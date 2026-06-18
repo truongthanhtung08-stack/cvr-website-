@@ -1,0 +1,36 @@
+# ===== Bien moi truong / bi mat =====
+.env
+.env.local
+.env*.local
+
+# ===== Node / Next.js =====
+node_modules/
+.next/
+out/
+build/
+dist/
+
+# ===== Log & cache =====
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm/
+.eslintcache
+
+# ===== He dieu hanh =====
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ===== IDE =====
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# ===== Vercel =====
+.vercel
+
+# ===== Tai lieu & tai san noi bo (khong day len GitHub) =====
+docs/
+assets/

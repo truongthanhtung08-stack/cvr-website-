@@ -1,0 +1,79 @@
+@import "tailwindcss";
+
+:root {
+  --background: #060606;
+  --foreground: #ffffff;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-be-vietnam);
+
+  /* Bộ nhận diện CENTRAL LAND — đơn sắc, nền tối */
+  --color-cl-ink: #060606;       /* đen chủ đạo (nền) */
+  --color-cl-charcoal: #141414;  /* than chì (card/section) */
+  --color-cl-gray: #9ca3af;      /* xám chữ phụ */
+  --color-cl-stone: #e6e6e6;     /* xám nhạt */
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+/* Lựa chọn dropdown nền tối dễ đọc */
+select option {
+  color: #0a0a0a;
+}
+
+/* Ken Burns — ảnh hero zoom chậm, sang trọng */
+@keyframes kenburns {
+  from { transform: scale(1.06); }
+  to { transform: scale(1.16); }
+}
+.animate-kenburns {
+  animation: kenburns 20s ease-in-out infinite alternate;
+}
+
+/* Reveal khi cuộn tới */
+.reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* Stagger — các card lần lượt hiện lên khi mục được reveal */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(22px); }
+  to { opacity: 1; transform: none; }
+}
+.reveal.is-visible .cards-stagger > * {
+  animation: fadeUp 0.6s both;
+}
+.cards-stagger > *:nth-child(2) { animation-delay: 0.06s; }
+.cards-stagger > *:nth-child(3) { animation-delay: 0.12s; }
+.cards-stagger > *:nth-child(4) { animation-delay: 0.18s; }
+.cards-stagger > *:nth-child(5) { animation-delay: 0.24s; }
+.cards-stagger > *:nth-child(6) { animation-delay: 0.30s; }
+.cards-stagger > *:nth-child(7) { animation-delay: 0.36s; }
+.cards-stagger > *:nth-child(8) { animation-delay: 0.42s; }
+.cards-stagger > *:nth-child(9) { animation-delay: 0.48s; }
+.cards-stagger > *:nth-child(10) { animation-delay: 0.54s; }
+.cards-stagger > *:nth-child(11) { animation-delay: 0.60s; }
+.cards-stagger > *:nth-child(12) { animation-delay: 0.66s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-kenburns { animation: none; }
+  .reveal { opacity: 1; transform: none; transition: none; }
+  .reveal.is-visible .cards-stagger > * { animation: none; }
+  html { scroll-behavior: auto; }
+}
