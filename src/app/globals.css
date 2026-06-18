@@ -9,6 +9,7 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-be-vietnam);
+  --font-serif: var(--font-playfair);
 
   /* Bộ nhận diện CENTRAL LAND — đơn sắc, nền tối */
   --color-cl-ink: #060606;       /* đen chủ đạo (nền) */

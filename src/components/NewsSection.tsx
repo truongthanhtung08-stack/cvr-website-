@@ -7,7 +7,7 @@ export default function NewsSection() {
     <section className="bg-cl-ink">
       <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
         <div className="flex items-end justify-between">
-          <h2 className="text-2xl font-extrabold tracking-tight text-white">
+          <h2 className="font-serif text-3xl font-bold text-white">
             Tin tức bất động sản
           </h2>
           <Link
