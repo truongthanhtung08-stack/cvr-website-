@@ -31,6 +31,7 @@ jobs:
         run: npm run build
         env:
           GITHUB_PAGES: "true"
+          NEXT_PUBLIC_BASE_PATH: "/cvr-website-"
       - name: Disable Jekyll
         run: touch out/.nojekyll
       - name: Upload Pages artifact

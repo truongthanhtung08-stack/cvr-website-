@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { asset } from "@/lib/asset";
 
 export default function AppDownload() {
   return (
@@ -12,10 +13,10 @@ export default function AppDownload() {
             <div className="relative flex justify-center">
               <div className="relative">
                 <div className="absolute -left-12 top-8 hidden h-[360px] w-[175px] rotate-[-8deg] overflow-hidden rounded-[2rem] border-4 border-white/15 bg-cl-ink shadow-2xl sm:block">
-                  <Image src="/images/gallery/p03.jpg" alt="" fill className="object-cover opacity-80" sizes="175px" />
+                  <Image src={asset("/images/gallery/p03.jpg")} alt="" fill className="object-cover opacity-80" sizes="175px" />
                 </div>
                 <div className="relative h-[400px] w-[195px] overflow-hidden rounded-[2.2rem] border-4 border-white/20 bg-cl-ink shadow-2xl">
-                  <Image src="/images/gallery/p01.jpg" alt="Ứng dụng CENTRAL LAND" fill className="object-cover" sizes="195px" />
+                  <Image src={asset("/images/gallery/p01.jpg")} alt="Ứng dụng CENTRAL LAND" fill className="object-cover" sizes="195px" />
                   <div className="absolute inset-x-0 top-0 flex justify-center pt-2">
                     <span className="h-1.5 w-16 rounded-full bg-white/40" />
                   </div>
@@ -48,7 +49,7 @@ export default function AppDownload() {
               <div className="mt-7 flex items-center gap-5">
                 {/* QR */}
                 <div className="rounded-xl bg-white p-2.5">
-                  <Image src="/images/qr.png" alt="Quét mã tải ứng dụng" width={100} height={100} className="h-[100px] w-[100px]" />
+                  <Image src={asset("/images/qr.png")} alt="Quét mã tải ứng dụng" width={100} height={100} className="h-[100px] w-[100px]" />
                 </div>
 
                 {/* Store badges */}

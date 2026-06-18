@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { asset } from "@/lib/asset";
 
 // Logo dùng chung: biểu tượng + tên + slogan, cân đối ở mọi kích thước.
 // Tên chữ hoa giãn rộng (tracking) để slogan luôn ngắn hơn hoặc bằng tên.
@@ -11,7 +12,7 @@ export default function BrandLogo({ size = "md" }: { size?: "md" | "lg" }) {
   return (
     <span className={`flex items-center ${s.gap}`}>
       <Image
-        src="/logo/symbol-white.svg"
+        src={asset("/logo/symbol-white.svg")}
         alt="CENTRAL LAND"
         width={s.icon}
         height={s.icon}

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import { asset } from "@/lib/asset";
 
 const tabs = ["Mua bán", "Cho thuê", "Dự án"];
 const provinces = ["Đà Nẵng", "Thừa Thiên Huế", "Quảng Nam", "Quảng Ngãi", "Bình Định"];
@@ -37,7 +38,7 @@ export default function Hero() {
   return (
     <section className="relative isolate flex min-h-[560px] items-end justify-center overflow-hidden">
       <Image
-        src="/images/hero-city2.jpg"
+        src={asset("/images/hero-city2.jpg")}
         alt="Bất động sản đô thị hiện đại"
         fill
         priority

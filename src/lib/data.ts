@@ -1,7 +1,9 @@
 // Dữ liệu mẫu (tạm thời) — sau này thay bằng dữ liệu thật từ Supabase
 // Ảnh đặt theo từng phân khúc: villa, căn hộ, nhà phố, đất nền, condotel, đất CN, kho xưởng
 
-const seg = (name: string) => `/images/segments/${name}.jpg`;
+import { asset } from "@/lib/asset";
+
+const seg = (name: string) => asset(`/images/segments/${name}.jpg`);
 
 export type Listing = {
   id: string;
