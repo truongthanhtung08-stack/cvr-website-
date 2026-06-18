@@ -48,11 +48,17 @@ Logo thật ở `public/logo/` (symbol-dark.svg cho nền sáng, symbol-white.sv
 | WSL2 + Ubuntu | ✅ Đã cài |
 | Claude Code CLI | ✅ 2.1.181 |
 | Git (config tên + email) | ✅ Xong |
-| GitHub repo `cvr-website` (Private) | ✅ Đã tạo |
+| GitHub repo `truongthanhtung08-stack/cvr-website-` | ✅ Đã tạo (PUBLIC — lưu ý tên có dấu `-` ở cuối) |
 | Supabase project | ✅ URL: `https://miyugmacyerqvzhgmbyd.supabase.co` (region Tokyo) |
-| Vercel project `cvr-website` | ✅ Đã liên kết GitHub → `cvr-website-eight.vercel.app` |
+| Vercel | ⚠️ KHÔNG dùng — link `cvr-website-eight.vercel.app` bị 404 + khoá. BỎ QUA. |
 
 > Khóa kết nối Supabase nằm ở `.env.local` (publishable key — an toàn cho client).
+
+### 🚀 TRIỂN KHAI (Deploy) — QUAN TRỌNG
+- **Link công khai 24/7 (CHÍNH THỨC):** `https://truongthanhtung08-stack.github.io/cvr-website-/`
+- **Cơ chế:** GitHub Actions (`.github/workflows/deploy.yml`) tự build static export + deploy lên GitHub Pages **mỗi lần push lên `main`** (~2-3 phút).
+- **→ Mọi chỉnh sửa web: chỉ cần commit + push lên `main`, link tự cập nhật.**
+- GitHub Pages chạy ở thư mục con `/cvr-website-/` nên cần `basePath` (xem `next.config.ts`, chỉ bật khi `GITHUB_PAGES=true`) + tiền tố ảnh qua helper `src/lib/asset.ts` (`NEXT_PUBLIC_BASE_PATH=/cvr-website-`). Local/dev KHÔNG có tiền tố.
 
 ---
 
