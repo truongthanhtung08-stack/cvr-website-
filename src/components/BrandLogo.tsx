@@ -6,8 +6,8 @@ import { asset } from "@/lib/asset";
 export default function BrandLogo({ size = "md" }: { size?: "md" | "lg" }) {
   const s =
     size === "lg"
-      ? { icon: 60, iconCls: "h-14 w-14", name: "text-[1.7rem]", slogan: "text-[13.5px]", gap: "gap-3.5" }
-      : { icon: 48, iconCls: "h-11 w-11", name: "text-[1.45rem]", slogan: "text-[11.5px]", gap: "gap-3" };
+      ? { icon: 76, iconCls: "h-[4.4rem] w-[4.4rem]", name: "text-[1.7rem]", slogan: "text-[13.5px]", gap: "gap-3.5" }
+      : { icon: 60, iconCls: "h-[3.4rem] w-[3.4rem]", name: "text-[1.45rem]", slogan: "text-[11.5px]", gap: "gap-3" };
 
   return (
     <span className={`flex items-center ${s.gap}`}>

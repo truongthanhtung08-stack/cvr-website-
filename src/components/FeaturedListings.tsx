@@ -23,10 +23,10 @@ export default function FeaturedListings() {
       : featuredListings.filter((l) => l.location.includes(city));
 
   return (
-    <section className="bg-cl-ink">
-      <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
+    <section className="section-edge bg-cl-ink">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="flex items-end justify-between">
-          <h2 className="font-serif text-3xl font-bold text-white">
+          <h2 className="font-serif text-2xl font-bold text-white">
             Bất động sản dành cho bạn
           </h2>
           <Link
@@ -44,9 +44,9 @@ export default function FeaturedListings() {
               key={c}
               type="button"
               onClick={() => setCity(c)}
-              className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+              className={`rounded-full px-4 py-1.5 text-sm font-medium transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
                 city === c
-                  ? "bg-white text-cl-ink"
+                  ? "scale-105 bg-white text-cl-ink shadow-lg shadow-white/10"
                   : "border border-white/15 text-white/70 hover:border-white/40 hover:text-white"
               }`}
             >
@@ -56,7 +56,7 @@ export default function FeaturedListings() {
         </div>
 
         {listings.length > 0 ? (
-          <div className="cards-stagger mt-7 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="cards-stagger mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {listings.map((item) => (
               <PropertyCard key={item.id} item={item} />
             ))}

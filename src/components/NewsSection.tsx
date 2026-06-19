@@ -4,10 +4,10 @@ import { articles } from "@/lib/data";
 
 export default function NewsSection() {
   return (
-    <section className="bg-cl-ink">
-      <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
+    <section className="section-edge bg-cl-charcoal">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="flex items-end justify-between">
-          <h2 className="font-serif text-3xl font-bold text-white">
+          <h2 className="font-serif text-2xl font-bold text-white">
             Tin tức bất động sản
           </h2>
           <Link
@@ -18,20 +18,21 @@ export default function NewsSection() {
           </Link>
         </div>
 
-        <div className="mt-7 grid grid-cols-1 gap-6 md:grid-cols-3">
+        <div className="mt-5 grid grid-cols-1 gap-6 md:grid-cols-3">
           {articles.map((a) => (
             <Link
               key={a.title}
               href="/tin-tuc"
-              className="group flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] transition-all hover:-translate-y-1 hover:border-white/30"
+              className="card-lux group relative flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] hover:-translate-y-2 hover:border-white/30 hover:shadow-2xl hover:shadow-black/60"
             >
+              <span className="card-sheen" aria-hidden />
               <div className="relative aspect-[16/9] overflow-hidden">
                 <Image
                   src={a.image}
                   alt={a.title}
                   fill
                   sizes="(max-width: 768px) 100vw, 33vw"
-                  className="object-cover transition-transform duration-500 group-hover:scale-105"
+                  className="object-cover transition-transform duration-[700ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.07]"
                 />
               </div>
               <div className="flex flex-1 flex-col p-5">

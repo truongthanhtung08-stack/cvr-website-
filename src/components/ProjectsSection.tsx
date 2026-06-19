@@ -4,10 +4,10 @@ import { projects } from "@/lib/data";
 
 export default function ProjectsSection() {
   return (
-    <section className="border-t border-white/5 bg-cl-charcoal">
-      <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
+    <section className="section-edge bg-cl-charcoal">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="flex items-end justify-between">
-          <h2 className="font-serif text-3xl font-bold text-white">
+          <h2 className="font-serif text-2xl font-bold text-white">
             Dự án nổi bật
           </h2>
           <Link
@@ -18,20 +18,21 @@ export default function ProjectsSection() {
           </Link>
         </div>
 
-        <div className="cards-stagger mt-7 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="cards-stagger mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {projects.map((p) => (
             <Link
               key={p.name}
               href="/du-an"
-              className="group flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] transition-all hover:-translate-y-1 hover:border-white/30"
+              className="card-lux group relative flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] hover:-translate-y-2 hover:border-white/30 hover:shadow-2xl hover:shadow-black/60"
             >
+              <span className="card-sheen" aria-hidden />
               <div className="relative aspect-[4/3] overflow-hidden">
                 <Image
                   src={p.image}
                   alt={p.name}
                   fill
                   sizes="(max-width: 768px) 100vw, 25vw"
-                  className="object-cover transition-transform duration-500 group-hover:scale-105"
+                  className="object-cover transition-transform duration-[700ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.07]"
                 />
                 <span className="absolute left-3 top-3 rounded-md bg-white/90 px-2.5 py-1 text-xs font-bold uppercase tracking-wide text-cl-ink">
                   {p.status}

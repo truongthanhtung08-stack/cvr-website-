@@ -36,22 +36,27 @@ export default function Hero() {
   }
 
   return (
-    <section className="relative isolate flex min-h-[560px] items-end justify-center overflow-hidden">
+    <section className="relative isolate flex min-h-[440px] items-end justify-center overflow-hidden">
       <Image
-        src={asset("/images/hero-city2.jpg")}
-        alt="Bất động sản đô thị hiện đại"
+        src={asset("/images/hero1.png")}
+        alt="Bất động sản Miền Trung"
         fill
         priority
         sizes="100vw"
-        className="animate-kenburns object-cover"
+        className="animate-kenburns object-cover contrast-[1.03] saturate-[1.08] brightness-[0.92]"
       />
-      {/* Lớp phủ: đậm ở trên cho header rõ trên trời sáng, giữa hiện màu, đậm dần xuống đáy cho thanh lọc + hoà nền */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/15 to-cl-ink" />
-      <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-cl-ink via-cl-ink/55 to-transparent" />
+      {/* Lớp phủ: đậm ở trên cho header rõ trên nền sáng, giữa hiện màu, đậm dần xuống đáy cho thanh lọc + hoà nền */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/25 to-cl-ink" />
+      <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-cl-ink via-cl-ink/60 to-transparent" />
 
-      <div className="relative w-full max-w-5xl px-4 pb-12 pt-28 sm:px-6">
+      <div className="relative w-full max-w-4xl px-4 pb-10 pt-24 sm:px-6">
+        {/* Tiêu đề gọn */}
+        <h1 className="hero-in hero-in-1 mb-4 max-w-2xl text-balance font-serif text-2xl font-bold leading-tight text-white drop-shadow-lg sm:text-[2rem]">
+          Bất động sản Miền Trung — minh bạch, trực tiếp
+        </h1>
+
         {/* Tabs */}
-        <div className="mb-2 flex gap-1.5">
+        <div className="hero-in hero-in-2 mb-2 flex gap-1.5">
           {tabs.map((t) => (
             <button
               key={t}
@@ -60,7 +65,7 @@ export default function Hero() {
               className={`rounded-lg px-4 py-1.5 text-sm font-semibold transition-all ${
                 tab === t
                   ? "bg-white text-cl-ink"
-                  : "bg-black/30 text-white/80 backdrop-blur-sm hover:bg-black/50"
+                  : "bg-black/40 text-white/80 backdrop-blur-sm hover:bg-black/60"
               }`}
             >
               {t}
@@ -68,10 +73,10 @@ export default function Hero() {
           ))}
         </div>
 
-        {/* Thanh tìm kiếm 1 hàng — gọn, không che ảnh */}
+        {/* Thanh tìm kiếm 1 hàng — nền tối đậm cho cân, nổi rõ trên ảnh sáng */}
         <form
           onSubmit={handleSearch}
-          className="flex flex-col gap-2 rounded-2xl border border-white/15 bg-white/10 p-2 shadow-2xl ring-1 ring-inset ring-white/10 backdrop-blur-md md:flex-row md:items-center md:gap-1.5"
+          className="hero-in hero-in-3 flex flex-col gap-2 rounded-2xl border border-white/15 bg-cl-ink/80 p-2 shadow-2xl ring-1 ring-inset ring-white/10 backdrop-blur-md md:flex-row md:items-center md:gap-1.5"
         >
           <Select label="Khu vực" value={province} onChange={setProvince} options={provinces} placeholder="Khu vực" />
           <span className="hidden h-6 w-px bg-white/15 md:block" />
@@ -88,7 +93,7 @@ export default function Hero() {
           />
           <button
             type="submit"
-            className="flex h-11 shrink-0 items-center justify-center gap-2 rounded-lg bg-white px-7 text-sm font-semibold text-cl-ink transition-colors hover:bg-white/90"
+            className="flex h-11 shrink-0 items-center justify-center gap-2 rounded-lg bg-white px-7 text-sm font-semibold text-cl-ink transition-all duration-200 hover:bg-white/90 hover:shadow-lg hover:shadow-white/10 active:scale-95"
           >
             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />

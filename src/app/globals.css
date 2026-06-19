@@ -3,6 +3,9 @@
 :root {
   --background: #060606;
   --foreground: #ffffff;
+  /* Easing dùng chung — đường cong "luxury": vào nhanh, dừng êm */
+  --ease-lux: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-out-soft: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @theme inline {
@@ -44,8 +47,9 @@ select option {
 /* Reveal khi cuộn tới */
 .reveal {
   opacity: 0;
-  transform: translateY(30px);
-  transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.2, 0.7, 0.2, 1);
+  transform: translateY(34px);
+  will-change: opacity, transform;
+  transition: opacity 0.9s var(--ease-out-soft), transform 0.9s var(--ease-out-soft);
 }
 .reveal.is-visible {
   opacity: 1;
@@ -54,11 +58,11 @@ select option {
 
 /* Stagger — các card lần lượt hiện lên khi mục được reveal */
 @keyframes fadeUp {
-  from { opacity: 0; transform: translateY(22px); }
+  from { opacity: 0; transform: translateY(26px) scale(0.985); }
   to { opacity: 1; transform: none; }
 }
 .reveal.is-visible .cards-stagger > * {
-  animation: fadeUp 0.6s both;
+  animation: fadeUp 0.7s var(--ease-out-soft) both;
 }
 .cards-stagger > *:nth-child(2) { animation-delay: 0.06s; }
 .cards-stagger > *:nth-child(3) { animation-delay: 0.12s; }
@@ -72,9 +76,204 @@ select option {
 .cards-stagger > *:nth-child(11) { animation-delay: 0.60s; }
 .cards-stagger > *:nth-child(12) { animation-delay: 0.66s; }
 
+/* ===== Nút "Đăng tin" — hiệu ứng bắt mắt (đơn sắc, sang trọng) ===== */
+.btn-dangtin {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  background-image: linear-gradient(135deg, #ffffff 0%, #e2e2e2 100%);
+  box-shadow:
+    0 4px 14px rgba(0, 0, 0, 0.35),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.6);
+  transition:
+    transform 0.25s cubic-bezier(0.2, 0.7, 0.2, 1),
+    box-shadow 0.25s ease;
+}
+.btn-dangtin:hover {
+  transform: translateY(-2px) scale(1.035);
+  box-shadow:
+    0 10px 26px rgba(255, 255, 255, 0.22),
+    0 6px 16px rgba(0, 0, 0, 0.45),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.85);
+}
+.btn-dangtin:active {
+  transform: translateY(0) scale(0.99);
+}
+/* Vệt sáng lướt ngang khi hover */
+.btn-dangtin::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.95) 50%,
+    transparent 70%
+  );
+  transform: translateX(-130%);
+  pointer-events: none;
+}
+.btn-dangtin:hover::before {
+  animation: btn-shine 0.9s ease;
+}
+.btn-dangtin > * {
+  position: relative;
+  z-index: 1;
+}
+@keyframes btn-shine {
+  to {
+    transform: translateX(130%);
+  }
+}
+/* Nhịp phát sáng nhẹ để thu hút mắt khi đứng yên */
+@keyframes btn-glow {
+  0%, 100% {
+    box-shadow:
+      0 4px 14px rgba(0, 0, 0, 0.35),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.6);
+  }
+  50% {
+    box-shadow:
+      0 4px 18px rgba(0, 0, 0, 0.4),
+      0 0 20px 2px rgba(255, 255, 255, 0.18),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.7);
+  }
+}
+.btn-dangtin--pulse {
+  animation: btn-glow 2.8s ease-in-out infinite;
+}
+.btn-dangtin--pulse:hover {
+  animation: none;
+}
+
+/* ===== Phân cách giữa các khối — đường gradient mờ dần 2 đầu ===== */
+.section-edge {
+  position: relative;
+}
+.section-edge::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(1120px, 88%);
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.16),
+    transparent
+  );
+  pointer-events: none;
+}
+
+/* ===== Footer — tách bạch rõ rệt với phần nội dung ===== */
+.footer-glow {
+  position: relative;
+  background:
+    radial-gradient(130% 90% at 50% 0%, rgba(255, 255, 255, 0.06), transparent 58%),
+    linear-gradient(180deg, #141414 0%, #060606 60%);
+}
+/* Viền sáng trên cùng — ranh giới rõ giữa nội dung và footer */
+.footer-glow::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.55),
+    transparent
+  );
+  pointer-events: none;
+}
+
+/* ===== Hero — nội dung xuất hiện mượt khi tải trang ===== */
+@keyframes heroIn {
+  from {
+    opacity: 0;
+    transform: translateY(26px);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}
+.hero-in {
+  opacity: 0;
+  animation: heroIn 0.85s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+}
+.hero-in-1 { animation-delay: 0.1s; }
+.hero-in-2 { animation-delay: 0.28s; }
+.hero-in-3 { animation-delay: 0.46s; }
+
+/* ===== Nav — gạch chân chạy mượt khi hover ===== */
+.nav-link {
+  position: relative;
+}
+.nav-link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -5px;
+  height: 1.5px;
+  width: 100%;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.4s var(--ease-out-soft);
+}
+.nav-link:hover::after {
+  transform: scaleX(1);
+}
+
+/* ===== Card BĐS — vệt sáng lướt nhẹ khi hover (sang trọng) ===== */
+.card-lux {
+  will-change: transform;
+  transition:
+    transform 0.45s var(--ease-out-soft),
+    border-color 0.45s var(--ease-out-soft),
+    box-shadow 0.45s var(--ease-out-soft);
+}
+.card-lux .card-sheen {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(
+    115deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.10) 50%,
+    transparent 65%
+  );
+  transform: translateX(-120%);
+  transition: opacity 0.3s ease;
+}
+.card-lux:hover .card-sheen {
+  opacity: 1;
+  animation: card-shine 0.85s var(--ease-out-soft);
+}
+@keyframes card-shine {
+  to { transform: translateX(120%); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-kenburns { animation: none; }
+  .hero-in { opacity: 1; animation: none; }
+  .nav-link::after { transition: none; }
   .reveal { opacity: 1; transform: none; transition: none; }
   .reveal.is-visible .cards-stagger > * { animation: none; }
   html { scroll-behavior: auto; }
+  .btn-dangtin, .btn-dangtin--pulse { animation: none; transition: none; }
+  .btn-dangtin:hover::before { animation: none; }
+  .btn-dangtin:hover { transform: none; }
+  .card-lux { transition: none; }
+  .card-lux:hover .card-sheen { animation: none; opacity: 0; }
 }

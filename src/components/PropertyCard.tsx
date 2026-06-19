@@ -6,8 +6,10 @@ export default function PropertyCard({ item }: { item: Listing }) {
   return (
     <Link
       href={`/bat-dong-san/${item.id}`}
-      className="group flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] transition-all duration-300 hover:-translate-y-1.5 hover:border-white/30 hover:shadow-2xl hover:shadow-black/50"
+      className="card-lux group relative flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] hover:-translate-y-2 hover:border-white/30 hover:shadow-2xl hover:shadow-black/60"
     >
+      {/* Vệt sáng lướt qua khi hover */}
+      <span className="card-sheen" aria-hidden />
       {/* Ảnh */}
       <div className="relative aspect-[4/3] overflow-hidden">
         <Image
@@ -15,8 +17,10 @@ export default function PropertyCard({ item }: { item: Listing }) {
           alt={item.title}
           fill
           sizes="(max-width: 768px) 100vw, 25vw"
-          className="object-cover transition-transform duration-500 group-hover:scale-105"
+          className="object-cover transition-transform duration-[700ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.07]"
         />
+        {/* Lớp tối nhẹ ở đáy ảnh, đậm hơn khi hover cho chữ rõ */}
+        <span className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-60 transition-opacity duration-500 group-hover:opacity-90" />
         {item.badge && (
           <span className="absolute left-3 top-3 rounded-md bg-white px-2.5 py-1 text-xs font-bold uppercase tracking-wide text-cl-ink">
             {item.badge}

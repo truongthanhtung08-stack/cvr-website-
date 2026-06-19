@@ -42,8 +42,8 @@ const socials = [
 
 export default function Footer() {
   return (
-    <footer className="mt-auto border-t border-white/10 bg-cl-ink text-slate-300">
-      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+    <footer className="footer-glow mt-auto text-slate-300">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 gap-8 md:grid-cols-5">
           {/* Thương hiệu + liên hệ */}
           <div className="col-span-2">
@@ -75,7 +75,7 @@ export default function Footer() {
                   key={s.label}
                   href={s.href}
                   aria-label={s.label}
-                  className="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 text-white/70 transition-colors hover:border-white hover:text-white"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 text-white/70 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 hover:scale-110 hover:border-white hover:bg-white hover:text-cl-ink"
                 >
                   <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d={s.d} /></svg>
                 </a>
@@ -94,7 +94,7 @@ export default function Footer() {
                   <li key={link.href}>
                     <Link
                       href={link.href}
-                      className="text-sm text-slate-400 transition-colors hover:text-white"
+                      className="inline-block text-sm text-slate-400 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:translate-x-1 hover:text-white"
                     >
                       {link.label}
                     </Link>
@@ -105,7 +105,7 @@ export default function Footer() {
           ))}
         </div>
 
-        <div className="mt-10 space-y-2 border-t border-white/10 pt-6 text-xs leading-relaxed text-slate-500">
+        <div className="mt-8 space-y-2 border-t border-white/10 pt-6 text-xs leading-relaxed text-slate-500">
           <p className="font-semibold text-slate-300">
             CÔNG TY CỔ PHẦN CENTRAL LAND
           </p>

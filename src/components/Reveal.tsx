@@ -23,7 +23,11 @@ export default function Reveal({
           observer.disconnect();
         }
       },
-      { threshold: 0.12 }
+      // Kích hoạt ngay khi mép trên của mục lọt vào ~88% chiều cao màn hình.
+      // Dùng rootMargin thay cho threshold để mục cao (lưới nhiều card trên
+      // mobile) vẫn luôn hiện — threshold cố định sẽ không bao giờ đạt nếu
+      // mục cao hơn màn hình.
+      { threshold: 0, rootMargin: "0px 0px -12% 0px" }
     );
     observer.observe(el);
     return () => observer.disconnect();
