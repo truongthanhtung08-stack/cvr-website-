@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import { Be_Vietnam_Pro, Playfair_Display } from "next/font/google";
+import { Be_Vietnam_Pro, Playfair_Display, Montserrat } from "next/font/google";
 import "./globals.css";
+import Chatbox from "@/components/Chatbox";
 
 const beVietnam = Be_Vietnam_Pro({
   variable: "--font-be-vietnam",
@@ -11,6 +12,14 @@ const beVietnam = Be_Vietnam_Pro({
 
 const playfair = Playfair_Display({
   variable: "--font-playfair",
+  subsets: ["latin", "vietnamese"],
+  weight: ["500", "600", "700", "800"],
+  display: "swap",
+});
+
+// Font hiện đại cho tiêu đề quảng cáo (Hero) — geometric sans, dấu "&" gọn đẹp, đủ dấu tiếng Việt
+const montserrat = Montserrat({
+  variable: "--font-montserrat",
   subsets: ["latin", "vietnamese"],
   weight: ["500", "600", "700", "800"],
   display: "swap",
@@ -28,9 +37,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="vi" className={`${beVietnam.variable} ${playfair.variable} h-full antialiased`}>
+    <html lang="vi" className={`${beVietnam.variable} ${playfair.variable} ${montserrat.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col font-sans bg-background text-foreground">
         {children}
+        <Chatbox />
       </body>
     </html>
   );

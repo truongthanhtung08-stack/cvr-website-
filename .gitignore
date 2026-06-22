@@ -34,3 +34,10 @@ desktop.ini
 # ===== Tai lieu & tai san noi bo (khong day len GitHub) =====
 docs/
 assets/
+
+# ===== File tam / script nhap (khong commit) =====
+*.tsbuildinfo
+crop-tmp.js
+crop2-tmp.js
+render-tmp.js
+.tmp-logo/

@@ -213,6 +213,13 @@ select option {
 .hero-in-2 { animation-delay: 0.28s; }
 .hero-in-3 { animation-delay: 0.46s; }
 
+/* Phụ đề Hero — mờ dần mỗi khi đổi slide */
+@keyframes heroSub {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+.hero-sub { animation: heroSub 0.7s var(--ease-out-soft) both; }
+
 /* ===== Nav — gạch chân chạy mượt khi hover ===== */
 .nav-link {
   position: relative;
