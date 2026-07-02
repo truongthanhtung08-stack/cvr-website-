@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import SaveButton from "@/components/SaveButton";
+import CompareButton from "@/components/CompareButton";
 import { listingSummary, type Listing } from "@/lib/data";
 import { tierFromBadge, getTier } from "@/lib/packages";
 
@@ -64,7 +65,10 @@ export default function PropertyCard({
             {tier.short}
           </span>
         )}
-        <SaveButton id={item.id} className="absolute right-2 top-2" />
+        <div className="absolute right-2 top-2 flex flex-col gap-1.5">
+          <SaveButton id={item.id} />
+          <CompareButton id={item.id} />
+        </div>
         {/* Badge số ảnh kiểu Homedy */}
         <span className="absolute bottom-2 left-2 flex items-center gap-1 bg-black/55 px-1.5 py-0.5 text-[10px] font-medium text-white">
           <CameraIcon />1
@@ -133,7 +137,10 @@ function PropertyRow({ item, showTime = false }: { item: Listing; showTime?: boo
             style={{ backgroundColor: tier.accent }}
           >{tier.short}</span>
         )}
-        <SaveButton id={item.id} className="absolute right-2 top-2 h-7 w-7" />
+        <div className="absolute right-2 top-2 flex flex-col gap-1.5">
+          <SaveButton id={item.id} className="h-7 w-7" />
+          <CompareButton id={item.id} className="h-7 w-7" />
+        </div>
         <span className="absolute bottom-2 left-2 flex items-center gap-1 bg-black/55 px-1.5 py-0.5 text-[10px] text-white">
           <CameraIcon />1
         </span>

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Playfair_Display, Montserrat } from "next/font/google";
 import "./globals.css";
 import Chatbox from "@/components/Chatbox";
+import CompareBar from "@/components/CompareBar";
 
 // Font chính toàn site: Inter — hiện đại, chuyên nghiệp, "SF Pro của web" (kiểu Apple),
 // hỗ trợ tiếng Việt đầy đủ.
@@ -42,6 +43,7 @@ export default function RootLayout({
     <html lang="vi" className={`${inter.variable} ${playfair.variable} ${montserrat.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col font-sans bg-background text-foreground">
         {children}
+        <CompareBar />
         <Chatbox />
       </body>
     </html>

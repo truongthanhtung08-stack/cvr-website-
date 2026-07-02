@@ -2,6 +2,7 @@ import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import FeaturedListings from "@/components/FeaturedListings";
 import ProjectsSection from "@/components/ProjectsSection";
+import ForYou from "@/components/ForYou";
 import LocationGrid from "@/components/LocationGrid";
 import NewsSection from "@/components/NewsSection";
 import PromoBanner from "@/components/PromoBanner";
@@ -20,6 +21,9 @@ export default function Home() {
         <FeaturedListings />
         <Reveal>
           <ProjectsSection />
+        </Reveal>
+        <Reveal>
+          <ForYou />
         </Reveal>
         <Reveal>
           <LocationGrid />

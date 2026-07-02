@@ -6,6 +6,7 @@ import Footer from "@/components/Footer";
 import Gallery from "@/components/Gallery";
 import PropertyCard from "@/components/PropertyCard";
 import RecordView from "@/components/RecordView";
+import PriceHistory from "@/components/PriceHistory";
 import { featuredListings, getListingById, buildListingDetail } from "@/lib/data";
 import { tierFromBadge, getTier } from "@/lib/packages";
 
@@ -170,6 +171,13 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                   })}
                 </div>
               </Section>
+
+              {/* Lịch sử giá (minh hoạ) — chỉ khi có giá dạng số */}
+              {priceVnd != null && (
+                <Section title="Lịch sử giá">
+                  <PriceHistory price={priceVnd} />
+                </Section>
+              )}
 
               {/* Vị trí */}
               <Section title="Vị trí trên bản đồ">

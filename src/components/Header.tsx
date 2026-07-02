@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import BrandLogo from "@/components/BrandLogo";
 import { packages } from "@/lib/packages";
+import { haptic } from "@/lib/haptic";
 
 type NavChild = { label: string; href: string };
 type NavItem = { label: string; href: string; children?: NavChild[] };
@@ -265,6 +266,7 @@ export default function Header() {
 
           <Link
             href="/dang-tin"
+            onClick={() => haptic()}
             className="btn-dangtin btn-dangtin--pulse group flex items-center gap-1.5 rounded-full px-5 py-2.5 text-sm font-semibold text-white"
           >
             <svg

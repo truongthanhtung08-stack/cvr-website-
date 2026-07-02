@@ -1,6 +1,7 @@
 "use client";
 
 import { useSaved } from "@/lib/useSaved";
+import { haptic } from "@/lib/haptic";
 
 // Nút "lưu tin" (trái tim) — đặt trên card. Bấm không điều hướng (chặn link cha).
 export default function SaveButton({ id, className = "" }: { id: string; className?: string }) {
@@ -15,6 +16,7 @@ export default function SaveButton({ id, className = "" }: { id: string; classNa
       onClick={(e) => {
         e.preventDefault();
         e.stopPropagation();
+        haptic();
         toggle(id);
       }}
       className={`flex h-9 w-9 items-center justify-center rounded-full backdrop-blur-sm transition ${
