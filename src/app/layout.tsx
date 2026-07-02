@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
-import { Be_Vietnam_Pro, Playfair_Display, Montserrat } from "next/font/google";
+import { Inter, Playfair_Display, Montserrat } from "next/font/google";
 import "./globals.css";
 import Chatbox from "@/components/Chatbox";
 
-const beVietnam = Be_Vietnam_Pro({
-  variable: "--font-be-vietnam",
+// Font chính toàn site: Inter — hiện đại, chuyên nghiệp, "SF Pro của web" (kiểu Apple),
+// hỗ trợ tiếng Việt đầy đủ.
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin", "vietnamese"],
   weight: ["400", "500", "600", "700", "800"],
   display: "swap",
@@ -26,9 +28,9 @@ const montserrat = Montserrat({
 });
 
 export const metadata: Metadata = {
-  title: "CENTRAL LAND — Bất động sản Đà Nẵng, Huế & Miền Trung",
+  title: "COASTAL LAND — Bất động sản Đà Nẵng, Huế & Miền Trung",
   description:
-    "CENTRAL LAND — Gateway to Central Coast property. Sàn giao dịch bất động sản trung gian, khách quan tại Đà Nẵng, Huế và Miền Trung: đất nền, căn hộ, nhà phố, villa biển và bất động sản công nghiệp.",
+    "COASTAL LAND — Gateway to Central Coast property. Sàn giao dịch bất động sản trung gian, khách quan tại Đà Nẵng, Huế và Miền Trung: đất nền, căn hộ, nhà phố, villa biển và bất động sản công nghiệp.",
 };
 
 export default function RootLayout({
@@ -37,7 +39,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="vi" className={`${beVietnam.variable} ${playfair.variable} ${montserrat.variable} h-full antialiased`}>
+    <html lang="vi" className={`${inter.variable} ${playfair.variable} ${montserrat.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col font-sans bg-background text-foreground">
         {children}
         <Chatbox />

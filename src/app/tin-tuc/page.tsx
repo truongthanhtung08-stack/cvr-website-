@@ -29,7 +29,7 @@ export default function TinTucPage() {
               <Link
                 key={a.slug}
                 href={`/tin-tuc/${a.slug}`}
-                className="card-lux group relative flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] hover:-translate-y-2 hover:border-cl-gold/40 hover:shadow-2xl hover:shadow-black/60"
+                className="card-lux group relative flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] hover:-translate-y-2 hover:border-cvr-gold/40 hover:shadow-2xl hover:shadow-black/60"
               >
                 <span className="card-sheen" aria-hidden />
                 <div className="relative aspect-[16/9] overflow-hidden">
@@ -37,10 +37,10 @@ export default function TinTucPage() {
                 </div>
                 <div className="flex flex-1 flex-col p-4">
                   <div className="flex items-center gap-2 text-xs text-white/50">
-                    <span className="rounded bg-cl-gold/15 px-2 py-0.5 font-medium text-cl-gold-soft">{a.category}</span>
+                    <span className="rounded bg-cvr-gold/15 px-2 py-0.5 font-medium text-cvr-gold-soft">{a.category}</span>
                     <span>{a.date}</span>
                   </div>
-                  <h3 className="mt-2.5 line-clamp-2 font-bold leading-snug text-white group-hover:text-cl-gold-soft">{a.title}</h3>
+                  <h3 className="mt-2.5 line-clamp-2 font-bold leading-snug text-white group-hover:text-cvr-gold-soft">{a.title}</h3>
                   <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-white/60">{a.excerpt}</p>
                 </div>
               </Link>

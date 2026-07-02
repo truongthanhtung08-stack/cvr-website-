@@ -25,11 +25,11 @@ const benefits = [
 
 export default function ValueSection() {
   return (
-    <section className="section-edge bg-cl-ink">
+    <section className="section-edge bg-cvr-ink">
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-12">
         <div className="grid gap-8 lg:grid-cols-[1.2fr_1fr] lg:items-end">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.26em] text-cl-gold-soft">
+            <p className="text-sm font-semibold uppercase tracking-[0.26em] text-cvr-gold-soft">
               Coastal Land — Tinh hoa bất động sản Miền Trung
             </p>
             <h2 className="mt-4 max-w-2xl text-3xl font-semibold leading-tight text-white sm:text-4xl">
@@ -41,7 +41,7 @@ export default function ValueSection() {
             <div className="mt-6 flex flex-wrap gap-3">
               <Link
                 href="/mua-ban"
-                className="inline-flex items-center justify-center rounded-full bg-cl-gold px-5 py-3 text-sm font-semibold text-cl-ink transition hover:bg-white/90"
+                className="inline-flex items-center justify-center rounded-full bg-cvr-gold px-5 py-3 text-sm font-semibold text-cvr-ink transition hover:bg-white/90"
               >
                 Xem tin mua bán
               </Link>
@@ -56,7 +56,7 @@ export default function ValueSection() {
 
           <div className="grid gap-4 sm:grid-cols-2">
             {benefits.map((item) => (
-              <article key={item.title} className="rounded-3xl border border-white/10 bg-white/[0.04] p-6 shadow-2xl shadow-black/20 transition hover:-translate-y-1.5 hover:border-cl-gold/30 hover:bg-white/[0.08]">
+              <article key={item.title} className="rounded-3xl border border-white/10 bg-white/[0.04] p-6 shadow-2xl shadow-black/20 transition hover:-translate-y-1.5 hover:border-cvr-gold/30 hover:bg-white/[0.08]">
                 <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 text-lg font-bold text-white">
                   {item.icon}
                 </div>

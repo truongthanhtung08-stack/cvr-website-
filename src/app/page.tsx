@@ -14,9 +14,9 @@ export default function Home() {
       <Header />
       <main className="flex-1">
         <Hero />
-        <Reveal>
-          <FeaturedListings />
-        </Reveal>
+        {/* Không bọc Reveal: section này ló ngay dưới banner (above-the-fold),
+            cần hiện tức thì để tạo kết nối — tránh bị "vùng chết" của Reveal ẩn đi. */}
+        <FeaturedListings />
         <Reveal>
           <ProjectsSection />
         </Reveal>

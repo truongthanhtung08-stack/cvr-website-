@@ -1,25 +1,43 @@
 // Tuỳ chọn bộ lọc dùng chung cho Hero, trang danh sách & tìm kiếm.
 // 👉 Thêm/bớt loại hình hoặc mức giá tại đây — toàn bộ bộ lọc tự cập nhật.
 
+// ═══════════════════════════════════════════════════════════════════════════
+// LOẠI HÌNH (sản phẩm) PHÂN THEO MỤC ĐÍCH — chuẩn Brief + Kế hoạch V3.
+// Mọi tin do thành viên (người bán/môi giới) đăng, phân theo MỤC ĐÍCH:
+//   • "ban"  = Mua bán  → danh mục saleTypeGroups
+//   • "thue" = Cho thuê → danh mục rentTypeGroups (có Văn phòng, Mặt bằng,
+//              Phòng trọ, Căn hộ dịch vụ… — KHÔNG có ở mua bán)
+// ═══════════════════════════════════════════════════════════════════════════
+type TypeGroup = { label: string; items: string[] };
+
+// MUA BÁN
+export const saleTypeGroups: TypeGroup[] = [
+  { label: "Nhà ở", items: ["Căn hộ chung cư", "Nhà riêng", "Nhà mặt phố", "Nhà biệt thự / Liền kề", "Shophouse / Nhà phố thương mại"] },
+  { label: "Đất", items: ["Đất nền / Đất nền dự án", "Đất nông nghiệp"] },
+  { label: "Du lịch / Nghỉ dưỡng", items: ["Villa / Biệt thự biển", "Condotel"] },
+  { label: "Công nghiệp", items: ["Đất công nghiệp", "Kho / Nhà xưởng"] },
+  { label: "Khác", items: ["Bất động sản khác"] },
+];
+
+// CHO THUÊ (11 danh mục — Kế hoạch V3)
+export const rentTypeGroups: TypeGroup[] = [
+  { label: "Nhà ở", items: ["Căn hộ chung cư", "Căn hộ dịch vụ", "Nhà riêng", "Nhà mặt phố", "Nhà phố thương mại", "Biệt thự / Liền kề", "Nhà trọ / Phòng trọ"] },
+  { label: "Thương mại & văn phòng", items: ["Văn phòng", "Mặt bằng / Cửa hàng bán lẻ"] },
+  { label: "Đất & công nghiệp", items: ["Thuê đất / Nhà xưởng / Kho bãi"] },
+  { label: "Khác", items: ["Bất động sản khác"] },
+];
+
+// Chọn bộ danh mục theo mục đích (dùng cho FilterBar trên từng trang)
+export function typeGroupsFor(purpose: "ban" | "thue"): TypeGroup[] {
+  return purpose === "thue" ? rentTypeGroups : saleTypeGroups;
+}
+
+// Mặc định = mua bán (giữ tương thích nơi chưa truyền purpose)
+export const propertyTypeGroups: TypeGroup[] = saleTypeGroups;
+
+// Danh sách phẳng (gộp cả 2 mục đích, không trùng) — cho autocomplete loại hình
 export const propertyTypeOptions: string[] = [
-  "Căn hộ / Chung cư",
-  "Nhà riêng",
-  "Nhà mặt phố",
-  "Nhà biệt thự / Villa",
-  "Shophouse / Nhà phố thương mại",
-  "Đất nền dự án",
-  "Đất / Đất thổ cư",
-  "Đất nông nghiệp",
-  "Trang trại / Khu nghỉ dưỡng",
-  "Condotel",
-  "Officetel",
-  "Văn phòng",
-  "Mặt bằng kinh doanh",
-  "Phòng trọ / Nhà trọ",
-  "Khách sạn",
-  "Kho / Nhà xưởng",
-  "Đất công nghiệp",
-  "Bất động sản khác",
+  ...new Set([...saleTypeGroups, ...rentTypeGroups].flatMap((g) => g.items)),
 ];
 
 // Mức giá — bounds tính theo TỶ đồng (max = null nghĩa là không giới hạn trên)
@@ -40,6 +58,24 @@ export const priceRanges: PriceRange[] = [
 ];
 
 export const priceRangeLabels: string[] = priceRanges.map((r) => r.label);
+
+// Mức giá CHO THUÊ — tính theo TRIỆU/THÁNG (bounds quy về đơn vị tỷ để dùng chung
+// priceToTy: "18 triệu/tháng" → 0.018). Dùng cho sidebar trang /cho-thue.
+export const rentPriceRanges: PriceRange[] = [
+  { label: "Dưới 3 triệu", min: 0, max: 0.003 },
+  { label: "3 - 5 triệu", min: 0.003, max: 0.005 },
+  { label: "5 - 10 triệu", min: 0.005, max: 0.01 },
+  { label: "10 - 20 triệu", min: 0.01, max: 0.02 },
+  { label: "20 - 40 triệu", min: 0.02, max: 0.04 },
+  { label: "40 - 70 triệu", min: 0.04, max: 0.07 },
+  { label: "70 - 100 triệu", min: 0.07, max: 0.1 },
+  { label: "Trên 100 triệu", min: 0.1, max: null },
+];
+
+// Chọn bộ mức giá theo mục đích (mua bán = tỷ · cho thuê = triệu/tháng)
+export function priceRangesFor(purpose: "ban" | "thue"): PriceRange[] {
+  return purpose === "thue" ? rentPriceRanges : priceRanges;
+}
 
 // Đổi chuỗi giá "28,5 tỷ" → số tỷ. "Thỏa thuận" → null
 export function priceToTy(price: string): number | null {
@@ -181,6 +217,19 @@ export function hasActiveFilters(f: Filters): boolean {
   );
 }
 
+// Bỏ dấu tiếng Việt + thường hoá để khớp gần đúng / không phân biệt dấu.
+// Gõ "hoa xuan" hay "hoas xuan" vẫn khớp "Hòa Xuân".
+export function normalizeVi(s: string): string {
+  return s
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "") // bỏ dấu thanh + dấu phụ
+    .replace(/đ/g, "d")
+    .replace(/Đ/g, "d")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 // Khớp loại hình (lỏng — nhãn menu khác chuỗi loại trong dữ liệu)
 function matchType(itemType: string, option: string): boolean {
   const head = option.split(/[ /]/)[0].toLowerCase();
@@ -194,7 +243,7 @@ type FilterableListing = {
 
 // Áp dụng toàn bộ bộ lọc lên danh sách
 export function applyFilters<T extends FilterableListing>(items: T[], f: Filters): T[] {
-  const kw = f.keyword.trim().toLowerCase();
+  const kw = normalizeVi(f.keyword);
   return items.filter((item) => {
     if (f.province && !item.location.includes(f.province)) return false;
     if (f.district && !item.location.includes(f.district)) return false;
@@ -214,7 +263,7 @@ export function applyFilters<T extends FilterableListing>(items: T[], f: Filters
       if (f.beds >= 5 ? b < 5 : b !== f.beds) return false;
     }
     if (f.direction && listingDirection(item.id) !== f.direction) return false;
-    if (kw && !`${item.title} ${item.location} ${item.type}`.toLowerCase().includes(kw)) return false;
+    if (kw && !normalizeVi(`${item.title} ${item.location} ${item.type}`).includes(kw)) return false;
     return true;
   });
 }

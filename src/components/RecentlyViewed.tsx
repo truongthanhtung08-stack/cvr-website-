@@ -19,7 +19,7 @@ export default function RecentlyViewed() {
   if (!mounted || items.length === 0) return null;
 
   return (
-    <section className="section-edge bg-cl-ink">
+    <section className="section-edge bg-cvr-ink">
       <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-12">
         <h2 className="font-serif text-2xl font-bold text-white">Bất động sản đã xem</h2>
         <div className="mt-4 flex gap-5 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">

@@ -29,7 +29,7 @@ export default function DangTinPage() {
           <div className="mt-8 grid grid-cols-2 gap-3 lg:grid-cols-4">
             {steps.map((s) => (
               <div key={s.n} className="rounded-2xl border border-white/12 bg-white/[0.03] p-4">
-                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-sm font-bold text-cl-ink">{s.n}</span>
+                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-sm font-bold text-cvr-ink">{s.n}</span>
                 <h3 className="mt-2.5 text-sm font-semibold text-white">{s.t}</h3>
                 <p className="mt-1 text-xs text-white/55">{s.d}</p>
               </div>

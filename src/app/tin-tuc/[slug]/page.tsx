@@ -38,7 +38,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
           </nav>
 
           <div className="flex items-center gap-2 text-xs text-white/55">
-            <span className="rounded bg-cl-gold/15 px-2 py-0.5 font-medium text-cl-gold-soft">{a.category}</span>
+            <span className="rounded bg-cvr-gold/15 px-2 py-0.5 font-medium text-cvr-gold-soft">{a.category}</span>
             <span>{a.date}</span>
           </div>
           <h1 className="mt-3 font-serif text-2xl font-bold leading-tight text-white sm:text-[2rem]">{a.title}</h1>
@@ -57,7 +57,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
             <h2 className="mb-5 font-serif text-xl font-bold text-white sm:text-2xl">Tin liên quan</h2>
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
               {related.map((r) => (
-                <Link key={r.slug} href={`/tin-tuc/${r.slug}`} className="card-lux group relative flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] hover:-translate-y-1.5 hover:border-cl-gold/40">
+                <Link key={r.slug} href={`/tin-tuc/${r.slug}`} className="card-lux group relative flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] hover:-translate-y-1.5 hover:border-cvr-gold/40">
                   <span className="card-sheen" aria-hidden />
                   <div className="relative aspect-[16/9] overflow-hidden">
                     <Image src={r.image} alt={r.title} fill sizes="(max-width:768px) 100vw, 33vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />

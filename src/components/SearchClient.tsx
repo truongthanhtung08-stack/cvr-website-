@@ -140,7 +140,7 @@ export default function SearchClient() {
           <button
             type="button"
             onClick={reset}
-            className="mt-5 rounded-lg bg-white px-5 py-2 text-sm font-semibold text-cl-ink transition hover:bg-white/90"
+            className="mt-5 rounded-lg bg-white px-5 py-2 text-sm font-semibold text-cvr-ink transition hover:bg-white/90"
           >
             Xoá bộ lọc
           </button>
@@ -170,9 +170,9 @@ function Select({
       onChange={(e) => onChange(e.target.value)}
       className="h-11 flex-1 rounded-lg border border-white/10 bg-white/5 px-3 text-sm text-white outline-none transition focus:border-white/40 focus:bg-white/10 md:min-w-[150px]"
     >
-      <option value="" className="bg-cl-ink">{placeholder}</option>
+      <option value="" className="bg-cvr-ink">{placeholder}</option>
       {options.map((o) => (
-        <option key={o} value={o} className="bg-cl-ink">
+        <option key={o} value={o} className="bg-cvr-ink">
           {o}
         </option>
       ))}

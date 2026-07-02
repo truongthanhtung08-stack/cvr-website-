@@ -57,7 +57,7 @@ export default function Chatbox() {
         type="button"
         aria-label="Mở chat trực tuyến"
         onClick={() => setOpen((v) => !v)}
-        className={`fixed bottom-5 right-5 z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-white text-cl-ink shadow-xl shadow-black/40 transition-all duration-300 hover:scale-105 active:scale-95 ${
+        className={`fixed bottom-5 right-5 z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-white text-cvr-ink shadow-xl shadow-black/40 transition-all duration-300 hover:scale-105 active:scale-95 ${
           open ? "rotate-90 opacity-0 pointer-events-none" : "opacity-100"
         }`}
       >
@@ -70,17 +70,17 @@ export default function Chatbox() {
 
       {/* Khung chat */}
       <div
-        className={`fixed bottom-5 right-5 z-[60] flex w-[min(360px,calc(100vw-2.5rem))] flex-col overflow-hidden rounded-2xl border border-white/12 bg-cl-charcoal shadow-2xl shadow-black/50 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+        className={`fixed bottom-5 right-5 z-[60] flex w-[min(360px,calc(100vw-2.5rem))] flex-col overflow-hidden rounded-2xl border border-white/12 bg-cvr-charcoal shadow-2xl shadow-black/50 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
           open ? "translate-y-0 scale-100 opacity-100" : "pointer-events-none translate-y-4 scale-95 opacity-0"
         }`}
         style={{ height: "min(520px, calc(100vh - 2.5rem))" }}
       >
         {/* Tiêu đề */}
-        <div className="flex items-center justify-between gap-3 border-b border-white/10 bg-cl-ink px-4 py-3">
+        <div className="flex items-center justify-between gap-3 border-b border-white/10 bg-cvr-ink px-4 py-3">
           <div className="flex items-center gap-3">
-            <div className="relative flex h-9 w-9 items-center justify-center rounded-full bg-white text-sm font-bold text-cl-ink">
-              CL
-              <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-cl-ink bg-green-400" />
+            <div className="relative flex h-9 w-9 items-center justify-center rounded-full bg-white text-sm font-bold text-cvr-ink">
+              CVR
+              <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-cvr-ink bg-green-400" />
             </div>
             <div className="leading-tight">
               <p className="text-sm font-semibold text-white">Coastal Land</p>
@@ -106,7 +106,7 @@ export default function Chatbox() {
               <div
                 className={`max-w-[80%] rounded-2xl px-3.5 py-2 text-sm leading-relaxed ${
                   m.from === "user"
-                    ? "rounded-br-sm bg-white text-cl-ink"
+                    ? "rounded-br-sm bg-white text-cvr-ink"
                     : "rounded-bl-sm bg-white/8 text-white/90"
                 }`}
               >
@@ -138,7 +138,7 @@ export default function Chatbox() {
             e.preventDefault();
             send(input);
           }}
-          className="flex items-center gap-2 border-t border-white/10 bg-cl-ink px-3 py-3"
+          className="flex items-center gap-2 border-t border-white/10 bg-cvr-ink px-3 py-3"
         >
           <input
             type="text"
@@ -150,7 +150,7 @@ export default function Chatbox() {
           <button
             type="submit"
             aria-label="Gửi"
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white text-cl-ink transition-transform hover:scale-105 active:scale-95"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white text-cvr-ink transition-transform hover:scale-105 active:scale-95"
           >
             <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M12 5l7 7-7 7" />

@@ -27,7 +27,7 @@ export default function SavedClient() {
         </svg>
         <p className="text-white/70">Bạn chưa lưu tin nào.</p>
         <p className="mt-1 text-sm text-white/45">Bấm biểu tượng trái tim ❤ trên mỗi tin để lưu lại xem sau.</p>
-        <Link href="/mua-ban" className="mt-5 rounded-lg bg-white px-5 py-2 text-sm font-semibold text-cl-ink transition hover:bg-white/90">
+        <Link href="/mua-ban" className="mt-5 rounded-lg bg-white px-5 py-2 text-sm font-semibold text-cvr-ink transition hover:bg-white/90">
           Khám phá nhà đất
         </Link>
       </div>

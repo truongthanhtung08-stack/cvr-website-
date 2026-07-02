@@ -24,7 +24,15 @@ export type Listing = {
   type: string;
   image: string;
   badge?: "VIP" | "Nổi bật" | "Mới";
+  // Mục đích tin: "ban" = mua bán (mặc định) · "thue" = cho thuê (giá tính theo tháng).
+  // Phân tách rõ với "type" (sản phẩm/loại hình) để logic bán/thuê đúng trên mọi trang.
+  purpose?: "ban" | "thue";
 };
+
+// Lọc tin theo mục đích (mặc định không có purpose = "ban")
+export function listingsByPurpose(purpose: "ban" | "thue"): Listing[] {
+  return featuredListings.filter((l) => (l.purpose ?? "ban") === purpose);
+}
 
 // Định dạng vị trí: "Phường/Xã, Quận/Huyện, Tỉnh" — khớp danh mục đơn vị hành chính
 // (src/lib/locations.ts) để bộ lọc 3 cấp trả đúng kết quả. Giá tham chiếu mặt bằng 2026.
@@ -62,6 +70,17 @@ export const featuredListings: Listing[] = [
   { id: "22", title: "Căn hộ biển Quy Nhơn full nội thất, view vịnh", price: "2,7 tỷ", area: "62 m²", beds: 2, baths: 2, location: "Nguyễn Văn Cừ, TP. Quy Nhơn, Gia Lai", type: "Căn hộ / Chung cư", image: tin(22), badge: "Nổi bật" },
   { id: "23", title: "Đất nền KĐT An Nhơn, giá đầu tư hấp dẫn", price: "1,5 tỷ", pricePerM2: "15 tr/m²", area: "100 m²", location: "Bình Định, An Nhơn, Gia Lai", type: "Đất nền", image: tin(23), badge: "Mới" },
   { id: "24", title: "Villa biển trực diện vịnh Quy Nhơn", price: "18,9 tỷ", area: "280 m²", beds: 5, baths: 5, location: "Ghềnh Ráng, TP. Quy Nhơn, Gia Lai", type: "Villa / Biệt thự biển", image: tin(24), badge: "VIP" },
+
+  // ===== CHO THUÊ (purpose: "thue") — giá tính THEO THÁNG, loại hình thuê (Kế hoạch V3) =====
+  { id: "25", title: "Cho thuê căn hộ 2PN The Filmore view sông Hàn, full nội thất", price: "18 triệu/tháng", area: "95 m²", beds: 2, baths: 2, location: "Hải Châu I, Hải Châu, Đà Nẵng", type: "Căn hộ chung cư", image: tin(2), badge: "Nổi bật", purpose: "thue" },
+  { id: "26", title: "Cho thuê căn hộ dịch vụ 1PN trung tâm Hải Châu, dọn vào ở ngay", price: "9 triệu/tháng", area: "45 m²", beds: 1, baths: 1, location: "Thạch Thang, Hải Châu, Đà Nẵng", type: "Căn hộ dịch vụ", image: tin(12), badge: "Mới", purpose: "thue" },
+  { id: "27", title: "Cho thuê nhà riêng 3 tầng khu Mỹ An, gần biển Mỹ Khê", price: "22 triệu/tháng", area: "100 m²", beds: 4, baths: 4, location: "Mỹ An, Ngũ Hành Sơn, Đà Nẵng", type: "Nhà riêng", image: tin(3), purpose: "thue" },
+  { id: "28", title: "Cho thuê nhà mặt phố Nguyễn Văn Linh, tiện kinh doanh", price: "40 triệu/tháng", area: "120 m²", beds: 3, baths: 3, location: "Nam Dương, Hải Châu, Đà Nẵng", type: "Nhà mặt phố", image: tin(10), badge: "VIP", purpose: "thue" },
+  { id: "29", title: "Cho thuê văn phòng hạng B trung tâm Hải Châu, 120m² sàn thông", price: "28 triệu/tháng", area: "120 m²", location: "Thạch Thang, Hải Châu, Đà Nẵng", type: "Văn phòng", image: tin(7), purpose: "thue" },
+  { id: "30", title: "Cho thuê mặt bằng cửa hàng phố biển Mỹ Khê, mặt tiền rộng", price: "45 triệu/tháng", area: "150 m²", location: "Phước Mỹ, Sơn Trà, Đà Nẵng", type: "Mặt bằng / Cửa hàng bán lẻ", image: tin(1), badge: "Nổi bật", purpose: "thue" },
+  { id: "31", title: "Cho thuê kho xưởng KCN Hòa Khánh 1.500m², điện 3 pha", price: "Thỏa thuận", area: "1.500 m²", location: "Hòa Khánh Bắc, Liên Chiểu, Đà Nẵng", type: "Thuê đất / Nhà xưởng / Kho bãi", image: tin(6), purpose: "thue" },
+  { id: "32", title: "Cho thuê phòng trọ cao cấp gần ĐH Duy Tân, an ninh 24/7", price: "4,5 triệu/tháng", area: "30 m²", beds: 1, baths: 1, location: "Khuê Mỹ, Ngũ Hành Sơn, Đà Nẵng", type: "Nhà trọ / Phòng trọ", image: tin(5), purpose: "thue" },
+  { id: "33", title: "Cho thuê nhà nguyên căn khu An Cựu, Huế — 3PN đầy đủ nội thất", price: "14 triệu/tháng", area: "180 m²", beds: 3, baths: 2, location: "An Cựu, Quận Thuận Hóa, Huế", type: "Nhà riêng", image: tin(14), purpose: "thue" },
 ];
 
 export type Area = {
@@ -71,15 +90,18 @@ export type Area = {
   href: string;
 };
 
+// Khu vực trọng điểm: DUYÊN HẢI MIỀN TRUNG + TÂY NGUYÊN (8 tỉnh/thành sau sát nhập 2025).
+// 5 mục ĐẦU = bộ hiển thị trang chủ (Đà Nẵng lõi + Huế, Khánh Hòa, Quảng Ngãi, Gia Lai);
+// các mục sau hiện khi bấm "Xem tất cả".
 export const areas: Area[] = [
   { name: "Đà Nẵng", count: "1.240 tin", image: tin(1), href: "/mua-ban?tinh=Đà Nẵng" },
   { name: "Huế", count: "586 tin", image: tin(13), href: "/mua-ban?tinh=Huế" },
+  { name: "Khánh Hòa", count: "212 tin", image: tin(5), href: "/mua-ban?tinh=Khánh Hòa" },
   { name: "Quảng Ngãi", count: "256 tin", image: tin(20), href: "/mua-ban?tinh=Quảng Ngãi" },
   { name: "Gia Lai", count: "298 tin", image: tin(24), href: "/mua-ban?tinh=Gia Lai" },
-  { name: "Khánh Hòa", count: "212 tin", image: tin(5), href: "/mua-ban?tinh=Khánh Hòa" },
   { name: "Đắk Lắk", count: "164 tin", image: tin(9), href: "/mua-ban?tinh=Đắk Lắk" },
   { name: "Quảng Trị", count: "138 tin", image: tin(3), href: "/mua-ban?tinh=Quảng Trị" },
-  { name: "Hà Nội", count: "320 tin", image: tin(2), href: "/mua-ban?tinh=Hà Nội" },
+  { name: "Lâm Đồng", count: "180 tin", image: tin(19), href: "/mua-ban?tinh=Lâm Đồng" },
 ];
 
 export type Article = {
@@ -226,7 +248,7 @@ export function buildListingDetail(l: Listing): ListingDetail {
   ];
 
   return {
-    code: `CL-${l.id.padStart(5, "0")}`,
+    code: `CVR-${l.id.padStart(5, "0")}`,
     postedDate: "12/06/2026",
     gallery,
     description,

@@ -14,7 +14,7 @@ export default function LeadForm({
   if (sent) {
     return (
       <div className="rounded-2xl border border-white/12 bg-white/[0.04] p-8 text-center">
-        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-white text-cl-ink">
+        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-white text-cvr-ink">
           <svg className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
         </div>
         <h3 className="font-serif text-xl font-bold text-white">Đã gửi thành công!</h3>
@@ -43,7 +43,7 @@ export default function LeadForm({
         <label className="mb-1.5 block text-sm font-medium text-white/80">Nội dung</label>
         <textarea name="note" rows={4} placeholder="Mô tả bất động sản hoặc nhu cầu của bạn…" className="w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white placeholder-white/40 outline-none transition focus:border-white/40" />
       </div>
-      <button type="submit" className="btn-dangtin flex w-full items-center justify-center gap-2 rounded-lg px-6 py-3.5 text-sm font-bold text-cl-ink">
+      <button type="submit" className="btn-dangtin flex w-full items-center justify-center gap-2 rounded-lg px-6 py-3.5 text-sm font-bold text-cvr-ink">
         {cta}
       </button>
       <p className="text-center text-[11px] text-white/40">Thông tin của bạn được bảo mật theo chính sách của Coastal Land.</p>

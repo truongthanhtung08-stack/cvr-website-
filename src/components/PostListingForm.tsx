@@ -32,7 +32,7 @@ export default function PostListingForm() {
   if (sent) {
     return (
       <div className="rounded-2xl border border-white/12 bg-white/[0.04] p-10 text-center">
-        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-white text-cl-ink">
+        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-white text-cvr-ink">
           <svg className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
         </div>
         <h3 className="font-serif text-xl font-bold text-white">Tin đăng đã được gửi!</h3>
@@ -164,7 +164,7 @@ export default function PostListingForm() {
         </div>
       </Card>
 
-      <button type="submit" className="btn-dangtin flex w-full items-center justify-center gap-2 rounded-xl px-6 py-4 text-base font-bold text-cl-ink">
+      <button type="submit" className="btn-dangtin flex w-full items-center justify-center gap-2 rounded-xl px-6 py-4 text-base font-bold text-cvr-ink">
         Đăng tin ngay
       </button>
       <p className="text-center text-[11px] text-white/40">Tin đăng được AI kiểm duyệt trước khi hiển thị.</p>
@@ -182,7 +182,7 @@ function Card({ step, title, children }: { step: string; title: string; children
   return (
     <section className="rounded-2xl border border-white/12 bg-white/[0.03] p-5 sm:p-6">
       <h2 className="mb-4 flex items-center gap-2.5 font-serif text-lg font-bold text-white">
-        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-sm text-cl-ink">{step}</span>
+        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-sm text-cvr-ink">{step}</span>
         {title}
       </h2>
       <div className="space-y-4">{children}</div>
@@ -213,7 +213,7 @@ function Text({ label, placeholder, required }: { label: string; placeholder: st
 
 function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
-    <button type="button" onClick={onClick} className={`rounded-lg border px-3 py-2 text-xs font-medium transition ${active ? "border-white bg-white text-cl-ink" : "border-white/15 text-white/70 hover:border-white/40 hover:text-white"}`}>
+    <button type="button" onClick={onClick} className={`rounded-lg border px-3 py-2 text-xs font-medium transition ${active ? "border-white bg-white text-cvr-ink" : "border-white/15 text-white/70 hover:border-white/40 hover:text-white"}`}>
       {children}
     </button>
   );

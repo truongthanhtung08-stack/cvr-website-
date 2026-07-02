@@ -1,9 +1,9 @@
 // Danh mục đơn vị hành chính — CẬP NHẬT THEO SÁT NHẬP 2025 (34 đơn vị toàn quốc).
 // Cấu trúc: Tỉnh/Thành phố → Quận/Huyện/Thị xã → Phường/Xã/Thị trấn.
 //
-// 👉 7 đơn vị LÕI vùng Duyên Hải Trung Bộ (Huế, Đà Nẵng, Quảng Ngãi, Gia Lai,
-//    Đắk Lắk, Khánh Hòa, Quảng Trị) có quận/huyện chi tiết; các tỉnh còn lại để
-//    mức tỉnh (bổ sung dần). Có thể thay bằng dữ liệu Supabase (bảng `locations`).
+// 👉 8 đơn vị LÕI vùng DUYÊN HẢI MIỀN TRUNG + TÂY NGUYÊN (Quảng Trị, Huế, Đà Nẵng,
+//    Quảng Ngãi, Gia Lai, Đắk Lắk, Khánh Hòa, Lâm Đồng) có quận/huyện chi tiết;
+//    các tỉnh còn lại để mức tỉnh (bổ sung dần). Có thể thay bằng Supabase (bảng `locations`).
 
 export type Ward = string;
 
@@ -145,6 +145,32 @@ export const provinces: Province[] = [
     ],
   },
 
+  {
+    // Lâm Đồng = Lâm Đồng + Đắk Nông + Bình Thuận (Tây Nguyên + biển Bình Thuận)
+    name: "Lâm Đồng",
+    districts: [
+      { name: "TP. Đà Lạt", wards: ["Phường 1", "Phường 2", "Phường 3", "Phường 4", "Phường 8", "Phường 9", "Phường 10", "Phường 11", "Xuân Hương", "Cam Ly", "Xuân Trường", "Trạm Hành"] },
+      { name: "TP. Bảo Lộc", wards: ["Lộc Phát", "Lộc Tiến", "Lộc Sơn", "B'Lao", "Lộc Nga", "Lộc Châu", "Đại Lào"] },
+      { name: "Đức Trọng", wards: ["Liên Nghĩa (TT)", "Liên Hiệp", "Hiệp Thạnh", "Phú Hội", "Tân Hội", "Bình Thạnh"] },
+      { name: "Di Linh", wards: ["Di Linh (TT)", "Đinh Lạc", "Tân Nghĩa", "Gung Ré", "Hòa Ninh"] },
+      { name: "Lâm Hà", wards: ["Đinh Văn (TT)", "Nam Ban (TT)", "Tân Hà", "Đạ Đờn", "Phú Sơn"] },
+      { name: "Bảo Lâm", wards: ["Lộc Thắng (TT)", "Lộc An", "Lộc Đức", "Lộc Ngãi", "B'Lá"] },
+      { name: "Đơn Dương", wards: ["Thạnh Mỹ (TT)", "D'Ran (TT)", "Lạc Xuân", "Ka Đô", "Quảng Lập"] },
+      // — Khu vực Bình Thuận (cũ) — biển —
+      { name: "TP. Phan Thiết", wards: ["Phú Thủy", "Phú Trinh", "Đức Long", "Hàm Tiến", "Mũi Né", "Thanh Hải", "Bình Hưng", "Đức Nghĩa", "Phú Hài"] },
+      { name: "La Gi", wards: ["Phước Hội", "Phước Lộc", "Tân An", "Tân Thiện", "Bình Tân"] },
+      { name: "Hàm Thuận Nam", wards: ["Thuận Nam (TT)", "Tân Thành", "Tân Thuận", "Thuận Quý", "Hàm Cường"] },
+      { name: "Hàm Thuận Bắc", wards: ["Ma Lâm (TT)", "Phú Long (TT)", "Hàm Đức", "Hàm Liêm", "Hồng Sơn"] },
+      { name: "Tuy Phong", wards: ["Liên Hương (TT)", "Phan Rí Cửa (TT)", "Vĩnh Tân", "Bình Thạnh", "Chí Công"] },
+      // — Khu vực Đắk Nông (cũ) — Tây Nguyên —
+      { name: "TP. Gia Nghĩa", wards: ["Nghĩa Đức", "Nghĩa Thành", "Nghĩa Phú", "Nghĩa Tân", "Nghĩa Trung", "Quảng Thành"] },
+      { name: "Đắk Mil", wards: ["Đắk Mil (TT)", "Đắk Lao", "Đắk Sắk", "Đức Mạnh", "Thuận An"] },
+      { name: "Đắk R'lấp", wards: ["Kiến Đức (TT)", "Nhân Cơ", "Nghĩa Thắng", "Đắk Wer", "Quảng Tín"] },
+      { name: "Krông Nô", wards: ["Đắk Mâm (TT)", "Nâm Nung", "Đắk Sôr", "Buôn Choáh", "Nam Đà"] },
+      { name: "Cư Jút", wards: ["Ea T'ling (TT)", "Đắk Wil", "Nam Dong", "Tâm Thắng", "Cư Knia"] },
+    ],
+  },
+
   // ===== HAI ĐÔ THỊ LỚN (giữ quận để lọc; HCM sau sát nhập gồm Bình Dương + BR-VT) =====
   {
     name: "Hà Nội",
@@ -170,7 +196,7 @@ export const provinces: Province[] = [
     "Hải Phòng", "Cần Thơ",
     "Tuyên Quang", "Lào Cai", "Thái Nguyên", "Phú Thọ", "Bắc Ninh", "Hưng Yên", "Ninh Bình",
     "Quảng Ninh", "Cao Bằng", "Lạng Sơn", "Lai Châu", "Điện Biên", "Sơn La",
-    "Thanh Hóa", "Nghệ An", "Hà Tĩnh", "Lâm Đồng", "Đồng Nai", "Tây Ninh",
+    "Thanh Hóa", "Nghệ An", "Hà Tĩnh", "Đồng Nai", "Tây Ninh",
     "Vĩnh Long", "Đồng Tháp", "Cà Mau", "An Giang",
   ].map((name) => ({ name, districts: [] as District[] })),
 ];

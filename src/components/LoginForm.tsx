@@ -15,7 +15,7 @@ export default function LoginForm() {
       <p className="mt-1.5 text-sm text-white/55">Đăng nhập để quản lý tin đăng và tin đã lưu.</p>
 
       {notice && (
-        <div className="mt-4 rounded-lg border border-cl-gold/30 bg-cl-gold/10 px-3 py-2.5 text-sm text-cl-gold-soft">
+        <div className="mt-4 rounded-lg border border-cvr-gold/30 bg-cvr-gold/10 px-3 py-2.5 text-sm text-cvr-gold-soft">
           {notice}
         </div>
       )}
@@ -58,7 +58,7 @@ export default function LoginForm() {
 
         <div className="flex items-center justify-between text-sm">
           <label className="flex cursor-pointer items-center gap-2 text-white/65">
-            <input type="checkbox" className="h-4 w-4 accent-cl-gold" />
+            <input type="checkbox" className="h-4 w-4 accent-cvr-gold" />
             Ghi nhớ đăng nhập
           </label>
           <Link href="/quen-mat-khau" className="text-white/65 hover:text-white">Quên mật khẩu?</Link>
@@ -66,7 +66,7 @@ export default function LoginForm() {
 
         <button
           type="submit"
-          className="h-11 w-full rounded-lg bg-white text-sm font-semibold text-cl-ink transition hover:bg-white/90 active:scale-[0.99]"
+          className="h-11 w-full rounded-lg bg-white text-sm font-semibold text-cvr-ink transition hover:bg-white/90 active:scale-[0.99]"
         >
           Đăng nhập
         </button>
@@ -86,7 +86,7 @@ export default function LoginForm() {
 
       <p className="mt-6 text-center text-sm text-white/60">
         Chưa có tài khoản?{" "}
-        <Link href="/dang-ky" className="font-semibold text-white hover:text-cl-gold-soft">Đăng ký ngay</Link>
+        <Link href="/dang-ky" className="font-semibold text-white hover:text-cvr-gold-soft">Đăng ký ngay</Link>
       </p>
     </div>
   );

@@ -80,7 +80,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               <Gallery images={d.gallery} alt={p.name} />
 
               <div className="mt-6">
-                <span className="mb-2 inline-block rounded-md bg-white px-2.5 py-1 text-xs font-bold uppercase tracking-wide text-cl-ink">{p.status}</span>
+                <span className="mb-2 inline-block rounded-md bg-white px-2.5 py-1 text-xs font-bold uppercase tracking-wide text-cvr-ink">{p.status}</span>
                 <h1 className="font-serif text-2xl font-bold leading-tight text-white sm:text-3xl">{p.name}</h1>
                 <p className="mt-2 flex items-center gap-1.5 text-sm text-white/60">
                   <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
@@ -89,7 +89,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               </div>
 
               {/* Mục lục — thanh điều hướng dính */}
-              <div className="sticky top-[60px] z-30 -mx-1 mt-5 overflow-x-auto border-b border-white/10 bg-cl-ink/85 px-1 backdrop-blur-md">
+              <div className="sticky top-[60px] z-30 -mx-1 mt-5 overflow-x-auto border-b border-white/10 bg-cvr-ink/85 px-1 backdrop-blur-md">
                 <div className="flex gap-1 whitespace-nowrap py-1">
                   {toc.map((t) => (
                     <a key={t.id} href={`#${t.id}`} className="rounded-lg px-3 py-2 text-sm font-medium text-white/65 transition hover:bg-white/10 hover:text-white">
@@ -160,7 +160,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                 </div>
                 <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
                   <p className="text-xs text-white/45">* Giá &amp; loại căn mang tính tham khảo — nhận bảng giá chính thức mới nhất.</p>
-                  <a href="#tai-tai-lieu" className="rounded-lg bg-cl-gold px-4 py-2 text-xs font-semibold text-cl-ink transition hover:bg-cl-gold-soft">Nhận bảng giá chi tiết →</a>
+                  <a href="#tai-tai-lieu" className="rounded-lg bg-cvr-gold px-4 py-2 text-xs font-semibold text-cvr-ink transition hover:bg-cvr-gold-soft">Nhận bảng giá chi tiết →</a>
                 </div>
               </section>
 
@@ -171,9 +171,9 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                   {progressSteps.map((s, i) => (
                     <div key={s} className="flex flex-1 flex-col items-center text-center">
                       <div className="flex w-full items-center">
-                        <span className={`h-0.5 flex-1 ${i === 0 ? "bg-transparent" : i <= step ? "bg-cl-gold" : "bg-white/15"}`} />
-                        <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${i <= step ? "bg-cl-gold text-cl-ink" : "border border-white/25 text-white/45"}`}>{i + 1}</span>
-                        <span className={`h-0.5 flex-1 ${i === progressSteps.length - 1 ? "bg-transparent" : i < step ? "bg-cl-gold" : "bg-white/15"}`} />
+                        <span className={`h-0.5 flex-1 ${i === 0 ? "bg-transparent" : i <= step ? "bg-cvr-gold" : "bg-white/15"}`} />
+                        <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${i <= step ? "bg-cvr-gold text-cvr-ink" : "border border-white/25 text-white/45"}`}>{i + 1}</span>
+                        <span className={`h-0.5 flex-1 ${i === progressSteps.length - 1 ? "bg-transparent" : i < step ? "bg-cvr-gold" : "bg-white/15"}`} />
                       </div>
                       <span className={`mt-2 text-[11px] leading-tight sm:text-xs ${i <= step ? "text-white" : "text-white/45"}`}>{s}</span>
                     </div>
@@ -228,7 +228,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                   <p className="text-2xl font-extrabold text-white">{p.priceFrom}</p>
                   <p className="mt-1 text-xs text-white/55">{p.type}</p>
                   <div className="mt-4 space-y-2.5">
-                    <a href="tel:0905000111" className="flex items-center justify-center gap-2 rounded-lg bg-white px-4 py-3 text-sm font-bold text-cl-ink transition hover:bg-white/90">Gọi tư vấn dự án</a>
+                    <a href="tel:0905000111" className="flex items-center justify-center gap-2 rounded-lg bg-white px-4 py-3 text-sm font-bold text-cvr-ink transition hover:bg-white/90">Gọi tư vấn dự án</a>
                   </div>
                   <p className="mt-3 text-center text-[11px] text-white/40">{d.developer} · Bàn giao {d.handover}</p>
                 </div>

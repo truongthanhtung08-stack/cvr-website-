@@ -1,8 +1,9 @@
 @import "tailwindcss";
 
 :root {
-  --background: #060606;
-  --foreground: #ffffff;
+  /* Hệ màu nền/chữ kiểu Apple. Nền trắng, chữ near-black #1d1d1f. */
+  --background: #ffffff;
+  --foreground: #1d1d1f;
   /* Easing dùng chung — đường cong "luxury": vào nhanh, dừng êm */
   --ease-lux: cubic-bezier(0.22, 0.61, 0.36, 1);
   --ease-out-soft: cubic-bezier(0.16, 1, 0.3, 1);
@@ -11,14 +12,26 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-be-vietnam);
+  --font-sans: var(--font-inter);
   --font-serif: var(--font-playfair);
 
-  /* Bộ nhận diện CENTRAL LAND — đơn sắc, nền tối */
-  --color-cl-ink: #060606;       /* đen chủ đạo (nền) */
-  --color-cl-charcoal: #141414;  /* than chì (card/section) */
-  --color-cl-gray: #9ca3af;      /* xám chữ phụ */
-  --color-cl-stone: #e6e6e6;     /* xám nhạt */
+  /* ===== Bộ nhận diện COASTAL LAND — hệ màu nền/chữ kiểu Apple (apple.com) ===== */
+  /* Thang MỰC ĐẶC (không dùng opacity) — đúng giá trị thật của Apple */
+  --color-cvr-ink: #1d1d1f;       /* Apple primary: tiêu đề / chữ chính (KHÔNG dùng #000) */
+  --color-cvr-body: #424245;      /* Apple: chữ nội dung đậm */
+  --color-cvr-muted: #6e6e73;     /* Apple: chữ phụ / mô tả / meta */
+  --color-cvr-faint: #86868b;     /* Apple: chú thích mờ / footnote / icon nhạt */
+  /* Lớp nền & viền — đúng Apple */
+  --color-cvr-surface: #f5f5f7;   /* Apple section gray (xám lạnh signature) */
+  --color-cvr-line: #d2d2d7;      /* Apple: viền / đường phân cách */
+  /* Điểm nhấn VÀNG antique — dùng tiết chế (badge VIP, CTA đặc biệt) */
+  --color-cvr-gold: #b89254;      /* vàng nền badge */
+  --color-cvr-gold-soft: #d8bc82; /* vàng nhạt: chữ vàng trên nền tối */
+  --color-cvr-gold-ink: #8a6d2e;  /* vàng đậm: chữ vàng trên nền trắng (đủ tương phản) */
+  /* Giữ cho các trang con còn nền tối (chưa chuyển) */
+  --color-cvr-charcoal: #141414;
+  --color-cvr-gray: #9ca3af;
+  --color-cvr-stone: #e6e6e6;
 }
 
 html {
@@ -28,6 +41,22 @@ html {
 body {
   background: var(--background);
   color: var(--foreground);
+  /* Làm mịn chữ như apple.com — mảnh, sắc, "trong" hơn */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* ===== Bóng "luxury" — nhiều lớp, ám màu mực, rất mềm (cho card nền trắng) ===== */
+.shadow-lux {
+  box-shadow:
+    0 1px 2px rgba(16, 18, 29, 0.05),
+    0 8px 24px rgba(16, 18, 29, 0.06);
+}
+.shadow-lux-hover:hover {
+  box-shadow:
+    0 4px 12px rgba(16, 18, 29, 0.08),
+    0 18px 48px rgba(16, 18, 29, 0.12);
 }
 
 /* Lựa chọn dropdown nền tối dễ đọc */
@@ -81,10 +110,10 @@ select option {
   position: relative;
   overflow: hidden;
   isolation: isolate;
-  background-image: linear-gradient(135deg, #ffffff 0%, #e2e2e2 100%);
+  background-image: linear-gradient(135deg, #1f1f1f 0%, #000000 100%);
   box-shadow:
-    0 4px 14px rgba(0, 0, 0, 0.35),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.6);
+    0 4px 14px rgba(0, 0, 0, 0.22),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08);
   transition:
     transform 0.25s cubic-bezier(0.2, 0.7, 0.2, 1),
     box-shadow 0.25s ease;
@@ -92,9 +121,9 @@ select option {
 .btn-dangtin:hover {
   transform: translateY(-2px) scale(1.035);
   box-shadow:
-    0 10px 26px rgba(255, 255, 255, 0.22),
-    0 6px 16px rgba(0, 0, 0, 0.45),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.85);
+    0 10px 26px rgba(0, 0, 0, 0.28),
+    0 6px 16px rgba(0, 0, 0, 0.22),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.16);
 }
 .btn-dangtin:active {
   transform: translateY(0) scale(0.99);
@@ -130,14 +159,13 @@ select option {
 @keyframes btn-glow {
   0%, 100% {
     box-shadow:
-      0 4px 14px rgba(0, 0, 0, 0.35),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.6);
+      0 4px 14px rgba(0, 0, 0, 0.22),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.08);
   }
   50% {
     box-shadow:
-      0 4px 18px rgba(0, 0, 0, 0.4),
-      0 0 20px 2px rgba(255, 255, 255, 0.18),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.7);
+      0 6px 20px rgba(0, 0, 0, 0.32),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.16);
   }
 }
 .btn-dangtin--pulse {
@@ -162,7 +190,7 @@ select option {
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(255, 255, 255, 0.16),
+    rgba(0, 0, 0, 0.10),
     transparent
   );
   pointer-events: none;
@@ -172,21 +200,21 @@ select option {
 .footer-glow {
   position: relative;
   background:
-    radial-gradient(130% 90% at 50% 0%, rgba(255, 255, 255, 0.06), transparent 58%),
-    linear-gradient(180deg, #141414 0%, #060606 60%);
+    radial-gradient(130% 90% at 50% 0%, rgba(0, 0, 0, 0.035), transparent 58%),
+    linear-gradient(180deg, #f6f6f7 0%, #efeff1 100%);
 }
-/* Viền sáng trên cùng — ranh giới rõ giữa nội dung và footer */
+/* Viền trên cùng — ranh giới rõ giữa nội dung và footer */
 .footer-glow::before {
   content: "";
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  height: 2px;
+  height: 1px;
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(255, 255, 255, 0.55),
+    rgba(0, 0, 0, 0.18),
     transparent
   );
   pointer-events: none;
@@ -257,7 +285,7 @@ select option {
   background: linear-gradient(
     115deg,
     transparent 35%,
-    rgba(255, 255, 255, 0.10) 50%,
+    rgba(0, 0, 0, 0.05) 50%,
     transparent 65%
   );
   transform: translateX(-120%);
@@ -269,6 +297,10 @@ select option {
 }
 @keyframes card-shine {
   to { transform: translateX(120%); }
+}
+@keyframes banner-progress {
+  from { width: 0%; }
+  to   { width: 100%; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -283,4 +315,52 @@ select option {
   .btn-dangtin:hover { transform: none; }
   .card-lux { transition: none; }
   .card-lux:hover .card-sheen { animation: none; opacity: 0; }
+}
+
+/* ===== Thanh trượt 2 đầu (Mức giá / Diện tích) — kiểu Homedy ===== */
+/* Hai input range chồng lên nhau; chỉ núm nhận chuột để kéo được cả 2 đầu. */
+.cvr-range {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  pointer-events: none;
+}
+.cvr-range::-webkit-slider-runnable-track { background: transparent; }
+.cvr-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  pointer-events: auto;
+  height: 16px;
+  width: 16px;
+  margin-top: -6px;
+  border-radius: 9999px;
+  background: var(--color-cvr-ink);
+  border: 2px solid #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+}
+.cvr-range::-moz-range-track { background: transparent; }
+.cvr-range::-moz-range-thumb {
+  pointer-events: auto;
+  height: 16px;
+  width: 16px;
+  border-radius: 9999px;
+  background: var(--color-cvr-ink);
+  border: 2px solid #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+}
+
+/* Hiệu ứng panel dropdown hiện mượt (fade + trượt nhẹ) — chỉ transform/opacity */
+@keyframes cvr-pop {
+  from { opacity: 0; transform: translateY(-4px) scale(0.985); }
+  to { opacity: 1; transform: none; }
+}
+.cvr-pop {
+  animation: cvr-pop 0.14s var(--ease-out-soft);
+  transform-origin: top center;
+  will-change: transform, opacity;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cvr-pop { animation: none; }
 }

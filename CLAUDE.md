@@ -1,7 +1,39 @@
-# CLAUDE.md — Dự án Central Coast Realty (CVR)
+# CLAUDE.md — Dự án COASTAL LAND (CVR)
 
 > File này Claude Code tự đọc mỗi khi mở dự án. Luôn cập nhật khi có thay đổi quan trọng.
 > **Trả lời và viết mọi nội dung bằng tiếng Việt có dấu.**
+
+---
+
+## 0. NGUYÊN TẮC LÀM VIỆC (áp dụng cho mọi task — theo Andrej Karpathy)
+
+> Bốn nguyên tắc cốt lõi: **suy nghĩ trước khi code, đơn giản trước, sửa tối thiểu, có mục tiêu đo được.**
+> Áp dụng cho mọi yêu cầu trong dự án này — đặt _cẩn thận_ lên trên _nhanh_.
+
+**1. Suy nghĩ trước khi code**
+- Nói rõ giả định thay vì đoán ngầm và làm tới.
+- Khi yêu cầu mơ hồ → nêu các cách hiểu khác nhau, KHÔNG tự chọn một cách rồi làm.
+- Thấy cách làm đơn giản hơn → đề xuất.
+- Thật sự chưa rõ → DỪNG và hỏi (đặc biệt với việc khó hoàn tác: xoá file, đổi schema, deploy).
+
+**2. Đơn giản trước (Simplicity First)**
+- Chỉ viết code giải quyết đúng vấn đề được nêu.
+- Không thêm tính năng "phòng xa", không xử lý lỗi cho tình huống không thể xảy ra.
+- Mục tiêu: cắt giảm 60%+ độ phức tạp thừa khi có thể.
+- Tự kiểm: "Một kỹ sư senior có gọi đoạn này là over-engineer không?"
+
+**3. Sửa tối thiểu, đúng phạm vi (Surgical Changes)**
+- Chỉ động vào những gì yêu cầu đòi hỏi. Giữ nguyên style, format, comment hiện có.
+- Không refactor code đang chạy tốt mà không liên quan.
+- Chỉ xoá import/biến do CHÍNH thay đổi của mình làm thừa ra.
+- Code chết có sẵn → **báo chứ không tự xoá** trừ khi được yêu cầu.
+
+**4. Thực thi theo mục tiêu (Goal-Driven)**
+- Trước khi làm, định nghĩa tiêu chí thành công kiểm chứng được.
+- Biến yêu cầu mơ hồ ("sửa cái bug") thành mục tiêu test được.
+- Việc nhiều bước → chia nhỏ, có checkpoint kiểm chứng.
+
+**Dấu hiệu làm đúng:** ít thay đổi thừa trong diff · ít phải viết lại do over-engineer · hỏi cho rõ TRƯỚC khi code thay vì sửa sai SAU.
 
 ---
 
@@ -9,56 +41,61 @@
 
 | | |
 |---|---|
-| **Tên thương hiệu** | **CENTRAL LAND** (theo logo & ĐKKD chính thức) |
+| **Tên thương hiệu** | **COASTAL LAND** (theo Brief & Kế hoạch v3 chính thức) |
+| **Tên đầy đủ** | Central Coast Vietnam Real Estate |
+| **Tên viết tắt** | **CVR** |
 | **Tagline** | Gateway to Central Coast property |
-| **Website** | centralcoast.vn |
+| **Website (đích)** | coastalland.vn |
 | **Loại** | Sàn giao dịch BĐS trung gian (Đà Nẵng – Huế, mở rộng Miền Trung) |
 | **Mô hình** | Solopreneur + AI-Driven (1 người vận hành, dùng AI thay developer) |
-| **Tiêu chuẩn** | Chất lượng tương đương website $10.000 USD |
+| **Ngôn ngữ** | Tiếng Việt (có dấu) + Tiếng Anh |
+| **Tiêu chuẩn** | Chất lượng tương đương website $20.000 USD |
 
 **Nguyên tắc kinh doanh cốt lõi:** Người mua MIỄN PHÍ mãi mãi — chỉ thu phí người bán/môi giới.
+
+> ⚠️ Tài liệu cũ từng dùng tên "Central Land / Central Coast Realty" và domain "centralcoast.vn".
+> **Tên & domain chuẩn đã chốt: COASTAL LAND / coastalland.vn.** Nếu thấy tên/domain cũ ở đâu → sửa.
 
 ---
 
 ## 2. Tech Stack (đã chốt)
 
 ```
-Frontend:   Next.js 14 (App Router) + TailwindCSS  — SSR/SSG, responsive, SEO
-Database:   Supabase (PostgreSQL)                  — free tier năm 1
-Hosting:    Vercel                                 — auto-deploy từ GitHub
+Frontend:    Next.js 16 (App Router) + React 19 + TailwindCSS v4 + TypeScript
+Database:    Supabase (PostgreSQL)                  — free tier năm 1
+Hosting:     Vercel (kế hoạch)                       — auto-deploy từ GitHub
+Live hiện tại: GitHub Pages (static export)          — xem mục 3
 CDN/Bảo mật: Cloudflare
-Thanh toán: PayOS API
+Thanh toán:  PayOS API (ưu tiên) · dự phòng MoMo/ZaloPay/Stripe
 AI kiểm duyệt tin: Claude API
-Email:      Resend
-Analytics:  Google Analytics 4 + Search Console
+Email:       Resend
+Analytics:   Google Analytics 4 + Search Console
 ```
 
-**Bộ nhận diện CENTRAL LAND — ĐƠN SẮC (đen/trắng/xám):**
-`#060606` (đen chủ đạo) · `#1F1F1F` (than chì) · `#E6E6E6` (xám nhạt) · trắng.
-Token Tailwind: `cl-ink`, `cl-charcoal`, `cl-gray`, `cl-stone`.
+### Bộ nhận diện COASTAL LAND — màu sắc
+
+**Hệ màu chuẩn (đích): TRẮNG / ĐEN + điểm nhấn VÀNG (luxury).**
+- Nền chủ đạo trắng, chữ đen; Header/Footer có thể đảo nền đen chữ trắng.
+- Vàng dùng cho điểm nhấn đặc biệt: badge VIP, nút CTA quan trọng (theo logo thương hiệu).
+
+> ⚠️ **Lệch giữa tài liệu và code hiện tại:** giao diện đang chạy vẫn là bản **đơn sắc nền tối**
+> (`#060606` đen, chữ trắng — token `cl-ink/cl-charcoal/cl-gray/cl-stone` trong `src/app/globals.css`).
+> Việc chuyển sang hệ trắng/đen+vàng là **đầu mục còn tồn**, chưa làm. Đừng mô tả là đã xong.
+> Comment `Bộ nhận diện CENTRAL LAND` trong `globals.css` còn ghi tên cũ — cần đổi thành COASTAL LAND khi đụng tới.
+
 Logo thật ở `public/logo/` (symbol-dark.svg cho nền sáng, symbol-white.svg cho nền tối).
 
 ---
 
-## 3. Dịch vụ đã thiết lập (Giai đoạn 0 — xong)
+## 3. TRIỂN KHAI (Deploy) — QUAN TRỌNG
 
-| Dịch vụ | Trạng thái |
-|---|---|
-| Node.js 20 LTS + nvm-windows | ✅ Đã cài |
-| WSL2 + Ubuntu | ✅ Đã cài |
-| Claude Code CLI | ✅ 2.1.181 |
-| Git (config tên + email) | ✅ Xong |
-| GitHub repo `truongthanhtung08-stack/cvr-website-` | ✅ Đã tạo (PUBLIC — lưu ý tên có dấu `-` ở cuối) |
-| Supabase project | ✅ URL: `https://miyugmacyerqvzhgmbyd.supabase.co` (region Tokyo) |
-| Vercel | ⚠️ KHÔNG dùng — link `cvr-website-eight.vercel.app` bị 404 + khoá. BỎ QUA. |
-
-> Khóa kết nối Supabase nằm ở `.env.local` (publishable key — an toàn cho client).
-
-### 🚀 TRIỂN KHAI (Deploy) — QUAN TRỌNG
-- **Link công khai 24/7 (CHÍNH THỨC):** `https://truongthanhtung08-stack.github.io/cvr-website-/`
-- **Cơ chế:** GitHub Actions (`.github/workflows/deploy.yml`) tự build static export + deploy lên GitHub Pages **mỗi lần push lên `main`** (~2-3 phút).
+- **Link công khai 24/7 (CHÍNH THỨC hiện tại):** `https://truongthanhtung08-stack.github.io/cvr-website-/`
+- **Domain đích sau này:** coastalland.vn (chưa trỏ).
+- **Cơ chế:** GitHub Actions (`.github/workflows/deploy.yml`) tự build static export + deploy lên GitHub Pages **mỗi lần push lên `main`** (~2–3 phút).
 - **→ Mọi chỉnh sửa web: chỉ cần commit + push lên `main`, link tự cập nhật.**
 - GitHub Pages chạy ở thư mục con `/cvr-website-/` nên cần `basePath` (xem `next.config.ts`, chỉ bật khi `GITHUB_PAGES=true`) + tiền tố ảnh qua helper `src/lib/asset.ts` (`NEXT_PUBLIC_BASE_PATH=/cvr-website-`). Local/dev KHÔNG có tiền tố.
+- Repo GitHub: `truongthanhtung08-stack/cvr-website-` (PUBLIC — lưu ý có dấu `-` ở cuối).
+- ⚠️ Vercel: link `cvr-website-eight.vercel.app` từng 404 + khoá. Hiện BỎ QUA, dùng GitHub Pages.
 
 ---
 
@@ -66,20 +103,27 @@ Logo thật ở `public/logo/` (symbol-dark.svg cho nền sáng, symbol-white.sv
 
 ```
 cvr-website/
-├── CLAUDE.md          ← file này (bối cảnh dự án)
+├── CLAUDE.md          ← file này (bối cảnh + nguyên tắc làm việc)
+├── README.md          ← hướng dẫn chạy/deploy nhanh
 ├── .env.local         ← khóa kết nối Supabase (KHÔNG commit lên git)
-├── docs/              ← tài liệu kế hoạch (Brief, KeHoach, Context...)
-│   ├── CVR_Context.md ← BỐI CẢNH ĐẦY ĐỦ (đọc file này khi cần chi tiết)
-│   └── CVR_SystemPrompt.txt
-├── assets/            ← Logo, Giao diện (mockup), Hình ảnh, ĐKKD
-└── (mã nguồn Next.js sẽ tạo ở đây: app/, components/, lib/, types/)
+├── next.config.ts     ← cấu hình basePath cho GitHub Pages
+├── docs/              ← tài liệu kế hoạch (Brief, Kế hoạch v3, Context...)
+│   ├── CVR_Context.md ← BỐI CẢNH ĐẦY ĐỦ (đọc khi cần chi tiết)
+│   └── CVR_KeHoach_toàn diện_v3..docx ← kế hoạch gốc (nguồn sự thật, không sửa trực tiếp)
+├── src/
+│   ├── app/           ← App Router + globals.css (@theme cấu hình màu)
+│   ├── components/    ← PropertyCard, FeaturedListings, LocationGrid, NewsSection...
+│   └── lib/           ← supabase/ (client.ts, server.ts), data.ts, asset.ts
+└── public/
+    ├── logo/          ← logo SVG thật
+    └── images/        ← ảnh tin (tin/), dự án (du-an/), hero, gallery
 ```
 
 📌 **Khi cần thông tin chi tiết** (database schema, gói dịch vụ, lộ trình 3 năm, chi phí, prompt mẫu) → đọc `docs/CVR_Context.md`.
 
 ---
 
-## 5. Nguyên tắc làm việc
+## 5. Nguyên tắc dự án (bổ sung cho mục 0)
 
 1. **Tiếng Việt có dấu** — luôn luôn, không ngoại lệ.
 2. Ưu tiên giải pháp **1 người làm được** bằng AI và tự động hóa.
@@ -103,37 +147,36 @@ cvr-website/
 ## 7. Trạng thái hiện tại
 
 ```
-GIAI ĐOẠN: 0 (Khởi động) → chuẩn bị sang Giai đoạn 1 (Lập trình)
+GIAI ĐOẠN: 1 (Lập trình) — trang chủ + dữ liệu mẫu đã có, đang xây các trang con
 
 ✅ Đã xong:
-  - Toàn bộ môi trường máy tính (Node, Git, WSL, Claude Code)
-  - Tài khoản GitHub / Supabase / Vercel + repo + project
-  - .env.local kết nối Supabase
-  - Folder dự án + tài liệu
-  - ✅ Khởi tạo project: Next.js 16 + React 19 + TailwindCSS v4 + TypeScript
-  - ✅ Supabase client (src/lib/supabase/client.ts + server.ts)
-  - ✅ Trang chủ đầy đủ kiểu Homedy (nền đen, chữ trắng, sang trọng):
-       Header (logo SVG to rõ) → Hero (ảnh villa + bộ lọc) → BĐS nổi bật
-       → Loại hình → BĐS theo khu vực → Giá trị → Tin tức → CTA → Footer đầy đủ
-  - ✅ Dữ liệu mẫu: src/lib/data.ts (featuredListings, areas, articles)
-  - ✅ Component: PropertyCard, FeaturedListings, LocationGrid, NewsSection
-  - ✅ Ảnh mẫu: public/images/gallery/p01..p12.jpg (Unsplash, thay bằng ảnh thật sau)
-  - ✅ Ảnh hero: public/images/hero.jpg (placeholder, thay bằng ảnh BĐS thật)
+  - Môi trường: Node 20, Git, WSL, Claude Code CLI
+  - Tài khoản GitHub / Supabase + repo + project; .env.local kết nối Supabase
+  - Khởi tạo project: Next.js 16 + React 19 + TailwindCSS v4 + TypeScript
+  - Supabase client (src/lib/supabase/client.ts + server.ts)
+  - Trang chủ đầy đủ: Header → Hero (ảnh + bộ lọc) → BĐS nổi bật → Loại hình
+       → BĐS theo khu vực → Giá trị → Tin tức → CTA → Footer
+  - Dữ liệu mẫu: src/lib/data.ts (featuredListings, areas, articles)
+  - Component: PropertyCard, FeaturedListings, LocationGrid, NewsSection
+  - Ảnh mẫu thật: public/images/tin/*.jpg, public/images/du-an/*.jpg, hero
+  - Deploy tự động lên GitHub Pages qua GitHub Actions
 
-⏳ Bước kế tiếp (Giai đoạn 1):
-  - Tạo bảng `listings` + dữ liệu mẫu trong Supabase
-  - Trang danh sách /mua-ban (bộ lọc + grid + phân trang)
+⏳ Bước kế tiếp:
+  - Chuyển hệ màu giao diện sang TRẮNG/ĐEN + VÀNG (hiện còn đơn sắc nền tối) — xem mục 2
+  - Tạo bảng `listings` + dữ liệu thật trong Supabase
+  - Trang danh sách /mua-ban, /cho-thue (bộ lọc + grid + phân trang)
   - Trang chi tiết BĐS /bat-dong-san/[slug]
-  - Đăng ký domain centralcoast.vn
+  - Đăng ký domain coastalland.vn
 
-GHI CHU KY THUAT:
-  - Tailwind v4: cau hinh mau o src/app/globals.css trong @theme (KHONG co tailwind.config.js)
-  - Mau dung qua class: bg-cvr-blue, text-cvr-sky, ...
-  - Component giao diện o src/components/, Supabase helper o src/lib/supabase/
+GHI CHÚ KỸ THUẬT:
+  - Tailwind v4: cấu hình màu ở src/app/globals.css trong @theme (KHÔNG có tailwind.config.js)
+  - Component giao diện ở src/components/, Supabase helper ở src/lib/supabase/
+  - Ảnh phải qua helper src/lib/asset.ts để chạy đúng trên GitHub Pages
 ```
 
 ---
 
 ## 8. Website tham khảo
-- https://homedy.com (UX/UI danh sách BĐS)
+- https://homedy.com (UX/UI danh sách BĐS — bộ lọc tìm kiếm là ưu tiên số 1)
 - https://batdongsan.com.vn (phân loại, bộ lọc)
+- https://apple.com (về giao diện và annimation)

@@ -1,12 +1,22 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+
+// Trạng thái mở DÙNG CHUNG cho cả nhóm dropdown: mỗi lúc chỉ 1 mục mở,
+// bấm mục khác là chuyển ngay (mượt, chuẩn Homedy). Bọc nhóm bằng <FilterDropdownGroup>.
+const DropdownGroupContext = createContext<{ openId: string | null; setOpenId: (id: string | null) => void } | null>(null);
+
+export function FilterDropdownGroup({ children }: { children: React.ReactNode }) {
+  const [openId, setOpenId] = useState<string | null>(null);
+  return <DropdownGroupContext.Provider value={{ openId, setOpenId }}>{children}</DropdownGroupContext.Provider>;
+}
 
 // Nút lọc kiểu Homedy: bấm mở panel (render ra body bằng portal nên KHÔNG bao giờ
 // bị section khác đè/cắt), tự đóng khi bấm ra ngoài / Esc / cuộn nhiều.
 export default function FilterDropdown({
   label,
+  id,
   summary,
   active,
   panelClassName = "w-72",
@@ -16,6 +26,7 @@ export default function FilterDropdown({
   children,
 }: {
   label: string;
+  id?: string; // định danh trong nhóm (mặc định = label)
   summary?: string;
   active?: boolean;
   panelClassName?: string;
@@ -24,7 +35,17 @@ export default function FilterDropdown({
   compact?: boolean;
   children: (api: { close: () => void }) => React.ReactNode;
 }) {
-  const [open, setOpen] = useState(false);
+  const groupId = id ?? label;
+  const group = useContext(DropdownGroupContext);
+  const [localOpen, setLocalOpen] = useState(false);
+  const open = group ? group.openId === groupId : localOpen;
+  const setOpen = useCallback(
+    (v: boolean) => {
+      if (group) group.setOpenId(v ? groupId : null);
+      else setLocalOpen(v);
+    },
+    [group, groupId],
+  );
   const btnRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState<{ top?: number; bottom?: number; left?: number; right?: number; maxH?: number }>({ top: 0 });
@@ -80,16 +101,20 @@ export default function FilterDropdown({
       <button
         ref={btnRef}
         type="button"
-        onClick={() => setOpen((o) => !o)}
-        className={`flex ${compact ? "h-10 w-auto max-w-[150px]" : "h-11 w-full"} items-center justify-between gap-2 rounded-lg border px-3 text-sm outline-none transition ${
-          active
-            ? "border-cl-gold/60 bg-white/10 text-white"
-            : "border-white/10 bg-white/5 text-white/80 hover:border-white/30"
+        onClick={() => setOpen(!open)}
+        className={`flex ${compact ? "h-8 w-auto whitespace-nowrap px-2.5" : "h-11 w-full px-3"} items-center justify-between gap-2 rounded-lg border text-sm outline-none transition ${
+          compact
+            ? active
+              ? "border-white/40 bg-white/20 text-white"
+              : "border-white/15 bg-white/10 text-white/85 hover:border-white/35"
+            : active
+              ? "border-cvr-ink/40 bg-cvr-ink/[0.06] text-cvr-ink"
+              : "border-black/12 bg-black/[0.03] text-cvr-ink/80 hover:border-black/30"
         }`}
       >
         <span className="truncate">{active && summary ? summary : label}</span>
         <svg
-          className={`h-4 w-4 shrink-0 text-white/50 transition-transform ${open ? "rotate-180" : ""}`}
+          className={`h-4 w-4 shrink-0 transition-transform ${compact ? "text-white/60" : "text-cvr-faint"} ${open ? "rotate-180" : ""}`}
           fill="none"
           stroke="currentColor"
           strokeWidth={2}
@@ -104,7 +129,7 @@ export default function FilterDropdown({
           <div
             ref={panelRef}
             style={{ top: pos.top, bottom: pos.bottom, left: pos.left, right: pos.right, maxHeight: pos.maxH }}
-            className={`fixed z-[100] max-w-[calc(100vw-1rem)] overflow-y-auto rounded-xl border border-white/12 bg-cl-ink/95 p-3 shadow-2xl shadow-black/60 ring-1 ring-inset ring-white/10 backdrop-blur-xl ${panelClassName}`}
+            className={`cvr-pop fixed z-[100] max-w-[calc(100vw-1rem)] overflow-y-auto rounded-xl border border-cvr-line bg-white p-3 shadow-2xl shadow-black/15 ring-1 ring-inset ring-black/5 backdrop-blur-xl ${panelClassName}`}
           >
             {children({ close: () => setOpen(false) })}
           </div>,
@@ -123,18 +148,18 @@ export function PanelActions({
   onApply: () => void;
 }) {
   return (
-    <div className="mt-3 flex items-center justify-between gap-2 border-t border-white/10 pt-3">
+    <div className="mt-3 flex items-center justify-between gap-2 border-t border-cvr-line pt-3">
       <button
         type="button"
         onClick={onReset}
-        className="text-xs font-medium text-white/55 transition hover:text-white"
+        className="text-xs font-medium text-cvr-muted transition hover:text-cvr-ink"
       >
         Đặt lại
       </button>
       <button
         type="button"
         onClick={onApply}
-        className="rounded-lg bg-cl-gold px-4 py-1.5 text-xs font-semibold text-cl-ink transition hover:bg-cl-gold-soft"
+        className="rounded-lg bg-cvr-ink px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-cvr-ink/90"
       >
         Áp dụng
       </button>
