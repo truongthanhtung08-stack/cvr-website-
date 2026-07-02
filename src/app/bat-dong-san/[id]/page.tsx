@@ -7,10 +7,21 @@ import Gallery from "@/components/Gallery";
 import PropertyCard from "@/components/PropertyCard";
 import RecordView from "@/components/RecordView";
 import { featuredListings, getListingById, buildListingDetail } from "@/lib/data";
+import { tierFromBadge, getTier } from "@/lib/packages";
 
 // Bắt buộc cho static export (GitHub Pages): liệt kê mọi id
 export function generateStaticParams() {
   return featuredListings.map((l) => ({ id: l.id }));
+}
+
+// Chuyển chuỗi giá VN ("33 tỷ", "7,2 tỷ", "15 triệu") → số VNĐ cho Schema. Không parse được → null.
+function parseVnd(s: string): number | null {
+  const t = s.toLowerCase().replace(/\./g, "").replace(",", ".");
+  const num = parseFloat(t);
+  if (Number.isNaN(num)) return null;
+  if (t.includes("tỷ")) return Math.round(num * 1e9);
+  if (t.includes("triệu") || t.includes("tr")) return Math.round(num * 1e6);
+  return null;
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -23,20 +34,29 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   };
 }
 
-// ── Cấp độ tin (Tin thường / Tin VIP) ────────────────────────────────────────
-function tierOf(badge?: string) {
-  if (badge === "VIP")     return { label: "TIN VIP",     cls: "bg-red-500 text-white" };
-  if (badge === "Nổi bật") return { label: "TIN NỔI BẬT", cls: "bg-orange-500 text-white" };
-  if (badge === "Mới")     return { label: "TIN MỚI",     cls: "bg-green-500 text-white" };
-  return { label: "Tin thường", cls: "bg-cvr-surface text-cvr-muted ring-1 ring-cvr-line" };
-}
-
 export default async function ListingDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const l = getListingById(id);
   if (!l) notFound();
   const d = buildListingDetail(l);
-  const tier = tierOf(l.badge);
+  // Hạng CVR của tin (đồng bộ với thẻ tin V.7). Không có huy hiệu → tin thường.
+  const tier = l.badge ? getTier(tierFromBadge(l.badge)) : null;
+  const phoneTel = d.agent.phone.replace(/\s/g, "");
+
+  // Schema.org RealEstateListing (IV.2) — dữ liệu chuẩn cho Google.
+  const priceVnd = parseVnd(l.price);
+  const areaNum = parseFloat(l.area.replace(",", "."));
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "RealEstateListing",
+    name: l.title,
+    description: `${l.title} tại ${l.location}. Diện tích ${l.area}, giá ${l.price}.`,
+    image: d.gallery,
+    datePosted: d.postedDate,
+    address: { "@type": "PostalAddress", addressLocality: l.location, addressCountry: "VN" },
+    ...(Number.isNaN(areaNum) ? {} : { floorSize: { "@type": "QuantitativeValue", value: areaNum, unitCode: "MTK" } }),
+    ...(priceVnd == null ? {} : { offers: { "@type": "Offer", priceCurrency: "VND", price: priceVnd, availability: "https://schema.org/InStock" } }),
+  };
 
   // Mục đích tin → breadcrumb + tin liên quan cùng mục đích (bán/thuê)
   const purpose = l.purpose ?? "ban";
@@ -54,8 +74,10 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
     <>
       <Header />
       <RecordView id={l.id} />
+      {/* Schema.org RealEstateListing — dữ liệu chuẩn cho Google (IV.2) */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <main className="flex-1 bg-white">
-        <div className="mx-auto max-w-7xl px-4 pb-20 pt-24 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl px-4 pb-24 pt-24 sm:px-6 lg:px-8 lg:pb-20">
           {/* Breadcrumb */}
           <nav className="mb-4 flex flex-wrap items-center gap-1.5 text-xs text-cvr-muted">
             <Link href="/" className="hover:text-cvr-ink">Trang chủ</Link>
@@ -72,9 +94,15 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
 
               {/* Tiêu đề + giá */}
               <div className="mt-6">
-                <span className={`mb-2 inline-block rounded px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide ${tier.cls}`}>
-                  {tier.label}
-                </span>
+                {tier ? (
+                  <span className="mb-2 inline-block rounded px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-cvr-ink" style={{ backgroundColor: tier.accent }}>
+                    {tier.name}
+                  </span>
+                ) : (
+                  <span className="mb-2 inline-block rounded bg-cvr-surface px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-cvr-muted ring-1 ring-cvr-line">
+                    Tin thường
+                  </span>
+                )}
                 <h1 className="font-serif text-2xl font-bold leading-tight text-cvr-ink sm:text-3xl">{l.title}</h1>
                 <p className="mt-2 flex items-center gap-1.5 text-sm text-cvr-muted">
                   <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
@@ -205,6 +233,23 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
               </div>
             </div>
           )}
+        </div>
+
+        {/* Thanh liên hệ DÍNH (mobile) — Gọi / Zalo bám đáy màn hình (III.4) */}
+        <div className="fixed inset-x-0 bottom-0 z-40 flex gap-2 border-t border-cvr-line bg-white/95 p-3 backdrop-blur-md lg:hidden">
+          <a
+            href={`tel:${phoneTel}`}
+            className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-cvr-ink py-3 text-sm font-bold text-white transition active:scale-95"
+          >
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.95.68l1.5 4.5a1 1 0 01-.5 1.2l-2.26 1.13a11 11 0 005.52 5.52l1.13-2.26a1 1 0 011.2-.5l4.5 1.5a1 1 0 01.68.95V19a2 2 0 01-2 2h-1C9.7 21 3 14.3 3 6V5z" /></svg>
+            Gọi ngay
+          </a>
+          <a
+            href={`https://zalo.me/${d.agent.zalo}`}
+            className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-cvr-line bg-white py-3 text-sm font-semibold text-cvr-body transition active:scale-95"
+          >
+            Nhắn Zalo
+          </a>
         </div>
       </main>
       <Footer />
