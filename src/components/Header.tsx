@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import BrandLogo from "@/components/BrandLogo";
+import { packages } from "@/lib/packages";
 
 type NavChild = { label: string; href: string };
 type NavItem = { label: string; href: string; children?: NavChild[] };
@@ -55,13 +56,20 @@ const danhMucChuyenGia: NavChild[] = [
   { label: "Trở thành chuyên gia", href: "/chuyen-gia/dang-ky" },
 ];
 
-// Thứ tự menu: Dự án · Mua bán · Cho thuê · Tin tức · Chuyên gia
+// Menu Tiện ích — các gói dịch vụ (lấy từ packages.ts để không lặp dữ liệu)
+const danhMucTienIch: NavChild[] = packages.map((p) => ({
+  label: p.label,
+  href: `/tien-ich/${p.slug}`,
+}));
+
+// Thứ tự menu: Dự án · Mua bán · Cho thuê · Tin tức · Chuyên gia · Tiện ích
 const navItems: NavItem[] = [
   { label: "Dự án", href: "/du-an", children: loaiHinhDuAn },
   { label: "Mua bán", href: "/mua-ban", children: loaiHinhBan },
   { label: "Cho thuê", href: "/cho-thue", children: loaiHinhThue },
   { label: "Tin tức", href: "/tin-tuc" },
   { label: "Chuyên gia", href: "/chuyen-gia", children: danhMucChuyenGia },
+  { label: "Tiện ích", href: "/tien-ich/goi-dang-tin", children: danhMucTienIch },
 ];
 
 const chevronDown = (
@@ -257,7 +265,7 @@ export default function Header() {
 
           <Link
             href="/dang-tin"
-            className="btn-dangtin btn-dangtin--pulse group flex items-center gap-1.5 rounded-lg px-5 py-2.5 text-sm font-semibold text-white"
+            className="btn-dangtin btn-dangtin--pulse group flex items-center gap-1.5 rounded-full px-5 py-2.5 text-sm font-semibold text-white"
           >
             <svg
               className="h-4 w-4 transition-transform duration-300 group-hover:rotate-90"

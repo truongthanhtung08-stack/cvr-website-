@@ -4,6 +4,7 @@ import FeaturedListings from "@/components/FeaturedListings";
 import ProjectsSection from "@/components/ProjectsSection";
 import LocationGrid from "@/components/LocationGrid";
 import NewsSection from "@/components/NewsSection";
+import PromoBanner from "@/components/PromoBanner";
 import AppDownload from "@/components/AppDownload";
 import Footer from "@/components/Footer";
 import Reveal from "@/components/Reveal";
@@ -25,6 +26,9 @@ export default function Home() {
         </Reveal>
         <Reveal>
           <NewsSection />
+        </Reveal>
+        <Reveal>
+          <PromoBanner />
         </Reveal>
         <Reveal>
           <AppDownload />

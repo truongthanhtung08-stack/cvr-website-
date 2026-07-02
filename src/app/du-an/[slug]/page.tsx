@@ -15,9 +15,9 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const p = getProjectBySlug(slug);
-  if (!p) return { title: "Không tìm thấy dự án | Central Land" };
+  if (!p) return { title: "Không tìm thấy dự án | Coastal Land" };
   return {
-    title: `${p.name} — ${p.priceFrom} | Central Land`,
+    title: `${p.name} — ${p.priceFrom} | Coastal Land`,
     description: `Dự án ${p.name} tại ${p.location}. ${p.type}, ${p.status}. Mục lục: tổng quan, vị trí, mặt bằng, tiện ích và tin đăng mới nhất.`,
   };
 }
@@ -140,7 +140,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                     </a>
                   ))}
                 </div>
-                <p className="mt-3 text-xs text-white/45">Bấm để nhận file mặt bằng chi tiết và bảng hàng mới nhất từ Central Land.</p>
+                <p className="mt-3 text-xs text-white/45">Bấm để nhận file mặt bằng chi tiết và bảng hàng mới nhất từ Coastal Land.</p>
               </section>
 
               {/* Bảng giá & loại căn */}
@@ -206,7 +206,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                     </div>
                   ))}
                 </div>
-                <p className="mt-3 text-xs text-white/45">Hình ảnh dự án (ảnh phối cảnh/thực tế). Liên hệ Central Land để nhận thêm hình ảnh & video.</p>
+                <p className="mt-3 text-xs text-white/45">Hình ảnh dự án (ảnh phối cảnh/thực tế). Liên hệ Coastal Land để nhận thêm hình ảnh & video.</p>
               </section>
 
               {/* Tin đăng mới nhất trong khu vực */}

@@ -119,7 +119,7 @@ select option {
     box-shadow 0.25s ease;
 }
 .btn-dangtin:hover {
-  transform: translateY(-2px) scale(1.035);
+  transform: translateY(-2px) scale(1.05);
   box-shadow:
     0 10px 26px rgba(0, 0, 0, 0.28),
     0 6px 16px rgba(0, 0, 0, 0.22),

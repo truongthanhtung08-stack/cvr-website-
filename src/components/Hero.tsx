@@ -134,12 +134,12 @@ export default function Hero() {
       {/* ── Layout dọc: text → dots → search ── */}
       <div className="pointer-events-none relative z-10 mx-auto flex w-full max-w-7xl flex-1 flex-col px-4 pb-4 pt-16 sm:px-16">
 
-        {/* Vùng chữ — co giãn lấp đầy khoảng trống còn lại */}
-        <div className={`flex flex-1 ${cur.href?.startsWith("/du-an") ? "items-end pb-2" : "items-center"}`}>
+        {/* Vùng chữ — mọi slide căn SÁT DƯỚI, canh trái (spec V.6) */}
+        <div className="flex flex-1 items-end pb-2">
           {cur.showText !== false && (
             <div
               key={active}
-              className={`hero-sub max-w-3xl text-left ${cur.href?.startsWith("/du-an") ? "" : "sm:translate-y-6"}`}
+              className="hero-sub max-w-3xl text-left"
             >
               {cur.status && (
                 <span className="mb-2 inline-flex items-center rounded-full bg-white/15 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-white ring-1 ring-inset ring-white/25 backdrop-blur-sm">

@@ -5,7 +5,7 @@ import Footer from "@/components/Footer";
 import SearchClient from "@/components/SearchClient";
 
 export const metadata: Metadata = {
-  title: "Tìm kiếm bất động sản | Central Land",
+  title: "Tìm kiếm bất động sản | Coastal Land",
   description:
     "Tìm nhà đất, căn hộ, đất nền, dự án tại Đà Nẵng, Huế và Miền Trung — lọc theo khu vực, loại hình, mức giá.",
 };

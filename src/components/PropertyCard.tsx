@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import SaveButton from "@/components/SaveButton";
 import { listingSummary, type Listing } from "@/lib/data";
+import { tierFromBadge, getTier } from "@/lib/packages";
 
 const AGENTS = [
   { name: "Trương Thanh Tùng", phone: "0905 123 456" },
@@ -37,11 +38,14 @@ export default function PropertyCard({
 }) {
   if (layout === "list") return <PropertyRow item={item} showTime={showTime} />;
   const agent = getAgent(item.id);
+  // Hạng CVR của tin (từ huy hiệu VIP/Nổi bật/Mới). Tin không huy hiệu → tin thường.
+  const tier = item.badge ? getTier(tierFromBadge(item.badge)) : null;
 
   return (
     <Link
       href={`/bat-dong-san/${item.id}`}
       className="flex flex-col overflow-hidden border border-cvr-line bg-white transition-shadow hover:shadow-md"
+      style={tier ? { borderTopColor: tier.accent, borderTopWidth: "2px" } : undefined}
     >
       {/* Ảnh */}
       <div className="relative aspect-[4/3] overflow-hidden bg-cvr-surface">
@@ -52,13 +56,12 @@ export default function PropertyCard({
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
           className="object-cover"
         />
-        {item.badge && (
-          <span className={`absolute left-2 top-2 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
-            item.badge === "VIP" ? "bg-red-500 text-white" :
-            item.badge === "Nổi bật" ? "bg-orange-500 text-white" :
-            "bg-green-500 text-white"
-          }`}>
-            {item.badge}
+        {tier && (
+          <span
+            className="absolute left-2 top-2 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-cvr-ink"
+            style={{ backgroundColor: tier.accent }}
+          >
+            {tier.short}
           </span>
         )}
         <SaveButton id={item.id} className="absolute right-2 top-2" />
@@ -71,8 +74,11 @@ export default function PropertyCard({
       {/* Nội dung */}
       <div className="flex flex-1 flex-col p-3">
 
-        {/* Tiêu đề — 2 dòng */}
-        <h3 className="line-clamp-2 min-h-[2.6rem] text-sm font-semibold uppercase leading-snug text-cvr-ink">
+        {/* Tiêu đề — 2 dòng (màu theo hạng) */}
+        <h3
+          className="line-clamp-2 min-h-[2.6rem] text-sm font-semibold uppercase leading-snug text-cvr-ink"
+          style={tier?.titleColor ? { color: tier.titleColor } : undefined}
+        >
           {item.title}
         </h3>
 
@@ -112,18 +118,20 @@ export default function PropertyCard({
 // ── List row ─────────────────────────────────────────────────────────────────
 function PropertyRow({ item, showTime = false }: { item: Listing; showTime?: boolean }) {
   const agent = getAgent(item.id);
+  const tier = item.badge ? getTier(tierFromBadge(item.badge)) : null;
   return (
     <Link
       href={`/bat-dong-san/${item.id}`}
       className="flex gap-3 overflow-hidden border border-cvr-line bg-white p-2.5 transition-shadow hover:shadow-md"
+      style={tier ? { borderTopColor: tier.accent, borderTopWidth: "2px" } : undefined}
     >
       <div className="relative aspect-[4/3] w-48 shrink-0 overflow-hidden bg-cvr-surface">
         <Image src={item.image} alt={item.title} fill sizes="192px" className="object-cover" />
-        {item.badge && (
-          <span className={`absolute left-2 top-2 px-1.5 py-0.5 text-[10px] font-bold uppercase ${
-            item.badge === "VIP" ? "bg-red-500 text-white" :
-            item.badge === "Nổi bật" ? "bg-orange-500 text-white" : "bg-green-500 text-white"
-          }`}>{item.badge}</span>
+        {tier && (
+          <span
+            className="absolute left-2 top-2 px-1.5 py-0.5 text-[10px] font-bold uppercase text-cvr-ink"
+            style={{ backgroundColor: tier.accent }}
+          >{tier.short}</span>
         )}
         <SaveButton id={item.id} className="absolute right-2 top-2 h-7 w-7" />
         <span className="absolute bottom-2 left-2 flex items-center gap-1 bg-black/55 px-1.5 py-0.5 text-[10px] text-white">
@@ -131,7 +139,10 @@ function PropertyRow({ item, showTime = false }: { item: Listing; showTime?: boo
         </span>
       </div>
       <div className="flex min-w-0 flex-1 flex-col">
-        <h3 className="line-clamp-2 text-base font-semibold uppercase leading-snug text-cvr-ink">{item.title}</h3>
+        <h3
+          className="line-clamp-2 text-base font-semibold uppercase leading-snug text-cvr-ink"
+          style={tier?.titleColor ? { color: tier.titleColor } : undefined}
+        >{item.title}</h3>
         <p className="mt-1 line-clamp-2 text-sm leading-relaxed text-cvr-muted">{listingSummary(item)}</p>
         <div className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <span className={`text-sm ${item.price === "Thỏa thuận" ? "text-cvr-muted" : "text-cvr-ink"}`}>{item.price}</span>

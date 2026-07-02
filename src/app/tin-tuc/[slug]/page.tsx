@@ -13,8 +13,8 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const a = getArticleBySlug(slug);
-  if (!a) return { title: "Không tìm thấy | Central Land" };
-  return { title: `${a.title} | Central Land`, description: a.excerpt };
+  if (!a) return { title: "Không tìm thấy | Coastal Land" };
+  return { title: `${a.title} | Coastal Land`, description: a.excerpt };
 }
 
 export default async function ArticlePage({ params }: { params: Promise<{ slug: string }> }) {

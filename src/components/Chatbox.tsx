@@ -63,8 +63,9 @@ export default function Chatbox() {
       >
         {/* Nhịp phát sáng thu hút */}
         <span className="absolute inset-0 animate-ping rounded-full bg-white/40" style={{ animationDuration: "2.5s" }} />
-        <svg className="relative h-6 w-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M21 12a8 8 0 01-11.4 7.2L3 21l1.8-6.6A8 8 0 1121 12z" />
+        {/* Icon Tin nhắn kiểu iMessage — bong bóng đặc, đuôi góc dưới-trái */}
+        <svg className="relative h-7 w-7" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 2.25c-5.385 0-9.75 3.24-9.75 7.5 0 2.68 1.72 5.03 4.32 6.4-.14.86-.5 1.9-1.2 2.86a.375.375 0 0 0 .35.6c1.7-.2 3.06-.78 4.02-1.35.73.16 1.5.24 2.26.24 5.385 0 9.75-3.24 9.75-7.5S17.385 2.25 12 2.25Z" />
         </svg>
       </button>
 

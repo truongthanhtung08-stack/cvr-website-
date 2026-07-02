@@ -14,8 +14,8 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const l = getLandingBySlug(slug);
-  if (!l) return { title: "Không tìm thấy | Central Land" };
-  return { title: `${l.title} | Central Land`, description: l.intro.slice(0, 160) };
+  if (!l) return { title: "Không tìm thấy | Coastal Land" };
+  return { title: `${l.title} | Coastal Land`, description: l.intro.slice(0, 160) };
 }
 
 export default async function LandingPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -83,7 +83,7 @@ export default async function LandingPage({ params }: { params: Promise<{ slug: 
 
           {/* CTA cuối */}
           <div className="mt-12 flex flex-col items-center gap-4 rounded-3xl border border-white/10 bg-gradient-to-br from-cvr-charcoal to-cvr-ink p-8 text-center sm:p-12">
-            <h2 className="font-serif text-2xl font-bold text-white sm:text-3xl">Sẵn sàng bắt đầu cùng Central Land?</h2>
+            <h2 className="font-serif text-2xl font-bold text-white sm:text-3xl">Sẵn sàng bắt đầu cùng Coastal Land?</h2>
             <p className="max-w-xl text-sm text-white/65">Liên hệ đội ngũ của chúng tôi để được tư vấn miễn phí và nhận giải pháp phù hợp nhất.</p>
             <div className="mt-2 flex flex-wrap items-center justify-center gap-3">
               <Link href={l.ctaHref} className="rounded-lg bg-white px-6 py-3 text-sm font-semibold text-cvr-ink transition hover:bg-white/90">{l.ctaLabel}</Link>

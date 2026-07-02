@@ -17,24 +17,26 @@ export type Banner = {
   href?: string; // bấm banner / bấm CTA → tới đâu
 };
 
-// Banner Hero trang chủ — 3 slide. Chữ chạy trên banner = 2 DÒNG, canh trái.
+// Banner Hero trang chủ — 3 slide. Chữ chạy trên banner = 3 DÒNG (Nhãn · Tiêu đề · Mô tả), canh trái, sát dưới.
 // 👉 Bạn TỰ SỬA nội dung tại đây. Đặt showText:false để TẮT chữ trên 1 banner.
 export const homeBanners: Banner[] = [
   // ===== 2 BANNER CÔNG TY (quảng cáo / landing page công ty) =====
   {
     id: "lp-gioi-thieu",
-    image: "/images/hero-cty1.jpg",
-    title: "Coastal Land — Bất động sản Duyên hải Miền Trung", // dòng 1
-    subtitle: "Minh bạch · pháp lý rõ ràng · giao dịch an toàn", // dòng 2
+    image: "/images/hero-1-1.png",
+    status: "Sàn BĐS Miền Trung", // dòng 1 (nhãn)
+    title: "Coastal Land — Bất động sản Duyên hải Miền Trung", // dòng 2
+    subtitle: "Minh bạch · pháp lý rõ ràng · giao dịch an toàn", // dòng 3
     // cta: "Tìm hiểu thêm", // CTA TẮT cho banner công ty — bỏ // để bật
     showText: true,
-    href: "/landing/ve-central-land",
+    href: "/landing/ve-coastal-land",
   },
   {
     id: "lp-dich-vu",
-    image: "/images/hero-cty2.jpg",
-    title: "Ký gửi Bất động sản chuyên nghiệp", // dòng 1
-    subtitle: "Định giá chuẩn · bán nhanh · hỗ trợ pháp lý", // dòng 2
+    image: "/images/hero-3-1.png",
+    status: "Dịch vụ ký gửi", // dòng 1 (nhãn)
+    title: "Ký gửi Bất động sản chuyên nghiệp", // dòng 2
+    subtitle: "Định giá chuẩn · bán nhanh · hỗ trợ pháp lý", // dòng 3
     // cta: "Xem dịch vụ", // CTA TẮT cho banner công ty — bỏ // để bật
     showText: true,
     href: "/landing/dich-vu",
@@ -42,10 +44,10 @@ export const homeBanners: Banner[] = [
   // ===== 1 BANNER DỰ ÁN (dòng 1 = TÊN dự án, dòng 2 = ĐỊA ĐIỂM) =====
   {
     id: "lp-vinhomes",
-    image: "/images/duan-vinhomes.jpg",
-    // status: "Đang mở bán", // ẨN dòng đầu — bỏ // để hiện
-    title: "Vinhomes Skylake — Dream Apartment", // TÊN dự án
-    subtitle: "Phạm Hùng, Nam Từ Liêm, Hà Nội", // ĐỊA CHỈ
+    image: "/images/duan-vinhomes-1-1.png",
+    status: "Đang mở bán", // dòng 1 (nhãn)
+    title: "Vinhomes Skylake — Dream Apartment", // dòng 2 — TÊN dự án
+    subtitle: "Phạm Hùng, Nam Từ Liêm, Hà Nội", // dòng 3 — ĐỊA CHỈ
     // cta: "Xem dự án", // ẨN dòng cuối (CTA) — bỏ // để hiện
     showText: true,
     href: "/du-an/vinhomes-skylake-dream",

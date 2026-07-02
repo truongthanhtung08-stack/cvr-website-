@@ -21,7 +21,7 @@ export type Landing = {
 
 export const landings: Landing[] = [
   {
-    slug: "ve-central-land",
+    slug: "ve-coastal-land",
     image: "/images/hero-cty1.jpg",
     eyebrow: "Central Coast Vietnam Properties (CVR)",
     title: "Sàn bất động sản Duyên hải miền Trung",
