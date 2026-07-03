@@ -89,11 +89,14 @@ Logo thật ở `public/logo/` (symbol-dark.svg cho nền sáng, symbol-white.sv
 
 ## 3. TRIỂN KHAI (Deploy) — QUAN TRỌNG
 
-- **Link công khai 24/7 (CHÍNH THỨC hiện tại):** `https://truongthanhtung08-stack.github.io/cvr-website-/`
-- **Domain đích sau này:** coastalland.vn (chưa trỏ).
+- **Website CHÍNH THỨC (từ 3/7/2026):** `https://coastalland.vn` — domain mua tại PA Vietnam,
+  DNS trỏ GitHub Pages (4 bản ghi A `185.199.108-111.153` + CNAME `www` → `truongthanhtung08-stack.github.io`),
+  đã gắn Custom domain trong repo Settings → Pages. Link cũ
+  `truongthanhtung08-stack.github.io/cvr-website-/` tự chuyển hướng về domain.
 - **Cơ chế:** GitHub Actions (`.github/workflows/deploy.yml`) tự build static export + deploy lên GitHub Pages **mỗi lần push lên `main`** (~2–3 phút).
-- **→ Mọi chỉnh sửa web: chỉ cần commit + push lên `main`, link tự cập nhật.**
-- GitHub Pages chạy ở thư mục con `/cvr-website-/` nên cần `basePath` (xem `next.config.ts`, chỉ bật khi `GITHUB_PAGES=true`) + tiền tố ảnh qua helper `src/lib/asset.ts` (`NEXT_PUBLIC_BASE_PATH=/cvr-website-`). Local/dev KHÔNG có tiền tố.
+- **→ Mọi chỉnh sửa web: chỉ cần commit + push lên `main`, domain tự cập nhật.**
+- Custom domain chạy ở GỐC → **KHÔNG còn basePath/tiền tố `/cvr-website-`** (đã gỡ khỏi
+  `next.config.ts` + `deploy.yml` ngày 3/7/2026). Helper `src/lib/asset.ts` vẫn dùng cho ảnh (prefix rỗng).
 - Repo GitHub: `truongthanhtung08-stack/cvr-website-` (PUBLIC — lưu ý có dấu `-` ở cuối).
 - ⚠️ Vercel: link `cvr-website-eight.vercel.app` từng 404 + khoá. Hiện BỎ QUA, dùng GitHub Pages.
 
@@ -166,7 +169,7 @@ GIAI ĐOẠN: 1 (Lập trình) — trang chủ + dữ liệu mẫu đã có, đa
   - Tạo bảng `listings` + dữ liệu thật trong Supabase
   - Trang danh sách /mua-ban, /cho-thue (bộ lọc + grid + phân trang)
   - Trang chi tiết BĐS /bat-dong-san/[slug]
-  - Đăng ký domain coastalland.vn
+  - ✅ Domain coastalland.vn ĐÃ MUA + ĐÃ GẮN, site chạy chính thức (3/7/2026)
 
 GHI CHÚ KỸ THUẬT:
   - Tailwind v4: cấu hình màu ở src/app/globals.css trong @theme (KHÔNG có tailwind.config.js)
