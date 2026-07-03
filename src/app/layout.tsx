@@ -32,6 +32,9 @@ export const metadata: Metadata = {
   title: "COASTAL LAND — Bất động sản Đà Nẵng, Huế & Miền Trung",
   description:
     "COASTAL LAND — Gateway to Central Coast property. Sàn giao dịch bất động sản trung gian, khách quan tại Đà Nẵng, Huế và Miền Trung: đất nền, căn hộ, nhà phố, villa biển và bất động sản công nghiệp.",
+  // ⚠️ CHƯA PUBLISH: chặn Google index tới khi ra mắt chính thức.
+  // Khi publish: XÓA khối robots này + đăng ký Google Search Console.
+  robots: { index: false, follow: false },
 };
 
 export default function RootLayout({
