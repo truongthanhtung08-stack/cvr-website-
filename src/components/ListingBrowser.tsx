@@ -120,6 +120,7 @@ export default function ListingBrowser({
                 <option value="gia-tang">Giá thấp → cao</option>
                 <option value="gia-giam">Giá cao → thấp</option>
                 <option value="dt-giam">Diện tích lớn nhất</option>
+                {purpose === "ban" && <option value="gia-m2">Giá/m² thấp nhất</option>}
               </select>
             </div>
           </div>
@@ -178,15 +179,15 @@ export default function ListingBrowser({
             {/* Bất động sản theo khu vực */}
             <SidebarFilter title={`${heading} theo khu vực`}>
               {provinces.map(([prov, count]) => {
-                const on = filters.province === prov;
+                const on = filters.locations.some((l) => l.province === prov && !l.district && !l.ward);
                 return (
                   <SidebarLink
                     key={prov}
                     active={on}
                     count={count}
                     onClick={() => setFilters(on
-                      ? { ...filters, province: "", district: "", ward: "" }
-                      : { ...filters, province: prov, district: "", ward: "" })}
+                      ? { ...filters, locations: filters.locations.filter((l) => !(l.province === prov && !l.district && !l.ward)) }
+                      : { ...filters, locations: [...filters.locations, { province: prov }] })}
                   >
                     {prov}
                   </SidebarLink>

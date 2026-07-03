@@ -60,7 +60,7 @@ export default function FeaturedListings() {
       <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
 
         {/* Tiêu đề (link "Xem tất cả" đặt ở CUỐI phần) */}
-        <h2 className="font-serif text-2xl font-bold text-cvr-ink">
+        <h2 className="text-2xl font-semibold text-cvr-ink">
           Bất động sản dành cho bạn
         </h2>
 

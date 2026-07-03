@@ -29,24 +29,29 @@ export default function HomeSearch() {
   const purpose: "ban" | "thue" = tab === "Cho thuê" ? "thue" : "ban";
 
   const tabBar = (
-    <div className="flex shrink-0 gap-1.5">
+    <div className="flex items-center gap-7">
       {tabs.map((t) => (
         <button
           key={t}
           type="button"
           onClick={() => setTab(t)}
-          className={`h-8 rounded-lg px-3 text-[13px] font-semibold transition-all ${
-            tab === t ? "bg-white text-cvr-ink" : "bg-white/10 text-white/80 hover:bg-white/20"
+          className={`relative pb-2 text-[15px] font-semibold transition-colors [text-shadow:0_1px_10px_rgba(0,0,0,0.6)] ${
+            tab === t ? "text-white" : "text-white/70 hover:text-white"
           }`}
         >
           {t}
+          {tab === t && <span className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-cvr-gold shadow-[0_1px_6px_rgba(0,0,0,0.5)]" />}
         </button>
       ))}
     </div>
   );
 
   return (
-    <div className="mx-auto w-fit max-w-full rounded-2xl border border-white/10 bg-cvr-ink/75 p-2 shadow-2xl shadow-black/40 ring-1 ring-inset ring-white/10 backdrop-blur-2xl backdrop-saturate-150">
+    <div
+      className="mx-auto w-full max-w-2xl"
+      onPointerDown={(e) => e.stopPropagation()}
+      onPointerUp={(e) => e.stopPropagation()}
+    >
       <FilterBar value={filters} onChange={setFilters} onSearch={handleSearch} onMap={handleMap} compact leading={tabBar} purpose={purpose} />
     </div>
   );

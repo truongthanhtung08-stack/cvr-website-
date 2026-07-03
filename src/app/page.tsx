@@ -2,11 +2,12 @@ import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import FeaturedListings from "@/components/FeaturedListings";
 import ProjectsSection from "@/components/ProjectsSection";
-import ForYou from "@/components/ForYou";
+// import ForYou from "@/components/ForYou"; // TẠM ẨN — chờ chốt vị trí đặt lại (component vẫn còn)
 import LocationGrid from "@/components/LocationGrid";
 import NewsSection from "@/components/NewsSection";
-import PromoBanner from "@/components/PromoBanner";
-import AppDownload from "@/components/AppDownload";
+// import PromoBanner from "@/components/PromoBanner";   // thay bằng AdBannerSeller (mẫu Apple) — khôi phục nếu cần
+// import AppDownload from "@/components/AppDownload";   // thay bằng AdBannerApp (mẫu Apple) — khôi phục nếu cần
+import { AdBannerSeller, AdBannerApp } from "@/components/HomeAdBanners";
 import Footer from "@/components/Footer";
 import Reveal from "@/components/Reveal";
 
@@ -22,9 +23,10 @@ export default function Home() {
         <Reveal>
           <ProjectsSection />
         </Reveal>
+        {/* "Dành riêng cho bạn" TẠM ẨN theo yêu cầu — mở lại: bỏ comment import ForYou + khối này.
         <Reveal>
           <ForYou />
-        </Reveal>
+        </Reveal> */}
         <Reveal>
           <LocationGrid />
         </Reveal>
@@ -32,10 +34,10 @@ export default function Home() {
           <NewsSection />
         </Reveal>
         <Reveal>
-          <PromoBanner />
+          <AdBannerSeller />
         </Reveal>
         <Reveal>
-          <AppDownload />
+          <AdBannerApp />
         </Reveal>
       </main>
       <Footer />

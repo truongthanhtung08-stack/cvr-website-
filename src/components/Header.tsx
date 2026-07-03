@@ -232,7 +232,7 @@ export default function Header() {
 
   return (
     <header
-      className={`sticky top-0 z-50 w-full border-b border-white/10 bg-cvr-ink/80 backdrop-blur-xl backdrop-saturate-150 transition-shadow duration-300 ${
+      className={`nav-glass sticky top-0 z-50 w-full border-b border-white/10 transition-shadow duration-300 ${
         scrolled ? "shadow-lg shadow-black/25" : ""
       }`}
     >

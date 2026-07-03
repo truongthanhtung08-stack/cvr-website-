@@ -58,7 +58,7 @@ export default function Hero() {
             quality={100}
             draggable={false}
             sizes="100vw"
-            className={`pointer-events-none object-cover transition-opacity duration-[1000ms] ease-[cubic-bezier(0.4,0,0.2,1)] ${
+            className={`animate-kenburns pointer-events-none object-cover transition-opacity duration-[1000ms] ease-[cubic-bezier(0.4,0,0.2,1)] ${
               i === active ? "opacity-100" : "opacity-0"
             }`}
           />
@@ -131,22 +131,26 @@ export default function Hero() {
         </>
       )}
 
-      {/* ── Layout dọc: text → dots → search ── */}
-      <div className="pointer-events-none relative z-10 mx-auto flex w-full max-w-7xl flex-1 flex-col px-4 pb-4 pt-16 sm:px-16">
+      {/* ── Layout kiểu Batdongsan: BỘ LỌC sát TRÊN · CHỮ tiêu đề sát DƯỚI (canh trái) ── */}
+      <div className="pointer-events-none relative z-10 mx-auto flex w-full max-w-7xl flex-1 flex-col justify-between px-4 pb-10 pt-6 sm:px-16 sm:pt-8">
 
-        {/* Vùng chữ — mọi slide căn SÁT DƯỚI, canh trái (spec V.6) */}
-        <div className="flex flex-1 items-end pb-2">
-          {cur.showText !== false && (
+        {/* ── Bộ lọc — sát TRÊN, canh giữa ngang (kiểu Batdongsan) ── */}
+        <div className="pointer-events-auto mx-auto w-full max-w-4xl">
+          <HomeSearch />
+        </div>
+
+        {/* Vùng chữ — sát DƯỚI, canh trái (spec V.6) */}
+        {cur.showText !== false && (
             <div
               key={active}
               className="hero-sub max-w-3xl text-left"
             >
               {cur.status && (
-                <span className="mb-2 inline-flex items-center rounded-full bg-white/15 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-white ring-1 ring-inset ring-white/25 backdrop-blur-sm">
+                <span className="mb-2 inline-flex items-center rounded-full bg-white/15 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-white ring-1 ring-inset ring-white/25 backdrop-blur-sm">
                   {cur.status}
                 </span>
               )}
-              <h2 className="text-balance font-[family-name:var(--font-montserrat)] text-lg font-bold leading-[1.2] tracking-tight text-white [text-shadow:0_2px_16px_rgba(0,0,0,0.6)] sm:text-2xl">
+              <h2 className="text-balance font-[family-name:var(--font-montserrat)] text-lg font-semibold leading-[1.2] tracking-tight text-white [text-shadow:0_2px_16px_rgba(0,0,0,0.6)] sm:text-2xl">
                 {cur.title}
               </h2>
               {cur.subtitle && (
@@ -167,12 +171,6 @@ export default function Hero() {
               )}
             </div>
           )}
-        </div>
-
-        {/* ── Search bar ── */}
-        <div className="pointer-events-auto mx-auto w-full max-w-4xl">
-          <HomeSearch />
-        </div>
       </div>
     </section>
   );

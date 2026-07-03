@@ -126,11 +126,28 @@ export function listingDirection(id: string): string {
   return directionOptions[idx % directionOptions.length];
 }
 
+// ===== Pháp lý (đặc thù MUA BÁN) & Nội thất (đặc thù CHO THUÊ) =====
+// Suy ổn định từ id (giống listingDirection) — sau thay bằng cột thật trong Supabase.
+export const legalOptions = ["Sổ đỏ / Sổ hồng", "Hợp đồng mua bán", "Đang chờ sổ"];
+export function listingLegal(id: string): string {
+  const idx = parseInt(id, 10) || 1;
+  return legalOptions[idx % legalOptions.length];
+}
+
+export const furnishingOptions = ["Đầy đủ nội thất", "Nội thất cơ bản", "Nội thất trống"];
+export function listingFurnishing(id: string): string {
+  const idx = parseInt(id, 10) || 1;
+  return furnishingOptions[(idx + 1) % furnishingOptions.length];
+}
+
 // ===== Bộ lọc gộp — dùng chung cho mọi trang =====
+// Khu vực ĐA CHỌN (tối đa 5, kiểu Batdongsan): mỗi phần tử là 1 đường dẫn địa giới.
+export type LocationSel = { province: string; district?: string; ward?: string };
+export const MAX_LOCATIONS = 5;
+
 export type Filters = {
-  province: string;
-  district: string;
-  ward: string;
+  locations: LocationSel[]; // đa khu vực (OR giữa các phần tử); rỗng = toàn quốc
+  project: string;          // tên dự án (rỗng = mọi dự án)
   types: string[]; // chọn nhiều loại hình
   priceMin: number | null; // tỷ
   priceMax: number | null; // tỷ
@@ -138,25 +155,51 @@ export type Filters = {
   areaMax: number | null; // m²
   beds: number; // 0 = bất kỳ, 5 = 5+
   direction: string;
+  legal: string;       // pháp lý — đặc thù MUA BÁN
+  furnishing: string;  // nội thất — đặc thù CHO THUÊ
   keyword: string;
 };
 
+// Nhãn hiển thị 1 khu vực: ưu tiên cấp sâu nhất (phường → quận → tỉnh).
+export function locationLabel(l: LocationSel): string {
+  return l.ward || l.district || l.province;
+}
+
+// So khớp 2 khu vực (để tránh thêm trùng vào danh sách đa chọn).
+export function sameLocation(a: LocationSel, b: LocationSel): boolean {
+  return a.province === b.province && (a.district ?? "") === (b.district ?? "") && (a.ward ?? "") === (b.ward ?? "");
+}
+
 export function emptyFilters(): Filters {
   return {
-    province: "", district: "", ward: "",
+    locations: [],
+    project: "",
     types: [],
     priceMin: null, priceMax: null,
     areaMin: null, areaMax: null,
-    beds: 0, direction: "", keyword: "",
+    beds: 0, direction: "",
+    legal: "", furnishing: "",
+    keyword: "",
   };
 }
 
 // Khởi tạo bộ lọc từ query string (link từ Hero, khu vực, v.v.)
 export function filtersFromParams(params: URLSearchParams): Filters {
   const f = emptyFilters();
-  f.province = params.get("tinh") ?? "";
-  f.district = params.get("quan") ?? "";
-  f.ward = params.get("phuong") ?? "";
+  // Đa khu vực: kv=Tỉnh/Quận/Phường;Tỉnh2/... — ưu tiên; fallback tinh/quan/phuong (link cũ).
+  const kv = params.get("kv");
+  if (kv) {
+    f.locations = kv
+      .split(";")
+      .map((s) => s.split("/").map((x) => x.trim()))
+      .filter((a) => a[0])
+      .map((a) => ({ province: a[0], district: a[1] || undefined, ward: a[2] || undefined }))
+      .slice(0, MAX_LOCATIONS);
+  } else {
+    const tinh = params.get("tinh");
+    if (tinh) f.locations = [{ province: tinh, district: params.get("quan") || undefined, ward: params.get("phuong") || undefined }];
+  }
+  f.project = params.get("duan") ?? "";
   const loai = params.get("loai");
   if (loai) f.types = loai.split(",").map((s) => s.trim()).filter(Boolean);
   // Khoảng giá: ưu tiên min/max (số tỷ), fallback nhãn preset (tương thích cũ)
@@ -186,6 +229,8 @@ export function filtersFromParams(params: URLSearchParams): Filters {
   const pn = params.get("pn");
   if (pn) f.beds = parseInt(pn, 10) || 0;
   f.direction = params.get("huong") ?? "";
+  f.legal = params.get("phaply") ?? "";
+  f.furnishing = params.get("noithat") ?? "";
   f.keyword = params.get("q") ?? "";
   return f;
 }
@@ -193,9 +238,10 @@ export function filtersFromParams(params: URLSearchParams): Filters {
 // Serialize bộ lọc ra query string (cho Hero điều hướng sang trang tìm kiếm, không mất dữ liệu)
 export function filtersToParams(f: Filters): URLSearchParams {
   const p = new URLSearchParams();
-  if (f.province) p.set("tinh", f.province);
-  if (f.district) p.set("quan", f.district);
-  if (f.ward) p.set("phuong", f.ward);
+  if (f.locations.length) {
+    p.set("kv", f.locations.map((l) => [l.province, l.district, l.ward].filter(Boolean).join("/")).join(";"));
+  }
+  if (f.project) p.set("duan", f.project);
   if (f.types.length) p.set("loai", f.types.join(","));
   if (f.priceMin != null) p.set("giaMin", String(f.priceMin));
   if (f.priceMax != null) p.set("giaMax", String(f.priceMax));
@@ -203,6 +249,8 @@ export function filtersToParams(f: Filters): URLSearchParams {
   if (f.areaMax != null) p.set("dtMax", String(f.areaMax));
   if (f.beds) p.set("pn", String(f.beds));
   if (f.direction) p.set("huong", f.direction);
+  if (f.legal) p.set("phaply", f.legal);
+  if (f.furnishing) p.set("noithat", f.furnishing);
   if (f.keyword.trim()) p.set("q", f.keyword.trim());
   return p;
 }
@@ -210,10 +258,10 @@ export function filtersToParams(f: Filters): URLSearchParams {
 // Có đang áp dụng bộ lọc nào không
 export function hasActiveFilters(f: Filters): boolean {
   return Boolean(
-    f.province || f.district || f.ward || f.types.length ||
+    f.locations.length || f.project || f.types.length ||
     f.priceMin != null || f.priceMax != null ||
     f.areaMin != null || f.areaMax != null ||
-    f.beds || f.direction || f.keyword.trim()
+    f.beds || f.direction || f.legal || f.furnishing || f.keyword.trim()
   );
 }
 
@@ -244,10 +292,17 @@ type FilterableListing = {
 // Áp dụng toàn bộ bộ lọc lên danh sách
 export function applyFilters<T extends FilterableListing>(items: T[], f: Filters): T[] {
   const kw = normalizeVi(f.keyword);
+  const proj = normalizeVi(f.project);
   return items.filter((item) => {
-    if (f.province && !item.location.includes(f.province)) return false;
-    if (f.district && !item.location.includes(f.district)) return false;
-    if (f.ward && !item.location.includes(f.ward)) return false;
+    if (f.locations.length) {
+      const inArea = f.locations.some((l) =>
+        item.location.includes(l.province) &&
+        (!l.district || item.location.includes(l.district)) &&
+        (!l.ward || item.location.includes(l.ward)),
+      );
+      if (!inArea) return false;
+    }
+    if (proj && !normalizeVi(`${item.title} ${item.location}`).includes(proj)) return false;
     if (f.types.length && !f.types.some((t) => matchType(item.type, t))) return false;
 
     const ty = priceToTy(item.price);
@@ -263,19 +318,28 @@ export function applyFilters<T extends FilterableListing>(items: T[], f: Filters
       if (f.beds >= 5 ? b < 5 : b !== f.beds) return false;
     }
     if (f.direction && listingDirection(item.id) !== f.direction) return false;
+    if (f.legal && listingLegal(item.id) !== f.legal) return false;
+    if (f.furnishing && listingFurnishing(item.id) !== f.furnishing) return false;
     if (kw && !normalizeVi(`${item.title} ${item.location} ${item.type}`).includes(kw)) return false;
     return true;
   });
 }
 
 // Sắp xếp kết quả
-export type SortKey = "moi" | "gia-tang" | "gia-giam" | "dt-giam";
+export type SortKey = "moi" | "gia-tang" | "gia-giam" | "dt-giam" | "gia-m2";
+
+// Đơn giá (tỷ/m²) — để so sánh Giá/m²; null nếu thiếu giá hoặc diện tích.
+function pricePerM2(price: string, area: string): number | null {
+  const ty = priceToTy(price); const m2 = areaToM2(area);
+  return ty == null || !m2 ? null : ty / m2;
+}
 
 export function sortListings<T extends FilterableListing>(items: T[], sort: SortKey): T[] {
   const s = [...items];
   if (sort === "gia-tang") s.sort((a, b) => (priceToTy(a.price) ?? 1e9) - (priceToTy(b.price) ?? 1e9));
   if (sort === "gia-giam") s.sort((a, b) => (priceToTy(b.price) ?? -1) - (priceToTy(a.price) ?? -1));
   if (sort === "dt-giam") s.sort((a, b) => (areaToM2(b.area) ?? -1) - (areaToM2(a.area) ?? -1));
+  if (sort === "gia-m2") s.sort((a, b) => (pricePerM2(a.price, a.area) ?? 1e9) - (pricePerM2(b.price, b.area) ?? 1e9));
   return s;
 }
 

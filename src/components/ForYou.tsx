@@ -46,10 +46,10 @@ export default function ForYou() {
 
   return (
     <section className="section-edge bg-white">
-      <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8 lg:py-16">
+      <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
         <div className="mb-6 flex items-end justify-between gap-3">
           <div>
-            <h2 className="font-serif text-2xl font-bold tracking-tight text-cvr-ink sm:text-3xl">Dành riêng cho bạn</h2>
+            <h2 className="text-2xl font-semibold text-cvr-ink sm:text-3xl">Dành riêng cho bạn</h2>
             <p className="mt-1.5 text-sm text-cvr-muted">
               {viewed.length > 0 ? "Gợi ý dựa trên bất động sản bạn vừa xem" : "Những bất động sản nổi bật đáng chú ý"}
             </p>

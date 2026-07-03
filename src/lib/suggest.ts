@@ -7,7 +7,7 @@ import { provinces } from "@/lib/locations";
 import { propertyTypeOptions, normalizeVi } from "@/lib/filters";
 import { featuredListings, projects, articles } from "@/lib/data";
 
-export type SuggestKind = "Khu vực" | "Loại hình" | "Sản phẩm" | "Dự án" | "Tin tức";
+export type SuggestKind = "Khu vực" | "Mục đích" | "Loại hình" | "Sản phẩm" | "Dự án" | "Tin tức";
 
 export type Suggestion = {
   label: string;
@@ -47,6 +47,20 @@ for (const p of provinces) {
   }
 }
 
+// 1.5) Mục đích / Nhu cầu — Bán · Cho thuê · Dự án (áp dụng TOÀN QUỐC, không giới hạn khu vực)
+const PURPOSE_SUGGESTIONS = [
+  { label: "Nhà đất bán", sub: "Tin rao bán — toàn quốc", href: "/mua-ban", alias: "mua ban nha dat can ban" },
+  { label: "Nhà đất cho thuê", sub: "Tin cho thuê — toàn quốc", href: "/cho-thue", alias: "cho thue nha dat can ho thue" },
+  { label: "Dự án bất động sản", sub: "Tất cả dự án", href: "/du-an", alias: "du an bat dong san chu dau tu" },
+];
+for (const p of PURPOSE_SUGGESTIONS) {
+  ENTRIES.push({
+    label: p.label, kind: "Mục đích", sub: p.sub,
+    href: p.href, keyword: p.label,
+    norm: toNorm(`${p.label} ${p.alias}`), primary: toNorm(p.label),
+  });
+}
+
 // 2) Loại hình BĐS
 for (const t of propertyTypeOptions) {
   ENTRIES.push({ label: t, kind: "Loại hình", type: t, norm: toNorm(t), primary: toNorm(t) });
@@ -57,7 +71,7 @@ for (const it of featuredListings) {
   ENTRIES.push({
     label: it.title, kind: "Sản phẩm", sub: it.location,
     href: `/bat-dong-san/${it.id}`, keyword: it.title,
-    norm: toNorm(`${it.title} ${it.location}`), primary: toNorm(it.title),
+    norm: toNorm(`${it.title} ${it.location} ${it.type}`), primary: toNorm(it.title),
   });
 }
 
@@ -80,15 +94,13 @@ for (const a of articles) {
 }
 
 // Gợi ý phổ biến — hiện ngay khi người dùng chạm vào ô tìm kiếm (chưa gõ), kiểu Homedy.
+// Chỉ VÀI gợi ý ĐIỂN HÌNH phủ đủ chức năng (Mục đích · Khu vực · Loại hình) — không liệt kê dài.
 export const popularSuggestions: Suggestion[] = [
+  { label: "Nhà đất bán", kind: "Mục đích", sub: "Tin rao bán — toàn quốc", href: "/mua-ban" },
+  { label: "Nhà đất cho thuê", kind: "Mục đích", sub: "Tin cho thuê — toàn quốc", href: "/cho-thue" },
   { label: "Đà Nẵng", kind: "Khu vực", province: "Đà Nẵng" },
   { label: "Huế", kind: "Khu vực", province: "Huế" },
-  { label: "Khánh Hòa", kind: "Khu vực", province: "Khánh Hòa" },
-  { label: "Lâm Đồng", kind: "Khu vực", province: "Lâm Đồng" },
-  { label: "Gia Lai", kind: "Khu vực", province: "Gia Lai" },
   { label: "Căn hộ chung cư", kind: "Loại hình", type: "Căn hộ chung cư" },
-  { label: "Đất nền / Đất nền dự án", kind: "Loại hình", type: "Đất nền / Đất nền dự án" },
-  { label: "Villa / Biệt thự biển", kind: "Loại hình", type: "Villa / Biệt thự biển" },
 ];
 
 // Khoảng cách Levenshtein có chặn trên `max` (thoát sớm để nhanh).
@@ -135,7 +147,7 @@ function tokensFuzzy(qTokens: string[], eTokens: string[]): boolean {
 
 // Cùng hạng khớp: ưu tiên lọc cấu trúc (khu vực, loại) trước, rồi dự án/sản phẩm/tin.
 const KIND_ORDER: Record<SuggestKind, number> = {
-  "Khu vực": 0, "Loại hình": 1, "Dự án": 2, "Sản phẩm": 3, "Tin tức": 4,
+  "Khu vực": 0, "Mục đích": 1, "Loại hình": 2, "Dự án": 3, "Sản phẩm": 4, "Tin tức": 5,
 };
 
 // Trả về tối đa `limit` gợi ý.

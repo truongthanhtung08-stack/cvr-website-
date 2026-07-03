@@ -23,7 +23,7 @@ export const homeBanners: Banner[] = [
   // ===== 2 BANNER CÔNG TY (quảng cáo / landing page công ty) =====
   {
     id: "lp-gioi-thieu",
-    image: "/images/hero-1-1.png",
+    image: "/images/hero-1-1.jpg",
     status: "Sàn BĐS Miền Trung", // dòng 1 (nhãn)
     title: "Coastal Land — Bất động sản Duyên hải Miền Trung", // dòng 2
     subtitle: "Minh bạch · pháp lý rõ ràng · giao dịch an toàn", // dòng 3
@@ -33,7 +33,7 @@ export const homeBanners: Banner[] = [
   },
   {
     id: "lp-dich-vu",
-    image: "/images/hero-3-1.png",
+    image: "/images/hero-3-1.jpg",
     status: "Dịch vụ ký gửi", // dòng 1 (nhãn)
     title: "Ký gửi Bất động sản chuyên nghiệp", // dòng 2
     subtitle: "Định giá chuẩn · bán nhanh · hỗ trợ pháp lý", // dòng 3
@@ -44,7 +44,7 @@ export const homeBanners: Banner[] = [
   // ===== 1 BANNER DỰ ÁN (dòng 1 = TÊN dự án, dòng 2 = ĐỊA ĐIỂM) =====
   {
     id: "lp-vinhomes",
-    image: "/images/duan-vinhomes-1-1.png",
+    image: "/images/duan-vinhomes-1-1.jpg",
     status: "Đang mở bán", // dòng 1 (nhãn)
     title: "Vinhomes Skylake — Dream Apartment", // dòng 2 — TÊN dự án
     subtitle: "Phạm Hùng, Nam Từ Liêm, Hà Nội", // dòng 3 — ĐỊA CHỈ

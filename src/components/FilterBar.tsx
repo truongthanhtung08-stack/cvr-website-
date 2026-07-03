@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import FilterDropdown, { PanelActions, FilterDropdownGroup } from "@/components/FilterDropdown";
 import { provinceNames, districtsOf, wardsOf } from "@/lib/locations";
+import { projects } from "@/lib/data";
 import {
   typeGroupsFor,
   priceRangesFor,
@@ -12,9 +13,14 @@ import {
   directionOptions,
   priceRangeText,
   areaRangeText,
-  emptyFilters,
   normalizeVi,
+  locationLabel,
+  sameLocation,
+  MAX_LOCATIONS,
+  legalOptions,
+  furnishingOptions,
   type Filters,
+  type LocationSel,
 } from "@/lib/filters";
 import { suggest, popularSuggestions, type Suggestion, type SuggestKind } from "@/lib/suggest";
 
@@ -22,6 +28,7 @@ const RECENT_KEY = "cvr-recent-search"; // lịch sử tìm kiếm (localStorage
 
 // Icon (path d) cho từng nhóm gợi ý.
 const SUGGEST_ICON: Record<SuggestKind, string> = {
+  "Mục đích": "M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4",
   "Khu vực": "M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z M15 11a3 3 0 11-6 0 3 3 0 016 0z",
   "Loại hình": "M7 7h.01M7 3h5a1.99 1.99 0 011.414.586l7 7a2 2 0 010 2.828l-5 5a2 2 0 01-2.828 0l-7-7A1.99 1.99 0 014 9V4a1 1 0 011-1z",
   "Sản phẩm": "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6",
@@ -34,7 +41,6 @@ export default function FilterBar({
   value,
   onChange,
   onSearch,
-  onMap,
   compact = false,
   leading,
   purpose = "ban",
@@ -55,7 +61,7 @@ export default function FilterBar({
   const typeGroups = typeGroupsFor(purpose);
   const typeOptions = typeGroups.flatMap((g) => g.items);
   const set = (patch: Partial<Filters>) => onChange({ ...f, ...patch });
-  const hh = compact ? "h-8" : "h-11"; // chiều cao ô (gọn hết cỡ khi đặt trên Hero)
+  const hh = compact ? "h-12" : "h-11"; // compact = thanh tìm kiếm LỚN ở Hero (kiểu Batdongsan)
 
   // Autocomplete đa tầng: Khu vực · Loại hình · Sản phẩm · Dự án · Tin tức.
   // Khi chạm vào ô (chưa gõ) → hiện Lịch sử + Gợi ý phổ biến (mô hình Homedy).
@@ -63,6 +69,7 @@ export default function FilterBar({
   const [sugOpen, setSugOpen] = useState(false);
   const [activeIdx, setActiveIdx] = useState(-1);
   const [recent, setRecent] = useState<Suggestion[]>([]);
+  const boxRef = useRef<HTMLDivElement>(null); // vùng ô tìm — để bấm-ra-ngoài thì đóng gợi ý
 
   useEffect(() => {
     try {
@@ -70,6 +77,16 @@ export default function FilterBar({
       if (Array.isArray(r)) setRecent(r);
     } catch { /* bỏ qua localStorage lỗi */ }
   }, []);
+
+  // Ẩn gợi ý THÔNG MINH: chỉ đóng khi bấm RA NGOÀI ô tìm (thay onBlur hẹn-giờ chập chờn).
+  useEffect(() => {
+    if (!sugOpen) return;
+    const onDoc = (e: MouseEvent) => {
+      if (!boxRef.current?.contains(e.target as Node)) { setSugOpen(false); setActiveIdx(-1); }
+    };
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, [sugOpen]);
 
   const pushRecent = (s: Suggestion) => {
     setRecent((prev) => {
@@ -84,13 +101,18 @@ export default function FilterBar({
   };
 
   const typed = f.keyword.trim().length > 0;
-  // Panel: đang gõ → kết quả khớp; chưa gõ → lịch sử + phổ biến.
-  const panelItems: Suggestion[] = typed ? suggest(f.keyword, 8) : [...recent, ...popularSuggestions];
+  // Panel: chỉ VÀI gợi ý điển hình — đang gõ → tối đa 6 kết quả khớp; chưa gõ → ≤3 lịch sử + phổ biến.
+  const recentShown = recent.slice(0, 3);
+  const panelItems: Suggestion[] = typed ? suggest(f.keyword, 6) : [...recentShown, ...popularSuggestions];
 
   const applySuggestion = (s: Suggestion) => {
     pushRecent(s);
-    if (s.kind === "Khu vực") {
-      set({ province: s.province ?? "", district: s.district ?? "", ward: s.ward ?? "", keyword: "" });
+    if (s.kind === "Khu vực" && s.province) {
+      // Thêm khu vực vào danh sách ĐA CHỌN (không ghi đè, không trùng, tối đa 5).
+      const sel: LocationSel = { province: s.province, district: s.district || undefined, ward: s.ward || undefined };
+      const dup = f.locations.some((l) => sameLocation(l, sel));
+      const locations = dup || f.locations.length >= MAX_LOCATIONS ? f.locations : [...f.locations, sel];
+      set({ locations, keyword: "" });
     } else if (s.kind === "Loại hình" && s.type) {
       set({ types: f.types.includes(s.type) ? f.types : [...f.types, s.type], keyword: "" });
     } else if (s.href) {
@@ -128,10 +150,16 @@ export default function FilterBar({
 
   const areaLabel = areaRangeText(f.areaMin, f.areaMax);
   const priceLabel = priceRangeText(f.priceMin, f.priceMax);
-  const locLabel = f.ward || f.district || f.province;
+  const locLabel =
+    f.locations.length === 0 ? "" :
+    f.locations.length === 1 ? locationLabel(f.locations[0]) :
+    `${locationLabel(f.locations[0])} +${f.locations.length - 1}`;
   const typeLabel =
     f.types.length === 0 ? "" : f.types.length === 1 ? f.types[0] : `${f.types.length} loại hình`;
-  const moreCount = (f.beds ? 1 : 0) + (f.direction ? 1 : 0);
+  // Lọc thêm ĐẶC THÙ theo ý định: mua bán = Hướng + Pháp lý · cho thuê = Nội thất.
+  const moreCount =
+    (f.beds ? 1 : 0) +
+    (purpose === "ban" ? (f.direction ? 1 : 0) + (f.legal ? 1 : 0) : (f.furnishing ? 1 : 0));
 
   // Compact: mỗi ô lọc rộng vừa đúng nội dung (hiện đủ chữ, không cắt).
   const ddClass = compact ? "shrink-0" : "lg:flex-1 lg:min-w-0";
@@ -139,14 +167,23 @@ export default function FilterBar({
   // ===== Nhóm dropdown (dùng chung cho cả 2 layout) =====
   const dropdowns = (
     <>
-      {/* Khu vực — danh sách bấm chọn + lọc nhanh + breadcrumb (kiểu Homedy) */}
-      <FilterDropdown label="Khu vực" summary={locLabel} active={!!locLabel} panelClassName="w-72" compact={compact} className={ddClass}>
+      {/* Khu vực — ĐA CHỌN (tối đa 5) theo tầng Tỉnh→Quận→Phường (kiểu Batdongsan) */}
+      <FilterDropdown label="Khu vực" summary={locLabel} active={f.locations.length > 0} panelClassName="w-80" compact={compact} className={ddClass}>
         {() => (
           <LocationPanel
-            province={f.province}
-            district={f.district}
-            ward={f.ward}
-            onChange={(patch) => set(patch)}
+            locations={f.locations}
+            onChange={(locations) => set({ locations })}
+          />
+        )}
+      </FilterDropdown>
+
+      {/* Dự án — LỌC ĐỘNG theo khu vực đã chọn (kiểu Batdongsan) */}
+      <FilterDropdown label="Dự án" summary={f.project} active={!!f.project} panelClassName="w-72" compact={compact} className={ddClass}>
+        {({ close }) => (
+          <ProjectPanel
+            locations={f.locations}
+            project={f.project}
+            onPick={(name) => { set({ project: f.project === name ? "" : name }); close(); }}
           />
         )}
       </FilterDropdown>
@@ -265,17 +302,43 @@ export default function FilterBar({
                 ))}
               </div>
             </div>
-            <div>
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-cvr-muted">Hướng nhà</p>
-              <div className="flex flex-wrap gap-1.5">
-                {directionOptions.map((d) => (
-                  <Chip key={d} active={f.direction === d} onClick={() => set({ direction: f.direction === d ? "" : d })}>
-                    {d}
-                  </Chip>
-                ))}
+            {purpose === "ban" && (
+              <div>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-cvr-muted">Hướng nhà</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {directionOptions.map((d) => (
+                    <Chip key={d} active={f.direction === d} onClick={() => set({ direction: f.direction === d ? "" : d })}>
+                      {d}
+                    </Chip>
+                  ))}
+                </div>
               </div>
-            </div>
-            <PanelActions onReset={() => set({ beds: 0, direction: "" })} onApply={close} />
+            )}
+            {/* Đặc thù theo ý định: MUA BÁN → Pháp lý · CHO THUÊ → Nội thất */}
+            {purpose === "ban" ? (
+              <div>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-cvr-muted">Pháp lý</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {legalOptions.map((x) => (
+                    <Chip key={x} active={f.legal === x} onClick={() => set({ legal: f.legal === x ? "" : x })}>
+                      {x}
+                    </Chip>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-cvr-muted">Nội thất</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {furnishingOptions.map((x) => (
+                    <Chip key={x} active={f.furnishing === x} onClick={() => set({ furnishing: f.furnishing === x ? "" : x })}>
+                      {x}
+                    </Chip>
+                  ))}
+                </div>
+              </div>
+            )}
+            <PanelActions onReset={() => set({ beds: 0, direction: "", legal: "", furnishing: "" })} onApply={close} />
           </div>
         )}
       </FilterDropdown>
@@ -284,9 +347,9 @@ export default function FilterBar({
 
   // ===== Ô từ khoá + nút tìm kiếm (dùng chung) =====
   const searchBox = (
-    <div className={compact ? "flex min-w-[360px] flex-1 gap-2" : "flex gap-2 lg:w-72 xl:w-80"}>
+    <div ref={boxRef} className={compact ? "flex w-full gap-2.5" : "flex gap-2 lg:w-72 xl:w-80"}>
       <div className="relative flex-1">
-        <svg className={`pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 ${compact ? "text-white/55" : "text-cvr-faint"}`} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+        <svg className={`pointer-events-none absolute top-1/2 -translate-y-1/2 text-cvr-faint ${compact ? "left-4 h-[18px] w-[18px]" : "left-3 h-4 w-4"}`} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
         </svg>
         <input
@@ -294,24 +357,23 @@ export default function FilterBar({
           value={f.keyword}
           onChange={(e) => { set({ keyword: e.target.value }); setSugOpen(true); setActiveIdx(-1); }}
           onFocus={() => setSugOpen(true)}
-          onBlur={() => setTimeout(() => setSugOpen(false), 150)}
           onKeyDown={onKeyNav}
-          placeholder="Bán chung cư tại Đà Nẵng 2 phòng ngủ"
+          placeholder="Nhập khu vực, dự án, hoặc loại bất động sản…"
           aria-label="Tìm theo từ khoá, khu vực, loại hình, dự án, tin"
           autoComplete="off"
           role="combobox"
           aria-expanded={sugOpen}
-          className={`${hh} w-full rounded-lg border pl-9 pr-3 text-sm outline-none transition ${
+          className={`${hh} w-full border outline-none transition ${
             compact
-              ? "border-white/15 bg-white/10 text-white placeholder-white/40 placeholder:italic focus:border-white/45 focus:bg-white/15"
-              : "border-black/12 bg-black/[0.03] text-cvr-ink placeholder-cvr-faint focus:border-cvr-ink/40 focus:bg-black/[0.05]"
+              ? "rounded-xl border-transparent bg-white pl-11 pr-4 text-[15px] text-cvr-ink placeholder-cvr-faint shadow-lg shadow-black/20 ring-1 ring-black/5 focus:ring-2 focus:ring-cvr-gold/50"
+              : "rounded-lg border-black/12 bg-black/[0.03] pl-9 pr-3 text-sm text-cvr-ink placeholder-cvr-faint focus:border-cvr-ink/40 focus:bg-black/[0.05]"
           }`}
         />
         {sugOpen && panelItems.length > 0 && (
           <div className="absolute left-0 right-0 top-full z-[120] mt-1.5 max-h-80 overflow-y-auto rounded-xl border border-cvr-line bg-white p-1.5 shadow-2xl shadow-black/20 ring-1 ring-inset ring-black/5">
             {panelItems.map((s, i) => {
               const header = !typed
-                ? i === 0 && recent.length > 0 ? "recent" : i === recent.length ? "popular" : ""
+                ? i === 0 && recentShown.length > 0 ? "recent" : i === recentShown.length ? "popular" : ""
                 : "";
               return (
                 <div key={`${s.label}-${i}`}>
@@ -353,54 +415,33 @@ export default function FilterBar({
           type="button"
           onClick={onSearch}
           aria-label="Tìm kiếm"
-          className={`flex ${hh} shrink-0 items-center justify-center gap-2 rounded-lg text-sm font-semibold transition active:scale-95 ${
-            compact ? "w-8 bg-white text-cvr-ink hover:bg-white/90" : "bg-cvr-ink px-6 text-white hover:bg-cvr-ink/90"
+          className={`flex ${hh} shrink-0 items-center justify-center gap-2 font-semibold transition active:scale-95 ${
+            compact
+              ? "rounded-xl bg-cvr-gold px-6 text-[15px] text-cvr-ink shadow-lg shadow-black/20 hover:bg-cvr-gold-soft"
+              : "rounded-lg bg-cvr-ink px-6 text-sm text-white hover:bg-cvr-ink/90"
           }`}
         >
-          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
-          </svg>
-          {!compact && "Tìm kiếm"}
+          {!compact && (
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
+            </svg>
+          )}
+          Tìm kiếm
         </button>
       )}
     </div>
   );
 
-  // Compact (Hero): gọn hết mức — ĐÚNG 2 dòng.
-  // Dòng 1 = menu (tab) + ô tìm kiếm từ khoá; dòng 2 = các ô lọc (rộng bằng nhau).
+  // Compact (Hero): kiểu Batdongsan — tab canh giữa + 1 thanh tìm kiếm LỚN.
+  // Lọc đa tầng thông minh (khu vực → quận → phường · loại hình · dự án) + sửa lỗi gõ
+  // nằm trong autocomplete của chính ô tìm kiếm (xem suggest.ts).
   if (compact) {
     return (
-      <div className="flex flex-col gap-2">
-        {/* Dòng 1: tab (menu) — vạch ngăn cách biệt — ô từ khoá — Bản đồ */}
-        <div className="flex flex-wrap items-center gap-2">
-          {leading}
-          {leading && <span aria-hidden className="mx-1 h-5 w-px shrink-0 self-center bg-white/20" />}
-          {searchBox}
-          <button
-            type="button"
-            onClick={onMap}
-            className="flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-white/15 bg-white/10 px-3 text-sm font-medium text-white/85 transition hover:border-white/35 hover:text-white"
-          >
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-            </svg>
-            Bản đồ
-          </button>
-        </div>
-        {/* Dòng 2: các ô lọc (rộng vừa đủ chữ) — Đặt lại ở cuối */}
-        <div className="flex flex-wrap items-center gap-2">
-          <FilterDropdownGroup>{dropdowns}</FilterDropdownGroup>
-          <button
-            type="button"
-            onClick={() => onChange(emptyFilters())}
-            className="ml-auto flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-white/15 bg-white/10 px-3 text-sm font-medium text-white/85 transition hover:border-white/35 hover:text-white"
-          >
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-            Đặt lại
-          </button>
-        </div>
+      <div className="flex flex-col gap-3.5">
+        {/* Dòng 1: tab (menu) — canh giữa, gạch chân tab đang chọn */}
+        {leading && <div className="flex justify-center">{leading}</div>}
+        {/* Dòng 2: thanh tìm kiếm lớn */}
+        {searchBox}
       </div>
     );
   }
@@ -420,30 +461,37 @@ export default function FilterBar({
 
 // ===== Bộ phận con =====
 
-// Bộ chọn khu vực kiểu Homedy: bấm chọn theo tầng Tỉnh → Quận → Phường,
-// có breadcrumb để quay lại + ô lọc nhanh trong panel.
+// Bộ chọn khu vực ĐA TẦNG + ĐA CHỌN (kiểu Batdongsan): duyệt Tỉnh→Quận→Phường,
+// thêm cả tỉnh/quận hoặc chọn tới phường; mỗi khu vực là 1 chip (tối đa MAX_LOCATIONS).
 function LocationPanel({
-  province, district, ward, onChange,
+  locations, onChange,
 }: {
-  province: string;
-  district: string;
-  ward: string;
-  onChange: (patch: { province?: string; district?: string; ward?: string }) => void;
+  locations: LocationSel[];
+  onChange: (locations: LocationSel[]) => void;
 }) {
   const [q, setQ] = useState("");
-  const wardList = province && district ? wardsOf(province, district) : [];
+  const [prov, setProv] = useState(""); // đường dẫn đang duyệt (chưa cam kết)
+  const [dist, setDist] = useState("");
+  const wardList = prov && dist ? wardsOf(prov, dist) : [];
   const level: "province" | "district" | "ward" =
-    !province ? "province" : !district ? "district" : wardList.length ? "ward" : "district";
+    !prov ? "province" : !dist ? "district" : wardList.length ? "ward" : "district";
 
-  const list = level === "province" ? provinceNames : level === "district" ? districtsOf(province) : wardList;
+  const list = level === "province" ? provinceNames : level === "district" ? districtsOf(prov) : wardList;
   const nq = normalizeVi(q);
   const filtered = nq ? list.filter((x) => normalizeVi(x).includes(nq)) : list;
 
+  const full = locations.length >= MAX_LOCATIONS;
+  const add = (sel: LocationSel) => {
+    if (full || locations.some((l) => sameLocation(l, sel))) return;
+    onChange([...locations, sel]);
+    setProv(""); setDist(""); setQ("");
+  };
+  const remove = (i: number) => onChange(locations.filter((_, k) => k !== i));
+
   const pick = (name: string) => {
-    if (level === "province") onChange({ province: name, district: "", ward: "" });
-    else if (level === "district") onChange({ district: name, ward: "" });
-    else onChange({ ward: name });
-    setQ("");
+    if (level === "province") { setProv(name); setQ(""); }
+    else if (level === "district") { setDist(name); setQ(""); }
+    else add({ province: prov, district: dist, ward: name }); // tới phường = thêm luôn
   };
 
   const Crumb = ({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) => (
@@ -458,13 +506,37 @@ function LocationPanel({
 
   return (
     <div>
-      {/* Breadcrumb tầng địa giới */}
+      {/* Khu vực ĐÃ CHỌN — chip gỡ riêng */}
+      {locations.length > 0 && (
+        <div className="mb-2 flex flex-wrap gap-1.5">
+          {locations.map((l, i) => (
+            <span key={`${locationLabel(l)}-${i}`} className="inline-flex items-center gap-1 rounded-full bg-cvr-ink/10 py-1 pl-2.5 pr-1.5 text-xs text-cvr-ink">
+              <span className="max-w-[9rem] truncate">{locationLabel(l)}</span>
+              <button type="button" onClick={() => remove(i)} aria-label="Gỡ khu vực" className="text-cvr-faint transition hover:text-cvr-ink">
+                <svg className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+
+      {/* Breadcrumb tầng đang duyệt */}
       <div className="mb-2 flex flex-wrap items-center gap-0.5 text-xs">
-        <Crumb active={!province} onClick={() => { onChange({ province: "", district: "", ward: "" }); setQ(""); }}>Toàn quốc</Crumb>
-        {province && <><span className="text-cvr-faint">›</span><Crumb active={!district} onClick={() => { onChange({ district: "", ward: "" }); setQ(""); }}>{province}</Crumb></>}
-        {district && <><span className="text-cvr-faint">›</span><Crumb active={!ward} onClick={() => { onChange({ ward: "" }); setQ(""); }}>{district}</Crumb></>}
-        {ward && <><span className="text-cvr-faint">›</span><span className="max-w-[8rem] truncate px-1.5 py-0.5 font-semibold text-cvr-ink">{ward}</span></>}
+        <Crumb active={!prov} onClick={() => { setProv(""); setDist(""); setQ(""); }}>Toàn quốc</Crumb>
+        {prov && <><span className="text-cvr-faint">›</span><Crumb active={!dist} onClick={() => { setDist(""); setQ(""); }}>{prov}</Crumb></>}
+        {dist && <><span className="text-cvr-faint">›</span><span className="max-w-[8rem] truncate px-1.5 py-0.5 font-semibold text-cvr-ink">{dist}</span></>}
       </div>
+
+      {/* Thêm nhanh cả tỉnh / cả quận đang duyệt */}
+      {prov && !full && (
+        <button
+          type="button"
+          onClick={() => add(dist ? { province: prov, district: dist } : { province: prov })}
+          className="mb-2 w-full rounded-lg border border-cvr-ink/25 bg-cvr-ink/[0.04] px-2.5 py-1.5 text-left text-xs font-medium text-cvr-ink transition hover:bg-cvr-ink/10"
+        >
+          ＋ Thêm cả {dist || prov}
+        </button>
+      )}
 
       {/* Lọc nhanh trong tầng hiện tại */}
       <input
@@ -477,20 +549,67 @@ function LocationPanel({
 
       {/* Danh sách bấm chọn */}
       <div className="mt-2 max-h-56 space-y-0.5 overflow-y-auto">
+        {full && <p className="px-2 py-2 text-center text-xs font-medium text-cvr-gold-ink">Đã đạt tối đa {MAX_LOCATIONS} khu vực</p>}
         {filtered.length === 0 && <p className="px-2 py-3 text-center text-sm text-cvr-faint">Không có kết quả</p>}
-        {filtered.map((name) => {
-          const active = level === "province" ? province === name : level === "district" ? district === name : ward === name;
+        {filtered.map((name) => (
+          <button
+            key={name}
+            type="button"
+            onClick={() => pick(name)}
+            className="flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 text-left text-sm text-cvr-ink/80 transition hover:bg-black/5"
+          >
+            <span className="truncate">{name}</span>
+            {level !== "ward" ? <span className="shrink-0 text-cvr-faint">›</span> : <span className="shrink-0 text-[11px] text-cvr-faint">＋ Thêm</span>}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Danh sách dự án — LỌC ĐỘNG theo khu vực đã chọn (kiểu Batdongsan): chọn Đà Nẵng
+// → chỉ hiện dự án Đà Nẵng. Chưa chọn khu vực → hiện tất cả.
+function ProjectPanel({
+  locations, project, onPick,
+}: {
+  locations: LocationSel[];
+  project: string;
+  onPick: (name: string) => void;
+}) {
+  const [q, setQ] = useState("");
+  const inArea = (loc: string) =>
+    locations.length === 0 ||
+    locations.some((l) => loc.includes(l.province) && (!l.district || loc.includes(l.district)) && (!l.ward || loc.includes(l.ward)));
+  const base = projects.filter((p) => inArea(p.location));
+  const nq = normalizeVi(q);
+  const list = nq ? base.filter((p) => normalizeVi(`${p.name} ${p.location} ${p.developer}`).includes(nq)) : base;
+
+  return (
+    <div>
+      <input
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+        placeholder="Tìm dự án…"
+        aria-label="Tìm dự án"
+        className="h-9 w-full rounded-lg border border-black/12 bg-black/[0.03] px-3 text-sm text-cvr-ink placeholder-cvr-faint outline-none focus:border-cvr-ink/40"
+      />
+      <div className="mt-2 max-h-64 space-y-0.5 overflow-y-auto">
+        {list.length === 0 && (
+          <p className="px-2 py-3 text-center text-sm text-cvr-faint">
+            {locations.length ? "Chưa có dự án ở khu vực đã chọn" : "Không có dự án khớp"}
+          </p>
+        )}
+        {list.map((p) => {
+          const active = project === p.name;
           return (
             <button
-              key={name}
+              key={p.slug}
               type="button"
-              onClick={() => pick(name)}
-              className={`flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 text-left text-sm transition ${
-                active ? "bg-cvr-ink/10 text-cvr-ink" : "text-cvr-ink/80 hover:bg-black/5"
-              }`}
+              onClick={() => onPick(p.name)}
+              className={`flex w-full flex-col rounded-lg px-2.5 py-1.5 text-left text-sm transition ${active ? "bg-cvr-ink/10 text-cvr-ink" : "text-cvr-ink/80 hover:bg-black/5"}`}
             >
-              <span className="truncate">{name}</span>
-              {level !== "ward" && <span className="shrink-0 text-cvr-faint">›</span>}
+              <span className="truncate font-medium">{p.name}</span>
+              <span className="truncate text-[11px] text-cvr-faint">{p.location}</span>
             </button>
           );
         })}

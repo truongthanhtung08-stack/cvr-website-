@@ -45,6 +45,30 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  /* Giãn chữ âm rất nhẹ — Inter mô phỏng SF Pro của Apple (chữ "khít", tinh tế).
+     Giá trị nhỏ để không ảnh hưởng dấu tiếng Việt. */
+  letter-spacing: -0.01em;
+}
+
+/* Tiêu đề kiểu Apple: cỡ càng lớn giãn chữ càng chặt (đặc trưng SF Pro Display).
+   Áp cho mọi heading để phân cấp chữ tương phản mạnh, "khít" như apple.com. */
+h1, h2, h3 {
+  letter-spacing: -0.022em;
+}
+
+/* ===== Thanh nav kính mờ — công thức ĐEN chuẩn apple.com (global nav) =====
+   Màu nav #161617 (đậm hơn #1d1d1f một chút) + saturate 180% + blur 20px.
+   Cho ra thanh menu đen "trong", nổi khối, không bị xám bệch khi cuộn qua nền trắng. */
+.nav-glass {
+  /* Độ đặc cao (0.97) để đọc ra ĐEN #161617 kể cả khi sau lưng là nền trắng —
+     web nền sáng khác trang nền tối của Apple, phải đặc hơn mới ra "đen chuẩn". */
+  background-color: rgba(22, 22, 23, 0.97);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+}
+/* Trình duyệt không hỗ trợ backdrop-filter → nền đen đặc hoàn toàn */
+@supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .nav-glass { background-color: #161617; }
 }
 
 /* ===== Bóng "luxury" — nhiều lớp, ám màu mực, rất mềm (cho card nền trắng) ===== */

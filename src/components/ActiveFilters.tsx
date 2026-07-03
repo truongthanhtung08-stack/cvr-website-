@@ -1,6 +1,6 @@
 "use client";
 
-import { priceRangeText, areaRangeText, type Filters } from "@/lib/filters";
+import { priceRangeText, areaRangeText, locationLabel, type Filters } from "@/lib/filters";
 
 // Chip các bộ lọc đang áp dụng — bấm X để gỡ từng cái (giống Homedy).
 export default function ActiveFilters({
@@ -13,9 +13,10 @@ export default function ActiveFilters({
   const f = value;
   const chips: { key: string; label: string; clear: Partial<Filters> }[] = [];
 
-  if (f.province) chips.push({ key: "tinh", label: f.province, clear: { province: "", district: "", ward: "" } });
-  if (f.district) chips.push({ key: "quan", label: f.district, clear: { district: "", ward: "" } });
-  if (f.ward) chips.push({ key: "phuong", label: f.ward, clear: { ward: "" } });
+  f.locations.forEach((l, i) =>
+    chips.push({ key: `kv-${i}`, label: locationLabel(l), clear: { locations: f.locations.filter((_, k) => k !== i) } }),
+  );
+  if (f.project) chips.push({ key: "duan", label: f.project, clear: { project: "" } });
   f.types.forEach((t) =>
     chips.push({ key: `loai-${t}`, label: t, clear: { types: f.types.filter((x) => x !== t) } }),
   );
@@ -25,6 +26,8 @@ export default function ActiveFilters({
     chips.push({ key: "dt", label: areaRangeText(f.areaMin, f.areaMax), clear: { areaMin: null, areaMax: null } });
   if (f.beds) chips.push({ key: "pn", label: f.beds >= 5 ? "5+ phòng ngủ" : `${f.beds} phòng ngủ`, clear: { beds: 0 } });
   if (f.direction) chips.push({ key: "huong", label: `Hướng ${f.direction}`, clear: { direction: "" } });
+  if (f.legal) chips.push({ key: "phaply", label: f.legal, clear: { legal: "" } });
+  if (f.furnishing) chips.push({ key: "noithat", label: f.furnishing, clear: { furnishing: "" } });
   if (f.keyword.trim()) chips.push({ key: "q", label: `“${f.keyword.trim()}”`, clear: { keyword: "" } });
 
   if (chips.length === 0) return null;

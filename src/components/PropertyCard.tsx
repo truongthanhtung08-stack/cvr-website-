@@ -45,7 +45,7 @@ export default function PropertyCard({
   return (
     <Link
       href={`/bat-dong-san/${item.id}`}
-      className="flex flex-col overflow-hidden border border-cvr-line bg-white transition-shadow hover:shadow-md"
+      className="flex flex-col overflow-hidden rounded-2xl border border-cvr-line bg-white shadow-lux shadow-lux-hover transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1"
       style={tier ? { borderTopColor: tier.accent, borderTopWidth: "2px" } : undefined}
     >
       {/* Ảnh */}

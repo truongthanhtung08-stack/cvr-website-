@@ -22,9 +22,9 @@ export default function NewsSection() {
   const goTo = (i: number) => setSlide(Math.max(0, Math.min(i, totalSlides - 1)));
 
   return (
-    <section className="section-edge bg-cvr-surface">
+    <section className="section-edge bg-white">
       <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
-        <h2 className="font-serif text-2xl font-bold text-cvr-ink">
+        <h2 className="text-2xl font-semibold text-cvr-ink">
           Tin tức
         </h2>
 
@@ -34,7 +34,7 @@ export default function NewsSection() {
             <Link
               key={a.title}
               href="/tin-tuc"
-              className="card-lux group relative flex flex-col overflow-hidden border border-cvr-line bg-white shadow-lux hover:-translate-y-2 hover:border-cvr-gold/45 shadow-lux-hover"
+              className="card-lux group relative flex flex-col overflow-hidden rounded-2xl border border-cvr-line bg-white shadow-lux hover:-translate-y-2 hover:border-cvr-gold/45 shadow-lux-hover"
             >
               <span className="card-sheen" aria-hidden />
               <div className="relative aspect-[16/9] overflow-hidden">
@@ -53,7 +53,7 @@ export default function NewsSection() {
                   </span>
                   <span>{a.date}</span>
                 </div>
-                <h3 className="mt-3 line-clamp-2 font-bold leading-snug text-cvr-ink">
+                <h3 className="mt-3 line-clamp-2 font-semibold leading-snug text-cvr-ink">
                   {a.title}
                 </h3>
                 <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-cvr-muted">

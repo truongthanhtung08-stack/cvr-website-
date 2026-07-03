@@ -11,6 +11,11 @@ const nextConfig: NextConfig = isPages
       images: { unoptimized: true },
       trailingSlash: true,
     }
-  : {};
+  : {
+      // Dev/Vercel: cũng tắt tối ưu ảnh để KHỚP production (GitHub Pages static export
+      // luôn unoptimized). Đồng thời dev phục vụ ảnh gốc từ /public tức thì thay vì
+      // qua /_next/image (vốn chậm, gây treo tải khi chụp/kiểm thử).
+      images: { unoptimized: true },
+    };
 
 export default nextConfig;
