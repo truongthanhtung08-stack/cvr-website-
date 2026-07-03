@@ -1,13 +1,12 @@
 import type { NextConfig } from "next";
 
-// Khi build cho GitHub Pages (biến GITHUB_PAGES=true) thì xuất tĩnh + đặt basePath.
-// Local/Vercel/Cloudflare giữ nguyên (không basePath).
+// Khi build cho GitHub Pages (biến GITHUB_PAGES=true) thì xuất tĩnh.
+// Từ 7/2026 chạy domain riêng coastalland.vn (custom domain) → KHÔNG còn basePath /cvr-website-.
 const isPages = process.env.GITHUB_PAGES === "true";
 
 const nextConfig: NextConfig = isPages
   ? {
       output: "export",
-      basePath: "/cvr-website-",
       images: { unoptimized: true },
       trailingSlash: true,
     }
