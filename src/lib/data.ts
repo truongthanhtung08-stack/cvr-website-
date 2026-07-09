@@ -129,6 +129,37 @@ export function getArticleBySlug(slug: string): Article | undefined {
   return articles.find((a) => a.slug === slug);
 }
 
+// Tỉnh/thành = phần cuối chuỗi địa chỉ ("Hòa Hải, Ngũ Hành Sơn, Đà Nẵng" → "Đà Nẵng").
+export function provinceOf(location: string): string {
+  return location.split(",").pop()?.trim() ?? "";
+}
+
+// Quận/huyện = phần áp cuối ("Hòa Hải, Ngũ Hành Sơn, Đà Nẵng" → "Ngũ Hành Sơn").
+export function districtOf(location: string): string {
+  const parts = location.split(",").map((s) => s.trim());
+  return parts.length >= 2 ? parts[parts.length - 2] : "";
+}
+
+// Phân khúc = từ khoá loại hình chuẩn hoá, suy từ chuỗi type (khớp giữa dự án ↔ tin).
+// Trả "" nếu không nhận ra (không tính là cùng phân khúc).
+const SEGMENT_KEYWORDS = [
+  "Căn hộ", "Condotel", "Villa", "Biệt thự", "Shophouse", "Nhà phố",
+  "Nhà riêng", "Đất nền", "Đất công nghiệp", "Nhà xưởng", "Kho", "Đất",
+];
+export function segmentOf(type: string): string {
+  return SEGMENT_KEYWORDS.find((k) => type.includes(k)) ?? "";
+}
+
+// Chọn N mục "liên quan" theo ĐIỂM relevance (cao → thấp), giữ thứ tự gốc khi bằng điểm,
+// luôn trả đủ N nếu pool đủ (điểm 0 vẫn được lấy để lấp). Dùng chung cho BĐS/dự án/tin tức.
+export function pickRelated<T>(pool: T[], score: (x: T) => number, n: number): T[] {
+  return pool
+    .map((x, i) => ({ x, s: score(x), i }))
+    .sort((a, b) => b.s - a.s || a.i - b.i)
+    .slice(0, n)
+    .map((e) => e.x);
+}
+
 // Nội dung bài viết — dùng content nếu có, không thì sinh đoạn mẫu chuyên nghiệp
 export function articleContent(a: Article): string[] {
   if (a.content?.length) return a.content;

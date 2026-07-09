@@ -46,7 +46,6 @@ export default function PropertyCard({
     <Link
       href={`/bat-dong-san/${item.id}`}
       className="flex flex-col overflow-hidden rounded-2xl border border-cvr-line bg-white shadow-lux shadow-lux-hover transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1"
-      style={tier ? { borderTopColor: tier.accent, borderTopWidth: "2px" } : undefined}
     >
       {/* Ảnh */}
       <div className="relative aspect-[4/3] overflow-hidden bg-cvr-surface">
@@ -126,10 +125,9 @@ function PropertyRow({ item, showTime = false }: { item: Listing; showTime?: boo
   return (
     <Link
       href={`/bat-dong-san/${item.id}`}
-      className="flex gap-3 overflow-hidden border border-cvr-line bg-white p-2.5 transition-shadow hover:shadow-md"
-      style={tier ? { borderTopColor: tier.accent, borderTopWidth: "2px" } : undefined}
+      className="flex gap-3 overflow-hidden rounded-2xl border border-cvr-line bg-white p-2.5 shadow-lux shadow-lux-hover transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5"
     >
-      <div className="relative aspect-[4/3] w-48 shrink-0 overflow-hidden bg-cvr-surface">
+      <div className="relative aspect-[4/3] w-48 shrink-0 overflow-hidden rounded-xl bg-cvr-surface">
         <Image src={item.image} alt={item.title} fill sizes="192px" className="object-cover" />
         {tier && (
           <span

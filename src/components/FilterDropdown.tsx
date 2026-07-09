@@ -102,19 +102,19 @@ export default function FilterDropdown({
         ref={btnRef}
         type="button"
         onClick={() => setOpen(!open)}
-        className={`flex ${compact ? "h-8 w-auto whitespace-nowrap px-2.5" : "h-11 w-full px-3"} items-center justify-between gap-2 rounded-lg border text-sm outline-none transition ${
+        className={`flex ${compact ? "h-8 w-auto whitespace-nowrap px-2.5" : "h-9 w-full px-3.5 lg:w-auto lg:whitespace-nowrap"} items-center justify-between gap-2 rounded-full border text-sm outline-none transition ${
           compact
             ? active
               ? "border-white/40 bg-white/20 text-white"
               : "border-white/15 bg-white/10 text-white/85 hover:border-white/35"
             : active
-              ? "border-cvr-ink/40 bg-cvr-ink/[0.06] text-cvr-ink"
-              : "border-black/12 bg-black/[0.03] text-cvr-ink/80 hover:border-black/30"
+              ? "border-transparent bg-cvr-ink text-white"
+              : "border-transparent bg-cvr-surface text-cvr-body hover:bg-black/[0.07] hover:text-cvr-ink"
         }`}
       >
         <span className="truncate">{active && summary ? summary : label}</span>
         <svg
-          className={`h-4 w-4 shrink-0 transition-transform ${compact ? "text-white/60" : "text-cvr-faint"} ${open ? "rotate-180" : ""}`}
+          className={`h-4 w-4 shrink-0 transition-transform ${compact ? "text-white/60" : active ? "text-white/70" : "text-cvr-faint"} ${open ? "rotate-180" : ""}`}
           fill="none"
           stroke="currentColor"
           strokeWidth={2}

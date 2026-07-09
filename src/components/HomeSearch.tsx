@@ -7,8 +7,9 @@ import { emptyFilters, filtersToParams, type Filters } from "@/lib/filters";
 const tabs = ["Mua bán", "Cho thuê", "Dự án"];
 
 // Khối tìm kiếm trang chủ (tab + bộ lọc) — tách riêng, nằm dưới banner Hero.
-export default function HomeSearch() {
-  const [tab, setTab] = useState(tabs[0]);
+// defaultTab: tab chọn sẵn khi mở trang (vd trang /du-an → "Dự án").
+export default function HomeSearch({ defaultTab }: { defaultTab?: string }) {
+  const [tab, setTab] = useState(defaultTab && tabs.includes(defaultTab) ? defaultTab : tabs[0]);
   const [filters, setFilters] = useState<Filters>(emptyFilters());
 
   function handleSearch() {

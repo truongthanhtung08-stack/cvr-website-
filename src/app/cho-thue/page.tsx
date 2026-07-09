@@ -15,7 +15,7 @@ export default function ChoThuePage() {
       <Header />
       <main className="flex-1 bg-white">
         <Suspense fallback={<div className="pt-32 text-center text-cvr-muted">Đang tải…</div>}>
-          <ListingBrowser purpose="thue" heading="Nhà đất cho thuê" subheading="Cho thuê bất động sản tại Đà Nẵng, Huế và Miền Trung — cập nhật liên tục, kiểm chứng thực địa." />
+          <ListingBrowser purpose="thue" heading="Nhà đất cho thuê" />
         </Suspense>
       </main>
       <Footer />

@@ -11,40 +11,82 @@ export const metadata: Metadata = {
 };
 
 export default function TinTucPage() {
+  const [featured, ...rest] = articles;
+
   return (
     <>
       <Header />
-      <main className="flex-1">
-        <div className="mx-auto max-w-7xl px-4 pb-20 pt-24 sm:px-6 lg:px-8">
-          <nav className="mb-3 flex items-center gap-1.5 text-xs text-white/40">
-            <Link href="/" className="hover:text-white/70">Trang chủ</Link>
+      <main className="flex-1 bg-white">
+        <div className="mx-auto max-w-7xl px-4 pb-20 pt-6 sm:px-6 lg:px-8">
+          <nav className="flex items-center gap-1.5 text-xs text-cvr-muted">
+            <Link href="/" className="hover:text-cvr-ink">Trang chủ</Link>
             <span>/</span>
-            <span className="text-white/70">Tin tức</span>
+            <span className="text-cvr-body">Tin tức</span>
           </nav>
-          <h1 className="font-serif text-2xl font-bold text-white sm:text-3xl">Tin tức bất động sản</h1>
-          <p className="mt-1.5 text-sm text-white/55">Phân tích thị trường, cẩm nang & kinh nghiệm đầu tư tại Duyên hải miền Trung.</p>
+          <h1 className="mt-3 text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">Tin tức bất động sản</h1>
+          <p className="mt-1.5 text-sm text-cvr-muted">Phân tích thị trường, cẩm nang &amp; kinh nghiệm đầu tư tại Duyên hải miền Trung.</p>
 
-          <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {articles.map((a) => (
-              <Link
-                key={a.slug}
-                href={`/tin-tuc/${a.slug}`}
-                className="card-lux group relative flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] hover:-translate-y-2 hover:border-cvr-gold/40 hover:shadow-2xl hover:shadow-black/60"
-              >
-                <span className="card-sheen" aria-hidden />
-                <div className="relative aspect-[16/9] overflow-hidden">
-                  <Image src={a.image} alt={a.title} fill sizes="(max-width:768px) 100vw, 25vw" className="object-cover transition-transform duration-[700ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.07]" />
-                </div>
-                <div className="flex flex-1 flex-col p-4">
-                  <div className="flex items-center gap-2 text-xs text-white/50">
-                    <span className="rounded bg-cvr-gold/15 px-2 py-0.5 font-medium text-cvr-gold-soft">{a.category}</span>
-                    <span>{a.date}</span>
+          {/* Bài nổi bật — ảnh trái · nội dung phải (kiểu Batdongsan) */}
+          <Link
+            href={`/tin-tuc/${featured.slug}`}
+            className="card-lux group mt-6 flex flex-col overflow-hidden rounded-2xl border border-cvr-line bg-white shadow-lux shadow-lux-hover hover:-translate-y-1 sm:flex-row"
+          >
+            <span className="card-sheen" aria-hidden />
+            <div className="relative aspect-[16/9] overflow-hidden sm:aspect-auto sm:w-1/2 sm:shrink-0">
+              <Image src={featured.image} alt={featured.title} fill sizes="(max-width:640px) 100vw, 50vw" className="object-cover transition-transform duration-[700ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.05]" />
+            </div>
+            <div className="flex flex-1 flex-col justify-center p-5 sm:p-8">
+              <p className="flex items-center gap-2 text-xs text-cvr-muted">
+                <span className="rounded-full bg-cvr-surface px-2.5 py-0.5 font-medium text-cvr-body">{featured.category}</span>
+                <span>{featured.date}</span>
+              </p>
+              <h2 className="mt-3 line-clamp-2 text-xl font-semibold leading-snug text-cvr-ink transition-colors group-hover:text-cvr-gold-ink sm:text-2xl">
+                {featured.title}
+              </h2>
+              <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-cvr-muted">{featured.excerpt}</p>
+              <span className="mt-4 text-sm font-medium text-cvr-muted transition-colors group-hover:text-cvr-ink">Đọc bài viết →</span>
+            </div>
+          </Link>
+
+          {/* ── 2 cột kiểu Batdongsan: LIST bài viết (trái) + Bài viết được quan tâm (phải) ── */}
+          <div className="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-3">
+            {/* Danh sách bài — hàng ngang: ảnh trái · nội dung phải, ngăn dòng kẻ */}
+            <div className="divide-y divide-cvr-line/70 lg:col-span-2">
+              {rest.map((a) => (
+                <Link key={a.slug} href={`/tin-tuc/${a.slug}`} className="group flex gap-4 py-5 first:pt-0 sm:gap-5">
+                  <div className="relative aspect-[16/10] w-36 shrink-0 overflow-hidden rounded-xl bg-cvr-surface sm:w-56">
+                    <Image src={a.image} alt={a.title} fill sizes="(max-width:640px) 144px, 224px" className="object-cover transition-transform duration-[700ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.05]" />
                   </div>
-                  <h3 className="mt-2.5 line-clamp-2 font-bold leading-snug text-white group-hover:text-cvr-gold-soft">{a.title}</h3>
-                  <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-white/60">{a.excerpt}</p>
+                  <div className="flex min-w-0 flex-1 flex-col">
+                    <div className="flex items-center gap-2 text-xs text-cvr-muted">
+                      <span className="rounded-full bg-cvr-surface px-2.5 py-0.5 font-medium text-cvr-body">{a.category}</span>
+                      <span>{a.date}</span>
+                    </div>
+                    <h3 className="mt-2 line-clamp-2 font-semibold leading-snug text-cvr-ink transition-colors group-hover:text-cvr-gold-ink sm:text-lg">
+                      {a.title}
+                    </h3>
+                    <p className="mt-1.5 line-clamp-3 text-sm leading-relaxed text-cvr-muted">{a.excerpt}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+
+            {/* Sidebar: bài viết được quan tâm — đánh số (kiểu Batdongsan) */}
+            <aside className="lg:col-span-1">
+              <div className="sticky top-24 rounded-2xl border border-cvr-line bg-white p-5 shadow-lux">
+                <h2 className="text-sm font-semibold tracking-tight text-cvr-ink">Bài viết được quan tâm</h2>
+                <div className="mt-1 flex flex-col divide-y divide-cvr-line/70">
+                  {articles.slice(0, 5).map((a, i) => (
+                    <Link key={a.slug} href={`/tin-tuc/${a.slug}`} className="group flex gap-3 py-3 last:pb-0">
+                      <span className="w-5 shrink-0 text-lg font-semibold leading-snug text-cvr-faint">{i + 1}</span>
+                      <span className="line-clamp-2 text-sm font-medium leading-snug text-cvr-ink transition-colors group-hover:text-cvr-gold-ink">
+                        {a.title}
+                      </span>
+                    </Link>
+                  ))}
                 </div>
-              </Link>
-            ))}
+              </div>
+            </aside>
           </div>
         </div>
       </main>
@@ -52,4 +94,3 @@ export default function TinTucPage() {
     </>
   );
 }
-

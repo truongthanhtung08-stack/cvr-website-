@@ -31,7 +31,7 @@ export default function ComparePage() {
     <>
       <Header />
       <main className="flex-1 bg-white">
-        <div className="mx-auto max-w-7xl px-4 pb-20 pt-24 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl px-4 pb-20 pt-6 sm:px-6 lg:px-8">
           <nav className="mb-4 flex items-center gap-1.5 text-xs text-cvr-muted">
             <Link href="/" className="hover:text-cvr-ink">Trang chủ</Link>
             <span>/</span>
@@ -39,7 +39,7 @@ export default function ComparePage() {
           </nav>
 
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-            <h1 className="font-serif text-2xl font-bold text-cvr-ink sm:text-3xl">So sánh bất động sản</h1>
+            <h1 className="text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">So sánh bất động sản</h1>
             {items.length > 0 && (
               <button
                 type="button"

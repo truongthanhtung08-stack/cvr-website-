@@ -18,25 +18,25 @@ export default function BaoGiaPage() {
   return (
     <>
       <Header />
-      <main className="flex-1">
-        <div className="mx-auto max-w-7xl px-4 pb-20 pt-24 sm:px-6 lg:px-8">
+      <main className="flex-1 bg-white">
+        <div className="mx-auto max-w-7xl px-4 pb-20 pt-10 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
-            <span className="inline-block rounded-full bg-white/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-white">Dành cho người bán & môi giới</span>
-            <h1 className="mt-3 font-serif text-3xl font-bold text-white sm:text-4xl">Nhận báo giá đăng tin</h1>
-            <p className="mt-3 text-white/65">Để lại thông tin, chuyên viên Coastal Land gửi bảng giá chi tiết và tư vấn gói phù hợp trong 5 phút.</p>
+            <span className="inline-block rounded-full bg-cvr-surface px-3 py-1 text-xs font-bold uppercase tracking-wider text-cvr-body">Dành cho người bán & môi giới</span>
+            <h1 className="mt-3 text-3xl font-semibold tracking-tight text-cvr-ink sm:text-4xl">Nhận báo giá đăng tin</h1>
+            <p className="mt-3 text-cvr-muted">Để lại thông tin, chuyên viên Coastal Land gửi bảng giá chi tiết và tư vấn gói phù hợp trong 5 phút.</p>
           </div>
 
           {/* Bảng gói */}
           <div className="mt-10 grid grid-cols-1 gap-5 md:grid-cols-3">
             {packages.map((p) => (
-              <div key={p.name} className={`rounded-2xl border p-6 ${p.highlight ? "border-white/40 bg-white/[0.06]" : "border-white/12 bg-white/[0.03]"}`}>
-                {p.highlight && <span className="mb-2 inline-block rounded-md bg-white px-2 py-0.5 text-[10px] font-bold uppercase text-cvr-ink">Phổ biến</span>}
-                <h3 className="font-serif text-xl font-bold text-white">{p.name}</h3>
-                <p className="mt-1 text-2xl font-extrabold text-white">{p.price}</p>
-                <p className="text-xs text-white/55">{p.note}</p>
-                <ul className="mt-4 space-y-2 text-sm text-white/75">
+              <div key={p.name} className={`rounded-2xl border bg-white p-6 shadow-lux ${p.highlight ? "border-cvr-gold/60" : "border-cvr-line"}`}>
+                {p.highlight && <span className="mb-2 inline-block rounded-md bg-cvr-gold px-2 py-0.5 text-[10px] font-bold uppercase text-cvr-ink">Phổ biến</span>}
+                <h3 className="text-xl font-semibold tracking-tight text-cvr-ink">{p.name}</h3>
+                <p className="mt-1 text-2xl font-bold tracking-tight text-cvr-ink">{p.price}</p>
+                <p className="text-xs text-cvr-muted">{p.note}</p>
+                <ul className="mt-4 space-y-2 text-sm text-cvr-body">
                   {p.perks.map((perk) => (
-                    <li key={perk} className="flex gap-2"><span className="text-white">✓</span> {perk}</li>
+                    <li key={perk} className="flex gap-2"><span className="text-cvr-gold-ink">✓</span> {perk}</li>
                   ))}
                 </ul>
               </div>

@@ -12,7 +12,7 @@ export default function DangNhapPage() {
   return (
     <>
       <Header />
-      <main className="flex flex-1 items-center justify-center px-4 pb-16 pt-28 sm:px-6">
+      <main className="flex flex-1 items-center justify-center bg-white px-4 py-16 sm:px-6">
         <LoginForm />
       </main>
       <Footer />

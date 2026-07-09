@@ -47,15 +47,15 @@ export default async function PackagePage({ params }: { params: Promise<{ slug: 
   return (
     <>
       <Header />
-      <main className="flex-1">
-        <div className="mx-auto max-w-7xl px-4 pb-20 pt-24 sm:px-6 lg:px-8">
+      <main className="flex-1 bg-white">
+        <div className="mx-auto max-w-7xl px-4 pb-20 pt-6 sm:px-6 lg:px-8">
           {/* Breadcrumb */}
-          <nav className="mb-5 flex flex-wrap items-center gap-1.5 text-xs text-white/40">
-            <Link href="/" className="hover:text-white/70">Trang chủ</Link>
+          <nav className="mb-5 flex flex-wrap items-center gap-1.5 text-xs text-cvr-muted">
+            <Link href="/" className="hover:text-cvr-ink">Trang chủ</Link>
             <span>/</span>
-            <span className="text-white/70">Tiện ích</span>
+            <span className="text-cvr-body">Tiện ích</span>
             <span>/</span>
-            <span className="line-clamp-1 text-white/70">{p.label}</span>
+            <span className="line-clamp-1 text-cvr-body">{p.label}</span>
           </nav>
 
           {/* Thanh chọn gói (giống Homedy) */}
@@ -70,7 +70,7 @@ export default async function PackagePage({ params }: { params: Promise<{ slug: 
                     className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
                       active
                         ? "border-cvr-gold bg-cvr-gold text-cvr-ink"
-                        : "border-white/15 text-white/70 hover:border-white/40 hover:text-white"
+                        : "border-cvr-line text-cvr-body hover:border-cvr-ink hover:text-cvr-ink"
                     }`}
                   >
                     {pkg.label}
@@ -82,18 +82,18 @@ export default async function PackagePage({ params }: { params: Promise<{ slug: 
 
           {/* Tiêu đề gói */}
           <header className="max-w-2xl">
-            <span className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-white/[0.06] text-white ring-1 ring-inset ring-white/10">
+            <span className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-cvr-surface text-cvr-ink ring-1 ring-inset ring-cvr-line">
               <PkgGlyph icon={p.icon} />
             </span>
-            <h1 className="font-serif text-3xl font-bold leading-tight tracking-tight text-white sm:text-4xl">{p.title}</h1>
-            <p className="mt-3 text-base leading-relaxed text-white/65">{p.description}</p>
+            <h1 className="text-3xl font-semibold leading-tight tracking-tight text-cvr-ink sm:text-4xl">{p.title}</h1>
+            <p className="mt-3 text-base leading-relaxed text-cvr-muted">{p.description}</p>
           </header>
 
           {/* Bảng giá 3 hạng CVR — PLACEHOLDER */}
           <section className="mt-12">
             <div className="mb-5 flex flex-wrap items-end justify-between gap-2">
-              <h2 className="font-serif text-xl font-bold text-white sm:text-2xl">Bảng giá theo hạng</h2>
-              <span className="rounded-full bg-white/[0.06] px-3 py-1 text-xs font-medium text-white/55 ring-1 ring-inset ring-white/10">
+              <h2 className="text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">Bảng giá theo hạng</h2>
+              <span className="rounded-full bg-cvr-surface px-3 py-1 text-xs font-medium text-cvr-muted ring-1 ring-inset ring-cvr-line">
                 Bảng giá đang được cập nhật
               </span>
             </div>
@@ -102,7 +102,7 @@ export default async function PackagePage({ params }: { params: Promise<{ slug: 
               {tiers.map((t) => (
                 <div
                   key={t.id}
-                  className="flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]"
+                  className="flex flex-col overflow-hidden rounded-2xl border border-cvr-line bg-white shadow-lux"
                 >
                   {/* Đầu cột — màu theo hạng */}
                   <div
@@ -110,15 +110,15 @@ export default async function PackagePage({ params }: { params: Promise<{ slug: 
                     style={{ borderTop: `3px solid ${t.accent}` }}
                   >
                     <p className="text-lg font-bold" style={{ color: t.accent }}>{t.name}</p>
-                    <p className="mt-0.5 text-xs text-white/55">{t.tagline}</p>
+                    <p className="mt-0.5 text-xs text-cvr-muted">{t.tagline}</p>
                   </div>
 
                   {/* Các dòng quyền lợi (placeholder) */}
-                  <div className="flex-1 divide-y divide-white/8 px-5">
+                  <div className="flex-1 divide-y divide-cvr-line/70 px-5">
                     {benefitRows.map((row) => (
                       <div key={row.label} className="flex items-center justify-between gap-3 py-3 text-sm">
-                        <span className="text-white/55">{row.label}</span>
-                        <span className="text-right font-medium text-white/80">{row.values[t.id]}</span>
+                        <span className="text-cvr-muted">{row.label}</span>
+                        <span className="text-right font-medium text-cvr-ink">{row.values[t.id]}</span>
                       </div>
                     ))}
                   </div>
@@ -137,7 +137,7 @@ export default async function PackagePage({ params }: { params: Promise<{ slug: 
               ))}
             </div>
 
-            <p className="mt-4 text-xs text-white/40">
+            <p className="mt-4 text-xs text-cvr-faint">
               * Giá &amp; quyền lợi sẽ được cập nhật chính thức. Liên hệ Coastal Land để nhận bảng giá mới nhất.
             </p>
           </section>
@@ -145,8 +145,8 @@ export default async function PackagePage({ params }: { params: Promise<{ slug: 
           {/* Liên hệ tư vấn */}
           <section id="lien-he" className="mt-14 scroll-mt-28">
             <div className="mx-auto max-w-xl">
-              <h2 className="text-center font-serif text-xl font-bold text-white sm:text-2xl">Đăng ký nhận bảng giá &amp; tư vấn</h2>
-              <p className="mb-4 mt-1 text-center text-sm text-white/55">Chuyên viên Coastal Land sẽ liên hệ tư vấn gói phù hợp nhất.</p>
+              <h2 className="text-center text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">Đăng ký nhận bảng giá &amp; tư vấn</h2>
+              <p className="mb-4 mt-1 text-center text-sm text-cvr-muted">Chuyên viên Coastal Land sẽ liên hệ tư vấn gói phù hợp nhất.</p>
               <LeadForm
                 cta="Nhận tư vấn gói dịch vụ"
                 topics={packages.map((pkg) => pkg.title)}

@@ -45,7 +45,7 @@ export default function SearchClient() {
   const active = hasActiveFilters(filters);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 pb-20 pt-24 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-7xl px-4 pb-20 pt-6 sm:px-6 lg:px-8">
       {/* Breadcrumb */}
       <nav className="mb-3 flex items-center gap-1.5 text-xs text-cvr-muted">
         <a href="/" className="hover:text-cvr-ink">Trang chủ</a>
@@ -53,7 +53,7 @@ export default function SearchClient() {
         <span className="text-cvr-body">Tìm kiếm</span>
       </nav>
 
-      <h1 className="font-serif text-2xl font-bold text-cvr-ink sm:text-3xl">Tìm kiếm bất động sản</h1>
+      <h1 className="text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">Tìm kiếm bất động sản</h1>
       <p className="mt-1.5 text-sm text-cvr-muted">
         Không giới hạn khu vực — gõ khu vực, dự án hay loại hình bất động sản đều ra kết quả.
       </p>

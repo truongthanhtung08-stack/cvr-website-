@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
 import PropertyCard from "@/components/PropertyCard";
 import FilterBar from "@/components/FilterBar";
@@ -17,15 +18,19 @@ import {
   type SortKey,
 } from "@/lib/filters";
 
+// Bản đồ chỉ chạy phía client (Leaflet cần window) — tải lười khi bật chế độ Bản đồ.
+const MapView = dynamic(() => import("@/components/MapView"), {
+  ssr: false,
+  loading: () => <div className="flex h-full items-center justify-center text-sm text-cvr-muted">Đang tải bản đồ…</div>,
+});
+
 const PER_PAGE = 8;
 
 export default function ListingBrowser({
   heading,
-  subheading,
   purpose = "ban",
 }: {
   heading: string;
-  subheading: string;
   // Mục đích trang: "ban" = mua bán · "thue" = cho thuê — lọc nguồn tin + danh mục loại hình.
   purpose?: "ban" | "thue";
 }) {
@@ -33,7 +38,7 @@ export default function ListingBrowser({
 
   const [filters, setFiltersState] = useState<Filters>(() => filtersFromParams(params));
   const [sort, setSort] = useState<SortKey>("moi");
-  const [view, setView] = useState<"list" | "grid">("list");
+  const [view, setView] = useState<"list" | "grid" | "map">("list");
   const [page, setPage] = useState(1);
 
   // Đổi bộ lọc → luôn quay về trang 1
@@ -66,20 +71,23 @@ export default function ListingBrowser({
   const active = hasActiveFilters(filters);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 pb-20 pt-24 sm:px-6 lg:px-8">
-      {/* Breadcrumb */}
-      <nav className="mb-3 flex items-center gap-1.5 text-xs text-cvr-muted">
+    <div className="mx-auto max-w-7xl px-4 pb-20 pt-6 sm:px-6 lg:px-8">
+      {/* ── Phần trên kiểu Homedy (gọn): breadcrumb → thanh lọc → tiêu đề + bộ đếm ── */}
+      <nav className="flex items-center gap-1.5 text-xs text-cvr-muted">
         <a href="/" className="hover:text-cvr-ink">Trang chủ</a>
         <span>/</span>
         <span className="text-cvr-body">{heading}</span>
       </nav>
 
-      <h1 className="font-serif text-2xl font-bold text-cvr-ink sm:text-3xl">{heading}</h1>
-      <p className="mt-1.5 text-sm text-cvr-muted">{subheading}</p>
-
-      {/* Thanh lọc Homedy-style */}
-      <div className="mt-5">
-        <FilterBar value={filters} onChange={setFilters} purpose={purpose} />
+      {/* Thanh lọc — ngay dưới breadcrumb; nút Bản đồ nằm cạnh ô tìm (kiểu Batdongsan) */}
+      <div className="mt-2.5">
+        <FilterBar
+          value={filters}
+          onChange={setFilters}
+          purpose={purpose}
+          onMap={() => setView(view === "map" ? "list" : "map")}
+          mapActive={view === "map"}
+        />
       </div>
 
       {/* Chip bộ lọc đang áp dụng */}
@@ -89,16 +97,14 @@ export default function ListingBrowser({
         </div>
       )}
 
-      {/* ── 2 cột: danh sách (trái) + sidebar lọc nhanh (phải) — giống Homedy ── */}
-      <div className="mt-5 grid grid-cols-1 gap-6 lg:grid-cols-3">
+      {/* Tiêu đề + bộ đếm nhảy theo bộ lọc */}
+      <h1 className="mt-5 text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">{heading}</h1>
+      <p className="mt-1 text-sm text-cvr-muted">
+        Hiện có <span className="font-semibold text-cvr-ink">{results.length}</span> bất động sản{active ? " phù hợp " : " "}tại Đà Nẵng, Huế &amp; Miền Trung.
+      </p>
 
-        {/* CỘT TRÁI: tổng kết + sắp xếp + danh sách */}
-        <div className="lg:col-span-2">
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <p className="text-sm text-cvr-body">
-              <span className="font-bold text-cvr-ink">{results.length}</span> bất động sản{active ? " phù hợp" : ""}
-            </p>
-            <div className="flex items-center gap-3">
+      {/* Hàng điều khiển dùng chung: xoá lọc · chế độ xem (Danh sách/Lưới/Bản đồ) · sắp xếp */}
+      <div className="mt-4 flex flex-wrap items-center justify-end gap-3">
               {active && (
                 <button
                   type="button"
@@ -122,9 +128,33 @@ export default function ListingBrowser({
                 <option value="dt-giam">Diện tích lớn nhất</option>
                 {purpose === "ban" && <option value="gia-m2">Giá/m² thấp nhất</option>}
               </select>
+      </div>
+
+      {view === "map" ? (
+        /* ── Chế độ BẢN ĐỒ: danh sách cuộn (trái) + bản đồ dính (phải) — kiểu Batdongsan ── */
+        <div className="mt-4 grid grid-cols-1 gap-5 lg:grid-cols-5">
+          {/* space-y (block) thay vì flex-col: tránh flex co bẹp thẻ khi vùng cuộn có max-height */}
+          <div className="order-2 space-y-4 lg:order-1 lg:col-span-2 lg:max-h-[calc(100vh-140px)] lg:overflow-y-auto lg:pr-1">
+            {results.length > 0 ? (
+              results.map((item) => <PropertyCard key={item.id} item={item} layout="list" showTime />)
+            ) : (
+              <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-cvr-line py-20 text-center">
+                <p className="text-cvr-body">Không tìm thấy bất động sản phù hợp.</p>
+                <button type="button" onClick={() => setFilters(emptyFilters())} className="mt-5 rounded-lg bg-cvr-ink px-5 py-2 text-sm font-semibold text-white transition hover:bg-cvr-body">Xoá bộ lọc</button>
+              </div>
+            )}
+          </div>
+          <div className="order-1 lg:order-2 lg:col-span-3">
+            <div className="sticky top-24 h-[380px] overflow-hidden rounded-2xl border border-cvr-line shadow-lux lg:h-[calc(100vh-140px)]">
+              <MapView items={results} />
             </div>
           </div>
+        </div>
+      ) : (
+      <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-3">
 
+        {/* CỘT TRÁI: danh sách tin */}
+        <div className="lg:col-span-2">
           {pageItems.length > 0 ? (
             <>
               <div
@@ -198,6 +228,7 @@ export default function ListingBrowser({
         </aside>
 
       </div>
+      )}
     </div>
   );
 }
@@ -205,7 +236,7 @@ export default function ListingBrowser({
 // ── Sidebar lọc nhanh (giống .product-right của Homedy) ──────────────────────
 function SidebarFilter({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-xl border border-cvr-line bg-white p-4 shadow-sm">
+    <div className="rounded-2xl border border-cvr-line bg-white p-4 shadow-lux">
       <p className="mb-2.5 text-sm font-semibold text-cvr-ink">{title}</p>
       <ul className="grid grid-cols-2 gap-1.5">{children}</ul>
     </div>
@@ -233,13 +264,13 @@ function SidebarLink({ active, onClick, count, children }: { active: boolean; on
   );
 }
 
-// Nút chuyển chế độ xem Danh sách / Lưới
+// Nút chuyển chế độ xem Danh sách / Lưới / Bản đồ
 export function ViewToggle({
   view,
   setView,
 }: {
-  view: "list" | "grid";
-  setView: (v: "list" | "grid") => void;
+  view: "list" | "grid" | "map";
+  setView: (v: "list" | "grid" | "map") => void;
 }) {
   return (
     <div className="flex items-center rounded-lg border border-cvr-line bg-white p-0.5">

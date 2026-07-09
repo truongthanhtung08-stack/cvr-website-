@@ -57,12 +57,12 @@ export default function Chatbox() {
         type="button"
         aria-label="Mở chat trực tuyến"
         onClick={() => setOpen((v) => !v)}
-        className={`fixed bottom-5 right-5 z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-white text-cvr-ink shadow-xl shadow-black/40 transition-all duration-300 hover:scale-105 active:scale-95 ${
+        className={`fixed bottom-5 right-5 z-[60] flex h-14 w-14 items-center justify-center rounded-full bg-cvr-ink text-white shadow-xl shadow-black/25 transition-all duration-300 hover:scale-105 active:scale-95 ${
           open ? "rotate-90 opacity-0 pointer-events-none" : "opacity-100"
         }`}
       >
         {/* Nhịp phát sáng thu hút */}
-        <span className="absolute inset-0 animate-ping rounded-full bg-white/40" style={{ animationDuration: "2.5s" }} />
+        <span className="absolute inset-0 animate-ping rounded-full bg-cvr-ink/30" style={{ animationDuration: "2.5s" }} />
         {/* Icon Tin nhắn kiểu iMessage — bong bóng đặc, đuôi góc dưới-trái */}
         <svg className="relative h-7 w-7" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path d="M12 2.25c-5.385 0-9.75 3.24-9.75 7.5 0 2.68 1.72 5.03 4.32 6.4-.14.86-.5 1.9-1.2 2.86a.375.375 0 0 0 .35.6c1.7-.2 3.06-.78 4.02-1.35.73.16 1.5.24 2.26.24 5.385 0 9.75-3.24 9.75-7.5S17.385 2.25 12 2.25Z" />
@@ -71,28 +71,28 @@ export default function Chatbox() {
 
       {/* Khung chat */}
       <div
-        className={`fixed bottom-5 right-5 z-[60] flex w-[min(360px,calc(100vw-2.5rem))] flex-col overflow-hidden rounded-2xl border border-white/12 bg-cvr-charcoal shadow-2xl shadow-black/50 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+        className={`fixed bottom-5 right-5 z-[60] flex w-[min(360px,calc(100vw-2.5rem))] flex-col overflow-hidden rounded-2xl border border-cvr-line bg-white shadow-2xl shadow-black/15 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
           open ? "translate-y-0 scale-100 opacity-100" : "pointer-events-none translate-y-4 scale-95 opacity-0"
         }`}
         style={{ height: "min(520px, calc(100vh - 2.5rem))" }}
       >
         {/* Tiêu đề */}
-        <div className="flex items-center justify-between gap-3 border-b border-white/10 bg-cvr-ink px-4 py-3">
+        <div className="flex items-center justify-between gap-3 border-b border-cvr-line bg-white px-4 py-3">
           <div className="flex items-center gap-3">
-            <div className="relative flex h-9 w-9 items-center justify-center rounded-full bg-white text-sm font-bold text-cvr-ink">
+            <div className="relative flex h-9 w-9 items-center justify-center rounded-full bg-cvr-ink text-sm font-bold text-white">
               CVR
-              <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-cvr-ink bg-green-400" />
+              <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white bg-green-500" />
             </div>
             <div className="leading-tight">
-              <p className="text-sm font-semibold text-white">Coastal Land</p>
-              <p className="text-[11px] text-green-400">Đang trực tuyến</p>
+              <p className="text-sm font-semibold text-cvr-ink">Coastal Land</p>
+              <p className="text-[11px] text-green-600">Đang trực tuyến</p>
             </div>
           </div>
           <button
             type="button"
             aria-label="Đóng chat"
             onClick={() => setOpen(false)}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-white/60 transition-colors hover:bg-white/10 hover:text-white"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-cvr-muted transition-colors hover:bg-black/5 hover:text-cvr-ink"
           >
             <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -107,8 +107,8 @@ export default function Chatbox() {
               <div
                 className={`max-w-[80%] rounded-2xl px-3.5 py-2 text-sm leading-relaxed ${
                   m.from === "user"
-                    ? "rounded-br-sm bg-white text-cvr-ink"
-                    : "rounded-bl-sm bg-white/8 text-white/90"
+                    ? "rounded-br-sm bg-cvr-ink text-white"
+                    : "rounded-bl-sm bg-cvr-surface text-cvr-body"
                 }`}
               >
                 {m.text}
@@ -124,7 +124,7 @@ export default function Chatbox() {
                   key={q}
                   type="button"
                   onClick={() => send(q)}
-                  className="rounded-full border border-white/15 px-3 py-1.5 text-xs text-white/80 transition-colors hover:border-white/40 hover:bg-white/5 hover:text-white"
+                  className="rounded-full border border-cvr-line px-3 py-1.5 text-xs text-cvr-body transition-colors hover:border-cvr-ink/40 hover:bg-black/5 hover:text-cvr-ink"
                 >
                   {q}
                 </button>
@@ -139,19 +139,19 @@ export default function Chatbox() {
             e.preventDefault();
             send(input);
           }}
-          className="flex items-center gap-2 border-t border-white/10 bg-cvr-ink px-3 py-3"
+          className="flex items-center gap-2 border-t border-cvr-line bg-white px-3 py-3"
         >
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Nhập tin nhắn…"
-            className="h-10 flex-1 rounded-lg border border-white/10 bg-white/5 px-3 text-sm text-white placeholder-white/40 outline-none transition focus:border-white/40 focus:bg-white/10"
+            className="h-10 flex-1 rounded-lg border border-cvr-line bg-cvr-surface px-3 text-sm text-cvr-ink placeholder-cvr-faint outline-none transition focus:border-cvr-ink/40 focus:bg-white"
           />
           <button
             type="submit"
             aria-label="Gửi"
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white text-cvr-ink transition-transform hover:scale-105 active:scale-95"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-cvr-ink text-white transition-transform hover:scale-105 active:scale-95"
           >
             <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M12 5l7 7-7 7" />

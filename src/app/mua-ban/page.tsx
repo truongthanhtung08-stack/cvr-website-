@@ -15,7 +15,7 @@ export default function MuaBanPage() {
       <Header />
       <main className="flex-1 bg-white">
         <Suspense fallback={<div className="pt-32 text-center text-cvr-muted">Đang tải…</div>}>
-          <ListingBrowser purpose="ban" heading="Nhà đất bán" subheading="Mua bán bất động sản tại Đà Nẵng, Huế và Miền Trung — minh bạch, trực tiếp, kiểm chứng thực địa." />
+          <ListingBrowser purpose="ban" heading="Nhà đất bán" />
         </Suspense>
       </main>
       <Footer />

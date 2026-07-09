@@ -17,8 +17,8 @@ export default function CompareBar() {
 
   return (
     <div className="fixed inset-x-0 bottom-4 z-50 px-4 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 sm:px-0">
-      <div className="mx-auto flex max-w-2xl items-center gap-3 rounded-2xl border border-white/12 bg-cvr-ink/95 p-2.5 pl-4 shadow-2xl shadow-black/50 backdrop-blur-md">
-        <span className="hidden shrink-0 text-sm font-semibold text-white sm:block">So sánh</span>
+      <div className="mx-auto flex max-w-2xl items-center gap-3 rounded-2xl border border-cvr-line bg-white/95 p-2.5 pl-4 shadow-2xl shadow-black/15 backdrop-blur-md">
+        <span className="hidden shrink-0 text-sm font-semibold text-cvr-ink sm:block">So sánh</span>
 
         {/* Thumbnails đã chọn */}
         <div className="flex flex-1 items-center gap-2 overflow-x-auto">
@@ -40,7 +40,7 @@ export default function CompareBar() {
         <button
           type="button"
           onClick={clear}
-          className="shrink-0 text-xs font-medium text-white/55 transition hover:text-white"
+          className="shrink-0 text-xs font-medium text-cvr-muted transition hover:text-cvr-ink"
         >
           Xoá
         </button>

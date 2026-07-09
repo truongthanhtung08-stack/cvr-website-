@@ -25,29 +25,29 @@ const benefits = [
 
 export default function ValueSection() {
   return (
-    <section className="section-edge bg-cvr-ink">
-      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-12">
+    <section className="section-edge bg-cvr-surface">
+      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         <div className="grid gap-8 lg:grid-cols-[1.2fr_1fr] lg:items-end">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.26em] text-cvr-gold-soft">
+            <p className="text-sm font-semibold uppercase tracking-[0.26em] text-cvr-gold-ink">
               Coastal Land — Tinh hoa bất động sản Miền Trung
             </p>
-            <h2 className="mt-4 max-w-2xl text-3xl font-semibold leading-tight text-white sm:text-4xl">
+            <h2 className="mt-4 max-w-2xl text-3xl font-semibold leading-tight text-cvr-ink sm:text-4xl">
               Tìm đúng sản phẩm, kiểm chứng đúng giá, chốt giao dịch an toàn.
             </h2>
-            <p className="mt-4 max-w-2xl text-sm leading-7 text-white/70">
+            <p className="mt-4 max-w-2xl text-sm leading-7 text-cvr-muted">
               Chúng tôi giúp bạn đi thẳng vào tin đăng chất lượng, pháp lý sáng và dịch vụ hỗ trợ toàn hành trình mua bán, cho thuê tại Đà Nẵng, Huế và Miền Trung.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <Link
                 href="/mua-ban"
-                className="inline-flex items-center justify-center rounded-full bg-cvr-gold px-5 py-3 text-sm font-semibold text-cvr-ink transition hover:bg-white/90"
+                className="inline-flex items-center justify-center rounded-full bg-cvr-ink px-5 py-3 text-sm font-semibold text-white transition hover:bg-cvr-body"
               >
                 Xem tin mua bán
               </Link>
               <Link
                 href="/dang-tin"
-                className="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/15"
+                className="inline-flex items-center justify-center rounded-full border border-cvr-line bg-white px-5 py-3 text-sm font-semibold text-cvr-ink transition hover:bg-black/5"
               >
                 Đăng tin miễn phí
               </Link>
@@ -56,12 +56,12 @@ export default function ValueSection() {
 
           <div className="grid gap-4 sm:grid-cols-2">
             {benefits.map((item) => (
-              <article key={item.title} className="rounded-3xl border border-white/10 bg-white/[0.04] p-6 shadow-2xl shadow-black/20 transition hover:-translate-y-1.5 hover:border-cvr-gold/30 hover:bg-white/[0.08]">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 text-lg font-bold text-white">
+              <article key={item.title} className="shadow-lux rounded-3xl border border-cvr-line bg-white p-6 transition hover:-translate-y-1.5 hover:border-cvr-gold/40">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-cvr-surface text-lg font-bold text-cvr-ink">
                   {item.icon}
                 </div>
-                <h3 className="mt-4 text-lg font-semibold text-white">{item.title}</h3>
-                <p className="mt-2 text-sm leading-6 text-white/70">{item.description}</p>
+                <h3 className="mt-4 text-lg font-semibold text-cvr-ink">{item.title}</h3>
+                <p className="mt-2 text-sm leading-6 text-cvr-muted">{item.description}</p>
               </article>
             ))}
           </div>

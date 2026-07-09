@@ -4,10 +4,10 @@ import { notFound } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Gallery from "@/components/Gallery";
-import PropertyCard from "@/components/PropertyCard";
+import ListingSlider from "@/components/ListingSlider";
 import RecordView from "@/components/RecordView";
 import PriceHistory from "@/components/PriceHistory";
-import { featuredListings, getListingById, buildListingDetail } from "@/lib/data";
+import { featuredListings, getListingById, buildListingDetail, provinceOf, pickRelated } from "@/lib/data";
 import { tierFromBadge, getTier } from "@/lib/packages";
 
 // Bắt buộc cho static export (GitHub Pages): liệt kê mọi id
@@ -64,12 +64,15 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
   const purposeHref = purpose === "thue" ? "/cho-thue" : "/mua-ban";
   const purposeLabel = purpose === "thue" ? "Nhà đất cho thuê" : "Nhà đất bán";
 
-  // Tin liên quan: cùng MỤC ĐÍCH, ưu tiên cùng loại hình
+  // Tin tương tự: BẮT BUỘC cùng MỤC ĐÍCH (bán↔bán, thuê↔thuê), sắp theo độ liên quan
+  // — cùng TỈNH (+2) và cùng LOẠI HÌNH (+1). Hiện HẾT (không giới hạn) để chạy slider.
+  const curProvince = provinceOf(l.location);
   const samePurpose = featuredListings.filter((x) => x.id !== l.id && (x.purpose ?? "ban") === purpose);
-  const related = samePurpose.filter((x) => x.type === l.type).slice(0, 4);
-  const relatedFill = related.length < 4
-    ? [...related, ...samePurpose.filter((x) => !related.includes(x)).slice(0, 4 - related.length)]
-    : related;
+  const relatedFill = pickRelated(
+    samePurpose,
+    (x) => (provinceOf(x.location) === curProvince ? 2 : 0) + (x.type === l.type ? 1 : 0),
+    samePurpose.length,
+  );
 
   return (
     <>
@@ -78,7 +81,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
       {/* Schema.org RealEstateListing — dữ liệu chuẩn cho Google (IV.2) */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <main className="flex-1 bg-white">
-        <div className="mx-auto max-w-7xl px-4 pb-24 pt-24 sm:px-6 lg:px-8 lg:pb-20">
+        <div className="mx-auto max-w-7xl px-4 pb-24 pt-6 sm:px-6 lg:px-8 lg:pb-20">
           {/* Breadcrumb */}
           <nav className="mb-4 flex flex-wrap items-center gap-1.5 text-xs text-cvr-muted">
             <Link href="/" className="hover:text-cvr-ink">Trang chủ</Link>
@@ -104,7 +107,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                     Tin thường
                   </span>
                 )}
-                <h1 className="font-serif text-2xl font-bold leading-tight text-cvr-ink sm:text-3xl">{l.title}</h1>
+                <h1 className="text-2xl font-semibold leading-tight tracking-tight text-cvr-ink sm:text-3xl">{l.title}</h1>
                 <p className="mt-2 flex items-center gap-1.5 text-sm text-cvr-muted">
                   <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                   {l.location}
@@ -232,13 +235,11 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
             </aside>
           </div>
 
-          {/* BĐS liên quan */}
+          {/* BĐS tương tự — slider cuộn ngang, hiện hết số tin tương tự (không giới hạn) */}
           {relatedFill.length > 0 && (
             <div className="mt-14">
-              <h2 className="font-serif text-xl font-bold text-cvr-ink sm:text-2xl">Bất động sản tương tự</h2>
-              <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-                {relatedFill.map((item) => <PropertyCard key={item.id} item={item} />)}
-              </div>
+              <h2 className="mb-5 text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">Bất động sản tương tự</h2>
+              <ListingSlider items={relatedFill} />
             </div>
           )}
         </div>
@@ -268,7 +269,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="mt-8 border-t border-cvr-line pt-6">
-      <h2 className="mb-4 font-serif text-lg font-bold text-cvr-ink sm:text-xl">{title}</h2>
+      <h2 className="mb-4 text-lg font-semibold tracking-tight text-cvr-ink sm:text-xl">{title}</h2>
       {children}
     </section>
   );

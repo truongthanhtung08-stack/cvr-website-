@@ -17,7 +17,7 @@ export default function TimKiemPage() {
       <main className="flex-1 bg-white">
         <Suspense
           fallback={
-            <div className="mx-auto max-w-7xl px-4 pb-20 pt-32 text-cvr-muted sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-7xl px-4 pb-20 pt-6 text-cvr-muted sm:px-6 lg:px-8">
               Đang tải bộ tìm kiếm…
             </div>
           }

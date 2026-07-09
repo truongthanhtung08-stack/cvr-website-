@@ -31,13 +31,13 @@ export default function PostListingForm() {
 
   if (sent) {
     return (
-      <div className="rounded-2xl border border-white/12 bg-white/[0.04] p-10 text-center">
-        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-white text-cvr-ink">
+      <div className="rounded-2xl border border-cvr-line bg-white p-10 text-center shadow-lux">
+        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-cvr-ink text-white">
           <svg className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
         </div>
-        <h3 className="font-serif text-xl font-bold text-white">Tin đăng đã được gửi!</h3>
-        <p className="mt-2 text-sm text-white/65">Tin của bạn đang chờ AI kiểm duyệt và sẽ hiển thị sau ít phút. Chuyên viên Coastal Land sẽ liên hệ hỗ trợ nếu cần.</p>
-        <button type="button" onClick={() => setSent(false)} className="mt-5 rounded-lg border border-white/20 px-5 py-2 text-sm font-medium text-white hover:bg-white/10">Đăng tin khác</button>
+        <h3 className="text-xl font-semibold tracking-tight text-cvr-ink">Tin đăng đã được gửi!</h3>
+        <p className="mt-2 text-sm text-cvr-muted">Tin của bạn đang chờ AI kiểm duyệt và sẽ hiển thị sau ít phút. Chuyên viên Coastal Land sẽ liên hệ hỗ trợ nếu cần.</p>
+        <button type="button" onClick={() => setSent(false)} className="mt-5 rounded-lg border border-cvr-line px-5 py-2 text-sm font-medium text-cvr-ink hover:bg-black/5">Đăng tin khác</button>
       </div>
     );
   }
@@ -129,7 +129,7 @@ export default function PostListingForm() {
         <div className="space-y-4">
           {amenityGroups.map((g) => (
             <div key={g.group}>
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-white/45">{g.group}</p>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-cvr-faint">{g.group}</p>
               <div className="flex flex-wrap gap-2">
                 {g.items.map((it) => (
                   <Chip key={it} active={amenities.includes(it)} onClick={() => toggle(amenities, setAmenities, it)}>{it}</Chip>
@@ -147,10 +147,10 @@ export default function PostListingForm() {
 
       {/* 8. Hình ảnh */}
       <Card step="8" title="Hình ảnh & video">
-        <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-white/20 bg-white/[0.02] px-4 py-10 text-center transition hover:border-white/40">
-          <svg className="h-9 w-9 text-white/40" fill="none" stroke="currentColor" strokeWidth={1.6} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5V18a2 2 0 002 2h14a2 2 0 002-2v-1.5M16 8l-4-4m0 0L8 8m4-4v12" /></svg>
-          <span className="text-sm text-white/70">Kéo thả hoặc bấm để tải ảnh (tối đa 20 ảnh)</span>
-          <span className="text-xs text-white/40">{photoCount > 0 ? `Đã chọn ${photoCount} ảnh` : "JPG, PNG — nên ≥ 1200px"}</span>
+        <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-cvr-line bg-cvr-surface px-4 py-10 text-center transition hover:border-cvr-ink/40">
+          <svg className="h-9 w-9 text-cvr-faint" fill="none" stroke="currentColor" strokeWidth={1.6} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5V18a2 2 0 002 2h14a2 2 0 002-2v-1.5M16 8l-4-4m0 0L8 8m4-4v12" /></svg>
+          <span className="text-sm text-cvr-body">Kéo thả hoặc bấm để tải ảnh (tối đa 20 ảnh)</span>
+          <span className="text-xs text-cvr-faint">{photoCount > 0 ? `Đã chọn ${photoCount} ảnh` : "JPG, PNG — nên ≥ 1200px"}</span>
           <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => setPhotoCount(e.target.files?.length ?? 0)} />
         </label>
       </Card>
@@ -167,22 +167,22 @@ export default function PostListingForm() {
       <button type="submit" className="btn-dangtin flex w-full items-center justify-center gap-2 rounded-xl px-6 py-4 text-base font-bold text-cvr-ink">
         Đăng tin ngay
       </button>
-      <p className="text-center text-[11px] text-white/40">Tin đăng được AI kiểm duyệt trước khi hiển thị.</p>
+      <p className="text-center text-[11px] text-cvr-faint">Tin đăng được AI kiểm duyệt trước khi hiển thị.</p>
     </form>
   );
 }
 
-const inputCls = "h-11 w-full rounded-lg border border-white/12 bg-white/5 px-3 text-sm text-white placeholder-white/35 outline-none transition focus:border-white/40 focus:bg-white/10";
+const inputCls = "h-11 w-full rounded-lg border border-transparent bg-cvr-surface px-3 text-sm text-cvr-ink placeholder-cvr-faint outline-none transition focus:border-cvr-line focus:bg-white";
 
 function Label({ children }: { children: React.ReactNode }) {
-  return <label className="mb-1.5 block text-sm font-medium text-white/80">{children}</label>;
+  return <label className="mb-1.5 block text-sm font-medium text-cvr-body">{children}</label>;
 }
 
 function Card({ step, title, children }: { step: string; title: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-2xl border border-white/12 bg-white/[0.03] p-5 sm:p-6">
-      <h2 className="mb-4 flex items-center gap-2.5 font-serif text-lg font-bold text-white">
-        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-sm text-cvr-ink">{step}</span>
+    <section className="rounded-2xl border border-cvr-line bg-white p-5 shadow-lux sm:p-6">
+      <h2 className="mb-4 flex items-center gap-2.5 text-lg font-semibold tracking-tight text-cvr-ink">
+        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-cvr-ink text-sm text-white">{step}</span>
         {title}
       </h2>
       <div className="space-y-4">{children}</div>
@@ -213,7 +213,7 @@ function Text({ label, placeholder, required }: { label: string; placeholder: st
 
 function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
-    <button type="button" onClick={onClick} className={`rounded-lg border px-3 py-2 text-xs font-medium transition ${active ? "border-white bg-white text-cvr-ink" : "border-white/15 text-white/70 hover:border-white/40 hover:text-white"}`}>
+    <button type="button" onClick={onClick} className={`rounded-lg border px-3 py-2 text-xs font-medium transition ${active ? "border-cvr-ink bg-cvr-ink text-white" : "border-cvr-line text-cvr-body hover:border-cvr-ink hover:text-cvr-ink"}`}>
       {children}
     </button>
   );

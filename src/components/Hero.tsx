@@ -5,15 +5,31 @@ import Image from "next/image";
 import Link from "next/link";
 import { asset } from "@/lib/asset";
 import HomeSearch from "@/components/HomeSearch";
-import { homeBanners } from "@/lib/banners";
+import { homeBanners, type Banner } from "@/lib/banners";
 
 const DURATION = 6000;
 
-export default function Hero() {
+// Hero dùng chung: trang chủ (mặc định) + các trang con muốn banner cùng bố cục
+// (bộ lọc sát trên canh giữa · chữ sát dưới canh trái).
+type HeroProps = {
+  banners?: Banner[]; // bộ banner chạy trong hero (mặc định: banner trang chủ)
+  heightClass?: string; // chiều cao hero (gồm cả min-h; mặc định: gần full màn hình)
+  search?: boolean; // hiện hộp bộ lọc trên banner (trang con đã có thanh lọc riêng → tắt)
+  searchTab?: string; // tab bộ lọc chọn sẵn (vd "Dự án")
+  fit?: "cover" | "contain"; // "cover" (mặc định): ảnh phủ kín, có cắt · "contain": ôm TRỌN ảnh, nền 2 bên lấp bằng ảnh mờ
+};
+
+export default function Hero({
+  banners = homeBanners,
+  heightClass = "min-h-[340px] sm:h-[calc(100svh-120px)]",
+  search = true,
+  searchTab,
+  fit = "cover",
+}: HeroProps) {
+  const contain = fit === "contain";
   const [active, setActive] = useState(0);
   const [playing, setPlaying] = useState(true);
   const [tick, setTick] = useState(0);
-  const banners = homeBanners;
   const cur = banners[active];
 
   useEffect(() => {
@@ -42,12 +58,27 @@ export default function Hero() {
 
   return (
     <section
-      className="relative isolate flex min-h-[340px] flex-col sm:h-[calc(100svh-120px)] select-none"
+      className={`relative isolate flex flex-col ${heightClass} select-none`}
       onPointerDown={onDown}
       onPointerUp={onUp}
     >
       {/* ── Ảnh nền ── */}
       <div className="absolute inset-0 -z-10 overflow-hidden bg-cvr-ink">
+        {/* Chế độ contain: lớp nền = chính ảnh đang xem, phủ kín + làm mờ để lấp 2 bên
+            (ôm TRỌN ảnh chính ở giữa mà không để dải trống) */}
+        {contain && (
+          <Image
+            key={`bg-${cur.id}`}
+            src={asset(cur.image)}
+            alt=""
+            aria-hidden
+            fill
+            quality={40}
+            draggable={false}
+            sizes="100vw"
+            className="scale-110 object-cover blur-2xl"
+          />
+        )}
         {banners.map((b, i) => (
           <Image
             key={b.id}
@@ -58,14 +89,20 @@ export default function Hero() {
             quality={100}
             draggable={false}
             sizes="100vw"
-            className={`animate-kenburns pointer-events-none object-cover transition-opacity duration-[1000ms] ease-[cubic-bezier(0.4,0,0.2,1)] ${
-              i === active ? "opacity-100" : "opacity-0"
-            }`}
+            className={`pointer-events-none transition-opacity duration-[1000ms] ease-[cubic-bezier(0.4,0,0.2,1)] ${
+              contain ? "object-contain" : "animate-kenburns object-cover"
+            } ${i === active ? "opacity-100" : "opacity-0"}`}
           />
         ))}
-        {/* Overlay giảm so với bản cũ — đủ để chữ đọc được, không làm tối ảnh */}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-black/15 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+        {/* Overlay đủ để chữ đọc được, không làm tối ảnh. Chế độ contain chỉ tối nhẹ đáy. */}
+        {contain ? (
+          <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
+        ) : (
+          <>
+            <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-black/15 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+          </>
+        )}
       </div>
 
       {/* ── Link toàn banner (z-0, dưới mọi control) ── */}
@@ -132,12 +169,14 @@ export default function Hero() {
       )}
 
       {/* ── Layout kiểu Batdongsan: BỘ LỌC sát TRÊN · CHỮ tiêu đề sát DƯỚI (canh trái) ── */}
-      <div className="pointer-events-none relative z-10 mx-auto flex w-full max-w-7xl flex-1 flex-col justify-between px-4 pb-10 pt-6 sm:px-16 sm:pt-8">
+      <div className={`pointer-events-none relative z-10 mx-auto flex w-full max-w-7xl flex-1 flex-col px-4 pb-10 pt-6 sm:px-16 sm:pt-8 ${search ? "justify-between" : "justify-end"}`}>
 
         {/* ── Bộ lọc — sát TRÊN, canh giữa ngang (kiểu Batdongsan) ── */}
-        <div className="pointer-events-auto mx-auto w-full max-w-4xl">
-          <HomeSearch />
-        </div>
+        {search && (
+          <div className="pointer-events-auto mx-auto w-full max-w-4xl">
+            <HomeSearch defaultTab={searchTab} />
+          </div>
+        )}
 
         {/* Vùng chữ — sát DƯỚI, canh trái (spec V.6) */}
         {cur.showText !== false && (

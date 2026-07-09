@@ -136,7 +136,7 @@ function NavLink({ item }: { item: NavItem }) {
 function SaveButton() {
   return (
     <Link
-      href="/tin-da-luu"
+      href="/tin-luu"
       className="hidden items-center gap-1.5 text-sm font-medium text-cvr-line transition-colors hover:text-white sm:flex"
     >
       <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
@@ -153,7 +153,7 @@ function AccountMenu({ name, onLogout }: { name: string; onLogout: () => void })
   const links: NavChild[] = [
     { label: "Tổng quan", href: "/tai-khoan" },
     { label: "Tin đã đăng", href: "/tai-khoan/tin-dang" },
-    { label: "Tin đã lưu", href: "/tin-da-luu" },
+    { label: "Tin đã lưu", href: "/tin-luu" },
     { label: "Cài đặt tài khoản", href: "/tai-khoan/cai-dat" },
   ];
 

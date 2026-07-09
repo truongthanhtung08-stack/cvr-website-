@@ -41,6 +41,8 @@ export default function FilterBar({
   value,
   onChange,
   onSearch,
+  onMap,
+  mapActive = false,
   compact = false,
   leading,
   purpose = "ban",
@@ -48,8 +50,9 @@ export default function FilterBar({
   value: Filters;
   onChange: (f: Filters) => void;
   onSearch?: () => void;
-  // Bấm "Bản đồ" — mở chế độ bản đồ (vd: chuyển sang /tim-kiem dạng bản đồ).
+  // Bấm "Bản đồ" — bật/tắt chế độ bản đồ (nút nằm cạnh ô tìm, kiểu Batdongsan).
   onMap?: () => void;
+  mapActive?: boolean;
   compact?: boolean;
   // Nội dung đứng đầu dòng 1 (vd: tab Mua bán/Cho thuê/Dự án) — chỉ dùng ở chế độ compact.
   leading?: React.ReactNode;
@@ -61,7 +64,7 @@ export default function FilterBar({
   const typeGroups = typeGroupsFor(purpose);
   const typeOptions = typeGroups.flatMap((g) => g.items);
   const set = (patch: Partial<Filters>) => onChange({ ...f, ...patch });
-  const hh = compact ? "h-12" : "h-11"; // compact = thanh tìm kiếm LỚN ở Hero (kiểu Batdongsan)
+  const hh = compact ? "h-12" : "h-10"; // compact = thanh tìm kiếm LỚN ở Hero · trang danh sách = gọn
 
   // Autocomplete đa tầng: Khu vực · Loại hình · Sản phẩm · Dự án · Tin tức.
   // Khi chạm vào ô (chưa gõ) → hiện Lịch sử + Gợi ý phổ biến (mô hình Homedy).
@@ -161,8 +164,8 @@ export default function FilterBar({
     (f.beds ? 1 : 0) +
     (purpose === "ban" ? (f.direction ? 1 : 0) + (f.legal ? 1 : 0) : (f.furnishing ? 1 : 0));
 
-  // Compact: mỗi ô lọc rộng vừa đúng nội dung (hiện đủ chữ, không cắt).
-  const ddClass = compact ? "shrink-0" : "lg:flex-1 lg:min-w-0";
+  // Mỗi ô lọc rộng vừa đúng nội dung (pill gọn, hiện đủ chữ, không kéo giãn).
+  const ddClass = "shrink-0";
 
   // ===== Nhóm dropdown (dùng chung cho cả 2 layout) =====
   const dropdowns = (
@@ -347,7 +350,7 @@ export default function FilterBar({
 
   // ===== Ô từ khoá + nút tìm kiếm (dùng chung) =====
   const searchBox = (
-    <div ref={boxRef} className={compact ? "flex w-full gap-2.5" : "flex gap-2 lg:w-72 xl:w-80"}>
+    <div ref={boxRef} className={compact ? "flex w-full gap-2.5" : "flex w-full gap-2"}>
       <div className="relative flex-1">
         <svg className={`pointer-events-none absolute top-1/2 -translate-y-1/2 text-cvr-faint ${compact ? "left-4 h-[18px] w-[18px]" : "left-3 h-4 w-4"}`} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
@@ -366,7 +369,7 @@ export default function FilterBar({
           className={`${hh} w-full border outline-none transition ${
             compact
               ? "rounded-xl border-transparent bg-white pl-11 pr-4 text-[15px] text-cvr-ink placeholder-cvr-faint shadow-lg shadow-black/20 ring-1 ring-black/5 focus:ring-2 focus:ring-cvr-gold/50"
-              : "rounded-lg border-black/12 bg-black/[0.03] pl-9 pr-3 text-sm text-cvr-ink placeholder-cvr-faint focus:border-cvr-ink/40 focus:bg-black/[0.05]"
+              : "rounded-xl border-transparent bg-cvr-surface pl-9 pr-3 text-sm text-cvr-ink placeholder-cvr-faint focus:border-cvr-line focus:bg-white"
           }`}
         />
         {sugOpen && panelItems.length > 0 && (
@@ -418,7 +421,7 @@ export default function FilterBar({
           className={`flex ${hh} shrink-0 items-center justify-center gap-2 font-semibold transition active:scale-95 ${
             compact
               ? "rounded-xl bg-cvr-gold px-6 text-[15px] text-cvr-ink shadow-lg shadow-black/20 hover:bg-cvr-gold-soft"
-              : "rounded-lg bg-cvr-ink px-6 text-sm text-white hover:bg-cvr-ink/90"
+              : "rounded-xl bg-cvr-ink px-6 text-sm text-white hover:bg-cvr-ink/90"
           }`}
         >
           {!compact && (
@@ -429,12 +432,28 @@ export default function FilterBar({
           Tìm kiếm
         </button>
       )}
+      {/* Nút Bản đồ — cạnh ô tìm kiếm (kiểu Batdongsan), chỉ ở trang danh sách */}
+      {!compact && onMap && (
+        <button
+          type="button"
+          onClick={onMap}
+          aria-pressed={mapActive}
+          className={`flex ${hh} shrink-0 items-center gap-1.5 rounded-xl border border-transparent px-3.5 text-sm font-medium transition ${
+            mapActive
+              ? "bg-cvr-ink text-white"
+              : "bg-cvr-surface text-cvr-ink hover:bg-black/[0.07]"
+          }`}
+        >
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4M9 7l6-3" /></svg>
+          Bản đồ
+        </button>
+      )}
     </div>
   );
 
-  // Compact (Hero): kiểu Batdongsan — tab canh giữa + 1 thanh tìm kiếm LỚN.
-  // Lọc đa tầng thông minh (khu vực → quận → phường · loại hình · dự án) + sửa lỗi gõ
-  // nằm trong autocomplete của chính ô tìm kiếm (xem suggest.ts).
+  // Compact (Hero): kiểu "bay" trên ảnh — tab canh giữa + 1 thanh tìm kiếm LỚN,
+  // KHÔNG hộp nền, KHÔNG dàn dropdown (lọc chi tiết nằm ở trang kết quả).
+  // Autocomplete thông minh (khu vực · loại hình · dự án · tin) vẫn nằm trong ô tìm (suggest.ts).
   if (compact) {
     return (
       <div className="flex flex-col gap-3.5">
@@ -446,14 +465,15 @@ export default function FilterBar({
     );
   }
 
-  // Mặc định (trang tìm kiếm): dropdown chiếm phần lớn, ô tìm bên phải.
+  // Mặc định (trang danh sách/tìm kiếm): kiểu Batdongsan — ô tìm LỚN ở trên,
+  // dàn dropdown lọc dàn đều ở dưới.
   return (
-    <div className="rounded-2xl border border-cvr-line bg-black/[0.02] p-2.5 shadow-xl shadow-black/10 backdrop-blur-md">
-      <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:flex lg:flex-1">
+    <div className="rounded-2xl border border-cvr-line bg-white p-2.5 shadow-lux">
+      <div className="flex flex-col gap-2">
+        {searchBox}
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:flex lg:flex-wrap">
           <FilterDropdownGroup>{dropdowns}</FilterDropdownGroup>
         </div>
-        {searchBox}
       </div>
     </div>
   );
