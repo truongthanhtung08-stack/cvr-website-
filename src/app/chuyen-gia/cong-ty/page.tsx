@@ -29,8 +29,8 @@ export default function CongTyPage() {
             {agencies.map((a) => {
               const initials = a.name.replace(/^Sàn |^Coastal Land.*/, "S").trim().split(" ").slice(0, 2).map((s) => s[0]).join("").toUpperCase();
               return (
-                <div key={a.slug} className="shadow-lux flex items-center gap-4 rounded-2xl border border-cvr-line bg-white p-5 transition hover:-translate-y-1 hover:border-cvr-gold/40">
-                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-cvr-ink text-lg font-bold text-white">
+                <div key={a.slug} className="shadow-lux flex items-center gap-4 rounded-none border border-cvr-line bg-white p-5 transition hover:-translate-y-1 hover:border-cvr-blue/40">
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-none bg-cvr-ink text-lg font-bold text-white">
                     {initials}
                   </div>
                   <div className="min-w-0 flex-1">

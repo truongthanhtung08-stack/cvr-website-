@@ -36,7 +36,7 @@ export default function DangKyChuyenGiaPage() {
 
               <div className="mt-6 space-y-4">
                 {benefits.map((b, i) => (
-                  <div key={b.title} className="flex gap-4 rounded-2xl border border-cvr-line bg-cvr-surface p-4">
+                  <div key={b.title} className="flex gap-4 rounded-none border border-cvr-line bg-cvr-surface p-4">
                     <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-cvr-ink text-sm font-bold text-white">{i + 1}</span>
                     <div>
                       <h3 className="font-semibold text-cvr-ink">{b.title}</h3>

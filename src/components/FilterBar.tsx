@@ -19,6 +19,8 @@ import {
   MAX_LOCATIONS,
   legalOptions,
   furnishingOptions,
+  emptyFilters,
+  hasActiveFilters,
   type Filters,
   type LocationSel,
 } from "@/lib/filters";
@@ -167,10 +169,69 @@ export default function FilterBar({
   // Mỗi ô lọc rộng vừa đúng nội dung (pill gọn, hiện đủ chữ, không kéo giãn).
   const ddClass = "shrink-0";
 
-  // ===== Nhóm dropdown (dùng chung cho cả 2 layout) =====
-  const dropdowns = (
-    <>
-      {/* Khu vực — ĐA CHỌN (tối đa 5) theo tầng Tỉnh→Quận→Phường (kiểu Batdongsan) */}
+  // ===== "Loại nhà đất" — dòng 2 (bố cục Batdongsan) =====
+  const typeDropdown = (
+    <FilterDropdown label="Loại nhà đất" summary={typeLabel} active={f.types.length > 0} panelClassName="w-72" compact={compact} className={ddClass}>
+      {() => {
+        const allChecked = typeOptions.every((t) => f.types.includes(t));
+        return (
+          <div>
+            {/* Chọn tất cả */}
+            <label className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm font-semibold text-cvr-ink transition hover:bg-black/5">
+              <input
+                type="checkbox"
+                checked={allChecked}
+                onChange={() => set({ types: allChecked ? [] : [...typeOptions] })}
+                className="h-4 w-4 shrink-0 accent-cvr-blue"
+              />
+              <span>Tất cả loại nhà đất</span>
+            </label>
+
+            <div className="mt-1 max-h-64 space-y-1.5 overflow-y-auto pr-1">
+              {typeGroups.map((g) => (
+                <div key={g.label}>
+                  <p className="px-2 pb-0.5 pt-1 text-[11px] font-semibold uppercase tracking-wide text-cvr-faint">{g.label}</p>
+                  {g.items.map((t) => {
+                    const checked = f.types.includes(t);
+                    return (
+                      <label
+                        key={t}
+                        className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm text-cvr-ink/80 transition hover:bg-black/5"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() =>
+                            set({ types: checked ? f.types.filter((x) => x !== t) : [...f.types, t] })
+                          }
+                          className="h-4 w-4 shrink-0 accent-cvr-blue"
+                        />
+                        <span className="truncate">{t}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+
+            {f.types.length > 0 && (
+              <button
+                type="button"
+                onClick={() => set({ types: [] })}
+                className="mt-2 border-t border-cvr-line pt-2 text-xs font-medium text-cvr-muted transition hover:text-cvr-ink"
+              >
+                Bỏ chọn tất cả
+              </button>
+            )}
+          </div>
+        );
+      }}
+    </FilterDropdown>
+  );
+
+  // ===== Các dropdown chi tiết — dòng 2 (thứ tự hiển thị xếp ở phần return) =====
+  // Khu vực — ĐA CHỌN (tối đa 5) theo tầng Tỉnh→Quận→Phường (kiểu Batdongsan)
+  const locationDropdown = (
       <FilterDropdown label="Khu vực" summary={locLabel} active={f.locations.length > 0} panelClassName="w-80" compact={compact} className={ddClass}>
         {() => (
           <LocationPanel
@@ -179,8 +240,10 @@ export default function FilterBar({
           />
         )}
       </FilterDropdown>
+  );
 
-      {/* Dự án — LỌC ĐỘNG theo khu vực đã chọn (kiểu Batdongsan) */}
+  // Dự án — LỌC ĐỘNG theo khu vực đã chọn (kiểu Batdongsan)
+  const projectDropdown = (
       <FilterDropdown label="Dự án" summary={f.project} active={!!f.project} panelClassName="w-72" compact={compact} className={ddClass}>
         {({ close }) => (
           <ProjectPanel
@@ -190,67 +253,11 @@ export default function FilterBar({
           />
         )}
       </FilterDropdown>
+  );
 
-      {/* Loại nhà đất — gom nhóm + chọn tất cả (kiểu Homedy) */}
-      <FilterDropdown label="Loại nhà đất" summary={typeLabel} active={f.types.length > 0} panelClassName="w-72" compact={compact} className={ddClass}>
-        {() => {
-          const allChecked = typeOptions.every((t) => f.types.includes(t));
-          return (
-            <div>
-              {/* Chọn tất cả */}
-              <label className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm font-semibold text-cvr-ink transition hover:bg-black/5">
-                <input
-                  type="checkbox"
-                  checked={allChecked}
-                  onChange={() => set({ types: allChecked ? [] : [...typeOptions] })}
-                  className="h-4 w-4 shrink-0 accent-cvr-ink"
-                />
-                <span>Tất cả loại nhà đất</span>
-              </label>
-
-              <div className="mt-1 max-h-64 space-y-1.5 overflow-y-auto pr-1">
-                {typeGroups.map((g) => (
-                  <div key={g.label}>
-                    <p className="px-2 pb-0.5 pt-1 text-[11px] font-semibold uppercase tracking-wide text-cvr-faint">{g.label}</p>
-                    {g.items.map((t) => {
-                      const checked = f.types.includes(t);
-                      return (
-                        <label
-                          key={t}
-                          className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm text-cvr-ink/80 transition hover:bg-black/5"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={checked}
-                            onChange={() =>
-                              set({ types: checked ? f.types.filter((x) => x !== t) : [...f.types, t] })
-                            }
-                            className="h-4 w-4 shrink-0 accent-cvr-ink"
-                          />
-                          <span className="truncate">{t}</span>
-                        </label>
-                      );
-                    })}
-                  </div>
-                ))}
-              </div>
-
-              {f.types.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => set({ types: [] })}
-                  className="mt-2 border-t border-cvr-line pt-2 text-xs font-medium text-cvr-muted transition hover:text-cvr-ink"
-                >
-                  Bỏ chọn tất cả
-                </button>
-              )}
-            </div>
-          );
-        }}
-      </FilterDropdown>
-
-      {/* Mức giá */}
-      <FilterDropdown label="Mức giá" summary={priceLabel} active={f.priceMin != null || f.priceMax != null} panelClassName="w-80" compact={compact} className={ddClass}>
+  // Khoảng giá (tên nhãn kiểu Batdongsan)
+  const priceDropdown = (
+      <FilterDropdown label="Khoảng giá" summary={priceLabel} active={f.priceMin != null || f.priceMax != null} panelClassName="w-80" compact={compact} className={ddClass}>
         {({ close }) => (
           <RangePanel
             unit="tỷ"
@@ -265,8 +272,10 @@ export default function FilterBar({
           />
         )}
       </FilterDropdown>
+  );
 
-      {/* Diện tích */}
+  // Diện tích
+  const areaDropdown = (
       <FilterDropdown label="Diện tích" summary={areaLabel} active={f.areaMin != null || f.areaMax != null} panelClassName="w-80" compact={compact} className={ddClass}>
         {({ close }) => (
           <RangePanel
@@ -282,15 +291,16 @@ export default function FilterBar({
           />
         )}
       </FilterDropdown>
+  );
 
-      {/* Lọc thêm: phòng ngủ + hướng */}
+  // "Lọc" — phòng ngủ + hướng + pháp lý/nội thất (đứng ĐẦU dòng 2, kiểu Batdongsan)
+  const moreDropdown = (
       <FilterDropdown
-        label="Lọc thêm"
-        summary={moreCount ? `Lọc thêm (${moreCount})` : ""}
+        label="Lọc"
+        summary={moreCount ? `Lọc (${moreCount})` : ""}
         active={moreCount > 0}
         panelClassName="w-80"
         className={ddClass}
-        align="right"
         compact={compact}
       >
         {({ close }) => (
@@ -345,14 +355,13 @@ export default function FilterBar({
           </div>
         )}
       </FilterDropdown>
-    </>
   );
 
   // ===== Ô từ khoá + nút tìm kiếm (dùng chung) =====
   const searchBox = (
     <div ref={boxRef} className={compact ? "flex w-full gap-2.5" : "flex w-full gap-2"}>
-      <div className="relative flex-1">
-        <svg className={`pointer-events-none absolute top-1/2 -translate-y-1/2 text-cvr-faint ${compact ? "left-4 h-[18px] w-[18px]" : "left-3 h-4 w-4"}`} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+      <div className={compact ? "relative flex-1" : "relative flex h-12 min-w-0 flex-1 items-center rounded-none bg-cvr-surface transition focus-within:ring-2 focus-within:ring-cvr-blue/40"}>
+        <svg className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-cvr-faint" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
         </svg>
         <input
@@ -366,14 +375,25 @@ export default function FilterBar({
           autoComplete="off"
           role="combobox"
           aria-expanded={sugOpen}
-          className={`${hh} w-full border outline-none transition ${
+          className={
             compact
-              ? "rounded-xl border-transparent bg-white pl-11 pr-4 text-[15px] text-cvr-ink placeholder-cvr-faint shadow-lg shadow-black/20 ring-1 ring-black/5 focus:ring-2 focus:ring-cvr-gold/50"
-              : "rounded-xl border-transparent bg-cvr-surface pl-9 pr-3 text-sm text-cvr-ink placeholder-cvr-faint focus:border-cvr-line focus:bg-white"
-          }`}
+              ? "h-12 w-full rounded-xl border border-transparent bg-white pl-11 pr-4 text-[15px] text-cvr-ink placeholder-cvr-faint shadow-lg shadow-black/20 ring-1 ring-black/5 outline-none transition focus:ring-2 focus:ring-cvr-blue/50"
+              : "h-full w-full min-w-0 flex-1 border-none bg-transparent pl-11 pr-3 text-[15px] text-cvr-ink placeholder-cvr-faint outline-none"
+          }
         />
+        {/* Nút Tìm kiếm NẰM TRONG thanh tìm (kiểu Batdongsan) — trang danh sách */}
+        {!compact && (
+          <button
+            type="button"
+            aria-label="Tìm kiếm"
+            onClick={() => { setSugOpen(false); onSearch?.(); }}
+            className="m-1.5 flex h-9 shrink-0 items-center justify-center rounded-none bg-cvr-blue px-5 text-sm font-semibold text-white transition hover:bg-cvr-blue-ink active:scale-95"
+          >
+            Tìm kiếm
+          </button>
+        )}
         {sugOpen && panelItems.length > 0 && (
-          <div className="absolute left-0 right-0 top-full z-[120] mt-1.5 max-h-80 overflow-y-auto rounded-xl border border-cvr-line bg-white p-1.5 shadow-2xl shadow-black/20 ring-1 ring-inset ring-black/5">
+          <div className="absolute left-0 right-0 top-full z-[120] mt-1.5 max-h-80 overflow-y-auto rounded-none border border-cvr-line bg-white p-1.5 shadow-2xl shadow-black/20 ring-1 ring-inset ring-black/5">
             {panelItems.map((s, i) => {
               const header = !typed
                 ? i === 0 && recentShown.length > 0 ? "recent" : i === recentShown.length ? "popular" : ""
@@ -413,15 +433,15 @@ export default function FilterBar({
           </div>
         )}
       </div>
-      {onSearch && (
+      {compact && onSearch && (
         <button
           type="button"
           onClick={onSearch}
           aria-label="Tìm kiếm"
           className={`flex ${hh} shrink-0 items-center justify-center gap-2 font-semibold transition active:scale-95 ${
             compact
-              ? "rounded-xl bg-cvr-gold px-6 text-[15px] text-cvr-ink shadow-lg shadow-black/20 hover:bg-cvr-gold-soft"
-              : "rounded-xl bg-cvr-ink px-6 text-sm text-white hover:bg-cvr-ink/90"
+              ? "rounded-xl bg-cvr-blue px-6 text-[15px] text-white shadow-lg shadow-black/20 hover:bg-cvr-blue-ink"
+              : "rounded-xl bg-cvr-blue px-6 text-sm text-white hover:bg-cvr-blue-ink"
           }`}
         >
           {!compact && (
@@ -438,14 +458,12 @@ export default function FilterBar({
           type="button"
           onClick={onMap}
           aria-pressed={mapActive}
-          className={`flex ${hh} shrink-0 items-center gap-1.5 rounded-xl border border-transparent px-3.5 text-sm font-medium transition ${
-            mapActive
-              ? "bg-cvr-ink text-white"
-              : "bg-cvr-surface text-cvr-ink hover:bg-black/[0.07]"
+          className={`flex h-12 shrink-0 items-center gap-2 rounded-none px-5 text-sm font-semibold text-white transition ${
+            mapActive ? "bg-cvr-blue-ink" : "bg-cvr-blue hover:bg-cvr-blue-ink"
           }`}
         >
-          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4M9 7l6-3" /></svg>
-          Bản đồ
+          <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4M9 7l6-3" /></svg>
+          Xem bản đồ
         </button>
       )}
     </div>
@@ -465,17 +483,40 @@ export default function FilterBar({
     );
   }
 
-  // Mặc định (trang danh sách/tìm kiếm): kiểu Batdongsan — ô tìm LỚN ở trên,
-  // dàn dropdown lọc dàn đều ở dưới.
+  // Mặc định (trang danh sách/tìm kiếm): bố cục Batdongsan, da Apple —
+  // DÒNG 1: Loại nhà đất (dẫn đầu) + ô tìm kiếm + Bản đồ ·
+  // DÒNG 2: Khu vực · Dự án · Mức giá · Diện tích · Lọc thêm · Đặt lại (phải).
+  const hasActive = hasActiveFilters(f);
   return (
-    <div className="rounded-2xl border border-cvr-line bg-white p-2.5 shadow-lux">
-      <div className="flex flex-col gap-2">
-        {searchBox}
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:flex lg:flex-wrap">
-          <FilterDropdownGroup>{dropdowns}</FilterDropdownGroup>
+    <FilterDropdownGroup>
+      <div className="rounded-none border border-cvr-line bg-white p-2.5 shadow-lux">
+        <div className="flex flex-col gap-2">
+          {searchBox}
+          <div className="flex flex-wrap items-center gap-2">
+            {moreDropdown}
+            <FilterToggle label="Tin xác thực" checked={f.verified} onChange={(v) => set({ verified: v })} />
+            {typeDropdown}
+            {priceDropdown}
+            {areaDropdown}
+            {locationDropdown}
+            {projectDropdown}
+            <FilterToggle label="Môi giới chuyên nghiệp" checked={f.broker} onChange={(v) => set({ broker: v })} />
+            {hasActive && (
+              <button
+                type="button"
+                onClick={() => onChange(emptyFilters())}
+                className="flex h-9 items-center justify-center gap-1.5 px-3 text-sm font-medium text-cvr-muted transition hover:text-cvr-blue-ink lg:ml-auto"
+              >
+                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h5M20 20v-5h-5M4 9a8 8 0 0114.13-3.36M20 15A8 8 0 015.87 18.36" />
+                </svg>
+                Đặt lại
+              </button>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </FilterDropdownGroup>
   );
 }
 
@@ -530,9 +571,9 @@ function LocationPanel({
       {locations.length > 0 && (
         <div className="mb-2 flex flex-wrap gap-1.5">
           {locations.map((l, i) => (
-            <span key={`${locationLabel(l)}-${i}`} className="inline-flex items-center gap-1 rounded-full bg-cvr-ink/10 py-1 pl-2.5 pr-1.5 text-xs text-cvr-ink">
+            <span key={`${locationLabel(l)}-${i}`} className="inline-flex items-center gap-1 rounded-full bg-cvr-blue/10 py-1 pl-2.5 pr-1.5 text-xs font-medium text-cvr-blue-ink">
               <span className="max-w-[9rem] truncate">{locationLabel(l)}</span>
-              <button type="button" onClick={() => remove(i)} aria-label="Gỡ khu vực" className="text-cvr-faint transition hover:text-cvr-ink">
+              <button type="button" onClick={() => remove(i)} aria-label="Gỡ khu vực" className="text-cvr-blue/60 transition hover:text-cvr-blue-ink">
                 <svg className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </span>
@@ -552,7 +593,7 @@ function LocationPanel({
         <button
           type="button"
           onClick={() => add(dist ? { province: prov, district: dist } : { province: prov })}
-          className="mb-2 w-full rounded-lg border border-cvr-ink/25 bg-cvr-ink/[0.04] px-2.5 py-1.5 text-left text-xs font-medium text-cvr-ink transition hover:bg-cvr-ink/10"
+          className="mb-2 w-full rounded-lg border border-cvr-blue/30 bg-cvr-blue/[0.06] px-2.5 py-1.5 text-left text-xs font-medium text-cvr-blue-ink transition hover:bg-cvr-blue/15"
         >
           ＋ Thêm cả {dist || prov}
         </button>
@@ -564,12 +605,12 @@ function LocationPanel({
         onChange={(e) => setQ(e.target.value)}
         placeholder={level === "province" ? "Tìm tỉnh/thành…" : level === "district" ? "Tìm quận/huyện…" : "Tìm phường/xã…"}
         aria-label="Lọc nhanh khu vực"
-        className="h-9 w-full rounded-lg border border-black/12 bg-black/[0.03] px-3 text-sm text-cvr-ink placeholder-cvr-faint outline-none focus:border-cvr-ink/40"
+        className="h-9 w-full rounded-lg border border-black/12 bg-black/[0.03] px-3 text-sm text-cvr-ink placeholder-cvr-faint outline-none focus:border-cvr-blue/60"
       />
 
       {/* Danh sách bấm chọn */}
       <div className="mt-2 max-h-56 space-y-0.5 overflow-y-auto">
-        {full && <p className="px-2 py-2 text-center text-xs font-medium text-cvr-gold-ink">Đã đạt tối đa {MAX_LOCATIONS} khu vực</p>}
+        {full && <p className="px-2 py-2 text-center text-xs font-medium text-cvr-blue-ink">Đã đạt tối đa {MAX_LOCATIONS} khu vực</p>}
         {filtered.length === 0 && <p className="px-2 py-3 text-center text-sm text-cvr-faint">Không có kết quả</p>}
         {filtered.map((name) => (
           <button
@@ -611,7 +652,7 @@ function ProjectPanel({
         onChange={(e) => setQ(e.target.value)}
         placeholder="Tìm dự án…"
         aria-label="Tìm dự án"
-        className="h-9 w-full rounded-lg border border-black/12 bg-black/[0.03] px-3 text-sm text-cvr-ink placeholder-cvr-faint outline-none focus:border-cvr-ink/40"
+        className="h-9 w-full rounded-lg border border-black/12 bg-black/[0.03] px-3 text-sm text-cvr-ink placeholder-cvr-faint outline-none focus:border-cvr-blue/60"
       />
       <div className="mt-2 max-h-64 space-y-0.5 overflow-y-auto">
         {list.length === 0 && (
@@ -626,7 +667,7 @@ function ProjectPanel({
               key={p.slug}
               type="button"
               onClick={() => onPick(p.name)}
-              className={`flex w-full flex-col rounded-lg px-2.5 py-1.5 text-left text-sm transition ${active ? "bg-cvr-ink/10 text-cvr-ink" : "text-cvr-ink/80 hover:bg-black/5"}`}
+              className={`flex w-full flex-col rounded-lg px-2.5 py-1.5 text-left text-sm transition ${active ? "bg-cvr-blue/10 text-cvr-blue-ink" : "text-cvr-ink/80 hover:bg-black/5"}`}
             >
               <span className="truncate font-medium">{p.name}</span>
               <span className="truncate text-[11px] text-cvr-faint">{p.location}</span>
@@ -638,13 +679,37 @@ function ProjectPanel({
   );
 }
 
+// Toggle bật/tắt kiểu Batdongsan (Tin xác thực · Môi giới chuyên nghiệp) — công tắc iOS/Apple.
+function FilterToggle({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      className={`flex h-10 shrink-0 items-center gap-2.5 rounded-none border px-3.5 text-sm transition ${
+        checked
+          ? "border-cvr-blue/50 bg-white font-medium text-cvr-ink"
+          : "border-cvr-line bg-white text-cvr-body hover:border-cvr-ink/35"
+      }`}
+    >
+      {label}
+      <span className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${checked ? "bg-cvr-blue" : "bg-black/15"}`} aria-hidden>
+        <span
+          className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${checked ? "translate-x-[18px]" : "translate-x-0.5"}`}
+        />
+      </span>
+    </button>
+  );
+}
+
 function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
     <button
       type="button"
       onClick={onClick}
       className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition ${
-        active ? "border-cvr-ink bg-cvr-ink text-white" : "border-black/15 text-cvr-ink/75 hover:border-black/40 hover:text-cvr-ink"
+        active ? "border-cvr-blue bg-cvr-blue text-white" : "border-black/15 text-cvr-ink/75 hover:border-cvr-blue/50 hover:text-cvr-ink"
       }`}
     >
       {children}
@@ -693,7 +758,7 @@ function RangePanel({
       <div className="relative mb-3 h-5">
         <div className="absolute top-1/2 h-1 w-full -translate-y-1/2 rounded-full bg-black/10" />
         <div
-          className="absolute top-1/2 h-1 -translate-y-1/2 rounded-full bg-cvr-ink"
+          className="absolute top-1/2 h-1 -translate-y-1/2 rounded-full bg-cvr-blue"
           style={{ left: `${pct(lo)}%`, right: `${100 - pct(hi)}%` }}
         />
         <input
@@ -717,7 +782,7 @@ function RangePanel({
           value={draftMin}
           onChange={(e) => setDraftMin(e.target.value)}
           onBlur={() => commit(draftMin, draftMax)}
-          className="h-10 w-full rounded-lg border border-black/12 bg-black/[0.03] px-3 text-sm text-cvr-ink placeholder-cvr-faint outline-none focus:border-cvr-ink/40"
+          className="h-10 w-full rounded-lg border border-black/12 bg-black/[0.03] px-3 text-sm text-cvr-ink placeholder-cvr-faint outline-none focus:border-cvr-blue/60"
         />
         <span className="text-cvr-faint">–</span>
         <input
@@ -725,7 +790,7 @@ function RangePanel({
           value={draftMax}
           onChange={(e) => setDraftMax(e.target.value)}
           onBlur={() => commit(draftMin, draftMax)}
-          className="h-10 w-full rounded-lg border border-black/12 bg-black/[0.03] px-3 text-sm text-cvr-ink placeholder-cvr-faint outline-none focus:border-cvr-ink/40"
+          className="h-10 w-full rounded-lg border border-black/12 bg-black/[0.03] px-3 text-sm text-cvr-ink placeholder-cvr-faint outline-none focus:border-cvr-blue/60"
         />
         <span className="shrink-0 text-xs text-cvr-faint">{unit}</span>
       </div>
@@ -744,7 +809,7 @@ function RangePanel({
                 onPick(p.min, p.max);
               }}
               className={`block w-full rounded-lg px-2.5 py-1.5 text-left text-sm transition ${
-                active ? "bg-cvr-ink/10 text-cvr-ink" : "text-cvr-ink/75 hover:bg-black/5"
+                active ? "bg-cvr-blue/10 font-medium text-cvr-blue-ink" : "text-cvr-ink/75 hover:bg-black/5"
               }`}
             >
               {p.label}

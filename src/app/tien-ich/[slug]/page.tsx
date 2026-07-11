@@ -69,7 +69,7 @@ export default async function PackagePage({ params }: { params: Promise<{ slug: 
                     href={`/tien-ich/${pkg.slug}`}
                     className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
                       active
-                        ? "border-cvr-gold bg-cvr-gold text-cvr-ink"
+                        ? "border-cvr-blue bg-cvr-blue text-white"
                         : "border-cvr-line text-cvr-body hover:border-cvr-ink hover:text-cvr-ink"
                     }`}
                   >
@@ -102,7 +102,7 @@ export default async function PackagePage({ params }: { params: Promise<{ slug: 
               {tiers.map((t) => (
                 <div
                   key={t.id}
-                  className="flex flex-col overflow-hidden rounded-2xl border border-cvr-line bg-white shadow-lux"
+                  className="flex flex-col overflow-hidden rounded-none border border-cvr-line bg-white shadow-lux"
                 >
                   {/* Đầu cột — màu theo hạng */}
                   <div

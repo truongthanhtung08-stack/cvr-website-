@@ -23,10 +23,10 @@ export function AdBannerSeller() {
   return (
     <section className="section-edge bg-white">
       <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
-        {/* Khung = ĐÚNG tỷ lệ ảnh (3:1) trên desktop → hiện TRỌN cảnh, không crop, không zoom */}
-        <div className="relative overflow-hidden rounded-[1.75rem] shadow-lux md:aspect-[3/1]">
+        {/* Khung GỌN (3.5:1) trên desktop — ảnh PHỦ KÍN khung (cover), không hụt 2 bên */}
+        <div className="relative overflow-hidden rounded-[1.75rem] shadow-lux md:aspect-[7/2]">
           <Image
-            src={asset("/images/banner-coastal.jpg")}
+            src={asset("/images/banner-coastal-35.jpg")}
             alt="Villa ven biển Duyên Hải Miền Trung lúc hoàng hôn"
             fill
             sizes="(max-width: 1280px) 100vw, 1216px"
@@ -36,7 +36,7 @@ export function AdBannerSeller() {
           <div className="absolute inset-0 bg-gradient-to-r from-white/85 via-white/35 to-transparent" aria-hidden />
 
           {/* Nội dung — gọn, canh giữa dọc bên trái */}
-          <div className="relative flex min-h-[280px] flex-col justify-center px-8 py-10 sm:px-12 md:absolute md:inset-y-0 md:min-h-0 lg:px-14">
+          <div className="relative flex min-h-[240px] flex-col justify-center px-8 py-8 sm:px-12 md:absolute md:inset-y-0 md:min-h-0 lg:px-14">
             <h2 className="text-balance text-2xl font-semibold leading-[1.12] tracking-tight text-cvr-ink sm:text-3xl">
               Đưa bất động sản
               <br />
@@ -72,7 +72,7 @@ export function AdBannerApp() {
           <div className="pointer-events-none absolute -bottom-24 -left-16 h-72 w-72 rounded-full bg-cvr-gold/[0.14] blur-3xl" aria-hidden />
           <div className="pointer-events-none absolute -bottom-32 left-24 h-56 w-96 rotate-12 rounded-full bg-cvr-gold/[0.07] blur-3xl" aria-hidden />
 
-          <div className="relative grid items-center gap-7 px-8 py-8 sm:px-12 md:grid-cols-[auto_1fr_auto] md:gap-9 lg:px-14">
+          <div className="relative grid items-center gap-6 px-8 py-6 sm:px-12 md:grid-cols-[auto_1fr_auto] md:gap-8 lg:px-14">
             {/* iPhone thật (cắt từ Banner Mẫu 6) — 2 máy, app COASTAL LAND, trôi nổi nhẹ */}
             <div className="order-2 flex items-center justify-center md:order-1">
               <Image
@@ -80,7 +80,7 @@ export function AdBannerApp() {
                 alt="Ứng dụng COASTAL LAND trên iPhone"
                 width={300}
                 height={289}
-                className="animate-float w-[250px] sm:w-[300px] [mask-image:radial-gradient(ellipse_75%_75%_at_50%_48%,black_62%,transparent_98%)]"
+                className="animate-float w-[220px] sm:w-[260px] [mask-image:radial-gradient(ellipse_75%_75%_at_50%_48%,black_62%,transparent_98%)]"
               />
             </div>
 
@@ -111,9 +111,9 @@ export function AdBannerApp() {
                   <Image
                     src={asset("/images/qr.png")}
                     alt="Quét mã QR để tải ứng dụng COASTAL LAND"
-                    width={76}
-                    height={76}
-                    className="h-[76px] w-[76px]"
+                    width={64}
+                    height={64}
+                    className="h-16 w-16"
                   />
                 </div>
                 <p className={`max-w-[6.5rem] text-xs leading-snug ${DARK_BODY}`}>Quét mã để tải ứng dụng</p>

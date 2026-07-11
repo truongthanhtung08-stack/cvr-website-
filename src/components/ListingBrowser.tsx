@@ -72,15 +72,9 @@ export default function ListingBrowser({
 
   return (
     <div className="mx-auto max-w-7xl px-4 pb-20 pt-6 sm:px-6 lg:px-8">
-      {/* ── Phần trên kiểu Homedy (gọn): breadcrumb → thanh lọc → tiêu đề + bộ đếm ── */}
-      <nav className="flex items-center gap-1.5 text-xs text-cvr-muted">
-        <a href="/" className="hover:text-cvr-ink">Trang chủ</a>
-        <span>/</span>
-        <span className="text-cvr-body">{heading}</span>
-      </nav>
-
-      {/* Thanh lọc — ngay dưới breadcrumb; nút Bản đồ nằm cạnh ô tìm (kiểu Batdongsan) */}
-      <div className="mt-2.5">
+      {/* ── Phần trên kiểu Homedy (gọn): thanh lọc → tiêu đề + bộ đếm.
+           Trang cấp 1 KHÔNG dùng breadcrumb (menu đã chỉ vị trí — chuẩn Apple). ── */}
+      <div>
         <FilterBar
           value={filters}
           onChange={setFilters}
@@ -138,14 +132,14 @@ export default function ListingBrowser({
             {results.length > 0 ? (
               results.map((item) => <PropertyCard key={item.id} item={item} layout="list" showTime />)
             ) : (
-              <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-cvr-line py-20 text-center">
+              <div className="flex flex-col items-center justify-center rounded-none border border-dashed border-cvr-line py-20 text-center">
                 <p className="text-cvr-body">Không tìm thấy bất động sản phù hợp.</p>
                 <button type="button" onClick={() => setFilters(emptyFilters())} className="mt-5 rounded-lg bg-cvr-ink px-5 py-2 text-sm font-semibold text-white transition hover:bg-cvr-body">Xoá bộ lọc</button>
               </div>
             )}
           </div>
           <div className="order-1 lg:order-2 lg:col-span-3">
-            <div className="sticky top-24 h-[380px] overflow-hidden rounded-2xl border border-cvr-line shadow-lux lg:h-[calc(100vh-140px)]">
+            <div className="sticky top-24 h-[380px] overflow-hidden rounded-none border border-cvr-line shadow-lux lg:h-[calc(100vh-140px)]">
               <MapView items={results} />
             </div>
           </div>
@@ -178,7 +172,7 @@ export default function ListingBrowser({
               )}
             </>
           ) : (
-            <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-cvr-line py-20 text-center">
+            <div className="flex flex-col items-center justify-center rounded-none border border-dashed border-cvr-line py-20 text-center">
               <p className="text-cvr-body">Không tìm thấy bất động sản phù hợp.</p>
               <button type="button" onClick={() => setFilters(emptyFilters())} className="mt-5 rounded-lg bg-cvr-ink px-5 py-2 text-sm font-semibold text-white transition hover:bg-cvr-body">Xoá bộ lọc</button>
             </div>
@@ -236,7 +230,7 @@ export default function ListingBrowser({
 // ── Sidebar lọc nhanh (giống .product-right của Homedy) ──────────────────────
 function SidebarFilter({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-2xl border border-cvr-line bg-white p-4 shadow-lux">
+    <div className="rounded-none border border-cvr-line bg-white p-4 shadow-lux">
       <p className="mb-2.5 text-sm font-semibold text-cvr-ink">{title}</p>
       <ul className="grid grid-cols-2 gap-1.5">{children}</ul>
     </div>

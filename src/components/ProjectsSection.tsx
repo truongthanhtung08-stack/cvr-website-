@@ -34,7 +34,7 @@ export default function ProjectsSection() {
             <Link
               key={p.name}
               href="/du-an"
-              className="card-lux group relative flex flex-col overflow-hidden rounded-2xl border border-cvr-line bg-white shadow-lux hover:-translate-y-2 hover:border-cvr-gold/45 shadow-lux-hover"
+              className="card-lux group relative flex flex-col overflow-hidden rounded-none border border-cvr-line bg-white shadow-lux hover:-translate-y-2 hover:border-cvr-blue/45 shadow-lux-hover"
             >
               <span className="card-sheen" aria-hidden />
               <div className="relative aspect-[4/3] overflow-hidden">

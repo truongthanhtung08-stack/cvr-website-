@@ -76,7 +76,7 @@ export default function PromoBanner() {
             return (
               <div
                 key={p.tag}
-                className={`group flex flex-col rounded-2xl p-6 shadow-lux shadow-lux-hover transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1 ${
+                className={`group flex flex-col rounded-none p-6 shadow-lux shadow-lux-hover transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1 ${
                   featured
                     ? "bg-gradient-to-br from-cvr-ink to-[#2b2b2e] text-white"
                     : "border border-cvr-line bg-white text-cvr-ink"

@@ -6,7 +6,7 @@ import type { Listing } from "@/lib/data";
 // tiêu đề · giá · diện tích · khu vực bên phải. Dùng cho "Tin đăng mới nhất" trang dự án.
 export default function ListingList({ items }: { items: Listing[] }) {
   return (
-    <ul className="divide-y divide-cvr-line overflow-hidden rounded-2xl border border-cvr-line bg-white shadow-lux">
+    <ul className="divide-y divide-cvr-line overflow-hidden rounded-none border border-cvr-line bg-white shadow-lux">
       {items.map((l) => (
         <li key={l.id}>
           <Link
@@ -17,7 +17,7 @@ export default function ListingList({ items }: { items: Listing[] }) {
               <Image src={l.image} alt={l.title} fill sizes="160px" className="object-cover transition-transform duration-500 group-hover:scale-105" />
             </div>
             <div className="flex min-w-0 flex-1 flex-col">
-              <h3 className="line-clamp-2 font-semibold leading-snug text-cvr-ink transition-colors group-hover:text-cvr-gold-ink">
+              <h3 className="line-clamp-2 font-semibold leading-snug text-cvr-ink transition-colors group-hover:text-cvr-blue-ink">
                 {l.title}
               </h3>
               <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">

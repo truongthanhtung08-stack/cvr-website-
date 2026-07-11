@@ -66,7 +66,7 @@ export default function ProjectsBrowser() {
           type="button"
           onClick={() => { onPick(name); close(); }}
           className={`flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 text-left text-sm transition ${
-            value === name ? "bg-cvr-ink/10 font-medium text-cvr-ink" : "text-cvr-ink/80 hover:bg-black/5"
+            value === name ? "bg-cvr-blue/10 font-medium text-cvr-blue-ink" : "text-cvr-ink/80 hover:bg-black/5"
           }`}
         >
           <span className="truncate">{name}</span>
@@ -79,7 +79,7 @@ export default function ProjectsBrowser() {
   return (
     <>
       {/* ── Thanh lọc dự án dưới Hero (kiểu Batdongsan) ── */}
-      <div className="mt-2.5 rounded-2xl border border-cvr-line bg-white p-2.5 shadow-lux">
+      <div className="mt-2.5 rounded-none border border-cvr-line bg-white p-2.5 shadow-lux">
         <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
           {/* Ô tìm nhanh dự án */}
           <div className="relative flex-1">
@@ -115,7 +115,7 @@ export default function ProjectsBrowser() {
             <button
               type="button"
               onClick={reset}
-              className="h-11 shrink-0 rounded-lg px-3 text-sm font-medium text-cvr-muted transition hover:text-cvr-ink"
+              className="h-10 shrink-0 rounded-lg px-3 text-sm font-medium text-cvr-muted transition hover:text-cvr-blue-ink"
             >
               Đặt lại
             </button>
@@ -139,7 +139,7 @@ export default function ProjectsBrowser() {
               <Link
                 key={p.slug}
                 href={`/du-an/${p.slug}`}
-                className="card-lux group relative flex gap-3 overflow-hidden rounded-2xl border border-cvr-line bg-white p-2.5 shadow-lux shadow-lux-hover hover:-translate-y-1 hover:border-cvr-gold/45 sm:gap-5 sm:p-3"
+                className="card-lux group relative flex gap-3 overflow-hidden rounded-none border border-cvr-line bg-white p-2.5 shadow-lux shadow-lux-hover hover:-translate-y-1 hover:border-cvr-blue/45 sm:gap-5 sm:p-3"
               >
                 {/* Ảnh trái */}
                 <div className="relative aspect-[4/3] w-32 shrink-0 overflow-hidden rounded-xl bg-cvr-surface sm:w-56 md:w-64">
@@ -157,7 +157,7 @@ export default function ProjectsBrowser() {
 
                 {/* Thông tin phải */}
                 <div className="flex min-w-0 flex-1 flex-col py-1 pr-1">
-                  <h3 className="line-clamp-2 font-semibold leading-snug text-cvr-ink transition-colors group-hover:text-cvr-gold-ink sm:text-lg">
+                  <h3 className="line-clamp-2 font-semibold leading-snug text-cvr-ink transition-colors group-hover:text-cvr-blue-ink sm:text-lg">
                     {p.name}
                   </h3>
                   <p className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
@@ -175,7 +175,7 @@ export default function ProjectsBrowser() {
                     <span className="truncate text-xs text-cvr-body">
                       Chủ đầu tư: <span className="font-medium text-cvr-ink">{p.developer}</span>
                     </span>
-                    <span className="shrink-0 text-xs font-medium text-cvr-muted transition-colors group-hover:text-cvr-gold-ink">
+                    <span className="shrink-0 text-xs font-medium text-cvr-muted transition-colors group-hover:text-cvr-blue-ink">
                       Xem dự án →
                     </span>
                   </div>
@@ -184,7 +184,7 @@ export default function ProjectsBrowser() {
             ))}
 
             {visible.length === 0 && (
-              <p className="rounded-2xl border border-cvr-line bg-cvr-surface p-10 text-center text-sm text-cvr-muted">
+              <p className="rounded-none border border-cvr-line bg-cvr-surface p-10 text-center text-sm text-cvr-muted">
                 Chưa có dự án phù hợp bộ lọc. Hãy đổi từ khoá hoặc bấm &ldquo;Đặt lại&rdquo;.
               </p>
             )}
@@ -194,7 +194,7 @@ export default function ProjectsBrowser() {
         {/* ── Sidebar: lọc theo khu vực + tin tức (kiểu Batdongsan) ── */}
         <aside className="lg:col-span-1">
           <div className="sticky top-24 space-y-5">
-            <div className="rounded-2xl border border-cvr-line bg-white p-5 shadow-lux">
+            <div className="rounded-none border border-cvr-line bg-white p-5 shadow-lux">
               <h2 className="text-sm font-semibold tracking-tight text-cvr-ink">Lọc theo khu vực</h2>
               <div className="mt-3 flex flex-col">
                 {[[ALL, projects.length] as [string, number], ...provinceCounts].map(([name, count]) => (
@@ -216,7 +216,7 @@ export default function ProjectsBrowser() {
             </div>
 
             {/* Tin tức bất động sản — 5 bài mới nhất */}
-            <div className="rounded-2xl border border-cvr-line bg-white p-5 shadow-lux">
+            <div className="rounded-none border border-cvr-line bg-white p-5 shadow-lux">
               <div className="flex items-baseline justify-between gap-2">
                 <h2 className="text-sm font-semibold tracking-tight text-cvr-ink">Tin tức bất động sản</h2>
                 <Link href="/tin-tuc" className="shrink-0 text-xs font-medium text-cvr-muted transition-colors hover:text-cvr-ink">
@@ -226,7 +226,7 @@ export default function ProjectsBrowser() {
               <div className="mt-2 flex flex-col divide-y divide-cvr-line/70">
                 {articles.slice(0, 5).map((a) => (
                   <Link key={a.slug} href={`/tin-tuc/${a.slug}`} className="group py-3 first:pt-2 last:pb-0">
-                    <p className="line-clamp-2 text-sm font-medium leading-snug text-cvr-ink transition-colors group-hover:text-cvr-gold-ink">
+                    <p className="line-clamp-2 text-sm font-medium leading-snug text-cvr-ink transition-colors group-hover:text-cvr-blue-ink">
                       {a.title}
                     </p>
                     <p className="mt-1 text-xs text-cvr-muted">{a.category} · {a.date}</p>

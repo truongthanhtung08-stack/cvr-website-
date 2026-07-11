@@ -140,6 +140,17 @@ export function listingFurnishing(id: string): string {
   return furnishingOptions[(idx + 1) % furnishingOptions.length];
 }
 
+// ===== Tin xác thực & Môi giới chuyên nghiệp (toggle kiểu Batdongsan) =====
+// Suy ổn định từ id (giống listingDirection) — sau thay bằng cột thật trong Supabase.
+export function listingVerified(id: string): boolean {
+  const idx = parseInt(id, 10) || 1;
+  return idx % 3 !== 0; // ~2/3 tin đã xác thực
+}
+export function listingProBroker(id: string): boolean {
+  const idx = parseInt(id, 10) || 1;
+  return idx % 2 === 0; // ~1/2 tin do môi giới chuyên nghiệp đăng
+}
+
 // ===== Bộ lọc gộp — dùng chung cho mọi trang =====
 // Khu vực ĐA CHỌN (tối đa 5, kiểu Batdongsan): mỗi phần tử là 1 đường dẫn địa giới.
 export type LocationSel = { province: string; district?: string; ward?: string };
@@ -157,6 +168,8 @@ export type Filters = {
   direction: string;
   legal: string;       // pháp lý — đặc thù MUA BÁN
   furnishing: string;  // nội thất — đặc thù CHO THUÊ
+  verified: boolean;   // chỉ tin đã xác thực (toggle kiểu Batdongsan)
+  broker: boolean;     // chỉ tin của môi giới chuyên nghiệp (toggle)
   keyword: string;
 };
 
@@ -179,6 +192,7 @@ export function emptyFilters(): Filters {
     areaMin: null, areaMax: null,
     beds: 0, direction: "",
     legal: "", furnishing: "",
+    verified: false, broker: false,
     keyword: "",
   };
 }
@@ -231,6 +245,8 @@ export function filtersFromParams(params: URLSearchParams): Filters {
   f.direction = params.get("huong") ?? "";
   f.legal = params.get("phaply") ?? "";
   f.furnishing = params.get("noithat") ?? "";
+  f.verified = params.get("xacthuc") === "1";
+  f.broker = params.get("moigioi") === "1";
   f.keyword = params.get("q") ?? "";
   return f;
 }
@@ -251,6 +267,8 @@ export function filtersToParams(f: Filters): URLSearchParams {
   if (f.direction) p.set("huong", f.direction);
   if (f.legal) p.set("phaply", f.legal);
   if (f.furnishing) p.set("noithat", f.furnishing);
+  if (f.verified) p.set("xacthuc", "1");
+  if (f.broker) p.set("moigioi", "1");
   if (f.keyword.trim()) p.set("q", f.keyword.trim());
   return p;
 }
@@ -261,7 +279,7 @@ export function hasActiveFilters(f: Filters): boolean {
     f.locations.length || f.project || f.types.length ||
     f.priceMin != null || f.priceMax != null ||
     f.areaMin != null || f.areaMax != null ||
-    f.beds || f.direction || f.legal || f.furnishing || f.keyword.trim()
+    f.beds || f.direction || f.legal || f.furnishing || f.verified || f.broker || f.keyword.trim()
   );
 }
 
@@ -294,6 +312,8 @@ export function applyFilters<T extends FilterableListing>(items: T[], f: Filters
   const kw = normalizeVi(f.keyword);
   const proj = normalizeVi(f.project);
   return items.filter((item) => {
+    if (f.verified && !listingVerified(item.id)) return false;
+    if (f.broker && !listingProBroker(item.id)) return false;
     if (f.locations.length) {
       const inArea = f.locations.some((l) =>
         item.location.includes(l.province) &&

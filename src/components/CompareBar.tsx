@@ -17,7 +17,7 @@ export default function CompareBar() {
 
   return (
     <div className="fixed inset-x-0 bottom-4 z-50 px-4 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 sm:px-0">
-      <div className="mx-auto flex max-w-2xl items-center gap-3 rounded-2xl border border-cvr-line bg-white/95 p-2.5 pl-4 shadow-2xl shadow-black/15 backdrop-blur-md">
+      <div className="mx-auto flex max-w-2xl items-center gap-3 rounded-none border border-cvr-line bg-white/95 p-2.5 pl-4 shadow-2xl shadow-black/15 backdrop-blur-md">
         <span className="hidden shrink-0 text-sm font-semibold text-cvr-ink sm:block">So sánh</span>
 
         {/* Thumbnails đã chọn */}
@@ -46,7 +46,7 @@ export default function CompareBar() {
         </button>
         <Link
           href="/so-sanh"
-          className="flex shrink-0 items-center gap-1.5 rounded-full bg-cvr-gold px-4 py-2 text-sm font-bold text-cvr-ink transition hover:bg-cvr-gold-soft"
+          className="flex shrink-0 items-center gap-1.5 rounded-full bg-cvr-blue px-4 py-2 text-sm font-bold text-white transition hover:bg-cvr-blue-ink"
         >
           So sánh ({count})
         </Link>

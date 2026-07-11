@@ -52,7 +52,7 @@ export default function BannerCarousel({
 
   return (
     <div
-      className={`relative w-full overflow-hidden rounded-2xl border border-cvr-line/40 select-none cursor-grab ${aspect}`}
+      className={`relative w-full overflow-hidden rounded-none border border-cvr-line/40 select-none cursor-grab ${aspect}`}
       onPointerDown={onDown}
       onPointerUp={onUp}
     >

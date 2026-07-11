@@ -267,10 +267,10 @@ export default function Header() {
           <Link
             href="/dang-tin"
             onClick={() => haptic()}
-            className="btn-dangtin btn-dangtin--pulse group flex items-center gap-1.5 rounded-full px-5 py-2.5 text-sm font-semibold text-white"
+            className="btn-dangtin flex items-center gap-1.5 rounded-full px-5 py-2.5 text-sm font-semibold text-white"
           >
             <svg
-              className="h-4 w-4 transition-transform duration-300 group-hover:rotate-90"
+              className="h-4 w-4"
               fill="none"
               stroke="currentColor"
               strokeWidth={2.5}

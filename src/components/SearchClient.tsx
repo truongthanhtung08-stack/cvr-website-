@@ -46,13 +46,6 @@ export default function SearchClient() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 pb-20 pt-6 sm:px-6 lg:px-8">
-      {/* Breadcrumb */}
-      <nav className="mb-3 flex items-center gap-1.5 text-xs text-cvr-muted">
-        <a href="/" className="hover:text-cvr-ink">Trang chủ</a>
-        <span>/</span>
-        <span className="text-cvr-body">Tìm kiếm</span>
-      </nav>
-
       <h1 className="text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">Tìm kiếm bất động sản</h1>
       <p className="mt-1.5 text-sm text-cvr-muted">
         Không giới hạn khu vực — gõ khu vực, dự án hay loại hình bất động sản đều ra kết quả.
@@ -109,7 +102,7 @@ export default function SearchClient() {
           ))}
         </div>
       ) : (
-        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-cvr-line py-20 text-center">
+        <div className="flex flex-col items-center justify-center rounded-none border border-dashed border-cvr-line py-20 text-center">
           <svg className="mb-4 h-12 w-12 text-cvr-faint" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
           </svg>

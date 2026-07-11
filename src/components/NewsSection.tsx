@@ -12,18 +12,13 @@ export default function NewsSection() {
   return (
     <section className="section-edge bg-white">
       <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
-        <div className="flex items-baseline justify-between gap-3">
-          <h2 className="text-2xl font-semibold text-cvr-ink">Tin tức</h2>
-          <Link href="/tin-tuc" className="text-sm font-medium text-cvr-muted transition-colors hover:text-cvr-ink">
-            Xem tất cả →
-          </Link>
-        </div>
+        <h2 className="text-2xl font-semibold text-cvr-ink">Tin tức</h2>
 
         <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2">
           {/* Bài nổi bật */}
           <Link
             href={`/tin-tuc/${featured.slug}`}
-            className="card-lux group relative flex flex-col overflow-hidden rounded-2xl border border-cvr-line bg-white shadow-lux shadow-lux-hover hover:-translate-y-1"
+            className="card-lux group relative flex flex-col overflow-hidden rounded-none border border-cvr-line bg-white shadow-lux shadow-lux-hover hover:-translate-y-1"
           >
             <span className="card-sheen" aria-hidden />
             <div className="relative aspect-[16/9] overflow-hidden">
@@ -40,7 +35,7 @@ export default function NewsSection() {
                 <span className="rounded-full bg-cvr-surface px-2.5 py-0.5 font-medium text-cvr-body">{featured.category}</span>
                 <span>{featured.date}</span>
               </p>
-              <h3 className="mt-2.5 line-clamp-2 text-lg font-semibold leading-snug text-cvr-ink transition-colors group-hover:text-cvr-gold-ink sm:text-xl">
+              <h3 className="mt-2.5 line-clamp-2 text-lg font-semibold leading-snug text-cvr-ink transition-colors group-hover:text-cvr-blue-ink sm:text-xl">
                 {featured.title}
               </h3>
               <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-cvr-muted">{featured.excerpt}</p>
@@ -48,16 +43,23 @@ export default function NewsSection() {
           </Link>
 
           {/* Cột tiêu đề tin mới — mỗi dòng giãn đều theo chiều cao bài nổi bật */}
-          <div className="flex flex-col divide-y divide-cvr-line/70 rounded-2xl border border-cvr-line bg-white px-5 py-1.5 shadow-lux">
+          <div className="flex flex-col divide-y divide-cvr-line/70 rounded-none border border-cvr-line bg-white px-5 py-1.5 shadow-lux">
             {headlines.map((a) => (
               <Link key={a.slug} href={`/tin-tuc/${a.slug}`} className="group flex flex-1 flex-col justify-center py-3">
-                <h3 className="line-clamp-2 font-medium leading-snug text-cvr-ink transition-colors group-hover:text-cvr-gold-ink">
+                <h3 className="line-clamp-2 font-medium leading-snug text-cvr-ink transition-colors group-hover:text-cvr-blue-ink">
                   {a.title}
                 </h3>
                 <p className="mt-1 text-xs text-cvr-muted">{a.category} · {a.date}</p>
               </Link>
             ))}
           </div>
+        </div>
+
+        {/* Xem thêm — cuối phần, canh phải (đồng bộ các section khác) */}
+        <div className="mt-5 flex justify-end">
+          <Link href="/tin-tuc" className="text-sm font-medium text-cvr-muted transition-colors hover:text-cvr-ink">
+            Xem tất cả →
+          </Link>
         </div>
       </div>
     </section>

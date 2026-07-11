@@ -32,12 +32,6 @@ export default function ComparePage() {
       <Header />
       <main className="flex-1 bg-white">
         <div className="mx-auto max-w-7xl px-4 pb-20 pt-6 sm:px-6 lg:px-8">
-          <nav className="mb-4 flex items-center gap-1.5 text-xs text-cvr-muted">
-            <Link href="/" className="hover:text-cvr-ink">Trang chủ</Link>
-            <span>/</span>
-            <span className="text-cvr-body">So sánh bất động sản</span>
-          </nav>
-
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
             <h1 className="text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">So sánh bất động sản</h1>
             {items.length > 0 && (
@@ -52,7 +46,7 @@ export default function ComparePage() {
           </div>
 
           {items.length === 0 ? (
-            <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-cvr-line py-20 text-center">
+            <div className="flex flex-col items-center justify-center rounded-none border border-dashed border-cvr-line py-20 text-center">
               <p className="text-cvr-body">Chưa có bất động sản nào để so sánh.</p>
               <p className="mt-1 text-sm text-cvr-muted">Bấm nút so sánh trên thẻ tin để thêm (tối đa 4 tin).</p>
               <Link href="/mua-ban" className="mt-5 rounded-lg bg-cvr-ink px-5 py-2 text-sm font-semibold text-white transition hover:bg-cvr-body">
@@ -88,7 +82,7 @@ export default function ComparePage() {
                                 <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                               </button>
                             </div>
-                            <Link href={`/bat-dong-san/${l.id}`} className="mt-2 line-clamp-2 block text-left text-sm font-semibold text-cvr-ink hover:text-cvr-gold-ink">
+                            <Link href={`/bat-dong-san/${l.id}`} className="mt-2 line-clamp-2 block text-left text-sm font-semibold text-cvr-ink hover:text-cvr-blue-ink">
                               {l.title}
                             </Link>
                           </div>

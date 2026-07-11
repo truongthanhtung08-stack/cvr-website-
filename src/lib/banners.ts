@@ -23,20 +23,20 @@ export const homeBanners: Banner[] = [
   // ===== 2 BANNER CÔNG TY (quảng cáo / landing page công ty) =====
   {
     id: "lp-gioi-thieu",
-    image: "/images/hero-1-1.jpg",
-    status: "Sàn BĐS Miền Trung", // dòng 1 (nhãn)
-    title: "Coastal Land — Bất động sản Duyên hải Miền Trung", // dòng 2
-    subtitle: "Minh bạch · pháp lý rõ ràng · giao dịch an toàn", // dòng 3
+    image: "/images/hero-thanh-pho-hien-dai-26.jpg",
+    status: "Nền tảng công nghệ", // dòng 1 (nhãn)
+    title: "Bất động sản Duyên hải Miền Trung", // dòng 2
+    subtitle: "Kết nối · Tiện ích · Minh bạch", // dòng 3
     // cta: "Tìm hiểu thêm", // CTA TẮT cho banner công ty — bỏ // để bật
     showText: true,
     href: "/landing/ve-coastal-land",
   },
   {
     id: "lp-dich-vu",
-    image: "/images/hero-3-1.jpg",
-    status: "Dịch vụ ký gửi", // dòng 1 (nhãn)
-    title: "Ký gửi Bất động sản chuyên nghiệp", // dòng 2
-    subtitle: "Định giá chuẩn · bán nhanh · hỗ trợ pháp lý", // dòng 3
+    image: "/images/hero-pho-bien-9-26.jpg",
+    status: "Coastal Land", // dòng 1 (nhãn — tự hiển thị IN HOA)
+    title: "Kết nối Mua bán · Cho thuê · Dự án", // dòng 2
+    subtitle: "Tiếp cận khách hàng và nhà đầu tư", // dòng 3
     // cta: "Xem dịch vụ", // CTA TẮT cho banner công ty — bỏ // để bật
     showText: true,
     href: "/landing/dich-vu",
@@ -44,20 +44,20 @@ export const homeBanners: Banner[] = [
   // ===== 1 BANNER DỰ ÁN (dòng 1 = TÊN dự án, dòng 2 = ĐỊA ĐIỂM) =====
   {
     id: "lp-vinhomes",
-    image: "/images/duan-vinhomes-1-1.jpg",
-    status: "Đang mở bán", // dòng 1 (nhãn)
-    title: "Vinhomes Skylake — Dream Apartment", // dòng 2 — TÊN dự án
-    subtitle: "Phạm Hùng, Nam Từ Liêm, Hà Nội", // dòng 3 — ĐỊA CHỈ
+    image: "/images/hero-villa-view-bien-12-26.jpg",
+    // CHỈ hiện dòng 2 (bỏ nhãn dòng 1 + mô tả dòng 3)
+    title: "Dự án nổi bật", // dòng 2
     // cta: "Xem dự án", // ẨN dòng cuối (CTA) — bỏ // để hiện
     showText: true,
     href: "/du-an/vinhomes-skylake-dream",
   },
 ];
 
-// Banner trang Dự án — 5 mẫu lấy từ ảnh chính mỗi dự án + Tên + Địa chỉ
+// Banner trang Dự án — 5 mẫu, ảnh PANORAMA (biển/đô thị/bến du thuyền/đảo) crop đúng
+// tỷ lệ khung banner (3:1), chân trời ở giữa nên KHÔNG mất chủ thể; KHÔNG dùng ảnh thẻ dự án (16:10).
 export const projectBanners: Banner[] = projects.slice(0, 5).map((p) => ({
   id: p.slug,
-  image: `/images/du-an/${p.slug}.jpg`,
+  image: `/images/du-an/hero-${p.slug}-3x1.jpg`,
   title: p.name,
   subtitle: p.location,
   href: `/du-an/${p.slug}`,

@@ -12,7 +12,7 @@ export default function AppDownload() {
     <section className="section-edge bg-white">
       <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
         {/* Panel nền tối nổi bật (chuyên nghiệp, thu hút) — bản gọn */}
-        <div className="overflow-hidden rounded-3xl bg-gradient-to-br from-cvr-ink to-[#2b2b2e] p-6 shadow-lux sm:p-8">
+        <div className="overflow-hidden rounded-none bg-gradient-to-br from-cvr-ink to-[#2b2b2e] p-6 shadow-lux sm:p-8">
           <div className="grid grid-cols-1 items-center gap-8 md:grid-cols-2">
             {/* Trái: giới thiệu + đánh giá + tải */}
             <div>

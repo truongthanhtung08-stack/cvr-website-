@@ -13,7 +13,7 @@ export default function LeadForm({
 
   if (sent) {
     return (
-      <div className="rounded-2xl border border-cvr-line bg-white p-8 text-center shadow-lux">
+      <div className="rounded-none border border-cvr-line bg-white p-8 text-center shadow-lux">
         <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-cvr-ink text-white">
           <svg className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
         </div>
@@ -26,7 +26,7 @@ export default function LeadForm({
   return (
     <form
       onSubmit={(e) => { e.preventDefault(); setSent(true); }}
-      className="space-y-4 rounded-2xl border border-cvr-line bg-white p-6 shadow-lux sm:p-8"
+      className="space-y-4 rounded-none border border-cvr-line bg-white p-6 shadow-lux sm:p-8"
     >
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label="Họ và tên *" name="name" placeholder="Nguyễn Văn A" required />

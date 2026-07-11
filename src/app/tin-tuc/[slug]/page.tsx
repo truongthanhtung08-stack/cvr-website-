@@ -48,7 +48,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
           </div>
           <h1 className="mt-3 text-2xl font-semibold leading-tight tracking-tight text-cvr-ink sm:text-[2rem]">{a.title}</h1>
 
-          <div className="relative mt-5 aspect-[16/9] overflow-hidden rounded-2xl border border-cvr-line">
+          <div className="relative mt-5 aspect-[16/9] overflow-hidden rounded-none border border-cvr-line">
             <Image src={a.image} alt={a.title} fill priority sizes="(max-width:768px) 100vw, 768px" className="object-cover" />
           </div>
 
@@ -62,14 +62,14 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
             <h2 className="mb-5 text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">Tin liên quan</h2>
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
               {related.map((r) => (
-                <Link key={r.slug} href={`/tin-tuc/${r.slug}`} className="card-lux group relative flex flex-col overflow-hidden rounded-2xl border border-cvr-line bg-white shadow-lux shadow-lux-hover hover:-translate-y-1.5 hover:border-cvr-gold/45">
+                <Link key={r.slug} href={`/tin-tuc/${r.slug}`} className="card-lux group relative flex flex-col overflow-hidden rounded-none border border-cvr-line bg-white shadow-lux shadow-lux-hover hover:-translate-y-1.5 hover:border-cvr-blue/45">
                   <span className="card-sheen" aria-hidden />
                   <div className="relative aspect-[16/9] overflow-hidden">
                     <Image src={r.image} alt={r.title} fill sizes="(max-width:768px) 100vw, 33vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
                   </div>
                   <div className="p-4">
                     <span className="text-xs text-cvr-muted">{r.date}</span>
-                    <h3 className="mt-1 line-clamp-2 font-semibold leading-snug text-cvr-ink transition-colors group-hover:text-cvr-gold-ink">{r.title}</h3>
+                    <h3 className="mt-1 line-clamp-2 font-semibold leading-snug text-cvr-ink transition-colors group-hover:text-cvr-blue-ink">{r.title}</h3>
                   </div>
                 </Link>
               ))}

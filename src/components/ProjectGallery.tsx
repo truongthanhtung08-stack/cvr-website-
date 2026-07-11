@@ -20,7 +20,7 @@ export default function ProjectGallery({ images, alt }: Props) {
   return (
     <>
       <div className="relative">
-        <div className="grid h-[240px] grid-cols-4 grid-rows-2 gap-2 overflow-hidden rounded-2xl sm:h-[360px]">
+        <div className="grid h-[240px] grid-cols-4 grid-rows-2 gap-2 overflow-hidden rounded-none sm:h-[360px]">
           {/* Ảnh lớn — trái, chiếm 2 cột × 2 hàng (mobile: full) */}
           <button
             type="button"

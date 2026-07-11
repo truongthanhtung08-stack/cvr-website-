@@ -41,7 +41,7 @@ export default function HomeSearch({ defaultTab }: { defaultTab?: string }) {
           }`}
         >
           {t}
-          {tab === t && <span className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-cvr-gold shadow-[0_1px_6px_rgba(0,0,0,0.5)]" />}
+          {tab === t && <span className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-cvr-blue-soft shadow-[0_1px_6px_rgba(0,0,0,0.5)]" />}
         </button>
       ))}
     </div>

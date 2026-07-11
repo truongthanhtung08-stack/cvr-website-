@@ -29,7 +29,7 @@ export default function BaoGiaPage() {
           {/* Bảng gói */}
           <div className="mt-10 grid grid-cols-1 gap-5 md:grid-cols-3">
             {packages.map((p) => (
-              <div key={p.name} className={`rounded-2xl border bg-white p-6 shadow-lux ${p.highlight ? "border-cvr-gold/60" : "border-cvr-line"}`}>
+              <div key={p.name} className={`rounded-none border bg-white p-6 shadow-lux ${p.highlight ? "border-cvr-gold/60" : "border-cvr-line"}`}>
                 {p.highlight && <span className="mb-2 inline-block rounded-md bg-cvr-gold px-2 py-0.5 text-[10px] font-bold uppercase text-cvr-ink">Phổ biến</span>}
                 <h3 className="text-xl font-semibold tracking-tight text-cvr-ink">{p.name}</h3>
                 <p className="mt-1 text-2xl font-bold tracking-tight text-cvr-ink">{p.price}</p>

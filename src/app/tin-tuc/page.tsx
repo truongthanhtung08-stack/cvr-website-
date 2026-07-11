@@ -18,18 +18,13 @@ export default function TinTucPage() {
       <Header />
       <main className="flex-1 bg-white">
         <div className="mx-auto max-w-7xl px-4 pb-20 pt-6 sm:px-6 lg:px-8">
-          <nav className="flex items-center gap-1.5 text-xs text-cvr-muted">
-            <Link href="/" className="hover:text-cvr-ink">Trang chủ</Link>
-            <span>/</span>
-            <span className="text-cvr-body">Tin tức</span>
-          </nav>
-          <h1 className="mt-3 text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">Tin tức bất động sản</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">Tin tức bất động sản</h1>
           <p className="mt-1.5 text-sm text-cvr-muted">Phân tích thị trường, cẩm nang &amp; kinh nghiệm đầu tư tại Duyên hải miền Trung.</p>
 
           {/* Bài nổi bật — ảnh trái · nội dung phải (kiểu Batdongsan) */}
           <Link
             href={`/tin-tuc/${featured.slug}`}
-            className="card-lux group mt-6 flex flex-col overflow-hidden rounded-2xl border border-cvr-line bg-white shadow-lux shadow-lux-hover hover:-translate-y-1 sm:flex-row"
+            className="card-lux group mt-6 flex flex-col overflow-hidden rounded-none border border-cvr-line bg-white shadow-lux shadow-lux-hover hover:-translate-y-1 sm:flex-row"
           >
             <span className="card-sheen" aria-hidden />
             <div className="relative aspect-[16/9] overflow-hidden sm:aspect-auto sm:w-1/2 sm:shrink-0">
@@ -40,7 +35,7 @@ export default function TinTucPage() {
                 <span className="rounded-full bg-cvr-surface px-2.5 py-0.5 font-medium text-cvr-body">{featured.category}</span>
                 <span>{featured.date}</span>
               </p>
-              <h2 className="mt-3 line-clamp-2 text-xl font-semibold leading-snug text-cvr-ink transition-colors group-hover:text-cvr-gold-ink sm:text-2xl">
+              <h2 className="mt-3 line-clamp-2 text-xl font-semibold leading-snug text-cvr-ink transition-colors group-hover:text-cvr-blue-ink sm:text-2xl">
                 {featured.title}
               </h2>
               <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-cvr-muted">{featured.excerpt}</p>
@@ -62,7 +57,7 @@ export default function TinTucPage() {
                       <span className="rounded-full bg-cvr-surface px-2.5 py-0.5 font-medium text-cvr-body">{a.category}</span>
                       <span>{a.date}</span>
                     </div>
-                    <h3 className="mt-2 line-clamp-2 font-semibold leading-snug text-cvr-ink transition-colors group-hover:text-cvr-gold-ink sm:text-lg">
+                    <h3 className="mt-2 line-clamp-2 font-semibold leading-snug text-cvr-ink transition-colors group-hover:text-cvr-blue-ink sm:text-lg">
                       {a.title}
                     </h3>
                     <p className="mt-1.5 line-clamp-3 text-sm leading-relaxed text-cvr-muted">{a.excerpt}</p>
@@ -73,13 +68,13 @@ export default function TinTucPage() {
 
             {/* Sidebar: bài viết được quan tâm — đánh số (kiểu Batdongsan) */}
             <aside className="lg:col-span-1">
-              <div className="sticky top-24 rounded-2xl border border-cvr-line bg-white p-5 shadow-lux">
+              <div className="sticky top-24 rounded-none border border-cvr-line bg-white p-5 shadow-lux">
                 <h2 className="text-sm font-semibold tracking-tight text-cvr-ink">Bài viết được quan tâm</h2>
                 <div className="mt-1 flex flex-col divide-y divide-cvr-line/70">
                   {articles.slice(0, 5).map((a, i) => (
                     <Link key={a.slug} href={`/tin-tuc/${a.slug}`} className="group flex gap-3 py-3 last:pb-0">
                       <span className="w-5 shrink-0 text-lg font-semibold leading-snug text-cvr-faint">{i + 1}</span>
-                      <span className="line-clamp-2 text-sm font-medium leading-snug text-cvr-ink transition-colors group-hover:text-cvr-gold-ink">
+                      <span className="line-clamp-2 text-sm font-medium leading-snug text-cvr-ink transition-colors group-hover:text-cvr-blue-ink">
                         {a.title}
                       </span>
                     </Link>

@@ -25,9 +25,14 @@
   --color-cvr-surface: #f5f5f7;   /* Apple section gray (xám lạnh signature) */
   --color-cvr-line: #d2d2d7;      /* Apple: viền / đường phân cách */
   /* Điểm nhấn VÀNG antique — dùng tiết chế (badge VIP, CTA đặc biệt) */
+  /* Điểm nhấn VÀNG antique — CHỈ cho tín hiệu CAO CẤP hiếm gặp: badge VIP/Diamond/Gold, gói premium */
   --color-cvr-gold: #b89254;      /* vàng nền badge */
   --color-cvr-gold-soft: #d8bc82; /* vàng nhạt: chữ vàng trên nền tối */
   --color-cvr-gold-ink: #8a6d2e;  /* vàng đậm: chữ vàng trên nền trắng (đủ tương phản) */
+  /* Điểm nhấn XANH Apple — màu TƯƠNG TÁC chính: nút/CTA, ô tìm kiếm, tab active, link, focus */
+  --color-cvr-blue: #0071e3;      /* xanh Apple: nền nút/CTA · tab active · focus */
+  --color-cvr-blue-soft: #2997ff; /* xanh Apple sáng: dùng trên nền tối (hero/header) */
+  --color-cvr-blue-ink: #0066cc;  /* xanh Apple đậm: chữ/link trên nền trắng (đạt AA) */
   /* Giữ cho các trang con còn nền tối (chưa chuyển) */
   --color-cvr-charcoal: #141414;
   --color-cvr-gray: #9ca3af;
@@ -129,74 +134,24 @@ select option {
 .cards-stagger > *:nth-child(11) { animation-delay: 0.60s; }
 .cards-stagger > *:nth-child(12) { animation-delay: 0.66s; }
 
-/* ===== Nút "Đăng tin" — hiệu ứng bắt mắt (đơn sắc, sang trọng) ===== */
+/* ===== Nút "Đăng tin" — pill CTA tối giản kiểu Apple (tĩnh, sang) ===== */
 .btn-dangtin {
-  position: relative;
-  overflow: hidden;
-  isolation: isolate;
-  background-image: linear-gradient(135deg, #1f1f1f 0%, #000000 100%);
+  background-image: linear-gradient(135deg, #2a2a2c 0%, #060606 100%);
   box-shadow:
-    0 4px 14px rgba(0, 0, 0, 0.22),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+    0 1px 2px rgba(0, 0, 0, 0.35),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.12);
   transition:
     transform 0.25s cubic-bezier(0.2, 0.7, 0.2, 1),
     box-shadow 0.25s ease;
 }
 .btn-dangtin:hover {
-  transform: translateY(-2px) scale(1.05);
+  transform: translateY(-1px);
   box-shadow:
-    0 10px 26px rgba(0, 0, 0, 0.28),
-    0 6px 16px rgba(0, 0, 0, 0.22),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.16);
+    0 6px 16px rgba(0, 0, 0, 0.30),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.20);
 }
 .btn-dangtin:active {
-  transform: translateY(0) scale(0.99);
-}
-/* Vệt sáng lướt ngang khi hover */
-.btn-dangtin::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  background: linear-gradient(
-    105deg,
-    transparent 30%,
-    rgba(255, 255, 255, 0.95) 50%,
-    transparent 70%
-  );
-  transform: translateX(-130%);
-  pointer-events: none;
-}
-.btn-dangtin:hover::before {
-  animation: btn-shine 0.9s ease;
-}
-.btn-dangtin > * {
-  position: relative;
-  z-index: 1;
-}
-@keyframes btn-shine {
-  to {
-    transform: translateX(130%);
-  }
-}
-/* Nhịp phát sáng nhẹ để thu hút mắt khi đứng yên */
-@keyframes btn-glow {
-  0%, 100% {
-    box-shadow:
-      0 4px 14px rgba(0, 0, 0, 0.22),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.08);
-  }
-  50% {
-    box-shadow:
-      0 6px 20px rgba(0, 0, 0, 0.32),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.16);
-  }
-}
-.btn-dangtin--pulse {
-  animation: btn-glow 2.8s ease-in-out infinite;
-}
-.btn-dangtin--pulse:hover {
-  animation: none;
+  transform: translateY(0);
 }
 
 /* ===== Phân cách giữa các khối — đường gradient mờ dần 2 đầu ===== */
@@ -341,8 +296,7 @@ select option {
   .reveal { opacity: 1; transform: none; transition: none; }
   .reveal.is-visible .cards-stagger > * { animation: none; }
   html { scroll-behavior: auto; }
-  .btn-dangtin, .btn-dangtin--pulse { animation: none; transition: none; }
-  .btn-dangtin:hover::before { animation: none; }
+  .btn-dangtin { transition: none; }
   .btn-dangtin:hover { transform: none; }
   .card-lux { transition: none; }
   .card-lux:hover .card-sheen { animation: none; opacity: 0; }
@@ -366,7 +320,7 @@ select option {
   width: 16px;
   margin-top: -6px;
   border-radius: 9999px;
-  background: var(--color-cvr-ink);
+  background: var(--color-cvr-blue);
   border: 2px solid #fff;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
   cursor: pointer;
@@ -377,7 +331,7 @@ select option {
   height: 16px;
   width: 16px;
   border-radius: 9999px;
-  background: var(--color-cvr-ink);
+  background: var(--color-cvr-blue);
   border: 2px solid #fff;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
   cursor: pointer;

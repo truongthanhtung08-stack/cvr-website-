@@ -56,8 +56,8 @@ export default function ValueSection() {
 
           <div className="grid gap-4 sm:grid-cols-2">
             {benefits.map((item) => (
-              <article key={item.title} className="shadow-lux rounded-3xl border border-cvr-line bg-white p-6 transition hover:-translate-y-1.5 hover:border-cvr-gold/40">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-cvr-surface text-lg font-bold text-cvr-ink">
+              <article key={item.title} className="shadow-lux rounded-none border border-cvr-line bg-white p-6 transition hover:-translate-y-1.5 hover:border-cvr-blue/40">
+                <div className="flex h-11 w-11 items-center justify-center rounded-none bg-cvr-surface text-lg font-bold text-cvr-ink">
                   {item.icon}
                 </div>
                 <h3 className="mt-4 text-lg font-semibold text-cvr-ink">{item.title}</h3>

@@ -178,7 +178,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                 </div>
                 <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
                   <p className="text-xs text-cvr-faint">* Giá &amp; loại căn mang tính tham khảo — nhận bảng giá chính thức mới nhất.</p>
-                  <a href="#tai-tai-lieu" className="rounded-lg bg-cvr-gold px-4 py-2 text-xs font-semibold text-cvr-ink transition hover:bg-cvr-gold-soft">Nhận bảng giá chi tiết →</a>
+                  <a href="#tai-tai-lieu" className="rounded-lg bg-cvr-blue px-4 py-2 text-xs font-semibold text-white transition hover:bg-cvr-blue-ink">Nhận bảng giá chi tiết →</a>
                 </div>
               </section>
 
@@ -189,9 +189,9 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                   {progressSteps.map((s, i) => (
                     <div key={s} className="flex flex-1 flex-col items-center text-center">
                       <div className="flex w-full items-center">
-                        <span className={`h-0.5 flex-1 ${i === 0 ? "bg-transparent" : i <= step ? "bg-cvr-gold" : "bg-cvr-line"}`} />
-                        <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${i <= step ? "bg-cvr-gold text-cvr-ink" : "border border-cvr-line text-cvr-faint"}`}>{i + 1}</span>
-                        <span className={`h-0.5 flex-1 ${i === progressSteps.length - 1 ? "bg-transparent" : i < step ? "bg-cvr-gold" : "bg-cvr-line"}`} />
+                        <span className={`h-0.5 flex-1 ${i === 0 ? "bg-transparent" : i <= step ? "bg-cvr-blue" : "bg-cvr-line"}`} />
+                        <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${i <= step ? "bg-cvr-blue text-white" : "border border-cvr-line text-cvr-faint"}`}>{i + 1}</span>
+                        <span className={`h-0.5 flex-1 ${i === progressSteps.length - 1 ? "bg-transparent" : i < step ? "bg-cvr-blue" : "bg-cvr-line"}`} />
                       </div>
                       <span className={`mt-2 text-[11px] leading-tight sm:text-xs ${i <= step ? "text-cvr-ink" : "text-cvr-faint"}`}>{s}</span>
                     </div>
@@ -225,7 +225,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             {/* Cột phụ */}
             <aside className="lg:col-span-1">
               <div className="sticky top-24 space-y-4">
-                <div className="rounded-2xl border border-cvr-line bg-white p-5 shadow-lux">
+                <div className="rounded-none border border-cvr-line bg-white p-5 shadow-lux">
                   <p className="text-xs text-cvr-muted">Giá bán từ</p>
                   <p className="text-2xl font-bold tracking-tight text-cvr-ink">{p.priceFrom}</p>
                   <p className="mt-1 text-xs text-cvr-muted">{p.type}</p>
@@ -250,14 +250,14 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               <h2 className="text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">Dự án khác</h2>
               <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-3">
                 {others.map((o) => (
-                  <Link key={o.slug} href={`/du-an/${o.slug}`} className="card-lux group relative flex flex-col overflow-hidden rounded-2xl border border-cvr-line bg-white shadow-lux shadow-lux-hover hover:-translate-y-1.5 hover:border-cvr-gold/45">
+                  <Link key={o.slug} href={`/du-an/${o.slug}`} className="card-lux group relative flex flex-col overflow-hidden rounded-none border border-cvr-line bg-white shadow-lux shadow-lux-hover hover:-translate-y-1.5 hover:border-cvr-blue/45">
                     <span className="card-sheen" aria-hidden />
                     <div className="relative aspect-[16/10] overflow-hidden">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={o.image} alt={o.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
                     </div>
                     <div className="p-4">
-                      <h3 className="font-semibold text-cvr-ink transition-colors group-hover:text-cvr-gold-ink">{o.name}</h3>
+                      <h3 className="font-semibold text-cvr-ink transition-colors group-hover:text-cvr-blue-ink">{o.name}</h3>
                       <p className="mt-1 text-xs text-cvr-muted">{o.location}</p>
                     </div>
                   </Link>

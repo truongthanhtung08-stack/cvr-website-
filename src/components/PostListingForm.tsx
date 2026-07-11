@@ -31,7 +31,7 @@ export default function PostListingForm() {
 
   if (sent) {
     return (
-      <div className="rounded-2xl border border-cvr-line bg-white p-10 text-center shadow-lux">
+      <div className="rounded-none border border-cvr-line bg-white p-10 text-center shadow-lux">
         <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-cvr-ink text-white">
           <svg className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
         </div>
@@ -180,7 +180,7 @@ function Label({ children }: { children: React.ReactNode }) {
 
 function Card({ step, title, children }: { step: string; title: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-2xl border border-cvr-line bg-white p-5 shadow-lux sm:p-6">
+    <section className="rounded-none border border-cvr-line bg-white p-5 shadow-lux sm:p-6">
       <h2 className="mb-4 flex items-center gap-2.5 text-lg font-semibold tracking-tight text-cvr-ink">
         <span className="flex h-7 w-7 items-center justify-center rounded-full bg-cvr-ink text-sm text-white">{step}</span>
         {title}

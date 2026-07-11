@@ -21,7 +21,7 @@ export default function SaveButton({ id, className = "" }: { id: string; classNa
       }}
       className={`flex h-9 w-9 items-center justify-center rounded-full backdrop-blur-sm transition ${
         saved
-          ? "bg-cvr-gold text-cvr-ink"
+          ? "bg-cvr-blue text-white"
           : "bg-black/45 text-white hover:bg-black/70"
       } ${className}`}
     >

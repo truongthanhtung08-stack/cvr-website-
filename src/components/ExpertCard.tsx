@@ -5,7 +5,7 @@ import type { Expert } from "@/lib/experts";
 export default function ExpertCard({ e }: { e: Expert }) {
   const initials = e.name.trim().split(" ").slice(-2).map((s) => s[0]).join("").toUpperCase();
   return (
-    <div className="shadow-lux flex flex-col rounded-2xl border border-cvr-line bg-white p-5 transition hover:-translate-y-1 hover:border-cvr-gold/40">
+    <div className="shadow-lux flex flex-col rounded-none border border-cvr-line bg-white p-5 transition hover:-translate-y-1 hover:border-cvr-blue/40">
       <div className="flex items-start gap-4">
         <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-cvr-surface text-lg font-bold text-cvr-ink ring-1 ring-cvr-line">
           {initials}
@@ -14,7 +14,7 @@ export default function ExpertCard({ e }: { e: Expert }) {
           <div className="flex items-center gap-1.5">
             <h3 className="truncate font-semibold text-cvr-ink">{e.name}</h3>
             {e.verified && (
-              <svg className="h-4 w-4 shrink-0 text-cvr-gold-ink" viewBox="0 0 24 24" fill="currentColor" aria-label="Đã xác minh">
+              <svg className="h-4 w-4 shrink-0 text-cvr-blue" viewBox="0 0 24 24" fill="currentColor" aria-label="Đã xác minh">
                 <path d="M12 1l2.7 2.1 3.4-.3 1 3.3 2.9 1.8-1.2 3.2 1.2 3.2-2.9 1.8-1 3.3-3.4-.3L12 23l-2.7-2.1-3.4.3-1-3.3L2 16.1l1.2-3.2L2 9.7l2.9-1.8 1-3.3 3.4.3z" />
                 <path d="M10.6 14.6l-2.2-2.2 1.1-1.1 1.1 1.1 3-3 1.1 1.1z" fill="#fff" />
               </svg>

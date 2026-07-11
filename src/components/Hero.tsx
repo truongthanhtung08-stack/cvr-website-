@@ -21,6 +21,7 @@ type HeroProps = {
 
 export default function Hero({
   banners = homeBanners,
+  // GIỮ NGUYÊN tỷ lệ khung trang — muốn ảnh hiện trọn thì dùng fit="contain", KHÔNG đổi chiều cao.
   heightClass = "min-h-[340px] sm:h-[calc(100svh-120px)]",
   search = true,
   searchTab,
@@ -42,7 +43,7 @@ export default function Hero({
     return () => clearTimeout(id);
   }, [active, playing, banners.length]);
 
-  // swipe / touchpad
+  // Kéo/vuốt bằng chuột hoặc chạm
   const startX = useRef<number | null>(null);
   const onDown = (e: React.PointerEvent) => { startX.current = e.clientX; };
   const onUp   = (e: React.PointerEvent) => {
@@ -56,11 +57,26 @@ export default function Hero({
   };
   const goTo = (i: number) => { setActive(i); setTick((t) => t + 1); };
 
+  // Vuốt NGANG bằng touchpad laptop (wheel deltaX) → chuyển slide. Chỉ nhận khi
+  // cử chỉ NGANG rõ rệt (không cướp cuộn dọc); khoá 700ms để 1 lần vuốt = 1 slide.
+  const wheelLock = useRef(false);
+  const onWheel = (e: React.WheelEvent) => {
+    if (banners.length <= 1) return;
+    if (Math.abs(e.deltaX) < 24 || Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return;
+    if (wheelLock.current) return;
+    wheelLock.current = true;
+    goTo(e.deltaX > 0
+      ? (active + 1) % banners.length
+      : (active - 1 + banners.length) % banners.length);
+    window.setTimeout(() => { wheelLock.current = false; }, 700);
+  };
+
   return (
     <section
       className={`relative isolate flex flex-col ${heightClass} select-none`}
       onPointerDown={onDown}
       onPointerUp={onUp}
+      onWheel={onWheel}
     >
       {/* ── Ảnh nền ── */}
       <div className="absolute inset-0 -z-10 overflow-hidden bg-cvr-ink">
@@ -90,19 +106,14 @@ export default function Hero({
             draggable={false}
             sizes="100vw"
             className={`pointer-events-none transition-opacity duration-[1000ms] ease-[cubic-bezier(0.4,0,0.2,1)] ${
-              contain ? "object-contain" : "animate-kenburns object-cover"
+              contain ? "object-contain" : "object-cover"
             } ${i === active ? "opacity-100" : "opacity-0"}`}
           />
         ))}
-        {/* Overlay đủ để chữ đọc được, không làm tối ảnh. Chế độ contain chỉ tối nhẹ đáy. */}
-        {contain ? (
-          <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
-        ) : (
-          <>
-            <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-black/15 to-transparent" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
-          </>
-        )}
+        {/* Overlay TỐI THIỂU kiểu Apple: 2 dải mờ ở mép trên (bộ lọc/tab) + mép dưới (chữ)
+            — phần giữa trong suốt hoàn toàn, giữ nguyên ánh sáng/màu ảnh gốc. */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
       </div>
 
       {/* ── Link toàn banner (z-0, dưới mọi control) ── */}
@@ -221,7 +232,7 @@ function SideNav({ dir, onClick }: { dir: "prev" | "next"; onClick: () => void }
       type="button"
       onClick={onClick}
       aria-label={dir === "prev" ? "Banner trước" : "Banner sau"}
-      className={`absolute top-1/2 z-20 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/30 bg-black/35 text-white backdrop-blur-sm transition hover:border-cvr-gold/70 hover:bg-black/55 sm:flex ${
+      className={`absolute top-1/2 z-20 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/30 bg-black/35 text-white backdrop-blur-sm transition hover:border-white/70 hover:bg-black/55 sm:flex ${
         dir === "prev" ? "left-3" : "right-3"
       }`}
     >

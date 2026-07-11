@@ -21,7 +21,7 @@ export default function CompareButton({ id, className = "" }: { id: string; clas
         toggle(id);
       }}
       className={`flex h-9 w-9 items-center justify-center rounded-full backdrop-blur-sm transition ${
-        on ? "bg-cvr-gold text-cvr-ink" : "bg-black/45 text-white hover:bg-black/70"
+        on ? "bg-cvr-blue text-white" : "bg-black/45 text-white hover:bg-black/70"
       } ${className}`}
     >
       {/* Icon so sánh (2 cột) */}

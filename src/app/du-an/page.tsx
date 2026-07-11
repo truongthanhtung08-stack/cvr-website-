@@ -16,17 +16,10 @@ export default function DuAnPage() {
     <>
       <Header />
       <main className="flex-1 bg-white">
-        {/* Banner dự án — ôm TRỌN ảnh (fit=contain): ảnh chính hiện đủ, không cắt;
-            nền 2 bên lấp bằng chính ảnh làm mờ. Tỷ lệ banner ngang hợp lý. */}
-        <Hero banners={projectBanners} heightClass="h-[340px] sm:h-[440px]" search={false} fit="contain" />
+        {/* Banner dự án — khung GIỮ NGUYÊN; ảnh PHỦ KÍN khung (cover), KHÔNG hụt 2 bên. */}
+        <Hero banners={projectBanners} heightClass="h-[320px] sm:h-[400px]" search={false} />
 
-        <div className="mx-auto max-w-7xl px-4 pb-20 pt-4 sm:px-6 lg:px-8">
-          <nav className="flex items-center gap-1.5 text-xs text-cvr-muted">
-            <Link href="/" className="hover:text-cvr-ink">Trang chủ</Link>
-            <span>/</span>
-            <span className="text-cvr-body">Dự án</span>
-          </nav>
-
+        <div className="mx-auto max-w-7xl px-4 pb-20 pt-3 sm:px-6 lg:px-8">
           {/* Thanh lọc kiểu Batdongsan + tiêu đề + danh sách (bộ đếm nhảy theo bộ lọc) */}
           <ProjectsBrowser />
         </div>

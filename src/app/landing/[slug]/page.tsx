@@ -49,7 +49,7 @@ export default async function LandingPage({ params }: { params: Promise<{ slug: 
           {/* Số liệu */}
           <div className="mt-10 grid grid-cols-2 gap-4 lg:grid-cols-4">
             {l.stats.map((s) => (
-              <div key={s.label} className="rounded-2xl border border-cvr-line bg-white p-5 text-center shadow-lux">
+              <div key={s.label} className="rounded-none border border-cvr-line bg-white p-5 text-center shadow-lux">
                 <p className="text-2xl font-semibold tracking-tight text-cvr-gold-ink sm:text-3xl">{s.value}</p>
                 <p className="mt-1 text-xs text-cvr-muted sm:text-sm">{s.label}</p>
               </div>
@@ -59,7 +59,7 @@ export default async function LandingPage({ params }: { params: Promise<{ slug: 
           {/* Khối nội dung */}
           <div className="mt-10 grid grid-cols-1 gap-5 md:grid-cols-3">
             {l.blocks.map((b, i) => (
-              <div key={b.title} className="rounded-2xl border border-cvr-line bg-white p-6 shadow-lux">
+              <div key={b.title} className="rounded-none border border-cvr-line bg-white p-6 shadow-lux">
                 <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-cvr-gold/15 text-lg font-bold text-cvr-gold-ink">{i + 1}</span>
                 <h3 className="mt-4 font-semibold text-cvr-ink">{b.title}</h3>
                 <p className="mt-1.5 text-sm leading-relaxed text-cvr-muted">{b.desc}</p>
@@ -73,7 +73,7 @@ export default async function LandingPage({ params }: { params: Promise<{ slug: 
               <h2 className="mb-5 text-2xl font-semibold tracking-tight text-cvr-ink">Hình ảnh</h2>
               <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
                 {l.gallery.map((src, i) => (
-                  <div key={i} className="relative aspect-[4/3] overflow-hidden rounded-2xl border border-cvr-line">
+                  <div key={i} className="relative aspect-[4/3] overflow-hidden rounded-none border border-cvr-line">
                     <Image src={asset(src)} alt={`${l.title} ${i + 1}`} fill sizes="(max-width:768px) 50vw, 25vw" className="object-cover transition-transform duration-500 hover:scale-105" />
                   </div>
                 ))}
@@ -82,7 +82,7 @@ export default async function LandingPage({ params }: { params: Promise<{ slug: 
           )}
 
           {/* CTA cuối */}
-          <div className="mt-12 flex flex-col items-center gap-4 rounded-3xl border border-cvr-line bg-cvr-surface p-8 text-center sm:p-12">
+          <div className="mt-12 flex flex-col items-center gap-4 rounded-none border border-cvr-line bg-cvr-surface p-8 text-center sm:p-12">
             <h2 className="text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">Sẵn sàng bắt đầu cùng Coastal Land?</h2>
             <p className="max-w-xl text-sm text-cvr-muted">Liên hệ đội ngũ của chúng tôi để được tư vấn miễn phí và nhận giải pháp phù hợp nhất.</p>
             <div className="mt-2 flex flex-wrap items-center justify-center gap-3">

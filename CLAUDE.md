@@ -39,19 +39,72 @@
 
 ## 1. Dự án là gì
 
+> ⚡ **Đây KHÔNG chỉ là một website thông thường — đây là Dự án COASTAL LAND PLATFORM.**
+> **Phiên bản hiện tại: 1.0 (Foundation).**
+
 | | |
 |---|---|
+| **Tên dự án** | **Coastal Land Platform** — phiên bản **1.0 (Foundation)** |
 | **Tên thương hiệu** | **COASTAL LAND** (theo Brief & Kế hoạch v3 chính thức) |
 | **Tên đầy đủ** | Central Coast Vietnam Real Estate |
 | **Tên viết tắt** | **CVR** |
 | **Tagline** | Gateway to Central Coast property |
 | **Website (đích)** | coastalland.vn |
-| **Loại** | Sàn giao dịch BĐS trung gian (Đà Nẵng – Huế, mở rộng Miền Trung) |
+| **Loại** | Nền tảng PropTech — giai đoạn 1.0 là sàn giao dịch BĐS trung gian (Đà Nẵng – Huế, mở rộng Miền Trung) |
 | **Mô hình** | Solopreneur + AI-Driven (1 người vận hành, dùng AI thay developer) |
 | **Ngôn ngữ** | Tiếng Việt (có dấu) + Tiếng Anh |
 | **Tiêu chuẩn** | Chất lượng tương đương website $20.000 USD |
 
+**🎯 Mục tiêu dài hạn (tầm nhìn Platform):** Xây dựng **nền tảng PropTech hàng đầu Việt Nam**, theo lộ trình:
+1. **Foundation (1.0 — hiện tại):** làm chủ thị trường Miền Trung (Đà Nẵng – Huế).
+2. **Mở rộng toàn quốc:** nhân rộng mô hình ra các thị trường lớn cả nước.
+3. **Hệ sinh thái:** tích hợp **AI, Big Data** cùng hệ sinh thái dịch vụ bất động sản (định giá, pháp lý, tài chính, quản lý...).
+
+→ Mọi quyết định kiến trúc/kỹ thuật phải tính đến tầm nhìn này: code viết cho 1.0 nhưng **không được khoá đường mở rộng** (đa khu vực, đa dịch vụ, dữ liệu lớn).
+
 **Nguyên tắc kinh doanh cốt lõi:** Người mua MIỄN PHÍ mãi mãi — chỉ thu phí người bán/môi giới.
+
+---
+
+## 1B. SMART SEARCH SYSTEM — "TRÁI TIM" CỦA NỀN TẢNG ❤️
+
+> Trong Coastal Land Platform, **trái tim là cấu trúc và xây dựng Smart Search System**.
+> Mọi tính năng tìm kiếm/lọc/gợi ý đều là bộ phận của hệ thống này — thiết kế đồng bộ,
+> KHÔNG làm rời rạc từng mảnh.
+
+### 8 thành phần của Smart Search System
+
+| # | Thành phần | Vai trò |
+|---|---|---|
+| 1 | **AI Search** | Hiểu truy vấn tự nhiên tiếng Việt ("căn hộ 2PN gần biển dưới 3 tỷ") → tự tách khu vực/loại hình/giá/tiện ích. Dùng Claude API khi cần. |
+| 2 | **Quick Search** | Ô tìm nhanh + autocomplete thông minh (đã có nền: `suggest.ts`, normalizeVi) — gõ là ra khu vực, dự án, loại hình, tin. Phản hồi tức thì. |
+| 3 | **Dynamic Filter** | Bộ lọc đa tầng nhảy theo ngữ cảnh: chọn Mua bán/Cho thuê → loại hình đổi theo (taxonomy 2 trục đã có); chọn khu vực → dự án lọc động; đếm kết quả realtime. |
+| 4 | **Semantic Search** | Tìm theo NGỮ NGHĨA, không chỉ khớp chữ: "gần trường học", "view sông", "hợp đầu tư" → khớp thuộc tính/tiện ích/mô tả tin. (Về sau: embeddings + Supabase pgvector.) |
+| 5 | **Recommendation Engine** | Gợi ý cá nhân hoá: từ tin đã xem/đã lưu/khu vực quan tâm → "Dành riêng cho bạn", tin tương tự (đã có nền: pickRelated + provinceOf/districtOf/segmentOf). |
+| 6 | **Ranking Engine** | Thứ hạng kết quả = điểm tổng hợp: độ khớp truy vấn + hạng tin (VIP/Diamond/Gold) + độ tươi + chất lượng tin (ảnh/mô tả đầy đủ) + hành vi người dùng. Minh bạch, không để VIP đè hoàn toàn độ khớp. |
+| 7 | **Saved Search** | Lưu bộ lọc/truy vấn + thông báo khi có tin mới khớp (email/notification). Giữ chân người mua quay lại — nguồn lead cho người bán. |
+| 8 | **Search Analytics** | Ghi nhận truy vấn, bộ lọc dùng nhiều, truy vấn 0 kết quả, CTR từng vị trí → dữ liệu để tinh chỉnh Ranking + báo giá trị cho người đăng tin. |
+
+### UX Research bắt buộc (làm TRƯỚC khi thiết kế từng phần)
+
+Phân tích 7 nền tảng chuẩn thế giới + Việt Nam, từ đó **đúc kết "Best Practices" riêng cho Coastal Land**:
+
+1. **Batdongsan.com.vn** (VN — thị phần lớn nhất: taxonomy, bộ lọc, tin VIP)
+2. **Homedy** (VN — UX bộ lọc & danh sách gọn)
+3. **Zillow** (US — search map-first, Zestimate, saved search/notification)
+4. **Rightmove** (UK — tốc độ, bộ lọc đơn giản mà đủ, email alert)
+5. **PropertyGuru** (SEA — đa thị trường, gần bối cảnh VN nhất về hành vi)
+6. **Domain** (AU — UX mobile, shortlist/collections)
+7. **Realtor.com** (US — dữ liệu chuẩn hoá, SEO search page)
+
+→ Mỗi phân tích trả lời: *họ tổ chức search thế nào · bộ lọc gì được ưu tiên · ranking ra sao ·
+giữ chân người dùng bằng gì · điều gì đáng học / đáng tránh cho thị trường Miền Trung.*
+Kết quả đúc kết lưu vào `docs/` (file UX research riêng) trước khi code từng thành phần.
+
+### Trạng thái hiện tại (nền đã có → sẽ nâng cấp thành hệ thống)
+
+- ✅ Nền Quick Search (autocomplete `suggest.ts` + normalizeVi) · Dynamic Filter đa tầng (locations[] đa chọn, dự án lọc động, giá/m², lọc theo ý định) · Recommendation sơ khai (pickRelated, tin tương tự, RecentlyViewed) · Saved (tin lưu localStorage)
+- ⏳ Chưa có: AI Search, Semantic Search, Ranking Engine đúng nghĩa, Saved Search (lưu bộ lọc + alert), Search Analytics, và bộ UX Research 7 nền tảng.
 
 > ⚠️ Tài liệu cũ từng dùng tên "Central Land / Central Coast Realty" và domain "centralcoast.vn".
 > **Tên & domain chuẩn đã chốt: COASTAL LAND / coastalland.vn.** Nếu thấy tên/domain cũ ở đâu → sửa.

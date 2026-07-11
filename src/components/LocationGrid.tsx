@@ -22,7 +22,7 @@ export default function LocationGrid() {
               <Link
                 key={area.name}
                 href={area.href}
-                className={`card-lux group relative overflow-hidden ring-1 ring-black/5 shadow-lux transition-transform hover:-translate-y-1.5 shadow-lux-hover hover:ring-cvr-gold/40 ${
+                className={`card-lux group relative overflow-hidden ring-1 ring-black/5 shadow-lux transition-transform hover:-translate-y-1.5 shadow-lux-hover hover:ring-cvr-blue/40 ${
                   big ? "col-span-2 row-span-2" : ""
                 }`}
               >

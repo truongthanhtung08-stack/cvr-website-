@@ -199,7 +199,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
             {/* Cột phụ — môi giới (dính khi cuộn) */}
             <aside className="lg:col-span-1">
               <div className="sticky top-24 space-y-4">
-                <div className="rounded-2xl border border-cvr-line bg-white p-5 shadow-sm">
+                <div className="rounded-none border border-cvr-line bg-white p-5 shadow-sm">
                   <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-cvr-faint">Liên hệ tư vấn</p>
                   <div className="flex items-center gap-3">
                     <div className="flex h-12 w-12 items-center justify-center rounded-full bg-cvr-surface text-lg font-bold text-cvr-ink ring-1 ring-cvr-line">
@@ -222,7 +222,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                   <p className="mt-3 text-center text-[11px] text-cvr-faint">Mã tin: {d.code} · Đăng {d.postedDate}</p>
                 </div>
 
-                <div className="rounded-2xl border border-cvr-line bg-white p-5 text-sm shadow-sm">
+                <div className="rounded-none border border-cvr-line bg-white p-5 text-sm shadow-sm">
                   <p className="font-semibold text-cvr-ink">Pháp lý & cam kết</p>
                   <ul className="mt-3 space-y-2 text-cvr-body">
                     <li className="flex gap-2"><span className="text-cvr-gold-ink">✓</span> {d.legal}</li>

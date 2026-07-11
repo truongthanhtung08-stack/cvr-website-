@@ -13,7 +13,7 @@ export default function Gallery({ images, alt }: { images: string[]; alt: string
       <button
         type="button"
         onClick={() => setLightbox(true)}
-        className="group relative block aspect-[16/9] max-h-[400px] w-full overflow-hidden rounded-2xl border border-cvr-line"
+        className="group relative block aspect-[16/9] max-h-[400px] w-full overflow-hidden rounded-none border border-cvr-line"
       >
         <Image src={images[active]} alt={alt} fill priority sizes="(max-width:1024px) 100vw, 66vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
         <span className="absolute bottom-3 right-3 rounded-md bg-black/60 px-2.5 py-1 text-xs text-white backdrop-blur-sm">

@@ -23,6 +23,7 @@ export default function FilterDropdown({
   className = "",
   align = "left",
   compact = false,
+  field = false,
   children,
 }: {
   label: string;
@@ -33,6 +34,8 @@ export default function FilterDropdown({
   className?: string;
   align?: "left" | "right";
   compact?: boolean;
+  // field = nút LỚN đứng cùng hàng ô tìm kiếm (dòng 1 kiểu Batdongsan): h-10, bo xl.
+  field?: boolean;
   children: (api: { close: () => void }) => React.ReactNode;
 }) {
   const groupId = id ?? label;
@@ -102,19 +105,29 @@ export default function FilterDropdown({
         ref={btnRef}
         type="button"
         onClick={() => setOpen(!open)}
-        className={`flex ${compact ? "h-8 w-auto whitespace-nowrap px-2.5" : "h-9 w-full px-3.5 lg:w-auto lg:whitespace-nowrap"} items-center justify-between gap-2 rounded-full border text-sm outline-none transition ${
+        className={`flex items-center justify-between gap-2 border text-sm outline-none transition ${
           compact
-            ? active
-              ? "border-white/40 bg-white/20 text-white"
-              : "border-white/15 bg-white/10 text-white/85 hover:border-white/35"
-            : active
-              ? "border-transparent bg-cvr-ink text-white"
-              : "border-transparent bg-cvr-surface text-cvr-body hover:bg-black/[0.07] hover:text-cvr-ink"
+            ? `h-8 w-auto whitespace-nowrap rounded-full px-2.5 ${
+                active
+                  ? "border-white/40 bg-white/20 text-white"
+                  : "border-white/15 bg-white/10 text-white/85 hover:border-white/35"
+              }`
+            : field
+              ? `h-10 w-full shrink-0 rounded-xl px-4 font-medium sm:w-auto sm:whitespace-nowrap ${
+                  active
+                    ? "border-transparent bg-cvr-blue text-white"
+                    : "border-transparent bg-cvr-surface text-cvr-ink hover:bg-black/[0.07]"
+                }`
+              : `h-10 w-full rounded-none px-3.5 lg:w-auto lg:whitespace-nowrap ${
+                  active
+                    ? "border-cvr-blue/60 bg-white font-medium text-cvr-blue-ink"
+                    : "border-cvr-line bg-white text-cvr-body hover:border-cvr-ink/35 hover:text-cvr-ink"
+                }`
         }`}
       >
         <span className="truncate">{active && summary ? summary : label}</span>
         <svg
-          className={`h-4 w-4 shrink-0 transition-transform ${compact ? "text-white/60" : active ? "text-white/70" : "text-cvr-faint"} ${open ? "rotate-180" : ""}`}
+          className={`h-4 w-4 shrink-0 transition-transform ${compact ? "text-white/60" : active ? "text-cvr-blue" : "text-cvr-faint"} ${open ? "rotate-180" : ""}`}
           fill="none"
           stroke="currentColor"
           strokeWidth={2}
@@ -129,7 +142,7 @@ export default function FilterDropdown({
           <div
             ref={panelRef}
             style={{ top: pos.top, bottom: pos.bottom, left: pos.left, right: pos.right, maxHeight: pos.maxH }}
-            className={`cvr-pop fixed z-[100] max-w-[calc(100vw-1rem)] overflow-y-auto rounded-xl border border-cvr-line bg-white p-3 shadow-2xl shadow-black/15 ring-1 ring-inset ring-black/5 backdrop-blur-xl ${panelClassName}`}
+            className={`cvr-pop fixed z-[100] max-w-[calc(100vw-1rem)] overflow-y-auto rounded-none border border-cvr-line bg-white p-3 shadow-2xl shadow-black/15 ring-1 ring-inset ring-black/5 backdrop-blur-xl ${panelClassName}`}
           >
             {children({ close: () => setOpen(false) })}
           </div>,
@@ -159,7 +172,7 @@ export function PanelActions({
       <button
         type="button"
         onClick={onApply}
-        className="rounded-lg bg-cvr-ink px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-cvr-ink/90"
+        className="rounded-lg bg-cvr-blue px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-cvr-blue-ink"
       >
         Áp dụng
       </button>
