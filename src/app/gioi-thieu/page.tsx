@@ -8,7 +8,7 @@ import { asset } from "@/lib/asset";
 export const metadata: Metadata = {
   title: "Giới thiệu | Coastal Land",
   description:
-    "Coastal Land (coastalland.vn) — nền tảng công nghệ và cổng thông tin bất động sản trực tuyến hàng đầu tại Việt Nam. Nền tảng công nghệ kết nối ưu việt giúp khách hàng kết nối dễ dàng để thực hiện giao dịch.",
+    "Coastal Land (coastalland.vn) — nền tảng công nghệ và cổng thông tin Bất động sản trực tuyến hàng đầu tại Việt Nam. Hệ thống ưu việc giúp khách hàng kết nối dễ dàng và thực hiện giao dịch.",
 };
 
 const stats = [
