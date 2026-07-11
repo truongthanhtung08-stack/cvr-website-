@@ -2,12 +2,48 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
+
+// Dịch vài lỗi Supabase thường gặp sang tiếng Việt.
+function viError(msg: string): string {
+  if (/invalid login credentials/i.test(msg)) return "Email hoặc mật khẩu không đúng.";
+  if (/email not confirmed/i.test(msg)) return "Tài khoản chưa xác nhận email. Vui lòng kiểm tra hộp thư.";
+  return msg || "Đăng nhập không thành công, vui lòng thử lại.";
+}
 
 export default function LoginForm() {
   const [email, setEmail] = useState("");
   const [pw, setPw] = useState("");
   const [show, setShow] = useState(false);
   const [notice, setNotice] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setNotice("");
+    if (!email.includes("@")) {
+      setNotice("Hiện đăng nhập bằng email. Đăng nhập bằng số điện thoại (OTP) sẽ sớm có.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password: pw,
+      });
+      if (error) {
+        setNotice(viError(error.message));
+        return;
+      }
+      const next = new URLSearchParams(window.location.search).get("next");
+      window.location.href = next || "/tai-khoan";
+    } catch {
+      setNotice("Hệ thống tài khoản chưa sẵn sàng. Vui lòng thử lại sau.");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <div className="w-full max-w-md rounded-none border border-cvr-line bg-white p-6 shadow-lux sm:p-8">
@@ -20,13 +56,7 @@ export default function LoginForm() {
         </div>
       )}
 
-      <form
-        className="mt-5 space-y-4"
-        onSubmit={(e) => {
-          e.preventDefault();
-          setNotice("Hệ thống tài khoản đang được hoàn thiện — sẽ sớm hoạt động. Cảm ơn bạn!");
-        }}
-      >
+      <form className="mt-5 space-y-4" onSubmit={onSubmit}>
         <Field label="Email hoặc số điện thoại">
           <input
             type="text"
@@ -66,9 +96,10 @@ export default function LoginForm() {
 
         <button
           type="submit"
-          className="h-11 w-full rounded-lg bg-cvr-ink text-sm font-semibold text-white transition hover:bg-cvr-ink/90 active:scale-[0.99]"
+          disabled={loading}
+          className="h-11 w-full rounded-lg bg-cvr-ink text-sm font-semibold text-white transition hover:bg-cvr-ink/90 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
         >
-          Đăng nhập
+          {loading ? "Đang đăng nhập…" : "Đăng nhập"}
         </button>
       </form>
 

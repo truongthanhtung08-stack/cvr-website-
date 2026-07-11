@@ -5,6 +5,7 @@ import Link from "next/link";
 import BrandLogo from "@/components/BrandLogo";
 import { packages } from "@/lib/packages";
 import { haptic } from "@/lib/haptic";
+import { useAuth, displayName, signOut } from "@/lib/useAuth";
 
 type NavChild = { label: string; href: string };
 type NavItem = { label: string; href: string; children?: NavChild[] };
@@ -200,7 +201,7 @@ function AccountMenu({ name, onLogout }: { name: string; onLogout: () => void })
 
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
-  const [member, setMember] = useState<{ name: string } | null>(null);
+  const { user } = useAuth();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 80);
@@ -208,27 +209,6 @@ export default function Header() {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
-
-  // Trạng thái đăng nhập (tạm — sẽ thay bằng Supabase Auth). Đọc từ localStorage
-  // key "cvr-member" = {"name":"..."} để demo cả 2 giao diện khách/thành viên.
-  useEffect(() => {
-    const read = () => {
-      try {
-        const raw = localStorage.getItem("cvr-member");
-        setMember(raw ? JSON.parse(raw) : null);
-      } catch {
-        setMember(null);
-      }
-    };
-    read();
-    window.addEventListener("storage", read);
-    return () => window.removeEventListener("storage", read);
-  }, []);
-
-  const logout = () => {
-    localStorage.removeItem("cvr-member");
-    setMember(null);
-  };
 
   return (
     <header
@@ -253,8 +233,8 @@ export default function Header() {
         <div className="flex items-center gap-3 sm:gap-5">
           <SaveButton />
 
-          {member ? (
-            <AccountMenu name={member.name} onLogout={logout} />
+          {user ? (
+            <AccountMenu name={displayName(user)} onLogout={signOut} />
           ) : (
             <Link
               href="/dang-nhap"
