@@ -3,7 +3,6 @@ import Image from "next/image";
 import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import BrandLogo from "@/components/BrandLogo";
 import { asset } from "@/lib/asset";
 
 export const metadata: Metadata = {
@@ -15,7 +14,6 @@ export const metadata: Metadata = {
 const stats = [
   { value: "2", label: "Thị trường trọng điểm", sub: "Đà Nẵng · Huế" },
   { value: "1.000+", label: "Tin đăng chọn lọc", sub: "cập nhật mỗi ngày" },
-  { value: "100%", label: "Người mua miễn phí", sub: "mãi mãi" },
   { value: "24/7", label: "Hỗ trợ trực tuyến", sub: "minh bạch · nhanh" },
 ];
 
@@ -58,41 +56,26 @@ export default function GioiThieuPage() {
       <main className="flex-1 bg-white">
         {/* ── Hero giới thiệu ── */}
         <section className="relative isolate">
-          <div className="relative h-[46vh] min-h-[320px] w-full overflow-hidden bg-cvr-ink">
+          <div className="relative h-[30vh] min-h-[200px] w-full overflow-hidden bg-cvr-ink sm:h-[38vh] sm:max-h-[400px]">
             <Image
-              src={asset("/images/gioi-thieu/intro-thanh-pho.jpg")}
-              alt="Coastal Land — Bất động sản Duyên hải Miền Trung"
+              src={asset("/images/gioi-thieu/hero-gioi-thieu.jpg")}
+              alt="Không gian làm việc Coastal Land bên bờ biển Duyên hải Miền Trung"
               fill
               priority
               sizes="100vw"
               className="object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/25 to-black/20" />
-            <div className="absolute inset-0 flex items-end">
-              <div className="mx-auto w-full max-w-7xl px-4 pb-10 sm:px-6 lg:px-8">
-                <BrandLogo size="lg" tone="light" />
-                <span className="mt-5 inline-flex items-center bg-cvr-blue px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-white">
-                  Nền tảng công nghệ Bất động sản
-                </span>
-                <h1 className="mt-3 max-w-3xl text-3xl font-semibold leading-tight tracking-tight text-white [text-shadow:0_2px_16px_rgba(0,0,0,0.6)] sm:text-5xl">
-                  Về COASTAL LAND
-                </h1>
-                <p className="mt-3 max-w-2xl text-balance text-sm font-medium text-white/90 [text-shadow:0_1px_8px_rgba(0,0,0,0.55)] sm:text-lg">
-                  Cổng thông tin bất động sản trực tuyến cho Duyên hải Miền Trung — minh bạch, an toàn, kết nối nhanh.
-                </p>
-              </div>
-            </div>
           </div>
         </section>
 
         {/* ── Câu chuyện ── */}
-        <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+        <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-16 lg:px-8">
           <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2">
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.22em] text-cvr-blue-ink">Chúng tôi là ai</p>
-              <h2 className="mt-3 text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">
+              <h1 className="mt-3 text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">
                 Nền tảng bất động sản hàng đầu Miền Trung
-              </h2>
+              </h1>
               <div className="mt-5 space-y-4 text-[15px] leading-relaxed text-cvr-body">
                 <p>
                   <span className="font-semibold text-cvr-ink">Coastal Land</span> (coastalland.vn) là một trong những
@@ -112,7 +95,7 @@ export default function GioiThieuPage() {
 
         {/* ── Tầm nhìn & Sứ mệnh ── */}
         <section className="bg-cvr-surface">
-          <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+          <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-16 lg:px-8">
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <div className="border border-cvr-line bg-white p-8 shadow-lux">
                 <h3 className="text-lg font-semibold tracking-tight text-cvr-ink">Tầm nhìn</h3>
@@ -133,7 +116,7 @@ export default function GioiThieuPage() {
         </section>
 
         {/* ── Giá trị cốt lõi ── */}
-        <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+        <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-16 lg:px-8">
           <div className="max-w-2xl">
             <p className="text-sm font-semibold uppercase tracking-[0.22em] text-cvr-blue-ink">Giá trị cốt lõi</p>
             <h2 className="mt-3 text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">
@@ -165,8 +148,8 @@ export default function GioiThieuPage() {
             sizes="100vw"
             className="object-cover opacity-25"
           />
-          <div className="relative mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-            <div className="grid grid-cols-2 gap-8 lg:grid-cols-4">
+          <div className="relative mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-16 lg:px-8">
+            <div className="grid grid-cols-1 gap-8 sm:grid-cols-3">
               {stats.map((s) => (
                 <div key={s.label} className="text-center">
                   <p className="text-4xl font-semibold tracking-tight text-white sm:text-5xl">{s.value}</p>
@@ -179,9 +162,9 @@ export default function GioiThieuPage() {
         </section>
 
         {/* ── Thị trường Miền Trung ── */}
-        <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+        <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-16 lg:px-8">
           <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2">
-            <Figure src="/images/gioi-thieu/pho-bien.jpg" alt="Bất động sản ven biển Miền Trung" className="order-2 aspect-[16/10] w-full lg:order-1" />
+            <Figure src="/images/gioi-thieu/chuyen-sau.jpg" alt="Không gian ven biển Duyên hải Miền Trung" className="order-2 aspect-[16/10] w-full lg:order-1" />
             <div className="order-1 lg:order-2">
               <p className="text-sm font-semibold uppercase tracking-[0.22em] text-cvr-blue-ink">Thị trường</p>
               <h2 className="mt-3 text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">

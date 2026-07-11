@@ -24,7 +24,7 @@ export function AdBannerSeller() {
     <section className="section-edge bg-white">
       <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
         {/* Khung GỌN (3.5:1) trên desktop — ảnh PHỦ KÍN khung (cover), không hụt 2 bên */}
-        <div className="relative overflow-hidden rounded-[1.75rem] shadow-lux md:aspect-[7/2]">
+        <div className="relative overflow-hidden rounded-none shadow-lux md:aspect-[7/2]">
           <Image
             src={asset("/images/banner-coastal-35.jpg")}
             alt="Villa ven biển Duyên Hải Miền Trung lúc hoàng hôn"
@@ -67,7 +67,7 @@ export function AdBannerApp() {
   return (
     <section className="section-edge bg-white">
       <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
-        <div className="relative overflow-hidden rounded-[1.75rem] bg-[#0b0b0d] shadow-lux">
+        <div className="relative overflow-hidden rounded-none bg-[#0b0b0d] shadow-lux">
           {/* Vệt sáng vàng cong mờ — dưới trái (như mẫu) */}
           <div className="pointer-events-none absolute -bottom-24 -left-16 h-72 w-72 rounded-full bg-cvr-gold/[0.14] blur-3xl" aria-hidden />
           <div className="pointer-events-none absolute -bottom-32 left-24 h-56 w-96 rotate-12 rounded-full bg-cvr-gold/[0.07] blur-3xl" aria-hidden />

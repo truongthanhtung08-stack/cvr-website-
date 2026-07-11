@@ -5,7 +5,7 @@ import { asset } from "@/lib/asset";
 
 // Ảnh minh hoạ khu "Thông tin Coastal Land" (lấy từ bộ ảnh dự án) → dẫn tới trang giới thiệu.
 const footerShots = [
-  { src: "/images/gioi-thieu/pho-bien.jpg", alt: "Bất động sản ven biển Miền Trung" },
+  { src: "/images/gioi-thieu/intro-thanh-pho.jpg", alt: "Đô thị ven biển Duyên hải Miền Trung" },
   { src: "/images/gioi-thieu/villa-bien.jpg", alt: "Biệt thự view biển" },
   { src: "/images/gioi-thieu/ben-du-thuyen.jpg", alt: "Đô thị ven biển" },
 ];
