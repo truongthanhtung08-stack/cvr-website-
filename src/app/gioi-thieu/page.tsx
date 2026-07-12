@@ -83,7 +83,7 @@ export default function GioiThieuPage() {
                   Đà Nẵng và mở rộng khắp các khu vực đầy tiềm năng thuộc Duyên hải Miền Trung và Tây Nguyên.
                 </p>
                 <p>
-                  Với nền tảng công nghệ ưu việc cùng chiến lược Marketing hiệu quả, Chúng tôi gắn kết và tạo kết nối giữa những người có nhu cầu mua và bán bất động sản, giữa người dùng và các chuyên gia nhằm giúp mọi người tìm kiếm, chia sẻ và giao dịch nhanh chóng, thuận tiện.
+                  Với nền tảng công nghệ ưu việt cùng chiến lược Marketing hiệu quả, Chúng tôi gắn kết và tạo kết nối giữa những người có nhu cầu mua và bán bất động sản, giữa người dùng và các chuyên gia nhằm giúp mọi người tìm kiếm, chia sẻ và giao dịch nhanh chóng, thuận tiện.
                   
                   <span className="font-semibold text-cvr-ink"> </span>
                 </p>
@@ -100,15 +100,14 @@ export default function GioiThieuPage() {
               <div className="border border-cvr-line bg-white p-8 shadow-lux">
                 <h3 className="text-lg font-semibold tracking-tight text-cvr-ink">Tầm nhìn</h3>
                 <p className="mt-3 text-[15px] leading-relaxed text-cvr-body">
-                  Trở thành nền tảng PropTech hàng đầu Việt Nam — làm chủ thị trường Miền Trung, mở rộng toàn quốc
-                  và xây dựng hệ sinh thái bất động sản tích hợp AI và Big Data.
+                  Trở thành nền tảng PropTech hàng đầu Việt Nam và xây dựng hệ sinh thái bất động sản thân thiện dễ dàng đến người dùng.
                 </p>
               </div>
               <div className="border border-cvr-line bg-white p-8 shadow-lux">
                 <h3 className="text-lg font-semibold tracking-tight text-cvr-ink">Sứ mệnh</h3>
                 <p className="mt-3 text-[15px] leading-relaxed text-cvr-body">
-                  Giúp mọi người mua – bán bất động sản dễ dàng, minh bạch và an toàn; mang công nghệ đến gần
-                  người dùng và nâng chuẩn dịch vụ bất động sản Miền Trung.
+                  Kết nối mọi người mua – bán bất động sản dễ dàng, minh bạch và an toàn; mang công nghệ đến gần
+                  người dùng và nâng chuẩn dịch vụ bất động sản.
                 </p>
               </div>
             </div>
