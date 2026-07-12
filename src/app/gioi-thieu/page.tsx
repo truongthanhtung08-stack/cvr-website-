@@ -85,7 +85,7 @@ export default function GioiThieuPage() {
                 <p>
                   Với nền tảng công nghệ ưu việc cùng chiến lược Marketing hiệu quả, Chúng tôi gắn kết và tạo kết nối giữa những người có nhu cầu mua và bán bất động sản, giữa người dùng và các chuyên gia nhằm giúp mọi người tìm kiếm, chia sẻ và giao dịch nhanh chóng, thuận tiện.
                   
-                  <span className="font-semibold text-cvr-ink"> </span>; 
+                  <span className="font-semibold text-cvr-ink"> </span>
                 </p>
               </div>
             </div>
