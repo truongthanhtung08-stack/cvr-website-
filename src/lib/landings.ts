@@ -24,8 +24,8 @@ export const landings: Landing[] = [
     slug: "ve-coastal-land",
     image: "/images/hero-cty1.jpg",
     eyebrow: "Central Coast Vietnam Properties (CVR)",
-    title: "Sàn bất động sản Duyên hải miền Trung",
-    subtitle: "Minh bạch · Trực tiếp · Kiểm chứng thực địa",
+    title: "Bất động sản Duyên hải Miền trung",
+    subtitle: "Cổng thông tin Bất động sản trực tuyến ưu việt",
     intro:
       "Coastal Land là sàn giao dịch bất động sản trung gian, khách quan tại Đà Nẵng – Huế và toàn vùng Duyên hải miền Trung. Chúng tôi kết nối trực tiếp người mua và người bán, kiểm chứng pháp lý và thực địa từng tin đăng — với nguyên tắc cốt lõi: người mua MIỄN PHÍ mãi mãi.",
     stats: [
