@@ -35,8 +35,8 @@ export const homeBanners: Banner[] = [
     id: "lp-dich-vu",
     image: "/images/hero-pho-bien-9-26.jpg",
     status: "Coastal Land", // dòng 1 (nhãn — tự hiển thị IN HOA)
-    title: "Kết nối Mua bán · Cho thuê · Dự án", // dòng 2
-    subtitle: "Tiếp cận khách hàng và nhà đầu tư", // dòng 3
+    title: "Nền tảng công nghệ Bất động sản hàng đầu", // dòng 2
+    subtitle: "Mua bán - Cho thuê - Dự án", // dòng 3
     // cta: "Xem dịch vụ", // CTA TẮT cho banner công ty — bỏ // để bật
     showText: true,
     href: "/landing/dich-vu",
