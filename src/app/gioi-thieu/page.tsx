@@ -165,14 +165,14 @@ export default function GioiThieuPage() {
           <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2">
             <Figure src="/images/gioi-thieu/chuyen-sau.jpg" alt="Không gian ven biển Duyên hải Miền Trung" className="order-2 aspect-[16/10] w-full lg:order-1" />
             <div className="order-1 lg:order-2">
-              <p className="text-sm font-semibold uppercase tracking-[0.22em] text-cvr-blue-ink">Thị trường</p>
+              <p className="text-sm font-semibold uppercase tracking-[0.22em] text-cvr-blue-ink">Thị trường chuyên sâu</p>
               <h2 className="mt-3 text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">
-                Chuyên sâu Duyên hải Miền Trung
+                Duyên hải Miền Trung
               </h2>
               <p className="mt-5 text-[15px] leading-relaxed text-cvr-body">
-                Chúng tôi chọn chiều sâu trước chiều rộng: hiểu thật kỹ Đà Nẵng, Huế và các đô thị ven biển
+                Chúng tôi thấu hiểu nhu cầu của người dùng cũng như tiềm năng các đô thị ven biển
                 Miền Trung — từ căn hộ, nhà phố, đất nền đến bất động sản nghỉ dưỡng — để mỗi kết quả tìm kiếm
-                đều sát nhu cầu thật của bạn.
+                đều sát nhu cầu thật.
               </p>
               <Link
                 href="/du-an"
@@ -192,7 +192,7 @@ export default function GioiThieuPage() {
               Bắt đầu cùng Coastal Land
             </h2>
             <p className="max-w-xl text-[15px] text-cvr-muted">
-              Đăng tin để tiếp cận khách hàng và nhà đầu tư, hoặc tìm ngay bất động sản phù hợp tại Miền Trung.
+              Đăng tin để tiếp cận khách hàng và nhà đầu tư, hoặc tìm ngay bất động sản phù hợp.
             </p>
             <div className="mt-1 flex flex-wrap justify-center gap-3">
               <Link href="/dang-tin" className="bg-cvr-blue px-6 py-3 text-sm font-semibold text-white transition hover:bg-cvr-blue-ink">
