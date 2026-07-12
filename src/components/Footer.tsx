@@ -66,8 +66,7 @@ export default function Footer() {
               Bất động sản Duyên hải Miền Trung
             </p>
             <p className="mt-3 max-w-sm text-sm leading-relaxed text-cvr-muted">
-              Coastal Land (coastalland.vn) là một trong những nền tảng công nghệ
-              và cổng thông tin bất động sản trực tuyến hàng đầu tại Việt Nam.
+              Coastal Land (coastalland.vn) là nền tảng công nghệ và cổng thông tin bất động sản trực tuyến hàng đầu tại Việt Nam.
             </p>
 
             <ul className="mt-6 space-y-2.5 text-sm text-cvr-body">
