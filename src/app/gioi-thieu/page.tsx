@@ -74,7 +74,7 @@ export default function GioiThieuPage() {
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.22em] text-cvr-blue-ink">Chúng tôi là ai</p>
               <h1 className="mt-3 text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">
-            Nền tảng công nghệ và cổng thông tin    Bất động sản hàng đầu
+            Nền tảng công nghệ và cổng thông tin Bất động sản hàng đầu
               </h1>
               <div className="mt-5 space-y-4 text-[15px] leading-relaxed text-cvr-body">
                 <p>
