@@ -37,6 +37,8 @@ const columns = [
     links: [
       { label: "BĐS Đà Nẵng", href: "/mua-ban?tinh=Đà Nẵng" },
       { label: "BĐS Huế", href: "/mua-ban?tinh=Huế" },
+      { label: "BĐS Quảng Bình", href: "/mua-ban?tinh=Huế" },
+      { label: "BĐS Quảng Ngãi", href: "/mua-ban?tinh=Huế" },
       { label: "BĐS Khánh Hòa", href: "/mua-ban?tinh=Khánh Hòa" },
       { label: "BĐS Lâm Đồng", href: "/mua-ban?tinh=Lâm Đồng" },
       { label: "BĐS Gia Lai", href: "/mua-ban?tinh=Gia Lai" },
