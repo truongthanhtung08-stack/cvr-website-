@@ -27,7 +27,7 @@ export const landings: Landing[] = [
     title: "Bất động sản Duyên hải Miền trung",
     subtitle: "Cổng thông tin Bất động sản trực tuyến ưu việt",
     intro:
-      "Coastal Land là sàn giao dịch bất động sản trung gian, khách quan tại Đà Nẵng – Huế và toàn vùng Duyên hải miền Trung. Chúng tôi kết nối trực tiếp người mua và người bán, kiểm chứng pháp lý và thực địa từng tin đăng — với nguyên tắc cốt lõi: người mua MIỄN PHÍ mãi mãi.",
+      "Coastal Land (www.coastalland.vn) là nền tảng kết nối bất động sản số 1 tại Duyên hải Trung bộ. Với nền tảng công nghệ cùng chiến lược Marketing vượt trội, Chúng tôi gắn kết và tạo kết nối giữa những người có nhu cầu mua và bán bất động sản, giữa người dùng và các chuyên gia nhằm giúp mọi người tìm kiếm, chia sẻ và giao dịch nhanh chóng, thuận tiện.",
     stats: [
       { value: "2.500+", label: "Tin đã kiểm duyệt" },
       { value: "7", label: "Tỉnh/thành phủ sóng" },
