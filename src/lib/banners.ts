@@ -24,7 +24,7 @@ export const homeBanners: Banner[] = [
   {
     id: "lp-gioi-thieu",
     image: "/images/hero-thanh-pho-hien-dai-26.jpg",
-    status: "Nền tảng công nghệ", // dòng 1 (nhãn)
+    status: "Coastal Land", // dòng 1 (nhãn)
     title: "Bất động sản Duyên hải Miền trung", // dòng 2
     subtitle: "Kết nối · Tiện ích · Xác thực", // dòng 3
     // cta: "Tìm hiểu thêm", // CTA TẮT cho banner công ty — bỏ // để bật
