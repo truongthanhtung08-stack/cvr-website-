@@ -32,8 +32,7 @@ export const landings: Landing[] = [
       { value: "2.500+", label: "Tin đã kiểm duyệt" },
       { value: "7", label: "Tỉnh/thành phủ sóng" },
       { value: "100%", label: "Tin kiểm chứng thực địa" },
-      { value: "0đ", label: "Phí cho người mua" },
-    ],
+     ],
     blocks: [
       { title: "Khách quan & minh bạch", desc: "Thông tin trung lập, không thổi giá; mọi tin đều ghi rõ pháp lý, diện tích, vị trí thật." },
       { title: "Kiểm chứng thực địa", desc: "Đội ngũ đi thực tế, xác minh sổ và hiện trạng trước khi đăng — giảm rủi ro cho người mua." },
