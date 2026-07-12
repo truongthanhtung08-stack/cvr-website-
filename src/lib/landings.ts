@@ -36,7 +36,7 @@ export const landings: Landing[] = [
     blocks: [
       { title: "Khách quan & minh bạch", desc: "Thông tin trung lập, không thổi giá; mọi tin đều ghi rõ pháp lý, diện tích, vị trí thật." },
       { title: "Kiểm chứng thực địa", desc: "Đội ngũ đi thực tế, xác minh sổ và hiện trạng trước khi đăng — giảm rủi ro cho người mua." },
-      { title: "Phủ sóng miền Trung", desc: "Đà Nẵng, Huế, Quảng Ngãi, Gia Lai, Đắk Lắk, Khánh Hòa, Quảng Trị — cập nhật liên tục." },
+      { title: "Phủ sóng toàn khu vực", desc: "Duyên hải Miền trung và Tây Nguyên — cập nhật liên tục." },
     ],
     gallery: ["/images/tin/1.jpg", "/images/tin/13.jpg", "/images/tin/19.jpg", "/images/tin/24.jpg"],
     ctaLabel: "Khám phá nhà đất",
