@@ -79,13 +79,13 @@ export default function GioiThieuPage() {
               <div className="mt-5 space-y-4 text-[15px] leading-relaxed text-cvr-body">
                 <p>
                   <span className="font-semibold text-cvr-ink">Coastal Land</span> (coastalland.vn) là một trong những
-                  nền tảng công nghệ và cổng thông tin bất động sản trực tuyến hàng đầu tại Việt Nam, khởi đầu từ
-                  Đà Nẵng – Huế và mở rộng khắp Duyên hải Miền Trung.
+                  nền tảng công nghệ và cổng thông tin bất động sản trực tuyến hàng đầu tại Việt Nam, Chúng tôi khởi đầu từ
+                  Đà Nẵng và mở rộng khắp các khu vực đầy tiềm năng thuộc Duyên hải Miền Trung và Tây Nguyên.
                 </p>
                 <p>
-                  Chúng tôi kết nối trực tiếp người mua với người bán — môi giới, cá nhân chính chủ và doanh nghiệp —
-                  trên một nền tảng minh bạch, dữ liệu chuẩn và công cụ tìm kiếm thông minh. Người mua luôn
-                  <span className="font-semibold text-cvr-ink"> miễn phí</span>; chúng tôi chỉ thu phí dịch vụ từ người bán.
+                  Với nền tảng công nghệ ưu việc cùng chiến lược Marketing hiệu quả, Chúng tôi gắn kết và tạo kết nối giữa những người có nhu cầu mua và bán bất động sản, giữa người dùng và các chuyên gia nhằm giúp mọi người tìm kiếm, chia sẻ và giao dịch nhanh chóng, thuận tiện.
+                  
+                  <span className="font-semibold text-cvr-ink"> </span>; 
                 </p>
               </div>
             </div>
