@@ -133,7 +133,7 @@ export default function Footer() {
 
         <div className="mt-8 space-y-2 border-t border-cvr-line pt-6 text-xs leading-relaxed text-cvr-faint">
           <p className="font-semibold text-cvr-body">
-            CÔNG TY CỔ PHẦN COASTAL LAND
+            Central Coast Vietnam Real Estate (CVR)
           </p>
           {/* 2 dòng pháp lý (ĐKKD · địa chỉ/hotline) — CHỪA LẠI, bổ sung khi có thông tin */}
           <p className="pt-2 text-cvr-muted">
