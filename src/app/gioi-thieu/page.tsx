@@ -8,7 +8,7 @@ import { asset } from "@/lib/asset";
 export const metadata: Metadata = {
   title: "Giới thiệu | Coastal Land",
   description:
-    "Coastal Land (coastalland.vn) — nền tảng công nghệ và cổng thông tin Bất động sản trực tuyến hàng đầu tại Việt Nam. Hệ thống ưu việc giúp khách hàng kết nối dễ dàng và thực hiện giao dịch.",
+    "Coastal Land (coastalland.vn) — nền tảng công nghệ và cổng thông tin Bất động sản trực tuyến hàng đầu tại Việt Nam. Hệ thống ưu việt giúp khách hàng kết nối dễ dàng và thực hiện giao dịch.",
 };
 
 const stats = [
@@ -74,18 +74,18 @@ export default function GioiThieuPage() {
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.22em] text-cvr-blue-ink">Chúng tôi là ai</p>
               <h1 className="mt-3 text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">
-                Nền tảng bất động sản hàng đầu Miền Trung
+            Nền tảng công nghệ và cổng thông tin Bất động sản hàng đầu
               </h1>
               <div className="mt-5 space-y-4 text-[15px] leading-relaxed text-cvr-body">
                 <p>
                   <span className="font-semibold text-cvr-ink">Coastal Land</span> (coastalland.vn) là một trong những
-                  nền tảng công nghệ và cổng thông tin bất động sản trực tuyến hàng đầu tại Việt Nam, khởi đầu từ
-                  Đà Nẵng – Huế và mở rộng khắp Duyên hải Miền Trung.
+                  nền tảng công nghệ và cổng thông tin bất động sản trực tuyến hàng đầu tại Việt Nam, Chúng tôi khởi đầu từ
+                  Đà Nẵng và mở rộng khắp các khu vực đầy tiềm năng thuộc Duyên hải Miền Trung và Tây Nguyên.
                 </p>
                 <p>
-                  Chúng tôi kết nối trực tiếp người mua với người bán — môi giới, cá nhân chính chủ và doanh nghiệp —
-                  trên một nền tảng minh bạch, dữ liệu chuẩn và công cụ tìm kiếm thông minh. Người mua luôn
-                  <span className="font-semibold text-cvr-ink"> miễn phí</span>; chúng tôi chỉ thu phí dịch vụ từ người bán.
+                  Với nền tảng công nghệ ưu việt cùng chiến lược Marketing hiệu quả, Chúng tôi gắn kết và tạo kết nối giữa những người có nhu cầu mua và bán bất động sản, giữa người dùng và các chuyên gia nhằm giúp mọi người tìm kiếm, chia sẻ và giao dịch nhanh chóng, thuận tiện.
+                  
+                  <span className="font-semibold text-cvr-ink"> </span>
                 </p>
               </div>
             </div>
@@ -100,15 +100,14 @@ export default function GioiThieuPage() {
               <div className="border border-cvr-line bg-white p-8 shadow-lux">
                 <h3 className="text-lg font-semibold tracking-tight text-cvr-ink">Tầm nhìn</h3>
                 <p className="mt-3 text-[15px] leading-relaxed text-cvr-body">
-                  Trở thành nền tảng PropTech hàng đầu Việt Nam — làm chủ thị trường Miền Trung, mở rộng toàn quốc
-                  và xây dựng hệ sinh thái bất động sản tích hợp AI và Big Data.
+                  Trở thành nền tảng PropTech hàng đầu Việt Nam và xây dựng hệ sinh thái bất động sản thân thiện dễ dàng đến người dùng.
                 </p>
               </div>
               <div className="border border-cvr-line bg-white p-8 shadow-lux">
                 <h3 className="text-lg font-semibold tracking-tight text-cvr-ink">Sứ mệnh</h3>
                 <p className="mt-3 text-[15px] leading-relaxed text-cvr-body">
-                  Giúp mọi người mua – bán bất động sản dễ dàng, minh bạch và an toàn; mang công nghệ đến gần
-                  người dùng và nâng chuẩn dịch vụ bất động sản Miền Trung.
+                  Kết nối mọi người mua – bán bất động sản dễ dàng, minh bạch và an toàn; mang công nghệ đến gần
+                  người dùng và nâng chuẩn dịch vụ bất động sản.
                 </p>
               </div>
             </div>
@@ -166,14 +165,14 @@ export default function GioiThieuPage() {
           <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2">
             <Figure src="/images/gioi-thieu/chuyen-sau.jpg" alt="Không gian ven biển Duyên hải Miền Trung" className="order-2 aspect-[16/10] w-full lg:order-1" />
             <div className="order-1 lg:order-2">
-              <p className="text-sm font-semibold uppercase tracking-[0.22em] text-cvr-blue-ink">Thị trường</p>
+              <p className="text-sm font-semibold uppercase tracking-[0.22em] text-cvr-blue-ink">Thị trường chuyên sâu</p>
               <h2 className="mt-3 text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">
-                Chuyên sâu Duyên hải Miền Trung
+                Duyên hải Miền Trung
               </h2>
               <p className="mt-5 text-[15px] leading-relaxed text-cvr-body">
-                Chúng tôi chọn chiều sâu trước chiều rộng: hiểu thật kỹ Đà Nẵng, Huế và các đô thị ven biển
+                Chúng tôi thấu hiểu nhu cầu của người dùng cũng như tiềm năng các đô thị ven biển
                 Miền Trung — từ căn hộ, nhà phố, đất nền đến bất động sản nghỉ dưỡng — để mỗi kết quả tìm kiếm
-                đều sát nhu cầu thật của bạn.
+                đều sát nhu cầu thật.
               </p>
               <Link
                 href="/du-an"
@@ -193,7 +192,7 @@ export default function GioiThieuPage() {
               Bắt đầu cùng Coastal Land
             </h2>
             <p className="max-w-xl text-[15px] text-cvr-muted">
-              Đăng tin để tiếp cận khách hàng và nhà đầu tư, hoặc tìm ngay bất động sản phù hợp tại Miền Trung.
+              Đăng tin để tiếp cận khách hàng và nhà đầu tư, hoặc tìm ngay bất động sản phù hợp.
             </p>
             <div className="mt-1 flex flex-wrap justify-center gap-3">
               <Link href="/dang-tin" className="bg-cvr-blue px-6 py-3 text-sm font-semibold text-white transition hover:bg-cvr-blue-ink">

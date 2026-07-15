@@ -37,6 +37,8 @@ const columns = [
     links: [
       { label: "BĐS Đà Nẵng", href: "/mua-ban?tinh=Đà Nẵng" },
       { label: "BĐS Huế", href: "/mua-ban?tinh=Huế" },
+      { label: "BĐS Quảng Bình", href: "/mua-ban?tinh=Huế" },
+      { label: "BĐS Quảng Ngãi", href: "/mua-ban?tinh=Huế" },
       { label: "BĐS Khánh Hòa", href: "/mua-ban?tinh=Khánh Hòa" },
       { label: "BĐS Lâm Đồng", href: "/mua-ban?tinh=Lâm Đồng" },
       { label: "BĐS Gia Lai", href: "/mua-ban?tinh=Gia Lai" },
@@ -66,8 +68,7 @@ export default function Footer() {
               Bất động sản Duyên hải Miền Trung
             </p>
             <p className="mt-3 max-w-sm text-sm leading-relaxed text-cvr-muted">
-              Coastal Land (coastalland.vn) là một trong những nền tảng công nghệ
-              và cổng thông tin bất động sản trực tuyến hàng đầu tại Việt Nam.
+              Coastal Land (coastalland.vn) là nền tảng công nghệ và cổng thông tin bất động sản trực tuyến hàng đầu tại Việt Nam.
             </p>
 
             <ul className="mt-6 space-y-2.5 text-sm text-cvr-body">
@@ -132,7 +133,7 @@ export default function Footer() {
 
         <div className="mt-8 space-y-2 border-t border-cvr-line pt-6 text-xs leading-relaxed text-cvr-faint">
           <p className="font-semibold text-cvr-body">
-            CÔNG TY CỔ PHẦN COASTAL LAND
+            Central Coast Vietnam Real Estate (CVR)
           </p>
           {/* 2 dòng pháp lý (ĐKKD · địa chỉ/hotline) — CHỪA LẠI, bổ sung khi có thông tin */}
           <p className="pt-2 text-cvr-muted">

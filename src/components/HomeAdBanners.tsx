@@ -38,15 +38,14 @@ export function AdBannerSeller() {
           {/* Nội dung — gọn, canh giữa dọc bên trái */}
           <div className="relative flex min-h-[240px] flex-col justify-center px-8 py-8 sm:px-12 md:absolute md:inset-y-0 md:min-h-0 lg:px-14">
             <h2 className="text-balance text-2xl font-semibold leading-[1.12] tracking-tight text-cvr-ink sm:text-3xl">
-              Đưa bất động sản
+              Đưa Bất động sản
               <br />
               <span className="text-cvr-gold-ink">đến đúng khách hàng.</span>
             </h2>
             <span className="mt-4 h-px w-12 bg-cvr-gold-ink/50" aria-hidden />
             <p className="mt-4 max-w-sm text-sm leading-relaxed text-cvr-body">
               Đăng tin mua bán, cho thuê và dự án trên{" "}
-              <span className="font-semibold text-cvr-gold-ink">COASTAL LAND</span> — tiếp cận đúng
-              khách hàng Duyên Hải Miền Trung nhanh chóng, minh bạch và hiệu quả.
+              <span className="font-semibold text-cvr-gold-ink">COASTAL LAND</span> Với giao diện thân thiện, thông tin cập nhật chính xác cùng nhiều tính năng khác biệt, Coastal Land đang từng ngày khẳng định giá trị đối với người dùng và khách hàng.
             </p>
             <Link
               href="/dang-tin"
