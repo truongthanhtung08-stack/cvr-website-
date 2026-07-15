@@ -43,7 +43,21 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(redirect);
   }
 
-  // Gác riêng theo vai trò (chỉ role='admin' vào /admin) sẽ thêm ở B3 — đọc profiles.role.
+  // Gác riêng /admin theo vai trò: chỉ profiles.role='admin' mới được vào.
+  // (Đã đăng nhập nhưng không phải admin → đưa về trang chủ. Dữ liệu vẫn được RLS
+  // bảo vệ thêm một lớp ở database.)
+  if (path.startsWith("/admin") && user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+    if (!profile || profile.role !== "admin") {
+      const home = request.nextUrl.clone();
+      home.pathname = "/";
+      return NextResponse.redirect(home);
+    }
+  }
 
   return response;
 }
