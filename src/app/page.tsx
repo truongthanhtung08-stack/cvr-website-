@@ -10,8 +10,11 @@ import NewsSection from "@/components/NewsSection";
 import { AdBannerSeller, AdBannerApp } from "@/components/HomeAdBanners";
 import Footer from "@/components/Footer";
 import Reveal from "@/components/Reveal";
+import { getListings } from "@/lib/listingsDb";
 
-export default function Home() {
+export default async function Home() {
+  // B2: tin từ Supabase (bảng listings) — chưa có bảng/lỗi → tự dùng dữ liệu mẫu
+  const listings = await getListings();
   return (
     <>
       <Header />
@@ -20,7 +23,7 @@ export default function Home() {
         <Hero />
         {/* Không bọc Reveal: section này ló ngay dưới banner (above-the-fold),
             cần hiện tức thì để tạo kết nối — tránh bị "vùng chết" của Reveal ẩn đi. */}
-        <FeaturedListings />
+        <FeaturedListings items={listings} />
         <Reveal>
           <ProjectsSection />
         </Reveal>

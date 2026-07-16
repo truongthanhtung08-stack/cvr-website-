@@ -25,7 +25,8 @@ const typeTabs: TypeTab[] = [
 const PER_SLIDE = 8; // 2 hàng × 4 tin
 const SLIDE_COUNT = 2; // chạy 2 slides
 
-export default function FeaturedListings() {
+// items: tin từ Supabase (server truyền xuống) — không truyền thì dùng dữ liệu mẫu.
+export default function FeaturedListings({ items = featuredListings }: { items?: Listing[] }) {
   const [activeTab, setActiveTab] = useState("Tất cả");
   const [slideIdx, setSlideIdx] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -33,7 +34,7 @@ export default function FeaturedListings() {
 
   // Lọc theo tab → xếp theo cấp tin (cao trước) → chia 2 slides nối tiếp, mỗi slide 8 tin
   const activeMatch = typeTabs.find((t) => t.label === activeTab)?.match ?? (() => true);
-  const sorted = featuredListings
+  const sorted = items
     .filter((l) => activeMatch(l))
     .sort((a, b) => tierRank(a.badge) - tierRank(b.badge));
   const slides = Array.from({ length: SLIDE_COUNT }, (_, i) =>

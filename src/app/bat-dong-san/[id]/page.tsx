@@ -7,13 +7,15 @@ import Gallery from "@/components/Gallery";
 import ListingSlider from "@/components/ListingSlider";
 import RecordView from "@/components/RecordView";
 import PriceHistory from "@/components/PriceHistory";
-import { featuredListings, getListingById, buildListingDetail, provinceOf, pickRelated } from "@/lib/data";
+import { featuredListings, buildListingDetail, provinceOf, pickRelated } from "@/lib/data";
+import { getListing, getListings } from "@/lib/listingsDb";
 import { tierFromBadge, getTier } from "@/lib/packages";
 
-// Bắt buộc cho static export (GitHub Pages): liệt kê mọi id
+// Prerender sẵn các tin mẫu; tin mới (id UUID từ Supabase) render theo yêu cầu.
 export function generateStaticParams() {
   return featuredListings.map((l) => ({ id: l.id }));
 }
+export const dynamicParams = true;
 
 // Chuyển chuỗi giá VN ("33 tỷ", "7,2 tỷ", "15 triệu") → số VNĐ cho Schema. Không parse được → null.
 function parseVnd(s: string): number | null {
@@ -27,7 +29,7 @@ function parseVnd(s: string): number | null {
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
-  const l = getListingById(id);
+  const l = await getListing(id); // B2: đọc Supabase, fallback dữ liệu mẫu
   if (!l) return { title: "Không tìm thấy | Coastal Land" };
   return {
     title: `${l.title} — ${l.price} | Coastal Land`,
@@ -37,7 +39,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
 export default async function ListingDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const l = getListingById(id);
+  const l = await getListing(id); // B2: đọc Supabase, fallback dữ liệu mẫu
   if (!l) notFound();
   const d = buildListingDetail(l);
   // Hạng CVR của tin (đồng bộ với thẻ tin V.7). Không có huy hiệu → tin thường.
@@ -67,7 +69,8 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
   // Tin tương tự: BẮT BUỘC cùng MỤC ĐÍCH (bán↔bán, thuê↔thuê), sắp theo độ liên quan
   // — cùng TỈNH (+2) và cùng LOẠI HÌNH (+1). Hiện HẾT (không giới hạn) để chạy slider.
   const curProvince = provinceOf(l.location);
-  const samePurpose = featuredListings.filter((x) => x.id !== l.id && (x.purpose ?? "ban") === purpose);
+  const all = await getListings(); // B2: tin tương tự cũng lấy từ Supabase
+  const samePurpose = all.filter((x) => x.id !== l.id && (x.purpose ?? "ban") === purpose);
   const relatedFill = pickRelated(
     samePurpose,
     (x) => (provinceOf(x.location) === curProvince ? 2 : 0) + (x.type === l.type ? 1 : 0),

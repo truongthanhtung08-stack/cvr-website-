@@ -6,7 +6,7 @@ import { useSearchParams } from "next/navigation";
 import PropertyCard from "@/components/PropertyCard";
 import FilterBar from "@/components/FilterBar";
 import ActiveFilters from "@/components/ActiveFilters";
-import { featuredListings } from "@/lib/data";
+import { featuredListings, type Listing } from "@/lib/data";
 import {
   applyFilters,
   sortListings,
@@ -29,10 +29,13 @@ const PER_PAGE = 8;
 export default function ListingBrowser({
   heading,
   purpose = "ban",
+  items = featuredListings,
 }: {
   heading: string;
   // Mục đích trang: "ban" = mua bán · "thue" = cho thuê — lọc nguồn tin + danh mục loại hình.
   purpose?: "ban" | "thue";
+  // Tin từ Supabase (server truyền xuống) — không truyền thì dùng dữ liệu mẫu.
+  items?: Listing[];
 }) {
   const params = useSearchParams();
 
@@ -46,8 +49,8 @@ export default function ListingBrowser({
 
   // Nguồn tin theo đúng MỤC ĐÍCH của trang (bán / thuê)
   const base = useMemo(
-    () => featuredListings.filter((l) => (l.purpose ?? "ban") === purpose),
-    [purpose],
+    () => items.filter((l) => (l.purpose ?? "ban") === purpose),
+    [items, purpose],
   );
 
   const results = useMemo(
