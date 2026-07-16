@@ -117,15 +117,98 @@ const serviceMenu = [
   { label: "Quy định chung", href: "#quy-dinh" },
 ];
 
-// Các gói chưa công bố giá — mô tả + CTA tư vấn
-const otherPkgs = [
-  { id: "goi-day-tin", no: "3", name: "Gói Đẩy tin (Up tin)", desc: "Đẩy tin đăng lên đầu danh sách của từng loại tin, làm mới thời gian đăng để luôn nằm trong tầm mắt người mua. Gói nhiều lần đẩy tin trong nhiều ngày, mỗi ngày 1 lần." },
-  { id: "goi-du-an", no: "4", name: "Gói Dự án", desc: "Trang dự án riêng cho chủ đầu tư/đại lý — trình bày tổng thể, mặt bằng, tiến độ; xuất hiện ở các vị trí dự án nổi bật trên Website." },
-  { id: "goi-pr", no: "5", name: "Gói bài PR", desc: "Bài viết truyền thông trên chuyên mục Tin tức — xuất hiện trên Trang chủ và trang chuyên mục, tăng độ tin cậy & nhận diện thương hiệu." },
-  { id: "goi-banner", no: "6", name: "Gói Banner quảng cáo", desc: "Vị trí banner nổi bật trên Trang chủ và các trang danh sách — tiếp cận diện rộng toàn bộ khách truy cập." },
+// ── 3. GÓI ĐẨY TIN (Up tin) — bảng 4 cấp, giá đối chuẩn Homedy ──
+const upRows: { label: string; values: { original?: string; price: string }[] }[] = [
+  { label: "Up ngay", values: [{ price: "90.000đ" }, { price: "46.000đ" }, { price: "17.000đ" }, { price: "5.000đ" }] },
+  { label: "Up 3 lần (−20%)", values: [{ original: "270.000đ", price: "216.000đ" }, { original: "138.000đ", price: "110.400đ" }, { original: "51.000đ", price: "40.800đ" }, { original: "15.000đ", price: "12.000đ" }] },
+  { label: "Up 7 lần (−30%)", values: [{ original: "630.000đ", price: "441.000đ" }, { original: "322.000đ", price: "225.400đ" }, { original: "119.000đ", price: "83.300đ" }, { original: "35.000đ", price: "24.500đ" }] },
+  { label: "Up 13 lần (−40%)", values: [{ original: "1.170.000đ", price: "702.000đ" }, { original: "598.000đ", price: "358.800đ" }, { original: "221.000đ", price: "132.600đ" }, { original: "65.000đ", price: "39.000đ" }] },
+  { label: "Up 27 lần (−50%)", values: [{ original: "2.430.000đ", price: "1.215.000đ" }, { original: "1.242.000đ", price: "621.000đ" }, { original: "459.000đ", price: "229.500đ" }, { original: "135.000đ", price: "67.500đ" }] },
 ];
 
-const HOTLINE = "0905 22 00 22"; // hotline hiển thị — đổi tại đây khi có số chính thức
+// ── 4. GÓI DỰ ÁN — 3 cấp CVR-PJ ──
+const pjPkgs = [
+  {
+    tierId: "diamond" as const,
+    name: "CVR-PJ Diamond",
+    sample: { title: "Sun Cosmo Residence", address: "Hòa Hải, Ngũ Hành Sơn, Đà Nẵng" },
+    displays: ["Xuất hiện trên Trang chủ.", "Xuất hiện trên CVR-PJ Gold.", "Xuất hiện trên CVR Diamond.", "Icon màu đỏ nổi bật."],
+    prices: [
+      { label: "Giá 1 tuần", price: "6.800.000đ" },
+      { label: "Giá 2 tuần (−6%)", original: "13.600.000đ", price: "12.800.000đ" },
+    ],
+  },
+  {
+    tierId: "gold" as const,
+    name: "CVR-PJ Gold",
+    sample: { title: "The Filmore Da Nang", address: "Hải Châu, Đà Nẵng" },
+    displays: ["Xuất hiện trên CVR-PJ Silver.", "Xuất hiện trên CVR Gold.", "Icon màu vàng nổi bật."],
+    prices: [
+      { label: "Giá 1 tuần", price: "3.500.000đ" },
+      { label: "Giá 2 tuần (−6%)", original: "7.000.000đ", price: "6.600.000đ" },
+    ],
+  },
+  {
+    tierId: "silver" as const,
+    name: "CVR-PJ Silver",
+    sample: { title: "Khu đô thị FPT City", address: "Ngũ Hành Sơn, Đà Nẵng" },
+    displays: ["Xuất hiện trên CVR-PJ Basic.", "Xuất hiện trên CVR Silver.", "Icon màu xanh nổi bật."],
+    prices: [
+      { label: "Giá 1 tuần", price: "2.000.000đ" },
+      { label: "Giá 2 tuần (−5%)", original: "4.000.000đ", price: "3.800.000đ" },
+    ],
+  },
+];
+
+// ── 5. GÓI BÀI PR — 3 cấp ──
+const prPkgs = [
+  {
+    tierId: "diamond" as const,
+    name: "CVR-PR Diamond",
+    price: "8.900.000đ",
+    displays: ["Xuất hiện trên Trang chủ: box Tin tức.", "Xuất hiện trên trang chuyên mục Tin tức.", "Chia sẻ trên Fanpage Facebook của Coastal Land."],
+  },
+  {
+    tierId: "gold" as const,
+    name: "CVR-PR Gold",
+    price: "5.900.000đ",
+    displays: ["Xuất hiện trên Trang chủ: box Tin tức.", "Xuất hiện trên trang chuyên mục Tin tức."],
+  },
+  {
+    tierId: "silver" as const,
+    name: "CVR-PR Silver",
+    price: "2.900.000đ",
+    displays: ["Xuất hiện trên trang chuyên mục Tin tức."],
+  },
+];
+
+const prNotes = [
+  "Một bài PR không quá 5 ảnh minh hoạ.",
+  "Bài PR gửi trước 2 ngày.",
+  "Bài PR xuất hiện ở Trang chủ trong 1 ngày, xuất hiện trên trang chuyên mục Tin tức vĩnh viễn.",
+];
+
+// ── 6. GÓI BANNER — web + mobile + combo ──
+const bannerWebRows = [
+  { name: "CVR-BANNER Homepage 1", size: "370 × 300", price: "7.500.000đ", pos: "Trang chủ", note: "Chia sẻ 3" },
+  { name: "CVR-BANNER Homepage 2", size: "370 × 312", price: "5.000.000đ", pos: "Trang chủ", note: "Chia sẻ 3" },
+  { name: "CVR-BANNER Homepage 3", size: "370 × 430", price: "6.000.000đ", pos: "Trang chủ", note: "Chia sẻ 3" },
+  { name: "CVR-BANNER Listing 1", size: "370 × 600", price: "7.000.000đ", pos: "Trang danh sách Tin đăng / Dự án", note: "Chia sẻ 3" },
+  { name: "CVR-BANNER Listing 2", size: "370 × 320", price: "3.000.000đ", pos: "Trang danh sách Tin đăng / Dự án", note: "Chia sẻ 3" },
+  { name: "CVR-BANNER Listing 3", size: "370 × 430", price: "5.000.000đ", pos: "Trang danh sách Tin đăng / Dự án", note: "Chia sẻ 3" },
+];
+
+const bannerMobileRows = [
+  { name: "CVR-BANNER Mobile Homepage", size: "345 × 200", price: "5.000.000đ", pos: "Trang chủ (mobile)", note: "Chia sẻ 3" },
+  { name: "CVR-BANNER Mobile Listing", size: "345 × 150", price: "3.000.000đ", pos: "Trang chủ + Tin đăng (mobile)", note: "Bao toàn tỉnh lẻ: 1.500.000đ" },
+];
+
+const bannerComboRows = [
+  { name: "CVR-BANNER Combo Homepage", size: "Banner Homepage 1 + Mobile Homepage", price: "10.000.000đ", pos: "Web + Mobile", note: "Chiết khấu 20%" },
+  { name: "CVR-BANNER Combo Listing", size: "Banner Listing 1 + Mobile Listing", price: "8.900.000đ", pos: "Web + Mobile", note: "Chiết khấu 15%" },
+];
+
+const HOTLINE = "0377 985 036"; // hotline chính thức (khớp Footer: +84 377 985 036)
 
 export default function BaoGiaPage() {
   return (
@@ -287,23 +370,190 @@ export default function BaoGiaPage() {
                 </div>
               </section>
 
-              {/* 3–6. Các gói khác — nhận tư vấn */}
-              {otherPkgs.map((p) => (
-                <section key={p.id} id={p.id} className="scroll-mt-24">
-                  <SectionTitle no={p.no} title={p.name} desc={p.desc} />
-                  <div className="mt-4 flex flex-wrap items-center justify-between gap-4 rounded-none border border-cvr-line bg-white p-5 shadow-lux sm:p-6">
-                    <p className="text-sm text-cvr-muted">
-                      Giá theo vị trí &amp; thời lượng — nhận báo giá chi tiết từ chuyên viên Coastal Land.
-                    </p>
-                    <a
-                      href="#lien-he"
-                      className="rounded-lg border border-cvr-ink px-5 py-2 text-sm font-semibold text-cvr-ink transition hover:bg-cvr-ink hover:text-white"
-                    >
-                      Liên hệ tư vấn
-                    </a>
+              {/* 3. GÓI ĐẨY TIN — bảng 4 cấp */}
+              <section id="goi-day-tin" className="scroll-mt-24">
+                <SectionTitle
+                  no="3"
+                  title="Gói Đẩy tin (Up tin)"
+                  desc="Đẩy tin đăng lên trên đầu của từng loại tin. Gói nhiều lần đẩy tin trong nhiều ngày, mỗi ngày 1 lần."
+                />
+                <div className="mt-4 overflow-x-auto rounded-none border border-cvr-line bg-white shadow-lux">
+                  <table className="w-full min-w-[640px] text-sm">
+                    <thead>
+                      <tr className="border-b border-cvr-line bg-cvr-surface/60 text-left">
+                        <th className="px-4 py-3 font-semibold text-cvr-ink">Gói</th>
+                        {(["diamond", "gold", "silver", "basic"] as const).map((id) => {
+                          const t = getTier(id);
+                          return (
+                            <th key={id} className="px-4 py-3 text-center font-bold" style={{ color: t.accent }}>
+                              CVR-UP {t.short}
+                            </th>
+                          );
+                        })}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {upRows.map((r) => (
+                        <tr key={r.label} className="border-b border-cvr-line/70 last:border-0">
+                          <td className="px-4 py-3 font-medium text-cvr-body">{r.label}</td>
+                          {r.values.map((v, i) => (
+                            <td key={i} className="px-4 py-3 text-center">
+                              {v.original && (
+                                <span className="mr-1.5 text-xs text-cvr-faint line-through">{v.original}</span>
+                              )}
+                              <span className="font-bold text-cvr-ink">{v.price}</span>
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+
+              {/* 4. GÓI DỰ ÁN — 3 cấp CVR-PJ */}
+              <section id="goi-du-an" className="scroll-mt-24">
+                <SectionTitle
+                  no="4"
+                  title="Gói Dự án"
+                  desc="Vị trí dự án nổi bật dành cho chủ đầu tư & đại lý phân phối."
+                />
+                <div className="mt-4 space-y-5">
+                  {pjPkgs.map((p) => {
+                    const t = getTier(p.tierId);
+                    return (
+                      <div key={p.name} className="overflow-hidden rounded-none border border-cvr-line bg-white shadow-lux">
+                        <div className="grid grid-cols-1 md:grid-cols-[1fr_280px]">
+                          <div className="p-5 sm:p-6">
+                            <p className="text-xl font-bold" style={{ color: t.accent }}>{p.name}</p>
+                            <div className="mt-3 rounded-lg border border-cvr-line bg-cvr-surface p-3">
+                              <p className="text-sm font-semibold leading-snug text-cvr-ink">
+                                <FlameIcon color={t.accent} />
+                                {p.sample.title}
+                              </p>
+                              <p className="mt-1 text-xs text-cvr-muted">{p.sample.address}</p>
+                            </div>
+                            <ul className="mt-4 space-y-1.5 text-sm text-cvr-body">
+                              {p.displays.map((d) => (
+                                <li key={d} className="flex gap-2"><CheckIcon /> <span>{d}</span></li>
+                              ))}
+                            </ul>
+                          </div>
+                          <div className="flex flex-col border-t border-cvr-line bg-cvr-surface/60 p-5 sm:p-6 md:border-l md:border-t-0">
+                            <div className="flex-1 space-y-3">
+                              {p.prices.map((pr) => (
+                                <div key={pr.label}>
+                                  <p className="text-xs text-cvr-muted">{pr.label}</p>
+                                  <p className="text-lg font-bold text-cvr-ink">
+                                    {pr.original && (
+                                      <span className="mr-2 text-sm font-medium text-cvr-faint line-through">{pr.original}</span>
+                                    )}
+                                    {pr.price}
+                                  </p>
+                                </div>
+                              ))}
+                            </div>
+                            <a
+                              href="#lien-he"
+                              className="mt-4 block rounded-lg bg-cvr-ink py-2.5 text-center text-sm font-semibold text-white transition hover:bg-cvr-ink/90"
+                            >
+                              Liên hệ tư vấn
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+
+              {/* 5. GÓI BÀI PR — 3 cấp */}
+              <section id="goi-pr" className="scroll-mt-24">
+                <SectionTitle
+                  no="5"
+                  title="Gói bài PR"
+                  desc="Bài viết truyền thông trên chuyên mục Tin tức — tăng độ tin cậy & nhận diện thương hiệu."
+                />
+                <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
+                  {prPkgs.map((p) => {
+                    const t = getTier(p.tierId);
+                    return (
+                      <div key={p.name} className="flex flex-col overflow-hidden rounded-none border border-cvr-line bg-white shadow-lux">
+                        <div className="px-5 py-4" style={{ borderTop: `3px solid ${t.accent}` }}>
+                          <p className="text-lg font-bold" style={{ color: t.accent }}>{p.name}</p>
+                        </div>
+                        <ul className="flex-1 space-y-1.5 px-5 text-sm text-cvr-body">
+                          {p.displays.map((d) => (
+                            <li key={d} className="flex gap-2"><CheckIcon /> <span>{d}</span></li>
+                          ))}
+                        </ul>
+                        <div className="p-5">
+                          <p className="text-xs text-cvr-muted">Giá/bài</p>
+                          <p className="text-xl font-bold text-cvr-ink">{p.price}</p>
+                          <a
+                            href="#lien-he"
+                            className="mt-3 block rounded-lg bg-cvr-ink py-2.5 text-center text-sm font-semibold text-white transition hover:bg-cvr-ink/90"
+                          >
+                            Liên hệ tư vấn
+                          </a>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="mt-4 rounded-none border border-cvr-line bg-white p-5 shadow-lux">
+                  <p className="text-xs font-bold uppercase tracking-wider text-cvr-ink">Lưu ý</p>
+                  <ul className="mt-2 space-y-1 text-sm text-cvr-muted">
+                    {prNotes.map((n) => <li key={n}>– {n}</li>)}
+                  </ul>
+                </div>
+              </section>
+
+              {/* 6. GÓI BANNER — web / mobile / combo */}
+              <section id="goi-banner" className="scroll-mt-24">
+                <SectionTitle
+                  no="6"
+                  title="Gói Banner quảng cáo"
+                  desc="Vị trí banner nổi bật trên Trang chủ và các trang danh sách — tiếp cận toàn bộ khách truy cập."
+                />
+                {[
+                  { title: "Banner Web", rows: bannerWebRows, sizeLabel: "Kích thước (px)" },
+                  { title: "Banner Mobile Web", rows: bannerMobileRows, sizeLabel: "Kích thước (px)" },
+                  { title: "Banner Web + Mobile Web (Combo)", rows: bannerComboRows, sizeLabel: "Sản phẩm" },
+                ].map((tbl) => (
+                  <div key={tbl.title} className="mt-4">
+                    <p className="mb-2 text-sm font-bold uppercase tracking-wider text-cvr-body">{tbl.title}</p>
+                    <div className="overflow-x-auto rounded-none border border-cvr-line bg-white shadow-lux">
+                      <table className="w-full min-w-[640px] text-sm">
+                        <thead>
+                          <tr className="border-b border-cvr-line bg-cvr-surface/60 text-left">
+                            <th className="px-4 py-3 font-semibold text-cvr-ink">Tên gói</th>
+                            <th className="px-4 py-3 font-semibold text-cvr-ink">{tbl.sizeLabel}</th>
+                            <th className="px-4 py-3 font-semibold text-cvr-ink">Giá/tuần</th>
+                            <th className="px-4 py-3 font-semibold text-cvr-ink">Vị trí</th>
+                            <th className="px-4 py-3 font-semibold text-cvr-ink">Ghi chú</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {tbl.rows.map((r) => (
+                            <tr key={r.name} className="border-b border-cvr-line/70 last:border-0">
+                              <td className="px-4 py-3 font-medium text-cvr-ink">{r.name}</td>
+                              <td className="px-4 py-3 text-cvr-body">{r.size}</td>
+                              <td className="px-4 py-3 font-bold text-cvr-ink">{r.price}</td>
+                              <td className="px-4 py-3 text-cvr-body">{r.pos}</td>
+                              <td className="px-4 py-3 text-cvr-muted">{r.note}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
-                </section>
-              ))}
+                ))}
+                <p className="mt-3 text-xs text-cvr-faint">
+                  Chế độ &ldquo;Chia sẻ 3&rdquo; theo traffic · Thời gian quảng cáo dưới 7 ngày tính tròn 1 tuần ·
+                  Gửi banner trước 1 ngày (banner đặc biệt: 3 ngày) · Định dạng GIF/JPG/PNG, dung lượng &lt; 150KB.
+                </p>
+              </section>
 
               {/* Loại tin & đặc điểm */}
               <section id="dac-diem" className="scroll-mt-24">
