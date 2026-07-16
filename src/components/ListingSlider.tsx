@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import PropertyCard from "@/components/PropertyCard";
 import type { Listing } from "@/lib/data";
+import { smoothScrollTo } from "@/lib/scroll";
 
 // Slider cuộn ngang cho phần "Bất động sản tương tự" — hiện HẾT số tin tương tự
 // (không giới hạn), scroll-snap mượt + nút ‹ › điều hướng. Kiểu Apple/Batdongsan.
@@ -12,8 +13,10 @@ export default function ListingSlider({ items }: { items: Listing[] }) {
   const nudge = (dir: number) => {
     const el = ref.current;
     if (!el) return;
-    // nhảy đúng 1 "trang" = trọn bề rộng khung nhìn (4 mục trên desktop)
-    el.scrollBy({ left: dir * el.clientWidth, behavior: "smooth" });
+    // nhảy đúng 1 "trang" = trọn bề rộng khung nhìn (4 mục trên desktop).
+    // Kẹp trong [0, max] để không cuộn hụt ở hai đầu.
+    const max = el.scrollWidth - el.clientWidth;
+    smoothScrollTo(el, Math.max(0, Math.min(max, el.scrollLeft + dir * el.clientWidth)));
   };
 
   return (

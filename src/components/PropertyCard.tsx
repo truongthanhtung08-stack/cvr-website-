@@ -29,6 +29,8 @@ function AgentAvatar({ name, size = 6 }: { name: string; size?: number }) {
 // ── Card lưới — bố cục giống Homedy (.product-item) ──────────────────────────
 // variant theo KÍCH THƯỚC tin trong bảng "Loại tin và đặc điểm":
 //   "featured" = Rất lớn (Diamond) · "grid" = Lớn/Trung bình (Gold/Silver) · "mini" = Nhỏ nhất (Basic)
+//   "tier" = thẻ CÙNG KÍCH THƯỚC, phân cấp bằng NỘI DUNG: màu tiêu đề + số dòng mô tả
+//            (Diamond 2 · Gold 1 · Silver/Basic 0) + hiện thành viên (chỉ Diamond/Gold).
 export default function PropertyCard({
   item,
   layout = "grid",
@@ -37,7 +39,7 @@ export default function PropertyCard({
 }: {
   item: Listing;
   layout?: "grid" | "list";
-  variant?: "featured" | "grid" | "mini";
+  variant?: "featured" | "grid" | "mini" | "tier";
   // Hiện "Hôm nay" (thời gian đăng) — chỉ ở trang list (Mua bán/Cho thuê), KHÔNG ở trang chủ.
   showTime?: boolean;
 }) {
@@ -47,13 +49,18 @@ export default function PropertyCard({
   const tier = item.badge ? getTier(tierFromBadge(item.badge)) : null;
   const isFeatured = variant === "featured";
   const isMini = variant === "mini";
+  const isTier = variant === "tier";
+  const tierId = tier?.id ?? "basic";
+  // Lượng nội dung theo cấp (variant "tier") — các variant khác giữ nguyên hành vi cũ
+  const descLines = isTier ? (tierId === "diamond" ? 2 : tierId === "gold" ? 1 : 0) : isMini ? 0 : 2;
+  const showAgent = isTier ? tierId === "diamond" || tierId === "gold" : !isMini;
 
   return (
     <Link
       href={`/bat-dong-san/${item.id}`}
+      // Khung thẻ Apple thuần: viền tóc cvr-line + bóng mềm — KHÔNG viền màu theo cấp.
+      // Cấp tin thể hiện qua huy hiệu + màu TIÊU ĐỀ (đúng bảng đặc điểm), không tô khung.
       className="flex flex-col overflow-hidden rounded-none border border-cvr-line bg-white shadow-lux shadow-lux-hover transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1"
-      // Viền màu cấp tin trên đỉnh thẻ (Diamond đỏ · Gold vàng · Silver xanh) — Basic không viền
-      style={tier && tier.id !== "basic" ? { borderTop: `2px solid ${tier.accent}` } : undefined}
     >
       {/* Ảnh — Diamond khung rộng hơn (rất lớn), còn lại 4/3 */}
       <div className={`relative overflow-hidden bg-cvr-surface ${isFeatured ? "aspect-[16/10]" : "aspect-[4/3]"}`}>
@@ -96,9 +103,11 @@ export default function PropertyCard({
           {item.title}
         </h3>
 
-        {/* Mô tả — 2 dòng (tin Nhỏ nhất không có mô tả) */}
-        {!isMini && (
-          <p className="mt-1 line-clamp-2 min-h-[2.2rem] text-[13px] leading-relaxed text-cvr-muted">
+        {/* Mô tả — số dòng theo cấp (Diamond 2 · Gold 1 · Silver/Basic 0) */}
+        {descLines > 0 && (
+          <p className={`mt-1 text-[13px] leading-relaxed text-cvr-muted ${
+            descLines === 1 ? "line-clamp-1" : "line-clamp-2 min-h-[2.2rem]"
+          }`}>
             {listingSummary(item)}
           </p>
         )}
@@ -119,9 +128,9 @@ export default function PropertyCard({
           <PinIcon /><span className="line-clamp-1">{item.location}</span>
         </p>
 
-        {/* Đáy: agent (+ thời gian chỉ ở trang list) — tin Nhỏ nhất lược bỏ */}
-        {!isMini && (
-          <div className="mt-2.5 flex items-center gap-2 border-t border-cvr-line pt-2.5">
+        {/* Đáy: thành viên đăng tin — chỉ cấp cao (variant "tier": Diamond/Gold) */}
+        {showAgent && (
+          <div className={`flex items-center gap-2 border-t border-cvr-line pt-2.5 ${isTier ? "mt-auto" : "mt-2.5"}`}>
             <AgentAvatar name={agent.name} size={7} />
             <span className="min-w-0 flex-1 truncate text-xs font-medium text-cvr-body">{agent.name}</span>
             {showTime && <span className="shrink-0 text-[11px] text-cvr-faint">Hôm nay</span>}

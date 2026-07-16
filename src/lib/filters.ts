@@ -1,6 +1,8 @@
 // Tuỳ chọn bộ lọc dùng chung cho Hero, trang danh sách & tìm kiếm.
 // 👉 Thêm/bớt loại hình hoặc mức giá tại đây — toàn bộ bộ lọc tự cập nhật.
 
+import { tierRank } from "./packages";
+
 // ═══════════════════════════════════════════════════════════════════════════
 // LOẠI HÌNH (sản phẩm) PHÂN THEO MỤC ĐÍCH — chuẩn Brief + Kế hoạch V3.
 // Mọi tin do thành viên (người bán/môi giới) đăng, phân theo MỤC ĐÍCH:
@@ -304,7 +306,7 @@ function matchType(itemType: string, option: string): boolean {
 
 type FilterableListing = {
   id: string; title: string; price: string; area: string;
-  beds?: number; location: string; type: string;
+  beds?: number; location: string; type: string; badge?: string;
 };
 
 // Áp dụng toàn bộ bộ lọc lên danh sách
@@ -354,12 +356,18 @@ function pricePerM2(price: string, area: string): number | null {
   return ty == null || !m2 ? null : ty / m2;
 }
 
+// Sắp xếp theo cấp tin (chuẩn Batdongsan/Homedy): Diamond → Gold → Silver → Basic.
+// • "Mới nhất" (mặc định): cấp cao đứng trước, cùng cấp giữ thứ tự nguồn (tin mới trước).
+// • Người dùng chọn sắp xếp khác (giá/diện tích): tôn trọng tiêu chí đã chọn,
+//   chỉ dùng cấp tin để phân định khi ĐỒNG HẠNG — VIP không đè lên lựa chọn người dùng.
 export function sortListings<T extends FilterableListing>(items: T[], sort: SortKey): T[] {
   const s = [...items];
-  if (sort === "gia-tang") s.sort((a, b) => (priceToTy(a.price) ?? 1e9) - (priceToTy(b.price) ?? 1e9));
-  if (sort === "gia-giam") s.sort((a, b) => (priceToTy(b.price) ?? -1) - (priceToTy(a.price) ?? -1));
-  if (sort === "dt-giam") s.sort((a, b) => (areaToM2(b.area) ?? -1) - (areaToM2(a.area) ?? -1));
-  if (sort === "gia-m2") s.sort((a, b) => (pricePerM2(a.price, a.area) ?? 1e9) - (pricePerM2(b.price, b.area) ?? 1e9));
+  const byTier = (a: T, b: T) => tierRank(a.badge) - tierRank(b.badge);
+  if (sort === "moi") s.sort(byTier);
+  if (sort === "gia-tang") s.sort((a, b) => ((priceToTy(a.price) ?? 1e9) - (priceToTy(b.price) ?? 1e9)) || byTier(a, b));
+  if (sort === "gia-giam") s.sort((a, b) => ((priceToTy(b.price) ?? -1) - (priceToTy(a.price) ?? -1)) || byTier(a, b));
+  if (sort === "dt-giam") s.sort((a, b) => ((areaToM2(b.area) ?? -1) - (areaToM2(a.area) ?? -1)) || byTier(a, b));
+  if (sort === "gia-m2") s.sort((a, b) => ((pricePerM2(a.price, a.area) ?? 1e9) - (pricePerM2(b.price, b.area) ?? 1e9)) || byTier(a, b));
   return s;
 }
 

@@ -93,6 +93,14 @@ select option {
   color: #0a0a0a;
 }
 
+/* Ẩn thanh cuộn cho track slider scroll-snap (vẫn cuộn/vuốt bình thường) */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 /* Ken Burns — ảnh hero zoom chậm, sang trọng */
 @keyframes kenburns {
   from { transform: scale(1.06); }

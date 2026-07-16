@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import PropertyCard from "@/components/PropertyCard";
+import ListingSlider from "@/components/ListingSlider";
 import { featuredListings, type Listing } from "@/lib/data";
 import { useRecentlyViewed } from "@/lib/useRecentlyViewed";
 
@@ -22,12 +22,8 @@ export default function RecentlyViewed() {
     <section className="section-edge bg-cvr-surface">
       <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
         <h2 className="text-2xl font-semibold text-cvr-ink">Bất động sản đã xem</h2>
-        <div className="mt-4 flex gap-5 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {items.map((item) => (
-            <div key={item.id} className="w-[80%] shrink-0 sm:w-[calc((100%-1.25rem)/2)] lg:w-[calc((100%-3.75rem)/4)]">
-              <PropertyCard item={item} />
-            </div>
-          ))}
+        <div className="mt-4">
+          <ListingSlider items={items} />
         </div>
       </div>
     </section>
