@@ -27,13 +27,17 @@ function AgentAvatar({ name, size = 6 }: { name: string; size?: number }) {
 }
 
 // ── Card lưới — bố cục giống Homedy (.product-item) ──────────────────────────
+// variant theo KÍCH THƯỚC tin trong bảng "Loại tin và đặc điểm":
+//   "featured" = Rất lớn (Diamond) · "grid" = Lớn/Trung bình (Gold/Silver) · "mini" = Nhỏ nhất (Basic)
 export default function PropertyCard({
   item,
   layout = "grid",
+  variant = "grid",
   showTime = false,
 }: {
   item: Listing;
   layout?: "grid" | "list";
+  variant?: "featured" | "grid" | "mini";
   // Hiện "Hôm nay" (thời gian đăng) — chỉ ở trang list (Mua bán/Cho thuê), KHÔNG ở trang chủ.
   showTime?: boolean;
 }) {
@@ -41,32 +45,36 @@ export default function PropertyCard({
   const agent = getAgent(item.id);
   // Hạng CVR của tin (từ huy hiệu VIP/Nổi bật/Mới). Tin không huy hiệu → tin thường.
   const tier = item.badge ? getTier(tierFromBadge(item.badge)) : null;
+  const isFeatured = variant === "featured";
+  const isMini = variant === "mini";
 
   return (
     <Link
       href={`/bat-dong-san/${item.id}`}
       className="flex flex-col overflow-hidden rounded-none border border-cvr-line bg-white shadow-lux shadow-lux-hover transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1"
+      // Viền màu cấp tin trên đỉnh thẻ (Diamond đỏ · Gold vàng · Silver xanh) — Basic không viền
+      style={tier && tier.id !== "basic" ? { borderTop: `2px solid ${tier.accent}` } : undefined}
     >
-      {/* Ảnh */}
-      <div className="relative aspect-[4/3] overflow-hidden bg-cvr-surface">
+      {/* Ảnh — Diamond khung rộng hơn (rất lớn), còn lại 4/3 */}
+      <div className={`relative overflow-hidden bg-cvr-surface ${isFeatured ? "aspect-[16/10]" : "aspect-[4/3]"}`}>
         <Image
           src={item.image}
           alt={item.title}
           fill
-          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+          sizes={isFeatured ? "(max-width: 640px) 100vw, 50vw" : "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"}
           className="object-cover"
         />
         {tier && (
           <span
-            className="absolute left-2 top-2 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide"
+            className={`absolute left-2 top-2 font-bold uppercase tracking-wide ${isFeatured ? "px-2 py-1 text-[11px]" : "px-1.5 py-0.5 text-[10px]"}`}
             style={{ backgroundColor: tier.accent, color: tier.id === "gold" ? "#1d1d1f" : "#fff" }}
           >
             {tier.short}
           </span>
         )}
         <div className="absolute right-2 top-2 flex flex-col gap-1.5">
-          <SaveButton id={item.id} />
-          <CompareButton id={item.id} />
+          <SaveButton id={item.id} className={isMini ? "h-7 w-7" : undefined} />
+          <CompareButton id={item.id} className={isMini ? "h-7 w-7" : undefined} />
         </div>
         {/* Badge số ảnh kiểu Homedy */}
         <span className="absolute bottom-2 left-2 flex items-center gap-1 bg-black/55 px-1.5 py-0.5 text-[10px] font-medium text-white">
@@ -75,30 +83,34 @@ export default function PropertyCard({
       </div>
 
       {/* Nội dung */}
-      <div className="flex flex-1 flex-col p-3">
+      <div className={`flex flex-1 flex-col ${isFeatured ? "p-4" : isMini ? "p-2.5" : "p-3"}`}>
 
         {/* Tiêu đề — 2 dòng, kiểu chữ theo cấp tin (Diamond/Gold VIẾT HOA + icon HOT) */}
         <h3
-          className={`line-clamp-2 min-h-[2.6rem] text-sm font-semibold leading-snug text-cvr-ink ${tier?.uppercase ? "uppercase" : ""}`}
+          className={`line-clamp-2 font-semibold leading-snug text-cvr-ink ${tier?.uppercase ? "uppercase" : ""} ${
+            isFeatured ? "min-h-[3rem] text-base" : isMini ? "min-h-[2.4rem] text-[13px]" : "min-h-[2.6rem] text-sm"
+          }`}
           style={tier?.titleColor ? { color: tier.titleColor } : undefined}
         >
           {tier?.hot && <HotIcon color={tier.accent} />}
           {item.title}
         </h3>
 
-        {/* Mô tả — 2 dòng */}
-        <p className="mt-1 line-clamp-2 min-h-[2.2rem] text-[13px] leading-relaxed text-cvr-muted">
-          {listingSummary(item)}
-        </p>
+        {/* Mô tả — 2 dòng (tin Nhỏ nhất không có mô tả) */}
+        {!isMini && (
+          <p className="mt-1 line-clamp-2 min-h-[2.2rem] text-[13px] leading-relaxed text-cvr-muted">
+            {listingSummary(item)}
+          </p>
+        )}
 
         {/* Giá — Diện tích (giá trái · diện tích phải, dãn cách giống Homedy) */}
-        <div className="mt-2.5 flex items-baseline justify-between gap-2">
-          <span className={`text-[13px] ${item.price === "Thỏa thuận" ? "text-cvr-muted" : "text-cvr-ink"}`}>
+        <div className={`flex items-baseline justify-between gap-2 ${isMini ? "mt-1.5" : "mt-2.5"}`}>
+          <span className={`${isFeatured ? "text-sm font-semibold" : "text-[13px]"} ${item.price === "Thỏa thuận" ? "text-cvr-muted" : "text-cvr-ink"}`}>
             {item.price}
           </span>
-          <span className="flex items-baseline gap-2 text-[13px] text-cvr-body">
+          <span className={`flex items-baseline gap-2 text-cvr-body ${isFeatured ? "text-sm" : "text-[13px]"}`}>
             <span>{item.area}</span>
-            {item.pricePerM2 && <span className="text-xs text-cvr-muted">{item.pricePerM2}</span>}
+            {!isMini && item.pricePerM2 && <span className="text-xs text-cvr-muted">{item.pricePerM2}</span>}
           </span>
         </div>
 
@@ -107,12 +119,14 @@ export default function PropertyCard({
           <PinIcon /><span className="line-clamp-1">{item.location}</span>
         </p>
 
-        {/* Đáy: agent (+ thời gian chỉ ở trang list) */}
-        <div className="mt-2.5 flex items-center gap-2 border-t border-cvr-line pt-2.5">
-          <AgentAvatar name={agent.name} size={7} />
-          <span className="min-w-0 flex-1 truncate text-xs font-medium text-cvr-body">{agent.name}</span>
-          {showTime && <span className="shrink-0 text-[11px] text-cvr-faint">Hôm nay</span>}
-        </div>
+        {/* Đáy: agent (+ thời gian chỉ ở trang list) — tin Nhỏ nhất lược bỏ */}
+        {!isMini && (
+          <div className="mt-2.5 flex items-center gap-2 border-t border-cvr-line pt-2.5">
+            <AgentAvatar name={agent.name} size={7} />
+            <span className="min-w-0 flex-1 truncate text-xs font-medium text-cvr-body">{agent.name}</span>
+            {showTime && <span className="shrink-0 text-[11px] text-cvr-faint">Hôm nay</span>}
+          </div>
+        )}
 
       </div>
     </Link>

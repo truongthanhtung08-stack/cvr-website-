@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import PropertyCard from "@/components/PropertyCard";
 import { featuredListings, type Listing } from "@/lib/data";
-import { tierRank } from "@/lib/packages";
+import { tierFromBadge, type TierId } from "@/lib/packages";
 
 // ── Tab nhanh: kết hợp MỤC ĐÍCH (bán/thuê) × LOẠI SẢN PHẨM ────────────────────
 const isBan = (l: Listing) => (l.purpose ?? "ban") === "ban";
@@ -17,39 +17,30 @@ const typeTabs: TypeTab[] = [
   { label: "Cho thuê",      match: (l) => (l.purpose ?? "ban") === "thue" },
 ];
 
-const PER_SLIDE = 8;  // 2 hàng × 4 cột mỗi slide
-const MAX_SLIDES = 2; // trang chủ chỉ hiện đúng 2 slide (tối đa 16 tin)
+// ── 4 tầng hiển thị theo bảng "Loại tin và đặc điểm" (Gía đăng tin + QC) ──────
+// Thứ hạng 1→4 · Kích thước: Rất lớn → Lớn → Trung bình → Nhỏ nhất
+const TIER_ROWS: {
+  tier: TierId;
+  max: number;
+  cols: string;
+  variant: "featured" | "grid" | "mini";
+}[] = [
+  { tier: "diamond", max: 2, cols: "grid-cols-1 sm:grid-cols-2",                 variant: "featured" }, // Rất lớn
+  { tier: "gold",    max: 3, cols: "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3",  variant: "grid" },     // Lớn
+  { tier: "silver",  max: 4, cols: "grid-cols-2 lg:grid-cols-4",                 variant: "grid" },     // Trung bình
+  { tier: "basic",   max: 4, cols: "grid-cols-2 lg:grid-cols-4",                 variant: "mini" },     // Nhỏ nhất
+];
 
 export default function FeaturedListings() {
   const [activeTab, setActiveTab] = useState("Tất cả");
-  const [slide, setSlide]         = useState(0);
-  const trackRef                  = useRef<HTMLDivElement>(null);
 
-  // Lọc + sắp xếp theo CẤP TIN: Diamond → Gold → Silver → Basic
-  // (theo bảng "Gói đăng tin": tin cấp cao đứng trên, tin thường nằm dưới)
+  // Lọc theo tab rồi chia 4 tầng theo cấp tin (Diamond → Gold → Silver → Basic)
   const activeMatch = typeTabs.find((t) => t.label === activeTab)?.match ?? (() => true);
-  const sorted = [...featuredListings]
-    .filter((l) => activeMatch(l))
-    .sort((a, b) => tierRank(a.badge) - tierRank(b.badge));
-
-  // Chỉ lấy tối đa 16 tin (2 slide × 8), chia thành các slide 8 tin
-  const capped = sorted.slice(0, PER_SLIDE * MAX_SLIDES);
-  const slides: typeof sorted[] = [];
-  for (let i = 0; i < capped.length; i += PER_SLIDE) {
-    slides.push(capped.slice(i, i + PER_SLIDE));
-  }
-  const totalSlides = Math.max(slides.length, 1);
-  const currentSlide = Math.min(slide, totalSlides - 1);
-  const visibleItems = slides[currentSlide] ?? [];
-
-  function goTo(idx: number) {
-    setSlide(Math.max(0, Math.min(idx, totalSlides - 1)));
-  }
-
-  function handleTabChange(label: string) {
-    setActiveTab(label);
-    setSlide(0);
-  }
+  const filtered = featuredListings.filter((l) => activeMatch(l));
+  const rows = TIER_ROWS.map((r) => ({
+    ...r,
+    items: filtered.filter((l) => tierFromBadge(l.badge) === r.tier).slice(0, r.max),
+  })).filter((r) => r.items.length > 0);
 
   return (
     <section className="section-edge bg-white">
@@ -66,7 +57,7 @@ export default function FeaturedListings() {
             <button
               key={t.label}
               type="button"
-              onClick={() => handleTabChange(t.label)}
+              onClick={() => setActiveTab(t.label)}
               className={`rounded-full px-4 py-1.5 text-sm font-medium transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
                 activeTab === t.label
                   ? "scale-105 bg-cvr-ink text-white shadow-lg shadow-black/10"
@@ -78,63 +69,23 @@ export default function FeaturedListings() {
           ))}
         </div>
 
-        {/* Lưới tin */}
-        {visibleItems.length > 0 ? (
+        {/* 4 tầng tin theo cấp — kích thước giảm dần đúng bảng đặc điểm */}
+        {rows.length > 0 ? (
           <>
-            <div
-              ref={trackRef}
-              className="cards-stagger mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4"
-            >
-              {visibleItems.map((item) => (
-                <PropertyCard key={item.id} item={item} />
+            <div className="mt-5 space-y-5">
+              {rows.map((r) => (
+                <div key={r.tier} className={`cards-stagger grid gap-5 ${r.cols}`}>
+                  {r.items.map((item) => (
+                    <PropertyCard key={item.id} item={item} variant={r.variant} />
+                  ))}
+                </div>
               ))}
             </div>
 
-            {/* Hàng cuối: nút chuyển slide (giữa) — "Xem tất cả" (phải), cùng 1 hàng */}
-            <div className="mt-5 grid grid-cols-3 items-center">
-              <span aria-hidden /> {/* spacer trái để nav nằm chính giữa */}
-
-              {totalSlides > 1 ? (
-                <div className="flex items-center justify-center gap-4">
-                  <button
-                    type="button"
-                    onClick={() => goTo(currentSlide - 1)}
-                    disabled={currentSlide === 0}
-                    aria-label="Slide trước"
-                    className="flex h-9 w-9 items-center justify-center rounded-full border border-cvr-line bg-white text-cvr-body shadow-sm transition hover:border-cvr-ink hover:text-cvr-ink disabled:cursor-not-allowed disabled:opacity-30"
-                  >
-                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-                  </button>
-                  <div className="flex gap-2">
-                    {Array.from({ length: totalSlides }).map((_, i) => (
-                      <button
-                        key={i}
-                        type="button"
-                        onClick={() => goTo(i)}
-                        aria-label={`Slide ${i + 1}`}
-                        className={`h-2 rounded-full transition-all duration-300 ${i === currentSlide ? "w-6 bg-cvr-ink" : "w-2 bg-cvr-line hover:bg-cvr-muted"}`}
-                      />
-                    ))}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => goTo(currentSlide + 1)}
-                    disabled={currentSlide === totalSlides - 1}
-                    aria-label="Slide tiếp"
-                    className="flex h-9 w-9 items-center justify-center rounded-full border border-cvr-line bg-white text-cvr-body shadow-sm transition hover:border-cvr-ink hover:text-cvr-ink disabled:cursor-not-allowed disabled:opacity-30"
-                  >
-                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-                  </button>
-                </div>
-              ) : (
-                <span aria-hidden />
-              )}
-
-              <div className="flex justify-end">
-                <Link href="/mua-ban" className="text-sm font-medium text-cvr-muted transition-colors hover:text-cvr-ink">
-                  Xem tất cả →
-                </Link>
-              </div>
+            <div className="mt-6 flex justify-end">
+              <Link href="/mua-ban" className="text-sm font-medium text-cvr-muted transition-colors hover:text-cvr-ink">
+                Xem tất cả →
+              </Link>
             </div>
           </>
         ) : (
