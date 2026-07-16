@@ -4,12 +4,7 @@ import { useState, useRef } from "react";
 import Link from "next/link";
 import PropertyCard from "@/components/PropertyCard";
 import { featuredListings, type Listing } from "@/lib/data";
-
-// ── Thứ tự ưu tiên badge ──────────────────────────────────────────────────────
-const BADGE_RANK: Record<string, number> = { VIP: 0, "Nổi bật": 1, Mới: 2 };
-function badgeScore(badge?: string) {
-  return badge !== undefined ? (BADGE_RANK[badge] ?? 3) : 99;
-}
+import { tierRank } from "@/lib/packages";
 
 // ── Tab nhanh: kết hợp MỤC ĐÍCH (bán/thuê) × LOẠI SẢN PHẨM ────────────────────
 const isBan = (l: Listing) => (l.purpose ?? "ban") === "ban";
@@ -30,11 +25,12 @@ export default function FeaturedListings() {
   const [slide, setSlide]         = useState(0);
   const trackRef                  = useRef<HTMLDivElement>(null);
 
-  // Lọc + sắp xếp VIP trước, mới nhất sau
+  // Lọc + sắp xếp theo CẤP TIN: Diamond → Gold → Silver → Basic
+  // (theo bảng "Gói đăng tin": tin cấp cao đứng trên, tin thường nằm dưới)
   const activeMatch = typeTabs.find((t) => t.label === activeTab)?.match ?? (() => true);
   const sorted = [...featuredListings]
     .filter((l) => activeMatch(l))
-    .sort((a, b) => badgeScore(a.badge) - badgeScore(b.badge));
+    .sort((a, b) => tierRank(a.badge) - tierRank(b.badge));
 
   // Chỉ lấy tối đa 16 tin (2 slide × 8), chia thành các slide 8 tin
   const capped = sorted.slice(0, PER_SLIDE * MAX_SLIDES);

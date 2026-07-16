@@ -58,8 +58,8 @@ export default function PropertyCard({
         />
         {tier && (
           <span
-            className="absolute left-2 top-2 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-cvr-ink"
-            style={{ backgroundColor: tier.accent }}
+            className="absolute left-2 top-2 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide"
+            style={{ backgroundColor: tier.accent, color: tier.id === "gold" ? "#1d1d1f" : "#fff" }}
           >
             {tier.short}
           </span>
@@ -77,11 +77,12 @@ export default function PropertyCard({
       {/* Nội dung */}
       <div className="flex flex-1 flex-col p-3">
 
-        {/* Tiêu đề — 2 dòng (màu theo hạng) */}
+        {/* Tiêu đề — 2 dòng, kiểu chữ theo cấp tin (Diamond/Gold VIẾT HOA + icon HOT) */}
         <h3
-          className="line-clamp-2 min-h-[2.6rem] text-sm font-semibold uppercase leading-snug text-cvr-ink"
+          className={`line-clamp-2 min-h-[2.6rem] text-sm font-semibold leading-snug text-cvr-ink ${tier?.uppercase ? "uppercase" : ""}`}
           style={tier?.titleColor ? { color: tier.titleColor } : undefined}
         >
+          {tier?.hot && <HotIcon color={tier.accent} />}
           {item.title}
         </h3>
 
@@ -131,8 +132,8 @@ function PropertyRow({ item, showTime = false }: { item: Listing; showTime?: boo
         <Image src={item.image} alt={item.title} fill sizes="192px" className="object-cover" />
         {tier && (
           <span
-            className="absolute left-2 top-2 px-1.5 py-0.5 text-[10px] font-bold uppercase text-cvr-ink"
-            style={{ backgroundColor: tier.accent }}
+            className="absolute left-2 top-2 px-1.5 py-0.5 text-[10px] font-bold uppercase"
+            style={{ backgroundColor: tier.accent, color: tier.id === "gold" ? "#1d1d1f" : "#fff" }}
           >{tier.short}</span>
         )}
         <div className="absolute right-2 top-2 flex flex-col gap-1.5">
@@ -145,9 +146,12 @@ function PropertyRow({ item, showTime = false }: { item: Listing; showTime?: boo
       </div>
       <div className="flex min-w-0 flex-1 flex-col">
         <h3
-          className="line-clamp-2 text-base font-semibold uppercase leading-snug text-cvr-ink"
+          className={`line-clamp-2 text-base font-semibold leading-snug text-cvr-ink ${tier?.uppercase ? "uppercase" : ""}`}
           style={tier?.titleColor ? { color: tier.titleColor } : undefined}
-        >{item.title}</h3>
+        >
+          {tier?.hot && <HotIcon color={tier.accent} />}
+          {item.title}
+        </h3>
         <p className="mt-1 line-clamp-2 text-sm leading-relaxed text-cvr-muted">{listingSummary(item)}</p>
         <div className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <span className={`text-sm ${item.price === "Thỏa thuận" ? "text-cvr-muted" : "text-cvr-ink"}`}>{item.price}</span>
@@ -163,6 +167,21 @@ function PropertyRow({ item, showTime = false }: { item: Listing; showTime?: boo
         </div>
       </div>
     </Link>
+  );
+}
+
+// Icon HOT (ngọn lửa) cạnh tiêu đề tin VIP — màu theo cấp (đỏ/vàng/xanh).
+function HotIcon({ color }: { color: string }) {
+  return (
+    <svg
+      className="mb-0.5 mr-1 inline-block h-3.5 w-3.5 align-middle"
+      style={{ color }}
+      fill="currentColor"
+      viewBox="0 0 24 24"
+      aria-label="Tin nổi bật"
+    >
+      <path d="M13.5 0.67s0.74 2.65 0.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l0.03-0.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5 0.67zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-0.36 3.6-1.21 4.62-2.58 0.39 1.29 0.59 2.65 0.59 4.04 0 2.65-2.15 4.8-4.8 4.8z" />
+    </svg>
   );
 }
 

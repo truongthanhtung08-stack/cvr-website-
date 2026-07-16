@@ -89,16 +89,13 @@ export default async function PackagePage({ params }: { params: Promise<{ slug: 
             <p className="mt-3 text-base leading-relaxed text-cvr-muted">{p.description}</p>
           </header>
 
-          {/* Bảng giá 3 hạng CVR — PLACEHOLDER */}
+          {/* Bảng giá 4 cấp tin CVR — số liệu thật từ bảng "Gói đăng tin + QC" */}
           <section className="mt-12">
             <div className="mb-5 flex flex-wrap items-end justify-between gap-2">
-              <h2 className="text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">Bảng giá theo hạng</h2>
-              <span className="rounded-full bg-cvr-surface px-3 py-1 text-xs font-medium text-cvr-muted ring-1 ring-inset ring-cvr-line">
-                Bảng giá đang được cập nhật
-              </span>
+              <h2 className="text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">Bảng giá theo cấp tin</h2>
             </div>
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {tiers.map((t) => (
                 <div
                   key={t.id}
@@ -127,8 +124,7 @@ export default async function PackagePage({ params }: { params: Promise<{ slug: 
                   <div className="p-5">
                     <a
                       href="#lien-he"
-                      className="block rounded-lg py-2.5 text-center text-sm font-semibold text-cvr-ink transition hover:opacity-90"
-                      style={{ backgroundColor: t.accent }}
+                      className="block rounded-lg bg-cvr-ink py-2.5 text-center text-sm font-semibold text-white transition hover:bg-cvr-ink/90"
                     >
                       Nhận tư vấn {t.name}
                     </a>
@@ -138,7 +134,7 @@ export default async function PackagePage({ params }: { params: Promise<{ slug: 
             </div>
 
             <p className="mt-4 text-xs text-cvr-faint">
-              * Giá &amp; quyền lợi sẽ được cập nhật chính thức. Liên hệ Coastal Land để nhận bảng giá mới nhất.
+              * Tin VIP được ưu tiên kiểm duyệt và hiển thị sớm. Giá đã gồm ưu đãi theo thời hạn gói — liên hệ Coastal Land để được tư vấn cấp tin phù hợp.
             </p>
           </section>
 
