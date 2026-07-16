@@ -58,11 +58,11 @@ const danhMucChuyenGia: NavChild[] = [
   { label: "Trở thành chuyên gia", href: "/chuyen-gia/dang-ky" },
 ];
 
-// Menu Tiện ích — các gói dịch vụ (lấy từ packages.ts để không lặp dữ liệu)
-const danhMucTienIch: NavChild[] = packages.map((p) => ({
-  label: p.label,
-  href: `/tien-ich/${p.slug}`,
-}));
+// Menu Tiện ích — trang báo giá tổng + các gói dịch vụ (lấy từ packages.ts để không lặp dữ liệu)
+const danhMucTienIch: NavChild[] = [
+  { label: "Báo giá Dịch vụ và Truyền thông", href: "/bao-gia-dang-tin" },
+  ...packages.map((p) => ({ label: p.label, href: `/tien-ich/${p.slug}` })),
+];
 
 // Thứ tự menu: Dự án · Mua bán · Cho thuê · Tin tức · Chuyên gia · Tiện ích
 const navItems: NavItem[] = [
