@@ -26,7 +26,7 @@ const columns = [
     title: "Hỗ trợ khách hàng",
     links: [
       { label: "Hướng dẫn đăng tin", href: "/huong-dan" },
-      { label: "Bảng giá dịch vụ", href: "/bang-gia" },
+      { label: "Báo giá dịch vụ", href: "/bao-gia-dang-tin" },
       { label: "Câu hỏi thường gặp", href: "/faq" },
       { label: "Quy định đăng tin", href: "/quy-dinh" },
       { label: "Góp ý, báo lỗi", href: "/gop-y" },
