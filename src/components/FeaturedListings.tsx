@@ -96,7 +96,8 @@ export default function FeaturedListings() {
               >
                 {slides.map((items, i) => (
                   <div key={i} className="w-full shrink-0 snap-start">
-                    <div className="cards-stagger grid grid-cols-2 gap-5 lg:grid-cols-4">
+                    {/* Mobile 1 tin/hàng (thẻ đủ rộng để đọc) · tablet 2 · desktop 4 */}
+                  <div className="cards-stagger grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
                       {items.map((item) => (
                         <PropertyCard key={item.id} item={item} variant="tier" />
                       ))}
