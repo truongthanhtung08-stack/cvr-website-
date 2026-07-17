@@ -57,9 +57,9 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  // Tin MỚI → tự điền sẵn liên hệ từ hồ sơ admin (SĐT người đăng không bị bỏ trống).
+  // Tự điền liên hệ từ hồ sơ người đăng NẾU tin chưa có (áp cả tin mới lẫn tin cũ
+  // chưa nhập SĐT) — "coi bạn là thành viên, lấy số của bạn". Đã nhập rồi thì giữ nguyên.
   useEffect(() => {
-    if (editing) return;
     const supabase = createClient();
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -71,7 +71,7 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
         setCEmail((v) => v || p.email || "");
       }
     })();
-  }, [editing]);
+  }, []);
 
   const typeGroups = purpose === "thue" ? rentTypeGroups : saleTypeGroups;
   const specFields = type ? specForType(type).fields : [];
