@@ -11,6 +11,19 @@
 import type { Listing } from "@/lib/data";
 import { featuredListings, getListingById } from "@/lib/data";
 import { asset } from "@/lib/asset";
+import { specForType, amenityGroups } from "@/lib/listingSpec";
+
+// Thuộc tính linh hoạt lưu trong cột details (JSONB) — xem 0006_listing_details.sql
+export type ListingDetailsJson = {
+  specs?: Record<string, string>;
+  interior?: string[];
+  amenities?: string[];
+  legal?: string;
+  furnish?: string;
+  direction?: string;
+  addressDetail?: string;
+  contact?: { name?: string; phone?: string; email?: string };
+};
 
 // Hàng trong bảng `listings` (xem supabase/migrations/0002_listings.sql)
 type Row = {
@@ -21,6 +34,7 @@ type Row = {
   description: string | null;
   price_vnd: number | null;
   area_m2: number | null;
+  built_area_m2: number | null;
   beds: number | null;
   baths: number | null;
   ward: string | null;
@@ -28,6 +42,7 @@ type Row = {
   province: string;
   images: string[];
   tier: "diamond" | "gold" | "silver" | "basic";
+  details: ListingDetailsJson | null;
   created_at: string;
 };
 
@@ -77,8 +92,12 @@ function rowToListing(r: Row): Listing {
   };
 }
 
+// Cột cơ bản (thẻ tin & danh sách) — KHÔNG gồm details để danh sách vẫn chạy
+// kể cả khi cột details chưa được tạo (migration 0006 chưa chạy).
 const COLS =
-  "id,purpose,type,title,description,price_vnd,area_m2,beds,baths,ward,district,province,images,tier,created_at";
+  "id,purpose,type,title,description,price_vnd,area_m2,built_area_m2,beds,baths,ward,district,province,images,tier,created_at";
+// Trang chi tiết cần thêm details (thuộc tính thật)
+const COLS_DETAIL = `${COLS},details`;
 
 // Gọi PostgREST trực tiếp bằng fetch để dùng cache Next (revalidate) —
 // KHÔNG dùng client cookies ở đây vì tin đã duyệt là dữ liệu công khai.
@@ -110,4 +129,83 @@ export async function getListing(id: string): Promise<Listing | null> {
   const rows = await rest(`select=${COLS}&id=eq.${encodeURIComponent(id)}&limit=1`);
   if (!rows || rows.length === 0) return getListingById(id) ?? null;
   return rowToListing(rows[0]);
+}
+
+// ── CHI TIẾT ĐẦY ĐỦ cho trang /bat-dong-san/[id] — DỮ LIỆU THẬT ─────────────
+// Trả đúng những gì Admin đã nhập: TẤT CẢ ảnh, mô tả, đặc điểm, nội thất, tiện
+// ích, pháp lý, người đăng. Phần trống → null/[] để trang ghi "Chưa cập nhật"
+// (KHÔNG bịa như buildListingDetail cũ).
+export type ListingSpecRow = { label: string; value: string };
+export type ListingFull = {
+  listing: Listing;            // giá/diện tích/vị trí/hạng… (thẻ dùng chung)
+  images: string[];            // toàn bộ ảnh thật (đúng số lượng)
+  builtArea: string | null;    // diện tích xây dựng
+  descriptionParas: string[];  // mô tả (tách theo dòng)
+  specs: ListingSpecRow[];     // đặc điểm đã nhập (bỏ mục trống)
+  interior: string[];          // nội thất có sẵn
+  amenityGroups: { group: string; items: { name: string; active: boolean }[] }[];
+  legal: string | null;
+  furnish: string | null;
+  direction: string | null;
+  addressDetail: string | null;
+  contact: { name: string; phone: string; email: string } | null;
+  mapQuery: string;            // chuỗi địa chỉ để nhúng bản đồ
+};
+
+function rowToDetail(r: Row): ListingFull {
+  const d = r.details ?? {};
+  const imgs = r.images.length ? r.images : [PLACEHOLDER_IMAGE];
+  const specDefs = specForType(r.type).fields;
+  const specs = specDefs
+    .map((f) => ({ label: f.label + (f.unit ? ` (${f.unit})` : ""), value: (d.specs?.[f.key] ?? "").trim() }))
+    .filter((s) => s.value);
+  const amenSet = new Set(d.amenities ?? []);
+  const c = d.contact;
+  return {
+    listing: rowToListing(r),
+    images: imgs.map(asset),
+    builtArea: r.built_area_m2 != null ? `${fmtNum(r.built_area_m2, 0)} m²` : null,
+    descriptionParas: (r.description ?? "").split("\n").map((s) => s.trim()).filter(Boolean),
+    specs,
+    interior: d.interior ?? [],
+    amenityGroups: amenityGroups.map((g) => ({
+      group: g.group,
+      items: g.items.map((name) => ({ name, active: amenSet.has(name) })),
+    })),
+    legal: d.legal || null,
+    furnish: d.furnish || null,
+    direction: d.direction || null,
+    addressDetail: d.addressDetail || null,
+    contact: c && (c.name || c.phone) ? { name: c.name ?? "", phone: c.phone ?? "", email: c.email ?? "" } : null,
+    mapQuery: [r.ward, r.district, r.province].filter(Boolean).join(", "),
+  };
+}
+
+// Fallback khi DB chưa sẵn (worktree/CI) — dựng chi tiết tối giản từ dữ liệu mẫu.
+function mockToDetail(m: Listing): ListingFull {
+  return {
+    listing: m,
+    images: [m.image],
+    builtArea: null,
+    descriptionParas: [],
+    specs: [],
+    interior: [],
+    amenityGroups: amenityGroups.map((g) => ({ group: g.group, items: g.items.map((name) => ({ name, active: false })) })),
+    legal: null, furnish: null, direction: null, addressDetail: null, contact: null,
+    mapQuery: m.location,
+  };
+}
+
+export async function getListingDetail(id: string): Promise<ListingFull | null> {
+  const q = `&id=eq.${encodeURIComponent(id)}&limit=1`;
+  // Ưu tiên query CÓ details; nếu lỗi (cột details chưa tạo) → query cơ bản,
+  // tin vẫn hiển thị (đặc điểm để trống) thay vì 404.
+  let rows = await rest(`select=${COLS_DETAIL}${q}`);
+  if (!rows) rows = await rest(`select=${COLS}${q}`);
+  if (!rows) {
+    const m = getListingById(id); // DB hoàn toàn không sẵn → dữ liệu mẫu
+    return m ? mockToDetail(m) : null;
+  }
+  if (rows.length === 0) return null;
+  return rowToDetail(rows[0]);
 }

@@ -2,8 +2,20 @@
 // Hàng thô của bảng `listings` (supabase/migrations/0002_listings.sql).
 
 export type ListingTier = "diamond" | "gold" | "silver" | "basic";
-export type ListingStatus = "pending" | "approved" | "rejected" | "hidden" | "expired";
+export type ListingStatus = "draft" | "pending" | "approved" | "rejected" | "hidden" | "expired";
 export type ListingPurpose = "ban" | "thue";
+
+// Thuộc tính linh hoạt lưu trong cột details (JSONB) — xem 0006_listing_details.sql
+export type ListingDetails = {
+  specs?: Record<string, string>;   // đặc điểm theo loại hình (key listingSpec)
+  interior?: string[];              // nội thất có sẵn
+  amenities?: string[];             // tiện ích
+  legal?: string;                   // pháp lý
+  furnish?: string;                 // mức nội thất
+  direction?: string;               // hướng
+  addressDetail?: string;           // địa chỉ cụ thể
+  contact?: { name?: string; phone?: string; email?: string }; // người đăng
+};
 
 export type ListingRow = {
   id: string;
@@ -13,7 +25,8 @@ export type ListingRow = {
   title: string;
   description: string | null;
   price_vnd: number | null;
-  area_m2: number | null;
+  area_m2: number | null;        // diện tích đất
+  built_area_m2: number | null;  // diện tích xây dựng
   beds: number | null;
   baths: number | null;
   ward: string | null;
@@ -22,6 +35,7 @@ export type ListingRow = {
   lat: number | null;
   lng: number | null;
   images: string[];
+  details: ListingDetails | null;
   tier: ListingTier;
   tier_expires_at: string | null;
   status: ListingStatus;
@@ -57,6 +71,7 @@ export function tierBadge(t: ListingTier) {
 
 export function listingStatusLabel(s: ListingStatus): string {
   return {
+    draft: "Nháp",
     pending: "Chờ duyệt",
     approved: "Đang đăng",
     rejected: "Từ chối",
@@ -67,6 +82,7 @@ export function listingStatusLabel(s: ListingStatus): string {
 
 export function listingStatusBadge(s: ListingStatus) {
   const cls = {
+    draft: "bg-slate-100 text-slate-600 ring-slate-500/20",
     pending: "bg-amber-50 text-amber-700 ring-amber-600/20",
     approved: "bg-green-50 text-green-700 ring-green-600/20",
     rejected: "bg-red-50 text-red-700 ring-red-600/20",

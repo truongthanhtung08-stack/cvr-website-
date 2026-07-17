@@ -1,24 +1,112 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
+import {
+  type ListingRow,
+  type ListingStatus,
+  purposeLabel,
+  listingStatusBadge,
+  adminPriceText,
+} from "@/lib/listingAdmin";
 
-// Danh sách tin của thành viên — hiển thị thật khi có bảng listings (B2).
+// Tin đăng của THÀNH VIÊN — tin của chính mình (mọi trạng thái, kể cả nháp).
+// RLS đảm bảo chỉ thấy tin owner_id = mình.
 export default function MyListingsPage() {
-  return (
-    <div className="rounded-2xl border border-cvr-line bg-white p-8 text-center shadow-sm">
-      <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-cvr-surface">
-        <svg className="h-6 w-6 text-cvr-muted" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 4H7a2 2 0 01-2-2V6a2 2 0 012-2h7l5 5v11a2 2 0 01-2 2z" />
-        </svg>
+  const [rows, setRows] = useState<ListingRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState<"all" | ListingStatus>("all");
+
+  useEffect(() => {
+    const supabase = createClient();
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { setLoading(false); return; }
+      const { data } = await supabase
+        .from("listings")
+        .select("*")
+        .eq("owner_id", user.id)
+        .order("created_at", { ascending: false });
+      setRows((data ?? []) as ListingRow[]);
+      setLoading(false);
+    })();
+  }, []);
+
+  const filtered = tab === "all" ? rows : rows.filter((r) => r.status === tab);
+  const count = (s: ListingStatus) => rows.filter((r) => r.status === s).length;
+
+  if (loading) return <p className="text-sm text-cvr-muted">Đang tải…</p>;
+
+  if (rows.length === 0) {
+    return (
+      <div className="rounded-2xl border border-cvr-line bg-white p-8 text-center shadow-sm">
+        <h2 className="text-lg font-semibold tracking-tight text-cvr-ink">Chưa có tin đăng</h2>
+        <p className="mx-auto mt-1.5 max-w-md text-sm leading-relaxed text-cvr-muted">
+          Đăng tin đầu tiên của bạn — có thể lưu nháp và hoàn thiện dần.
+        </p>
+        <Link href="/dang-tin" className="mt-4 inline-block rounded-lg bg-cvr-ink px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-cvr-ink/90">
+          + Đăng tin mới
+        </Link>
       </div>
-      <h2 className="mt-3 text-lg font-semibold tracking-tight text-cvr-ink">Chưa có tin đăng</h2>
-      <p className="mx-auto mt-1.5 max-w-md text-sm leading-relaxed text-cvr-muted">
-        Hệ thống đăng tin trực tuyến đang hoàn thiện. Khi hoạt động, tin của bạn sẽ hiển thị tại đây
-        kèm trạng thái duyệt, lượt xem và lượt liên hệ.
-      </p>
-      <Link href="/dang-tin" className="mt-4 inline-block rounded-lg bg-cvr-ink px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-cvr-ink/90">
-        + Đăng tin mới
-      </Link>
+    );
+  }
+
+  const tabs: { key: "all" | ListingStatus; label: string }[] = [
+    { key: "all", label: `Tất cả (${rows.length})` },
+    { key: "approved", label: `Đang đăng (${count("approved")})` },
+    { key: "pending", label: `Chờ duyệt (${count("pending")})` },
+    { key: "draft", label: `Nháp (${count("draft")})` },
+  ];
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap gap-2">
+          {tabs.map((t) => (
+            <button
+              key={t.key}
+              type="button"
+              onClick={() => setTab(t.key)}
+              className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition ${
+                tab === t.key ? "bg-cvr-ink text-white" : "border border-cvr-line text-cvr-body hover:border-cvr-ink hover:text-cvr-ink"
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+        <Link href="/dang-tin" className="rounded-lg bg-cvr-ink px-4 py-2 text-sm font-semibold text-white transition hover:bg-cvr-ink/90">
+          + Đăng tin mới
+        </Link>
+      </div>
+
+      <div className="space-y-3">
+        {filtered.map((r) => (
+          <div key={r.id} className="flex items-center gap-4 rounded-2xl border border-cvr-line bg-white p-4 shadow-sm">
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="truncate font-medium text-cvr-ink">{r.title || "(chưa có tiêu đề)"}</span>
+                {listingStatusBadge(r.status)}
+              </div>
+              <div className="mt-1 truncate text-sm text-cvr-muted">
+                {purposeLabel(r.purpose)}{r.type ? ` · ${r.type}` : ""} · {adminPriceText(r.price_vnd, r.purpose)}
+                {r.area_m2 != null ? ` · ${r.area_m2} m²` : ""}
+                {r.province ? ` · ${r.province}` : ""}
+              </div>
+            </div>
+            <div className="flex shrink-0 items-center gap-3">
+              {r.status === "approved" && (
+                <Link href={`/bat-dong-san/${r.id}`} target="_blank" className="text-sm font-medium text-cvr-muted hover:text-cvr-ink">Xem ↗</Link>
+              )}
+              <span className="text-xs text-cvr-faint">{r.view_count} lượt xem</span>
+            </div>
+          </div>
+        ))}
+        {filtered.length === 0 && (
+          <p className="py-8 text-center text-sm text-cvr-muted">Không có tin nào ở mục này.</p>
+        )}
+      </div>
     </div>
   );
 }

@@ -51,6 +51,7 @@ export default function AdminListingsPage() {
   }, [rows, q, purpose, tier, status]);
 
   const pendingCount = rows.filter((r) => r.status === "pending").length;
+  const draftCount = rows.filter((r) => r.status === "draft").length;
 
   // Thao tác nhanh: đổi trạng thái 1 tin (Duyệt / Ẩn / Hiện lại)
   async function setRowStatus(id: string, next: ListingStatus) {
@@ -85,7 +86,7 @@ export default function AdminListingsPage() {
           <p className="mt-1 text-sm text-cvr-muted">
             {loading
               ? "Đang tải…"
-              : `${filtered.length} / ${rows.length} tin${pendingCount ? ` · ${pendingCount} tin chờ duyệt` : ""}`}
+              : `${filtered.length} / ${rows.length} tin${pendingCount ? ` · ${pendingCount} chờ duyệt` : ""}${draftCount ? ` · ${draftCount} nháp` : ""}`}
           </p>
         </div>
         <Link
@@ -118,6 +119,7 @@ export default function AdminListingsPage() {
         </select>
         <select value={status} onChange={(e) => setStatus(e.target.value as typeof status)} className={selCls}>
           <option value="all">Tất cả trạng thái</option>
+          <option value="draft">Nháp</option>
           <option value="pending">Chờ duyệt</option>
           <option value="approved">Đang đăng</option>
           <option value="hidden">Đã ẩn</option>
@@ -212,6 +214,11 @@ function RowActions({
 }) {
   return (
     <span className="inline-flex items-center gap-3">
+      {row.status === "draft" && (
+        <button type="button" onClick={() => onStatus(row.id, "approved")} className="text-sm font-medium text-green-700 hover:text-green-800">
+          Đăng
+        </button>
+      )}
       {row.status === "pending" && (
         <button type="button" onClick={() => onStatus(row.id, "approved")} className="text-sm font-medium text-green-700 hover:text-green-800">
           Duyệt

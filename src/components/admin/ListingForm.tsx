@@ -4,6 +4,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { saleTypeGroups, rentTypeGroups } from "@/lib/filters";
+import { provinceNames, districtsOf, wardsOf } from "@/lib/locations";
+import { specForType, interiorItems, amenityGroups, legalOptions, furnishLevels, directions } from "@/lib/listingSpec";
+import ImagePicker from "@/components/admin/ImagePicker";
 import {
   type ListingRow,
   type ListingPurpose,
@@ -30,19 +33,39 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
       : String(initial.price_vnd / 1e9);
   });
   const [area, setArea] = useState(initial?.area_m2 != null ? String(initial.area_m2) : "");
+  const [builtArea, setBuiltArea] = useState(initial?.built_area_m2 != null ? String(initial.built_area_m2) : "");
   const [beds, setBeds] = useState(initial?.beds != null ? String(initial.beds) : "");
   const [baths, setBaths] = useState(initial?.baths != null ? String(initial.baths) : "");
   const [ward, setWard] = useState(initial?.ward ?? "");
   const [district, setDistrict] = useState(initial?.district ?? "");
   const [province, setProvince] = useState(initial?.province ?? "");
-  const [images, setImages] = useState((initial?.images ?? []).join("\n"));
+  const [images, setImages] = useState<string[]>(initial?.images ?? []);
   const [tier, setTier] = useState<ListingTier>(initial?.tier ?? "basic");
-  const [status, setStatus] = useState<ListingStatus>(initial?.status ?? "approved");
+
+  // Thuộc tính chi tiết (lưu vào cột details JSONB) — nhập gì web hiện nấy
+  const [addressDetail, setAddressDetail] = useState(initial?.details?.addressDetail ?? "");
+  const [specValues, setSpecValues] = useState<Record<string, string>>(initial?.details?.specs ?? {});
+  const [direction, setDirection] = useState(initial?.details?.direction ?? "");
+  const [legal, setLegal] = useState(initial?.details?.legal ?? "");
+  const [furnish, setFurnish] = useState(initial?.details?.furnish ?? "");
+  const [interior, setInterior] = useState<string[]>(initial?.details?.interior ?? []);
+  const [amenities, setAmenities] = useState<string[]>(initial?.details?.amenities ?? []);
+  const [cName, setCName] = useState(initial?.details?.contact?.name ?? "");
+  const [cPhone, setCPhone] = useState(initial?.details?.contact?.phone ?? "");
+  const [cEmail, setCEmail] = useState(initial?.details?.contact?.email ?? "");
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
   const typeGroups = purpose === "thue" ? rentTypeGroups : saleTypeGroups;
+  const specFields = type ? specForType(type).fields : [];
+
+  // Danh sách quận/huyện & phường/xã liên động theo lựa chọn cấp trên
+  const districtOptions = province ? districtsOf(province) : [];
+  const wardOptions = province && district ? wardsOf(province, district) : [];
+
+  const toggle = (list: string[], set: (v: string[]) => void, v: string) =>
+    set(list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
 
   // VNĐ từ ô giá theo mục đích (bán = tỷ · thuê = triệu/tháng)
   const priceVnd = negotiable
@@ -51,33 +74,54 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
       ? null
       : Math.round(parseFloat(priceUnit.replace(",", ".")) * (purpose === "thue" ? 1e6 : 1e9));
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  // asDraft = true → LƯU NHÁP (chỉ cần tiêu đề, không hiện trên web, vào tiếp được).
+  // asDraft = false → ĐĂNG TIN (kiểm tra đủ thông tin rồi công khai — status 'approved').
+  async function save(asDraft: boolean) {
     setError("");
-    if (!title.trim()) return setError("Chưa nhập tiêu đề tin.");
-    if (!type) return setError("Chưa chọn loại hình.");
-    if (!province.trim()) return setError("Chưa nhập Tỉnh/Thành.");
-    if (!negotiable && (priceVnd == null || Number.isNaN(priceVnd)))
-      return setError("Giá không hợp lệ — nhập số, hoặc tick \"Giá thỏa thuận\".");
+    if (!title.trim())
+      return setError(asDraft ? "Nhập tiêu đề để lưu nháp." : "Chưa nhập tiêu đề tin.");
 
+    if (!asDraft) {
+      if (!type) return setError("Chưa chọn loại hình.");
+      if (!province.trim()) return setError("Chưa chọn Tỉnh/Thành.");
+      if (!negotiable && (priceVnd == null || Number.isNaN(priceVnd)))
+        return setError("Giá không hợp lệ — nhập số, hoặc tick \"Giá thỏa thuận\".");
+    }
+
+    // Đăng tin → 'approved' (admin công khai ngay). Lưu nháp → 'draft'.
+    const newStatus: ListingStatus = asDraft ? "draft" : "approved";
     setSaving(true);
     const payload = {
       purpose,
-      type,
+      type: type || null,
       title: title.trim(),
       description: description.trim() || null,
       price_vnd: priceVnd,
       area_m2: area.trim() ? parseFloat(area.replace(",", ".")) : null,
+      built_area_m2: builtArea.trim() ? parseFloat(builtArea.replace(",", ".")) : null,
       beds: beds.trim() ? parseInt(beds, 10) : null,
       baths: baths.trim() ? parseInt(baths, 10) : null,
       ward: ward.trim() || null,
       district: district.trim() || null,
-      province: province.trim(),
-      images: images.split("\n").map((s) => s.trim()).filter(Boolean),
+      province: province.trim() || null,
+      images: images.map((s) => s.trim()).filter(Boolean),
+      // Thuộc tính thật → cột details (trang chi tiết hiện đúng những gì nhập)
+      details: {
+        specs: Object.fromEntries(Object.entries(specValues).filter(([, v]) => v && v.trim())),
+        interior,
+        amenities,
+        legal: legal || undefined,
+        furnish: furnish || undefined,
+        direction: direction || undefined,
+        addressDetail: addressDetail.trim() || undefined,
+        contact: (cName.trim() || cPhone.trim() || cEmail.trim())
+          ? { name: cName.trim(), phone: cPhone.trim(), email: cEmail.trim() }
+          : undefined,
+      },
       tier,
-      status,
-      // Duyệt đăng lần đầu → ghi thời điểm đăng (giữ nguyên khi sửa tin cũ)
-      published_at: status === "approved" ? (initial?.published_at ?? new Date().toISOString()) : initial?.published_at ?? null,
+      status: newStatus,
+      // Ghi thời điểm đăng lần đầu khi công khai (giữ nguyên nếu tin đã có)
+      published_at: newStatus === "approved" ? (initial?.published_at ?? new Date().toISOString()) : initial?.published_at ?? null,
     };
 
     const supabase = createClient();
@@ -92,10 +136,10 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
-      {/* Mục đích + Loại hình + Hạng + Trạng thái */}
+    <form onSubmit={(e) => { e.preventDefault(); save(false); }} className="space-y-5">
+      {/* Mục đích + Loại hình + Hạng (trạng thái do 2 nút Lưu nháp / Đăng tin quyết định) */}
       <Card title="Phân loại">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <Field label="Mục đích">
             <select value={purpose} onChange={(e) => { setPurpose(e.target.value as ListingPurpose); setType(""); }} className={inputCls}>
               <option value="ban">Mua bán</option>
@@ -120,15 +164,6 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
               <option value="basic">Thường</option>
             </select>
           </Field>
-          <Field label="Trạng thái">
-            <select value={status} onChange={(e) => setStatus(e.target.value as ListingStatus)} className={inputCls}>
-              <option value="approved">Đang đăng (hiện trên web)</option>
-              <option value="pending">Chờ duyệt</option>
-              <option value="hidden">Ẩn tạm</option>
-              <option value="rejected">Từ chối</option>
-              <option value="expired">Hết hạn</option>
-            </select>
-          </Field>
         </div>
       </Card>
 
@@ -146,23 +181,31 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
 
       {/* Giá & thông số */}
       <Card title="Giá & thông số">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Field label={purpose === "thue" ? "Giá thuê (TRIỆU/tháng)" : "Giá bán (TỶ đồng)"}>
+        {/* Giá + Giá thỏa thuận */}
+        <Field label={purpose === "thue" ? "Giá thuê (TRIỆU/tháng)" : "Giá bán (TỶ đồng)"}>
+          <div className="flex flex-wrap items-center gap-3">
             <input
               value={priceUnit}
               onChange={(e) => setPriceUnit(e.target.value)}
               disabled={negotiable}
               inputMode="decimal"
               placeholder={purpose === "thue" ? "VD: 18 hoặc 4,5" : "VD: 7,2 hoặc 33"}
-              className={`${inputCls} disabled:bg-cvr-surface disabled:text-cvr-faint`}
+              className={`${inputCls} sm:max-w-xs disabled:bg-cvr-surface disabled:text-cvr-faint`}
             />
-            <label className="mt-2 flex items-center gap-2 text-sm text-cvr-body">
+            <label className="flex items-center gap-2 text-sm text-cvr-body">
               <input type="checkbox" checked={negotiable} onChange={(e) => setNegotiable(e.target.checked)} className="h-4 w-4 rounded border-cvr-line" />
               Giá thỏa thuận
             </label>
+          </div>
+        </Field>
+
+        {/* Diện tích đất · Diện tích xây dựng · Phòng ngủ · Phòng tắm */}
+        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <Field label="Diện tích đất (m²)">
+            <input value={area} onChange={(e) => setArea(e.target.value)} inputMode="decimal" placeholder="VD: 100" className={inputCls} />
           </Field>
-          <Field label="Diện tích (m²)">
-            <input value={area} onChange={(e) => setArea(e.target.value)} inputMode="decimal" placeholder="VD: 95" className={inputCls} />
+          <Field label="Diện tích xây dựng (m²)">
+            <input value={builtArea} onChange={(e) => setBuiltArea(e.target.value)} inputMode="decimal" placeholder="VD: 95 (đất nền bỏ trống)" className={inputCls} />
           </Field>
           <Field label="Phòng ngủ">
             <input value={beds} onChange={(e) => setBeds(e.target.value)} inputMode="numeric" placeholder="VD: 2" className={inputCls} />
@@ -173,54 +216,165 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
         </div>
       </Card>
 
-      {/* Vị trí */}
+      {/* Vị trí — 3 cấp CHỌN từ danh sách, liên động: Tỉnh → Quận/Huyện → Phường/Xã.
+          Chọn tỉnh mới → xoá quận + phường cũ; chọn quận mới → xoá phường cũ.
+          Tỉnh chưa có dữ liệu quận/huyện (ngoài 8 tỉnh lõi) → cho gõ tay để không kẹt. */}
       <Card title="Vị trí">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <Field label="Phường/Xã">
-            <input value={ward} onChange={(e) => setWard(e.target.value)} placeholder="VD: Hải Châu I" className={inputCls} />
-          </Field>
-          <Field label="Quận/Huyện">
-            <input value={district} onChange={(e) => setDistrict(e.target.value)} placeholder="VD: Hải Châu" className={inputCls} />
-          </Field>
           <Field label="Tỉnh/Thành (bắt buộc)">
-            <input value={province} onChange={(e) => setProvince(e.target.value)} placeholder="VD: Đà Nẵng" className={inputCls} />
+            <select
+              value={province}
+              onChange={(e) => { setProvince(e.target.value); setDistrict(""); setWard(""); }}
+              className={inputCls}
+            >
+              <option value="">— Chọn Tỉnh/Thành —</option>
+              {provinceNames.map((p) => <option key={p} value={p}>{p}</option>)}
+            </select>
+          </Field>
+
+          <Field label="Quận/Huyện">
+            {districtOptions.length > 0 ? (
+              <select
+                value={district}
+                onChange={(e) => { setDistrict(e.target.value); setWard(""); }}
+                disabled={!province}
+                className={`${inputCls} disabled:bg-cvr-surface disabled:text-cvr-faint`}
+              >
+                <option value="">{province ? "— Chọn Quận/Huyện —" : "Chọn tỉnh trước"}</option>
+                {districtOptions.map((d) => <option key={d} value={d}>{d}</option>)}
+              </select>
+            ) : (
+              <input value={district} onChange={(e) => setDistrict(e.target.value)} placeholder="Nhập Quận/Huyện" className={inputCls} />
+            )}
+          </Field>
+
+          <Field label="Phường/Xã">
+            {wardOptions.length > 0 ? (
+              <select
+                value={ward}
+                onChange={(e) => setWard(e.target.value)}
+                disabled={!district}
+                className={`${inputCls} disabled:bg-cvr-surface disabled:text-cvr-faint`}
+              >
+                <option value="">{district ? "— Chọn Phường/Xã —" : "Chọn quận/huyện trước"}</option>
+                {wardOptions.map((w) => <option key={w} value={w}>{w}</option>)}
+              </select>
+            ) : (
+              <input value={ward} onChange={(e) => setWard(e.target.value)} placeholder="Nhập Phường/Xã" className={inputCls} />
+            )}
+          </Field>
+        </div>
+        <div className="mt-4">
+          <Field label="Địa chỉ cụ thể (số nhà, đường, dự án)">
+            <input value={addressDetail} onChange={(e) => setAddressDetail(e.target.value)} placeholder="VD: 123 Võ Nguyên Giáp / Dự án ..." className={inputCls} />
           </Field>
         </div>
         <p className="mt-2 text-xs text-cvr-faint">
-          Viết đúng tên như bộ lọc đang dùng (Đà Nẵng, Huế, Quảng Ngãi, Gia Lai…) để tin hiện đúng khi lọc theo khu vực.
+          Chọn theo danh sách để tin hiện đúng khi lọc khu vực. Tỉnh chưa có sẵn quận/huyện thì gõ tay.
         </p>
       </Card>
 
-      {/* Ảnh */}
-      <Card title="Ảnh (mỗi dòng 1 đường dẫn — dòng đầu là ảnh chính)">
-        <textarea
-          value={images}
-          onChange={(e) => setImages(e.target.value)}
-          rows={3}
-          placeholder={"/images/tin/1.jpg\n/images/tin/2.jpg"}
-          className={`${inputCls} h-auto py-2.5 font-mono text-xs`}
-        />
-        <p className="mt-2 text-xs text-cvr-faint">
-          Tạm thời dùng ảnh có sẵn trong <code>public/images/</code>. Upload ảnh trực tiếp sẽ làm ở bước Storage.
-        </p>
+      {/* Đặc điểm theo loại hình (động) + Hướng + Pháp lý + Mức nội thất */}
+      <Card title={`Đặc điểm bất động sản${type ? ` — ${type}` : ""}`}>
+        {!type && <p className="mb-3 text-sm text-cvr-muted">Chọn loại hình ở trên để hiện đúng bộ đặc điểm.</p>}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {specFields.map((f) => (
+            <Field key={f.key} label={f.label + (f.unit ? ` (${f.unit})` : "")}>
+              {f.type === "select" ? (
+                <select value={specValues[f.key] ?? ""} onChange={(e) => setSpecValues((s) => ({ ...s, [f.key]: e.target.value }))} className={inputCls}>
+                  <option value="">Chọn</option>
+                  {f.options?.map((o) => <option key={o} value={o}>{o}</option>)}
+                </select>
+              ) : (
+                <input type={f.type === "number" ? "number" : "text"} value={specValues[f.key] ?? ""} onChange={(e) => setSpecValues((s) => ({ ...s, [f.key]: e.target.value }))} placeholder={f.placeholder ?? ""} className={inputCls} />
+              )}
+            </Field>
+          ))}
+          <Field label="Hướng nhà / đất">
+            <select value={direction} onChange={(e) => setDirection(e.target.value)} className={inputCls}>
+              <option value="">Chọn</option>
+              {directions.map((o) => <option key={o} value={o}>{o}</option>)}
+            </select>
+          </Field>
+          <Field label="Tình trạng pháp lý">
+            <select value={legal} onChange={(e) => setLegal(e.target.value)} className={inputCls}>
+              <option value="">Chọn</option>
+              {legalOptions.map((o) => <option key={o} value={o}>{o}</option>)}
+            </select>
+          </Field>
+          <Field label="Tình trạng nội thất">
+            <select value={furnish} onChange={(e) => setFurnish(e.target.value)} className={inputCls}>
+              <option value="">Chọn</option>
+              {furnishLevels.map((o) => <option key={o} value={o}>{o}</option>)}
+            </select>
+          </Field>
+        </div>
+      </Card>
+
+      {/* Nội thất — tick mục có sẵn */}
+      <Card title="Nội thất bàn giao (tick mục có)">
+        <div className="flex flex-wrap gap-2">
+          {interiorItems.map((it) => (
+            <Chip key={it} active={interior.includes(it)} onClick={() => toggle(interior, setInterior, it)}>{it}</Chip>
+          ))}
+        </div>
+      </Card>
+
+      {/* Tiện ích — tick mục có sẵn, theo nhóm */}
+      <Card title="Tiện ích (tick mục có)">
+        <div className="space-y-4">
+          {amenityGroups.map((g) => (
+            <div key={g.group}>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-cvr-faint">{g.group}</p>
+              <div className="flex flex-wrap gap-2">
+                {g.items.map((it) => (
+                  <Chip key={it} active={amenities.includes(it)} onClick={() => toggle(amenities, setAmenities, it)}>{it}</Chip>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      {/* Ảnh — tải từ máy / dán link · ảnh đầu là ảnh đại diện */}
+      <Card title="Ảnh tin đăng">
+        <ImagePicker value={images} onChange={setImages} />
+      </Card>
+
+      {/* Thông tin người đăng — hiện ở khung liên hệ trang chi tiết */}
+      <Card title="Thông tin người đăng / liên hệ">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <Field label="Họ và tên"><input value={cName} onChange={(e) => setCName(e.target.value)} placeholder="Nguyễn Văn A" className={inputCls} /></Field>
+          <Field label="Số điện thoại"><input type="tel" value={cPhone} onChange={(e) => setCPhone(e.target.value)} placeholder="09xx xxx xxx" className={inputCls} /></Field>
+          <Field label="Email"><input type="email" value={cEmail} onChange={(e) => setCEmail(e.target.value)} placeholder="email@vidu.com" className={inputCls} /></Field>
+        </div>
       </Card>
 
       {error && (
         <p className="rounded-lg bg-red-50 px-4 py-2.5 text-sm font-medium text-red-700 ring-1 ring-inset ring-red-600/20">{error}</p>
       )}
 
-      <div className="flex items-center gap-3">
+      {/* 2 nút: ĐĂNG TIN (công khai) · LƯU NHÁP (làm dở, vào tiếp không mất) */}
+      <div className="flex flex-wrap items-center gap-3">
         <button
           type="submit"
           disabled={saving}
           className="rounded-lg bg-cvr-ink px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-cvr-ink/90 disabled:opacity-50"
         >
-          {saving ? "Đang lưu…" : editing ? "Lưu thay đổi" : "Đăng tin"}
+          {saving ? "Đang lưu…" : editing ? "Cập nhật & đăng" : "Đăng tin"}
+        </button>
+        <button
+          type="button"
+          onClick={() => save(true)}
+          disabled={saving}
+          className="rounded-lg border border-cvr-line px-5 py-2.5 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink disabled:opacity-50"
+        >
+          Lưu nháp
         </button>
         <button
           type="button"
           onClick={() => router.push("/admin/tin-dang")}
-          className="rounded-lg border border-cvr-line px-5 py-2.5 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink"
+          className="rounded-lg px-3 py-2.5 text-sm font-medium text-cvr-muted transition hover:text-cvr-ink"
         >
           Huỷ
         </button>
@@ -230,6 +384,10 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
           </span>
         )}
       </div>
+      <p className="text-xs text-cvr-faint">
+        <strong>Lưu nháp</strong>: chỉ cần tiêu đề, tin chưa hiện trên web — vào <em>Sửa</em> để làm tiếp bất cứ lúc nào.
+        <strong> Đăng tin</strong>: cần đủ thông tin, tin hiện ngay trên web.
+      </p>
     </form>
   );
 }
@@ -252,5 +410,13 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <span className="mb-1.5 block text-sm font-medium text-cvr-body">{label}</span>
       {children}
     </label>
+  );
+}
+
+function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button type="button" onClick={onClick} className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition ${active ? "border-cvr-ink bg-cvr-ink text-white" : "border-cvr-line text-cvr-body hover:border-cvr-ink hover:text-cvr-ink"}`}>
+      {children}
+    </button>
   );
 }

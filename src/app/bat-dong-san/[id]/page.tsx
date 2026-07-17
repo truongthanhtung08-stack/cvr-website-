@@ -7,8 +7,8 @@ import Gallery from "@/components/Gallery";
 import ListingSlider from "@/components/ListingSlider";
 import RecordView from "@/components/RecordView";
 import PriceHistory from "@/components/PriceHistory";
-import { featuredListings, buildListingDetail, provinceOf, pickRelated } from "@/lib/data";
-import { getListing, getListings } from "@/lib/listingsDb";
+import { featuredListings, provinceOf, pickRelated } from "@/lib/data";
+import { getListing, getListings, getListingDetail } from "@/lib/listingsDb";
 import { tierFromBadge, getTier } from "@/lib/packages";
 
 // Prerender sẵn các tin mẫu; tin mới (id UUID từ Supabase) render theo yêu cầu.
@@ -39,12 +39,16 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
 export default async function ListingDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const l = await getListing(id); // B2: đọc Supabase, fallback dữ liệu mẫu
-  if (!l) notFound();
-  const d = buildListingDetail(l);
+  const d = await getListingDetail(id); // DỮ LIỆU THẬT: ảnh, đặc điểm, tiện ích, người đăng
+  if (!d) notFound();
+  const l = d.listing;
   // Hạng CVR của tin (đồng bộ với thẻ tin V.7). Không có huy hiệu → tin thường.
   const tier = l.badge ? getTier(tierFromBadge(l.badge)) : null;
-  const phoneTel = d.agent.phone.replace(/\s/g, "");
+
+  // Liên hệ: người đăng đã nhập → dùng; chưa có → hotline Coastal Land.
+  const contact = d.contact ?? { name: "Coastal Land", phone: "0905 000 111", email: "" };
+  const phoneTel = contact.phone.replace(/\s/g, "");
+  const zalo = phoneTel.replace(/\D/g, "");
 
   // Schema.org RealEstateListing (IV.2) — dữ liệu chuẩn cho Google.
   const priceVnd = parseVnd(l.price);
@@ -54,8 +58,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
     "@type": "RealEstateListing",
     name: l.title,
     description: `${l.title} tại ${l.location}. Diện tích ${l.area}, giá ${l.price}.`,
-    image: d.gallery,
-    datePosted: d.postedDate,
+    image: d.images,
     address: { "@type": "PostalAddress", addressLocality: l.location, addressCountry: "VN" },
     ...(Number.isNaN(areaNum) ? {} : { floorSize: { "@type": "QuantitativeValue", value: areaNum, unitCode: "MTK" } }),
     ...(priceVnd == null ? {} : { offers: { "@type": "Offer", priceCurrency: "VND", price: priceVnd, availability: "https://schema.org/InStock" } }),
@@ -94,13 +97,16 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
             <span className="line-clamp-1 text-cvr-body">{l.title}</span>
           </nav>
 
+          {/* Thư viện ảnh THẬT — tràn full chiều rộng phía trên (kiểu Homedy) */}
+          <div className="mb-6">
+            <Gallery images={d.images} alt={l.title} />
+          </div>
+
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
             {/* Cột chính */}
             <div className="lg:col-span-2">
-              <Gallery images={d.gallery} alt={l.title} />
-
               {/* Tiêu đề + giá */}
-              <div className="mt-6">
+              <div>
                 {tier ? (
                   <span className="mb-2 inline-block rounded px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-cvr-ink" style={{ backgroundColor: tier.accent }}>
                     {tier.name}
@@ -113,35 +119,43 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                 <h1 className="text-2xl font-semibold leading-tight tracking-tight text-cvr-ink sm:text-3xl">{l.title}</h1>
                 <p className="mt-2 flex items-center gap-1.5 text-sm text-cvr-muted">
                   <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                  {l.location}
+                  {d.addressDetail ? `${d.addressDetail}, ` : ""}{l.location}
                 </p>
                 <div className="mt-4 flex flex-wrap items-end gap-x-8 gap-y-3 rounded-xl border border-cvr-line bg-cvr-surface p-4">
                   <Stat label="Mức giá" value={l.price} big accent />
-                  <Stat label="Diện tích" value={l.area} big />
+                  <Stat label="Diện tích đất" value={l.area} big />
+                  {d.builtArea && <Stat label="Diện tích XD" value={d.builtArea} />}
                   {l.pricePerM2 && <Stat label="Giá / m²" value={l.pricePerM2} />}
                   {l.beds && <Stat label="Phòng ngủ" value={`${l.beds}`} />}
                   {l.baths && <Stat label="Phòng tắm" value={`${l.baths}`} />}
                 </div>
               </div>
 
-              {/* Mô tả — Homedy đặt "Thông tin mô tả" ngay sau phần đầu */}
-              <Section title="Thông tin mô tả">
-                <div className="space-y-3 text-sm leading-relaxed text-cvr-body">
-                  {d.description.map((p, i) => <p key={i}>{p}</p>)}
-                </div>
-              </Section>
+              {/* Mô tả — chỉ hiện khi người đăng có viết (không bịa) */}
+              {d.descriptionParas.length > 0 && (
+                <Section title="Thông tin mô tả">
+                  <div className="space-y-3 whitespace-pre-line text-sm leading-relaxed text-cvr-body">
+                    {d.descriptionParas.map((p, i) => <p key={i}>{p}</p>)}
+                  </div>
+                </Section>
+              )}
 
-              {/* Đặc điểm bất động sản — sau phần mô tả (giống Homedy) */}
+              {/* Đặc điểm bất động sản — chỉ những gì đã nhập */}
               <Section title="Đặc điểm bất động sản">
                 <div className="grid grid-cols-1 gap-x-8 sm:grid-cols-2">
                   <Row label="Loại hình" value={l.type} />
+                  <Row label="Diện tích đất" value={l.area} />
+                  {d.builtArea && <Row label="Diện tích xây dựng" value={d.builtArea} />}
+                  {l.beds ? <Row label="Phòng ngủ" value={`${l.beds}`} /> : null}
+                  {l.baths ? <Row label="Phòng tắm" value={`${l.baths}`} /> : null}
+                  {d.direction && <Row label="Hướng" value={d.direction} />}
                   {d.specs.map((f) => <Row key={f.label} label={f.label} value={f.value} />)}
-                  <Row label="Tình trạng pháp lý" value={d.legal} />
-                  <Row label="Tình trạng nội thất" value={d.furnish} />
+                  <Row label="Tình trạng pháp lý" value={d.legal ?? "Chưa cập nhật"} />
+                  {d.furnish && <Row label="Tình trạng nội thất" value={d.furnish} />}
                 </div>
               </Section>
 
-              {/* Nội thất */}
+              {/* Nội thất — chỉ khi người đăng tick */}
               {d.interior.length > 0 && (
                 <Section title="Nội thất bàn giao">
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -155,30 +169,32 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                 </Section>
               )}
 
-              {/* Tiện ích */}
-              <Section title="Tiện ích">
-                <div className="space-y-5">
-                  {d.amenityGroups.map((g) => {
-                    const active = g.items.filter((it) => it.active);
-                    if (active.length === 0) return null;
-                    return (
-                      <div key={g.group}>
-                        <p className="mb-2.5 text-xs font-semibold uppercase tracking-wider text-cvr-faint">{g.group}</p>
-                        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
-                          {active.map((it) => (
-                            <span key={it.name} className="flex items-center gap-2 rounded-lg border border-cvr-line bg-cvr-surface px-3 py-2.5 text-xs text-cvr-body">
-                              <svg className="h-4 w-4 shrink-0 text-cvr-gold-ink" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                              {it.name}
-                            </span>
-                          ))}
+              {/* Tiện ích — chỉ khi có mục được tick */}
+              {d.amenityGroups.some((g) => g.items.some((it) => it.active)) && (
+                <Section title="Tiện ích">
+                  <div className="space-y-5">
+                    {d.amenityGroups.map((g) => {
+                      const active = g.items.filter((it) => it.active);
+                      if (active.length === 0) return null;
+                      return (
+                        <div key={g.group}>
+                          <p className="mb-2.5 text-xs font-semibold uppercase tracking-wider text-cvr-faint">{g.group}</p>
+                          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
+                            {active.map((it) => (
+                              <span key={it.name} className="flex items-center gap-2 rounded-lg border border-cvr-line bg-cvr-surface px-3 py-2.5 text-xs text-cvr-body">
+                                <svg className="h-4 w-4 shrink-0 text-cvr-gold-ink" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                                {it.name}
+                              </span>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </Section>
+                      );
+                    })}
+                  </div>
+                </Section>
+              )}
 
-              {/* Lịch sử giá (minh hoạ) — chỉ khi có giá dạng số */}
+              {/* Lịch sử giá — chỉ khi có giá dạng số */}
               {priceVnd != null && (
                 <Section title="Lịch sử giá">
                   <PriceHistory price={priceVnd} />
@@ -203,35 +219,35 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
             <aside className="lg:col-span-1">
               <div className="sticky top-24 space-y-4">
                 <div className="rounded-none border border-cvr-line bg-white p-5 shadow-sm">
-                  <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-cvr-faint">Liên hệ tư vấn</p>
+                  <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-cvr-faint">Liên hệ {d.contact ? "người đăng" : "tư vấn"}</p>
                   <div className="flex items-center gap-3">
                     <div className="flex h-12 w-12 items-center justify-center rounded-full bg-cvr-surface text-lg font-bold text-cvr-ink ring-1 ring-cvr-line">
-                      {d.agent.name.split(" ").pop()?.[0]}
+                      {contact.name.split(" ").pop()?.[0] ?? "C"}
                     </div>
                     <div>
-                      <p className="font-semibold text-cvr-ink">{d.agent.name}</p>
-                      <p className="text-xs text-cvr-muted">{d.agent.role} · Coastal Land</p>
+                      <p className="font-semibold text-cvr-ink">{contact.name}</p>
+                      <p className="text-xs text-cvr-muted">{d.contact ? "Người đăng tin" : "Chuyên viên"} · Coastal Land</p>
                     </div>
                   </div>
                   <div className="mt-4 space-y-2.5">
-                    <a href={`tel:${d.agent.phone.replace(/\s/g, "")}`} className="flex items-center justify-center gap-2 rounded-lg bg-cvr-ink px-4 py-3 text-sm font-bold text-white transition hover:bg-cvr-body">
+                    <a href={`tel:${phoneTel}`} className="flex items-center justify-center gap-2 rounded-lg bg-cvr-ink px-4 py-3 text-sm font-bold text-white transition hover:bg-cvr-body">
                       <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.95.68l1.5 4.5a1 1 0 01-.5 1.2l-2.26 1.13a11 11 0 005.52 5.52l1.13-2.26a1 1 0 011.2-.5l4.5 1.5a1 1 0 01.68.95V19a2 2 0 01-2 2h-1C9.7 21 3 14.3 3 6V5z" /></svg>
-                      {d.agent.phone}
+                      {contact.phone}
                     </a>
-                    <a href={`https://zalo.me/${d.agent.zalo}`} className="flex items-center justify-center gap-2 rounded-lg border border-cvr-line px-4 py-3 text-sm font-semibold text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink">
+                    <a href={`https://zalo.me/${zalo}`} className="flex items-center justify-center gap-2 rounded-lg border border-cvr-line px-4 py-3 text-sm font-semibold text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink">
                       Nhắn Zalo
                     </a>
                   </div>
-                  <p className="mt-3 text-center text-[11px] text-cvr-faint">Mã tin: {d.code} · Đăng {d.postedDate}</p>
+                  <p className="mt-3 text-center text-[11px] text-cvr-faint">Mã tin: {l.id.slice(0, 8).toUpperCase()}</p>
                 </div>
 
                 <div className="rounded-none border border-cvr-line bg-white p-5 text-sm shadow-sm">
                   <p className="font-semibold text-cvr-ink">Pháp lý & cam kết</p>
                   <ul className="mt-3 space-y-2 text-cvr-body">
-                    <li className="flex gap-2"><span className="text-cvr-gold-ink">✓</span> {d.legal}</li>
-                    <li className="flex gap-2"><span className="text-cvr-gold-ink">✓</span> Hướng nhà: {d.direction}</li>
-                    <li className="flex gap-2"><span className="text-cvr-gold-ink">✓</span> Kiểm chứng thực địa</li>
-                    <li className="flex gap-2"><span className="text-cvr-gold-ink">✓</span> Hỗ trợ thủ tục công chứng</li>
+                    <li className="flex gap-2"><span className="text-cvr-gold-ink">✓</span> Pháp lý: {d.legal ?? "Liên hệ để biết chi tiết"}</li>
+                    {d.direction && <li className="flex gap-2"><span className="text-cvr-gold-ink">✓</span> Hướng: {d.direction}</li>}
+                    <li className="flex gap-2"><span className="text-cvr-gold-ink">✓</span> Kiểm chứng thực địa trước khi đăng</li>
+                    <li className="flex gap-2"><span className="text-cvr-gold-ink">✓</span> Hỗ trợ thủ tục công chứng, sang tên</li>
                   </ul>
                 </div>
               </div>
@@ -257,7 +273,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
             Gọi ngay
           </a>
           <a
-            href={`https://zalo.me/${d.agent.zalo}`}
+            href={`https://zalo.me/${zalo}`}
             className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-cvr-line bg-white py-3 text-sm font-semibold text-cvr-body transition active:scale-95"
           >
             Nhắn Zalo
