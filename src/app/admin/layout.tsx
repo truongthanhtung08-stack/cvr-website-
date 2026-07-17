@@ -8,9 +8,9 @@ import { signOut } from "@/lib/useAuth";
 
 const nav = [
   { label: "Tổng quan", href: "/admin", icon: "grid" },
+  { label: "Tin đăng", href: "/admin/tin-dang", icon: "doc" },
+  { label: "Đăng tin mới", href: "/admin/tin-dang/moi", icon: "plus" },
   { label: "Khách hàng", href: "/admin/khach-hang", icon: "users" },
-  { label: "Tạo khách hàng", href: "/admin/khach-hang/moi", icon: "plus" },
-  { label: "Duyệt tin đăng", href: "/admin/tin-dang", icon: "doc" },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

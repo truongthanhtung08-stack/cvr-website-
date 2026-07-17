@@ -102,9 +102,12 @@ create policy "listings_select_public_or_own" on public.listings
     status = 'approved' or owner_id = auth.uid() or public.is_admin()
   );
 
--- Thêm: thành viên đăng nhập tự đăng tin của mình (mặc định pending chờ duyệt)
+-- Thêm: thành viên đăng nhập tự đăng tin của mình (mặc định pending chờ duyệt);
+--       admin đăng được tin hệ thống (owner_id null) hoặc thay mặt thành viên.
 create policy "listings_insert_own" on public.listings
-  for insert with check ( auth.uid() is not null and owner_id = auth.uid() );
+  for insert with check (
+    (auth.uid() is not null and owner_id = auth.uid()) or public.is_admin()
+  );
 
 -- Sửa: chủ tin sửa tin mình (cột đặc quyền bị trigger #4 chặn); admin sửa tất cả
 create policy "listings_update_own_or_admin" on public.listings
