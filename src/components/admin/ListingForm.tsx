@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { saleTypeGroups, rentTypeGroups } from "@/lib/filters";
@@ -56,6 +56,22 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+
+  // Tin MỚI → tự điền sẵn liên hệ từ hồ sơ admin (SĐT người đăng không bị bỏ trống).
+  useEffect(() => {
+    if (editing) return;
+    const supabase = createClient();
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data: p } = await supabase.from("profiles").select("full_name, phone, email").eq("id", user.id).single();
+      if (p) {
+        setCName((v) => v || p.full_name || "");
+        setCPhone((v) => v || p.phone || "");
+        setCEmail((v) => v || p.email || "");
+      }
+    })();
+  }, [editing]);
 
   const typeGroups = purpose === "thue" ? rentTypeGroups : saleTypeGroups;
   const specFields = type ? specForType(type).fields : [];
@@ -348,6 +364,9 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
           <Field label="Số điện thoại"><input type="tel" value={cPhone} onChange={(e) => setCPhone(e.target.value)} placeholder="09xx xxx xxx" className={inputCls} /></Field>
           <Field label="Email"><input type="email" value={cEmail} onChange={(e) => setCEmail(e.target.value)} placeholder="email@vidu.com" className={inputCls} /></Field>
         </div>
+        <p className="mt-2 text-xs text-cvr-faint">
+          Số điện thoại này hiện ở khung liên hệ trang tin, và <strong>nút Zalo tự trỏ tới chính số này</strong>. Bỏ trống → dùng hotline Coastal Land.
+        </p>
       </Card>
 
       {error && (

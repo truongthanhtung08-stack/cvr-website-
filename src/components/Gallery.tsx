@@ -67,7 +67,7 @@ export default function Gallery({ images, alt }: { images: string[]; alt: string
           <Image src={images[0]} alt={alt} fill priority sizes="(max-width:1024px) 100vw, 66vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
         </button>
       ) : (
-        <div className="grid grid-cols-2 gap-2 sm:h-[380px] sm:grid-cols-4 sm:grid-rows-2">
+        <div className="grid grid-cols-2 gap-2 sm:h-[340px] sm:grid-cols-4 sm:grid-rows-2">
           {/* Ảnh lớn */}
           <button
             type="button"
