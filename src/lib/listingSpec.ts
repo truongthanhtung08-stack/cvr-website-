@@ -48,61 +48,37 @@ export const interiorItems = [
   "Tivi", "Lò vi sóng", "Bàn làm việc", "Đèn trang trí",
 ];
 
-// Bộ trường riêng theo từng loại hình
+// Bộ trường riêng theo từng loại hình.
+// ⚠️ KHÔNG để "Hướng" và "Tình trạng nội thất" ở đây — chúng là trường DÙNG CHUNG,
+//    form tự thêm 1 lần cho mọi loại (tránh lặp). Ở đây chỉ đặc điểm ĐẶC THÙ theo loại.
+// `match`: từ khoá nhận diện loại hình (đối chiếu nhãn thật ở filters.ts). Thứ tự
+//    trong mảng = ĐỘ ƯU TIÊN (specForType lấy khớp ĐẦU TIÊN) — loại đặc thù đứng trước
+//    loại chung, vd "Đất công nghiệp" phải khớp Kho xưởng TRƯỚC khi khớp "Đất".
 export type CategorySpec = { label: string; match: string[]; fields: Field[] };
 
 export const categorySpecs: CategorySpec[] = [
   {
-    label: "Căn hộ / Chung cư",
-    match: ["Căn hộ", "Chung cư"],
-    fields: [
-      { key: "loaiCanho", label: "Loại hình căn hộ", type: "select", options: ["Chung cư", "Duplex", "Penthouse", "Studio", "Officetel", "Shophouse khối đế"] },
-      { key: "beds", label: "Số phòng ngủ", type: "select", options: ["1", "2", "3", "4", "5+"] },
-      { key: "baths", label: "Số phòng tắm", type: "select", options: ["1", "2", "3", "4+"] },
-      { key: "floor", label: "Tầng số", type: "text", placeholder: "VD: Tầng 18" },
-      { key: "block", label: "Block / Toà / Tháp", type: "text", placeholder: "VD: Block A" },
-      { key: "balcony", label: "Hướng ban công", type: "select", options: directions },
-      { key: "furnish", label: "Tình trạng nội thất", type: "select", options: furnishLevels },
-    ],
-  },
-  {
-    label: "Nhà phố / Biệt thự / Shophouse",
-    match: ["Nhà phố", "Villa", "Biệt thự", "Shophouse"],
-    fields: [
-      { key: "beds", label: "Số phòng ngủ", type: "select", options: ["2", "3", "4", "5", "6+"] },
-      { key: "baths", label: "Số phòng tắm", type: "select", options: ["1", "2", "3", "4+"] },
-      { key: "floors", label: "Số tầng", type: "select", options: ["1", "2", "3", "4", "5+"] },
-      { key: "frontage", label: "Mặt tiền", type: "number", unit: "m" },
-      { key: "roadWidth", label: "Đường vào", type: "number", unit: "m" },
-      { key: "direction", label: "Hướng nhà", type: "select", options: directions },
-      { key: "furnish", label: "Tình trạng nội thất", type: "select", options: furnishLevels },
-    ],
-  },
-  {
-    label: "Đất nền / Đất",
-    match: ["Đất nền", "Đất"],
-    fields: [
-      { key: "landType", label: "Loại đất", type: "select", options: ["Đất thổ cư", "Đất ở đô thị", "Đất nền dự án", "Đất vườn", "Đất khác"] },
-      { key: "frontage", label: "Mặt tiền", type: "number", unit: "m" },
-      { key: "roadWidth", label: "Đường vào", type: "number", unit: "m" },
-      { key: "direction", label: "Hướng đất", type: "select", options: directions },
-      { key: "blocks", label: "Số lô / nền", type: "text", placeholder: "VD: Lô A12" },
-    ],
-  },
-  {
     label: "Condotel / Nghỉ dưỡng",
-    match: ["Condotel"],
+    match: ["condotel", "nghỉ dưỡng"],
     fields: [
-      { key: "beds", label: "Loại phòng", type: "select", options: ["Studio", "1 phòng ngủ", "2 phòng ngủ", "3 phòng ngủ"] },
+      { key: "roomType", label: "Loại phòng", type: "select", options: ["Studio", "1 phòng ngủ", "2 phòng ngủ", "3 phòng ngủ"] },
       { key: "view", label: "Hướng view", type: "select", options: ["Biển", "Thành phố", "Hồ bơi", "Sông / núi"] },
-      { key: "furnish", label: "Tình trạng nội thất", type: "select", options: furnishLevels },
       { key: "profit", label: "Cam kết lợi nhuận", type: "text", placeholder: "VD: 8%/năm" },
       { key: "operator", label: "Đơn vị vận hành", type: "text" },
     ],
   },
   {
+    label: "Căn hộ / Chung cư",
+    match: ["căn hộ", "chung cư", "officetel", "duplex", "penthouse", "studio"],
+    fields: [
+      { key: "loaiCanho", label: "Loại hình căn hộ", type: "select", options: ["Chung cư", "Duplex", "Penthouse", "Studio", "Officetel", "Căn hộ dịch vụ"] },
+      { key: "floor", label: "Tầng số", type: "text", placeholder: "VD: Tầng 18" },
+      { key: "block", label: "Block / Toà / Tháp", type: "text", placeholder: "VD: Block A" },
+    ],
+  },
+  {
     label: "Đất công nghiệp / Kho xưởng",
-    match: ["công nghiệp", "xưởng", "Kho"],
+    match: ["công nghiệp", "xưởng", "kho bãi", "nhà kho"],
     fields: [
       { key: "frontage", label: "Mặt tiền", type: "number", unit: "m" },
       { key: "roadWidth", label: "Đường container", type: "number", unit: "m" },
@@ -111,15 +87,47 @@ export const categorySpecs: CategorySpec[] = [
       { key: "term", label: "Thời hạn sử dụng đất", type: "text", placeholder: "VD: Đến 2068" },
     ],
   },
+  {
+    label: "Văn phòng / Mặt bằng",
+    match: ["văn phòng", "mặt bằng", "cửa hàng", "kinh doanh"],
+    fields: [
+      { key: "usableArea", label: "Diện tích sử dụng", type: "number", unit: "m²" },
+      { key: "floor", label: "Tầng số", type: "text", placeholder: "VD: Tầng 3" },
+      { key: "frontage", label: "Mặt tiền", type: "number", unit: "m" },
+      { key: "roadWidth", label: "Đường vào", type: "number", unit: "m" },
+    ],
+  },
+  {
+    label: "Nhà ở (Nhà riêng / Nhà phố / Biệt thự)",
+    match: ["nhà riêng", "nhà mặt phố", "nhà phố", "biệt thự", "villa", "liền kề", "shophouse", "nhà trọ", "phòng trọ", "nhà"],
+    fields: [
+      { key: "floors", label: "Số tầng", type: "select", options: ["1", "2", "3", "4", "5+"] },
+      { key: "frontage", label: "Mặt tiền", type: "number", unit: "m" },
+      { key: "roadWidth", label: "Đường vào", type: "number", unit: "m" },
+    ],
+  },
+  {
+    label: "Đất nền / Đất",
+    match: ["đất nền", "đất nông nghiệp", "đất"],
+    fields: [
+      { key: "landType", label: "Loại đất", type: "select", options: ["Đất thổ cư", "Đất ở đô thị", "Đất nền dự án", "Đất nông nghiệp", "Đất vườn", "Đất khác"] },
+      { key: "frontage", label: "Mặt tiền", type: "number", unit: "m" },
+      { key: "roadWidth", label: "Đường vào", type: "number", unit: "m" },
+      { key: "blocks", label: "Số lô / nền", type: "text", placeholder: "VD: Lô A12" },
+    ],
+  },
 ];
 
+// Bộ tối giản cho loại không xác định ("Bất động sản khác") — chỉ dùng trường chung.
+const genericSpec: CategorySpec = { label: "Bất động sản khác", match: [], fields: [] };
+
+// Nhận diện bộ đặc điểm theo NHÃN LOẠI HÌNH thật. Khớp theo độ ưu tiên (mảng trên);
+// không khớp gì → bộ tối giản (KHÔNG mặc định về Căn hộ như trước).
 export function specForType(type: string): CategorySpec {
-  return (
-    categorySpecs.find((c) => c.match.some((m) => type.toLowerCase().includes(m.toLowerCase()))) ??
-    categorySpecs[0]
-  );
+  const t = type.toLowerCase();
+  return categorySpecs.find((c) => c.match.some((m) => t.includes(m))) ?? genericSpec;
 }
 
-// Loại tin & loại hình BĐS cho form đăng tin
+// Loại tin cho form đăng tin
 export const demandTypes = ["Cần bán", "Cho thuê", "Dự án"];
 export const propertyCategories = categorySpecs.map((c) => c.label);

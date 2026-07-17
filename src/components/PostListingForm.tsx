@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import {
   categorySpecs, propertyCategories, demandTypes,
-  legalOptions, furnishLevels, amenityGroups, interiorItems,
+  legalOptions, furnishLevels, amenityGroups, interiorItems, directions,
 } from "@/lib/listingSpec";
 import { provinceNames, districtsOf, wardsOf } from "@/lib/locations";
 import ImagePicker from "@/components/admin/ImagePicker";
@@ -33,9 +33,12 @@ export default function PostListingForm() {
   const [priceUnit, setPriceUnit] = useState("tỷ");
   const [area, setArea] = useState("");
   const [builtArea, setBuiltArea] = useState("");
+  const [beds, setBeds] = useState("");
+  const [baths, setBaths] = useState("");
   const [specValues, setSpecValues] = useState<Record<string, string>>({});
   const [legal, setLegal] = useState("");
   const [furnish, setFurnish] = useState("");
+  const [direction, setDirection] = useState("");
   const [interior, setInterior] = useState<string[]>([]);
   const [amenities, setAmenities] = useState<string[]>([]);
   const [description, setDescription] = useState("");
@@ -107,6 +110,8 @@ export default function PostListingForm() {
       price_vnd: priceToVnd(),
       area_m2: area.trim() ? parseFloat(area.replace(",", ".")) : null,
       built_area_m2: builtArea.trim() ? parseFloat(builtArea.replace(",", ".")) : null,
+      beds: beds.trim() ? parseInt(beds, 10) : null,
+      baths: baths.trim() ? parseInt(baths, 10) : null,
       ward: ward || null,
       district: district || null,
       province: province || null,
@@ -118,6 +123,7 @@ export default function PostListingForm() {
         amenities,
         legal: legal || undefined,
         furnish: furnish || undefined,
+        direction: direction || undefined,
         addressDetail: addressDetail.trim() || undefined,
         contact: (contactName.trim() || contactPhone.trim() || contactEmail.trim())
           ? { name: contactName.trim(), phone: contactPhone.trim(), email: contactEmail.trim() }
@@ -206,9 +212,19 @@ export default function PostListingForm() {
             <input type="number" min="0" value={area} onChange={(e) => setArea(e.target.value)} placeholder="VD: 100" className={inputCls} />
           </div>
         </div>
-        <div>
-          <Label>Diện tích xây dựng (m²)</Label>
-          <input type="number" min="0" value={builtArea} onChange={(e) => setBuiltArea(e.target.value)} placeholder="VD: 95 (đất nền bỏ trống)" className={inputCls + " sm:max-w-xs"} />
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div>
+            <Label>Diện tích xây dựng (m²)</Label>
+            <input type="number" min="0" value={builtArea} onChange={(e) => setBuiltArea(e.target.value)} placeholder="VD: 95 (đất nền bỏ trống)" className={inputCls} />
+          </div>
+          <div>
+            <Label>Số phòng ngủ</Label>
+            <input type="number" min="0" value={beds} onChange={(e) => setBeds(e.target.value)} placeholder="VD: 3" className={inputCls} />
+          </div>
+          <div>
+            <Label>Số phòng tắm</Label>
+            <input type="number" min="0" value={baths} onChange={(e) => setBaths(e.target.value)} placeholder="VD: 2" className={inputCls} />
+          </div>
         </div>
       </Card>
 
@@ -228,11 +244,12 @@ export default function PostListingForm() {
               )}
             </div>
           ))}
+          {/* Trường DÙNG CHUNG mọi loại hình: Hướng · Nội thất · Pháp lý */}
           <div>
-            <Label>Tình trạng pháp lý</Label>
-            <select value={legal} onChange={(e) => setLegal(e.target.value)} className={inputCls}>
+            <Label>Hướng nhà / đất</Label>
+            <select value={direction} onChange={(e) => setDirection(e.target.value)} className={inputCls}>
               <option value="">Chọn</option>
-              {legalOptions.map((o) => <option key={o} value={o}>{o}</option>)}
+              {directions.map((o) => <option key={o} value={o}>{o}</option>)}
             </select>
           </div>
           <div>
@@ -240,6 +257,13 @@ export default function PostListingForm() {
             <select value={furnish} onChange={(e) => setFurnish(e.target.value)} className={inputCls}>
               <option value="">Chọn</option>
               {furnishLevels.map((o) => <option key={o} value={o}>{o}</option>)}
+            </select>
+          </div>
+          <div>
+            <Label>Tình trạng pháp lý</Label>
+            <select value={legal} onChange={(e) => setLegal(e.target.value)} className={inputCls}>
+              <option value="">Chọn</option>
+              {legalOptions.map((o) => <option key={o} value={o}>{o}</option>)}
             </select>
           </div>
         </div>
