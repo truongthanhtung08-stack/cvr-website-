@@ -67,12 +67,12 @@ export default function Gallery({ images, alt }: { images: string[]; alt: string
           <Image src={images[0]} alt={alt} fill priority sizes="(max-width:1024px) 100vw, 66vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
         </button>
       ) : (
-        <div className="grid grid-cols-2 gap-2 lg:h-[440px] lg:grid-cols-4 lg:grid-rows-2">
+        <div className="grid grid-cols-2 gap-2 sm:h-[380px] sm:grid-cols-4 sm:grid-rows-2">
           {/* Ảnh lớn */}
           <button
             type="button"
             onClick={() => open(0)}
-            className="group relative col-span-2 aspect-[16/10] overflow-hidden rounded-none border border-cvr-line lg:col-span-2 lg:row-span-2 lg:aspect-auto lg:h-full"
+            className="group relative col-span-2 aspect-[16/9] overflow-hidden rounded-none border border-cvr-line sm:row-span-2 sm:aspect-auto sm:h-full"
           >
             <Image src={images[0]} alt={alt} fill priority sizes="(max-width:1024px) 100vw, 50vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
             <span className="absolute bottom-3 left-3 rounded-md bg-black/60 px-2.5 py-1 text-xs text-white backdrop-blur-sm">
@@ -89,7 +89,7 @@ export default function Gallery({ images, alt }: { images: string[]; alt: string
                 key={idx}
                 type="button"
                 onClick={() => open(idx)}
-                className="group relative aspect-square overflow-hidden rounded-none border border-cvr-line lg:aspect-auto lg:h-full"
+                className="group relative aspect-square overflow-hidden rounded-none border border-cvr-line sm:aspect-auto sm:h-full"
               >
                 <Image src={src} alt={`${alt} ${idx + 1}`} fill sizes="(max-width:1024px) 50vw, 25vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
                 {isLast && (

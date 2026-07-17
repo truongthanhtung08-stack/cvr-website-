@@ -129,7 +129,7 @@ export default function AdminListingsPage() {
       </div>
 
       {/* Bảng (desktop) */}
-      <div className="mt-4 hidden overflow-hidden rounded-2xl border border-cvr-line bg-white shadow-sm md:block">
+      <div className="mt-4 hidden overflow-hidden rounded-2xl border border-cvr-line bg-white shadow-lux md:block">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-cvr-line text-left text-xs uppercase tracking-wider text-cvr-faint">
@@ -176,7 +176,7 @@ export default function AdminListingsPage() {
       {/* Thẻ (mobile) */}
       <div className="mt-4 space-y-3 md:hidden">
         {filtered.map((r) => (
-          <div key={r.id} className="rounded-2xl border border-cvr-line bg-white p-4 shadow-sm">
+          <div key={r.id} className="rounded-2xl border border-cvr-line bg-white p-4 shadow-lux">
             <Link href={`/admin/tin-dang/${r.id}`} className="block">
               <div className="flex items-start justify-between gap-2">
                 <span className="font-medium leading-snug text-cvr-ink">{r.title}</span>

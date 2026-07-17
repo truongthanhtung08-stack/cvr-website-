@@ -86,7 +86,7 @@ export default function CustomersPage() {
       </div>
 
       {/* Bảng (desktop) */}
-      <div className="mt-4 hidden overflow-hidden rounded-2xl border border-cvr-line bg-white shadow-sm md:block">
+      <div className="mt-4 hidden overflow-hidden rounded-2xl border border-cvr-line bg-white shadow-lux md:block">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-cvr-line text-left text-xs uppercase tracking-wider text-cvr-faint">
@@ -136,7 +136,7 @@ export default function CustomersPage() {
           <Link
             key={r.id}
             href={`/admin/khach-hang/${r.id}`}
-            className="block rounded-2xl border border-cvr-line bg-white p-4 shadow-sm"
+            className="block rounded-2xl border border-cvr-line bg-white p-4 shadow-lux"
           >
             <div className="flex items-center justify-between">
               <span className="font-medium text-cvr-ink">{r.full_name || "(chưa đặt tên)"}</span>

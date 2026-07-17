@@ -149,7 +149,7 @@ const inp = "h-10 w-full rounded-lg border border-cvr-line bg-white px-3 text-sm
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-2xl border border-cvr-line bg-white p-5 shadow-sm">
+    <section className="rounded-2xl border border-cvr-line bg-white p-5 shadow-lux">
       <h2 className="mb-4 text-base font-semibold text-cvr-ink">{title}</h2>
       {children}
     </section>

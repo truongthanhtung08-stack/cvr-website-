@@ -397,7 +397,7 @@ const inputCls =
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-2xl border border-cvr-line bg-white p-5 shadow-sm">
+    <div className="rounded-2xl border border-cvr-line bg-white p-5 shadow-lux">
       <h2 className="mb-4 text-base font-semibold text-cvr-ink">{title}</h2>
       {children}
     </div>
