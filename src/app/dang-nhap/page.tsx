@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -13,7 +14,10 @@ export default function DangNhapPage() {
     <>
       <Header />
       <main className="flex flex-1 items-center justify-center bg-white px-4 py-16 sm:px-6">
-        <LoginForm />
+        {/* Suspense: LoginForm đọc useSearchParams (?next, ?error) */}
+        <Suspense fallback={<div className="text-sm text-cvr-muted">Đang tải…</div>}>
+          <LoginForm />
+        </Suspense>
       </main>
       <Footer />
     </>

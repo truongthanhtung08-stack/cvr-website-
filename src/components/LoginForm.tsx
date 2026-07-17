@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import SocialAuth from "@/components/SocialAuth";
 
 // Dịch vài lỗi Supabase thường gặp sang tiếng Việt.
 function viError(msg: string): string {
@@ -15,7 +17,13 @@ export default function LoginForm() {
   const [email, setEmail] = useState("");
   const [pw, setPw] = useState("");
   const [show, setShow] = useState(false);
-  const [notice, setNotice] = useState("");
+  const searchParams = useSearchParams();
+  // Google đăng nhập dở dang (huỷ/lỗi ở callback) → báo nhẹ, người dùng thử lại.
+  const [notice, setNotice] = useState(() =>
+    searchParams.get("error") === "oauth"
+      ? "Đăng nhập Google chưa hoàn tất. Vui lòng thử lại hoặc dùng email."
+      : ""
+  );
   const [loading, setLoading] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
@@ -108,12 +116,8 @@ export default function LoginForm() {
         <span className="h-px flex-1 bg-cvr-line" /> hoặc <span className="h-px flex-1 bg-cvr-line" />
       </div>
 
-      {/* Đăng nhập mạng xã hội (giao diện) */}
-      <div className="space-y-2.5">
-        <SocialBtn label="Tiếp tục với Google" />
-        <SocialBtn label="Tiếp tục với Facebook" />
-        <SocialBtn label="Tiếp tục với Zalo" />
-      </div>
+      {/* Đăng nhập mạng xã hội — Google chạy thật, Facebook/Zalo sắp có */}
+      <SocialAuth />
 
       <p className="mt-6 text-center text-sm text-cvr-muted">
         Chưa có tài khoản?{" "}
@@ -132,13 +136,3 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-function SocialBtn({ label }: { label: string }) {
-  return (
-    <button
-      type="button"
-      className="flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-cvr-line bg-white text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink"
-    >
-      {label}
-    </button>
-  );
-}

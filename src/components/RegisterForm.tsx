@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import SocialAuth from "@/components/SocialAuth";
 
 function viError(msg: string): string {
   if (/already registered|already exists|user already/i.test(msg))
@@ -153,6 +154,14 @@ export default function RegisterForm() {
           {loading ? "Đang tạo tài khoản…" : "Đăng ký"}
         </button>
       </form>
+
+      {/* Phân cách */}
+      <div className="my-5 flex items-center gap-3 text-xs text-cvr-faint">
+        <span className="h-px flex-1 bg-cvr-line" /> hoặc đăng ký nhanh <span className="h-px flex-1 bg-cvr-line" />
+      </div>
+
+      {/* Đăng ký mạng xã hội — Google chạy thật, Facebook/Zalo sắp có */}
+      <SocialAuth />
 
       <p className="mt-6 text-center text-sm text-cvr-muted">
         Đã có tài khoản?{" "}
