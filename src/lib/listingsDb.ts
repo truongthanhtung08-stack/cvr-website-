@@ -108,7 +108,7 @@ async function rest(query: string): Promise<Row[] | null> {
   try {
     const res = await fetch(`${url}/rest/v1/listings?${query}`, {
       headers: { apikey: key, Authorization: `Bearer ${key}` },
-      next: { revalidate: 60 }, // admin sửa tin → web cập nhật trong ≤60s
+      cache: "no-store", // LUÔN lấy dữ liệu mới — admin sửa gì web hiện NGAY
     });
     if (!res.ok) return null; // bảng chưa tạo (404) / lỗi khác → fallback
     return (await res.json()) as Row[];
