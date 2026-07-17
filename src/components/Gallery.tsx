@@ -9,8 +9,19 @@ import Image from "next/image";
 export default function Gallery({ images, alt }: { images: string[]; alt: string }) {
   const [lb, setLb] = useState(-1); // chỉ số ảnh đang xem lớn; -1 = đóng
   const [fade, setFade] = useState(false); // hiệu ứng mờ khi đổi ảnh
+  const [bigIdx, setBigIdx] = useState(0); // ảnh LỚN đang hiện (tự chạy slide)
+  const [paused, setPaused] = useState(false);
   const open = (i: number) => setLb(i);
   const close = () => setLb(-1);
+
+  // Ảnh lớn TỰ CHẠY slide qua tất cả ảnh (4s/ảnh, mờ nhẹ) — dừng khi rê chuột,
+  // tôn trọng prefers-reduced-motion. Người dùng vẫn bấm ảnh nhỏ để xem lớn.
+  useEffect(() => {
+    if (paused || images.length < 2) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const t = setInterval(() => setBigIdx((i) => (i + 1) % images.length), 4000);
+    return () => clearInterval(t);
+  }, [paused, images.length]);
 
   // Đổi ảnh có hiệu ứng mờ nhẹ (mượt, không giật)
   const step = useCallback((dir: number) => {
@@ -68,15 +79,23 @@ export default function Gallery({ images, alt }: { images: string[]; alt: string
         </button>
       ) : (
         <div className="grid grid-cols-2 gap-2 sm:h-[340px] sm:grid-cols-4 sm:grid-rows-2">
-          {/* Ảnh lớn */}
+          {/* Ảnh lớn — TỰ CHẠY slide qua các ảnh, bấm để xem lớn */}
           <button
             type="button"
-            onClick={() => open(0)}
+            onClick={() => open(bigIdx)}
+            onMouseEnter={() => setPaused(true)}
+            onMouseLeave={() => setPaused(false)}
             className="group relative col-span-2 aspect-[16/9] overflow-hidden rounded-none border border-cvr-line sm:row-span-2 sm:aspect-auto sm:h-full"
           >
-            <Image src={images[0]} alt={alt} fill priority sizes="(max-width:1024px) 100vw, 50vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
+            <Image key={bigIdx} src={images[bigIdx]} alt={alt} fill priority sizes="(max-width:1024px) 100vw, 50vw" className="object-cover animate-fadein" />
             <span className="absolute bottom-3 left-3 rounded-md bg-black/60 px-2.5 py-1 text-xs text-white backdrop-blur-sm">
-              {images.length} ảnh · Bấm để xem lớn
+              {bigIdx + 1}/{images.length} · Bấm để xem lớn
+            </span>
+            {/* Chấm chỉ vị trí ảnh đang chạy */}
+            <span className="absolute bottom-3 right-3 flex gap-1">
+              {images.slice(0, Math.min(images.length, 8)).map((_, i) => (
+                <span key={i} className={`h-1.5 rounded-full transition-all ${i === bigIdx % 8 ? "w-4 bg-white" : "w-1.5 bg-white/50"}`} />
+              ))}
             </span>
           </button>
 

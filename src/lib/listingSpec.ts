@@ -56,6 +56,12 @@ export const interiorItems = [
 //    loại chung, vd "Đất công nghiệp" phải khớp Kho xưởng TRƯỚC khi khớp "Đất".
 export type CategorySpec = { label: string; match: string[]; fields: Field[] };
 
+const floorsField: Field = { key: "floors", label: "Số tầng", type: "select", options: ["1", "2", "3", "4", "5", "6+"] };
+const frontageField: Field = { key: "frontage", label: "Mặt tiền", type: "number", unit: "m" };
+const roadField: Field = { key: "roadWidth", label: "Đường vào", type: "number", unit: "m" };
+
+// Mỗi LOẠI HÌNH có bộ đặc điểm ĐẶC THÙ riêng. Thứ tự = ĐỘ ƯU TIÊN khớp
+// (loại đặc thù đứng trước loại chung: Biệt thự/Shophouse trước "nhà", Kho xưởng trước "đất").
 export const categorySpecs: CategorySpec[] = [
   {
     label: "Condotel / Nghỉ dưỡng",
@@ -74,36 +80,80 @@ export const categorySpecs: CategorySpec[] = [
       { key: "loaiCanho", label: "Loại hình căn hộ", type: "select", options: ["Chung cư", "Duplex", "Penthouse", "Studio", "Officetel", "Căn hộ dịch vụ"] },
       { key: "floor", label: "Tầng số", type: "text", placeholder: "VD: Tầng 18" },
       { key: "block", label: "Block / Toà / Tháp", type: "text", placeholder: "VD: Block A" },
+      { key: "view", label: "Hướng view", type: "select", options: ["Biển", "Thành phố", "Hồ bơi", "Sông / công viên", "Nội khu"] },
     ],
   },
   {
-    label: "Đất công nghiệp / Kho xưởng",
-    match: ["công nghiệp", "xưởng", "kho bãi", "nhà kho"],
+    label: "Đất công nghiệp / Nhà xưởng / Kho bãi",
+    match: ["công nghiệp", "xưởng", "kho bãi", "nhà kho", "kho"],
     fields: [
-      { key: "frontage", label: "Mặt tiền", type: "number", unit: "m" },
+      { key: "usableArea", label: "Diện tích xưởng/kho", type: "number", unit: "m²" },
       { key: "roadWidth", label: "Đường container", type: "number", unit: "m" },
       { key: "power", label: "Công suất điện", type: "text", placeholder: "VD: 560 KVA" },
       { key: "pccc", label: "Hệ thống PCCC", type: "select", options: ["Đã có", "Chưa có"] },
+      { key: "crane", label: "Cẩu trục / tải nền", type: "text", placeholder: "VD: 5 tấn/m²" },
       { key: "term", label: "Thời hạn sử dụng đất", type: "text", placeholder: "VD: Đến 2068" },
     ],
   },
   {
-    label: "Văn phòng / Mặt bằng",
+    label: "Văn phòng / Mặt bằng kinh doanh",
     match: ["văn phòng", "mặt bằng", "cửa hàng", "kinh doanh"],
     fields: [
       { key: "usableArea", label: "Diện tích sử dụng", type: "number", unit: "m²" },
       { key: "floor", label: "Tầng số", type: "text", placeholder: "VD: Tầng 3" },
-      { key: "frontage", label: "Mặt tiền", type: "number", unit: "m" },
-      { key: "roadWidth", label: "Đường vào", type: "number", unit: "m" },
+      frontageField,
+      { key: "grade", label: "Hạng toà nhà", type: "select", options: ["Hạng A", "Hạng B", "Hạng C", "Nhà phố"] },
     ],
   },
   {
-    label: "Nhà ở (Nhà riêng / Nhà phố / Biệt thự)",
-    match: ["nhà riêng", "nhà mặt phố", "nhà phố", "biệt thự", "villa", "liền kề", "shophouse", "nhà trọ", "phòng trọ", "nhà"],
+    label: "Biệt thự / Villa",
+    match: ["biệt thự", "villa", "liền kề"],
     fields: [
-      { key: "floors", label: "Số tầng", type: "select", options: ["1", "2", "3", "4", "5+"] },
-      { key: "frontage", label: "Mặt tiền", type: "number", unit: "m" },
-      { key: "roadWidth", label: "Đường vào", type: "number", unit: "m" },
+      floorsField,
+      frontageField,
+      { key: "gardenArea", label: "Diện tích sân vườn", type: "number", unit: "m²" },
+      { key: "pool", label: "Hồ bơi riêng", type: "select", options: ["Có", "Không"] },
+      { key: "view", label: "View / cảnh quan", type: "select", options: ["Biển", "Sông / hồ", "Sân golf", "Công viên", "Nội khu"] },
+    ],
+  },
+  {
+    label: "Shophouse / Nhà phố thương mại",
+    match: ["shophouse", "nhà phố thương mại", "thương mại"],
+    fields: [
+      floorsField,
+      frontageField,
+      roadField,
+      { key: "bizFloors", label: "Số tầng kinh doanh", type: "select", options: ["1", "2", "3", "Cả toà"] },
+      { key: "corner", label: "Vị trí", type: "select", options: ["Lô góc 2 mặt tiền", "1 mặt tiền", "Trong khu"] },
+    ],
+  },
+  {
+    label: "Nhà mặt phố",
+    match: ["nhà mặt phố", "mặt phố", "mặt tiền"],
+    fields: [
+      floorsField,
+      frontageField,
+      roadField,
+      { key: "corner", label: "Vị trí", type: "select", options: ["Lô góc 2 mặt tiền", "1 mặt tiền"] },
+    ],
+  },
+  {
+    label: "Nhà trọ / Phòng trọ",
+    match: ["nhà trọ", "phòng trọ", "trọ"],
+    fields: [
+      { key: "rooms", label: "Số phòng cho thuê", type: "number" },
+      floorsField,
+      { key: "roomArea", label: "Diện tích mỗi phòng", type: "number", unit: "m²" },
+      { key: "wc", label: "Vệ sinh", type: "select", options: ["Khép kín", "Chung"] },
+    ],
+  },
+  {
+    label: "Nhà riêng",
+    match: ["nhà riêng", "nhà ngõ", "nhà hẻm", "nhà"],
+    fields: [
+      floorsField,
+      frontageField,
+      roadField,
     ],
   },
   {
@@ -111,9 +161,10 @@ export const categorySpecs: CategorySpec[] = [
     match: ["đất nền", "đất nông nghiệp", "đất"],
     fields: [
       { key: "landType", label: "Loại đất", type: "select", options: ["Đất thổ cư", "Đất ở đô thị", "Đất nền dự án", "Đất nông nghiệp", "Đất vườn", "Đất khác"] },
-      { key: "frontage", label: "Mặt tiền", type: "number", unit: "m" },
-      { key: "roadWidth", label: "Đường vào", type: "number", unit: "m" },
+      frontageField,
+      roadField,
       { key: "blocks", label: "Số lô / nền", type: "text", placeholder: "VD: Lô A12" },
+      { key: "shape", label: "Hình dạng lô", type: "select", options: ["Vuông vức", "Nở hậu", "Thóp hậu", "Chữ L", "Khác"] },
     ],
   },
 ];
