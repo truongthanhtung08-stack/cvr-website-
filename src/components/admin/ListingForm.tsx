@@ -54,24 +54,50 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
   const [cPhone, setCPhone] = useState(initial?.details?.contact?.phone ?? "");
   const [cEmail, setCEmail] = useState(initial?.details?.contact?.email ?? "");
 
+  // Đăng tin GIÙM khách: chọn tin này thuộc khách hàng nào (owner_id).
+  type Cust = { id: string; full_name: string | null; phone: string | null; email: string | null; role: string };
+  const [ownerId, setOwnerId] = useState<string>(initial?.owner_id ?? "");
+  const [customers, setCustomers] = useState<Cust[]>([]);
+
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  // Tự điền liên hệ từ hồ sơ người đăng NẾU tin chưa có (áp cả tin mới lẫn tin cũ
-  // chưa nhập SĐT) — "coi bạn là thành viên, lấy số của bạn". Đã nhập rồi thì giữ nguyên.
+  // Nạp danh sách khách hàng (để admin chọn đăng giùm) + mặc định người đăng.
+  // Tin mới chưa gán chủ → mặc định là admin đang đăng nhập. Prefill liên hệ theo chủ.
   useEffect(() => {
     const supabase = createClient();
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      const { data: p } = await supabase.from("profiles").select("full_name, phone, email").eq("id", user.id).single();
-      if (p) {
-        setCName((v) => v || p.full_name || "");
-        setCPhone((v) => v || p.phone || "");
-        setCEmail((v) => v || p.email || "");
+      const { data: list } = await supabase
+        .from("profiles")
+        .select("id, full_name, phone, email, role")
+        .order("created_at", { ascending: false });
+      if (list) setCustomers(list as Cust[]);
+
+      const defaultOwner = initial?.owner_id || (!editing && user ? user.id : "");
+      if (!ownerId && defaultOwner) setOwnerId(defaultOwner);
+
+      // Điền liên hệ từ hồ sơ chủ tin (nếu tin chưa có sẵn contact)
+      const src = (list as Cust[] | null)?.find((x) => x.id === (initial?.owner_id || user?.id));
+      if (src) {
+        setCName((v) => v || src.full_name || "");
+        setCPhone((v) => v || src.phone || "");
+        setCEmail((v) => v || src.email || "");
       }
     })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Chọn khách hàng chủ tin → tự điền tên/SĐT/email của khách đó (đăng giùm).
+  function pickOwner(id: string) {
+    setOwnerId(id);
+    const c = customers.find((x) => x.id === id);
+    if (c) {
+      setCName(c.full_name ?? "");
+      setCPhone(c.phone ?? "");
+      setCEmail(c.email ?? "");
+    }
+  }
 
   const typeGroups = purpose === "thue" ? rentTypeGroups : saleTypeGroups;
   const specFields = type ? specForType(type).fields : [];
@@ -108,6 +134,7 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
     const newStatus: ListingStatus = asDraft ? "draft" : "approved";
     setSaving(true);
     const payload = {
+      owner_id: ownerId || null, // tin thuộc khách hàng nào (admin đăng giùm)
       purpose,
       type: type || null,
       title: title.trim(),
@@ -359,6 +386,20 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
 
       {/* Thông tin người đăng — hiện ở khung liên hệ trang chi tiết */}
       <Card title="Thông tin người đăng / liên hệ">
+        {/* Đăng GIÙM khách: chọn khách hàng → tự điền tên/SĐT của họ */}
+        <Field label="Tin này của khách hàng nào (đăng giùm)">
+          <select value={ownerId} onChange={(e) => pickOwner(e.target.value)} className={inputCls}>
+            <option value="">— Chọn khách hàng / đăng dưới tên admin —</option>
+            {customers.map((c) => (
+              <option key={c.id} value={c.id}>
+                {(c.full_name || c.email || "(chưa đặt tên)")}{c.phone ? ` · ${c.phone}` : ""}{c.role === "admin" ? " · (admin)" : ""}
+              </option>
+            ))}
+          </select>
+        </Field>
+        <p className="mt-1.5 mb-3 text-xs text-cvr-faint">
+          Chọn khách → tự điền tên &amp; SĐT của khách vào ô dưới. Tin sẽ thuộc về tài khoản khách đó (họ thấy trong &quot;Tin đăng của tôi&quot;).
+        </p>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <Field label="Họ và tên"><input value={cName} onChange={(e) => setCName(e.target.value)} placeholder="Nguyễn Văn A" className={inputCls} /></Field>
           <Field label="Số điện thoại"><input type="tel" value={cPhone} onChange={(e) => setCPhone(e.target.value)} placeholder="09xx xxx xxx" className={inputCls} /></Field>
