@@ -45,7 +45,16 @@ export default function LoginForm() {
         return;
       }
       const next = new URLSearchParams(window.location.search).get("next");
-      window.location.href = next || "/tai-khoan";
+      if (next) {
+        window.location.href = next;
+        return;
+      }
+      // Không có đích cụ thể → về đúng nơi theo vai trò: admin → /admin, khách → /tai-khoan
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: profile } = user
+        ? await supabase.from("profiles").select("role").eq("id", user.id).single()
+        : { data: null };
+      window.location.href = profile?.role === "admin" ? "/admin" : "/tai-khoan";
     } catch {
       setNotice("Hệ thống tài khoản chưa sẵn sàng. Vui lòng thử lại sau.");
     } finally {

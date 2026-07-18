@@ -5,13 +5,10 @@ import CompareButton from "@/components/CompareButton";
 import { listingSummary, type Listing } from "@/lib/data";
 import { tierFromBadge, getTier } from "@/lib/packages";
 
-const AGENTS = [
-  { name: "Trương Thanh Tùng", phone: "0905 123 456" },
-  { name: "Nguyễn Thị Hương",  phone: "0901 234 567" },
-  { name: "Lê Hoàng Nam",      phone: "0902 345 678" },
-];
-function getAgent(id: string) {
-  return AGENTS[(Math.max(0, parseInt(id, 10) || 1) - 1) % AGENTS.length];
+// Tên NGƯỜI ĐĂNG hiển thị trên thẻ: lấy từ tin thật (details.contact.name —
+// là tên KHÁCH HÀNG kể cả khi admin đăng giùm). Tin không có tên → "Coastal Land".
+function agentNameOf(item: Listing): string {
+  return item.agentName?.trim() || "Coastal Land";
 }
 
 function AgentAvatar({ name, size = 6 }: { name: string; size?: number }) {
@@ -44,7 +41,7 @@ export default function PropertyCard({
   showTime?: boolean;
 }) {
   if (layout === "list") return <PropertyRow item={item} showTime={showTime} />;
-  const agent = getAgent(item.id);
+  const agentName = agentNameOf(item);
   // Hạng CVR của tin (từ huy hiệu VIP/Nổi bật/Mới). Tin không huy hiệu → tin thường.
   const tier = item.badge ? getTier(tierFromBadge(item.badge)) : null;
   const isFeatured = variant === "featured";
@@ -131,8 +128,8 @@ export default function PropertyCard({
         {/* Đáy: thành viên đăng tin — chỉ cấp cao (variant "tier": Diamond/Gold) */}
         {showAgent && (
           <div className={`flex items-center gap-2 border-t border-cvr-line pt-2.5 ${isTier ? "mt-auto" : "mt-2.5"}`}>
-            <AgentAvatar name={agent.name} size={7} />
-            <span className="min-w-0 flex-1 truncate text-xs font-medium text-cvr-body">{agent.name}</span>
+            <AgentAvatar name={agentName} size={7} />
+            <span className="min-w-0 flex-1 truncate text-xs font-medium text-cvr-body">{agentName}</span>
             {showTime && <span className="shrink-0 text-[11px] text-cvr-faint">Hôm nay</span>}
           </div>
         )}
@@ -144,7 +141,7 @@ export default function PropertyCard({
 
 // ── List row ─────────────────────────────────────────────────────────────────
 function PropertyRow({ item, showTime = false }: { item: Listing; showTime?: boolean }) {
-  const agent = getAgent(item.id);
+  const agentName = agentNameOf(item);
   const tier = item.badge ? getTier(tierFromBadge(item.badge)) : null;
   return (
     <Link
@@ -184,8 +181,8 @@ function PropertyRow({ item, showTime = false }: { item: Listing; showTime?: boo
         </div>
         <p className="mt-1.5 flex items-center gap-1 text-xs text-cvr-muted"><PinIcon /><span className="truncate">{item.location}</span></p>
         <div className="mt-auto flex items-center gap-2 border-t border-cvr-line pt-2">
-          <AgentAvatar name={agent.name} size={7} />
-          <span className="min-w-0 flex-1 truncate text-xs font-medium text-cvr-body">{agent.name}</span>
+          <AgentAvatar name={agentName} size={7} />
+          <span className="min-w-0 flex-1 truncate text-xs font-medium text-cvr-body">{agentName}</span>
           {showTime && <span className="shrink-0 text-[11px] text-cvr-faint">Hôm nay</span>}
         </div>
       </div>

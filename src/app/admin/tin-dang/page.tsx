@@ -54,12 +54,17 @@ export default function AdminListingsPage() {
   const draftCount = rows.filter((r) => r.status === "draft").length;
 
   // Thao tác nhanh: đổi trạng thái 1 tin (Duyệt / Ẩn / Hiện lại)
+  // KHÔNG nuốt lỗi: thất bại phải báo ngay để admin biết tin CHƯA đổi trạng thái.
   async function setRowStatus(id: string, next: ListingStatus) {
     const supabase = createClient();
     const patch: Partial<ListingRow> = { status: next };
     if (next === "approved") patch.published_at = new Date().toISOString();
     const { error } = await supabase.from("listings").update(patch).eq("id", id);
-    if (!error) setRows((rs) => rs.map((r) => (r.id === id ? { ...r, ...patch } : r)));
+    if (error) {
+      window.alert(`Đổi trạng thái THẤT BẠI — tin chưa thay đổi.\nLỗi: ${error.message}`);
+      return;
+    }
+    setRows((rs) => rs.map((r) => (r.id === id ? { ...r, ...patch } : r)));
   }
 
   if (dbMissing) {

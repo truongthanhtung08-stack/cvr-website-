@@ -27,6 +27,9 @@ export type Listing = {
   // Mục đích tin: "ban" = mua bán (mặc định) · "thue" = cho thuê (giá tính theo tháng).
   // Phân tách rõ với "type" (sản phẩm/loại hình) để logic bán/thuê đúng trên mọi trang.
   purpose?: "ban" | "thue";
+  // Tên NGƯỜI ĐĂNG THẬT (details.contact.name — khách hàng, kể cả khi admin đăng giùm).
+  // Không có → thẻ tin hiện "Coastal Land".
+  agentName?: string;
 };
 
 // Lọc tin theo mục đích (mặc định không có purpose = "ban")

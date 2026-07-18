@@ -89,15 +89,16 @@ function rowToListing(r: Row): Listing {
     image: asset(r.images[0] ?? PLACEHOLDER_IMAGE),
     badge: TIER_BADGE[r.tier],
     purpose: r.purpose,
+    // Tên người đăng thật (khách hàng) — thẻ tin hiện đúng tên này, không phải admin
+    agentName: r.details?.contact?.name || undefined,
   };
 }
 
-// Cột cơ bản (thẻ tin & danh sách) — KHÔNG gồm details để danh sách vẫn chạy
-// kể cả khi cột details chưa được tạo (migration 0006 chưa chạy).
+// Cột cho thẻ tin & danh sách — GỒM CẢ details để thẻ hiện đúng TÊN NGƯỜI ĐĂNG THẬT
+// (details.contact.name — cột details đã có trên production từ migration 0006).
 const COLS =
-  "id,purpose,type,title,description,price_vnd,area_m2,built_area_m2,beds,baths,ward,district,province,images,tier,created_at";
-// Trang chi tiết cần thêm details (thuộc tính thật)
-const COLS_DETAIL = `${COLS},details`;
+  "id,purpose,type,title,description,price_vnd,area_m2,built_area_m2,beds,baths,ward,district,province,images,tier,created_at,details";
+const COLS_DETAIL = COLS;
 
 // Gọi PostgREST trực tiếp bằng fetch để dùng cache Next (revalidate) —
 // KHÔNG dùng client cookies ở đây vì tin đã duyệt là dữ liệu công khai.
