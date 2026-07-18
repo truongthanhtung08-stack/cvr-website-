@@ -19,6 +19,9 @@ export default function SocialAuth() {
       provider: "google",
       options: {
         redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
+        // LUÔN hiện màn hình CHỌN TÀI KHOẢN Google (không tự vào gmail gần nhất)
+        // — người có nhiều gmail (vd admin + khách) chọn đúng tài khoản mỗi lần.
+        queryParams: { prompt: "select_account" },
       },
     });
     // Thành công thì trình duyệt tự chuyển sang Google — chỉ còn lại trường hợp lỗi.
