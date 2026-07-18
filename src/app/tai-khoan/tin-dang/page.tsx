@@ -33,6 +33,13 @@ export default function MyListingsPage() {
     })();
   }, []);
 
+  // Xoá tin NHÁP của chính mình (hỏi xác nhận trước; RLS chỉ cho xoá tin mình)
+  async function handleDelete(r: ListingRow) {
+    if (!window.confirm(`Xoá tin nháp "${r.title || "(chưa có tiêu đề)"}"?`)) return;
+    const { error } = await createClient().from("listings").delete().eq("id", r.id);
+    if (!error) setRows((rows) => rows.filter((x) => x.id !== r.id));
+  }
+
   const filtered = tab === "all" ? rows : rows.filter((r) => r.status === tab);
   const count = (s: ListingStatus) => rows.filter((r) => r.status === s).length;
 
@@ -115,6 +122,15 @@ export default function MyListingsPage() {
                 </svg>
                 Sửa
               </Link>
+              {r.status === "draft" && (
+                <button
+                  type="button"
+                  onClick={() => handleDelete(r)}
+                  className="flex h-9 items-center rounded-full border border-red-200 px-4 text-sm font-medium text-red-600 transition hover:border-red-400 hover:bg-red-50"
+                >
+                  Xoá
+                </button>
+              )}
             </div>
           </div>
         ))}

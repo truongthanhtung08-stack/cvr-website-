@@ -29,6 +29,7 @@ export default function PostListingForm() {
   // Chế độ SỬA: nạp tin cũ ("loading") · nạp xong ("ok") · không thấy/không có quyền ("notfound")
   const [editLoad, setEditLoad] = useState<"" | "loading" | "ok" | "notfound">(editId ? "loading" : "");
   const [editStatus, setEditStatus] = useState<string>("");
+  const [editOwner, setEditOwner] = useState<string | null>(null);
   const [demand, setDemand] = useState(demandTypes[0]);
   const [category, setCategory] = useState(propertyCategories[0]);
   const [province, setProvince] = useState("");
@@ -118,6 +119,7 @@ export default function PostListingForm() {
         setContactEmail(d.contact.email ?? "");
       }
       setEditStatus(r.status);
+      setEditOwner(r.owner_id);
       setEditLoad("ok");
     })();
   }, [editId]);
@@ -183,9 +185,31 @@ export default function PostListingForm() {
     };
 
     const supabase = createClient();
-    const { error: err } = editId
-      ? await supabase.from("listings").update(values).eq("id", editId)
-      : await supabase.from("listings").insert({ ...values, owner_id: userId, tier: "basic", published_at: null });
+    let err: { message: string } | null = null;
+
+    if (!editId) {
+      // TIN MỚI
+      ({ error: err } = await supabase
+        .from("listings")
+        .insert({ ...values, owner_id: userId, tier: "basic", published_at: null }));
+    } else if (editStatus === "draft" && !asDraft) {
+      // ĐĂNG TIN NHÁP: tạo tin mới "chờ duyệt" + xoá nháp cũ.
+      // (2 thao tác này chủ tin luôn có quyền — không phụ thuộc quyền đổi status trong DB)
+      ({ error: err } = await supabase
+        .from("listings")
+        .insert({ ...values, owner_id: editOwner ?? userId, tier: "basic", published_at: null }));
+      if (!err) await supabase.from("listings").delete().eq("id", editId);
+    } else {
+      // SỬA tin (nháp→nháp, chờ duyệt, đã duyệt…)
+      ({ error: err } = await supabase.from("listings").update(values).eq("id", editId));
+      if (err && /đặc quyền|dac quyen|privileged/i.test(err.message)) {
+        // DB chưa cho chủ tin đổi trạng thái (chưa chạy migration 0007)
+        // → vẫn lưu TOÀN BỘ nội dung, giữ nguyên trạng thái cũ.
+        const { status: _ignored, ...noStatus } = values;
+        ({ error: err } = await supabase.from("listings").update(noStatus).eq("id", editId));
+      }
+    }
+
     setSaving("");
     if (err) return setError(`Lưu thất bại: ${err.message}`);
     setDone(asDraft ? "draft" : "pending");
