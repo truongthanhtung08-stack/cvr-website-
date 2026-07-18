@@ -25,8 +25,69 @@ function autoReply(text: string): string {
   return "Cảm ơn anh/chị đã nhắn tin cho Coastal Land. Anh/chị để lại số điện thoại hoặc nội dung cần hỗ trợ, chuyên viên sẽ phản hồi sớm nhất ạ.";
 }
 
+// Vị trí nút chat (khoảng cách tới mép PHẢI/DƯỚI màn hình). null = góc mặc định.
+type ChatPos = { right: number; bottom: number };
+const POS_KEY = "cl-chat-pos";
+const BTN = 48; // đường kính nút (h-12)
+const MARGIN = 8;
+
+function clampBtn(p: ChatPos): ChatPos {
+  return {
+    right: Math.min(Math.max(p.right, MARGIN), Math.max(MARGIN, window.innerWidth - BTN - MARGIN)),
+    bottom: Math.min(Math.max(p.bottom, MARGIN), Math.max(MARGIN, window.innerHeight - BTN - MARGIN)),
+  };
+}
+
 export default function Chatbox() {
   const [open, setOpen] = useState(false);
+  // Nút chat KÉO–THẢ được để không che nội dung (yêu cầu 14/7). Vị trí lưu localStorage.
+  const [pos, setPos] = useState<ChatPos | null>(null);
+  const drag = useRef<{ startX: number; startY: number; base: ChatPos; moved: boolean } | null>(null);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(POS_KEY);
+      if (saved) setPos(clampBtn(JSON.parse(saved)));
+    } catch { /* vị trí hỏng → dùng góc mặc định */ }
+  }, []);
+
+  const onBtnPointerDown = (e: React.PointerEvent) => {
+    const base = pos ?? { right: 20, bottom: 20 };
+    drag.current = { startX: e.clientX, startY: e.clientY, base, moved: false };
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+  };
+  const onBtnPointerMove = (e: React.PointerEvent) => {
+    if (!drag.current) return;
+    const dx = e.clientX - drag.current.startX;
+    const dy = e.clientY - drag.current.startY;
+    if (!drag.current.moved && Math.hypot(dx, dy) < 6) return; // chưa vượt ngưỡng → coi là bấm
+    drag.current.moved = true;
+    setPos(clampBtn({ right: drag.current.base.right - dx, bottom: drag.current.base.bottom - dy }));
+  };
+  const onBtnPointerUp = () => {
+    if (!drag.current) return;
+    const wasDrag = drag.current.moved;
+    drag.current = null;
+    if (wasDrag) {
+      setPos((p) => {
+        if (p) try { localStorage.setItem(POS_KEY, JSON.stringify(p)); } catch { /* bỏ qua */ }
+        return p;
+      });
+    } else {
+      setOpen((v) => !v);
+    }
+  };
+
+  // Khung chat mở cạnh nút — kẹp lại để luôn nằm trọn trong màn hình.
+  const panelStyle = (() => {
+    if (!pos || typeof window === "undefined") return undefined;
+    const w = Math.min(360, window.innerWidth - 40);
+    const h = Math.min(520, window.innerHeight - 40);
+    return {
+      right: Math.min(Math.max(pos.right, MARGIN), Math.max(MARGIN, window.innerWidth - w - MARGIN)),
+      bottom: Math.min(Math.max(pos.bottom, MARGIN), Math.max(MARGIN, window.innerHeight - h - MARGIN)),
+    } as React.CSSProperties;
+  })();
   const [messages, setMessages] = useState<Msg[]>([
     {
       from: "bot",
@@ -52,12 +113,15 @@ export default function Chatbox() {
 
   return (
     <>
-      {/* Nút mở chat */}
+      {/* Nút mở chat — GIỮ + KÉO để dời chỗ, BẤM để mở */}
       <button
         type="button"
-        aria-label="Mở chat trực tuyến"
-        onClick={() => setOpen((v) => !v)}
-        className={`fixed bottom-5 right-5 z-[60] flex h-12 w-12 items-center justify-center rounded-full bg-cvr-blue text-white shadow-lg shadow-black/20 ring-1 ring-white/15 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 hover:bg-cvr-blue-ink active:scale-95 ${
+        aria-label="Mở chat trực tuyến (giữ và kéo để di chuyển)"
+        onPointerDown={onBtnPointerDown}
+        onPointerMove={onBtnPointerMove}
+        onPointerUp={onBtnPointerUp}
+        style={pos ? { right: pos.right, bottom: pos.bottom } : undefined}
+        className={`fixed bottom-5 right-5 z-[60] flex h-12 w-12 touch-none select-none items-center justify-center rounded-full bg-cvr-blue text-white shadow-lg shadow-black/20 ring-1 ring-white/15 transition-[opacity,transform,background-color] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:bg-cvr-blue-ink ${
           open ? "pointer-events-none scale-0 opacity-0" : "opacity-100"
         }`}
       >
@@ -67,12 +131,12 @@ export default function Chatbox() {
         </svg>
       </button>
 
-      {/* Khung chat */}
+      {/* Khung chat — mở tại vị trí nút (đã kéo tới đâu thì mở ở đó, kẹp trong màn hình) */}
       <div
-        className={`fixed bottom-5 right-5 z-[60] flex w-[min(360px,calc(100vw-2.5rem))] flex-col overflow-hidden rounded-none border border-cvr-line bg-white shadow-2xl shadow-black/15 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+        className={`fixed bottom-5 right-5 z-[60] flex w-[min(360px,calc(100vw-2.5rem))] flex-col overflow-hidden rounded-none border border-cvr-line bg-white shadow-2xl shadow-black/15 transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
           open ? "translate-y-0 scale-100 opacity-100" : "pointer-events-none translate-y-4 scale-95 opacity-0"
         }`}
-        style={{ height: "min(520px, calc(100vh - 2.5rem))" }}
+        style={{ height: "min(520px, calc(100vh - 2.5rem))", ...panelStyle }}
       >
         {/* Tiêu đề */}
         <div className="flex items-center justify-between gap-3 border-b border-cvr-line bg-white px-4 py-3">

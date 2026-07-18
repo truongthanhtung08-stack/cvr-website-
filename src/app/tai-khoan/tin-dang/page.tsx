@@ -95,11 +95,26 @@ export default function MyListingsPage() {
                 {r.province ? ` · ${r.province}` : ""}
               </div>
             </div>
-            <div className="flex shrink-0 items-center gap-3">
-              {r.status === "approved" && (
-                <Link href={`/bat-dong-san/${r.id}`} target="_blank" className="text-sm font-medium text-cvr-muted hover:text-cvr-ink">Xem ↗</Link>
-              )}
+            <div className="flex shrink-0 flex-col items-end gap-2 sm:flex-row sm:items-center sm:gap-3">
               <span className="text-xs text-cvr-faint">{r.view_count} lượt xem</span>
+              {r.status === "approved" && (
+                <Link
+                  href={`/bat-dong-san/${r.id}`}
+                  target="_blank"
+                  className="flex h-9 items-center gap-1.5 rounded-full border border-cvr-line px-4 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink"
+                >
+                  Xem ↗
+                </Link>
+              )}
+              <Link
+                href={`/dang-tin?id=${r.id}`}
+                className="flex h-9 items-center gap-1.5 rounded-full bg-cvr-ink px-4 text-sm font-semibold text-white transition hover:bg-cvr-ink/90"
+              >
+                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                Sửa
+              </Link>
             </div>
           </div>
         ))}

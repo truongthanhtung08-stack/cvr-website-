@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import PostListingForm from "@/components/PostListingForm";
@@ -37,7 +38,10 @@ export default function DangTinPage() {
           </div>
 
           <div className="mt-10">
-            <PostListingForm />
+            {/* Suspense: form đọc ?id= (chế độ sửa tin) bằng useSearchParams */}
+            <Suspense fallback={<p className="py-16 text-center text-sm text-cvr-muted">Đang tải…</p>}>
+              <PostListingForm />
+            </Suspense>
           </div>
         </div>
       </main>

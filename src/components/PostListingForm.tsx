@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import {
   categorySpecs, propertyCategories, demandTypes,
@@ -10,18 +10,25 @@ import {
 } from "@/lib/listingSpec";
 import { provinceNames, districtsOf, wardsOf } from "@/lib/locations";
 import ImagePicker from "@/components/admin/ImagePicker";
+import type { ListingRow } from "@/lib/listingAdmin";
 
 // Form đăng tin cho KHÁCH HÀNG (/dang-tin) — nối Supabase thật.
 // Cùng cấu trúc với form admin: Lưu nháp (làm dở) / Đăng tin (gửi duyệt).
 // Khách đăng → status 'pending' (chờ admin duyệt). Nháp → 'draft'.
+// CHỈNH SỬA tin cũ: mở /dang-tin?id=<id tin> — form tự nạp tin (RLS chỉ cho chủ tin),
+// lưu = update. Tin đã duyệt sửa xong sẽ quay về "Chờ duyệt".
 export default function PostListingForm() {
   const router = useRouter();
+  const editId = useSearchParams().get("id");
 
   // Ai đang đăng nhập (cần để gắn owner_id + prefill liên hệ)
   const [userId, setUserId] = useState<string | null>(null);
   const [authReady, setAuthReady] = useState(false);
 
   const [done, setDone] = useState<"" | "draft" | "pending">("");
+  // Chế độ SỬA: nạp tin cũ ("loading") · nạp xong ("ok") · không thấy/không có quyền ("notfound")
+  const [editLoad, setEditLoad] = useState<"" | "loading" | "ok" | "notfound">(editId ? "loading" : "");
+  const [editStatus, setEditStatus] = useState<string>("");
   const [demand, setDemand] = useState(demandTypes[0]);
   const [category, setCategory] = useState(propertyCategories[0]);
   const [province, setProvince] = useState("");
@@ -47,7 +54,8 @@ export default function PostListingForm() {
   const [contactPhone, setContactPhone] = useState("");
   const [contactEmail, setContactEmail] = useState("");
 
-  const [saving, setSaving] = useState(false);
+  // Đang lưu nút nào — để 2 nút hiện trạng thái riêng, không lẫn nhau
+  const [saving, setSaving] = useState<"" | "draft" | "publish">("");
   const [error, setError] = useState("");
 
   const spec = useMemo(() => categorySpecs.find((c) => c.label === category) ?? categorySpecs[0], [category]);
@@ -71,6 +79,48 @@ export default function PostListingForm() {
       setAuthReady(true);
     })();
   }, []);
+
+  // CHẾ ĐỘ SỬA: nạp tin cũ vào form (RLS đảm bảo chỉ chủ tin/admin đọc được tin chưa duyệt)
+  useEffect(() => {
+    if (!editId) return;
+    const supabase = createClient();
+    (async () => {
+      const { data, error } = await supabase.from("listings").select("*").eq("id", editId).single();
+      if (error || !data) { setEditLoad("notfound"); return; }
+      const r = data as ListingRow;
+      setDemand(r.purpose === "thue" ? "Cho thuê" : demandTypes[0]);
+      if (propertyCategories.includes(r.type)) setCategory(r.type);
+      setProvince(r.province ?? "");
+      setDistrict(r.district ?? "");
+      setWard(r.ward ?? "");
+      setTitle(r.title ?? "");
+      setDescription(r.description ?? "");
+      // Giá VNĐ → ô nhập + đơn vị (ngược với priceToVnd)
+      if (r.price_vnd == null) { setPriceUnit("Thoả thuận"); setPriceValue(""); }
+      else if (r.price_vnd >= 1e9) { setPriceUnit("tỷ"); setPriceValue(String(Math.round((r.price_vnd / 1e9) * 100) / 100)); }
+      else { setPriceUnit("triệu"); setPriceValue(String(Math.round(r.price_vnd / 1e6))); }
+      setArea(r.area_m2 != null ? String(r.area_m2) : "");
+      setBuiltArea(r.built_area_m2 != null ? String(r.built_area_m2) : "");
+      setBeds(r.beds != null ? String(r.beds) : "");
+      setBaths(r.baths != null ? String(r.baths) : "");
+      setImages(r.images ?? []);
+      const d = r.details ?? {};
+      setSpecValues(d.specs ?? {});
+      setInterior(d.interior ?? []);
+      setAmenities(d.amenities ?? []);
+      setLegal(d.legal ?? "");
+      setFurnish(d.furnish ?? "");
+      setDirection(d.direction ?? "");
+      setAddressDetail(d.addressDetail ?? "");
+      if (d.contact) {
+        setContactName(d.contact.name ?? "");
+        setContactPhone(d.contact.phone ?? "");
+        setContactEmail(d.contact.email ?? "");
+      }
+      setEditStatus(r.status);
+      setEditLoad("ok");
+    })();
+  }, [editId]);
 
   function toggle(list: string[], set: (v: string[]) => void, v: string) {
     set(list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
@@ -100,10 +150,10 @@ export default function PostListingForm() {
       if (!contactName.trim() || !contactPhone.trim()) return setError("Nhập họ tên và số điện thoại liên hệ.");
     }
 
-    setSaving(true);
-    const { error: err } = await createClient().from("listings").insert({
-      owner_id: userId,
-      purpose: demand === "Cho thuê" ? "thue" : "ban",
+    setSaving(asDraft ? "draft" : "publish");
+    // Dữ liệu chung cho cả THÊM MỚI và CẬP NHẬT
+    const values = {
+      purpose: demand === "Cho thuê" ? ("thue" as const) : ("ban" as const),
       type: category,
       title: title.trim(),
       description: description.trim() || null,
@@ -129,11 +179,14 @@ export default function PostListingForm() {
           ? { name: contactName.trim(), phone: contactPhone.trim(), email: contactEmail.trim() }
           : undefined,
       },
-      tier: "basic",
-      status: asDraft ? "draft" : "pending", // khách đăng → chờ admin duyệt
-      published_at: null,
-    });
-    setSaving(false);
+      status: asDraft ? ("draft" as const) : ("pending" as const), // khách đăng → chờ admin duyệt
+    };
+
+    const supabase = createClient();
+    const { error: err } = editId
+      ? await supabase.from("listings").update(values).eq("id", editId)
+      : await supabase.from("listings").insert({ ...values, owner_id: userId, tier: "basic", published_at: null });
+    setSaving("");
     if (err) return setError(`Lưu thất bại: ${err.message}`);
     setDone(asDraft ? "draft" : "pending");
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -159,7 +212,7 @@ export default function PostListingForm() {
           <svg className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
         </div>
         <h3 className="text-xl font-semibold tracking-tight text-cvr-ink">
-          {done === "draft" ? "Đã lưu nháp!" : "Tin đăng đã được gửi!"}
+          {done === "draft" ? "Đã lưu nháp!" : editId ? "Đã cập nhật — tin chờ duyệt lại!" : "Tin đăng đã được gửi!"}
         </h3>
         <p className="mt-2 text-sm text-cvr-muted">
           {done === "draft"
@@ -167,15 +220,41 @@ export default function PostListingForm() {
             : "Tin của bạn đang chờ Coastal Land kiểm duyệt và sẽ hiển thị sau ít phút."}
         </p>
         <div className="mt-5 flex flex-wrap justify-center gap-3">
-          <Link href="/tai-khoan/tin-dang" className="rounded-lg bg-cvr-ink px-5 py-2 text-sm font-semibold text-white transition hover:bg-cvr-ink/90">Tin đăng của tôi</Link>
-          <button type="button" onClick={() => { setDone(""); setTitle(""); setImages([]); }} className="rounded-lg border border-cvr-line px-5 py-2 text-sm font-medium text-cvr-body hover:border-cvr-ink hover:text-cvr-ink">Đăng tin khác</button>
+          <Link href="/tai-khoan/tin-dang" className="rounded-full bg-cvr-ink px-5 py-2 text-sm font-semibold text-white transition hover:bg-cvr-ink/90">Tin đăng của tôi</Link>
+          {!editId && (
+            <button type="button" onClick={() => { setDone(""); setTitle(""); setImages([]); }} className="rounded-full border border-cvr-line px-5 py-2 text-sm font-medium text-cvr-body hover:border-cvr-ink hover:text-cvr-ink">Đăng tin khác</button>
+          )}
         </div>
+      </div>
+    );
+  }
+
+  // Chế độ sửa: đang nạp tin / không tìm thấy (sai id hoặc tin không thuộc tài khoản này)
+  if (editLoad === "loading") {
+    return <p className="py-16 text-center text-sm text-cvr-muted">Đang tải tin để chỉnh sửa…</p>;
+  }
+  if (editLoad === "notfound") {
+    return (
+      <div className="rounded-none border border-cvr-line bg-white p-10 text-center shadow-lux">
+        <h3 className="text-xl font-semibold tracking-tight text-cvr-ink">Không tìm thấy tin</h3>
+        <p className="mt-2 text-sm text-cvr-muted">Tin không tồn tại hoặc không thuộc tài khoản của bạn.</p>
+        <Link href="/tai-khoan/tin-dang" className="mt-5 inline-block rounded-full bg-cvr-ink px-5 py-2 text-sm font-semibold text-white transition hover:bg-cvr-ink/90">Về Tin đăng của tôi</Link>
       </div>
     );
   }
 
   return (
     <form onSubmit={(e) => { e.preventDefault(); save(false); }} className="space-y-6">
+      {/* Băng rôn chế độ SỬA — nói rõ đang sửa tin nào, trạng thái gì */}
+      {editId && (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-none border border-cvr-blue/30 bg-cvr-blue/[0.06] px-4 py-3">
+          <p className="text-sm font-medium text-cvr-blue-ink">
+            Đang chỉnh sửa tin{editStatus === "draft" ? " nháp" : editStatus === "approved" ? " (đã duyệt — lưu xong sẽ duyệt lại)" : ""}
+          </p>
+          <Link href="/tai-khoan/tin-dang" className="text-sm font-medium text-cvr-muted transition hover:text-cvr-ink">← Về danh sách tin</Link>
+        </div>
+      )}
+
       {/* 1. Loại tin & loại hình */}
       <Card step="1" title="Loại tin đăng">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -317,17 +396,34 @@ export default function PostListingForm() {
         <p className="rounded-lg bg-red-50 px-4 py-2.5 text-sm font-medium text-red-700 ring-1 ring-inset ring-red-600/20">{error}</p>
       )}
 
-      {/* 2 nút: ĐĂNG TIN (gửi duyệt) · LƯU NHÁP (làm tiếp sau) */}
-      <div className="flex flex-wrap items-center gap-3">
-        <button type="submit" disabled={saving} className="btn-dangtin flex items-center justify-center gap-2 rounded-xl px-6 py-3.5 text-base font-bold text-cvr-ink disabled:opacity-50">
-          {saving ? "Đang gửi…" : "Đăng tin ngay"}
+      {/* 2 nút TÁCH BIỆT RÕ (pill Apple): ĐĂNG TIN = đen đặc nổi bật (gửi duyệt) ·
+          LƯU NHÁP = xám nhạt kín đáo (cất tạm, làm tiếp sau) */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <button
+          type="submit"
+          disabled={!!saving}
+          className="btn-dangtin flex h-[52px] flex-1 items-center justify-center gap-2 rounded-full px-8 text-base font-bold text-white disabled:opacity-50 sm:flex-none"
+        >
+          <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 19V5m0 0l-6 6m6-6l6 6" />
+          </svg>
+          {saving === "publish" ? "Đang gửi duyệt…" : editId ? "Cập nhật & gửi duyệt" : "Đăng tin ngay"}
         </button>
-        <button type="button" onClick={() => save(true)} disabled={saving} className="rounded-xl border border-cvr-line px-6 py-3.5 text-base font-semibold text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink disabled:opacity-50">
-          Lưu nháp
+        <button
+          type="button"
+          onClick={() => save(true)}
+          disabled={!!saving}
+          className="flex h-[52px] flex-1 items-center justify-center gap-2 rounded-full bg-cvr-surface px-7 text-base font-semibold text-cvr-body ring-1 ring-inset ring-cvr-line transition hover:bg-cvr-line/40 hover:text-cvr-ink active:scale-[0.98] disabled:opacity-50 sm:flex-none"
+        >
+          <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M17 21v-8H7v8M7 3v5h8M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
+          </svg>
+          {saving === "draft" ? "Đang lưu nháp…" : "Lưu nháp"}
         </button>
       </div>
-      <p className="text-center text-[11px] text-cvr-faint">
-        <strong>Lưu nháp</strong>: lưu vào tài khoản, làm tiếp sau. <strong>Đăng tin</strong>: gửi Coastal Land kiểm duyệt trước khi hiển thị.
+      <p className="text-center text-xs text-cvr-muted">
+        <strong className="text-cvr-ink">Đăng tin</strong>: gửi Coastal Land kiểm duyệt, duyệt xong tin hiển thị công khai. ·{" "}
+        <strong className="text-cvr-ink">Lưu nháp</strong>: cất tạm trong tài khoản, chưa ai thấy, vào làm tiếp bất cứ lúc nào.
       </p>
     </form>
   );

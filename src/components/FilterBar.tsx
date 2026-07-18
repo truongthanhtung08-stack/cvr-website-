@@ -74,6 +74,8 @@ export default function FilterBar({
   const [sugOpen, setSugOpen] = useState(false);
   const [activeIdx, setActiveIdx] = useState(-1);
   const [recent, setRecent] = useState<Suggestion[]>([]);
+  // Mobile (< sm): hàng dropdown lọc gập sau nút "Bộ lọc" cho gọn màn hình nhỏ.
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const boxRef = useRef<HTMLDivElement>(null); // vùng ô tìm — để bấm-ra-ngoài thì đóng gợi ý
 
   useEffect(() => {
@@ -492,7 +494,26 @@ export default function FilterBar({
       <div className="rounded-none border border-cvr-line bg-white p-2.5 shadow-lux">
         <div className="flex flex-col gap-2">
           {searchBox}
-          <div className="flex flex-wrap items-center gap-2">
+          {/* MOBILE: hàng dropdown thu gọn sau nút "Bộ lọc" (desktop luôn hiện) */}
+          <button
+            type="button"
+            onClick={() => setMobileFiltersOpen((v) => !v)}
+            aria-expanded={mobileFiltersOpen}
+            className="flex h-10 w-full items-center justify-center gap-2 rounded-none border border-cvr-line text-sm font-medium text-cvr-body transition active:bg-cvr-surface sm:hidden"
+          >
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 5h18M6 12h12M10 19h4" />
+            </svg>
+            Bộ lọc
+            {hasActive && <span className="h-1.5 w-1.5 rounded-full bg-cvr-blue" />}
+            <svg
+              className={`h-3.5 w-3.5 text-cvr-faint transition-transform duration-200 ${mobileFiltersOpen ? "rotate-180" : ""}`}
+              fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          <div className={`${mobileFiltersOpen ? "flex" : "hidden"} flex-wrap items-center gap-2 sm:flex`}>
             {moreDropdown}
             <FilterToggle label="Tin xác thực" checked={f.verified} onChange={(v) => set({ verified: v })} />
             {typeDropdown}

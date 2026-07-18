@@ -151,8 +151,8 @@ function PropertyRow({ item, showTime = false }: { item: Listing; showTime?: boo
       href={`/bat-dong-san/${item.id}`}
       className="flex gap-3 overflow-hidden rounded-none border border-cvr-line bg-white p-2.5 shadow-lux shadow-lux-hover transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5"
     >
-      <div className="relative aspect-[4/3] w-48 shrink-0 overflow-hidden rounded-xl bg-cvr-surface">
-        <Image src={item.image} alt={item.title} fill sizes="192px" className="object-cover" />
+      <div className="relative aspect-[4/3] w-32 shrink-0 overflow-hidden rounded-xl bg-cvr-surface sm:w-48">
+        <Image src={item.image} alt={item.title} fill sizes="(max-width: 640px) 128px, 192px" className="object-cover" />
         {tier && (
           <span
             className="absolute left-2 top-2 px-1.5 py-0.5 text-[10px] font-bold uppercase"
@@ -169,13 +169,13 @@ function PropertyRow({ item, showTime = false }: { item: Listing; showTime?: boo
       </div>
       <div className="flex min-w-0 flex-1 flex-col">
         <h3
-          className={`line-clamp-2 text-base font-semibold leading-snug text-cvr-ink ${tier?.uppercase ? "uppercase" : ""}`}
+          className={`line-clamp-2 text-sm font-semibold leading-snug text-cvr-ink sm:text-base ${tier?.uppercase ? "uppercase" : ""}`}
           style={tier?.titleColor ? { color: tier.titleColor } : undefined}
         >
           {tier?.hot && <HotIcon color={tier.accent} />}
           {item.title}
         </h3>
-        <p className="mt-1 line-clamp-2 text-sm leading-relaxed text-cvr-muted">{listingSummary(item)}</p>
+        <p className="mt-1 hidden text-sm leading-relaxed text-cvr-muted sm:line-clamp-2">{listingSummary(item)}</p>
         <div className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <span className={`text-sm ${item.price === "Thỏa thuận" ? "text-cvr-muted" : "text-cvr-ink"}`}>{item.price}</span>
           <span className="text-sm text-cvr-body">{item.area}</span>

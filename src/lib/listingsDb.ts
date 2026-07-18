@@ -117,11 +117,18 @@ async function rest(query: string): Promise<Row[] | null> {
   }
 }
 
+// Tin MẪU seed từ lúc dev có id dạng SỐ ('1'..'33') — tin thật của khách là UUID.
+// WEB PHẢI THẬT (18/7): loại tin mẫu khỏi mọi trang, kể cả khi chưa xoá trong DB
+// (migration 0008 xoá hẳn; lớp lọc này đảm bảo ngay cả khi chưa chạy SQL).
+const isSeedRow = (r: Row) => /^\d+$/.test(r.id);
+
 // Toàn bộ tin ĐÃ DUYỆT (mới nhất trước — FE tự xếp hạng VIP bằng sortListings)
+// TIN THẬT 100%: DB trả 0 tin thật → hiện trống thật (KHÔNG độn dữ liệu mẫu).
+// Chỉ fallback mẫu khi Supabase LỖI/chưa cấu hình (rows=null) để web không trắng trang.
 export async function getListings(): Promise<Listing[]> {
   const rows = await rest(`select=${COLS}&status=eq.approved&order=created_at.desc&limit=500`);
-  if (!rows || rows.length === 0) return featuredListings; // fallback dữ liệu mẫu
-  return rows.map(rowToListing);
+  if (!rows) return featuredListings; // lỗi kết nối/chưa cấu hình → fallback mẫu
+  return rows.filter((r) => !isSeedRow(r)).map(rowToListing);
 }
 
 // Một tin theo id (trang chi tiết) — fallback tìm trong dữ liệu mẫu
