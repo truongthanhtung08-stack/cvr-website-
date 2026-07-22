@@ -66,6 +66,12 @@ export default function AdminDashboard() {
           <Link href="/admin/tin-dang" className="rounded-lg border border-cvr-line px-4 py-2 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink">
             Quản lý tin đăng
           </Link>
+          <Link href="/admin/du-an/moi" className="rounded-lg border border-cvr-line px-4 py-2 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink">
+            + Thêm dự án
+          </Link>
+          <Link href="/admin/tin-tuc/moi" className="rounded-lg border border-cvr-line px-4 py-2 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink">
+            + Viết bài tin tức
+          </Link>
           <Link href="/admin/khach-hang" className="rounded-lg border border-cvr-line px-4 py-2 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink">
             Quản lý khách hàng
           </Link>

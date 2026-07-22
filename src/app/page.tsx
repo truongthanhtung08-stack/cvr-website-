@@ -11,10 +11,12 @@ import { AdBannerSeller, AdBannerApp } from "@/components/HomeAdBanners";
 import Footer from "@/components/Footer";
 import Reveal from "@/components/Reveal";
 import { getListings } from "@/lib/listingsDb";
+import { getArticles, getProjects } from "@/lib/contentDb";
 
 export default async function Home() {
   // B2: tin từ Supabase (bảng listings) — chưa có bảng/lỗi → tự dùng dữ liệu mẫu
-  const listings = await getListings();
+  // Dự án + Tin tức: nội dung admin tự tạo (contentDb) — chưa có → mẫu
+  const [listings, projects, articles] = await Promise.all([getListings(), getProjects(), getArticles()]);
   return (
     <>
       <Header />
@@ -25,7 +27,7 @@ export default async function Home() {
             cần hiện tức thì để tạo kết nối — tránh bị "vùng chết" của Reveal ẩn đi. */}
         <FeaturedListings items={listings} />
         <Reveal>
-          <ProjectsSection />
+          <ProjectsSection projects={projects} />
         </Reveal>
         {/* "Dành riêng cho bạn" TẠM ẨN theo yêu cầu — mở lại: bỏ comment import ForYou + khối này.
         <Reveal>
@@ -35,7 +37,7 @@ export default async function Home() {
           <LocationGrid />
         </Reveal>
         <Reveal>
-          <NewsSection />
+          <NewsSection articles={articles} />
         </Reveal>
         <Reveal>
           <AdBannerSeller />

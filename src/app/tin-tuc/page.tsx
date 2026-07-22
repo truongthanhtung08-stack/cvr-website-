@@ -3,14 +3,16 @@ import Image from "next/image";
 import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { articles } from "@/lib/data";
+import { getArticles } from "@/lib/contentDb";
 
 export const metadata: Metadata = {
   title: "Tin tức bất động sản | Coastal Land",
   description: "Phân tích thị trường, cẩm nang pháp lý và kinh nghiệm đầu tư bất động sản tại Đà Nẵng, Huế và miền Trung.",
 };
 
-export default function TinTucPage() {
+export default async function TinTucPage() {
+  // Bài viết từ Supabase (admin tự tạo) — chưa có bài thật → bài mẫu
+  const articles = await getArticles();
   const [featured, ...rest] = articles;
 
   return (

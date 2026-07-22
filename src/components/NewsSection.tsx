@@ -1,11 +1,13 @@
 import Image from "next/image";
 import Link from "next/link";
-import { articles } from "@/lib/data";
+import type { Article } from "@/lib/data";
 
 // Khối Tin tức trang chủ — cấu trúc kiểu Batdongsan:
 // BÀI NỔI BẬT lớn bên trái (ảnh + tiêu đề + mô tả) + CỘT TIÊU ĐỀ tin mới bên phải
 // (chỉ chữ, ngăn dòng kẻ — gọn, lướt nhanh). Giao diện thẻ Apple (trắng + shadow-lux).
-export default function NewsSection() {
+// Bài viết do trang cha truyền vào (đọc từ Supabase — admin đăng gì hiện nấy).
+export default function NewsSection({ articles }: { articles: Article[] }) {
+  if (articles.length === 0) return null;
   const [featured, ...rest] = articles;
   const headlines = rest.slice(0, 6);
 

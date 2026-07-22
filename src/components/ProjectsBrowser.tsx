@@ -5,12 +5,13 @@ import Image from "next/image";
 import Link from "next/link";
 import FilterDropdown, { FilterDropdownGroup } from "@/components/FilterDropdown";
 import { normalizeVi } from "@/lib/filters";
-import { projects, articles } from "@/lib/data";
+import type { Project, Article } from "@/lib/data";
 
 // Danh sách dự án trang /du-an — bố cục kiểu Batdongsan:
 // thanh lọc dưới Hero (ô tìm + dropdown Khu vực · Loại hình · Trạng thái)
 // → tiêu đề + bộ đếm nhảy theo bộ lọc → thẻ ngang (ảnh trái · thông tin phải)
 // + sidebar phải = lọc theo khu vực (đếm số dự án) + tin tức bất động sản.
+// Dữ liệu do trang cha truyền vào (đọc từ Supabase — admin đăng gì hiện nấy).
 
 // Tỉnh/thành = phần cuối của location ("Hòa Hải, Ngũ Hành Sơn, Đà Nẵng" → "Đà Nẵng")
 const provinceOf = (location: string) => location.split(",").pop()?.trim() ?? "";
@@ -18,27 +19,27 @@ const provinceOf = (location: string) => location.split(",").pop()?.trim() ?? ""
 const typeOf = (type: string) =>
   type.includes("Căn hộ") ? "Căn hộ" : type.includes("đô thị") ? "Khu đô thị" : "Nghỉ dưỡng & biệt thự";
 // Giá/m² tham khảo: lấy hàng "Giá..." trong bảng quy mô của dự án
-const priceRef = (p: (typeof projects)[number]) =>
+const priceRef = (p: Project) =>
   p.scale.find((s) => s.label.startsWith("Giá"))?.value;
 
 const ALL = "Tất cả";
 
 // Đếm số dự án theo từng giá trị của 1 tiêu chí
-function countBy(key: (p: (typeof projects)[number]) => string): [string, number][] {
+function countBy(projects: Project[], key: (p: Project) => string): [string, number][] {
   const m = new Map<string, number>();
   for (const p of projects) m.set(key(p), (m.get(key(p)) ?? 0) + 1);
   return [...m];
 }
 
-export default function ProjectsBrowser() {
+export default function ProjectsBrowser({ projects, articles }: { projects: Project[]; articles: Article[] }) {
   const [q, setQ] = useState("");
   const [status, setStatus] = useState(ALL);
   const [province, setProvince] = useState(ALL);
   const [type, setType] = useState(ALL);
 
-  const provinceCounts = countBy((p) => provinceOf(p.location));
-  const typeCounts = countBy((p) => typeOf(p.type));
-  const statusCounts = countBy((p) => p.status);
+  const provinceCounts = countBy(projects, (p) => provinceOf(p.location));
+  const typeCounts = countBy(projects, (p) => typeOf(p.type));
+  const statusCounts = countBy(projects, (p) => p.status);
 
   const nq = normalizeVi(q.trim());
   const visible = projects.filter(

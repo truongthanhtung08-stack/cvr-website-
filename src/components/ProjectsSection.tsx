@@ -3,18 +3,20 @@
 import { useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { projects } from "@/lib/data";
+import type { Project } from "@/lib/data";
 import { smoothScrollTo } from "@/lib/scroll";
 import { useAutoSlide } from "@/lib/useAutoSlide";
 
 const PER_SLIDE = 4; // 1 hàng × 4 dự án mỗi slide (số slide KHÔNG giới hạn)
 
-export default function ProjectsSection() {
+// Dự án do trang cha truyền vào (đọc từ Supabase — admin đăng gì hiện nấy).
+export default function ProjectsSection({ projects }: { projects: Project[] }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [slide, setSlide] = useState(0);
   const [paused, setPaused] = useState(false);
 
   // Chia toàn bộ dự án thành các slide 4 dự án (không cắt bớt)
+  // (hooks phải gọi trước early-return — kiểm tra rỗng đặt ở dưới)
   const slides: typeof projects[] = [];
   for (let i = 0; i < projects.length; i += PER_SLIDE) {
     slides.push(projects.slice(i, i + PER_SLIDE));
@@ -32,6 +34,8 @@ export default function ProjectsSection() {
   // trong khung nhìn & không tương tác. Lệch nhịp 10s của "BĐS dành cho bạn"
   // để 2 slider không chuyển cùng lúc (đỡ rối mắt).
   useAutoSlide(trackRef, totalSlides, paused, 7000);
+
+  if (projects.length === 0) return null;
 
   return (
     <section className="section-edge bg-cvr-surface">

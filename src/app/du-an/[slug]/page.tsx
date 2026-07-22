@@ -6,15 +6,13 @@ import Footer from "@/components/Footer";
 import ProjectGallery from "@/components/ProjectGallery";
 import ListingList from "@/components/ListingList";
 import LeadForm from "@/components/LeadForm";
-import { projects, getProjectBySlug, buildProjectDetail, featuredListings, provinceOf, districtOf, segmentOf, pickRelated } from "@/lib/data";
-
-export function generateStaticParams() {
-  return projects.map((p) => ({ slug: p.slug }));
-}
+import { provinceOf, districtOf, segmentOf, pickRelated } from "@/lib/data";
+import { getProject, getProjects } from "@/lib/contentDb";
+import { getListings } from "@/lib/listingsDb";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const p = getProjectBySlug(slug);
+  const p = await getProject(slug);
   if (!p) return { title: "Không tìm thấy dự án | Coastal Land" };
   return {
     title: `${p.name} — ${p.priceFrom} | Coastal Land`,
@@ -53,9 +51,21 @@ function currentStep(status: string): number {
 
 export default async function ProjectDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const p = getProjectBySlug(slug);
+  // Dự án + tin đăng từ Supabase (admin tự tạo) — không có trong DB → dữ liệu mẫu
+  const [p, projects, listings] = await Promise.all([getProject(slug), getProjects(), getListings()]);
   if (!p) notFound();
-  const d = buildProjectDetail(p);
+  // Chi tiết hiển thị: thư viện ảnh = ảnh THẬT của dự án + bổ sung từ dự án khác
+  const d = {
+    gallery: Array.from(
+      new Set([...(p.photos ?? [p.image]), ...projects.filter((x) => x.slug !== p.slug).map((x) => x.image)]),
+    ).slice(0, 6),
+    overview: p.overview,
+    scale: p.scale,
+    amenities: p.amenities,
+    developer: p.developer,
+    handover: p.scale.find((s) => s.label.includes("Bàn giao"))?.value ?? p.status,
+    mapQuery: `${p.location}, Việt Nam`,
+  };
   const province = provinceOf(p.location);
   // Dự án khác: ưu tiên cùng TỈNH (+2) và cùng LOẠI HÌNH (+1), luôn đủ 3.
   const others = pickRelated(
@@ -69,7 +79,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   const projSegment = segmentOf(p.type);
   const projDistrict = districtOf(p.location);
   const nearby = pickRelated(
-    featuredListings.filter((x) => provinceOf(x.location) === province),
+    listings.filter((x) => provinceOf(x.location) === province),
     (x) =>
       (x.title.includes(p.name) ? 100 : 0) +
       (districtOf(x.location) === projDistrict ? 20 : 0) +

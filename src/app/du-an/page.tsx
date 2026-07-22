@@ -5,13 +5,16 @@ import Footer from "@/components/Footer";
 import Hero from "@/components/Hero";
 import ProjectsBrowser from "@/components/ProjectsBrowser";
 import { projectBanners } from "@/lib/banners";
+import { getProjects, getArticles } from "@/lib/contentDb";
 
 export const metadata: Metadata = {
   title: "Dự án bất động sản Đà Nẵng, Huế & Miền Trung | Coastal Land",
   description: "Danh sách dự án căn hộ, khu đô thị, nghỉ dưỡng tại Miền Trung — tiến độ, giá bán và tiện ích đầy đủ.",
 };
 
-export default function DuAnPage() {
+export default async function DuAnPage() {
+  // Dự án + bài viết từ Supabase (admin tự tạo) — chưa có nội dung thật → mẫu
+  const [projects, articles] = await Promise.all([getProjects(), getArticles()]);
   return (
     <>
       <Header />
@@ -21,7 +24,7 @@ export default function DuAnPage() {
 
         <div className="mx-auto max-w-7xl px-4 pb-20 pt-3 sm:px-6 lg:px-8">
           {/* Thanh lọc kiểu Batdongsan + tiêu đề + danh sách (bộ đếm nhảy theo bộ lọc) */}
-          <ProjectsBrowser />
+          <ProjectsBrowser projects={projects} articles={articles} />
         </div>
       </main>
       <Footer />

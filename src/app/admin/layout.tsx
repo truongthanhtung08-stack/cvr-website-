@@ -10,6 +10,8 @@ const nav = [
   { label: "Tổng quan", href: "/admin", icon: "grid" },
   { label: "Tin đăng", href: "/admin/tin-dang", icon: "doc" },
   { label: "Đăng tin mới", href: "/admin/tin-dang/moi", icon: "plus" },
+  { label: "Dự án", href: "/admin/du-an", icon: "building" },
+  { label: "Tin tức", href: "/admin/tin-tuc", icon: "news" },
   { label: "Khách hàng", href: "/admin/khach-hang", icon: "users" },
 ];
 
@@ -123,5 +125,9 @@ function NavIcon({ name }: { name: string }) {
     return <svg className={common} {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-1a4 4 0 00-3-3.87M9 20H4v-1a4 4 0 013-3.87m6-1a4 4 0 100-8 4 4 0 000 8zm6-4a3 3 0 10-2-5.24M5 12a3 3 0 002-5.24" /></svg>;
   if (name === "plus")
     return <svg className={common} {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14" /></svg>;
+  if (name === "building")
+    return <svg className={common} {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M3 21h18M5 21V5a2 2 0 012-2h6a2 2 0 012 2v16m0-10h2a2 2 0 012 2v8M9 7h2m-2 4h2m-2 4h2" /></svg>;
+  if (name === "news")
+    return <svg className={common} {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v12a2 2 0 002 2zm0 0a2 2 0 002-2V8M7 8h6m-6 4h6m-6 4h4" /></svg>;
   return <svg className={common} {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 4H7a2 2 0 01-2-2V6a2 2 0 012-2h7l5 5v11a2 2 0 01-2 2z" /></svg>;
 }

@@ -4,22 +4,20 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { articles, getArticleBySlug, articleContent, pickRelated } from "@/lib/data";
-
-export function generateStaticParams() {
-  return articles.map((a) => ({ slug: a.slug }));
-}
+import { articleContent, pickRelated } from "@/lib/data";
+import { getArticle, getArticles } from "@/lib/contentDb";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const a = getArticleBySlug(slug);
+  const a = await getArticle(slug);
   if (!a) return { title: "Không tìm thấy | Coastal Land" };
   return { title: `${a.title} | Coastal Land`, description: a.excerpt };
 }
 
 export default async function ArticlePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const a = getArticleBySlug(slug);
+  // Bài viết từ Supabase (admin tự tạo) — không có trong DB → tìm bài mẫu
+  const [a, articles] = await Promise.all([getArticle(slug), getArticles()]);
   if (!a) notFound();
   const content = articleContent(a);
   // Tin liên quan: ưu tiên CÙNG CHUYÊN MỤC (+1), còn lại lấp theo thứ tự mới nhất. Đủ 3.
