@@ -1,8 +1,12 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import BrandLogo from "@/components/BrandLogo";
 import { asset } from "@/lib/asset";
-import { getFooter } from "@/lib/siteContent";
+import { createClient } from "@/lib/supabase/client";
+import { FOOTER_DEFAULT, type FooterData } from "@/lib/siteContent";
 
 // Đường dẫn icon SVG theo tên mạng xã hội (link do admin nhập, icon giữ trong code).
 const SOCIAL_PATHS: Record<string, string> = {
@@ -50,8 +54,21 @@ const columns = [
   },
 ];
 
-export default async function Footer() {
-  const f = await getFooter();
+export default function Footer() {
+  // Tải nội dung footer từ Supabase (admin sửa được); chưa có → dùng mặc định.
+  const [f, setF] = useState<FooterData>(FOOTER_DEFAULT);
+  useEffect(() => {
+    (async () => {
+      const supabase = createClient();
+      const { data } = await supabase.from("site_content").select("data").eq("key", "footer").maybeSingle();
+      const d = (data?.data ?? null) as Partial<FooterData> | null;
+      if (d) setF({
+        ...FOOTER_DEFAULT, ...d,
+        socials: d.socials?.length ? d.socials : FOOTER_DEFAULT.socials,
+        images: d.images?.length ? d.images : FOOTER_DEFAULT.images,
+      });
+    })();
+  }, []);
   return (
     <footer className="footer-glow mt-auto text-cvr-body">
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
