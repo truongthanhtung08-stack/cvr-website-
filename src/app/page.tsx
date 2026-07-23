@@ -12,17 +12,21 @@ import Footer from "@/components/Footer";
 import Reveal from "@/components/Reveal";
 import { getListings } from "@/lib/listingsDb";
 import { getArticles, getProjects } from "@/lib/contentDb";
+import { getHeroBanners } from "@/lib/siteContent";
 
 export default async function Home() {
   // B2: tin từ Supabase (bảng listings) — chưa có bảng/lỗi → tự dùng dữ liệu mẫu
   // Dự án + Tin tức: nội dung admin tự tạo (contentDb) — chưa có → mẫu
-  const [listings, projects, articles] = await Promise.all([getListings(), getProjects(), getArticles()]);
+  // Hero: ảnh/chữ banner admin sửa được (siteContent) — chưa nhập → banner mặc định
+  const [listings, projects, articles, heroBanners] = await Promise.all([
+    getListings(), getProjects(), getArticles(), getHeroBanners(),
+  ]);
   return (
     <>
       <Header />
       <main className="flex-1">
         {/* Hero: khung GIỮ NGUYÊN — ảnh PHỦ KÍN khung (cover), không hụt 2 bên */}
-        <Hero />
+        <Hero banners={heroBanners} />
         {/* Không bọc Reveal: section này ló ngay dưới banner (above-the-fold),
             cần hiện tức thì để tạo kết nối — tránh bị "vùng chết" của Reveal ẩn đi. */}
         <FeaturedListings items={listings} />

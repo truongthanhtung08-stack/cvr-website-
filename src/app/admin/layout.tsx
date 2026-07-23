@@ -13,6 +13,7 @@ const nav = [
   { label: "Dự án", href: "/admin/du-an", icon: "building" },
   { label: "Tin tức", href: "/admin/tin-tuc", icon: "news" },
   { label: "Khách hàng", href: "/admin/khach-hang", icon: "users" },
+  { label: "Nội dung web", href: "/admin/noi-dung", icon: "doc" },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
