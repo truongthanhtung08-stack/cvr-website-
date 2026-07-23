@@ -40,8 +40,8 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
           </div>
           <h1 className="mt-3 text-2xl font-semibold leading-tight tracking-tight text-cvr-ink sm:text-[2rem]">{a.title}</h1>
 
-          <div className="relative mt-5 aspect-[16/9] overflow-hidden rounded-none border border-cvr-line bg-cvr-surface">
-            <Image src={a.image} alt={a.title} fill priority sizes="(max-width:768px) 100vw, 768px" className="object-contain" />
+          <div className="relative mt-5 aspect-[16/9] overflow-hidden rounded-none border border-cvr-line">
+            <Image src={a.image} alt={a.title} fill priority sizes="(max-width:768px) 100vw, 768px" className="object-cover" />
           </div>
 
           <div className="mt-6 space-y-4 text-[15px] leading-relaxed text-cvr-body">
@@ -56,8 +56,8 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
               {related.map((r) => (
                 <Link key={r.slug} href={`/tin-tuc/${r.slug}`} className="card-lux group relative flex flex-col overflow-hidden rounded-none border border-cvr-line bg-white shadow-lux shadow-lux-hover hover:-translate-y-1.5 hover:border-cvr-blue/45">
                   <span className="card-sheen" aria-hidden />
-                  <div className="relative aspect-[16/9] overflow-hidden bg-cvr-surface">
-                    <Image src={r.image} alt={r.title} fill sizes="(max-width:768px) 100vw, 33vw" className="object-contain transition-transform duration-500 group-hover:scale-105" />
+                  <div className="relative aspect-[16/9] overflow-hidden">
+                    <Image src={r.image} alt={r.title} fill sizes="(max-width:768px) 100vw, 33vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
                   </div>
                   <div className="p-4">
                     <span className="text-xs text-cvr-muted">{r.date}</span>

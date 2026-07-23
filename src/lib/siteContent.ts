@@ -6,7 +6,6 @@
 
 import { asset } from "@/lib/asset";
 import { homeBanners, type Banner } from "@/lib/banners";
-import { areas as AREAS_DEFAULT, type Area } from "@/lib/data";
 
 // Lấy 1 khối nội dung theo key. Lỗi/chưa cấu hình/chưa có → null (dùng mặc định).
 async function fetchBlock<T>(key: string): Promise<T | null> {

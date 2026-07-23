@@ -74,8 +74,8 @@ export default function Gallery({ images, alt }: { images: string[]; alt: string
   return (
     <>
       {images.length === 1 ? (
-        <button type="button" onClick={() => open(0)} className="group relative block aspect-[16/9] w-full overflow-hidden rounded-none border border-cvr-line bg-cvr-surface">
-          <Image src={images[0]} alt={alt} fill priority sizes="(max-width:1024px) 100vw, 66vw" className="object-contain transition-transform duration-500 group-hover:scale-105" />
+        <button type="button" onClick={() => open(0)} className="group relative block aspect-[16/9] w-full overflow-hidden rounded-none border border-cvr-line">
+          <Image src={images[0]} alt={alt} fill priority sizes="(max-width:1024px) 100vw, 66vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
         </button>
       ) : (
         <div className="grid grid-cols-2 gap-2 sm:h-[340px] sm:grid-cols-4 sm:grid-rows-2">
@@ -85,9 +85,9 @@ export default function Gallery({ images, alt }: { images: string[]; alt: string
             onClick={() => open(bigIdx)}
             onMouseEnter={() => setPaused(true)}
             onMouseLeave={() => setPaused(false)}
-            className="group relative col-span-2 aspect-[16/9] overflow-hidden rounded-none border border-cvr-line bg-cvr-surface sm:row-span-2 sm:aspect-auto sm:h-full"
+            className="group relative col-span-2 aspect-[16/9] overflow-hidden rounded-none border border-cvr-line sm:row-span-2 sm:aspect-auto sm:h-full"
           >
-            <Image key={bigIdx} src={images[bigIdx]} alt={alt} fill priority sizes="(max-width:1024px) 100vw, 50vw" className="object-contain animate-fadein" />
+            <Image key={bigIdx} src={images[bigIdx]} alt={alt} fill priority sizes="(max-width:1024px) 100vw, 50vw" className="object-cover animate-fadein" />
             <span className="absolute bottom-3 left-3 rounded-md bg-black/60 px-2.5 py-1 text-xs text-white backdrop-blur-sm">
               {bigIdx + 1}/{images.length} · Bấm để xem lớn
             </span>
@@ -108,9 +108,9 @@ export default function Gallery({ images, alt }: { images: string[]; alt: string
                 key={idx}
                 type="button"
                 onClick={() => open(idx)}
-                className="group relative aspect-square overflow-hidden rounded-none border border-cvr-line bg-cvr-surface sm:aspect-auto sm:h-full"
+                className="group relative aspect-square overflow-hidden rounded-none border border-cvr-line sm:aspect-auto sm:h-full"
               >
-                <Image src={src} alt={`${alt} ${idx + 1}`} fill sizes="(max-width:1024px) 50vw, 25vw" className="object-contain transition-transform duration-500 group-hover:scale-105" />
+                <Image src={src} alt={`${alt} ${idx + 1}`} fill sizes="(max-width:1024px) 50vw, 25vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
                 {isLast && (
                   <span className="absolute inset-0 flex items-center justify-center bg-black/55 text-lg font-semibold text-white">
                     +{extra} ảnh

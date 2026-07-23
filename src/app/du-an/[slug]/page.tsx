@@ -290,9 +290,9 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                 {others.map((o) => (
                   <Link key={o.slug} href={`/du-an/${o.slug}`} className="card-lux group relative flex flex-col overflow-hidden rounded-none border border-cvr-line bg-white shadow-lux shadow-lux-hover hover:-translate-y-1.5 hover:border-cvr-blue/45">
                     <span className="card-sheen" aria-hidden />
-                    <div className="relative aspect-[16/10] overflow-hidden bg-cvr-surface">
+                    <div className="relative aspect-[16/10] overflow-hidden">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={o.image} alt={o.name} className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-105" />
+                      <img src={o.image} alt={o.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
                     </div>
                     <div className="p-4">
                       <h3 className="font-semibold text-cvr-ink transition-colors group-hover:text-cvr-blue-ink">{o.name}</h3>

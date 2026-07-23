@@ -79,7 +79,7 @@ export default function PropertyCard({
           alt={item.title}
           fill
           sizes={isFeatured ? "(max-width: 640px) 100vw, 50vw" : "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"}
-          className="object-contain"
+          className="object-cover"
         />
         {tier && (
           <span

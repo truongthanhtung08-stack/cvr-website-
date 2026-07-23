@@ -25,9 +25,9 @@ export default function ProjectGallery({ images, alt }: Props) {
           <button
             type="button"
             onClick={() => open(0)}
-            className="group relative col-span-4 row-span-2 overflow-hidden bg-cvr-surface sm:col-span-2"
+            className="group relative col-span-4 row-span-2 overflow-hidden sm:col-span-2"
           >
-            <Image src={images[0]} alt={alt} fill priority sizes="(max-width:640px) 100vw, 44vw" className="object-contain transition-transform duration-500 group-hover:scale-105" />
+            <Image src={images[0]} alt={alt} fill priority sizes="(max-width:640px) 100vw, 44vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
           </button>
 
           {/* 4 ảnh nhỏ — phải, lưới 2×2 (ẩn trên mobile) */}
@@ -36,9 +36,9 @@ export default function ProjectGallery({ images, alt }: Props) {
               key={i}
               type="button"
               onClick={() => open(i + 1)}
-              className="group relative hidden overflow-hidden bg-cvr-surface sm:block"
+              className="group relative hidden overflow-hidden sm:block"
             >
-              <Image src={src} alt={`${alt} ${i + 2}`} fill sizes="22vw" className="object-contain transition-transform duration-500 group-hover:scale-105" />
+              <Image src={src} alt={`${alt} ${i + 2}`} fill sizes="22vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
             </button>
           ))}
         </div>
