@@ -14,7 +14,7 @@ type TypeGroup = { label: string; items: string[] };
 
 // MUA BÁN
 export const saleTypeGroups: TypeGroup[] = [
-  { label: "Nhà ở", items: ["Căn hộ chung cư", "Nhà riêng", "Nhà mặt phố", "Nhà biệt thự / Liền kề", "Shophouse / Nhà phố thương mại"] },
+  { label: "Nhà ở", items: ["Căn hộ", "Chung cư", "Nhà riêng", "Nhà mặt phố", "Nhà biệt thự / Liền kề", "Shophouse / Nhà phố thương mại"] },
   { label: "Đất", items: ["Đất nền / Đất nền dự án", "Đất nông nghiệp"] },
   { label: "Du lịch / Nghỉ dưỡng", items: ["Villa / Biệt thự biển", "Condotel"] },
   { label: "Công nghiệp", items: ["Đất công nghiệp", "Kho / Nhà xưởng"] },
@@ -23,7 +23,7 @@ export const saleTypeGroups: TypeGroup[] = [
 
 // CHO THUÊ (11 danh mục — Kế hoạch V3)
 export const rentTypeGroups: TypeGroup[] = [
-  { label: "Nhà ở", items: ["Căn hộ chung cư", "Căn hộ dịch vụ", "Nhà riêng", "Nhà mặt phố", "Nhà phố thương mại", "Biệt thự / Liền kề", "Nhà trọ / Phòng trọ"] },
+  { label: "Nhà ở", items: ["Căn hộ", "Chung cư", "Căn hộ dịch vụ", "Nhà riêng", "Nhà mặt phố", "Nhà phố thương mại", "Biệt thự / Liền kề", "Nhà trọ / Phòng trọ"] },
   { label: "Thương mại & văn phòng", items: ["Văn phòng", "Mặt bằng / Cửa hàng bán lẻ"] },
   { label: "Đất & công nghiệp", items: ["Thuê đất / Nhà xưởng / Kho bãi"] },
   { label: "Khác", items: ["Bất động sản khác"] },

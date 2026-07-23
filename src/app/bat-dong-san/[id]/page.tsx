@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -10,6 +9,8 @@ import PriceHistory from "@/components/PriceHistory";
 import { featuredListings, provinceOf, pickRelated } from "@/lib/data";
 import { getListing, getListings, getListingDetail } from "@/lib/listingsDb";
 import { tierFromBadge, getTier } from "@/lib/packages";
+import RichContent from "@/components/RichContent";
+import VideoEmbed from "@/components/VideoEmbed";
 
 // Prerender sẵn các tin mẫu; tin mới (id UUID từ Supabase) render theo yêu cầu.
 export function generateStaticParams() {
@@ -46,7 +47,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
   const tier = l.badge ? getTier(tierFromBadge(l.badge)) : null;
 
   // Liên hệ: người đăng đã nhập → dùng; chưa có → hotline Coastal Land.
-  const contact = d.contact ?? { name: "Coastal Land", phone: "0905 000 111", email: "" };
+  const contact = d.contact ?? { name: "Coastal Land", phone: "0905 000 111", email: "", avatar: null };
   const phoneTel = contact.phone.replace(/\s/g, "");
   const zalo = phoneTel.replace(/\D/g, "");
 
@@ -66,8 +67,6 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
 
   // Mục đích tin → breadcrumb + tin liên quan cùng mục đích (bán/thuê)
   const purpose = l.purpose ?? "ban";
-  const purposeHref = purpose === "thue" ? "/cho-thue" : "/mua-ban";
-  const purposeLabel = purpose === "thue" ? "Nhà đất cho thuê" : "Nhà đất bán";
 
   // Tin tương tự: BẮT BUỘC cùng MỤC ĐÍCH (bán↔bán, thuê↔thuê), sắp theo độ liên quan
   // — cùng TỈNH (+2) và cùng LOẠI HÌNH (+1). Hiện HẾT (không giới hạn) để chạy slider.
@@ -88,14 +87,6 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <main className="flex-1 bg-white">
         <div className="mx-auto max-w-7xl px-4 pb-24 pt-6 sm:px-6 lg:px-8 lg:pb-20">
-          {/* Breadcrumb */}
-          <nav className="mb-4 flex flex-wrap items-center gap-1.5 text-xs text-cvr-muted">
-            <Link href="/" className="hover:text-cvr-ink">Trang chủ</Link>
-            <span>/</span>
-            <Link href={purposeHref} className="hover:text-cvr-ink">{purposeLabel}</Link>
-            <span>/</span>
-            <span className="line-clamp-1 text-cvr-body">{l.title}</span>
-          </nav>
 
           {/* Thư viện ảnh THẬT — tràn full chiều rộng phía trên (kiểu Homedy) */}
           <div className="mb-6">
@@ -135,7 +126,16 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
               {d.descriptionParas.length > 0 && (
                 <Section title="Thông tin mô tả">
                   <div className="space-y-3 whitespace-pre-line text-sm leading-relaxed text-cvr-body">
-                    {d.descriptionParas.map((p, i) => <p key={i}>{p}</p>)}
+                    <RichContent paragraphs={d.descriptionParas} />
+                  </div>
+                </Section>
+              )}
+
+              {/* Video — tệp/link người đăng thêm ở mục tải ảnh */}
+              {d.videos.length > 0 && (
+                <Section title="Video">
+                  <div className="space-y-4">
+                    {d.videos.map((v, i) => <VideoEmbed key={i} url={v} />)}
                   </div>
                 </Section>
               )}
@@ -221,9 +221,14 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                 <div className="rounded-none border border-cvr-line bg-white p-5 shadow-sm">
                   <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-cvr-faint">Liên hệ {d.contact ? "người đăng" : "tư vấn"}</p>
                   <div className="flex items-center gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-cvr-surface text-lg font-bold text-cvr-ink ring-1 ring-cvr-line">
-                      {contact.name.split(" ").pop()?.[0] ?? "C"}
-                    </div>
+                    {contact.avatar ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img src={contact.avatar} alt={contact.name} className="h-12 w-12 shrink-0 rounded-full object-cover ring-1 ring-cvr-line" />
+                    ) : (
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-cvr-surface text-lg font-bold text-cvr-ink ring-1 ring-cvr-line">
+                        {contact.name.split(" ").pop()?.[0] ?? "C"}
+                      </div>
+                    )}
                     <div>
                       <p className="font-semibold text-cvr-ink">{contact.name}</p>
                       <p className="text-xs text-cvr-muted">{d.contact ? "Người đăng tin" : "Chuyên viên"} · Coastal Land</p>

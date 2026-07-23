@@ -11,6 +11,7 @@
 import type { Listing } from "@/lib/data";
 import { featuredListings, getListingById } from "@/lib/data";
 import { asset } from "@/lib/asset";
+import { isVideoUrl } from "@/lib/media";
 import { specForType, amenityGroups } from "@/lib/listingSpec";
 
 // Thuộc tính linh hoạt lưu trong cột details (JSONB) — xem 0006_listing_details.sql
@@ -22,7 +23,7 @@ export type ListingDetailsJson = {
   furnish?: string;
   direction?: string;
   addressDetail?: string;
-  contact?: { name?: string; phone?: string; email?: string };
+  contact?: { name?: string; phone?: string; email?: string; avatar?: string };
 };
 
 // Hàng trong bảng `listings` (xem supabase/migrations/0002_listings.sql)
@@ -86,11 +87,13 @@ function rowToListing(r: Row): Listing {
     ...(r.baths != null ? { baths: r.baths } : {}),
     location: [r.ward, r.district, r.province].filter(Boolean).join(", "),
     type: r.type,
-    image: asset(r.images[0] ?? PLACEHOLDER_IMAGE),
+    // Ảnh đại diện = ẢNH đầu tiên (bỏ qua video nếu đứng trước)
+    image: asset(r.images.find((s) => !isVideoUrl(s)) ?? PLACEHOLDER_IMAGE),
     badge: TIER_BADGE[r.tier],
     purpose: r.purpose,
     // Tên người đăng thật (khách hàng) — thẻ tin hiện đúng tên này, không phải admin
     agentName: r.details?.contact?.name || undefined,
+    ...(r.details?.contact?.avatar ? { agentAvatar: asset(r.details.contact.avatar) } : {}),
   };
 }
 
@@ -147,6 +150,7 @@ export type ListingSpecRow = { label: string; value: string };
 export type ListingFull = {
   listing: Listing;            // giá/diện tích/vị trí/hạng… (thẻ dùng chung)
   images: string[];            // toàn bộ ảnh thật (đúng số lượng)
+  videos: string[];            // video (tệp mp4 tải lên / link YouTube-Vimeo)
   builtArea: string | null;    // diện tích xây dựng
   descriptionParas: string[];  // mô tả (tách theo dòng)
   specs: ListingSpecRow[];     // đặc điểm đã nhập (bỏ mục trống)
@@ -156,13 +160,16 @@ export type ListingFull = {
   furnish: string | null;
   direction: string | null;
   addressDetail: string | null;
-  contact: { name: string; phone: string; email: string } | null;
+  contact: { name: string; phone: string; email: string; avatar: string | null } | null;
   mapQuery: string;            // chuỗi địa chỉ để nhúng bản đồ
 };
 
 function rowToDetail(r: Row): ListingFull {
   const d = r.details ?? {};
-  const imgs = r.images.length ? r.images : [PLACEHOLDER_IMAGE];
+  // Tách ẢNH và VIDEO: thư viện ảnh chỉ nhận ảnh; video hiện ở mục Video riêng.
+  const videos = r.images.filter(isVideoUrl);
+  const imageOnly = r.images.filter((s) => !isVideoUrl(s));
+  const imgs = imageOnly.length ? imageOnly : [PLACEHOLDER_IMAGE];
   const specDefs = specForType(r.type).fields;
   const specs = specDefs
     .map((f) => ({ label: f.label + (f.unit ? ` (${f.unit})` : ""), value: (d.specs?.[f.key] ?? "").trim() }))
@@ -172,6 +179,7 @@ function rowToDetail(r: Row): ListingFull {
   return {
     listing: rowToListing(r),
     images: imgs.map(asset),
+    videos,
     builtArea: r.built_area_m2 != null ? `${fmtNum(r.built_area_m2, 0)} m²` : null,
     descriptionParas: (r.description ?? "").split("\n").map((s) => s.trim()).filter(Boolean),
     specs,
@@ -184,7 +192,7 @@ function rowToDetail(r: Row): ListingFull {
     furnish: d.furnish || null,
     direction: d.direction || null,
     addressDetail: d.addressDetail || null,
-    contact: c && (c.name || c.phone) ? { name: c.name ?? "", phone: c.phone ?? "", email: c.email ?? "" } : null,
+    contact: c && (c.name || c.phone) ? { name: c.name ?? "", phone: c.phone ?? "", email: c.email ?? "", avatar: c.avatar ? asset(c.avatar) : null } : null,
     mapQuery: [r.ward, r.district, r.province].filter(Boolean).join(", "),
   };
 }
@@ -194,6 +202,7 @@ function mockToDetail(m: Listing): ListingFull {
   return {
     listing: m,
     images: [m.image],
+    videos: [],
     builtArea: null,
     descriptionParas: [],
     specs: [],

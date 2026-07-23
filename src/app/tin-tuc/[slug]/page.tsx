@@ -6,6 +6,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { articleContent, pickRelated } from "@/lib/data";
 import { getArticle, getArticles } from "@/lib/contentDb";
+import RichContent from "@/components/RichContent";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
@@ -32,13 +33,6 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
       <Header />
       <main className="flex-1 bg-white">
         <article className="mx-auto max-w-3xl px-4 pb-16 pt-6 sm:px-6">
-          <nav className="mb-3 flex flex-wrap items-center gap-1.5 text-xs text-cvr-muted">
-            <Link href="/" className="hover:text-cvr-ink">Trang chủ</Link>
-            <span>/</span>
-            <Link href="/tin-tuc" className="hover:text-cvr-ink">Tin tức</Link>
-            <span>/</span>
-            <span className="line-clamp-1 text-cvr-body">{a.title}</span>
-          </nav>
 
           <div className="flex items-center gap-2 text-xs text-cvr-muted">
             <span className="rounded-full bg-cvr-surface px-2.5 py-0.5 font-medium text-cvr-body">{a.category}</span>
@@ -46,12 +40,12 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
           </div>
           <h1 className="mt-3 text-2xl font-semibold leading-tight tracking-tight text-cvr-ink sm:text-[2rem]">{a.title}</h1>
 
-          <div className="relative mt-5 aspect-[16/9] overflow-hidden rounded-none border border-cvr-line">
-            <Image src={a.image} alt={a.title} fill priority sizes="(max-width:768px) 100vw, 768px" className="object-cover" />
+          <div className="relative mt-5 aspect-[16/9] overflow-hidden rounded-none border border-cvr-line bg-cvr-surface">
+            <Image src={a.image} alt={a.title} fill priority sizes="(max-width:768px) 100vw, 768px" className="object-contain" />
           </div>
 
           <div className="mt-6 space-y-4 text-[15px] leading-relaxed text-cvr-body">
-            {content.map((p, i) => <p key={i}>{p}</p>)}
+            <RichContent paragraphs={content} />
           </div>
         </article>
 
@@ -62,8 +56,8 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
               {related.map((r) => (
                 <Link key={r.slug} href={`/tin-tuc/${r.slug}`} className="card-lux group relative flex flex-col overflow-hidden rounded-none border border-cvr-line bg-white shadow-lux shadow-lux-hover hover:-translate-y-1.5 hover:border-cvr-blue/45">
                   <span className="card-sheen" aria-hidden />
-                  <div className="relative aspect-[16/9] overflow-hidden">
-                    <Image src={r.image} alt={r.title} fill sizes="(max-width:768px) 100vw, 33vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
+                  <div className="relative aspect-[16/9] overflow-hidden bg-cvr-surface">
+                    <Image src={r.image} alt={r.title} fill sizes="(max-width:768px) 100vw, 33vw" className="object-contain transition-transform duration-500 group-hover:scale-105" />
                   </div>
                   <div className="p-4">
                     <span className="text-xs text-cvr-muted">{r.date}</span>

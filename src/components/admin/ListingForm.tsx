@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { saleTypeGroups, rentTypeGroups } from "@/lib/filters";
 import { provinceNames, districtsOf, wardsOf } from "@/lib/locations";
 import { specForType, interiorItems, amenityGroups, legalOptions, furnishLevels, directions } from "@/lib/listingSpec";
 import ImagePicker from "@/components/admin/ImagePicker";
+import ContentEditor from "@/components/admin/ContentEditor";
+import { uploadImageFile } from "@/lib/uploadImage";
 import {
   type ListingRow,
   type ListingPurpose,
@@ -53,6 +55,9 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
   const [cName, setCName] = useState(initial?.details?.contact?.name ?? "");
   const [cPhone, setCPhone] = useState(initial?.details?.contact?.phone ?? "");
   const [cEmail, setCEmail] = useState(initial?.details?.contact?.email ?? "");
+  const [cAvatar, setCAvatar] = useState(initial?.details?.contact?.avatar ?? "");
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const avatarRef = useRef<HTMLInputElement>(null);
 
   // Đăng tin GIÙM khách: chọn tin này thuộc khách hàng nào (owner_id).
   type Cust = { id: string; full_name: string | null; phone: string | null; email: string | null; role: string };
@@ -97,6 +102,19 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
       setCPhone(c.phone ?? "");
       setCEmail(c.email ?? "");
     }
+  }
+
+  // Tải ảnh đại diện người đăng lên Supabase → lưu URL vào cAvatar.
+  async function handleAvatar(files: FileList | null) {
+    const file = files?.[0];
+    if (!file) return;
+    setError("");
+    setAvatarUploading(true);
+    const { url, error: e } = await uploadImageFile(file);
+    setAvatarUploading(false);
+    if (e) return setError(e);
+    if (url) setCAvatar(url);
+    if (avatarRef.current) avatarRef.current.value = "";
   }
 
   const typeGroups = purpose === "thue" ? rentTypeGroups : saleTypeGroups;
@@ -157,8 +175,8 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
         furnish: furnish || undefined,
         direction: direction || undefined,
         addressDetail: addressDetail.trim() || undefined,
-        contact: (cName.trim() || cPhone.trim() || cEmail.trim())
-          ? { name: cName.trim(), phone: cPhone.trim(), email: cEmail.trim() }
+        contact: (cName.trim() || cPhone.trim() || cEmail.trim() || cAvatar.trim())
+          ? { name: cName.trim(), phone: cPhone.trim(), email: cEmail.trim(), avatar: cAvatar.trim() || undefined }
           : undefined,
       },
       tier,
@@ -217,7 +235,7 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
             <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="VD: Căn hộ 2PN view sông Hàn, full nội thất" className={inputCls} />
           </Field>
           <Field label="Mô tả (bỏ trống → web tự tóm tắt)">
-            <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={4} placeholder="Mô tả chi tiết: vị trí, nội thất, pháp lý, tiện ích xung quanh…" className={`${inputCls} h-auto py-2.5`} />
+            <ContentEditor value={description} onChange={setDescription} placeholder="Mô tả chi tiết: vị trí, nội thất, pháp lý, tiện ích xung quanh…" />
           </Field>
         </div>
       </Card>
@@ -400,6 +418,37 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
         <p className="mt-1.5 mb-3 text-xs text-cvr-faint">
           Chọn khách → tự điền tên &amp; SĐT của khách vào ô dưới. Tin sẽ thuộc về tài khoản khách đó (họ thấy trong &quot;Tin đăng của tôi&quot;).
         </p>
+        {/* Ảnh đại diện người đăng — hiện trên thẻ tin cấp cao (Diamond/Gold) & trang chi tiết */}
+        <div className="mb-4 flex items-center gap-4">
+          {cAvatar ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img src={cAvatar} alt="Ảnh đại diện" className="h-16 w-16 shrink-0 rounded-full object-cover ring-1 ring-cvr-line" />
+          ) : (
+            <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-cvr-surface text-xl font-bold text-cvr-faint ring-1 ring-cvr-line">
+              {(cName.trim().split(" ").pop()?.[0] ?? "?").toUpperCase()}
+            </span>
+          )}
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => avatarRef.current?.click()}
+              disabled={avatarUploading}
+              className="rounded-lg border border-cvr-line bg-white px-3 py-1.5 text-xs font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink disabled:opacity-60"
+            >
+              {avatarUploading ? "Đang tải…" : cAvatar ? "Đổi ảnh đại diện" : "Tải ảnh đại diện"}
+            </button>
+            {cAvatar && (
+              <button
+                type="button"
+                onClick={() => setCAvatar("")}
+                className="text-xs font-medium text-cvr-muted transition hover:text-red-600"
+              >
+                Xoá ảnh
+              </button>
+            )}
+            <input ref={avatarRef} type="file" accept="image/*" onChange={(e) => handleAvatar(e.target.files)} className="hidden" />
+          </div>
+        </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <Field label="Họ và tên"><input value={cName} onChange={(e) => setCName(e.target.value)} placeholder="Nguyễn Văn A" className={inputCls} /></Field>
           <Field label="Số điện thoại"><input type="tel" value={cPhone} onChange={(e) => setCPhone(e.target.value)} placeholder="09xx xxx xxx" className={inputCls} /></Field>

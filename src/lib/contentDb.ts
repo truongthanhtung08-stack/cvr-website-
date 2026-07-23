@@ -12,6 +12,7 @@
 import type { Article, Project } from "@/lib/data";
 import { articles as sampleArticles, projects as sampleProjects, getArticleBySlug, getProjectBySlug } from "@/lib/data";
 import { asset } from "@/lib/asset";
+import { isVideoUrl } from "@/lib/media";
 import type { ArticleRow, ProjectRow } from "@/lib/contentAdmin";
 
 const ARTICLE_PLACEHOLDER = "/images/segments/canho1.jpg";
@@ -88,7 +89,16 @@ export async function getArticle(slug: string): Promise<Article | null> {
 function projectRowToProject(r: ProjectRow): Project {
   const location = [r.ward, r.district, r.province].filter(Boolean).join(", ");
   const overview = paras(r.overview);
-  const images = (r.images ?? []).filter(Boolean);
+  // Tách ẢNH và VIDEO: thư viện ảnh chỉ nhận ảnh; video hiện ở mục Video riêng.
+  const media = (r.images ?? []).filter(Boolean);
+  const photos = media.filter((s) => !isVideoUrl(s));
+  const videos = media.filter(isVideoUrl);
+  const d = r.details ?? {};
+  // Ảnh mặt bằng đưa qua asset() để chạy đúng trên mọi môi trường
+  const floorPlans = (d.floorPlans ?? [])
+    .filter((f) => f && f.image)
+    .map((f) => ({ label: f.label ?? "", image: asset(f.image), note: f.note ?? "" }));
+  const dev = d.developerInfo;
   return {
     slug: r.slug,
     name: r.name,
@@ -96,12 +106,21 @@ function projectRowToProject(r: ProjectRow): Project {
     priceFrom: r.price_from || "Liên hệ",
     type: r.type || "Dự án bất động sản",
     status: r.status_text || "Đang mở bán",
-    image: asset(images[0] ?? PROJECT_PLACEHOLDER),
+    image: asset(photos[0] ?? PROJECT_PLACEHOLDER),
     developer: r.developer || "Đang cập nhật",
     scale: (r.scale ?? []).filter((s) => s && s.label && s.value),
     amenities: (r.amenities ?? []).filter(Boolean),
     overview: overview.length ? overview : [`Dự án ${r.name}${location ? ` tại ${location}` : ""} — thông tin đang được Coastal Land cập nhật.`],
-    ...(images.length ? { photos: images.map(asset) } : {}),
+    ...(photos.length ? { photos: photos.map(asset) } : {}),
+    ...(videos.length ? { videos } : {}),
+    ...(d.purposes?.length ? { purposes: d.purposes } : {}),
+    priceMode: d.priceMode ?? "hidden",
+    ...(d.priceTable?.length ? { priceTable: d.priceTable.filter((p) => p && (p.unit || p.area || p.price)) } : {}),
+    ...(floorPlans.length ? { floorPlans } : {}),
+    ...(d.places?.length ? { places: d.places.filter((p) => p && p.name) } : {}),
+    ...(dev && (dev.desc || dev.website || dev.established || dev.logo)
+      ? { developerInfo: { ...dev, ...(dev.logo ? { logo: asset(dev.logo) } : {}) } }
+      : {}),
   };
 }
 

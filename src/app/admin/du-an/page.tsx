@@ -114,6 +114,9 @@ export default function AdminProjectsPage() {
             </div>
             {contentStatusBadge(r.status)}
             <span className="flex items-center gap-3">
+              <a href={`/du-an/${r.slug}`} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-cvr-body hover:text-cvr-ink">
+                Xem
+              </a>
               {r.status === "draft" ? (
                 <button type="button" onClick={() => setRowStatus(r.id, "published")} className="text-sm font-medium text-green-700 hover:text-green-800">
                   Đăng

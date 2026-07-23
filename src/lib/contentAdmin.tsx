@@ -19,6 +19,36 @@ export type ArticleRow = {
 
 export type ProjectScaleItem = { label: string; value: string };
 
+// ── Dữ liệu cấu trúc mới của dự án (lưu trong cột JSONB `details`) ──────────────
+export type ProjectPurpose = "ban" | "thue";
+export type ProjectPriceRow = { unit: string; area: string; direction: string; price: string };
+export type ProjectFloorPlan = { label: string; image: string; note: string };
+export type ProjectPlace = { category: string; name: string; distance: string };
+export type ProjectDeveloperInfo = { established?: string; website?: string; desc?: string; logo?: string };
+
+export type ProjectDetails = {
+  purposes?: ProjectPurpose[];            // Bán / Cho thuê
+  priceMode?: "show" | "hidden";          // hiện giá cụ thể / ẩn giá (mặc định) → "Liên hệ"
+  priceTable?: ProjectPriceRow[];         // Loại căn – Diện tích – Hướng – Giá
+  floorPlans?: ProjectFloorPlan[];        // Mặt bằng từng tháp/tầng/loại căn
+  places?: ProjectPlace[];                // Tiện ích xung quanh (có khoảng cách)
+  developerInfo?: ProjectDeveloperInfo;   // Chủ đầu tư (thông tin mở rộng)
+};
+
+// Nhóm tiện ích xung quanh (đối chiếu Batdongsan) — cho form + biểu tượng
+export const placeCategories = [
+  "Sân bay",
+  "Trường học",
+  "Siêu thị",
+  "Công viên",
+  "Bệnh viện",
+  "Nhà hàng",
+  "Trung tâm thương mại",
+  "Bến xe / Ga",
+  "Bãi biển",
+  "Khác",
+];
+
 export type ProjectRow = {
   id: string;
   slug: string;
@@ -34,6 +64,7 @@ export type ProjectRow = {
   scale: ProjectScaleItem[];
   amenities: string[];
   overview: string | null;  // mỗi đoạn 1 dòng
+  details: ProjectDetails | null;  // dữ liệu cấu trúc mới (cột JSONB)
   status: ContentStatus;
   published_at: string | null;
   created_at: string;

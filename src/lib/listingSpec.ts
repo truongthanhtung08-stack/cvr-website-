@@ -57,7 +57,10 @@ export const interiorItems = [
 export type CategorySpec = { label: string; match: string[]; fields: Field[] };
 
 const floorsField: Field = { key: "floors", label: "Số tầng", type: "select", options: ["1", "2", "3", "4", "5", "6+"] };
-const frontageField: Field = { key: "frontage", label: "Mặt tiền", type: "number", unit: "m" };
+// Kích thước lô: mặt tiền = CHIỀU NGANG, depth = CHIỀU DÀI (chiều sâu). Đặt cạnh nhau
+// cho mọi loại gắn với thửa đất (nhà, đất) để nhập/hiển thị "ngang × dài" khoa học.
+const frontageField: Field = { key: "frontage", label: "Chiều ngang (mặt tiền)", type: "number", unit: "m" };
+const depthField: Field = { key: "depth", label: "Chiều dài (chiều sâu)", type: "number", unit: "m" };
 const roadField: Field = { key: "roadWidth", label: "Đường vào", type: "number", unit: "m" };
 
 // Mỗi LOẠI HÌNH có bộ đặc điểm ĐẶC THÙ riêng. Thứ tự = ĐỘ ƯU TIÊN khớp
@@ -77,9 +80,11 @@ export const categorySpecs: CategorySpec[] = [
     label: "Căn hộ / Chung cư",
     match: ["căn hộ", "chung cư", "officetel", "duplex", "penthouse", "studio"],
     fields: [
-      { key: "loaiCanho", label: "Loại hình căn hộ", type: "select", options: ["Chung cư", "Duplex", "Penthouse", "Studio", "Officetel", "Căn hộ dịch vụ"] },
-      { key: "floor", label: "Tầng số", type: "text", placeholder: "VD: Tầng 18" },
+      { key: "loaiCanho", label: "Loại hình căn hộ", type: "select", options: ["Chung cư", "Căn hộ dịch vụ", "Duplex", "Penthouse", "Studio", "Officetel"] },
+      { key: "floor", label: "Tầng số (căn)", type: "text", placeholder: "VD: Tầng 18" },
       { key: "block", label: "Block / Toà / Tháp", type: "text", placeholder: "VD: Block A" },
+      { key: "buildingFloors", label: "Tổng số tầng toà", type: "text", placeholder: "VD: 30 tầng" },
+      { key: "balcony", label: "Hướng ban công", type: "select", options: directions },
       { key: "view", label: "Hướng view", type: "select", options: ["Biển", "Thành phố", "Hồ bơi", "Sông / công viên", "Nội khu"] },
     ],
   },
@@ -111,6 +116,7 @@ export const categorySpecs: CategorySpec[] = [
     fields: [
       floorsField,
       frontageField,
+      depthField,
       { key: "gardenArea", label: "Diện tích sân vườn", type: "number", unit: "m²" },
       { key: "pool", label: "Hồ bơi riêng", type: "select", options: ["Có", "Không"] },
       { key: "view", label: "View / cảnh quan", type: "select", options: ["Biển", "Sông / hồ", "Sân golf", "Công viên", "Nội khu"] },
@@ -122,6 +128,7 @@ export const categorySpecs: CategorySpec[] = [
     fields: [
       floorsField,
       frontageField,
+      depthField,
       roadField,
       { key: "bizFloors", label: "Số tầng kinh doanh", type: "select", options: ["1", "2", "3", "Cả toà"] },
       { key: "corner", label: "Vị trí", type: "select", options: ["Lô góc 2 mặt tiền", "1 mặt tiền", "Trong khu"] },
@@ -133,6 +140,7 @@ export const categorySpecs: CategorySpec[] = [
     fields: [
       floorsField,
       frontageField,
+      depthField,
       roadField,
       { key: "corner", label: "Vị trí", type: "select", options: ["Lô góc 2 mặt tiền", "1 mặt tiền"] },
     ],
@@ -153,6 +161,7 @@ export const categorySpecs: CategorySpec[] = [
     fields: [
       floorsField,
       frontageField,
+      depthField,
       roadField,
     ],
   },
@@ -162,6 +171,7 @@ export const categorySpecs: CategorySpec[] = [
     fields: [
       { key: "landType", label: "Loại đất", type: "select", options: ["Đất thổ cư", "Đất ở đô thị", "Đất nền dự án", "Đất nông nghiệp", "Đất vườn", "Đất khác"] },
       frontageField,
+      depthField,
       roadField,
       { key: "blocks", label: "Số lô / nền", type: "text", placeholder: "VD: Lô A12" },
       { key: "shape", label: "Hình dạng lô", type: "select", options: ["Vuông vức", "Nở hậu", "Thóp hậu", "Chữ L", "Khác"] },

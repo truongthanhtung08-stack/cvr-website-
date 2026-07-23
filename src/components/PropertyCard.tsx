@@ -11,12 +11,24 @@ function agentNameOf(item: Listing): string {
   return item.agentName?.trim() || "Coastal Land";
 }
 
-function AgentAvatar({ name, size = 6 }: { name: string; size?: number }) {
+function AgentAvatar({ name, src, size = 6 }: { name: string; src?: string; size?: number }) {
+  const dim = `${size * 4}px`;
+  if (src) {
+    return (
+      /* eslint-disable-next-line @next/next/no-img-element */
+      <img
+        src={src}
+        alt={name}
+        className="shrink-0 rounded-full object-cover ring-1 ring-cvr-line"
+        style={{ width: dim, height: dim }}
+      />
+    );
+  }
   const initials = name.split(" ").slice(-2).map(w => w[0]).join("").toUpperCase();
   return (
     <span
       className="flex shrink-0 items-center justify-center rounded-full bg-cvr-surface font-bold text-cvr-body ring-1 ring-cvr-line"
-      style={{ width: `${size * 4}px`, height: `${size * 4}px`, fontSize: `${size * 1.6}px` }}
+      style={{ width: dim, height: dim, fontSize: `${size * 1.6}px` }}
     >
       {initials}
     </span>
@@ -48,8 +60,9 @@ export default function PropertyCard({
   const isMini = variant === "mini";
   const isTier = variant === "tier";
   const tierId = tier?.id ?? "basic";
-  // Lượng nội dung theo cấp (variant "tier") — các variant khác giữ nguyên hành vi cũ
-  const descLines = isTier ? (tierId === "diamond" ? 2 : tierId === "gold" ? 1 : 0) : isMini ? 0 : 2;
+  // Lượng nội dung theo cấp (variant "tier") — các variant khác giữ nguyên hành vi cũ.
+  // Diamond & Gold: 2 dòng · Silver: 1 dòng · Basic: 0 dòng (theo cấp VIP thành viên).
+  const descLines = isTier ? (tierId === "diamond" || tierId === "gold" ? 2 : tierId === "silver" ? 1 : 0) : isMini ? 0 : 2;
   const showAgent = isTier ? tierId === "diamond" || tierId === "gold" : !isMini;
 
   return (
@@ -66,7 +79,7 @@ export default function PropertyCard({
           alt={item.title}
           fill
           sizes={isFeatured ? "(max-width: 640px) 100vw, 50vw" : "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"}
-          className="object-cover"
+          className="object-contain"
         />
         {tier && (
           <span
@@ -128,7 +141,7 @@ export default function PropertyCard({
         {/* Đáy: thành viên đăng tin — chỉ cấp cao (variant "tier": Diamond/Gold) */}
         {showAgent && (
           <div className={`flex items-center gap-2 border-t border-cvr-line pt-2.5 ${isTier ? "mt-auto" : "mt-2.5"}`}>
-            <AgentAvatar name={agentName} size={7} />
+            <AgentAvatar name={agentName} src={item.agentAvatar} size={7} />
             <span className="min-w-0 flex-1 truncate text-xs font-medium text-cvr-body">{agentName}</span>
             {showTime && <span className="shrink-0 text-[11px] text-cvr-faint">Hôm nay</span>}
           </div>
@@ -181,7 +194,7 @@ function PropertyRow({ item, showTime = false }: { item: Listing; showTime?: boo
         </div>
         <p className="mt-1.5 flex items-center gap-1 text-xs text-cvr-muted"><PinIcon /><span className="truncate">{item.location}</span></p>
         <div className="mt-auto flex items-center gap-2 border-t border-cvr-line pt-2">
-          <AgentAvatar name={agentName} size={7} />
+          <AgentAvatar name={agentName} src={item.agentAvatar} size={7} />
           <span className="min-w-0 flex-1 truncate text-xs font-medium text-cvr-body">{agentName}</span>
           {showTime && <span className="shrink-0 text-[11px] text-cvr-faint">Hôm nay</span>}
         </div>

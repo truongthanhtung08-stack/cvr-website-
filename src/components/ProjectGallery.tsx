@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import Lightbox from "@/components/Lightbox";
 
 // Lưới ảnh chi tiết dự án kiểu Batdongsan: 1 ảnh lớn trái + 4 ảnh nhỏ phải (2×2),
-// badge trạng thái + chỉ số quy mô đè trên ảnh lớn, bộ đếm ảnh góc dưới phải.
-// Bấm ảnh bất kỳ → lightbox xem toàn bộ.
+// bộ đếm ảnh góc dưới phải. Bấm ảnh bất kỳ → Lightbox xem lớn + ZOOM được.
 type Props = {
   images: string[];
   alt: string;
@@ -25,9 +25,9 @@ export default function ProjectGallery({ images, alt }: Props) {
           <button
             type="button"
             onClick={() => open(0)}
-            className="group relative col-span-4 row-span-2 overflow-hidden sm:col-span-2"
+            className="group relative col-span-4 row-span-2 overflow-hidden bg-cvr-surface sm:col-span-2"
           >
-            <Image src={images[0]} alt={alt} fill priority sizes="(max-width:640px) 100vw, 44vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
+            <Image src={images[0]} alt={alt} fill priority sizes="(max-width:640px) 100vw, 44vw" className="object-contain transition-transform duration-500 group-hover:scale-105" />
           </button>
 
           {/* 4 ảnh nhỏ — phải, lưới 2×2 (ẩn trên mobile) */}
@@ -36,9 +36,9 @@ export default function ProjectGallery({ images, alt }: Props) {
               key={i}
               type="button"
               onClick={() => open(i + 1)}
-              className="group relative hidden overflow-hidden sm:block"
+              className="group relative hidden overflow-hidden bg-cvr-surface sm:block"
             >
-              <Image src={src} alt={`${alt} ${i + 2}`} fill sizes="22vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
+              <Image src={src} alt={`${alt} ${i + 2}`} fill sizes="22vw" className="object-contain transition-transform duration-500 group-hover:scale-105" />
             </button>
           ))}
         </div>
@@ -57,23 +57,8 @@ export default function ProjectGallery({ images, alt }: Props) {
         </button>
       </div>
 
-      {/* Lightbox */}
-      {lightbox && (
-        <div
-          onClick={() => setLightbox(false)}
-          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm"
-        >
-          <button type="button" aria-label="Đóng" className="absolute right-5 top-5 flex h-10 w-10 items-center justify-center rounded-lg text-white/80 hover:bg-white/10">
-            <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-          </button>
-          <div className="relative h-[80vh] w-full max-w-5xl" onClick={(e) => e.stopPropagation()}>
-            <Image src={images[active]} alt={alt} fill sizes="100vw" className="object-contain" />
-            <span className="absolute bottom-2 left-1/2 -translate-x-1/2 rounded-md bg-black/60 px-2.5 py-1 text-xs text-white">{active + 1} / {images.length}</span>
-            <button type="button" onClick={() => setActive((a) => (a - 1 + images.length) % images.length)} className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-white/10 p-3 text-white hover:bg-white/20">‹</button>
-            <button type="button" onClick={() => setActive((a) => (a + 1) % images.length)} className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-white/10 p-3 text-white hover:bg-white/20">›</button>
-          </div>
-        </div>
-      )}
+      {/* Lightbox — xem lớn + zoom được (cuộn/bấm đúp), vuốt đổi ảnh */}
+      {lightbox && <Lightbox images={images} start={active} onClose={() => setLightbox(false)} />}
     </>
   );
 }

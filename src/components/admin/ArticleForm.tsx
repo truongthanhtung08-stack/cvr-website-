@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import ImagePicker from "@/components/admin/ImagePicker";
+import ContentEditor from "@/components/admin/ContentEditor";
+import { isVideoUrl } from "@/lib/media";
 import {
   type ArticleRow,
   type ContentStatus,
@@ -55,7 +57,7 @@ export default function ArticleForm({ initial }: { initial?: ArticleRow }) {
       excerpt: excerpt.trim() || null,
       category,
       content: content.trim() || null,
-      image: images[0] ?? null,
+      image: images.find((s) => !isVideoUrl(s)) ?? null,
       status: newStatus,
       published_at:
         newStatus === "published" ? (initial?.published_at ?? new Date().toISOString()) : initial?.published_at ?? null,
@@ -104,7 +106,7 @@ export default function ArticleForm({ initial }: { initial?: ArticleRow }) {
             <textarea value={excerpt} onChange={(e) => setExcerpt(e.target.value)} rows={2} placeholder="1–2 câu tóm tắt nội dung bài…" className={`${inputCls} h-auto py-2.5`} />
           </Field>
           <Field label="Nội dung bài — mỗi ĐOẠN xuống 1 dòng">
-            <textarea value={content} onChange={(e) => setContent(e.target.value)} rows={12} placeholder={"Đoạn mở đầu…\nĐoạn tiếp theo…\nĐoạn kết…"} className={`${inputCls} h-auto py-2.5`} />
+            <ContentEditor value={content} onChange={setContent} placeholder={"Đoạn mở đầu…\nĐoạn tiếp theo…\nĐoạn kết…"} />
           </Field>
         </div>
       </Card>

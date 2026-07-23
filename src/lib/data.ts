@@ -30,6 +30,9 @@ export type Listing = {
   // Tên NGƯỜI ĐĂNG THẬT (details.contact.name — khách hàng, kể cả khi admin đăng giùm).
   // Không có → thẻ tin hiện "Coastal Land".
   agentName?: string;
+  // Ảnh đại diện người đăng (details.contact.avatar) — hiện trên thẻ tin cấp cao.
+  // Không có → avatar chữ cái đầu tên.
+  agentAvatar?: string;
 };
 
 // Lọc tin theo mục đích (mặc định không có purpose = "ban")
@@ -312,6 +315,14 @@ export type Project = {
   amenities: string[];
   overview: string[];
   photos?: string[]; // ảnh thật của dự án (cho thư viện ảnh) — nếu có sẽ ưu tiên
+  videos?: string[]; // video dự án (tệp mp4 / link YouTube-Vimeo) — hiện ở mục Video
+  // ── Dữ liệu cấu trúc mới (admin nhập, cột details) ──
+  purposes?: ("ban" | "thue")[];        // Mục đích: Bán / Cho thuê
+  priceMode?: "show" | "hidden";        // hiện giá cụ thể / ẩn giá → "Liên hệ"
+  priceTable?: { unit: string; area: string; direction: string; price: string }[];
+  floorPlans?: { label: string; image: string; note: string }[];
+  places?: { category: string; name: string; distance: string }[];
+  developerInfo?: { established?: string; website?: string; desc?: string; logo?: string };
 };
 
 // ⚠️ Số liệu dự án mang tính tham khảo cho mẫu giao diện — cần đối chiếu công bố

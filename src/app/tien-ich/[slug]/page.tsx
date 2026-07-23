@@ -49,14 +49,6 @@ export default async function PackagePage({ params }: { params: Promise<{ slug: 
       <Header />
       <main className="flex-1 bg-white">
         <div className="mx-auto max-w-7xl px-4 pb-20 pt-6 sm:px-6 lg:px-8">
-          {/* Breadcrumb */}
-          <nav className="mb-5 flex flex-wrap items-center gap-1.5 text-xs text-cvr-muted">
-            <Link href="/" className="hover:text-cvr-ink">Trang chủ</Link>
-            <span>/</span>
-            <span className="text-cvr-body">Tiện ích</span>
-            <span>/</span>
-            <span className="line-clamp-1 text-cvr-body">{p.label}</span>
-          </nav>
 
           {/* Thanh chọn gói (giống Homedy) */}
           <div className="-mx-1 mb-8 overflow-x-auto">

@@ -219,6 +219,9 @@ function RowActions({
 }) {
   return (
     <span className="inline-flex items-center gap-3">
+      <a href={`/bat-dong-san/${row.id}`} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-cvr-body hover:text-cvr-ink">
+        Xem
+      </a>
       {row.status === "draft" && (
         <button type="button" onClick={() => onStatus(row.id, "approved")} className="text-sm font-medium text-green-700 hover:text-green-800">
           Đăng

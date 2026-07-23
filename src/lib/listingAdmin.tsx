@@ -14,7 +14,7 @@ export type ListingDetails = {
   furnish?: string;                 // mức nội thất
   direction?: string;               // hướng
   addressDetail?: string;           // địa chỉ cụ thể
-  contact?: { name?: string; phone?: string; email?: string }; // người đăng
+  contact?: { name?: string; phone?: string; email?: string; avatar?: string }; // người đăng (avatar = ảnh đại diện)
 };
 
 export type ListingRow = {
