@@ -12,14 +12,14 @@ import Footer from "@/components/Footer";
 import Reveal from "@/components/Reveal";
 import { getListings } from "@/lib/listingsDb";
 import { getArticles, getProjects } from "@/lib/contentDb";
-import { getHeroBanners, getHomeAd } from "@/lib/siteContent";
+import { getHeroBanners, getHomeAd, getHomeAreas } from "@/lib/siteContent";
 
 export default async function Home() {
   // B2: tin từ Supabase (bảng listings) — chưa có bảng/lỗi → tự dùng dữ liệu mẫu
   // Dự án + Tin tức: nội dung admin tự tạo (contentDb) — chưa có → mẫu
-  // Hero + 2 banner cuối: ảnh/chữ admin sửa được (siteContent) — chưa nhập → mặc định
-  const [listings, projects, articles, heroBanners, homeAd] = await Promise.all([
-    getListings(), getProjects(), getArticles(), getHeroBanners(), getHomeAd(),
+  // Hero + 2 banner cuối + khu vực: ảnh/chữ admin sửa được (siteContent) — chưa nhập → mặc định
+  const [listings, projects, articles, heroBanners, homeAd, homeAreas] = await Promise.all([
+    getListings(), getProjects(), getArticles(), getHeroBanners(), getHomeAd(), getHomeAreas(),
   ]);
   return (
     <>
@@ -38,7 +38,7 @@ export default async function Home() {
           <ForYou />
         </Reveal> */}
         <Reveal>
-          <LocationGrid />
+          <LocationGrid areas={homeAreas} />
         </Reveal>
         <Reveal>
           <NewsSection articles={articles} />

@@ -163,3 +163,100 @@ export async function getLandingBySlug(slug: string): Promise<Landing | undefine
   const all = await getLandings();
   return all.find((l) => l.slug === slug);
 }
+
+// ── BẤT ĐỘNG SẢN THEO KHU VỰC (trang chủ) ────────────────────────────────────
+// 5 ô: ô ĐẦU = địa điểm lõi (hiển thị lớn 2×2). Lưu key 'home_areas'.
+// image = đường dẫn RAW (component tự qua asset()).
+export type AreaCard = {
+  name: string;
+  count: string;   // dòng nhỏ dưới tên, vd "1.240 tin"
+  image: string;   // ảnh RAW, vd "/images/tin/1.jpg"
+  href: string;    // bấm ô → tới đâu
+};
+
+export const HOME_AREAS_DEFAULT: AreaCard[] = [
+  { name: "Đà Nẵng", count: "1.240 tin", image: "/images/tin/1.jpg", href: "/mua-ban?tinh=Đà Nẵng" },
+  { name: "Huế", count: "586 tin", image: "/images/tin/13.jpg", href: "/mua-ban?tinh=Huế" },
+  { name: "Quy Nhơn", count: "198 tin", image: "/images/tin/5.jpg", href: "/mua-ban?tinh=Quy Nhơn" },
+  { name: "Nha Trang", count: "324 tin", image: "/images/tin/9.jpg", href: "/mua-ban?tinh=Nha Trang" },
+  { name: "Quảng Ngãi", count: "256 tin", image: "/images/tin/20.jpg", href: "/mua-ban?tinh=Quảng Ngãi" },
+];
+
+export async function getHomeAreas(): Promise<AreaCard[]> {
+  const data = await fetchBlock<{ items: AreaCard[] }>("home_areas");
+  const items = data?.items?.filter((a) => a && a.name && a.image);
+  return items?.length ? items : HOME_AREAS_DEFAULT;
+}
+
+// ── TRANG GIỚI THIỆU CÔNG TY (/gioi-thieu) ───────────────────────────────────
+// Lưu key 'about'. Icon của "giá trị cốt lõi" giữ trong code (map theo thứ tự).
+export type AboutStat = { value: string; label: string; sub: string };
+export type AboutValue = { title: string; desc: string };
+export type AboutData = {
+  heroImage: string;
+  story: { eyebrow: string; title: string; paragraphs: string[]; image: string };
+  vision: string;
+  mission: string;
+  values: AboutValue[];
+  statsImage: string;
+  stats: AboutStat[];
+  market: { image: string; eyebrow: string; title: string; desc: string; ctaLabel: string; ctaHref: string };
+  cta: { title: string; desc: string; primaryLabel: string; primaryHref: string; secondaryLabel: string; secondaryHref: string };
+};
+
+export const ABOUT_DEFAULT: AboutData = {
+  heroImage: "/images/gioi-thieu/hero-gioi-thieu.jpg",
+  story: {
+    eyebrow: "Chúng tôi là ai",
+    title: "Nền tảng công nghệ và cổng thông tin Bất động sản hàng đầu",
+    paragraphs: [
+      "Coastal Land (coastalland.vn) là một trong những nền tảng công nghệ và cổng thông tin bất động sản trực tuyến hàng đầu tại Việt Nam, Chúng tôi khởi đầu từ Đà Nẵng và mở rộng khắp các khu vực đầy tiềm năng thuộc Duyên hải Miền Trung và Tây Nguyên.",
+      "Với nền tảng công nghệ ưu việt cùng chiến lược Marketing hiệu quả, Chúng tôi gắn kết và tạo kết nối giữa những người có nhu cầu mua và bán bất động sản, giữa người dùng và các chuyên gia nhằm giúp mọi người tìm kiếm, chia sẻ và giao dịch nhanh chóng, thuận tiện.",
+    ],
+    image: "/images/gioi-thieu/office.jpg",
+  },
+  vision: "Trở thành nền tảng PropTech hàng đầu Việt Nam và xây dựng hệ sinh thái bất động sản thân thiện dễ dàng đến người dùng.",
+  mission: "Kết nối mọi người mua – bán bất động sản dễ dàng, minh bạch và an toàn; mang công nghệ đến gần người dùng và nâng chuẩn dịch vụ bất động sản.",
+  values: [
+    { title: "Minh bạch", desc: "Thông tin rõ ràng, pháp lý kiểm chứng — người mua yên tâm, người bán uy tín." },
+    { title: "Công nghệ", desc: "Bộ lọc thông minh, gợi ý cá nhân hoá và dữ liệu lớn — tìm đúng bất động sản nhanh nhất." },
+    { title: "An toàn", desc: "Kết nối trực tiếp người mua và người bán, hỗ trợ pháp lý xuyên suốt giao dịch." },
+    { title: "Đồng hành", desc: "Phục vụ môi giới, chính chủ và doanh nghiệp — cùng phát triển thị trường bền vững." },
+  ],
+  statsImage: "/images/gioi-thieu/ben-du-thuyen.jpg",
+  stats: [
+    { value: "2", label: "Thị trường trọng điểm", sub: "Đà Nẵng · Huế" },
+    { value: "1.000+", label: "Tin đăng chọn lọc", sub: "cập nhật mỗi ngày" },
+    { value: "24/7", label: "Hỗ trợ trực tuyến", sub: "minh bạch · nhanh" },
+  ],
+  market: {
+    image: "/images/gioi-thieu/chuyen-sau.jpg",
+    eyebrow: "Thị trường chuyên sâu",
+    title: "Duyên hải Miền Trung",
+    desc: "Chúng tôi thấu hiểu nhu cầu của người dùng cũng như tiềm năng các đô thị ven biển Miền Trung — từ căn hộ, nhà phố, đất nền đến bất động sản nghỉ dưỡng — để mỗi kết quả tìm kiếm đều sát nhu cầu thật.",
+    ctaLabel: "Khám phá dự án",
+    ctaHref: "/du-an",
+  },
+  cta: {
+    title: "Bắt đầu cùng Coastal Land",
+    desc: "Đăng tin để tiếp cận khách hàng và nhà đầu tư, hoặc tìm ngay bất động sản phù hợp.",
+    primaryLabel: "Đăng tin ngay",
+    primaryHref: "/dang-tin",
+    secondaryLabel: "Xem bất động sản",
+    secondaryHref: "/mua-ban",
+  },
+};
+
+export async function getAbout(): Promise<AboutData> {
+  const data = await fetchBlock<Partial<AboutData>>("about");
+  if (!data) return ABOUT_DEFAULT;
+  // Gộp với mặc định: field/khối admin bỏ trống → giữ mặc định.
+  return {
+    ...ABOUT_DEFAULT, ...data,
+    story: { ...ABOUT_DEFAULT.story, ...data.story },
+    market: { ...ABOUT_DEFAULT.market, ...data.market },
+    cta: { ...ABOUT_DEFAULT.cta, ...data.cta },
+    values: data.values?.length ? data.values : ABOUT_DEFAULT.values,
+    stats: data.stats?.length ? data.stats : ABOUT_DEFAULT.stats,
+  };
+}

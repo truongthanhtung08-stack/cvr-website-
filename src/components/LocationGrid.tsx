@@ -1,11 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
-import { areas } from "@/lib/data";
+import { asset } from "@/lib/asset";
+import { HOME_AREAS_DEFAULT, type AreaCard } from "@/lib/siteContent";
 
-// Bố cục Homedy: gói gọn 2 HÀNG — Đà Nẵng là ô LÕI 2×2, kèm 4 địa điểm
-// (Huế, Khánh Hòa, Quảng Ngãi, Gia Lai). Bấm "Xem tất cả" để xem mọi khu vực.
-export default function LocationGrid() {
-  const shown = areas.slice(0, 5); // [0] = Đà Nẵng (lõi) + 4 ô nhỏ
+// Bố cục Homedy: gói gọn 2 HÀNG — ô ĐẦU là địa điểm LÕI 2×2, kèm 4 địa điểm nhỏ.
+// Dữ liệu admin sửa được (getHomeAreas) — chưa nhập → mặc định trong code.
+export default function LocationGrid({ areas = HOME_AREAS_DEFAULT }: { areas?: AreaCard[] }) {
+  const shown = areas.slice(0, 5); // [0] = địa điểm lõi (lớn) + 4 ô nhỏ
 
   return (
     <section className="section-edge bg-white">
@@ -28,7 +29,7 @@ export default function LocationGrid() {
               >
                 <span className="card-sheen z-[3]" aria-hidden />
                 <Image
-                  src={area.image}
+                  src={asset(area.image)}
                   alt={area.name}
                   fill
                   sizes={big ? "(max-width: 1024px) 100vw, 50vw" : "(max-width: 1024px) 50vw, 25vw"}

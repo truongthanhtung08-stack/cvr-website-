@@ -6,7 +6,7 @@ import { uploadImageFile } from "@/lib/uploadImage";
 import { asset } from "@/lib/asset";
 import { homeBanners, projectBanners, type Banner } from "@/lib/banners";
 import { landings as LANDINGS_DEFAULT, type Landing } from "@/lib/landings";
-import { FOOTER_DEFAULT, HOME_AD_DEFAULT, type FooterData, type HomeAdData } from "@/lib/siteContent";
+import { FOOTER_DEFAULT, HOME_AD_DEFAULT, HOME_AREAS_DEFAULT, ABOUT_DEFAULT, type FooterData, type HomeAdData, type AreaCard, type AboutData } from "@/lib/siteContent";
 
 // Quản lý NỘI DUNG TĨNH trang web (chữ + ảnh) — Hero trang chủ + Footer công ty.
 // Lưu vào bảng site_content (key: 'hero_home', 'footer'). Web đọc no-store → hiện ngay.
@@ -16,19 +16,23 @@ export default function AdminSiteContentPage() {
   const [homeAd, setHomeAd] = useState<HomeAdData>(HOME_AD_DEFAULT);
   const [projBanners, setProjBanners] = useState<Banner[]>(projectBanners);
   const [landings, setLandings] = useState<Landing[]>(LANDINGS_DEFAULT);
+  const [homeAreas, setHomeAreas] = useState<AreaCard[]>(HOME_AREAS_DEFAULT);
+  const [about, setAbout] = useState<AboutData>(ABOUT_DEFAULT);
   const [loading, setLoading] = useState(true);
   const [savingHero, setSavingHero] = useState(false);
   const [savingFooter, setSavingFooter] = useState(false);
   const [savingAd, setSavingAd] = useState(false);
   const [savingProj, setSavingProj] = useState(false);
   const [savingLanding, setSavingLanding] = useState(false);
+  const [savingAreas, setSavingAreas] = useState(false);
+  const [savingAbout, setSavingAbout] = useState(false);
   const [msg, setMsg] = useState("");
 
   useEffect(() => {
     (async () => {
       const supabase = createClient();
       const { data } = await supabase.from("site_content").select("key,data")
-        .in("key", ["hero_home", "footer", "home_ad", "banner_projects", "landings"]);
+        .in("key", ["hero_home", "footer", "home_ad", "banner_projects", "landings", "home_areas", "about"]);
       const rows = (data ?? []) as { key: string; data: Record<string, unknown> }[];
       const pick = (k: string) => rows.find((r) => r.key === k)?.data;
 
@@ -53,6 +57,19 @@ export default function AdminSiteContentPage() {
 
       const ld = pick("landings") as { items?: Landing[] } | undefined;
       if (ld?.items?.length) setLandings(ld.items);
+
+      const ar = pick("home_areas") as { items?: AreaCard[] } | undefined;
+      if (ar?.items?.length) setHomeAreas(ar.items);
+
+      const ab = pick("about") as Partial<AboutData> | undefined;
+      if (ab) setAbout({
+        ...ABOUT_DEFAULT, ...ab,
+        story: { ...ABOUT_DEFAULT.story, ...ab.story },
+        market: { ...ABOUT_DEFAULT.market, ...ab.market },
+        cta: { ...ABOUT_DEFAULT.cta, ...ab.cta },
+        values: ab.values?.length ? ab.values : ABOUT_DEFAULT.values,
+        stats: ab.stats?.length ? ab.stats : ABOUT_DEFAULT.stats,
+      });
 
       setLoading(false);
     })();
@@ -87,6 +104,11 @@ export default function AdminSiteContentPage() {
   const addLd = () =>
     setLandings((s) => [...s, { slug: "", image: "", eyebrow: "", title: "", subtitle: "", intro: "", stats: [], blocks: [], gallery: [], ctaLabel: "", ctaHref: "" }]);
   const delLd = (i: number) => setLandings((s) => s.filter((_, j) => j !== i));
+  const setArea = (i: number, patch: Partial<AreaCard>) =>
+    setHomeAreas((s) => s.map((x, j) => (j === i ? { ...x, ...patch } : x)));
+  const addArea = () =>
+    setHomeAreas((s) => [...s, { name: "", count: "", image: "", href: "/mua-ban" }]);
+  const delArea = (i: number) => setHomeAreas((s) => s.filter((_, j) => j !== i));
 
   if (loading) return <p className="text-sm text-cvr-muted">Đang tải…</p>;
 
@@ -119,6 +141,28 @@ export default function AdminSiteContentPage() {
           ))}
         </div>
         <SaveButton saving={savingHero} onClick={() => saveBlock("hero_home", { slides: heroSlides }, setSavingHero)} />
+      </Card>
+
+      {/* BẤT ĐỘNG SẢN THEO KHU VỰC (trang chủ) */}
+      <Card title="Bất động sản theo khu vực (trang chủ)" note="5 ô · ô ĐẦU hiển thị LỚN (địa điểm nổi bật). Ảnh dọc, nên 800 × 800 px">
+        <div className="space-y-5">
+          {homeAreas.map((a, i) => (
+            <div key={i} className="rounded-xl border border-cvr-line p-4">
+              <div className="mb-3 flex items-center justify-between">
+                <p className="text-sm font-semibold text-cvr-ink">Ô {i + 1}{i === 0 ? " (lớn — nổi bật)" : ""}</p>
+                <button type="button" onClick={() => delArea(i)} className="text-xs font-medium text-red-600 hover:underline">Xoá</button>
+              </div>
+              <ImageField value={a.image} ratio="Vuông · 800×800" onChange={(url) => setArea(i, { image: url })} />
+              <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <Field label="Tên khu vực"><input value={a.name} onChange={(e) => setArea(i, { name: e.target.value })} className={inputCls} /></Field>
+                <Field label="Dòng phụ (vd '1.240 tin')"><input value={a.count} onChange={(e) => setArea(i, { count: e.target.value })} className={inputCls} /></Field>
+                <Field label="Link khi bấm (href)"><input value={a.href} onChange={(e) => setArea(i, { href: e.target.value })} placeholder="/mua-ban?tinh=Đà Nẵng" className={inputCls} /></Field>
+              </div>
+            </div>
+          ))}
+          <button type="button" onClick={addArea} className={addBtnCls}>+ Thêm khu vực</button>
+        </div>
+        <SaveButton saving={savingAreas} onClick={() => saveBlock("home_areas", { items: homeAreas }, setSavingAreas)} />
       </Card>
 
       {/* FOOTER */}
@@ -220,6 +264,12 @@ export default function AdminSiteContentPage() {
           <button type="button" onClick={addLd} className={addBtnCls}>+ Thêm landing</button>
         </div>
         <SaveButton saving={savingLanding} onClick={() => saveBlock("landings", { items: landings }, setSavingLanding)} />
+      </Card>
+
+      {/* TRANG GIỚI THIỆU CÔNG TY */}
+      <Card title="Trang Giới thiệu công ty (/gioi-thieu)" note="Toàn bộ nội dung trang: câu chuyện · tầm nhìn/sứ mệnh · giá trị cốt lõi · số liệu · thị trường · CTA">
+        <AboutEditor value={about} onChange={(patch) => setAbout((a) => ({ ...a, ...patch }))} />
+        <SaveButton saving={savingAbout} onClick={() => saveBlock("about", about, setSavingAbout)} />
       </Card>
 
       <p className="text-xs text-cvr-faint">
@@ -384,5 +434,105 @@ function RemoveBtn({ onClick }: { onClick: () => void }) {
     <button type="button" onClick={onClick} aria-label="Xoá dòng" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-cvr-line text-cvr-muted transition hover:border-red-500 hover:text-red-600">
       <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
     </button>
+  );
+}
+
+// ── Trình sửa trang Giới thiệu công ty (/gioi-thieu) ──
+function AboutEditor({ value: a, onChange }: { value: AboutData; onChange: (patch: Partial<AboutData>) => void }) {
+  const setStory = (patch: Partial<AboutData["story"]>) => onChange({ story: { ...a.story, ...patch } });
+  const setMarket = (patch: Partial<AboutData["market"]>) => onChange({ market: { ...a.market, ...patch } });
+  const setCta = (patch: Partial<AboutData["cta"]>) => onChange({ cta: { ...a.cta, ...patch } });
+  const setValue = (i: number, patch: Partial<AboutData["values"][number]>) =>
+    onChange({ values: a.values.map((v, j) => (j === i ? { ...v, ...patch } : v)) });
+  const setStat = (i: number, patch: Partial<AboutData["stats"][number]>) =>
+    onChange({ stats: a.stats.map((s, j) => (j === i ? { ...s, ...patch } : s)) });
+
+  return (
+    <div className="space-y-6">
+      {/* Ảnh hero */}
+      <div>
+        <p className="mb-1.5 text-sm font-semibold text-cvr-ink">Ảnh đầu trang (hero)</p>
+        <ImageField value={a.heroImage} ratio="Ngang · 1920×720" onChange={(url) => onChange({ heroImage: url })} />
+      </div>
+
+      {/* Câu chuyện */}
+      <div className="rounded-xl border border-cvr-line p-4">
+        <p className="mb-3 text-sm font-semibold text-cvr-ink">Câu chuyện — “Chúng tôi là ai”</p>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <Field label="Nhãn nhỏ (eyebrow)"><input value={a.story.eyebrow} onChange={(e) => setStory({ eyebrow: e.target.value })} className={inputCls} /></Field>
+          <Field label="Tiêu đề"><input value={a.story.title} onChange={(e) => setStory({ title: e.target.value })} className={inputCls} /></Field>
+        </div>
+        <div className="mt-3"><ImageField value={a.story.image} ratio="16:10" onChange={(url) => setStory({ image: url })} /></div>
+        <SubList title="Đoạn văn giới thiệu" addLabel="+ Thêm đoạn" onAdd={() => setStory({ paragraphs: [...a.story.paragraphs, ""] })}>
+          {a.story.paragraphs.map((p, i) => (
+            <div key={i} className="flex gap-2">
+              <textarea value={p} onChange={(e) => setStory({ paragraphs: a.story.paragraphs.map((x, j) => (j === i ? e.target.value : x)) })} rows={2} className={`${inputCls} h-auto flex-1 py-2.5`} />
+              <RemoveBtn onClick={() => setStory({ paragraphs: a.story.paragraphs.filter((_, j) => j !== i) })} />
+            </div>
+          ))}
+        </SubList>
+      </div>
+
+      {/* Tầm nhìn & Sứ mệnh */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <Field label="Tầm nhìn"><textarea value={a.vision} onChange={(e) => onChange({ vision: e.target.value })} rows={3} className={`${inputCls} h-auto py-2.5`} /></Field>
+        <Field label="Sứ mệnh"><textarea value={a.mission} onChange={(e) => onChange({ mission: e.target.value })} rows={3} className={`${inputCls} h-auto py-2.5`} /></Field>
+      </div>
+
+      {/* Giá trị cốt lõi */}
+      <div className="rounded-xl border border-cvr-line p-4">
+        <SubList title="Giá trị cốt lõi (icon giữ theo thứ tự)" addLabel="+ Thêm giá trị" onAdd={() => onChange({ values: [...a.values, { title: "", desc: "" }] })}>
+          {a.values.map((v, i) => (
+            <div key={i} className="flex gap-2">
+              <input value={v.title} onChange={(e) => setValue(i, { title: e.target.value })} placeholder="Tiêu đề" className={`${inputCls} flex-1`} />
+              <input value={v.desc} onChange={(e) => setValue(i, { desc: e.target.value })} placeholder="Mô tả" className={`${inputCls} flex-[2]`} />
+              <RemoveBtn onClick={() => onChange({ values: a.values.filter((_, j) => j !== i) })} />
+            </div>
+          ))}
+        </SubList>
+      </div>
+
+      {/* Số liệu */}
+      <div className="rounded-xl border border-cvr-line p-4">
+        <p className="mb-1.5 text-sm font-semibold text-cvr-ink">Ảnh nền khối số liệu</p>
+        <ImageField value={a.statsImage} ratio="Ngang · 1920×720" onChange={(url) => onChange({ statsImage: url })} />
+        <SubList title="Số liệu (số · nhãn · dòng phụ)" addLabel="+ Thêm số liệu" onAdd={() => onChange({ stats: [...a.stats, { value: "", label: "", sub: "" }] })}>
+          {a.stats.map((s, i) => (
+            <div key={i} className="flex gap-2">
+              <input value={s.value} onChange={(e) => setStat(i, { value: e.target.value })} placeholder="24/7" className={`${inputCls} w-24`} />
+              <input value={s.label} onChange={(e) => setStat(i, { label: e.target.value })} placeholder="Nhãn" className={`${inputCls} flex-1`} />
+              <input value={s.sub} onChange={(e) => setStat(i, { sub: e.target.value })} placeholder="Dòng phụ" className={`${inputCls} flex-1`} />
+              <RemoveBtn onClick={() => onChange({ stats: a.stats.filter((_, j) => j !== i) })} />
+            </div>
+          ))}
+        </SubList>
+      </div>
+
+      {/* Thị trường */}
+      <div className="rounded-xl border border-cvr-line p-4">
+        <p className="mb-3 text-sm font-semibold text-cvr-ink">Khối “Thị trường chuyên sâu”</p>
+        <ImageField value={a.market.image} ratio="16:10" onChange={(url) => setMarket({ image: url })} />
+        <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <Field label="Nhãn nhỏ"><input value={a.market.eyebrow} onChange={(e) => setMarket({ eyebrow: e.target.value })} className={inputCls} /></Field>
+          <Field label="Tiêu đề"><input value={a.market.title} onChange={(e) => setMarket({ title: e.target.value })} className={inputCls} /></Field>
+          <Field label="Nhãn nút CTA"><input value={a.market.ctaLabel} onChange={(e) => setMarket({ ctaLabel: e.target.value })} className={inputCls} /></Field>
+          <Field label="Link nút CTA"><input value={a.market.ctaHref} onChange={(e) => setMarket({ ctaHref: e.target.value })} className={inputCls} /></Field>
+        </div>
+        <div className="mt-3"><Field label="Mô tả"><textarea value={a.market.desc} onChange={(e) => setMarket({ desc: e.target.value })} rows={3} className={`${inputCls} h-auto py-2.5`} /></Field></div>
+      </div>
+
+      {/* CTA cuối */}
+      <div className="rounded-xl border border-cvr-line p-4">
+        <p className="mb-3 text-sm font-semibold text-cvr-ink">Khối kêu gọi cuối trang (CTA)</p>
+        <Field label="Tiêu đề"><input value={a.cta.title} onChange={(e) => setCta({ title: e.target.value })} className={inputCls} /></Field>
+        <div className="mt-3"><Field label="Mô tả"><textarea value={a.cta.desc} onChange={(e) => setCta({ desc: e.target.value })} rows={2} className={`${inputCls} h-auto py-2.5`} /></Field></div>
+        <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <Field label="Nút chính — nhãn"><input value={a.cta.primaryLabel} onChange={(e) => setCta({ primaryLabel: e.target.value })} className={inputCls} /></Field>
+          <Field label="Nút chính — link"><input value={a.cta.primaryHref} onChange={(e) => setCta({ primaryHref: e.target.value })} className={inputCls} /></Field>
+          <Field label="Nút phụ — nhãn"><input value={a.cta.secondaryLabel} onChange={(e) => setCta({ secondaryLabel: e.target.value })} className={inputCls} /></Field>
+          <Field label="Nút phụ — link"><input value={a.cta.secondaryHref} onChange={(e) => setCta({ secondaryHref: e.target.value })} className={inputCls} /></Field>
+        </div>
+      </div>
+    </div>
   );
 }
