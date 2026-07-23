@@ -5,22 +5,24 @@ import { notFound } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { asset } from "@/lib/asset";
-import { landings, getLandingBySlug } from "@/lib/landings";
+import { landings } from "@/lib/landings";
+import { getLandingBySlug } from "@/lib/siteContent";
 
+// Prerender các slug mặc định; slug do admin thêm mới vẫn render on-demand (dynamicParams mặc định true).
 export function generateStaticParams() {
   return landings.map((l) => ({ slug: l.slug }));
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const l = getLandingBySlug(slug);
+  const l = await getLandingBySlug(slug);
   if (!l) return { title: "Không tìm thấy | Coastal Land" };
   return { title: `${l.title} | Coastal Land`, description: l.intro.slice(0, 160) };
 }
 
 export default async function LandingPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const l = getLandingBySlug(slug);
+  const l = await getLandingBySlug(slug);
   if (!l) notFound();
 
   return (

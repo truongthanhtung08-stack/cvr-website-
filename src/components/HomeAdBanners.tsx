@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { asset } from "@/lib/asset";
+import { HOME_AD_DEFAULT, type HomeAdData } from "@/lib/siteContent";
 
 // ===== 2 banner quảng cáo cuối trang chủ — bám mẫu Banner Mẫu 6 =====
 // (D:\Coastal Land\Lập trình website\Banner\Banner Mẫu 6.png + spec Re*.txt)
@@ -19,14 +20,14 @@ const ArrowRight = (
 );
 
 // ── Banner 01 — ĐĂNG TIN: ảnh liền mạch, chữ trên vùng sáng bên trái ──
-export function AdBannerSeller() {
+export function AdBannerSeller({ data = HOME_AD_DEFAULT.seller }: { data?: HomeAdData["seller"] }) {
   return (
     <section className="section-edge bg-white">
       <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
         {/* Khung GỌN (3.5:1) trên desktop — ảnh PHỦ KÍN khung (cover), không hụt 2 bên */}
         <div className="relative overflow-hidden rounded-none shadow-lux md:aspect-[7/2]">
           <Image
-            src={asset("/images/banner-coastal-35.jpg")}
+            src={asset(data.image)}
             alt="Villa ven biển Duyên Hải Miền Trung lúc hoàng hôn"
             fill
             sizes="(max-width: 1280px) 100vw, 1216px"
@@ -38,20 +39,19 @@ export function AdBannerSeller() {
           {/* Nội dung — gọn, canh giữa dọc bên trái */}
           <div className="relative flex min-h-[240px] flex-col justify-center px-8 py-8 sm:px-12 md:absolute md:inset-y-0 md:min-h-0 lg:px-14">
             <h2 className="text-balance text-2xl font-semibold leading-[1.12] tracking-tight text-cvr-ink sm:text-3xl">
-              Đưa Bất động sản
+              {data.titleLine1}
               <br />
-              <span className="text-cvr-gold-ink">đến đúng khách hàng.</span>
+              <span className="text-cvr-gold-ink">{data.titleLine2}</span>
             </h2>
             <span className="mt-4 h-px w-12 bg-cvr-gold-ink/50" aria-hidden />
             <p className="mt-4 max-w-sm text-sm leading-relaxed text-cvr-body">
-              Đăng tin mua bán, cho thuê và dự án trên{" "}
-              <span className="font-semibold text-cvr-gold-ink">COASTAL LAND</span> Với giao diện thân thiện, thông tin cập nhật chính xác cùng nhiều tính năng khác biệt, Coastal Land đang từng ngày khẳng định giá trị đối với người dùng và khách hàng.
+              {data.body}
             </p>
             <Link
-              href="/dang-tin"
+              href={data.ctaHref}
               className="group mt-6 inline-flex w-fit items-center gap-2 rounded-full bg-cvr-ink px-6 py-3 text-sm font-semibold text-white transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 hover:bg-black"
             >
-              Đăng tin ngay
+              {data.ctaLabel}
               {ArrowRight}
             </Link>
           </div>
@@ -62,7 +62,7 @@ export function AdBannerSeller() {
 }
 
 // ── Banner 02 — ỨNG DỤNG: 3 khối như mẫu (iPhone · nội dung · vạch dọc + QR/store) ──
-export function AdBannerApp() {
+export function AdBannerApp({ data = HOME_AD_DEFAULT.app }: { data?: HomeAdData["app"] }) {
   return (
     <section className="section-edge bg-white">
       <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
@@ -75,7 +75,7 @@ export function AdBannerApp() {
             {/* iPhone thật (cắt từ Banner Mẫu 6) — 2 máy, app COASTAL LAND, trôi nổi nhẹ */}
             <div className="order-2 flex items-center justify-center md:order-1">
               <Image
-                src={asset("/images/app-phones.png")}
+                src={asset(data.phones)}
                 alt="Ứng dụng COASTAL LAND trên iPhone"
                 width={300}
                 height={289}
@@ -86,19 +86,19 @@ export function AdBannerApp() {
             {/* Nội dung — giữa */}
             <div className="order-1 min-w-0 md:order-2">
               <h2 className="text-balance text-2xl font-semibold leading-[1.12] tracking-tight text-white sm:text-3xl">
-                Thị trường bất động sản.
+                {data.titleLine1}
                 <br />
-                <span className="text-cvr-gold-soft">Trong tầm tay bạn.</span>
+                <span className="text-cvr-gold-soft">{data.titleLine2}</span>
               </h2>
               <span className="mt-4 block h-px w-12 bg-cvr-gold-soft/40" aria-hidden />
               <p className={`mt-4 max-w-md text-sm leading-relaxed ${DARK_BODY}`}>
-                Ứng dụng COASTAL LAND giúp bạn tìm kiếm, so sánh, theo dõi và nắm bắt cơ hội mọi lúc, mọi nơi.
+                {data.body}
               </p>
               <a
-                href="#"
+                href={data.ctaHref}
                 className="group mt-6 inline-flex w-fit items-center gap-2 rounded-full bg-cvr-gold px-6 py-3 text-sm font-semibold text-cvr-ink transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 hover:bg-cvr-gold-soft"
               >
-                Tải ứng dụng
+                {data.ctaLabel}
                 {ArrowRight}
               </a>
             </div>
@@ -108,7 +108,7 @@ export function AdBannerApp() {
               <div className="flex items-center gap-3">
                 <div className="rounded-xl bg-white p-2">
                   <Image
-                    src={asset("/images/qr.png")}
+                    src={asset(data.qr)}
                     alt="Quét mã QR để tải ứng dụng COASTAL LAND"
                     width={64}
                     height={64}
@@ -117,8 +117,8 @@ export function AdBannerApp() {
                 </div>
                 <p className={`max-w-[6.5rem] text-xs leading-snug ${DARK_BODY}`}>Quét mã để tải ứng dụng</p>
               </div>
-              <StoreButton store="apple" />
-              <StoreButton store="google" />
+              <StoreButton store="apple" href={data.appleHref} />
+              <StoreButton store="google" href={data.googleHref} />
             </div>
           </div>
         </div>
@@ -128,10 +128,10 @@ export function AdBannerApp() {
 }
 
 // Nút tải App Store / Google Play — nền tối, viền mảnh (như mẫu)
-function StoreButton({ store }: { store: "apple" | "google" }) {
+function StoreButton({ store, href = "#" }: { store: "apple" | "google"; href?: string }) {
   return (
     <a
-      href="#"
+      href={href}
       className="flex items-center gap-2.5 rounded-xl border border-white/12 bg-white/[0.06] px-4 py-2 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 hover:bg-white/10"
     >
       {store === "apple" ? (
