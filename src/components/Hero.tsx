@@ -21,10 +21,8 @@ type HeroProps = {
 
 export default function Hero({
   banners = homeBanners,
-  // Khung LẤY ĐÚNG TỶ LỆ CỦA ẢNH ĐANG HIỆN (đo từ chính file ảnh admin up) →
-  // ảnh hiện TRỌN VẸN, không cắt, không hở, không méo — kể cả khi các banner
-  // trong slide có tỷ lệ khác nhau. KHÔNG đặt max-h (sẽ co chiều rộng gây hở).
-  heightClass = "w-full",
+  // GIỮ NGUYÊN tỷ lệ khung trang — muốn ảnh hiện trọn thì dùng fit="contain", KHÔNG đổi chiều cao.
+  heightClass = "min-h-[340px] sm:h-[calc(100svh-120px)]",
   search = true,
   searchTab,
   fit = "cover",
@@ -34,16 +32,6 @@ export default function Hero({
   const [playing, setPlaying] = useState(true);
   const [tick, setTick] = useState(0);
   const cur = banners[active];
-
-  // Tỷ lệ THẬT của từng ảnh banner — đọc trực tiếp từ file admin đã up.
-  // Khung Hero lấy đúng tỷ lệ ảnh đang hiện → ảnh luôn trọn vẹn, không cắt/hở.
-  const [ratios, setRatios] = useState<Record<number, number>>({});
-  const noteRatio = (i: number, el: HTMLImageElement) => {
-    if (!el.naturalHeight) return;
-    const rr = el.naturalWidth / el.naturalHeight;
-    setRatios((p) => (p[i] ? p : { ...p, [i]: rr }));
-  };
-  const activeRatio = ratios[active];
 
   useEffect(() => {
     if (banners.length <= 1 || !playing) return;
@@ -94,9 +82,6 @@ export default function Hero({
     )}
     <section
       className={`relative isolate flex flex-col ${heightClass} select-none`}
-      // KHUNG CỐ ĐỊNH 2:1 — KHÔNG đổi theo từng ảnh. (Đã thử cho khung ăn theo tỷ lệ
-      // từng banner: trang bị NHẢY 142px mỗi lần chuyển slide → bỏ hẳn.)
-      style={{ aspectRatio: "2 / 1" }}
       onPointerDown={onDown}
       onPointerUp={onUp}
       onWheel={onWheel}
@@ -125,13 +110,9 @@ export default function Hero({
             alt={b.title}
             fill
             priority={i === 0}
-            // Tải NGAY cả các banner sau (AVIF ~60KB/ảnh) để biết TỶ LỆ THẬT của
-            // từng ảnh ngay từ đầu → khung không phải đoán, chuyển slide không giật.
-            loading={i === 0 ? undefined : "eager"}
             quality={100}
             draggable={false}
             sizes="100vw"
-            onLoad={(e) => noteRatio(i, e.currentTarget)}
             className={`pointer-events-none transition-opacity duration-[1000ms] ease-[cubic-bezier(0.4,0,0.2,1)] ${
               contain ? "object-contain" : "object-cover"
             } ${i === active ? "opacity-100" : "opacity-0"}`}
