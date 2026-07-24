@@ -521,7 +521,7 @@ function PkgCard({
             {!isBasic && (
               <span
                 className="rounded-full px-2.5 py-[3px] text-[10px] font-bold uppercase tracking-wide"
-                style={{ backgroundColor: t.accent, color: t.id === "gold" ? "#1d1d1f" : "#fff" }}
+                style={{ backgroundColor: t.accent, color: "#fff" }}
               >
                 {t.short}
               </span>
@@ -541,7 +541,7 @@ function PkgCard({
               {!isBasic && (
                 <span
                   className="absolute left-1.5 top-1.5 px-1.5 py-px text-[9px] font-bold uppercase"
-                  style={{ backgroundColor: t.accent, color: t.id === "gold" ? "#1d1d1f" : "#fff" }}
+                  style={{ backgroundColor: t.accent, color: "#fff" }}
                 >
                   {t.short}
                 </span>

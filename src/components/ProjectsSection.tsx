@@ -66,7 +66,7 @@ export default function ProjectsSection({ projects }: { projects: Project[] }) {
                       className="card-lux group relative flex flex-col overflow-hidden rounded-none border border-cvr-line bg-white shadow-lux hover:-translate-y-2 hover:border-cvr-blue/45 shadow-lux-hover"
                     >
                       <span className="card-sheen" aria-hidden />
-                      <div className="relative aspect-[16/10] overflow-hidden sm:aspect-[4/3]">
+                      <div className="relative aspect-[3/2] overflow-hidden sm:aspect-[4/3]">
                         <Image
                           src={p.image}
                           alt={p.name}

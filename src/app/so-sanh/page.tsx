@@ -69,7 +69,7 @@ export default function ComparePage() {
                             <div className="relative aspect-[4/3] overflow-hidden rounded-lg bg-cvr-surface">
                               <Image src={asset(l.image)} alt={l.title} fill sizes="200px" className="object-cover" />
                               {tier && (
-                                <span className="absolute left-1.5 top-1.5 px-1.5 py-0.5 text-[9px] font-bold uppercase text-cvr-ink" style={{ backgroundColor: tier.accent }}>
+                                <span className="absolute left-1.5 top-1.5 px-1.5 py-0.5 text-[9px] font-bold uppercase text-white" style={{ backgroundColor: tier.accent }}>
                                   {tier.short}
                                 </span>
                               )}

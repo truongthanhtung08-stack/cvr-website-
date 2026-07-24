@@ -94,11 +94,6 @@ function AreaTile({ area, big, running, delay }: { area: AreaCard; big: boolean;
       {/* Phủ tối chỉ ở DẢI HẸP sát chân ô (đủ đọc chữ) — thân ảnh giữ nguyên độ sáng gốc */}
       <div className="absolute inset-x-0 bottom-0 h-1/3 bg-[linear-gradient(to_top,rgba(0,0,0,0.55)_0%,rgba(0,0,0,0.18)_38%,rgba(0,0,0,0)_100%)]" />
       <div className="absolute bottom-0 left-0 p-5 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:-translate-y-1 [text-shadow:0_1px_2px_rgba(0,0,0,0.6),0_2px_14px_rgba(0,0,0,0.5)]">
-        {big && (
-          <span className="mb-1.5 inline-block bg-cvr-gold px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-cvr-ink [text-shadow:none]">
-            Địa điểm nổi bật
-          </span>
-        )}
         <h3 className={`font-bold text-white ${big ? "text-2xl sm:text-3xl" : "text-lg sm:text-xl"}`}>
           {area.name}
         </h3>

@@ -99,7 +99,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
               {/* Tiêu đề + giá */}
               <div>
                 {tier ? (
-                  <span className="mb-2 inline-block rounded px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-cvr-ink" style={{ backgroundColor: tier.accent }}>
+                  <span className="mb-2 inline-block rounded px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-white" style={{ backgroundColor: tier.accent }}>
                     {tier.name}
                   </span>
                 ) : (

@@ -85,7 +85,7 @@ export default function PropertyCard({
         {tier && (
           <span
             className={`absolute left-2 top-2 font-bold uppercase tracking-wide ${isFeatured ? "px-2 py-1 text-[11px]" : "px-1.5 py-0.5 text-[10px]"}`}
-            style={{ backgroundColor: tier.accent, color: tier.id === "gold" ? "#1d1d1f" : "#fff" }}
+            style={{ backgroundColor: tier.accent, color: "#fff" }}
           >
             {tier.short}
           </span>
@@ -168,7 +168,7 @@ function PropertyRow({ item, showTime = false }: { item: Listing; showTime?: boo
         {tier && (
           <span
             className="absolute left-2 top-2 px-1.5 py-0.5 text-[10px] font-bold uppercase"
-            style={{ backgroundColor: tier.accent, color: tier.id === "gold" ? "#1d1d1f" : "#fff" }}
+            style={{ backgroundColor: tier.accent, color: "#fff" }}
           >{tier.short}</span>
         )}
         <div className="absolute right-2 top-2 flex flex-col gap-1.5">

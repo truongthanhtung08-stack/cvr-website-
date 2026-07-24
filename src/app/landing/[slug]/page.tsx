@@ -37,7 +37,7 @@ export default async function LandingPage({ params }: { params: Promise<{ slug: 
             <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.28em] text-cvr-gold sm:text-xs">{l.eyebrow}</p>
             <h1 className="max-w-3xl text-3xl font-semibold leading-tight tracking-tight text-white drop-shadow-md sm:text-4xl lg:text-5xl">{l.title}</h1>
             <p className="mt-3 text-base text-white/85 sm:text-lg">{l.subtitle}</p>
-            <Link href={l.ctaHref} className="mt-6 inline-flex items-center gap-2 rounded-lg bg-cvr-gold px-6 py-3 text-sm font-semibold text-cvr-ink transition hover:bg-cvr-gold-soft active:scale-95">
+            <Link href={l.ctaHref} className="mt-6 inline-flex items-center gap-2 rounded-lg bg-cvr-gold px-6 py-3 text-sm font-semibold text-white transition hover:bg-cvr-gold-soft active:scale-95">
               {l.ctaLabel}
               <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.4} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
             </Link>

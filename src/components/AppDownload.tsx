@@ -109,7 +109,7 @@ function PhoneMockup() {
         <div className="space-y-2.5 bg-cvr-surface p-3">
           <div className="overflow-hidden rounded-lg border-t-2 border-cvr-gold bg-white shadow-sm">
             <div className="relative h-20 bg-gradient-to-br from-cvr-ink/80 to-cvr-muted">
-              <span className="absolute left-1.5 top-1.5 bg-cvr-gold px-1 py-0.5 text-[7px] font-bold uppercase text-cvr-ink">Diamond</span>
+              <span className="absolute left-1.5 top-1.5 bg-cvr-gold px-1 py-0.5 text-[7px] font-bold uppercase text-white">Diamond</span>
             </div>
             <div className="space-y-1 p-2">
               <div className="h-1.5 w-4/5 rounded-full" style={{ backgroundColor: "#8a6d2e" }} />

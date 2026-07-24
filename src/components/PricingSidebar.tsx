@@ -79,7 +79,7 @@ export default function PricingSidebar({
         <p className="mt-1 text-xs text-cvr-line">Hỗ trợ 8:00 – 21:00 hằng ngày</p>
         <a
           href="#lien-he"
-          className="mt-4 block rounded-full bg-cvr-gold py-2.5 text-sm font-bold text-cvr-ink transition hover:bg-cvr-gold-soft"
+          className="mt-4 block rounded-full bg-cvr-gold py-2.5 text-sm font-bold text-white transition hover:bg-cvr-gold-soft"
         >
           Nhận tư vấn miễn phí
         </a>

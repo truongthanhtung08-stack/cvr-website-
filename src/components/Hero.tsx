@@ -21,9 +21,10 @@ type HeroProps = {
 
 export default function Hero({
   banners = homeBanners,
-  // MOBILE: banner CHỮ NHẬT ngang gọn (170px) — để MÀN HÌNH ĐẦU thấy trọn thẻ tin.
-  // Desktop GIỮ NGUYÊN gần full màn hình.
-  heightClass = "min-h-[170px] sm:h-[calc(100svh-120px)]",
+  // KHUNG ĐÚNG TỶ LỆ ẢNH BANNER (2:1) → ảnh ÔM TRỌN: kín khung, không cắt, không hở.
+  // BẮT BUỘC w-full và KHÔNG đặt max-h: nếu chặn chiều cao, trình duyệt sẽ CO luôn
+  // chiều rộng để giữ tỷ lệ → hở khoảng trắng bên phải (lỗi đã gặp trên PC).
+  heightClass = "w-full aspect-[2/1]",
   search = true,
   searchTab,
   fit = "cover",
