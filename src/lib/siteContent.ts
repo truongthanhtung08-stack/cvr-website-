@@ -170,17 +170,23 @@ export async function getLandingBySlug(slug: string): Promise<Landing | undefine
 // image = đường dẫn RAW (component tự qua asset()).
 export type AreaCard = {
   name: string;
-  count: string;   // dòng nhỏ dưới tên, vd "1.240 tin"
-  image: string;   // ảnh RAW, vd "/images/tin/1.jpg"
-  href: string;    // bấm ô → tới đâu
+  count: string;      // dòng nhỏ dưới tên, vd "1.240 tin"
+  image: string;      // ảnh CHÍNH (RAW), vd "/images/tin/1.jpg"
+  images?: string[];  // ảnh chạy slide THÊM sau ảnh chính (không có → ô đứng yên)
+  href: string;       // bấm ô → tới đâu
 };
 
+// Danh sách ảnh của một ô khu vực: ảnh chính đứng đầu, bỏ trùng và ô rỗng.
+export function areaImages(a: AreaCard): string[] {
+  return Array.from(new Set([a.image, ...(a.images ?? [])].filter(Boolean)));
+}
+
 export const HOME_AREAS_DEFAULT: AreaCard[] = [
-  { name: "Đà Nẵng", count: "1.240 tin", image: "/images/tin/1.jpg", href: "/mua-ban?tinh=Đà Nẵng" },
-  { name: "Huế", count: "586 tin", image: "/images/tin/13.jpg", href: "/mua-ban?tinh=Huế" },
-  { name: "Quy Nhơn", count: "198 tin", image: "/images/tin/5.jpg", href: "/mua-ban?tinh=Quy Nhơn" },
-  { name: "Nha Trang", count: "324 tin", image: "/images/tin/9.jpg", href: "/mua-ban?tinh=Nha Trang" },
-  { name: "Quảng Ngãi", count: "256 tin", image: "/images/tin/20.jpg", href: "/mua-ban?tinh=Quảng Ngãi" },
+  { name: "Đà Nẵng", count: "1.240 tin", image: "/images/tin/1.jpg", images: ["/images/tin/2.jpg", "/images/tin/3.jpg"], href: "/mua-ban?tinh=Đà Nẵng" },
+  { name: "Huế", count: "586 tin", image: "/images/tin/13.jpg", images: ["/images/tin/14.jpg", "/images/tin/15.jpg"], href: "/mua-ban?tinh=Huế" },
+  { name: "Quy Nhơn", count: "198 tin", image: "/images/tin/5.jpg", images: ["/images/tin/6.jpg", "/images/tin/7.jpg"], href: "/mua-ban?tinh=Quy Nhơn" },
+  { name: "Nha Trang", count: "324 tin", image: "/images/tin/9.jpg", images: ["/images/tin/10.jpg", "/images/tin/11.jpg"], href: "/mua-ban?tinh=Nha Trang" },
+  { name: "Quảng Ngãi", count: "256 tin", image: "/images/tin/20.jpg", images: ["/images/tin/21.jpg", "/images/tin/22.jpg"], href: "/mua-ban?tinh=Quảng Ngãi" },
 ];
 
 export async function getHomeAreas(): Promise<AreaCard[]> {

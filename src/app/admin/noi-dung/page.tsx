@@ -109,6 +109,12 @@ export default function AdminSiteContentPage() {
   const addArea = () =>
     setHomeAreas((s) => [...s, { name: "", count: "", image: "", href: "/mua-ban" }]);
   const delArea = (i: number) => setHomeAreas((s) => s.filter((_, j) => j !== i));
+  // Ảnh chạy slide thêm của 1 ô khu vực (ngoài ảnh chính)
+  const setAreaImg = (i: number, k: number, url: string) =>
+    setArea(i, { images: (homeAreas[i].images ?? []).map((x, j) => (j === k ? url : x)) });
+  const addAreaImg = (i: number) => setArea(i, { images: [...(homeAreas[i].images ?? []), ""] });
+  const delAreaImg = (i: number, k: number) =>
+    setArea(i, { images: (homeAreas[i].images ?? []).filter((_, j) => j !== k) });
 
   if (loading) return <p className="text-sm text-cvr-muted">Đang tải…</p>;
 
@@ -153,6 +159,21 @@ export default function AdminSiteContentPage() {
                 <button type="button" onClick={() => delArea(i)} className="text-xs font-medium text-red-600 hover:underline">Xoá</button>
               </div>
               <ImageField value={a.image} ratio="Vuông · 800×800" onChange={(url) => setArea(i, { image: url })} />
+
+              {/* Ảnh chạy slide thêm — ô khu vực tự đổi ảnh 5 giây/lần */}
+              <div className="mt-3">
+                <p className="mb-2 text-sm font-medium text-cvr-body">Ảnh chạy slide thêm (ngoài ảnh chính)</p>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  {(a.images ?? []).map((src, k) => (
+                    <div key={k}>
+                      <ImageField value={src} ratio="Vuông · 800×800" onChange={(url) => setAreaImg(i, k, url)} />
+                      <button type="button" onClick={() => delAreaImg(i, k)} className="mt-1 text-xs font-medium text-red-600 hover:underline">Xoá ảnh</button>
+                    </div>
+                  ))}
+                </div>
+                <button type="button" onClick={() => addAreaImg(i)} className={`${addBtnCls} mt-3`}>+ Thêm ảnh</button>
+              </div>
+
               <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <Field label="Tên khu vực"><input value={a.name} onChange={(e) => setArea(i, { name: e.target.value })} className={inputCls} /></Field>
                 <Field label="Dòng phụ (vd '1.240 tin')"><input value={a.count} onChange={(e) => setArea(i, { count: e.target.value })} className={inputCls} /></Field>
