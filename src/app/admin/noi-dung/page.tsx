@@ -137,11 +137,17 @@ export default function AdminSiteContentPage() {
               <p className="mb-3 text-sm font-semibold text-cvr-ink">Slide {i + 1}</p>
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                 <div>
-                  <p className="mb-1.5 text-sm font-semibold text-cvr-ink">Ảnh MÁY TÍNH</p>
+                  <p className="text-sm font-semibold text-cvr-ink">Ảnh MÁY TÍNH</p>
+                  <p className="mb-2 mt-0.5 inline-block rounded-md bg-cvr-blue/10 px-2.5 py-1 text-[15px] font-bold tracking-tight text-cvr-blue-ink">
+                    2560 × 1280 px · tỷ lệ 2 : 1
+                  </p>
                   <ImageField value={s.image} ratio="2:1 · 2560×1280" onChange={(url) => setSlide(i, { image: url })} />
                 </div>
                 <div>
-                  <p className="mb-1.5 text-sm font-semibold text-cvr-ink">Ảnh ĐIỆN THOẠI</p>
+                  <p className="text-sm font-semibold text-cvr-ink">Ảnh ĐIỆN THOẠI</p>
+                  <p className="mb-2 mt-0.5 inline-block rounded-md bg-cvr-blue/10 px-2.5 py-1 text-[15px] font-bold tracking-tight text-cvr-blue-ink">
+                    1200 × 480 px · tỷ lệ 2,5 : 1
+                  </p>
                   <ImageField value={s.imageMobile ?? ""} ratio="2.5:1 · 1200×480" onChange={(url) => setSlide(i, { imageMobile: url })} />
                   <p className="mt-1 text-xs text-cvr-muted">Bỏ trống → điện thoại dùng tạm ảnh máy tính (sẽ bị cắt)</p>
                 </div>
@@ -340,7 +346,7 @@ function ImageField({ value, ratio, onChange }: { value: string; ratio: string; 
         ) : (
           <div className="flex h-full w-full items-center justify-center text-xs text-cvr-faint">Chưa có ảnh</div>
         )}
-        <span className="absolute left-1.5 top-1.5 rounded bg-black/60 px-1.5 py-0.5 text-[10px] font-medium text-white">Tỷ lệ {ratio}</span>
+        <span className="absolute left-2 top-2 rounded-md bg-black/70 px-2 py-1 text-[12px] font-semibold text-white backdrop-blur-sm">Tỷ lệ {ratio}</span>
       </div>
       <div className="mt-2 flex items-center gap-2">
         <button type="button" onClick={() => ref.current?.click()} disabled={up} className="rounded-lg border border-cvr-line bg-white px-3 py-1.5 text-xs font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink disabled:opacity-60">
