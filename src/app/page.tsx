@@ -43,12 +43,10 @@ export default async function Home() {
         <Reveal>
           <NewsSection articles={articles} />
         </Reveal>
-        <Reveal>
-          <AdBannerSeller data={homeAd.seller} />
-        </Reveal>
-        <Reveal>
-          <AdBannerApp data={homeAd.app} />
-        </Reveal>
+        {/* KHÔNG bọc Reveal: 2 banner cuối đứng yên, không hiệu ứng hiện dần */}
+        <AdBannerSeller data={homeAd.seller} />
+        {/* KHÔNG bọc Reveal: banner App phải đứng yên tuyệt đối (yêu cầu: bỏ hiệu ứng cụm iPhone) */}
+        <AdBannerApp data={homeAd.app} />
       </main>
       <Footer />
     </>
