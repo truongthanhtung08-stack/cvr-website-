@@ -21,8 +21,10 @@ type HeroProps = {
 
 export default function Hero({
   banners = homeBanners,
-  // GIỮ NGUYÊN tỷ lệ khung trang — muốn ảnh hiện trọn thì dùng fit="contain", KHÔNG đổi chiều cao.
-  heightClass = "min-h-[340px] sm:h-[calc(100svh-120px)]",
+  // KHUNG KHOÁ TỶ LỆ 2:1 (chốt ngày 24/7/2026) — banner thiết kế 2560×1280 sẽ khớp
+  // KHÍT khung: hiện trọn ảnh, không cắt, không hở, giống nhau trên PC và mobile.
+  // KHÔNG thêm max-h (sẽ co chiều rộng gây hở) · KHÔNG cho khung đổi theo từng ảnh (gây nhảy trang).
+  heightClass = "w-full aspect-[2/1]",
   search = true,
   searchTab,
   fit = "cover",
