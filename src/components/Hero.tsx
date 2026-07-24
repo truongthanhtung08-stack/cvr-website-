@@ -21,10 +21,12 @@ type HeroProps = {
 
 export default function Hero({
   banners = homeBanners,
-  // KHUNG KHOÁ TỶ LỆ 2:1 (chốt ngày 24/7/2026) — banner thiết kế 2560×1280 sẽ khớp
-  // KHÍT khung: hiện trọn ảnh, không cắt, không hở, giống nhau trên PC và mobile.
-  // KHÔNG thêm max-h (sẽ co chiều rộng gây hở) · KHÔNG cho khung đổi theo từng ảnh (gây nhảy trang).
-  heightClass = "w-full aspect-[2/1]",
+  // KHUNG KHOÁ TỶ LỆ RIÊNG CHO TỪNG BẢN (chốt 24/7/2026):
+  //   • MOBILE 2.5:1 → Hero cao ~150px, màn hình đầu vẫn thấy phần tin (ảnh 1200×480)
+  //   • PC      2:1  → Hero cao ~712px, banner lớn ấn tượng      (ảnh 2560×1280)
+  // Mỗi bản dùng ẢNH RIÊNG nên khớp KHÍT khung: hiện trọn, không cắt, không hở.
+  // KHÔNG thêm max-h (co chiều rộng gây hở) · KHÔNG cho khung đổi theo từng ảnh (nhảy trang).
+  heightClass = "w-full aspect-[5/2] sm:aspect-[2/1]",
   search = true,
   searchTab,
   fit = "cover",
@@ -105,21 +107,37 @@ export default function Hero({
             className="scale-110 object-cover blur-2xl"
           />
         )}
-        {banners.map((b, i) => (
-          <Image
-            key={b.id}
-            src={asset(b.image)}
-            alt={b.title}
-            fill
-            priority={i === 0}
-            quality={100}
-            draggable={false}
-            sizes="100vw"
-            className={`pointer-events-none transition-opacity duration-[1000ms] ease-[cubic-bezier(0.4,0,0.2,1)] ${
-              contain ? "object-contain" : "object-cover"
-            } ${i === active ? "opacity-100" : "opacity-0"}`}
-          />
-        ))}
+        {banners.map((b, i) => {
+          const cls = `pointer-events-none transition-opacity duration-[1000ms] ease-[cubic-bezier(0.4,0,0.2,1)] ${
+            contain ? "object-contain" : "object-cover"
+          } ${i === active ? "opacity-100" : "opacity-0"}`;
+          return (
+            <div key={b.id}>
+              {/* ĐIỆN THOẠI: ảnh riêng 1200×480 (2.5:1). Chưa có ảnh mobile → dùng tạm ảnh PC. */}
+              <Image
+                src={asset(b.imageMobile || b.image)}
+                alt={b.title}
+                fill
+                priority={i === 0}
+                quality={100}
+                draggable={false}
+                sizes="100vw"
+                className={`${cls} sm:hidden`}
+              />
+              {/* PC: ảnh 2560×1280 (2:1) */}
+              <Image
+                src={asset(b.image)}
+                alt={b.title}
+                fill
+                priority={i === 0}
+                quality={100}
+                draggable={false}
+                sizes="100vw"
+                className={`${cls} hidden sm:block`}
+              />
+            </div>
+          );
+        })}
         {/* Overlay TỐI THIỂU kiểu Apple: 2 dải mờ ở mép trên (bộ lọc/tab) + mép dưới (chữ)
             — phần giữa trong suốt hoàn toàn, giữ nguyên ánh sáng/màu ảnh gốc. */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-transparent" />

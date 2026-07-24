@@ -130,12 +130,22 @@ export default function AdminSiteContentPage() {
       )}
 
       {/* HERO TRANG CHỦ */}
-      <Card title="Hero trang chủ (3 slide)" note="Ảnh ngang 16:9 · nên 1920 × 1080 px">
+      <Card title="Hero trang chủ (3 slide)" note="Mỗi slide cần 2 ảnh: MÁY TÍNH 2560×1280 (2:1) và ĐIỆN THOẠI 1200×480 (2.5:1)">
         <div className="space-y-5">
           {heroSlides.map((s, i) => (
             <div key={i} className="rounded-xl border border-cvr-line p-4">
               <p className="mb-3 text-sm font-semibold text-cvr-ink">Slide {i + 1}</p>
-              <ImageField value={s.image} ratio="16:9 · 1920×1080" onChange={(url) => setSlide(i, { image: url })} />
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                <div>
+                  <p className="mb-1.5 text-sm font-semibold text-cvr-ink">Ảnh MÁY TÍNH</p>
+                  <ImageField value={s.image} ratio="2:1 · 2560×1280" onChange={(url) => setSlide(i, { image: url })} />
+                </div>
+                <div>
+                  <p className="mb-1.5 text-sm font-semibold text-cvr-ink">Ảnh ĐIỆN THOẠI</p>
+                  <ImageField value={s.imageMobile ?? ""} ratio="2.5:1 · 1200×480" onChange={(url) => setSlide(i, { imageMobile: url })} />
+                  <p className="mt-1 text-xs text-cvr-muted">Bỏ trống → điện thoại dùng tạm ảnh máy tính (sẽ bị cắt)</p>
+                </div>
+              </div>
               <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <Field label="Nhãn (dòng 1)"><input value={s.status ?? ""} onChange={(e) => setSlide(i, { status: e.target.value })} className={inputCls} /></Field>
                 <Field label="Tiêu đề (dòng 2)"><input value={s.title ?? ""} onChange={(e) => setSlide(i, { title: e.target.value })} className={inputCls} /></Field>

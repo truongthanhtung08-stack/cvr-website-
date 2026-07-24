@@ -8,7 +8,10 @@ import { projects } from "@/lib/data";
 
 export type Banner = {
   id: string;
-  image: string; // đường dẫn RAW trong /public, vd "/images/hero1.png"
+  image: string; // ảnh PC — RAW trong /public. Thiết kế 2560×1280 (tỷ lệ 2:1)
+  // Ảnh riêng cho ĐIỆN THOẠI — thiết kế 1200×480 (tỷ lệ 2.5:1) để Hero thấp,
+  // màn hình đầu vẫn thấy phần tin. Bỏ trống → dùng tạm ảnh PC.
+  imageMobile?: string;
   status?: string; // (DỰ ÁN) tình trạng: "Đang mở bán" / "Sắp mở bán" — nhãn dòng trên cùng
   title: string; // DÒNG chính (lớn): tiêu đề / tên dự án — cũng dùng làm alt ảnh
   subtitle?: string; // DÒNG phụ (nhỏ): mô tả ngắn / ĐỊA CHỈ
