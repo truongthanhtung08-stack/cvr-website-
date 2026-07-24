@@ -83,14 +83,22 @@ export default function FilterBar({
     } catch { /* bỏ qua localStorage lỗi */ }
   }, []);
 
-  // Ẩn gợi ý THÔNG MINH: chỉ đóng khi bấm RA NGOÀI ô tìm (thay onBlur hẹn-giờ chập chờn).
+  // Ẩn gợi ý: đóng khi chạm/bấm RA NGOÀI ô tìm. Dùng "pointerdown" (bao cả CHẠM,
+  // chuột, bút) — "mousedown" cũ không ăn chắc trên điện thoại nên panel bị kẹt.
+  // Thêm phím Esc để đóng.
   useEffect(() => {
     if (!sugOpen) return;
-    const onDoc = (e: MouseEvent) => {
-      if (!boxRef.current?.contains(e.target as Node)) { setSugOpen(false); setActiveIdx(-1); }
+    const close = () => { setSugOpen(false); setActiveIdx(-1); };
+    const onDoc = (e: Event) => {
+      if (!boxRef.current?.contains(e.target as Node)) close();
     };
-    document.addEventListener("mousedown", onDoc);
-    return () => document.removeEventListener("mousedown", onDoc);
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") close(); };
+    document.addEventListener("pointerdown", onDoc);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onDoc);
+      document.removeEventListener("keydown", onKey);
+    };
   }, [sugOpen]);
 
   const pushRecent = (s: Suggestion) => {
@@ -361,14 +369,17 @@ export default function FilterBar({
   const searchBox = (
     <div ref={boxRef} className={compact ? "flex w-full gap-2.5" : "flex w-full gap-2"}>
       <div className={compact ? "relative flex-1" : "relative flex h-12 min-w-0 flex-1 items-center rounded-none bg-cvr-surface transition focus-within:ring-2 focus-within:ring-cvr-blue/40"}>
-        <svg className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-cvr-faint" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+        {/* Kính lúp trái — compact(Hero) trên MOBILE ẩn đi vì đã có nút search xanh bên phải */}
+        <svg className={`pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-cvr-faint ${compact ? "hidden sm:block" : ""}`} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
         </svg>
         <input
           type="text"
           value={f.keyword}
           onChange={(e) => { set({ keyword: e.target.value }); setSugOpen(true); setActiveIdx(-1); }}
-          onFocus={() => setSugOpen(true)}
+          // MOBILE: KHÔNG tự xổ gợi ý khi chỉ chạm vào ô (màn hình nhỏ, rất vướng).
+          // Chỉ mở khi người dùng thực sự gõ chữ. Desktop giữ nguyên: chạm là gợi ý.
+          onFocus={() => { if (!window.matchMedia("(max-width: 639px)").matches) setSugOpen(true); }}
           onKeyDown={onKeyNav}
           placeholder="Nhập khu vực, dự án, hoặc loại bất động sản…"
           aria-label="Tìm theo từ khoá, khu vực, loại hình, dự án, tin"
@@ -377,10 +388,25 @@ export default function FilterBar({
           aria-expanded={sugOpen}
           className={
             compact
-              ? "h-12 w-full rounded-xl border border-transparent bg-white pl-11 pr-4 text-[15px] text-cvr-ink placeholder-cvr-faint shadow-lg shadow-black/20 ring-1 ring-black/5 outline-none transition focus:ring-2 focus:ring-cvr-blue/50"
+              // MOBILE: ô nằm trên NỀN TRẮNG → nền xám nhạt Apple cho thấy rõ khung.
+              // DESKTOP: vẫn trắng + đổ bóng vì nằm đè trên ảnh Hero tối.
+              ? "h-11 w-full rounded-xl border border-transparent bg-cvr-surface pl-4 pr-12 text-[15px] text-cvr-ink placeholder-cvr-faint ring-1 ring-black/5 outline-none transition focus:ring-2 focus:ring-cvr-blue/50 sm:h-12 sm:bg-white sm:pl-11 sm:pr-4 sm:shadow-lg sm:shadow-black/20"
               : "h-full w-full min-w-0 flex-1 border-none bg-transparent pl-11 pr-3 text-[15px] text-cvr-ink placeholder-cvr-faint outline-none"
           }
         />
+        {/* MOBILE (Hero): nút SEARCH XANH nằm NGAY TRONG ô tìm — gọn, 1 dòng duy nhất */}
+        {compact && onSearch && (
+          <button
+            type="button"
+            aria-label="Tìm kiếm"
+            onClick={() => { setSugOpen(false); onSearch(); }}
+            className="absolute right-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg bg-cvr-blue text-white transition active:scale-95 sm:hidden"
+          >
+            <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={2.4} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
+            </svg>
+          </button>
+        )}
         {/* Nút Tìm kiếm NẰM TRONG thanh tìm (kiểu Batdongsan) — trang danh sách */}
         {!compact && (
           <button
@@ -393,7 +419,26 @@ export default function FilterBar({
           </button>
         )}
         {sugOpen && panelItems.length > 0 && (
-          <div className="absolute left-0 right-0 top-full z-[120] mt-1.5 max-h-80 overflow-y-auto rounded-none border border-cvr-line bg-white p-1.5 shadow-2xl shadow-black/20 ring-1 ring-inset ring-black/5">
+          <div className="absolute left-0 right-0 top-full z-[120] mt-1.5 max-h-64 overflow-y-auto rounded-none border border-cvr-line bg-white p-1.5 shadow-2xl shadow-black/20 ring-1 ring-inset ring-black/5 sm:max-h-80">
+            {/* MOBILE: nút ĐÓNG rõ ràng — chạm là tắt panel + đóng luôn bàn phím */}
+            <div className="sticky top-0 z-10 -mx-1.5 -mt-1.5 mb-1 flex items-center justify-between border-b border-cvr-line bg-white px-2.5 py-1.5 sm:hidden">
+              <span className="text-[11px] font-semibold uppercase tracking-wide text-cvr-faint">Gợi ý tìm kiếm</span>
+              <button
+                type="button"
+                aria-label="Đóng gợi ý"
+                onPointerDown={(e) => e.preventDefault()}
+                onClick={() => {
+                  setSugOpen(false);
+                  setActiveIdx(-1);
+                  (document.activeElement as HTMLElement | null)?.blur?.();
+                }}
+                className="-mr-1 flex h-9 w-9 items-center justify-center rounded-full text-cvr-muted active:bg-cvr-surface"
+              >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
             {panelItems.map((s, i) => {
               const header = !typed
                 ? i === 0 && recentShown.length > 0 ? "recent" : i === recentShown.length ? "popular" : ""
@@ -438,7 +483,7 @@ export default function FilterBar({
           type="button"
           onClick={onSearch}
           aria-label="Tìm kiếm"
-          className={`flex ${hh} shrink-0 items-center justify-center gap-2 font-semibold transition active:scale-95 ${
+          className={`hidden ${hh} shrink-0 items-center justify-center gap-2 font-semibold transition active:scale-95 sm:flex ${
             compact
               ? "rounded-xl bg-cvr-blue px-6 text-[15px] text-white shadow-lg shadow-black/20 hover:bg-cvr-blue-ink"
               : "rounded-xl bg-cvr-blue px-6 text-sm text-white hover:bg-cvr-blue-ink"
@@ -475,8 +520,9 @@ export default function FilterBar({
   if (compact) {
     return (
       <div className="flex flex-col gap-3.5">
-        {/* Dòng 1: tab (menu) — canh giữa, gạch chân tab đang chọn */}
-        {leading && <div className="flex justify-center">{leading}</div>}
+        {/* Dòng 1: tab (menu) — canh giữa, gạch chân tab đang chọn.
+            MOBILE: ẩn — Hero chỉ còn ĐÚNG 1 dòng ô tìm kiếm cho gọn. */}
+        {leading && <div className="hidden justify-center sm:flex">{leading}</div>}
         {/* Dòng 2: thanh tìm kiếm lớn */}
         {searchBox}
       </div>

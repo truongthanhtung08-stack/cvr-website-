@@ -21,8 +21,9 @@ type HeroProps = {
 
 export default function Hero({
   banners = homeBanners,
-  // GIỮ NGUYÊN tỷ lệ khung trang — muốn ảnh hiện trọn thì dùng fit="contain", KHÔNG đổi chiều cao.
-  heightClass = "min-h-[340px] sm:h-[calc(100svh-120px)]",
+  // MOBILE: banner CHỮ NHẬT ngang gọn (170px) — để MÀN HÌNH ĐẦU thấy trọn thẻ tin.
+  // Desktop GIỮ NGUYÊN gần full màn hình.
+  heightClass = "min-h-[170px] sm:h-[calc(100svh-120px)]",
   search = true,
   searchTab,
   fit = "cover",
@@ -72,6 +73,14 @@ export default function Hero({
   };
 
   return (
+    <>
+    {/* ── MOBILE: thanh tìm kiếm TÁCH RIÊNG trên nền trắng, đặt NGAY TRÊN Hero
+        (mô hình Batdongsan) → Hero bên dưới là ảnh SẠCH, không bị ô lọc đè lên. ── */}
+    {search && (
+      <div className="bg-white px-4 py-1.5 sm:hidden">
+        <HomeSearch defaultTab={searchTab} />
+      </div>
+    )}
     <section
       className={`relative isolate flex flex-col ${heightClass} select-none`}
       onPointerDown={onDown}
@@ -180,11 +189,12 @@ export default function Hero({
       )}
 
       {/* ── Layout kiểu Batdongsan: BỘ LỌC sát TRÊN · CHỮ tiêu đề sát DƯỚI (canh trái) ── */}
-      <div className={`pointer-events-none relative z-10 mx-auto flex w-full max-w-7xl flex-1 flex-col px-4 pb-10 pt-6 sm:px-16 sm:pt-8 ${search ? "justify-between" : "justify-end"}`}>
+      <div className={`pointer-events-none relative z-10 mx-auto flex w-full max-w-7xl flex-1 flex-col px-4 pb-6 pt-4 sm:px-16 sm:pb-10 sm:pt-8 ${search ? "justify-end sm:justify-between" : "justify-end"}`}>
 
-        {/* ── Bộ lọc — sát TRÊN, canh giữa ngang (kiểu Batdongsan) ── */}
+        {/* ── Bộ lọc — sát TRÊN, canh giữa ngang (kiểu Batdongsan).
+            MOBILE: ẩn (đã có thanh tìm kiếm riêng phía trên Hero). ── */}
         {search && (
-          <div className="pointer-events-auto mx-auto w-full max-w-4xl">
+          <div className="pointer-events-auto mx-auto hidden w-full max-w-4xl sm:block">
             <HomeSearch defaultTab={searchTab} />
           </div>
         )}
@@ -223,6 +233,7 @@ export default function Hero({
           )}
       </div>
     </section>
+    </>
   );
 }
 

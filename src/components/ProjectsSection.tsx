@@ -39,13 +39,13 @@ export default function ProjectsSection({ projects }: { projects: Project[] }) {
 
   return (
     <section className="section-edge bg-cvr-surface">
-      <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
-        <h2 className="text-2xl font-semibold text-cvr-ink">
+      <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 sm:py-4 lg:px-8">
+        <h2 className="text-xl font-semibold text-cvr-ink sm:text-2xl">
           Dự án nổi bật
         </h2>
 
         {/* Track scroll-snap: tự chạy + chấm/mũi tên + touchpad/mobile vuốt tự nhiên */}
-        <div className="relative mt-5">
+        <div className="relative mt-4 sm:mt-5">
           <div
             ref={trackRef}
             className="no-scrollbar flex snap-x snap-mandatory items-start overflow-x-auto overscroll-x-contain"
@@ -66,7 +66,7 @@ export default function ProjectsSection({ projects }: { projects: Project[] }) {
                       className="card-lux group relative flex flex-col overflow-hidden rounded-none border border-cvr-line bg-white shadow-lux hover:-translate-y-2 hover:border-cvr-blue/45 shadow-lux-hover"
                     >
                       <span className="card-sheen" aria-hidden />
-                      <div className="relative aspect-[4/3] overflow-hidden">
+                      <div className="relative aspect-[16/10] overflow-hidden sm:aspect-[4/3]">
                         <Image
                           src={p.image}
                           alt={p.name}
@@ -120,7 +120,7 @@ export default function ProjectsSection({ projects }: { projects: Project[] }) {
         </div>
 
         {/* Hàng cuối: chấm chuyển slide (giữa) — "Xem tất cả" (phải) */}
-        <div className="relative mt-6 flex items-center justify-center">
+        <div className="relative mt-4 flex items-center justify-center sm:mt-6">
           {totalSlides > 1 && (
             <div className="flex gap-2">
               {Array.from({ length: totalSlides }).map((_, i) => (

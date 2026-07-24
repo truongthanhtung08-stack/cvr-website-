@@ -130,7 +130,7 @@ export default function Gallery({ images, alt }: { images: string[]; alt: string
           >
             <Image key={bigIdx} src={images[bigIdx]} alt={alt} fill priority sizes="(max-width:1024px) 100vw, 50vw" className="object-cover animate-fadein" />
             <span className="absolute bottom-3 left-3 rounded-md bg-black/60 px-2.5 py-1 text-xs text-white backdrop-blur-sm">
-              {bigIdx + 1}/{images.length} · Bấm để xem lớn
+              {bigIdx + 1}/{images.length}
             </span>
             {/* Chấm chỉ vị trí ảnh đang chạy */}
             <span className="absolute bottom-3 right-3 flex gap-1">
@@ -185,7 +185,7 @@ export default function Gallery({ images, alt }: { images: string[]; alt: string
               sizes="100vw"
               className={`object-contain transition-opacity duration-150 ease-out ${fade ? "opacity-0" : "opacity-100"}`}
             />
-            <span className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-md bg-white/10 px-3 py-1 text-sm text-white">{lb + 1} / {images.length} · vuốt để xem</span>
+            <span className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-md bg-white/10 px-3 py-1 text-sm text-white">{lb + 1} / {images.length}</span>
             {images.length > 1 && (
               <>
                 <button type="button" onClick={prev} aria-label="Ảnh trước" className="absolute left-2 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-2xl text-white transition hover:bg-white/25">‹</button>

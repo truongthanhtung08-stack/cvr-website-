@@ -13,8 +13,8 @@ export default function NewsSection({ articles }: { articles: Article[] }) {
 
   return (
     <section className="section-edge bg-white">
-      <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
-        <h2 className="text-2xl font-semibold text-cvr-ink">Tin tức</h2>
+      <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 sm:py-4 lg:px-8">
+        <h2 className="text-xl font-semibold text-cvr-ink sm:text-2xl">Tin tức</h2>
 
         <div className={`mt-5 grid grid-cols-1 gap-5 ${headlines.length ? "lg:grid-cols-5" : "lg:grid-cols-2"}`}>
           {/* Bài nổi bật */}
@@ -48,7 +48,7 @@ export default function NewsSection({ articles }: { articles: Article[] }) {
           {headlines.length > 0 && (
           <div className="flex flex-col divide-y divide-cvr-line/70 rounded-none border border-cvr-line bg-white px-5 shadow-lux lg:col-span-3">
             {headlines.map((a) => (
-              <Link key={a.slug} href={`/tin-tuc/${a.slug}`} className="group flex flex-1 items-center gap-4 py-4">
+              <Link key={a.slug} href={`/tin-tuc/${a.slug}`} className="group flex flex-1 items-center gap-4 py-2.5 sm:py-4">
                 <div className="relative aspect-[4/3] w-28 shrink-0 overflow-hidden rounded-lg sm:w-32">
                   <Image
                     src={a.image}
@@ -72,7 +72,7 @@ export default function NewsSection({ articles }: { articles: Article[] }) {
         </div>
 
         {/* Xem thêm — phần tin còn lại nằm ở trang /tin-tuc */}
-        <div className="mt-5 flex justify-end">
+        <div className="mt-4 flex justify-end">
           <Link href="/tin-tuc" className="text-sm font-medium text-cvr-muted transition-colors hover:text-cvr-ink">
             Xem thêm tin tức →
           </Link>

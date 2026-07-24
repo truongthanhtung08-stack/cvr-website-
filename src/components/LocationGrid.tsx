@@ -26,14 +26,14 @@ export default function LocationGrid({ areas = HOME_AREAS_DEFAULT }: { areas?: A
 
   return (
     <section className="section-edge bg-white">
-      <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
-        <h2 className="text-2xl font-semibold text-cvr-ink">
+      <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 sm:py-4 lg:px-8">
+        <h2 className="text-xl font-semibold text-cvr-ink sm:text-2xl">
           Bất động sản theo khu vực
         </h2>
 
         {/* MOBILE: khu vực CHÍNH = 2 ô (col-span-2, 1 hàng) · 4 ô nhỏ 2×2 — gap mảnh
             cực tiểu, ô mở rộng hết cỡ (chuẩn Apple). DESKTOP: giữ nguyên ô lõi 2×2. */}
-        <div ref={gridRef} className="mt-5 grid grid-cols-2 gap-1 [grid-auto-rows:10rem] sm:grid-cols-4 sm:gap-4 sm:[grid-auto-rows:11rem]">
+        <div ref={gridRef} className="mt-4 grid grid-cols-2 gap-1 [grid-auto-rows:8rem] sm:mt-5 sm:grid-cols-4 sm:gap-4 sm:[grid-auto-rows:11rem]">
           {shown.map((area, i) => (
             <AreaTile
               key={area.name}
@@ -46,7 +46,7 @@ export default function LocationGrid({ areas = HOME_AREAS_DEFAULT }: { areas?: A
         </div>
 
         {/* Xem tất cả khu vực — cuối phần, canh phải */}
-        <div className="mt-5 flex justify-end">
+        <div className="mt-4 flex justify-end">
           <Link href="/mua-ban" className="text-sm font-medium text-cvr-muted transition-colors hover:text-cvr-ink">
             Xem tất cả khu vực →
           </Link>

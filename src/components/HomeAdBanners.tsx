@@ -22,7 +22,7 @@ const ArrowRight = (
 export function AdBannerSeller({ data = HOME_AD_DEFAULT.seller }: { data?: HomeAdData["seller"] }) {
   return (
     <section className="section-edge bg-white">
-      <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 sm:py-4 lg:px-8">
         <div className="relative overflow-hidden bg-cvr-surface shadow-lux">
           <Image
             src={asset(data.image)}
@@ -37,7 +37,7 @@ export function AdBannerSeller({ data = HOME_AD_DEFAULT.seller }: { data?: HomeA
             aria-hidden
           />
           {/* Nội dung chiếm đúng NỬA khung — cân với nửa ảnh bên phải */}
-          <div className="relative flex min-h-[300px] flex-col justify-end px-6 pb-9 pt-32 sm:px-10 md:min-h-[290px] md:max-w-[50%] md:justify-center md:py-10 lg:h-[320px] lg:px-14">
+          <div className="relative flex min-h-[230px] flex-col justify-end px-5 pb-6 pt-24 sm:px-10 md:min-h-[290px] md:max-w-[50%] md:justify-center md:py-10 lg:h-[320px] lg:px-14">
             <h2 className="text-balance text-[22px] font-semibold leading-[1.12] tracking-tight text-cvr-ink sm:text-[24px] lg:text-[29px]">
               {data.titleLine1}
               <br />
@@ -64,11 +64,11 @@ export function AdBannerSeller({ data = HOME_AD_DEFAULT.seller }: { data?: HomeA
 export function AdBannerApp({ data = HOME_AD_DEFAULT.app }: { data?: HomeAdData["app"] }) {
   return (
     <section className="section-edge bg-white">
-      <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 sm:py-4 lg:px-8">
         <div className="relative overflow-hidden bg-[#0b0b0d] shadow-lux">
           {/* Nội dung + cụm máy đi thành MỘT CẶP, canh giữa → sát nhau, cân hai bên */}
           {/* Lưới NỬA–NỬA: nội dung nửa trái · cụm máy nửa phải, gặp nhau giữa khung */}
-          <div className="relative grid items-center px-6 pb-9 pt-9 sm:px-10 md:h-[290px] md:grid-cols-2 md:gap-8 md:px-10 md:py-0 lg:h-[320px] lg:gap-10 lg:px-14">
+          <div className="relative grid items-center px-5 pb-6 pt-6 sm:px-10 md:h-[290px] md:grid-cols-2 md:gap-8 md:px-10 md:py-0 lg:h-[320px] lg:gap-10 lg:px-14">
             {/* ĐẢO so với Banner 1: cụm máy nửa TRÁI · nội dung nửa PHẢI (nhịp xen kẽ) */}
             <div className="order-2 w-full text-center md:order-2 md:w-auto md:max-w-[470px] md:justify-self-end md:text-left">
               <h2 className="text-balance text-[22px] font-semibold leading-[1.12] tracking-tight text-white sm:text-[24px] lg:text-[29px]">
@@ -87,7 +87,7 @@ export function AdBannerApp({ data = HOME_AD_DEFAULT.app }: { data?: HomeAdData[
 
             {/* Cụm iPhone 17 Pro Max THẬT — cao BẰNG khung banner (chạm mép trên–dưới).
                 Nền ảnh trong suốt: KHÔNG mask, KHÔNG hiệu ứng, KHÔNG bọc Reveal. */}
-            <div className="order-1 mb-7 flex min-w-0 justify-center md:order-1 md:mb-0 md:justify-start md:pl-8 lg:pl-12">
+            <div className="order-1 mb-4 flex min-w-0 justify-center md:order-1 md:mb-0 md:justify-start md:pl-8 lg:pl-12">
               <Image
                 src={asset(data.phones)}
                 alt="Ứng dụng COASTAL LAND trên iPhone 17 Pro Max"
@@ -96,7 +96,7 @@ export function AdBannerApp({ data = HOME_AD_DEFAULT.app }: { data?: HomeAdData[
                 sizes="(max-width: 768px) 62vw, 300px"
                 priority
                 /* Chiều cao CỐ ĐỊNH, PHÓNG MAX trong khung (chừa 6px mỗi bên cho khỏi tràn) */
-                className="h-auto w-[220px] max-w-full sm:w-[260px] md:h-[278px] md:w-auto lg:h-[308px]"
+                className="h-auto w-[168px] max-w-full sm:w-[260px] md:h-[278px] md:w-auto lg:h-[308px]"
               />
             </div>
           </div>

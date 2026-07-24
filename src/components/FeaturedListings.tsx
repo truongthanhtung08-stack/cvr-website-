@@ -54,32 +54,23 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
 
   return (
     <section className="section-edge bg-white">
-      <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 sm:py-4 lg:px-8">
 
-        {/* Tiêu đề — mobile có "Xem tất cả" ngay cạnh (desktop đặt ở CUỐI phần) */}
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="text-2xl font-semibold text-cvr-ink">
-            Bất động sản dành cho bạn
-          </h2>
-          <Link
-            href="/mua-ban"
-            className="inline-flex shrink-0 items-center gap-1 rounded-full border border-cvr-line px-3.5 py-1.5 text-[13px] font-semibold text-cvr-ink transition active:bg-cvr-surface sm:hidden"
-          >
-            Xem tất cả
-            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
-          </Link>
-        </div>
+        {/* Tiêu đề — chiếm TRỌN dòng (không để nút ép xuống 2 dòng) */}
+        <h2 className="text-xl font-semibold text-cvr-ink sm:text-2xl">
+          Bất động sản dành cho bạn
+        </h2>
 
-        {/* Tabs loại hình */}
-        <div className="mt-5 flex flex-wrap gap-2">
+        {/* Tabs loại hình — MOBILE: cuộn ngang ĐÚNG 1 dòng (không xuống hàng, không bị cắt) */}
+        <div className="no-scrollbar -mx-4 mt-3 flex gap-2 overflow-x-auto px-4 pb-0.5 sm:mx-0 sm:mt-5 sm:flex-wrap sm:overflow-visible sm:px-0">
           {typeTabs.map((t) => (
             <button
               key={t.label}
               type="button"
               onClick={() => { setActiveTab(t.label); setSlideIdx(0); trackRef.current?.scrollTo({ left: 0 }); }}
-              className={`rounded-full px-4 py-1.5 text-sm font-medium transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+              className={`shrink-0 whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-medium transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] sm:py-2 ${
                 activeTab === t.label
-                  ? "scale-105 bg-cvr-ink text-white shadow-lg shadow-black/10"
+                  ? "bg-cvr-ink text-white shadow-lg shadow-black/10 sm:scale-105"
                   : "border border-black/15 text-cvr-body hover:border-black/40 hover:text-cvr-ink"
               }`}
             >
@@ -94,17 +85,21 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
             {/* ── ĐIỆN THOẠI (< 640px): lướt ngang TỪNG THẺ lớn, ló mép thẻ sau —
                 khách vuốt để xem hết tin. Thẻ cuối = "Xem tất cả". ── */}
             <div className="sm:hidden">
-              <div className="no-scrollbar -mx-4 mt-5 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2">
+              <div className="no-scrollbar -mx-4 mt-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 sm:mt-5">
                 {sorted.slice(0, SLIDE_COUNT * PER_SLIDE).map((item) => (
                   <div key={item.id} className="w-[86%] shrink-0 snap-start">
                     <PropertyCard item={item} variant="tier" />
                   </div>
                 ))}
               </div>
-              <p className="mt-2.5 flex items-center justify-center gap-1.5 text-xs text-cvr-faint">
-                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 7l-4 5 4 5M16 7l4 5-4 5" /></svg>
-                Vuốt ngang để xem thêm tin
-              </p>
+              {/* Nút XEM TẤT CẢ — full-width, rõ ràng, đặt cuối mục (chuẩn app mobile) */}
+              <Link
+                href="/mua-ban"
+                className="mt-4 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-full border border-cvr-line text-[15px] font-semibold text-cvr-ink transition active:bg-cvr-surface"
+              >
+                Xem tất cả bất động sản
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+              </Link>
             </div>
 
             {/* ── TABLET / MÁY TÍNH (≥ 640px): GIỮ NGUYÊN slider 2 slide đã duyệt ── */}

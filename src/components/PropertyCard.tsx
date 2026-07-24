@@ -73,7 +73,8 @@ export default function PropertyCard({
       className="flex flex-col overflow-hidden rounded-none border border-cvr-line bg-white shadow-lux shadow-lux-hover transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1"
     >
       {/* Ảnh — Diamond khung rộng hơn (rất lớn), còn lại 4/3 */}
-      <div className={`relative overflow-hidden bg-cvr-surface ${isFeatured ? "aspect-[16/10]" : "aspect-[4/3]"}`}>
+      {/* Thẻ trang chủ (tier) trên MOBILE: ảnh 16/10 thấp hơn để màn hình đầu thấy trọn thẻ */}
+      <div className={`relative overflow-hidden bg-cvr-surface ${isFeatured ? "aspect-[16/10]" : isTier ? "aspect-[16/10] sm:aspect-[4/3]" : "aspect-[4/3]"}`}>
         <Image
           src={item.image}
           alt={item.title}
@@ -116,8 +117,9 @@ export default function PropertyCard({
         {/* Mô tả — số dòng theo cấp (Diamond 2 · Gold 1 · Silver/Basic 0) */}
         {descLines > 0 && (
           <p className={`mt-1 text-[13px] leading-relaxed text-cvr-muted ${
-            descLines === 1 ? "line-clamp-1" : "line-clamp-2 min-h-[2.2rem]"
-          }`}>
+            /* Thẻ trang chủ trên MOBILE: ẩn mô tả cho thẻ gọn, màn hình đầu thấy trọn tin */
+            isTier ? "hidden sm:block " : ""
+          }${descLines === 1 ? "line-clamp-1" : "line-clamp-2 min-h-[2.2rem]"}`}>
             {listingSummary(item)}
           </p>
         )}
