@@ -37,6 +37,30 @@
 
 ---
 
+## 0B. QUY TRÌNH BẮT BUỘC — đọc `QUY-TRINH-LAM-VIEC.md`
+
+> 📌 **File chi tiết: [`QUY-TRINH-LAM-VIEC.md`](QUY-TRINH-LAM-VIEC.md) — PHẢI đọc và tuân thủ.**
+
+**Nguyên tắc 1 — ĐÃ DUYỆT LÀ KHÔNG ĐỘNG VÀO.**
+Phần nào chủ dự án đã xem và duyệt thì GIỮ NGUYÊN 100%. Không tự ý chỉnh kích thước, màu,
+bố cục, khoảng cách, hiệu ứng; không "tiện tay" refactor. **Chỉ đổi khi được yêu cầu rõ ràng.**
+Buộc phải đụng vào vì lý do kỹ thuật → **DỪNG, HỎI TRƯỚC.**
+
+**Nguyên tắc 2 — MỘT LẦN CHO XONG.** Mỗi yêu cầu đi trọn 4 bước trong một lượt:
+
+| 1. SỬA | 2. KIỂM TRA | 3. DUYỆT | 4. PUSH |
+|---|---|---|---|
+| Claude sửa **thẳng trong** `Projects\cvr-website` (KHÔNG worktree) | **Claude tự** xác minh thay đổi đã lên + xác định **đúng cổng**, rồi mới báo link | Chủ dự án xem, trả lời "OK" / "chỉnh [gì]" | Chỉ khi nghe **"Push"** → `git add -A` + commit + `git push origin main` |
+
+**Ba cái bẫy đã từng làm mất rất nhiều thời gian:**
+1. **Nhiều dev server cùng chạy** (3000 + 3001) → chủ dự án xem nhầm bản cũ, sửa 5 lần vẫn thấy y nguyên.
+   → Chỉ chạy MỘT server; Claude phải tự xác định cổng nào chạy từ thư mục chính.
+2. **Làm trong worktree** → thiếu `.env.local`, chủ dự án không thấy thay đổi. → Luôn đồng bộ về thư mục chính.
+3. **Nội dung admin (Supabase) đè lên mặc định trong code** → đổi ảnh/chữ trong code sẽ KHÔNG hiện.
+   → Muốn đổi thật phải sửa trong `/admin/noi-dung`.
+
+---
+
 ## 1. Dự án là gì
 
 > ⚡ **Đây KHÔNG chỉ là một website thông thường — đây là Dự án COASTAL LAND PLATFORM.**
