@@ -7,6 +7,7 @@
 import { asset } from "@/lib/asset";
 import { homeBanners, projectBanners, type Banner } from "@/lib/banners";
 import { landings as LANDINGS_DEFAULT, type Landing } from "@/lib/landings";
+import { PRICING_DEFAULT, type PricingData } from "@/lib/pricingData";
 
 // Lấy 1 khối nội dung theo key. Lỗi/chưa cấu hình/chưa có → null (dùng mặc định).
 async function fetchBlock<T>(key: string): Promise<T | null> {
@@ -124,7 +125,7 @@ export const HOME_AD_DEFAULT: HomeAdData = {
     titleLine1: "Thị trường bất động sản.",
     titleLine2: "Trong tầm tay bạn.",
     body: "Ứng dụng COASTAL LAND giúp bạn tìm kiếm, so sánh, theo dõi và nắm bắt cơ hội mọi lúc, mọi nơi.",
-    phones: "/images/app-phones.png",
+    phones: "/images/app-mockup.png",
     qr: "/images/qr.png",
     ctaLabel: "Tải ứng dụng",
     ctaHref: "#",
@@ -259,4 +260,12 @@ export async function getAbout(): Promise<AboutData> {
     values: data.values?.length ? data.values : ABOUT_DEFAULT.values,
     stats: data.stats?.length ? data.stats : ABOUT_DEFAULT.stats,
   };
+}
+
+// ── BẢNG GIÁ DỊCH VỤ (/bao-gia-dang-tin) ─────────────────────────────────────
+// Lưu key 'pricing' (toàn bộ PricingData). Admin sửa từ mặc định → lưu trọn object.
+export async function getPricing(): Promise<PricingData> {
+  const data = await fetchBlock<Partial<PricingData>>("pricing");
+  if (!data) return PRICING_DEFAULT;
+  return { ...PRICING_DEFAULT, ...data, intro: { ...PRICING_DEFAULT.intro, ...data.intro } };
 }
