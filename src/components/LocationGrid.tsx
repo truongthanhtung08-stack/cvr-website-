@@ -31,8 +31,9 @@ export default function LocationGrid({ areas = HOME_AREAS_DEFAULT }: { areas?: A
           Bất động sản theo khu vực
         </h2>
 
-        {/* 2 hàng gọn: Đà Nẵng ô lõi 2×2 (trái) + 4 ô (2×2 bên phải), cao đều nhau */}
-        <div ref={gridRef} className="mt-5 grid grid-cols-2 gap-4 [grid-auto-rows:11rem] sm:grid-cols-4">
+        {/* MOBILE: khu vực CHÍNH = 2 ô (col-span-2, 1 hàng) · 4 ô nhỏ 2×2 — gap mảnh
+            cực tiểu, ô mở rộng hết cỡ (chuẩn Apple). DESKTOP: giữ nguyên ô lõi 2×2. */}
+        <div ref={gridRef} className="mt-5 grid grid-cols-2 gap-1 [grid-auto-rows:10rem] sm:grid-cols-4 sm:gap-4 sm:[grid-auto-rows:11rem]">
           {shown.map((area, i) => (
             <AreaTile
               key={area.name}
@@ -74,7 +75,7 @@ function AreaTile({ area, big, running, delay }: { area: AreaCard; big: boolean;
     <Link
       href={area.href}
       className={`card-lux group relative overflow-hidden ring-1 ring-black/5 shadow-lux transition-transform hover:-translate-y-1.5 shadow-lux-hover hover:ring-cvr-blue/40 ${
-        big ? "col-span-2 row-span-2" : ""
+        big ? "col-span-2 row-span-1 sm:row-span-2" : ""
       }`}
     >
       <span className="card-sheen z-[3]" aria-hidden />

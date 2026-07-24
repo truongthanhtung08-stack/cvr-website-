@@ -53,6 +53,25 @@ export default function FilterDropdown({
   const panelRef = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState<{ top?: number; bottom?: number; left?: number; right?: number; maxH?: number }>({ top: 0 });
 
+  // ĐIỆN THOẠI (< 640px): panel neo theo nút quá chật → đổi sang SHEET trượt từ đáy
+  // đúng chuẩn iOS (nền mờ, thanh kéo, bo góc trên, né thanh Home). Desktop giữ nguyên.
+  const [sheet, setSheet] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 639px)");
+    const sync = () => setSheet(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
+
+  // Khoá cuộn nền khi sheet đang mở (nếu không, cuộn trong sheet sẽ kéo cả trang)
+  useEffect(() => {
+    if (!open || !sheet) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, [open, sheet]);
+
   // Mở XUỐNG nếu đủ chỗ phía dưới, ngược lại mở LÊN — linh hoạt theo không gian trang.
   const reposition = useCallback(() => {
     const el = btnRef.current;
@@ -74,11 +93,11 @@ export default function FilterDropdown({
   }, [align]);
 
   useLayoutEffect(() => {
-    if (open) reposition();
-  }, [open, reposition]);
+    if (open && !sheet) reposition();
+  }, [open, sheet, reposition]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || sheet) return;
     function onDoc(e: MouseEvent) {
       const t = e.target as Node;
       if (btnRef.current?.contains(t) || panelRef.current?.contains(t)) return;
@@ -97,7 +116,15 @@ export default function FilterDropdown({
       window.removeEventListener("resize", reposition);
       window.removeEventListener("scroll", reposition, true);
     };
-  }, [open, reposition]);
+  }, [open, sheet, reposition, setOpen]);
+
+  // Sheet: đóng bằng phím Esc (bấm ra ngoài đã có lớp nền mờ xử lý)
+  useEffect(() => {
+    if (!open || !sheet) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open, sheet, setOpen]);
 
   return (
     <div className={`relative ${className}`}>
@@ -118,7 +145,7 @@ export default function FilterDropdown({
                     ? "border-transparent bg-cvr-blue text-white"
                     : "border-transparent bg-cvr-surface text-cvr-ink hover:bg-black/[0.07]"
                 }`
-              : `h-10 w-full rounded-none px-3.5 lg:w-auto lg:whitespace-nowrap ${
+              : `h-10 w-auto shrink-0 whitespace-nowrap rounded-none px-3.5 ${
                   active
                     ? "border-cvr-blue/60 bg-white font-medium text-cvr-blue-ink"
                     : "border-cvr-line bg-white text-cvr-body hover:border-cvr-ink/35 hover:text-cvr-ink"
@@ -137,17 +164,60 @@ export default function FilterDropdown({
         </svg>
       </button>
 
-      {open &&
-        createPortal(
-          <div
-            ref={panelRef}
-            style={{ top: pos.top, bottom: pos.bottom, left: pos.left, right: pos.right, maxHeight: pos.maxH }}
-            className={`cvr-pop fixed z-[100] max-w-[calc(100vw-1rem)] overflow-y-auto rounded-none border border-cvr-line bg-white p-3 shadow-2xl shadow-black/15 ring-1 ring-inset ring-black/5 backdrop-blur-xl ${panelClassName}`}
-          >
-            {children({ close: () => setOpen(false) })}
-          </div>,
-          document.body,
-        )}
+      {open && sheet
+        ? /* ── ĐIỆN THOẠI: sheet trượt từ đáy (chuẩn iOS) ── */
+          createPortal(
+            <div className="fixed inset-0 z-[100] sm:hidden">
+              {/* Nền mờ — chạm để đóng */}
+              <button
+                type="button"
+                aria-label="Đóng"
+                onClick={() => setOpen(false)}
+                className="cvr-sheet-scrim absolute inset-0 bg-black/40"
+              />
+              <div
+                ref={panelRef}
+                role="dialog"
+                aria-modal="true"
+                aria-label={label}
+                className="cvr-sheet absolute inset-x-0 bottom-0 flex max-h-[86dvh] flex-col rounded-t-2xl bg-white pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_40px_rgba(0,0,0,0.22)]"
+              >
+                {/* Thanh kéo + tiêu đề — đúng cấu trúc sheet của iOS */}
+                <div className="shrink-0 px-4 pb-2 pt-2.5">
+                  <span className="mx-auto block h-[5px] w-9 rounded-full bg-black/20" aria-hidden />
+                  <div className="mt-2.5 flex items-center justify-between gap-3">
+                    <span className="text-[17px] font-semibold tracking-tight text-cvr-ink">{label}</span>
+                    <button
+                      type="button"
+                      onClick={() => setOpen(false)}
+                      className="-mr-1 flex h-9 w-9 items-center justify-center rounded-full text-cvr-muted active:bg-cvr-surface"
+                      aria-label="Đóng"
+                    >
+                      <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                {/* Nội dung bộ lọc — cuộn riêng trong sheet */}
+                <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-4">
+                  {children({ close: () => setOpen(false) })}
+                </div>
+              </div>
+            </div>,
+            document.body,
+          )
+        : open &&
+          createPortal(
+            <div
+              ref={panelRef}
+              style={{ top: pos.top, bottom: pos.bottom, left: pos.left, right: pos.right, maxHeight: pos.maxH }}
+              className={`cvr-pop fixed z-[100] max-w-[calc(100vw-1rem)] overflow-y-auto rounded-none border border-cvr-line bg-white p-3 shadow-2xl shadow-black/15 ring-1 ring-inset ring-black/5 backdrop-blur-xl ${panelClassName}`}
+            >
+              {children({ close: () => setOpen(false) })}
+            </div>,
+            document.body,
+          )}
     </div>
   );
 }

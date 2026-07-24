@@ -56,10 +56,19 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
     <section className="section-edge bg-white">
       <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
 
-        {/* Tiêu đề (link "Xem tất cả" đặt ở CUỐI phần) */}
-        <h2 className="text-2xl font-semibold text-cvr-ink">
-          Bất động sản dành cho bạn
-        </h2>
+        {/* Tiêu đề — mobile có "Xem tất cả" ngay cạnh (desktop đặt ở CUỐI phần) */}
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-2xl font-semibold text-cvr-ink">
+            Bất động sản dành cho bạn
+          </h2>
+          <Link
+            href="/mua-ban"
+            className="inline-flex shrink-0 items-center gap-1 rounded-full border border-cvr-line px-3.5 py-1.5 text-[13px] font-semibold text-cvr-ink transition active:bg-cvr-surface sm:hidden"
+          >
+            Xem tất cả
+            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+          </Link>
+        </div>
 
         {/* Tabs loại hình */}
         <div className="mt-5 flex flex-wrap gap-2">
@@ -82,6 +91,24 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
         {/* Slider 2 slides — mỗi slide 2 hàng × 4 tin, xếp theo cấp VIP */}
         {slides.length > 0 ? (
           <>
+            {/* ── ĐIỆN THOẠI (< 640px): lướt ngang TỪNG THẺ lớn, ló mép thẻ sau —
+                khách vuốt để xem hết tin. Thẻ cuối = "Xem tất cả". ── */}
+            <div className="sm:hidden">
+              <div className="no-scrollbar -mx-4 mt-5 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2">
+                {sorted.slice(0, SLIDE_COUNT * PER_SLIDE).map((item) => (
+                  <div key={item.id} className="w-[86%] shrink-0 snap-start">
+                    <PropertyCard item={item} variant="tier" />
+                  </div>
+                ))}
+              </div>
+              <p className="mt-2.5 flex items-center justify-center gap-1.5 text-xs text-cvr-faint">
+                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 7l-4 5 4 5M16 7l4 5-4 5" /></svg>
+                Vuốt ngang để xem thêm tin
+              </p>
+            </div>
+
+            {/* ── TABLET / MÁY TÍNH (≥ 640px): GIỮ NGUYÊN slider 2 slide đã duyệt ── */}
+            <div className="hidden sm:block">
             {/* Track scroll-snap: tự chạy + chấm điều hướng + mũi tên (chuột)
                 + vuốt ngang tự nhiên (touchpad 2 ngón / màn hình cảm ứng) */}
             <div className="relative mt-5">
@@ -153,6 +180,7 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
               >
                 Xem tất cả →
               </Link>
+            </div>
             </div>
           </>
         ) : (

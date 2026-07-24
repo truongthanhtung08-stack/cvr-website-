@@ -1,8 +1,9 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, Playfair_Display, Montserrat } from "next/font/google";
 import "./globals.css";
 import Chatbox from "@/components/Chatbox";
 import CompareBar from "@/components/CompareBar";
+import MobileTabBar from "@/components/MobileTabBar";
 
 // Font chính toàn site: Inter — hiện đại, chuyên nghiệp, "SF Pro của web" (kiểu Apple),
 // hỗ trợ tiếng Việt đầy đủ.
@@ -35,6 +36,33 @@ export const metadata: Metadata = {
   // ⚠️ CHƯA PUBLISH: chặn Google index tới khi ra mắt chính thức.
   // Khi publish: XÓA khối robots này + đăng ký Google Search Console.
   robots: { index: false, follow: false },
+  applicationName: "COASTAL LAND",
+  // PWA — cài được lên màn hình chính Android & iOS
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    title: "COASTAL LAND",
+    // Thanh trạng thái trong suốt → nền đen của header chạy lên tận đỉnh máy (kiểu app iOS).
+    statusBarStyle: "black-translucent",
+  },
+  // Safari tự biến các con số (diện tích, mã tin…) thành link gọi điện màu xanh → tắt.
+  // Nút gọi/Zalo trên trang chi tiết vẫn hoạt động vì dùng thẻ <a href="tel:"> tường minh.
+  formatDetection: { telephone: false },
+};
+
+// Chuẩn hiển thị trên điện thoại — Android & iOS
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  // KHÔNG khoá phóng to (chuẩn trợ năng của Apple) — chỉ giới hạn mức tối đa.
+  maximumScale: 5,
+  userScalable: true,
+  // Bắt buộc để env(safe-area-inset-*) có giá trị thật trên iPhone tai thỏ / thanh Home.
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#161617" },
+    { media: "(prefers-color-scheme: dark)", color: "#161617" },
+  ],
 };
 
 export default function RootLayout({
@@ -48,6 +76,7 @@ export default function RootLayout({
         {children}
         <CompareBar />
         <Chatbox />
+        <MobileTabBar />
       </body>
     </html>
   );

@@ -74,8 +74,6 @@ export default function FilterBar({
   const [sugOpen, setSugOpen] = useState(false);
   const [activeIdx, setActiveIdx] = useState(-1);
   const [recent, setRecent] = useState<Suggestion[]>([]);
-  // Mobile (< sm): hàng dropdown lọc gập sau nút "Bộ lọc" cho gọn màn hình nhỏ.
-  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const boxRef = useRef<HTMLDivElement>(null); // vùng ô tìm — để bấm-ra-ngoài thì đóng gợi ý
 
   useEffect(() => {
@@ -454,13 +452,13 @@ export default function FilterBar({
           Tìm kiếm
         </button>
       )}
-      {/* Nút Bản đồ — cạnh ô tìm kiếm (kiểu Batdongsan), chỉ ở trang danh sách */}
+      {/* Nút Bản đồ cạnh ô tìm — CHỈ desktop (mobile chật → đưa xuống hàng chip lọc) */}
       {!compact && onMap && (
         <button
           type="button"
           onClick={onMap}
           aria-pressed={mapActive}
-          className={`flex h-12 shrink-0 items-center gap-2 rounded-none px-5 text-sm font-semibold text-white transition ${
+          className={`hidden h-12 shrink-0 items-center gap-2 rounded-none px-5 text-sm font-semibold text-white transition sm:flex ${
             mapActive ? "bg-cvr-blue-ink" : "bg-cvr-blue hover:bg-cvr-blue-ink"
           }`}
         >
@@ -492,28 +490,25 @@ export default function FilterBar({
   return (
     <FilterDropdownGroup>
       <div className="rounded-none border border-cvr-line bg-white p-2.5 shadow-lux">
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2.5">
           {searchBox}
-          {/* MOBILE: hàng dropdown thu gọn sau nút "Bộ lọc" (desktop luôn hiện) */}
-          <button
-            type="button"
-            onClick={() => setMobileFiltersOpen((v) => !v)}
-            aria-expanded={mobileFiltersOpen}
-            className="flex h-10 w-full items-center justify-center gap-2 rounded-none border border-cvr-line text-sm font-medium text-cvr-body transition active:bg-cvr-surface sm:hidden"
-          >
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 5h18M6 12h12M10 19h4" />
-            </svg>
-            Bộ lọc
-            {hasActive && <span className="h-1.5 w-1.5 rounded-full bg-cvr-blue" />}
-            <svg
-              className={`h-3.5 w-3.5 text-cvr-faint transition-transform duration-200 ${mobileFiltersOpen ? "rotate-180" : ""}`}
-              fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
-          <div className={`${mobileFiltersOpen ? "flex" : "hidden"} flex-wrap items-center gap-2 sm:flex`}>
+          {/* Hàng chip lọc — CUỘN NGANG trên mobile (kiểu Batdongsan), tự xuống hàng trên desktop.
+              -mx-2.5/px-2.5 để dải chip tràn sát mép thẻ, cuộn mượt hết bề rộng. */}
+          <div className="no-scrollbar -mx-2.5 flex items-center gap-2 overflow-x-auto px-2.5 pb-0.5 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
+            {/* Bản đồ — chip mở/tắt chế độ bản đồ (chỉ mobile; desktop có nút cạnh ô tìm) */}
+            {onMap && (
+              <button
+                type="button"
+                onClick={onMap}
+                aria-pressed={mapActive}
+                className={`flex h-10 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-none border px-3.5 text-sm font-medium transition sm:hidden ${
+                  mapActive ? "border-cvr-blue bg-cvr-blue text-white" : "border-cvr-line bg-white text-cvr-body active:bg-cvr-surface"
+                }`}
+              >
+                <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4M9 7l6-3" /></svg>
+                Bản đồ
+              </button>
+            )}
             {moreDropdown}
             <FilterToggle label="Tin xác thực" checked={f.verified} onChange={(v) => set({ verified: v })} />
             {typeDropdown}

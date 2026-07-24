@@ -121,7 +121,7 @@ export default function Chatbox() {
         onPointerMove={onBtnPointerMove}
         onPointerUp={onBtnPointerUp}
         style={pos ? { right: pos.right, bottom: pos.bottom } : undefined}
-        className={`fixed bottom-5 right-5 z-[60] flex h-12 w-12 touch-none select-none items-center justify-center rounded-full bg-cvr-blue text-white shadow-lg shadow-black/20 ring-1 ring-white/15 transition-[opacity,transform,background-color] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:bg-cvr-blue-ink ${
+        className={`float-above-tabbar fixed bottom-5 right-5 z-[60] flex h-12 w-12 touch-none select-none items-center justify-center rounded-full bg-cvr-blue text-white shadow-lg shadow-black/20 ring-1 ring-white/15 transition-[opacity,transform,background-color] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:bg-cvr-blue-ink ${
           open ? "pointer-events-none scale-0 opacity-0" : "opacity-100"
         }`}
       >
@@ -133,10 +133,11 @@ export default function Chatbox() {
 
       {/* Khung chat — mở tại vị trí nút (đã kéo tới đâu thì mở ở đó, kẹp trong màn hình) */}
       <div
-        className={`fixed bottom-5 right-5 z-[60] flex w-[min(360px,calc(100vw-2.5rem))] flex-col overflow-hidden rounded-none border border-cvr-line bg-white shadow-2xl shadow-black/15 transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+        className={`float-above-tabbar fixed bottom-5 right-5 z-[60] flex w-[min(360px,calc(100vw-2.5rem))] flex-col overflow-hidden rounded-none border border-cvr-line bg-white shadow-2xl shadow-black/15 transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
           open ? "translate-y-0 scale-100 opacity-100" : "pointer-events-none translate-y-4 scale-95 opacity-0"
         }`}
-        style={{ height: "min(520px, calc(100vh - 2.5rem))", ...panelStyle }}
+        // dvh: chiều cao THẬT của khung nhìn trên di động (100vh bị thanh địa chỉ ăn mất)
+        style={{ height: "min(520px, calc(100dvh - var(--tabbar-h) - 2.5rem))", ...panelStyle }}
       >
         {/* Tiêu đề */}
         <div className="flex items-center justify-between gap-3 border-b border-cvr-line bg-white px-4 py-3">

@@ -6,15 +6,28 @@ const isPages = process.env.GITHUB_PAGES === "true";
 
 const nextConfig: NextConfig = isPages
   ? {
+      // GitHub Pages = static export: bắt buộc unoptimized (không có server tối ưu ảnh).
       output: "export",
       images: { unoptimized: true },
       trailingSlash: true,
     }
   : {
-      // Dev/Vercel: cũng tắt tối ưu ảnh để KHỚP production (GitHub Pages static export
-      // luôn unoptimized). Đồng thời dev phục vụ ảnh gốc từ /public tức thì thay vì
-      // qua /_next/image (vốn chậm, gây treo tải khi chụp/kiểm thử).
-      images: { unoptimized: true },
+      // Dev/Vercel: BẬT tối ưu ảnh của Next. Đây là đòn bẩy tốc độ lớn nhất trên mobile —
+      // điện thoại 375px chỉ tải bản ảnh ~640px định dạng AVIF/WebP thay vì nguyên PNG gốc
+      // ~2000px từ Supabase (giảm ~70–85% dung lượng ảnh), tải nhanh + mượt như apple.com.
+      images: {
+        // AVIF trước (nhẹ nhất), WebP dự phòng cho máy cũ.
+        formats: ["image/avif", "image/webp"],
+        // Next 16 yêu cầu liệt kê mọi mức chất lượng được dùng trong code:
+        //   40 = nền mờ Hero (blur) · 75 = mặc định thẻ tin · 100 = ảnh Hero chính.
+        qualities: [40, 75, 100],
+        // Cho phép tối ưu ảnh tin lấy từ Supabase Storage.
+        remotePatterns: [
+          { protocol: "https", hostname: "miyugmacyerqvzhgmbyd.supabase.co" },
+        ],
+        // Giữ bản tối ưu 30 ngày trên CDN Vercel → lần tải sau tức thì.
+        minimumCacheTTL: 2592000,
+      },
     };
 
 export default nextConfig;

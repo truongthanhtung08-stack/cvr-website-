@@ -230,11 +230,61 @@ function MobileMenu({
     <div
       // absolute theo header (KHÔNG dùng fixed: backdrop-filter của .nav-glass biến header
       // thành containing block, fixed sẽ neo sai). top-full = ngay dưới thanh 60px.
-      className={`absolute inset-x-0 top-full z-40 flex h-[calc(100dvh-60px)] flex-col overflow-y-auto overscroll-contain bg-[#161617]/97 backdrop-blur-xl transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] lg:hidden ${
+      className={`absolute inset-x-0 top-full z-40 flex h-[calc(100dvh-60px-env(safe-area-inset-top))] flex-col overflow-y-auto overscroll-contain bg-[#161617]/97 backdrop-blur-xl transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] lg:hidden ${
         open ? "visible translate-y-0 opacity-100" : "invisible -translate-y-2 opacity-0 pointer-events-none"
       }`}
     >
-      <nav className="flex-1 px-6 pb-10 pt-4">
+      <nav className="flex-1 px-6 pb-[calc(2.5rem+env(safe-area-inset-bottom))] pt-4">
+        {/* ── KHỐI TÀI KHOẢN + ĐĂNG TIN — đầu menu (mô hình Batdongsan mobile) ── */}
+        <div className="mb-5">
+          {user ? (
+            <Link
+              href="/tai-khoan"
+              onClick={onClose}
+              className="mb-3 flex min-h-[52px] items-center gap-3 rounded-xl bg-white/10 px-3.5 ring-1 ring-inset ring-white/15"
+            >
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/15 text-sm font-semibold text-white">
+                {displayName(user).trim().charAt(0).toUpperCase() || "T"}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[15px] font-semibold text-white">{displayName(user)}</span>
+                <span className="block text-[12px] text-white/60">Xem tài khoản của tôi</span>
+              </span>
+              <svg className="h-4 w-4 shrink-0 text-white/40" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
+          ) : (
+            <div className="mb-3 grid grid-cols-2 gap-2.5">
+              <Link
+                href="/dang-nhap"
+                onClick={onClose}
+                className="flex min-h-[46px] items-center justify-center rounded-full text-[15px] font-semibold text-white ring-1 ring-inset ring-white/25 transition-colors active:bg-white/10"
+              >
+                Đăng nhập
+              </Link>
+              <Link
+                href="/dang-ky"
+                onClick={onClose}
+                className="flex min-h-[46px] items-center justify-center rounded-full bg-white text-[15px] font-semibold text-cvr-ink transition-transform active:scale-[0.98]"
+              >
+                Đăng ký
+              </Link>
+            </div>
+          )}
+
+          <Link
+            href="/dang-tin"
+            onClick={() => { haptic(); onClose(); }}
+            className="flex min-h-[48px] items-center justify-center gap-1.5 rounded-full bg-cvr-blue text-[15px] font-semibold text-white transition-transform active:scale-[0.98]"
+          >
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+            Đăng tin ngay
+          </Link>
+        </div>
+
         {navItems.map((item) => (
           <div key={item.href} className="border-b border-white/10">
             {item.children ? (
@@ -295,7 +345,7 @@ function MobileMenu({
           </div>
         ))}
 
-        {/* Hành động phụ — Lưu · Tài khoản */}
+        {/* Hành động phụ — Tin đã lưu · Đăng xuất (tài khoản & đăng tin đã nằm ở ĐẦU menu) */}
         <div className="mt-2">
           <Link
             href="/tin-luu"
@@ -307,48 +357,16 @@ function MobileMenu({
             </svg>
             Tin đã lưu
           </Link>
-          {user ? (
-            <>
-              <Link
-                href="/tai-khoan"
-                onClick={onClose}
-                className="flex min-h-[48px] items-center gap-2.5 border-b border-white/10 text-[15px] text-white/80"
-              >
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-xs font-semibold text-white ring-1 ring-white/15">
-                  {displayName(user).trim().charAt(0).toUpperCase() || "T"}
-                </span>
-                {displayName(user)}
-              </Link>
-              <button
-                type="button"
-                onClick={() => { onLogout(); onClose(); }}
-                className="flex min-h-[48px] w-full items-center text-left text-[15px] text-white/60"
-              >
-                Đăng xuất
-              </button>
-            </>
-          ) : (
-            <Link
-              href="/dang-nhap"
-              onClick={onClose}
-              className="flex min-h-[48px] items-center text-[15px] text-white/80"
+          {user && (
+            <button
+              type="button"
+              onClick={() => { onLogout(); onClose(); }}
+              className="flex min-h-[48px] w-full items-center text-left text-[15px] text-white/60"
             >
-              Đăng nhập / Đăng ký
-            </Link>
+              Đăng xuất
+            </button>
           )}
         </div>
-
-        {/* CTA Đăng tin — nổi bật cuối menu */}
-        <Link
-          href="/dang-tin"
-          onClick={() => { haptic(); onClose(); }}
-          className="btn-dangtin mt-5 flex min-h-[48px] items-center justify-center gap-1.5 rounded-full text-[15px] font-semibold text-white"
-        >
-          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-          </svg>
-          Đăng tin ngay
-        </Link>
       </nav>
     </div>
   );
@@ -400,10 +418,11 @@ export default function Header() {
             </Link>
           )}
 
+          {/* Đăng tin — chỉ desktop (< lg đã có trong Menu, tránh chật thanh trên điện thoại) */}
           <Link
             href="/dang-tin"
             onClick={() => haptic()}
-            className="btn-dangtin flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold text-white sm:px-5 sm:py-2.5"
+            className="btn-dangtin hidden items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold text-white sm:px-5 sm:py-2.5 lg:flex"
           >
             <svg
               className="h-4 w-4"
@@ -423,7 +442,7 @@ export default function Header() {
             aria-label={menuOpen ? "Đóng menu" : "Mở menu"}
             aria-expanded={menuOpen}
             onClick={() => setMenuOpen((v) => !v)}
-            className="relative flex h-11 w-9 items-center justify-center lg:hidden"
+            className="relative -mr-1 flex h-11 w-11 items-center justify-center lg:hidden"
           >
             <span
               className={`absolute h-[1.5px] w-[18px] rounded-full bg-white transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${

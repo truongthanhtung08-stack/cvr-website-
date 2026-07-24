@@ -16,7 +16,7 @@ export default function CompareBar() {
     .filter((x): x is NonNullable<typeof x> => Boolean(x));
 
   return (
-    <div className="fixed inset-x-0 bottom-4 z-50 px-4 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 sm:px-0">
+    <div className="float-above-tabbar fixed inset-x-0 bottom-4 z-50 px-4 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 sm:px-0">
       <div className="mx-auto flex max-w-2xl items-center gap-3 rounded-none border border-cvr-line bg-white/95 p-2.5 pl-4 shadow-2xl shadow-black/15 backdrop-blur-md">
         <span className="hidden shrink-0 text-sm font-semibold text-cvr-ink sm:block">So sánh</span>
 

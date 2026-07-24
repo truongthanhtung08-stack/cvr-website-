@@ -29,7 +29,7 @@ export function AdBannerSeller({ data = HOME_AD_DEFAULT.seller }: { data?: HomeA
             alt="Bất động sản ven biển Duyên Hải Miền Trung"
             fill
             sizes="(max-width: 768px) 100vw, 1216px"
-            className="object-cover object-[72%_center]"
+            className="object-cover object-center md:object-[72%_center]"
           />
           {/* Lớp phủ tan mềm — mobile phủ dọc · desktop phủ ngang. Không mép cứng. */}
           <div
@@ -37,18 +37,18 @@ export function AdBannerSeller({ data = HOME_AD_DEFAULT.seller }: { data?: HomeA
             aria-hidden
           />
           {/* Nội dung chiếm đúng NỬA khung — cân với nửa ảnh bên phải */}
-          <div className="relative flex min-h-[270px] flex-col justify-end px-6 pb-8 pt-28 sm:px-10 md:min-h-[290px] md:max-w-[50%] md:justify-center md:py-10 lg:h-[320px] lg:px-14">
-            <h2 className="text-balance text-[19px] font-semibold leading-[1.12] tracking-tight text-cvr-ink sm:text-[24px] lg:text-[29px]">
+          <div className="relative flex min-h-[300px] flex-col justify-end px-6 pb-9 pt-32 sm:px-10 md:min-h-[290px] md:max-w-[50%] md:justify-center md:py-10 lg:h-[320px] lg:px-14">
+            <h2 className="text-balance text-[22px] font-semibold leading-[1.12] tracking-tight text-cvr-ink sm:text-[24px] lg:text-[29px]">
               {data.titleLine1}
               <br />
               <span className="text-cvr-gold-ink">{data.titleLine2}</span>
             </h2>
-            <p className="mt-3 max-w-sm text-[13px] leading-relaxed text-cvr-muted sm:text-sm">
+            <p className="mt-3 max-w-sm text-[14px] leading-relaxed text-cvr-muted sm:text-sm">
               {data.body}
             </p>
             <Link
               href={data.ctaHref}
-              className="group mt-4 inline-flex w-fit items-center gap-2 rounded-full bg-cvr-ink px-5 py-2.5 text-[13px] font-semibold text-white transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 hover:bg-black sm:text-sm"
+              className="group mt-5 inline-flex min-h-[44px] w-fit items-center gap-2 rounded-full bg-cvr-ink px-6 py-2.5 text-sm font-semibold text-white transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 hover:bg-black"
             >
               {data.ctaLabel}
               {ArrowRight}
@@ -70,16 +70,16 @@ export function AdBannerApp({ data = HOME_AD_DEFAULT.app }: { data?: HomeAdData[
           {/* Lưới NỬA–NỬA: nội dung nửa trái · cụm máy nửa phải, gặp nhau giữa khung */}
           <div className="relative grid items-center px-6 pb-9 pt-9 sm:px-10 md:h-[290px] md:grid-cols-2 md:gap-8 md:px-10 md:py-0 lg:h-[320px] lg:gap-10 lg:px-14">
             {/* ĐẢO so với Banner 1: cụm máy nửa TRÁI · nội dung nửa PHẢI (nhịp xen kẽ) */}
-            <div className="order-2 w-full md:order-2 md:w-auto md:max-w-[470px] md:justify-self-end">
-              <h2 className="text-balance text-[19px] font-semibold leading-[1.12] tracking-tight text-white sm:text-[24px] lg:text-[29px]">
+            <div className="order-2 w-full text-center md:order-2 md:w-auto md:max-w-[470px] md:justify-self-end md:text-left">
+              <h2 className="text-balance text-[22px] font-semibold leading-[1.12] tracking-tight text-white sm:text-[24px] lg:text-[29px]">
                 {data.titleLine1}
                 <br />
                 <span className="text-cvr-gold-soft">{data.titleLine2}</span>
               </h2>
-              <p className={`mt-3 max-w-md text-[13px] leading-relaxed sm:text-sm ${DARK_BODY}`}>
+              <p className={`mt-3 text-[14px] leading-relaxed sm:text-sm md:max-w-md ${DARK_BODY}`}>
                 {data.body}
               </p>
-              <div className="mt-4 flex flex-wrap items-center gap-2.5">
+              <div className="mt-4 flex flex-wrap items-center justify-center gap-2.5 md:justify-start">
                 <StoreButton store="apple" href={data.appleHref} />
                 <StoreButton store="google" href={data.googleHref} />
               </div>
@@ -111,7 +111,7 @@ function StoreButton({ store, href = "#" }: { store: "apple" | "google"; href?: 
   return (
     <a
       href={href}
-      className="flex items-center gap-2.5 rounded-xl border border-white/12 bg-white/[0.06] px-3.5 py-2 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 hover:bg-white/10"
+      className="flex min-h-[44px] items-center gap-2.5 rounded-xl border border-white/12 bg-white/[0.06] px-4 py-2 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 hover:bg-white/10"
     >
       {store === "apple" ? (
         <svg className="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M17.05 12.04c-.03-2.6 2.12-3.85 2.22-3.91-1.21-1.77-3.09-2.01-3.76-2.04-1.6-.16-3.12.94-3.93.94-.81 0-2.06-.92-3.39-.9-1.74.03-3.35 1.01-4.25 2.57-1.81 3.14-.46 7.78 1.3 10.32.86 1.24 1.89 2.64 3.23 2.59 1.3-.05 1.79-.84 3.36-.84 1.57 0 2.01.84 3.39.81 1.4-.02 2.29-1.27 3.15-2.52.99-1.44 1.4-2.84 1.42-2.91-.03-.01-2.72-1.04-2.75-4.13zM14.6 4.6c.72-.87 1.2-2.08 1.07-3.28-1.03.04-2.28.69-3.02 1.56-.66.77-1.24 2-1.08 3.18 1.15.09 2.33-.59 3.03-1.46z" /></svg>
@@ -119,8 +119,8 @@ function StoreButton({ store, href = "#" }: { store: "apple" | "google"; href?: 
         <svg className="h-5 w-5" viewBox="0 0 24 24"><path fill="#00d4ff" d="M3.6 2.4c-.3.3-.5.7-.5 1.2v16.8c0 .5.2.9.5 1.2l.1.1L13 12.1v-.2L3.7 2.3l-.1.1z" /><path fill="#ffce00" d="M16.3 15.4L13 12.1v-.2l3.3-3.3.1.1 3.9 2.2c1.1.6 1.1 1.7 0 2.3l-3.9 2.2-.1.1z" /><path fill="#ff3b30" d="M16.4 15.3L13 12 3.6 21.6c.4.4 1 .4 1.6.1l11.2-6.4" /><path fill="#00e676" d="M16.4 8.7L5.2 2.3c-.6-.3-1.2-.3-1.6.1L13 12l3.4-3.3z" /></svg>
       )}
       <span className="flex flex-col leading-tight">
-        <span className={`text-[9px] ${DARK_FAINT}`}>{store === "apple" ? "Tải về trên" : "TẢI TRÊN"}</span>
-        <span className="text-[13px] font-semibold text-white">{store === "apple" ? "App Store" : "Google Play"}</span>
+        <span className={`text-[10px] ${DARK_FAINT}`}>{store === "apple" ? "Tải về trên" : "TẢI TRÊN"}</span>
+        <span className="text-[14px] font-semibold text-white">{store === "apple" ? "App Store" : "Google Play"}</span>
       </span>
     </a>
   );

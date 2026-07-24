@@ -1,0 +1,25 @@
+{
+  "name": "COASTAL LAND — Bất động sản Miền Trung",
+  "short_name": "COASTAL LAND",
+  "description": "Sàn giao dịch bất động sản Đà Nẵng, Huế & Miền Trung. Tìm nhà đất, căn hộ, đất nền, villa biển — người mua miễn phí.",
+  "lang": "vi",
+  "dir": "ltr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#161617",
+  "categories": ["business", "lifestyle", "shopping"],
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Mua bán", "short_name": "Mua bán", "url": "/mua-ban", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Cho thuê", "short_name": "Cho thuê", "url": "/cho-thue", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Tin đã lưu", "short_name": "Đã lưu", "url": "/tin-luu", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Đăng tin", "short_name": "Đăng tin", "url": "/dang-tin", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

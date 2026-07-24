@@ -94,14 +94,15 @@ export default function ListingBrowser({
         </div>
       )}
 
-      {/* Tiêu đề + bộ đếm nhảy theo bộ lọc */}
+      {/* Tiêu đề + bộ đếm nhảy theo bộ lọc — câu đếm TẠM ẨN trên mobile (theo yêu cầu) */}
       <h1 className="mt-5 text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">{heading}</h1>
-      <p className="mt-1 text-sm text-cvr-muted">
+      <p className="mt-1 hidden text-sm text-cvr-muted sm:block">
         Hiện có <span className="font-semibold text-cvr-ink">{results.length}</span> bất động sản{active ? " phù hợp " : " "}tại Đà Nẵng, Huế &amp; Miền Trung.
       </p>
 
-      {/* Hàng điều khiển dùng chung: xoá lọc · chế độ xem (Danh sách/Lưới/Bản đồ) · sắp xếp */}
-      <div className="mt-4 flex flex-wrap items-center justify-end gap-3">
+      {/* Hàng điều khiển dùng chung: xoá lọc · chế độ xem (Danh sách/Lưới/Bản đồ) · sắp xếp.
+          Trên mobile TẠM ẨN chế độ xem + sắp xếp (theo yêu cầu), giữ nút Xoá lọc. */}
+      <div className="mt-3 flex flex-wrap items-center justify-end gap-3 sm:mt-4">
               {active && (
                 <button
                   type="button"
@@ -112,12 +113,14 @@ export default function ListingBrowser({
                   Xoá lọc
                 </button>
               )}
-              <ViewToggle view={view} setView={setView} />
+              <div className="hidden sm:block">
+                <ViewToggle view={view} setView={setView} />
+              </div>
               <select
                 aria-label="Sắp xếp"
                 value={sort}
                 onChange={(e) => setSort(e.target.value as SortKey)}
-                className="h-9 rounded-lg border border-cvr-line bg-white px-3 text-xs text-cvr-ink outline-none transition focus:border-cvr-ink"
+                className="hidden h-9 rounded-lg border border-cvr-line bg-white px-3 text-xs text-cvr-ink outline-none transition focus:border-cvr-ink sm:block"
               >
                 <option value="moi">Mới nhất</option>
                 <option value="gia-tang">Giá thấp → cao</option>
@@ -154,14 +157,24 @@ export default function ListingBrowser({
         <div className="lg:col-span-2">
           {pageItems.length > 0 ? (
             <>
+              {/* MOBILE (< 640px): LUÔN thẻ dọc — ảnh trên, nội dung dưới (thuần CSS,
+                  không phụ thuộc JS → chắc chắn đúng trên mọi máy) */}
+              <div className="grid grid-cols-1 gap-5 sm:hidden">
+                {pageItems.map((item) => (
+                  <PropertyCard key={item.id} item={item} layout="grid" showTime />
+                ))}
+              </div>
+              {/* DESKTOP (≥ 640px): theo chế độ xem đã chọn (Danh sách = thẻ ngang · Lưới = thẻ dọc) */}
               <div
-                className={
+                className={`hidden ${
                   view === "list"
-                    ? "flex flex-col gap-4"
-                    : "grid grid-cols-1 gap-5 sm:grid-cols-2"
-                }
+                    ? "sm:flex sm:flex-col sm:gap-4"
+                    : "sm:grid sm:grid-cols-2 sm:gap-5"
+                }`}
               >
-                {pageItems.map((item) => <PropertyCard key={item.id} item={item} layout={view} showTime />)}
+                {pageItems.map((item) => (
+                  <PropertyCard key={item.id} item={item} layout={view} showTime />
+                ))}
               </div>
 
               {totalPages > 1 && (

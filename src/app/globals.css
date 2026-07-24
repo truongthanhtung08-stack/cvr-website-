@@ -119,14 +119,15 @@ select option {
   animation: kenburns 20s ease-in-out infinite alternate;
 }
 
-/* Reveal khi cuộn tới */
-.reveal {
+/* Reveal khi cuộn tới — NGUYÊN TẮC: chỉ ẩn khi JS đã "arm" (mục dưới màn hình).
+   Mặc định .reveal KHÔNG ẩn → JS hỏng/không chạy vẫn hiện đủ nội dung, không trắng. */
+.reveal.armed {
   opacity: 0;
   transform: translateY(34px);
   will-change: opacity, transform;
   transition: opacity 0.9s var(--ease-out-soft), transform 0.9s var(--ease-out-soft);
 }
-.reveal.is-visible {
+.reveal.armed.is-visible {
   opacity: 1;
   transform: none;
 }
@@ -310,8 +311,8 @@ select option {
   .animate-kenburns { animation: none; }
   .hero-in { opacity: 1; animation: none; }
   .nav-link::after { transition: none; }
-  .reveal { opacity: 1; transform: none; transition: none; }
-  .reveal.is-visible .cards-stagger > * { animation: none; }
+  .reveal, .reveal.armed { opacity: 1; transform: none; transition: none; }
+  .reveal .cards-stagger > * { animation: none; }
   html { scroll-behavior: auto; }
   .btn-dangtin { transition: none; }
   .btn-dangtin:hover { transform: none; }
@@ -414,3 +415,132 @@ select option {
 }
 .map-pop-price { display: block; margin-top: 4px; font-size: 13px; font-weight: 600; color: var(--color-cvr-gold-ink); }
 .map-pop-loc { display: block; margin-top: 2px; font-size: 11px; color: var(--color-cvr-muted); }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   NỀN TẢNG MOBILE (Android & iOS) — chuẩn Apple
+   Mọi quy tắc dưới đây CHỈ tác động màn hình nhỏ (< 1024px) hoặc thiết bị cảm ứng.
+   Giao diện DESKTOP giữ nguyên 100%.
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Chiều cao thanh tab dưới cùng (0 trên desktop vì không có tab bar) */
+  --tabbar-h: 0px;
+}
+@media (max-width: 1023px) {
+  :root {
+    /* 49pt — đúng chuẩn iOS Tab Bar — cộng thêm vùng an toàn thanh Home iPhone */
+    --tabbar-h: calc(49px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+html {
+  /* iOS tự phóng to chữ khi xoay ngang → tắt, giữ đúng thang chữ đã thiết kế */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  /* Bỏ ô sáng xám/xanh nhấp nháy khi chạm (Android & iOS) — chạm phải "im lặng" như app */
+  -webkit-tap-highlight-color: transparent;
+  /* Chặn tràn ngang do phần tử lệch khung. Dùng `clip` (KHÔNG dùng `hidden`)
+     vì `hidden` tạo vùng cuộn mới và làm hỏng `position: sticky` của header. */
+  overflow-x: clip;
+}
+
+/* Vùng chạm tối thiểu 44×44px theo Human Interface Guidelines của Apple */
+@media (pointer: coarse) {
+  a[role="button"], button, [role="tab"], summary {
+    touch-action: manipulation; /* bỏ độ trễ 300ms + chặn double-tap-to-zoom trên nút */
+  }
+}
+
+/* Thiết bị KHÔNG có chuột: hiệu ứng hover sẽ "dính" sau khi chạm → tắt hẳn.
+   (Các lớp hover:* của Tailwind v4 đã tự gói trong @media (hover: hover), chỉ
+   những rule :hover tự viết trong file này mới cần chặn thủ công.) */
+@media (hover: none) {
+  .shadow-lux-hover:hover {
+    box-shadow:
+      0 1px 2px rgba(16, 18, 29, 0.05),
+      0 8px 24px rgba(16, 18, 29, 0.06);
+  }
+  .card-lux:hover .card-sheen { opacity: 0; animation: none; }
+  .btn-dangtin:hover { transform: none; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35), inset 0 0 0 1px rgba(255, 255, 255, 0.12); }
+  .nav-link:hover::after { transform: scaleX(0); }
+  .map-pill:hover { background: #fff; color: var(--color-cvr-ink); transform: translate(-50%, -100%); }
+}
+
+/* iOS TỰ PHÓNG TO trang khi chạm vào ô nhập có cỡ chữ < 16px → ép tối thiểu 16px
+   trên điện thoại. Đây là cách duy nhất tránh "giật zoom" mà vẫn cho phép người
+   dùng tự phóng to (không dùng maximum-scale=1 vốn vi phạm trợ năng). */
+@media (max-width: 767px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+/* Cuộn ngang mượt kiểu iOS cho các slider/track ảnh */
+.no-scrollbar {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain; /* vuốt hết slider không kéo luôn cả trang */
+}
+
+/* ── Thanh tab dưới cùng — kính mờ cùng công thức với header (saturate 180%) ── */
+.tabbar-glass {
+  background-color: rgba(255, 255, 255, 0.82);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+  border-top: 1px solid rgba(0, 0, 0, 0.12);
+  /* Không cho long-press hiện menu hệ thống trên thanh điều hướng (giống app) */
+  -webkit-touch-callout: none;
+}
+/* Sợi tóc THẬT trên màn hình retina — 1px vật lý, không phải 1px CSS */
+@media (min-resolution: 2dppx) {
+  .tabbar-glass { border-top-width: 0.5px; }
+}
+@supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .tabbar-glass { background-color: #fff; }
+}
+
+/* Header: trong chế độ ứng dụng đã cài (standalone), nền đen chạy lên tận đỉnh máy,
+   nội dung header đẩy xuống dưới thanh trạng thái. Trên trình duyệt thường = 0px. */
+.nav-glass {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* Phần tử nổi dưới đáy (Chatbox · thanh So sánh) phải nằm TRÊN thanh tab, không đè lên nhau */
+@media (max-width: 1023px) {
+  .float-above-tabbar {
+    bottom: calc(var(--tabbar-h) + 12px);
+  }
+}
+
+/* ── Sheet trượt từ đáy (bộ lọc trên điện thoại) ──
+   Đường cong cubic-bezier(0.32, 0.72, 0, 1) chính là easing sheet của iOS:
+   bật lên nhanh rồi dừng rất êm, không nảy. Chỉ animate transform/opacity. */
+@keyframes cvr-sheet-up {
+  from { transform: translateY(100%); }
+  to { transform: none; }
+}
+@keyframes cvr-scrim-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.cvr-sheet {
+  animation: cvr-sheet-up 380ms cubic-bezier(0.32, 0.72, 0, 1);
+  will-change: transform;
+}
+.cvr-sheet-scrim {
+  animation: cvr-scrim-in 300ms ease-out;
+}
+
+/* Viền focus rõ ràng khi điều hướng bằng bàn phím/trợ năng (không hiện khi chạm) */
+:focus-visible {
+  outline: 2px solid var(--color-cvr-blue);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cvr-sheet, .cvr-sheet-scrim { animation: none; }
+}
