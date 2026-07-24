@@ -94,9 +94,9 @@ export default function Hero({
     )}
     <section
       className={`relative isolate flex flex-col ${heightClass} select-none`}
-      // Khung ăn theo đúng tỷ lệ ảnh đang hiện (mặc định 2/1 trong lúc ảnh đang tải).
-      // Trang truyền heightClass có chiều cao cố định (vd /du-an) thì height thắng, không đổi.
-      style={{ aspectRatio: String(activeRatio ?? 2) }}
+      // KHUNG CỐ ĐỊNH 2:1 — KHÔNG đổi theo từng ảnh. (Đã thử cho khung ăn theo tỷ lệ
+      // từng banner: trang bị NHẢY 142px mỗi lần chuyển slide → bỏ hẳn.)
+      style={{ aspectRatio: "2 / 1" }}
       onPointerDown={onDown}
       onPointerUp={onUp}
       onWheel={onWheel}
