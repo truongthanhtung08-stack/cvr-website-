@@ -136,7 +136,13 @@ export default function ListingBrowser({
           {/* space-y (block) thay vì flex-col: tránh flex co bẹp thẻ khi vùng cuộn có max-height */}
           <div className="order-2 space-y-4 lg:order-1 lg:col-span-2 lg:max-h-[calc(100vh-140px)] lg:overflow-y-auto lg:pr-1">
             {results.length > 0 ? (
-              results.map((item) => <PropertyCard key={item.id} item={item} layout="list" showTime />)
+              /* MOBILE: thẻ DỌC (ảnh trên) · DESKTOP: hàng ngang */
+              results.map((item) => (
+                <div key={item.id}>
+                  <div className="sm:hidden"><PropertyCard item={item} layout="grid" showTime /></div>
+                  <div className="hidden sm:block"><PropertyCard item={item} layout="list" showTime /></div>
+                </div>
+              ))
             ) : (
               <div className="flex flex-col items-center justify-center rounded-none border border-dashed border-cvr-line py-20 text-center">
                 <p className="text-cvr-body">Không tìm thấy bất động sản phù hợp.</p>

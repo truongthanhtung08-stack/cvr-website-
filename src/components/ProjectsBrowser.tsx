@@ -31,7 +31,17 @@ function countBy(projects: Project[], key: (p: Project) => string): [string, num
   return [...m];
 }
 
-export default function ProjectsBrowser({ projects, articles }: { projects: Project[]; articles: Article[] }) {
+export default function ProjectsBrowser({
+  projects,
+  articles,
+  hero,
+}: {
+  projects: Project[];
+  articles: Article[];
+  // Banner Hero — nhận từ trang cha để đặt ĐÚNG thứ tự: mobile nằm DƯỚI thanh lọc,
+  // desktop nằm TRÊN (dùng CSS order, không đổi cấu trúc dữ liệu).
+  hero?: React.ReactNode;
+}) {
   const [q, setQ] = useState("");
   const [status, setStatus] = useState(ALL);
   const [province, setProvince] = useState(ALL);
@@ -78,9 +88,15 @@ export default function ProjectsBrowser({ projects, articles }: { projects: Proj
   );
 
   return (
-    <>
-      {/* ── Thanh lọc dự án dưới Hero (kiểu Batdongsan) ── */}
-      <div className="mt-2.5 rounded-none border border-cvr-line bg-white p-2.5 shadow-lux">
+    <div className="flex flex-col">
+      {/* Hero banner — MOBILE nằm DƯỚI thanh lọc (mẫu Batdongsan), DESKTOP nằm TRÊN.
+          Âm lề để banner tràn hết bề ngang, không bị lề trang bó lại. */}
+      {hero && (
+        <div className="order-2 -mx-4 mb-3 sm:order-1 sm:-mx-6 sm:mb-0 lg:-mx-8">{hero}</div>
+      )}
+
+      {/* ── Thanh tìm + lọc dự án (MOBILE: lên trên cùng) ── */}
+      <div className="order-1 mt-2.5 rounded-none border border-cvr-line bg-white p-2.5 shadow-lux sm:order-2">
         <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
           {/* Ô tìm nhanh dự án */}
           <div className="relative flex-1">
@@ -97,8 +113,8 @@ export default function ProjectsBrowser({ projects, articles }: { projects: Proj
             />
           </div>
 
-          {/* Dropdown: Khu vực · Loại hình · Trạng thái */}
-          <div className="grid grid-cols-3 gap-2 lg:flex">
+          {/* Chip lọc: Khu vực · Loại hình · Trạng thái — MOBILE cuộn ngang 1 dòng */}
+          <div className="no-scrollbar -mx-2.5 flex items-center gap-2 overflow-x-auto px-2.5 pb-0.5 lg:mx-0 lg:overflow-visible lg:px-0">
             <FilterDropdownGroup>
               <FilterDropdown label="Khu vực" summary={province === ALL ? "" : province} active={province !== ALL} panelClassName="w-64" className="shrink-0">
                 {({ close }) => optionList(provinceCounts, province, setProvince, close)}
@@ -124,6 +140,8 @@ export default function ProjectsBrowser({ projects, articles }: { projects: Proj
         </div>
       </div>
 
+      {/* Phần còn lại LUÔN nằm cuối (sau Hero và thanh lọc) trên mọi kích thước */}
+      <div className="order-3">
       {/* Tiêu đề + bộ đếm nhảy theo bộ lọc (kiểu Batdongsan) */}
       <h1 className="mt-6 text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">
         Dự án bất động sản Miền Trung
@@ -238,6 +256,7 @@ export default function ProjectsBrowser({ projects, articles }: { projects: Proj
           </div>
         </aside>
       </div>
-    </>
+      </div>
+    </div>
   );
 }

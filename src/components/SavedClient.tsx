@@ -39,7 +39,13 @@ export default function SavedClient() {
       <p className="mt-4 text-sm text-cvr-body">
         <span className="font-bold text-cvr-ink">{items.length}</span> tin đã lưu
       </p>
-      <div className="mt-4 flex flex-col gap-4">
+      {/* MOBILE: thẻ DỌC (ảnh trên, nội dung dưới) · DESKTOP: hàng ngang như cũ */}
+      <div className="mt-4 grid grid-cols-1 gap-5 sm:hidden">
+        {items.map((item) => (
+          <PropertyCard key={item.id} item={item} layout="grid" />
+        ))}
+      </div>
+      <div className="mt-4 hidden flex-col gap-4 sm:flex">
         {items.map((item) => (
           <PropertyCard key={item.id} item={item} layout="list" />
         ))}

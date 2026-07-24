@@ -11,10 +11,11 @@ export default function ListingList({ items }: { items: Listing[] }) {
         <li key={l.id}>
           <Link
             href={`/bat-dong-san/${l.id}`}
-            className="group flex gap-4 p-3 transition-colors hover:bg-cvr-surface sm:p-4"
+            // MOBILE: thẻ DỌC — ảnh trên, nội dung dưới. DESKTOP: giữ hàng ngang.
+            className="group flex flex-col gap-3 p-3 transition-colors hover:bg-cvr-surface sm:flex-row sm:gap-4 sm:p-4"
           >
-            <div className="relative aspect-[4/3] w-28 shrink-0 overflow-hidden rounded-xl sm:w-40">
-              <Image src={l.image} alt={l.title} fill sizes="160px" className="object-cover transition-transform duration-500 group-hover:scale-105" />
+            <div className="relative aspect-[16/10] w-full shrink-0 overflow-hidden rounded-xl sm:aspect-[4/3] sm:w-40">
+              <Image src={l.image} alt={l.title} fill sizes="(max-width: 640px) 100vw, 160px" className="object-cover transition-transform duration-500 group-hover:scale-105" />
             </div>
             <div className="flex min-w-0 flex-1 flex-col">
               <h3 className="line-clamp-2 font-semibold leading-snug text-cvr-ink transition-colors group-hover:text-cvr-blue-ink">
