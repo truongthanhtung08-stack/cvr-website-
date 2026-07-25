@@ -24,19 +24,14 @@ import {
   type Filters,
   type LocationSel,
 } from "@/lib/filters";
-import { suggest, popularSuggestions, type Suggestion, type SuggestKind } from "@/lib/suggest";
+import { suggest, popularSuggestions, type Suggestion } from "@/lib/suggest";
 
 const RECENT_KEY = "cvr-recent-search"; // lịch sử tìm kiếm (localStorage)
 
-// Icon (path d) cho từng nhóm gợi ý.
-const SUGGEST_ICON: Record<SuggestKind, string> = {
-  "Mục đích": "M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4",
-  "Khu vực": "M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z M15 11a3 3 0 11-6 0 3 3 0 016 0z",
-  "Loại hình": "M7 7h.01M7 3h5a1.99 1.99 0 011.414.586l7 7a2 2 0 010 2.828l-5 5a2 2 0 01-2.828 0l-7-7A1.99 1.99 0 014 9V4a1 1 0 011-1z",
-  "Sản phẩm": "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6",
-  "Dự án": "M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0H5m14 0h2M5 21H3m4-14h.01M11 7h.01M7 11h.01M11 11h.01M7 15h.01M11 15h.01",
-  "Tin tức": "M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m0 0a2 2 0 012 2v9a2 2 0 11-4 0V9a2 2 0 012-2zM5 12h6m-6 4h6m-6-8h6",
-};
+// Icon dòng gợi ý — kiểu Google: đồng hồ (lịch sử) · kính lúp (gợi ý) · mũi tên chèn ↖.
+const ICON_CLOCK = "M12 8v4l2.5 2.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z";
+const ICON_SEARCH = "M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z";
+const ICON_INSERT = "M18 18L6 6M6 6h8M6 6v8"; // ↖ chèn gợi ý vào ô tìm
 
 // Thanh lọc kiểu Homedy — fully controlled qua props value/onChange.
 export default function FilterBar({
@@ -75,6 +70,9 @@ export default function FilterBar({
   const [activeIdx, setActiveIdx] = useState(-1);
   const [recent, setRecent] = useState<Suggestion[]>([]);
   const boxRef = useRef<HTMLDivElement>(null); // vùng ô tìm — để bấm-ra-ngoài thì đóng gợi ý
+  const inputRef = useRef<HTMLInputElement>(null); // để nút Chèn/Xoá đưa con trỏ về ô
+  const overlayInputRef = useRef<HTMLInputElement>(null); // ô nhập của trang tìm toàn màn hình (mobile)
+  const [overlay, setOverlay] = useState(false); // MOBILE: chạm ô → mở trang tìm TOÀN MÀN HÌNH kiểu Google
 
   useEffect(() => {
     try {
@@ -114,9 +112,14 @@ export default function FilterBar({
   };
 
   const typed = f.keyword.trim().length > 0;
-  // Panel: chỉ VÀI gợi ý điển hình — đang gõ → tối đa 6 kết quả khớp; chưa gõ → ≤3 lịch sử + phổ biến.
+  // Panel: đang gõ → tối đa 6 kết quả khớp; chưa gõ → ≤3 lịch sử + phổ biến.
   const recentShown = recent.slice(0, 3);
-  const panelItems: Suggestion[] = typed ? suggest(f.keyword, 6) : [...recentShown, ...popularSuggestions];
+  const typedHits = typed ? suggest(f.keyword, 6) : [];
+  // LUÔN có gợi ý (kiểu Google): gõ mà không khớp gì → hiện GỢI Ý PHỔ BIẾN thay vì để trống.
+  const noHits = typed && typedHits.length === 0;
+  const panelItems: Suggestion[] = typed
+    ? (noHits ? popularSuggestions : typedHits)
+    : [...recentShown, ...popularSuggestions];
 
   const applySuggestion = (s: Suggestion) => {
     pushRecent(s);
@@ -134,7 +137,16 @@ export default function FilterBar({
       set({ keyword: s.keyword });
     }
     setSugOpen(false);
+    setOverlay(false);
     setActiveIdx(-1);
+  };
+
+  // Nút ↖ — CHÈN gợi ý vào ô tìm để sửa tiếp, KHÔNG tìm/điều hướng ngay (kiểu Google).
+  const insertSuggestion = (s: Suggestion) => {
+    set({ keyword: s.keyword || s.label });
+    setSugOpen(true);
+    setActiveIdx(-1);
+    (overlay ? overlayInputRef : inputRef).current?.focus();
   };
 
   // Điều hướng bằng phím trong panel gợi ý.
@@ -365,8 +377,58 @@ export default function FilterBar({
       </FilterDropdown>
   );
 
+  // ===== Danh sách gợi ý — DÙNG CHUNG cho dropdown (desktop) & trang tìm toàn màn hình (mobile) =====
+  const suggestionRows = panelItems.map((s, i) => {
+    const header = !typed
+      ? i === 0 && recentShown.length > 0 ? "recent" : i === recentShown.length ? "popular" : ""
+      : "";
+    return (
+      <div key={`${s.label}-${i}`}>
+        {header === "recent" && (
+          <div className="flex items-center justify-between px-2.5 pb-1 pt-1 text-[11px] font-semibold uppercase tracking-wide text-cvr-faint">
+            <span>Tìm kiếm gần đây</span>
+            <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={clearRecent} className="font-medium normal-case text-cvr-muted transition hover:text-cvr-ink">Xoá</button>
+          </div>
+        )}
+        {header === "popular" && (
+          <div className="px-2.5 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wide text-cvr-faint">Gợi ý phổ biến</div>
+        )}
+        <div className={`group flex items-center rounded-lg pr-1 transition ${i === activeIdx ? "bg-black/[0.06]" : "hover:bg-black/5"}`}>
+          <button
+            type="button"
+            onMouseDown={(e) => e.preventDefault()}
+            onMouseEnter={() => setActiveIdx(i)}
+            onClick={() => applySuggestion(s)}
+            className="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg px-2.5 py-2.5 text-left text-sm"
+          >
+            <svg className="h-[18px] w-[18px] shrink-0 text-cvr-faint" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d={!typed && i < recentShown.length ? ICON_CLOCK : ICON_SEARCH} />
+            </svg>
+            <span className="flex min-w-0 flex-1 flex-col">
+              <span className="truncate"><HighlightLabel label={s.label} q={typed ? f.keyword : ""} /></span>
+              {s.sub && <span className="truncate text-[11px] font-normal text-cvr-faint">{s.sub}</span>}
+            </span>
+          </button>
+          {/* ↖ Chèn gợi ý vào ô tìm để sửa tiếp (không tìm ngay) — kiểu Google */}
+          <button
+            type="button"
+            aria-label="Chèn vào ô tìm kiếm"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={(e) => { e.stopPropagation(); insertSuggestion(s); }}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-cvr-faint transition hover:bg-black/10 hover:text-cvr-ink active:scale-95"
+          >
+            <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d={ICON_INSERT} />
+            </svg>
+          </button>
+        </div>
+      </div>
+    );
+  });
+
   // ===== Ô từ khoá + nút tìm kiếm (dùng chung) =====
   const searchBox = (
+    <>
     <div ref={boxRef} className={compact ? "flex w-full gap-2.5" : "flex w-full gap-2"}>
       <div className={compact ? "relative flex-1" : "relative flex h-12 min-w-0 flex-1 items-center rounded-none bg-cvr-surface transition focus-within:ring-2 focus-within:ring-cvr-blue/40"}>
         {/* Kính lúp trái — compact(Hero) trên MOBILE ẩn đi vì đã có nút search xanh bên phải */}
@@ -374,12 +436,15 @@ export default function FilterBar({
           <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
         </svg>
         <input
+          ref={inputRef}
           type="text"
           value={f.keyword}
           onChange={(e) => { set({ keyword: e.target.value }); setSugOpen(true); setActiveIdx(-1); }}
-          // MOBILE: KHÔNG tự xổ gợi ý khi chỉ chạm vào ô (màn hình nhỏ, rất vướng).
-          // Chỉ mở khi người dùng thực sự gõ chữ. Desktop giữ nguyên: chạm là gợi ý.
-          onFocus={() => { if (!window.matchMedia("(max-width: 639px)").matches) setSugOpen(true); }}
+          // Kiểu Google: MOBILE → chạm ô mở TRANG TÌM TOÀN MÀN HÌNH · DESKTOP → xổ dropdown gợi ý.
+          onFocus={(e) => {
+            if (window.matchMedia("(max-width: 639px)").matches) { e.currentTarget.blur(); setOverlay(true); }
+            else setSugOpen(true);
+          }}
           onKeyDown={onKeyNav}
           placeholder="Nhập khu vực, dự án, hoặc loại bất động sản…"
           aria-label="Tìm theo từ khoá, khu vực, loại hình, dự án, tin"
@@ -390,10 +455,25 @@ export default function FilterBar({
             compact
               // MOBILE: ô nằm trên NỀN TRẮNG → nền xám nhạt Apple cho thấy rõ khung.
               // DESKTOP: vẫn trắng + đổ bóng vì nằm đè trên ảnh Hero tối.
-              ? "h-11 w-full rounded-xl border border-transparent bg-cvr-surface pl-4 pr-12 text-[15px] text-cvr-ink placeholder-cvr-faint ring-1 ring-black/5 outline-none transition focus:ring-2 focus:ring-cvr-blue/50 sm:h-12 sm:bg-white sm:pl-11 sm:pr-4 sm:shadow-lg sm:shadow-black/20"
+              // Đệm phải NỚI RA khi đã gõ để chừa chỗ nút xoá ×.
+              ? `h-11 w-full rounded-xl border border-transparent bg-cvr-surface pl-4 ${typed ? "pr-[4.75rem]" : "pr-12"} text-[15px] text-cvr-ink placeholder-cvr-faint ring-1 ring-black/5 outline-none transition focus:ring-2 focus:ring-cvr-blue/50 sm:h-12 sm:bg-white sm:pl-11 ${typed ? "sm:pr-11" : "sm:pr-4"} sm:shadow-lg sm:shadow-black/20`
               : "h-full w-full min-w-0 flex-1 border-none bg-transparent pl-11 pr-3 text-[15px] text-cvr-ink placeholder-cvr-faint outline-none"
           }
         />
+        {/* Nút XOÁ (×) trong ô — kiểu Google, hiện khi đã gõ (chỉ ô tìm lớn/Hero) */}
+        {compact && f.keyword.trim().length > 0 && (
+          <button
+            type="button"
+            aria-label="Xoá từ khoá"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => { set({ keyword: "" }); setSugOpen(true); inputRef.current?.focus(); }}
+            className="absolute right-10 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-cvr-faint transition hover:bg-black/5 hover:text-cvr-ink active:scale-95 sm:right-3"
+          >
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        )}
         {/* MOBILE (Hero): nút SEARCH XANH nằm NGAY TRONG ô tìm — gọn, 1 dòng duy nhất */}
         {compact && onSearch && (
           <button
@@ -439,42 +519,10 @@ export default function FilterBar({
                 </svg>
               </button>
             </div>
-            {panelItems.map((s, i) => {
-              const header = !typed
-                ? i === 0 && recentShown.length > 0 ? "recent" : i === recentShown.length ? "popular" : ""
-                : "";
-              return (
-                <div key={`${s.label}-${i}`}>
-                  {header === "recent" && (
-                    <div className="flex items-center justify-between px-2.5 pb-1 pt-1 text-[11px] font-semibold uppercase tracking-wide text-cvr-faint">
-                      <span>Tìm kiếm gần đây</span>
-                      <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={clearRecent} className="font-medium normal-case text-cvr-muted transition hover:text-cvr-ink">Xoá</button>
-                    </div>
-                  )}
-                  {header === "popular" && (
-                    <div className="px-2.5 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wide text-cvr-faint">Gợi ý phổ biến</div>
-                  )}
-                  <button
-                    type="button"
-                    onMouseDown={(e) => e.preventDefault()}
-                    onMouseEnter={() => setActiveIdx(i)}
-                    onClick={() => applySuggestion(s)}
-                    className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left text-sm transition ${
-                      i === activeIdx ? "bg-black/[0.06] text-cvr-ink" : "text-cvr-ink/85 hover:bg-black/5"
-                    }`}
-                  >
-                    <svg className="h-4 w-4 shrink-0 text-cvr-faint" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d={SUGGEST_ICON[s.kind]} />
-                    </svg>
-                    <span className="flex min-w-0 flex-1 flex-col">
-                      <span className="truncate">{s.label}</span>
-                      {s.sub && <span className="truncate text-[11px] text-cvr-faint">{s.sub}</span>}
-                    </span>
-                    <span className="shrink-0 text-[11px] text-cvr-faint">{s.kind}</span>
-                  </button>
-                </div>
-              );
-            })}
+            {noHits && (
+              <p className="px-2.5 pb-1 pt-1 text-[12px] text-cvr-muted">Không có kết quả cho “{f.keyword}”. Gợi ý:</p>
+            )}
+            {suggestionRows}
           </div>
         )}
       </div>
@@ -512,6 +560,63 @@ export default function FilterBar({
         </button>
       )}
     </div>
+
+    {/* ===== MOBILE: TRANG TÌM TOÀN MÀN HÌNH kiểu Google — chạm ô tìm là mở ===== */}
+    {overlay && (
+      <div className="fixed inset-0 z-[200] flex flex-col bg-white sm:hidden">
+        <div className="flex items-center gap-1.5 border-b border-cvr-line px-2 py-2">
+          <button
+            type="button"
+            aria-label="Đóng tìm kiếm"
+            onClick={() => { setOverlay(false); setActiveIdx(-1); }}
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-cvr-ink active:bg-cvr-surface"
+          >
+            <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+          </button>
+          <div className="relative flex-1">
+            <input
+              ref={overlayInputRef}
+              autoFocus
+              type="text"
+              value={f.keyword}
+              onChange={(e) => { set({ keyword: e.target.value }); setActiveIdx(-1); }}
+              onKeyDown={(e) => { if (e.key === "Enter") setOverlay(false); onKeyNav(e); }}
+              placeholder="Nhập khu vực, dự án, hoặc loại bất động sản…"
+              aria-label="Tìm kiếm"
+              autoComplete="off"
+              className="h-11 w-full rounded-full bg-cvr-surface pl-4 pr-10 text-[15px] text-cvr-ink placeholder-cvr-faint outline-none ring-1 ring-black/5 focus:ring-2 focus:ring-cvr-blue/40"
+            />
+            {f.keyword.trim().length > 0 && (
+              <button
+                type="button"
+                aria-label="Xoá từ khoá"
+                onClick={() => { set({ keyword: "" }); overlayInputRef.current?.focus(); }}
+                className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-cvr-faint active:bg-black/5"
+              >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            )}
+          </div>
+          <button
+            type="button"
+            aria-label="Tìm kiếm"
+            onClick={() => { setOverlay(false); onSearch?.(); }}
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-cvr-blue text-white active:scale-95"
+          >
+            <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={2.4} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" /></svg>
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-1.5">
+          {noHits && (
+            <p className="px-2.5 pb-1.5 pt-2 text-[13px] text-cvr-muted">
+              Không có kết quả cho “{f.keyword}”. Gợi ý cho bạn:
+            </p>
+          )}
+          {suggestionRows}
+        </div>
+      </div>
+    )}
+    </>
   );
 
   // Compact (Hero): kiểu "bay" trên ảnh — tab canh giữa + 1 thanh tìm kiếm LỚN,
@@ -661,14 +766,19 @@ function LocationPanel({
         </button>
       )}
 
-      {/* Lọc nhanh trong tầng hiện tại */}
-      <input
-        value={q}
-        onChange={(e) => setQ(e.target.value)}
-        placeholder={level === "province" ? "Tìm tỉnh/thành…" : level === "district" ? "Tìm quận/huyện…" : "Tìm phường/xã…"}
-        aria-label="Lọc nhanh khu vực"
-        className="h-9 w-full rounded-lg border border-black/12 bg-black/[0.03] px-3 text-sm text-cvr-ink placeholder-cvr-faint outline-none focus:border-cvr-blue/60"
-      />
+      {/* Lọc nhanh trong tầng hiện tại — kính lúp kiểu Google */}
+      <div className="relative">
+        <svg className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-cvr-faint" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
+        </svg>
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder={level === "province" ? "Tìm tỉnh/thành…" : level === "district" ? "Tìm quận/huyện…" : "Tìm phường/xã…"}
+          aria-label="Lọc nhanh khu vực"
+          className="h-9 w-full rounded-lg border border-black/12 bg-black/[0.03] pl-9 pr-3 text-sm text-cvr-ink placeholder-cvr-faint outline-none focus:border-cvr-blue/60"
+        />
+      </div>
 
       {/* Danh sách bấm chọn */}
       <div className="mt-2 max-h-56 space-y-0.5 overflow-y-auto">
@@ -681,7 +791,7 @@ function LocationPanel({
             onClick={() => pick(name)}
             className="flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 text-left text-sm text-cvr-ink/80 transition hover:bg-black/5"
           >
-            <span className="truncate">{name}</span>
+            <span className="truncate"><HighlightLabel label={name} q={q} /></span>
             {level !== "ward" ? <span className="shrink-0 text-cvr-faint">›</span> : <span className="shrink-0 text-[11px] text-cvr-faint">＋ Thêm</span>}
           </button>
         ))}
@@ -709,13 +819,18 @@ function ProjectPanel({
 
   return (
     <div>
-      <input
-        value={q}
-        onChange={(e) => setQ(e.target.value)}
-        placeholder="Tìm dự án…"
-        aria-label="Tìm dự án"
-        className="h-9 w-full rounded-lg border border-black/12 bg-black/[0.03] px-3 text-sm text-cvr-ink placeholder-cvr-faint outline-none focus:border-cvr-blue/60"
-      />
+      <div className="relative">
+        <svg className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-cvr-faint" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
+        </svg>
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Tìm dự án…"
+          aria-label="Tìm dự án"
+          className="h-9 w-full rounded-lg border border-black/12 bg-black/[0.03] pl-9 pr-3 text-sm text-cvr-ink placeholder-cvr-faint outline-none focus:border-cvr-blue/60"
+        />
+      </div>
       <div className="mt-2 max-h-64 space-y-0.5 overflow-y-auto">
         {list.length === 0 && (
           <p className="px-2 py-3 text-center text-sm text-cvr-faint">
@@ -731,7 +846,7 @@ function ProjectPanel({
               onClick={() => onPick(p.name)}
               className={`flex w-full flex-col rounded-lg px-2.5 py-1.5 text-left text-sm transition ${active ? "bg-cvr-blue/10 text-cvr-blue-ink" : "text-cvr-ink/80 hover:bg-black/5"}`}
             >
-              <span className="truncate font-medium">{p.name}</span>
+              <span className="truncate font-medium">{active ? p.name : <HighlightLabel label={p.name} q={q} />}</span>
               <span className="truncate text-[11px] text-cvr-faint">{p.location}</span>
             </button>
           );
@@ -762,6 +877,25 @@ function FilterToggle({ label, checked, onChange }: { label: string; checked: bo
         />
       </span>
     </button>
+  );
+}
+
+// Tô kiểu Google: phần ĐÃ GÕ để nhạt/thường · phần GỢI Ý còn lại IN ĐẬM.
+// Khớp không phân biệt dấu; nếu độ dài lệch (chuỗi lạ) → hiện đậm nguyên nhãn cho an toàn.
+function HighlightLabel({ label, q }: { label: string; q: string }) {
+  const strip = (s: string) =>
+    s.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/g, "d").replace(/Đ/g, "d").toLowerCase();
+  const nq = strip(q.trim());
+  const nl = strip(label);
+  if (!nq || nl.length !== label.length) return <span className="font-medium text-cvr-ink">{label}</span>;
+  const idx = nl.indexOf(nq);
+  if (idx < 0) return <span className="font-medium text-cvr-ink">{label}</span>;
+  return (
+    <>
+      {idx > 0 && <span className="font-semibold text-cvr-ink">{label.slice(0, idx)}</span>}
+      <span className="font-normal text-cvr-muted">{label.slice(idx, idx + nq.length)}</span>
+      <span className="font-semibold text-cvr-ink">{label.slice(idx + nq.length)}</span>
+    </>
   );
 }
 

@@ -172,5 +172,17 @@ export function suggest(query: string, limit = 8): Suggestion[] {
       KIND_ORDER[a.e.kind] - KIND_ORDER[b.e.kind] ||
       a.e.label.length - b.e.label.length,
   );
-  return scored.slice(0, limit).map((s) => s.e);
+  // ĐA DẠNG hoá: KHÔNG để một nhóm (vd Khu vực) chiếm hết. Mỗi nhóm tối đa `perKind`
+  // gợi ý; chỗ còn trống mới lấp bằng phần dư → phủ mọi loại từ khoá.
+  const perKind = 3;
+  const count: Partial<Record<SuggestKind, number>> = {};
+  const picked: Entry[] = [];
+  const rest: Entry[] = [];
+  for (const { e } of scored) {
+    const n = count[e.kind] ?? 0;
+    if (n < perKind && picked.length < limit) { count[e.kind] = n + 1; picked.push(e); }
+    else rest.push(e);
+  }
+  for (const e of rest) { if (picked.length >= limit) break; picked.push(e); }
+  return picked.slice(0, limit);
 }
