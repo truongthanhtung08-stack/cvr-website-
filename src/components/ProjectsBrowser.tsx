@@ -92,7 +92,11 @@ export default function ProjectsBrowser({
       {/* Hero banner — MOBILE nằm DƯỚI thanh lọc (mẫu Batdongsan), DESKTOP nằm TRÊN.
           Âm lề để banner tràn hết bề ngang, không bị lề trang bó lại. */}
       {hero && (
-        <div className="order-2 -mx-4 mb-3 sm:order-1 sm:-mx-6 sm:mb-0 lg:-mx-8">{hero}</div>
+        // Tràn viền THẬT: kéo ra full bề ngang màn hình, không bị khung max-w-7xl bó lại
+        // (trước đây Hero nằm ngoài khung nên full màn hình — phải giữ đúng như vậy trên PC).
+        <div className="relative left-1/2 order-2 mb-3 w-screen -translate-x-1/2 sm:order-1 sm:mb-0">
+          {hero}
+        </div>
       )}
 
       {/* ── Thanh tìm + lọc dự án (MOBILE: lên trên cùng) ── */}
