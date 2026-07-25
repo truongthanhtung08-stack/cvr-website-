@@ -21,12 +21,9 @@ type HeroProps = {
 
 export default function Hero({
   banners = homeBanners,
-  // KHUNG KHOÁ TỶ LỆ RIÊNG CHO TỪNG BẢN (chốt 24/7/2026):
-  //   • MOBILE 2.5:1 → Hero cao ~150px, màn hình đầu vẫn thấy phần tin (ảnh 1200×480)
-  //   • PC      2:1  → Hero cao ~712px, banner lớn ấn tượng      (ảnh 2560×1280)
-  // Mỗi bản dùng ẢNH RIÊNG nên khớp KHÍT khung: hiện trọn, không cắt, không hở.
-  // KHÔNG thêm max-h (co chiều rộng gây hở) · KHÔNG cho khung đổi theo từng ảnh (nhảy trang).
-  heightClass = "w-full aspect-[5/2] sm:aspect-[2/1]",
+  // PC: GIỮ NGUYÊN khung gốc (chạy tốt mấy tháng) — gần full màn hình.
+  // MOBILE: thấp lại (170px) để màn hình đầu vẫn thấy phần tin (theo yêu cầu chủ dự án).
+  heightClass = "min-h-[170px] sm:h-[calc(100svh-120px)]",
   search = true,
   searchTab,
   fit = "cover",
