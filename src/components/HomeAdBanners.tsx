@@ -4,13 +4,13 @@ import { asset } from "@/lib/asset";
 import { HOME_AD_DEFAULT, type HomeAdData } from "@/lib/siteContent";
 
 // ===== 2 banner cuối trang chủ — chuẩn Apple, GỌN, KHUNG VUÔNG =====
-// Nguyên tắc: một mặt nền liền mạch, chuyển màu mềm, KHÔNG chia đôi khô cứng.
-// Banner 01 (sáng #f5f5f7): ĐĂNG TIN — ảnh biển tan mềm vào vùng chữ.
-// Banner 02 (tối #0b0b0d): APP — cụm iPhone 17 Pro Max THẬT (ảnh nền trong suốt,
-//   cắt từ "Mockup đt 6"), đặt SÁT nội dung. KHÔNG mask, KHÔNG hiệu ứng trôi.
+// Tỷ lệ bám mẫu Apple: PC ~2.21:1 (aspect co giãn theo bề ngang), mobile giữ thẻ ngang 260px.
+// Chữ 1 MÀU (không tách dòng vàng). Nút CTA 1 màu.
+// Banner 01 (sáng #f5f5f7): ĐĂNG TIN — chữ trái · ảnh biển phải · nút đen.
+// Banner 02 (tối #0b0b0d): APP — chữ trái + 1 nút CTA xanh · iPhone phải. KHÔNG QR, KHÔNG store buttons.
 
 const DARK_BODY = "text-[#a1a1a6]";
-const DARK_FAINT = "text-[#86868b]";
+const APPLE_BLUE = "bg-[#0071e3] hover:bg-[#0077ed]";
 
 const ArrowRight = (
   <svg className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
@@ -18,14 +18,14 @@ const ArrowRight = (
   </svg>
 );
 
-// ── Banner 01 — ĐĂNG TIN ──
+// ── Banner 01 — ĐĂNG TIN (sáng) ──
 export function AdBannerSeller({ data = HOME_AD_DEFAULT.seller }: { data?: HomeAdData["seller"] }) {
   return (
     <section className="section-edge bg-white">
       <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 sm:py-4 lg:px-8">
         <div className="relative overflow-hidden bg-cvr-surface shadow-lux">
 
-          {/* ===== MOBILE: nội dung đặt TRÊN 1 hình nền · cao 260px (bằng Banner 2) ===== */}
+          {/* ===== MOBILE: nội dung TRÊN 1 hình nền · cao 260px ===== */}
           <div className="relative h-[260px] md:hidden">
             <Image
               src={asset(data.image)}
@@ -34,7 +34,6 @@ export function AdBannerSeller({ data = HOME_AD_DEFAULT.seller }: { data?: HomeA
               sizes="100vw"
               className="object-cover object-center"
             />
-            {/* Dải sáng dưới = "khoảng trống" cho chữ → mọi ảnh đều đọc RÕ */}
             <div
               className="absolute inset-0 bg-gradient-to-t from-cvr-surface via-cvr-surface/90 via-[55%] to-transparent"
               aria-hidden
@@ -43,7 +42,7 @@ export function AdBannerSeller({ data = HOME_AD_DEFAULT.seller }: { data?: HomeA
               <h2 className="text-balance text-[20px] font-semibold leading-[1.14] tracking-tight text-cvr-ink">
                 {data.titleLine1}
                 <br />
-                <span className="text-cvr-gold-ink">{data.titleLine2}</span>
+                {data.titleLine2}
               </h2>
               <p className="mt-1.5 max-w-[34ch] text-[13px] leading-relaxed text-cvr-muted">
                 {data.body}
@@ -58,8 +57,8 @@ export function AdBannerSeller({ data = HOME_AD_DEFAULT.seller }: { data?: HomeA
             </div>
           </div>
 
-          {/* ===== DESKTOP: GIỮ NGUYÊN bản đã duyệt (nửa trái nội dung · nửa phải ảnh) ===== */}
-          <div className="relative hidden md:block">
+          {/* ===== DESKTOP: tỷ lệ 2.21:1 như mẫu 1 · chữ trái · ảnh phải ===== */}
+          <div className="relative hidden md:block md:aspect-[1731/783]">
             <Image
               src={asset(data.image)}
               alt="Bất động sản ven biển Duyên Hải Miền Trung"
@@ -71,18 +70,18 @@ export function AdBannerSeller({ data = HOME_AD_DEFAULT.seller }: { data?: HomeA
               className="absolute inset-0 bg-gradient-to-r from-cvr-surface from-[46%] via-cvr-surface/50 to-transparent"
               aria-hidden
             />
-            <div className="relative flex min-h-[290px] max-w-[50%] flex-col justify-center px-10 py-10 lg:h-[320px] lg:px-14">
-              <h2 className="text-balance text-[24px] font-semibold leading-[1.12] tracking-tight text-cvr-ink lg:text-[29px]">
+            <div className="absolute inset-0 flex max-w-[50%] flex-col justify-center px-10 lg:px-16">
+              <h2 className="text-balance text-[26px] font-semibold leading-[1.12] tracking-tight text-cvr-ink lg:text-[34px]">
                 {data.titleLine1}
                 <br />
-                <span className="text-cvr-gold-ink">{data.titleLine2}</span>
+                {data.titleLine2}
               </h2>
-              <p className="mt-3 max-w-sm text-sm leading-relaxed text-cvr-muted">
+              <p className="mt-3 max-w-sm text-sm leading-relaxed text-cvr-muted lg:text-[15px]">
                 {data.body}
               </p>
               <Link
                 href={data.ctaHref}
-                className="group mt-5 inline-flex min-h-[44px] w-fit items-center gap-2 rounded-full bg-cvr-ink px-6 py-2.5 text-sm font-semibold text-white transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 hover:bg-black"
+                className="group mt-6 inline-flex min-h-[46px] w-fit items-center gap-2 rounded-full bg-cvr-ink px-6 py-2.5 text-sm font-semibold text-white transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 hover:bg-black lg:text-[15px]"
               >
                 {data.ctaLabel}
                 {ArrowRight}
@@ -96,27 +95,29 @@ export function AdBannerSeller({ data = HOME_AD_DEFAULT.seller }: { data?: HomeA
   );
 }
 
-// ── Banner 02 — ỨNG DỤNG ──
+// ── Banner 02 — ỨNG DỤNG (tối, tối giản như mẫu 2) ──
 export function AdBannerApp({ data = HOME_AD_DEFAULT.app }: { data?: HomeAdData["app"] }) {
   return (
     <section className="section-edge bg-white">
       <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 sm:py-4 lg:px-8">
         <div className="relative overflow-hidden bg-[#0b0b0d] shadow-lux">
-          {/* ===== MOBILE: chữ + nút (biểu tượng) bên TRÁI · iPhone LỚN bên PHẢI · cao 260px ===== */}
+
+          {/* ===== MOBILE: chữ + 1 nút CTA bên TRÁI · iPhone bên PHẢI · cao 260px ===== */}
           <div className="grid h-[260px] grid-cols-[1fr_auto] items-center overflow-hidden md:hidden">
             <div className="pl-5 pr-1">
-              {/* Tạm bỏ dòng mô tả cho gọn — chỉ TÊN APP + 2 nút biểu tượng */}
               <h2 className="text-balance text-[20px] font-semibold leading-[1.15] tracking-tight text-white">
                 {data.titleLine1}
                 <br />
-                <span className="text-cvr-gold-soft">{data.titleLine2}</span>
+                {data.titleLine2}
               </h2>
-              <div className="mt-4 flex items-center gap-2.5">
-                <StoreIcon store="apple" href={data.appleHref} />
-                <StoreIcon store="google" href={data.googleHref} />
-              </div>
+              <a
+                href={data.ctaHref}
+                className={`group mt-4 inline-flex min-h-[42px] w-fit items-center gap-2 rounded-full px-5 py-2 text-[13px] font-semibold text-white transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 ${APPLE_BLUE}`}
+              >
+                {data.ctaLabel}
+                {ArrowRight}
+              </a>
             </div>
-            {/* iPhone LỚN — căn giữa dọc cho khớp khối chữ, tràn nhẹ mép phải */}
             <div className="flex h-full items-center justify-end">
               <Image
                 src={asset(data.phones)}
@@ -130,75 +131,42 @@ export function AdBannerApp({ data = HOME_AD_DEFAULT.app }: { data?: HomeAdData[
             </div>
           </div>
 
-          {/* ===== DESKTOP: GIỮ NGUYÊN bản đã duyệt (nửa–nửa: máy trái · nội dung phải) ===== */}
-          <div className="relative hidden items-center px-5 pb-6 pt-6 sm:px-10 md:grid md:h-[290px] md:grid-cols-2 md:gap-8 md:px-10 md:py-0 lg:h-[320px] lg:gap-10 lg:px-14">
-            <div className="order-2 w-full text-center md:order-2 md:w-auto md:max-w-[470px] md:justify-self-end md:text-left">
-              <h2 className="text-balance text-[22px] font-semibold leading-[1.12] tracking-tight text-white sm:text-[24px] lg:text-[29px]">
-                {data.titleLine1}
-                <br />
-                <span className="text-cvr-gold-soft">{data.titleLine2}</span>
-              </h2>
-              <p className={`mt-3 text-[14px] leading-relaxed sm:text-sm md:max-w-md ${DARK_BODY}`}>
-                {data.body}
-              </p>
-              <div className="mt-4 flex flex-wrap items-center justify-center gap-2.5 md:justify-start">
-                <StoreButton store="apple" href={data.appleHref} />
-                <StoreButton store="google" href={data.googleHref} />
-              </div>
-            </div>
-
-            {/* Cụm iPhone 17 Pro Max THẬT — cao BẰNG khung banner (chạm mép trên–dưới). */}
-            <div className="order-1 flex min-w-0 justify-center md:order-1 md:justify-start md:pl-8 lg:pl-12">
+          {/* ===== DESKTOP: tỷ lệ 2.22:1 như mẫu 2 · chữ trái + 1 nút CTA · iPhone phải ===== */}
+          <div className="relative hidden md:block md:aspect-[1767/795]">
+            {/* iPhone phải — cao gần kín khung, tràn nhẹ mép phải */}
+            <div className="absolute inset-y-0 right-0 flex items-center pr-8 lg:pr-14">
               <Image
                 src={asset(data.phones)}
                 alt="Ứng dụng COASTAL LAND trên iPhone 17 Pro Max"
                 width={807}
                 height={859}
-                sizes="300px"
+                sizes="360px"
                 priority
-                className="h-auto md:h-[278px] md:w-auto lg:h-[308px]"
+                className="h-[86%] w-auto"
               />
             </div>
+            {/* Chữ trái */}
+            <div className="absolute inset-0 flex max-w-[55%] flex-col justify-center px-10 lg:px-16">
+              <h2 className="text-balance text-[26px] font-semibold leading-[1.12] tracking-tight text-white lg:text-[34px]">
+                {data.titleLine1}
+                <br />
+                {data.titleLine2}
+              </h2>
+              <p className={`mt-3 max-w-md text-sm leading-relaxed lg:text-[15px] ${DARK_BODY}`}>
+                {data.body}
+              </p>
+              <a
+                href={data.ctaHref}
+                className={`group mt-6 inline-flex min-h-[46px] w-fit items-center gap-2 rounded-full px-6 py-2.5 text-sm font-semibold text-white transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 lg:text-[15px] ${APPLE_BLUE}`}
+              >
+                {data.ctaLabel}
+                {ArrowRight}
+              </a>
+            </div>
           </div>
+
         </div>
       </div>
     </section>
-  );
-}
-
-// Nút tải App Store / Google Play — nền tối, viền mảnh
-function StoreButton({ store, href = "#" }: { store: "apple" | "google"; href?: string }) {
-  return (
-    <a
-      href={href}
-      className="flex min-h-[44px] items-center gap-2.5 rounded-xl border border-white/12 bg-white/[0.06] px-4 py-2 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 hover:bg-white/10"
-    >
-      {store === "apple" ? (
-        <svg className="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M17.05 12.04c-.03-2.6 2.12-3.85 2.22-3.91-1.21-1.77-3.09-2.01-3.76-2.04-1.6-.16-3.12.94-3.93.94-.81 0-2.06-.92-3.39-.9-1.74.03-3.35 1.01-4.25 2.57-1.81 3.14-.46 7.78 1.3 10.32.86 1.24 1.89 2.64 3.23 2.59 1.3-.05 1.79-.84 3.36-.84 1.57 0 2.01.84 3.39.81 1.4-.02 2.29-1.27 3.15-2.52.99-1.44 1.4-2.84 1.42-2.91-.03-.01-2.72-1.04-2.75-4.13zM14.6 4.6c.72-.87 1.2-2.08 1.07-3.28-1.03.04-2.28.69-3.02 1.56-.66.77-1.24 2-1.08 3.18 1.15.09 2.33-.59 3.03-1.46z" /></svg>
-      ) : (
-        <svg className="h-5 w-5" viewBox="0 0 24 24"><path fill="#00d4ff" d="M3.6 2.4c-.3.3-.5.7-.5 1.2v16.8c0 .5.2.9.5 1.2l.1.1L13 12.1v-.2L3.7 2.3l-.1.1z" /><path fill="#ffce00" d="M16.3 15.4L13 12.1v-.2l3.3-3.3.1.1 3.9 2.2c1.1.6 1.1 1.7 0 2.3l-3.9 2.2-.1.1z" /><path fill="#ff3b30" d="M16.4 15.3L13 12 3.6 21.6c.4.4 1 .4 1.6.1l11.2-6.4" /><path fill="#00e676" d="M16.4 8.7L5.2 2.3c-.6-.3-1.2-.3-1.6.1L13 12l3.4-3.3z" /></svg>
-      )}
-      <span className="flex flex-col leading-tight">
-        <span className={`text-[10px] ${DARK_FAINT}`}>{store === "apple" ? "Tải về trên" : "TẢI TRÊN"}</span>
-        <span className="text-[14px] font-semibold text-white">{store === "apple" ? "App Store" : "Google Play"}</span>
-      </span>
-    </a>
-  );
-}
-
-// Nút tải CHỈ BIỂU TƯỢNG (dùng khi hẹp chỗ — mobile) — vuông, viền mảnh
-function StoreIcon({ store, href = "#" }: { store: "apple" | "google"; href?: string }) {
-  return (
-    <a
-      href={href}
-      aria-label={store === "apple" ? "Tải trên App Store" : "Tải trên Google Play"}
-      className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/12 bg-white/[0.06] transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 hover:bg-white/10"
-    >
-      {store === "apple" ? (
-        <svg className="h-6 w-6 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M17.05 12.04c-.03-2.6 2.12-3.85 2.22-3.91-1.21-1.77-3.09-2.01-3.76-2.04-1.6-.16-3.12.94-3.93.94-.81 0-2.06-.92-3.39-.9-1.74.03-3.35 1.01-4.25 2.57-1.81 3.14-.46 7.78 1.3 10.32.86 1.24 1.89 2.64 3.23 2.59 1.3-.05 1.79-.84 3.36-.84 1.57 0 2.01.84 3.39.81 1.4-.02 2.29-1.27 3.15-2.52.99-1.44 1.4-2.84 1.42-2.91-.03-.01-2.72-1.04-2.75-4.13zM14.6 4.6c.72-.87 1.2-2.08 1.07-3.28-1.03.04-2.28.69-3.02 1.56-.66.77-1.24 2-1.08 3.18 1.15.09 2.33-.59 3.03-1.46z" /></svg>
-      ) : (
-        <svg className="h-6 w-6" viewBox="0 0 24 24"><path fill="#00d4ff" d="M3.6 2.4c-.3.3-.5.7-.5 1.2v16.8c0 .5.2.9.5 1.2l.1.1L13 12.1v-.2L3.7 2.3l-.1.1z" /><path fill="#ffce00" d="M16.3 15.4L13 12.1v-.2l3.3-3.3.1.1 3.9 2.2c1.1.6 1.1 1.7 0 2.3l-3.9 2.2-.1.1z" /><path fill="#ff3b30" d="M16.4 15.3L13 12 3.6 21.6c.4.4 1 .4 1.6.1l11.2-6.4" /><path fill="#00e676" d="M16.4 8.7L5.2 2.3c-.6-.3-1.2-.3-1.6.1L13 12l3.4-3.3z" /></svg>
-      )}
-    </a>
   );
 }
