@@ -18,6 +18,26 @@ const ArrowRight = (
   </svg>
 );
 
+// Lợi ích ngắn — chỉ hiện trên PC để lấp khoảng trống dọc (mobile chật, không dùng)
+const SELLER_FEATURES = [
+  "Đăng tin nhanh chỉ trong vài phút",
+  "Kiểm duyệt & hiển thị ngay trong ngày",
+  "Tiếp cận đúng khách mua tại Miền Trung",
+];
+const APP_FEATURES = [
+  "Tìm kiếm & lọc bất động sản thông minh",
+  "Lưu tin yêu thích & so sánh nhanh",
+  "Nhận thông báo dự án, tin mới phù hợp",
+];
+
+function CheckIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" strokeWidth={2.6} viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+    </svg>
+  );
+}
+
 // ── Banner 01 — ĐĂNG TIN (sáng) ──
 export function AdBannerSeller({ data = HOME_AD_DEFAULT.seller }: { data?: HomeAdData["seller"] }) {
   return (
@@ -79,6 +99,14 @@ export function AdBannerSeller({ data = HOME_AD_DEFAULT.seller }: { data?: HomeA
               <p className="mt-2.5 max-w-sm text-[13px] leading-relaxed text-cvr-muted lg:text-sm">
                 {data.body}
               </p>
+              <ul className="mt-4 space-y-2">
+                {SELLER_FEATURES.map((f) => (
+                  <li key={f} className="flex items-center gap-2.5 text-[13px] font-medium text-cvr-ink/80 lg:text-sm">
+                    <CheckIcon className="h-4 w-4 shrink-0 text-cvr-gold-ink" />
+                    {f}
+                  </li>
+                ))}
+              </ul>
               <Link
                 href={data.ctaHref}
                 className="group mt-5 inline-flex min-h-[42px] w-fit items-center gap-1.5 whitespace-nowrap rounded-full bg-cvr-ink px-5 py-2.5 text-[13px] font-semibold text-white transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 hover:bg-black lg:text-sm"
@@ -153,6 +181,14 @@ export function AdBannerApp({ data = HOME_AD_DEFAULT.app }: { data?: HomeAdData[
               <p className={`mt-2.5 max-w-md text-[13px] leading-relaxed lg:text-sm ${DARK_BODY}`}>
                 {data.body}
               </p>
+              <ul className="mt-4 space-y-2">
+                {APP_FEATURES.map((f) => (
+                  <li key={f} className="flex items-center gap-2.5 text-[13px] font-medium text-white/75 lg:text-sm">
+                    <CheckIcon className="h-4 w-4 shrink-0 text-cvr-gold-soft" />
+                    {f}
+                  </li>
+                ))}
+              </ul>
               <div className="mt-5 flex flex-wrap items-center gap-3">
                 <StoreButton store="apple" href={data.appleHref} />
                 <StoreButton store="google" href={data.googleHref} />
