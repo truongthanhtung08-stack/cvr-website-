@@ -159,39 +159,41 @@ export function AdBannerApp({ data = HOME_AD_DEFAULT.app }: { data?: HomeAdData[
             </div>
           </div>
 
-          {/* ===== DESKTOP: chữ trái + 2 CTA store · iPhone TRÀN trên/dưới, sát mép phải ===== */}
+          {/* ===== DESKTOP: ĐẢO NGƯỢC banner 1 — iPhone TRÁI · chữ PHẢI · sát nhau ở giữa ===== */}
           <div className="relative hidden md:block md:h-[300px] lg:h-[340px]">
-            {/* iPhone phóng to, tràn trên–dưới khung (card overflow-hidden cắt phần thừa) */}
-            <Image
-              src={asset(data.phones)}
-              alt="Ứng dụng COASTAL LAND trên iPhone 17 Pro Max"
-              width={807}
-              height={859}
-              sizes="480px"
-              priority
-              className="absolute right-0 top-1/2 w-auto max-w-none -translate-y-1/2 translate-x-[3%] md:h-[120%] lg:h-[126%]"
-            />
-            {/* Chữ trái */}
-            <div className="absolute inset-0 flex max-w-[58%] flex-col justify-center px-10 lg:px-16">
-              <h2 className="text-balance text-[21px] font-semibold leading-[1.12] tracking-tight text-white lg:text-[26px]">
-                {data.titleLine1}
-                <br />
-                {data.titleLine2}
-              </h2>
-              <p className={`mt-2.5 max-w-md text-[13px] leading-relaxed lg:text-sm ${DARK_BODY}`}>
-                {data.body}
-              </p>
-              <ul className="mt-4 space-y-2">
-                {APP_FEATURES.map((f) => (
-                  <li key={f} className="flex items-center gap-2.5 text-[13px] font-medium text-white/75 lg:text-sm">
-                    <CheckIcon className="h-4 w-4 shrink-0 text-cvr-gold-soft" />
-                    {f}
-                  </li>
-                ))}
-              </ul>
-              <div className="mt-5 flex flex-wrap items-center gap-3">
-                <StoreButton store="apple" href={data.appleHref} />
-                <StoreButton store="google" href={data.googleHref} />
+            <div className="absolute inset-0 flex items-center justify-center gap-6 px-8 lg:gap-12 lg:px-12">
+              {/* iPhone TRÁI — tràn trên/dưới khung (card overflow-hidden cắt phần thừa) */}
+              <Image
+                src={asset(data.phones)}
+                alt="Ứng dụng COASTAL LAND trên iPhone 17 Pro Max"
+                width={807}
+                height={859}
+                sizes="440px"
+                priority
+                className="w-auto max-w-none shrink-0 md:h-[116%] lg:h-[122%]"
+              />
+              {/* Nội dung PHẢI */}
+              <div className="max-w-[420px] shrink">
+                <h2 className="text-balance text-[21px] font-semibold leading-[1.12] tracking-tight text-white lg:text-[26px]">
+                  {data.titleLine1}
+                  <br />
+                  {data.titleLine2}
+                </h2>
+                <p className={`mt-2.5 text-[13px] leading-relaxed lg:text-sm ${DARK_BODY}`}>
+                  {data.body}
+                </p>
+                <ul className="mt-4 space-y-2">
+                  {APP_FEATURES.map((f) => (
+                    <li key={f} className="flex items-center gap-2.5 text-[13px] font-medium text-white/75 lg:text-sm">
+                      <CheckIcon className="h-4 w-4 shrink-0 text-cvr-gold-soft" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <div className="mt-5 flex flex-wrap items-center gap-3">
+                  <StoreButton store="apple" href={data.appleHref} />
+                  <StoreButton store="google" href={data.googleHref} />
+                </div>
               </div>
             </div>
           </div>
