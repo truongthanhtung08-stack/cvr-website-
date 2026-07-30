@@ -456,7 +456,7 @@ export default function FilterBar({
               // MOBILE: ô nằm trên NỀN TRẮNG → nền xám nhạt Apple cho thấy rõ khung.
               // DESKTOP: vẫn trắng + đổ bóng vì nằm đè trên ảnh Hero tối.
               // Đệm phải NỚI RA khi đã gõ để chừa chỗ nút xoá ×.
-              ? `h-11 w-full rounded-xl border border-transparent bg-cvr-surface pl-4 ${typed ? "pr-[4.75rem]" : "pr-12"} text-[15px] text-cvr-ink placeholder-cvr-faint ring-1 ring-black/5 outline-none transition focus:ring-2 focus:ring-cvr-blue/50 sm:h-12 sm:bg-white sm:pl-11 ${typed ? "sm:pr-11" : "sm:pr-4"} sm:shadow-lg sm:shadow-black/20`
+              ? `h-11 w-full rounded-xl border border-transparent bg-cvr-surface pl-4 ${typed ? "pr-[5.5rem]" : "pr-14"} text-[15px] text-cvr-ink placeholder-cvr-faint ring-1 ring-black/5 outline-none transition focus:ring-2 focus:ring-cvr-blue/50 sm:h-12 sm:bg-white sm:pl-11 ${typed ? "sm:pr-11" : "sm:pr-4"} sm:shadow-lg sm:shadow-black/20`
               : "h-full w-full min-w-0 flex-1 border-none bg-transparent pl-11 pr-3 text-[15px] text-cvr-ink placeholder-cvr-faint outline-none"
           }
         />
@@ -467,36 +467,49 @@ export default function FilterBar({
             aria-label="Xoá từ khoá"
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => { set({ keyword: "" }); setSugOpen(true); inputRef.current?.focus(); }}
-            className="absolute right-10 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-cvr-faint transition hover:bg-black/5 hover:text-cvr-ink active:scale-95 sm:right-3"
+            className="absolute right-[3.25rem] top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-cvr-faint transition hover:bg-black/5 hover:text-cvr-ink active:scale-95 sm:right-3"
           >
             <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         )}
-        {/* MOBILE (Hero): nút SEARCH XANH nằm NGAY TRONG ô tìm — gọn, 1 dòng duy nhất */}
+        {/* MOBILE (Hero): nút SEARCH XANH nằm NGAY TRONG ô tìm — cao BẰNG khung, 1 dòng duy nhất */}
         {compact && onSearch && (
           <button
             type="button"
             aria-label="Tìm kiếm"
             onClick={() => { setSugOpen(false); onSearch(); }}
-            className="absolute right-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg bg-cvr-blue text-white transition active:scale-95 sm:hidden"
+            className="absolute right-1 top-1 bottom-1 flex w-11 items-center justify-center rounded-lg bg-cvr-blue text-white transition active:scale-95 sm:hidden"
           >
-            <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={2.4} viewBox="0 0 24 24">
+            <svg className="h-[22px] w-[22px]" fill="none" stroke="currentColor" strokeWidth={2.4} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
             </svg>
           </button>
         )}
-        {/* Nút Tìm kiếm NẰM TRONG thanh tìm (kiểu Batdongsan) — trang danh sách */}
+        {/* Nút Tìm kiếm NẰM TRONG thanh tìm (kiểu Batdongsan) — trang danh sách.
+            MOBILE: BIỂU TƯỢNG Search cao BẰNG khung · DESKTOP: giữ NGUYÊN nút chữ. */}
         {!compact && (
-          <button
-            type="button"
-            aria-label="Tìm kiếm"
-            onClick={() => { setSugOpen(false); onSearch?.(); }}
-            className="m-1.5 flex h-9 shrink-0 items-center justify-center rounded-none bg-cvr-blue px-5 text-sm font-semibold text-white transition hover:bg-cvr-blue-ink active:scale-95"
-          >
-            Tìm kiếm
-          </button>
+          <>
+            <button
+              type="button"
+              aria-label="Tìm kiếm"
+              onClick={() => { setSugOpen(false); onSearch?.(); }}
+              className="flex h-12 w-14 shrink-0 items-center justify-center rounded-none bg-cvr-blue text-white transition active:scale-95 sm:hidden"
+            >
+              <svg className="h-[22px] w-[22px]" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              aria-label="Tìm kiếm"
+              onClick={() => { setSugOpen(false); onSearch?.(); }}
+              className="m-1.5 hidden h-9 shrink-0 items-center justify-center rounded-none bg-cvr-blue px-5 text-sm font-semibold text-white transition hover:bg-cvr-blue-ink active:scale-95 sm:flex"
+            >
+              Tìm kiếm
+            </button>
+          </>
         )}
         {sugOpen && panelItems.length > 0 && (
           <div className="absolute left-0 right-0 top-full z-[120] mt-1.5 max-h-64 overflow-y-auto rounded-none border border-cvr-line bg-white p-1.5 shadow-2xl shadow-black/20 ring-1 ring-inset ring-black/5 sm:max-h-80">

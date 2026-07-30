@@ -135,7 +135,7 @@ export default function ProjectsSection({ projects }: { projects: Project[] }) {
             </div>
           )}
           <Link href="/du-an" className="absolute right-0 text-sm font-medium text-cvr-muted transition-colors hover:text-cvr-ink">
-            Xem tất cả →
+            Xem thêm →
           </Link>
         </div>
       </div>

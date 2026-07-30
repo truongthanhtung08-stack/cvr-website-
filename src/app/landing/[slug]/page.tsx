@@ -7,6 +7,11 @@ import Footer from "@/components/Footer";
 import { asset } from "@/lib/asset";
 import { landings } from "@/lib/landings";
 import { getLandingBySlug } from "@/lib/siteContent";
+import LandingDisabledRedirect from "./LandingDisabledRedirect";
+
+// ⏸️ TẠM ẨN LANDING PAGE (28.07): chưa có landing hoàn chỉnh → khoá cả route.
+// Đặt về false để MỞ LẠI landing (và khôi phục href landing trong src/lib/banners.ts).
+const LANDING_HIDDEN: boolean = true;
 
 // Prerender các slug mặc định; slug do admin thêm mới vẫn render on-demand (dynamicParams mặc định true).
 export function generateStaticParams() {
@@ -21,6 +26,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 }
 
 export default async function LandingPage({ params }: { params: Promise<{ slug: string }> }) {
+  // ⏸️ Landing đang tạm ẩn → chuyển hướng về /gioi-thieu (xem cờ LANDING_HIDDEN ở trên).
+  if (LANDING_HIDDEN) return <LandingDisabledRedirect />;
   const { slug } = await params;
   const l = await getLandingBySlug(slug);
   if (!l) notFound();

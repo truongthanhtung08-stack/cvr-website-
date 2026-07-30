@@ -97,7 +97,7 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
                 href="/mua-ban"
                 className="mt-4 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-full border border-cvr-line text-[15px] font-semibold text-cvr-ink transition active:bg-cvr-surface"
               >
-                Xem tất cả bất động sản
+                Xem thêm
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
               </Link>
             </div>
@@ -173,7 +173,7 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
                 href="/mua-ban"
                 className="absolute right-0 text-sm font-medium text-cvr-muted transition-colors hover:text-cvr-ink"
               >
-                Xem tất cả →
+                Xem thêm →
               </Link>
             </div>
             </div>

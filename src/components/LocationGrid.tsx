@@ -48,7 +48,7 @@ export default function LocationGrid({ areas = HOME_AREAS_DEFAULT }: { areas?: A
         {/* Xem tất cả khu vực — cuối phần, canh phải */}
         <div className="mt-4 flex justify-end">
           <Link href="/mua-ban" className="text-sm font-medium text-cvr-muted transition-colors hover:text-cvr-ink">
-            Xem tất cả khu vực →
+            Xem thêm →
           </Link>
         </div>
       </div>

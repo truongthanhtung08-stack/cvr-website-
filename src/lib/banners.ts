@@ -32,7 +32,9 @@ export const homeBanners: Banner[] = [
     subtitle: "Kết nối - Tiện ích - Xác thực", // dòng 3
     // cta: "Tìm hiểu thêm", // CTA TẮT cho banner công ty — bỏ // để bật
     showText: true,
-    href: "/landing/ve-coastal-land",
+    // ⏸️ TẠM ẨN LANDING PAGE (28.07): chưa có landing hoàn chỉnh → banner về trang giới thiệu.
+    //    Khi có landing hoàn chỉnh, đổi lại href: "/landing/ve-coastal-land"
+    href: "/gioi-thieu",
   },
   {
     id: "lp-dich-vu",
@@ -42,7 +44,9 @@ export const homeBanners: Banner[] = [
     subtitle: "Mua bán - Cho thuê - Dự án", // dòng 3
     // cta: "Xem dịch vụ", // CTA TẮT cho banner công ty — bỏ // để bật
     showText: true,
-    href: "/landing/dich-vu",
+    // ⏸️ TẠM ẨN LANDING PAGE (28.07): chưa có landing hoàn chỉnh → banner về trang giới thiệu.
+    //    Khi có landing hoàn chỉnh, đổi lại href: "/landing/dich-vu"
+    href: "/gioi-thieu",
   },
   // ===== 1 BANNER DỰ ÁN (dòng 1 = TÊN dự án, dòng 2 = ĐỊA ĐIỂM) =====
   {

@@ -243,7 +243,7 @@ export default function ProjectsBrowser({
               <div className="flex items-baseline justify-between gap-2">
                 <h2 className="text-sm font-semibold tracking-tight text-cvr-ink">Tin tức bất động sản</h2>
                 <Link href="/tin-tuc" className="shrink-0 text-xs font-medium text-cvr-muted transition-colors hover:text-cvr-ink">
-                  Xem tất cả →
+                  Xem thêm →
                 </Link>
               </div>
               <div className="mt-2 flex flex-col divide-y divide-cvr-line/70">
