@@ -106,7 +106,7 @@ export default function PropertyCard({
         {/* Tiêu đề — 2 dòng, kiểu chữ theo cấp tin (Diamond/Gold VIẾT HOA + icon HOT) */}
         <h3
           className={`line-clamp-2 font-semibold leading-snug text-cvr-ink ${tier?.uppercase ? "uppercase" : ""} ${
-            isFeatured ? "min-h-[3rem] text-base" : isMini ? "min-h-[2.4rem] text-[13px]" : "min-h-[2.6rem] text-sm"
+            isFeatured ? "min-h-[3rem] text-lg" : isMini ? "min-h-[2.4rem] text-sm" : "min-h-[2.7rem] text-[15px]"
           }`}
           style={tier?.titleColor ? { color: tier.titleColor } : undefined}
         >
@@ -116,7 +116,7 @@ export default function PropertyCard({
 
         {/* Mô tả — số dòng theo cấp (Diamond 2 · Gold 1 · Silver/Basic 0) */}
         {descLines > 0 && (
-          <p className={`mt-1 text-[13px] leading-relaxed text-cvr-muted ${
+          <p className={`mt-1 text-sm leading-relaxed text-cvr-muted ${
             /* Thẻ trang chủ trên MOBILE: ẩn mô tả cho thẻ gọn, màn hình đầu thấy trọn tin */
             isTier ? "hidden sm:block " : ""
           }${descLines === 1 ? "line-clamp-1" : "line-clamp-2 min-h-[2.2rem]"}`}>
@@ -126,7 +126,7 @@ export default function PropertyCard({
 
         {/* Giá — Diện tích (giá trái · diện tích phải, dãn cách giống Homedy) */}
         <div className={`flex items-baseline justify-between gap-2 ${isMini ? "mt-1.5" : "mt-2.5"}`}>
-          <span className={`${isFeatured ? "text-sm font-semibold" : "text-[13px]"} ${item.price === "Thỏa thuận" ? "text-cvr-muted" : "text-cvr-ink"}`}>
+          <span className={`font-semibold ${isFeatured ? "text-base" : "text-[15px]"} ${item.price === "Thỏa thuận" ? "text-cvr-muted" : "text-cvr-ink"}`}>
             {item.price}
           </span>
           <span className={`flex items-baseline gap-2 text-cvr-body ${isFeatured ? "text-sm" : "text-[13px]"}`}>
@@ -136,7 +136,7 @@ export default function PropertyCard({
         </div>
 
         {/* Địa chỉ */}
-        <p className="mt-1.5 flex items-center gap-1 text-xs text-cvr-muted">
+        <p className="mt-1.5 flex items-center gap-1 text-[13px] text-cvr-muted">
           <PinIcon /><span className="line-clamp-1">{item.location}</span>
         </p>
 
