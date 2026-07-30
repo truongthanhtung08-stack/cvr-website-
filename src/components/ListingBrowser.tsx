@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
 import PropertyCard from "@/components/PropertyCard";
 import FilterBar from "@/components/FilterBar";
@@ -17,12 +16,6 @@ import {
   type Filters,
   type SortKey,
 } from "@/lib/filters";
-
-// Bản đồ chỉ chạy phía client (Leaflet cần window) — tải lười khi bật chế độ Bản đồ.
-const MapView = dynamic(() => import("@/components/MapView"), {
-  ssr: false,
-  loading: () => <div className="flex h-full items-center justify-center text-sm text-cvr-muted">Đang tải bản đồ…</div>,
-});
 
 const PER_PAGE = 8;
 
@@ -41,7 +34,7 @@ export default function ListingBrowser({
 
   const [filters, setFiltersState] = useState<Filters>(() => filtersFromParams(params));
   const [sort, setSort] = useState<SortKey>("moi");
-  const [view, setView] = useState<"list" | "grid" | "map">("list");
+  const [view, setView] = useState<"list" | "grid">("list");
   const [page, setPage] = useState(1);
 
   // Đổi bộ lọc → luôn quay về trang 1
@@ -82,8 +75,6 @@ export default function ListingBrowser({
           value={filters}
           onChange={setFilters}
           purpose={purpose}
-          onMap={() => setView(view === "map" ? "list" : "map")}
-          mapActive={view === "map"}
         />
       </div>
 
@@ -130,33 +121,6 @@ export default function ListingBrowser({
               </select>
       </div>
 
-      {view === "map" ? (
-        /* ── Chế độ BẢN ĐỒ: danh sách cuộn (trái) + bản đồ dính (phải) — kiểu Batdongsan ── */
-        <div className="mt-4 grid grid-cols-1 gap-5 lg:grid-cols-5">
-          {/* space-y (block) thay vì flex-col: tránh flex co bẹp thẻ khi vùng cuộn có max-height */}
-          <div className="order-2 space-y-4 lg:order-1 lg:col-span-2 lg:max-h-[calc(100vh-140px)] lg:overflow-y-auto lg:pr-1">
-            {results.length > 0 ? (
-              /* MOBILE: thẻ DỌC (ảnh trên) · DESKTOP: hàng ngang */
-              results.map((item) => (
-                <div key={item.id}>
-                  <div className="sm:hidden"><PropertyCard item={item} layout="grid" showTime /></div>
-                  <div className="hidden sm:block"><PropertyCard item={item} layout="list" showTime /></div>
-                </div>
-              ))
-            ) : (
-              <div className="flex flex-col items-center justify-center rounded-none border border-dashed border-cvr-line py-20 text-center">
-                <p className="text-cvr-body">Không tìm thấy bất động sản phù hợp.</p>
-                <button type="button" onClick={() => setFilters(emptyFilters())} className="mt-5 rounded-lg bg-cvr-ink px-5 py-2 text-sm font-semibold text-white transition hover:bg-cvr-body">Xoá bộ lọc</button>
-              </div>
-            )}
-          </div>
-          <div className="order-1 lg:order-2 lg:col-span-3">
-            <div className="sticky top-24 h-[380px] overflow-hidden rounded-none border border-cvr-line shadow-lux lg:h-[calc(100vh-140px)]">
-              <MapView items={results} />
-            </div>
-          </div>
-        </div>
-      ) : (
       <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-3">
 
         {/* CỘT TRÁI: danh sách tin */}
@@ -244,7 +208,6 @@ export default function ListingBrowser({
         </aside>
 
       </div>
-      )}
     </div>
   );
 }
@@ -280,13 +243,13 @@ function SidebarLink({ active, onClick, count, children }: { active: boolean; on
   );
 }
 
-// Nút chuyển chế độ xem Danh sách / Lưới / Bản đồ
+// Nút chuyển chế độ xem Danh sách / Lưới
 export function ViewToggle({
   view,
   setView,
 }: {
-  view: "list" | "grid" | "map";
-  setView: (v: "list" | "grid" | "map") => void;
+  view: "list" | "grid";
+  setView: (v: "list" | "grid") => void;
 }) {
   return (
     <div className="flex items-center rounded-lg border border-cvr-line bg-white p-0.5">

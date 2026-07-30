@@ -320,7 +320,7 @@ function MobileMenu({
                       onClick={onClose}
                       className="block py-2.5 text-[15px] font-semibold text-white/90"
                     >
-                      Xem thêm
+                      Xem tất cả
                     </Link>
                     {item.children.map((child) => (
                       <Link

@@ -1,11 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import FilterDropdown, { FilterDropdownGroup } from "@/components/FilterDropdown";
 import { normalizeVi } from "@/lib/filters";
+import { provinceNamesFor, type GeoMode } from "@/lib/locations";
 import type { Project, Article } from "@/lib/data";
+
+const GEO_MODE_KEY = "cl-geo-mode"; // đồng bộ hệ đơn vị hành chính với FilterBar (Mua bán/Cho thuê)
 
 // Danh sách dự án trang /du-an — bố cục kiểu Batdongsan:
 // thanh lọc dưới Hero (ô tìm + dropdown Khu vực · Loại hình · Trạng thái)
@@ -46,10 +49,27 @@ export default function ProjectsBrowser({
   const [status, setStatus] = useState(ALL);
   const [province, setProvince] = useState(ALL);
   const [type, setType] = useState(ALL);
+  // MOBILE: chạm ô tìm → mở trang tìm TOÀN MÀN HÌNH (back + × + nút search) — như Mua bán.
+  const [overlay, setOverlay] = useState(false);
+  const overlayInputRef = useRef<HTMLInputElement>(null);
+  // Hệ đơn vị hành chính Cũ/Mới — bật/tắt như bên Mua bán (nhớ chung qua localStorage).
+  const [geoMode, setGeoMode] = useState<GeoMode>("moi");
+  useEffect(() => {
+    try { const m = localStorage.getItem(GEO_MODE_KEY); if (m === "moi" || m === "cu") setGeoMode(m); } catch { /* noop */ }
+  }, []);
+  const switchGeo = (m: GeoMode) => {
+    setGeoMode(m); setProvince(ALL);
+    try { localStorage.setItem(GEO_MODE_KEY, m); } catch { /* noop */ }
+  };
 
   const provinceCounts = countBy(projects, (p) => provinceOf(p.location));
   const typeCounts = countBy(projects, (p) => typeOf(p.type));
   const statusCounts = countBy(projects, (p) => p.status);
+  // Danh sách tỉnh theo hệ đã chọn, chỉ giữ tỉnh có dự án (kèm số đếm). Rỗng → dùng nguyên data.
+  const provCountMap = new Map(provinceCounts);
+  const provinceOpts: [string, number][] =
+    provinceNamesFor(geoMode).filter((n) => provCountMap.has(n)).map((n) => [n, provCountMap.get(n)!]);
+  const provinceOptions = provinceOpts.length ? provinceOpts : provinceCounts;
 
   const nq = normalizeVi(q.trim());
   const visible = projects.filter(
@@ -102,7 +122,8 @@ export default function ProjectsBrowser({
       {/* ── Thanh tìm + lọc dự án (MOBILE: lên trên cùng) ── */}
       <div className="order-1 mt-2.5 rounded-none border border-cvr-line bg-white p-2.5 shadow-lux sm:order-2">
         <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
-          {/* Ô tìm nhanh dự án */}
+          {/* Ô tìm nhanh dự án + nút search (mobile) */}
+          <div className="flex flex-1 items-center gap-2">
           <div className="relative flex-1">
             <svg className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-cvr-faint" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
@@ -111,17 +132,59 @@ export default function ProjectsBrowser({
               type="text"
               value={q}
               onChange={(e) => setQ(e.target.value)}
+              onFocus={(e) => {
+                // MOBILE: mở trang tìm toàn màn hình (có nút back + search) thay vì gõ tại chỗ.
+                if (window.matchMedia("(max-width: 639px)").matches) { e.currentTarget.blur(); setOverlay(true); }
+              }}
               placeholder="Tìm nhanh theo tên dự án, chủ đầu tư, vị trí…"
               aria-label="Tìm nhanh dự án"
-              className="h-10 w-full rounded-xl border border-transparent bg-cvr-surface pl-9 pr-3 text-sm text-cvr-ink placeholder-cvr-faint outline-none transition focus:border-cvr-line focus:bg-white"
+              className="h-10 w-full rounded-xl border border-transparent bg-cvr-surface pl-9 pr-9 text-sm text-cvr-ink placeholder-cvr-faint outline-none transition focus:border-cvr-line focus:bg-white"
             />
+            {/* Nút xoá nhanh (×) — đồng bộ với ô tìm Mua bán/Cho thuê */}
+            {q.trim().length > 0 && (
+              <button
+                type="button"
+                aria-label="Xoá tìm kiếm"
+                onClick={() => setQ("")}
+                className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-cvr-faint transition hover:bg-black/5 hover:text-cvr-ink active:scale-95"
+              >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            )}
+          </div>
+            {/* Nút search — mobile: mở tìm toàn màn hình; gọn, cao bằng ô, bo góc đồng bộ */}
+            <button
+              type="button"
+              aria-label="Tìm kiếm"
+              onClick={() => setOverlay(true)}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-cvr-blue text-white transition active:scale-95 sm:hidden"
+            >
+              <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" /></svg>
+            </button>
           </div>
 
           {/* Chip lọc: Khu vực · Loại hình · Trạng thái — MOBILE cuộn ngang 1 dòng */}
           <div className="no-scrollbar -mx-2.5 flex items-center gap-2 overflow-x-auto px-2.5 pb-0.5 lg:mx-0 lg:overflow-visible lg:px-0">
             <FilterDropdownGroup>
               <FilterDropdown label="Khu vực" summary={province === ALL ? "" : province} active={province !== ALL} panelClassName="w-64" className="shrink-0">
-                {({ close }) => optionList(provinceCounts, province, setProvince, close)}
+                {({ close }) => (
+                  <div>
+                    {/* Công tắc hệ hành chính Cũ/Mới — đồng bộ với Mua bán/Cho thuê */}
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={geoMode === "moi"}
+                      onClick={() => switchGeo(geoMode === "moi" ? "cu" : "moi")}
+                      className="mb-2 flex w-full items-center justify-between gap-3 rounded-lg bg-cvr-blue/[0.06] px-2.5 py-2 text-left transition hover:bg-cvr-blue/[0.1]"
+                    >
+                      <span className="text-[12px] font-semibold text-cvr-ink">Tìm theo địa chỉ mới sau sáp nhập</span>
+                      <span className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${geoMode === "moi" ? "bg-cvr-blue" : "bg-black/20"}`}>
+                        <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all ${geoMode === "moi" ? "left-[18px]" : "left-0.5"}`} />
+                      </span>
+                    </button>
+                    {optionList(provinceOptions, province, setProvince, close)}
+                  </div>
+                )}
               </FilterDropdown>
               <FilterDropdown label="Loại hình" summary={type === ALL ? "" : type} active={type !== ALL} panelClassName="w-64" className="shrink-0">
                 {({ close }) => optionList(typeCounts, type, setType, close)}
@@ -143,6 +206,70 @@ export default function ProjectsBrowser({
           )}
         </div>
       </div>
+
+      {/* ── MOBILE: trang tìm dự án TOÀN MÀN HÌNH — back + × + nút Search (đồng bộ Mua bán) ── */}
+      {overlay && (
+        <div className="fixed inset-0 z-[200] flex flex-col bg-white sm:hidden">
+          <div className="flex items-center gap-1.5 border-b border-cvr-line px-2 py-2">
+            <button
+              type="button"
+              aria-label="Đóng tìm kiếm"
+              onClick={() => setOverlay(false)}
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-cvr-ink active:bg-cvr-surface"
+            >
+              <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+            </button>
+            <div className="relative flex-1">
+              <input
+                ref={overlayInputRef}
+                autoFocus
+                type="text"
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") setOverlay(false); }}
+                placeholder="Tìm nhanh dự án, chủ đầu tư, vị trí…"
+                aria-label="Tìm dự án"
+                className="h-11 w-full rounded-full bg-cvr-surface pl-4 pr-10 text-[15px] text-cvr-ink placeholder-cvr-faint outline-none ring-1 ring-black/5 focus:ring-2 focus:ring-cvr-blue/40"
+              />
+              {q.trim().length > 0 && (
+                <button
+                  type="button"
+                  aria-label="Xoá tìm kiếm"
+                  onClick={() => { setQ(""); overlayInputRef.current?.focus(); }}
+                  className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-cvr-faint active:bg-black/5"
+                >
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              )}
+            </div>
+            <button
+              type="button"
+              aria-label="Tìm kiếm"
+              onClick={() => setOverlay(false)}
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-cvr-blue text-white active:scale-95"
+            >
+              <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={2.4} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" /></svg>
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto p-2">
+            {visible.length === 0 ? (
+              <p className="px-2.5 py-3 text-sm text-cvr-muted">Không tìm thấy dự án khớp “{q}”.</p>
+            ) : (
+              visible.map((p) => (
+                <Link
+                  key={p.slug}
+                  href={`/du-an/${p.slug}`}
+                  onClick={() => setOverlay(false)}
+                  className="flex flex-col rounded-lg px-2.5 py-2.5 active:bg-cvr-surface"
+                >
+                  <span className="text-sm font-medium text-cvr-ink">{p.name}</span>
+                  <span className="text-[12px] text-cvr-faint">{p.location}</span>
+                </Link>
+              ))
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Phần còn lại LUÔN nằm cuối (sau Hero và thanh lọc) trên mọi kích thước */}
       <div className="order-3">

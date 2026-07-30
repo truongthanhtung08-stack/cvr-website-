@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import FilterDropdown, { PanelActions, FilterDropdownGroup } from "@/components/FilterDropdown";
-import { provinceNames, districtsOf, wardsOf } from "@/lib/locations";
+import { districtsOf, wardsOf, wardsOfNew, provinceNamesFor, type GeoMode } from "@/lib/locations";
 import { projects } from "@/lib/data";
 import {
   typeGroupsFor,
@@ -27,6 +27,7 @@ import {
 import { suggest, popularSuggestions, type Suggestion } from "@/lib/suggest";
 
 const RECENT_KEY = "cvr-recent-search"; // lịch sử tìm kiếm (localStorage)
+const GEO_MODE_KEY = "cl-geo-mode"; // hệ đơn vị hành chính đã chọn: "cu" | "moi" (localStorage)
 
 // Icon dòng gợi ý — kiểu Google: đồng hồ (lịch sử) · kính lúp (gợi ý) · mũi tên chèn ↖.
 const ICON_CLOCK = "M12 8v4l2.5 2.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z";
@@ -182,16 +183,18 @@ export default function FilterBar({
   const typeLabel =
     f.types.length === 0 ? "" : f.types.length === 1 ? f.types[0] : `${f.types.length} loại hình`;
   // Lọc thêm ĐẶC THÙ theo ý định: mua bán = Hướng + Pháp lý · cho thuê = Nội thất.
+  // + 2 công tắc Tin xác thực / Môi giới chuyên nghiệp (đã gộp vào drawer "Lọc thêm").
   const moreCount =
     (f.beds ? 1 : 0) +
-    (purpose === "ban" ? (f.direction ? 1 : 0) + (f.legal ? 1 : 0) : (f.furnishing ? 1 : 0));
+    (purpose === "ban" ? (f.direction ? 1 : 0) + (f.legal ? 1 : 0) : (f.furnishing ? 1 : 0)) +
+    (f.verified ? 1 : 0) + (f.broker ? 1 : 0);
 
   // Mỗi ô lọc rộng vừa đúng nội dung (pill gọn, hiện đủ chữ, không kéo giãn).
   const ddClass = "shrink-0";
 
   // ===== "Loại nhà đất" — dòng 2 (bố cục Batdongsan) =====
   const typeDropdown = (
-    <FilterDropdown label="Loại nhà đất" summary={typeLabel} active={f.types.length > 0} panelClassName="w-72" compact={compact} className={ddClass}>
+    <FilterDropdown label="Loại BĐS" summary={typeLabel} active={f.types.length > 0} panelClassName="w-72" compact={compact} className={ddClass}>
       {() => {
         const allChecked = typeOptions.every((t) => f.types.includes(t));
         return (
@@ -252,7 +255,7 @@ export default function FilterBar({
   // ===== Các dropdown chi tiết — dòng 2 (thứ tự hiển thị xếp ở phần return) =====
   // Khu vực — ĐA CHỌN (tối đa 5) theo tầng Tỉnh→Quận→Phường (kiểu Batdongsan)
   const locationDropdown = (
-      <FilterDropdown label="Khu vực" summary={locLabel} active={f.locations.length > 0} panelClassName="w-80" compact={compact} className={ddClass}>
+      <FilterDropdown label="Toàn quốc" summary={locLabel} active={f.locations.length > 0} panelClassName="w-80" compact={compact} className={ddClass}>
         {() => (
           <LocationPanel
             locations={f.locations}
@@ -316,8 +319,8 @@ export default function FilterBar({
   // "Lọc" — phòng ngủ + hướng + pháp lý/nội thất (đứng ĐẦU dòng 2, kiểu Batdongsan)
   const moreDropdown = (
       <FilterDropdown
-        label="Lọc"
-        summary={moreCount ? `Lọc (${moreCount})` : ""}
+        label="Lọc thêm"
+        summary={moreCount ? `Lọc thêm (${moreCount})` : ""}
         active={moreCount > 0}
         panelClassName="w-80"
         className={ddClass}
@@ -371,7 +374,15 @@ export default function FilterBar({
                 </div>
               </div>
             )}
-            <PanelActions onReset={() => set({ beds: 0, direction: "", legal: "", furnishing: "" })} onApply={close} />
+            {/* Công tắc chuyển từ thanh chính vào đây (theo mockup): Tin xác thực · Môi giới chuyên nghiệp */}
+            <div>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-cvr-muted">Lọc khác</p>
+              <div className="space-y-1">
+                <SwitchRow label="Tin xác thực" checked={f.verified} onChange={(v) => set({ verified: v })} />
+                <SwitchRow label="Môi giới chuyên nghiệp" checked={f.broker} onChange={(v) => set({ broker: v })} />
+              </div>
+            </div>
+            <PanelActions onReset={() => set({ beds: 0, direction: "", legal: "", furnishing: "", verified: false, broker: false })} onApply={close} />
           </div>
         )}
       </FilterDropdown>
@@ -487,6 +498,18 @@ export default function FilterBar({
             </svg>
           </button>
         )}
+        {/* Nút XOÁ nhanh (×) cho ô tìm TRANG DANH SÁCH — hiện khi đã gõ, đồng bộ với Hero. */}
+        {!compact && f.keyword.trim().length > 0 && (
+          <button
+            type="button"
+            aria-label="Xoá từ khoá"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => { set({ keyword: "" }); setSugOpen(true); inputRef.current?.focus(); }}
+            className="mr-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-cvr-faint transition hover:bg-black/5 hover:text-cvr-ink active:scale-95"
+          >
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+        )}
         {/* Nút Tìm kiếm NẰM TRONG thanh tìm (kiểu Batdongsan) — trang danh sách.
             MOBILE: BIỂU TƯỢNG Search cao BẰNG khung · DESKTOP: giữ NGUYÊN nút chữ. */}
         {!compact && (
@@ -495,9 +518,9 @@ export default function FilterBar({
               type="button"
               aria-label="Tìm kiếm"
               onClick={() => { setSugOpen(false); onSearch?.(); }}
-              className="flex h-12 w-14 shrink-0 items-center justify-center rounded-none bg-cvr-blue text-white transition active:scale-95 sm:hidden"
+              className="m-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-cvr-blue text-white transition active:scale-95 sm:hidden"
             >
-              <svg className="h-[22px] w-[22px]" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
+              <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
               </svg>
             </button>
@@ -513,12 +536,12 @@ export default function FilterBar({
         )}
         {sugOpen && panelItems.length > 0 && (
           <div className="absolute left-0 right-0 top-full z-[120] mt-1.5 max-h-64 overflow-y-auto rounded-none border border-cvr-line bg-white p-1.5 shadow-2xl shadow-black/20 ring-1 ring-inset ring-black/5 sm:max-h-80">
-            {/* MOBILE: nút ĐÓNG rõ ràng — chạm là tắt panel + đóng luôn bàn phím */}
-            <div className="sticky top-0 z-10 -mx-1.5 -mt-1.5 mb-1 flex items-center justify-between border-b border-cvr-line bg-white px-2.5 py-1.5 sm:hidden">
+            {/* Nút THOÁT tìm kiếm — chạm là tắt panel gợi ý + đóng bàn phím. Hiện cả PC & Mobile. */}
+            <div className="sticky top-0 z-10 -mx-1.5 -mt-1.5 mb-1 flex items-center justify-between border-b border-cvr-line bg-white px-2.5 py-1.5">
               <span className="text-[11px] font-semibold uppercase tracking-wide text-cvr-faint">Gợi ý tìm kiếm</span>
               <button
                 type="button"
-                aria-label="Đóng gợi ý"
+                aria-label="Thoát tìm kiếm"
                 onPointerDown={(e) => e.preventDefault()}
                 onClick={() => {
                   setSugOpen(false);
@@ -673,14 +696,14 @@ export default function FilterBar({
                 Bản đồ
               </button>
             )}
-            {moreDropdown}
-            <FilterToggle label="Tin xác thực" checked={f.verified} onChange={(v) => set({ verified: v })} />
+            {/* Thứ tự chuẩn (mockup Mục I phần 2): Khu vực · Dự án · Loại BĐS · Mức giá · Diện tích · Lọc thêm.
+                2 công tắc Tin xác thực / Môi giới chuyên nghiệp đã chuyển vào "Lọc thêm". */}
+            {locationDropdown}
+            {projectDropdown}
             {typeDropdown}
             {priceDropdown}
             {areaDropdown}
-            {locationDropdown}
-            {projectDropdown}
-            <FilterToggle label="Môi giới chuyên nghiệp" checked={f.broker} onChange={(v) => set({ broker: v })} />
+            {moreDropdown}
             {hasActive && (
               <button
                 type="button"
@@ -713,11 +736,27 @@ function LocationPanel({
   const [q, setQ] = useState("");
   const [prov, setProv] = useState(""); // đường dẫn đang duyệt (chưa cam kết)
   const [dist, setDist] = useState("");
-  const wardList = prov && dist ? wardsOf(prov, dist) : [];
-  const level: "province" | "district" | "ward" =
-    !prov ? "province" : !dist ? "district" : wardList.length ? "ward" : "district";
+  // Hệ đơn vị hành chính: "moi" (sau sát nhập 2025 — 2 cấp) hoặc "cu" (trước — 3 cấp).
+  // Nhớ lựa chọn để áp đồng bộ cho Dự án · Mua bán · Cho thuê (cả PC & Mobile).
+  const [mode, setMode] = useState<GeoMode>("moi");
+  useEffect(() => {
+    try { const m = localStorage.getItem(GEO_MODE_KEY); if (m === "moi" || m === "cu") setMode(m); } catch { /* noop */ }
+  }, []);
+  const switchMode = (m: GeoMode) => {
+    if (m === mode) return;
+    setMode(m); setProv(""); setDist(""); setQ("");
+    try { localStorage.setItem(GEO_MODE_KEY, m); } catch { /* noop */ }
+  };
 
-  const list = level === "province" ? provinceNames : level === "district" ? districtsOf(prov) : wardList;
+  const isNew = mode === "moi";
+  // Hệ mới: Tỉnh → thẳng tới Phường/Xã (bỏ Quận/Huyện). Hệ cũ: Tỉnh → Quận/Huyện → Phường/Xã.
+  const wardList = isNew ? (prov ? wardsOfNew(prov) : []) : (prov && dist ? wardsOf(prov, dist) : []);
+  const level: "province" | "district" | "ward" =
+    !prov ? "province"
+      : isNew ? "ward"
+      : !dist ? "district" : wardList.length ? "ward" : "district";
+
+  const list = level === "province" ? provinceNamesFor(mode) : level === "district" ? districtsOf(prov) : wardList;
   const nq = normalizeVi(q);
   const filtered = nq ? list.filter((x) => normalizeVi(x).includes(nq)) : list;
 
@@ -732,7 +771,7 @@ function LocationPanel({
   const pick = (name: string) => {
     if (level === "province") { setProv(name); setQ(""); }
     else if (level === "district") { setDist(name); setQ(""); }
-    else add({ province: prov, district: dist, ward: name }); // tới phường = thêm luôn
+    else add(isNew ? { province: prov, ward: name } : { province: prov, district: dist, ward: name }); // tới phường = thêm luôn
   };
 
   const Crumb = ({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) => (
@@ -747,6 +786,24 @@ function LocationPanel({
 
   return (
     <div>
+      {/* Công tắc: Tìm theo địa chỉ MỚI sau sáp nhập (2025). Bật = hệ mới 2 cấp
+          (Tỉnh/Thành → Phường/Xã); Tắt = hệ cũ 3 cấp (Tỉnh → Quận/Huyện → Phường/Xã). */}
+      <button
+        type="button"
+        role="switch"
+        aria-checked={isNew}
+        onClick={() => switchMode(isNew ? "cu" : "moi")}
+        className="mb-1.5 flex w-full items-center justify-between gap-3 rounded-lg bg-cvr-blue/[0.06] px-3 py-2.5 text-left transition hover:bg-cvr-blue/[0.1]"
+      >
+        <span className="text-[13px] font-semibold text-cvr-ink">Tìm theo địa chỉ mới sau sáp nhập</span>
+        <span className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${isNew ? "bg-cvr-blue" : "bg-black/20"}`}>
+          <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all ${isNew ? "left-[18px]" : "left-0.5"}`} />
+        </span>
+      </button>
+      <p className="mb-2 px-0.5 text-[11px] text-cvr-faint">
+        {isNew ? "Tỉnh/Thành phố → Phường/Xã (sau sáp nhập 2025)" : "Tỉnh → Quận/Huyện → Phường/Xã (trước sáp nhập)"}
+      </p>
+
       {/* Khu vực ĐÃ CHỌN — chip gỡ riêng */}
       {locations.length > 0 && (
         <div className="mb-2 flex flex-wrap gap-1.5">
@@ -870,20 +927,17 @@ function ProjectPanel({
 }
 
 // Toggle bật/tắt kiểu Batdongsan (Tin xác thực · Môi giới chuyên nghiệp) — công tắc iOS/Apple.
-function FilterToggle({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
+// Hàng công tắc trong drawer "Lọc thêm" (nhãn trái · switch phải) — kiểu Apple.
+function SwitchRow({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
   return (
     <button
       type="button"
       role="switch"
       aria-checked={checked}
       onClick={() => onChange(!checked)}
-      className={`flex h-10 shrink-0 items-center gap-2.5 rounded-none border px-3.5 text-sm transition ${
-        checked
-          ? "border-cvr-blue/50 bg-white font-medium text-cvr-ink"
-          : "border-cvr-line bg-white text-cvr-body hover:border-cvr-ink/35"
-      }`}
+      className="flex w-full items-center justify-between gap-3 rounded-lg px-1 py-1.5 text-left text-sm text-cvr-ink transition hover:bg-black/[0.03]"
     >
-      {label}
+      <span className="font-medium">{label}</span>
       <span className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${checked ? "bg-cvr-blue" : "bg-black/15"}`} aria-hidden>
         <span
           className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${checked ? "translate-x-[18px]" : "translate-x-0.5"}`}

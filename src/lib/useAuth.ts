@@ -12,6 +12,25 @@ export function useAuth() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // ─── CHẾ ĐỘ "XEM THỬ ĐÃ ĐĂNG NHẬP" — CHỈ trên link preview (cloudflared tunnel) ───
+    // Đăng nhập Google thật bị Supabase đá về coastalland.vn nên không xem được UI đã
+    // đăng nhập trên link tạm. Mở "…/?preview_login=1" để giả đăng nhập, "?preview_login=0"
+    // để thoát. Gác theo hostname → KHÔNG BAO GIỜ chạy trên coastalland.vn / localhost thật.
+    if (typeof window !== "undefined" && /\.trycloudflare\.com$/.test(window.location.hostname)) {
+      const p = new URLSearchParams(window.location.search);
+      if (p.get("preview_login") === "1") localStorage.setItem("cl-preview-login", "1");
+      if (p.get("preview_login") === "0") localStorage.removeItem("cl-preview-login");
+      if (localStorage.getItem("cl-preview-login") === "1") {
+        setUser({
+          id: "preview-user", aud: "authenticated", role: "authenticated",
+          email: "xemthu@coastalland.vn", created_at: new Date(0).toISOString(),
+          app_metadata: {}, user_metadata: { full_name: "Xem thử (preview)" },
+        } as unknown as User);
+        setLoading(false);
+        return;
+      }
+    }
+
     if (
       !process.env.NEXT_PUBLIC_SUPABASE_URL ||
       !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY

@@ -5,6 +5,8 @@
 //    Quảng Ngãi, Gia Lai, Đắk Lắk, Khánh Hòa, Lâm Đồng) có quận/huyện chi tiết;
 //    các tỉnh còn lại để mức tỉnh (bổ sung dần). Có thể thay bằng Supabase (bảng `locations`).
 
+import { provincesNew } from "./provincesNew";
+
 export type Ward = string;
 
 export type District = {
@@ -213,4 +215,96 @@ export function districtsOf(provinceName: string): string[] {
 export function wardsOf(provinceName: string, districtName: string): string[] {
   const p = provinces.find((p) => p.name === provinceName);
   return p?.districts.find((d) => d.name === districtName)?.wards ?? [];
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// HAI HỆ ĐƠN VỊ HÀNH CHÍNH — khách chọn 1 trong 2 (nút bật/tắt trên bộ lọc):
+//   • "cu"  = TRƯỚC sát nhập — 3 cấp: Tỉnh → Quận/Huyện → Phường/Xã (dữ liệu `provinces` ở trên)
+//   • "moi" = SAU sát nhập 2025 — 2 cấp: Tỉnh → Phường/Xã (dữ liệu `provincesNew`, bỏ Quận/Huyện)
+// Áp dụng đồng bộ cho Dự án · Mua bán · Cho thuê, cả PC & Mobile.
+// ═══════════════════════════════════════════════════════════════════════════
+export type GeoMode = "cu" | "moi";
+
+// Tên tỉnh/thành hệ MỚI — dùng cho select cấp 1 khi mode = "moi"
+export const provinceNamesNew: string[] = provincesNew.map((p) => p.name);
+
+// Danh sách tỉnh/thành theo hệ đã chọn
+export function provinceNamesFor(mode: GeoMode): string[] {
+  return mode === "moi" ? provinceNamesNew : provinceNames;
+}
+
+// Phường/xã trực thuộc tỉnh (hệ MỚI — 2 cấp, không qua quận/huyện)
+export function wardsOfNew(provinceName: string): string[] {
+  return provincesNew.find((p) => p.name === provinceName)?.wards ?? [];
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SÁT NHẬP 2025 — 63 TỈNH CŨ → 34 TỈNH MỚI
+// Cho khách 2 lựa chọn: chọn theo tên tỉnh MỚI (sau sát nhập) hoặc tên tỉnh CŨ
+// (trước sát nhập — nhiều người vẫn quen). Chọn tên cũ → tự quy về tỉnh mới để lọc.
+//
+// `provinceMergers`: tỉnh MỚI → danh sách tỉnh CŨ gộp vào (phần tử đầu = tên cũ
+// tương ứng chính nó; Huế đổi tên từ "Thừa Thiên Huế"). Đây là NGUỒN SỰ THẬT —
+// mọi danh sách/ánh xạ cũ↔mới dưới đây suy ra từ bảng này.
+// Nguồn: Nghị quyết sắp xếp đơn vị hành chính cấp tỉnh 2025.
+// ═══════════════════════════════════════════════════════════════════════════
+export const provinceMergers: Record<string, string[]> = {
+  // — 6 THÀNH PHỐ TRỰC THUỘC TW —
+  "Hà Nội": ["Hà Nội"],
+  "Huế": ["Thừa Thiên Huế"],
+  "Hải Phòng": ["Hải Phòng", "Hải Dương"],
+  "Đà Nẵng": ["Đà Nẵng", "Quảng Nam"],
+  "TP. Hồ Chí Minh": ["TP. Hồ Chí Minh", "Bình Dương", "Bà Rịa - Vũng Tàu"],
+  "Cần Thơ": ["Cần Thơ", "Sóc Trăng", "Hậu Giang"],
+  // — MIỀN NÚI & TRUNG DU BẮC BỘ —
+  "Tuyên Quang": ["Tuyên Quang", "Hà Giang"],
+  "Lào Cai": ["Lào Cai", "Yên Bái"],
+  "Thái Nguyên": ["Thái Nguyên", "Bắc Kạn"],
+  "Phú Thọ": ["Phú Thọ", "Vĩnh Phúc", "Hòa Bình"],
+  "Bắc Ninh": ["Bắc Ninh", "Bắc Giang"],
+  "Cao Bằng": ["Cao Bằng"],
+  "Lạng Sơn": ["Lạng Sơn"],
+  "Quảng Ninh": ["Quảng Ninh"],
+  "Lai Châu": ["Lai Châu"],
+  "Điện Biên": ["Điện Biên"],
+  "Sơn La": ["Sơn La"],
+  // — ĐỒNG BẰNG SÔNG HỒNG —
+  "Hưng Yên": ["Hưng Yên", "Thái Bình"],
+  "Ninh Bình": ["Ninh Bình", "Hà Nam", "Nam Định"],
+  // — BẮC TRUNG BỘ & DUYÊN HẢI MIỀN TRUNG —
+  "Thanh Hóa": ["Thanh Hóa"],
+  "Nghệ An": ["Nghệ An"],
+  "Hà Tĩnh": ["Hà Tĩnh"],
+  "Quảng Trị": ["Quảng Trị", "Quảng Bình"],
+  "Quảng Ngãi": ["Quảng Ngãi", "Kon Tum"],
+  "Gia Lai": ["Gia Lai", "Bình Định"],
+  "Khánh Hòa": ["Khánh Hòa", "Ninh Thuận"],
+  "Đắk Lắk": ["Đắk Lắk", "Phú Yên"],
+  "Lâm Đồng": ["Lâm Đồng", "Đắk Nông", "Bình Thuận"],
+  // — ĐÔNG NAM BỘ & TÂY NAM BỘ —
+  "Đồng Nai": ["Đồng Nai", "Bình Phước"],
+  "Tây Ninh": ["Tây Ninh", "Long An"],
+  "Vĩnh Long": ["Vĩnh Long", "Bến Tre", "Trà Vinh"],
+  "Đồng Tháp": ["Đồng Tháp", "Tiền Giang"],
+  "Cà Mau": ["Cà Mau", "Bạc Liêu"],
+  "An Giang": ["An Giang", "Kiên Giang"],
+};
+
+// Danh sách tên tỉnh CŨ (63) — kèm tỉnh mới chứa nó. Sắp theo A→Z (bảng chọn "tỉnh cũ").
+export type OldProvince = { name: string; newName: string };
+export const oldProvinces: OldProvince[] = Object.entries(provinceMergers)
+  .flatMap(([newName, olds]) => olds.map((name) => ({ name, newName })))
+  .sort((a, b) => a.name.localeCompare(b.name, "vi"));
+
+// Tên các tỉnh CŨ — cho select cấp 1 ở chế độ "tỉnh cũ".
+export const oldProvinceNames: string[] = oldProvinces.map((o) => o.name);
+
+// Tỉnh cũ → tỉnh mới (quy đổi khi khách chọn theo tên cũ). Không khớp → trả chính nó.
+export function newProvinceOf(oldName: string): string {
+  return oldProvinces.find((o) => o.name === oldName)?.newName ?? oldName;
+}
+
+// Tỉnh mới → các tỉnh cũ gộp vào (để hiện chú thích "gồm …").
+export function oldNamesOf(newName: string): string[] {
+  return provinceMergers[newName] ?? [newName];
 }
