@@ -37,10 +37,11 @@ export default function NewsSection({ articles }: { articles: Article[] }) {
                 <span className="rounded-full bg-cvr-surface px-2.5 py-0.5 font-medium text-cvr-body">{featured.category}</span>
                 <span>{featured.date}</span>
               </p>
-              <h3 className="mt-2.5 line-clamp-2 text-lg font-semibold leading-snug text-cvr-ink transition-colors group-hover:text-cvr-blue-ink">
+              {/* Tin đầu: ưu tiên full tiêu đề (tới 3 dòng) — MOBILE gọn 1 dòng nội dung (T19) */}
+              <h3 className="mt-2.5 line-clamp-3 text-lg font-semibold leading-snug text-cvr-ink transition-colors group-hover:text-cvr-blue-ink">
                 {featured.title}
               </h3>
-              <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-cvr-muted">{featured.excerpt}</p>
+              <p className="mt-2 line-clamp-1 text-sm leading-relaxed text-cvr-muted sm:line-clamp-3">{featured.excerpt}</p>
             </div>
           </Link>
 
@@ -62,7 +63,7 @@ export default function NewsSection({ articles }: { articles: Article[] }) {
                   <h3 className="line-clamp-2 font-semibold leading-snug text-cvr-ink transition-colors group-hover:text-cvr-blue-ink">
                     {a.title}
                   </h3>
-                  <p className="mt-1 line-clamp-2 text-sm leading-relaxed text-cvr-muted">{a.excerpt}</p>
+                  <p className="mt-1 line-clamp-1 text-sm leading-relaxed text-cvr-muted sm:line-clamp-2">{a.excerpt}</p>
                   <p className="mt-1.5 text-xs text-cvr-faint">{a.category} · {a.date}</p>
                 </div>
               </Link>

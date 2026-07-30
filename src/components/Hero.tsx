@@ -219,7 +219,9 @@ export default function Hero({
         {cur.showText !== false && (
             <div
               key={active}
-              className="hero-sub max-w-3xl text-left"
+              // MOBILE: chừa lề phải (pr-24) để chữ không chạy đè cụm chấm slide + nút play
+              // ở góc dưới-phải; PC giữ nguyên (sm:pr-0).
+              className="hero-sub max-w-3xl pr-28 text-left sm:pr-0"
             >
               {cur.status && (
                 <span className="mb-2 inline-flex items-center rounded-full bg-white/15 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-white ring-1 ring-inset ring-white/25 backdrop-blur-sm">

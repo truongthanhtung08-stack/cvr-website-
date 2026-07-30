@@ -131,7 +131,7 @@ export function AdBannerApp({ data = HOME_AD_DEFAULT.app }: { data?: HomeAdData[
 
           {/* ===== MOBILE: 2 nút store (iOS + Android) bên TRÁI · iPhone TRÀN mép phải/đáy · cao 210px ===== */}
           <div className="grid h-[210px] grid-cols-[1fr_164px] items-center overflow-hidden md:hidden">
-            <div className="flex min-w-0 flex-col items-start gap-2.5 pl-5 pr-1">
+            <div className="flex min-w-0 flex-col items-stretch gap-2.5 pl-5 pr-1">
               <StoreButton store="apple" href={data.appleHref} compact />
               <StoreButton store="google" href={data.googleHref} compact />
             </div>
@@ -200,7 +200,7 @@ function StoreButton({ store, href = "#", compact = false }: { store: "apple" | 
   return (
     <a
       href={href}
-      className={`flex items-center rounded-xl border border-white/15 bg-white/[0.06] transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 hover:bg-white/[0.12] ${compact ? "min-h-[40px] gap-2 px-3 py-1.5" : "min-h-[44px] gap-2.5 px-4 py-2"}`}
+      className={`flex items-center rounded-xl border border-white/15 bg-white/[0.06] transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 hover:bg-white/[0.12] ${compact ? "w-full min-h-[40px] gap-2 px-3 py-1.5" : "min-h-[44px] gap-2.5 px-4 py-2"}`}
     >
       {store === "apple" ? (
         <svg className={`${iconCls} text-white`} fill="currentColor" viewBox="0 0 24 24"><path d="M17.05 12.04c-.03-2.6 2.12-3.85 2.22-3.91-1.21-1.77-3.09-2.01-3.76-2.04-1.6-.16-3.12.94-3.93.94-.81 0-2.06-.92-3.39-.9-1.74.03-3.35 1.01-4.25 2.57-1.81 3.14-.46 7.78 1.3 10.32.86 1.24 1.89 2.64 3.23 2.59 1.3-.05 1.79-.84 3.36-.84 1.57 0 2.01.84 3.39.81 1.4-.02 2.29-1.27 3.15-2.52.99-1.44 1.4-2.84 1.42-2.91-.03-.01-2.72-1.04-2.75-4.13zM14.6 4.6c.72-.87 1.2-2.08 1.07-3.28-1.03.04-2.28.69-3.02 1.56-.66.77-1.24 2-1.08 3.18 1.15.09 2.33-.59 3.03-1.46z" /></svg>

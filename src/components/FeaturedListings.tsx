@@ -92,9 +92,9 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
                   </div>
                 ))}
               </div>
-              {/* Nút XEM TẤT CẢ — full-width, rõ ràng, đặt cuối mục (chuẩn app mobile) */}
+              {/* Nút XEM THÊM — full-width. Ra list GỒM CẢ Bán + Cho thuê (T19) → /tim-kiem */}
               <Link
-                href="/mua-ban"
+                href="/tim-kiem"
                 className="mt-4 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-full border border-cvr-line text-[15px] font-semibold text-cvr-ink transition active:bg-cvr-surface"
               >
                 Xem thêm
@@ -170,7 +170,7 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
                 </div>
               )}
               <Link
-                href="/mua-ban"
+                href="/tim-kiem"
                 className="absolute right-0 text-sm font-medium text-cvr-muted transition-colors hover:text-cvr-ink"
               >
                 Xem thêm →

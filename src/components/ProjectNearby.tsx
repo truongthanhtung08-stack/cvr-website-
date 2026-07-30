@@ -85,7 +85,7 @@ export default function ProjectNearby({
             <div key={i} className="flex items-center gap-3 rounded-xl border border-cvr-line bg-cvr-surface px-3.5 py-3">
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-lg shadow-sm">{ICON[p.category] ?? "📍"}</span>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-cvr-ink">{p.name}</p>
+                <p className="text-sm font-medium leading-snug text-cvr-ink">{p.name}</p>
                 <p className="text-xs text-cvr-muted">{p.category}</p>
               </div>
               {p.distance && <span className="shrink-0 rounded-md bg-white px-2 py-1 text-xs font-semibold text-cvr-body shadow-sm">{p.distance}</span>}

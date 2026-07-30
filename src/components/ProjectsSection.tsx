@@ -15,11 +15,11 @@ export default function ProjectsSection({ projects }: { projects: Project[] }) {
   const [slide, setSlide] = useState(0);
   const [paused, setPaused] = useState(false);
 
-  // Chia toàn bộ dự án thành các slide 4 dự án (không cắt bớt)
-  // (hooks phải gọi trước early-return — kiểm tra rỗng đặt ở dưới)
+  // Homepage: chỉ slide 8 dự án đầu (2 slide × 4) — còn lại xem qua nút "Xem thêm" (T19).
+  const homeProjects = projects.slice(0, 8);
   const slides: typeof projects[] = [];
-  for (let i = 0; i < projects.length; i += PER_SLIDE) {
-    slides.push(projects.slice(i, i + PER_SLIDE));
+  for (let i = 0; i < homeProjects.length; i += PER_SLIDE) {
+    slides.push(homeProjects.slice(i, i + PER_SLIDE));
   }
   const totalSlides = Math.max(slides.length, 1);
   const current = Math.min(slide, totalSlides - 1);
@@ -62,7 +62,7 @@ export default function ProjectsSection({ projects }: { projects: Project[] }) {
                   {group.map((p) => (
                     <Link
                       key={p.name}
-                      href="/du-an"
+                      href={`/du-an/${p.slug}`}
                       className="card-lux group relative flex flex-col overflow-hidden rounded-none border border-cvr-line bg-white shadow-lux hover:-translate-y-2 hover:border-cvr-blue/45 shadow-lux-hover"
                     >
                       <span className="card-sheen" aria-hidden />

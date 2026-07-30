@@ -174,11 +174,11 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               {/* 4) Tiện ích dự án */}
               {p.amenities.length > 0 && (
                 <Section id="tien-ich" title="Tiện ích dự án">
-                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
                     {p.amenities.map((a) => (
-                      <span key={a} className="flex items-center gap-2 rounded-lg border border-cvr-line bg-cvr-surface px-3 py-2.5 text-xs text-cvr-body">
-                        <svg className="h-4 w-4 shrink-0 text-cvr-ink" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                        {a}
+                      <span key={a} className="flex items-start gap-2.5 rounded-xl border border-cvr-line bg-cvr-surface px-4 py-3 text-sm leading-snug text-cvr-body">
+                        <svg className="mt-0.5 h-4 w-4 shrink-0 text-cvr-blue" fill="none" stroke="currentColor" strokeWidth={2.4} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                        <span className="min-w-0">{a}</span>
                       </span>
                     ))}
                   </div>
@@ -324,7 +324,7 @@ function Fact({ label, value, accent = false }: { label: string; value: string; 
   return (
     <div className="bg-white px-4 py-3">
       <p className="text-[11px] uppercase tracking-wide text-cvr-faint">{label}</p>
-      <p className={`mt-0.5 truncate text-sm font-semibold ${accent ? "text-cvr-blue-ink" : "text-cvr-ink"}`} title={value}>{value}</p>
+      <p className={`mt-0.5 text-sm font-semibold leading-snug break-words ${accent ? "text-cvr-blue-ink" : "text-cvr-ink"}`} title={value}>{value}</p>
     </div>
   );
 }

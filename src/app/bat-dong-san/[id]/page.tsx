@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -259,11 +260,19 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
             </aside>
           </div>
 
-          {/* BĐS tương tự — slider cuộn ngang, hiện hết số tin tương tự (không giới hạn) */}
+          {/* BĐS tương tự — slide 8 tin + nút "Xem thêm" → ra list theo trang (yêu cầu T19) */}
           {relatedFill.length > 0 && (
             <div className="mt-14">
-              <h2 className="mb-5 text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">Bất động sản tương tự</h2>
-              <ListingSlider items={relatedFill} />
+              <div className="mb-5 flex items-center justify-between gap-3">
+                <h2 className="text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">Bất động sản tương tự</h2>
+                <Link
+                  href={purpose === "thue" ? "/cho-thue" : "/mua-ban"}
+                  className="shrink-0 text-sm font-medium text-cvr-muted transition-colors hover:text-cvr-ink"
+                >
+                  Xem thêm →
+                </Link>
+              </div>
+              <ListingSlider items={relatedFill.slice(0, 8)} />
             </div>
           )}
         </div>
