@@ -8,7 +8,18 @@ import { haptic } from "@/lib/haptic";
 import { useAuth, displayName, signOut } from "@/lib/useAuth";
 
 type NavChild = { label: string; href: string };
-type NavItem = { label: string; href: string; children?: NavChild[] };
+// icon = path 'd' của SVG (24x24, outline) — hiện bên trái mỗi mục trong menu Mobile (kiểu Batdongsan).
+type NavItem = { label: string; href: string; children?: NavChild[]; icon?: string };
+
+// Icon cho từng mục menu Mobile (outline, chuẩn Apple)
+const ICONS = {
+  duAn: "M3 21h18M5 21V5a1 1 0 011-1h5a1 1 0 011 1v16M13 21V9a1 1 0 011-1h4a1 1 0 011 1v12M8 7h.01M8 11h.01M8 15h.01M16 12h.01M16 16h.01",
+  muaBan: "M3 11.5L12 4l9 7.5M5 10v9a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1v-9",
+  choThue: "M3 21h18M6 21V7a1 1 0 011-1h4a1 1 0 011 1v14M14 21V11a1 1 0 011-1h3a1 1 0 011 1v10M8.5 9h.01M8.5 13h.01",
+  tinTuc: "M4 5a1 1 0 011-1h10a1 1 0 011 1v14a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM16 8h3a1 1 0 011 1v9a2 2 0 01-2 2M7 8h6M7 12h6M7 16h4",
+  chuyenGia: "M16 20v-1a4 4 0 00-4-4H8a4 4 0 00-4 4v1M10 11a4 4 0 100-8 4 4 0 000 8zM18 8v6M21 11h-6",
+  tienIch: "M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z",
+};
 
 // Đầy đủ loại hình BĐS bán (kiểu Homedy)
 const loaiHinhBan: NavChild[] = [
@@ -66,12 +77,12 @@ const danhMucTienIch: NavChild[] = [
 
 // Thứ tự menu: Dự án · Mua bán · Cho thuê · Tin tức · Chuyên gia · Tiện ích
 const navItems: NavItem[] = [
-  { label: "Dự án", href: "/du-an", children: loaiHinhDuAn },
-  { label: "Mua bán", href: "/mua-ban", children: loaiHinhBan },
-  { label: "Cho thuê", href: "/cho-thue", children: loaiHinhThue },
-  { label: "Tin tức", href: "/tin-tuc" },
-  { label: "Chuyên gia", href: "/chuyen-gia", children: danhMucChuyenGia },
-  { label: "Tiện ích", href: "/tien-ich/goi-dang-tin", children: danhMucTienIch },
+  { label: "Dự án", href: "/du-an", children: loaiHinhDuAn, icon: ICONS.duAn },
+  { label: "Mua bán", href: "/mua-ban", children: loaiHinhBan, icon: ICONS.muaBan },
+  { label: "Cho thuê", href: "/cho-thue", children: loaiHinhThue, icon: ICONS.choThue },
+  { label: "Tin tức", href: "/tin-tuc", icon: ICONS.tinTuc },
+  { label: "Chuyên gia", href: "/chuyen-gia", children: danhMucChuyenGia, icon: ICONS.chuyenGia },
+  { label: "Tiện ích", href: "/tien-ich/goi-dang-tin", children: danhMucTienIch, icon: ICONS.tienIch },
 ];
 
 const chevronDown = (
@@ -137,16 +148,19 @@ function NavLink({ item }: { item: NavItem }) {
 }
 
 // Nút "Lưu" — dẫn tới danh sách tin đã lưu
+// ♡ Yêu thích trên thanh header (kiểu Batdongsan): MOBILE = icon trái tim,
+// DESKTOP (lg) = có thêm chữ "Lưu".
 function SaveButton() {
   return (
     <Link
       href="/tin-luu"
-      className="hidden items-center gap-1.5 text-sm font-medium text-cvr-line transition-colors hover:text-white sm:flex"
+      aria-label="Tin đã lưu"
+      className="flex items-center gap-1.5 text-cvr-line transition-colors hover:text-white"
     >
-      <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+      <svg className="h-[23px] w-[23px] lg:h-[18px] lg:w-[18px]" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 10-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 000-7.78z" />
       </svg>
-      Lưu
+      <span className="hidden text-sm font-medium lg:inline">Lưu</span>
     </Link>
   );
 }
@@ -238,25 +252,30 @@ function MobileMenu({
       }`}
     >
       <nav className="flex-1 px-6 pb-[calc(2.5rem+env(safe-area-inset-bottom))] pt-4">
-        {/* ── KHỐI TÀI KHOẢN + ĐĂNG TIN — đầu menu (mô hình Batdongsan mobile) ── */}
+        {/* ── ĐĂNG TIN + (chưa đăng nhập → Đăng nhập/Đăng ký) — đầu menu.
+            Kiểu Batdongsan: KHI ĐÃ ĐĂNG NHẬP, tài khoản & avatar nằm ở THANH TRÊN
+            (avatar + ♡ + 🔔), KHÔNG lặp lại khối tài khoản trong menu drawer. ── */}
         <div className="mb-5">
           {user ? (
-            <Link
-              href="/tai-khoan"
-              onClick={onClose}
-              className="mb-3 flex min-h-[52px] items-center gap-3 rounded-xl bg-white/10 px-3.5 ring-1 ring-inset ring-white/15"
-            >
-              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/15 text-sm font-semibold text-white">
-                {displayName(user).trim().charAt(0).toUpperCase() || "T"}
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-[15px] font-semibold text-white">{displayName(user)}</span>
-                <span className="block text-[12px] text-white/60">Xem tài khoản của tôi</span>
-              </span>
-              <svg className="h-4 w-4 shrink-0 text-white/40" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-              </svg>
-            </Link>
+            // Đã đăng nhập — kiểu Batdongsan: [avatar + tên] … [🔔], gần đầu menu.
+            <div className="mb-3 flex items-center gap-3">
+              <Link href="/tai-khoan" onClick={onClose} className="flex min-w-0 flex-1 items-center gap-3">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/15 text-[16px] font-semibold text-white">
+                  {displayName(user).trim().charAt(0).toUpperCase() || "T"}
+                </span>
+                <span className="min-w-0 truncate text-[16px] font-semibold text-white">{displayName(user)}</span>
+              </Link>
+              <Link
+                href="/tai-khoan"
+                onClick={onClose}
+                aria-label="Thông báo"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white/80 transition-colors active:bg-white/10"
+              >
+                <svg className="h-[22px] w-[22px]" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+              </Link>
+            </div>
           ) : (
             <div className="mb-3 grid grid-cols-2 gap-2.5">
               <Link
@@ -298,7 +317,14 @@ function MobileMenu({
                   aria-expanded={expanded === item.label}
                   className="flex min-h-[52px] w-full items-center justify-between text-left text-[17px] font-medium text-white"
                 >
-                  {item.label}
+                  <span className="flex items-center gap-3.5">
+                    {item.icon && (
+                      <svg className="h-[22px] w-[22px] shrink-0 text-white/75" fill="none" stroke="currentColor" strokeWidth={1.7} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
+                      </svg>
+                    )}
+                    {item.label}
+                  </span>
                   <svg
                     className={`h-4 w-4 text-white/50 transition-transform duration-300 ${expanded === item.label ? "rotate-180" : ""}`}
                     fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"
@@ -340,8 +366,13 @@ function MobileMenu({
               <Link
                 href={item.href}
                 onClick={onClose}
-                className="flex min-h-[52px] items-center text-[17px] font-medium text-white"
+                className="flex min-h-[52px] items-center gap-3.5 text-[17px] font-medium text-white"
               >
+                {item.icon && (
+                  <svg className="h-[22px] w-[22px] shrink-0 text-white/75" fill="none" stroke="currentColor" strokeWidth={1.7} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
+                  </svg>
+                )}
                 {item.label}
               </Link>
             )}
@@ -410,16 +441,20 @@ export default function Header() {
         <div className="flex items-center gap-3 sm:gap-5">
           <SaveButton />
 
-          {user ? (
-            <AccountMenu name={displayName(user)} onLogout={signOut} />
-          ) : (
-            <Link
-              href="/dang-nhap"
-              className="hidden text-sm font-medium text-cvr-line transition-colors hover:text-white sm:block"
-            >
-              Đăng nhập
-            </Link>
-          )}
+          {/* Tài khoản/Đăng nhập — CHỈ desktop (lg). MOBILE: avatar + tài khoản nằm TRONG
+              drawer menu (kiểu Batdongsan) → thanh header mobile chỉ Logo · ♡ · ☰. */}
+          <div className="hidden items-center lg:flex">
+            {user ? (
+              <AccountMenu name={displayName(user)} onLogout={signOut} />
+            ) : (
+              <Link
+                href="/dang-nhap"
+                className="text-sm font-medium text-cvr-line transition-colors hover:text-white"
+              >
+                Đăng nhập
+              </Link>
+            )}
+          </div>
 
           {/* Đăng tin — chỉ desktop (< lg đã có trong Menu, tránh chật thanh trên điện thoại) */}
           <Link
