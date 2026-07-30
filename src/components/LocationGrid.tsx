@@ -74,7 +74,7 @@ function AreaTile({ area, big, running, delay }: { area: AreaCard; big: boolean;
   return (
     <Link
       href={area.href}
-      className={`card-lux group relative overflow-hidden ring-1 ring-black/5 shadow-lux transition-transform hover:-translate-y-1.5 shadow-lux-hover hover:ring-cvr-blue/40 ${
+      className={`card-lux group relative overflow-hidden shadow-lux transition-transform hover:-translate-y-1.5 shadow-lux-hover hover:ring-cvr-blue/40 sm:ring-1 sm:ring-black/5 ${
         big ? "col-span-2 row-span-1 sm:row-span-2" : ""
       }`}
     >

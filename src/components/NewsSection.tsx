@@ -16,6 +16,21 @@ export default function NewsSection({ articles }: { articles: Article[] }) {
       <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 sm:py-4 lg:px-8">
         <h2 className="text-xl font-semibold text-cvr-ink sm:text-2xl">Tin tức</h2>
 
+        {/* Các mục tin tức (T19): Pháp lý, Quy hoạch, Tư vấn đầu tư… — cuộn ngang 1 dòng trên mobile */}
+        <div className="no-scrollbar -mx-4 mt-3 flex gap-2 overflow-x-auto px-4 pb-0.5 sm:mx-0 sm:mt-4 sm:flex-wrap sm:px-0">
+          {["Tất cả", "Phân tích thị trường", "Pháp lý", "Quy hoạch", "Tư vấn đầu tư", "Cẩm nang"].map((c, i) => (
+            <Link
+              key={c}
+              href="/tin-tuc"
+              className={`shrink-0 whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+                i === 0 ? "bg-cvr-ink text-white" : "border border-black/15 text-cvr-body hover:border-black/40 hover:text-cvr-ink"
+              }`}
+            >
+              {c}
+            </Link>
+          ))}
+        </div>
+
         <div className={`mt-5 grid grid-cols-1 gap-5 ${headlines.length ? "lg:grid-cols-5" : "lg:grid-cols-2"}`}>
           {/* Bài nổi bật */}
           <Link
@@ -49,8 +64,9 @@ export default function NewsSection({ articles }: { articles: Article[] }) {
           {headlines.length > 0 && (
           <div className="flex flex-col divide-y divide-cvr-line/70 rounded-none border border-cvr-line bg-white px-5 shadow-lux lg:col-span-3">
             {headlines.map((a) => (
-              <Link key={a.slug} href={`/tin-tuc/${a.slug}`} className="group flex flex-1 items-center gap-4 py-2.5 sm:py-4">
-                <div className="relative aspect-[4/3] w-28 shrink-0 overflow-hidden rounded-lg sm:w-32">
+              <Link key={a.slug} href={`/tin-tuc/${a.slug}`} className="group flex flex-1 flex-col gap-2.5 py-3 sm:flex-row sm:items-center sm:gap-4 sm:py-4">
+                {/* MOBILE: hình TRÊN (tràn ngang), chữ DƯỚI — kiểu Báo Mới (T19). DESKTOP: hình trái. */}
+                <div className="relative aspect-[16/9] w-full shrink-0 overflow-hidden rounded-lg sm:aspect-[4/3] sm:w-32">
                   <Image
                     src={a.image}
                     alt={a.title}

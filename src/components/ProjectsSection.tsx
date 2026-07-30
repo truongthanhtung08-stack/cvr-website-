@@ -63,7 +63,7 @@ export default function ProjectsSection({ projects }: { projects: Project[] }) {
                     <Link
                       key={p.name}
                       href={`/du-an/${p.slug}`}
-                      className="card-lux group relative flex flex-col overflow-hidden rounded-none border border-cvr-line bg-white shadow-lux hover:-translate-y-2 hover:border-cvr-blue/45 shadow-lux-hover"
+                      className="card-lux group relative flex flex-col overflow-hidden rounded-none border-0 bg-white shadow-lux hover:-translate-y-2 hover:border-cvr-blue/45 shadow-lux-hover sm:border sm:border-cvr-line"
                     >
                       <span className="card-sheen" aria-hidden />
                       <div className="relative aspect-[3/2] overflow-hidden sm:aspect-[4/3]">

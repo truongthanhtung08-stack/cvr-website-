@@ -285,10 +285,13 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
           {others.length > 0 && (
             <div className="mt-14">
-              <h2 className="text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">Dự án khác</h2>
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">Dự án liên quan</h2>
+                <Link href="/du-an" className="shrink-0 text-sm font-medium text-cvr-muted transition-colors hover:text-cvr-ink">Xem thêm →</Link>
+              </div>
               <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-3">
                 {others.map((o) => (
-                  <Link key={o.slug} href={`/du-an/${o.slug}`} className="card-lux group relative flex flex-col overflow-hidden rounded-none border border-cvr-line bg-white shadow-lux shadow-lux-hover hover:-translate-y-1.5 hover:border-cvr-blue/45">
+                  <Link key={o.slug} href={`/du-an/${o.slug}`} className="card-lux group relative flex flex-col overflow-hidden rounded-none border-0 bg-white shadow-lux shadow-lux-hover hover:-translate-y-1.5 hover:border-cvr-blue/45 sm:border sm:border-cvr-line">
                     <span className="card-sheen" aria-hidden />
                     <div className="relative aspect-[16/10] overflow-hidden">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
