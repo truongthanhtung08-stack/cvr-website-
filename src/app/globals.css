@@ -437,6 +437,10 @@ html {
   /* iOS tự phóng to chữ khi xoay ngang → tắt, giữ đúng thang chữ đã thiết kế */
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+  /* Tắt "nảy/xê dịch" ngang khi chạm-kéo trang (rubber-band) — nguyên nhân trang bị
+     xê dịch trái/phải khi chạm trên điện thoại. CHỈ ảnh hưởng hành vi cuộn, KHÔNG đụng
+     chạm/bấm/layout; không dùng clip nên an toàn cho mọi máy (iPhone lẫn Android). */
+  overscroll-behavior-x: none;
 }
 
 body {
@@ -445,6 +449,7 @@ body {
   /* Chặn tràn ngang do phần tử lệch khung. Dùng `clip` (KHÔNG dùng `hidden`)
      vì `hidden` tạo vùng cuộn mới và làm hỏng `position: sticky` của header. */
   overflow-x: clip;
+  overscroll-behavior-x: none;
 }
 
 /* Vùng chạm tối thiểu 44×44px theo Human Interface Guidelines của Apple */

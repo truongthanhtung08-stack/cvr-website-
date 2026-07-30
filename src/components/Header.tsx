@@ -87,9 +87,12 @@ const chevronDown = (
 );
 
 // Panel dropdown nền trắng (tương phản trên header tối, kiểu flyout Apple)
-function DropdownPanel({ children }: { children: React.ReactNode }) {
+// align="right": mở dọc mép phải (dùng cho menu tài khoản ở sát mép phải — tránh
+// panel w-64 canh giữa bị TRÀN sang phải gây kéo lệch trang trên mobile khi đăng nhập).
+function DropdownPanel({ children, align = "center" }: { children: React.ReactNode; align?: "center" | "right" }) {
+  const pos = align === "right" ? "right-0" : "left-1/2 -translate-x-1/2";
   return (
-    <div className="invisible absolute left-1/2 top-full z-50 w-64 -translate-x-1/2 pt-3 opacity-0 transition-opacity duration-200 group-hover:visible group-hover:opacity-100">
+    <div className={`invisible absolute top-full z-50 w-64 pt-3 opacity-0 transition-opacity duration-200 group-hover:visible group-hover:opacity-100 ${pos}`}>
       <div className="origin-top translate-y-1.5 scale-[0.98] overflow-hidden rounded-xl border border-cvr-line bg-white py-2 opacity-0 shadow-xl shadow-black/20 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-y-0 group-hover:scale-100 group-hover:opacity-100">
         {children}
       </div>
@@ -173,7 +176,7 @@ function AccountMenu({ name, onLogout }: { name: string; onLogout: () => void })
         {chevronDown}
       </button>
 
-      <DropdownPanel>
+      <DropdownPanel align="right">
         <div className="border-b border-cvr-line px-4 pb-2.5 pt-1">
           <p className="truncate text-sm font-semibold text-cvr-ink">{name}</p>
           <p className="text-xs text-cvr-muted">Thành viên COASTAL LAND</p>
@@ -317,7 +320,7 @@ function MobileMenu({
                       onClick={onClose}
                       className="block py-2.5 text-[15px] font-semibold text-white/90"
                     >
-                      Xem tất cả {item.label.toLowerCase()}
+                      Xem thêm
                     </Link>
                     {item.children.map((child) => (
                       <Link
