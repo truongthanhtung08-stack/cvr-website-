@@ -31,23 +31,9 @@ export default function LocationGrid({ areas = HOME_AREAS_DEFAULT }: { areas?: A
           Bất động sản theo khu vực
         </h2>
 
-        {/* MOBILE: lướt ngang từng ô khu vực — ẢNH TRÊN tràn viền · TÊN + số tin Ở DƯỚI */}
-        <div className="no-scrollbar -mx-4 mt-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 sm:hidden">
-          {shown.map((area) => (
-            <Link key={area.name} href={area.href} className="flex w-[58%] shrink-0 snap-start flex-col overflow-hidden rounded-none bg-white shadow-lux">
-              <div className="relative aspect-[16/10] w-full overflow-hidden">
-                <Image src={asset(areaImages(area)[0])} alt={area.name} fill sizes="58vw" className="object-cover brightness-105" />
-              </div>
-              <div className="p-3">
-                <h3 className="font-bold text-cvr-ink">{area.name}</h3>
-                <p className="mt-0.5 text-xs text-cvr-muted">{area.count}</p>
-              </div>
-            </Link>
-          ))}
-        </div>
-
-        {/* DESKTOP: GIỮ NGUYÊN mosaic ô lõi 2×2 đã duyệt (ẩn trên mobile) */}
-        <div ref={gridRef} className="mt-4 hidden gap-4 [grid-auto-rows:11rem] sm:mt-5 sm:grid sm:grid-cols-4">
+        {/* Mosaic khu vực (ô lõi 2×2 + 4 ô nhỏ) — GIỮ NGUYÊN cấu trúc.
+            MOBILE: TRÀN VIỀN sát mép màn hình (-mx-4) · DESKTOP: giữ như cũ. */}
+        <div ref={gridRef} className="-mx-4 mt-4 grid grid-cols-2 gap-1 [grid-auto-rows:8rem] sm:mx-0 sm:mt-5 sm:grid-cols-4 sm:gap-4 sm:[grid-auto-rows:11rem]">
           {shown.map((area, i) => (
             <AreaTile
               key={area.name}
@@ -59,13 +45,8 @@ export default function LocationGrid({ areas = HOME_AREAS_DEFAULT }: { areas?: A
           ))}
         </div>
 
-        {/* MOBILE: nút Xem thêm full-width — ĐỒNG BỘ với BĐS/Dự án/Tin tức */}
-        <Link href="/mua-ban" className="mt-4 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-full border border-cvr-line text-[15px] font-semibold text-cvr-ink transition active:bg-cvr-surface sm:hidden">
-          Xem thêm khu vực
-          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
-        </Link>
-        {/* DESKTOP: link góc phải (giữ nguyên) */}
-        <div className="mt-4 hidden justify-end sm:flex">
+        {/* Xem tất cả khu vực — cuối phần, canh phải (giữ nguyên) */}
+        <div className="mt-4 flex justify-end">
           <Link href="/mua-ban" className="text-sm font-medium text-cvr-muted transition-colors hover:text-cvr-ink">
             Xem thêm →
           </Link>
