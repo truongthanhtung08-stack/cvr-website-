@@ -92,10 +92,11 @@ export default function PropertyCard({
             {tier.short}
           </span>
         )}
-        {/* So sánh LÊN TRÊN · Yêu thích (lưu) XUỐNG DƯỚI (yêu cầu T19) */}
+        {/* So sánh giữ TRÊN ẢNH · Yêu thích (tim) chuyển xuống ĐÁY thẻ.
+            Thẻ KHÔNG có hàng người đăng → giữ tim trên ảnh để không mất nút. */}
         <div className="absolute right-2 top-2 flex flex-col gap-1.5">
           <CompareButton id={item.id} className={isMini ? "h-7 w-7" : undefined} />
-          <SaveButton id={item.id} className={isMini ? "h-7 w-7" : undefined} />
+          {!showAgent && <SaveButton id={item.id} className={isMini ? "h-7 w-7" : undefined} />}
         </div>
         {/* Badge số ảnh kiểu Homedy */}
         <span className="absolute bottom-2 left-2 flex items-center gap-1 bg-black/55 px-1.5 py-0.5 text-[10px] font-medium text-white">
@@ -107,9 +108,11 @@ export default function PropertyCard({
       <div className={`flex flex-1 flex-col ${isFeatured ? "p-4" : isMini ? "p-2.5" : "p-3"}`}>
 
         {/* Tiêu đề — 2 dòng, kiểu chữ theo cấp tin (Diamond/Gold VIẾT HOA + icon HOT) */}
+        {/* Tiêu đề: cao ĐÚNG 2 dòng (h-[3em] = 2×leading-1.5) + overflow-hidden →
+            dòng 3 bị ẩn HẲN, không lú dấu. (line-clamp-2 của Tailwind build này hỏng.) */}
         <h3
-          className={`line-clamp-2 font-semibold leading-[1.5] text-cvr-ink ${tier?.uppercase ? "uppercase" : ""} ${
-            isFeatured ? "min-h-[3.4rem] text-lg" : isMini ? "min-h-[2.6rem] text-sm" : "min-h-[3.1rem] text-[15px]"
+          className={`h-[3em] overflow-hidden font-semibold leading-[1.5] text-cvr-ink ${tier?.uppercase ? "uppercase" : ""} ${
+            isFeatured ? "text-lg" : isMini ? "text-sm" : "text-[15px]"
           }`}
           style={tier?.titleColor ? { color: tier.titleColor } : undefined}
         >
@@ -149,6 +152,8 @@ export default function PropertyCard({
             <AgentAvatar name={agentName} src={item.agentAvatar} size={7} />
             <span className="min-w-0 flex-1 truncate text-xs font-medium text-cvr-body">{agentName}</span>
             {showTime && <span className="shrink-0 text-[11px] text-cvr-faint">Hôm nay</span>}
+            {/* Nút Yêu thích (tim) ở ĐÁY thẻ, cạnh người đăng (yêu cầu T19) */}
+            <SaveButton id={item.id} variant="bare" className="h-8 w-8 shrink-0" />
           </div>
         )}
 
@@ -184,7 +189,7 @@ function PropertyRow({ item, showTime = false }: { item: Listing; showTime?: boo
       </div>
       <div className="flex min-w-0 flex-1 flex-col">
         <h3
-          className={`line-clamp-2 text-sm font-semibold leading-snug text-cvr-ink sm:text-base ${tier?.uppercase ? "uppercase" : ""}`}
+          className={`h-[3em] overflow-hidden text-sm font-semibold leading-[1.5] text-cvr-ink sm:text-base ${tier?.uppercase ? "uppercase" : ""}`}
           style={tier?.titleColor ? { color: tier.titleColor } : undefined}
         >
           {tier?.hot && <HotIcon color={tier.accent} />}
