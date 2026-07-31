@@ -7,17 +7,15 @@ import Gallery from "@/components/Gallery";
 import ListingSlider from "@/components/ListingSlider";
 import RecordView from "@/components/RecordView";
 import PriceHistory from "@/components/PriceHistory";
-import { featuredListings, provinceOf, pickRelated } from "@/lib/data";
+import { provinceOf, pickRelated } from "@/lib/data";
 import { getListing, getListings, getListingDetail } from "@/lib/listingsDb";
 import { tierFromBadge, getTier } from "@/lib/packages";
 import RichContent from "@/components/RichContent";
 import VideoEmbed from "@/components/VideoEmbed";
 
-// Prerender sẵn các tin mẫu; tin mới (id UUID từ Supabase) render theo yêu cầu.
-export function generateStaticParams() {
-  return featuredListings.map((l) => ({ id: l.id }));
-}
-export const dynamicParams = true;
+// Trang chi tiết đọc Supabase với cache no-store (admin sửa hiện NGAY) → BẮT BUỘC
+// render động theo yêu cầu. Không thì Next xếp tĩnh (SSG) rồi lỗi "static→dynamic" → 500.
+export const dynamic = "force-dynamic";
 
 // Chuyển chuỗi giá VN ("33 tỷ", "7,2 tỷ", "15 triệu") → số VNĐ cho Schema. Không parse được → null.
 function parseVnd(s: string): number | null {
