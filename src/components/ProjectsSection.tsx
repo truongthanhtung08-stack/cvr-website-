@@ -44,8 +44,39 @@ export default function ProjectsSection({ projects }: { projects: Project[] }) {
           Dự án nổi bật
         </h2>
 
+        {/* ── MOBILE (< 640px): lướt ngang TỪNG thẻ dự án (như "BĐS dành cho bạn"),
+            ló mép thẻ sau. Thẻ cuối kèm nút "Xem thêm" → /du-an (phân trang). ── */}
+        <div className="sm:hidden">
+          <div className="no-scrollbar -mx-4 mt-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2">
+            {homeProjects.map((p) => (
+              <Link key={p.slug} href={`/du-an/${p.slug}`} className="flex w-[86%] shrink-0 snap-start flex-col overflow-hidden rounded-none border border-cvr-line bg-white shadow-lux">
+                <div className="relative aspect-[3/2] w-full overflow-hidden">
+                  <Image src={p.image} alt={p.name} fill sizes="86vw" className="object-cover" />
+                  <span className="absolute left-3 top-3 bg-white/90 px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-cvr-ink">{p.status}</span>
+                </div>
+                <div className="flex flex-1 flex-col p-4">
+                  <h3 className="h-[3em] overflow-hidden font-semibold leading-[1.5] text-cvr-ink">{p.name}</h3>
+                  <p className="mt-1 flex items-center gap-1 text-xs text-cvr-muted">
+                    <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                    {p.location}
+                  </p>
+                  <div className="mt-3 flex items-center justify-between border-t border-cvr-line pt-3">
+                    <span className="text-xs text-cvr-muted">{p.type}</span>
+                    <span className="text-sm font-semibold text-cvr-ink">{p.priceFrom}</span>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+          <Link href="/du-an" className="mt-4 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-full border border-cvr-line text-[15px] font-semibold text-cvr-ink transition active:bg-cvr-surface">
+            Xem thêm
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+          </Link>
+        </div>
+
+        {/* ── TABLET/DESKTOP (≥ 640px): GIỮ NGUYÊN slider đã duyệt ── */}
         {/* Track scroll-snap: tự chạy + chấm/mũi tên + touchpad/mobile vuốt tự nhiên */}
-        <div className="relative mt-4 sm:mt-5">
+        <div className="relative mt-4 hidden sm:mt-5 sm:block">
           <div
             ref={trackRef}
             className="no-scrollbar flex snap-x snap-mandatory items-start overflow-x-auto overscroll-x-contain"
@@ -119,8 +150,8 @@ export default function ProjectsSection({ projects }: { projects: Project[] }) {
           )}
         </div>
 
-        {/* Hàng cuối: chấm chuyển slide (giữa) — "Xem tất cả" (phải) */}
-        <div className="relative mt-4 flex items-center justify-center sm:mt-6">
+        {/* Hàng cuối: chấm chuyển slide (giữa) — "Xem tất cả" (phải). Mobile ẩn (đã có nút Xem thêm). */}
+        <div className="relative mt-4 hidden items-center justify-center sm:mt-6 sm:flex">
           {totalSlides > 1 && (
             <div className="flex gap-2">
               {Array.from({ length: totalSlides }).map((_, i) => (
