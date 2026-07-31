@@ -4,6 +4,7 @@ import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { getArticles } from "@/lib/contentDb";
+import PagedArticleList from "@/components/PagedArticleList";
 
 export const metadata: Metadata = {
   title: "Tin tức bất động sản | Coastal Land",
@@ -57,25 +58,9 @@ export default async function TinTucPage() {
           {/* ── 2 cột kiểu Batdongsan: LIST bài viết (trái) + Bài viết được quan tâm (phải) ── */}
           {articles.length > 0 && (
           <div className="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-3">
-            {/* Danh sách bài — hàng ngang: ảnh trái · nội dung phải, ngăn dòng kẻ */}
-            <div className="divide-y divide-cvr-line/70 lg:col-span-2">
-              {rest.map((a) => (
-                <Link key={a.slug} href={`/tin-tuc/${a.slug}`} className="group flex gap-4 py-5 first:pt-0 sm:gap-5">
-                  <div className="relative aspect-[16/10] w-36 shrink-0 overflow-hidden rounded-xl bg-cvr-surface sm:w-56">
-                    <Image src={a.image} alt={a.title} fill sizes="(max-width:640px) 144px, 224px" className="object-cover transition-transform duration-[700ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.05]" />
-                  </div>
-                  <div className="flex min-w-0 flex-1 flex-col">
-                    <div className="flex items-center gap-2 text-xs text-cvr-muted">
-                      <span className="rounded-full bg-cvr-surface px-2.5 py-0.5 font-medium text-cvr-body">{a.category}</span>
-                      <span>{a.date}</span>
-                    </div>
-                    <h3 className="mt-2 line-clamp-2 font-semibold leading-snug text-cvr-ink transition-colors group-hover:text-cvr-blue-ink sm:text-lg">
-                      {a.title}
-                    </h3>
-                    <p className="mt-1.5 line-clamp-3 text-sm leading-relaxed text-cvr-muted">{a.excerpt}</p>
-                  </div>
-                </Link>
-              ))}
+            {/* Danh sách bài PHÂN TRANG (10 bài/trang) — đích của nút "Xem thêm" */}
+            <div className="lg:col-span-2">
+              <PagedArticleList articles={rest} />
             </div>
 
             {/* Sidebar: bài viết được quan tâm — đánh số (kiểu Batdongsan) */}

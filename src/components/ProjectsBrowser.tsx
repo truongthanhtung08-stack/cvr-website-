@@ -83,6 +83,14 @@ export default function ProjectsBrowser({
   const hasActive = q.trim() !== "" || status !== ALL || province !== ALL || type !== ALL;
   const reset = () => { setQ(""); setStatus(ALL); setProvince(ALL); setType(ALL); };
 
+  // Phân trang danh sách dự án: 9 dự án/trang (khớp yêu cầu "8–10/trang").
+  const PER_PAGE = 9;
+  const [page, setPage] = useState(1);
+  useEffect(() => { setPage(1); }, [q, status, province, type]); // đổi lọc → về trang 1
+  const totalPages = Math.max(1, Math.ceil(visible.length / PER_PAGE));
+  const current = Math.min(page, totalPages);
+  const pageItems = visible.slice((current - 1) * PER_PAGE, current * PER_PAGE);
+
   // Panel chọn 1 giá trị trong dropdown (kèm số dự án mỗi mục)
   const optionList = (
     options: [string, number][],
@@ -285,7 +293,7 @@ export default function ProjectsBrowser({
         {/* ── Cột chính: thẻ dự án ngang ── */}
         <div className="lg:col-span-2">
           <div className="flex flex-col gap-5">
-            {visible.map((p) => (
+            {pageItems.map((p) => (
               <Link
                 key={p.slug}
                 href={`/du-an/${p.slug}`}
@@ -339,6 +347,17 @@ export default function ProjectsBrowser({
               </p>
             )}
           </div>
+
+          {/* Phân trang dự án — mỗi trang 9 (đích của nút "Xem thêm" ở trang chủ) */}
+          {totalPages > 1 && (
+            <div className="mt-8 flex items-center justify-center gap-1.5">
+              <button type="button" disabled={current === 1} onClick={() => { setPage(current - 1); window.scrollTo({ top: 0 }); }} className="flex h-9 w-9 items-center justify-center rounded-lg border border-cvr-line text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink disabled:cursor-not-allowed disabled:opacity-30">‹</button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                <button key={p} type="button" onClick={() => { setPage(p); window.scrollTo({ top: 0 }); }} className={`h-9 min-w-9 rounded-lg px-3 text-sm font-medium transition ${p === current ? "bg-cvr-ink text-white" : "border border-cvr-line text-cvr-body hover:border-cvr-ink hover:text-cvr-ink"}`}>{p}</button>
+              ))}
+              <button type="button" disabled={current === totalPages} onClick={() => { setPage(current + 1); window.scrollTo({ top: 0 }); }} className="flex h-9 w-9 items-center justify-center rounded-lg border border-cvr-line text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink disabled:cursor-not-allowed disabled:opacity-30">›</button>
+            </div>
+          )}
         </div>
 
         {/* ── Sidebar: lọc theo khu vực + tin tức (kiểu Batdongsan) ── */}
