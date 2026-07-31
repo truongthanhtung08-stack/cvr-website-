@@ -35,7 +35,7 @@ export default function NewsSection({ articles }: { articles: Article[] }) {
           {/* Bài nổi bật */}
           <Link
             href={`/tin-tuc/${featured.slug}`}
-            className={`card-lux group relative flex flex-col overflow-hidden rounded-none border border-cvr-line bg-white shadow-lux shadow-lux-hover hover:-translate-y-1 ${headlines.length ? "lg:col-span-2" : ""}`}
+            className={`card-lux group relative flex flex-col overflow-hidden rounded-none border-0 bg-white shadow-lux shadow-lux-hover hover:-translate-y-1 sm:border sm:border-cvr-line ${headlines.length ? "lg:col-span-2" : ""}`}
           >
             <span className="card-sheen" aria-hidden />
             <div className="relative aspect-[16/9] overflow-hidden">
@@ -93,7 +93,7 @@ export default function NewsSection({ articles }: { articles: Article[] }) {
           <div className="lg:hidden">
             <div className="no-scrollbar -mx-4 mt-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2">
               {rest.slice(0, 10).map((a) => (
-                <Link key={a.slug} href={`/tin-tuc/${a.slug}`} className="flex w-[80%] shrink-0 snap-start flex-col overflow-hidden rounded-none border border-cvr-line bg-white shadow-lux">
+                <Link key={a.slug} href={`/tin-tuc/${a.slug}`} className="flex w-[80%] shrink-0 snap-start flex-col overflow-hidden rounded-none bg-white shadow-lux">
                   <div className="relative aspect-[16/9] w-full overflow-hidden">
                     <Image src={a.image} alt={a.title} fill sizes="80vw" className="object-cover" />
                   </div>

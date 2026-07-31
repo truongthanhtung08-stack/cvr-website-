@@ -49,7 +49,7 @@ export default function ProjectsSection({ projects }: { projects: Project[] }) {
         <div className="sm:hidden">
           <div className="no-scrollbar -mx-4 mt-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2">
             {homeProjects.map((p) => (
-              <Link key={p.slug} href={`/du-an/${p.slug}`} className="flex w-[86%] shrink-0 snap-start flex-col overflow-hidden rounded-none border border-cvr-line bg-white shadow-lux">
+              <Link key={p.slug} href={`/du-an/${p.slug}`} className="flex w-[86%] shrink-0 snap-start flex-col overflow-hidden rounded-none bg-white shadow-lux">
                 <div className="relative aspect-[3/2] w-full overflow-hidden">
                   <Image src={p.image} alt={p.name} fill sizes="86vw" className="object-cover" />
                   <span className="absolute left-3 top-3 bg-white/90 px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-cvr-ink">{p.status}</span>
