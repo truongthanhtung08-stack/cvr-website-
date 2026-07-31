@@ -89,6 +89,8 @@ function rowToListing(r: Row): Listing {
     type: r.type,
     // Ảnh đại diện = ẢNH đầu tiên (bỏ qua video nếu đứng trước)
     image: asset(r.images.find((s) => !isVideoUrl(s)) ?? PLACEHOLDER_IMAGE),
+    // Số ẢNH thật (không tính video) → badge "📷 n" đúng thay vì cứng "1"
+    imageCount: r.images.filter((s) => !isVideoUrl(s)).length,
     badge: TIER_BADGE[r.tier],
     purpose: r.purpose,
     // Tên người đăng thật (khách hàng) — thẻ tin hiện đúng tên này, không phải admin

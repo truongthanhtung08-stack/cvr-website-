@@ -23,6 +23,8 @@ export type Listing = {
   location: string;
   type: string;
   image: string;
+  // Số ẢNH thật của tin (để badge "📷 n" đúng, không cứng "1"). Không có → coi như 1.
+  imageCount?: number;
   badge?: "VIP" | "Nổi bật" | "Mới";
   // Mục đích tin: "ban" = mua bán (mặc định) · "thue" = cho thuê (giá tính theo tháng).
   // Phân tách rõ với "type" (sản phẩm/loại hình) để logic bán/thuê đúng trên mọi trang.

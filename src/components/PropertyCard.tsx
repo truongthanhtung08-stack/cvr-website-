@@ -92,13 +92,14 @@ export default function PropertyCard({
             {tier.short}
           </span>
         )}
+        {/* So sánh LÊN TRÊN · Yêu thích (lưu) XUỐNG DƯỚI (yêu cầu T19) */}
         <div className="absolute right-2 top-2 flex flex-col gap-1.5">
-          <SaveButton id={item.id} className={isMini ? "h-7 w-7" : undefined} />
           <CompareButton id={item.id} className={isMini ? "h-7 w-7" : undefined} />
+          <SaveButton id={item.id} className={isMini ? "h-7 w-7" : undefined} />
         </div>
         {/* Badge số ảnh kiểu Homedy */}
         <span className="absolute bottom-2 left-2 flex items-center gap-1 bg-black/55 px-1.5 py-0.5 text-[10px] font-medium text-white">
-          <CameraIcon />1
+          <CameraIcon />{item.imageCount || 1}
         </span>
       </div>
 
@@ -107,8 +108,8 @@ export default function PropertyCard({
 
         {/* Tiêu đề — 2 dòng, kiểu chữ theo cấp tin (Diamond/Gold VIẾT HOA + icon HOT) */}
         <h3
-          className={`line-clamp-2 font-semibold leading-snug text-cvr-ink ${tier?.uppercase ? "uppercase" : ""} ${
-            isFeatured ? "min-h-[3rem] text-lg" : isMini ? "min-h-[2.4rem] text-sm" : "min-h-[2.7rem] text-[15px]"
+          className={`line-clamp-2 font-semibold leading-[1.5] text-cvr-ink ${tier?.uppercase ? "uppercase" : ""} ${
+            isFeatured ? "min-h-[3.4rem] text-lg" : isMini ? "min-h-[2.6rem] text-sm" : "min-h-[3.1rem] text-[15px]"
           }`}
           style={tier?.titleColor ? { color: tier.titleColor } : undefined}
         >
@@ -174,11 +175,11 @@ function PropertyRow({ item, showTime = false }: { item: Listing; showTime?: boo
           >{tier.short}</span>
         )}
         <div className="absolute right-2 top-2 flex flex-col gap-1.5">
-          <SaveButton id={item.id} className="h-7 w-7" />
           <CompareButton id={item.id} className="h-7 w-7" />
+          <SaveButton id={item.id} className="h-7 w-7" />
         </div>
         <span className="absolute bottom-2 left-2 flex items-center gap-1 bg-black/55 px-1.5 py-0.5 text-[10px] text-white">
-          <CameraIcon />1
+          <CameraIcon />{item.imageCount || 1}
         </span>
       </div>
       <div className="flex min-w-0 flex-1 flex-col">
