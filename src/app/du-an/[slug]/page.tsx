@@ -7,6 +7,7 @@ import ProjectGallery from "@/components/ProjectGallery";
 import ProjectNav from "@/components/ProjectNav";
 import ProjectNearby from "@/components/ProjectNearby";
 import FloorPlans from "@/components/FloorPlans";
+import ListingSlider from "@/components/ListingSlider";
 import RelatedListingsTabs from "@/components/RelatedListingsTabs";
 import LeadForm from "@/components/LeadForm";
 import RichContent from "@/components/RichContent";
@@ -68,7 +69,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   const others = pickRelated(
     projects.filter((x) => x.slug !== p.slug),
     (x) => (provinceOf(x.location) === province ? 2 : 0) + (x.type === p.type ? 1 : 0),
-    3,
+    8,
   );
 
   // Tin liên quan trong tỉnh — xếp theo cùng dự án → cùng khu vực → cùng phân khúc,
@@ -255,8 +256,24 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
               {/* 8) Tin bán / cho thuê liên quan */}
               {hasRelated && (
-                <Section id="tin-dang" title={`Tin bán & cho thuê tại ${province}`}>
-                  <RelatedListingsTabs ban={relBan} thue={relThue} />
+                <Section id="tin-dang" title={`Bất động sản liên quan tại ${province}`}>
+                  {/* MOBILE: slide 8 tin + nút "Bất động sản tương tự" */}
+                  <div className="sm:hidden">
+                    <ListingSlider items={[...relBan, ...relThue].slice(0, 8)} />
+                    <div className="mt-6 flex justify-center">
+                      <Link
+                        href={purposes.includes("thue") ? "/cho-thue" : "/mua-ban"}
+                        className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full border border-cvr-line px-6 text-sm font-semibold text-cvr-ink transition active:bg-cvr-surface"
+                      >
+                        Bất động sản tương tự
+                        <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+                      </Link>
+                    </div>
+                  </div>
+                  {/* DESKTOP: GIỮ NGUYÊN tab Bán/Cho thuê đã duyệt */}
+                  <div className="hidden sm:block">
+                    <RelatedListingsTabs ban={relBan} thue={relThue} />
+                  </div>
                 </Section>
               )}
             </div>
@@ -289,9 +306,10 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                 <h2 className="text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">Dự án liên quan</h2>
                 <Link href="/du-an" className="shrink-0 text-sm font-medium text-cvr-muted transition-colors hover:text-cvr-ink">Xem thêm →</Link>
               </div>
-              <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-3">
+              {/* MOBILE: slide vuốt ngang · DESKTOP: GIỮ NGUYÊN lưới 3 cột đã duyệt */}
+              <div className="no-scrollbar mt-5 flex gap-5 overflow-x-auto snap-x snap-mandatory pb-2 sm:grid sm:grid-cols-3 sm:overflow-visible sm:pb-0">
                 {others.map((o) => (
-                  <Link key={o.slug} href={`/du-an/${o.slug}`} className="card-lux group relative flex flex-col overflow-hidden rounded-none border-0 bg-white shadow-lux shadow-lux-hover hover:-translate-y-1.5 hover:border-cvr-blue/45 sm:border sm:border-cvr-line">
+                  <Link key={o.slug} href={`/du-an/${o.slug}`} className="card-lux group relative flex w-[80%] shrink-0 snap-start flex-col overflow-hidden rounded-none border-0 bg-white shadow-lux shadow-lux-hover hover:-translate-y-1.5 hover:border-cvr-blue/45 sm:w-auto sm:border sm:border-cvr-line">
                     <span className="card-sheen" aria-hidden />
                     <div className="relative aspect-[16/10] overflow-hidden">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -303,6 +321,13 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                     </div>
                   </Link>
                 ))}
+              </div>
+              {/* Nút Xem thêm (bổ sung) — CHỈ mobile; desktop giữ link "Xem thêm →" ở tiêu đề */}
+              <div className="mt-6 flex justify-center sm:hidden">
+                <Link href="/du-an" className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full border border-cvr-line px-6 text-sm font-semibold text-cvr-ink transition active:bg-cvr-surface">
+                  Xem thêm dự án
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+                </Link>
               </div>
             </div>
           )}

@@ -62,7 +62,7 @@ export default function NewsSection({ articles }: { articles: Article[] }) {
 
           {/* Danh sách tin — mỗi tin: ảnh nhỏ + tiêu đề + mô tả + thể loại/ngày */}
           {headlines.length > 0 && (
-          <div className="flex flex-col divide-y divide-cvr-line/70 rounded-none border border-cvr-line bg-white px-5 shadow-lux lg:col-span-3">
+          <div className="hidden divide-y divide-cvr-line/70 rounded-none border border-cvr-line bg-white px-5 shadow-lux lg:col-span-3 lg:flex lg:flex-col">
             {headlines.map((a) => (
               <Link key={a.slug} href={`/tin-tuc/${a.slug}`} className="group flex flex-1 flex-col gap-2.5 py-3 sm:flex-row sm:items-center sm:gap-4 sm:py-4">
                 {/* MOBILE: hình TRÊN (tràn ngang), chữ DƯỚI — kiểu Báo Mới (T19). DESKTOP: hình trái. */}
@@ -88,8 +88,31 @@ export default function NewsSection({ articles }: { articles: Article[] }) {
           )}
         </div>
 
-        {/* Xem thêm — phần tin còn lại nằm ở trang /tin-tuc */}
-        <div className="mt-4 flex justify-end">
+        {/* MOBILE: slide 10 tin (ảnh TRÀN VIỀN trên · chữ dưới) + nút Xem thêm. Desktop ẩn. */}
+        {rest.length > 0 && (
+          <div className="lg:hidden">
+            <div className="no-scrollbar -mx-4 mt-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2">
+              {rest.slice(0, 10).map((a) => (
+                <Link key={a.slug} href={`/tin-tuc/${a.slug}`} className="flex w-[80%] shrink-0 snap-start flex-col overflow-hidden rounded-none border border-cvr-line bg-white shadow-lux">
+                  <div className="relative aspect-[16/9] w-full overflow-hidden">
+                    <Image src={a.image} alt={a.title} fill sizes="80vw" className="object-cover" />
+                  </div>
+                  <div className="p-3">
+                    <h3 className="h-[3em] overflow-hidden font-semibold leading-[1.5] text-cvr-ink">{a.title}</h3>
+                    <p className="mt-1.5 text-xs text-cvr-faint">{a.category} · {a.date}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+            <Link href="/tin-tuc" className="mt-3 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-full border border-cvr-line text-[15px] font-semibold text-cvr-ink transition active:bg-cvr-surface">
+              Xem thêm tin tức
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+            </Link>
+          </div>
+        )}
+
+        {/* Xem thêm — DESKTOP giữ nguyên link góc phải */}
+        <div className="mt-4 hidden justify-end lg:flex">
           <Link href="/tin-tuc" className="text-sm font-medium text-cvr-muted transition-colors hover:text-cvr-ink">
             Xem thêm tin tức →
           </Link>

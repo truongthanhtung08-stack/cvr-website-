@@ -92,11 +92,12 @@ export default function PropertyCard({
             {tier.short}
           </span>
         )}
-        {/* So sánh giữ TRÊN ẢNH · Yêu thích (tim) chuyển xuống ĐÁY thẻ.
-            Thẻ KHÔNG có hàng người đăng → giữ tim trên ảnh để không mất nút. */}
+        {/* DESKTOP (đã duyệt): GIỮ NGUYÊN Yêu thích + So sánh trên ảnh.
+            MOBILE: chỉ So sánh trên ảnh; Yêu thích (tim) chuyển xuống ĐÁY thẻ. */}
         <div className="absolute right-2 top-2 flex flex-col gap-1.5">
+          <SaveButton id={item.id} className={`hidden sm:flex ${isMini ? "h-7 w-7" : ""}`} />
           <CompareButton id={item.id} className={isMini ? "h-7 w-7" : undefined} />
-          {!showAgent && <SaveButton id={item.id} className={isMini ? "h-7 w-7" : undefined} />}
+          {!showAgent && <SaveButton id={item.id} className={`sm:hidden ${isMini ? "h-7 w-7" : ""}`} />}
         </div>
         {/* Badge số ảnh kiểu Homedy */}
         <span className="absolute bottom-2 left-2 flex items-center gap-1 bg-black/55 px-1.5 py-0.5 text-[10px] font-medium text-white">
@@ -152,8 +153,8 @@ export default function PropertyCard({
             <AgentAvatar name={agentName} src={item.agentAvatar} size={7} />
             <span className="min-w-0 flex-1 truncate text-xs font-medium text-cvr-body">{agentName}</span>
             {showTime && <span className="shrink-0 text-[11px] text-cvr-faint">Hôm nay</span>}
-            {/* Nút Yêu thích (tim) ở ĐÁY thẻ, cạnh người đăng (yêu cầu T19) */}
-            <SaveButton id={item.id} variant="bare" className="h-8 w-8 shrink-0" />
+            {/* Nút Yêu thích (tim) ở ĐÁY thẻ — CHỈ mobile (desktop giữ tim trên ảnh) */}
+            <SaveButton id={item.id} variant="bare" className="h-8 w-8 shrink-0 sm:hidden" />
           </div>
         )}
 
@@ -180,8 +181,8 @@ function PropertyRow({ item, showTime = false }: { item: Listing; showTime?: boo
           >{tier.short}</span>
         )}
         <div className="absolute right-2 top-2 flex flex-col gap-1.5">
-          <CompareButton id={item.id} className="h-7 w-7" />
           <SaveButton id={item.id} className="h-7 w-7" />
+          <CompareButton id={item.id} className="h-7 w-7" />
         </div>
         <span className="absolute bottom-2 left-2 flex items-center gap-1 bg-black/55 px-1.5 py-0.5 text-[10px] text-white">
           <CameraIcon />{item.imageCount || 1}

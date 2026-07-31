@@ -271,11 +271,11 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                 </Link>
               </div>
               <ListingSlider items={relatedFill.slice(0, 8)} />
-              {/* Nút Xem thêm rõ ràng dưới slider → ra danh sách tin theo trang (8 tin/trang) */}
-              <div className="mt-6 flex justify-center">
+              {/* Nút Xem thêm (bổ sung) — CHỈ mobile; desktop giữ link "Xem thêm →" ở tiêu đề */}
+              <div className="mt-6 flex justify-center sm:hidden">
                 <Link
                   href={purpose === "thue" ? "/cho-thue" : "/mua-ban"}
-                  className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full border border-cvr-line px-6 text-sm font-semibold text-cvr-ink transition hover:border-cvr-ink active:bg-cvr-surface"
+                  className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full border border-cvr-line px-6 text-sm font-semibold text-cvr-ink transition active:bg-cvr-surface"
                 >
                   Xem thêm bất động sản tương tự
                   <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
