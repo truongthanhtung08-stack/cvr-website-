@@ -72,6 +72,10 @@ export default function Hero({
     window.setTimeout(() => { wheelLock.current = false; }, 700);
   };
 
+  // Không có banner nào (vd trang Dự án khi admin CHƯA nhập banner) → không render,
+  // tránh đọc thuộc tính của banner rỗng. Đặt SAU mọi hook (đúng luật React).
+  if (banners.length === 0) return null;
+
   return (
     <>
     {/* ── MOBILE: thanh tìm kiếm TÁCH RIÊNG trên nền trắng, đặt NGAY TRÊN Hero

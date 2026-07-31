@@ -87,7 +87,7 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
             <div className="sm:hidden">
               <div className="no-scrollbar -mx-4 mt-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 sm:mt-5">
                 {sorted.slice(0, SLIDE_COUNT * PER_SLIDE).map((item) => (
-                  <div key={item.id} className="w-[86%] shrink-0 snap-start">
+                  <div key={item.id} className="w-[90%] shrink-0 snap-start">
                     <PropertyCard item={item} variant="tier" />
                   </div>
                 ))}

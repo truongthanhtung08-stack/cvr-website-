@@ -23,7 +23,15 @@ export default async function TinTucPage() {
           <h1 className="text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">Tin tức bất động sản</h1>
           <p className="mt-1.5 text-sm text-cvr-muted">Phân tích thị trường, cẩm nang &amp; kinh nghiệm đầu tư tại Duyên hải miền Trung.</p>
 
+          {/* Chưa có bài viết nào (admin chưa đăng) → trạng thái trống, không crash */}
+          {articles.length === 0 && (
+            <p className="mt-10 rounded-xl border border-dashed border-cvr-line px-4 py-16 text-center text-cvr-muted">
+              Chưa có bài viết nào. Nội dung đang được cập nhật.
+            </p>
+          )}
+
           {/* Bài nổi bật — ảnh trái · nội dung phải (kiểu Batdongsan) */}
+          {featured && (
           <Link
             href={`/tin-tuc/${featured.slug}`}
             className="card-lux group mt-6 flex flex-col overflow-hidden rounded-none border border-cvr-line bg-white shadow-lux shadow-lux-hover hover:-translate-y-1 sm:flex-row"
@@ -44,8 +52,10 @@ export default async function TinTucPage() {
               <span className="mt-4 text-sm font-medium text-cvr-muted transition-colors group-hover:text-cvr-ink">Đọc bài viết →</span>
             </div>
           </Link>
+          )}
 
           {/* ── 2 cột kiểu Batdongsan: LIST bài viết (trái) + Bài viết được quan tâm (phải) ── */}
+          {articles.length > 0 && (
           <div className="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-3">
             {/* Danh sách bài — hàng ngang: ảnh trái · nội dung phải, ngăn dòng kẻ */}
             <div className="divide-y divide-cvr-line/70 lg:col-span-2">
@@ -85,6 +95,7 @@ export default async function TinTucPage() {
               </div>
             </aside>
           </div>
+          )}
         </div>
       </main>
       <Footer />

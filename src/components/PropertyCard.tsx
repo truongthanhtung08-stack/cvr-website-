@@ -63,7 +63,9 @@ export default function PropertyCard({
   // Lượng nội dung theo cấp (variant "tier") — các variant khác giữ nguyên hành vi cũ.
   // Diamond & Gold: 2 dòng · Silver: 1 dòng · Basic: 0 dòng (theo cấp VIP thành viên).
   const descLines = isTier ? (tierId === "diamond" || tierId === "gold" ? 2 : tierId === "silver" ? 1 : 0) : isMini ? 0 : 2;
-  const showAgent = isTier ? tierId === "diamond" || tierId === "gold" : !isMini;
+  // Thẻ trang chủ (tier): MỌI cấp đều hiện thông tin thành viên ở đáy (kể cả Silver/Basic)
+  // để thẻ không bị trống — đồng bộ với tin VIP (yêu cầu T19 mobile).
+  const showAgent = isTier ? true : !isMini;
 
   return (
     <Link
