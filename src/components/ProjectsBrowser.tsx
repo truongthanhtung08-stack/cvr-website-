@@ -297,10 +297,10 @@ export default function ProjectsBrowser({
               <Link
                 key={p.slug}
                 href={`/du-an/${p.slug}`}
-                className="card-lux group relative flex gap-3 overflow-hidden rounded-none border border-cvr-line bg-white p-2.5 shadow-lux shadow-lux-hover hover:-translate-y-1 hover:border-cvr-blue/45 sm:gap-5 sm:p-3"
+                className="card-lux group relative flex flex-col overflow-hidden rounded-none bg-white shadow-lux shadow-lux-hover hover:-translate-y-1 hover:border-cvr-blue/45 sm:flex-row sm:gap-5 sm:border sm:border-cvr-line sm:p-3"
               >
-                {/* Ảnh trái */}
-                <div className="relative aspect-[4/3] w-32 shrink-0 overflow-hidden rounded-xl bg-cvr-surface sm:w-56 md:w-64">
+                {/* MOBILE: ảnh TRÊN tràn viền · DESKTOP: ảnh trái */}
+                <div className="relative aspect-[16/10] w-full shrink-0 overflow-hidden rounded-none bg-cvr-surface sm:aspect-[4/3] sm:w-56 sm:rounded-xl md:w-64">
                   <Image
                     src={p.image}
                     alt={p.name}
@@ -313,8 +313,8 @@ export default function ProjectsBrowser({
                   </span>
                 </div>
 
-                {/* Thông tin phải */}
-                <div className="flex min-w-0 flex-1 flex-col py-1 pr-1">
+                {/* Thông tin — mobile có padding cho "thở", desktop sát ảnh */}
+                <div className="flex min-w-0 flex-1 flex-col p-3 sm:p-0 sm:py-1 sm:pr-1">
                   <h3 className="line-clamp-2 font-semibold leading-snug text-cvr-ink transition-colors group-hover:text-cvr-blue-ink sm:text-lg">
                     {p.name}
                   </h3>

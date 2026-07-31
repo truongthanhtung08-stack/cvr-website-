@@ -21,9 +21,9 @@ export default function PagedArticleList({ articles }: { articles: Article[] }) 
     <div>
       <div className="divide-y divide-cvr-line/70">
         {items.map((a) => (
-          <Link key={a.slug} href={`/tin-tuc/${a.slug}`} className="group flex gap-4 py-5 first:pt-0 sm:gap-5">
-            <div className="relative aspect-[16/10] w-36 shrink-0 overflow-hidden rounded-xl bg-cvr-surface sm:w-56">
-              <Image src={a.image} alt={a.title} fill sizes="(max-width:640px) 144px, 224px" className="object-cover transition-transform duration-[700ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.05]" />
+          <Link key={a.slug} href={`/tin-tuc/${a.slug}`} className="group flex flex-col gap-2.5 py-5 first:pt-0 sm:flex-row sm:gap-5">
+            <div className="relative aspect-[16/9] w-full shrink-0 overflow-hidden rounded-none bg-cvr-surface sm:aspect-[16/10] sm:w-56 sm:rounded-xl">
+              <Image src={a.image} alt={a.title} fill sizes="(max-width:640px) 100vw, 224px" className="object-cover transition-transform duration-[700ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.05]" />
             </div>
             <div className="flex min-w-0 flex-1 flex-col">
               <div className="flex items-center gap-2 text-xs text-cvr-muted">
