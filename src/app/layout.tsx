@@ -49,9 +49,9 @@ export const metadata: Metadata = {
     "đất nền", "căn hộ", "villa biển", "COASTAL LAND", "coastalland.vn",
   ],
   alternates: { canonical: "/" },
- verification: {
-    google: "Kltt2fEbpFCiNLrRJwZATFfhyKayu507-q7KhxEwUWQ",
-  },
+verification: {
+  google: "Kltt2fEbpFCiNLrRJwZATFfhyKayu507-q7KhxEwUWQ",
+},
   // ✅ ĐÃ PUBLISH: cho Google index + theo dõi liên kết.
   robots: {
     index: true,
