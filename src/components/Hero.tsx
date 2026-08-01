@@ -17,6 +17,7 @@ type HeroProps = {
   search?: boolean; // hiện hộp bộ lọc trên banner (trang con đã có thanh lọc riêng → tắt)
   searchTab?: string; // tab bộ lọc chọn sẵn (vd "Dự án")
   fit?: "cover" | "contain"; // "cover" (mặc định): ảnh phủ kín, có cắt · "contain": ôm TRỌN ảnh, nền 2 bên lấp bằng ảnh mờ
+  mobileTwoLine?: boolean; // MOBILE: chỉ 2 dòng text (tiêu đề + phụ đề, ẩn nhãn), mỗi dòng 1 câu KHÔNG ngắt dòng
 };
 
 export default function Hero({
@@ -27,6 +28,7 @@ export default function Hero({
   search = true,
   searchTab,
   fit = "cover",
+  mobileTwoLine = false,
 }: HeroProps) {
   const contain = fit === "contain";
   const [active, setActive] = useState(0);
@@ -228,15 +230,15 @@ export default function Hero({
               className="hero-sub max-w-3xl pr-28 text-left sm:pr-0"
             >
               {cur.status && (
-                <span className="mb-2 inline-flex items-center rounded-full bg-white/15 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-white ring-1 ring-inset ring-white/25 backdrop-blur-sm">
+                <span className={`mb-2 inline-flex items-center rounded-full bg-white/15 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-white ring-1 ring-inset ring-white/25 backdrop-blur-sm ${mobileTwoLine ? "hidden sm:inline-flex" : ""}`}>
                   {cur.status}
                 </span>
               )}
-              <h2 className="text-balance font-[family-name:var(--font-montserrat)] text-lg font-semibold leading-[1.2] tracking-tight text-white [text-shadow:0_2px_16px_rgba(0,0,0,0.6)] sm:text-2xl">
+              <h2 className={`text-balance font-[family-name:var(--font-montserrat)] text-lg font-semibold leading-[1.2] tracking-tight text-white [text-shadow:0_2px_16px_rgba(0,0,0,0.6)] sm:text-2xl ${mobileTwoLine ? "whitespace-nowrap sm:whitespace-normal" : ""}`}>
                 {cur.title}
               </h2>
               {cur.subtitle && (
-                <p className="mt-1 text-balance text-sm font-medium text-white/90 [text-shadow:0_1px_8px_rgba(0,0,0,0.55)] sm:text-base">
+                <p className={`mt-1 text-balance text-sm font-medium text-white/90 [text-shadow:0_1px_8px_rgba(0,0,0,0.55)] sm:text-base ${mobileTwoLine ? "whitespace-nowrap sm:whitespace-normal" : ""}`}>
                   {cur.subtitle}
                 </p>
               )}

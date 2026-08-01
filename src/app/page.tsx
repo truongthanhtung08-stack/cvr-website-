@@ -25,8 +25,9 @@ export default async function Home() {
     <>
       <Header />
       <main className="flex-1">
-        {/* Hero: khung GIỮ NGUYÊN — ảnh PHỦ KÍN khung (cover), không hụt 2 bên */}
-        <Hero banners={heroBanners} />
+        {/* Hero: khung GIỮ NGUYÊN — ảnh PHỦ KÍN khung (cover), không hụt 2 bên.
+            mobileTwoLine: mobile chỉ 2 dòng text (tiêu đề + phụ đề) canh dưới-trái, không ngắt dòng */}
+        <Hero banners={heroBanners} mobileTwoLine />
         {/* Không bọc Reveal: section này ló ngay dưới banner (above-the-fold),
             cần hiện tức thì để tạo kết nối — tránh bị "vùng chết" của Reveal ẩn đi. */}
         <FeaturedListings items={listings} />
