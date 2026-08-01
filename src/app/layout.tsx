@@ -29,13 +29,46 @@ const montserrat = Montserrat({
   display: "swap",
 });
 
+const SITE_URL = "https://coastalland.vn";
+const SITE_TITLE = "COASTAL LAND — Bất động sản Đà Nẵng, Huế & Miền Trung";
+const SITE_DESC =
+  "COASTAL LAND — Gateway to Central Coast property. Sàn giao dịch bất động sản trung gian, khách quan tại Đà Nẵng, Huế và Miền Trung: đất nền, căn hộ, nhà phố, villa biển và bất động sản công nghiệp.";
+const OG_IMAGE = "/images/hero-thanh-pho-hien-dai-26.jpg";
+
 export const metadata: Metadata = {
-  title: "COASTAL LAND — Bất động sản Đà Nẵng, Huế & Miền Trung",
-  description:
-    "COASTAL LAND — Gateway to Central Coast property. Sàn giao dịch bất động sản trung gian, khách quan tại Đà Nẵng, Huế và Miền Trung: đất nền, căn hộ, nhà phố, villa biển và bất động sản công nghiệp.",
-  // ⚠️ CHƯA PUBLISH: chặn Google index tới khi ra mắt chính thức.
-  // Khi publish: XÓA khối robots này + đăng ký Google Search Console.
-  robots: { index: false, follow: false },
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: SITE_TITLE,
+    template: "%s | COASTAL LAND",
+  },
+  description: SITE_DESC,
+  keywords: [
+    "bất động sản Đà Nẵng", "bất động sản Huế", "bất động sản Miền Trung",
+    "nhà đất Đà Nẵng", "mua bán nhà đất", "cho thuê nhà đất", "dự án bất động sản",
+    "đất nền", "căn hộ", "villa biển", "COASTAL LAND", "coastalland.vn",
+  ],
+  alternates: { canonical: "/" },
+  // ✅ ĐÃ PUBLISH: cho Google index + theo dõi liên kết.
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1 },
+  },
+  openGraph: {
+    type: "website",
+    locale: "vi_VN",
+    url: SITE_URL,
+    siteName: "COASTAL LAND",
+    title: SITE_TITLE,
+    description: SITE_DESC,
+    images: [{ url: OG_IMAGE, width: 1200, height: 630, alt: "COASTAL LAND — Bất động sản Duyên hải Miền Trung" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SITE_TITLE,
+    description: SITE_DESC,
+    images: [OG_IMAGE],
+  },
   applicationName: "COASTAL LAND",
   // PWA — cài được lên màn hình chính Android & iOS
   manifest: "/manifest.webmanifest",
