@@ -35,7 +35,7 @@ const vipPkgs = [
       "Xuất hiện trong box “Bất động sản nổi bật”.",
       "Chèn 1 link bất kỳ dưới tin đăng.",
     ],
-    sample: { img: 1, title: "VILLA BIỂN 3 TẦNG MẶT TIỀN VÕ NGUYÊN GIÁP, VIEW MỸ KHÊ", address: "Phước Mỹ, Sơn Trà, Đà Nẵng", price: "33 tỷ · 350 m²" },
+    sample: { img: "anh-tin-diamond.png", title: "VILLA BIỂN 3 TẦNG MẶT TIỀN VÕ NGUYÊN GIÁP, VIEW MỸ KHÊ", address: "Phước Mỹ, Sơn Trà, Đà Nẵng", price: "33 tỷ · 350 m²" },
     prices: [
       { label: "Giá 1 tuần", price: "980.000đ" },
       { label: "Giá 2 tuần (−15%)", original: "1.960.000đ", price: "1.700.000đ" },
@@ -54,7 +54,7 @@ const vipPkgs = [
       "Tiêu đề màu vàng + Bôi đậm + Viết hoa + icon HOT màu vàng.",
       "Xuất hiện trong box “Bất động sản nổi bật”.",
     ],
-    sample: { img: 2, title: "CĂN HỘ THE FILMORE 2PN VIEW SÔNG HÀN, BÀN GIAO CAO CẤP", address: "Hải Châu I, Hải Châu, Đà Nẵng", price: "7,2 tỷ · 95 m²" },
+    sample: { img: "2", title: "CĂN HỘ THE FILMORE 2PN VIEW SÔNG HÀN, BÀN GIAO CAO CẤP", address: "Hải Châu I, Hải Châu, Đà Nẵng", price: "7,2 tỷ · 95 m²" },
     prices: [
       { label: "Giá 1 tuần", price: "490.000đ" },
       { label: "Giá 2 tuần (−20%)", original: "980.000đ", price: "800.000đ" },
@@ -65,7 +65,7 @@ const vipPkgs = [
     tierId: "silver" as TierId,
     benefits: ["Tăng lượt xem gấp 5 lần tin thường.", "Tiếp cận khách hàng tốt."],
     displays: ["Đứng trên CVR Basic.", "Tiêu đề màu xanh + Bôi đậm + icon HOT màu xanh."],
-    sample: { img: 4, title: "Đất nền KĐT sinh thái Hòa Xuân, sổ đỏ trao tay", address: "Hòa Xuân, Cẩm Lệ, Đà Nẵng", price: "4,2 tỷ · 100 m²" },
+    sample: { img: "4", title: "Đất nền KĐT sinh thái Hòa Xuân, sổ đỏ trao tay", address: "Hòa Xuân, Cẩm Lệ, Đà Nẵng", price: "4,2 tỷ · 100 m²" },
     prices: [
       { label: "Giá 1 tuần", price: "170.000đ" },
       { label: "Giá 2 tuần (−15%)", original: "340.000đ", price: "300.000đ" },
@@ -77,7 +77,7 @@ const vipPkgs = [
 const basicPkg = {
   benefits: ["Tiếp cận khách hàng tốt.", "Chi phí thấp nhất."],
   displays: ["Nằm bên dưới các tin cao cấp.", "Tiêu đề hiển thị mặc định."],
-  sample: { img: 3, title: "Nhà phố 4 tầng mặt tiền kinh doanh trung tâm Thanh Khê", address: "Tam Thuận, Thanh Khê, Đà Nẵng", price: "8,5 tỷ · 100 m²" },
+  sample: { img: "3", title: "Nhà phố 4 tầng mặt tiền kinh doanh trung tâm Thanh Khê", address: "Tam Thuận, Thanh Khê, Đà Nẵng", price: "8,5 tỷ · 100 m²" },
   prices: [
     { label: "Giá 1 tuần", price: "15.000đ" },
     { label: "Giá 2 tuần", price: "20.000đ" },
@@ -244,7 +244,7 @@ export default function BaoGiaPage() {
                       benefits={p.benefits}
                       displays={p.displays}
                       preview={{
-                        img: asset(`/images/tin/${p.sample.img}.jpg`),
+                        img: asset(`/images/tin/${p.sample.img}`),
                         title: p.sample.title,
                         address: p.sample.address,
                         meta: p.sample.price,
@@ -267,7 +267,7 @@ export default function BaoGiaPage() {
                     benefits={basicPkg.benefits}
                     displays={basicPkg.displays}
                     preview={{
-                      img: asset(`/images/tin/${basicPkg.sample.img}.jpg`),
+                      img: asset(`/images/tin/${basicPkg.sample.img}`),
                       title: basicPkg.sample.title,
                       address: basicPkg.sample.address,
                       meta: basicPkg.sample.price,

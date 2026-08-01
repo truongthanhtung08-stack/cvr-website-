@@ -21,8 +21,8 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const l = await getLandingBySlug(slug);
-  if (!l) return { title: "Không tìm thấy | Coastal Land" };
-  return { title: `${l.title} | Coastal Land`, description: l.intro.slice(0, 160) };
+  if (!l) return { title: "Không tìm thấy" };
+  return { title: l.title, description: l.intro.slice(0, 140) };
 }
 
 export default async function LandingPage({ params }: { params: Promise<{ slug: string }> }) {

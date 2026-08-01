@@ -11,8 +11,8 @@ import RichContent from "@/components/RichContent";
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const a = await getArticle(slug);
-  if (!a) return { title: "Không tìm thấy | Coastal Land" };
-  return { title: `${a.title} | Coastal Land`, description: a.excerpt };
+  if (!a) return { title: "Không tìm thấy" };
+  return { title: a.title, description: a.excerpt.slice(0, 140) };
 }
 
 export default async function ArticlePage({ params }: { params: Promise<{ slug: string }> }) {

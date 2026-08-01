@@ -19,10 +19,10 @@ import { getListings } from "@/lib/listingsDb";
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const p = await getProject(slug);
-  if (!p) return { title: "Không tìm thấy dự án | Coastal Land" };
+  if (!p) return { title: "Không tìm thấy dự án" };
   return {
-    title: `${p.name} — ${p.priceFrom} | Coastal Land`,
-    description: `Dự án ${p.name} tại ${p.location}. ${p.type}, ${p.status}. Tổng quan, vị trí, mặt bằng, tiện ích, tiến độ, bảng giá, chủ đầu tư và tin bán/cho thuê liên quan.`,
+    title: `${p.name} — ${p.priceFrom}`,
+    description: `Dự án ${p.name} tại ${p.location}. ${p.type}, ${p.status}. Xem chi tiết tại Coastal Land.`,
   };
 }
 

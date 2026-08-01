@@ -32,8 +32,8 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const l = await getListing(id); // B2: đọc Supabase, fallback dữ liệu mẫu
   if (!l) return { title: "Không tìm thấy | Coastal Land" };
   return {
-    title: `${l.title} — ${l.price} | Coastal Land`,
-    description: `${l.title} tại ${l.location}. Diện tích ${l.area}, giá ${l.price}. Xem hình ảnh, vị trí và thông tin chi tiết tại Coastal Land.`,
+    title: `${l.title} — ${l.price}`,
+    description: `${l.title} tại ${l.location}. Giá ${l.price}. Xem chi tiết tại Coastal Land.`,
   };
 }
 

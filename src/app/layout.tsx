@@ -30,10 +30,11 @@ const montserrat = Montserrat({
 });
 
 const SITE_URL = "https://coastalland.vn";
-const SITE_TITLE = "COASTAL LAND — Bất động sản Đà Nẵng, Huế & Miền Trung";
+const SITE_TITLE = "COASTAL LAND";
 const SITE_DESC =
-  "COASTAL LAND — Gateway to Central Coast property. Sàn giao dịch bất động sản trung gian, khách quan tại Đà Nẵng, Huế và Miền Trung: đất nền, căn hộ, nhà phố, villa biển và bất động sản công nghiệp.";
-const OG_IMAGE = "/images/hero-thanh-pho-hien-dai-26.jpg";
+  "Bất động sản Đà Nẵng, Huế và Miền Trung.";
+const OG_IMAGE_PATH = "/images/hero-thanh-pho-hien-dai-26.jpg";
+const OG_IMAGE_URL = new URL(OG_IMAGE_PATH, SITE_URL).toString();
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -61,13 +62,13 @@ export const metadata: Metadata = {
     siteName: "COASTAL LAND",
     title: SITE_TITLE,
     description: SITE_DESC,
-    images: [{ url: OG_IMAGE, width: 1200, height: 630, alt: "COASTAL LAND — Bất động sản Duyên hải Miền Trung" }],
+    images: [{ url: OG_IMAGE_URL, width: 1200, height: 630, alt: "COASTAL LAND — Bất động sản Duyên hải Miền Trung" }],
   },
   twitter: {
     card: "summary_large_image",
     title: SITE_TITLE,
     description: SITE_DESC,
-    images: [OG_IMAGE],
+    images: [OG_IMAGE_URL],
   },
   applicationName: "COASTAL LAND",
   // PWA — cài được lên màn hình chính Android & iOS

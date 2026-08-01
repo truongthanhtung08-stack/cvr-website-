@@ -51,7 +51,7 @@ export const PRICING_DEFAULT: PricingData = {
         "Xuất hiện trong box “Bất động sản nổi bật”.",
         "Chèn 1 link bất kỳ dưới tin đăng.",
       ],
-      sample: { image: "/images/tin/1.jpg", title: "VILLA BIỂN 3 TẦNG MẶT TIỀN VÕ NGUYÊN GIÁP, VIEW MỸ KHÊ", address: "Phước Mỹ, Sơn Trà, Đà Nẵng", price: "33 tỷ · 350 m²" },
+      sample: { image: "/images/tin/anh tin Diamond.png", title: "VILLA BIỂN 3 TẦNG MẶT TIỀN VÕ NGUYÊN GIÁP, VIEW MỸ KHÊ", address: "Phước Mỹ, Sơn Trà, Đà Nẵng", price: "33 tỷ · 350 m²" },
       prices: [
         { label: "Giá 1 tuần", price: "980.000đ" },
         { label: "Giá 2 tuần (−15%)", original: "1.960.000đ", price: "1.700.000đ" },
