@@ -438,7 +438,7 @@ export default function Header() {
         </nav>
 
         {/* Hành động: Lưu · (Đăng nhập | Tài khoản) · Đăng tin */}
-        <div className="flex items-center gap-3 sm:gap-5">
+        <div className="flex items-center gap-1 sm:gap-5">
           <SaveButton />
 
           {/* Tài khoản/Đăng nhập — CHỈ desktop (lg). MOBILE: avatar + tài khoản nằm TRONG

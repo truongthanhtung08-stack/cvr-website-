@@ -42,7 +42,7 @@ export function AdBannerSeller({ data = HOME_AD_DEFAULT.seller }: { data?: HomeA
   return (
     <section className="section-edge bg-white">
       <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 sm:py-4 lg:px-8">
-        <div className="relative overflow-hidden bg-cvr-surface shadow-lux">
+        <div className="relative -mx-4 overflow-hidden bg-cvr-surface shadow-lux sm:mx-0">
 
           {/* ===== MOBILE: nội dung TRÊN 1 hình nền · cao 210px ===== */}
           <div className="relative h-[210px] md:hidden">
@@ -127,11 +127,11 @@ export function AdBannerApp({ data = HOME_AD_DEFAULT.app }: { data?: HomeAdData[
   return (
     <section className="section-edge bg-white">
       <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 sm:py-4 lg:px-8">
-        <div className="relative overflow-hidden bg-[#0b0b0d] shadow-lux">
+        <div className="relative -mx-4 overflow-hidden bg-[#0b0b0d] shadow-lux sm:mx-0">
 
           {/* ===== MOBILE: 2 nút store (iOS + Android) bên TRÁI · iPhone TRÀN mép phải/đáy · cao 210px ===== */}
           <div className="grid h-[210px] grid-cols-[1fr_164px] items-center overflow-hidden md:hidden">
-            <div className="flex min-w-0 flex-col items-stretch gap-2.5 pl-5 pr-1">
+            <div className="flex min-w-0 flex-col items-stretch gap-2.5 pl-5 pr-5">
               <StoreButton store="apple" href={data.appleHref} compact />
               <StoreButton store="google" href={data.googleHref} compact />
             </div>

@@ -28,7 +28,7 @@ export const homeBanners: Banner[] = [
     id: "lp-gioi-thieu",
     image: "/images/hero-thanh-pho-hien-dai-26.jpg",
     status: "Bất Động Sản", // dòng 1 (nhãn)
-    title: "Duyên Hải Miền Trung", // dòng 2
+    title: "BĐS Duyên hải Việt Nam", // dòng 2 (1 dòng)
     subtitle: "Kết nối - Tiện ích - Xác thực", // dòng 3
     // cta: "Tìm hiểu thêm", // CTA TẮT cho banner công ty — bỏ // để bật
     showText: true,
@@ -40,7 +40,7 @@ export const homeBanners: Banner[] = [
     id: "lp-dich-vu",
     image: "/images/hero-pho-bien-9-26.jpg",
     status: "Cổng Thông Tin", // dòng 1 (nhãn — tự hiển thị IN HOA)
-    title: "Bất Động Sản trực tuyến", // dòng 2
+    title: "BĐS trực tuyến", // dòng 2 (1 dòng)
     subtitle: "Mua bán - Cho thuê - Dự án", // dòng 3
     // cta: "Xem dịch vụ", // CTA TẮT cho banner công ty — bỏ // để bật
     showText: true,

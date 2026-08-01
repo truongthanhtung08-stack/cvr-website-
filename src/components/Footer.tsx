@@ -17,6 +17,15 @@ const SOCIAL_PATHS: Record<string, string> = {
 };
 const DEFAULT_SOCIAL_PATH = SOCIAL_PATHS.Facebook;
 
+// Màu thương hiệu từng mạng — tô đúng logo (Zalo xanh · Facebook xanh · X đen · YouTube đỏ).
+const SOCIAL_COLORS: Record<string, string> = {
+  Zalo: "#0068FF",
+  Facebook: "#1877F2",
+  X: "#000000",
+  YouTube: "#FF0000",
+};
+const DEFAULT_SOCIAL_COLOR = SOCIAL_COLORS.Facebook;
+
 const columns = [
   {
     title: "Về COASTAL LAND",
@@ -104,15 +113,15 @@ export default function Footer() {
                   key={s.label}
                   href={s.href || "#"}
                   aria-label={s.label}
-                  className="flex h-9 w-9 items-center justify-center rounded-full border border-black/15 text-cvr-body transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 hover:scale-110 hover:border-cvr-ink hover:bg-cvr-ink hover:text-white"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-black/10 bg-white transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 hover:scale-110 hover:shadow-md"
                 >
-                  <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d={SOCIAL_PATHS[s.label] ?? DEFAULT_SOCIAL_PATH} /></svg>
+                  <svg className="h-[18px] w-[18px]" fill={SOCIAL_COLORS[s.label] ?? DEFAULT_SOCIAL_COLOR} viewBox="0 0 24 24"><path d={SOCIAL_PATHS[s.label] ?? DEFAULT_SOCIAL_PATH} /></svg>
                 </a>
               ))}
             </div>
 
-            {/* Ảnh minh hoạ — dẫn tới trang Giới thiệu */}
-            <div className="mt-6 grid max-w-sm grid-cols-3 gap-2">
+            {/* Ảnh minh hoạ — dẫn tới trang Giới thiệu (thu hẹp chiều ngang) */}
+            <div className="mt-6 grid max-w-[240px] grid-cols-3 gap-2">
               {f.images.map((s) => (
                 <Link key={s.src} href="/gioi-thieu" aria-label="Giới thiệu Coastal Land" className="group relative aspect-[4/3] overflow-hidden bg-cvr-surface ring-1 ring-black/5">
                   <Image src={asset(s.src)} alt={s.alt} fill sizes="140px" className="object-cover transition-transform duration-500 group-hover:scale-105" />

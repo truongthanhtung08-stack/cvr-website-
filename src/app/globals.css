@@ -441,6 +441,11 @@ html {
      xê dịch trái/phải khi chạm trên điện thoại. CHỈ ảnh hưởng hành vi cuộn, KHÔNG đụng
      chạm/bấm/layout; không dùng clip nên an toàn cho mọi máy (iPhone lẫn Android). */
   overscroll-behavior-x: none;
+  /* CHỐNG "XÊ DỊCH KHI ĐĂNG NHẬP/MỞ MENU": luôn CHỪA CHỖ cho thanh cuộn dọc.
+     Khi thanh cuộn xuất hiện/biến mất (mở menu khoá cuộn, chuyển trang dài↔ngắn,
+     đăng nhập) trang KHÔNG còn nhảy trái/phải nữa. Trên điện thoại (thanh cuộn nổi)
+     không chiếm chỗ nên vô hại. */
+  scrollbar-gutter: stable;
 }
 
 body {

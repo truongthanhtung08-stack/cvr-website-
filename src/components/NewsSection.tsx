@@ -35,7 +35,7 @@ export default function NewsSection({ articles }: { articles: Article[] }) {
           {/* Bài nổi bật */}
           <Link
             href={`/tin-tuc/${featured.slug}`}
-            className={`card-lux group relative flex flex-col overflow-hidden rounded-none border-0 bg-white shadow-lux shadow-lux-hover hover:-translate-y-1 sm:border sm:border-cvr-line ${headlines.length ? "lg:col-span-2" : ""}`}
+            className={`card-lux group relative -mx-4 flex flex-col overflow-hidden rounded-none border-0 bg-white shadow-lux shadow-lux-hover hover:-translate-y-1 sm:mx-0 sm:border sm:border-cvr-line ${headlines.length ? "lg:col-span-2" : ""}`}
           >
             <span className="card-sheen" aria-hidden />
             <div className="relative aspect-[16/9] overflow-hidden">

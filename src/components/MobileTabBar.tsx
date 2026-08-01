@@ -49,10 +49,21 @@ const ICONS: Record<string, IconPair> = {
       />
     ),
   },
-  // Dấu trang — Đã lưu
-  bookmark: {
-    line: <path strokeLinecap="round" strokeLinejoin="round" d="M6.2 4.9a1.6 1.6 0 0 1 1.6-1.6h8.4a1.6 1.6 0 0 1 1.6 1.6v15.6L12 17.1l-5.8 3.4Z" />,
-    fill: <path d="M7.8 2.8h8.4A2.1 2.1 0 0 1 18.3 4.9v15.6a1 1 0 0 1-1.5.86L12 18.5l-4.8 2.86a1 1 0 0 1-1.5-.86V4.9A2.1 2.1 0 0 1 7.8 2.8Z" />,
+  // Hai toà tháp — Dự án
+  duAn: {
+    line: (
+      <>
+        <rect x="3.5" y="8.5" width="7" height="11.5" rx="1" />
+        <rect x="12" y="4" width="8" height="16" rx="1" />
+        <path strokeLinecap="round" d="M2.5 20.5h19M6 11.6h2M6 14.6h2M15 7.2h2M15 10.6h2M15 14h2" />
+      </>
+    ),
+    fill: (
+      <>
+        <rect x="3.4" y="8.4" width="7.2" height="12.2" rx="1.2" />
+        <rect x="11.9" y="3.9" width="8.2" height="16.7" rx="1.2" />
+      </>
+    ),
   },
   // Người dùng — Tài khoản
   user: {
@@ -105,7 +116,7 @@ export default function MobileTabBar() {
     { href: "/", label: "Trang chủ", icon: "home" as const, on: pathname === "/" },
     { href: "/mua-ban", label: "Mua bán", icon: "tag" as const, on: pathname.startsWith("/mua-ban") },
     { href: "/cho-thue", label: "Cho thuê", icon: "building" as const, on: pathname.startsWith("/cho-thue") },
-    { href: "/tin-luu", label: "Đã lưu", icon: "bookmark" as const, on: pathname.startsWith("/tin-luu") },
+    { href: "/du-an", label: "Dự án", icon: "duAn" as const, on: pathname.startsWith("/du-an") },
     {
       href: user ? "/tai-khoan" : "/dang-nhap",
       label: "Tài khoản",
