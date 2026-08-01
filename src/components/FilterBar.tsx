@@ -441,7 +441,7 @@ export default function FilterBar({
   const searchBox = (
     <>
     <div ref={boxRef} className={compact ? "flex w-full gap-2.5" : "flex w-full gap-2"}>
-      <div className={compact ? "relative flex-1" : "relative flex h-12 min-w-0 flex-1 items-center rounded-none bg-cvr-surface transition focus-within:ring-2 focus-within:ring-cvr-blue/40"}>
+      <div className={compact ? "relative flex-1" : "relative flex h-11 min-w-0 flex-1 items-center rounded-none bg-cvr-surface transition focus-within:ring-2 focus-within:ring-cvr-blue/40 sm:h-12"}>
         {/* Kính lúp trái — compact(Hero) trên MOBILE ẩn đi vì đã có nút search xanh bên phải */}
         <svg className={`pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-cvr-faint ${compact ? "hidden sm:block" : ""}`} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
@@ -518,7 +518,7 @@ export default function FilterBar({
               type="button"
               aria-label="Tìm kiếm"
               onClick={() => { setSugOpen(false); onSearch?.(); }}
-              className="m-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-cvr-blue text-white transition active:scale-95 sm:hidden"
+              className="m-1 flex w-9 shrink-0 items-center justify-center self-stretch rounded-lg bg-cvr-blue text-white transition active:scale-95 sm:hidden"
             >
               <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />

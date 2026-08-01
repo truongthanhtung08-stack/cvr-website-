@@ -57,14 +57,16 @@ export default function SearchClient({ items = featuredListings }: { items?: Lis
   const pageItems = results.slice((current - 1) * PER_PAGE, current * PER_PAGE);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 pb-20 pt-6 sm:px-6 lg:px-8">
-      <h1 className="text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">Tìm kiếm bất động sản</h1>
-      <p className="mt-1.5 text-sm text-cvr-muted">
+    <div className="mx-auto max-w-7xl px-4 pb-20 pt-2 sm:px-6 sm:pt-6 lg:px-8">
+      {/* MOBILE: ẩn tiêu đề + mô tả để thanh tìm kiếm sát ngay dưới header (không chừa khoảng trống).
+          Vẫn giữ trong DOM cho SEO (hidden = display:none, Google vẫn đọc). */}
+      <h1 className="hidden text-2xl font-semibold tracking-tight text-cvr-ink sm:block sm:text-3xl">Tìm kiếm bất động sản</h1>
+      <p className="mt-1.5 hidden text-sm text-cvr-muted sm:block">
         Không giới hạn khu vực — gõ khu vực, dự án hay loại hình bất động sản đều ra kết quả.
       </p>
 
       {/* Thanh lọc thông minh (dùng chung với /mua-ban, /cho-thue) */}
-      <div className="mt-5">
+      <div className="mt-0 sm:mt-5">
         <FilterBar value={filters} onChange={changeFilters} purpose={purpose} />
       </div>
 

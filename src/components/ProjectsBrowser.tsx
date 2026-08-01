@@ -329,12 +329,9 @@ export default function ProjectsBrowser({
                   <p className="mb-3 mt-1.5 line-clamp-2 text-xs leading-relaxed text-cvr-muted">
                     {p.type} · {p.overview[0]}
                   </p>
-                  <div className="mt-auto flex items-center justify-between gap-3 border-t border-cvr-line pt-2.5">
-                    <span className="truncate text-xs text-cvr-body">
+                  <div className="mt-auto border-t border-cvr-line pt-2.5">
+                    <span className="text-xs text-cvr-body">
                       Chủ đầu tư: <span className="font-medium text-cvr-ink">{p.developer}</span>
-                    </span>
-                    <span className="shrink-0 text-xs font-medium text-cvr-muted transition-colors group-hover:text-cvr-blue-ink">
-                      Xem dự án →
                     </span>
                   </div>
                 </div>
