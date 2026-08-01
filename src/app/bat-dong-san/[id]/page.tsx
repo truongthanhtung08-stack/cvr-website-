@@ -318,9 +318,9 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between border-b border-cvr-line py-3 text-sm">
-      <span className="text-cvr-muted">{label}</span>
-      <span className="font-medium text-cvr-ink">{value}</span>
+    <div className="flex items-start justify-between gap-4 border-b border-cvr-line py-3 text-sm">
+      <span className="shrink-0 whitespace-nowrap text-cvr-muted">{label}</span>
+      <span className="min-w-0 text-right font-medium text-cvr-ink">{value}</span>
     </div>
   );
 }

@@ -142,9 +142,9 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                 {p.scale.length > 0 && (
                   <div className="mt-6 grid grid-cols-1 gap-x-8 sm:grid-cols-2">
                     {p.scale.map((s) => (
-                      <div key={s.label} className="flex items-center justify-between border-b border-cvr-line/70 py-3 text-sm">
-                        <span className="text-cvr-muted">{s.label}</span>
-                        <span className="font-medium text-cvr-ink">{s.value}</span>
+                      <div key={s.label} className="flex items-start justify-between gap-4 border-b border-cvr-line/70 py-3 text-sm">
+                        <span className="shrink-0 whitespace-nowrap text-cvr-muted">{s.label}</span>
+                        <span className="min-w-0 text-right font-medium text-cvr-ink">{s.value}</span>
                       </div>
                     ))}
                   </div>

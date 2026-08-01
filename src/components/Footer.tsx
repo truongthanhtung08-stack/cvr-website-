@@ -123,7 +123,7 @@ export default function Footer() {
             {/* Ảnh minh hoạ — dẫn tới trang Giới thiệu (thu hẹp chiều ngang) */}
             <div className="mt-6 grid max-w-[240px] grid-cols-3 gap-2">
               {f.images.map((s) => (
-                <Link key={s.src} href="/gioi-thieu" aria-label="Giới thiệu Coastal Land" className="group relative aspect-[4/3] overflow-hidden bg-cvr-surface ring-1 ring-black/5">
+                <Link key={s.src} href="/gioi-thieu" aria-label="Giới thiệu Coastal Land" className="group relative aspect-[16/9] overflow-hidden rounded-md bg-cvr-surface ring-1 ring-black/5">
                   <Image src={asset(s.src)} alt={s.alt} fill sizes="140px" className="object-cover transition-transform duration-500 group-hover:scale-105" />
                 </Link>
               ))}

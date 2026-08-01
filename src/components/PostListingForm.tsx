@@ -399,7 +399,7 @@ export default function PostListingForm() {
 
       {/* 7. Mô tả */}
       <Card step="7" title="Mô tả chi tiết">
-        <textarea rows={6} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Mô tả vị trí, kết cấu, tiện ích, pháp lý, lý do bán… (nội dung càng đầy đủ càng dễ chốt)" className={inputCls + " resize-y"} />
+        <textarea rows={6} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Mô tả vị trí, kết cấu, tiện ích, pháp lý, lý do bán… (nội dung càng đầy đủ càng dễ chốt)" className="w-full resize-y rounded-lg border border-transparent bg-cvr-surface px-3 py-2.5 text-sm leading-relaxed text-cvr-ink placeholder-cvr-faint outline-none transition focus:border-cvr-line focus:bg-white min-h-[9rem]" />
       </Card>
 
       {/* 8. Hình ảnh — tải từ máy / dán link, ảnh đầu là ảnh đại diện */}
