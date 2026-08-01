@@ -60,9 +60,9 @@ export default function ProjectsSection({ projects }: { projects: Project[] }) {
                     <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                     {p.location}
                   </p>
-                  <div className="mt-3 flex items-center justify-between border-t border-cvr-line pt-3">
-                    <span className="text-xs text-cvr-muted">{p.type}</span>
-                    <span className="text-sm font-semibold text-cvr-ink">{p.priceFrom}</span>
+                  <div className="mt-3 flex items-center justify-between gap-3 border-t border-cvr-line pt-3">
+                    <span className="min-w-0 truncate text-xs text-cvr-muted">{p.type}</span>
+                    <span className="shrink-0 whitespace-nowrap text-sm font-semibold text-cvr-ink">{p.priceFrom}</span>
                   </div>
                 </div>
               </Link>

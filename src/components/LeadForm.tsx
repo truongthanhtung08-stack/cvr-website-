@@ -43,7 +43,7 @@ export default function LeadForm({
         <label className="mb-1.5 block text-sm font-medium text-cvr-body">Nội dung</label>
         <textarea name="note" rows={4} placeholder="Mô tả bất động sản hoặc nhu cầu của bạn…" className="w-full rounded-lg border border-transparent bg-cvr-surface px-3 py-2.5 text-sm text-cvr-ink placeholder-cvr-faint outline-none transition focus:border-cvr-line focus:bg-white" />
       </div>
-      <button type="submit" className="btn-dangtin flex w-full items-center justify-center gap-2 rounded-lg px-6 py-3.5 text-sm font-bold text-cvr-ink">
+      <button type="submit" className="btn-dangtin flex w-full items-center justify-center gap-2 rounded-lg px-6 py-3.5 text-sm font-bold text-white">
         {cta}
       </button>
       <p className="text-center text-[11px] text-cvr-faint">Thông tin của bạn được bảo mật theo chính sách của Coastal Land.</p>

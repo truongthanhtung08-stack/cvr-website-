@@ -85,10 +85,10 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
       {/* Schema.org RealEstateListing — dữ liệu chuẩn cho Google (IV.2) */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <main className="flex-1 bg-white">
-        <div className="mx-auto max-w-7xl px-4 pb-24 pt-6 sm:px-6 lg:px-8 lg:pb-20">
+        <div className="mx-auto max-w-7xl px-4 pb-24 pt-2 sm:px-6 sm:pt-6 lg:px-8 lg:pb-20">
 
-          {/* Thư viện ảnh THẬT — tràn full chiều rộng phía trên (kiểu Homedy) */}
-          <div className="mb-6">
+          {/* Thư viện ảnh THẬT — MOBILE tràn viền sát 2 mép (giảm khoảng trống trên) */}
+          <div className="-mx-4 mb-6 sm:mx-0">
             <Gallery images={d.images} alt={l.title} />
           </div>
 

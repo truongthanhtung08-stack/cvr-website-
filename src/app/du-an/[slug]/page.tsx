@@ -102,10 +102,12 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
     <>
       <Header />
       <main className="flex-1 bg-white">
-        <div className="mx-auto max-w-7xl px-4 pb-20 pt-6 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl px-4 pb-20 pt-2 sm:px-6 sm:pt-6 lg:px-8">
 
-          {/* Thư viện ảnh — bấm để xem lớn + zoom */}
-          <ProjectGallery images={gallery} alt={p.name} />
+          {/* Thư viện ảnh — MOBILE tràn viền sát 2 mép (giảm khoảng trống trên) · bấm để xem lớn + zoom */}
+          <div className="-mx-4 sm:mx-0">
+            <ProjectGallery images={gallery} alt={p.name} />
+          </div>
 
           {/* Tiêu đề + địa chỉ — bố cục cân đối, rõ ràng */}
           <div className="mt-5">
@@ -121,7 +123,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             </p>
 
             {/* Dải thông tin nhanh — cân đối, dễ đọc từng tiêu chí */}
-            <div className="mt-4 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-cvr-line bg-cvr-line sm:grid-cols-4">
+            <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
               <Fact label="Giá từ" value={p.priceFrom} accent />
               <Fact label="Loại hình" value={p.type} />
               <Fact label="Chủ đầu tư" value={p.developer} />
