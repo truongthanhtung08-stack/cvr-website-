@@ -19,9 +19,9 @@ const ArrowRight = (
 
 // Lợi ích ngắn — chỉ hiện trên PC để lấp khoảng trống dọc (mobile chật, không dùng)
 const SELLER_FEATURES = [
-  "Đăng tin nhanh chỉ trong vài phút",
-  "Kiểm duyệt & hiển thị ngay trong ngày",
-  "Tiếp cận đúng khách mua tại Miền Trung",
+  "Đăng tin nhanh trong vài phút",
+  "Kiểm duyệt & hiển thị ngay",
+  "Tiếp cận khách hàng nhanh chóng",
 ];
 const APP_FEATURES = [
   "Tìm kiếm & lọc bất động sản thông minh",
