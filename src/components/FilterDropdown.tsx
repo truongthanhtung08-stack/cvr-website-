@@ -145,10 +145,12 @@ export default function FilterDropdown({
                     ? "border-transparent bg-cvr-blue text-white"
                     : "border-transparent bg-cvr-surface text-cvr-ink hover:bg-black/[0.07]"
                 }`
-              : `h-10 w-auto shrink-0 whitespace-nowrap rounded-none px-3.5 ${
+              : // MOBILE: pill bo tròn mềm, nền xám nhạt (giống ô tìm) — hết ô vuông viền cứng.
+                // DESKTOP (sm): giữ nguyên kiểu cũ (vuông, viền, nền trắng).
+                `h-10 w-auto shrink-0 whitespace-nowrap rounded-full px-4 sm:rounded-none sm:px-3.5 ${
                   active
-                    ? "border-cvr-blue/60 bg-white font-medium text-cvr-blue-ink"
-                    : "border-cvr-line bg-white text-cvr-body hover:border-cvr-ink/35 hover:text-cvr-ink"
+                    ? "border-cvr-blue bg-cvr-blue/10 font-medium text-cvr-blue-ink sm:border-cvr-blue/60 sm:bg-white"
+                    : "border-black/10 bg-cvr-surface text-cvr-ink/80 hover:border-cvr-ink/35 hover:text-cvr-ink sm:border-cvr-line sm:bg-white sm:text-cvr-body"
                 }`
         }`}
       >

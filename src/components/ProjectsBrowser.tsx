@@ -127,13 +127,13 @@ export default function ProjectsBrowser({
         </div>
       )}
 
-      {/* ── Thanh tìm + lọc dự án (MOBILE: lên trên cùng, KHÔNG khung viền/bóng cho gọn sạch) ── */}
-      <div className="order-1 mt-2 rounded-none bg-white p-2.5 sm:order-2 sm:mt-2.5 sm:border sm:border-cvr-line sm:shadow-lux">
+      {/* ── Thanh tìm + lọc dự án (MOBILE: lên trên cùng, KHÔNG khung viền/bóng, rộng hết bề ngang) ── */}
+      <div className="order-1 mt-1 rounded-none bg-white pb-2.5 pt-1 sm:order-2 sm:mt-2.5 sm:border sm:border-cvr-line sm:p-2.5 sm:shadow-lux">
         <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
           {/* Ô tìm nhanh dự án — nút search XANH nằm SÁT mép phải trong khung (mobile), đồng bộ Mua bán/Cho thuê */}
           <div className="flex flex-1 items-center gap-2">
           <div className="relative flex-1">
-            <svg className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-cvr-faint" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <svg className="pointer-events-none absolute left-3 top-1/2 hidden h-4 w-4 -translate-y-1/2 text-cvr-faint sm:block" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
             </svg>
             <input
@@ -146,7 +146,7 @@ export default function ProjectsBrowser({
               }}
               placeholder="Tìm nhanh theo tên dự án, chủ đầu tư, vị trí…"
               aria-label="Tìm nhanh dự án"
-              className="h-11 w-full rounded-xl border border-transparent bg-cvr-surface pl-9 pr-14 text-sm text-cvr-ink placeholder-cvr-faint outline-none transition focus:border-cvr-line focus:bg-white sm:h-10 sm:pr-9"
+              className="h-11 w-full rounded-xl bg-cvr-surface pl-4 pr-14 text-[15px] text-cvr-ink placeholder-cvr-faint ring-1 ring-black/5 outline-none transition focus:ring-2 focus:ring-cvr-blue/50 sm:h-10 sm:border sm:border-transparent sm:pl-9 sm:pr-9 sm:ring-0 sm:focus:border-cvr-line sm:focus:bg-white"
             />
             {/* Nút xoá nhanh (×) — đồng bộ với ô tìm Mua bán/Cho thuê */}
             {q.trim().length > 0 && (
@@ -159,12 +159,12 @@ export default function ProjectsBrowser({
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             )}
-            {/* Nút search XANH — CAO FULL khung, SÁT mép phải (chỉ mobile) → mở tìm toàn màn hình */}
+            {/* Nút search XANH — bo tròn mềm, snug mép phải (giống trang chủ) → mở tìm toàn màn hình */}
             <button
               type="button"
               aria-label="Tìm kiếm"
               onClick={() => setOverlay(true)}
-              className="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-r-xl bg-cvr-blue text-white transition active:scale-95 sm:hidden"
+              className="absolute right-1 top-1 bottom-1 flex w-11 items-center justify-center rounded-lg bg-cvr-blue text-white transition hover:bg-cvr-blue-ink active:scale-95 sm:hidden"
             >
               <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" /></svg>
             </button>
@@ -172,7 +172,7 @@ export default function ProjectsBrowser({
           </div>
 
           {/* Chip lọc: Khu vực · Loại hình · Trạng thái — MOBILE cuộn ngang 1 dòng */}
-          <div className="no-scrollbar -mx-2.5 flex items-center gap-2 overflow-x-auto px-2.5 pb-0.5 lg:mx-0 lg:overflow-visible lg:px-0">
+          <div className="no-scrollbar flex items-center gap-2 overflow-x-auto pb-0.5 lg:overflow-visible">
             <FilterDropdownGroup>
               <FilterDropdown label="Khu vực" summary={province === ALL ? "" : province} active={province !== ALL} panelClassName="w-64" className="shrink-0">
                 {({ close }) => (
