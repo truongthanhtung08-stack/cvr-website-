@@ -168,8 +168,7 @@ function NavLink({ item }: { item: NavItem }) {
                 </div>
               ) : null}
             </div>
-            {index < item.children.length - 1 ? <div className="mx-4 h-px bg-cvr-line/70" /> : null}
-          </div>
+{index < (item.children?.length ?? 0) - 1 ? <div className="mx-4 h-px bg-cvr-line/70" /> : null}          </div>
         ))}
       </DropdownPanel>
     </div>
