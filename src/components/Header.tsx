@@ -401,7 +401,7 @@ function MobileMenu({
                             </div>
                           ) : null}
                         </div>
-                        {index < item.children?.length - 1 ? <div className="h-px bg-white/10" /> : null}
+                        {index < (item.children?.length ?? 0) - 1 ? <div className="h-px bg-white/10" /> : null}
                       </div>
                     ))}
                     <div className="h-2" />
