@@ -5,7 +5,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import LeadForm from "@/components/LeadForm";
 import PricingSidebar from "@/components/PricingSidebar";
-import { getTier, type TierId } from "@/lib/packages";
+import { getTier, type TierId, utilityTools } from "@/lib/packages";
 import { asset } from "@/lib/asset";
 
 export const metadata: Metadata = {
@@ -192,6 +192,7 @@ const rules = [
 ];
 
 const serviceMenu = [
+  { label: "Công cụ tiện ích", href: "#cong-cu-tien-ich" },
   { label: "1. Gói đăng tin VIP", href: "#goi-vip" },
   { label: "2. Gói tin đăng lẻ", href: "#goi-le" },
   { label: "3. Gói Đẩy tin", href: "#goi-day-tin" },
@@ -232,6 +233,25 @@ export default function BaoGiaPage() {
             <PricingSidebar items={serviceMenu} hotline={HOTLINE} />
 
             <div className="min-w-0 space-y-20">
+              {/* 0. CÔNG CỤ TIỆN ÍCH */}
+              <section id="cong-cu-tien-ich" className="scroll-mt-24">
+                <SectionTitle no="00" title="Công cụ tiện ích đi kèm" desc="Tất cả các công cụ mới đã tạo đều được gom vào đây để khách hàng tiếp cận dễ dàng." />
+                <div className="mt-7 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                  {utilityTools.map((tool) => (
+                    <Link
+                      key={tool.slug}
+                      href={`/tien-ich/${tool.slug}`}
+                      className="group rounded-2xl border border-cvr-line bg-white p-5 shadow-lux transition hover:-translate-y-0.5 hover:border-cvr-gold-ink"
+                    >
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-cvr-gold-ink">Tiện ích</p>
+                      <h3 className="mt-2 text-lg font-semibold tracking-tight text-cvr-ink">{tool.label}</h3>
+                      <p className="mt-2 text-sm leading-relaxed text-cvr-muted">{tool.description}</p>
+                      <span className="mt-4 inline-flex text-sm font-semibold text-cvr-ink transition group-hover:text-cvr-gold-ink">Xem ngay →</span>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+
               {/* 1. GÓI ĐĂNG TIN VIP */}
               <section id="goi-vip" className="scroll-mt-24">
                 <SectionTitle no="01" title="Gói đăng tin VIP" desc="Giải pháp tiếp cận tin đăng hiệu quả tới khách hàng tiềm năng." />

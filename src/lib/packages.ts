@@ -51,12 +51,15 @@ export function tierRank(badge?: string): number {
 }
 
 // --- 5 GÓI DỊCH VỤ (đúng menu spec V.2) ---
+export type PkgKind = "service" | "tool";
+
 export type Pkg = {
   slug: string;
   label: string; // nhãn trên menu Tiện ích
   title: string; // tiêu đề trang
   description: string; // mô tả ngắn dưới tiêu đề
   icon: PkgIcon; // key icon (vẽ trong component)
+  kind: PkgKind;
 };
 
 export type PkgIcon = "post" | "boost" | "project" | "pr" | "banner";
@@ -68,6 +71,7 @@ export const packages: Pkg[] = [
     title: "Gói Đăng tin",
     description: "Đăng tin bất động sản theo hạng CVR — hiển thị đúng đối tượng, tối ưu lượt xem.",
     icon: "post",
+    kind: "service",
   },
   {
     slug: "goi-day-tin",
@@ -75,6 +79,7 @@ export const packages: Pkg[] = [
     title: "Gói Đẩy tin (Up tin)",
     description: "Đẩy tin lên đầu danh sách, làm mới thời gian đăng để luôn nằm trong tầm mắt người mua.",
     icon: "boost",
+    kind: "service",
   },
   {
     slug: "goi-du-an",
@@ -82,6 +87,7 @@ export const packages: Pkg[] = [
     title: "Gói Dự án",
     description: "Trang dự án riêng cho chủ đầu tư/đại lý — trình bày tổng thể, mặt bằng, tiến độ.",
     icon: "project",
+    kind: "service",
   },
   {
     slug: "goi-bai-pr",
@@ -89,6 +95,7 @@ export const packages: Pkg[] = [
     title: "Gói bài PR",
     description: "Bài viết truyền thông trên chuyên mục Tin tức — tăng độ tin cậy & nhận diện thương hiệu.",
     icon: "pr",
+    kind: "service",
   },
   {
     slug: "goi-banner",
@@ -96,11 +103,63 @@ export const packages: Pkg[] = [
     title: "Gói Banner quảng cáo",
     description: "Vị trí banner nổi bật trên trang chủ và các trang danh sách — tiếp cận diện rộng.",
     icon: "banner",
+    kind: "service",
+  },
+];
+
+export const utilityTools: Pkg[] = [
+  {
+    slug: "so-sanh-nha-dat",
+    label: "So sánh nhà đất",
+    title: "So sánh nhà đất",
+    description: "So sánh nhanh các tin bất động sản theo khu vực, giá và diện tích.",
+    icon: "post",
+    kind: "tool",
+  },
+  {
+    slug: "gia-nha-dat",
+    label: "Giá nhà đất",
+    title: "Giá nhà đất",
+    description: "Theo dõi và tra cứu xu hướng giá nhà đất theo khu vực.",
+    icon: "boost",
+    kind: "tool",
+  },
+  {
+    slug: "bao-cao-thi-truong-bds",
+    label: "Báo cáo thị trường BĐS",
+    title: "Báo cáo thị trường BĐS",
+    description: "Cập nhật tình hình thị trường bất động sản Miền Trung theo thời điểm.",
+    icon: "project",
+    kind: "tool",
+  },
+  {
+    slug: "tinh-lai-suat-vay",
+    label: "Tính lãi suất vay",
+    title: "Tính lãi suất vay",
+    description: "Công cụ tính toán lãi suất vay mua nhà, đầu tư và tài chính.",
+    icon: "pr",
+    kind: "tool",
+  },
+  {
+    slug: "thu-vien-phap-luat",
+    label: "Thư viện pháp luật",
+    title: "Thư viện pháp luật",
+    description: "Kho tư liệu pháp luật liên quan đến giao dịch bất động sản.",
+    icon: "banner",
+    kind: "tool",
+  },
+  {
+    slug: "xem-phong-thuy",
+    label: "Xem phong thủy",
+    title: "Xem phong thủy",
+    description: "Hướng dẫn xem phong thủy cho nhà ở và đất nền theo nguyên tắc cơ bản.",
+    icon: "post",
+    kind: "tool",
   },
 ];
 
 export function getPackage(slug: string): Pkg | undefined {
-  return packages.find((p) => p.slug === slug);
+  return [...packages, ...utilityTools].find((p) => p.slug === slug);
 }
 
 // Bảng giá & quyền lợi theo cấp tin — số liệu THẬT từ file "Gia đăng tin + QC"

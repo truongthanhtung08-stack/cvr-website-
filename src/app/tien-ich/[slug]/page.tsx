@@ -4,10 +4,10 @@ import { notFound } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import LeadForm from "@/components/LeadForm";
-import { packages, getPackage, tiers, benefitRows } from "@/lib/packages";
+import { packages, utilityTools, getPackage, tiers, benefitRows } from "@/lib/packages";
 
 export function generateStaticParams() {
-  return packages.map((p) => ({ slug: p.slug }));
+  return [...packages, ...utilityTools].map((p) => ({ slug: p.slug }));
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -53,19 +53,23 @@ export default async function PackagePage({ params }: { params: Promise<{ slug: 
           {/* Thanh chọn gói (giống Homedy) */}
           <div className="-mx-1 mb-8 overflow-x-auto">
             <div className="flex gap-2 whitespace-nowrap px-1">
-              {packages.map((pkg) => {
-                const active = pkg.slug === p.slug;
+              {[
+                { slug: "bao-gia-dang-tin", label: "Báo giá dịch vụ", href: "/bao-gia-dang-tin", kind: "service" as const },
+                ...packages.map((pkg) => ({ ...pkg, href: `/tien-ich/${pkg.slug}` })),
+                ...utilityTools.map((tool) => ({ ...tool, href: `/tien-ich/${tool.slug}` })),
+              ].map((item) => {
+                const active = item.slug === p.slug;
                 return (
                   <Link
-                    key={pkg.slug}
-                    href={`/tien-ich/${pkg.slug}`}
+                    key={item.slug}
+                    href={item.href}
                     className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
                       active
                         ? "border-cvr-blue bg-cvr-blue text-white"
                         : "border-cvr-line text-cvr-body hover:border-cvr-ink hover:text-cvr-ink"
                     }`}
                   >
-                    {pkg.label}
+                    {item.label}
                   </Link>
                 );
               })}
@@ -81,54 +85,66 @@ export default async function PackagePage({ params }: { params: Promise<{ slug: 
             <p className="mt-3 text-base leading-relaxed text-cvr-muted">{p.description}</p>
           </header>
 
-          {/* Bảng giá 4 cấp tin CVR — số liệu thật từ bảng "Gói đăng tin + QC" */}
-          <section className="mt-12">
-            <div className="mb-5 flex flex-wrap items-end justify-between gap-2">
-              <h2 className="text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">Bảng giá theo cấp tin</h2>
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {tiers.map((t) => (
-                <div
-                  key={t.id}
-                  className="flex flex-col overflow-hidden rounded-none border border-cvr-line bg-white shadow-lux"
-                >
-                  {/* Đầu cột — màu theo hạng */}
-                  <div
-                    className="px-5 py-4"
-                    style={{ borderTop: `3px solid ${t.accent}` }}
-                  >
-                    <p className="text-lg font-bold" style={{ color: t.accent }}>{t.name}</p>
-                    <p className="mt-0.5 text-xs text-cvr-muted">{t.tagline}</p>
-                  </div>
-
-                  {/* Các dòng quyền lợi (placeholder) */}
-                  <div className="flex-1 divide-y divide-cvr-line/70 px-5">
-                    {benefitRows.map((row) => (
-                      <div key={row.label} className="flex items-center justify-between gap-3 py-3 text-sm">
-                        <span className="text-cvr-muted">{row.label}</span>
-                        <span className="text-right font-medium text-cvr-ink">{row.values[t.id]}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* CTA cột */}
-                  <div className="p-5">
-                    <a
-                      href="#lien-he"
-                      className="block rounded-lg bg-cvr-ink py-2.5 text-center text-sm font-semibold text-white transition hover:bg-cvr-ink/90"
-                    >
-                      Nhận tư vấn {t.name}
-                    </a>
-                  </div>
+          {p.kind === "tool" ? (
+            <section className="mt-12">
+              <div className="rounded-2xl border border-cvr-line bg-cvr-surface p-8 sm:p-10">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-cvr-gold-ink">Công cụ tiện ích</p>
+                <h2 className="mt-3 text-2xl font-semibold tracking-tight text-cvr-ink">{p.title}</h2>
+                <p className="mt-3 max-w-2xl text-base leading-relaxed text-cvr-muted">{p.description}</p>
+                <div className="mt-6 rounded-xl border border-cvr-line bg-white p-5 shadow-[0_1px_10px_rgba(0,0,0,0.05)]">
+                  <p className="text-base font-semibold text-cvr-ink">Tính năng này đang được chuẩn bị.</p>
+                  <p className="mt-2 text-sm leading-relaxed text-cvr-muted">
+                    Coastal Land sẽ sớm cập nhật nội dung, dữ liệu và công cụ tương tác cho mục này để bạn sử dụng thuận tiện hơn.
+                  </p>
                 </div>
-              ))}
-            </div>
+              </div>
+            </section>
+          ) : (
+            <section className="mt-12">
+              <div className="mb-5 flex flex-wrap items-end justify-between gap-2">
+                <h2 className="text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">Bảng giá theo cấp tin</h2>
+              </div>
 
-            <p className="mt-4 text-xs text-cvr-faint">
-              * Tin VIP được ưu tiên kiểm duyệt và hiển thị sớm. Giá đã gồm ưu đãi theo thời hạn gói — liên hệ Coastal Land để được tư vấn cấp tin phù hợp.
-            </p>
-          </section>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {tiers.map((t) => (
+                  <div
+                    key={t.id}
+                    className="flex flex-col overflow-hidden rounded-none border border-cvr-line bg-white shadow-lux"
+                  >
+                    <div
+                      className="px-5 py-4"
+                      style={{ borderTop: `3px solid ${t.accent}` }}
+                    >
+                      <p className="text-lg font-bold" style={{ color: t.accent }}>{t.name}</p>
+                      <p className="mt-0.5 text-xs text-cvr-muted">{t.tagline}</p>
+                    </div>
+
+                    <div className="flex-1 divide-y divide-cvr-line/70 px-5">
+                      {benefitRows.map((row) => (
+                        <div key={row.label} className="flex items-center justify-between gap-3 py-3 text-sm">
+                          <span className="text-cvr-muted">{row.label}</span>
+                          <span className="text-right font-medium text-cvr-ink">{row.values[t.id]}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="p-5">
+                      <a
+                        href="#lien-he"
+                        className="block rounded-lg bg-cvr-ink py-2.5 text-center text-sm font-semibold text-white transition hover:bg-cvr-ink/90"
+                      >
+                        Nhận tư vấn {t.name}
+                      </a>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <p className="mt-4 text-xs text-cvr-faint">
+                * Tin VIP được ưu tiên kiểm duyệt và hiển thị sớm. Giá đã gồm ưu đãi theo thời hạn gói — liên hệ Coastal Land để được tư vấn cấp tin phù hợp.
+              </p>
+            </section>
+          )}
 
           {/* Liên hệ tư vấn */}
           <section id="lien-he" className="mt-14 scroll-mt-28">

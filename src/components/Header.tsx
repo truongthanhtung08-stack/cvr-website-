@@ -3,11 +3,11 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import BrandLogo from "@/components/BrandLogo";
-import { packages } from "@/lib/packages";
+import { packages, utilityTools } from "@/lib/packages";
 import { haptic } from "@/lib/haptic";
 import { useAuth, displayName, signOut } from "@/lib/useAuth";
 
-type NavChild = { label: string; href: string };
+type NavChild = { label: string; href: string; children?: NavChild[] };
 // icon = path 'd' của SVG (24x24, outline) — hiện bên trái mỗi mục trong menu Mobile (kiểu Batdongsan).
 type NavItem = { label: string; href: string; children?: NavChild[]; icon?: string };
 
@@ -69,10 +69,22 @@ const danhMucChuyenGia: NavChild[] = [
   { label: "Trở thành chuyên gia", href: "/chuyen-gia/dang-ky" },
 ];
 
-// Menu Tiện ích — trang báo giá tổng + các gói dịch vụ (lấy từ packages.ts để không lặp dữ liệu)
+// Menu Tiện ích — bố trí theo logic: báo giá ở đầu, sau đó là nhóm dịch vụ và công cụ tiện ích.
 const danhMucTienIch: NavChild[] = [
-  { label: "Báo giá Dịch vụ và Truyền thông", href: "/bao-gia-dang-tin" },
-  ...packages.map((p) => ({ label: p.label, href: `/tien-ich/${p.slug}` })),
+  {
+    label: "Báo giá dịch vụ và truyền thông",
+    href: "/bao-gia-dang-tin",
+  },
+  {
+    label: "Dịch vụ",
+    href: "/tien-ich/goi-dang-tin",
+    children: packages.map((item) => ({ label: item.label, href: `/tien-ich/${item.slug}` })),
+  },
+  {
+    label: "Công cụ tiện ích",
+    href: "/tien-ich/so-sanh-nha-dat",
+    children: utilityTools.map((item) => ({ label: item.label, href: `/tien-ich/${item.slug}` })),
+  },
 ];
 
 // Thứ tự menu: Dự án · Mua bán · Cho thuê · Tin tức · Chuyên gia · Tiện ích
@@ -82,7 +94,7 @@ const navItems: NavItem[] = [
   { label: "Cho thuê", href: "/cho-thue", children: loaiHinhThue, icon: ICONS.choThue },
   { label: "Tin tức", href: "/tin-tuc", icon: ICONS.tinTuc },
   { label: "Chuyên gia", href: "/chuyen-gia", children: danhMucChuyenGia, icon: ICONS.chuyenGia },
-  { label: "Tiện ích", href: "/tien-ich/goi-dang-tin", children: danhMucTienIch, icon: ICONS.tienIch },
+  { label: "Tiện ích", href: "/bao-gia-dang-tin", children: danhMucTienIch, icon: ICONS.tienIch },
 ];
 
 const chevronDown = (
@@ -133,14 +145,31 @@ function NavLink({ item }: { item: NavItem }) {
       </Link>
 
       <DropdownPanel>
-        {item.children.map((child) => (
-          <Link
-            key={child.href}
-            href={child.href}
-            className="block px-4 py-2.5 text-sm font-medium text-cvr-body transition-colors hover:bg-cvr-surface hover:text-cvr-ink"
-          >
-            {child.label}
-          </Link>
+        {item.children.map((child, index) => (
+          <div key={child.href}>
+            <div className={`px-4 py-2.5 ${child.children?.length ? "rounded-lg bg-cvr-surface/70" : ""}`}>
+              <Link
+                href={child.href}
+                className={`block text-sm transition-colors ${child.children?.length ? "font-semibold uppercase tracking-[0.16em] text-cvr-gold-ink" : "font-semibold text-cvr-ink hover:text-cvr-gold-ink"}`}
+              >
+                {child.label}
+              </Link>
+              {child.children?.length ? (
+                <div className="mt-2 space-y-1.5 border-l border-cvr-line/70 pl-3">
+                  {child.children.map((grandChild) => (
+                    <Link
+                      key={grandChild.href}
+                      href={grandChild.href}
+                      className="block text-sm text-cvr-body transition-colors hover:text-cvr-ink"
+                    >
+                      {grandChild.label}
+                    </Link>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+            {index < item.children.length - 1 ? <div className="mx-4 h-px bg-cvr-line/70" /> : null}
+          </div>
         ))}
       </DropdownPanel>
     </div>
@@ -348,15 +377,33 @@ function MobileMenu({
                     >
                       Xem tất cả
                     </Link>
-                    {item.children.map((child) => (
-                      <Link
-                        key={child.href}
-                        href={child.href}
-                        onClick={onClose}
-                        className="block py-2.5 text-[15px] text-white/70 transition-colors active:text-white"
-                      >
-                        {child.label}
-                      </Link>
+                    {item.children.map((child, index) => (
+                      <div key={child.href}>
+                        <div className="py-2.5">
+                          <Link
+                            href={child.href}
+                            onClick={onClose}
+                            className={`block text-[15px] transition-colors ${child.children?.length ? "font-semibold text-white" : "font-semibold text-white/90"}`}
+                          >
+                            {child.label}
+                          </Link>
+                          {child.children?.length ? (
+                            <div className="mt-1.5 space-y-1.5 pl-3">
+                              {child.children.map((grandChild) => (
+                                <Link
+                                  key={grandChild.href}
+                                  href={grandChild.href}
+                                  onClick={onClose}
+                                  className="block text-[14px] text-white/70 transition-colors active:text-white"
+                                >
+                                  {grandChild.label}
+                                </Link>
+                              ))}
+                            </div>
+                          ) : null}
+                        </div>
+                        {index < item.children.length - 1 ? <div className="h-px bg-white/10" /> : null}
+                      </div>
                     ))}
                     <div className="h-2" />
                   </div>
