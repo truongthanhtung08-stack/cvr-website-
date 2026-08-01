@@ -518,7 +518,7 @@ export default function FilterBar({
               type="button"
               aria-label="Tìm kiếm"
               onClick={() => { setSugOpen(false); onSearch?.(); }}
-              className="m-1 flex w-9 shrink-0 items-center justify-center self-stretch rounded-lg bg-cvr-blue text-white transition active:scale-95 sm:hidden"
+              className="flex w-12 shrink-0 items-center justify-center self-stretch bg-cvr-blue text-white transition active:scale-95 sm:hidden"
             >
               <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
@@ -676,7 +676,7 @@ export default function FilterBar({
   const hasActive = hasActiveFilters(f);
   return (
     <FilterDropdownGroup>
-      <div className="rounded-none border border-cvr-line bg-white p-2.5 shadow-lux">
+      <div className="rounded-none bg-white p-2.5 sm:border sm:border-cvr-line sm:shadow-lux">
         <div className="flex flex-col gap-2.5">
           {searchBox}
           {/* Hàng chip lọc — CUỘN NGANG trên mobile (kiểu Batdongsan), tự xuống hàng trên desktop.
