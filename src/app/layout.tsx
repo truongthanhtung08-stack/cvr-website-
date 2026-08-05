@@ -32,7 +32,7 @@ const montserrat = Montserrat({
 const SITE_URL = "https://coastalland.vn";
 const SITE_TITLE = "COASTAL LAND";
 const SITE_DESC =
-  "Bất động sản Đà Nẵng, Huế và Miền Trung.";
+  "Bất động sản Đà Nẵng, Miền Trung và Duyên hải Việt Nam."
 const OG_IMAGE_PATH = "/images/hero-thanh-pho-hien-dai-26.jpg";
 const OG_IMAGE_URL = new URL(OG_IMAGE_PATH, SITE_URL).toString();
 
@@ -44,7 +44,7 @@ export const metadata: Metadata = {
   },
   description: SITE_DESC,
   keywords: [
-    "bất động sản Đà Nẵng", "bất động sản Huế", "bất động sản Miền Trung",
+    "bất động sản Đà Nẵng", "bất động sản Huế", "bất động sản Duyên hải Miền Trung",
     "nhà đất Đà Nẵng", "mua bán nhà đất", "cho thuê nhà đất", "dự án bất động sản",
     "đất nền", "căn hộ", "villa biển", "COASTAL LAND", "coastalland.vn",
   ],
