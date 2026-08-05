@@ -5,9 +5,12 @@ import Link from "next/link";
 import BrandLogo from "@/components/BrandLogo";
 import { packages, utilityTools } from "@/lib/packages";
 import { haptic } from "@/lib/haptic";
+import { useSaved } from "@/lib/useSaved";
 import { useAuth, displayName, signOut } from "@/lib/useAuth";
 
-type NavChild = { label: string; href: string; children?: NavChild[] };
+// href KHÔNG bắt buộc: mục chỉ có `children` là NHÃN NHÓM (không bấm được),
+// dùng để gom danh mục — tránh link cha trỏ trùng một mục con.
+type NavChild = { label: string; href?: string; children?: NavChild[] };
 // icon = path 'd' của SVG (24x24, outline) — hiện bên trái mỗi mục trong menu Mobile (kiểu Batdongsan).
 type NavItem = { label: string; href: string; children?: NavChild[]; icon?: string };
 
@@ -69,7 +72,9 @@ const danhMucChuyenGia: NavChild[] = [
   { label: "Trở thành chuyên gia", href: "/chuyen-gia/dang-ky" },
 ];
 
-// Menu Tiện ích — bố trí theo logic: báo giá ở đầu, sau đó là nhóm dịch vụ và công cụ tiện ích.
+// Menu Tiện ích — Báo giá dịch vụ ở TRÊN CÙNG, dưới là 2 nhóm: Dịch vụ · Công cụ tiện ích.
+// "Dịch vụ" / "Công cụ tiện ích" chỉ là NHÃN NHÓM (không có href) — trước đây trỏ trùng
+// mục con đầu tiên (goi-dang-tin, so-sanh-nha-dat) gây link thừa.
 const danhMucTienIch: NavChild[] = [
   {
     label: "Báo giá dịch vụ và truyền thông",
@@ -77,12 +82,10 @@ const danhMucTienIch: NavChild[] = [
   },
   {
     label: "Dịch vụ",
-    href: "/tien-ich/goi-dang-tin",
     children: packages.map((item) => ({ label: item.label, href: `/tien-ich/${item.slug}` })),
   },
   {
     label: "Công cụ tiện ích",
-    href: "/tien-ich/so-sanh-nha-dat",
     children: utilityTools.map((item) => ({ label: item.label, href: `/tien-ich/${item.slug}` })),
   },
 ];
@@ -146,20 +149,24 @@ function NavLink({ item }: { item: NavItem }) {
 
       <DropdownPanel>
         {item.children.map((child, index) => (
-          <div key={child.href}>
+          <div key={child.label}>
             <div className={`px-4 py-2.5 ${child.children?.length ? "rounded-lg bg-cvr-surface/70" : ""}`}>
-              <Link
-                href={child.href}
-                className={`block text-sm transition-colors ${child.children?.length ? "font-semibold uppercase tracking-[0.16em] text-cvr-gold-ink" : "font-semibold text-cvr-ink hover:text-cvr-gold-ink"}`}
-              >
-                {child.label}
-              </Link>
+              {child.href ? (
+                <Link
+                  href={child.href}
+                  className="block text-sm font-semibold text-cvr-ink transition-colors hover:text-cvr-gold-ink"
+                >
+                  {child.label}
+                </Link>
+              ) : (
+                <p className="text-sm font-semibold uppercase tracking-[0.16em] text-cvr-gold-ink">{child.label}</p>
+              )}
               {child.children?.length ? (
                 <div className="mt-2 space-y-1.5 border-l border-cvr-line/70 pl-3">
                   {child.children.map((grandChild) => (
                     <Link
-                      key={grandChild.href}
-                      href={grandChild.href}
+                      key={grandChild.label}
+                      href={grandChild.href ?? "#"}
                       className="block text-sm text-cvr-body transition-colors hover:text-cvr-ink"
                     >
                       {grandChild.label}
@@ -177,17 +184,26 @@ function NavLink({ item }: { item: NavItem }) {
 
 // Nút "Lưu" — dẫn tới danh sách tin đã lưu
 // ♡ Yêu thích trên thanh header (kiểu Batdongsan): MOBILE = icon trái tim,
-// DESKTOP (lg) = có thêm chữ "Lưu".
+// DESKTOP (lg) = có thêm chữ "Lưu" (giữ nguyên như đã duyệt).
+// MOBILE: bọc trong ô chạm 44×44 (chuẩn Apple) để cân với nút ☰ và không dính sát mép;
+//         có huy hiệu đếm số tin đã lưu như Batdongsan.
 function SaveButton() {
+  const { count } = useSaved();
+
   return (
     <Link
       href="/tin-luu"
-      aria-label="Tin đã lưu"
-      className="flex items-center gap-1.5 text-cvr-line transition-colors hover:text-white"
+      aria-label={count > 0 ? `Tin đã lưu (${count})` : "Tin đã lưu"}
+      className="relative flex h-11 w-11 items-center justify-center text-cvr-line transition-colors hover:text-white lg:h-auto lg:w-auto lg:gap-1.5"
     >
-      <svg className="h-[23px] w-[23px] lg:h-[18px] lg:w-[18px]" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+      <svg className="h-[22px] w-[22px] lg:h-[18px] lg:w-[18px]" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 10-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 000-7.78z" />
       </svg>
+      {count > 0 && (
+        <span className="absolute right-[7px] top-[7px] flex h-[15px] min-w-[15px] items-center justify-center rounded-full bg-[#ff3b30] px-1 text-[9px] font-bold leading-none text-white lg:hidden">
+          {count > 9 ? "9+" : count}
+        </span>
+      )}
       <span className="hidden text-sm font-medium lg:inline">Lưu</span>
     </Link>
   );
@@ -196,7 +212,7 @@ function SaveButton() {
 // Menu tài khoản khi đã đăng nhập (avatar + dropdown)
 function AccountMenu({ name, onLogout }: { name: string; onLogout: () => void }) {
   const initial = name.trim().charAt(0).toUpperCase() || "T";
-  const links: NavChild[] = [
+  const links: { label: string; href: string }[] = [
     { label: "Tổng quan", href: "/tai-khoan" },
     { label: "Tin đã đăng", href: "/tai-khoan/tin-dang" },
     { label: "Tin đã lưu", href: "/tin-luu" },
@@ -275,15 +291,15 @@ function MobileMenu({
     <div
       // absolute theo header (KHÔNG dùng fixed: backdrop-filter của .nav-glass biến header
       // thành containing block, fixed sẽ neo sai). top-full = ngay dưới thanh 60px.
-      className={`absolute inset-x-0 top-full z-40 flex h-[calc(100dvh-60px-env(safe-area-inset-top))] flex-col overflow-y-auto overscroll-contain bg-[#161617]/97 backdrop-blur-xl transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] lg:hidden ${
+      className={`menu-glass absolute inset-x-0 top-full z-40 flex h-[calc(100dvh-60px-env(safe-area-inset-top))] flex-col overflow-y-auto overscroll-contain transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] lg:hidden ${
         open ? "visible translate-y-0 opacity-100" : "invisible -translate-y-2 opacity-0 pointer-events-none"
       }`}
     >
-      <nav className="flex-1 px-6 pb-[calc(2.5rem+env(safe-area-inset-bottom))] pt-4">
+      <nav className="flex-1 px-6 pb-[calc(2.5rem+env(safe-area-inset-bottom))] pt-5">
         {/* ── ĐĂNG TIN + (chưa đăng nhập → Đăng nhập/Đăng ký) — đầu menu.
             Kiểu Batdongsan: KHI ĐÃ ĐĂNG NHẬP, tài khoản & avatar nằm ở THANH TRÊN
             (avatar + ♡ + 🔔), KHÔNG lặp lại khối tài khoản trong menu drawer. ── */}
-        <div className="mb-5">
+        <div className="mb-7">
           {user ? (
             // Đã đăng nhập — kiểu Batdongsan: [avatar + tên] … [🔔], gần đầu menu.
             <div className="mb-3 flex items-center gap-3">
@@ -335,31 +351,48 @@ function MobileMenu({
           </Link>
         </div>
 
+        {/* Danh sách menu — KHÔNG dùng đường kẻ phân chia (kiểu Apple): phân tách bằng
+            khoảng trắng; mục đang mở được bọc khối kính sáng nhẹ để gom nhóm thị giác. */}
+        <div className="space-y-1">
         {navItems.map((item) => (
-          <div key={item.href} className="border-b border-white/10">
+          <div
+            key={item.href}
+            className={`-mx-3 rounded-2xl px-3 transition-colors duration-300 ${
+              expanded === item.label ? "bg-white/[0.07]" : ""
+            }`}
+          >
             {item.children ? (
               <>
-                <button
-                  type="button"
-                  onClick={() => setExpanded(expanded === item.label ? null : item.label)}
-                  aria-expanded={expanded === item.label}
-                  className="flex min-h-[52px] w-full items-center justify-between text-left text-[17px] font-medium text-white"
-                >
-                  <span className="flex items-center gap-3.5">
+                {/* Hàng menu tách đôi: BẤM VÀO TÊN = mở trang tổng (xem tất cả) ·
+                    BẤM MŨI TÊN = mở/gập danh mục con. Không còn dòng "Xem tất cả". */}
+                <div className="flex items-center">
+                  <Link
+                    href={item.href}
+                    onClick={onClose}
+                    className="flex min-h-[56px] flex-1 items-center gap-3.5 text-[17px] font-medium text-white"
+                  >
                     {item.icon && (
                       <svg className="h-[22px] w-[22px] shrink-0 text-white/75" fill="none" stroke="currentColor" strokeWidth={1.7} viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
                       </svg>
                     )}
                     {item.label}
-                  </span>
-                  <svg
-                    className={`h-4 w-4 text-white/50 transition-transform duration-300 ${expanded === item.label ? "rotate-180" : ""}`}
-                    fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => setExpanded(expanded === item.label ? null : item.label)}
+                    aria-expanded={expanded === item.label}
+                    aria-label={`${expanded === item.label ? "Thu gọn" : "Mở rộng"} ${item.label}`}
+                    className="-mr-2 flex h-[56px] w-12 shrink-0 items-center justify-center"
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
+                    <svg
+                      className={`h-4 w-4 text-white/50 transition-transform duration-300 ${expanded === item.label ? "rotate-180" : ""}`}
+                      fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                </div>
                 <div
                   className="grid"
                   // Inline (không dùng class grid-rows-[..] — Tailwind không sinh rule ổn định)
@@ -368,32 +401,32 @@ function MobileMenu({
                     transition: "grid-template-rows 300ms cubic-bezier(0.16,1,0.3,1)",
                   }}
                 >
-                  <div className="overflow-hidden">
-                    <Link
-                      href={item.href}
-                      onClick={onClose}
-                      className="block py-2.5 text-[15px] font-semibold text-white/90"
-                    >
-                      Xem tất cả
-                    </Link>
-                    {item.children.map((child, index) => (
-                      <div key={child.href}>
-                        <div className="py-2.5">
-                          <Link
-                            href={child.href}
-                            onClick={onClose}
-                            className={`block text-[15px] transition-colors ${child.children?.length ? "font-semibold text-white" : "font-semibold text-white/90"}`}
-                          >
-                            {child.label}
-                          </Link>
+                  {/* pl-9 = 22px icon + gap-3.5 → danh mục con thẳng hàng với CHỮ của mục cha */}
+                  <div className="overflow-hidden pb-3 pl-9">
+                    {item.children.map((child) => (
+                      <div key={child.label}>
+                        <div className="py-3">
+                          {child.href ? (
+                            <Link
+                              href={child.href}
+                              onClick={onClose}
+                              className="block text-[15px] font-semibold text-white/90 transition-colors active:text-white"
+                            >
+                              {child.label}
+                            </Link>
+                          ) : (
+                            <p className="pb-0.5 text-[12px] font-semibold uppercase tracking-[0.14em] text-white/50">
+                              {child.label}
+                            </p>
+                          )}
                           {child.children?.length ? (
-                            <div className="mt-1.5 space-y-1.5 pl-3">
+                            <div className="mt-2.5 space-y-3.5 pl-3.5">
                               {child.children.map((grandChild) => (
                                 <Link
-                                  key={grandChild.href}
-                                  href={grandChild.href}
+                                  key={grandChild.label}
+                                  href={grandChild.href ?? "#"}
                                   onClick={onClose}
-                                  className="block text-[14px] text-white/70 transition-colors active:text-white"
+                                  className="block text-[15px] font-medium text-white/75 transition-colors active:text-white"
                                 >
                                   {grandChild.label}
                                 </Link>
@@ -401,10 +434,8 @@ function MobileMenu({
                             </div>
                           ) : null}
                         </div>
-                        {index < (item.children?.length ?? 0) - 1 ? <div className="h-px bg-white/10" /> : null}
                       </div>
                     ))}
-                    <div className="h-2" />
                   </div>
                 </div>
               </>
@@ -412,7 +443,7 @@ function MobileMenu({
               <Link
                 href={item.href}
                 onClick={onClose}
-                className="flex min-h-[52px] items-center gap-3.5 text-[17px] font-medium text-white"
+                className="flex min-h-[56px] items-center gap-3.5 text-[17px] font-medium text-white"
               >
                 {item.icon && (
                   <svg className="h-[22px] w-[22px] shrink-0 text-white/75" fill="none" stroke="currentColor" strokeWidth={1.7} viewBox="0 0 24 24">
@@ -424,16 +455,19 @@ function MobileMenu({
             )}
           </div>
         ))}
+        </div>
 
-        {/* Hành động phụ — Tin đã lưu · Đăng xuất (tài khoản & đăng tin đã nằm ở ĐẦU menu) */}
-        <div className="mt-2">
+        {/* Hành động phụ — Tin đã lưu · Đăng xuất (tài khoản & đăng tin đã nằm ở ĐẦU menu).
+            Icon 22px + gap-3.5 để chữ thẳng hàng với các mục menu chính phía trên.
+            Tách khỏi menu chính bằng KHOẢNG TRẮNG, không dùng đường kẻ. */}
+        <div className="mt-7">
           <Link
             href="/tin-luu"
             onClick={onClose}
-            className="flex min-h-[48px] items-center gap-2.5 border-b border-white/10 text-[15px] text-white/80"
+            className="flex min-h-[56px] items-center gap-3.5 text-[16px] font-medium text-white/85"
           >
-            <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+            <svg className="h-[22px] w-[22px] shrink-0 text-white/60" fill="none" stroke="currentColor" strokeWidth={1.7} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 10-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 000-7.78z" />
             </svg>
             Tin đã lưu
           </Link>
@@ -441,8 +475,11 @@ function MobileMenu({
             <button
               type="button"
               onClick={() => { onLogout(); onClose(); }}
-              className="flex min-h-[48px] w-full items-center text-left text-[15px] text-white/60"
+              className="flex min-h-[56px] w-full items-center gap-3.5 text-left text-[16px] font-medium text-white/60"
             >
+              <svg className="h-[22px] w-[22px] shrink-0 text-white/45" fill="none" stroke="currentColor" strokeWidth={1.7} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 17l5-5-5-5M20 12H9M12 20H6a2 2 0 01-2-2V6a2 2 0 012-2h6" />
+              </svg>
               Đăng xuất
             </button>
           )}
