@@ -220,7 +220,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                   <iframe
                     title="Bản đồ"
                     src={`https://maps.google.com/maps?q=${encodeURIComponent(d.mapQuery)}&z=14&output=embed`}
-                    className="h-[320px] w-full"
+                    className="h-[190px] w-full sm:h-[240px]"
                     loading="lazy"
                   />
                 </div>

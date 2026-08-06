@@ -23,9 +23,9 @@ export default function LeadForm({
     );
   }
 
-  // Bản GỌN: bỏ nhãn riêng từng ô (đưa vào placeholder), chỉ giữ những gì cần để
-  // liên hệ lại — Họ tên · Điện thoại · Nhu cầu · ghi chú ngắn. Chiều cao giảm
-  // hơn một nửa so với bản cũ, vừa khung cột phải và không chiếm trọn màn hình điện thoại.
+  // Bản GỌN: bỏ nhãn riêng từng ô (đưa vào placeholder), giữ đủ thông tin để gửi
+  // báo giá/tài liệu — Họ tên · Điện thoại · EMAIL · Nhu cầu · ghi chú ngắn.
+  // Chiều cao vẫn ngắn hơn nhiều so với bản cũ, vừa khung cột phải trên điện thoại.
   return (
     <form
       onSubmit={(e) => { e.preventDefault(); setSent(true); }}
@@ -35,6 +35,8 @@ export default function LeadForm({
         <Field name="name" placeholder="Họ và tên *" required />
         <Field name="phone" placeholder="Số điện thoại *" type="tel" required />
       </div>
+      {/* Email — BẮT BUỘC có ở mọi form nhận báo giá / tài liệu (gửi bảng giá, brochure) */}
+      <Field name="email" placeholder="Email *" type="email" required />
       <select name="topic" aria-label="Nhu cầu" className="h-11 w-full rounded-lg border border-transparent bg-cvr-surface px-3 text-sm text-cvr-ink outline-none transition focus:border-cvr-line focus:bg-white">
         {topics.map((t) => <option key={t} value={t}>{t}</option>)}
       </select>

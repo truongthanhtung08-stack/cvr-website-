@@ -24,6 +24,7 @@ export default function ListingBrowser({
   purpose = "ban",
   items = featuredListings,
   relevance = false,
+  nested = false,
 }: {
   heading: string;
   // Mục đích trang: "ban" = mua bán · "thue" = cho thuê — lọc nguồn tin + danh mục loại hình.
@@ -33,6 +34,9 @@ export default function ListingBrowser({
   // Danh sách "tin tương tự": nguồn đã sắp theo độ liên quan → mặc định giữ đúng
   // thứ tự đó (thay vì Mới nhất) và thêm lựa chọn sắp xếp "Liên quan nhất".
   relevance?: boolean;
+  // Đặt bên trong một trang đã có khung max-w-7xl + lề ngang (trang chi tiết tin,
+  // chi tiết dự án…) → BỎ khung riêng, nếu không lề bị cộng dồn gấp đôi.
+  nested?: boolean;
 }) {
   const params = useSearchParams();
 
@@ -71,7 +75,7 @@ export default function ListingBrowser({
   const active = hasActiveFilters(filters);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 pb-20 pt-1 sm:px-6 sm:pt-6 lg:px-8">
+    <div className={nested ? "pb-20 pt-1 sm:pt-6" : "mx-auto max-w-7xl px-4 pb-20 pt-1 sm:px-6 sm:pt-6 lg:px-8"}>
       {/* ── Phần trên kiểu Homedy (gọn): thanh lọc → tiêu đề + bộ đếm.
            Trang cấp 1 KHÔNG dùng breadcrumb (menu đã chỉ vị trí — chuẩn Apple). ── */}
       <div>

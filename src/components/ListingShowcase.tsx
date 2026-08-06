@@ -59,6 +59,7 @@ export default function ListingShowcase({
         purpose={purpose}
         items={items}
         relevance={relevance}
+        nested
       />
     );
   }

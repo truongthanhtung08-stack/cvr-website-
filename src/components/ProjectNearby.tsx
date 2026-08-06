@@ -58,7 +58,7 @@ export default function ProjectNearby({
         <iframe
           title="Bản đồ dự án"
           src={`https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}&z=14&output=embed`}
-          className="h-[320px] w-full grayscale-[0.25]"
+          className="h-[190px] w-full grayscale-[0.25] sm:h-[240px]"
           loading="lazy"
         />
       </div>

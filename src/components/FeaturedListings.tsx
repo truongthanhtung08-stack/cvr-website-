@@ -67,16 +67,16 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
   // ── ĐÃ BẤM "XEM THÊM": trang chủ đổi sang ĐÚNG bố cục trang Mua bán —
   //    danh sách tin bên trái + cột phải (lọc theo giá, theo khu vực…) + phân trang.
   //    Dùng lại chính ListingBrowser của /mua-ban nên không lệch cấu trúc.
+  //    KHÔNG bọc thêm khung px-4: ListingBrowser đã có khung max-w-7xl + lề ngang
+  //    riêng — bọc nữa là lề bị cộng dồn, hẹp hơn trang /mua-ban.
   if (expanded) {
     return (
       <section className="section-edge bg-white">
-        <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
-          <ListingBrowser
-            heading={expandPurpose === "thue" ? "Bất động sản cho thuê" : "Bất động sản mua bán"}
-            purpose={expandPurpose}
-            items={items}
-          />
-        </div>
+        <ListingBrowser
+          heading={expandPurpose === "thue" ? "Bất động sản cho thuê" : "Bất động sản mua bán"}
+          purpose={expandPurpose}
+          items={items}
+        />
       </section>
     );
   }
