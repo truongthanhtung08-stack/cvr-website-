@@ -4,9 +4,12 @@ import { useRef, useState } from "react";
 import Link from "next/link";
 import PropertyCard from "@/components/PropertyCard";
 import { featuredListings, type Listing } from "@/lib/data";
+import Pager from "@/components/Pager";
 import { tierRank } from "@/lib/packages";
 import { smoothScrollTo } from "@/lib/scroll";
 import { useAutoSlide } from "@/lib/useAutoSlide";
+
+const PER_PAGE = 8; // số tin mỗi trang khi bấm "Xem thêm" (danh sách dạng list)
 
 // ── Tab nhanh: kết hợp MỤC ĐÍCH (bán/thuê) × LOẠI SẢN PHẨM ────────────────────
 const isBan = (l: Listing) => (l.purpose ?? "ban") === "ban";
@@ -31,6 +34,9 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
   const [slideIdx, setSlideIdx] = useState(0);
   const [paused, setPaused] = useState(false);
   const trackRef = useRef<HTMLDivElement>(null);
+  // PC: bấm "Xem thêm" → xổ ra ngay tại chỗ danh sách tin dạng list, 8 tin/trang
+  const [expanded, setExpanded] = useState(false);
+  const [page, setPage] = useState(1);
 
   // Lọc theo tab → xếp theo cấp tin (cao trước) → chia 2 slides nối tiếp, mỗi slide 8 tin
   const activeMatch = typeTabs.find((t) => t.label === activeTab)?.match ?? (() => true);
@@ -67,7 +73,7 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
             <button
               key={t.label}
               type="button"
-              onClick={() => { setActiveTab(t.label); setSlideIdx(0); trackRef.current?.scrollTo({ left: 0 }); }}
+              onClick={() => { setActiveTab(t.label); setSlideIdx(0); setPage(1); trackRef.current?.scrollTo({ left: 0 }); }}
               className={`shrink-0 whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-medium transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] sm:py-2 ${
                 activeTab === t.label
                   ? "bg-cvr-ink text-white shadow-lg shadow-black/10 sm:scale-105"
@@ -103,7 +109,7 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
             </div>
 
             {/* ── TABLET / MÁY TÍNH (≥ 640px): GIỮ NGUYÊN slider 2 slide đã duyệt ── */}
-            <div className="hidden sm:block">
+            <div className={expanded ? "hidden" : "hidden sm:block"}>
             {/* Track scroll-snap: tự chạy + chấm điều hướng + mũi tên (chuột)
                 + vuốt ngang tự nhiên (touchpad 2 ngón / màn hình cảm ứng) */}
             <div className="relative mt-5">
@@ -169,13 +175,42 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
                   ))}
                 </div>
               )}
-              <Link
-                href="/tim-kiem"
-                className="absolute right-0 text-sm font-medium text-cvr-muted transition-colors hover:text-cvr-ink"
-              >
-                Xem thêm →
-              </Link>
             </div>
+            </div>
+
+            {/* PC: danh sách tin dạng LIST (ảnh trái – nội dung phải), 8 tin/trang */}
+            {expanded && (
+              <div className="mt-5 hidden sm:block">
+                <div className="space-y-4">
+                  {sorted
+                    .slice((page - 1) * PER_PAGE, page * PER_PAGE)
+                    .map((item) => (
+                      <PropertyCard key={item.id} item={item} layout="list" />
+                    ))}
+                </div>
+                <Pager
+                  page={page}
+                  totalPages={Math.max(1, Math.ceil(sorted.length / PER_PAGE))}
+                  onChange={setPage}
+                />
+              </div>
+            )}
+
+            {/* Nút Xem thêm / Thu gọn — CHỈ PC (điện thoại giữ nút "Xem thêm" → /tim-kiem) */}
+            <div className="mt-6 hidden justify-center sm:flex">
+              <button
+                type="button"
+                onClick={() => { setExpanded((v) => !v); setPage(1); }}
+                className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full border border-cvr-line px-6 text-sm font-semibold text-cvr-ink transition hover:bg-cvr-surface"
+              >
+                {expanded ? "Thu gọn" : `Xem thêm (${sorted.length} tin)`}
+                <svg
+                  className={`h-4 w-4 transition-transform duration-300 ${expanded ? "rotate-180" : ""}`}
+                  fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
             </div>
           </>
         ) : (

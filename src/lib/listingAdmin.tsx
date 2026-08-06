@@ -15,6 +15,7 @@ export type ListingDetails = {
   direction?: string;               // hướng
   addressDetail?: string;           // địa chỉ cụ thể
   contact?: { name?: string; phone?: string; email?: string; avatar?: string }; // người đăng (avatar = ảnh đại diện)
+  project?: string;                 // SLUG dự án tin này thuộc về ("" = không thuộc dự án nào)
 };
 
 export type ListingRow = {

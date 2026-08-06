@@ -4,9 +4,13 @@ import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import LeadForm from "@/components/LeadForm";
-import PricingSidebar from "@/components/PricingSidebar";
-import { getTier, type TierId, utilityTools } from "@/lib/packages";
-import { asset } from "@/lib/asset";
+import PricingSidebar, { type SidebarGroup } from "@/components/PricingSidebar";
+import PropertyCard from "@/components/PropertyCard";
+import { ProjectCard, ProjectRow } from "@/components/ProjectSlider";
+import { getTier, tierFromBadge, type TierId, utilityTools } from "@/lib/packages";
+import { getListings } from "@/lib/listingsDb";
+import { getProjects } from "@/lib/contentDb";
+import type { Listing, Project } from "@/lib/data";
 
 export const metadata: Metadata = {
   title: "Báo giá dịch vụ và truyền thông | Coastal Land",
@@ -35,7 +39,6 @@ const vipPkgs = [
       "Xuất hiện trong box “Bất động sản nổi bật”.",
       "Chèn 1 link bất kỳ dưới tin đăng.",
     ],
-    sample: { img: "anh-tin-diamond.png", title: "VILLA BIỂN 3 TẦNG MẶT TIỀN VÕ NGUYÊN GIÁP, VIEW MỸ KHÊ", address: "Phước Mỹ, Sơn Trà, Đà Nẵng", price: "33 tỷ · 350 m²" },
     prices: [
       { label: "Giá 1 tuần", price: "980.000đ" },
       { label: "Giá 2 tuần (−15%)", original: "1.960.000đ", price: "1.700.000đ" },
@@ -54,7 +57,6 @@ const vipPkgs = [
       "Tiêu đề màu vàng + Bôi đậm + Viết hoa + icon HOT màu vàng.",
       "Xuất hiện trong box “Bất động sản nổi bật”.",
     ],
-    sample: { img: "2.jpg", title: "CĂN HỘ THE FILMORE 2PN VIEW SÔNG HÀN, BÀN GIAO CAO CẤP", address: "Hải Châu I, Hải Châu, Đà Nẵng", price: "7,2 tỷ · 95 m²" },
     prices: [
       { label: "Giá 1 tuần", price: "490.000đ" },
       { label: "Giá 2 tuần (−20%)", original: "980.000đ", price: "800.000đ" },
@@ -65,7 +67,6 @@ const vipPkgs = [
     tierId: "silver" as TierId,
     benefits: ["Tăng lượt xem gấp 5 lần tin thường.", "Tiếp cận khách hàng tốt."],
     displays: ["Đứng trên CVR Basic.", "Tiêu đề màu xanh + Bôi đậm + icon HOT màu xanh."],
-    sample: { img: "4.jpg", title: "Đất nền KĐT sinh thái Hòa Xuân, sổ đỏ trao tay", address: "Hòa Xuân, Cẩm Lệ, Đà Nẵng", price: "4,2 tỷ · 100 m²" },
     prices: [
       { label: "Giá 1 tuần", price: "170.000đ" },
       { label: "Giá 2 tuần (−15%)", original: "340.000đ", price: "300.000đ" },
@@ -77,7 +78,6 @@ const vipPkgs = [
 const basicPkg = {
   benefits: ["Tiếp cận khách hàng tốt.", "Chi phí thấp nhất."],
   displays: ["Nằm bên dưới các tin cao cấp.", "Tiêu đề hiển thị mặc định."],
-  sample: { img: "3.jpg", title: "Nhà phố 4 tầng mặt tiền kinh doanh trung tâm Thanh Khê", address: "Tam Thuận, Thanh Khê, Đà Nẵng", price: "8,5 tỷ · 100 m²" },
   prices: [
     { label: "Giá 1 tuần", price: "15.000đ" },
     { label: "Giá 2 tuần", price: "20.000đ" },
@@ -191,23 +191,51 @@ const rules = [
   "Việc hiển thị tin đăng trên Sàn dựa trên các tiêu chí gồm nhưng không giới hạn ở: loại gói dịch vụ (tin thường, CVR Silver, CVR Gold, CVR Diamond), thời điểm đăng tin và các tiêu chí kỹ thuật khác theo quy định của Sàn tại từng thời điểm.",
 ];
 
-const serviceMenu = [
-  { label: "Công cụ tiện ích", href: "#cong-cu-tien-ich" },
-  { label: "1. Gói đăng tin VIP", href: "#goi-vip" },
-  { label: "2. Gói tin đăng lẻ", href: "#goi-le" },
-  { label: "3. Gói Đẩy tin", href: "#goi-day-tin" },
-  { label: "4. Gói Dự án", href: "#goi-du-an" },
-  { label: "5. Gói bài PR", href: "#goi-pr" },
-  { label: "6. Gói Banner", href: "#goi-banner" },
-  { label: "Loại tin & đặc điểm", href: "#dac-diem" },
-  { label: "Quy định chung", href: "#quy-dinh" },
-  { label: "Nhận báo giá", href: "#lien-he" },
+// Menu sidebar — 2 PHẦN. Phần "Danh sách dịch vụ" KHÔNG còn mục Công cụ tiện ích;
+// Công cụ tiện ích tách thành phần riêng nằm PHÍA SAU.
+const serviceGroups: SidebarGroup[] = [
+  {
+    title: "Danh sách dịch vụ",
+    items: [
+      { label: "1. Gói đăng tin VIP", href: "#goi-vip" },
+      { label: "2. Gói tin đăng lẻ", href: "#goi-le" },
+      { label: "3. Gói Đẩy tin", href: "#goi-day-tin" },
+      { label: "4. Gói Dự án", href: "#goi-du-an" },
+      { label: "5. Gói bài PR", href: "#goi-pr" },
+      { label: "6. Gói Banner", href: "#goi-banner" },
+      { label: "Loại tin & đặc điểm", href: "#dac-diem" },
+      { label: "Quy định chung", href: "#quy-dinh" },
+      { label: "Nhận báo giá", href: "#lien-he" },
+    ],
+  },
+  {
+    title: "Công cụ tiện ích",
+    items: [
+      { label: "Tất cả công cụ", href: "#cong-cu-tien-ich" },
+      ...utilityTools.map((t) => ({ label: t.label, href: `/tien-ich/${t.slug}` })),
+    ],
+  },
 ];
 
 const HOTLINE = "0377 985 036";
 
 // ═══════════════ TRANG ═══════════════
-export default function BaoGiaPage() {
+// Thẻ tin minh hoạ từng cấp = TIN THẬT mới nhất của cấp đó trong Supabase
+// (không còn tin/ảnh mẫu cứng). Đăng hoặc sửa tin trong admin → trang này tự đổi theo.
+export default async function BaoGiaPage() {
+  const [listings, allProjects] = await Promise.all([getListings(), getProjects()]);
+  const newestOfTier = (id: TierId): Listing | null =>
+    listings.find((l) => tierFromBadge(l.badge) === id) ?? null;
+  const samples: Record<TierId, Listing | null> = {
+    diamond: newestOfTier("diamond"),
+    gold: newestOfTier("gold"),
+    silver: newestOfTier("silver"),
+    basic: newestOfTier("basic"),
+  };
+  // Dự án mẫu từng cấp CVR-PJ — dự án thật mới nhất của cấp đó
+  const projectOfTier = (id: TierId): Project | null =>
+    allProjects.find((x) => (x.tier ?? "basic") === id) ?? null;
+
   return (
     <>
       <Header />
@@ -230,28 +258,9 @@ export default function BaoGiaPage() {
 
         <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
           <div className="grid grid-cols-1 gap-10 lg:grid-cols-[250px_1fr]">
-            <PricingSidebar items={serviceMenu} hotline={HOTLINE} />
+            <PricingSidebar groups={serviceGroups} hotline={HOTLINE} />
 
             <div className="min-w-0 space-y-20">
-              {/* 0. CÔNG CỤ TIỆN ÍCH */}
-              <section id="cong-cu-tien-ich" className="scroll-mt-24">
-                <SectionTitle no="00" title="Công cụ tiện ích đi kèm" desc="Tất cả các công cụ mới đã tạo đều được gom vào đây để khách hàng tiếp cận dễ dàng." />
-                <div className="mt-7 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-                  {utilityTools.map((tool) => (
-                    <Link
-                      key={tool.slug}
-                      href={`/tien-ich/${tool.slug}`}
-                      className="group rounded-2xl border border-cvr-line bg-white p-5 shadow-lux transition hover:-translate-y-0.5 hover:border-cvr-gold-ink"
-                    >
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-cvr-gold-ink">Tiện ích</p>
-                      <h3 className="mt-2 text-lg font-semibold tracking-tight text-cvr-ink">{tool.label}</h3>
-                      <p className="mt-2 text-sm leading-relaxed text-cvr-muted">{tool.description}</p>
-                      <span className="mt-4 inline-flex text-sm font-semibold text-cvr-ink transition group-hover:text-cvr-gold-ink">Xem ngay →</span>
-                    </Link>
-                  ))}
-                </div>
-              </section>
-
               {/* 1. GÓI ĐĂNG TIN VIP */}
               <section id="goi-vip" className="scroll-mt-24">
                 <SectionTitle no="01" title="Gói đăng tin VIP" desc="Giải pháp tiếp cận tin đăng hiệu quả tới khách hàng tiềm năng." />
@@ -263,13 +272,7 @@ export default function BaoGiaPage() {
                       name={getTier(p.tierId).name}
                       benefits={p.benefits}
                       displays={p.displays}
-                      preview={{
-                        img: asset(`/images/tin/${p.sample.img}`),
-                        title: p.sample.title,
-                        address: p.sample.address,
-                        meta: p.sample.price,
-                        styled: true,
-                      }}
+                      media={<TierSample listing={samples[p.tierId]} />}
                       prices={p.prices}
                       cta={{ label: "Đăng tin ngay", href: "/dang-tin" }}
                     />
@@ -286,13 +289,7 @@ export default function BaoGiaPage() {
                     name="CVR Basic"
                     benefits={basicPkg.benefits}
                     displays={basicPkg.displays}
-                    preview={{
-                      img: asset(`/images/tin/${basicPkg.sample.img}`),
-                      title: basicPkg.sample.title,
-                      address: basicPkg.sample.address,
-                      meta: basicPkg.sample.price,
-                      styled: false,
-                    }}
+                    media={<TierSample listing={samples.basic} />}
                     prices={basicPkg.prices}
                     cta={{ label: "Đăng tin ngay", href: "/dang-tin" }}
                   />
@@ -344,12 +341,7 @@ export default function BaoGiaPage() {
                       tierId={p.tierId}
                       name={p.name}
                       displays={p.displays}
-                      preview={{
-                        img: asset(`/images/du-an/${p.img}`),
-                        title: p.sample.title,
-                        address: p.sample.address,
-                        styled: false,
-                      }}
+                      media={<ProjectTierSample project={projectOfTier(p.tierId)} />}
                       prices={p.prices}
                       cta={{ label: "Liên hệ tư vấn", href: "#lien-he" }}
                     />
@@ -473,6 +465,25 @@ export default function BaoGiaPage() {
                 </div>
               </section>
 
+              {/* CÔNG CỤ TIỆN ÍCH — phần 2 của menu, nằm SAU toàn bộ danh sách dịch vụ */}
+              <section id="cong-cu-tien-ich" className="scroll-mt-24">
+                <SectionTitle title="Công cụ tiện ích" desc="Bộ công cụ miễn phí đi kèm dịch vụ — tra cứu giá, so sánh, tính lãi vay, pháp lý và phong thủy." />
+                <div className="mt-7 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                  {utilityTools.map((tool) => (
+                    <Link
+                      key={tool.slug}
+                      href={`/tien-ich/${tool.slug}`}
+                      className="group rounded-2xl border border-cvr-line bg-white p-5 shadow-lux transition hover:-translate-y-0.5 hover:border-cvr-gold-ink"
+                    >
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-cvr-gold-ink">Tiện ích</p>
+                      <h3 className="mt-2 text-lg font-semibold tracking-tight text-cvr-ink">{tool.label}</h3>
+                      <p className="mt-2 text-sm leading-relaxed text-cvr-muted">{tool.description}</p>
+                      <span className="mt-4 inline-flex text-sm font-semibold text-cvr-ink transition group-hover:text-cvr-gold-ink">Xem ngay →</span>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+
               {/* LIÊN HỆ */}
               <section id="lien-he" className="scroll-mt-24">
                 <SectionTitle title="Nhận báo giá và tư vấn" desc="Để lại thông tin, chuyên viên Coastal Land liên hệ trong 5 phút." />
@@ -515,7 +526,7 @@ function PkgCard({
   name,
   benefits,
   displays,
-  preview,
+  media,
   prices,
   cta,
 }: {
@@ -523,7 +534,7 @@ function PkgCard({
   name: string;
   benefits?: string[];
   displays: string[];
-  preview: { img: string; title: string; address: string; meta?: string; styled: boolean };
+  media: React.ReactNode;
   prices: PriceLine[];
   cta: { label: string; href: string };
 }) {
@@ -554,42 +565,18 @@ function PkgCard({
             </ul>
           )}
 
-          {/* Tin mẫu — mô phỏng thẻ tin thật trên sàn */}
-          <div className="mt-6 flex items-center gap-4 rounded-xl border border-cvr-line bg-white p-3.5 shadow-[0_1px_10px_rgba(0,0,0,0.05)]">
-            <div className="relative h-[92px] w-[132px] shrink-0 overflow-hidden rounded-lg bg-cvr-surface sm:h-[100px] sm:w-[150px]">
-              <Image src={preview.img} alt={preview.title} fill sizes="150px" className="object-cover" />
-              {!isBasic && (
-                <span
-                  className="absolute left-1.5 top-1.5 px-1.5 py-px text-[9px] font-bold uppercase"
-                  style={{ backgroundColor: t.accent, color: "#fff" }}
-                >
-                  {t.short}
-                </span>
-              )}
-            </div>
-            <div className="min-w-0">
-              <p
-                className={`line-clamp-2 text-sm font-semibold leading-snug ${preview.styled && t.uppercase ? "uppercase" : ""}`}
-                style={{ color: preview.styled ? t.titleColor || "#1d1d1f" : "#1d1d1f" }}
-              >
-                {preview.styled && t.hot && <FlameIcon color={t.accent} />}
-                {preview.title}
-              </p>
-              <p className="mt-1.5 truncate text-xs text-cvr-muted">{preview.address}</p>
-              {preview.meta && <p className="mt-1 text-[13px] font-semibold text-cvr-ink">{preview.meta}</p>}
-            </div>
-          </div>
-
-          <ul className="mt-6 space-y-2 text-sm leading-relaxed text-cvr-body">
+          {/* Tin mẫu = tin thật của cấp, hiển thị đúng kiểu theo thiết bị */}
+          {media}
+          <ul className="mt-7 space-y-2 text-sm leading-relaxed text-cvr-body">
             {displays.map((d) => (
               <li key={d} className="flex gap-2.5"><CheckIcon /> <span>{d}</span></li>
             ))}
           </ul>
         </div>
 
-        {/* Bảng giá */}
+        {/* Bảng giá — dính đầu khi cuộn để luôn ngang tầm nội dung bên trái */}
         <aside className="flex flex-col border-t border-cvr-line bg-cvr-surface/70 p-7 sm:p-8 md:border-l md:border-t-0">
-          <div className="flex-1">
+          <div className="md:sticky md:top-24">
             {prices.map((pr, i) => (
               <div key={pr.label} className={`py-3.5 ${i > 0 ? "border-t border-cvr-line/70" : "pt-0"}`}>
                 <p className="text-[13px] text-cvr-muted">{pr.label}</p>
@@ -601,16 +588,56 @@ function PkgCard({
                 </p>
               </div>
             ))}
+            <Link
+              href={cta.href}
+              className="mt-5 block rounded-full bg-cvr-ink py-3 text-center text-sm font-semibold text-white transition hover:bg-cvr-ink/90 active:scale-[0.99]"
+            >
+              {cta.label}
+            </Link>
           </div>
-          <Link
-            href={cta.href}
-            className="mt-5 block rounded-full bg-cvr-ink py-3 text-center text-sm font-semibold text-white transition hover:bg-cvr-ink/90 active:scale-[0.99]"
-          >
-            {cta.label}
-          </Link>
         </aside>
       </div>
     </article>
+  );
+}
+
+// ── THẺ TIN MINH HOẠ TỪNG CẤP ────────────────────────────────────────────────
+// Tin có HAI kiểu bố trí, thẻ mẫu tự đổi theo thiết bị đang xem — mỗi lúc MỘT thẻ,
+// KHÔNG hiện 2 thẻ cùng lúc (sẽ lặp lại đúng một tấm ảnh):
+//   · Từ sm trở lên (PC/tablet) → ảnh BÊN TRÁI, nội dung BÊN PHẢI (layout="list")
+//   · Dưới sm (điện thoại)      → ảnh Ở TRÊN,   nội dung Ở DƯỚI   (variant="tier")
+// Cả hai đều là component thật đang chạy trên sàn, dữ liệu là TIN THẬT mới nhất
+// của cấp đó → đăng/sửa tin trong admin là thẻ này tự thay theo.
+function TierSample({ listing }: { listing: Listing | null }) {
+  if (!listing) return null; // chưa có tin cấp này → không hiện gì
+
+  return (
+    <>
+      {/* PC/tablet: ảnh trái – nội dung phải */}
+      <div className="mt-6 hidden sm:block">
+        <PropertyCard item={listing} layout="list" />
+      </div>
+      {/* Điện thoại: ảnh trên – nội dung dưới */}
+      <div className="mt-6 max-w-[320px] sm:hidden">
+        <PropertyCard item={listing} variant="tier" />
+      </div>
+    </>
+  );
+}
+
+// Dự án mẫu từng cấp — DỰ ÁN THẬT, bố trí y hệt thẻ tin:
+// PC = ảnh trái / nội dung phải · điện thoại = ảnh trên / nội dung dưới.
+function ProjectTierSample({ project }: { project: Project | null }) {
+  if (!project) return null;
+  return (
+    <>
+      <div className="mt-6 hidden sm:block">
+        <ProjectRow p={project} />
+      </div>
+      <div className="mt-6 max-w-[320px] sm:hidden">
+        <ProjectCard p={project} />
+      </div>
+    </>
   );
 }
 
@@ -618,14 +645,6 @@ function CheckIcon() {
   return (
     <svg className="mt-0.5 h-4 w-4 shrink-0 text-cvr-gold-ink" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-    </svg>
-  );
-}
-
-function FlameIcon({ color }: { color: string }) {
-  return (
-    <svg className="mb-0.5 mr-1 inline-block h-3.5 w-3.5 align-middle" style={{ color }} fill="currentColor" viewBox="0 0 24 24">
-      <path d="M13.5 0.67s0.74 2.65 0.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l0.03-0.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5 0.67zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-0.36 3.6-1.21 4.62-2.58 0.39 1.29 0.59 2.65 0.59 4.04 0 2.65-2.15 4.8-4.8 4.8z" />
     </svg>
   );
 }

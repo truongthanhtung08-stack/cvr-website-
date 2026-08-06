@@ -56,6 +56,9 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
   const [cPhone, setCPhone] = useState(initial?.details?.contact?.phone ?? "");
   const [cEmail, setCEmail] = useState(initial?.details?.contact?.email ?? "");
   const [cAvatar, setCAvatar] = useState(initial?.details?.contact?.avatar ?? "");
+  // Tin thuộc dự án nào — quyết định mục "Tin mua bán liên quan tại dự án …"
+  const [projectSlug, setProjectSlug] = useState(initial?.details?.project ?? "");
+  const [projectOptions, setProjectOptions] = useState<{ slug: string; name: string }[]>([]);
   const [avatarUploading, setAvatarUploading] = useState(false);
   const avatarRef = useRef<HTMLInputElement>(null);
 
@@ -66,6 +69,18 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+
+  // Nạp danh sách dự án đã đăng — cho ô "Thuộc dự án"
+  useEffect(() => {
+    (async () => {
+      const { data } = await createClient()
+        .from("projects")
+        .select("slug, name")
+        .eq("status", "published")
+        .order("name");
+      if (data) setProjectOptions(data as { slug: string; name: string }[]);
+    })();
+  }, []);
 
   // Nạp danh sách khách hàng (để admin chọn đăng giùm) + mặc định người đăng.
   // Tin mới chưa gán chủ → mặc định là admin đang đăng nhập. Prefill liên hệ theo chủ.
@@ -175,6 +190,7 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
         furnish: furnish || undefined,
         direction: direction || undefined,
         addressDetail: addressDetail.trim() || undefined,
+        project: projectSlug || undefined,
         contact: (cName.trim() || cPhone.trim() || cEmail.trim() || cAvatar.trim())
           ? { name: cName.trim(), phone: cPhone.trim(), email: cEmail.trim(), avatar: cAvatar.trim() || undefined }
           : undefined,
@@ -456,6 +472,24 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
         </div>
         <p className="mt-2 text-xs text-cvr-faint">
           Số điện thoại này hiện ở khung liên hệ trang tin, và <strong>nút Zalo tự trỏ tới chính số này</strong>. Bỏ trống → dùng hotline Coastal Land.
+        </p>
+      </Card>
+
+      {/* Tin thuộc dự án nào — nguồn của mục "Tin mua bán liên quan tại dự án …" */}
+      <Card title="Thuộc dự án">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Field label="Dự án">
+            <select value={projectSlug} onChange={(e) => setProjectSlug(e.target.value)} className={inputCls}>
+              <option value="">— Không thuộc dự án nào —</option>
+              {projectOptions.map((o) => (
+                <option key={o.slug} value={o.slug}>{o.name}</option>
+              ))}
+            </select>
+          </Field>
+        </div>
+        <p className="mt-2 text-xs text-cvr-faint">
+          Chọn dự án → tin này hiện trong mục “Tin mua bán liên quan tại dự án …” ở trang dự án đó.
+          Để trống nếu tin không thuộc dự án nào.
         </p>
       </Card>
 

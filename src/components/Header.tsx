@@ -115,14 +115,37 @@ const chevronDown = (
 // Panel dropdown nền trắng (tương phản trên header tối, kiểu flyout Apple)
 // align="right": mở dọc mép phải (dùng cho menu tài khoản ở sát mép phải — tránh
 // panel w-64 canh giữa bị TRÀN sang phải gây kéo lệch trang trên mobile khi đăng nhập).
-function DropdownPanel({ children, align = "center" }: { children: React.ReactNode; align?: "center" | "right" }) {
+function DropdownPanel({
+  children,
+  align = "center",
+  wide = false,
+}: {
+  children: React.ReactNode;
+  align?: "center" | "right";
+  wide?: boolean;
+}) {
   const pos = align === "right" ? "right-0" : "left-1/2 -translate-x-1/2";
   return (
-    <div className={`invisible absolute top-full z-50 w-64 pt-3 opacity-0 transition-opacity duration-200 group-hover:visible group-hover:opacity-100 ${pos}`}>
-      <div className="origin-top translate-y-1.5 scale-[0.98] overflow-hidden rounded-xl border border-cvr-line bg-white py-2 opacity-0 shadow-xl shadow-black/20 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-y-0 group-hover:scale-100 group-hover:opacity-100">
+    <div className={`invisible absolute top-full z-50 ${wide ? "w-[600px]" : "w-64"} pt-3 opacity-0 transition-opacity duration-200 group-hover:visible group-hover:opacity-100 ${pos}`}>
+      <div className="origin-top translate-y-1.5 scale-[0.98] overflow-hidden rounded-2xl border border-cvr-line bg-white p-2 opacity-0 shadow-xl shadow-black/20 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-y-0 group-hover:scale-100 group-hover:opacity-100">
         {children}
       </div>
     </div>
+  );
+}
+
+// Một dòng trong dropdown desktop — ô bo tròn, sáng nền khi rê chuột (kiểu Apple),
+// KHÔNG dùng đường kẻ phân chia.
+function DropdownItem({ href, label, strong = false }: { href: string; label: string; strong?: boolean }) {
+  return (
+    <Link
+      href={href}
+      className={`block rounded-xl px-3.5 py-2.5 text-sm transition-colors hover:bg-cvr-surface ${
+        strong ? "font-semibold text-cvr-ink" : "font-medium text-cvr-body hover:text-cvr-ink"
+      }`}
+    >
+      {label}
+    </Link>
   );
 }
 
@@ -138,6 +161,10 @@ function NavLink({ item }: { item: NavItem }) {
     );
   }
 
+  // Mục có NHÓM con (hiện chỉ "Tiện ích") → panel rộng 2 cột kiểu mega-menu Apple.
+  const groups = item.children.filter((c) => c.children?.length);
+  const singles = item.children.filter((c) => !c.children?.length);
+
   return (
     <div className="group relative">
       <Link
@@ -147,37 +174,40 @@ function NavLink({ item }: { item: NavItem }) {
         {item.label}
       </Link>
 
-      <DropdownPanel>
-        {item.children.map((child, index) => (
-          <div key={child.label}>
-            <div className={`px-4 py-2.5 ${child.children?.length ? "rounded-lg bg-cvr-surface/70" : ""}`}>
-              {child.href ? (
-                <Link
-                  href={child.href}
-                  className="block text-sm font-semibold text-cvr-ink transition-colors hover:text-cvr-gold-ink"
-                >
-                  {child.label}
-                </Link>
-              ) : (
-                <p className="text-sm font-semibold uppercase tracking-[0.16em] text-cvr-gold-ink">{child.label}</p>
-              )}
-              {child.children?.length ? (
-                <div className="mt-2 space-y-1.5 border-l border-cvr-line/70 pl-3">
-                  {child.children.map((grandChild) => (
-                    <Link
-                      key={grandChild.label}
-                      href={grandChild.href ?? "#"}
-                      className="block text-sm text-cvr-body transition-colors hover:text-cvr-ink"
-                    >
-                      {grandChild.label}
-                    </Link>
-                  ))}
-                </div>
-              ) : null}
-            </div>
-{index < (item.children?.length ?? 0) - 1 ? <div className="mx-4 h-px bg-cvr-line/70" /> : null}          </div>
-        ))}
-      </DropdownPanel>
+      {groups.length ? (
+        // ── Panel 2 phần: (1) mục nổi bật ở TRÊN CÙNG (Báo giá dịch vụ) ·
+        //    (2) hai nhóm Dịch vụ | Công cụ tiện ích xếp 2 cột.
+        <DropdownPanel wide>
+          {singles.map((c) => (
+            <Link
+              key={c.label}
+              href={c.href ?? "#"}
+              className="mb-1 flex items-center justify-between rounded-xl bg-cvr-surface px-4 py-3 transition-colors hover:bg-cvr-line/50"
+            >
+              <span className="text-sm font-semibold text-cvr-ink">{c.label}</span>
+              <span className="text-sm font-semibold text-cvr-gold-ink">→</span>
+            </Link>
+          ))}
+          <div className="grid grid-cols-2 gap-x-4">
+            {groups.map((g) => (
+              <div key={g.label}>
+                <p className="px-3.5 pb-1 pt-3 text-[11px] font-bold uppercase tracking-[0.16em] text-cvr-faint">
+                  {g.label}
+                </p>
+                {g.children?.map((c) => (
+                  <DropdownItem key={c.label} href={c.href ?? "#"} label={c.label} />
+                ))}
+              </div>
+            ))}
+          </div>
+        </DropdownPanel>
+      ) : (
+        <DropdownPanel>
+          {item.children.map((c) => (
+            <DropdownItem key={c.label} href={c.href ?? "#"} label={c.label} strong />
+          ))}
+        </DropdownPanel>
+      )}
     </div>
   );
 }
@@ -235,23 +265,17 @@ function AccountMenu({ name, onLogout }: { name: string; onLogout: () => void })
       </button>
 
       <DropdownPanel align="right">
-        <div className="border-b border-cvr-line px-4 pb-2.5 pt-1">
+        <div className="mb-1 rounded-xl bg-cvr-surface px-3.5 py-2.5">
           <p className="truncate text-sm font-semibold text-cvr-ink">{name}</p>
           <p className="text-xs text-cvr-muted">Thành viên COASTAL LAND</p>
         </div>
         {links.map((child) => (
-          <Link
-            key={child.href}
-            href={child.href}
-            className="block px-4 py-2.5 text-sm font-medium text-cvr-body transition-colors hover:bg-cvr-surface hover:text-cvr-ink"
-          >
-            {child.label}
-          </Link>
+          <DropdownItem key={child.href} href={child.href} label={child.label} />
         ))}
         <button
           type="button"
           onClick={onLogout}
-          className="block w-full border-t border-cvr-line px-4 py-2.5 text-left text-sm font-medium text-cvr-muted transition-colors hover:bg-cvr-surface hover:text-cvr-ink"
+          className="block w-full rounded-xl px-3.5 py-2.5 text-left text-sm font-medium text-cvr-muted transition-colors hover:bg-cvr-surface hover:text-cvr-ink"
         >
           Đăng xuất
         </button>

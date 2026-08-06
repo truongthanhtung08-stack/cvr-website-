@@ -14,8 +14,10 @@ import {
   type ProjectPriceRow,
   type ProjectFloorPlan,
   type ProjectPlace,
+  type ProjectTier,
   type ContentStatus,
   projectStatusOptions,
+  projectTierOptions,
   placeCategories,
   slugify,
 } from "@/lib/contentAdmin";
@@ -63,6 +65,10 @@ export default function ProjectForm({ initial }: { initial?: ProjectRow }) {
   const [amenityInput, setAmenityInput] = useState("");
 
   // ── Dữ liệu cấu trúc mới (cột details) ──
+  const [tier, setTier] = useState<ProjectTier>(initial?.details?.tier ?? "basic");
+  const [contactName, setContactName] = useState(initial?.details?.contact?.name ?? "");
+  const [contactPhone, setContactPhone] = useState(initial?.details?.contact?.phone ?? "");
+  const [contactEmail, setContactEmail] = useState(initial?.details?.contact?.email ?? "");
   const [purposes, setPurposes] = useState<ProjectPurpose[]>(initial?.details?.purposes ?? ["ban"]);
   const [priceMode, setPriceMode] = useState<"show" | "hidden">(initial?.details?.priceMode ?? "hidden");
   const [priceRows, setPriceRows] = useState<ProjectPriceRow[]>(
@@ -169,6 +175,12 @@ export default function ProjectForm({ initial }: { initial?: ProjectRow }) {
       amenities,
       overview: overview.trim() || null,
       details: {
+        tier,
+        // Bỏ trống hết → không lưu contact → trang dự án KHÔNG hiện khối liên hệ
+        contact:
+          contactName.trim() || contactPhone.trim() || contactEmail.trim()
+            ? { name: contactName.trim(), phone: contactPhone.trim(), email: contactEmail.trim() }
+            : undefined,
         purposes,
         priceMode,
         priceTable: priceRows
@@ -241,6 +253,40 @@ export default function ProjectForm({ initial }: { initial?: ProjectRow }) {
             </Field>
           </div>
         </div>
+      </Card>
+
+      {/* Cấp dự án — quyết định thứ tự trong slide "Dự án nổi bật" ở trang chủ */}
+      <Card title="Cấp dự án (CVR-PJ)">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Field label="Cấp hiển thị">
+            <select value={tier} onChange={(e) => setTier(e.target.value as ProjectTier)} className={inputCls}>
+              {projectTierOptions.map((o) => (
+                <option key={o.id} value={o.id}>{o.label}</option>
+              ))}
+            </select>
+          </Field>
+        </div>
+        <p className="mt-2 text-xs text-cvr-faint">
+          Cấp càng cao càng đứng trước trong slide “Dự án nổi bật” ở trang chủ và mục “Dự án liên quan”.
+        </p>
+      </Card>
+
+      {/* Thông tin liên hệ dự án — BỎ TRỐNG thì trang dự án không hiện khối liên hệ */}
+      <Card title="Thông tin liên hệ">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <Field label="Người phụ trách">
+            <input value={contactName} onChange={(e) => setContactName(e.target.value)} placeholder="VD: Nguyễn Văn A" className={inputCls} />
+          </Field>
+          <Field label="Số điện thoại">
+            <input type="tel" value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} placeholder="09xx xxx xxx" className={inputCls} />
+          </Field>
+          <Field label="Email">
+            <input type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} placeholder="email@example.com" className={inputCls} />
+          </Field>
+        </div>
+        <p className="mt-2 text-xs text-cvr-faint">
+          Để trống toàn bộ → trang dự án KHÔNG hiện khối liên hệ (không hiện số điện thoại mặc định nào).
+        </p>
       </Card>
 
       {/* Mục đích: dự án bán / cho thuê — quyết định tab tin liên quan trên web */}

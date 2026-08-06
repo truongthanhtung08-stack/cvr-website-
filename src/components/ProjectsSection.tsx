@@ -6,6 +6,7 @@ import Link from "next/link";
 import type { Project } from "@/lib/data";
 import { smoothScrollTo } from "@/lib/scroll";
 import { useAutoSlide } from "@/lib/useAutoSlide";
+import { sortProjectsByTier, ProjectListPaged, ExpandToggle } from "@/components/ProjectSlider";
 
 const PER_SLIDE = 4; // 1 hàng × 4 dự án mỗi slide (số slide KHÔNG giới hạn)
 
@@ -14,9 +15,13 @@ export default function ProjectsSection({ projects }: { projects: Project[] }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [slide, setSlide] = useState(0);
   const [paused, setPaused] = useState(false);
+  // Nút "Xem thêm" → xổ ra ngay tại chỗ danh sách dạng List, 8 dự án/trang.
+  const [expanded, setExpanded] = useState(false);
 
-  // Homepage: chỉ slide 8 dự án đầu (2 slide × 4) — còn lại xem qua nút "Xem thêm" (T19).
-  const homeProjects = projects.slice(0, 8);
+  // Homepage: slide 8 dự án đầu XẾP THEO CẤP VIP (Diamond → Gold → Silver → thường);
+  // còn lại xem qua nút "Xem thêm".
+  const ranked = sortProjectsByTier(projects);
+  const homeProjects = ranked.slice(0, 8);
   const slides: typeof projects[] = [];
   for (let i = 0; i < homeProjects.length; i += PER_SLIDE) {
     slides.push(homeProjects.slice(i, i + PER_SLIDE));
@@ -44,8 +49,11 @@ export default function ProjectsSection({ projects }: { projects: Project[] }) {
           Dự án nổi bật
         </h2>
 
+        {/* Slide 8 dự án — ẩn đi khi bấm "Xem thêm" để nhường chỗ cho danh sách */}
+        <div className={expanded ? "hidden" : undefined}>
+
         {/* ── MOBILE (< 640px): lướt ngang TỪNG thẻ dự án (như "BĐS dành cho bạn"),
-            ló mép thẻ sau. Thẻ cuối kèm nút "Xem thêm" → /du-an (phân trang). ── */}
+            ló mép thẻ sau. ── */}
         <div className="sm:hidden">
           <div className="no-scrollbar -mx-4 mt-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2">
             {homeProjects.map((p) => (
@@ -68,10 +76,6 @@ export default function ProjectsSection({ projects }: { projects: Project[] }) {
               </Link>
             ))}
           </div>
-          <Link href="/du-an" className="mt-4 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-full border border-cvr-line text-[15px] font-semibold text-cvr-ink transition active:bg-cvr-surface">
-            Xem thêm
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
-          </Link>
         </div>
 
         {/* ── TABLET/DESKTOP (≥ 640px): GIỮ NGUYÊN slider đã duyệt ── */}
@@ -165,10 +169,20 @@ export default function ProjectsSection({ projects }: { projects: Project[] }) {
               ))}
             </div>
           )}
-          <Link href="/du-an" className="absolute right-0 text-sm font-medium text-cvr-muted transition-colors hover:text-cvr-ink">
-            Xem thêm →
-          </Link>
         </div>
+
+        </div>{/* hết khối slide */}
+
+        {/* Bấm "Xem thêm" → danh sách TẤT CẢ dự án dạng List, 8 dự án/trang */}
+        {expanded && (
+          <div className="mt-5">
+            <ProjectListPaged projects={ranked} />
+          </div>
+        )}
+
+        {ranked.length > 8 && (
+          <ExpandToggle expanded={expanded} onClick={() => setExpanded((v) => !v)} count={ranked.length} />
+        )}
       </div>
     </section>
   );

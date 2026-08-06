@@ -2,19 +2,25 @@
 
 import { useEffect, useState } from "react";
 
-// Sidebar "Danh sách dịch vụ" cho trang Báo giá truyền thông (tham khảo Homedy).
+export type SidebarGroup = { title: string; items: { label: string; href: string }[] };
+
+// Sidebar trang Báo giá — 2 PHẦN: "Danh sách dịch vụ" (neo trong trang) và
+// "Công cụ tiện ích" (link sang trang tiện ích) nằm phía sau.
 // Tự tô sáng mục đang xem khi cuộn (IntersectionObserver — chỉ đổi màu, không reflow).
 export default function PricingSidebar({
-  items,
+  groups,
   hotline,
 }: {
-  items: { label: string; href: string }[];
+  groups: SidebarGroup[];
   hotline: string;
 }) {
-  const [active, setActive] = useState(items[0]?.href ?? "");
+  const [active, setActive] = useState(groups[0]?.items[0]?.href ?? "");
 
   useEffect(() => {
-    const sections = items
+    const sections = groups
+      .flatMap((g) => g.items)
+      // Chỉ theo dõi mục neo trong trang (#...) — link sang trang khác bỏ qua.
+      .filter((m) => m.href.startsWith("#"))
       .map((m) => document.querySelector(m.href))
       .filter((el): el is Element => !!el);
     if (!sections.length) return;
@@ -31,38 +37,42 @@ export default function PricingSidebar({
     );
     sections.forEach((s) => io.observe(s));
     return () => io.disconnect();
-  }, [items]);
+  }, [groups]);
 
   return (
     <aside className="lg:sticky lg:top-20 lg:self-start">
-      <div className="overflow-hidden rounded-2xl border border-cvr-line bg-white shadow-lux">
-        <p className="border-b border-cvr-line px-5 py-3.5 text-[11px] font-bold uppercase tracking-[0.18em] text-cvr-muted">
-          Danh sách dịch vụ
-        </p>
-        <nav className="py-1.5">
-          {items.map((m) => {
-            const isActive = active === m.href;
-            return (
-              <a
-                key={m.href}
-                href={m.href}
-                className={`relative block px-5 py-2.5 text-sm transition-colors ${
-                  isActive
-                    ? "font-semibold text-cvr-ink"
-                    : "font-medium text-cvr-body hover:text-cvr-ink"
-                }`}
-              >
-                {/* Thanh nhấn vàng bên trái cho mục đang xem */}
-                <span
-                  className={`absolute bottom-1.5 left-0 top-1.5 w-[3px] rounded-r bg-cvr-gold transition-opacity ${
-                    isActive ? "opacity-100" : "opacity-0"
+      {/* 2 phần xếp dọc: Danh sách dịch vụ → Công cụ tiện ích.
+          Kiểu Apple: khối bo 2xl, không đường kẻ giữa các mục, nền sáng khi rê chuột. */}
+      <div className="space-y-4">
+        {groups.map((g) => (
+          <nav key={g.title} className="rounded-2xl border border-cvr-line bg-white p-2 shadow-lux">
+            <p className="px-3.5 pb-1.5 pt-2.5 text-[11px] font-bold uppercase tracking-[0.18em] text-cvr-faint">
+              {g.title}
+            </p>
+            {g.items.map((m) => {
+              const isActive = active === m.href;
+              return (
+                <a
+                  key={m.href}
+                  href={m.href}
+                  className={`relative block rounded-xl px-3.5 py-2.5 text-sm transition-colors ${
+                    isActive
+                      ? "bg-cvr-surface font-semibold text-cvr-ink"
+                      : "font-medium text-cvr-body hover:bg-cvr-surface hover:text-cvr-ink"
                   }`}
-                />
-                {m.label}
-              </a>
-            );
-          })}
-        </nav>
+                >
+                  {/* Thanh nhấn vàng bên trái cho mục đang xem */}
+                  <span
+                    className={`absolute bottom-2 left-0 top-2 w-[3px] rounded-r bg-cvr-gold transition-opacity ${
+                      isActive ? "opacity-100" : "opacity-0"
+                    }`}
+                  />
+                  {m.label}
+                </a>
+              );
+            })}
+          </nav>
+        ))}
       </div>
 
       {/* Hotline — nền đen luxury, CTA vàng */}

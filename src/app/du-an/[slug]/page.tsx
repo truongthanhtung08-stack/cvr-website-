@@ -6,8 +6,9 @@ import Footer from "@/components/Footer";
 import ProjectGallery from "@/components/ProjectGallery";
 import ProjectNav from "@/components/ProjectNav";
 import ProjectNearby from "@/components/ProjectNearby";
+import ProjectSlider from "@/components/ProjectSlider";
 import FloorPlans from "@/components/FloorPlans";
-import ListingSlider from "@/components/ListingSlider";
+import PropertyCard from "@/components/PropertyCard";
 import RelatedListingsTabs from "@/components/RelatedListingsTabs";
 import LeadForm from "@/components/LeadForm";
 import RichContent from "@/components/RichContent";
@@ -47,9 +48,9 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   const [p, projects, listings] = await Promise.all([getProject(slug), getProjects(), getListings()]);
   if (!p) notFound();
 
-  const gallery = Array.from(
-    new Set([...(p.photos ?? [p.image]), ...projects.filter((x) => x.slug !== p.slug).map((x) => x.image)]),
-  ).slice(0, 8);
+  // Thư viện ảnh: CHỈ ảnh của CHÍNH dự án này.
+  // (Trước đây độn thêm ảnh của các dự án khác cho đủ 8 tấm → ảnh các dự án lẫn lộn nhau.)
+  const gallery = Array.from(new Set(p.photos?.length ? p.photos : [p.image]));
 
   const province = provinceOf(p.location);
   const handover = p.scale.find((s) => s.label.includes("Bàn giao"))?.value ?? p.status;
@@ -61,29 +62,30 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   const priceTable = p.priceTable ?? [];
   const places = p.places ?? [];
   const dev = p.developerInfo;
+  // Liên hệ dự án — admin không nhập thì contentDb trả undefined → không hiện khối liên hệ.
+  const contact = p.contact;
 
-  // Giá hiển thị 1 dòng bảng giá: ẩn giá / bỏ trống → "Liên hệ"
-  const rowPrice = (price: string) => (p.priceMode === "show" && price ? price : "Liên hệ");
+  // ẨN GIÁ: không hiện bất kỳ thông tin giá/loại căn/diện tích nào — chỉ "Liên hệ".
+  const showPrice = p.priceMode === "show";
+  const rowPrice = (price: string) => (showPrice && price ? price : "Liên hệ");
+  // Giá ở cột phải: ẩn giá → "Liên hệ" thay vì lộ khoảng giá.
+  const sidePrice = showPrice ? p.priceFrom : "Liên hệ";
 
   // Dự án khác — ưu tiên cùng tỉnh + cùng loại hình
+  // Dự án liên quan — LẤY HẾT (ưu tiên cùng tỉnh + cùng loại hình) để nút "Xem thêm"
+  // còn danh sách mà xổ ra; ProjectSlider tự cắt 8 cái đầu cho slide.
   const others = pickRelated(
     projects.filter((x) => x.slug !== p.slug),
     (x) => (provinceOf(x.location) === province ? 2 : 0) + (x.type === p.type ? 1 : 0),
-    8,
+    projects.length,
   );
 
-  // Tin liên quan trong tỉnh — xếp theo cùng dự án → cùng khu vực → cùng phân khúc,
-  // rồi tách theo Bán / Cho thuê cho tab tin liên quan.
-  const projSegment = segmentOf(p.type);
-  const projDistrict = districtOf(p.location);
-  const score = (x: (typeof listings)[number]) =>
-    (x.title.includes(p.name) ? 100 : 0) +
-    (districtOf(x.location) === projDistrict ? 20 : 0) +
-    (segmentOf(x.type) !== "" && segmentOf(x.type) === projSegment ? 5 : 0);
-  const inProvince = listings.filter((x) => provinceOf(x.location) === province);
-  const relBan = pickRelated(inProvince.filter((x) => (x.purpose ?? "ban") === "ban"), score, 6);
-  const relThue = pickRelated(inProvince.filter((x) => (x.purpose ?? "ban") === "thue"), score, 6);
-  const hasRelated = relBan.length > 0 || relThue.length > 0;
+  // Tin của CHÍNH dự án này — gán trong admin qua trường "Thuộc dự án" (details.project).
+  // Dự án không có tin nào → để TRỐNG, tuyệt đối KHÔNG độn tin của dự án khác vào.
+  const projectListings = listings.filter((x) => x.projectSlug === p.slug);
+  const relBan = projectListings.filter((x) => (x.purpose ?? "ban") === "ban");
+  const relThue = projectListings.filter((x) => (x.purpose ?? "ban") === "thue");
+  const hasRelated = projectListings.length > 0;
 
   // Menu — chỉ mục có nội dung (khớp id các <section>)
   const nav = [
@@ -124,7 +126,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
             {/* Dải thông tin nhanh — cân đối, dễ đọc từng tiêu chí */}
             <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
-              <Fact label="Giá từ" value={p.priceFrom} accent />
+              <Fact label="Giá từ" value={sidePrice} accent />
               <Fact label="Loại hình" value={p.type} />
               <Fact label="Chủ đầu tư" value={p.developer} />
               <Fact label="Bàn giao" value={handover} />
@@ -207,7 +209,15 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
               {/* 6) Bảng giá — cấu trúc Loại căn – Diện tích – Hướng – Giá (ẩn/hiện giá) */}
               <Section id="bang-gia" title="Bảng giá & loại hình">
-                {priceTable.length > 0 ? (
+                {!showPrice ? (
+                  /* ẨN GIÁ → không hiện loại căn / diện tích / hướng / giá, chỉ mời liên hệ */
+                  <div className="rounded-xl border border-dashed border-cvr-line bg-cvr-surface px-4 py-7 text-center">
+                    <p className="text-lg font-semibold tracking-tight text-cvr-ink">Liên hệ</p>
+                    <p className="mt-1.5 text-sm text-cvr-body">
+                      Bảng giá &amp; chính sách bán hàng của dự án được cung cấp trực tiếp.
+                    </p>
+                  </div>
+                ) : priceTable.length > 0 ? (
                   <div className="overflow-hidden rounded-xl border border-cvr-line">
                     <div className="grid grid-cols-[1.4fr_1fr_0.8fr_1fr] bg-cvr-surface px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-cvr-muted">
                       <span>Loại căn</span><span>Diện tích</span><span>Hướng</span><span className="text-right">Giá</span>
@@ -256,23 +266,16 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                 {dev?.desc && <p className="mt-4 whitespace-pre-line text-sm leading-relaxed text-cvr-body">{dev.desc}</p>}
               </Section>
 
-              {/* 8) Tin bán / cho thuê liên quan */}
+              {/* 8) Tin mua bán / cho thuê CỦA CHÍNH dự án này */}
               {hasRelated && (
-                <Section id="tin-dang" title={`Bất động sản liên quan tại ${province}`}>
-                  {/* MOBILE: slide 8 tin + nút "Bất động sản tương tự" */}
-                  <div className="sm:hidden">
-                    <ListingSlider items={[...relBan, ...relThue].slice(0, 8)} />
-                    <div className="mt-6 flex justify-center">
-                      <Link
-                        href={purposes.includes("thue") ? "/cho-thue" : "/mua-ban"}
-                        className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full border border-cvr-line px-6 text-sm font-semibold text-cvr-ink transition active:bg-cvr-surface"
-                      >
-                        Bất động sản tương tự
-                        <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
-                      </Link>
-                    </div>
+                <Section id="tin-dang" title={`Tin mua bán liên quan tại dự án ${p.name}`}>
+                  {/* MOBILE: thẻ dọc — ảnh trên, nội dung dưới (đúng cấu trúc tin theo cấp VIP) */}
+                  <div className="space-y-5 sm:hidden">
+                    {projectListings.map((x) => (
+                      <PropertyCard key={x.id} item={x} variant="tier" />
+                    ))}
                   </div>
-                  {/* DESKTOP: GIỮ NGUYÊN tab Bán/Cho thuê đã duyệt */}
+                  {/* PC: thẻ ngang — ảnh trái, nội dung phải (ảnh lớn, cân đối với nội dung) */}
                   <div className="hidden sm:block">
                     <RelatedListingsTabs ban={relBan} thue={relThue} />
                   </div>
@@ -284,12 +287,37 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             <aside className="lg:col-span-1">
               <div className="sticky top-24 space-y-4">
                 <div className="rounded-2xl border border-cvr-line bg-white p-5 shadow-lux">
-                  <p className="text-xs text-cvr-muted">Giá bán từ</p>
-                  <p className="text-2xl font-bold tracking-tight text-cvr-ink">{p.priceFrom}</p>
+                  <p className="text-xs text-cvr-muted">{showPrice ? "Giá bán từ" : "Giá bán"}</p>
+                  <p className="text-2xl font-bold tracking-tight text-cvr-ink">{sidePrice}</p>
                   <p className="mt-1 text-xs text-cvr-muted">{p.type}</p>
-                  <div className="mt-4 space-y-2.5">
-                    <a href="tel:0905000111" className="flex items-center justify-center gap-2 rounded-lg bg-cvr-ink px-4 py-3 text-sm font-bold text-white transition hover:bg-cvr-ink/90">Gọi tư vấn dự án</a>
-                  </div>
+
+                  {/* Liên hệ dự án — CHỈ hiện khi admin đã nhập (không bịa số tổng đài) */}
+                  {contact && (
+                    <div className="mt-4 space-y-2.5">
+                      {contact.name && (
+                        <p className="text-sm font-semibold text-cvr-ink">{contact.name}</p>
+                      )}
+                      {contact.phone && (
+                        <a
+                          href={`tel:${contact.phone.replace(/\s/g, "")}`}
+                          className="flex items-center justify-center gap-2 rounded-lg bg-cvr-ink px-4 py-3 text-sm font-bold text-white transition hover:bg-cvr-ink/90"
+                        >
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h2.5a1 1 0 01.97.757l.9 3.6a1 1 0 01-.29.98l-1.5 1.4a14 14 0 006.68 6.68l1.4-1.5a1 1 0 01.98-.29l3.6.9a1 1 0 01.76.97V19a2 2 0 01-2 2A16 16 0 013 5z" /></svg>
+                          {contact.phone}
+                        </a>
+                      )}
+                      {contact.email && (
+                        <a
+                          href={`mailto:${contact.email}`}
+                          className="flex items-center justify-center gap-2 rounded-lg border border-cvr-line px-4 py-3 text-sm font-semibold text-cvr-ink transition hover:bg-cvr-surface"
+                        >
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 8l9 6 9-6M4 5h16a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V6a1 1 0 011-1z" /></svg>
+                          {contact.email}
+                        </a>
+                      )}
+                    </div>
+                  )}
+
                   <p className="mt-3 text-center text-[11px] text-cvr-faint">{p.developer} · Bàn giao {handover}</p>
                 </div>
 
@@ -304,33 +332,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
           {others.length > 0 && (
             <div className="mt-14">
-              <div className="flex items-center justify-between gap-3">
-                <h2 className="text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">Dự án liên quan</h2>
-                <Link href="/du-an" className="shrink-0 text-sm font-medium text-cvr-muted transition-colors hover:text-cvr-ink">Xem thêm →</Link>
-              </div>
-              {/* MOBILE: slide vuốt ngang · DESKTOP: GIỮ NGUYÊN lưới 3 cột đã duyệt */}
-              <div className="no-scrollbar mt-5 flex gap-5 overflow-x-auto snap-x snap-mandatory pb-2 sm:grid sm:grid-cols-3 sm:overflow-visible sm:pb-0">
-                {others.map((o) => (
-                  <Link key={o.slug} href={`/du-an/${o.slug}`} className="card-lux group relative flex w-[80%] shrink-0 snap-start flex-col overflow-hidden rounded-none border-0 bg-white shadow-lux shadow-lux-hover hover:-translate-y-1.5 hover:border-cvr-blue/45 sm:w-auto sm:border sm:border-cvr-line">
-                    <span className="card-sheen" aria-hidden />
-                    <div className="relative aspect-[16/10] overflow-hidden">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={o.image} alt={o.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                    </div>
-                    <div className="p-4">
-                      <h3 className="font-semibold text-cvr-ink transition-colors group-hover:text-cvr-blue-ink">{o.name}</h3>
-                      <p className="mt-1 text-xs text-cvr-muted">{o.location}</p>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-              {/* Nút Xem thêm (bổ sung) — CHỈ mobile; desktop giữ link "Xem thêm →" ở tiêu đề */}
-              <div className="mt-6 flex justify-center sm:hidden">
-                <Link href="/du-an" className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full border border-cvr-line px-6 text-sm font-semibold text-cvr-ink transition active:bg-cvr-surface">
-                  Xem thêm dự án
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
-                </Link>
-              </div>
+              {/* Slide 8 dự án theo cấp VIP · nút "Xem thêm" xổ ra List phân trang 8/trang */}
+              <ProjectSlider projects={others} title="Dự án liên quan" />
             </div>
           )}
         </div>

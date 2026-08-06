@@ -2,10 +2,13 @@
 
 import { useState } from "react";
 import type { Listing } from "@/lib/data";
-import ListingList from "@/components/ListingList";
+import PropertyCard from "@/components/PropertyCard";
 
-// Tin BÁN / CHO THUÊ liên quan tới dự án — tab chuyển giữa 2 nhóm.
-// Chỉ hiện tab có tin; mặc định mở tab nào có tin trước.
+// Tin BÁN / CHO THUÊ của dự án — tab chuyển giữa 2 nhóm.
+// Dùng THẺ TIN THẬT dạng hàng ngang (ảnh trái – nội dung phải), đầy đủ cấu trúc
+// theo cấp VIP: huy hiệu cấp · tiêu đề đổi màu/VIẾT HOA + icon HOT · mô tả ·
+// giá – diện tích – đơn giá · địa chỉ · người đăng.
+// (Trước đây dùng ListingList: ảnh chỉ 160px và mất hết phân cấp VIP.)
 export default function RelatedListingsTabs({ ban, thue }: { ban: Listing[]; thue: Listing[] }) {
   const hasBan = ban.length > 0;
   const hasThue = thue.length > 0;
@@ -36,10 +39,14 @@ export default function RelatedListingsTabs({ ban, thue }: { ban: Listing[]; thu
         )}
       </div>
       {items.length > 0 ? (
-        <ListingList items={items} />
+        <div className="space-y-4">
+          {items.map((l) => (
+            <PropertyCard key={l.id} item={l} layout="list" />
+          ))}
+        </div>
       ) : (
         <p className="rounded-xl border border-cvr-line bg-cvr-surface px-4 py-6 text-center text-sm text-cvr-muted">
-          Chưa có tin {tab === "ban" ? "bán" : "cho thuê"} tại khu vực dự án.
+          Dự án chưa có tin {tab === "ban" ? "bán" : "cho thuê"}.
         </p>
       )}
     </div>

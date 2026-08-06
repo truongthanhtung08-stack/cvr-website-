@@ -35,6 +35,9 @@ export type Listing = {
   // Ảnh đại diện người đăng (details.contact.avatar) — hiện trên thẻ tin cấp cao.
   // Không có → avatar chữ cái đầu tên.
   agentAvatar?: string;
+  // SLUG dự án tin này thuộc về (details.project) — dùng cho mục
+  // "Tin mua bán liên quan tại dự án …". Không thuộc dự án nào → bỏ trống.
+  projectSlug?: string;
 };
 
 // Lọc tin theo mục đích (mặc định không có purpose = "ban")
@@ -267,6 +270,8 @@ export type Project = {
   photos?: string[]; // ảnh thật của dự án (cho thư viện ảnh) — nếu có sẽ ưu tiên
   videos?: string[]; // video dự án (tệp mp4 / link YouTube-Vimeo) — hiện ở mục Video
   // ── Dữ liệu cấu trúc mới (admin nhập, cột details) ──
+  tier?: "diamond" | "gold" | "silver" | "basic"; // cấp CVR-PJ → thứ tự slide dự án
+  contact?: { name?: string; phone?: string; email?: string }; // liên hệ dự án (rỗng = không hiện)
   purposes?: ("ban" | "thue")[];        // Mục đích: Bán / Cho thuê
   priceMode?: "show" | "hidden";        // hiện giá cụ thể / ẩn giá → "Liên hệ"
   priceTable?: { unit: string; area: string; direction: string; price: string }[];

@@ -54,6 +54,9 @@ export default function PostListingForm() {
   const [contactName, setContactName] = useState("");
   const [contactPhone, setContactPhone] = useState("");
   const [contactEmail, setContactEmail] = useState("");
+  // Tin thuộc dự án nào (không bắt buộc) — hiện trong mục tin liên quan của dự án đó
+  const [projectSlug, setProjectSlug] = useState("");
+  const [projectOptions, setProjectOptions] = useState<{ slug: string; name: string }[]>([]);
 
   // Đang lưu nút nào — để 2 nút hiện trạng thái riêng, không lẫn nhau
   const [saving, setSaving] = useState<"" | "draft" | "publish">("");
@@ -62,6 +65,18 @@ export default function PostListingForm() {
   const spec = useMemo(() => categorySpecs.find((c) => c.label === category) ?? categorySpecs[0], [category]);
   const districts = province ? districtsOf(province) : [];
   const wards = province && district ? wardsOf(province, district) : [];
+
+  // Nạp danh sách dự án đã đăng — cho ô "Thuộc dự án"
+  useEffect(() => {
+    (async () => {
+      const { data } = await createClient()
+        .from("projects")
+        .select("slug, name")
+        .eq("status", "published")
+        .order("name");
+      if (data) setProjectOptions(data as { slug: string; name: string }[]);
+    })();
+  }, []);
 
   // Lấy phiên đăng nhập + prefill liên hệ từ hồ sơ
   useEffect(() => {
@@ -113,6 +128,7 @@ export default function PostListingForm() {
       setFurnish(d.furnish ?? "");
       setDirection(d.direction ?? "");
       setAddressDetail(d.addressDetail ?? "");
+      setProjectSlug(d.project ?? "");
       if (d.contact) {
         setContactName(d.contact.name ?? "");
         setContactPhone(d.contact.phone ?? "");
@@ -177,6 +193,7 @@ export default function PostListingForm() {
         furnish: furnish || undefined,
         direction: direction || undefined,
         addressDetail: addressDetail.trim() || undefined,
+        project: projectSlug || undefined,
         contact: (contactName.trim() || contactPhone.trim() || contactEmail.trim())
           ? { name: contactName.trim(), phone: contactPhone.trim(), email: contactEmail.trim() }
           : undefined,
@@ -414,6 +431,24 @@ export default function PostListingForm() {
           <div><Label>Số điện thoại *</Label><input type="tel" value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} placeholder="09xx xxx xxx" className={inputCls} /></div>
           <div><Label>Email</Label><input type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} placeholder="email@example.com" className={inputCls} /></div>
         </div>
+      </Card>
+
+      {/* 10. Thuộc dự án (không bắt buộc) */}
+      <Card step="10" title="Thuộc dự án">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <Label>Dự án</Label>
+            <select value={projectSlug} onChange={(e) => setProjectSlug(e.target.value)} className={inputCls}>
+              <option value="">— Không thuộc dự án nào —</option>
+              {projectOptions.map((o) => (
+                <option key={o.slug} value={o.slug}>{o.name}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <p className="mt-2 text-xs text-cvr-faint">
+          Chọn dự án → tin của bạn hiện thêm ở trang dự án đó, tiếp cận đúng khách đang quan tâm dự án.
+        </p>
       </Card>
 
       {error && (

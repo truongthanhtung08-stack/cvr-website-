@@ -113,6 +113,12 @@ function projectRowToProject(r: ProjectRow): Project {
     overview: overview.length ? overview : [`Dự án ${r.name}${location ? ` tại ${location}` : ""} — thông tin đang được Coastal Land cập nhật.`],
     ...(photos.length ? { photos: photos.map(asset) } : {}),
     ...(videos.length ? { videos } : {}),
+    tier: d.tier ?? "basic",
+    // Chỉ trả contact khi admin ĐÃ nhập ít nhất SĐT hoặc email — không có thì
+    // trang dự án bỏ hẳn khối liên hệ (không hiện số tổng đài bịa).
+    ...(d.contact && (d.contact.phone?.trim() || d.contact.email?.trim())
+      ? { contact: d.contact }
+      : {}),
     ...(d.purposes?.length ? { purposes: d.purposes } : {}),
     priceMode: d.priceMode ?? "hidden",
     ...(d.priceTable?.length ? { priceTable: d.priceTable.filter((p) => p && (p.unit || p.area || p.price)) } : {}),

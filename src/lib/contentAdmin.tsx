@@ -26,14 +26,32 @@ export type ProjectFloorPlan = { label: string; image: string; note: string };
 export type ProjectPlace = { category: string; name: string; distance: string };
 export type ProjectDeveloperInfo = { established?: string; website?: string; desc?: string; logo?: string };
 
+// Cấp dự án (CVR-PJ) — quyết định thứ tự hiển thị slide dự án ở trang chủ,
+// tương ứng bảng giá "Gói Dự án": Diamond > Gold > Silver > Basic.
+export type ProjectTier = "diamond" | "gold" | "silver" | "basic";
+
+// Thông tin liên hệ của dự án — admin nhập; KHÔNG nhập thì trang dự án
+// không hiện khối liên hệ (không bịa số tổng đài).
+export type ProjectContact = { name?: string; phone?: string; email?: string };
+
 export type ProjectDetails = {
+  tier?: ProjectTier;                     // cấp CVR-PJ (mặc định basic)
   purposes?: ProjectPurpose[];            // Bán / Cho thuê
   priceMode?: "show" | "hidden";          // hiện giá cụ thể / ẩn giá (mặc định) → "Liên hệ"
   priceTable?: ProjectPriceRow[];         // Loại căn – Diện tích – Hướng – Giá
   floorPlans?: ProjectFloorPlan[];        // Mặt bằng từng tháp/tầng/loại căn
   places?: ProjectPlace[];                // Tiện ích xung quanh (có khoảng cách)
   developerInfo?: ProjectDeveloperInfo;   // Chủ đầu tư (thông tin mở rộng)
+  contact?: ProjectContact;               // Liên hệ dự án (SĐT, email…)
 };
+
+// Nhãn cấp dự án cho form admin
+export const projectTierOptions: { id: ProjectTier; label: string }[] = [
+  { id: "diamond", label: "CVR-PJ Diamond" },
+  { id: "gold", label: "CVR-PJ Gold" },
+  { id: "silver", label: "CVR-PJ Silver" },
+  { id: "basic", label: "Không xếp cấp (thường)" },
+];
 
 // Nhóm tiện ích xung quanh (đối chiếu Batdongsan) — cho form + biểu tượng
 export const placeCategories = [

@@ -24,6 +24,7 @@ export type ListingDetailsJson = {
   direction?: string;
   addressDetail?: string;
   contact?: { name?: string; phone?: string; email?: string; avatar?: string };
+  project?: string; // SLUG dự án tin này thuộc về — dùng cho "Tin liên quan tại dự án"
 };
 
 // Hàng trong bảng `listings` (xem supabase/migrations/0002_listings.sql)
@@ -96,6 +97,7 @@ function rowToListing(r: Row): Listing {
     // Tên người đăng thật (khách hàng) — thẻ tin hiện đúng tên này, không phải admin
     agentName: r.details?.contact?.name || undefined,
     ...(r.details?.contact?.avatar ? { agentAvatar: asset(r.details.contact.avatar) } : {}),
+    ...(r.details?.project ? { projectSlug: r.details.project } : {}),
   };
 }
 
