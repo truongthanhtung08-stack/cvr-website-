@@ -225,13 +225,13 @@ function SaveButton() {
     <Link
       href="/tin-luu"
       aria-label={count > 0 ? `Tin đã lưu (${count})` : "Tin đã lưu"}
-      className="relative flex h-11 w-11 items-center justify-center text-cvr-line transition-colors hover:text-white lg:h-auto lg:w-auto lg:gap-1.5"
+      className="relative flex h-11 w-9 items-center justify-center text-cvr-line transition-colors hover:text-white lg:h-auto lg:w-auto lg:gap-1.5"
     >
       <svg className="h-[22px] w-[22px] lg:h-[18px] lg:w-[18px]" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 10-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 000-7.78z" />
       </svg>
       {count > 0 && (
-        <span className="absolute right-[7px] top-[7px] flex h-[15px] min-w-[15px] items-center justify-center rounded-full bg-[#ff3b30] px-1 text-[9px] font-bold leading-none text-white lg:hidden">
+        <span className="absolute right-[4px] top-[7px] flex h-[15px] min-w-[15px] items-center justify-center rounded-full bg-[#ff3b30] px-1 text-[9px] font-bold leading-none text-white lg:hidden">
           {count > 9 ? "9+" : count}
         </span>
       )}
@@ -545,8 +545,9 @@ export default function Header() {
           ))}
         </nav>
 
-        {/* Hành động: Lưu · (Đăng nhập | Tài khoản) · Đăng tin */}
-        <div className="flex items-center gap-1 sm:gap-5">
+        {/* Hành động: Lưu · (Đăng nhập | Tài khoản) · Đăng tin
+            MOBILE: ♡ nằm SÁT nút ☰ (gap-0) — vẫn giữ vùng chạm cao 44px. */}
+        <div className="flex items-center gap-0 sm:gap-5">
           <SaveButton />
 
           {/* Tài khoản/Đăng nhập — CHỈ desktop (lg). MOBILE: avatar + tài khoản nằm TRONG

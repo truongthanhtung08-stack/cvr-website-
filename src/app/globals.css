@@ -81,9 +81,11 @@ h1, h2, h3 {
    mờ mờ nội dung trang phía sau — đúng chất glassmorphism của Apple.
    Vẫn đạt tương phản chữ trắng ≥ 7:1 khi nền sau là trang trắng. */
 .menu-glass {
-  background-color: rgba(22, 22, 23, 0.82);
-  -webkit-backdrop-filter: saturate(180%) blur(30px);
-  backdrop-filter: saturate(180%) blur(30px);
+  /* Vẫn trong (thấy mờ mờ trang phía sau) nhưng ĐỦ ĐẶC + blur mạnh để chữ menu
+     nổi rõ, không bị nội dung trang sau lẫn vào. */
+  background-color: rgba(22, 22, 23, 0.9);
+  -webkit-backdrop-filter: saturate(180%) blur(44px);
+  backdrop-filter: saturate(180%) blur(44px);
 }
 @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
   .menu-glass { background-color: #161617; }
