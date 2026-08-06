@@ -102,7 +102,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
           <HomeCollapsible>
 
           {/* Thư viện ảnh THẬT — MOBILE tràn viền sát 2 mép + sát header (không khoảng trống) */}
-          <div className="-mx-4 mb-5 sm:mx-0 sm:mb-6">
+          <div className="-mx-4 mb-6 sm:mx-0">
             <Gallery images={d.images} alt={l.title} />
           </div>
 

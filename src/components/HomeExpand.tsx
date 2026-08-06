@@ -44,7 +44,12 @@ export function useHomeSection(key: string) {
   return {
     expanded: openKey === key,
     hidden: openKey !== null && openKey !== key,
-    toggle: () => setOpenKey(openKey === key ? null : key),
+    // Bấm "Xem thêm": danh sách xổ ra luôn bắt đầu ở TRANG 1 và đưa màn hình về
+    // đầu danh sách (nút nằm cuối khối, không cuộn lên thì khách đứng ở giữa trang).
+    toggle: () => {
+      setOpenKey(openKey === key ? null : key);
+      if (typeof window !== "undefined") window.scrollTo({ top: 0 });
+    },
     close: () => setOpenKey(null),
   };
 }

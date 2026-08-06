@@ -41,7 +41,7 @@ export default function ListingShowcase({
   // Chưa có tin → VẪN dựng sẵn khung, chỉ báo trống.
   if (items.length === 0) {
     return (
-      <div className={title ? "mt-10 sm:mt-14" : undefined}>
+      <div className={title ? "mt-14" : undefined}>
         {title && <h2 className="mb-5 text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">{title}</h2>}
         <p className="rounded-xl border border-dashed border-cvr-line bg-cvr-surface px-4 py-8 text-center text-sm text-cvr-muted">
           {emptyNote}
@@ -64,7 +64,7 @@ export default function ListingShowcase({
   }
 
   return (
-    <div className={title ? "mt-10 sm:mt-14" : undefined}>
+    <div className={title ? "mt-14" : undefined}>
       {title && <h2 className="mb-5 text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">{title}</h2>}
       <ListingSlider items={items.slice(0, 8)} />
       <div className="mt-6 flex justify-center">

@@ -195,7 +195,7 @@ export default function ProjectSlider({
 
   return (
     /* Đã mở danh sách → bỏ khoảng cách trên đầu (nội dung phía trên đã ẩn) */
-    <div className={expanded ? undefined : "mt-10 sm:mt-14"}>
+    <div className={expanded ? undefined : "mt-14"}>
       {/* Mở danh sách rồi thì ẩn tiêu đề khối — danh sách đã có tiêu đề riêng */}
       {!expanded && <h2 className="text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">{title}</h2>}
 

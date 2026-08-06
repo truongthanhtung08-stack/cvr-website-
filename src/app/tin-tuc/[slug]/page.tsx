@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import ArticleShowcase from "@/components/ArticleShowcase";
+import { HomeExpandProvider, HomeCollapsible } from "@/components/HomeExpand";
 import { articleContent, pickRelated } from "@/lib/data";
 import { getArticle, getArticles } from "@/lib/contentDb";
 import RichContent from "@/components/RichContent";
@@ -21,17 +22,18 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
   const [a, articles] = await Promise.all([getArticle(slug), getArticles()]);
   if (!a) notFound();
   const content = articleContent(a);
-  // Tin liên quan: ưu tiên CÙNG CHUYÊN MỤC (+1), còn lại lấp theo thứ tự mới nhất. Đủ 3.
-  const related = pickRelated(
-    articles.filter((x) => x.slug !== a.slug),
-    (x) => (x.category === a.category ? 1 : 0),
-    3,
-  );
+  // Tin liên quan: ưu tiên CÙNG CHUYÊN MỤC (+1), còn lại theo thứ tự mới nhất.
+  // Lấy HẾT: slide hiện 8 bài đầu, "Xem thêm" đổ ra danh sách theo trang.
+  const pool = articles.filter((x) => x.slug !== a.slug);
+  const related = pickRelated(pool, (x) => (x.category === a.category ? 1 : 0), pool.length);
 
   return (
     <>
       <Header />
       <main className="flex-1 bg-white">
+        <HomeExpandProvider>
+        {/* Nội dung bài — ẩn khi bấm "Xem thêm" ở mục tin liên quan bên dưới */}
+        <HomeCollapsible>
         <article className="mx-auto max-w-3xl px-4 pb-16 pt-6 sm:px-6">
 
           <div className="flex items-center gap-2 text-xs text-cvr-muted">
@@ -48,26 +50,19 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
             <RichContent paragraphs={content} />
           </div>
         </article>
+        </HomeCollapsible>
 
-        {related.length > 0 && (
-          <div className="mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-8">
-            <h2 className="mb-5 text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">Tin liên quan</h2>
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
-              {related.map((r) => (
-                <Link key={r.slug} href={`/tin-tuc/${r.slug}`} className="card-lux group relative flex flex-col overflow-hidden rounded-none border border-cvr-line bg-white shadow-lux shadow-lux-hover hover:-translate-y-1.5 hover:border-cvr-blue/45">
-                  <span className="card-sheen" aria-hidden />
-                  <div className="relative aspect-[16/9] overflow-hidden">
-                    <Image src={r.image} alt={r.title} fill sizes="(max-width:768px) 100vw, 33vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
-                  </div>
-                  <div className="p-4">
-                    <span className="text-xs text-cvr-muted">{r.date}</span>
-                    <h3 className="mt-1 line-clamp-2 font-semibold leading-snug text-cvr-ink transition-colors group-hover:text-cvr-blue-ink">{r.title}</h3>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
+        {/* Tin liên quan — CÙNG CẤU TRÚC mọi khối: slide 8 bài → "Xem thêm" →
+            danh sách theo trang (có cột phải), nội dung bài phía trên ẩn đi. */}
+        <div className="mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-8">
+          <ArticleShowcase
+            articles={related}
+            title="Tin liên quan"
+            sectionKey="tin-lien-quan"
+            emptyNote="Chưa có bài viết liên quan."
+          />
+        </div>
+        </HomeExpandProvider>
       </main>
       <Footer />
     </>

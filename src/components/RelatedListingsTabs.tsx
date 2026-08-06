@@ -26,7 +26,7 @@ export default function RelatedListingsTabs({ ban, thue, title }: { ban: Listing
   if (hidden) return null;
 
   return (
-    <div className={expanded ? undefined : "mt-10 sm:mt-14"}>
+    <div className={expanded ? undefined : "mt-14"}>
       {!expanded && title && (
         <h2 className="mb-5 text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">{title}</h2>
       )}
