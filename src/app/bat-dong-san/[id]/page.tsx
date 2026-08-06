@@ -273,6 +273,8 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
             <ListingShowcase
               items={relatedFill}
               sectionKey="bds-tuong-tu"
+              purpose={purpose}
+              heading="Bất động sản tương tự"
               emptyNote="Chưa có bất động sản tương tự."
             />
           </div>
