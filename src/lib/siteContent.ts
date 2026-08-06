@@ -27,6 +27,15 @@ async function fetchBlock<T>(key: string): Promise<T | null> {
   }
 }
 
+// ── TIN CHÍNH TRANG CHỦ ──────────────────────────────────────────────────────
+// GHIM một bài viết làm tin chính (ô lớn bên trái khối Tin tức). Không ghim bài
+// nào → tự lấy bài mới nhất. Nhờ vậy đăng bài mới KHÔNG làm trôi tin chính.
+// Lưu: site_content key "home_featured_article" = { slug }.
+export async function getFeaturedArticleSlug(): Promise<string | null> {
+  const data = await fetchBlock<{ slug?: string }>("home_featured_article");
+  return data?.slug?.trim() || null;
+}
+
 // ── HERO TRANG CHỦ ───────────────────────────────────────────────────────────
 // Lưu dạng { slides: Banner[] }. Ảnh là đường dẫn RAW → qua asset() khi hiển thị.
 export async function getHeroBanners(): Promise<Banner[]> {

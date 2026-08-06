@@ -13,14 +13,15 @@ import Reveal from "@/components/Reveal";
 import { HomeExpandProvider, HomeCollapsible } from "@/components/HomeExpand";
 import { getListings } from "@/lib/listingsDb";
 import { getArticles, getProjects } from "@/lib/contentDb";
-import { getHeroBanners, getHomeAd, getHomeAreas } from "@/lib/siteContent";
+import { getHeroBanners, getHomeAd, getHomeAreas, getFeaturedArticleSlug } from "@/lib/siteContent";
 
 export default async function Home() {
   // B2: tin từ Supabase (bảng listings) — chưa có bảng/lỗi → tự dùng dữ liệu mẫu
   // Dự án + Tin tức: nội dung admin tự tạo (contentDb) — chưa có → mẫu
   // Hero + 2 banner cuối + khu vực: ảnh/chữ admin sửa được (siteContent) — chưa nhập → mặc định
-  const [listings, projects, articles, heroBanners, homeAd, homeAreas] = await Promise.all([
+  const [listings, projects, articles, heroBanners, homeAd, homeAreas, featuredSlug] = await Promise.all([
     getListings(), getProjects(), getArticles(), getHeroBanners(), getHomeAd(), getHomeAreas(),
+    getFeaturedArticleSlug(),
   ]);
   return (
     <>
@@ -49,7 +50,7 @@ export default async function Home() {
               <LocationGrid areas={homeAreas} />
             </Reveal>
             <Reveal>
-              <NewsSection articles={articles} />
+              <NewsSection articles={articles} featuredSlug={featuredSlug} />
             </Reveal>
             {/* KHÔNG bọc Reveal: 2 banner cuối đứng yên, không hiệu ứng hiện dần */}
             <AdBannerSeller data={homeAd.seller} />

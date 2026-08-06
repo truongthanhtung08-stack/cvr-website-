@@ -36,13 +36,22 @@ function ArticleRow({ a }: { a: Article }) {
 // BÀI NỔI BẬT (gọn, 2/5 chiều ngang) bên trái + DANH SÁCH tin bên phải, mỗi tin
 // đủ 3 dòng (tiêu đề · mô tả · thể loại/ngày) kèm ảnh nhỏ. Giao diện thẻ Apple.
 // Số tin vừa khung trang chủ — phần còn lại xem ở /tin-tuc qua nút "Xem thêm".
-export default function NewsSection({ articles }: { articles: Article[] }) {
+export default function NewsSection({
+  articles,
+  featuredSlug,
+}: {
+  articles: Article[];
+  // Slug bài được GHIM làm tin chính (admin tick trong form bài viết).
+  // Không ghim / bài đã xoá → tự lấy bài mới nhất.
+  featuredSlug?: string | null;
+}) {
   // Nút "Xem thêm" → đổ ra danh sách tin tức dạng list, 8 tin/trang, ngay tại chỗ
   const [expanded, setExpanded] = useState(false);
   const [page, setPage] = useState(1);
 
-  const featured = articles[0];
-  const rest = articles.slice(1);
+  const pinned = featuredSlug ? articles.find((a) => a.slug === featuredSlug) : undefined;
+  const featured = pinned ?? articles[0];
+  const rest = articles.filter((a) => a.slug !== featured?.slug);
   const headlines = rest.slice(0, 4); // vừa chiều cao bài nổi bật
   const totalPages = Math.max(1, Math.ceil(articles.length / PER_PAGE));
   const current = Math.min(page, totalPages);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import ImagePicker from "@/components/admin/ImagePicker";
@@ -27,6 +27,23 @@ export default function ArticleForm({ initial }: { initial?: ArticleRow }) {
   const [excerpt, setExcerpt] = useState(initial?.excerpt ?? "");
   const [content, setContent] = useState(initial?.content ?? "");
   const [images, setImages] = useState<string[]>(initial?.image ? [initial.image] : []);
+  // GHIM bài này làm TIN CHÍNH trang chủ. Chỉ có ĐÚNG 1 tin chính: tick bài mới
+  // là tự bỏ ghim bài cũ (chỉ lưu 1 slug trong site_content).
+  const [isFeatured, setIsFeatured] = useState(false);
+  const [pinnedSlug, setPinnedSlug] = useState("");
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await createClient()
+        .from("site_content")
+        .select("data")
+        .eq("key", "home_featured_article")
+        .maybeSingle();
+      const s = ((data as { data?: { slug?: string } } | null)?.data?.slug ?? "").trim();
+      setPinnedSlug(s);
+      if (initial?.slug && s === initial.slug) setIsFeatured(true);
+    })();
+  }, [initial?.slug]);
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -76,6 +93,13 @@ export default function ArticleForm({ initial }: { initial?: ArticleRow }) {
           : `Lưu thất bại: ${err.message}`,
       );
     }
+    // Ghim / bỏ ghim tin chính trang chủ (chỉ giữ đúng 1 slug)
+    if (isFeatured) {
+      await supabase.from("site_content").upsert({ key: "home_featured_article", data: { slug: finalSlug } });
+    } else if (pinnedSlug && pinnedSlug === finalSlug) {
+      await supabase.from("site_content").upsert({ key: "home_featured_article", data: { slug: "" } });
+    }
+
     router.push("/admin/tin-tuc");
     router.refresh();
   }
@@ -87,6 +111,26 @@ export default function ArticleForm({ initial }: { initial?: ArticleRow }) {
           <Field label="Tiêu đề bài viết">
             <input value={title} onChange={(e) => onTitleChange(e.target.value)} placeholder="VD: Toàn cảnh thị trường BĐS Đà Nẵng cuối 2026" className={inputCls} />
           </Field>
+
+          {/* Ghim tin chính trang chủ — chống trôi khi đăng bài mới */}
+          <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-cvr-line bg-cvr-surface/60 p-3.5">
+            <input
+              type="checkbox"
+              checked={isFeatured}
+              onChange={(e) => setIsFeatured(e.target.checked)}
+              className="mt-0.5 h-4 w-4 shrink-0"
+            />
+            <span className="min-w-0">
+              <span className="block text-sm font-semibold text-cvr-ink">Đặt làm TIN CHÍNH trang chủ</span>
+              <span className="mt-0.5 block text-xs leading-relaxed text-cvr-muted">
+                Bài này sẽ nằm ở ô lớn của khối Tin tức trang chủ và <strong>không bị trôi</strong> khi đăng bài mới.
+                Chỉ có đúng 1 tin chính — tick bài này là tự bỏ ghim bài đang ghim.
+                {pinnedSlug && pinnedSlug !== slug && (
+                  <> Đang ghim: <strong>{pinnedSlug}</strong>.</>
+                )}
+              </span>
+            </span>
+          </label>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field label="Chuyên mục">
               <select value={category} onChange={(e) => setCategory(e.target.value)} className={inputCls}>
