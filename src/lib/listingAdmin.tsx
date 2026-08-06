@@ -3,7 +3,7 @@
 
 export type ListingTier = "diamond" | "gold" | "silver" | "basic";
 export type ListingStatus = "draft" | "pending" | "approved" | "rejected" | "hidden" | "expired";
-export type ListingPurpose = "ban" | "thue";
+export type ListingPurpose = "ban" | "thue" | "mua" | "can-thue";
 
 // Thuộc tính linh hoạt lưu trong cột details (JSONB) — xem 0006_listing_details.sql
 export type ListingDetails = {
@@ -48,7 +48,7 @@ export type ListingRow = {
 };
 
 export function purposeLabel(p: ListingPurpose): string {
-  return p === "thue" ? "Cho thuê" : "Mua bán";
+  return { ban: "Mua bán", thue: "Cho thuê", mua: "Cần mua", "can-thue": "Cần thuê" }[p] ?? "Mua bán";
 }
 
 export function tierLabel(t: ListingTier): string {

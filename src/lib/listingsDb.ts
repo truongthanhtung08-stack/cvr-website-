@@ -30,7 +30,7 @@ export type ListingDetailsJson = {
 // Hàng trong bảng `listings` (xem supabase/migrations/0002_listings.sql)
 type Row = {
   id: string;
-  purpose: "ban" | "thue";
+  purpose: "ban" | "thue" | "mua" | "can-thue";
   type: string;
   title: string;
   description: string | null;

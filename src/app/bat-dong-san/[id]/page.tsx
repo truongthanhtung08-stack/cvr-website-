@@ -281,7 +281,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
           <ListingShowcase
             items={relatedFill}
             sectionKey="bds-tuong-tu"
-            purpose={purpose}
+            purpose={purpose === "thue" || purpose === "can-thue" ? "thue" : "ban"}
             title="Bất động sản tương tự"
             heading="Bất động sản tương tự"
             relevance

@@ -189,6 +189,24 @@ export function specForType(type: string): CategorySpec {
   return categorySpecs.find((c) => c.match.some((m) => t.includes(m))) ?? genericSpec;
 }
 
-// Loại tin cho form đăng tin
-export const demandTypes = ["Cần bán", "Cho thuê", "Dự án"];
+// Loại tin cho form đăng tin — có cả tin RAO BÁN/CHO THUÊ và tin TÌM MUA/TÌM THUÊ.
+//   Cần bán · Cho thuê  → người có bất động sản
+//   Cần mua · Cần thuê  → người đang tìm bất động sản
+export const demandTypes = ["Cần bán", "Cho thuê", "Cần mua", "Cần thuê", "Dự án"];
+
+// Nhu cầu (nhãn form) → mục đích lưu trong dữ liệu
+export function purposeOfDemand(demand: string): "ban" | "thue" | "mua" | "can-thue" {
+  if (demand === "Cho thuê") return "thue";
+  if (demand === "Cần mua") return "mua";
+  if (demand === "Cần thuê") return "can-thue";
+  return "ban";
+}
+
+// Mục đích → nhãn hiển thị
+export function demandOfPurpose(purpose?: string): string {
+  if (purpose === "thue") return "Cho thuê";
+  if (purpose === "mua") return "Cần mua";
+  if (purpose === "can-thue") return "Cần thuê";
+  return "Cần bán";
+}
 export const propertyCategories = categorySpecs.map((c) => c.label);

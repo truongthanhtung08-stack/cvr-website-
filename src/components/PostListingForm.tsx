@@ -7,8 +7,9 @@ import { createClient } from "@/lib/supabase/client";
 import {
   categorySpecs, propertyCategories, demandTypes,
   legalOptions, furnishLevels, amenityGroups, interiorItems, directions,
+  purposeOfDemand, demandOfPurpose,
 } from "@/lib/listingSpec";
-import { provinceNames, districtsOf, wardsOf } from "@/lib/locations";
+import { provinceNamesFor, districtsOf, wardsOf, wardsOfNew, type GeoMode } from "@/lib/locations";
 import ImagePicker from "@/components/admin/ImagePicker";
 import type { ListingRow } from "@/lib/listingAdmin";
 
@@ -35,6 +36,8 @@ export default function PostListingForm() {
   const [province, setProvince] = useState("");
   const [district, setDistrict] = useState("");
   const [ward, setWard] = useState("");
+  // Hệ đơn vị hành chính: "moi" = tỉnh/thành sau sáp nhập (mặc định) · "cu" = trước sáp nhập
+  const [geoMode, setGeoMode] = useState<GeoMode>("moi");
   const [addressDetail, setAddressDetail] = useState("");
   const [title, setTitle] = useState("");
   const [priceValue, setPriceValue] = useState("");
@@ -63,8 +66,13 @@ export default function PostListingForm() {
   const [error, setError] = useState("");
 
   const spec = useMemo(() => categorySpecs.find((c) => c.label === category) ?? categorySpecs[0], [category]);
-  const districts = province ? districtsOf(province) : [];
-  const wards = province && district ? wardsOf(province, district) : [];
+  // Hệ MỚI (sau sáp nhập): bỏ cấp Quận/Huyện — Tỉnh/Thành → thẳng Phường/Xã
+  const provinceOptions = provinceNamesFor(geoMode);
+  const districts = geoMode === "moi" ? [] : province ? districtsOf(province) : [];
+  const wards =
+    geoMode === "moi"
+      ? province ? wardsOfNew(province) : []
+      : province && district ? wardsOf(province, district) : [];
 
   // Nạp danh sách dự án đã đăng — cho ô "Thuộc dự án"
   useEffect(() => {
@@ -104,7 +112,7 @@ export default function PostListingForm() {
       const { data, error } = await supabase.from("listings").select("*").eq("id", editId).single();
       if (error || !data) { setEditLoad("notfound"); return; }
       const r = data as ListingRow;
-      setDemand(r.purpose === "thue" ? "Cho thuê" : demandTypes[0]);
+      setDemand(demandOfPurpose(r.purpose));
       if (propertyCategories.includes(r.type)) setCategory(r.type);
       setProvince(r.province ?? "");
       setDistrict(r.district ?? "");
@@ -171,7 +179,8 @@ export default function PostListingForm() {
     setSaving(asDraft ? "draft" : "publish");
     // Dữ liệu chung cho cả THÊM MỚI và CẬP NHẬT
     const values = {
-      purpose: demand === "Cho thuê" ? ("thue" as const) : ("ban" as const),
+      // Nhu cầu: Cần bán · Cho thuê · Cần mua · Cần thuê
+      purpose: purposeOfDemand(demand),
       type: category,
       title: title.trim(),
       description: description.trim() || null,
@@ -306,10 +315,30 @@ export default function PostListingForm() {
 
       {/* 2. Địa chỉ */}
       <Card step="2" title="Địa chỉ bất động sản">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <Pick label="Tỉnh / Thành" value={province} onChange={(v) => { setProvince(v); setDistrict(""); setWard(""); }} options={provinceNames} placeholder="Chọn Tỉnh / Thành" />
-          <Pick label="Quận / Huyện" value={district} onChange={(v) => { setDistrict(v); setWard(""); }} options={districts} placeholder="Chọn Quận / Huyện" disabled={!province} />
-          <Pick label="Phường / Xã" value={ward} onChange={setWard} options={wards} placeholder="Chọn Phường / Xã" disabled={!district} />
+        {/* Chọn hệ đơn vị hành chính: MỚI (sau sáp nhập) hay CŨ */}
+        <div className="mb-3 inline-flex rounded-lg border border-cvr-line bg-white p-1">
+          {([
+            { id: "moi" as GeoMode, label: "Tỉnh/Thành mới (sau sáp nhập)" },
+            { id: "cu" as GeoMode, label: "Địa chỉ cũ" },
+          ]).map((m) => (
+            <button
+              key={m.id}
+              type="button"
+              onClick={() => { setGeoMode(m.id); setProvince(""); setDistrict(""); setWard(""); }}
+              className={`rounded-md px-3 py-1.5 text-xs font-medium transition ${
+                geoMode === m.id ? "bg-cvr-ink text-white" : "text-cvr-body hover:text-cvr-ink"
+              }`}
+            >
+              {m.label}
+            </button>
+          ))}
+        </div>
+        <div className={`grid grid-cols-1 gap-4 ${geoMode === "moi" ? "sm:grid-cols-2" : "sm:grid-cols-3"}`}>
+          <Pick label="Tỉnh / Thành" value={province} onChange={(v) => { setProvince(v); setDistrict(""); setWard(""); }} options={provinceOptions} placeholder="Chọn Tỉnh / Thành" />
+          {geoMode === "cu" && (
+            <Pick label="Quận / Huyện" value={district} onChange={(v) => { setDistrict(v); setWard(""); }} options={districts} placeholder="Chọn Quận / Huyện" disabled={!province} />
+          )}
+          <Pick label="Phường / Xã" value={ward} onChange={setWard} options={wards} placeholder="Chọn Phường / Xã" disabled={geoMode === "moi" ? !province : !district} />
         </div>
         <Text label="Địa chỉ cụ thể (số nhà, đường, dự án)" value={addressDetail} onChange={setAddressDetail} placeholder="VD: 123 Võ Nguyên Giáp / Dự án ..." />
       </Card>

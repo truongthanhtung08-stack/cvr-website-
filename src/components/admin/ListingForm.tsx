@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { saleTypeGroups, rentTypeGroups } from "@/lib/filters";
-import { provinceNames, districtsOf, wardsOf } from "@/lib/locations";
+import { provinceNamesFor, districtsOf, wardsOf, wardsOfNew, type GeoMode } from "@/lib/locations";
 import { specForType, interiorItems, amenityGroups, legalOptions, furnishLevels, directions } from "@/lib/listingSpec";
 import ImagePicker from "@/components/admin/ImagePicker";
 import ContentEditor from "@/components/admin/ContentEditor";
@@ -136,8 +136,14 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
   const specFields = type ? specForType(type).fields : [];
 
   // Danh sách quận/huyện & phường/xã liên động theo lựa chọn cấp trên
-  const districtOptions = province ? districtsOf(province) : [];
-  const wardOptions = province && district ? wardsOf(province, district) : [];
+  // Hệ đơn vị hành chính: MỚI (sau sáp nhập) bỏ cấp Quận/Huyện
+  const [geoMode, setGeoMode] = useState<GeoMode>("moi");
+  const provinceOptions = provinceNamesFor(geoMode);
+  const districtOptions = geoMode === "moi" ? [] : province ? districtsOf(province) : [];
+  const wardOptions =
+    geoMode === "moi"
+      ? province ? wardsOfNew(province) : []
+      : province && district ? wardsOf(province, district) : [];
 
   const toggle = (list: string[], set: (v: string[]) => void, v: string) =>
     set(list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
@@ -221,6 +227,8 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
             <select value={purpose} onChange={(e) => { setPurpose(e.target.value as ListingPurpose); setType(""); }} className={inputCls}>
               <option value="ban">Mua bán</option>
               <option value="thue">Cho thuê</option>
+              <option value="mua">Cần mua</option>
+              <option value="can-thue">Cần thuê</option>
             </select>
           </Field>
           <Field label="Loại hình">
@@ -298,6 +306,21 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
           Tỉnh chưa có dữ liệu quận/huyện (ngoài 8 tỉnh lõi) → cho gõ tay để không kẹt. */}
       <Card title="Vị trí">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <Field label="Hệ địa chỉ">
+            <div className="inline-flex rounded-lg border border-cvr-line bg-white p-1">
+              {([{ id: "moi" as GeoMode, label: "Tỉnh/Thành mới" }, { id: "cu" as GeoMode, label: "Địa chỉ cũ" }]).map((m) => (
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() => { setGeoMode(m.id); setProvince(""); setDistrict(""); setWard(""); }}
+                  className={`rounded-md px-3 py-1.5 text-xs font-medium transition ${geoMode === m.id ? "bg-cvr-ink text-white" : "text-cvr-body hover:text-cvr-ink"}`}
+                >
+                  {m.label}
+                </button>
+              ))}
+            </div>
+          </Field>
+
           <Field label="Tỉnh/Thành (bắt buộc)">
             <select
               value={province}
@@ -305,7 +328,7 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
               className={inputCls}
             >
               <option value="">— Chọn Tỉnh/Thành —</option>
-              {provinceNames.map((p) => <option key={p} value={p}>{p}</option>)}
+              {provinceOptions.map((p) => <option key={p} value={p}>{p}</option>)}
             </select>
           </Field>
 
@@ -330,10 +353,12 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
               <select
                 value={ward}
                 onChange={(e) => setWard(e.target.value)}
-                disabled={!district}
+                disabled={geoMode === "moi" ? !province : !district}
                 className={`${inputCls} disabled:bg-cvr-surface disabled:text-cvr-faint`}
               >
-                <option value="">{district ? "— Chọn Phường/Xã —" : "Chọn quận/huyện trước"}</option>
+                <option value="">
+                  {(geoMode === "moi" ? province : district) ? "— Chọn Phường/Xã —" : geoMode === "moi" ? "Chọn tỉnh trước" : "Chọn quận/huyện trước"}
+                </option>
                 {wardOptions.map((w) => <option key={w} value={w}>{w}</option>)}
               </select>
             ) : (
