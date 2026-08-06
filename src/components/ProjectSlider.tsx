@@ -86,10 +86,11 @@ export function ProjectRow({ p }: { p: Project }) {
   return (
     <Link
       href={`/du-an/${p.slug}`}
-      className="group flex gap-3 overflow-hidden border border-cvr-line bg-white p-2.5 shadow-lux shadow-lux-hover transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 sm:gap-4 sm:p-3"
+      // ĐIỆN THOẠI: ảnh TRÊN – nội dung DƯỚI · MÁY TÍNH: ảnh TRÁI – nội dung PHẢI
+      className="group flex flex-col gap-3 overflow-hidden border border-cvr-line bg-white p-2.5 shadow-lux shadow-lux-hover transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 sm:flex-row sm:gap-4 sm:p-3"
     >
-      <div className="relative aspect-[4/3] w-32 shrink-0 overflow-hidden bg-cvr-surface sm:w-56 lg:w-64">
-        <Image src={p.image} alt={p.name} fill sizes="(max-width: 640px) 128px, (max-width: 1024px) 224px, 256px" className="object-cover transition-transform duration-500 group-hover:scale-105" />
+      <div className="relative aspect-[16/10] w-full shrink-0 overflow-hidden bg-cvr-surface sm:aspect-[4/3] sm:w-[38%] sm:min-w-[240px] sm:max-w-[420px]">
+        <Image src={p.image} alt={p.name} fill sizes="(max-width: 640px) 100vw, 38vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
         <TierBadge tier={p.tier} />
       </div>
       <div className="flex min-w-0 flex-1 flex-col">
@@ -199,8 +200,8 @@ export default function ProjectSlider({
         </div>
       )}
 
-      {/* Nút Xem thêm / Thu gọn — chỉ hiện khi có nhiều hơn 8 dự án */}
-      {sorted.length > 8 && (
+      {/* LUÔN có nút — cấu trúc đồng nhất ở mọi phần, kể cả khi ít hơn 8 dự án */}
+      {sorted.length > 0 && (
         <ExpandToggle expanded={expanded} onClick={() => setExpanded((v) => !v)} count={sorted.length} />
       )}
     </div>

@@ -180,7 +180,7 @@ export default function ProjectsSection({ projects }: { projects: Project[] }) {
           </div>
         )}
 
-        {ranked.length > 8 && (
+        {ranked.length > 0 && (
           <ExpandToggle expanded={expanded} onClick={() => setExpanded((v) => !v)} count={ranked.length} />
         )}
       </div>

@@ -52,7 +52,8 @@ export default function ListingShowcase({
         </>
       )}
 
-      {items.length > 8 && (
+      {/* LUÔN có nút — cấu trúc đồng nhất ở mọi phần, kể cả khi ít hơn 8 tin */}
+      {items.length > 0 && (
         <div className="mt-6 flex justify-center">
           <button
             type="button"

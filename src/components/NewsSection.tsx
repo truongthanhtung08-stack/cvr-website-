@@ -13,10 +13,11 @@ function ArticleRow({ a }: { a: Article }) {
   return (
     <Link
       href={`/tin-tuc/${a.slug}`}
-      className="group flex gap-3 overflow-hidden border border-cvr-line bg-white p-2.5 shadow-lux shadow-lux-hover transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 sm:gap-4 sm:p-3"
+      // ĐIỆN THOẠI: ảnh TRÊN – nội dung DƯỚI · MÁY TÍNH: ảnh TRÁI – nội dung PHẢI
+      className="group flex flex-col gap-3 overflow-hidden border border-cvr-line bg-white p-2.5 shadow-lux shadow-lux-hover transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 sm:flex-row sm:gap-4 sm:p-3"
     >
-      <div className="relative aspect-[4/3] w-36 shrink-0 overflow-hidden rounded-xl bg-cvr-surface sm:w-[32%] sm:min-w-[220px] sm:max-w-[360px]">
-        <Image src={a.image} alt={a.title} fill sizes="(max-width: 640px) 144px, 32vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
+      <div className="relative aspect-[16/10] w-full shrink-0 overflow-hidden rounded-xl bg-cvr-surface sm:aspect-[4/3] sm:w-[32%] sm:min-w-[220px] sm:max-w-[360px]">
+        <Image src={a.image} alt={a.title} fill sizes="(max-width: 640px) 100vw, 32vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
       </div>
       <div className="flex min-w-0 flex-1 flex-col">
         <p className="flex items-center gap-2 text-xs text-cvr-muted">
