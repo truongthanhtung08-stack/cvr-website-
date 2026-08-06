@@ -609,7 +609,16 @@ function PkgCard({
 // Cả hai đều là component thật đang chạy trên sàn, dữ liệu là TIN THẬT mới nhất
 // của cấp đó → đăng/sửa tin trong admin là thẻ này tự thay theo.
 function TierSample({ listing }: { listing: Listing | null }) {
-  if (!listing) return null; // chưa có tin cấp này → không hiện gì
+  // Chưa có tin ở cấp này → VẪN dựng khung, báo trống (đừng để trắng trơn).
+  if (!listing) {
+    return (
+      <div className="mt-6 max-w-[420px] rounded-2xl border border-dashed border-cvr-line bg-cvr-surface/60 px-4 py-8 text-center">
+        <p className="text-sm text-cvr-muted">
+          Chưa có tin ở cấp này — có tin được duyệt là thẻ mẫu tự hiện.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -628,7 +637,16 @@ function TierSample({ listing }: { listing: Listing | null }) {
 // Dự án mẫu từng cấp — DỰ ÁN THẬT, bố trí y hệt thẻ tin:
 // PC = ảnh trái / nội dung phải · điện thoại = ảnh trên / nội dung dưới.
 function ProjectTierSample({ project }: { project: Project | null }) {
-  if (!project) return null;
+  // Chưa có dự án nào ở cấp này → VẪN dựng khung, báo trống (đừng để trắng trơn).
+  if (!project) {
+    return (
+      <div className="mt-6 max-w-[420px] rounded-2xl border border-dashed border-cvr-line bg-cvr-surface/60 px-4 py-8 text-center">
+        <p className="text-sm text-cvr-muted">
+          Chưa có dự án ở cấp này — vào <strong>Admin › Dự án</strong> chọn “Cấp dự án (CVR-PJ)” là hiện ngay.
+        </p>
+      </div>
+    );
+  }
   return (
     <>
       <div className="mt-6 hidden sm:block">

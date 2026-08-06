@@ -7,6 +7,7 @@ import type { Project } from "@/lib/data";
 import { smoothScrollTo } from "@/lib/scroll";
 import { useAutoSlide } from "@/lib/useAutoSlide";
 import { sortProjectsByTier, ProjectListPaged, ExpandToggle } from "@/components/ProjectSlider";
+import { useHomeSection } from "@/components/HomeExpand";
 
 const PER_SLIDE = 4; // 1 hàng × 4 dự án mỗi slide (số slide KHÔNG giới hạn)
 
@@ -15,8 +16,8 @@ export default function ProjectsSection({ projects }: { projects: Project[] }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [slide, setSlide] = useState(0);
   const [paused, setPaused] = useState(false);
-  // Nút "Xem thêm" → xổ ra ngay tại chỗ danh sách dạng List, 8 dự án/trang.
-  const [expanded, setExpanded] = useState(false);
+  // Nút "Xem thêm" → khối này thành danh sách theo trang, các khối khác ẩn.
+  const { expanded, hidden, toggle } = useHomeSection("du-an");
 
   // Homepage: slide 8 dự án đầu XẾP THEO CẤP VIP (Diamond → Gold → Silver → thường);
   // còn lại xem qua nút "Xem thêm".
@@ -40,7 +41,7 @@ export default function ProjectsSection({ projects }: { projects: Project[] }) {
   // để 2 slider không chuyển cùng lúc (đỡ rối mắt).
   useAutoSlide(trackRef, totalSlides, paused, 7000);
 
-  if (projects.length === 0) return null;
+  if (projects.length === 0 || hidden) return null;
 
   return (
     <section className="section-edge bg-cvr-surface">
@@ -181,7 +182,7 @@ export default function ProjectsSection({ projects }: { projects: Project[] }) {
         )}
 
         {ranked.length > 0 && (
-          <ExpandToggle expanded={expanded} onClick={() => setExpanded((v) => !v)} count={ranked.length} />
+          <ExpandToggle expanded={expanded} onClick={toggle} count={ranked.length} />
         )}
       </div>
     </section>

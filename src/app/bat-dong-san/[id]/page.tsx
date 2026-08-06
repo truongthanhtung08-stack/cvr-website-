@@ -259,13 +259,12 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
           </div>
 
           {/* BĐS tương tự — slide 8 tin + nút "Xem thêm" → ra list theo trang (yêu cầu T19) */}
-          {relatedFill.length > 0 && (
-            <div className="mt-14">
-              <h2 className="mb-5 text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">Bất động sản tương tự</h2>
-              {/* Slide mặc định · nút "Xem thêm" → đổ ra list phân trang ngay tại chỗ */}
-              <ListingShowcase items={relatedFill} />
-            </div>
-          )}
+          {/* LUÔN dựng khung — slide mặc định · "Xem thêm" → list phân trang.
+              Chưa có tin tương tự thì báo trống, không ẩn cả mục. */}
+          <div className="mt-14">
+            <h2 className="mb-5 text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">Bất động sản tương tự</h2>
+            <ListingShowcase items={relatedFill} emptyNote="Chưa có bất động sản tương tự." />
+          </div>
         </div>
 
         {/* Thanh liên hệ DÍNH (mobile) — Gọi / Zalo bám đáy màn hình (III.4) */}

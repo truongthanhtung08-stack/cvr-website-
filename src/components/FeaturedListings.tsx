@@ -5,7 +5,7 @@ import Link from "next/link";
 import PropertyCard from "@/components/PropertyCard";
 import { featuredListings, type Listing } from "@/lib/data";
 import ListingBrowser from "@/components/ListingBrowser";
-import { useHomeExpand } from "@/components/HomeExpand";
+import { useHomeSection } from "@/components/HomeExpand";
 import { tierRank } from "@/lib/packages";
 import { smoothScrollTo } from "@/lib/scroll";
 import { useAutoSlide } from "@/lib/useAutoSlide";
@@ -35,7 +35,7 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
   const trackRef = useRef<HTMLDivElement>(null);
   // PC: bấm "Xem thêm" → đổi sang bố cục trang danh sách (list + cột phải),
   // đồng thời ẩn mọi phần khác của trang chủ (trạng thái dùng chung qua context).
-  const { expanded, setExpanded } = useHomeExpand();
+  const { expanded, hidden, toggle, close } = useHomeSection("tin");
 
   // Lọc theo tab → xếp theo cấp tin (cao trước) → chia 2 slides nối tiếp, mỗi slide 8 tin
   const activeMatch = typeTabs.find((t) => t.label === activeTab)?.match ?? (() => true);
@@ -62,6 +62,9 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
   const expandPurpose: "ban" | "thue" = activeTab === "Cho thuê" ? "thue" : "ban";
   const expandCount = items.filter((l) => (l.purpose ?? "ban") === expandPurpose).length;
 
+  // Khối khác đang mở → khối này ẩn
+  if (hidden) return null;
+
   // ── ĐÃ BẤM "XEM THÊM": trang chủ đổi sang ĐÚNG bố cục trang Mua bán —
   //    danh sách tin bên trái + cột phải (lọc theo giá, theo khu vực…) + phân trang.
   //    Dùng lại chính ListingBrowser của /mua-ban nên không lệch cấu trúc.
@@ -71,7 +74,7 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
         <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
           <button
             type="button"
-            onClick={() => setExpanded(false)}
+            onClick={close}
             className="inline-flex min-h-[40px] items-center gap-2 text-sm font-semibold text-cvr-body transition hover:text-cvr-ink"
           >
             <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
@@ -213,7 +216,7 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
             <div className="mt-6 hidden justify-center sm:flex">
               <button
                 type="button"
-                onClick={() => setExpanded(true)}
+                onClick={toggle}
                 className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full border border-cvr-line px-6 text-sm font-semibold text-cvr-ink transition hover:bg-cvr-surface"
               >
                 Xem thêm ({expandCount} tin)

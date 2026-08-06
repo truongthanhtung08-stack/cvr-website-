@@ -2,25 +2,34 @@
 
 import { createContext, useContext, useState } from "react";
 
-// Trạng thái "đang mở danh sách tin đầy đủ" của trang chủ.
-// Khi bật: phần tin đổi sang bố cục trang danh sách (list + cột phải), và
-// TẤT CẢ các phần khác của trang chủ (Dự án, Khu vực, Tin tức, banner) ẩn đi —
-// người xem tập trung vào danh sách, không phải cuộn qua nội dung khác.
-type Ctx = { expanded: boolean; setExpanded: (v: boolean) => void };
+// ── MỘT KIỂU DUY NHẤT CHO MỌI KHỐI TRANG CHỦ ─────────────────────────────────
+// Mỗi khối (Tin · Dự án · Khu vực · Tin tức) có nút "Xem thêm".
+// Bấm vào: khối đó đổi sang DANH SÁCH THEO TRANG, TẤT CẢ khối còn lại (kể cả Hero
+// và banner) ẨN ĐI — không đổ dài xuống giữa trang. Bấm "Thu gọn" là về như cũ.
+// Tại một thời điểm chỉ có ĐÚNG 1 khối được mở.
+type Ctx = { openKey: string | null; setOpenKey: (k: string | null) => void };
 
-const HomeExpandCtx = createContext<Ctx>({ expanded: false, setExpanded: () => {} });
-
-export function useHomeExpand() {
-  return useContext(HomeExpandCtx);
-}
+const HomeExpandCtx = createContext<Ctx>({ openKey: null, setOpenKey: () => {} });
 
 export function HomeExpandProvider({ children }: { children: React.ReactNode }) {
-  const [expanded, setExpanded] = useState(false);
-  return <HomeExpandCtx.Provider value={{ expanded, setExpanded }}>{children}</HomeExpandCtx.Provider>;
+  const [openKey, setOpenKey] = useState<string | null>(null);
+  return <HomeExpandCtx.Provider value={{ openKey, setOpenKey }}>{children}</HomeExpandCtx.Provider>;
 }
 
-// Bọc các phần trang chủ cần ẩn khi mở danh sách đầy đủ.
+// Dùng trong từng khối có nút "Xem thêm".
+//   expanded = khối này đang mở · hidden = khối khác đang mở nên khối này ẩn
+export function useHomeSection(key: string) {
+  const { openKey, setOpenKey } = useContext(HomeExpandCtx);
+  return {
+    expanded: openKey === key,
+    hidden: openKey !== null && openKey !== key,
+    toggle: () => setOpenKey(openKey === key ? null : key),
+    close: () => setOpenKey(null),
+  };
+}
+
+// Bọc các phần KHÔNG có nút "Xem thêm" (Hero, banner) — ẩn khi có khối nào đang mở.
 export function HomeCollapsible({ children }: { children: React.ReactNode }) {
-  const { expanded } = useHomeExpand();
-  return <div className={expanded ? "hidden" : undefined}>{children}</div>;
+  const { openKey } = useContext(HomeExpandCtx);
+  return <div className={openKey ? "hidden" : undefined}>{children}</div>;
 }

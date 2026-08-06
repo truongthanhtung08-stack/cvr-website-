@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import Pager from "@/components/Pager";
+import { useHomeSection } from "@/components/HomeExpand";
 import type { Article } from "@/lib/data";
 
 const PER_PAGE = 8;
@@ -46,8 +47,8 @@ export default function NewsSection({
   // Không ghim / bài đã xoá → tự lấy bài mới nhất.
   featuredSlug?: string | null;
 }) {
-  // Nút "Xem thêm" → đổ ra danh sách tin tức dạng list, 8 tin/trang, ngay tại chỗ
-  const [expanded, setExpanded] = useState(false);
+  // Nút "Xem thêm" → khối này thành danh sách theo trang, các khối khác ẩn
+  const { expanded, hidden, toggle } = useHomeSection("tin-tuc");
   const [page, setPage] = useState(1);
 
   const pinned = featuredSlug ? articles.find((a) => a.slug === featuredSlug) : undefined;
@@ -57,6 +58,8 @@ export default function NewsSection({
   const totalPages = Math.max(1, Math.ceil(articles.length / PER_PAGE));
   const current = Math.min(page, totalPages);
   const pageItems = articles.slice((current - 1) * PER_PAGE, current * PER_PAGE);
+
+  if (hidden) return null;
 
   return (
     <section className="section-edge bg-white">
@@ -180,7 +183,7 @@ export default function NewsSection({
         <div className="mt-6 flex justify-center">
           <button
             type="button"
-            onClick={() => { setExpanded((v) => !v); setPage(1); }}
+            onClick={() => { toggle(); setPage(1); }}
             className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full border border-cvr-line px-6 text-sm font-semibold text-cvr-ink transition hover:bg-cvr-surface active:bg-cvr-surface"
           >
             {expanded ? "Thu gọn" : `Xem thêm (${articles.length} tin)`}
