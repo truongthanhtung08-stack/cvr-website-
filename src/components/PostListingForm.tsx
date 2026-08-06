@@ -11,6 +11,7 @@ import {
 } from "@/lib/listingSpec";
 import { provinceNamesFor, districtsOf, wardsOf, wardsOfNew, type GeoMode } from "@/lib/locations";
 import ImagePicker from "@/components/admin/ImagePicker";
+import ContentEditor from "@/components/admin/ContentEditor";
 import type { ListingRow } from "@/lib/listingAdmin";
 
 // Form đăng tin cho KHÁCH HÀNG (/dang-tin) — nối Supabase thật.
@@ -445,7 +446,14 @@ export default function PostListingForm() {
 
       {/* 7. Mô tả */}
       <Card step="7" title="Mô tả chi tiết">
-        <textarea rows={6} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Mô tả vị trí, kết cấu, tiện ích, pháp lý, lý do bán… (nội dung càng đầy đủ càng dễ chốt)" className="w-full resize-y rounded-lg border border-transparent bg-cvr-surface px-3 py-2.5 text-sm leading-relaxed text-cvr-ink placeholder-cvr-faint outline-none transition focus:border-cvr-line focus:bg-white min-h-[9rem]" />
+        {/* Cùng bộ công cụ với trang quản trị: in đậm · in nghiêng · canh
+            trái/giữa/phải/đều · chèn ảnh, video giữa bài. */}
+        <ContentEditor
+          value={description}
+          onChange={setDescription}
+          rows={8}
+          placeholder="Mô tả vị trí, kết cấu, tiện ích, pháp lý, lý do bán… (nội dung càng đầy đủ càng dễ chốt)"
+        />
       </Card>
 
       {/* 8. Hình ảnh — tải từ máy / dán link, ảnh đầu là ảnh đại diện */}
