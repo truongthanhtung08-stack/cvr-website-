@@ -172,8 +172,9 @@ function PropertyRow({ item, showTime = false }: { item: Listing; showTime?: boo
       href={`/bat-dong-san/${item.id}`}
       className="flex gap-3 overflow-hidden rounded-none border border-cvr-line bg-white p-2.5 shadow-lux shadow-lux-hover transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5"
     >
-      <div className="relative aspect-[4/3] w-32 shrink-0 overflow-hidden rounded-xl bg-cvr-surface sm:w-56 lg:w-72">
-        <Image src={item.image} alt={item.title} fill sizes="(max-width: 640px) 128px, (max-width: 1024px) 224px, 288px" className="object-cover" />
+      {/* Ảnh chiếm ~38% bề ngang thẻ (trước là cố định 288px → nhỏ so với phần nội dung). */}
+      <div className="relative aspect-[4/3] w-36 shrink-0 overflow-hidden rounded-xl bg-cvr-surface sm:w-[38%] sm:max-w-[420px] sm:min-w-[240px]">
+        <Image src={item.image} alt={item.title} fill sizes="(max-width: 640px) 144px, 38vw" className="object-cover" />
         {tier && (
           <span
             className="absolute left-2 top-2 px-1.5 py-0.5 text-[10px] font-bold uppercase"

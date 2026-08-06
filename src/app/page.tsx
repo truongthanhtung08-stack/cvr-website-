@@ -10,6 +10,7 @@ import NewsSection from "@/components/NewsSection";
 import { AdBannerSeller, AdBannerApp } from "@/components/HomeAdBanners";
 import Footer from "@/components/Footer";
 import Reveal from "@/components/Reveal";
+import { HomeExpandProvider, HomeCollapsible } from "@/components/HomeExpand";
 import { getListings } from "@/lib/listingsDb";
 import { getArticles, getProjects } from "@/lib/contentDb";
 import { getHeroBanners, getHomeAd, getHomeAreas } from "@/lib/siteContent";
@@ -27,27 +28,35 @@ export default async function Home() {
       <main className="flex-1">
         {/* Hero: khung GIỮ NGUYÊN — ảnh PHỦ KÍN khung (cover), không hụt 2 bên.
             mobileTwoLine: mobile chỉ 2 dòng text (tiêu đề + phụ đề) canh dưới-trái, không ngắt dòng */}
-        <Hero banners={heroBanners} mobileTwoLine />
-        {/* Không bọc Reveal: section này ló ngay dưới banner (above-the-fold),
-            cần hiện tức thì để tạo kết nối — tránh bị "vùng chết" của Reveal ẩn đi. */}
-        <FeaturedListings items={listings} />
-        <Reveal>
-          <ProjectsSection projects={projects} />
-        </Reveal>
-        {/* "Dành riêng cho bạn" TẠM ẨN theo yêu cầu — mở lại: bỏ comment import ForYou + khối này.
-        <Reveal>
-          <ForYou />
-        </Reveal> */}
-        <Reveal>
-          <LocationGrid areas={homeAreas} />
-        </Reveal>
-        <Reveal>
-          <NewsSection articles={articles} />
-        </Reveal>
-        {/* KHÔNG bọc Reveal: 2 banner cuối đứng yên, không hiệu ứng hiện dần */}
-        <AdBannerSeller data={homeAd.seller} />
-        {/* KHÔNG bọc Reveal: banner App phải đứng yên tuyệt đối (yêu cầu: bỏ hiệu ứng cụm iPhone) */}
-        <AdBannerApp data={homeAd.app} />
+        <HomeExpandProvider>
+          {/* Hero ẩn luôn khi mở danh sách đầy đủ để trang gọn như trang Mua bán */}
+          <HomeCollapsible>
+            <Hero banners={heroBanners} mobileTwoLine />
+          </HomeCollapsible>
+          {/* Không bọc Reveal: section này ló ngay dưới banner (above-the-fold),
+              cần hiện tức thì để tạo kết nối — tránh bị "vùng chết" của Reveal ẩn đi. */}
+          <FeaturedListings items={listings} />
+          {/* Các phần còn lại của trang chủ — ẩn hết khi bấm "Xem thêm" */}
+          <HomeCollapsible>
+            <Reveal>
+              <ProjectsSection projects={projects} />
+            </Reveal>
+            {/* "Dành riêng cho bạn" TẠM ẨN theo yêu cầu — mở lại: bỏ comment import ForYou + khối này.
+            <Reveal>
+              <ForYou />
+            </Reveal> */}
+            <Reveal>
+              <LocationGrid areas={homeAreas} />
+            </Reveal>
+            <Reveal>
+              <NewsSection articles={articles} />
+            </Reveal>
+            {/* KHÔNG bọc Reveal: 2 banner cuối đứng yên, không hiệu ứng hiện dần */}
+            <AdBannerSeller data={homeAd.seller} />
+            {/* KHÔNG bọc Reveal: banner App phải đứng yên tuyệt đối (yêu cầu: bỏ hiệu ứng cụm iPhone) */}
+            <AdBannerApp data={homeAd.app} />
+          </HomeCollapsible>
+        </HomeExpandProvider>
       </main>
       <Footer />
     </>
