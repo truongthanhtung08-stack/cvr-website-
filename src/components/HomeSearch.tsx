@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import FilterBar from "@/components/FilterBar";
+import HeroSearchBar from "@/components/HeroSearchBar";
 import { emptyFilters, filtersToParams, type Filters } from "@/lib/filters";
 
 const tabs = ["Mua bán", "Cho thuê", "Dự án"];
@@ -49,11 +50,17 @@ export default function HomeSearch({ defaultTab }: { defaultTab?: string }) {
 
   return (
     <div
-      className="mx-auto w-full max-w-2xl"
+      className="mx-auto w-full max-w-2xl sm:max-w-4xl"
       onPointerDown={(e) => e.stopPropagation()}
       onPointerUp={(e) => e.stopPropagation()}
     >
-      <FilterBar value={filters} onChange={setFilters} onSearch={handleSearch} onMap={handleMap} compact leading={tabBar} purpose={purpose} />
+      {/* MÁY TÍNH: thanh trắng 4 ô theo mẫu UI trong tài liệu */}
+      <HeroSearchBar defaultTab={tab} />
+
+      {/* ĐIỆN THOẠI: giữ nguyên bộ lọc dạng chip đã duyệt */}
+      <div className="sm:hidden">
+        <FilterBar value={filters} onChange={setFilters} onSearch={handleSearch} onMap={handleMap} compact leading={tabBar} purpose={purpose} />
+      </div>
     </div>
   );
 }
