@@ -3,8 +3,10 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import type { Project } from "@/lib/data";
+import type { Project, Article } from "@/lib/data";
+import ProjectsBrowser from "@/components/ProjectsBrowser";
 import Pager from "@/components/Pager";
+import { useHomeSection } from "@/components/HomeExpand";
 
 // ── KHỐI DỰ ÁN DÙNG CHUNG (trang chủ · "Dự án liên quan" ở trang chi tiết) ────
 // Cấu trúc đã chốt:
@@ -157,12 +159,18 @@ export default function ProjectSlider({
   projects,
   title,
   emptyNote,
+  sectionKey = "du-an-lien-quan",
+  articles = [],
 }: {
   projects: Project[];
   title: string;
   emptyNote?: string;
+  // Tin tức cho CỘT PHẢI của danh sách dự án (giống trang /du-an)
+  articles?: Article[];
+  // Bấm "Xem thêm" → phần còn lại của trang ẩn đi, không đổ dài xuống dưới
+  sectionKey?: string;
 }) {
-  const [expanded, setExpanded] = useState(false);
+  const { expanded, toggle } = useHomeSection(sectionKey);
 
   const sorted = sortProjectsByTier(projects);
   const top8 = sorted.slice(0, 8);
@@ -194,15 +202,16 @@ export default function ProjectSlider({
           ))}
         </div>
       ) : (
-        /* XỔ RA: danh sách dạng List, 8 dự án/trang */
+        /* XỔ RA: ĐÚNG bố cục trang /du-an — danh sách + CỘT PHẢI (lọc khu vực,
+           tin tức) + phân trang. Dùng lại chính ProjectsBrowser nên không lệch. */
         <div className="mt-5">
-          <ProjectListPaged projects={sorted} />
+          <ProjectsBrowser projects={sorted} articles={articles} />
         </div>
       )}
 
       {/* LUÔN có nút — cấu trúc đồng nhất ở mọi phần, kể cả khi ít hơn 8 dự án */}
       {sorted.length > 0 && (
-        <ExpandToggle expanded={expanded} onClick={() => setExpanded((v) => !v)} count={sorted.length} />
+        <ExpandToggle expanded={expanded} onClick={toggle} count={sorted.length} />
       )}
     </div>
   );

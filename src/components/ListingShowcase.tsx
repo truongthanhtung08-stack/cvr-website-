@@ -4,6 +4,7 @@ import { useState } from "react";
 import PropertyCard from "@/components/PropertyCard";
 import ListingSlider from "@/components/ListingSlider";
 import Pager from "@/components/Pager";
+import { useHomeSection } from "@/components/HomeExpand";
 import type { Listing } from "@/lib/data";
 
 const PER_PAGE = 8;
@@ -16,11 +17,15 @@ const PER_PAGE = 8;
 export default function ListingShowcase({
   items,
   emptyNote = "Chưa có tin đăng ở mục này.",
+  sectionKey = "showcase",
 }: {
   items: Listing[];
   emptyNote?: string;
+  // Khoá của khối — bấm "Xem thêm" thì phần còn lại của trang ẩn đi
+  // (giống trang chủ), KHÔNG đổ danh sách dài xuống dưới.
+  sectionKey?: string;
 }) {
-  const [expanded, setExpanded] = useState(false);
+  const { expanded, toggle } = useHomeSection(sectionKey);
   const [page, setPage] = useState(1);
 
   // Chưa có tin → VẪN dựng sẵn khung, chỉ báo trống. Có tin là chạy đúng cấu trúc
@@ -57,7 +62,7 @@ export default function ListingShowcase({
         <div className="mt-6 flex justify-center">
           <button
             type="button"
-            onClick={() => { setExpanded((v) => !v); setPage(1); }}
+            onClick={() => { toggle(); setPage(1); }}
             className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full border border-cvr-line px-6 text-sm font-semibold text-cvr-ink transition hover:bg-cvr-surface active:bg-cvr-surface"
           >
             {expanded ? "Thu gọn" : `Xem thêm (${items.length} tin)`}

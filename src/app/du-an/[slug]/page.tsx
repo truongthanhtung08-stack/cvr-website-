@@ -7,6 +7,7 @@ import ProjectGallery from "@/components/ProjectGallery";
 import ProjectNav from "@/components/ProjectNav";
 import ProjectNearby from "@/components/ProjectNearby";
 import ProjectSlider from "@/components/ProjectSlider";
+import { HomeExpandProvider, HomeCollapsible } from "@/components/HomeExpand";
 import FloorPlans from "@/components/FloorPlans";
 import PropertyCard from "@/components/PropertyCard";
 import RelatedListingsTabs from "@/components/RelatedListingsTabs";
@@ -14,7 +15,7 @@ import LeadForm from "@/components/LeadForm";
 import RichContent from "@/components/RichContent";
 import VideoEmbed from "@/components/VideoEmbed";
 import { provinceOf, districtOf, segmentOf, pickRelated } from "@/lib/data";
-import { getProject, getProjects } from "@/lib/contentDb";
+import { getProject, getProjects, getArticles } from "@/lib/contentDb";
 import { getListings } from "@/lib/listingsDb";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -45,7 +46,7 @@ function normalizeUrl(u: string): string {
 
 export default async function ProjectDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const [p, projects, listings] = await Promise.all([getProject(slug), getProjects(), getListings()]);
+  const [p, projects, listings, articles] = await Promise.all([getProject(slug), getProjects(), getListings(), getArticles()]);
   if (!p) notFound();
 
   // Thư viện ảnh: CHỈ ảnh của CHÍNH dự án này.
@@ -105,6 +106,10 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
       <Header />
       <main className="flex-1 bg-white">
         <div className="mx-auto max-w-7xl px-4 pb-20 pt-2 sm:px-6 sm:pt-6 lg:px-8">
+
+          <HomeExpandProvider>
+          {/* Nội dung dự án — ẩn khi bấm "Xem thêm" ở mục tin/dự án bên dưới */}
+          <HomeCollapsible>
 
           {/* Thư viện ảnh — MOBILE tràn viền sát 2 mép (giảm khoảng trống trên) · bấm để xem lớn + zoom */}
           <div className="-mx-4 sm:mx-0">
@@ -266,18 +271,6 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                 {dev?.desc && <p className="mt-4 whitespace-pre-line text-sm leading-relaxed text-cvr-body">{dev.desc}</p>}
               </Section>
 
-              {/* 8) Tin mua bán / cho thuê CỦA CHÍNH dự án này.
-                  LUÔN dựng khung — chưa có tin thì báo trống, có tin là chạy đúng
-                  cấu trúc slide + "Xem thêm" → list, không phải sửa gì thêm. */}
-              <Section id="tin-dang" title={`Tin mua bán liên quan tại dự án ${p.name}`}>
-                {hasRelated ? (
-                  <RelatedListingsTabs ban={relBan} thue={relThue} />
-                ) : (
-                  <p className="rounded-xl border border-dashed border-cvr-line bg-cvr-surface px-4 py-8 text-center text-sm text-cvr-muted">
-                    Dự án chưa có tin mua bán / cho thuê nào.
-                  </p>
-                )}
-              </Section>
             </div>
 
             {/* Cột phụ — giá & liên hệ (dính khi cuộn) */}
@@ -327,11 +320,36 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             </aside>
           </div>
 
-          {/* Slide 8 dự án theo cấp VIP · nút "Xem thêm" xổ ra List phân trang 8/trang.
-              Chưa có dự án nào khác → vẫn dựng khung, chỉ báo trống. */}
+          </HomeCollapsible>
+
+          {/* ── DƯỚI THÔNG TIN DỰ ÁN: 2 khối, cùng một kiểu ──────────────────
+              1) Tin mua bán / cho thuê CỦA CHÍNH dự án này
+              2) Dự án liên quan
+              Cả hai: slide mặc định → bấm "Xem thêm" ra danh sách trang 1,2,3…
+              và ẩn nội dung dự án phía trên (không đổ dài xuống dưới). */}
+          <section id="tin-dang" className="mt-14 scroll-mt-28">
+            <h2 className="mb-5 text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">
+              Tin mua bán liên quan tại dự án {p.name}
+            </h2>
+            {hasRelated ? (
+              <RelatedListingsTabs ban={relBan} thue={relThue} />
+            ) : (
+              <p className="rounded-xl border border-dashed border-cvr-line bg-cvr-surface px-4 py-8 text-center text-sm text-cvr-muted">
+                Dự án chưa có tin mua bán / cho thuê nào.
+              </p>
+            )}
+          </section>
+
           <div className="mt-14">
-            <ProjectSlider projects={others} title="Dự án liên quan" emptyNote="Chưa có dự án liên quan." />
+            <ProjectSlider
+              projects={others}
+              title="Dự án liên quan"
+              sectionKey="du-an-lien-quan"
+              articles={articles}
+              emptyNote="Chưa có dự án liên quan."
+            />
           </div>
+          </HomeExpandProvider>
         </div>
       </main>
       <Footer />

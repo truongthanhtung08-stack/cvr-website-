@@ -37,7 +37,7 @@ export default async function Home() {
           {/* 4 khối có nút "Xem thêm" — mỗi khối tự ẩn khi khối khác đang mở.
               Không bọc Reveal: Reveal ẩn/hiện theo cuộn sẽ đá nhau với cơ chế mở rộng. */}
           <FeaturedListings items={listings} />
-          <ProjectsSection projects={projects} />
+          <ProjectsSection projects={projects} articles={articles} />
           {/* "Dành riêng cho bạn" TẠM ẨN theo yêu cầu — mở lại: bỏ comment import ForYou + khối này.
           <ForYou /> */}
           <LocationGrid areas={homeAreas} />

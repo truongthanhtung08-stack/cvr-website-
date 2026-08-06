@@ -3,16 +3,17 @@
 import { useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import type { Project } from "@/lib/data";
+import type { Project, Article } from "@/lib/data";
+import ProjectsBrowser from "@/components/ProjectsBrowser";
 import { smoothScrollTo } from "@/lib/scroll";
 import { useAutoSlide } from "@/lib/useAutoSlide";
-import { sortProjectsByTier, ProjectListPaged, ExpandToggle } from "@/components/ProjectSlider";
+import { sortProjectsByTier, ExpandToggle } from "@/components/ProjectSlider";
 import { useHomeSection } from "@/components/HomeExpand";
 
 const PER_SLIDE = 4; // 1 hàng × 4 dự án mỗi slide (số slide KHÔNG giới hạn)
 
 // Dự án do trang cha truyền vào (đọc từ Supabase — admin đăng gì hiện nấy).
-export default function ProjectsSection({ projects }: { projects: Project[] }) {
+export default function ProjectsSection({ projects, articles = [] }: { projects: Project[]; articles?: Article[] }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [slide, setSlide] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -177,7 +178,7 @@ export default function ProjectsSection({ projects }: { projects: Project[] }) {
         {/* Bấm "Xem thêm" → danh sách TẤT CẢ dự án dạng List, 8 dự án/trang */}
         {expanded && (
           <div className="mt-5">
-            <ProjectListPaged projects={ranked} />
+            <ProjectsBrowser projects={ranked} articles={articles} />
           </div>
         )}
 

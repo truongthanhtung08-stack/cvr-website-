@@ -40,7 +40,7 @@ export default function RelatedListingsTabs({ ban, thue }: { ban: Listing[]; thu
       </div>
       {items.length > 0 ? (
         /* Slide mặc định · "Xem thêm" → đổ ra list phân trang */
-        <ListingShowcase key={tab} items={items} />
+        <ListingShowcase items={items} sectionKey="tin-du-an" />
       ) : (
         <p className="rounded-xl border border-cvr-line bg-cvr-surface px-4 py-6 text-center text-sm text-cvr-muted">
           Dự án chưa có tin {tab === "ban" ? "bán" : "cho thuê"}.

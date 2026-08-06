@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import Pager from "@/components/Pager";
+import PagedArticleList from "@/components/PagedArticleList";
 import { useHomeSection } from "@/components/HomeExpand";
 import type { Article } from "@/lib/data";
 
@@ -78,10 +78,8 @@ export default function NewsSection({
         {/* ĐÃ BẤM "XEM THÊM": danh sách tin tức dạng list, phân trang */}
         {expanded ? (
           <div className="mt-5">
-            <div className="space-y-4">
-              {pageItems.map((a) => <ArticleRow key={a.slug} a={a} />)}
-            </div>
-            <Pager page={current} totalPages={totalPages} onChange={setPage} />
+            {/* Dùng lại đúng danh sách tin tức của trang /tin-tuc (phân trang) */}
+            <PagedArticleList articles={articles} />
           </div>
         ) : (
         <>

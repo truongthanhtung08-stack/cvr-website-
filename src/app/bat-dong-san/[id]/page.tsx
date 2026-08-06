@@ -5,6 +5,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Gallery from "@/components/Gallery";
 import ListingShowcase from "@/components/ListingShowcase";
+import { HomeExpandProvider, HomeCollapsible } from "@/components/HomeExpand";
 import RecordView from "@/components/RecordView";
 import PriceHistory from "@/components/PriceHistory";
 import { provinceOf, pickRelated } from "@/lib/data";
@@ -86,6 +87,10 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <main className="flex-1 bg-white">
         <div className="mx-auto max-w-7xl px-4 pb-24 pt-2 sm:px-6 sm:pt-6 lg:px-8 lg:pb-20">
+
+          <HomeExpandProvider>
+          {/* Toàn bộ nội dung tin — ẩn khi bấm "Xem thêm" ở mục BĐS tương tự */}
+          <HomeCollapsible>
 
           {/* Thư viện ảnh THẬT — MOBILE tràn viền sát 2 mép (giảm khoảng trống trên) */}
           <div className="-mx-4 mb-6 sm:mx-0">
@@ -258,13 +263,20 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
             </aside>
           </div>
 
-          {/* BĐS tương tự — slide 8 tin + nút "Xem thêm" → ra list theo trang (yêu cầu T19) */}
-          {/* LUÔN dựng khung — slide mặc định · "Xem thêm" → list phân trang.
-              Chưa có tin tương tự thì báo trống, không ẩn cả mục. */}
+          </HomeCollapsible>
+
+          {/* BĐS tương tự — bấm "Xem thêm" thì nội dung tin phía trên ẩn đi */}
+          {/* Slide mặc định · "Xem thêm" → danh sách trang 1,2,3… và ẩn nội dung
+              tin phía trên (không đổ dài xuống dưới). */}
           <div className="mt-14">
             <h2 className="mb-5 text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">Bất động sản tương tự</h2>
-            <ListingShowcase items={relatedFill} emptyNote="Chưa có bất động sản tương tự." />
+            <ListingShowcase
+              items={relatedFill}
+              sectionKey="bds-tuong-tu"
+              emptyNote="Chưa có bất động sản tương tự."
+            />
           </div>
+          </HomeExpandProvider>
         </div>
 
         {/* Thanh liên hệ DÍNH (mobile) — Gọi / Zalo bám đáy màn hình (III.4) */}
