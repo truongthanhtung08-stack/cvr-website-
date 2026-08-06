@@ -8,6 +8,7 @@ import { asset } from "@/lib/asset";
 import { homeBanners, projectBanners, type Banner } from "@/lib/banners";
 import { landings as LANDINGS_DEFAULT, type Landing } from "@/lib/landings";
 import { PRICING_DEFAULT, type PricingData } from "@/lib/pricingData";
+import { BILLING_DEFAULT, type BillingData } from "@/lib/billing";
 
 // Lấy 1 khối nội dung theo key. Lỗi/chưa cấu hình/chưa có → null (dùng mặc định).
 async function fetchBlock<T>(key: string): Promise<T | null> {
@@ -283,4 +284,21 @@ export async function getPricing(): Promise<PricingData> {
   const data = await fetchBlock<Partial<PricingData>>("pricing");
   if (!data) return PRICING_DEFAULT;
   return { ...PRICING_DEFAULT, ...data, intro: { ...PRICING_DEFAULT.intro, ...data.intro } };
+}
+
+// ── GÓI ĐĂNG TIN · KHUYẾN MÃI · ĐIỂM · CẤP THÀNH VIÊN ────────────────────────
+// Lưu key 'billing' (toàn bộ BillingData). Admin sửa ở /admin/gia-khuyen-mai.
+export async function getBilling(): Promise<BillingData> {
+  const data = await fetchBlock<Partial<BillingData>>("billing");
+  if (!data) return BILLING_DEFAULT;
+  return {
+    ...BILLING_DEFAULT,
+    ...data,
+    plans: data.plans?.length ? data.plans : BILLING_DEFAULT.plans,
+    promos: data.promos ?? [],
+    free: { ...BILLING_DEFAULT.free, ...data.free },
+    points: { ...BILLING_DEFAULT.points, ...data.points },
+    levels: data.levels?.length ? data.levels : BILLING_DEFAULT.levels,
+    topupAmounts: data.topupAmounts?.length ? data.topupAmounts : BILLING_DEFAULT.topupAmounts,
+  };
 }

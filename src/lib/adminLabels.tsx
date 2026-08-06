@@ -2,7 +2,7 @@ import type { Role, Status } from "@/lib/useProfile";
 
 export function roleLabel(role: Role): string {
   return {
-    buyer: "Người mua",
+    buyer: "Thành viên",
     agent: "Môi giới",
     company: "Công ty / Sàn",
     admin: "Admin",

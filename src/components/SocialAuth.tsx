@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
 // Đăng nhập/đăng ký bằng mạng xã hội — dùng chung cho /dang-nhap và /dang-ky.
@@ -35,6 +36,33 @@ export default function SocialAuth() {
     }
   }
 
+  // Đăng nhập qua nhà cung cấp khác (Facebook…). Chưa bật provider trong Supabase
+  // → báo rõ để chủ dự án biết cần cắm App ID / App Secret.
+  async function withProvider(provider: "facebook") {
+    setLoading(true);
+    setNotice("");
+    const next = new URLSearchParams(window.location.search).get("next") || "/tai-khoan";
+    const supabase = createClient();
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: { redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}` },
+    });
+    if (error) {
+      setLoading(false);
+      setNotice(
+        /provider is not enabled/i.test(error.message)
+          ? "Đăng nhập Facebook chưa được bật. Cần App ID và App Secret của Facebook Developer."
+          : "Không kết nối được Facebook. Vui lòng thử lại.",
+      );
+    }
+  }
+
+  // Zalo chưa nằm trong danh sách nhà cung cấp sẵn của Supabase → nối qua Zalo
+  // Official Account (App ID + Secret). Chưa cắm khoá thì báo rõ cho người dùng.
+  async function withZalo() {
+    setNotice("Đăng nhập Zalo cần App ID và Secret của Zalo Official Account. Vui lòng dùng cách khác trong lúc chờ kết nối.");
+  }
+
   return (
     <div className="space-y-2.5">
       {notice && (
@@ -55,25 +83,31 @@ export default function SocialAuth() {
 
       <button
         type="button"
-        disabled
-        title="Sắp có"
-        className="flex h-11 w-full cursor-not-allowed items-center justify-center gap-2.5 rounded-lg border border-cvr-line bg-cvr-surface text-sm font-medium text-cvr-faint"
+        onClick={() => withProvider("facebook")}
+        disabled={loading}
+        className="flex h-11 w-full items-center justify-center gap-2.5 rounded-lg border border-cvr-line bg-white text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink disabled:opacity-60"
       >
         <FacebookIcon />
         Tiếp tục với Facebook
-        <span className="rounded-full bg-cvr-line/60 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide">Sắp có</span>
       </button>
 
       <button
         type="button"
-        disabled
-        title="Sắp có"
-        className="flex h-11 w-full cursor-not-allowed items-center justify-center gap-2.5 rounded-lg border border-cvr-line bg-cvr-surface text-sm font-medium text-cvr-faint"
+        onClick={() => withZalo()}
+        disabled={loading}
+        className="flex h-11 w-full items-center justify-center gap-2.5 rounded-lg border border-cvr-line bg-white text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink disabled:opacity-60"
       >
         <ZaloIcon />
         Tiếp tục với Zalo
-        <span className="rounded-full bg-cvr-line/60 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide">Sắp có</span>
       </button>
+
+      <Link
+        href="/dang-nhap/so-dien-thoai"
+        className="flex h-11 w-full items-center justify-center gap-2.5 rounded-lg border border-cvr-line bg-white text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink"
+      >
+        <PhoneIcon />
+        Tiếp tục với số điện thoại
+      </Link>
     </div>
   );
 }
@@ -94,6 +128,14 @@ function FacebookIcon() {
   return (
     <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="#9aa0a6" aria-hidden>
       <path d="M22 12a10 10 0 10-11.56 9.88v-6.99H7.9V12h2.54V9.8c0-2.5 1.49-3.89 3.78-3.89 1.09 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56V12h2.78l-.44 2.89h-2.34v6.99A10 10 0 0022 12z" />
+    </svg>
+  );
+}
+
+function PhoneIcon() {
+  return (
+    <svg className="h-[18px] w-[18px]" fill="none" stroke="#6e6e73" strokeWidth={1.8} viewBox="0 0 24 24" aria-hidden>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h2.5a1 1 0 01.97.757l.9 3.6a1 1 0 01-.29.98l-1.5 1.4a14 14 0 006.68 6.68l1.4-1.5a1 1 0 01.98-.29l3.6.9a1 1 0 01.76.97V19a2 2 0 01-2 2A16 16 0 013 5z" />
     </svg>
   );
 }

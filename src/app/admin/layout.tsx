@@ -13,6 +13,8 @@ const nav = [
   { label: "Dự án", href: "/admin/du-an", icon: "building" },
   { label: "Tin tức", href: "/admin/tin-tuc", icon: "news" },
   { label: "Khách hàng", href: "/admin/khach-hang", icon: "users" },
+  { label: "Giá & khuyến mãi", href: "/admin/gia-khuyen-mai", icon: "tag" },
+  { label: "Thanh toán", href: "/admin/thanh-toan", icon: "card" },
   { label: "Nội dung web", href: "/admin/noi-dung", icon: "doc" },
 ];
 
@@ -128,6 +130,10 @@ function NavIcon({ name }: { name: string }) {
     return <svg className={common} {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14" /></svg>;
   if (name === "building")
     return <svg className={common} {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M3 21h18M5 21V5a2 2 0 012-2h6a2 2 0 012 2v16m0-10h2a2 2 0 012 2v8M9 7h2m-2 4h2m-2 4h2" /></svg>;
+  if (name === "tag")
+    return <svg className={common} {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M3 11V5a2 2 0 012-2h6l9 9a2 2 0 010 2.83l-5.17 5.17a2 2 0 01-2.83 0L3 11z" /></svg>;
+  if (name === "card")
+    return <svg className={common} {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M5 6h14a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2zm2 9h4" /></svg>;
   if (name === "news")
     return <svg className={common} {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v12a2 2 0 002 2zm0 0a2 2 0 002-2V8M7 8h6m-6 4h6m-6 4h4" /></svg>;
   return <svg className={common} {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 4H7a2 2 0 01-2-2V6a2 2 0 012-2h7l5 5v11a2 2 0 01-2 2z" /></svg>;
