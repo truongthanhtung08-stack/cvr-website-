@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import PagedArticleList from "@/components/PagedArticleList";
+import ArticleBrowser from "@/components/ArticleBrowser";
 import { useHomeSection } from "@/components/HomeExpand";
 import type { Article } from "@/lib/data";
 
@@ -78,8 +78,9 @@ export default function NewsSection({
         {/* ĐÃ BẤM "XEM THÊM": danh sách tin tức dạng list, phân trang */}
         {expanded ? (
           <div className="mt-5">
-            {/* Dùng lại đúng danh sách tin tức của trang /tin-tuc (phân trang) */}
-            <PagedArticleList articles={articles} />
+            {/* ĐÚNG bố cục trang /tin-tuc: danh sách phân trang + CỘT PHẢI
+                "Bài viết được quan tâm" (dùng chung component ArticleBrowser) */}
+            <ArticleBrowser articles={articles} />
           </div>
         ) : (
         <>

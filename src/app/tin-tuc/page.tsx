@@ -4,7 +4,7 @@ import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { getArticles } from "@/lib/contentDb";
-import PagedArticleList from "@/components/PagedArticleList";
+import ArticleBrowser from "@/components/ArticleBrowser";
 
 export const metadata: Metadata = {
   title: "Tin tức bất động sản | Coastal Land",
@@ -55,32 +55,8 @@ export default async function TinTucPage() {
           </Link>
           )}
 
-          {/* ── 2 cột kiểu Batdongsan: LIST bài viết (trái) + Bài viết được quan tâm (phải) ── */}
-          {articles.length > 0 && (
-          <div className="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-3">
-            {/* Danh sách bài PHÂN TRANG (10 bài/trang) — đích của nút "Xem thêm" */}
-            <div className="lg:col-span-2">
-              <PagedArticleList articles={rest} />
-            </div>
-
-            {/* Sidebar: bài viết được quan tâm — đánh số (kiểu Batdongsan) */}
-            <aside className="lg:col-span-1">
-              <div className="sticky top-24 rounded-none border border-cvr-line bg-white p-5 shadow-lux">
-                <h2 className="text-sm font-semibold tracking-tight text-cvr-ink">Bài viết được quan tâm</h2>
-                <div className="mt-1 flex flex-col divide-y divide-cvr-line/70">
-                  {articles.slice(0, 5).map((a, i) => (
-                    <Link key={a.slug} href={`/tin-tuc/${a.slug}`} className="group flex gap-3 py-3 last:pb-0">
-                      <span className="w-5 shrink-0 text-lg font-semibold leading-snug text-cvr-faint">{i + 1}</span>
-                      <span className="line-clamp-2 text-sm font-medium leading-snug text-cvr-ink transition-colors group-hover:text-cvr-blue-ink">
-                        {a.title}
-                      </span>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            </aside>
-          </div>
-          )}
+          {/* Danh sách bài + cột phải — dùng CHUNG với khối Tin tức trang chủ */}
+          {articles.length > 0 && <div className="mt-6"><ArticleBrowser articles={articles} /></div>}
         </div>
       </main>
       <Footer />
