@@ -283,7 +283,7 @@ export default function ProjectsBrowser({
       <div className="order-3">
       {/* Tiêu đề + bộ đếm nhảy theo bộ lọc (kiểu Batdongsan) */}
       <h1 className="mt-6 text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">
-        Dự án bất động sản Miền Trung
+        Dự án nổi bật
       </h1>
       <p className="mt-1.5 text-sm text-cvr-muted">
         Hiện có {visible.length} dự án căn hộ, khu đô thị và nghỉ dưỡng đang được Coastal Land phân phối.

@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 
 // ── MỘT KIỂU DUY NHẤT CHO MỌI KHỐI TRANG CHỦ ─────────────────────────────────
 // Mỗi khối (Tin · Dự án · Khu vực · Tin tức) có nút "Xem thêm".
@@ -11,9 +11,30 @@ type Ctx = { openKey: string | null; setOpenKey: (k: string | null) => void };
 
 const HomeExpandCtx = createContext<Ctx>({ openKey: null, setOpenKey: () => {} });
 
+// Bấm LOGO (hoặc tab "Trang chủ") khi đang ở trang chủ → về trạng thái mặc định:
+// đóng mọi khối đang mở, hiện lại đầy đủ trang. Header nằm ngoài Provider nên
+// báo qua sự kiện chung của cửa sổ.
+export const HOME_RESET_EVENT = "cl-home-reset";
+
 export function HomeExpandProvider({ children }: { children: React.ReactNode }) {
   const [openKey, setOpenKey] = useState<string | null>(null);
+
+  useEffect(() => {
+    const reset = () => setOpenKey(null);
+    window.addEventListener(HOME_RESET_EVENT, reset);
+    return () => window.removeEventListener(HOME_RESET_EVENT, reset);
+  }, []);
+
   return <HomeExpandCtx.Provider value={{ openKey, setOpenKey }}>{children}</HomeExpandCtx.Provider>;
+}
+
+// Dùng cho logo / tab "Trang chủ": đang ở trang chủ thì đưa trang về mặc định
+// (đóng khối đang mở + cuộn lên đầu) thay vì đứng yên tại chỗ.
+export function resetHomeIfOnHome() {
+  if (typeof window === "undefined") return;
+  if (window.location.pathname !== "/") return;
+  window.dispatchEvent(new Event(HOME_RESET_EVENT));
+  window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 // Dùng trong từng khối có nút "Xem thêm".

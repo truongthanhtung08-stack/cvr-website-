@@ -348,7 +348,9 @@ export function applyFilters<T extends FilterableListing>(items: T[], f: Filters
 }
 
 // Sắp xếp kết quả
-export type SortKey = "moi" | "gia-tang" | "gia-giam" | "dt-giam" | "gia-m2";
+// "lien-quan" = giữ nguyên thứ tự nguồn đã sắp sẵn theo độ liên quan
+// (dùng cho "Bất động sản tương tự": cùng dự án → cùng khu vực → cùng loại hình).
+export type SortKey = "moi" | "gia-tang" | "gia-giam" | "dt-giam" | "gia-m2" | "lien-quan";
 
 // Đơn giá (tỷ/m²) — để so sánh Giá/m²; null nếu thiếu giá hoặc diện tích.
 function pricePerM2(price: string, area: string): number | null {
@@ -363,6 +365,7 @@ function pricePerM2(price: string, area: string): number | null {
 export function sortListings<T extends FilterableListing>(items: T[], sort: SortKey): T[] {
   const s = [...items];
   const byTier = (a: T, b: T) => tierRank(a.badge) - tierRank(b.badge);
+  if (sort === "lien-quan") return s; // đã sắp theo độ liên quan từ trước — giữ nguyên
   if (sort === "moi") s.sort(byTier);
   if (sort === "gia-tang") s.sort((a, b) => ((priceToTy(a.price) ?? 1e9) - (priceToTy(b.price) ?? 1e9)) || byTier(a, b));
   if (sort === "gia-giam") s.sort((a, b) => ((priceToTy(b.price) ?? -1) - (priceToTy(a.price) ?? -1)) || byTier(a, b));

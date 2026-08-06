@@ -47,9 +47,12 @@ export default function ProjectsSection({ projects, articles = [] }: { projects:
   return (
     <section className="section-edge bg-cvr-surface">
       <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 sm:py-4 lg:px-8">
-        <h2 className="text-xl font-semibold text-cvr-ink sm:text-2xl">
-          Dự án nổi bật
-        </h2>
+        {/* Mở danh sách rồi thì ẩn tiêu đề khối — danh sách đã có tiêu đề riêng */}
+        {!expanded && (
+          <h2 className="text-xl font-semibold text-cvr-ink sm:text-2xl">
+            Dự án nổi bật
+          </h2>
+        )}
 
         {/* Slide 8 dự án — ẩn đi khi bấm "Xem thêm" để nhường chỗ cho danh sách */}
         <div className={expanded ? "hidden" : undefined}>
@@ -176,14 +179,10 @@ export default function ProjectsSection({ projects, articles = [] }: { projects:
         </div>{/* hết khối slide */}
 
         {/* Bấm "Xem thêm" → danh sách TẤT CẢ dự án dạng List, 8 dự án/trang */}
-        {expanded && (
-          <div className="mt-5">
-            <ProjectsBrowser projects={ranked} articles={articles} />
-          </div>
-        )}
+        {expanded && <ProjectsBrowser projects={ranked} articles={articles} />}
 
         {ranked.length > 0 && (
-          <ExpandToggle expanded={expanded} onClick={toggle} count={ranked.length} />
+          <ExpandToggle expanded={expanded} onClick={toggle} />
         )}
       </div>
     </section>

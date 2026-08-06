@@ -136,7 +136,7 @@ export function ProjectListPaged({ projects }: { projects: Project[] }) {
 
 // Nút "Xem thêm" dùng chung — bấm là ra danh sách theo trang. KHÔNG có "Thu gọn":
 // đã mở danh sách thì nút biến mất.
-export function ExpandToggle({ expanded, onClick, count }: { expanded: boolean; onClick: () => void; count: number }) {
+export function ExpandToggle({ expanded, onClick }: { expanded: boolean; onClick: () => void }) {
   if (expanded) return null;
   return (
     <div className="mt-6 flex justify-center">
@@ -145,7 +145,7 @@ export function ExpandToggle({ expanded, onClick, count }: { expanded: boolean; 
         onClick={onClick}
         className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full border border-cvr-line px-6 text-sm font-semibold text-cvr-ink transition hover:bg-cvr-surface active:bg-cvr-surface"
       >
-        {`Xem thêm (${count} dự án)`}
+        Xem thêm
         <svg
           className="h-4 w-4"
           fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"
@@ -172,16 +172,19 @@ export default function ProjectSlider({
   // Bấm "Xem thêm" → phần còn lại của trang ẩn đi, không đổ dài xuống dưới
   sectionKey?: string;
 }) {
-  const { expanded, toggle } = useHomeSection(sectionKey);
+  const { expanded, hidden, toggle } = useHomeSection(sectionKey);
 
   const sorted = sortProjectsByTier(projects);
   const top8 = sorted.slice(0, 8);
+
+  // Khối khác đang mở danh sách → khối này ẩn
+  if (hidden) return null;
 
   // Chưa có dự án → VẪN dựng khung (tiêu đề + ô báo trống) để khi có dự án là
   // chạy đúng cấu trúc slide + "Xem thêm" mà không phải sửa gì thêm.
   if (sorted.length === 0) {
     return (
-      <div>
+      <div className="mt-10 sm:mt-14">
         <h2 className="text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">{title}</h2>
         <p className="mt-5 rounded-xl border border-dashed border-cvr-line bg-cvr-surface px-4 py-8 text-center text-sm text-cvr-muted">
           {emptyNote ?? "Chưa có dự án nào."}
@@ -191,8 +194,10 @@ export default function ProjectSlider({
   }
 
   return (
-    <div>
-      <h2 className="text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">{title}</h2>
+    /* Đã mở danh sách → bỏ khoảng cách trên đầu (nội dung phía trên đã ẩn) */
+    <div className={expanded ? undefined : "mt-10 sm:mt-14"}>
+      {/* Mở danh sách rồi thì ẩn tiêu đề khối — danh sách đã có tiêu đề riêng */}
+      {!expanded && <h2 className="text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">{title}</h2>}
 
       {!expanded ? (
         /* SLIDE 8 dự án — vuốt ngang trên điện thoại, lưới 4 cột trên PC */
@@ -206,14 +211,12 @@ export default function ProjectSlider({
       ) : (
         /* XỔ RA: ĐÚNG bố cục trang /du-an — danh sách + CỘT PHẢI (lọc khu vực,
            tin tức) + phân trang. Dùng lại chính ProjectsBrowser nên không lệch. */
-        <div className="mt-5">
-          <ProjectsBrowser projects={sorted} articles={articles} />
-        </div>
+        <ProjectsBrowser projects={sorted} articles={articles} />
       )}
 
       {/* LUÔN có nút — cấu trúc đồng nhất ở mọi phần, kể cả khi ít hơn 8 dự án */}
       {sorted.length > 0 && (
-        <ExpandToggle expanded={expanded} onClick={toggle} count={sorted.length} />
+        <ExpandToggle expanded={expanded} onClick={toggle} />
       )}
     </div>
   );

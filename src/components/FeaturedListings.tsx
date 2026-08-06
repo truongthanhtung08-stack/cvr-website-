@@ -58,9 +58,8 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
   const active = Math.min(slideIdx, slides.length - 1);
 
   // Bấm "Xem thêm" mở danh sách ĐÚNG mục đích của tab đang chọn (tab "Cho thuê"
-  // → danh sách cho thuê), để số tin trên nút khớp với danh sách xổ ra.
+  // → danh sách cho thuê).
   const expandPurpose: "ban" | "thue" = activeTab === "Cho thuê" ? "thue" : "ban";
-  const expandCount = items.filter((l) => (l.purpose ?? "ban") === expandPurpose).length;
 
   // Khối khác đang mở → khối này ẩn
   if (hidden) return null;
@@ -128,7 +127,7 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
                 onClick={toggle}
                 className="mt-4 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-full border border-cvr-line text-[15px] font-semibold text-cvr-ink transition active:bg-cvr-surface"
               >
-                Xem thêm ({expandCount} tin)
+                Xem thêm
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
               </button>
             </div>
@@ -210,7 +209,7 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
                 onClick={toggle}
                 className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full border border-cvr-line px-6 text-sm font-semibold text-cvr-ink transition hover:bg-cvr-surface"
               >
-                Xem thêm ({expandCount} tin)
+                Xem thêm
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                 </svg>

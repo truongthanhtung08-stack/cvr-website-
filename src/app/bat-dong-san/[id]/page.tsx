@@ -8,7 +8,7 @@ import ListingShowcase from "@/components/ListingShowcase";
 import { HomeExpandProvider, HomeCollapsible } from "@/components/HomeExpand";
 import RecordView from "@/components/RecordView";
 import PriceHistory from "@/components/PriceHistory";
-import { provinceOf, pickRelated } from "@/lib/data";
+import { provinceOf, districtOf, pickRelated } from "@/lib/data";
 import { getListing, getListings, getListingDetail } from "@/lib/listingsDb";
 import { tierFromBadge, getTier } from "@/lib/packages";
 import RichContent from "@/components/RichContent";
@@ -68,14 +68,22 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
   // Mục đích tin → breadcrumb + tin liên quan cùng mục đích (bán/thuê)
   const purpose = l.purpose ?? "ban";
 
-  // Tin tương tự: BẮT BUỘC cùng MỤC ĐÍCH (bán↔bán, thuê↔thuê), sắp theo độ liên quan
-  // — cùng TỈNH (+2) và cùng LOẠI HÌNH (+1). Hiện HẾT (không giới hạn) để chạy slider.
+  // Tin tương tự — thứ tự ưu tiên đúng như đã chốt:
+  //   1) BẮT BUỘC cùng MỤC ĐÍCH (bán↔bán, thuê↔thuê)
+  //   2) cùng DỰ ÁN (+8) → 3) cùng QUẬN/HUYỆN (+4) → 4) cùng TỈNH (+2)
+  //   5) cùng LOẠI HÌNH (+1)
+  // Lấy HẾT (không giới hạn): slider hiện 8 tin đầu, "Xem thêm" đổ ra danh sách theo trang.
   const curProvince = provinceOf(l.location);
+  const curDistrict = districtOf(l.location);
   const all = await getListings(); // B2: tin tương tự cũng lấy từ Supabase
   const samePurpose = all.filter((x) => x.id !== l.id && (x.purpose ?? "ban") === purpose);
   const relatedFill = pickRelated(
     samePurpose,
-    (x) => (provinceOf(x.location) === curProvince ? 2 : 0) + (x.type === l.type ? 1 : 0),
+    (x) =>
+      (l.projectSlug && x.projectSlug === l.projectSlug ? 8 : 0) +
+      (curDistrict && districtOf(x.location) === curDistrict ? 4 : 0) +
+      (provinceOf(x.location) === curProvince ? 2 : 0) +
+      (x.type === l.type ? 1 : 0),
     samePurpose.length,
   );
 
@@ -86,14 +94,15 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
       {/* Schema.org RealEstateListing — dữ liệu chuẩn cho Google (IV.2) */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <main className="flex-1 bg-white">
-        <div className="mx-auto max-w-7xl px-4 pb-24 pt-2 sm:px-6 sm:pt-6 lg:px-8 lg:pb-20">
+        {/* MOBILE: pt-0 → ảnh tin nằm SÁT mép dưới header (không chừa khoảng trắng) */}
+        <div className="mx-auto max-w-7xl px-4 pb-24 pt-0 sm:px-6 sm:pt-6 lg:px-8 lg:pb-20">
 
           <HomeExpandProvider>
           {/* Toàn bộ nội dung tin — ẩn khi bấm "Xem thêm" ở mục BĐS tương tự */}
           <HomeCollapsible>
 
-          {/* Thư viện ảnh THẬT — MOBILE tràn viền sát 2 mép (giảm khoảng trống trên) */}
-          <div className="-mx-4 mb-6 sm:mx-0">
+          {/* Thư viện ảnh THẬT — MOBILE tràn viền sát 2 mép + sát header (không khoảng trống) */}
+          <div className="-mx-4 mb-5 sm:mx-0 sm:mb-6">
             <Gallery images={d.images} alt={l.title} />
           </div>
 
@@ -265,19 +274,19 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
 
           </HomeCollapsible>
 
-          {/* BĐS tương tự — bấm "Xem thêm" thì nội dung tin phía trên ẩn đi */}
-          {/* Slide mặc định · "Xem thêm" → danh sách trang 1,2,3… và ẩn nội dung
-              tin phía trên (không đổ dài xuống dưới). */}
-          <div className="mt-14">
-            <h2 className="mb-5 text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">Bất động sản tương tự</h2>
-            <ListingShowcase
-              items={relatedFill}
-              sectionKey="bds-tuong-tu"
-              purpose={purpose}
-              heading="Bất động sản tương tự"
-              emptyNote="Chưa có bất động sản tương tự."
-            />
-          </div>
+          {/* BĐS tương tự — slide 8 tin · "Xem thêm" → danh sách theo trang (8 tin/trang),
+              giữ ĐÚNG thứ tự ưu tiên tương tự; nội dung tin phía trên ẩn đi.
+              Tiêu đề do chính khối tự dựng (ẩn khi mở danh sách → không lặp chữ,
+              không chừa khoảng trống trên đầu). */}
+          <ListingShowcase
+            items={relatedFill}
+            sectionKey="bds-tuong-tu"
+            purpose={purpose}
+            title="Bất động sản tương tự"
+            heading="Bất động sản tương tự"
+            relevance
+            emptyNote="Chưa có bất động sản tương tự."
+          />
           </HomeExpandProvider>
         </div>
 

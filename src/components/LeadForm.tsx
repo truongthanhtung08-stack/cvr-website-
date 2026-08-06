@@ -23,27 +23,23 @@ export default function LeadForm({
     );
   }
 
+  // Bản GỌN: bỏ nhãn riêng từng ô (đưa vào placeholder), chỉ giữ những gì cần để
+  // liên hệ lại — Họ tên · Điện thoại · Nhu cầu · ghi chú ngắn. Chiều cao giảm
+  // hơn một nửa so với bản cũ, vừa khung cột phải và không chiếm trọn màn hình điện thoại.
   return (
     <form
       onSubmit={(e) => { e.preventDefault(); setSent(true); }}
-      className="space-y-4 rounded-none border border-cvr-line bg-white p-6 shadow-lux sm:p-8"
+      className="space-y-2.5 rounded-none border border-cvr-line bg-white p-4 shadow-lux sm:p-5"
     >
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Field label="Họ và tên *" name="name" placeholder="Nguyễn Văn A" required />
-        <Field label="Số điện thoại *" name="phone" placeholder="09xx xxx xxx" type="tel" required />
+      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+        <Field name="name" placeholder="Họ và tên *" required />
+        <Field name="phone" placeholder="Số điện thoại *" type="tel" required />
       </div>
-      <Field label="Email" name="email" placeholder="email@example.com" type="email" />
-      <div>
-        <label className="mb-1.5 block text-sm font-medium text-cvr-body">Nhu cầu</label>
-        <select name="topic" className="h-11 w-full rounded-lg border border-transparent bg-cvr-surface px-3 text-sm text-cvr-ink outline-none transition focus:border-cvr-line focus:bg-white">
-          {topics.map((t) => <option key={t} value={t}>{t}</option>)}
-        </select>
-      </div>
-      <div>
-        <label className="mb-1.5 block text-sm font-medium text-cvr-body">Nội dung</label>
-        <textarea name="note" rows={4} placeholder="Mô tả bất động sản hoặc nhu cầu của bạn…" className="w-full rounded-lg border border-transparent bg-cvr-surface px-3 py-2.5 text-sm text-cvr-ink placeholder-cvr-faint outline-none transition focus:border-cvr-line focus:bg-white" />
-      </div>
-      <button type="submit" className="btn-dangtin flex w-full items-center justify-center gap-2 rounded-lg px-6 py-3.5 text-sm font-bold text-white">
+      <select name="topic" aria-label="Nhu cầu" className="h-11 w-full rounded-lg border border-transparent bg-cvr-surface px-3 text-sm text-cvr-ink outline-none transition focus:border-cvr-line focus:bg-white">
+        {topics.map((t) => <option key={t} value={t}>{t}</option>)}
+      </select>
+      <textarea name="note" rows={2} aria-label="Nội dung" placeholder="Ghi chú thêm (không bắt buộc)" className="w-full rounded-lg border border-transparent bg-cvr-surface px-3 py-2.5 text-sm text-cvr-ink placeholder-cvr-faint outline-none transition focus:border-cvr-line focus:bg-white" />
+      <button type="submit" className="btn-dangtin flex w-full items-center justify-center gap-2 rounded-lg px-6 py-3 text-sm font-bold text-white">
         {cta}
       </button>
       <p className="text-center text-[11px] text-cvr-faint">Thông tin của bạn được bảo mật theo chính sách của Coastal Land.</p>
@@ -51,11 +47,15 @@ export default function LeadForm({
   );
 }
 
-function Field({ label, name, placeholder, type = "text", required }: { label: string; name: string; placeholder: string; type?: string; required?: boolean }) {
+function Field({ name, placeholder, type = "text", required }: { name: string; placeholder: string; type?: string; required?: boolean }) {
   return (
-    <div>
-      <label className="mb-1.5 block text-sm font-medium text-cvr-body">{label}</label>
-      <input name={name} type={type} required={required} placeholder={placeholder} className="h-11 w-full rounded-lg border border-transparent bg-cvr-surface px-3 text-sm text-cvr-ink placeholder-cvr-faint outline-none transition focus:border-cvr-line focus:bg-white" />
-    </div>
+    <input
+      name={name}
+      type={type}
+      required={required}
+      placeholder={placeholder}
+      aria-label={placeholder.replace(" *", "")}
+      className="h-11 w-full rounded-lg border border-transparent bg-cvr-surface px-3 text-sm text-cvr-ink placeholder-cvr-faint outline-none transition focus:border-cvr-line focus:bg-white"
+    />
   );
 }

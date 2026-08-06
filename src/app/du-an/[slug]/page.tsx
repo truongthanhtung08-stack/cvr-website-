@@ -105,7 +105,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
     <>
       <Header />
       <main className="flex-1 bg-white">
-        <div className="mx-auto max-w-7xl px-4 pb-20 pt-2 sm:px-6 sm:pt-6 lg:px-8">
+        {/* MOBILE: pt-0 → ảnh dự án nằm SÁT mép dưới header (không chừa khoảng trắng) */}
+        <div className="mx-auto max-w-7xl px-4 pb-20 pt-0 sm:px-6 sm:pt-6 lg:px-8">
 
           <HomeExpandProvider>
           {/* Nội dung dự án — ẩn khi bấm "Xem thêm" ở mục tin/dự án bên dưới */}
@@ -327,28 +328,36 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               2) Dự án liên quan
               Cả hai: slide mặc định → bấm "Xem thêm" ra danh sách trang 1,2,3…
               và ẩn nội dung dự án phía trên (không đổ dài xuống dưới). */}
-          <section id="tin-dang" className="mt-14 scroll-mt-28">
-            <h2 className="mb-5 text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">
-              Tin mua bán liên quan tại dự án {p.name}
-            </h2>
+          <section id="tin-dang" className="scroll-mt-28">
             {hasRelated ? (
-              <RelatedListingsTabs ban={relBan} thue={relThue} />
+              <RelatedListingsTabs
+                ban={relBan}
+                thue={relThue}
+                title={`Tin mua bán liên quan tại dự án ${p.name}`}
+              />
             ) : (
-              <p className="rounded-xl border border-dashed border-cvr-line bg-cvr-surface px-4 py-8 text-center text-sm text-cvr-muted">
-                Dự án chưa có tin mua bán / cho thuê nào.
-              </p>
+              /* Chưa có tin → khối trống, không có nút "Xem thêm" nên ẩn đi khi
+                 khối "Dự án liên quan" đang mở danh sách */
+              <HomeCollapsible>
+                <div className="mt-10 sm:mt-14">
+                  <h2 className="mb-5 text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">
+                    Tin mua bán liên quan tại dự án {p.name}
+                  </h2>
+                  <p className="rounded-xl border border-dashed border-cvr-line bg-cvr-surface px-4 py-8 text-center text-sm text-cvr-muted">
+                    Dự án chưa có tin mua bán / cho thuê nào.
+                  </p>
+                </div>
+              </HomeCollapsible>
             )}
           </section>
 
-          <div className="mt-14">
-            <ProjectSlider
-              projects={others}
-              title="Dự án liên quan"
-              sectionKey="du-an-lien-quan"
-              articles={articles}
-              emptyNote="Chưa có dự án liên quan."
-            />
-          </div>
+          <ProjectSlider
+            projects={others}
+            title="Dự án liên quan"
+            sectionKey="du-an-lien-quan"
+            articles={articles}
+            emptyNote="Chưa có dự án liên quan."
+          />
           </HomeExpandProvider>
         </div>
       </main>

@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useSaved } from "@/lib/useSaved";
 import { useAuth } from "@/lib/useAuth";
 import { haptic } from "@/lib/haptic";
+import { resetHomeIfOnHome } from "@/components/HomeExpand";
 
 // ── Thanh tab DƯỚI CÙNG — chỉ hiện trên điện thoại/tablet (< lg). Desktop KHÔNG đổi gì.
 //
@@ -139,7 +140,7 @@ export default function MobileTabBar() {
             <li key={t.href} className="flex-1">
               <Link
                 href={t.href}
-                onClick={() => haptic()}
+                onClick={() => { haptic(); if (t.href === "/") resetHomeIfOnHome(); }}
                 aria-current={t.on ? "page" : undefined}
                 className={`flex h-[49px] flex-col items-center justify-center gap-[2px] transition-colors duration-200 ${
                   t.on ? "text-cvr-blue" : "text-cvr-muted active:text-cvr-ink"

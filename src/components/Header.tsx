@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import BrandLogo from "@/components/BrandLogo";
+import { resetHomeIfOnHome } from "@/components/HomeExpand";
 import { packages, utilityTools } from "@/lib/packages";
 import { haptic } from "@/lib/haptic";
 import { useSaved } from "@/lib/useSaved";
@@ -533,7 +534,7 @@ export default function Header() {
     >
       <div className="mx-auto flex h-[60px] max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo trắng (nền tối) */}
-        <Link href="/" aria-label="COASTAL LAND — Trang chủ">
+        <Link href="/" aria-label="COASTAL LAND — Trang chủ" onClick={() => resetHomeIfOnHome()}>
           <BrandLogo size="md" tone="light" />
         </Link>
 

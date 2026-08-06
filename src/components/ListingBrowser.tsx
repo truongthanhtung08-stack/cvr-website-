@@ -23,17 +23,21 @@ export default function ListingBrowser({
   heading,
   purpose = "ban",
   items = featuredListings,
+  relevance = false,
 }: {
   heading: string;
   // Mục đích trang: "ban" = mua bán · "thue" = cho thuê — lọc nguồn tin + danh mục loại hình.
   purpose?: "ban" | "thue";
   // Tin từ Supabase (server truyền xuống) — không truyền thì dùng dữ liệu mẫu.
   items?: Listing[];
+  // Danh sách "tin tương tự": nguồn đã sắp theo độ liên quan → mặc định giữ đúng
+  // thứ tự đó (thay vì Mới nhất) và thêm lựa chọn sắp xếp "Liên quan nhất".
+  relevance?: boolean;
 }) {
   const params = useSearchParams();
 
   const [filters, setFiltersState] = useState<Filters>(() => filtersFromParams(params));
-  const [sort, setSort] = useState<SortKey>("moi");
+  const [sort, setSort] = useState<SortKey>(relevance ? "lien-quan" : "moi");
   const [view, setView] = useState<"list" | "grid">("list");
   const [page, setPage] = useState(1);
 
@@ -113,6 +117,7 @@ export default function ListingBrowser({
                 onChange={(e) => setSort(e.target.value as SortKey)}
                 className="hidden h-9 rounded-lg border border-cvr-line bg-white px-3 text-xs text-cvr-ink outline-none transition focus:border-cvr-ink sm:block"
               >
+                {relevance && <option value="lien-quan">Liên quan nhất</option>}
                 <option value="moi">Mới nhất</option>
                 <option value="gia-tang">Giá thấp → cao</option>
                 <option value="gia-giam">Giá cao → thấp</option>
