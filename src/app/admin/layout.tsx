@@ -6,17 +6,45 @@ import { useEffect } from "react";
 import { useProfile } from "@/lib/useProfile";
 import { signOut } from "@/lib/useAuth";
 
-const nav = [
-  { label: "Tổng quan", href: "/admin", icon: "grid" },
-  { label: "Tin đăng", href: "/admin/tin-dang", icon: "doc" },
-  { label: "Đăng tin mới", href: "/admin/tin-dang/moi", icon: "plus" },
-  { label: "Dự án", href: "/admin/du-an", icon: "building" },
-  { label: "Tin tức", href: "/admin/tin-tuc", icon: "news" },
-  { label: "Khách hàng", href: "/admin/khach-hang", icon: "users" },
-  { label: "Giá & khuyến mãi", href: "/admin/gia-khuyen-mai", icon: "tag" },
-  { label: "Thanh toán", href: "/admin/thanh-toan", icon: "card" },
-  { label: "Nội dung web", href: "/admin/noi-dung", icon: "doc" },
+// Điều hướng quản trị — chia NHÓM cho dễ tìm (thay vì 9 mục phẳng):
+//   Tổng quan · Đăng bán (nội dung tin) · Kinh doanh (khách, giá, thu tiền) · Website
+const navGroups: { group: string; items: { label: string; href: string; icon: string }[] }[] = [
+  {
+    group: "",
+    items: [{ label: "Tổng quan", href: "/admin", icon: "grid" }],
+  },
+  {
+    group: "Nội dung đăng",
+    items: [
+      { label: "Tin đăng", href: "/admin/tin-dang", icon: "doc" },
+      { label: "Đăng tin mới", href: "/admin/tin-dang/moi", icon: "plus" },
+      { label: "Dự án", href: "/admin/du-an", icon: "building" },
+      { label: "Tin tức", href: "/admin/tin-tuc", icon: "news" },
+    ],
+  },
+  {
+    group: "Kinh doanh",
+    items: [
+      { label: "Khách hàng", href: "/admin/khach-hang", icon: "users" },
+      { label: "Giá & khuyến mãi", href: "/admin/gia-khuyen-mai", icon: "tag" },
+      { label: "Thanh toán", href: "/admin/thanh-toan", icon: "card" },
+    ],
+  },
+  {
+    group: "Website",
+    items: [{ label: "Nội dung web", href: "/admin/noi-dung", icon: "doc" }],
+  },
 ];
+
+const nav = navGroups.flatMap((g) => g.items);
+
+// Mục đang xem: khớp chính xác với /admin, khớp tiền tố với các mục còn lại.
+// Riêng "Tin đăng" không sáng khi đang ở "Đăng tin mới".
+function isActive(href: string, pathname: string): boolean {
+  if (href === "/admin") return pathname === "/admin";
+  if (href === "/admin/tin-dang") return pathname === "/admin/tin-dang" || /^\/admin\/tin-dang\/(?!moi)/.test(pathname);
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { profile, loading } = useProfile();
@@ -40,34 +68,42 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <div className="flex min-h-screen bg-cvr-surface">
       {/* Sidebar */}
-      <aside className="hidden w-60 shrink-0 flex-col border-r border-cvr-line bg-white md:flex">
-        <div className="flex h-16 items-center gap-2 border-b border-cvr-line px-5">
+      <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-cvr-line bg-white md:flex">
+        <div className="flex h-16 shrink-0 items-center gap-2 border-b border-cvr-line px-5">
           <span className="text-base font-semibold tracking-tight text-cvr-ink">COASTAL LAND</span>
           <span className="rounded bg-cvr-ink px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
             Admin
           </span>
         </div>
-        <nav className="flex-1 space-y-1 p-3">
-          {nav.map((item) => {
-            const active =
-              item.href === "/admin"
-                ? pathname === "/admin"
-                : pathname.startsWith(item.href);
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${
-                  active
-                    ? "bg-cvr-ink text-white"
-                    : "text-cvr-body hover:bg-cvr-surface hover:text-cvr-ink"
-                }`}
-              >
-                <NavIcon name={item.icon} />
-                {item.label}
-              </Link>
-            );
-          })}
+        <nav className="flex-1 overflow-y-auto p-3">
+          {navGroups.map((g, gi) => (
+            <div key={g.group || gi} className={gi > 0 ? "mt-4" : ""}>
+              {g.group && (
+                <p className="mb-1.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-cvr-faint">
+                  {g.group}
+                </p>
+              )}
+              <div className="space-y-1">
+                {g.items.map((item) => {
+                  const active = isActive(item.href, pathname);
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${
+                        active
+                          ? "bg-cvr-ink text-white"
+                          : "text-cvr-body hover:bg-cvr-surface hover:text-cvr-ink"
+                      }`}
+                    >
+                      <NavIcon name={item.icon} />
+                      {item.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </nav>
         <div className="border-t border-cvr-line p-3">
           <Link
@@ -81,13 +117,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       {/* Nội dung */}
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex h-16 items-center justify-between border-b border-cvr-line bg-white px-5">
-          <div className="flex items-center gap-2 md:hidden">
+        {/* Thanh trên — dính khi cuộn để luôn có lối đăng xuất / về trang chủ */}
+        <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-3 border-b border-cvr-line bg-white/95 px-4 backdrop-blur sm:h-16 sm:px-5">
+          <Link href="/admin" className="flex items-center gap-2 md:hidden">
             <span className="text-sm font-semibold text-cvr-ink">COASTAL LAND</span>
             <span className="rounded bg-cvr-ink px-1.5 py-0.5 text-[10px] font-bold uppercase text-white">Admin</span>
-          </div>
-          <div className="ml-auto flex items-center gap-4">
-            <span className="text-sm text-cvr-body">
+          </Link>
+          <div className="ml-auto flex min-w-0 items-center gap-2 sm:gap-4">
+            <Link href="/" className="hidden text-sm text-cvr-muted transition hover:text-cvr-ink sm:inline">
+              Xem web ↗
+            </Link>
+            <span className="hidden max-w-[180px] truncate text-sm text-cvr-body sm:inline">
               {profile.full_name || profile.email}
             </span>
             <button
@@ -100,17 +140,25 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
         </header>
 
-        {/* Nav ngang cho mobile */}
-        <nav className="flex gap-1 overflow-x-auto border-b border-cvr-line bg-white px-3 py-2 md:hidden">
-          {nav.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium text-cvr-body hover:bg-cvr-surface"
-            >
-              {item.label}
-            </Link>
-          ))}
+        {/* Điều hướng ngang trên điện thoại — dính dưới thanh trên, mục đang xem
+            được tô đậm, cuộn ngang một dòng (không xuống hàng, không cắt chữ) */}
+        <nav className="no-scrollbar sticky top-14 z-20 flex gap-1.5 overflow-x-auto border-b border-cvr-line bg-white px-3 py-2 sm:top-16 md:hidden">
+          {nav.map((item) => {
+            const active = isActive(item.href, pathname);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                aria-current={active ? "page" : undefined}
+                className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium transition ${
+                  active ? "bg-cvr-ink text-white" : "border border-cvr-line text-cvr-body active:bg-cvr-surface"
+                }`}
+              >
+                <NavIcon name={item.icon} />
+                {item.label}
+              </Link>
+            );
+          })}
         </nav>
 
         <main className="flex-1 p-5 sm:p-6 lg:p-8">{children}</main>
