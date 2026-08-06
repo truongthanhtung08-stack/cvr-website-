@@ -48,6 +48,10 @@ export default function ListingBrowser({
   // Đổi bộ lọc → luôn quay về trang 1
   const setFilters = (f: Filters) => { setFiltersState(f); setPage(1); };
 
+  // Bấm sang trang khác → hiện NGAY từ tin đầu tiên của trang đó (nhảy thẳng lên
+  // đầu danh sách, không phải cuộn tay). Áp dụng cho mọi danh sách phân trang.
+  const goPage = (p: number) => { setPage(p); window.scrollTo({ top: 0 }); };
+
   // Nguồn tin theo đúng MỤC ĐÍCH của trang (bán / thuê)
   const base = useMemo(
     () => items.filter((l) => (l.purpose ?? "ban") === purpose),
@@ -158,11 +162,11 @@ export default function ListingBrowser({
 
               {totalPages > 1 && (
                 <div className="mt-10 flex items-center justify-center gap-1.5">
-                  <button type="button" disabled={current === 1} onClick={() => setPage(current - 1)} className="flex h-9 w-9 items-center justify-center rounded-lg border border-cvr-line text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink disabled:cursor-not-allowed disabled:opacity-30">‹</button>
+                  <button type="button" disabled={current === 1} onClick={() => goPage(current - 1)} className="flex h-9 w-9 items-center justify-center rounded-lg border border-cvr-line text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink disabled:cursor-not-allowed disabled:opacity-30">‹</button>
                   {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                    <button key={p} type="button" onClick={() => setPage(p)} className={`h-9 min-w-9 rounded-lg px-3 text-sm font-medium transition ${p === current ? "bg-cvr-ink text-white" : "border border-cvr-line text-cvr-body hover:border-cvr-ink hover:text-cvr-ink"}`}>{p}</button>
+                    <button key={p} type="button" onClick={() => goPage(p)} className={`h-9 min-w-9 rounded-lg px-3 text-sm font-medium transition ${p === current ? "bg-cvr-ink text-white" : "border border-cvr-line text-cvr-body hover:border-cvr-ink hover:text-cvr-ink"}`}>{p}</button>
                   ))}
-                  <button type="button" disabled={current === totalPages} onClick={() => setPage(current + 1)} className="flex h-9 w-9 items-center justify-center rounded-lg border border-cvr-line text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink disabled:cursor-not-allowed disabled:opacity-30">›</button>
+                  <button type="button" disabled={current === totalPages} onClick={() => goPage(current + 1)} className="flex h-9 w-9 items-center justify-center rounded-lg border border-cvr-line text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink disabled:cursor-not-allowed disabled:opacity-30">›</button>
                 </div>
               )}
             </>
