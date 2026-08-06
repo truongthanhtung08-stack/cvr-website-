@@ -57,6 +57,11 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
   useAutoSlide(trackRef, slides.length, paused, 10000);
   const active = Math.min(slideIdx, slides.length - 1);
 
+  // Bấm "Xem thêm" mở danh sách ĐÚNG mục đích của tab đang chọn (tab "Cho thuê"
+  // → danh sách cho thuê), để số tin trên nút khớp với danh sách xổ ra.
+  const expandPurpose: "ban" | "thue" = activeTab === "Cho thuê" ? "thue" : "ban";
+  const expandCount = items.filter((l) => (l.purpose ?? "ban") === expandPurpose).length;
+
   // ── ĐÃ BẤM "XEM THÊM": trang chủ đổi sang ĐÚNG bố cục trang Mua bán —
   //    danh sách tin bên trái + cột phải (lọc theo giá, theo khu vực…) + phân trang.
   //    Dùng lại chính ListingBrowser của /mua-ban nên không lệch cấu trúc.
@@ -74,7 +79,11 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
             </svg>
             Về trang chủ
           </button>
-          <ListingBrowser heading="Bất động sản mua bán" purpose="ban" items={items} />
+          <ListingBrowser
+            heading={expandPurpose === "thue" ? "Bất động sản cho thuê" : "Bất động sản mua bán"}
+            purpose={expandPurpose}
+            items={items}
+          />
         </div>
       </section>
     );
@@ -207,7 +216,7 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
                 onClick={() => setExpanded(true)}
                 className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full border border-cvr-line px-6 text-sm font-semibold text-cvr-ink transition hover:bg-cvr-surface"
               >
-                Xem thêm ({sorted.length} tin)
+                Xem thêm ({expandCount} tin)
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                 </svg>
