@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import ListingSlider from "@/components/ListingSlider";
+import ListingShowcase from "@/components/ListingShowcase";
 import { featuredListings, type Listing } from "@/lib/data";
 import { useRecentlyViewed } from "@/lib/useRecentlyViewed";
 
@@ -23,7 +23,7 @@ export default function RecentlyViewed() {
       <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
         <h2 className="text-2xl font-semibold text-cvr-ink">Bất động sản đã xem</h2>
         <div className="mt-4">
-          <ListingSlider items={items} />
+          <ListingShowcase items={items} />
         </div>
       </div>
     </section>

@@ -49,14 +49,14 @@ export default function PricingSidebar({
           rất lâu mới tới nội dung. Giờ gọn 1 dòng, luôn thấy mình đang ở mục nào.
           Nhóm "Công cụ tiện ích" không đưa vào đây — đã có nguyên một mục thẻ
           ở cuối trang, đưa lên nav nữa là thừa. */}
-      <nav className="no-scrollbar sticky top-[60px] z-30 -mx-4 flex gap-2 overflow-x-auto border-b border-cvr-line bg-white/95 px-4 py-2.5 backdrop-blur-xl sm:-mx-6 sm:px-6 lg:hidden">
+      <nav className="no-scrollbar sticky top-[60px] z-30 -mx-4 flex gap-2.5 overflow-x-auto border-b border-cvr-line bg-white/95 px-4 py-3 backdrop-blur-xl sm:-mx-6 sm:px-6 lg:hidden">
         {anchorItems.map((m) => {
           const isActive = active === m.href;
           return (
             <a
               key={m.href}
               href={m.href}
-              className={`shrink-0 whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+              className={`shrink-0 whitespace-nowrap rounded-full px-4 py-2 text-[13px] font-medium transition-colors ${
                 isActive
                   ? "bg-cvr-ink text-white"
                   : "border border-cvr-line text-cvr-body active:bg-cvr-surface"
@@ -68,7 +68,7 @@ export default function PricingSidebar({
         })}
         <a
           href={`tel:${hotline.replace(/\s/g, "")}`}
-          className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-cvr-gold px-4 py-1.5 text-sm font-bold text-white"
+          className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-cvr-gold px-4 py-2 text-[13px] font-bold text-white"
         >
           <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h2.5a1 1 0 01.97.757l.9 3.6a1 1 0 01-.29.98l-1.5 1.4a14 14 0 006.68 6.68l1.4-1.5a1 1 0 01.98-.29l3.6.9a1 1 0 01.76.97V19a2 2 0 01-2 2A16 16 0 013 5z" />
@@ -81,10 +81,10 @@ export default function PricingSidebar({
       <aside className="hidden lg:sticky lg:top-20 lg:block lg:self-start">
       {/* 2 phần xếp dọc: Danh sách dịch vụ → Công cụ tiện ích.
           Kiểu Apple: khối bo 2xl, không đường kẻ giữa các mục, nền sáng khi rê chuột. */}
-      <div className="space-y-4">
+      <div className="space-y-3">
         {groups.map((g) => (
-          <nav key={g.title} className="rounded-2xl border border-cvr-line bg-white p-2 shadow-lux">
-            <p className="px-3.5 pb-1.5 pt-2.5 text-[11px] font-bold uppercase tracking-[0.18em] text-cvr-faint">
+          <nav key={g.title} className="rounded-2xl border border-cvr-line bg-white p-2.5 shadow-lux">
+            <p className="px-3.5 pb-2 pt-2 text-[10px] font-bold uppercase tracking-[0.2em] text-cvr-faint">
               {g.title}
             </p>
             {g.items.map((m) => {
@@ -93,7 +93,7 @@ export default function PricingSidebar({
                 <a
                   key={m.href}
                   href={m.href}
-                  className={`relative block rounded-xl px-3.5 py-2.5 text-sm transition-colors ${
+                  className={`relative block rounded-xl px-3.5 py-2 text-[13.5px] leading-snug transition-colors ${
                     isActive
                       ? "bg-cvr-surface font-semibold text-cvr-ink"
                       : "font-medium text-cvr-body hover:bg-cvr-surface hover:text-cvr-ink"
@@ -114,7 +114,7 @@ export default function PricingSidebar({
       </div>
 
       {/* Hotline — nền đen luxury, CTA vàng */}
-      <div className="mt-4 overflow-hidden rounded-2xl bg-gradient-to-br from-cvr-ink to-[#2b2b2e] p-5 text-center shadow-lux">
+      <div className="mt-3 overflow-hidden rounded-2xl bg-gradient-to-br from-cvr-ink to-[#2b2b2e] p-6 text-center shadow-lux">
         <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-cvr-gold-soft">
           Hotline tư vấn
         </p>

@@ -5,8 +5,35 @@ import VideoEmbed from "@/components/VideoEmbed";
 // một dòng riêng theo cú pháp markdown:
 //   • Ảnh:   ![](url)
 //   • Video: @[video](url)   (tệp mp4/webm đã tải lên, hoặc link YouTube/Vimeo)
+//   • Đậm:   **chữ đậm**      • Nghiêng: *chữ nghiêng*
+//   • Canh lề: ::center:: / ::right:: / ::justify:: đặt ở ĐẦU dòng
 const IMG_MARKER = /^!\[[^\]]*\]\((.+)\)$/;
 const VIDEO_MARKER = /^@\[video\]\((.+)\)$/i;
+const ALIGN_MARKER = /^::(center|right|justify)::\s?/;
+
+const ALIGN_CLASS: Record<string, string> = {
+  center: "text-center",
+  right: "text-right",
+  justify: "text-justify",
+};
+
+// Đậm / nghiêng trong 1 đoạn — cú pháp markdown quen thuộc, không cần thư viện.
+function renderInline(text: string): React.ReactNode[] {
+  const out: React.ReactNode[] = [];
+  const re = /(\*\*[^*]+\*\*|\*[^*]+\*)/g;
+  let last = 0;
+  let m: RegExpExecArray | null;
+  let k = 0;
+  while ((m = re.exec(text)) !== null) {
+    if (m.index > last) out.push(text.slice(last, m.index));
+    const t = m[0];
+    if (t.startsWith("**")) out.push(<strong key={k++}>{t.slice(2, -2)}</strong>);
+    else out.push(<em key={k++}>{t.slice(1, -1)}</em>);
+    last = m.index + t.length;
+  }
+  if (last < text.length) out.push(text.slice(last));
+  return out;
+}
 
 export function imageMarkerUrl(line: string): string | null {
   const m = line.trim().match(IMG_MARKER);
@@ -35,7 +62,13 @@ export default function RichContent({ paragraphs }: { paragraphs: string[] }) {
             </figure>
           );
         }
-        return <p key={i}>{p}</p>;
+        const am = p.match(ALIGN_MARKER);
+        const body = am ? p.slice(am[0].length) : p;
+        return (
+          <p key={i} className={am ? ALIGN_CLASS[am[1]] : undefined}>
+            {renderInline(body)}
+          </p>
+        );
       })}
     </>
   );

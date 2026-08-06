@@ -266,21 +266,18 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                 {dev?.desc && <p className="mt-4 whitespace-pre-line text-sm leading-relaxed text-cvr-body">{dev.desc}</p>}
               </Section>
 
-              {/* 8) Tin mua bán / cho thuê CỦA CHÍNH dự án này */}
-              {hasRelated && (
-                <Section id="tin-dang" title={`Tin mua bán liên quan tại dự án ${p.name}`}>
-                  {/* MOBILE: thẻ dọc — ảnh trên, nội dung dưới (đúng cấu trúc tin theo cấp VIP) */}
-                  <div className="space-y-5 sm:hidden">
-                    {projectListings.map((x) => (
-                      <PropertyCard key={x.id} item={x} variant="tier" />
-                    ))}
-                  </div>
-                  {/* PC: thẻ ngang — ảnh trái, nội dung phải (ảnh lớn, cân đối với nội dung) */}
-                  <div className="hidden sm:block">
-                    <RelatedListingsTabs ban={relBan} thue={relThue} />
-                  </div>
-                </Section>
-              )}
+              {/* 8) Tin mua bán / cho thuê CỦA CHÍNH dự án này.
+                  LUÔN dựng khung — chưa có tin thì báo trống, có tin là chạy đúng
+                  cấu trúc slide + "Xem thêm" → list, không phải sửa gì thêm. */}
+              <Section id="tin-dang" title={`Tin mua bán liên quan tại dự án ${p.name}`}>
+                {hasRelated ? (
+                  <RelatedListingsTabs ban={relBan} thue={relThue} />
+                ) : (
+                  <p className="rounded-xl border border-dashed border-cvr-line bg-cvr-surface px-4 py-8 text-center text-sm text-cvr-muted">
+                    Dự án chưa có tin mua bán / cho thuê nào.
+                  </p>
+                )}
+              </Section>
             </div>
 
             {/* Cột phụ — giá & liên hệ (dính khi cuộn) */}
@@ -330,12 +327,11 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             </aside>
           </div>
 
-          {others.length > 0 && (
-            <div className="mt-14">
-              {/* Slide 8 dự án theo cấp VIP · nút "Xem thêm" xổ ra List phân trang 8/trang */}
-              <ProjectSlider projects={others} title="Dự án liên quan" />
-            </div>
-          )}
+          {/* Slide 8 dự án theo cấp VIP · nút "Xem thêm" xổ ra List phân trang 8/trang.
+              Chưa có dự án nào khác → vẫn dựng khung, chỉ báo trống. */}
+          <div className="mt-14">
+            <ProjectSlider projects={others} title="Dự án liên quan" emptyNote="Chưa có dự án liên quan." />
+          </div>
         </div>
       </main>
       <Footer />

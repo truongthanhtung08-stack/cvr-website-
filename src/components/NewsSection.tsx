@@ -1,20 +1,77 @@
+"use client";
+
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import Pager from "@/components/Pager";
 import type { Article } from "@/lib/data";
+
+const PER_PAGE = 8;
+
+// Hàng tin tức dạng LIST — ảnh trái, nội dung phải (dùng khi bấm "Xem thêm")
+function ArticleRow({ a }: { a: Article }) {
+  return (
+    <Link
+      href={`/tin-tuc/${a.slug}`}
+      className="group flex gap-3 overflow-hidden border border-cvr-line bg-white p-2.5 shadow-lux shadow-lux-hover transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 sm:gap-4 sm:p-3"
+    >
+      <div className="relative aspect-[4/3] w-36 shrink-0 overflow-hidden rounded-xl bg-cvr-surface sm:w-[32%] sm:min-w-[220px] sm:max-w-[360px]">
+        <Image src={a.image} alt={a.title} fill sizes="(max-width: 640px) 144px, 32vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
+      </div>
+      <div className="flex min-w-0 flex-1 flex-col">
+        <p className="flex items-center gap-2 text-xs text-cvr-muted">
+          <span className="rounded-full bg-cvr-surface px-2.5 py-0.5 font-medium text-cvr-body">{a.category}</span>
+          <span>{a.date}</span>
+        </p>
+        <h3 className="mt-1.5 line-clamp-2 font-semibold leading-snug text-cvr-ink transition-colors group-hover:text-cvr-blue-ink sm:text-lg">
+          {a.title}
+        </h3>
+        <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-cvr-muted sm:line-clamp-3">{a.excerpt}</p>
+      </div>
+    </Link>
+  );
+}
 
 // Khối Tin tức trang chủ — cấu trúc kiểu Batdongsan:
 // BÀI NỔI BẬT (gọn, 2/5 chiều ngang) bên trái + DANH SÁCH tin bên phải, mỗi tin
 // đủ 3 dòng (tiêu đề · mô tả · thể loại/ngày) kèm ảnh nhỏ. Giao diện thẻ Apple.
 // Số tin vừa khung trang chủ — phần còn lại xem ở /tin-tuc qua nút "Xem thêm".
 export default function NewsSection({ articles }: { articles: Article[] }) {
-  if (articles.length === 0) return null;
-  const [featured, ...rest] = articles;
+  // Nút "Xem thêm" → đổ ra danh sách tin tức dạng list, 8 tin/trang, ngay tại chỗ
+  const [expanded, setExpanded] = useState(false);
+  const [page, setPage] = useState(1);
+
+  const featured = articles[0];
+  const rest = articles.slice(1);
   const headlines = rest.slice(0, 4); // vừa chiều cao bài nổi bật
+  const totalPages = Math.max(1, Math.ceil(articles.length / PER_PAGE));
+  const current = Math.min(page, totalPages);
+  const pageItems = articles.slice((current - 1) * PER_PAGE, current * PER_PAGE);
 
   return (
     <section className="section-edge bg-white">
       <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 sm:py-4 lg:px-8">
         <h2 className="text-xl font-semibold text-cvr-ink sm:text-2xl">Tin tức</h2>
+
+        {/* Chưa có bài viết → VẪN giữ khung, chỉ báo trống */}
+        {articles.length === 0 && (
+          <p className="mt-5 rounded-xl border border-dashed border-cvr-line bg-cvr-surface px-4 py-8 text-center text-sm text-cvr-muted">
+            Chưa có bài viết nào.
+          </p>
+        )}
+
+        {articles.length > 0 && (
+        <>
+        {/* ĐÃ BẤM "XEM THÊM": danh sách tin tức dạng list, phân trang */}
+        {expanded ? (
+          <div className="mt-5">
+            <div className="space-y-4">
+              {pageItems.map((a) => <ArticleRow key={a.slug} a={a} />)}
+            </div>
+            <Pager page={current} totalPages={totalPages} onChange={setPage} />
+          </div>
+        ) : (
+        <>
 
         {/* Các mục tin tức (T19): Pháp lý, Quy hoạch, Tư vấn đầu tư… — cuộn ngang 1 dòng trên mobile */}
         <div className="no-scrollbar -mx-4 mt-3 flex gap-2 overflow-x-auto px-4 pb-0.5 sm:mx-0 sm:mt-4 sm:flex-wrap sm:px-0">
@@ -104,19 +161,29 @@ export default function NewsSection({ articles }: { articles: Article[] }) {
                 </Link>
               ))}
             </div>
-            <Link href="/tin-tuc" className="mt-3 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-full border border-cvr-line text-[15px] font-semibold text-cvr-ink transition active:bg-cvr-surface">
-              Xem thêm tin tức
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
-            </Link>
           </div>
         )}
+        </>
+        )}
 
-        {/* Xem thêm — DESKTOP giữ nguyên link góc phải */}
-        <div className="mt-4 hidden justify-end lg:flex">
-          <Link href="/tin-tuc" className="text-sm font-medium text-cvr-muted transition-colors hover:text-cvr-ink">
-            Xem thêm tin tức →
-          </Link>
+        {/* Nút Xem thêm / Thu gọn — chung cho cả PC và điện thoại */}
+        <div className="mt-6 flex justify-center">
+          <button
+            type="button"
+            onClick={() => { setExpanded((v) => !v); setPage(1); }}
+            className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full border border-cvr-line px-6 text-sm font-semibold text-cvr-ink transition hover:bg-cvr-surface active:bg-cvr-surface"
+          >
+            {expanded ? "Thu gọn" : `Xem thêm (${articles.length} tin)`}
+            <svg
+              className={`h-4 w-4 transition-transform duration-300 ${expanded ? "rotate-180" : ""}`}
+              fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
         </div>
+        </>
+        )}
       </div>
     </section>
   );

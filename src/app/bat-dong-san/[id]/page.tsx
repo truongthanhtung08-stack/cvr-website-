@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Gallery from "@/components/Gallery";
-import ListingSlider from "@/components/ListingSlider";
+import ListingShowcase from "@/components/ListingShowcase";
 import RecordView from "@/components/RecordView";
 import PriceHistory from "@/components/PriceHistory";
 import { provinceOf, pickRelated } from "@/lib/data";
@@ -261,26 +261,9 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
           {/* BĐS tương tự — slide 8 tin + nút "Xem thêm" → ra list theo trang (yêu cầu T19) */}
           {relatedFill.length > 0 && (
             <div className="mt-14">
-              <div className="mb-5 flex items-center justify-between gap-3">
-                <h2 className="text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">Bất động sản tương tự</h2>
-                <Link
-                  href={purpose === "thue" ? "/cho-thue" : "/mua-ban"}
-                  className="shrink-0 text-sm font-medium text-cvr-muted transition-colors hover:text-cvr-ink"
-                >
-                  Xem thêm →
-                </Link>
-              </div>
-              <ListingSlider items={relatedFill.slice(0, 8)} />
-              {/* Nút Xem thêm (bổ sung) — CHỈ mobile; desktop giữ link "Xem thêm →" ở tiêu đề */}
-              <div className="mt-6 flex justify-center sm:hidden">
-                <Link
-                  href={purpose === "thue" ? "/cho-thue" : "/mua-ban"}
-                  className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full border border-cvr-line px-6 text-sm font-semibold text-cvr-ink transition active:bg-cvr-surface"
-                >
-                  Xem thêm bất động sản tương tự
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
-                </Link>
-              </div>
+              <h2 className="mb-5 text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">Bất động sản tương tự</h2>
+              {/* Slide mặc định · nút "Xem thêm" → đổ ra list phân trang ngay tại chỗ */}
+              <ListingShowcase items={relatedFill} />
             </div>
           )}
         </div>

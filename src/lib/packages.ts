@@ -5,9 +5,9 @@
 
 // --- 4 CẤP TIN CVR — theo bảng "Gia đăng tin + QC" (D:\Coastal Land\Bảng giá truyền thông) ---
 // Chuẩn hiển thị tham chiếu Batdongsan/Homedy:
-//   Diamond (VIP Kim Cương): tiêu đề ĐỎ + VIẾT HOA + đậm + icon HOT đỏ — x20 lượt xem,
+//   Diamond (VIP Kim Cương): tiêu đề ĐỎ + VIẾT HOA + đậm — x20 lượt xem,
 //     lên Trang chủ, box "BĐS nổi bật", nhân đôi hiển thị, kích thước tin rất lớn.
-//   Gold (VIP Vàng): tiêu đề VÀNG + VIẾT HOA + đậm + icon HOT vàng — x10 lượt xem, box nổi bật.
+//   Gold (VIP Vàng): tiêu đề VÀNG + VIẾT HOA + đậm — x10 lượt xem, box nổi bật.
 //   Silver (VIP Bạc): tiêu đề XANH + đậm (không viết hoa) — x5 lượt xem, đứng trên tin thường.
 //   Basic (tin thường): hiển thị mặc định, nằm dưới các tin cao cấp.
 export type TierId = "diamond" | "gold" | "silver" | "basic";
@@ -17,7 +17,7 @@ export type Tier = {
   name: string; // "CVR Diamond"
   short: string; // nhãn ngắn trên huy hiệu thẻ tin: "Diamond"
   tagline: string; // mô tả ngắn
-  accent: string; // màu nhấn của hạng (huy hiệu ảnh + icon HOT)
+  accent: string; // màu nhấn của hạng (huy hiệu trên ảnh)
   titleColor: string; // màu tiêu đề tin (đủ tương phản WCAG trên nền trắng); "" = màu mặc định
   uppercase: boolean; // tiêu đề VIẾT HOA (chỉ Diamond & Gold)
   hot: boolean; // hiện icon HOT cạnh tiêu đề (các cấp VIP)
@@ -193,9 +193,9 @@ export const benefitRows: BenefitRow[] = [
   {
     label: "Tiêu đề tin",
     values: {
-      diamond: "Đỏ · VIẾT HOA · đậm · icon HOT",
-      gold: "Vàng · VIẾT HOA · đậm · icon HOT",
-      silver: "Xanh · đậm · icon HOT",
+      diamond: "Đỏ · VIẾT HOA · đậm",
+      gold: "Vàng · VIẾT HOA · đậm",
+      silver: "Xanh · đậm",
       basic: "Mặc định",
     },
   },

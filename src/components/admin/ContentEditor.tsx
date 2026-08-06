@@ -45,6 +45,41 @@ export default function ContentEditor({
     });
   }
 
+  // Bọc phần chữ đang bôi đen bằng ** (đậm) hoặc * (nghiêng). Chưa bôi đen →
+  // chèn cặp dấu và đặt con trỏ vào giữa để gõ tiếp.
+  function wrapSelection(mark: string) {
+    const ta = taRef.current;
+    const start = ta?.selectionStart ?? value.length;
+    const end = ta?.selectionEnd ?? value.length;
+    const sel = value.slice(start, end);
+    const next = `${value.slice(0, start)}${mark}${sel}${mark}${value.slice(end)}`;
+    onChange(next);
+    const caret = start + mark.length + sel.length;
+    requestAnimationFrame(() => {
+      ta?.focus();
+      ta?.setSelectionRange(sel ? caret + mark.length : caret, sel ? caret + mark.length : caret);
+    });
+  }
+
+  // Canh lề DÒNG đang đứng con trỏ: gắn/gỡ marker ::center:: ::right:: ::justify::
+  function setAlign(kind: "left" | "center" | "right" | "justify") {
+    const ta = taRef.current;
+    const pos = ta?.selectionStart ?? 0;
+    const lineStart = value.lastIndexOf("\n", pos - 1) + 1;
+    const nl = value.indexOf("\n", pos);
+    const lineEnd = nl === -1 ? value.length : nl;
+    const line = value.slice(lineStart, lineEnd);
+    const stripped = line.replace(/^::(center|right|justify)::\s?/, "");
+    const nextLine = kind === "left" ? stripped : `::${kind}:: ${stripped}`;
+    const next = value.slice(0, lineStart) + nextLine + value.slice(lineEnd);
+    onChange(next);
+    const caret = lineStart + nextLine.length;
+    requestAnimationFrame(() => {
+      ta?.focus();
+      ta?.setSelectionRange(caret, caret);
+    });
+  }
+
   const insertImage = (url: string) => { if (url.trim()) insertLine(`![](${url.trim()})`); };
   const insertVideo = (url: string) => { if (url.trim()) insertLine(`@[video](${url.trim()})`); };
 
@@ -85,6 +120,29 @@ export default function ContentEditor({
 
   return (
     <div className="space-y-2">
+      {/* Thanh định dạng cơ bản: đậm · nghiêng · canh lề */}
+      <div className="flex flex-wrap items-center gap-1.5">
+        <ToolBtn label="In đậm" onClick={() => wrapSelection("**")}>
+          <span className="text-[13px] font-bold">B</span>
+        </ToolBtn>
+        <ToolBtn label="In nghiêng" onClick={() => wrapSelection("*")}>
+          <span className="font-serif text-[13px] italic">I</span>
+        </ToolBtn>
+        <span className="mx-1 h-5 w-px bg-cvr-line" />
+        <ToolBtn label="Canh trái" onClick={() => setAlign("left")}>
+          <AlignIcon lines={[16, 10, 16, 10]} />
+        </ToolBtn>
+        <ToolBtn label="Canh giữa" onClick={() => setAlign("center")}>
+          <AlignIcon lines={[16, 10, 16, 10]} center />
+        </ToolBtn>
+        <ToolBtn label="Canh phải" onClick={() => setAlign("right")}>
+          <AlignIcon lines={[16, 10, 16, 10]} right />
+        </ToolBtn>
+        <ToolBtn label="Canh đều 2 bên" onClick={() => setAlign("justify")}>
+          <AlignIcon lines={[16, 16, 16, 16]} />
+        </ToolBtn>
+      </div>
+
       {/* Thanh công cụ chèn ảnh / video */}
       <div className="flex flex-wrap items-center gap-2">
         <button
@@ -152,7 +210,35 @@ export default function ContentEditor({
       )}
       <p className="text-xs text-cvr-faint">
         Mỗi <strong>đoạn</strong> xuống 1 dòng. Bấm <strong>“Chèn ảnh”</strong> / <strong>“Chèn video”</strong> để thêm ngay giữa bài — ảnh &amp; video sẽ hiện đúng vị trí đó trên web.
+        Bôi đen chữ rồi bấm <strong>B</strong> / <strong>I</strong> để in đậm, in nghiêng; nút canh lề áp cho dòng đang đứng con trỏ.
       </p>
     </div>
+  );
+}
+
+// Nút trên thanh định dạng
+function ToolBtn({ label, onClick, children }: { label: string; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={label}
+      aria-label={label}
+      className="flex h-8 w-8 items-center justify-center rounded-lg border border-cvr-line bg-white text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink"
+    >
+      {children}
+    </button>
+  );
+}
+
+// Biểu tượng canh lề — 4 vạch, dài/ngắn theo kiểu canh
+function AlignIcon({ lines, center = false, right = false }: { lines: number[]; center?: boolean; right?: boolean }) {
+  return (
+    <svg className="h-4 w-4" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round">
+      {lines.map((w, i) => {
+        const x1 = center ? (20 - w) / 2 : right ? 20 - w - 2 : 2;
+        return <line key={i} x1={x1} y1={4 + i * 4} x2={x1 + w - 2} y2={4 + i * 4} />;
+      })}
+    </svg>
   );
 }

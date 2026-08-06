@@ -166,12 +166,17 @@ export default function ProjectSlider({
   const sorted = sortProjectsByTier(projects);
   const top8 = sorted.slice(0, 8);
 
+  // Chưa có dự án → VẪN dựng khung (tiêu đề + ô báo trống) để khi có dự án là
+  // chạy đúng cấu trúc slide + "Xem thêm" mà không phải sửa gì thêm.
   if (sorted.length === 0) {
-    return emptyNote ? (
-      <p className="rounded-xl border border-cvr-line bg-cvr-surface px-4 py-6 text-center text-sm text-cvr-muted">
-        {emptyNote}
-      </p>
-    ) : null;
+    return (
+      <div>
+        <h2 className="text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">{title}</h2>
+        <p className="mt-5 rounded-xl border border-dashed border-cvr-line bg-cvr-surface px-4 py-8 text-center text-sm text-cvr-muted">
+          {emptyNote ?? "Chưa có dự án nào."}
+        </p>
+      </div>
+    );
   }
 
   return (

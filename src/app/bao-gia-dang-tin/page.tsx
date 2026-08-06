@@ -35,7 +35,7 @@ const vipPkgs = [
     displays: [
       "Xuất hiện trên Trang chủ.",
       "Đứng trên CVR Gold.",
-      "Tiêu đề màu đỏ + Bôi đậm + Viết hoa + icon HOT màu đỏ.",
+      "Tiêu đề màu đỏ + Bôi đậm + Viết hoa.",
       "Xuất hiện trong box “Bất động sản nổi bật”.",
       "Chèn 1 link bất kỳ dưới tin đăng.",
     ],
@@ -54,7 +54,7 @@ const vipPkgs = [
     ],
     displays: [
       "Đứng trên CVR Silver.",
-      "Tiêu đề màu vàng + Bôi đậm + Viết hoa + icon HOT màu vàng.",
+      "Tiêu đề màu vàng + Bôi đậm + Viết hoa.",
       "Xuất hiện trong box “Bất động sản nổi bật”.",
     ],
     prices: [
@@ -66,7 +66,7 @@ const vipPkgs = [
   {
     tierId: "silver" as TierId,
     benefits: ["Tăng lượt xem gấp 5 lần tin thường.", "Tiếp cận khách hàng tốt."],
-    displays: ["Đứng trên CVR Basic.", "Tiêu đề màu xanh + Bôi đậm + icon HOT màu xanh."],
+    displays: ["Đứng trên CVR Basic.", "Tiêu đề màu xanh + Bôi đậm."],
     prices: [
       { label: "Giá 1 tuần", price: "170.000đ" },
       { label: "Giá 2 tuần (−15%)", original: "340.000đ", price: "300.000đ" },
@@ -256,15 +256,15 @@ export default async function BaoGiaPage() {
           </div>
         </section>
 
-        <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8 lg:py-14">
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[250px_1fr] lg:gap-10">
+        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8 lg:py-16">
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-[264px_1fr] lg:gap-14">
             <PricingSidebar groups={serviceGroups} hotline={HOTLINE} />
 
-            <div className="min-w-0 space-y-20">
+            <div className="min-w-0 space-y-16 sm:space-y-20 lg:space-y-24">
               {/* 1. GÓI ĐĂNG TIN VIP */}
               <section id="goi-vip" className="scroll-mt-24">
                 <SectionTitle no="01" title="Gói đăng tin VIP" desc="Giải pháp tiếp cận tin đăng hiệu quả tới khách hàng tiềm năng." />
-                <div className="mt-7 space-y-7">
+                <div className="mt-8 space-y-8">
                   {vipPkgs.map((p) => (
                     <PkgCard
                       key={p.tierId}
@@ -283,7 +283,7 @@ export default async function BaoGiaPage() {
               {/* 2. GÓI TIN ĐĂNG LẺ */}
               <section id="goi-le" className="scroll-mt-24">
                 <SectionTitle no="02" title="Gói tin đăng lẻ" desc="CVR Basic — đăng tin tiết kiệm, phù hợp nhu cầu cơ bản." />
-                <div className="mt-7">
+                <div className="mt-8">
                   <PkgCard
                     tierId="basic"
                     name="CVR Basic"
@@ -299,7 +299,7 @@ export default async function BaoGiaPage() {
               {/* 3. GÓI ĐẨY TIN */}
               <section id="goi-day-tin" className="scroll-mt-24">
                 <SectionTitle no="03" title="Gói Đẩy tin" desc="Đẩy tin đăng lên trên đầu của từng loại tin. Gói nhiều lần đẩy tin trong nhiều ngày, mỗi ngày 1 lần." />
-                <div className="mt-7 overflow-x-auto rounded-2xl border border-cvr-line bg-white shadow-lux">
+                <div className="mt-8 overflow-x-auto rounded-2xl border border-cvr-line bg-white shadow-lux">
                   <table className="w-full min-w-[680px] text-sm">
                     <thead>
                       <tr className="border-b border-cvr-line text-left">
@@ -334,7 +334,7 @@ export default async function BaoGiaPage() {
               {/* 4. GÓI DỰ ÁN */}
               <section id="goi-du-an" className="scroll-mt-24">
                 <SectionTitle no="04" title="Gói Dự án" desc="Vị trí dự án nổi bật dành cho chủ đầu tư và đại lý phân phối." />
-                <div className="mt-7 space-y-7">
+                <div className="mt-8 space-y-8">
                   {pjPkgs.map((p) => (
                     <PkgCard
                       key={p.name}
@@ -352,7 +352,7 @@ export default async function BaoGiaPage() {
               {/* 5. GÓI BÀI PR */}
               <section id="goi-pr" className="scroll-mt-24">
                 <SectionTitle no="05" title="Gói bài PR" desc="Bài viết truyền thông trên chuyên mục Tin tức — tăng độ tin cậy và nhận diện thương hiệu." />
-                <div className="mt-7 grid grid-cols-1 gap-6 md:grid-cols-3">
+                <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-3">
                   {prPkgs.map((p) => {
                     const t = getTier(p.tierId);
                     return (
@@ -426,7 +426,7 @@ export default async function BaoGiaPage() {
               {/* LOẠI TIN & ĐẶC ĐIỂM */}
               <section id="dac-diem" className="scroll-mt-24">
                 <SectionTitle title="Loại tin và đặc điểm" desc="So sánh đặc điểm hiển thị giữa các cấp tin." />
-                <div className="mt-7 overflow-x-auto rounded-2xl border border-cvr-line bg-white shadow-lux">
+                <div className="mt-8 overflow-x-auto rounded-2xl border border-cvr-line bg-white shadow-lux">
                   <table className="w-full min-w-[640px] text-sm">
                     <thead>
                       <tr className="border-b border-cvr-line text-left">
@@ -458,7 +458,7 @@ export default async function BaoGiaPage() {
               {/* QUY ĐỊNH CHUNG */}
               <section id="quy-dinh" className="scroll-mt-24">
                 <SectionTitle title="Quy định chung" desc="" />
-                <div className="mt-7 space-y-3.5 rounded-2xl bg-cvr-surface p-7">
+                <div className="mt-8 space-y-3.5 rounded-2xl bg-cvr-surface p-7 sm:p-8">
                   {rules.map((r) => (
                     <p key={r} className="text-sm leading-relaxed text-cvr-body">{r}</p>
                   ))}
@@ -468,17 +468,17 @@ export default async function BaoGiaPage() {
               {/* CÔNG CỤ TIỆN ÍCH — phần 2 của menu, nằm SAU toàn bộ danh sách dịch vụ */}
               <section id="cong-cu-tien-ich" className="scroll-mt-24">
                 <SectionTitle title="Công cụ tiện ích" desc="Bộ công cụ miễn phí đi kèm dịch vụ — tra cứu giá, so sánh, tính lãi vay, pháp lý và phong thủy." />
-                <div className="mt-7 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                <div className="mt-8 grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
                   {utilityTools.map((tool) => (
                     <Link
                       key={tool.slug}
                       href={`/tien-ich/${tool.slug}`}
-                      className="group rounded-2xl border border-cvr-line bg-white p-5 shadow-lux transition hover:-translate-y-0.5 hover:border-cvr-gold-ink"
+                      className="group flex flex-col rounded-2xl border border-cvr-line bg-white p-6 shadow-lux transition hover:-translate-y-0.5 hover:border-cvr-gold-ink"
                     >
                       <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-cvr-gold-ink">Tiện ích</p>
                       <h3 className="mt-2 text-lg font-semibold tracking-tight text-cvr-ink">{tool.label}</h3>
                       <p className="mt-2 text-sm leading-relaxed text-cvr-muted">{tool.description}</p>
-                      <span className="mt-4 inline-flex text-sm font-semibold text-cvr-ink transition group-hover:text-cvr-gold-ink">Xem ngay →</span>
+                      <span className="mt-5 inline-flex text-sm font-semibold text-cvr-ink transition group-hover:text-cvr-gold-ink">Xem ngay →</span>
                     </Link>
                   ))}
                 </div>
@@ -487,7 +487,7 @@ export default async function BaoGiaPage() {
               {/* LIÊN HỆ */}
               <section id="lien-he" className="scroll-mt-24">
                 <SectionTitle title="Nhận báo giá và tư vấn" desc="Để lại thông tin, chuyên viên Coastal Land liên hệ trong 5 phút." />
-                <div className="mt-7 max-w-2xl">
+                <div className="mt-8 max-w-2xl">
                   <LeadForm
                     cta="Nhận báo giá ngay"
                     topics={["Gói đăng tin VIP", "Gói Đẩy tin", "Gói Dự án", "Gói bài PR", "Gói Banner", "Khác"]}
@@ -514,8 +514,8 @@ function SectionTitle({ no, title, desc }: { no?: string; title: string; desc: s
           Dịch vụ {no}
         </p>
       )}
-      <h2 className="mt-1.5 text-[26px] font-semibold tracking-tight text-cvr-ink sm:text-3xl">{title}</h2>
-      {desc && <p className="mt-2 max-w-2xl text-sm leading-relaxed text-cvr-muted">{desc}</p>}
+      <h2 className="mt-2 text-[26px] font-semibold leading-tight tracking-tight text-cvr-ink sm:text-[32px]">{title}</h2>
+      {desc && <p className="mt-3 max-w-2xl text-[15px] leading-relaxed text-cvr-muted">{desc}</p>}
     </header>
   );
 }

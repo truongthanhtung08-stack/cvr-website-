@@ -108,7 +108,7 @@ export default function PropertyCard({
       {/* Nội dung */}
       <div className={`flex flex-1 flex-col ${isFeatured ? "p-4" : isMini ? "p-2.5" : "p-3"}`}>
 
-        {/* Tiêu đề — 2 dòng, kiểu chữ theo cấp tin (Diamond/Gold VIẾT HOA + icon HOT) */}
+        {/* Tiêu đề — 2 dòng, kiểu chữ theo cấp tin (Diamond/Gold VIẾT HOA) */}
         {/* Tiêu đề: cao ĐÚNG 2 dòng (h-[3em] = 2×leading-1.5) + overflow-hidden →
             dòng 3 bị ẩn HẲN, không lú dấu. (line-clamp-2 của Tailwind build này hỏng.) */}
         <h3
@@ -117,7 +117,6 @@ export default function PropertyCard({
           }`}
           style={tier?.titleColor ? { color: tier.titleColor } : undefined}
         >
-          {tier?.hot && <HotIcon color={tier.accent} />}
           {item.title}
         </h3>
 
@@ -194,7 +193,6 @@ function PropertyRow({ item, showTime = false }: { item: Listing; showTime?: boo
           className={`h-[3em] overflow-hidden text-sm font-semibold leading-[1.5] text-cvr-ink sm:text-base ${tier?.uppercase ? "uppercase" : ""}`}
           style={tier?.titleColor ? { color: tier.titleColor } : undefined}
         >
-          {tier?.hot && <HotIcon color={tier.accent} />}
           {item.title}
         </h3>
         <p className="mt-1 hidden text-sm leading-relaxed text-cvr-muted sm:line-clamp-2">{listingSummary(item)}</p>
@@ -212,21 +210,6 @@ function PropertyRow({ item, showTime = false }: { item: Listing; showTime?: boo
         </div>
       </div>
     </Link>
-  );
-}
-
-// Icon HOT (ngọn lửa) cạnh tiêu đề tin VIP — màu theo cấp (đỏ/vàng/xanh).
-function HotIcon({ color }: { color: string }) {
-  return (
-    <svg
-      className="mb-0.5 mr-1 inline-block h-3.5 w-3.5 align-middle"
-      style={{ color }}
-      fill="currentColor"
-      viewBox="0 0 24 24"
-      aria-label="Tin nổi bật"
-    >
-      <path d="M13.5 0.67s0.74 2.65 0.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l0.03-0.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5 0.67zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-0.36 3.6-1.21 4.62-2.58 0.39 1.29 0.59 2.65 0.59 4.04 0 2.65-2.15 4.8-4.8 4.8z" />
-    </svg>
   );
 }
 
