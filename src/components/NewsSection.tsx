@@ -177,22 +177,21 @@ export default function NewsSection({
         </>
         )}
 
-        {/* Nút Xem thêm / Thu gọn — chung cho cả PC và điện thoại */}
-        <div className="mt-6 flex justify-center">
-          <button
-            type="button"
-            onClick={() => { toggle(); setPage(1); }}
-            className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full border border-cvr-line px-6 text-sm font-semibold text-cvr-ink transition hover:bg-cvr-surface active:bg-cvr-surface"
-          >
-            {expanded ? "Thu gọn" : `Xem thêm (${articles.length} tin)`}
-            <svg
-              className={`h-4 w-4 transition-transform duration-300 ${expanded ? "rotate-180" : ""}`}
-              fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"
+        {/* Bấm là ra danh sách theo trang — không có "Thu gọn" */}
+        {!expanded && (
+          <div className="mt-6 flex justify-center">
+            <button
+              type="button"
+              onClick={toggle}
+              className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full border border-cvr-line px-6 text-sm font-semibold text-cvr-ink transition hover:bg-cvr-surface active:bg-cvr-surface"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
-        </div>
+              {`Xem thêm (${articles.length} tin)`}
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+          </div>
+        )}
         </>
         )}
       </div>

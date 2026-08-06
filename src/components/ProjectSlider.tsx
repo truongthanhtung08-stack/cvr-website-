@@ -134,8 +134,10 @@ export function ProjectListPaged({ projects }: { projects: Project[] }) {
   );
 }
 
-// Nút "Xem thêm / Thu gọn" dùng chung
+// Nút "Xem thêm" dùng chung — bấm là ra danh sách theo trang. KHÔNG có "Thu gọn":
+// đã mở danh sách thì nút biến mất.
 export function ExpandToggle({ expanded, onClick, count }: { expanded: boolean; onClick: () => void; count: number }) {
+  if (expanded) return null;
   return (
     <div className="mt-6 flex justify-center">
       <button
@@ -143,9 +145,9 @@ export function ExpandToggle({ expanded, onClick, count }: { expanded: boolean; 
         onClick={onClick}
         className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full border border-cvr-line px-6 text-sm font-semibold text-cvr-ink transition hover:bg-cvr-surface active:bg-cvr-surface"
       >
-        {expanded ? "Thu gọn" : `Xem thêm (${count} dự án)`}
+        {`Xem thêm (${count} dự án)`}
         <svg
-          className={`h-4 w-4 transition-transform duration-300 ${expanded ? "rotate-180" : ""}`}
+          className="h-4 w-4"
           fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"
         >
           <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />

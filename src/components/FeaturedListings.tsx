@@ -35,7 +35,7 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
   const trackRef = useRef<HTMLDivElement>(null);
   // PC: bấm "Xem thêm" → đổi sang bố cục trang danh sách (list + cột phải),
   // đồng thời ẩn mọi phần khác của trang chủ (trạng thái dùng chung qua context).
-  const { expanded, hidden, toggle, close } = useHomeSection("tin");
+  const { expanded, hidden, toggle } = useHomeSection("tin");
 
   // Lọc theo tab → xếp theo cấp tin (cao trước) → chia 2 slides nối tiếp, mỗi slide 8 tin
   const activeMatch = typeTabs.find((t) => t.label === activeTab)?.match ?? (() => true);
@@ -72,16 +72,6 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
     return (
       <section className="section-edge bg-white">
         <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
-          <button
-            type="button"
-            onClick={close}
-            className="inline-flex min-h-[40px] items-center gap-2 text-sm font-semibold text-cvr-body transition hover:text-cvr-ink"
-          >
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
-            Về trang chủ
-          </button>
           <ListingBrowser
             heading={expandPurpose === "thue" ? "Bất động sản cho thuê" : "Bất động sản mua bán"}
             purpose={expandPurpose}
@@ -132,14 +122,15 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
                   </div>
                 ))}
               </div>
-              {/* Nút XEM THÊM — full-width. Ra list GỒM CẢ Bán + Cho thuê (T19) → /tim-kiem */}
-              <Link
-                href="/tim-kiem"
+              {/* Nút XEM THÊM (điện thoại) — CÙNG cơ chế với PC: ra danh sách theo trang */}
+              <button
+                type="button"
+                onClick={toggle}
                 className="mt-4 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-full border border-cvr-line text-[15px] font-semibold text-cvr-ink transition active:bg-cvr-surface"
               >
-                Xem thêm
-                <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
-              </Link>
+                Xem thêm ({expandCount} tin)
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+              </button>
             </div>
 
             {/* ── TABLET / MÁY TÍNH (≥ 640px): GIỮ NGUYÊN slider 2 slide đã duyệt ── */}
