@@ -12,7 +12,7 @@ import {
 import { provinceNamesFor, districtsOf, wardsOf, wardsOfNew, type GeoMode } from "@/lib/locations";
 import ImagePicker from "@/components/admin/ImagePicker";
 import ContentEditor from "@/components/admin/ContentEditor";
-import { freeNote, tenGoiMienPhi, vnd } from "@/lib/billing";
+import { freeNote, levelOf, quotePrice, tenGoiMienPhi, vnd } from "@/lib/billing";
 import { useBilling } from "@/lib/useBilling";
 import type { TierId } from "@/lib/packages";
 import type { ListingRow } from "@/lib/listingAdmin";
@@ -68,6 +68,13 @@ export default function PostListingForm() {
   const [planTier, setPlanTier] = useState<TierId>("basic");
   const [planDays, setPlanDays] = useState<number>(billing.plans[0]?.terms[0]?.days ?? 7);
   const [planStart, setPlanStart] = useState<string>("");
+  // Thông tin ví/hồ sơ dùng để tính ưu đãi (null = chưa đăng nhập hoặc chưa tải xong)
+  const [hoSoVi, setHoSoVi] = useState<{
+    created_at: string | null;
+    free_quota: number;
+    role: string;
+    total_spend: number;
+  } | null>(null);
   const [projectSlug, setProjectSlug] = useState("");
   const [projectOptions, setProjectOptions] = useState<{ slug: string; name: string }[]>([]);
 
@@ -92,10 +99,55 @@ export default function PostListingForm() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [billingLoading, planTier, billing.plans]);
 
-  const planPrice = useMemo(() => {
-    const p = billing.plans.find((x) => x.tierId === planTier);
-    return (p?.terms.find((t) => t.days === planDays) ?? p?.terms[0])?.price ?? 0;
-  }, [billing.plans, planTier, planDays]);
+  // ── SỐ TIỀN THỰC PHẢI TRẢ ─────────────────────────────────────────────────
+  // Giá gói → trừ khuyến mãi đang chạy → trừ ưu đãi theo cấp thành viên.
+  // Riêng gói nằm trong chính sách MIỄN PHÍ (vd: thành viên mới, 1 tháng đầu,
+  // không giới hạn tin) thì thành tiền = 0đ; các gói còn lại vẫn tính tiền —
+  // đó là phần nâng cấp để tin hiển thị nổi bật hơn.
+  const laThanhVienMoi = useMemo(() => {
+    if (!hoSoVi?.created_at) return false;
+    const soNgay = (Date.now() - new Date(hoSoVi.created_at).getTime()) / 86_400_000;
+    return soNgay <= billing.free.days;
+  }, [hoSoVi, billing.free.days]);
+
+  const capThanhVien = useMemo(
+    () => levelOf(billing, hoSoVi?.total_spend ?? 0),
+    [billing, hoSoVi],
+  );
+
+  const baoGia = useMemo(
+    () =>
+      quotePrice({
+        data: billing,
+        tierId: planTier,
+        days: planDays,
+        today: new Date().toISOString().slice(0, 10),
+        isNewMember: laThanhVienMoi,
+        levelId: capThanhVien.id,
+      }),
+    [billing, planTier, planDays, laThanhVienMoi, capThanhVien.id],
+  );
+
+  // Gói này có được miễn phí cho khách đang đăng nhập không?
+  const duocMienPhi = useMemo(() => {
+    const f = billing.free;
+    if (!f.active || planTier !== f.tierId || !hoSoVi) return false;
+    const hopDoiTuong =
+      f.audience === "all" || (f.audience === "new" && laThanhVienMoi) || f.audience === hoSoVi.role;
+    const conLuot = f.quota === 0 || hoSoVi.free_quota > 0; // quota 0 = không giới hạn
+    return hopDoiTuong && laThanhVienMoi && conLuot;
+  }, [billing.free, planTier, hoSoVi, laThanhVienMoi]);
+
+  const thanhTien = duocMienPhi ? 0 : baoGia.total;
+
+  // Giá hiển thị cạnh tên từng gói trong ô chọn (để nhìn là biết chọn gì)
+  const giaCuaGoi = (tierId: TierId): string => {
+    const p = billing.plans.find((x) => x.tierId === tierId);
+    const gia = (p?.terms.find((t) => t.days === planDays) ?? p?.terms[0])?.price ?? 0;
+    const mienPhi =
+      billing.free.active && tierId === billing.free.tierId && hoSoVi && laThanhVienMoi;
+    return mienPhi ? "Miễn phí (ưu đãi thành viên mới)" : vnd(gia);
+  };
 
   const spec = useMemo(() => categorySpecs.find((c) => c.label === category) ?? categorySpecs[0], [category]);
   // Hệ MỚI (sau sáp nhập): bỏ cấp Quận/Huyện — Tỉnh/Thành → thẳng Phường/Xã
@@ -125,11 +177,23 @@ export default function PostListingForm() {
       const { data: { user } } = await supabase.auth.getUser();
       setUserId(user?.id ?? null);
       if (user) {
-        const { data: p } = await supabase.from("profiles").select("full_name, phone, email").eq("id", user.id).single();
+        // Lấy thêm ngày tạo · hạn mức tin miễn phí · vai trò · tổng chi tiêu
+        // để tính ĐÚNG số tiền phải trả (ưu đãi thành viên mới, khuyến mãi, cấp).
+        const { data: p } = await supabase
+          .from("profiles")
+          .select("full_name, phone, email, created_at, free_quota, role, total_spend")
+          .eq("id", user.id)
+          .single();
         if (p) {
           setContactName((v) => v || p.full_name || "");
           setContactPhone((v) => v || p.phone || "");
           setContactEmail((v) => v || p.email || "");
+          setHoSoVi({
+            created_at: p.created_at ?? null,
+            free_quota: (p as { free_quota?: number }).free_quota ?? 0,
+            role: (p as { role?: string }).role ?? "buyer",
+            total_spend: (p as { total_spend?: number }).total_spend ?? 0,
+          });
         }
       }
       setAuthReady(true);
@@ -504,7 +568,9 @@ export default function PostListingForm() {
             <Label>Loại tin</Label>
             <select value={planTier} onChange={(e) => setPlanTier(e.target.value as TierId)} className={inputCls}>
               {billing.plans.map((p) => (
-                <option key={p.tierId} value={p.tierId}>{p.name}</option>
+                <option key={p.tierId} value={p.tierId}>
+                  {p.name} — {giaCuaGoi(p.tierId)}
+                </option>
               ))}
             </select>
           </div>
@@ -525,13 +591,51 @@ export default function PostListingForm() {
             <input type="date" value={planEnd} readOnly className={`${inputCls} bg-cvr-surface text-cvr-muted`} />
           </div>
         </div>
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-cvr-surface px-4 py-3">
-          <span className="text-sm font-semibold uppercase tracking-wide text-cvr-body">Giá trị tin đăng</span>
-          <span className="text-lg font-bold text-cvr-blue-ink">{vnd(planPrice)}</span>
+        {/* BẢNG TÍNH TIỀN — nói rõ từng khoản để khách không bao giờ thấy giá "trên trời" */}
+        <div className="mt-4 rounded-xl bg-cvr-surface px-4 py-3">
+          <div className="flex items-center justify-between gap-2 text-sm text-cvr-body">
+            <span>Giá gói {billing.plans.find((p) => p.tierId === planTier)?.name} · {planDays} ngày</span>
+            <span className={thanhTien < baoGia.base ? "text-cvr-muted line-through" : "font-semibold text-cvr-ink"}>
+              {vnd(baoGia.base)}
+            </span>
+          </div>
+
+          {duocMienPhi ? (
+            <div className="mt-1.5 flex items-center justify-between gap-2 text-sm text-cvr-blue-ink">
+              <span>Ưu đãi thành viên mới</span>
+              <span className="font-semibold">− {vnd(baoGia.base)}</span>
+            </div>
+          ) : (
+            <>
+              {baoGia.promo && baoGia.promoOff > 0 && (
+                <div className="mt-1.5 flex items-center justify-between gap-2 text-sm text-cvr-blue-ink">
+                  <span>Khuyến mãi: {baoGia.promo.name} (−{baoGia.promo.percent}%)</span>
+                  <span className="font-semibold">− {vnd(baoGia.promoOff)}</span>
+                </div>
+              )}
+              {baoGia.levelOff > 0 && (
+                <div className="mt-1.5 flex items-center justify-between gap-2 text-sm text-cvr-blue-ink">
+                  <span>Ưu đãi cấp {capThanhVien.name} (−{capThanhVien.discount}%)</span>
+                  <span className="font-semibold">− {vnd(baoGia.levelOff)}</span>
+                </div>
+              )}
+            </>
+          )}
+
+          <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 border-t border-cvr-line pt-2.5">
+            <span className="text-sm font-semibold uppercase tracking-wide text-cvr-body">Thành tiền</span>
+            <span className="text-lg font-bold text-cvr-blue-ink">
+              {thanhTien === 0 ? "0 ₫ — Miễn phí" : vnd(thanhTien)}
+            </span>
+          </div>
         </div>
+
         {billing.free.active && (
           <p className="mt-3 rounded-lg border border-cvr-blue/25 bg-cvr-blue/[0.06] px-3 py-2 text-xs text-cvr-blue-ink">
             {freeNote(billing.free, tenGoiMienPhi(billing))}
+            {!hoSoVi && " Đăng nhập để hệ thống áp ưu đãi cho bạn."}
+            {hoSoVi && !duocMienPhi && planTier !== billing.free.tierId &&
+              ` Gói ${tenGoiMienPhi(billing)} đang miễn phí cho bạn — các gói khác là bản nâng cấp hiển thị nổi bật hơn, có tính phí.`}
           </p>
         )}
       </Card>
