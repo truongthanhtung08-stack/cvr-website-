@@ -158,10 +158,13 @@ export default function ImagePicker({
         </button>
         <input ref={videoRef} type="file" accept="video/*" onChange={(e) => handleVideoFile(e.target.files)} className="hidden" />
 
-        <span className="text-xs text-cvr-faint">hoặc</span>
+      </div>
 
-        {/* Cả hàng dán link phải co được trong màn hình điện thoại */}
-        <div className="flex w-full min-w-0 flex-1 items-center gap-2 sm:w-auto">
+      {/* Ô dán link nằm HẲN Ở DÒNG RIÊNG bên dưới hai nút — không đứng chung
+          hàng nữa nên không bao giờ bị đẩy ra ngoài mép màn hình. */}
+      <div className="mt-3">
+        <p className="mb-1.5 text-xs text-cvr-faint">Hoặc dán link ảnh / video</p>
+        <div className="flex w-full min-w-0 items-center gap-2">
           <input
             value={link}
             onChange={(e) => setLink(e.target.value)}
