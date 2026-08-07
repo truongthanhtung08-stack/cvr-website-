@@ -61,7 +61,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     // Màn hình chờ giữ ĐÚNG khung của trang quản trị (có chỗ cột trái + thanh trên)
     // → khi tải xong nội dung không bị nhảy sang phải như trước.
     return (
-      <div className="flex min-h-screen bg-cvr-surface">
+      <div className="flex min-h-screen w-full max-w-full overflow-x-hidden bg-cvr-surface">
         <div className="hidden w-60 shrink-0 border-r border-cvr-line bg-white md:block" />
         <div className="flex min-w-0 flex-1 flex-col">
           <div className="h-14 shrink-0 border-b border-cvr-line bg-white sm:h-16" />
@@ -75,7 +75,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
-    <div className="flex min-h-screen bg-cvr-surface">
+    <div className="flex min-h-screen w-full max-w-full overflow-x-hidden bg-cvr-surface">
       {/* Sidebar */}
       <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-cvr-line bg-white md:flex">
         <div className="flex h-16 shrink-0 items-center gap-2 border-b border-cvr-line px-5">
@@ -127,7 +127,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Nội dung */}
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Thanh trên — dính khi cuộn để luôn có lối đăng xuất / về trang chủ */}
-        <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-3 border-b border-cvr-line bg-white/95 px-4 backdrop-blur sm:h-16 sm:px-5">
+        <header className="sticky top-0 z-30 flex h-14 w-full max-w-full items-center justify-between gap-3 border-b border-cvr-line bg-white/95 px-4 backdrop-blur sm:h-16 sm:px-5">
           {/* Điều hướng: Quay lại · Tiến tới · Tổng quan — luôn có ở mọi trang admin */}
           <div className="flex items-center gap-1">
             <button

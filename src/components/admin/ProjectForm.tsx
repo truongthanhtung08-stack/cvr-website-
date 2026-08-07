@@ -226,7 +226,7 @@ export default function ProjectForm({ initial }: { initial?: ProjectRow }) {
           <Field label="Tên dự án">
             <input value={name} onChange={(e) => onNameChange(e.target.value)} placeholder="VD: Sun Cosmo Residence" className={inputCls} />
           </Field>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
             <Field label="Slug (đường dẫn /du-an/…)">
               <input
                 value={slug}
@@ -239,7 +239,7 @@ export default function ProjectForm({ initial }: { initial?: ProjectRow }) {
               <input value={developer} onChange={(e) => setDeveloper(e.target.value)} placeholder="VD: Sun Property (Sun Group)" className={inputCls} />
             </Field>
           </div>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-3">
             <Field label="Loại hình dự án">
               <input value={type} onChange={(e) => setType(e.target.value)} placeholder="VD: Căn hộ cao cấp ven sông" className={inputCls} />
             </Field>
@@ -257,7 +257,7 @@ export default function ProjectForm({ initial }: { initial?: ProjectRow }) {
 
       {/* Cấp dự án — quyết định thứ tự trong slide "Dự án nổi bật" ở trang chủ */}
       <Card title="Cấp dự án (CVR-PJ)">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Cấp hiển thị">
             <select value={tier} onChange={(e) => setTier(e.target.value as ProjectTier)} className={inputCls}>
               {projectTierOptions.map((o) => (
@@ -273,7 +273,7 @@ export default function ProjectForm({ initial }: { initial?: ProjectRow }) {
 
       {/* Thông tin liên hệ dự án — BỎ TRỐNG thì trang dự án không hiện khối liên hệ */}
       <Card title="Thông tin liên hệ">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-3">
           <Field label="Người phụ trách">
             <input value={contactName} onChange={(e) => setContactName(e.target.value)} placeholder="VD: Nguyễn Văn A" className={inputCls} />
           </Field>
@@ -300,7 +300,7 @@ export default function ProjectForm({ initial }: { initial?: ProjectRow }) {
 
       {/* Vị trí — 3 cấp chọn liên động, giống form Tin đăng */}
       <Card title="Vị trí">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-3">
           <Field label="Tỉnh/Thành (bắt buộc)">
             <select
               value={province}
