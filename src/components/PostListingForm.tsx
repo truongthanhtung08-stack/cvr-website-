@@ -12,7 +12,7 @@ import {
 import { provinceNamesFor, districtsOf, wardsOf, wardsOfNew, type GeoMode } from "@/lib/locations";
 import ImagePicker from "@/components/admin/ImagePicker";
 import ContentEditor from "@/components/admin/ContentEditor";
-import { freeNote, vnd } from "@/lib/billing";
+import { freeNote, tenGoiMienPhi, vnd } from "@/lib/billing";
 import { useBilling } from "@/lib/useBilling";
 import type { TierId } from "@/lib/packages";
 import type { ListingRow } from "@/lib/listingAdmin";
@@ -531,7 +531,7 @@ export default function PostListingForm() {
         </div>
         {billing.free.active && (
           <p className="mt-3 rounded-lg border border-cvr-blue/25 bg-cvr-blue/[0.06] px-3 py-2 text-xs text-cvr-blue-ink">
-            {billing.free.note || freeNote(billing.free)}
+            {freeNote(billing.free, tenGoiMienPhi(billing))}
           </p>
         )}
       </Card>

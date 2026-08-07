@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import {
   BILLING_DEFAULT,
   freeNote,
+  tenGoiMienPhi,
   vnd,
   type BillingData,
   type Promo,
@@ -315,17 +316,15 @@ function FreeTab({ data, setData }: { data: BillingData; setData: (d: BillingDat
             {AUDIENCES.map((a) => <option key={a.id} value={a.id}>{a.label}</option>)}
           </select>
         </Field>
-        <div className="sm:col-span-2 lg:col-span-3">
-          <Field label="Dòng thông báo hiện cho khách (bỏ trống → tự sinh theo cài đặt trên)">
-            <input
-              value={f.note}
-              onChange={(e) => set({ note: e.target.value })}
-              placeholder={freeNote(f)}
-              className={inputCls}
-            />
-          </Field>
+        {/* Câu thông báo TỰ SINH từ đúng cài đặt trên — không cho gõ tay nữa để web
+            không bao giờ nói sai ưu đãi (trước đây đổi số tin mà quên sửa câu). */}
+        <div className="sm:col-span-2 lg:col-span-4">
+          <p className="text-xs font-medium text-cvr-muted">Khách sẽ đọc thấy đúng câu này:</p>
+          <p className="mt-1.5 rounded-lg border border-cvr-blue/25 bg-cvr-blue/[0.06] px-4 py-3 text-sm font-medium text-cvr-blue-ink">
+            {freeNote(f, tenGoiMienPhi(data))}
+          </p>
           <p className="mt-1.5 text-xs text-cvr-muted">
-            Đang hiện cho khách: <span className="font-medium text-cvr-body">{f.note || freeNote(f)}</span>
+            Câu này tự viết theo 4 ô ở trên — sửa số tin hoặc số ngày là câu đổi theo ngay.
           </p>
         </div>
       </div>

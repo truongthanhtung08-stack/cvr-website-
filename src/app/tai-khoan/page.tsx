@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useProfile } from "@/lib/useProfile";
 import { roleLabel, statusBadge } from "@/lib/adminLabels";
-import { freeNote, levelOf, vnd } from "@/lib/billing";
+import { freeNote, levelOf, tenGoiMienPhi, vnd } from "@/lib/billing";
 import { useBilling } from "@/lib/useBilling";
 
 // Tổng quan tài khoản thành viên: ví (số dư · điểm · cấp) + gói dịch vụ +
@@ -51,14 +51,14 @@ export default function AccountOverviewPage() {
         <Card label="Vai trò" value={roleLabel(profile.role)} />
         <Card label="Gói dịch vụ" value={profile.plan || "Basic (miễn phí)"} />
         <Card
-          label="Hạn mức tin miễn phí"
+          label={free.active && free.quota === 0 ? "Tin miễn phí" : "Tin miễn phí còn lại"}
           value={free.active && free.quota === 0 ? "Không giới hạn" : `${profile.free_quota} tin`}
         />
       </div>
 
       {free.active && (
         <p className="rounded-xl border border-cvr-blue/25 bg-cvr-blue/[0.06] px-4 py-3 text-sm text-cvr-blue-ink">
-          {free.note || freeNote(free)}
+          {freeNote(free, tenGoiMienPhi(billing))}
         </p>
       )}
 

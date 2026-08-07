@@ -199,13 +199,21 @@ export function vnd(n: number): string {
 }
 
 // ── DÒNG THÔNG BÁO MIỄN PHÍ CHO THÀNH VIÊN MỚI ──────────────────────────────
-// quota = 0 → KHÔNG GIỚI HẠN SỐ TIN (vd: "miễn phí 1 tháng đầu, không giới hạn").
-// Admin có thể tự viết câu riêng ở ô "Dòng thông báo"; bỏ trống thì dùng câu này.
-export function freeNote(f: FreePolicy): string {
+// LUÔN SINH TỪ CÀI ĐẶT THẬT — không lấy chữ tự do nữa. Trước đây admin gõ tay
+// câu này nên đổi số tin/số ngày mà quên sửa câu là web nói SAI ưu đãi
+// (vd cài "không giới hạn" nhưng vẫn hiện "được đăng 3 tin").
+// quota = 0 → KHÔNG GIỚI HẠN số tin.
+export function freeNote(f: FreePolicy, tenGoi?: string): string {
   const soTin = f.quota > 0 ? `${f.quota} tin` : "KHÔNG GIỚI HẠN số tin";
   const thoiHan =
     f.days % 30 === 0 && f.days >= 30 ? `${f.days / 30} tháng đầu` : `${f.days} ngày đầu`;
-  return `Thành viên mới được đăng ${soTin} miễn phí trong ${thoiHan}.`;
+  const goi = tenGoi ? ` (gói ${tenGoi})` : "";
+  return `Thành viên mới: đăng miễn phí ${soTin} trong ${thoiHan}${goi}.`;
+}
+
+// Tên gói của chính sách miễn phí — để câu thông báo nói rõ miễn phí ở gói nào
+export function tenGoiMienPhi(data: BillingData): string | undefined {
+  return data.plans.find((p) => p.tierId === data.free.tierId)?.name;
 }
 
 // ── DÒNG GIÁ CHO TRANG BÁO GIÁ (/bao-gia-dang-tin) ──────────────────────────
