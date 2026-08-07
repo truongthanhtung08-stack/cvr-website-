@@ -76,7 +76,7 @@ export default function AdminBillingPage() {
   if (loading) return <p className="text-sm text-cvr-muted">Đang tải bảng giá…</p>;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold tracking-tight text-cvr-ink">Giá & khuyến mãi</h1>
@@ -332,7 +332,7 @@ function PointsTab({ data, setData }: { data: BillingData; setData: (d: BillingD
     setData({ ...data, levels: data.levels.map((l, k) => (k === i ? { ...l, ...patch } : l)) });
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <Panel title="Điểm thưởng" desc="Khách nạp tiền được cộng điểm, điểm dùng để trừ vào phí đăng tin.">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <Field label="Trạng thái">
@@ -385,9 +385,9 @@ const inputCls = "h-10 w-full rounded-lg border border-cvr-line px-3 text-sm tex
 
 function Panel({ title, desc, children }: { title: string; desc?: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-2xl border border-cvr-line bg-white p-5 shadow-sm">
+    <section className="rounded-2xl border border-cvr-line bg-white p-4 shadow-sm">
       <h2 className="text-base font-semibold text-cvr-ink">{title}</h2>
-      {desc && <p className="mb-4 mt-1 text-sm text-cvr-muted">{desc}</p>}
+      {desc && <p className="mb-3 mt-1 text-sm text-cvr-muted">{desc}</p>}
       {children}
     </section>
   );

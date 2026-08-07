@@ -131,7 +131,7 @@ export default function AdminSiteContentPage() {
 
       {/* HERO TRANG CHỦ */}
       <Card title="Hero trang chủ (3 slide)" note="Mỗi slide cần 2 ảnh: MÁY TÍNH 2560×1280 (2:1) và ĐIỆN THOẠI 1200×480 (2.5:1)">
-        <div className="space-y-5">
+        <div className="space-y-4">
           {heroSlides.map((s, i) => (
             <div key={i} className="rounded-xl border border-cvr-line p-4">
               <p className="mb-3 text-sm font-semibold text-cvr-ink">Slide {i + 1}</p>
@@ -167,7 +167,7 @@ export default function AdminSiteContentPage() {
 
       {/* BẤT ĐỘNG SẢN THEO KHU VỰC (trang chủ) */}
       <Card title="Bất động sản theo khu vực (trang chủ)" note="5 ô · ô ĐẦU hiển thị LỚN (địa điểm nổi bật). Ảnh dọc, nên 800 × 800 px">
-        <div className="space-y-5">
+        <div className="space-y-4">
           {homeAreas.map((a, i) => (
             <div key={i} className="rounded-xl border border-cvr-line p-4">
               <div className="mb-3 flex items-center justify-between">
@@ -237,7 +237,7 @@ export default function AdminSiteContentPage() {
 
       {/* 2 BANNER CUỐI TRANG CHỦ */}
       <Card title="2 banner cuối trang chủ" note="Banner 'Đăng tin' (ảnh ngang 3.5:1) + Banner 'Ứng dụng' (ảnh iPhone nền trong · QR)">
-        <div className="space-y-6">
+        <div className="space-y-4">
           <div className="rounded-xl border border-cvr-line p-4">
             <p className="mb-3 text-sm font-semibold text-cvr-ink">Banner 1 — Đăng tin (nền sáng)</p>
             <ImageField value={homeAd.seller.image} ratio="3.5:1 · 1600×460" onChange={(url) => setSeller({ image: url })} />
@@ -272,7 +272,7 @@ export default function AdminSiteContentPage() {
 
       {/* BANNER TRANG DỰ ÁN */}
       <Card title="Banner trang Dự án (/du-an)" note="Ảnh ngang 3:1 · nên 1920 × 640 px · nhiều slide sẽ tự chạy">
-        <div className="space-y-5">
+        <div className="space-y-4">
           {projBanners.map((s, i) => (
             <div key={i} className="rounded-xl border border-cvr-line p-4">
               <div className="mb-3 flex items-center justify-between">
@@ -294,7 +294,7 @@ export default function AdminSiteContentPage() {
 
       {/* LANDING PAGES */}
       <Card title="Landing pages (/landing/…)" note="Trang đích chạy từ banner Hero. Slug = đoạn cuối đường dẫn, vd 've-coastal-land' → /landing/ve-coastal-land">
-        <div className="space-y-6">
+        <div className="space-y-4">
           {landings.map((l, i) => (
             <LandingEditor key={i} value={l} index={i} onChange={(patch) => setLd(i, patch)} onDelete={() => delLd(i)} />
           ))}
@@ -369,7 +369,7 @@ function SaveButton({ saving, onClick }: { saving: boolean; onClick: () => void 
 
 function Card({ title, note, children }: { title: string; note?: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-2xl border border-cvr-line bg-white p-5 shadow-lux">
+    <div className="rounded-2xl border border-cvr-line bg-white p-4 shadow-lux">
       <h2 className="text-base font-semibold text-cvr-ink">{title}</h2>
       {note && <p className="mb-4 mt-0.5 text-xs text-cvr-faint">{note}</p>}
       {!note && <div className="mb-4" />}
@@ -485,7 +485,7 @@ function AboutEditor({ value: a, onChange }: { value: AboutData; onChange: (patc
     onChange({ stats: a.stats.map((s, j) => (j === i ? { ...s, ...patch } : s)) });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Ảnh hero */}
       <div>
         <p className="mb-1.5 text-sm font-semibold text-cvr-ink">Ảnh đầu trang (hero)</p>

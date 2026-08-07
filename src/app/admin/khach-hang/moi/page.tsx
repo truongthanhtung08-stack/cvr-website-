@@ -9,7 +9,7 @@ export default function NewCustomerPage() {
     <div className="mx-auto max-w-2xl">
       <Link href="/admin/khach-hang" className="text-sm text-cvr-muted hover:text-cvr-ink">← Danh sách khách hàng</Link>
       <h1 className="mt-2 text-2xl font-semibold tracking-tight text-cvr-ink">Tạo khách hàng</h1>
-      <div className="mt-5 rounded-2xl border border-cvr-line bg-white p-6 shadow-lux">
+      <div className="mt-5 rounded-2xl border border-cvr-line bg-white p-4 shadow-lux">
         <p className="text-sm leading-relaxed text-cvr-body">
           Tính năng <strong>admin tạo hộ tài khoản</strong> cần khoá quản trị (service_role) chạy
           phía máy chủ để bảo mật — sẽ được thêm qua một API riêng ở bước kế tiếp.

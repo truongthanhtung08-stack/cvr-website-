@@ -219,7 +219,7 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
   }
 
   return (
-    <form onSubmit={(e) => { e.preventDefault(); save(false); }} className="space-y-5">
+    <form onSubmit={(e) => { e.preventDefault(); save(false); }} className="space-y-4">
       {/* Mục đích + Loại hình + Hạng (trạng thái do 2 nút Lưu nháp / Đăng tin quyết định) */}
       <Card title="Phân loại">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -565,7 +565,7 @@ const inputCls =
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-2xl border border-cvr-line bg-white p-5 shadow-lux">
+    <div className="rounded-2xl border border-cvr-line bg-white p-4 shadow-lux">
       <h2 className="mb-4 text-base font-semibold text-cvr-ink">{title}</h2>
       {children}
     </div>

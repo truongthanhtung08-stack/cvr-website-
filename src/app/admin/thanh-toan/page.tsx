@@ -49,14 +49,14 @@ export default function AdminPaymentsPage() {
   }, []);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <div>
         <h1 className="text-xl font-semibold tracking-tight text-cvr-ink">Thanh toán</h1>
         <p className="mt-1 text-sm text-cvr-muted">Cổng thanh toán PayOS và lịch sử giao dịch của khách hàng.</p>
       </div>
 
       {/* Trạng thái cổng thanh toán */}
-      <section className="rounded-2xl border border-cvr-line bg-white p-5 shadow-sm">
+      <section className="rounded-2xl border border-cvr-line bg-white p-4 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-base font-semibold text-cvr-ink">Cổng thanh toán PayOS</h2>
           {cfg && (
@@ -84,7 +84,7 @@ export default function AdminPaymentsPage() {
       </section>
 
       {/* Giao dịch */}
-      <section className="rounded-2xl border border-cvr-line bg-white p-5 shadow-sm">
+      <section className="rounded-2xl border border-cvr-line bg-white p-4 shadow-sm">
         <h2 className="text-base font-semibold text-cvr-ink">Giao dịch gần đây</h2>
         {dbErr && (
           <p className="mt-2 rounded-lg bg-amber-50 px-4 py-2.5 text-sm text-amber-700">

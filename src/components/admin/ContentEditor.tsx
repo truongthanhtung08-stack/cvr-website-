@@ -203,7 +203,7 @@ export default function ContentEditor({
         rows={rows}
         placeholder={placeholder}
         // Khung gọn lại (trước 340px / 240px) và CÓ THỂ KÉO GIÃN khi cần viết dài.
-        className="min-h-[170px] w-full resize-y rounded-lg border border-cvr-line bg-white px-3 py-2.5 text-sm leading-relaxed text-cvr-ink placeholder-cvr-faint outline-none transition focus:border-cvr-ink sm:min-h-[150px]"
+        className="min-h-[140px] w-full resize-y rounded-lg border border-cvr-line bg-white px-3 py-2.5 text-sm leading-relaxed text-cvr-ink placeholder-cvr-faint outline-none transition focus:border-cvr-ink sm:min-h-[128px]"
       />
 
       {error && (

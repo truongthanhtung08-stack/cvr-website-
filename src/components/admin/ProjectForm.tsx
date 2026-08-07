@@ -220,7 +220,7 @@ export default function ProjectForm({ initial }: { initial?: ProjectRow }) {
   }
 
   return (
-    <form onSubmit={(e) => { e.preventDefault(); save(false); }} className="space-y-5">
+    <form onSubmit={(e) => { e.preventDefault(); save(false); }} className="space-y-4">
       <Card title="Thông tin dự án">
         <div className="space-y-4">
           <Field label="Tên dự án">
@@ -644,7 +644,7 @@ const inputCls =
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-2xl border border-cvr-line bg-white p-5 shadow-lux">
+    <div className="rounded-2xl border border-cvr-line bg-white p-4 shadow-lux">
       <h2 className="mb-4 text-base font-semibold text-cvr-ink">{title}</h2>
       {children}
     </div>

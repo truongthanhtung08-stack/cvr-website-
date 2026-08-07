@@ -57,7 +57,7 @@ export default function AdminDashboard() {
         <StatCard label="Mật độ tin / thành viên" value={undefined} pending />
       </div>
 
-      <div className="mt-6 rounded-2xl border border-cvr-line bg-white p-5 shadow-lux">
+      <div className="mt-6 rounded-2xl border border-cvr-line bg-white p-4 shadow-lux">
         <h2 className="text-base font-semibold text-cvr-ink">Bắt đầu nhanh</h2>
         <div className="mt-3 flex flex-wrap gap-3">
           <Link href="/admin/tin-dang/moi" className="rounded-lg bg-cvr-ink px-4 py-2 text-sm font-semibold text-white transition hover:bg-cvr-ink/90">
@@ -93,7 +93,7 @@ function StatCard({
   pending?: boolean;
 }) {
   return (
-    <div className="rounded-2xl border border-cvr-line bg-white p-5 shadow-lux">
+    <div className="rounded-2xl border border-cvr-line bg-white p-4 shadow-lux">
       <p className="text-sm text-cvr-muted">{label}</p>
       <p className={`mt-2 text-3xl font-semibold tracking-tight ${accent ? "text-cvr-blue-ink" : "text-cvr-ink"}`}>
         {pending ? <span className="text-base font-medium text-cvr-faint">Chờ B2</span> : value ?? "…"}
