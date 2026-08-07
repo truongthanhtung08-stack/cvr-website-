@@ -20,6 +20,18 @@ export type ParsedRow = {
   tomTat: { tieuDe: string; mucDich: string; loaiHinh: string; gia: string; khuVuc: string; hang: string };
 };
 
+// Ô trong cột "anh" là ĐƯỜNG DẪN/LINK sẵn hay là TÊN TỆP ảnh trên máy?
+export function laLinkAnh(gt: string): boolean {
+  return /^(https?:)?\/\//i.test(gt) || gt.startsWith("/");
+}
+
+// Hai tên tệp có phải cùng một ảnh không — bỏ qua hoa thường, dấu, và cho phép
+// ghi thiếu đuôi mở rộng ("nha-my-khe-1" khớp "nha-my-khe-1.jpg").
+export function cungTenTep(tenTep: string, ghiTrongFile: string): boolean {
+  const bo = (s: string) => chuanHoa(s.replace(/\.[^.]+$/, ""));
+  return bo(tenTep) === bo(ghiTrongFile);
+}
+
 // Khớp ảnh với tin theo TÊN TỆP: ảnh "tin01-1.jpg", "tin01_2.jpg", "tin01 (3).jpg"
 // đều thuộc tin có ma_anh = "tin01". So sánh không phân biệt hoa thường/dấu.
 export function anhThuocMa(tenTep: string, maAnh: string): boolean {
@@ -191,8 +203,13 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
   if (lay(COT.hangTin) && !(TIERS as string[]).includes(hangRaw))
     loi.push(`hang_tin "${lay(COT.hangTin)}" không hợp lệ (diamond/gold/silver/basic)`);
 
-  // Nhiều ảnh: ngăn cách bằng dấu | (đường dẫn /images/... hoặc link ảnh đầy đủ)
-  const anh = lay(COT.anh).split("|").map((s) => s.trim()).filter(Boolean);
+  // Cột "anh" nhận CẢ HAI kiểu, ngăn nhau bằng | hoặc ; hoặc xuống dòng:
+  //   · TÊN TỆP ảnh trên máy ("nha-my-khe-1.jpg") → khớp với ảnh tải ở Bước 4
+  //   · Đường dẫn/link có sẵn ("/images/tin/1.jpg", "https://…") → dùng thẳng
+  const anh = lay(COT.anh)
+    .split(/[|;\n]/)
+    .map((s) => s.trim())
+    .filter(Boolean);
 
   const ten = lay(COT.lienHeTen);
   const sdt = lay(COT.lienHeSdt);

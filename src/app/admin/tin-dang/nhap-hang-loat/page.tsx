@@ -3,7 +3,15 @@
 import { useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { anhThuocMa, docTinTuBang, docTinTuCsv, LOAI_HINH_HOP_LE, type ParsedRow } from "@/lib/csvTin";
+import {
+  anhThuocMa,
+  cungTenTep,
+  docTinTuBang,
+  docTinTuCsv,
+  laLinkAnh,
+  LOAI_HINH_HOP_LE,
+  type ParsedRow,
+} from "@/lib/csvTin";
 import { docXlsx } from "@/lib/docXlsx";
 import { uploadImageFile } from "@/lib/uploadImage";
 
@@ -29,16 +37,29 @@ export default function NhapHangLoatPage() {
   const hopLe = rows.filter((r) => r.loi.length === 0);
   const sai = rows.filter((r) => r.loi.length > 0);
 
-  // Ảnh của một tin = ảnh ghi sẵn trong cột "anh" + ảnh tải lên có tên khớp "ma_anh"
-  // (xếp theo tên tệp nên ảnh …-1 đứng đầu và thành ẢNH ĐẠI DIỆN).
-  const anhCuaTin = (r: ParsedRow): string[] => {
-    const coSan = (r.payload.images as string[]) ?? [];
-    const khop = anhDaTai
+  // ẢNH CỦA MỘT TIN — gộp 2 cách, giữ đúng thứ tự anh ghi trong file:
+  //   1) Cột "anh" ghi TÊN TỆP ảnh trên máy → lấy link của ảnh đã tải cùng tên
+  //      (ghi thiếu đuôi .jpg cũng khớp). Ghi sẵn link/đường dẫn thì dùng thẳng.
+  //   2) Cột "ma_anh" → tự gom mọi ảnh tải lên có tên bắt đầu bằng mã đó,
+  //      xếp theo SỐ cuối tên tệp nên ảnh …-1 làm ẢNH ĐẠI DIỆN.
+  const anhCuaTin = (r: ParsedRow): { urls: string[]; thieu: string[] } => {
+    const urls: string[] = [];
+    const thieu: string[] = [];
+
+    for (const gt of (r.payload.images as string[]) ?? []) {
+      if (laLinkAnh(gt)) { urls.push(gt); continue; }
+      const tim = anhDaTai.find((a) => cungTenTep(a.ten, gt));
+      if (tim) urls.push(tim.url);
+      else thieu.push(gt);
+    }
+
+    const theoMa = anhDaTai
       .filter((a) => anhThuocMa(a.ten, r.maAnh))
-      // Xếp theo SỐ cuối tên tệp (tin01-1, tin01-2, "tin01 (3)") → ảnh -1 làm đại diện
       .sort((a, b) => soCuoiTen(a.ten) - soCuoiTen(b.ten) || a.ten.localeCompare(b.ten, "vi", { numeric: true }))
-      .map((a) => a.url);
-    return [...coSan, ...khop];
+      .map((a) => a.url)
+      .filter((u) => !urls.includes(u)); // đã lấy theo tên tệp thì không lấy lại
+
+    return { urls: [...urls, ...theoMa], thieu };
   };
 
   async function taiAnhHangLoat(files: FileList) {
@@ -91,7 +112,7 @@ export default function NhapHangLoatPage() {
       for (let i = 0; i < hopLe.length; i += 50) {
         const lo = hopLe
           .slice(i, i + 50)
-          .map((r) => ({ ...r.payload, images: anhCuaTin(r), published_at: now }));
+          .map((r) => ({ ...r.payload, images: anhCuaTin(r).urls, published_at: now }));
         const { error } = await supabase.from("listings").insert(lo);
         if (error) {
           setKetQua(`Đã đăng ${xong} tin thì gặp lỗi: ${error.message}`);
@@ -162,9 +183,9 @@ export default function NhapHangLoatPage() {
         <p className="text-xs font-bold uppercase tracking-wider text-cvr-faint">Bước 4</p>
         <h2 className="mt-1 text-base font-semibold text-cvr-ink">Tải ảnh cho tất cả tin — một lượt</h2>
         <p className="mt-1 text-sm text-cvr-muted">
-          Đặt tên ảnh theo <strong>mã ảnh</strong> của tin trong file (cột <code>ma_anh</code>):
-          tin <code>tin01</code> thì ảnh đặt <code>tin01-1.jpg</code>, <code>tin01-2.jpg</code>…
-          Chọn HẾT ảnh một lần, hệ thống tự chia về đúng tin — ảnh số 1 làm ảnh đại diện.
+          Ảnh để trong thư mục trên máy, <strong>tên ảnh đúng như tên ghi trong file Excel</strong> (cột <code>anh</code>).
+          Chọn HẾT ảnh một lần — hệ thống tự chia về đúng từng tin theo tên tệp, ảnh ghi trước làm ảnh đại diện.
+          Tin nào thiếu ảnh sẽ bị bôi đỏ trong bảng xem trước.
         </p>
         <div className="mt-3 flex flex-wrap items-center gap-3">
           <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-cvr-line px-4 py-2 text-sm font-medium text-cvr-body hover:border-cvr-ink hover:text-cvr-ink">
@@ -264,11 +285,7 @@ export default function NhapHangLoatPage() {
                     <td className="max-w-[220px] truncate px-3 py-2.5 text-cvr-body">{r.tomTat.khuVuc}</td>
                     <td className="px-3 py-2.5 uppercase text-cvr-muted">{r.tomTat.hang}</td>
                     <td className="px-3 py-2.5">
-                      {anhCuaTin(r).length > 0 ? (
-                        <span className="font-medium text-green-700">{anhCuaTin(r).length} ảnh</span>
-                      ) : (
-                        <span className="text-cvr-faint">chưa có</span>
-                      )}
+                      <AnhCell {...anhCuaTin(r)} />
                     </td>
                   </tr>
                 ))}
@@ -289,8 +306,16 @@ export default function NhapHangLoatPage() {
           <li><strong>dien_tich</strong> (m²), <strong>phong_ngu</strong>, <strong>phong_tam</strong>: chỉ ghi số.</li>
           <li><strong>tinh_thanh</strong>: bắt buộc · <strong>quan_huyen</strong>, <strong>phuong_xa</strong>: nên có để lọc theo khu vực.</li>
           <li><strong>hang_tin</strong>: <code>diamond</code> · <code>gold</code> · <code>silver</code> · <code>basic</code> (bỏ trống = basic).</li>
-          <li><strong>ma_anh</strong>: mã để tải ảnh hàng loạt (vd <code>tin01</code>) — đặt tên ảnh <code>tin01-1.jpg</code>, <code>tin01-2.jpg</code>… rồi chọn hết ảnh ở Bước 4, hệ thống tự chia đúng tin. <strong>Không phải up từng tin.</strong></li>
-          <li><strong>anh</strong>: chỉ dùng khi ảnh ĐÃ có link sẵn — nhiều ảnh ngăn nhau bằng dấu <code>|</code> (vd <code>/images/tin/1.jpg</code> hoặc https://…). Để trống nếu tải ảnh từ máy ở Bước 4.</li>
+          <li>
+            <strong>anh</strong>: ghi <strong>đúng TÊN ẢNH trên máy</strong>, nhiều ảnh ngăn nhau bằng dấu <code>|</code> —
+            vd <code>nha-my-khe-1.jpg | nha-my-khe-2.jpg</code>. Ảnh ghi trước làm <strong>ảnh đại diện</strong>.
+            Ghi thiếu đuôi <code>.jpg</code> cũng khớp. (Ảnh đã có link sẵn thì dán thẳng link cũng được.)
+          </li>
+          <li>
+            <strong>ma_anh</strong>: cách nhanh hơn nếu anh đặt tên ảnh theo mã — ghi <code>tin01</code> rồi
+            đặt ảnh <code>tin01-1.jpg</code>, <code>tin01-2.jpg</code>… là hệ thống tự gom, khỏi liệt kê từng tên.
+            Dùng cột <strong>anh</strong> hoặc <strong>ma_anh</strong> đều được, không cần cả hai.
+          </li>
           <li><strong>dia_chi</strong>, <strong>phap_ly</strong>, <strong>huong</strong>, <strong>lien_he_ten</strong>, <strong>lien_he_sdt</strong>: không bắt buộc.</li>
         </ul>
         <div className="mt-4 rounded-lg bg-cvr-surface p-3 text-sm text-cvr-body">
@@ -318,6 +343,22 @@ export default function NhapHangLoatPage() {
           <DanhSachLoai title="loai_hinh khi muc_dich = thue" items={LOAI_HINH_HOP_LE.thue} />
         </div>
       </section>
+    </div>
+  );
+}
+
+// Ô "Ảnh" trong bảng xem trước: có bao nhiêu ảnh · thiếu ảnh nào (theo tên ghi trong file)
+function AnhCell({ urls, thieu }: { urls: string[]; thieu: string[] }) {
+  return (
+    <div className="min-w-[120px]">
+      {urls.length > 0 ? (
+        <span className="font-medium text-green-700">{urls.length} ảnh</span>
+      ) : (
+        <span className="text-cvr-faint">chưa có</span>
+      )}
+      {thieu.length > 0 && (
+        <p className="mt-0.5 text-xs font-medium text-red-700">Chưa tải: {thieu.join(", ")}</p>
+      )}
     </div>
   );
 }
