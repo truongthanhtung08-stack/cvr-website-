@@ -128,10 +128,33 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Thanh trên — dính khi cuộn để luôn có lối đăng xuất / về trang chủ */}
         <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-3 border-b border-cvr-line bg-white/95 px-4 backdrop-blur sm:h-16 sm:px-5">
-          <Link href="/admin" className="flex items-center gap-2 md:hidden">
-            <span className="text-sm font-semibold text-cvr-ink">COASTAL LAND</span>
-            <span className="rounded bg-cvr-ink px-1.5 py-0.5 text-[10px] font-bold uppercase text-white">Admin</span>
-          </Link>
+          {/* Điều hướng: Quay lại · Tiến tới · Tổng quan — luôn có ở mọi trang admin */}
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              aria-label="Quay lại"
+              onClick={() => window.history.back()}
+              className="flex h-9 w-9 items-center justify-center rounded-lg border border-cvr-line text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink"
+            >
+              <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+            </button>
+            <button
+              type="button"
+              aria-label="Tiến tới"
+              onClick={() => window.history.forward()}
+              className="hidden h-9 w-9 items-center justify-center rounded-lg border border-cvr-line text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink sm:flex"
+            >
+              <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+            </button>
+            <Link
+              href="/admin"
+              aria-label="Tổng quan"
+              className="flex h-9 items-center gap-1.5 rounded-lg border border-cvr-line px-3 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink"
+            >
+              <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 11l9-8 9 8M5 10v10h14V10" /></svg>
+              <span className="hidden sm:inline">Tổng quan</span>
+            </Link>
+          </div>
           <div className="ml-auto flex min-w-0 items-center gap-2 sm:gap-4">
             <Link href="/" className="hidden text-sm text-cvr-muted transition hover:text-cvr-ink sm:inline">
               Xem web ↗
