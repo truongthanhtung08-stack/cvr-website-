@@ -35,6 +35,16 @@ export function HomeExpandProvider({ children }: { children: React.ReactNode }) 
   // Số bước lịch sử đã thêm — để bấm logo là nhả đúng bấy nhiêu bước.
   const depthRef = useRef(0);
 
+  // TẢI LẠI TRANG (F5): địa chỉ có ?muc=<khoá> → mở lại đúng khối đó,
+  // không văng về trang đầu như trước.
+  useEffect(() => {
+    const key = new URLSearchParams(window.location.search).get("muc");
+    if (key) {
+      setOpenKey(key);
+      depthRef.current = 1;
+    }
+  }, []);
+
   // BACK / FORWARD của trình duyệt: trạng thái khối lấy thẳng từ lịch sử.
   useEffect(() => {
     const onPop = (e: PopStateEvent) => {
@@ -48,10 +58,13 @@ export function HomeExpandProvider({ children }: { children: React.ReactNode }) 
   }, []);
 
   const closeAll = useCallback(() => {
-    const back = depthRef.current;
     depthRef.current = 0;
     setOpenKey(null);
-    if (back > 0) window.history.go(-back); // nhả các bước đã thêm → lịch sử sạch
+    // Xoá khoá khối khỏi địa chỉ, KHÔNG lùi lịch sử — vì nếu người dùng vừa F5
+    // ngay trên danh sách thì lùi một bước sẽ văng khỏi trang.
+    const url = new URL(window.location.href);
+    url.searchParams.delete("muc");
+    window.history.replaceState({}, "", url);
     window.scrollTo({ top: 0 });
   }, []);
 
@@ -65,7 +78,10 @@ export function HomeExpandProvider({ children }: { children: React.ReactNode }) 
     setOpenKey(key);
     depthRef.current += 1;
     const state: SectionHistoryState = { clSection: key, clDepth: depthRef.current };
-    window.history.pushState(state, "");
+    // Ghi khoá khối vào địa chỉ → bấm F5 vẫn giữ nguyên danh sách đang xem.
+    const url = new URL(window.location.href);
+    url.searchParams.set("muc", key);
+    window.history.pushState(state, "", url);
     window.scrollTo({ top: 0 });
   }, []);
 

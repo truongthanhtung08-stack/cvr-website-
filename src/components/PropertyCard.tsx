@@ -76,7 +76,7 @@ export default function PropertyCard({
     >
       {/* Ảnh — Diamond khung rộng hơn (rất lớn), còn lại 4/3 */}
       {/* Thẻ trang chủ (tier) trên MOBILE: ảnh 16/10 thấp hơn để màn hình đầu thấy trọn thẻ */}
-      <div className={`relative overflow-hidden bg-cvr-surface aspect-[16/9] sm:aspect-[16/10]`}>
+      <div className={`relative overflow-hidden bg-cvr-surface aspect-[3/2] sm:aspect-[16/10]`}>
         <Image
           src={item.image}
           alt={item.title}

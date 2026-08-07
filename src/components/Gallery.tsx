@@ -82,7 +82,7 @@ export default function Gallery({ images, alt }: { images: string[]; alt: string
   return (
     <>
       {images.length === 1 ? (
-        <button type="button" onClick={() => open(0)} className="group relative block aspect-[16/9] w-full overflow-hidden rounded-none border border-cvr-line">
+        <button type="button" onClick={() => open(0)} className="group relative block aspect-[2/1] w-full overflow-hidden rounded-none border border-cvr-line">
           <Image src={images[0]} alt={alt} fill priority sizes="(max-width:1024px) 100vw, 66vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
         </button>
       ) : (
@@ -100,7 +100,7 @@ export default function Gallery({ images, alt }: { images: string[]; alt: string
                 type="button"
                 onClick={() => open(i)}
                 aria-label={`Ảnh ${i + 1}`}
-                className="relative aspect-[4/3] w-full shrink-0 snap-center overflow-hidden border border-cvr-line bg-cvr-surface"
+                className="relative aspect-[2/1] w-full shrink-0 snap-center overflow-hidden border border-cvr-line bg-cvr-surface"
               >
                 <Image src={src} alt={`${alt} ${i + 1}`} fill priority={i === 0} sizes="100vw" className="object-cover" />
               </button>

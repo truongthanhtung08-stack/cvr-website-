@@ -12,6 +12,8 @@ import {
 import { provinceNamesFor, districtsOf, wardsOf, wardsOfNew, type GeoMode } from "@/lib/locations";
 import ImagePicker from "@/components/admin/ImagePicker";
 import ContentEditor from "@/components/admin/ContentEditor";
+import { BILLING_DEFAULT, vnd } from "@/lib/billing";
+import type { TierId } from "@/lib/packages";
 import type { ListingRow } from "@/lib/listingAdmin";
 
 // Form đăng tin cho KHÁCH HÀNG (/dang-tin) — nối Supabase thật.
@@ -59,6 +61,9 @@ export default function PostListingForm() {
   const [contactPhone, setContactPhone] = useState("");
   const [contactEmail, setContactEmail] = useState("");
   // Tin thuộc dự án nào (không bắt buộc) — hiện trong mục tin liên quan của dự án đó
+  // Gói đăng tin khách chọn (giá do quản trị đặt ở /admin/gia-khuyen-mai)
+  const [planTier, setPlanTier] = useState<TierId>("basic");
+  const [planDays, setPlanDays] = useState<number>(BILLING_DEFAULT.plans[0]?.terms[0]?.days ?? 7);
   const [projectSlug, setProjectSlug] = useState("");
   const [projectOptions, setProjectOptions] = useState<{ slug: string; name: string }[]>([]);
 
@@ -203,6 +208,7 @@ export default function PostListingForm() {
         furnish: furnish || undefined,
         direction: direction || undefined,
         addressDetail: addressDetail.trim() || undefined,
+        plan: { tier: planTier, days: planDays },
         project: projectSlug || undefined,
         contact: (contactName.trim() || contactPhone.trim() || contactEmail.trim())
           ? { name: contactName.trim(), phone: contactPhone.trim(), email: contactEmail.trim() }
@@ -462,7 +468,47 @@ export default function PostListingForm() {
       </Card>
 
       {/* 9. Liên hệ */}
-      <Card step="9" title="Thông tin liên hệ">
+      {/* Chọn gói hiển thị — giá và khuyến mãi do quản trị đặt ở /admin/gia-khuyen-mai */}
+      <Card step="9" title="Gói đăng tin">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {BILLING_DEFAULT.plans.map((p) => {
+            const on = planTier === p.tierId;
+            const term = p.terms.find((t) => t.days === planDays) ?? p.terms[0];
+            return (
+              <button
+                key={p.tierId}
+                type="button"
+                onClick={() => setPlanTier(p.tierId)}
+                className={`rounded-xl border p-3 text-left transition ${on ? "border-cvr-ink bg-cvr-surface" : "border-cvr-line hover:border-cvr-ink"}`}
+              >
+                <p className="text-sm font-semibold text-cvr-ink">{p.name.replace("CVR ", "")}</p>
+                <p className="mt-0.5 text-[11px] leading-snug text-cvr-muted">{p.note}</p>
+                <p className="mt-1.5 text-sm font-bold text-cvr-blue-ink">{vnd(term.price)}</p>
+              </button>
+            );
+          })}
+        </div>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <span className="text-xs font-medium text-cvr-muted">Thời hạn:</span>
+          {(BILLING_DEFAULT.plans[0]?.terms ?? []).map((t) => (
+            <button
+              key={t.days}
+              type="button"
+              onClick={() => setPlanDays(t.days)}
+              className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${planDays === t.days ? "bg-cvr-ink text-white" : "border border-cvr-line text-cvr-body hover:border-cvr-ink"}`}
+            >
+              {t.days} ngày
+            </button>
+          ))}
+        </div>
+        {BILLING_DEFAULT.free.active && (
+          <p className="mt-3 rounded-lg border border-cvr-blue/25 bg-cvr-blue/[0.06] px-3 py-2 text-xs text-cvr-blue-ink">
+            {BILLING_DEFAULT.free.note}
+          </p>
+        )}
+      </Card>
+
+      <Card step="10" title="Thông tin liên hệ">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <div><Label>Họ và tên *</Label><input value={contactName} onChange={(e) => setContactName(e.target.value)} placeholder="Nguyễn Văn A" className={inputCls} /></div>
           <div><Label>Số điện thoại *</Label><input type="tel" value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} placeholder="09xx xxx xxx" className={inputCls} /></div>

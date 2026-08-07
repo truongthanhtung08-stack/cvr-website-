@@ -107,7 +107,7 @@ export default function NewsSection({
             className={`card-lux group relative -mx-4 flex flex-col overflow-hidden rounded-none border-0 bg-white shadow-lux shadow-lux-hover hover:-translate-y-1 sm:mx-0 sm:border sm:border-cvr-line ${headlines.length ? "lg:col-span-2" : ""}`}
           >
             <span className="card-sheen" aria-hidden />
-            <div className="relative aspect-[16/9] overflow-hidden">
+            <div className="relative aspect-[2/1] overflow-hidden">
               <Image
                 src={featured.image}
                 alt={featured.title}
