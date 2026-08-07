@@ -461,6 +461,10 @@ html {
      đăng nhập) trang KHÔNG còn nhảy trái/phải nữa. Trên điện thoại (thanh cuộn nổi)
      không chiếm chỗ nên vô hại. */
   scrollbar-gutter: stable;
+  /* KHOA BE NGANG toan trang: khong phan tu nao keo trang rong hon man hinh.
+     Dung clip (khong phai hidden) nen position: sticky cua header van chay. */
+  max-width: 100%; /* khoa be ngang */
+  overflow-x: clip;
 }
 
 body {
