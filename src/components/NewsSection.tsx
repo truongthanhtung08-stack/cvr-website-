@@ -167,7 +167,7 @@ export default function NewsSection({
                     <Image src={a.image} alt={a.title} fill sizes="80vw" className="object-cover" />
                   </div>
                   <div className="p-3">
-                    <h3 className="h-[3em] overflow-hidden font-semibold leading-[1.5] text-cvr-ink">{a.title}</h3>
+                    <h3 className="clamp-2 min-h-[3em] font-semibold leading-[1.5] text-cvr-ink">{a.title}</h3>
                     <p className="mt-1.5 text-xs text-cvr-faint">{a.category} · {a.date}</p>
                   </div>
                 </Link>

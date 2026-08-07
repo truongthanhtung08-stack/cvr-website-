@@ -11,9 +11,13 @@ import { uploadImageFile, uploadVideoFile } from "@/lib/uploadImage";
 export default function ImagePicker({
   value,
   onChange,
+  maxImages,
+  tierName,
 }: {
   value: string[];
   onChange: (imgs: string[]) => void;
+  maxImages?: number;   // giới hạn ảnh theo cấp tin (Basic 7 · Silver 10 · Gold 12 · Diamond 15)
+  tierName?: string;
 }) {
   const imgRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLInputElement>(null);
@@ -27,12 +31,28 @@ export default function ImagePicker({
   // Chỉ số ẢNH ĐẠI DIỆN = ảnh (không phải video) ĐẦU TIÊN trong mảng.
   const coverIdx = value.findIndex((v) => !isVideoUrl(v));
 
+  // Số ẢNH (không tính video) đang có và còn nhận thêm được bao nhiêu
+  const soAnh = value.filter((v) => !isVideoUrl(v)).length;
+  const conNhan = maxImages == null ? Infinity : Math.max(0, maxImages - soAnh);
+
   async function handleImageFiles(files: FileList | null) {
     if (!files || files.length === 0) return;
     setError("");
+
+    let ds = Array.from(files);
+    if (ds.length > conNhan) {
+      ds = ds.slice(0, conNhan);
+      setError(
+        conNhan === 0
+          ? `Tin ${tierName ?? ""} chỉ đăng tối đa ${maxImages} ảnh — xoá bớt ảnh cũ hoặc nâng cấp gói tin.`
+          : `Chỉ nhận thêm ${conNhan} ảnh (tối đa ${maxImages} ảnh cho tin ${tierName ?? ""}). Các ảnh chọn dư đã bỏ qua.`,
+      );
+      if (conNhan === 0) { if (imgRef.current) imgRef.current.value = ""; return; }
+    }
+
     setUploadingImg(true);
     const added: string[] = [];
-    for (const file of Array.from(files)) {
+    for (const file of ds) {
       const { url, error: e } = await uploadImageFile(file);
       if (e) setError(e);
       else if (url) added.push(url);
@@ -58,6 +78,10 @@ export default function ImagePicker({
   function addLink() {
     const url = link.trim();
     if (!url) return;
+    if (!isVideoUrl(url) && conNhan <= 0) {
+      setError(`Tin ${tierName ?? ""} chỉ đăng tối đa ${maxImages} ảnh.`);
+      return;
+    }
     onChange([...value, url]);
     setLink("");
   }
@@ -132,6 +156,15 @@ export default function ImagePicker({
             );
           })}
         </div>
+      )}
+
+      {/* Bộ đếm ảnh theo cấp tin — nhìn là biết còn được thêm bao nhiêu */}
+      {maxImages != null && (
+        <p className="text-sm font-medium text-cvr-body">
+          Ảnh: <span className={soAnh >= maxImages ? "text-red-600" : "text-cvr-ink"}>{soAnh}/{maxImages}</span>
+          {tierName ? <span className="text-cvr-muted"> · tin {tierName}</span> : null}
+          {soAnh >= maxImages && <span className="text-red-600"> — đã đủ, nâng cấp gói để đăng thêm ảnh</span>}
+        </p>
       )}
 
       {/* Nút tải ảnh / video + dán link */}

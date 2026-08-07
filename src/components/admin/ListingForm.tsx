@@ -9,6 +9,9 @@ import { specForType, interiorItems, amenityGroups, legalOptions, furnishLevels,
 import ImagePicker from "@/components/admin/ImagePicker";
 import ContentEditor from "@/components/admin/ContentEditor";
 import { uploadImageFile } from "@/lib/uploadImage";
+import { soAnhToiDa } from "@/lib/billing";
+import { useBilling } from "@/lib/useBilling";
+import { getTier } from "@/lib/packages";
 import {
   type ListingRow,
   type ListingPurpose,
@@ -23,6 +26,7 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
   const router = useRouter();
   const editing = Boolean(initial);
 
+  const { billing } = useBilling(); // giới hạn số ảnh theo cấp tin (admin đặt)
   const [purpose, setPurpose] = useState<ListingPurpose>(initial?.purpose ?? "ban");
   const [type, setType] = useState(initial?.type ?? "");
   const [title, setTitle] = useState(initial?.title ?? "");
@@ -440,7 +444,12 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
 
       {/* Ảnh — tải từ máy / dán link · ảnh đầu là ảnh đại diện */}
       <Card title="Ảnh tin đăng">
-        <ImagePicker value={images} onChange={setImages} />
+        <ImagePicker
+          value={images}
+          onChange={setImages}
+          maxImages={soAnhToiDa(billing, tier)}
+          tierName={getTier(tier).name}
+        />
       </Card>
 
       {/* Thông tin người đăng — hiện ở khung liên hệ trang chi tiết */}

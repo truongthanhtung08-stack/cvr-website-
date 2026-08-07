@@ -21,7 +21,15 @@ export type Plan = {
   name: string;      // "CVR Diamond"
   terms: PlanTerm[];
   note?: string;
+  maxImages?: number; // SỐ ẢNH TỐI ĐA mỗi tin của cấp này (giữ dung lượng kho ảnh)
 };
+
+// Số ảnh tối đa của một cấp tin. Chưa đặt trong admin → dùng mức mặc định bên dưới.
+const ANH_MAC_DINH: Record<TierId, number> = { diamond: 15, gold: 12, silver: 10, basic: 7 };
+
+export function soAnhToiDa(data: BillingData, tierId: TierId): number {
+  return data.plans.find((p) => p.tierId === tierId)?.maxImages ?? ANH_MAC_DINH[tierId];
+}
 
 // ── Khuyến mãi ──────────────────────────────────────────────────────────────
 // Chủ dự án tự đặt: giảm bao nhiêu %, áp cho ai, trong thời gian nào.
@@ -86,6 +94,7 @@ export const BILLING_DEFAULT: BillingData = {
         { days: 30, price: 3_900_000 },
       ],
       note: "Ưu tiên hiển thị cao nhất — x20 lượt xem",
+      maxImages: 15,
     },
     {
       tierId: "gold",
@@ -96,6 +105,7 @@ export const BILLING_DEFAULT: BillingData = {
         { days: 30, price: 2_340_000 },
       ],
       note: "Hiển thị nổi bật — x10 lượt xem",
+      maxImages: 12,
     },
     {
       tierId: "silver",
@@ -106,6 +116,7 @@ export const BILLING_DEFAULT: BillingData = {
         { days: 30, price: 1_040_000 },
       ],
       note: "Tiết kiệm hiệu quả — x5 lượt xem",
+      maxImages: 10,
     },
     {
       tierId: "basic",
@@ -116,6 +127,7 @@ export const BILLING_DEFAULT: BillingData = {
         { days: 30, price: 260_000 },
       ],
       note: "Tin thường, chi phí thấp nhất",
+      maxImages: 7,
     },
   ],
   promos: [],

@@ -68,7 +68,7 @@ export default function ProjectsSection({ projects, articles = [] }: { projects:
                   <span className="absolute left-3 top-3 rounded-full bg-white/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.06em] text-cvr-ink shadow-[0_2px_10px_rgba(0,0,0,0.18)] ring-1 ring-white/60 backdrop-blur-md">{p.status}</span>
                 </div>
                 <div className="flex flex-1 flex-col p-4">
-                  <h3 className="h-[3em] overflow-hidden font-semibold leading-[1.5] text-cvr-ink">{p.name}</h3>
+                  <h3 className="clamp-2 min-h-[3em] font-semibold leading-[1.5] text-cvr-ink">{p.name}</h3>
                   <p className="mt-1 flex items-center gap-1 text-xs text-cvr-muted">
                     <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                     {p.location}

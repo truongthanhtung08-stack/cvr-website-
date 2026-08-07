@@ -14,6 +14,9 @@ import {
 } from "@/lib/csvTin";
 import { docXlsx } from "@/lib/docXlsx";
 import { uploadImageFile } from "@/lib/uploadImage";
+import { soAnhToiDa } from "@/lib/billing";
+import { useBilling } from "@/lib/useBilling";
+import type { TierId } from "@/lib/packages";
 
 // ============================================================================
 // ADMIN — ĐĂNG NHIỀU TIN CÙNG LÚC BẰNG FILE (Excel/CSV)
@@ -23,6 +26,7 @@ import { uploadImageFile } from "@/lib/uploadImage";
 // ============================================================================
 
 export default function NhapHangLoatPage() {
+  const { billing } = useBilling(); // giới hạn ảnh theo cấp tin
   const [rows, setRows] = useState<ParsedRow[]>([]);
   const [tenFile, setTenFile] = useState("");
   const [loiChung, setLoiChung] = useState("");
@@ -42,7 +46,7 @@ export default function NhapHangLoatPage() {
   //      (ghi thiếu đuôi .jpg cũng khớp). Ghi sẵn link/đường dẫn thì dùng thẳng.
   //   2) Cột "ma_anh" → tự gom mọi ảnh tải lên có tên bắt đầu bằng mã đó,
   //      xếp theo SỐ cuối tên tệp nên ảnh …-1 làm ẢNH ĐẠI DIỆN.
-  const anhCuaTin = (r: ParsedRow): { urls: string[]; thieu: string[] } => {
+  const anhCuaTin = (r: ParsedRow): { urls: string[]; thieu: string[]; boBot: number; toiDa: number } => {
     const urls: string[] = [];
     const thieu: string[] = [];
 
@@ -59,7 +63,11 @@ export default function NhapHangLoatPage() {
       .map((a) => a.url)
       .filter((u) => !urls.includes(u)); // đã lấy theo tên tệp thì không lấy lại
 
-    return { urls: [...urls, ...theoMa], thieu };
+    // GIỚI HẠN ẢNH THEO CẤP TIN (Basic 7 · Silver 10 · Gold 12 · Diamond 15)
+    const tier = (r.payload.tier as TierId) ?? "basic";
+    const toiDa = soAnhToiDa(billing, tier);
+    const tatCa = [...urls, ...theoMa];
+    return { urls: tatCa.slice(0, toiDa), thieu, boBot: Math.max(0, tatCa.length - toiDa), toiDa };
   };
 
   async function taiAnhHangLoat(files: FileList) {
@@ -348,13 +356,18 @@ export default function NhapHangLoatPage() {
 }
 
 // Ô "Ảnh" trong bảng xem trước: có bao nhiêu ảnh · thiếu ảnh nào (theo tên ghi trong file)
-function AnhCell({ urls, thieu }: { urls: string[]; thieu: string[] }) {
+function AnhCell({ urls, thieu, boBot, toiDa }: { urls: string[]; thieu: string[]; boBot: number; toiDa: number }) {
   return (
-    <div className="min-w-[120px]">
+    <div className="min-w-[130px]">
       {urls.length > 0 ? (
-        <span className="font-medium text-green-700">{urls.length} ảnh</span>
+        <span className="font-medium text-green-700">{urls.length}/{toiDa} ảnh</span>
       ) : (
         <span className="text-cvr-faint">chưa có</span>
+      )}
+      {boBot > 0 && (
+        <p className="mt-0.5 text-xs font-medium text-amber-700">
+          Bỏ bớt {boBot} ảnh (cấp tin này tối đa {toiDa})
+        </p>
       )}
       {thieu.length > 0 && (
         <p className="mt-0.5 text-xs font-medium text-red-700">Chưa tải: {thieu.join(", ")}</p>

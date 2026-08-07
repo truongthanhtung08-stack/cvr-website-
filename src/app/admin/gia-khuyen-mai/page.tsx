@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import {
   BILLING_DEFAULT,
   freeNote,
+  soAnhToiDa,
   tenGoiMienPhi,
   vnd,
   type BillingData,
@@ -127,6 +128,14 @@ export default function AdminBillingPage() {
 
 // ── 1) GÓI ĐĂNG TIN & GIÁ ───────────────────────────────────────────────────
 function PlansTab({ data, setData }: { data: BillingData; setData: (d: BillingData) => void }) {
+  // Số ảnh tối đa mỗi tin theo cấp — giữ dung lượng kho ảnh, đồng thời là quyền lợi
+  // để khách nâng cấp gói (xem trang Dung lượng để biết còn bao nhiêu chỗ).
+  const setMaxImages = (tierId: TierId, maxImages: number) =>
+    setData({
+      ...data,
+      plans: data.plans.map((p) => (p.tierId === tierId ? { ...p, maxImages } : p)),
+    });
+
   const setPrice = (tierId: TierId, days: number, price: number) =>
     setData({
       ...data,
@@ -147,6 +156,7 @@ function PlansTab({ data, setData }: { data: BillingData; setData: (d: BillingDa
               {data.plans[0]?.terms.map((t) => (
                 <th key={t.days} className="py-2.5">{t.days} ngày</th>
               ))}
+              <th className="py-2.5">Số ảnh tối đa</th>
             </tr>
           </thead>
           <tbody>
@@ -169,6 +179,17 @@ function PlansTab({ data, setData }: { data: BillingData; setData: (d: BillingDa
                     <p className="mt-1 text-[11px] text-cvr-faint">{vnd(t.price)}</p>
                   </td>
                 ))}
+                <td className="py-3 pr-3">
+                  <input
+                    type="number"
+                    min={1}
+                    max={30}
+                    value={p.maxImages ?? soAnhToiDa(data, p.tierId)}
+                    onChange={(e) => setMaxImages(p.tierId, Math.max(1, Number(e.target.value) || 1))}
+                    className="h-10 w-24 rounded-lg border border-cvr-line px-3 text-sm text-cvr-ink outline-none focus:border-cvr-ink"
+                  />
+                  <p className="mt-1 text-[11px] text-cvr-faint">ảnh / tin</p>
+                </td>
               </tr>
             ))}
           </tbody>

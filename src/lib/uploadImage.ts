@@ -4,6 +4,40 @@ import { createClient } from "@/lib/supabase/client";
 
 export type UploadResult = { url?: string; error?: string };
 
+// ── TỰ NÉN ẢNH TRƯỚC KHI TẢI LÊN ────────────────────────────────────────────
+// Kho ảnh Supabase gói miễn phí chỉ 1GB. Ảnh gốc điện thoại 3–5MB, 500 tin ×
+// 7 ảnh là vài chục GB → chắc chắn vỡ trần. Thu cạnh dài về 1600px + JPEG chất
+// lượng 82% cho ra ~150–350KB/ảnh, mắt thường không phân biệt được trên web.
+// Ảnh vốn đã nhỏ hơn bản nén thì giữ nguyên bản gốc.
+const CANH_TOI_DA = 1600;
+const CHAT_LUONG = 0.82;
+
+async function nenAnh(file: File): Promise<File> {
+  // Môi trường không có canvas (SSR) hoặc ảnh dạng đặc biệt → giữ nguyên
+  if (typeof document === "undefined" || !/^image\/(jpeg|png|webp)$/i.test(file.type)) return file;
+  try {
+    const bitmap = await createImageBitmap(file);
+    const ti = Math.min(1, CANH_TOI_DA / Math.max(bitmap.width, bitmap.height));
+    const w = Math.round(bitmap.width * ti);
+    const h = Math.round(bitmap.height * ti);
+
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return file;
+    ctx.drawImage(bitmap, 0, 0, w, h);
+    bitmap.close?.();
+
+    const blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, "image/jpeg", CHAT_LUONG));
+    if (!blob || blob.size >= file.size) return file; // nén không lợi → dùng bản gốc
+    const ten = file.name.replace(/\.[^.]+$/, "") + ".jpg";
+    return new File([blob], ten, { type: "image/jpeg" });
+  } catch {
+    return file;
+  }
+}
+
 async function uploadMedia(file: File, kind: "image" | "video", maxMB: number): Promise<UploadResult> {
   if (!file.type.startsWith(`${kind}/`))
     return {
@@ -28,6 +62,11 @@ async function uploadMedia(file: File, kind: "image" | "video", maxMB: number): 
   return { url: supabase.storage.from("listings").getPublicUrl(path).data.publicUrl };
 }
 
-// Ảnh tối đa 10MB · Video tối đa 50MB (giới hạn upload Supabase Storage mặc định).
-export const uploadImageFile = (file: File) => uploadMedia(file, "image", 10);
+// Ảnh: NÉN TRƯỚC rồi mới tải lên (xem nenAnh ở trên). Giới hạn 15MB tính trên
+// ảnh GỐC — ảnh máy ảnh cỡ lớn vẫn nhận, nén xong chỉ còn vài trăm KB.
+export const uploadImageFile = async (file: File) => {
+  if (file.size > 15 * 1024 * 1024)
+    return { error: `Ảnh "${file.name}" quá 15MB — chọn ảnh nhỏ hơn.` };
+  return uploadMedia(await nenAnh(file), "image", 15);
+};
 export const uploadVideoFile = (file: File) => uploadMedia(file, "video", 50);

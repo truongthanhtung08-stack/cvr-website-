@@ -68,7 +68,7 @@ export function ProjectCard({ p }: { p: Project }) {
         </span>
       </div>
       <div className="flex flex-1 flex-col p-4">
-        <h3 className="h-[3em] overflow-hidden font-semibold leading-[1.5] text-cvr-ink transition-colors group-hover:text-cvr-blue-ink">
+        <h3 className="clamp-2 min-h-[3em] font-semibold leading-[1.5] text-cvr-ink transition-colors group-hover:text-cvr-blue-ink">
           {p.name}
         </h3>
         <p className="mt-1.5 flex items-center gap-1.5 text-xs text-cvr-muted">

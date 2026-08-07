@@ -30,7 +30,7 @@ export default function PagedArticleList({ articles }: { articles: Article[] }) 
                 <span className="rounded-full bg-cvr-surface px-2.5 py-0.5 font-medium text-cvr-body">{a.category}</span>
                 <span>{a.date}</span>
               </div>
-              <h3 className="mt-2 h-[3em] overflow-hidden font-semibold leading-[1.5] text-cvr-ink transition-colors group-hover:text-cvr-blue-ink sm:text-lg">
+              <h3 className="mt-2 clamp-2 min-h-[3em] font-semibold leading-[1.5] text-cvr-ink transition-colors group-hover:text-cvr-blue-ink sm:text-lg">
                 {a.title}
               </h3>
               <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-cvr-muted">{a.excerpt}</p>

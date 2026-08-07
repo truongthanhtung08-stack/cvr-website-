@@ -12,7 +12,7 @@ import {
 import { provinceNamesFor, districtsOf, wardsOf, wardsOfNew, type GeoMode } from "@/lib/locations";
 import ImagePicker from "@/components/admin/ImagePicker";
 import ContentEditor from "@/components/admin/ContentEditor";
-import { freeNote, levelOf, quotePrice, tenGoiMienPhi, vnd } from "@/lib/billing";
+import { freeNote, levelOf, quotePrice, soAnhToiDa, tenGoiMienPhi, vnd } from "@/lib/billing";
 import { useBilling } from "@/lib/useBilling";
 import { getTier, type TierId } from "@/lib/packages";
 import type { ListingRow } from "@/lib/listingAdmin";
@@ -554,7 +554,12 @@ export default function PostListingForm() {
 
       {/* 8. Hình ảnh — tải từ máy / dán link, ảnh đầu là ảnh đại diện */}
       <Card step="8" title="Hình ảnh">
-        <ImagePicker value={images} onChange={setImages} />
+        <ImagePicker
+          value={images}
+          onChange={setImages}
+          maxImages={soAnhToiDa(billing, planTier)}
+          tierName={getTier(planTier).name}
+        />
       </Card>
 
       {/* 9. Liên hệ */}

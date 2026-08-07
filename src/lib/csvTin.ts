@@ -25,19 +25,39 @@ export function laLinkAnh(gt: string): boolean {
   return /^(https?:)?\/\//i.test(gt) || gt.startsWith("/");
 }
 
-// Hai tên tệp có phải cùng một ảnh không — bỏ qua hoa thường, dấu, và cho phép
-// ghi thiếu đuôi mở rộng ("nha-my-khe-1" khớp "nha-my-khe-1.jpg").
+// Bỏ đuôi ảnh — bỏ ĐƯỢC CẢ ĐUÔI KÉP. Windows hay tạo ra "tin01-1.jpg.jpg" hoặc
+// "tin01-5.jpg.PNG" khi đổi tên tệp lúc đang ẩn phần mở rộng.
+const DUOI_ANH = /\.(jpe?g|png|webp|gif|heic|heif|bmp|tiff?)$/i;
+function boDuoiAnh(s: string): string {
+  let t = s.trim();
+  while (DUOI_ANH.test(t)) t = t.replace(DUOI_ANH, "");
+  return t;
+}
+
+// Hai tên tệp có phải cùng một ảnh không — bỏ qua hoa thường, dấu, đuôi kép, và
+// cho phép ghi thiếu đuôi ("nha-my-khe-1" khớp "nha-my-khe-1.jpg").
 export function cungTenTep(tenTep: string, ghiTrongFile: string): boolean {
-  const bo = (s: string) => chuanHoa(s.replace(/\.[^.]+$/, ""));
-  return bo(tenTep) === bo(ghiTrongFile);
+  return chuanHoa(boDuoiAnh(tenTep)) === chuanHoa(boDuoiAnh(ghiTrongFile));
+}
+
+// Tách một ô thành danh sách tên ảnh — nhận MỌI kiểu ngăn cách người dùng hay gõ:
+// dấu | , ; hoặc xuống dòng.
+export function tachDanhSachAnh(o: string): string[] {
+  return o.split(/[|;,\n]/).map((s) => s.trim()).filter(Boolean);
+}
+
+// Ô "ma_anh" đang ghi MÃ (tin01) hay ghi thẳng DANH SÁCH TÊN ẢNH?
+// Có đuôi ảnh hoặc có dấu ngăn cách → coi là danh sách tên ảnh.
+export function laDanhSachTenAnh(o: string): boolean {
+  return /[|;,\n]/.test(o) || DUOI_ANH.test(o.trim());
 }
 
 // Khớp ảnh với tin theo TÊN TỆP: ảnh "tin01-1.jpg", "tin01_2.jpg", "tin01 (3).jpg"
 // đều thuộc tin có ma_anh = "tin01". So sánh không phân biệt hoa thường/dấu.
 export function anhThuocMa(tenTep: string, maAnh: string): boolean {
   if (!maAnh) return false;
-  const ten = chuanHoa(tenTep.replace(/\.[^.]+$/, "")); // bỏ đuôi mở rộng
-  const ma = chuanHoa(maAnh);
+  const ten = chuanHoa(boDuoiAnh(tenTep));
+  const ma = chuanHoa(boDuoiAnh(maAnh));
   return ten === ma || ten.startsWith(`${ma}_`) || ten.startsWith(`${ma}(`);
 }
 
@@ -203,13 +223,15 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
   if (lay(COT.hangTin) && !(TIERS as string[]).includes(hangRaw))
     loi.push(`hang_tin "${lay(COT.hangTin)}" không hợp lệ (diamond/gold/silver/basic)`);
 
-  // Cột "anh" nhận CẢ HAI kiểu, ngăn nhau bằng | hoặc ; hoặc xuống dòng:
-  //   · TÊN TỆP ảnh trên máy ("nha-my-khe-1.jpg") → khớp với ảnh tải ở Bước 4
+  // ẢNH — nhận mọi kiểu ghi, ngăn nhau bằng | , ; hoặc xuống dòng:
+  //   · TÊN TỆP ảnh trên máy ("tin01-1.jpg") → khớp với ảnh tải ở Bước 4
   //   · Đường dẫn/link có sẵn ("/images/tin/1.jpg", "https://…") → dùng thẳng
-  const anh = lay(COT.anh)
-    .split(/[|;\n]/)
-    .map((s) => s.trim())
-    .filter(Boolean);
+  // Ghi nhầm danh sách tên ảnh vào ô "ma_anh" cũng hiểu (rất dễ nhầm 2 cột này).
+  const maAnhRaw = lay(COT.maAnh);
+  const anh = [
+    ...tachDanhSachAnh(lay(COT.anh)),
+    ...(laDanhSachTenAnh(maAnhRaw) ? tachDanhSachAnh(maAnhRaw) : []),
+  ];
 
   const ten = lay(COT.lienHeTen);
   const sdt = lay(COT.lienHeSdt);
@@ -241,7 +263,9 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
     dong: soDong,
     loi,
     payload,
-    maAnh: lay(COT.maAnh),
+    // Chỉ giữ làm "mã gom ảnh theo tiền tố" khi ô đó thực sự là MÃ (tin01),
+    // còn nếu là danh sách tên ảnh thì đã gộp vào danh sách ảnh phía trên.
+    maAnh: laDanhSachTenAnh(maAnhRaw) ? "" : maAnhRaw,
     tomTat: {
       tieuDe: tieuDe || "(trống)",
       mucDich: mucDich === "thue" ? "Cho thuê" : "Mua bán",

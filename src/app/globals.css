@@ -41,7 +41,25 @@
 
 html {
   scroll-behavior: smooth;
+  /* Chừa chỗ cho thanh header dính khi trang tự cuộn tới một mục (link có #,
+     mở từ Zalo/Facebook) → tiêu đề mục không bị header đè lên. */
+  scroll-padding-top: calc(60px + env(safe-area-inset-top, 0px));
 }
+
+/* ── CẮT CHỮ ĐÚNG THEO DÒNG (2 dòng / 1 dòng) ──────────────────────────────
+   Trước đây tiêu đề thẻ tin đặt CHIỀU CAO CỨNG h-[3em] + overflow-hidden.
+   Trình duyệt TRONG ỨNG DỤNG (Zalo, Facebook, Messenger) tự chỉnh cỡ chữ và
+   khoảng dòng khác trình duyệt thường → 2 dòng chữ cao hơn 3em, dòng thứ hai bị
+   XÉN NGANG THÂN CHỮ (nhìn như chữ đè lên nhau). Cắt theo DÒNG thì dù cỡ chữ
+   thay đổi thế nào cũng không bao giờ cắt ngang chữ. */
+.clamp-2,
+.clamp-1 {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.clamp-2 { -webkit-line-clamp: 2; line-clamp: 2; }
+.clamp-1 { -webkit-line-clamp: 1; line-clamp: 1; }
 
 body {
   background: var(--background);

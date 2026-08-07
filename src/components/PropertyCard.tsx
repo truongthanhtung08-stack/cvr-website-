@@ -111,10 +111,11 @@ export default function PropertyCard({
       <div className={`flex flex-1 flex-col ${isFeatured ? "p-4" : isMini ? "p-2.5" : "p-3"}`}>
 
         {/* Tiêu đề — 2 dòng, kiểu chữ theo cấp tin (Diamond/Gold VIẾT HOA) */}
-        {/* Tiêu đề: cao ĐÚNG 2 dòng (h-[3em] = 2×leading-1.5) + overflow-hidden →
-            dòng 3 bị ẩn HẲN, không lú dấu. (line-clamp-2 của Tailwind build này hỏng.) */}
+        {/* Tiêu đề: cắt ĐÚNG 2 DÒNG (.clamp-2 trong globals.css) — không đặt chiều
+            cao cứng nữa vì trình duyệt trong Zalo/Facebook chỉnh cỡ chữ khác làm
+            dòng 2 bị xén ngang thân chữ. min-h giữ các thẻ bằng nhau. */}
         <h3
-          className={`h-[3em] overflow-hidden font-semibold leading-[1.5] text-cvr-ink ${tier?.uppercase ? "uppercase" : ""} ${
+          className={`clamp-2 min-h-[3em] font-semibold leading-[1.5] text-cvr-ink ${tier?.uppercase ? "uppercase" : ""} ${
             isFeatured ? "text-lg" : isMini ? "text-sm" : "text-[15px]"
           }`}
           style={tier?.titleColor ? { color: tier.titleColor } : undefined}
@@ -193,7 +194,7 @@ function PropertyRow({ item, showTime = false }: { item: Listing; showTime?: boo
       </div>
       <div className="flex min-w-0 flex-1 flex-col">
         <h3
-          className={`h-[3em] overflow-hidden text-sm font-semibold leading-[1.5] text-cvr-ink sm:text-base ${tier?.uppercase ? "uppercase" : ""}`}
+          className={`clamp-2 min-h-[3em] text-sm font-semibold leading-[1.5] text-cvr-ink sm:text-base ${tier?.uppercase ? "uppercase" : ""}`}
           style={tier?.titleColor ? { color: tier.titleColor } : undefined}
         >
           {item.title}
