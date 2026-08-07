@@ -1,9 +1,10 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useProfile } from "@/lib/useProfile";
-import { BILLING_DEFAULT, vnd } from "@/lib/billing";
+import { vnd } from "@/lib/billing";
+import { useBilling } from "@/lib/useBilling";
 
 // ============================================================================
 // NẠP TIỀN VÀO TÀI KHOẢN — cổng thanh toán PayOS.
@@ -25,15 +26,22 @@ function TopUpForm() {
   const params = useSearchParams();
   const ketQua = params.get("ket-qua");
 
-  const amounts = BILLING_DEFAULT.topupAmounts;
-  const [amount, setAmount] = useState<number>(amounts[1]);
+  // Mệnh giá nạp & tỷ lệ tích điểm lấy từ bản admin đã lưu
+  const { billing, loading: billingLoading } = useBilling();
+  const amounts = billing.topupAmounts;
+  const [amount, setAmount] = useState<number>(amounts[1] ?? amounts[0]);
   const [custom, setCustom] = useState("");
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
 
+  // Tải xong mệnh giá của admin → chọn sẵn mệnh giá thứ hai như trước
+  useEffect(() => {
+    if (!billingLoading) setAmount(amounts[1] ?? amounts[0]);
+  }, [billingLoading, amounts]);
+
   const finalAmount = custom.trim() ? Number(custom.replace(/\D/g, "")) || 0 : amount;
-  const points = BILLING_DEFAULT.points.active
-    ? Math.floor(finalAmount / BILLING_DEFAULT.points.earnPerVnd)
+  const points = billing.points.active
+    ? Math.floor(finalAmount / billing.points.earnPerVnd)
     : 0;
 
   async function pay() {

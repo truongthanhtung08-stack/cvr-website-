@@ -197,3 +197,41 @@ export function levelOf(data: BillingData, totalSpend: number): MemberLevel {
 export function vnd(n: number): string {
   return n.toLocaleString("vi-VN") + " ₫";
 }
+
+// ── DÒNG THÔNG BÁO MIỄN PHÍ CHO THÀNH VIÊN MỚI ──────────────────────────────
+// quota = 0 → KHÔNG GIỚI HẠN SỐ TIN (vd: "miễn phí 1 tháng đầu, không giới hạn").
+// Admin có thể tự viết câu riêng ở ô "Dòng thông báo"; bỏ trống thì dùng câu này.
+export function freeNote(f: FreePolicy): string {
+  const soTin = f.quota > 0 ? `${f.quota} tin` : "KHÔNG GIỚI HẠN số tin";
+  const thoiHan =
+    f.days % 30 === 0 && f.days >= 30 ? `${f.days / 30} tháng đầu` : `${f.days} ngày đầu`;
+  return `Thành viên mới được đăng ${soTin} miễn phí trong ${thoiHan}.`;
+}
+
+// ── DÒNG GIÁ CHO TRANG BÁO GIÁ (/bao-gia-dang-tin) ──────────────────────────
+// Sinh thẳng từ bảng giá admin đang lưu → sửa giá ở /admin/gia-khuyen-mai là
+// trang báo giá đổi theo (trước đây giá viết cứng trong trang nên không đổi).
+// Mốc 1 tuần làm giá gốc: kỳ dài hơn rẻ hơn thì hiện giá gạch + % giảm.
+export type PriceLineOut = { label: string; original?: string; price: string };
+
+export function priceLinesFor(data: BillingData, tierId: TierId): PriceLineOut[] | null {
+  const plan = data.plans.find((p) => p.tierId === tierId);
+  if (!plan?.terms.length) return null;
+  const terms = [...plan.terms].sort((a, b) => a.days - b.days);
+  const perWeek = terms.find((t) => t.days === 7)?.price ?? terms[0].price / (terms[0].days / 7);
+
+  return terms.map((t) => {
+    const goc = Math.round(perWeek * (t.days / 7));
+    const giam = goc > t.price ? Math.round(((goc - t.price) / goc) * 100) : 0;
+    const ten = t.days % 7 === 0 ? `Giá ${t.days / 7} tuần` : `Giá ${t.days} ngày`;
+    return {
+      label: giam > 0 ? `${ten} (−${giam}%)` : ten,
+      original: giam > 0 ? dong(goc) : undefined,
+      price: dong(t.price),
+    };
+  });
+}
+
+function dong(n: number): string {
+  return n.toLocaleString("vi-VN") + "đ";
+}

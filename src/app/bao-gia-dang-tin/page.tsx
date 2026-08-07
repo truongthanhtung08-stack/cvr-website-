@@ -10,6 +10,8 @@ import { ProjectCard, ProjectRow } from "@/components/ProjectSlider";
 import { getTier, tierFromBadge, type TierId, utilityTools } from "@/lib/packages";
 import { getListings } from "@/lib/listingsDb";
 import { getProjects } from "@/lib/contentDb";
+import { getBilling } from "@/lib/siteContent";
+import { priceLinesFor } from "@/lib/billing";
 import type { Listing, Project } from "@/lib/data";
 
 export const metadata: Metadata = {
@@ -223,7 +225,10 @@ const HOTLINE = "0377 985 036";
 // Thẻ tin minh hoạ từng cấp = TIN THẬT mới nhất của cấp đó trong Supabase
 // (không còn tin/ảnh mẫu cứng). Đăng hoặc sửa tin trong admin → trang này tự đổi theo.
 export default async function BaoGiaPage() {
-  const [listings, allProjects] = await Promise.all([getListings(), getProjects()]);
+  const [listings, allProjects, billing] = await Promise.all([getListings(), getProjects(), getBilling()]);
+  // GIÁ TIN lấy từ bảng giá admin (/admin/gia-khuyen-mai) — chưa lưu thì dùng giá
+  // in sẵn bên dưới. Trước đây giá viết cứng tại trang này nên sửa ở admin không đổi.
+  const giaTin = (id: TierId, macDinh: PriceLine[]): PriceLine[] => priceLinesFor(billing, id) ?? macDinh;
   const newestOfTier = (id: TierId): Listing | null =>
     listings.find((l) => tierFromBadge(l.badge) === id) ?? null;
   const samples: Record<TierId, Listing | null> = {
@@ -273,7 +278,7 @@ export default async function BaoGiaPage() {
                       benefits={p.benefits}
                       displays={p.displays}
                       media={<TierSample listing={samples[p.tierId]} />}
-                      prices={p.prices}
+                      prices={giaTin(p.tierId, p.prices)}
                       cta={{ label: "Đăng tin ngay", href: "/dang-tin" }}
                     />
                   ))}
@@ -290,7 +295,7 @@ export default async function BaoGiaPage() {
                     benefits={basicPkg.benefits}
                     displays={basicPkg.displays}
                     media={<TierSample listing={samples.basic} />}
-                    prices={basicPkg.prices}
+                    prices={giaTin("basic", basicPkg.prices)}
                     cta={{ label: "Đăng tin ngay", href: "/dang-tin" }}
                   />
                 </div>

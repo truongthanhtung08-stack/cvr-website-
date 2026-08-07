@@ -3,14 +3,17 @@
 import Link from "next/link";
 import { useProfile } from "@/lib/useProfile";
 import { roleLabel, statusBadge } from "@/lib/adminLabels";
-import { BILLING_DEFAULT, levelOf, vnd } from "@/lib/billing";
+import { freeNote, levelOf, vnd } from "@/lib/billing";
+import { useBilling } from "@/lib/useBilling";
 
 // Tổng quan tài khoản thành viên: ví (số dư · điểm · cấp) + gói dịch vụ +
 // lối tắt đăng tin (Mua bán / Cho thuê / Dự án) và quản lý tài khoản.
 export default function AccountOverviewPage() {
   const { profile, loading } = useProfile();
+  // Giá · điểm · cấp thành viên lấy từ bản admin đã lưu (không phải giá cứng trong code)
+  const { billing, loading: billingLoading } = useBilling();
 
-  if (loading) return <p className="text-sm text-cvr-muted">Đang tải…</p>;
+  if (loading || billingLoading) return <p className="text-sm text-cvr-muted">Đang tải…</p>;
   if (!profile) return <p className="text-sm text-cvr-muted">Không tải được hồ sơ. Vui lòng đăng nhập lại.</p>;
 
   // Ví: các cột balance/points/total_spend có thể chưa bật trong CSDL → coi như 0.
@@ -18,9 +21,9 @@ export default function AccountOverviewPage() {
   const balance = p.balance ?? 0;
   const points = p.points ?? 0;
   const totalSpend = p.total_spend ?? 0;
-  const level = levelOf(BILLING_DEFAULT, totalSpend);
-  const pointValue = points * BILLING_DEFAULT.points.redeemRate;
-  const free = BILLING_DEFAULT.free;
+  const level = levelOf(billing, totalSpend);
+  const pointValue = points * billing.points.redeemRate;
+  const free = billing.free;
 
   return (
     <div className="space-y-5">
@@ -47,12 +50,15 @@ export default function AccountOverviewPage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Card label="Vai trò" value={roleLabel(profile.role)} />
         <Card label="Gói dịch vụ" value={profile.plan || "Basic (miễn phí)"} />
-        <Card label="Hạn mức tin miễn phí" value={`${profile.free_quota} tin`} />
+        <Card
+          label="Hạn mức tin miễn phí"
+          value={free.active && free.quota === 0 ? "Không giới hạn" : `${profile.free_quota} tin`}
+        />
       </div>
 
       {free.active && (
         <p className="rounded-xl border border-cvr-blue/25 bg-cvr-blue/[0.06] px-4 py-3 text-sm text-cvr-blue-ink">
-          {free.note}
+          {free.note || freeNote(free)}
         </p>
       )}
 

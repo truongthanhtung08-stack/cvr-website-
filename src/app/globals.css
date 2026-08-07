@@ -79,19 +79,15 @@ h1, h2, h3 {
   .nav-glass { background-color: #161617; }
 }
 
-/* ===== Panel menu Mobile — kính mờ XUYÊN THẤU kiểu Apple =====
-   Nhạt hơn .nav-glass (0.82 thay vì 0.97) + blur mạnh hơn (30px) để nhìn thấy
-   mờ mờ nội dung trang phía sau — đúng chất glassmorphism của Apple.
-   Vẫn đạt tương phản chữ trắng ≥ 7:1 khi nền sau là trang trắng. */
-.menu-glass {
-  /* Vẫn trong (thấy mờ mờ trang phía sau) nhưng ĐỦ ĐẶC + blur mạnh để chữ menu
-     nổi rõ, không bị nội dung trang sau lẫn vào. */
-  background-color: rgba(22, 22, 23, 0.9);
-  -webkit-backdrop-filter: saturate(180%) blur(44px);
-  backdrop-filter: saturate(180%) blur(44px);
-}
-@supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
-  .menu-glass { background-color: #161617; }
+/* ===== Panel menu Mobile — nền ĐEN ĐẶC (không kính mờ) =====
+   Trước đây panel dùng backdrop-filter blur(44px) trên NGUYÊN màn hình:
+     · Nằm trong header vốn đã có backdrop-filter → lớp mờ chồng lớp mờ, nhiều máy
+       Android bỏ qua hiệu ứng → chỉ còn nền mờ 0.9 và nhìn xuyên thấy nội dung
+       trang phía sau (trông như menu "bị ẩn").
+     · Blur cả màn hình phải vẽ lại liên tục → GIẬT LAG khi mở/cuộn.
+   Nền đặc: chữ luôn rõ, mở tức thì, không tốn GPU. */
+.menu-solid {
+  background-color: #161617;
 }
 
 /* ===== Bóng "luxury" — nhiều lớp, ám màu mực, rất mềm (cho card nền trắng) ===== */

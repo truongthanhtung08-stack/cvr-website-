@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import {
   BILLING_DEFAULT,
+  freeNote,
   vnd,
   type BillingData,
   type Promo,
@@ -298,10 +299,10 @@ function FreeTab({ data, setData }: { data: BillingData; setData: (d: BillingDat
             {f.active ? "Đang áp dụng" : "Đã tắt"}
           </button>
         </Field>
-        <Field label="Số tin miễn phí">
+        <Field label="Số tin miễn phí (0 = không giới hạn)">
           <input type="number" min={0} value={f.quota} onChange={(e) => set({ quota: Number(e.target.value) || 0 })} className={inputCls} />
         </Field>
-        <Field label="Trong bao nhiêu ngày">
+        <Field label="Trong bao nhiêu ngày (30 = 1 tháng)">
           <input type="number" min={0} value={f.days} onChange={(e) => set({ days: Number(e.target.value) || 0 })} className={inputCls} />
         </Field>
         <Field label="Đăng ở gói">
@@ -315,9 +316,17 @@ function FreeTab({ data, setData }: { data: BillingData; setData: (d: BillingDat
           </select>
         </Field>
         <div className="sm:col-span-2 lg:col-span-3">
-          <Field label="Dòng thông báo hiện cho khách">
-            <input value={f.note} onChange={(e) => set({ note: e.target.value })} className={inputCls} />
+          <Field label="Dòng thông báo hiện cho khách (bỏ trống → tự sinh theo cài đặt trên)">
+            <input
+              value={f.note}
+              onChange={(e) => set({ note: e.target.value })}
+              placeholder={freeNote(f)}
+              className={inputCls}
+            />
           </Field>
+          <p className="mt-1.5 text-xs text-cvr-muted">
+            Đang hiện cho khách: <span className="font-medium text-cvr-body">{f.note || freeNote(f)}</span>
+          </p>
         </div>
       </div>
     </Panel>

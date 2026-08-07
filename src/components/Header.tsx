@@ -300,9 +300,14 @@ function MobileMenu({
 }) {
   const [expanded, setExpanded] = useState<string | null>(null);
 
+  // Khoá cuộn nền khi menu mở — khoá cả <html> vì trên điện thoại phần tử cuộn
+  // thật là <html>, chỉ khoá <body> thì nền vẫn trôi (cảm giác giật khi vuốt menu).
   useEffect(() => {
+    const root = document.documentElement;
+    root.style.overflow = open ? "hidden" : "";
     document.body.style.overflow = open ? "hidden" : "";
     return () => {
+      root.style.overflow = "";
       document.body.style.overflow = "";
     };
   }, [open]);
@@ -314,9 +319,12 @@ function MobileMenu({
 
   return (
     <div
-      // absolute theo header (KHÔNG dùng fixed: backdrop-filter của .nav-glass biến header
-      // thành containing block, fixed sẽ neo sai). top-full = ngay dưới thanh 60px.
-      className={`menu-glass absolute inset-x-0 top-full z-40 flex h-[calc(100dvh-60px-env(safe-area-inset-top))] flex-col overflow-y-auto overscroll-contain transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] lg:hidden ${
+      // FIXED theo màn hình và nằm NGOÀI <header> (xem Header bên dưới).
+      // Trước đây panel là absolute BÊN TRONG header sticky → khi đã cuộn trang,
+      // header dính + body khoá cuộn làm mốc neo sai: menu bị đẩy lệch lên và cụt
+      // (trông như "ẩn"). Fixed neo thẳng vào màn hình nên cuộn tới đâu cũng đúng.
+      // z-[45]: trên thanh tab đáy (z-40), dưới header (z-50) để nút ☰ vẫn bấm đóng được.
+      className={`menu-solid fixed inset-x-0 bottom-0 top-[calc(60px+env(safe-area-inset-top))] z-[45] flex flex-col overflow-y-auto overscroll-contain transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] lg:hidden ${
         open ? "visible translate-y-0 opacity-100" : "invisible -translate-y-2 opacity-0 pointer-events-none"
       }`}
     >
@@ -527,7 +535,8 @@ export default function Header() {
   }, []);
 
   return (
-    <header
+    <>
+      <header
       className={`nav-glass sticky top-0 z-50 w-full border-b border-white/10 transition-shadow duration-300 ${
         scrolled ? "shadow-lg shadow-black/25" : ""
       }`}
@@ -604,8 +613,11 @@ export default function Header() {
           </button>
         </div>
       </div>
+      </header>
 
+      {/* Menu mobile để NGOÀI <header>: header có backdrop-filter (.nav-glass) — mọi
+          phần tử fixed nằm bên trong sẽ bị neo vào header thay vì vào màn hình. */}
       <MobileMenu open={menuOpen} onClose={() => setMenuOpen(false)} user={user} onLogout={signOut} />
-    </header>
+    </>
   );
 }

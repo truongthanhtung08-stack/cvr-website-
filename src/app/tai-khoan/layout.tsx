@@ -6,9 +6,13 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useProfile } from "@/lib/useProfile";
 
+// Thanh điều hướng khu vực khách hàng — ĐỦ mọi mục đang có (trước đây thiếu
+// Nạp tiền · Đổi điểm nên vào rồi không có đường quay lại/đi tiếp).
 const tabs = [
   { label: "Tổng quan", href: "/tai-khoan" },
   { label: "Tin đã đăng", href: "/tai-khoan/tin-dang" },
+  { label: "Nạp tiền", href: "/tai-khoan/nap-tien" },
+  { label: "Đổi điểm", href: "/tai-khoan/doi-diem" },
   { label: "Cài đặt", href: "/tai-khoan/cai-dat" },
 ];
 
@@ -28,14 +32,15 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
           <p className="mt-1 text-sm text-cvr-muted">Quản lý tin đăng và thông tin cá nhân.</p>
 
           {/* Tab điều hướng */}
-          <nav className="mt-5 flex gap-1 overflow-x-auto rounded-xl border border-cvr-line bg-white p-1">
+          <nav className="no-scrollbar mt-5 flex gap-1 overflow-x-auto rounded-xl border border-cvr-line bg-white p-1">
             {tabs.map((t) => {
               const active = t.href === "/tai-khoan" ? pathname === t.href : pathname.startsWith(t.href);
               return (
                 <Link
                   key={t.href}
                   href={t.href}
-                  className={`whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium transition ${
+                  aria-current={active ? "page" : undefined}
+                  className={`shrink-0 whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium transition ${
                     active ? "bg-cvr-ink text-white" : "text-cvr-body hover:bg-cvr-surface"
                   }`}
                 >

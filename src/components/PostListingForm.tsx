@@ -12,7 +12,8 @@ import {
 import { provinceNamesFor, districtsOf, wardsOf, wardsOfNew, type GeoMode } from "@/lib/locations";
 import ImagePicker from "@/components/admin/ImagePicker";
 import ContentEditor from "@/components/admin/ContentEditor";
-import { BILLING_DEFAULT, vnd } from "@/lib/billing";
+import { freeNote, vnd } from "@/lib/billing";
+import { useBilling } from "@/lib/useBilling";
 import type { TierId } from "@/lib/packages";
 import type { ListingRow } from "@/lib/listingAdmin";
 
@@ -62,8 +63,10 @@ export default function PostListingForm() {
   const [contactEmail, setContactEmail] = useState("");
   // Tin thuộc dự án nào (không bắt buộc) — hiện trong mục tin liên quan của dự án đó
   // Gói đăng tin khách chọn (giá do quản trị đặt ở /admin/gia-khuyen-mai)
+  // Bảng giá HIỆN HÀNH (bản admin đã lưu ở /admin/gia-khuyen-mai), không phải giá cứng trong code
+  const { billing, loading: billingLoading } = useBilling();
   const [planTier, setPlanTier] = useState<TierId>("basic");
-  const [planDays, setPlanDays] = useState<number>(BILLING_DEFAULT.plans[0]?.terms[0]?.days ?? 7);
+  const [planDays, setPlanDays] = useState<number>(billing.plans[0]?.terms[0]?.days ?? 7);
   const [planStart, setPlanStart] = useState<string>("");
   const [projectSlug, setProjectSlug] = useState("");
   const [projectOptions, setProjectOptions] = useState<{ slug: string; name: string }[]>([]);
@@ -80,10 +83,19 @@ export default function PostListingForm() {
     d.setDate(d.getDate() + planDays);
     return d.toISOString().slice(0, 10);
   }, [planStart, planDays]);
+  // Tải xong bảng giá admin → đưa thời hạn về mốc đầu tiên của bảng giá hiện hành
+  useEffect(() => {
+    if (!billingLoading) {
+      const terms = billing.plans.find((p) => p.tierId === planTier)?.terms ?? [];
+      if (terms.length && !terms.some((t) => t.days === planDays)) setPlanDays(terms[0].days);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [billingLoading, planTier, billing.plans]);
+
   const planPrice = useMemo(() => {
-    const p = BILLING_DEFAULT.plans.find((x) => x.tierId === planTier);
+    const p = billing.plans.find((x) => x.tierId === planTier);
     return (p?.terms.find((t) => t.days === planDays) ?? p?.terms[0])?.price ?? 0;
-  }, [planTier, planDays]);
+  }, [billing.plans, planTier, planDays]);
 
   const spec = useMemo(() => categorySpecs.find((c) => c.label === category) ?? categorySpecs[0], [category]);
   // Hệ MỚI (sau sáp nhập): bỏ cấp Quận/Huyện — Tỉnh/Thành → thẳng Phường/Xã
@@ -491,7 +503,7 @@ export default function PostListingForm() {
           <div>
             <Label>Loại tin</Label>
             <select value={planTier} onChange={(e) => setPlanTier(e.target.value as TierId)} className={inputCls}>
-              {BILLING_DEFAULT.plans.map((p) => (
+              {billing.plans.map((p) => (
                 <option key={p.tierId} value={p.tierId}>{p.name}</option>
               ))}
             </select>
@@ -499,7 +511,7 @@ export default function PostListingForm() {
           <div>
             <Label>Thời gian</Label>
             <select value={planDays} onChange={(e) => setPlanDays(Number(e.target.value))} className={inputCls}>
-              {(BILLING_DEFAULT.plans.find((p) => p.tierId === planTier)?.terms ?? []).map((t) => (
+              {(billing.plans.find((p) => p.tierId === planTier)?.terms ?? []).map((t) => (
                 <option key={t.days} value={t.days}>{t.days} ngày</option>
               ))}
             </select>
@@ -517,9 +529,9 @@ export default function PostListingForm() {
           <span className="text-sm font-semibold uppercase tracking-wide text-cvr-body">Giá trị tin đăng</span>
           <span className="text-lg font-bold text-cvr-blue-ink">{vnd(planPrice)}</span>
         </div>
-        {BILLING_DEFAULT.free.active && (
+        {billing.free.active && (
           <p className="mt-3 rounded-lg border border-cvr-blue/25 bg-cvr-blue/[0.06] px-3 py-2 text-xs text-cvr-blue-ink">
-            {BILLING_DEFAULT.free.note}
+            {billing.free.note || freeNote(billing.free)}
           </p>
         )}
       </Card>

@@ -1,19 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useProfile } from "@/lib/useProfile";
-import { BILLING_DEFAULT, vnd } from "@/lib/billing";
+import { vnd } from "@/lib/billing";
+import { useBilling } from "@/lib/useBilling";
 
 // Đổi điểm thưởng thành số dư dùng để đăng tin.
 // Tỷ lệ quy đổi và mức tối thiểu do chủ dự án đặt ở /admin/gia-khuyen-mai.
 export default function RedeemPointsPage() {
   const { profile, loading } = useProfile();
-  const cfg = BILLING_DEFAULT.points;
+  const { billing, loading: billingLoading } = useBilling();
+  const cfg = billing.points;
   const [amount, setAmount] = useState<number>(cfg.minRedeem);
   const [done, setDone] = useState(false);
 
-  if (loading) return <p className="text-sm text-cvr-muted">Đang tải…</p>;
+  // Tải xong cấu hình điểm của admin → đưa ô nhập về mức tối thiểu hiện hành
+  useEffect(() => {
+    if (!billingLoading) setAmount(cfg.minRedeem);
+  }, [billingLoading, cfg.minRedeem]);
+
+  if (loading || billingLoading) return <p className="text-sm text-cvr-muted">Đang tải…</p>;
 
   const p = profile as unknown as { points?: number } | null;
   const points = p?.points ?? 0;
