@@ -21,6 +21,10 @@ export default function AccountOverviewPage() {
   const balance = p.balance ?? 0;
   const points = p.points ?? 0;
   const totalSpend = p.total_spend ?? 0;
+  // QUYỀN ĐĂNG DỰ ÁN — mặc định KHOÁ. Chỉ mở khi quản trị viên duyệt hồ sơ
+  // Chủ đầu tư / Công ty phân phối (cột profiles.can_post_project).
+  const duocDangDuAn = Boolean((profile as unknown as { can_post_project?: boolean }).can_post_project);
+
   const level = levelOf(billing, totalSpend);       // null = chưa đạt mốc nào
   const capKeTiep = levelTiepTheo(billing, totalSpend);
   const pointValue = points * billing.points.redeemRate;
@@ -91,7 +95,19 @@ export default function AccountOverviewPage() {
         <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
           <PostType href="/dang-tin?loai=ban" icon="tag" title="Mua bán" desc="Nhà, đất, căn hộ cần bán" />
           <PostType href="/dang-tin?loai=thue" icon="key" title="Cho thuê" desc="Nhà, mặt bằng, căn hộ cho thuê" />
-          <PostType href="/dang-tin?loai=du-an" icon="building" title="Dự án" desc="Dự án chủ đầu tư phân phối" />
+          {/* ĐĂNG DỰ ÁN — KHOÁ, chỉ mở cho Chủ đầu tư / Công ty phân phối đã được
+              quản trị viên xét duyệt hồ sơ. Trước đây ô này dẫn sang form tin
+              mua bán/cho thuê (không đăng được dự án) nên gây hiểu nhầm. */}
+          <PostTypeKhoa
+            icon="building"
+            title="Dự án"
+            desc={
+              duocDangDuAn
+                ? "Đăng dự án của bạn"
+                : "Chỉ dành cho Chủ đầu tư / Công ty phân phối — cần duyệt hồ sơ"
+            }
+            moKhoa={duocDangDuAn}
+          />
         </div>
       </div>
 
@@ -143,6 +159,28 @@ function Card({ label, value, sub, accent, color }: { label: string; value: stri
         {value}
       </p>
       {sub && <p className="mt-0.5 text-xs text-cvr-muted">{sub}</p>}
+    </div>
+  );
+}
+
+// Ô "Đăng dự án" khi CHƯA được duyệt: không bấm vào form được, thay bằng lối
+// gửi hồ sơ để quản trị viên xét (Chủ đầu tư / Công ty phân phối).
+function PostTypeKhoa({ icon, title, desc, moKhoa }: { icon: string; title: string; desc: string; moKhoa: boolean }) {
+  if (moKhoa) return <PostType href="/dang-tin/du-an" icon={icon} title={title} desc={desc} />;
+  return (
+    <div className="flex items-center gap-3 rounded-xl border border-dashed border-cvr-line bg-cvr-surface p-4">
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-cvr-faint">
+        <svg className="h-[22px] w-[22px]" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+        </svg>
+      </span>
+      <span className="min-w-0">
+        <span className="block font-semibold text-cvr-body">{title}</span>
+        <span className="mt-0.5 block text-xs text-cvr-muted">{desc}</span>
+        <Link href="/tai-khoan/cai-dat" className="mt-1 inline-block text-xs font-semibold text-cvr-blue-ink underline">
+          Gửi hồ sơ xét duyệt →
+        </Link>
+      </span>
     </div>
   );
 }

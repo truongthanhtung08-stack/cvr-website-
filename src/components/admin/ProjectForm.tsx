@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { provinceNames, districtsOf, wardsOf } from "@/lib/locations";
+import { provinceNamesFor, districtsOf, wardsOf, wardsOfNew, type GeoMode } from "@/lib/locations";
 import ImagePicker from "@/components/admin/ImagePicker";
 import ContentEditor from "@/components/admin/ContentEditor";
 import { uploadImageFile } from "@/lib/uploadImage";
@@ -124,8 +124,14 @@ export default function ProjectForm({ initial }: { initial?: ProjectRow }) {
     if (url) setDevLogo(url);
   }
 
-  const districtOptions = province ? districtsOf(province) : [];
-  const wardOptions = province && district ? wardsOf(province, district) : [];
+  // Hệ đơn vị hành chính: MỚI (sau sáp nhập, bỏ cấp Quận/Huyện) hoặc CŨ
+  const [geoMode, setGeoMode] = useState<GeoMode>("moi");
+  const provinceOptions = provinceNamesFor(geoMode);
+  const districtOptions = geoMode === "moi" ? [] : province ? districtsOf(province) : [];
+  const wardOptions =
+    geoMode === "moi"
+      ? province ? wardsOfNew(province) : []
+      : province && district ? wardsOf(province, district) : [];
 
   function onNameChange(v: string) {
     setName(v);
@@ -298,9 +304,25 @@ export default function ProjectForm({ initial }: { initial?: ProjectRow }) {
         <p className="mt-2 text-xs text-cvr-faint">Chọn 1 hoặc cả 2 — hiện huy hiệu trên trang dự án và tách tab “Tin bán / cho thuê” liên quan.</p>
       </Card>
 
-      {/* Vị trí — 3 cấp chọn liên động, giống form Tin đăng */}
+      {/* Vị trí — GIỐNG HỆT form Tin đăng: chọn hệ địa chỉ MỚI (sau sáp nhập, bỏ cấp
+          Quận/Huyện) hoặc CŨ, rồi chọn liên động Tỉnh → (Quận/Huyện) → Phường/Xã. */}
       <Card title="Vị trí">
         <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-3">
+          <Field label="Hệ địa chỉ">
+            <div className="inline-flex rounded-lg border border-cvr-line bg-white p-1">
+              {([{ id: "moi" as GeoMode, label: "Tỉnh/Thành mới" }, { id: "cu" as GeoMode, label: "Địa chỉ cũ" }]).map((m) => (
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() => { setGeoMode(m.id); setProvince(""); setDistrict(""); setWard(""); }}
+                  className={`rounded-md px-3 py-1.5 text-xs font-medium transition ${geoMode === m.id ? "bg-cvr-ink text-white" : "text-cvr-body hover:text-cvr-ink"}`}
+                >
+                  {m.label}
+                </button>
+              ))}
+            </div>
+          </Field>
+
           <Field label="Tỉnh/Thành (bắt buộc)">
             <select
               value={province}
@@ -308,33 +330,39 @@ export default function ProjectForm({ initial }: { initial?: ProjectRow }) {
               className={inputCls}
             >
               <option value="">— Chọn Tỉnh/Thành —</option>
-              {provinceNames.map((p) => <option key={p} value={p}>{p}</option>)}
+              {provinceOptions.map((p) => <option key={p} value={p}>{p}</option>)}
             </select>
           </Field>
-          <Field label="Quận/Huyện">
-            {districtOptions.length > 0 ? (
-              <select
-                value={district}
-                onChange={(e) => { setDistrict(e.target.value); setWard(""); }}
-                disabled={!province}
-                className={`${inputCls} disabled:bg-cvr-surface disabled:text-cvr-faint`}
-              >
-                <option value="">{province ? "— Chọn Quận/Huyện —" : "Chọn tỉnh trước"}</option>
-                {districtOptions.map((d) => <option key={d} value={d}>{d}</option>)}
-              </select>
-            ) : (
-              <input value={district} onChange={(e) => setDistrict(e.target.value)} placeholder="Nhập Quận/Huyện" className={inputCls} />
-            )}
-          </Field>
+
+          {geoMode === "cu" && (
+            <Field label="Quận/Huyện">
+              {districtOptions.length > 0 ? (
+                <select
+                  value={district}
+                  onChange={(e) => { setDistrict(e.target.value); setWard(""); }}
+                  disabled={!province}
+                  className={`${inputCls} disabled:bg-cvr-surface disabled:text-cvr-faint`}
+                >
+                  <option value="">{province ? "— Chọn Quận/Huyện —" : "Chọn tỉnh trước"}</option>
+                  {districtOptions.map((d) => <option key={d} value={d}>{d}</option>)}
+                </select>
+              ) : (
+                <input value={district} onChange={(e) => setDistrict(e.target.value)} placeholder="Nhập Quận/Huyện" className={inputCls} />
+              )}
+            </Field>
+          )}
+
           <Field label="Phường/Xã">
             {wardOptions.length > 0 ? (
               <select
                 value={ward}
                 onChange={(e) => setWard(e.target.value)}
-                disabled={!district}
+                disabled={geoMode === "moi" ? !province : !district}
                 className={`${inputCls} disabled:bg-cvr-surface disabled:text-cvr-faint`}
               >
-                <option value="">{district ? "— Chọn Phường/Xã —" : "Chọn quận/huyện trước"}</option>
+                <option value="">
+                  {(geoMode === "moi" ? province : district) ? "— Chọn Phường/Xã —" : geoMode === "moi" ? "Chọn tỉnh trước" : "Chọn quận/huyện trước"}
+                </option>
                 {wardOptions.map((w) => <option key={w} value={w}>{w}</option>)}
               </select>
             ) : (
@@ -342,6 +370,9 @@ export default function ProjectForm({ initial }: { initial?: ProjectRow }) {
             )}
           </Field>
         </div>
+        <p className="mt-2 text-xs text-cvr-faint">
+          Hệ MỚI (sau sáp nhập) bỏ cấp Quận/Huyện: Tỉnh/Thành → thẳng Phường/Xã.
+        </p>
       </Card>
 
       {/* Tiện ích xung quanh — hiện dưới bản đồ (sân bay, trường, siêu thị… + khoảng cách) */}
