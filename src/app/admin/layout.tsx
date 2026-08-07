@@ -18,6 +18,7 @@ const navGroups: { group: string; items: { label: string; href: string; icon: st
     items: [
       { label: "Tin đăng", href: "/admin/tin-dang", icon: "doc" },
       { label: "Đăng tin mới", href: "/admin/tin-dang/moi", icon: "plus" },
+      { label: "Đăng nhiều tin (file)", href: "/admin/tin-dang/nhap-hang-loat", icon: "upload" },
       { label: "Dự án", href: "/admin/du-an", icon: "building" },
       { label: "Tin tức", href: "/admin/tin-tuc", icon: "news" },
     ],
@@ -42,7 +43,8 @@ const nav = navGroups.flatMap((g) => g.items);
 // Riêng "Tin đăng" không sáng khi đang ở "Đăng tin mới".
 function isActive(href: string, pathname: string): boolean {
   if (href === "/admin") return pathname === "/admin";
-  if (href === "/admin/tin-dang") return pathname === "/admin/tin-dang" || /^\/admin\/tin-dang\/(?!moi)/.test(pathname);
+  if (href === "/admin/tin-dang")
+    return pathname === "/admin/tin-dang" || /^\/admin\/tin-dang\/(?!moi|nhap-hang-loat)/.test(pathname);
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
@@ -210,6 +212,8 @@ function NavIcon({ name }: { name: string }) {
     return <svg className={common} {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z" /></svg>;
   if (name === "users")
     return <svg className={common} {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-1a4 4 0 00-3-3.87M9 20H4v-1a4 4 0 013-3.87m6-1a4 4 0 100-8 4 4 0 000 8zm6-4a3 3 0 10-2-5.24M5 12a3 3 0 002-5.24" /></svg>;
+  if (name === "upload")
+    return <svg className={common} {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M12 16V4m0 0L8 8m4-4l4 4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" /></svg>;
   if (name === "plus")
     return <svg className={common} {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14" /></svg>;
   if (name === "building")

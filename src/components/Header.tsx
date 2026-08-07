@@ -300,17 +300,12 @@ function MobileMenu({
 }) {
   const [expanded, setExpanded] = useState<string | null>(null);
 
-  // Khoá cuộn nền khi menu mở — khoá cả <html> vì trên điện thoại phần tử cuộn
-  // thật là <html>, chỉ khoá <body> thì nền vẫn trôi (cảm giác giật khi vuốt menu).
-  useEffect(() => {
-    const root = document.documentElement;
-    root.style.overflow = open ? "hidden" : "";
-    document.body.style.overflow = open ? "hidden" : "";
-    return () => {
-      root.style.overflow = "";
-      document.body.style.overflow = "";
-    };
-  }, [open]);
+  // KHÔNG khoá cuộn bằng overflow:hidden nữa.
+  // Đó chính là thủ phạm của lỗi "cuộn xuống rồi bấm menu thì menu bị ẩn":
+  // đặt overflow:hidden lên <html>/<body> làm mất luôn ngữ cảnh cuộn → header
+  // position:sticky rơi về vị trí gốc (trôi khỏi màn hình), để hở một dải nội dung
+  // trang phía trên panel và mất luôn nút ☰ để đóng.
+  // Panel đã phủ kín màn hình + overscroll-contain nên nền không trôi theo tay vuốt.
 
   // Đóng menu thì gập luôn accordion để lần mở sau sạch sẽ
   useEffect(() => {
