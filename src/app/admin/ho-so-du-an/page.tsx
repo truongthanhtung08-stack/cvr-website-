@@ -14,7 +14,8 @@ type HoSo = {
   id: string;
   user_id: string;
   loai: string;
-  company_name: string;
+  project_name: string | null;
+  company_name: string | null;
   tax_code: string | null;
   website: string | null;
   contact_name: string | null;
@@ -131,9 +132,21 @@ export default function DuyetHoSoDuAnPage() {
             <div key={h.id} className="rounded-2xl border border-cvr-line bg-white p-5 shadow-lux">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="font-semibold text-cvr-ink">{h.company_name}</p>
+                  {/* Thông tin quan trọng nhất: AI gọi cho ai, về DỰ ÁN NÀO */}
+                  <p className="font-semibold text-cvr-ink">
+                    {h.contact_name || h.profiles?.full_name || "(chưa có tên)"}
+                    {h.contact_phone && (
+                      <a href={`tel:${h.contact_phone}`} className="ml-2 font-normal text-cvr-blue-ink underline">
+                        {h.contact_phone}
+                      </a>
+                    )}
+                  </p>
+                  <p className="mt-0.5 text-sm text-cvr-body">
+                    Dự án: <strong>{h.project_name || "(chưa ghi)"}</strong>
+                  </p>
                   <p className="mt-0.5 text-sm text-cvr-muted">
                     {LOAI[h.loai] ?? h.loai}
+                    {h.company_name ? ` · ${h.company_name}` : ""}
                     {h.tax_code ? ` · MST ${h.tax_code}` : ""}
                   </p>
                 </div>
@@ -143,11 +156,14 @@ export default function DuyetHoSoDuAnPage() {
               </div>
 
               <dl className="mt-3 grid grid-cols-1 gap-x-6 gap-y-1.5 text-sm sm:grid-cols-2">
-                <Dong nhan="Tài khoản" gt={h.profiles?.full_name || h.profiles?.email || h.user_id} />
-                <Dong nhan="Người phụ trách" gt={[h.contact_name, h.contact_phone].filter(Boolean).join(" · ")} />
+                <Dong nhan="Tài khoản" gt={h.profiles?.email || h.user_id} />
                 <Dong nhan="Website" gt={h.website} />
                 <Dong nhan="Ghi chú của khách" gt={h.note} />
               </dl>
+
+              <p className="mt-3 rounded-lg bg-cvr-surface px-3 py-2 text-xs text-cvr-muted">
+                Gọi số trên để xác minh hồ sơ Chủ đầu tư / uỷ quyền phân phối, xong mới bấm Duyệt.
+              </p>
 
               {h.documents?.length > 0 && (
                 <div className="mt-3 flex flex-wrap gap-2">

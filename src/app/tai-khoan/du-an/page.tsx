@@ -76,21 +76,21 @@ function NoiDung() {
           <h1 className="text-xl font-semibold tracking-tight text-cvr-ink">Đăng dự án</h1>
           <p className="mt-2 text-sm text-cvr-body">
             Khu vực này dành riêng cho <strong>Chủ đầu tư</strong> và <strong>Công ty phân phối</strong>.
-            Để mở quyền đăng dự án, bạn cần gửi hồ sơ pháp nhân để Coastal Land xét duyệt.
+            Gửi yêu cầu để Coastal Land liên hệ xác minh và mở quyền đăng dự án cho bạn.
           </p>
           <ul className="mt-3 space-y-1.5 text-sm text-cvr-body">
-            <li>· Giấy chứng nhận đăng ký kinh doanh</li>
-            <li>· Văn bản chứng minh là chủ đầu tư hoặc đơn vị được uỷ quyền phân phối</li>
-            <li>· Thông tin người phụ trách (họ tên, điện thoại)</li>
+            <li>· Họ tên và số điện thoại liên hệ</li>
+            <li>· Tên dự án bạn muốn đăng</li>
           </ul>
           <Link
             href="/tai-khoan/du-an/ho-so"
             className="mt-4 inline-block rounded-lg bg-cvr-ink px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-cvr-ink/90"
           >
-            Gửi hồ sơ xét duyệt
+            Gửi yêu cầu
           </Link>
           <p className="mt-3 text-xs text-cvr-muted">
-            Hồ sơ được duyệt trong 1–2 ngày làm việc. Duyệt xong bạn đăng dự án ngay tại đây.
+            Coastal Land gọi lại trong 1–2 ngày làm việc để xác minh hồ sơ Chủ đầu tư / uỷ quyền
+            phân phối. Duyệt xong bạn đăng dự án ngay tại đây.
           </p>
         </div>
       </div>
