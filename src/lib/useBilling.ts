@@ -49,6 +49,7 @@ function mergeBilling(saved: Partial<BillingData>): BillingData {
     ...BILLING_DEFAULT,
     ...saved,
     plans: saved.plans?.length ? saved.plans : BILLING_DEFAULT.plans,
+    projectPlans: saved.projectPlans?.length ? saved.projectPlans : BILLING_DEFAULT.projectPlans,
     promos: saved.promos ?? [],
     free: { ...BILLING_DEFAULT.free, ...saved.free },
     points: { ...BILLING_DEFAULT.points, ...saved.points },

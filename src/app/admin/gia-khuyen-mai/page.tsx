@@ -5,9 +5,12 @@ import { createClient } from "@/lib/supabase/client";
 import {
   BILLING_DEFAULT,
   freeNote,
+  goiDuAn,
+  soAnhDuAnToiDa,
   soAnhToiDa,
   tenGoiMienPhi,
   vnd,
+  type Plan,
   type BillingData,
   type Promo,
   type PromoAudience,
@@ -25,6 +28,7 @@ import { getTier, type TierId } from "@/lib/packages";
 
 const TABS = [
   { id: "plans", label: "Gói đăng tin & giá" },
+  { id: "projects", label: "Gói dự án" },
   { id: "promos", label: "Khuyến mãi" },
   { id: "free", label: "Miễn phí thành viên mới" },
   { id: "points", label: "Điểm & cấp thành viên" },
@@ -120,6 +124,7 @@ export default function AdminBillingPage() {
 
       {tab === "plans" && <PlansTab data={data} setData={setData} />}
       {tab === "promos" && <PromosTab data={data} setData={setData} />}
+      {tab === "projects" && <ProjectPlansTab data={data} setData={setData} />}
       {tab === "free" && <FreeTab data={data} setData={setData} />}
       {tab === "points" && <PointsTab data={data} setData={setData} />}
     </div>
@@ -300,6 +305,82 @@ function PromosTab({ data, setData }: { data: BillingData; setData: (d: BillingD
           + Thêm chương trình
         </button>
       </div>
+    </Panel>
+  );
+}
+
+// ── 2B) GÓI DỰ ÁN (CVR-PJ) ──────────────────────────────────────────────────
+// Cùng cấu trúc với gói đăng tin: giá theo cấp × thời hạn + số ảnh tối đa.
+// Khách là Chủ đầu tư/phân phối đã duyệt sẽ thấy đúng bảng giá này khi đăng dự án.
+function ProjectPlansTab({ data, setData }: { data: BillingData; setData: (d: BillingData) => void }) {
+  const ds = goiDuAn(data);
+
+  const sua = (tierId: TierId, patch: Partial<Plan>) =>
+    setData({ ...data, projectPlans: ds.map((p) => (p.tierId === tierId ? { ...p, ...patch } : p)) });
+
+  const suaGia = (tierId: TierId, days: number, price: number) =>
+    setData({
+      ...data,
+      projectPlans: ds.map((p) =>
+        p.tierId === tierId ? { ...p, terms: p.terms.map((t) => (t.days === days ? { ...t, price } : t)) } : p,
+      ),
+    });
+
+  return (
+    <Panel
+      title="Giá gói dự án (CVR-PJ)"
+      desc="Áp cho dự án do Chủ đầu tư / Công ty phân phối đăng. Để 0đ = miễn phí giai đoạn đầu."
+    >
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[560px] text-sm">
+          <thead>
+            <tr className="border-b border-cvr-line text-left text-xs uppercase tracking-wide text-cvr-muted">
+              <th className="py-2.5">Gói dự án</th>
+              {ds[0]?.terms.map((t) => (
+                <th key={t.days} className="py-2.5">{t.days} ngày</th>
+              ))}
+              <th className="py-2.5">Số ảnh tối đa</th>
+            </tr>
+          </thead>
+          <tbody>
+            {ds.map((p) => (
+              <tr key={p.tierId} className="border-b border-cvr-line/70">
+                <td className="py-3 pr-4">
+                  <p className="font-semibold text-cvr-ink">{p.name}</p>
+                  {p.note && <p className="text-xs text-cvr-muted">{p.note}</p>}
+                </td>
+                {p.terms.map((t) => (
+                  <td key={t.days} className="py-3 pr-3">
+                    <input
+                      type="number"
+                      min={0}
+                      step={100000}
+                      value={t.price}
+                      onChange={(e) => suaGia(p.tierId, t.days, Number(e.target.value) || 0)}
+                      className="h-10 w-36 rounded-lg border border-cvr-line px-3 text-sm text-cvr-ink outline-none focus:border-cvr-ink"
+                    />
+                    <p className="mt-1 text-[11px] text-cvr-faint">{t.price === 0 ? "Miễn phí" : vnd(t.price)}</p>
+                  </td>
+                ))}
+                <td className="py-3 pr-3">
+                  <input
+                    type="number"
+                    min={1}
+                    max={60}
+                    value={p.maxImages ?? soAnhDuAnToiDa(data, p.tierId)}
+                    onChange={(e) => sua(p.tierId, { maxImages: Math.max(1, Number(e.target.value) || 1) })}
+                    className="h-10 w-24 rounded-lg border border-cvr-line px-3 text-sm text-cvr-ink outline-none focus:border-cvr-ink"
+                  />
+                  <p className="mt-1 text-[11px] text-cvr-faint">ảnh / dự án</p>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="mt-3 text-xs text-cvr-muted">
+        Khuyến mãi và ưu đãi cấp hội viên áp chung cho cả tin đăng và dự án.
+      </p>
     </Panel>
   );
 }

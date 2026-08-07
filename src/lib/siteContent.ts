@@ -295,6 +295,7 @@ export async function getBilling(): Promise<BillingData> {
     ...BILLING_DEFAULT,
     ...data,
     plans: data.plans?.length ? data.plans : BILLING_DEFAULT.plans,
+    projectPlans: data.projectPlans?.length ? data.projectPlans : BILLING_DEFAULT.projectPlans,
     promos: data.promos ?? [],
     free: { ...BILLING_DEFAULT.free, ...data.free },
     points: { ...BILLING_DEFAULT.points, ...data.points },

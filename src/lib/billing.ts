@@ -31,6 +31,30 @@ export function soAnhToiDa(data: BillingData, tierId: TierId): number {
   return data.plans.find((p) => p.tierId === tierId)?.maxImages ?? ANH_MAC_DINH[tierId];
 }
 
+// ── GÓI DỰ ÁN (CVR-PJ) ──────────────────────────────────────────────────────
+// Dự án có thư viện ảnh, mặt bằng, tiện ích… nên số ảnh nhiều hơn tin thường.
+const ANH_DU_AN_MAC_DINH: Record<TierId, number> = { diamond: 30, gold: 25, silver: 20, basic: 15 };
+
+export function goiDuAn(data: BillingData): Plan[] {
+  return data.projectPlans?.length ? data.projectPlans : PROJECT_PLANS_DEFAULT;
+}
+
+export function soAnhDuAnToiDa(data: BillingData, tierId: TierId): number {
+  return goiDuAn(data).find((p) => p.tierId === tierId)?.maxImages ?? ANH_DU_AN_MAC_DINH[tierId];
+}
+
+// Báo giá cho DỰ ÁN — dùng chung công thức với tin đăng (khuyến mãi + cấp hội viên)
+export function quotePriceDuAn(args: {
+  data: BillingData;
+  tierId: TierId;
+  days: number;
+  today: string;
+  isNewMember?: boolean;
+  levelId?: string;
+}): PriceQuote {
+  return quotePrice({ ...args, data: { ...args.data, plans: goiDuAn(args.data) } });
+}
+
 // ── Khuyến mãi ──────────────────────────────────────────────────────────────
 // Chủ dự án tự đặt: giảm bao nhiêu %, áp cho ai, trong thời gian nào.
 export type PromoAudience = "all" | "new" | "agent" | "company";
@@ -75,12 +99,59 @@ export type MemberLevel = {
 
 export type BillingData = {
   plans: Plan[];
+  projectPlans?: Plan[];    // GÓI DỰ ÁN (CVR-PJ) — cùng cấu trúc với gói tin đăng
   promos: Promo[];
   free: FreePolicy;
   points: PointPolicy;
   levels: MemberLevel[];
   topupAmounts: number[];   // mệnh giá nạp nhanh
 };
+
+// ── GIÁ GÓI DỰ ÁN CHUẨN (khớp mục "Gói Dự án" trong trang Báo giá) ──────────
+// Giai đoạn đầu: CVR-PJ Basic để 0đ (miễn phí) cho dự án chạy trước.
+// Chủ dự án sửa được toàn bộ ở /admin/gia-khuyen-mai → tab "Gói dự án".
+export const PROJECT_PLANS_DEFAULT: Plan[] = [
+  {
+    tierId: "diamond",
+    name: "CVR-PJ Diamond",
+    terms: [
+      { days: 7, price: 6_800_000 },
+      { days: 14, price: 12_800_000 },
+    ],
+    note: "Trang chủ + đứng trên CVR-PJ Gold — icon đỏ nổi bật",
+    maxImages: 30,
+  },
+  {
+    tierId: "gold",
+    name: "CVR-PJ Gold",
+    terms: [
+      { days: 7, price: 3_500_000 },
+      { days: 14, price: 6_600_000 },
+    ],
+    note: "Đứng trên CVR-PJ Silver — icon vàng nổi bật",
+    maxImages: 25,
+  },
+  {
+    tierId: "silver",
+    name: "CVR-PJ Silver",
+    terms: [
+      { days: 7, price: 2_000_000 },
+      { days: 14, price: 3_800_000 },
+    ],
+    note: "Đứng trên CVR-PJ Basic — icon xanh nổi bật",
+    maxImages: 20,
+  },
+  {
+    tierId: "basic",
+    name: "CVR-PJ Basic",
+    terms: [
+      { days: 7, price: 0 },
+      { days: 14, price: 0 },
+    ],
+    note: "Giai đoạn đầu: miễn phí — đặt giá trong admin khi bắt đầu thu",
+    maxImages: 15,
+  },
+];
 
 // ── GIÁ CHUẨN HIỆN TẠI (khớp bảng giá đang đăng trên web) ───────────────────
 export const BILLING_DEFAULT: BillingData = {
@@ -148,6 +219,7 @@ export const BILLING_DEFAULT: BillingData = {
     { id: "kimcuong", name: "Kim cương", minSpend: 50_000_000, discount: 10, color: "#d7263d" },
   ],
   topupAmounts: [200_000, 500_000, 1_000_000, 2_000_000, 5_000_000, 10_000_000],
+  projectPlans: PROJECT_PLANS_DEFAULT,
 };
 
 // ── TÍNH GIÁ ────────────────────────────────────────────────────────────────

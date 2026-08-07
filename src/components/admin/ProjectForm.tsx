@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { goiDuAn, quotePriceDuAn, soAnhDuAnToiDa, vnd } from "@/lib/billing";
+import { useBilling } from "@/lib/useBilling";
 import { provinceNamesFor, districtsOf, wardsOf, wardsOfNew, type GeoMode } from "@/lib/locations";
 import ImagePicker from "@/components/admin/ImagePicker";
 import ContentEditor from "@/components/admin/ContentEditor";
@@ -78,6 +80,26 @@ export default function ProjectForm({
 
   // ── Dữ liệu cấu trúc mới (cột details) ──
   const [tier, setTier] = useState<ProjectTier>(initial?.details?.tier ?? "basic");
+
+  // Bảng giá gói dự án (admin đặt ở /admin/gia-khuyen-mai → tab "Gói dự án")
+  const { billing } = useBilling();
+  const [soNgay, setSoNgay] = useState<number>(7);
+  useEffect(() => {
+    const terms = goiDuAn(billing).find((p) => p.tierId === tier)?.terms ?? [];
+    if (terms.length && !terms.some((t) => t.days === soNgay)) setSoNgay(terms[0].days);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [billing, tier]);
+
+  const baoGiaDuAn = useMemo(
+    () =>
+      quotePriceDuAn({
+        data: billing,
+        tierId: tier,
+        days: soNgay,
+        today: new Date().toISOString().slice(0, 10),
+      }),
+    [billing, tier, soNgay],
+  );
   const [contactName, setContactName] = useState(initial?.details?.contact?.name ?? "");
   const [contactPhone, setContactPhone] = useState(initial?.details?.contact?.phone ?? "");
   const [contactEmail, setContactEmail] = useState(initial?.details?.contact?.email ?? "");
@@ -294,6 +316,47 @@ export default function ProjectForm({
         <p className="mt-2 text-xs text-cvr-faint">
           Cấp càng cao càng đứng trước trong slide “Dự án nổi bật” ở trang chủ và mục “Dự án liên quan”.
         </p>
+
+        {/* BẢNG TÍNH TIỀN — chỉ hiện cho khách hàng (admin đăng thì không tính phí).
+            Giá lấy từ /admin/gia-khuyen-mai → tab "Gói dự án". */}
+        {khachHang && (
+          <div className="mt-4 rounded-xl bg-cvr-surface px-4 py-3">
+            <div className="mb-2 flex flex-wrap items-center gap-3">
+              <span className="text-xs font-medium text-cvr-muted">Thời hạn hiển thị</span>
+              <select
+                value={soNgay}
+                onChange={(e) => setSoNgay(Number(e.target.value))}
+                className="h-9 rounded-lg border border-cvr-line bg-white px-3 text-sm text-cvr-ink outline-none focus:border-cvr-ink"
+              >
+                {(goiDuAn(billing).find((p) => p.tierId === tier)?.terms ?? []).map((t) => (
+                  <option key={t.days} value={t.days}>{t.days} ngày</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex items-center justify-between gap-2 text-sm text-cvr-body">
+              <span>Giá gói {goiDuAn(billing).find((p) => p.tierId === tier)?.name ?? ""} · {soNgay} ngày</span>
+              <span className={baoGiaDuAn.total < baoGiaDuAn.base ? "text-cvr-muted line-through" : "font-semibold text-cvr-ink"}>
+                {baoGiaDuAn.base === 0 ? "Miễn phí" : vnd(baoGiaDuAn.base)}
+              </span>
+            </div>
+            {baoGiaDuAn.promo && baoGiaDuAn.promoOff > 0 && (
+              <div className="mt-1.5 flex items-center justify-between gap-2 text-sm text-cvr-blue-ink">
+                <span>Khuyến mãi: {baoGiaDuAn.promo.name} (−{baoGiaDuAn.promo.percent}%)</span>
+                <span className="font-semibold">− {vnd(baoGiaDuAn.promoOff)}</span>
+              </div>
+            )}
+            <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 border-t border-cvr-line pt-2.5">
+              <span className="text-sm font-semibold uppercase tracking-wide text-cvr-body">Thành tiền</span>
+              <span className="text-lg font-bold text-cvr-blue-ink">
+                {baoGiaDuAn.total === 0 ? "0 ₫ — Miễn phí" : vnd(baoGiaDuAn.total)}
+              </span>
+            </div>
+            <p className="mt-2 text-xs text-cvr-muted">
+              Giai đoạn này dự án <strong>chạy trước, chưa thu phí</strong> — số tiền trên là để tham khảo.
+            </p>
+          </div>
+        )}
       </Card>
 
       {/* Thông tin liên hệ dự án — BỎ TRỐNG thì trang dự án không hiện khối liên hệ */}
@@ -650,7 +713,12 @@ export default function ProjectForm({
       </Card>
 
       <Card title="Ảnh & video dự án (ảnh đầu = ảnh đại diện)">
-        <ImagePicker value={images} onChange={setImages} />
+        <ImagePicker
+          value={images}
+          onChange={setImages}
+          maxImages={soAnhDuAnToiDa(billing, tier)}
+          tierName={goiDuAn(billing).find((p) => p.tierId === tier)?.name}
+        />
       </Card>
 
       {error && (
