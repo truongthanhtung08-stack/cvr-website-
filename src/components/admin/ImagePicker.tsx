@@ -160,18 +160,21 @@ export default function ImagePicker({
 
         <span className="text-xs text-cvr-faint">hoặc</span>
 
-        <div className="flex flex-1 items-center gap-2">
+        {/* Cả hàng dán link phải co được trong màn hình điện thoại */}
+        <div className="flex w-full min-w-0 flex-1 items-center gap-2 sm:w-auto">
           <input
             value={link}
             onChange={(e) => setLink(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addLink(); } }}
             placeholder="Dán link ảnh hoặc video (YouTube/Vimeo/mp4)…"
-            className="h-10 min-w-[200px] flex-1 rounded-lg border border-cvr-line bg-white px-3 text-sm text-cvr-ink placeholder-cvr-faint outline-none transition focus:border-cvr-ink"
+            // min-w-0 (KHÔNG đặt bề rộng tối thiểu cứng) → trên điện thoại ô co lại
+            // vừa màn hình, nút "Thêm" không bị đẩy ra ngoài mép phải.
+            className="h-10 w-full min-w-0 flex-1 rounded-lg border border-cvr-line bg-white px-3 text-sm text-cvr-ink placeholder-cvr-faint outline-none transition focus:border-cvr-ink"
           />
           <button
             type="button"
             onClick={addLink}
-            className="rounded-lg border border-cvr-line px-3 py-2 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink"
+            className="shrink-0 rounded-lg border border-cvr-line px-3 py-2 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink"
           >
             Thêm
           </button>

@@ -53,6 +53,9 @@ body {
   /* Giãn chữ âm rất nhẹ — Inter mô phỏng SF Pro của Apple (chữ "khít", tinh tế).
      Giá trị nhỏ để không ảnh hưởng dấu tiếng Việt. */
   letter-spacing: -0.01em;
+  /* Câu/từ dài (tiêu đề, địa chỉ, đường dẫn) TỰ XUỐNG DÒNG thay vì tràn ra ngoài
+     khung và đẩy cả trang rộng hơn màn hình. */
+  overflow-wrap: break-word;
 }
 
 /* Tiêu đề kiểu Apple: cỡ càng lớn giãn chữ càng chặt (đặc trưng SF Pro Display).
