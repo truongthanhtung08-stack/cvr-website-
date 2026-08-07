@@ -467,7 +467,10 @@ export default function FilterBar({
               // MOBILE: ô nằm trên NỀN TRẮNG → nền xám nhạt Apple cho thấy rõ khung.
               // DESKTOP: vẫn trắng + đổ bóng vì nằm đè trên ảnh Hero tối.
               // Đệm phải NỚI RA khi đã gõ để chừa chỗ nút xoá ×.
-              ? `h-11 w-full rounded-xl border border-transparent bg-cvr-surface pl-4 ${typed ? "pr-[5.5rem]" : "pr-14"} text-[15px] text-cvr-ink placeholder-cvr-faint ring-1 ring-black/5 outline-none transition focus:ring-2 focus:ring-cvr-blue/50 sm:h-12 sm:bg-white sm:pl-11 ${typed ? "sm:pr-11" : "sm:pr-4"} sm:shadow-lg sm:shadow-black/20`
+              // DESKTOP: ô nằm TRONG khối trắng của Hero → nền xám nhạt, không đổ
+              // bóng (nếu để trắng + bóng sẽ thành "khối lồng khối").
+              // DESKTOP: chừa chỗ cho nút "Tìm kiếm" NẰM TRONG ô (không tách rời).
+              ? `h-11 w-full rounded-xl border border-transparent bg-cvr-surface pl-4 ${typed ? "pr-[5.5rem]" : "pr-14"} text-[15px] text-cvr-ink placeholder-cvr-faint ring-1 ring-black/5 outline-none transition focus:ring-2 focus:ring-cvr-blue/50 sm:h-12 sm:bg-white/[0.08] sm:pl-11 ${typed ? "sm:pr-[11.5rem]" : "sm:pr-[8.5rem]"} sm:text-white sm:placeholder-white/70 sm:ring-white/30 sm:focus:ring-white/60`
               : "h-full w-full min-w-0 flex-1 border-none bg-transparent pl-4 pr-14 text-[15px] text-cvr-ink placeholder-cvr-faint outline-none sm:pl-11 sm:pr-3"
           }
         />
@@ -486,6 +489,16 @@ export default function FilterBar({
           </button>
         )}
         {/* MOBILE (Hero): nút SEARCH XANH nằm NGAY TRONG ô tìm — cao BẰNG khung, 1 dòng duy nhất */}
+        {/* Nút tìm DESKTOP — nằm NGAY TRONG ô tìm, sát mép phải (không tách khối) */}
+        {compact && onSearch && (
+          <button
+            type="button"
+            onClick={() => { setSugOpen(false); onSearch(); }}
+            className="absolute bottom-1.5 right-1.5 top-1.5 hidden items-center justify-center rounded-lg bg-cvr-blue px-6 text-[14px] font-semibold text-white transition hover:bg-cvr-blue-ink active:scale-95 sm:flex"
+          >
+            Tìm kiếm
+          </button>
+        )}
         {compact && onSearch && (
           <button
             type="button"
@@ -562,25 +575,7 @@ export default function FilterBar({
           </div>
         )}
       </div>
-      {compact && onSearch && (
-        <button
-          type="button"
-          onClick={onSearch}
-          aria-label="Tìm kiếm"
-          className={`hidden ${hh} shrink-0 items-center justify-center gap-2 font-semibold transition active:scale-95 sm:flex ${
-            compact
-              ? "rounded-xl bg-cvr-blue px-6 text-[15px] text-white shadow-lg shadow-black/20 hover:bg-cvr-blue-ink"
-              : "rounded-xl bg-cvr-blue px-6 text-sm text-white hover:bg-cvr-blue-ink"
-          }`}
-        >
-          {!compact && (
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
-            </svg>
-          )}
-          Tìm kiếm
-        </button>
-      )}
+      {/* (Hero) Nút tìm đã nằm TRONG ô tìm ở trên — không còn nút rời bên ngoài. */}
       {/* Nút Bản đồ cạnh ô tìm — CHỈ desktop (mobile chật → đưa xuống hàng chip lọc) */}
       {!compact && onMap && (
         <button
@@ -660,7 +655,7 @@ export default function FilterBar({
   // Autocomplete thông minh (khu vực · loại hình · dự án · tin) vẫn nằm trong ô tìm (suggest.ts).
   if (compact) {
     return (
-      <div className="flex flex-col gap-3.5">
+      <div className="flex flex-col gap-2 sm:gap-2">
         {/* Dòng 1: tab (menu) — canh giữa, gạch chân tab đang chọn.
             MOBILE: ẩn — Hero chỉ còn ĐÚNG 1 dòng ô tìm kiếm cho gọn. */}
         {leading && <div className="hidden justify-center sm:flex">{leading}</div>}
