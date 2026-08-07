@@ -2,6 +2,7 @@
 // 👉 Thêm/bớt loại hình hoặc mức giá tại đây — toàn bộ bộ lọc tự cập nhật.
 
 import { tierRank } from "./packages";
+import { tenTinhTuongDuong } from "./locations";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // LOẠI HÌNH (sản phẩm) PHÂN THEO MỤC ĐÍCH — chuẩn Brief + Kế hoạch V3.
@@ -317,8 +318,9 @@ export function applyFilters<T extends FilterableListing>(items: T[], f: Filters
     if (f.verified && !listingVerified(item.id)) return false;
     if (f.broker && !listingProBroker(item.id)) return false;
     if (f.locations.length) {
+      // Khớp cả TÊN TỈNH CŨ và MỚI (sau sáp nhập) — xem tenTinhTuongDuong()
       const inArea = f.locations.some((l) =>
-        item.location.includes(l.province) &&
+        tenTinhTuongDuong(l.province).some((ten) => item.location.includes(ten)) &&
         (!l.district || item.location.includes(l.district)) &&
         (!l.ward || item.location.includes(l.ward)),
       );

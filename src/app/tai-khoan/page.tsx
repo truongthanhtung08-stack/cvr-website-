@@ -166,7 +166,7 @@ function Card({ label, value, sub, accent, color }: { label: string; value: stri
 // Ô "Đăng dự án" khi CHƯA được duyệt: không bấm vào form được, thay bằng lối
 // gửi hồ sơ để quản trị viên xét (Chủ đầu tư / Công ty phân phối).
 function PostTypeKhoa({ icon, title, desc, moKhoa }: { icon: string; title: string; desc: string; moKhoa: boolean }) {
-  if (moKhoa) return <PostType href="/dang-tin/du-an" icon={icon} title={title} desc={desc} />;
+  if (moKhoa) return <PostType href="/tai-khoan/du-an/moi" icon={icon} title={title} desc={desc} />;
   return (
     <div className="flex items-center gap-3 rounded-xl border border-dashed border-cvr-line bg-cvr-surface p-4">
       <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-cvr-faint">
@@ -177,8 +177,8 @@ function PostTypeKhoa({ icon, title, desc, moKhoa }: { icon: string; title: stri
       <span className="min-w-0">
         <span className="block font-semibold text-cvr-body">{title}</span>
         <span className="mt-0.5 block text-xs text-cvr-muted">{desc}</span>
-        <Link href="/tai-khoan/cai-dat" className="mt-1 inline-block text-xs font-semibold text-cvr-blue-ink underline">
-          Gửi hồ sơ xét duyệt →
+        <Link href="/tai-khoan/du-an" className="mt-1 inline-block text-xs font-semibold text-cvr-blue-ink underline">
+          Xem điều kiện & gửi hồ sơ →
         </Link>
       </span>
     </div>

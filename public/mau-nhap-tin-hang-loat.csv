@@ -1,4 +1,4 @@
-﻿ma_anh,muc_dich,loai_hinh,tieu_de,mo_ta,gia,dien_tich,phong_ngu,phong_tam,phuong_xa,quan_huyen,tinh_thanh,hang_tin,anh,dia_chi,phap_ly,huong,lien_he_ten,lien_he_sdt
-tin01,ban,Nhà riêng,NHÀ 3 TẦNG KIỆT Ô TÔ GẦN BIỂN MỸ KHÊ,"Nhà mới xây, full nội thất, kiệt ô tô tránh, cách biển 500m.","5,5",62,3,3,Phước Mỹ,Sơn Trà,Đà Nẵng,gold,nha-my-khe-1.jpg|nha-my-khe-2.jpg,Đường Hà Bổng,Sổ hồng riêng,Đông Nam,Nguyễn Văn A,0905123456
-tin02,ban,Đất nền / Đất nền dự án,ĐẤT NỀN HOÀ XUÂN VỊ TRÍ ĐẸP GIÁ ĐẦU TƯ,"Lô góc 2 mặt tiền, đường 7m5, sổ đỏ trao tay.","4,2",100,,,Hoà Xuân,Cẩm Lệ,Đà Nẵng,basic,dat-hoa-xuan-1.jpg,Khu B2.35,Sổ đỏ,Bắc,Trần Thị B,0905987654
-tin03,thue,Căn hộ,CHO THUÊ CĂN HỘ 2PN VIEW SÔNG HÀN FULL NỘI THẤT,"Toà mới, có hồ bơi, gym, bảo vệ 24/7.",18,95,2,2,Hải Châu I,Hải Châu,Đà Nẵng,silver,canho-song-han-1.jpg|canho-song-han-2.jpg|canho-song-han-3.jpg,Bạch Đằng,,Đông,Lê Văn C,0905111222
+﻿ma_anh,muc_dich,loai_hinh,tieu_de,mo_ta,gia,dien_tich,phong_ngu,phong_tam,phuong_xa,quan_huyen,tinh_thanh,hang_tin,dia_chi,phap_ly,huong,lien_he_ten,lien_he_sdt
+tin01,ban,Nhà riêng,NHÀ 3 TẦNG KIỆT Ô TÔ GẦN BIỂN MỸ KHÊ,"Nhà mới xây, full nội thất, kiệt ô tô tránh, cách biển 500m.","5,5",62,3,3,Phước Mỹ,Sơn Trà,Đà Nẵng,gold,Đường Hà Bổng,Sổ hồng riêng,Đông Nam,Nguyễn Văn A,0905123456
+tin02,ban,Đất nền / Đất nền dự án,ĐẤT NỀN HOÀ XUÂN VỊ TRÍ ĐẸP GIÁ ĐẦU TƯ,"Lô góc 2 mặt tiền, đường 7m5, sổ đỏ trao tay.","4,2",100,,,Hoà Xuân,Cẩm Lệ,Đà Nẵng,basic,Khu B2.35,Sổ đỏ,Bắc,Trần Thị B,0905987654
+tin03,thue,Căn hộ,CHO THUÊ CĂN HỘ 2PN VIEW SÔNG HÀN FULL NỘI THẤT,"Toà mới, có hồ bơi, gym, bảo vệ 24/7.",18,95,2,2,Hải Châu I,Hải Châu,Đà Nẵng,silver,Bạch Đằng,,Đông,Lê Văn C,0905111222

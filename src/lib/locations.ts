@@ -308,3 +308,23 @@ export function newProvinceOf(oldName: string): string {
 export function oldNamesOf(newName: string): string[] {
   return provinceMergers[newName] ?? [newName];
 }
+
+// ── NỐI HAI HỆ TÊN TỈNH LẠI VỚI NHAU ────────────────────────────────────────
+// Tin cũ lưu tên tỉnh CŨ, tin mới lưu tên tỉnh MỚI. Nếu tìm kiếm chỉ so đúng
+// một tên thì dữ liệu bị chia đôi: chọn "Đà Nẵng" (mới) sẽ KHÔNG ra tin lưu là
+// "Quảng Nam" (cũ) và ngược lại. Hàm này trả về MỌI tên tương đương của một
+// tỉnh để bộ lọc khớp cả hai hệ — chủ dự án nhập theo hệ nào cũng tìm ra.
+export function tenTinhTuongDuong(ten: string): string[] {
+  const ds = new Set<string>([ten]);
+  // Tên MỚI → thêm các tỉnh cũ đã gộp vào nó
+  for (const cu of provinceMergers[ten] ?? []) ds.add(cu);
+  // Tên CŨ → thêm tên mới sau sáp nhập
+  const moi = oldProvinces.find((o) => o.name === ten)?.newName;
+  if (moi) {
+    ds.add(moi);
+    // …và các tỉnh cũ "anh em" cùng gộp vào tỉnh mới đó thì KHÔNG thêm:
+    // chọn "Quảng Nam" chỉ nên ra tin Quảng Nam + tin ghi theo tên mới,
+    // không kéo luôn tin của tỉnh cũ khác.
+  }
+  return [...ds];
+}

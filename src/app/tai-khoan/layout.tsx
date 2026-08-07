@@ -27,6 +27,7 @@ const nhomMuc: { nhom: string; items: Muc[] }[] = [
     items: [
       { label: "Tin đã đăng", href: "/tai-khoan/tin-dang", icon: "doc" },
       { label: "Tin đã lưu", href: "/tin-luu", icon: "heart" },
+      { label: "Dự án của tôi", href: "/tai-khoan/du-an", icon: "building" },
     ],
   },
   {
@@ -161,6 +162,8 @@ function MucIcon({ name }: { name: string }) {
   const props = { fill: "none", stroke: "currentColor", strokeWidth: 1.8, viewBox: "0 0 24 24" } as const;
   if (name === "grid")
     return <svg className={common} {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z" /></svg>;
+  if (name === "building")
+    return <svg className={common} {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M3 21h18M5 21V5a2 2 0 012-2h6a2 2 0 012 2v16m0-10h2a2 2 0 012 2v8M9 7h2m-2 4h2m-2 4h2" /></svg>;
   if (name === "heart")
     return <svg className={common} {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M12 20s-7-4.5-7-9.2A3.8 3.8 0 0 1 12 8a3.8 3.8 0 0 1 7 2.8C19 15.5 12 20 12 20z" /></svg>;
   if (name === "card")

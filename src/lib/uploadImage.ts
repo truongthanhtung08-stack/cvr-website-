@@ -12,6 +12,25 @@ export type UploadResult = { url?: string; error?: string };
 const CANH_TOI_DA = 1600;
 const CHAT_LUONG = 0.82;
 
+// ── ĐÓNG DẤU CHÌM "COASTAL LAND" ────────────────────────────────────────────
+// Ký hiệu MỜ ở góc dưới phải mọi ảnh tin đăng: ảnh bị lấy đi nơi khác vẫn nhận
+// ra nguồn, nhưng không che nội dung. Cỡ chữ theo bề ngang ảnh nên ảnh to hay
+// nhỏ đều cân. Vẽ trước khi xuất JPEG nên dấu nằm HẲN trong ảnh, không gỡ được.
+function dongDauCvr(ctx: CanvasRenderingContext2D, w: number, h: number) {
+  const co = Math.max(13, Math.round(w * 0.028));
+  const le = Math.round(w * 0.022);
+  ctx.save();
+  ctx.font = `600 ${co}px system-ui, -apple-system, "Segoe UI", sans-serif`;
+  ctx.textAlign = "right";
+  ctx.textBaseline = "bottom";
+  // Viền tối rất nhẹ để chữ vẫn đọc được trên nền ảnh sáng
+  ctx.shadowColor = "rgba(0,0,0,0.45)";
+  ctx.shadowBlur = Math.round(co * 0.5);
+  ctx.fillStyle = "rgba(255,255,255,0.42)";
+  ctx.fillText("COASTAL LAND", w - le, h - le);
+  ctx.restore();
+}
+
 async function nenAnh(file: File): Promise<File> {
   // Môi trường không có canvas (SSR) hoặc ảnh dạng đặc biệt → giữ nguyên
   if (typeof document === "undefined" || !/^image\/(jpeg|png|webp)$/i.test(file.type)) return file;
@@ -26,11 +45,18 @@ async function nenAnh(file: File): Promise<File> {
     canvas.height = h;
     const ctx = canvas.getContext("2d");
     if (!ctx) return file;
+    // PNG/WebP có vùng trong suốt → JPEG không có kênh trong suốt, phải lót nền
+    // TRẮNG trước, nếu không vùng đó thành ĐEN.
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, w, h);
     ctx.drawImage(bitmap, 0, 0, w, h);
     bitmap.close?.();
+    dongDauCvr(ctx, w, h);
 
     const blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, "image/jpeg", CHAT_LUONG));
-    if (!blob || blob.size >= file.size) return file; // nén không lợi → dùng bản gốc
+    // Dùng bản qua canvas KỂ CẢ khi không nhẹ hơn — vì bản này mới có đóng dấu
+    // COASTAL LAND. Chỉ giữ ảnh gốc khi trình duyệt không xuất được.
+    if (!blob) return file;
     const ten = file.name.replace(/\.[^.]+$/, "") + ".jpg";
     return new File([blob], ten, { type: "image/jpeg" });
   } catch {

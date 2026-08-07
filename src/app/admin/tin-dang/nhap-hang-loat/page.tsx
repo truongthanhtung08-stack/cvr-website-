@@ -191,9 +191,12 @@ export default function NhapHangLoatPage() {
         <p className="text-xs font-bold uppercase tracking-wider text-cvr-faint">Bước 4</p>
         <h2 className="mt-1 text-base font-semibold text-cvr-ink">Tải ảnh cho tất cả tin — một lượt</h2>
         <p className="mt-1 text-sm text-cvr-muted">
-          Ảnh để trong thư mục trên máy, <strong>tên ảnh đúng như tên ghi trong file Excel</strong> (cột <code>anh</code>).
-          Chọn HẾT ảnh một lần — hệ thống tự chia về đúng từng tin theo tên tệp, ảnh ghi trước làm ảnh đại diện.
+          Ảnh để trong thư mục trên máy, tên ảnh khớp cột <code>ma_anh</code> trong file Excel.
+          Chọn HẾT ảnh một lần — hệ thống tự chia về đúng từng tin, ảnh <strong>-1</strong> làm ảnh đại diện.
           Tin nào thiếu ảnh sẽ bị bôi đỏ trong bảng xem trước.
+        </p>
+        <p className="mt-1 text-sm text-cvr-muted">
+          Mọi ảnh tải lên đều được <strong>tự thu nhỏ + đóng dấu chìm “COASTAL LAND”</strong> ở góc dưới phải.
         </p>
         <div className="mt-3 flex flex-wrap items-center gap-3">
           <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-cvr-line px-4 py-2 text-sm font-medium text-cvr-body hover:border-cvr-ink hover:text-cvr-ink">
@@ -315,14 +318,13 @@ export default function NhapHangLoatPage() {
           <li><strong>tinh_thanh</strong>: bắt buộc · <strong>quan_huyen</strong>, <strong>phuong_xa</strong>: nên có để lọc theo khu vực.</li>
           <li><strong>hang_tin</strong>: <code>diamond</code> · <code>gold</code> · <code>silver</code> · <code>basic</code> (bỏ trống = basic).</li>
           <li>
-            <strong>anh</strong>: ghi <strong>đúng TÊN ẢNH trên máy</strong>, nhiều ảnh ngăn nhau bằng dấu <code>|</code> —
-            vd <code>nha-my-khe-1.jpg | nha-my-khe-2.jpg</code>. Ảnh ghi trước làm <strong>ảnh đại diện</strong>.
-            Ghi thiếu đuôi <code>.jpg</code> cũng khớp. (Ảnh đã có link sẵn thì dán thẳng link cũng được.)
-          </li>
-          <li>
-            <strong>ma_anh</strong>: cách nhanh hơn nếu anh đặt tên ảnh theo mã — ghi <code>tin01</code> rồi
-            đặt ảnh <code>tin01-1.jpg</code>, <code>tin01-2.jpg</code>… là hệ thống tự gom, khỏi liệt kê từng tên.
-            Dùng cột <strong>anh</strong> hoặc <strong>ma_anh</strong> đều được, không cần cả hai.
+            <strong>ma_anh</strong> — cột ảnh duy nhất, ghi theo <strong>một trong hai cách</strong>:
+            <br />
+            · <strong>Cách gọn (nên dùng)</strong>: ghi mã <code>tin01</code>, rồi đặt tên ảnh trên máy là
+            <code> tin01-1.jpg</code>, <code>tin01-2.jpg</code>… — hệ thống tự gom, ảnh <strong>-1</strong> làm ảnh đại diện.
+            <br />
+            · <strong>Cách liệt kê</strong>: ghi thẳng tên từng ảnh, ngăn nhau bằng <code>|</code> hoặc dấu phẩy —
+            vd <code>nha-my-khe-1.jpg | nha-my-khe-2.jpg</code>. Ảnh ghi trước làm ảnh đại diện.
           </li>
           <li><strong>dia_chi</strong>, <strong>phap_ly</strong>, <strong>huong</strong>, <strong>lien_he_ten</strong>, <strong>lien_he_sdt</strong>: không bắt buộc.</li>
         </ul>

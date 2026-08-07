@@ -40,9 +40,21 @@ const DEFAULT_PRICE_ROWS: ProjectPriceRow[] = [
   { unit: "Căn 3 phòng ngủ", area: "95 – 125 m²", direction: "", price: "" },
 ];
 
-// Form Thêm/Sửa DỰ ÁN (admin). Tổng quan: mỗi ĐOẠN xuống 1 dòng.
-// Slug tự sinh từ tên dự án (sửa được) — là đường dẫn /du-an/[slug].
-export default function ProjectForm({ initial }: { initial?: ProjectRow }) {
+// Form Thêm/Sửa DỰ ÁN — DÙNG CHUNG cho quản trị viên và cho khách hàng đã được
+// duyệt là Chủ đầu tư / Công ty phân phối.
+//   · Quản trị viên (khachHang = false): "Đăng dự án" là lên web ngay.
+//   · Khách hàng   (khachHang = true) : "Gửi duyệt" → trạng thái CHỜ DUYỆT,
+//     quản trị viên xem rồi mới cho hiện trên web. Dự án gắn owner_id = khách đó.
+// Tổng quan: mỗi ĐOẠN xuống 1 dòng. Slug tự sinh từ tên dự án (sửa được).
+export default function ProjectForm({
+  initial,
+  khachHang = false,
+  ownerId,
+}: {
+  initial?: ProjectRow;
+  khachHang?: boolean;
+  ownerId?: string | null;
+}) {
   const router = useRouter();
   const editing = Boolean(initial);
 
@@ -162,7 +174,12 @@ export default function ProjectForm({ initial }: { initial?: ProjectRow }) {
       if (!type.trim()) return setError("Chưa nhập loại hình dự án.");
     }
 
-    const newStatus: ContentStatus = asDraft ? "draft" : "published";
+    // Khách hàng KHÔNG tự đăng công khai được: bấm "Gửi duyệt" → chờ quản trị viên.
+    const newStatus: ContentStatus = asDraft
+      ? "draft"
+      : khachHang
+        ? ("pending" as ContentStatus)
+        : "published";
     setSaving(true);
     const payload = {
       slug: finalSlug,
@@ -206,6 +223,8 @@ export default function ProjectForm({ initial }: { initial?: ProjectRow }) {
       status: newStatus,
       published_at:
         newStatus === "published" ? (initial?.published_at ?? new Date().toISOString()) : initial?.published_at ?? null,
+      // Dự án của khách hàng nào (admin tự tạo → để trống)
+      ...(khachHang && ownerId ? { owner_id: ownerId } : {}),
     };
 
     const supabase = createClient();
@@ -221,7 +240,7 @@ export default function ProjectForm({ initial }: { initial?: ProjectRow }) {
           : `Lưu thất bại: ${err.message}`,
       );
     }
-    router.push("/admin/du-an");
+    router.push(khachHang ? "/tai-khoan/du-an?da-gui=1" : "/admin/du-an");
     router.refresh();
   }
 
@@ -644,7 +663,11 @@ export default function ProjectForm({ initial }: { initial?: ProjectRow }) {
           disabled={saving}
           className="rounded-lg bg-cvr-ink px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-cvr-ink/90 disabled:opacity-50"
         >
-          {saving ? "Đang lưu…" : editing ? "Cập nhật & đăng" : "Đăng dự án"}
+          {saving
+            ? "Đang lưu…"
+            : khachHang
+              ? editing ? "Cập nhật & gửi duyệt" : "Gửi duyệt dự án"
+              : editing ? "Cập nhật & đăng" : "Đăng dự án"}
         </button>
         <button
           type="button"
@@ -656,7 +679,7 @@ export default function ProjectForm({ initial }: { initial?: ProjectRow }) {
         </button>
         <button
           type="button"
-          onClick={() => router.push("/admin/du-an")}
+          onClick={() => router.push(khachHang ? "/tai-khoan/du-an" : "/admin/du-an")}
           className="rounded-lg px-3 py-2.5 text-sm font-medium text-cvr-muted transition hover:text-cvr-ink"
         >
           Huỷ
@@ -664,7 +687,16 @@ export default function ProjectForm({ initial }: { initial?: ProjectRow }) {
       </div>
       <p className="text-xs text-cvr-faint">
         <strong>Lưu nháp</strong>: chỉ cần tên dự án, chưa hiện trên web.
-        <strong> Đăng dự án</strong>: dự án hiện ngay tại trang Dự án và trang chủ.
+        {khachHang ? (
+          <>
+            <strong> Gửi duyệt</strong>: dự án chuyển sang trạng thái chờ duyệt, quản trị viên
+            xem xong sẽ cho hiện trên trang Dự án.
+          </>
+        ) : (
+          <>
+            <strong> Đăng dự án</strong>: dự án hiện ngay tại trang Dự án và trang chủ.
+          </>
+        )}
       </p>
     </form>
   );
