@@ -65,6 +65,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="hidden w-60 shrink-0 border-r border-cvr-line bg-white md:block" />
         <div className="flex min-w-0 flex-1 flex-col">
           <div className="h-14 shrink-0 border-b border-cvr-line bg-white sm:h-16" />
+          <div className="h-[45px] shrink-0 border-b border-cvr-line bg-white md:hidden" />
           <div className="flex flex-1 items-center justify-center text-sm text-cvr-muted">
             Đang tải khu vực quản trị…
           </div>

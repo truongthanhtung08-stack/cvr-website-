@@ -556,11 +556,11 @@ export default function PostListingForm() {
 
       {/* 2 nút TÁCH BIỆT RÕ (pill Apple): ĐĂNG TIN = đen đặc nổi bật (gửi duyệt) ·
           LƯU NHÁP = xám nhạt kín đáo (cất tạm, làm tiếp sau) */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+      <div className="flex flex-col gap-3 border-t border-cvr-line pt-5 sm:flex-row sm:items-center sm:justify-end">
         <button
           type="submit"
           disabled={!!saving}
-          className="btn-dangtin flex h-[52px] flex-1 items-center justify-center gap-2 rounded-full px-8 text-base font-bold text-white disabled:opacity-50 sm:flex-none"
+          className="btn-dangtin flex h-12 w-full sm:w-auto items-center justify-center gap-2 rounded-full px-8 text-base font-bold text-white disabled:opacity-50 "
         >
           <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 19V5m0 0l-6 6m6-6l6 6" />
@@ -571,7 +571,7 @@ export default function PostListingForm() {
           type="button"
           onClick={() => save(true)}
           disabled={!!saving}
-          className="flex h-[52px] flex-1 items-center justify-center gap-2 rounded-full bg-cvr-surface px-7 text-base font-semibold text-cvr-body ring-1 ring-inset ring-cvr-line transition hover:bg-cvr-line/40 hover:text-cvr-ink active:scale-[0.98] disabled:opacity-50 sm:flex-none"
+          className="flex h-12 w-full sm:w-auto items-center justify-center gap-2 rounded-full bg-cvr-surface px-7 text-base font-semibold text-cvr-body ring-1 ring-inset ring-cvr-line transition hover:bg-cvr-line/40 hover:text-cvr-ink active:scale-[0.98] disabled:opacity-50 "
         >
           <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M17 21v-8H7v8M7 3v5h8M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
