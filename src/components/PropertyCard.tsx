@@ -76,7 +76,7 @@ export default function PropertyCard({
     >
       {/* Ảnh — Diamond khung rộng hơn (rất lớn), còn lại 4/3 */}
       {/* Thẻ trang chủ (tier) trên MOBILE: ảnh 16/10 thấp hơn để màn hình đầu thấy trọn thẻ */}
-      <div className={`relative overflow-hidden bg-cvr-surface ${isFeatured ? "aspect-[16/10]" : isTier ? "aspect-[16/10] sm:aspect-[4/3]" : "aspect-[4/3]"}`}>
+      <div className={`relative overflow-hidden bg-cvr-surface ${isFeatured ? "aspect-[16/10]" : isTier ? "aspect-[16/10]" : "aspect-[16/10]"}`}>
         <Image
           src={item.image}
           alt={item.title}
@@ -173,7 +173,7 @@ function PropertyRow({ item, showTime = false }: { item: Listing; showTime?: boo
       // MÁY TÍNH: ảnh TRÁI – nội dung PHẢI, ảnh chiếm ~38% bề ngang thẻ.
       className="flex flex-col gap-3 overflow-hidden rounded-none border border-cvr-line bg-white p-2.5 shadow-lux shadow-lux-hover transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 sm:flex-row sm:gap-4 sm:p-3"
     >
-      <div className="relative aspect-[16/10] w-full shrink-0 overflow-hidden rounded-xl bg-cvr-surface sm:aspect-[4/3] sm:w-[38%] sm:min-w-[240px] sm:max-w-[420px]">
+      <div className="relative aspect-[16/10] w-full shrink-0 overflow-hidden rounded-xl bg-cvr-surface sm:aspect-[16/10] sm:w-[30%] sm:min-w-[190px] sm:max-w-[300px]">
         <Image src={item.image} alt={item.title} fill sizes="(max-width: 640px) 100vw, 38vw" className="object-cover" />
         {tier && (
           <span

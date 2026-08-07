@@ -4,6 +4,7 @@ import "./globals.css";
 import Chatbox from "@/components/Chatbox";
 import CompareBar from "@/components/CompareBar";
 import MobileTabBar from "@/components/MobileTabBar";
+import ScrollTopOnRoute from "@/components/ScrollTopOnRoute";
 
 // Font chính toàn site: Inter — hiện đại, chuyên nghiệp, "SF Pro của web" (kiểu Apple),
 // hỗ trợ tiếng Việt đầy đủ.
@@ -110,6 +111,7 @@ export default function RootLayout({
   return (
     <html lang="vi" className={`${inter.variable} ${playfair.variable} ${montserrat.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col font-sans bg-background text-foreground">
+        <ScrollTopOnRoute />
         {children}
         <CompareBar />
         <Chatbox />

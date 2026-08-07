@@ -121,15 +121,17 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
                   </div>
                 ))}
               </div>
-              {/* Nút XEM THÊM (điện thoại) — CÙNG cơ chế với PC: ra danh sách theo trang */}
+              {/* Nút XEM THÊM (điện thoại) — CÙNG kích thước với mọi khối khác */}
+              <div className="flex justify-center">
               <button
                 type="button"
                 onClick={toggle}
-                className="mt-4 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-full border border-cvr-line text-[15px] font-semibold text-cvr-ink transition active:bg-cvr-surface"
+                className="mt-6 inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full border border-cvr-line px-6 text-sm font-semibold text-cvr-ink transition active:bg-cvr-surface"
               >
                 Xem thêm
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
               </button>
+              </div>
             </div>
 
             {/* ── TABLET / MÁY TÍNH (≥ 640px): GIỮ NGUYÊN slider 2 slide đã duyệt ── */}
