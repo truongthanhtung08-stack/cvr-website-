@@ -19,7 +19,7 @@ export default function PagedArticleList({ articles }: { articles: Article[] }) 
 
   return (
     <div>
-      <div className="divide-y divide-cvr-line/70">
+      <div className="reveal is-visible cards-stagger divide-y divide-cvr-line/70">
         {items.map((a) => (
           <Link key={a.slug} href={`/tin-tuc/${a.slug}`} className="group flex flex-col gap-2.5 py-5 first:pt-0 sm:flex-row sm:gap-5">
             <div className="relative aspect-[16/9] w-full shrink-0 overflow-hidden rounded-none bg-cvr-surface sm:aspect-[16/10] sm:w-56 sm:rounded-xl">

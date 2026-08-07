@@ -292,7 +292,7 @@ export default function ProjectsBrowser({
       <div className="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-3">
         {/* ── Cột chính: thẻ dự án ngang ── */}
         <div className="lg:col-span-2">
-          <div className="flex flex-col gap-5">
+          <div className="reveal is-visible cards-stagger flex flex-col gap-5">
             {pageItems.map((p) => (
               <Link
                 key={p.slug}

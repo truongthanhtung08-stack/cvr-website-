@@ -140,7 +140,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
           </div>
 
           <div className="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-3">
-            <div className="lg:col-span-2">
+            <div className="reveal is-visible cards-stagger lg:col-span-2">
               {/* Menu dính — sáng theo mục đang xem, bấm để cuộn mượt */}
               <ProjectNav items={nav} />
 

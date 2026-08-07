@@ -108,7 +108,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
 
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
             {/* Cột chính */}
-            <div className="lg:col-span-2">
+            <div className="reveal is-visible cards-stagger lg:col-span-2">
               {/* Tiêu đề + giá */}
               <div>
                 {tier ? (

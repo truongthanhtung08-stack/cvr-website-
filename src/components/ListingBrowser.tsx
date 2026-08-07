@@ -142,14 +142,14 @@ export default function ListingBrowser({
             <>
               {/* MOBILE (< 640px): LUÔN thẻ dọc — ảnh trên, nội dung dưới (thuần CSS,
                   không phụ thuộc JS → chắc chắn đúng trên mọi máy) */}
-              <div className="grid grid-cols-1 gap-5 sm:hidden">
+              <div className="reveal is-visible cards-stagger grid grid-cols-1 gap-5 sm:hidden">
                 {pageItems.map((item) => (
                   <PropertyCard key={item.id} item={item} layout="grid" showTime />
                 ))}
               </div>
               {/* DESKTOP (≥ 640px): theo chế độ xem đã chọn (Danh sách = thẻ ngang · Lưới = thẻ dọc) */}
               <div
-                className={`hidden ${
+                className={`reveal is-visible cards-stagger hidden ${
                   view === "list"
                     ? "sm:flex sm:flex-col sm:gap-4"
                     : "sm:grid sm:grid-cols-2 sm:gap-5"
