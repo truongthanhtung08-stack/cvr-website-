@@ -127,12 +127,21 @@ export function docTinTuCsv(text: string): { rows: ParsedRow[]; loiChung: string
 export function docTinTuBang(bang: string[][]): { rows: ParsedRow[]; loiChung: string | null } {
   if (bang.length < 2) return { rows: [], loiChung: "File chưa có dữ liệu (cần dòng tiêu đề + ít nhất 1 dòng tin)." };
 
-  const header = bang[0].map(chuanHoa);
+  // TÌM DÒNG TÊN CỘT — không bắt buộc phải là dòng đầu tiên: chủ dự án hay chèn
+  // dòng trang trí ("BẢNG ĐĂNG TIN THÁNG 8…") phía trên cho dễ nhìn. Quét 10 dòng
+  // đầu, dòng nào có cột "tieu_de" thì đó là dòng tên cột.
+  const viTriHeader = bang.slice(0, 10).findIndex((r) => r.map(chuanHoa).includes(COT.tieuDe));
+  if (viTriHeader < 0)
+    return { rows: [], loiChung: `File không có cột "${COT.tieuDe}" (tiêu đề tin). Hãy tải file mẫu và nhập theo đúng cột.` };
+
+  const header = bang[viTriHeader].map(chuanHoa);
   const thieu = [COT.tieuDe, COT.tinhThanh].filter((c) => !header.includes(c));
   if (thieu.length)
     return { rows: [], loiChung: `File thiếu cột bắt buộc: ${thieu.join(", ")}. Hãy tải file mẫu và nhập theo đúng cột.` };
 
-  const rows = bang.slice(1).map((cells, i) => docMotDong(header, cells, i + 2));
+  const rows = bang
+    .slice(viTriHeader + 1)
+    .map((cells, i) => docMotDong(header, cells, viTriHeader + i + 2));
   return { rows, loiChung: null };
 }
 

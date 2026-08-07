@@ -138,6 +138,10 @@ export default function NhapHangLoatPage() {
             Mở file mẫu bằng Excel → điền tin → <strong>File → Save As → Excel Workbook (.xlsx)</strong>.
             Không cần chuyển sang CSV. Giữ .csv cũng được.
           </p>
+          <p className="mt-1.5 text-xs text-cvr-muted">
+            Cứ tô màu, giãn cột, đổi thứ tự cột, đổi tên cột sang tiếng Việt, thêm cột riêng —
+            hệ thống vẫn đọc đúng.
+          </p>
         </Buoc>
         <Buoc so="3" title="Chọn file Excel">
           <label className="mt-2 inline-flex cursor-pointer rounded-lg border border-cvr-line px-4 py-2 text-sm font-medium text-cvr-body hover:border-cvr-ink hover:text-cvr-ink">
@@ -289,6 +293,21 @@ export default function NhapHangLoatPage() {
           <li><strong>anh</strong>: chỉ dùng khi ảnh ĐÃ có link sẵn — nhiều ảnh ngăn nhau bằng dấu <code>|</code> (vd <code>/images/tin/1.jpg</code> hoặc https://…). Để trống nếu tải ảnh từ máy ở Bước 4.</li>
           <li><strong>dia_chi</strong>, <strong>phap_ly</strong>, <strong>huong</strong>, <strong>lien_he_ten</strong>, <strong>lien_he_sdt</strong>: không bắt buộc.</li>
         </ul>
+        <div className="mt-4 rounded-lg bg-cvr-surface p-3 text-sm text-cvr-body">
+          <p className="font-semibold text-cvr-ink">Căn chỉnh file cho dễ nhìn — được phép:</p>
+          <p className="mt-1">
+            Tô màu · in đậm · giãn cột · đóng băng dòng · <strong>đổi thứ tự cột</strong> ·
+            <strong> đổi tên cột sang tiếng Việt có dấu</strong> (Tiêu đề, Mục đích, Giá, Tỉnh thành) ·
+            thêm cột riêng (STT, ghi chú) · để dòng trống xen giữa ·
+            chèn dòng tiêu đề trang trí phía trên.
+          </p>
+          <p className="mt-2 font-semibold text-cvr-ink">Không được:</p>
+          <p className="mt-1">
+            Gộp ô (merge) trong vùng dữ liệu · để dữ liệu ở sheet thứ hai ·
+            ghi giá kèm chữ (<code>5,5 tỷ</code>) — chỉ ghi số <code>5,5</code>.
+          </p>
+        </div>
+
         <p className="mt-3 text-sm text-cvr-muted">
           Tin nhập bằng file được đăng công khai ngay như khi bấm “Đăng tin”. Sửa lại từng tin ở{" "}
           <Link href="/admin/tin-dang" className="font-medium text-cvr-blue-ink underline">Tin đăng</Link>.
