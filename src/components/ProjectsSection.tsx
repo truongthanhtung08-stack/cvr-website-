@@ -63,9 +63,9 @@ export default function ProjectsSection({ projects, articles = [] }: { projects:
           <div className="no-scrollbar -mx-4 mt-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2">
             {homeProjects.map((p) => (
               <Link key={p.slug} href={`/du-an/${p.slug}`} className="flex w-[90%] shrink-0 snap-start flex-col overflow-hidden rounded-none bg-white shadow-lux">
-                <div className="relative aspect-[3/2] w-full overflow-hidden">
+                <div className="relative aspect-[16/9] w-full overflow-hidden">
                   <Image src={p.image} alt={p.name} fill sizes="90vw" className="object-cover" />
-                  <span className="absolute left-3 top-3 bg-white/90 px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-cvr-ink">{p.status}</span>
+                  <span className="absolute left-3 top-3 rounded-full bg-white/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.06em] text-cvr-ink shadow-[0_2px_10px_rgba(0,0,0,0.18)] ring-1 ring-white/60 backdrop-blur-md">{p.status}</span>
                 </div>
                 <div className="flex flex-1 flex-col p-4">
                   <h3 className="h-[3em] overflow-hidden font-semibold leading-[1.5] text-cvr-ink">{p.name}</h3>
@@ -106,7 +106,7 @@ export default function ProjectsSection({ projects, articles = [] }: { projects:
                       className="card-lux group relative flex flex-col overflow-hidden rounded-none border-0 bg-white shadow-lux hover:-translate-y-2 hover:border-cvr-blue/45 shadow-lux-hover sm:border sm:border-cvr-line"
                     >
                       <span className="card-sheen" aria-hidden />
-                      <div className="relative aspect-[3/2] overflow-hidden sm:aspect-[4/3]">
+                      <div className="relative aspect-[16/9] overflow-hidden sm:aspect-[4/3]">
                         <Image
                           src={p.image}
                           alt={p.name}
@@ -114,7 +114,7 @@ export default function ProjectsSection({ projects, articles = [] }: { projects:
                           sizes="(max-width: 768px) 100vw, 25vw"
                           className="object-cover transition-transform duration-[700ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.07]"
                         />
-                        <span className="absolute left-3 top-3 bg-white/90 px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-cvr-ink">
+                        <span className="absolute left-3 top-3 rounded-full bg-white/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.06em] text-cvr-ink shadow-[0_2px_10px_rgba(0,0,0,0.18)] ring-1 ring-white/60 backdrop-blur-md">
                           {p.status}
                         </span>
                       </div>

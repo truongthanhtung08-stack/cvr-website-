@@ -36,7 +36,7 @@ function TierBadge({ tier }: { tier?: string }) {
   if (!tier || tier === "basic") return null;
   return (
     <span
-      className="absolute left-3 top-3 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white"
+      className="absolute left-3 top-3 rounded-full px-2.5 py-[3px] text-[10px] font-semibold uppercase tracking-[0.06em] text-white shadow-[0_2px_10px_rgba(0,0,0,0.28)] ring-1 ring-white/25 backdrop-blur-md"
       style={{ backgroundColor: TIER_ACCENT[tier] }}
     >
       {TIER_SHORT[tier]}
@@ -60,10 +60,10 @@ export function ProjectCard({ p }: { p: Project }) {
       href={`/du-an/${p.slug}`}
       className="group flex flex-col overflow-hidden rounded-none border-0 bg-white shadow-lux shadow-lux-hover transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1 sm:border sm:border-cvr-line"
     >
-      <div className="relative aspect-[16/10] overflow-hidden bg-cvr-surface">
+      <div className="relative aspect-[16/9] overflow-hidden bg-cvr-surface sm:aspect-[16/10]">
         <Image src={p.image} alt={p.name} fill sizes="(max-width: 640px) 86vw, 25vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
         <TierBadge tier={p.tier} />
-        <span className="absolute right-3 top-3 bg-white/90 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-cvr-ink">
+        <span className="absolute right-3 top-3 rounded-full bg-white/80 px-2.5 py-[3px] text-[10px] font-semibold uppercase tracking-[0.06em] text-cvr-ink shadow-[0_2px_10px_rgba(0,0,0,0.18)] ring-1 ring-white/60 backdrop-blur-md">
           {p.status}
         </span>
       </div>
@@ -91,7 +91,7 @@ export function ProjectRow({ p }: { p: Project }) {
       // ĐIỆN THOẠI: ảnh TRÊN – nội dung DƯỚI · MÁY TÍNH: ảnh TRÁI – nội dung PHẢI
       className="group flex flex-col gap-3 overflow-hidden border border-cvr-line bg-white p-2.5 shadow-lux shadow-lux-hover transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 sm:flex-row sm:gap-4 sm:p-3"
     >
-      <div className="relative aspect-[16/10] w-full shrink-0 overflow-hidden bg-cvr-surface sm:aspect-[4/3] sm:w-[38%] sm:min-w-[240px] sm:max-w-[420px]">
+      <div className="relative aspect-[16/9] w-full shrink-0 overflow-hidden bg-cvr-surface sm:aspect-[4/3] sm:w-[38%] sm:min-w-[240px] sm:max-w-[420px]">
         <Image src={p.image} alt={p.name} fill sizes="(max-width: 640px) 100vw, 38vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
         <TierBadge tier={p.tier} />
       </div>

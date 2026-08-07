@@ -300,7 +300,7 @@ export default function ProjectsBrowser({
                 className="card-lux group relative flex flex-col overflow-hidden rounded-none bg-white shadow-lux shadow-lux-hover hover:-translate-y-1 hover:border-cvr-blue/45 sm:flex-row sm:gap-5 sm:border sm:border-cvr-line sm:p-3"
               >
                 {/* MOBILE: ảnh TRÊN tràn viền · DESKTOP: ảnh trái */}
-                <div className="relative aspect-[16/10] w-full shrink-0 overflow-hidden rounded-none bg-cvr-surface sm:aspect-[4/3] sm:w-56 sm:rounded-xl md:w-64">
+                <div className="relative aspect-[16/9] w-full shrink-0 overflow-hidden rounded-none bg-cvr-surface sm:aspect-[4/3] sm:w-56 sm:rounded-xl md:w-64">
                   <Image
                     src={p.image}
                     alt={p.name}
@@ -308,7 +308,7 @@ export default function ProjectsBrowser({
                     sizes="(max-width:640px) 33vw, 256px"
                     className="object-cover transition-transform duration-[700ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.06]"
                   />
-                  <span className="absolute left-2 top-2 rounded-md bg-white/90 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-cvr-ink backdrop-blur-sm">
+                  <span className="absolute left-2.5 top-2.5 rounded-full bg-white/80 px-2.5 py-[3px] text-[11px] font-semibold uppercase tracking-[0.06em] text-cvr-ink shadow-[0_2px_10px_rgba(0,0,0,0.18)] ring-1 ring-white/60 backdrop-blur-md">
                     {p.status}
                   </span>
                 </div>

@@ -76,7 +76,7 @@ export default function PropertyCard({
     >
       {/* Ảnh — Diamond khung rộng hơn (rất lớn), còn lại 4/3 */}
       {/* Thẻ trang chủ (tier) trên MOBILE: ảnh 16/10 thấp hơn để màn hình đầu thấy trọn thẻ */}
-      <div className={`relative overflow-hidden bg-cvr-surface ${isFeatured ? "aspect-[16/10]" : isTier ? "aspect-[16/10]" : "aspect-[16/10]"}`}>
+      <div className={`relative overflow-hidden bg-cvr-surface aspect-[16/9] sm:aspect-[16/10]`}>
         <Image
           src={item.image}
           alt={item.title}
@@ -86,8 +86,10 @@ export default function PropertyCard({
         />
         {tier && (
           <span
-            className={`absolute left-2 top-2 font-bold uppercase tracking-wide ${isFeatured ? "px-2 py-1 text-[11px]" : "px-1.5 py-0.5 text-[10px]"}`}
-            style={{ backgroundColor: tier.accent, color: "#fff" }}
+            // Huy hiệu cấp tin: viên thuốc KÍNH MỜ — nền màu hạng trong suốt nhẹ,
+            // viền sáng mảnh + bóng đổ → nổi rõ trên mọi ảnh mà không đè cứng lên ảnh.
+            className={`absolute left-2.5 top-2.5 rounded-full font-semibold uppercase tracking-[0.06em] text-white shadow-[0_2px_10px_rgba(0,0,0,0.28)] ring-1 ring-white/25 backdrop-blur-md ${isFeatured ? "px-2.5 py-1 text-[11px]" : "px-2 py-[3px] text-[10px]"}`}
+            style={{ backgroundColor: `${tier.accent}e6` }}
           >
             {tier.short}
           </span>
