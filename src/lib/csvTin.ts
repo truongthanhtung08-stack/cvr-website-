@@ -120,7 +120,11 @@ export function docCsv(text: string): string[][] {
 
 // ── KIỂM TRA & CHUYỂN THÀNH TIN ─────────────────────────────────────────────
 export function docTinTuCsv(text: string): { rows: ParsedRow[]; loiChung: string | null } {
-  const bang = docCsv(text);
+  return docTinTuBang(docCsv(text));
+}
+
+// Dùng chung cho CSV và Excel (.xlsx) — cả hai đều quy về bảng string[][]
+export function docTinTuBang(bang: string[][]): { rows: ParsedRow[]; loiChung: string | null } {
   if (bang.length < 2) return { rows: [], loiChung: "File chưa có dữ liệu (cần dòng tiêu đề + ít nhất 1 dòng tin)." };
 
   const header = bang[0].map(chuanHoa);

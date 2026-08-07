@@ -3,7 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { anhThuocMa, docTinTuCsv, LOAI_HINH_HOP_LE, type ParsedRow } from "@/lib/csvTin";
+import { anhThuocMa, docTinTuBang, docTinTuCsv, LOAI_HINH_HOP_LE, type ParsedRow } from "@/lib/csvTin";
+import { docXlsx } from "@/lib/docXlsx";
 import { uploadImageFile } from "@/lib/uploadImage";
 
 // ============================================================================
@@ -55,15 +56,27 @@ export default function NhapHangLoatPage() {
     setDangTaiAnh(0);
   }
 
+  // Nhận cả Excel (.xlsx) và CSV — Excel đọc thẳng, không cần "Save as CSV"
+  // (Excel lưu CSV hay sai bảng mã làm tiếng Việt vỡ dấu).
   async function chonFile(file: File) {
     setKetQua("");
     setLoiChung("");
     setRows([]);
     setTenFile(file.name);
-    const text = await file.text();
-    const { rows: r, loiChung: err } = docTinTuCsv(text);
-    if (err) setLoiChung(err);
-    setRows(r);
+    try {
+      const laExcel = /\.xlsx$/i.test(file.name);
+      const { rows: r, loiChung: err } = laExcel
+        ? docTinTuBang(await docXlsx(await file.arrayBuffer()))
+        : docTinTuCsv(await file.text());
+      if (err) setLoiChung(err);
+      setRows(r);
+    } catch (e) {
+      setLoiChung(
+        /\.xls$/i.test(file.name)
+          ? "File .xls đời cũ chưa đọc được — mở bằng Excel rồi Lưu thành .xlsx."
+          : `Không đọc được file: ${e instanceof Error ? e.message : "lỗi không rõ"}`,
+      );
+    }
   }
 
   async function dangTat() {
@@ -120,19 +133,18 @@ export default function NhapHangLoatPage() {
             Mở bằng Excel / Google Sheet. Giữ nguyên dòng tiêu đề, điền từ dòng 2 trở xuống.
           </p>
         </Buoc>
-        <Buoc so="2" title="Lưu lại đúng định dạng">
+        <Buoc so="2" title="Soạn bằng Excel, lưu .xlsx">
           <p className="mt-2 text-xs text-cvr-muted">
-            Excel: <strong>File → Save As → CSV UTF-8 (Comma delimited)</strong>.
-            <br />
-            Google Sheet: <strong>File → Tải xuống → CSV</strong>.
+            Mở file mẫu bằng Excel → điền tin → <strong>File → Save As → Excel Workbook (.xlsx)</strong>.
+            Không cần chuyển sang CSV. Giữ .csv cũng được.
           </p>
         </Buoc>
-        <Buoc so="3" title="Chọn file CSV">
+        <Buoc so="3" title="Chọn file Excel">
           <label className="mt-2 inline-flex cursor-pointer rounded-lg border border-cvr-line px-4 py-2 text-sm font-medium text-cvr-body hover:border-cvr-ink hover:text-cvr-ink">
-            Chọn file CSV
+            Chọn file .xlsx / .csv
             <input
               type="file"
-              accept=".csv,text/csv"
+              accept=".xlsx,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
               className="hidden"
               onChange={(e) => { const f = e.target.files?.[0]; if (f) chonFile(f); e.target.value = ""; }}
             />
