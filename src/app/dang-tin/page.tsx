@@ -21,13 +21,13 @@ export default function DangTinPage() {
     <>
       <Header />
       <main className="flex-1 bg-white">
-        <div className="mx-auto max-w-4xl px-4 pb-20 pt-10 sm:px-6 lg:px-8">
+        <div className="mx-auto w-full max-w-4xl overflow-x-hidden px-4 pb-20 pt-10 sm:px-6 lg:px-8">
           <div className="text-center">
             <h1 className="text-3xl font-semibold tracking-tight text-cvr-ink sm:text-4xl">Đăng tin bất động sản</h1>
             <p className="mx-auto mt-3 max-w-2xl text-cvr-muted">Biểu mẫu chuyên nghiệp với đầy đủ thuộc tính theo từng loại hình — bạn chỉ cần chọn và điền.</p>
           </div>
 
-          <div className="mt-8 grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <div className="mt-8 grid min-w-0 grid-cols-2 gap-3 lg:grid-cols-4">
             {steps.map((s) => (
               <div key={s.n} className="rounded-none border border-cvr-line bg-cvr-surface p-4">
                 <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-sm font-bold text-cvr-ink shadow-sm">{s.n}</span>

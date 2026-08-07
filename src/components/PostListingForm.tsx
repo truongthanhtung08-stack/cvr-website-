@@ -328,7 +328,7 @@ export default function PostListingForm() {
 
       {/* 1. Loại tin & loại hình */}
       <Card step="1" title="Loại tin đăng">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
           <Pick label="Nhu cầu" value={demand} onChange={setDemand} options={demandTypes} />
           <Pick label="Loại hình bất động sản" value={category} onChange={(v) => { setCategory(v); setSpecValues({}); }} options={propertyCategories} />
         </div>
@@ -367,7 +367,7 @@ export default function PostListingForm() {
       {/* 3. Thông tin chính */}
       <Card step="3" title="Thông tin chính">
         <Text label="Tiêu đề tin đăng *" value={title} onChange={setTitle} placeholder="VD: Bán căn hộ 2PN view sông Hàn, full nội thất" required />
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-3">
           <div className="sm:col-span-2">
             <Label>Mức giá</Label>
             <div className="flex gap-2">
@@ -382,7 +382,7 @@ export default function PostListingForm() {
             <input type="number" min="0" value={area} onChange={(e) => setArea(e.target.value)} placeholder="VD: 100" className={inputCls} />
           </div>
         </div>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-3">
           <div>
             <Label>Diện tích xây dựng (m²)</Label>
             <input type="number" min="0" value={builtArea} onChange={(e) => setBuiltArea(e.target.value)} placeholder="VD: 95 (đất nền bỏ trống)" className={inputCls} />
@@ -487,7 +487,7 @@ export default function PostListingForm() {
         <p className="-mt-1 mb-3 text-sm text-cvr-muted">
           Tin ở gói cao hiển thị nổi bật hơn — <span className="font-semibold text-cvr-ink">Diamond</span> có lượt xem trung bình cao gấp 20 lần tin thường.
         </p>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <Label>Loại tin</Label>
             <select value={planTier} onChange={(e) => setPlanTier(e.target.value as TierId)} className={inputCls}>
@@ -525,7 +525,7 @@ export default function PostListingForm() {
       </Card>
 
       <Card step="10" title="Thông tin liên hệ">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-3">
           <div><Label>Họ và tên *</Label><input value={contactName} onChange={(e) => setContactName(e.target.value)} placeholder="Nguyễn Văn A" className={inputCls} /></div>
           <div><Label>Số điện thoại *</Label><input type="tel" value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} placeholder="09xx xxx xxx" className={inputCls} /></div>
           <div><Label>Email</Label><input type="email" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} placeholder="email@example.com" className={inputCls} /></div>
@@ -534,7 +534,7 @@ export default function PostListingForm() {
 
       {/* 10. Thuộc dự án (không bắt buộc) */}
       <Card step="10" title="Thuộc dự án">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <Label>Dự án</Label>
             <select value={projectSlug} onChange={(e) => setProjectSlug(e.target.value)} className={inputCls}>
