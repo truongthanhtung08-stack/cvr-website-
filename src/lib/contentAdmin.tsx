@@ -1,7 +1,9 @@
 // Kiểu dữ liệu + nhãn tiếng Việt cho ADMIN NỘI DUNG (Tin tức + Dự án).
 // Hàng thô của bảng `articles` / `projects` (supabase/migrations/0009_articles_projects.sql).
 
-export type ContentStatus = "draft" | "published";
+// 'pending' = KHÁCH HÀNG (Chủ đầu tư/phân phối) đã gửi dự án, CHỜ QUẢN TRỊ DUYỆT.
+// Khác 'draft' (nháp của chính người tạo, chưa gửi đi đâu cả).
+export type ContentStatus = "draft" | "pending" | "published";
 
 export type ArticleRow = {
   id: string;
@@ -103,14 +105,16 @@ export const articleCategories = [
 export const projectStatusOptions = ["Sắp mở bán", "Đang mở bán", "Sắp bàn giao", "Đã bàn giao"];
 
 export function contentStatusLabel(s: ContentStatus): string {
-  return s === "published" ? "Đã đăng" : "Nháp";
+  return s === "published" ? "Đã đăng" : s === "pending" ? "Chờ duyệt" : "Nháp";
 }
 
 export function contentStatusBadge(s: ContentStatus) {
   const cls =
     s === "published"
       ? "bg-green-50 text-green-700 ring-green-600/20"
-      : "bg-slate-100 text-slate-600 ring-slate-500/20";
+      : s === "pending"
+        ? "bg-amber-50 text-amber-700 ring-amber-600/20"
+        : "bg-slate-100 text-slate-600 ring-slate-500/20";
   return (
     <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${cls}`}>
       {contentStatusLabel(s)}

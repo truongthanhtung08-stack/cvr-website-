@@ -96,6 +96,7 @@ export default function AdminProjectsPage() {
           className="h-10 rounded-lg border border-cvr-line bg-white px-3 text-sm text-cvr-body outline-none focus:border-cvr-ink"
         >
           <option value="all">Tất cả trạng thái</option>
+          <option value="pending">Chờ duyệt</option>
           <option value="published">Đã đăng</option>
           <option value="draft">Nháp</option>
         </select>
@@ -117,14 +118,21 @@ export default function AdminProjectsPage() {
               <a href={`/du-an/${r.slug}`} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-cvr-body hover:text-cvr-ink">
                 Xem
               </a>
-              {r.status === "draft" ? (
-                <button type="button" onClick={() => setRowStatus(r.id, "published")} className="text-sm font-medium text-green-700 hover:text-green-800">
-                  Đăng
-                </button>
-              ) : (
+              {r.status === "published" ? (
                 <button type="button" onClick={() => setRowStatus(r.id, "draft")} className="text-sm font-medium text-cvr-muted hover:text-cvr-ink">
                   Ẩn
                 </button>
+              ) : (
+                <>
+                  <button type="button" onClick={() => setRowStatus(r.id, "published")} className="text-sm font-semibold text-green-700 hover:text-green-800">
+                    {r.status === "pending" ? "Duyệt & đăng" : "Đăng"}
+                  </button>
+                  {r.status === "pending" && (
+                    <button type="button" onClick={() => setRowStatus(r.id, "draft")} className="text-sm font-medium text-red-700 hover:text-red-800">
+                      Trả lại
+                    </button>
+                  )}
+                </>
               )}
               <Link href={`/admin/du-an/${r.id}`} className="text-sm font-medium text-cvr-blue-ink hover:text-cvr-blue">
                 Sửa

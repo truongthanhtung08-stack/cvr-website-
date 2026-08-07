@@ -84,7 +84,7 @@ function NoiDung() {
             <li>· Thông tin người phụ trách (họ tên, điện thoại)</li>
           </ul>
           <Link
-            href="/tai-khoan/cai-dat"
+            href="/tai-khoan/du-an/ho-so"
             className="mt-4 inline-block rounded-lg bg-cvr-ink px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-cvr-ink/90"
           >
             Gửi hồ sơ xét duyệt

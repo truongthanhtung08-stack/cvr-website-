@@ -177,8 +177,8 @@ function PostTypeKhoa({ icon, title, desc, moKhoa }: { icon: string; title: stri
       <span className="min-w-0">
         <span className="block font-semibold text-cvr-body">{title}</span>
         <span className="mt-0.5 block text-xs text-cvr-muted">{desc}</span>
-        <Link href="/tai-khoan/du-an" className="mt-1 inline-block text-xs font-semibold text-cvr-blue-ink underline">
-          Xem điều kiện & gửi hồ sơ →
+        <Link href="/tai-khoan/du-an/ho-so" className="mt-1 inline-block text-xs font-semibold text-cvr-blue-ink underline">
+          Gửi hồ sơ xét duyệt →
         </Link>
       </span>
     </div>
