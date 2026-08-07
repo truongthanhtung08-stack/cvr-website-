@@ -58,9 +58,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }, [loading, profile]);
 
   if (loading || !profile || profile.role !== "admin") {
+    // Màn hình chờ giữ ĐÚNG khung của trang quản trị (có chỗ cột trái + thanh trên)
+    // → khi tải xong nội dung không bị nhảy sang phải như trước.
     return (
-      <div className="flex min-h-screen items-center justify-center bg-cvr-surface text-sm text-cvr-muted">
-        Đang tải khu vực quản trị…
+      <div className="flex min-h-screen bg-cvr-surface">
+        <div className="hidden w-60 shrink-0 border-r border-cvr-line bg-white md:block" />
+        <div className="flex min-w-0 flex-1 flex-col">
+          <div className="h-14 shrink-0 border-b border-cvr-line bg-white sm:h-16" />
+          <div className="flex flex-1 items-center justify-center text-sm text-cvr-muted">
+            Đang tải khu vực quản trị…
+          </div>
+        </div>
       </div>
     );
   }
