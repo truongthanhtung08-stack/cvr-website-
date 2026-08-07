@@ -115,6 +115,8 @@ export default function DuyetHoSoDuAnPage() {
 
       {loi && <p className="rounded-lg bg-red-50 px-4 py-2.5 text-sm text-red-700">{loi}</p>}
 
+      <MoQuyenNhanh onXong={tai} />
+
       {loading ? (
         <p className="text-sm text-cvr-muted">Đang tải…</p>
       ) : hienThi.length === 0 ? (
@@ -189,6 +191,112 @@ export default function DuyetHoSoDuAnPage() {
         </div>
       )}
     </div>
+  );
+}
+
+// ── MỞ QUYỀN NHANH ──────────────────────────────────────────────────────────
+// Duyệt trực tiếp theo email tài khoản, KHÔNG cần khách gửi hồ sơ qua web —
+// dùng khi đã xác minh hồ sơ ngoài đời (gặp trực tiếp, gửi qua Zalo/email),
+// hoặc khi chính chủ dự án muốn tự thử chức năng đăng dự án.
+function MoQuyenNhanh({ onXong }: { onXong: () => void }) {
+  const [email, setEmail] = useState("");
+  const [dangChay, setDangChay] = useState(false);
+  const [thongBao, setThongBao] = useState("");
+  const [ds, setDs] = useState<{ id: string; email: string | null; full_name: string | null }[]>([]);
+
+  async function taiDsCoQuyen() {
+    try {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, email, full_name")
+        .eq("can_post_project", true);
+      setDs(data ?? []);
+    } catch {
+      /* bỏ qua */
+    }
+  }
+
+  useEffect(() => { taiDsCoQuyen(); }, []);
+
+  async function doiQuyen(mail: string, bat: boolean) {
+    const m = mail.trim().toLowerCase();
+    if (!m) return setThongBao("Nhập email tài khoản cần mở quyền.");
+    setDangChay(true);
+    setThongBao("");
+    try {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("profiles")
+        .update({ can_post_project: bat })
+        .eq("email", m)
+        .select("id, email");
+      if (error) throw error;
+      if (!data?.length) {
+        setThongBao(`Không tìm thấy tài khoản có email "${m}". Kiểm tra lại email đã đăng ký.`);
+      } else {
+        setThongBao(bat ? `Đã mở quyền đăng dự án cho ${m}.` : `Đã thu hồi quyền của ${m}.`);
+        setEmail("");
+        await taiDsCoQuyen();
+        onXong();
+      }
+    } catch (e) {
+      setThongBao(`Không lưu được: ${e instanceof Error ? e.message : "lỗi không rõ"}`);
+    }
+    setDangChay(false);
+  }
+
+  return (
+    <section className="rounded-2xl border border-cvr-line bg-white p-5 shadow-lux">
+      <h2 className="text-base font-semibold text-cvr-ink">Mở quyền nhanh theo email</h2>
+      <p className="mt-1 text-sm text-cvr-muted">
+        Đã xác minh hồ sơ bên ngoài (hoặc muốn tự thử) thì mở quyền thẳng ở đây, khách không cần gửi hồ sơ qua web.
+      </p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        <input
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); doiQuyen(email, true); } }}
+          placeholder="email@tai-khoan.com"
+          className="h-10 min-w-[240px] flex-1 rounded-lg border border-cvr-line px-3 text-sm text-cvr-ink placeholder-cvr-faint outline-none focus:border-cvr-ink"
+        />
+        <button
+          type="button"
+          disabled={dangChay}
+          onClick={() => doiQuyen(email, true)}
+          className="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-700 disabled:opacity-50"
+        >
+          {dangChay ? "Đang lưu…" : "Mở quyền đăng dự án"}
+        </button>
+      </div>
+      {thongBao && (
+        <p className={`mt-2 rounded-lg px-4 py-2.5 text-sm ${thongBao.startsWith("Đã") ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>
+          {thongBao}
+        </p>
+      )}
+
+      {ds.length > 0 && (
+        <div className="mt-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-cvr-muted">
+            Tài khoản đang có quyền đăng dự án ({ds.length})
+          </p>
+          <ul className="mt-2 space-y-1.5">
+            {ds.map((p) => (
+              <li key={p.id} className="flex flex-wrap items-center gap-3 text-sm">
+                <span className="text-cvr-body">{p.full_name || "(chưa đặt tên)"} · {p.email}</span>
+                <button
+                  type="button"
+                  onClick={() => p.email && doiQuyen(p.email, false)}
+                  className="text-xs font-medium text-red-700 underline hover:text-red-800"
+                >
+                  Thu hồi
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </section>
   );
 }
 
