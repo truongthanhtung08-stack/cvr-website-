@@ -16,8 +16,18 @@ export type ParsedRow = {
   dong: number;                       // số dòng trong file (tính cả dòng tiêu đề)
   loi: string[];                      // rỗng = hợp lệ
   payload: Record<string, unknown>;   // sẵn sàng insert vào bảng listings
+  maAnh: string;                      // mã để khớp ảnh tải hàng loạt theo tên tệp
   tomTat: { tieuDe: string; mucDich: string; loaiHinh: string; gia: string; khuVuc: string; hang: string };
 };
+
+// Khớp ảnh với tin theo TÊN TỆP: ảnh "tin01-1.jpg", "tin01_2.jpg", "tin01 (3).jpg"
+// đều thuộc tin có ma_anh = "tin01". So sánh không phân biệt hoa thường/dấu.
+export function anhThuocMa(tenTep: string, maAnh: string): boolean {
+  if (!maAnh) return false;
+  const ten = chuanHoa(tenTep.replace(/\.[^.]+$/, "")); // bỏ đuôi mở rộng
+  const ma = chuanHoa(maAnh);
+  return ten === ma || ten.startsWith(`${ma}_`) || ten.startsWith(`${ma}(`);
+}
 
 // ── CỘT TRONG FILE ──────────────────────────────────────────────────────────
 // Tên cột nhận cả có dấu lẫn không dấu, hoa/thường, dấu cách hay gạch dưới.
@@ -35,6 +45,7 @@ export const COT = {
   tinhThanh: "tinh_thanh",
   hangTin: "hang_tin",
   anh: "anh",
+  maAnh: "ma_anh",
   diaChi: "dia_chi",
   phapLy: "phap_ly",
   huong: "huong",
@@ -200,6 +211,7 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
     dong: soDong,
     loi,
     payload,
+    maAnh: lay(COT.maAnh),
     tomTat: {
       tieuDe: tieuDe || "(trống)",
       mucDich: mucDich === "thue" ? "Cho thuê" : "Mua bán",

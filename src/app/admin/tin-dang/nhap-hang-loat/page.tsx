@@ -3,7 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { docTinTuCsv, LOAI_HINH_HOP_LE, type ParsedRow } from "@/lib/csvTin";
+import { anhThuocMa, docTinTuCsv, LOAI_HINH_HOP_LE, type ParsedRow } from "@/lib/csvTin";
+import { uploadImageFile } from "@/lib/uploadImage";
 
 // ============================================================================
 // ADMIN — ĐĂNG NHIỀU TIN CÙNG LÚC BẰNG FILE (Excel/CSV)
@@ -19,8 +20,40 @@ export default function NhapHangLoatPage() {
   const [dangGui, setDangGui] = useState(false);
   const [ketQua, setKetQua] = useState("");
 
+  // Ảnh tải hàng loạt: tên tệp → link đã tải lên kho ảnh
+  const [anhDaTai, setAnhDaTai] = useState<{ ten: string; url: string }[]>([]);
+  const [dangTaiAnh, setDangTaiAnh] = useState(0); // số ảnh còn lại đang tải
+  const [loiAnh, setLoiAnh] = useState("");
+
   const hopLe = rows.filter((r) => r.loi.length === 0);
   const sai = rows.filter((r) => r.loi.length > 0);
+
+  // Ảnh của một tin = ảnh ghi sẵn trong cột "anh" + ảnh tải lên có tên khớp "ma_anh"
+  // (xếp theo tên tệp nên ảnh …-1 đứng đầu và thành ẢNH ĐẠI DIỆN).
+  const anhCuaTin = (r: ParsedRow): string[] => {
+    const coSan = (r.payload.images as string[]) ?? [];
+    const khop = anhDaTai
+      .filter((a) => anhThuocMa(a.ten, r.maAnh))
+      // Xếp theo SỐ cuối tên tệp (tin01-1, tin01-2, "tin01 (3)") → ảnh -1 làm đại diện
+      .sort((a, b) => soCuoiTen(a.ten) - soCuoiTen(b.ten) || a.ten.localeCompare(b.ten, "vi", { numeric: true }))
+      .map((a) => a.url);
+    return [...coSan, ...khop];
+  };
+
+  async function taiAnhHangLoat(files: FileList) {
+    setLoiAnh("");
+    const ds = Array.from(files);
+    setDangTaiAnh(ds.length);
+    const them: { ten: string; url: string }[] = [];
+    for (const f of ds) {
+      const { url, error } = await uploadImageFile(f);
+      if (error) setLoiAnh(error);
+      else if (url) them.push({ ten: f.name, url });
+      setDangTaiAnh((n) => n - 1);
+    }
+    setAnhDaTai((cu) => [...cu, ...them]);
+    setDangTaiAnh(0);
+  }
 
   async function chonFile(file: File) {
     setKetQua("");
@@ -43,7 +76,9 @@ export default function NhapHangLoatPage() {
       let xong = 0;
       // Chia lô 50 tin/lần cho nhẹ đường truyền và dễ biết dừng ở đâu nếu lỗi
       for (let i = 0; i < hopLe.length; i += 50) {
-        const lo = hopLe.slice(i, i + 50).map((r) => ({ ...r.payload, published_at: now }));
+        const lo = hopLe
+          .slice(i, i + 50)
+          .map((r) => ({ ...r.payload, images: anhCuaTin(r), published_at: now }));
         const { error } = await supabase.from("listings").insert(lo);
         if (error) {
           setKetQua(`Đã đăng ${xong} tin thì gặp lỗi: ${error.message}`);
@@ -55,6 +90,7 @@ export default function NhapHangLoatPage() {
       setKetQua(`Đã đăng ${xong} tin. Web cập nhật trong vòng 60 giây.`);
       setRows([]);
       setTenFile("");
+      setAnhDaTai([]);
     } catch {
       setKetQua("Không kết nối được cơ sở dữ liệu.");
     }
@@ -91,7 +127,7 @@ export default function NhapHangLoatPage() {
             Google Sheet: <strong>File → Tải xuống → CSV</strong>.
           </p>
         </Buoc>
-        <Buoc so="3" title="Chọn file & đăng">
+        <Buoc so="3" title="Chọn file CSV">
           <label className="mt-2 inline-flex cursor-pointer rounded-lg border border-cvr-line px-4 py-2 text-sm font-medium text-cvr-body hover:border-cvr-ink hover:text-cvr-ink">
             Chọn file CSV
             <input
@@ -104,6 +140,49 @@ export default function NhapHangLoatPage() {
           {tenFile && <p className="mt-2 truncate text-xs text-cvr-muted">Đang xem: {tenFile}</p>}
         </Buoc>
       </div>
+
+      {/* BƯỚC 4 — TẢI ẢNH HÀNG LOẠT, TỰ KHỚP VÀO TIN THEO TÊN TỆP */}
+      <section className="rounded-xl border border-cvr-line bg-white p-5">
+        <p className="text-xs font-bold uppercase tracking-wider text-cvr-faint">Bước 4</p>
+        <h2 className="mt-1 text-base font-semibold text-cvr-ink">Tải ảnh cho tất cả tin — một lượt</h2>
+        <p className="mt-1 text-sm text-cvr-muted">
+          Đặt tên ảnh theo <strong>mã ảnh</strong> của tin trong file (cột <code>ma_anh</code>):
+          tin <code>tin01</code> thì ảnh đặt <code>tin01-1.jpg</code>, <code>tin01-2.jpg</code>…
+          Chọn HẾT ảnh một lần, hệ thống tự chia về đúng tin — ảnh số 1 làm ảnh đại diện.
+        </p>
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-cvr-line px-4 py-2 text-sm font-medium text-cvr-body hover:border-cvr-ink hover:text-cvr-ink">
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 16V4m0 0L8 8m4-4l4 4M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" />
+            </svg>
+            Chọn nhiều ảnh từ máy
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              className="hidden"
+              onChange={(e) => { const f = e.target.files; if (f?.length) taiAnhHangLoat(f); e.target.value = ""; }}
+            />
+          </label>
+          {dangTaiAnh > 0 && <span className="text-sm text-cvr-muted">Đang tải… còn {dangTaiAnh} ảnh</span>}
+          {anhDaTai.length > 0 && dangTaiAnh === 0 && (
+            <span className="text-sm font-medium text-green-700">Đã tải {anhDaTai.length} ảnh</span>
+          )}
+          {anhDaTai.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setAnhDaTai([])}
+              className="text-sm text-cvr-muted underline hover:text-cvr-ink"
+            >
+              Bỏ hết ảnh đã tải
+            </button>
+          )}
+        </div>
+        {loiAnh && <p className="mt-2 rounded-lg bg-red-50 px-4 py-2.5 text-sm text-red-700">{loiAnh}</p>}
+        <p className="mt-2 text-xs text-cvr-faint">
+          Ảnh ≤ 10MB mỗi tệp. Tin nào đã ghi sẵn link trong cột <code>anh</code> thì link đó đứng trước.
+        </p>
+      </section>
 
       {loiChung && <p className="rounded-lg bg-red-50 px-4 py-2.5 text-sm text-red-700">{loiChung}</p>}
       {ketQua && (
@@ -155,6 +234,7 @@ export default function NhapHangLoatPage() {
                   <th className="px-3 py-2.5">Giá</th>
                   <th className="px-3 py-2.5">Khu vực</th>
                   <th className="px-3 py-2.5">Hạng</th>
+                  <th className="px-3 py-2.5">Ảnh</th>
                 </tr>
               </thead>
               <tbody>
@@ -167,6 +247,13 @@ export default function NhapHangLoatPage() {
                     <td className="px-3 py-2.5 text-cvr-body">{r.tomTat.gia}</td>
                     <td className="max-w-[220px] truncate px-3 py-2.5 text-cvr-body">{r.tomTat.khuVuc}</td>
                     <td className="px-3 py-2.5 uppercase text-cvr-muted">{r.tomTat.hang}</td>
+                    <td className="px-3 py-2.5">
+                      {anhCuaTin(r).length > 0 ? (
+                        <span className="font-medium text-green-700">{anhCuaTin(r).length} ảnh</span>
+                      ) : (
+                        <span className="text-cvr-faint">chưa có</span>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -186,7 +273,8 @@ export default function NhapHangLoatPage() {
           <li><strong>dien_tich</strong> (m²), <strong>phong_ngu</strong>, <strong>phong_tam</strong>: chỉ ghi số.</li>
           <li><strong>tinh_thanh</strong>: bắt buộc · <strong>quan_huyen</strong>, <strong>phuong_xa</strong>: nên có để lọc theo khu vực.</li>
           <li><strong>hang_tin</strong>: <code>diamond</code> · <code>gold</code> · <code>silver</code> · <code>basic</code> (bỏ trống = basic).</li>
-          <li><strong>anh</strong>: nhiều ảnh ngăn nhau bằng dấu <code>|</code>. Ảnh phải là đường dẫn đã có trên web (vd <code>/images/tin/1.jpg</code>) hoặc link ảnh đầy đủ (https://…).</li>
+          <li><strong>ma_anh</strong>: mã để tải ảnh hàng loạt (vd <code>tin01</code>) — đặt tên ảnh <code>tin01-1.jpg</code>, <code>tin01-2.jpg</code>… rồi chọn hết ảnh ở Bước 4, hệ thống tự chia đúng tin. <strong>Không phải up từng tin.</strong></li>
+          <li><strong>anh</strong>: chỉ dùng khi ảnh ĐÃ có link sẵn — nhiều ảnh ngăn nhau bằng dấu <code>|</code> (vd <code>/images/tin/1.jpg</code> hoặc https://…). Để trống nếu tải ảnh từ máy ở Bước 4.</li>
           <li><strong>dia_chi</strong>, <strong>phap_ly</strong>, <strong>huong</strong>, <strong>lien_he_ten</strong>, <strong>lien_he_sdt</strong>: không bắt buộc.</li>
         </ul>
         <p className="mt-3 text-sm text-cvr-muted">
@@ -201,6 +289,12 @@ export default function NhapHangLoatPage() {
       </section>
     </div>
   );
+}
+
+// Số thứ tự ở CUỐI tên tệp: "tin01-2.jpg" → 2 · "tin01 (3).png" → 3 · không có → 9999
+function soCuoiTen(ten: string): number {
+  const m = ten.replace(/\.[^.]+$/, "").match(/(\d+)\s*\)?$/);
+  return m ? Number(m[1]) : 9999;
 }
 
 function Buoc({ so, title, children }: { so: string; title: string; children: React.ReactNode }) {
