@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useProfile } from "@/lib/useProfile";
 import { roleLabel, statusBadge } from "@/lib/adminLabels";
-import { freeNote, levelOf, tenGoiMienPhi, vnd } from "@/lib/billing";
+import { freeNote, levelOf, levelTiepTheo, tenGoiMienPhi, vnd } from "@/lib/billing";
 import { useBilling } from "@/lib/useBilling";
 
 // Tổng quan tài khoản thành viên: ví (số dư · điểm · cấp) + gói dịch vụ +
@@ -21,7 +21,8 @@ export default function AccountOverviewPage() {
   const balance = p.balance ?? 0;
   const points = p.points ?? 0;
   const totalSpend = p.total_spend ?? 0;
-  const level = levelOf(billing, totalSpend);
+  const level = levelOf(billing, totalSpend);       // null = chưa đạt mốc nào
+  const capKeTiep = levelTiepTheo(billing, totalSpend);
   const pointValue = points * billing.points.redeemRate;
   const free = billing.free;
 
@@ -31,7 +32,18 @@ export default function AccountOverviewPage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Card label="Số dư tài khoản" value={vnd(balance)} accent />
         <Card label="Điểm thưởng" value={`${points} điểm`} sub={pointValue > 0 ? `≈ ${vnd(pointValue)}` : "Nạp tiền để tích điểm"} />
-        <Card label="Cấp thành viên" value={level.name} sub={level.discount > 0 ? `Giảm thêm ${level.discount}% khi đăng tin` : "Chi tiêu để lên cấp"} color={level.color} />
+        <Card
+          label="Cấp hội viên"
+          value={level ? level.name : "Chưa có cấp"}
+          sub={
+            level && level.discount > 0
+              ? `Giảm thêm ${level.discount}% khi đăng tin`
+              : capKeTiep
+                ? `Chi tiêu ${vnd(capKeTiep.minSpend)} để lên ${capKeTiep.name}`
+                : undefined
+          }
+          color={level?.color}
+        />
       </div>
 
       <div className="flex flex-wrap gap-3">
@@ -62,14 +74,24 @@ export default function AccountOverviewPage() {
         </p>
       )}
 
-      {/* Đăng tin — đúng 3 loại của nền tảng */}
-      <div className="rounded-2xl border border-cvr-line bg-white p-5 shadow-sm">
-        <h2 className="text-base font-semibold text-cvr-ink">Đăng tin mới</h2>
-        <p className="mt-1 text-sm text-cvr-muted">Chọn loại tin bạn muốn đăng.</p>
-        <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <PostType href="/dang-tin?loai=ban" title="Mua bán" desc="Nhà, đất, căn hộ cần bán" />
-          <PostType href="/dang-tin?loai=thue" title="Cho thuê" desc="Nhà, mặt bằng, căn hộ cho thuê" />
-          <PostType href="/dang-tin?loai=du-an" title="Dự án" desc="Dự án chủ đầu tư phân phối" />
+      {/* ĐĂNG TIN — việc quan trọng nhất của khách, nên làm NỔI hẳn:
+          viền xanh + nền xanh nhạt + icon từng loại để nhìn phát nhận ra ngay. */}
+      <div className="rounded-2xl border-2 border-cvr-blue/35 bg-cvr-blue/[0.05] p-5 shadow-lux">
+        <div className="flex items-start gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-cvr-blue text-white">
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+          </span>
+          <div className="min-w-0">
+            <h2 className="text-lg font-semibold tracking-tight text-cvr-ink">Đăng tin mới</h2>
+            <p className="mt-0.5 text-sm text-cvr-muted">Chọn loại tin bạn muốn đăng — chỉ mất 2 phút.</p>
+          </div>
+        </div>
+        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <PostType href="/dang-tin?loai=ban" icon="tag" title="Mua bán" desc="Nhà, đất, căn hộ cần bán" />
+          <PostType href="/dang-tin?loai=thue" icon="key" title="Cho thuê" desc="Nhà, mặt bằng, căn hộ cho thuê" />
+          <PostType href="/dang-tin?loai=du-an" icon="building" title="Dự án" desc="Dự án chủ đầu tư phân phối" />
         </div>
       </div>
 
@@ -125,11 +147,28 @@ function Card({ label, value, sub, accent, color }: { label: string; value: stri
   );
 }
 
-function PostType({ href, title, desc }: { href: string; title: string; desc: string }) {
+function PostType({ href, icon, title, desc }: { href: string; icon: string; title: string; desc: string }) {
+  const props = { fill: "none", stroke: "currentColor", strokeWidth: 1.8, viewBox: "0 0 24 24" } as const;
+  const hinh =
+    icon === "tag" ? (
+      <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M3 11V5a2 2 0 012-2h6l9 9a2 2 0 010 2.83l-5.17 5.17a2 2 0 01-2.83 0L3 11z" />
+    ) : icon === "key" ? (
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15 7a4 4 0 11-3.9 5H8v3H5v3H2v-3l6.1-6A4 4 0 0115 7z" />
+    ) : (
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 21h18M5 21V5a2 2 0 012-2h6a2 2 0 012 2v16m0-10h2a2 2 0 012 2v8M9 7h2m-2 4h2m-2 4h2" />
+    );
   return (
-    <Link href={href} className="rounded-xl border border-cvr-line p-4 transition hover:border-cvr-ink hover:shadow-sm">
-      <p className="font-semibold text-cvr-ink">{title}</p>
-      <p className="mt-0.5 text-xs text-cvr-muted">{desc}</p>
+    <Link
+      href={href}
+      className="flex items-center gap-3 rounded-xl border border-cvr-line bg-white p-4 transition hover:border-cvr-blue hover:shadow-lux"
+    >
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-cvr-blue/10 text-cvr-blue-ink">
+        <svg className="h-[22px] w-[22px]" {...props}>{hinh}</svg>
+      </span>
+      <span className="min-w-0">
+        <span className="block font-semibold text-cvr-ink">{title}</span>
+        <span className="mt-0.5 block text-xs text-cvr-muted">{desc}</span>
+      </span>
     </Link>
   );
 }

@@ -64,10 +64,11 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
           </h1>
           <p className="mt-1 text-sm text-cvr-muted">Quản lý tin đăng, ví tiền và thông tin cá nhân.</p>
 
-          {/* ĐIỆN THOẠI — hàng chip cuộn ngang (một dòng, không cắt chữ) */}
+          {/* ĐIỆN THOẠI — hàng chip cuộn ngang, DÍNH ngay dưới header (60px) để
+              cuộn tới đâu vẫn thấy đường đi, không phải vuốt ngược lên đầu trang. */}
           <nav
             aria-label="Điều hướng tài khoản"
-            className="no-scrollbar mt-5 flex gap-1.5 overflow-x-auto lg:hidden"
+            className="no-scrollbar sticky top-[60px] z-20 -mx-4 mt-5 flex gap-1.5 overflow-x-auto border-y border-cvr-line bg-white px-4 py-2.5 sm:-mx-6 sm:px-6 lg:hidden"
           >
             {tatCaMuc.map((m) => {
               const active = dangXem(m.href, pathname);

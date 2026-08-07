@@ -11,7 +11,7 @@ import {
   type Promo,
   type PromoAudience,
 } from "@/lib/billing";
-import type { TierId } from "@/lib/packages";
+import { getTier, type TierId } from "@/lib/packages";
 
 // ============================================================================
 // ADMIN — GIÁ & KHUYẾN MÃI (chủ dự án tự quản lý, không cần sửa code)
@@ -153,7 +153,7 @@ function PlansTab({ data, setData }: { data: BillingData; setData: (d: BillingDa
             {data.plans.map((p) => (
               <tr key={p.tierId} className="border-b border-cvr-line/70">
                 <td className="py-3 pr-4">
-                  <p className="font-semibold text-cvr-ink">{p.name}</p>
+                  <p className="font-semibold text-cvr-ink">{getTier(p.tierId).name}</p>
                   {p.note && <p className="text-xs text-cvr-muted">{p.note}</p>}
                 </td>
                 {p.terms.map((t) => (

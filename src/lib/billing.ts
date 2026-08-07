@@ -7,7 +7,7 @@
 // nên đổi là hiện NGAY, không cần sửa code.
 // ============================================================================
 
-import type { TierId } from "@/lib/packages";
+import { getTier, type TierId } from "@/lib/packages";
 
 // ── Gói đăng tin ────────────────────────────────────────────────────────────
 // Mỗi cấp tin (Diamond/Gold/Silver/Basic) có các mốc thời hạn kèm giá chuẩn.
@@ -128,8 +128,9 @@ export const BILLING_DEFAULT: BillingData = {
     note: "Thành viên mới được đăng 3 tin miễn phí trong 30 ngày đầu.",
   },
   points: { active: true, earnPerVnd: 10_000, redeemRate: 100, minRedeem: 100 },
+  // CẤP HỘI VIÊN — KHÔNG có cấp "Đồng". Khách chưa đạt mốc chi tiêu thấp nhất
+  // thì CHƯA có cấp (không phải hạng bét), lên Bạc khi đủ mốc.
   levels: [
-    { id: "dong", name: "Đồng", minSpend: 0, discount: 0, color: "#a9714b" },
     { id: "bac", name: "Bạc", minSpend: 5_000_000, discount: 3, color: "#8e949b" },
     { id: "vang", name: "Vàng", minSpend: 20_000_000, discount: 5, color: "#c9a24a" },
     { id: "kimcuong", name: "Kim cương", minSpend: 50_000_000, discount: 10, color: "#d7263d" },
@@ -161,14 +162,14 @@ export function quotePrice({
   days,
   today,
   isNewMember = false,
-  levelId = "dong",
+  levelId,
 }: {
   data: BillingData;
   tierId: TierId;
   days: number;
   today: string;          // "YYYY-MM-DD"
   isNewMember?: boolean;
-  levelId?: string;
+  levelId?: string;       // không truyền = khách chưa có cấp hội viên
 }): PriceQuote {
   const plan = data.plans.find((p) => p.tierId === tierId);
   const term = plan?.terms.find((t) => t.days === days) ?? plan?.terms[0];
@@ -183,15 +184,21 @@ export function quotePrice({
   const promo = fit[0] ?? null;
   const promoOff = promo ? Math.round((base * promo.percent) / 100) : 0;
 
-  const level = data.levels.find((l) => l.id === levelId);
+  const level = levelId ? data.levels.find((l) => l.id === levelId) : undefined;
   const levelOff = level?.discount ? Math.round(((base - promoOff) * level.discount) / 100) : 0;
 
   return { base, promo, promoOff, levelOff, total: Math.max(0, base - promoOff - levelOff) };
 }
 
-export function levelOf(data: BillingData, totalSpend: number): MemberLevel {
+// Cấp hội viên theo tổng chi tiêu. CHƯA đủ mốc thấp nhất → null (chưa có cấp).
+export function levelOf(data: BillingData, totalSpend: number): MemberLevel | null {
   const sorted = [...data.levels].sort((a, b) => b.minSpend - a.minSpend);
-  return sorted.find((l) => totalSpend >= l.minSpend) ?? data.levels[0];
+  return sorted.find((l) => totalSpend >= l.minSpend) ?? null;
+}
+
+// Cấp kế tiếp cần đạt (để nói cho khách còn thiếu bao nhiêu). Hết cấp → null.
+export function levelTiepTheo(data: BillingData, totalSpend: number): MemberLevel | null {
+  return [...data.levels].sort((a, b) => a.minSpend - b.minSpend).find((l) => totalSpend < l.minSpend) ?? null;
 }
 
 export function vnd(n: number): string {
@@ -211,9 +218,10 @@ export function freeNote(f: FreePolicy, tenGoi?: string): string {
   return `Thành viên mới: đăng miễn phí ${soTin} trong ${thoiHan}${goi}.`;
 }
 
-// Tên gói của chính sách miễn phí — để câu thông báo nói rõ miễn phí ở gói nào
-export function tenGoiMienPhi(data: BillingData): string | undefined {
-  return data.plans.find((p) => p.tierId === data.free.tierId)?.name;
+// Tên gói của chính sách miễn phí — để câu thông báo nói rõ miễn phí ở gói nào.
+// TÊN CẤP TIN luôn lấy từ packages.ts (một nguồn duy nhất) để mọi nơi gọi giống nhau.
+export function tenGoiMienPhi(data: BillingData): string {
+  return getTier(data.free.tierId).name;
 }
 
 // ── DÒNG GIÁ CHO TRANG BÁO GIÁ (/bao-gia-dang-tin) ──────────────────────────

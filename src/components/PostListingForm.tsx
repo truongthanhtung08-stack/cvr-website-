@@ -14,7 +14,7 @@ import ImagePicker from "@/components/admin/ImagePicker";
 import ContentEditor from "@/components/admin/ContentEditor";
 import { freeNote, levelOf, quotePrice, tenGoiMienPhi, vnd } from "@/lib/billing";
 import { useBilling } from "@/lib/useBilling";
-import type { TierId } from "@/lib/packages";
+import { getTier, type TierId } from "@/lib/packages";
 import type { ListingRow } from "@/lib/listingAdmin";
 
 // Form đăng tin cho KHÁCH HÀNG (/dang-tin) — nối Supabase thật.
@@ -123,9 +123,9 @@ export default function PostListingForm() {
         days: planDays,
         today: new Date().toISOString().slice(0, 10),
         isNewMember: laThanhVienMoi,
-        levelId: capThanhVien.id,
+        levelId: capThanhVien?.id, // chưa có cấp hội viên → không giảm theo cấp
       }),
-    [billing, planTier, planDays, laThanhVienMoi, capThanhVien.id],
+    [billing, planTier, planDays, laThanhVienMoi, capThanhVien],
   );
 
   // Gói này có được miễn phí cho khách đang đăng nhập không?
@@ -569,7 +569,7 @@ export default function PostListingForm() {
             <select value={planTier} onChange={(e) => setPlanTier(e.target.value as TierId)} className={inputCls}>
               {billing.plans.map((p) => (
                 <option key={p.tierId} value={p.tierId}>
-                  {p.name} — {giaCuaGoi(p.tierId)}
+                  {getTier(p.tierId).name} — {giaCuaGoi(p.tierId)}
                 </option>
               ))}
             </select>
@@ -594,7 +594,7 @@ export default function PostListingForm() {
         {/* BẢNG TÍNH TIỀN — nói rõ từng khoản để khách không bao giờ thấy giá "trên trời" */}
         <div className="mt-4 rounded-xl bg-cvr-surface px-4 py-3">
           <div className="flex items-center justify-between gap-2 text-sm text-cvr-body">
-            <span>Giá gói {billing.plans.find((p) => p.tierId === planTier)?.name} · {planDays} ngày</span>
+            <span>Giá gói {getTier(planTier).name} · {planDays} ngày</span>
             <span className={thanhTien < baoGia.base ? "text-cvr-muted line-through" : "font-semibold text-cvr-ink"}>
               {vnd(baoGia.base)}
             </span>
@@ -613,9 +613,9 @@ export default function PostListingForm() {
                   <span className="font-semibold">− {vnd(baoGia.promoOff)}</span>
                 </div>
               )}
-              {baoGia.levelOff > 0 && (
+              {baoGia.levelOff > 0 && capThanhVien && (
                 <div className="mt-1.5 flex items-center justify-between gap-2 text-sm text-cvr-blue-ink">
-                  <span>Ưu đãi cấp {capThanhVien.name} (−{capThanhVien.discount}%)</span>
+                  <span>Ưu đãi hội viên {capThanhVien.name} (−{capThanhVien.discount}%)</span>
                   <span className="font-semibold">− {vnd(baoGia.levelOff)}</span>
                 </div>
               )}

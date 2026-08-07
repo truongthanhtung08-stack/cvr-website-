@@ -61,6 +61,17 @@ function chuanHoa(s: string): string {
     .replace(/[\s\-/]+/g, "_");
 }
 
+// Đọc số theo cách người Việt gõ, KHÔNG được nhầm 5,5 tỷ thành 55 tỷ:
+//   · Có dấu PHẨY  → phẩy là dấu thập phân, chấm là dấu nghìn: "1.234,5" → 1234.5
+//   · Không có phẩy → chấm là dấu thập phân (kiểu Excel tiếng Anh): "5.5" → 5.5
+function soVN(s: string): number | null {
+  const t = s.trim();
+  if (!t) return null;
+  const chuan = t.includes(",") ? t.replace(/\./g, "").replace(",", ".") : t;
+  const n = Number(chuan);
+  return Number.isNaN(n) ? null : n;
+}
+
 // ── ĐỌC CSV ─────────────────────────────────────────────────────────────────
 // Tự nhận dấu phân cách , hoặc ; (Excel tiếng Việt hay xuất bằng ;), hiểu ô có
 // dấu nháy kép bọc ngoài (bên trong có dấu phẩy, xuống dòng, "" = một dấu nháy).
@@ -137,20 +148,18 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
 
   // Giá: BÁN nhập theo TỶ · THUÊ nhập theo TRIỆU/tháng (giống form đăng tin).
   // Bỏ trống = Thỏa thuận.
-  const giaRaw = lay(COT.gia).replace(/\./g, "").replace(",", ".").trim();
   let giaVnd: number | null = null;
-  if (giaRaw) {
-    const n = parseFloat(giaRaw);
-    if (Number.isNaN(n)) loi.push(`gia "${lay(COT.gia)}" không phải số`);
+  if (lay(COT.gia)) {
+    const n = soVN(lay(COT.gia));
+    if (n == null) loi.push(`gia "${lay(COT.gia)}" không phải số`);
     else giaVnd = Math.round(n * (mucDich === "thue" ? 1e6 : 1e9));
   }
 
   const soHoacNull = (v: string, ten: string, nguyen = false): number | null => {
-    const s = v.replace(",", ".").trim();
-    if (!s) return null;
-    const n = nguyen ? parseInt(s, 10) : parseFloat(s);
-    if (Number.isNaN(n)) { loi.push(`${ten} "${v}" không phải số`); return null; }
-    return n;
+    if (!v.trim()) return null;
+    const n = soVN(v);
+    if (n == null) { loi.push(`${ten} "${v}" không phải số`); return null; }
+    return nguyen ? Math.round(n) : n;
   };
 
   const hangRaw = chuanHoa(lay(COT.hangTin) || "basic");
