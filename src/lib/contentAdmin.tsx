@@ -38,6 +38,7 @@ export type ProjectContact = { name?: string; phone?: string; email?: string };
 
 export type ProjectDetails = {
   tier?: ProjectTier;                     // cấp CVR-PJ (mặc định basic)
+  addressDetail?: string;                 // ĐỊA CHỈ CỤ THỂ: số nhà, đường, khu — hiện trên trang dự án
   purposes?: ProjectPurpose[];            // Bán / Cho thuê
   priceMode?: "show" | "hidden";          // hiện giá cụ thể / ẩn giá (mặc định) → "Liên hệ"
   priceTable?: ProjectPriceRow[];         // Loại căn – Diện tích – Hướng – Giá

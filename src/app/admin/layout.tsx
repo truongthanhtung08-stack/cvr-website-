@@ -20,13 +20,13 @@ const navGroups: { group: string; items: { label: string; href: string; icon: st
       { label: "Đăng tin mới", href: "/admin/tin-dang/moi", icon: "plus" },
       { label: "Đăng nhiều tin (file)", href: "/admin/tin-dang/nhap-hang-loat", icon: "upload" },
       { label: "Dự án", href: "/admin/du-an", icon: "building" },
-      { label: "Hồ sơ đăng dự án", href: "/admin/ho-so-du-an", icon: "check" },
       { label: "Tin tức", href: "/admin/tin-tuc", icon: "news" },
     ],
   },
   {
     group: "Kinh doanh",
     items: [
+      { label: "Yêu cầu khách hàng", href: "/admin/yeu-cau", icon: "check" },
       { label: "Khách hàng", href: "/admin/khach-hang", icon: "users" },
       { label: "Giá & khuyến mãi", href: "/admin/gia-khuyen-mai", icon: "tag" },
       { label: "Thanh toán", href: "/admin/thanh-toan", icon: "card" },

@@ -59,3 +59,27 @@ create policy yc_update_admin on public.customer_requests
 drop policy if exists yc_delete_admin on public.customer_requests;
 create policy yc_delete_admin on public.customer_requests
   for delete using ( public.is_admin() );
+
+-- Chuyển các yêu cầu đã gửi ở bảng cũ sang (nếu có) — chạy lại nhiều lần cũng
+-- không bị trùng. Bảng cũ project_poster_requests từ nay KHÔNG dùng nữa.
+do $$
+begin
+  if exists (select 1 from information_schema.tables
+             where table_schema = 'public' and table_name = 'project_poster_requests') then
+    insert into public.customer_requests (id, user_id, loai, ten, dien_thoai, noi_dung, status, admin_note, created_at)
+    select r.id,
+           r.user_id,
+           'dang_du_an',
+           coalesce(nullif(r.contact_name, ''), 'Khách hàng'),
+           coalesce(nullif(r.contact_phone, ''), '—'),
+           concat_ws(E'\n',
+             nullif(concat('Dự án: ', r.project_name), 'Dự án: '),
+             nullif(concat('Công ty: ', r.company_name), 'Công ty: '),
+             r.note),
+           case r.status when 'da_duyet' then 'xong' when 'tu_choi' then 'tu_choi' else 'moi' end,
+           r.admin_note,
+           r.created_at
+    from public.project_poster_requests r
+    where not exists (select 1 from public.customer_requests c where c.id = r.id);
+  end if;
+end $$;

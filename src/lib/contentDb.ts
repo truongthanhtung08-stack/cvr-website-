@@ -87,7 +87,11 @@ export async function getArticle(slug: string): Promise<Article | null> {
 // ── DỰ ÁN ───────────────────────────────────────────────────────────────────
 
 function projectRowToProject(r: ProjectRow): Project {
-  const location = [r.ward, r.district, r.province].filter(Boolean).join(", ");
+  // ĐỊA CHỈ ĐẦY ĐỦ: số nhà/đường (admin nhập) + Phường/Xã + Quận/Huyện + Tỉnh/Thành
+  const location = [r.details?.addressDetail, r.ward, r.district, r.province]
+    .map((s) => s?.trim())
+    .filter(Boolean)
+    .join(", ");
   const overview = paras(r.overview);
   // Tách ẢNH và VIDEO: thư viện ảnh chỉ nhận ảnh; video hiện ở mục Video riêng.
   const media = (r.images ?? []).filter(Boolean);

@@ -79,6 +79,7 @@ export default function ProjectForm({
   const [amenityInput, setAmenityInput] = useState("");
 
   // ── Dữ liệu cấu trúc mới (cột details) ──
+  const [addressDetail, setAddressDetail] = useState(initial?.details?.addressDetail ?? "");
   const [tier, setTier] = useState<ProjectTier>(initial?.details?.tier ?? "basic");
 
   // Bảng giá gói dự án (admin đặt ở /admin/gia-khuyen-mai → tab "Gói dự án")
@@ -221,6 +222,7 @@ export default function ProjectForm({
       overview: overview.trim() || null,
       details: {
         tier,
+        addressDetail: addressDetail.trim() || undefined,
         // Bỏ trống hết → không lưu contact → trang dự án KHÔNG hiện khối liên hệ
         contact:
           contactName.trim() || contactPhone.trim() || contactEmail.trim()
@@ -452,8 +454,21 @@ export default function ProjectForm({
             )}
           </Field>
         </div>
+        {/* ĐỊA CHỈ CỤ THỂ — số nhà/đường/khu. Hiện ngay dưới tên dự án trên web,
+            là thứ khách cần để biết dự án nằm chính xác ở đâu. */}
+        <div className="mt-4">
+          <Field label="Địa chỉ cụ thể (số nhà, đường, khu)">
+            <input
+              value={addressDetail}
+              onChange={(e) => setAddressDetail(e.target.value)}
+              placeholder="VD: 01 Võ Nguyên Giáp, khu Sơn Thuỷ"
+              className={inputCls}
+            />
+          </Field>
+        </div>
         <p className="mt-2 text-xs text-cvr-faint">
           Hệ MỚI (sau sáp nhập) bỏ cấp Quận/Huyện: Tỉnh/Thành → thẳng Phường/Xã.
+          Địa chỉ đầy đủ hiện trên web = Địa chỉ cụ thể + Phường/Xã + Tỉnh/Thành.
         </p>
       </Card>
 
