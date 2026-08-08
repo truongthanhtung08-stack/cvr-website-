@@ -6,7 +6,15 @@ import Image from "next/image";
 // Thư viện ảnh trang chi tiết BĐS — bố cục kiểu Homedy:
 // 1 ảnh lớn bên trái + lưới 2×2 ảnh nhỏ bên phải. Bấm ảnh nào → mở xem lớn (lightbox).
 // Lightbox: vuốt touchpad ngang · phím ←/→ · vuốt tay (mobile) · chuyển ảnh mượt.
-export default function Gallery({ images, alt }: { images: string[]; alt: string }) {
+export default function Gallery({
+  images,
+  alt,
+  listingId,
+}: {
+  images: string[];
+  alt: string;
+  listingId?: string; // truyền vào để bộ xem ảnh có nút trái tim (lưu tin)
+}) {
   const [lb, setLb] = useState(-1); // chỉ số ảnh đang xem lớn; -1 = đóng
   const [fade, setFade] = useState(false); // hiệu ứng mờ khi đổi ảnh
   const [bigIdx, setBigIdx] = useState(0); // ảnh LỚN đang hiện (tự chạy slide)

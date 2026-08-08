@@ -19,23 +19,28 @@ import { haptic } from "@/lib/haptic";
 // Trang chủ không hiện (không có gì để quay lại).
 // ============================================================================
 
-// Mục cha + tên hiển thị theo đoạn đầu của đường dẫn
-const MUC: Record<string, { ten: string; cha: string }> = {
+// Mỗi mục khai BA thứ:
+//   ten     – tên hiển thị trên thanh
+//   cha     – về đâu khi đang ở TRANG GỐC của mục (vd /mua-ban → trang chủ)
+//   chaCon  – về đâu khi đang ở TRANG CON (vd /bat-dong-san/abc → /mua-ban)
+// PHẢI khai chaCon bằng đường dẫn THẬT CÓ TRANG: /bat-dong-san, /tien-ich và
+// /landing KHÔNG có trang gốc → lùi về đó là lỗi 404.
+const MUC: Record<string, { ten: string; cha: string; chaCon?: string }> = {
   "mua-ban": { ten: "Mua bán", cha: "/" },
   "cho-thue": { ten: "Cho thuê", cha: "/" },
-  "du-an": { ten: "Dự án", cha: "/" },
-  "tin-tuc": { ten: "Tin tức", cha: "/" },
-  "chuyen-gia": { ten: "Chuyên gia", cha: "/" },
-  "tien-ich": { ten: "Tiện ích", cha: "/" },
-  "bat-dong-san": { ten: "Chi tiết tin", cha: "/mua-ban" },
+  "du-an": { ten: "Dự án", cha: "/", chaCon: "/du-an" },
+  "tin-tuc": { ten: "Tin tức", cha: "/", chaCon: "/tin-tuc" },
+  "chuyen-gia": { ten: "Chuyên gia", cha: "/", chaCon: "/chuyen-gia" },
+  "tien-ich": { ten: "Tiện ích", cha: "/", chaCon: "/bao-gia-dang-tin" }, // không có trang gốc
+  "bat-dong-san": { ten: "Chi tiết tin", cha: "/mua-ban", chaCon: "/mua-ban" }, // không có trang gốc
   "tim-kiem": { ten: "Kết quả tìm kiếm", cha: "/" },
   "so-sanh": { ten: "So sánh", cha: "/" },
   "tin-luu": { ten: "Tin đã lưu", cha: "/" },
-  "dang-tin": { ten: "Đăng tin", cha: "/tai-khoan" },
+  "dang-tin": { ten: "Đăng tin", cha: "/tai-khoan", chaCon: "/tai-khoan" },
   "bao-gia-dang-tin": { ten: "Bảng giá dịch vụ", cha: "/" },
   "gioi-thieu": { ten: "Giới thiệu", cha: "/" },
-  "tai-khoan": { ten: "Tài khoản", cha: "/" },
-  landing: { ten: "Trang giới thiệu", cha: "/" },
+  "tai-khoan": { ten: "Tài khoản", cha: "/", chaCon: "/tai-khoan" },
+  landing: { ten: "Trang giới thiệu", cha: "/", chaCon: "/" }, // không có trang gốc
 };
 
 // Tên riêng cho các trang con của khu tài khoản (admin của khách hàng)
@@ -62,17 +67,20 @@ export default function BackBar() {
   let ten = muc.ten;
   if (goc === "tai-khoan" && doan[1]) ten = TAI_KHOAN_CON[doan[1]] ?? muc.ten;
 
-  // Trang cha: trang con lùi về trang gốc của mục, trang gốc lùi theo bảng trên
-  const cha = doan.length > 1 ? `/${goc}` : muc.cha;
+  // Trang cha (chỉ dùng khi KHÔNG có lịch sử để lùi):
+  // trang con → chaCon (đường dẫn có thật) · trang gốc của mục → cha
+  const cha = doan.length > 1 ? (muc.chaCon ?? `/${goc}`) : muc.cha;
 
   function quayLai() {
     haptic();
-    // Có lịch sử trong chính web này → lùi đúng trang trước đó
-    if (typeof window !== "undefined" && window.history.length > 1 && document.referrer.includes(window.location.host)) {
+    // NÚT BACK = LÙI THẬT. Còn lịch sử thì lùi đúng trang vừa xem.
+    if (typeof window !== "undefined" && window.history.length > 1) {
       router.back();
       return;
     }
-    router.push(cha); // vào thẳng từ link ngoài → về trang cha hợp lý
+    // Chỉ khi KHÔNG có gì để lùi (mở thẳng từ link Zalo/Facebook trong tab mới)
+    // mới đưa về trang cha — và trang cha luôn là đường dẫn CÓ THẬT.
+    router.push(cha);
   }
 
   return (
