@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSaved } from "@/lib/useSaved";
 import { haptic } from "@/lib/haptic";
+import { anhToiUu, beRongManHinh } from "@/lib/anhToiUu";
 
 // ============================================================================
 // BỘ XEM ẢNH KIỂU FACEBOOK — dùng chung cho MỌI mục có ảnh
@@ -54,6 +55,10 @@ export default function PhotoViewer({
 
   const { has, toggle } = useSaved();
   const daLuu = listingId ? has(listingId) : false;
+
+  // Tải bản ảnh vừa đúng bề rộng màn hình (AVIF/WebP) → mở nhanh, không giật
+  const [beRong, setBeRong] = useState(1080);
+  useEffect(() => { setBeRong(beRongManHinh()); }, []);
 
   const veMacDinh = useCallback(() => { setScale(1); setPan({ x: 0, y: 0 }); }, []);
   const doiAnh = useCallback(
@@ -239,7 +244,9 @@ export default function PhotoViewer({
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               ref={i === idx ? anhRef : undefined}
-              src={src}
+              // Chỉ tải ảnh đang xem và 1 ảnh hai bên → vuốt tới đâu có ngay tới đó,
+              // không tải cùng lúc cả bộ (13 ảnh) làm nghẽn mạng.
+              src={Math.abs(i - idx) <= 2 ? anhToiUu(src, beRong) : undefined}
               alt={captions?.[i] ?? `${title ?? "Ảnh"} ${i + 1}`}
               draggable={false}
               loading={Math.abs(i - idx) <= 1 ? "eager" : "lazy"}

@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import Lightbox from "@/components/Lightbox";
+import PhotoViewer from "@/components/PhotoViewer";
 
 // Lưới ảnh chi tiết dự án kiểu Batdongsan: 1 ảnh lớn trái + 4 ảnh nhỏ phải (2×2),
-// bộ đếm ảnh góc dưới phải. Bấm ảnh bất kỳ → Lightbox xem lớn + ZOOM được.
+// bộ đếm ảnh góc dưới phải. Bấm ảnh bất kỳ → xem toàn màn hình kiểu Facebook
+// (vuốt ngang đổi ảnh, vuốt xuống thoát, zoom không kéo ảnh ra ngoài khung).
 type Props = {
   images: string[];
   alt: string;
@@ -58,7 +59,7 @@ export default function ProjectGallery({ images, alt }: Props) {
       </div>
 
       {/* Lightbox — xem lớn + zoom được (cuộn/bấm đúp), vuốt đổi ảnh */}
-      {lightbox && <Lightbox images={images} start={active} onClose={() => setLightbox(false)} />}
+      {lightbox && <PhotoViewer images={images} start={active} title={alt} onClose={() => setLightbox(false)} />}
     </>
   );
 }

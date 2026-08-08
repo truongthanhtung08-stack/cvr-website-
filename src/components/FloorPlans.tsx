@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import Lightbox from "@/components/Lightbox";
+import PhotoViewer from "@/components/PhotoViewer";
 
 type FloorPlan = { label: string; image: string; note: string };
 
 // Mặt bằng dự án — lưới ảnh mặt bằng theo tháp/tầng/loại căn, mỗi ảnh có chú thích.
-// Bấm ảnh → mở Lightbox xem lớn + ZOOM (đọc rõ từng căn, kích thước phòng).
+// Bấm ảnh → xem toàn màn hình + ZOOM (đọc rõ từng căn, kích thước phòng).
 export default function FloorPlans({ items }: { items: FloorPlan[] }) {
   const [open, setOpen] = useState(-1);
   const images = items.map((f) => f.image);
@@ -34,7 +34,7 @@ export default function FloorPlans({ items }: { items: FloorPlan[] }) {
           </figure>
         ))}
       </div>
-      {open >= 0 && <Lightbox images={images} captions={captions} start={open} onClose={() => setOpen(-1)} />}
+      {open >= 0 && <PhotoViewer images={images} captions={captions} start={open} title="Mặt bằng" onClose={() => setOpen(-1)} />}
     </>
   );
 }

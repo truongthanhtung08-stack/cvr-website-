@@ -1,11 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import PhotoViewer from "@/components/PhotoViewer";
 
 // Thư viện ảnh trang chi tiết BĐS — bố cục kiểu Homedy:
-// 1 ảnh lớn bên trái + lưới 2×2 ảnh nhỏ bên phải. Bấm ảnh nào → mở xem lớn (lightbox).
-// Lightbox: vuốt touchpad ngang · phím ←/→ · vuốt tay (mobile) · chuyển ảnh mượt.
+// 1 ảnh lớn bên trái + lưới 2×2 ảnh nhỏ bên phải.
+// ĐIỆN THOẠI (kiểu Facebook): carousel 1 ảnh + nút "Xem tất cả N ảnh" → danh sách
+// ảnh xếp dọc full bề ngang → bấm 1 ảnh mở toàn màn hình (vuốt ngang đổi ảnh,
+// vuốt xuống thoát, zoom không kéo ra ngoài khung) — xem PhotoViewer.
 export default function Gallery({
   images,
   alt,
@@ -16,7 +19,7 @@ export default function Gallery({
   listingId?: string; // truyền vào để bộ xem ảnh có nút trái tim (lưu tin)
 }) {
   const [lb, setLb] = useState(-1); // chỉ số ảnh đang xem lớn; -1 = đóng
-  const [fade, setFade] = useState(false); // hiệu ứng mờ khi đổi ảnh
+  const [list, setList] = useState(false); // danh sách ảnh kiểu Facebook (điện thoại)
   const [bigIdx, setBigIdx] = useState(0); // ảnh LỚN đang hiện (tự chạy slide)
   const [paused, setPaused] = useState(false);
   const open = (i: number) => setLb(i);
@@ -39,47 +42,18 @@ export default function Gallery({
     return () => clearInterval(t);
   }, [paused, images.length]);
 
-  // Đổi ảnh có hiệu ứng mờ nhẹ (mượt, không giật)
-  const step = useCallback((dir: number) => {
-    setFade(true);
-    setLb((a) => (a + dir + images.length) % images.length);
-    window.setTimeout(() => setFade(false), 120);
-  }, [images.length]);
-  const prev = useCallback(() => step(-1), [step]);
-  const next = useCallback(() => step(1), [step]);
-
-  // Phím ←/→ chuyển ảnh · Esc đóng
+  // Mở danh sách ảnh thì khoá cuộn trang nền (dùng position:fixed — KHÔNG dùng
+  // overflow:hidden vì cách đó làm hỏng position:sticky của header).
   useEffect(() => {
-    if (lb < 0) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "ArrowLeft") prev();
-      else if (e.key === "ArrowRight") next();
-      else if (e.key === "Escape") close();
+    if (!list) return;
+    const y = window.scrollY;
+    const b = document.body.style;
+    b.position = "fixed"; b.top = `-${y}px`; b.left = "0"; b.right = "0";
+    return () => {
+      b.position = ""; b.top = ""; b.left = ""; b.right = "";
+      window.scrollTo(0, y);
     };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [lb, prev, next]);
-
-  // Vuốt NGANG bằng touchpad (wheel deltaX) → chuyển ảnh. Khoá 400ms/lần để 1 cú
-  // vuốt = 1 ảnh (không lướt vèo nhiều ảnh). Chỉ nhận cử chỉ NGANG rõ rệt.
-  const wheelLock = useRef(0);
-  const onWheel = (e: React.WheelEvent) => {
-    if (Math.abs(e.deltaX) < Math.abs(e.deltaY) || Math.abs(e.deltaX) < 12) return;
-    const now = Date.now();
-    if (now - wheelLock.current < 400) return;
-    wheelLock.current = now;
-    if (e.deltaX > 0) next(); else prev();
-  };
-
-  // Vuốt tay (màn hình cảm ứng)
-  const touchX = useRef<number | null>(null);
-  const onTouchStart = (e: React.TouchEvent) => { touchX.current = e.touches[0].clientX; };
-  const onTouchEnd = (e: React.TouchEvent) => {
-    if (touchX.current == null) return;
-    const dx = e.changedTouches[0].clientX - touchX.current;
-    if (Math.abs(dx) > 40) { if (dx < 0) next(); else prev(); }
-    touchX.current = null;
-  };
+  }, [list]);
 
   if (images.length === 0) return null;
 
@@ -124,6 +98,18 @@ export default function Gallery({
               <span key={i} className={`h-1.5 rounded-full transition-all ${i === mCur % 8 ? "w-4 bg-white" : "w-1.5 bg-white/55"}`} />
             ))}
           </span>
+
+          {/* Xem tất cả ảnh — mở danh sách ảnh xếp dọc kiểu Facebook */}
+          <button
+            type="button"
+            onClick={() => setList(true)}
+            className="absolute bottom-3 left-3 flex items-center gap-1.5 rounded-md bg-black/65 px-2.5 py-1 text-[13px] font-medium text-white backdrop-blur-sm active:bg-black/80"
+          >
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.9} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h10" />
+            </svg>
+            Xem tất cả {images.length} ảnh
+          </button>
         </div>
 
         {/* ── TABLET / MÁY TÍNH (≥ 640px): GIỮ NGUYÊN bố cục ảnh lớn + lưới 2×2 đã duyệt ── */}
@@ -172,36 +158,66 @@ export default function Gallery({
         </>
       )}
 
-      {/* Lightbox — xem lớn: vuốt touchpad ngang · phím ←/→ · vuốt tay · nút ‹ › */}
-      {lb >= 0 && (
-        <div
-          onClick={close}
-          onWheel={onWheel}
-          onTouchStart={onTouchStart}
-          onTouchEnd={onTouchEnd}
-          className="fixed inset-0 z-[70] flex items-center justify-center overscroll-contain bg-black/90 p-4 backdrop-blur-sm"
-        >
-          <button type="button" aria-label="Đóng" onClick={close} className="absolute right-5 top-5 z-10 flex h-10 w-10 items-center justify-center rounded-lg text-white/80 transition hover:bg-white/10">
-            <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-          </button>
-          <div className="relative h-[82vh] w-full max-w-5xl" onClick={(e) => e.stopPropagation()}>
-            <Image
-              key={lb}
-              src={images[lb]}
-              alt={alt}
-              fill
-              sizes="100vw"
-              className={`object-contain transition-opacity duration-150 ease-out ${fade ? "opacity-0" : "opacity-100"}`}
-            />
-            <span className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-md bg-white/10 px-3 py-1 text-sm text-white">{lb + 1} / {images.length}</span>
-            {images.length > 1 && (
-              <>
-                <button type="button" onClick={prev} aria-label="Ảnh trước" className="absolute left-2 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-2xl text-white transition hover:bg-white/25">‹</button>
-                <button type="button" onClick={next} aria-label="Ảnh sau" className="absolute right-2 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-2xl text-white transition hover:bg-white/25">›</button>
-              </>
-            )}
+      {/* DANH SÁCH ẢNH KIỂU FACEBOOK (điện thoại) — mở từ nút "Xem tất cả N ảnh".
+          Ảnh xếp dọc full bề ngang, bấm ảnh nào mở ảnh đó toàn màn hình. */}
+      {list && (
+        <div className="fixed inset-0 z-[85] overflow-y-auto overscroll-contain bg-white lg:hidden">
+          <div className="sticky top-0 z-10 flex items-center gap-2 border-b border-cvr-line bg-white/95 px-2 py-2.5 pt-[calc(0.625rem+env(safe-area-inset-top))] backdrop-blur">
+            <button
+              type="button"
+              aria-label="Quay lại"
+              onClick={() => setList(false)}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-cvr-ink active:bg-cvr-surface"
+            >
+              <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[15px] font-semibold text-cvr-ink">{alt}</p>
+              <p className="text-xs text-cvr-muted">{images.length} ảnh</p>
+            </div>
+          </div>
+
+          <div className="space-y-2 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+            {images.map((src, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => open(i)}
+                aria-label={`Xem ảnh ${i + 1}`}
+                className="relative block w-full bg-cvr-surface"
+              >
+                {/* Ảnh đi qua bộ tối ưu (AVIF/WebP đúng bề rộng máy) + chỉ tải khi
+                    cuộn tới → danh sách 13 ảnh vẫn mở nhanh, không giật. */}
+                <Image
+                  src={src}
+                  alt={`${alt} ${i + 1}`}
+                  width={1080}
+                  height={810}
+                  sizes="100vw"
+                  priority={i < 2}
+                  loading={i < 2 ? "eager" : "lazy"}
+                  className="h-auto w-full"
+                />
+                <span className="absolute bottom-2 right-2 rounded-md bg-black/65 px-2 py-0.5 text-xs font-medium text-white">
+                  {i + 1}/{images.length}
+                </span>
+              </button>
+            ))}
           </div>
         </div>
+      )}
+
+      {/* Xem 1 ảnh toàn màn hình — vuốt trái/phải đổi ảnh, vuốt xuống thoát */}
+      {lb >= 0 && (
+        <PhotoViewer
+          images={images}
+          start={lb}
+          title={alt}
+          listingId={listingId}
+          onClose={close}
+        />
       )}
     </>
   );
