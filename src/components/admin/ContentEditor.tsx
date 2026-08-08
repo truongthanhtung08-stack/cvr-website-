@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { uploadImageFile, uploadVideoFile } from "@/lib/uploadImage";
 import { isVideoUrl } from "@/lib/media";
+import RichContent from "@/components/RichContent";
 
 // Ô nhập NỘI DUNG có chèn ẢNH & VIDEO giữa bài (Tin đăng · Dự án · Tin tức).
 // Mỗi đoạn xuống 1 dòng. Chèn ảnh → dòng ![](url) · chèn video → dòng @[video](url)
@@ -26,6 +27,7 @@ export default function ContentEditor({
   const [link, setLink] = useState("");
   const [showLink, setShowLink] = useState(false);
   const [error, setError] = useState("");
+  const [xemTruoc, setXemTruoc] = useState(true); // mặc định MỞ để thấy ngay web sẽ ra sao
 
   // Chèn 1 dòng (marker ảnh/video) tại con trỏ, luôn nằm trên dòng riêng.
   function insertLine(line: string) {
@@ -47,17 +49,30 @@ export default function ContentEditor({
 
   // Bọc phần chữ đang bôi đen bằng ** (đậm) hoặc * (nghiêng). Chưa bôi đen →
   // chèn cặp dấu và đặt con trỏ vào giữa để gõ tiếp.
+  //
+  // QUAN TRỌNG: bôi đen NHIỀU DÒNG thì bọc TỪNG DÒNG một. Trước đây bọc cả khối
+  // (dấu ** ở đầu dòng 1 và cuối dòng cuối) — mà web hiển thị theo TỪNG ĐOẠN,
+  // nên mỗi đoạn chỉ có 1 dấu ** lẻ → web hiện ra nguyên dấu sao, chữ không đậm.
   function wrapSelection(mark: string) {
     const ta = taRef.current;
     const start = ta?.selectionStart ?? value.length;
     const end = ta?.selectionEnd ?? value.length;
     const sel = value.slice(start, end);
-    const next = `${value.slice(0, start)}${mark}${sel}${mark}${value.slice(end)}`;
+
+    const boc = (s: string) => `${mark}${s}${mark}`;
+    const moi = sel.includes("\n")
+      ? sel
+          .split("\n")
+          .map((d) => (d.trim() ? boc(d.trim()) : d)) // dòng trống giữ nguyên
+          .join("\n")
+      : boc(sel);
+
+    const next = value.slice(0, start) + moi + value.slice(end);
     onChange(next);
-    const caret = start + mark.length + sel.length;
+    const caret = sel ? start + moi.length : start + mark.length;
     requestAnimationFrame(() => {
       ta?.focus();
-      ta?.setSelectionRange(sel ? caret + mark.length : caret, sel ? caret + mark.length : caret);
+      ta?.setSelectionRange(caret, caret);
     });
   }
 
@@ -209,6 +224,31 @@ export default function ContentEditor({
       {error && (
         <p className="rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/20">{error}</p>
       )}
+
+      {/* XEM TRƯỚC — hiện ĐÚNG như trên web (cùng một bộ hiển thị RichContent),
+          để soạn xong là biết ngay web ra sao, không phải lưu rồi mở web kiểm tra. */}
+      <div className="rounded-lg border border-cvr-line bg-cvr-surface">
+        <button
+          type="button"
+          onClick={() => setXemTruoc((v) => !v)}
+          className="flex w-full items-center justify-between px-3 py-2 text-xs font-semibold text-cvr-body"
+        >
+          <span>Xem trước — hiện đúng như trên web</span>
+          <span className="text-cvr-muted">{xemTruoc ? "Ẩn ▲" : "Hiện ▼"}</span>
+        </button>
+        {xemTruoc && (
+          <div className="border-t border-cvr-line bg-white px-3 py-3">
+            {value.trim() ? (
+              <div className="space-y-2.5 text-sm leading-relaxed text-cvr-body">
+                <RichContent paragraphs={value.split("\n").filter((d) => d.trim())} />
+              </div>
+            ) : (
+              <p className="text-sm text-cvr-faint">Chưa có nội dung.</p>
+            )}
+          </div>
+        )}
+      </div>
+
       <p className="text-xs text-cvr-faint">
         Mỗi <strong>đoạn</strong> xuống 1 dòng. Bấm <strong>“Chèn ảnh”</strong> / <strong>“Chèn video”</strong> để thêm ngay giữa bài — ảnh &amp; video sẽ hiện đúng vị trí đó trên web.
         Bôi đen chữ rồi bấm <strong>B</strong> / <strong>I</strong> để in đậm, in nghiêng; nút canh lề áp cho dòng đang đứng con trỏ.
