@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import BrandLogo from "@/components/BrandLogo";
+import BackBar from "@/components/BackBar";
 import { resetHomeIfOnHome } from "@/components/HomeExpand";
 import { packages, utilityTools } from "@/lib/packages";
 import { haptic } from "@/lib/haptic";
@@ -609,6 +610,10 @@ export default function Header() {
         </div>
       </div>
       </header>
+
+      {/* Nút QUAY LẠI trên điện thoại — dính ngay dưới header, có ở mọi trang
+          (trừ trang chủ) để khách không bị kẹt trong các mục sâu. */}
+      <BackBar />
 
       {/* Menu mobile để NGOÀI <header>: header có backdrop-filter (.nav-glass) — mọi
           phần tử fixed nằm bên trong sẽ bị neo vào header thay vì vào màn hình. */}

@@ -69,7 +69,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
               cuộn tới đâu vẫn thấy đường đi, không phải vuốt ngược lên đầu trang. */}
           <nav
             aria-label="Điều hướng tài khoản"
-            className="no-scrollbar sticky top-[60px] z-20 -mx-4 mt-5 flex gap-1.5 overflow-x-auto border-y border-cvr-line bg-white px-4 py-2.5 sm:-mx-6 sm:px-6 lg:hidden"
+            className="no-scrollbar sticky top-[calc(60px+var(--backbar-h)+env(safe-area-inset-top))] z-20 -mx-4 mt-5 flex gap-1.5 overflow-x-auto border-y border-cvr-line bg-white px-4 py-2.5 sm:-mx-6 sm:px-6 lg:hidden"
           >
             {tatCaMuc.map((m) => {
               const active = dangXem(m.href, pathname);

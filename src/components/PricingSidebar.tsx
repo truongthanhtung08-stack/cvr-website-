@@ -49,7 +49,7 @@ export default function PricingSidebar({
           rất lâu mới tới nội dung. Giờ gọn 1 dòng, luôn thấy mình đang ở mục nào.
           Nhóm "Công cụ tiện ích" không đưa vào đây — đã có nguyên một mục thẻ
           ở cuối trang, đưa lên nav nữa là thừa. */}
-      <nav className="no-scrollbar sticky top-[60px] z-30 -mx-4 flex gap-2.5 overflow-x-auto border-b border-cvr-line bg-white/95 px-4 py-3 backdrop-blur-xl sm:-mx-6 sm:px-6 lg:hidden">
+      <nav className="no-scrollbar sticky top-[calc(60px+var(--backbar-h)+env(safe-area-inset-top))] z-20 -mx-4 flex gap-2.5 overflow-x-auto border-b border-cvr-line bg-white/95 px-4 py-3 backdrop-blur-xl sm:-mx-6 sm:px-6 lg:hidden">
         {anchorItems.map((m) => {
           const isActive = active === m.href;
           return (

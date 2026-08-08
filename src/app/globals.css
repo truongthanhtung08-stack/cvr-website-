@@ -457,6 +457,12 @@ select option {
 :root {
   /* Chiều cao thanh tab dưới cùng (0 trên desktop vì không có tab bar) */
   --tabbar-h: 0px;
+  /* Chiều cao thanh "Quay lại" trên điện thoại — desktop không có nên = 0.
+     Các thanh dính khác (tab tài khoản…) cộng thêm giá trị này để không đè lên nhau. */
+  --backbar-h: 0px;
+}
+@media (max-width: 1023px) {
+  :root { --backbar-h: 53px; }
 }
 @media (max-width: 1023px) {
   :root {
