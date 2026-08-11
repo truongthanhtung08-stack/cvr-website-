@@ -53,12 +53,13 @@ const columns = [
     links: [
       { label: "BĐS Đà Nẵng", href: "/mua-ban?tinh=Đà Nẵng" },
       { label: "BĐS Huế", href: "/mua-ban?tinh=Huế" },
-      { label: "BĐS Quảng Bình", href: "/mua-ban?tinh=Quảng Bình" },
+      { label: "BĐS Quảng Trị", href: "/mua-ban?tinh=Quảng Bình" },
       { label: "BĐS Quảng Ngãi", href: "/mua-ban?tinh=Quảng Ngãi" },
       { label: "BĐS Khánh Hòa", href: "/mua-ban?tinh=Khánh Hòa" },
       { label: "BĐS Lâm Đồng", href: "/mua-ban?tinh=Lâm Đồng" },
       { label: "BĐS Gia Lai", href: "/mua-ban?tinh=Gia Lai" },
-      { label: "BĐS Đắk Lắk", href: "/mua-ban?tinh=Đắk Lắk" },
+      { label: "BĐS Hà Nội", href: "/mua-ban?tinh=Hà Nội" },
+      { label: "BĐS Hồ Chí Minh", href: "/mua-ban?tinh=Hồ Chí Minh" },
     ],
   },
 ];
