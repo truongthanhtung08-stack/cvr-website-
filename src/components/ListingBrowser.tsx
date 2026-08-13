@@ -96,7 +96,7 @@ export default function ListingBrowser({
 
   return (
     // PC: thanh lọc nằm SÁT header, không chừa khoảng trống (file V3 10.08.2026).
-    <div className={nested ? "pb-20 pt-1 sm:pt-6" : "mx-auto max-w-7xl px-4 pb-20 pt-0 sm:px-6 sm:pt-2 lg:px-8"}>
+    <div className={nested ? "pb-20 pt-1 sm:pt-6" : "mx-auto max-w-7xl px-4 pb-20 pt-0 sm:px-6 sm:pt-0 lg:px-8"}>
       {/* ── Phần trên kiểu Homedy (gọn): thanh lọc → tiêu đề + bộ đếm.
            Trang cấp 1 KHÔNG dùng breadcrumb (menu đã chỉ vị trí — chuẩn Apple). ── */}
       <div>
