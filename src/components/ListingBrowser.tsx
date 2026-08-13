@@ -117,14 +117,14 @@ export default function ListingBrowser({
       )}
 
       {/* Tiêu đề + bộ đếm nhảy theo bộ lọc — câu đếm TẠM ẨN trên mobile (theo yêu cầu) */}
-      <h1 className="mt-5 text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">{heading}</h1>
+      <h1 className="mt-4 text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">{heading}</h1>
       <p className="mt-1 hidden text-sm text-cvr-muted sm:block">
         Hiện có <span className="font-semibold text-cvr-ink">{results.length}</span> bất động sản{active ? " phù hợp " : " "}tại Đà Nẵng, Huế &amp; Miền Trung.
       </p>
 
       {/* Hàng điều khiển dùng chung: xoá lọc · chế độ xem (Danh sách/Lưới/Bản đồ) · sắp xếp.
           Trên mobile TẠM ẨN chế độ xem + sắp xếp (theo yêu cầu), giữ nút Xoá lọc. */}
-      <div className="mt-3 flex flex-wrap items-center justify-end gap-3 sm:mt-4">
+      <div className="mt-2 flex flex-wrap items-center justify-end gap-3 sm:mt-2.5">
               {/* XEM BẢN ĐỒ — CHỈ mobile. Trên PC nút này nằm NGAY CẠNH ô tìm kiếm
                   (do FilterBar dựng, đúng bố cục Batdongsan) nên ở đây ẩn đi. */}
               <button
@@ -184,7 +184,7 @@ export default function ListingBrowser({
         </div>
       )}
 
-      <div className={`mt-4 grid grid-cols-1 gap-6 lg:grid-cols-3 ${mapMode ? "hidden" : ""}`}>
+      <div className={`mt-3 grid grid-cols-1 gap-6 lg:grid-cols-3 ${mapMode ? "hidden" : ""}`}>
 
         {/* CỘT TRÁI: danh sách tin */}
         <div className="lg:col-span-2">

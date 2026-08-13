@@ -440,9 +440,9 @@ export default function FilterBar({
   // ===== Ô từ khoá + nút tìm kiếm (dùng chung) =====
   const searchBox = (
     <>
-    {/* Trang danh sách (Mua bán/Cho thuê): thanh tìm NGẮN LẠI trên PC (tối đa 880px)
-        + nút "Xem bản đồ" nằm ngay cạnh — đúng bố cục Batdongsan. */}
-    <div ref={boxRef} className={compact ? "flex w-full gap-2.5" : "flex w-full gap-2 sm:max-w-[880px]"}>
+    {/* Trang danh sách: ô tìm co giãn hết khung, nút "Xem bản đồ" nằm SÁT MÉP PHẢI
+        → không còn mảng trống hụt bên phải như khi giới hạn bề ngang. */}
+    <div ref={boxRef} className={compact ? "flex w-full gap-2.5" : "flex w-full gap-2.5"}>
       <div className={compact ? "relative flex-1" : "relative flex h-11 min-w-0 flex-1 items-center rounded-xl bg-cvr-surface ring-1 ring-black/5 transition focus-within:ring-2 focus-within:ring-cvr-blue/40 sm:h-12 sm:rounded-none sm:ring-0"}>
         {/* Kính lúp trái — MOBILE ẩn (đã có nút search xanh bên phải, giống thanh tìm trang chủ) */}
         <svg className="pointer-events-none absolute left-4 top-1/2 hidden h-[18px] w-[18px] -translate-y-1/2 text-cvr-faint sm:block" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
@@ -543,7 +543,7 @@ export default function FilterBar({
               type="button"
               aria-label="Tìm kiếm"
               onClick={() => { setSugOpen(false); onSearch?.(); }}
-              className="m-1.5 hidden h-9 shrink-0 items-center justify-center rounded-none bg-cvr-blue px-5 text-sm font-semibold text-white transition hover:bg-cvr-blue-ink active:scale-95 sm:flex"
+              className="m-1.5 hidden h-9 shrink-0 items-center justify-center rounded-lg bg-cvr-blue px-5 text-sm font-semibold text-white transition hover:bg-cvr-blue-ink active:scale-95 sm:flex"
             >
               Tìm kiếm
             </button>
@@ -584,8 +584,12 @@ export default function FilterBar({
           type="button"
           onClick={onMap}
           aria-pressed={mapActive}
-          className={`hidden h-12 shrink-0 items-center gap-2 rounded-none px-5 text-sm font-semibold text-white transition sm:flex ${
-            mapActive ? "bg-cvr-blue-ink" : "bg-cvr-blue hover:bg-cvr-blue-ink"
+          // Nút PHỤ: viền mảnh, chữ xanh — để không tranh với nút "Tìm kiếm" (nút
+          // chính, nền xanh đặc). Bo góc + chiều cao khớp ô tìm cho đồng bộ.
+          className={`hidden h-12 shrink-0 items-center gap-2 rounded-xl border px-5 text-sm font-semibold transition sm:flex ${
+            mapActive
+              ? "border-cvr-blue bg-cvr-blue text-white"
+              : "border-cvr-line bg-white text-cvr-blue-ink hover:border-cvr-blue hover:bg-cvr-blue/5"
           }`}
         >
           <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4M9 7l6-3" /></svg>
@@ -675,7 +679,7 @@ export default function FilterBar({
     <FilterDropdownGroup>
       {/* MOBILE: KHÔNG khung (viền/bóng), KHÔNG padding ngang → thanh tìm rộng hết bề ngang trang.
           DESKTOP: giữ thẻ như cũ. */}
-      <div className="rounded-none bg-white pb-2.5 pt-1 sm:border sm:border-cvr-line sm:p-2.5 sm:shadow-lux">
+      <div className="rounded-none bg-white pb-2 pt-1 sm:rounded-xl sm:border sm:border-cvr-line sm:p-2 sm:shadow-lux">
         <div className="flex flex-col gap-2.5">
           {searchBox}
           {/* Hàng chip lọc — CUỘN NGANG trên mobile (kiểu Batdongsan), tự xuống hàng trên desktop.
