@@ -13,7 +13,7 @@
 // khớp để nơi hiển thị BÔI ĐẬM (xem components/Highlight.tsx).
 // ============================================================================
 
-import { normalizeVi } from "@/lib/filters";
+import { applyFilters, emptyFilters, normalizeVi, type Filters } from "@/lib/filters";
 
 // ── Từ điển nhận diện ───────────────────────────────────────────────────────
 // Mỗi mục: [nhãn chuẩn, các cách viết người dùng hay gõ]
@@ -270,6 +270,80 @@ export function smartSearch<T extends Searchable>(items: T[], raw: string): { hi
 
   hits.sort((a, b) => a.tier - b.tier || b.score - a.score);
   return { hits, parsed };
+}
+
+// ============================================================================
+// NỚI LỎNG THÔNG MINH CHO CÁC TRƯỜNG LỌC CHỌN TAY
+// (khu vực · loại hình · giá · diện tích · phòng ngủ · hướng · pháp lý · nội thất…)
+//
+// Cùng một logic với ô từ khoá: khớp ĐỦ → Tầng 1; thiếu vài tiêu chí phụ nhưng
+// GIỮ ĐƯỢC khu vực + loại hình → Tầng 2; dính ít nhất 1 tiêu chí → Tầng 3.
+// Nhờ vậy chọn lọc quá chặt cũng KHÔNG ra màn hình trống, mà tụt xuống gợi ý
+// gần đúng — đúng tinh thần "Smart Relax" trong tài liệu mục 4.
+//
+// Mỗi tiêu chí được kiểm bằng CHÍNH applyFilters (chỉ bật đúng 1 trường) nên
+// luật lọc không bao giờ lệch với bộ lọc gốc.
+// ============================================================================
+type Tieu = { ten: string; giu: boolean; f: Filters };
+
+function tachTieuChi(f: Filters): Tieu[] {
+  const ds: Tieu[] = [];
+  const chi = (patch: Partial<Filters>) => ({ ...emptyFilters(), ...patch });
+  if (f.locations.length) ds.push({ ten: "khu vực", giu: true, f: chi({ locations: f.locations }) });
+  if (f.types.length) ds.push({ ten: "loại hình", giu: true, f: chi({ types: f.types }) });
+  if (f.project.trim()) ds.push({ ten: "dự án", giu: true, f: chi({ project: f.project }) });
+  if (f.priceMin != null || f.priceMax != null) ds.push({ ten: "mức giá", giu: false, f: chi({ priceMin: f.priceMin, priceMax: f.priceMax }) });
+  if (f.areaMin != null || f.areaMax != null) ds.push({ ten: "diện tích", giu: false, f: chi({ areaMin: f.areaMin, areaMax: f.areaMax }) });
+  if (f.beds) ds.push({ ten: "phòng ngủ", giu: false, f: chi({ beds: f.beds }) });
+  if (f.direction) ds.push({ ten: "hướng", giu: false, f: chi({ direction: f.direction }) });
+  if (f.legal) ds.push({ ten: "pháp lý", giu: false, f: chi({ legal: f.legal }) });
+  if (f.furnishing) ds.push({ ten: "nội thất", giu: false, f: chi({ furnishing: f.furnishing }) });
+  if (f.verified) ds.push({ ten: "tin xác thực", giu: false, f: chi({ verified: true }) });
+  if (f.broker) ds.push({ ten: "môi giới chuyên nghiệp", giu: false, f: chi({ broker: true }) });
+  return ds;
+}
+
+export type FilterHit<T> = { item: T; tier: 1 | 2 | 3; thieu: string[] };
+
+export function smartFilter<T extends Searchable & { badge?: string }>(
+  items: T[],
+  f: Filters,
+): FilterHit<T>[] {
+  const tieu = tachTieuChi(f);
+  // Không chọn tiêu chí nào → mọi tin đều là Tầng 1
+  if (tieu.length === 0) return items.map((item) => ({ item, tier: 1, thieu: [] }));
+
+  const out: FilterHit<T>[] = [];
+  for (const item of items) {
+    const dat: string[] = [];
+    const thieu: string[] = [];
+    let giuDu = true;
+    for (const t of tieu) {
+      const ok = applyFilters([item], t.f).length > 0;
+      if (ok) dat.push(t.ten);
+      else {
+        thieu.push(t.ten);
+        if (t.giu) giuDu = false; // hụt khu vực / loại hình → không được lên Tầng 2
+      }
+    }
+    if (dat.length === 0) continue;
+    const tier: 1 | 2 | 3 =
+      thieu.length === 0 ? 1 : giuDu && dat.length / tieu.length >= 0.5 ? 2 : 3;
+    out.push({ item, tier, thieu });
+  }
+
+  // Vẫn rỗng (chọn quá chặt, dữ liệu chưa có tin nào dính) → giữ lại tin cùng
+  // KHU VỰC, không có nữa thì cùng LOẠI HÌNH, cuối cùng là toàn bộ danh sách.
+  if (out.length === 0) {
+    const kv = tieu.find((t) => t.ten === "khu vực");
+    const lh = tieu.find((t) => t.ten === "loại hình");
+    const thu = (t?: Tieu) => (t ? applyFilters(items, t.f) : []);
+    const nguon = thu(kv).length ? thu(kv) : thu(lh).length ? thu(lh) : items;
+    for (const item of nguon.slice(0, 24)) out.push({ item: item as T, tier: 3, thieu: tieu.map((t) => t.ten) });
+  }
+
+  out.sort((a, b) => a.tier - b.tier);
+  return out;
 }
 
 // Nhãn từng tầng (đúng chữ trong tài liệu mục 4)

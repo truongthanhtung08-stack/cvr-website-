@@ -15,7 +15,6 @@ import FilterBar from "@/components/FilterBar";
 import ActiveFilters from "@/components/ActiveFilters";
 import { featuredListings, type Article, type Listing } from "@/lib/data";
 import {
-  applyFilters,
   sortListings,
   filtersFromParams,
   emptyFilters,
@@ -25,6 +24,7 @@ import {
   type Filters,
   type SortKey,
 } from "@/lib/filters";
+import { smartFilter, smartSearch, TIER_LABEL } from "@/lib/smartSearch";
 
 const PER_PAGE = 8;
 
@@ -74,10 +74,20 @@ export default function ListingBrowser({
     [items, purpose],
   );
 
+  // NỚI LỎNG THÔNG MINH: chọn lọc quá chặt cũng không ra màn hình trống —
+  // tin khớp đủ lên đầu (Tầng 1), thiếu tiêu chí phụ xuống Tầng 2/3 kèm nhãn.
+  const hits = useMemo(() => smartFilter(base, { ...filters, keyword: "" }), [base, filters]);
+  // Từ khoá gõ tay xử lý bằng lõi tìm kiếm thông minh (bóc tách câu dài)
+  const search = useMemo(() => smartSearch(hits.map((h) => h.item), filters.keyword), [hits, filters.keyword]);
+  const coTuKhoa = filters.keyword.trim().length > 0;
+
   const results = useMemo(
-    () => sortListings(applyFilters(base, filters), sort),
-    [base, filters, sort],
+    () => (coTuKhoa ? search.hits.map((h) => h.item) : sortListings(hits.map((h) => h.item), sort)),
+    [coTuKhoa, search, hits, sort],
   );
+  // Tầng của từng tin + chữ cần bôi đậm
+  const tierById = useMemo(() => new Map(hits.map((h) => [h.item.id, h.tier])), [hits]);
+  const termsById = useMemo(() => new Map(search.hits.map((h) => [h.item.id, h.matched])), [search]);
 
   // Số tin theo tỉnh/thành (cho sidebar "theo khu vực" — giống Homedy)
   const provinces = useMemo(() => {
@@ -194,11 +204,16 @@ export default function ListingBrowser({
         <div className="lg:col-span-2">
           {pageItems.length > 0 ? (
             <>
+              {/* Nhãn TẦNG kết quả — cho biết nhóm tin đang xem khớp tới đâu */}
+              {(active || coTuKhoa) && (() => {
+                const t = tierById.get(pageItems[0].id) ?? 1;
+                return t === 1 ? null : <p className="mb-3 text-sm font-medium text-cvr-body">{TIER_LABEL[t]}</p>;
+              })()}
               {/* MOBILE (< 640px): LUÔN thẻ dọc — ảnh trên, nội dung dưới (thuần CSS,
                   không phụ thuộc JS → chắc chắn đúng trên mọi máy) */}
               <div className="reveal is-visible cards-stagger grid grid-cols-1 gap-5 sm:hidden">
                 {pageItems.map((item) => (
-                  <PropertyCard key={item.id} item={item} layout="grid" showTime />
+                  <PropertyCard key={item.id} item={item} layout="grid" showTime terms={termsById.get(item.id) ?? []} />
                 ))}
               </div>
               {/* DESKTOP (≥ 640px): theo chế độ xem đã chọn (Danh sách = thẻ ngang · Lưới = thẻ dọc) */}
@@ -210,7 +225,7 @@ export default function ListingBrowser({
                 }`}
               >
                 {pageItems.map((item) => (
-                  <PropertyCard key={item.id} item={item} layout={view} showTime />
+                  <PropertyCard key={item.id} item={item} layout={view} showTime terms={termsById.get(item.id) ?? []} />
                 ))}
               </div>
 

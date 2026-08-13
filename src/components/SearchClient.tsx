@@ -7,7 +7,6 @@ import FilterBar from "@/components/FilterBar";
 import ActiveFilters from "@/components/ActiveFilters";
 import { featuredListings, type Listing } from "@/lib/data";
 import {
-  applyFilters,
   sortListings,
   filtersFromParams,
   emptyFilters,
@@ -15,7 +14,7 @@ import {
   type Filters,
   type SortKey,
 } from "@/lib/filters";
-import { smartSearch, TIER_LABEL } from "@/lib/smartSearch";
+import { smartFilter, smartSearch, TIER_LABEL } from "@/lib/smartSearch";
 
 const PER_PAGE = 8; // mỗi trang 8 tin (giống danh sách /mua-ban)
 
@@ -52,8 +51,12 @@ export default function SearchClient({ items = featuredListings }: { items?: Lis
   // Bộ lọc chọn tay chạy trước (khu vực/giá/diện tích…), TỪ KHOÁ do smartSearch
   // xử lý: bóc tách câu dài → xếp 3 tầng (khớp 100% → gần đúng → liên quan) và
   // LUÔN có kết quả. Không gõ từ khoá → giữ nguyên cách sắp xếp cũ.
-  const loc = useMemo(() => applyFilters(base, { ...filters, keyword: "" }), [base, filters]);
+  // Các trường lọc chọn tay (khu vực · loại hình · giá · diện tích · đặc điểm…)
+  // cũng chạy theo cùng logic 3 tầng — chọn quá chặt vẫn không ra màn hình trống.
+  const locHits = useMemo(() => smartFilter(base, { ...filters, keyword: "" }), [base, filters]);
+  const loc = useMemo(() => locHits.map((h) => h.item), [locHits]);
   const search = useMemo(() => smartSearch(loc, filters.keyword), [loc, filters.keyword]);
+  const filterTierById = useMemo(() => new Map(locHits.map((h) => [h.item.id, h.tier])), [locHits]);
   const coTuKhoa = filters.keyword.trim().length > 0;
 
   const results = useMemo(
@@ -126,11 +129,12 @@ export default function SearchClient({ items = featuredListings }: { items?: Lis
         <>
           {/* Nhãn TẦNG KẾT QUẢ — hiện đúng chất lượng khớp của nhóm tin đang xem
               (khớp 100% · gần đúng · liên quan). Không gõ từ khoá thì không hiện. */}
-          {coTuKhoa && pageItems.length > 0 && (() => {
-            const t = hitById.get(pageItems[0].id)?.tier ?? 3;
-            return (
-              <p className="mb-3 text-sm font-medium text-cvr-body">{TIER_LABEL[t]}</p>
-            );
+          {(coTuKhoa || active) && pageItems.length > 0 && (() => {
+            // Tầng hiển thị = tầng THẤP HƠN giữa (khớp từ khoá) và (khớp bộ lọc)
+            const a = coTuKhoa ? hitById.get(pageItems[0].id)?.tier ?? 3 : 1;
+            const b = filterTierById.get(pageItems[0].id) ?? 1;
+            const t = Math.max(a, b) as 1 | 2 | 3;
+            return t === 1 ? null : <p className="mb-3 text-sm font-medium text-cvr-body">{TIER_LABEL[t]}</p>;
           })()}
 
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
