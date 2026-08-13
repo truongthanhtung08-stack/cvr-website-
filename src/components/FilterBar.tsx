@@ -25,6 +25,7 @@ import {
   type LocationSel,
 } from "@/lib/filters";
 import { suggest, popularSuggestions, type Suggestion } from "@/lib/suggest";
+import { goiYNoiLong } from "@/lib/smartSearch";
 
 const RECENT_KEY = "cvr-recent-search"; // lịch sử tìm kiếm (localStorage)
 const GEO_MODE_KEY = "cl-geo-mode"; // hệ đơn vị hành chính đã chọn: "cu" | "moi" (localStorage)
@@ -118,13 +119,23 @@ export default function FilterBar({
   const typedHits = typed ? suggest(f.keyword, 6) : [];
   // LUÔN có gợi ý (kiểu Google): gõ mà không khớp gì → hiện GỢI Ý PHỔ BIẾN thay vì để trống.
   const noHits = typed && typedHits.length === 0;
+  // GỢI Ý BẬC THANG — dựng từ chính câu đang gõ, xếp từ khớp đầy đủ → nới dần.
+  // VD "Đất nền tại Đà Nẵng giá dưới 3 tỷ" → [Đất nền · Đà Nẵng · dưới 3 tỷ] →
+  // [Đất nền · Đà Nẵng] → [Tất cả đất nền] → [BĐS tại Đà Nẵng] → [BĐS dưới 3 tỷ].
+  const bacThang: Suggestion[] = typed
+    ? goiYNoiLong(f.keyword).map((g) => ({ label: g.label, kind: "Gợi ý" as const, sub: g.sub, patch: g.patch }))
+    : [];
   const panelItems: Suggestion[] = typed
-    ? (noHits ? popularSuggestions : typedHits)
+    ? [...bacThang, ...(noHits ? popularSuggestions : typedHits)]
     : [...recentShown, ...popularSuggestions];
 
   const applySuggestion = (s: Suggestion) => {
     pushRecent(s);
-    if (s.kind === "Khu vực" && s.province) {
+    if (s.patch) {
+      // Gợi ý bậc thang: đổ THẲNG nhiều trường lọc cùng lúc, xoá ô từ khoá
+      // (tiêu chí đã nằm trong bộ lọc rồi, giữ lại sẽ lọc chồng hai lần).
+      set({ ...s.patch, keyword: "" });
+    } else if (s.kind === "Khu vực" && s.province) {
       // Thêm khu vực vào danh sách ĐA CHỌN (không ghi đè, không trùng, tối đa 5).
       const sel: LocationSel = { province: s.province, district: s.district || undefined, ward: s.ward || undefined };
       const dup = f.locations.some((l) => sameLocation(l, sel));

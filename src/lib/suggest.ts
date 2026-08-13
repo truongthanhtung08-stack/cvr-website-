@@ -7,7 +7,7 @@ import { provinces } from "@/lib/locations";
 import { propertyTypeOptions, normalizeVi } from "@/lib/filters";
 import { featuredListings, projects, articles } from "@/lib/data";
 
-export type SuggestKind = "Khu vực" | "Mục đích" | "Loại hình" | "Sản phẩm" | "Dự án" | "Tin tức";
+export type SuggestKind = "Gợi ý" | "Khu vực" | "Mục đích" | "Loại hình" | "Sản phẩm" | "Dự án" | "Tin tức";
 
 export type Suggestion = {
   label: string;
@@ -23,6 +23,9 @@ export type Suggestion = {
   href?: string;
   // Phụ: từ khoá đổ vào ô tìm (khi không điều hướng được)
   keyword?: string;
+  // Gợi ý bậc thang: bấm là ĐỔ THẲNG nhiều trường lọc cùng lúc
+  // (loại hình + khu vực + giá + phòng ngủ) — xem goiYNoiLong() trong smartSearch.ts
+  patch?: Partial<import("@/lib/filters").Filters>;
 };
 
 type Entry = Suggestion & { norm: string; primary: string };
@@ -147,6 +150,8 @@ function tokensFuzzy(qTokens: string[], eTokens: string[]): boolean {
 
 // Cùng hạng khớp: ưu tiên lọc cấu trúc (khu vực, loại) trước, rồi dự án/sản phẩm/tin.
 const KIND_ORDER: Record<SuggestKind, number> = {
+  // "Gợi ý" (bậc thang từ chính câu đang gõ) LUÔN đứng đầu panel
+  "Gợi ý": -1,
   "Khu vực": 0, "Mục đích": 1, "Loại hình": 2, "Dự án": 3, "Sản phẩm": 4, "Tin tức": 5,
 };
 

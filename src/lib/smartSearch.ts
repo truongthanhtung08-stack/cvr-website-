@@ -346,6 +346,69 @@ export function smartFilter<T extends Searchable & { badge?: string }>(
   return out;
 }
 
+// ============================================================================
+// GỢI Ý TÌM KIẾM THEO BẬC THANG (nới lỏng dần)
+// Gõ "Đất nền tại Đà Nẵng giá dưới 3 tỷ" → gợi ý theo đúng thứ tự ưu tiên:
+//   1. Đất nền · Đà Nẵng · dưới 3 tỷ   (khớp 100%)
+//   2. Đất nền · Đà Nẵng               (bỏ điều kiện phụ nhất: giá)
+//   3. Đất nền                         (bỏ tiếp khu vực)
+//   4. Bất động sản tại Đà Nẵng        (chỉ giữ khu vực)
+// Bấm dòng nào là bộ lọc nhảy đúng dòng đó — không phải gõ lại.
+// ============================================================================
+export type GoiY = { label: string; sub: string; patch: Partial<Filters> };
+
+export function goiYNoiLong(raw: string): GoiY[] {
+  const p = parseQuery(raw);
+  const loai = p.types[0];
+  const noi = p.places[0];
+  const coGia = p.priceMaxTy != null || p.priceMinTy != null;
+  const giaChu = p.priceMaxTy != null
+    ? `dưới ${p.priceMaxTy >= 1 ? `${p.priceMaxTy} tỷ` : `${Math.round(p.priceMaxTy * 1000)} triệu`}`
+    : p.priceMinTy != null
+      ? `trên ${p.priceMinTy} tỷ`
+      : "";
+
+  const pGia: Partial<Filters> = coGia ? { priceMin: p.priceMinTy, priceMax: p.priceMaxTy } : {};
+  const pLoai: Partial<Filters> = loai ? { types: [loai] } : {};
+  const pNoi: Partial<Filters> = noi ? { locations: [{ province: noi }] } : {};
+  const pPn: Partial<Filters> = p.beds != null ? { beds: p.beds } : {};
+
+  const ds: GoiY[] = [];
+  const them = (label: string, sub: string, patch: Partial<Filters>) => {
+    if (!label || ds.some((x) => x.label === label)) return;
+    ds.push({ label, sub, patch });
+  };
+
+  const phanLoai = loai ?? "Bất động sản";
+  const phanNoi = noi ? ` tại ${noi}` : "";
+  const phanPn = p.beds != null ? ` ${p.beds} PN` : "";
+
+  // 1) Đầy đủ mọi tiêu chí bóc được
+  if (loai || noi || coGia || p.beds != null) {
+    them(
+      `${phanLoai}${phanPn}${phanNoi}${coGia ? ` ${giaChu}` : ""}`,
+      "Khớp đầy đủ tiêu chí",
+      { ...pLoai, ...pNoi, ...pGia, ...pPn },
+    );
+  }
+  // 2) Bỏ GIÁ (điều kiện dễ nới nhất)
+  if (coGia && (loai || noi)) {
+    them(`${phanLoai}${phanPn}${phanNoi}`, "Bỏ điều kiện giá", { ...pLoai, ...pNoi, ...pPn });
+  }
+  // 3) Bỏ tiếp SỐ PHÒNG NGỦ
+  if (p.beds != null && (loai || noi)) {
+    them(`${phanLoai}${phanNoi}`, "Bỏ điều kiện phòng ngủ", { ...pLoai, ...pNoi });
+  }
+  // 4) Chỉ LOẠI HÌNH
+  if (loai) them(`Tất cả ${loai.toLowerCase()}`, "Toàn quốc", pLoai);
+  // 5) Chỉ KHU VỰC
+  if (noi) them(`Bất động sản tại ${noi}`, "Mọi loại hình", pNoi);
+  // 6) Chỉ GIÁ
+  if (coGia) them(`Bất động sản ${giaChu}`, "Mọi khu vực, mọi loại hình", pGia);
+
+  return ds.slice(0, 5);
+}
+
 // Nhãn từng tầng (đúng chữ trong tài liệu mục 4)
 export const TIER_LABEL: Record<1 | 2 | 3, string> = {
   1: "🔥 Khớp hoàn hảo với tiêu chí của bạn",
