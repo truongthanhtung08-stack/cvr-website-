@@ -344,7 +344,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               /* Chưa có tin → khối trống, không có nút "Xem thêm" nên ẩn đi khi
                  khối "Dự án liên quan" đang mở danh sách */
               <HomeCollapsible>
-                <div className="mt-10 sm:mt-14">
+                <div className="mt-10">
                   <h2 className="mb-5 text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">
                     Tin mua bán liên quan tại dự án {p.name}
                   </h2>
