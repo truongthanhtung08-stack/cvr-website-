@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import type { Project, Article } from "@/lib/data";
@@ -136,6 +136,25 @@ export function ProjectListPaged({ projects }: { projects: Project[] }) {
 
 // Nút "Xem thêm" dùng chung — bấm là ra danh sách theo trang. KHÔNG có "Thu gọn":
 // đã mở danh sách thì nút biến mất.
+// Mũi tên chạy slide — chỉ hiện trên máy có chuột (điện thoại vuốt tay).
+function SlideArrow({ dir, onClick }: { dir: "prev" | "next"; onClick: () => void }) {
+  const prev = dir === "prev";
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={prev ? "Xem dự án trước" : "Xem dự án tiếp theo"}
+      className={`absolute top-[38%] z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-cvr-line bg-white/95 text-cvr-ink shadow-lux backdrop-blur transition hover:bg-white lg:flex ${
+        prev ? "-left-4" : "-right-4"
+      }`}
+    >
+      <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d={prev ? "M15 5l-7 7 7 7" : "M9 5l7 7-7 7"} />
+      </svg>
+    </button>
+  );
+}
+
 export function ExpandToggle({ expanded, onClick }: { expanded: boolean; onClick: () => void }) {
   if (expanded) return null;
   return (
@@ -177,6 +196,12 @@ export default function ProjectSlider({
   sectionKey?: string;
 }) {
   const { expanded, hidden, toggle } = useHomeSection(sectionKey);
+  // Chạy slide bằng mũi tên: cuộn đúng 1 màn thẻ mỗi lần bấm.
+  const trackRef = useRef<HTMLDivElement>(null);
+  const slide = (huong: 1 | -1) => {
+    const el = trackRef.current;
+    if (el) el.scrollBy({ left: huong * el.clientWidth * 0.9, behavior: "smooth" });
+  };
 
   const sorted = relevance ? projects : sortProjectsByTier(projects);
   const top8 = sorted.slice(0, 8);
@@ -199,18 +224,30 @@ export default function ProjectSlider({
 
   return (
     /* Đã mở danh sách → bỏ khoảng cách trên đầu (nội dung phía trên đã ẩn) */
-    <div className={expanded ? undefined : "mt-14"}>
+    /* Cách khối trên 40px — trước để 56px, lệch hẳn với 32px giữa các khối nội
+       dung phía trên (Tổng quan · Vị trí · Tiến độ · Bảng giá · Chủ đầu tư). */
+    <div className={expanded ? undefined : "mt-10"}>
       {/* Mở danh sách rồi thì ẩn tiêu đề khối — danh sách đã có tiêu đề riêng */}
       {!expanded && <h2 className="text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">{title}</h2>}
 
       {!expanded ? (
-        /* SLIDE 8 dự án — vuốt ngang trên điện thoại, lưới 4 cột trên PC */
-        <div className="no-scrollbar -mx-4 mt-5 flex snap-x snap-mandatory gap-5 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 sm:pb-0 lg:grid-cols-4">
-          {top8.map((p) => (
-            <div key={p.slug} className="w-[80%] shrink-0 snap-start sm:w-auto">
-              <ProjectCard p={p} />
-            </div>
-          ))}
+        /* SLIDE 8 dự án — CHẠY NGANG Ở MỌI KÍCH THƯỚC MÀN (trước đây PC bị dựng
+           thành lưới tĩnh 4×2, không phải slide). Điện thoại 1 thẻ · tablet 2 ·
+           PC 4 thẻ mỗi màn; vuốt hoặc bấm mũi tên để chạy. */
+        <div className="relative mt-5">
+          <div ref={trackRef} className="no-scrollbar -mx-4 flex snap-x snap-mandatory gap-5 overflow-x-auto scroll-smooth px-4 pb-2 sm:mx-0 sm:px-0">
+            {top8.map((p) => (
+              <div
+                key={p.slug}
+                className="w-[80%] shrink-0 snap-start sm:w-[calc(50%-10px)] lg:w-[calc(25%-15px)]"
+              >
+                <ProjectCard p={p} />
+              </div>
+            ))}
+          </div>
+          {/* Mũi tên — chỉ hiện trên máy có chuột */}
+          <SlideArrow dir="prev" onClick={() => slide(-1)} />
+          <SlideArrow dir="next" onClick={() => slide(1)} />
         </div>
       ) : (
         /* XỔ RA: ĐÚNG bố cục trang /du-an — danh sách + CỘT PHẢI (lọc khu vực,
