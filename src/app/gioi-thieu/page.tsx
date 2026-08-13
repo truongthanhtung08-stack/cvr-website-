@@ -81,12 +81,12 @@ export default async function GioiThieuPage() {
       <main className="flex-1 bg-white">
         {/* ── Hero giới thiệu ──
              KHUNG THEO TỶ LỆ CỐ ĐỊNH (không dùng vh) để ảnh luôn hiện đúng phần
-             mong muốn: PC 16:5 (=3.2:1) · điện thoại 16:10.
-             → Ảnh cần chuẩn bị: TỶ LỆ 16:5, khuyến nghị 3200×1000 (tối thiểu 1920×600).
-             Khung cũ (38vh, tối đa 400px) hoá ra ~4.8:1 nên cắt mất 2/3 ảnh 16:9,
-             đường chân trời bị xén — nay 16:5 giữ được dải biển mà không quá cao. */}
+             mong muốn: PC 7:2 (=3.5:1) · điện thoại 16:10.
+             → Ảnh cần chuẩn bị: TỶ LỆ 7:2, khuyến nghị 3500×1000 (tối thiểu 1920×550).
+             KHÔNG chèn watermark/logo lên hero này — để ảnh sạch, thương hiệu đã có
+             ở header ngay phía trên. */}
         <section className="relative isolate">
-          <div className="relative aspect-[16/10] w-full overflow-hidden bg-cvr-ink sm:aspect-[16/5] sm:max-h-[500px]">
+          <div className="relative aspect-[16/10] w-full overflow-hidden bg-cvr-ink sm:aspect-[7/2] sm:max-h-[420px]">
             <Image
               src={asset(about.heroImage)}
               alt="Không gian làm việc Coastal Land bên bờ biển Duyên hải Miền Trung"

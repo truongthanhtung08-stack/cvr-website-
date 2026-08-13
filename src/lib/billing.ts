@@ -91,7 +91,7 @@ export type PointPolicy = {
 // ── Cấp thành viên ──────────────────────────────────────────────────────────
 export type MemberLevel = {
   id: string;
-  name: string;         // Đồng · Bạc · Vàng · Kim cương
+  name: string;         // Basic · Silver · Gold · Diamond (trùng tên 4 hạng tin)
   minSpend: number;     // tổng chi tiêu tối thiểu (VNĐ)
   discount: number;     // % giảm thêm cho cấp này
   color: string;
@@ -211,12 +211,14 @@ export const BILLING_DEFAULT: BillingData = {
     note: "Thành viên mới được đăng 3 tin miễn phí trong 30 ngày đầu.",
   },
   points: { active: true, earnPerVnd: 10_000, redeemRate: 100, minRedeem: 100 },
-  // CẤP HỘI VIÊN — KHÔNG có cấp "Đồng". Khách chưa đạt mốc chi tiêu thấp nhất
-  // thì CHƯA có cấp (không phải hạng bét), lên Bạc khi đủ mốc.
+  // CẤP HỘI VIÊN — ĐÚNG 4 CẤP, TRÙNG TÊN với 4 hạng tin (Basic · Silver · Gold ·
+  // Diamond) để khách không phải nhớ hai hệ tên. Basic là cấp khởi điểm (0đ),
+  // đủ mốc chi tiêu thì tự lên cấp trên. Màu lấy đúng màu hạng tin trong packages.ts.
   levels: [
-    { id: "bac", name: "Bạc", minSpend: 5_000_000, discount: 3, color: "#8e949b" },
-    { id: "vang", name: "Vàng", minSpend: 20_000_000, discount: 5, color: "#c9a24a" },
-    { id: "kimcuong", name: "Kim cương", minSpend: 50_000_000, discount: 10, color: "#d7263d" },
+    { id: "basic", name: "Basic", minSpend: 0, discount: 0, color: "#9aa0a6" },
+    { id: "silver", name: "Silver", minSpend: 5_000_000, discount: 3, color: "#0071e3" },
+    { id: "gold", name: "Gold", minSpend: 20_000_000, discount: 5, color: "#c9a24a" },
+    { id: "diamond", name: "Diamond", minSpend: 50_000_000, discount: 10, color: "#d7263d" },
   ],
   topupAmounts: [200_000, 500_000, 1_000_000, 2_000_000, 5_000_000, 10_000_000],
   projectPlans: PROJECT_PLANS_DEFAULT,

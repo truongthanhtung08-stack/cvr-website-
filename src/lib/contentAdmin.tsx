@@ -103,7 +103,16 @@ export const articleCategories = [
 ];
 
 // Trạng thái bán hàng của dự án (huy hiệu trên thẻ dự án)
-export const projectStatusOptions = ["Sắp mở bán", "Đang mở bán", "Sắp bàn giao", "Đã bàn giao"];
+// Tình trạng dự án — admin chọn trực tiếp, thanh "Tiến độ dự án" ở trang chi tiết
+// tự nhảy theo (xem currentStep trong app/du-an/[slug]/page.tsx).
+export const projectStatusOptions = [
+  "Chưa mở bán",
+  "Sắp mở bán",
+  "Đang mở bán",
+  "Đã hoàn thành",
+  "Sắp bàn giao",
+  "Đã bàn giao",
+];
 
 export function contentStatusLabel(s: ContentStatus): string {
   return s === "published" ? "Đã đăng" : s === "pending" ? "Chờ duyệt" : "Nháp";

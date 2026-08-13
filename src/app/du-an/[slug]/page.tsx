@@ -30,12 +30,17 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 // Các mốc tiến độ
 const progressSteps = ["Pháp lý & khởi công", "Thi công phần thô", "Hoàn thiện", "Bàn giao"];
+// Tình trạng dự án (admin chọn) → bước sáng trên thanh Tiến độ.
+// ⚠️ Thứ tự kiểm tra QUAN TRỌNG: "Chưa mở bán" cũng chứa chữ "mở bán", "Sắp bàn
+// giao" cũng chứa "bàn giao" — mục hẹp phải xét TRƯỚC mục rộng.
 function currentStep(status: string): number {
   const s = status.toLowerCase();
+  if (s.includes("chưa mở")) return 0;
   if (s.includes("sắp mở")) return 0;
-  if (s.includes("mở bán")) return 1;
+  if (s.includes("đã bàn giao")) return 3;
   if (s.includes("sắp bàn giao")) return 2;
-  if (s.includes("bàn giao") || s.includes("hoàn thiện")) return 3;
+  if (s.includes("hoàn thành") || s.includes("hoàn thiện")) return 2;
+  if (s.includes("mở bán")) return 1;
   return 1;
 }
 
