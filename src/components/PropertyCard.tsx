@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import SaveButton from "@/components/SaveButton";
 import CompareButton from "@/components/CompareButton";
+import Highlight from "@/components/Highlight";
 import { listingSummary, type Listing } from "@/lib/data";
 import { tierFromBadge, getTier } from "@/lib/packages";
 
@@ -45,14 +46,17 @@ export default function PropertyCard({
   layout = "grid",
   variant = "grid",
   showTime = false,
+  terms = [],
 }: {
   item: Listing;
   layout?: "grid" | "list";
   variant?: "featured" | "grid" | "mini" | "tier";
   // Hiện "Hôm nay" (thời gian đăng) — chỉ ở trang list (Mua bán/Cho thuê), KHÔNG ở trang chủ.
   showTime?: boolean;
+  // Từ khoá đang tìm → BÔI ĐẬM phần khớp trong tiêu đề & địa chỉ (trang kết quả tìm kiếm)
+  terms?: string[];
 }) {
-  if (layout === "list") return <PropertyRow item={item} showTime={showTime} />;
+  if (layout === "list") return <PropertyRow item={item} showTime={showTime} terms={terms} />;
   const agentName = agentNameOf(item);
   // Hạng CVR của tin (từ huy hiệu VIP/Nổi bật/Mới). Tin không huy hiệu → tin thường.
   const tier = item.badge ? getTier(tierFromBadge(item.badge)) : null;
@@ -120,7 +124,7 @@ export default function PropertyCard({
           }`}
           style={tier?.titleColor ? { color: tier.titleColor } : undefined}
         >
-          {item.title}
+          <Highlight text={item.title} terms={terms} />
         </h3>
 
         {/* Mô tả — số dòng theo cấp (Diamond 2 · Gold 1 · Silver/Basic 0) */}
@@ -146,7 +150,7 @@ export default function PropertyCard({
 
         {/* Địa chỉ */}
         <p className="mt-1.5 flex items-center gap-1 text-[13px] text-cvr-muted">
-          <PinIcon /><span className="line-clamp-1">{item.location}</span>
+          <PinIcon /><span className="line-clamp-1"><Highlight text={item.location} terms={terms} /></span>
         </p>
 
         {/* Đáy: thành viên đăng tin — chỉ cấp cao (variant "tier": Diamond/Gold) */}
@@ -166,7 +170,7 @@ export default function PropertyCard({
 }
 
 // ── List row ─────────────────────────────────────────────────────────────────
-function PropertyRow({ item, showTime = false }: { item: Listing; showTime?: boolean }) {
+function PropertyRow({ item, showTime = false, terms = [] }: { item: Listing; showTime?: boolean; terms?: string[] }) {
   const agentName = agentNameOf(item);
   const tier = item.badge ? getTier(tierFromBadge(item.badge)) : null;
   return (
@@ -198,7 +202,7 @@ function PropertyRow({ item, showTime = false }: { item: Listing; showTime?: boo
           className={`clamp-2 min-h-[3em] text-sm font-semibold leading-[1.5] text-cvr-ink sm:text-base ${tier?.uppercase ? "uppercase" : ""}`}
           style={tier?.titleColor ? { color: tier.titleColor } : undefined}
         >
-          {item.title}
+          <Highlight text={item.title} terms={terms} />
         </h3>
         <p className="mt-1 hidden text-sm leading-relaxed text-cvr-muted sm:line-clamp-2">{listingSummary(item)}</p>
         <div className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
@@ -207,7 +211,7 @@ function PropertyRow({ item, showTime = false }: { item: Listing; showTime?: boo
           {item.pricePerM2 && <span className="text-[13px] text-cvr-muted">{item.pricePerM2}</span>}
           {item.beds ? <span className="text-[13px] text-cvr-muted">{item.beds} PN</span> : null}
         </div>
-        <p className="mt-1.5 flex items-center gap-1 text-xs text-cvr-muted"><PinIcon /><span className="truncate">{item.location}</span></p>
+        <p className="mt-1.5 flex items-center gap-1 text-xs text-cvr-muted"><PinIcon /><span className="truncate"><Highlight text={item.location} terms={terms} /></span></p>
         <div className="mt-auto flex items-center gap-2 border-t border-cvr-line pt-2">
           <AgentAvatar name={agentName} src={item.agentAvatar} size={7} />
           <span className="min-w-0 flex-1 truncate text-xs font-medium text-cvr-body">{agentName}</span>

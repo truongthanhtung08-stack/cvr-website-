@@ -15,6 +15,7 @@ import {
   type Filters,
   type SortKey,
 } from "@/lib/filters";
+import { smartSearch, TIER_LABEL } from "@/lib/smartSearch";
 
 const PER_PAGE = 8; // mỗi trang 8 tin (giống danh sách /mua-ban)
 
@@ -47,10 +48,20 @@ export default function SearchClient({ items = featuredListings }: { items?: Lis
     [items, purpose],
   );
 
+  // ── TÌM KIẾM THÔNG MINH (tài liệu "Hệ thống bộ lọc và tìm kiếm thông minh") ──
+  // Bộ lọc chọn tay chạy trước (khu vực/giá/diện tích…), TỪ KHOÁ do smartSearch
+  // xử lý: bóc tách câu dài → xếp 3 tầng (khớp 100% → gần đúng → liên quan) và
+  // LUÔN có kết quả. Không gõ từ khoá → giữ nguyên cách sắp xếp cũ.
+  const loc = useMemo(() => applyFilters(base, { ...filters, keyword: "" }), [base, filters]);
+  const search = useMemo(() => smartSearch(loc, filters.keyword), [loc, filters.keyword]);
+  const coTuKhoa = filters.keyword.trim().length > 0;
+
   const results = useMemo(
-    () => sortListings(applyFilters(base, filters), sort),
-    [base, filters, sort],
+    () => (coTuKhoa ? search.hits.map((h) => h.item) : sortListings(loc, sort)),
+    [coTuKhoa, search, loc, sort],
   );
+  // Tra cứu nhanh: tin nào thuộc tầng nào + khớp những chữ gì (để bôi đậm)
+  const hitById = useMemo(() => new Map(search.hits.map((h) => [h.item.id, h])), [search]);
   const active = hasActiveFilters(filters);
 
   // Phân trang: 8 tin/trang, kẹp trang hiện tại trong [1, totalPages]
@@ -113,9 +124,18 @@ export default function SearchClient({ items = featuredListings }: { items?: Lis
       {/* Kết quả — 8 tin/trang, có phân trang 1,2,3… */}
       {results.length > 0 ? (
         <>
+          {/* Nhãn TẦNG KẾT QUẢ — hiện đúng chất lượng khớp của nhóm tin đang xem
+              (khớp 100% · gần đúng · liên quan). Không gõ từ khoá thì không hiện. */}
+          {coTuKhoa && pageItems.length > 0 && (() => {
+            const t = hitById.get(pageItems[0].id)?.tier ?? 3;
+            return (
+              <p className="mb-3 text-sm font-medium text-cvr-body">{TIER_LABEL[t]}</p>
+            );
+          })()}
+
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {pageItems.map((item) => (
-              <PropertyCard key={item.id} item={item} />
+              <PropertyCard key={item.id} item={item} terms={hitById.get(item.id)?.matched ?? []} />
             ))}
           </div>
 
