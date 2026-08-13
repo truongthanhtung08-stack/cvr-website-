@@ -1,8 +1,15 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+
+// Bản đồ chỉ chạy phía trình duyệt (Leaflet đụng tới window) → nạp động, tắt SSR.
+const MapView = dynamic(() => import("@/components/MapView"), {
+  ssr: false,
+  loading: () => <div className="flex h-full items-center justify-center text-sm text-cvr-muted">Đang tải bản đồ…</div>,
+});
 import PropertyCard from "@/components/PropertyCard";
 import FilterBar from "@/components/FilterBar";
 import ActiveFilters from "@/components/ActiveFilters";
@@ -49,6 +56,9 @@ export default function ListingBrowser({
   const [filters, setFiltersState] = useState<Filters>(() => filtersFromParams(params));
   const [sort, setSort] = useState<SortKey>(relevance ? "lien-quan" : "moi");
   const [view, setView] = useState<"list" | "grid">("list");
+  // Chế độ BẢN ĐỒ (kiểu Batdongsan): bật là cả trang chuyển sang xem bản đồ,
+  // marker chạy theo đúng bộ lọc đang áp dụng.
+  const [mapMode, setMapMode] = useState(false);
   const [page, setPage] = useState(1);
 
   // Đổi bộ lọc → luôn quay về trang 1
@@ -113,6 +123,23 @@ export default function ListingBrowser({
       {/* Hàng điều khiển dùng chung: xoá lọc · chế độ xem (Danh sách/Lưới/Bản đồ) · sắp xếp.
           Trên mobile TẠM ẨN chế độ xem + sắp xếp (theo yêu cầu), giữ nút Xoá lọc. */}
       <div className="mt-3 flex flex-wrap items-center justify-end gap-3 sm:mt-4">
+              {/* XEM BẢN ĐỒ (kiểu Batdongsan) — bật/tắt chế độ bản đồ ngay tại chỗ.
+                  Marker chạy theo đúng bộ lọc đang áp dụng. */}
+              <button
+                type="button"
+                onClick={() => setMapMode((v) => !v)}
+                aria-pressed={mapMode}
+                className={`mr-auto inline-flex min-h-[38px] items-center gap-2 rounded-lg px-3.5 text-sm font-semibold transition ${
+                  mapMode
+                    ? "bg-cvr-ink text-white"
+                    : "border border-cvr-line bg-white text-cvr-body hover:border-cvr-ink hover:text-cvr-ink"
+                }`}
+              >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.9} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 4.5l6 2.4 5-2.4v14.4l-5 2.4-6-2.4-5 2.4V4.9l5-2.4v16.8" />
+                </svg>
+                {mapMode ? "Xem danh sách" : "Xem bản đồ"}
+              </button>
               {active && (
                 <button
                   type="button"
@@ -141,7 +168,21 @@ export default function ListingBrowser({
               </select>
       </div>
 
-      <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-3">
+      {/* ═══ CHẾ ĐỘ BẢN ĐỒ ═══ marker là viên GIÁ, bấm ra thẻ mini dẫn tới tin.
+          Bấm "Xem danh sách" để quay lại. */}
+      {mapMode && (
+        <div className="mt-4 overflow-hidden rounded-xl border border-cvr-line">
+          <div className="h-[62vh] min-h-[380px] w-full">
+            <MapView items={results} />
+          </div>
+          <p className="border-t border-cvr-line bg-cvr-surface px-3 py-2 text-xs text-cvr-muted">
+            Đang hiện <span className="font-semibold text-cvr-ink">{results.length}</span> bất động sản theo bộ lọc.
+            Bấm vào viên giá để xem nhanh tin.
+          </p>
+        </div>
+      )}
+
+      <div className={`mt-4 grid grid-cols-1 gap-6 lg:grid-cols-3 ${mapMode ? "hidden" : ""}`}>
 
         {/* CỘT TRÁI: danh sách tin */}
         <div className="lg:col-span-2">
