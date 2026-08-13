@@ -186,7 +186,7 @@ export default function ProjectsBrowser({
               }}
               placeholder="Tìm nhanh theo tên dự án, chủ đầu tư, vị trí…"
               aria-label="Tìm nhanh dự án"
-              className="h-11 w-full rounded-xl bg-cvr-surface pl-4 pr-14 text-[15px] text-cvr-ink placeholder-cvr-faint ring-1 ring-black/5 outline-none transition focus:ring-2 focus:ring-cvr-blue/50 sm:h-10 sm:border sm:border-transparent sm:pl-9 sm:pr-9 sm:ring-0 sm:focus:border-cvr-line sm:focus:bg-white"
+              className="h-11 w-full rounded-xl bg-cvr-surface pl-4 pr-14 text-[15px] text-cvr-ink placeholder-cvr-faint ring-1 ring-black/5 outline-none transition focus:ring-2 focus:ring-cvr-blue/50 sm:h-10 sm:border sm:border-transparent sm:pl-9 sm:pr-24 sm:ring-0 sm:focus:border-cvr-line sm:focus:bg-white"
             />
             {/* Nút xoá nhanh (×) — đồng bộ với ô tìm Mua bán/Cho thuê */}
             {q.trim().length > 0 && (
@@ -194,7 +194,7 @@ export default function ProjectsBrowser({
                 type="button"
                 aria-label="Xoá tìm kiếm"
                 onClick={() => setQ("")}
-                className="absolute right-14 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-cvr-faint transition hover:bg-black/5 hover:text-cvr-ink active:scale-95 sm:right-2"
+                className="absolute right-14 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-cvr-faint transition hover:bg-black/5 hover:text-cvr-ink active:scale-95 sm:right-[5.5rem]"
               >
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
@@ -236,6 +236,20 @@ export default function ProjectsBrowser({
                 ))}
               </div>
             )}
+
+            {/* NÚT TÌM KIẾM trên PC — mục Dự án cũng phải có nút như Mua bán/Cho thuê
+                (trước đây desktop chỉ có kính lúp trang trí, không bấm được) */}
+            <button
+              type="button"
+              aria-label="Tìm kiếm dự án"
+              onClick={() => setSugOpen(false)}
+              className="absolute right-1 top-1 bottom-1 hidden items-center gap-1.5 rounded-lg bg-cvr-blue px-3 text-[13px] font-semibold text-white transition hover:bg-cvr-blue-ink active:scale-95 sm:flex"
+            >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.4} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
+              </svg>
+              Tìm
+            </button>
 
             {/* Nút search XANH — bo tròn mềm, snug mép phải (giống trang chủ) → mở tìm toàn màn hình */}
             <button

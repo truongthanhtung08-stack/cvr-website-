@@ -267,10 +267,11 @@ export default function FilterBar({
   // Khu vực — ĐA CHỌN (tối đa 5) theo tầng Tỉnh→Quận→Phường (kiểu Batdongsan)
   const locationDropdown = (
       <FilterDropdown label="Toàn quốc" summary={locLabel} active={f.locations.length > 0} panelClassName="w-80" compact={compact} className={ddClass}>
-        {() => (
+        {({ close }) => (
           <LocationPanel
             locations={f.locations}
             onChange={(locations) => set({ locations })}
+            onClose={close}
           />
         )}
       </FilterDropdown>
@@ -744,10 +745,13 @@ export default function FilterBar({
 // Bộ chọn khu vực ĐA TẦNG + ĐA CHỌN (kiểu Batdongsan): duyệt Tỉnh→Quận→Phường,
 // thêm cả tỉnh/quận hoặc chọn tới phường; mỗi khu vực là 1 chip (tối đa MAX_LOCATIONS).
 function LocationPanel({
-  locations, onChange,
+  locations, onChange, onClose,
 }: {
   locations: LocationSel[];
   onChange: (locations: LocationSel[]) => void;
+  // Đóng panel từ bên trong (nút "Xong") — trước đây chỉ đóng được bằng cách
+  // bấm ra ngoài, người dùng không biết đã chọn xong hay chưa.
+  onClose?: () => void;
 }) {
   const [q, setQ] = useState("");
   const [prov, setProv] = useState(""); // đường dẫn đang duyệt (chưa cam kết)
@@ -881,6 +885,27 @@ function LocationPanel({
             {level !== "ward" ? <span className="shrink-0 text-cvr-faint">›</span> : <span className="shrink-0 text-[11px] text-cvr-faint">＋ Thêm</span>}
           </button>
         ))}
+      </div>
+
+      {/* ── HÀNG THAO TÁC — luôn nhìn thấy ở đáy panel ──────────────────────────
+          Trước đây chọn xong không có nút nào để đóng, phải bấm ra ngoài mới thoát;
+          cũng không có cách bỏ hết khu vực đã chọn ngoài việc gỡ từng chip. */}
+      <div className="mt-2 flex items-center justify-between gap-2 border-t border-cvr-line pt-2">
+        <button
+          type="button"
+          onClick={() => { onChange([]); setProv(""); setDist(""); setQ(""); }}
+          disabled={locations.length === 0}
+          className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-cvr-body transition hover:bg-black/5 hover:text-cvr-ink disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          Bỏ chọn tất cả
+        </button>
+        <button
+          type="button"
+          onClick={() => onClose?.()}
+          className="rounded-lg bg-cvr-blue px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-cvr-blue-ink"
+        >
+          Xong{locations.length > 0 ? ` (${locations.length})` : ""}
+        </button>
       </div>
     </div>
   );
