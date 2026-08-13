@@ -25,7 +25,11 @@ export const metadata: Metadata = {
    · Lưới 2 cột ảnh–chữ : gap 8 → 14 · Lưới thẻ: gap 5
    · Nút CTA            : viên thuốc, cao tối thiểu 48px
    ════════════════════════════════════════════════════════════════════════════ */
-const SECTION = "mx-auto max-w-7xl px-5 py-8 sm:px-6 sm:py-16 lg:px-8";
+const SECTION = "mx-auto max-w-7xl px-5 py-7 sm:px-6 sm:py-12 lg:px-8";
+// Khối mà nội dung là THẺ: thẻ đã có sẵn 24px đệm bên trong, nên khối phải bớt
+// đệm lại — nếu để bằng khối thường thì chỗ giáp ranh bị cộng dồn thành ~100px
+// trong khi chỗ khác chỉ 32px (đo thật trên máy: 32·101·89·89·75 → rất lệch).
+const SECTION_CARD = "mx-auto max-w-7xl px-5 py-4 sm:px-6 sm:py-9 lg:px-8";
 // items-stretch (KHÔNG dùng items-center): trước đây ảnh canh giữa theo chiều dọc
 // nên khi cột chữ dài hơn ảnh sẽ hở 2 mảng trắng trên–dưới ảnh, nhìn rất rời rạc.
 // Nay ảnh KÉO CAO BẰNG cột chữ → 2 cột thẳng hàng cả mép trên lẫn mép dưới.
@@ -83,12 +87,13 @@ export default async function GioiThieuPage() {
       <main className="flex-1 bg-white">
         {/* ── Hero giới thiệu ──
              KHUNG THEO TỶ LỆ CỐ ĐỊNH (không dùng vh) để ảnh luôn hiện đúng phần
-             mong muốn: PC 7:2 (=3.5:1) · điện thoại 16:10.
-             → Ảnh cần chuẩn bị: TỶ LỆ 7:2, khuyến nghị 3500×1000 (tối thiểu 1920×550).
+             mong muốn: PC 4:1 · điện thoại 16:10. (Đã hạ dần 3:1 → 16:5 → 7:2 → 4:1
+             theo yêu cầu "hero PC quá to"; cao tối đa 330px.)
+             → Ảnh cần chuẩn bị: TỶ LỆ 4:1, khuyến nghị 4000×1000 (tối thiểu 1920×480).
              KHÔNG chèn watermark/logo lên hero này — để ảnh sạch, thương hiệu đã có
              ở header ngay phía trên. */}
-        <section className="relative isolate">
-          <div className="relative aspect-[16/10] w-full overflow-hidden bg-cvr-ink sm:aspect-[7/2] sm:max-h-[420px]">
+        <section className="relative isolate pb-7 sm:pb-12">
+          <div className="relative aspect-[16/10] w-full overflow-hidden bg-cvr-ink sm:aspect-[4/1] sm:max-h-[330px]">
             <Image
               src={asset(about.heroImage)}
               alt="Không gian làm việc Coastal Land bên bờ biển Duyên hải Miền Trung"
@@ -118,7 +123,7 @@ export default async function GioiThieuPage() {
 
         {/* ── Tầm nhìn & Sứ mệnh — mỗi thẻ một ICON cho chuyên nghiệp ── */}
         <section className="bg-cvr-surface">
-          <div className={SECTION}>
+          <div className={SECTION_CARD}>
             <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
               <div className={CARD}>
                 {/* ICON và TIÊU ĐỀ nằm NGANG HÀNG */}
@@ -151,7 +156,7 @@ export default async function GioiThieuPage() {
         </section>
 
         {/* ── Giá trị cốt lõi ── */}
-        <section className={SECTION}>
+        <section className={SECTION_CARD}>
           <div className="max-w-2xl">
             <Eyebrow>Giá trị cốt lõi</Eyebrow>
             <Title>Điều làm nên Coastal Land</Title>
