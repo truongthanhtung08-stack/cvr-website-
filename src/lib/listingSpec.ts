@@ -76,11 +76,26 @@ export const categorySpecs: CategorySpec[] = [
       { key: "operator", label: "Đơn vị vận hành", type: "text" },
     ],
   },
+  // CHUNG CƯ và CĂN HỘ là HAI loại hình RIÊNG BIỆT (yêu cầu 13/8/2026) — trước đây
+  // gộp chung một bộ đặc điểm. "Chung cư" phải đứng TRƯỚC "Căn hộ" vì so khớp lấy
+  // mục đầu tiên trúng từ khoá. Cả hai đều có Hướng ban công; "Hướng nhà / đất" là
+  // trường DÙNG CHUNG do form tự thêm cho mọi loại nên không khai lại ở đây.
   {
-    label: "Căn hộ / Chung cư",
-    match: ["căn hộ", "chung cư", "officetel", "duplex", "penthouse", "studio"],
+    label: "Chung cư",
+    match: ["chung cư"],
     fields: [
-      { key: "loaiCanho", label: "Loại hình căn hộ", type: "select", options: ["Chung cư", "Căn hộ dịch vụ", "Duplex", "Penthouse", "Studio", "Officetel"] },
+      { key: "floor", label: "Tầng số (căn)", type: "text", placeholder: "VD: Tầng 18" },
+      { key: "block", label: "Block / Toà / Tháp", type: "text", placeholder: "VD: Block A" },
+      { key: "buildingFloors", label: "Tổng số tầng toà", type: "text", placeholder: "VD: 30 tầng" },
+      { key: "balcony", label: "Hướng ban công", type: "select", options: directions },
+      { key: "view", label: "Hướng view", type: "select", options: ["Biển", "Thành phố", "Hồ bơi", "Sông / công viên", "Nội khu"] },
+    ],
+  },
+  {
+    label: "Căn hộ",
+    match: ["căn hộ", "officetel", "duplex", "penthouse", "studio"],
+    fields: [
+      { key: "loaiCanho", label: "Loại hình căn hộ", type: "select", options: ["Căn hộ dịch vụ", "Duplex", "Penthouse", "Studio", "Officetel"] },
       { key: "floor", label: "Tầng số (căn)", type: "text", placeholder: "VD: Tầng 18" },
       { key: "block", label: "Block / Toà / Tháp", type: "text", placeholder: "VD: Block A" },
       { key: "buildingFloors", label: "Tổng số tầng toà", type: "text", placeholder: "VD: 30 tầng" },

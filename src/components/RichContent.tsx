@@ -24,7 +24,9 @@ const ALIGN_CLASS: Record<string, string> = {
 //      hiện nguyên "**" ra ngoài web như trước.
 function renderInline(text: string): React.ReactNode[] {
   const out: React.ReactNode[] = [];
-  const re = /(\*\*.+?\*\*|\*[^*\n]+?\*)/g;
+  // ĐẬM+NGHIÊNG (***) phải đứng TRƯỚC đậm (**), nếu không "***chữ***" sẽ bị
+  // khớp nhầm thành **…** và lòi ra một dấu * ở đầu (lỗi đã thấy trong ô soạn tin).
+  const re = /(\*\*\*.+?\*\*\*|\*\*.+?\*\*|\*[^*\n]+?\*)/g;
   const donLe = (s: string) => s.replace(/\*{1,2}/g, ""); // dọn dấu sao thừa
   let last = 0;
   let m: RegExpExecArray | null;
@@ -32,7 +34,8 @@ function renderInline(text: string): React.ReactNode[] {
   while ((m = re.exec(text)) !== null) {
     if (m.index > last) out.push(donLe(text.slice(last, m.index)));
     const t = m[0];
-    if (t.startsWith("**")) out.push(<strong key={k++}>{t.slice(2, -2)}</strong>);
+    if (t.startsWith("***")) out.push(<strong key={k++}><em>{t.slice(3, -3)}</em></strong>);
+    else if (t.startsWith("**")) out.push(<strong key={k++}>{t.slice(2, -2)}</strong>);
     else out.push(<em key={k++}>{t.slice(1, -1)}</em>);
     last = m.index + t.length;
   }
