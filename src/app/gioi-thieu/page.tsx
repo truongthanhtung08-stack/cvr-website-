@@ -16,18 +16,20 @@ export const metadata: Metadata = {
    HỆ NHỊP CHUNG CỦA TRANG — sửa ở ĐÂY là cả trang đổi theo, không còn mỗi khối
    một kiểu (khoảng cách/cỡ chữ trước đây rời rạc trên cả PC lẫn điện thoại).
 
-   · Chiều dọc mỗi khối : py-14 (điện thoại) → py-20 (máy tính)
+   · Chiều dọc mỗi khối : py-8 (điện thoại) → py-16 (máy tính)
+     ⚠️ Chỗ 2 khối giáp nhau, khoảng trắng = py dưới + py trên. Để py-14 thì hở
+     tới 112px trên điện thoại — nhìn rất rời rạc. py-8 → hở 64px, vừa mắt.
    · Lề ngang           : px-5 → px-6 → px-8, khung tối đa 7xl
    · Cụm tiêu đề        : eyebrow → tiêu đề → mô tả, cách nhau 10px / 16px
    · Thẻ                : p-6 (đt) → p-7 (máy tính), icon 48px bo 16px
    · Lưới 2 cột ảnh–chữ : gap 8 → 14 · Lưới thẻ: gap 5
    · Nút CTA            : viên thuốc, cao tối thiểu 48px
    ════════════════════════════════════════════════════════════════════════════ */
-const SECTION = "mx-auto max-w-7xl px-5 py-14 sm:px-6 sm:py-20 lg:px-8";
+const SECTION = "mx-auto max-w-7xl px-5 py-8 sm:px-6 sm:py-16 lg:px-8";
 // items-stretch (KHÔNG dùng items-center): trước đây ảnh canh giữa theo chiều dọc
 // nên khi cột chữ dài hơn ảnh sẽ hở 2 mảng trắng trên–dưới ảnh, nhìn rất rời rạc.
 // Nay ảnh KÉO CAO BẰNG cột chữ → 2 cột thẳng hàng cả mép trên lẫn mép dưới.
-const SPLIT = "grid grid-cols-1 items-stretch gap-8 lg:grid-cols-2 lg:gap-14";
+const SPLIT = "grid grid-cols-1 items-stretch gap-5 lg:grid-cols-2 lg:gap-14";
 const CARD = "border border-cvr-line bg-white p-6 shadow-lux sm:p-7";
 const ICON_BOX = "flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl";
 // Hàng đầu thẻ: ICON và TIÊU ĐỀ NGANG HÀNG (không xếp trên–dưới nữa)

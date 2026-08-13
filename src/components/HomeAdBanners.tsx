@@ -90,8 +90,8 @@ export function AdBannerAll({ data = HOME_AD_DEFAULT }: { data?: HomeAdData }) {
           <Image
             src={asset("/images/app-phone-2026-b.png")}
             alt="Màn hình Dự án trên ứng dụng COASTAL LAND"
-            width={681}
-            height={1318}
+            width={702}
+            height={1340}
             sizes="240px"
             // Hiện từ màn ≥1024px (mốc cũ 1280px quá cao: màn 1280 trừ thanh cuộn
             // còn ~1265px nên máy thứ 2 không bao giờ hiện). Ở 1024–1280 thì thu
