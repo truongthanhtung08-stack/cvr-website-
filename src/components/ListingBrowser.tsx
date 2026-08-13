@@ -2,10 +2,11 @@
 
 import { useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import PropertyCard from "@/components/PropertyCard";
 import FilterBar from "@/components/FilterBar";
 import ActiveFilters from "@/components/ActiveFilters";
-import { featuredListings, type Listing } from "@/lib/data";
+import { featuredListings, type Article, type Listing } from "@/lib/data";
 import {
   applyFilters,
   sortListings,
@@ -13,6 +14,7 @@ import {
   emptyFilters,
   hasActiveFilters,
   priceRangesFor,
+  areaRanges,
   type Filters,
   type SortKey,
 } from "@/lib/filters";
@@ -23,6 +25,7 @@ export default function ListingBrowser({
   heading,
   purpose = "ban",
   items = featuredListings,
+  articles = [],
   relevance = false,
   nested = false,
 }: {
@@ -31,6 +34,9 @@ export default function ListingBrowser({
   purpose?: "ban" | "thue";
   // Tin từ Supabase (server truyền xuống) — không truyền thì dùng dữ liệu mẫu.
   items?: Listing[];
+  // Bài viết cho cột phải "Bài viết được quan tâm" (trang Mua bán / Cho thuê).
+  // Không truyền → khối này không hiện (vd khi nhúng trong trang chi tiết tin).
+  articles?: Article[];
   // Danh sách "tin tương tự": nguồn đã sắp theo độ liên quan → mặc định giữ đúng
   // thứ tự đó (thay vì Mới nhất) và thêm lựa chọn sắp xếp "Liên quan nhất".
   relevance?: boolean;
@@ -79,7 +85,8 @@ export default function ListingBrowser({
   const active = hasActiveFilters(filters);
 
   return (
-    <div className={nested ? "pb-20 pt-1 sm:pt-6" : "mx-auto max-w-7xl px-4 pb-20 pt-1 sm:px-6 sm:pt-6 lg:px-8"}>
+    // PC: thanh lọc nằm SÁT header, không chừa khoảng trống (file V3 10.08.2026).
+    <div className={nested ? "pb-20 pt-1 sm:pt-6" : "mx-auto max-w-7xl px-4 pb-20 pt-1 sm:px-6 sm:pt-2 lg:px-8"}>
       {/* ── Phần trên kiểu Homedy (gọn): thanh lọc → tiêu đề + bộ đếm.
            Trang cấp 1 KHÔNG dùng breadcrumb (menu đã chỉ vị trí — chuẩn Apple). ── */}
       <div>
@@ -199,6 +206,24 @@ export default function ListingBrowser({
               })}
             </SidebarFilter>
 
+            {/* Lọc theo diện tích */}
+            <SidebarFilter title="Lọc theo diện tích">
+              {areaRanges.map((r) => {
+                const on = filters.areaMin === r.min && filters.areaMax === r.max;
+                return (
+                  <SidebarLink
+                    key={r.label}
+                    active={on}
+                    onClick={() => setFilters(on
+                      ? { ...filters, areaMin: null, areaMax: null }
+                      : { ...filters, areaMin: r.min, areaMax: r.max })}
+                  >
+                    {r.label}
+                  </SidebarLink>
+                );
+              })}
+            </SidebarFilter>
+
             {/* Bất động sản theo khu vực */}
             <SidebarFilter title={`${heading} theo khu vực`}>
               {provinces.map(([prov, count]) => {
@@ -217,6 +242,23 @@ export default function ListingBrowser({
                 );
               })}
             </SidebarFilter>
+
+            {/* Bài viết được quan tâm — CÙNG kiểu với cột phải trang Tin tức */}
+            {articles.length > 0 && (
+              <div className="rounded-none border border-cvr-line bg-white p-4 shadow-lux">
+                <p className="mb-1 text-sm font-semibold text-cvr-ink">Bài viết được quan tâm</p>
+                <div className="flex flex-col divide-y divide-cvr-line/70">
+                  {articles.slice(0, 5).map((a, i) => (
+                    <Link key={a.slug} href={`/tin-tuc/${a.slug}`} className="group flex gap-3 py-2.5 last:pb-0">
+                      <span className="w-5 shrink-0 text-lg font-semibold leading-snug text-cvr-faint">{i + 1}</span>
+                      <span className="line-clamp-2 text-[13px] font-medium leading-snug text-cvr-ink transition-colors group-hover:text-cvr-blue-ink">
+                        {a.title}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </aside>
 

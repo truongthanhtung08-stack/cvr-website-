@@ -63,12 +63,14 @@ export type Area = {
 export const areas: Area[] = [
   { name: "Đà Nẵng", count: "1.240 tin", image: tin(1), href: "/mua-ban?tinh=Đà Nẵng" },
   { name: "Huế", count: "586 tin", image: tin(13), href: "/mua-ban?tinh=Huế" },
+  { name: "Quảng Trị", count: "586 tin", image: tin(13), href: "/mua-ban?tinh=Quảng Trị" },
   { name: "Khánh Hòa", count: "212 tin", image: tin(5), href: "/mua-ban?tinh=Khánh Hòa" },
   { name: "Quảng Ngãi", count: "256 tin", image: tin(20), href: "/mua-ban?tinh=Quảng Ngãi" },
   { name: "Gia Lai", count: "298 tin", image: tin(24), href: "/mua-ban?tinh=Gia Lai" },
-  { name: "Đắk Lắk", count: "164 tin", image: tin(9), href: "/mua-ban?tinh=Đắk Lắk" },
-  { name: "Quảng Trị", count: "138 tin", image: tin(3), href: "/mua-ban?tinh=Quảng Trị" },
   { name: "Lâm Đồng", count: "180 tin", image: tin(19), href: "/mua-ban?tinh=Lâm Đồng" },
+  { name: "Đắk Lắk", count: "164 tin", image: tin(9), href: "/mua-ban?tinh=Đắk Lắk" },
+  { name: "Hồ Chí Minh", count: "138 tin", image: tin(3), href: "/mua-ban?tinh=Hồ Chí Minh" },
+  { name: "Hà Nội", count: "180 tin", image: tin(19), href: "/mua-ban?tinh=Hà Nội" },
 ];
 
 export type Article = {

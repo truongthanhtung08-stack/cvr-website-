@@ -143,7 +143,7 @@ export function ExpandToggle({ expanded, onClick }: { expanded: boolean; onClick
       <button
         type="button"
         onClick={onClick}
-        className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full border border-cvr-line px-6 text-sm font-semibold text-cvr-ink transition hover:bg-cvr-surface active:bg-cvr-surface"
+        className="btn-xemthem"
       >
         Xem thêm
         <svg

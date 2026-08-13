@@ -133,23 +133,24 @@ export default function NewsSection({
           {headlines.length > 0 && (
           <div className="hidden divide-y divide-cvr-line/70 rounded-none border border-cvr-line bg-white px-5 shadow-lux lg:col-span-3 lg:flex lg:flex-col">
             {headlines.map((a) => (
-              <Link key={a.slug} href={`/tin-tuc/${a.slug}`} className="group flex flex-1 flex-col gap-2.5 py-3 sm:flex-row sm:items-center sm:gap-4 sm:py-4">
-                {/* MOBILE: hình TRÊN (tràn ngang), chữ DƯỚI — kiểu Báo Mới (T19). DESKTOP: hình trái. */}
-                <div className="relative aspect-[16/9] w-full shrink-0 overflow-hidden rounded-lg sm:aspect-[4/3] sm:w-32">
+              <Link key={a.slug} href={`/tin-tuc/${a.slug}`} className="group flex flex-1 flex-col gap-2.5 py-3 sm:flex-row sm:items-center sm:gap-5 sm:py-4">
+                {/* MOBILE: hình TRÊN (tràn ngang), chữ DƯỚI — kiểu Báo Mới (T19). DESKTOP: hình trái.
+                    PC: ảnh + chữ TO hơn để cân với bài nổi bật bên trái (file V3 10.08.2026). */}
+                <div className="relative aspect-[16/9] w-full shrink-0 overflow-hidden rounded-lg sm:w-44">
                   <Image
                     src={a.image}
                     alt={a.title}
                     fill
-                    sizes="128px"
+                    sizes="176px"
                     className="object-cover transition-transform duration-[700ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.06]"
                   />
                 </div>
                 <div className="min-w-0">
-                  <h3 className="line-clamp-2 font-semibold leading-snug text-cvr-ink transition-colors group-hover:text-cvr-blue-ink">
+                  <h3 className="line-clamp-2 font-semibold leading-snug text-cvr-ink transition-colors group-hover:text-cvr-blue-ink sm:text-[17px]">
                     {a.title}
                   </h3>
-                  <p className="mt-1 line-clamp-1 text-sm leading-relaxed text-cvr-muted sm:line-clamp-2">{a.excerpt}</p>
-                  <p className="mt-1.5 text-xs text-cvr-faint">{a.category} · {a.date}</p>
+                  <p className="mt-1.5 line-clamp-1 text-sm leading-relaxed text-cvr-muted sm:line-clamp-2 sm:text-[15px]">{a.excerpt}</p>
+                  <p className="mt-2 text-xs text-cvr-faint sm:text-[13px]">{a.category} · {a.date}</p>
                 </div>
               </Link>
             ))}
@@ -184,7 +185,7 @@ export default function NewsSection({
             <button
               type="button"
               onClick={toggle}
-              className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full border border-cvr-line px-6 text-sm font-semibold text-cvr-ink transition hover:bg-cvr-surface active:bg-cvr-surface"
+              className="btn-xemthem"
             >
               Xem thêm
               <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">

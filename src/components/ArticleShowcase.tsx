@@ -79,7 +79,7 @@ export default function ArticleShowcase({
         <button
           type="button"
           onClick={toggle}
-          className="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full border border-cvr-line px-6 text-sm font-semibold text-cvr-ink transition hover:bg-cvr-surface active:bg-cvr-surface"
+          className="btn-xemthem"
         >
           Xem thêm
           <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">

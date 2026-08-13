@@ -7,7 +7,7 @@ import LocationGrid from "@/components/LocationGrid";
 import NewsSection from "@/components/NewsSection";
 // import PromoBanner from "@/components/PromoBanner";   // thay bằng AdBannerSeller (mẫu Apple) — khôi phục nếu cần
 // import AppDownload from "@/components/AppDownload";   // thay bằng AdBannerApp (mẫu Apple) — khôi phục nếu cần
-import { AdBannerSeller, AdBannerApp } from "@/components/HomeAdBanners";
+import { AdBannerAll } from "@/components/HomeAdBanners";
 import Footer from "@/components/Footer";
 import { HomeExpandProvider, HomeCollapsible } from "@/components/HomeExpand";
 import { getListings } from "@/lib/listingsDb";
@@ -43,9 +43,9 @@ export default async function Home() {
           <LocationGrid areas={homeAreas} />
           <NewsSection articles={articles} featuredSlug={featuredSlug} />
 
+          {/* 2 banner cuối ĐÃ GỘP thành 1 (mẫu Demo 2 — file 10.08.2026) */}
           <HomeCollapsible>
-            <AdBannerSeller data={homeAd.seller} />
-            <AdBannerApp data={homeAd.app} />
+            <AdBannerAll data={homeAd} />
           </HomeCollapsible>
         </HomeExpandProvider>
       </main>

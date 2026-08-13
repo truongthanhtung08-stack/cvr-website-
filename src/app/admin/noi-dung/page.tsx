@@ -208,7 +208,7 @@ export default function AdminSiteContentPage() {
           <Field label="Dòng đậm (tagline)"><input value={footer.tagline} onChange={(e) => setFooter({ ...footer, tagline: e.target.value })} className={inputCls} /></Field>
           <Field label="Giới thiệu ngắn"><textarea value={footer.description} onChange={(e) => setFooter({ ...footer, description: e.target.value })} rows={2} className={`${inputCls} h-auto py-2.5`} /></Field>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <Field label="Hotline"><input value={footer.hotline} onChange={(e) => setFooter({ ...footer, hotline: e.target.value })} className={inputCls} /></Field>
+            <Field label="Hỗ trợ kỹ thuật (số điện thoại)"><input value={footer.hotline} onChange={(e) => setFooter({ ...footer, hotline: e.target.value })} className={inputCls} /></Field>
             <Field label="Email"><input value={footer.email} onChange={(e) => setFooter({ ...footer, email: e.target.value })} className={inputCls} /></Field>
             <Field label="Địa chỉ"><input value={footer.address} onChange={(e) => setFooter({ ...footer, address: e.target.value })} className={inputCls} /></Field>
           </div>

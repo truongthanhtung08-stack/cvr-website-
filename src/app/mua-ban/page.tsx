@@ -4,6 +4,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ListingBrowser from "@/components/ListingBrowser";
 import { getListings } from "@/lib/listingsDb";
+import { getArticles } from "@/lib/contentDb";
 
 export const metadata: Metadata = {
   title: "Nhà đất bán tại Đà Nẵng, Huế & Miền Trung | Coastal Land",
@@ -11,13 +12,14 @@ export const metadata: Metadata = {
 };
 
 export default async function MuaBanPage() {
-  const listings = await getListings(); // B2: tin từ Supabase (fallback dữ liệu mẫu)
+  // B2: tin từ Supabase (fallback dữ liệu mẫu) + bài viết cho cột phải
+  const [listings, articles] = await Promise.all([getListings(), getArticles()]);
   return (
     <>
       <Header />
       <main className="flex-1 bg-white">
         <Suspense fallback={<div className="pt-32 text-center text-cvr-muted">Đang tải…</div>}>
-          <ListingBrowser purpose="ban" heading="Nhà đất bán" items={listings} />
+          <ListingBrowser purpose="ban" heading="Nhà đất bán" items={listings} articles={articles} />
         </Suspense>
       </main>
       <Footer />

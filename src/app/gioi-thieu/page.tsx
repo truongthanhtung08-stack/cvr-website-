@@ -9,7 +9,7 @@ import { getAbout } from "@/lib/siteContent";
 export const metadata: Metadata = {
   title: "Giới thiệu | Coastal Land",
   description:
-    "Coastal Land (coastalland.vn) — nền tảng công nghệ và cổng thông tin Bất động sản trực tuyến hàng đầu tại Việt Nam. Hệ thống ưu việt giúp khách hàng kết nối dễ dàng và thực hiện giao dịch.",
+    "Coastal Land (coastalland.vn) — nền tảng công nghệ và cổng thông tin Bất động sản trực tuyến hàng đầu tại Việt Nam. Hệ thống ưu việt giúp khách hàng kết nối và thực hiện giao dịch dễ dàng.",
 };
 
 // Icon "giá trị cốt lõi" giữ trong code, map theo thứ tự với values[] admin nhập.
@@ -112,28 +112,8 @@ export default async function GioiThieuPage() {
           </div>
         </section>
 
-        {/* ── Số liệu ── */}
-        <section className="relative isolate overflow-hidden bg-cvr-ink">
-          <Image
-            src={asset(about.statsImage)}
-            alt=""
-            aria-hidden
-            fill
-            sizes="100vw"
-            className="object-cover opacity-25"
-          />
-          <div className="relative mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-16 lg:px-8">
-            <div className="grid grid-cols-1 gap-8 sm:grid-cols-3">
-              {about.stats.map((s, i) => (
-                <div key={i} className="text-center">
-                  <p className="text-4xl font-semibold tracking-tight text-white sm:text-5xl">{s.value}</p>
-                  <p className="mt-2 text-sm font-medium text-white">{s.label}</p>
-                  <p className="text-xs text-white/60">{s.sub}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
+        {/* ── Số liệu: ĐÃ BỎ theo yêu cầu (file V3 10.08.2026).
+             Dữ liệu stats/statsImage vẫn còn trong admin — chưa xoá, chỉ không hiển thị. ── */}
 
         {/* ── Thị trường Miền Trung ── */}
         <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-16 lg:px-8">

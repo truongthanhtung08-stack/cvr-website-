@@ -1,10 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import BrandLogo from "@/components/BrandLogo";
-import { asset } from "@/lib/asset";
 import { createClient } from "@/lib/supabase/client";
 import { FOOTER_DEFAULT, type FooterData } from "@/lib/siteContent";
 
@@ -25,6 +23,24 @@ const SOCIAL_COLORS: Record<string, string> = {
   YouTube: "#FF0000",
 };
 const DEFAULT_SOCIAL_COLOR = SOCIAL_COLORS.Facebook;
+
+// Link mạng xã hội: admin nhập link nào thì dùng link đó (/admin/noi-dung).
+// Riêng ZALO chưa nhập → tự trỏ thẳng tới số Hỗ trợ kỹ thuật (mở chat Zalo).
+// Mạng chưa có link → icon VẪN hiện nhưng chưa bấm được (kích hoạt khi có link).
+// Bảo đảm luôn có Zalo trong danh sách mạng xã hội (dù admin lưu thiếu).
+function withZalo(list: FooterData["socials"]): FooterData["socials"] {
+  return list.some((s) => s.label === "Zalo") ? list : [{ label: "Zalo", href: "#" }, ...list];
+}
+
+function socialHref(label: string, href: string, hotline: string): string | null {
+  const v = (href ?? "").trim();
+  if (v && v !== "#") return v;
+  if (label === "Zalo") {
+    const digits = hotline.replace(/\D/g, "").replace(/^84/, "0");
+    return digits ? `https://zalo.me/${digits}` : null;
+  }
+  return null;
+}
 
 const columns = [
   {
@@ -74,7 +90,8 @@ export default function Footer() {
       const d = (data?.data ?? null) as Partial<FooterData> | null;
       if (d) setF({
         ...FOOTER_DEFAULT, ...d,
-        socials: d.socials?.length ? d.socials : FOOTER_DEFAULT.socials,
+        // ZALO luôn có mặt: admin lưu danh sách thiếu Zalo thì tự chèn lên đầu.
+        socials: withZalo(d.socials?.length ? d.socials : FOOTER_DEFAULT.socials),
         images: d.images?.length ? d.images : FOOTER_DEFAULT.images,
       });
     })();
@@ -96,7 +113,7 @@ export default function Footer() {
             <ul className="mt-6 space-y-2.5 text-sm text-cvr-body">
               <li className="flex items-center gap-2.5">
                 <svg className="h-4 w-4 text-cvr-faint" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.95.68l1.5 4.5a1 1 0 01-.5 1.21l-2.26 1.13a11 11 0 005.52 5.52l1.13-2.26a1 1 0 011.21-.5l4.5 1.5a1 1 0 01.68.95V19a2 2 0 01-2 2h-1C9.72 21 3 14.28 3 6V5z" /></svg>
-                Hotline: <span className="font-semibold text-cvr-ink">{f.hotline}</span>
+                Hỗ trợ kỹ thuật: <span className="font-semibold text-cvr-ink">{f.hotline}</span>
               </li>
               <li className="flex items-center gap-2.5">
                 <svg className="h-4 w-4 text-cvr-faint" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l9 6 9-6M3 8v10a1 1 0 001 1h16a1 1 0 001-1V8M3 8l9-5 9 5" /></svg>
@@ -108,27 +125,35 @@ export default function Footer() {
               </li>
             </ul>
 
-            <div className="mt-6 flex gap-3">
-              {f.socials.map((s) => (
-                <a
-                  key={s.label}
-                  href={s.href || "#"}
-                  aria-label={s.label}
-                  className="flex h-9 w-9 items-center justify-center rounded-full border border-black/10 bg-white transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 hover:scale-110 hover:shadow-md"
-                >
-                  <svg className="h-[18px] w-[18px]" fill={SOCIAL_COLORS[s.label] ?? DEFAULT_SOCIAL_COLOR} viewBox="0 0 24 24"><path d={SOCIAL_PATHS[s.label] ?? DEFAULT_SOCIAL_PATH} /></svg>
-                </a>
-              ))}
+            {/* Mạng xã hội — icon TO, bấm là nối thẳng tới trang/kênh tương ứng */}
+            <div className="mt-6 flex flex-wrap gap-3.5">
+              {f.socials.map((s) => {
+                const href = socialHref(s.label, s.href, f.hotline);
+                const box = "flex h-12 w-12 items-center justify-center rounded-full border border-black/10 bg-white shadow-sm transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]";
+                const icon = (
+                  <svg className="h-6 w-6" fill={SOCIAL_COLORS[s.label] ?? DEFAULT_SOCIAL_COLOR} viewBox="0 0 24 24"><path d={SOCIAL_PATHS[s.label] ?? DEFAULT_SOCIAL_PATH} /></svg>
+                );
+                return href ? (
+                  <a
+                    key={s.label}
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={s.label}
+                    className={`${box} hover:-translate-y-0.5 hover:scale-110 hover:shadow-md`}
+                  >
+                    {icon}
+                  </a>
+                ) : (
+                  <span key={s.label} aria-label={s.label} title="Sắp kết nối" className={`${box} cursor-default opacity-45`}>
+                    {icon}
+                  </span>
+                );
+              })}
             </div>
 
-            {/* Ảnh minh hoạ — dẫn tới trang Giới thiệu (thu hẹp chiều ngang) */}
-            <div className="mt-6 grid max-w-[240px] grid-cols-3 gap-2">
-              {f.images.map((s) => (
-                <Link key={s.src} href="/gioi-thieu" aria-label="Giới thiệu Coastal Land" className="group relative aspect-[16/9] overflow-hidden rounded-md bg-cvr-surface ring-1 ring-black/5">
-                  <Image src={asset(s.src)} alt={s.alt} fill sizes="140px" className="object-cover transition-transform duration-500 group-hover:scale-105" />
-                </Link>
-              ))}
-            </div>
+            {/* 3 ảnh minh hoạ: ĐÃ BỎ theo yêu cầu (file V3 10.08.2026).
+                Dữ liệu images vẫn còn trong admin — chưa xoá, chỉ không hiển thị. */}
           </div>
 
           {/* Cột liên kết */}

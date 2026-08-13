@@ -113,10 +113,10 @@ export default function PricingSidebar({
         ))}
       </div>
 
-      {/* Hotline — nền đen luxury, CTA vàng */}
+      {/* Hỗ trợ kỹ thuật — nền đen luxury, CTA vàng */}
       <div className="mt-3 overflow-hidden rounded-2xl bg-gradient-to-br from-cvr-ink to-[#2b2b2e] p-6 text-center shadow-lux">
         <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-cvr-gold-soft">
-          Hotline tư vấn
+          Hỗ trợ kỹ thuật
         </p>
         <a
           href={`tel:${hotline.replace(/\s/g, "")}`}

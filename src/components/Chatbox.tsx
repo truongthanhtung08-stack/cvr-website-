@@ -21,7 +21,7 @@ function autoReply(text: string): string {
   if (t.includes("ký gửi") || t.includes("bán"))
     return "Coastal Land hỗ trợ ký gửi & rao bán bất động sản. Anh/chị cho em xin địa chỉ và mức giá mong muốn nhé.";
   if (t.includes("chuyên viên") || t.includes("gặp") || t.includes("gọi"))
-    return "Em kết nối anh/chị với chuyên viên ngay. Hotline: 0905 xxx xxx — hoặc để lại số, bên em gọi lại trong 5 phút ạ.";
+    return "Em kết nối anh/chị với chuyên viên ngay. Hỗ trợ kỹ thuật: 0377 985 036 — hoặc để lại số, bên em gọi lại trong 5 phút ạ.";
   return "Cảm ơn anh/chị đã nhắn tin cho Coastal Land. Anh/chị để lại số điện thoại hoặc nội dung cần hỗ trợ, chuyên viên sẽ phản hồi sớm nhất ạ.";
 }
 
