@@ -32,7 +32,9 @@ export default function ProjectNav({ items }: { items: { id: string; label: stri
   }
 
   return (
-    <div className="sticky top-[56px] z-30 -mx-1 overflow-x-auto border-b border-cvr-line bg-white/90 px-1 backdrop-blur-md">
+    // MOBILE: dính NGAY DƯỚI thanh "Quay lại" (header 60px + thanh back 53px = 113px)
+    // — trước để 56px nên menu bị thanh back đè lên. PC: dính dưới header (60px).
+    <div className="sticky top-[113px] z-30 -mx-1 overflow-x-auto border-b border-cvr-line bg-white/95 px-1 backdrop-blur-md lg:top-[60px]">
       <div className="flex gap-1 whitespace-nowrap py-1">
         {items.map((t) => (
           <button

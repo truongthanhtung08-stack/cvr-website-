@@ -9,6 +9,7 @@ import { HomeExpandProvider, HomeCollapsible } from "@/components/HomeExpand";
 import RecordView from "@/components/RecordView";
 import PriceHistory from "@/components/PriceHistory";
 import ProjectNearby from "@/components/ProjectNearby";
+import ProjectNav from "@/components/ProjectNav";
 import { provinceOf, districtOf, pickRelated } from "@/lib/data";
 import { getListing, getListings, getListingDetail } from "@/lib/listingsDb";
 import { tierFromBadge, getTier } from "@/lib/packages";
@@ -88,6 +89,18 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
     samePurpose.length,
   );
 
+  // MENU DÍNH theo mục — cuộn tới đâu sáng mục đó (giống trang dự án).
+  // Chỉ liệt kê mục THẬT SỰ có nội dung để không bấm vào chỗ trống.
+  const nav = [
+    ...(d.descriptionParas.length > 0 ? [{ id: "mo-ta", label: "Mô tả" }] : []),
+    ...(d.videos.length > 0 ? [{ id: "video", label: "Video" }] : []),
+    { id: "dac-diem", label: "Đặc điểm" },
+    ...(d.interior.length > 0 ? [{ id: "noi-that", label: "Nội thất" }] : []),
+    ...(d.amenityGroups.some((g) => g.items.some((it) => it.active)) ? [{ id: "tien-ich", label: "Tiện ích" }] : []),
+    ...(priceVnd != null ? [{ id: "lich-su-gia", label: "Lịch sử giá" }] : []),
+    { id: "vi-tri", label: "Vị trí" },
+  ];
+
   return (
     <>
       <Header />
@@ -136,9 +149,12 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                 </div>
               </div>
 
+              {/* Menu dính — sáng theo mục đang xem, bấm để cuộn mượt (như trang dự án) */}
+              <ProjectNav items={nav} />
+
               {/* Mô tả — chỉ hiện khi người đăng có viết (không bịa) */}
               {d.descriptionParas.length > 0 && (
-                <Section title="Thông tin mô tả">
+                <Section id="mo-ta" title="Thông tin mô tả">
                   <div className="space-y-3 whitespace-pre-line text-sm leading-relaxed text-cvr-body">
                     <RichContent paragraphs={d.descriptionParas} />
                   </div>
@@ -147,7 +163,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
 
               {/* Video — tệp/link người đăng thêm ở mục tải ảnh */}
               {d.videos.length > 0 && (
-                <Section title="Video">
+                <Section id="video" title="Video">
                   <div className="space-y-4">
                     {d.videos.map((v, i) => <VideoEmbed key={i} url={v} />)}
                   </div>
@@ -155,7 +171,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
               )}
 
               {/* Đặc điểm bất động sản — chỉ những gì đã nhập */}
-              <Section title="Đặc điểm bất động sản">
+              <Section id="dac-diem" title="Đặc điểm bất động sản">
                 <div className="grid grid-cols-1 gap-x-8 sm:grid-cols-2">
                   <Row label="Loại hình" value={l.type} />
                   <Row label="Diện tích đất" value={l.area} />
@@ -171,7 +187,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
 
               {/* Nội thất — chỉ khi người đăng tick */}
               {d.interior.length > 0 && (
-                <Section title="Nội thất bàn giao">
+                <Section id="noi-that" title="Nội thất bàn giao">
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                     {d.interior.map((a) => (
                       <span key={a} className="flex items-center gap-2 rounded-lg border border-cvr-line bg-cvr-surface px-3 py-2.5 text-xs text-cvr-body">
@@ -185,7 +201,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
 
               {/* Tiện ích — chỉ khi có mục được tick */}
               {d.amenityGroups.some((g) => g.items.some((it) => it.active)) && (
-                <Section title="Tiện ích">
+                <Section id="tien-ich" title="Tiện ích">
                   <div className="space-y-5">
                     {d.amenityGroups.map((g) => {
                       const active = g.items.filter((it) => it.active);
@@ -210,7 +226,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
 
               {/* Lịch sử giá — chỉ khi có giá dạng số */}
               {priceVnd != null && (
-                <Section title="Lịch sử giá">
+                <Section id="lich-su-gia" title="Lịch sử giá">
                   <PriceHistory price={priceVnd} />
                 </Section>
               )}
@@ -220,7 +236,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                   Google Maps · tiện ích xung quanh (bấm ra Google Maps).
                   Vị trí lấy theo điểm admin GHIM (details.mapPin); chưa ghim thì
                   tự tìm theo địa chỉ tin. */}
-              <Section title="Vị trí trên bản đồ">
+              <Section id="vi-tri" title="Vị trí trên bản đồ">
                 <ProjectNearby mapQuery={d.mapQuery} address={l.location} places={[]} />
               </Section>
             </div>
@@ -311,9 +327,10 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({ id, title, children }: { id?: string; title: string; children: React.ReactNode }) {
   return (
-    <section className="mt-8 border-t border-cvr-line pt-6">
+    // scroll-mt-28: bấm menu cuộn tới thì tiêu đề không bị header + menu dính che
+    <section id={id} className="mt-8 scroll-mt-28 border-t border-cvr-line pt-6">
       <h2 className="mb-4 text-lg font-semibold tracking-tight text-cvr-ink sm:text-xl">{title}</h2>
       {children}
     </section>
