@@ -96,7 +96,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <main className="flex-1 bg-white">
         {/* MOBILE: pt-0 → ảnh tin nằm SÁT mép dưới header (không chừa khoảng trắng) */}
-        <div className="mx-auto max-w-7xl px-4 pb-24 pt-0 sm:px-6 sm:pt-2 lg:px-8 lg:pb-20">
+        <div className="mx-auto max-w-7xl px-4 pb-24 pt-0 sm:px-6 sm:pt-0 lg:px-8 lg:pb-20">
 
           <HomeExpandProvider>
           {/* Toàn bộ nội dung tin — ẩn khi bấm "Xem thêm" ở mục BĐS tương tự */}

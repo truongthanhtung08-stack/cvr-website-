@@ -59,7 +59,7 @@ export default function SearchClient({ items = featuredListings }: { items?: Lis
   const pageItems = results.slice((current - 1) * PER_PAGE, current * PER_PAGE);
 
   return (
-    <div className="mx-auto max-w-7xl px-4 pb-20 pt-0 sm:px-6 sm:pt-2 lg:px-8">
+    <div className="mx-auto max-w-7xl px-4 pb-20 pt-0 sm:px-6 sm:pt-0 lg:px-8">
       {/* MOBILE: ẩn tiêu đề + mô tả để thanh tìm kiếm sát ngay dưới header (không chừa khoảng trống).
           Vẫn giữ trong DOM cho SEO (hidden = display:none, Google vẫn đọc). */}
       <h1 className="hidden text-2xl font-semibold tracking-tight text-cvr-ink sm:block sm:text-3xl">Tìm kiếm bất động sản</h1>
