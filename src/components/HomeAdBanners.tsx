@@ -93,8 +93,10 @@ export function AdBannerAll({ data = HOME_AD_DEFAULT }: { data?: HomeAdData }) {
             width={681}
             height={1318}
             sizes="240px"
-            // Chỉ hiện từ màn ≥1280px — hẹp hơn thì máy thứ 2 sẽ đè lên chữ.
-            className="pointer-events-none absolute -bottom-[4%] right-[28.5%] hidden h-[104%] w-auto max-w-none xl:block"
+            // Hiện từ màn ≥1024px (mốc cũ 1280px quá cao: màn 1280 trừ thanh cuộn
+            // còn ~1265px nên máy thứ 2 không bao giờ hiện). Ở 1024–1280 thì thu
+            // nhỏ + lùi phải để KHÔNG đè lên chữ.
+            className="pointer-events-none absolute -bottom-[4%] hidden w-auto max-w-none lg:right-[26%] lg:block lg:h-[100%] xl:right-[28.5%] xl:h-[104%]"
           />
           <Image
             src={asset("/images/app-phone-2026.png")}
@@ -107,13 +109,13 @@ export function AdBannerAll({ data = HOME_AD_DEFAULT }: { data?: HomeAdData }) {
             // Đỉnh máy sát mép trên khung, chỉ khuyết phần đáy (bottom = 100% − chiều cao).
             // PC: 2 máy lùi vào trong (không dính mép banner) → chữ và máy đứng gần
             // nhau, không hở khoảng trống ở giữa.
-            className="pointer-events-none absolute -bottom-[36%] right-[2%] h-[136%] w-auto max-w-none md:-bottom-[32%] md:right-[9%] md:h-[132%]"
+            className="pointer-events-none absolute -bottom-[36%] right-[2%] h-[136%] w-auto max-w-none md:-bottom-[26%] md:right-[9%] md:h-[126%] xl:-bottom-[32%] xl:h-[132%]"
           />
 
           {/* ═══ NỘI DUNG BÊN TRÁI ═══ */}
           {/* MOBILE — KHÔNG chữ tiêu đề, KHÔNG khối "Tải ứng dụng": điện thoại là
               tâm điểm (cao 128% khung), bên trái chỉ giữ CTA + 2 nút tải app. */}
-          <div className="relative flex h-[230px] w-[50%] flex-col justify-center gap-2 px-3.5 md:hidden">
+          <div className="relative flex h-[230px] w-[50%] flex-col justify-center gap-2.5 px-3.5 md:hidden">
             <Link
               href={cta.ctaHref}
               className="inline-flex min-h-[42px] w-full items-center justify-center gap-1.5 whitespace-nowrap rounded-full bg-cvr-blue px-3 text-[13px] font-semibold text-white shadow-[0_6px_18px_rgba(0,113,227,0.32)] transition-transform active:scale-[0.98]"
@@ -121,9 +123,13 @@ export function AdBannerAll({ data = HOME_AD_DEFAULT }: { data?: HomeAdData }) {
               {cta.ctaLabel}
               {ArrowRight}
             </Link>
-            {/* Màn hình nhỏ → logo + TÊN store, bỏ dòng "Tải về trên" cho gọn */}
-            <StoreButton store="apple" href={app.appleHref} compact />
-            <StoreButton store="google" href={app.googleHref} compact />
+            {/* Màn hình nhỏ → logo + TÊN store, bỏ dòng "Tải về trên" cho gọn.
+                2 nút THU SÁT nhau (cách 6px) và BẰNG NHAU tuyệt đối: cùng bề rộng,
+                cùng chiều cao, ô icon cùng bề ngang nên tên store thẳng hàng. */}
+            <div className="flex flex-col gap-1.5">
+              <StoreButton store="apple" href={app.appleHref} compact />
+              <StoreButton store="google" href={app.googleHref} compact />
+            </div>
           </div>
 
           {/* DESKTOP */}
@@ -131,7 +137,8 @@ export function AdBannerAll({ data = HOME_AD_DEFAULT }: { data?: HomeAdData }) {
             {/* Chữ nằm trong CÙNG dải 1000px canh giữa với điện thoại → 2 phần cân,
                 sát nhau, không hở khoảng trống giữa banner. */}
             <div className="mx-auto flex h-full max-w-[1000px] items-center px-6">
-              <div className="w-full max-w-[460px]">
+              {/* Hẹp lại ở 1024–1280px để chừa chỗ cho máy thứ 2 */}
+              <div className="w-full max-w-[400px] xl:max-w-[460px]">
               <h2 className="text-[34px] font-semibold leading-[1.02] tracking-[-0.035em] text-cvr-ink lg:text-[44px]">
                 {HEADING}
               </h2>
@@ -170,7 +177,7 @@ function StoreButton({ store, href = "#", compact = false }: { store: "apple" | 
       )}
       {/* Bản gọn (mobile): logo + tên store trên MỘT dòng, bỏ dòng "Tải về trên" */}
       {compact ? (
-        <span className="whitespace-nowrap text-[12px] font-semibold text-white">
+        <span className="min-w-0 flex-1 whitespace-nowrap text-left text-[12px] font-semibold text-white">
           {store === "apple" ? "App Store" : "Google Play"}
         </span>
       ) : (
