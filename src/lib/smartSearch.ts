@@ -62,6 +62,8 @@ const DAC_DIEM: [string, string[]][] = [
 const TU_BO = new Set([
   "tai", "o", "co", "va", "cua", "cho", "voi", "gia", "can", "mua", "ban", "thue",
   "nha", "bat", "dong", "san", "bds", "khu", "vuc", "duoi", "tren", "tu", "den", "khoang",
+  // "dự án" xuất hiện ở gần như mọi dự án → giữ lại chỉ gây nhiễu điểm
+  "du", "an", "du an", "cac", "mot", "nao", "khong",
 ]);
 
 export type ParsedQuery = {
@@ -151,8 +153,14 @@ export type Hit<T> = {
   matched: string[];     // các từ đã khớp (để bôi đậm)
 };
 
-// Khớp mờ: chứa nguyên từ, hoặc lệch 1 ký tự với từ dài (chống gõ sai/thiếu dấu)
+// Khớp mờ: chứa nguyên từ, hoặc lệch 1 ký tự với từ dài (chống gõ sai/thiếu dấu).
+// ⚠️ Từ NGẮN (≤3 ký tự) phải khớp TRỌN TỪ, không được khớp chèn giữa chữ khác —
+// nếu không "an" sẽ khớp vào "hoà xuAN", "da" khớp vào "danh khôi"… làm dự án
+// chẳng liên quan cũng lọt lên đầu.
 function khopMo(hay: string, tu: string): boolean {
+  if (tu.length <= 3) {
+    return new RegExp(`(^|[^a-z0-9])${tu}([^a-z0-9]|$)`).test(hay);
+  }
   if (hay.includes(tu)) return true;
   if (tu.length < 5) return false;
   // bỏ 1 ký tự bất kỳ rồi thử lại — đủ bắt lỗi gõ thiếu/thừa 1 chữ

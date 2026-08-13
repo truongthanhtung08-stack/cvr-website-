@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import FilterDropdown, { FilterDropdownGroup } from "@/components/FilterDropdown";
 import Highlight from "@/components/Highlight";
-import { searchAny, TIER_LABEL } from "@/lib/smartSearch";
+import { goiYNoiLong, searchAny, TIER_LABEL } from "@/lib/smartSearch";
 import { provinceNamesFor, type GeoMode } from "@/lib/locations";
 import type { Project, Article } from "@/lib/data";
 
@@ -50,9 +50,30 @@ export default function ProjectsBrowser({
   const [status, setStatus] = useState(ALL);
   const [province, setProvince] = useState(ALL);
   const [type, setType] = useState(ALL);
+  // NHẬN TỪ KHOÁ TỪ TRANG CHỦ: bấm tab "Dự án" ở Hero rồi tìm → nhảy sang
+  // /du-an?q=... , ô tìm ở đây phải tự điền và lọc ngay (trước đây bỏ qua ?q=).
+  useEffect(() => {
+    const sp = new URLSearchParams(window.location.search);
+    const tuKhoa = sp.get("q") ?? "";
+    const tinh = sp.get("tinh") ?? "";
+    if (tuKhoa) setQ(tuKhoa);
+    if (tinh) setProvince(tinh);
+  }, []);
   // MOBILE: chạm ô tìm → mở trang tìm TOÀN MÀN HÌNH (back + × + nút search) — như Mua bán.
   const [overlay, setOverlay] = useState(false);
   const overlayInputRef = useRef<HTMLInputElement>(null);
+  // Panel gợi ý (PC): mở khi gõ, TẮT khi bấm ra ngoài hoặc nhấn Esc
+  const [sugOpen, setSugOpen] = useState(false);
+  const sugBoxRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const ngoai = (e: PointerEvent) => {
+      if (sugBoxRef.current && !sugBoxRef.current.contains(e.target as Node)) setSugOpen(false);
+    };
+    const esc = (e: KeyboardEvent) => { if (e.key === "Escape") setSugOpen(false); };
+    document.addEventListener("pointerdown", ngoai);
+    document.addEventListener("keydown", esc);
+    return () => { document.removeEventListener("pointerdown", ngoai); document.removeEventListener("keydown", esc); };
+  }, []);
   // Hệ đơn vị hành chính Cũ/Mới — bật/tắt như bên Mua bán (nhớ chung qua localStorage).
   const [geoMode, setGeoMode] = useState<GeoMode>("moi");
   useEffect(() => {
@@ -87,6 +108,16 @@ export default function ProjectsBrowser({
   // Tầng + chữ cần bôi đậm của từng dự án
   const tierBySlug = new Map(hits.map((h) => [h.item.slug, h.tier]));
   const termsBySlug = new Map(hits.map((h) => [h.item.slug, h.matched]));
+
+  // ── PANEL GỢI Ý TÌM KIẾM cho mục Dự án (mở khi gõ, tắt khi bấm ra ngoài/Esc) ──
+  // Gồm 2 nhóm: (1) gợi ý BẬC THANG dựng từ chính câu đang gõ · (2) tên dự án khớp.
+  const goiY = q.trim() ? goiYNoiLong(q) : [];
+  const duAnKhop = q.trim() ? hits.slice(0, 5).map((h) => h.item) : [];
+  const coGoiY = sugOpen && (goiY.length > 0 || duAnKhop.length > 0);
+  const chonGoiY = (tinh?: string) => {
+    if (tinh) setProvince(tinh);
+    setSugOpen(false);
+  };
 
   const hasActive = q.trim() !== "" || status !== ALL || province !== ALL || type !== ALL;
   const reset = () => { setQ(""); setStatus(ALL); setProvince(ALL); setType(ALL); };
@@ -140,7 +171,7 @@ export default function ProjectsBrowser({
         <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
           {/* Ô tìm nhanh dự án — nút search XANH nằm SÁT mép phải trong khung (mobile), đồng bộ Mua bán/Cho thuê */}
           <div className="flex flex-1 items-center gap-2">
-          <div className="relative flex-1">
+          <div ref={sugBoxRef} className="relative flex-1">
             <svg className="pointer-events-none absolute left-3 top-1/2 hidden h-4 w-4 -translate-y-1/2 text-cvr-faint sm:block" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
             </svg>
@@ -151,6 +182,7 @@ export default function ProjectsBrowser({
               onFocus={(e) => {
                 // MOBILE: mở trang tìm toàn màn hình (có nút back + search) thay vì gõ tại chỗ.
                 if (window.matchMedia("(max-width: 639px)").matches) { e.currentTarget.blur(); setOverlay(true); }
+                else setSugOpen(true); // PC: mở panel gợi ý
               }}
               placeholder="Tìm nhanh theo tên dự án, chủ đầu tư, vị trí…"
               aria-label="Tìm nhanh dự án"
@@ -167,6 +199,44 @@ export default function ProjectsBrowser({
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             )}
+            {/* ── PANEL GỢI Ý (chỉ PC) — bấm ra ngoài hoặc Esc là tắt ── */}
+            {coGoiY && (
+              <div className="absolute left-0 right-0 top-full z-[120] mt-1.5 hidden max-h-80 overflow-y-auto rounded-xl border border-cvr-line bg-white p-1.5 shadow-2xl shadow-black/20 sm:block">
+                <div className="sticky top-0 -mx-1.5 -mt-1.5 mb-1 flex items-center justify-between border-b border-cvr-line bg-white px-2.5 py-1.5">
+                  <span className="text-[11px] font-semibold uppercase tracking-wide text-cvr-faint">Gợi ý tìm kiếm</span>
+                  <button type="button" onClick={() => setSugOpen(false)} aria-label="Đóng gợi ý" className="text-cvr-muted hover:text-cvr-ink">
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                  </button>
+                </div>
+                {goiY.map((g) => (
+                  <button
+                    key={g.label}
+                    type="button"
+                    onClick={() => chonGoiY(g.patch.locations?.[0]?.province)}
+                    className="flex w-full items-center justify-between gap-3 rounded-lg px-2.5 py-2 text-left transition hover:bg-black/[0.04]"
+                  >
+                    <span className="min-w-0 truncate text-sm text-cvr-ink">{g.label}</span>
+                    <span className="shrink-0 text-[11px] text-cvr-faint">{g.sub}</span>
+                  </button>
+                ))}
+                {duAnKhop.length > 0 && (
+                  <p className="px-2.5 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wide text-cvr-faint">Dự án</p>
+                )}
+                {duAnKhop.map((p) => (
+                  <Link
+                    key={p.slug}
+                    href={`/du-an/${p.slug}`}
+                    className="flex w-full items-center justify-between gap-3 rounded-lg px-2.5 py-2 text-left transition hover:bg-black/[0.04]"
+                  >
+                    <span className="min-w-0 truncate text-sm text-cvr-ink">
+                      <Highlight text={p.name} terms={termsBySlug.get(p.slug) ?? []} />
+                    </span>
+                    <span className="shrink-0 text-[11px] text-cvr-faint">{provinceOf(p.location)}</span>
+                  </Link>
+                ))}
+              </div>
+            )}
+
             {/* Nút search XANH — bo tròn mềm, snug mép phải (giống trang chủ) → mở tìm toàn màn hình */}
             <button
               type="button"

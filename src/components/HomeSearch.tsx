@@ -15,10 +15,20 @@ export default function HomeSearch({ defaultTab }: { defaultTab?: string }) {
   const [tab, setTab] = useState(defaultTab && tabs.includes(defaultTab) ? defaultTab : tabs[0]);
   const [filters, setFilters] = useState<Filters>(emptyFilters());
 
+  // Trang ĐÍCH theo đúng tab đang chọn — bấm mục nào thì tìm trong mục đó:
+  //   Dự án   → /du-an     (tìm trong danh sách DỰ ÁN)
+  //   Mua bán → /mua-ban   · Cho thuê → /cho-thue  (tìm trong TIN đúng mục đích)
+  // Trước đây mọi tab đều đổ về /tim-kiem nên bấm "Dự án" lại ra tin bán/thuê.
+  function trangDich(params: URLSearchParams): string {
+    if (tab === "Dự án") return `/du-an?${params.toString()}`;
+    if (tab === "Cho thuê") return `/cho-thue?${params.toString()}`;
+    return `/mua-ban?${params.toString()}`;
+  }
+
   function handleSearch() {
     const params = filtersToParams(filters);
     params.set("mode", tab);
-    window.location.href = `/tim-kiem?${params.toString()}`;
+    window.location.href = trangDich(params);
   }
 
   // Mở trang kết quả ở chế độ bản đồ (bản đồ sẽ hiển thị khi xây xong).
@@ -26,7 +36,7 @@ export default function HomeSearch({ defaultTab }: { defaultTab?: string }) {
     const params = filtersToParams(filters);
     params.set("mode", tab);
     params.set("view", "map");
-    window.location.href = `/tim-kiem?${params.toString()}`;
+    window.location.href = trangDich(params);
   }
 
   // Tab "Cho thuê" → danh mục loại hình cho thuê; còn lại (Mua bán/Dự án) → mua bán
