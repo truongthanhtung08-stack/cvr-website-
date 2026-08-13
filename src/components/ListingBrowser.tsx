@@ -104,6 +104,8 @@ export default function ListingBrowser({
           value={filters}
           onChange={setFilters}
           purpose={purpose}
+          onMap={() => setMapMode((v) => !v)}
+          mapActive={mapMode}
         />
       </div>
 
@@ -123,13 +125,13 @@ export default function ListingBrowser({
       {/* Hàng điều khiển dùng chung: xoá lọc · chế độ xem (Danh sách/Lưới/Bản đồ) · sắp xếp.
           Trên mobile TẠM ẨN chế độ xem + sắp xếp (theo yêu cầu), giữ nút Xoá lọc. */}
       <div className="mt-3 flex flex-wrap items-center justify-end gap-3 sm:mt-4">
-              {/* XEM BẢN ĐỒ (kiểu Batdongsan) — bật/tắt chế độ bản đồ ngay tại chỗ.
-                  Marker chạy theo đúng bộ lọc đang áp dụng. */}
+              {/* XEM BẢN ĐỒ — CHỈ mobile. Trên PC nút này nằm NGAY CẠNH ô tìm kiếm
+                  (do FilterBar dựng, đúng bố cục Batdongsan) nên ở đây ẩn đi. */}
               <button
                 type="button"
                 onClick={() => setMapMode((v) => !v)}
                 aria-pressed={mapMode}
-                className={`mr-auto inline-flex min-h-[38px] items-center gap-2 rounded-lg px-3.5 text-sm font-semibold transition ${
+                className={`mr-auto inline-flex min-h-[38px] items-center gap-2 rounded-lg px-3.5 text-sm font-semibold transition sm:hidden ${
                   mapMode
                     ? "bg-cvr-ink text-white"
                     : "border border-cvr-line bg-white text-cvr-body hover:border-cvr-ink hover:text-cvr-ink"

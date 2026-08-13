@@ -440,7 +440,9 @@ export default function FilterBar({
   // ===== Ô từ khoá + nút tìm kiếm (dùng chung) =====
   const searchBox = (
     <>
-    <div ref={boxRef} className={compact ? "flex w-full gap-2.5" : "flex w-full gap-2"}>
+    {/* Trang danh sách (Mua bán/Cho thuê): thanh tìm NGẮN LẠI trên PC (tối đa 880px)
+        + nút "Xem bản đồ" nằm ngay cạnh — đúng bố cục Batdongsan. */}
+    <div ref={boxRef} className={compact ? "flex w-full gap-2.5" : "flex w-full gap-2 sm:max-w-[880px]"}>
       <div className={compact ? "relative flex-1" : "relative flex h-11 min-w-0 flex-1 items-center rounded-xl bg-cvr-surface ring-1 ring-black/5 transition focus-within:ring-2 focus-within:ring-cvr-blue/40 sm:h-12 sm:rounded-none sm:ring-0"}>
         {/* Kính lúp trái — MOBILE ẩn (đã có nút search xanh bên phải, giống thanh tìm trang chủ) */}
         <svg className="pointer-events-none absolute left-4 top-1/2 hidden h-[18px] w-[18px] -translate-y-1/2 text-cvr-faint sm:block" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">

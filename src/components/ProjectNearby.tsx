@@ -54,14 +54,22 @@ export default function ProjectNearby({
 
   return (
     <div className="space-y-4">
+      {/* Bản đồ NHÚNG: chạm vào là phóng to / thu nhỏ / kéo xem NGAY TẠI TRANG,
+          không nhảy đi đâu. Chỉ khi bấm nút "Mở Google Maps" mới mở app/web
+          Google Maps ở TAB MỚI — xong bấm quay lại là về đúng tin đang xem. */}
       <div className="overflow-hidden rounded-xl border border-cvr-line">
         <iframe
-          title="Bản đồ dự án"
-          src={`https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}&z=14&output=embed`}
-          className="h-[190px] w-full grayscale-[0.25] sm:h-[240px]"
+          title="Bản đồ vị trí"
+          src={`https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}&z=15&output=embed`}
+          className="h-[220px] w-full sm:h-[300px]"
           loading="lazy"
         />
       </div>
+      <p className="-mt-1 text-xs text-cvr-muted">
+        Chạm vào bản đồ để phóng to, kéo xem xung quanh ngay tại đây. Bấm
+        <span className="font-medium text-cvr-body"> Mở Google Maps </span>
+        khi muốn mở app — xem xong bấm quay lại là về đúng tin này.
+      </p>
 
       <div className="flex flex-wrap items-center justify-between gap-2.5">
         <p className="flex items-center gap-1.5 text-sm text-cvr-muted">
