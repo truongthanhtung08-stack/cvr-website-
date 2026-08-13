@@ -8,6 +8,7 @@ import ListingShowcase from "@/components/ListingShowcase";
 import { HomeExpandProvider, HomeCollapsible } from "@/components/HomeExpand";
 import RecordView from "@/components/RecordView";
 import PriceHistory from "@/components/PriceHistory";
+import ProjectNearby from "@/components/ProjectNearby";
 import { provinceOf, districtOf, pickRelated } from "@/lib/data";
 import { getListing, getListings, getListingDetail } from "@/lib/listingsDb";
 import { tierFromBadge, getTier } from "@/lib/packages";
@@ -214,17 +215,13 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                 </Section>
               )}
 
-              {/* Vị trí */}
+              {/* Vị trí — dùng CHUNG khối bản đồ với trang dự án: xem & zoom ngay
+                  trên trang · nút chỉ đường từ vị trí người xem · nút mở app / web
+                  Google Maps · tiện ích xung quanh (bấm ra Google Maps).
+                  Vị trí lấy theo điểm admin GHIM (details.mapPin); chưa ghim thì
+                  tự tìm theo địa chỉ tin. */}
               <Section title="Vị trí trên bản đồ">
-                <div className="overflow-hidden rounded-xl border border-cvr-line">
-                  <iframe
-                    title="Bản đồ"
-                    src={`https://maps.google.com/maps?q=${encodeURIComponent(d.mapQuery)}&z=14&output=embed`}
-                    className="h-[190px] w-full sm:h-[240px]"
-                    loading="lazy"
-                  />
-                </div>
-                <p className="mt-2 text-xs text-cvr-muted">{l.location}</p>
+                <ProjectNearby mapQuery={d.mapQuery} address={l.location} places={[]} />
               </Section>
             </div>
 

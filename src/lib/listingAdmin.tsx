@@ -14,6 +14,7 @@ export type ListingDetails = {
   furnish?: string;                 // mức nội thất
   direction?: string;               // hướng
   addressDetail?: string;           // địa chỉ cụ thể
+  mapPin?: string;                  // toạ độ / link Google Maps admin ghim tay
   contact?: { name?: string; phone?: string; email?: string; avatar?: string }; // người đăng (avatar = ảnh đại diện)
   project?: string;                 // SLUG dự án tin này thuộc về ("" = không thuộc dự án nào)
 };

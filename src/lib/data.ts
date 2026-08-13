@@ -38,6 +38,9 @@ export type Listing = {
   // SLUG dự án tin này thuộc về (details.project) — dùng cho mục
   // "Tin mua bán liên quan tại dự án …". Không thuộc dự án nào → bỏ trống.
   projectSlug?: string;
+  // Vị trí admin GHIM tay (toạ độ "16.06,108.22" hoặc link Google Maps).
+  // Có thì bản đồ trỏ đúng điểm này; không có thì tự tìm theo địa chỉ.
+  mapPin?: string;
 };
 
 // Lọc tin theo mục đích (mặc định không có purpose = "ban")
@@ -252,7 +255,8 @@ export function buildListingDetail(l: Listing): ListingDetail {
     legal: "Sổ đỏ / Sổ hồng chính chủ",
     direction: dir,
     agent: agents[idx % agents.length],
-    mapQuery: `${l.location}, Việt Nam`,
+    // Ưu tiên điểm admin đã ghim (chính xác tuyệt đối), không có mới đoán theo địa chỉ
+    mapQuery: l.mapPin?.trim() ? l.mapPin.trim() : `${l.location}, Việt Nam`,
   };
 }
 

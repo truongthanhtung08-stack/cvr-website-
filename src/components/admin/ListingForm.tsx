@@ -50,6 +50,9 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
 
   // Thuộc tính chi tiết (lưu vào cột details JSONB) — nhập gì web hiện nấy
   const [addressDetail, setAddressDetail] = useState(initial?.details?.addressDetail ?? "");
+  // GHIM VỊ TRÍ: khi địa chỉ không đủ chính xác, admin dán toạ độ (hoặc link
+  // Google Maps) — bản đồ trang tin sẽ trỏ ĐÚNG điểm đã ghim thay vì đoán theo tên.
+  const [mapPin, setMapPin] = useState(initial?.details?.mapPin ?? "");
   const [specValues, setSpecValues] = useState<Record<string, string>>(initial?.details?.specs ?? {});
   const [direction, setDirection] = useState(initial?.details?.direction ?? "");
   const [legal, setLegal] = useState(initial?.details?.legal ?? "");
@@ -200,6 +203,7 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
         furnish: furnish || undefined,
         direction: direction || undefined,
         addressDetail: addressDetail.trim() || undefined,
+        mapPin: mapPin.trim() || undefined,
         project: projectSlug || undefined,
         contact: (cName.trim() || cPhone.trim() || cEmail.trim() || cAvatar.trim())
           ? { name: cName.trim(), phone: cPhone.trim(), email: cEmail.trim(), avatar: cAvatar.trim() || undefined }
@@ -375,7 +379,21 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
             <input value={addressDetail} onChange={(e) => setAddressDetail(e.target.value)} placeholder="VD: 123 Võ Nguyên Giáp / Dự án ..." className={inputCls} />
           </Field>
         </div>
-        <p className="mt-2 text-xs text-cvr-faint">
+        <div className="mt-4">
+          <Field label="Ghim vị trí trên bản đồ (toạ độ hoặc link Google Maps)">
+            <input
+              value={mapPin}
+              onChange={(e) => setMapPin(e.target.value)}
+              placeholder="VD: 16.0678, 108.2208  —  hoặc dán link Google Maps"
+              className={inputCls}
+            />
+          </Field>
+          <p className="mt-1.5 text-xs text-cvr-faint">
+            Bỏ trống → bản đồ tự tìm theo địa chỉ ở trên. Địa chỉ không chính xác (đất nền, hẻm nhỏ…)
+            thì mở Google Maps, bấm giữ đúng vị trí, sao chép toạ độ rồi dán vào đây.
+          </p>
+        </div>
+        <p className="mt-3 text-xs text-cvr-faint">
           Chọn theo danh sách để tin hiện đúng khi lọc khu vực. Tỉnh chưa có sẵn quận/huyện thì gõ tay.
         </p>
       </Card>

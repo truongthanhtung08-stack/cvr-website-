@@ -23,6 +23,7 @@ export type ListingDetailsJson = {
   furnish?: string;
   direction?: string;
   addressDetail?: string;
+  mapPin?: string; // toạ độ / link Google Maps admin ghim tay
   contact?: { name?: string; phone?: string; email?: string; avatar?: string };
   project?: string; // SLUG dự án tin này thuộc về — dùng cho "Tin liên quan tại dự án"
 };
@@ -98,6 +99,7 @@ function rowToListing(r: Row): Listing {
     agentName: r.details?.contact?.name || undefined,
     ...(r.details?.contact?.avatar ? { agentAvatar: asset(r.details.contact.avatar) } : {}),
     ...(r.details?.project ? { projectSlug: r.details.project } : {}),
+    ...(r.details?.mapPin ? { mapPin: r.details.mapPin } : {}),
   };
 }
 
@@ -197,7 +199,9 @@ function rowToDetail(r: Row): ListingFull {
     direction: d.direction || null,
     addressDetail: d.addressDetail || null,
     contact: c && (c.name || c.phone) ? { name: c.name ?? "", phone: c.phone ?? "", email: c.email ?? "", avatar: c.avatar ? asset(c.avatar) : null } : null,
-    mapQuery: [r.ward, r.district, r.province].filter(Boolean).join(", "),
+    // Ưu tiên điểm admin GHIM (details.mapPin) → bản đồ trỏ ĐÚNG vị trí thật;
+    // chưa ghim thì tìm theo Phường/Quận/Tỉnh như trước.
+    mapQuery: d.mapPin?.trim() || [r.ward, r.district, r.province].filter(Boolean).join(", "),
   };
 }
 
