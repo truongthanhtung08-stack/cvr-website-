@@ -116,15 +116,18 @@ export default function ListingBrowser({
         </div>
       )}
 
-      {/* Tiêu đề + bộ đếm nhảy theo bộ lọc — câu đếm TẠM ẨN trên mobile (theo yêu cầu) */}
-      <h1 className="mt-4 text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">{heading}</h1>
-      <p className="mt-1 hidden text-sm text-cvr-muted sm:block">
-        Hiện có <span className="font-semibold text-cvr-ink">{results.length}</span> bất động sản{active ? " phù hợp " : " "}tại Đà Nẵng, Huế &amp; Miền Trung.
-      </p>
-
-      {/* Hàng điều khiển dùng chung: xoá lọc · chế độ xem (Danh sách/Lưới/Bản đồ) · sắp xếp.
-          Trên mobile TẠM ẨN chế độ xem + sắp xếp (theo yêu cầu), giữ nút Xoá lọc. */}
-      <div className="mt-2 flex flex-wrap items-center justify-end gap-3 sm:mt-2.5">
+      {/* TIÊU ĐỀ và HÀNG ĐIỀU KHIỂN nằm CÙNG MỘT HÀNG (tiêu đề trái · chế độ xem +
+          sắp xếp phải) — trước đây điều khiển chiếm riêng một hàng, chừa một dải
+          trống ngang giữa tiêu đề và danh sách tin. */}
+      <div className="mt-4 flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
+        <div className="min-w-0">
+          <h1 className="text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">{heading}</h1>
+          {/* Câu đếm TẠM ẨN trên mobile (theo yêu cầu) */}
+          <p className="mt-1 hidden text-sm text-cvr-muted sm:block">
+            Hiện có <span className="font-semibold text-cvr-ink">{results.length}</span> bất động sản{active ? " phù hợp " : " "}tại Đà Nẵng, Huế &amp; Miền Trung.
+          </p>
+        </div>
+        <div className="flex flex-1 flex-wrap items-center justify-end gap-3">
               {/* XEM BẢN ĐỒ — CHỈ mobile. Trên PC nút này nằm NGAY CẠNH ô tìm kiếm
                   (do FilterBar dựng, đúng bố cục Batdongsan) nên ở đây ẩn đi. */}
               <button
@@ -168,6 +171,7 @@ export default function ListingBrowser({
                 <option value="dt-giam">Diện tích lớn nhất</option>
                 {purpose === "ban" && <option value="gia-m2">Giá/m² thấp nhất</option>}
               </select>
+        </div>
       </div>
 
       {/* ═══ CHẾ ĐỘ BẢN ĐỒ ═══ marker là viên GIÁ, bấm ra thẻ mini dẫn tới tin.

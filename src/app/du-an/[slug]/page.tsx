@@ -358,7 +358,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
           <ProjectSlider
             projects={others}
-            title="Dự án liên quan"
+            relevance
+            title="Dự án tương tự"
             sectionKey="du-an-lien-quan"
             articles={articles}
             emptyNote="Chưa có dự án liên quan."

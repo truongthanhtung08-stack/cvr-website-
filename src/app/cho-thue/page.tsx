@@ -18,7 +18,9 @@ export default async function ChoThuePage() {
     <>
       <Header />
       <main className="flex-1 bg-white">
-        <Suspense fallback={<div className="pt-32 text-center text-cvr-muted">Đang tải…</div>}>
+        {/* Khung chờ: CHỈ cao bằng thanh lọc thật (không pt-32 như trước — đó chính là
+            mảng trắng 128px nằm ngay dưới header lúc trang đang tải). */}
+        <Suspense fallback={<div className="mx-auto h-[104px] max-w-7xl px-4 sm:px-6 lg:px-8" />}>
           <ListingBrowser purpose="thue" heading="Nhà đất cho thuê" items={listings} articles={articles} />
         </Suspense>
       </main>

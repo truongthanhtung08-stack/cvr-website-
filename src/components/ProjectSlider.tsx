@@ -163,10 +163,14 @@ export default function ProjectSlider({
   emptyNote,
   sectionKey = "du-an-lien-quan",
   articles = [],
+  relevance = false,
 }: {
   projects: Project[];
   title: string;
   emptyNote?: string;
+  // "Dự án tương tự": nguồn đã xếp sẵn theo ĐỘ LIÊN QUAN → GIỮ NGUYÊN thứ tự đó,
+  // không xếp lại theo hạng VIP (nếu xếp lại thì mất ưu tiên "tương tự").
+  relevance?: boolean;
   // Tin tức cho CỘT PHẢI của danh sách dự án (giống trang /du-an)
   articles?: Article[];
   // Bấm "Xem thêm" → phần còn lại của trang ẩn đi, không đổ dài xuống dưới
@@ -174,7 +178,7 @@ export default function ProjectSlider({
 }) {
   const { expanded, hidden, toggle } = useHomeSection(sectionKey);
 
-  const sorted = sortProjectsByTier(projects);
+  const sorted = relevance ? projects : sortProjectsByTier(projects);
   const top8 = sorted.slice(0, 8);
 
   // Khối khác đang mở danh sách → khối này ẩn
