@@ -86,7 +86,7 @@ export default function ListingBrowser({
 
   return (
     // PC: thanh lọc nằm SÁT header, không chừa khoảng trống (file V3 10.08.2026).
-    <div className={nested ? "pb-20 pt-1 sm:pt-6" : "mx-auto max-w-7xl px-4 pb-20 pt-1 sm:px-6 sm:pt-2 lg:px-8"}>
+    <div className={nested ? "pb-20 pt-1 sm:pt-6" : "mx-auto max-w-7xl px-4 pb-20 pt-0 sm:px-6 sm:pt-2 lg:px-8"}>
       {/* ── Phần trên kiểu Homedy (gọn): thanh lọc → tiêu đề + bộ đếm.
            Trang cấp 1 KHÔNG dùng breadcrumb (menu đã chỉ vị trí — chuẩn Apple). ── */}
       <div>
@@ -187,7 +187,8 @@ export default function ListingBrowser({
 
         {/* CỘT PHẢI: sidebar lọc nhanh */}
         <aside className="lg:col-span-1">
-          <div className="sticky top-24 space-y-5">
+          {/* Cột phải DÍNH CỐ ĐỊNH khi cuộn, cao hơn màn hình thì cuộn trong khung */}
+          <div className="no-scrollbar sticky top-20 max-h-[calc(100vh-6rem)] space-y-5 overflow-y-auto">
             {/* Lọc theo khoảng giá — mua bán = tỷ · cho thuê = triệu/tháng */}
             <SidebarFilter title={purpose === "thue" ? "Lọc theo giá thuê (tháng)" : "Lọc theo khoảng giá"}>
               {priceRangesFor(purpose).map((r) => {

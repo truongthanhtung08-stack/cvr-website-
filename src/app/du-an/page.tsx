@@ -22,7 +22,7 @@ export default async function DuAnPage() {
     <>
       <Header />
       <main className="flex-1 bg-white">
-        <div className="mx-auto max-w-7xl px-4 pb-20 pt-0 sm:px-6 sm:pt-3 lg:px-8">
+        <div className="mx-auto max-w-7xl px-4 pb-20 pt-0 sm:px-6 sm:pt-0 lg:px-8">
           {/* MOBILE: ô tìm + chip lọc lên TRÊN, banner nằm dưới (mẫu Batdongsan).
               DESKTOP: banner trên, thanh lọc dưới — như cũ. ProjectsBrowser tự xếp thứ tự. */}
           <ProjectsBrowser

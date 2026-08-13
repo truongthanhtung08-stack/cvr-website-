@@ -8,7 +8,6 @@ import { FOOTER_DEFAULT, type FooterData } from "@/lib/siteContent";
 
 // Đường dẫn icon SVG theo tên mạng xã hội (link do admin nhập, icon giữ trong code).
 const SOCIAL_PATHS: Record<string, string> = {
-  Zalo: "M12 2.4c-5.46 0-9.9 3.66-9.9 8.18 0 2.6 1.47 4.92 3.76 6.43-.16.57-.52 1.72-.66 2.18-.17.55.2.55.42.45.29-.12 2.5-1.66 3.46-2.31.94.22 1.93.34 2.92.34 5.46 0 9.9-3.66 9.9-8.18S17.46 2.4 12 2.4z",
   Facebook: "M22 12a10 10 0 10-11.56 9.88v-6.99H7.9V12h2.54V9.8c0-2.5 1.49-3.89 3.78-3.89 1.09 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56V12h2.78l-.44 2.89h-2.34v6.99A10 10 0 0022 12z",
   X: "M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231 5.451-6.231zm-1.161 17.52h1.833L7.084 4.126H5.117l11.966 15.644z",
   YouTube: "M23.5 6.2a3 3 0 00-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 00.5 6.2 31 31 0 000 12a31 31 0 00.5 5.8 3 3 0 002.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 002.1-2.1A31 31 0 0024 12a31 31 0 00-.5-5.8zM9.6 15.6V8.4l6.3 3.6-6.3 3.6z",
@@ -23,6 +22,28 @@ const SOCIAL_COLORS: Record<string, string> = {
   YouTube: "#FF0000",
 };
 const DEFAULT_SOCIAL_COLOR = SOCIAL_COLORS.Facebook;
+
+// Zalo KHÔNG phải hình bong bóng chat — nhận diện đúng của Zalo là ô bo góc
+// màu xanh #0068FF với chữ "Zalo" trắng ở giữa. Vẽ riêng, không dùng SOCIAL_PATHS.
+function ZaloMark({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" aria-hidden>
+      <rect width="24" height="24" rx="6.5" fill={SOCIAL_COLORS.Zalo} />
+      <text
+        x="12"
+        y="15.6"
+        textAnchor="middle"
+        fill="#ffffff"
+        fontSize="8.6"
+        fontWeight="700"
+        fontFamily="Helvetica, Arial, sans-serif"
+        letterSpacing="-0.3"
+      >
+        Zalo
+      </text>
+    </svg>
+  );
+}
 
 // Link mạng xã hội: admin nhập link nào thì dùng link đó (/admin/noi-dung).
 // Riêng ZALO chưa nhập → tự trỏ thẳng tới số Hỗ trợ kỹ thuật (mở chat Zalo).
@@ -130,7 +151,9 @@ export default function Footer() {
               {f.socials.map((s) => {
                 const href = socialHref(s.label, s.href, f.hotline);
                 const box = "flex h-12 w-12 items-center justify-center rounded-full border border-black/10 bg-white shadow-sm transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]";
-                const icon = (
+                const icon = s.label === "Zalo" ? (
+                  <ZaloMark className="h-[26px] w-[26px]" />
+                ) : (
                   <svg className="h-6 w-6" fill={SOCIAL_COLORS[s.label] ?? DEFAULT_SOCIAL_COLOR} viewBox="0 0 24 24"><path d={SOCIAL_PATHS[s.label] ?? DEFAULT_SOCIAL_PATH} /></svg>
                 );
                 return href ? (

@@ -106,7 +106,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
       <Header />
       <main className="flex-1 bg-white">
         {/* MOBILE: pt-0 → ảnh dự án nằm SÁT mép dưới header (không chừa khoảng trắng) */}
-        <div className="mx-auto max-w-7xl px-4 pb-20 pt-0 sm:px-6 sm:pt-6 lg:px-8">
+        <div className="mx-auto max-w-7xl px-4 pb-20 pt-0 sm:px-6 sm:pt-2 lg:px-8">
 
           <HomeExpandProvider>
           {/* Nội dung dự án — ẩn khi bấm "Xem thêm" ở mục tin/dự án bên dưới */}

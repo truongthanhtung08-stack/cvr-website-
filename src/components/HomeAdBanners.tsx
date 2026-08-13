@@ -83,7 +83,19 @@ export function AdBannerAll({ data = HOME_AD_DEFAULT }: { data?: HomeAdData }) {
             className="pointer-events-none absolute left-[52%] top-1/2 h-[64%] w-auto -translate-x-1/2 -translate-y-1/2 opacity-[0.16] md:left-[56%] md:h-[86%] md:opacity-[0.18]"
           />
 
-          {/* ═══ ĐIỆN THOẠI — nghiêng hướng về phía chữ (mẫu Demo 2) ═══ */}
+          {/* ═══ ĐIỆN THOẠI ═══
+              Màn rộng (≥1280px) dùng 2 máy khoe 2 màn hình khác nhau (Dự án + Trang chủ)
+              — lấp trọn khoảng giữa chữ và mép phải. Màn hẹp/mobile chỉ 1 máy cho gọn.
+              Máy SAU vẽ trước để nằm dưới máy TRƯỚC. */}
+          <Image
+            src={asset("/images/app-phone-2026-b.png")}
+            alt="Màn hình Dự án trên ứng dụng COASTAL LAND"
+            width={681}
+            height={1318}
+            sizes="240px"
+            // Chỉ hiện từ màn ≥1280px — hẹp hơn thì máy thứ 2 sẽ đè lên chữ.
+            className="pointer-events-none absolute -bottom-[4%] right-[28.5%] hidden h-[104%] w-auto max-w-none xl:block"
+          />
           <Image
             src={asset("/images/app-phone-2026.png")}
             alt="Ứng dụng COASTAL LAND trên iPhone"
@@ -93,9 +105,9 @@ export function AdBannerAll({ data = HOME_AD_DEFAULT }: { data?: HomeAdData }) {
             priority
             // Máy cao trọn khung, chỉ khuyết nhẹ phần đáy — đúng kiểu mẫu Demo 2.
             // Đỉnh máy sát mép trên khung, chỉ khuyết phần đáy (bottom = 100% − chiều cao).
-            // PC: mép phải máy neo theo DẢI NỘI DUNG 1000px canh giữa (không dính mép
-            // banner) → chữ và máy đứng gần nhau, không hở một khoảng trống ở giữa.
-            className="pointer-events-none absolute -bottom-[36%] right-[2%] h-[136%] w-auto max-w-none md:-bottom-[32%] md:right-[calc((100%-1000px)/2)] md:h-[132%]"
+            // PC: 2 máy lùi vào trong (không dính mép banner) → chữ và máy đứng gần
+            // nhau, không hở khoảng trống ở giữa.
+            className="pointer-events-none absolute -bottom-[36%] right-[2%] h-[136%] w-auto max-w-none md:-bottom-[32%] md:right-[9%] md:h-[132%]"
           />
 
           {/* ═══ NỘI DUNG BÊN TRÁI ═══ */}
@@ -109,12 +121,9 @@ export function AdBannerAll({ data = HOME_AD_DEFAULT }: { data?: HomeAdData }) {
               {cta.ctaLabel}
               {ArrowRight}
             </Link>
-            {/* Màn hình nhỏ → chỉ logo + tên store, BỎ dòng "Tải về trên"; 2 nút nằm
-                ngang cho gọn, nhường chiều cao cho điện thoại. */}
-            <div className="flex gap-2">
-              <StoreButton store="apple" href={app.appleHref} compact />
-              <StoreButton store="google" href={app.googleHref} compact />
-            </div>
+            {/* Màn hình nhỏ → logo + TÊN store, bỏ dòng "Tải về trên" cho gọn */}
+            <StoreButton store="apple" href={app.appleHref} compact />
+            <StoreButton store="google" href={app.googleHref} compact />
           </div>
 
           {/* DESKTOP */}
@@ -152,15 +161,19 @@ function StoreButton({ store, href = "#", compact = false }: { store: "apple" | 
     <a
       href={href}
       aria-label={store === "apple" ? "Tải trên App Store" : "Tải trên Google Play"}
-      className={`flex items-center rounded-xl bg-cvr-ink text-white shadow-sm transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 hover:bg-black ${compact ? "min-h-[36px] flex-1 justify-center gap-1.5 px-2" : "min-h-[46px] gap-2.5 px-4 py-2"}`}
+      className={`flex items-center rounded-xl bg-cvr-ink text-white shadow-sm transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 hover:bg-black ${compact ? "min-h-[36px] w-full gap-2 px-3" : "min-h-[46px] gap-2.5 px-4 py-2"}`}
     >
       {store === "apple" ? (
         <svg className={`${iconCls} text-white`} fill="currentColor" viewBox="0 0 24 24"><path d="M17.05 12.04c-.03-2.6 2.12-3.85 2.22-3.91-1.21-1.77-3.09-2.01-3.76-2.04-1.6-.16-3.12.94-3.93.94-.81 0-2.06-.92-3.39-.9-1.74.03-3.35 1.01-4.25 2.57-1.81 3.14-.46 7.78 1.3 10.32.86 1.24 1.89 2.64 3.23 2.59 1.3-.05 1.79-.84 3.36-.84 1.57 0 2.01.84 3.39.81 1.4-.02 2.29-1.27 3.15-2.52.99-1.44 1.4-2.84 1.42-2.91-.03-.01-2.72-1.04-2.75-4.13zM14.6 4.6c.72-.87 1.2-2.08 1.07-3.28-1.03.04-2.28.69-3.02 1.56-.66.77-1.24 2-1.08 3.18 1.15.09 2.33-.59 3.03-1.46z" /></svg>
       ) : (
         <svg className={iconCls} viewBox="0 0 24 24"><path fill="#00d4ff" d="M3.6 2.4c-.3.3-.5.7-.5 1.2v16.8c0 .5.2.9.5 1.2l.1.1L13 12.1v-.2L3.7 2.3l-.1.1z" /><path fill="#ffce00" d="M16.3 15.4L13 12.1v-.2l3.3-3.3.1.1 3.9 2.2c1.1.6 1.1 1.7 0 2.3l-3.9 2.2-.1.1z" /><path fill="#ff3b30" d="M16.4 15.3L13 12 3.6 21.6c.4.4 1 .4 1.6.1l11.2-6.4" /><path fill="#00e676" d="M16.4 8.7L5.2 2.3c-.6-.3-1.2-.3-1.6.1L13 12l3.4-3.3z" /></svg>
       )}
-      {/* Bản gọn (mobile): CHỈ logo store, bỏ hết chữ — màn hình nhỏ, logo đã đủ nhận biết */}
-      {!compact && (
+      {/* Bản gọn (mobile): logo + tên store trên MỘT dòng, bỏ dòng "Tải về trên" */}
+      {compact ? (
+        <span className="whitespace-nowrap text-[12px] font-semibold text-white">
+          {store === "apple" ? "App Store" : "Google Play"}
+        </span>
+      ) : (
         <span className="flex flex-col text-left leading-tight">
           <span className="text-[10px] text-white/65">Tải về trên</span>
           <span className="text-[13px] font-semibold text-white">{store === "apple" ? "App Store" : "Google Play"}</span>

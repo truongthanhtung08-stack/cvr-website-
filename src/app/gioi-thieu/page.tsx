@@ -37,9 +37,14 @@ export default async function GioiThieuPage() {
     <>
       <Header />
       <main className="flex-1 bg-white">
-        {/* ── Hero giới thiệu ── */}
+        {/* ── Hero giới thiệu ──
+             KHUNG THEO TỶ LỆ CỐ ĐỊNH (không dùng vh) để ảnh luôn hiện đúng phần
+             mong muốn: PC 3:1 · điện thoại 16:10.
+             → Ảnh cần chuẩn bị: TỶ LỆ 3:1, khuyến nghị 3000×1000 (tối thiểu 1920×640).
+             Khung cũ (38vh, tối đa 400px) hoá ra ~4.8:1 nên cắt mất 2/3 ảnh 16:9,
+             đường chân trời bị xén — nay 3:1 giữ được trọn dải biển. */}
         <section className="relative isolate">
-          <div className="relative h-[30vh] min-h-[200px] w-full overflow-hidden bg-cvr-ink sm:h-[38vh] sm:max-h-[400px]">
+          <div className="relative aspect-[16/10] w-full overflow-hidden bg-cvr-ink sm:aspect-[3/1] sm:max-h-[560px]">
             <Image
               src={asset(about.heroImage)}
               alt="Không gian làm việc Coastal Land bên bờ biển Duyên hải Miền Trung"
@@ -52,7 +57,7 @@ export default async function GioiThieuPage() {
         </section>
 
         {/* ── Câu chuyện ── */}
-        <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-16 lg:px-8">
+        <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
           <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2">
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.22em] text-cvr-blue-ink">{about.story.eyebrow}</p>
@@ -69,19 +74,32 @@ export default async function GioiThieuPage() {
           </div>
         </section>
 
-        {/* ── Tầm nhìn & Sứ mệnh ── */}
+        {/* ── Tầm nhìn & Sứ mệnh — có ICON cho chuyên nghiệp ── */}
         <section className="bg-cvr-surface">
-          <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-16 lg:px-8">
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              <div className="border border-cvr-line bg-white p-8 shadow-lux">
-                <h3 className="text-lg font-semibold tracking-tight text-cvr-ink">Tầm nhìn</h3>
-                <p className="mt-3 text-[15px] leading-relaxed text-cvr-body">
+          <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-6">
+              <div className="border border-cvr-line bg-white p-6 shadow-lux sm:p-8">
+                <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cvr-blue/10 text-cvr-blue-ink">
+                  <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" />
+                    <circle cx="12" cy="12" r="3.2" />
+                  </svg>
+                </span>
+                <h3 className="mt-4 text-lg font-semibold tracking-tight text-cvr-ink">Tầm nhìn</h3>
+                <p className="mt-2.5 text-[15px] leading-relaxed text-cvr-body">
                   {about.vision}
                 </p>
               </div>
-              <div className="border border-cvr-line bg-white p-8 shadow-lux">
-                <h3 className="text-lg font-semibold tracking-tight text-cvr-ink">Sứ mệnh</h3>
-                <p className="mt-3 text-[15px] leading-relaxed text-cvr-body">
+              <div className="border border-cvr-line bg-white p-6 shadow-lux sm:p-8">
+                <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cvr-gold/10 text-cvr-gold-ink">
+                  <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="8.5" />
+                    <circle cx="12" cy="12" r="4.6" />
+                    <circle cx="12" cy="12" r="1.1" fill="currentColor" stroke="none" />
+                  </svg>
+                </span>
+                <h3 className="mt-4 text-lg font-semibold tracking-tight text-cvr-ink">Sứ mệnh</h3>
+                <p className="mt-2.5 text-[15px] leading-relaxed text-cvr-body">
                   {about.mission}
                 </p>
               </div>
@@ -90,7 +108,7 @@ export default async function GioiThieuPage() {
         </section>
 
         {/* ── Giá trị cốt lõi ── */}
-        <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-16 lg:px-8">
+        <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
           <div className="max-w-2xl">
             <p className="text-sm font-semibold uppercase tracking-[0.22em] text-cvr-blue-ink">Giá trị cốt lõi</p>
             <h2 className="mt-3 text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">
@@ -100,7 +118,7 @@ export default async function GioiThieuPage() {
           <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {about.values.map((v, i) => (
               <div key={i} className="border border-cvr-line bg-white p-6 shadow-lux transition hover:-translate-y-1 hover:border-cvr-blue/40">
-                <span className="flex h-11 w-11 items-center justify-center bg-cvr-blue/10 text-cvr-blue-ink">
+                <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cvr-blue/10 text-cvr-blue-ink">
                   <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d={VALUE_ICONS[i % VALUE_ICONS.length]} />
                   </svg>
@@ -116,7 +134,7 @@ export default async function GioiThieuPage() {
              Dữ liệu stats/statsImage vẫn còn trong admin — chưa xoá, chỉ không hiển thị. ── */}
 
         {/* ── Thị trường Miền Trung ── */}
-        <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-16 lg:px-8">
+        <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
           <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2">
             <Figure src={about.market.image} alt="Không gian ven biển Duyên hải Miền Trung" className="order-2 aspect-[16/10] w-full lg:order-1" />
             <div className="order-1 lg:order-2">
@@ -129,7 +147,7 @@ export default async function GioiThieuPage() {
               </p>
               <Link
                 href={about.market.ctaHref}
-                className="mt-6 inline-flex items-center gap-2 bg-cvr-blue px-5 py-3 text-sm font-semibold text-white transition hover:bg-cvr-blue-ink"
+                className="mt-6 inline-flex min-h-[48px] items-center gap-2 rounded-full bg-cvr-blue px-6 text-sm font-semibold text-white shadow-[0_10px_26px_rgba(0,113,227,0.28)] transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 hover:bg-cvr-blue-ink"
               >
                 {about.market.ctaLabel}
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
@@ -140,18 +158,26 @@ export default async function GioiThieuPage() {
 
         {/* ── CTA ── */}
         <section className="border-t border-cvr-line bg-cvr-surface">
-          <div className="mx-auto flex max-w-7xl flex-col items-center gap-5 px-4 py-16 text-center sm:px-6 lg:px-8">
+          <div className="mx-auto flex max-w-7xl flex-col items-center gap-4 px-4 py-14 text-center sm:gap-5 sm:px-6 sm:py-16 lg:px-8">
             <h2 className="max-w-2xl text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">
               {about.cta.title}
             </h2>
             <p className="max-w-xl text-[15px] text-cvr-muted">
               {about.cta.desc}
             </p>
-            <div className="mt-1 flex flex-wrap justify-center gap-3">
-              <Link href={about.cta.primaryHref} className="bg-cvr-blue px-6 py-3 text-sm font-semibold text-white transition hover:bg-cvr-blue-ink">
+            {/* CTA: viên thuốc, cao tối thiểu 48px cho dễ chạm trên điện thoại;
+                mobile 2 nút TRÀN NGANG bằng nhau, PC nằm cạnh nhau canh giữa. */}
+            <div className="mt-1 flex w-full max-w-sm flex-col gap-3 sm:max-w-none sm:flex-row sm:justify-center">
+              <Link
+                href={about.cta.primaryHref}
+                className="inline-flex min-h-[48px] items-center justify-center rounded-full bg-cvr-blue px-7 text-sm font-semibold text-white shadow-[0_10px_26px_rgba(0,113,227,0.28)] transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 hover:bg-cvr-blue-ink"
+              >
                 {about.cta.primaryLabel}
               </Link>
-              <Link href={about.cta.secondaryHref} className="border border-cvr-line bg-white px-6 py-3 text-sm font-semibold text-cvr-ink transition hover:bg-black/5">
+              <Link
+                href={about.cta.secondaryHref}
+                className="inline-flex min-h-[48px] items-center justify-center rounded-full border border-cvr-line bg-white px-7 text-sm font-semibold text-cvr-ink transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 hover:border-cvr-ink"
+              >
                 {about.cta.secondaryLabel}
               </Link>
             </div>
