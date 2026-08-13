@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import FilterDropdown, { FilterDropdownGroup } from "@/components/FilterDropdown";
-import { normalizeVi } from "@/lib/filters";
+import Highlight from "@/components/Highlight";
+import { searchAny, TIER_LABEL } from "@/lib/smartSearch";
 import { provinceNamesFor, type GeoMode } from "@/lib/locations";
 import type { Project, Article } from "@/lib/data";
 
@@ -71,14 +72,21 @@ export default function ProjectsBrowser({
     provinceNamesFor(geoMode).filter((n) => provCountMap.has(n)).map((n) => [n, provCountMap.get(n)!]);
   const provinceOptions = provinceOpts.length ? provinceOpts : provinceCounts;
 
-  const nq = normalizeVi(q.trim());
-  const visible = projects.filter(
-    (p) =>
-      (status === ALL || p.status === status) &&
-      (province === ALL || provinceOf(p.location) === province) &&
-      (type === ALL || typeOf(p.type) === type) &&
-      (!nq || normalizeVi(`${p.name} ${p.developer} ${p.location}`).includes(nq))
-  );
+  // TÌM KIẾM THEO TRƯỜNG — DÙNG CHUNG một luật với Mua bán / Cho thuê:
+  // bóc tách câu dài → xếp 3 tầng (khớp đủ → gần đúng → liên quan) → không bao
+  // giờ ra màn hình trống. Khu vực + Loại hình là 2 trường GIỮ khi nới lỏng.
+  const hits = searchAny(projects, q, {
+    hay: (p) => `${p.name} ${p.developer} ${p.location} ${p.type} ${p.status} ${p.priceFrom}`,
+    truong: [
+      { ten: "khu vực", chon: province !== ALL, giu: true, ok: (p) => provinceOf(p.location) === province },
+      { ten: "loại hình", chon: type !== ALL, giu: true, ok: (p) => typeOf(p.type) === type },
+      { ten: "tình trạng", chon: status !== ALL, ok: (p) => p.status === status },
+    ],
+  });
+  const visible = hits.map((h) => h.item);
+  // Tầng + chữ cần bôi đậm của từng dự án
+  const tierBySlug = new Map(hits.map((h) => [h.item.slug, h.tier]));
+  const termsBySlug = new Map(hits.map((h) => [h.item.slug, h.matched]));
 
   const hasActive = q.trim() !== "" || status !== ALL || province !== ALL || type !== ALL;
   const reset = () => { setQ(""); setStatus(ALL); setProvince(ALL); setType(ALL); };
@@ -292,6 +300,11 @@ export default function ProjectsBrowser({
       <div className="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-3">
         {/* ── Cột chính: thẻ dự án ngang ── */}
         <div className="lg:col-span-2">
+          {/* Nhãn TẦNG kết quả — giống trang Mua bán / Cho thuê */}
+          {hasActive && pageItems.length > 0 && (() => {
+            const t = tierBySlug.get(pageItems[0].slug) ?? 1;
+            return t === 1 ? null : <p className="mb-3 text-sm font-medium text-cvr-body">{TIER_LABEL[t]}</p>;
+          })()}
           <div className="reveal is-visible cards-stagger flex flex-col gap-5">
             {pageItems.map((p) => (
               <Link
@@ -316,7 +329,7 @@ export default function ProjectsBrowser({
                 {/* Thông tin — mobile có padding cho "thở", desktop sát ảnh */}
                 <div className="flex min-w-0 flex-1 flex-col p-3 sm:p-0 sm:py-1 sm:pr-1">
                   <h3 className="line-clamp-2 font-semibold leading-snug text-cvr-ink transition-colors group-hover:text-cvr-blue-ink sm:text-lg">
-                    {p.name}
+                    <Highlight text={p.name} terms={termsBySlug.get(p.slug) ?? []} />
                   </h3>
                   <p className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
                     <span className="text-base font-semibold text-cvr-gold-ink sm:text-lg">{p.priceFrom}</span>

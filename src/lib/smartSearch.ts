@@ -409,6 +409,61 @@ export function goiYNoiLong(raw: string): GoiY[] {
   return ds.slice(0, 5);
 }
 
+// ============================================================================
+// TÌM KIẾM DÙNG CHUNG CHO MỌI LOẠI DỮ LIỆU (dự án, tin tức, chuyên gia…)
+// Cùng một luật với tin BĐS: bóc tách câu → 3 tầng → không bao giờ rỗng.
+// Nơi gọi chỉ cần chỉ ra "chuỗi để dò" (hay) và các tiêu chí lọc theo trường.
+//
+//   searchAny(items, q, {
+//     hay:   (p) => `${p.name} ${p.location} ${p.type}`,   // chuỗi để dò từ khoá
+//     truong: [                                            // các trường lọc
+//       { ten: "khu vực", chon: province !== "Tất cả", ok: (p) => provinceOf(p.location) === province },
+//       ...
+//     ],
+//   })
+// ============================================================================
+export type TruongLoc<T> = { ten: string; chon: boolean; giu?: boolean; ok: (item: T) => boolean };
+
+export function searchAny<T>(
+  items: T[],
+  q: string,
+  cfg: { hay: (item: T) => string; truong?: TruongLoc<T>[] },
+): { item: T; tier: 1 | 2 | 3; matched: string[] }[] {
+  const parsed = parseQuery(q);
+  const dung = (cfg.truong ?? []).filter((t) => t.chon);
+  const coQ = q.trim().length > 0;
+  const out: { item: T; tier: 1 | 2 | 3; matched: string[] }[] = [];
+
+  for (const item of items) {
+    const hay = normalizeVi(cfg.hay(item));
+    // Điểm phần TỪ KHOÁ
+    const tuKhop = coQ ? parsed.terms.filter((t) => khopMo(hay, t)) : [];
+    const qDu = !coQ || (parsed.terms.length > 0 && tuKhop.length === parsed.terms.length);
+    const qDinh = !coQ || tuKhop.length > 0;
+    // Điểm phần TRƯỜNG LỌC
+    const dat = dung.filter((t) => t.ok(item));
+    const giuDu = dung.filter((t) => t.giu).every((t) => t.ok(item));
+    const truongDu = dat.length === dung.length;
+
+    if (!qDinh && dat.length === 0) continue;
+
+    const tier: 1 | 2 | 3 =
+      qDu && truongDu ? 1 : giuDu && (dung.length === 0 || dat.length / dung.length >= 0.5) && qDinh ? 2 : 3;
+    out.push({ item, tier, matched: tuKhop.length ? parsed.highlight : [] });
+  }
+
+  // KHÔNG BAO GIỜ RỖNG: nới hết cỡ — giữ tin dính 3 ký tự đầu, cuối cùng lấy tất cả
+  if (out.length === 0) {
+    const goc = parsed.terms.map((t) => t.slice(0, 3)).filter(Boolean);
+    const cham = items.map((item) => ({ item, n: goc.filter((g) => normalizeVi(cfg.hay(item)).includes(g)).length }));
+    const co = cham.filter((c) => c.n > 0).sort((a, b) => b.n - a.n);
+    for (const c of (co.length ? co : cham).slice(0, 24)) out.push({ item: c.item, tier: 3, matched: [] });
+  }
+
+  out.sort((a, b) => a.tier - b.tier);
+  return out;
+}
+
 // Nhãn từng tầng (đúng chữ trong tài liệu mục 4)
 export const TIER_LABEL: Record<1 | 2 | 3, string> = {
   1: "🔥 Khớp hoàn hảo với tiêu chí của bạn",
