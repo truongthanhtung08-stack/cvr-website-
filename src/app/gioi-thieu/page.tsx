@@ -24,7 +24,10 @@ export const metadata: Metadata = {
    · Nút CTA            : viên thuốc, cao tối thiểu 48px
    ════════════════════════════════════════════════════════════════════════════ */
 const SECTION = "mx-auto max-w-7xl px-5 py-14 sm:px-6 sm:py-20 lg:px-8";
-const SPLIT = "grid grid-cols-1 items-center gap-8 lg:grid-cols-2 lg:gap-14";
+// items-stretch (KHÔNG dùng items-center): trước đây ảnh canh giữa theo chiều dọc
+// nên khi cột chữ dài hơn ảnh sẽ hở 2 mảng trắng trên–dưới ảnh, nhìn rất rời rạc.
+// Nay ảnh KÉO CAO BẰNG cột chữ → 2 cột thẳng hàng cả mép trên lẫn mép dưới.
+const SPLIT = "grid grid-cols-1 items-stretch gap-8 lg:grid-cols-2 lg:gap-14";
 const CARD = "border border-cvr-line bg-white p-6 shadow-lux sm:p-7";
 const ICON_BOX = "flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl";
 // Hàng đầu thẻ: ICON và TIÊU ĐỀ NGANG HÀNG (không xếp trên–dưới nữa)
@@ -58,10 +61,11 @@ const VALUE_ICONS = [
   "M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6 0a3 3 0 10-2.5-4.5",
 ];
 
-// Khối ảnh (vuông cạnh kiểu Apple mới) — mọi ảnh trong trang cùng tỷ lệ 16:10.
+// Khối ảnh (vuông cạnh kiểu Apple mới): điện thoại giữ tỷ lệ 16:10; máy tính KÉO
+// CAO BẰNG cột chữ bên cạnh (tối thiểu 340px) để 2 cột luôn thẳng hàng.
 function Figure({ src, alt, className = "" }: { src: string; alt: string; className?: string }) {
   return (
-    <div className={`relative aspect-[16/10] w-full overflow-hidden bg-cvr-surface ${className}`}>
+    <div className={`relative aspect-[16/10] w-full overflow-hidden bg-cvr-surface lg:aspect-auto lg:h-full lg:min-h-[340px] ${className}`}>
       <Image src={asset(src)} alt={alt} fill sizes="(max-width:1024px) 100vw, 50vw" className="object-cover" />
     </div>
   );
