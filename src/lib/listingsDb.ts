@@ -220,6 +220,7 @@ function mockToDetail(m: Listing): ListingFull {
     interior: [],
     amenityGroups: amenityGroups.map((g) => ({ group: g.group, items: g.items.map((name) => ({ name, active: false })) })),
     legal: null, furnish: null, direction: null, addressDetail: null, contact: null,
+    places: [],
     mapQuery: m.location,
   };
 }
