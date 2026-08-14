@@ -25,7 +25,6 @@ import {
   type LocationSel,
 } from "@/lib/filters";
 import { suggest, popularSuggestions, type Suggestion } from "@/lib/suggest";
-import { goiYNoiLong } from "@/lib/smartSearch";
 
 const RECENT_KEY = "cvr-recent-search"; // lịch sử tìm kiếm (localStorage)
 const GEO_MODE_KEY = "cl-geo-mode"; // hệ đơn vị hành chính đã chọn: "cu" | "moi" (localStorage)
@@ -48,7 +47,9 @@ export default function FilterBar({
 }: {
   value: Filters;
   onChange: (f: Filters) => void;
-  onSearch?: () => void;
+  // Kiểu Google: ra kết quả NGAY. Có thể truyền bộ lọc kèm (khi bấm gợi ý/lịch sử) để
+  // điều hướng đúng lựa chọn vừa chọn, không dính state cũ.
+  onSearch?: (f?: Filters) => void;
   // Bấm "Bản đồ" — bật/tắt chế độ bản đồ (nút nằm cạnh ô tìm, kiểu Batdongsan).
   onMap?: () => void;
   mapActive?: boolean;
@@ -112,62 +113,43 @@ export default function FilterBar({
     setRecent([]);
     try { localStorage.removeItem(RECENT_KEY); } catch { /* noop */ }
   };
-  // Xoá RIÊNG một mục trong lịch sử (dấu × ở cuối dòng) — kiểu Google.
-  const removeRecent = (label: string) => {
-    setRecent((prev) => {
-      const next = prev.filter((x) => x.label !== label);
-      try { localStorage.setItem(RECENT_KEY, JSON.stringify(next)); } catch { /* noop */ }
-      return next;
-    });
-  };
-  // LƯU CHÍNH CHỮ NGƯỜI GÕ vào lịch sử khi bấm Tìm / nhấn Enter.
-  // Trước đây chỉ lưu khi bấm vào một dòng gợi ý — mà phần lớn người dùng gõ
-  // xong là bấm Tìm luôn, nên lịch sử gần như trống.
-  const luuTuKhoaDaGo = () => {
-    const kw = f.keyword.trim();
-    if (kw.length >= 2) pushRecent({ label: kw, kind: "Gợi ý", sub: "Từ khoá đã tìm", keyword: kw });
-  };
 
   const typed = f.keyword.trim().length > 0;
   // Panel: đang gõ → tối đa 6 kết quả khớp; chưa gõ → ≤3 lịch sử + phổ biến.
-  const recentShown = recent.slice(0, 5); // hiện 5 mục gần nhất (trước chỉ 3)
+  const recentShown = recent.slice(0, 3);
   const typedHits = typed ? suggest(f.keyword, 6) : [];
   // LUÔN có gợi ý (kiểu Google): gõ mà không khớp gì → hiện GỢI Ý PHỔ BIẾN thay vì để trống.
   const noHits = typed && typedHits.length === 0;
-  // GỢI Ý BẬC THANG — dựng từ chính câu đang gõ, xếp từ khớp đầy đủ → nới dần.
-  // VD "Đất nền tại Đà Nẵng giá dưới 3 tỷ" → [Đất nền · Đà Nẵng · dưới 3 tỷ] →
-  // [Đất nền · Đà Nẵng] → [Tất cả đất nền] → [BĐS tại Đà Nẵng] → [BĐS dưới 3 tỷ].
-  const bacThang: Suggestion[] = typed
-    ? goiYNoiLong(f.keyword).map((g) => ({ label: g.label, kind: "Gợi ý" as const, sub: g.sub, patch: g.patch }))
-    : [];
   const panelItems: Suggestion[] = typed
-    ? [...bacThang, ...(noHits ? popularSuggestions : typedHits)]
+    ? (noHits ? popularSuggestions : typedHits)
     : [...recentShown, ...popularSuggestions];
 
   const applySuggestion = (s: Suggestion) => {
     pushRecent(s);
-    if (s.patch) {
-      // Gợi ý bậc thang: đổ THẲNG nhiều trường lọc cùng lúc.
-      // · Bậc dựng từ TIÊU CHÍ (loại hình/khu vực/giá) → xoá ô từ khoá, vì tiêu
-      //   chí đã nằm trong bộ lọc, giữ lại sẽ lọc chồng hai lần.
-      // · Bậc dựng từ CHÍNH CHỮ người gõ (khớp cả cụm / 1 từ) → giữ nguyên từ khoá.
-      set(s.patch.keyword != null ? s.patch : { ...s.patch, keyword: "" });
-    } else if (s.kind === "Khu vực" && s.province) {
+    setSugOpen(false);
+    setOverlay(false);
+    setActiveIdx(-1);
+    // Sản phẩm / Dự án / Tin tức (hoặc Mục đích có href) → mở thẳng trang tương ứng.
+    if (s.href) {
+      router.push(s.href);
+      return;
+    }
+    // Dựng bộ lọc MỚI từ gợi ý rồi RA KẾT QUẢ NGAY (kiểu Google) — truyền thẳng bộ lọc
+    // vừa dựng cho onSearch để tránh dùng state cũ.
+    let next: Filters = f;
+    if (s.kind === "Khu vực" && s.province) {
       // Thêm khu vực vào danh sách ĐA CHỌN (không ghi đè, không trùng, tối đa 5).
       const sel: LocationSel = { province: s.province, district: s.district || undefined, ward: s.ward || undefined };
       const dup = f.locations.some((l) => sameLocation(l, sel));
       const locations = dup || f.locations.length >= MAX_LOCATIONS ? f.locations : [...f.locations, sel];
-      set({ locations, keyword: "" });
+      next = { ...f, locations, keyword: "" };
     } else if (s.kind === "Loại hình" && s.type) {
-      set({ types: f.types.includes(s.type) ? f.types : [...f.types, s.type], keyword: "" });
-    } else if (s.href) {
-      router.push(s.href); // Sản phẩm / Dự án / Tin tức → trang chi tiết
+      next = { ...f, types: f.types.includes(s.type) ? f.types : [...f.types, s.type], keyword: "" };
     } else if (s.keyword) {
-      set({ keyword: s.keyword });
+      next = { ...f, keyword: s.keyword };
     }
-    setSugOpen(false);
-    setOverlay(false);
-    setActiveIdx(-1);
+    onChange(next);
+    onSearch?.(next);
   };
 
   // Nút ↖ — CHÈN gợi ý vào ô tìm để sửa tiếp, KHÔNG tìm/điều hướng ngay (kiểu Google).
@@ -193,7 +175,6 @@ export default function FilterBar({
         applySuggestion(panelItems[activeIdx]);
       } else {
         setSugOpen(false);
-        luuTuKhoaDaGo();
         onSearch?.();
       }
     } else if (e.key === "Escape") {
@@ -285,11 +266,10 @@ export default function FilterBar({
   // Khu vực — ĐA CHỌN (tối đa 5) theo tầng Tỉnh→Quận→Phường (kiểu Batdongsan)
   const locationDropdown = (
       <FilterDropdown label="Toàn quốc" summary={locLabel} active={f.locations.length > 0} panelClassName="w-80" compact={compact} className={ddClass}>
-        {({ close }) => (
+        {() => (
           <LocationPanel
             locations={f.locations}
             onChange={(locations) => set({ locations })}
-            onClose={close}
           />
         )}
       </FilterDropdown>
@@ -428,7 +408,7 @@ export default function FilterBar({
         {header === "recent" && (
           <div className="flex items-center justify-between px-2.5 pb-1 pt-1 text-[11px] font-semibold uppercase tracking-wide text-cvr-faint">
             <span>Tìm kiếm gần đây</span>
-            <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={clearRecent} className="font-medium normal-case text-cvr-muted transition hover:text-cvr-ink">Xoá tất cả</button>
+            <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={clearRecent} className="font-medium normal-case text-cvr-muted transition hover:text-cvr-ink">Xoá</button>
           </div>
         )}
         {header === "popular" && (
@@ -462,21 +442,6 @@ export default function FilterBar({
               <path strokeLinecap="round" strokeLinejoin="round" d={ICON_INSERT} />
             </svg>
           </button>
-          {/* × — XOÁ RIÊNG dòng lịch sử này (chỉ hiện với mục "Tìm kiếm gần đây") */}
-          {!typed && i < recentShown.length && (
-            <button
-              type="button"
-              aria-label={`Xoá "${s.label}" khỏi lịch sử`}
-              title="Xoá khỏi lịch sử"
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={(e) => { e.stopPropagation(); removeRecent(s.label); }}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-cvr-faint transition hover:bg-black/10 hover:text-cvr-ink active:scale-95"
-            >
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          )}
         </div>
       </div>
     );
@@ -485,12 +450,10 @@ export default function FilterBar({
   // ===== Ô từ khoá + nút tìm kiếm (dùng chung) =====
   const searchBox = (
     <>
-    {/* Trang danh sách: ô tìm co giãn hết khung, nút "Xem bản đồ" nằm SÁT MÉP PHẢI
-        → không còn mảng trống hụt bên phải như khi giới hạn bề ngang. */}
-    <div ref={boxRef} className={compact ? "flex w-full gap-2.5" : "flex w-full gap-2.5"}>
-      <div className={compact ? "relative flex-1" : "relative flex h-11 min-w-0 flex-1 items-center rounded-xl bg-cvr-surface ring-1 ring-black/5 transition focus-within:ring-2 focus-within:ring-cvr-blue/40 sm:h-11 sm:rounded-xl sm:ring-1"}>
-        {/* Kính lúp trái — MOBILE ẩn (đã có nút search xanh bên phải, giống thanh tìm trang chủ) */}
-        <svg className="pointer-events-none absolute left-4 top-1/2 hidden h-[18px] w-[18px] -translate-y-1/2 text-cvr-faint sm:block" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+    <div ref={boxRef} className={compact ? "flex w-full gap-2.5" : "flex w-full gap-2"}>
+      <div className={compact ? "relative flex-1" : "relative flex h-12 min-w-0 flex-1 items-center rounded-none bg-cvr-surface transition focus-within:ring-2 focus-within:ring-cvr-blue/40"}>
+        {/* Kính lúp trái — compact(Hero) trên MOBILE ẩn đi vì đã có nút search xanh bên phải */}
+        <svg className={`pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-cvr-faint ${compact ? "hidden sm:block" : ""}`} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
         </svg>
         <input
@@ -514,11 +477,8 @@ export default function FilterBar({
               // MOBILE: ô nằm trên NỀN TRẮNG → nền xám nhạt Apple cho thấy rõ khung.
               // DESKTOP: vẫn trắng + đổ bóng vì nằm đè trên ảnh Hero tối.
               // Đệm phải NỚI RA khi đã gõ để chừa chỗ nút xoá ×.
-              // DESKTOP: ô nằm TRONG khối trắng của Hero → nền xám nhạt, không đổ
-              // bóng (nếu để trắng + bóng sẽ thành "khối lồng khối").
-              // DESKTOP: chừa chỗ cho nút "Tìm kiếm" NẰM TRONG ô (không tách rời).
-              ? `h-11 w-full rounded-xl border border-transparent bg-cvr-surface pl-4 ${typed ? "pr-[5.5rem]" : "pr-14"} text-[15px] text-cvr-ink placeholder-cvr-faint ring-1 ring-black/5 outline-none transition focus:ring-2 focus:ring-cvr-blue/50 sm:h-12 sm:bg-white/[0.08] sm:pl-11 ${typed ? "sm:pr-[11.5rem]" : "sm:pr-[8.5rem]"} sm:text-white sm:placeholder-white/70 sm:ring-white/30 sm:focus:ring-white/60`
-              : "h-full w-full min-w-0 flex-1 border-none bg-transparent pl-4 pr-14 text-[15px] text-cvr-ink placeholder-cvr-faint outline-none sm:pl-11 sm:pr-3"
+              ? `h-11 w-full rounded-xl border border-transparent bg-cvr-surface pl-4 ${typed ? "pr-[5.5rem]" : "pr-14"} text-[15px] text-cvr-ink placeholder-cvr-faint ring-1 ring-black/5 outline-none transition focus:ring-2 focus:ring-cvr-blue/50 sm:h-12 sm:bg-white sm:pl-11 ${typed ? "sm:pr-11" : "sm:pr-4"} sm:shadow-lg sm:shadow-black/20`
+              : "h-full w-full min-w-0 flex-1 border-none bg-transparent pl-11 pr-3 text-[15px] text-cvr-ink placeholder-cvr-faint outline-none"
           }
         />
         {/* Nút XOÁ (×) trong ô — kiểu Google, hiện khi đã gõ (chỉ ô tìm lớn/Hero) */}
@@ -536,16 +496,6 @@ export default function FilterBar({
           </button>
         )}
         {/* MOBILE (Hero): nút SEARCH XANH nằm NGAY TRONG ô tìm — cao BẰNG khung, 1 dòng duy nhất */}
-        {/* Nút tìm DESKTOP — nằm NGAY TRONG ô tìm, sát mép phải (không tách khối) */}
-        {compact && onSearch && (
-          <button
-            type="button"
-            onClick={() => { setSugOpen(false); onSearch(); }}
-            className="absolute bottom-1.5 right-1.5 top-1.5 hidden items-center justify-center rounded-lg bg-cvr-blue px-6 text-[14px] font-semibold text-white transition hover:bg-cvr-blue-ink active:scale-95 sm:flex"
-          >
-            Tìm kiếm
-          </button>
-        )}
         {compact && onSearch && (
           <button
             type="button"
@@ -565,7 +515,7 @@ export default function FilterBar({
             aria-label="Xoá từ khoá"
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => { set({ keyword: "" }); setSugOpen(true); inputRef.current?.focus(); }}
-            className="mr-1 hidden h-8 w-8 shrink-0 items-center justify-center rounded-full text-cvr-faint transition hover:bg-black/5 hover:text-cvr-ink active:scale-95 sm:flex"
+            className="mr-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-cvr-faint transition hover:bg-black/5 hover:text-cvr-ink active:scale-95"
           >
             <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
@@ -577,8 +527,8 @@ export default function FilterBar({
             <button
               type="button"
               aria-label="Tìm kiếm"
-              onClick={() => { setSugOpen(false); setOverlay(true); }}
-              className="absolute right-1 top-1 bottom-1 flex w-11 items-center justify-center rounded-lg bg-cvr-blue text-white transition hover:bg-cvr-blue-ink active:scale-95 sm:hidden"
+              onClick={() => { setSugOpen(false); onSearch?.(); }}
+              className="m-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-cvr-blue text-white transition active:scale-95 sm:hidden"
             >
               <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
@@ -587,9 +537,8 @@ export default function FilterBar({
             <button
               type="button"
               aria-label="Tìm kiếm"
-              onClick={() => { setSugOpen(false); luuTuKhoaDaGo(); onSearch?.(); }}
-              // m-1 + h-9 = vừa khít khung h-11 (44px), không lòi ra ngoài
-              className="m-1 hidden h-9 shrink-0 items-center justify-center rounded-lg bg-cvr-blue px-5 text-sm font-semibold text-white transition hover:bg-cvr-blue-ink active:scale-95 sm:flex"
+              onClick={() => { setSugOpen(false); onSearch?.(); }}
+              className="m-1.5 hidden h-9 shrink-0 items-center justify-center rounded-none bg-cvr-blue px-5 text-sm font-semibold text-white transition hover:bg-cvr-blue-ink active:scale-95 sm:flex"
             >
               Tìm kiếm
             </button>
@@ -623,19 +572,33 @@ export default function FilterBar({
           </div>
         )}
       </div>
-      {/* (Hero) Nút tìm đã nằm TRONG ô tìm ở trên — không còn nút rời bên ngoài. */}
+      {compact && onSearch && (
+        <button
+          type="button"
+          onClick={() => onSearch()}
+          aria-label="Tìm kiếm"
+          className={`hidden ${hh} shrink-0 items-center justify-center gap-2 font-semibold transition active:scale-95 sm:flex ${
+            compact
+              ? "rounded-xl bg-cvr-blue px-6 text-[15px] text-white shadow-lg shadow-black/20 hover:bg-cvr-blue-ink"
+              : "rounded-xl bg-cvr-blue px-6 text-sm text-white hover:bg-cvr-blue-ink"
+          }`}
+        >
+          {!compact && (
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
+            </svg>
+          )}
+          Tìm kiếm
+        </button>
+      )}
       {/* Nút Bản đồ cạnh ô tìm — CHỈ desktop (mobile chật → đưa xuống hàng chip lọc) */}
       {!compact && onMap && (
         <button
           type="button"
           onClick={onMap}
           aria-pressed={mapActive}
-          // Nút PHỤ: viền mảnh, chữ xanh — để không tranh với nút "Tìm kiếm" (nút
-          // chính, nền xanh đặc). Bo góc + chiều cao khớp ô tìm cho đồng bộ.
-          className={`hidden h-11 shrink-0 items-center gap-2 rounded-xl border px-4 text-sm font-semibold transition sm:flex ${
-            mapActive
-              ? "border-cvr-blue bg-cvr-blue text-white"
-              : "border-cvr-line bg-white text-cvr-blue-ink hover:border-cvr-blue hover:bg-cvr-blue/5"
+          className={`hidden h-12 shrink-0 items-center gap-2 rounded-none px-5 text-sm font-semibold text-white transition sm:flex ${
+            mapActive ? "bg-cvr-blue-ink" : "bg-cvr-blue hover:bg-cvr-blue-ink"
           }`}
         >
           <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4M9 7l6-3" /></svg>
@@ -683,20 +646,12 @@ export default function FilterBar({
           <button
             type="button"
             aria-label="Tìm kiếm"
-            onClick={() => { setOverlay(false); luuTuKhoaDaGo(); onSearch?.(); }}
+            onClick={() => { setOverlay(false); onSearch?.(); }}
             className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-cvr-blue text-white active:scale-95"
           >
             <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={2.4} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" /></svg>
           </button>
         </div>
-        {/* CHỌN MỤC ĐÍCH (Dự án · Mua bán · Cho thuê) — đặt TRONG trang tìm của
-            điện thoại, ngay dưới ô nhập. Ngoài Hero mobile chỉ để đúng ô tìm cho
-            gọn; vào đây mới có đủ chỗ chọn, và chọn xong bấm Tìm là ra ĐÚNG mục. */}
-        {leading && (
-          <div className="border-b border-cvr-line px-3 pb-2 pt-1">
-            {leading}
-          </div>
-        )}
         <div className="flex-1 overflow-y-auto p-1.5">
           {noHits && (
             <p className="px-2.5 pb-1.5 pt-2 text-[13px] text-cvr-muted">
@@ -715,12 +670,9 @@ export default function FilterBar({
   // Autocomplete thông minh (khu vực · loại hình · dự án · tin) vẫn nằm trong ô tìm (suggest.ts).
   if (compact) {
     return (
-      <div className="flex flex-col gap-2 sm:gap-2">
+      <div className="flex flex-col gap-3.5">
         {/* Dòng 1: tab (menu) — canh giữa, gạch chân tab đang chọn.
             MOBILE: ẩn — Hero chỉ còn ĐÚNG 1 dòng ô tìm kiếm cho gọn. */}
-        {/* Hàng tab MỤC ĐÍCH — CHỈ trên máy tính. Điện thoại chật, ngoài Hero chỉ
-            để đúng ô tìm; phần chọn mục đích chuyển vào TRANG TÌM TOÀN MÀN HÌNH
-            (xem khối overlay bên dưới) nơi có đủ chỗ. */}
         {leading && <div className="hidden justify-center sm:flex">{leading}</div>}
         {/* Dòng 2: thanh tìm kiếm lớn */}
         {searchBox}
@@ -734,15 +686,12 @@ export default function FilterBar({
   const hasActive = hasActiveFilters(f);
   return (
     <FilterDropdownGroup>
-      {/* MOBILE: KHÔNG khung (viền/bóng), KHÔNG padding ngang → thanh tìm rộng hết bề ngang trang.
-          DESKTOP: giữ thẻ như cũ. */}
-      {/* SÁT HEADER: khung lọc không chừa lề trên (mt-0), chỉ có đệm trong 8px */}
-      <div className="rounded-none bg-white pb-2 pt-1 sm:mt-0 sm:rounded-xl sm:border sm:border-cvr-line sm:p-2 sm:shadow-lux">
+      <div className="rounded-none border border-cvr-line bg-white p-2.5 shadow-lux">
         <div className="flex flex-col gap-2.5">
           {searchBox}
           {/* Hàng chip lọc — CUỘN NGANG trên mobile (kiểu Batdongsan), tự xuống hàng trên desktop.
               -mx-2.5/px-2.5 để dải chip tràn sát mép thẻ, cuộn mượt hết bề rộng. */}
-          <div className="no-scrollbar flex items-center gap-2 overflow-x-auto pb-0.5 sm:flex-wrap sm:overflow-visible">
+          <div className="no-scrollbar -mx-2.5 flex items-center gap-2 overflow-x-auto px-2.5 pb-0.5 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
             {/* Bản đồ — chip mở/tắt chế độ bản đồ (chỉ mobile; desktop có nút cạnh ô tìm) */}
             {onMap && (
               <button
@@ -789,13 +738,10 @@ export default function FilterBar({
 // Bộ chọn khu vực ĐA TẦNG + ĐA CHỌN (kiểu Batdongsan): duyệt Tỉnh→Quận→Phường,
 // thêm cả tỉnh/quận hoặc chọn tới phường; mỗi khu vực là 1 chip (tối đa MAX_LOCATIONS).
 function LocationPanel({
-  locations, onChange, onClose,
+  locations, onChange,
 }: {
   locations: LocationSel[];
   onChange: (locations: LocationSel[]) => void;
-  // Đóng panel từ bên trong (nút "Xong") — trước đây chỉ đóng được bằng cách
-  // bấm ra ngoài, người dùng không biết đã chọn xong hay chưa.
-  onClose?: () => void;
 }) {
   const [q, setQ] = useState("");
   const [prov, setProv] = useState(""); // đường dẫn đang duyệt (chưa cam kết)
@@ -929,27 +875,6 @@ function LocationPanel({
             {level !== "ward" ? <span className="shrink-0 text-cvr-faint">›</span> : <span className="shrink-0 text-[11px] text-cvr-faint">＋ Thêm</span>}
           </button>
         ))}
-      </div>
-
-      {/* ── HÀNG THAO TÁC — luôn nhìn thấy ở đáy panel ──────────────────────────
-          Trước đây chọn xong không có nút nào để đóng, phải bấm ra ngoài mới thoát;
-          cũng không có cách bỏ hết khu vực đã chọn ngoài việc gỡ từng chip. */}
-      <div className="mt-2 flex items-center justify-between gap-2 border-t border-cvr-line pt-2">
-        <button
-          type="button"
-          onClick={() => { onChange([]); setProv(""); setDist(""); setQ(""); }}
-          disabled={locations.length === 0}
-          className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-cvr-body transition hover:bg-black/5 hover:text-cvr-ink disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          Bỏ chọn tất cả
-        </button>
-        <button
-          type="button"
-          onClick={() => onClose?.()}
-          className="rounded-lg bg-cvr-blue px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-cvr-blue-ink"
-        >
-          Xong{locations.length > 0 ? ` (${locations.length})` : ""}
-        </button>
       </div>
     </div>
   );
