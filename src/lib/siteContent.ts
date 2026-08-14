@@ -8,7 +8,7 @@ import { asset } from "@/lib/asset";
 import { homeBanners, projectBanners, type Banner } from "@/lib/banners";
 import { landings as LANDINGS_DEFAULT, type Landing } from "@/lib/landings";
 import { PRICING_DEFAULT, type PricingData } from "@/lib/pricingData";
-import { BILLING_DEFAULT, type BillingData } from "@/lib/billing";
+import { BILLING_DEFAULT, chuanHoaCapHoiVien, type BillingData } from "@/lib/billing";
 
 // Lấy 1 khối nội dung theo key. Lỗi/chưa cấu hình/chưa có → null (dùng mặc định).
 async function fetchBlock<T>(key: string): Promise<T | null> {
@@ -299,7 +299,7 @@ export async function getBilling(): Promise<BillingData> {
     promos: data.promos ?? [],
     free: { ...BILLING_DEFAULT.free, ...data.free },
     points: { ...BILLING_DEFAULT.points, ...data.points },
-    levels: data.levels?.length ? data.levels : BILLING_DEFAULT.levels,
+    levels: chuanHoaCapHoiVien(data.levels),
     topupAmounts: data.topupAmounts?.length ? data.topupAmounts : BILLING_DEFAULT.topupAmounts,
   };
 }

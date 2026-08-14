@@ -275,6 +275,15 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                   </div>
                 </div>
                 {dev?.desc && <p className="mt-4 whitespace-pre-line text-sm leading-relaxed text-cvr-body">{dev.desc}</p>}
+
+                {/* Đơn vị phát triển — chỉ hiện khi admin đã nhập (nhiều dự án
+                    chủ đầu tư và đơn vị phát triển là hai pháp nhân khác nhau) */}
+                {p.developmentUnit && (
+                  <div className="mt-4 rounded-xl border border-cvr-line bg-cvr-surface px-4 py-3">
+                    <p className="text-xs text-cvr-muted">Đơn vị phát triển</p>
+                    <p className="mt-0.5 text-sm font-semibold text-cvr-ink">{p.developmentUnit}</p>
+                  </div>
+                )}
               </Section>
 
             </div>

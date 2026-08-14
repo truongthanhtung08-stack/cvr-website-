@@ -131,6 +131,7 @@ function projectRowToProject(r: ProjectRow): Project {
     ...(dev && (dev.desc || dev.website || dev.established || dev.logo)
       ? { developerInfo: { ...dev, ...(dev.logo ? { logo: asset(dev.logo) } : {}) } }
       : {}),
+    ...(d.developmentUnit?.trim() ? { developmentUnit: d.developmentUnit.trim() } : {}),
   };
 }
 

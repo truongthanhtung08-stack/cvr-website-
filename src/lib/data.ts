@@ -286,6 +286,7 @@ export type Project = {
   floorPlans?: { label: string; image: string; note: string }[];
   places?: { category: string; name: string; distance: string }[];
   developerInfo?: { established?: string; website?: string; desc?: string; logo?: string };
+  developmentUnit?: string;             // Đơn vị phát triển (khác Chủ đầu tư)
 };
 
 // ⚠️ Số liệu dự án mang tính tham khảo cho mẫu giao diện — cần đối chiếu công bố

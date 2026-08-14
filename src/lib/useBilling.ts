@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { BILLING_DEFAULT, type BillingData } from "@/lib/billing";
+import { BILLING_DEFAULT, chuanHoaCapHoiVien, type BillingData } from "@/lib/billing";
 
 // ============================================================================
 // ĐỌC GIÁ & KHUYẾN MÃI ĐANG ÁP DỤNG (bản admin đã lưu) — dùng cho TRANG KHÁCH.
@@ -53,7 +53,7 @@ function mergeBilling(saved: Partial<BillingData>): BillingData {
     promos: saved.promos ?? [],
     free: { ...BILLING_DEFAULT.free, ...saved.free },
     points: { ...BILLING_DEFAULT.points, ...saved.points },
-    levels: saved.levels?.length ? saved.levels : BILLING_DEFAULT.levels,
+    levels: chuanHoaCapHoiVien(saved.levels),
     topupAmounts: saved.topupAmounts?.length ? saved.topupAmounts : BILLING_DEFAULT.topupAmounts,
   };
 }

@@ -67,6 +67,8 @@ export default function ProjectForm({
   const [statusText, setStatusText] = useState(initial?.status_text ?? "Đang mở bán");
   const [priceFrom, setPriceFrom] = useState(initial?.price_from ?? "");
   const [developer, setDeveloper] = useState(initial?.developer ?? "");
+  // Đơn vị phát triển — lưu trong cột details (JSON), KHÔNG cần thêm cột CSDL
+  const [developmentUnit, setDevelopmentUnit] = useState(initial?.details?.developmentUnit ?? "");
   const [province, setProvince] = useState(initial?.province ?? "");
   const [district, setDistrict] = useState(initial?.district ?? "");
   const [ward, setWard] = useState(initial?.ward ?? "");
@@ -243,6 +245,7 @@ export default function ProjectForm({
           devEstablished.trim() || devWebsite.trim() || devDesc.trim() || devLogo.trim()
             ? { established: devEstablished.trim(), website: devWebsite.trim(), desc: devDesc.trim(), logo: devLogo.trim() }
             : undefined,
+        developmentUnit: developmentUnit.trim() || undefined,
       },
       status: newStatus,
       published_at:
@@ -275,17 +278,25 @@ export default function ProjectForm({
           <Field label="Tên dự án">
             <input value={name} onChange={(e) => onNameChange(e.target.value)} placeholder="VD: Sun Cosmo Residence" className={inputCls} />
           </Field>
+          <Field label="Slug (đường dẫn /du-an/…)">
+            <input
+              value={slug}
+              onChange={(e) => { setSlug(e.target.value); setSlugTouched(true); }}
+              placeholder="tu-sinh-tu-ten-du-an"
+              className={inputCls}
+            />
+          </Field>
           <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="Slug (đường dẫn /du-an/…)">
-              <input
-                value={slug}
-                onChange={(e) => { setSlug(e.target.value); setSlugTouched(true); }}
-                placeholder="tu-sinh-tu-ten-du-an"
-                className={inputCls}
-              />
-            </Field>
             <Field label="Chủ đầu tư">
               <input value={developer} onChange={(e) => setDeveloper(e.target.value)} placeholder="VD: Sun Property (Sun Group)" className={inputCls} />
+            </Field>
+            <Field label="Đơn vị phát triển">
+              <input
+                value={developmentUnit}
+                onChange={(e) => setDevelopmentUnit(e.target.value)}
+                placeholder="VD: Sun Property — để trống nếu trùng chủ đầu tư"
+                className={inputCls}
+              />
             </Field>
           </div>
           <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-3">

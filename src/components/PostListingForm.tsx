@@ -73,7 +73,7 @@ export default function PostListingForm() {
     created_at: string | null;
     free_quota: number;
     role: string;
-    total_spend: number;
+    total_topup: number;
   } | null>(null);
   const [projectSlug, setProjectSlug] = useState("");
   const [projectOptions, setProjectOptions] = useState<{ slug: string; name: string }[]>([]);
@@ -111,7 +111,7 @@ export default function PostListingForm() {
   }, [hoSoVi, billing.free.days]);
 
   const capThanhVien = useMemo(
-    () => levelOf(billing, hoSoVi?.total_spend ?? 0),
+    () => levelOf(billing, hoSoVi?.total_topup ?? 0),
     [billing, hoSoVi],
   );
 
@@ -181,7 +181,7 @@ export default function PostListingForm() {
         // để tính ĐÚNG số tiền phải trả (ưu đãi thành viên mới, khuyến mãi, cấp).
         const { data: p } = await supabase
           .from("profiles")
-          .select("full_name, phone, email, created_at, free_quota, role, total_spend")
+          .select("full_name, phone, email, created_at, free_quota, role, total_topup")
           .eq("id", user.id)
           .single();
         if (p) {
@@ -192,7 +192,7 @@ export default function PostListingForm() {
             created_at: p.created_at ?? null,
             free_quota: (p as { free_quota?: number }).free_quota ?? 0,
             role: (p as { role?: string }).role ?? "buyer",
-            total_spend: (p as { total_spend?: number }).total_spend ?? 0,
+            total_topup: (p as { total_topup?: number }).total_topup ?? 0,
           });
         }
       }

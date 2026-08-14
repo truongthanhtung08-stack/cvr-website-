@@ -466,15 +466,18 @@ function PointsTab({ data, setData }: { data: BillingData; setData: (d: BillingD
         </div>
       </Panel>
 
-      <Panel title="Cấp thành viên" desc="Tổng chi tiêu càng cao, cấp càng cao và được giảm thêm khi đăng tin.">
+      <Panel
+        title="Cấp hội viên"
+        desc="Bốn cấp: Basic · Silver · Gold · Diamond. Khách LÊN CẤP theo TỔNG TIỀN ĐÃ NẠP vào ví — nạp đủ mốc nào là tự lên cấp đó, tiền còn trong ví vẫn được tính. Cấp càng cao càng được giảm thêm khi đăng tin."
+      >
         <div className="space-y-3">
           {data.levels.map((l, i) => (
             <div key={l.id} className="grid grid-cols-1 gap-3 rounded-xl border border-cvr-line p-3 sm:grid-cols-4">
               <Field label="Tên cấp">
                 <input value={l.name} onChange={(e) => setLevel(i, { name: e.target.value })} className={inputCls} />
               </Field>
-              <Field label="Tổng chi tiêu từ (₫)">
-                <input type="number" min={0} step={100000} value={l.minSpend} onChange={(e) => setLevel(i, { minSpend: Number(e.target.value) || 0 })} className={inputCls} />
+              <Field label="Tổng tiền nạp từ (₫)">
+                <input type="number" min={0} step={100000} value={l.minTopup} onChange={(e) => setLevel(i, { minTopup: Number(e.target.value) || 0 })} className={inputCls} />
               </Field>
               <Field label="Giảm thêm (%)">
                 <input type="number" min={0} max={100} value={l.discount} onChange={(e) => setLevel(i, { discount: Number(e.target.value) || 0 })} className={inputCls} />

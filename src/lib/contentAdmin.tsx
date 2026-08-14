@@ -45,6 +45,10 @@ export type ProjectDetails = {
   floorPlans?: ProjectFloorPlan[];        // Mặt bằng từng tháp/tầng/loại căn
   places?: ProjectPlace[];                // Tiện ích xung quanh (có khoảng cách)
   developerInfo?: ProjectDeveloperInfo;   // Chủ đầu tư (thông tin mở rộng)
+  // ĐƠN VỊ PHÁT TRIỂN — khác Chủ đầu tư: đơn vị được chủ đầu tư giao triển khai
+  // dự án (thiết kế, thi công, vận hành bán hàng). Nhiều dự án lớn ở Miền Trung
+  // ghi rõ cả hai, nên tách riêng thay vì nhét chung vào ô Chủ đầu tư.
+  developmentUnit?: string;
   contact?: ProjectContact;               // Liên hệ dự án (SĐT, email…)
 };
 

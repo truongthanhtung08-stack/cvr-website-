@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useProfile } from "@/lib/useProfile";
 import { roleLabel, statusBadge } from "@/lib/adminLabels";
-import { freeNote, levelOf, levelTiepTheo, tenGoiMienPhi, vnd } from "@/lib/billing";
+import { conThieuDeLenCap, freeNote, levelOf, levelTiepTheo, tenGoiMienPhi, vnd } from "@/lib/billing";
 import { useBilling } from "@/lib/useBilling";
 
 // Tổng quan tài khoản thành viên: ví (số dư · điểm · cấp) + gói dịch vụ +
@@ -16,17 +16,19 @@ export default function AccountOverviewPage() {
   if (loading || billingLoading) return <p className="text-sm text-cvr-muted">Đang tải…</p>;
   if (!profile) return <p className="text-sm text-cvr-muted">Không tải được hồ sơ. Vui lòng đăng nhập lại.</p>;
 
-  // Ví: các cột balance/points/total_spend có thể chưa bật trong CSDL → coi như 0.
-  const p = profile as unknown as { balance?: number; points?: number; total_spend?: number };
+  // Ví: các cột balance/points/total_topup có thể chưa bật trong CSDL → coi như 0.
+  const p = profile as unknown as { balance?: number; points?: number; total_topup?: number };
   const balance = p.balance ?? 0;
   const points = p.points ?? 0;
-  const totalSpend = p.total_spend ?? 0;
+  // Cấp hội viên xét theo TỔNG TIỀN ĐÃ NẠP (cột profiles.total_topup)
+  const totalTopup = p.total_topup ?? 0;
   // QUYỀN ĐĂNG DỰ ÁN — mặc định KHOÁ. Chỉ mở khi quản trị viên duyệt hồ sơ
   // Chủ đầu tư / Công ty phân phối (cột profiles.can_post_project).
   const duocDangDuAn = Boolean((profile as unknown as { can_post_project?: boolean }).can_post_project);
 
-  const level = levelOf(billing, totalSpend);       // null = chưa đạt mốc nào
-  const capKeTiep = levelTiepTheo(billing, totalSpend);
+  const level = levelOf(billing, totalTopup);       // null = chưa đạt mốc nào
+  const capKeTiep = levelTiepTheo(billing, totalTopup);
+  const conThieu = conThieuDeLenCap(billing, totalTopup);
   const pointValue = points * billing.points.redeemRate;
   const free = billing.free;
 
@@ -40,10 +42,10 @@ export default function AccountOverviewPage() {
           label="Cấp hội viên"
           value={level ? level.name : "Chưa có cấp"}
           sub={
-            level && level.discount > 0
-              ? `Giảm thêm ${level.discount}% khi đăng tin`
-              : capKeTiep
-                ? `Chi tiêu ${vnd(capKeTiep.minSpend)} để lên ${capKeTiep.name}`
+            capKeTiep
+              ? `Nạp thêm ${vnd(conThieu)} để lên ${capKeTiep.name}`
+              : level && level.discount > 0
+                ? `Giảm thêm ${level.discount}% khi đăng tin`
                 : undefined
           }
           color={level?.color}

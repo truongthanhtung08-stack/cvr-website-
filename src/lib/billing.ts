@@ -89,13 +89,25 @@ export type PointPolicy = {
 };
 
 // ── Cấp thành viên ──────────────────────────────────────────────────────────
+// ĐÚNG 4 CẤP: Basic · Silver · Gold · Diamond.
+// LÊN CẤP THEO TỔNG TIỀN ĐÃ NẠP (không phải tiền đã tiêu) — khách nạp vào ví
+// bao nhiêu thì xét cấp bấy nhiêu, tiền còn trong ví vẫn được tính.
 export type MemberLevel = {
   id: string;
   name: string;         // Basic · Silver · Gold · Diamond (trùng tên 4 hạng tin)
-  minSpend: number;     // tổng chi tiêu tối thiểu (VNĐ)
+  minTopup: number;     // tổng tiền NẠP tối thiểu để đạt cấp này (VNĐ)
   discount: number;     // % giảm thêm cho cấp này
   color: string;
 };
+
+// Dữ liệu admin lưu trước đây dùng tên cũ `minSpend` (xét theo chi tiêu).
+// Đọc lên thì quy về `minTopup` để không mất cài đặt cũ.
+type LegacyMemberLevel = MemberLevel & { minSpend?: number };
+
+export function chuanHoaCapHoiVien(levels: LegacyMemberLevel[] | undefined): MemberLevel[] {
+  if (!levels?.length) return BILLING_DEFAULT.levels;
+  return levels.map((l) => ({ ...l, minTopup: l.minTopup ?? l.minSpend ?? 0 }));
+}
 
 export type BillingData = {
   plans: Plan[];
@@ -212,13 +224,14 @@ export const BILLING_DEFAULT: BillingData = {
   },
   points: { active: true, earnPerVnd: 10_000, redeemRate: 100, minRedeem: 100 },
   // CẤP HỘI VIÊN — ĐÚNG 4 CẤP, TRÙNG TÊN với 4 hạng tin (Basic · Silver · Gold ·
-  // Diamond) để khách không phải nhớ hai hệ tên. Basic là cấp khởi điểm (0đ),
-  // đủ mốc chi tiêu thì tự lên cấp trên. Màu lấy đúng màu hạng tin trong packages.ts.
+  // Diamond) để khách không phải nhớ hai hệ tên. Basic là cấp khởi điểm (nạp 0đ),
+  // NẠP đủ mốc là tự lên cấp trên. Màu lấy đúng màu hạng tin trong packages.ts.
+  // Mốc mặc định — chủ dự án sửa được ở /admin/gia-khuyen-mai → tab Cấp hội viên.
   levels: [
-    { id: "basic", name: "Basic", minSpend: 0, discount: 0, color: "#9aa0a6" },
-    { id: "silver", name: "Silver", minSpend: 5_000_000, discount: 3, color: "#0071e3" },
-    { id: "gold", name: "Gold", minSpend: 20_000_000, discount: 5, color: "#c9a24a" },
-    { id: "diamond", name: "Diamond", minSpend: 50_000_000, discount: 10, color: "#d7263d" },
+    { id: "basic", name: "Basic", minTopup: 0, discount: 0, color: "#9aa0a6" },
+    { id: "silver", name: "Silver", minTopup: 5_000_000, discount: 3, color: "#0071e3" },
+    { id: "gold", name: "Gold", minTopup: 20_000_000, discount: 5, color: "#c9a24a" },
+    { id: "diamond", name: "Diamond", minTopup: 50_000_000, discount: 10, color: "#d7263d" },
   ],
   topupAmounts: [200_000, 500_000, 1_000_000, 2_000_000, 5_000_000, 10_000_000],
   projectPlans: PROJECT_PLANS_DEFAULT,
@@ -276,15 +289,21 @@ export function quotePrice({
   return { base, promo, promoOff, levelOff, total: Math.max(0, base - promoOff - levelOff) };
 }
 
-// Cấp hội viên theo tổng chi tiêu. CHƯA đủ mốc thấp nhất → null (chưa có cấp).
-export function levelOf(data: BillingData, totalSpend: number): MemberLevel | null {
-  const sorted = [...data.levels].sort((a, b) => b.minSpend - a.minSpend);
-  return sorted.find((l) => totalSpend >= l.minSpend) ?? null;
+// Cấp hội viên theo TỔNG TIỀN ĐÃ NẠP. Chưa đủ mốc thấp nhất → null (chưa có cấp).
+export function levelOf(data: BillingData, totalTopup: number): MemberLevel | null {
+  const sorted = [...data.levels].sort((a, b) => b.minTopup - a.minTopup);
+  return sorted.find((l) => totalTopup >= l.minTopup) ?? null;
 }
 
 // Cấp kế tiếp cần đạt (để nói cho khách còn thiếu bao nhiêu). Hết cấp → null.
-export function levelTiepTheo(data: BillingData, totalSpend: number): MemberLevel | null {
-  return [...data.levels].sort((a, b) => a.minSpend - b.minSpend).find((l) => totalSpend < l.minSpend) ?? null;
+export function levelTiepTheo(data: BillingData, totalTopup: number): MemberLevel | null {
+  return [...data.levels].sort((a, b) => a.minTopup - b.minTopup).find((l) => totalTopup < l.minTopup) ?? null;
+}
+
+// Còn thiếu bao nhiêu tiền nạp nữa thì lên cấp kế tiếp (0 = đã đạt cấp cao nhất).
+export function conThieuDeLenCap(data: BillingData, totalTopup: number): number {
+  const tiep = levelTiepTheo(data, totalTopup);
+  return tiep ? Math.max(0, tiep.minTopup - totalTopup) : 0;
 }
 
 export function vnd(n: number): string {
