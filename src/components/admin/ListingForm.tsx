@@ -180,8 +180,8 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
       if (!province.trim()) return setError("Chưa chọn Tỉnh/Thành.");
       if (!district.trim())
         return setError("Chưa chọn Quận/Huyện — đây là yếu tố quyết định tin có lên được các tìm kiếm theo khu vực hay không.");
-      if (description.trim().length < 100)
-        return setError(`Mô tả quá ngắn (${description.trim().length}/100 ký tự). Google cần nội dung thật để lập chỉ mục — viết ít nhất 2–3 câu về vị trí, pháp lý, tiện ích.`);
+      if (description.trim().length < 50)
+        return setError(`Mô tả quá ngắn (${description.trim().length}/50 ký tự). Google cần nội dung thật để lập chỉ mục — viết ít nhất 1–2 câu về vị trí, pháp lý, tiện ích.`);
       if (images.filter((s) => s.trim()).length === 0)
         return setError("Chưa có ảnh nào. Tin không ảnh gần như không được Google hiển thị và khách cũng bỏ qua.");
       if (!area.trim() || Number.isNaN(parseFloat(area.replace(",", "."))))
@@ -280,7 +280,7 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
           <Field label="Tiêu đề tin (bắt buộc — tối thiểu 30 ký tự, nên có tên quận/phường)">
             <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="VD: Bán căn hộ 2PN view sông Hàn, Hải Châu, Đà Nẵng" className={inputCls} />
           </Field>
-          <Field label="Mô tả (bắt buộc — tối thiểu 100 ký tự)">
+          <Field label="Mô tả (bắt buộc — tối thiểu 50 ký tự)">
             <ContentEditor value={description} onChange={setDescription} placeholder="Mô tả chi tiết: vị trí, nội thất, pháp lý, tiện ích xung quanh…" />
           </Field>
         </div>

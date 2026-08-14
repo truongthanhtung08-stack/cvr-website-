@@ -313,7 +313,7 @@ export default function NhapHangLoatPage() {
           <li><strong>muc_dich</strong>: <code>ban</code> hoặc <code>thue</code>.</li>
           <li><strong>loai_hinh</strong>: chép đúng một tên trong danh sách bên dưới.</li>
           <li><strong>tieu_de</strong>: bắt buộc, <strong>tối thiểu 30 ký tự</strong> — nên có loại hình + tên quận/phường.</li>
-          <li><strong>mo_ta</strong>: bắt buộc, <strong>tối thiểu 100 ký tự</strong> (khoảng 2–3 câu).</li>
+          <li><strong>mo_ta</strong>: bắt buộc, <strong>tối thiểu 50 ký tự</strong> (khoảng 1–2 câu).</li>
           <li><strong>gia</strong>: tin bán ghi theo <strong>TỶ</strong> (7,2 = 7,2 tỷ) · tin thuê ghi theo <strong>TRIỆU/tháng</strong> (18 = 18 triệu). Bỏ trống = Thỏa thuận.</li>
           <li><strong>dien_tich</strong> (m²): bắt buộc · <strong>phong_ngu</strong>, <strong>phong_tam</strong>: chỉ ghi số.</li>
           <li><strong>tinh_thanh</strong>, <strong>quan_huyen</strong>: bắt buộc · <strong>phuong_xa</strong>: nên có.</li>

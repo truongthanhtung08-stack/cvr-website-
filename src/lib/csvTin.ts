@@ -208,7 +208,7 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
   else if (tieuDe.length < 30) loi.push(`Tiêu đề quá ngắn (${tieuDe.length}/30 ký tự)`);
 
   const moTa = lay(COT.moTa);
-  if (moTa.trim().length < 100) loi.push(`Mô tả quá ngắn (${moTa.trim().length}/100 ký tự)`);
+  if (moTa.trim().length < 50) loi.push(`Mô tả quá ngắn (${moTa.trim().length}/50 ký tự)`);
 
   const quanHuyen = lay(COT.quanHuyen);
   if (!quanHuyen) loi.push("Thiếu quận/huyện");
