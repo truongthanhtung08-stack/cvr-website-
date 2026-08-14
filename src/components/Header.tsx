@@ -6,6 +6,7 @@ import BrandLogo from "@/components/BrandLogo";
 import BackBar from "@/components/BackBar";
 import { resetHomeIfOnHome } from "@/components/HomeExpand";
 import { packages, utilityTools } from "@/lib/packages";
+import { projectCategories, rentCategories, saleCategories } from "@/lib/categories";
 import { useSaved } from "@/lib/useSaved";
 import { useAuth, displayName, signOut } from "@/lib/useAuth";
 
@@ -25,45 +26,12 @@ const ICONS = {
   tienIch: "M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z",
 };
 
-// Đầy đủ loại hình BĐS bán (kiểu Homedy)
-const loaiHinhBan: NavChild[] = [
-  { label: "Căn hộ chung cư", href: "/mua-ban/can-ho-chung-cu" },
-  { label: "Nhà riêng", href: "/mua-ban/nha-rieng" },
-  { label: "Nhà biệt thự, liền kề", href: "/mua-ban/biet-thu-lien-ke" },
-  { label: "Nhà mặt phố", href: "/mua-ban/nha-mat-pho" },
-  { label: "Shophouse, nhà phố thương mại", href: "/mua-ban/shophouse" },
-  { label: "Đất nền dự án", href: "/mua-ban/dat-nen-du-an" },
-  { label: "Đất", href: "/mua-ban/dat" },
-  { label: "Trang trại, khu nghỉ dưỡng", href: "/mua-ban/trang-trai-nghi-duong" },
-  { label: "Condotel", href: "/mua-ban/condotel" },
-  { label: "Kho, nhà xưởng", href: "/mua-ban/kho-nha-xuong" },
-  { label: "Bất động sản khác", href: "/mua-ban/bds-khac" },
-];
-
-// Đầy đủ loại hình BĐS cho thuê (kiểu Homedy)
-const loaiHinhThue: NavChild[] = [
-  { label: "Căn hộ chung cư", href: "/cho-thue/can-ho-chung-cu" },
-  { label: "Nhà riêng", href: "/cho-thue/nha-rieng" },
-  { label: "Nhà biệt thự, liền kề", href: "/cho-thue/biet-thu-lien-ke" },
-  { label: "Nhà mặt phố", href: "/cho-thue/nha-mat-pho" },
-  { label: "Shophouse, nhà phố thương mại", href: "/cho-thue/shophouse" },
-  { label: "Nhà trọ, phòng trọ", href: "/cho-thue/phong-tro" },
-  { label: "Văn phòng", href: "/cho-thue/van-phong" },
-  { label: "Cửa hàng, ki ốt", href: "/cho-thue/cua-hang-ki-ot" },
-  { label: "Kho, nhà xưởng, đất", href: "/cho-thue/kho-nha-xuong" },
-  { label: "Bất động sản khác", href: "/cho-thue/bds-khac" },
-];
-
-const loaiHinhDuAn: NavChild[] = [
-  { label: "Căn hộ chung cư", href: "/du-an/can-ho-chung-cu" },
-  { label: "Khu đô thị mới", href: "/du-an/khu-do-thi-moi" },
-  { label: "Khu nghỉ dưỡng, sinh thái", href: "/du-an/khu-nghi-duong" },
-  { label: "Nhà ở xã hội", href: "/du-an/nha-o-xa-hoi" },
-  { label: "Cao ốc văn phòng", href: "/du-an/cao-oc-van-phong" },
-  { label: "Trung tâm thương mại", href: "/du-an/trung-tam-thuong-mai" },
-  { label: "Biệt thự, liền kề", href: "/du-an/biet-thu-lien-ke" },
-  { label: "Shophouse", href: "/du-an/shophouse" },
-];
+// Loại hình BĐS trong menu — lấy từ NGUỒN DUY NHẤT `src/lib/categories.ts`,
+// cũng chính là nguồn sinh ra các trang danh mục thật + sitemap. Nhờ vậy menu
+// không bao giờ trỏ vào đường dẫn không có trang (trước đây 29 link trả 404).
+const loaiHinhBan: NavChild[] = saleCategories.map((c) => ({ label: c.label, href: `/mua-ban/${c.slug}` }));
+const loaiHinhThue: NavChild[] = rentCategories.map((c) => ({ label: c.label, href: `/cho-thue/${c.slug}` }));
+const loaiHinhDuAn: NavChild[] = projectCategories.map((c) => ({ label: c.label, href: `/du-an/${c.slug}` }));
 
 const danhMucChuyenGia: NavChild[] = [
   { label: "Danh bạ chuyên gia", href: "/chuyen-gia" },

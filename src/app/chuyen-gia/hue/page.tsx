@@ -4,7 +4,8 @@ import Footer from "@/components/Footer";
 import ExpertsBrowser from "@/components/ExpertsBrowser";
 
 export const metadata: Metadata = {
-  title: "Chuyên gia bất động sản tại Huế | Coastal Land",
+  alternates: { canonical: "/chuyen-gia/hue" },
+  title: "Chuyên gia bất động sản tại Huế",
   description: "Danh bạ chuyên gia môi giới bất động sản uy tín tại Huế — đã xác minh, am hiểu thị trường Cố đô, hỗ trợ tư vấn và pháp lý.",
 };
 

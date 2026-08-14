@@ -4,7 +4,8 @@ import Footer from "@/components/Footer";
 import ExpertsBrowser from "@/components/ExpertsBrowser";
 
 export const metadata: Metadata = {
-  title: "Chuyên gia bất động sản tại Đà Nẵng | Coastal Land",
+  alternates: { canonical: "/chuyen-gia/da-nang" },
+  title: "Chuyên gia bất động sản tại Đà Nẵng",
   description: "Danh bạ chuyên gia môi giới bất động sản uy tín tại Đà Nẵng — đã xác minh, nhiều năm kinh nghiệm, hỗ trợ tư vấn và pháp lý.",
 };
 

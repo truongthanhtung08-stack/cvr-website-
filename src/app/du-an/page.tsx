@@ -8,7 +8,8 @@ import { getProjects, getArticles } from "@/lib/contentDb";
 import { getProjectBanners } from "@/lib/siteContent";
 
 export const metadata: Metadata = {
-  title: "Dự án bất động sản Đà Nẵng, Huế & Miền Trung | Coastal Land",
+  alternates: { canonical: "/du-an" },
+  title: "Dự án bất động sản Đà Nẵng, Huế & Miền Trung",
   description: "Danh sách dự án căn hộ, khu đô thị, nghỉ dưỡng tại Miền Trung — tiến độ, giá bán và tiện ích đầy đủ.",
 };
 

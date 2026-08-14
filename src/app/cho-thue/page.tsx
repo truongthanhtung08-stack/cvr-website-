@@ -7,7 +7,8 @@ import { getListings } from "@/lib/listingsDb";
 import { getArticles } from "@/lib/contentDb";
 
 export const metadata: Metadata = {
-  title: "Nhà đất cho thuê tại Đà Nẵng, Huế & Miền Trung | Coastal Land",
+  alternates: { canonical: "/cho-thue" },
+  title: "Nhà đất cho thuê tại Đà Nẵng, Huế & Miền Trung",
   description: "Cho thuê căn hộ, nhà phố, văn phòng, kho xưởng tại Miền Trung — lọc theo Tỉnh/Quận/Huyện/Phường/Xã, loại hình và mức giá.",
 };
 

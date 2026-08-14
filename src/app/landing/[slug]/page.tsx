@@ -21,8 +21,15 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const l = await getLandingBySlug(slug);
-  if (!l) return { title: "Không tìm thấy" };
-  return { title: l.title, description: l.intro.slice(0, 140) };
+  if (!l) return { title: "Không tìm thấy", robots: { index: false, follow: true } };
+  // Landing đang TẠM ẨN (cờ LANDING_HIDDEN → chuyển hướng về /gioi-thieu)
+  // nên không cho Google lập chỉ mục; bật lại thì bỏ dòng robots này.
+  return {
+    title: l.title,
+    description: l.intro.slice(0, 140),
+    alternates: { canonical: `/landing/${slug}` },
+    robots: { index: false, follow: true },
+  };
 }
 
 export default async function LandingPage({ params }: { params: Promise<{ slug: string }> }) {

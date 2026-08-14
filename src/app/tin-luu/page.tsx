@@ -4,8 +4,10 @@ import Footer from "@/components/Footer";
 import SavedClient from "@/components/SavedClient";
 
 export const metadata: Metadata = {
-  title: "Tin đã lưu | Coastal Land",
+  title: "Tin đã lưu",
   description: "Danh sách bất động sản bạn đã lưu để xem lại tại Coastal Land.",
+  // Nội dung riêng của từng khách (lưu trong máy) → Googlebot chỉ thấy trang rỗng.
+  robots: { index: false, follow: true },
 };
 
 export default function TinLuuPage() {

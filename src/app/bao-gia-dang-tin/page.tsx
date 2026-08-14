@@ -15,7 +15,8 @@ import { priceLinesFor } from "@/lib/billing";
 import type { Listing, Project } from "@/lib/data";
 
 export const metadata: Metadata = {
-  title: "Báo giá dịch vụ và truyền thông | Coastal Land",
+  alternates: { canonical: "/bao-gia-dang-tin" },
+  title: "Báo giá dịch vụ và truyền thông",
   description:
     "Bảng giá dịch vụ Coastal Land: gói đăng tin VIP (CVR Diamond, Gold, Silver), tin đăng lẻ, đẩy tin, gói dự án, bài PR và banner quảng cáo.",
 };

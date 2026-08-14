@@ -10,6 +10,7 @@ import RecordView from "@/components/RecordView";
 import PriceHistory from "@/components/PriceHistory";
 import ProjectNearby from "@/components/ProjectNearby";
 import ProjectNav from "@/components/ProjectNav";
+import { BreadcrumbJsonLd } from "@/components/Breadcrumb";
 import { provinceOf, districtOf, pickRelated } from "@/lib/data";
 import { getListing, getListings, getListingDetail } from "@/lib/listingsDb";
 import { tierFromBadge, getTier } from "@/lib/packages";
@@ -33,10 +34,19 @@ function parseVnd(s: string): number | null {
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
   const l = await getListing(id); // B2: đọc Supabase, fallback dữ liệu mẫu
-  if (!l) return { title: "Không tìm thấy | Coastal Land" };
+  if (!l) return { title: "Không tìm thấy", robots: { index: false, follow: true } };
+  const desc = `${l.title} tại ${l.location}. Giá ${l.price}${l.area ? `, diện tích ${l.area}` : ""}. Hình thật, liên hệ trực tiếp người đăng trên Coastal Land.`;
   return {
     title: `${l.title} — ${l.price}`,
-    description: `${l.title} tại ${l.location}. Giá ${l.price}. Xem chi tiết tại Coastal Land.`,
+    description: desc,
+    alternates: { canonical: `/bat-dong-san/${id}` },
+    openGraph: {
+      title: `${l.title} — ${l.price}`,
+      description: desc,
+      url: `/bat-dong-san/${id}`,
+      type: "website",
+      ...(l.image ? { images: [{ url: l.image, alt: l.title }] } : {}),
+    },
   };
 }
 
@@ -107,6 +117,13 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
       <RecordView id={l.id} />
       {/* Schema.org RealEstateListing — dữ liệu chuẩn cho Google (IV.2) */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      {/* Cây phân cấp cho Google (không hiện trên màn hình — giữ nguyên bố cục đã duyệt) */}
+      <BreadcrumbJsonLd
+        items={[
+          { name: l.purpose === "thue" ? "Nhà đất cho thuê" : "Nhà đất bán", href: l.purpose === "thue" ? "/cho-thue" : "/mua-ban" },
+          { name: l.title, href: `/bat-dong-san/${l.id}` },
+        ]}
+      />
       <main className="flex-1 bg-white">
         {/* MOBILE: pt-0 → ảnh tin nằm SÁT mép dưới header (không chừa khoảng trắng) */}
         <div className="mx-auto max-w-7xl px-4 pb-24 pt-0 sm:px-6 sm:pt-0 lg:px-8 lg:pb-20">

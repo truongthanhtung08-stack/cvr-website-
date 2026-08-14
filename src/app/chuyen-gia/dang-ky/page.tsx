@@ -4,7 +4,8 @@ import Footer from "@/components/Footer";
 import LeadForm from "@/components/LeadForm";
 
 export const metadata: Metadata = {
-  title: "Trở thành chuyên gia Coastal Land | Coastal Land",
+  alternates: { canonical: "/chuyen-gia/dang-ky" },
+  title: "Trở thành chuyên gia Coastal Land",
   description: "Đăng ký trở thành chuyên gia môi giới trên Coastal Land — tiếp cận khách hàng tiềm năng, hồ sơ xác minh và công cụ hỗ trợ giao dịch.",
 };
 

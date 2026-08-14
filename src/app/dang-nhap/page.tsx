@@ -5,7 +5,7 @@ import Footer from "@/components/Footer";
 import LoginForm from "@/components/LoginForm";
 
 export const metadata: Metadata = {
-  title: "Đăng nhập | Coastal Land",
+  title: "Đăng nhập",
   description: "Đăng nhập tài khoản Coastal Land để đăng tin, quản lý tin và lưu bất động sản yêu thích.",
 };
 

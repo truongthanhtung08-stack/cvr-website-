@@ -4,7 +4,7 @@ import Footer from "@/components/Footer";
 import ForgotPasswordForm from "@/components/ForgotPasswordForm";
 
 export const metadata: Metadata = {
-  title: "Quên mật khẩu | Coastal Land",
+  title: "Quên mật khẩu",
   description: "Đặt lại mật khẩu tài khoản Coastal Land.",
 };
 

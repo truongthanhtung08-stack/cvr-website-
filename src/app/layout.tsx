@@ -6,6 +6,7 @@ import CompareBar from "@/components/CompareBar";
 import MobileTabBar from "@/components/MobileTabBar";
 import ScrollTopOnRoute from "@/components/ScrollTopOnRoute";
 import RouteMotion from "@/components/RouteMotion";
+import SiteJsonLd from "@/components/SiteJsonLd";
 
 // Font chính toàn site: Inter — hiện đại, chuyên nghiệp, "SF Pro của web" (kiểu Apple),
 // hỗ trợ tiếng Việt đầy đủ.
@@ -50,7 +51,10 @@ export const metadata: Metadata = {
     "nhà đất Đà Nẵng", "mua bán nhà đất", "cho thuê nhà đất", "dự án bất động sản",
     "đất nền", "căn hộ", "villa biển", "COASTAL LAND", "coastalland.vn",
   ],
-  alternates: { canonical: "/" },
+  // ⚠️ KHÔNG khai canonical ở layout gốc. Next cho trang con KẾ THỪA metadata của
+  // layout, nên đặt canonical: "/" ở đây làm MỌI trang (mua-ban, du-an, tin-tuc,
+  // từng tin BĐS…) đều tự khai "bản gốc của tôi là trang chủ" → Google coi là
+  // trùng lặp và KHÔNG lập chỉ mục trang con. Mỗi trang tự khai canonical riêng.
 verification: {
   google: "Kltt2fEbpFCiNLrRJwZATFfhyKayu507-q7KhxEwUWQ",
 },
@@ -112,6 +116,7 @@ export default function RootLayout({
   return (
     <html lang="vi" className={`${inter.variable} ${playfair.variable} ${montserrat.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col font-sans bg-background text-foreground">
+        <SiteJsonLd />
         <ScrollTopOnRoute />
         {/* Thanh tiến trình + hiệu ứng vào trang khi chuyển trang (thay cho rung) */}
         <RouteMotion />

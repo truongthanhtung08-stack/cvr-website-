@@ -5,7 +5,8 @@ import Footer from "@/components/Footer";
 import PostListingForm from "@/components/PostListingForm";
 
 export const metadata: Metadata = {
-  title: "Đăng tin bất động sản | Coastal Land",
+  alternates: { canonical: "/dang-tin" },
+  title: "Đăng tin bất động sản",
   description: "Đăng tin bán / cho thuê nhà đất tại Đà Nẵng, Huế và Miền Trung trên Coastal Land — biểu mẫu chuyên nghiệp, đầy đủ thuộc tính theo loại hình, duyệt nhanh bằng AI.",
 };
 

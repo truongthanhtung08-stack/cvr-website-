@@ -4,7 +4,8 @@ import Footer from "@/components/Footer";
 import { agencies } from "@/lib/experts";
 
 export const metadata: Metadata = {
-  title: "Sàn giao dịch & công ty bất động sản | Coastal Land",
+  alternates: { canonical: "/chuyen-gia/cong-ty" },
+  title: "Sàn giao dịch & công ty bất động sản",
   description: "Danh sách sàn giao dịch và công ty bất động sản đối tác của Coastal Land tại Đà Nẵng và Huế.",
 };
 

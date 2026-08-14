@@ -35,6 +35,7 @@ export default function ListingBrowser({
   articles = [],
   relevance = false,
   nested = false,
+  initialTypes,
 }: {
   heading: string;
   // Mục đích trang: "ban" = mua bán · "thue" = cho thuê — lọc nguồn tin + danh mục loại hình.
@@ -50,10 +51,18 @@ export default function ListingBrowser({
   // Đặt bên trong một trang đã có khung max-w-7xl + lề ngang (trang chi tiết tin,
   // chi tiết dự án…) → BỎ khung riêng, nếu không lề bị cộng dồn gấp đôi.
   nested?: boolean;
+  // Trang DANH MỤC (/mua-ban/can-ho-chung-cu…): mở sẵn đúng loại hình của danh mục.
+  // Khách vẫn bỏ chọn / đổi lọc bình thường — đây chỉ là giá trị khởi đầu.
+  initialTypes?: string[];
 }) {
   const params = useSearchParams();
 
-  const [filters, setFiltersState] = useState<Filters>(() => filtersFromParams(params));
+  const [filters, setFiltersState] = useState<Filters>(() => {
+    const f = filtersFromParams(params);
+    // Địa chỉ chưa chỉ định loại hình → lấy loại hình của danh mục đang xem
+    if (initialTypes?.length && !f.types.length) f.types = [...initialTypes];
+    return f;
+  });
   const [sort, setSort] = useState<SortKey>(relevance ? "lien-quan" : "moi");
   const [view, setView] = useState<"list" | "grid">("list");
   // Chế độ BẢN ĐỒ (kiểu Batdongsan): bật là cả trang chuyển sang xem bản đồ,

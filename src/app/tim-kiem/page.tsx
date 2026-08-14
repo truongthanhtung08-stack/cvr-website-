@@ -6,7 +6,13 @@ import SearchClient from "@/components/SearchClient";
 import { getListings } from "@/lib/listingsDb";
 
 export const metadata: Metadata = {
-  title: "Tìm kiếm bất động sản | Coastal Land",
+  alternates: { canonical: "/tim-kiem" },
+  // Google khuyến cáo KHÔNG lập chỉ mục trang kết quả tìm kiếm nội bộ: mỗi tổ hợp
+  // bộ lọc sinh ra một địa chỉ khác nhau (?q=&kv=&loai=…) → hàng nghìn trang gần
+  // giống nhau, làm loãng chất lượng site. Khách vẫn dùng bình thường; các đường
+  // dẫn danh mục (/mua-ban/can-ho-chung-cu…) mới là trang để Google xếp hạng.
+  robots: { index: false, follow: true },
+  title: "Tìm kiếm bất động sản",
   description:
     "Tìm nhà đất, căn hộ, đất nền, dự án tại Đà Nẵng, Huế và Miền Trung — lọc theo khu vực, loại hình, mức giá.",
 };

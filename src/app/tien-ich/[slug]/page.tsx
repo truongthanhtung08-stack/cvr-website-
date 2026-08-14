@@ -13,10 +13,11 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const p = getPackage(slug);
-  if (!p) return { title: "Không tìm thấy gói dịch vụ | Coastal Land" };
+  if (!p) return { title: "Không tìm thấy gói dịch vụ", robots: { index: false, follow: true } };
   return {
-    title: `${p.title} | Coastal Land`,
+    title: p.title,
     description: p.description,
+    alternates: { canonical: `/tien-ich/${slug}` },
   };
 }
 

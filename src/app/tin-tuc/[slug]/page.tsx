@@ -8,12 +8,28 @@ import { HomeExpandProvider, HomeCollapsible } from "@/components/HomeExpand";
 import { articleContent, pickRelated } from "@/lib/data";
 import { getArticle, getArticles } from "@/lib/contentDb";
 import RichContent from "@/components/RichContent";
+import { BreadcrumbJsonLd } from "@/components/Breadcrumb";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const a = await getArticle(slug);
-  if (!a) return { title: "Không tìm thấy" };
-  return { title: a.title, description: a.excerpt.slice(0, 140) };
+  if (!a) return { title: "Không tìm thấy", robots: { index: false, follow: true } };
+  const desc = a.excerpt.slice(0, 160);
+  return {
+    title: a.title,
+    description: desc,
+    alternates: { canonical: `/tin-tuc/${slug}` },
+    // Bài viết → Google hiểu là bài báo, đủ điều kiện hiện trong Google Discover
+    openGraph: {
+      title: a.title,
+      description: desc,
+      url: `/tin-tuc/${slug}`,
+      type: "article",
+      publishedTime: a.date,
+      section: a.category,
+      ...(a.image ? { images: [{ url: a.image, alt: a.title }] } : {}),
+    },
+  };
 }
 
 export default async function ArticlePage({ params }: { params: Promise<{ slug: string }> }) {
@@ -30,6 +46,26 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
   return (
     <>
       <Header />
+      <BreadcrumbJsonLd items={[{ name: "Tin tức", href: "/tin-tuc" }, { name: a.title, href: `/tin-tuc/${a.slug}` }]} />
+      {/* Google hiểu đây là bài báo → đủ điều kiện vào Google Discover / Tin tức */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Article",
+            headline: a.title,
+            description: a.excerpt,
+            datePublished: a.date,
+            articleSection: a.category,
+            inLanguage: "vi-VN",
+            mainEntityOfPage: `https://coastalland.vn/tin-tuc/${a.slug}`,
+            ...(a.image ? { image: [a.image] } : {}),
+            author: { "@type": "Organization", name: "COASTAL LAND" },
+            publisher: { "@type": "Organization", name: "COASTAL LAND", logo: { "@type": "ImageObject", url: "https://coastalland.vn/logo/logo-horizontal-dark.svg" } },
+          }),
+        }}
+      />
       <main className="flex-1 bg-white">
         <HomeExpandProvider>
         {/* Nội dung bài — ẩn khi bấm "Xem thêm" ở mục tin liên quan bên dưới */}

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import FeaturedListings from "@/components/FeaturedListings";
@@ -13,6 +14,15 @@ import { HomeExpandProvider, HomeCollapsible } from "@/components/HomeExpand";
 import { getListings } from "@/lib/listingsDb";
 import { getArticles, getProjects } from "@/lib/contentDb";
 import { getHeroBanners, getHomeAd, getHomeAreas, getFeaturedArticleSlug } from "@/lib/siteContent";
+
+// Tiêu đề trang chủ phải CÓ TỪ KHOÁ — trước đây để trống nên Google chỉ thấy
+// "COASTAL LAND", không hiểu trang này bán gì, ở đâu.
+export const metadata: Metadata = {
+  title: "Bất động sản Đà Nẵng, Huế & Miền Trung | COASTAL LAND",
+  description:
+    "Mua bán, cho thuê nhà đất, căn hộ, đất nền và dự án tại Đà Nẵng, Huế và Duyên hải Miền Trung. Tin đăng hình thật, lọc theo khu vực, loại hình và mức giá — người mua miễn phí trọn đời.",
+  alternates: { canonical: "/" },
+};
 
 export default async function Home() {
   // B2: tin từ Supabase (bảng listings) — chưa có bảng/lỗi → tự dùng dữ liệu mẫu

@@ -7,7 +7,8 @@ import { getArticles } from "@/lib/contentDb";
 import ArticleBrowser from "@/components/ArticleBrowser";
 
 export const metadata: Metadata = {
-  title: "Tin tức bất động sản | Coastal Land",
+  alternates: { canonical: "/tin-tuc" },
+  title: "Tin tức bất động sản",
   description: "Phân tích thị trường, cẩm nang pháp lý và kinh nghiệm đầu tư bất động sản tại Đà Nẵng, Huế và miền Trung.",
 };
 

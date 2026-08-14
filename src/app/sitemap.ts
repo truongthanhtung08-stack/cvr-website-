@@ -1,9 +1,13 @@
 import type { MetadataRoute } from "next";
 import { getProjects, getArticles } from "@/lib/contentDb";
 import { getListings } from "@/lib/listingsDb";
+import { projectCategories, rentCategories, saleCategories } from "@/lib/categories";
+import { packages, utilityTools } from "@/lib/packages";
 
-// Bắt buộc TĨNH cho static export (GitHub Pages): dữ liệu lấy 1 lần lúc build.
-export const dynamic = "force-static";
+// TỰ LÀM MỚI MỖI GIỜ. Trước đây để `force-static` (di sản thời GitHub Pages):
+// sitemap chỉ sinh 1 lần lúc build, nên MỌI tin/dự án/bài viết đăng sau lần
+// deploy gần nhất đều KHÔNG có trong sitemap → Google không biết mà vào lấy.
+export const revalidate = 3600;
 
 // sitemap.xml (Next tự sinh khi build) — giúp Google phát hiện & lập chỉ mục nhanh.
 // Gồm các trang tĩnh chính + trang chi tiết động (dự án, tin tức, bất động sản).
@@ -14,12 +18,31 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const staticRoutes: MetadataRoute.Sitemap = [
     "", "/mua-ban", "/cho-thue", "/du-an", "/tin-tuc",
-    "/gioi-thieu", "/chuyen-gia", "/bao-gia-dang-tin", "/dang-tin", "/so-sanh",
+    // KHÔNG đưa /so-sanh, /tin-luu, /tim-kiem vào sitemap: nội dung sinh theo
+    // từng khách hoặc theo bộ lọc → Google coi là trang mỏng/trùng lặp.
+    "/gioi-thieu", "/chuyen-gia", "/bao-gia-dang-tin", "/dang-tin",
+    "/chuyen-gia/da-nang", "/chuyen-gia/hue", "/chuyen-gia/cong-ty", "/chuyen-gia/dang-ky",
   ].map((p) => ({
     url: `${SITE}${p}`,
     lastModified: now,
     changeFrequency: "weekly" as const,
     priority: p === "" ? 1 : 0.8,
+  }));
+
+  // Trang DANH MỤC loại hình — nhóm từ khoá quan trọng nhất của sàn
+  // ("bán căn hộ chung cư Đà Nẵng", "cho thuê văn phòng Huế"…)
+  const categoryRoutes: MetadataRoute.Sitemap = [
+    ...saleCategories.map((c) => `/mua-ban/${c.slug}`),
+    ...rentCategories.map((c) => `/cho-thue/${c.slug}`),
+    ...projectCategories.map((c) => `/du-an/${c.slug}`),
+  ].map((p) => ({ url: `${SITE}${p}`, lastModified: now, changeFrequency: "daily" as const, priority: 0.9 }));
+
+  // Trang gói dịch vụ & công cụ tiện ích
+  const toolRoutes: MetadataRoute.Sitemap = [...packages, ...utilityTools].map((t) => ({
+    url: `${SITE}/tien-ich/${t.slug}`,
+    lastModified: now,
+    changeFrequency: "monthly" as const,
+    priority: 0.5,
   }));
 
   const dynamic: MetadataRoute.Sitemap = [];
@@ -40,5 +63,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Bỏ qua — giữ nguyên các trang tĩnh.
   }
 
-  return [...staticRoutes, ...dynamic];
+  return [...staticRoutes, ...categoryRoutes, ...toolRoutes, ...dynamic];
 }

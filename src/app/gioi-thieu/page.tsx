@@ -7,7 +7,8 @@ import { asset } from "@/lib/asset";
 import { getAbout } from "@/lib/siteContent";
 
 export const metadata: Metadata = {
-  title: "Giới thiệu | Coastal Land",
+  alternates: { canonical: "/gioi-thieu" },
+  title: "Giới thiệu",
   description:
     "Coastal Land (coastalland.vn) — nền tảng công nghệ và cổng thông tin Bất động sản trực tuyến hàng đầu tại Việt Nam. Hệ thống ưu việt giúp khách hàng kết nối và thực hiện giao dịch dễ dàng.",
 };

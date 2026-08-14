@@ -14,17 +14,54 @@ import RelatedListingsTabs from "@/components/RelatedListingsTabs";
 import LeadForm from "@/components/LeadForm";
 import RichContent from "@/components/RichContent";
 import VideoEmbed from "@/components/VideoEmbed";
-import { provinceOf, districtOf, segmentOf, pickRelated } from "@/lib/data";
+import Breadcrumb from "@/components/Breadcrumb";
+import ProjectsBrowser from "@/components/ProjectsBrowser";
+import { provinceOf, districtOf, segmentOf, pickRelated, type Project } from "@/lib/data";
 import { getProject, getProjects, getArticles } from "@/lib/contentDb";
 import { getListings } from "@/lib/listingsDb";
+import { findCategory, projectCategories, type Category } from "@/lib/categories";
+import { normalizeVi } from "@/lib/filters";
+
+// Đường dẫn /du-an/<slug> phục vụ HAI loại trang:
+//   · slug là DANH MỤC loại hình (can-ho-chung-cu, khu-do-thi-moi…) → trang danh sách
+//   · còn lại → trang chi tiết một dự án
+// Trước đây các slug danh mục rơi vào nhánh chi tiết và trả 200 kèm chữ
+// "Không tìm thấy dự án" — Google gọi đây là soft 404, hại hơn cả 404 thật.
+function projectsInCategory(projects: Project[], c: Category): Project[] {
+  const keys = c.types.map(normalizeVi);
+  return projects.filter((p) => {
+    const t = normalizeVi(p.type);
+    return keys.some((k) => t.includes(k));
+  });
+}
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
+
+  const c = findCategory(projectCategories, slug);
+  if (c) {
+    return {
+      title: c.title,
+      description: c.desc,
+      alternates: { canonical: `/du-an/${c.slug}` },
+      openGraph: { title: c.title, description: c.desc, url: `/du-an/${c.slug}`, type: "website" },
+    };
+  }
+
   const p = await getProject(slug);
-  if (!p) return { title: "Không tìm thấy dự án" };
+  if (!p) return { title: "Không tìm thấy dự án", robots: { index: false, follow: true } };
+  const desc = `Dự án ${p.name} tại ${p.location}. ${p.type}, ${p.status}. Giá từ ${p.priceFrom} — tiến độ, mặt bằng, tiện ích đầy đủ tại Coastal Land.`;
   return {
     title: `${p.name} — ${p.priceFrom}`,
-    description: `Dự án ${p.name} tại ${p.location}. ${p.type}, ${p.status}. Xem chi tiết tại Coastal Land.`,
+    description: desc,
+    alternates: { canonical: `/du-an/${p.slug}` },
+    openGraph: {
+      title: `${p.name} — ${p.priceFrom}`,
+      description: desc,
+      url: `/du-an/${p.slug}`,
+      type: "website",
+      ...(p.image ? { images: [{ url: p.image, alt: p.name }] } : {}),
+    },
   };
 }
 
@@ -51,6 +88,29 @@ function normalizeUrl(u: string): string {
 
 export default async function ProjectDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
+
+  // ── Nhánh 1: slug là DANH MỤC loại hình dự án → trang danh sách ──
+  const cat = findCategory(projectCategories, slug);
+  if (cat) {
+    const [projects, articles] = await Promise.all([getProjects(), getArticles()]);
+    const items = projectsInCategory(projects, cat);
+    return (
+      <>
+        <Header />
+        <main className="flex-1 bg-white">
+          <Breadcrumb items={[{ name: "Dự án", href: "/du-an" }, { name: cat.label, href: `/du-an/${cat.slug}` }]} />
+          <div className="mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-8">
+            <h1 className="mb-1 mt-3 text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">{cat.h1}</h1>
+            <p className="mb-4 text-sm text-cvr-muted">{items.length} dự án · {cat.desc}</p>
+            <ProjectsBrowser projects={items} articles={articles} />
+          </div>
+        </main>
+        <Footer />
+      </>
+    );
+  }
+
+  // ── Nhánh 2: trang chi tiết một dự án ──
   const [p, projects, listings, articles] = await Promise.all([getProject(slug), getProjects(), getListings(), getArticles()]);
   if (!p) notFound();
 
