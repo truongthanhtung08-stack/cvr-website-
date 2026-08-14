@@ -689,6 +689,14 @@ export default function FilterBar({
             <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={2.4} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" /></svg>
           </button>
         </div>
+        {/* CHỌN MỤC ĐÍCH (Dự án · Mua bán · Cho thuê) — đặt TRONG trang tìm của
+            điện thoại, ngay dưới ô nhập. Ngoài Hero mobile chỉ để đúng ô tìm cho
+            gọn; vào đây mới có đủ chỗ chọn, và chọn xong bấm Tìm là ra ĐÚNG mục. */}
+        {leading && (
+          <div className="border-b border-cvr-line px-3 pb-2 pt-1">
+            {leading}
+          </div>
+        )}
         <div className="flex-1 overflow-y-auto p-1.5">
           {noHits && (
             <p className="px-2.5 pb-1.5 pt-2 text-[13px] text-cvr-muted">
@@ -710,10 +718,10 @@ export default function FilterBar({
       <div className="flex flex-col gap-2 sm:gap-2">
         {/* Dòng 1: tab (menu) — canh giữa, gạch chân tab đang chọn.
             MOBILE: ẩn — Hero chỉ còn ĐÚNG 1 dòng ô tìm kiếm cho gọn. */}
-        {/* Hàng tab MỤC ĐÍCH (Dự án · Mua bán · Cho thuê) — PHẢI hiện cả trên
-            ĐIỆN THOẠI. Trước để "hidden sm:flex" nên mobile không có chỗ chọn
-            mục đích, tìm gì cũng đổ về Mua bán. */}
-        {leading && <div className="mb-1 flex justify-center">{leading}</div>}
+        {/* Hàng tab MỤC ĐÍCH — CHỈ trên máy tính. Điện thoại chật, ngoài Hero chỉ
+            để đúng ô tìm; phần chọn mục đích chuyển vào TRANG TÌM TOÀN MÀN HÌNH
+            (xem khối overlay bên dưới) nơi có đủ chỗ. */}
+        {leading && <div className="hidden justify-center sm:flex">{leading}</div>}
         {/* Dòng 2: thanh tìm kiếm lớn */}
         {searchBox}
       </div>
