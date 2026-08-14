@@ -112,10 +112,25 @@ export default function FilterBar({
     setRecent([]);
     try { localStorage.removeItem(RECENT_KEY); } catch { /* noop */ }
   };
+  // Xoá RIÊNG một mục trong lịch sử (dấu × ở cuối dòng) — kiểu Google.
+  const removeRecent = (label: string) => {
+    setRecent((prev) => {
+      const next = prev.filter((x) => x.label !== label);
+      try { localStorage.setItem(RECENT_KEY, JSON.stringify(next)); } catch { /* noop */ }
+      return next;
+    });
+  };
+  // LƯU CHÍNH CHỮ NGƯỜI GÕ vào lịch sử khi bấm Tìm / nhấn Enter.
+  // Trước đây chỉ lưu khi bấm vào một dòng gợi ý — mà phần lớn người dùng gõ
+  // xong là bấm Tìm luôn, nên lịch sử gần như trống.
+  const luuTuKhoaDaGo = () => {
+    const kw = f.keyword.trim();
+    if (kw.length >= 2) pushRecent({ label: kw, kind: "Gợi ý", sub: "Từ khoá đã tìm", keyword: kw });
+  };
 
   const typed = f.keyword.trim().length > 0;
   // Panel: đang gõ → tối đa 6 kết quả khớp; chưa gõ → ≤3 lịch sử + phổ biến.
-  const recentShown = recent.slice(0, 3);
+  const recentShown = recent.slice(0, 5); // hiện 5 mục gần nhất (trước chỉ 3)
   const typedHits = typed ? suggest(f.keyword, 6) : [];
   // LUÔN có gợi ý (kiểu Google): gõ mà không khớp gì → hiện GỢI Ý PHỔ BIẾN thay vì để trống.
   const noHits = typed && typedHits.length === 0;
@@ -178,6 +193,7 @@ export default function FilterBar({
         applySuggestion(panelItems[activeIdx]);
       } else {
         setSugOpen(false);
+        luuTuKhoaDaGo();
         onSearch?.();
       }
     } else if (e.key === "Escape") {
@@ -412,7 +428,7 @@ export default function FilterBar({
         {header === "recent" && (
           <div className="flex items-center justify-between px-2.5 pb-1 pt-1 text-[11px] font-semibold uppercase tracking-wide text-cvr-faint">
             <span>Tìm kiếm gần đây</span>
-            <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={clearRecent} className="font-medium normal-case text-cvr-muted transition hover:text-cvr-ink">Xoá</button>
+            <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={clearRecent} className="font-medium normal-case text-cvr-muted transition hover:text-cvr-ink">Xoá tất cả</button>
           </div>
         )}
         {header === "popular" && (
@@ -446,6 +462,21 @@ export default function FilterBar({
               <path strokeLinecap="round" strokeLinejoin="round" d={ICON_INSERT} />
             </svg>
           </button>
+          {/* × — XOÁ RIÊNG dòng lịch sử này (chỉ hiện với mục "Tìm kiếm gần đây") */}
+          {!typed && i < recentShown.length && (
+            <button
+              type="button"
+              aria-label={`Xoá "${s.label}" khỏi lịch sử`}
+              title="Xoá khỏi lịch sử"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={(e) => { e.stopPropagation(); removeRecent(s.label); }}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-cvr-faint transition hover:bg-black/10 hover:text-cvr-ink active:scale-95"
+            >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
         </div>
       </div>
     );
@@ -556,7 +587,7 @@ export default function FilterBar({
             <button
               type="button"
               aria-label="Tìm kiếm"
-              onClick={() => { setSugOpen(false); onSearch?.(); }}
+              onClick={() => { setSugOpen(false); luuTuKhoaDaGo(); onSearch?.(); }}
               // m-1 + h-9 = vừa khít khung h-11 (44px), không lòi ra ngoài
               className="m-1 hidden h-9 shrink-0 items-center justify-center rounded-lg bg-cvr-blue px-5 text-sm font-semibold text-white transition hover:bg-cvr-blue-ink active:scale-95 sm:flex"
             >
@@ -652,7 +683,7 @@ export default function FilterBar({
           <button
             type="button"
             aria-label="Tìm kiếm"
-            onClick={() => { setOverlay(false); onSearch?.(); }}
+            onClick={() => { setOverlay(false); luuTuKhoaDaGo(); onSearch?.(); }}
             className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-cvr-blue text-white active:scale-95"
           >
             <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={2.4} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" /></svg>
