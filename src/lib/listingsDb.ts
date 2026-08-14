@@ -133,6 +133,9 @@ async function rest(query: string): Promise<Row[] | null> {
 // WEB PHẢI THẬT (18/7): loại tin mẫu khỏi mọi trang, kể cả khi chưa xoá trong DB
 // (migration 0008 xoá hẳn; lớp lọc này đảm bảo ngay cả khi chưa chạy SQL).
 const isSeedRow = (r: Row) => /^\d+$/.test(r.id);
+// Tin THẬT của khách luôn có id dạng UUID; tin DEMO seed (0002) có id SỐ ('1'..'33').
+// Dùng để chặn cả trang chi tiết /bat-dong-san/<số> mở ra tin demo.
+const isSeedId = (id: string) => /^\d+$/.test(id);
 
 // Toàn bộ tin ĐÃ DUYỆT (mới nhất trước — FE tự xếp hạng VIP bằng sortListings)
 // TIN THẬT 100%: DB trả 0 tin thật → hiện trống thật (KHÔNG độn dữ liệu mẫu).
@@ -145,6 +148,7 @@ export async function getListings(): Promise<Listing[]> {
 
 // Một tin theo id (trang chi tiết) — fallback tìm trong dữ liệu mẫu
 export async function getListing(id: string): Promise<Listing | null> {
+  if (isSeedId(id)) return null; // tin demo (id số) → coi như không tồn tại
   const rows = await rest(`select=${COLS}&id=eq.${encodeURIComponent(id)}&limit=1`);
   if (!rows || rows.length === 0) return getListingById(id) ?? null;
   return rowToListing(rows[0]);
@@ -227,6 +231,7 @@ function mockToDetail(m: Listing): ListingFull {
 }
 
 export async function getListingDetail(id: string): Promise<ListingFull | null> {
+  if (isSeedId(id)) return null; // tin demo (id số) → trang chi tiết trả 404
   const q = `&id=eq.${encodeURIComponent(id)}&limit=1`;
   // Ưu tiên query CÓ details; nếu lỗi (cột details chưa tạo) → query cơ bản,
   // tin vẫn hiển thị (đặc điểm để trống) thay vì 404.
