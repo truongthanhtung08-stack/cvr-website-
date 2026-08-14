@@ -19,10 +19,12 @@ export default function HomeSearch({ defaultTab }: { defaultTab?: string }) {
   //   Dự án   → /du-an     (tìm trong danh sách DỰ ÁN)
   //   Mua bán → /mua-ban   · Cho thuê → /cho-thue  (tìm trong TIN đúng mục đích)
   // Trước đây mọi tab đều đổ về /tim-kiem nên bấm "Dự án" lại ra tin bán/thuê.
+  // #ket-qua: khi bấm search, trình duyệt tự cuộn tới khối KẾT QUẢ (bỏ qua banner Hero
+  // rất to ở trang Dự án) — khỏi phải cuộn tay. Trang không có mốc này thì bỏ qua.
   function trangDich(params: URLSearchParams): string {
-    if (tab === "Dự án") return `/du-an?${params.toString()}`;
-    if (tab === "Cho thuê") return `/cho-thue?${params.toString()}`;
-    return `/mua-ban?${params.toString()}`;
+    if (tab === "Dự án") return `/du-an?${params.toString()}#ket-qua`;
+    if (tab === "Cho thuê") return `/cho-thue?${params.toString()}#ket-qua`;
+    return `/mua-ban?${params.toString()}#ket-qua`;
   }
 
   // Kiểu Google: ra kết quả ngay. `searchFilters` = bộ lọc truyền kèm khi bấm gợi ý/lịch sử

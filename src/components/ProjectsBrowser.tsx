@@ -90,6 +90,15 @@ export default function ProjectsBrowser({
   useEffect(() => {
     try { const m = localStorage.getItem(GEO_MODE_KEY); if (m === "moi" || m === "cu") setGeoMode(m); } catch { /* noop */ }
   }, []);
+
+  // Bấm search từ trang chủ → URL kèm #ket-qua → tự cuộn tới khối kết quả (bỏ qua
+  // banner Hero rất to), cho cả PC & Mobile. Dùng JS cho chắc (hash native không
+  // ổn định trên trang client-render). scroll-mt trên #ket-qua lo phần bù header.
+  useEffect(() => {
+    if (typeof window === "undefined" || window.location.hash !== "#ket-qua") return;
+    const el = document.getElementById("ket-qua");
+    if (el) requestAnimationFrame(() => el.scrollIntoView({ block: "start" }));
+  }, []);
   const switchGeo = (m: GeoMode) => {
     setGeoMode(m); setProvince(ALL);
     try { localStorage.setItem(GEO_MODE_KEY, m); } catch { /* noop */ }
@@ -393,8 +402,10 @@ export default function ProjectsBrowser({
         </div>
       )}
 
-      {/* Phần còn lại LUÔN nằm cuối (sau Hero và thanh lọc) trên mọi kích thước */}
-      <div className="order-3">
+      {/* Phần còn lại LUÔN nằm cuối (sau Hero và thanh lọc) trên mọi kích thước.
+          id="ket-qua" + scroll-mt: bấm search từ trang chủ → tự cuộn tới đây, bỏ qua
+          banner Hero rất to (áp cho cả PC & Mobile). */}
+      <div id="ket-qua" className="order-3 scroll-mt-20 sm:scroll-mt-24">
       {/* Tiêu đề + bộ đếm nhảy theo bộ lọc (kiểu Batdongsan) */}
       <h1 className="mt-6 text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">
         Dự án nổi bật

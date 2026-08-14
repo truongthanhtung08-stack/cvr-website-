@@ -1051,11 +1051,18 @@ function HighlightLabel({ label, q }: { label: string; q: string }) {
   if (!nq || nl.length !== label.length) return <span className="font-medium text-cvr-ink">{label}</span>;
   const idx = nl.indexOf(nq);
   if (idx < 0) return <span className="font-medium text-cvr-ink">{label}</span>;
+  // BÔI ĐẬM nguyên cụm TỪ KHÓA khớp (vd gõ "căn hộ" → đậm cả "căn hộ"), phần còn lại
+  // để thường. MỞ RỘNG tới ranh giới TỪ (khoảng trắng) để KHÔNG cắt giữa từ ghép
+  // tiếng Việt — gõ dính 1 phần của từ vẫn bôi đậm trọn từ đó ("hộ" nghĩa khác "căn hộ").
+  let start = idx;
+  let end = idx + nq.length;
+  while (start > 0 && label[start - 1] !== " ") start--;
+  while (end < label.length && label[end] !== " ") end++;
   return (
     <>
-      {idx > 0 && <span className="font-semibold text-cvr-ink">{label.slice(0, idx)}</span>}
-      <span className="font-normal text-cvr-muted">{label.slice(idx, idx + nq.length)}</span>
-      <span className="font-semibold text-cvr-ink">{label.slice(idx + nq.length)}</span>
+      {start > 0 && <span className="font-normal text-cvr-body">{label.slice(0, start)}</span>}
+      <span className="font-bold text-cvr-ink">{label.slice(start, end)}</span>
+      {end < label.length && <span className="font-normal text-cvr-body">{label.slice(end)}</span>}
     </>
   );
 }
