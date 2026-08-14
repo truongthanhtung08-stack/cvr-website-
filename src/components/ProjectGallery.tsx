@@ -3,10 +3,13 @@
 import { useState } from "react";
 import Image from "next/image";
 import PhotoViewer from "@/components/PhotoViewer";
+import PhotoList from "@/components/PhotoList";
 
 // Lưới ảnh chi tiết dự án kiểu Batdongsan: 1 ảnh lớn trái + 4 ảnh nhỏ phải (2×2),
 // bộ đếm ảnh góc dưới phải. Bấm ảnh bất kỳ → xem toàn màn hình kiểu Facebook
 // (vuốt ngang đổi ảnh, vuốt xuống thoát, zoom không kéo ảnh ra ngoài khung).
+// Bấm bộ đếm ảnh trên ĐIỆN THOẠI → danh sách ảnh xếp dọc (giống trang tin BĐS):
+// cuộn lên xuống, cuộn tiếp ở cuối trang là thoát — xem PhotoList.
 type Props = {
   images: string[];
   alt: string;
@@ -15,8 +18,15 @@ type Props = {
 export default function ProjectGallery({ images, alt }: Props) {
   const [active, setActive] = useState(0);
   const [lightbox, setLightbox] = useState(false);
+  const [list, setList] = useState(false);
   const thumbs = images.slice(1, 5);
   const open = (i: number) => { setActive(i); setLightbox(true); };
+  // Điện thoại chỉ thấy 1 ảnh lớn → bộ đếm mở DANH SÁCH ảnh.
+  // Máy tính đã có lưới 5 ảnh → bộ đếm mở thẳng ảnh lớn như cũ.
+  const bamDem = () => {
+    if (window.matchMedia("(min-width: 1024px)").matches) open(0);
+    else setList(true);
+  };
 
   return (
     <>
@@ -47,7 +57,7 @@ export default function ProjectGallery({ images, alt }: Props) {
         {/* Bộ đếm ảnh — góc dưới phải */}
         <button
           type="button"
-          onClick={() => open(0)}
+          onClick={bamDem}
           className="absolute bottom-3 right-3 flex items-center gap-1.5 rounded-lg bg-white/95 px-2.5 py-1.5 text-sm font-semibold text-cvr-ink shadow-md transition hover:bg-white"
         >
           <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
@@ -57,6 +67,11 @@ export default function ProjectGallery({ images, alt }: Props) {
           {images.length}
         </button>
       </div>
+
+      {/* Danh sách ảnh kiểu Facebook (điện thoại) — cuộn tiếp ở cuối trang là thoát */}
+      {list && (
+        <PhotoList images={images} title={alt} onPick={open} onClose={() => setList(false)} nhanPhim={!lightbox} />
+      )}
 
       {/* Lightbox — xem lớn + zoom được (cuộn/bấm đúp), vuốt đổi ảnh */}
       {lightbox && <PhotoViewer images={images} start={active} title={alt} onClose={() => setLightbox(false)} />}

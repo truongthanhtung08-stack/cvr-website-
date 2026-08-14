@@ -47,7 +47,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
           </div>
 
           <div className="mt-6 space-y-4 text-[15px] leading-relaxed text-cvr-body">
-            <RichContent paragraphs={content} />
+            <RichContent paragraphs={content} title={a.title} />
           </div>
         </article>
         </HomeCollapsible>

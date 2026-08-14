@@ -234,10 +234,35 @@ export function smartSearch<T extends Searchable>(items: T[], raw: string): { hi
     if (tong === 0 && tuLe.length === 0) continue;      // không dính gì
     if (tong > 0 && dat === 0 && tuLe.length === 0) continue;
 
+    // ── CHẤM ĐIỂM CHẶT, ƯU TIÊN CHÍNH XÁC LÊN TRƯỚC ────────────────────────
+    // Thứ tự trọng số (cao → thấp), đúng thứ tự chủ dự án yêu cầu:
+    //   nguyên cụm > đủ mọi từ > mục đích > loại hình > khu vực > đặc điểm
+    //   > phòng ngủ / giá > từ lẻ (khớp ở TIÊU ĐỀ ăn điểm gấp đôi địa chỉ)
+    const nquery = normalizeVi(raw);
+    const nTitle = normalizeVi(item.title);
+    const nRest = normalizeVi(`${item.location} ${item.type}`);
+    const duMoiTu = parsed.terms.length > 0 && tuLe.length === parsed.terms.length;
+
+    let score = 0;
+    if (nTitle.includes(nquery)) score += 100000;        // nguyên cụm nằm trong tiêu đề
+    else if (`${nTitle} ${nRest}`.includes(nquery)) score += 60000; // nguyên cụm ở đâu đó
+    if (duMoiTu) score += 20000;                          // đủ MỌI từ khoá
+    if (parsed.purpose && (item.purpose ?? "ban") === parsed.purpose) score += 8000;
+    if (parsed.types.length && parsed.types.some((t) => khopMo(hay, normalizeVi(t)))) score += 6000;
+    if (parsed.places.length && parsed.places.some((p) => khopMo(normalizeVi(item.location), normalizeVi(p)))) score += 5000;
+    score += parsed.features.filter((f) => khopMo(hay, normalizeVi(f))).length * 2000;
+    if (parsed.beds != null && item.beds != null && item.beds >= parsed.beds) score += 1500;
+    if ((parsed.priceMaxTy != null || parsed.priceMinTy != null) && matched.includes(item.price)) score += 1500;
+    for (const t of tuLe) score += khopMo(nTitle, t) ? 60 : 30;
+
+    // Tầng: CHẶT hơn trước — muốn Tầng 1 phải đạt ĐỦ tiêu chí VÀ đủ mọi từ khoá.
     const tyLe = tong === 0 ? 0 : dat / tong;
-    const tier: 1 | 2 | 3 = tong > 0 && dat === tong ? 1 : tyLe >= 0.5 ? 2 : 3;
-    // Điểm: ưu tiên tỉ lệ đạt, cộng thêm số từ lẻ khớp để xếp trong cùng tầng
-    const score = dat * 100 + tuLe.length * 10 + Math.round(tyLe * 10);
+    const tier: 1 | 2 | 3 =
+      tong > 0 && dat === tong && (parsed.terms.length === 0 || duMoiTu)
+        ? 1
+        : tyLe >= 0.6 || duMoiTu
+          ? 2
+          : 3;
 
     hits.push({ item, tier, score, matched: Array.from(new Set(matched)) });
   }
@@ -413,6 +438,17 @@ export function goiYNoiLong(raw: string): GoiY[] {
   if (noi) them(`Bất động sản tại ${noi}`, "Mọi loại hình", pNoi);
   // 6) Chỉ GIÁ
   if (coGia) them(`Bất động sản ${giaChu}`, "Mọi khu vực, mọi loại hình", pGia);
+
+  // 7) KHÔNG bóc được tiêu chí nào (vd gõ tên dự án, tên đường): vẫn phải có
+  //    bậc thang — nguyên cụm CHÍNH XÁC trước, rồi TƯƠNG ĐỐI, rồi TỪNG TỪ MỘT.
+  if (ds.length === 0 && p.raw.trim()) {
+    const cum = p.raw.trim();
+    them(cum, "Khớp chính xác cả cụm", { keyword: cum });
+    if (p.terms.length > 1) {
+      them(p.highlight.slice(0, 3).join(" "), "Khớp tương đối", { keyword: p.highlight.slice(0, 3).join(" ") });
+      for (const w of p.highlight.slice(0, 3)) them(w, "Chỉ 1 từ khoá", { keyword: w });
+    }
+  }
 
   return ds.slice(0, 5);
 }

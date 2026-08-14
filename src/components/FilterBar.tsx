@@ -132,9 +132,11 @@ export default function FilterBar({
   const applySuggestion = (s: Suggestion) => {
     pushRecent(s);
     if (s.patch) {
-      // Gợi ý bậc thang: đổ THẲNG nhiều trường lọc cùng lúc, xoá ô từ khoá
-      // (tiêu chí đã nằm trong bộ lọc rồi, giữ lại sẽ lọc chồng hai lần).
-      set({ ...s.patch, keyword: "" });
+      // Gợi ý bậc thang: đổ THẲNG nhiều trường lọc cùng lúc.
+      // · Bậc dựng từ TIÊU CHÍ (loại hình/khu vực/giá) → xoá ô từ khoá, vì tiêu
+      //   chí đã nằm trong bộ lọc, giữ lại sẽ lọc chồng hai lần.
+      // · Bậc dựng từ CHÍNH CHỮ người gõ (khớp cả cụm / 1 từ) → giữ nguyên từ khoá.
+      set(s.patch.keyword != null ? s.patch : { ...s.patch, keyword: "" });
     } else if (s.kind === "Khu vực" && s.province) {
       // Thêm khu vực vào danh sách ĐA CHỌN (không ghi đè, không trùng, tối đa 5).
       const sel: LocationSel = { province: s.province, district: s.district || undefined, ward: s.ward || undefined };

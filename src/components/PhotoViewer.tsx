@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useSaved } from "@/lib/useSaved";
 import { haptic } from "@/lib/haptic";
 import { anhToiUu, beRongManHinh } from "@/lib/anhToiUu";
+import { khoaCuon } from "@/lib/khoaCuon";
 
 // ============================================================================
 // BỘ XEM ẢNH KIỂU FACEBOOK — dùng chung cho MỌI mục có ảnh
@@ -102,20 +103,9 @@ export default function PhotoViewer({
     return () => window.removeEventListener("keydown", onKey);
   }, [doiAnh, onClose]);
 
-  // Khoá cuộn nền bằng position:fixed (KHÔNG dùng overflow:hidden — cách đó làm
-  // hỏng position:sticky của header, đã từng gây lỗi menu bị ẩn).
-  useEffect(() => {
-    const y = window.scrollY;
-    const b = document.body.style;
-    b.position = "fixed";
-    b.top = `-${y}px`;
-    b.left = "0";
-    b.right = "0";
-    return () => {
-      b.position = ""; b.top = ""; b.left = ""; b.right = "";
-      window.scrollTo(0, y);
-    };
-  }, []);
+  // Khoá cuộn trang nền. Bộ đếm dùng chung (khoaCuon.ts): mở từ DANH SÁCH ẢNH
+  // thì đóng bộ xem ảnh KHÔNG nhả trang nền, danh sách vẫn giữ đúng chỗ đang xem.
+  useEffect(khoaCuon, []);
 
   const dong = useCallback(() => {
     setDangDong(true);

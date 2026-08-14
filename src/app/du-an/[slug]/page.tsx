@@ -152,7 +152,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               {/* 1) Tổng quan */}
               <Section id="tong-quan" title="Tổng quan dự án">
                 <div className="space-y-3 text-sm leading-relaxed text-cvr-body">
-                  <RichContent paragraphs={p.overview} />
+                  <RichContent paragraphs={p.overview} title={p.name} />
                 </div>
                 {p.scale.length > 0 && (
                   <div className="mt-6 grid grid-cols-1 gap-x-8 sm:grid-cols-2">

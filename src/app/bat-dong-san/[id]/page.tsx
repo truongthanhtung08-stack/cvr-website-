@@ -156,7 +156,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
               {d.descriptionParas.length > 0 && (
                 <Section id="mo-ta" title="Thông tin mô tả">
                   <div className="space-y-3 whitespace-pre-line text-sm leading-relaxed text-cvr-body">
-                    <RichContent paragraphs={d.descriptionParas} />
+                    <RichContent paragraphs={d.descriptionParas} title={l.title} />
                   </div>
                 </Section>
               )}

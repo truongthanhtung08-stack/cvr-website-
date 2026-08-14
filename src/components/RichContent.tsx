@@ -1,5 +1,6 @@
 import { asset } from "@/lib/asset";
 import VideoEmbed from "@/components/VideoEmbed";
+import ContentPhoto from "@/components/ContentPhoto";
 
 // Nội dung admin nhập được lưu dạng text: MỖI ĐOẠN 1 dòng. Ảnh/video chèn giữa bài là
 // một dòng riêng theo cú pháp markdown:
@@ -55,20 +56,29 @@ export function videoMarkerUrl(line: string): string | null {
 
 // Hiển thị nội dung có ảnh/video chèn giữa bài. Tương thích ngược: nội dung cũ
 // (toàn văn bản) vẫn hiện như trước — dòng nào không phải marker → đoạn văn <p>.
-export default function RichContent({ paragraphs }: { paragraphs: string[] }) {
+// Ảnh chèn giữa bài BẤM ĐƯỢC: mở toàn màn hình + zoom + vuốt qua các ảnh khác
+// trong cùng bài (ContentPhoto → PhotoViewer).
+export default function RichContent({ paragraphs, title }: { paragraphs: string[]; title?: string }) {
+  // Gom trước toàn bộ ảnh trong bài để bấm ảnh nào cũng vuốt qua lại được.
+  // thuTuAnh: dòng thứ i trong bài là ảnh thứ mấy của bộ ảnh.
+  const anhTrongBai: string[] = [];
+  const thuTuAnh = new Map<number, number>();
+  paragraphs.forEach((p, i) => {
+    const s = imageMarkerUrl(p);
+    if (s) {
+      thuTuAnh.set(i, anhTrongBai.length);
+      anhTrongBai.push(asset(s));
+    }
+  });
+
   return (
     <>
       {paragraphs.map((p, i) => {
         const video = videoMarkerUrl(p);
         if (video) return <VideoEmbed key={i} url={video} />;
-        const src = imageMarkerUrl(p);
-        if (src) {
-          return (
-            <figure key={i} className="overflow-hidden rounded-xl border border-cvr-line">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={asset(src)} alt="" loading="lazy" className="h-auto w-full object-cover" />
-            </figure>
-          );
+        const viTri = thuTuAnh.get(i);
+        if (viTri !== undefined) {
+          return <ContentPhoto key={i} images={anhTrongBai} index={viTri} title={title} />;
         }
         const am = p.match(ALIGN_MARKER);
         const body = am ? p.slice(am[0].length) : p;

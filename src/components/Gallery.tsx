@@ -3,12 +3,14 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import PhotoViewer from "@/components/PhotoViewer";
+import PhotoList from "@/components/PhotoList";
 
 // Thư viện ảnh trang chi tiết BĐS — bố cục kiểu Homedy:
 // 1 ảnh lớn bên trái + lưới 2×2 ảnh nhỏ bên phải.
 // ĐIỆN THOẠI (kiểu Facebook): carousel 1 ảnh + nút "Xem tất cả N ảnh" → danh sách
-// ảnh xếp dọc full bề ngang → bấm 1 ảnh mở toàn màn hình (vuốt ngang đổi ảnh,
-// vuốt xuống thoát, zoom không kéo ra ngoài khung) — xem PhotoViewer.
+// ảnh xếp dọc full bề ngang (cuộn tiếp ở cuối trang là thoát — xem PhotoList)
+// → bấm 1 ảnh mở toàn màn hình (vuốt ngang đổi ảnh, vuốt xuống thoát, zoom
+// không kéo ra ngoài khung) — xem PhotoViewer.
 export default function Gallery({
   images,
   alt,
@@ -41,19 +43,6 @@ export default function Gallery({
     const t = setInterval(() => setBigIdx((i) => (i + 1) % images.length), 4000);
     return () => clearInterval(t);
   }, [paused, images.length]);
-
-  // Mở danh sách ảnh thì khoá cuộn trang nền (dùng position:fixed — KHÔNG dùng
-  // overflow:hidden vì cách đó làm hỏng position:sticky của header).
-  useEffect(() => {
-    if (!list) return;
-    const y = window.scrollY;
-    const b = document.body.style;
-    b.position = "fixed"; b.top = `-${y}px`; b.left = "0"; b.right = "0";
-    return () => {
-      b.position = ""; b.top = ""; b.left = ""; b.right = "";
-      window.scrollTo(0, y);
-    };
-  }, [list]);
 
   if (images.length === 0) return null;
 
@@ -159,54 +148,9 @@ export default function Gallery({
       )}
 
       {/* DANH SÁCH ẢNH KIỂU FACEBOOK (điện thoại) — mở từ nút "Xem tất cả N ảnh".
-          Ảnh xếp dọc full bề ngang, bấm ảnh nào mở ảnh đó toàn màn hình. */}
+          Ảnh xếp dọc full bề ngang, cuộn tiếp ở cuối trang là thoát. */}
       {list && (
-        <div className="fixed inset-0 z-[85] overflow-y-auto overscroll-contain bg-white lg:hidden">
-          <div className="sticky top-0 z-10 flex items-center gap-2 border-b border-cvr-line bg-white/95 px-2 py-2.5 pt-[calc(0.625rem+env(safe-area-inset-top))] backdrop-blur">
-            <button
-              type="button"
-              aria-label="Quay lại"
-              onClick={() => setList(false)}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-cvr-ink active:bg-cvr-surface"
-            >
-              <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-[15px] font-semibold text-cvr-ink">{alt}</p>
-              <p className="text-xs text-cvr-muted">{images.length} ảnh</p>
-            </div>
-          </div>
-
-          <div className="space-y-2 pb-[calc(1rem+env(safe-area-inset-bottom))]">
-            {images.map((src, i) => (
-              <button
-                key={i}
-                type="button"
-                onClick={() => open(i)}
-                aria-label={`Xem ảnh ${i + 1}`}
-                className="relative block w-full bg-cvr-surface"
-              >
-                {/* Ảnh đi qua bộ tối ưu (AVIF/WebP đúng bề rộng máy) + chỉ tải khi
-                    cuộn tới → danh sách 13 ảnh vẫn mở nhanh, không giật. */}
-                <Image
-                  src={src}
-                  alt={`${alt} ${i + 1}`}
-                  width={1080}
-                  height={810}
-                  sizes="100vw"
-                  priority={i < 2}
-                  loading={i < 2 ? "eager" : "lazy"}
-                  className="h-auto w-full"
-                />
-                <span className="absolute bottom-2 right-2 rounded-md bg-black/65 px-2 py-0.5 text-xs font-medium text-white">
-                  {i + 1}/{images.length}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
+        <PhotoList images={images} title={alt} onPick={open} onClose={() => setList(false)} nhanPhim={lb < 0} />
       )}
 
       {/* Xem 1 ảnh toàn màn hình — vuốt trái/phải đổi ảnh, vuốt xuống thoát */}
