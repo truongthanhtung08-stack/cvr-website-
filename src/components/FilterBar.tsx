@@ -710,7 +710,10 @@ export default function FilterBar({
       <div className="flex flex-col gap-2 sm:gap-2">
         {/* Dòng 1: tab (menu) — canh giữa, gạch chân tab đang chọn.
             MOBILE: ẩn — Hero chỉ còn ĐÚNG 1 dòng ô tìm kiếm cho gọn. */}
-        {leading && <div className="hidden justify-center sm:flex">{leading}</div>}
+        {/* Hàng tab MỤC ĐÍCH (Dự án · Mua bán · Cho thuê) — PHẢI hiện cả trên
+            ĐIỆN THOẠI. Trước để "hidden sm:flex" nên mobile không có chỗ chọn
+            mục đích, tìm gì cũng đổ về Mua bán. */}
+        {leading && <div className="mb-1 flex justify-center">{leading}</div>}
         {/* Dòng 2: thanh tìm kiếm lớn */}
         {searchBox}
       </div>

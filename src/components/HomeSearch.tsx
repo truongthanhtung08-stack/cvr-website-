@@ -51,12 +51,15 @@ export default function HomeSearch({ defaultTab }: { defaultTab?: string }) {
             key={t}
             type="button"
             onClick={() => setTab(t)}
-            className={`relative pb-2 text-[15px] font-semibold transition-colors [text-shadow:0_1px_10px_rgba(0,0,0,0.6)] ${
-              tab === t ? "text-white" : "text-white/70 hover:text-white"
+            // MOBILE: thanh tìm nằm trên nền TRẮNG (phía trên Hero) nên chữ phải
+            // ĐEN — trước đây để chữ trắng theo kiểu đè lên ảnh, đưa xuống nền
+            // trắng là mất chữ.
+            className={`relative pb-1.5 text-[15px] font-semibold transition-colors ${
+              tab === t ? "text-cvr-ink" : "text-cvr-muted"
             }`}
           >
             {t}
-            {tab === t && <span className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-cvr-blue-soft shadow-[0_1px_6px_rgba(0,0,0,0.5)]" />}
+            {tab === t && <span className="absolute inset-x-0 -bottom-px h-[2.5px] rounded-full bg-cvr-blue" />}
           </button>
         ))}
       </div>
