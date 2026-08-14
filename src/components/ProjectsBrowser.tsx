@@ -56,8 +56,19 @@ export default function ProjectsBrowser({
     const sp = new URLSearchParams(window.location.search);
     const tuKhoa = sp.get("q") ?? "";
     const tinh = sp.get("tinh") ?? "";
+    const loai = sp.get("loai") ?? "";     // loại hình chọn ở trang chủ
+    const tt = sp.get("trangthai") ?? "";  // tình trạng dự án
     if (tuKhoa) setQ(tuKhoa);
     if (tinh) setProvince(tinh);
+    // Loại hình ở trang chủ là danh mục của TIN (Căn hộ, Đất nền, Biệt thự…) —
+    // quy về đúng 3 nhóm loại hình mà dự án đang dùng; không thuộc nhóm nào thì
+    // để nguyên "Tất cả" và giữ chữ đó trong ô tìm để vẫn lọc được theo từ khoá.
+    if (loai) {
+      const nhom = typeOf(loai);
+      setType(nhom);
+      if (!tuKhoa) setQ(loai);
+    }
+    if (tt) setStatus(tt);
   }, []);
   // MOBILE: chạm ô tìm → mở trang tìm TOÀN MÀN HÌNH (back + × + nút search) — như Mua bán.
   const [overlay, setOverlay] = useState(false);
