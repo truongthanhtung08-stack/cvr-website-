@@ -1,7 +1,6 @@
 "use client";
 
 import { useRouter, usePathname } from "next/navigation";
-import { haptic } from "@/lib/haptic";
 
 // ============================================================================
 // NÚT QUAY LẠI — CHỈ TRÊN ĐIỆN THOẠI (< lg)
@@ -72,7 +71,6 @@ export default function BackBar() {
   const cha = doan.length > 1 ? (muc.chaCon ?? `/${goc}`) : muc.cha;
 
   function quayLai() {
-    haptic();
     // NÚT BACK = LÙI THẬT. Còn lịch sử thì lùi đúng trang vừa xem.
     if (typeof window !== "undefined" && window.history.length > 1) {
       router.back();

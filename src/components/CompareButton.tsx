@@ -1,7 +1,6 @@
 "use client";
 
 import { useCompare } from "@/lib/useCompare";
-import { haptic } from "@/lib/haptic";
 
 // Nút "So sánh" trên card (III.2). Bấm không điều hướng (chặn link cha).
 export default function CompareButton({ id, className = "" }: { id: string; className?: string }) {
@@ -17,7 +16,6 @@ export default function CompareButton({ id, className = "" }: { id: string; clas
       onClick={(e) => {
         e.preventDefault();
         e.stopPropagation();
-        haptic();
         toggle(id);
       }}
       className={`flex h-9 w-9 items-center justify-center rounded-full backdrop-blur-sm transition ${

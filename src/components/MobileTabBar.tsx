@@ -1,10 +1,9 @@
 "use client";
 
-import Link from "next/link";
+import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
 import { useSaved } from "@/lib/useSaved";
 import { useAuth } from "@/lib/useAuth";
-import { haptic } from "@/lib/haptic";
 import { resetHomeIfOnHome } from "@/components/HomeExpand";
 
 // ── Thanh tab DƯỚI CÙNG — chỉ hiện trên điện thoại/tablet (< lg). Desktop KHÔNG đổi gì.
@@ -94,6 +93,43 @@ function TabIcon({ name, active }: { name: keyof typeof ICONS; active: boolean }
   );
 }
 
+// ── Nội dung 1 tab — ĐẶT BÊN TRONG <Link> để dùng useLinkStatus ────────────
+// useLinkStatus cho biết cú chạm vào ĐÚNG link này có đang chờ trang mới không.
+// Nhờ vậy tab sáng lên + icon chuyển sang nét đặc NGAY khi ngón tay nhấc lên,
+// không phải đợi máy chủ trả dữ liệu (trước đây chạm xong tab vẫn xám → tưởng máy treo).
+function TabBody({
+  icon,
+  label,
+  on,
+  badge,
+}: {
+  icon: keyof typeof ICONS;
+  label: string;
+  on: boolean;
+  badge?: number;
+}) {
+  const { pending } = useLinkStatus();
+  const active = on || pending;
+
+  return (
+    <span
+      className={`press flex h-[49px] flex-col items-center justify-center gap-[2px] transition-colors duration-200 ${
+        active ? "text-cvr-blue" : "text-cvr-muted"
+      }`}
+    >
+      <span className="relative">
+        <TabIcon name={icon} active={active} />
+        {badge ? (
+          <span className="absolute -right-1.5 -top-0.5 flex h-[15px] min-w-[15px] items-center justify-center rounded-full bg-[#ff3b30] px-1 text-[9px] font-bold leading-none text-white ring-2 ring-white">
+            {badge > 9 ? "9+" : badge}
+          </span>
+        ) : null}
+      </span>
+      <span className="text-[10px] font-medium leading-none tracking-[-0.01em]">{label}</span>
+    </span>
+  );
+}
+
 // Trang KHÔNG hiện tab bar: đã có thanh hành động riêng dưới đáy, hoặc là luồng
 // toàn màn hình (đăng nhập / đăng tin / admin) — tab bar chỉ gây rối và che nút.
 const HIDDEN_PREFIXES = [
@@ -140,21 +176,16 @@ export default function MobileTabBar() {
             <li key={t.href} className="flex-1">
               <Link
                 href={t.href}
-                onClick={() => { haptic(); if (t.href === "/") resetHomeIfOnHome(); }}
+                onClick={() => { if (t.href === "/") resetHomeIfOnHome(); }}
                 aria-current={t.on ? "page" : undefined}
-                className={`flex h-[49px] flex-col items-center justify-center gap-[2px] transition-colors duration-200 ${
-                  t.on ? "text-cvr-blue" : "text-cvr-muted active:text-cvr-ink"
-                }`}
+                className="block"
               >
-                <span className="relative">
-                  <TabIcon name={t.icon} active={t.on} />
-                  {t.href === "/tin-luu" && count > 0 && (
-                    <span className="absolute -right-1.5 -top-0.5 flex h-[15px] min-w-[15px] items-center justify-center rounded-full bg-[#ff3b30] px-1 text-[9px] font-bold leading-none text-white ring-2 ring-white">
-                      {count > 9 ? "9+" : count}
-                    </span>
-                  )}
-                </span>
-                <span className="text-[10px] font-medium leading-none tracking-[-0.01em]">{t.label}</span>
+                <TabBody
+                  icon={t.icon}
+                  label={t.label}
+                  on={t.on}
+                  badge={t.href === "/tin-luu" ? count : 0}
+                />
               </Link>
             </li>
           ))}

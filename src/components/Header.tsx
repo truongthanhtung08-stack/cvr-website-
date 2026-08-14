@@ -6,7 +6,6 @@ import BrandLogo from "@/components/BrandLogo";
 import BackBar from "@/components/BackBar";
 import { resetHomeIfOnHome } from "@/components/HomeExpand";
 import { packages, utilityTools } from "@/lib/packages";
-import { haptic } from "@/lib/haptic";
 import { useSaved } from "@/lib/useSaved";
 import { useAuth, displayName, signOut } from "@/lib/useAuth";
 
@@ -370,8 +369,8 @@ function MobileMenu({
 
           <Link
             href="/dang-tin"
-            onClick={() => { haptic(); onClose(); }}
-            className="flex min-h-[48px] items-center justify-center gap-1.5 rounded-full bg-cvr-blue text-[15px] font-semibold text-white transition-transform active:scale-[0.98]"
+            onClick={onClose}
+            className="press flex min-h-[48px] items-center justify-center gap-1.5 rounded-full bg-cvr-blue text-[15px] font-semibold text-white"
           >
             <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
@@ -538,8 +537,14 @@ export default function Header() {
       }`}
     >
       <div className="mx-auto flex h-[60px] max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        {/* Logo trắng (nền tối) */}
-        <Link href="/" aria-label="COASTAL LAND — Trang chủ" onClick={() => resetHomeIfOnHome()}>
+        {/* Logo trắng (nền tối) — bấm là thấy phản hồi NGAY: logo nhún nhẹ rồi bật lại
+            (thay cho rung), thanh tiến trình chạy trên đỉnh, trang chủ hiện dần lên. */}
+        <Link
+          href="/"
+          aria-label="COASTAL LAND — Trang chủ"
+          onClick={() => resetHomeIfOnHome()}
+          className="press press-logo inline-flex"
+        >
           <BrandLogo size="md" tone="light" />
         </Link>
 
@@ -573,7 +578,6 @@ export default function Header() {
           {/* Đăng tin — chỉ desktop (< lg đã có trong Menu, tránh chật thanh trên điện thoại) */}
           <Link
             href="/dang-tin"
-            onClick={() => haptic()}
             className="btn-dangtin hidden items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold text-white sm:px-5 sm:py-2.5 lg:flex"
           >
             <svg

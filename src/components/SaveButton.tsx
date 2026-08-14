@@ -1,7 +1,6 @@
 "use client";
 
 import { useSaved } from "@/lib/useSaved";
-import { haptic } from "@/lib/haptic";
 
 // Nút "lưu tin" (trái tim). variant "overlay" = trên ẢNH (nền đen mờ) ·
 // "bare" = trên nền TRẮNG (đáy thẻ, chỉ icon). Bấm không điều hướng (chặn link cha).
@@ -30,7 +29,6 @@ export default function SaveButton({
       onClick={(e) => {
         e.preventDefault();
         e.stopPropagation();
-        haptic();
         toggle(id);
       }}
       className={`flex h-9 w-9 items-center justify-center rounded-full transition ${style} ${className}`}

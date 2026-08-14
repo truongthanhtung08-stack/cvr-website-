@@ -629,3 +629,81 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .cvr-sheet, .cvr-sheet-scrim { animation: none; }
 }
+
+/* ════════════════════════════════════════════════════════════════════════
+   PHẢN HỒI CHẠM + CHUYỂN TRANG — thay cho RUNG (Vibration API đã bỏ)
+   Nguyên tắc: mọi phản hồi là HÌNH ẢNH, chỉ animate transform/opacity.
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* .press — bấm vào là thấy ngay: nhấn xuống RẤT nhanh (90ms), nhả ra bật lại
+   êm theo đường cong iOS. Dùng cho logo, tab bar, nút chính, thẻ bấm được. */
+.press {
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform 300ms var(--ease-out-soft),
+    opacity 300ms var(--ease-out-soft);
+  will-change: transform;
+}
+.press:active {
+  transform: scale(0.94);
+  opacity: 0.72;
+  transition-duration: 90ms;
+}
+/* Logo: nhấn nhẹ hơn (logo ngang dài, thu nhiều trông giật) */
+.press-logo:active { transform: scale(0.965); opacity: 0.8; }
+
+/* Thanh tiến trình chuyển trang — hiện NGAY khi chạm link, trước cả khi máy chủ
+   trả về. Chỉ scaleX nên không reflow. */
+.cvr-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2.5px;
+  z-index: 60;
+  transform-origin: 0 50%;
+  background: linear-gradient(90deg, var(--color-cvr-blue), var(--color-cvr-blue-soft));
+  box-shadow: 0 0 8px rgba(41, 151, 255, 0.6);
+  animation: cvr-progress 9s cubic-bezier(0.1, 0.8, 0.2, 1) forwards;
+}
+@keyframes cvr-progress {
+  0%   { transform: scaleX(0.04); }
+  35%  { transform: scaleX(0.5); }
+  100% { transform: scaleX(0.94); }
+}
+
+/* Vào trang mới: nội dung dâng lên + hiện dần (kiểu Apple). Chỉ chạy khi CHUYỂN
+   trang trong site — lần tải đầu không chạy để không ảnh hưởng LCP. */
+@keyframes cvr-page-in {
+  from { opacity: 0; transform: translate3d(0, 10px, 0); }
+  to   { opacity: 1; transform: none; }
+}
+body[data-nav="in"] main {
+  animation: cvr-page-in 420ms var(--ease-out-soft) both;
+}
+
+/* Khung xương (skeleton) lúc chờ dữ liệu — vệt sáng chạy qua, chỉ transform */
+.skel {
+  position: relative;
+  overflow: hidden;
+  background: var(--color-cvr-surface);
+}
+.skel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
+  animation: cvr-shimmer 1.5s infinite;
+}
+@keyframes cvr-shimmer {
+  100% { transform: translateX(100%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .press { transition: none; }
+  .press:active { transform: none; opacity: 0.75; }
+  .cvr-progress { animation: none; transform: scaleX(0.35); }
+  body[data-nav="in"] main { animation: none; }
+  .skel::after { animation: none; }
+}

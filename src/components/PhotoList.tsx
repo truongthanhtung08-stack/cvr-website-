@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { khoaCuon } from "@/lib/khoaCuon";
-import { haptic } from "@/lib/haptic";
 
 // ============================================================================
 // DANH SÁCH ẢNH KIỂU FACEBOOK — dùng chung cho tin mua bán / cho thuê và dự án
@@ -68,7 +67,6 @@ export default function PhotoList({
     const dat = (v: number) => { lech = v; setKeo(v); };
 
     const chayThoat = (huong: number) => {
-      haptic();
       setMuot(true);
       setThoat(huong);
       window.setTimeout(() => dong.current(), THOI_GIAN_THOAT);

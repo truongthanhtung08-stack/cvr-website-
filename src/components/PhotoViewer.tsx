@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSaved } from "@/lib/useSaved";
-import { haptic } from "@/lib/haptic";
 import { anhToiUu, beRongManHinh } from "@/lib/anhToiUu";
 import { khoaCuon } from "@/lib/khoaCuon";
 
@@ -169,7 +168,7 @@ export default function PhotoViewer({
       else if (keo.x > nguong && idx > 0) doiAnh(-1);
     } else if (c?.huong === "doc") {
       // Vuốt XUỐNG (hoặc lên) đủ xa → thoát về trang tin
-      if (Math.abs(keo.y) > NGUONG_THOAT) { haptic(); dong(); return; }
+      if (Math.abs(keo.y) > NGUONG_THOAT) { dong(); return; }
     }
     setKeo({ x: 0, y: 0 });
     cham.current = null;
@@ -190,7 +189,6 @@ export default function PhotoViewer({
   }
 
   async function chiaSe() {
-    haptic();
     const url = window.location.href;
     try {
       if (navigator.share) await navigator.share({ title: title ?? "Coastal Land", url });
@@ -292,7 +290,7 @@ export default function PhotoViewer({
             <button
               type="button"
               aria-label={daLuu ? "Bỏ lưu tin" : "Lưu tin"}
-              onClick={(e) => { e.stopPropagation(); haptic(); toggle(listingId); }}
+              onClick={(e) => { e.stopPropagation(); toggle(listingId); }}
               className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white active:bg-white/15"
             >
               <svg
