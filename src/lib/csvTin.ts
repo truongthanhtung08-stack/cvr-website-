@@ -7,6 +7,9 @@
 // ============================================================================
 
 import { saleTypeGroups, rentTypeGroups } from "@/lib/filters";
+// Dùng CHUNG hàm tạo slug với form dự án trong admin → tên dự án trong file Excel
+// và slug dự án thật luôn khớp nhau, không bao giờ lệch quy tắc.
+import { slugify } from "@/lib/contentAdmin";
 
 export type ListingTierId = "diamond" | "gold" | "silver" | "basic";
 
@@ -96,15 +99,6 @@ function tachDanhSach(s: string): string[] {
   return s.split(/[,;\n|]+/).map((x) => x.trim()).filter(Boolean);
 }
 
-// "TTC Plaza Đà Nẵng" → "ttc-plaza-da-nang" (khớp cách đặt slug của dự án)
-function slugHoa(s: string): string {
-  return s
-    .normalize("NFD").replace(/[̀-ͯ]/g, "")
-    .replace(/đ/gi, "d")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
 
 export const HEADER_MAU = Object.values(COT);
 
@@ -277,7 +271,7 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
       contact: ten || sdt ? { name: ten, phone: sdt } : undefined,
       // ── 5 cột bổ sung ────────────────────────────────────────────────────
       // Dự án: lưu SLUG để trang chi tiết nối được với dự án tương ứng
-      project: lay(COT.tenDuAn) ? slugHoa(lay(COT.tenDuAn)) : undefined,
+      project: lay(COT.tenDuAn) ? slugify(lay(COT.tenDuAn)) : undefined,
       // Hướng ban công nằm trong bộ đặc điểm theo loại hình (key "balcony")
       specs: lay(COT.huongBanCong) ? { balcony: lay(COT.huongBanCong) } : undefined,
       furnish: lay(COT.tinhTrangNoiThat) || undefined,
