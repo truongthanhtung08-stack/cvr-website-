@@ -83,7 +83,28 @@ export const COT = {
   huong: "huong",
   lienHeTen: "lien_he_ten",
   lienHeSdt: "lien_he_sdt",
+  // ── 5 cột BỔ SUNG theo file mẫu mới (mau-nhap-tin-hang-loat.xlsx) ──────────
+  tenDuAn: "ten_du_an",                 // tin thuộc dự án nào
+  huongBanCong: "huong_ban_cong",       // hướng ban công (căn hộ / chung cư)
+  tinhTrangNoiThat: "tinh_trang_noi_that", // mức nội thất (Bàn giao thô / Đầy đủ…)
+  noiThatBanGiao: "noi_that_ban_giao",  // danh sách nội thất, ngăn bằng dấu phẩy
+  tienIch: "tien_ich",                  // danh sách tiện ích, ngăn bằng dấu phẩy
 } as const;
+
+// Tách ô "A, B; C" hoặc xuống dòng → mảng, bỏ khoảng trắng thừa và mục rỗng
+function tachDanhSach(s: string): string[] {
+  return s.split(/[,;\n|]+/).map((x) => x.trim()).filter(Boolean);
+}
+
+// "TTC Plaza Đà Nẵng" → "ttc-plaza-da-nang" (khớp cách đặt slug của dự án)
+function slugHoa(s: string): string {
+  return s
+    .normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .replace(/đ/gi, "d")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
 
 export const HEADER_MAU = Object.values(COT);
 
@@ -254,6 +275,14 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
       legal: lay(COT.phapLy) || undefined,
       direction: lay(COT.huong) || undefined,
       contact: ten || sdt ? { name: ten, phone: sdt } : undefined,
+      // ── 5 cột bổ sung ────────────────────────────────────────────────────
+      // Dự án: lưu SLUG để trang chi tiết nối được với dự án tương ứng
+      project: lay(COT.tenDuAn) ? slugHoa(lay(COT.tenDuAn)) : undefined,
+      // Hướng ban công nằm trong bộ đặc điểm theo loại hình (key "balcony")
+      specs: lay(COT.huongBanCong) ? { balcony: lay(COT.huongBanCong) } : undefined,
+      furnish: lay(COT.tinhTrangNoiThat) || undefined,
+      interior: lay(COT.noiThatBanGiao) ? tachDanhSach(lay(COT.noiThatBanGiao)) : undefined,
+      amenities: lay(COT.tienIch) ? tachDanhSach(lay(COT.tienIch)) : undefined,
     },
     tier: hang,
     status: "approved",
