@@ -41,6 +41,8 @@ export type Listing = {
   // Vị trí admin GHIM tay (toạ độ "16.06,108.22" hoặc link Google Maps).
   // Có thì bản đồ trỏ đúng điểm này; không có thì tự tìm theo địa chỉ.
   mapPin?: string;
+  // MÔ TẢ tin — đưa vào vùng dò của ô tìm kiếm (khớp cả nội dung, không chỉ tiêu đề)
+  desc?: string;
 };
 
 // Lọc tin theo mục đích (mặc định không có purpose = "ban")

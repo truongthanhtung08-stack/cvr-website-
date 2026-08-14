@@ -17,6 +17,7 @@ export default function ArticleBrowser({ articles }: { articles: Article[] }) {
   // KHÔNG BAO GIỜ trả về màn hình trống. Hiện trên cả PC và điện thoại.
   const [q, setQ] = useState("");
   const hits = searchAny(articles, q, {
+    ten: (a) => a.title,                                   // khớp ở tiêu đề ăn điểm cao nhất
     hay: (a) => `${a.title} ${a.excerpt} ${a.category}`,
   });
   const ketQua = hits.map((h) => h.item);

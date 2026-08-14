@@ -101,6 +101,7 @@ function rowToListing(r: Row): Listing {
     ...(r.details?.contact?.avatar ? { agentAvatar: asset(r.details.contact.avatar) } : {}),
     ...(r.details?.project ? { projectSlug: r.details.project } : {}),
     ...(r.details?.mapPin ? { mapPin: r.details.mapPin } : {}),
+    ...(r.description ? { desc: r.description } : {}),
   };
 }
 

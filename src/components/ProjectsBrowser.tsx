@@ -97,7 +97,18 @@ export default function ProjectsBrowser({
   // bóc tách câu dài → xếp 3 tầng (khớp đủ → gần đúng → liên quan) → không bao
   // giờ ra màn hình trống. Khu vực + Loại hình là 2 trường GIỮ khi nới lỏng.
   const hits = searchAny(projects, q, {
-    hay: (p) => `${p.name} ${p.developer} ${p.location} ${p.type} ${p.status} ${p.priceFrom}`,
+    // TÊN dự án = chuỗi chính (khớp ở đây ăn điểm cao nhất)
+    ten: (p) => `${p.name} ${p.type}`,
+    // Vùng dò ĐẦY ĐỦ: thêm MÔ TẢ, quy mô và TIỆN ÍCH XUNG QUANH — trước đây chỉ
+    // dò tên + chủ đầu tư + địa chỉ nên "view biển", "gần biển"… không bao giờ
+    // khớp dù mô tả dự án có ghi rõ.
+    hay: (p) =>
+      [
+        p.name, p.developer, p.location, p.type, p.status, p.priceFrom,
+        ...(p.overview ?? []),
+        ...(p.scale ?? []).map((s) => `${s.label} ${s.value}`),
+        ...(p.places ?? []).map((x) => `${x.category} ${x.name}`),
+      ].join(" "),
     truong: [
       { ten: "khu vực", chon: province !== ALL, giu: true, ok: (p) => provinceOf(p.location) === province },
       { ten: "loại hình", chon: type !== ALL, giu: true, ok: (p) => typeOf(p.type) === type },

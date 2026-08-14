@@ -144,6 +144,8 @@ export function parseQuery(raw: string): ParsedQuery {
 type Searchable = {
   id: string; title: string; location: string; type: string; price: string;
   area: string; beds?: number; purpose?: string;
+  // MÔ TẢ tin — cũng được dò khi tìm từ khoá (khớp cả nội dung bài, không chỉ tiêu đề)
+  desc?: string;
 };
 
 export type Hit<T> = {
@@ -186,7 +188,9 @@ export function smartSearch<T extends Searchable>(items: T[], raw: string): { hi
   const hits: Hit<T>[] = [];
 
   for (const item of items) {
-    const hay = normalizeVi(`${item.title} ${item.location} ${item.type} ${item.price} ${item.area}`);
+    // Vùng dò gồm CẢ MÔ TẢ tin — "view biển", "mới xây", "gần chợ"… thường chỉ
+    // nằm trong mô tả chứ không có ở tiêu đề.
+    const hay = normalizeVi(`${item.title} ${item.location} ${item.type} ${item.price} ${item.area} ${item.desc ?? ""}`);
     const matched: string[] = [];
     let dat = 0;   // số tiêu chí ĐẠT
     let tong = 0;  // tổng số tiêu chí bóc được từ câu
@@ -471,15 +475,23 @@ export type TruongLoc<T> = { ten: string; chon: boolean; giu?: boolean; ok: (ite
 export function searchAny<T>(
   items: T[],
   q: string,
-  cfg: { hay: (item: T) => string; truong?: TruongLoc<T>[] },
-): { item: T; tier: 1 | 2 | 3; matched: string[] }[] {
+  cfg: {
+    hay: (item: T) => string;
+    // Chuỗi CHÍNH (tên dự án / tiêu đề bài) — khớp ở đây ăn điểm cao hơn nhiều
+    // so với khớp ở phần mô tả. Không truyền → dùng luôn `hay`.
+    ten?: (item: T) => string;
+    truong?: TruongLoc<T>[];
+  },
+): { item: T; tier: 1 | 2 | 3; matched: string[]; score: number }[] {
   const parsed = parseQuery(q);
   const dung = (cfg.truong ?? []).filter((t) => t.chon);
   const coQ = q.trim().length > 0;
-  const out: { item: T; tier: 1 | 2 | 3; matched: string[] }[] = [];
+  const nquery = normalizeVi(q);
+  const out: { item: T; tier: 1 | 2 | 3; matched: string[]; score: number }[] = [];
 
   for (const item of items) {
     const hay = normalizeVi(cfg.hay(item));
+    const nTen = normalizeVi(cfg.ten ? cfg.ten(item) : cfg.hay(item));
     // Điểm phần TỪ KHOÁ
     const tuKhop = coQ ? parsed.terms.filter((t) => khopMo(hay, t)) : [];
     const qDu = !coQ || (parsed.terms.length > 0 && tuKhop.length === parsed.terms.length);
@@ -493,7 +505,30 @@ export function searchAny<T>(
 
     const tier: 1 | 2 | 3 =
       qDu && truongDu ? 1 : giuDu && (dung.length === 0 || dat.length / dung.length >= 0.5) && qDinh ? 2 : 3;
-    out.push({ item, tier, matched: tuKhop.length ? parsed.highlight : [] });
+
+    // ── CHẤM ĐIỂM (trước đây KHÔNG có → cùng tầng thì thứ tự về nguyên trạng,
+    //    nên gõ "Căn hộ view biển tại Đà Nẵng" ra đủ thứ dự án không liên quan) ──
+    // Thang điểm giống hệt bên tin BĐS: nguyên cụm > đủ mọi từ > tiêu chí > từ lẻ,
+    // và khớp ở TÊN ăn điểm gấp nhiều lần khớp trong phần mô tả.
+    let score = 0;
+    if (coQ) {
+      if (nTen.includes(nquery)) score += 100000;
+      else if (hay.includes(nquery)) score += 60000;
+      if (qDu) score += 20000;
+      // Mỗi từ khoá: khớp ở TÊN = 800đ · chỉ khớp trong mô tả = 120đ
+      for (const t of tuKhop) score += khopMo(nTen, t) ? 800 : 120;
+      // Khớp LIỀN NHAU 2 từ (vd "view bien") — dấu hiệu đúng ý người tìm
+      for (let i = 0; i + 1 < parsed.terms.length; i++) {
+        if (hay.includes(`${parsed.terms[i]} ${parsed.terms[i + 1]}`)) score += 3000;
+      }
+      // Bóc được loại hình / khu vực / đặc điểm mà khớp → cộng đúng thứ tự ưu tiên
+      if (parsed.types.some((t) => khopMo(hay, normalizeVi(t)))) score += 6000;
+      if (parsed.places.some((p) => khopMo(hay, normalizeVi(p)))) score += 5000;
+      score += parsed.features.filter((f) => khopMo(hay, normalizeVi(f))).length * 2000;
+    }
+    score += dat.length * 1000; // mỗi trường lọc đạt
+
+    out.push({ item, tier, matched: tuKhop.length ? parsed.highlight : [], score });
   }
 
   // KHÔNG BAO GIỜ RỖNG: nới hết cỡ — giữ tin dính 3 ký tự đầu, cuối cùng lấy tất cả
@@ -501,10 +536,10 @@ export function searchAny<T>(
     const goc = parsed.terms.map((t) => t.slice(0, 3)).filter(Boolean);
     const cham = items.map((item) => ({ item, n: goc.filter((g) => normalizeVi(cfg.hay(item)).includes(g)).length }));
     const co = cham.filter((c) => c.n > 0).sort((a, b) => b.n - a.n);
-    for (const c of (co.length ? co : cham).slice(0, 24)) out.push({ item: c.item, tier: 3, matched: [] });
+    for (const c of (co.length ? co : cham).slice(0, 24)) out.push({ item: c.item, tier: 3, matched: [], score: c.n });
   }
 
-  out.sort((a, b) => a.tier - b.tier);
+  out.sort((a, b) => a.tier - b.tier || b.score - a.score);
   return out;
 }
 
