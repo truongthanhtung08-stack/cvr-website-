@@ -170,8 +170,22 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
       return setError(asDraft ? "Nhập tiêu đề để lưu nháp." : "Chưa nhập tiêu đề tin.");
 
     if (!asDraft) {
+      // ── ĐIỀU KIỆN ĐỂ GOOGLE NHẬN TIN ──────────────────────────────────────
+      // Thiếu một trong các mục dưới đây thì tin vẫn lên web nhưng Google coi là
+      // "nội dung mỏng" và gần như không lập chỉ mục / không xếp hạng.
+      // Lưu nháp KHÔNG bị chặn — chỉ cần tiêu đề, vào sửa tiếp lúc nào cũng được.
+      if (title.trim().length < 30)
+        return setError("Tiêu đề quá ngắn (tối thiểu 30 ký tự). Nên có loại hình + tên quận/phường — VD: \"Bán căn hộ 2PN view sông Hàn, Hải Châu, Đà Nẵng\".");
       if (!type) return setError("Chưa chọn loại hình.");
       if (!province.trim()) return setError("Chưa chọn Tỉnh/Thành.");
+      if (!district.trim())
+        return setError("Chưa chọn Quận/Huyện — đây là yếu tố quyết định tin có lên được các tìm kiếm theo khu vực hay không.");
+      if (description.trim().length < 100)
+        return setError(`Mô tả quá ngắn (${description.trim().length}/100 ký tự). Google cần nội dung thật để lập chỉ mục — viết ít nhất 2–3 câu về vị trí, pháp lý, tiện ích.`);
+      if (images.filter((s) => s.trim()).length === 0)
+        return setError("Chưa có ảnh nào. Tin không ảnh gần như không được Google hiển thị và khách cũng bỏ qua.");
+      if (!area.trim() || Number.isNaN(parseFloat(area.replace(",", "."))))
+        return setError("Chưa nhập diện tích — thiếu diện tích thì tin bị loại khỏi bộ lọc và thiếu dữ liệu gửi cho Google.");
       if (!negotiable && (priceVnd == null || Number.isNaN(priceVnd)))
         return setError("Giá không hợp lệ — nhập số, hoặc tick \"Giá thỏa thuận\".");
     }
@@ -263,10 +277,10 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
       {/* Nội dung tin */}
       <Card title="Nội dung">
         <div className="space-y-4">
-          <Field label="Tiêu đề tin">
-            <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="VD: Căn hộ 2PN view sông Hàn, full nội thất" className={inputCls} />
+          <Field label="Tiêu đề tin (bắt buộc — tối thiểu 30 ký tự, nên có tên quận/phường)">
+            <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="VD: Bán căn hộ 2PN view sông Hàn, Hải Châu, Đà Nẵng" className={inputCls} />
           </Field>
-          <Field label="Mô tả (bỏ trống → web tự tóm tắt)">
+          <Field label="Mô tả (bắt buộc — tối thiểu 100 ký tự)">
             <ContentEditor value={description} onChange={setDescription} placeholder="Mô tả chi tiết: vị trí, nội thất, pháp lý, tiện ích xung quanh…" />
           </Field>
         </div>
@@ -294,7 +308,7 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
 
         {/* Diện tích đất · Diện tích xây dựng · Phòng ngủ · Phòng tắm */}
         <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Field label="Diện tích đất (m²)">
+          <Field label="Diện tích đất (m², bắt buộc)">
             <input value={area} onChange={(e) => setArea(e.target.value)} inputMode="decimal" placeholder="VD: 100" className={inputCls} />
           </Field>
           <Field label="Diện tích xây dựng (m²)">
@@ -340,7 +354,7 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
             </select>
           </Field>
 
-          <Field label="Quận/Huyện">
+          <Field label="Quận/Huyện (bắt buộc)">
             {districtOptions.length > 0 ? (
               <select
                 value={district}

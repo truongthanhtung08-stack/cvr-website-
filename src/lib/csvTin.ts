@@ -199,8 +199,21 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
   };
   const loi: string[] = [];
 
+  // ── ĐIỀU KIỆN ĐỂ GOOGLE NHẬN TIN ──────────────────────────────────────────
+  // Cùng bộ quy tắc với form đăng tin trong admin. Nhập hàng loạt đăng thẳng
+  // trạng thái 'approved' nên nếu không kiểm ở đây thì cả trăm tin thiếu nội
+  // dung sẽ lên web, Google coi là "nội dung mỏng" và bỏ qua toàn bộ.
   const tieuDe = lay(COT.tieuDe);
   if (!tieuDe) loi.push("Thiếu tiêu đề");
+  else if (tieuDe.length < 30) loi.push(`Tiêu đề quá ngắn (${tieuDe.length}/30 ký tự)`);
+
+  const moTa = lay(COT.moTa);
+  if (moTa.trim().length < 100) loi.push(`Mô tả quá ngắn (${moTa.trim().length}/100 ký tự)`);
+
+  const quanHuyen = lay(COT.quanHuyen);
+  if (!quanHuyen) loi.push("Thiếu quận/huyện");
+
+  if (!lay(COT.dienTich).trim()) loi.push("Thiếu diện tích");
 
   const mucDichRaw = chuanHoa(lay(COT.mucDich) || "ban");
   const mucDich = mucDichRaw === "thue" || mucDichRaw === "cho_thue" ? "thue" : "ban";
@@ -247,6 +260,8 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
     ...tachDanhSachAnh(lay(COT.anh)),
     ...(laDanhSachTenAnh(maAnhRaw) ? tachDanhSachAnh(maAnhRaw) : []),
   ];
+
+  if (anh.length === 0) loi.push("Thiếu ảnh (cần ít nhất 1)");
 
   const ten = lay(COT.lienHeTen);
   const sdt = lay(COT.lienHeSdt);

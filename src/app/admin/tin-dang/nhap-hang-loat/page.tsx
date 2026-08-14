@@ -312,10 +312,11 @@ export default function NhapHangLoatPage() {
         <ul className="mt-3 space-y-1.5 text-sm text-cvr-body">
           <li><strong>muc_dich</strong>: <code>ban</code> hoặc <code>thue</code>.</li>
           <li><strong>loai_hinh</strong>: chép đúng một tên trong danh sách bên dưới.</li>
-          <li><strong>tieu_de</strong>: bắt buộc.</li>
+          <li><strong>tieu_de</strong>: bắt buộc, <strong>tối thiểu 30 ký tự</strong> — nên có loại hình + tên quận/phường.</li>
+          <li><strong>mo_ta</strong>: bắt buộc, <strong>tối thiểu 100 ký tự</strong> (khoảng 2–3 câu).</li>
           <li><strong>gia</strong>: tin bán ghi theo <strong>TỶ</strong> (7,2 = 7,2 tỷ) · tin thuê ghi theo <strong>TRIỆU/tháng</strong> (18 = 18 triệu). Bỏ trống = Thỏa thuận.</li>
-          <li><strong>dien_tich</strong> (m²), <strong>phong_ngu</strong>, <strong>phong_tam</strong>: chỉ ghi số.</li>
-          <li><strong>tinh_thanh</strong>: bắt buộc · <strong>quan_huyen</strong>, <strong>phuong_xa</strong>: nên có để lọc theo khu vực.</li>
+          <li><strong>dien_tich</strong> (m²): bắt buộc · <strong>phong_ngu</strong>, <strong>phong_tam</strong>: chỉ ghi số.</li>
+          <li><strong>tinh_thanh</strong>, <strong>quan_huyen</strong>: bắt buộc · <strong>phuong_xa</strong>: nên có.</li>
           <li><strong>hang_tin</strong>: <code>diamond</code> · <code>gold</code> · <code>silver</code> · <code>basic</code> (bỏ trống = basic).</li>
           <li>
             <strong>ma_anh</strong> — cột ảnh duy nhất, ghi theo <strong>một trong hai cách</strong>:
@@ -325,6 +326,8 @@ export default function NhapHangLoatPage() {
             <br />
             · <strong>Cách liệt kê</strong>: ghi thẳng tên từng ảnh, ngăn nhau bằng <code>|</code> hoặc dấu phẩy —
             vd <code>nha-my-khe-1.jpg | nha-my-khe-2.jpg</code>. Ảnh ghi trước làm ảnh đại diện.
+            <br />
+            <strong>Bắt buộc ít nhất 1 ảnh</strong> — tin không ảnh sẽ bị báo lỗi, không đăng được.
           </li>
           <li><strong>dia_chi</strong>, <strong>phap_ly</strong>, <strong>huong</strong>, <strong>lien_he_ten</strong>, <strong>lien_he_sdt</strong>: không bắt buộc.</li>
         </ul>
