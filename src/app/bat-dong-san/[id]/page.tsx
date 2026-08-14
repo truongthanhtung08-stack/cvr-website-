@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Gallery from "@/components/Gallery";
+import DetailBackLink from "@/components/DetailBackLink";
 import ListingShowcase from "@/components/ListingShowcase";
 import { HomeExpandProvider, HomeCollapsible } from "@/components/HomeExpand";
 import RecordView from "@/components/RecordView";
@@ -127,6 +128,10 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
       <main className="flex-1 bg-white">
         {/* MOBILE: pt-0 → ảnh tin nằm SÁT mép dưới header (không chừa khoảng trắng) */}
         <div className="mx-auto max-w-7xl px-4 pb-24 pt-0 sm:px-6 sm:pt-0 lg:px-8 lg:pb-20">
+          {/* DESKTOP: link "‹ Quay lại kết quả tìm kiếm" (mobile đã có BackBar dưới header) */}
+          <div className="mb-3 hidden lg:block">
+            <DetailBackLink fallback={l.purpose === "thue" ? "/cho-thue" : "/mua-ban"} />
+          </div>
 
           <HomeExpandProvider>
           {/* Toàn bộ nội dung tin — ẩn khi bấm "Xem thêm" ở mục BĐS tương tự */}
