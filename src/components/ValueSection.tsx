@@ -1,19 +1,21 @@
 import Link from "next/link";
 
+// ⚠️ Coastal Land là CỔNG THÔNG TIN: chỉ NỖ LỰC XÁC THỰC thông tin, không cam
+// kết tuyệt đối ("mọi tin đăng"), không đứng ra giao dịch, không làm thủ tục.
 const benefits = [
   {
-    title: "Kiểm chứng thực địa",
-    description: "Mọi tin đăng đều được đội ngũ Coastal Land xác minh thực tế trước khi công bố.",
+    title: "Nỗ lực xác thực",
+    description: "Đội ngũ Coastal Land rà soát và xác thực thông tin tin đăng trước khi công bố.",
     icon: "M",
   },
   {
     title: "Minh bạch pháp lý",
-    description: "Sổ đỏ, sổ hồng chính chủ và quy hoạch rõ ràng để bạn yên tâm xuống tiền.",
+    description: "Thông tin sổ đỏ, sổ hồng và quy hoạch được nêu rõ để bạn tự đối chiếu trước khi quyết định.",
     icon: "P",
   },
   {
-    title: "Giao dịch an toàn",
-    description: "Kết nối trực tiếp người mua, người bán và môi giới chuyên nghiệp tại Miền Trung.",
+    title: "Kết nối trực tiếp",
+    description: "Người mua, người bán và môi giới chuyên nghiệp tại Miền Trung liên hệ thẳng với nhau.",
     icon: "A",
   },
   {
@@ -33,10 +35,10 @@ export default function ValueSection() {
               Coastal Land — Tinh hoa bất động sản Miền Trung
             </p>
             <h2 className="mt-4 max-w-2xl text-3xl font-semibold leading-tight text-cvr-ink sm:text-4xl">
-              Tìm đúng sản phẩm, kiểm chứng đúng giá, chốt giao dịch an toàn.
+              Tìm đúng sản phẩm, đối chiếu đúng giá, kết nối đúng người.
             </h2>
             <p className="mt-4 max-w-2xl text-sm leading-7 text-cvr-muted">
-              Chúng tôi giúp bạn đi thẳng vào tin đăng chất lượng, pháp lý sáng và dịch vụ hỗ trợ toàn hành trình mua bán, cho thuê tại Đà Nẵng, Huế và Miền Trung.
+              Coastal Land là cổng thông tin bất động sản — giúp người mua, người bán và môi giới tại Đà Nẵng, Huế và Miền Trung tìm thấy nhau qua tin đăng chất lượng, thông tin pháp lý rõ ràng.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <Link

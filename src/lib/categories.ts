@@ -80,7 +80,10 @@ export const saleCategories: Category[] = [
   {
     slug: "condotel", label: "Condotel",
     h1: "Bán condotel", title: `Bán condotel ${KV}`,
-    desc: `Mua bán condotel, căn hộ khách sạn tại ${KV} — cam kết lợi nhuận, vị trí ven biển.`,
+    // ⚠️ KHÔNG viết "cam kết lợi nhuận" — Coastal Land là cổng thông tin, không
+    // hứa lợi nhuận thay chủ đầu tư. Mức lợi nhuận (nếu có) do NGƯỜI ĐĂNG khai
+    // trong trường "Cam kết lợi nhuận" của tin, không phải Coastal Land cam kết.
+    desc: `Mua bán condotel, căn hộ khách sạn tại ${KV} — vị trí ven biển, thông tin pháp lý rõ ràng.`,
     types: ["Condotel"],
   },
   {

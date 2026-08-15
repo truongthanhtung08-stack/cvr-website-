@@ -26,16 +26,18 @@ export const landings: Landing[] = [
     eyebrow: "Central Coast Vietnam Properties (CVR)",
     title: "Bất động sản Duyên hải Miền trung",
     subtitle: "Cổng thông tin Bất động sản trực tuyến ưu việt",
+    // ⚠️ Không dùng "số 1" / "100%" / "mọi tin" — Luật Quảng cáo cấm tuyên bố
+    // hạng nhất không chứng minh được, và Coastal Land chỉ NỖ LỰC xác thực.
     intro:
-      "Coastal Land (www.coastalland.vn) là nền tảng kết nối bất động sản số 1 tại Duyên hải Trung bộ. Với nền tảng công nghệ cùng chiến lược Marketing vượt trội, Chúng tôi gắn kết và tạo kết nối giữa những người có nhu cầu mua và bán bất động sản, giữa người dùng và các chuyên gia nhằm giúp mọi người tìm kiếm, chia sẻ và giao dịch nhanh chóng, thuận tiện.",
+      "Coastal Land (www.coastalland.vn) là cổng thông tin bất động sản tại Duyên hải Trung bộ. Với nền tảng công nghệ cùng chiến lược Marketing bài bản, chúng tôi kết nối người có nhu cầu mua, bán, cho thuê bất động sản với nhau và với các chuyên gia — giúp mọi người tìm kiếm, chia sẻ thông tin nhanh chóng, thuận tiện.",
     stats: [
       { value: "2.500+", label: "Tin đã kiểm duyệt" },
       { value: "7", label: "Tỉnh/thành phủ sóng" },
-      { value: "100%", label: "Tin kiểm chứng thực địa" },
+      { value: "Rà soát", label: "Tin được xác thực trước khi đăng" },
      ],
     blocks: [
-      { title: "Khách quan & minh bạch", desc: "Thông tin trung lập, không thổi giá; mọi tin đều ghi rõ pháp lý, diện tích, vị trí thật." },
-      { title: "Kiểm chứng thực địa", desc: "Đội ngũ đi thực tế, xác minh sổ và hiện trạng trước khi đăng — giảm rủi ro cho người mua." },
+      { title: "Khách quan & minh bạch", desc: "Thông tin trung lập, không thổi giá; tin đăng ghi rõ pháp lý, diện tích, vị trí thật." },
+      { title: "Xác thực trước khi đăng", desc: "Đội ngũ rà soát thông tin, đối chiếu sổ và hiện trạng trước khi công bố — giảm rủi ro cho người mua." },
       { title: "Phủ sóng toàn khu vực", desc: "Duyên hải Miền trung và Tây Nguyên — cập nhật liên tục." },
     ],
     gallery: ["/images/tin/1.jpg", "/images/tin/13.jpg", "/images/tin/19.jpg", "/images/tin/24.jpg"],

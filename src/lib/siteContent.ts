@@ -237,8 +237,9 @@ export const ABOUT_DEFAULT: AboutData = {
   values: [
     { title: "Minh bạch", desc: "Thông tin rõ ràng, pháp lý kiểm chứng — người mua yên tâm, người bán uy tín." },
     { title: "Công nghệ", desc: "Bộ lọc thông minh, gợi ý cá nhân hoá và dữ liệu lớn — tìm đúng bất động sản nhanh nhất." },
-    { title: "An toàn", desc: "Kết nối trực tiếp người mua và người bán, hỗ trợ pháp lý xuyên suốt giao dịch." },
-    { title: "Đồng hành", desc: "Phục vụ môi giới, chính chủ và doanh nghiệp — cùng phát triển thị trường bền vững." },
+    // ⚠️ Coastal Land KHÔNG hỗ trợ pháp lý, KHÔNG tham gia giao dịch — chỉ kết nối.
+    { title: "An toàn", desc: "Kết nối trực tiếp người mua, người bán và môi giới; thông tin pháp lý nêu rõ để hai bên tự đối chiếu." },
+    { title: "Đồng hành", desc: "Phục vụ người mua, người bán, môi giới và doanh nghiệp — cùng phát triển thị trường bền vững." },
   ],
   statsImage: "/images/gioi-thieu/ben-du-thuyen.jpg",
   stats: [

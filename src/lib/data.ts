@@ -132,7 +132,7 @@ export function articleContent(a: Article): string[] {
   return [
     `${a.excerpt}`,
     `Theo ghi nhận của Coastal Land, thị trường bất động sản Duyên hải miền Trung tiếp tục cho thấy sự phân hoá rõ rệt giữa các phân khúc. Người mua ngày càng quan tâm đến tính pháp lý minh bạch, vị trí kết nối hạ tầng và tiềm năng khai thác dòng tiền dài hạn.`,
-    `Các chuyên gia khuyến nghị nhà đầu tư và người mua ở thực nên kiểm chứng thông tin thực địa, đối chiếu quy hoạch và lựa chọn đơn vị môi giới uy tín để giảm thiểu rủi ro. Coastal Land cam kết cung cấp thông tin khách quan, kiểm chứng từng tin đăng trước khi công bố.`,
+    `Các chuyên gia khuyến nghị nhà đầu tư và người mua ở thực nên kiểm chứng thông tin thực địa, đối chiếu quy hoạch và lựa chọn đơn vị môi giới uy tín để giảm thiểu rủi ro. Coastal Land nỗ lực cung cấp thông tin khách quan và rà soát tin đăng trước khi công bố.`,
     `Để cập nhật phân tích thị trường mới nhất cũng như danh mục bất động sản phù hợp, quý khách có thể theo dõi chuyên mục Tin tức hoặc liên hệ trực tiếp đội ngũ chuyên viên của Coastal Land.`,
   ];
 }
@@ -181,9 +181,12 @@ export function buildListingDetail(l: Listing): ListingDetail {
   const floors = l.type.includes("Đất") ? "—" : `${2 + (idx % 4)} tầng`;
 
   const description = [
-    `${l.title} toạ lạc tại ${l.location} — một trong những vị trí được săn đón bậc nhất khu vực nhờ kết nối giao thông thuận tiện, gần trục đường chính, trường học, bệnh viện và trung tâm thương mại. Bất động sản phù hợp cho cả nhu cầu ở thực lẫn đầu tư sinh lời dài hạn.`,
+    `${l.title} toạ lạc tại ${l.location} — một trong những vị trí được săn đón bậc nhất khu vực nhờ kết nối giao thông thuận tiện, gần trục đường chính, trường học, bệnh viện và trung tâm thương mại. Bất động sản phù hợp cho cả nhu cầu ở thực lẫn đầu tư dài hạn.`,
     `Diện tích ${l.area}${l.beds ? `, thiết kế ${l.beds} phòng ngủ và ${l.baths ?? l.beds} phòng vệ sinh` : ""}, bố cục thông minh, tối ưu công năng và đón sáng tự nhiên. Hướng nhà ${dir} thoáng đãng, hợp phong thuỷ với đa số gia chủ. ${floors !== "—" ? `Công trình ${floors}, kết cấu vững chắc, vật liệu hoàn thiện cao cấp.` : "Đất vuông vức, mặt tiền rộng, sẵn sàng xây dựng hoặc tách thửa."}`,
-    `Pháp lý minh bạch, sổ đỏ/sổ hồng chính chủ, hỗ trợ công chứng sang tên nhanh chóng. Coastal Land cam kết thông tin khách quan, kiểm chứng thực địa trước khi đăng tin. Mức giá ${l.price}${l.pricePerM2 ? ` (~${l.pricePerM2})` : ""} còn thương lượng cho khách thiện chí.`,
+    // ⚠️ Thủ tục công chứng / sang tên là TRÁCH NHIỆM CỦA MÔI GIỚI và hai bên
+    // giao dịch — KHÔNG phải của Coastal Land. Vai trò của Coastal Land chỉ là
+    // NỖ LỰC XÁC THỰC thông tin (không "cam kết", không đứng ra làm thủ tục).
+    `Pháp lý minh bạch, sổ đỏ/sổ hồng chính chủ. Thủ tục công chứng, sang tên do bên môi giới cùng người mua và người bán thực hiện; Coastal Land nỗ lực xác thực thông tin trước khi đăng tin. Mức giá ${l.price}${l.pricePerM2 ? ` (~${l.pricePerM2})` : ""} còn thương lượng cho khách thiện chí.`,
     // ⚠️ Coastal Land là CỔNG THÔNG TIN: không môi giới, không đứng ra giao dịch.
     // Câu kết phải hướng người xem liên hệ NGƯỜI ĐĂNG TIN — không được hàm ý
     // Coastal Land "đồng hành đến khi hoàn tất giao dịch".

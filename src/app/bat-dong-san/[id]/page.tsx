@@ -292,12 +292,15 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                 </div>
 
                 <div className="rounded-none border border-cvr-line bg-white p-5 text-sm shadow-sm">
-                  <p className="font-semibold text-cvr-ink">Pháp lý & cam kết</p>
+                  {/* ⚠️ Thủ tục công chứng / sang tên là việc của MÔI GIỚI và hai
+                      bên giao dịch — KHÔNG phải của Coastal Land. Ô này chỉ nêu
+                      thông tin pháp lý + mức độ xác thực, không "cam kết". */}
+                  <p className="font-semibold text-cvr-ink">Pháp lý & xác thực</p>
                   <ul className="mt-3 space-y-2 text-cvr-body">
                     <li className="flex gap-2"><span className="text-cvr-gold-ink">✓</span> Pháp lý: {d.legal ?? "Liên hệ để biết chi tiết"}</li>
                     {d.direction && <li className="flex gap-2"><span className="text-cvr-gold-ink">✓</span> Hướng: {d.direction}</li>}
-                    <li className="flex gap-2"><span className="text-cvr-gold-ink">✓</span> Kiểm chứng thực địa trước khi đăng</li>
-                    <li className="flex gap-2"><span className="text-cvr-gold-ink">✓</span> Hỗ trợ thủ tục công chứng, sang tên</li>
+                    <li className="flex gap-2"><span className="text-cvr-gold-ink">✓</span> Coastal Land nỗ lực xác thực thông tin trước khi đăng</li>
+                    <li className="flex gap-2"><span className="text-cvr-gold-ink">✓</span> Thủ tục công chứng, sang tên do môi giới và hai bên thực hiện</li>
                   </ul>
                 </div>
               </div>
