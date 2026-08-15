@@ -121,7 +121,7 @@ export default function YeuCauKhachPage() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight text-cvr-ink">
+          <h1 className="text-2xl font-semibold tracking-tight text-cvr-ink">
             Yêu cầu khách hàng
             {soMoi > 0 && (
               <span className="ml-2 rounded-full bg-red-600 px-2 py-0.5 text-xs font-bold text-white">{soMoi} mới</span>

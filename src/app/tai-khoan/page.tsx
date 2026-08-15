@@ -33,55 +33,14 @@ export default function AccountOverviewPage() {
   const free = billing.free;
 
   return (
+    // ── BỐ CỤC XẾP THEO VIỆC KHÁCH CẦN LÀM, KHÔNG THEO CON SỐ ────────────────
+    // Trước đây khách vừa đăng nhập là gặp ngay 6 ô số liệu (số dư · điểm · cấp ·
+    // vai trò · gói · tin miễn phí) rồi 3 cụm nút rải rác → rối, không biết bấm
+    // đâu. Nay còn 4 khối, mỗi khối MỘT việc, xếp từ việc chính xuống phụ:
+    //   1. Đăng tin  →  2. Tin của tôi  →  3. Ví & hội viên  →  4. Tài khoản
     <div className="space-y-5">
-      {/* Ví thành viên */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <Card label="Số dư tài khoản" value={vnd(balance)} accent />
-        <Card label="Điểm thưởng" value={`${points} điểm`} sub={pointValue > 0 ? `≈ ${vnd(pointValue)}` : "Nạp tiền để tích điểm"} />
-        <Card
-          label="Cấp hội viên"
-          value={level ? level.name : "Chưa có cấp"}
-          sub={
-            capKeTiep
-              ? `Nạp thêm ${vnd(conThieu)} để lên ${capKeTiep.name}`
-              : level && level.discount > 0
-                ? `Giảm thêm ${level.discount}% khi đăng tin`
-                : undefined
-          }
-          color={level?.color}
-        />
-      </div>
-
-      <div className="flex flex-wrap gap-3">
-        <Link href="/tai-khoan/nap-tien" className="rounded-lg bg-cvr-ink px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-cvr-ink/90">
-          + Nạp tiền
-        </Link>
-        <Link href="/tai-khoan/doi-diem" className="rounded-lg border border-cvr-line px-5 py-2.5 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink">
-          Đổi điểm
-        </Link>
-        <Link href="/bao-gia-dang-tin" className="rounded-lg border border-cvr-line px-5 py-2.5 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink">
-          Bảng giá dịch vụ
-        </Link>
-      </div>
-
-      {/* Gói dịch vụ + hạn mức */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <Card label="Vai trò" value={roleLabel(profile.role)} />
-        <Card label="Gói dịch vụ" value={profile.plan || "Basic (miễn phí)"} />
-        <Card
-          label={free.active && free.quota === 0 ? "Tin miễn phí" : "Tin miễn phí còn lại"}
-          value={free.active && free.quota === 0 ? "Không giới hạn" : `${profile.free_quota} tin`}
-        />
-      </div>
-
-      {free.active && (
-        <p className="rounded-xl border border-cvr-blue/25 bg-cvr-blue/[0.06] px-4 py-3 text-sm text-cvr-blue-ink">
-          {freeNote(free, tenGoiMienPhi(billing))}
-        </p>
-      )}
-
-      {/* ĐĂNG TIN — việc quan trọng nhất của khách, nên làm NỔI hẳn:
-          viền xanh + nền xanh nhạt + icon từng loại để nhìn phát nhận ra ngay. */}
+      {/* 1. ĐĂNG TIN — việc chính, đưa lên TRÊN CÙNG. Viền xanh + nền xanh nhạt
+             + icon từng loại để nhìn phát nhận ra ngay. */}
       <div className="rounded-2xl border-2 border-cvr-blue/35 bg-cvr-blue/[0.05] p-5 shadow-lux">
         <div className="flex items-start gap-3">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-cvr-blue text-white">
@@ -111,29 +70,80 @@ export default function AccountOverviewPage() {
             moKhoa={duocDangDuAn}
           />
         </div>
+        {free.active && (
+          <p className="mt-4 rounded-xl border border-cvr-blue/25 bg-white px-4 py-3 text-sm text-cvr-blue-ink">
+            {freeNote(free, tenGoiMienPhi(billing))}
+          </p>
+        )}
       </div>
 
-      {/* Trạng thái tài khoản */}
+      {/* 2. TIN CỦA TÔI — gom hết lối vào quản lý tin về MỘT chỗ. Trước đây
+             "Tin đã đăng"/"Tin đã lưu" nằm lẫn trong ô Trạng thái tài khoản. */}
+      <div className="rounded-2xl border border-cvr-line bg-white p-5 shadow-sm">
+        <h2 className="text-base font-semibold text-cvr-ink">Tin của tôi</h2>
+        <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <LoiTat href="/tai-khoan/tin-dang" title="Tin đã đăng" desc="Xem, sửa, gia hạn tin" />
+          <LoiTat href="/tin-luu" title="Tin đã lưu" desc="Bất động sản bạn quan tâm" />
+          <LoiTat href="/tai-khoan/du-an" title="Dự án của tôi" desc={duocDangDuAn ? "Quản lý dự án đã đăng" : "Cần duyệt hồ sơ"} />
+        </div>
+      </div>
+
+      {/* 3. VÍ & HỘI VIÊN — gộp 6 ô cũ thành MỘT khối: 3 chỉ số chính trên một
+             hàng, thông tin gói để ở dòng phụ, nút nạp/đổi ngay trong khối. */}
+      <div className="rounded-2xl border border-cvr-line bg-white p-5 shadow-sm">
+        <h2 className="text-base font-semibold text-cvr-ink">Ví &amp; hội viên</h2>
+        <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <ChiSo label="Số dư tài khoản" value={vnd(balance)} accent />
+          <ChiSo label="Điểm thưởng" value={`${points} điểm`} sub={pointValue > 0 ? `≈ ${vnd(pointValue)}` : "Nạp tiền để tích điểm"} />
+          <ChiSo
+            label="Cấp hội viên"
+            value={level ? level.name : "Chưa có cấp"}
+            sub={
+              capKeTiep
+                ? `Nạp thêm ${vnd(conThieu)} để lên ${capKeTiep.name}`
+                : level && level.discount > 0
+                  ? `Giảm thêm ${level.discount}% khi đăng tin`
+                  : undefined
+            }
+            color={level?.color}
+          />
+        </div>
+        <p className="mt-4 border-t border-cvr-line pt-3 text-sm text-cvr-muted">
+          Vai trò: <strong className="font-semibold text-cvr-ink">{roleLabel(profile.role)}</strong>
+          {" · "}Gói dịch vụ: <strong className="font-semibold text-cvr-ink">{profile.plan || "Basic (miễn phí)"}</strong>
+          {" · "}
+          {free.active && free.quota === 0
+            ? <>Tin miễn phí: <strong className="font-semibold text-cvr-ink">Không giới hạn</strong></>
+            : <>Tin miễn phí còn lại: <strong className="font-semibold text-cvr-ink">{profile.free_quota} tin</strong></>}
+        </p>
+        <div className="mt-4 flex flex-wrap gap-3">
+          <Link href="/tai-khoan/nap-tien" className="rounded-lg bg-cvr-ink px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-cvr-ink/90">
+            + Nạp tiền
+          </Link>
+          <Link href="/tai-khoan/doi-diem" className="rounded-lg border border-cvr-line px-5 py-2.5 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink">
+            Đổi điểm
+          </Link>
+          <Link href="/bao-gia-dang-tin" className="rounded-lg border border-cvr-line px-5 py-2.5 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink">
+            Bảng giá dịch vụ
+          </Link>
+        </div>
+      </div>
+
+      {/* 4. TÀI KHOẢN — gọn một dòng, không còn lẫn nút quản lý tin. */}
       <div className="rounded-2xl border border-cvr-line bg-white p-5 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h2 className="text-base font-semibold text-cvr-ink">Trạng thái tài khoản</h2>
-            <p className="mt-1 text-sm text-cvr-muted">
+          <div className="min-w-0">
+            <h2 className="text-base font-semibold text-cvr-ink">Tài khoản</h2>
+            <p className="mt-1 truncate text-sm text-cvr-muted">
               {profile.email} {profile.phone ? `· ${profile.phone}` : ""}
             </p>
           </div>
-          {statusBadge(profile.status)}
-        </div>
-        <div className="mt-4 flex flex-wrap gap-3">
-          <Link href="/tai-khoan/tin-dang" className="rounded-lg border border-cvr-line px-4 py-2 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink">
-            Tin đã đăng
-          </Link>
-          <Link href="/tin-luu" className="rounded-lg border border-cvr-line px-4 py-2 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink">
-            Tin đã lưu
-          </Link>
-          <Link href="/tai-khoan/cai-dat" className="rounded-lg border border-cvr-line px-4 py-2 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink">
-            Cài đặt tài khoản
-          </Link>
+          <div className="flex shrink-0 items-center gap-3">
+            {statusBadge(profile.status)}
+            <Link href="/tai-khoan/cai-dat" className="rounded-lg border border-cvr-line px-4 py-2 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink">
+              Cài đặt
+            </Link>
+          </div>
         </div>
       </div>
 
@@ -150,9 +160,11 @@ export default function AccountOverviewPage() {
   );
 }
 
-function Card({ label, value, sub, accent, color }: { label: string; value: string; sub?: string; accent?: boolean; color?: string }) {
+// Chỉ số trong khối Ví — KHÔNG còn là thẻ nổi riêng (trước mỗi con số một thẻ
+// viền + đổ bóng nên 6 con số thành 6 khối, nhìn rất nặng).
+function ChiSo({ label, value, sub, accent, color }: { label: string; value: string; sub?: string; accent?: boolean; color?: string }) {
   return (
-    <div className="rounded-2xl border border-cvr-line bg-white p-5 shadow-sm">
+    <div className="rounded-xl bg-cvr-surface p-4">
       <p className="text-sm text-cvr-muted">{label}</p>
       <p
         className={`mt-1.5 text-lg font-semibold tracking-tight ${accent ? "text-cvr-blue-ink" : "text-cvr-ink"}`}
@@ -162,6 +174,19 @@ function Card({ label, value, sub, accent, color }: { label: string; value: stri
       </p>
       {sub && <p className="mt-0.5 text-xs text-cvr-muted">{sub}</p>}
     </div>
+  );
+}
+
+// Lối tắt trong khối "Tin của tôi" — cùng kiểu ô bấm với PostType cho đồng bộ.
+function LoiTat({ href, title, desc }: { href: string; title: string; desc: string }) {
+  return (
+    <Link
+      href={href}
+      className="rounded-xl border border-cvr-line p-4 transition hover:border-cvr-blue hover:shadow-lux"
+    >
+      <span className="block font-semibold text-cvr-ink">{title}</span>
+      <span className="mt-0.5 block text-xs text-cvr-muted">{desc}</span>
+    </Link>
   );
 }
 

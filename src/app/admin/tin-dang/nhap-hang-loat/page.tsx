@@ -142,7 +142,7 @@ export default function NhapHangLoatPage() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight text-cvr-ink">Đăng nhiều tin bằng file</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-cvr-ink">Đăng nhiều tin bằng file</h1>
         <p className="mt-1 text-sm text-cvr-muted">
           Điền tin vào file mẫu (mỗi dòng một tin) rồi tải lên đây — không phải nhập tay từng tin.
         </p>

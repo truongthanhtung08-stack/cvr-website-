@@ -51,7 +51,7 @@ export default function AdminPaymentsPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight text-cvr-ink">Thanh toán</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-cvr-ink">Thanh toán</h1>
         <p className="mt-1 text-sm text-cvr-muted">Cổng thanh toán PayOS và lịch sử giao dịch của khách hàng.</p>
       </div>
 
