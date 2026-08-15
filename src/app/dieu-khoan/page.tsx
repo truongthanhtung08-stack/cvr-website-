@@ -1,0 +1,132 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import TrangPhapLy, { Muc, DanhSach } from "@/components/TrangPhapLy";
+
+export const metadata: Metadata = {
+  alternates: { canonical: "/dieu-khoan" },
+  title: "Điều khoản thoả thuận",
+  description:
+    "Điều khoản sử dụng cổng thông tin bất động sản Coastal Land — vai trò của nền tảng, quy định đăng tin, trách nhiệm của người dùng và giới hạn trách nhiệm.",
+};
+
+export default function DieuKhoanPage() {
+  return (
+    <TrangPhapLy
+      title="Điều khoản thoả thuận"
+      capNhat="15/08/2026"
+      moDau="Khi truy cập và sử dụng coastalland.vn, bạn đồng ý với các điều khoản dưới đây. Nếu không đồng ý, vui lòng ngừng sử dụng website."
+    >
+      <Muc so={1} title="Coastal Land là gì — và KHÔNG phải là gì">
+        <p>
+          Coastal Land là <strong className="font-semibold text-cvr-ink">cổng thông tin bất động sản</strong>. Chúng tôi đăng tải, kiểm duyệt và sắp xếp thông tin do người bán, người mua và môi giới gửi lên, giúp các bên tìm thấy nhau.
+        </p>
+        <p>Coastal Land <strong className="font-semibold text-cvr-ink">không</strong>:</p>
+        <DanhSach
+          items={[
+            "Không mua bán, không phân phối, không ký gửi bất kỳ bất động sản nào.",
+            "Không làm môi giới và không nhận hoa hồng từ giao dịch giữa các bên.",
+            "Không định giá bất động sản.",
+            "Không đứng ra thực hiện, làm chứng hay bảo lãnh cho giao dịch.",
+            "Không thực hiện thủ tục công chứng, sang tên — đó là việc của môi giới và hai bên giao dịch.",
+          ]}
+        />
+        <p>
+          Mọi thoả thuận, đặt cọc, thanh toán và chuyển nhượng là việc giữa người mua và người bán (hoặc môi giới của họ), diễn ra ngoài nền tảng.
+        </p>
+      </Muc>
+
+      <Muc so={2} title="Tài khoản">
+        <DanhSach
+          items={[
+            "Bạn chịu trách nhiệm về tính chính xác của thông tin đăng ký và về mọi hoạt động diễn ra dưới tài khoản của mình.",
+            "Không dùng chung tài khoản, không mạo danh người khác hay tổ chức khác.",
+            "Chúng tôi có quyền tạm khoá hoặc chấm dứt tài khoản vi phạm điều khoản này.",
+          ]}
+        />
+      </Muc>
+
+      <Muc so={3} title="Quy định đăng tin">
+        <p>
+          <strong className="font-semibold text-cvr-ink">Mọi tin đăng và mọi dự án đều phải được Coastal Land duyệt trước khi hiển thị công khai.</strong> Tin gửi lên sẽ ở trạng thái chờ duyệt.
+        </p>
+        <p>Người đăng cam kết:</p>
+        <DanhSach
+          items={[
+            "Thông tin đúng sự thật: vị trí, diện tích, giá, tình trạng pháp lý.",
+            "Có quyền rao bán, cho thuê bất động sản đó, hoặc được chủ sở hữu uỷ quyền.",
+            "Hình ảnh là ảnh thật của bất động sản, không dùng ảnh của người khác khi chưa được phép.",
+            "Không đăng trùng lặp nhiều tin cho cùng một bất động sản.",
+            "Không đăng nội dung sai lệch, lừa đảo, vi phạm pháp luật hoặc thuần phong mỹ tục.",
+          ]}
+        />
+        <p>
+          Coastal Land có quyền <strong className="font-semibold text-cvr-ink">từ chối duyệt, sửa, ẩn hoặc gỡ bỏ</strong> bất kỳ tin đăng nào không đáp ứng các điều kiện trên, mà không phải hoàn phí dịch vụ đã sử dụng cho tin vi phạm.
+        </p>
+      </Muc>
+
+      <Muc so={4} title="Phí dịch vụ">
+        <DanhSach
+          items={[
+            "Người tìm mua, tìm thuê sử dụng website MIỄN PHÍ.",
+            <>Người bán và môi giới trả phí cho dịch vụ đăng tin và quảng bá tin theo <Link href="/bao-gia-dang-tin" className="font-semibold text-cvr-blue-ink underline">bảng giá</Link> công bố trên website.</>,
+            "Phí đã thanh toán cho một tin đã hiển thị đủ thời hạn sẽ không được hoàn lại.",
+            "Bảng giá có thể thay đổi; thay đổi chỉ áp dụng cho các giao dịch phát sinh sau thời điểm công bố.",
+          ]}
+        />
+      </Muc>
+
+      <Muc so={5} title="Nội dung và bản quyền">
+        <p>
+          Bạn giữ quyền đối với nội dung và hình ảnh mình đăng lên. Khi đăng, bạn cho phép Coastal Land hiển thị, lưu trữ và quảng bá nội dung đó trên website cùng các kênh truyền thông của Coastal Land, nhằm phục vụ chính việc tiếp thị tin của bạn.
+        </p>
+        <p>
+          Giao diện, mã nguồn, logo và thương hiệu Coastal Land thuộc quyền sở hữu của chúng tôi. Không sao chép, thu thập dữ liệu tự động (crawl, scrape) hay sử dụng lại khi chưa có văn bản đồng ý.
+        </p>
+      </Muc>
+
+      <Muc so={6} title="Giới hạn trách nhiệm">
+        <p>
+          Thông tin trên website do người dùng cung cấp. Chúng tôi <strong className="font-semibold text-cvr-ink">nỗ lực xác thực</strong> trước khi đăng, nhưng không thể bảo đảm tuyệt đối tính chính xác, đầy đủ hay cập nhật của mọi tin đăng.
+        </p>
+        <p>
+          Trước khi đặt cọc hay thanh toán, bạn cần <strong className="font-semibold text-cvr-ink">tự kiểm tra thực địa, đối chiếu giấy tờ pháp lý và quy hoạch</strong>, và nên có sự tư vấn của đơn vị chuyên môn. Coastal Land không chịu trách nhiệm về thiệt hại phát sinh từ giao dịch giữa các bên, cũng như từ việc bạn tin vào thông tin trong tin đăng mà chưa kiểm chứng.
+        </p>
+        <p>
+          Website có thể tạm gián đoạn để bảo trì hoặc do sự cố ngoài tầm kiểm soát. Chúng tôi không chịu trách nhiệm về thiệt hại phát sinh từ việc gián đoạn đó.
+        </p>
+      </Muc>
+
+      <Muc so={7} title="Dữ liệu cá nhân">
+        <p>
+          Việc thu thập và xử lý dữ liệu cá nhân được nêu tại{" "}
+          <Link href="/bao-mat" className="font-semibold text-cvr-blue-ink underline">
+            Chính sách bảo mật
+          </Link>
+          , là một phần không tách rời của điều khoản này.
+        </p>
+      </Muc>
+
+      <Muc so={8} title="Thay đổi điều khoản">
+        <p>
+          Chúng tôi có thể cập nhật điều khoản này. Bản mới có hiệu lực kể từ khi đăng trên trang này. Việc bạn tiếp tục sử dụng website sau thời điểm đó được xem là đã chấp nhận nội dung mới.
+        </p>
+      </Muc>
+
+      <Muc so={9} title="Luật áp dụng">
+        <p>
+          Điều khoản này được điều chỉnh bởi pháp luật Việt Nam. Tranh chấp phát sinh sẽ được ưu tiên giải quyết bằng thương lượng; nếu không đạt kết quả, sẽ do toà án có thẩm quyền tại Việt Nam giải quyết.
+        </p>
+      </Muc>
+
+      <Muc so={10} title="Liên hệ">
+        <DanhSach
+          items={[
+            <>Email: <a href="mailto:lienhe@coastalland.vn" className="font-semibold text-cvr-blue-ink underline">lienhe@coastalland.vn</a></>,
+            <>Hotline / Zalo: <a href="tel:+84377985036" className="font-semibold text-cvr-blue-ink underline">0377 985 036</a></>,
+            "Website: coastalland.vn",
+          ]}
+        />
+      </Muc>
+    </TrangPhapLy>
+  );
+}
