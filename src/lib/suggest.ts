@@ -162,19 +162,54 @@ export function suggest(query: string, limit = 8): Suggestion[] {
   if (!q) return [];
   const qTokens = q.split(" ").filter(Boolean);
 
-  const scored: { e: Entry; rank: number }[] = [];
+  // `w` = độ mạnh của mối khớp, CHỈ dùng cho lượt quét cụm con bên dưới
+  // (cụm khớp dài hơn / địa giới sâu hơn đứng trước). Lượt chính để 0 → giữ
+  // nguyên thứ tự cũ, không đụng gì tới hành vi đang chạy tốt.
+  const sau = (e: Entry) => (e.ward ? 2 : e.district ? 1 : 0);
+  const scored: { e: Entry; rank: number; w: number }[] = [];
   for (const e of ENTRIES) {
     let rank: number;
     if (e.norm.startsWith(q)) rank = 0;
     else if (e.norm.includes(q)) rank = 1;
     else if (tokensFuzzy(qTokens, e.primary.split(" "))) rank = 2;
     else continue;
-    scored.push({ e, rank });
+    scored.push({ e, rank, w: 0 });
   }
+
+  // CÂU DÀI gần như KHÔNG BAO GIỜ khớp trọn vẹn một mục nào ("Đất nền tại Hoà
+  // Quý Đà Nẵng") — nhưng trong câu vẫn nêu rõ PHƯỜNG/QUẬN và LOẠI HÌNH. Khớp
+  // trọn câu trượt hết thì quét tiếp theo CỤM CON (dài trước) để vẫn moi đúng ý,
+  // thay vì báo "không có kết quả".
+  if (scored.length === 0 && qTokens.length >= 2) {
+    const cums: string[] = [];
+    for (let n = Math.min(4, qTokens.length); n >= 2; n--) {
+      for (let i = 0; i + n <= qTokens.length; i++) cums.push(qTokens.slice(i, i + n).join(" "));
+    }
+    const daCo = new Set<string>();
+    for (const c of cums) {
+      if (scored.length >= 60) break;
+      for (const e of ENTRIES) {
+        if (daCo.has(e.label)) continue;
+        // Khớp vào CHÍNH TÊN mục (phường "hoà quý", loại hình "đất nền") mới đáng
+        // tin — hạng 3. Chỉ dính đâu đó trong phần phụ (vd mọi phường của Đà Nẵng
+        // đều chứa "đà nẵng") thì xuống hạng 4, đứng sau.
+        const trungTen = e.primary === c || e.primary.startsWith(`${c} `);
+        // Khu vực BẮT BUỘC khớp đúng tên nó: nhãn phường nào cũng chứa tên quận
+        // + tỉnh, cho khớp lỏng thì gõ "đà nẵng" ra cả trăm phường chẳng liên quan.
+        if (!trungTen && (e.kind === "Khu vực" || !e.norm.includes(c))) continue;
+        daCo.add(e.label);
+        // Cụm khớp DÀI hơn / địa giới SÂU hơn đứng trước: "hoà quý" (phường) phải
+        // trên "đà nẵng" (tỉnh) trong câu "Đất nền tại Hoà Quý Đà Nẵng".
+        scored.push({ e, rank: trungTen ? 3 : 4, w: c.length * 10 + sau(e) });
+      }
+    }
+  }
+
   scored.sort(
     (a, b) =>
       a.rank - b.rank ||
       KIND_ORDER[a.e.kind] - KIND_ORDER[b.e.kind] ||
+      b.w - a.w ||
       a.e.label.length - b.e.label.length,
   );
   // ĐA DẠNG hoá: KHÔNG để một nhóm (vd Khu vực) chiếm hết. Mỗi nhóm tối đa `perKind`

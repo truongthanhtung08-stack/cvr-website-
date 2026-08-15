@@ -25,7 +25,7 @@ import {
   type LocationSel,
 } from "@/lib/filters";
 import { suggest, popularSuggestions, type Suggestion } from "@/lib/suggest";
-import { goiYNoiLong } from "@/lib/smartSearch";
+import { goiYNoiLong, parseQuery } from "@/lib/smartSearch";
 
 const RECENT_KEY = "cvr-recent-search"; // lịch sử tìm kiếm (localStorage)
 const GEO_MODE_KEY = "cl-geo-mode"; // hệ đơn vị hành chính đã chọn: "cu" | "moi" (localStorage)
@@ -133,7 +133,27 @@ export default function FilterBar({
   const typed = f.keyword.trim().length > 0;
   // Panel: đang gõ → tối đa 6 kết quả khớp; chưa gõ → ≤3 lịch sử + phổ biến.
   const recentShown = recent.slice(0, 5); // hiện 5 mục gần nhất (trước chỉ 3)
-  const typedHits = typed ? suggest(f.keyword, 6) : [];
+
+  // ── LOẠI DẦN GỢI Ý LẠC ĐỀ ────────────────────────────────────────────────
+  // Câu đã nêu RÕ mục đích (mua bán / cho thuê / dự án) hoặc loại hình → bỏ các
+  // gợi ý thuộc mục đích & loại hình KHÁC cho chính xác. Từ khoá CHUNG CHUNG
+  // (không nêu gì) → giữ nguyên, cứ hiển thị đủ để người dùng tự chọn.
+  const yDinh = parseQuery(f.keyword);
+  const mucDich = yDinh.purpose ?? purpose;
+  const roNghia = yDinh.purpose != null || yDinh.types.length > 0;
+  const HREF_MUC_DICH: Record<string, string> = { "/mua-ban": "ban", "/cho-thue": "thue", "/du-an": "duan" };
+  const dungY = (s: Suggestion) => {
+    if (!roNghia) return true;
+    if (s.kind === "Mục đích") return HREF_MUC_DICH[s.href ?? ""] === mucDich;
+    if (s.kind === "Loại hình" && s.type) {
+      if (!typeOptions.includes(s.type)) return false; // danh mục của mục đích khác
+      if (!yDinh.types.length) return true;
+      const n = normalizeVi(s.type);
+      return yDinh.types.some((t) => n.includes(normalizeVi(t)));
+    }
+    return true;
+  };
+  const typedHits = typed ? suggest(f.keyword, 12).filter(dungY).slice(0, 6) : [];
   // LUÔN có gợi ý (kiểu Google): gõ mà không khớp gì → hiện GỢI Ý PHỔ BIẾN thay vì để trống.
   const noHits = typed && typedHits.length === 0;
   // GỢI Ý BẬC THANG — dựng từ chính câu đang gõ, xếp từ khớp đầy đủ → nới dần.
@@ -143,8 +163,15 @@ export default function FilterBar({
     ? goiYNoiLong(f.keyword).map((g) => ({ label: g.label, kind: "Gợi ý" as const, sub: g.sub, patch: g.patch }))
     : [];
   const panelItems: Suggestion[] = typed
-    ? [...bacThang, ...(noHits ? popularSuggestions : typedHits)]
+    ? [...bacThang, ...(noHits ? popularSuggestions.filter(dungY) : typedHits)]
     : [...recentShown, ...popularSuggestions];
+  // Câu dài hiếm khi khớp NGUYÊN VĂN một mục nào — nhưng nếu bóc được tiêu chí
+  // (loại hình · phường/quận · giá…) thì KHÔNG được báo "không có kết quả",
+  // phải nói đã hiểu gì và gợi ý theo đúng tiêu chí đó.
+  const hieuY = bacThang.length > 0;
+  const dongDanDat = hieuY
+    ? "Gợi ý theo tiêu chí trong câu bạn gõ:"
+    : `Không có kết quả cho “${f.keyword}”. Gợi ý cho bạn:`;
 
   const applySuggestion = (s: Suggestion) => {
     pushRecent(s);
@@ -626,7 +653,7 @@ export default function FilterBar({
               </button>
             </div>
             {noHits && (
-              <p className="px-2.5 pb-1 pt-1 text-[12px] text-cvr-muted">Không có kết quả cho “{f.keyword}”. Gợi ý:</p>
+              <p className="px-2.5 pb-1 pt-1 text-[12px] text-cvr-muted">{dongDanDat}</p>
             )}
             {suggestionRows}
           </div>
@@ -709,7 +736,7 @@ export default function FilterBar({
         <div className="flex-1 overflow-y-auto p-1.5">
           {noHits && (
             <p className="px-2.5 pb-1.5 pt-2 text-[13px] text-cvr-muted">
-              Không có kết quả cho “{f.keyword}”. Gợi ý cho bạn:
+              {dongDanDat}
             </p>
           )}
           {suggestionRows}

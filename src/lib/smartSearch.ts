@@ -14,6 +14,7 @@
 // ============================================================================
 
 import { applyFilters, emptyFilters, normalizeVi, type Filters } from "@/lib/filters";
+import { provinces } from "@/lib/locations";
 
 // ── Từ điển nhận diện ───────────────────────────────────────────────────────
 // Mỗi mục: [nhãn chuẩn, các cách viết người dùng hay gõ]
@@ -45,6 +46,40 @@ const TINH: [string, string[]][] = [
   ["Hồ Chí Minh", ["ho chi minh", "hcm", "sai gon", "saigon", "tphcm"]],
 ];
 
+// ── Chỉ mục ĐỊA GIỚI SÂU: phường/xã + quận/huyện (dựng 1 lần từ locations.ts) ──
+// Câu dài kiểu "Đất nền tại Hoà Quý Đà Nẵng" trước đây chỉ bóc được TỈNH nên
+// phường "Hoà Quý" bị bỏ rơi → gợi ý hiện sai thành "Đất nền tại Đà Nẵng".
+// Xếp CHUỖI DÀI TRƯỚC để "ngu hanh son" thắng "hoa son", "hoa quy" thắng "hoa".
+export type PlaceHit = { province: string; district?: string; ward?: string; label: string };
+
+const DIA_GIOI: { norm: string; place: PlaceHit }[] = (() => {
+  const ds: { norm: string; place: PlaceHit }[] = [];
+  for (const p of provinces) {
+    for (const d of p.districts) {
+      for (const w of d.wards) {
+        const ten = w.replace(/\s*\(.*\)\s*$/, "").trim(); // "Sịa (TT)" → "Sịa"
+        ds.push({ norm: normalizeVi(ten), place: { province: p.name, district: d.name, ward: ten, label: `${ten}, ${d.name}, ${p.name}` } });
+      }
+      ds.push({ norm: normalizeVi(d.name), place: { province: p.name, district: d.name, label: `${d.name}, ${p.name}` } });
+    }
+  }
+  return ds.sort((a, b) => b.norm.length - a.norm.length);
+})();
+
+// Câu có nhắc tên phường/quận nào không? Ưu tiên: đúng tỉnh người dùng nói →
+// cấp SÂU nhất (phường trước quận) → tên dài nhất.
+function timDiaGioi(nq: string, tinh: string[]): PlaceHit | null {
+  // Lọc thô bằng includes (rất nhanh) rồi mới soi TRỌN TỪ bằng regex — tránh
+  // "hoa" khớp vào "hoà xuân", "an" khớp vào "hoà an".
+  const co = (t: string) =>
+    nq.includes(t) && new RegExp(`(^|[^a-z0-9])${t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}([^a-z0-9]|$)`).test(nq);
+  const ung = DIA_GIOI.filter((x) => x.norm.length >= 4 && co(x.norm));
+  if (!ung.length) return null;
+  const hop = tinh.length ? ung.filter((x) => tinh.includes(x.place.province)) : [];
+  const chon = hop.length ? hop : ung;
+  return chon.find((x) => x.place.ward)?.place ?? chon[0].place;
+}
+
 // Đặc điểm mô tả — khớp vào tiêu đề/mô tả tin
 const DAC_DIEM: [string, string[]][] = [
   ["view biển", ["view bien", "huong bien", "gan bien", "sat bien", "mat bien"]],
@@ -71,6 +106,7 @@ export type ParsedQuery = {
   purpose: "ban" | "thue" | null;
   types: string[];      // nhãn loại hình
   places: string[];     // nhãn tỉnh/thành
+  place: PlaceHit | null; // địa giới SÂU nhất bóc được (phường → quận → tỉnh)
   beds: number | null;
   priceMaxTy: number | null;
   priceMinTy: number | null;
@@ -108,9 +144,15 @@ function bocGia(nq: string): { min: number | null; max: number | null } {
 export function parseQuery(raw: string): ParsedQuery {
   const nq = normalizeVi(raw);
   const gia = bocGia(nq);
-  const types = timTuDien(nq, LOAI_HINH);
+  // "nhà đất" / "bất động sản" là cách nói CHUNG, không phải loại hình — phải bỏ
+  // trước khi dò, nếu không chữ "đất" trong "nhà đất" bị hiểu thành "Đất nền".
+  const types = timTuDien(nq.replace(/nha dat|bat dong san|bds/g, " "), LOAI_HINH);
   const places = timTuDien(nq, TINH);
   const features = timTuDien(nq, DAC_DIEM);
+  // Phường/quận trong câu ("Hoà Quý", "Ngũ Hành Sơn") — suy ra luôn TỈNH nếu
+  // người dùng không gõ tên tỉnh ("nhà đất Hoà Quý" → Đà Nẵng).
+  const place = timDiaGioi(nq, places);
+  if (place && !places.includes(place.province)) places.push(place.province);
 
   const purpose: "ban" | "thue" | null = /\b(thue|cho thue)\b/.test(nq)
     ? "thue"
@@ -137,7 +179,7 @@ export function parseQuery(raw: string): ParsedQuery {
     ),
   );
 
-  return { raw, purpose, types, places, beds: bocPhongNgu(nq), priceMaxTy: gia.max, priceMinTy: gia.min, features, terms, highlight };
+  return { raw, purpose, types, places, place, beds: bocPhongNgu(nq), priceMaxTy: gia.max, priceMinTy: gia.min, features, terms, highlight };
 }
 
 // ── Chấm điểm 1 tin theo câu đã bóc tách ────────────────────────────────────
@@ -207,6 +249,16 @@ export function smartSearch<T extends Searchable>(items: T[], raw: string): { hi
       const ok = parsed.places.some((p) => khopMo(normalizeVi(item.location), normalizeVi(p)));
       if (ok) { dat++; matched.push(...parsed.places); }
     }
+    // 2b) Địa giới SÂU (phường/quận bóc được từ câu) — chấm riêng, ăn điểm cao
+    //     hơn tỉnh vì cụ thể hơn. Có nó thì "Đất nền Hoà Quý" mới đẩy đúng tin ở
+    //     Hoà Quý lên trước tin cùng Đà Nẵng nhưng khác phường.
+    const nDiaChi = normalizeVi(item.location);
+    const tenSau = parsed.place?.ward ?? parsed.place?.district ?? null;
+    const dungDiaGioiSau = tenSau != null && nDiaChi.includes(normalizeVi(tenSau));
+    if (tenSau) {
+      tong++;
+      if (dungDiaGioiSau) { dat++; matched.push(tenSau); }
+    }
     // 3) Phòng ngủ
     if (parsed.beds != null) {
       tong++;
@@ -253,6 +305,7 @@ export function smartSearch<T extends Searchable>(items: T[], raw: string): { hi
     if (duMoiTu) score += 20000;                          // đủ MỌI từ khoá
     if (parsed.purpose && (item.purpose ?? "ban") === parsed.purpose) score += 8000;
     if (parsed.types.length && parsed.types.some((t) => khopMo(hay, normalizeVi(t)))) score += 6000;
+    if (dungDiaGioiSau) score += 7000;                    // đúng phường/quận — cụ thể nhất
     if (parsed.places.length && parsed.places.some((p) => khopMo(normalizeVi(item.location), normalizeVi(p)))) score += 5000;
     score += parsed.features.filter((f) => khopMo(hay, normalizeVi(f))).length * 2000;
     if (parsed.beds != null && item.beds != null && item.beds >= parsed.beds) score += 1500;
@@ -397,7 +450,8 @@ export type GoiY = { label: string; sub: string; patch: Partial<Filters> };
 export function goiYNoiLong(raw: string): GoiY[] {
   const p = parseQuery(raw);
   const loai = p.types[0];
-  const noi = p.places[0];
+  const pl = p.place;                       // phường/quận bóc được (nếu có)
+  const noi = pl?.province ?? p.places[0];   // tỉnh/thành
   const coGia = p.priceMaxTy != null || p.priceMinTy != null;
   const giaChu = p.priceMaxTy != null
     ? `dưới ${p.priceMaxTy >= 1 ? `${p.priceMaxTy} tỷ` : `${Math.round(p.priceMaxTy * 1000)} triệu`}`
@@ -407,7 +461,10 @@ export function goiYNoiLong(raw: string): GoiY[] {
 
   const pGia: Partial<Filters> = coGia ? { priceMin: p.priceMinTy, priceMax: p.priceMaxTy } : {};
   const pLoai: Partial<Filters> = loai ? { types: [loai] } : {};
-  const pNoi: Partial<Filters> = noi ? { locations: [{ province: noi }] } : {};
+  // Khu vực ở cấp SÂU nhất bóc được (phường → quận → tỉnh)
+  const pNoi: Partial<Filters> = pl
+    ? { locations: [{ province: pl.province, district: pl.district, ward: pl.ward }] }
+    : noi ? { locations: [{ province: noi }] } : {};
   const pPn: Partial<Filters> = p.beds != null ? { beds: p.beds } : {};
 
   const ds: GoiY[] = [];
@@ -417,14 +474,18 @@ export function goiYNoiLong(raw: string): GoiY[] {
   };
 
   const phanLoai = loai ?? "Bất động sản";
-  const phanNoi = noi ? ` tại ${noi}` : "";
+  // Nhãn khu vực đọc lên đúng như người dùng nghĩ: "Hoà Quý, Ngũ Hành Sơn"
+  const tenSau = pl?.ward ?? pl?.district ?? "";
+  const phanNoi = pl
+    ? ` tại ${pl.ward ? `${pl.ward}, ${pl.district}` : pl.district}`
+    : noi ? ` tại ${noi}` : "";
   const phanPn = p.beds != null ? ` ${p.beds} PN` : "";
 
   // 1) Đầy đủ mọi tiêu chí bóc được
   if (loai || noi || coGia || p.beds != null) {
     them(
       `${phanLoai}${phanPn}${phanNoi}${coGia ? ` ${giaChu}` : ""}`,
-      "Khớp đầy đủ tiêu chí",
+      pl ? `Khớp đầy đủ tiêu chí · ${pl.province}` : "Khớp đầy đủ tiêu chí",
       { ...pLoai, ...pNoi, ...pGia, ...pPn },
     );
   }
@@ -436,10 +497,20 @@ export function goiYNoiLong(raw: string): GoiY[] {
   if (p.beds != null && (loai || noi)) {
     them(`${phanLoai}${phanNoi}`, "Bỏ điều kiện phòng ngủ", { ...pLoai, ...pNoi });
   }
+  // 3b) NỚI ĐỊA GIỚI theo bậc: phường → quận → tỉnh.
+  //     "Đất nền tại Hoà Quý" hết tin → "Đất nền tại Ngũ Hành Sơn" → "…tại Đà Nẵng".
+  if (pl?.ward && pl.district) {
+    them(`${phanLoai} tại ${pl.district}`, "Mở rộng ra cả quận/huyện",
+      { ...pLoai, locations: [{ province: pl.province, district: pl.district }] });
+  }
+  if (pl) {
+    them(`${phanLoai} tại ${pl.province}`, `Mở rộng ra toàn ${pl.province}`,
+      { ...pLoai, locations: [{ province: pl.province }] });
+  }
   // 4) Chỉ LOẠI HÌNH
   if (loai) them(`Tất cả ${loai.toLowerCase()}`, "Toàn quốc", pLoai);
   // 5) Chỉ KHU VỰC
-  if (noi) them(`Bất động sản tại ${noi}`, "Mọi loại hình", pNoi);
+  if (noi) them(`Bất động sản${phanNoi || ` tại ${noi}`}`, tenSau ? `Mọi loại hình · ${pl?.province}` : "Mọi loại hình", pNoi);
   // 6) Chỉ GIÁ
   if (coGia) them(`Bất động sản ${giaChu}`, "Mọi khu vực, mọi loại hình", pGia);
 
