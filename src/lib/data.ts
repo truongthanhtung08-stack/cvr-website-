@@ -184,7 +184,10 @@ export function buildListingDetail(l: Listing): ListingDetail {
     `${l.title} toạ lạc tại ${l.location} — một trong những vị trí được săn đón bậc nhất khu vực nhờ kết nối giao thông thuận tiện, gần trục đường chính, trường học, bệnh viện và trung tâm thương mại. Bất động sản phù hợp cho cả nhu cầu ở thực lẫn đầu tư sinh lời dài hạn.`,
     `Diện tích ${l.area}${l.beds ? `, thiết kế ${l.beds} phòng ngủ và ${l.baths ?? l.beds} phòng vệ sinh` : ""}, bố cục thông minh, tối ưu công năng và đón sáng tự nhiên. Hướng nhà ${dir} thoáng đãng, hợp phong thuỷ với đa số gia chủ. ${floors !== "—" ? `Công trình ${floors}, kết cấu vững chắc, vật liệu hoàn thiện cao cấp.` : "Đất vuông vức, mặt tiền rộng, sẵn sàng xây dựng hoặc tách thửa."}`,
     `Pháp lý minh bạch, sổ đỏ/sổ hồng chính chủ, hỗ trợ công chứng sang tên nhanh chóng. Coastal Land cam kết thông tin khách quan, kiểm chứng thực địa trước khi đăng tin. Mức giá ${l.price}${l.pricePerM2 ? ` (~${l.pricePerM2})` : ""} còn thương lượng cho khách thiện chí.`,
-    `Liên hệ ngay để được tư vấn chi tiết, xem nhà thực tế và nhận thêm hình ảnh, video, hồ sơ pháp lý đầy đủ. Đội ngũ chuyên viên Coastal Land đồng hành cùng bạn từ khâu chọn lọc đến khi hoàn tất giao dịch.`,
+    // ⚠️ Coastal Land là CỔNG THÔNG TIN: không môi giới, không đứng ra giao dịch.
+    // Câu kết phải hướng người xem liên hệ NGƯỜI ĐĂNG TIN — không được hàm ý
+    // Coastal Land "đồng hành đến khi hoàn tất giao dịch".
+    `Liên hệ người đăng tin để được tư vấn chi tiết, xem nhà thực tế và nhận thêm hình ảnh, video, hồ sơ pháp lý đầy đủ. Coastal Land là cổng thông tin bất động sản — mọi trao đổi và giao dịch do bạn thực hiện trực tiếp với người đăng tin.`,
   ];
 
   const features = [

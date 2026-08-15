@@ -411,7 +411,9 @@ export default function ProjectsBrowser({
         Dự án nổi bật
       </h1>
       <p className="mt-1.5 text-sm text-cvr-muted">
-        Hiện có {visible.length} dự án căn hộ, khu đô thị và nghỉ dưỡng đang được Coastal Land phân phối.
+        {/* Coastal Land là CỔNG THÔNG TIN — không phân phối, không mua bán dự án.
+            Câu này chỉ nói về thông tin đang đăng tải, không được hàm ý môi giới. */}
+        Hiện có {visible.length} dự án căn hộ, khu đô thị và nghỉ dưỡng đang được cập nhật trên Coastal Land.
       </p>
 
       <div className="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-3">

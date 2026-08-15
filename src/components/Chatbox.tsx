@@ -1,28 +1,42 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
+import { useCompare } from "@/lib/useCompare";
 
 type Msg = { from: "bot" | "user"; text: string };
 
+// Trang ĐÃ CÓ thanh hành động bám đáy trên điện thoại (Gọi · Zalo ở trang chi
+// tiết) — nút chat nổi đúng vùng đó sẽ đè lên, nên ẩn hẳn trên mobile.
+const TRANG_CO_THANH_DAY = ["/bat-dong-san/"];
+
+// ĐÚNG 3 chức năng bên vận hành hỗ trợ (chủ dự án chốt 15/8/2026) + lối gặp người thật.
+// KHÔNG thêm chủ đề nào nghe như môi giới/tư vấn mua hộ — xem autoReply bên dưới.
 const quickReplies = [
-  "Tôi muốn tư vấn mua nhà",
-  "Bảng giá đăng tin",
-  "Ký gửi bán bất động sản",
+  "Báo giá dịch vụ",
+  "Hỗ trợ đăng tin mua bán, cho thuê",
+  "Hỗ trợ kỹ thuật",
   "Gặp chuyên viên Coastal Land",
 ];
 
-// Trả lời tự động đơn giản (sẽ nối Claude API / Zalo OA sau)
+// Trả lời tự động (sẽ nối Claude API / Zalo OA sau).
+// ⚠️ Coastal Land là CỔNG THÔNG TIN — bên vận hành CHỈ làm 3 việc: báo giá dịch
+// vụ · hỗ trợ đăng tin mua bán/cho thuê · hỗ trợ kỹ thuật. Tuyệt đối không hứa
+// tìm nhà hộ, tư vấn mua, ký gửi hay môi giới. Thứ tự if xếp từ CỤ THỂ → CHUNG.
 function autoReply(text: string): string {
   const t = text.toLowerCase();
-  if (t.includes("giá") || t.includes("đăng tin"))
-    return "Coastal Land có các gói đăng tin từ Tin thường đến VIP. Anh/chị để lại số điện thoại, chuyên viên sẽ gửi bảng báo giá chi tiết ngay ạ.";
-  if (t.includes("mua") || t.includes("tư vấn"))
-    return "Dạ, anh/chị quan tâm khu vực và loại hình nào (căn hộ, đất nền, nhà phố, villa…)? Em sẽ lọc các bất động sản phù hợp giúp mình.";
-  if (t.includes("ký gửi") || t.includes("bán"))
-    return "Coastal Land hỗ trợ ký gửi & rao bán bất động sản. Anh/chị cho em xin địa chỉ và mức giá mong muốn nhé.";
+  if (t.includes("kỹ thuật") || t.includes("lỗi") || t.includes("không đăng được") || t.includes("tài khoản") || t.includes("mật khẩu"))
+    return "Dạ, bên em hỗ trợ kỹ thuật cho tài khoản và tin đăng. Anh/chị mô tả giúp em lỗi đang gặp (kèm ảnh chụp màn hình nếu có), hoặc gọi 0377 985 036 để được xử lý ngay ạ.";
+  if (t.includes("báo giá") || t.includes("bảng giá") || t.includes("giá dịch vụ") || t.includes("gói"))
+    return "Coastal Land có các gói đăng tin từ Tin thường đến VIP, gói đẩy tin và banner quảng bá. Anh/chị xem bảng giá tại coastalland.vn/bao-gia-dang-tin, hoặc để lại số điện thoại để chuyên viên gửi báo giá chi tiết ạ.";
+  // Bắt cả "ký gửi" (người dùng hay gõ) nhưng trả lời ĐÚNG vai trò: hỗ trợ ĐĂNG TIN.
+  if (t.includes("đăng tin") || t.includes("ký gửi") || t.includes("bán") || t.includes("cho thuê"))
+    return "Bên em hỗ trợ anh/chị đăng tin mua bán, cho thuê lên Coastal Land để tiếp cận người mua. Anh/chị đăng trực tiếp tại coastalland.vn/dang-tin, hoặc để lại số điện thoại — chuyên viên sẽ hướng dẫn từng bước ạ.";
+  if (t.includes("mua") || t.includes("tìm") || t.includes("tư vấn"))
+    return "Người tìm mua dùng Coastal Land hoàn toàn miễn phí ạ. Anh/chị lọc theo khu vực, loại hình và mức giá ngay trên trang, rồi liên hệ trực tiếp người đăng tin. Cần hướng dẫn cách lọc thì em chỉ giúp mình nhé.";
   if (t.includes("chuyên viên") || t.includes("gặp") || t.includes("gọi"))
-    return "Em kết nối anh/chị với chuyên viên ngay. Hỗ trợ kỹ thuật: 0377 985 036 — hoặc để lại số, bên em gọi lại trong 5 phút ạ.";
-  return "Cảm ơn anh/chị đã nhắn tin cho Coastal Land. Anh/chị để lại số điện thoại hoặc nội dung cần hỗ trợ, chuyên viên sẽ phản hồi sớm nhất ạ.";
+    return "Em kết nối anh/chị với chuyên viên ngay. Hotline · Zalo: 0377 985 036 — hoặc để lại số, bên em gọi lại trong 5 phút ạ.";
+  return "Cảm ơn anh/chị đã nhắn tin cho Coastal Land. Bên em hỗ trợ: báo giá dịch vụ · đăng tin mua bán, cho thuê · hỗ trợ kỹ thuật. Anh/chị cần việc nào, hoặc để lại số điện thoại để chuyên viên gọi lại ạ.";
 }
 
 // Vị trí nút chat (khoảng cách tới mép PHẢI/DƯỚI màn hình). null = góc mặc định.
@@ -40,6 +54,32 @@ function clampBtn(p: ChatPos): ChatPos {
 
 export default function Chatbox() {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname() || "/";
+  const { count: soSanh } = useCompare();
+
+  // ── ĐỠ VƯỚNG TRÊN ĐIỆN THOẠI ──────────────────────────────────────────────
+  // (a) Ẩn nút khi màn hình đã có thanh bám đáy khác: thanh Gọi·Zalo ở trang chi
+  //     tiết, hoặc thanh So sánh đang bật. Máy tính KHÔNG đổi (các thanh đó
+  //     hoặc ẩn, hoặc nằm giữa màn hình nên không tranh chỗ với nút).
+  const vuongMobile = TRANG_CO_THANH_DAY.some((p) => pathname.startsWith(p)) || soSanh > 0;
+
+  // (b) Cuộn XUỐNG (đang đọc nội dung) → thu nút lại; cuộn LÊN → hiện lại.
+  //     Chỉ áp cho mobile qua biến thể max-lg: bên dưới.
+  const [anKhiCuon, setAnKhiCuon] = useState(false);
+  useEffect(() => {
+    if (open) { setAnKhiCuon(false); return; }
+    let truoc = window.scrollY;
+    const onScroll = () => {
+      const y = window.scrollY;
+      if (Math.abs(y - truoc) < 8) return; // bỏ qua rung nhỏ, tránh nhấp nháy
+      setAnKhiCuon(y > truoc && y > 220);
+      truoc = y;
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [open]);
+
+  const anTrenMobile = vuongMobile ? "hidden lg:flex" : "flex";
   // Nút chat KÉO–THẢ được để không che nội dung (yêu cầu 14/7). Vị trí lưu localStorage.
   const [pos, setPos] = useState<ChatPos | null>(null);
   const drag = useRef<{ startX: number; startY: number; base: ChatPos; moved: boolean } | null>(null);
@@ -121,8 +161,12 @@ export default function Chatbox() {
         onPointerMove={onBtnPointerMove}
         onPointerUp={onBtnPointerUp}
         style={pos ? { right: pos.right, bottom: pos.bottom } : undefined}
-        className={`float-above-tabbar fixed bottom-5 right-5 z-[60] flex h-12 w-12 touch-none select-none items-center justify-center rounded-full bg-cvr-blue text-white shadow-lg shadow-black/20 ring-1 ring-white/15 transition-[opacity,transform,background-color] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:bg-cvr-blue-ink ${
-          open ? "pointer-events-none scale-0 opacity-0" : "opacity-100"
+        className={`float-above-tabbar fixed bottom-5 right-5 z-[60] ${anTrenMobile} h-12 w-12 touch-none select-none items-center justify-center rounded-full bg-cvr-blue text-white shadow-lg shadow-black/20 ring-1 ring-white/15 transition-[opacity,transform,background-color] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:bg-cvr-blue-ink ${
+          open
+            ? "pointer-events-none scale-0 opacity-0"
+            : anKhiCuon
+              ? "max-lg:pointer-events-none max-lg:scale-0 max-lg:opacity-0"
+              : "opacity-100"
         }`}
       >
         {/* Icon Tin nhắn kiểu iMessage — bong bóng đặc, đuôi góc dưới-trái */}
@@ -133,7 +177,7 @@ export default function Chatbox() {
 
       {/* Khung chat — mở tại vị trí nút (đã kéo tới đâu thì mở ở đó, kẹp trong màn hình) */}
       <div
-        className={`float-above-tabbar fixed bottom-5 right-5 z-[60] flex w-[min(360px,calc(100vw-2.5rem))] flex-col overflow-hidden rounded-none border border-cvr-line bg-white shadow-2xl shadow-black/15 transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+        className={`float-above-tabbar fixed bottom-5 right-5 z-[60] ${anTrenMobile} w-[min(360px,calc(100vw-2.5rem))] flex-col overflow-hidden rounded-none border border-cvr-line bg-white shadow-2xl shadow-black/15 transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
           open ? "translate-y-0 scale-100 opacity-100" : "pointer-events-none translate-y-4 scale-95 opacity-0"
         }`}
         // dvh: chiều cao THẬT của khung nhìn trên di động (100vh bị thanh địa chỉ ăn mất)

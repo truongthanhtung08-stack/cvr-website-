@@ -45,24 +45,27 @@ export const landings: Landing[] = [
   {
     slug: "dich-vu",
     image: "/images/hero-cty2.jpg",
+    // ⚠️ ĐỊNH VỊ: Coastal Land là CỔNG THÔNG TIN BĐS — KHÔNG ký gửi, KHÔNG môi
+    // giới, KHÔNG phân phối/mua bán bất kỳ bất động sản nào. Mọi câu chữ ở đây
+    // chỉ được nói về DỊCH VỤ ĐĂNG TIN & QUẢNG BÁO TIN trên nền tảng.
     eyebrow: "Dành cho người bán & môi giới",
-    title: "Ký gửi & môi giới chuyên nghiệp",
-    subtitle: "Định giá đúng · Bán nhanh · Pháp lý an toàn",
+    title: "Dịch vụ hỗ trợ đăng tin mua bán, cho thuê",
+    subtitle: "Tin chuẩn · Đúng khu vực · Đúng người mua",
     intro:
-      "Bạn cần bán hoặc cho thuê bất động sản tại miền Trung? Coastal Land hỗ trợ định giá sát thị trường, chụp ảnh chuyên nghiệp, phân phối tin trên đa kênh và đồng hành pháp lý đến khi giao dịch hoàn tất.",
+      "Bạn cần bán hoặc cho thuê bất động sản tại miền Trung? Coastal Land là cổng thông tin giúp tin của bạn hiển thị đúng khu vực, đúng loại hình và tiếp cận người mua đang thật sự tìm — qua website, gói tin VIP và banner quảng bá.",
     stats: [
-      { value: "15 ngày", label: "Thời gian bán trung bình" },
+      { value: "Duyệt nhanh", label: "Tin lên trong ít phút" },
       { value: "Đa kênh", label: "Website · Zalo · Facebook" },
-      { value: "1-1", label: "Chuyên viên đồng hành" },
-      { value: "Cam kết", label: "Pháp lý minh bạch" },
+      { value: "Miễn phí", label: "Với người tìm mua" },
+      { value: "Kiểm chứng", label: "Tin đăng được xác minh" },
     ],
     blocks: [
-      { title: "Định giá sát thị trường", desc: "Phân tích dữ liệu giao dịch khu vực để định giá đúng, bán nhanh, không hớ." },
-      { title: "Marketing chuyên nghiệp", desc: "Ảnh đẹp, mô tả chuẩn SEO, đẩy tin VIP & banner tới đúng tệp khách hàng." },
-      { title: "Hỗ trợ pháp lý trọn gói", desc: "Tư vấn công chứng, sang tên, thuế phí — an toàn cho cả hai bên." },
+      { title: "Đăng tin đúng chuẩn", desc: "Biểu mẫu đầy đủ thuộc tính theo từng loại hình, tin lên là hiển thị đúng khu vực người mua đang tìm." },
+      { title: "Quảng bá đúng tệp", desc: "Gói tin VIP, vị trí nổi bật và banner đưa tin của bạn tới đúng nhóm khách hàng quan tâm." },
+      { title: "Kiểm duyệt minh bạch", desc: "Tin được kiểm duyệt trước khi công bố — giữ chất lượng thông tin cho cả người mua lẫn người bán." },
     ],
     gallery: ["/images/tin/3.jpg", "/images/tin/7.jpg", "/images/tin/16.jpg", "/images/segments/canho1.jpg"],
-    ctaLabel: "Nhận báo giá ký gửi",
+    ctaLabel: "Xem bảng giá đăng tin",
     ctaHref: "/bao-gia-dang-tin",
   },
 ];
