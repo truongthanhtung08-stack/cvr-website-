@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { PageHeader, Panel } from "@/components/admin/Ui";
+import { PageHeader, Panel } from "@/components/Ui";
 
 type Stats = {
   total: number; newWeek: number; agents: number;

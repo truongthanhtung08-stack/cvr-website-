@@ -60,10 +60,14 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
       <Header />
       <main className="flex-1 bg-cvr-surface">
         <div className="mx-auto max-w-6xl px-4 pb-16 pt-8 sm:px-6">
-          <h1 className="text-2xl font-semibold tracking-tight text-cvr-ink">
-            {loading ? "Tài khoản" : profile?.full_name || "Tài khoản"}
-          </h1>
-          <p className="mt-1 text-sm text-cvr-muted">Quản lý tin đăng, ví tiền và thông tin cá nhân.</p>
+          {/* LỜI CHÀO, KHÔNG PHẢI TIÊU ĐỀ TRANG.
+              Trước đây chỗ này là <h1> ghi TÊN KHÁCH, rồi mỗi trang con lại có
+              <h1> riêng → hai tiêu đề chồng nhau, và trang nào cũng "đội" tên
+              người thay vì tên trang. Nay để một dòng chào nhỏ; tên trang do
+              CHÍNH trang đó đặt (xem PageHeader). */}
+          <p className="text-sm text-cvr-muted">
+            {loading ? "Tài khoản" : <>Xin chào, <strong className="font-semibold text-cvr-ink">{profile?.full_name || "bạn"}</strong></>}
+          </p>
 
           {/* ĐIỆN THOẠI — hàng chip cuộn ngang, DÍNH ngay dưới header (60px) để
               cuộn tới đâu vẫn thấy đường đi, không phải vuốt ngược lên đầu trang. */}

@@ -50,7 +50,7 @@ export default function YeuCauDangDuAnPage() {
     const nhan = NHAN[daGui.status] ?? NHAN.moi;
     return (
       <div className="rounded-2xl border border-cvr-line bg-white p-6 shadow-lux">
-        <h1 className="text-xl font-semibold tracking-tight text-cvr-ink">Yêu cầu đăng dự án</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-cvr-ink">Yêu cầu đăng dự án</h1>
         <p className="mt-3">
           <span className={`rounded-full px-3 py-1 text-sm font-semibold ${nhan.lop}`}>{nhan.chu}</span>
         </p>
@@ -79,7 +79,7 @@ export default function YeuCauDangDuAnPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight text-cvr-ink">Yêu cầu đăng dự án</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-cvr-ink">Yêu cầu đăng dự án</h1>
         <p className="mt-1 text-sm text-cvr-muted">
           Để lại thông tin liên hệ — Coastal Land gọi lại xác minh hồ sơ Chủ đầu tư / Công ty phân
           phối rồi mở quyền đăng dự án cho bạn.

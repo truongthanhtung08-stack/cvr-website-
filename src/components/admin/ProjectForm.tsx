@@ -24,7 +24,7 @@ import {
   slugify,
 } from "@/lib/contentAdmin";
 import { directions } from "@/lib/listingSpec";
-import { Panel, Field } from "@/components/admin/Ui";
+import { Panel, Field } from "@/components/Ui";
 
 // Nhãn gợi ý cho bảng "Quy mô dự án" (sửa tự do được)
 const DEFAULT_SCALE: ProjectScaleItem[] = [
@@ -800,7 +800,7 @@ export default function ProjectForm({
 const inputCls =
   "h-10 w-full rounded-lg border border-cvr-line bg-white px-3 text-sm text-cvr-ink placeholder-cvr-faint outline-none transition focus:border-cvr-ink";
 
-// Card + Field đã gom về @/components/admin/Ui (dùng chung cho cả khu quản trị).
+// Card + Field đã gom về @/components/Ui (dùng chung cho cả khu quản trị).
 
 function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (

@@ -7,7 +7,7 @@ import { asset } from "@/lib/asset";
 import { homeBanners, projectBanners, type Banner } from "@/lib/banners";
 import { landings as LANDINGS_DEFAULT, type Landing } from "@/lib/landings";
 import { FOOTER_DEFAULT, HOME_AD_DEFAULT, HOME_AREAS_DEFAULT, ABOUT_DEFAULT, type FooterData, type HomeAdData, type AreaCard, type AboutData } from "@/lib/siteContent";
-import { Panel, Field } from "@/components/admin/Ui";
+import { Panel, Field } from "@/components/Ui";
 
 // Quản lý NỘI DUNG TĨNH trang web (chữ + ảnh) — Hero trang chủ + Footer công ty.
 // Lưu vào bảng site_content (key: 'hero_home', 'footer'). Web đọc no-store → hiện ngay.
@@ -368,7 +368,7 @@ function SaveButton({ saving, onClick }: { saving: boolean; onClick: () => void 
   );
 }
 
-// Card + Field đã gom về @/components/admin/Ui. `note=` cũ → `desc=` của Panel
+// Card + Field đã gom về @/components/Ui. `note=` cũ → `desc=` của Panel
 // (chữ to hơn một bậc, dễ đọc hơn, và giống mọi trang admin khác).
 
 // ── Trình sửa 1 Landing page (info + số liệu + khối + thư viện ảnh) ──

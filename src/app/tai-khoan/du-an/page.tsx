@@ -73,7 +73,7 @@ function NoiDung() {
     return (
       <div className="space-y-4">
         <div className="rounded-2xl border border-cvr-line bg-white p-6 shadow-lux">
-          <h1 className="text-xl font-semibold tracking-tight text-cvr-ink">Đăng dự án</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-cvr-ink">Đăng dự án</h1>
           <p className="mt-2 text-sm text-cvr-body">
             Khu vực này dành riêng cho <strong>Chủ đầu tư</strong> và <strong>Công ty phân phối</strong>.
             Gửi yêu cầu để Coastal Land liên hệ xác minh và mở quyền đăng dự án cho bạn.
@@ -107,7 +107,7 @@ function NoiDung() {
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight text-cvr-ink">Dự án của bạn</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-cvr-ink">Dự án của bạn</h1>
           <p className="mt-1 text-sm text-cvr-muted">Đăng và theo dõi trạng thái duyệt dự án.</p>
         </div>
         <Link

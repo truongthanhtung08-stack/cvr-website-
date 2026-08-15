@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { Profile, Role, Status } from "@/lib/useProfile";
-import { Panel, Field } from "@/components/admin/Ui";
+import { Panel, Field } from "@/components/Ui";
 
 export default function CustomerDetailPage() {
   const params = useParams<{ id: string }>();
@@ -148,7 +148,7 @@ export default function CustomerDetailPage() {
 
 const inp = "h-10 w-full rounded-lg border border-cvr-line bg-white px-3 text-sm text-cvr-ink outline-none focus:border-cvr-ink";
 
-// Section + Field đã gom về @/components/admin/Ui.
+// Section + Field đã gom về @/components/Ui.
 function Grid({ children }: { children: React.ReactNode }) {
   return <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">{children}</div>;
 }

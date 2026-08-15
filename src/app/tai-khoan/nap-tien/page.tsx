@@ -82,7 +82,7 @@ function TopUpForm() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight text-cvr-ink">Nạp tiền vào tài khoản</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-cvr-ink">Nạp tiền vào tài khoản</h1>
         <p className="mt-1 text-sm text-cvr-muted">
           Số dư dùng để thanh toán phí đăng tin, đẩy tin và quảng cáo trên Coastal Land.
         </p>

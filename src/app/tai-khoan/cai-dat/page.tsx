@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useProfile } from "@/lib/useProfile";
+import { PageHeader } from "@/components/Ui";
 
 // Cài đặt tài khoản: thành viên tự sửa thông tin cơ bản của mình
 // (các cột đặc quyền role/status/plan/quota bị DB chặn — chỉ admin đổi được).
@@ -45,6 +46,7 @@ export default function AccountSettingsPage() {
 
   return (
     <div className="space-y-5">
+      <PageHeader title="Cài đặt tài khoản" desc="Sửa thông tin cá nhân của bạn." />
       <form onSubmit={onSubmit} className="rounded-2xl border border-cvr-line bg-white p-5 shadow-sm sm:p-6">
         <h2 className="text-base font-semibold text-cvr-ink">Thông tin cá nhân</h2>
 

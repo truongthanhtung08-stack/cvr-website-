@@ -33,7 +33,7 @@ export default function DangDuAnKhachPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight text-cvr-ink">Đăng dự án mới</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-cvr-ink">Đăng dự án mới</h1>
         <p className="mt-1 text-sm text-cvr-muted">
           Điền đầy đủ rồi bấm <strong>Gửi duyệt</strong> — quản trị viên duyệt xong dự án sẽ hiện trên trang Dự án.
         </p>

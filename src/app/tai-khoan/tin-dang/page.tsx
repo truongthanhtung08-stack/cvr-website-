@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { PageHeader } from "@/components/Ui";
 import {
   type ListingRow,
   type ListingStatus,
@@ -68,6 +69,7 @@ export default function MyListingsPage() {
 
   return (
     <div className="space-y-4">
+      <PageHeader title="Tin đã đăng" desc="Tin của bạn ở mọi trạng thái — kể cả nháp và tin đang chờ duyệt." />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap gap-2">
           {tabs.map((t) => (

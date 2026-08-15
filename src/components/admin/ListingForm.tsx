@@ -12,7 +12,7 @@ import { uploadImageFile } from "@/lib/uploadImage";
 import { soAnhToiDa } from "@/lib/billing";
 import { useBilling } from "@/lib/useBilling";
 import { getTier } from "@/lib/packages";
-import { Panel, Field } from "@/components/admin/Ui";
+import { Panel, Field } from "@/components/Ui";
 import {
   type ListingRow,
   type ListingPurpose,
@@ -605,7 +605,7 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
 const inputCls =
   "h-10 w-full rounded-lg border border-cvr-line bg-white px-3 text-sm text-cvr-ink placeholder-cvr-faint outline-none transition focus:border-cvr-ink";
 
-// Card + Field đã gom về @/components/admin/Ui (dùng chung cho cả khu quản trị).
+// Card + Field đã gom về @/components/Ui (dùng chung cho cả khu quản trị).
 
 function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (

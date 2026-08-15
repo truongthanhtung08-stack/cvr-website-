@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import ImagePicker from "@/components/admin/ImagePicker";
 import ContentEditor from "@/components/admin/ContentEditor";
 import { isVideoUrl } from "@/lib/media";
-import { Panel, Field } from "@/components/admin/Ui";
+import { Panel, Field } from "@/components/Ui";
 import {
   type ArticleRow,
   type ContentStatus,
@@ -199,4 +199,4 @@ export default function ArticleForm({ initial }: { initial?: ArticleRow }) {
 const inputCls =
   "h-10 w-full rounded-lg border border-cvr-line bg-white px-3 text-sm text-cvr-ink placeholder-cvr-faint outline-none transition focus:border-cvr-ink";
 
-// Card + Field đã gom về @/components/admin/Ui (dùng chung cho cả khu quản trị).
+// Card + Field đã gom về @/components/Ui (dùng chung cho cả khu quản trị).

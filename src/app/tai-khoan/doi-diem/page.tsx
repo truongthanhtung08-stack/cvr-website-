@@ -30,7 +30,7 @@ export default function RedeemPointsPage() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight text-cvr-ink">Đổi điểm thưởng</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-cvr-ink">Đổi điểm thưởng</h1>
         <p className="mt-1 text-sm text-cvr-muted">
           1 điểm = {vnd(cfg.redeemRate)} · đổi tối thiểu {cfg.minRedeem} điểm.
         </p>
