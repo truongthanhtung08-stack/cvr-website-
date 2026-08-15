@@ -7,6 +7,7 @@ import { asset } from "@/lib/asset";
 import { homeBanners, projectBanners, type Banner } from "@/lib/banners";
 import { landings as LANDINGS_DEFAULT, type Landing } from "@/lib/landings";
 import { FOOTER_DEFAULT, HOME_AD_DEFAULT, HOME_AREAS_DEFAULT, ABOUT_DEFAULT, type FooterData, type HomeAdData, type AreaCard, type AboutData } from "@/lib/siteContent";
+import { Panel, Field } from "@/components/admin/Ui";
 
 // Quản lý NỘI DUNG TĨNH trang web (chữ + ảnh) — Hero trang chủ + Footer công ty.
 // Lưu vào bảng site_content (key: 'hero_home', 'footer'). Web đọc no-store → hiện ngay.
@@ -119,7 +120,7 @@ export default function AdminSiteContentPage() {
   if (loading) return <p className="text-sm text-cvr-muted">Đang tải…</p>;
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="max-w-4xl space-y-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-cvr-ink">Nội dung web</h1>
         <p className="mt-1 text-sm text-cvr-muted">Sửa ảnh &amp; chữ phần cứng của web. Bấm <strong>Lưu</strong> ở từng khối → web cập nhật ngay.</p>
@@ -130,7 +131,7 @@ export default function AdminSiteContentPage() {
       )}
 
       {/* HERO TRANG CHỦ */}
-      <Card title="Hero trang chủ (3 slide)" note="Mỗi slide cần 2 ảnh: MÁY TÍNH 2560×1280 (2:1) và ĐIỆN THOẠI 1200×480 (2.5:1)">
+      <Panel title="Hero trang chủ (3 slide)" desc="Mỗi slide cần 2 ảnh: MÁY TÍNH 2560×1280 (2:1) và ĐIỆN THOẠI 1200×480 (2.5:1)">
         <div className="space-y-4">
           {heroSlides.map((s, i) => (
             <div key={i} className="rounded-xl border border-cvr-line p-4">
@@ -163,10 +164,10 @@ export default function AdminSiteContentPage() {
           ))}
         </div>
         <SaveButton saving={savingHero} onClick={() => saveBlock("hero_home", { slides: heroSlides }, setSavingHero)} />
-      </Card>
+      </Panel>
 
       {/* BẤT ĐỘNG SẢN THEO KHU VỰC (trang chủ) */}
-      <Card title="Bất động sản theo khu vực (trang chủ)" note="5 ô · ô ĐẦU hiển thị LỚN (địa điểm nổi bật). Ảnh dọc, nên 800 × 800 px">
+      <Panel title="Bất động sản theo khu vực (trang chủ)" desc="5 ô · ô ĐẦU hiển thị LỚN (địa điểm nổi bật). Ảnh dọc, nên 800 × 800 px">
         <div className="space-y-4">
           {homeAreas.map((a, i) => (
             <div key={i} className="rounded-xl border border-cvr-line p-4">
@@ -200,10 +201,10 @@ export default function AdminSiteContentPage() {
           <button type="button" onClick={addArea} className={addBtnCls}>+ Thêm khu vực</button>
         </div>
         <SaveButton saving={savingAreas} onClick={() => saveBlock("home_areas", { items: homeAreas }, setSavingAreas)} />
-      </Card>
+      </Panel>
 
       {/* FOOTER */}
-      <Card title="Footer — thông tin công ty" note="3 ảnh minh hoạ tỷ lệ 4:3 · nên 800 × 600 px">
+      <Panel title="Footer — thông tin công ty" desc="3 ảnh minh hoạ tỷ lệ 4:3 · nên 800 × 600 px">
         <div className="space-y-4">
           <Field label="Dòng đậm (tagline)"><input value={footer.tagline} onChange={(e) => setFooter({ ...footer, tagline: e.target.value })} className={inputCls} /></Field>
           <Field label="Giới thiệu ngắn"><textarea value={footer.description} onChange={(e) => setFooter({ ...footer, description: e.target.value })} rows={2} className={`${inputCls} h-auto py-2.5`} /></Field>
@@ -233,10 +234,10 @@ export default function AdminSiteContentPage() {
           </div>
         </div>
         <SaveButton saving={savingFooter} onClick={() => saveBlock("footer", footer, setSavingFooter)} />
-      </Card>
+      </Panel>
 
       {/* 2 BANNER CUỐI TRANG CHỦ */}
-      <Card title="2 banner cuối trang chủ" note="Banner 'Đăng tin' (ảnh ngang 3.5:1) + Banner 'Ứng dụng' (ảnh iPhone nền trong · QR)">
+      <Panel title="2 banner cuối trang chủ" desc="Banner 'Đăng tin' (ảnh ngang 3.5:1) + Banner 'Ứng dụng' (ảnh iPhone nền trong · QR)">
         <div className="space-y-4">
           <div className="rounded-xl border border-cvr-line p-4">
             <p className="mb-3 text-sm font-semibold text-cvr-ink">Banner 1 — Đăng tin (nền sáng)</p>
@@ -268,10 +269,10 @@ export default function AdminSiteContentPage() {
           </div>
         </div>
         <SaveButton saving={savingAd} onClick={() => saveBlock("home_ad", homeAd, setSavingAd)} />
-      </Card>
+      </Panel>
 
       {/* BANNER TRANG DỰ ÁN */}
-      <Card title="Banner trang Dự án (/du-an)" note="Ảnh ngang 3:1 · nên 1920 × 640 px · nhiều slide sẽ tự chạy">
+      <Panel title="Banner trang Dự án (/du-an)" desc="Ảnh ngang 3:1 · nên 1920 × 640 px · nhiều slide sẽ tự chạy">
         <div className="space-y-4">
           {projBanners.map((s, i) => (
             <div key={i} className="rounded-xl border border-cvr-line p-4">
@@ -290,10 +291,10 @@ export default function AdminSiteContentPage() {
           <button type="button" onClick={addProj} className={addBtnCls}>+ Thêm slide</button>
         </div>
         <SaveButton saving={savingProj} onClick={() => saveBlock("banner_projects", { slides: projBanners }, setSavingProj)} />
-      </Card>
+      </Panel>
 
       {/* LANDING PAGES */}
-      <Card title="Landing pages (/landing/…)" note="Trang đích chạy từ banner Hero. Slug = đoạn cuối đường dẫn, vd 've-coastal-land' → /landing/ve-coastal-land">
+      <Panel title="Landing pages (/landing/…)" desc="Trang đích chạy từ banner Hero. Slug = đoạn cuối đường dẫn, vd 've-coastal-land' → /landing/ve-coastal-land">
         <div className="space-y-4">
           {landings.map((l, i) => (
             <LandingEditor key={i} value={l} index={i} onChange={(patch) => setLd(i, patch)} onDelete={() => delLd(i)} />
@@ -301,13 +302,13 @@ export default function AdminSiteContentPage() {
           <button type="button" onClick={addLd} className={addBtnCls}>+ Thêm landing</button>
         </div>
         <SaveButton saving={savingLanding} onClick={() => saveBlock("landings", { items: landings }, setSavingLanding)} />
-      </Card>
+      </Panel>
 
       {/* TRANG GIỚI THIỆU CÔNG TY */}
-      <Card title="Trang Giới thiệu công ty (/gioi-thieu)" note="Toàn bộ nội dung trang: câu chuyện · tầm nhìn/sứ mệnh · giá trị cốt lõi · số liệu · thị trường · CTA">
+      <Panel title="Trang Giới thiệu công ty (/gioi-thieu)" desc="Toàn bộ nội dung trang: câu chuyện · tầm nhìn/sứ mệnh · giá trị cốt lõi · số liệu · thị trường · CTA">
         <AboutEditor value={about} onChange={(patch) => setAbout((a) => ({ ...a, ...patch }))} />
         <SaveButton saving={savingAbout} onClick={() => saveBlock("about", about, setSavingAbout)} />
-      </Card>
+      </Panel>
 
       <p className="text-xs text-cvr-faint">
         Các khối khác (khu vực, tin tức, banner, giới thiệu…) sẽ được thêm vào đây theo cùng cách. Ảnh tải lên lưu ở Supabase, không đụng GitHub.
@@ -367,25 +368,8 @@ function SaveButton({ saving, onClick }: { saving: boolean; onClick: () => void 
   );
 }
 
-function Card({ title, note, children }: { title: string; note?: string; children: React.ReactNode }) {
-  return (
-    <div className="rounded-2xl border border-cvr-line bg-white p-4 shadow-lux">
-      <h2 className="text-base font-semibold text-cvr-ink">{title}</h2>
-      {note && <p className="mb-4 mt-0.5 text-xs text-cvr-faint">{note}</p>}
-      {!note && <div className="mb-4" />}
-      {children}
-    </div>
-  );
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label className="block">
-      <span className="mb-1.5 block text-sm font-medium text-cvr-body">{label}</span>
-      {children}
-    </label>
-  );
-}
+// Card + Field đã gom về @/components/admin/Ui. `note=` cũ → `desc=` của Panel
+// (chữ to hơn một bậc, dễ đọc hơn, và giống mọi trang admin khác).
 
 // ── Trình sửa 1 Landing page (info + số liệu + khối + thư viện ảnh) ──
 function LandingEditor({ value: l, index, onChange, onDelete }: {

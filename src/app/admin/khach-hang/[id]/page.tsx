@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { Profile, Role, Status } from "@/lib/useProfile";
+import { Panel, Field } from "@/components/admin/Ui";
 
 export default function CustomerDetailPage() {
   const params = useParams<{ id: string }>();
@@ -78,7 +79,7 @@ export default function CustomerDetailPage() {
     );
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="max-w-3xl">
       <Link href="/admin/khach-hang" className="text-sm text-cvr-muted hover:text-cvr-ink">← Danh sách khách hàng</Link>
       <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold tracking-tight text-cvr-ink">
@@ -104,7 +105,7 @@ export default function CustomerDetailPage() {
       )}
 
       <div className="mt-5 space-y-5">
-        <Section title="Thông tin cơ bản">
+        <Panel title="Thông tin cơ bản">
           <Grid>
             <Field label="Họ và tên"><input value={fullName} onChange={(e) => setFullName(e.target.value)} className={inp} /></Field>
             <Field label="Số điện thoại"><input value={phone} onChange={(e) => setPhone(e.target.value)} className={inp} /></Field>
@@ -112,9 +113,9 @@ export default function CustomerDetailPage() {
             <Field label="Khu vực"><input value={city} onChange={(e) => setCity(e.target.value)} placeholder="Đà Nẵng / Huế…" className={inp} /></Field>
             <Field label="Công ty / Sàn"><input value={companyName} onChange={(e) => setCompanyName(e.target.value)} className={inp} /></Field>
           </Grid>
-        </Section>
+        </Panel>
 
-        <Section title="Phân quyền & gói">
+        <Panel title="Phân quyền & gói">
           <Grid>
             <Field label="Vai trò">
               <select value={role} onChange={(e) => setRole(e.target.value as Role)} className={inp}>
@@ -134,7 +135,7 @@ export default function CustomerDetailPage() {
             <Field label="Gói (slug)"><input value={plan} onChange={(e) => setPlan(e.target.value)} placeholder="vd: moi-gioi-ca-nhan" className={inp} /></Field>
             <Field label="Hạn mức tin free"><input type="number" value={freeQuota} onChange={(e) => setFreeQuota(parseInt(e.target.value || "0", 10))} className={inp} /></Field>
           </Grid>
-        </Section>
+        </Panel>
 
         <button onClick={() => save()} disabled={saving}
           className="rounded-lg bg-cvr-ink px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-cvr-ink/90 disabled:opacity-60">
@@ -147,22 +148,7 @@ export default function CustomerDetailPage() {
 
 const inp = "h-10 w-full rounded-lg border border-cvr-line bg-white px-3 text-sm text-cvr-ink outline-none focus:border-cvr-ink";
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <section className="rounded-2xl border border-cvr-line bg-white p-4 shadow-lux">
-      <h2 className="mb-4 text-base font-semibold text-cvr-ink">{title}</h2>
-      {children}
-    </section>
-  );
-}
+// Section + Field đã gom về @/components/admin/Ui.
 function Grid({ children }: { children: React.ReactNode }) {
   return <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">{children}</div>;
-}
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label className="block">
-      <span className="mb-1.5 block text-sm font-medium text-cvr-body">{label}</span>
-      {children}
-    </label>
-  );
 }

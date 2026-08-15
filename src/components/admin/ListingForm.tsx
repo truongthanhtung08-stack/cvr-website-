@@ -12,6 +12,7 @@ import { uploadImageFile } from "@/lib/uploadImage";
 import { soAnhToiDa } from "@/lib/billing";
 import { useBilling } from "@/lib/useBilling";
 import { getTier } from "@/lib/packages";
+import { Panel, Field } from "@/components/admin/Ui";
 import {
   type ListingRow,
   type ListingPurpose,
@@ -243,7 +244,7 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
   return (
     <form onSubmit={(e) => { e.preventDefault(); save(false); }} className="space-y-4">
       {/* Mục đích + Loại hình + Hạng (trạng thái do 2 nút Lưu nháp / Đăng tin quyết định) */}
-      <Card title="Phân loại">
+      <Panel title="Phân loại">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <Field label="Mục đích">
             <select value={purpose} onChange={(e) => { setPurpose(e.target.value as ListingPurpose); setType(""); }} className={inputCls}>
@@ -272,10 +273,10 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
             </select>
           </Field>
         </div>
-      </Card>
+      </Panel>
 
       {/* Nội dung tin */}
-      <Card title="Nội dung">
+      <Panel title="Nội dung">
         <div className="space-y-4">
           <Field label="Tiêu đề tin (bắt buộc — tối thiểu 30 ký tự, nên có tên quận/phường)">
             <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="VD: Bán căn hộ 2PN view sông Hàn, Hải Châu, Đà Nẵng" className={inputCls} />
@@ -284,10 +285,10 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
             <ContentEditor value={description} onChange={setDescription} placeholder="Mô tả chi tiết: vị trí, nội thất, pháp lý, tiện ích xung quanh…" />
           </Field>
         </div>
-      </Card>
+      </Panel>
 
       {/* Giá & thông số */}
-      <Card title="Giá & thông số">
+      <Panel title="Giá & thông số">
         {/* Giá + Giá thỏa thuận */}
         <Field label={purpose === "thue" ? "Giá thuê (TRIỆU/tháng)" : "Giá bán (TỶ đồng)"}>
           <div className="flex flex-wrap items-center gap-3">
@@ -321,12 +322,12 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
             <input value={baths} onChange={(e) => setBaths(e.target.value)} inputMode="numeric" placeholder="VD: 2" className={inputCls} />
           </Field>
         </div>
-      </Card>
+      </Panel>
 
       {/* Vị trí — 3 cấp CHỌN từ danh sách, liên động: Tỉnh → Quận/Huyện → Phường/Xã.
           Chọn tỉnh mới → xoá quận + phường cũ; chọn quận mới → xoá phường cũ.
           Tỉnh chưa có dữ liệu quận/huyện (ngoài 8 tỉnh lõi) → cho gõ tay để không kẹt. */}
-      <Card title="Vị trí">
+      <Panel title="Vị trí">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <Field label="Hệ địa chỉ">
             <div className="inline-flex rounded-lg border border-cvr-line bg-white p-1">
@@ -410,10 +411,10 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
         <p className="mt-3 text-xs text-cvr-faint">
           Chọn theo danh sách để tin hiện đúng khi lọc khu vực. Tỉnh chưa có sẵn quận/huyện thì gõ tay.
         </p>
-      </Card>
+      </Panel>
 
       {/* Đặc điểm theo loại hình (động) + Hướng + Pháp lý + Mức nội thất */}
-      <Card title={`Đặc điểm bất động sản${type ? ` — ${type}` : ""}`}>
+      <Panel title={`Đặc điểm bất động sản${type ? ` — ${type}` : ""}`}>
         {!type && <p className="mb-3 text-sm text-cvr-muted">Chọn loại hình ở trên để hiện đúng bộ đặc điểm.</p>}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {specFields.map((f) => (
@@ -447,19 +448,19 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
             </select>
           </Field>
         </div>
-      </Card>
+      </Panel>
 
       {/* Nội thất — tick mục có sẵn */}
-      <Card title="Nội thất bàn giao (tick mục có)">
+      <Panel title="Nội thất bàn giao (tick mục có)">
         <div className="flex flex-wrap gap-2">
           {interiorItems.map((it) => (
             <Chip key={it} active={interior.includes(it)} onClick={() => toggle(interior, setInterior, it)}>{it}</Chip>
           ))}
         </div>
-      </Card>
+      </Panel>
 
       {/* Tiện ích — tick mục có sẵn, theo nhóm */}
-      <Card title="Tiện ích (tick mục có)">
+      <Panel title="Tiện ích (tick mục có)">
         <div className="space-y-4">
           {amenityGroups.map((g) => (
             <div key={g.group}>
@@ -472,20 +473,20 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
             </div>
           ))}
         </div>
-      </Card>
+      </Panel>
 
       {/* Ảnh — tải từ máy / dán link · ảnh đầu là ảnh đại diện */}
-      <Card title="Ảnh tin đăng">
+      <Panel title="Ảnh tin đăng">
         <ImagePicker
           value={images}
           onChange={setImages}
           maxImages={soAnhToiDa(billing, tier)}
           tierName={getTier(tier).name}
         />
-      </Card>
+      </Panel>
 
       {/* Thông tin người đăng — hiện ở khung liên hệ trang chi tiết */}
-      <Card title="Thông tin người đăng / liên hệ">
+      <Panel title="Thông tin người đăng / liên hệ">
         {/* Đăng GIÙM khách: chọn khách hàng → tự điền tên/SĐT của họ */}
         <Field label="Tin này của khách hàng nào (đăng giùm)">
           <select value={ownerId} onChange={(e) => pickOwner(e.target.value)} className={inputCls}>
@@ -539,10 +540,10 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
         <p className="mt-2 text-xs text-cvr-faint">
           Số điện thoại này hiện ở khung liên hệ trang tin, và <strong>nút Zalo tự trỏ tới chính số này</strong>. Bỏ trống → dùng hotline Coastal Land.
         </p>
-      </Card>
+      </Panel>
 
       {/* Tin thuộc dự án nào — nguồn của mục "Tin mua bán liên quan tại dự án …" */}
-      <Card title="Thuộc dự án">
+      <Panel title="Thuộc dự án">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Dự án">
             <select value={projectSlug} onChange={(e) => setProjectSlug(e.target.value)} className={inputCls}>
@@ -557,7 +558,7 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
           Chọn dự án → tin này hiện trong mục “Tin mua bán liên quan tại dự án …” ở trang dự án đó.
           Để trống nếu tin không thuộc dự án nào.
         </p>
-      </Card>
+      </Panel>
 
       {error && (
         <p className="rounded-lg bg-red-50 px-4 py-2.5 text-sm font-medium text-red-700 ring-1 ring-inset ring-red-600/20">{error}</p>
@@ -604,23 +605,7 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
 const inputCls =
   "h-10 w-full rounded-lg border border-cvr-line bg-white px-3 text-sm text-cvr-ink placeholder-cvr-faint outline-none transition focus:border-cvr-ink";
 
-function Card({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="rounded-2xl border border-cvr-line bg-white p-4 shadow-lux">
-      <h2 className="mb-4 text-base font-semibold text-cvr-ink">{title}</h2>
-      {children}
-    </div>
-  );
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label className="block">
-      <span className="mb-1.5 block text-sm font-medium text-cvr-body">{label}</span>
-      {children}
-    </label>
-  );
-}
+// Card + Field đã gom về @/components/admin/Ui (dùng chung cho cả khu quản trị).
 
 function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (

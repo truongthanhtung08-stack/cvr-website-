@@ -106,7 +106,15 @@ type LegacyMemberLevel = MemberLevel & { minSpend?: number };
 
 export function chuanHoaCapHoiVien(levels: LegacyMemberLevel[] | undefined): MemberLevel[] {
   if (!levels?.length) return BILLING_DEFAULT.levels;
-  return levels.map((l) => ({ ...l, minTopup: l.minTopup ?? l.minSpend ?? 0 }));
+  return levels.map((l) => ({
+    ...l,
+    minTopup: l.minTopup ?? l.minSpend ?? 0,
+    // Cấp khởi điểm trước đây từng đặt tên "Đồng" và có thể còn nằm trong bản
+    // admin đã lưu trên Supabase. Đổi ngay khi đọc lên → khách luôn thấy
+    // "Basic", trùng tên với hạng tin, không phải nhớ hai hệ tên.
+    id: l.id === "dong" ? "basic" : l.id,
+    name: l.name?.trim() === "Đồng" ? "Basic" : l.name,
+  }));
 }
 
 export type BillingData = {

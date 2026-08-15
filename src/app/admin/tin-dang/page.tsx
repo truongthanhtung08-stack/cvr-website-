@@ -69,7 +69,7 @@ export default function AdminListingsPage() {
 
   if (dbMissing) {
     return (
-      <div className="mx-auto max-w-2xl">
+      <div className="max-w-2xl">
         <h1 className="text-2xl font-semibold tracking-tight text-cvr-ink">Tin đăng</h1>
         <div className="mt-5 rounded-2xl border border-amber-300 bg-amber-50 p-6">
           <p className="text-sm leading-relaxed text-amber-900">
@@ -84,7 +84,7 @@ export default function AdminListingsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl">
+    <div className="max-w-6xl">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-cvr-ink">Tin đăng</h1>

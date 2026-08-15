@@ -24,6 +24,7 @@ import {
   slugify,
 } from "@/lib/contentAdmin";
 import { directions } from "@/lib/listingSpec";
+import { Panel, Field } from "@/components/admin/Ui";
 
 // Nhãn gợi ý cho bảng "Quy mô dự án" (sửa tự do được)
 const DEFAULT_SCALE: ProjectScaleItem[] = [
@@ -273,7 +274,7 @@ export default function ProjectForm({
 
   return (
     <form onSubmit={(e) => { e.preventDefault(); save(false); }} className="space-y-4">
-      <Card title="Thông tin dự án">
+      <Panel title="Thông tin dự án">
         <div className="space-y-4">
           <Field label="Tên dự án">
             <input value={name} onChange={(e) => onNameChange(e.target.value)} placeholder="VD: Sun Cosmo Residence" className={inputCls} />
@@ -313,10 +314,10 @@ export default function ProjectForm({
             </Field>
           </div>
         </div>
-      </Card>
+      </Panel>
 
       {/* Cấp dự án — quyết định thứ tự trong slide "Dự án nổi bật" ở trang chủ */}
-      <Card title="Cấp dự án (CVR-PJ)">
+      <Panel title="Cấp dự án (CVR-PJ)">
         <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Cấp hiển thị">
             <select value={tier} onChange={(e) => setTier(e.target.value as ProjectTier)} className={inputCls}>
@@ -370,10 +371,10 @@ export default function ProjectForm({
             </p>
           </div>
         )}
-      </Card>
+      </Panel>
 
       {/* Thông tin liên hệ dự án — BỎ TRỐNG thì trang dự án không hiện khối liên hệ */}
-      <Card title="Thông tin liên hệ">
+      <Panel title="Thông tin liên hệ">
         <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-3">
           <Field label="Người phụ trách">
             <input value={contactName} onChange={(e) => setContactName(e.target.value)} placeholder="VD: Nguyễn Văn A" className={inputCls} />
@@ -388,20 +389,20 @@ export default function ProjectForm({
         <p className="mt-2 text-xs text-cvr-faint">
           Để trống toàn bộ → trang dự án KHÔNG hiện khối liên hệ (không hiện số điện thoại mặc định nào).
         </p>
-      </Card>
+      </Panel>
 
       {/* Mục đích: dự án bán / cho thuê — quyết định tab tin liên quan trên web */}
-      <Card title="Mục đích">
+      <Panel title="Mục đích">
         <div className="flex flex-wrap gap-2">
           <Chip active={purposes.includes("ban")} onClick={() => togglePurpose("ban")}>Mua bán</Chip>
           <Chip active={purposes.includes("thue")} onClick={() => togglePurpose("thue")}>Cho thuê</Chip>
         </div>
         <p className="mt-2 text-xs text-cvr-faint">Chọn 1 hoặc cả 2 — hiện huy hiệu trên trang dự án và tách tab “Tin bán / cho thuê” liên quan.</p>
-      </Card>
+      </Panel>
 
       {/* Vị trí — GIỐNG HỆT form Tin đăng: chọn hệ địa chỉ MỚI (sau sáp nhập, bỏ cấp
           Quận/Huyện) hoặc CŨ, rồi chọn liên động Tỉnh → (Quận/Huyện) → Phường/Xã. */}
-      <Card title="Vị trí">
+      <Panel title="Vị trí">
         <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-3">
           <Field label="Hệ địa chỉ">
             <div className="inline-flex rounded-lg border border-cvr-line bg-white p-1">
@@ -481,10 +482,10 @@ export default function ProjectForm({
           Hệ MỚI (sau sáp nhập) bỏ cấp Quận/Huyện: Tỉnh/Thành → thẳng Phường/Xã.
           Địa chỉ đầy đủ hiện trên web = Địa chỉ cụ thể + Phường/Xã + Tỉnh/Thành.
         </p>
-      </Card>
+      </Panel>
 
       {/* Tiện ích xung quanh — hiện dưới bản đồ (sân bay, trường, siêu thị… + khoảng cách) */}
-      <Card title="Tiện ích xung quanh (dưới bản đồ)">
+      <Panel title="Tiện ích xung quanh (dưới bản đồ)">
         <div className="space-y-2.5">
           {places.map((row, i) => (
             <div key={i} className="flex flex-wrap items-center gap-2.5 sm:flex-nowrap">
@@ -519,18 +520,18 @@ export default function ProjectForm({
           + Thêm tiện ích xung quanh
         </button>
         <p className="mt-2 text-xs text-cvr-faint">Chỉ dòng có Tên mới hiện. Nhập khoảng cách để người xem dễ hình dung (kiểu Batdongsan).</p>
-      </Card>
+      </Panel>
 
-      <Card title="Tổng quan dự án — mỗi ĐOẠN xuống 1 dòng">
+      <Panel title="Tổng quan dự án — mỗi ĐOẠN xuống 1 dòng">
         <ContentEditor
           value={overview}
           onChange={setOverview}
           placeholder={"Giới thiệu vị trí, chủ đầu tư…\nĐiểm nổi bật về thiết kế, tiện ích…\nPhù hợp với ai, chính sách bán hàng…"}
         />
-      </Card>
+      </Panel>
 
       {/* Bảng quy mô: cặp Nhãn — Giá trị (chỉ lưu dòng có đủ cả 2) */}
-      <Card title="Quy mô dự án (bảng thông số)">
+      <Panel title="Quy mô dự án (bảng thông số)">
         <div className="space-y-2.5">
           {scale.map((row, i) => (
             <div key={i} className="flex items-center gap-2.5">
@@ -565,10 +566,10 @@ export default function ProjectForm({
           + Thêm dòng
         </button>
         <p className="mt-2 text-xs text-cvr-faint">Chỉ dòng có đủ Nhãn + Giá trị mới hiện trên web.</p>
-      </Card>
+      </Panel>
 
       {/* Tiện ích: gõ rồi Enter/Thêm — bấm chip để xoá */}
-      <Card title="Tiện ích dự án">
+      <Panel title="Tiện ích dự án">
         {amenities.length > 0 && (
           <div className="mb-3 flex flex-wrap gap-2">
             {amenities.map((a) => (
@@ -600,10 +601,10 @@ export default function ProjectForm({
             Thêm
           </button>
         </div>
-      </Card>
+      </Panel>
 
       {/* Mặt bằng dự án — mỗi mặt bằng 1 ảnh + chú thích (tháp/tầng/loại căn) */}
-      <Card title="Mặt bằng dự án (từng tháp / tầng / loại căn)">
+      <Panel title="Mặt bằng dự án (từng tháp / tầng / loại căn)">
         <div className="space-y-3">
           {floorPlans.map((f, i) => (
             <div key={i} className="rounded-xl border border-cvr-line p-3">
@@ -654,10 +655,10 @@ export default function ProjectForm({
           + Thêm mặt bằng
         </button>
         <p className="mt-2 text-xs text-cvr-faint">Tải ảnh mặt bằng từng tháp/tầng/loại căn kèm chú thích rõ ràng. Người xem bấm ảnh để phóng to.</p>
-      </Card>
+      </Panel>
 
       {/* Bảng giá — bật/tắt hiện giá cụ thể; cấu trúc Loại căn – Diện tích – Hướng – Giá */}
-      <Card title="Bảng giá dự án">
+      <Panel title="Bảng giá dự án">
         <div className="mb-3 flex flex-wrap items-center gap-4">
           <label className="flex items-center gap-2 text-sm text-cvr-body">
             <input type="radio" name="priceMode" checked={priceMode === "hidden"} onChange={() => setPriceMode("hidden")} className="h-4 w-4" />
@@ -699,10 +700,10 @@ export default function ProjectForm({
         <p className="mt-2 text-xs text-cvr-faint">
           Chọn <strong>“Ẩn giá”</strong> → mọi dòng hiện “Liên hệ”. Chọn <strong>“Hiện giá cụ thể”</strong> → dòng nào có nhập giá sẽ hiện giá, bỏ trống vẫn “Liên hệ”.
         </p>
-      </Card>
+      </Panel>
 
       {/* Chủ đầu tư — thông tin mở rộng (tên đã nhập ở mục Thông tin dự án) */}
-      <Card title="Chủ đầu tư">
+      <Panel title="Chủ đầu tư">
         <div className="flex items-start gap-4">
           <div className="shrink-0">
             {devLogo ? (
@@ -736,16 +737,16 @@ export default function ProjectForm({
           </div>
         </div>
         <p className="mt-2 text-xs text-cvr-faint">Tên chủ đầu tư lấy ở mục “Thông tin dự án”. Phần này bổ sung logo &amp; giới thiệu để mục Chủ đầu tư trên web chuyên nghiệp hơn.</p>
-      </Card>
+      </Panel>
 
-      <Card title="Ảnh & video dự án (ảnh đầu = ảnh đại diện)">
+      <Panel title="Ảnh & video dự án (ảnh đầu = ảnh đại diện)">
         <ImagePicker
           value={images}
           onChange={setImages}
           maxImages={soAnhDuAnToiDa(billing, tier)}
           tierName={goiDuAn(billing).find((p) => p.tierId === tier)?.name}
         />
-      </Card>
+      </Panel>
 
       {error && (
         <p className="rounded-lg bg-red-50 px-4 py-2.5 text-sm font-medium text-red-700 ring-1 ring-inset ring-red-600/20">{error}</p>
@@ -799,23 +800,7 @@ export default function ProjectForm({
 const inputCls =
   "h-10 w-full rounded-lg border border-cvr-line bg-white px-3 text-sm text-cvr-ink placeholder-cvr-faint outline-none transition focus:border-cvr-ink";
 
-function Card({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="rounded-2xl border border-cvr-line bg-white p-4 shadow-lux">
-      <h2 className="mb-4 text-base font-semibold text-cvr-ink">{title}</h2>
-      {children}
-    </div>
-  );
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label className="block">
-      <span className="mb-1.5 block text-sm font-medium text-cvr-body">{label}</span>
-      {children}
-    </label>
-  );
-}
+// Card + Field đã gom về @/components/admin/Ui (dùng chung cho cả khu quản trị).
 
 function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (

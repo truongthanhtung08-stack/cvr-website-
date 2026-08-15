@@ -16,6 +16,7 @@ import {
   type PromoAudience,
 } from "@/lib/billing";
 import { getTier, type TierId } from "@/lib/packages";
+import { Panel, Field as UiField } from "@/components/admin/Ui";
 
 // ============================================================================
 // ADMIN — GIÁ & KHUYẾN MÃI (chủ dự án tự quản lý, không cần sửa code)
@@ -496,21 +497,8 @@ function PointsTab({ data, setData }: { data: BillingData; setData: (d: BillingD
 // ── Thành phần dùng chung ───────────────────────────────────────────────────
 const inputCls = "h-10 w-full rounded-lg border border-cvr-line px-3 text-sm text-cvr-ink outline-none focus:border-cvr-ink";
 
-function Panel({ title, desc, children }: { title: string; desc?: string; children: React.ReactNode }) {
-  return (
-    <section className="rounded-2xl border border-cvr-line bg-white p-4 shadow-sm">
-      <h2 className="text-base font-semibold text-cvr-ink">{title}</h2>
-      {desc && <p className="mb-3 mt-1 text-sm text-cvr-muted">{desc}</p>}
-      {children}
-    </section>
-  );
-}
-
+// Panel đã gom về @/components/admin/Ui. Riêng bảng giá dùng nhãn DÀY ĐẶC
+// (nhiều cột trên một hàng) nên giữ biến thể `nho` của Field dùng chung.
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label className="block">
-      <span className="mb-1.5 block text-xs font-medium text-cvr-muted">{label}</span>
-      {children}
-    </label>
-  );
+  return <UiField nho label={label}>{children}</UiField>;
 }

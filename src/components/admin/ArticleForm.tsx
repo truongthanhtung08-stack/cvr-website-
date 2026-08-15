@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import ImagePicker from "@/components/admin/ImagePicker";
 import ContentEditor from "@/components/admin/ContentEditor";
 import { isVideoUrl } from "@/lib/media";
+import { Panel, Field } from "@/components/admin/Ui";
 import {
   type ArticleRow,
   type ContentStatus,
@@ -106,7 +107,7 @@ export default function ArticleForm({ initial }: { initial?: ArticleRow }) {
 
   return (
     <form onSubmit={(e) => { e.preventDefault(); save(false); }} className="space-y-4">
-      <Card title="Nội dung bài viết">
+      <Panel title="Nội dung bài viết">
         <div className="space-y-4">
           <Field label="Tiêu đề bài viết">
             <input value={title} onChange={(e) => onTitleChange(e.target.value)} placeholder="VD: Toàn cảnh thị trường BĐS Đà Nẵng cuối 2026" className={inputCls} />
@@ -153,11 +154,11 @@ export default function ArticleForm({ initial }: { initial?: ArticleRow }) {
             <ContentEditor value={content} onChange={setContent} placeholder={"Đoạn mở đầu…\nĐoạn tiếp theo…\nĐoạn kết…"} />
           </Field>
         </div>
-      </Card>
+      </Panel>
 
-      <Card title="Ảnh bài viết (ảnh đầu = ảnh đại diện)">
+      <Panel title="Ảnh bài viết (ảnh đầu = ảnh đại diện)">
         <ImagePicker value={images} onChange={setImages} />
-      </Card>
+      </Panel>
 
       {error && (
         <p className="rounded-lg bg-red-50 px-4 py-2.5 text-sm font-medium text-red-700 ring-1 ring-inset ring-red-600/20">{error}</p>
@@ -198,20 +199,4 @@ export default function ArticleForm({ initial }: { initial?: ArticleRow }) {
 const inputCls =
   "h-10 w-full rounded-lg border border-cvr-line bg-white px-3 text-sm text-cvr-ink placeholder-cvr-faint outline-none transition focus:border-cvr-ink";
 
-function Card({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="rounded-2xl border border-cvr-line bg-white p-4 shadow-lux">
-      <h2 className="mb-4 text-base font-semibold text-cvr-ink">{title}</h2>
-      {children}
-    </div>
-  );
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label className="block">
-      <span className="mb-1.5 block text-sm font-medium text-cvr-body">{label}</span>
-      {children}
-    </label>
-  );
-}
+// Card + Field đã gom về @/components/admin/Ui (dùng chung cho cả khu quản trị).

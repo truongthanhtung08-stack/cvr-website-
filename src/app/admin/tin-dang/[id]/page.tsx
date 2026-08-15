@@ -39,7 +39,7 @@ export default function EditListingPage() {
   if (loading) return <p className="text-sm text-cvr-muted">Đang tải…</p>;
   if (!row)
     return (
-      <div className="mx-auto max-w-2xl">
+      <div className="max-w-2xl">
         <p className="text-sm text-cvr-body">Không tìm thấy tin này.</p>
         <Link href="/admin/tin-dang" className="mt-3 inline-block text-sm font-medium text-cvr-blue-ink hover:text-cvr-blue">
           ← Về danh sách tin
@@ -48,7 +48,7 @@ export default function EditListingPage() {
     );
 
   return (
-    <div className="mx-auto max-w-4xl">
+    <div className="max-w-4xl">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-cvr-ink">Sửa tin đăng</h1>

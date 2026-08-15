@@ -6,7 +6,7 @@ import Link from "next/link";
 // từ trình duyệt. Sẽ làm qua một Route Handler/Edge Function ở bước tiếp theo của B3.
 export default function NewCustomerPage() {
   return (
-    <div className="mx-auto max-w-2xl">
+    <div className="max-w-2xl">
       <Link href="/admin/khach-hang" className="text-sm text-cvr-muted hover:text-cvr-ink">← Danh sách khách hàng</Link>
       <h1 className="mt-2 text-2xl font-semibold tracking-tight text-cvr-ink">Tạo khách hàng</h1>
       <div className="mt-5 rounded-2xl border border-cvr-line bg-white p-4 shadow-lux">

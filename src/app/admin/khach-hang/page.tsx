@@ -38,7 +38,7 @@ export default function CustomersPage() {
   }, [rows, q, role, status]);
 
   return (
-    <div className="mx-auto max-w-6xl">
+    <div className="max-w-6xl">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-cvr-ink">Khách hàng</h1>
