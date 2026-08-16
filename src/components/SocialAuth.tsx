@@ -5,8 +5,8 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
 // Đăng nhập/đăng ký bằng mạng xã hội — dùng chung cho /dang-nhap và /dang-ky.
-// Google: chạy thật qua Supabase OAuth (cần bật provider Google trong Supabase).
-// Facebook/Zalo: hiện "Sắp có" — Facebook chờ app Meta duyệt, Zalo làm cùng OTP.
+// Google + Facebook: chạy thật qua Supabase OAuth (đã bật provider trong Supabase).
+// Zalo: chưa có — Supabase không hỗ trợ sẵn, phải tự nối qua Zalo OA (cần ĐKKD).
 export default function SocialAuth() {
   const [notice, setNotice] = useState("");
   const [loading, setLoading] = useState(false);
@@ -45,7 +45,12 @@ export default function SocialAuth() {
     const supabase = createClient();
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
-      options: { redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}` },
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
+        // Xin đúng 2 quyền cơ bản. `email` có thể vẫn TRỐNG nếu người dùng đăng ký
+        // Facebook bằng số điện thoại — cột profiles.email cho phép NULL nên không vỡ.
+        scopes: "email,public_profile",
+      },
     });
     if (error) {
       setLoading(false);
@@ -124,9 +129,11 @@ function GoogleIcon() {
   );
 }
 
+// Xanh Facebook chính thức — đổi từ xám sang xanh khi provider đã bật thật,
+// để nút không còn trông như đang "sắp có".
 function FacebookIcon() {
   return (
-    <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="#9aa0a6" aria-hidden>
+    <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="#1877F2" aria-hidden>
       <path d="M22 12a10 10 0 10-11.56 9.88v-6.99H7.9V12h2.54V9.8c0-2.5 1.49-3.89 3.78-3.89 1.09 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56V12h2.78l-.44 2.89h-2.34v6.99A10 10 0 0022 12z" />
     </svg>
   );
