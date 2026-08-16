@@ -7,6 +7,7 @@ import MobileTabBar from "@/components/MobileTabBar";
 import ScrollTopOnRoute from "@/components/ScrollTopOnRoute";
 import RouteMotion from "@/components/RouteMotion";
 import SiteJsonLd from "@/components/SiteJsonLd";
+import PwaRegister from "@/components/PwaRegister";
 
 // Font chính toàn site: Inter — hiện đại, chuyên nghiệp, "SF Pro của web" (kiểu Apple),
 // hỗ trợ tiếng Việt đầy đủ.
@@ -117,6 +118,8 @@ export default function RootLayout({
     <html lang="vi" className={`${inter.variable} ${playfair.variable} ${montserrat.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col font-sans bg-background text-foreground">
         <SiteJsonLd />
+        {/* Cài web lên màn hình chính chạy như app (chỉ hoạt động ở bản thật) */}
+        <PwaRegister />
         <ScrollTopOnRoute />
         {/* Thanh tiến trình + hiệu ứng vào trang khi chuyển trang (thay cho rung) */}
         <RouteMotion />

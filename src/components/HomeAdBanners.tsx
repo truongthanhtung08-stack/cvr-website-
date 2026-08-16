@@ -2,6 +2,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { asset } from "@/lib/asset";
 import { HOME_AD_DEFAULT, type HomeAdData } from "@/lib/siteContent";
+import InstallAppButton from "@/components/InstallAppButton";
+
+// App chưa lên kho → 2 ô link trong /admin/noi-dung còn để trống (hoặc "#").
+// Lúc đó KHÔNG hiện nút App Store / Google Play bấm vào không ra gì, mà hiện nút
+// "Cài ứng dụng" (cài web lên màn hình chính) — dùng được ngay.
+// Dán link kho thật vào admin là 2 nút cũ tự quay lại, không phải sửa code.
+const isStoreLink = (href?: string) => !!href && /^https?:\/\//.test(href);
 
 // ===== BANNER CUỐI TRANG CHỦ — GỘP 2 BANNER THÀNH 1 =====
 // Theo mẫu "Demo 2" (file 10.08.2026): nền sáng "DT banner 1" · chữ + CTA bên TRÁI
@@ -44,8 +51,14 @@ function AppBlock({ appleHref, googleHref }: { appleHref?: string; googleHref?: 
         </div>
       </div>
       <div className="mt-4 flex flex-wrap items-center gap-2.5">
-        <StoreButton store="apple" href={appleHref} />
-        <StoreButton store="google" href={googleHref} />
+        {isStoreLink(appleHref) || isStoreLink(googleHref) ? (
+          <>
+            <StoreButton store="apple" href={appleHref} />
+            <StoreButton store="google" href={googleHref} />
+          </>
+        ) : (
+          <InstallAppButton />
+        )}
       </div>
     </div>
   );
@@ -127,8 +140,14 @@ export function AdBannerAll({ data = HOME_AD_DEFAULT }: { data?: HomeAdData }) {
                 2 nút THU SÁT nhau (cách 6px) và BẰNG NHAU tuyệt đối: cùng bề rộng,
                 cùng chiều cao, ô icon cùng bề ngang nên tên store thẳng hàng. */}
             <div className="flex flex-col gap-1.5">
-              <StoreButton store="apple" href={app.appleHref} compact />
-              <StoreButton store="google" href={app.googleHref} compact />
+              {isStoreLink(app.appleHref) || isStoreLink(app.googleHref) ? (
+                <>
+                  <StoreButton store="apple" href={app.appleHref} compact />
+                  <StoreButton store="google" href={app.googleHref} compact />
+                </>
+              ) : (
+                <InstallAppButton compact />
+              )}
             </div>
           </div>
 
