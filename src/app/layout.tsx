@@ -35,15 +35,21 @@ const montserrat = Montserrat({
 
 const SITE_URL = "https://coastalland.vn";
 const SITE_TITLE = "COASTAL LAND";
+// CÂU ĐỊNH VỊ CHUẨN — dùng thống nhất ở MỌI nơi: tiêu đề mặc định, thẻ chia sẻ
+// (Zalo/Facebook/Messenger), manifest, và tên trên Google Business Profile.
+// Google đối chiếu các nguồn này với nhau: gọi mỗi nơi một kiểu thì thương hiệu bị loãng.
+const SITE_TAGLINE = "COASTAL LAND — Bất động sản Duyên hải Miền Trung";
 const SITE_DESC =
-  "Bất động sản Đà Nẵng, Miền Trung và Duyên hải Việt Nam."
+  "Sàn giao dịch bất động sản Đà Nẵng, Huế và Duyên hải Miền Trung — mua bán, cho thuê nhà đất, căn hộ, đất nền và dự án. Người mua miễn phí trọn đời.";
 const OG_IMAGE_PATH = "/images/hero-thanh-pho-hien-dai-26.jpg";
 const OG_IMAGE_URL = new URL(OG_IMAGE_PATH, SITE_URL).toString();
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: SITE_TITLE,
+    // Trang nào không tự khai tiêu đề thì dùng câu định vị chuẩn (trước đây chỉ
+    // có "COASTAL LAND" — Google không biết mình làm gì, ở đâu).
+    default: SITE_TAGLINE,
     template: "%s | COASTAL LAND",
   },
   description: SITE_DESC,
@@ -70,13 +76,15 @@ verification: {
     locale: "vi_VN",
     url: SITE_URL,
     siteName: "COASTAL LAND",
-    title: SITE_TITLE,
+    // Đây mới là chữ hiện ra khi GỬI LINK qua Zalo/Messenger/Facebook — trước
+    // đây để trống chỉ có "COASTAL LAND", khách không biết mình bán gì.
+    title: SITE_TAGLINE,
     description: SITE_DESC,
     images: [{ url: OG_IMAGE_URL, width: 1200, height: 630, alt: "COASTAL LAND — Bất động sản Duyên hải Miền Trung" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: SITE_TITLE,
+    title: SITE_TAGLINE,
     description: SITE_DESC,
     images: [OG_IMAGE_URL],
   },

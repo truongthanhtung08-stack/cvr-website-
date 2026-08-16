@@ -22,13 +22,20 @@ const data = {
       image: `${SITE}/images/hero-thanh-pho-hien-dai-26.jpg`,
       description:
         "Sàn giao dịch bất động sản trực tuyến tại Đà Nẵng, Huế và Duyên hải Miền Trung — mua bán, cho thuê nhà đất, căn hộ, đất nền và dự án.",
+      slogan: "Bất động sản Duyên hải Miền Trung",
       areaServed: [
         { "@type": "City", name: "Đà Nẵng" },
         { "@type": "City", name: "Huế" },
         { "@type": "Place", name: "Duyên hải Miền Trung, Việt Nam" },
       ],
+      // ĐỊA CHỈ + ĐIỆN THOẠI phải TRÙNG TỪNG CHỮ với hồ sơ Google Business.
+      // Đây là cách Google nối "website này" với "doanh nghiệp này" thành MỘT thực thể
+      // → bảng thương hiệu bên phải kết quả tìm kiếm mới hiện đúng và mạnh.
+      // Lệch một chữ (viết tắt tên đường, thiếu phường) là Google coi như 2 nơi khác nhau.
+      telephone: "+84377985036",
       address: {
         "@type": "PostalAddress",
+        streetAddress: "220 Nguyễn Mậu Tài, Hòa Xuân",
         addressLocality: "Đà Nẵng",
         addressCountry: "VN",
       },
