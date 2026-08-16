@@ -47,9 +47,10 @@ export default function SocialAuth() {
       provider,
       options: {
         redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
-        // Xin đúng 2 quyền cơ bản. `email` có thể vẫn TRỐNG nếu người dùng đăng ký
-        // Facebook bằng số điện thoại — cột profiles.email cho phép NULL nên không vỡ.
-        scopes: "email,public_profile",
+        // CHỈ xin `public_profile`. Không xin `email`: app Facebook chưa được duyệt
+        // quyền này nên Facebook chặn ngay ở màn hình đăng nhập ("Invalid Scopes: email").
+        // Cột profiles.email cho phép NULL nên thiếu email vẫn tạo được tài khoản.
+        scopes: "public_profile",
       },
     });
     if (error) {
