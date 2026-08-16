@@ -58,8 +58,10 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
   // Hạng CVR của tin (đồng bộ với thẻ tin V.7). Không có huy hiệu → tin thường.
   const tier = l.badge ? getTier(tierFromBadge(l.badge)) : null;
 
-  // Liên hệ: người đăng đã nhập → dùng; chưa có → hotline Coastal Land.
-  const contact = d.contact ?? { name: "Coastal Land", phone: "0905 000 111", email: "", avatar: null };
+  // Liên hệ: LUÔN là NGƯỜI ĐĂNG (thành viên) — tin thuộc về thành viên, Coastal Land
+  // chỉ là cổng thông tin, KHÔNG đứng tên/không môi giới. Người đăng chưa nhập liên hệ
+  // riêng → tên chung "Người đăng tin" + số hotline THẬT để nút gọi/Zalo còn hoạt động.
+  const contact = d.contact ?? { name: "Người đăng tin", phone: "0377 985 036", email: "", avatar: null };
   const phoneTel = contact.phone.replace(/\s/g, "");
   const zalo = phoneTel.replace(/\D/g, "");
 
@@ -264,19 +266,24 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                   thì tự cuộn BÊN TRONG khung, không bao giờ trôi khỏi tầm nhìn. */}
               <div className="no-scrollbar sticky top-20 max-h-[calc(100vh-6rem)] space-y-4 overflow-y-auto">
                 <div className="rounded-none border border-cvr-line bg-white p-5 shadow-sm">
-                  <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-cvr-faint">Liên hệ {d.contact ? "người đăng" : "tư vấn"}</p>
+                  {/* Luôn là "người đăng" — chữ "tư vấn" khiến khách hiểu Coastal Land
+                      tư vấn/môi giới bất động sản này. */}
+                  <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-cvr-faint">Liên hệ người đăng</p>
                   <div className="flex items-center gap-3">
                     {contact.avatar ? (
                       /* eslint-disable-next-line @next/next/no-img-element */
                       <img src={contact.avatar} alt={contact.name} className="h-12 w-12 shrink-0 rounded-full object-cover ring-1 ring-cvr-line" />
                     ) : (
                       <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-cvr-surface text-lg font-bold text-cvr-ink ring-1 ring-cvr-line">
-                        {contact.name.split(" ").pop()?.[0] ?? "C"}
+                        {contact.name.trim().charAt(0).toUpperCase() || "N"}
                       </div>
                     )}
                     <div>
                       <p className="font-semibold text-cvr-ink">{contact.name}</p>
-                      <p className="text-xs text-cvr-muted">{d.contact ? "Người đăng tin" : "Chuyên viên"} · Coastal Land</p>
+                      {/* ⚠️ ĐỊNH VỊ: Coastal Land là CỔNG THÔNG TIN, KHÔNG môi giới.
+                          Tin thuộc về THÀNH VIÊN → LUÔN chỉ ghi "Người đăng tin",
+                          KHÔNG gắn "Coastal Land" / "Chuyên viên" (nghe như môi giới). */}
+                      <p className="text-xs text-cvr-muted">Người đăng tin</p>
                     </div>
                   </div>
                   <div className="mt-4 space-y-2.5">
