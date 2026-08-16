@@ -47,9 +47,9 @@ export default function SocialAuth() {
       provider,
       options: {
         redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
-        // CHỈ xin `public_profile`. Không xin `email`: app Facebook chưa được duyệt
-        // quyền này nên Facebook chặn ngay ở màn hình đăng nhập ("Invalid Scopes: email").
-        // Cột profiles.email cho phép NULL nên thiếu email vẫn tạo được tài khoản.
+        // LƯU Ý: Supabase LUÔN tự thêm `email` vào scope Facebook, không bỏ được từ đây.
+        // Nếu Facebook báo "Invalid Scopes: email" thì phải sửa ở Facebook Developer
+        // (thêm use case Facebook Login + quyền email), không phải sửa dòng này.
         scopes: "public_profile",
       },
     });
