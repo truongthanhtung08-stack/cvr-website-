@@ -249,10 +249,10 @@ export function buildListingDetail(l: Listing): ListingDetail {
     items: g.items.map((name) => ({ name, active: activeSet.has(name) })),
   }));
 
+  // LIÊN HỆ CHUNG — chỉ tên và số CÔNG TY. Tuyệt đối không đưa tên riêng hay số
+  // điện thoại cá nhân vào mã nguồn (kho mã này công khai trên GitHub).
   const agents = [
-    { name: "Trương Thanh Tùng", role: "Chuyên viên cấp cao", phone: "0905 000 111", zalo: "0905000111" },
-    { name: "Nguyễn Thị Hương", role: "Chuyên viên tư vấn", phone: "0905 222 333", zalo: "0905222333" },
-    { name: "Lê Hoàng Nam", role: "Chuyên viên dự án", phone: "0905 444 555", zalo: "0905444555" },
+    { name: "Coastal Land", role: "Hỗ trợ khách hàng", phone: "0377 985 036", zalo: "0377985036" },
   ];
 
   return {

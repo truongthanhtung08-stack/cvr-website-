@@ -14,22 +14,22 @@ export default function GopYPage() {
   return (
     <TrangPhapLy
       title="Góp ý, báo lỗi"
-      moDau="Website tốt lên nhờ người dùng nói thẳng. Thấy tin sai sự thật, giá ảo, ảnh không đúng, hay một nút bấm không chạy — hãy cho chúng tôi biết."
+      moDau="Website tốt lên nhờ người dùng nói thẳng. Thấy thông tin chưa đúng, ảnh không khớp, hay một nút bấm không chạy — bạn cho chúng tôi biết nhé."
     >
-      <Muc title="Báo tin đăng có vấn đề">
-        <p>Gửi cho chúng tôi khi bạn gặp một trong các trường hợp sau:</p>
+      <Muc title="Tin đăng có chỗ chưa ổn">
+        <p>Bạn gửi cho chúng tôi khi gặp một trong các trường hợp sau:</p>
         <DanhSach
           items={[
             "Tin đã bán / đã cho thuê nhưng vẫn còn hiển thị.",
-            "Giá, diện tích, vị trí hoặc pháp lý ghi sai so với thực tế.",
-            "Ảnh không phải của bất động sản đó, hoặc lấy ảnh của người khác.",
-            "Một bất động sản bị đăng trùng nhiều tin.",
-            "Có dấu hiệu lừa đảo: đòi đặt cọc giữ chỗ qua chuyển khoản, ép cọc gấp, không cho xem thực địa.",
+            "Giá, diện tích, vị trí hoặc pháp lý chưa khớp với thực tế.",
+            "Ảnh không phải của bất động sản đó, hoặc là ảnh của người khác.",
+            "Một bất động sản xuất hiện ở nhiều tin trùng nhau.",
+            "Hoặc bất cứ điều gì khiến bạn thấy chưa yên tâm về tin đăng đó.",
           ]}
         />
         <p>
-          Khi báo, xin ghi kèm <strong className="font-semibold text-cvr-ink">đường dẫn (link) của tin</strong> để chúng
-          tôi kiểm tra nhanh. Tin vi phạm sẽ bị ẩn hoặc gỡ theo{" "}
+          Bạn gửi kèm <strong className="font-semibold text-cvr-ink">đường dẫn (link) của tin</strong> giúp chúng tôi
+          kiểm tra nhanh hơn. Tin chưa đáp ứng sẽ được tạm ẩn hoặc gỡ theo{" "}
           <Link href="/quy-dinh" className="font-semibold text-cvr-blue-ink underline">
             Quy định đăng tin
           </Link>

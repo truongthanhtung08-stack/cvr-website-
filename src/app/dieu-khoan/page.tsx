@@ -38,38 +38,39 @@ export default function DieuKhoanPage() {
       <Muc so={2} title="Tài khoản">
         <DanhSach
           items={[
-            "Bạn chịu trách nhiệm về tính chính xác của thông tin đăng ký và về mọi hoạt động diễn ra dưới tài khoản của mình.",
-            "Không dùng chung tài khoản, không mạo danh người khác hay tổ chức khác.",
-            "Chúng tôi có quyền tạm khoá hoặc chấm dứt tài khoản vi phạm điều khoản này.",
+            "Bạn giữ thông tin đăng ký chính xác và phụ trách các hoạt động diễn ra dưới tài khoản của mình.",
+            "Mỗi người dùng một tài khoản riêng, đăng ký đúng tên của mình hoặc tổ chức mình đại diện.",
+            "Tài khoản không đáp ứng điều khoản này có thể được tạm dừng sau khi chúng tôi đã trao đổi với bạn.",
           ]}
         />
       </Muc>
 
       <Muc so={3} title="Quy định đăng tin">
         <p>
-          <strong className="font-semibold text-cvr-ink">Mọi tin đăng và mọi dự án đều phải được Coastal Land duyệt trước khi hiển thị công khai.</strong> Tin gửi lên sẽ ở trạng thái chờ duyệt.
+          Mọi tin đăng và dự án đều được Coastal Land xem qua trước khi hiển thị công khai. Tin gửi lên sẽ ở trạng thái
+          chờ duyệt.
         </p>
-        <p>Người đăng cam kết:</p>
+        <p>Khi đăng tin, bạn cho biết rằng:</p>
         <DanhSach
           items={[
-            "Thông tin đúng sự thật: vị trí, diện tích, giá, tình trạng pháp lý.",
-            "Có quyền rao bán, cho thuê bất động sản đó, hoặc được chủ sở hữu uỷ quyền.",
-            "Hình ảnh là ảnh thật của bất động sản, không dùng ảnh của người khác khi chưa được phép.",
-            "Không đăng trùng lặp nhiều tin cho cùng một bất động sản.",
-            "Không đăng nội dung sai lệch, lừa đảo, vi phạm pháp luật hoặc thuần phong mỹ tục.",
+            "Thông tin đúng thực tế: vị trí, diện tích, giá, tình trạng pháp lý.",
+            "Bạn có quyền rao bán, cho thuê bất động sản đó, hoặc được chủ sở hữu uỷ quyền.",
+            "Hình ảnh là ảnh thật của bất động sản; ảnh của người khác thì đã được họ đồng ý.",
+            "Mỗi bất động sản đăng một tin, không tách thành nhiều tin trùng nhau.",
+            "Nội dung phù hợp quy định pháp luật và thuần phong mỹ tục.",
           ]}
         />
         <p>
-          Coastal Land có quyền <strong className="font-semibold text-cvr-ink">từ chối duyệt, sửa, ẩn hoặc gỡ bỏ</strong> bất kỳ tin đăng nào không đáp ứng các điều kiện trên, mà không phải hoàn phí dịch vụ đã sử dụng cho tin vi phạm.
+          Với tin chưa đáp ứng các điều kiện trên, Coastal Land có thể gửi lại để bạn chỉnh sửa, hoặc tạm ẩn tin. Phần
+          thời gian tin đã hiển thị được tính là đã sử dụng dịch vụ.
         </p>
       </Muc>
 
       <Muc so={4} title="Phí dịch vụ">
         <DanhSach
           items={[
-            "Người tìm mua, tìm thuê sử dụng website MIỄN PHÍ.",
-            <>Người bán và môi giới trả phí cho dịch vụ đăng tin và quảng bá tin theo <Link href="/bao-gia-dang-tin" className="font-semibold text-cvr-blue-ink underline">bảng giá</Link> công bố trên website.</>,
-            "Phí đã thanh toán cho một tin đã hiển thị đủ thời hạn sẽ không được hoàn lại.",
+            <>Dịch vụ đăng tin và quảng bá tin có <Link href="/bao-gia-dang-tin" className="font-semibold text-cvr-blue-ink underline">bảng giá</Link> công bố trên website.</>,
+            "Tin đã hiển thị đủ thời hạn của gói thì phí dịch vụ được xem là đã sử dụng.",
             "Bảng giá có thể thay đổi; thay đổi chỉ áp dụng cho các giao dịch phát sinh sau thời điểm công bố.",
           ]}
         />
@@ -89,7 +90,7 @@ export default function DieuKhoanPage() {
           Thông tin trên website do người dùng cung cấp. Chúng tôi <strong className="font-semibold text-cvr-ink">nỗ lực xác thực</strong> trước khi đăng, nhưng không thể bảo đảm tuyệt đối tính chính xác, đầy đủ hay cập nhật của mọi tin đăng.
         </p>
         <p>
-          Trước khi đặt cọc hay thanh toán, bạn cần <strong className="font-semibold text-cvr-ink">tự kiểm tra thực địa, đối chiếu giấy tờ pháp lý và quy hoạch</strong>, và nên có sự tư vấn của đơn vị chuyên môn. Coastal Land không chịu trách nhiệm về thiệt hại phát sinh từ giao dịch giữa các bên, cũng như từ việc bạn tin vào thông tin trong tin đăng mà chưa kiểm chứng.
+          Như với mọi giao dịch nhà đất, trước khi giao dịch bạn nên <strong className="font-semibold text-cvr-ink">xem thực địa, đối chiếu giấy tờ pháp lý và quy hoạch</strong>, và tham khảo ý kiến đơn vị chuyên môn. Giao dịch diễn ra giữa bạn và người đăng tin, nên Coastal Land không tham gia và không chịu trách nhiệm về kết quả của giao dịch đó.
         </p>
         <p>
           Website có thể tạm gián đoạn để bảo trì hoặc do sự cố ngoài tầm kiểm soát. Chúng tôi không chịu trách nhiệm về thiệt hại phát sinh từ việc gián đoạn đó.

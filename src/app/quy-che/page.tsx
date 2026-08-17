@@ -23,13 +23,13 @@ export default function QuyChePage() {
           nơi người có nhà đất đăng thông tin và người tìm mua, tìm thuê tra cứu, kết nối trực tiếp với nhau.
         </p>
         <p>Coastal Land không mua bán, không phân phối, không ký gửi, không môi giới, không định giá và không đứng ra thực hiện giao dịch. Chúng tôi không thu hoa hồng từ giao dịch giữa các bên.</p>
-        <p>Hoạt động của cổng thông tin tuân thủ pháp luật Việt Nam. Thành viên tự chịu trách nhiệm trước pháp luật về nội dung mình đăng tải.</p>
+        <p>Cổng thông tin hoạt động theo pháp luật Việt Nam. Nội dung tin đăng do thành viên cung cấp và thuộc trách nhiệm của thành viên đó.</p>
       </Muc>
 
       <Muc so={2} title="Các bên tham gia">
         <DanhSach
           items={[
-            <><strong className="font-semibold text-cvr-ink">Người truy cập:</strong> tra cứu, tìm kiếm, so sánh và lưu tin — hoàn toàn miễn phí, không bắt buộc đăng ký.</>,
+            <><strong className="font-semibold text-cvr-ink">Người truy cập:</strong> tra cứu, tìm kiếm, so sánh và lưu tin. Không bắt buộc đăng ký tài khoản.</>,
             <><strong className="font-semibold text-cvr-ink">Thành viên đăng tin:</strong> chủ nhà đất, người được uỷ quyền, môi giới hoặc chủ đầu tư — đăng ký tài khoản, đăng tin theo gói dịch vụ.</>,
             <><strong className="font-semibold text-cvr-ink">Ban quản trị:</strong> Coastal Land — kiểm duyệt nội dung, vận hành hệ thống và hỗ trợ thành viên.</>,
           ]}
@@ -48,7 +48,7 @@ export default function QuyChePage() {
           ]}
         />
         <p>
-          Chi tiết điều kiện duyệt và các nội dung bị cấm xem tại{" "}
+          Chi tiết điều kiện duyệt và những nội dung chúng tôi không đăng, xem tại{" "}
           <Link href="/quy-dinh" className="font-semibold text-cvr-blue-ink underline">
             Quy định đăng tin
           </Link>
@@ -73,7 +73,7 @@ export default function QuyChePage() {
             "Có quyền rao bán, cho thuê bất động sản hoặc được chủ sở hữu uỷ quyền.",
             "Chịu trách nhiệm về nội dung, hình ảnh mình đăng và về mọi thoả thuận với khách.",
             "Gỡ tin ngay khi bất động sản đã giao dịch xong.",
-            "Không sử dụng nền tảng để phát tán tin ảo, thông tin sai lệch hoặc lừa đảo.",
+            "Không dùng nền tảng để đăng tin không có thật hoặc thông tin sai lệch.",
           ]}
         />
       </Muc>
@@ -81,8 +81,8 @@ export default function QuyChePage() {
       <Muc so={5} title="Quyền và nghĩa vụ của Ban quản trị">
         <DanhSach
           items={[
-            "Duyệt, từ chối, ẩn hoặc gỡ tin không đáp ứng quy định, không phải hoàn phí dịch vụ đã dùng cho tin vi phạm.",
-            "Tạm khoá hoặc chấm dứt tài khoản vi phạm nghiêm trọng hoặc lặp lại.",
+            "Duyệt tin, gửi lại tin kèm lý do để thành viên chỉnh sửa, hoặc tạm ẩn tin chưa đáp ứng quy định.",
+            "Tạm dừng tài khoản nếu tình trạng lặp lại nhiều lần sau khi đã trao đổi.",
             "Bảo đảm hệ thống vận hành ổn định; thông báo trước khi bảo trì theo kế hoạch.",
             "Bảo mật thông tin thành viên theo Chính sách bảo mật.",
             "Tiếp nhận và trả lời khiếu nại, phản ánh của thành viên và người truy cập.",
@@ -93,9 +93,8 @@ export default function QuyChePage() {
       <Muc so={6} title="Phí dịch vụ và thanh toán">
         <DanhSach
           items={[
-            "Người tìm mua, tìm thuê sử dụng website miễn phí.",
-            <>Người bán, môi giới trả phí đăng tin và quảng bá theo <Link href="/bao-gia-dang-tin" className="font-semibold text-cvr-blue-ink underline">bảng giá</Link> công bố công khai trên website.</>,
-            "Phí đã thanh toán cho tin đã hiển thị đủ thời hạn không được hoàn lại.",
+            <>Các dịch vụ đăng tin và quảng bá tin có <Link href="/bao-gia-dang-tin" className="font-semibold text-cvr-blue-ink underline">bảng giá</Link> công bố công khai trên website.</>,
+            "Tin đã hiển thị đủ thời hạn của gói thì phí dịch vụ được xem là đã sử dụng.",
             "Bảng giá có thể thay đổi; thay đổi chỉ áp dụng cho giao dịch phát sinh sau thời điểm công bố.",
           ]}
         />

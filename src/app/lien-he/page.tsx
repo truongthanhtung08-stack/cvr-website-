@@ -70,7 +70,7 @@ export default function LienHePage() {
               <Link href="/bao-gia-dang-tin" className="font-semibold text-cvr-blue-ink underline">
                 Báo giá dịch vụ
               </Link>
-              . Người tìm mua, tìm thuê dùng website miễn phí.
+              .
             </>,
             <>
               Thắc mắc chung →{" "}
@@ -100,19 +100,19 @@ export default function LienHePage() {
         />
       </Muc>
 
-      <Muc title="Lưu ý quan trọng">
+      <Muc title="Đôi điều để bạn nắm">
         <p>
-          Coastal Land là <strong className="font-semibold text-cvr-ink">cổng thông tin bất động sản</strong>. Chúng tôi
-          không mua bán, không phân phối, không ký gửi, không môi giới và không định giá bất động sản. Mọi thoả thuận,
-          đặt cọc và thanh toán là việc giữa bạn và người đăng tin, diễn ra ngoài nền tảng.
+          Coastal Land là <strong className="font-semibold text-cvr-ink">cổng thông tin bất động sản</strong> — nơi
+          người có nhà đất và người đang tìm gặp nhau. Chúng tôi không mua bán, không phân phối, không ký gửi, không môi
+          giới và không định giá. Việc thoả thuận, đặt cọc và thanh toán là giữa bạn với người đăng tin.
         </p>
         <p>
-          Nhân viên Coastal Land <strong className="font-semibold text-cvr-ink">không bao giờ</strong> yêu cầu bạn chuyển
-          tiền đặt cọc mua bán bất động sản vào tài khoản cá nhân. Nếu gặp trường hợp như vậy, hãy{" "}
+          Việc đặt cọc, thanh toán bạn làm trực tiếp với người bán hoặc môi giới của họ — Coastal Land không đứng ra thu
+          hộ khoản nào. Có gì chưa rõ, bạn{" "}
           <Link href="/gop-y" className="font-semibold text-cvr-blue-ink underline">
-            báo ngay cho chúng tôi
-          </Link>
-          .
+            nhắn cho chúng tôi
+          </Link>{" "}
+          nhé.
         </p>
       </Muc>
     </TrangPhapLy>

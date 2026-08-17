@@ -24,11 +24,11 @@ const NHOM: { ten: string; items: Hoi[] }[] = [
     ten: "Dành cho người tìm mua, tìm thuê",
     items: [
       {
-        q: "Dùng Coastal Land có mất phí không?",
+        q: "Tìm nhà trên Coastal Land có mất phí không?",
         a: (
           <p>
-            Không. Người tìm mua và tìm thuê dùng website <strong className="font-semibold text-cvr-ink">miễn phí mãi mãi</strong>:
-            xem tin, tìm kiếm, lọc, lưu tin, so sánh và liên hệ người đăng. Chỉ người bán và môi giới trả phí đăng tin.
+            Không. Bạn xem tin, tìm kiếm, lọc, lưu tin, so sánh và liên hệ người đăng thoải mái. Các dịch vụ đăng tin và
+            quảng bá tin thì có bảng giá riêng, xem tại <L href="/bao-gia-dang-tin">Báo giá dịch vụ</L>.
           </p>
         ),
       },
@@ -60,9 +60,10 @@ const NHOM: { ten: string; items: Hoi[] }[] = [
         q: "Thông tin trong tin đăng có chính xác không?",
         a: (
           <p>
-            Tin do người bán và môi giới cung cấp, được chúng tôi kiểm duyệt trước khi hiển thị. Dù vậy, trước khi đặt cọc
-            bạn vẫn cần <strong className="font-semibold text-cvr-ink">xem thực địa và đối chiếu giấy tờ pháp lý, quy hoạch</strong>.
-            Thấy tin sai hoặc có dấu hiệu lừa đảo, báo giúp chúng tôi tại <L href="/gop-y">Góp ý, báo lỗi</L>.
+            Tin do người bán và môi giới cung cấp, được chúng tôi kiểm duyệt trước khi hiển thị. Dù vậy, trước khi giao
+            dịch bạn vẫn nên <strong className="font-semibold text-cvr-ink">xem thực địa và đối chiếu giấy tờ pháp lý, quy hoạch</strong>{" "}
+            — như với mọi giao dịch nhà đất. Thấy thông tin nào chưa khớp, bạn báo giúp chúng tôi tại{" "}
+            <L href="/gop-y">Góp ý, báo lỗi</L>.
           </p>
         ),
       },

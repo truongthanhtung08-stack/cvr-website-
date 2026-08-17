@@ -103,7 +103,8 @@ export default async function LandingPage({ params }: { params: Promise<{ slug: 
             <p className="max-w-xl text-sm text-cvr-muted">Liên hệ đội ngũ của chúng tôi để được tư vấn miễn phí và nhận giải pháp phù hợp nhất.</p>
             <div className="mt-2 flex flex-wrap items-center justify-center gap-3">
               <Link href={l.ctaHref} className="rounded-lg bg-cvr-ink px-6 py-3 text-sm font-semibold text-white transition hover:bg-cvr-body">{l.ctaLabel}</Link>
-              <a href="tel:0905123456" className="rounded-lg border border-cvr-line bg-white px-6 py-3 text-sm font-semibold text-cvr-ink transition hover:bg-black/5">Hỗ trợ kỹ thuật: 0905 123 456</a>
+              {/* LUÔN dùng SỐ CÔNG TY — không bao giờ để số cá nhân trên trang công khai */}
+              <a href="tel:+84377985036" className="rounded-lg border border-cvr-line bg-white px-6 py-3 text-sm font-semibold text-cvr-ink transition hover:bg-black/5">Hỗ trợ kỹ thuật: 0377 985 036</a>
             </div>
           </div>
         </div>

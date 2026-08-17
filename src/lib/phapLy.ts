@@ -14,7 +14,8 @@ export const PHAP_LY = {
   dangKyKinhDoanh: "",
   // VD: "0401234567"
   maSoThue: "",
-  // VD: "Ông Trương Thanh Tùng" — người chịu trách nhiệm nội dung (bắt buộc khi đã có ĐKKD)
+  // Người chịu trách nhiệm nội dung — bắt buộc theo luật khi đã có ĐKKD.
+  // Điền đúng họ tên người đại diện ghi trên giấy phép. VD: "Ông Nguyễn Văn A"
   chiuTrachNhiemNoiDung: "",
   // Link xác nhận đã thông báo với Bộ Công Thương (có sau khi đăng ký website TMĐT).
   // VD: "http://online.gov.vn/Home/WebDetails/12345"

@@ -92,7 +92,7 @@ export default function HuongDanPage() {
           <Link href="/bao-gia-dang-tin" className="font-semibold text-cvr-blue-ink underline">
             Báo giá dịch vụ
           </Link>
-          . Người tìm mua, tìm thuê dùng website hoàn toàn miễn phí — chỉ người bán và môi giới trả phí đăng tin.
+          .
         </p>
       </Muc>
 
