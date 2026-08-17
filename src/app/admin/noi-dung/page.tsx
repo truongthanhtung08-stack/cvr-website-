@@ -87,8 +87,6 @@ export default function AdminSiteContentPage() {
 
   const setSlide = (i: number, patch: Partial<Banner>) =>
     setHeroSlides((s) => s.map((x, j) => (j === i ? { ...x, ...patch } : x)));
-  const setFooterImg = (i: number, src: string) =>
-    setFooter((f) => ({ ...f, images: f.images.map((im, j) => (j === i ? { ...im, src } : im)) }));
   const setSocial = (i: number, href: string) =>
     setFooter((f) => ({ ...f, socials: f.socials.map((s, j) => (j === i ? { ...s, href } : s)) }));
   const setSeller = (patch: Partial<HomeAdData["seller"]>) =>
@@ -166,8 +164,11 @@ export default function AdminSiteContentPage() {
         <SaveButton saving={savingHero} onClick={() => saveBlock("hero_home", { slides: heroSlides }, setSavingHero)} />
       </Panel>
 
-      {/* BẤT ĐỘNG SẢN THEO KHU VỰC (trang chủ) */}
-      <Panel title="Bất động sản theo khu vực (trang chủ)" desc="5 ô · ô ĐẦU hiển thị LỚN (địa điểm nổi bật). Ảnh dọc, nên 800 × 800 px">
+      {/* BẤT ĐỘNG SẢN THEO KHU VỰC (trang chủ)
+          Khung ô là NGANG — LocationGrid để ô cao 8rem (điện thoại) / 11rem (máy tính),
+          rộng gấp 1,3–2,7 lần chiều cao. Nhãn cũ ghi "ảnh dọc 800×800" là SAI: ảnh vuông
+          tải lên sẽ bị cắt cụt trên–dưới. */}
+      <Panel title="Bất động sản theo khu vực (trang chủ)" desc="5 ô · ô ĐẦU hiển thị LỚN (địa điểm nổi bật). Ảnh NGANG tỷ lệ 3:2 · nên 1200 × 800 px">
         <div className="space-y-4">
           {homeAreas.map((a, i) => (
             <div key={i} className="rounded-xl border border-cvr-line p-4">
@@ -175,7 +176,7 @@ export default function AdminSiteContentPage() {
                 <p className="text-sm font-semibold text-cvr-ink">Ô {i + 1}{i === 0 ? " (lớn — nổi bật)" : ""}</p>
                 <button type="button" onClick={() => delArea(i)} className="text-xs font-medium text-red-600 hover:underline">Xoá</button>
               </div>
-              <ImageField value={a.image} ratio="Vuông · 800×800" onChange={(url) => setArea(i, { image: url })} />
+              <ImageField value={a.image} ratio="Ngang 3:2 · 1200×800" onChange={(url) => setArea(i, { image: url })} />
 
               {/* Ảnh chạy slide thêm — ô khu vực tự đổi ảnh 5 giây/lần */}
               <div className="mt-3">
@@ -183,7 +184,7 @@ export default function AdminSiteContentPage() {
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                   {(a.images ?? []).map((src, k) => (
                     <div key={k}>
-                      <ImageField value={src} ratio="Vuông · 800×800" onChange={(url) => setAreaImg(i, k, url)} />
+                      <ImageField value={src} ratio="Ngang 3:2 · 1200×800" onChange={(url) => setAreaImg(i, k, url)} />
                       <button type="button" onClick={() => delAreaImg(i, k)} className="mt-1 text-xs font-medium text-red-600 hover:underline">Xoá ảnh</button>
                     </div>
                   ))}
@@ -204,14 +205,18 @@ export default function AdminSiteContentPage() {
       </Panel>
 
       {/* FOOTER */}
-      <Panel title="Footer — thông tin công ty" desc="3 ảnh minh hoạ tỷ lệ 4:3 · nên 800 × 600 px">
+      <Panel title="Footer — thông tin công ty" desc="Hotline · email · link mạng xã hội. Địa chỉ và thông tin pháp lý nay nằm trong src/lib/phapLy.ts">
         <div className="space-y-4">
           <Field label="Dòng đậm (tagline)"><input value={footer.tagline} onChange={(e) => setFooter({ ...footer, tagline: e.target.value })} className={inputCls} /></Field>
           <Field label="Giới thiệu ngắn"><textarea value={footer.description} onChange={(e) => setFooter({ ...footer, description: e.target.value })} rows={2} className={`${inputCls} h-auto py-2.5`} /></Field>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <Field label="Hỗ trợ kỹ thuật (số điện thoại)"><input value={footer.hotline} onChange={(e) => setFooter({ ...footer, hotline: e.target.value })} className={inputCls} /></Field>
             <Field label="Email"><input value={footer.email} onChange={(e) => setFooter({ ...footer, email: e.target.value })} className={inputCls} /></Field>
-            <Field label="Địa chỉ"><input value={footer.address} onChange={(e) => setFooter({ ...footer, address: e.target.value })} className={inputCls} /></Field>
+            {/* Địa chỉ đã chuyển hẳn sang src/lib/phapLy.ts (một nguồn duy nhất cho footer,
+                trang Liên hệ và Quy chế) → ô này KHÔNG còn tác dụng, khoá lại để khỏi sửa nhầm. */}
+            <Field label="Địa chỉ (sửa trong src/lib/phapLy.ts)">
+              <input value={footer.address} disabled className={`${inputCls} cursor-not-allowed bg-cvr-surface text-cvr-faint`} />
+            </Field>
           </div>
           <Field label="Tên pháp lý (dòng cuối)"><input value={footer.company} onChange={(e) => setFooter({ ...footer, company: e.target.value })} className={inputCls} /></Field>
 
@@ -224,14 +229,10 @@ export default function AdminSiteContentPage() {
             </div>
           </div>
 
-          <div>
-            <p className="mb-2 text-sm font-medium text-cvr-body">3 ảnh minh hoạ (4:3 · 800×600)</p>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              {footer.images.map((im, i) => (
-                <ImageField key={i} value={im.src} ratio="4:3 · 800×600" onChange={(url) => setFooterImg(i, url)} />
-              ))}
-            </div>
-          </div>
+          {/* 3 ảnh minh hoạ footer: ĐÃ BỎ khỏi giao diện web (yêu cầu file V3 10.08.2026),
+              Footer.tsx không còn hiển thị chúng. Bỏ luôn ô sửa ở đây để khỏi tải ảnh lên rồi
+              không thấy gì đổi. Dữ liệu cũ vẫn nằm nguyên trong site_content, muốn dùng lại
+              thì mở lại khối này + phần hiển thị trong Footer.tsx. */}
         </div>
         <SaveButton saving={savingFooter} onClick={() => saveBlock("footer", footer, setSavingFooter)} />
       </Panel>
@@ -389,7 +390,7 @@ function LandingEditor({ value: l, index, onChange, onDelete }: {
         <button type="button" onClick={onDelete} className="text-xs font-medium text-red-600 hover:underline">Xoá landing</button>
       </div>
 
-      <ImageField value={l.image} ratio="Ảnh hero landing" onChange={(url) => onChange({ image: url })} />
+      <ImageField value={l.image} ratio="Ngang 2:1 · 2000×1000" onChange={(url) => onChange({ image: url })} />
 
       <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Field label="Slug (đường dẫn)"><input value={l.slug} onChange={(e) => onChange({ slug: e.target.value })} placeholder="ve-coastal-land" className={inputCls} /></Field>
@@ -428,7 +429,7 @@ function LandingEditor({ value: l, index, onChange, onDelete }: {
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {l.gallery.map((src, i) => (
             <div key={i}>
-              <ImageField value={src} ratio="4:3" onChange={(url) => setGallery(i, url)} />
+              <ImageField value={src} ratio="4:3 · 1200×900" onChange={(url) => setGallery(i, url)} />
               <button type="button" onClick={() => onChange({ gallery: l.gallery.filter((_, j) => j !== i) })} className="mt-1 text-xs font-medium text-red-600 hover:underline">Xoá ảnh</button>
             </div>
           ))}
