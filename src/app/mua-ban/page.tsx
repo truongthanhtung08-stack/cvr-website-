@@ -9,7 +9,7 @@ import { getArticles } from "@/lib/contentDb";
 export const metadata: Metadata = {
   alternates: { canonical: "/mua-ban" },
   title: "Nhà đất bán tại Đà Nẵng, Huế & Miền Trung",
-  description: "Mua bán nhà đất, căn hộ, đất nền, villa, condotel tại Miền Trung — lọc theo Tỉnh/Quận/Huyện/Phường/Xã, loại hình và mức giá.",
+  description: "Mua bán nhà đất, căn hộ, đất nền, villa, condotel tại Miền Trung — lọc theo Tỉnh/Thành phố, Phường/Xã, loại hình và mức giá.",
 };
 
 export default async function MuaBanPage() {

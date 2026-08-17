@@ -4,6 +4,7 @@
 // Chọn Khu vực/Loại hình → đổ vào bộ lọc; chọn Sản phẩm/Dự án/Tin tức → mở trang chi tiết.
 
 import { provinces } from "@/lib/locations";
+import { provincesNew } from "@/lib/provincesNew";
 import { propertyTypeOptions, normalizeVi } from "@/lib/filters";
 import { featuredListings, projects, articles } from "@/lib/data";
 
@@ -47,6 +48,31 @@ for (const p of provinces) {
       const wl = `${w}, ${d.name}, ${p.name}`;
       ENTRIES.push({ label: wl, kind: "Khu vực", province: p.name, district: d.name, ward: w, norm: toNorm(wl), primary: toNorm(w) });
     }
+  }
+}
+
+// 1B) Khu vực theo ĐƠN VỊ HÀNH CHÍNH MỚI — 2 cấp: Tỉnh/Thành phố → Phường/Xã.
+// BẢO ĐẢM GÕ ĐỊA DANH NÀO CŨNG RA: danh mục cũ ở trên chỉ có 8 tỉnh lõi, nên gõ
+// "Nha Trang", "Quy Nhơn", "Hoà Xuân"… ở tỉnh khác là không có gợi ý. Ở đây nạp
+// đủ 34 tỉnh/thành + toàn bộ phường/xã sau sáp nhập 2025.
+// Địa danh cũ KHÔNG mất: Quy Nhơn → Phường Quy Nhơn (Gia Lai), Nha Trang →
+// Phường Nha Trang (Khánh Hòa) — nên gõ tên quen thuộc vẫn tìm ra.
+const daCoKhuVuc = new Set(ENTRIES.map((e) => e.norm));
+// Bỏ tiền tố cấp hành chính để khớp theo TÊN RIÊNG ("Phường Quy Nhơn" → "quy nhon")
+const tenRieng = (s: string) => toNorm(s.replace(/^(Phường|Xã|Thị trấn|Đặc khu)\s+/i, ""));
+
+for (const p of provincesNew) {
+  const pn = toNorm(p.name);
+  if (!daCoKhuVuc.has(pn)) {
+    daCoKhuVuc.add(pn);
+    ENTRIES.push({ label: p.name, kind: "Khu vực", province: p.name, norm: pn, primary: pn });
+  }
+  for (const w of p.wards) {
+    const label = `${w}, ${p.name}`;
+    const norm = toNorm(label);
+    if (daCoKhuVuc.has(norm)) continue;
+    daCoKhuVuc.add(norm);
+    ENTRIES.push({ label, kind: "Khu vực", province: p.name, ward: w, norm, primary: tenRieng(w) });
   }
 }
 

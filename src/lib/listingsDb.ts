@@ -73,6 +73,23 @@ function fmtPrice(v: number | null, purpose: Row["purpose"]): string {
   return v >= 1e9 ? `${fmtNum(v / 1e9)} tỷ` : `${fmtNum(v / 1e6)} triệu`;
 }
 
+// Gom MỌI TRƯỜNG đã nhập (ngoài tiêu đề/mô tả) thành một chuỗi để ô tìm kiếm dò
+// tới: pháp lý, hướng, nội thất, tiện ích, tiện ích xung quanh, địa chỉ chi tiết,
+// đặc điểm theo loại hình, dự án, người đăng. Chuỗi này KHÔNG hiện ra giao diện.
+function buildSearchText(r: Row): string {
+  const d = r.details ?? {};
+  return [
+    d.legal, d.furnish, d.direction, d.addressDetail, d.project,
+    ...Object.values(d.specs ?? {}),
+    ...(d.interior ?? []),
+    ...(d.amenities ?? []),
+    ...(d.places ?? []).map((p) => `${p.category} ${p.name}`),
+    d.contact?.name,
+  ]
+    .filter((s): s is string => Boolean(s && String(s).trim()))
+    .join(" ");
+}
+
 function rowToListing(r: Row): Listing {
   const price = fmtPrice(r.price_vnd, r.purpose);
   // Đơn giá đất "42 tr/m²" — chỉ hiện cho loại Đất (khớp dữ liệu mẫu cũ)
@@ -102,6 +119,11 @@ function rowToListing(r: Row): Listing {
     ...(r.details?.project ? { projectSlug: r.details.project } : {}),
     ...(r.details?.mapPin ? { mapPin: r.details.mapPin } : {}),
     ...(r.description ? { desc: r.description } : {}),
+    // Mọi trường còn lại → vùng dò của ô tìm kiếm (không hiển thị ra giao diện)
+    ...((): { searchText?: string } => {
+      const st = buildSearchText(r);
+      return st ? { searchText: st } : {};
+    })(),
   };
 }
 

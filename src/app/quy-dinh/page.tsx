@@ -29,7 +29,7 @@ export default function QuyDinhPage() {
           items={[
             "Thông tin đúng sự thật: vị trí, diện tích, giá, số phòng, tình trạng pháp lý.",
             "Giá ghi đúng đơn vị và là mức giá đang chào bán thật, không đăng giá thấp bất thường để dụ khách gọi.",
-            "Địa chỉ xác định được tới cấp Phường/Xã theo danh mục hành chính của hệ thống.",
+            "Địa chỉ xác định được tới cấp Phường/Xã theo đơn vị hành chính mới (2 cấp: Tỉnh/Thành phố → Phường/Xã).",
             "Ảnh là ảnh thật của chính bất động sản đang rao, còn mới, đủ sáng, thấy rõ hiện trạng.",
             "Tiêu đề mô tả đúng bất động sản, không viết hoa toàn bộ, không chèn ký tự trang trí.",
             "Loại hình và nhu cầu (bán / cho thuê) chọn đúng, không đặt nhầm danh mục để chiếm chỗ.",

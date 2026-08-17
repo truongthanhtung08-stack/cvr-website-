@@ -99,6 +99,7 @@ Kiểm tra nhanh mình đang ở đúng bản: trong thư mục phải **có fil
 | Banner đầu trang Dự án | `src/lib/banners.ts` → `projectBanners` | ✅ `banner_projects` |
 | Số điện thoại, email, địa chỉ, mạng xã hội ở Footer | `src/lib/siteContent.ts` → `FOOTER_DEFAULT` | ✅ `footer` |
 | Các cột link trong Footer (Giới thiệu, Tuyển dụng…) | `src/components/Footer.tsx` → `columns` | ❌ chỉ trong code |
+| **Thông tin pháp lý** (ĐKKD, MST, người chịu trách nhiệm, địa chỉ, miễn trừ) | `src/lib/phapLy.ts` — **điền 1 chỗ, hiện mọi nơi** | ❌ chỉ trong code |
 | 2 banner quảng cáo cuối trang chủ | `src/lib/siteContent.ts` → `HOME_AD_DEFAULT` | ✅ `home_ad` |
 | 5 ô khu vực trang chủ (Đà Nẵng, Huế…) | `src/lib/siteContent.ts` → `HOME_AREAS_DEFAULT` | ✅ `home_areas` |
 | Nội dung trang Giới thiệu | `src/lib/siteContent.ts` → `ABOUT_DEFAULT` | ✅ `about` |
@@ -244,7 +245,32 @@ Mở `src/components/Footer.tsx`, tìm `const columns = [`. Mỗi dòng là mộ
 - `label` = chữ hiện ra · `href` = trang sẽ mở.
 - **Thêm link mới phải có trang tương ứng**, nếu không bấm vào sẽ báo lỗi 404.
 
-### 4.3. Các trang văn bản (Điều khoản, Quy chế, FAQ, Liên hệ…)
+### 4.3. Thông tin pháp lý — ĐIỀN MỘT CHỖ, HIỆN MỌI NƠI ⭐
+
+Mở **`src/lib/phapLy.ts`** — đây là nơi duy nhất chứa thông tin pháp lý. Sửa file này thì
+**footer và trang Quy chế hoạt động tự cập nhật theo**, không phải sửa chỗ nào khác.
+
+```ts
+export const PHAP_LY = {
+  dangKyKinhDoanh: "",        // "Giấy CN ĐKKD số ... do Sở KH&ĐT thành phố Đà Nẵng cấp ngày ..."
+  maSoThue: "",               // "0401234567"
+  chiuTrachNhiemNoiDung: "",  // "Ông Trương Thanh Tùng"
+  boCongThuong: "",           // link online.gov.vn sau khi đăng ký website TMĐT
+  diaChiDayDu: "220 Nguyễn Mậu Tài, phường Hòa Xuân, thành phố Đà Nẵng",
+};
+```
+
+**Quy tắc vàng:** ô nào để trống `""` thì **dòng đó tự ẩn** trên web — không hiện chữ mẫu,
+không hiện "đang cập nhật". Có giấy tờ thật thì điền vào giữa 2 dấu nháy, dòng tự hiện lên.
+
+**Địa chỉ ghi theo đơn vị hành chính MỚI — 2 cấp:** `số nhà, đường` → `Phường/Xã` →
+`Tỉnh/Thành phố`. **Không còn cấp Quận/Huyện.**
+
+Ngay dưới đó là `MIEN_TRU` — câu miễn trừ trách nhiệm (sàn nào cũng có). Sửa chữ được, nhưng
+**giữ nguyên ý**: Coastal Land là cổng thông tin, không môi giới, không định giá, không phải
+một bên trong giao dịch. Bỏ ý này đi là tự nhận trách nhiệm pháp lý cho tin của người khác.
+
+### 4.4. Các trang văn bản (Điều khoản, Quy chế, FAQ, Liên hệ…)
 
 Mỗi trang là một file riêng, sửa thẳng chữ trong đó:
 
@@ -267,7 +293,7 @@ dấu phẩy và các thẻ `<p>`, `<Muc>`, `<DanhSach>`:
 
 Riêng trang FAQ: mỗi câu hỏi là một khối `{ q: "câu hỏi", a: <p>trả lời</p> }`.
 
-### 4.4. Chữ hiện khi gửi link qua Zalo / Facebook / Google
+### 4.5. Chữ hiện khi gửi link qua Zalo / Facebook / Google
 
 Mở `src/app/layout.tsx`, ngay đầu file:
 

@@ -5,6 +5,7 @@ import Link from "next/link";
 import BrandLogo from "@/components/BrandLogo";
 import { createClient } from "@/lib/supabase/client";
 import { FOOTER_DEFAULT, type FooterData } from "@/lib/siteContent";
+import { PHAP_LY, MIEN_TRU } from "@/lib/phapLy";
 
 // Đường dẫn icon SVG theo tên mạng xã hội (link do admin nhập, icon giữ trong code).
 const SOCIAL_PATHS: Record<string, string> = {
@@ -90,7 +91,7 @@ const columns = [
     links: [
       { label: "BĐS Đà Nẵng", href: "/mua-ban?tinh=Đà Nẵng" },
       { label: "BĐS Huế", href: "/mua-ban?tinh=Huế" },
-      { label: "BĐS Quảng Trị", href: "/mua-ban?tinh=Quảng Bình" },
+      { label: "BĐS Quảng Trị", href: "/mua-ban?tinh=Quảng Trị" },
       { label: "BĐS Quảng Ngãi", href: "/mua-ban?tinh=Quảng Ngãi" },
       { label: "BĐS Khánh Hòa", href: "/mua-ban?tinh=Khánh Hòa" },
       { label: "BĐS Lâm Đồng", href: "/mua-ban?tinh=Lâm Đồng" },
@@ -99,6 +100,19 @@ const columns = [
       { label: "BĐS Hồ Chí Minh", href: "/mua-ban?tinh=Hồ Chí Minh" },
     ],
   },
+];
+
+// Dải pháp lý cuối footer — cấu trúc rút gọn theo chuẩn chung của Batdongsan /
+// Homedy, giữ đúng vị thế CỔNG THÔNG TIN của Coastal Land.
+// 👉 Nội dung (ĐKKD, MST, người chịu trách nhiệm, địa chỉ) nằm ở src/lib/phapLy.ts.
+
+// Hàng liên kết pháp lý cuối cùng (gọn, 1 dòng) — giống dải cuối của các sàn lớn.
+const LINK_PHAP_LY = [
+  { label: "Điều khoản thoả thuận", href: "/dieu-khoan" },
+  { label: "Chính sách bảo mật", href: "/bao-mat" },
+  { label: "Quy chế hoạt động", href: "/quy-che" },
+  { label: "Quy định đăng tin", href: "/quy-dinh" },
+  { label: "Góp ý, báo lỗi", href: "/gop-y" },
 ];
 
 export default function Footer() {
@@ -205,7 +219,48 @@ export default function Footer() {
           <p className="font-semibold text-cvr-body">
             {f.company}
           </p>
-          {/* 2 dòng pháp lý (ĐKKD · địa chỉ/hotline) — CHỪA LẠI, bổ sung khi có thông tin */}
+
+          {/* Dòng pháp lý — ô nào trống trong src/lib/phapLy.ts thì tự ẩn, không lộ chữ mẫu */}
+          {PHAP_LY.dangKyKinhDoanh && <p>{PHAP_LY.dangKyKinhDoanh}</p>}
+          {PHAP_LY.maSoThue && <p>Mã số thuế: {PHAP_LY.maSoThue}</p>}
+          <p>
+            Địa chỉ: {PHAP_LY.diaChiDayDu || f.address}
+            <span className="mx-1.5 text-cvr-line">·</span>
+            Hotline: <a href={`tel:${f.hotline.replace(/\s/g, "")}`} className="hover:text-cvr-ink">{f.hotline}</a>
+            <span className="mx-1.5 text-cvr-line">·</span>
+            Email: <a href={`mailto:${f.email}`} className="hover:text-cvr-ink">{f.email}</a>
+          </p>
+          {PHAP_LY.chiuTrachNhiemNoiDung && (
+            <p>Chịu trách nhiệm nội dung: {PHAP_LY.chiuTrachNhiemNoiDung}</p>
+          )}
+          {PHAP_LY.boCongThuong && (
+            <p>
+              <a
+                href={PHAP_LY.boCongThuong}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-cvr-ink"
+              >
+                Đã thông báo website với Bộ Công Thương
+              </a>
+            </p>
+          )}
+
+          {/* Miễn trừ trách nhiệm — giữ đúng vị thế cổng thông tin */}
+          <p className="max-w-4xl pt-1">{MIEN_TRU}</p>
+
+          {/* Hàng liên kết pháp lý */}
+          <nav className="flex flex-wrap items-center gap-x-1.5 gap-y-1 pt-2">
+            {LINK_PHAP_LY.map((l, i) => (
+              <span key={l.href} className="flex items-center gap-1.5">
+                {i > 0 && <span className="text-cvr-line">·</span>}
+                <Link href={l.href} className="transition-colors hover:text-cvr-ink">
+                  {l.label}
+                </Link>
+              </span>
+            ))}
+          </nav>
+
           <p className="pt-2 text-cvr-muted">
             © {new Date().getFullYear()} COASTAL LAND · coastalland.vn
           </p>

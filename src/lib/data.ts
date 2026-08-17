@@ -43,6 +43,11 @@ export type Listing = {
   mapPin?: string;
   // MÔ TẢ tin — đưa vào vùng dò của ô tìm kiếm (khớp cả nội dung, không chỉ tiêu đề)
   desc?: string;
+  // MỌI TRƯỜNG CÒN LẠI đã nhập của tin, gộp thành MỘT chuỗi để ô tìm kiếm dò tới:
+  // pháp lý · hướng · nội thất · tiện ích · tiện ích xung quanh · địa chỉ chi tiết ·
+  // đặc điểm theo loại hình · dự án · tên người đăng.
+  // Dựng ở rowToListing (src/lib/listingsDb.ts) — KHÔNG hiển thị ra giao diện.
+  searchText?: string;
 };
 
 // Lọc tin theo mục đích (mặc định không có purpose = "ban")

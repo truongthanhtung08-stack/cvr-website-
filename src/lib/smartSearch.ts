@@ -185,9 +185,14 @@ export function parseQuery(raw: string): ParsedQuery {
 // ── Chấm điểm 1 tin theo câu đã bóc tách ────────────────────────────────────
 type Searchable = {
   id: string; title: string; location: string; type: string; price: string;
-  area: string; beds?: number; purpose?: string;
+  area: string; beds?: number; purpose?: string; badge?: string; agentName?: string;
   // MÔ TẢ tin — cũng được dò khi tìm từ khoá (khớp cả nội dung bài, không chỉ tiêu đề)
   desc?: string;
+  // MỌI TRƯỜNG CÒN LẠI đã nhập của tin, gộp thành một chuỗi: pháp lý, hướng,
+  // nội thất, tiện ích, tiện ích xung quanh, địa chỉ chi tiết, đặc điểm, dự án,
+  // người đăng… (dựng ở listingsDb.rowToListing). Nhờ vậy gõ "sổ hồng",
+  // "hồ bơi", "gần trường học", "đông nam"… đều tìm ra tin.
+  searchText?: string;
 };
 
 export type Hit<T> = {
@@ -230,9 +235,12 @@ export function smartSearch<T extends Searchable>(items: T[], raw: string): { hi
   const hits: Hit<T>[] = [];
 
   for (const item of items) {
-    // Vùng dò gồm CẢ MÔ TẢ tin — "view biển", "mới xây", "gần chợ"… thường chỉ
-    // nằm trong mô tả chứ không có ở tiêu đề.
-    const hay = normalizeVi(`${item.title} ${item.location} ${item.type} ${item.price} ${item.area} ${item.desc ?? ""}`);
+    // VÙNG DÒ = MỌI TRƯỜNG CÓ THÔNG TIN của tin: tiêu đề, địa chỉ, loại hình,
+    // giá, diện tích, hạng tin, người đăng, mô tả, và searchText (pháp lý, hướng,
+    // nội thất, tiện ích, tiện ích xung quanh, đặc điểm, dự án…).
+    const hay = normalizeVi(
+      `${item.title} ${item.location} ${item.type} ${item.price} ${item.area} ${item.badge ?? ""} ${item.agentName ?? ""} ${item.desc ?? ""} ${item.searchText ?? ""}`,
+    );
     const matched: string[] = [];
     let dat = 0;   // số tiêu chí ĐẠT
     let tong = 0;  // tổng số tiêu chí bóc được từ câu
@@ -348,7 +356,9 @@ export function smartSearch<T extends Searchable>(items: T[], raw: string): { hi
     if (hits.length === 0) {
       const goc = parsed.terms.map((t) => t.slice(0, 3)).filter(Boolean);
       const cham = items.map((item) => {
-        const hay = normalizeVi(`${item.title} ${item.location} ${item.type}`);
+        // Dò đủ mọi trường như tầng trên — địa danh dân gian, pháp lý, tiện ích…
+        // thường chỉ nằm ở mô tả hoặc các trường phụ.
+        const hay = normalizeVi(`${item.title} ${item.location} ${item.type} ${item.desc ?? ""} ${item.searchText ?? ""}`);
         const n = goc.filter((g) => hay.includes(g)).length;
         return { item, n };
       });

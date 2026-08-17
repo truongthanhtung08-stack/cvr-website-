@@ -308,6 +308,11 @@ function matchType(itemType: string, option: string): boolean {
 type FilterableListing = {
   id: string; title: string; price: string; area: string;
   beds?: number; location: string; type: string; badge?: string;
+  desc?: string;       // mô tả tin
+  agentName?: string;  // người đăng
+  // Mọi trường còn lại đã nhập (pháp lý, hướng, nội thất, tiện ích, đặc điểm…)
+  // gộp thành một chuỗi — xem rowToListing trong listingsDb.ts
+  searchText?: string;
 };
 
 // Áp dụng toàn bộ bộ lọc lên danh sách
@@ -344,7 +349,17 @@ export function applyFilters<T extends FilterableListing>(items: T[], f: Filters
     if (f.direction && listingDirection(item.id) !== f.direction) return false;
     if (f.legal && listingLegal(item.id) !== f.legal) return false;
     if (f.furnishing && listingFurnishing(item.id) !== f.furnishing) return false;
-    if (kw && !normalizeVi(`${item.title} ${item.location} ${item.type}`).includes(kw)) return false;
+    // TỪ KHOÁ dò MỌI TRƯỜNG CÓ THÔNG TIN của tin (tiêu đề · địa chỉ · loại hình ·
+    // giá · diện tích · người đăng · mô tả · pháp lý/hướng/nội thất/tiện ích…).
+    // Địa danh dân gian (Mỹ Khê, cầu Rồng…) không có trong danh mục hành chính
+    // mà nằm trong mô tả; chỉ dò tiêu đề/địa chỉ thì gõ gì cũng "không có kết quả".
+    if (
+      kw &&
+      !normalizeVi(
+        `${item.title} ${item.location} ${item.type} ${item.price} ${item.area} ${item.agentName ?? ""} ${item.desc ?? ""} ${item.searchText ?? ""}`,
+      ).includes(kw)
+    )
+      return false;
     return true;
   });
 }

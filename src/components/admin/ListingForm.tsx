@@ -179,8 +179,12 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
         return setError("Tiêu đề quá ngắn (tối thiểu 30 ký tự). Nên có loại hình + tên quận/phường — VD: \"Bán căn hộ 2PN view sông Hàn, Hải Châu, Đà Nẵng\".");
       if (!type) return setError("Chưa chọn loại hình.");
       if (!province.trim()) return setError("Chưa chọn Tỉnh/Thành.");
-      if (!district.trim())
-        return setError("Chưa chọn Quận/Huyện — đây là yếu tố quyết định tin có lên được các tìm kiếm theo khu vực hay không.");
+      // Hệ MỚI (2 cấp) KHÔNG còn Quận/Huyện → cấp bắt buộc thứ 2 là Phường/Xã.
+      // Hệ CŨ (3 cấp) vẫn bắt buộc Quận/Huyện như trước.
+      if (geoMode === "moi" ? !ward.trim() : !district.trim())
+        return setError(
+          `Chưa chọn ${geoMode === "moi" ? "Phường/Xã" : "Quận/Huyện"} — đây là yếu tố quyết định tin có lên được các tìm kiếm theo khu vực hay không.`,
+        );
       if (description.trim().length < 50)
         return setError(`Mô tả quá ngắn (${description.trim().length}/50 ký tự). Google cần nội dung thật để lập chỉ mục — viết ít nhất 1–2 câu về vị trí, pháp lý, tiện ích.`);
       if (images.filter((s) => s.trim()).length === 0)
@@ -355,6 +359,8 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
             </select>
           </Field>
 
+          {/* Hệ MỚI bỏ cấp Quận/Huyện → ẩn hẳn ô này (giống form đăng tin của khách) */}
+          {geoMode === "cu" && (
           <Field label="Quận/Huyện (bắt buộc)">
             {districtOptions.length > 0 ? (
               <select
@@ -370,8 +376,9 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
               <input value={district} onChange={(e) => setDistrict(e.target.value)} placeholder="Nhập Quận/Huyện" className={inputCls} />
             )}
           </Field>
+          )}
 
-          <Field label="Phường/Xã">
+          <Field label={geoMode === "moi" ? "Phường/Xã (bắt buộc)" : "Phường/Xã"}>
             {wardOptions.length > 0 ? (
               <select
                 value={ward}

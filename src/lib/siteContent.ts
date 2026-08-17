@@ -66,7 +66,8 @@ export const FOOTER_DEFAULT: FooterData = {
     "Coastal Land (coastalland.vn) là nền tảng công nghệ và cổng thông tin bất động sản trực tuyến hàng đầu tại Việt Nam.",
   hotline: "+84 377 985 036",
   email: "lienhe@coastalland.vn",
-  address: "Đà Nẵng",
+  // Địa chỉ công ty — ghi theo đơn vị hành chính MỚI 2025 (Tỉnh/Thành → Phường/Xã)
+  address: "220 Nguyễn Mậu Tài, phường Hòa Xuân, thành phố Đà Nẵng",
   company: "Central Coast Vietnam Real Estate (CVR)",
   socials: [
     { label: "Zalo", href: "#" },
@@ -194,8 +195,12 @@ export function areaImages(a: AreaCard): string[] {
 export const HOME_AREAS_DEFAULT: AreaCard[] = [
   { name: "Đà Nẵng", count: "1.240 tin", image: "/images/tin/1.jpg", images: ["/images/tin/2.jpg", "/images/tin/3.jpg"], href: "/mua-ban?tinh=Đà Nẵng" },
   { name: "Huế", count: "586 tin", image: "/images/tin/13.jpg", images: ["/images/tin/14.jpg", "/images/tin/15.jpg"], href: "/mua-ban?tinh=Huế" },
-  { name: "Quy Nhơn", count: "198 tin", image: "/images/tin/5.jpg", images: ["/images/tin/6.jpg", "/images/tin/7.jpg"], href: "/mua-ban?tinh=Quy Nhơn" },
-  { name: "Nha Trang", count: "324 tin", image: "/images/tin/9.jpg", images: ["/images/tin/10.jpg", "/images/tin/11.jpg"], href: "/mua-ban?tinh=Nha Trang" },
+  // ĐỊA DANH (Quy Nhơn, Nha Trang…) KHÔNG mất đi sau sáp nhập — chỉ không còn là
+  // cấp tỉnh. Sau 2025 chúng là PHƯỜNG thuộc tỉnh mới, nên lọc theo dạng
+  // kv=<Tỉnh mới>//<Địa danh>: Gia Lai//Quy Nhơn khớp cả Phường Quy Nhơn,
+  // Quy Nhơn Bắc/Nam/Đông/Tây. Dùng ?tinh=Quy Nhơn như trước sẽ ra 0 tin.
+  { name: "Quy Nhơn", count: "198 tin", image: "/images/tin/5.jpg", images: ["/images/tin/6.jpg", "/images/tin/7.jpg"], href: "/mua-ban?kv=Gia Lai//Quy Nhơn" },
+  { name: "Nha Trang", count: "324 tin", image: "/images/tin/9.jpg", images: ["/images/tin/10.jpg", "/images/tin/11.jpg"], href: "/mua-ban?kv=Khánh Hòa//Nha Trang" },
   { name: "Quảng Ngãi", count: "256 tin", image: "/images/tin/20.jpg", images: ["/images/tin/21.jpg", "/images/tin/22.jpg"], href: "/mua-ban?tinh=Quảng Ngãi" },
 ];
 

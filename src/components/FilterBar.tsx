@@ -162,16 +162,31 @@ export default function FilterBar({
   const bacThang: Suggestion[] = typed
     ? goiYNoiLong(f.keyword).map((g) => ({ label: g.label, kind: "Gợi ý" as const, sub: g.sub, patch: g.patch }))
     : [];
+  // ── LUÔN TÌM ĐƯỢC BẰNG CHÍNH CHỮ NGƯỜI GÕ ────────────────────────────────
+  // Địa danh dân gian (Mỹ Khê, cầu Rồng, chợ Hàn…), tên đường, tên toà nhà…
+  // KHÔNG có trong danh mục hành chính, nhưng CÓ trong chữ của tin. Dòng này
+  // đứng ĐẦU panel để mọi từ khoá đều tìm thẳng vào tiêu đề · mô tả · địa chỉ
+  // của tin — ô tìm kiếm không bao giờ là ngõ cụt.
+  const timTheoChu: Suggestion[] = typed
+    ? [{
+        label: `Tìm “${f.keyword.trim()}”`,
+        kind: "Gợi ý" as const,
+        sub: "Dò trong tiêu đề, mô tả và địa chỉ của tin",
+        keyword: f.keyword.trim(),
+      }]
+    : [];
   const panelItems: Suggestion[] = typed
-    ? [...bacThang, ...(noHits ? popularSuggestions.filter(dungY) : typedHits)]
+    ? [...timTheoChu, ...bacThang, ...(noHits ? popularSuggestions.filter(dungY) : typedHits)]
     : [...recentShown, ...popularSuggestions];
   // Câu dài hiếm khi khớp NGUYÊN VĂN một mục nào — nhưng nếu bóc được tiêu chí
   // (loại hình · phường/quận · giá…) thì KHÔNG được báo "không có kết quả",
   // phải nói đã hiểu gì và gợi ý theo đúng tiêu chí đó.
   const hieuY = bacThang.length > 0;
+  // KHÔNG bao giờ báo "không có kết quả" ngay lúc gõ: lúc này mới chỉ chưa khớp
+  // DANH MỤC, chưa hề dò vào tin. Dòng đầu panel vẫn tìm được bằng chính chữ đó.
   const dongDanDat = hieuY
     ? "Gợi ý theo tiêu chí trong câu bạn gõ:"
-    : `Không có kết quả cho “${f.keyword}”. Gợi ý cho bạn:`;
+    : `Tìm “${f.keyword.trim()}” trong toàn bộ tin đăng, hoặc chọn gợi ý:`;
 
   const applySuggestion = (s: Suggestion) => {
     pushRecent(s);

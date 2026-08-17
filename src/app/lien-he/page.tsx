@@ -14,6 +14,8 @@ export const metadata: Metadata = {
 const HOTLINE = "0377 985 036";
 const HOTLINE_TEL = "+84377985036";
 const EMAIL = "lienhe@coastalland.vn";
+// Địa chỉ ghi theo đơn vị hành chính MỚI 2025 (Tỉnh/Thành → Phường/Xã)
+const DIA_CHI = "220 Nguyễn Mậu Tài, phường Hòa Xuân, thành phố Đà Nẵng";
 
 export default function LienHePage() {
   return (
@@ -37,6 +39,11 @@ export default function LienHePage() {
                 {EMAIL}
               </a>{" "}
               — dành cho yêu cầu cần gửi kèm tài liệu, hình ảnh.
+            </>,
+            <>
+              Văn phòng:{" "}
+              <strong className="font-semibold text-cvr-ink">{DIA_CHI}</strong>. Vui lòng gọi trước khi đến để chúng tôi
+              bố trí người tiếp.
             </>,
             <>Khu vực hoạt động: Đà Nẵng · Huế và các tỉnh Duyên hải Miền Trung.</>,
             <>Giờ làm việc: 8:00 – 18:00, Thứ Hai đến Thứ Bảy. Ngoài giờ, vui lòng nhắn Zalo hoặc để lại yêu cầu.</>,

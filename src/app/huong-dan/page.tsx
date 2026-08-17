@@ -20,7 +20,7 @@ export default function HuongDanPage() {
         <DanhSach
           items={[
             "Ảnh thật của bất động sản — tối thiểu 4–5 tấm: mặt tiền, phòng khách, phòng ngủ, bếp, view. Chụp ngang, đủ sáng.",
-            "Địa chỉ đầy đủ: Phường/Xã — Quận/Huyện — Tỉnh/Thành.",
+            "Địa chỉ theo đơn vị hành chính MỚI (2 cấp): số nhà, tên đường — Phường/Xã — Tỉnh/Thành phố. Không còn cấp Quận/Huyện.",
             "Diện tích đất, diện tích xây dựng, số phòng ngủ, phòng tắm, hướng nhà.",
             "Giá bán hoặc giá thuê mỗi tháng. Chưa muốn công bố thì chọn “Thoả thuận”.",
             "Tình trạng pháp lý: sổ đỏ / sổ hồng, hợp đồng mua bán, đang chờ sổ…",
@@ -54,7 +54,7 @@ export default function HuongDanPage() {
         <DanhSach
           items={[
             "Loại tin đăng — chọn Bán hay Cho thuê, rồi chọn loại hình (nhà riêng, căn hộ, đất nền, kho xưởng…). Danh mục loại hình của Bán và Cho thuê khác nhau.",
-            "Địa chỉ — chọn theo danh mục hành chính để bộ lọc khu vực tìm ra tin của bạn.",
+            "Địa chỉ — chọn theo danh mục hành chính mới (Tỉnh/Thành phố → Phường/Xã) để bộ lọc khu vực tìm ra tin của bạn.",
             "Thông tin chính — giá, diện tích, số phòng.",
             "Đặc điểm, Nội thất, Tiện ích — tick những mục thực sự có. Đây chính là dữ liệu để người mua lọc ra tin của bạn.",
             "Mô tả chi tiết — viết cho người đọc, không nhồi từ khoá (xem mục 4).",

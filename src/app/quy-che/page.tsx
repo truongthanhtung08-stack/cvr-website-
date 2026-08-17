@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import TrangPhapLy, { Muc, DanhSach } from "@/components/TrangPhapLy";
+import { PHAP_LY } from "@/lib/phapLy";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/quy-che" },
@@ -133,7 +134,14 @@ export default function QuyChePage() {
           items={[
             <>Hotline / Zalo: <a href="tel:+84377985036" className="font-semibold text-cvr-blue-ink underline">0377 985 036</a></>,
             <>Email: <a href="mailto:lienhe@coastalland.vn" className="font-semibold text-cvr-blue-ink underline">lienhe@coastalland.vn</a></>,
+            <>Địa chỉ: {PHAP_LY.diaChiDayDu}</>,
             <>Trang <Link href="/lien-he" className="font-semibold text-cvr-blue-ink underline">Liên hệ</Link> — gửi yêu cầu trực tuyến.</>,
+            // Các dòng dưới CHỜ GIẤY ĐKKD — điền tại src/lib/phapLy.ts, chưa có thì tự ẩn.
+            ...(PHAP_LY.dangKyKinhDoanh ? [<>{PHAP_LY.dangKyKinhDoanh}</>] : []),
+            ...(PHAP_LY.maSoThue ? [<>Mã số thuế: {PHAP_LY.maSoThue}</>] : []),
+            ...(PHAP_LY.chiuTrachNhiemNoiDung
+              ? [<>Chịu trách nhiệm nội dung: {PHAP_LY.chiuTrachNhiemNoiDung}</>]
+              : []),
           ]}
         />
       </Muc>

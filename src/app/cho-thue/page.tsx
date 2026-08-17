@@ -9,7 +9,7 @@ import { getArticles } from "@/lib/contentDb";
 export const metadata: Metadata = {
   alternates: { canonical: "/cho-thue" },
   title: "Nhà đất cho thuê tại Đà Nẵng, Huế & Miền Trung",
-  description: "Cho thuê căn hộ, nhà phố, văn phòng, kho xưởng tại Miền Trung — lọc theo Tỉnh/Quận/Huyện/Phường/Xã, loại hình và mức giá.",
+  description: "Cho thuê căn hộ, nhà phố, văn phòng, kho xưởng tại Miền Trung — lọc theo Tỉnh/Thành phố, Phường/Xã, loại hình và mức giá.",
 };
 
 export default async function ChoThuePage() {
