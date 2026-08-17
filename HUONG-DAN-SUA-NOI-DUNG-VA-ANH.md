@@ -97,7 +97,7 @@ Kiểm tra nhanh mình đang ở đúng bản: trong thư mục phải **có fil
 |---|---|---|
 | **Ảnh + chữ Hero trang chủ** | `src/lib/banners.ts` → `homeBanners` | ✅ `hero_home` |
 | Banner đầu trang Dự án | `src/lib/banners.ts` → `projectBanners` | ✅ `banner_projects` |
-| Số điện thoại, email, địa chỉ, mạng xã hội ở Footer | `src/lib/siteContent.ts` → `FOOTER_DEFAULT` | ✅ `footer` |
+| Số điện thoại, email, mạng xã hội ở Footer (địa chỉ xem dòng dưới) | `src/lib/siteContent.ts` → `FOOTER_DEFAULT` | ✅ `footer` |
 | Các cột link trong Footer (Giới thiệu, Tuyển dụng…) | `src/components/Footer.tsx` → `columns` | ❌ chỉ trong code |
 | **Thông tin pháp lý** (ĐKKD, MST, người chịu trách nhiệm, địa chỉ, miễn trừ) | `src/lib/phapLy.ts` — **điền 1 chỗ, hiện mọi nơi** | ❌ chỉ trong code |
 | 2 banner quảng cáo cuối trang chủ | `src/lib/siteContent.ts` → `HOME_AD_DEFAULT` | ✅ `home_ad` |
@@ -225,7 +225,7 @@ export const FOOTER_DEFAULT: FooterData = {
   description: "Coastal Land (coastalland.vn) là ...",
   hotline: "+84 377 985 036",
   email: "lienhe@coastalland.vn",
-  address: "Đà Nẵng",
+  address: "...",   // ⚠️ Ô NÀY KHÔNG CÒN DÙNG — địa chỉ lấy từ src/lib/phapLy.ts
   company: "Central Coast Vietnam Real Estate (CVR)",
   socials: [
     { label: "Zalo", href: "#" },        // "#" = chưa có link → icon mờ, không bấm được
@@ -233,7 +233,12 @@ export const FOOTER_DEFAULT: FooterData = {
   ],
 };
 ```
-⚠️ Khối này Admin đè (`footer`) — thường phải sửa ở `/admin/noi-dung`.
+⚠️ Khối này Admin đè (`footer`) — hotline, email, mạng xã hội thường phải sửa ở
+`/admin/noi-dung`.
+
+**Riêng ĐỊA CHỈ thì không:** đã tách hẳn sang `src/lib/phapLy.ts` → `diaChiDayDu` (mục 4.3),
+sửa trong VS Code là lên thẳng, Admin không đè được. Lý do: địa chỉ phải giống nhau ở footer,
+trang Liên hệ và Quy chế — để 2 nơi thì sớm muộn cũng lệch.
 
 ### 4.2. Các cột link trong Footer (chỉ có trong code)
 
