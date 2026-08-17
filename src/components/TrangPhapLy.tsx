@@ -10,7 +10,8 @@ export default function TrangPhapLy({
   children,
 }: {
   title: string;
-  capNhat: string;
+  // Trang thông tin (Liên hệ, Tuyển dụng, FAQ…) không cần dòng "Cập nhật lần cuối" → bỏ trống.
+  capNhat?: string;
   moDau: string;
   children: React.ReactNode;
 }) {
@@ -20,7 +21,7 @@ export default function TrangPhapLy({
       <main className="flex-1 bg-white">
         <div className="mx-auto max-w-3xl px-4 pb-24 pt-8 sm:px-6">
           <h1 className="text-3xl font-semibold tracking-tight text-cvr-ink sm:text-4xl">{title}</h1>
-          <p className="mt-3 text-sm text-cvr-faint">Cập nhật lần cuối: {capNhat}</p>
+          {capNhat && <p className="mt-3 text-sm text-cvr-faint">Cập nhật lần cuối: {capNhat}</p>}
           <p className="mt-5 text-[15px] leading-8 text-cvr-body">{moDau}</p>
           <div className="mt-10 space-y-9">{children}</div>
         </div>
@@ -30,12 +31,13 @@ export default function TrangPhapLy({
   );
 }
 
-// Một mục đánh số trong văn bản.
-export function Muc({ so, title, children }: { so: number; title: string; children: React.ReactNode }) {
+// Một mục trong văn bản. Bỏ `so` khi mục không cần đánh số (trang thông tin).
+export function Muc({ so, title, children }: { so?: number; title: string; children: React.ReactNode }) {
   return (
     <section>
       <h2 className="text-lg font-semibold tracking-tight text-cvr-ink">
-        <span className="text-cvr-gold-ink">{so}.</span> {title}
+        {so != null && <span className="text-cvr-gold-ink">{so}. </span>}
+        {title}
       </h2>
       <div className="mt-3 space-y-3 text-[15px] leading-8 text-cvr-body">{children}</div>
     </section>

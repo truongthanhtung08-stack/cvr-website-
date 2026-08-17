@@ -24,9 +24,12 @@ function write(next: string[]) {
 
 export function useCompare() {
   const [ids, setIds] = useState<string[]>([]);
+  // ready = ĐÃ đọc xong localStorage (xem giải thích trong useSaved.ts).
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     setIds(read());
+    setReady(true);
     const sync = () => setIds(read());
     window.addEventListener(EVENT, sync);
     window.addEventListener("storage", sync);
@@ -52,5 +55,5 @@ export function useCompare() {
   const clear = useCallback(() => write([]), []);
   const has = useCallback((id: string) => ids.includes(id), [ids]);
 
-  return { ids, count: ids.length, toggle, remove, clear, has, full: ids.length >= COMPARE_MAX };
+  return { ids, ready, count: ids.length, toggle, remove, clear, has, full: ids.length >= COMPARE_MAX };
 }

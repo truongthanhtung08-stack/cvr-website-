@@ -3,17 +3,15 @@
 import Link from "next/link";
 import Image from "next/image";
 import { asset } from "@/lib/asset";
-import { featuredListings } from "@/lib/data";
 import { useCompare } from "@/lib/useCompare";
+import { useListingsByIds } from "@/lib/useListingsByIds";
 
 // Thanh SO SÁNH nổi (III.2) — hiện khi đã chọn ≥1 tin. Đặt giữa-dưới để không đè Chatbox.
 export default function CompareBar() {
   const { ids, remove, clear, count } = useCompare();
+  // Ảnh nhỏ lấy từ TIN THẬT trên Supabase (id lưu trong máy).
+  const { items } = useListingsByIds(ids);
   if (count === 0) return null;
-
-  const items = ids
-    .map((id) => featuredListings.find((l) => l.id === id))
-    .filter((x): x is NonNullable<typeof x> => Boolean(x));
 
   return (
     <div className="float-above-tabbar fixed inset-x-0 bottom-4 z-50 px-4 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 sm:px-0">

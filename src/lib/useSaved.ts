@@ -19,9 +19,13 @@ function read(): string[] {
 
 export function useSaved() {
   const [ids, setIds] = useState<string[]>([]);
+  // ready = ĐÃ đọc xong localStorage. Lần vẽ đầu ids luôn rỗng (chưa có localStorage),
+  // nếu không có cờ này trang "Tin đã lưu" sẽ loé lên "chưa lưu tin nào" rồi mới có tin.
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     setIds(read());
+    setReady(true);
     const sync = () => setIds(read());
     window.addEventListener(EVENT, sync);
     window.addEventListener("storage", sync);
@@ -41,5 +45,5 @@ export function useSaved() {
 
   const has = useCallback((id: string) => ids.includes(id), [ids]);
 
-  return { ids, count: ids.length, toggle, has };
+  return { ids, ready, count: ids.length, toggle, has };
 }

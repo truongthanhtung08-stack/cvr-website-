@@ -5,16 +5,16 @@ import Image from "next/image";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { asset } from "@/lib/asset";
-import { featuredListings, listingSummary, type Listing } from "@/lib/data";
+import { listingSummary, type Listing } from "@/lib/data";
 import { tierFromBadge, getTier } from "@/lib/packages";
 import { useCompare } from "@/lib/useCompare";
+import { useListingsByIds } from "@/lib/useListingsByIds";
 
 // Trang SO SÁNH bất động sản (III.2) — bảng song song thông số.
 export default function ComparePage() {
-  const { ids, remove, clear } = useCompare();
-  const items = ids
-    .map((id) => featuredListings.find((l) => l.id === id))
-    .filter((x): x is Listing => Boolean(x));
+  const { ids, ready, remove, clear } = useCompare();
+  // Tin THẬT lấy từ Supabase theo id đang so sánh (id lưu trong máy).
+  const { items, loading } = useListingsByIds(ids);
 
   const rows: { label: string; get: (l: Listing) => string }[] = [
     { label: "Mức giá", get: (l) => l.price },
@@ -23,8 +23,9 @@ export default function ComparePage() {
     { label: "Phòng ngủ", get: (l) => (l.beds ? `${l.beds}` : "—") },
     { label: "Phòng tắm", get: (l) => (l.baths ? `${l.baths}` : "—") },
     { label: "Loại hình", get: (l) => l.type },
+    { label: "Nhu cầu", get: (l) => ((l.purpose ?? "ban") === "thue" ? "Cho thuê" : "Mua bán") },
     { label: "Khu vực", get: (l) => l.location },
-    { label: "Mô tả", get: (l) => listingSummary(l) },
+    { label: "Mô tả", get: (l) => l.desc?.trim() || listingSummary(l) },
   ];
 
   return (
@@ -34,7 +35,7 @@ export default function ComparePage() {
         <div className="mx-auto max-w-7xl px-4 pb-20 pt-6 sm:px-6 lg:px-8">
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
             <h1 className="text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">So sánh bất động sản</h1>
-            {items.length > 0 && (
+            {ids.length > 0 && (
               <button
                 type="button"
                 onClick={clear}
@@ -45,9 +46,14 @@ export default function ComparePage() {
             )}
           </div>
 
-          {items.length === 0 ? (
+          {!ready || loading ? (
+            <p className="py-20 text-center text-sm text-cvr-muted">Đang tải bất động sản để so sánh…</p>
+          ) : items.length === 0 ? (
             <div className="flex flex-col items-center justify-center rounded-none border border-dashed border-cvr-line py-20 text-center">
-              <p className="text-cvr-body">Chưa có bất động sản nào để so sánh.</p>
+              {/* Có id nhưng không tra được tin = tin đã gỡ hoặc ngừng hiển thị */}
+              <p className="text-cvr-body">
+                {ids.length > 0 ? "Những tin bạn chọn không còn hiển thị." : "Chưa có bất động sản nào để so sánh."}
+              </p>
               <p className="mt-1 text-sm text-cvr-muted">Bấm nút so sánh trên thẻ tin để thêm (tối đa 4 tin).</p>
               <Link href="/mua-ban" className="mt-5 rounded-lg bg-cvr-ink px-5 py-2 text-sm font-semibold text-white transition hover:bg-cvr-body">
                 Xem danh sách bất động sản

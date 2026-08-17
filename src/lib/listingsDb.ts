@@ -154,6 +154,20 @@ export async function getListing(id: string): Promise<Listing | null> {
   return rowToListing(rows[0]);
 }
 
+// Nhiều tin theo DANH SÁCH id — dùng cho "Tin đã lưu" và "So sánh".
+// Chạy được CẢ ở trình duyệt (chỉ dùng fetch + khoá NEXT_PUBLIC_*), vì 2 mục này
+// đọc id từ localStorage nên phải tra tin phía client.
+// Giữ đúng THỨ TỰ id truyền vào; tin đã gỡ/chưa duyệt thì tự rơi khỏi danh sách.
+export async function getListingsByIds(ids: string[]): Promise<Listing[]> {
+  const wanted = ids.filter((id) => id && !isSeedId(id));
+  if (wanted.length === 0) return [];
+  const inList = wanted.map(encodeURIComponent).join(",");
+  const rows = await rest(`select=${COLS}&status=eq.approved&id=in.(${inList})&limit=${wanted.length}`);
+  if (!rows) return [];
+  const byId = new Map(rows.map((r) => [r.id, rowToListing(r)]));
+  return wanted.map((id) => byId.get(id)).filter((x): x is Listing => Boolean(x));
+}
+
 // ── CHI TIẾT ĐẦY ĐỦ cho trang /bat-dong-san/[id] — DỮ LIỆU THẬT ─────────────
 // Trả đúng những gì Admin đã nhập: TẤT CẢ ảnh, mô tả, đặc điểm, nội thất, tiện
 // ích, pháp lý, người đăng. Phần trống → null/[] để trang ghi "Chưa cập nhật"

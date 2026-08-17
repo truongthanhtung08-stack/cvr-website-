@@ -7,6 +7,7 @@ import Gallery from "@/components/Gallery";
 import ListingShowcase from "@/components/ListingShowcase";
 import { HomeExpandProvider, HomeCollapsible } from "@/components/HomeExpand";
 import RecordView from "@/components/RecordView";
+import ListingActions from "@/components/ListingActions";
 import PriceHistory from "@/components/PriceHistory";
 import ProjectNearby from "@/components/ProjectNearby";
 import ProjectNav from "@/components/ProjectNav";
@@ -169,6 +170,8 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                   {l.beds && <Stat label="Phòng ngủ" value={`${l.beds}`} />}
                   {l.baths && <Stat label="Phòng tắm" value={`${l.baths}`} />}
                 </div>
+                {/* Lưu tin (yêu thích) · So sánh — trạng thái dùng chung với thẻ tin */}
+                <ListingActions id={l.id} />
               </div>
 
               {/* Menu dính — sáng theo mục đang xem, bấm để cuộn mượt (như trang dự án) */}
