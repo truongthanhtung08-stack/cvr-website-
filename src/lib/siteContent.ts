@@ -195,12 +195,15 @@ export function areaImages(a: AreaCard): string[] {
 export const HOME_AREAS_DEFAULT: AreaCard[] = [
   { name: "Đà Nẵng", count: "1.240 tin", image: "/images/tin/1.jpg", images: ["/images/tin/2.jpg", "/images/tin/3.jpg"], href: "/mua-ban?tinh=Đà Nẵng" },
   { name: "Huế", count: "586 tin", image: "/images/tin/13.jpg", images: ["/images/tin/14.jpg", "/images/tin/15.jpg"], href: "/mua-ban?tinh=Huế" },
-  // ĐỊA DANH (Quy Nhơn, Nha Trang…) KHÔNG mất đi sau sáp nhập — chỉ không còn là
-  // cấp tỉnh. Sau 2025 chúng là PHƯỜNG thuộc tỉnh mới, nên lọc theo dạng
-  // kv=<Tỉnh mới>//<Địa danh>: Gia Lai//Quy Nhơn khớp cả Phường Quy Nhơn,
-  // Quy Nhơn Bắc/Nam/Đông/Tây. Dùng ?tinh=Quy Nhơn như trước sẽ ra 0 tin.
-  { name: "Quy Nhơn", count: "198 tin", image: "/images/tin/5.jpg", images: ["/images/tin/6.jpg", "/images/tin/7.jpg"], href: "/mua-ban?kv=Gia Lai//Quy Nhơn" },
-  { name: "Nha Trang", count: "324 tin", image: "/images/tin/9.jpg", images: ["/images/tin/10.jpg", "/images/tin/11.jpg"], href: "/mua-ban?kv=Khánh Hòa//Nha Trang" },
+  // Ô khu vực = ĐỊA DANH ĐIỂN HÌNH ai cũng biết (thành phố / tỉnh), không nhất
+  // thiết là đơn vị hành chính. Dùng được ?tinh=<Địa danh> vì bộ lọc dò CHUỖI CON
+  // trong địa chỉ tin: "Quy Nhơn" khớp cả "Phường Quy Nhơn Đông, Gia Lai" (hệ mới)
+  // lẫn "TP. Quy Nhơn, Bình Định" (hệ cũ).
+  // Địa danh TRÙNG TÊN giữa các tỉnh (VD: Hội An ở Đà Nẵng và Xã Hội An ở An Giang)
+  // → CỐ Ý RA CẢ HAI (chủ dự án chốt 17/8): đúng tên địa danh là đủ, khách tự chọn.
+  // Chỉ khi nào muốn bó vào ĐÚNG MỘT tỉnh mới ghim thêm: ?kv=Đà Nẵng//Hội An
+  { name: "Quy Nhơn", count: "198 tin", image: "/images/tin/5.jpg", images: ["/images/tin/6.jpg", "/images/tin/7.jpg"], href: "/mua-ban?tinh=Quy Nhơn" },
+  { name: "Nha Trang", count: "324 tin", image: "/images/tin/9.jpg", images: ["/images/tin/10.jpg", "/images/tin/11.jpg"], href: "/mua-ban?tinh=Nha Trang" },
   { name: "Quảng Ngãi", count: "256 tin", image: "/images/tin/20.jpg", images: ["/images/tin/21.jpg", "/images/tin/22.jpg"], href: "/mua-ban?tinh=Quảng Ngãi" },
 ];
 
