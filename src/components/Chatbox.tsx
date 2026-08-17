@@ -33,7 +33,7 @@ function autoReply(text: string): string {
   if (t.includes("đăng tin") || t.includes("ký gửi") || t.includes("bán") || t.includes("cho thuê"))
     return "Bên em hỗ trợ anh/chị đăng tin mua bán, cho thuê lên Coastal Land để tiếp cận người mua. Anh/chị đăng trực tiếp tại coastalland.vn/dang-tin, hoặc để lại số điện thoại — chuyên viên sẽ hướng dẫn từng bước ạ.";
   if (t.includes("mua") || t.includes("tìm") || t.includes("tư vấn"))
-    return "Người tìm mua dùng Coastal Land hoàn toàn miễn phí ạ. Anh/chị lọc theo khu vực, loại hình và mức giá ngay trên trang, rồi liên hệ trực tiếp người đăng tin. Cần hướng dẫn cách lọc thì em chỉ giúp mình nhé.";
+    return "Dạ, anh/chị lọc theo khu vực, loại hình và mức giá ngay trên trang, rồi liên hệ trực tiếp người đăng tin. Cần hướng dẫn cách lọc thì em chỉ giúp mình nhé.";
   if (t.includes("chuyên viên") || t.includes("gặp") || t.includes("gọi"))
     return "Em kết nối anh/chị với chuyên viên ngay. Hotline · Zalo: 0377 985 036 — hoặc để lại số, bên em gọi lại trong 5 phút ạ.";
   return "Cảm ơn anh/chị đã nhắn tin cho Coastal Land. Bên em hỗ trợ: báo giá dịch vụ · đăng tin mua bán, cho thuê · hỗ trợ kỹ thuật. Anh/chị cần việc nào, hoặc để lại số điện thoại để chuyên viên gọi lại ạ.";

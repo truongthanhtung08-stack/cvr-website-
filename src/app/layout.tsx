@@ -40,7 +40,7 @@ const SITE_TITLE = "COASTAL LAND";
 // Google đối chiếu các nguồn này với nhau: gọi mỗi nơi một kiểu thì thương hiệu bị loãng.
 const SITE_TAGLINE = "COASTAL LAND — Bất động sản Duyên hải Miền Trung";
 const SITE_DESC =
-  "Sàn giao dịch bất động sản Đà Nẵng, Huế và Duyên hải Miền Trung — mua bán, cho thuê nhà đất, căn hộ, đất nền và dự án. Người mua miễn phí trọn đời.";
+  "Sàn giao dịch bất động sản Đà Nẵng, Huế và Duyên hải Miền Trung — mua bán, cho thuê nhà đất, căn hộ, đất nền và dự án.";
 const OG_IMAGE_PATH = "/images/hero-thanh-pho-hien-dai-26.jpg";
 const OG_IMAGE_URL = new URL(OG_IMAGE_PATH, SITE_URL).toString();
 

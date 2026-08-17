@@ -20,7 +20,7 @@ import { getHeroBanners, getHomeAd, getHomeAreas, getFeaturedArticleSlug } from 
 export const metadata: Metadata = {
   title: "Bất động sản Đà Nẵng, Huế & Miền Trung | COASTAL LAND",
   description:
-    "Mua bán, cho thuê nhà đất, căn hộ, đất nền và dự án tại Đà Nẵng, Huế và Duyên hải Miền Trung. Tin đăng hình thật, lọc theo khu vực, loại hình và mức giá — người mua miễn phí trọn đời.",
+    "Mua bán, cho thuê nhà đất, căn hộ, đất nền và dự án tại Đà Nẵng, Huế và Duyên hải Miền Trung. Tin đăng hình thật, lọc theo khu vực, loại hình và mức giá.",
   alternates: { canonical: "/" },
 };
 

@@ -58,7 +58,7 @@ export const landings: Landing[] = [
     stats: [
       { value: "Duyệt nhanh", label: "Tin lên trong ít phút" },
       { value: "Đa kênh", label: "Website · Zalo · Facebook" },
-      { value: "Miễn phí", label: "Với người tìm mua" },
+      { value: "Miền Trung", label: "Đà Nẵng · Huế và lân cận" },
       { value: "Kiểm chứng", label: "Tin đăng được xác minh" },
     ],
     blocks: [

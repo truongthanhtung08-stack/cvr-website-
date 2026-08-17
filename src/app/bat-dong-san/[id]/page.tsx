@@ -61,8 +61,11 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
   // Liên hệ: LUÔN là NGƯỜI ĐĂNG (thành viên) — tin thuộc về thành viên, Coastal Land
   // chỉ là cổng thông tin, KHÔNG đứng tên/không môi giới. Người đăng chưa nhập liên hệ
   // riêng → tên chung "Người đăng tin" + số hotline THẬT để nút gọi/Zalo còn hoạt động.
-  const contact = d.contact ?? { name: "Người đăng tin", phone: "0377 985 036", email: "", avatar: null };
-  const phoneTel = contact.phone.replace(/\s/g, "");
+  // Người đăng CHƯA nhập liên hệ → KHÔNG hiện số nào cả (trước đây đổ về số mẫu
+  // "0905 000 111", sau đó là hotline Coastal Land). Thà không có nút gọi còn hơn
+  // đưa khách một số KHÔNG phải của người bán — Coastal Land không đứng ra giao dịch.
+  const contact = d.contact;
+  const phoneTel = contact ? contact.phone.replace(/\s/g, "") : "";
   const zalo = phoneTel.replace(/\D/g, "");
 
   // Schema.org RealEstateListing (IV.2) — dữ liệu chuẩn cho Google.
@@ -269,32 +272,40 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                   {/* Luôn là "người đăng" — chữ "tư vấn" khiến khách hiểu Coastal Land
                       tư vấn/môi giới bất động sản này. */}
                   <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-cvr-faint">Liên hệ người đăng</p>
-                  <div className="flex items-center gap-3">
-                    {contact.avatar ? (
-                      /* eslint-disable-next-line @next/next/no-img-element */
-                      <img src={contact.avatar} alt={contact.name} className="h-12 w-12 shrink-0 rounded-full object-cover ring-1 ring-cvr-line" />
-                    ) : (
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-cvr-surface text-lg font-bold text-cvr-ink ring-1 ring-cvr-line">
-                        {contact.name.trim().charAt(0).toUpperCase() || "N"}
+                  {contact ? (
+                    <>
+                      <div className="flex items-center gap-3">
+                        {contact.avatar ? (
+                          /* eslint-disable-next-line @next/next/no-img-element */
+                          <img src={contact.avatar} alt={contact.name} className="h-12 w-12 shrink-0 rounded-full object-cover ring-1 ring-cvr-line" />
+                        ) : (
+                          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-cvr-surface text-lg font-bold text-cvr-ink ring-1 ring-cvr-line">
+                            {contact.name.trim().charAt(0).toUpperCase() || "N"}
+                          </div>
+                        )}
+                        <div>
+                          <p className="font-semibold text-cvr-ink">{contact.name}</p>
+                          {/* ⚠️ ĐỊNH VỊ: Coastal Land là CỔNG THÔNG TIN, KHÔNG môi giới.
+                              Tin thuộc về THÀNH VIÊN → LUÔN chỉ ghi "Người đăng tin",
+                              KHÔNG gắn "Coastal Land" / "Chuyên viên" (nghe như môi giới). */}
+                          <p className="text-xs text-cvr-muted">Người đăng tin</p>
+                        </div>
                       </div>
-                    )}
-                    <div>
-                      <p className="font-semibold text-cvr-ink">{contact.name}</p>
-                      {/* ⚠️ ĐỊNH VỊ: Coastal Land là CỔNG THÔNG TIN, KHÔNG môi giới.
-                          Tin thuộc về THÀNH VIÊN → LUÔN chỉ ghi "Người đăng tin",
-                          KHÔNG gắn "Coastal Land" / "Chuyên viên" (nghe như môi giới). */}
-                      <p className="text-xs text-cvr-muted">Người đăng tin</p>
-                    </div>
-                  </div>
-                  <div className="mt-4 space-y-2.5">
-                    <a href={`tel:${phoneTel}`} className="flex items-center justify-center gap-2 rounded-lg bg-cvr-ink px-4 py-3 text-sm font-bold text-white transition hover:bg-cvr-body">
-                      <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.95.68l1.5 4.5a1 1 0 01-.5 1.2l-2.26 1.13a11 11 0 005.52 5.52l1.13-2.26a1 1 0 011.2-.5l4.5 1.5a1 1 0 01.68.95V19a2 2 0 01-2 2h-1C9.7 21 3 14.3 3 6V5z" /></svg>
-                      {contact.phone}
-                    </a>
-                    <a href={`https://zalo.me/${zalo}`} className="flex items-center justify-center gap-2 rounded-lg border border-cvr-line px-4 py-3 text-sm font-semibold text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink">
-                      Nhắn Zalo
-                    </a>
-                  </div>
+                      <div className="mt-4 space-y-2.5">
+                        <a href={`tel:${phoneTel}`} className="flex items-center justify-center gap-2 rounded-lg bg-cvr-ink px-4 py-3 text-sm font-bold text-white transition hover:bg-cvr-body">
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.95.68l1.5 4.5a1 1 0 01-.5 1.2l-2.26 1.13a11 11 0 005.52 5.52l1.13-2.26a1 1 0 011.2-.5l4.5 1.5a1 1 0 01.68.95V19a2 2 0 01-2 2h-1C9.7 21 3 14.3 3 6V5z" /></svg>
+                          {contact.phone}
+                        </a>
+                        <a href={`https://zalo.me/${zalo}`} className="flex items-center justify-center gap-2 rounded-lg border border-cvr-line px-4 py-3 text-sm font-semibold text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink">
+                          Nhắn Zalo
+                        </a>
+                      </div>
+                    </>
+                  ) : (
+                    <p className="text-sm leading-relaxed text-cvr-muted">
+                      Tin này chưa có thông tin liên hệ.
+                    </p>
+                  )}
                   <p className="mt-3 text-center text-[11px] text-cvr-faint">Mã tin: {l.id.slice(0, 8).toUpperCase()}</p>
                 </div>
 
@@ -332,7 +343,9 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
           </HomeExpandProvider>
         </div>
 
-        {/* Thanh liên hệ DÍNH (mobile) — Gọi / Zalo bám đáy màn hình (III.4) */}
+        {/* Thanh liên hệ DÍNH (mobile) — Gọi / Zalo bám đáy màn hình (III.4).
+            Tin chưa có liên hệ thì KHÔNG hiện thanh này (không có số để gọi). */}
+        {contact && (
         <div className="fixed inset-x-0 bottom-0 z-40 flex gap-2 border-t border-cvr-line bg-white/95 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur-md lg:hidden">
           <a
             href={`tel:${phoneTel}`}
@@ -348,6 +361,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
             Nhắn Zalo
           </a>
         </div>
+        )}
       </main>
       <Footer />
     </>
