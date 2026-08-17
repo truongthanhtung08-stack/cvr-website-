@@ -24,7 +24,10 @@ export const metadata: Metadata = {
     "Giải đáp thắc mắc thường gặp khi dùng Coastal Land: tìm mua, tìm thuê, lưu tin, so sánh, đăng tin, chi phí và kiểm duyệt tin.",
 };
 
-type Hoi = { q: string; a: React.ReactNode };
+// aText = CÙNG NỘI DUNG câu trả lời nhưng dạng chữ thuần, để khai báo cho Google
+// (FAQPage JSON-LD). Google yêu cầu nội dung khai báo phải TRÙNG với nội dung khách
+// nhìn thấy — sai lệch là bị phạt, nên khi sửa câu trả lời thì sửa cả hai.
+type Hoi = { q: string; a: React.ReactNode; aText?: string };
 
 const L = ({ href, children }: { href: string; children: React.ReactNode }) => (
   <Link href={href} className="font-semibold text-cvr-blue-ink underline">
@@ -45,10 +48,14 @@ const NHOM: { ten: string; items: Hoi[] }[] = [
             quảng bá tin thì có bảng giá riêng, xem tại <L href="/bao-gia-dang-tin">Báo giá dịch vụ</L>.
           </p>
         ),
+        aText:
+          "Không. Bạn xem tin, tìm kiếm, lọc, lưu tin, so sánh và liên hệ người đăng thoải mái. Các dịch vụ đăng tin và quảng bá tin thì có bảng giá riêng.",
       },
       {
         q: "Có cần tài khoản mới xem được tin không?",
         a: <p>Không cần. Bạn xem và tìm kiếm thoải mái mà không phải đăng ký. Tài khoản chỉ cần khi bạn muốn đăng tin hoặc quản lý tin của mình.</p>,
+        aText:
+          "Không cần. Bạn xem và tìm kiếm thoải mái mà không phải đăng ký. Tài khoản chỉ cần khi bạn muốn đăng tin hoặc quản lý tin của mình.",
       },
       {
         q: "Lưu tin yêu thích thế nào?",
@@ -89,6 +96,8 @@ const NHOM: { ten: string; items: Hoi[] }[] = [
             không định giá. Bạn liên hệ trực tiếp người đăng tin qua số điện thoại hiển thị trên tin.
           </p>
         ),
+        aText:
+          "Không. Coastal Land là cổng thông tin: chúng tôi không mua bán, không phân phối, không ký gửi, không môi giới và không định giá. Bạn liên hệ trực tiếp người đăng tin qua số điện thoại hiển thị trên tin.",
       },
     ],
   },
@@ -125,6 +134,8 @@ const NHOM: { ten: string; items: Hoi[] }[] = [
             ảnh rõ ràng thường lên trong vòng vài giờ làm việc.
           </p>
         ),
+        aText:
+          "Mọi tin đều qua kiểm duyệt trước khi công khai — để lọc tin ảo, tin trùng và thông tin sai lệch. Tin điền đầy đủ, ảnh rõ ràng thường lên trong vòng vài giờ làm việc.",
       },
       {
         q: "Vì sao tin của tôi bị trả về?",
@@ -176,6 +187,8 @@ const NHOM: { ten: string; items: Hoi[] }[] = [
             (Chrome). Website sẽ chạy như một app riêng, không có thanh địa chỉ.
           </p>
         ),
+        aText:
+          "Được. Mở coastalland.vn trên điện thoại rồi chọn Thêm vào màn hình chính (Safari) hoặc Cài đặt ứng dụng (Chrome). Website sẽ chạy như một app riêng, không có thanh địa chỉ.",
       },
       {
         q: "Tôi gặp lỗi khi dùng website?",
@@ -205,6 +218,25 @@ const NHOM: { ten: string; items: Hoi[] }[] = [
 export default function FaqPage() {
   return (
     <>
+      {/* KHAI BÁO FAQ CHO GOOGLE (FAQPage) — câu hỏi có thể hiện THẲNG trong kết quả
+          tìm kiếm, chiếm nhiều chỗ hơn và kéo lượt bấm. Chỉ khai những câu đã viết `aText`,
+          và nội dung khai PHẢI trùng với câu trả lời khách nhìn thấy. */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            mainEntity: NHOM.flatMap((n) => n.items)
+              .filter((it) => it.aText)
+              .map((it) => ({
+                "@type": "Question",
+                name: it.q,
+                acceptedAnswer: { "@type": "Answer", text: it.aText },
+              })),
+          }),
+        }}
+      />
       <Header />
       <main className="flex-1 bg-white">
         <div className="mx-auto max-w-3xl px-4 pb-24 pt-8 sm:px-6">

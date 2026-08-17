@@ -29,6 +29,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: p === "" ? 1 : 0.8,
   }));
 
+  // TRANG THÔNG TIN & PHÁP LÝ — ít thay đổi, nhưng Google dùng để chấm độ TIN CẬY
+  // của một sàn (E-E-A-T): có địa chỉ, có điều khoản, có kênh khiếu nại rõ ràng.
+  // Bỏ chúng ra ngoài sitemap là mất không một điểm cộng miễn phí.
+  const infoRoutes: MetadataRoute.Sitemap = [
+    "/lien-he", "/huong-dan", "/faq", "/quy-dinh", "/quy-che",
+    "/dieu-khoan", "/bao-mat", "/tuyen-dung", "/gop-y",
+  ].map((p) => ({ url: `${SITE}${p}`, lastModified: now, changeFrequency: "monthly" as const, priority: 0.4 }));
+
   // Trang DANH MỤC loại hình — nhóm từ khoá quan trọng nhất của sàn
   // ("bán căn hộ chung cư Đà Nẵng", "cho thuê văn phòng Huế"…)
   const categoryRoutes: MetadataRoute.Sitemap = [
@@ -63,5 +71,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Bỏ qua — giữ nguyên các trang tĩnh.
   }
 
-  return [...staticRoutes, ...categoryRoutes, ...toolRoutes, ...dynamic];
+  return [...staticRoutes, ...infoRoutes, ...categoryRoutes, ...toolRoutes, ...dynamic];
 }
