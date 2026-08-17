@@ -1,8 +1,30 @@
 # HƯỚNG DẪN SỬA NỘI DUNG & HÌNH ẢNH TRỰC TIẾP TRONG VS CODE
 
-> Dành cho chủ dự án COASTAL LAND. Mục tiêu: tự đổi chữ và ảnh cơ bản mà **không cần
-> nhập dữ liệu vào Admin**, không cần biết lập trình.
-> Mọi đường dẫn tính từ thư mục gốc dự án: `C:\Users\X1 GEN 8\Projects\cvr-website`.
+> Dành cho chủ dự án COASTAL LAND — tự đổi **chữ và ảnh** của web mà không cần biết lập trình.
+> Chữ sửa trong VS Code, ảnh tải lên qua Admin. Mọi đường dẫn tính từ thư mục gốc dự án:
+> `C:\Users\X1 GEN 8\Projects\cvr-website`.
+
+---
+
+## ⭐ NGUYÊN TẮC CHIA VIỆC — NHỚ ĐÚNG MỘT CÂU NÀY
+
+> **ẢNH thì vào Admin. CHỮ thì mở VS Code.**
+
+| | Sửa ở đâu | Gồm những gì |
+|---|---|---|
+| 🖼️ **ẢNH** | **Admin** — `coastalland.vn/admin/noi-dung` | Hero trang chủ · ô khu vực · 2 banner cuối trang chủ · banner trang Dự án · ảnh trang Giới thiệu · ảnh tin, dự án, bài viết |
+| 📝 **CHỮ** | **VS Code** | 9 trang văn bản (Điều khoản, Bảo mật, Quy chế, Quy định, FAQ, Liên hệ, Hướng dẫn, Tuyển dụng, Góp ý) · thông tin pháp lý · link footer · chữ SEO |
+
+**Lý do chia như vậy:** ảnh phải tải lên máy chủ nên để Admin làm cho nhanh (lưu xong hiện
+ngay, không phải push). Chữ để trong code thì dữ liệu gọn, có lịch sử sửa đổi, và sửa hàng
+loạt nhanh hơn nhiều so với gõ từng ô trong Admin.
+
+**Ngoại lệ cần nhớ:**
+- Chữ đi kèm ảnh trong các khối Admin (3 dòng chữ trên Hero, tên ô khu vực, chữ trên banner)
+  → sửa **trong Admin**, vì nó nằm chung khối với ảnh.
+- Logo và icon app → **không có trong Admin**, chép đè file trong `public/logo/`, `public/icons/`.
+
+Chi tiết từng khối xem bảng ở mục 0.1 ngay dưới.
 
 ---
 
@@ -24,8 +46,22 @@ Code chỉ được dùng khi Admin **chưa có** dữ liệu cho khối đó.
 2. Hoặc sửa thẳng trong Admin (nhanh nhất),
 3. Hoặc xoá dữ liệu khối đó trong Admin → web quay về dùng mặc định trong code.
 
-Các khối do Admin quản (key trong bảng `site_content`):
-`hero_home` · `footer` · `home_ad` · `home_areas` · `banner_projects` · `landings` · `about`
+#### Bảng tra: khối nào SỬA Ở ĐÂU *(kiểm tra thật ngày 17/08/2026)*
+
+| Khối | Sửa ở đâu |
+|---|---|
+| **Hero trang chủ** (`hero_home`) | ⛔ **Admin** — code không có tác dụng |
+| **Footer** (`footer`) — hotline, email, mạng xã hội | ⛔ **Admin** *(riêng ĐỊA CHỈ đã tách sang code, xem 4.3)* |
+| **2 banner cuối trang chủ** (`home_ad`) | ⛔ **Admin** |
+| **5 ô khu vực trang chủ** (`home_areas`) | ⛔ **Admin** |
+| **Banner trang Dự án** (`banner_projects`) | ⛔ **Admin** |
+| **Trang Giới thiệu** (`about`) | ⛔ **Admin** |
+| **Landing page** (`landings`) | ✅ **VS Code** — `src/lib/landings.ts` |
+| Mọi trang văn bản, thông tin pháp lý, link footer, SEO | ✅ **VS Code** |
+
+**Đọc bảng này TRƯỚC KHI sửa bất cứ thứ gì.** Sáu khối đầu mà mở VS Code ra sửa là mất công
+vô ích — web không đổi. Cách tự kiểm tra lại về sau: mở `/admin/noi-dung`, khối nào đã có
+sẵn ảnh/chữ trong đó thì Admin đang quản khối đó.
 
 ### 0.2. Ba quy tắc bất di bất dịch về ảnh
 
@@ -95,7 +131,7 @@ Kiểm tra nhanh mình đang ở đúng bản: trong thư mục phải **có fil
 
 | Muốn đổi | Mở file | Admin có đè không |
 |---|---|---|
-| **Ảnh + chữ Hero trang chủ** | `src/lib/banners.ts` → `homeBanners` | ✅ `hero_home` |
+| **Ảnh + chữ Hero trang chủ** | ⛔ **Sửa trong `/admin/noi-dung`** — xem mục 2.0. Code (`src/lib/banners.ts`) hiện KHÔNG có tác dụng | ✅ `hero_home` — **đang đè** |
 | Banner đầu trang Dự án | `src/lib/banners.ts` → `projectBanners` | ✅ `banner_projects` |
 | Số điện thoại, email, mạng xã hội ở Footer (địa chỉ xem dòng dưới) | `src/lib/siteContent.ts` → `FOOTER_DEFAULT` | ✅ `footer` |
 | Các cột link trong Footer (Giới thiệu, Tuyển dụng…) | `src/components/Footer.tsx` → `columns` | ❌ chỉ trong code |
@@ -111,9 +147,104 @@ Kiểm tra nhanh mình đang ở đúng bản: trong thư mục phải **có fil
 
 ---
 
+## 1B. ADMIN — VÀO Ở ĐÂU, CÓ GÌ TRONG ĐÓ
+
+### Admin là gì
+
+Admin **không phải phần mềm riêng**. Nó là **một trang nằm trên chính website của mình**,
+chỉ tài khoản có quyền admin mới mở được. Người khác đăng nhập vào sẽ bị đưa về trang chủ.
+
+### Vào bằng cách nào
+
+Mở trình duyệt, gõ thẳng địa chỉ:
+
+```
+coastalland.vn/admin/noi-dung
+```
+
+Chưa đăng nhập thì nó đưa sang trang đăng nhập → đăng nhập bằng **tài khoản admin**
+(`truongthanhtung08@gmail.com`) → nó tự quay lại đúng trang Nội dung web.
+
+> 💡 Khi đang chạy thử ở máy: `localhost:3000/admin/noi-dung`
+
+### Vào rồi thấy gì
+
+Trang tên **"Nội dung web"**, cuộn xuống lần lượt các khối:
+
+| # | Khối | Sửa được gì |
+|---|---|---|
+| 1 | **Hero trang chủ (3 slide)** | ảnh + 3 dòng chữ + nút + link của từng slide |
+| 2 | Bất động sản theo khu vực | 5 ô khu vực: tên, số tin, ảnh, link |
+| 3 | Footer | hotline, email, mạng xã hội |
+| 4 | Banner quảng cáo cuối trang chủ | ảnh, tiêu đề, nội dung, nút |
+| 5 | Banner trang Dự án | ảnh + chữ banner đầu trang Dự án |
+| 6 | Landing page | các trang landing |
+| 7 | Giới thiệu | toàn bộ nội dung trang Giới thiệu |
+
+**Mỗi khối có nút Lưu riêng ở cuối khối.** Sửa khối nào bấm Lưu khối đó → web đổi **ngay
+lập tức**, không cần push, không cần đợi deploy. Ra web bấm **Ctrl + F5** để thấy.
+
+### Ảnh nào chỉnh ở đâu
+
+| Muốn đổi ảnh | Vào đâu |
+|---|---|
+| **Hero trang chủ** | `/admin/noi-dung` → khối 1 |
+| 5 ô khu vực trang chủ | `/admin/noi-dung` → khối 2 |
+| 2 banner cuối trang chủ | `/admin/noi-dung` → khối 4 |
+| Banner đầu trang Dự án | `/admin/noi-dung` → khối 5 |
+| Ảnh trang Giới thiệu | `/admin/noi-dung` → khối 7 |
+| Ảnh tin đăng | `/admin/tin-dang` → mở tin cần sửa |
+| Ảnh dự án | `/admin/du-an` → mở dự án cần sửa |
+| Ảnh bài viết | `/admin/tin-tuc` → mở bài cần sửa |
+| **Logo · icon app** | ⚠️ KHÔNG có trong Admin — thay file trong `public/logo/`, `public/icons/` (mục 5) |
+
+### Các địa chỉ Admin cần nhớ
+
+| Việc | Địa chỉ |
+|---|---|
+| Tổng quan | `coastalland.vn/admin` |
+| **Sửa ảnh & chữ của web** | `coastalland.vn/admin/noi-dung` |
+| Duyệt / sửa tin đăng | `coastalland.vn/admin/tin-dang` |
+| Dự án | `coastalland.vn/admin/du-an` |
+| Tin tức | `coastalland.vn/admin/tin-tuc` |
+| Khách hàng | `coastalland.vn/admin/khach-hang` |
+| Yêu cầu khách gửi về | `coastalland.vn/admin/yeu-cau` |
+| Bảng giá · khuyến mãi | `coastalland.vn/admin/gia-khuyen-mai` |
+| Thanh toán | `coastalland.vn/admin/thanh-toan` |
+
+---
+
 ## 2. HERO TRANG CHỦ — CHI TIẾT (quan trọng nhất)
 
+### 2.0. ⛔ HERO HIỆN KHÔNG SỬA ĐƯỢC TRONG VS CODE — PHẢI VÀO ADMIN
+
+**Tình trạng hiện tại (17/08/2026):** Hero trang chủ **đang do Admin điều khiển** — 3 ảnh
+đã tải lên Supabase. Sửa `src/lib/banners.ts` trong VS Code sẽ **KHÔNG có gì đổi trên web**.
+
+**→ Sửa Hero tại: `coastalland.vn/admin/noi-dung` → khối "Hero trang chủ (3 slide)"**
+
+Cách tự kiểm tra sau này Hero đang do ai quản: vào `/admin/noi-dung`, nếu khối Hero đã có
+sẵn ảnh và chữ → Admin đang quản, sửa ở đó. Nếu trống trơn → web đang lấy từ code, lúc đó
+mới sửa `banners.ts` (mục 2.3).
+
+#### Các ô trong Admin và ý nghĩa
+
+| Ô trong Admin | Hiện ra ở đâu | Ghi chú |
+|---|---|---|
+| **Ảnh MÁY TÍNH** | nền Hero trên máy tính | 2560 × 1280 px |
+| **Ảnh ĐIỆN THOẠI** | nền Hero trên điện thoại | 1200 × 480 px · bỏ trống = dùng tạm ảnh PC |
+| **Nhãn (dòng 1)** | chữ nhỏ trên cùng | 2–3 từ, hệ thống tự viết hoa |
+| **Tiêu đề (dòng 2)** | chữ lớn nhất | ≤ 25 ký tự, giữ 1 dòng |
+| **Mô tả (dòng 3)** | chữ nhỏ dưới tiêu đề | ≤ 40 ký tự |
+| **Nút CTA** | nút bấm | để trống = ẩn nút |
+| **Link khi bấm** | bấm banner đi đâu | `/du-an/...` · `/landing/...` |
+
+Sửa xong bấm **Lưu** ngay dưới khối → web đổi **ngay lập tức**, không cần push, không cần
+đợi deploy. Mở web bấm **Ctrl + F5** để thấy.
+
 ### 2.1. KÍCH THƯỚC ẢNH BẮT BUỘC
+
+*(Áp dụng cho cả hai cách — sửa trong Admin hay trong code.)*
 
 | Loại | Kích thước thiết kế | Tỷ lệ | Dùng khi |
 |---|---|---|---|
@@ -141,7 +272,10 @@ bấy nhiêu rồi **cắt bớt phần thừa**. Khung thật trên web:
 - Hệ thống tự phủ 2 dải mờ: mép trên (cho bộ lọc) và mép dưới (cho chữ) — không cần
   tự làm tối ảnh trước.
 
-### 2.3. Thay ảnh Hero — 3 bước
+### 2.3. Thay ảnh Hero TRONG CODE — chỉ khi Admin CHƯA có dữ liệu Hero
+
+> ⛔ Hiện tại Admin **đang có** dữ liệu Hero → làm theo mục 2.0, đừng làm mục này.
+> Mục này để dành cho khi nào Hero được trả về cho code quản.
 
 **Bước 1.** Chép ảnh vào `public/images/`. Ví dụ đặt tên `hero-bien-my-khe.jpg`
 (và bản điện thoại `hero-bien-my-khe-mobile.jpg` nếu có).
@@ -193,17 +327,17 @@ Cắt đúng tỷ lệ = ảnh không bị mất đầu, mất chân. Cột "khu
 
 | Vị trí trên web | Tỷ lệ khung | Kích thước khuyến nghị | Thư mục ảnh |
 |---|---|---|---|
-| **Hero trang chủ — PC** | **2 : 1** | **2560 × 1280** | `public/images/` |
-| **Hero trang chủ — điện thoại** | **2,5 : 1** | **1200 × 480** | `public/images/` |
-| Banner đầu trang Dự án | 3 : 1 | 2400 × 800 | `public/images/du-an/` |
-| **Thẻ tin bất động sản** | **16 : 10** | **1200 × 750** | `public/images/tin/` |
-| Ô khu vực trang chủ | ô dọc/ngang, ảnh phủ kín | 1600 × 1200 | `public/images/tin/` |
-| Thẻ dự án | 3 : 2 và 4 : 3 | 1500 × 1000 | `public/images/du-an/` |
+| **Hero trang chủ — PC** | **2 : 1** | **2560 × 1280** | 🖼️ Admin tải lên |
+| **Hero trang chủ — điện thoại** | **2,5 : 1** | **1200 × 480** | 🖼️ Admin tải lên |
+| Banner đầu trang Dự án | 3 : 1 | 2400 × 800 | 🖼️ Admin tải lên |
+| **Thẻ tin bất động sản** | **16 : 10** | **1200 × 750** | 🖼️ Admin → Tin đăng |
+| Ô khu vực trang chủ | ảnh phủ kín ô | 1600 × 1200 | 🖼️ Admin tải lên |
+| Thẻ dự án | 3 : 2 và 4 : 3 | 1500 × 1000 | 🖼️ Admin → Dự án |
 | Ảnh lớn trong thư viện tin | 2 : 1 | 2000 × 1000 | Supabase (Admin tải lên) |
 | Ảnh nhỏ trong thư viện tin | 16 : 9 | 1600 × 900 | Supabase (Admin tải lên) |
-| Ảnh bài viết / tin tức | 16 : 9 | 1600 × 900 | `public/images/` |
+| Ảnh bài viết / tin tức | 16 : 9 | 1600 × 900 | 🖼️ Admin → Tin tức |
 | Ảnh nhỏ bài viết trong danh sách | 4 : 3 | 1200 × 900 | `public/images/` |
-| Ảnh trang Giới thiệu | 16 : 10 | 1600 × 1000 | `public/images/gioi-thieu/` |
+| Ảnh trang Giới thiệu | 16 : 10 | 1600 × 1000 | 🖼️ Admin tải lên |
 | Dải ảnh ngang trang Giới thiệu | 4 : 1 | 2400 × 600 | `public/images/gioi-thieu/` |
 | Mặt bằng căn hộ | 4 : 3 | 1600 × 1200 | `public/images/du-an/` |
 | **Ảnh hiện khi gửi link Zalo/Facebook** | **1,91 : 1** | **1200 × 630** | `public/images/` |
@@ -275,7 +409,10 @@ Ngay dưới đó là `MIEN_TRU` — câu miễn trừ trách nhiệm (sàn nào
 **giữ nguyên ý**: Coastal Land là cổng thông tin, không môi giới, không định giá, không phải
 một bên trong giao dịch. Bỏ ý này đi là tự nhận trách nhiệm pháp lý cho tin của người khác.
 
-### 4.4. Các trang văn bản (Điều khoản, Quy chế, FAQ, Liên hệ…)
+### 4.4. Các trang văn bản (Điều khoản, Quy chế, FAQ, Liên hệ…) — SỬA TRONG VS CODE
+
+> ✅ 9 trang này **Admin không quản** → mở VS Code sửa là lên web (sau khi push).
+> Mở file ra, **ngay dòng đầu đã có bảng hướng dẫn sửa** dán sẵn trong đó.
 
 Mỗi trang là một file riêng, sửa thẳng chữ trong đó:
 

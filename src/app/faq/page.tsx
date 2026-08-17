@@ -1,3 +1,17 @@
+// ════════════════════════════════════════════════════════════════════════════
+// 📝 SỬA CHỮ CỦA TRANG NÀY NGAY TẠI ĐÂY (VS Code) — Admin KHÔNG quản trang này,
+//    nên sửa xong là lên web (sau khi push). Không phải vào /admin.
+//
+//    CÁCH SỬA AN TOÀN:
+//    · Chỉ đổi phần chữ tiếng Việt NẰM GIỮA HAI DẤU NHÁY "..."
+//    · Giữ nguyên dấu phẩy, dấu ngoặc và các thẻ <p> <Muc> <DanhSach> <Link>
+//    · Thêm một gạch đầu dòng: chép cả một dòng "..." rồi dán xuống dưới, sửa chữ
+//    · Bỏ một gạch đầu dòng: xoá trọn dòng "...", kể cả dấu phẩy cuối dòng
+//    · Sửa xong: Ctrl+S → xem http://localhost:3000 → ưng thì nhắn "Push"
+//
+//    Lỡ hỏng: Ctrl+Z liên tục để hoàn tác về lúc còn chạy được.
+//    Hướng dẫn đầy đủ: HUONG-DAN-SUA-NOI-DUNG-VA-ANH.md (mục 4.4)
+// ════════════════════════════════════════════════════════════════════════════
 import type { Metadata } from "next";
 import Link from "next/link";
 import Header from "@/components/Header";
