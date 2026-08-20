@@ -148,10 +148,25 @@ function PhoneIcon() {
   );
 }
 
+// Zalo KHÔNG phải hình bong bóng chat — nhận diện đúng của Zalo là ô bo góc màu
+// xanh #0068FF với chữ "Zalo" trắng ở giữa. Vẽ giống hệt logo Zalo dưới Footer
+// để cả web chỉ có MỘT hình Zalo duy nhất.
 function ZaloIcon() {
   return (
-    <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="#9aa0a6" aria-hidden>
-      <path d="M12 2.4c-5.46 0-9.9 3.66-9.9 8.18 0 2.6 1.47 4.92 3.76 6.43-.16.57-.52 1.72-.66 2.18-.17.55.2.55.42.45.29-.12 2.5-1.66 3.46-2.31.94.22 1.93.34 2.92.34 5.46 0 9.9-3.66 9.9-8.18S17.46 2.4 12 2.4z" />
+    <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24" aria-hidden>
+      <rect width="24" height="24" rx="6.5" fill="#0068FF" />
+      <text
+        x="12"
+        y="15.6"
+        textAnchor="middle"
+        fill="#ffffff"
+        fontSize="8.6"
+        fontWeight="700"
+        fontFamily="Helvetica, Arial, sans-serif"
+        letterSpacing="-0.3"
+      >
+        Zalo
+      </text>
     </svg>
   );
 }
