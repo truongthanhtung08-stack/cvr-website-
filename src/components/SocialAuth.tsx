@@ -9,10 +9,12 @@ import { createClient } from "@/lib/supabase/client";
 // Zalo: chưa có — Supabase không hỗ trợ sẵn, phải tự nối qua Zalo OA (cần ĐKKD).
 export default function SocialAuth() {
   const [notice, setNotice] = useState("");
-  const [loading, setLoading] = useState(false);
+  // Nút NÀO đang chờ thì CHỈ nút đó báo "Đang chuyển tới…". Trước đây dùng một cờ
+  // chung nên bấm Zalo lại thấy nút Google đổi chữ → tưởng web đá sang Google.
+  const [loading, setLoading] = useState<null | "google" | "facebook" | "zalo">(null);
 
   async function withGoogle() {
-    setLoading(true);
+    setLoading("google");
     setNotice("");
     const next = new URLSearchParams(window.location.search).get("next") || "/tai-khoan";
     const supabase = createClient();
@@ -27,7 +29,7 @@ export default function SocialAuth() {
     });
     // Thành công thì trình duyệt tự chuyển sang Google — chỉ còn lại trường hợp lỗi.
     if (error) {
-      setLoading(false);
+      setLoading(null);
       setNotice(
         /provider is not enabled/i.test(error.message)
           ? "Đăng nhập Google chưa được bật trên hệ thống. Vui lòng dùng email hoặc thử lại sau."
@@ -39,7 +41,7 @@ export default function SocialAuth() {
   // Đăng nhập qua nhà cung cấp khác (Facebook…). Chưa bật provider trong Supabase
   // → báo rõ để chủ dự án biết cần cắm App ID / App Secret.
   async function withProvider(provider: "facebook") {
-    setLoading(true);
+    setLoading(provider);
     setNotice("");
     const next = new URLSearchParams(window.location.search).get("next") || "/tai-khoan";
     const supabase = createClient();
@@ -54,7 +56,7 @@ export default function SocialAuth() {
       },
     });
     if (error) {
-      setLoading(false);
+      setLoading(null);
       setNotice(
         /provider is not enabled/i.test(error.message)
           ? "Đăng nhập Facebook chưa được bật. Cần App ID và App Secret của Facebook Developer."
@@ -67,7 +69,7 @@ export default function SocialAuth() {
   // route riêng /api/auth/zalo (OAuth v4 + PKCE, xử lý phía máy chủ).
   // Chưa cắm khoá trong Vercel thì route tự đá về đây kèm ?error=zalo_chua_cau_hinh.
   function withZalo() {
-    setLoading(true);
+    setLoading("zalo");
     const next = new URLSearchParams(window.location.search).get("next") || "/tai-khoan";
     window.location.href = `/api/auth/zalo?next=${encodeURIComponent(next)}`;
   }
@@ -83,31 +85,31 @@ export default function SocialAuth() {
       <button
         type="button"
         onClick={withGoogle}
-        disabled={loading}
+        disabled={loading !== null}
         className="flex h-11 w-full items-center justify-center gap-2.5 rounded-lg border border-cvr-line bg-white text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink disabled:opacity-60"
       >
         <GoogleIcon />
-        {loading ? "Đang chuyển tới Google…" : "Tiếp tục với Google"}
+        {loading === "google" ? "Đang chuyển tới Google…" : "Tiếp tục với Google"}
       </button>
 
       <button
         type="button"
         onClick={() => withProvider("facebook")}
-        disabled={loading}
+        disabled={loading !== null}
         className="flex h-11 w-full items-center justify-center gap-2.5 rounded-lg border border-cvr-line bg-white text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink disabled:opacity-60"
       >
         <FacebookIcon />
-        Tiếp tục với Facebook
+        {loading === "facebook" ? "Đang chuyển tới Facebook…" : "Tiếp tục với Facebook"}
       </button>
 
       <button
         type="button"
         onClick={() => withZalo()}
-        disabled={loading}
+        disabled={loading !== null}
         className="flex h-11 w-full items-center justify-center gap-2.5 rounded-lg border border-cvr-line bg-white text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink disabled:opacity-60"
       >
         <ZaloIcon />
-        Tiếp tục với Zalo
+        {loading === "zalo" ? "Đang chuyển tới Zalo…" : "Tiếp tục với Zalo"}
       </button>
 
       <Link
