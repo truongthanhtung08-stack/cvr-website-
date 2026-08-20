@@ -62,9 +62,16 @@ export const metadata: Metadata = {
   // layout, nên đặt canonical: "/" ở đây làm MỌI trang (mua-ban, du-an, tin-tuc,
   // từng tin BĐS…) đều tự khai "bản gốc của tôi là trang chủ" → Google coi là
   // trùng lặp và KHÔNG lập chỉ mục trang con. Mỗi trang tự khai canonical riêng.
-verification: {
-  google: "Kltt2fEbpFCiNLrRJwZATFfhyKayu507-q7KhxEwUWQ",
-},
+  verification: {
+    google: "Kltt2fEbpFCiNLrRJwZATFfhyKayu507-q7KhxEwUWQ",
+    // Meta/Facebook xác minh quyền sở hữu miền coastalland.vn — bắt buộc để đưa
+    // app Facebook lên Live (đăng nhập bằng Facebook cho khách ngoài).
+    // Lấy ở Meta Business Suite → Domains → coastalland.vn → Thêm thẻ meta.
+    // ⚠️ ĐỪNG XOÁ: gỡ thẻ này là Meta huỷ xác minh miền, app rớt khỏi Live.
+    other: {
+      "facebook-domain-verification": "zehj35msh3k32im86ueqe7b1v3zvdt",
+    },
+  },
   // ✅ ĐÃ PUBLISH: cho Google index + theo dõi liên kết.
   robots: {
     index: true,
