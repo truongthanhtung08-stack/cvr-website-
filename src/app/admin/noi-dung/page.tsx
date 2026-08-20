@@ -278,7 +278,7 @@ export default function AdminSiteContentPage() {
       </Panel>
 
       {/* BANNER TRANG DỰ ÁN */}
-      <Panel title="Banner trang Dự án (/du-an)" desc="Mỗi slide có 2 ô ảnh: MÁY TÍNH 1920×600 (3,2:1) và ĐIỆN THOẠI 1200×600 (2:1) · nhiều slide sẽ tự chạy">
+      <Panel title="Banner trang Dự án (/du-an)" desc="Mỗi slide có 2 ô ảnh: MÁY TÍNH 2400×600 (4:1) và ĐIỆN THOẠI 1200×600 (2:1) · nhiều slide sẽ tự chạy">
         <div className="space-y-4">
           {projBanners.map((s, i) => (
             <div key={i} className="rounded-xl border border-cvr-line p-4">
@@ -286,15 +286,15 @@ export default function AdminSiteContentPage() {
                 <p className="text-sm font-semibold text-cvr-ink">Slide {i + 1}</p>
                 <button type="button" onClick={() => delProj(i)} className="text-xs font-medium text-red-600 hover:underline">Xoá</button>
               </div>
-              {/* 2 ô ảnh riêng cho từng loại máy — KHUNG banner giữ nguyên (h-[190px] sm:h-[400px]),
-                  chỉ thêm chỗ để nhập ảnh riêng cho điện thoại. */}
+              {/* KHUNG banner thật: ĐIỆN THOẠI khoá tỷ lệ 2:1 → ảnh 1200×600 khớp ĐÚNG,
+                  không bị cắt · MÁY TÍNH cao 400px tràn hết bề ngang → ảnh 4:1 hợp nhất. */}
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                 <div>
                   <p className="text-sm font-semibold text-cvr-ink">Ảnh MÁY TÍNH</p>
                   <p className="mb-2 mt-0.5 inline-block rounded-md bg-cvr-blue/10 px-2.5 py-1 text-[15px] font-bold tracking-tight text-cvr-blue-ink">
-                    1920 × 600 px · tỷ lệ 3,2 : 1
+                    2400 × 600 px · tỷ lệ 4 : 1
                   </p>
-                  <ImageField value={s.image} ratio="3,2:1 · 1920×600" onChange={(url) => setProj(i, { image: url })} />
+                  <ImageField value={s.image} ratio="4:1 · 2400×600" onChange={(url) => setProj(i, { image: url })} />
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-cvr-ink">Ảnh ĐIỆN THOẠI</p>
@@ -302,7 +302,7 @@ export default function AdminSiteContentPage() {
                     1200 × 600 px · tỷ lệ 2 : 1
                   </p>
                   <ImageField value={s.imageMobile ?? ""} ratio="2:1 · 1200×600" onChange={(url) => setProj(i, { imageMobile: url })} />
-                  <p className="mt-1 text-xs text-cvr-muted">Bỏ trống → điện thoại dùng tạm ảnh máy tính</p>
+                  <p className="mt-1 text-xs text-cvr-muted">Khớp ĐÚNG khung điện thoại — ảnh không bị cắt. Bỏ trống → dùng tạm ảnh máy tính (sẽ bị cắt hai bên).</p>
                 </div>
               </div>
               <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">

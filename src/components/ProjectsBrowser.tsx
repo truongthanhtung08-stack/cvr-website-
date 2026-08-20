@@ -250,13 +250,13 @@ export default function ProjectsBrowser({
       {hero && (
         // Tràn viền THẬT: kéo ra full bề ngang màn hình, không bị khung max-w-7xl bó lại
         // (trước đây Hero nằm ngoài khung nên full màn hình — phải giữ đúng như vậy trên PC).
-        <div className="relative left-1/2 order-2 mb-3 w-screen -translate-x-1/2 sm:order-1 sm:mb-0">
+        <div className="relative left-1/2 order-2 mb-0 w-screen -translate-x-1/2 sm:order-1 sm:mb-0">
           {hero}
         </div>
       )}
 
       {/* ── Thanh tìm + lọc dự án (MOBILE: lên trên cùng, KHÔNG khung viền/bóng, rộng hết bề ngang) ── */}
-      <div className="order-1 mt-1.5 rounded-none bg-white pb-3 pt-0 sm:order-2 sm:mt-2.5 sm:border sm:border-cvr-line sm:p-2.5 sm:shadow-lux">
+      <div className="order-1 mt-2 rounded-none bg-white pb-2.5 pt-0 sm:order-2 sm:mt-2.5 sm:border sm:border-cvr-line sm:p-2.5 sm:shadow-lux">
         <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
           {/* Ô tìm nhanh dự án — nút search XANH nằm SÁT mép phải trong khung (mobile), đồng bộ Mua bán/Cho thuê.
               MOBILE: chừa lề trái đúng chỗ NÚT BACK TRÒN nổi (8px + 36px) để nút đứng
@@ -476,7 +476,7 @@ export default function ProjectsBrowser({
           banner Hero rất to (áp cho cả PC & Mobile). */}
       <div id="ket-qua" className="order-3 scroll-mt-20 sm:scroll-mt-24">
       {/* Tiêu đề + bộ đếm nhảy theo bộ lọc (kiểu Batdongsan) */}
-      <h1 className="mt-6 text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">
+      <h1 className="mt-3 text-2xl font-semibold tracking-tight text-cvr-ink sm:mt-6 sm:text-3xl">
         Dự án nổi bật
       </h1>
       <p className="mt-1.5 text-sm text-cvr-muted">
