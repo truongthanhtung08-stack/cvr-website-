@@ -40,6 +40,22 @@ const MUC: Record<string, { ten: string; cha: string; chaCon?: string }> = {
   "gioi-thieu": { ten: "Giới thiệu", cha: "/" },
   "tai-khoan": { ten: "Tài khoản", cha: "/", chaCon: "/tai-khoan" },
   landing: { ten: "Trang giới thiệu", cha: "/", chaCon: "/" }, // không có trang gốc
+
+  // ── Trang thông tin · hỗ trợ · pháp lý · tài khoản ────────────────────────
+  // TRƯỚC ĐÂY THIẾU HẲN → trên điện thoại các trang này KHÔNG có nút quay lại,
+  // khách vào rồi mắc kẹt. Nặng nhất là Liên hệ và Góp ý — đúng chỗ khách nhắn tin.
+  "lien-he": { ten: "Liên hệ", cha: "/" },
+  "gop-y": { ten: "Góp ý", cha: "/" },
+  faq: { ten: "Câu hỏi thường gặp", cha: "/" },
+  "huong-dan": { ten: "Hướng dẫn", cha: "/" },
+  "quy-che": { ten: "Quy chế hoạt động", cha: "/" },
+  "quy-dinh": { ten: "Quy định đăng tin", cha: "/" },
+  "dieu-khoan": { ten: "Điều khoản thoả thuận", cha: "/" },
+  "bao-mat": { ten: "Chính sách bảo mật", cha: "/" },
+  "tuyen-dung": { ten: "Tuyển dụng", cha: "/" },
+  "dang-nhap": { ten: "Đăng nhập", cha: "/", chaCon: "/dang-nhap" },
+  "dang-ky": { ten: "Đăng ký", cha: "/" },
+  "quen-mat-khau": { ten: "Quên mật khẩu", cha: "/dang-nhap" },
 };
 
 // Tên riêng cho các trang con của khu tài khoản (admin của khách hàng)

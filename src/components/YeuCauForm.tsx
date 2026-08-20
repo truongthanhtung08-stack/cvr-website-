@@ -3,12 +3,16 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useProfile } from "@/lib/useProfile";
+import { ONhap, ONhapDai, NutXoaHet, NutQuayLai, TheGuiXong } from "@/components/FormFields";
 
 // ============================================================================
 // Ô GỬI YÊU CẦU — DÙNG CHUNG CHO MỌI LOẠI YÊU CẦU
 // Khách chỉ để lại: TÊN · SỐ ĐIỆN THOẠI · EMAIL (không bắt buộc) · NỘI DUNG.
 // Mọi yêu cầu đổ về một chỗ: /admin/yeu-cau để quản trị viên xử lý.
 // Đặt `loai` khác nhau để lọc: dang_du_an · ho_tro · hop_tac · khac
+//
+// Mỗi ô có nút ✕ xoá nhanh · có "Xoá hết" · có "Quay lại" · gửi xong vẫn còn
+// lối đi tiếp — dùng chung mảnh ghép trong components/FormFields.tsx.
 // ============================================================================
 
 export type LoaiYeuCau = "dang_du_an" | "ho_tro" | "hop_tac" | "khac";
@@ -43,6 +47,16 @@ export default function YeuCauForm({
     setEmail((v) => v || profile.email || "");
   }, [profile]);
 
+  const coChu = Boolean(ten || dienThoai || email || noiDung);
+
+  function xoaHet() {
+    setTen("");
+    setDienThoai("");
+    setEmail("");
+    setNoiDung("");
+    setLoi("");
+  }
+
   async function gui() {
     setLoi("");
     if (!ten.trim()) return setLoi("Chưa nhập họ tên.");
@@ -72,71 +86,47 @@ export default function YeuCauForm({
     setDangGui(false);
   }
 
+  // Gửi xong: báo rõ + vẫn còn lối đi tiếp (gửi yêu cầu khác / quay lại)
   if (xong) {
     return (
-      <p className="rounded-xl bg-green-50 px-4 py-3 text-sm font-medium text-green-700">{loiNhanXong}</p>
+      <TheGuiXong
+        loiNhan={loiNhanXong}
+        onGuiTiep={() => {
+          xoaHet();
+          setXong(false);
+        }}
+      />
     );
   }
 
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <O nhan="Họ và tên *">
-          <input value={ten} onChange={(e) => setTen(e.target.value)} placeholder="Nguyễn Văn A" className={inputCls} />
-        </O>
-        <O nhan="Số điện thoại *">
-          <input
-            value={dienThoai}
-            onChange={(e) => setDienThoai(e.target.value)}
-            inputMode="tel"
-            placeholder="0905 123 456"
-            className={inputCls}
-          />
-        </O>
+        <ONhap nhan="Họ và tên *" value={ten} onChange={setTen} placeholder="Nguyễn Văn A" />
+        <ONhap nhan="Số điện thoại *" value={dienThoai} onChange={setDienThoai} placeholder="0905 123 456" inputMode="tel" />
       </div>
 
-      <O nhan="Email (không bắt buộc)">
-        <input
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          inputMode="email"
-          placeholder="email@cua-ban.com"
-          className={inputCls}
-        />
-      </O>
+      <ONhap nhan="Email (không bắt buộc)" value={email} onChange={setEmail} placeholder="email@cua-ban.com" inputMode="email" />
 
-      <O nhan="Nội dung yêu cầu *">
-        <textarea
-          value={noiDung}
-          onChange={(e) => setNoiDung(e.target.value)}
-          rows={4}
-          placeholder={goiYNoiDung}
-          className={`${inputCls} h-auto py-2.5`}
-        />
-      </O>
+      <ONhapDai nhan="Nội dung yêu cầu *" value={noiDung} onChange={setNoiDung} placeholder={goiYNoiDung} />
 
       {loi && <p className="rounded-lg bg-red-50 px-4 py-2.5 text-sm text-red-700">{loi}</p>}
 
-      <button
-        type="button"
-        onClick={gui}
-        disabled={dangGui}
-        className="rounded-lg bg-cvr-ink px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-cvr-ink/90 disabled:opacity-50"
-      >
-        {dangGui ? "Đang gửi…" : nhanNut}
-      </button>
+      {/* Hàng nút: GỬI · Xoá hết (khi đã gõ) · Quay lại — luôn có lối thoát */}
+      <div className="flex flex-wrap items-center gap-2.5">
+        <button
+          type="button"
+          onClick={gui}
+          disabled={dangGui}
+          className="rounded-lg bg-cvr-ink px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-cvr-ink/90 disabled:opacity-50"
+        >
+          {dangGui ? "Đang gửi…" : nhanNut}
+        </button>
+        {coChu && <NutXoaHet onClick={xoaHet} />}
+        <span className="ml-auto">
+          <NutQuayLai />
+        </span>
+      </div>
     </div>
-  );
-}
-
-const inputCls =
-  "h-11 w-full rounded-lg border border-cvr-line bg-white px-3 text-sm text-cvr-ink placeholder-cvr-faint outline-none transition focus:border-cvr-ink";
-
-function O({ nhan, children }: { nhan: string; children: React.ReactNode }) {
-  return (
-    <label className="block">
-      <span className="mb-1.5 block text-xs font-medium text-cvr-muted">{nhan}</span>
-      {children}
-    </label>
   );
 }

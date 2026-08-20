@@ -61,7 +61,8 @@ export type FooterData = {
 
 // Mặc định = đúng nội dung Footer hiện tại (khớp Footer.tsx cũ).
 export const FOOTER_DEFAULT: FooterData = {
-  tagline: "Bất động sản Duyên hải Miền Trung",
+  // Dòng đậm dưới logo — chủ dự án muốn giữ TÊN CŨ (CVR), không phải câu mô tả.
+  tagline: "Central Coast Vietnam Real Estate (CVR)",
   description:
     "Coastal Land (coastalland.vn) là nền tảng công nghệ và cổng thông tin bất động sản trực tuyến hàng đầu tại Việt Nam.",
   hotline: "+84 377 985 036",
