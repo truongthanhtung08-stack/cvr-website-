@@ -70,8 +70,13 @@ export async function GET(request: Request) {
     // mục "Đăng ký sử dụng API"), nhưng ID thì luôn có. Nên: xin đủ trước, hỏng
     // thì lùi về xin mỗi ID — đủ để đăng nhập, tên/ảnh bổ sung sau cũng được.
     type ZaloMe = { id?: string; name?: string; picture?: { data?: { url?: string } } };
+    // Tài liệu Zalo có 2 kiểu gửi mã truy cập: qua HEADER hoặc qua THAM SỐ URL,
+    // tuỳ phiên bản. Gửi cả hai cho chắc — thừa một chỗ không sao, thiếu là hỏng.
     const hoiZalo = async (fields: string): Promise<ZaloMe> => {
-      const r = await fetch(`${ZALO_ME_URL}?fields=${fields}`, {
+      const u = new URL(ZALO_ME_URL);
+      u.searchParams.set("fields", fields);
+      u.searchParams.set("access_token", token.access_token!);
+      const r = await fetch(u.toString(), {
         headers: { access_token: token.access_token! },
         cache: "no-store",
       });
