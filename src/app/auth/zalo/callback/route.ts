@@ -70,9 +70,25 @@ export async function GET(request: Request) {
     // mục "Đăng ký sử dụng API"), nhưng ID thì luôn có. Nên: xin đủ trước, hỏng
     // thì lùi về xin mỗi ID — đủ để đăng nhập, tên/ảnh bổ sung sau cũng được.
     type ZaloMe = { id?: string; name?: string; picture?: { data?: { url?: string } } };
-    // Tài liệu Zalo có 2 kiểu gửi mã truy cập: qua HEADER hoặc qua THAM SỐ URL,
-    // tuỳ phiên bản. Gửi cả hai cho chắc — thừa một chỗ không sao, thiếu là hỏng.
+    // ⚠️ ZALO CHẶN THEO IP: chỉ cho đọc thông tin người dùng từ máy chủ đặt TẠI
+    // VIỆT NAM. Vercel chạy ở Mỹ nên gọi thẳng sẽ bị từ chối:
+    //   error -501 "Personal information is limited due to IP address not inside Vietnam"
+    // → Có trạm trung chuyển ở VN (tools/zalo-proxy-vn/zalo-me.php) thì gọi qua đó.
+    //   Chưa có trạm thì vẫn gọi thẳng, để không chặn đường Google/email đang chạy.
+    const proxyUrl = process.env.ZALO_PROXY_URL;
+    const proxyKey = process.env.ZALO_PROXY_KEY;
+
     const hoiZalo = async (fields: string): Promise<ZaloMe> => {
+      if (proxyUrl && proxyKey) {
+        const r = await fetch(proxyUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-cl-key": proxyKey },
+          body: JSON.stringify({ access_token: token.access_token, fields }),
+          cache: "no-store",
+        });
+        return (await r.json()) as ZaloMe;
+      }
+      // Gọi thẳng (chỉ chạy được nếu máy chủ đặt tại Việt Nam)
       const u = new URL(ZALO_ME_URL);
       u.searchParams.set("fields", fields);
       u.searchParams.set("access_token", token.access_token!);
