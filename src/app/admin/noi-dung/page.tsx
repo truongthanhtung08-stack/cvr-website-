@@ -130,7 +130,7 @@ export default function AdminSiteContentPage() {
       )}
 
       {/* HERO TRANG CHỦ */}
-      <Panel title="Hero trang chủ (3 slide)" desc="Mỗi slide cần 2 ảnh: MÁY TÍNH 2560×1280 (2:1) và ĐIỆN THOẠI 1200×480 (2.5:1)">
+      <Panel title="Hero trang chủ (3 slide)" desc="Mỗi slide cần 2 ảnh: MÁY TÍNH 2600×1000 (2,6:1) và ĐIỆN THOẠI 1200×520 (2,3:1)">
         <div className="space-y-4">
           {heroSlides.map((s, i) => (
             <div key={i} className="rounded-xl border border-cvr-line p-4">
@@ -139,16 +139,16 @@ export default function AdminSiteContentPage() {
                 <div>
                   <p className="text-sm font-semibold text-cvr-ink">Ảnh MÁY TÍNH</p>
                   <p className="mb-2 mt-0.5 inline-block rounded-md bg-cvr-blue/10 px-2.5 py-1 text-[15px] font-bold tracking-tight text-cvr-blue-ink">
-                    2560 × 1280 px · tỷ lệ 2 : 1
+                    2600 × 1000 px · tỷ lệ 2,6 : 1
                   </p>
-                  <ImageField value={s.image} ratio="2:1 · 2560×1280" onChange={(url) => setSlide(i, { image: url })} />
+                  <ImageField value={s.image} ratio="2,6:1 · 2600×1000" onChange={(url) => setSlide(i, { image: url })} />
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-cvr-ink">Ảnh ĐIỆN THOẠI</p>
                   <p className="mb-2 mt-0.5 inline-block rounded-md bg-cvr-blue/10 px-2.5 py-1 text-[15px] font-bold tracking-tight text-cvr-blue-ink">
-                    1200 × 480 px · tỷ lệ 2,5 : 1
+                    1200 × 520 px · tỷ lệ 2,3 : 1
                   </p>
-                  <ImageField value={s.imageMobile ?? ""} ratio="2.5:1 · 1200×480" onChange={(url) => setSlide(i, { imageMobile: url })} />
+                  <ImageField value={s.imageMobile ?? ""} ratio="2,3:1 · 1200×520" onChange={(url) => setSlide(i, { imageMobile: url })} />
                   <p className="mt-1 text-xs text-cvr-muted">Bỏ trống → điện thoại dùng tạm ảnh máy tính (sẽ bị cắt)</p>
                 </div>
               </div>
@@ -278,7 +278,7 @@ export default function AdminSiteContentPage() {
       </Panel>
 
       {/* BANNER TRANG DỰ ÁN */}
-      <Panel title="Banner trang Dự án (/du-an)" desc="Mỗi slide có 2 ô ảnh: MÁY TÍNH 1920×640 (3:1) và ĐIỆN THOẠI 1200×600 (2:1) · nhiều slide sẽ tự chạy">
+      <Panel title="Banner trang Dự án (/du-an)" desc="Mỗi slide có 2 ô ảnh: MÁY TÍNH 1920×600 (3,2:1) và ĐIỆN THOẠI 1200×600 (2:1) · nhiều slide sẽ tự chạy">
         <div className="space-y-4">
           {projBanners.map((s, i) => (
             <div key={i} className="rounded-xl border border-cvr-line p-4">
@@ -292,9 +292,9 @@ export default function AdminSiteContentPage() {
                 <div>
                   <p className="text-sm font-semibold text-cvr-ink">Ảnh MÁY TÍNH</p>
                   <p className="mb-2 mt-0.5 inline-block rounded-md bg-cvr-blue/10 px-2.5 py-1 text-[15px] font-bold tracking-tight text-cvr-blue-ink">
-                    1920 × 640 px · tỷ lệ 3 : 1
+                    1920 × 600 px · tỷ lệ 3,2 : 1
                   </p>
-                  <ImageField value={s.image} ratio="3:1 · 1920×640" onChange={(url) => setProj(i, { image: url })} />
+                  <ImageField value={s.image} ratio="3,2:1 · 1920×600" onChange={(url) => setProj(i, { image: url })} />
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-cvr-ink">Ảnh ĐIỆN THOẠI</p>
@@ -497,7 +497,23 @@ function AboutEditor({ value: a, onChange }: { value: AboutData; onChange: (patc
       {/* Ảnh hero */}
       <div>
         <p className="mb-1.5 text-sm font-semibold text-cvr-ink">Ảnh đầu trang (hero)</p>
-        <ImageField value={a.heroImage} ratio="Ngang · 1920×720" onChange={(url) => onChange({ heroImage: url })} />
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <div>
+            <p className="text-sm font-semibold text-cvr-ink">Ảnh MÁY TÍNH</p>
+            <p className="mb-2 mt-0.5 inline-block rounded-md bg-cvr-blue/10 px-2.5 py-1 text-[15px] font-bold tracking-tight text-cvr-blue-ink">
+              4000 × 1000 px · tỷ lệ 4 : 1
+            </p>
+            <ImageField value={a.heroImage} ratio="4:1 · 4000×1000" onChange={(url) => onChange({ heroImage: url })} />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-cvr-ink">Ảnh ĐIỆN THOẠI</p>
+            <p className="mb-2 mt-0.5 inline-block rounded-md bg-cvr-blue/10 px-2.5 py-1 text-[15px] font-bold tracking-tight text-cvr-blue-ink">
+              1200 × 750 px · tỷ lệ 16 : 10
+            </p>
+            <ImageField value={a.heroImageMobile ?? ""} ratio="16:10 · 1200×750" onChange={(url) => onChange({ heroImageMobile: url })} />
+            <p className="mt-1 text-xs text-cvr-muted">Bỏ trống → điện thoại dùng tạm ảnh máy tính (sẽ bị cắt)</p>
+          </div>
+        </div>
       </div>
 
       {/* Câu chuyện */}

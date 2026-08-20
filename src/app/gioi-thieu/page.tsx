@@ -90,18 +90,30 @@ export default async function GioiThieuPage() {
              KHUNG THEO TỶ LỆ CỐ ĐỊNH (không dùng vh) để ảnh luôn hiện đúng phần
              mong muốn: PC 4:1 · điện thoại 16:10. (Đã hạ dần 3:1 → 16:5 → 7:2 → 4:1
              theo yêu cầu "hero PC quá to"; cao tối đa 330px.)
-             → Ảnh cần chuẩn bị: TỶ LỆ 4:1, khuyến nghị 4000×1000 (tối thiểu 1920×480).
+             → Ảnh cần chuẩn bị (KHUNG GIỮ NGUYÊN, chỉ khớp ảnh theo khung):
+                MÁY TÍNH  4:1    → 4000×1000
+                ĐIỆN THOẠI 16:10 → 1200×750
              KHÔNG chèn watermark/logo lên hero này — để ảnh sạch, thương hiệu đã có
              ở header ngay phía trên. */}
         <section className="relative isolate pb-7 sm:pb-12">
           <div className="relative aspect-[16/10] w-full overflow-hidden bg-cvr-ink sm:aspect-[4/1] sm:max-h-[330px]">
+            {/* ĐIỆN THOẠI — ảnh riêng 16:10; chưa nhập thì dùng tạm ảnh máy tính */}
+            <Image
+              src={asset(about.heroImageMobile || about.heroImage)}
+              alt="Không gian làm việc Coastal Land bên bờ biển Duyên hải Miền Trung"
+              fill
+              priority
+              sizes="100vw"
+              className="object-cover sm:hidden"
+            />
+            {/* MÁY TÍNH — ảnh 4:1 */}
             <Image
               src={asset(about.heroImage)}
               alt="Không gian làm việc Coastal Land bên bờ biển Duyên hải Miền Trung"
               fill
               priority
               sizes="100vw"
-              className="object-cover"
+              className="hidden object-cover sm:block"
             />
           </div>
         </section>

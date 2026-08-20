@@ -218,7 +218,8 @@ export async function getHomeAreas(): Promise<AreaCard[]> {
 export type AboutStat = { value: string; label: string; sub: string };
 export type AboutValue = { title: string; desc: string };
 export type AboutData = {
-  heroImage: string;
+  heroImage: string;        // MÁY TÍNH — khung 4:1 → ảnh 4000×1000
+  heroImageMobile?: string; // ĐIỆN THOẠI — khung 16:10 → ảnh 1200×750. Trống → dùng tạm ảnh PC
   story: { eyebrow: string; title: string; paragraphs: string[]; image: string };
   vision: string;
   mission: string;
