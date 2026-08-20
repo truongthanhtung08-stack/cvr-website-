@@ -140,8 +140,7 @@ Kết quả đúc kết lưu vào `docs/` (file UX research riêng) trước khi
 ```
 Frontend:    Next.js 16 (App Router) + React 19 + TailwindCSS v4 + TypeScript
 Database:    Supabase (PostgreSQL)                  — free tier năm 1
-Hosting:     Vercel (kế hoạch)                       — auto-deploy từ GitHub
-Live hiện tại: GitHub Pages (static export)          — xem mục 3
+Hosting:     VERCEL (đang chạy thật)                 — auto-deploy mỗi lần push main
 CDN/Bảo mật: Cloudflare
 Thanh toán:  PayOS API (ưu tiên) · dự phòng MoMo/ZaloPay/Stripe
 AI kiểm duyệt tin: Claude API
@@ -166,16 +165,16 @@ Logo thật ở `public/logo/` (symbol-dark.svg cho nền sáng, symbol-white.sv
 
 ## 3. TRIỂN KHAI (Deploy) — QUAN TRỌNG
 
-- **Website CHÍNH THỨC (từ 3/7/2026):** `https://coastalland.vn` — domain mua tại PA Vietnam,
-  DNS trỏ GitHub Pages (4 bản ghi A `185.199.108-111.153` + CNAME `www` → `truongthanhtung08-stack.github.io`),
-  đã gắn Custom domain trong repo Settings → Pages. Link cũ
-  `truongthanhtung08-stack.github.io/cvr-website-/` tự chuyển hướng về domain.
-- **Cơ chế:** GitHub Actions (`.github/workflows/deploy.yml`) tự build static export + deploy lên GitHub Pages **mỗi lần push lên `main`** (~2–3 phút).
-- **→ Mọi chỉnh sửa web: chỉ cần commit + push lên `main`, domain tự cập nhật.**
-- Custom domain chạy ở GỐC → **KHÔNG còn basePath/tiền tố `/cvr-website-`** (đã gỡ khỏi
-  `next.config.ts` + `deploy.yml` ngày 3/7/2026). Helper `src/lib/asset.ts` vẫn dùng cho ảnh (prefix rỗng).
+- **Website CHÍNH THỨC:** `https://coastalland.vn` — domain mua tại PA Vietnam.
+- **CHẠY TRÊN VERCEL** (chế độ máy chủ, KHÔNG phải GitHub Pages tĩnh). Kiểm chứng:
+  `curl -sI https://coastalland.vn` trả về `Server: Vercel`.
+  → Có route máy chủ thật (`/api/...`, `/auth/...`), có biến môi trường, đọc Supabase no-store.
+- **Cơ chế:** push lên `main` → Vercel tự build và deploy, **~45 giây** là lên web.
+- Biến môi trường cắm tại **Vercel → Settings → Environment Variables** (không phải file .env trên máy).
+  Đổi biến xong phải **Redeploy** mới có hiệu lực.
 - Repo GitHub: `truongthanhtung08-stack/cvr-website-` (PUBLIC — lưu ý có dấu `-` ở cuối).
-- ⚠️ Vercel: link `cvr-website-eight.vercel.app` từng 404 + khoá. Hiện BỎ QUA, dùng GitHub Pages.
+- ⚠️ Tài liệu cũ (11/7) ghi web chạy GitHub Pages / static export / "bỏ qua Vercel" — **SAI, đã bỏ**.
+  `deploy.yml` và `basePath` là tàn dư thời GitHub Pages, không còn tác dụng.
 
 ---
 
