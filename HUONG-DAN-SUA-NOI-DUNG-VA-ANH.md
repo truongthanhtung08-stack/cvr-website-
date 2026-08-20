@@ -50,12 +50,12 @@ Code chỉ được dùng khi Admin **chưa có** dữ liệu cho khối đó.
 
 | Khối | Sửa ở đâu |
 |---|---|
-| **Hero trang chủ** (`hero_home`) | ⛔ **Admin** — code không có tác dụng |
-| **Footer** (`footer`) — hotline, email, mạng xã hội | ⛔ **Admin** *(riêng ĐỊA CHỈ đã tách sang code, xem 4.3)* |
-| **2 banner cuối trang chủ** (`home_ad`) | ⛔ **Admin** |
-| **5 ô khu vực trang chủ** (`home_areas`) | ⛔ **Admin** |
-| **Banner trang Dự án** (`banner_projects`) | ⛔ **Admin** |
-| **Trang Giới thiệu** (`about`) | ⛔ **Admin** |
+| **Hero trang chủ** (`hero_home`) | ✅ **Admin** — code không có tác dụng |
+| **Footer** (`footer`) — hotline, email, mạng xã hội | ✅ **Admin** *(riêng ĐỊA CHỈ đã tách sang code, xem 4.3)* |
+| **2 banner cuối trang chủ** (`home_ad`) | ✅ **Admin** |
+| **5 ô khu vực trang chủ** (`home_areas`) | ✅ **Admin** |
+| **Banner trang Dự án** (`banner_projects`) | ✅ **Admin** |
+| **Trang Giới thiệu** (`about`) | ✅ **Admin** |
 | **Landing page** (`landings`) | ✅ **VS Code** — `src/lib/landings.ts` |
 | Mọi trang văn bản, thông tin pháp lý, link footer, SEO | ✅ **VS Code** |
 
@@ -98,7 +98,7 @@ thay ảnh một lần là **cả máy tính lẫn điện thoại đều đổi
 | **Tách 2 ảnh** (đẹp nhất) | có cả `image` và `imageMobile` | Mỗi thiết bị một ảnh cắt sẵn đúng khung |
 
 ```ts
-image: "/images/hero-bien.jpg",          // PC 2560×1280 — BẮT BUỘC
+image: "/images/hero-bien.jpg",          // PC 2600×1000 — BẮT BUỘC
 imageMobile: "/images/hero-bien-mb.jpg", // ĐT 1200×480 — bỏ dòng này = dùng chung ảnh PC
 ```
 
@@ -131,7 +131,7 @@ Kiểm tra nhanh mình đang ở đúng bản: trong thư mục phải **có fil
 
 | Muốn đổi | Mở file | Admin có đè không |
 |---|---|---|
-| **Ảnh + chữ Hero trang chủ** | ⛔ **Sửa trong `/admin/noi-dung`** — xem mục 2.0. Code (`src/lib/banners.ts`) hiện KHÔNG có tác dụng | ✅ `hero_home` — **đang đè** |
+| **Ảnh + chữ Hero trang chủ** | ✅ **Sửa trong `/admin/noi-dung`** — xem mục 2.0. Code (`src/lib/banners.ts`) hiện KHÔNG có tác dụng | ✅ `hero_home` — **đang đè** |
 | Banner đầu trang Dự án | `src/lib/banners.ts` → `projectBanners` | ✅ `banner_projects` |
 | Số điện thoại, email, mạng xã hội ở Footer (địa chỉ xem dòng dưới) | `src/lib/siteContent.ts` → `FOOTER_DEFAULT` | ✅ `footer` |
 | Các cột link trong Footer (Giới thiệu, Tuyển dụng…) | `src/components/Footer.tsx` → `columns` | ❌ chỉ trong code |
@@ -216,7 +216,7 @@ lập tức**, không cần push, không cần đợi deploy. Ra web bấm **Ctr
 
 ## 2. HERO TRANG CHỦ — CHI TIẾT (quan trọng nhất)
 
-### 2.0. ⛔ HERO HIỆN KHÔNG SỬA ĐƯỢC TRONG VS CODE — PHẢI VÀO ADMIN
+### 2.0. ✅ HERO HIỆN KHÔNG SỬA ĐƯỢC TRONG VS CODE — PHẢI VÀO ADMIN
 
 **Tình trạng hiện tại (17/08/2026):** Hero trang chủ **đang do Admin điều khiển** — 3 ảnh
 đã tải lên Supabase. Sửa `src/lib/banners.ts` trong VS Code sẽ **KHÔNG có gì đổi trên web**.
@@ -231,8 +231,8 @@ mới sửa `banners.ts` (mục 2.3).
 
 | Ô trong Admin | Hiện ra ở đâu | Ghi chú |
 |---|---|---|
-| **Ảnh MÁY TÍNH** | nền Hero trên máy tính | 2560 × 1280 px |
-| **Ảnh ĐIỆN THOẠI** | nền Hero trên điện thoại | 1200 × 480 px · bỏ trống = dùng tạm ảnh PC |
+| **Ảnh MÁY TÍNH** | nền Hero trên máy tính | 2600 × 1000 px |
+| **Ảnh ĐIỆN THOẠI** | nền Hero trên điện thoại | 1200 × 520 px · bỏ trống = dùng tạm ảnh PC |
 | **Nhãn (dòng 1)** | chữ nhỏ trên cùng | 2–3 từ, hệ thống tự viết hoa |
 | **Tiêu đề (dòng 2)** | chữ lớn nhất | ≤ 25 ký tự, giữ 1 dòng |
 | **Mô tả (dòng 3)** | chữ nhỏ dưới tiêu đề | ≤ 40 ký tự |
@@ -248,8 +248,8 @@ Sửa xong bấm **Lưu** ngay dưới khối → web đổi **ngay lập tức*
 
 | Loại | Kích thước thiết kế | Tỷ lệ | Dùng khi |
 |---|---|---|---|
-| **Ảnh máy tính (PC)** | **2560 × 1280 px** | **2 : 1** | màn hình từ 640px trở lên |
-| **Ảnh điện thoại** | **1200 × 480 px** | **2,5 : 1** | màn hình dưới 640px |
+| **Ảnh máy tính (PC)** | **2600 × 1000 px** | **2,6 : 1** | màn hình từ 640px trở lên |
+| **Ảnh điện thoại** | **1200 × 520 px** | **2,3 : 1** | màn hình dưới 640px |
 
 - Định dạng: **JPG**, chất lượng xuất 85–90%.
 - Dung lượng mỗi ảnh: **nên ≤ 500 KB**, tối đa 800 KB. Ảnh 5 MB làm trang chủ tải chậm rõ rệt.
@@ -274,7 +274,7 @@ bấy nhiêu rồi **cắt bớt phần thừa**. Khung thật trên web:
 
 ### 2.3. Thay ảnh Hero TRONG CODE — chỉ khi Admin CHƯA có dữ liệu Hero
 
-> ⛔ Hiện tại Admin **đang có** dữ liệu Hero → làm theo mục 2.0, đừng làm mục này.
+> ✅ Hiện tại Admin **đang có** dữ liệu Hero → làm theo mục 2.0, đừng làm mục này.
 > Mục này để dành cho khi nào Hero được trả về cho code quản.
 
 **Bước 1.** Chép ảnh vào `public/images/`. Ví dụ đặt tên `hero-bien-my-khe.jpg`
@@ -286,7 +286,7 @@ bấy nhiêu rồi **cắt bớt phần thừa**. Khung thật trên web:
 export const homeBanners: Banner[] = [
   {
     id: "lp-gioi-thieu",
-    image: "/images/hero-bien-my-khe.jpg",              // ← ảnh PC 2560×1280
+    image: "/images/hero-bien-my-khe.jpg",              // ← ảnh PC 2600×1000
     imageMobile: "/images/hero-bien-my-khe-mobile.jpg", // ← ảnh ĐT 1200×480 (không có thì xoá dòng này)
     status: "Bất Động Sản",        // dòng 1 — nhãn nhỏ, tự IN HOA
     title: "Duyên hải Việt Nam",   // dòng 2 — tiêu đề lớn (giữ 1 dòng ngắn)
@@ -327,9 +327,10 @@ Cắt đúng tỷ lệ = ảnh không bị mất đầu, mất chân. Cột "khu
 
 | Vị trí trên web | Tỷ lệ khung | Kích thước khuyến nghị | Thư mục ảnh |
 |---|---|---|---|
-| **Hero trang chủ — PC** | **2 : 1** | **2560 × 1280** | 🖼️ Admin tải lên |
-| **Hero trang chủ — điện thoại** | **2,5 : 1** | **1200 × 480** | 🖼️ Admin tải lên |
-| Banner đầu trang Dự án | 3 : 1 | 2400 × 800 | 🖼️ Admin tải lên |
+| **Hero trang chủ — PC** | **2,6 : 1** | **2600 × 1000** | 🖼️ Admin tải lên |
+| **Hero trang chủ — điện thoại** | **2,3 : 1** | **1200 × 520** | 🖼️ Admin tải lên |
+| **Banner trang Dự án — PC** | **3,2 : 1** | **1920 × 600** | 🖼️ Admin tải lên |
+| **Banner trang Dự án — điện thoại** | **2 : 1** | **1200 × 600** | 🖼️ Admin tải lên |
 | **Thẻ tin bất động sản** | **16 : 10** | **1200 × 750** | 🖼️ Admin → Tin đăng |
 | Ô khu vực trang chủ | ảnh phủ kín ô | 1600 × 1200 | 🖼️ Admin tải lên |
 | Thẻ dự án | 3 : 2 và 4 : 3 | 1500 × 1000 | 🖼️ Admin → Dự án |
