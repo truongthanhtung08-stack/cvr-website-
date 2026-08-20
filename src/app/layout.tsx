@@ -7,6 +7,7 @@ import MobileTabBar from "@/components/MobileTabBar";
 import ScrollTopOnRoute from "@/components/ScrollTopOnRoute";
 import RouteMotion from "@/components/RouteMotion";
 import SiteJsonLd from "@/components/SiteJsonLd";
+import Analytics from "@/components/Analytics";
 import PwaRegister from "@/components/PwaRegister";
 
 // Font chính toàn site: Inter — hiện đại, chuyên nghiệp, "SF Pro của web" (kiểu Apple),
@@ -133,6 +134,8 @@ export default function RootLayout({
     <html lang="vi" className={`${inter.variable} ${playfair.variable} ${montserrat.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col font-sans bg-background text-foreground">
         <SiteJsonLd />
+        {/* Google Analytics 4 — chỉ chạy khi đã cắm NEXT_PUBLIC_GA_ID */}
+        <Analytics />
         {/* Cài web lên màn hình chính chạy như app (chỉ hoạt động ở bản thật) */}
         <PwaRegister />
         <ScrollTopOnRoute />

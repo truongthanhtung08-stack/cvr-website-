@@ -166,8 +166,32 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
     ...(hasRelated ? [{ id: "tin-dang", label: "Tin bán / cho thuê" }] : []),
   ];
 
+  // ── DỮ LIỆU CÓ CẤU TRÚC CHO GOOGLE (JSON-LD) ──────────────────────────────
+  // Trang dự án trước đây KHÔNG khai gì → với Google nó chỉ là một trang chữ.
+  // Khai đúng kiểu ResidentialComplex + chủ đầu tư + vị trí + tiện ích + giá từ
+  // → Google hiểu đây là một KHU BẤT ĐỘNG SẢN CÓ THẬT, đủ điều kiện hiện kèm
+  // ảnh/giá trong kết quả tìm kiếm và nối vào thực thể thương hiệu Coastal Land.
+  const SITE = "https://coastalland.vn";
+  const giaTu = p.priceMode === "hidden" ? null : p.priceFrom;
+  const duAnJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "ResidentialComplex",
+    "@id": `${SITE}/du-an/${p.slug}#du-an`,
+    name: p.name,
+    url: `${SITE}/du-an/${p.slug}`,
+    description: p.overview?.[0] ?? `Dự án ${p.name} tại ${p.location}. Loại hình ${p.type}, tình trạng ${p.status}.`,
+    image: (p.photos?.length ? p.photos : [p.image]).map((x) => (x.startsWith("http") ? x : `${SITE}${x}`)),
+    address: { "@type": "PostalAddress", streetAddress: p.location, addressCountry: "VN" },
+    ...(p.developer ? { developer: { "@type": "Organization", name: p.developer } } : {}),
+    ...(p.amenities?.length ? { amenityFeature: p.amenities.slice(0, 12).map((a) => ({ "@type": "LocationFeatureSpecification", name: a })) } : {}),
+    // Giá "từ …" chỉ khai khi dự án cho hiện giá (admin đặt priceMode)
+    ...(giaTu ? { makesOffer: { "@type": "Offer", priceCurrency: "VND", description: giaTu, availability: "https://schema.org/InStock" } } : {}),
+    provider: { "@id": `${SITE}/#to-chuc` }, // nối về thực thể COASTAL LAND ở layout gốc
+  };
+
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(duAnJsonLd) }} />
       <Header />
       <main className="flex-1 bg-white">
         {/* MOBILE: pt-0 → ảnh dự án nằm SÁT mép dưới header (không chừa khoảng trắng) */}
