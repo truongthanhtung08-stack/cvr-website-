@@ -22,14 +22,24 @@ type Payment = {
 
 export default function AdminPaymentsPage() {
   const [cfg, setCfg] = useState<{ daCauHinh: boolean; thieu: string[] } | null>(null);
+  // Webhook = đường PayOS gọi ngược về web báo "khách đã chuyển tiền" → web tự
+  // cộng ví. Thiếu nó thì tiền về ngân hàng mà ví khách vẫn bằng 0.
+  const [hook, setHook] = useState<{ daCauHinh: boolean; thieu: string[] } | null>(null);
   const [rows, setRows] = useState<Payment[] | null>(null);
   const [dbErr, setDbErr] = useState("");
+  const [copied, setCopied] = useState(false);
+  const webhookUrl = typeof window === "undefined" ? "" : `${window.location.origin}/api/thanh-toan/webhook`;
 
   useEffect(() => {
     fetch("/api/thanh-toan/tao-don")
       .then((r) => r.json())
       .then(setCfg)
       .catch(() => setCfg({ daCauHinh: false, thieu: ["PAYOS_CLIENT_ID", "PAYOS_API_KEY", "PAYOS_CHECKSUM_KEY"] }));
+
+    fetch("/api/thanh-toan/webhook")
+      .then((r) => r.json())
+      .then(setHook)
+      .catch(() => setHook({ daCauHinh: false, thieu: ["PAYOS_CHECKSUM_KEY", "SUPABASE_SERVICE_ROLE_KEY"] }));
 
     (async () => {
       try {
@@ -83,12 +93,61 @@ export default function AdminPaymentsPage() {
         )}
       </section>
 
+      {/* Webhook — bước BẮT BUỘC để tiền tự vào ví */}
+      <section className="rounded-2xl border border-cvr-line bg-white p-4 shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-base font-semibold text-cvr-ink">Tự động cộng ví khi khách chuyển tiền</h2>
+          {hook && (
+            <span
+              className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                hook.daCauHinh ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-700"
+              }`}
+            >
+              {hook.daCauHinh ? "Sẵn sàng" : "Chưa cắm khoá"}
+            </span>
+          )}
+        </div>
+
+        <p className="mt-2 text-sm text-cvr-body">
+          Khách chuyển khoản xong, PayOS gọi về địa chỉ dưới đây; web tự đổi giao dịch sang
+          <span className="font-semibold text-cvr-ink"> Đã thanh toán</span>, cộng tiền vào ví và xét lại cấp hội viên.
+          Chưa khai địa chỉ này thì tiền về ngân hàng nhưng ví khách vẫn bằng 0.
+        </p>
+
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <code className="min-w-0 flex-1 truncate rounded-lg bg-cvr-surface px-3 py-2 text-[13px] text-cvr-ink">{webhookUrl}</code>
+          <button
+            type="button"
+            onClick={() => {
+              navigator.clipboard?.writeText(webhookUrl);
+              setCopied(true);
+              window.setTimeout(() => setCopied(false), 1600);
+            }}
+            className="rounded-lg bg-cvr-blue px-4 py-2 text-sm font-semibold text-white transition hover:bg-cvr-blue-ink active:scale-95"
+          >
+            {copied ? "Đã chép ✓" : "Chép địa chỉ"}
+          </button>
+        </div>
+
+        <ol className="mt-3 list-decimal space-y-1 pl-5 text-sm text-cvr-muted">
+          <li>Vào <span className="font-medium text-cvr-ink">my.payos.vn</span> → Kênh thanh toán → mục Webhook.</li>
+          <li>Dán địa chỉ trên rồi bấm <span className="font-medium text-cvr-ink">Kiểm tra / Lưu</span> — PayOS sẽ gọi thử, phải báo thành công.</li>
+          <li>Nạp thử một khoản nhỏ (10.000 ₫) rồi xem giao dịch bên dưới có chuyển sang “Đã thanh toán” và ví có nhảy số không.</li>
+        </ol>
+
+        {hook && !hook.daCauHinh && (
+          <p className="mt-3 rounded-lg bg-amber-50 px-4 py-2.5 text-sm text-amber-700">
+            Còn thiếu khoá: <span className="font-semibold">{hook.thieu.join(" · ")}</span> — dán ở Vercel → Settings → Environment Variables rồi Redeploy.
+          </p>
+        )}
+      </section>
+
       {/* Giao dịch */}
       <section className="rounded-2xl border border-cvr-line bg-white p-4 shadow-sm">
         <h2 className="text-base font-semibold text-cvr-ink">Giao dịch gần đây</h2>
         {dbErr && (
           <p className="mt-2 rounded-lg bg-amber-50 px-4 py-2.5 text-sm text-amber-700">
-            Chưa có bảng lưu giao dịch (payments). Chạy tệp <code>docs/sql/thanh-toan.sql</code> trong Supabase để bật.
+            Chưa có bảng lưu giao dịch (payments). Chạy tệp <code>docs/sql/vi-thanh-vien-va-thanh-toan.sql</code> trong Supabase để bật.
           </p>
         )}
         {rows && rows.length === 0 && !dbErr && (

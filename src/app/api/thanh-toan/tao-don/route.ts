@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
+import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 // ============================================================================
 // CỔNG THANH TOÁN PayOS — tạo link thanh toán cho một đơn nạp tiền / mua gói.
@@ -44,6 +46,17 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, message: "Số tiền tối thiểu là 10.000 ₫." }, { status: 400 });
   }
 
+  // AI đang nạp — đọc từ phiên đăng nhập, KHÔNG lấy theo dữ liệu trình duyệt gửi
+  // lên (nếu tin trình duyệt thì ai cũng khai được id người khác để nhận tiền).
+  let nguoiNap: { id: string; email?: string } | null = null;
+  try {
+    const supabase = await createClient();
+    const { data } = await supabase.auth.getUser();
+    if (data?.user) nguoiNap = { id: data.user.id, email: data.user.email ?? undefined };
+  } catch {
+    /* chưa cấu hình Supabase → vẫn tạo được link, đối soát tay */
+  }
+
   // Mã đơn: số nguyên tăng dần theo thời gian (yêu cầu của PayOS)
   const orderCode = Number(String(Date.now()).slice(-10));
   // PayOS giới hạn mô tả 25 ký tự
@@ -84,6 +97,24 @@ export async function POST(req: Request) {
         { ok: false, message: json?.desc || "Cổng thanh toán từ chối đơn hàng.", detail: json },
         { status: 502 },
       );
+    }
+
+    // ── GHI ĐƠN VÀO SỔ (payments, trạng thái "pending") ────────────────────
+    // Bắt buộc: lát nữa PayOS báo "đã nhận tiền" thì webhook dò theo order_code
+    // trong sổ này để biết cộng cho AI và cộng BAO NHIÊU. Không ghi ở đây thì
+    // tiền về mà không biết của ai.
+    // Ghi bằng khoá quản trị vì phiên khách không chắc còn sống lúc chuyển trang.
+    const admin = createAdminClient();
+    if (admin) {
+      await admin.from("payments").insert({
+        user_id: nguoiNap?.id ?? null,
+        user_email: nguoiNap?.email ?? body.buyerEmail ?? null,
+        order_code: String(orderCode),
+        amount,
+        kind: "topup",
+        status: "pending",
+        note: nguoiNap ? null : "Đơn tạo khi chưa đăng nhập — cần đối soát tay.",
+      });
     }
 
     return NextResponse.json({
