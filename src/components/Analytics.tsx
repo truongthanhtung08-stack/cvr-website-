@@ -6,19 +6,23 @@ import Script from "next/script";
 // Vì sao cần: không có số liệu thì chạy marketing là chạy mù — không biết khách
 // vào từ đâu, xem tin nào, bỏ đi ở bước nào, tiền quảng cáo nào ra lead.
 //
-// CÁCH BẬT (chủ dự án làm 1 lần, không cần sửa code):
-//   1. analytics.google.com → Quản trị → Tạo tài sản (property) cho coastalland.vn
-//      → Luồng dữ liệu (Web) → lấy MÃ ĐO LƯỜNG dạng G-XXXXXXXXXX
-//   2. Vercel → Settings → Environment Variables → thêm:
-//        NEXT_PUBLIC_GA_ID = G-XXXXXXXXXX
-//   3. Redeploy. Xong — số liệu chạy về ngay trong mục "Thời gian thực".
+// MÃ ĐO LƯỜNG ĐANG DÙNG: G-2RE29WXQCC
+//   · Tài sản "coastalland.vn" · luồng "Coastal Land Web" (tạo 20/8/2026).
+//   · Mã này KHÔNG phải khoá bí mật — mọi website dùng Analytics đều để lộ nó
+//     trong mã nguồn trang, nên ghi thẳng vào đây được, khỏi phải vào Vercel.
+//   · Muốn đổi sang tài sản khác mà không sửa code: đặt biến NEXT_PUBLIC_GA_ID
+//     trên Vercel → giá trị đó được ưu tiên.
 //
-// Chưa cắm mã → KHÔNG chèn script nào (web không tải thêm gì, không chậm đi).
+// Xem số liệu: analytics.google.com → tài sản coastalland.vn → Báo cáo →
+// Thời gian thực (mở web trên điện thoại là thấy có người đang online).
+//
 // Script đặt afterInteractive: chờ trang hiện xong mới tải → không làm chậm
 // lần hiển thị đầu tiên (điểm tốc độ Google chấm vẫn giữ nguyên).
 // ============================================================================
+const GA_MAC_DINH = "G-2RE29WXQCC";
+
 export default function Analytics() {
-  const id = process.env.NEXT_PUBLIC_GA_ID;
+  const id = process.env.NEXT_PUBLIC_GA_ID || GA_MAC_DINH;
   if (!id) return null;
 
   return (
