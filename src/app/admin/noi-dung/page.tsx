@@ -278,7 +278,7 @@ export default function AdminSiteContentPage() {
       </Panel>
 
       {/* BANNER TRANG DỰ ÁN */}
-      <Panel title="Banner trang Dự án (/du-an)" desc="Mỗi slide có 2 ô ảnh: MÁY TÍNH 1920×640 (3:1) và ĐIỆN THOẠI 1140×600 (≈1,9:1) · nhiều slide sẽ tự chạy">
+      <Panel title="Banner trang Dự án (/du-an)" desc="Mỗi slide có 2 ô ảnh: MÁY TÍNH 1920×640 (3:1) và ĐIỆN THOẠI 1200×600 (2:1) · nhiều slide sẽ tự chạy">
         <div className="space-y-4">
           {projBanners.map((s, i) => (
             <div key={i} className="rounded-xl border border-cvr-line p-4">
@@ -299,9 +299,9 @@ export default function AdminSiteContentPage() {
                 <div>
                   <p className="text-sm font-semibold text-cvr-ink">Ảnh ĐIỆN THOẠI</p>
                   <p className="mb-2 mt-0.5 inline-block rounded-md bg-cvr-blue/10 px-2.5 py-1 text-[15px] font-bold tracking-tight text-cvr-blue-ink">
-                    1140 × 600 px · tỷ lệ ≈ 1,9 : 1
+                    1200 × 600 px · tỷ lệ 2 : 1
                   </p>
-                  <ImageField value={s.imageMobile ?? ""} ratio="≈1.9:1 · 1140×600" onChange={(url) => setProj(i, { imageMobile: url })} />
+                  <ImageField value={s.imageMobile ?? ""} ratio="2:1 · 1200×600" onChange={(url) => setProj(i, { imageMobile: url })} />
                   <p className="mt-1 text-xs text-cvr-muted">Bỏ trống → điện thoại dùng tạm ảnh máy tính</p>
                 </div>
               </div>
