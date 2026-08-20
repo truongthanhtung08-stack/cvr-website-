@@ -278,7 +278,7 @@ export default function AdminSiteContentPage() {
       </Panel>
 
       {/* BANNER TRANG DỰ ÁN */}
-      <Panel title="Banner trang Dự án (/du-an)" desc="Mỗi slide cần 2 ảnh: MÁY TÍNH 1920×640 (3:1) và ĐIỆN THOẠI 1200×480 (2,5:1) · nhiều slide sẽ tự chạy">
+      <Panel title="Banner trang Dự án (/du-an)" desc="Mỗi slide có 2 ô ảnh: MÁY TÍNH 1920×640 (3:1) và ĐIỆN THOẠI 1140×600 (≈1,9:1) · nhiều slide sẽ tự chạy">
         <div className="space-y-4">
           {projBanners.map((s, i) => (
             <div key={i} className="rounded-xl border border-cvr-line p-4">
@@ -286,6 +286,8 @@ export default function AdminSiteContentPage() {
                 <p className="text-sm font-semibold text-cvr-ink">Slide {i + 1}</p>
                 <button type="button" onClick={() => delProj(i)} className="text-xs font-medium text-red-600 hover:underline">Xoá</button>
               </div>
+              {/* 2 ô ảnh riêng cho từng loại máy — KHUNG banner giữ nguyên (h-[190px] sm:h-[400px]),
+                  chỉ thêm chỗ để nhập ảnh riêng cho điện thoại. */}
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                 <div>
                   <p className="text-sm font-semibold text-cvr-ink">Ảnh MÁY TÍNH</p>
@@ -297,10 +299,10 @@ export default function AdminSiteContentPage() {
                 <div>
                   <p className="text-sm font-semibold text-cvr-ink">Ảnh ĐIỆN THOẠI</p>
                   <p className="mb-2 mt-0.5 inline-block rounded-md bg-cvr-blue/10 px-2.5 py-1 text-[15px] font-bold tracking-tight text-cvr-blue-ink">
-                    1200 × 480 px · tỷ lệ 2,5 : 1
+                    1140 × 600 px · tỷ lệ ≈ 1,9 : 1
                   </p>
-                  <ImageField value={s.imageMobile ?? ""} ratio="2.5:1 · 1200×480" onChange={(url) => setProj(i, { imageMobile: url })} />
-                  <p className="mt-1 text-xs text-cvr-muted">Bỏ trống → điện thoại dùng tạm ảnh máy tính (sẽ bị cắt hai bên)</p>
+                  <ImageField value={s.imageMobile ?? ""} ratio="≈1.9:1 · 1140×600" onChange={(url) => setProj(i, { imageMobile: url })} />
+                  <p className="mt-1 text-xs text-cvr-muted">Bỏ trống → điện thoại dùng tạm ảnh máy tính</p>
                 </div>
               </div>
               <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -492,23 +494,10 @@ function AboutEditor({ value: a, onChange }: { value: AboutData; onChange: (patc
 
   return (
     <div className="space-y-4">
-      {/* Ảnh hero — 2 ảnh riêng. Nhãn cũ ghi "1920×720" không khớp khung; khung nay = 8:3 */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <div>
-          <p className="text-sm font-semibold text-cvr-ink">Ảnh đầu trang — MÁY TÍNH</p>
-          <p className="mb-2 mt-0.5 inline-block rounded-md bg-cvr-blue/10 px-2.5 py-1 text-[15px] font-bold tracking-tight text-cvr-blue-ink">
-            2400 × 900 px · tỷ lệ 8 : 3
-          </p>
-          <ImageField value={a.heroImage} ratio="8:3 · 2400×900" onChange={(url) => onChange({ heroImage: url })} />
-        </div>
-        <div>
-          <p className="text-sm font-semibold text-cvr-ink">Ảnh đầu trang — ĐIỆN THOẠI</p>
-          <p className="mb-2 mt-0.5 inline-block rounded-md bg-cvr-blue/10 px-2.5 py-1 text-[15px] font-bold tracking-tight text-cvr-blue-ink">
-            1200 × 480 px · tỷ lệ 2,5 : 1
-          </p>
-          <ImageField value={a.heroImageMobile ?? ""} ratio="2.5:1 · 1200×480" onChange={(url) => onChange({ heroImageMobile: url })} />
-          <p className="mt-1 text-xs text-cvr-muted">Bỏ trống → điện thoại dùng tạm ảnh máy tính (sẽ bị cắt hai bên)</p>
-        </div>
+      {/* Ảnh hero */}
+      <div>
+        <p className="mb-1.5 text-sm font-semibold text-cvr-ink">Ảnh đầu trang (hero)</p>
+        <ImageField value={a.heroImage} ratio="Ngang · 1920×720" onChange={(url) => onChange({ heroImage: url })} />
       </div>
 
       {/* Câu chuyện */}

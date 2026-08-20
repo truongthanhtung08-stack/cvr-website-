@@ -86,32 +86,22 @@ export default async function GioiThieuPage() {
     <>
       <Header />
       <main className="flex-1 bg-white">
-        {/* ── Hero giới thiệu ── ẢNH PHẢI HIỆN TRỌN, KHÔNG CẮT
-             Khung = ĐÚNG tỷ lệ ảnh đang dùng: 8:3 (≈2,67:1 — ảnh 2400×900, tối thiểu 1600×600).
-             ⚠️ Khung cũ `sm:aspect-[4/1] sm:max-h-[330px]` sai 2 chỗ: (1) 4:1 không khớp ảnh
-             2,67:1; (2) max-h ép chiều cao trên màn >1320px làm khung méo thành 5,8:1 → cắt
-             mất 1/3 ảnh. Nay chặn chiều cao bằng BỀ NGANG (max-w-[1320px]) chứ không dùng max-h.
-             Chưa có ảnh ĐIỆN THOẠI riêng → điện thoại dùng luôn tỷ lệ 8:3 để ảnh vẫn hiện trọn.
-             KHÔNG chèn watermark/logo lên hero này — thương hiệu đã có ở header phía trên. */}
+        {/* ── Hero giới thiệu ──
+             KHUNG THEO TỶ LỆ CỐ ĐỊNH (không dùng vh) để ảnh luôn hiện đúng phần
+             mong muốn: PC 4:1 · điện thoại 16:10. (Đã hạ dần 3:1 → 16:5 → 7:2 → 4:1
+             theo yêu cầu "hero PC quá to"; cao tối đa 330px.)
+             → Ảnh cần chuẩn bị: TỶ LỆ 4:1, khuyến nghị 4000×1000 (tối thiểu 1920×480).
+             KHÔNG chèn watermark/logo lên hero này — để ảnh sạch, thương hiệu đã có
+             ở header ngay phía trên. */}
         <section className="relative isolate pb-7 sm:pb-12">
-          <div className={`relative mx-auto w-full max-w-[1320px] overflow-hidden bg-cvr-ink ${about.heroImageMobile ? "aspect-[5/2] sm:aspect-[8/3]" : "aspect-[8/3]"}`}>
-            {/* ĐIỆN THOẠI */}
-            <Image
-              src={asset(about.heroImageMobile || about.heroImage)}
-              alt="Không gian làm việc Coastal Land bên bờ biển Duyên hải Miền Trung"
-              fill
-              priority
-              sizes="100vw"
-              className="object-cover sm:hidden"
-            />
-            {/* MÁY TÍNH */}
+          <div className="relative aspect-[16/10] w-full overflow-hidden bg-cvr-ink sm:aspect-[4/1] sm:max-h-[330px]">
             <Image
               src={asset(about.heroImage)}
               alt="Không gian làm việc Coastal Land bên bờ biển Duyên hải Miền Trung"
               fill
               priority
-              sizes="(max-width: 1320px) 100vw, 1320px"
-              className="hidden object-cover sm:block"
+              sizes="100vw"
+              className="object-cover"
             />
           </div>
         </section>

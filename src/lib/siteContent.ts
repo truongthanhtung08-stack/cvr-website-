@@ -218,8 +218,7 @@ export async function getHomeAreas(): Promise<AreaCard[]> {
 export type AboutStat = { value: string; label: string; sub: string };
 export type AboutValue = { title: string; desc: string };
 export type AboutData = {
-  heroImage: string;        // MÁY TÍNH — tỷ lệ 8:3 ≈ 2,67:1 (2400×900, tối thiểu 1600×600)
-  heroImageMobile?: string; // ĐIỆN THOẠI — tỷ lệ 2,5:1 (1200×480). Trống → dùng tạm ảnh PC (bị cắt)
+  heroImage: string;
   story: { eyebrow: string; title: string; paragraphs: string[]; image: string };
   vision: string;
   mission: string;

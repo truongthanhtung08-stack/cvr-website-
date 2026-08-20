@@ -13,12 +13,7 @@ const DURATION = 6000;
 // (bộ lọc sát trên canh giữa · chữ sát dưới canh trái).
 type HeroProps = {
   banners?: Banner[]; // bộ banner chạy trong hero (mặc định: banner trang chủ)
-  // KHUNG HERO — phải là TỶ LỆ (aspect-[…]), KHÔNG dùng chiều cao cố định.
-  // Lý do: chiều cao cố định (vd h-[400px] hay h-[calc(100svh-120px)]) làm tỷ lệ khung
-  // đổi theo bề rộng màn hình → khác tỷ lệ ảnh → object-cover BẮT BUỘC phải cắt bớt.
-  // Đặt khung ĐÚNG bằng tỷ lệ ảnh thì cover = ôm trọn, không cắt một milimét nào.
-  heightClass?: string;        // dùng khi slide CÓ ảnh điện thoại riêng (mobile + PC khác tỷ lệ)
-  heightClassNoMobile?: string; // dùng khi CHƯA có ảnh điện thoại → điện thoại dùng luôn tỷ lệ ảnh PC
+  heightClass?: string; // chiều cao hero (gồm cả min-h; mặc định: gần full màn hình)
   search?: boolean; // hiện hộp bộ lọc trên banner (trang con đã có thanh lọc riêng → tắt)
   searchTab?: string; // tab bộ lọc chọn sẵn (vd "Dự án")
   fit?: "cover" | "contain"; // "cover" (mặc định): ảnh phủ kín, có cắt · "contain": ôm TRỌN ảnh, nền 2 bên lấp bằng ảnh mờ
@@ -27,22 +22,15 @@ type HeroProps = {
 
 export default function Hero({
   banners = homeBanners,
-  // KHUNG = ĐÚNG TỶ LỆ ẢNH (khớp thông số ghi trong /admin/noi-dung):
-  //   MOBILE  2,5 : 1  → ảnh 1200 × 480
-  //   PC (sm) 2   : 1  → ảnh 2560 × 1280
-  // Nhờ vậy ảnh hiện TRỌN VẸN, không cắt trên–dưới, không hụt hai bên, ở MỌI bề rộng màn hình.
-  heightClass = "aspect-[5/2] sm:aspect-[2/1]",
-  heightClassNoMobile = "aspect-[2/1]",
+  // PC: GIỮ NGUYÊN khung gốc (chạy tốt mấy tháng) — gần full màn hình.
+  // MOBILE: thấp lại (170px) để màn hình đầu vẫn thấy phần tin (theo yêu cầu chủ dự án).
+  heightClass = "min-h-[170px] sm:h-[calc(100svh-120px)]",
   search = true,
   searchTab,
   fit = "cover",
   mobileTwoLine = false,
 }: HeroProps) {
   const contain = fit === "contain";
-  // Chưa nhập ảnh ĐIỆN THOẠI riêng → điện thoại dùng luôn TỶ LỆ ẢNH MÁY TÍNH, nhờ vậy
-  // ảnh PC vẫn hiện TRỌN trên điện thoại (chỉ nhỏ hơn) thay vì bị cắt cụt hai bên.
-  // Nhập ảnh điện thoại vào là khung tự về đúng 2,5:1 — không phải sửa code.
-  const frameClass = banners.some((b) => b.imageMobile) ? heightClass : heightClassNoMobile;
   const [active, setActive] = useState(0);
   const [playing, setPlaying] = useState(true);
   const [tick, setTick] = useState(0);
@@ -100,7 +88,7 @@ export default function Hero({
       </div>
     )}
     <section
-      className={`relative isolate flex flex-col ${frameClass} select-none`}
+      className={`relative isolate flex flex-col ${heightClass} select-none`}
       onPointerDown={onDown}
       onPointerUp={onUp}
       onWheel={onWheel}
