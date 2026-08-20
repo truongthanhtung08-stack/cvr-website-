@@ -85,7 +85,12 @@ export async function GET(request: Request) {
     }
     if (!me.id) {
       console.error("[zalo] xin moi id cung that bai:", JSON.stringify(me));
-      return loi("zalo_khong_lay_duoc_thong_tin");
+      // TẠM THỜI: đưa nguyên câu trả lời của Zalo ra màn hình để dò lỗi.
+      // Gỡ đoạn ?chi_tiet= này khi đăng nhập Zalo đã chạy ổn định.
+      const chiTiet = encodeURIComponent(JSON.stringify(me).slice(0, 160));
+      return NextResponse.redirect(
+        `${origin}/dang-nhap?error=zalo_khong_lay_duoc_thong_tin&chi_tiet=${chiTiet}`,
+      );
     }
 
     const email = emailKyThuat(me.id);
