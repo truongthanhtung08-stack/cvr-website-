@@ -1,12 +1,15 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import FilterDropdown, { FilterDropdownGroup } from "@/components/FilterDropdown";
 import Highlight from "@/components/Highlight";
 import { goiYNoiLong, searchAny, TIER_LABEL } from "@/lib/smartSearch";
 import { provinceNamesFor, type GeoMode } from "@/lib/locations";
+import { projectHints } from "@/lib/searchHints";
+import { useTypingPlaceholder } from "@/lib/useTypingPlaceholder";
+import { cuonToiKetQua } from "@/lib/scroll";
 import type { Project, Article } from "@/lib/data";
 
 const GEO_MODE_KEY = "cl-geo-mode"; // đồng bộ hệ đơn vị hành chính với FilterBar (Mua bán/Cho thuê)
@@ -148,10 +151,32 @@ export default function ProjectsBrowser({
   const chonGoiY = (tinh?: string) => {
     if (tinh) setProvince(tinh);
     setSugOpen(false);
+    chayTim(); // bấm gợi ý = ra kết quả NGAY, không phải bấm thêm nút Tìm
   };
 
   const hasActive = q.trim() !== "" || status !== ALL || province !== ALL || type !== ALL;
   const reset = () => { setQ(""); setStatus(ALL); setProvince(ALL); setType(ALL); };
+
+  // Gợi ý CHẠY CHỮ trong ô tìm — dựng từ CHÍNH kho dự án đang có (tên dự án, chủ
+  // đầu tư, khu vực, tình trạng CÓ THẬT) nên gõ vào là chắc chắn ra kết quả;
+  // kho rỗng thì lùi về bộ theo cơ cấu. Dừng chạy khi khách đã gõ.
+  // useMemo giữ mảng ổn định giữa các lần render (nếu không sẽ reset chữ liên tục).
+  const hintDuAn = useMemo(() => projectHints(projects), [projects]);
+  const goiYChay = useTypingPlaceholder(hintDuAn, q.trim().length > 0);
+
+  // ── CHẠY TÌM (nút Tìm · Enter · bấm gợi ý · bấm "Xong" ở bảng lọc) ──────────
+  // Trang Dự án lọc TẠI CHỖ nên "chạy" = đóng panel/trang tìm + CUỘN xuống khối
+  // kết quả, kèm ~0,7s trạng thái "đang tìm" để khách biết máy đang chạy —
+  // dù có dự án khớp hay không.
+  const [dangTim, setDangTim] = useState(false);
+  const chayTim = () => {
+    setSugOpen(false);
+    setOverlay(false);
+    setDangTim(true);
+    window.setTimeout(() => setDangTim(false), 700);
+    // đợi overlay đóng xong mới cuộn, nếu không phần tử còn bị che
+    window.setTimeout(cuonToiKetQua, 60);
+  };
 
   // Phân trang danh sách dự án: 9 dự án/trang (khớp yêu cầu "8–10/trang").
   const PER_PAGE = 9;
@@ -248,7 +273,9 @@ export default function ProjectsBrowser({
                 if (window.matchMedia("(max-width: 639px)").matches) { e.currentTarget.blur(); setOverlay(true); }
                 else setSugOpen(true); // PC: mở panel gợi ý
               }}
-              placeholder="Tìm nhanh theo tên dự án, chủ đầu tư, vị trí…"
+              onKeyDown={(e) => { if (e.key === "Enter") chayTim(); }}
+              // Gợi ý CHẠY CHỮ của mục Dự án
+              placeholder={goiYChay}
               aria-label="Tìm nhanh dự án"
               className="h-11 w-full rounded-xl bg-cvr-surface pl-4 pr-14 text-[15px] text-cvr-ink placeholder-cvr-faint ring-1 ring-black/5 outline-none transition focus:ring-2 focus:ring-cvr-blue/50 sm:h-10 sm:border sm:border-transparent sm:pl-9 sm:pr-24 sm:ring-0 sm:focus:border-cvr-line sm:focus:bg-white"
             />
@@ -306,23 +333,29 @@ export default function ProjectsBrowser({
             <button
               type="button"
               aria-label="Tìm kiếm dự án"
-              onClick={() => setSugOpen(false)}
+              onClick={chayTim}
               className="absolute right-1 top-1 bottom-1 hidden items-center gap-1.5 rounded-lg bg-cvr-blue px-3 text-[13px] font-semibold text-white transition hover:bg-cvr-blue-ink active:scale-95 sm:flex"
             >
+              {dangTim ? <SpinnerDuAn size={16} /> : (
               <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.4} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
               </svg>
-              Tìm
+              )}
+              {dangTim ? "Đang tìm…" : "Tìm"}
             </button>
 
-            {/* Nút search XANH — bo tròn mềm, snug mép phải (giống trang chủ) → mở tìm toàn màn hình */}
+            {/* Nút search XANH — bo tròn mềm, snug mép phải (giống trang chủ).
+                Đã gõ từ khoá / đã chọn lọc → BẤM LÀ CHẠY (cuộn xuống kết quả);
+                còn trống trơn → mở trang tìm toàn màn hình để gõ và chọn. */}
             <button
               type="button"
               aria-label="Tìm kiếm"
-              onClick={() => setOverlay(true)}
+              onClick={() => (hasActive ? chayTim() : setOverlay(true))}
               className="absolute right-1 top-1 bottom-1 flex w-11 items-center justify-center rounded-lg bg-cvr-blue text-white transition hover:bg-cvr-blue-ink active:scale-95 sm:hidden"
             >
+              {dangTim ? <SpinnerDuAn size={18} /> : (
               <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" /></svg>
+              )}
             </button>
           </div>
           </div>
@@ -367,8 +400,8 @@ export default function ProjectsBrowser({
                 type="text"
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") setOverlay(false); }}
-                placeholder="Tìm nhanh dự án, chủ đầu tư, vị trí…"
+                onKeyDown={(e) => { if (e.key === "Enter") chayTim(); }}
+                placeholder={goiYChay}
                 aria-label="Tìm dự án"
                 className="h-11 w-full rounded-full bg-cvr-surface pl-4 pr-10 text-[15px] text-cvr-ink placeholder-cvr-faint outline-none ring-1 ring-black/5 focus:ring-2 focus:ring-cvr-blue/40"
               />
@@ -386,10 +419,12 @@ export default function ProjectsBrowser({
             <button
               type="button"
               aria-label="Tìm kiếm"
-              onClick={() => setOverlay(false)}
+              onClick={chayTim}
               className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-cvr-blue text-white active:scale-95"
             >
+              {dangTim ? <SpinnerDuAn size={18} /> : (
               <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={2.4} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" /></svg>
+              )}
             </button>
           </div>
           {/* BỘ LỌC dự án — MOBILE nằm TRONG trang tìm này (giống trang chủ đưa
@@ -405,6 +440,14 @@ export default function ProjectsBrowser({
                 Đặt lại
               </button>
             )}
+            {/* Chọn xong (1 trường hay nhiều trường tuỳ khách) → bấm XONG là ra kết quả */}
+            <button
+              type="button"
+              onClick={chayTim}
+              className="ml-auto h-10 shrink-0 rounded-full bg-cvr-blue px-4 text-sm font-semibold text-white active:scale-95"
+            >
+              Xong
+            </button>
           </div>
           <div className="flex-1 overflow-y-auto p-2">
             {visible.length === 0 ? (
@@ -561,5 +604,16 @@ export default function ProjectsBrowser({
       </div>
       </div>
     </div>
+  );
+}
+
+// Vòng xoay "đang tìm" của mục Dự án — báo cho khách biết máy đang chạy
+// ngay khi bấm Tìm / Enter / Xong, dù có dự án khớp hay không.
+function SpinnerDuAn({ size = 16 }: { size?: number }) {
+  return (
+    <svg className="animate-spin" style={{ width: size, height: size }} viewBox="0 0 24 24" fill="none" aria-hidden>
+      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeOpacity={0.3} strokeWidth={2.6} />
+      <path d="M21 12a9 9 0 00-9-9" stroke="currentColor" strokeWidth={2.6} strokeLinecap="round" />
+    </svg>
   );
 }

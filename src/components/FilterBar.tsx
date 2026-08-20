@@ -26,6 +26,9 @@ import {
 } from "@/lib/filters";
 import { suggest, popularSuggestions, type Suggestion } from "@/lib/suggest";
 import { goiYNoiLong, parseQuery } from "@/lib/smartSearch";
+import { hintsFor, type HintMode } from "@/lib/searchHints";
+import { useTypingPlaceholder } from "@/lib/useTypingPlaceholder";
+import { cuonToiKetQua } from "@/lib/scroll";
 
 const RECENT_KEY = "cvr-recent-search"; // lịch sử tìm kiếm (localStorage)
 const GEO_MODE_KEY = "cl-geo-mode"; // hệ đơn vị hành chính đã chọn: "cu" | "moi" (localStorage)
@@ -45,6 +48,7 @@ export default function FilterBar({
   compact = false,
   leading,
   purpose = "ban",
+  hintMode,
 }: {
   value: Filters;
   onChange: (f: Filters) => void;
@@ -59,6 +63,9 @@ export default function FilterBar({
   leading?: React.ReactNode;
   // Mục đích trang → danh mục loại hình tương ứng (mua bán vs cho thuê).
   purpose?: "ban" | "thue";
+  // Bộ câu gợi ý chạy trong ô tìm. Mặc định theo purpose; trang chủ truyền thêm
+  // "duan" khi đang ở tab Dự án (purpose của Dự án vẫn là "ban").
+  hintMode?: HintMode;
 }) {
   const f = value;
   // Danh mục loại hình theo đúng mục đích trang
@@ -66,6 +73,11 @@ export default function FilterBar({
   const typeOptions = typeGroups.flatMap((g) => g.items);
   const set = (patch: Partial<Filters>) => onChange({ ...f, ...patch });
   const hh = compact ? "h-12" : "h-10"; // compact = thanh tìm kiếm LỚN ở Hero · trang danh sách = gọn
+
+  // Gợi ý CHẠY CHỮ trong ô tìm — SÁT đúng mục đang đứng (mua bán / cho thuê / dự án).
+  // Người dùng đã gõ chữ → dừng chạy để không giật dưới tay họ.
+  const hintPhrases = hintsFor(hintMode ?? purpose);
+  const goiYChay = useTypingPlaceholder(hintPhrases, f.keyword.trim().length > 0);
 
   // Autocomplete đa tầng: Khu vực · Loại hình · Sản phẩm · Dự án · Tin tức.
   // Khi chạm vào ô (chưa gõ) → hiện Lịch sử + Gợi ý phổ biến (mô hình Homedy).
@@ -128,6 +140,23 @@ export default function FilterBar({
   const luuTuKhoaDaGo = () => {
     const kw = f.keyword.trim();
     if (kw.length >= 2) pushRecent({ label: kw, kind: "Gợi ý", sub: "Từ khoá đã tìm", keyword: kw });
+  };
+
+  // ── CHẠY TÌM (một cửa cho: nút Tìm · Enter · bấm dòng gợi ý) ───────────────
+  // LUÔN có phản hồi, dù khớp hay không khớp tin nào:
+  //   • Trang có onSearch (trang chủ) → sang trang kết quả.
+  //   • Trang danh sách tự lọc tại chỗ → CUỘN xuống khối kết quả (#ket-qua).
+  // Kèm trạng thái "đang tìm" ~0,7s để khách thấy máy đang chạy, không tưởng đứng yên.
+  const [dangTim, setDangTim] = useState(false);
+  const chayTim = (next?: Filters, luu = true) => {
+    setSugOpen(false);
+    setOverlay(false);
+    setActiveIdx(-1);
+    if (luu) luuTuKhoaDaGo();
+    setDangTim(true);
+    window.setTimeout(() => setDangTim(false), 700);
+    if (onSearch) onSearch(next);
+    else cuonToiKetQua();
   };
 
   const typed = f.keyword.trim().length > 0;
@@ -218,7 +247,9 @@ export default function FilterBar({
       next = { ...f, keyword: s.keyword };
     }
     onChange(next);
-    onSearch?.(next);
+    // Bấm một dòng gợi ý = ra kết quả NGAY (không phải bấm thêm nút Tìm):
+    // trang chủ → sang trang kết quả · trang danh sách → cuộn xuống kết quả.
+    chayTim(next, false); // đã pushRecent(s) ở trên, không lưu lại lần nữa
   };
 
   // Nút ↖ — CHÈN gợi ý vào ô tìm để sửa tiếp, KHÔNG tìm/điều hướng ngay (kiểu Google).
@@ -243,9 +274,8 @@ export default function FilterBar({
         e.preventDefault();
         applySuggestion(panelItems[activeIdx]);
       } else {
-        setSugOpen(false);
-        luuTuKhoaDaGo();
-        onSearch?.();
+        // Enter (PC & điện thoại): LUÔN chạy tìm — kể cả khi chưa có gợi ý nào khớp.
+        chayTim();
       }
     } else if (e.key === "Escape") {
       setSugOpen(false);
@@ -275,7 +305,7 @@ export default function FilterBar({
   // ===== "Loại nhà đất" — dòng 2 (bố cục Batdongsan) =====
   const typeDropdown = (
     <FilterDropdown label="Loại BĐS" summary={typeLabel} active={f.types.length > 0} panelClassName="w-72" compact={compact} className={ddClass}>
-      {() => {
+      {({ close }) => {
         const allChecked = typeOptions.every((t) => f.types.includes(t));
         return (
           <div>
@@ -317,15 +347,25 @@ export default function FilterBar({
               ))}
             </div>
 
-            {f.types.length > 0 && (
+            {/* HÀNG KẾT THÚC CHỌN — bỏ chọn hết · "Xong" đóng bảng và RA KẾT QUẢ NGAY.
+                Trước đây chỉ có nút bỏ chọn, chọn xong không biết bấm đâu để tìm. */}
+            <div className="mt-2 flex items-center justify-between gap-2 border-t border-cvr-line pt-2">
               <button
                 type="button"
                 onClick={() => set({ types: [] })}
-                className="mt-2 border-t border-cvr-line pt-2 text-xs font-medium text-cvr-muted transition hover:text-cvr-ink"
+                disabled={f.types.length === 0}
+                className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-cvr-body transition hover:bg-black/5 hover:text-cvr-ink disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Bỏ chọn tất cả
               </button>
-            )}
+              <button
+                type="button"
+                onClick={() => { close(); chayTim(); }}
+                className="rounded-lg bg-cvr-blue px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-cvr-blue-ink"
+              >
+                Xong{f.types.length > 0 ? ` (${f.types.length})` : ""}
+              </button>
+            </div>
           </div>
         );
       }}
@@ -340,7 +380,9 @@ export default function FilterBar({
           <LocationPanel
             locations={f.locations}
             onChange={(locations) => set({ locations })}
-            onClose={close}
+            // "Xong" = kết thúc chọn VÀ ra kết quả ngay (đóng bảng rồi chạy tìm),
+            // không phải chỉ đóng bảng để khách ngồi đoán đã tìm hay chưa.
+            onClose={() => { close(); chayTim(); }}
           />
         )}
       </FilterDropdown>
@@ -353,7 +395,13 @@ export default function FilterBar({
           <ProjectPanel
             locations={f.locations}
             project={f.project}
-            onPick={(name) => { set({ project: f.project === name ? "" : name }); close(); }}
+            // Chọn dự án = chốt luôn → đóng bảng + ra kết quả ngay
+            onPick={(name) => {
+              const next = { ...f, project: f.project === name ? "" : name };
+              onChange(next);
+              close();
+              chayTim(next, false);
+            }}
           />
         )}
       </FilterDropdown>
@@ -372,7 +420,7 @@ export default function FilterBar({
             presets={priceRangesFor(purpose)}
             onPick={(min, max) => set({ priceMin: min, priceMax: max })}
             onReset={() => set({ priceMin: null, priceMax: null })}
-            onApply={close}
+            onApply={() => { close(); chayTim(); }}
           />
         )}
       </FilterDropdown>
@@ -391,7 +439,7 @@ export default function FilterBar({
             presets={areaRanges}
             onPick={(min, max) => set({ areaMin: min, areaMax: max })}
             onReset={() => set({ areaMin: null, areaMax: null })}
-            onApply={close}
+            onApply={() => { close(); chayTim(); }}
           />
         )}
       </FilterDropdown>
@@ -463,7 +511,7 @@ export default function FilterBar({
                 <SwitchRow label="Môi giới chuyên nghiệp" checked={f.broker} onChange={(v) => set({ broker: v })} />
               </div>
             </div>
-            <PanelActions onReset={() => set({ beds: 0, direction: "", legal: "", furnishing: "", verified: false, broker: false })} onApply={close} />
+            <PanelActions onReset={() => set({ beds: 0, direction: "", legal: "", furnishing: "", verified: false, broker: false })} onApply={() => { close(); chayTim(); }} />
           </div>
         )}
       </FilterDropdown>
@@ -555,7 +603,8 @@ export default function FilterBar({
             else setSugOpen(true);
           }}
           onKeyDown={onKeyNav}
-          placeholder="Nhập khu vực, dự án, hoặc loại bất động sản…"
+          // Gợi ý CHẠY CHỮ theo đúng mục (mua bán / cho thuê / dự án)
+          placeholder={goiYChay}
           aria-label="Tìm theo từ khoá, khu vực, loại hình, dự án, tin"
           autoComplete="off"
           role="combobox"
@@ -591,22 +640,25 @@ export default function FilterBar({
         {compact && onSearch && (
           <button
             type="button"
-            onClick={() => { setSugOpen(false); onSearch(); }}
-            className="absolute bottom-1.5 right-1.5 top-1.5 hidden items-center justify-center rounded-lg bg-cvr-blue px-6 text-[14px] font-semibold text-white transition hover:bg-cvr-blue-ink active:scale-95 sm:flex"
+            onClick={() => chayTim()}
+            className="absolute bottom-1.5 right-1.5 top-1.5 hidden items-center justify-center gap-2 rounded-lg bg-cvr-blue px-6 text-[14px] font-semibold text-white transition hover:bg-cvr-blue-ink active:scale-95 sm:flex"
           >
-            Tìm kiếm
+            {dangTim && <Spinner />}
+            {dangTim ? "Đang tìm…" : "Tìm kiếm"}
           </button>
         )}
         {compact && onSearch && (
           <button
             type="button"
             aria-label="Tìm kiếm"
-            onClick={() => { setSugOpen(false); onSearch(); }}
+            onClick={() => chayTim()}
             className="absolute right-1 top-1 bottom-1 flex w-11 items-center justify-center rounded-lg bg-cvr-blue text-white transition active:scale-95 sm:hidden"
           >
+            {dangTim ? <Spinner size={20} /> : (
             <svg className="h-[22px] w-[22px]" fill="none" stroke="currentColor" strokeWidth={2.4} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
             </svg>
+            )}
           </button>
         )}
         {/* Nút XOÁ nhanh (×) cho ô tìm TRANG DANH SÁCH — hiện khi đã gõ, đồng bộ với Hero. */}
@@ -628,21 +680,26 @@ export default function FilterBar({
             <button
               type="button"
               aria-label="Tìm kiếm"
-              onClick={() => { setSugOpen(false); setOverlay(true); }}
+              // Đã gõ từ khoá / đã chọn lọc → BẤM LÀ CHẠY (cuộn xuống kết quả).
+              // Còn trống trơn → mở trang tìm toàn màn hình để gõ.
+              onClick={() => (typed || hasActiveFilters(f) ? chayTim() : (setSugOpen(false), setOverlay(true)))}
               className="absolute right-1 top-1 bottom-1 flex w-11 items-center justify-center rounded-lg bg-cvr-blue text-white transition hover:bg-cvr-blue-ink active:scale-95 sm:hidden"
             >
+              {dangTim ? <Spinner size={18} /> : (
               <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
               </svg>
+              )}
             </button>
             <button
               type="button"
               aria-label="Tìm kiếm"
-              onClick={() => { setSugOpen(false); luuTuKhoaDaGo(); onSearch?.(); }}
+              onClick={() => chayTim()}
               // m-1 + h-9 = vừa khít khung h-11 (44px), không lòi ra ngoài
-              className="m-1 hidden h-9 shrink-0 items-center justify-center rounded-lg bg-cvr-blue px-5 text-sm font-semibold text-white transition hover:bg-cvr-blue-ink active:scale-95 sm:flex"
+              className="m-1 hidden h-9 shrink-0 items-center justify-center gap-2 rounded-lg bg-cvr-blue px-5 text-sm font-semibold text-white transition hover:bg-cvr-blue-ink active:scale-95 sm:flex"
             >
-              Tìm kiếm
+              {dangTim && <Spinner />}
+              {dangTim ? "Đang tìm…" : "Tìm kiếm"}
             </button>
           </>
         )}
@@ -715,7 +772,7 @@ export default function FilterBar({
               value={f.keyword}
               onChange={(e) => { set({ keyword: e.target.value }); setActiveIdx(-1); }}
               onKeyDown={(e) => { if (e.key === "Enter") setOverlay(false); onKeyNav(e); }}
-              placeholder="Nhập khu vực, dự án, hoặc loại bất động sản…"
+              placeholder={goiYChay}
               aria-label="Tìm kiếm"
               autoComplete="off"
               className="h-11 w-full rounded-full bg-cvr-surface pl-4 pr-10 text-[15px] text-cvr-ink placeholder-cvr-faint outline-none ring-1 ring-black/5 focus:ring-2 focus:ring-cvr-blue/40"
@@ -734,10 +791,12 @@ export default function FilterBar({
           <button
             type="button"
             aria-label="Tìm kiếm"
-            onClick={() => { setOverlay(false); luuTuKhoaDaGo(); onSearch?.(); }}
+            onClick={() => chayTim()}
             className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-cvr-blue text-white active:scale-95"
           >
+            {dangTim ? <Spinner size={18} /> : (
             <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={2.4} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" /></svg>
+            )}
           </button>
         </div>
         {/* CHỌN MỤC ĐÍCH (Dự án · Mua bán · Cho thuê) — đặt TRONG trang tìm của
@@ -1229,5 +1288,22 @@ function RangePanel({
         onApply={onApply}
       />
     </div>
+  );
+}
+
+// Vòng xoay "đang tìm" — hiện trong nút Tìm ngay khi bấm/Enter, để khách BIẾT
+// máy đang chạy dù kết quả có khớp hay không.
+function Spinner({ size = 16 }: { size?: number }) {
+  return (
+    <svg
+      className="animate-spin"
+      style={{ width: size, height: size }}
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden
+    >
+      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeOpacity={0.3} strokeWidth={2.6} />
+      <path d="M21 12a9 9 0 00-9-9" stroke="currentColor" strokeWidth={2.6} strokeLinecap="round" />
+    </svg>
   );
 }

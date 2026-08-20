@@ -93,8 +93,9 @@ export default function SearchClient({ items = featuredListings }: { items?: Lis
         </div>
       )}
 
-      {/* Tổng kết + sắp xếp + xoá lọc */}
-      <div className="mb-5 mt-5 flex flex-wrap items-center justify-between gap-3">
+      {/* Tổng kết + sắp xếp + xoá lọc.
+          id="ket-qua": bấm Tìm / Enter / chọn gợi ý là cuộn thẳng xuống đây. */}
+      <div id="ket-qua" className="mb-5 mt-5 flex scroll-mt-20 flex-wrap items-center justify-between gap-3 sm:scroll-mt-24">
         <p className="text-sm text-cvr-body">
           <span className="font-bold text-cvr-ink">{results.length}</span> bất động sản{active ? " phù hợp" : ""}
         </p>

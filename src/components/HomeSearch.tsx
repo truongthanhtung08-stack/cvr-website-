@@ -3,6 +3,7 @@
 import { useState } from "react";
 import FilterBar from "@/components/FilterBar";
 import { emptyFilters, filtersToParams, type Filters } from "@/lib/filters";
+import type { HintMode } from "@/lib/searchHints";
 
 const tabs = ["Mua bán", "Cho thuê", "Dự án"];
 
@@ -45,6 +46,9 @@ export default function HomeSearch({ defaultTab }: { defaultTab?: string }) {
 
   // Tab "Cho thuê" → danh mục loại hình cho thuê; còn lại (Mua bán/Dự án) → mua bán
   const purpose: "ban" | "thue" = tab === "Cho thuê" ? "thue" : "ban";
+  // Câu gợi ý chạy trong ô tìm phải SÁT tab đang chọn. Tab Dự án có bộ riêng —
+  // không suy ra được từ purpose (Dự án cũng mang purpose "ban").
+  const hintMode: HintMode = tab === "Dự án" ? "duan" : tab === "Cho thuê" ? "thue" : "ban";
 
   const tabBar = (
     <>
@@ -97,7 +101,7 @@ export default function HomeSearch({ defaultTab }: { defaultTab?: string }) {
       {/* MỘT KHỐI TRẮNG DUY NHẤT (chỉ máy tính): menu và ô tìm nằm chung một nền,
           không lồng khối. Điện thoại giữ nguyên như đã duyệt. */}
       <div className="sm:rounded-[22px] sm:bg-black/15 sm:p-2.5 sm:shadow-2xl sm:shadow-black/25 sm:ring-1 sm:ring-inset sm:ring-white/25 sm:backdrop-blur-xl sm:backdrop-saturate-150">
-        <FilterBar value={filters} onChange={setFilters} onSearch={handleSearch} onMap={handleMap} compact leading={tabBar} purpose={purpose} />
+        <FilterBar value={filters} onChange={setFilters} onSearch={handleSearch} onMap={handleMap} compact leading={tabBar} purpose={purpose} hintMode={hintMode} />
       </div>
     </div>
   );

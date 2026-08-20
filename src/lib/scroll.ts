@@ -1,3 +1,13 @@
+// Cuộn tới khối KẾT QUẢ (#ket-qua) của trang đang xem — dùng khi người dùng bấm
+// Tìm / Enter / chọn gợi ý ở NGAY trang danh sách (không đổi trang): phải thấy
+// trang "chạy" xuống kết quả, kể cả khi không có tin nào khớp.
+export function cuonToiKetQua() {
+  const el = document.getElementById("ket-qua");
+  if (!el) return;
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  el.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+}
+
 // Cuộn ngang mượt bằng rAF — dùng chung cho mọi slider scroll-snap.
 // KHÔNG dùng scrollTo({behavior:"smooth"}) vì scroll-snap MANDATORY trên Chromium
 // chống lại từng khung trung gian và kéo track về snap point cũ → slide đứng im.

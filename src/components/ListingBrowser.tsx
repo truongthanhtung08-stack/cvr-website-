@@ -138,7 +138,9 @@ export default function ListingBrowser({
       {/* TIÊU ĐỀ và HÀNG ĐIỀU KHIỂN nằm CÙNG MỘT HÀNG (tiêu đề trái · chế độ xem +
           sắp xếp phải) — trước đây điều khiển chiếm riêng một hàng, chừa một dải
           trống ngang giữa tiêu đề và danh sách tin. */}
-      <div className="mt-4 flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
+      {/* id="ket-qua": mốc để bấm Tìm / Enter / chọn gợi ý là CUỘN THẲNG xuống đây,
+          khách thấy trang chạy ngay cả khi kết quả không đổi. scroll-mt bù header. */}
+      <div id="ket-qua" className="mt-4 flex scroll-mt-20 flex-wrap items-end justify-between gap-x-4 gap-y-2 sm:scroll-mt-24">
         <div className="min-w-0">
           <h1 className="text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">{heading}</h1>
           {/* Câu đếm TẠM ẨN trên mobile (theo yêu cầu) */}
