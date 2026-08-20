@@ -66,16 +66,27 @@ export async function GET(request: Request) {
     if (!token.access_token) return loi("zalo_doi_ma_that_bai");
 
     // ── 2. Hỏi Zalo thông tin khách ─────────────────────────────────────────
-    const meRes = await fetch(`${ZALO_ME_URL}?fields=id,name,picture`, {
-      headers: { access_token: token.access_token },
-      cache: "no-store",
-    });
-    const me = (await meRes.json()) as {
-      id?: string;
-      name?: string;
-      picture?: { data?: { url?: string } };
+    // App Zalo mới tạo thường CHƯA được cấp quyền đọc tên + ảnh (phải đăng ký ở
+    // mục "Đăng ký sử dụng API"), nhưng ID thì luôn có. Nên: xin đủ trước, hỏng
+    // thì lùi về xin mỗi ID — đủ để đăng nhập, tên/ảnh bổ sung sau cũng được.
+    type ZaloMe = { id?: string; name?: string; picture?: { data?: { url?: string } } };
+    const hoiZalo = async (fields: string): Promise<ZaloMe> => {
+      const r = await fetch(`${ZALO_ME_URL}?fields=${fields}`, {
+        headers: { access_token: token.access_token! },
+        cache: "no-store",
+      });
+      return (await r.json()) as ZaloMe;
     };
-    if (!me.id) return loi("zalo_khong_lay_duoc_thong_tin");
+
+    let me = await hoiZalo("id,name,picture");
+    if (!me.id) {
+      console.error("[zalo] xin id,name,picture that bai:", JSON.stringify(me));
+      me = await hoiZalo("id"); // lùi về mức tối thiểu
+    }
+    if (!me.id) {
+      console.error("[zalo] xin moi id cung that bai:", JSON.stringify(me));
+      return loi("zalo_khong_lay_duoc_thong_tin");
+    }
 
     const email = emailKyThuat(me.id);
     const hoTen = me.name?.trim() || "Người dùng Zalo";
