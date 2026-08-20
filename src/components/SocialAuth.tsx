@@ -63,10 +63,13 @@ export default function SocialAuth() {
     }
   }
 
-  // Zalo chưa nằm trong danh sách nhà cung cấp sẵn của Supabase → nối qua Zalo
-  // Official Account (App ID + Secret). Chưa cắm khoá thì báo rõ cho người dùng.
-  async function withZalo() {
-    setNotice("Đăng nhập Zalo cần App ID và Secret của Zalo Official Account. Vui lòng dùng cách khác trong lúc chờ kết nối.");
+  // Zalo không nằm trong danh sách nhà cung cấp sẵn của Supabase → tự nối qua
+  // route riêng /api/auth/zalo (OAuth v4 + PKCE, xử lý phía máy chủ).
+  // Chưa cắm khoá trong Vercel thì route tự đá về đây kèm ?error=zalo_chua_cau_hinh.
+  function withZalo() {
+    setLoading(true);
+    const next = new URLSearchParams(window.location.search).get("next") || "/tai-khoan";
+    window.location.href = `/api/auth/zalo?next=${encodeURIComponent(next)}`;
   }
 
   return (

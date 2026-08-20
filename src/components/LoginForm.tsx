@@ -18,12 +18,16 @@ export default function LoginForm() {
   const [pw, setPw] = useState("");
   const [show, setShow] = useState(false);
   const searchParams = useSearchParams();
-  // Google đăng nhập dở dang (huỷ/lỗi ở callback) → báo nhẹ, người dùng thử lại.
-  const [notice, setNotice] = useState(() =>
-    searchParams.get("error") === "oauth"
-      ? "Đăng nhập Google chưa hoàn tất. Vui lòng thử lại hoặc dùng email."
-      : ""
-  );
+  // Đăng nhập mạng xã hội dở dang (huỷ/lỗi ở callback) → báo nhẹ, người dùng thử lại.
+  const [notice, setNotice] = useState(() => {
+    const e = searchParams.get("error") ?? "";
+    if (e === "oauth") return "Đăng nhập Google chưa hoàn tất. Vui lòng thử lại hoặc dùng email.";
+    if (e === "zalo_chua_cau_hinh")
+      return "Đăng nhập Zalo chưa được kích hoạt. Vui lòng dùng Google hoặc email trong lúc chờ.";
+    if (e.startsWith("zalo_"))
+      return "Đăng nhập Zalo chưa hoàn tất. Vui lòng thử lại hoặc dùng cách khác.";
+    return "";
+  });
   const [loading, setLoading] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {

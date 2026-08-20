@@ -1,0 +1,132 @@
+import { NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
+import {
+  COOKIE_NEXT,
+  COOKIE_STATE,
+  COOKIE_VERIFIER,
+  ZALO_ME_URL,
+  ZALO_TOKEN_URL,
+  emailKyThuat,
+  zaloConfig,
+} from "@/lib/zalo";
+
+// BƯỚC 2 của đăng nhập Zalo — đường dẫn này khai trong Zalo Developers:
+//   https://coastalland.vn/auth/zalo/callback
+//
+// Việc phải làm:
+//   1. Đối chiếu state (chống giả mạo) rồi đổi code lấy access_token của Zalo
+//   2. Hỏi Zalo tên + ảnh đại diện của khách
+//   3. Tạo (hoặc tìm lại) tài khoản Supabase tương ứng, rồi mở phiên đăng nhập
+//
+// Zalo KHÔNG trả email, nên mỗi khách được gán một email kỹ thuật theo ID Zalo.
+export const dynamic = "force-dynamic";
+
+export async function GET(request: Request) {
+  const { searchParams, origin } = new URL(request.url);
+  const loi = (ma: string) => NextResponse.redirect(`${origin}/dang-nhap?error=${ma}`);
+
+  const { appId, secret, serviceKey, daCauHinh } = zaloConfig();
+  if (!daCauHinh || !appId || !secret || !serviceKey) return loi("zalo_chua_cau_hinh");
+
+  const code = searchParams.get("code");
+  const state = searchParams.get("state");
+  if (!code) return loi("zalo_thieu_ma");
+
+  // Lấy lại 3 cookie đã cất ở bước 1
+  const cookieHeader = request.headers.get("cookie") ?? "";
+  const doc = (ten: string) =>
+    cookieHeader
+      .split(";")
+      .map((c) => c.trim())
+      .find((c) => c.startsWith(`${ten}=`))
+      ?.slice(ten.length + 1);
+
+  const verifier = doc(COOKIE_VERIFIER);
+  const stateLuu = doc(COOKIE_STATE);
+  const next = decodeURIComponent(doc(COOKIE_NEXT) ?? "/tai-khoan");
+  if (!verifier || !stateLuu || stateLuu !== state) return loi("zalo_sai_phien");
+
+  try {
+    // ── 1. Đổi code lấy access_token ────────────────────────────────────────
+    const tokenRes = await fetch(ZALO_TOKEN_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        secret_key: secret,
+      },
+      body: new URLSearchParams({
+        code,
+        app_id: appId,
+        grant_type: "authorization_code",
+        code_verifier: verifier,
+      }),
+      cache: "no-store",
+    });
+    const token = (await tokenRes.json()) as { access_token?: string; error?: number };
+    if (!token.access_token) return loi("zalo_doi_ma_that_bai");
+
+    // ── 2. Hỏi Zalo thông tin khách ─────────────────────────────────────────
+    const meRes = await fetch(`${ZALO_ME_URL}?fields=id,name,picture`, {
+      headers: { access_token: token.access_token },
+      cache: "no-store",
+    });
+    const me = (await meRes.json()) as {
+      id?: string;
+      name?: string;
+      picture?: { data?: { url?: string } };
+    };
+    if (!me.id) return loi("zalo_khong_lay_duoc_thong_tin");
+
+    const email = emailKyThuat(me.id);
+    const hoTen = me.name?.trim() || "Người dùng Zalo";
+    const anh = me.picture?.data?.url ?? null;
+
+    // ── 3. Tạo/tìm tài khoản Supabase rồi mở phiên ──────────────────────────
+    const { createClient: createAdmin } = await import("@supabase/supabase-js");
+    const admin = createAdmin(process.env.NEXT_PUBLIC_SUPABASE_URL!, serviceKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+
+    // Chưa có thì tạo; đã có thì bỏ qua lỗi trùng email.
+    const { error: loiTao } = await admin.auth.admin.createUser({
+      email,
+      email_confirm: true,
+      user_metadata: { full_name: hoTen, avatar_url: anh, provider: "zalo", zalo_id: me.id },
+    });
+    if (loiTao && !/already/i.test(loiTao.message)) return loi("zalo_tao_tai_khoan_that_bai");
+
+    // Sinh liên kết đăng nhập một lần rồi tự đổi thành phiên (cookie) ngay tại đây
+    const { data: link, error: loiLink } = await admin.auth.admin.generateLink({
+      type: "magiclink",
+      email,
+    });
+    const hash = link?.properties?.hashed_token;
+    if (loiLink || !hash) return loi("zalo_tao_phien_that_bai");
+
+    const supabase = await createClient();
+    const { error: loiXacThuc } = await supabase.auth.verifyOtp({
+      type: "magiclink",
+      token_hash: hash,
+    });
+    if (loiXacThuc) return loi("zalo_mo_phien_that_bai");
+
+    // Về đúng nơi theo vai trò (giống luồng Google)
+    let dest = next;
+    if (dest === "/tai-khoan") {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: profile } = user
+        ? await supabase.from("profiles").select("role").eq("id", user.id).single()
+        : { data: null };
+      if (profile?.role === "admin") dest = "/admin";
+    }
+
+    const res = NextResponse.redirect(`${origin}${dest}`);
+    // Dọn cookie tạm
+    for (const c of [COOKIE_VERIFIER, COOKIE_STATE, COOKIE_NEXT]) {
+      res.cookies.set(c, "", { path: "/", maxAge: 0 });
+    }
+    return res;
+  } catch {
+    return loi("zalo_loi_ket_noi");
+  }
+}
