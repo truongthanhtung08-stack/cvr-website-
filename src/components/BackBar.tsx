@@ -112,7 +112,9 @@ export default function BackBar() {
         onClick={quayLai}
         aria-label={`Quay lại — ${ten}`}
         title={`Quay lại — ${ten}`}
-        className="fixed left-2 top-[calc(60px+env(safe-area-inset-top)+10px)] z-40 flex h-9 w-9 items-center justify-center rounded-full border border-black/5 bg-white/90 text-cvr-ink shadow-[0_2px_10px_rgba(0,0,0,0.18)] backdrop-blur-md transition active:scale-95 active:bg-white lg:hidden"
+        // top = header 60px + lề trên thanh tìm 6px + 4px → nút THẲNG HÀNG với ô tìm
+      // (ô tìm cao 44px, tâm ở 88px; nút cao 36px, tâm cũng 88px).
+      className="fixed left-2 top-[calc(60px+env(safe-area-inset-top)+10px)] z-40 flex h-9 w-9 items-center justify-center rounded-full border border-black/5 bg-white/90 text-cvr-ink shadow-[0_2px_10px_rgba(0,0,0,0.18)] backdrop-blur-md transition active:scale-95 active:bg-white lg:hidden"
       >
         <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />

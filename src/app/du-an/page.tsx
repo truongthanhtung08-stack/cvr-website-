@@ -25,12 +25,14 @@ export default async function DuAnPage() {
       <main className="flex-1 bg-white">
         <div className="mx-auto max-w-7xl px-4 pb-20 pt-0 sm:px-6 sm:pt-0 lg:px-8">
           {/* MOBILE: ô tìm lên TRÊN, banner nằm dưới (mẫu Batdongsan); nút lọc nằm
-              trong trang tìm toàn màn hình → hero mobile cao thêm chút (190 → 224px).
-              DESKTOP: banner trên, thanh lọc dưới — như cũ. ProjectsBrowser tự xếp thứ tự. */}
+              trong trang tìm toàn màn hình. Banner KHOÁ THEO TỶ LỆ 2:1 (chữ nhật)
+              thay cho chiều cao cứng → nhỏ gọn lại và tự cân theo mọi khổ máy
+              (375px → 187px, máy to hơn thì cao theo, không bao giờ chiếm quá nửa màn).
+              DESKTOP: banner trên, thanh lọc dưới — giữ nguyên 400px như cũ. */}
           <ProjectsBrowser
             projects={projects}
             articles={articles}
-            hero={<Hero banners={projBanners} heightClass="h-[224px] sm:h-[400px]" search={false} />}
+            hero={<Hero banners={projBanners} heightClass="aspect-[2/1] sm:aspect-auto sm:h-[400px]" search={false} />}
           />
         </div>
       </main>

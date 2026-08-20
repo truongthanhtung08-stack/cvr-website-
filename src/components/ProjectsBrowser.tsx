@@ -256,10 +256,12 @@ export default function ProjectsBrowser({
       )}
 
       {/* ── Thanh tìm + lọc dự án (MOBILE: lên trên cùng, KHÔNG khung viền/bóng, rộng hết bề ngang) ── */}
-      <div className="order-1 mt-1 rounded-none bg-white pb-2.5 pt-1 sm:order-2 sm:mt-2.5 sm:border sm:border-cvr-line sm:p-2.5 sm:shadow-lux">
+      <div className="order-1 mt-1.5 rounded-none bg-white pb-3 pt-0 sm:order-2 sm:mt-2.5 sm:border sm:border-cvr-line sm:p-2.5 sm:shadow-lux">
         <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
-          {/* Ô tìm nhanh dự án — nút search XANH nằm SÁT mép phải trong khung (mobile), đồng bộ Mua bán/Cho thuê */}
-          <div className="flex flex-1 items-center gap-2">
+          {/* Ô tìm nhanh dự án — nút search XANH nằm SÁT mép phải trong khung (mobile), đồng bộ Mua bán/Cho thuê.
+              MOBILE: chừa lề trái đúng chỗ NÚT BACK TRÒN nổi (8px + 36px) để nút đứng
+              CẠNH ô tìm thành một hàng, không đè lên chữ gợi ý đang chạy. */}
+          <div className="ml-11 flex flex-1 items-center gap-2 sm:ml-0">
           <div ref={sugBoxRef} className="relative flex-1">
             <svg className="pointer-events-none absolute left-3 top-1/2 hidden h-4 w-4 -translate-y-1/2 text-cvr-faint sm:block" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
