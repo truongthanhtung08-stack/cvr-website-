@@ -232,13 +232,19 @@ export default function Footer() {
 
           <p>Địa chỉ: {PHAP_LY.diaChiDayDu || f.address}</p>
 
-          {/* Liên hệ CÔNG TY — bấm gọi / gửi mail được ngay */}
-          <p className="text-cvr-body">
-            Điện thoại:{" "}
-            <a href={`tel:${f.hotline.replace(/\s/g, "")}`} className="font-medium hover:text-cvr-ink">{f.hotline}</a>
-            <span className="mx-1.5 text-cvr-line">·</span>
-            Email:{" "}
-            <a href={`mailto:${f.email}`} className="font-medium hover:text-cvr-ink">{f.email}</a>
+          {/* Liên hệ CÔNG TY — bấm gọi / gửi mail được ngay.
+              whitespace-nowrap: số điện thoại có dấu cách ("+84 377 985 036") nên trình duyệt
+              được phép ngắt giữa số → nhìn đứt quãng. Khoá lại để mỗi mục là MỘT khối liền,
+              màn hẹp thì cả cụm xuống dòng nguyên vẹn chứ không vỡ đôi. */}
+          <p className="flex flex-wrap gap-x-5 gap-y-1 text-cvr-body">
+            <span className="whitespace-nowrap">
+              Điện thoại:{" "}
+              <a href={`tel:${f.hotline.replace(/\s/g, "")}`} className="font-medium hover:text-cvr-ink">{f.hotline}</a>
+            </span>
+            <span className="whitespace-nowrap">
+              Email:{" "}
+              <a href={`mailto:${f.email}`} className="font-medium hover:text-cvr-ink">{f.email}</a>
+            </span>
           </p>
 
           {PHAP_LY.chiuTrachNhiemNoiDung && (
