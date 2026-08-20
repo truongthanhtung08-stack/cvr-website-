@@ -72,10 +72,7 @@ export default function LoginForm() {
   return (
     <div className="w-full max-w-md rounded-none border border-cvr-line bg-white p-6 shadow-lux sm:p-8">
       <h1 className="text-2xl font-semibold tracking-tight text-cvr-ink">Đăng nhập</h1>
-      <p className="mt-1.5 text-sm text-cvr-muted">
-        Bấm một nút là vào ngay — không cần điền biểu mẫu, không cần nhớ mật khẩu.
-        Lần đầu dùng là tự có tài khoản.
-      </p>
+      <p className="mt-1.5 text-sm text-cvr-muted">Đăng nhập để quản lý tin đăng và tin đã lưu.</p>
 
       {notice && (
         <div className="mt-4 rounded-lg border border-cvr-blue/30 bg-cvr-blue/[0.08] px-3 py-2.5 text-sm text-cvr-blue-ink">
