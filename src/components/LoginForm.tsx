@@ -24,8 +24,9 @@ export default function LoginForm() {
     if (e === "oauth") return "Đăng nhập Google chưa hoàn tất. Vui lòng thử lại hoặc dùng email.";
     if (e === "zalo_chua_cau_hinh")
       return "Đăng nhập Zalo chưa được kích hoạt. Vui lòng dùng Google hoặc email trong lúc chờ.";
+    // Kèm MÃ để biết hỏng ở khâu nào — không phải mò thanh địa chỉ.
     if (e.startsWith("zalo_"))
-      return "Đăng nhập Zalo chưa hoàn tất. Vui lòng thử lại hoặc dùng cách khác.";
+      return `Đăng nhập Zalo chưa hoàn tất (mã: ${e}). Vui lòng thử lại hoặc dùng cách khác.`;
     return "";
   });
   const [loading, setLoading] = useState(false);

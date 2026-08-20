@@ -114,12 +114,18 @@ export async function GET(request: Request) {
     const hash = link?.properties?.hashed_token;
     if (loiLink || !hash) return loi("zalo_tao_phien_that_bai");
 
+    // Supabase đổi tên loại mã theo phiên bản: bản mới dùng "email", bản cũ dùng
+    // "magiclink". Thử lần lượt cả hai để không phụ thuộc phiên bản.
     const supabase = await createClient();
-    const { error: loiXacThuc } = await supabase.auth.verifyOtp({
-      type: "magiclink",
-      token_hash: hash,
-    });
-    if (loiXacThuc) return loi("zalo_mo_phien_that_bai");
+    let loiXacThuc = (await supabase.auth.verifyOtp({ type: "email", token_hash: hash })).error;
+    if (loiXacThuc) {
+      console.error("[zalo] verifyOtp type=email that bai:", loiXacThuc.message);
+      loiXacThuc = (await supabase.auth.verifyOtp({ type: "magiclink", token_hash: hash })).error;
+    }
+    if (loiXacThuc) {
+      console.error("[zalo] verifyOtp type=magiclink cung that bai:", loiXacThuc.message);
+      return loi("zalo_mo_phien_that_bai");
+    }
 
     // Về đúng nơi theo vai trò (giống luồng Google)
     let dest = next;
