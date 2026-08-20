@@ -36,7 +36,8 @@ export default async function Home() {
     <>
       <Header />
       <main className="flex-1">
-        {/* Hero: khung GIỮ NGUYÊN — ảnh PHỦ KÍN khung (cover), không hụt 2 bên.
+        {/* Hero: khung theo ĐÚNG TỶ LỆ ẢNH (mobile 2,5:1 · PC 2:1) → ảnh phủ kín khung mà
+            KHÔNG bị cắt, không hụt 2 bên, ở mọi bề rộng màn hình. Tỷ lệ đặt trong Hero.tsx.
             mobileTwoLine: mobile chỉ 2 dòng text (tiêu đề + phụ đề) canh dưới-trái, không ngắt dòng */}
         <HomeExpandProvider>
           {/* Hero + 2 banner: không có nút "Xem thêm" → ẩn khi bất kỳ khối nào đang mở */}

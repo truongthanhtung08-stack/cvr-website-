@@ -145,11 +145,12 @@ export default function QuyChePage() {
       <Muc so={10} title="Đầu mối liên hệ">
         <DanhSach
           items={[
+            ...(PHAP_LY.tenCongTy ? [<>Đơn vị chủ quản: <strong className="font-semibold text-cvr-ink">{PHAP_LY.tenCongTy}</strong></>] : []),
             <>Hotline / Zalo: <a href="tel:+84377985036" className="font-semibold text-cvr-blue-ink underline">0377 985 036</a></>,
             <>Email: <a href="mailto:lienhe@coastalland.vn" className="font-semibold text-cvr-blue-ink underline">lienhe@coastalland.vn</a></>,
             <>Địa chỉ: {PHAP_LY.diaChiDayDu}</>,
             <>Trang <Link href="/lien-he" className="font-semibold text-cvr-blue-ink underline">Liên hệ</Link> — gửi yêu cầu trực tuyến.</>,
-            // Các dòng dưới CHỜ GIẤY ĐKKD — điền tại src/lib/phapLy.ts, chưa có thì tự ẩn.
+            // Các dòng dưới lấy từ giấy ĐKKD — sửa tại src/lib/phapLy.ts, để trống thì tự ẩn.
             ...(PHAP_LY.dangKyKinhDoanh ? [<>{PHAP_LY.dangKyKinhDoanh}</>] : []),
             ...(PHAP_LY.maSoThue ? [<>Mã số thuế: {PHAP_LY.maSoThue}</>] : []),
             ...(PHAP_LY.chiuTrachNhiemNoiDung

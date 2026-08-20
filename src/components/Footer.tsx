@@ -219,8 +219,10 @@ export default function Footer() {
         </div>
 
         <div className="mt-8 space-y-2 border-t border-cvr-line pt-6 text-xs leading-relaxed text-cvr-faint">
+          {/* Tên pháp lý lấy từ phapLy.ts (đúng giấy ĐKKD) — không để admin sửa lệch giấy phép.
+              Chưa điền thì mới dùng tên trong phần Nội dung web. */}
           <p className="font-semibold text-cvr-body">
-            {f.company}
+            {PHAP_LY.tenCongTy || f.company}
           </p>
 
           {/* Dòng pháp lý — ô nào trống trong src/lib/phapLy.ts thì tự ẩn, không lộ chữ mẫu */}

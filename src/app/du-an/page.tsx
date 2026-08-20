@@ -26,10 +26,21 @@ export default async function DuAnPage() {
         <div className="mx-auto max-w-7xl px-4 pb-20 pt-0 sm:px-6 sm:pt-0 lg:px-8">
           {/* MOBILE: ô tìm + chip lọc lên TRÊN, banner nằm dưới (mẫu Batdongsan).
               DESKTOP: banner trên, thanh lọc dưới — như cũ. ProjectsBrowser tự xếp thứ tự. */}
+          {/* Hero: KHUNG = ĐÚNG TỶ LỆ ẢNH, mỗi slide có ẢNH RIÊNG cho từng loại máy
+              (giống Hero trang chủ): MÁY TÍNH 3:1 · 1920×640 — ĐIỆN THOẠI 2,5:1 · 1200×480.
+              Trước đây để chiều cao cố định (190px / 400px) nên khung co giãn theo màn hình,
+              ảnh luôn bị cắt — nhất là trên điện thoại (khung ~2:1 mà ảnh 3:1, cụt hai bên). */}
           <ProjectsBrowser
             projects={projects}
             articles={articles}
-            hero={<Hero banners={projBanners} heightClass="h-[190px] sm:h-[400px]" search={false} />}
+            hero={
+              <Hero
+                banners={projBanners}
+                heightClass="aspect-[5/2] sm:aspect-[3/1]"
+                heightClassNoMobile="aspect-[3/1]"
+                search={false}
+              />
+            }
           />
         </div>
       </main>

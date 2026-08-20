@@ -62,6 +62,9 @@ export const homeBanners: Banner[] = [
 
 // Banner trang Dự án — 5 mẫu, ảnh PANORAMA (biển/đô thị/bến du thuyền/đảo) crop đúng
 // tỷ lệ khung banner (3:1), chân trời ở giữa nên KHÔNG mất chủ thể; KHÔNG dùng ảnh thẻ dự án (16:10).
+// Khung: MÁY TÍNH 3:1 (1920×640) · ĐIỆN THOẠI 2,5:1 (1200×480) → mỗi slide nên có thêm
+// `imageMobile`. Bộ mặc định này chỉ có ảnh PC nên trên điện thoại sẽ bị cắt hai bên;
+// banner chạy thật lấy từ /admin/noi-dung (có đủ 2 ô ảnh).
 export const projectBanners: Banner[] = projects.slice(0, 5).map((p) => ({
   id: p.slug,
   image: `/images/du-an/hero-${p.slug}-3x1.jpg`,

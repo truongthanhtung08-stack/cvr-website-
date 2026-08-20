@@ -7,6 +7,7 @@ import { asset } from "@/lib/asset";
 import { homeBanners, projectBanners, type Banner } from "@/lib/banners";
 import { landings as LANDINGS_DEFAULT, type Landing } from "@/lib/landings";
 import { FOOTER_DEFAULT, HOME_AD_DEFAULT, HOME_AREAS_DEFAULT, ABOUT_DEFAULT, type FooterData, type HomeAdData, type AreaCard, type AboutData } from "@/lib/siteContent";
+import { PHAP_LY } from "@/lib/phapLy";
 import { Panel, Field } from "@/components/Ui";
 
 // Quản lý NỘI DUNG TĨNH trang web (chữ + ảnh) — Hero trang chủ + Footer công ty.
@@ -218,7 +219,11 @@ export default function AdminSiteContentPage() {
               <input value={footer.address} disabled className={`${inputCls} cursor-not-allowed bg-cvr-surface text-cvr-faint`} />
             </Field>
           </div>
-          <Field label="Tên pháp lý (dòng cuối)"><input value={footer.company} onChange={(e) => setFooter({ ...footer, company: e.target.value })} className={inputCls} /></Field>
+          {/* Tên pháp lý phải khớp TỪNG CHỮ với giấy ĐKKD → lấy từ src/lib/phapLy.ts,
+              khoá ô này lại (cùng cách đã làm với ô Địa chỉ) để không sửa lệch giấy phép. */}
+          <Field label="Tên pháp lý (sửa trong src/lib/phapLy.ts)">
+            <input value={PHAP_LY.tenCongTy || footer.company} disabled className={`${inputCls} cursor-not-allowed bg-cvr-surface text-cvr-faint`} />
+          </Field>
 
           <div>
             <p className="mb-2 text-sm font-medium text-cvr-body">Link mạng xã hội</p>
@@ -273,7 +278,7 @@ export default function AdminSiteContentPage() {
       </Panel>
 
       {/* BANNER TRANG DỰ ÁN */}
-      <Panel title="Banner trang Dự án (/du-an)" desc="Ảnh ngang 3:1 · nên 1920 × 640 px · nhiều slide sẽ tự chạy">
+      <Panel title="Banner trang Dự án (/du-an)" desc="Mỗi slide cần 2 ảnh: MÁY TÍNH 1920×640 (3:1) và ĐIỆN THOẠI 1200×480 (2,5:1) · nhiều slide sẽ tự chạy">
         <div className="space-y-4">
           {projBanners.map((s, i) => (
             <div key={i} className="rounded-xl border border-cvr-line p-4">
@@ -281,7 +286,23 @@ export default function AdminSiteContentPage() {
                 <p className="text-sm font-semibold text-cvr-ink">Slide {i + 1}</p>
                 <button type="button" onClick={() => delProj(i)} className="text-xs font-medium text-red-600 hover:underline">Xoá</button>
               </div>
-              <ImageField value={s.image} ratio="3:1 · 1920×640" onChange={(url) => setProj(i, { image: url })} />
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                <div>
+                  <p className="text-sm font-semibold text-cvr-ink">Ảnh MÁY TÍNH</p>
+                  <p className="mb-2 mt-0.5 inline-block rounded-md bg-cvr-blue/10 px-2.5 py-1 text-[15px] font-bold tracking-tight text-cvr-blue-ink">
+                    1920 × 640 px · tỷ lệ 3 : 1
+                  </p>
+                  <ImageField value={s.image} ratio="3:1 · 1920×640" onChange={(url) => setProj(i, { image: url })} />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-cvr-ink">Ảnh ĐIỆN THOẠI</p>
+                  <p className="mb-2 mt-0.5 inline-block rounded-md bg-cvr-blue/10 px-2.5 py-1 text-[15px] font-bold tracking-tight text-cvr-blue-ink">
+                    1200 × 480 px · tỷ lệ 2,5 : 1
+                  </p>
+                  <ImageField value={s.imageMobile ?? ""} ratio="2.5:1 · 1200×480" onChange={(url) => setProj(i, { imageMobile: url })} />
+                  <p className="mt-1 text-xs text-cvr-muted">Bỏ trống → điện thoại dùng tạm ảnh máy tính (sẽ bị cắt hai bên)</p>
+                </div>
+              </div>
               <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <Field label="Tiêu đề (tên dự án)"><input value={s.title ?? ""} onChange={(e) => setProj(i, { title: e.target.value })} className={inputCls} /></Field>
                 <Field label="Mô tả / địa chỉ"><input value={s.subtitle ?? ""} onChange={(e) => setProj(i, { subtitle: e.target.value })} className={inputCls} /></Field>
@@ -471,10 +492,23 @@ function AboutEditor({ value: a, onChange }: { value: AboutData; onChange: (patc
 
   return (
     <div className="space-y-4">
-      {/* Ảnh hero */}
-      <div>
-        <p className="mb-1.5 text-sm font-semibold text-cvr-ink">Ảnh đầu trang (hero)</p>
-        <ImageField value={a.heroImage} ratio="Ngang · 1920×720" onChange={(url) => onChange({ heroImage: url })} />
+      {/* Ảnh hero — 2 ảnh riêng. Nhãn cũ ghi "1920×720" không khớp khung; khung nay = 8:3 */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div>
+          <p className="text-sm font-semibold text-cvr-ink">Ảnh đầu trang — MÁY TÍNH</p>
+          <p className="mb-2 mt-0.5 inline-block rounded-md bg-cvr-blue/10 px-2.5 py-1 text-[15px] font-bold tracking-tight text-cvr-blue-ink">
+            2400 × 900 px · tỷ lệ 8 : 3
+          </p>
+          <ImageField value={a.heroImage} ratio="8:3 · 2400×900" onChange={(url) => onChange({ heroImage: url })} />
+        </div>
+        <div>
+          <p className="text-sm font-semibold text-cvr-ink">Ảnh đầu trang — ĐIỆN THOẠI</p>
+          <p className="mb-2 mt-0.5 inline-block rounded-md bg-cvr-blue/10 px-2.5 py-1 text-[15px] font-bold tracking-tight text-cvr-blue-ink">
+            1200 × 480 px · tỷ lệ 2,5 : 1
+          </p>
+          <ImageField value={a.heroImageMobile ?? ""} ratio="2.5:1 · 1200×480" onChange={(url) => onChange({ heroImageMobile: url })} />
+          <p className="mt-1 text-xs text-cvr-muted">Bỏ trống → điện thoại dùng tạm ảnh máy tính (sẽ bị cắt hai bên)</p>
+        </div>
       </div>
 
       {/* Câu chuyện */}

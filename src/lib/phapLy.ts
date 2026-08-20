@@ -8,22 +8,27 @@
 //    không hiện "đang cập nhật". Điền vào là dòng tự hiện lên.
 // ════════════════════════════════════════════════════════════════════════════
 
+// ⚠️ CHỈ ĐƯA LÊN WEB NHỮNG THÔNG TIN BẮT BUỘC PHẢI CÔNG KHAI.
+//    Giấy ĐKKD còn nhiều mục KHÔNG được đưa lên: số định danh cá nhân, ngày sinh,
+//    vốn điều lệ, điện thoại/email cá nhân của chủ sở hữu. Đừng thêm vào file này.
 export const PHAP_LY = {
-  // ── CHỜ GIẤY TỜ (anh gửi, em điền) ────────────────────────────────────────
-  // VD: "Giấy CN ĐKKD số 0401234567 do Sở KH&ĐT thành phố Đà Nẵng cấp ngày 01/01/2026"
-  dangKyKinhDoanh: "",
-  // VD: "0401234567"
-  maSoThue: "",
-  // Người chịu trách nhiệm nội dung — bắt buộc theo luật khi đã có ĐKKD.
-  // Điền đúng họ tên người đại diện ghi trên giấy phép. VD: "Ông Nguyễn Văn A"
-  chiuTrachNhiemNoiDung: "",
-  // Link xác nhận đã thông báo với Bộ Công Thương (có sau khi đăng ký website TMĐT).
+  // ── ĐÃ CÓ GIẤY ĐKKD (cấp 17/08/2026) ──────────────────────────────────────
+  // Tên pháp lý đầy đủ — phải ghi ĐÚNG như trên giấy phép.
+  tenCongTy: "CÔNG TY TNHH BẤT ĐỘNG SẢN COASTAL LAND",
+  dangKyKinhDoanh:
+    "Giấy chứng nhận đăng ký doanh nghiệp số 0402353502 do Phòng Đăng ký kinh doanh — Sở Tài chính thành phố Đà Nẵng cấp ngày 17/08/2026",
+  // Mã số doanh nghiệp cũng chính là mã số thuế.
+  maSoThue: "0402353502",
+  // Người chịu trách nhiệm nội dung — bắt buộc theo luật. Là người đại diện pháp luật.
+  chiuTrachNhiemNoiDung: "Ông Trương Thanh Tùng",
+  // Địa chỉ trụ sở chính, ghi theo đơn vị hành chính MỚI 2025 (Tỉnh/Thành → Phường/Xã).
+  diaChiDayDu: "220 Nguyễn Mậu Tài, phường Hòa Xuân, thành phố Đà Nẵng",
+
+  // ── CÒN THIẾU ─────────────────────────────────────────────────────────────
+  // Link xác nhận đã thông báo website với Bộ Công Thương. ĐÃ CÓ ĐKKD → đăng ký
+  // được ngay tại online.gov.vn; có link thì dán vào đây, dòng tự hiện ở footer.
   // VD: "http://online.gov.vn/Home/WebDetails/12345"
   boCongThuong: "",
-
-  // ── ĐÃ CÓ ──────────────────────────────────────────────────────────────────
-  // Địa chỉ ghi theo đơn vị hành chính MỚI 2025 (Tỉnh/Thành → Phường/Xã).
-  diaChiDayDu: "220 Nguyễn Mậu Tài, phường Hòa Xuân, thành phố Đà Nẵng",
 };
 
 // Câu miễn trừ trách nhiệm — sàn/cổng thông tin nào cũng có dòng này.
