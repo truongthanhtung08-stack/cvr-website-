@@ -1,4 +1,4 @@
-import type { Project } from "./data";
+import type { Listing, Project } from "./data";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // CÂU GỢI Ý CHẠY CHỮ trong ô tìm kiếm
@@ -59,6 +59,98 @@ export function hintsFor(mode: HintMode): string[] {
   return HINTS[mode];
 }
 
+// ── Tiện ích dùng chung ───────────────────────────────────────────────────
+// Tỉnh/thành = phần cuối địa chỉ ("Hoà Hải, Ngũ Hành Sơn, Đà Nẵng" → "Đà Nẵng")
+const tinhCua = (location: string) => location.split(",").pop()?.trim() ?? "";
+// Loại hình gọn để gõ: "Đất nền / Đất nền dự án" → "Đất nền" (bộ máy vẫn hiểu)
+const loaiCua = (type: string) => type.split("/")[0].trim();
+const gomTrung = (xs: string[]) => Array.from(new Set(xs.filter(Boolean)));
+
+// ── Gợi ý mục MUA BÁN / CHO THUÊ — chạy theo TIN MỚI và TIN HOT ────────────
+// Kho tin sẽ lên hàng trăm, hàng nghìn → câu gợi ý KHÔNG để cố định mà bám dữ
+// liệu đang có, đổi theo từng đợt đăng tin:
+//   • HOT   = cặp (loại hình × khu vực) có nhiều tin nhất, tin hạng VIP/Nổi bật
+//             tính điểm nặng hơn → phản ánh đúng chỗ đang sôi động.
+//   • MỚI   = loại hình & khu vực của những tin vừa đăng (kho trả về mới nhất trước).
+//   • GIÁ   = ghép thêm tầm giá đang nhiều tin nhất của cặp hot nhất.
+// Xen kẽ HOT ↔ MỚI cho phong phú. Kho rỗng → lùi về bộ theo cơ cấu.
+export function listingHints(items: Listing[], purpose: "ban" | "thue"): string[] {
+  const mac = purpose === "thue" ? HINT_THUE : HINT_BAN;
+  const ds = items.filter((l) => (l.purpose ?? "ban") === purpose);
+  if (ds.length === 0) return mac;
+
+  // Điểm HOT: mỗi tin cộng điểm cho cặp "loại hình × tỉnh" của nó
+  const diemCua = (l: Listing) => (l.badge === "VIP" ? 3 : l.badge === "Nổi bật" ? 2 : 1);
+  const diem = new Map<string, number>();
+  for (const l of ds) {
+    const k = `${loaiCua(l.type)}|${tinhCua(l.location)}`;
+    diem.set(k, (diem.get(k) ?? 0) + diemCua(l));
+  }
+  const hot = [...diem]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([k]) => {
+      const [loai, tinh] = k.split("|");
+      return tinh ? `${loai} tại ${tinh}` : loai;
+    });
+
+  // MỚI: 3 tin vừa đăng (kho sắp created_at giảm dần)
+  const moi = ds.slice(0, 3).map((l) => {
+    const tinh = tinhCua(l.location);
+    return tinh ? `${loaiCua(l.type)} ${tinh}` : loaiCua(l.type);
+  });
+
+  // Tầm giá đang có nhiều tin nhất trong nhóm hot nhất → thành 1 câu kèm giá
+  const cauGia: string[] = [];
+  const [loaiHot, tinhHot] = ([...diem].sort((a, b) => b[1] - a[1])[0]?.[0] ?? "").split("|");
+  if (loaiHot && tinhHot) {
+    const cungNhom = ds.filter((l) => loaiCua(l.type) === loaiHot && tinhCua(l.location) === tinhHot);
+    const tam = tamGiaPhoBien(cungNhom, purpose);
+    if (tam) cauGia.push(`${loaiHot} ${tinhHot} ${tam}`);
+  }
+
+  // Xen kẽ hot ↔ mới để câu chạy không bị lặp một kiểu
+  const xen: string[] = [];
+  for (let i = 0; i < Math.max(hot.length, moi.length); i++) {
+    if (hot[i]) xen.push(hot[i]);
+    if (moi[i]) xen.push(moi[i]);
+  }
+  const ra = gomTrung([...xen, ...cauGia]);
+  return ra.length >= 3 ? ra : gomTrung([...ra, ...mac]).slice(0, 6);
+}
+
+// Tầm giá nhiều tin nhất, viết đúng cú pháp bộ máy đọc được ("dưới 3 tỷ", "1 - 2 tỷ")
+function tamGiaPhoBien(items: Listing[], purpose: "ban" | "thue"): string | null {
+  const bac: [string, (n: number) => boolean][] =
+    purpose === "thue"
+      ? [
+          ["dưới 5 triệu", (n) => n < 0.005],
+          ["5 - 10 triệu", (n) => n >= 0.005 && n < 0.01],
+          ["10 - 20 triệu", (n) => n >= 0.01 && n < 0.02],
+          ["trên 20 triệu", (n) => n >= 0.02],
+        ]
+      : [
+          ["dưới 2 tỷ", (n) => n < 2],
+          ["2 - 5 tỷ", (n) => n >= 2 && n < 5],
+          ["5 - 10 tỷ", (n) => n >= 5 && n < 10],
+          ["trên 10 tỷ", (n) => n >= 10],
+        ];
+  const so = (giá: string) => {
+    const m = giá.replace(",", ".").match(/[\d.]+/);
+    if (!m) return null;
+    const n = parseFloat(m[0]);
+    return /tri[eệ]u/i.test(giá) ? n / 1000 : n; // quy về đơn vị tỷ
+  };
+  const dem = new Map<string, number>();
+  for (const l of items) {
+    const n = so(l.price);
+    if (n == null) continue;
+    const hit = bac.find(([, ok]) => ok(n));
+    if (hit) dem.set(hit[0], (dem.get(hit[0]) ?? 0) + 1);
+  }
+  return [...dem].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+}
+
 // ── Gợi ý mục DỰ ÁN dựng từ CHÍNH kho dự án đang có ────────────────────────
 // Có dự án thật (admin đã đăng) → gợi ý bằng tên dự án · chủ đầu tư · khu vực ·
 // tình trạng CÓ THẬT, gõ vào chắc chắn ra kết quả. Kho rỗng → dùng bộ cơ cấu.
@@ -67,18 +159,29 @@ export function projectHints(projects: Project[]): string[] {
   if (projects.length === 0) return HINT_DU_AN;
 
   const lay = <T,>(xs: T[], n: number) => Array.from(new Set(xs)).filter(Boolean).slice(0, n);
-  const tinhCua = (location: string) => location.split(",").pop()?.trim() ?? "";
 
-  const ten = lay(projects.map((p) => p.name), 3);
+  // MỚI: kho trả về dự án mới nhất trước → 2 cái đầu là 2 dự án vừa lên.
+  const moi = lay(projects.map((p) => p.name), 2);
+  // HOT: dự án ĐANG MỞ BÁN / SẮP MỞ BÁN — thứ khách hỏi nhiều nhất.
+  const dangHot = projects.filter((p) => /mở bán|nhận (giữ chỗ|booking)/i.test(p.status ?? ""));
+  const tenHot = lay(dangHot.map((p) => p.name), 2);
+  // Khu vực có NHIỀU dự án nhất (chỗ đang sôi động)
+  const demKhuVuc = new Map<string, number>();
+  for (const p of projects) {
+    const t = tinhCua(p.location);
+    if (t) demKhuVuc.set(t, (demKhuVuc.get(t) ?? 0) + 1);
+  }
+  const khuVuc = [...demKhuVuc].sort((a, b) => b[1] - a[1]).slice(0, 2).map(([t]) => t);
   const chuDauTu = lay(projects.map((p) => p.developer).filter(Boolean) as string[], 2);
-  const khuVuc = lay(projects.map((p) => tinhCua(p.location)), 2);
-  const tinhTrang = lay(projects.map((p) => p.status).filter(Boolean), 1);
+  const tinhTrang = lay(dangHot.map((p) => p.status).filter(Boolean), 1);
 
-  const hints = [
-    ...ten,
-    ...chuDauTu.map((d) => `Chủ đầu tư ${d}`),
+  // Xen kẽ MỚI ↔ HOT rồi tới khu vực · chủ đầu tư · tình trạng
+  const hints = gomTrung([
+    moi[0], tenHot[0], moi[1], tenHot[1],
     ...khuVuc.map((k) => `Dự án tại ${k}`),
+    ...chuDauTu.map((d) => `Chủ đầu tư ${d}`),
     ...tinhTrang.flatMap((t) => (khuVuc[0] ? [`Dự án ${t.toLowerCase()} tại ${khuVuc[0]}`] : [])),
-  ];
+  ].filter(Boolean) as string[]);
+
   return hints.length > 0 ? hints : HINT_DU_AN;
 }

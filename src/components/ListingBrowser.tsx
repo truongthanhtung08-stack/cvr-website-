@@ -125,6 +125,8 @@ export default function ListingBrowser({
           purpose={purpose}
           onMap={() => setMapMode((v) => !v)}
           mapActive={mapMode}
+          // Câu gợi ý chạy trong ô tìm bám theo TIN MỚI + TIN HOT của chính trang này
+          hintItems={items}
         />
       </div>
 

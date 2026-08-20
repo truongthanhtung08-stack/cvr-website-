@@ -41,7 +41,9 @@ export default async function Home() {
         <HomeExpandProvider>
           {/* Hero + 2 banner: không có nút "Xem thêm" → ẩn khi bất kỳ khối nào đang mở */}
           <HomeCollapsible>
-            <Hero banners={heroBanners} mobileTwoLine />
+            {/* searchItems: câu gợi ý chạy trong ô tìm bám TIN MỚI + TIN HOT.
+                Chỉ đưa 60 tin mới nhất — đủ để tính, khỏi phình trang. */}
+            <Hero banners={heroBanners} mobileTwoLine searchItems={listings.slice(0, 60)} />
           </HomeCollapsible>
 
           {/* 4 khối có nút "Xem thêm" — mỗi khối tự ẩn khi khối khác đang mở.

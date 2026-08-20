@@ -83,7 +83,7 @@ export default function SearchClient({ items = featuredListings }: { items?: Lis
 
       {/* Thanh lọc thông minh (dùng chung với /mua-ban, /cho-thue) */}
       <div className="mt-0 sm:mt-5">
-        <FilterBar value={filters} onChange={changeFilters} purpose={purpose} />
+        <FilterBar value={filters} onChange={changeFilters} purpose={purpose} hintItems={items} />
       </div>
 
       {/* Chip bộ lọc đang áp dụng */}

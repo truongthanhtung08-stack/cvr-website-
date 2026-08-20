@@ -6,6 +6,7 @@ import Link from "next/link";
 import { asset } from "@/lib/asset";
 import HomeSearch from "@/components/HomeSearch";
 import { homeBanners, type Banner } from "@/lib/banners";
+import type { Listing } from "@/lib/data";
 
 const DURATION = 6000;
 
@@ -18,6 +19,7 @@ type HeroProps = {
   searchTab?: string; // tab bộ lọc chọn sẵn (vd "Dự án")
   fit?: "cover" | "contain"; // "cover" (mặc định): ảnh phủ kín, có cắt · "contain": ôm TRỌN ảnh, nền 2 bên lấp bằng ảnh mờ
   mobileTwoLine?: boolean; // MOBILE: chỉ 2 dòng text (tiêu đề + phụ đề, ẩn nhãn), mỗi dòng 1 câu KHÔNG ngắt dòng
+  searchItems?: Listing[]; // kho tin để câu gợi ý trong ô tìm bám TIN MỚI + TIN HOT
 };
 
 export default function Hero({
@@ -29,6 +31,7 @@ export default function Hero({
   searchTab,
   fit = "cover",
   mobileTwoLine = false,
+  searchItems,
 }: HeroProps) {
   const contain = fit === "contain";
   const [active, setActive] = useState(0);
@@ -84,7 +87,7 @@ export default function Hero({
         (mô hình Batdongsan) → Hero bên dưới là ảnh SẠCH, không bị ô lọc đè lên. ── */}
     {search && (
       <div className="bg-white px-4 py-1.5 sm:hidden">
-        <HomeSearch defaultTab={searchTab} />
+        <HomeSearch defaultTab={searchTab} items={searchItems} />
       </div>
     )}
     <section
@@ -217,7 +220,7 @@ export default function Hero({
             MOBILE: ẩn (đã có thanh tìm kiếm riêng phía trên Hero). ── */}
         {search && (
           <div className="pointer-events-auto mx-auto hidden w-full max-w-4xl sm:block">
-            <HomeSearch defaultTab={searchTab} />
+            <HomeSearch defaultTab={searchTab} items={searchItems} />
           </div>
         )}
 

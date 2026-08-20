@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import FilterDropdown, { PanelActions, FilterDropdownGroup } from "@/components/FilterDropdown";
 import { districtsOf, wardsOf, wardsOfNew, provinceNamesFor, type GeoMode } from "@/lib/locations";
-import { projects } from "@/lib/data";
+import { projects, type Listing } from "@/lib/data";
 import {
   typeGroupsFor,
   priceRangesFor,
@@ -26,7 +26,7 @@ import {
 } from "@/lib/filters";
 import { suggest, popularSuggestions, type Suggestion } from "@/lib/suggest";
 import { goiYNoiLong, parseQuery } from "@/lib/smartSearch";
-import { hintsFor, type HintMode } from "@/lib/searchHints";
+import { hintsFor, listingHints, type HintMode } from "@/lib/searchHints";
 import { useTypingPlaceholder } from "@/lib/useTypingPlaceholder";
 import { cuonToiKetQua } from "@/lib/scroll";
 
@@ -49,6 +49,7 @@ export default function FilterBar({
   leading,
   purpose = "ban",
   hintMode,
+  hintItems,
 }: {
   value: Filters;
   onChange: (f: Filters) => void;
@@ -66,6 +67,9 @@ export default function FilterBar({
   // Bộ câu gợi ý chạy trong ô tìm. Mặc định theo purpose; trang chủ truyền thêm
   // "duan" khi đang ở tab Dự án (purpose của Dự án vẫn là "ban").
   hintMode?: HintMode;
+  // Kho tin để dựng câu gợi ý theo TIN MỚI + TIN HOT (đổi theo từng đợt đăng tin).
+  // Không truyền → dùng bộ câu theo cơ cấu.
+  hintItems?: Listing[];
 }) {
   const f = value;
   // Danh mục loại hình theo đúng mục đích trang
@@ -74,9 +78,16 @@ export default function FilterBar({
   const set = (patch: Partial<Filters>) => onChange({ ...f, ...patch });
   const hh = compact ? "h-12" : "h-10"; // compact = thanh tìm kiếm LỚN ở Hero · trang danh sách = gọn
 
-  // Gợi ý CHẠY CHỮ trong ô tìm — SÁT đúng mục đang đứng (mua bán / cho thuê / dự án).
+  // Gợi ý CHẠY CHỮ trong ô tìm — SÁT đúng mục đang đứng (mua bán / cho thuê / dự án)
+  // và bám TIN MỚI + TIN HOT trong kho (có kho tin thì dựng động, không thì theo cơ cấu).
   // Người dùng đã gõ chữ → dừng chạy để không giật dưới tay họ.
-  const hintPhrases = hintsFor(hintMode ?? purpose);
+  const mode = hintMode ?? purpose;
+  const hintPhrases = useMemo(
+    () => (hintItems && hintItems.length > 0 && mode !== "duan"
+      ? listingHints(hintItems, mode)
+      : hintsFor(mode)),
+    [hintItems, mode],
+  );
   const goiYChay = useTypingPlaceholder(hintPhrases, f.keyword.trim().length > 0);
 
   // Autocomplete đa tầng: Khu vực · Loại hình · Sản phẩm · Dự án · Tin tức.
