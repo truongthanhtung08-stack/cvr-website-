@@ -29,6 +29,9 @@ export default function LoginForm() {
     return "";
   });
   const [loading, setLoading] = useState(false);
+  // Email + mật khẩu ĐÓNG sẵn: đường chính là bấm một nút (Zalo/Google) là vào ngay.
+  // Ai quen dùng email thì mở ra — không ép ai phải nhớ mật khẩu.
+  const [moEmail, setMoEmail] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -69,7 +72,10 @@ export default function LoginForm() {
   return (
     <div className="w-full max-w-md rounded-none border border-cvr-line bg-white p-6 shadow-lux sm:p-8">
       <h1 className="text-2xl font-semibold tracking-tight text-cvr-ink">Đăng nhập</h1>
-      <p className="mt-1.5 text-sm text-cvr-muted">Đăng nhập để quản lý tin đăng và tin đã lưu.</p>
+      <p className="mt-1.5 text-sm text-cvr-muted">
+        Bấm một nút là vào ngay — không cần điền biểu mẫu, không cần nhớ mật khẩu.
+        Lần đầu dùng là tự có tài khoản.
+      </p>
 
       {notice && (
         <div className="mt-4 rounded-lg border border-cvr-blue/30 bg-cvr-blue/[0.08] px-3 py-2.5 text-sm text-cvr-blue-ink">
@@ -77,7 +83,28 @@ export default function LoginForm() {
         </div>
       )}
 
-      <form className="mt-5 space-y-4" onSubmit={onSubmit}>
+      {/* ── ĐƯỜNG CHÍNH: một chạm là vào (Zalo · Google · Facebook · số điện thoại) ── */}
+      <div className="mt-5">
+        <SocialAuth />
+      </div>
+
+      {/* ── ĐƯỜNG PHỤ: email + mật khẩu, đóng sẵn cho gọn ── */}
+      <div className="my-5 flex items-center gap-3 text-xs text-cvr-faint">
+        <span className="h-px flex-1 bg-cvr-line" /> hoặc <span className="h-px flex-1 bg-cvr-line" />
+      </div>
+
+      {!moEmail && (
+        <button
+          type="button"
+          onClick={() => setMoEmail(true)}
+          className="flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-cvr-line text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink"
+        >
+          Đăng nhập bằng email và mật khẩu
+        </button>
+      )}
+
+      {moEmail && (
+      <form className="space-y-4" onSubmit={onSubmit}>
         <Field label="Email hoặc số điện thoại">
           <input
             type="text"
@@ -122,20 +149,13 @@ export default function LoginForm() {
         >
           {loading ? "Đang đăng nhập…" : "Đăng nhập"}
         </button>
+
+        <p className="text-center text-sm text-cvr-muted">
+          Chưa có tài khoản?{" "}
+          <Link href="/dang-ky" className="font-semibold text-cvr-blue-ink hover:text-cvr-blue">Đăng ký bằng email</Link>
+        </p>
       </form>
-
-      {/* Phân cách */}
-      <div className="my-5 flex items-center gap-3 text-xs text-cvr-faint">
-        <span className="h-px flex-1 bg-cvr-line" /> hoặc <span className="h-px flex-1 bg-cvr-line" />
-      </div>
-
-      {/* Đăng nhập mạng xã hội — Google chạy thật, Facebook/Zalo sắp có */}
-      <SocialAuth />
-
-      <p className="mt-6 text-center text-sm text-cvr-muted">
-        Chưa có tài khoản?{" "}
-        <Link href="/dang-ky" className="font-semibold text-cvr-blue-ink hover:text-cvr-blue">Đăng ký ngay</Link>
-      </p>
+      )}
     </div>
   );
 }
