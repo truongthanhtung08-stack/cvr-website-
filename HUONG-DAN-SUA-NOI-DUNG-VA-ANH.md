@@ -65,6 +65,41 @@ Code chỉ được dùng khi Admin **chưa có** dữ liệu cho khối đó.
 | Logo, icon app | ✅ **VS Code** — chép đè file trong `public/logo`, `public/icons` |
 | Bố cục, màu, kích thước khung | ✅ **VS Code** |
 
+### Rà TOÀN BỘ trang trên web — trang nào sửa ở đâu *(rà bằng code 20/08/2026)*
+
+Cột cuối trả lời đúng câu hỏi: **push lên có tác dụng không.**
+
+| Trang trên web | Sửa ở đâu | Push có tác dụng? |
+|---|---|---|
+| Trang chủ — banner, ô khu vực, 2 banner cuối | /admin/noi-dung | Không |
+| Trang chủ — danh sách tin · dự án · tin tức | /admin/tin-dang · /admin/du-an · /admin/tin-tuc | Không |
+| Mua bán · Cho thuê · Tìm kiếm · Chi tiết tin | /admin/tin-dang | Không |
+| Dự án (banner) | /admin/noi-dung | Không |
+| Dự án (danh sách + chi tiết) | /admin/du-an | Không |
+| Tin tức (danh sách + bài viết) | /admin/tin-tuc | Không |
+| Giới thiệu | /admin/noi-dung | Không |
+| Trang landing | /admin/noi-dung | Không |
+| Bảng giá đăng tin | /admin/gia-khuyen-mai | Không |
+| Nạp tiền · Đổi điểm · Tài khoản | /admin/gia-khuyen-mai | Không |
+| Footer — điện thoại, email, mạng xã hội | /admin/noi-dung | Không |
+| **Điều khoản** | `src/app/dieu-khoan/page.tsx` | **Có** |
+| **Bảo mật** | `src/app/bao-mat/page.tsx` | **Có** |
+| **Quy chế** | `src/app/quy-che/page.tsx` | **Có** |
+| **Quy định đăng tin** | `src/app/quy-dinh/page.tsx` | **Có** |
+| **FAQ** | `src/app/faq/page.tsx` | **Có** |
+| **Liên hệ** | `src/app/lien-he/page.tsx` | **Có** |
+| **Hướng dẫn** | `src/app/huong-dan/page.tsx` | **Có** |
+| **Tuyển dụng** | `src/app/tuyen-dung/page.tsx` | **Có** |
+| **Góp ý** | `src/app/gop-y/page.tsx` | **Có** |
+| **Chuyên gia** (4 trang) | `src/app/chuyen-gia/` | **Có** |
+| **Tiện ích** | `src/app/tien-ich/` | **Có** |
+| **Đăng nhập · Đăng ký · Quên mật khẩu** | `src/app/dang-nhap/ · dang-ky/ · quen-mat-khau/` | **Có** |
+| **Đăng tin · So sánh · Tin đã lưu** | `src/app/dang-tin/` · `src/app/so-sanh/` · `src/app/tin-luu/` | **Có** |
+| **Tên công ty · mã số thuế · địa chỉ · miễn trừ** | `src/lib/phapLy.ts` | **Có** |
+| **Các cột liên kết ở footer** | `src/components/Footer.tsx` | **Có** |
+| **Logo · icon app** | `public/logo/` · `public/icons/` | **Có** |
+| **Bố cục · màu · kích thước khung** | file giao diện tương ứng | **Có** |
+
 **Đọc bảng này TRƯỚC KHI sửa bất cứ thứ gì.** Khối nào ghi Admin mà mở VS Code ra sửa là mất công
 vô ích — web không đổi. Cách tự kiểm tra lại về sau: mở `/admin/noi-dung`, khối nào đã có
 sẵn ảnh/chữ trong đó thì Admin đang quản khối đó.
