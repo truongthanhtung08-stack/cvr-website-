@@ -38,10 +38,12 @@ export const PHAP_LY = {
 // MỘT câu giấy phép gọn — viết như các website doanh nghiệp khác vẫn ghi.
 // Trước đây mã số 0402353502 bị lặp 2 lần (câu "Giấy chứng nhận…" + dòng "Mã số thuế").
 // Kết quả: "Mã số doanh nghiệp: 0402353502 do Sở Tài chính thành phố Đà Nẵng cấp ngày 17/08/2026"
+// \u00A0 = dấu cách KHÔNG cho xuống dòng: giữ "nghiệp: 0402353502" và "ngày 17/08/2026"
+// dính liền, không bị trình duyệt cắt đôi khi màn hẹp.
 export const DONG_GIAY_PHEP = PHAP_LY.maSoThue
-  ? `Mã số doanh nghiệp: ${PHAP_LY.maSoThue}` +
+  ? `Mã số doanh nghiệp:\u00A0${PHAP_LY.maSoThue}` +
     (PHAP_LY.noiCap ? ` do ${PHAP_LY.noiCap} cấp` : "") +
-    (PHAP_LY.ngayCap ? ` ngày ${PHAP_LY.ngayCap}` : "")
+    (PHAP_LY.ngayCap ? ` ngày\u00A0${PHAP_LY.ngayCap}` : "")
   : "";
 
 // Câu miễn trừ trách nhiệm — sàn/cổng thông tin nào cũng có dòng này.
