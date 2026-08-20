@@ -16,6 +16,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import TrangPhapLy, { Muc, DanhSach } from "@/components/TrangPhapLy";
 import YeuCauForm from "@/components/YeuCauForm";
+import { PHAP_LY } from "@/lib/phapLy";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/lien-he" },
@@ -28,8 +29,8 @@ export const metadata: Metadata = {
 const HOTLINE = "0377 985 036";
 const HOTLINE_TEL = "+84377985036";
 const EMAIL = "lienhe@coastalland.vn";
-// Địa chỉ ghi theo đơn vị hành chính MỚI 2025 (Tỉnh/Thành → Phường/Xã)
-const DIA_CHI = "220 Nguyễn Mậu Tài, phường Hòa Xuân, thành phố Đà Nẵng";
+// Địa chỉ lấy từ src/lib/phapLy.ts — MỘT nguồn duy nhất, khớp giấy ĐKKD và footer.
+const DIA_CHI = PHAP_LY.diaChiDayDu;
 
 export default function LienHePage() {
   return (
@@ -40,6 +41,10 @@ export default function LienHePage() {
       <Muc title="Kênh liên hệ">
         <DanhSach
           items={[
+            // Pháp nhân vận hành — lấy từ src/lib/phapLy.ts, ô trống thì dòng tự ẩn.
+            ...(PHAP_LY.tenCongTy
+              ? [<>Đơn vị chủ quản: <strong className="font-semibold text-cvr-ink">{PHAP_LY.tenCongTy}</strong>{PHAP_LY.maSoThue ? ` — MSDN ${PHAP_LY.maSoThue}` : ""}</>]
+              : []),
             <>
               Hotline / Zalo:{" "}
               <a href={`tel:${HOTLINE_TEL}`} className="font-semibold text-cvr-blue-ink underline">
