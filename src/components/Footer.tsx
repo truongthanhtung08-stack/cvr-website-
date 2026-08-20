@@ -236,7 +236,7 @@ export default function Footer() {
               whitespace-nowrap: số điện thoại có dấu cách ("+84 377 985 036") nên trình duyệt
               được phép ngắt giữa số → nhìn đứt quãng. Khoá lại để mỗi mục là MỘT khối liền,
               màn hẹp thì cả cụm xuống dòng nguyên vẹn chứ không vỡ đôi. */}
-          <p className="flex flex-wrap gap-x-5 gap-y-1 text-cvr-body">
+          <p className="flex flex-wrap gap-x-3 gap-y-1 text-cvr-body sm:gap-x-6">
             <span className="whitespace-nowrap">
               Điện thoại:{" "}
               <a href={`tel:${f.hotline.replace(/\s/g, "")}`} className="font-medium hover:text-cvr-ink">{f.hotline}</a>
