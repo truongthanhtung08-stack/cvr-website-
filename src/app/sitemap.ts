@@ -58,14 +58,28 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const [projects, articles, listings] = await Promise.all([
       getProjects(), getArticles(), getListings(),
     ]);
+    // KHAI CẢ ẢNH của từng trang (sitemap ảnh). Bất động sản là ngành khách xem
+    // BẰNG MẮT: rất nhiều người tìm qua Google Hình ảnh rồi mới bấm vào web.
+    // Không khai thì ảnh tin gần như không bao giờ được lập chỉ mục.
+    const anhTuyetDoi = (u?: string) => (!u ? [] : [u.startsWith("http") ? u : `${SITE}${u}`]);
+
     for (const p of projects) {
-      dynamic.push({ url: `${SITE}/du-an/${p.slug}`, lastModified: now, changeFrequency: "weekly", priority: 0.7 });
+      dynamic.push({
+        url: `${SITE}/du-an/${p.slug}`, lastModified: now, changeFrequency: "weekly", priority: 0.7,
+        images: (p.photos?.length ? p.photos.slice(0, 5) : [p.image]).flatMap(anhTuyetDoi),
+      });
     }
     for (const a of articles) {
-      dynamic.push({ url: `${SITE}/tin-tuc/${a.slug}`, lastModified: now, changeFrequency: "monthly", priority: 0.6 });
+      dynamic.push({
+        url: `${SITE}/tin-tuc/${a.slug}`, lastModified: now, changeFrequency: "monthly", priority: 0.6,
+        images: anhTuyetDoi(a.image),
+      });
     }
     for (const l of listings) {
-      dynamic.push({ url: `${SITE}/bat-dong-san/${l.id}`, lastModified: now, changeFrequency: "weekly", priority: 0.7 });
+      dynamic.push({
+        url: `${SITE}/bat-dong-san/${l.id}`, lastModified: now, changeFrequency: "weekly", priority: 0.7,
+        images: anhTuyetDoi(l.image),
+      });
     }
   } catch {
     // Bỏ qua — giữ nguyên các trang tĩnh.

@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { ListingListJsonLd } from "@/components/ListJsonLd";
 import ListingBrowser from "@/components/ListingBrowser";
 import { getListings } from "@/lib/listingsDb";
 import { getArticles } from "@/lib/contentDb";
@@ -17,6 +18,7 @@ export default async function ChoThuePage() {
   const [listings, articles] = await Promise.all([getListings(), getArticles()]);
   return (
     <>
+      <ListingListJsonLd items={listings.filter((l) => (l.purpose ?? "ban") === "thue")} heading="Nhà đất cho thuê tại Đà Nẵng, Huế & Miền Trung" path="/cho-thue" />
       <Header />
       <main className="flex-1 bg-white">
         {/* Khung chờ: CHỈ cao bằng thanh lọc thật (không pt-32 như trước — đó chính là

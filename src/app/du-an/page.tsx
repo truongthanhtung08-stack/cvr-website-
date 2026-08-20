@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { ProjectListJsonLd } from "@/components/ListJsonLd";
 import Hero from "@/components/Hero";
 import ProjectsBrowser from "@/components/ProjectsBrowser";
 import { getProjects, getArticles } from "@/lib/contentDb";
@@ -21,6 +22,7 @@ export default async function DuAnPage() {
   ]);
   return (
     <>
+      <ProjectListJsonLd items={projects} heading="Dự án bất động sản Đà Nẵng, Huế & Miền Trung" path="/du-an" />
       <Header />
       <main className="flex-1 bg-white">
         <div className="mx-auto max-w-7xl px-4 pb-20 pt-0 sm:px-6 sm:pt-0 lg:px-8">
