@@ -185,6 +185,39 @@ export default function ProjectsBrowser({
     </div>
   );
 
+  // Nhóm nút lọc dùng chung cho HAI vị trí: thanh lọc (desktop) và trang tìm
+  // toàn màn hình (mobile). Chức năng y hệt — chỉ khác chỗ đặt.
+  const chipLoc = (
+    <FilterDropdownGroup>
+      <FilterDropdown label="Khu vực" summary={province === ALL ? "" : province} active={province !== ALL} panelClassName="w-64" className="shrink-0">
+        {({ close }) => (
+          <div>
+            {/* Công tắc hệ hành chính Cũ/Mới — đồng bộ với Mua bán/Cho thuê */}
+            <button
+              type="button"
+              role="switch"
+              aria-checked={geoMode === "moi"}
+              onClick={() => switchGeo(geoMode === "moi" ? "cu" : "moi")}
+              className="mb-2 flex w-full items-center justify-between gap-3 rounded-lg bg-cvr-blue/[0.06] px-2.5 py-2 text-left transition hover:bg-cvr-blue/[0.1]"
+            >
+              <span className="text-[12px] font-semibold text-cvr-ink">Tìm theo địa chỉ mới sau sáp nhập</span>
+              <span className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${geoMode === "moi" ? "bg-cvr-blue" : "bg-black/20"}`}>
+                <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all ${geoMode === "moi" ? "left-[18px]" : "left-0.5"}`} />
+              </span>
+            </button>
+            {optionList(provinceOptions, province, setProvince, close)}
+          </div>
+        )}
+      </FilterDropdown>
+      <FilterDropdown label="Loại hình" summary={type === ALL ? "" : type} active={type !== ALL} panelClassName="w-64" className="shrink-0">
+        {({ close }) => optionList(typeCounts, type, setType, close)}
+      </FilterDropdown>
+      <FilterDropdown label="Trạng thái" summary={status === ALL ? "" : status} active={status !== ALL} panelClassName="w-64" className="shrink-0">
+        {({ close }) => optionList(statusCounts, status, setStatus, close)}
+      </FilterDropdown>
+    </FilterDropdownGroup>
+  );
+
   return (
     <div className="flex flex-col">
       {/* Hero banner — MOBILE nằm DƯỚI thanh lọc (mẫu Batdongsan), DESKTOP nằm TRÊN.
@@ -294,43 +327,18 @@ export default function ProjectsBrowser({
           </div>
           </div>
 
-          {/* Chip lọc: Khu vực · Loại hình · Trạng thái — MOBILE cuộn ngang 1 dòng */}
-          <div className="no-scrollbar flex items-center gap-2 overflow-x-auto pb-0.5 lg:overflow-visible">
-            <FilterDropdownGroup>
-              <FilterDropdown label="Khu vực" summary={province === ALL ? "" : province} active={province !== ALL} panelClassName="w-64" className="shrink-0">
-                {({ close }) => (
-                  <div>
-                    {/* Công tắc hệ hành chính Cũ/Mới — đồng bộ với Mua bán/Cho thuê */}
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={geoMode === "moi"}
-                      onClick={() => switchGeo(geoMode === "moi" ? "cu" : "moi")}
-                      className="mb-2 flex w-full items-center justify-between gap-3 rounded-lg bg-cvr-blue/[0.06] px-2.5 py-2 text-left transition hover:bg-cvr-blue/[0.1]"
-                    >
-                      <span className="text-[12px] font-semibold text-cvr-ink">Tìm theo địa chỉ mới sau sáp nhập</span>
-                      <span className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${geoMode === "moi" ? "bg-cvr-blue" : "bg-black/20"}`}>
-                        <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all ${geoMode === "moi" ? "left-[18px]" : "left-0.5"}`} />
-                      </span>
-                    </button>
-                    {optionList(provinceOptions, province, setProvince, close)}
-                  </div>
-                )}
-              </FilterDropdown>
-              <FilterDropdown label="Loại hình" summary={type === ALL ? "" : type} active={type !== ALL} panelClassName="w-64" className="shrink-0">
-                {({ close }) => optionList(typeCounts, type, setType, close)}
-              </FilterDropdown>
-              <FilterDropdown label="Trạng thái" summary={status === ALL ? "" : status} active={status !== ALL} panelClassName="w-64" className="shrink-0">
-                {({ close }) => optionList(statusCounts, status, setStatus, close)}
-              </FilterDropdown>
-            </FilterDropdownGroup>
+          {/* Chip lọc: Khu vực · Loại hình · Trạng thái.
+              MOBILE: ẨN ở đây — chuyển vào TRANG TÌM toàn màn hình (bấm nút tìm kiếm),
+              đúng kiểu bộ lọc trang chủ mobile. DESKTOP: giữ nguyên tại chỗ. */}
+          <div className="no-scrollbar hidden items-center gap-2 overflow-x-auto pb-0.5 sm:flex lg:overflow-visible">
+            {chipLoc}
           </div>
 
           {hasActive && (
             <button
               type="button"
               onClick={reset}
-              className="h-10 shrink-0 rounded-lg px-3 text-sm font-medium text-cvr-muted transition hover:text-cvr-blue-ink"
+              className="hidden h-10 shrink-0 rounded-lg px-3 text-sm font-medium text-cvr-muted transition hover:text-cvr-blue-ink sm:block"
             >
               Đặt lại
             </button>
@@ -340,7 +348,9 @@ export default function ProjectsBrowser({
 
       {/* ── MOBILE: trang tìm dự án TOÀN MÀN HÌNH — back + × + nút Search (đồng bộ Mua bán) ── */}
       {overlay && (
-        <div className="fixed inset-0 z-[200] flex flex-col bg-white sm:hidden">
+        // z-[80]: phủ header (z-50) + thanh tab đáy (z-40) nhưng THẤP hơn sheet
+        // của nút lọc (z-100) để bảng chọn Khu vực/Loại hình/Trạng thái mở đè lên được.
+        <div className="fixed inset-0 z-[80] flex flex-col bg-white sm:hidden">
           <div className="flex items-center gap-1.5 border-b border-cvr-line px-2 py-2">
             <button
               type="button"
@@ -381,6 +391,20 @@ export default function ProjectsBrowser({
             >
               <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={2.4} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" /></svg>
             </button>
+          </div>
+          {/* BỘ LỌC dự án — MOBILE nằm TRONG trang tìm này (giống trang chủ đưa
+              tab Mua bán/Cho thuê/Dự án vào trang tìm). Chức năng giữ nguyên. */}
+          <div className="no-scrollbar flex items-center gap-2 overflow-x-auto border-b border-cvr-line px-3 py-2">
+            {chipLoc}
+            {hasActive && (
+              <button
+                type="button"
+                onClick={reset}
+                className="h-10 shrink-0 rounded-full px-3 text-sm font-medium text-cvr-muted active:text-cvr-blue-ink"
+              >
+                Đặt lại
+              </button>
+            )}
           </div>
           <div className="flex-1 overflow-y-auto p-2">
             {visible.length === 0 ? (

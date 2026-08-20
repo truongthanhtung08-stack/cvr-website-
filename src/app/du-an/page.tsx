@@ -24,12 +24,13 @@ export default async function DuAnPage() {
       <Header />
       <main className="flex-1 bg-white">
         <div className="mx-auto max-w-7xl px-4 pb-20 pt-0 sm:px-6 sm:pt-0 lg:px-8">
-          {/* MOBILE: ô tìm + chip lọc lên TRÊN, banner nằm dưới (mẫu Batdongsan).
+          {/* MOBILE: ô tìm lên TRÊN, banner nằm dưới (mẫu Batdongsan); nút lọc nằm
+              trong trang tìm toàn màn hình → hero mobile cao thêm chút (190 → 224px).
               DESKTOP: banner trên, thanh lọc dưới — như cũ. ProjectsBrowser tự xếp thứ tự. */}
           <ProjectsBrowser
             projects={projects}
             articles={articles}
-            hero={<Hero banners={projBanners} heightClass="h-[190px] sm:h-[400px]" search={false} />}
+            hero={<Hero banners={projBanners} heightClass="h-[224px] sm:h-[400px]" search={false} />}
           />
         </div>
       </main>
