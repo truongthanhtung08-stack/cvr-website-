@@ -46,7 +46,7 @@ Code chỉ được dùng khi Admin **chưa có** dữ liệu cho khối đó.
 2. Hoặc sửa thẳng trong Admin (nhanh nhất),
 3. Hoặc xoá dữ liệu khối đó trong Admin → web quay về dùng mặc định trong code.
 
-#### Bảng tra: khối nào SỬA Ở ĐÂU *(kiểm tra thật ngày 17/08/2026)*
+#### Bảng tra: khối nào SỬA Ở ĐÂU *(rà lại bằng code ngày 20/08/2026)*
 
 | Khối | Sửa ở đâu |
 |---|---|
@@ -56,10 +56,16 @@ Code chỉ được dùng khi Admin **chưa có** dữ liệu cho khối đó.
 | **5 ô khu vực trang chủ** (`home_areas`) | ✅ **Admin** |
 | **Banner trang Dự án** (`banner_projects`) | ✅ **Admin** |
 | **Trang Giới thiệu** (`about`) | ✅ **Admin** |
-| **Landing page** (`landings`) | ✅ **VS Code** — `src/lib/landings.ts` |
+| **Landing page** (`landings`) | ✅ **Admin** — /admin/noi-dung |
+| **Bảng giá gói tin** (`pricing`) | ✅ **Admin** — /admin/gia-khuyen-mai |
+| **Cấp hội viên · khuyến mãi** (`billing`) | ✅ **Admin** — /admin/gia-khuyen-mai |
+| **Ghim bài "tin chính" trang chủ** (`home_featured_article`) | ✅ **Admin** — /admin/tin-tuc, trong form bài viết |
+| **Dự án · Bài viết · Tin đăng của khách** | ✅ **Admin** — /admin/du-an · /admin/tin-tuc · /admin/tin-dang |
 | Mọi trang văn bản, thông tin pháp lý, link footer, SEO | ✅ **VS Code** |
+| Logo, icon app | ✅ **VS Code** — chép đè file trong `public/logo`, `public/icons` |
+| Bố cục, màu, kích thước khung | ✅ **VS Code** |
 
-**Đọc bảng này TRƯỚC KHI sửa bất cứ thứ gì.** Sáu khối đầu mà mở VS Code ra sửa là mất công
+**Đọc bảng này TRƯỚC KHI sửa bất cứ thứ gì.** Khối nào ghi Admin mà mở VS Code ra sửa là mất công
 vô ích — web không đổi. Cách tự kiểm tra lại về sau: mở `/admin/noi-dung`, khối nào đã có
 sẵn ảnh/chữ trong đó thì Admin đang quản khối đó.
 
