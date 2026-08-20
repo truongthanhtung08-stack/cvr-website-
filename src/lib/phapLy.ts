@@ -8,9 +8,9 @@
 //    không hiện "đang cập nhật". Điền vào là dòng tự hiện lên.
 // ════════════════════════════════════════════════════════════════════════════
 
-// ⚠️ CHỈ ĐƯA LÊN WEB NHỮNG THÔNG TIN BẮT BUỘC PHẢI CÔNG KHAI.
-//    Giấy ĐKKD còn nhiều mục KHÔNG được đưa lên: số định danh cá nhân, ngày sinh,
-//    vốn điều lệ, điện thoại/email cá nhân của chủ sở hữu. Đừng thêm vào file này.
+// ⚠️ CHỈ ĐƯA LÊN WEB THÔNG TIN CỦA PHÁP NHÂN — KHÔNG ĐƯA THÔNG TIN CÁ NHÂN.
+//    Cấm đưa lên: HỌ TÊN người đại diện/chủ sở hữu, số định danh cá nhân, ngày sinh,
+//    vốn điều lệ, điện thoại/email cá nhân. Đừng thêm mấy mục đó vào file này.
 export const PHAP_LY = {
   // ── ĐÃ CÓ GIẤY ĐKKD (cấp 17/08/2026) ──────────────────────────────────────
   // Tên pháp lý đầy đủ — phải ghi ĐÚNG như trên giấy phép.
@@ -19,8 +19,10 @@ export const PHAP_LY = {
     "Giấy chứng nhận đăng ký doanh nghiệp số 0402353502 do Phòng Đăng ký kinh doanh — Sở Tài chính thành phố Đà Nẵng cấp ngày 17/08/2026",
   // Mã số doanh nghiệp cũng chính là mã số thuế.
   maSoThue: "0402353502",
-  // Người chịu trách nhiệm nội dung — bắt buộc theo luật. Là người đại diện pháp luật.
-  chiuTrachNhiemNoiDung: "Ông Trương Thanh Tùng",
+  // Người chịu trách nhiệm nội dung — CỐ Ý ĐỂ TRỐNG theo yêu cầu chủ dự án:
+  // không đưa TÊN CÁ NHÂN lên web, chỉ để pháp nhân (công ty) chịu trách nhiệm.
+  // Để trống thì dòng này tự ẩn ở footer và trang Quy chế. Đừng tự điền lại.
+  chiuTrachNhiemNoiDung: "",
   // Địa chỉ trụ sở chính, ghi theo đơn vị hành chính MỚI 2025 (Tỉnh/Thành → Phường/Xã).
   diaChiDayDu: "220 Nguyễn Mậu Tài, phường Hòa Xuân, thành phố Đà Nẵng",
 
