@@ -15,10 +15,10 @@ export const PHAP_LY = {
   // ── ĐÃ CÓ GIẤY ĐKKD (cấp 17/08/2026) ──────────────────────────────────────
   // Tên pháp lý đầy đủ — phải ghi ĐÚNG như trên giấy phép.
   tenCongTy: "CÔNG TY TNHH BẤT ĐỘNG SẢN COASTAL LAND",
-  dangKyKinhDoanh:
-    "Giấy chứng nhận đăng ký doanh nghiệp số 0402353502 do Phòng Đăng ký kinh doanh — Sở Tài chính thành phố Đà Nẵng cấp ngày 17/08/2026",
-  // Mã số doanh nghiệp cũng chính là mã số thuế.
+  // Mã số doanh nghiệp — cũng chính là mã số thuế. CHỈ GHI MỘT LẦN trên web.
   maSoThue: "0402353502",
+  ngayCap: "17/08/2026",
+  noiCap: "Sở Tài chính thành phố Đà Nẵng",
   // Người chịu trách nhiệm nội dung — CỐ Ý ĐỂ TRỐNG theo yêu cầu chủ dự án:
   // không đưa TÊN CÁ NHÂN lên web, chỉ để pháp nhân (công ty) chịu trách nhiệm.
   // Để trống thì dòng này tự ẩn ở footer và trang Quy chế. Đừng tự điền lại.
@@ -32,6 +32,15 @@ export const PHAP_LY = {
   // VD: "http://online.gov.vn/Home/WebDetails/12345"
   boCongThuong: "",
 };
+
+// MỘT câu giấy phép gọn — viết như các website doanh nghiệp khác vẫn ghi.
+// Trước đây mã số 0402353502 bị lặp 2 lần (câu "Giấy chứng nhận…" + dòng "Mã số thuế").
+// Kết quả: "Mã số doanh nghiệp: 0402353502 do Sở Tài chính thành phố Đà Nẵng cấp ngày 17/08/2026"
+export const DONG_GIAY_PHEP = PHAP_LY.maSoThue
+  ? `Mã số doanh nghiệp: ${PHAP_LY.maSoThue}` +
+    (PHAP_LY.noiCap ? ` do ${PHAP_LY.noiCap} cấp` : "") +
+    (PHAP_LY.ngayCap ? ` ngày ${PHAP_LY.ngayCap}` : "")
+  : "";
 
 // Câu miễn trừ trách nhiệm — sàn/cổng thông tin nào cũng có dòng này.
 // Sửa chữ được, nhưng GIỮ NGUYÊN Ý: Coastal Land là cổng thông tin, không môi giới,

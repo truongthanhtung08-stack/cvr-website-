@@ -5,7 +5,7 @@ import Link from "next/link";
 import BrandLogo from "@/components/BrandLogo";
 import { createClient } from "@/lib/supabase/client";
 import { FOOTER_DEFAULT, type FooterData } from "@/lib/siteContent";
-import { PHAP_LY, MIEN_TRU } from "@/lib/phapLy";
+import { PHAP_LY, MIEN_TRU, DONG_GIAY_PHEP } from "@/lib/phapLy";
 
 // Đường dẫn icon SVG theo tên mạng xã hội (link do admin nhập, icon giữ trong code).
 const SOCIAL_PATHS: Record<string, string> = {
@@ -225,16 +225,22 @@ export default function Footer() {
             {PHAP_LY.tenCongTy || f.company}
           </p>
 
-          {/* Dòng pháp lý — ô nào trống trong src/lib/phapLy.ts thì tự ẩn, không lộ chữ mẫu */}
-          {PHAP_LY.dangKyKinhDoanh && <p>{PHAP_LY.dangKyKinhDoanh}</p>}
-          {PHAP_LY.maSoThue && <p>Mã số thuế: {PHAP_LY.maSoThue}</p>}
-          <p>
-            Địa chỉ: {PHAP_LY.diaChiDayDu || f.address}
+          {/* Bố cục 3 dòng riêng biệt cho dễ đọc (nhất là trên điện thoại):
+              1) giấy phép · 2) địa chỉ trụ sở · 3) LIÊN HỆ CÔNG TY (điện thoại + email).
+              Ô nào trống trong src/lib/phapLy.ts thì dòng đó tự ẩn. */}
+          {DONG_GIAY_PHEP && <p>{DONG_GIAY_PHEP}</p>}
+
+          <p>Địa chỉ: {PHAP_LY.diaChiDayDu || f.address}</p>
+
+          {/* Liên hệ CÔNG TY — bấm gọi / gửi mail được ngay */}
+          <p className="text-cvr-body">
+            Điện thoại:{" "}
+            <a href={`tel:${f.hotline.replace(/\s/g, "")}`} className="font-medium hover:text-cvr-ink">{f.hotline}</a>
             <span className="mx-1.5 text-cvr-line">·</span>
-            Hotline: <a href={`tel:${f.hotline.replace(/\s/g, "")}`} className="hover:text-cvr-ink">{f.hotline}</a>
-            <span className="mx-1.5 text-cvr-line">·</span>
-            Email: <a href={`mailto:${f.email}`} className="hover:text-cvr-ink">{f.email}</a>
+            Email:{" "}
+            <a href={`mailto:${f.email}`} className="font-medium hover:text-cvr-ink">{f.email}</a>
           </p>
+
           {PHAP_LY.chiuTrachNhiemNoiDung && (
             <p>Chịu trách nhiệm nội dung: {PHAP_LY.chiuTrachNhiemNoiDung}</p>
           )}
