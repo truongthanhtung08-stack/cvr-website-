@@ -15,12 +15,15 @@ import LeadForm from "@/components/LeadForm";
 import RichContent from "@/components/RichContent";
 import VideoEmbed from "@/components/VideoEmbed";
 import Breadcrumb from "@/components/Breadcrumb";
+import KhuVucLinks from "@/components/KhuVucLinks";
+import { ProjectListJsonLd } from "@/components/ListJsonLd";
 import ProjectsBrowser from "@/components/ProjectsBrowser";
 import { provinceOf, districtOf, segmentOf, pickRelated, type Project } from "@/lib/data";
 import { getProject, getProjects, getArticles } from "@/lib/contentDb";
 import { getListings } from "@/lib/listingsDb";
 import { findCategory, projectCategories, type Category } from "@/lib/categories";
 import { normalizeVi } from "@/lib/filters";
+import { demTinTheoKhuVuc, moTaKhuVuc, tieuDeKhuVuc, timKhuVuc } from "@/lib/khuVuc";
 
 // Đường dẫn /du-an/<slug> phục vụ HAI loại trang:
 //   · slug là DANH MỤC loại hình (can-ho-chung-cu, khu-do-thi-moi…) → trang danh sách
@@ -45,6 +48,24 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       description: c.desc,
       alternates: { canonical: `/du-an/${c.slug}` },
       openGraph: { title: c.title, description: c.desc, url: `/du-an/${c.slug}`, type: "website" },
+    };
+  }
+
+  // Slug là KHU VỰC (da-nang, hue…) → trang "Dự án tại <tỉnh>".
+  // Xét TRƯỚC khi tra dự án: tên dự án không bao giờ trùng slug tỉnh.
+  const kv = timKhuVuc(slug);
+  if (kv) {
+    const projects = await getProjects().catch(() => []);
+    const soDuAn = demTinTheoKhuVuc(projects, kv.name);
+    const title = tieuDeKhuVuc("duan", kv.name);
+    const description = moTaKhuVuc("duan", kv.name, soDuAn);
+    return {
+      title,
+      description,
+      alternates: { canonical: `/du-an/${kv.slug}` },
+      openGraph: { title, description, url: `/du-an/${kv.slug}`, type: "website" },
+      // Chưa có dự án nào ở tỉnh đó → xem được nhưng không cho lập chỉ mục
+      ...(soDuAn === 0 ? { robots: { index: false, follow: true } } : {}),
     };
   }
 
@@ -104,6 +125,43 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             <p className="mb-4 text-sm text-cvr-muted">{items.length} dự án · {cat.desc}</p>
             <ProjectsBrowser projects={items} articles={articles} />
           </div>
+        </main>
+        <Footer />
+      </>
+    );
+  }
+
+  // ── Nhánh 1B: slug là KHU VỰC → "Dự án tại <tỉnh>" ──
+  // Nhóm truy vấn địa phương ("dự án Đà Nẵng", "dự án bất động sản Huế") —
+  // trước đây web không có trang nào nhận nhóm này.
+  const kv = timKhuVuc(slug);
+  if (kv) {
+    const [projects, articles] = await Promise.all([getProjects(), getArticles()]);
+    const items = projects.filter((x) => normalizeVi(x.location.split(",").pop() ?? "") === normalizeVi(kv.name));
+    const demTheoTinh = (() => {
+      const m = new Map<string, number>();
+      for (const x of projects) {
+        const t = x.location.split(",").pop()?.trim() ?? "";
+        if (t) m.set(t, (m.get(t) ?? 0) + 1);
+      }
+      return [...m.entries()].sort((a, b) => b[1] - a[1]);
+    })();
+    return (
+      <>
+        <ProjectListJsonLd items={items} heading={tieuDeKhuVuc("duan", kv.name)} path={`/du-an/${kv.slug}`} />
+        <Header />
+        <main className="flex-1 bg-white">
+          <Breadcrumb items={[{ name: "Dự án", href: "/du-an" }, { name: kv.name, href: `/du-an/${kv.slug}` }]} />
+          <div className="mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-8">
+            <h1 className="mb-1 mt-3 text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">
+              Dự án bất động sản tại {kv.name}
+            </h1>
+            <p className="mb-4 text-sm text-cvr-muted">
+              {items.length} dự án · {moTaKhuVuc("duan", kv.name, items.length)}
+            </p>
+            <ProjectsBrowser projects={items} articles={articles} />
+          </div>
+          <KhuVucLinks base="/du-an" demTheoTinh={demTheoTinh} tinhDangXem={kv.name} />
         </main>
         <Footer />
       </>

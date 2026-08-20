@@ -36,6 +36,7 @@ export default function ListingBrowser({
   relevance = false,
   nested = false,
   initialTypes,
+  initialProvince,
 }: {
   heading: string;
   // Mục đích trang: "ban" = mua bán · "thue" = cho thuê — lọc nguồn tin + danh mục loại hình.
@@ -54,6 +55,8 @@ export default function ListingBrowser({
   // Trang DANH MỤC (/mua-ban/can-ho-chung-cu…): mở sẵn đúng loại hình của danh mục.
   // Khách vẫn bỏ chọn / đổi lọc bình thường — đây chỉ là giá trị khởi đầu.
   initialTypes?: string[];
+  // Trang KHU VỰC (/mua-ban/da-nang…): mở sẵn đúng tỉnh/thành đang xem.
+  initialProvince?: string;
 }) {
   const params = useSearchParams();
 
@@ -61,6 +64,8 @@ export default function ListingBrowser({
     const f = filtersFromParams(params);
     // Địa chỉ chưa chỉ định loại hình → lấy loại hình của danh mục đang xem
     if (initialTypes?.length && !f.types.length) f.types = [...initialTypes];
+    // Trang khu vực: chưa chọn nơi nào → mặc định lọc đúng tỉnh của trang
+    if (initialProvince && f.locations.length === 0) f.locations = [{ province: initialProvince }];
     return f;
   });
   const [sort, setSort] = useState<SortKey>(relevance ? "lien-quan" : "moi");

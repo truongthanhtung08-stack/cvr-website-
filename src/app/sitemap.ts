@@ -3,6 +3,7 @@ import { getProjects, getArticles } from "@/lib/contentDb";
 import { getListings } from "@/lib/listingsDb";
 import { projectCategories, rentCategories, saleCategories } from "@/lib/categories";
 import { packages, utilityTools } from "@/lib/packages";
+import { khuVucList } from "@/lib/khuVuc";
 
 // TỰ LÀM MỚI MỖI GIỜ. Trước đây để `force-static` (di sản thời GitHub Pages):
 // sitemap chỉ sinh 1 lần lúc build, nên MỌI tin/dự án/bài viết đăng sau lần
@@ -62,6 +63,39 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // BẰNG MẮT: rất nhiều người tìm qua Google Hình ảnh rồi mới bấm vào web.
     // Không khai thì ảnh tin gần như không bao giờ được lập chỉ mục.
     const anhTuyetDoi = (u?: string) => (!u ? [] : [u.startsWith("http") ? u : `${SITE}${u}`]);
+
+    // ── TRANG THEO KHU VỰC — CHỈ khu vực ĐANG CÓ TIN ────────────────────────
+    // /mua-ban/da-nang · /cho-thue/hue · /du-an/quang-ngai …
+    // Nhóm truy vấn địa phương là nhóm đông nhất của ngành. Nhưng chỉ đưa vào
+    // sitemap khu vực có tin thật: rải hàng loạt trang rỗng là cách nhanh nhất
+    // để Google đánh giá thấp cả tên miền (trang khu vực rỗng đã tự gắn noindex).
+    const tinhCua = (loc: string) => loc.split(",").pop()?.trim() ?? "";
+    const demTheo = (arr: { location: string }[]) => {
+      const m = new Map<string, number>();
+      for (const x of arr) {
+        const t = tinhCua(x.location);
+        if (t) m.set(t, (m.get(t) ?? 0) + 1);
+      }
+      return m;
+    };
+    const demBan = demTheo(listings.filter((l) => (l.purpose ?? "ban") === "ban"));
+    const demThue = demTheo(listings.filter((l) => (l.purpose ?? "ban") === "thue"));
+    const demDuAn = demTheo(projects);
+
+    for (const [duong, dem] of [["/mua-ban", demBan], ["/cho-thue", demThue], ["/du-an", demDuAn]] as const) {
+      for (const [ten, so] of dem) {
+        if (so <= 0) continue;
+        const kv = khuVucList.find((k) => k.name === ten);
+        if (!kv) continue;
+        dynamic.push({
+          url: `${SITE}${duong}/${kv.slug}`,
+          lastModified: now,
+          changeFrequency: "daily",
+          // Trang khu vực đông tin đáng ưu tiên ngang trang danh mục loại hình
+          priority: so >= 10 ? 0.9 : 0.7,
+        });
+      }
+    }
 
     for (const p of projects) {
       dynamic.push({
