@@ -12,7 +12,9 @@
    Chỉ những thứ bất biến (JS/CSS có mã băm trong tên) mới lấy từ bộ nhớ trước.
    ========================================================================== */
 
-const VERSION = "cl-v1";
+// v2 (20/8/2026): dựng lại bộ icon app (logo to sát khung) → phải nâng số hiệu này,
+// nếu không máy đã cài vẫn hiện icon cũ lấy từ bộ nhớ đệm.
+const VERSION = "cl-v2";
 const SHELL = `${VERSION}-shell`; // trang báo mất mạng + icon
 const ASSETS = `${VERSION}-assets`; // JS/CSS/font có mã băm — bất biến
 const MEDIA = `${VERSION}-media`; // ảnh trong /images, /logo
