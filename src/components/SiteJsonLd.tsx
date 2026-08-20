@@ -17,9 +17,9 @@ const data = {
       "@id": `${SITE}/#to-chuc`,
       name: "COASTAL LAND",
       alternateName: "Central Coast Vietnam Real Estate",
-      // Pháp nhân thật đứng sau website — Google đối chiếu được với đăng ký doanh nghiệp,
-      // đây là yếu tố tin cậy (E-E-A-T) mà một cổng BĐS rất cần.
-      legalName: "CÔNG TY TNHH BẤT ĐỘNG SẢN COASTAL LAND",
+      // Chỉ khai MÃ SỐ DOANH NGHIỆP để Google đối chiếu được với đăng ký doanh nghiệp
+      // (yếu tố tin cậy E-E-A-T). KHÔNG khai legalName tiếng Việt đầy đủ — theo yêu cầu
+      // chủ dự án, web chỉ dùng tên viết tắt COASTAL LAND (đã nằm ở trường "name").
       taxID: "0402353502",
       url: SITE,
       logo: `${SITE}/logo/logo-horizontal-dark.svg`,

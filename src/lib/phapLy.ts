@@ -13,8 +13,10 @@
 //    vốn điều lệ, điện thoại/email cá nhân. Đừng thêm mấy mục đó vào file này.
 export const PHAP_LY = {
   // ── ĐÃ CÓ GIẤY ĐKKD (cấp 17/08/2026) ──────────────────────────────────────
-  // Tên pháp lý đầy đủ — phải ghi ĐÚNG như trên giấy phép.
-  tenCongTy: "CÔNG TY TNHH BẤT ĐỘNG SẢN COASTAL LAND",
+  // Dùng TÊN VIẾT TẮT theo yêu cầu chủ dự án — đây là mục "Tên công ty viết tắt"
+  // ghi trên giấy ĐKKD, hoàn toàn hợp lệ. KHÔNG dùng tên tiếng Việt đầy đủ
+  // ("CÔNG TY TNHH BẤT ĐỘNG SẢN COASTAL LAND") trên web.
+  tenCongTy: "COASTAL LAND",
   // Mã số doanh nghiệp — cũng chính là mã số thuế. CHỈ GHI MỘT LẦN trên web.
   maSoThue: "0402353502",
   ngayCap: "17/08/2026",
