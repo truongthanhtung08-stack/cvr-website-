@@ -13,6 +13,7 @@ import { provinceNamesFor, districtsOf, wardsOf, wardsOfNew, type GeoMode } from
 import ImagePicker from "@/components/admin/ImagePicker";
 import ContentEditor from "@/components/admin/ContentEditor";
 import { freeNote, levelOf, quotePrice, soAnhToiDa, tenGoiMienPhi, vnd } from "@/lib/billing";
+import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
 import { useBilling } from "@/lib/useBilling";
 import { getTier, type TierId } from "@/lib/packages";
 import type { ListingRow } from "@/lib/listingAdmin";
@@ -139,6 +140,10 @@ export default function PostListingForm() {
   }, [billing.free, planTier, hoSoVi, laThanhVienMoi]);
 
   const thanhTien = duocMienPhi ? 0 : baoGia.total;
+
+  // Giá niêm yết CHƯA gồm VAT → khách trả thêm 8%. Phải hiện rõ ngay tại đây,
+  // nếu không khách thấy giá 1.050.000đ mà ví bị trừ 1.134.000đ là khiếu nại.
+  const tienThue = tachThue(thanhTien);
 
   // Giá hiển thị cạnh tên từng gói trong ô chọn (để nhìn là biết chọn gì)
   const giaCuaGoi = (tierId: TierId): string => {
@@ -627,12 +632,31 @@ export default function PostListingForm() {
             </>
           )}
 
+          {thanhTien > 0 && (
+            <>
+              <div className="mt-2.5 flex items-center justify-between gap-2 border-t border-cvr-line pt-2.5 text-sm text-cvr-body">
+                <span>Cộng tiền dịch vụ</span>
+                <span className="font-semibold text-cvr-ink">{vnd(tienThue.tienHang)}</span>
+              </div>
+              <div className="mt-1.5 flex items-center justify-between gap-2 text-sm text-cvr-body">
+                <span>Thuế GTGT {(THUE_SUAT_GTGT * 100).toFixed(0)}%</span>
+                <span className="font-semibold text-cvr-ink">{vnd(tienThue.tienThue)}</span>
+              </div>
+            </>
+          )}
+
           <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 border-t border-cvr-line pt-2.5">
             <span className="text-sm font-semibold uppercase tracking-wide text-cvr-body">Thành tiền</span>
             <span className="text-lg font-bold text-cvr-blue-ink">
-              {thanhTien === 0 ? "0 ₫ — Miễn phí" : vnd(thanhTien)}
+              {thanhTien === 0 ? "0 ₫ — Miễn phí" : vnd(tienThue.tongTra)}
             </span>
           </div>
+
+          {thanhTien > 0 && (
+            <p className="mt-2 text-xs text-cvr-muted">
+              Trừ vào ví khi tin được duyệt và lên sóng. Tin bị từ chối thì không trừ đồng nào.
+            </p>
+          )}
         </div>
 
         {billing.free.active && (

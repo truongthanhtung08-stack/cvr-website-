@@ -54,13 +54,19 @@ export async function POST(request: Request) {
   // ── 2. Lấy tin ────────────────────────────────────────────────────────────
   const { data: tin, error: loiTin } = await admin
     .from("listings")
-    .select("id,title,owner_id,status,tier_yeu_cau,tier_days,da_tru_vi")
+    .select("id,title,owner_id,status,tier_yeu_cau,tier_days,da_tru_vi,details")
     .eq("id", id)
     .single();
   if (loiTin || !tin) return loi("Không tìm thấy tin", 404);
 
-  const goi = (tin.tier_yeu_cau ?? "basic") as TierId;
-  const soNgay = Number(tin.tier_days) || 0;
+  // Gói khách chọn nằm ở HAI chỗ tuỳ tin đăng lúc nào:
+  //   · details.plan = { tier, days }  ← form đăng tin ghi vào đây từ trước tới nay
+  //   · cột tier_yeu_cau / tier_days   ← cột riêng thêm ở migration 0017
+  // Ưu tiên cột riêng, không có thì lấy trong details → tin CŨ vẫn duyệt và tính
+  // tiền đúng, không phải sửa form khách (phần đã duyệt, không đụng).
+  const plan = (tin.details as { plan?: { tier?: string; days?: number } } | null)?.plan;
+  const goi = ((tin.tier_yeu_cau ?? plan?.tier ?? "basic") as TierId);
+  const soNgay = Number(tin.tier_days ?? plan?.days) || 0;
   const mienPhi = goi === "basic" || soNgay <= 0;
 
   // ── 3. Tin miễn phí: duyệt thẳng, không dính tiền nong ────────────────────
