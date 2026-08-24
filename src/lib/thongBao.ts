@@ -94,22 +94,30 @@ async function guiEmail(t: NoiDungThongBao): Promise<KetQuaKenh> {
 // LƯU Ý: đây là Zalo OA + ZNS, KHÁC HẲN app đăng nhập Zalo (ZALO_APP_ID).
 // Mẫu tin phải được Zalo duyệt trước; mỗi tin tốn ~300–500đ.
 async function guiZalo(t: NoiDungThongBao): Promise<KetQuaKenh> {
+  if (!t.znsTemplateId) return { kenh: "zalo", daGui: false, lyDo: "chưa khai mã mẫu ZNS" };
+  return guiZns(t.phone, t.znsTemplateId, t.znsData ?? {});
+}
+
+/**
+ * Gửi một tin ZNS bất kỳ. Dùng chung cho thông báo VÀ cho mã OTP đăng nhập
+ * (route /api/auth/sms-hook gọi hàm này).
+ */
+export async function guiZns(
+  phone: string | null | undefined,
+  templateId: string,
+  data: Record<string, string>,
+): Promise<KetQuaKenh> {
   const token = process.env.ZALO_OA_ACCESS_TOKEN;
   if (!token) return { kenh: "zalo", daGui: false, lyDo: "chưa cắm ZALO_OA_ACCESS_TOKEN" };
-  if (!t.znsTemplateId) return { kenh: "zalo", daGui: false, lyDo: "chưa khai mã mẫu ZNS" };
 
-  const phone = soDienThoaiZalo(t.phone);
-  if (!phone) return { kenh: "zalo", daGui: false, lyDo: "khách không có số điện thoại hợp lệ" };
+  const so = soDienThoaiZalo(phone);
+  if (!so) return { kenh: "zalo", daGui: false, lyDo: "số điện thoại không hợp lệ" };
 
   try {
     const res = await fetch(ZNS_URL, {
       method: "POST",
       headers: { access_token: token, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        phone,
-        template_id: t.znsTemplateId,
-        template_data: t.znsData ?? {},
-      }),
+      body: JSON.stringify({ phone: so, template_id: templateId, template_data: data }),
     });
     const kq = (await res.json()) as { error?: number; message?: string };
     // Zalo trả HTTP 200 kèm error !== 0 khi hỏng → phải xem thân trả về, không xem status.
