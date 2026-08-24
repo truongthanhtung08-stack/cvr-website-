@@ -34,6 +34,7 @@ const nhomMuc: { nhom: string; items: Muc[] }[] = [
     nhom: "Ví & ưu đãi",
     items: [
       { label: "Nạp tiền", href: "/tai-khoan/nap-tien", icon: "card" },
+      { label: "Hóa đơn của tôi", href: "/tai-khoan/hoa-don", icon: "card" },
       { label: "Đổi điểm", href: "/tai-khoan/doi-diem", icon: "star" },
       { label: "Bảng giá dịch vụ", href: "/bao-gia-dang-tin", icon: "tag" },
     ],
