@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { BILLING_DEFAULT, chuanHoaCapHoiVien, type BillingData, type MemberLevel } from "@/lib/billing";
+import { BILLING_DEFAULT, chuanHoaCapHoiVien, vnd, type BillingData, type MemberLevel } from "@/lib/billing";
+import { guiThongBao } from "@/lib/thongBao";
 
 // ============================================================================
 // PayOS GỌI NGƯỢC VỀ WEB KHI KHÁCH ĐÃ CHUYỂN TIỀN (webhook)
@@ -130,10 +131,12 @@ export async function POST(req: Request) {
   if (don.user_id && soTien > 0) {
     const { data: hoSo } = await supabase
       .from("profiles")
-      .select("balance,total_topup")
+      .select("balance,total_topup,email,phone,full_name")
       .eq("id", don.user_id)
       .limit(1);
-    const cu = hoSo?.[0] as { balance: number | null; total_topup: number | null } | undefined;
+    const cu = hoSo?.[0] as
+      | { balance: number | null; total_topup: number | null; email: string | null; phone: string | null; full_name: string | null }
+      | undefined;
     const soDuMoi = Number(cu?.balance ?? 0) + soTien;
     const tongNapMoi = Number(cu?.total_topup ?? 0) + soTien;
 
@@ -158,6 +161,25 @@ export async function POST(req: Request) {
     // lần sau vào nhánh "đã xử lý", KHÔNG cộng hai lần. Dòng tiền vẫn nằm trong
     // sổ payments để đối soát tay.
     if (loiVi) return NextResponse.json({ ok: false, message: loiVi.message }, { status: 500 });
+
+    // ── Báo cho khách: đã nhận tiền, số dư mới ──────────────────────────────
+    // KHÔNG có hóa đơn ở bước này — nạp ví là khách gửi tiền trước, chưa phải
+    // doanh thu. Hóa đơn chỉ phát sinh khi khách DÙNG gói (tin được duyệt).
+    // Gửi hỏng cũng KHÔNG được trả lỗi: tiền đã vào ví rồi, trả 500 là PayOS
+    // gọi lại → nguy cơ cộng ví hai lần.
+    await guiThongBao({
+      email: cu?.email,
+      phone: cu?.phone,
+      tieuDe: "Đã nhận tiền nạp vào ví",
+      loiNhan: `Coastal Land đã nhận được khoản nạp của ${cu?.full_name || "quý khách"}.`,
+      cacDong: [
+        { nhan: "Số tiền nạp", giaTri: vnd(soTien) },
+        { nhan: "Số dư hiện tại", giaTri: vnd(soDuMoi) },
+        { nhan: "Mã giao dịch", giaTri: String(don.id) },
+      ],
+      znsTemplateId: process.env.ZALO_ZNS_TEMPLATE_NAP_TIEN,
+      znsData: { so_tien: vnd(soTien), so_du: vnd(soDuMoi) },
+    });
   }
 
   return NextResponse.json({ ok: true, message: "Đã cộng vào ví." });

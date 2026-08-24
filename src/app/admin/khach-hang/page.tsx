@@ -94,6 +94,7 @@ export default function CustomersPage() {
               <th className="px-4 py-3 font-medium">Liên hệ</th>
               <th className="px-4 py-3 font-medium">Vai trò</th>
               <th className="px-4 py-3 font-medium">Trạng thái</th>
+              <th className="px-4 py-3 font-medium">Hóa đơn</th>
               <th className="px-4 py-3 font-medium">Ngày đăng ký</th>
               <th className="px-4 py-3" />
             </tr>
@@ -111,6 +112,7 @@ export default function CustomersPage() {
                 </td>
                 <td className="px-4 py-3 text-cvr-body">{roleLabel(r.role)}</td>
                 <td className="px-4 py-3">{statusBadge(r.status)}</td>
+                <td className="px-4 py-3">{nhanHoaDon(r)}</td>
                 <td className="px-4 py-3 text-cvr-muted">{fmtDate(r.created_at)}</td>
                 <td className="px-4 py-3 text-right">
                   <Link href={`/admin/khach-hang/${r.id}`} className="text-sm font-medium text-cvr-blue-ink hover:text-cvr-blue">
@@ -121,7 +123,7 @@ export default function CustomersPage() {
             ))}
             {!loading && filtered.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-10 text-center text-cvr-muted">
+                <td colSpan={7} className="px-4 py-10 text-center text-cvr-muted">
                   Không có khách hàng nào khớp bộ lọc.
                 </td>
               </tr>
@@ -144,6 +146,7 @@ export default function CustomersPage() {
             </div>
             <div className="mt-1 text-sm text-cvr-body">{r.phone || "—"} · {r.email || "—"}</div>
             <div className="mt-1 text-xs text-cvr-muted">{roleLabel(r.role)} · {fmtDate(r.created_at)}</div>
+            <div className="mt-1.5">{nhanHoaDon(r)}</div>
           </Link>
         ))}
         {!loading && filtered.length === 0 && (
@@ -151,6 +154,26 @@ export default function CustomersPage() {
         )}
       </div>
     </div>
+  );
+}
+
+// Khách có cần xuất hóa đơn công ty riêng không — quyết định lúc duyệt tin là
+// xuất hóa đơn riêng ngay, hay gom vào hóa đơn tổng cuối ngày.
+// Các cột hd_* chỉ có sau migration 0017 → đọc phòng thủ, chưa có coi như không.
+function nhanHoaDon(r: unknown) {
+  const p = r as { xuat_hoa_don?: boolean | null; hd_ten_cong_ty?: string | null; hd_mst?: string | null };
+  if (!p.xuat_hoa_don) {
+    return <span className="text-xs text-cvr-muted">Khách lẻ · gom hóa đơn tổng</span>;
+  }
+  return (
+    <span className="inline-block">
+      <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-800">Cần hóa đơn</span>
+      {(p.hd_ten_cong_ty || p.hd_mst) && (
+        <span className="mt-0.5 block text-xs text-cvr-muted">
+          {p.hd_ten_cong_ty ?? ""}{p.hd_ten_cong_ty && p.hd_mst ? " · " : ""}{p.hd_mst ?? ""}
+        </span>
+      )}
+    </span>
   );
 }
 

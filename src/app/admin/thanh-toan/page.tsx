@@ -188,6 +188,112 @@ export default function AdminPaymentsPage() {
           </div>
         )}
       </section>
+
+      <KhoiGuiThu />
     </div>
+  );
+}
+
+// ── GỬI THỬ THÔNG BÁO ───────────────────────────────────────────────────────
+// Kiểm tra đường email/Zalo có thông không mà KHÔNG cần nạp tiền thật.
+// Bày nguyên lý do hỏng của từng kênh — đó mới là thứ cần nhìn khi dò lỗi.
+function KhoiGuiThu() {
+  const [cfg, setCfg] = useState<{
+    email: { daCamKhoa: boolean; from: string; daXacMinhTenMien: boolean };
+    zalo: { daCamKhoa: boolean; mauNapTien: boolean; mauDuyetTin: boolean };
+  } | null>(null);
+  const [dangGui, setDangGui] = useState("");
+  const [kq, setKq] = useState<{ kenh: string; daGui: boolean; lyDo?: string }[] | null>(null);
+  const [guiToi, setGuiToi] = useState("");
+
+  useEffect(() => {
+    fetch("/api/thong-bao/thu")
+      .then((r) => r.json())
+      .then(setCfg)
+      .catch(() => setCfg(null));
+  }, []);
+
+  async function gui(loai: "nap_tien" | "duyet_tin") {
+    setDangGui(loai);
+    setKq(null);
+    try {
+      const r = await fetch("/api/thong-bao/thu", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ loai }),
+      });
+      const j = await r.json();
+      setKq(j.ketQua ?? [{ kenh: "email", daGui: false, lyDo: j.message ?? "Không gọi được" }]);
+      setGuiToi(j.guiToi ? `${j.guiToi.email} · ${j.guiToi.phone}` : "");
+    } catch (e) {
+      setKq([{ kenh: "email", daGui: false, lyDo: String(e) }]);
+    }
+    setDangGui("");
+  }
+
+  return (
+    <section className="rounded-2xl border border-cvr-line bg-white p-5 shadow-sm sm:p-6">
+      <h2 className="text-base font-semibold text-cvr-ink">Gửi thử thông báo cho khách</h2>
+      <p className="mt-1 text-sm text-cvr-muted">
+        Kiểm tra đường email và Zalo có thông không — gửi về chính tài khoản admin đang đăng nhập,
+        không cần nạp tiền hay duyệt tin thật.
+      </p>
+
+      {cfg && (
+        <ul className="mt-3 space-y-1.5 text-sm">
+          <Dong ok={cfg.email.daCamKhoa} nhan="Khoá Resend" phu={cfg.email.daCamKhoa ? "" : "thiếu RESEND_API_KEY"} />
+          <Dong
+            ok={cfg.email.daXacMinhTenMien}
+            nhan="Tên miền gửi thư"
+            phu={cfg.email.daXacMinhTenMien ? cfg.email.from : "chưa xác minh coastalland.vn — KHÁCH KHÔNG NHẬN ĐƯỢC, chỉ gửi về email chủ tài khoản Resend"}
+          />
+          <Dong ok={cfg.zalo.daCamKhoa} nhan="Zalo OA" phu={cfg.zalo.daCamKhoa ? "" : "thiếu ZALO_OA_ACCESS_TOKEN"} />
+          <Dong ok={cfg.zalo.mauNapTien} nhan="Mẫu ZNS nạp tiền" phu={cfg.zalo.mauNapTien ? "" : "chưa khai mã mẫu"} />
+          <Dong ok={cfg.zalo.mauDuyetTin} nhan="Mẫu ZNS duyệt tin" phu={cfg.zalo.mauDuyetTin ? "" : "chưa khai mã mẫu"} />
+        </ul>
+      )}
+
+      <div className="mt-4 flex flex-wrap gap-3">
+        <button
+          onClick={() => gui("nap_tien")}
+          disabled={dangGui !== ""}
+          className="rounded-lg border border-cvr-line px-4 py-2 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink disabled:opacity-60"
+        >
+          {dangGui === "nap_tien" ? "Đang gửi…" : "Gửi thử: nạp tiền"}
+        </button>
+        <button
+          onClick={() => gui("duyet_tin")}
+          disabled={dangGui !== ""}
+          className="rounded-lg border border-cvr-line px-4 py-2 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink disabled:opacity-60"
+        >
+          {dangGui === "duyet_tin" ? "Đang gửi…" : "Gửi thử: tin được duyệt"}
+        </button>
+      </div>
+
+      {kq && (
+        <div className="mt-4 rounded-xl bg-cvr-surface p-4">
+          {guiToi && <p className="mb-2 text-xs text-cvr-muted">Gửi tới: {guiToi}</p>}
+          <ul className="space-y-1.5 text-sm">
+            {kq.map((k) => (
+              <li key={k.kenh} className="flex flex-wrap items-baseline gap-x-2">
+                <span className={k.daGui ? "text-green-700" : "text-red-700"}>{k.daGui ? "✓" : "✕"}</span>
+                <span className="font-medium capitalize text-cvr-ink">{k.kenh}</span>
+                {k.lyDo && <span className="text-xs text-cvr-muted">{k.lyDo}</span>}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function Dong({ ok, nhan, phu }: { ok: boolean; nhan: string; phu?: string }) {
+  return (
+    <li className="flex flex-wrap items-baseline gap-x-2">
+      <span className={ok ? "text-green-700" : "text-amber-600"}>{ok ? "✓" : "○"}</span>
+      <span className="text-cvr-body">{nhan}</span>
+      {phu && <span className="text-xs text-cvr-muted">{phu}</span>}
+    </li>
   );
 }

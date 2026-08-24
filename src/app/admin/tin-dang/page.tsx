@@ -56,9 +56,35 @@ export default function AdminListingsPage() {
   // Thao tác nhanh: đổi trạng thái 1 tin (Duyệt / Ẩn / Hiện lại)
   // KHÔNG nuốt lỗi: thất bại phải báo ngay để admin biết tin CHƯA đổi trạng thái.
   async function setRowStatus(id: string, next: ListingStatus) {
+    // DUYỆT phải đi qua máy chủ — ở đó mới trừ ví theo bảng giá, ghi doanh thu
+    // và báo cho khách. Sửa thẳng từ trình duyệt là tin lên sóng MIỄN PHÍ.
+    if (next === "approved") {
+      const r = await fetch("/api/tin-dang/duyet", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      const j = await r.json().catch(() => ({ ok: false, message: "Máy chủ không trả lời" }));
+      if (!j.ok) {
+        window.alert(`Duyệt tin THẤT BẠI — tin chưa thay đổi.\n${j.message ?? ""}`);
+        return;
+      }
+      setRows((rs) =>
+        rs.map((x) => (x.id === id ? { ...x, status: next, published_at: new Date().toISOString() } : x)),
+      );
+      if (j.daTru) {
+        window.alert(
+          `Đã duyệt và cho tin lên sóng.\n\n` +
+            `Đã trừ ví: ${Number(j.daTru).toLocaleString("vi-VN")}đ\n` +
+            `Số dư còn: ${Number(j.soDuMoi).toLocaleString("vi-VN")}đ\n` +
+            `Hóa đơn: ${j.hoaDon}`,
+        );
+      }
+      return;
+    }
+
     const supabase = createClient();
     const patch: Partial<ListingRow> = { status: next };
-    if (next === "approved") patch.published_at = new Date().toISOString();
     const { error } = await supabase.from("listings").update(patch).eq("id", id);
     if (error) {
       window.alert(`Đổi trạng thái THẤT BẠI — tin chưa thay đổi.\nLỗi: ${error.message}`);

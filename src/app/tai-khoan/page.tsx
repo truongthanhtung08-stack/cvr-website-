@@ -126,6 +126,9 @@ export default function AccountOverviewPage() {
           <Link href="/tai-khoan/doi-diem" className="rounded-lg border border-cvr-line px-5 py-2.5 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink">
             Đổi điểm
           </Link>
+          <Link href="/tai-khoan/hoa-don" className="rounded-lg border border-cvr-line px-5 py-2.5 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink">
+            Hóa đơn của tôi
+          </Link>
           <Link href="/bao-gia-dang-tin" className="rounded-lg border border-cvr-line px-5 py-2.5 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink">
             Bảng giá dịch vụ
           </Link>
