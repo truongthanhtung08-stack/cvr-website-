@@ -7,6 +7,27 @@ import { createClient } from "@/lib/supabase/client";
 // Đăng nhập/đăng ký bằng mạng xã hội — dùng chung cho /dang-nhap và /dang-ky.
 // Google + Facebook: chạy thật qua Supabase OAuth (đã bật provider trong Supabase).
 // Zalo: chưa có — Supabase không hỗ trợ sẵn, phải tự nối qua Zalo OA (cần ĐKKD).
+
+// ⚠️ TẠM ẨN NÚT FACEBOOK (24/08/2026).
+// Phía Supabase đã bật provider đúng, nhưng app Facebook 2187272691890819 CHƯA được
+// Đăng (menu Đăng còn nhãn "Đã hủy đăng"). App chưa Đăng thì CHỈ người có vai trò
+// trong app đăng nhập được — chủ dự án vào bình thường, khách ngoài thì hỏng.
+// Đăng app đang kẹt ở Xác minh doanh nghiệp: hồ sơ nộp 19/08/2026 bị Meta từ chối
+// ("chưa xác minh được... dựa trên thông tin bạn cung cấp") vì công ty mới cấp ĐKKD
+// ngày 17/08/2026, chưa kịp có trong cơ sở dữ liệu Meta tra. Nộp lại khoảng 15/09.
+//
+// 👉 KHI APP ĐÃ ĐĂNG: đổi dòng dưới thành `true` là nút hiện lại. KHÔNG phải sửa gì khác.
+const BAT_FACEBOOK = false;
+
+// ⚠️ TẠM ẨN NÚT SỐ ĐIỆN THOẠI (24/08/2026).
+// Supabase trả `phone: false` — provider Phone chưa bật, nên trang
+// /dang-nhap/so-dien-thoai có đủ giao diện + signInWithOtp nhưng khách bấm vào sẽ
+// KHÔNG BAO GIỜ nhận được mã. Chốt với chủ dự án: chưa đi đường Twilio vì SMS về VN
+// ~1.300đ/tin và hay bị nhà mạng chặn nếu chưa đăng ký brandname. Dồn cho Zalo.
+//
+// 👉 KHI ĐÃ BẬT Phone provider + cắm SMS: đổi thành `true`.
+const BAT_SO_DIEN_THOAI = false;
+
 export default function SocialAuth() {
   const [notice, setNotice] = useState("");
   // Nút NÀO đang chờ thì CHỈ nút đó báo "Đang chuyển tới…". Trước đây dùng một cờ
@@ -92,15 +113,17 @@ export default function SocialAuth() {
         {loading === "google" ? "Đang chuyển tới Google…" : "Tiếp tục với Google"}
       </button>
 
-      <button
-        type="button"
-        onClick={() => withProvider("facebook")}
-        disabled={loading !== null}
-        className="flex h-11 w-full items-center justify-center gap-2.5 rounded-lg border border-cvr-line bg-white text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink disabled:opacity-60"
-      >
-        <FacebookIcon />
-        {loading === "facebook" ? "Đang chuyển tới Facebook…" : "Tiếp tục với Facebook"}
-      </button>
+      {BAT_FACEBOOK && (
+        <button
+          type="button"
+          onClick={() => withProvider("facebook")}
+          disabled={loading !== null}
+          className="flex h-11 w-full items-center justify-center gap-2.5 rounded-lg border border-cvr-line bg-white text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink disabled:opacity-60"
+        >
+          <FacebookIcon />
+          {loading === "facebook" ? "Đang chuyển tới Facebook…" : "Tiếp tục với Facebook"}
+        </button>
+      )}
 
       <button
         type="button"
@@ -112,13 +135,15 @@ export default function SocialAuth() {
         {loading === "zalo" ? "Đang chuyển tới Zalo…" : "Tiếp tục với Zalo"}
       </button>
 
-      <Link
-        href="/dang-nhap/so-dien-thoai"
-        className="flex h-11 w-full items-center justify-center gap-2.5 rounded-lg border border-cvr-line bg-white text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink"
-      >
-        <PhoneIcon />
-        Tiếp tục với số điện thoại
-      </Link>
+      {BAT_SO_DIEN_THOAI && (
+        <Link
+          href="/dang-nhap/so-dien-thoai"
+          className="flex h-11 w-full items-center justify-center gap-2.5 rounded-lg border border-cvr-line bg-white text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink"
+        >
+          <PhoneIcon />
+          Tiếp tục với số điện thoại
+        </Link>
+      )}
     </div>
   );
 }
