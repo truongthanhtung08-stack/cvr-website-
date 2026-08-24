@@ -75,7 +75,32 @@ export async function POST(request: Request) {
 }
 
 // Xem nhanh route sống chưa và đã cắm đủ khoá chưa (không gửi gì cả).
-export async function GET() {
+//
+// Thêm ?kiem-tra-ip=1 để hỏi thẳng Zalo xem máy chủ này (Vercel, đặt ở Mỹ) có
+// bị chặn theo IP không — câu hỏi sống còn của cả phương án OTP qua Zalo.
+// Gọi bằng token GIẢ nên không gửi tin, không tốn tiền, không cần OA.
+// Cách đọc kết quả:
+//   · "Access token invalid" (-124) → Zalo chỉ chê token, KHÔNG chặn IP → chạy được
+//   · lỗi nhắc tới IP / Vietnam      → bị chặn → phải có máy chủ trung chuyển tại VN
+// Gọi từ máy đặt tại Việt Nam để đối chiếu thì cũng ra -124.
+export async function GET(request: Request) {
+  if (new URL(request.url).searchParams.get("kiem-tra-ip")) {
+    try {
+      const res = await fetch("https://business.openapi.zalo.me/message/template", {
+        method: "POST",
+        headers: { access_token: "token_gia_de_thu", "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: "84900000000", template_id: "000000", template_data: {} }),
+        cache: "no-store",
+      });
+      return NextResponse.json({
+        zaloTraVe: await res.json(),
+        ghiChu: "Chỉ chê token = KHÔNG chặn IP. Nhắc tới IP/Vietnam = bị chặn.",
+      });
+    } catch (e) {
+      return NextResponse.json({ loiGoi: String(e) });
+    }
+  }
+
   return NextResponse.json({
     daCauHinh: Boolean(process.env.SUPABASE_SMS_HOOK_SECRET && process.env.ZALO_ZNS_TEMPLATE_OTP && process.env.ZALO_OA_ACCESS_TOKEN),
     thieu: [
