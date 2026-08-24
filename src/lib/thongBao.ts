@@ -107,8 +107,12 @@ export async function guiZns(
   templateId: string,
   data: Record<string, string>,
 ): Promise<KetQuaKenh> {
-  const token = process.env.ZALO_OA_ACCESS_TOKEN;
-  if (!token) return { kenh: "zalo", daGui: false, lyDo: "chưa cắm ZALO_OA_ACCESS_TOKEN" };
+  // Access token Zalo OA chỉ sống 1 giờ nên KHÔNG cắm cứng — layAccessToken()
+  // tự làm mới và tự lưu bản mới. Vẫn cho phép đè bằng ZALO_OA_ACCESS_TOKEN
+  // khi cần thử tay.
+  const { layAccessToken } = await import("@/lib/zaloOa");
+  const token = process.env.ZALO_OA_ACCESS_TOKEN || (await layAccessToken());
+  if (!token) return { kenh: "zalo", daGui: false, lyDo: "chưa lấy được access token Zalo OA" };
 
   const so = soDienThoaiZalo(phone);
   if (!so) return { kenh: "zalo", daGui: false, lyDo: "số điện thoại không hợp lệ" };

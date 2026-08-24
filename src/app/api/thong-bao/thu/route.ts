@@ -91,7 +91,13 @@ export async function GET() {
       daXacMinhTenMien: Boolean(process.env.RESEND_FROM && !/resend\.dev/i.test(process.env.RESEND_FROM)),
     },
     zalo: {
-      daCamKhoa: Boolean(process.env.ZALO_OA_ACCESS_TOKEN),
+      // Token tự làm mới qua App ID + Secret + refresh token (token sống 1 giờ,
+      // không cắm cứng được). ZALO_OA_ACCESS_TOKEN chỉ để đè khi thử tay.
+      daCamKhoa: Boolean(
+        (process.env.ZALO_OA_APP_ID && process.env.ZALO_OA_APP_SECRET && process.env.ZALO_OA_REFRESH_TOKEN) ||
+          process.env.ZALO_OA_ACCESS_TOKEN,
+      ),
+      mauOtp: Boolean(process.env.ZALO_ZNS_TEMPLATE_OTP),
       mauNapTien: Boolean(process.env.ZALO_ZNS_TEMPLATE_NAP_TIEN),
       mauDuyetTin: Boolean(process.env.ZALO_ZNS_TEMPLATE_DUYET_TIN),
     },

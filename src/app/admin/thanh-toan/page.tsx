@@ -200,7 +200,7 @@ export default function AdminPaymentsPage() {
 function KhoiGuiThu() {
   const [cfg, setCfg] = useState<{
     email: { daCamKhoa: boolean; from: string; daXacMinhTenMien: boolean };
-    zalo: { daCamKhoa: boolean; mauNapTien: boolean; mauDuyetTin: boolean };
+    zalo: { daCamKhoa: boolean; mauOtp: boolean; mauNapTien: boolean; mauDuyetTin: boolean };
   } | null>(null);
   const [dangGui, setDangGui] = useState("");
   const [kq, setKq] = useState<{ kenh: string; daGui: boolean; lyDo?: string }[] | null>(null);
@@ -247,7 +247,8 @@ function KhoiGuiThu() {
             nhan="Tên miền gửi thư"
             phu={cfg.email.daXacMinhTenMien ? cfg.email.from : "chưa xác minh coastalland.vn — KHÁCH KHÔNG NHẬN ĐƯỢC, chỉ gửi về email chủ tài khoản Resend"}
           />
-          <Dong ok={cfg.zalo.daCamKhoa} nhan="Zalo OA" phu={cfg.zalo.daCamKhoa ? "" : "thiếu ZALO_OA_ACCESS_TOKEN"} />
+          <Dong ok={cfg.zalo.daCamKhoa} nhan="Zalo OA" phu={cfg.zalo.daCamKhoa ? "token tự làm mới" : "thiếu ZALO_OA_APP_ID / APP_SECRET / REFRESH_TOKEN"} />
+          <Dong ok={cfg.zalo.mauOtp} nhan="Mẫu ZNS mã OTP đăng nhập" phu={cfg.zalo.mauOtp ? "" : "chưa khai mã mẫu"} />
           <Dong ok={cfg.zalo.mauNapTien} nhan="Mẫu ZNS nạp tiền" phu={cfg.zalo.mauNapTien ? "" : "chưa khai mã mẫu"} />
           <Dong ok={cfg.zalo.mauDuyetTin} nhan="Mẫu ZNS duyệt tin" phu={cfg.zalo.mauDuyetTin ? "" : "chưa khai mã mẫu"} />
         </ul>
