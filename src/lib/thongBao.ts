@@ -94,6 +94,16 @@ async function guiEmail(t: NoiDungThongBao): Promise<KetQuaKenh> {
 // LƯU Ý: đây là Zalo OA + ZNS, KHÁC HẲN app đăng nhập Zalo (ZALO_APP_ID).
 // Mẫu tin phải được Zalo duyệt trước; mỗi tin tốn ~300–500đ.
 async function guiZalo(t: NoiDungThongBao): Promise<KetQuaKenh> {
+  // ── CÔNG TẮC TIẾT KIỆM ──────────────────────────────────────────────────
+  // Mỗi tin ZNS tốn ~300–500đ, còn email qua Resend miễn phí tới 3.000 thư/tháng.
+  // Nên THÔNG BÁO (nạp tiền, duyệt tin) mặc định chỉ gửi email. Muốn gửi kèm
+  // Zalo thì đặt ZALO_THONG_BAO=1 trên Vercel.
+  //
+  // ⚠️ Công tắc này KHÔNG ảnh hưởng mã OTP đăng nhập — route /api/auth/sms-hook
+  // gọi thẳng guiZns(), luôn gửi, vì đó là đường đăng nhập duy nhất của khách.
+  if (process.env.ZALO_THONG_BAO !== "1") {
+    return { kenh: "zalo", daGui: false, lyDo: "đang tắt để tiết kiệm (đặt ZALO_THONG_BAO=1 để bật)" };
+  }
   if (!t.znsTemplateId) return { kenh: "zalo", daGui: false, lyDo: "chưa khai mã mẫu ZNS" };
   return guiZns(t.phone, t.znsTemplateId, t.znsData ?? {});
 }

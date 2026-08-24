@@ -200,7 +200,7 @@ export default function AdminPaymentsPage() {
 function KhoiGuiThu() {
   const [cfg, setCfg] = useState<{
     email: { daCamKhoa: boolean; from: string; daXacMinhTenMien: boolean };
-    zalo: { daCamKhoa: boolean; mauOtp: boolean; mauNapTien: boolean; mauDuyetTin: boolean };
+    zalo: { daCamKhoa: boolean; mauOtp: boolean; mauNapTien: boolean; mauDuyetTin: boolean; guiThongBaoZalo: boolean };
   } | null>(null);
   const [dangGui, setDangGui] = useState("");
   const [kq, setKq] = useState<{ kenh: string; daGui: boolean; lyDo?: string }[] | null>(null);
@@ -251,6 +251,11 @@ function KhoiGuiThu() {
           <Dong ok={cfg.zalo.mauOtp} nhan="Mẫu ZNS mã OTP đăng nhập" phu={cfg.zalo.mauOtp ? "" : "chưa khai mã mẫu"} />
           <Dong ok={cfg.zalo.mauNapTien} nhan="Mẫu ZNS nạp tiền" phu={cfg.zalo.mauNapTien ? "" : "chưa khai mã mẫu"} />
           <Dong ok={cfg.zalo.mauDuyetTin} nhan="Mẫu ZNS duyệt tin" phu={cfg.zalo.mauDuyetTin ? "" : "chưa khai mã mẫu"} />
+          <Dong
+            ok={cfg.zalo.guiThongBaoZalo}
+            nhan="Gửi THÔNG BÁO kèm Zalo"
+            phu={cfg.zalo.guiThongBaoZalo ? "đang bật — mỗi tin ~300–500đ" : "đang TẮT cho đỡ tốn (email vẫn gửi bình thường) · bật bằng ZALO_THONG_BAO=1"}
+          />
         </ul>
       )}
 

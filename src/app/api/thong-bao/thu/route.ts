@@ -98,6 +98,9 @@ export async function GET() {
           process.env.ZALO_OA_ACCESS_TOKEN,
       ),
       mauOtp: Boolean(process.env.ZALO_ZNS_TEMPLATE_OTP),
+      // Thông báo qua Zalo mặc định TẮT cho đỡ tốn (~300–500đ/tin), email miễn phí.
+      // OTP đăng nhập KHÔNG chịu ảnh hưởng công tắc này — luôn gửi.
+      guiThongBaoZalo: process.env.ZALO_THONG_BAO === "1",
       mauNapTien: Boolean(process.env.ZALO_ZNS_TEMPLATE_NAP_TIEN),
       mauDuyetTin: Boolean(process.env.ZALO_ZNS_TEMPLATE_DUYET_TIN),
     },
