@@ -283,6 +283,9 @@ export default function AdminThuePage() {
         )}
       </div>
 
+      {/* ── HÓA ĐƠN CHỜ PHÁT HÀNH ───────────────────────────────────────── */}
+      <KhoiXuatHoaDon onSaved={nap} />
+
       {/* ── HÓA ĐƠN MUA VÀO ─────────────────────────────────────────────── */}
       <KhoiHoaDonVao rows={vao} onSaved={nap} />
     </div>
@@ -416,6 +419,218 @@ function KhoiHoaDonVao({ rows, onSaved }: { rows: DongVao[] | null; onSaved: () 
       )}
     </div>
   );
+}
+
+// ── HÓA ĐƠN CHỜ PHÁT HÀNH → XUẤT FILE → KÝ BẰNG USB TOKEN BÊN VIETTEL ──────
+// Vì chữ ký số là USB token (không phải cloud), máy chủ web KHÔNG tự ký được —
+// phải có người cắm USB. Nên luồng là: web gom sẵn số liệu → xuất file → chủ dự
+// án nhập vào phần mềm Viettel, cắm USB, ký → Viettel tự gửi hóa đơn cho khách.
+//
+// Chia đúng 2 nhóm theo NĐ 123/2020 Điều 9 khoản 4:
+//   · RIÊNG — khách có khai công ty + MST → mỗi giao dịch một hóa đơn
+//   · TỔNG  — khách không lấy hóa đơn → gom cả ngày thành MỘT hóa đơn tổng,
+//             các dòng chi tiết trong file chính là bảng kê đính kèm
+//
+// Ký xong bên Viettel thì bấm "Đánh dấu đã phát hành" để sổ khớp với thực tế.
+// 👉 Sau này mua ký số cloud thì chỉ cần thêm bước gọi API, phần gom số liệu
+//    này giữ nguyên, không phải viết lại.
+type ChoXuat = {
+  id: string;
+  ngay_ghi_nhan: string;
+  mo_ta: string;
+  tien_hang: number;
+  tien_thue: number;
+  tong_tra: number;
+  hoa_don_loai: string;
+  ten_nguoi_mua: string | null;
+  mst_nguoi_mua: string | null;
+  dia_chi_nguoi_mua: string | null;
+  email_nguoi_mua: string | null;
+};
+
+function KhoiXuatHoaDon({ onSaved }: { onSaved: () => void }) {
+  const [ngay, setNgay] = useState(ngayISO(new Date()));
+  const [rows, setRows] = useState<ChoXuat[] | null>(null);
+  const [soHoaDon, setSoHoaDon] = useState("");
+  const [dangLuu, setDangLuu] = useState(false);
+  const [notice, setNotice] = useState("");
+
+  const nap = useCallback(async () => {
+    const supabase = createClient();
+    const tu = new Date(`${ngay}T00:00:00`);
+    const den = new Date(`${ngay}T23:59:59.999`);
+    const { data, error } = await supabase
+      .from("doanh_thu")
+      .select("id,ngay_ghi_nhan,mo_ta,tien_hang,tien_thue,tong_tra,hoa_don_loai,ten_nguoi_mua,mst_nguoi_mua,dia_chi_nguoi_mua,email_nguoi_mua")
+      .eq("hoa_don_trang_thai", "chua_xuat")
+      .gte("ngay_ghi_nhan", tu.toISOString())
+      .lte("ngay_ghi_nhan", den.toISOString())
+      .order("ngay_ghi_nhan", { ascending: true });
+    setRows(error ? [] : ((data ?? []) as ChoXuat[]));
+  }, [ngay]);
+
+  useEffect(() => {
+    void nap();
+  }, [nap]);
+
+  const rieng = (rows ?? []).filter((d) => d.hoa_don_loai === "rieng");
+  const tong = (rows ?? []).filter((d) => d.hoa_don_loai !== "rieng");
+  const tienTong = tong.reduce((s, d) => s + d.tien_hang, 0);
+  const thueTong = tong.reduce((s, d) => s + d.tien_thue, 0);
+  // Số tờ hóa đơn thực sự phải ký: mỗi khách yêu cầu riêng 1 tờ + 1 tờ tổng
+  const soTo = rieng.length + (tong.length > 0 ? 1 : 0);
+
+  async function danhDauDaXuat() {
+    if (!rows || rows.length === 0) return;
+    setDangLuu(true);
+    setNotice("");
+    const supabase = createClient();
+    const { error } = await supabase
+      .from("doanh_thu")
+      .update({
+        hoa_don_trang_thai: "da_xuat",
+        hoa_don_ngay: new Date().toISOString(),
+        hoa_don_so: soHoaDon.trim() || null,
+      })
+      .in("id", rows.map((d) => d.id));
+    setDangLuu(false);
+    if (error) return setNotice("Lỗi: " + error.message);
+    setNotice(`Đã đánh dấu ${rows.length} giao dịch là đã phát hành hóa đơn ✓`);
+    setSoHoaDon("");
+    void nap();
+    onSaved();
+  }
+
+  return (
+    <div className="rounded-2xl border border-cvr-line bg-white p-5 shadow-sm sm:p-6">
+      <h2 className="text-base font-semibold text-cvr-ink">Hóa đơn chờ phát hành</h2>
+      <p className="mt-1 text-sm text-cvr-muted">
+        Xuất file rồi nhập vào phần mềm Viettel, cắm USB token ký. Viettel sẽ tự gửi hóa đơn về email khách.
+      </p>
+
+      <div className="mt-4 flex flex-wrap items-end gap-3">
+        <label className="block">
+          <span className="mb-1.5 block text-sm font-medium text-cvr-body">Ngày</span>
+          <input type="date" value={ngay} onChange={(e) => setNgay(e.target.value)} className={inp} />
+        </label>
+        <button
+          onClick={() => taiCsv(`hoa-don-${ngay}.csv`, csvHoaDon(rieng, tong, ngay))}
+          disabled={!rows || rows.length === 0}
+          className="rounded-lg bg-cvr-ink px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-cvr-ink/90 disabled:opacity-40"
+        >
+          Tải file hóa đơn
+        </button>
+      </div>
+
+      {!rows ? (
+        <p className="mt-4 text-sm text-cvr-muted">Đang tải…</p>
+      ) : rows.length === 0 ? (
+        <p className="mt-4 rounded-lg bg-cvr-surface px-3 py-2.5 text-sm text-cvr-muted">
+          Ngày này không có giao dịch nào chờ phát hành hóa đơn.
+        </p>
+      ) : (
+        <>
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <ONho nhan="Số tờ phải ký" giaTri={String(soTo)} />
+            <ONho nhan="Hóa đơn riêng (khách yêu cầu)" giaTri={`${rieng.length} tờ`} />
+            <ONho nhan="Gom vào hóa đơn tổng" giaTri={`${tong.length} giao dịch`} />
+          </div>
+
+          {tong.length > 0 && (
+            <p className="mt-3 rounded-lg bg-cvr-surface px-3 py-2.5 text-sm text-cvr-body">
+              <strong className="font-semibold text-cvr-ink">Hóa đơn tổng:</strong> tiền hàng {vnd(tienTong)} · thuế{" "}
+              {vnd(thueTong)} · tổng {vnd(tienTong + thueTong)} — người mua ghi{" "}
+              <em>&ldquo;Khách lẻ không lấy hóa đơn&rdquo;</em>, đính kèm bảng kê chi tiết trong file.
+            </p>
+          )}
+
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full min-w-[640px] border-collapse text-sm">
+              <thead>
+                <tr className="border-b border-cvr-line text-left text-xs uppercase tracking-wide text-cvr-muted">
+                  <th className="py-2 pr-3 font-medium">Loại</th>
+                  <th className="py-2 pr-3 font-medium">Nội dung</th>
+                  <th className="py-2 pr-3 font-medium">Người mua</th>
+                  <th className="py-2 pr-3 text-right font-medium">Tiền hàng</th>
+                  <th className="py-2 text-right font-medium">Thuế</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((d) => (
+                  <tr key={d.id} className="border-b border-cvr-line/60">
+                    <td className="py-2 pr-3">
+                      <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${d.hoa_don_loai === "rieng" ? "bg-amber-50 text-amber-800" : "bg-cvr-surface text-cvr-muted"}`}>
+                        {d.hoa_don_loai === "rieng" ? "Riêng" : "Tổng"}
+                      </span>
+                    </td>
+                    <td className="py-2 pr-3 text-cvr-body">{d.mo_ta}</td>
+                    <td className="py-2 pr-3 text-cvr-body">
+                      {d.mst_nguoi_mua ? `${d.ten_nguoi_mua ?? ""} · ${d.mst_nguoi_mua}` : "Khách lẻ không lấy hóa đơn"}
+                    </td>
+                    <td className="py-2 pr-3 text-right tabular-nums text-cvr-ink">{vnd(d.tien_hang)}</td>
+                    <td className="py-2 text-right tabular-nums text-cvr-ink">{vnd(d.tien_thue)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="mt-5 rounded-xl bg-cvr-surface p-4">
+            <p className="text-sm font-medium text-cvr-ink">Ký xong bên Viettel rồi thì bấm đây</p>
+            <p className="mt-1 text-xs text-cvr-muted">
+              Đánh dấu {rows.length} giao dịch trên là đã phát hành, để không bị xuất trùng lần sau.
+            </p>
+            <div className="mt-3 flex flex-wrap items-end gap-3">
+              <label className="block">
+                <span className="mb-1.5 block text-sm font-medium text-cvr-body">Số hóa đơn (tuỳ chọn)</span>
+                <input value={soHoaDon} onChange={(e) => setSoHoaDon(e.target.value)} className={inp} placeholder="C26TAA/0000123" />
+              </label>
+              <button onClick={danhDauDaXuat} disabled={dangLuu} className={btnPhu}>
+                {dangLuu ? "Đang lưu…" : "Đánh dấu đã phát hành"}
+              </button>
+            </div>
+            {notice && <p className="mt-2 text-sm text-cvr-body">{notice}</p>}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+// File cho phần mềm Viettel. Cột đặt theo nghiệp vụ chuẩn; khi có mẫu import
+// chính thức của Viettel thì chỉnh lại tên cột cho khớp, dữ liệu giữ nguyên.
+function csvHoaDon(rieng: ChoXuat[], tong: ChoXuat[], ngay: string): string {
+  const q = (v: string | number | null) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+  const d = ngay.split("-").reverse().join("/");
+  const dong: string[] = [
+    ["Loai hoa don", "Ngay", "Ten nguoi mua", "MST", "Dia chi", "Email", "Noi dung", "Tien hang", "Thue GTGT", "Tong cong"].join(","),
+  ];
+
+  for (const r of rieng) {
+    dong.push([
+      q("HOA DON RIENG"), q(d), q(r.ten_nguoi_mua), q(r.mst_nguoi_mua), q(r.dia_chi_nguoi_mua),
+      q(r.email_nguoi_mua), q(r.mo_ta), r.tien_hang, r.tien_thue, r.tong_tra,
+    ].join(","));
+  }
+
+  if (tong.length > 0) {
+    const th = tong.reduce((s, r) => s + r.tien_hang, 0);
+    const tt = tong.reduce((s, r) => s + r.tien_thue, 0);
+    dong.push("");
+    dong.push(q(`HOA DON TONG NGAY ${d} - gom ${tong.length} giao dich`));
+    dong.push([
+      q("HOA DON TONG"), q(d), q("Khach le khong lay hoa don"), "", "", "",
+      q(`Dich vu dang tin ngay ${d}`), th, tt, th + tt,
+    ].join(","));
+    dong.push("");
+    dong.push(q("BANG KE CHI TIET DINH KEM HOA DON TONG"));
+    dong.push(["STT", "Noi dung", "Tien hang", "Thue GTGT", "Tong cong"].map(q).join(","));
+    tong.forEach((r, i) => {
+      dong.push([i + 1, q(r.mo_ta), r.tien_hang, r.tien_thue, r.tong_tra].join(","));
+    });
+  }
+
+  return dong.join("\n");
 }
 
 // ── TẢI FILE XML HÓA ĐƠN → TỰ ĐỌC → TỰ CỘNG VÀO KHẤU TRỪ ───────────────────
@@ -579,6 +794,15 @@ function L({ label, children }: { label: string; children: React.ReactNode }) {
       <span className="mb-1.5 block text-sm font-medium text-cvr-body">{label}</span>
       {children}
     </label>
+  );
+}
+
+function ONho({ nhan, giaTri }: { nhan: string; giaTri: string }) {
+  return (
+    <div className="rounded-xl border border-cvr-line p-3">
+      <div className="text-xs uppercase tracking-wide text-cvr-muted">{nhan}</div>
+      <div className="mt-1 text-lg font-semibold text-cvr-ink">{giaTri}</div>
+    </div>
   );
 }
 
