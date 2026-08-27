@@ -41,3 +41,7 @@ crop-tmp.js
 crop2-tmp.js
 render-tmp.js
 .tmp-logo/
+
+# Bo dung video quang cao — chay tren may, KHONG day len repo cong khai
+# (111MB: node_modules + file .mp4 da render)
+video-quang-cao/

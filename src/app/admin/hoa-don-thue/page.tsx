@@ -4,6 +4,16 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { vnd } from "@/lib/billing";
 import { THUE_SUAT_GTGT, khoangQuy } from "@/lib/thue";
+import {
+  NCC_DA_BIET,
+  TY_LE,
+  doanNhom,
+  hanNop,
+  khoangThang,
+  tinhFct,
+  type LoaiDichVu,
+  type NhomNcc,
+} from "@/lib/thueNhaThau";
 
 // ============================================================================
 // ADMIN — HÓA ĐƠN & BÁO CÁO THUẾ
@@ -12,11 +22,14 @@ import { THUE_SUAT_GTGT, khoangQuy } from "@/lib/thue";
 // để chép thẳng vào eTax, kèm nút tải CSV về chỉnh tay nếu cần.
 //
 // NGUỒN SỐ LIỆU:
-//   · Đầu ra  = bảng `doanh_thu`   — web tự ghi khi tin được duyệt (khách dùng gói)
-//   · Đầu vào = bảng `hoa_don_vao` — nhập tay ở ngay trang này (hóa đơn mua vào)
+//   · Đầu ra  = bảng `doanh_thu`     — web tự ghi khi tin được duyệt (khách dùng gói)
+//   · Đầu vào = bảng `hoa_don_vao`   — hóa đơn GTGT Việt Nam (tải XML hoặc nhập tay)
+//   · Đầu vào = bảng `hoa_don_ngoai` — hóa đơn nước ngoài + thuế nhà thầu nộp thay
 //
-// ⚠️ Hóa đơn nước ngoài (Vercel/Supabase/Anthropic) KHÔNG có thuế GTGT Việt Nam
-//    → nhập tiền thuế = 0 và bỏ tick "được khấu trừ". Chúng chỉ là chi phí TNDN.
+// ⚠️ Hóa đơn nước ngoài (Anthropic/Vercel/Supabase…) KHÔNG nhập ở mục "hóa đơn mua
+//    vào" — có mục riêng ở cuối trang. Nhà cung cấp chưa đăng ký thuế tại VN thì
+//    mình phải KHAI NỘP THAY (tờ khai 01/NTNN); chứng từ nộp thuế GTGT đó ĐƯỢC
+//    KHẤU TRỪ (Nghị định 181/2025/NĐ-CP) nên mục đó tự cộng vào [23] [24] [25].
 //
 // ⚠️ Thuế suất 8% theo Nghị quyết 204/2025/QH15 áp dụng đến hết 31/12/2026.
 //    Kỳ có thuế suất giảm thường phải nộp kèm phụ lục giảm thuế GTGT — kiểm tra
@@ -49,6 +62,32 @@ type DongVao = {
   duoc_khau_tru: boolean;
 };
 
+type DongNgoai = {
+  id: string;
+  ky_thang: string;
+  ngay_hoa_don: string;
+  nha_cung_cap: string;
+  so_hoa_don: string | null;
+  dien_giai: string | null;
+  nhom: NhomNcc;
+  loai: LoaiDichVu;
+  hop_dong_net: boolean;
+  tien_usd: number;
+  ty_gia: number;
+  tien_vnd: number;
+  dt_gtgt: number;
+  thue_gtgt: number;
+  dt_tndn: number;
+  thue_tndn: number;
+  da_nop: boolean;
+  ngay_nop: string | null;
+  chung_tu_nop: string | null;
+};
+
+const COT_NGOAI =
+  "id,ky_thang,ngay_hoa_don,nha_cung_cap,so_hoa_don,dien_giai,nhom,loai,hop_dong_net," +
+  "tien_usd,ty_gia,tien_vnd,dt_gtgt,thue_gtgt,dt_tndn,thue_tndn,da_nop,ngay_nop,chung_tu_nop";
+
 const HOM_NAY = new Date();
 
 export default function AdminThuePage() {
@@ -56,6 +95,7 @@ export default function AdminThuePage() {
   const [quy, setQuy] = useState(Math.floor(HOM_NAY.getMonth() / 3) + 1);
   const [ra, setRa] = useState<DongDoanhThu[] | null>(null);
   const [vao, setVao] = useState<DongVao[] | null>(null);
+  const [ngoai, setNgoai] = useState<DongNgoai[] | null>(null);
   const [loi, setLoi] = useState("");
 
   const { tu, den } = useMemo(() => khoangQuy(nam, quy), [nam, quy]);
@@ -77,6 +117,17 @@ export default function AdminThuePage() {
       .gte("ngay_hoa_don", ngayISO(tu))
       .lte("ngay_hoa_don", ngayISO(den))
       .order("ngay_hoa_don", { ascending: true });
+
+    // Hóa đơn nước ngoài của CẢ QUÝ — thuế GTGT nộp thay đã nộp thì cộng vào khấu trừ.
+    const r3 = await supabase
+      .from("hoa_don_ngoai")
+      .select(COT_NGOAI)
+      .gte("ky_thang", ngayISO(tu))
+      .lte("ky_thang", ngayISO(den))
+      .order("ngay_hoa_don", { ascending: true });
+
+    // Bảng 0018 có thể chưa chạy — không để nó chặn cả trang, chỉ coi như chưa có dòng nào.
+    setNgoai(r3.error ? [] : ((r3.data ?? []) as unknown as DongNgoai[]));
 
     // Chưa chạy migration 0017 → bảng chưa tồn tại. Báo bằng tiếng người.
     if (r1.error || r2.error) {
@@ -102,13 +153,24 @@ export default function AdminThuePage() {
   const t = useMemo(() => {
     const dsRa = ra ?? [];
     const dsVao = vao ?? [];
+    const dsNgoai = ngoai ?? [];
     const dtChuaThue = dsRa.reduce((s, d) => s + Number(d.tien_hang || 0), 0);
     const thueRa = dsRa.reduce((s, d) => s + Number(d.tien_thue || 0), 0);
     const khauTru = dsVao.filter((d) => d.duoc_khau_tru);
-    const hangVao = khauTru.reduce((s, d) => s + Number(d.tien_hang || 0), 0);
-    const thueVao = khauTru.reduce((s, d) => s + Number(d.tien_thue || 0), 0);
-    // Chi phí tính thuế TNDN gồm CẢ hóa đơn không được khấu trừ GTGT (vd nước ngoài)
-    const tongChiPhi = dsVao.reduce((s, d) => s + Number(d.tien_hang || 0), 0);
+
+    // Thuế nhà thầu chỉ được khấu trừ khi ĐÃ NỘP Kho bạc — Nghị định 181/2025 đòi
+    // chứng từ nộp thuế. Chưa nộp thì chưa cộng, tránh khai khống chỉ tiêu [24].
+    const ngoaiDaNop = dsNgoai.filter((d) => d.nhom === "phai_khai_thay" && d.da_nop);
+    const hangVaoNgoai = ngoaiDaNop.reduce((s, d) => s + Number(d.dt_gtgt || 0), 0);
+    const thueVaoNgoai = ngoaiDaNop.reduce((s, d) => s + Number(d.thue_gtgt || 0), 0);
+
+    const hangVao = khauTru.reduce((s, d) => s + Number(d.tien_hang || 0), 0) + hangVaoNgoai;
+    const thueVao = khauTru.reduce((s, d) => s + Number(d.tien_thue || 0), 0) + thueVaoNgoai;
+    // Chi phí tính thuế TNDN gồm CẢ hóa đơn không được khấu trừ GTGT, tiền trả nhà
+    // cung cấp nước ngoài, và thuế TNDN nộp thay (mình chịu → là chi phí của mình).
+    const tongChiPhi =
+      dsVao.reduce((s, d) => s + Number(d.tien_hang || 0), 0) +
+      dsNgoai.reduce((s, d) => s + Number(d.tien_vnd || 0) + (d.da_nop ? Number(d.thue_tndn || 0) : 0), 0);
     const phaiNop = thueRa - thueVao;
     const loiNhuan = dtChuaThue - tongChiPhi;
     return {
@@ -116,6 +178,7 @@ export default function AdminThuePage() {
       thueRa,
       hangVao,
       thueVao,
+      thueVaoNgoai,
       tongChiPhi,
       phaiNop,
       loiNhuan,
@@ -123,7 +186,7 @@ export default function AdminThuePage() {
       tamNopTndn: Math.max(0, Math.round(loiNhuan * 0.15)),
       soGiaoDich: dsRa.length,
     };
-  }, [ra, vao]);
+  }, [ra, vao, ngoai]);
 
   const nhan = `Quý ${quy}/${nam}`;
 
@@ -202,6 +265,15 @@ export default function AdminThuePage() {
             </tr>
           </tbody>
         </table>
+
+        {t.thueVaoNgoai > 0 && (
+          <p className="mt-4 rounded-lg border border-cvr-line bg-cvr-surface px-3 py-2.5 text-xs leading-relaxed text-cvr-body">
+            Trong chỉ tiêu [24] và [25] ở trên đã có{" "}
+            <strong className="font-semibold text-cvr-ink">{vnd(t.thueVaoNgoai)}</strong> thuế GTGT nộp thay nhà
+            thầu nước ngoài (đã nộp Kho bạc) — chứng từ nộp thuế thay là căn cứ khấu trừ hợp lệ theo Nghị định
+            181/2025/NĐ-CP. Chi tiết ở mục &ldquo;Hóa đơn nước ngoài&rdquo; cuối trang.
+          </p>
+        )}
 
         <p className="mt-4 rounded-lg bg-cvr-surface px-3 py-2.5 text-xs leading-relaxed text-cvr-muted">
           Thuế suất {(THUE_SUAT_GTGT * 100).toFixed(0)}% theo Nghị quyết 204/2025/QH15 (áp dụng đến hết 31/12/2026).
@@ -288,6 +360,9 @@ export default function AdminThuePage() {
 
       {/* ── HÓA ĐƠN MUA VÀO ─────────────────────────────────────────────── */}
       <KhoiHoaDonVao rows={vao} onSaved={nap} />
+
+      {/* ── HÓA ĐƠN NƯỚC NGOÀI & THUẾ NHÀ THẦU ──────────────────────────── */}
+      <KhoiThueNhaThau onSaved={nap} />
     </div>
   );
 }
@@ -377,7 +452,10 @@ function KhoiHoaDonVao({ rows, onSaved }: { rows: DongVao[] | null; onSaved: () 
               className="h-4 w-4 accent-cvr-ink"
             />
             <span className="text-sm text-cvr-body">
-              Được khấu trừ GTGT <span className="text-cvr-muted">(bỏ tick với hóa đơn nước ngoài — Vercel, Supabase, Anthropic…)</span>
+              Được khấu trừ GTGT{" "}
+              <span className="text-cvr-muted">
+                (bỏ tick khi hóa đơn không đủ điều kiện khấu trừ — vd trả tiền mặt khoản từ 5 triệu)
+              </span>
             </span>
           </label>
           <div className="sm:col-span-3">
@@ -731,9 +809,9 @@ function KhoiTaiXml({ onSaved }: { onSaved: () => void }) {
       )}
 
       <p className="mt-3 text-xs leading-relaxed text-cvr-muted">
-        ⚠️ Hóa đơn nước ngoài (Vercel, Supabase, Anthropic…) <strong>không có bản XML</strong> và không
-        có thuế GTGT Việt Nam — nhập tay với tiền thuế = 0 và bỏ tick &ldquo;được khấu trừ&rdquo;.
-        Chúng chỉ tính vào chi phí thuế TNDN.
+        ⚠️ Hóa đơn nước ngoài (Anthropic, Vercel, Supabase…) <strong>không có bản XML</strong> — đừng nhập ở
+        đây. Chúng đi qua mục <strong>&ldquo;Hóa đơn nước ngoài &amp; thuế nhà thầu&rdquo;</strong> cuối trang,
+        khai nộp thay xong sẽ tự cộng vào phần được khấu trừ.
       </p>
     </div>
   );
@@ -782,6 +860,494 @@ function docHoaDonXml(xml: string): {
     tien_hang: so(doc, "TgTCThue"), // tổng tiền chưa thuế
     tien_thue: so(doc, "TgTThue"),  // tổng tiền thuế GTGT
   };
+}
+
+// ── HÓA ĐƠN NƯỚC NGOÀI & THUẾ NHÀ THẦU (FCT) ───────────────────────────────
+// Khai theo THÁNG, hạn nộp ngày 20 tháng sau — nên mục này có bộ chọn tháng
+// riêng, không dùng chung bộ chọn quý ở đầu trang. Thuế GTGT nộp thay của cả 3
+// tháng trong quý sẽ tự cộng vào chỉ tiêu [24] [25] của tờ khai 01/GTGT quý đó.
+//
+// Tỷ giá: dùng TỶ GIÁ TRUNG TÂM do Ngân hàng Nhà nước công bố, lấy tại thời điểm
+// quyết toán — chủ dự án chốt 28/08/2026. Nhập một lần ở đầu mục, áp cho cả tháng.
+// Bấm "Lấy tỷ giá NHNN" thì máy chủ tự đọc sbv.gov.vn (route /api/ty-gia);
+// hỏng thì vẫn gõ tay được, không chặn việc.
+function KhoiThueNhaThau({ onSaved }: { onSaved: () => void }) {
+  const [nam, setNam] = useState(HOM_NAY.getFullYear());
+  const [thang, setThang] = useState(HOM_NAY.getMonth() + 1); // mặc định tháng hiện tại
+  const [tyGia, setTyGia] = useState("");
+  const [ngayTyGia, setNgayTyGia] = useState("");
+  const [dangLayTyGia, setDangLayTyGia] = useState(false);
+  const [rows, setRows] = useState<DongNgoai[] | null>(null);
+  const [loi, setLoi] = useState("");
+
+  async function layTyGia() {
+    setDangLayTyGia(true);
+    setNgayTyGia("");
+    try {
+      const r = await fetch("/api/ty-gia", { cache: "no-store" });
+      const j = await r.json();
+      if (j.ok) {
+        setTyGia(String(j.tyGia));
+        setNgayTyGia(j.ngay ? `NHNN áp dụng cho ngày ${j.ngay}` : "Đã lấy từ sbv.gov.vn");
+      } else {
+        setNgayTyGia(j.message ?? "Không lấy được — nhập tay giúp.");
+      }
+    } catch {
+      setNgayTyGia("Không nối được sbv.gov.vn — nhập tay giúp.");
+    }
+    setDangLayTyGia(false);
+  }
+
+  const kyThang = `${nam}-${String(thang).padStart(2, "0")}-01`;
+  const { tu, den } = useMemo(() => khoangThang(nam, thang), [nam, thang]);
+
+  const nap = useCallback(async () => {
+    setLoi("");
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("hoa_don_ngoai")
+      .select(COT_NGOAI)
+      .eq("ky_thang", `${nam}-${String(thang).padStart(2, "0")}-01`)
+      .order("ngay_hoa_don", { ascending: true });
+
+    if (error) {
+      setLoi(
+        /does not exist|schema cache/i.test(error.message)
+          ? "Chưa có bảng dữ liệu. Vào Supabase → SQL Editor → chạy file supabase/migrations/0018_thue_nha_thau.sql rồi tải lại trang."
+          : error.message,
+      );
+      setRows([]);
+      return;
+    }
+    const ds = (data ?? []) as unknown as DongNgoai[];
+    setRows(ds);
+    // Nhớ lại tỷ giá đã dùng cho tháng này để khỏi phải tra lại.
+    const cu = ds.find((d) => Number(d.ty_gia) > 0);
+    if (cu) setTyGia(String(Math.round(Number(cu.ty_gia))));
+  }, [nam, thang]);
+
+  useEffect(() => {
+    void nap();
+  }, [nap]);
+
+  const t = useMemo(() => {
+    const ds = rows ?? [];
+    const phaiKhai = ds.filter((d) => d.nhom === "phai_khai_thay");
+    return {
+      tienVnd: ds.reduce((s, d) => s + Number(d.tien_vnd || 0), 0),
+      thueGtgt: phaiKhai.reduce((s, d) => s + Number(d.thue_gtgt || 0), 0),
+      thueTndn: phaiKhai.reduce((s, d) => s + Number(d.thue_tndn || 0), 0),
+      daNop: phaiKhai.filter((d) => d.da_nop).length,
+      chuaNop: phaiKhai.filter((d) => !d.da_nop).length,
+    };
+  }, [rows]);
+
+  const han = hanNop(nam, thang);
+  const treHan = !!rows && t.chuaNop > 0 && HOM_NAY > han;
+
+  return (
+    <div className="rounded-2xl border border-cvr-line bg-white p-5 shadow-sm sm:p-6">
+      <h2 className="text-base font-semibold text-cvr-ink">Hóa đơn nước ngoài &amp; thuế nhà thầu</h2>
+      <p className="mt-1 text-sm text-cvr-muted">
+        Nhà cung cấp chưa đăng ký thuế tại Việt Nam thì mình phải khai nộp thay (tờ khai 01/NTNN).
+        Nộp xong bấm &ldquo;đã nộp&rdquo; — thuế GTGT sẽ tự cộng vào chỉ tiêu [24] [25] của tờ khai quý.
+      </p>
+
+      {/* Chọn kỳ + tỷ giá */}
+      <div className="mt-4 flex flex-wrap items-end gap-3 rounded-xl bg-cvr-surface p-4">
+        <label className="block">
+          <span className="mb-1.5 block text-sm font-medium text-cvr-body">Tháng phát sinh</span>
+          <select value={thang} onChange={(e) => setThang(Number(e.target.value))} className={inp}>
+            {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+              <option key={m} value={m}>Tháng {m}</option>
+            ))}
+          </select>
+        </label>
+        <label className="block">
+          <span className="mb-1.5 block text-sm font-medium text-cvr-body">Năm</span>
+          <select value={nam} onChange={(e) => setNam(Number(e.target.value))} className={inp}>
+            {[HOM_NAY.getFullYear() - 1, HOM_NAY.getFullYear(), HOM_NAY.getFullYear() + 1].map((n) => (
+              <option key={n} value={n}>{n}</option>
+            ))}
+          </select>
+        </label>
+        <label className="block">
+          <span className="mb-1.5 block text-sm font-medium text-cvr-body">Tỷ giá NHNN (1 USD = ? đ)</span>
+          <input
+            value={tyGia}
+            onChange={(e) => { setTyGia(e.target.value); setNgayTyGia(""); }}
+            className={inp}
+            inputMode="numeric"
+            placeholder="25611"
+          />
+        </label>
+        <button onClick={layTyGia} disabled={dangLayTyGia} className={btnPhu + " mb-0.5"}>
+          {dangLayTyGia ? "Đang lấy…" : "Lấy tỷ giá NHNN"}
+        </button>
+        <p className={`pb-2 text-sm ${treHan ? "font-semibold text-amber-700" : "text-cvr-muted"}`}>
+          Hạn nộp {han.toLocaleDateString("vi-VN")}
+          {treHan ? " — ĐÃ QUÁ HẠN" : ""}
+        </p>
+      </div>
+
+      <p className="mt-2 text-xs leading-relaxed text-cvr-muted">
+        {ngayTyGia && <strong className="text-cvr-ink">{ngayTyGia}. </strong>}
+        Dùng <strong>tỷ giá trung tâm do Ngân hàng Nhà nước công bố</strong>, lấy tại thời điểm quyết toán —
+        xem tại{" "}
+        <a href="https://sbv.gov.vn/vi/t%E1%BB%B7-gi%C3%A1" target="_blank" rel="noopener noreferrer" className="underline">
+          sbv.gov.vn
+        </a>
+        . Tỷ giá được lưu cứng vào từng dòng lúc bấm lưu, sau này NHNN đổi tỷ giá thì số cũ không bị tính lại.
+      </p>
+
+      {loi && (
+        <div className="mt-4 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">{loi}</div>
+      )}
+
+      {/* Tổng của tháng */}
+      <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <ONho nhan="Tiền trả nhà cung cấp" giaTri={vnd(t.tienVnd)} />
+        <ONho nhan="Thuế GTGT nộp thay (được khấu trừ)" giaTri={vnd(t.thueGtgt)} />
+        <ONho nhan="Thuế TNDN nộp thay (chi phí)" giaTri={vnd(t.thueTndn)} />
+      </div>
+
+      <FormNgoai kyThang={kyThang} tyGia={tyGia} tu={tu} den={den} onSaved={() => { void nap(); onSaved(); }} />
+
+      {rows && rows.length > 0 && (
+        <>
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full min-w-[860px] border-collapse text-sm">
+              <thead>
+                <tr className="border-b border-cvr-line text-left text-xs uppercase tracking-wide text-cvr-muted">
+                  <th className="py-2 pr-3 font-medium">Ngày</th>
+                  <th className="py-2 pr-3 font-medium">Nhà cung cấp</th>
+                  <th className="py-2 pr-3 text-right font-medium">USD</th>
+                  <th className="py-2 pr-3 text-right font-medium">Tiền VNĐ</th>
+                  <th className="py-2 pr-3 text-right font-medium">Thuế GTGT</th>
+                  <th className="py-2 pr-3 text-right font-medium">Thuế TNDN</th>
+                  <th className="py-2 font-medium">Trạng thái</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((d) => (
+                  <tr key={d.id} className="border-b border-cvr-line/60">
+                    <td className="py-2 pr-3 whitespace-nowrap text-cvr-body">{d.ngay_hoa_don}</td>
+                    <td className="py-2 pr-3 text-cvr-body">
+                      {d.nha_cung_cap}
+                      {d.dien_giai ? <span className="block text-xs text-cvr-muted">{d.dien_giai}</span> : null}
+                    </td>
+                    <td className="py-2 pr-3 text-right tabular-nums text-cvr-ink">
+                      {Number(d.tien_usd).toLocaleString("vi-VN")}
+                    </td>
+                    <td className="py-2 pr-3 text-right tabular-nums text-cvr-ink">{vnd(d.tien_vnd)}</td>
+                    <td className="py-2 pr-3 text-right tabular-nums text-cvr-ink">{vnd(d.thue_gtgt)}</td>
+                    <td className="py-2 pr-3 text-right tabular-nums text-cvr-ink">{vnd(d.thue_tndn)}</td>
+                    <td className="py-2 text-xs">
+                      {d.nhom === "da_dang_ky" ? (
+                        <span className="text-cvr-muted">Đã đăng ký tại VN — không khai thay</span>
+                      ) : d.da_nop ? (
+                        <span className="text-green-700">Đã nộp {d.ngay_nop ?? ""}</span>
+                      ) : (
+                        <span className="text-amber-700">Chờ nộp</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <button
+              onClick={() => taiCsv(`to-khai-01NTNN-T${thang}-${nam}.csv`, csvNtnn(rows, thang, nam))}
+              className={btnPhu}
+            >
+              Tải CSV tờ khai 01/NTNN
+            </button>
+          </div>
+
+          <KhoiDanhDauNop rows={rows} onSaved={() => { void nap(); onSaved(); }} />
+        </>
+      )}
+
+      {rows && rows.length === 0 && !loi && (
+        <p className="mt-4 rounded-lg bg-cvr-surface px-3 py-2.5 text-sm text-cvr-muted">
+          Tháng này chưa có hóa đơn nước ngoài nào.
+        </p>
+      )}
+
+      <p className="mt-4 rounded-lg bg-cvr-surface px-3 py-2.5 text-xs leading-relaxed text-cvr-muted">
+        Tỷ lệ áp dụng: dịch vụ <strong>GTGT 5%</strong> (Thông tư 69/2025/TT-BTC) ·{" "}
+        <strong>TNDN 5%</strong>, bản quyền/license <strong>TNDN 10%</strong> (Nghị định 320/2025/NĐ-CP).
+        Hợp đồng NET (trả thẻ, nhà cung cấp nhận đủ) phải quy đổi ngược theo Thông tư 20/2026/TT-BTC.
+        Thuế GTGT nộp thay được khấu trừ theo Nghị định 181/2025/NĐ-CP — <strong>bắt buộc</strong> thanh toán
+        bằng thẻ đứng tên công ty với khoản từ 5 triệu đồng, và điền đủ tên công ty + MST vào phần Billing
+        của nhà cung cấp.
+      </p>
+    </div>
+  );
+}
+
+// Form thêm hóa đơn nước ngoài — tính thuế ngay khi gõ để thấy trước số phải nộp.
+function FormNgoai({
+  kyThang,
+  tyGia,
+  tu,
+  den,
+  onSaved,
+}: {
+  kyThang: string;
+  tyGia: string;
+  tu: Date;
+  den: Date;
+  onSaved: () => void;
+}) {
+  const [mo, setMo] = useState(false);
+  const [f, setF] = useState({
+    ngay_hoa_don: ngayISO(new Date()),
+    nha_cung_cap: "",
+    so_hoa_don: "",
+    dien_giai: "",
+    tien_usd: "",
+    loai: "dich_vu" as LoaiDichVu,
+    nhom: "phai_khai_thay" as NhomNcc,
+    hop_dong_net: true,
+  });
+  const [saving, setSaving] = useState(false);
+  const [notice, setNotice] = useState("");
+
+  // Nhóm tự đoán theo tên nhà cung cấp, nhưng chọn tay thì giữ lựa chọn của người dùng.
+  const [tuDoanNhom, setTuDoanNhom] = useState(true);
+  const nhom = tuDoanNhom ? doanNhom(f.nha_cung_cap) : f.nhom;
+
+  const tienVnd = Math.round((Number(f.tien_usd) || 0) * (Number(tyGia) || 0));
+  const kq = nhom === "da_dang_ky"
+    ? { dtGtgt: 0, thueGtgt: 0, dtTndn: 0, thueTndn: 0, tongNop: 0 }
+    : tinhFct(tienVnd, f.loai, f.hop_dong_net);
+
+  async function luu(e: React.FormEvent) {
+    e.preventDefault();
+    if (!f.nha_cung_cap.trim()) return setNotice("Chưa điền nhà cung cấp.");
+    if (!(Number(tyGia) > 0)) return setNotice("Chưa nhập tỷ giá NHNN ở trên.");
+    if (!(Number(f.tien_usd) > 0)) return setNotice("Chưa nhập số tiền USD.");
+
+    const ngay = new Date(`${f.ngay_hoa_don}T12:00:00`);
+    if (ngay < tu || ngay > den) {
+      return setNotice("Ngày hóa đơn không nằm trong tháng đang chọn — đổi tháng ở trên hoặc sửa lại ngày.");
+    }
+
+    setSaving(true);
+    setNotice("");
+    const { error } = await createClient().from("hoa_don_ngoai").insert({
+      ky_thang: kyThang,
+      ngay_hoa_don: f.ngay_hoa_don,
+      nha_cung_cap: f.nha_cung_cap.trim(),
+      so_hoa_don: f.so_hoa_don.trim() || null,
+      dien_giai: f.dien_giai.trim() || null,
+      nhom,
+      loai: f.loai,
+      hop_dong_net: f.hop_dong_net,
+      tien_usd: Number(f.tien_usd),
+      ty_gia: Number(tyGia),
+      tien_vnd: tienVnd,
+      dt_gtgt: kq.dtGtgt,
+      thue_gtgt: kq.thueGtgt,
+      dt_tndn: kq.dtTndn,
+      thue_tndn: kq.thueTndn,
+    });
+    setSaving(false);
+    if (error) {
+      return setNotice(
+        /duplicate key|uq_hoa_don_ngoai_so/i.test(error.message)
+          ? "Hóa đơn này đã có trong sổ (trùng nhà cung cấp + số hóa đơn)."
+          : "Lưu thất bại: " + error.message,
+      );
+    }
+    setF({ ...f, nha_cung_cap: "", so_hoa_don: "", dien_giai: "", tien_usd: "" });
+    setTuDoanNhom(true);
+    setNotice("Đã lưu ✓");
+    onSaved();
+  }
+
+  return (
+    <div className="mt-4">
+      <button onClick={() => setMo((v) => !v)} className={btnPhu}>
+        {mo ? "Đóng" : "+ Thêm hóa đơn nước ngoài"}
+      </button>
+
+      {mo && (
+        <form onSubmit={luu} className="mt-3 grid grid-cols-1 gap-3 rounded-xl bg-cvr-surface p-4 sm:grid-cols-3">
+          <L label="Ngày hóa đơn">
+            <input type="date" value={f.ngay_hoa_don} onChange={(e) => setF({ ...f, ngay_hoa_don: e.target.value })} className={inp} />
+          </L>
+          <L label="Nhà cung cấp *">
+            <input
+              list="ds-ncc-ngoai"
+              value={f.nha_cung_cap}
+              onChange={(e) => { setF({ ...f, nha_cung_cap: e.target.value }); setTuDoanNhom(true); }}
+              className={inp}
+              placeholder="Anthropic / Vercel / Supabase…"
+            />
+            <datalist id="ds-ncc-ngoai">
+              {NCC_DA_BIET.map((n) => <option key={n.khoa} value={n.ten} />)}
+            </datalist>
+          </L>
+          <L label="Số hóa đơn">
+            <input value={f.so_hoa_don} onChange={(e) => setF({ ...f, so_hoa_don: e.target.value })} className={inp} placeholder="INV-2026-0001" />
+          </L>
+
+          <L label="Số tiền (USD) *">
+            <input value={f.tien_usd} onChange={(e) => setF({ ...f, tien_usd: e.target.value })} className={inp} inputMode="decimal" placeholder="100" />
+          </L>
+          <L label="Bản chất khoản chi">
+            <select value={f.loai} onChange={(e) => setF({ ...f, loai: e.target.value as LoaiDichVu })} className={inp}>
+              {(Object.keys(TY_LE) as LoaiDichVu[]).map((k) => (
+                <option key={k} value={k}>{TY_LE[k].nhan}</option>
+              ))}
+            </select>
+          </L>
+          <L label="Nhóm nhà cung cấp">
+            <select
+              value={nhom}
+              onChange={(e) => { setTuDoanNhom(false); setF({ ...f, nhom: e.target.value as NhomNcc }); }}
+              className={inp}
+            >
+              <option value="phai_khai_thay">Chưa đăng ký tại VN — phải khai nộp thay</option>
+              <option value="da_dang_ky">Đã đăng ký thuế tại VN (MST đầu 80) — không khai thay</option>
+            </select>
+          </L>
+
+          <L label="Diễn giải">
+            <input value={f.dien_giai} onChange={(e) => setF({ ...f, dien_giai: e.target.value })} className={inp} placeholder="Claude API tháng 8/2026" />
+          </L>
+          <label className="flex items-end gap-2 pb-2 sm:col-span-2">
+            <input
+              type="checkbox"
+              checked={f.hop_dong_net}
+              onChange={(e) => setF({ ...f, hop_dong_net: e.target.checked })}
+              className="h-4 w-4 accent-cvr-ink"
+            />
+            <span className="text-sm text-cvr-body">
+              Hợp đồng NET{" "}
+              <span className="text-cvr-muted">
+                (trả thẻ, nhà cung cấp nhận đủ số tiền — mình chịu thuế, phải quy đổi ngược)
+              </span>
+            </span>
+          </label>
+
+          {/* Xem trước số thuế — thấy ngay trước khi lưu */}
+          <div className="rounded-lg border border-cvr-line bg-white p-3 text-sm sm:col-span-3">
+            <div className="flex flex-wrap justify-between gap-x-6 gap-y-1">
+              <span className="text-cvr-muted">Tiền quy đổi</span>
+              <span className="tabular-nums font-medium text-cvr-ink">{vnd(tienVnd)}</span>
+            </div>
+            {nhom === "da_dang_ky" ? (
+              <p className="mt-1 text-xs text-cvr-muted">
+                Nhà cung cấp đã đăng ký thuế tại VN — không khai nộp thay, toàn bộ tính vào chi phí TNDN.
+              </p>
+            ) : (
+              <>
+                <div className="mt-1 flex flex-wrap justify-between gap-x-6 gap-y-1">
+                  <span className="text-cvr-muted">Thuế GTGT nộp thay (được khấu trừ)</span>
+                  <span className="tabular-nums font-medium text-cvr-ink">{vnd(kq.thueGtgt)}</span>
+                </div>
+                <div className="mt-1 flex flex-wrap justify-between gap-x-6 gap-y-1">
+                  <span className="text-cvr-muted">Thuế TNDN nộp thay (chi phí)</span>
+                  <span className="tabular-nums font-medium text-cvr-ink">{vnd(kq.thueTndn)}</span>
+                </div>
+                <div className="mt-1 flex flex-wrap justify-between gap-x-6 gap-y-1 border-t border-cvr-line pt-1">
+                  <span className="font-medium text-cvr-ink">Tổng nộp Kho bạc</span>
+                  <span className="tabular-nums font-semibold text-cvr-ink">{vnd(kq.tongNop)}</span>
+                </div>
+              </>
+            )}
+          </div>
+
+          <div className="sm:col-span-3">
+            {notice && <p className="mb-2 text-sm text-cvr-body">{notice}</p>}
+            <button type="submit" disabled={saving} className="rounded-lg bg-cvr-ink px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-cvr-ink/90 disabled:opacity-60">
+              {saving ? "Đang lưu…" : "Lưu hóa đơn"}
+            </button>
+          </div>
+        </form>
+      )}
+    </div>
+  );
+}
+
+// Nộp xong Kho bạc thì đánh dấu — CHƯA đánh dấu thì chưa được cộng vào khấu trừ,
+// vì Nghị định 181/2025 đòi phải có chứng từ nộp thuế thật.
+function KhoiDanhDauNop({ rows, onSaved }: { rows: DongNgoai[]; onSaved: () => void }) {
+  const [ngayNop, setNgayNop] = useState(ngayISO(new Date()));
+  const [chungTu, setChungTu] = useState("");
+  const [dangLuu, setDangLuu] = useState(false);
+  const [notice, setNotice] = useState("");
+
+  const choNop = rows.filter((d) => d.nhom === "phai_khai_thay" && !d.da_nop);
+  if (choNop.length === 0) return null;
+
+  const tongNop = choNop.reduce((s, d) => s + Number(d.thue_gtgt || 0) + Number(d.thue_tndn || 0), 0);
+
+  async function danhDau() {
+    setDangLuu(true);
+    setNotice("");
+    const { error } = await createClient()
+      .from("hoa_don_ngoai")
+      .update({ da_nop: true, ngay_nop: ngayNop, chung_tu_nop: chungTu.trim() || null })
+      .in("id", choNop.map((d) => d.id));
+    setDangLuu(false);
+    if (error) return setNotice("Lỗi: " + error.message);
+    setChungTu("");
+    setNotice(`Đã đánh dấu ${choNop.length} hóa đơn là đã nộp — thuế GTGT nay được cộng vào khấu trừ ✓`);
+    onSaved();
+  }
+
+  return (
+    <div className="mt-5 rounded-xl bg-cvr-surface p-4">
+      <p className="text-sm font-medium text-cvr-ink">Nộp Kho bạc xong rồi thì bấm đây</p>
+      <p className="mt-1 text-xs text-cvr-muted">
+        {choNop.length} hóa đơn đang chờ, tổng phải nộp <strong className="text-cvr-ink">{vnd(tongNop)}</strong>.
+        Nộp bằng mã số thuế nộp thay (MST chính kèm đuôi -999) trên thuedientu.gdt.gov.vn.
+        Chưa đánh dấu thì thuế GTGT chưa được cộng vào chỉ tiêu [24] [25].
+      </p>
+      <div className="mt-3 flex flex-wrap items-end gap-3">
+        <label className="block">
+          <span className="mb-1.5 block text-sm font-medium text-cvr-body">Ngày nộp</span>
+          <input type="date" value={ngayNop} onChange={(e) => setNgayNop(e.target.value)} className={inp} />
+        </label>
+        <label className="block">
+          <span className="mb-1.5 block text-sm font-medium text-cvr-body">Số chứng từ nộp (tuỳ chọn)</span>
+          <input value={chungTu} onChange={(e) => setChungTu(e.target.value)} className={inp} placeholder="Giấy nộp tiền số…" />
+        </label>
+        <button onClick={danhDau} disabled={dangLuu} className={btnPhu}>
+          {dangLuu ? "Đang lưu…" : "Đánh dấu đã nộp"}
+        </button>
+      </div>
+      {notice && <p className="mt-2 text-sm text-cvr-body">{notice}</p>}
+    </div>
+  );
+}
+
+function csvNtnn(rows: DongNgoai[], thang: number, nam: number): string {
+  const phaiKhai = rows.filter((d) => d.nhom === "phai_khai_thay");
+  const c = (k: keyof DongNgoai) => phaiKhai.reduce((s, d) => s + Number(d[k] || 0), 0);
+  return [
+    ["Chi tieu", "Noi dung", "So tien"].map(o).join(","),
+    ["", o(`To khai thue nha thau 01/NTNN - Thang ${thang}/${nam}`), ""].join(","),
+    "",
+    ["Ngay HD", "Nha cung cap", "So HD", "Dien giai", "USD", "Ty gia NHNN", "Tien VND", "DT tinh GTGT", "Thue GTGT", "DT tinh TNDN", "Thue TNDN"].map(o).join(","),
+    ...phaiKhai.map((d) =>
+      [
+        o(d.ngay_hoa_don), o(d.nha_cung_cap), o(d.so_hoa_don), o(d.dien_giai),
+        d.tien_usd, d.ty_gia, d.tien_vnd, d.dt_gtgt, d.thue_gtgt, d.dt_tndn, d.thue_tndn,
+      ].join(","),
+    ),
+    "",
+    [o("TONG CONG"), "", "", "", "", "", c("tien_vnd"), c("dt_gtgt"), c("thue_gtgt"), c("dt_tndn"), c("thue_tndn")].join(","),
+    "",
+    [o("Thue GTGT nop thay - dua vao chi tieu [24] va [25] cua to khai 01/GTGT"), "", c("thue_gtgt")].join(","),
+    [o("Tong phai nop Kho bac"), "", c("thue_gtgt") + c("thue_tndn")].join(","),
+  ].join("\n");
 }
 
 // ── Phụ trợ ─────────────────────────────────────────────────────────────────
