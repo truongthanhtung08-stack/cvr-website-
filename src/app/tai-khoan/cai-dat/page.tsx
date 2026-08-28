@@ -97,8 +97,11 @@ export default function AccountSettingsPage() {
 
 // ── THÔNG TIN XUẤT HÓA ĐƠN ──────────────────────────────────────────────────
 // Khai MỘT LẦN, dùng cho mọi giao dịch sau đó — khách không phải nhập lại mỗi lần.
-// Không bật: giao dịch vẫn được xuất hóa đơn theo quy định, nhưng gộp vào HÓA ĐƠN
-// TỔNG cuối ngày (NĐ 123/2020 Điều 9 khoản 4) — đa số môi giới cá nhân chọn cách này.
+// Không bật: giao dịch vẫn được kê khai đủ theo quy định, nhưng gộp vào HÓA ĐƠN
+// TỔNG cuối ngày — đa số môi giới cá nhân chọn cách này.
+// ⚠️ Căn cứ cũ là NĐ 123/2020 Điều 9 khoản 4, nay đã bị NĐ 254/2026/NĐ-CP thay từ
+//    01/07/2026. Cách gom đang chờ chốt lại — xem ghi chú đầy đủ ở
+//    src/app/admin/hoa-don-thue/page.tsx, khối "Hóa đơn chờ phát hành".
 function KhoiHoaDon({ profile }: { profile: { id: string; email: string | null } }) {
   // Các cột này chỉ có sau khi chạy migration 0017 → đọc phòng thủ, chưa có coi như trống.
   const hd = profile as unknown as {

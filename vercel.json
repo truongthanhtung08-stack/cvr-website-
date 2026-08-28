@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/hoa-don/nhac-xuat",
+      "schedule": "0 13 * * *"
+    },
+    {
+      "path": "/api/hoa-don/nhac-xuat",
+      "schedule": "30 1 * * *"
+    }
+  ]
+}

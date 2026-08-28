@@ -20,6 +20,25 @@ export const THUE_SUAT_GTGT = 0.08;
  */
 export const GIA_DA_GOM_VAT = false;
 
+/**
+ * Ký hiệu hóa đơn đã đăng ký bên VNPT Invoice — PHẢI KHỚP TUYỆT ĐỐI, không thì
+ * file tải lên bị từ chối.
+ *
+ * Cấu trúc 7 ký tự do luật quy định:
+ *   1   hóa đơn giá trị gia tăng
+ *   C   có mã của cơ quan thuế
+ *   26  năm phát hành 2026
+ *   T   hóa đơn điện tử thông thường
+ *   CL  hai ký tự tự chọn — Coastal Land
+ *
+ * 👉 Sang 2027 phải đổi "26" thành "27" và đăng ký dải ký hiệu mới bên VNPT.
+ */
+export const KY_HIEU_HOA_DON = "1C26TCL";
+
+/** Đơn vị tính mặc định khi xuất hóa đơn — phải có sẵn trong danh mục VNPT. */
+export const DVT_GOI_TIN = "Gói";
+export const DVT_HOA_DON_TONG = "Lần";
+
 export type TachThue = {
   /** Doanh thu chưa thuế — ĐÂY là số đưa vào tờ khai GTGT và tính thuế TNDN. */
   tienHang: number;

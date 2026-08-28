@@ -3,7 +3,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { vnd } from "@/lib/billing";
-import { THUE_SUAT_GTGT, khoangQuy, tachThue } from "@/lib/thue";
+import {
+  DVT_GOI_TIN,
+  DVT_HOA_DON_TONG,
+  KY_HIEU_HOA_DON,
+  THUE_SUAT_GTGT,
+  khoangQuy,
+  tachThue,
+} from "@/lib/thue";
 import {
   NCC_DA_BIET,
   TY_LE,
@@ -336,7 +343,7 @@ export default function AdminThuePage() {
       </div>
 
       {/* ── BẢNG KÊ ĐẦU RA ──────────────────────────────────────────────── */}
-      <div id="hoa-don-cho-phat-hanh" className="rounded-2xl border border-cvr-line bg-white p-5 shadow-sm sm:p-6">
+      <div className="rounded-2xl border border-cvr-line bg-white p-5 shadow-sm sm:p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-base font-semibold text-cvr-ink">
             Bảng kê hóa đơn đầu ra — {t.soGiaoDich} giao dịch
@@ -483,7 +490,7 @@ function KhoiViecCanLam({ lamMoi }: { lamMoi: number }) {
           ds.push({
             xong: false,
             ten: `Hóa đơn đầu ra ngày ${ngay}`,
-            chiTiet: `${so} giao dịch chờ ký ở Viettel`,
+            chiTiet: `${so} giao dịch chờ ký ở VNPT`,
             neo: "hoa-don-cho-phat-hanh",
             nut: "Tải file",
           });
@@ -932,14 +939,29 @@ function KhoiHoaDonVao({ rows, onSaved }: { rows: DongVao[] | null; onSaved: () 
 // ── HÓA ĐƠN CHỜ PHÁT HÀNH → XUẤT FILE → KÝ BẰNG USB TOKEN BÊN VIETTEL ──────
 // Vì chữ ký số là USB token (không phải cloud), máy chủ web KHÔNG tự ký được —
 // phải có người cắm USB. Nên luồng là: web gom sẵn số liệu → xuất file → chủ dự
-// án nhập vào phần mềm Viettel, cắm USB, ký → Viettel tự gửi hóa đơn cho khách.
+// án nhập vào phần mềm VNPT Invoice, cắm USB, ký → VNPT tự gửi hóa đơn cho khách.
 //
-// Chia đúng 2 nhóm theo NĐ 123/2020 Điều 9 khoản 4:
+// Chia đúng 2 nhóm:
 //   · RIÊNG — khách có khai công ty + MST → mỗi giao dịch một hóa đơn
 //   · TỔNG  — khách không lấy hóa đơn → gom cả ngày thành MỘT hóa đơn tổng,
 //             các dòng chi tiết trong file chính là bảng kê đính kèm
 //
-// Ký xong bên Viettel thì bấm "Đánh dấu đã phát hành" để sổ khớp với thực tế.
+// ⚠️ CĂN CỨ ĐANG CHỜ CHỐT LẠI (rà 28/08/2026). Cách gom "hóa đơn tổng cuối ngày"
+// dựng theo NĐ 123/2020 Điều 9 khoản 4 — nghị định đó ĐÃ HẾT HIỆU LỰC, bị thay
+// bởi NĐ 254/2026/NĐ-CP từ 01/07/2026.
+//
+// Nghị định mới cho dịch vụ B2C có phần mềm quản lý chi tiết từng giao dịch
+// (Điều 9 khoản 4 điểm r) một cơ chế KHÁC và nhẹ hơn hẳn: không xuất hóa đơn cho
+// từng khách lẻ nữa, mà gửi "Bảng thông tin chi tiết giao dịch" theo THÁNG hoặc
+// QUÝ cho cơ quan thuế, hạn trùng hạn nộp tờ khai GTGT (Điều 16 khoản 3 điểm a.2).
+//
+// Hệ thống này ghi đủ từng giao dịch nên khớp điều kiện, nhưng CHƯA đổi luồng vì
+// còn hai việc phải chốt: (1) xác nhận dịch vụ đăng tin thuộc nhóm "các dịch vụ
+// khác" ở điểm r, (2) lấy mẫu Bảng thông tin chi tiết giao dịch của Bộ Tài chính.
+// Trước khi chốt thì GIỮ NGUYÊN cách gom hóa đơn tổng — xuất thừa còn sửa được,
+// bỏ không xuất mà sai thì bị phạt.
+//
+// Ký xong bên VNPT thì bấm "Đánh dấu đã phát hành" để sổ khớp với thực tế.
 // 👉 Sau này mua ký số cloud thì chỉ cần thêm bước gọi API, phần gom số liệu
 //    này giữ nguyên, không phải viết lại.
 type ChoXuat = {
@@ -1001,19 +1023,47 @@ function KhoiXuatHoaDon({ onSaved }: { onSaved: () => void }) {
         hoa_don_so: soHoaDon.trim() || null,
       })
       .in("id", rows.map((d) => d.id));
+    if (error) {
+      setDangLuu(false);
+      return setNotice("Lỗi: " + error.message);
+    }
+
+    // ── Báo cho khách có hóa đơn riêng ────────────────────────────────────
+    // VNPT có gửi email kèm file gốc, nhưng email hóa đơn hay rơi vào spam.
+    // Nhắn thêm một lần từ phía mình để khách biết mà vào tài khoản xem.
+    //
+    // Báo hỏng thì KHÔNG coi là lỗi: hóa đơn đã phát hành xong rồi, cái đó
+    // quan trọng hơn tin nhắn. Chỉ ghi thêm một câu để biết mà gửi tay.
+    let themVeBao = "";
+    try {
+      const r = await fetch("/api/hoa-don/bao-khach", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: rows.map((d) => d.id) }),
+      });
+      const j = await r.json();
+      themVeBao = j.ok
+        ? j.soDaBao > 0
+          ? ` Đã báo ${j.soGuiEmailThanhCong}/${j.soDaBao} khách qua email` +
+            (j.soGuiZaloThanhCong > 0 ? `, ${j.soGuiZaloThanhCong} qua Zalo` : "") + "."
+          : " Không có hóa đơn riêng nào nên không phải báo ai."
+        : " ⚠️ Chưa báo được cho khách: " + (j.message ?? "lỗi không rõ");
+    } catch {
+      themVeBao = " ⚠️ Chưa báo được cho khách — kiểm tra lại đường mạng.";
+    }
+
     setDangLuu(false);
-    if (error) return setNotice("Lỗi: " + error.message);
-    setNotice(`Đã đánh dấu ${rows.length} giao dịch là đã phát hành hóa đơn ✓`);
+    setNotice(`Đã đánh dấu ${rows.length} giao dịch là đã phát hành hóa đơn ✓` + themVeBao);
     setSoHoaDon("");
     void nap();
     onSaved();
   }
 
   return (
-    <div id="hoa-don-ngoai" className="rounded-2xl border border-cvr-line bg-white p-5 shadow-sm sm:p-6">
+    <div id="hoa-don-cho-phat-hanh" className="rounded-2xl border border-cvr-line bg-white p-5 shadow-sm sm:p-6">
       <h2 className="text-base font-semibold text-cvr-ink">Hóa đơn chờ phát hành</h2>
       <p className="mt-1 text-sm text-cvr-muted">
-        Xuất file rồi nhập vào phần mềm Viettel, cắm USB token ký. Viettel sẽ tự gửi hóa đơn về email khách.
+        Xuất file rồi nhập vào phần mềm VNPT Invoice, cắm USB token ký. VNPT sẽ tự gửi hóa đơn về email khách.
       </p>
 
       <div className="mt-4 flex flex-wrap items-end gap-3">
@@ -1084,7 +1134,7 @@ function KhoiXuatHoaDon({ onSaved }: { onSaved: () => void }) {
           </div>
 
           <div className="mt-5 rounded-xl bg-cvr-surface p-4">
-            <p className="text-sm font-medium text-cvr-ink">Ký xong bên Viettel rồi thì bấm đây</p>
+            <p className="text-sm font-medium text-cvr-ink">Ký xong bên VNPT rồi thì bấm đây</p>
             <p className="mt-1 text-xs text-cvr-muted">
               Đánh dấu {rows.length} giao dịch trên là đã phát hành, để không bị xuất trùng lần sau.
             </p>
@@ -1105,33 +1155,67 @@ function KhoiXuatHoaDon({ onSaved }: { onSaved: () => void }) {
   );
 }
 
-// File cho phần mềm Viettel. Cột đặt theo nghiệp vụ chuẩn; khi có mẫu import
-// chính thức của Viettel thì chỉnh lại tên cột cho khớp, dữ liệu giữ nguyên.
+// File cho phần mềm VNPT Invoice. Cột đặt theo nghiệp vụ chuẩn; khi có mẫu import
+// chính thức của VNPT thì chỉnh lại tên cột cho khớp, dữ liệu giữ nguyên.
+// File tải lên VNPT Invoice (Quản lý hóa đơn → Tải hóa đơn theo lô).
+//
+// Tên cột đặt ĐÚNG THEO NHÃN TRÊN MẪU HÓA ĐƠN VNPT đã dựng, không tự đặt tên
+// nữa. Khi có file mẫu import chính thức của VNPT, chỉ việc đối chiếu và đổi
+// tên cột cho khớp — thứ tự và ý nghĩa dữ liệu giữ nguyên, không phải viết lại.
+//
+// Mỗi dòng = MỘT DÒNG HÀNG trên hóa đơn. Các dòng cùng "Ký hiệu + Số thứ tự
+// hóa đơn" thuộc về cùng một tờ.
+//
+// Hai loại tờ trong ngày:
+//   · RIÊNG — khách khai công ty + MST, mỗi giao dịch một tờ
+//   · TỔNG  — gom hết khách không lấy hóa đơn thành MỘT tờ, kèm bảng kê
 function csvHoaDon(rieng: ChoXuat[], tong: ChoXuat[], ngay: string): string {
   const q = (v: string | number | null) => `"${String(v ?? "").replace(/"/g, '""')}"`;
   const d = ngay.split("-").reverse().join("/");
-  const dong: string[] = [
-    ["Loai hoa don", "Ngay", "Ten nguoi mua", "MST", "Dia chi", "Email", "Noi dung", "Tien hang", "Thue GTGT", "Tong cong"].join(","),
+  const ts = (THUE_SUAT_GTGT * 100).toFixed(0) + "%";
+
+  const COT = [
+    "So thu tu hoa don", "Ky hieu", "Ngay hoa don",
+    "Ho va ten nguoi mua hang", "Ten don vi mua hang", "Ma so thue",
+    "Dia chi", "Email", "Hinh thuc thanh toan", "Don vi tien te",
+    "Ten hang hoa dich vu", "Don vi tinh", "So luong", "Don gia", "Thanh tien",
+    "Thue suat", "Tien thue GTGT", "Tong tien thanh toan",
   ];
 
+  const dong: string[] = [COT.map(q).join(",")];
+  let soTo = 0;
+
+  // ── Hóa đơn riêng: mỗi giao dịch một tờ, một dòng hàng ──────────────────
   for (const r of rieng) {
+    soTo++;
     dong.push([
-      q("HOA DON RIENG"), q(d), q(r.ten_nguoi_mua), q(r.mst_nguoi_mua), q(r.dia_chi_nguoi_mua),
-      q(r.email_nguoi_mua), q(r.mo_ta), r.tien_hang, r.tien_thue, r.tong_tra,
+      soTo, q(KY_HIEU_HOA_DON), q(d),
+      q(""), q(r.ten_nguoi_mua), q(r.mst_nguoi_mua),
+      q(r.dia_chi_nguoi_mua), q(r.email_nguoi_mua), q("Chuyen khoan"), q("VND"),
+      q(r.mo_ta), q(DVT_GOI_TIN), 1, r.tien_hang, r.tien_hang,
+      q(ts), r.tien_thue, r.tong_tra,
     ].join(","));
   }
 
+  // ── Hóa đơn tổng: gộp thành MỘT dòng hàng, số lượng 1 ───────────────────
+  // Cố ý để số lượng 1 và đơn giá = tổng tiền hàng. Ghi số lượng 27 rồi bỏ
+  // trống đơn giá thì VNPT tính lại thành tiền ra 0, hóa đơn sai số.
   if (tong.length > 0) {
+    soTo++;
     const th = tong.reduce((s, r) => s + r.tien_hang, 0);
     const tt = tong.reduce((s, r) => s + r.tien_thue, 0);
-    dong.push("");
-    dong.push(q(`HOA DON TONG NGAY ${d} - gom ${tong.length} giao dich`));
     dong.push([
-      q("HOA DON TONG"), q(d), q("Khach le khong lay hoa don"), "", "", "",
-      q(`Dich vu dang tin ngay ${d}`), th, tt, th + tt,
+      soTo, q(KY_HIEU_HOA_DON), q(d),
+      q(""), q("Khach le khong lay hoa don"), q(""),
+      q(""), q(""), q("Chuyen khoan"), q("VND"),
+      q(`Dich vu dang tin bat dong san ngay ${d}`), q(DVT_HOA_DON_TONG), 1, th, th,
+      q(ts), tt, th + tt,
     ].join(","));
+
+    // Bảng kê để đối chiếu — KHÔNG tải lên VNPT, chỉ để lưu và giải trình khi
+    // cơ quan thuế hỏi tờ hóa đơn tổng gồm những giao dịch nào.
     dong.push("");
-    dong.push(q("BANG KE CHI TIET DINH KEM HOA DON TONG"));
+    dong.push(q(`BANG KE CHI TIET KEM HOA DON TONG NGAY ${d} - ${tong.length} giao dich`));
     dong.push(["STT", "Noi dung", "Tien hang", "Thue GTGT", "Tong cong"].map(q).join(","));
     tong.forEach((r, i) => {
       dong.push([i + 1, q(r.mo_ta), r.tien_hang, r.tien_thue, r.tong_tra].join(","));
@@ -1379,7 +1463,7 @@ function KhoiThueNhaThau({ onSaved }: { onSaved: () => void }) {
   const coNhom2 = (rows ?? []).some((d) => d.nhom === "phai_khai_thay");
 
   return (
-    <div className="rounded-2xl border border-cvr-line bg-white p-5 shadow-sm sm:p-6">
+    <div id="hoa-don-ngoai" className="rounded-2xl border border-cvr-line bg-white p-5 shadow-sm sm:p-6">
       <h2 className="text-base font-semibold text-cvr-ink">Hóa đơn nước ngoài &amp; thuế nhà thầu</h2>
       <p className="mt-1 text-sm text-cvr-muted">
         Nhà cung cấp chưa đăng ký thuế tại Việt Nam thì mình phải khai nộp thay (tờ khai 01/NTNN).
