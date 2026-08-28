@@ -100,6 +100,9 @@ export default function AdminThuePage() {
   const [vao, setVao] = useState<DongVao[] | null>(null);
   const [ngoai, setNgoai] = useState<DongNgoai[] | null>(null);
   const [loi, setLoi] = useState("");
+  // Tăng mỗi lần nạp lại số liệu → danh sách "Việc cần làm" tự tính lại,
+  // để vừa ký hóa đơn hay vừa bấm "đã nộp" xong là dòng đó xanh ngay.
+  const [lamMoi, setLamMoi] = useState(0);
 
   const { tu, den } = useMemo(() => khoangQuy(nam, quy), [nam, quy]);
 
@@ -149,6 +152,7 @@ export default function AdminThuePage() {
     }
     setRa((r1.data ?? []) as DongDoanhThu[]);
     setVao((r2.data ?? []) as DongVao[]);
+    setLamMoi((n) => n + 1); // báo cho danh sách "Việc cần làm" tính lại
   }, [tu, den]);
 
   useEffect(() => {
@@ -229,6 +233,9 @@ export default function AdminThuePage() {
         </p>
       </div>
 
+      {/* ── VIỆC THUẾ CẦN LÀM — đặt trên cùng, mở trang ra là thấy ngay ── */}
+      <KhoiViecCanLam lamMoi={lamMoi} />
+
       {/* Chọn kỳ */}
       <div className="flex flex-wrap items-end gap-3 rounded-2xl border border-cvr-line bg-white p-5 shadow-sm">
         <label className="block">
@@ -260,7 +267,7 @@ export default function AdminThuePage() {
       <KhoiCoCauDoanhThu t={t} nhan={nhan} onSaved={nap} />
 
       {/* ── TỜ KHAI 01/GTGT ─────────────────────────────────────────────── */}
-      <div className="rounded-2xl border border-cvr-line bg-white p-5 shadow-sm sm:p-6">
+      <div id="to-khai-gtgt" className="rounded-2xl border border-cvr-line bg-white p-5 shadow-sm sm:p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-base font-semibold text-cvr-ink">Tờ khai thuế GTGT — mẫu 01/GTGT · {nhan}</h2>
           <button onClick={() => taiCsv(`to-khai-01GTGT-Q${quy}-${nam}.csv`, csvToKhai(t, nhan))} className={btnPhu}>
@@ -329,7 +336,7 @@ export default function AdminThuePage() {
       </div>
 
       {/* ── BẢNG KÊ ĐẦU RA ──────────────────────────────────────────────── */}
-      <div className="rounded-2xl border border-cvr-line bg-white p-5 shadow-sm sm:p-6">
+      <div id="hoa-don-cho-phat-hanh" className="rounded-2xl border border-cvr-line bg-white p-5 shadow-sm sm:p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-base font-semibold text-cvr-ink">
             Bảng kê hóa đơn đầu ra — {t.soGiaoDich} giao dịch
@@ -392,6 +399,220 @@ export default function AdminThuePage() {
   );
 }
 
+// ── VIỆC THUẾ CẦN LÀM ─────────────────────────────────────────────────────
+// Gom BỐN việc tay đang nằm rải rác ở bốn mục thành MỘT danh sách duy nhất đặt
+// đầu trang — chủ dự án chốt 28/08/2026: bốn việc ở bốn chỗ thì chưa gọi là
+// quy trình thống nhất. Mở admin ra là thấy còn thiếu gì, hạn khi nào, bấm vào
+// là nhảy thẳng tới chỗ làm. Hết việc thì cả khối chuyển xanh.
+//
+// Việc ĐÃ XONG vẫn hiện kèm dấu ✓ chứ không biến mất — để phân biệt "đã làm
+// rồi" với "chưa bao giờ có việc đó".
+
+/** Kỳ khai GTGT đang tới hạn và hạn nộp của nó. */
+function kyGtgtToiHan(homNay: Date): { quy: number; nam: number; han: Date } {
+  const nam = homNay.getFullYear();
+  const quyHienTai = Math.floor(homNay.getMonth() / 3) + 1;
+  const thangDauQuy = (quyHienTai - 1) * 3;
+
+  // Mặc định: khai cho quý VỪA KẾT THÚC, hạn là ngày cuối tháng đầu quý này.
+  let quy = quyHienTai - 1;
+  let namKhai = nam;
+  if (quy === 0) { quy = 4; namKhai = nam - 1; }
+  let han = new Date(nam, thangDauQuy + 1, 0, 23, 59, 59);
+
+  // Qua hạn đó rồi thì việc tiếp theo là khai cho chính quý đang chạy.
+  if (homNay > han) {
+    quy = quyHienTai;
+    namKhai = nam;
+    han = new Date(nam, thangDauQuy + 4, 0, 23, 59, 59);
+  }
+  return { quy, nam: namKhai, han };
+}
+
+type Viec = {
+  xong: boolean;
+  ten: string;
+  chiTiet: string;
+  han?: Date;
+  neo?: string;
+  nut?: string;
+};
+
+function KhoiViecCanLam({ lamMoi }: { lamMoi: number }) {
+  const [viec, setViec] = useState<Viec[] | null>(null);
+
+  useEffect(() => {
+    let huy = false;
+
+    void (async () => {
+      const supabase = createClient();
+      const homNay = new Date();
+
+      // Tháng trước — kỳ của hóa đơn nước ngoài và tờ khai nhà thầu.
+      const thangTruoc = new Date(homNay.getFullYear(), homNay.getMonth() - 1, 1);
+      const kyTruoc = `${thangTruoc.getFullYear()}-${String(thangTruoc.getMonth() + 1).padStart(2, "0")}-01`;
+      const nhanThangTruoc = `tháng ${thangTruoc.getMonth() + 1}/${thangTruoc.getFullYear()}`;
+      // Hạn nộp tờ khai nhà thầu: ngày 20 của tháng này.
+      const hanNtnn = new Date(homNay.getFullYear(), homNay.getMonth(), 20, 23, 59, 59);
+
+      const dauThangNay = new Date(homNay.getFullYear(), homNay.getMonth(), 1);
+      const nhanThangNay = `tháng ${homNay.getMonth() + 1}/${homNay.getFullYear()}`;
+
+      const [choKy, ngoai, b2b] = await Promise.all([
+        supabase.from("doanh_thu").select("id,ngay_ghi_nhan")
+          .eq("hoa_don_trang_thai", "chua_xuat")
+          .order("ngay_ghi_nhan", { ascending: false }).limit(300),
+        supabase.from("hoa_don_ngoai").select("id,nhom,da_nop").eq("ky_thang", kyTruoc),
+        supabase.from("doanh_thu").select("id").eq("nguon", "doanh_nghiep")
+          .gte("ngay_ghi_nhan", dauThangNay.toISOString()),
+      ]);
+
+      const ds: Viec[] = [];
+
+      // ── 1) Hóa đơn đầu ra chờ ký ──────────────────────────────────────
+      const rowsKy = (choKy.data ?? []) as { ngay_ghi_nhan: string }[];
+      if (rowsKy.length === 0) {
+        ds.push({ xong: true, ten: "Hóa đơn đầu ra", chiTiet: "không còn giao dịch nào chờ ký" });
+      } else {
+        const theoNgay = new Map<string, number>();
+        for (const r of rowsKy) {
+          const n = new Date(r.ngay_ghi_nhan).toLocaleDateString("vi-VN");
+          theoNgay.set(n, (theoNgay.get(n) ?? 0) + 1);
+        }
+        for (const [ngay, so] of theoNgay) {
+          ds.push({
+            xong: false,
+            ten: `Hóa đơn đầu ra ngày ${ngay}`,
+            chiTiet: `${so} giao dịch chờ ký ở Viettel`,
+            neo: "hoa-don-cho-phat-hanh",
+            nut: "Tải file",
+          });
+        }
+      }
+
+      // ── 2) Hóa đơn nước ngoài tháng trước ─────────────────────────────
+      const dsNgoai = (ngoai.data ?? []) as { nhom: string; da_nop: boolean }[];
+      ds.push(
+        dsNgoai.length > 0
+          ? { xong: true, ten: `Hóa đơn nước ngoài ${nhanThangTruoc}`, chiTiet: `đã nhập ${dsNgoai.length} hóa đơn` }
+          : {
+              // KHÔNG gắn hạn ở đây. Chưa up file thì chưa biết tháng đó có hóa
+              // đơn hay không — kêu "quá hạn" cho một việc có thể không tồn tại
+              // là báo động giả, lâu ngày sẽ làm quen tay bỏ qua cả báo thật.
+              // Hạn chỉ hiện ở dòng thuế nhà thầu, khi đã biết chắc có hóa đơn.
+              xong: false,
+              ten: `Hóa đơn nước ngoài ${nhanThangTruoc}`,
+              chiTiet: "chưa up file nào — tháng đó không có thì bỏ qua",
+              neo: "hoa-don-ngoai",
+              nut: "Chọn PDF",
+            },
+      );
+
+      // ── 3) Doanh thu doanh nghiệp tháng này ───────────────────────────
+      const soB2b = (b2b.data ?? []).length;
+      ds.push(
+        soB2b > 0
+          ? { xong: true, ten: `Doanh thu doanh nghiệp ${nhanThangNay}`, chiTiet: `đã ghi ${soB2b} khoản` }
+          : {
+              xong: false,
+              ten: `Doanh thu doanh nghiệp ${nhanThangNay}`,
+              chiTiet: "chưa nhập khoản nào — tháng này có banner, bài PR, hợp đồng dịch vụ không?",
+              neo: "co-cau-doanh-thu",
+              nut: "Ghi doanh thu",
+            },
+      );
+
+      // ── 4) Thuế nhà thầu tháng trước ──────────────────────────────────
+      const phaiKhai = dsNgoai.filter((d) => d.nhom === "phai_khai_thay");
+      const chuaNop = phaiKhai.filter((d) => !d.da_nop).length;
+      ds.push(
+        phaiKhai.length === 0
+          ? { xong: true, ten: `Thuế nhà thầu ${nhanThangTruoc}`, chiTiet: "không phát sinh — không phải khai" }
+          : chuaNop === 0
+            ? { xong: true, ten: `Thuế nhà thầu ${nhanThangTruoc}`, chiTiet: `đã nộp đủ ${phaiKhai.length} hóa đơn` }
+            : {
+                xong: false,
+                ten: `Thuế nhà thầu ${nhanThangTruoc}`,
+                chiTiet: `${chuaNop} hóa đơn chờ khai 01/NTNN và nộp Kho bạc`,
+                han: hanNtnn,
+                neo: "hoa-don-ngoai",
+                nut: "Xem số",
+              },
+      );
+
+      // ── 5) Tờ khai GTGT quý ───────────────────────────────────────────
+      const ky = kyGtgtToiHan(homNay);
+      ds.push({
+        xong: false,
+        ten: `Tờ khai 01/GTGT Quý ${ky.quy}/${ky.nam}`,
+        chiTiet: "chép chỉ tiêu sang eTax rồi nộp",
+        han: ky.han,
+        neo: "to-khai-gtgt",
+        nut: "Xem số",
+      });
+
+      if (!huy) setViec(ds);
+    })();
+
+    return () => { huy = true; };
+  }, [lamMoi]);
+
+  if (!viec) return null;
+
+  const conLai = viec.filter((v) => !v.xong).length;
+
+  return (
+    <div className={`rounded-2xl border p-5 shadow-sm sm:p-6 ${conLai === 0 ? "border-green-300 bg-green-50/60" : "border-cvr-line bg-white"}`}>
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h2 className="text-base font-semibold text-cvr-ink">Việc thuế cần làm</h2>
+        <span className={`text-sm font-medium ${conLai === 0 ? "text-green-700" : "text-cvr-muted"}`}>
+          {conLai === 0 ? "xong hết ✓" : `còn ${conLai} việc`}
+        </span>
+      </div>
+
+      <ul className="mt-4 divide-y divide-cvr-line/60">
+        {viec.map((v, i) => {
+          const conNgay = v.han ? Math.ceil((v.han.getTime() - Date.now()) / 86400000) : null;
+          const gapGap = conNgay !== null && conNgay <= 3;
+          return (
+            <li key={i} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2.5">
+              <span className={`text-sm ${v.xong ? "text-green-700" : "text-cvr-muted"}`}>{v.xong ? "✓" : "☐"}</span>
+              <span className={`text-sm font-medium ${v.xong ? "text-cvr-muted" : "text-cvr-ink"}`}>{v.ten}</span>
+              <span className="text-sm text-cvr-muted">{v.chiTiet}</span>
+              {conNgay !== null && !v.xong && (
+                <span className={`text-xs font-medium ${gapGap ? "text-amber-700" : "text-cvr-muted"}`}>
+                  hạn {v.han!.toLocaleDateString("vi-VN")}
+                  {conNgay < 0 ? " — ĐÃ QUÁ HẠN" : ` — còn ${conNgay} ngày`}
+                </span>
+              )}
+              {v.neo && !v.xong && (
+                // ⚠️ Ở trang này KHÔNG dùng được <a href="#id"> lẫn scrollIntoView.
+                // Khung admin có <main className="overflow-x-hidden">, mà theo
+                // chuẩn CSS đặt một trục là hidden thì trục kia thành auto — thẻ
+                // main trở thành khung cuộn giả (không hề tràn) và nuốt luôn lệnh
+                // cuộn, đo thực tế chỉ nhích 126px rồi đứng. Vì vậy tự tính toạ
+                // độ rồi cuộn thẳng cửa sổ, và để "instant" vì trang đặt
+                // scroll-behavior: smooth toàn cục nên hoạt ảnh hay bị huỷ giữa chừng.
+                <button
+                  onClick={() => {
+                    const dich = document.getElementById(v.neo!);
+                    if (!dich) return;
+                    const y = dich.getBoundingClientRect().top + window.scrollY - 12;
+                    window.scrollTo({ top: y, behavior: "instant" });
+                  }}
+                  className="ml-auto whitespace-nowrap text-sm font-medium text-cvr-ink underline underline-offset-2 hover:text-cvr-ink/70"
+                >
+                  {v.nut} →
+                </button>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
 // ── CƠ CẤU DOANH THU: TIN ĐĂNG + DỊCH VỤ DOANH NGHIỆP ─────────────────────
 // Hai dòng LUÔN hiện kể cả khi bằng 0 — chủ dự án chốt 28/08/2026. Nhìn thấy
 // dòng 0 thì biết mảng đó chưa phát sinh; giấu đi thì không phân biệt được
@@ -415,18 +636,20 @@ function KhoiCoCauDoanhThu({
   onSaved: () => void;
 }) {
   return (
-    <div className="rounded-2xl border border-cvr-line bg-white p-5 shadow-sm sm:p-6">
+    <div id="co-cau-doanh-thu" className="rounded-2xl border border-cvr-line bg-white p-5 shadow-sm sm:p-6">
       <h2 className="text-base font-semibold text-cvr-ink">Cơ cấu doanh thu · {nhan}</h2>
       <p className="mt-1 text-sm text-cvr-muted">
         Tổng hai dòng dưới đây chính là chỉ tiêu [32] của tờ khai GTGT.
+        Tin đăng web tự ghi khi duyệt; dịch vụ doanh nghiệp nhập tay ở dưới.
       </p>
 
+      {/* Bỏ cột "Cách ghi nhận" — đó là lời giải thích cố định, không phải số
+          liệu, lặp ở mọi dòng thì chỉ làm bảng rộng thêm. Đã đưa lên câu trên. */}
       <div className="mt-4 overflow-x-auto">
-        <table className="w-full min-w-[560px] border-collapse text-sm">
+        <table className="w-full min-w-[460px] border-collapse text-sm">
           <thead>
             <tr className="border-b border-cvr-line text-left text-xs uppercase tracking-wide text-cvr-muted">
               <th className="py-2 pr-3 font-medium">Nguồn doanh thu</th>
-              <th className="py-2 pr-3 font-medium">Cách ghi nhận</th>
               <th className="py-2 pr-3 text-right font-medium">Số giao dịch</th>
               <th className="py-2 pr-3 text-right font-medium">Tiền hàng</th>
               <th className="py-2 text-right font-medium">Thuế GTGT</th>
@@ -435,20 +658,18 @@ function KhoiCoCauDoanhThu({
           <tbody>
             <tr className="border-b border-cvr-line/60">
               <td className="py-2.5 pr-3 font-medium text-cvr-ink">Bán gói tin đăng</td>
-              <td className="py-2.5 pr-3 text-cvr-muted">Web tự ghi khi duyệt tin</td>
               <td className="py-2.5 pr-3 text-right tabular-nums text-cvr-body">{t.soTinDang}</td>
               <td className="py-2.5 pr-3 text-right tabular-nums text-cvr-ink">{vnd(t.dtTinDang)}</td>
               <td className="py-2.5 text-right tabular-nums text-cvr-ink">{vnd(t.thueTinDang)}</td>
             </tr>
             <tr className="border-b border-cvr-line/60">
               <td className="py-2.5 pr-3 font-medium text-cvr-ink">Dịch vụ doanh nghiệp</td>
-              <td className="py-2.5 pr-3 text-cvr-muted">Nhập tay ở dưới</td>
               <td className="py-2.5 pr-3 text-right tabular-nums text-cvr-body">{t.soDoanhNghiep}</td>
               <td className="py-2.5 pr-3 text-right tabular-nums text-cvr-ink">{vnd(t.dtDoanhNghiep)}</td>
               <td className="py-2.5 text-right tabular-nums text-cvr-ink">{vnd(t.thueDoanhNghiep)}</td>
             </tr>
             <tr className="border-t-2 border-cvr-ink">
-              <td className="py-3 pr-3 font-semibold text-cvr-ink" colSpan={3}>TỔNG DOANH THU</td>
+              <td className="py-3 pr-3 font-semibold text-cvr-ink" colSpan={2}>TỔNG DOANH THU</td>
               <td className="py-3 pr-3 text-right text-base font-bold tabular-nums text-cvr-ink">{vnd(t.dtChuaThue)}</td>
               <td className="py-3 text-right text-base font-bold tabular-nums text-cvr-ink">{vnd(t.thueRa)}</td>
             </tr>
@@ -789,7 +1010,7 @@ function KhoiXuatHoaDon({ onSaved }: { onSaved: () => void }) {
   }
 
   return (
-    <div className="rounded-2xl border border-cvr-line bg-white p-5 shadow-sm sm:p-6">
+    <div id="hoa-don-ngoai" className="rounded-2xl border border-cvr-line bg-white p-5 shadow-sm sm:p-6">
       <h2 className="text-base font-semibold text-cvr-ink">Hóa đơn chờ phát hành</h2>
       <p className="mt-1 text-sm text-cvr-muted">
         Xuất file rồi nhập vào phần mềm Viettel, cắm USB token ký. Viettel sẽ tự gửi hóa đơn về email khách.
@@ -1153,6 +1374,9 @@ function KhoiThueNhaThau({ onSaved }: { onSaved: () => void }) {
 
   const han = hanNop(nam, thang);
   const treHan = !!rows && t.chuaNop > 0 && HOM_NAY > han;
+  // Tháng này có hóa đơn phải khai nộp thay không? Quyết định việc hiện hay ẩn
+  // hai cột thuế trong bảng — toàn Nhóm 1 thì hai cột đó luôn rỗng.
+  const coNhom2 = (rows ?? []).some((d) => d.nhom === "phai_khai_thay");
 
   return (
     <div className="rounded-2xl border border-cvr-line bg-white p-5 shadow-sm sm:p-6">
@@ -1234,8 +1458,11 @@ function KhoiThueNhaThau({ onSaved }: { onSaved: () => void }) {
                   <th className="py-2 pr-3 font-medium">Nhà cung cấp</th>
                   <th className="py-2 pr-3 text-right font-medium">USD</th>
                   <th className="py-2 pr-3 text-right font-medium">Tiền VNĐ</th>
-                  <th className="py-2 pr-3 text-right font-medium">Thuế GTGT</th>
-                  <th className="py-2 pr-3 text-right font-medium">Thuế TNDN</th>
+                  {/* Hai cột thuế chỉ hiện khi tháng đó THẬT SỰ có hóa đơn phải
+                      khai nộp thay. Toàn Nhóm 1 thì hai cột này luôn bằng 0 —
+                      để lại chỉ tổ làm bảng rộng và gây hiểu nhầm là có thuế. */}
+                  {coNhom2 && <th className="py-2 pr-3 text-right font-medium">Thuế GTGT</th>}
+                  {coNhom2 && <th className="py-2 pr-3 text-right font-medium">Thuế TNDN</th>}
                   <th className="py-2 font-medium">Trạng thái</th>
                 </tr>
               </thead>
@@ -1251,8 +1478,8 @@ function KhoiThueNhaThau({ onSaved }: { onSaved: () => void }) {
                       {Number(d.tien_usd).toLocaleString("vi-VN")}
                     </td>
                     <td className="py-2 pr-3 text-right tabular-nums text-cvr-ink">{vnd(d.tien_vnd)}</td>
-                    <td className="py-2 pr-3 text-right tabular-nums text-cvr-ink">{vnd(d.thue_gtgt)}</td>
-                    <td className="py-2 pr-3 text-right tabular-nums text-cvr-ink">{vnd(d.thue_tndn)}</td>
+                    {coNhom2 && <td className="py-2 pr-3 text-right tabular-nums text-cvr-ink">{vnd(d.thue_gtgt)}</td>}
+                    {coNhom2 && <td className="py-2 pr-3 text-right tabular-nums text-cvr-ink">{vnd(d.thue_tndn)}</td>}
                     <td className="py-2 text-xs">
                       {d.nhom === "da_dang_ky" ? (
                         <span className="text-cvr-muted">Đã đăng ký tại VN — không khai thay</span>
