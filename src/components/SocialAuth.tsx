@@ -138,14 +138,21 @@ export default function SocialAuth() {
         {loading === "google" ? "Đang chuyển tới Google…" : "Tiếp tục với Google"}
       </button>
 
-      {/* Có đường dẫn dựng sẵn thì dùng THẺ LIÊN KẾT — cú chạm đi thẳng sang Zalo,
-          đó là điều kiện để điện thoại có thể giao sang app Zalo. Chưa có thì
-          quay về nút bấm như cũ (vẫn vào được, chỉ là qua trình duyệt). */}
+      {/* ZALO CHỈ HIỆN TRÊN MÁY TÍNH (hidden sm:flex) — quyết định 28/8/2026.
+          Trên điện thoại, Zalo bắt đăng nhập Zalo Web bằng MẬT KHẨU: app Zalo và
+          trình duyệt không dùng chung phiên, và QR thì vô dụng vì không thể tự quét
+          màn hình của chính máy đó. Mà gần như không ai nhớ mật khẩu Zalo — chính
+          chủ dự án cũng vậy. Khách thấy chữ "Zalo" tưởng bấm phát là vào, gặp ô mật
+          khẩu là bỏ luôn → nút này trên điện thoại hại nhiều hơn lợi.
+          Trên máy tính thì giữ: ở đó QR dùng được, quét bằng app Zalo trên điện
+          thoại — đúng thói quen người Việt.
+          Muốn Zalo một chạm trên điện thoại thì phải có app native + SDK Zalo;
+          web và PWA đều không làm được. Đừng gỡ dòng hidden này khi chưa có app. */}
       {zaloUrl ? (
         <a
           href={zaloUrl}
           onClick={() => setLoading("zalo")}
-          className="flex h-11 w-full items-center justify-center gap-2.5 rounded-lg border border-cvr-line bg-white text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink"
+          className="hidden h-11 w-full items-center justify-center gap-2.5 rounded-lg border border-cvr-line bg-white text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink sm:flex"
         >
           <ZaloIcon />
           {loading === "zalo" ? "Đang chuyển tới Zalo…" : "Tiếp tục với Zalo"}
@@ -155,7 +162,7 @@ export default function SocialAuth() {
           type="button"
           onClick={() => withZalo()}
           disabled={loading !== null}
-          className="flex h-11 w-full items-center justify-center gap-2.5 rounded-lg border border-cvr-line bg-white text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink disabled:opacity-60"
+          className="hidden h-11 w-full items-center justify-center gap-2.5 rounded-lg border border-cvr-line bg-white text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink disabled:opacity-60 sm:flex"
         >
           <ZaloIcon />
           {loading === "zalo" ? "Đang chuyển tới Zalo…" : "Tiếp tục với Zalo"}
