@@ -93,6 +93,41 @@ export default function AdminListingsPage() {
     setRows((rs) => rs.map((r) => (r.id === id ? { ...r, ...patch } : r)));
   }
 
+  // TỪ CHỐI phải đi qua máy chủ: ghi lý do vào tin rồi BÁO KHÁCH qua email/Zalo.
+  // Sửa thẳng từ trình duyệt thì tin chết lặng, khách ngồi chờ mãi không biết vì sao.
+  async function tuChoi(id: string) {
+    const lyDo = window.prompt(
+      "Lý do từ chối (khách nhận đúng dòng này qua email):\n" +
+        "Ví dụ: Ảnh mờ và trùng tin khác · Thiếu diện tích và giá · Sai khu vực.",
+    );
+    if (lyDo === null) return;
+    if (!lyDo.trim()) {
+      window.alert("Chưa ghi lý do — tin chưa thay đổi.");
+      return;
+    }
+
+    const r = await fetch("/api/tin-dang/tu-choi", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, lyDo }),
+    });
+    const j = await r.json().catch(() => ({ ok: false, message: "Máy chủ không trả lời" }));
+    if (!j.ok) {
+      window.alert(`Từ chối tin THẤT BẠI — tin chưa thay đổi.\n${j.message ?? ""}`);
+      return;
+    }
+    setRows((rs) => rs.map((x) => (x.id === id ? { ...x, status: "rejected" } : x)));
+
+    // Nói rõ đã báo được khách chưa — gửi hỏng thì admin còn gọi điện.
+    const kenh = (j.thongBao ?? []) as { kenh: string; daGui: boolean; lyDo?: string }[];
+    const hong = kenh.filter((k) => !k.daGui).map((k) => `· ${k.kenh}: ${k.lyDo ?? "không gửi được"}`);
+    window.alert(
+      "Đã từ chối tin.\n\n" +
+        (kenh.some((k) => k.daGui) ? "Đã báo cho khách." : "CHƯA báo được cho khách — cần liên hệ tay.") +
+        (hong.length ? `\n\nKênh không gửi được:\n${hong.join("\n")}` : ""),
+    );
+  }
+
   if (dbMissing) {
     return (
       <div className="max-w-2xl">
@@ -189,7 +224,7 @@ export default function AdminListingsPage() {
                 <td className="px-4 py-3">{listingStatusBadge(r.status)}</td>
                 <td className="whitespace-nowrap px-4 py-3 text-cvr-muted">{fmtDate(r.created_at)}</td>
                 <td className="whitespace-nowrap px-4 py-3 text-right">
-                  <RowActions row={r} onStatus={setRowStatus} />
+                  <RowActions row={r} onStatus={setRowStatus} onTuChoi={tuChoi} />
                 </td>
               </tr>
             ))}
@@ -221,7 +256,7 @@ export default function AdminListingsPage() {
               </div>
             </Link>
             <div className="mt-3 border-t border-cvr-line pt-2 text-right">
-              <RowActions row={r} onStatus={setRowStatus} />
+              <RowActions row={r} onStatus={setRowStatus} onTuChoi={tuChoi} />
             </div>
           </div>
         ))}
@@ -239,9 +274,11 @@ export default function AdminListingsPage() {
 function RowActions({
   row,
   onStatus,
+  onTuChoi,
 }: {
   row: ListingRow;
   onStatus: (id: string, next: ListingStatus) => void;
+  onTuChoi: (id: string) => void;
 }) {
   return (
     <span className="inline-flex items-center gap-3">
@@ -256,6 +293,11 @@ function RowActions({
       {row.status === "pending" && (
         <button type="button" onClick={() => onStatus(row.id, "approved")} className="text-sm font-medium text-green-700 hover:text-green-800">
           Duyệt
+        </button>
+      )}
+      {row.status === "pending" && (
+        <button type="button" onClick={() => onTuChoi(row.id)} className="text-sm font-medium text-red-700 hover:text-red-800">
+          Từ chối
         </button>
       )}
       {row.status === "approved" && (

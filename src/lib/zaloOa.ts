@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { baoLoi } from "@/lib/baoLoi";
 
 // ════════════════════════════════════════════════════════════════════════════
 // ZALO OA — TỰ LÀM MỚI ACCESS TOKEN
@@ -92,7 +93,16 @@ export async function layAccessToken(): Promise<string | null> {
     };
 
     if (!kq.access_token || !kq.refresh_token) {
-      console.error("[zalo-oa] làm mới token thất bại:", JSON.stringify(kq).slice(0, 300));
+      await baoLoi({
+        noi: "zalo-oa",
+        mucDo: "chet",
+        tomTat: "Không làm mới được token Zalo OA — mã OTP đăng nhập đang chết",
+        chiTiet: JSON.stringify(kq).slice(0, 300),
+        hauQua: "Khách đăng nhập bằng số điện thoại sẽ không nhận được mã, và mọi thông báo ZNS đều hỏng.",
+        canLam:
+          "Vào developers.zalo.me → ứng dụng liên kết OA → cấp quyền lại để lấy refresh token mới, " +
+          "rồi thay ZALO_OA_REFRESH_TOKEN trên Vercel và Redeploy.",
+      });
       return null;
     }
 
@@ -106,9 +116,16 @@ export async function layAccessToken(): Promise<string | null> {
 
     const { error } = await admin.from("site_content").upsert({ key: KHOA, data: moi }, { onConflict: "key" });
     if (error) {
-      // Lưu hỏng thì lần sau không làm mới được nữa (refresh token cũ đã bị Zalo
-      // vô hiệu) → phải hét lên trong log để còn biết đường cấp quyền lại.
-      console.error("[zalo-oa] LƯU TOKEN MỚI THẤT BẠI, refresh token cũ đã mất hiệu lực:", error.message);
+      // Lưu hỏng là hỏng hẳn: refresh token cũ đã bị Zalo vô hiệu, bản mới thì
+      // không giữ được → một tiếng nữa hết hạn là chết, phải cấp quyền lại tay.
+      await baoLoi({
+        noi: "zalo-oa",
+        mucDo: "chet",
+        tomTat: "LƯU TOKEN ZALO MỚI THẤT BẠI — refresh token cũ đã mất hiệu lực",
+        chiTiet: error.message,
+        hauQua: "Khoảng một tiếng nữa mọi tin ZNS và mã OTP đăng nhập sẽ chết.",
+        canLam: "Kiểm tra bảng site_content trên Supabase, rồi cấp quyền lại OA để lấy refresh token mới.",
+      });
     }
 
     return moi.access_token;

@@ -63,6 +63,10 @@ export default function AdminDashboard() {
     <div>
       <PageHeader title="Tổng quan" desc="Việc đang chờ xử lý và số liệu nền tảng Coastal Land." />
 
+      {/* 0. SỰ CỐ — đứng TRÊN cả việc cần làm. Email báo lỗi có thể rơi vào spam
+             hoặc chính Resend hỏng; đây là đường thứ hai để lỗi không nằm im. */}
+      <SuCoBang />
+
       {/* 1. VIỆC CẦN LÀM — luôn đứng đầu. Hết việc thì báo rõ "không còn việc",
              không để khoảng trống khiến người dùng tưởng trang lỗi. */}
       <Panel title="Việc cần làm" className="mt-6">
@@ -127,6 +131,88 @@ export default function AdminDashboard() {
           </Link>
         </div>
       </Panel>
+    </div>
+  );
+}
+
+// ── SỰ CỐ HỆ THỐNG ─────────────────────────────────────────────────────────
+// Những lỗi web từng nuốt im (trừ tiền mà không ghi sổ, tiền về không rõ của ai,
+// token Zalo chết…) nay được ghi vào bảng `su_co` và hiện ở đây.
+// Bảng chưa tạo (chưa chạy migration 0020) → ẩn hẳn, không báo lỗi đỏ vô nghĩa.
+type SuCoRow = {
+  id: string;
+  xay_ra_luc: string;
+  noi: string;
+  muc_do: "chet" | "nang" | "nhe";
+  tom_tat: string;
+  chi_tiet: string | null;
+  hau_qua: string | null;
+  can_lam: string | null;
+};
+
+function SuCoBang() {
+  const [ds, setDs] = useState<SuCoRow[]>([]);
+
+  useEffect(() => {
+    const supabase = createClient();
+    (async () => {
+      const { data } = await supabase
+        .from("su_co")
+        .select("id,xay_ra_luc,noi,muc_do,tom_tat,chi_tiet,hau_qua,can_lam")
+        .eq("da_xu_ly", false)
+        .order("xay_ra_luc", { ascending: false })
+        .limit(10);
+      setDs((data ?? []) as SuCoRow[]);
+    })();
+  }, []);
+
+  // Đánh dấu đã xử lý = giấu khỏi danh sách, KHÔNG xoá — còn tra lại được về sau.
+  async function xong(id: string) {
+    const { error } = await createClient()
+      .from("su_co")
+      .update({ da_xu_ly: true, xu_ly_luc: new Date().toISOString() })
+      .eq("id", id);
+    if (error) {
+      window.alert(`Không đánh dấu được: ${error.message}`);
+      return;
+    }
+    setDs((rs) => rs.filter((r) => r.id !== id));
+  }
+
+  if (ds.length === 0) return null;
+
+  return (
+    <div className="mt-6 rounded-2xl border border-red-300 bg-red-50/70 p-5 shadow-sm sm:p-6">
+      <h2 className="text-base font-semibold text-red-900">
+        Sự cố hệ thống · {ds.length} việc chưa xử lý
+      </h2>
+      <div className="mt-4 space-y-3">
+        {ds.map((s) => (
+          <div key={s.id} className="rounded-xl border border-red-200 bg-white p-4">
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <p className="font-semibold text-cvr-ink">
+                {s.muc_do === "chet" && <span className="mr-2 text-red-700">KHẨN</span>}
+                {s.tom_tat}
+              </p>
+              <span className="text-xs text-cvr-faint">
+                {new Date(s.xay_ra_luc).toLocaleString("vi-VN")} · {s.noi}
+              </span>
+            </div>
+            {s.hau_qua && <p className="mt-1.5 text-sm text-red-800">Không sửa thì: {s.hau_qua}</p>}
+            {s.can_lam && <p className="mt-1 text-sm text-cvr-body">Cần làm: {s.can_lam}</p>}
+            {s.chi_tiet && (
+              <p className="mt-1 break-words text-xs text-cvr-faint">Máy báo: {s.chi_tiet}</p>
+            )}
+            <button
+              type="button"
+              onClick={() => xong(s.id)}
+              className="mt-3 rounded-lg border border-cvr-line px-3 py-1.5 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink"
+            >
+              Đã xử lý
+            </button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

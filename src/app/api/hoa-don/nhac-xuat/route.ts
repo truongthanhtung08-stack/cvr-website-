@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { guiThongBao, soDienThoaiZalo } from "@/lib/thongBao";
+import { baoLoi } from "@/lib/baoLoi";
+import { quetTinHetHan } from "@/lib/hetHanTin";
 import { vnd } from "@/lib/billing";
 
 // ============================================================================
@@ -41,6 +43,12 @@ export async function GET(request: Request) {
     );
   }
 
+  // ── Nhân thể quét luôn tin hết hạn gói ────────────────────────────────────
+  // Gộp vào đây vì Vercel gói Hobby chỉ cho 2 cron, đã dùng hết cho hóa đơn.
+  // Phải chạy TRƯỚC các lệnh return sớm bên dưới — không thì hôm nào không có
+  // hóa đơn chờ ký là hôm đó tin hết hạn cũng không ai quét.
+  const hetHan = await quetTinHetHan(supabase);
+
   // ── Giao dịch còn chờ xuất hóa đơn ────────────────────────────────────────
   // Lấy CẢ những ngày trước, không chỉ hôm nay: quên một hôm thì hôm sau vẫn
   // được nhắc, chứ không im lặng bỏ qua.
@@ -56,7 +64,7 @@ export async function GET(request: Request) {
 
   const ds = data ?? [];
   if (ds.length === 0) {
-    return NextResponse.json({ ok: true, canNhac: false, message: "Không có giao dịch nào chờ xuất hóa đơn." });
+    return NextResponse.json({ ok: true, canNhac: false, hetHan, message: "Không có giao dịch nào chờ xuất hóa đơn." });
   }
 
   // ── Gom theo ngày để biết phải ký mấy tờ ──────────────────────────────────
@@ -119,12 +127,27 @@ export async function GET(request: Request) {
     );
   }
 
+  // Lời nhắc không tới được ai = coi như không có lời nhắc: quên ký một tối là
+  // hôm sau VNPT khoá. Ghi vào sổ sự cố để mở /admin là thấy đỏ ngay — sổ này
+  // cứu được cả trường hợp chính Resend đang hỏng nên email không đi được.
+  if (!ketQua.flat().some((k) => k.daGui)) {
+    await baoLoi({
+      noi: "nhac-xuat-hoa-don",
+      mucDo: "chet",
+      tomTat: `Không gửi được lời nhắc xuất ${soTo} tờ hóa đơn`,
+      chiTiet: ketQua.flat().map((k) => `${k.kenh}: ${k.lyDo ?? "không rõ"}`).join(" · "),
+      hauQua: "Quên ký trong ngày thì VNPT khoá phát hành, phải gọi tổng đài xin mở.",
+      canLam: "Mở /admin/hoa-don-thue ký ngay, rồi kiểm tra khoá Resend.",
+    });
+  }
+
   return NextResponse.json({
     ok: true,
     canNhac: true,
     soGiaoDich: ds.length,
     soTo,
     soNguoiNhan: nguoiNhan.length,
+    hetHan,
     ketQua: ketQua.flat(),
   });
 }

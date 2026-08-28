@@ -66,6 +66,8 @@ export default function MyListingsPage() {
     { key: "pending", label: `Chờ duyệt (${count("pending")})` },
     { key: "draft", label: `Nháp (${count("draft")})` },
   ];
+  // Chỉ hiện mục "Bị từ chối" khi thật sự có — không ai cần một mục luôn bằng 0.
+  if (count("rejected") > 0) tabs.push({ key: "rejected", label: `Bị từ chối (${count("rejected")})` });
 
   return (
     <div className="space-y-4">
@@ -103,6 +105,14 @@ export default function MyListingsPage() {
                 {r.area_m2 != null ? ` · ${r.area_m2} m²` : ""}
                 {r.province ? ` · ${r.province}` : ""}
               </div>
+              {/* Tin bị từ chối: nói thẳng lý do ngay tại đây. Chỉ báo qua email thì
+                  khách mất thư là chịu, vào trang này chỉ thấy chữ "Bị từ chối" trơ trọi. */}
+              {r.status === "rejected" && r.details?.ly_do_tu_choi && (
+                <p className="mt-2 rounded-lg bg-red-50 px-3 py-2 text-sm leading-relaxed text-red-800">
+                  <span className="font-semibold">Lý do chưa duyệt:</span> {r.details.ly_do_tu_choi}
+                  <span className="block text-red-700/80">Sửa lại rồi gửi duyệt lại — tin chưa duyệt thì chưa bị trừ tiền.</span>
+                </p>
+              )}
             </div>
             <div className="flex shrink-0 flex-col items-end gap-2 sm:flex-row sm:items-center sm:gap-3">
               <span className="text-xs text-cvr-faint">{r.view_count} lượt xem</span>

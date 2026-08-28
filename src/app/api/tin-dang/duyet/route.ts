@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { BILLING_DEFAULT, quotePrice, vnd, type BillingData } from "@/lib/billing";
 import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
 import { guiThongBao } from "@/lib/thongBao";
+import { baoLoi } from "@/lib/baoLoi";
 import type { TierId } from "@/lib/packages";
 
 // ============================================================================
@@ -158,9 +159,20 @@ export async function POST(request: Request) {
     dia_chi_nguoi_mua: canHoaDon ? hs.hd_dia_chi : null,
     email_nguoi_mua: (canHoaDon ? hs.hd_email : null) || hs.email,
   });
-  // Ghi sổ hỏng thì KHÔNG dừng: tiền đã trừ, tin phải lên sóng. Ghi log để đối
-  // soát tay — thà lệch sổ một dòng còn hơn khách mất tiền mà tin không đăng.
-  if (loiSo) console.error("[duyet-tin] ghi doanh_thu that bai:", id, loiSo.message);
+  // Ghi sổ hỏng thì KHÔNG dừng: tiền đã trừ, tin phải lên sóng — thà lệch sổ một
+  // dòng còn hơn khách mất tiền mà tin không đăng. NHƯNG phải gào lên ngay: tiền
+  // đã vào túi mình mà không có trong sổ là sai tờ khai thuế, không ai tự biết.
+  if (loiSo) {
+    await baoLoi({
+      noi: "duyet-tin",
+      mucDo: "chet",
+      tomTat: "Đã trừ tiền khách nhưng KHÔNG ghi được sổ doanh thu",
+      chiTiet: `Tin ${id} — ${loiSo.message}`,
+      hauQua: "Tờ khai thuế quý này thiếu một khoản thu, và khách sẽ không được xuất hóa đơn.",
+      canLam: `Vào /admin/hoa-don-thue → ghi tay khoản ${vnd(tien.tongTra)} của tin "${tin.title}".`,
+      khoa: `duyet-tin:doanh-thu:${id}`, // mỗi tin một cảnh báo riêng, không nuốt của nhau
+    });
+  }
 
   // ── 8. Cho tin lên sóng ───────────────────────────────────────────────────
   const hetHan = new Date(Date.now() + soNgay * 86_400_000).toISOString();
@@ -232,9 +244,31 @@ async function baoKhach(
       email = (data?.[0]?.email as string | null) ?? null;
       phone = (data?.[0]?.phone as string | null) ?? null;
     }
-    return await guiThongBao({ ...noiDung, email, phone });
+    const kq = await guiThongBao({ ...noiDung, email, phone });
+
+    // Không kênh nào tới được khách = khách đã bị trừ tiền mà không biết tin đã
+    // lên sóng. Im lặng ở đây là mất khách, nên báo ngay cho chủ dự án gọi tay.
+    if (!kq.some((k) => k.daGui)) {
+      await baoLoi({
+        noi: "duyet-tin",
+        mucDo: "nang",
+        tomTat: "Duyệt tin xong nhưng KHÔNG báo được cho khách",
+        chiTiet: kq.map((k) => `${k.kenh}: ${k.lyDo ?? "không rõ"}`).join(" · "),
+        hauQua: "Khách bị trừ tiền mà không biết tin đã lên sóng.",
+        canLam: `Gọi hoặc nhắn cho khách${email ? ` (${email})` : ""} để báo tin đã đăng.`,
+        khoa: `duyet-tin:bao-khach:${ownerId ?? "khong-ro"}`,
+      });
+    }
+    return kq;
   } catch (e) {
-    console.error("[duyet-tin] gui thong bao that bai:", e);
+    await baoLoi({
+      noi: "duyet-tin",
+      mucDo: "nang",
+      tomTat: "Gửi thông báo duyệt tin cho khách bị lỗi",
+      chiTiet: String(e),
+      hauQua: "Khách bị trừ tiền mà không biết tin đã lên sóng.",
+      canLam: "Liên hệ khách bằng tay, rồi xem lại khoá Resend / Zalo.",
+    });
     return [];
   }
 }

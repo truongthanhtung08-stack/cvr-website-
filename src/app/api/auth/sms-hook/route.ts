@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { guiZns } from "@/lib/thongBao";
+import { baoLoi } from "@/lib/baoLoi";
 
 // ============================================================================
 // SUPABASE "SEND SMS HOOK" — GỬI MÃ OTP ĐĂNG NHẬP QUA ZALO
@@ -65,7 +66,16 @@ export async function POST(request: Request) {
   const kq = await guiZns(phone, templateId, { ma_otp: otp });
 
   if (!kq.daGui) {
-    console.error("[sms-hook] gui ZNS that bai:", kq.lyDo);
+    // Gửi mã hỏng = khách KHÔNG đăng nhập được. Gộp mọi lần hỏng vào một khoá:
+    // khi Zalo sập thì cả trăm người cùng hỏng, chỉ cần một tiếng chuông.
+    await baoLoi({
+      noi: "sms-hook",
+      mucDo: "chet",
+      tomTat: "Không gửi được mã OTP qua Zalo — khách đang không đăng nhập được",
+      chiTiet: kq.lyDo,
+      hauQua: "Zalo là đường đăng nhập bằng số điện thoại duy nhất đang chạy.",
+      canLam: "Kiểm tra token Zalo OA và số dư ZNS. Trong lúc chờ, bảo khách đăng nhập bằng Google hoặc email.",
+    });
     // Trả lỗi để Supabase báo ngược cho khách "không gửi được mã", thay vì để
     // khách ngồi chờ một tin nhắn không bao giờ tới.
     return loi(`Không gửi được mã qua Zalo: ${kq.lyDo ?? ""}`);

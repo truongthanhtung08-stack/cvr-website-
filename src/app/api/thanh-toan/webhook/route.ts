@@ -3,6 +3,7 @@ import crypto from "crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { BILLING_DEFAULT, chuanHoaCapHoiVien, vnd, type BillingData, type MemberLevel } from "@/lib/billing";
 import { guiThongBao } from "@/lib/thongBao";
+import { baoLoi } from "@/lib/baoLoi";
 
 // ============================================================================
 // PayOS GỌI NGƯỢC VỀ WEB KHI KHÁCH ĐÃ CHUYỂN TIỀN (webhook)
@@ -106,6 +107,20 @@ export async function POST(req: Request) {
       status: thanhCong ? "paid" : "cancelled",
       note: "PayOS báo về nhưng không tìm thấy đơn gốc — cần đối soát tay.",
     });
+
+    // KHÁCH ĐÃ CHUYỂN TIỀN THẬT mà mình không biết tiền của ai → ví vẫn bằng 0.
+    // Đây là kiểu lỗi khách sẽ tự đi kể, phải biết trước khi khách kịp bực.
+    if (thanhCong) {
+      await baoLoi({
+        noi: "payos-webhook",
+        mucDo: "chet",
+        tomTat: "Tiền đã về nhưng KHÔNG biết của khách nào — ví chưa được cộng",
+        chiTiet: `Mã đơn PayOS ${orderCode}, số tiền ${body.data.amount ?? "?"}`,
+        hauQua: "Khách mất tiền mà ví vẫn bằng 0.",
+        canLam: `Mở /admin/thanh-toan, tìm mã đơn ${orderCode}, đối chiếu sao kê rồi cộng ví tay cho khách.`,
+        khoa: `payos:mat-don:${orderCode}`,
+      });
+    }
     return NextResponse.json({ ok: true, message: "Đã ghi nhận để đối soát." });
   }
 
@@ -160,7 +175,18 @@ export async function POST(req: Request) {
     // Ví lỗi mà đơn đã "paid" → trả 500 để PayOS gửi lại; đơn vẫn "paid" nên
     // lần sau vào nhánh "đã xử lý", KHÔNG cộng hai lần. Dòng tiền vẫn nằm trong
     // sổ payments để đối soát tay.
-    if (loiVi) return NextResponse.json({ ok: false, message: loiVi.message }, { status: 500 });
+    if (loiVi) {
+      await baoLoi({
+        noi: "payos-webhook",
+        mucDo: "chet",
+        tomTat: "Đơn đã ghi ĐÃ THANH TOÁN nhưng cộng ví cho khách thất bại",
+        chiTiet: `Đơn ${don.id} — ${loiVi.message}`,
+        hauQua: "Khách đã trả tiền mà số dư không tăng.",
+        canLam: `Kiểm tra hồ sơ khách rồi cộng tay ${vnd(soTien)} vào ví, hoặc chờ PayOS gọi lại.`,
+        khoa: `payos:cong-vi:${don.id}`,
+      });
+      return NextResponse.json({ ok: false, message: loiVi.message }, { status: 500 });
+    }
 
     // ── Báo cho khách: đã nhận tiền, số dư mới ──────────────────────────────
     // KHÔNG có hóa đơn ở bước này — nạp ví là khách gửi tiền trước, chưa phải
