@@ -43,11 +43,10 @@ export default function SocialAuth() {
       provider: "google",
       options: {
         redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
-        // KHÔNG truyền prompt: đang sẵn một tài khoản Google thì bấm một cái là
-        // vào thẳng, không phải chọn lại. Trước đây ép prompt=select_account nên
-        // lần nào cũng chen thêm màn hình chọn tài khoản — chủ dự án bác bỏ.
-        // Ai có nhiều Gmail vẫn đổi được: Google tự hiện danh sách khi đang đăng
-        // nhập nhiều tài khoản, còn không thì đăng xuất rồi vào lại.
+        // LUÔN hiện màn hình CHỌN TÀI KHOẢN Google (không tự vào gmail gần nhất)
+        // — người có nhiều gmail (vd admin + khách) chọn đúng tài khoản mỗi lần.
+        // Chủ dự án xác nhận 28/8: cho chọn tài khoản là bình thường, GIỮ NGUYÊN.
+        queryParams: { prompt: "select_account" },
       },
     });
     // Thành công thì trình duyệt tự chuyển sang Google — chỉ còn lại trường hợp lỗi.
