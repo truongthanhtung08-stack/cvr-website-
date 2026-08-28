@@ -43,9 +43,11 @@ export default function SocialAuth() {
       provider: "google",
       options: {
         redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
-        // LUÔN hiện màn hình CHỌN TÀI KHOẢN Google (không tự vào gmail gần nhất)
-        // — người có nhiều gmail (vd admin + khách) chọn đúng tài khoản mỗi lần.
-        queryParams: { prompt: "select_account" },
+        // KHÔNG truyền prompt: đang sẵn một tài khoản Google thì bấm một cái là
+        // vào thẳng, không phải chọn lại. Trước đây ép prompt=select_account nên
+        // lần nào cũng chen thêm màn hình chọn tài khoản — chủ dự án bác bỏ.
+        // Ai có nhiều Gmail vẫn đổi được: Google tự hiện danh sách khi đang đăng
+        // nhập nhiều tài khoản, còn không thì đăng xuất rồi vào lại.
       },
     });
     // Thành công thì trình duyệt tự chuyển sang Google — chỉ còn lại trường hợp lỗi.
@@ -103,6 +105,20 @@ export default function SocialAuth() {
         </p>
       )}
 
+      {/* ZALO ĐỨNG ĐẦU — gần như người mua nhà ở Việt Nam nào cũng sẵn Zalo trên
+          máy, bấm một cái là vào thẳng (điện thoại mở app, máy tính quét QR).
+          Google xuống dưới làm đường dự phòng. Viền đậm + chữ đậm để mắt rơi
+          vào đây trước, KHÔNG đổi màu nền — giữ nguyên hệ nút trắng của trang. */}
+      <button
+        type="button"
+        onClick={() => withZalo()}
+        disabled={loading !== null}
+        className="flex h-11 w-full items-center justify-center gap-2.5 rounded-lg border border-cvr-ink bg-white text-sm font-semibold text-cvr-ink transition hover:bg-cvr-surface disabled:opacity-60"
+      >
+        <ZaloIcon />
+        {loading === "zalo" ? "Đang chuyển tới Zalo…" : "Tiếp tục với Zalo"}
+      </button>
+
       <button
         type="button"
         onClick={withGoogle}
@@ -124,16 +140,6 @@ export default function SocialAuth() {
           {loading === "facebook" ? "Đang chuyển tới Facebook…" : "Tiếp tục với Facebook"}
         </button>
       )}
-
-      <button
-        type="button"
-        onClick={() => withZalo()}
-        disabled={loading !== null}
-        className="flex h-11 w-full items-center justify-center gap-2.5 rounded-lg border border-cvr-line bg-white text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink disabled:opacity-60"
-      >
-        <ZaloIcon />
-        {loading === "zalo" ? "Đang chuyển tới Zalo…" : "Tiếp tục với Zalo"}
-      </button>
 
       {BAT_SO_DIEN_THOAI && (
         <Link
