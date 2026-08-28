@@ -104,28 +104,30 @@ export default function SocialAuth() {
         </p>
       )}
 
-      {/* ZALO ĐỨNG ĐẦU — gần như người mua nhà ở Việt Nam nào cũng sẵn Zalo trên
-          máy, bấm một cái là vào thẳng (điện thoại mở app, máy tính quét QR).
-          Google xuống dưới làm đường dự phòng. Viền đậm + chữ đậm để mắt rơi
-          vào đây trước, KHÔNG đổi màu nền — giữ nguyên hệ nút trắng của trang. */}
-      <button
-        type="button"
-        onClick={() => withZalo()}
-        disabled={loading !== null}
-        className="flex h-11 w-full items-center justify-center gap-2.5 rounded-lg border border-cvr-ink bg-white text-sm font-semibold text-cvr-ink transition hover:bg-cvr-surface disabled:opacity-60"
-      >
-        <ZaloIcon />
-        {loading === "zalo" ? "Đang chuyển tới Zalo…" : "Tiếp tục với Zalo"}
-      </button>
-
+      {/* GOOGLE ĐỨNG ĐẦU — trên điện thoại đây là đường DUY NHẤT vào được bằng
+          một chạm: máy Android/Chrome đã sẵn tài khoản, bấm là ra danh sách chọn
+          rồi vào thẳng. Viền đậm + chữ đậm để mắt rơi vào đây trước.
+          Zalo xuống ngay dưới: Zalo Web luôn bắt đăng nhập lại (phiên rất ngắn,
+          và mở trong trình duyệt phụ là mất phiên), nên KHÔNG thể một chạm —
+          muốn Zalo một chạm thì phải đi đường OTP qua ZNS hoặc app riêng. */}
       <button
         type="button"
         onClick={withGoogle}
         disabled={loading !== null}
-        className="flex h-11 w-full items-center justify-center gap-2.5 rounded-lg border border-cvr-line bg-white text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink disabled:opacity-60"
+        className="flex h-11 w-full items-center justify-center gap-2.5 rounded-lg border border-cvr-ink bg-white text-sm font-semibold text-cvr-ink transition hover:bg-cvr-surface disabled:opacity-60"
       >
         <GoogleIcon />
         {loading === "google" ? "Đang chuyển tới Google…" : "Tiếp tục với Google"}
+      </button>
+
+      <button
+        type="button"
+        onClick={() => withZalo()}
+        disabled={loading !== null}
+        className="flex h-11 w-full items-center justify-center gap-2.5 rounded-lg border border-cvr-line bg-white text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink disabled:opacity-60"
+      >
+        <ZaloIcon />
+        {loading === "zalo" ? "Đang chuyển tới Zalo…" : "Tiếp tục với Zalo"}
       </button>
 
       {BAT_FACEBOOK && (
