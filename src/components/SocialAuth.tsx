@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
@@ -33,6 +33,24 @@ export default function SocialAuth() {
   // Nút NÀO đang chờ thì CHỈ nút đó báo "Đang chuyển tới…". Trước đây dùng một cờ
   // chung nên bấm Zalo lại thấy nút Google đổi chữ → tưởng web đá sang Google.
   const [loading, setLoading] = useState<null | "google" | "facebook" | "zalo">(null);
+
+  // Đường dẫn Zalo dựng SẴN lúc mở trang, để nút Zalo là một thẻ liên kết bấm
+  // thẳng sang oauth.zaloapp.com. Người Việt đăng nhập Zalo bằng APP chứ không ai
+  // vào trình duyệt đăng nhập Zalo Web; muốn điện thoại giao link cho app Zalo thì
+  // phải có CÚ CHẠM THẲNG của người dùng — Android cố ý không giao link cho app khi
+  // link đến từ chuỗi chuyển hướng (cách cũ: bấm → /api/auth/zalo → 307 → Zalo).
+  // Chưa lấy được thì nút quay về cách cũ, không ai bị kẹt.
+  const [zaloUrl, setZaloUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    const next = new URLSearchParams(window.location.search).get("next") || "/tai-khoan";
+    let huy = false;
+    fetch(`/api/auth/zalo/link?next=${encodeURIComponent(next)}`)
+      .then((r) => r.json())
+      .then((j) => { if (!huy && j?.ok && j.url) setZaloUrl(j.url as string); })
+      .catch(() => { /* im lặng: nút vẫn chạy bằng đường cũ */ });
+    return () => { huy = true; };
+  }, []);
 
   async function withGoogle() {
     setLoading("google");
@@ -120,15 +138,29 @@ export default function SocialAuth() {
         {loading === "google" ? "Đang chuyển tới Google…" : "Tiếp tục với Google"}
       </button>
 
-      <button
-        type="button"
-        onClick={() => withZalo()}
-        disabled={loading !== null}
-        className="flex h-11 w-full items-center justify-center gap-2.5 rounded-lg border border-cvr-line bg-white text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink disabled:opacity-60"
-      >
-        <ZaloIcon />
-        {loading === "zalo" ? "Đang chuyển tới Zalo…" : "Tiếp tục với Zalo"}
-      </button>
+      {/* Có đường dẫn dựng sẵn thì dùng THẺ LIÊN KẾT — cú chạm đi thẳng sang Zalo,
+          đó là điều kiện để điện thoại có thể giao sang app Zalo. Chưa có thì
+          quay về nút bấm như cũ (vẫn vào được, chỉ là qua trình duyệt). */}
+      {zaloUrl ? (
+        <a
+          href={zaloUrl}
+          onClick={() => setLoading("zalo")}
+          className="flex h-11 w-full items-center justify-center gap-2.5 rounded-lg border border-cvr-line bg-white text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink"
+        >
+          <ZaloIcon />
+          {loading === "zalo" ? "Đang chuyển tới Zalo…" : "Tiếp tục với Zalo"}
+        </a>
+      ) : (
+        <button
+          type="button"
+          onClick={() => withZalo()}
+          disabled={loading !== null}
+          className="flex h-11 w-full items-center justify-center gap-2.5 rounded-lg border border-cvr-line bg-white text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink disabled:opacity-60"
+        >
+          <ZaloIcon />
+          {loading === "zalo" ? "Đang chuyển tới Zalo…" : "Tiếp tục với Zalo"}
+        </button>
+      )}
 
       {BAT_FACEBOOK && (
         <button
