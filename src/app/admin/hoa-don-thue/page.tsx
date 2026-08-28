@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { vnd } from "@/lib/billing";
-import { THUE_SUAT_GTGT, khoangQuy } from "@/lib/thue";
+import { THUE_SUAT_GTGT, khoangQuy, tachThue } from "@/lib/thue";
 import {
   NCC_DA_BIET,
   TY_LE,
@@ -14,6 +14,7 @@ import {
   type LoaiDichVu,
   type NhomNcc,
 } from "@/lib/thueNhaThau";
+import { docHoaDonNgoai } from "@/lib/docHoaDonNgoai";
 
 // ============================================================================
 // ADMIN — HÓA ĐƠN & BÁO CÁO THUẾ
@@ -48,6 +49,8 @@ type DongDoanhThu = {
   hoa_don_trang_thai: string;
   ten_nguoi_mua: string | null;
   mst_nguoi_mua: string | null;
+  /** 'tin_dang' = web tự ghi khi duyệt tin · 'doanh_nghiep' = dịch vụ B2B nhập tay */
+  nguon: string;
 };
 
 type DongVao = {
@@ -106,7 +109,7 @@ export default function AdminThuePage() {
 
     const r1 = await supabase
       .from("doanh_thu")
-      .select("id,ngay_ghi_nhan,mo_ta,tien_hang,tien_thue,tong_tra,hoa_don_loai,hoa_don_so,hoa_don_trang_thai,ten_nguoi_mua,mst_nguoi_mua")
+      .select("id,ngay_ghi_nhan,mo_ta,tien_hang,tien_thue,tong_tra,hoa_don_loai,hoa_don_so,hoa_don_trang_thai,ten_nguoi_mua,mst_nguoi_mua,nguon")
       .gte("ngay_ghi_nhan", tu.toISOString())
       .lte("ngay_ghi_nhan", den.toISOString())
       .order("ngay_ghi_nhan", { ascending: true });
@@ -129,13 +132,16 @@ export default function AdminThuePage() {
     // Bảng 0018 có thể chưa chạy — không để nó chặn cả trang, chỉ coi như chưa có dòng nào.
     setNgoai(r3.error ? [] : ((r3.data ?? []) as unknown as DongNgoai[]));
 
-    // Chưa chạy migration 0017 → bảng chưa tồn tại. Báo bằng tiếng người.
+    // Chưa chạy migration → bảng/cột chưa tồn tại. Báo bằng tiếng người, và nói
+    // rõ CHẠY FILE NÀO — thiếu cột `nguon` (0019) báo khác thiếu cả bảng (0017).
     if (r1.error || r2.error) {
       const msg = r1.error?.message || r2.error?.message || "";
       setLoi(
-        /does not exist|schema cache/i.test(msg)
-          ? "Chưa có bảng dữ liệu. Vào Supabase → SQL Editor → chạy file supabase/migrations/0017_goi_tin_va_doanh_thu.sql rồi tải lại trang."
-          : msg,
+        /nguon/i.test(msg)
+          ? "Thiếu cột phân nguồn doanh thu. Vào Supabase → SQL Editor → chạy file supabase/migrations/0019_doanh_thu_doanh_nghiep.sql rồi tải lại trang."
+          : /does not exist|schema cache/i.test(msg)
+            ? "Chưa có bảng dữ liệu. Vào Supabase → SQL Editor → chạy lần lượt các file trong supabase/migrations/ (0017, 0018, 0019) rồi tải lại trang."
+            : msg,
       );
       setRa([]);
       setVao([]);
@@ -156,6 +162,14 @@ export default function AdminThuePage() {
     const dsNgoai = ngoai ?? [];
     const dtChuaThue = dsRa.reduce((s, d) => s + Number(d.tien_hang || 0), 0);
     const thueRa = dsRa.reduce((s, d) => s + Number(d.tien_thue || 0), 0);
+
+    // Tách hai nguồn doanh thu để báo cáo nhìn ra ngay mảng nào đang chạy.
+    // Dòng cũ chưa có cột `nguon` thì mặc định là tin đăng.
+    const laDoanhNghiep = (d: DongDoanhThu) => d.nguon === "doanh_nghiep";
+    const cong = (ds: DongDoanhThu[], k: "tien_hang" | "tien_thue") =>
+      ds.reduce((s, d) => s + Number(d[k] || 0), 0);
+    const raTin = dsRa.filter((d) => !laDoanhNghiep(d));
+    const raDn = dsRa.filter(laDoanhNghiep);
     const khauTru = dsVao.filter((d) => d.duoc_khau_tru);
 
     // Thuế nhà thầu chỉ được khấu trừ khi ĐÃ NỘP Kho bạc — Nghị định 181/2025 đòi
@@ -185,6 +199,14 @@ export default function AdminThuePage() {
       // Doanh thu ≤ 3 tỷ/năm → 15% (Luật Thuế TNDN 67/2025/QH15)
       tamNopTndn: Math.max(0, Math.round(loiNhuan * 0.15)),
       soGiaoDich: dsRa.length,
+      // Cơ cấu doanh thu — LUÔN hiện đủ hai dòng kể cả khi bằng 0, để nhìn ra
+      // ngay là mảng đó chưa phát sinh chứ không phải bị quên nhập.
+      dtTinDang: cong(raTin, "tien_hang"),
+      thueTinDang: cong(raTin, "tien_thue"),
+      soTinDang: raTin.length,
+      dtDoanhNghiep: cong(raDn, "tien_hang"),
+      thueDoanhNghiep: cong(raDn, "tien_thue"),
+      soDoanhNghiep: raDn.length,
     };
   }, [ra, vao, ngoai]);
 
@@ -233,6 +255,9 @@ export default function AdminThuePage() {
       {loi && (
         <div className="rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">{loi}</div>
       )}
+
+      {/* ── CƠ CẤU DOANH THU ────────────────────────────────────────────── */}
+      <KhoiCoCauDoanhThu t={t} nhan={nhan} onSaved={nap} />
 
       {/* ── TỜ KHAI 01/GTGT ─────────────────────────────────────────────── */}
       <div className="rounded-2xl border border-cvr-line bg-white p-5 shadow-sm sm:p-6">
@@ -363,6 +388,190 @@ export default function AdminThuePage() {
 
       {/* ── HÓA ĐƠN NƯỚC NGOÀI & THUẾ NHÀ THẦU ──────────────────────────── */}
       <KhoiThueNhaThau onSaved={nap} />
+    </div>
+  );
+}
+
+// ── CƠ CẤU DOANH THU: TIN ĐĂNG + DỊCH VỤ DOANH NGHIỆP ─────────────────────
+// Hai dòng LUÔN hiện kể cả khi bằng 0 — chủ dự án chốt 28/08/2026. Nhìn thấy
+// dòng 0 thì biết mảng đó chưa phát sinh; giấu đi thì không phân biệt được
+// "chưa có" với "quên nhập", mà quên nhập doanh thu là khai thiếu thuế.
+//
+// Doanh thu tin đăng do web tự ghi lúc duyệt tin, KHÔNG nhập tay.
+// Doanh thu doanh nghiệp (banner, bài PR, hợp đồng dịch vụ) thì web không biết,
+// phải nhập ở đây. Nhập xong nó đi tiếp vào đúng luồng cũ: hiện ở mục "Hóa đơn
+// chờ phát hành" cuối ngày, và cộng vào chỉ tiêu [32] [33] của tờ khai quý.
+function KhoiCoCauDoanhThu({
+  t,
+  nhan,
+  onSaved,
+}: {
+  t: {
+    dtTinDang: number; thueTinDang: number; soTinDang: number;
+    dtDoanhNghiep: number; thueDoanhNghiep: number; soDoanhNghiep: number;
+    dtChuaThue: number; thueRa: number;
+  };
+  nhan: string;
+  onSaved: () => void;
+}) {
+  return (
+    <div className="rounded-2xl border border-cvr-line bg-white p-5 shadow-sm sm:p-6">
+      <h2 className="text-base font-semibold text-cvr-ink">Cơ cấu doanh thu · {nhan}</h2>
+      <p className="mt-1 text-sm text-cvr-muted">
+        Tổng hai dòng dưới đây chính là chỉ tiêu [32] của tờ khai GTGT.
+      </p>
+
+      <div className="mt-4 overflow-x-auto">
+        <table className="w-full min-w-[560px] border-collapse text-sm">
+          <thead>
+            <tr className="border-b border-cvr-line text-left text-xs uppercase tracking-wide text-cvr-muted">
+              <th className="py-2 pr-3 font-medium">Nguồn doanh thu</th>
+              <th className="py-2 pr-3 font-medium">Cách ghi nhận</th>
+              <th className="py-2 pr-3 text-right font-medium">Số giao dịch</th>
+              <th className="py-2 pr-3 text-right font-medium">Tiền hàng</th>
+              <th className="py-2 text-right font-medium">Thuế GTGT</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr className="border-b border-cvr-line/60">
+              <td className="py-2.5 pr-3 font-medium text-cvr-ink">Bán gói tin đăng</td>
+              <td className="py-2.5 pr-3 text-cvr-muted">Web tự ghi khi duyệt tin</td>
+              <td className="py-2.5 pr-3 text-right tabular-nums text-cvr-body">{t.soTinDang}</td>
+              <td className="py-2.5 pr-3 text-right tabular-nums text-cvr-ink">{vnd(t.dtTinDang)}</td>
+              <td className="py-2.5 text-right tabular-nums text-cvr-ink">{vnd(t.thueTinDang)}</td>
+            </tr>
+            <tr className="border-b border-cvr-line/60">
+              <td className="py-2.5 pr-3 font-medium text-cvr-ink">Dịch vụ doanh nghiệp</td>
+              <td className="py-2.5 pr-3 text-cvr-muted">Nhập tay ở dưới</td>
+              <td className="py-2.5 pr-3 text-right tabular-nums text-cvr-body">{t.soDoanhNghiep}</td>
+              <td className="py-2.5 pr-3 text-right tabular-nums text-cvr-ink">{vnd(t.dtDoanhNghiep)}</td>
+              <td className="py-2.5 text-right tabular-nums text-cvr-ink">{vnd(t.thueDoanhNghiep)}</td>
+            </tr>
+            <tr className="border-t-2 border-cvr-ink">
+              <td className="py-3 pr-3 font-semibold text-cvr-ink" colSpan={3}>TỔNG DOANH THU</td>
+              <td className="py-3 pr-3 text-right text-base font-bold tabular-nums text-cvr-ink">{vnd(t.dtChuaThue)}</td>
+              <td className="py-3 text-right text-base font-bold tabular-nums text-cvr-ink">{vnd(t.thueRa)}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <FormDoanhThuDoanhNghiep onSaved={onSaved} />
+    </div>
+  );
+}
+
+// Nhập doanh thu ngoài tin đăng. Khách doanh nghiệp LUÔN lấy hóa đơn nên mặc
+// định xuất hóa đơn RIÊNG, không gom vào hóa đơn tổng cuối ngày.
+function FormDoanhThuDoanhNghiep({ onSaved }: { onSaved: () => void }) {
+  const [mo, setMo] = useState(false);
+  const [f, setF] = useState({
+    ngay: ngayISO(new Date()),
+    mo_ta: "",
+    ten_nguoi_mua: "",
+    mst_nguoi_mua: "",
+    dia_chi_nguoi_mua: "",
+    email_nguoi_mua: "",
+    tien_hang: "",
+  });
+  const [saving, setSaving] = useState(false);
+  const [notice, setNotice] = useState("");
+
+  const tach = tachThue(Number(f.tien_hang) || 0);
+
+  async function luu(e: React.FormEvent) {
+    e.preventDefault();
+    if (!f.mo_ta.trim()) return setNotice("Chưa điền nội dung dịch vụ.");
+    if (!f.ten_nguoi_mua.trim()) return setNotice("Chưa điền tên công ty mua.");
+    if (!(Number(f.tien_hang) > 0)) return setNotice("Chưa điền tiền hàng chưa thuế.");
+
+    setSaving(true);
+    setNotice("");
+    const { error } = await createClient().from("doanh_thu").insert({
+      nguon: "doanh_nghiep",
+      mo_ta: f.mo_ta.trim(),
+      tien_hang: tach.tienHang,
+      tien_thue: tach.tienThue,
+      thue_suat: tach.thueSuat,
+      tong_tra: tach.tongTra,
+      ngay_ghi_nhan: new Date(`${f.ngay}T12:00:00`).toISOString(),
+      // Khách doanh nghiệp luôn cần hóa đơn đứng tên họ.
+      yeu_cau_hoa_don: true,
+      hoa_don_loai: "rieng",
+      hoa_don_trang_thai: "chua_xuat",
+      ten_nguoi_mua: f.ten_nguoi_mua.trim(),
+      mst_nguoi_mua: f.mst_nguoi_mua.trim() || null,
+      dia_chi_nguoi_mua: f.dia_chi_nguoi_mua.trim() || null,
+      email_nguoi_mua: f.email_nguoi_mua.trim() || null,
+    });
+    setSaving(false);
+    if (error) {
+      return setNotice(
+        /nguon/i.test(error.message)
+          ? "Thiếu cột phân nguồn — chạy file supabase/migrations/0019_doanh_thu_doanh_nghiep.sql trong Supabase rồi thử lại."
+          : "Lưu thất bại: " + error.message,
+      );
+    }
+    setF({ ...f, mo_ta: "", ten_nguoi_mua: "", mst_nguoi_mua: "", dia_chi_nguoi_mua: "", email_nguoi_mua: "", tien_hang: "" });
+    setNotice("Đã ghi nhận ✓ Giao dịch này giờ nằm ở mục “Hóa đơn chờ phát hành”.");
+    onSaved();
+  }
+
+  return (
+    <div className="mt-5">
+      <button onClick={() => setMo((v) => !v)} className={btnPhu}>
+        {mo ? "Đóng" : "+ Ghi doanh thu dịch vụ doanh nghiệp"}
+      </button>
+
+      {mo && (
+        <form onSubmit={luu} className="mt-3 grid grid-cols-1 gap-3 rounded-xl bg-cvr-surface p-4 sm:grid-cols-3">
+          <L label="Ngày ghi nhận">
+            <input type="date" value={f.ngay} onChange={(e) => setF({ ...f, ngay: e.target.value })} className={inp} />
+          </L>
+          <L label="Nội dung dịch vụ *">
+            <input value={f.mo_ta} onChange={(e) => setF({ ...f, mo_ta: e.target.value })} className={inp} placeholder="Banner trang chủ tháng 9/2026" />
+          </L>
+          <L label="Tiền hàng chưa thuế *">
+            <input value={f.tien_hang} onChange={(e) => setF({ ...f, tien_hang: e.target.value })} className={inp} inputMode="numeric" placeholder="10000000" />
+          </L>
+
+          <L label="Tên công ty mua *">
+            <input value={f.ten_nguoi_mua} onChange={(e) => setF({ ...f, ten_nguoi_mua: e.target.value })} className={inp} />
+          </L>
+          <L label="Mã số thuế người mua">
+            <input value={f.mst_nguoi_mua} onChange={(e) => setF({ ...f, mst_nguoi_mua: e.target.value })} className={inp} />
+          </L>
+          <L label="Email nhận hóa đơn">
+            <input value={f.email_nguoi_mua} onChange={(e) => setF({ ...f, email_nguoi_mua: e.target.value })} className={inp} />
+          </L>
+
+          <L label="Địa chỉ người mua">
+            <input value={f.dia_chi_nguoi_mua} onChange={(e) => setF({ ...f, dia_chi_nguoi_mua: e.target.value })} className={inp} />
+          </L>
+
+          <div className="rounded-lg border border-cvr-line bg-white p-3 text-sm sm:col-span-2">
+            <div className="flex flex-wrap justify-between gap-x-6">
+              <span className="text-cvr-muted">Tiền hàng</span>
+              <span className="tabular-nums text-cvr-ink">{vnd(tach.tienHang)}</span>
+            </div>
+            <div className="mt-1 flex flex-wrap justify-between gap-x-6">
+              <span className="text-cvr-muted">Thuế GTGT {(tach.thueSuat * 100).toFixed(0)}%</span>
+              <span className="tabular-nums text-cvr-ink">{vnd(tach.tienThue)}</span>
+            </div>
+            <div className="mt-1 flex flex-wrap justify-between gap-x-6 border-t border-cvr-line pt-1">
+              <span className="font-medium text-cvr-ink">Khách phải trả</span>
+              <span className="tabular-nums font-semibold text-cvr-ink">{vnd(tach.tongTra)}</span>
+            </div>
+          </div>
+
+          <div className="sm:col-span-3">
+            {notice && <p className="mb-2 text-sm text-cvr-body">{notice}</p>}
+            <button type="submit" disabled={saving} className="rounded-lg bg-cvr-ink px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-cvr-ink/90 disabled:opacity-60">
+              {saving ? "Đang lưu…" : "Ghi nhận doanh thu"}
+            </button>
+          </div>
+        </form>
+      )}
     </div>
   );
 }
@@ -1011,6 +1220,8 @@ function KhoiThueNhaThau({ onSaved }: { onSaved: () => void }) {
         <ONho nhan="Thuế TNDN nộp thay (chi phí)" giaTri={vnd(t.thueTndn)} />
       </div>
 
+      <KhoiTaiPdfNgoai tyGia={tyGia} onSaved={() => { void nap(); onSaved(); }} />
+
       <FormNgoai kyThang={kyThang} tyGia={tyGia} tu={tu} den={den} onSaved={() => { void nap(); onSaved(); }} />
 
       {rows && rows.length > 0 && (
@@ -1084,6 +1295,284 @@ function KhoiThueNhaThau({ onSaved }: { onSaved: () => void }) {
         bằng thẻ đứng tên công ty với khoản từ 5 triệu đồng, và điền đủ tên công ty + MST vào phần Billing
         của nhà cung cấp.
       </p>
+    </div>
+  );
+}
+
+// ── TẢI FILE PDF HÓA ĐƠN NƯỚC NGOÀI → TỰ ĐỌC → SOÁT → LƯU ─────────────────
+// Anthropic, Vercel, Supabase đều phát hành qua Stripe nên nhãn chữ giống nhau,
+// đọc được cả ba bằng một bộ quy tắc (xem lib/docHoaDonNgoai.ts). Google và
+// Facebook cũng tải lên được — hệ thống tự xếp Nhóm 1 và không tính thuế nhà thầu.
+//
+// LUÔN cho soát trước khi lưu, KHÔNG ghi thẳng: số này đi vào tờ khai thuế, máy
+// đọc nhầm một chữ số là sai số nộp Kho bạc. Ô nào máy không chắc thì để trống
+// và hiện cảnh báo màu hổ phách ngay dưới dòng đó.
+//
+// File đọc NGAY TRONG TRÌNH DUYỆT, không gửi lên máy chủ.
+//
+// Kỳ khai lấy theo NGÀY TRÊN TỪNG HÓA ĐƠN, không theo tháng đang chọn ở trên —
+// tải một lúc hóa đơn nhiều tháng thì mỗi tờ tự về đúng kỳ của nó.
+type DongNhap = {
+  ten: string;
+  ngay_hoa_don: string;
+  nha_cung_cap: string;
+  so_hoa_don: string;
+  tien: string;
+  tienTe: string;
+  nhom: NhomNcc;
+  loai: LoaiDichVu;
+  hop_dong_net: boolean;
+  canhBao: string[];
+};
+
+function KhoiTaiPdfNgoai({ tyGia, onSaved }: { tyGia: string; onSaved: () => void }) {
+  const [dangDoc, setDangDoc] = useState(false);
+  const [tienDo, setTienDo] = useState("");
+  const [rows, setRows] = useState<DongNhap[] | null>(null);
+  const [dangLuu, setDangLuu] = useState(false);
+  const [notice, setNotice] = useState("");
+
+  async function chonFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    e.target.value = ""; // cho phép chọn lại đúng file đó
+    if (files.length === 0) return;
+
+    setDangDoc(true);
+    setNotice("");
+    const ra: DongNhap[] = [];
+
+    try {
+      const pdfjs = await import("pdfjs-dist");
+      pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+        "pdfjs-dist/build/pdf.worker.min.mjs",
+        import.meta.url,
+      ).toString();
+
+      for (let i = 0; i < files.length; i++) {
+        const f = files[i];
+        setTienDo(`Đang đọc ${i + 1}/${files.length} — ${f.name}`);
+        try {
+          const tap = await pdfjs.getDocument({ data: await f.arrayBuffer() }).promise;
+          let chu = "";
+          for (let p = 1; p <= tap.numPages; p++) {
+            const trang = await tap.getPage(p);
+            const noiDung = await trang.getTextContent();
+            chu += " " + noiDung.items.map((m) => ("str" in m ? m.str : "")).join(" ");
+          }
+          const hd = docHoaDonNgoai(chu);
+          ra.push({
+            ten: f.name,
+            ngay_hoa_don: hd.ngay_hoa_don ?? "",
+            nha_cung_cap: hd.nha_cung_cap,
+            so_hoa_don: hd.so_hoa_don ?? "",
+            tien: hd.tien > 0 ? String(hd.tien) : "",
+            tienTe: hd.tienTe,
+            // Hóa đơn tự khai đã đăng ký thuế VN thì tin hóa đơn, không tin danh sách đoán tên.
+            nhom: hd.daDangKyVn ? "da_dang_ky" : doanNhom(hd.nha_cung_cap),
+            loai: "dich_vu",
+            hop_dong_net: true,
+            canhBao: hd.canhBao,
+          });
+        } catch (err) {
+          ra.push({
+            ten: f.name, ngay_hoa_don: "", nha_cung_cap: "", so_hoa_don: "", tien: "",
+            tienTe: "USD", nhom: "phai_khai_thay", loai: "dich_vu", hop_dong_net: true,
+            canhBao: ["Không mở được file này: " + String(err)],
+          });
+        }
+      }
+    } catch (err) {
+      setNotice("Không nạp được bộ đọc PDF: " + String(err));
+    }
+
+    setRows([...(rows ?? []), ...ra]);
+    setTienDo("");
+    setDangDoc(false);
+  }
+
+  function sua(i: number, thay: Partial<DongNhap>) {
+    setRows((cu) => (cu ?? []).map((d, k) => (k === i ? { ...d, ...thay } : d)));
+  }
+
+  /** Quy ra VNĐ: hóa đơn ghi VNĐ thì giữ nguyên, ghi USD thì nhân tỷ giá. */
+  function raVnd(d: DongNhap): number {
+    const so = Number(d.tien) || 0;
+    if (d.tienTe === "VND") return Math.round(so);
+    return Math.round(so * (Number(tyGia) || 0));
+  }
+
+  async function luuHet() {
+    const ds = rows ?? [];
+    if (ds.length === 0) return;
+    const thieuTyGia = ds.some((d) => d.tienTe !== "VND") && !(Number(tyGia) > 0);
+    if (thieuTyGia) return setNotice("Chưa nhập tỷ giá NHNN ở trên — bấm “Lấy tỷ giá NHNN”.");
+
+    setDangLuu(true);
+    setNotice("");
+    const supabase = createClient();
+    let luu = 0;
+    const hong: string[] = [];
+
+    for (const d of ds) {
+      const vnd_ = raVnd(d);
+      if (!d.ngay_hoa_don || !d.nha_cung_cap.trim() || !(vnd_ > 0)) {
+        hong.push(`${d.ten}: còn thiếu ngày, nhà cung cấp hoặc số tiền`);
+        continue;
+      }
+      const kq = d.nhom === "da_dang_ky"
+        ? { dtGtgt: 0, thueGtgt: 0, dtTndn: 0, thueTndn: 0 }
+        : tinhFct(vnd_, d.loai, d.hop_dong_net);
+
+      const { error } = await supabase.from("hoa_don_ngoai").insert({
+        ky_thang: d.ngay_hoa_don.slice(0, 7) + "-01", // kỳ khai = tháng của chính hóa đơn
+        ngay_hoa_don: d.ngay_hoa_don,
+        nha_cung_cap: d.nha_cung_cap.trim(),
+        so_hoa_don: d.so_hoa_don.trim() || null,
+        dien_giai: null,
+        nhom: d.nhom,
+        loai: d.loai,
+        hop_dong_net: d.hop_dong_net,
+        tien_usd: d.tienTe === "VND" ? 0 : Number(d.tien) || 0,
+        ty_gia: d.tienTe === "VND" ? 1 : Number(tyGia) || 0,
+        tien_vnd: vnd_,
+        dt_gtgt: kq.dtGtgt,
+        thue_gtgt: kq.thueGtgt,
+        dt_tndn: kq.dtTndn,
+        thue_tndn: kq.thueTndn,
+      });
+      if (error) {
+        hong.push(
+          /duplicate key|uq_hoa_don_ngoai_so/i.test(error.message)
+            ? `${d.ten}: đã có trong sổ, bỏ qua`
+            : `${d.ten}: ${error.message}`,
+        );
+      } else {
+        luu++;
+      }
+    }
+
+    setDangLuu(false);
+    setRows(null);
+    setNotice(
+      `Đã lưu ${luu}/${ds.length} hóa đơn.` +
+        (hong.length ? " Không lưu được: " + hong.join(" · ") : "") +
+        " Hóa đơn thuộc tháng khác đã tự về đúng kỳ của nó — đổi tháng ở trên để xem.",
+    );
+    onSaved();
+  }
+
+  return (
+    <div className="mt-4 rounded-xl border border-dashed border-cvr-line bg-cvr-surface p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="text-sm font-medium text-cvr-ink">Tải hóa đơn nước ngoài (file PDF)</p>
+          <p className="mt-0.5 text-xs text-cvr-muted">
+            Chọn nhiều file cùng lúc — hệ thống tự đọc nhà cung cấp, số hóa đơn, ngày, số tiền rồi
+            tính sẵn thuế. Đọc ngay trên máy anh, file không gửi đi đâu.
+          </p>
+        </div>
+        <label className={btnPhu + " cursor-pointer whitespace-nowrap"}>
+          {dangDoc ? "Đang đọc…" : "Chọn file PDF"}
+          <input type="file" accept=".pdf,application/pdf" multiple onChange={chonFile} className="hidden" disabled={dangDoc} />
+        </label>
+      </div>
+
+      {tienDo && <p className="mt-2 text-xs text-cvr-body">{tienDo}</p>}
+      {notice && <p className="mt-2 text-sm text-cvr-body">{notice}</p>}
+
+      {rows && rows.length > 0 && (
+        <div className="mt-4 border-t border-cvr-line pt-4">
+          <p className="text-sm font-medium text-cvr-ink">
+            Soát lại {rows.length} hóa đơn rồi mới lưu
+          </p>
+
+          <div className="mt-3 space-y-3">
+            {rows.map((d, i) => {
+              const vnd_ = raVnd(d);
+              const kq = d.nhom === "da_dang_ky"
+                ? { thueGtgt: 0, thueTndn: 0, tongNop: 0 }
+                : tinhFct(vnd_, d.loai, d.hop_dong_net);
+              return (
+                <div key={i} className="rounded-lg border border-cvr-line bg-white p-3">
+                  <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                    <span className="text-xs font-medium text-cvr-muted">{d.ten}</span>
+                    <button
+                      onClick={() => setRows((cu) => (cu ?? []).filter((_, k) => k !== i))}
+                      className="text-xs text-cvr-muted underline hover:text-cvr-ink"
+                    >
+                      Bỏ dòng này
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-4">
+                    <L label="Ngày hóa đơn">
+                      <input type="date" value={d.ngay_hoa_don} onChange={(e) => sua(i, { ngay_hoa_don: e.target.value })} className={inp} />
+                    </L>
+                    <L label="Nhà cung cấp">
+                      <input
+                        value={d.nha_cung_cap}
+                        onChange={(e) => sua(i, { nha_cung_cap: e.target.value, nhom: doanNhom(e.target.value) })}
+                        className={inp}
+                      />
+                    </L>
+                    <L label="Số hóa đơn">
+                      <input value={d.so_hoa_don} onChange={(e) => sua(i, { so_hoa_don: e.target.value })} className={inp} />
+                    </L>
+                    <L label={`Số tiền (${d.tienTe})`}>
+                      <input value={d.tien} onChange={(e) => sua(i, { tien: e.target.value })} className={inp} inputMode="decimal" />
+                    </L>
+                    <L label="Nhóm nhà cung cấp">
+                      <select value={d.nhom} onChange={(e) => sua(i, { nhom: e.target.value as NhomNcc })} className={inp}>
+                        <option value="phai_khai_thay">Chưa đăng ký tại VN — khai nộp thay</option>
+                        <option value="da_dang_ky">Đã đăng ký tại VN — không khai thay</option>
+                      </select>
+                    </L>
+                    <L label="Bản chất khoản chi">
+                      <select value={d.loai} onChange={(e) => sua(i, { loai: e.target.value as LoaiDichVu })} className={inp}>
+                        {(Object.keys(TY_LE) as LoaiDichVu[]).map((k) => (
+                          <option key={k} value={k}>{TY_LE[k].nhan}</option>
+                        ))}
+                      </select>
+                    </L>
+                    <div className="sm:col-span-2 sm:pt-6">
+                      <p className="text-sm text-cvr-body">
+                        Quy đổi <strong className="text-cvr-ink">{vnd(vnd_)}</strong>
+                        {d.nhom === "da_dang_ky" ? (
+                          <span className="text-cvr-muted"> · không khai nộp thay</span>
+                        ) : (
+                          <>
+                            {" · GTGT "}<strong className="text-cvr-ink">{vnd(kq.thueGtgt)}</strong>
+                            {" · TNDN "}<strong className="text-cvr-ink">{vnd(kq.thueTndn)}</strong>
+                          </>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+
+                  {d.canhBao.length > 0 && (
+                    <ul className="mt-2 space-y-0.5">
+                      {d.canhBao.map((c, k) => (
+                        <li key={k} className="text-xs text-amber-700">⚠️ {c}</li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <button
+              onClick={luuHet}
+              disabled={dangLuu}
+              className="rounded-lg bg-cvr-ink px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-cvr-ink/90 disabled:opacity-60"
+            >
+              {dangLuu ? "Đang lưu…" : `Lưu ${rows.length} hóa đơn`}
+            </button>
+            <button onClick={() => setRows(null)} className={btnPhu}>Bỏ hết</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

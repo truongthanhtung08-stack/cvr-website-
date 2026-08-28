@@ -57,7 +57,12 @@ export const NCC_DA_BIET: { khoa: string; ten: string; nhom: NhomNcc }[] = [
   { khoa: "meta", ten: "Meta", nhom: "da_dang_ky" },
   { khoa: "microsoft", ten: "Microsoft", nhom: "da_dang_ky" },
   { khoa: "apple", ten: "Apple", nhom: "da_dang_ky" },
-  { khoa: "anthropic", ten: "Anthropic", nhom: "phai_khai_thay" },
+  // ⚠️ Anthropic ĐÃ đăng ký thuế tại VN — KHÔNG khai nộp thay, khai là nộp trùng.
+  // Bằng chứng: hóa đơn thật số PYYF4T6M-0008 ngày 17/08/2026 ghi rõ
+  //   "VAT Registration: Vietnam VAT 9000020034"  và  "VAT - Vietnam 10% on $20.00 = $2.22"
+  // → họ tự thu 10% GTGT Việt Nam rồi tự nộp. Tài liệu quy trình cũ xếp Anthropic
+  //   vào nhóm phải khai nộp thay là SAI, đã sửa 28/08/2026.
+  { khoa: "anthropic", ten: "Anthropic", nhom: "da_dang_ky" },
   { khoa: "vercel", ten: "Vercel", nhom: "phai_khai_thay" },
   { khoa: "supabase", ten: "Supabase", nhom: "phai_khai_thay" },
   { khoa: "cloudflare", ten: "Cloudflare", nhom: "phai_khai_thay" },
