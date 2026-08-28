@@ -14,7 +14,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 //   2. Admin của OA mở đường dẫn đó, bấm Đồng ý.
 //   3. Zalo gọi ngược về ĐÚNG route này kèm ?code=…
 //   4. Route đổi code lấy access_token + refresh_token, LƯU THẲNG vào bảng
-//      site_content (khoá `zalo_oa_token`) — đúng chỗ mà lib/zaloOa.ts đọc.
+//      bi_mat (khoá `zalo_oa_token`) — bảng chỉ máy chủ đọc được, xem migration 0021.
 //
 // VÌ SAO LÀM VẬY: refresh token là chuỗi bí mật, và Zalo XOAY nó sau mỗi lần làm
 // mới. Bắt người ta copy dán vào biến môi trường thì vừa lộ, vừa chỉ đúng được một
@@ -66,7 +66,7 @@ export async function GET(request: Request) {
 
     // Trừ hao 5 phút giống lib/zaloOa.ts để không dùng token sát giờ hết hạn.
     const song = Number(kq.expires_in) || 3600;
-    const { error } = await admin.from("site_content").upsert(
+    const { error } = await admin.from("bi_mat").upsert(
       {
         key: "zalo_oa_token",
         data: {

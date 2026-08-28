@@ -12,8 +12,8 @@ import { baoLoi } from "@/lib/baoLoi";
 // và vô hiệu cái cũ. Nên BẮT BUỘC phải lưu lại ngay. Mất refresh token hiện
 // hành = phải vào Zalo cấp quyền lại bằng tay.
 //
-// LƯU Ở ĐÂU: bảng `site_content`, khoá `zalo_oa_token` — bảng này đã có sẵn cho
-// nội dung web, không phải tạo bảng mới, không phải chạy migration.
+// LƯU Ở ĐÂU: bảng `bi_mat`, khoá `zalo_oa_token` (migration 0021). KHÔNG dùng
+// site_content: bảng đó ĐỌC ĐƯỢC CÔNG KHAI (đã kiểm chứng bằng khoá ẩn danh),
 //
 // BIẾN MÔI TRƯỜNG (Vercel):
 //   ZALO_OA_APP_ID         — App ID của ứng dụng đã liên kết OA
@@ -24,6 +24,7 @@ import { baoLoi } from "@/lib/baoLoi";
 // ════════════════════════════════════════════════════════════════════════════
 
 const URL_TOKEN = "https://oauth.zaloapp.com/v4/oa/access_token";
+const BANG = "bi_mat";
 const KHOA = "zalo_oa_token";
 /** Làm mới sớm 5 phút để không rơi vào lúc token vừa hết hạn giữa chừng. */
 const DEM_TRUOC_MS = 5 * 60 * 1000;
@@ -59,7 +60,7 @@ export async function layAccessToken(): Promise<string | null> {
   }
 
   // ── Token đang lưu còn dùng được không ────────────────────────────────────
-  const { data } = await admin.from("site_content").select("data").eq("key", KHOA).limit(1);
+  const { data } = await admin.from(BANG).select("data").eq("key", KHOA).limit(1);
   const luu = data?.[0]?.data as BanGhiToken | undefined;
 
   if (luu?.access_token && luu.het_han_luc - DEM_TRUOC_MS > Date.now()) {
@@ -114,7 +115,7 @@ export async function layAccessToken(): Promise<string | null> {
       het_han_luc: Date.now() + song * 1000,
     };
 
-    const { error } = await admin.from("site_content").upsert({ key: KHOA, data: moi }, { onConflict: "key" });
+    const { error } = await admin.from(BANG).upsert({ key: KHOA, data: moi }, { onConflict: "key" });
     if (error) {
       // Lưu hỏng là hỏng hẳn: refresh token cũ đã bị Zalo vô hiệu, bản mới thì
       // không giữ được → một tiếng nữa hết hạn là chết, phải cấp quyền lại tay.
@@ -124,7 +125,7 @@ export async function layAccessToken(): Promise<string | null> {
         tomTat: "LƯU TOKEN ZALO MỚI THẤT BẠI — refresh token cũ đã mất hiệu lực",
         chiTiet: error.message,
         hauQua: "Khoảng một tiếng nữa mọi tin ZNS và mã OTP đăng nhập sẽ chết.",
-        canLam: "Kiểm tra bảng site_content trên Supabase, rồi cấp quyền lại OA để lấy refresh token mới.",
+        canLam: "Kiểm tra bảng bi_mat trên Supabase, rồi cấp quyền lại OA để lấy refresh token mới.",
       });
     }
 
