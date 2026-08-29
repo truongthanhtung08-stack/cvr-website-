@@ -38,7 +38,6 @@ export default function NhapHangLoatPage() {
   const [dangTaiAnh, setDangTaiAnh] = useState(0); // số ảnh còn lại đang tải
   const [loiAnh, setLoiAnh] = useState("");
 
-  const hopLe = rows.filter((r) => r.loi.length === 0);
   const sai = rows.filter((r) => r.loi.length > 0);
 
   // ẢNH CỦA MỘT TIN — gộp 2 cách, giữ đúng thứ tự anh ghi trong file:
@@ -69,6 +68,12 @@ export default function NhapHangLoatPage() {
     const tatCa = [...urls, ...theoMa];
     return { urls: tatCa.slice(0, toiDa), thieu, boBot: Math.max(0, tatCa.length - toiDa), toiDa };
   };
+
+  // ĐÚNG LUẬT nhưng CHƯA có ảnh thật (mới ghi ma_anh, chưa tải ảnh ở Bước 4)
+  // thì chưa đăng được — đếm riêng để báo rõ, không lặng lẽ bỏ qua.
+  const dungLuat = rows.filter((r) => r.loi.length === 0);
+  const chuaAnh = dungLuat.filter((r) => anhCuaTin(r).urls.length === 0);
+  const hopLe = dungLuat.filter((r) => anhCuaTin(r).urls.length > 0);
 
   async function taiAnhHangLoat(files: FileList) {
     setLoiAnh("");
@@ -246,6 +251,9 @@ export default function NhapHangLoatPage() {
             <span className="text-sm text-cvr-body">
               Đọc được <strong className="text-cvr-ink">{rows.length}</strong> dòng ·{" "}
               <span className="text-green-700">{hopLe.length} tin hợp lệ</span>
+              {chuaAnh.length > 0 && (
+                <span className="text-amber-700"> · {chuaAnh.length} tin chưa có ảnh (tải ảnh ở Bước 4 mới đăng được)</span>
+              )}
               {sai.length > 0 && <span className="text-red-700"> · {sai.length} dòng lỗi (sẽ bỏ qua)</span>}
             </span>
             <button
@@ -312,11 +320,16 @@ export default function NhapHangLoatPage() {
         <ul className="mt-3 space-y-1.5 text-sm text-cvr-body">
           <li><strong>muc_dich</strong>: <code>ban</code> hoặc <code>thue</code>.</li>
           <li><strong>loai_hinh</strong>: chép đúng một tên trong danh sách bên dưới.</li>
-          <li><strong>tieu_de</strong>: bắt buộc, <strong>tối thiểu 30 ký tự</strong> — nên có loại hình + tên quận/phường.</li>
+          <li><strong>tieu_de</strong>: bắt buộc, <strong>tối thiểu 30 ký tự</strong> — nên có loại hình + tên phường/xã.</li>
           <li><strong>mo_ta</strong>: bắt buộc, <strong>tối thiểu 50 ký tự</strong> (khoảng 1–2 câu).</li>
           <li><strong>gia</strong>: tin bán ghi theo <strong>TỶ</strong> (7,2 = 7,2 tỷ) · tin thuê ghi theo <strong>TRIỆU/tháng</strong> (18 = 18 triệu). Bỏ trống = Thỏa thuận.</li>
           <li><strong>dien_tich</strong> (m²): bắt buộc · <strong>phong_ngu</strong>, <strong>phong_tam</strong>: chỉ ghi số.</li>
-          <li><strong>tinh_thanh</strong>, <strong>quan_huyen</strong>: bắt buộc · <strong>phuong_xa</strong>: nên có.</li>
+          <li>
+            <strong>tinh_thanh</strong>, <strong>phuong_xa</strong>: bắt buộc — ghi theo{" "}
+            <strong>đơn vị hành chính MỚI 2 cấp</strong> (Tỉnh/Thành → Phường/Xã, không còn Quận/Huyện).
+            Ví dụ: <code>Phường Sơn Trà</code> + <code>Đà Nẵng</code> · <code>Phường Quy Nhơn</code> + <code>Gia Lai</code>.
+            Cột <code>quan_huyen</code> chỉ dùng cho dữ liệu cũ, để trống cũng được.
+          </li>
           <li><strong>hang_tin</strong>: <code>diamond</code> · <code>gold</code> · <code>silver</code> · <code>basic</code> (bỏ trống = basic).</li>
           <li>
             <strong>ma_anh</strong> — cột ảnh duy nhất, ghi theo <strong>một trong hai cách</strong>:
@@ -327,9 +340,15 @@ export default function NhapHangLoatPage() {
             · <strong>Cách liệt kê</strong>: ghi thẳng tên từng ảnh, ngăn nhau bằng <code>|</code> hoặc dấu phẩy —
             vd <code>nha-my-khe-1.jpg | nha-my-khe-2.jpg</code>. Ảnh ghi trước làm ảnh đại diện.
             <br />
-            <strong>Bắt buộc ít nhất 1 ảnh</strong> — tin không ảnh sẽ bị báo lỗi, không đăng được.
+            <strong>Bắt buộc ít nhất 1 ảnh</strong> — dòng không ghi mã cũng không ghi tên ảnh sẽ bị báo lỗi.
+            Có ghi mã nhưng chưa tải ảnh lên ở Bước 4 thì tin vẫn chưa đăng được, bảng sẽ báo “chưa có ảnh”.
           </li>
           <li><strong>dia_chi</strong>, <strong>phap_ly</strong>, <strong>huong</strong>, <strong>lien_he_ten</strong>, <strong>lien_he_sdt</strong>: không bắt buộc.</li>
+          <li>
+            <strong>ten_du_an</strong>, <strong>huong_ban_cong</strong>, <strong>tinh_trang_noi_that</strong>,{" "}
+            <strong>noi_that_ban_giao</strong>, <strong>tien_ich</strong>: không bắt buộc — hai cột cuối ghi
+            nhiều mục ngăn nhau bằng dấu phẩy, vd <code>Máy lạnh, Tủ bếp, Sofa</code>.
+          </li>
         </ul>
         <div className="mt-4 rounded-lg bg-cvr-surface p-3 text-sm text-cvr-body">
           <p className="font-semibold text-cvr-ink">Căn chỉnh file cho dễ nhìn — được phép:</p>

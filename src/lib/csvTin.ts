@@ -210,8 +210,11 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
   const moTa = lay(COT.moTa);
   if (moTa.trim().length < 50) loi.push(`Mô tả quá ngắn (${moTa.trim().length}/50 ký tự)`);
 
+  // ĐƠN VỊ HÀNH CHÍNH MỚI — 2 cấp: Tỉnh/Thành → Phường/Xã (KHÔNG còn Quận/Huyện).
+  // Vì vậy chỗ bắt buộc là PHƯỜNG/XÃ. Tin theo hệ cũ chỉ ghi quan_huyen vẫn nhận.
+  const phuongXa = lay(COT.phuongXa);
   const quanHuyen = lay(COT.quanHuyen);
-  if (!quanHuyen) loi.push("Thiếu quận/huyện");
+  if (!phuongXa && !quanHuyen) loi.push("Thiếu phường/xã");
 
   if (!lay(COT.dienTich).trim()) loi.push("Thiếu diện tích");
 
@@ -261,7 +264,12 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
     ...(laDanhSachTenAnh(maAnhRaw) ? tachDanhSachAnh(maAnhRaw) : []),
   ];
 
-  if (anh.length === 0) loi.push("Thiếu ảnh (cần ít nhất 1)");
+  // Chỉ giữ làm "mã gom ảnh theo tiền tố" khi ô đó thực sự là MÃ (tin01), còn nếu
+  // là danh sách tên ảnh thì đã gộp vào danh sách ảnh phía trên.
+  const maAnh = laDanhSachTenAnh(maAnhRaw) ? "" : maAnhRaw;
+
+  // Ghi MÃ ảnh cũng tính là ĐÃ khai ảnh — ảnh thật khớp vào theo tên tệp ở Bước 4.
+  if (anh.length === 0 && !maAnh) loi.push("Thiếu ảnh (cần ít nhất 1)");
 
   const ten = lay(COT.lienHeTen);
   const sdt = lay(COT.lienHeSdt);
@@ -275,8 +283,8 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
     area_m2: soHoacNull(lay(COT.dienTich), "dien_tich"),
     beds: soHoacNull(lay(COT.phongNgu), "phong_ngu", true),
     baths: soHoacNull(lay(COT.phongTam), "phong_tam", true),
-    ward: lay(COT.phuongXa) || null,
-    district: lay(COT.quanHuyen) || null,
+    ward: phuongXa || null,
+    district: quanHuyen || null,
     province: tinhThanh || null,
     images: anh,
     details: {
@@ -301,15 +309,13 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
     dong: soDong,
     loi,
     payload,
-    // Chỉ giữ làm "mã gom ảnh theo tiền tố" khi ô đó thực sự là MÃ (tin01),
-    // còn nếu là danh sách tên ảnh thì đã gộp vào danh sách ảnh phía trên.
-    maAnh: laDanhSachTenAnh(maAnhRaw) ? "" : maAnhRaw,
+    maAnh,
     tomTat: {
       tieuDe: tieuDe || "(trống)",
       mucDich: mucDich === "thue" ? "Cho thuê" : "Mua bán",
       loaiHinh: loaiHinhChuan || "(trống)",
       gia: giaVnd == null ? "Thỏa thuận" : giaVnd.toLocaleString("vi-VN") + " ₫",
-      khuVuc: [lay(COT.phuongXa), lay(COT.quanHuyen), tinhThanh].filter(Boolean).join(", ") || "(trống)",
+      khuVuc: [phuongXa, quanHuyen, tinhThanh].filter(Boolean).join(", ") || "(trống)",
       hang,
     },
   };
