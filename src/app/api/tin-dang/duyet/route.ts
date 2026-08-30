@@ -77,6 +77,15 @@ export async function POST(request: Request) {
       .update({ status: "approved", published_at: new Date().toISOString(), tier: "basic" })
       .eq("id", id);
     if (error) return loi(error.message, 500);
+    // Mẫu ZNS "tin đã duyệt" khai 3 tham số nên cả 3 đều PHẢI có giá trị —
+    // trước đây chỗ này truyền so_du rỗng, Zalo từ chối cả tin. Tin miễn phí
+    // không trừ tiền nên số dư giữ nguyên, vẫn đọc ra để báo cho đúng.
+    const { data: viArr } = await admin
+      .from("profiles")
+      .select("balance")
+      .eq("id", tin.owner_id)
+      .limit(1);
+    const soDuHienTai = Number(viArr?.[0]?.balance ?? 0);
     await baoKhach(admin, tin.owner_id, {
       tieuDe: "Tin của bạn đã được duyệt",
       cacDong: [
@@ -84,7 +93,7 @@ export async function POST(request: Request) {
         { nhan: "Gói dịch vụ", giaTri: "Tin thường (miễn phí)" },
       ],
       znsTemplateId: process.env.ZALO_ZNS_TEMPLATE_DUYET_TIN,
-      znsData: { ten_tin: tin.title, so_tien: "0đ", so_du: "" },
+      znsData: { ten_tin: tin.title, so_tien: vnd(0), so_du: vnd(soDuHienTai) },
     });
     return NextResponse.json({ ok: true, mienPhi: true });
   }

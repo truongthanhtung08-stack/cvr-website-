@@ -62,8 +62,10 @@ export async function POST(request: Request) {
   const otp = payload.sms?.otp;
   if (!phone || !otp) return loi("Thiếu số điện thoại hoặc mã OTP");
 
-  // Tên tham số `ma_otp` phải KHỚP mẫu tin đã đăng ký với Zalo.
-  const kq = await guiZns(phone, templateId, { ma_otp: otp });
+  // Tên tham số phải KHỚP mẫu tin đã đăng ký với Zalo. Mẫu xác thực của Zalo
+  // (ZBS 630638 "Mã OTP đăng nhập") dùng đúng chữ `otp` — trước đây chỗ này ghi
+  // `ma_otp` nên Zalo sẽ trả lỗi thiếu tham số và khách không đăng nhập được.
+  const kq = await guiZns(phone, templateId, { otp });
 
   if (!kq.daGui) {
     // Gửi mã hỏng = khách KHÔNG đăng nhập được. Gộp mọi lần hỏng vào một khoá:

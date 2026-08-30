@@ -19,6 +19,15 @@
 //   ZALO_OA_ACCESS_TOKEN        access token của Zalo OA (không phải app đăng nhập Zalo)
 //   ZALO_ZNS_TEMPLATE_NAP_TIEN  mã mẫu tin ZNS "nạp tiền thành công" (Zalo duyệt trước)
 //   ZALO_ZNS_TEMPLATE_DUYET_TIN mã mẫu tin ZNS "tin đã lên sóng"
+//
+// ── MẪU ĐÃ ĐĂNG KÝ VỚI ZALO (tạo 30/08/2026, OA Coastal Land · ZBS-311320) ──
+//   630636  Tin đăng đã duyệt   → ten_tin, so_tien, so_du   → ZALO_ZNS_TEMPLATE_DUYET_TIN
+//   630637  Nạp tiền vào ví     → so_tien, so_du            → ZALO_ZNS_TEMPLATE_NAP_TIEN
+//   630638  Mã OTP đăng nhập    → otp                       → ZALO_ZNS_TEMPLATE_OTP
+// Chưa tạo: mẫu tin bị từ chối (ten_tin, ly_do) · mẫu hóa đơn (so_hoa_don, so_tien).
+//
+// ⚠️ TÊN THAM SỐ Ở ĐÂY PHẢI KHỚP TỪNG CHỮ với mẫu bên Zalo. Sai một chữ là Zalo
+// từ chối cả tin, mà hỏng lặng lẽ — khách không nhận được gì.
 // ════════════════════════════════════════════════════════════════════════════
 
 const ZNS_URL = "https://business.openapi.zalo.me/message/template";
@@ -108,6 +117,57 @@ async function guiZalo(t: NoiDungThongBao): Promise<KetQuaKenh> {
   return guiZns(t.phone, t.znsTemplateId, t.znsData ?? {});
 }
 
+// ── GIỚI HẠN KÝ TỰ TỪNG THAM SỐ ────────────────────────────────────────────
+// Mỗi tham số trong mẫu ZNS được khai một "Cài đặt kỹ thuật", và mỗi kiểu có
+// giới hạn ký tự CỨNG. Gửi dài hơn → Zalo trả lỗi, tin không tới khách.
+//
+// Số dưới đây ĐỌC TRỰC TIẾP từ thuộc tính maxlength của ô nhập trên ZBS
+// (kiểm chứng 30/08/2026), không phải phỏng đoán:
+//   ten_tin  → kiểu "Tên sản phẩm / Thương hiệu"  = 200
+//   ly_do    → kiểu "Tên sản phẩm / Thương hiệu"  = 200
+//   so_tien  → kiểu "Số lượng / Số tiền"          =  20
+//   so_du    → kiểu "Số lượng / Số tiền"          =  20
+//   so_hoa_don → kiểu "Mã số"                     =  30
+//   otp      → kiểu "OTP"                         =  10
+//
+// ⚠️ Đổi kiểu tham số bên ZBS thì phải sửa bảng này cho khớp.
+const GIOI_HAN_THAM_SO: Record<string, number> = {
+  ten_tin: 200,
+  ly_do: 200,
+  so_tien: 20,
+  so_du: 20,
+  so_hoa_don: 30,
+  otp: 10,
+};
+
+/** Tham số Zalo đánh dấu "Loại dữ liệu: number" — phải giữ đúng dạng đã duyệt. */
+const THAM_SO_TIEN = new Set(["so_tien", "so_du"]);
+
+/**
+ * Cắt cho vừa giới hạn, giữ đúng dạng tiền đã duyệt, và KHÔNG để tham số rỗng.
+ *
+ * · Chặn rỗng: Zalo bắt buộc mọi tham số khai trong mẫu đều phải có giá trị.
+ *   Truyền chuỗi rỗng thì cả tin bị từ chối — mà hỏng lặng lẽ, khách không nhận
+ *   được gì còn mình không biết. Thà hiện "—" còn hơn mất cả tin.
+ *
+ * · Dạng tiền: mẫu bên Zalo được duyệt với chữ "đ" thường (vd "2.268.000 đ") và
+ *   ô đó Zalo ghi "Loại dữ liệu: number". Trong khi vnd() ở billing.ts sinh ra
+ *   ký hiệu "₫" (U+20AB) — KHÁC ký tự. Không đổi vnd() vì nó dùng cho web và
+ *   email vốn đã duyệt giao diện; chỉ nắn lại đúng tại cửa gửi ZNS.
+ */
+function chuanHoaThamSo(data: Record<string, string>): Record<string, string> {
+  const ra: Record<string, string> = {};
+  for (const [khoa, giaTri] of Object.entries(data)) {
+    let s = (giaTri ?? "").toString().trim();
+    if (THAM_SO_TIEN.has(khoa)) s = s.replace(/₫/g, "đ");
+    const max = GIOI_HAN_THAM_SO[khoa];
+    // Cắt ở ranh giới ký tự, thêm "…" để người đọc biết là còn nữa.
+    const catGon = max && s.length > max ? s.slice(0, max - 1).trimEnd() + "…" : s;
+    ra[khoa] = catGon || "—";
+  }
+  return ra;
+}
+
 /**
  * Gửi một tin ZNS bất kỳ. Dùng chung cho thông báo VÀ cho mã OTP đăng nhập
  * (route /api/auth/sms-hook gọi hàm này).
@@ -131,7 +191,11 @@ export async function guiZns(
     const res = await fetch(ZNS_URL, {
       method: "POST",
       headers: { access_token: token, "Content-Type": "application/json" },
-      body: JSON.stringify({ phone: so, template_id: templateId, template_data: data }),
+      body: JSON.stringify({
+        phone: so,
+        template_id: templateId,
+        template_data: chuanHoaThamSo(data),
+      }),
     });
     const kq = (await res.json()) as { error?: number; message?: string };
     // Zalo trả HTTP 200 kèm error !== 0 khi hỏng → phải xem thân trả về, không xem status.
