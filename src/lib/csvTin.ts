@@ -288,6 +288,9 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
     province: tinhThanh || null,
     images: anh,
     details: {
+      // MÃ ẢNH lưu luôn vào tin — để lần tải file sau nhận ra tin này ĐÃ ĐĂNG,
+      // chỉ bổ sung ảnh còn thiếu thay vì đăng trùng một tin nữa.
+      maAnh: (laDanhSachTenAnh(maAnhRaw) ? "" : maAnhRaw) || undefined,
       addressDetail: lay(COT.diaChi) || undefined,
       legal: lay(COT.phapLy) || undefined,
       direction: lay(COT.huong) || undefined,

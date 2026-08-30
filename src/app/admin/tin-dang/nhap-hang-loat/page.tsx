@@ -120,10 +120,28 @@ export default function NhapHangLoatPage() {
     try {
       const supabase = createClient();
       const now = new Date().toISOString();
+
+      // ĐÃ ĐĂNG RỒI THÌ CHỈ BỔ SUNG ẢNH, KHÔNG ĐĂNG TRÙNG.
+      // Ảnh thường về từng đợt (xin được tin nào bỏ tin đó), nên chủ dự án hay
+      // phải tải cùng một file nhiều lần. Đối chiếu bằng mã ảnh đã lưu trong tin.
+      const maTrongFile = [...new Set(hopLe.map((r) => r.maAnh).filter(Boolean))];
+      const daCo = new Map<string, { id: string; images: string[] }>();
+      if (maTrongFile.length) {
+        const { data } = await supabase
+          .from("listings")
+          .select("id,images,details->>maAnh")
+          .in("details->>maAnh", maTrongFile);
+        for (const r of (data ?? []) as { id: string; images: string[] | null; maAnh: string }[])
+          if (r.maAnh) daCo.set(r.maAnh, { id: r.id, images: r.images ?? [] });
+      }
+
+      const tinMoi = hopLe.filter((r) => !r.maAnh || !daCo.has(r.maAnh));
+      const tinCu = hopLe.filter((r) => r.maAnh && daCo.has(r.maAnh));
+
       let xong = 0;
       // Chia lô 50 tin/lần cho nhẹ đường truyền và dễ biết dừng ở đâu nếu lỗi
-      for (let i = 0; i < hopLe.length; i += 50) {
-        const lo = hopLe
+      for (let i = 0; i < tinMoi.length; i += 50) {
+        const lo = tinMoi
           .slice(i, i + 50)
           .map((r) => ({ ...r.payload, images: anhCuaTin(r).urls, published_at: now }));
         const { error } = await supabase.from("listings").insert(lo);
@@ -134,7 +152,29 @@ export default function NhapHangLoatPage() {
         }
         xong += lo.length;
       }
-      setKetQua(`Đã đăng ${xong} tin. Web cập nhật trong vòng 60 giây.`);
+
+      // Tin cũ: gộp ảnh mới vào sau ảnh đã có, bỏ ảnh trùng, cắt theo hạng tin
+      let capNhat = 0;
+      for (const r of tinCu) {
+        const cu = daCo.get(r.maAnh)!;
+        const { urls, toiDa } = anhCuaTin(r);
+        const gop = [...cu.images, ...urls.filter((u) => !cu.images.includes(u))].slice(0, toiDa);
+        if (gop.length === cu.images.length) continue; // không có ảnh nào mới
+        const { error } = await supabase.from("listings").update({ images: gop }).eq("id", cu.id);
+        if (error) {
+          setKetQua(`Đã đăng ${xong} tin, cập nhật ${capNhat} tin thì gặp lỗi: ${error.message}`);
+          setDangGui(false);
+          return;
+        }
+        capNhat++;
+      }
+
+      setKetQua(
+        `Đã đăng ${xong} tin mới` +
+          (capNhat ? ` · bổ sung ảnh cho ${capNhat} tin đã đăng` : "") +
+          (tinCu.length - capNhat ? ` · ${tinCu.length - capNhat} tin đã đăng, không có ảnh mới` : "") +
+          ". Web cập nhật trong vòng 60 giây.",
+      );
       setRows([]);
       setTenFile("");
       setAnhDaTai([]);
@@ -264,6 +304,11 @@ export default function NhapHangLoatPage() {
             >
               {dangGui ? "Đang đăng…" : `Đăng ${hopLe.length} tin`}
             </button>
+            <p className="w-full text-xs text-cvr-muted">
+              Tải cùng một file nhiều lần cũng <strong>không bị trùng tin</strong>: tin nào đã đăng rồi
+              (khớp theo <code>ma_anh</code>) thì chỉ <strong>bổ sung ảnh mới</strong>, không đăng lại.
+              Nhờ vậy xin được ảnh tới đâu cứ bỏ vào thư mục rồi tải lên tới đó.
+            </p>
           </div>
 
           {sai.length > 0 && (
