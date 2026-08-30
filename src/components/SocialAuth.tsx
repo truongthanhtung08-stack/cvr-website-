@@ -38,6 +38,21 @@ const BAT_FACEBOOK = false;
 //    Thấy trục trặc thì xoá biến đó đi là nút ẩn lại.
 const BAT_SO_DIEN_THOAI = process.env.NEXT_PUBLIC_BAT_SO_DIEN_THOAI === "1";
 
+// ⚠️ TẠM ẨN NÚT ZALO (30/08/2026) — đã thử thật trên coastalland.vn, Zalo trả:
+//   {"error":-501,"message":"Personal information is limited due to IP address
+//    not inside Vietnam: 35.72.184.148"}
+// Khách bấm vào vẫn đăng nhập Zalo và bấm Đồng ý được, nhưng bước web hỏi Zalo
+// "người này là ai" bị chặn vì máy chủ Vercel ở Mỹ → quay về kèm lỗi, KHÔNG vào
+// được. Bày một nút chắc chắn hỏng còn tệ hơn là không bày.
+//
+// LƯU Ý: chỉ API đọc THÔNG TIN CÁ NHÂN bị chặn theo IP. Gửi ZNS
+// (business.openapi.zalo.me) là máy chủ gọi máy chủ, KHÔNG dính — cấp quyền OA
+// hôm nay chạy trót lọt từ chính IP này là bằng chứng.
+//
+// 👉 Khi nào gỡ được (trạm trung chuyển đặt tại VN, hoặc Zalo mở IP cho app):
+//    Vercel → thêm NEXT_PUBLIC_BAT_ZALO = 1 → Redeploy.
+const BAT_ZALO = process.env.NEXT_PUBLIC_BAT_ZALO === "1";
+
 export default function SocialAuth() {
   const [notice, setNotice] = useState("");
   // Nút NÀO đang chờ thì CHỈ nút đó báo "Đang chuyển tới…". Trước đây dùng một cờ
@@ -151,7 +166,7 @@ export default function SocialAuth() {
       {/* Có đường dẫn dựng sẵn thì dùng THẺ LIÊN KẾT — cú chạm đi thẳng sang Zalo,
           đó là điều kiện để điện thoại có thể giao sang app Zalo. Chưa có thì
           quay về nút bấm như cũ (vẫn vào được, chỉ là qua trình duyệt). */}
-      {zaloUrl ? (
+      {BAT_ZALO && (zaloUrl ? (
         <a
           href={zaloUrl}
           onClick={() => setLoading("zalo")}
@@ -170,7 +185,7 @@ export default function SocialAuth() {
           <ZaloIcon />
           {loading === "zalo" ? "Đang chuyển tới Zalo…" : "Tiếp tục với Zalo"}
         </button>
-      )}
+      ))}
 
       {BAT_FACEBOOK && (
         <button

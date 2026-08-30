@@ -32,6 +32,8 @@ export default function LoginForm() {
     return "";
   });
   const [loading, setLoading] = useState(false);
+  // Sai mật khẩu → mới bày lối ra (đặt lại · nhắc Google) ngay trong khung lỗi.
+  const [saiMatKhau, setSaiMatKhau] = useState(false);
   // Email + mật khẩu ĐÓNG sẵn: đường chính là bấm một nút (Zalo/Google) là vào ngay.
   // Ai quen dùng email thì mở ra — không ép ai phải nhớ mật khẩu.
   const [moEmail, setMoEmail] = useState(false);
@@ -57,6 +59,7 @@ export default function LoginForm() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setNotice("");
+    setSaiMatKhau(false);
     if (!email.includes("@")) {
       setNotice("Hiện đăng nhập bằng email. Đăng nhập bằng số điện thoại (OTP) sẽ sớm có.");
       return;
@@ -70,6 +73,7 @@ export default function LoginForm() {
       });
       if (error) {
         setNotice(viError(error.message));
+        setSaiMatKhau(/invalid login credentials/i.test(error.message));
         return;
       }
       // Đăng nhập xong mới lưu — lưu trước thì sai email cũng nhớ, lần sau điền sẵn cái sai.
@@ -109,21 +113,35 @@ export default function LoginForm() {
       {notice && (
         <div className="mt-4 rounded-lg border border-cvr-blue/30 bg-cvr-blue/[0.08] px-3 py-2.5 text-sm text-cvr-blue-ink">
           {notice}
+
+          {/* SAI MẬT KHẨU MỚI LÀ LÚC CẦN LỐI RA — bày sẵn ngay trong khung lỗi,
+              đúng hai việc khách sẽ làm tiếp: đặt lại mật khẩu, hoặc chợt nhớ ra
+              mình vốn vào bằng Google chứ không có mật khẩu nào. Để "Quên mật
+              khẩu?" lúc khách chưa gõ gì thì vô nghĩa — quên cái gì? */}
+          {saiMatKhau && (
+            <div className="mt-2.5 space-y-1.5 border-t border-cvr-blue/20 pt-2.5 text-[13px]">
+              <p>
+                <Link href="/quen-mat-khau" className="font-semibold underline">
+                  Đặt lại mật khẩu
+                </Link>{" "}
+                — chúng tôi gửi liên kết về email của bạn.
+              </p>
+              <p className="text-cvr-blue-ink/80">
+                Hoặc bạn từng vào bằng <strong>Google</strong>? Tài khoản đó không có mật khẩu —
+                bấm nút Google ở trên là vào ngay.
+              </p>
+            </div>
+          )}
         </div>
       )}
 
-      {/* ── ĐƯỜNG CHÍNH: một chạm là vào (Zalo · Google · Facebook · số điện thoại) ── */}
-      <div className="mt-5">
+      {/* MỌI CÁCH ĐĂNG NHẬP XẾP NGANG HÀNG, KHÔNG CHIA "hoặc", KHÔNG GIẤU CÁI NÀO.
+          Chủ dự án chốt: có bao nhiêu phương thức thì bày ra bấy nhiêu, để khách
+          nhìn một cái là thấy hết đường vào, không phải mở thêm khối nào. */}
+      <div className="mt-5 space-y-3">
         <SocialAuth />
-      </div>
 
-      {/* ── ĐƯỜNG PHỤ: email + mật khẩu, đóng sẵn cho gọn ── */}
-      <div className="my-5 flex items-center gap-3 text-xs text-cvr-faint">
-        <span className="h-px flex-1 bg-cvr-line" /> hoặc <span className="h-px flex-1 bg-cvr-line" />
-      </div>
-
-      {!moEmail && (
-        <>
+        {!moEmail && (
           <button
             type="button"
             onClick={() => setMoEmail(true)}
@@ -131,22 +149,9 @@ export default function LoginForm() {
           >
             Đăng nhập bằng email và mật khẩu
           </button>
+        )}
+      </div>
 
-          {/* QUÊN MẬT KHẨU phải THẤY NGAY, không giấu trong khối email đang đóng —
-              khách quên mật khẩu là lúc đang bí, bắt họ mở thêm một khối nữa mới
-              thấy lối ra thì hỏng. Kèm câu nhắc cho người vào bằng Zalo/Google:
-              họ KHÔNG có mật khẩu nào cả, bấm lại nút đó là vào. */}
-          <p className="mt-4 text-center text-sm text-cvr-muted">
-            <Link href="/quen-mat-khau" className="font-medium text-cvr-blue-ink hover:text-cvr-blue">
-              Quên mật khẩu?
-            </Link>
-          </p>
-          <p className="mt-1.5 text-center text-xs leading-relaxed text-cvr-faint">
-            Nếu bạn từng vào bằng <strong className="font-medium">Google</strong> thì không có
-            mật khẩu nào cả — bấm lại đúng nút đó ở trên là vào ngay.
-          </p>
-        </>
-      )}
 
       {moEmail && (
       <form className="space-y-4" onSubmit={onSubmit}>
