@@ -229,7 +229,8 @@ export type ListingFull = {
   direction: string | null;
   addressDetail: string | null;
   contact: { name: string; phone: string; email: string; avatar: string | null } | null;
-  mapQuery: string;            // chuỗi địa chỉ để nhúng bản đồ
+  mapQuery: string;            // chuỗi địa chỉ (hoặc toạ độ) để ghim bản đồ
+  mapZoom: number;             // mức phóng: 17 khi ghim đúng nhà/đường · 15 khi chỉ có phường
   places: { category: string; name: string; distance: string }[]; // tiện ích quanh BĐS
 };
 
@@ -262,10 +263,19 @@ function rowToDetail(r: Row): ListingFull {
     direction: d.direction || null,
     addressDetail: d.addressDetail || null,
     contact: c && (c.name || c.phone) ? { name: c.name ?? "", phone: c.phone ?? "", email: c.email ?? "", avatar: c.avatar ? asset(c.avatar) : null } : null,
-    // Ưu tiên điểm admin GHIM (details.mapPin) → bản đồ trỏ ĐÚNG vị trí thật;
-    // chưa ghim thì tìm theo Phường/Quận/Tỉnh như trước.
+    // GHIM BẢN ĐỒ — thứ tự ưu tiên, càng lên trên càng chính xác:
+    //   1) điểm admin GHIM tay (details.mapPin: toạ độ / link Maps) → đúng tuyệt đối
+    //   2) ĐỊA CHỈ CHI TIẾT (số nhà, tên đường) + Phường/Quận/Tỉnh → ghim đúng con đường
+    //   3) chỉ Phường/Quận/Tỉnh → ghim giữa khu vực
+    // Trước đây bỏ sót bước 2: tin ghi rõ "123 Nguyễn Văn Linh" vẫn chỉ ghim giữa
+    // phường, khách không biết bất động sản nằm ở đoạn đường nào.
     places: d.places ?? [],
-    mapQuery: d.mapPin?.trim() || [r.ward, r.district, r.province].filter(Boolean).join(", "),
+    mapQuery:
+      d.mapPin?.trim() ||
+      [d.addressDetail?.trim(), r.ward, r.district, r.province].filter(Boolean).join(", "),
+    // Có toạ độ ghim / có tên đường → phóng gần (17) thấy rõ vị trí;
+    // chỉ có phường/xã → giữ 15 nhìn bao quát khu vực.
+    mapZoom: d.mapPin?.trim() || d.addressDetail?.trim() ? 17 : 15,
   };
 }
 
@@ -282,7 +292,7 @@ function mockToDetail(m: Listing): ListingFull {
     amenityGroups: amenityGroups.map((g) => ({ group: g.group, items: g.items.map((name) => ({ name, active: false })) })),
     legal: null, furnish: null, direction: null, addressDetail: null, contact: null,
     places: [],
-    mapQuery: m.location,
+    mapQuery: m.location, mapZoom: 15,
   };
 }
 

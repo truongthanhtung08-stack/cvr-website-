@@ -2,11 +2,12 @@
 
 import { useSaved } from "@/lib/useSaved";
 import { useCompare } from "@/lib/useCompare";
+import ShareButtons from "@/components/ShareButtons";
 
-// Hàng thao tác trên TRANG CHI TIẾT tin: Lưu tin (yêu thích) · So sánh.
+// Hàng thao tác trên TRANG CHI TIẾT tin: Lưu tin (yêu thích) · So sánh · Chia sẻ.
 // Trên thẻ tin đã có nút icon; ở trang chi tiết dùng nút CÓ CHỮ cho rõ ràng
 // (giống batdongsan.com.vn / homedy). Trạng thái lưu chung một chỗ với thẻ tin.
-export default function ListingActions({ id }: { id: string }) {
+export default function ListingActions({ id, title }: { id: string; title: string }) {
   const { has: daLuu, toggle: luu } = useSaved();
   const { has: dangSoSanh, toggle: soSanh, full } = useCompare();
   const saved = daLuu(id);
@@ -43,6 +44,8 @@ export default function ListingActions({ id }: { id: string }) {
         </svg>
         {compared ? "Đang so sánh" : "So sánh"}
       </button>
+
+      <ShareButtons title={title} />
     </div>
   );
 }
