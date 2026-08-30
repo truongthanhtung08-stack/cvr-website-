@@ -936,7 +936,7 @@ function KhoiHoaDonVao({ rows, onSaved }: { rows: DongVao[] | null; onSaved: () 
   );
 }
 
-// ── HÓA ĐƠN CHỜ PHÁT HÀNH → XUẤT FILE → KÝ BẰNG USB TOKEN BÊN VIETTEL ──────
+// ── HÓA ĐƠN CHỜ PHÁT HÀNH → XUẤT FILE → KÝ BẰNG USB TOKEN BÊN VNPT ────────
 // Vì chữ ký số là USB token (không phải cloud), máy chủ web KHÔNG tự ký được —
 // phải có người cắm USB. Nên luồng là: web gom sẵn số liệu → xuất file → chủ dự
 // án nhập vào phần mềm VNPT Invoice, cắm USB, ký → VNPT tự gửi hóa đơn cho khách.
