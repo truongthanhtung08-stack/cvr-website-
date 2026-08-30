@@ -3,7 +3,7 @@ import Link from "next/link";
 import SaveButton from "@/components/SaveButton";
 import CompareButton from "@/components/CompareButton";
 import Highlight from "@/components/Highlight";
-import { listingSummary, type Listing } from "@/lib/data";
+import { listingSummary, postedText, type Listing } from "@/lib/data";
 import { tierFromBadge, getTier } from "@/lib/packages";
 
 // Tên NGƯỜI ĐĂNG hiển thị trên thẻ: lấy từ tin thật (details.contact.name —
@@ -92,7 +92,7 @@ export default function PropertyCard({
           <span
             // Huy hiệu cấp tin: viên thuốc KÍNH MỜ — nền màu hạng trong suốt nhẹ,
             // viền sáng mảnh + bóng đổ → nổi rõ trên mọi ảnh mà không đè cứng lên ảnh.
-            className={`absolute left-2.5 top-2.5 rounded-full font-semibold uppercase tracking-[0.06em] text-white shadow-[0_2px_10px_rgba(0,0,0,0.28)] ring-1 ring-white/25 backdrop-blur-md ${isFeatured ? "px-2.5 py-1 text-[11px]" : "px-2 py-[3px] text-[10px]"}`}
+            className={`absolute left-2.5 top-2.5 rounded-full font-semibold uppercase tracking-[0.06em] text-white shadow-[0_2px_10px_rgba(0,0,0,0.28)] ring-1 ring-white/25 backdrop-blur-md ${isFeatured ? "px-2.5 py-1 text-[11px]" : "px-2 py-[3px] text-[11px]"}`}
             style={{ backgroundColor: `${tier.accent}e6` }}
           >
             {tier.short}
@@ -106,7 +106,7 @@ export default function PropertyCard({
           {!showAgent && <SaveButton id={item.id} className={`sm:hidden ${isMini ? "h-7 w-7" : ""}`} />}
         </div>
         {/* Badge số ảnh kiểu Homedy */}
-        <span className="absolute bottom-2 left-2 flex items-center gap-1 bg-black/55 px-1.5 py-0.5 text-[10px] font-medium text-white">
+        <span className="absolute bottom-2 left-2 flex items-center gap-1 bg-black/55 px-1.5 py-0.5 text-[11px] font-medium text-white">
           <CameraIcon />{item.imageCount || 1}
         </span>
       </div>
@@ -139,12 +139,12 @@ export default function PropertyCard({
 
         {/* Giá — Diện tích (giá trái · diện tích phải, dãn cách giống Homedy) */}
         <div className={`flex items-baseline justify-between gap-2 ${isMini ? "mt-1.5" : "mt-2.5"}`}>
-          <span className={`font-semibold ${isFeatured ? "text-base" : "text-[15px]"} ${item.price === "Thỏa thuận" ? "text-cvr-muted" : "text-cvr-ink"}`}>
+          <span className={`font-bold ${isFeatured ? "text-[17px]" : "text-[16px]"} ${item.price === "Thỏa thuận" ? "text-cvr-muted" : "text-red-500"}`}>
             {item.price}
           </span>
           <span className={`flex items-baseline gap-2 text-cvr-body ${isFeatured ? "text-sm" : "text-[13px]"}`}>
             <span>{item.area}</span>
-            {!isMini && item.pricePerM2 && <span className="text-xs text-cvr-muted">{item.pricePerM2}</span>}
+            {!isMini && item.pricePerM2 && <span className="text-[13px] text-cvr-muted">{item.pricePerM2}</span>}
           </span>
         </div>
 
@@ -157,8 +157,10 @@ export default function PropertyCard({
         {showAgent && (
           <div className={`flex items-center gap-2 border-t border-cvr-line pt-2.5 ${isTier ? "mt-auto" : "mt-2.5"}`}>
             <AgentAvatar name={agentName} src={item.agentAvatar} size={7} />
-            <span className="min-w-0 flex-1 truncate text-xs font-medium text-cvr-body">{agentName}</span>
-            {showTime && <span className="shrink-0 text-[11px] text-cvr-faint">Hôm nay</span>}
+            <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-cvr-body">{agentName}</span>
+            {showTime && postedText(item.postedAt) && (
+              <span className="shrink-0 text-[12px] text-cvr-faint">{postedText(item.postedAt)}</span>
+            )}
             {/* Nút Yêu thích (tim) ở ĐÁY thẻ — CHỈ mobile (desktop giữ tim trên ảnh) */}
             <SaveButton id={item.id} variant="bare" className="h-8 w-8 shrink-0 sm:hidden" />
           </div>
@@ -185,7 +187,7 @@ function PropertyRow({ item, showTime = false, terms = [] }: { item: Listing; sh
         <Image src={item.image} alt={item.title} fill sizes="(max-width: 640px) 100vw, 38vw" className="object-cover" />
         {tier && (
           <span
-            className="absolute left-2 top-2 px-1.5 py-0.5 text-[10px] font-bold uppercase"
+            className="absolute left-2 top-2 px-1.5 py-0.5 text-[11px] font-bold uppercase"
             style={{ backgroundColor: tier.accent, color: "#fff" }}
           >{tier.short}</span>
         )}
@@ -193,7 +195,7 @@ function PropertyRow({ item, showTime = false, terms = [] }: { item: Listing; sh
           <SaveButton id={item.id} className="h-7 w-7" />
           <CompareButton id={item.id} className="h-7 w-7" />
         </div>
-        <span className="absolute bottom-2 left-2 flex items-center gap-1 bg-black/55 px-1.5 py-0.5 text-[10px] text-white">
+        <span className="absolute bottom-2 left-2 flex items-center gap-1 bg-black/55 px-1.5 py-0.5 text-[11px] text-white">
           <CameraIcon />{item.imageCount || 1}
         </span>
       </div>
@@ -206,16 +208,18 @@ function PropertyRow({ item, showTime = false, terms = [] }: { item: Listing; sh
         </h3>
         <p className="mt-1 hidden text-sm leading-relaxed text-cvr-muted sm:line-clamp-2">{listingSummary(item)}</p>
         <div className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <span className={`text-sm ${item.price === "Thỏa thuận" ? "text-cvr-muted" : "text-cvr-ink"}`}>{item.price}</span>
+          <span className={`text-[16px] font-bold ${item.price === "Thỏa thuận" ? "text-cvr-muted" : "text-red-500"}`}>{item.price}</span>
           <span className="text-sm text-cvr-body">{item.area}</span>
           {item.pricePerM2 && <span className="text-[13px] text-cvr-muted">{item.pricePerM2}</span>}
           {item.beds ? <span className="text-[13px] text-cvr-muted">{item.beds} PN</span> : null}
         </div>
-        <p className="mt-1.5 flex items-center gap-1 text-xs text-cvr-muted"><PinIcon /><span className="truncate"><Highlight text={item.location} terms={terms} /></span></p>
+        <p className="mt-1.5 flex items-center gap-1 text-[13px] text-cvr-muted"><PinIcon /><span className="truncate"><Highlight text={item.location} terms={terms} /></span></p>
         <div className="mt-auto flex items-center gap-2 border-t border-cvr-line pt-2">
           <AgentAvatar name={agentName} src={item.agentAvatar} size={7} />
-          <span className="min-w-0 flex-1 truncate text-xs font-medium text-cvr-body">{agentName}</span>
-          {showTime && <span className="shrink-0 text-[11px] text-cvr-faint">Hôm nay</span>}
+          <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-cvr-body">{agentName}</span>
+          {showTime && postedText(item.postedAt) && (
+              <span className="shrink-0 text-[12px] text-cvr-faint">{postedText(item.postedAt)}</span>
+            )}
         </div>
       </div>
     </Link>

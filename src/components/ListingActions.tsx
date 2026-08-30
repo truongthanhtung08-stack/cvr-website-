@@ -14,12 +14,14 @@ export default function ListingActions({ id, title }: { id: string; title: strin
   const compared = dangSoSanh(id);
 
   const base =
-    "inline-flex min-h-[44px] items-center gap-2 rounded-full border px-4 text-sm font-semibold transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]";
+    "inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-full border px-3 text-[14px] font-semibold transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] sm:w-auto sm:px-4";
   const off = "border-cvr-line bg-white text-cvr-body hover:-translate-y-0.5 hover:border-cvr-ink hover:text-cvr-ink";
   const on = "border-cvr-blue bg-cvr-blue text-white hover:bg-cvr-blue-ink";
 
+  // Ba nút LUÔN nằm MỘT dòng: chia đều ba cột trên điện thoại, trở về hàng ngang
+  // bình thường từ màn hình lớn (sm trở lên).
   return (
-    <div className="mt-4 flex flex-wrap gap-2.5">
+    <div className="mt-4 grid grid-cols-3 items-stretch gap-2 sm:flex sm:flex-wrap sm:gap-2.5">
       <button
         type="button"
         aria-pressed={saved}

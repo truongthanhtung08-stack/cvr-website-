@@ -253,7 +253,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
       <Header />
       <main className="flex-1 bg-white">
         {/* MOBILE: pt-0 → ảnh dự án nằm SÁT mép dưới header (không chừa khoảng trắng) */}
-        <div className="mx-auto max-w-7xl px-4 pb-20 pt-0 sm:px-6 sm:pt-0 lg:px-8">
+        <div className="mx-auto max-w-7xl px-4 pb-24 pt-0 sm:px-6 sm:pt-0 lg:px-8 lg:pb-12">
 
           <HomeExpandProvider>
           {/* Nội dung dự án — ẩn khi bấm "Xem thêm" ở mục tin/dự án bên dưới */}
@@ -269,10 +269,10 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             <div className="flex flex-wrap items-center gap-2">
               {purposes.includes("ban") && <PurposeChip>Bán</PurposeChip>}
               {purposes.includes("thue") && <PurposeChip>Cho thuê</PurposeChip>}
-              <span className="rounded-full bg-cvr-surface px-3 py-1 text-xs font-medium text-cvr-body">{p.status}</span>
+              <span className="rounded-full bg-cvr-surface px-3 py-1 text-[12px] font-medium text-cvr-body">{p.status}</span>
             </div>
-            <h1 className="mt-2.5 text-2xl font-semibold leading-tight tracking-tight text-cvr-ink sm:text-3xl">{p.name}</h1>
-            <p className="mt-2 flex items-start gap-1.5 text-sm text-cvr-muted">
+            <h1 className="mt-2.5 text-[21px] font-semibold leading-[1.3] tracking-tight text-cvr-ink sm:text-[28px]">{p.name}</h1>
+            <p className="mt-2.5 flex items-start gap-1.5 text-[14px] leading-relaxed text-cvr-muted sm:text-[15px]">
               <svg className="mt-0.5 h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
               <span>{p.location}</span>
             </p>
@@ -287,13 +287,13 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
           </div>
 
           <div className="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-3">
-            <div className="reveal is-visible cards-stagger lg:col-span-2">
+            <div className="reveal is-visible cards-stagger lg:col-span-2 [&>section:first-of-type]:mt-4">
               {/* Menu dính — sáng theo mục đang xem, bấm để cuộn mượt */}
               <ProjectNav items={nav} />
 
               {/* 1) Tổng quan */}
               <Section id="tong-quan" title="Tổng quan dự án">
-                <div className="space-y-3 text-sm leading-relaxed text-cvr-body">
+                <div className="space-y-3 text-[15px] leading-relaxed text-cvr-body">
                   <RichContent paragraphs={p.overview} title={p.name} />
                 </div>
                 {p.scale.length > 0 && (
@@ -319,7 +319,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
               {/* 2) Vị trí — bản đồ + tiện ích xung quanh + chỉ đường từ vị trí của bạn */}
               <Section id="vi-tri" title="Vị trí & tiện ích xung quanh">
-                <ProjectNearby mapQuery={mapQuery} address={p.location} places={places} />
+                <ProjectNearby mapQuery={mapQuery} address={p.location} places={places} zoom={16} />
               </Section>
 
               {/* 3) Mặt bằng — ảnh từng tháp/tầng/loại căn, bấm để phóng to */}
@@ -334,7 +334,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                 <Section id="tien-ich" title="Tiện ích dự án">
                   <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
                     {p.amenities.map((a) => (
-                      <span key={a} className="flex items-start gap-2.5 rounded-xl border border-cvr-line bg-cvr-surface px-4 py-3 text-sm leading-snug text-cvr-body">
+                      <span key={a} className="flex items-start gap-2.5 rounded-xl border border-cvr-line bg-white px-4 py-3 text-[15px] leading-snug text-cvr-body">
                         <svg className="mt-0.5 h-4 w-4 shrink-0 text-cvr-blue" fill="none" stroke="currentColor" strokeWidth={2.4} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                         <span className="min-w-0">{a}</span>
                       </span>
@@ -364,7 +364,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               <Section id="bang-gia" title="Bảng giá & loại hình">
                 {!showPrice ? (
                   /* ẨN GIÁ → không hiện loại căn / diện tích / hướng / giá, chỉ mời liên hệ */
-                  <div className="rounded-xl border border-dashed border-cvr-line bg-cvr-surface px-4 py-7 text-center">
+                  <div className="rounded-xl border border-dashed border-cvr-line bg-white px-4 py-7 text-center">
                     <p className="text-lg font-semibold tracking-tight text-cvr-ink">Liên hệ</p>
                     <p className="mt-1.5 text-sm text-cvr-body">
                       Bảng giá &amp; chính sách bán hàng của dự án được cung cấp trực tiếp.
@@ -372,7 +372,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                   </div>
                 ) : priceTable.length > 0 ? (
                   <div className="overflow-hidden rounded-xl border border-cvr-line">
-                    <div className="grid grid-cols-[1.4fr_1fr_0.8fr_1fr] bg-cvr-surface px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-cvr-muted">
+                    <div className="grid grid-cols-[1.4fr_1fr_0.8fr_1fr] bg-white px-4 py-2.5 text-[12px] font-semibold uppercase tracking-wide text-cvr-muted">
                       <span>Loại căn</span><span>Diện tích</span><span>Hướng</span><span className="text-right">Giá</span>
                     </div>
                     {priceTable.map((u, i) => (
@@ -385,7 +385,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                     ))}
                   </div>
                 ) : (
-                  <div className="rounded-xl border border-dashed border-cvr-line bg-cvr-surface px-4 py-6 text-center">
+                  <div className="rounded-xl border border-dashed border-cvr-line bg-white px-4 py-6 text-center">
                     <p className="text-sm text-cvr-body">Bảng giá &amp; loại căn đang được cập nhật.</p>
                   </div>
                 )}
@@ -499,7 +499,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                   <h2 className="mb-5 text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">
                     Tin mua bán liên quan tại dự án {p.name}
                   </h2>
-                  <p className="rounded-xl border border-dashed border-cvr-line bg-cvr-surface px-4 py-8 text-center text-sm text-cvr-muted">
+                  <p className="rounded-xl border border-dashed border-cvr-line bg-white px-4 py-8 text-center text-[15px] text-cvr-muted">
                     Dự án chưa có tin mua bán / cho thuê nào.
                   </p>
                 </div>
@@ -526,8 +526,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 // Section chuẩn — có id để menu cuộn tới, tiêu đề nhất quán
 function Section({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
   return (
-    <section id={id} className="mt-8 scroll-mt-28 border-t border-cvr-line pt-6">
-      <h2 className="mb-4 text-lg font-semibold tracking-tight text-cvr-ink sm:text-xl">{title}</h2>
+    <section id={id} className="mt-4 scroll-mt-28 rounded-2xl bg-cvr-surface p-4 sm:p-5">
+      <h2 className="mb-4 text-[19px] font-semibold tracking-tight text-cvr-ink sm:text-[22px]">{title}</h2>
       {children}
     </section>
   );
@@ -536,14 +536,14 @@ function Section({ id, title, children }: { id: string; title: string; children:
 function Fact({ label, value, accent = false }: { label: string; value: string; accent?: boolean }) {
   return (
     <div className="bg-white px-4 py-3">
-      <p className="text-[11px] uppercase tracking-wide text-cvr-faint">{label}</p>
-      <p className={`mt-0.5 text-sm font-semibold leading-snug break-words ${accent ? "text-cvr-blue-ink" : "text-cvr-ink"}`} title={value}>{value}</p>
+      <p className="text-[12px] uppercase tracking-wide text-cvr-faint">{label}</p>
+      <p className={`mt-1 text-[15px] font-semibold leading-snug break-words ${accent ? "text-cvr-blue-ink" : "text-cvr-ink"}`} title={value}>{value}</p>
     </div>
   );
 }
 
 function PurposeChip({ children }: { children: React.ReactNode }) {
   return (
-    <span className="rounded-full bg-cvr-ink px-3 py-1 text-xs font-semibold text-white">{children}</span>
+    <span className="rounded-full bg-cvr-ink px-3 py-1 text-[12px] font-semibold text-white">{children}</span>
   );
 }

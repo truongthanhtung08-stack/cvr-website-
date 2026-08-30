@@ -132,6 +132,7 @@ function rowToListing(r: Row): Listing {
     // Số ẢNH thật (không tính video) → badge "📷 n" đúng thay vì cứng "1"
     imageCount: r.images.filter((s) => !isVideoUrl(s)).length,
     badge: TIER_BADGE[r.tier],
+    postedAt: r.created_at,
     purpose: r.purpose,
     // Tên người đăng thật (khách hàng) — thẻ tin hiện đúng tên này, không phải admin
     agentName: r.details?.contact?.name || undefined,

@@ -136,7 +136,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
       />
       <main className="flex-1 bg-white">
         {/* MOBILE: pt-0 → ảnh tin nằm SÁT mép dưới header (không chừa khoảng trắng) */}
-        <div className="mx-auto max-w-7xl px-4 pb-24 pt-0 sm:px-6 sm:pt-0 lg:px-8 lg:pb-20">
+        <div className="mx-auto max-w-7xl px-4 pb-24 pt-0 sm:px-6 sm:pt-0 lg:px-8 lg:pb-12">
 
           <HomeExpandProvider>
           {/* Toàn bộ nội dung tin — ẩn khi bấm "Xem thêm" ở mục BĐS tương tự */}
@@ -149,7 +149,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
 
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
             {/* Cột chính */}
-            <div className="reveal is-visible cards-stagger lg:col-span-2">
+            <div className="reveal is-visible cards-stagger lg:col-span-2 [&>section:first-of-type]:mt-4">
               {/* ═══ TỔNG QUAN TIN ═══ mở tin ra là thấy ngay, theo đúng thứ tự mắt
                   người đọc: tin có đáng tin không → là cái gì → ở đâu → bao nhiêu
                   tiền → rộng bao nhiêu → thông số → thao tác. */}
@@ -167,41 +167,52 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                       Tin thường
                     </span>
                   )}
-                  <span className="text-[11px] font-medium tracking-wide text-cvr-faint">
+                  <span className="text-[12px] font-medium tracking-wide text-cvr-faint">
                     Mã tin: {l.id.slice(0, 8).toUpperCase()}
                   </span>
                 </div>
 
                 {/* Tiêu đề — 22px trên điện thoại: đọc thoải mái mà vẫn thấy được
                     giá ngay bên dưới trong cùng một màn hình. */}
-                <h1 className="mt-2.5 text-[22px] font-semibold leading-[1.25] tracking-tight text-cvr-ink sm:text-3xl">{l.title}</h1>
+                <h1 className="mt-2.5 text-[21px] font-semibold leading-[1.3] tracking-tight text-cvr-ink sm:text-[28px]">{l.title}</h1>
 
-                <p className="mt-2 flex items-start gap-1.5 text-[13px] leading-snug text-cvr-muted sm:text-sm">
+                <p className="mt-2.5 flex items-start gap-1.5 text-[14px] leading-relaxed text-cvr-muted sm:text-[15px]">
                   <svg className="mt-[2px] h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                   <span className="min-w-0">{d.addressDetail ? d.addressDetail + ", " : ""}{l.location}</span>
                 </p>
 
-                {/* KHỐI GIÁ — giá và diện tích là hai con số khách tìm đầu tiên nên
-                    cho đứng riêng một hàng, cỡ lớn hẳn; thông số còn lại xếp lưới đều
-                    bên dưới. Trước đây tất cả nằm chung một hàng flex-wrap nên trên
-                    điện thoại rơi xuống so le, không đọc lướt được. */}
-                <div className="mt-4 rounded-2xl border border-cvr-line bg-cvr-surface p-4">
-                  <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+                {/* KHỐI THÔNG TIN CHÍNH — mọi ô cùng bề ngang nên nội dung dài ngắn
+                    khác nhau vẫn cân, không ô nào đẩy lệch ô nào. */}
+                <div className="mt-4 rounded-2xl border border-cvr-line bg-white p-4">
+                  {/* Bốn ô CÙNG BỀ NGANG — giá dài mấy cũng chỉ xuống dòng trong ô của
+                      nó, không đẩy lệch các ô còn lại. Giá vẫn nổi nhờ cỡ chữ + màu,
+                      không cần phóng to quá khổ. */}
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-4">
                     <div className="min-w-0">
-                      <p className="text-xs text-cvr-muted">{nhanGia}</p>
-                      <p className="mt-0.5 text-[26px] font-bold leading-none text-red-500 sm:text-3xl">{l.price}</p>
-                      {l.pricePerM2 && <p className="mt-1.5 text-xs text-cvr-muted">≈ {l.pricePerM2}</p>}
+                      <p className="text-[12px] text-cvr-muted">{nhanGia}</p>
+                      <p className="mt-1 break-words text-[20px] font-bold leading-tight text-red-500 sm:text-[22px]">{l.price}</p>
                     </div>
-                    <div className="min-w-0 text-right">
-                      <p className="text-xs text-cvr-muted">{nhanDienTich}</p>
-                      <p className="mt-0.5 text-[22px] font-semibold leading-none text-cvr-ink sm:text-2xl">{l.area}</p>
-                      {d.builtArea && <p className="mt-1.5 text-xs text-cvr-muted">XD {d.builtArea}</p>}
+                    <div className="min-w-0">
+                      <p className="text-[12px] text-cvr-muted">{nhanDienTich}</p>
+                      <p className="mt-1 break-words text-[17px] font-semibold leading-tight text-cvr-ink">{l.area}</p>
                     </div>
+                    {d.builtArea && (
+                      <div className="min-w-0">
+                        <p className="text-[12px] text-cvr-muted">Diện tích xây dựng</p>
+                        <p className="mt-1 break-words text-[17px] font-semibold leading-tight text-cvr-ink">{d.builtArea}</p>
+                      </div>
+                    )}
+                    {l.pricePerM2 && (
+                      <div className="min-w-0">
+                        <p className="text-[12px] text-cvr-muted">Giá / m²</p>
+                        <p className="mt-1 break-words text-[17px] font-semibold leading-tight text-cvr-ink">{l.pricePerM2}</p>
+                      </div>
+                    )}
                   </div>
 
                   {/* Thông số phụ — chỉ hiện mục ĐÃ CÓ dữ liệu, không đổ ô trống */}
                   {(l.beds || l.baths || d.direction || d.furnish) && (
-                    <div className="mt-3.5 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-cvr-line pt-3.5 sm:grid-cols-4">
+                    <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-cvr-line pt-4 sm:grid-cols-4">
                       {l.beds ? <MiniStat label="Phòng ngủ" value={l.beds + " PN"} /> : null}
                       {l.baths ? <MiniStat label="Phòng tắm" value={l.baths + " WC"} /> : null}
                       {d.direction && <MiniStat label="Hướng" value={d.direction} />}
@@ -210,19 +221,10 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                   )}
                 </div>
 
-                {/* Hàng XÁC THỰC — chỉ nêu điều CÓ THẬT: tin phải qua kiểm duyệt mới
-                    hiển thị, pháp lý đúng như người đăng khai, số ảnh đếm được.
-                    ⚠️ KHÔNG viết "cam kết" / "đảm bảo" — Coastal Land là cổng thông
-                    tin, chỉ nỗ lực xác thực chứ không đứng ra giao dịch. */}
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <TrustChip>Tin đã qua kiểm duyệt</TrustChip>
-                  {d.legal && <TrustChip>Pháp lý: {d.legal}</TrustChip>}
-                  {d.images.length > 1 && <TrustChip>{d.images.length} hình ảnh</TrustChip>}
-                  {d.videos.length > 0 && <TrustChip>Có video</TrustChip>}
-                </div>
 
                 {/* Lưu tin · So sánh · Chia sẻ — trạng thái dùng chung với thẻ tin */}
                 <ListingActions id={l.id} title={l.title} />
+
               </div>
 
               {/* Menu dính — sáng theo mục đang xem, bấm để cuộn mượt (như trang dự án) */}
@@ -231,7 +233,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
               {/* Mô tả — chỉ hiện khi người đăng có viết (không bịa) */}
               {d.descriptionParas.length > 0 && (
                 <Section id="mo-ta" title="Thông tin mô tả">
-                  <div className="space-y-3 whitespace-pre-line text-sm leading-relaxed text-cvr-body">
+                  <div className="space-y-3 whitespace-pre-line text-[15px] leading-relaxed text-cvr-body">
                     <RichContent paragraphs={d.descriptionParas} title={l.title} />
                   </div>
                 </Section>
@@ -266,7 +268,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                 <Section id="noi-that" title="Nội thất bàn giao">
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                     {d.interior.map((a) => (
-                      <span key={a} className="flex items-center gap-2 rounded-lg border border-cvr-line bg-cvr-surface px-3 py-2.5 text-xs text-cvr-body">
+                      <span key={a} className="flex items-center gap-2 rounded-lg border border-cvr-line bg-white px-3 py-2.5 text-[13px] text-cvr-body">
                         <svg className="h-4 w-4 shrink-0 text-cvr-gold-ink" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                         {a}
                       </span>
@@ -287,7 +289,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                           <p className="mb-2.5 text-xs font-semibold uppercase tracking-wider text-cvr-faint">{g.group}</p>
                           <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
                             {active.map((it) => (
-                              <span key={it.name} className="flex items-center gap-2 rounded-lg border border-cvr-line bg-cvr-surface px-3 py-2.5 text-xs text-cvr-body">
+                              <span key={it.name} className="flex items-center gap-2 rounded-lg border border-cvr-line bg-white px-3 py-2.5 text-[13px] text-cvr-body">
                                 <svg className="h-4 w-4 shrink-0 text-cvr-gold-ink" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                                 {it.name}
                               </span>
@@ -362,15 +364,15 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                   )}
                 </div>
 
-                <div className="rounded-none border border-cvr-line bg-white p-5 text-sm shadow-sm">
+                <div className="rounded-none border border-cvr-line bg-white p-5 text-[15px] shadow-sm">
                   {/* ⚠️ Thủ tục công chứng / sang tên là việc của MÔI GIỚI và hai
                       bên giao dịch — KHÔNG phải của Coastal Land. Ô này chỉ nêu
                       thông tin pháp lý + mức độ xác thực, không "cam kết". */}
                   <p className="font-semibold text-cvr-ink">Pháp lý & xác thực</p>
-                  <ul className="mt-3 space-y-2 text-cvr-body">
+                  <ul className="mt-3 space-y-2.5 leading-relaxed text-cvr-body">
                     <li className="flex gap-2"><span className="text-cvr-gold-ink">✓</span> Pháp lý: {d.legal ?? "Liên hệ để biết chi tiết"}</li>
                     {d.direction && <li className="flex gap-2"><span className="text-cvr-gold-ink">✓</span> Hướng: {d.direction}</li>}
-                    <li className="flex gap-2"><span className="text-cvr-gold-ink">✓</span> Coastal Land nỗ lực xác thực thông tin trước khi đăng</li>
+                    <li className="flex gap-2"><span className="text-cvr-gold-ink">✓</span> Tin đã qua kiểm duyệt; Coastal Land nỗ lực xác thực thông tin trước khi đăng</li>
                     <li className="flex gap-2"><span className="text-cvr-gold-ink">✓</span> Thủ tục công chứng, sang tên do môi giới và hai bên thực hiện</li>
                   </ul>
                 </div>
@@ -424,8 +426,8 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
 function Section({ id, title, children }: { id?: string; title: string; children: React.ReactNode }) {
   return (
     // scroll-mt-28: bấm menu cuộn tới thì tiêu đề không bị header + menu dính che
-    <section id={id} className="mt-7 scroll-mt-28 border-t border-cvr-line pt-5 sm:mt-8 sm:pt-6">
-      <h2 className="mb-4 text-lg font-semibold tracking-tight text-cvr-ink sm:text-xl">{title}</h2>
+    <section id={id} className="mt-4 scroll-mt-28 rounded-2xl bg-cvr-surface p-4 sm:p-5">
+      <h2 className="mb-4 text-[19px] font-semibold tracking-tight text-cvr-ink sm:text-[22px]">{title}</h2>
       {children}
     </section>
   );
@@ -433,7 +435,7 @@ function Section({ id, title, children }: { id?: string; title: string; children
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-start justify-between gap-4 border-b border-cvr-line py-3 text-sm">
+    <div className="flex items-start justify-between gap-4 border-b border-cvr-line py-3 text-[15px]">
       <span className="shrink-0 whitespace-nowrap text-cvr-muted">{label}</span>
       <span className="min-w-0 text-right font-medium text-cvr-ink">{value}</span>
     </div>
@@ -444,18 +446,8 @@ function Row({ label, value }: { label: string; value: string }) {
 function MiniStat({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0">
-      <p className="text-[11px] leading-tight text-cvr-muted">{label}</p>
-      <p className="mt-0.5 truncate text-sm font-semibold text-cvr-ink">{value}</p>
+      <p className="text-[12px] leading-tight text-cvr-muted">{label}</p>
+      <p className="mt-1 truncate text-[15px] font-semibold text-cvr-ink">{value}</p>
     </div>
-  );
-}
-
-// Viên thông tin XÁC THỰC dưới khối giá — chỉ nêu dữ kiện có thật, không hứa hẹn.
-function TrustChip({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="inline-flex items-center gap-1.5 rounded-full border border-cvr-line bg-white px-3 py-1.5 text-[12px] font-medium text-cvr-body">
-      <svg className="h-3.5 w-3.5 shrink-0 text-cvr-gold-ink" fill="none" stroke="currentColor" strokeWidth={2.4} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-      {children}
-    </span>
   );
 }

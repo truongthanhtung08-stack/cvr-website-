@@ -58,13 +58,13 @@ export default function ShareButtons({ title }: { title: string }) {
     "flex min-h-[44px] w-full items-center gap-3 px-4 text-sm font-medium text-cvr-body transition hover:bg-cvr-surface active:bg-cvr-surface";
 
   return (
-    <div ref={boxRef} className="relative">
+    <div ref={boxRef} className="relative w-full sm:w-auto">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         aria-label="Chia sẻ tin này"
-        className="inline-flex min-h-[44px] items-center gap-2 rounded-full border border-cvr-line bg-white px-4 text-sm font-semibold text-cvr-body transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 hover:border-cvr-ink hover:text-cvr-ink"
+        className="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-full border border-cvr-line bg-white px-3 text-[14px] font-semibold text-cvr-body transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 hover:border-cvr-ink hover:text-cvr-ink sm:w-auto sm:px-4"
       >
         <svg className="h-[17px] w-[17px]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" d="M8.7 10.7a3 3 0 100 2.6m0-2.6l6.6-3.4m-6.6 6l6.6 3.4M18 8a3 3 0 100-6 3 3 0 000 6zm0 14a3 3 0 100-6 3 3 0 000 6z" />

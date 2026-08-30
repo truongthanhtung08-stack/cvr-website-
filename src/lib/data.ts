@@ -48,6 +48,10 @@ export type Listing = {
   // đặc điểm theo loại hình · dự án · tên người đăng.
   // Dựng ở rowToListing (src/lib/listingsDb.ts) — KHÔNG hiển thị ra giao diện.
   searchText?: string;
+  // NGÀY ĐĂNG thật (created_at dạng ISO). Thẻ tin hiện "Hôm nay / 3 ngày trước /
+  // 12/08/2026" theo mốc này. Không có → thẻ không hiện thời gian (thà không hiện
+  // còn hơn ghi cứng "Hôm nay" cho cả tin đăng ba tháng trước).
+  postedAt?: string;
 };
 
 // Lọc tin theo mục đích (mặc định không có purpose = "ban")
@@ -150,10 +154,33 @@ export function getListingById(id: string): Listing | undefined {
 }
 
 // Tóm tắt ngắn 2 dòng cho card (kiểu Homedy) — suy từ dữ liệu cơ bản
+// Dòng mô tả trên THẺ TIN.
+// Ưu tiên MÔ TẢ THẬT người đăng viết — dọn xuống dòng, biểu tượng, khoảng trắng
+// thừa cho gọn một dòng. Tin chưa có mô tả mới rơi về câu tóm tắt tự sinh.
+// (Trước đây LUÔN dùng câu tự sinh → 500 tin hiện y hệt nhau, khách lướt không
+//  thu được thông tin gì.)
 export function listingSummary(l: Listing): string {
+  const that = (l.desc ?? "")
+    .replace(/\s+/g, " ")
+    .replace(/[•·▪◦*#=_~>-]{2,}/g, " ")
+    .trim();
+  if (that.length >= 30) return that;
+
   const place = l.location.split(",").slice(0, 2).map((s) => s.trim()).join(", ");
   const beds = l.beds ? ` • ${l.beds} PN` : "";
-  return `${l.type} tại ${place}. Diện tích ${l.area}${beds}, pháp lý rõ ràng, kết nối tiện ích.`;
+  return `${l.type} tại ${place}. Diện tích ${l.area}${beds}.`;
+}
+
+// "Hôm nay" · "3 ngày trước" · "12/08/2026" — từ ngày đăng thật.
+export function postedText(iso?: string): string {
+  if (!iso) return "";
+  const t = new Date(iso).getTime();
+  if (Number.isNaN(t)) return "";
+  const ngay = Math.floor((Date.now() - t) / 86400000);
+  if (ngay <= 0) return "Hôm nay";
+  if (ngay === 1) return "Hôm qua";
+  if (ngay < 30) return `${ngay} ngày trước`;
+  return new Date(iso).toLocaleDateString("vi-VN");
 }
 
 export type ListingDetail = {

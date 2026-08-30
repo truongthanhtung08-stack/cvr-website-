@@ -22,14 +22,14 @@ export default function ListingList({ items }: { items: Listing[] }) {
                 {l.title}
               </h3>
               <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-                <span className="font-bold text-red-500">{l.price}</span>
+                <span className="text-[16px] font-bold text-red-500">{l.price}</span>
                 <span className="text-cvr-muted">{l.area}</span>
                 {l.pricePerM2 && <span className="text-cvr-muted">· {l.pricePerM2}</span>}
               </div>
-              <p className="mt-auto flex items-center gap-1.5 pt-1.5 text-xs text-cvr-muted">
+              <p className="mt-auto flex items-center gap-1.5 pt-1.5 text-[13px] text-cvr-muted">
                 <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                 <span className="line-clamp-1">{l.location}</span>
-                <span className="ml-1 hidden rounded bg-cvr-surface px-1.5 py-0.5 text-[11px] text-cvr-body sm:inline">{l.type}</span>
+                <span className="ml-1 hidden rounded bg-cvr-surface px-1.5 py-0.5 text-[12px] text-cvr-body sm:inline">{l.type}</span>
               </p>
             </div>
           </Link>
