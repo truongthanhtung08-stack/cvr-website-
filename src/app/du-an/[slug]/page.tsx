@@ -271,14 +271,14 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               {purposes.includes("thue") && <PurposeChip>Cho thuê</PurposeChip>}
               <span className="rounded-full bg-cvr-surface px-3 py-1 text-[12px] font-medium text-cvr-body">{p.status}</span>
             </div>
-            <h1 className="mt-2.5 text-[21px] font-semibold leading-[1.3] tracking-tight text-cvr-ink sm:text-[28px]">{p.name}</h1>
-            <p className="mt-2.5 flex items-start gap-1.5 text-[14px] leading-relaxed text-cvr-muted sm:text-[15px]">
+            <h1 className="mt-3 text-[21px] font-semibold leading-[1.3] tracking-tight text-cvr-ink sm:text-[28px]">{p.name}</h1>
+            <p className="mt-2 flex items-start gap-1.5 text-[14px] leading-relaxed text-cvr-muted sm:text-[15px]">
               <svg className="mt-0.5 h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
               <span>{p.location}</span>
             </p>
 
             {/* Dải thông tin nhanh — cân đối, dễ đọc từng tiêu chí */}
-            <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4">
               <Fact label="Giá từ" value={sidePrice} accent />
               <Fact label="Loại hình" value={p.type} />
               <Fact label="Chủ đầu tư" value={p.developer} />
@@ -286,8 +286,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             </div>
           </div>
 
-          <div className="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-3">
-            <div className="reveal is-visible cards-stagger lg:col-span-2 [&>section:first-of-type]:mt-4">
+          <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
+            <div className="reveal is-visible cards-stagger lg:col-span-2 [&>section:first-of-type]:mt-5">
               {/* Menu dính — sáng theo mục đang xem, bấm để cuộn mượt */}
               <ProjectNav items={nav} />
 
@@ -526,7 +526,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 // Section chuẩn — có id để menu cuộn tới, tiêu đề nhất quán
 function Section({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
   return (
-    <section id={id} className="mt-4 scroll-mt-28 rounded-2xl bg-cvr-surface p-4 sm:p-5">
+    <section id={id} className="mt-5 scroll-mt-28 rounded-2xl bg-cvr-surface p-4 sm:p-5">
       <h2 className="mb-4 text-[19px] font-semibold tracking-tight text-cvr-ink sm:text-[22px]">{title}</h2>
       {children}
     </section>

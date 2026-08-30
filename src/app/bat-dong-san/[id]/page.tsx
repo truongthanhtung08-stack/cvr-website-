@@ -7,7 +7,7 @@ import Gallery from "@/components/Gallery";
 import ListingShowcase from "@/components/ListingShowcase";
 import { HomeExpandProvider, HomeCollapsible } from "@/components/HomeExpand";
 import RecordView from "@/components/RecordView";
-import ListingActions from "@/components/ListingActions";
+import ShareButtons from "@/components/ShareButtons";
 import PriceHistory from "@/components/PriceHistory";
 import ProjectNearby from "@/components/ProjectNearby";
 import ProjectNav from "@/components/ProjectNav";
@@ -136,54 +136,60 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
       />
       <main className="flex-1 bg-white">
         {/* MOBILE: pt-0 → ảnh tin nằm SÁT mép dưới header (không chừa khoảng trắng) */}
-        <div className="mx-auto max-w-7xl px-4 pb-24 pt-0 sm:px-6 sm:pt-0 lg:px-8 lg:pb-12">
+        <div className={`mx-auto max-w-7xl px-4 pt-0 sm:px-6 sm:pt-0 lg:px-8 lg:pb-12 ${contact ? "pb-24" : "pb-10"}`}>
 
           <HomeExpandProvider>
           {/* Toàn bộ nội dung tin — ẩn khi bấm "Xem thêm" ở mục BĐS tương tự */}
           <HomeCollapsible>
 
           {/* Thư viện ảnh THẬT — MOBILE tràn viền sát 2 mép + sát header (không khoảng trống) */}
-          <div className="-mx-4 mb-6 sm:mx-0">
+          <div className="-mx-4 mb-5 sm:mx-0">
             <Gallery images={d.images} alt={l.title} listingId={l.id} />
           </div>
 
-          <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
             {/* Cột chính */}
-            <div className="reveal is-visible cards-stagger lg:col-span-2 [&>section:first-of-type]:mt-4">
+            <div className="reveal is-visible cards-stagger lg:col-span-2 [&>section:first-of-type]:mt-5">
               {/* ═══ TỔNG QUAN TIN ═══ mở tin ra là thấy ngay, theo đúng thứ tự mắt
                   người đọc: tin có đáng tin không → là cái gì → ở đâu → bao nhiêu
                   tiền → rộng bao nhiêu → thông số → thao tác. */}
-              <div>
+              <div className="mb-6">
                 {/* Hàng nhận diện: hạng tin + mã tin — cho khách cảm giác tin có hồ
                     sơ, có mã tra cứu. Trước đây mã tin nằm tít dưới cột phải, trên
                     điện thoại gần như không ai nhìn thấy. */}
-                <div className="flex flex-wrap items-center gap-2">
-                  {tier ? (
-                    <span className="inline-block rounded px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-white" style={{ backgroundColor: tier.accent }}>
-                      {tier.name}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex min-w-0 flex-wrap items-center gap-2">
+                    {tier ? (
+                      <span className="inline-block rounded px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-white" style={{ backgroundColor: tier.accent }}>
+                        {tier.name}
+                      </span>
+                    ) : (
+                      <span className="inline-block rounded bg-cvr-surface px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-cvr-muted ring-1 ring-cvr-line">
+                        Tin thường
+                      </span>
+                    )}
+                    <span className="text-[12px] font-medium tracking-wide text-cvr-faint">
+                      Mã tin: {l.id.slice(0, 8).toUpperCase()}
                     </span>
-                  ) : (
-                    <span className="inline-block rounded bg-cvr-surface px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-cvr-muted ring-1 ring-cvr-line">
-                      Tin thường
-                    </span>
-                  )}
-                  <span className="text-[12px] font-medium tracking-wide text-cvr-faint">
-                    Mã tin: {l.id.slice(0, 8).toUpperCase()}
-                  </span>
+                  </div>
+                  {/* CHIA SẺ — đặt ngay đầu tin, ngang tầm mắt, không chiếm thêm
+                      dòng nào. Nút Lưu / So sánh bỏ đi vì đã có sẵn trên từng thẻ
+                      tin ngoài trang chủ và trang Mua bán / Cho thuê. */}
+                  <ShareButtons title={l.title} />
                 </div>
 
-                {/* Tiêu đề — 22px trên điện thoại: đọc thoải mái mà vẫn thấy được
+                {/* Tiêu đề — 21px trên điện thoại: đọc thoải mái mà vẫn thấy được
                     giá ngay bên dưới trong cùng một màn hình. */}
-                <h1 className="mt-2.5 text-[21px] font-semibold leading-[1.3] tracking-tight text-cvr-ink sm:text-[28px]">{l.title}</h1>
+                <h1 className="mt-3 text-[21px] font-semibold leading-[1.3] tracking-tight text-cvr-ink sm:text-[28px]">{l.title}</h1>
 
-                <p className="mt-2.5 flex items-start gap-1.5 text-[14px] leading-relaxed text-cvr-muted sm:text-[15px]">
+                <p className="mt-2 flex items-start gap-1.5 text-[14px] leading-relaxed text-cvr-muted sm:text-[15px]">
                   <svg className="mt-[2px] h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                   <span className="min-w-0">{d.addressDetail ? d.addressDetail + ", " : ""}{l.location}</span>
                 </p>
 
                 {/* KHỐI THÔNG TIN CHÍNH — mọi ô cùng bề ngang nên nội dung dài ngắn
                     khác nhau vẫn cân, không ô nào đẩy lệch ô nào. */}
-                <div className="mt-4 rounded-2xl border border-cvr-line bg-white p-4">
+                <div className="mt-5 rounded-2xl border border-cvr-line bg-white p-4">
                   {/* Bốn ô CÙNG BỀ NGANG — giá dài mấy cũng chỉ xuống dòng trong ô của
                       nó, không đẩy lệch các ô còn lại. Giá vẫn nổi nhờ cỡ chữ + màu,
                       không cần phóng to quá khổ. */}
@@ -221,9 +227,6 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                   )}
                 </div>
 
-
-                {/* Lưu tin · So sánh · Chia sẻ — trạng thái dùng chung với thẻ tin */}
-                <ListingActions id={l.id} title={l.title} />
 
               </div>
 
@@ -426,7 +429,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
 function Section({ id, title, children }: { id?: string; title: string; children: React.ReactNode }) {
   return (
     // scroll-mt-28: bấm menu cuộn tới thì tiêu đề không bị header + menu dính che
-    <section id={id} className="mt-4 scroll-mt-28 rounded-2xl bg-cvr-surface p-4 sm:p-5">
+    <section id={id} className="mt-5 scroll-mt-28 rounded-2xl bg-cvr-surface p-4 sm:p-5">
       <h2 className="mb-4 text-[19px] font-semibold tracking-tight text-cvr-ink sm:text-[22px]">{title}</h2>
       {children}
     </section>
