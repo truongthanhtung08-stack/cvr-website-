@@ -85,7 +85,8 @@ export const COT = {
   phapLy: "phap_ly",
   huong: "huong",
   lienHeTen: "lien_he_ten",
-  lienHeSdt: "lien_he_sdt",
+  lienHeSdt: "lien_he_sdt",      // nhiều số ngăn bằng dấu |
+  lienHeEmail: "lien_he_email",  // không bắt buộc — thêm một chìa để ghép tài khoản
   // ── 5 cột BỔ SUNG theo file mẫu mới (mau-nhap-tin-hang-loat.xlsx) ──────────
   tenDuAn: "ten_du_an",                 // tin thuộc dự án nào
   huongBanCong: "huong_ban_cong",       // hướng ban công (căn hộ / chung cư)
@@ -280,7 +281,11 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
   const video = tachDanhSachAnh(lay(COT.video)).filter(laLinkAnh);
 
   const ten = lay(COT.lienHeTen);
-  const sdt = lay(COT.lienHeSdt);
+  // SỐ ĐIỆN THOẠI — có thể nhiều số ngăn bằng | ; hoặc phẩy. Chỉ giữ chữ số.
+  // Đây là CHÌA KHOÁ để sau này gán tin đăng hộ về tài khoản khách, nên lưu ĐỦ.
+  const dsSdt = [...new Set(tachDanhSachAnh(lay(COT.lienHeSdt)).map((s) => s.replace(/D/g, "")).filter((s) => s.length >= 9))];
+  const sdt = dsSdt[0] ?? "";
+  const email = lay(COT.lienHeEmail).trim().toLowerCase();
 
   const payload = {
     purpose: mucDich,
@@ -302,7 +307,11 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
       addressDetail: lay(COT.diaChi) || undefined,
       legal: lay(COT.phapLy) || undefined,
       direction: lay(COT.huong) || undefined,
-      contact: ten || sdt ? { name: ten, phone: sdt } : undefined,
+      contact: ten || sdt || email
+        ? { name: ten || undefined, phone: sdt || undefined,
+            ...(dsSdt.length > 1 ? { phones: dsSdt } : {}),
+            email: email || undefined }
+        : undefined,
       // ── 5 cột bổ sung ────────────────────────────────────────────────────
       // Dự án: lưu SLUG để trang chi tiết nối được với dự án tương ứng
       project: lay(COT.tenDuAn) ? slugify(lay(COT.tenDuAn)) : undefined,

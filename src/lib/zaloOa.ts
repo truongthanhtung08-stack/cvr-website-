@@ -36,9 +36,15 @@ type BanGhiToken = {
 };
 
 export function zaloOaConfig() {
-  const appId = process.env.ZALO_OA_APP_ID;
-  const secret = process.env.ZALO_OA_APP_SECRET;
-  const thieu = [!appId && "ZALO_OA_APP_ID", !secret && "ZALO_OA_APP_SECRET"].filter(Boolean) as string[];
+  // CÙNG MỘT ỨNG DỤNG ZALO với phần đăng nhập (app 114204740698790237), nên nếu
+  // chưa cắm riêng ZALO_OA_* thì dùng luôn ZALO_APP_ID / ZALO_APP_SECRET đã có
+  // sẵn trên Vercel — khỏi phải cắm hai biến trùng giá trị rồi quên đồng bộ.
+  const appId = process.env.ZALO_OA_APP_ID || process.env.ZALO_APP_ID;
+  const secret = process.env.ZALO_OA_APP_SECRET || process.env.ZALO_APP_SECRET;
+  const thieu = [
+    !appId && "ZALO_OA_APP_ID (hoặc ZALO_APP_ID)",
+    !secret && "ZALO_OA_APP_SECRET (hoặc ZALO_APP_SECRET)",
+  ].filter(Boolean) as string[];
   return { appId, secret, thieu, daCauHinh: thieu.length === 0 };
 }
 

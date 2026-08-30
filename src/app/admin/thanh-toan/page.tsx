@@ -247,7 +247,7 @@ function KhoiGuiThu() {
             nhan="Tên miền gửi thư"
             phu={cfg.email.daXacMinhTenMien ? cfg.email.from : "chưa xác minh coastalland.vn — KHÁCH KHÔNG NHẬN ĐƯỢC, chỉ gửi về email chủ tài khoản Resend"}
           />
-          <Dong ok={cfg.zalo.daCamKhoa} nhan="Zalo OA" phu={cfg.zalo.daCamKhoa ? "token tự làm mới" : "thiếu ZALO_OA_APP_ID / APP_SECRET / REFRESH_TOKEN"} />
+          <Dong ok={cfg.zalo.daCamKhoa} nhan="Zalo OA" phu={cfg.zalo.daCamKhoa ? "đã cấp quyền OA · token tự làm mới" : "thiếu ZALO_APP_ID / ZALO_APP_SECRET, hoặc chưa cấp quyền OA"} />
           <Dong ok={cfg.zalo.mauOtp} nhan="Mẫu ZNS mã OTP đăng nhập" phu={cfg.zalo.mauOtp ? "" : "chưa khai mã mẫu"} />
           <Dong ok={cfg.zalo.mauNapTien} nhan="Mẫu ZNS nạp tiền" phu={cfg.zalo.mauNapTien ? "" : "chưa khai mã mẫu"} />
           <Dong ok={cfg.zalo.mauDuyetTin} nhan="Mẫu ZNS duyệt tin" phu={cfg.zalo.mauDuyetTin ? "" : "chưa khai mã mẫu"} />

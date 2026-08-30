@@ -25,7 +25,9 @@ export type ListingDetailsJson = {
   addressDetail?: string;
   mapPin?: string; // toạ độ / link Google Maps admin ghim tay
   places?: { category: string; name: string; distance: string }[]; // tiện ích xung quanh
-  contact?: { name?: string; phone?: string; email?: string; avatar?: string };
+  // phones: MỌI số của người đăng (số đầu = số hiển thị). Giữ đủ để sau này
+  // ghép tin đăng hộ về đúng tài khoản khách — khách hay có 2 số.
+  contact?: { name?: string; phone?: string; phones?: string[]; email?: string; avatar?: string };
   project?: string; // SLUG dự án tin này thuộc về — dùng cho "Tin liên quan tại dự án"
 };
 

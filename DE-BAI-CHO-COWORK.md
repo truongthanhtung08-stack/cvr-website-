@@ -226,7 +226,14 @@ Từ 2025 **không còn Quận/Huyện**. Chỉ có: **Tỉnh/Thành → Phườ
 | `tinh_trang_noi_that` | `Bàn giao thô` · `Cơ bản` · `Đầy đủ` · `Đầy đủ / Cao cấp` |
 | `noi_that_ban_giao` | Nhiều mục ngăn bằng **dấu phẩy**: `Máy lạnh, Tủ bếp, Sofa` |
 | `tien_ich` | Nhiều mục ngăn bằng **dấu phẩy**: `Hồ bơi, Phòng gym, Bảo vệ 24/7` |
-| `lien_he_ten`, `lien_he_sdt` | Tên + số của người đăng tin |
+| `lien_he_ten` | Tên người đăng |
+| `lien_he_sdt` | **QUAN TRỌNG NHẤT trong nhóm này.** Số điện thoại người đăng. Tin có **nhiều số thì ghi đủ**, ngăn bằng `\|` — vd `0905123456 \| 0935777888`. Chỉ ghi chữ số |
+| `lien_he_email` | Email người đăng nếu tin có. Không có thì để trống |
+
+> **Vì sao số điện thoại và email quan trọng hơn các cột khác:** tin này là chủ dự án
+> **đăng hộ** người bán. Sau này người bán tạo tài khoản trên web, hệ thống dựa vào
+> **số điện thoại / email** để trả tin về đúng tài khoản của họ — khỏi phải đăng lại.
+> Thiếu số là mất luôn mối nối đó, sau không sửa được. **Khách hay có 2 số → ghi đủ cả hai.**
 | `anh` | Chỉ dùng khi ghi thẳng tên ảnh hoặc link, ngăn bằng `\|` (xem mục 5) |
 
 ### 4.3 Danh mục `loai_hinh` — chép đúng nguyên văn

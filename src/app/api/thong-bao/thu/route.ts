@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { guiThongBao, type NoiDungThongBao } from "@/lib/thongBao";
 import { vnd } from "@/lib/billing";
+import { zaloOaConfig } from "@/lib/zaloOa";
 
 // ============================================================================
 // GỬI THỬ THÔNG BÁO — để kiểm tra đường email/Zalo có thông không, KHÔNG cần
@@ -93,10 +94,10 @@ export async function GET() {
     zalo: {
       // Token tự làm mới qua App ID + Secret + refresh token (token sống 1 giờ,
       // không cắm cứng được). ZALO_OA_ACCESS_TOKEN chỉ để đè khi thử tay.
-      daCamKhoa: Boolean(
-        (process.env.ZALO_OA_APP_ID && process.env.ZALO_OA_APP_SECRET && process.env.ZALO_OA_REFRESH_TOKEN) ||
-          process.env.ZALO_OA_ACCESS_TOKEN,
-      ),
+      // Refresh token nay nằm trong bảng bi_mat sau khi cấp quyền OA — không còn
+      // bắt buộc cắm ZALO_OA_REFRESH_TOKEN. Chỉ cần App ID + Secret (dùng chung
+      // với ZALO_APP_ID / ZALO_APP_SECRET của phần đăng nhập Zalo).
+      daCamKhoa: zaloOaConfig().daCauHinh || Boolean(process.env.ZALO_OA_ACCESS_TOKEN),
       mauOtp: Boolean(process.env.ZALO_ZNS_TEMPLATE_OTP),
       // Thông báo qua Zalo mặc định TẮT cho đỡ tốn (~300–500đ/tin), email miễn phí.
       // OTP đăng nhập KHÔNG chịu ảnh hưởng công tắc này — luôn gửi.

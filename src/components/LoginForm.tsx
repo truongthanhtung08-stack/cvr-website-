@@ -94,13 +94,30 @@ export default function LoginForm() {
       </div>
 
       {!moEmail && (
-        <button
-          type="button"
-          onClick={() => setMoEmail(true)}
-          className="flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-cvr-line text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink"
-        >
-          Đăng nhập bằng email và mật khẩu
-        </button>
+        <>
+          <button
+            type="button"
+            onClick={() => setMoEmail(true)}
+            className="flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-cvr-line text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink"
+          >
+            Đăng nhập bằng email và mật khẩu
+          </button>
+
+          {/* QUÊN MẬT KHẨU phải THẤY NGAY, không giấu trong khối email đang đóng —
+              khách quên mật khẩu là lúc đang bí, bắt họ mở thêm một khối nữa mới
+              thấy lối ra thì hỏng. Kèm câu nhắc cho người vào bằng Zalo/Google:
+              họ KHÔNG có mật khẩu nào cả, bấm lại nút đó là vào. */}
+          <p className="mt-4 text-center text-sm text-cvr-muted">
+            <Link href="/quen-mat-khau" className="font-medium text-cvr-blue-ink hover:text-cvr-blue">
+              Quên mật khẩu?
+            </Link>
+          </p>
+          <p className="mt-1.5 text-center text-xs leading-relaxed text-cvr-faint">
+            Nếu bạn từng vào bằng <strong className="font-medium">Zalo</strong> hoặc{" "}
+            <strong className="font-medium">Google</strong> thì không có mật khẩu nào cả —
+            bấm lại đúng nút đó ở trên là vào ngay.
+          </p>
+        </>
       )}
 
       {moEmail && (
