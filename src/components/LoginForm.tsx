@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -36,6 +36,24 @@ export default function LoginForm() {
   // Ai quen dùng email thì mở ra — không ép ai phải nhớ mật khẩu.
   const [moEmail, setMoEmail] = useState(false);
 
+  // GHI NHỚ TRÊN MÁY NÀY — nhớ email/số đã dùng để lần sau điền sẵn, khách chỉ
+  // gõ mật khẩu. Phiên đăng nhập thì Supabase vốn giữ tới khi bấm Đăng xuất,
+  // không phụ thuộc ô này. Trước đây ô này là hộp trống không nối vào đâu.
+  const [ghiNho, setGhiNho] = useState(true);
+  useEffect(() => {
+    try {
+      const cu = localStorage.getItem("cl-dang-nhap-email");
+      if (cu) {
+        setEmail(cu);
+        setMoEmail(true); // đã từng dùng email → mở sẵn khối cho nhanh
+      } else {
+        setGhiNho(localStorage.getItem("cl-ghi-nho") !== "0");
+      }
+    } catch {
+      /* trình duyệt chặn localStorage — bỏ qua, không chặn đăng nhập vì lý do đó */
+    }
+  }, []);
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setNotice("");
@@ -54,6 +72,17 @@ export default function LoginForm() {
         setNotice(viError(error.message));
         return;
       }
+      // Đăng nhập xong mới lưu — lưu trước thì sai email cũng nhớ, lần sau điền sẵn cái sai.
+      try {
+        if (ghiNho) {
+          localStorage.setItem("cl-dang-nhap-email", email.trim());
+          localStorage.removeItem("cl-ghi-nho");
+        } else {
+          localStorage.removeItem("cl-dang-nhap-email");
+          localStorage.setItem("cl-ghi-nho", "0");
+        }
+      } catch { /* trình duyệt chặn localStorage — không chặn đăng nhập vì lý do đó */ }
+
       const next = new URLSearchParams(window.location.search).get("next");
       if (next) {
         window.location.href = next;
@@ -113,9 +142,8 @@ export default function LoginForm() {
             </Link>
           </p>
           <p className="mt-1.5 text-center text-xs leading-relaxed text-cvr-faint">
-            Nếu bạn từng vào bằng <strong className="font-medium">Zalo</strong> hoặc{" "}
-            <strong className="font-medium">Google</strong> thì không có mật khẩu nào cả —
-            bấm lại đúng nút đó ở trên là vào ngay.
+            Nếu bạn từng vào bằng <strong className="font-medium">Google</strong> thì không có
+            mật khẩu nào cả — bấm lại đúng nút đó ở trên là vào ngay.
           </p>
         </>
       )}
@@ -153,8 +181,13 @@ export default function LoginForm() {
 
         <div className="flex items-center justify-between text-sm">
           <label className="flex cursor-pointer items-center gap-2 text-cvr-body">
-            <input type="checkbox" className="h-4 w-4 accent-cvr-ink" />
-            Ghi nhớ đăng nhập
+            <input
+              type="checkbox"
+              checked={ghiNho}
+              onChange={(e) => setGhiNho(e.target.checked)}
+              className="h-4 w-4 accent-cvr-ink"
+            />
+            Ghi nhớ tôi trên máy này
           </label>
           <Link href="/quen-mat-khau" className="text-cvr-body hover:text-cvr-ink">Quên mật khẩu?</Link>
         </div>

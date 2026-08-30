@@ -44,7 +44,7 @@ export default function ForgotPasswordForm() {
           Họ nhập email thật vào đây sẽ không nhận được thư nào và tưởng web hỏng.
           Nói trước ngay đầu trang, đừng để họ chờ thư vô ích. */}
       <div className="mt-4 rounded-lg border border-cvr-blue/30 bg-cvr-blue/[0.08] px-3 py-2.5 text-sm text-cvr-blue-ink">
-        Bạn từng vào bằng <strong>Zalo</strong> hoặc <strong>Google</strong>? Tài khoản đó{" "}
+        Bạn từng vào bằng <strong>Google</strong>? Tài khoản đó{" "}
         <strong>không có mật khẩu</strong> — quay lại{" "}
         <Link href="/dang-nhap" className="font-semibold underline">trang đăng nhập</Link>{" "}
         bấm đúng nút đó là vào ngay, không cần đặt lại gì.
@@ -56,7 +56,7 @@ export default function ForgotPasswordForm() {
           <br />
           <span className="mt-1.5 block text-cvr-muted">
             Chờ vài phút không thấy thì xem thư mục <strong>Spam / Quảng cáo</strong>. Vẫn không có
-            nghĩa là email này chưa từng đăng ký — thử vào bằng Zalo hoặc Google.
+            nghĩa là email này chưa từng đăng ký — thử vào bằng Google.
           </span>
         </div>
       ) : (
