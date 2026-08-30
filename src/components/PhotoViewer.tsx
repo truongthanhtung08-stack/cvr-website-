@@ -234,7 +234,7 @@ export default function PhotoViewer({
               ref={i === idx ? anhRef : undefined}
               // Chỉ tải ảnh đang xem và 1 ảnh hai bên → vuốt tới đâu có ngay tới đó,
               // không tải cùng lúc cả bộ (13 ảnh) làm nghẽn mạng.
-              src={Math.abs(i - idx) <= 2 ? anhToiUu(src, beRong) : undefined}
+              src={Math.abs(i - idx) <= 2 ? anhToiUu(src, beRong, 90) : undefined}
               alt={captions?.[i] ?? `${title ?? "Ảnh"} ${i + 1}`}
               draggable={false}
               loading={Math.abs(i - idx) <= 1 ? "eager" : "lazy"}

@@ -19,8 +19,10 @@ const nextConfig: NextConfig = isPages
         // AVIF trước (nhẹ nhất), WebP dự phòng cho máy cũ.
         formats: ["image/avif", "image/webp"],
         // Next 16 yêu cầu liệt kê mọi mức chất lượng được dùng trong code:
-        //   40 = nền mờ Hero (blur) · 75 = mặc định thẻ tin · 100 = ảnh Hero chính.
-        qualities: [40, 75, 100],
+        //   40 = nền mờ Hero (blur) · 75 = thẻ tin (nhỏ, ưu tiên tải nhanh)
+        //   90 = ẢNH LỚN: bộ xem toàn màn hình, ảnh chính trang chi tiết/dự án
+        //   100 = ảnh Hero chính.
+        qualities: [40, 75, 90, 100],
         // Cho phép tối ưu ảnh tin lấy từ Supabase Storage.
         remotePatterns: [
           { protocol: "https", hostname: "miyugmacyerqvzhgmbyd.supabase.co" },

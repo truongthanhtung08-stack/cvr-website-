@@ -9,8 +9,13 @@ export type UploadResult = { url?: string; error?: string };
 // 7 ảnh là vài chục GB → chắc chắn vỡ trần. Thu cạnh dài về 1600px + JPEG chất
 // lượng 82% cho ra ~150–350KB/ảnh, mắt thường không phân biệt được trên web.
 // Ảnh vốn đã nhỏ hơn bản nén thì giữ nguyên bản gốc.
-const CANH_TOI_DA = 1600;
-const CHAT_LUONG = 0.82;
+// 2048px = mức màn hình PC nét cao (retina/4K) cần cho ảnh lớn trang chi tiết.
+// Điện thoại chỉ cần ~800px nên thừa sức. Để 1600 thì ảnh lớn trên PC bị mềm.
+const CANH_TOI_DA = 2048;
+// WebP nhẹ hơn JPEG ~30% ở cùng độ nét → ảnh to hơn 1,28 lần mà dung lượng gần
+// như không đổi. Trình duyệt nào không xuất được WebP thì tự lùi về JPEG.
+const CHAT_LUONG = 0.8;
+const CHAT_LUONG_JPEG = 0.85;
 
 // ── ĐÓNG DẤU CHÌM "COASTAL LAND" ────────────────────────────────────────────
 // Ký hiệu MỜ ở góc dưới phải mọi ảnh tin đăng: ảnh bị lấy đi nơi khác vẫn nhận
@@ -53,12 +58,17 @@ async function nenAnh(file: File): Promise<File> {
     bitmap.close?.();
     dongDauCvr(ctx, w, h);
 
-    const blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, "image/jpeg", CHAT_LUONG));
+    // WebP trước; trình duyệt cũ không xuất được thì lùi về JPEG.
+    // toBlob trả về đúng loại đã yêu cầu — kiểm blob.type để biết có lùi hay không.
+    let blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, "image/webp", CHAT_LUONG));
+    if (!blob || blob.type !== "image/webp")
+      blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, "image/jpeg", CHAT_LUONG_JPEG));
     // Dùng bản qua canvas KỂ CẢ khi không nhẹ hơn — vì bản này mới có đóng dấu
     // COASTAL LAND. Chỉ giữ ảnh gốc khi trình duyệt không xuất được.
     if (!blob) return file;
-    const ten = file.name.replace(/\.[^.]+$/, "") + ".jpg";
-    return new File([blob], ten, { type: "image/jpeg" });
+    const duoi = blob.type === "image/webp" ? ".webp" : ".jpg";
+    const ten = file.name.replace(/\.[^.]+$/, "") + duoi;
+    return new File([blob], ten, { type: blob.type });
   } catch {
     return file;
   }

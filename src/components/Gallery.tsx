@@ -54,7 +54,7 @@ export default function Gallery({
     <>
       {images.length === 1 ? (
         <button type="button" onClick={() => open(0)} className="group relative block aspect-[2/1] w-full overflow-hidden rounded-none border border-cvr-line">
-          <Image src={images[0]} alt={alt} fill priority sizes="(max-width:1024px) 100vw, 66vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
+          <Image src={images[0]} alt={alt} fill priority quality={90} sizes="(max-width:1024px) 100vw, 66vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
         </button>
       ) : (
         <>
@@ -73,7 +73,7 @@ export default function Gallery({
                 aria-label={`Ảnh ${i + 1}`}
                 className="relative aspect-[2/1] w-full shrink-0 snap-center overflow-hidden border border-cvr-line bg-cvr-surface"
               >
-                <Image src={src} alt={`${alt} ${i + 1}`} fill priority={i === 0} sizes="100vw" className="object-cover" />
+                <Image src={src} alt={`${alt} ${i + 1}`} fill priority={i === 0} quality={90} sizes="100vw" className="object-cover" />
               </button>
             ))}
           </div>
@@ -111,7 +111,7 @@ export default function Gallery({
             onMouseLeave={() => setPaused(false)}
             className="group relative col-span-2 aspect-[16/9] overflow-hidden rounded-none border border-cvr-line sm:row-span-2 sm:aspect-auto sm:h-full"
           >
-            <Image key={bigIdx} src={images[bigIdx]} alt={alt} fill priority sizes="(max-width:1024px) 100vw, 50vw" className="object-cover animate-fadein" />
+            <Image key={bigIdx} src={images[bigIdx]} alt={alt} fill priority quality={90} sizes="(max-width:1024px) 100vw, 50vw" className="object-cover animate-fadein" />
             <span className="absolute bottom-3 left-3 rounded-md bg-black/60 px-2.5 py-1 text-xs text-white backdrop-blur-sm">
               {bigIdx + 1}/{images.length}
             </span>

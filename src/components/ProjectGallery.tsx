@@ -38,7 +38,7 @@ export default function ProjectGallery({ images, alt }: Props) {
             onClick={() => open(0)}
             className="group relative col-span-4 row-span-2 overflow-hidden sm:col-span-2"
           >
-            <Image src={images[0]} alt={alt} fill priority sizes="(max-width:640px) 100vw, 44vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
+            <Image src={images[0]} alt={alt} fill priority quality={90} sizes="(max-width:640px) 100vw, 44vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
           </button>
 
           {/* 4 ảnh nhỏ — phải, lưới 2×2 (ẩn trên mobile) */}

@@ -3,11 +3,15 @@
 > File này là **đề bài giao cho Cowork** (hoặc bất kỳ ai/công cụ nào làm việc gom tin).
 > Đọc xong là làm được, không cần hỏi lại.
 >
-> **Ba câu tóm gọn cả việc:**
+> **Bốn câu tóm gọn cả việc:**
 > 1. Điền **đúng theo file mẫu** — đúng tên cột, đúng định dạng từng ô.
-> 2. Nội dung và ảnh **lấy y nguyên của người đăng**, không viết lại, không bỏ bớt.
-> 3. **Cái nào thiếu — nội dung hay ảnh — thì để trống ô đó, dán LINK vào `nguon` / `link_anh`
->    và ghi rõ thiếu gì vào `ghi_chu`.** Chủ dự án tự vào lấy nốt. Đừng đoán, đừng bỏ tin.
+>    Trường **bắt buộc** phải có đủ; trường khác **có thì lấy hết, không có thì để trống**.
+> 2. Nội dung **lấy y nguyên của người đăng**, không viết lại, không thêm thắt, không bịa.
+> 3. **Ảnh: KHÔNG cần tải về.** Chỉ cần ghi **đủ link ảnh trực tiếp** vào cột `link_anh`
+>    (ngăn bằng `\|`) và điền `ma_anh`. Chủ dự án bấm `TAI-ANH-VA-KIEM.bat` là tải hết,
+>    đặt tên chuẩn và kiểm ảnh tự động — xem mục 5E.
+> 4. **Cái nào thiếu thì để trống ô đó, dán LINK vào `nguon` / `link_anh`, ghi rõ thiếu gì
+>    vào `ghi_chu`.** Đừng đoán, đừng bỏ tin.
 
 ---
 
@@ -28,12 +32,13 @@ C:\Users\X1 GEN 8\Projects\TIN-HANG-NGAY\
 │   ├── anh\
 │   │   ├── da-nang\               ← ảnh Đà Nẵng
 │   │   ├── hue\
-│   │   ├── nha-trang\
 │   │   ├── quy-nhon\
-│   │   ├── quang-ngai\
-│   │   └── quang-tri\
-│   └── bao-cao.txt                ← khung sẵn, điền vào chỗ chấm
+│   │   ├── nha-trang\
+│   │   └── phan-thiet\
+│   ├── bao-cao.txt                ← khung sẵn, điền vào chỗ chấm
+│   └── KIEM-ANH.html              ← công cụ tự tạo, xem mục 5E
 │
+├── TAI-ANH-VA-KIEM.bat            ← chủ dự án bấm 2 lần để tải hết ảnh
 └── DA-DANG\                       ← đăng xong thì kéo cả thư mục ngày vào đây
 ```
 
@@ -59,36 +64,71 @@ bằng **tên cột**, sai tên là không đọc được.
 | Cột thêm | Ghi gì |
 |---|---|
 | `nguon` | **Link tin gốc** (bắt buộc, dán link đầy đủ). Không có link thì ghi nơi lấy + ngày giờ thấy tin |
-| `link_anh` | Link tới **chỗ có ảnh** khi không tải được ảnh về — xem mục 5 |
+| `link_anh` | **LUÔN LUÔN ghi đủ link ảnh trực tiếp** (`…jpg`), ngăn nhau bằng `\|` — **kể cả khi đã tải ảnh về rồi**. Chủ dự án cần để tải lại và đối chiếu. Không có link ảnh thì ghi link tin gốc |
 | `ghi_chu` | Thiếu gì, vướng gì: `chưa tải được ảnh` · `tin không ghi diện tích` · `nghi trùng tin hôm qua` · `giá bất thường` |
 
 > Ba cột này **không lên web**, chỉ để chủ dự án mở link vào lấy nốt phần còn thiếu.
 
 ---
 
-## 2. ĐỊNH MỨC MỖI NGÀY — 50 TIN, CHIA 6 KHU VỰC
+## 2. ĐỊNH MỨC MỖI NGÀY — 34 TIN, 5 KHU VỰC
 
-Trong mỗi khu vực giữ khoảng **70% tin bán · 30% tin cho thuê**.
+**Mỗi khu vực phải có CẢ tin mua bán LẪN tin cho thuê**, tỷ lệ khoảng **70% bán · 30% thuê**.
 
-| # | Khu vực (tỉnh MỚI) | Đã gồm tỉnh cũ | Địa bàn trọng tâm | Số tin/ngày |
-|---|---|---|---|---|
-| 1 | **Đà Nẵng** | Đà Nẵng + Quảng Nam | Sơn Trà · An Hải · Hải Châu · Ngũ Hành Sơn · Hòa Xuân · Hội An · Điện Bàn | **12** |
-| 2 | **Huế** | Thừa Thiên Huế | Phú Xuân · Thuận Hóa · Vỹ Dạ · An Cựu · Thuận An · Hương Thủy | **10** |
-| 3 | **Khánh Hòa — Nha Trang** | Khánh Hòa + Ninh Thuận | Nha Trang · Bắc Nha Trang · Tây Nha Trang · Nam Nha Trang · Cam Ranh | **10** |
-| 4 | **Gia Lai — Quy Nhơn** | Gia Lai + Bình Định | Quy Nhơn · Quy Nhơn Bắc/Nam/Đông/Tây · An Nhơn | **8** |
-| 5 | **Quảng Ngãi** | Quảng Ngãi + Kon Tum | Cẩm Thành · Nghĩa Lộ · Trương Quang Trọng | **5** |
-| 6 | **Quảng Trị** | Quảng Trị + Quảng Bình | Đông Hà · Nam Đông Hà · Đồng Hới · Ba Đồn | **5** |
-| | | | **Tổng** | **50** |
+| # | Khu vực | Tỉnh MỚI (ghi vào `tinh_thanh`) | Địa bàn trọng tâm | Tin/ngày | Mã ảnh |
+|---|---|---|---|---|---|
+| 1 | **Đà Nẵng** | `Đà Nẵng` | Sơn Trà · An Hải · Hải Châu · Ngũ Hành Sơn · Hòa Xuân · Hội An · Điện Bàn | **10** | `dn01`–`dn10` |
+| 2 | **Huế** | `Huế` | Phú Xuân · Thuận Hóa · Vỹ Dạ · An Cựu · Thuận An · Hương Thủy | **6** | `hue01`–`hue06` |
+| 3 | **Quy Nhơn** | `Gia Lai` | Quy Nhơn · Quy Nhơn Bắc/Nam/Đông/Tây · An Nhơn | **6** | `qnhon01`–`qnhon06` |
+| 4 | **Nha Trang** | `Khánh Hòa` | Nha Trang · Bắc/Tây/Nam Nha Trang · Cam Ranh | **6** | `nt01`–`nt06` |
+| 5 | **Phan Thiết** | `Lâm Đồng` | Phan Thiết · Mũi Né · Phú Thủy · Tiến Thành · Bình Thuận · La Gi | **6** | `pt01`–`pt06` |
+| | | | **Tổng** | **34** | |
 
-Ba thị trường ven biển lớn (Đà Nẵng · Huế · Nha Trang) chiếm hơn nửa định mức vì lượng tin
-và lượng người tìm ở đó nhiều nhất. Muốn đổi số thì sửa thẳng cột cuối bảng này.
+⚠️ **Hai tỉnh dễ ghi nhầm** — sáp nhập 2025 đổi tỉnh chủ quản:
+- **Quy Nhơn** nay thuộc tỉnh **Gia Lai** (Bình Định đã nhập vào Gia Lai)
+- **Phan Thiết** nay thuộc tỉnh **Lâm Đồng** (Bình Thuận đã nhập vào Lâm Đồng)
 
-**Khu vực dự bị** — dùng khi một khu vực trên không gom đủ số:
-**Đắk Lắk** (gồm Phú Yên — Buôn Ma Thuột, Tuy Hòa).
-File mẫu có sẵn ví dụ cho cả 7 tỉnh nên đổi khu vực chỉ là thay dòng.
+Ghi `tinh_thanh` = `Bình Định` hay `Bình Thuận` là **sai**, tin sẽ không lọc được theo khu vực.
+
+**Khu vực dự bị** — khi một khu vực không gom đủ số: Quảng Nam/Hội An (thuộc `Đà Nẵng`),
+Quảng Ngãi, Quảng Trị, Đắk Lắk. Danh sách phường/xã của cả 8 tỉnh có trong
+`_MAU\DANH-SACH-PHUONG-XA-MIEN-TRUNG.txt`.
 
 > Không gom đủ số tin **thật** cho một khu vực thì giao thiếu và ghi rõ trong `bao-cao.txt` —
 > **tuyệt đối không bịa thêm cho đủ số.**
+
+---
+
+## 2B. NGUỒN TIN — THỨ TỰ ƯU TIÊN (chủ dự án đã chốt)
+
+Làm theo đúng thứ tự này. Chất lượng tin quan trọng hơn tốc độ gom.
+
+| # | Nguồn | Vì sao xếp ở đây |
+|---|---|---|
+| 1 | **batdongsan.com.vn** | **Nguồn chính.** Tin cập nhật liên tục, nhiều nhất, ảnh to và rõ, nội dung đầy đủ nhất |
+| 2 | **homedy.com** | Tin có kiểm duyệt, ảnh khá, mô tả đủ |
+| 3 | **mogi.vn** | Tương tự Homedy |
+| 4 | **alonhadat.com.vn** | **Lấy ít thôi** — tin không xác thực, ảnh xấu (đo thật: tối đa 670px), nội dung thiếu. Chỉ dùng khi ba nguồn trên không đủ số |
+| 5 | Nhóm **Zalo · Facebook** | Tin tươi nhất nhưng cần đăng nhập — xem ghi chú dưới |
+
+**Cách tìm:** trên chính trang đó, lọc theo **tỉnh + loại hình**, sắp xếp **Tin mới nhất**,
+lấy tin đăng trong **3 ngày gần đây**. Tin cũ hơn phần lớn đã bán hoặc đã cho thuê.
+
+**Hai vướng đã biết trước ở batdongsan.com.vn** — gặp thì xử lý thế này, đừng dừng lại:
+
+1. **Cloudflare chặn** (`Just a moment…`, lỗi 403). Đã thử thực tế, có xảy ra.
+   Vào được bằng công cụ đọc web thì cứ lấy. Không vào được thì **chuyển sang Homedy/Mogi**
+   và **ghi vào `bao-cao.txt`**. Không tìm cách vượt lớp kiểm tra đó.
+2. **Số điện thoại bị giấu sau nút “Hiện số”.** Không bấm được thì:
+   → `lien_he_sdt` để trống · `ghi_chu` = `số ẩn, bấm "Hiện số" ở link nguon`
+   → **`nguon` phải có link tin gốc** — chủ dự án đằng nào cũng mở link đó để xin ảnh gốc,
+   bấm luôn "Hiện số" một thể, không mất thêm bước nào.
+
+**Nhóm Zalo / Facebook:** máy không vào được (phải đăng nhập). Đây là phần **chủ dự án tự lấy tay** —
+thấy tin hay thì dán link vào cột `nguon` của bảng ngày hôm đó, Cowork điền nốt các cột còn lại.
+
+**Nguồn tốt nhất, không phải xin ai:** form “Đăng tin” trên chính `coastalland.vn`,
+Fanpage / Zalo OA, và môi giới gửi thẳng qua Zalo cho chủ dự án.
 
 ---
 
@@ -224,12 +264,11 @@ Vì vậy mã ảnh phải mang tiền tố khu vực:
 
 | Khu vực | Thư mục ảnh | Mã ảnh (`ma_anh`) | Tên tệp |
 |---|---|---|---|
-| Đà Nẵng | `anh\da-nang\` | `dn01` … `dn12` | `dn01-1.jpg`, `dn01-2.jpg`… |
-| Huế | `anh\hue\` | `hue01` … `hue10` | `hue01-1.jpg`… |
-| Nha Trang | `anh\nha-trang\` | `nt01` … `nt10` | `nt01-1.jpg`… |
-| Quy Nhơn | `anh\quy-nhon\` | `qnhon01` … `qnhon08` | `qnhon01-1.jpg`… |
-| Quảng Ngãi | `anh\quang-ngai\` | `qngai01` … `qngai05` | `qngai01-1.jpg`… |
-| Quảng Trị | `anh\quang-tri\` | `qtri01` … `qtri05` | `qtri01-1.jpg`… |
+| Đà Nẵng | `anh\da-nang\` | `dn01` … `dn10` | `dn01-1.jpg`, `dn01-2.jpg`… |
+| Huế | `anh\hue\` | `hue01` … `hue06` | `hue01-1.jpg`… |
+| Quy Nhơn | `anh\quy-nhon\` | `qnhon01` … `qnhon06` | `qnhon01-1.jpg`… |
+| Nha Trang | `anh\nha-trang\` | `nt01` … `nt06` | `nt01-1.jpg`… |
+| Phan Thiết | `anh\phan-thiet\` | `pt01` … `pt06` | `pt01-1.jpg`… |
 
 Số cuối tên tệp là thứ tự ảnh **đúng như trong tin gốc**; **ảnh `-1` là ảnh đại diện**.
 
@@ -253,15 +292,72 @@ Ba mức, dùng mức cao nhất làm được:
 
 | Mức | Khi nào | Ghi thế nào |
 |---|---|---|
-| **1. Tải được ảnh** (tốt nhất) | Lấy được file về máy | `ma_anh` = `dn01`, ảnh để trong `anhda-nang` tên `dn01-1.jpg`… |
-| **2. Không tải được nhưng có link ảnh trực tiếp** | Link kết thúc bằng `.jpg` / `.png` / `.webp` | Dán các link vào **cột `anh`**, ngăn nhau bằng `\|`. Web dùng thẳng link đó. Để trống `ma_anh` |
-| **3. Không có cả hai** | Ảnh sau đăng nhập, ảnh trong app | Để trống `ma_anh` và `anh`. Dán **link tin gốc** vào cột `link_anh` + `nguon`, `ghi_chu` = `chưa lấy được ảnh` |
+| **1. Tải được ảnh** (tốt nhất) | Lấy được file về máy | `ma_anh` = `dn01`, ảnh để trong `anh\da-nang\` tên `dn01-1.jpg`… |
+| **2. Không tải được nhưng có link ảnh trực tiếp** | Link kết thúc bằng `.jpg` / `.png` | Vẫn ghi `ma_anh` = `dn01` như thường, **để trống cột `anh`**, và xuất thêm file **`tai-anh-<ngày>.ps1`** (xem dưới) để chủ dự án tải ảnh về bằng một cú double-click |
+| **3. Không có cả hai** | Tin gốc không có ảnh · ảnh nằm sau đăng nhập | Để trống `ma_anh` và `anh`. Dán **link tin gốc** vào `link_anh` + `nguon`, `ghi_chu` = `chưa lấy được ảnh` |
 
-⚠️ **Mức 2 chỉ là tạm.** Link ảnh Facebook/Zalo thường hết hạn sau vài giờ, ảnh sẽ mất trên web.
-Chủ dự án nên mở link tải lại về rồi đăng bằng mức 1.
+> ⛔ **TUYỆT ĐỐI KHÔNG dán link ảnh của trang khác vào cột `anh`.**
+> Web chỉ nhận ảnh từ kho ảnh riêng (`supabase.co`). Link từ alonhadat, chotot,
+> batdongsan… sẽ **bị chặn và ảnh vỡ trắng** trên trang. Ngoài ra ảnh vẫn nằm trên
+> máy chủ của họ — họ đổi hoặc xoá là tin của mình mất ảnh.
+>
+> ✅ **Link ảnh để ở cột `link_anh`** — cột này web bỏ qua, nhưng chủ dự án cần nó
+> để tải lại ảnh và đối chiếu. **Mọi dòng có ảnh đều phải có link ảnh ở đây**,
+> kể cả dòng đã tải ảnh về đủ. Nhiều link ngăn nhau bằng `\|`.
+
+**File `tai-anh-<ngày>.ps1` — cách chuyển ảnh về máy chủ dự án**
+
+Đặt trong thư mục ngày, nội dung là danh sách `tên tệp → link ảnh`, chạy bằng PowerShell trên
+máy chủ dự án (máy đó không bị chặn mạng). Đặt sẵn **đúng tên chuẩn `dn01-1.jpg`** ngay trong
+script, tải xong là dùng được luôn, không phải đổi tên tay.
 
 **Dòng ở mức 3 sẽ báo đỏ “Thiếu ảnh” trong bảng xem trước — đúng như vậy.** Đó là cách web nhắc
-chủ dự án còn tin chưa có ảnh. Mở `link_anh`, lấy ảnh, tải lên là hết đỏ.
+chủ dự án còn tin chưa có ảnh. Mở `link_anh`, xin ảnh, tải lên là hết đỏ.
+
+### 5D. ẢNH NHỎ HƠN 1000px COI NHƯ CHƯA CÓ ẢNH
+
+Nhiều trang rao vặt chỉ cho tải bản **thu nhỏ**. Đã đo thực tế: ảnh trên
+**alonhadat.com.vn tối đa 670px, 30–56KB** — đưa lên khung ảnh 1600px của web sẽ **mờ nhoè**,
+không đăng được.
+
+| Cạnh dài ảnh nguồn | Làm gì |
+|---|---|
+| **≥ 1200px** | Dùng tốt, đăng được ngay |
+| **1000 – 1200px** | Tạm được — ghi `ảnh hơi nhỏ` vào `ghi_chu` |
+| **< 1000px** | Vẫn tải về (để chủ dự án nhận ra căn nhà lúc gọi điện), nhưng **bắt buộc** ghi `ghi_chu` = `ảnh nguồn chỉ <số>px, cần xin ảnh gốc` |
+
+Ảnh gốc trong điện thoại người đăng luôn 2000–4000px. Chủ dự án gọi xin là có ngay,
+vừa nét vừa sạch watermark. **Đó mới là ảnh đăng lên web.**
+
+### 5E. CÔNG CỤ TẢI ẢNH — CHỦ DỰ ÁN BẤM 2 LẦN LÀ XONG
+
+Trong `TIN-HANG-NGAY\` có sẵn **`TAI-ANH-VA-KIEM.bat`**. Bấm hai lần là nó:
+
+0. **Tự chuẩn hoá bảng** — việc máy làm được thì máy làm, chủ dự án khỏi sửa tay:
+   · cấp `ma_anh` cho dòng còn trống (tự điền vào chỗ khuyết: `dn04`, không nối đuôi `dn06`)
+   · bỏ emoji, hashtag, dấu chấm lặp, gạch trang trí trong tiêu đề & mô tả
+   · tiêu đề VIẾT HOA TOÀN BỘ → Viết Hoa Đầu Từ
+   · `gia`, `dien_tich`, `phong_ngu`, `phong_tam` chỉ giữ số (`5,5 tỷ` → `5,5`)
+   · `lien_he_sdt` chỉ giữ chữ số
+   Bản trước khi sửa lưu thành `Bang-<ngày>.goc.csv`. **Phải đóng Excel** thì mới ghi được.
+1. Đọc `link_anh` của mọi dòng trong bảng ngày mới nhất
+2. **Tải hết ảnh** về đúng thư mục khu vực, đặt sẵn tên `dn01-1.jpg`, `dn01-2.jpg`…
+   (8 ảnh cùng lúc · ảnh đã có thì bỏ qua nên chạy lại bao nhiêu lần cũng được)
+3. **Đo từng ảnh** rồi mở **`KIEM-ANH.html`** — một trang xem nhanh: mỗi tin một khối,
+   ảnh hiện thành hình nhỏ, dưới mỗi ảnh ghi `1600×1200 · 340KB`, ảnh nhỏ hơn 1000px
+   được **viền vàng**, tin chưa có ảnh **viền đỏ**. Nhìn một lượt là biết phải xin ảnh tin nào.
+
+**Vì vậy nhiệm vụ của Cowork về ảnh rút gọn còn đúng một việc: ghi ĐỦ LINK ẢNH vào cột
+`link_anh`.** Không cần tự tải, không cần tự đặt tên, không cần viết script — công cụ lo hết.
+Link nào cũng phải là link ảnh trực tiếp (kết thúc `.jpg` / `.png` / `.webp`), ngăn nhau bằng `|`.
+
+**Ghi link Y NHƯ trang đó cho, đừng tự sửa** — kể cả link có đoạn thu nhỏ, vd
+`file4.batdongsan.com.vn/resize/1275x717/2026/07/31/abc.jpg`. Công cụ **tự bỏ đoạn
+`/resize/…/` để lấy bản gốc**: đã đo thật, `956×717` (mờ) → `1600×1200` (đạt chuẩn).
+
+**Lấy ĐỦ ảnh, không phải một tấm.** Trang batdongsan nạp thư viện ảnh bằng JavaScript nên
+nhìn nguồn trang chỉ thấy 1 link đại diện, trong khi tin có 8–20 ảnh. Cố lấy hết; thật sự
+chỉ lấy được 1 thì ghi `ghi_chu` = `chỉ lấy được 1 ảnh, mở link nguon để lấy đủ`.
 
 ### 5C. THIẾU NỘI DUNG CŨNG LÀM Y VẬY
 
@@ -324,8 +420,10 @@ Rà lại từng dòng cho **đúng khuôn** — sửa định dạng (chính t�
       **cùng số điện thoại VÀ cùng địa chỉ/diện tích/giá** → bỏ, ghi vào `bao-cao.txt`.
       Chỉ trùng số điện thoại thôi thì **KHÔNG phải trùng** — một môi giới đăng nhiều căn khác nhau
       là bình thường, bỏ đi là mất tin thật.
-- [ ] Đủ định mức theo bảng mục 2: **tổng 50 tin** (Đà Nẵng 12 · Huế 10 · Nha Trang 10 ·
-      Quy Nhơn 8 · Quảng Ngãi 5 · Quảng Trị 5), mỗi khu vực khoảng **70% bán – 30% thuê**
+- [ ] Đủ định mức theo bảng mục 2: **tổng 34 tin** — Đà Nẵng 10 · Huế 6 · Quy Nhơn 6 ·
+      Nha Trang 6 · Phan Thiết 6. Mỗi khu vực phải có **cả tin bán lẫn tin thuê** (~70/30)
+- [ ] `tinh_thanh` của Quy Nhơn ghi là `Gia Lai`, của Phan Thiết ghi là `Lâm Đồng` — không phải
+      `Bình Định` / `Bình Thuận`
 
 Ghi kết quả vào `bao-cao.txt`: tổng số tin · số tin từng khu vực (đủ/thiếu bao nhiêu so với định mức) ·
 số tin bán/thuê · **danh sách dòng chưa lấy được ảnh** · **danh sách dòng còn thiếu thông tin và thiếu gì** ·
