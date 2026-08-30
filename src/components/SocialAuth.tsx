@@ -19,14 +19,24 @@ import { createClient } from "@/lib/supabase/client";
 // 👉 KHI APP ĐÃ ĐĂNG: đổi dòng dưới thành `true` là nút hiện lại. KHÔNG phải sửa gì khác.
 const BAT_FACEBOOK = false;
 
-// ⚠️ TẠM ẨN NÚT SỐ ĐIỆN THOẠI (24/08/2026).
-// Supabase trả `phone: false` — provider Phone chưa bật, nên trang
-// /dang-nhap/so-dien-thoai có đủ giao diện + signInWithOtp nhưng khách bấm vào sẽ
-// KHÔNG BAO GIỜ nhận được mã. Chốt với chủ dự án: chưa đi đường Twilio vì SMS về VN
-// ~1.300đ/tin và hay bị nhà mạng chặn nếu chưa đăng ký brandname. Dồn cho Zalo.
+// NÚT SỐ ĐIỆN THOẠI — CHỦ DỰ ÁN TỰ BẬT, KHÔNG PHẢI SỬA CODE.
 //
-// 👉 KHI ĐÃ BẬT Phone provider + cắm SMS: đổi thành `true`.
-const BAT_SO_DIEN_THOAI = false;
+// Đường đi đã dựng xong: khách nhập số → Supabase sinh mã → gọi vào
+// /api/auth/sms-hook → route đẩy mã sang Zalo ZNS. Nhưng chỉ chạy khi đã đủ
+// BA thứ, mà cả ba đều nằm ngoài code:
+//   1. Mẫu tin ZNS loại "xác thực" được Zalo duyệt → ZALO_ZNS_TEMPLATE_OTP
+//   2. Supabase → Authentication → Providers → bật Phone
+//   3. Supabase → Hooks → Send SMS Hook → /api/auth/sms-hook
+//      rồi cắm chuỗi bí mật vào SUPABASE_SMS_HOOK_SECRET
+//
+// Thiếu một trong ba thì khách bấm vào sẽ nhập số rồi NGỒI CHỜ MÃ KHÔNG BAO GIỜ
+// TỚI — tệ hơn là không có nút. Nên mặc định TẮT.
+//
+// 👉 Xong cả ba: Vercel → Environment Variables → thêm
+//       NEXT_PUBLIC_BAT_SO_DIEN_THOAI = 1
+//    rồi Redeploy. Nút hiện ngay, không cần sửa code, không cần chờ ai.
+//    Thấy trục trặc thì xoá biến đó đi là nút ẩn lại.
+const BAT_SO_DIEN_THOAI = process.env.NEXT_PUBLIC_BAT_SO_DIEN_THOAI === "1";
 
 export default function SocialAuth() {
   const [notice, setNotice] = useState("");
