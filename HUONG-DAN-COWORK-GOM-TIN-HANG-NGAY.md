@@ -3,15 +3,18 @@
 > File này là **đề bài giao cho Cowork** (hoặc bất kỳ ai/công cụ nào làm việc gom tin).
 > Đọc xong là làm được, không cần hỏi lại.
 >
-> **Bốn câu tóm gọn cả việc:**
+> **Năm câu tóm gọn cả việc:**
 > 1. Điền **đúng theo file mẫu** — đúng tên cột, đúng định dạng từng ô.
 >    Trường **bắt buộc** phải có đủ; trường khác **có thì lấy hết, không có thì để trống**.
 > 2. Nội dung **lấy y nguyên của người đăng**, không viết lại, không thêm thắt, không bịa.
 > 3. **Ảnh: KHÔNG cần tải về.** Chỉ cần ghi **đủ link ảnh trực tiếp** vào cột `link_anh`
 >    (ngăn bằng `\|`) và điền `ma_anh`. Chủ dự án bấm `TAI-ANH-VA-KIEM.bat` là tải hết,
 >    đặt tên chuẩn và kiểm ảnh tự động — xem mục 5E.
-> 4. **Cái nào thiếu thì để trống ô đó, dán LINK vào `nguon` / `link_anh`, ghi rõ thiếu gì
->    vào `ghi_chu`.** Đừng đoán, đừng bỏ tin.
+> 4. **CHỌN TIN THEO ẢNH TRƯỚC: cạnh NGẮN của ảnh nguồn phải ≥ 1200px.**
+>    Tin không có ảnh, hoặc ảnh cạnh ngắn dưới 900px → **BỎ TIN, tìm tin khác**.
+>    Lý do: chủ dự án còn cắt lại ảnh về 4:3 rồi mới đăng, cắt là mất bớt, phóng to không cứu được.
+> 5. **Ảnh kém thì bỏ tin · thiếu chữ thì vẫn giao.** Thiếu pháp lý/hướng/số điện thoại…
+>    thì để trống ô đó, dán link vào `nguon`, ghi rõ thiếu gì vào `ghi_chu`. Đừng đoán.
 
 ---
 
@@ -24,7 +27,7 @@ C:\Users\X1 GEN 8\Projects\TIN-HANG-NGAY\
 │
 ├── _MAU\                          ← KHUÔN GỐC, KHÔNG SỬA, KHÔNG XOÁ
 │   ├── mau-nhap-tin-hang-loat.csv
-│   ├── DANH-SACH-PHUONG-XA-MIEN-TRUNG.txt   ← 610 phường/xã, chép tên từ đây
+│   ├── DANH-SACH-PHUONG-XA-MIEN-TRUNG.txt   ← 734 phường/xã, chép tên từ đây
 │   └── DE-BAI-CHO-COWORK.md       ← chính file này
 │
 ├── Tin-2026-08-30\                ← gói của ngày, mỗi ngày một thư mục
@@ -65,7 +68,7 @@ bằng **tên cột**, sai tên là không đọc được.
 |---|---|
 | `nguon` | **Link tin gốc** (bắt buộc, dán link đầy đủ). Không có link thì ghi nơi lấy + ngày giờ thấy tin |
 | `link_anh` | **LUÔN LUÔN ghi đủ link ảnh trực tiếp** (`…jpg`), ngăn nhau bằng `\|` — **kể cả khi đã tải ảnh về rồi**. Chủ dự án cần để tải lại và đối chiếu. Không có link ảnh thì ghi link tin gốc |
-| `ghi_chu` | Thiếu gì, vướng gì: `chưa tải được ảnh` · `tin không ghi diện tích` · `nghi trùng tin hôm qua` · `giá bất thường` |
+| `ghi_chu` | Thiếu gì, vướng gì: `tin không ghi diện tích` · `nghi trùng tin hôm qua` · `giá bất thường` |
 
 > Ba cột này **không lên web**, chỉ để chủ dự án mở link vào lấy nốt phần còn thiếu.
 
@@ -180,7 +183,7 @@ Từ 2025 **không còn Quận/Huyện**. Chỉ có: **Tỉnh/Thành → Phườ
 - `tinh_thanh` = tên tỉnh trong bảng mục 2 (ghi đúng chính tả, có dấu).
 - `phuong_xa` = tên phường/xã, **ghi cả chữ “Phường”/“Xã”** — vd `Phường Sơn Trà`, `Xã Hòa Vang`.
 - **Danh sách phường/xã để chép:** `_MAU\DANH-SACH-PHUONG-XA-MIEN-TRUNG.txt`
-  — 610 phường/xã của 7 tỉnh, đã lọc sẵn. **Chép từ file đó ra, không tự gõ theo trí nhớ.**
+  — 734 phường/xã của 8 tỉnh, đã lọc sẵn. **Chép từ file đó ra, không tự gõ theo trí nhớ.**
   Sai một chữ là tin không lọc được theo khu vực, coi như tin chìm.
 - **Tin gốc ghi theo địa giới CŨ** (rất hay gặp — "Quận Hải Châu", "Phường Mỹ An, Ngũ Hành Sơn"):
   tìm phường/xã MỚI gần đúng nhất trong file trên, **đồng thời chép nguyên chữ trong tin gốc
@@ -335,7 +338,7 @@ Ba mức, dùng mức cao nhất làm được:
 |---|---|---|
 | **1. Tải được ảnh** (tốt nhất) | Lấy được file về máy | `ma_anh` = `dn01`, ảnh để trong `anh\da-nang\` tên `dn01-1.jpg`… |
 | **2. Không tải được nhưng có link ảnh trực tiếp** | Link kết thúc bằng `.jpg` / `.png` | Vẫn ghi `ma_anh` = `dn01` như thường, **để trống cột `anh`**, và xuất thêm file **`tai-anh-<ngày>.ps1`** (xem dưới) để chủ dự án tải ảnh về bằng một cú double-click |
-| **3. Không có cả hai** | Tin gốc không có ảnh · ảnh nằm sau đăng nhập | Để trống `ma_anh` và `anh`. Dán **link tin gốc** vào `link_anh` + `nguon`, `ghi_chu` = `chưa lấy được ảnh` |
+| **3. Không có ảnh nào** | Tin gốc không đăng ảnh · ảnh nằm sau đăng nhập | **BỎ TIN, tìm tin khác.** Tin nào cũng phải có ảnh thật mới đăng được |
 
 > ⛔ **TUYỆT ĐỐI KHÔNG dán link ảnh của trang khác vào cột `anh`.**
 > Web chỉ nhận ảnh từ kho ảnh riêng (`supabase.co`). Link từ alonhadat, chotot,
@@ -355,20 +358,26 @@ script, tải xong là dùng được luôn, không phải đổi tên tay.
 **Dòng ở mức 3 sẽ báo đỏ “Thiếu ảnh” trong bảng xem trước — đúng như vậy.** Đó là cách web nhắc
 chủ dự án còn tin chưa có ảnh. Mở `link_anh`, xin ảnh, tải lên là hết đỏ.
 
-### 5D. ẢNH NHỎ HƠN 1000px COI NHƯ CHƯA CÓ ẢNH
+### 5D. NGƯỠNG ẢNH — ĐO THEO CẠNH NGẮN
 
 Nhiều trang rao vặt chỉ cho tải bản **thu nhỏ**. Đã đo thực tế: ảnh trên
-**alonhadat.com.vn tối đa 670px, 30–56KB** — đưa lên khung ảnh 1600px của web sẽ **mờ nhoè**,
-không đăng được.
+**alonhadat.com.vn tối đa 670px** — cắt 4:3 xong là mờ nhoè, không đăng được.
 
-| Cạnh dài ảnh nguồn | Làm gì |
-|---|---|
-| **≥ 1200px** | Dùng tốt, đăng được ngay |
-| **1000 – 1200px** | Tạm được — ghi `ảnh hơi nhỏ` vào `ghi_chu` |
-| **< 1000px** | Vẫn tải về (để chủ dự án nhận ra căn nhà lúc gọi điện), nhưng **bắt buộc** ghi `ghi_chu` = `ảnh nguồn chỉ <số>px, cần xin ảnh gốc` |
+**Đo theo CẠNH NGẮN**, không phải cạnh dài. Vì chủ dự án còn cắt lại ảnh về tỷ lệ **4:3**
+trong Photoshop rồi mới đăng, mà cắt 4:3 thì **cạnh ngắn quyết định** kích thước ảnh ra:
 
-Ảnh gốc trong điện thoại người đăng luôn 2000–4000px. Chủ dự án gọi xin là có ngay,
-vừa nét vừa sạch watermark. **Đó mới là ảnh đăng lên web.**
+| Cạnh NGẮN ảnh nguồn | Cắt 4:3 ra | Làm gì |
+|---|---|---|
+| **≥ 1200px** | ≥ 1600 × 1200 | ✅ Lấy — đây là chuẩn nhắm tới |
+| **900 – 1200px** | ~1200 × 900 | ⚠️ Tạm được, ghi `ảnh hơi nhỏ` vào `ghi_chu` |
+| **< 900px** | mờ | ❌ **BỎ TIN, tìm tin khác** — đừng giao rồi ghi chú |
+
+Bản gốc batdongsan (bỏ đoạn `/resize/1275x717/`) đúng **1600 × 1200** → cắt 4:3 ra đúng
+1600 × 1200, không mất gì. Đó là mức nên nhắm.
+
+**Phóng to ảnh nhỏ KHÔNG cứu được.** Đã thử thật: kéo 670px lên 2048px là phóng 306%,
+chỉ ra ảnh nhoè to hơn. Ảnh gốc trong điện thoại người đăng luôn 2000–4000px — chủ dự án
+gọi xin là có ngay, vừa nét vừa sạch watermark. **Đó mới là ảnh đăng lên web.**
 
 ### 5E. CÔNG CỤ TẢI ẢNH — CHỦ DỰ ÁN BẤM 2 LẦN LÀ XONG
 
@@ -418,10 +427,13 @@ Thiếu cột ở mục 4.2 thì vẫn đăng được bình thường.
    tên và số điện thoại của họ. Việc biên tập là của chủ dự án ở bước sau, không phải của Cowork.
 2. **Không bịa tin.** Không có tin thật thì để trống dòng đó và ghi vào `bao-cao.txt`.
    Thiếu số còn hơn có tin ma — khách gọi vào không có nhà là mất uy tín.
-3. **Không bỏ bớt ảnh.** Tin có bao nhiêu ảnh tải về hết bấy nhiêu (xem mục 5).
-4. **Không bỏ tin chỉ vì không tải được ảnh, hay vì tin thiếu thông tin.**
-   Vẫn giao dòng đó, **để lại link** trong `nguon` / `link_anh` và ghi thiếu gì vào `ghi_chu` —
-   chủ dự án sẽ tự vào lấy nốt (mục 5B, 5C).
+3. **Không bỏ bớt ảnh.** Tin có bao nhiêu ảnh thì ghi đủ bấy nhiêu link (xem mục 5).
+4. **Phân biệt rõ hai trường hợp — đừng lẫn:**
+   · **Ảnh KHÔNG ĐẠT CHUẨN** (tin không có ảnh nào · cạnh ngắn < 900px)
+     → **BỎ TIN, tìm tin khác.** Đừng giao rồi ghi chú.
+   · **Ảnh đạt chuẩn nhưng thiếu thông tin khác** (thiếu pháp lý, hướng, số điện thoại…)
+     → **VẪN GIAO**, để trống ô đó, dán link vào `nguon` và ghi thiếu gì vào `ghi_chu`.
+   Nói gọn: **ảnh kém thì bỏ tin · thiếu chữ thì vẫn giao.**
 5. Không ghi giá kèm chữ (`5,5 tỷ`) — chỉ ghi số.
 6. Không gộp ô (merge) trong vùng dữ liệu, không để dữ liệu ở sheet thứ hai.
 7. Không đổi tên cột trong file mẫu, không xoá cột.
@@ -452,7 +464,7 @@ Rà lại từng dòng cho **đúng khuôn** — sửa định dạng (chính t�
 - [ ] `dien_tich` có số · `gia` chỉ có số, dấu phẩy thập phân
 - [ ] Mã ảnh đúng tiền tố khu vực (`dn` · `hue` · `nt` · `qnhon` · `qngai` · `qtri`), không trùng nhau
 - [ ] Ảnh: hoặc `ma_anh` + đủ ảnh trong đúng thư mục khu vực (mức 1) · hoặc link ảnh trong cột `anh` (mức 2) ·
-      hoặc `link_anh` + `ghi_chu` = `chưa lấy được ảnh` (mức 3). **Không được để trống cả ba.**
+      **Không dòng nào được để trống cả hai.** Tin không có ảnh đạt chuẩn thì đã bỏ từ đầu.
 - [ ] `nguon` có **link tin gốc** · `lien_he_sdt` có số của người đăng — chủ dự án cần hai cái này
       để gọi xin phép và vào lấy nốt phần thiếu
 - [ ] Ô nào không có trong tin gốc thì **để trống**, không đoán — ghi thiếu gì vào `ghi_chu`
@@ -467,7 +479,7 @@ Rà lại từng dòng cho **đúng khuôn** — sửa định dạng (chính t�
       `Bình Định` / `Bình Thuận`
 
 Ghi kết quả vào `bao-cao.txt`: tổng số tin · số tin từng khu vực (đủ/thiếu bao nhiêu so với định mức) ·
-số tin bán/thuê · **danh sách dòng chưa lấy được ảnh** · **danh sách dòng còn thiếu thông tin và thiếu gì** ·
+số tin bán/thuê · **số tin đã bỏ vì ảnh không đạt** · **danh sách dòng còn thiếu thông tin và thiếu gì** ·
 lấy tin từ những nguồn nào, nguồn nào chặn không vào được.
 
 ---
@@ -499,7 +511,7 @@ rồi đi tiếp**, đừng dừng lại loay hoay — mất thời gian mà v�
 | Việc | Cowork làm được? | Gặp thì làm gì |
 |---|---|---|
 | Vào nhóm Facebook / Zalo phải đăng nhập | **Không** | Ghi vào `bao-cao.txt` mục "nguồn bị chặn". Chuyển sang nguồn công khai khác |
-| Tải ảnh nằm sau đăng nhập, hoặc trong app | **Không** | Vẫn giữ dòng tin, dán link vào `link_anh`, `ghi_chu` = `chưa lấy được ảnh` |
+| Tải ảnh nằm sau đăng nhập, hoặc trong app | **Không** | Bỏ tin đó, tìm tin khác có ảnh công khai |
 | Gọi điện xác minh tin còn hay hết | **Không** | Ghi số vào `lien_he_sdt` — chủ dự án gọi |
 | Xin phép người đăng | **Không** | Việc của chủ dự án |
 | Quyết định `hang_tin` | **Không nên** | Luôn để trống |
