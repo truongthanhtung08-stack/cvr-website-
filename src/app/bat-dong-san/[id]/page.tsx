@@ -250,7 +250,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
               <Section id="dac-diem" title="Đặc điểm bất động sản">
                 <div className="grid grid-cols-1 gap-x-8 sm:grid-cols-2">
                   <Row label="Loại hình" value={l.type} />
-                  <Row label="Diện tích đất" value={l.area} />
+                  <Row label={nhanDienTich} value={l.area} />
                   {d.builtArea && <Row label="Diện tích xây dựng" value={d.builtArea} />}
                   {l.beds ? <Row label="Phòng ngủ" value={`${l.beds}`} /> : null}
                   {l.baths ? <Row label="Phòng tắm" value={`${l.baths}`} /> : null}
