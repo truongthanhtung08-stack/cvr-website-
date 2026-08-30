@@ -114,6 +114,47 @@ Làm theo đúng thứ tự này. Chất lượng tin quan trọng hơn tốc đ
 **Cách tìm:** trên chính trang đó, lọc theo **tỉnh + loại hình**, sắp xếp **Tin mới nhất**,
 lấy tin đăng trong **3 ngày gần đây**. Tin cũ hơn phần lớn đã bán hoặc đã cho thuê.
 
+### Tiêu chí chọn tin — CHẤT LƯỢNG TRƯỚC, SỐ LƯỢNG SAU
+
+Thà giao 8 tin tốt còn hơn 10 tin cẩu thả. Đứng trước 2 tin thì lấy tin nào **điểm cao hơn**:
+
+| Ưu tiên lấy | Bỏ qua |
+|---|---|
+| **Nhiều ảnh, ảnh to rõ** — **cạnh NGẮN ≥ 1200px** | Tin 1 ảnh mờ, ảnh chụp màn hình, ảnh dính watermark to |
+| **Mô tả đầy đủ** — kết cấu, vị trí, pháp lý, giá | Mô tả 1–2 dòng cụt, chỉ có số điện thoại |
+| **Có đủ**: diện tích · giá · số phòng · hướng · pháp lý | Thiếu cả giá lẫn diện tích |
+| Có **tên + số điện thoại** người đăng | Không có cách nào liên hệ |
+| Có **video** (YouTube / clip nhà) — cột `video` | |
+| Địa chỉ rõ tới tên đường | Chỉ ghi tên tỉnh chung chung |
+| Tin đăng **trong 3 ngày** | Tin cũ hơn 1 tháng |
+
+Tin nào không đủ tiêu chí thì **bỏ, tìm tin khác** — đừng cố nhét cho đủ số.
+Cả khu vực không đủ tin tốt thì giao thiếu và ghi rõ trong `bao-cao.txt`.
+
+#### Vì sao ảnh phải có cạnh NGẮN ≥ 1200px
+
+Chủ dự án còn phải **cắt lại ảnh về tỷ lệ 4:3** rồi mới đăng. Cắt là **mất bớt**,
+không bao giờ thêm được. Nên phải chừa dư ngay từ ảnh nguồn:
+
+| Ảnh nguồn | Cắt 4:3 ra | Dùng được? |
+|---|---|---|
+| 1600 × 1200 (bản gốc batdongsan) | 1600 × 1200 | ✅ Đạt |
+| 1600 × 900 | 1200 × 900 | ⚠️ Vừa đủ |
+| 956 × 717 | 956 × 717 | ❌ Mờ |
+| 670 × 502 (alonhadat) | 670 × 502 | ❌ Hỏng hẳn |
+
+**Phóng to ảnh nhỏ KHÔNG cứu được.** Đã thử thật: kéo ảnh 670px lên 2048px là phóng
+306%, chỉ ra ảnh nhoè to hơn. Ảnh nhỏ mà nét vẫn hơn ảnh to mà mờ.
+
+Vì vậy: **thấy tin ảnh nhỏ thì bỏ luôn tin đó, tìm tin khác** — đừng giao rồi ghi chú.
+
+### Cột `video` — có thì lấy
+
+Tin gốc có video (YouTube, Vimeo, hoặc file `.mp4`) thì dán link vào cột **`video`**,
+nhiều link ngăn bằng `|`. Trang chi tiết tự tách ra mục Video riêng.
+
+**Video KHÔNG thay được ảnh** — tin chỉ có video mà không có ảnh vẫn tính là thiếu ảnh.
+
 **Hai vướng đã biết trước ở batdongsan.com.vn** — gặp thì xử lý thế này, đừng dừng lại:
 
 1. **Cloudflare chặn** (`Just a moment…`, lỗi 403). Đã thử thực tế, có xảy ra.

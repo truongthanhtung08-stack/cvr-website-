@@ -15,6 +15,7 @@ import {
 import { docXlsx } from "@/lib/docXlsx";
 import { uploadImageFile } from "@/lib/uploadImage";
 import { soAnhToiDa } from "@/lib/billing";
+import { isVideoUrl } from "@/lib/media";
 import { useBilling } from "@/lib/useBilling";
 import type { TierId } from "@/lib/packages";
 
@@ -71,9 +72,13 @@ export default function NhapHangLoatPage() {
 
   // ĐÚNG LUẬT nhưng CHƯA có ảnh thật (mới ghi ma_anh, chưa tải ảnh ở Bước 4)
   // thì chưa đăng được — đếm riêng để báo rõ, không lặng lẽ bỏ qua.
+  // TIN NÀO CŨNG PHẢI CÓ ẢNH THẬT — quy định của chủ dự án. Tin chưa có ảnh
+  // KHÔNG lên web; bỏ ảnh vào thư mục rồi tải lại file là nó tự lên.
   const dungLuat = rows.filter((r) => r.loi.length === 0);
-  const chuaAnh = dungLuat.filter((r) => anhCuaTin(r).urls.length === 0);
-  const hopLe = dungLuat.filter((r) => anhCuaTin(r).urls.length > 0);
+  // Đếm ẢNH THẬT — video xếp chung cột images nhưng không thay được ảnh
+  const soAnhThat = (r: ParsedRow) => anhCuaTin(r).urls.filter((u) => !isVideoUrl(u)).length;
+  const chuaAnh = dungLuat.filter((r) => soAnhThat(r) === 0);
+  const hopLe = dungLuat.filter((r) => soAnhThat(r) > 0);
 
   async function taiAnhHangLoat(files: FileList) {
     setLoiAnh("");
@@ -292,7 +297,7 @@ export default function NhapHangLoatPage() {
               Đọc được <strong className="text-cvr-ink">{rows.length}</strong> dòng ·{" "}
               <span className="text-green-700">{hopLe.length} tin hợp lệ</span>
               {chuaAnh.length > 0 && (
-                <span className="text-amber-700"> · {chuaAnh.length} tin chưa có ảnh (tải ảnh ở Bước 4 mới đăng được)</span>
+                <span className="text-amber-700"> · {chuaAnh.length} tin chưa có ảnh — chưa đăng, bỏ ảnh vào thư mục rồi tải lại file là tự lên</span>
               )}
               {sai.length > 0 && <span className="text-red-700"> · {sai.length} dòng lỗi (sẽ bỏ qua)</span>}
             </span>

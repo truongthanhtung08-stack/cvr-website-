@@ -61,6 +61,24 @@ const TIER_BADGE: Record<Row["tier"], Listing["badge"]> = {
 // Ảnh đại diện khi tin chưa có ảnh (admin đăng nhanh chưa kịp upload)
 const PLACEHOLDER_IMAGE = "/images/segments/canho1.jpg";
 
+// ẢNH TẠM THEO LOẠI HÌNH — tin gốc không có ảnh nào (rất hay gặp với tin gom
+// hàng loạt) vẫn lên web được, và ảnh minh hoạ ít nhất đúng phân khúc thay vì
+// luôn là ảnh căn hộ. Chủ dự án xin được ảnh thật rồi tải lại là ảnh thật thay chỗ.
+const ANH_TAM_THEO_LOAI: { khop: RegExp; anh: string }[] = [
+  { khop: /đất nền|đất nền dự án|đất thổ|đất ở/i, anh: "/images/segments/datnen1.jpg" },
+  { khop: /đất công nghiệp|đất nông nghiệp/i, anh: "/images/segments/datcn1.jpg" },
+  { khop: /kho|nhà xưởng|kho bãi/i, anh: "/images/segments/kho1.jpg" },
+  { khop: /villa|biệt thự/i, anh: "/images/segments/villa1.jpg" },
+  { khop: /condotel/i, anh: "/images/segments/condotel1.jpg" },
+  { khop: /nhà mặt phố|shophouse|nhà phố thương mại|mặt bằng|cửa hàng|văn phòng/i, anh: "/images/segments/nhapho1.jpg" },
+  { khop: /nhà riêng|nhà trọ|phòng trọ/i, anh: "/images/segments/nhapho2.jpg" },
+];
+
+function anhTam(loaiHinh: string | null): string {
+  const t = loaiHinh ?? "";
+  return ANH_TAM_THEO_LOAI.find((x) => x.khop.test(t))?.anh ?? PLACEHOLDER_IMAGE;
+}
+
 // Số kiểu VN: 7.2 → "7,2" · 1500 → "1.500"
 function fmtNum(n: number, maxFrac = 1): string {
   return n.toLocaleString("vi-VN", { maximumFractionDigits: maxFrac });
@@ -108,7 +126,7 @@ function rowToListing(r: Row): Listing {
     location: [r.ward, r.district, r.province].filter(Boolean).join(", "),
     type: r.type,
     // Ảnh đại diện = ẢNH đầu tiên (bỏ qua video nếu đứng trước)
-    image: asset(r.images.find((s) => !isVideoUrl(s)) ?? PLACEHOLDER_IMAGE),
+    image: asset(r.images.find((s) => !isVideoUrl(s)) ?? anhTam(r.type)),
     // Số ẢNH thật (không tính video) → badge "📷 n" đúng thay vì cứng "1"
     imageCount: r.images.filter((s) => !isVideoUrl(s)).length,
     badge: TIER_BADGE[r.tier],
@@ -218,7 +236,7 @@ function rowToDetail(r: Row): ListingFull {
   // Tách ẢNH và VIDEO: thư viện ảnh chỉ nhận ảnh; video hiện ở mục Video riêng.
   const videos = r.images.filter(isVideoUrl);
   const imageOnly = r.images.filter((s) => !isVideoUrl(s));
-  const imgs = imageOnly.length ? imageOnly : [PLACEHOLDER_IMAGE];
+  const imgs = imageOnly.length ? imageOnly : [anhTam(r.type)];
   const specDefs = specForType(r.type).fields;
   const specs = specDefs
     .map((f) => ({ label: f.label + (f.unit ? ` (${f.unit})` : ""), value: (d.specs?.[f.key] ?? "").trim() }))

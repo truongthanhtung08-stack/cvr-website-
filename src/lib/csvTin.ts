@@ -92,6 +92,10 @@ export const COT = {
   tinhTrangNoiThat: "tinh_trang_noi_that", // mức nội thất (Bàn giao thô / Đầy đủ…)
   noiThatBanGiao: "noi_that_ban_giao",  // danh sách nội thất, ngăn bằng dấu phẩy
   tienIch: "tien_ich",                  // danh sách tiện ích, ngăn bằng dấu phẩy
+  // VIDEO — link YouTube/Vimeo hoặc tệp .mp4 đã có trên mạng. Nhiều link ngăn
+  // bằng dấu |. Lưu chung vào cột images của tin; trang chi tiết tự tách ra mục
+  // Video riêng (xem isVideoUrl trong media.ts).
+  video: "video",
 } as const;
 
 // Tách ô "A, B; C" hoặc xuống dòng → mảng, bỏ khoảng trắng thừa và mục rỗng
@@ -271,6 +275,10 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
   // Ghi MÃ ảnh cũng tính là ĐÃ khai ảnh — ảnh thật khớp vào theo tên tệp ở Bước 4.
   if (anh.length === 0 && !maAnh) loi.push("Thiếu ảnh (cần ít nhất 1)");
 
+  // VIDEO xếp SAU ảnh trong cùng cột images — trang chi tiết tự tách ra mục Video.
+  // Video KHÔNG thay được ảnh: tin chỉ có video vẫn báo thiếu ảnh ở trên.
+  const video = tachDanhSachAnh(lay(COT.video)).filter(laLinkAnh);
+
   const ten = lay(COT.lienHeTen);
   const sdt = lay(COT.lienHeSdt);
 
@@ -286,7 +294,7 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
     ward: phuongXa || null,
     district: quanHuyen || null,
     province: tinhThanh || null,
-    images: anh,
+    images: [...anh, ...video],
     details: {
       // MÃ ẢNH lưu luôn vào tin — để lần tải file sau nhận ra tin này ĐÃ ĐĂNG,
       // chỉ bổ sung ảnh còn thiếu thay vì đăng trùng một tin nữa.
