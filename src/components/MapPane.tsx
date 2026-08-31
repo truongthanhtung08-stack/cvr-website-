@@ -12,8 +12,7 @@ import { useEffect, useRef, useState } from "react";
 //
 // CẦN BIẾN MÔI TRƯỜNG: NEXT_PUBLIC_GOOGLE_MAPS_KEY (Vercel → Environment Variables).
 //   Key phải bật 2 API: "Maps JavaScript API" và "Geocoding API".
-//   CHƯA có key / tải hỏng / không tra được địa chỉ → tự quay về bản nhúng cũ,
-//   web không bao giờ trắng chỗ bản đồ.
+//   CHƯA có key / tải hỏng → tự quay về bản nhúng cũ, web không bao giờ trắng chỗ bản đồ.
 
 const KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY ?? "";
 
@@ -70,22 +69,41 @@ function loadMapsApi(): Promise<void> {
 
 // Tra địa chỉ → toạ độ. Nhớ lại trong phiên để khách xem đi xem lại một tin
 // không gọi Google nhiều lần (tiết kiệm hạn mức).
-async function geocode(query: string): Promise<LatLng | null> {
-  const cacheKey = "cvr-geo:" + query;
-  try {
-    const hit = sessionStorage.getItem(cacheKey);
-    if (hit) return JSON.parse(hit) as LatLng;
-  } catch {}
+//
+// LÙI DẦN ĐỘ CHI TIẾT: địa chỉ đầy đủ tra không ra thì bỏ bớt phần đầu rồi tra
+// lại theo phường/xã, cuối cùng là tỉnh/thành.
+// ⚠️ ĐỪNG BỎ vòng lặp này: trước đây tra hỏng MỘT phát là rơi thẳng về bản đồ
+// NHÚNG cũ — mà bản nhúng thì BẮT BUỘC hai ngón, đúng cái lỗi cần diệt. Tin nào
+// địa chỉ Google không nhận ra (số nhà lạ, tên đường viết tắt) là khách lại phải
+// dùng hai ngón, trong khi tin khác thì một ngón — rối và không giải thích được.
+//
+// Cờ coarse: ghim theo địa chỉ rút gọn thì phóng xa ra, không giả vờ chính xác.
+async function geocode(query: string): Promise<(LatLng & { coarse: boolean }) | null> {
   const g = window.google;
   if (!g) return null;
-  const { results } = await new g.maps.Geocoder().geocode({ address: query, region: "VN" });
-  if (!results?.length) return null;
-  const loc = results[0].geometry.location;
-  const point = { lat: loc.lat(), lng: loc.lng() };
-  try {
-    sessionStorage.setItem(cacheKey, JSON.stringify(point));
-  } catch {}
-  return point;
+  const parts = query.split(",").map((s) => s.trim()).filter(Boolean);
+  const geocoder = new g.maps.Geocoder();
+
+  for (let i = 0; i < parts.length; i++) {
+    const address = parts.slice(i).join(", ");
+    const cacheKey = "cvr-geo:" + address;
+    try {
+      const hit = sessionStorage.getItem(cacheKey);
+      if (hit) return { ...(JSON.parse(hit) as LatLng), coarse: i > 0 };
+    } catch {}
+    try {
+      const { results } = await geocoder.geocode({ address, region: "VN" });
+      if (results?.length) {
+        const loc = results[0].geometry.location;
+        const point = { lat: loc.lat(), lng: loc.lng() };
+        try {
+          sessionStorage.setItem(cacheKey, JSON.stringify(point));
+        } catch {}
+        return { ...point, coarse: i > 0 };
+      }
+    } catch {}
+  }
+  return null;
 }
 
 export default function MapPane({
@@ -101,6 +119,10 @@ export default function MapPane({
 }) {
   const boxRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<GMap | null>(null);
+  // Trạng thái khoá đọc qua ref: dựng bản đồ cần biết giá trị hiện tại, nhưng
+  // KHÔNG được để nó nằm trong deps — mỗi lần khách mở/khoá mà dựng lại bản đồ
+  // là tính thêm một lượt tải bản đồ với Google.
+  const lockedRef = useRef(locked);
   // "js" = bản đồ tự vẽ (kéo 1 ngón) · "iframe" = bản nhúng cũ khi chưa có key / lỗi
   const [mode, setMode] = useState<"js" | "iframe">(KEY ? "js" : "iframe");
 
@@ -110,25 +132,30 @@ export default function MapPane({
     (async () => {
       try {
         await loadMapsApi();
-        const center = parseLatLng(query) ?? (await geocode(query));
-        if (huy || !center || !boxRef.current || !window.google) {
-          if (!huy && !center) setMode("iframe");
+        const pin = parseLatLng(query);
+        const found = pin ? { ...pin, coarse: false } : await geocode(query);
+        if (huy) return;
+        // Chỉ lùi về bản nhúng khi KHÔNG tra ra bất cứ mức nào (kể cả tỉnh/thành).
+        if (!found || !boxRef.current || !window.google) {
+          if (!found) setMode("iframe");
           return;
         }
         const g = window.google;
         const map = new g.maps.Map(boxRef.current, {
-          center,
-          zoom,
+          center: { lat: found.lat, lng: found.lng },
+          // Ghim theo địa chỉ rút gọn → lùi mức phóng, tránh chỉ sai vào một căn nhà cụ thể.
+          zoom: found.coarse ? Math.min(zoom, 14) : zoom,
           // ĐÂY LÀ CHỖ CHO PHÉP KÉO MỘT NGÓN — mặc định của Google là "auto"
           // (điện thoại phải hai ngón).
-          gestureHandling: "greedy",
+          gestureHandling: lockedRef.current ? "none" : "greedy",
           mapTypeControl: false,
           streetViewControl: false,
           fullscreenControl: false,
           zoomControl: true,
           keyboardShortcuts: false,
         });
-        new g.maps.Marker({ position: center, map });
+        // Địa chỉ chỉ tra được tới phường/tỉnh thì KHÔNG cắm ghim — cắm là chỉ sai nhà người ta.
+        if (!found.coarse) new g.maps.Marker({ position: { lat: found.lat, lng: found.lng }, map });
         mapRef.current = map;
       } catch {
         if (!huy) setMode("iframe");
@@ -139,6 +166,14 @@ export default function MapPane({
       mapRef.current = null;
     };
   }, [query, zoom, mode]);
+
+  // Mở/khoá bằng chính cử chỉ của Google, không chỉ dựa vào pointer-events:
+  // "none" = bản đồ bỏ qua mọi cử chỉ (ngón tay lướt qua vẫn cuộn trang),
+  // "greedy" = MỘT ngón kéo được ngay.
+  useEffect(() => {
+    lockedRef.current = locked;
+    mapRef.current?.setOptions({ gestureHandling: locked ? "none" : "greedy" });
+  }, [locked]);
 
   const size = "h-[260px] w-full sm:h-[320px]";
 
@@ -153,7 +188,13 @@ export default function MapPane({
     );
   }
 
-  return <div ref={boxRef} aria-label="Bản đồ vị trí" className={`${size} bg-cvr-surface ${locked ? "pointer-events-none" : ""}`} />;
+  return (
+    <div
+      ref={boxRef}
+      aria-label="Bản đồ vị trí"
+      className={`${size} bg-cvr-surface ${locked ? "pointer-events-none" : ""}`}
+    />
+  );
 }
 
 // Có key → bản đồ tự vẽ, kéo MỘT ngón. Chưa có key → còn dùng bản nhúng của
