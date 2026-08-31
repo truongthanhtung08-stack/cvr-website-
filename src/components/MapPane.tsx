@@ -81,28 +81,22 @@ export default function MapPane({
     (async () => {
       try {
         await loadMapsApi();
-        const pin = parseLatLng(query);
-        // Thứ tự: toạ độ admin ghim tay → Google tra địa chỉ → bảng tâm khu vực
-        // của chính mình (src/lib/geo.ts).
-        // ⚠️ BƯỚC BA LÀ BẮT BUỘC: dịch vụ tra địa chỉ của Google có lúc bị chặn
-        // (chưa bật đủ, hết hạn mức, lỗi mạng). Trước đây hỏng là rơi về bản đồ
-        // NHÚNG — mà bản nhúng thì BẮT BUỘC hai ngón. Nay hỏng thì vẫn là bản đồ
-        // tự vẽ, ghim giữa khu vực, KÉO MỘT NGÓN như mọi nơi khác.
-        const doTay = pin ? { ...pin, coarse: false } : await geocode(query);
-        const khuVuc = centerOfArea(query);
-        const found =
-          doTay ?? (khuVuc ? { lat: khuVuc[0], lng: khuVuc[1], coarse: true } : null);
-        if (huy) return;
-        // Chỉ lùi về bản nhúng khi không biết nổi khu vực nằm ở đâu.
-        if (!found || !boxRef.current || !window.google) {
-          if (!found) setMode("iframe");
-          return;
-        }
+        if (huy || !boxRef.current || !window.google) return;
         const g = window.google;
+
+        // ── BƯỚC 1: VẼ BẢN ĐỒ NGAY, không chờ ai cả ──────────────────────────
+        // ⚠️ ĐỪNG đưa việc tra địa chỉ lên trước bước này. Dịch vụ tra địa chỉ
+        // của Google có lúc bị chặn (chưa bật đủ, hết hạn mức, lỗi mạng); chờ nó
+        // là khách nhìn thấy một ô XÁM TRẮNG. Biết khu vực là vẽ được rồi.
+        const pin = parseLatLng(query);
+        const khuVuc = centerOfArea(query);
+        const center: LatLng =
+          pin ?? (khuVuc ? { lat: khuVuc[0], lng: khuVuc[1] } : { lat: 16.054, lng: 108.202 });
+
         const map = new g.maps.Map(boxRef.current, {
-          center: { lat: found.lat, lng: found.lng },
-          // Ghim theo địa chỉ rút gọn → lùi mức phóng, tránh chỉ sai vào một căn nhà cụ thể.
-          zoom: found.coarse ? Math.min(zoom, 14) : zoom,
+          center,
+          // Chưa biết đúng điểm thì mở rộng cả khu vực, không giả vờ chính xác.
+          zoom: pin ? zoom : Math.min(zoom, 13),
           // ĐÂY LÀ CHỖ CHO PHÉP KÉO MỘT NGÓN — mặc định của Google là "auto"
           // (điện thoại phải hai ngón).
           gestureHandling: lockedRef.current ? "none" : "greedy",
@@ -112,9 +106,32 @@ export default function MapPane({
           zoomControl: true,
           keyboardShortcuts: false,
         });
-        // Địa chỉ chỉ tra được tới phường/tỉnh thì KHÔNG cắm ghim — cắm là chỉ sai nhà người ta.
-        if (!found.coarse) new g.maps.Marker({ position: { lat: found.lat, lng: found.lng }, map });
         mapRef.current = map;
+
+        // CANH CHỪNG: Google có thể từ chối vẽ (tài khoản chưa mở khoá Maps, hết
+        // hạn mức, sai khoá) và để lại một Ô XÁM TRẮNG. Chờ vài giây, không thấy
+        // bản đồ mọc ra thì lùi về bản nhúng — bản nhúng phải hai ngón, nhưng
+        // KHÁCH VẪN THẤY BẢN ĐỒ, còn hơn nhìn ô trắng.
+        setTimeout(() => {
+          if (huy) return;
+          if (!boxRef.current?.querySelector(".gm-style")) setMode("iframe");
+        }, 5000);
+
+        // Khách/admin đã tự ghim vị trí → CẮM GHIM ĐỎ, chắc chắn đúng điểm.
+        if (pin) {
+          new g.maps.Marker({ position: pin, map });
+          return;
+        }
+
+        // ── BƯỚC 2: tra địa chỉ ở NỀN, ra kết quả thì dời bản đồ tới đúng chỗ ──
+        // Tra được tới số nhà / tên đường → dời + cắm ghim đỏ.
+        // Chỉ ra tới phường/tỉnh (hoặc tra hỏng) → giữ nguyên khung khu vực,
+        // KHÔNG cắm ghim — cắm là chỉ sai nhà người ta.
+        const found = await geocode(query);
+        if (huy || !found || found.coarse) return;
+        map.setCenter({ lat: found.lat, lng: found.lng });
+        map.setOptions({ zoom });
+        new g.maps.Marker({ position: { lat: found.lat, lng: found.lng }, map });
       } catch {
         if (!huy) setMode("iframe");
       }
