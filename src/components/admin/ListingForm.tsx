@@ -7,6 +7,7 @@ import { saleTypeGroups, rentTypeGroups } from "@/lib/filters";
 import { provinceNamesFor, districtsOf, wardsOf, wardsOfNew, type GeoMode } from "@/lib/locations";
 import { specForType, interiorItems, amenityGroups, legalOptions, furnishLevels, directions } from "@/lib/listingSpec";
 import ImagePicker from "@/components/admin/ImagePicker";
+import MapPicker from "@/components/MapPicker";
 import ContentEditor from "@/components/admin/ContentEditor";
 import { uploadImageFile } from "@/lib/uploadImage";
 import { soAnhToiDa } from "@/lib/billing";
@@ -411,9 +412,12 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
             />
           </Field>
           <p className="mt-1.5 text-xs text-cvr-faint">
-            Bỏ trống → bản đồ tự tìm theo địa chỉ ở trên. Địa chỉ không chính xác (đất nền, hẻm nhỏ…)
-            thì mở Google Maps, bấm giữ đúng vị trí, sao chép toạ độ rồi dán vào đây.
+            Bỏ trống → bản đồ tự tìm theo địa chỉ ở trên. Không cần dán toạ độ tay nữa:
+            bấm thẳng lên bản đồ dưới đây là ghim.
           </p>
+          <div className="mt-3">
+            <MapPicker value={mapPin} onChange={setMapPin} hint={`${addressDetail}, ${ward}, ${district}, ${province}`} />
+          </div>
         </div>
         <p className="mt-3 text-xs text-cvr-faint">
           Chọn theo danh sách để tin hiện đúng khi lọc khu vực. Tỉnh chưa có sẵn quận/huyện thì gõ tay.

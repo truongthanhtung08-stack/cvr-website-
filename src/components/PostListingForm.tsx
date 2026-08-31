@@ -11,6 +11,7 @@ import {
 } from "@/lib/listingSpec";
 import { provinceNamesFor, districtsOf, wardsOf, wardsOfNew, type GeoMode } from "@/lib/locations";
 import ImagePicker from "@/components/admin/ImagePicker";
+import MapPicker from "@/components/MapPicker";
 import ContentEditor from "@/components/admin/ContentEditor";
 import { freeNote, levelOf, quotePrice, soAnhToiDa, tenGoiMienPhi, vnd } from "@/lib/billing";
 import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
@@ -44,6 +45,10 @@ export default function PostListingForm() {
   // Hệ đơn vị hành chính: "moi" = tỉnh/thành sau sáp nhập (mặc định) · "cu" = trước sáp nhập
   const [geoMode, setGeoMode] = useState<GeoMode>("moi");
   const [addressDetail, setAddressDetail] = useState("");
+  // GHIM VỊ TRÍ: rất nhiều bất động sản chưa có địa chỉ chính xác (đất nền, lô
+  // dự án, nhà trong hẻm). Cho người đăng tự bấm đúng điểm trên bản đồ thay vì
+  // để máy đoán theo tên đường. Lưu chuỗi "lat, lng" vào details.mapPin.
+  const [mapPin, setMapPin] = useState("");
   const [title, setTitle] = useState("");
   const [priceValue, setPriceValue] = useState("");
   const [priceUnit, setPriceUnit] = useState("tỷ");
@@ -237,6 +242,7 @@ export default function PostListingForm() {
       setFurnish(d.furnish ?? "");
       setDirection(d.direction ?? "");
       setAddressDetail(d.addressDetail ?? "");
+      setMapPin(d.mapPin ?? "");
       setProjectSlug(d.project ?? "");
       if (d.contact) {
         setContactName(d.contact.name ?? "");
@@ -303,6 +309,7 @@ export default function PostListingForm() {
         furnish: furnish || undefined,
         direction: direction || undefined,
         addressDetail: addressDetail.trim() || undefined,
+        mapPin: mapPin.trim() || undefined,
         plan: { tier: planTier, days: planDays },
         project: projectSlug || undefined,
         contact: (contactName.trim() || contactPhone.trim() || contactEmail.trim())
@@ -443,6 +450,10 @@ export default function PostListingForm() {
           <Pick label="Phường / Xã" value={ward} onChange={setWard} options={wards} placeholder="Chọn Phường / Xã" disabled={geoMode === "moi" ? !province : !district} />
         </div>
         <Text label="Địa chỉ cụ thể (số nhà, đường, dự án)" value={addressDetail} onChange={setAddressDetail} placeholder="VD: 123 Võ Nguyên Giáp / Dự án ..." />
+        <div className="mt-4">
+          <p className="mb-2 text-sm font-semibold text-cvr-ink">Ghim vị trí trên bản đồ</p>
+          <MapPicker value={mapPin} onChange={setMapPin} hint={`${addressDetail}, ${ward}, ${district}, ${province}`} />
+        </div>
       </Card>
 
       {/* 3. Thông tin chính */}

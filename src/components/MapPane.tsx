@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { centerOfArea } from "@/lib/geo";
+import { MAP_KEY, loadMapsApi, parseLatLng, type GMap, type LatLng } from "@/lib/googleMaps";
 
 // ── KHUNG BẢN ĐỒ VỊ TRÍ (dùng chung: chi tiết tin + chi tiết dự án) ────────────
 //
@@ -14,59 +15,6 @@ import { centerOfArea } from "@/lib/geo";
 // CẦN BIẾN MÔI TRƯỜNG: NEXT_PUBLIC_GOOGLE_MAPS_KEY (Vercel → Environment Variables).
 //   Key phải bật 2 API: "Maps JavaScript API" và "Geocoding API".
 //   CHƯA có key / tải hỏng → tự quay về bản nhúng cũ, web không bao giờ trắng chỗ bản đồ.
-
-const KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY ?? "";
-
-type LatLng = { lat: number; lng: number };
-type GLatLng = { lat(): number; lng(): number };
-type GMap = { setOptions(o: Record<string, unknown>): void };
-type GMaps = {
-  Map: new (el: HTMLElement, opts: Record<string, unknown>) => GMap;
-  Marker: new (opts: Record<string, unknown>) => unknown;
-  Geocoder: new () => {
-    geocode(req: { address: string; region?: string }): Promise<{ results: { geometry: { location: GLatLng } }[] }>;
-  };
-};
-
-declare global {
-  interface Window {
-    google?: { maps: GMaps };
-  }
-}
-
-// Admin có thể ghim tay bằng TOẠ ĐỘ hoặc dán LINK Google Maps → lấy thẳng số,
-// khỏi tốn một lượt tra địa chỉ (và ghim đúng tuyệt đối).
-function parseLatLng(q: string): LatLng | null {
-  const m =
-    q.match(/^\s*(-?\d{1,3}(?:\.\d+)?)\s*,\s*(-?\d{1,3}(?:\.\d+)?)\s*$/) ||
-    q.match(/@(-?\d{1,3}(?:\.\d+)?),(-?\d{1,3}(?:\.\d+)?)/) ||
-    q.match(/[?&]q=(-?\d{1,3}(?:\.\d+)?),(-?\d{1,3}(?:\.\d+)?)/);
-  if (!m) return null;
-  const lat = Number(m[1]);
-  const lng = Number(m[2]);
-  return Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : null;
-}
-
-// Nạp thư viện Google Maps ĐÚNG MỘT LẦN cho cả trang (nhiều khối bản đồ vẫn chỉ 1 script).
-let mapsPromise: Promise<void> | null = null;
-function loadMapsApi(): Promise<void> {
-  if (window.google?.maps) return Promise.resolve();
-  if (mapsPromise) return mapsPromise;
-  mapsPromise = new Promise<void>((resolve, reject) => {
-    const cb = "__cvrGoogleMapsReady";
-    (window as unknown as Record<string, unknown>)[cb] = () => resolve();
-    const s = document.createElement("script");
-    s.src =
-      "https://maps.googleapis.com/maps/api/js?key=" +
-      encodeURIComponent(KEY) +
-      "&language=vi&region=VN&loading=async&callback=" +
-      cb;
-    s.async = true;
-    s.onerror = () => reject(new Error("Không tải được Google Maps"));
-    document.head.appendChild(s);
-  });
-  return mapsPromise;
-}
 
 // Tra địa chỉ → toạ độ. Nhớ lại trong phiên để khách xem đi xem lại một tin
 // không gọi Google nhiều lần (tiết kiệm hạn mức).
@@ -125,7 +73,7 @@ export default function MapPane({
   // là tính thêm một lượt tải bản đồ với Google.
   const lockedRef = useRef(locked);
   // "js" = bản đồ tự vẽ (kéo 1 ngón) · "iframe" = bản nhúng cũ khi chưa có key / lỗi
-  const [mode, setMode] = useState<"js" | "iframe">(KEY ? "js" : "iframe");
+  const [mode, setMode] = useState<"js" | "iframe">(MAP_KEY ? "js" : "iframe");
 
   useEffect(() => {
     if (mode !== "js") return;
@@ -209,4 +157,4 @@ export default function MapPane({
 
 // Có key → bản đồ tự vẽ, kéo MỘT ngón. Chưa có key → còn dùng bản nhúng của
 // Google, vẫn phải hai ngón; câu hướng dẫn dưới bản đồ đổi theo đúng sự thật.
-export const MAP_KEO_MOT_NGON = Boolean(KEY);
+export const MAP_KEO_MOT_NGON = Boolean(MAP_KEY);
