@@ -25,7 +25,7 @@ export default async function DuAnPage() {
       <ProjectListJsonLd items={projects} heading="Dự án bất động sản Đà Nẵng, Huế & Miền Trung" path="/du-an" />
       <Header />
       <main className="flex-1 bg-white">
-        <div className="mx-auto max-w-7xl px-4 pb-20 pt-0 sm:px-6 sm:pt-0 lg:px-8">
+        <div className="mx-auto max-w-7xl px-4 pt-0 pb-footer sm:px-6 sm:pt-0 lg:px-8">
           {/* MOBILE: ô tìm lên TRÊN, banner nằm dưới (mẫu Batdongsan); nút lọc nằm
               trong trang tìm toàn màn hình. Banner KHOÁ THEO TỶ LỆ 2:1 (chữ nhật)
               thay cho chiều cao cứng → nhỏ gọn lại và tự cân theo mọi khổ máy

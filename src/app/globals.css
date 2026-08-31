@@ -504,6 +504,32 @@ select option {
   }
 }
 
+/* ── KHOẢNG CÁCH CHUẨN GIỮA NỘI DUNG VÀ FOOTER — DÙNG CHUNG TOÀN WEB ──
+   Trước đây mỗi trang tự đặt pb-10 / pb-16 / pb-20 / pb-24 nên chỗ hụt chỗ thừa.
+   Nay chỉ còn MỘT con số: .pb-footer đặt ở khung ngoài cùng của mỗi trang.
+   ⚠️ KHÔNG cộng chiều cao thanh dính đáy (Gọi · Nhắn Zalo · tab bar) vào đây —
+   làm vậy sẽ hở một mảng trắng to phía trên footer. Chỗ trống cho thanh đó nằm
+   SAU footer, xem .footer-safe bên dưới. */
+.pb-footer {
+  padding-bottom: 3rem;
+}
+@media (min-width: 1024px) {
+  .pb-footer {
+    padding-bottom: 4.5rem;
+  }
+}
+
+/* Chỗ trống SAU footer để thanh hành động dính đáy (Gọi · Nhắn Zalo ở trang chi
+   tiết tin) không đè lên dòng pháp lý cuối footer. Desktop không có thanh này. */
+.footer-safe {
+  height: 0;
+}
+@media (max-width: 1023px) {
+  .footer-safe {
+    height: calc(68px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
 html {
   /* iOS tự phóng to chữ khi xoay ngang → tắt, giữ đúng thang chữ đã thiết kế */
   -webkit-text-size-adjust: 100%;

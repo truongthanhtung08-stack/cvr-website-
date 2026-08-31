@@ -19,7 +19,7 @@ export default function TrangPhapLy({
     <>
       <Header />
       <main className="flex-1 bg-white">
-        <div className="mx-auto max-w-3xl px-4 pb-24 pt-8 sm:px-6">
+        <div className="mx-auto max-w-3xl px-4 pt-8 pb-footer sm:px-6">
           <h1 className="text-3xl font-semibold tracking-tight text-cvr-ink sm:text-4xl">{title}</h1>
           {capNhat && <p className="mt-3 text-sm text-cvr-faint">Cập nhật lần cuối: {capNhat}</p>}
           <p className="mt-5 text-[15px] leading-8 text-cvr-body">{moDau}</p>

@@ -90,7 +90,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
 
         {/* Tin liên quan — CÙNG CẤU TRÚC mọi khối: slide 8 bài → "Xem thêm" →
             danh sách theo trang (có cột phải), nội dung bài phía trên ẩn đi. */}
-        <div className="mx-auto max-w-7xl px-4 pb-20 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl px-4 pb-footer sm:px-6 lg:px-8">
           <ArticleShowcase
             articles={related}
             title="Tin liên quan"

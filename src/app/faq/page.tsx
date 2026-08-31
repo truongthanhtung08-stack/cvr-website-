@@ -239,7 +239,7 @@ export default function FaqPage() {
       />
       <Header />
       <main className="flex-1 bg-white">
-        <div className="mx-auto max-w-3xl px-4 pb-24 pt-8 sm:px-6">
+        <div className="mx-auto max-w-3xl px-4 pt-8 pb-footer sm:px-6">
           <h1 className="text-3xl font-semibold tracking-tight text-cvr-ink sm:text-4xl">Câu hỏi thường gặp</h1>
           <p className="mt-5 text-[15px] leading-8 text-cvr-body">
             Những điều người dùng hỏi chúng tôi nhiều nhất. Bấm vào câu hỏi để xem trả lời.

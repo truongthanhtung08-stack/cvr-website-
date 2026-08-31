@@ -49,7 +49,7 @@ export default async function PackagePage({ params }: { params: Promise<{ slug: 
     <>
       <Header />
       <main className="flex-1 bg-white">
-        <div className="mx-auto max-w-7xl px-4 pb-20 pt-6 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl px-4 pt-6 pb-footer sm:px-6 lg:px-8">
 
           {/* Thanh chọn gói (giống Homedy) */}
           <div className="-mx-1 mb-8 overflow-x-auto">

@@ -144,7 +144,7 @@ export default function PhoneLoginPage() {
     <>
       <Header />
       <main className="flex-1 bg-white">
-        <div className="mx-auto max-w-md px-4 pb-20 pt-10 sm:px-6">
+        <div className="mx-auto max-w-md px-4 pt-10 pb-footer sm:px-6">
           <h1 className="text-2xl font-semibold tracking-tight text-cvr-ink">Đăng nhập bằng số điện thoại</h1>
 
           {notice && (

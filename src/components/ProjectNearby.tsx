@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import MapPane, { MAP_KEO_MOT_NGON } from "@/components/MapPane";
 
 type Place = { category: string; name: string; distance: string };
 
@@ -67,12 +68,7 @@ export default function ProjectNearby({
           không nhảy đi đâu. Chỉ khi bấm nút "Mở Google Maps" mới mở app/web
           Google Maps ở TAB MỚI — xong bấm quay lại là về đúng tin đang xem. */}
       <div className="relative overflow-hidden rounded-xl border border-cvr-line">
-        <iframe
-          title="Bản đồ vị trí"
-          src={`https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}&z=${zoom}&output=embed`}
-          className={`h-[260px] w-full sm:h-[320px] ${mapOn ? "" : "pointer-events-none"}`}
-          loading="lazy"
-        />
+        <MapPane query={mapQuery} zoom={zoom} locked={!mapOn} />
 
         {/* Lớp phủ khi bản đồ đang KHOÁ — chạm là mở, không cần hai ngón */}
         {!mapOn && (
@@ -107,8 +103,12 @@ export default function ProjectNearby({
       </div>
       <p className="-mt-1 text-[13px] leading-relaxed text-cvr-muted">
         {mapOn
-          ? "Bản đồ đang mở — kéo bằng một ngón để xem xung quanh. Bấm “Khoá bản đồ” để cuộn trang tiếp."
-          : "Chạm một cái vào bản đồ rồi kéo bằng một ngón để xem xung quanh — không cần hai ngón."}
+          ? MAP_KEO_MOT_NGON
+            ? "Bản đồ đang mở — kéo bằng một ngón để xem xung quanh. Bấm “Khoá bản đồ” để cuộn trang tiếp."
+            : "Bản đồ đang mở — phóng to / thu nhỏ để xem xung quanh. Bấm “Khoá bản đồ” để cuộn trang tiếp."
+          : MAP_KEO_MOT_NGON
+            ? "Chạm một cái vào bản đồ rồi kéo bằng một ngón để xem xung quanh — không cần hai ngón."
+            : "Chạm một cái vào bản đồ để xem xung quanh."}
       </p>
 
       <div className="grid grid-cols-1 gap-2.5 sm:flex sm:flex-wrap sm:items-center sm:justify-between">

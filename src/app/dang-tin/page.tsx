@@ -22,7 +22,7 @@ export default function DangTinPage() {
     <>
       <Header />
       <main className="flex-1 bg-white">
-        <div className="mx-auto w-full max-w-4xl overflow-x-hidden px-4 pb-20 pt-10 sm:px-6 lg:px-8">
+        <div className="mx-auto w-full max-w-4xl overflow-x-hidden px-4 pt-10 pb-footer sm:px-6 lg:px-8">
           <div className="text-center">
             <h1 className="text-3xl font-semibold tracking-tight text-cvr-ink sm:text-4xl">Đăng tin bất động sản</h1>
             <p className="mx-auto mt-3 max-w-2xl text-cvr-muted">Biểu mẫu chuyên nghiệp với đầy đủ thuộc tính theo từng loại hình — bạn chỉ cần chọn và điền.</p>

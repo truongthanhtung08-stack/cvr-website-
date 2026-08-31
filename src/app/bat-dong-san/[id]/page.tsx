@@ -136,7 +136,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
       />
       <main className="flex-1 bg-white">
         {/* MOBILE: pt-0 → ảnh tin nằm SÁT mép dưới header (không chừa khoảng trắng) */}
-        <div className={`mx-auto max-w-7xl px-4 pt-0 sm:px-6 sm:pt-0 lg:px-8 lg:pb-12 ${contact ? "pb-24" : "pb-10"}`}>
+        <div className="mx-auto max-w-7xl px-4 pt-0 pb-footer sm:px-6 sm:pt-0 lg:px-8">
 
           <HomeExpandProvider>
           {/* Toàn bộ nội dung tin — ẩn khi bấm "Xem thêm" ở mục BĐS tương tự */}
@@ -422,6 +422,9 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
         )}
       </main>
       <Footer />
+      {/* Chỗ trống cuối trang để thanh Gọi · Nhắn Zalo (dính đáy) không che dòng
+          pháp lý cuối footer — cùng cơ chế với chỗ trống của tab bar ở các trang khác. */}
+      {contact && <div className="footer-safe" aria-hidden />}
     </>
   );
 }

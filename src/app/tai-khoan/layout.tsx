@@ -60,7 +60,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
     <>
       <Header />
       <main className="flex-1 bg-cvr-surface">
-        <div className="mx-auto max-w-6xl px-4 pb-16 pt-8 sm:px-6">
+        <div className="mx-auto max-w-6xl px-4 pt-8 pb-footer sm:px-6">
           {/* LỜI CHÀO, KHÔNG PHẢI TIÊU ĐỀ TRANG.
               Trước đây chỗ này là <h1> ghi TÊN KHÁCH, rồi mỗi trang con lại có
               <h1> riêng → hai tiêu đề chồng nhau, và trang nào cũng "đội" tên

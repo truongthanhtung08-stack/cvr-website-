@@ -20,7 +20,7 @@ export default function DangKyChuyenGiaPage() {
     <>
       <Header />
       <main className="flex-1 bg-white">
-        <div className="mx-auto max-w-7xl px-4 pb-20 pt-6 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl px-4 pt-6 pb-footer sm:px-6 lg:px-8">
 
           <div className="grid grid-cols-1 gap-10 lg:grid-cols-2 lg:items-start">
             <div>
