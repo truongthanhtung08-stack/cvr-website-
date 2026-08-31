@@ -104,10 +104,10 @@ export default function ProjectNearby({
       <p className="-mt-1 text-[13px] leading-relaxed text-cvr-muted">
         {mapOn
           ? MAP_KEO_MOT_NGON
-            ? "Bản đồ đang mở — kéo bằng một ngón để xem xung quanh. Bấm “Khoá bản đồ” để cuộn trang tiếp."
+            ? "Bản đồ đang mở — kéo để xem xung quanh. Bấm “Khoá bản đồ” để cuộn trang tiếp."
             : "Bản đồ đang mở — phóng to / thu nhỏ để xem xung quanh. Bấm “Khoá bản đồ” để cuộn trang tiếp."
           : MAP_KEO_MOT_NGON
-            ? "Chạm một cái vào bản đồ rồi kéo bằng một ngón để xem xung quanh — không cần hai ngón."
+            ? "Chạm một cái vào bản đồ rồi kéo để xem xung quanh."
             : "Chạm một cái vào bản đồ để xem xung quanh."}
       </p>
 

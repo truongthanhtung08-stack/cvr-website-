@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { centerOfArea } from "@/lib/geo";
 
 // ── KHUNG BẢN ĐỒ VỊ TRÍ (dùng chung: chi tiết tin + chi tiết dự án) ────────────
 //
@@ -133,9 +134,18 @@ export default function MapPane({
       try {
         await loadMapsApi();
         const pin = parseLatLng(query);
-        const found = pin ? { ...pin, coarse: false } : await geocode(query);
+        // Thứ tự: toạ độ admin ghim tay → Google tra địa chỉ → bảng tâm khu vực
+        // của chính mình (src/lib/geo.ts).
+        // ⚠️ BƯỚC BA LÀ BẮT BUỘC: dịch vụ tra địa chỉ của Google có lúc bị chặn
+        // (chưa bật đủ, hết hạn mức, lỗi mạng). Trước đây hỏng là rơi về bản đồ
+        // NHÚNG — mà bản nhúng thì BẮT BUỘC hai ngón. Nay hỏng thì vẫn là bản đồ
+        // tự vẽ, ghim giữa khu vực, KÉO MỘT NGÓN như mọi nơi khác.
+        const doTay = pin ? { ...pin, coarse: false } : await geocode(query);
+        const khuVuc = centerOfArea(query);
+        const found =
+          doTay ?? (khuVuc ? { lat: khuVuc[0], lng: khuVuc[1], coarse: true } : null);
         if (huy) return;
-        // Chỉ lùi về bản nhúng khi KHÔNG tra ra bất cứ mức nào (kể cả tỉnh/thành).
+        // Chỉ lùi về bản nhúng khi không biết nổi khu vực nằm ở đâu.
         if (!found || !boxRef.current || !window.google) {
           if (!found) setMode("iframe");
           return;

@@ -47,3 +47,12 @@ export function coordOf(location: string, seed: string): [number, number] {
   const dLng = (((h >> 10) % 1000) / 1000 - 0.5) * 0.014;
   return [lat + dLat, lng + dLng];
 }
+
+// Tâm khu vực CHÍNH XÁC (không jitter) — dùng khi cần ghim một địa chỉ lên bản đồ
+// mà không tra được toạ độ thật. Khác coordOf ở chỗ KHÔNG xê dịch ngẫu nhiên:
+// ở đây mình cố ý nói "đây là giữa khu vực", không giả vờ là đúng căn nhà.
+// Không khớp khu vực nào → null (nơi gọi tự quyết định làm gì).
+export function centerOfArea(location: string): [number, number] | null {
+  const hit = CENTERS.find(([name]) => location.includes(name));
+  return hit ? [hit[1], hit[2]] : null;
+}
