@@ -58,6 +58,21 @@ export function formatLatLng(p: LatLng): string {
   return `${p.lat.toFixed(6)}, ${p.lng.toFixed(6)}`;
 }
 
+// ── GOOGLE TỪ CHỐI KHOÁ / TÀI KHOẢN ──────────────────────────────────────────
+// Khi khoá sai, chưa mở khoá Maps, hoặc hết hạn mức, thư viện Google gọi đúng
+// một hàm tên `gm_authFailure` rồi để lại một Ô XÁM TRẮNG. Bắt lấy tín hiệu đó
+// để mọi khối bản đồ lùi về bản nhúng NGAY — vào tin là phải thấy bản đồ, không
+// bao giờ được để trắng.
+let mapsAuthFailed = false;
+const authFailSubs = new Set<() => void>();
+export function onMapsAuthFailure(fn: () => void): () => void {
+  authFailSubs.add(fn);
+  if (mapsAuthFailed) fn();
+  return () => {
+    authFailSubs.delete(fn);
+  };
+}
+
 // Nạp thư viện Google Maps ĐÚNG MỘT LẦN cho cả trang (nhiều khối bản đồ vẫn chỉ 1 script).
 let mapsPromise: Promise<void> | null = null;
 export function loadMapsApi(): Promise<void> {
@@ -66,6 +81,10 @@ export function loadMapsApi(): Promise<void> {
   mapsPromise = new Promise<void>((resolve, reject) => {
     const cb = "__cvrGoogleMapsReady";
     (window as unknown as Record<string, unknown>)[cb] = () => resolve();
+    (window as unknown as Record<string, unknown>).gm_authFailure = () => {
+      mapsAuthFailed = true;
+      authFailSubs.forEach((f) => f());
+    };
     const s = document.createElement("script");
     s.src =
       "https://maps.googleapis.com/maps/api/js?key=" +

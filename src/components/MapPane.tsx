@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { centerOfArea } from "@/lib/geo";
-import { MAP_KEY, loadMapsApi, parseLatLng, type GMap, type LatLng } from "@/lib/googleMaps";
+import { MAP_KEY, loadMapsApi, onMapsAuthFailure, parseLatLng, type GMap, type LatLng } from "@/lib/googleMaps";
 
 // ── KHUNG BẢN ĐỒ VỊ TRÍ (dùng chung: chi tiết tin + chi tiết dự án) ────────────
 //
@@ -115,7 +115,7 @@ export default function MapPane({
         setTimeout(() => {
           if (huy) return;
           if (!boxRef.current?.querySelector(".gm-style")) setMode("iframe");
-        }, 5000);
+        }, 3000);
 
         // Khách/admin đã tự ghim vị trí → CẮM GHIM ĐỎ, chắc chắn đúng điểm.
         if (pin) {
@@ -141,6 +141,9 @@ export default function MapPane({
       mapRef.current = null;
     };
   }, [query, zoom, mode]);
+
+  // Google từ chối khoá/tài khoản → lùi về bản nhúng NGAY, không đợi canh chừng.
+  useEffect(() => onMapsAuthFailure(() => setMode("iframe")), []);
 
   // Mở/khoá bằng chính cử chỉ của Google, không chỉ dựa vào pointer-events:
   // "none" = bản đồ bỏ qua mọi cử chỉ (ngón tay lướt qua vẫn cuộn trang),
