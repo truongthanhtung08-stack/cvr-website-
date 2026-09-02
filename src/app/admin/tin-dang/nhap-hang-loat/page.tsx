@@ -48,6 +48,13 @@ export default function NhapHangLoatPage() {
 
   const sai = rows.filter((r) => r.loi.length > 0);
 
+  // CHỌN LẠI CÙNG MỘT THƯ MỤC LẦN THỨ HAI: mỗi lần tải lên kho sinh một địa chỉ
+  // khác nhau nên cùng một tấm ảnh sẽ nằm hai lần trong danh sách → tin nhận ảnh
+  // LẶP và bị cắt mất những tấm phía sau. Lọc theo TÊN TỆP, giữ bản tải sau cùng.
+  const anhTheoTen = new Map<string, { ten: string; url: string }>();
+  for (const a of anhDaTai) anhTheoTen.set(a.ten.trim().toLowerCase(), a);
+  const anhDaTaiLoc = [...anhTheoTen.values()];
+
   // ẢNH CỦA MỘT TIN — gộp 2 cách, giữ đúng thứ tự anh ghi trong file:
   //   1) Cột "anh" ghi TÊN TỆP ảnh trên máy → lấy link của ảnh đã tải cùng tên
   //      (ghi thiếu đuôi .jpg cũng khớp). Ghi sẵn link/đường dẫn thì dùng thẳng.
@@ -59,12 +66,12 @@ export default function NhapHangLoatPage() {
 
     for (const gt of (r.payload.images as string[]) ?? []) {
       if (laLinkAnh(gt)) { urls.push(gt); continue; }
-      const tim = anhDaTai.find((a) => cungTenTep(a.ten, gt));
+      const tim = anhDaTaiLoc.find((a) => cungTenTep(a.ten, gt));
       if (tim) urls.push(tim.url);
       else thieu.push(gt);
     }
 
-    const theoMa = anhDaTai
+    const theoMa = anhDaTaiLoc
       .filter((a) => anhThuocMa(a.ten, r.maAnh))
       .sort((a, b) => soCuoiTen(a.ten) - soCuoiTen(b.ten) || a.ten.localeCompare(b.ten, "vi", { numeric: true }))
       .map((a) => a.url)
@@ -304,7 +311,12 @@ export default function NhapHangLoatPage() {
           </label>
           {dangTaiAnh > 0 && <span className="text-sm text-cvr-muted">Đang tải… còn {dangTaiAnh} ảnh</span>}
           {anhDaTai.length > 0 && dangTaiAnh === 0 && (
-            <span className="text-sm font-medium text-green-700">Đã tải {anhDaTai.length} ảnh</span>
+            <span className="text-sm font-medium text-green-700">
+              Đã tải {anhDaTaiLoc.length} ảnh
+              {anhDaTai.length > anhDaTaiLoc.length && (
+                <span className="font-normal text-cvr-muted"> (bỏ {anhDaTai.length - anhDaTaiLoc.length} tệp chọn trùng)</span>
+              )}
+            </span>
           )}
           {anhDaTai.length > 0 && (
             <button
@@ -470,11 +482,17 @@ export default function NhapHangLoatPage() {
 }
 
 // Ô "Ảnh" trong bảng xem trước: có bao nhiêu ảnh · thiếu ảnh nào (theo tên ghi trong file)
+// ĐẾM RIÊNG ảnh và video: urls là danh sách media gộp, nếu đếm chung thì tin
+// 15 ảnh + 1 video hiện thành "16/15 ảnh" — trông như vượt giới hạn dù không hề.
 function AnhCell({ urls, thieu, boBot, toiDa }: { urls: string[]; thieu: string[]; boBot: number; toiDa: number }) {
+  const soAnh = urls.filter((u) => !isVideoUrl(u)).length;
+  const soVideo = urls.length - soAnh;
   return (
     <div className="min-w-[130px]">
       {urls.length > 0 ? (
-        <span className="font-medium text-green-700">{urls.length}/{toiDa} ảnh</span>
+        <span className="font-medium text-green-700">
+          {soAnh}/{toiDa} ảnh{soVideo > 0 ? ` · ${soVideo} video` : ""}
+        </span>
       ) : (
         <span className="text-cvr-faint">chưa có</span>
       )}
