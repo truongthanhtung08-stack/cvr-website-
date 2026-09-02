@@ -121,10 +121,12 @@ export default function MapPicker({
           if (p) dat({ lat: p.lat(), lng: p.lng() });
         });
 
-        // CHƯA ghim và CHƯA chọn khu vực → xin vị trí máy để đưa bản đồ về ngay
-        // chỗ khách đang đứng. CHỈ DỜI BẢN ĐỒ, không tự ghim — ghim là việc của
-        // khách. Khách từ chối chia sẻ vị trí thì thôi, bản đồ vẫn mở cả nước.
-        if (!saved && !khuVuc && navigator.geolocation) {
+        // CHƯA ghim → xin vị trí máy ngay, KHÔNG cần khách nhập gì cả: mở form
+        // ra là bản đồ đã nằm sẵn quanh chỗ khách đứng, bấm một cái là ghim.
+        // CHỈ DỜI BẢN ĐỒ, không tự ghim — ghim vẫn là quyết định của khách.
+        // Khách từ chối chia sẻ vị trí thì bản đồ vẫn ở Đà Nẵng, tự kéo được.
+        const daNhapDiaChi = hint.split(",").some((s) => s.trim().length > 0);
+        if (!saved && !daNhapDiaChi && navigator.geolocation) {
           navigator.geolocation.getCurrentPosition(
             (pos) => {
               if (huy || parseLatLng(value)) return;
@@ -137,10 +139,17 @@ export default function MapPicker({
         }
         // Google có thể nạp được thư viện mà vẫn KHÔNG vẽ (khoá sai, chưa bật
         // Maps JavaScript API, hết hạn mức) — lúc đó nó chỉ để lại một ô xám.
-        // Kiểm lại sau 2 giây: không thấy lớp .gm-style thì coi như hỏng.
-        setTimeout(() => {
-          if (!huy && !boxRef.current?.querySelector(".gm-style")) setHongBanDo(true);
-        }, 2000);
+        // ⚠️ ĐỢI ĐỦ LÂU rồi hãy kết luận: trên điện thoại và mạng 3G/4G, Google
+        // hay mất 3–6 giây mới vẽ xong. Trước đây chỉ đợi 2 giây nên bản đồ
+        // THẬT bị coi nhầm là hỏng rồi thay bằng bản nhúng.
+        for (const giay of [4, 8, 12]) {
+          setTimeout(() => {
+            if (huy) return;
+            const daVe = !!boxRef.current?.querySelector(".gm-style");
+            if (daVe) setHongBanDo(false);
+            else if (giay === 12) setHongBanDo(true);
+          }, giay * 1000);
+        }
       } catch {
         if (!huy) setHongBanDo(true);
       }
