@@ -17,7 +17,6 @@ import { provinceOf, districtOf, pickRelated } from "@/lib/data";
 import { getListing, getListings, getListingDetail } from "@/lib/listingsDb";
 import { tierFromBadge, getTier } from "@/lib/packages";
 import RichContent from "@/components/RichContent";
-import VideoEmbed from "@/components/VideoEmbed";
 
 // Trang chi tiết đọc Supabase với cache no-store (admin sửa hiện NGAY) → BẮT BUỘC
 // render động theo yêu cầu. Không thì Next xếp tĩnh (SSG) rồi lỗi "static→dynamic" → 500.
@@ -115,7 +114,6 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
   // Chỉ liệt kê mục THẬT SỰ có nội dung để không bấm vào chỗ trống.
   const nav = [
     ...(d.descriptionParas.length > 0 ? [{ id: "mo-ta", label: "Mô tả" }] : []),
-    ...(d.videos.length > 0 ? [{ id: "video", label: "Video" }] : []),
     { id: "dac-diem", label: "Đặc điểm" },
     ...(d.interior.length > 0 ? [{ id: "noi-that", label: "Nội thất" }] : []),
     ...(d.amenityGroups.some((g) => g.items.some((it) => it.active)) ? [{ id: "tien-ich", label: "Tiện ích" }] : []),
@@ -146,7 +144,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
 
           {/* Thư viện ảnh THẬT — MOBILE tràn viền sát 2 mép + sát header (không khoảng trống) */}
           <div className="-mx-4 mb-5 sm:mx-0">
-            <Gallery images={d.images} alt={l.title} listingId={l.id} />
+            <Gallery images={d.images} videos={d.videos} alt={l.title} listingId={l.id} />
           </div>
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
@@ -244,15 +242,6 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                 <Section id="mo-ta" title="Thông tin mô tả">
                   <div className="space-y-3 whitespace-pre-line text-[15px] leading-relaxed text-cvr-body">
                     <RichContent paragraphs={d.descriptionParas} title={l.title} />
-                  </div>
-                </Section>
-              )}
-
-              {/* Video — tệp/link người đăng thêm ở mục tải ảnh */}
-              {d.videos.length > 0 && (
-                <Section id="video" title="Video">
-                  <div className="space-y-4">
-                    {d.videos.map((v, i) => <VideoEmbed key={i} url={v} />)}
                   </div>
                 </Section>
               )}
