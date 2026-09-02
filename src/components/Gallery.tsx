@@ -44,11 +44,27 @@ export default function Gallery({
 
   // MOBILE: carousel vuốt 1 ảnh (kiểu Homedy) — theo dõi ảnh đang xem để đếm "Ảnh x/y".
   const [mCur, setMCur] = useState(0);
+  const [mCham, setMCham] = useState(false); // khách đã tự vuốt → thôi tự chạy, để khách chủ động
   const mTrack = useRef<HTMLDivElement>(null);
   const onMScroll = () => {
     const el = mTrack.current;
     if (el) setMCur(Math.round(el.scrollLeft / el.clientWidth));
   };
+
+  // ĐIỆN THOẠI cũng TỰ CHẠY slide 4s/slide như máy tính (video tính là một slide,
+  // nó không tự phát nên vẫn trôi qua như ảnh). Ngưng khi: khách đang xem video /
+  // phóng to, hoặc khách đã tự vuốt tay.
+  useEffect(() => {
+    if (hold || mCham || media.length < 2) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const t = setTimeout(() => {
+      const el = mTrack.current;
+      if (!el || el.clientWidth === 0) return; // đang ở khổ máy tính → bỏ qua
+      const ke = (Math.round(el.scrollLeft / el.clientWidth) + 1) % media.length;
+      el.scrollTo({ left: ke * el.clientWidth, behavior: "smooth" });
+    }, 4000);
+    return () => clearTimeout(t);
+  }, [hold, mCham, mCur, media.length]);
 
   // Slide lớn TỰ CHẠY qua tất cả ảnh (4s/slide, mờ nhẹ) — dừng khi rê chuột,
   // tôn trọng prefers-reduced-motion. Slide video chạy đúng nhịp mặc định như ảnh;
@@ -109,6 +125,8 @@ export default function Gallery({
           <div
             ref={mTrack}
             onScroll={onMScroll}
+            onTouchStart={() => setMCham(true)}
+            onPointerDown={() => setMCham(true)}
             className="no-scrollbar flex snap-x snap-mandatory overflow-x-auto overscroll-x-contain"
           >
             {media.map((m, i) =>
@@ -117,7 +135,7 @@ export default function Gallery({
                   key={i}
                   className="relative aspect-[2/1] w-full shrink-0 snap-center overflow-hidden border border-cvr-line bg-black"
                 >
-                  <GallerySlideVideo url={m.src} active={i === mCur} />
+                  <GallerySlideVideo url={m.src} active={i === mCur} onHold={setHold} />
                 </div>
               ) : (
                 <button
