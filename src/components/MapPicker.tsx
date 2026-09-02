@@ -171,18 +171,26 @@ export default function MapPicker({
 
   async function veKhuVuc() {
     const map = mapRef.current;
-    const diaChi = hintRef.current.split(",").map((s) => s.trim()).filter(Boolean).join(", ");
+    const phan = hintRef.current.split(",").map((s) => s.trim());
+    // Ô "Địa chỉ cụ thể" là phần ĐẦU TIÊN — có số nhà hoặc tên đường thì trỏ
+    // thẳng tới đó, chính xác hơn hẳn tâm phường.
+    const coDuong = phan[0].length >= 3;
+    const diaChi = phan.filter(Boolean).join(", ");
     if (!map || !diaChi) return;
 
-    // 1) Bảng toạ độ sẵn trong code — nhanh, miễn phí, nhưng chỉ có ít khu vực.
-    const kv = centerOfArea(diaChi);
-    if (kv) {
-      map.setCenter({ lat: kv[0], lng: kv[1] });
-      map.setOptions({ zoom: 15 });
-      return;
+    // 1) CHƯA có tên đường → dùng bảng toạ độ sẵn trong code cho nhanh và miễn phí.
+    //    CÓ tên đường thì BỎ QUA bảng này: bảng khớp lỏng theo tên tỉnh nên hễ
+    //    địa chỉ có chữ "Đà Nẵng" là nó trả về tâm thành phố, vứt mất tên đường.
+    if (!coDuong) {
+      const kv = centerOfArea(diaChi);
+      if (kv) {
+        map.setCenter({ lat: kv[0], lng: kv[1] });
+        map.setOptions({ zoom: 15 });
+        return;
+      }
     }
-    // 2) Không có trong bảng → nhờ Google tra đúng phường/xã (khoá đã bật
-    //    Geocoding API). Cả nước 3.321 phường/xã nên không thể liệt kê tay.
+    // 2) Nhờ Google tra đúng địa chỉ (khoá đã bật Geocoding API). Có tên đường
+    //    thì phóng sát hơn vì đã biết gần đúng chỗ.
     const g = window.google as unknown as {
       maps?: { Geocoder?: new () => { geocode: (r: object) => Promise<{ results?: { geometry?: { location?: { lat: () => number; lng: () => number } } }[] }> } };
     };
@@ -193,7 +201,7 @@ export default function MapPicker({
       const p = kq.results?.[0]?.geometry?.location;
       if (p) {
         map.setCenter({ lat: p.lat(), lng: p.lng() });
-        map.setOptions({ zoom: 16 });
+        map.setOptions({ zoom: coDuong ? 17 : 16 });
       }
     } catch {
       // Tra không ra thì thôi, khách vẫn tự kéo bản đồ được
@@ -309,7 +317,7 @@ export default function MapPicker({
           <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" />
           </svg>
-          {dangTimKhuVuc ? "Đang tìm…" : "Về khu vực đã chọn"}
+          {dangTimKhuVuc ? "Đang tìm…" : "Về địa chỉ đã nhập"}
         </button>
         {daGhim && (
           <button
