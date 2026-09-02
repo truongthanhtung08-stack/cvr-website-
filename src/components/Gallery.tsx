@@ -29,6 +29,7 @@ export default function Gallery({
   const [list, setList] = useState(false); // danh sách ảnh kiểu Facebook (điện thoại)
   const [bigIdx, setBigIdx] = useState(0); // slide LỚN đang hiện (tự chạy)
   const [paused, setPaused] = useState(false);
+  const [hold, setHold] = useState(false); // đang phóng to video → tạm ngưng tự chuyển slide
   const open = (i: number) => setLb(i);
   const close = () => setLb(-1);
 
@@ -49,15 +50,15 @@ export default function Gallery({
     if (el) setMCur(Math.round(el.scrollLeft / el.clientWidth));
   };
 
-  // Slide lớn TỰ CHẠY qua tất cả ảnh (4s/ảnh, mờ nhẹ) — dừng khi rê chuột,
-  // tôn trọng prefers-reduced-motion. Slide video được ở lại lâu hơn (15s) để
-  // khách kịp xem; xem hết video thì tự sang ảnh kế (onEnded).
+  // Slide lớn TỰ CHẠY qua tất cả ảnh (4s/slide, mờ nhẹ) — dừng khi rê chuột,
+  // tôn trọng prefers-reduced-motion. Slide video chạy đúng nhịp mặc định như ảnh;
+  // chỉ khi khách bấm PHÓNG TO video mới ngưng để không bị kéo đi giữa chừng.
   useEffect(() => {
-    if (paused || media.length < 2) return;
+    if (paused || hold || media.length < 2) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const t = setTimeout(() => setBigIdx((i) => (i + 1) % media.length), bigIdx < nVid ? 15000 : 4000);
+    const t = setTimeout(() => setBigIdx((i) => (i + 1) % media.length), 4000);
     return () => clearTimeout(t);
-  }, [paused, bigIdx, nVid, media.length]);
+  }, [paused, hold, bigIdx, media.length]);
 
   if (media.length === 0) return null;
 
@@ -111,9 +112,11 @@ export default function Gallery({
           </div>
           {/* Ở slide video thì đẩy các nhãn lên TRÊN để không đè thanh điều khiển video */}
           {/* Đếm ảnh — chữ cỡ đọc được (13px), nền tối rõ */}
-          <span className={`pointer-events-none absolute right-3 rounded-md bg-black/65 px-2.5 py-1 text-[13px] font-medium text-white backdrop-blur-sm ${mIsVideo ? "top-3" : "bottom-3"}`}>
-            {mIsVideo ? "Video" : `Ảnh ${imgIdx(mCur) + 1}/${images.length}`}
-          </span>
+          {!mIsVideo && (
+            <span className="pointer-events-none absolute bottom-3 right-3 rounded-md bg-black/65 px-2.5 py-1 text-[13px] font-medium text-white backdrop-blur-sm">
+              Ảnh {imgIdx(mCur) + 1}/{images.length}
+            </span>
+          )}
           {/* Chấm vị trí */}
           {!mIsVideo && (
             <span className="pointer-events-none absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5">
@@ -145,11 +148,7 @@ export default function Gallery({
             className="group relative col-span-2 aspect-[16/9] overflow-hidden rounded-none border border-cvr-line sm:row-span-2 sm:aspect-auto sm:h-full"
           >
             {bigIsVideo ? (
-              <GallerySlideVideo
-                url={media[bigIdx].src}
-                active
-                onEnded={() => setBigIdx((i) => (i + 1) % media.length)}
-              />
+              <GallerySlideVideo url={media[bigIdx].src} active onHold={setHold} />
             ) : (
               <button type="button" onClick={() => open(imgIdx(bigIdx))} className="absolute inset-0 block h-full w-full">
                 <Image key={bigIdx} src={media[bigIdx].src} alt={alt} fill priority quality={90} sizes="(max-width:1024px) 100vw, 50vw" className="object-cover animate-fadein" />
@@ -158,12 +157,14 @@ export default function Gallery({
             <span className={`pointer-events-none absolute left-3 rounded-md bg-black/60 px-2.5 py-1 text-xs text-white backdrop-blur-sm ${bigIsVideo ? "top-3" : "bottom-3"}`}>
               {bigIsVideo ? "Video" : `${imgIdx(bigIdx) + 1}/${images.length}`}
             </span>
-            {/* Chấm chỉ vị trí slide đang chạy */}
-            <span className={`pointer-events-none absolute right-3 flex gap-1 ${bigIsVideo ? "top-3" : "bottom-3"}`}>
-              {media.slice(0, Math.min(media.length, 8)).map((_, i) => (
-                <span key={i} className={`h-1.5 rounded-full transition-all ${i === bigIdx % 8 ? "w-4 bg-white" : "w-1.5 bg-white/50"}`} />
-              ))}
-            </span>
+            {/* Chấm chỉ vị trí slide — slide video thì ẩn, nhường góc phải cho nút Phóng to */}
+            {!bigIsVideo && (
+              <span className="pointer-events-none absolute bottom-3 right-3 flex gap-1">
+                {media.slice(0, Math.min(media.length, 8)).map((_, i) => (
+                  <span key={i} className={`h-1.5 rounded-full transition-all ${i === bigIdx % 8 ? "w-4 bg-white" : "w-1.5 bg-white/50"}`} />
+                ))}
+              </span>
+            )}
           </div>
 
           {/* Lưới 2×2 ô nhỏ bên phải */}
