@@ -216,11 +216,15 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                     )}
                   </div>
 
-                  {/* Thông số phụ — chỉ hiện mục ĐÃ CÓ dữ liệu, không đổ ô trống */}
-                  {(l.beds || l.baths || d.direction || d.furnish) && (
+                  {/* THÔNG TIN CHÍNH — phòng ngủ/phòng tắm (nếu loại hình có) cộng
+                      với bộ mục chính riêng của từng loại hình: đất thì chiều ngang ·
+                      chiều dài · đường vào · loại đất; căn hộ thì tầng số… Chỉ hiện
+                      mục ĐÃ CÓ dữ liệu, lưới tự xuống hàng nên không xén, không chồng. */}
+                  {(l.beds || l.baths || d.direction || d.furnish || d.specsChinh.length > 0) && (
                     <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-cvr-line pt-4 sm:grid-cols-4">
                       {l.beds ? <MiniStat label="Phòng ngủ" value={l.beds + " PN"} /> : null}
                       {l.baths ? <MiniStat label="Phòng tắm" value={l.baths + " WC"} /> : null}
+                      {d.specsChinh.map((f) => <MiniStat key={f.label} label={f.label} value={f.value} />)}
                       {d.direction && <MiniStat label="Hướng" value={d.direction} />}
                       {d.furnish && <MiniStat label="Nội thất" value={d.furnish} />}
                     </div>
@@ -260,6 +264,8 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                   {l.beds ? <Row label="Phòng ngủ" value={`${l.beds}`} /> : null}
                   {l.baths ? <Row label="Phòng tắm" value={`${l.baths}`} /> : null}
                   {d.direction && <Row label="Hướng" value={d.direction} />}
+                  {/* Bảng đặc điểm liệt kê ĐỦ: mục chính trước, đặc điểm sau */}
+                  {d.specsChinh.map((f) => <Row key={f.label} label={f.label} value={f.value} />)}
                   {d.specs.map((f) => <Row key={f.label} label={f.label} value={f.value} />)}
                   <Row label="Tình trạng pháp lý" value={d.legal ?? "Chưa cập nhật"} />
                   {d.furnish && <Row label="Tình trạng nội thất" value={d.furnish} />}
@@ -456,7 +462,9 @@ function MiniStat({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0">
       <p className="text-[12px] leading-tight text-cvr-muted">{label}</p>
-      <p className="mt-1 truncate text-[15px] font-semibold text-cvr-ink">{value}</p>
+      {/* break-words chứ KHÔNG truncate: giá trị dài phải xuống dòng, không được
+          cắt cụt bằng dấu "…" — người xem cần đọc đủ số liệu. */}
+      <p className="mt-1 break-words text-[15px] font-semibold leading-snug text-cvr-ink">{value}</p>
     </div>
   );
 }

@@ -12,7 +12,7 @@ import type { Listing } from "@/lib/data";
 import { featuredListings, getListingById } from "@/lib/data";
 import { asset } from "@/lib/asset";
 import { isVideoUrl } from "@/lib/media";
-import { fieldsFor, amenityGroups } from "@/lib/listingSpec";
+import { fieldsSplit, amenityGroups, type Field } from "@/lib/listingSpec";
 
 // Thuộc tính linh hoạt lưu trong cột details (JSONB) — xem 0006_listing_details.sql
 export type ListingDetailsJson = {
@@ -222,7 +222,8 @@ export type ListingFull = {
   videos: string[];            // video (tệp mp4 tải lên / link YouTube-Vimeo)
   builtArea: string | null;    // diện tích xây dựng
   descriptionParas: string[];  // mô tả (tách theo dòng)
-  specs: ListingSpecRow[];     // đặc điểm đã nhập (bỏ mục trống)
+  specsChinh: ListingSpecRow[]; // THÔNG TIN CHÍNH của loại hình (bỏ mục trống)
+  specs: ListingSpecRow[];     // đặc điểm còn lại đã nhập (bỏ mục trống)
   interior: string[];          // nội thất có sẵn
   amenityGroups: { group: string; items: { name: string; active: boolean }[] }[];
   legal: string | null;
@@ -241,11 +242,16 @@ function rowToDetail(r: Row): ListingFull {
   const videos = r.images.filter(isVideoUrl);
   const imageOnly = r.images.filter((s) => !isVideoUrl(s));
   const imgs = imageOnly.length ? imageOnly : [anhTam(r.type)];
-  // Đặc điểm theo LOẠI HÌNH, tin cho thuê có thêm phần điện/nước/thời gian vào ở
-  const specDefs = fieldsFor(r.type, r.purpose);
-  const specs = specDefs
-    .map((f) => ({ label: f.label + (f.unit ? ` (${f.unit})` : ""), value: (d.specs?.[f.key] ?? "").trim() }))
-    .filter((s) => s.value);
+  // Bộ mục theo LOẠI HÌNH, tách sẵn THÔNG TIN CHÍNH và ĐẶC ĐIỂM. Tin cho thuê
+  // có thêm phần điện/nước/thời gian vào ở. Mục nào người đăng để trống thì lọc
+  // bỏ luôn — trang tin không bao giờ hiện ô rỗng.
+  const doc = (fs: Field[]) =>
+    fs
+      .map((f) => ({ label: f.label + (f.unit ? ` (${f.unit})` : ""), value: (d.specs?.[f.key] ?? "").trim() }))
+      .filter((s) => s.value);
+  const { chinh, dacDiem } = fieldsSplit(r.type, r.purpose);
+  const specsChinh = doc(chinh);
+  const specs = doc(dacDiem);
   const amenSet = new Set(d.amenities ?? []);
   const c = d.contact;
   return {
@@ -254,6 +260,7 @@ function rowToDetail(r: Row): ListingFull {
     videos,
     builtArea: r.built_area_m2 != null ? `${fmtNum(r.built_area_m2, 0)} m²` : null,
     descriptionParas: (r.description ?? "").split("\n").map((s) => s.trim()).filter(Boolean),
+    specsChinh,
     specs,
     interior: d.interior ?? [],
     amenityGroups: amenityGroups.map((g) => ({
@@ -289,6 +296,7 @@ function mockToDetail(m: Listing): ListingFull {
     videos: [],
     builtArea: null,
     descriptionParas: [],
+    specsChinh: [],
     specs: [],
     interior: [],
     amenityGroups: amenityGroups.map((g) => ({ group: g.group, items: g.items.map((name) => ({ name, active: false })) })),

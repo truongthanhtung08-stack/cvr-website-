@@ -8,6 +8,11 @@ export type Field = {
   options?: string[];
   unit?: string;
   placeholder?: string;
+  // THÔNG TIN CHÍNH của loại hình này → nằm ở khối "Thông tin chính" trong form
+  // và hiện ngay đầu trang tin. Mục chính là mục BẮT BUỘC phải có (xem `main`
+  // đi kèm `batBuoc`). Không đánh dấu = đặc điểm, để trống thì web không hiện.
+  main?: boolean;
+  batBuoc?: boolean;
 };
 
 export const directions = ["Đông", "Tây", "Nam", "Bắc", "Đông Bắc", "Đông Nam", "Tây Bắc", "Tây Nam"];
@@ -56,12 +61,13 @@ export const interiorItems = [
 //    loại chung, vd "Đất công nghiệp" phải khớp Kho xưởng TRƯỚC khi khớp "Đất".
 export type CategorySpec = { label: string; match: string[]; fields: Field[] };
 
-const floorsField: Field = { key: "floors", label: "Số tầng", type: "select", options: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10+"] };
+const floorsField: Field = { key: "floors", label: "Số tầng", type: "select", options: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10+"], main: true, batBuoc: true };
 // Kích thước lô: mặt tiền = CHIỀU NGANG, depth = CHIỀU DÀI (chiều sâu). Đặt cạnh nhau
 // cho mọi loại gắn với thửa đất (nhà, đất) để nhập/hiển thị "ngang × dài" khoa học.
-const frontageField: Field = { key: "frontage", label: "Chiều ngang (mặt tiền)", type: "number", unit: "m" };
-const depthField: Field = { key: "depth", label: "Chiều dài (chiều sâu)", type: "number", unit: "m" };
-const roadField: Field = { key: "roadWidth", label: "Đường vào", type: "number", unit: "m" };
+const frontageField: Field = { key: "frontage", label: "Mặt tiền (chiều ngang)", type: "number", unit: "m", main: true, batBuoc: true };
+const depthField: Field = { key: "depth", label: "Chiều dài (chiều sâu)", type: "number", unit: "m", main: true };
+// (giữ nguyên nhãn "Chiều dài (chiều sâu)" — người đăng hay nhầm với chiều cao)
+const roadField: Field = { key: "roadWidth", label: "Đường vào", type: "number", unit: "m", main: true, batBuoc: true };
 
 // Mỗi LOẠI HÌNH có bộ đặc điểm ĐẶC THÙ riêng. Thứ tự = ĐỘ ƯU TIÊN khớp
 // (loại đặc thù đứng trước loại chung: Biệt thự/Shophouse trước "nhà", Kho xưởng trước "đất").
@@ -70,7 +76,7 @@ export const categorySpecs: CategorySpec[] = [
     label: "Condotel / Nghỉ dưỡng",
     match: ["condotel", "nghỉ dưỡng"],
     fields: [
-      { key: "roomType", label: "Loại phòng", type: "select", options: ["Studio", "1 phòng ngủ", "2 phòng ngủ", "3 phòng ngủ"] },
+      { key: "roomType", label: "Loại phòng", type: "select", options: ["Studio", "1 phòng ngủ", "2 phòng ngủ", "3 phòng ngủ"], main: true, batBuoc: true },
       { key: "view", label: "Hướng view", type: "select", options: ["Biển", "Thành phố", "Hồ bơi", "Sông / núi"] },
       { key: "profit", label: "Cam kết lợi nhuận", type: "text", placeholder: "VD: 8%/năm" },
       { key: "operator", label: "Đơn vị vận hành", type: "text" },
@@ -84,7 +90,7 @@ export const categorySpecs: CategorySpec[] = [
     label: "Chung cư",
     match: ["chung cư"],
     fields: [
-      { key: "floor", label: "Tầng số (căn)", type: "text", placeholder: "VD: Tầng 18" },
+      { key: "floor", label: "Tầng số (căn)", type: "text", placeholder: "VD: Tầng 18", main: true, batBuoc: true },
       { key: "block", label: "Block / Toà / Tháp", type: "text", placeholder: "VD: Block A" },
       { key: "buildingFloors", label: "Tổng số tầng toà", type: "text", placeholder: "VD: 30 tầng" },
       { key: "balcony", label: "Hướng ban công", type: "select", options: directions },
@@ -96,7 +102,7 @@ export const categorySpecs: CategorySpec[] = [
     match: ["căn hộ", "officetel", "duplex", "penthouse", "studio"],
     fields: [
       { key: "loaiCanho", label: "Loại hình căn hộ", type: "select", options: ["Căn hộ dịch vụ", "Duplex", "Penthouse", "Studio", "Officetel"] },
-      { key: "floor", label: "Tầng số (căn)", type: "text", placeholder: "VD: Tầng 18" },
+      { key: "floor", label: "Tầng số (căn)", type: "text", placeholder: "VD: Tầng 18", main: true, batBuoc: true },
       { key: "block", label: "Block / Toà / Tháp", type: "text", placeholder: "VD: Block A" },
       { key: "buildingFloors", label: "Tổng số tầng toà", type: "text", placeholder: "VD: 30 tầng" },
       { key: "balcony", label: "Hướng ban công", type: "select", options: directions },
@@ -107,8 +113,8 @@ export const categorySpecs: CategorySpec[] = [
     label: "Đất công nghiệp / Nhà xưởng / Kho bãi",
     match: ["công nghiệp", "xưởng", "kho bãi", "nhà kho", "kho"],
     fields: [
-      { key: "usableArea", label: "Diện tích xưởng/kho", type: "number", unit: "m²" },
-      { key: "roadWidth", label: "Đường container", type: "number", unit: "m" },
+      { key: "usableArea", label: "Diện tích xưởng/kho", type: "number", unit: "m²", main: true, batBuoc: true },
+      { key: "roadWidth", label: "Đường container", type: "number", unit: "m", main: true, batBuoc: true },
       { key: "power", label: "Công suất điện", type: "text", placeholder: "VD: 560 KVA" },
       { key: "pccc", label: "Hệ thống PCCC", type: "select", options: ["Đã có", "Chưa có"] },
       { key: "crane", label: "Cẩu trục / tải nền", type: "text", placeholder: "VD: 5 tấn/m²" },
@@ -119,8 +125,8 @@ export const categorySpecs: CategorySpec[] = [
     label: "Văn phòng / Mặt bằng kinh doanh",
     match: ["văn phòng", "mặt bằng", "cửa hàng", "kinh doanh"],
     fields: [
-      { key: "usableArea", label: "Diện tích sử dụng", type: "number", unit: "m²" },
-      { key: "floor", label: "Tầng số", type: "text", placeholder: "VD: Tầng 3" },
+      { key: "usableArea", label: "Diện tích sử dụng", type: "number", unit: "m²", main: true, batBuoc: true },
+      { key: "floor", label: "Tầng số", type: "text", placeholder: "VD: Tầng 3", main: true },
       frontageField,
       roadField,
       { key: "grade", label: "Hạng toà nhà", type: "select", options: ["Hạng A", "Hạng B", "Hạng C", "Nhà phố"] },
@@ -147,7 +153,7 @@ export const categorySpecs: CategorySpec[] = [
       frontageField,
       depthField,
       roadField,
-      { key: "bizFloors", label: "Số tầng kinh doanh", type: "select", options: ["1", "2", "3", "Cả toà"] },
+      { key: "bizFloors", label: "Số tầng kinh doanh", type: "select", options: ["1", "2", "3", "Cả toà"], main: true },
       { key: "corner", label: "Vị trí", type: "select", options: ["Lô góc 2 mặt tiền", "1 mặt tiền", "Trong khu"] },
     ],
   },
@@ -166,10 +172,10 @@ export const categorySpecs: CategorySpec[] = [
     label: "Nhà trọ / Phòng trọ",
     match: ["nhà trọ", "phòng trọ", "trọ"],
     fields: [
-      { key: "rooms", label: "Số phòng cho thuê", type: "number" },
+      { key: "rooms", label: "Số phòng cho thuê", type: "number", main: true, batBuoc: true },
+      { key: "roomArea", label: "Diện tích mỗi phòng", type: "number", unit: "m²", main: true, batBuoc: true },
+      { key: "wc", label: "Vệ sinh", type: "select", options: ["Khép kín", "Chung"], main: true, batBuoc: true },
       floorsField,
-      { key: "roomArea", label: "Diện tích mỗi phòng", type: "number", unit: "m²" },
-      { key: "wc", label: "Vệ sinh", type: "select", options: ["Khép kín", "Chung"] },
     ],
   },
   {
@@ -186,7 +192,7 @@ export const categorySpecs: CategorySpec[] = [
     label: "Đất nền / Đất",
     match: ["đất nền", "đất nông nghiệp", "đất"],
     fields: [
-      { key: "landType", label: "Loại đất", type: "select", options: ["Đất thổ cư", "Đất ở đô thị", "Đất nền dự án", "Đất nông nghiệp", "Đất vườn", "Đất khác"] },
+      { key: "landType", label: "Loại đất", type: "select", options: ["Đất thổ cư", "Đất ở đô thị", "Đất nền dự án", "Đất nông nghiệp", "Đất vườn", "Đất khác"], main: true, batBuoc: true },
       frontageField,
       depthField,
       roadField,
@@ -210,6 +216,28 @@ export const rentFields: Field[] = [
 export function fieldsFor(type: string, purpose?: string): Field[] {
   const base = specForType(type).fields;
   return purpose === "thue" ? [...base, ...rentFields] : base;
+}
+
+// ── TÁCH "THÔNG TIN CHÍNH" VÀ "ĐẶC ĐIỂM" ───────────────────────────────────
+// Mỗi loại hình có bộ thông tin chính riêng: đất thì là chiều ngang · chiều dài ·
+// đường vào · loại đất; căn hộ thì là tầng số; nhà thì là số tầng · mặt tiền ·
+// đường vào… Phần còn lại xuống khối Đặc điểm. Mục nào người đăng để trống thì
+// trang tin KHÔNG hiện — không bao giờ để ô trống lửng lơ.
+export function fieldsSplit(type: string, purpose?: string): { chinh: Field[]; dacDiem: Field[] } {
+  const all = fieldsFor(type, purpose);
+  return { chinh: all.filter((f) => f.main), dacDiem: all.filter((f) => !f.main) };
+}
+
+// Những mục BẮT BUỘC của loại hình đang chọn còn đang để trống — form chặn đăng
+// và chỉ đúng tên mục còn thiếu, không báo chung chung.
+export function thieuMucBatBuoc(
+  type: string,
+  purpose: string | undefined,
+  giaTri: Record<string, string>,
+): string[] {
+  return fieldsFor(type, purpose)
+    .filter((f) => f.batBuoc && !(giaTri[f.key] ?? "").trim())
+    .map((f) => f.label);
 }
 
 // ── MỤC NÀO KHÔNG THUỘC LOẠI HÌNH THÌ ĐỪNG HIỆN ─────────────────────────────

@@ -5,8 +5,8 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import {
-  categorySpecs, propertyCategories, demandTypes, rentFields,
-  coPhongNgu, coPhongTam, coDienTichXayDung,
+  categorySpecs, propertyCategories, demandTypes,
+  coPhongNgu, coPhongTam, coDienTichXayDung, fieldsSplit, thieuMucBatBuoc, type Field,
   legalOptions, furnishLevels, amenityGroups, interiorItems, directions,
   purposeOfDemand, demandOfPurpose,
 } from "@/lib/listingSpec";
@@ -161,10 +161,28 @@ export default function PostListingForm() {
   };
 
   const spec = useMemo(() => categorySpecs.find((c) => c.label === category) ?? categorySpecs[0], [category]);
-  // Tin CHO THUÊ có thêm 3 mục: thời gian vào ở · giá điện · giá nước
-  const specFields = useMemo(
-    () => (purposeOfDemand(demand) === "thue" ? [...spec.fields, ...rentFields] : spec.fields),
-    [spec, demand],
+  // Bộ mục của loại hình đang chọn, tách sẵn 2 khối:
+  //   · chinh    → nằm ngay trong "Thông tin chính" (bắt buộc, hiện đầu trang tin)
+  //   · dacDiem  → xuống khối "Đặc điểm", để trống thì web không hiện
+  // Tin CHO THUÊ có thêm 3 mục: thời gian vào ở · giá điện · giá nước.
+  const { chinh: specChinh, dacDiem: specDacDiem } = useMemo(
+    () => fieldsSplit(category, purposeOfDemand(demand)),
+    [category, demand],
+  );
+
+  // Ô nhập một mục đặc điểm — dùng chung cho cả hai khối để hai bên không lệch nhau
+  const ONhapSpec = ({ f }: { f: Field }) => (
+    <div className="min-w-0">
+      <Label>{f.label}{f.unit ? ` (${f.unit})` : ""}{f.batBuoc ? " *" : ""}</Label>
+      {f.type === "select" ? (
+        <select value={specValues[f.key] ?? ""} onChange={(e) => setSpecValues((s) => ({ ...s, [f.key]: e.target.value }))} className={inputCls}>
+          <option value="">Chọn</option>
+          {f.options?.map((o) => <option key={o} value={o}>{o}</option>)}
+        </select>
+      ) : (
+        <input type="text" inputMode={f.type === "number" ? "decimal" : undefined} value={specValues[f.key] ?? ""} onChange={(e) => setSpecValues((s) => ({ ...s, [f.key]: e.target.value }))} placeholder={f.placeholder ?? ""} className={inputCls} />
+      )}
+    </div>
   );
   // Hệ MỚI (sau sáp nhập): bỏ cấp Quận/Huyện — Tỉnh/Thành → thẳng Phường/Xã
   const provinceOptions = provinceNamesFor(geoMode);
@@ -287,7 +305,13 @@ export default function PostListingForm() {
     if (!asDraft) {
       if (!province) return setError("Chưa chọn Tỉnh/Thành.");
       if (!contactName.trim() || !contactPhone.trim()) return setError("Nhập họ tên và số điện thoại liên hệ.");
+      if (!area.trim()) return setError("Chưa nhập diện tích.");
+      // THÔNG TIN CHÍNH THEO LOẠI HÌNH — thiếu mục nào báo đúng tên mục đó,
+      // không báo chung chung để người đăng khỏi phải dò cả trang.
+      const thieu = thieuMucBatBuoc(category, purposeOfDemand(demand), specValues);
+      if (thieu.length) return setError(`Chưa nhập: ${thieu.join(" · ")}.`);
     }
+    // LƯU NHÁP thì không chặn gì thêm — người đăng ghi tới đâu lưu tới đó.
 
     setSaving(asDraft ? "draft" : "publish");
     // Dữ liệu chung cho cả THÊM MỚI và CẬP NHẬT
@@ -512,24 +536,21 @@ export default function PostListingForm() {
           const cot = oChinh.length === 1 ? "" : oChinh.length === 2 ? " sm:grid-cols-2" : " sm:grid-cols-3";
           return <div className={`grid min-w-0 grid-cols-1 gap-4${cot}`}>{oChinh}</div>;
         })()}
+
+        {/* THÔNG TIN CHÍNH RIÊNG CỦA LOẠI HÌNH — đất thì chiều ngang · chiều dài ·
+            đường vào · loại đất; căn hộ thì tầng số; nhà thì số tầng · mặt tiền…
+            Lưới 2/3 cột tự co theo số mục nên không chừa ô trống, không xén chữ. */}
+        {specChinh.length > 0 && (
+          <div className={`mt-4 grid min-w-0 grid-cols-1 gap-4 ${specChinh.length === 2 ? "sm:grid-cols-2" : specChinh.length >= 3 ? "sm:grid-cols-2 lg:grid-cols-3" : ""}`}>
+            {specChinh.map((f) => <ONhapSpec key={f.key} f={f} />)}
+          </div>
+        )}
       </Card>
 
       {/* 4. Đặc điểm theo loại hình (động) */}
       <Card step="4" title={`Đặc điểm — ${spec.label}`}>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {specFields.map((f) => (
-            <div key={f.key}>
-              <Label>{f.label}{f.unit ? ` (${f.unit})` : ""}</Label>
-              {f.type === "select" ? (
-                <select value={specValues[f.key] ?? ""} onChange={(e) => setSpecValues((s) => ({ ...s, [f.key]: e.target.value }))} className={inputCls}>
-                  <option value="">Chọn</option>
-                  {f.options?.map((o) => <option key={o} value={o}>{o}</option>)}
-                </select>
-              ) : (
-                <input type="text" inputMode={f.type === "number" ? "decimal" : undefined} value={specValues[f.key] ?? ""} onChange={(e) => setSpecValues((s) => ({ ...s, [f.key]: e.target.value }))} placeholder={f.placeholder ?? ""} className={inputCls} />
-              )}
-            </div>
-          ))}
+        <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {specDacDiem.map((f) => <ONhapSpec key={f.key} f={f} />)}
           {/* Trường DÙNG CHUNG mọi loại hình: Hướng · Nội thất · Pháp lý */}
           <div>
             <Label>Hướng nhà / đất</Label>
