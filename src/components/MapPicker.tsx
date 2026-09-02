@@ -381,9 +381,14 @@ export default function MapPicker({
             Xoá ghim
           </button>
         )}
+        {/* KHÔNG khoe toạ độ ra nữa. Khách chỉ bấm — kéo — phóng bản đồ rồi ghim;
+            con số lat/lng chạy ngầm, hiện ra chỉ làm khách hoang mang. */}
         {daGhim && (
-          <span className="text-[13px] font-medium text-cvr-body">
-            Đã ghim: <span className="tabular-nums">{value}</span>
+          <span className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-green-700">
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+            Đã ghim vị trí
           </span>
         )}
       </div>
