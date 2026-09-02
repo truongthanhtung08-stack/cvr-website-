@@ -3,15 +3,19 @@
 import { useEffect, useRef, useState } from "react";
 import { asset } from "@/lib/asset";
 import { videoEmbedUrl } from "@/lib/media";
+import { khoaCuon } from "@/lib/khoaCuon";
 
 // VIDEO NẰM TRONG THƯ VIỆN ẢNH — coi như MỘT TẤM HÌNH của tin:
 //   · lấp đầy đúng khung ảnh (object-contain trên nền đen) → không bao giờ to quá khung
 //   · KHÔNG tự chạy: hiện sẵn KHUNG HÌNH ĐẦU (preload="metadata" + "#t=0.1") nên
 //     không còn ô trắng trống; khách bấm nút play mới chạy (có tiếng).
 //   · Đang xem thì thư viện NGƯNG tự chuyển slide (onHold), xem xong chạy tiếp.
-//   · PHÓNG TO ↔ THU NHỎ đi thành một cặp: nút của chính mình luôn hiện ở góc phải
-//     trên, kể cả khi đang full màn hình (nút của trình duyệt tự ẩn, bấm phóng xong
-//     không biết đường thu lại). Phím Esc vẫn thoát được như thường.
+//
+// PHÓNG TO / THU NHỎ — LÀM BẰNG LỚP PHỦ CỦA CHÍNH WEB, KHÔNG dùng chế độ full màn
+// hình của trình duyệt. Lý do: khi trình duyệt phóng to, nó phóng THẲNG THẺ VIDEO
+// nên mọi nút mình vẽ đều bị nuốt mất, khách phóng lên rồi không có đường thu lại.
+// Làm bằng lớp phủ thì nút "THU NHỎ" luôn nằm góc phải trên, không bao giờ tự ẩn,
+// bấm ra vùng nền đen hoặc phím Esc cũng thu lại được.
 export default function GallerySlideVideo({
   url,
   active,
@@ -19,21 +23,25 @@ export default function GallerySlideVideo({
 }: {
   url: string;
   active: boolean;                 // đang là slide hiện tại
-  onHold?: (giu: boolean) => void; // đang xem / phóng to → giữ slide, đừng tự chuyển
+  onHold?: (giu: boolean) => void; // đang xem / đang phóng to → giữ slide, đừng tự chuyển
 }) {
   const embed = videoEmbedUrl(url);
-  const wrapRef = useRef<HTMLDivElement>(null);
   const ref = useRef<HTMLVideoElement>(null);
-  const [fs, setFs] = useState(false);       // đang phóng to toàn màn hình
-  const [chay, setChay] = useState(false);   // đã bấm play (dùng cho YouTube/Vimeo)
+  const [to, setTo] = useState(false);     // đang phóng to (lớp phủ toàn màn hình)
+  const [chay, setChay] = useState(false); // đã bấm play (dùng cho YouTube/Vimeo)
   const holdRef = useRef(onHold);
   const playingRef = useRef(false);
-  const fsRef = useRef(false);
+  const toRef = useRef(false);
 
   useEffect(() => {
     holdRef.current = onHold;
   });
-  const bao = () => holdRef.current?.(playingRef.current || fsRef.current);
+  const bao = () => holdRef.current?.(playingRef.current || toRef.current);
+  const datTo = (v: boolean) => {
+    toRef.current = v;
+    setTo(v);
+    bao();
+  };
 
   // Rời slide → về lại trạng thái "chưa bấm play" (chỉnh state ngay trong lượt vẽ,
   // đúng cách React khuyên khi state phải theo prop).
@@ -55,126 +63,110 @@ export default function GallerySlideVideo({
     bao();
   }, [active]);
 
-  // Theo dõi phóng to / thu nhỏ để đổi nút và để thư viện ngừng chuyển slide.
+  // Đang phóng to: khoá cuộn trang nền + phím Esc để thu nhỏ.
   useEffect(() => {
-    const onFs = () => {
-      const el =
-        document.fullscreenElement ??
-        (document as unknown as { webkitFullscreenElement?: Element | null }).webkitFullscreenElement ??
-        null;
-      const on = !!el && (el === wrapRef.current || el === ref.current);
-      fsRef.current = on;
-      setFs(on);
-      bao();
+    if (!to) return;
+    const nha = khoaCuon();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") datTo(false);
     };
-    document.addEventListener("fullscreenchange", onFs);
-    document.addEventListener("webkitfullscreenchange", onFs);
+    document.addEventListener("keydown", onKey);
     return () => {
-      document.removeEventListener("fullscreenchange", onFs);
-      document.removeEventListener("webkitfullscreenchange", onFs);
-      holdRef.current?.(false);
+      document.removeEventListener("keydown", onKey);
+      nha();
     };
-  }, []);
+  }, [to]);
 
-  const phongTo = () => {
-    const el = wrapRef.current as (HTMLDivElement & { webkitRequestFullscreen?: () => void }) | null;
-    const fn = el && (el.requestFullscreen ?? el.webkitRequestFullscreen);
-    if (fn && el) {
-      fn.call(el);
-      return;
-    }
-    // iPhone không cho phóng to cả khung → dùng trình phát của máy (đã có nút "Xong")
-    const v = ref.current as (HTMLVideoElement & { webkitEnterFullscreen?: () => void }) | null;
-    v?.webkitEnterFullscreen?.();
-  };
-  const thuNho = () => {
-    const d = document as Document & { webkitExitFullscreen?: () => void };
-    (d.exitFullscreen ?? d.webkitExitFullscreen)?.call(d);
-  };
+  // Gỡ khỏi trang → nhả quyền giữ slide.
+  useEffect(() => () => holdRef.current?.(false), []);
 
-  return (
-    <div
-      ref={wrapRef}
-      className="absolute inset-0 bg-black [&:fullscreen]:fixed [&:fullscreen]:h-screen [&:fullscreen]:w-screen"
-    >
-      {embed ? (
-        // YouTube/Vimeo: bấm play mới nạp iframe → trang nhẹ, và không tự chạy.
-        chay ? (
-          <iframe
-            src={`${embed}${embed.includes("?") ? "&" : "?"}autoplay=1&playsinline=1`}
-            title="Video"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-            className="h-full w-full bg-black"
-          />
-        ) : (
-          <button
-            type="button"
-            onClick={() => {
-              setChay(true);
-              playingRef.current = true;
-              bao();
-            }}
-            aria-label="Phát video"
-            className="flex h-full w-full items-center justify-center bg-black"
-          >
-            <span className="flex h-16 w-16 items-center justify-center rounded-full bg-white/90 transition hover:scale-105">
-              <svg className="ml-1 h-7 w-7 text-black" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M8 5v14l11-7z" />
-              </svg>
-            </span>
-          </button>
-        )
-      ) : (
-        <video
-          ref={ref}
-          src={`${asset(url)}#t=0.1`}
-          playsInline
-          controls
-          controlsList="nofullscreen"
-          preload="metadata"
-          onPlay={() => {
-            playingRef.current = true;
-            bao();
-          }}
-          onPause={() => {
-            playingRef.current = false;
-            bao();
-          }}
-          onEnded={() => {
-            playingRef.current = false;
-            bao();
-          }}
-          className="h-full w-full bg-black object-contain"
-        >
-          Trình duyệt không hỗ trợ phát video.
-        </video>
-      )}
-
-      {/* Cặp nút PHÓNG TO ↔ THU NHỎ — luôn hiện, kể cả khi đang full màn hình */}
+  const video = embed ? (
+    // YouTube/Vimeo: bấm play mới nạp iframe → trang nhẹ, và không tự chạy.
+    chay ? (
+      <iframe
+        src={`${embed}${embed.includes("?") ? "&" : "?"}autoplay=1&playsinline=1`}
+        title="Video"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        className="h-full w-full bg-black"
+      />
+    ) : (
       <button
         type="button"
-        onClick={fs ? thuNho : phongTo}
-        className={`absolute right-3 top-3 z-10 flex items-center gap-1.5 rounded-md bg-black/70 font-medium text-white backdrop-blur-sm transition hover:bg-black/90 active:bg-black/90 ${
-          fs ? "px-4 py-2.5 text-[15px] ring-1 ring-white/30" : "px-2.5 py-1.5 text-[13px]"
-        }`}
+        onClick={() => {
+          setChay(true);
+          playingRef.current = true;
+          bao();
+        }}
+        aria-label="Phát video"
+        className="flex h-full w-full items-center justify-center bg-black"
       >
-        {fs ? (
-          <>
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 20v-5H4m11 5v-5h5M9 4v5H4m11-5v5h5" />
-            </svg>
-            Thu nhỏ
-          </>
-        ) : (
-          <>
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 9V4h5M20 9V4h-5M4 15v5h5m11-5v5h-5" />
-            </svg>
-            Phóng to
-          </>
-        )}
+        <span className="flex h-16 w-16 items-center justify-center rounded-full bg-white/90 transition hover:scale-105">
+          <svg className="ml-1 h-7 w-7 text-black" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M8 5v14l11-7z" />
+          </svg>
+        </span>
       </button>
+    )
+  ) : (
+    <video
+      ref={ref}
+      src={`${asset(url)}#t=0.1`}
+      playsInline
+      controls
+      controlsList="nofullscreen"
+      preload="metadata"
+      onPlay={() => {
+        playingRef.current = true;
+        bao();
+      }}
+      onPause={() => {
+        playingRef.current = false;
+        bao();
+      }}
+      onEnded={() => {
+        playingRef.current = false;
+        bao();
+      }}
+      className="h-full w-full bg-black object-contain"
+    >
+      Trình duyệt không hỗ trợ phát video.
+    </video>
+  );
+
+  // Nút PHÓNG TO ↔ THU NHỎ — một cặp, luôn ở góc phải trên, không bao giờ tự ẩn.
+  const nut = (
+    <button
+      type="button"
+      onClick={() => datTo(!to)}
+      className={`absolute right-3 top-3 z-10 flex items-center gap-1.5 rounded-md bg-black/70 font-medium text-white ring-1 ring-white/25 backdrop-blur-sm transition hover:bg-black/90 active:bg-black/90 ${
+        to ? "px-4 py-2.5 text-[15px]" : "px-2.5 py-1.5 text-[13px]"
+      }`}
+    >
+      {to ? (
+        <>
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 20v-5H4m11 5v-5h5M9 4v5H4m11-5v5h5" />
+          </svg>
+          Thu nhỏ
+        </>
+      ) : (
+        <>
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 9V4h5M20 9V4h-5M4 15v5h5m11-5v5h-5" />
+          </svg>
+          Phóng to
+        </>
+      )}
+    </button>
+  );
+
+  // Phóng to = đổi khung chứa từ "trong thư viện ảnh" thành "phủ kín màn hình".
+  // Vẫn CÙNG một thẻ video (chỉ đổi lớp CSS) nên đang xem tới đâu giữ nguyên tới
+  // đó, không bị tua lại từ đầu.
+  return (
+    <div className={to ? "fixed inset-0 z-[120] bg-black" : "absolute inset-0 bg-black"}>
+      {video}
+      {nut}
     </div>
   );
 }
