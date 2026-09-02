@@ -7,7 +7,10 @@ import { saleTypeGroups, rentTypeGroups } from "@/lib/filters";
 import { provinceNamesFor, districtsOf, wardsOf, wardsOfNew, type GeoMode } from "@/lib/locations";
 import { fieldsFor, interiorItems, amenityGroups, legalOptions, furnishLevels, directions, coPhongNgu, coPhongTam, coDienTichXayDung, nhanDienTich } from "@/lib/listingSpec";
 import ImagePicker from "@/components/admin/ImagePicker";
-import MapPicker from "@/components/MapPicker";
+// BẢN ĐỒ GHIM — dùng bản Leaflet/OpenStreetMap. Bản chạy nền Google
+// (components/MapPicker.tsx) GIỮ LẠI để sau này Google thông thì đổi về, chỉ
+// phải sửa đúng dòng import này.
+import MapPicker from "@/components/MapPickerLeaflet";
 import ContentEditor from "@/components/admin/ContentEditor";
 import { uploadImageFile } from "@/lib/uploadImage";
 import { soAnhToiDa, soVideoToiDa } from "@/lib/billing";

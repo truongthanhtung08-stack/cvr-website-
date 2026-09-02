@@ -13,7 +13,10 @@ import {
 import { typeGroupsFor } from "@/lib/filters";
 import { provinceNamesFor, districtsOf, wardsOf, wardsOfNew, type GeoMode } from "@/lib/locations";
 import ImagePicker from "@/components/admin/ImagePicker";
-import MapPicker from "@/components/MapPicker";
+// BẢN ĐỒ GHIM — dùng bản Leaflet/OpenStreetMap. Bản chạy nền Google
+// (components/MapPicker.tsx) GIỮ LẠI để sau này Google thông thì đổi về, chỉ
+// phải sửa đúng dòng import này.
+import MapPicker from "@/components/MapPickerLeaflet";
 import ContentEditor from "@/components/admin/ContentEditor";
 import { freeNote, levelOf, quotePrice, soAnhToiDa, soVideoToiDa, tenGoiMienPhi, vnd } from "@/lib/billing";
 import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
