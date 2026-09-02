@@ -5,6 +5,7 @@ import * as L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import type { Listing } from "@/lib/data";
 import { coordOf } from "@/lib/geo";
+import { parseLatLng } from "@/lib/googleMaps";
 import { layViTri, loiDinhVi, quyenDinhVi } from "@/lib/dinhVi";
 import NhacBatDinhVi from "@/components/NhacBatDinhVi";
 
@@ -25,6 +26,10 @@ export type DiemBanDo = {
   loc: string;
   image: string;
   href: string;
+  // true  = toạ độ THẬT do người đăng ghim tay → marker đứng đúng chỗ
+  // false = chỉ suy từ phường/xã → marker chỉ mang tính tương đối, phải nói rõ
+  //         trong popup, không để người xem tưởng bất động sản nằm đúng điểm đó.
+  chinhXac?: boolean;
 };
 
 export default function MapView({ items, diem }: { items?: Listing[]; diem?: DiemBanDo[] }) {
@@ -40,11 +45,17 @@ export default function MapView({ items, diem }: { items?: Listing[]; diem?: Die
   const ds: DiemBanDo[] =
     diem ??
     (items ?? []).map((it) => {
-      const [lat, lng] = coordOf(it.location, it.id);
+      // ƯU TIÊN TOẠ ĐỘ NGƯỜI ĐĂNG GHIM TAY. Trước đây luôn suy từ tên phường/xã
+      // rồi xê dịch ngẫu nhiên cho khỏi chồng marker — nghĩa là tin đã ghim đúng
+      // vị trí vẫn bị ném ra một chỗ bịa. Người đăng ghim công cốc, người xem bấm
+      // vào marker rồi tới nơi thì không thấy nhà đâu.
+      const ghim = it.mapPin ? parseLatLng(it.mapPin) : null;
+      const [lat, lng] = ghim ? [ghim.lat, ghim.lng] : coordOf(it.location, it.id);
       return {
         id: it.id,
         lat,
         lng,
+        chinhXac: !!ghim,
         nhan: it.price,
         title: it.title,
         phu: `${it.price} · ${it.area}`,
@@ -92,7 +103,7 @@ export default function MapView({ items, diem }: { items?: Listing[]; diem?: Die
           <span class="map-pop-body">
             <span class="map-pop-title">${d.title}</span>
             <span class="map-pop-price">${d.phu}</span>
-            <span class="map-pop-loc">${d.loc}</span>
+            <span class="map-pop-loc">${d.loc}${d.chinhXac ? "" : " · vị trí tương đối"}</span>
           </span>
         </a>`,
         { closeButton: false, offset: L.point(0, -14) },
