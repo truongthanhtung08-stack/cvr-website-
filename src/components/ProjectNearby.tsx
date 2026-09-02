@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import MapPane from "@/components/MapPane";
+import { chiDuong, xemTrenBanDo } from "@/lib/moGoogleMaps";
 
 type Place = { category: string; name: string; distance: string };
 
@@ -41,24 +42,27 @@ export default function ProjectNearby({
   // cuộn trang tiếp. Đây là cách Batdongsan / Zillow đang làm.
   const [mapOn, setMapOn] = useState(false);
 
+  // CHỈ ĐƯỜNG TỪ VỊ TRÍ KHÁCH — mở thẳng APP bản đồ trên máy (Google Maps, iPhone
+  // chưa cài thì Bản đồ Apple), không mở tab trình duyệt.
+  // Định vị lấy NHANH: không bắt GPS chính xác cao (chờ bắt vệ tinh mất 5–15 giây),
+  // dùng wifi/trạm phát sóng + vị trí cũ trong 5 phút là đủ cho điểm xuất phát.
+  // Không lấy được vị trí thì vẫn mở app — app tự hỏi và tự lấy vị trí máy.
   function directionsFromMe() {
-    const dest = encodeURIComponent(mapQuery);
     if (!navigator.geolocation) {
-      window.open(`https://www.google.com/maps/dir/?api=1&destination=${dest}`, "_blank", "noopener");
+      chiDuong(mapQuery);
       return;
     }
     setLocating(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setLocating(false);
-        const origin = `${pos.coords.latitude},${pos.coords.longitude}`;
-        window.open(`https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${dest}`, "_blank", "noopener");
+        chiDuong(mapQuery, `${pos.coords.latitude},${pos.coords.longitude}`);
       },
       () => {
         setLocating(false);
-        window.open(`https://www.google.com/maps/dir/?api=1&destination=${dest}`, "_blank", "noopener");
+        chiDuong(mapQuery);
       },
-      { enableHighAccuracy: true, timeout: 8000 },
+      { enableHighAccuracy: false, timeout: 6000, maximumAge: 300000 },
     );
   }
 
@@ -92,20 +96,20 @@ export default function ProjectNearby({
             nhìn — đừng thêm nút nổi lên đây nữa. */}
       </div>
       {/* HAI NÚT SÁT NGAY DƯỚI KHUNG BẢN ĐỒ, cỡ nhỏ — chủ dự án chốt bố cục này.
-          Mở Google Maps: điện thoại có cài app sẽ bật APP, không thì mở WEB; mở ở
-          TAB MỚI nên đóng tab là quay lại đúng tin đang xem. */}
+          Cả hai nút đều mở THẲNG APP BẢN ĐỒ trên máy khách: Google Maps nếu có cài
+          (hầu như máy nào cũng có), iPhone chưa cài thì rơi về Bản đồ Apple.
+          Xem chi tiết cách chuyển app ở src/lib/moGoogleMaps.ts. */}
       <div className="-mt-2.5 flex gap-2">
-        <a
-          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`}
-          target="_blank"
-          rel="noopener noreferrer"
+        <button
+          type="button"
+          onClick={() => xemTrenBanDo(mapQuery)}
           className="inline-flex h-8 flex-1 items-center justify-center gap-1.5 rounded-lg border border-cvr-line bg-white px-2.5 text-[12px] font-semibold text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink sm:flex-none"
         >
           <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M14 4h6v6M20 4l-8.5 8.5M18 14v5a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1h5" />
           </svg>
-          Mở Google Maps
-        </a>
+          Mở bản đồ
+        </button>
         <button
           type="button"
           onClick={directionsFromMe}
