@@ -176,7 +176,9 @@ export default function MapPicker({
     // thẳng tới đó, chính xác hơn hẳn tâm phường.
     const coDuong = phan[0].length >= 3;
     const diaChi = phan.filter(Boolean).join(", ");
-    if (!map || !diaChi) return;
+    // Chuỗi rỗng hoặc quá ngắn (mới gõ một hai chữ) thì đừng hỏi Google — vừa
+    // tốn lượt tra vừa nhận về kết quả bậy ở tận đâu.
+    if (!map || diaChi.length < 4) return;
 
     // 1) CHƯA có tên đường → dùng bảng toạ độ sẵn trong code cho nhanh và miễn phí.
     //    CÓ tên đường thì BỎ QUA bảng này: bảng khớp lỏng theo tên tỉnh nên hễ
@@ -252,8 +254,13 @@ export default function MapPicker({
     markerRef.current = null;
   }
 
-  // Bản nhúng dự phòng mở đúng khu vực đang nhập (chỉ để nhìn, không ghim được)
-  const khuVucNhung = hint.trim() || "Đà Nẵng";
+  // Bản nhúng dự phòng mở đúng khu vực đang nhập (chỉ để nhìn, không ghim được).
+  // ⚠️ hint được ghép sẵn dạng "địa chỉ, phường, quận, tỉnh" nên khi khách CHƯA
+  // nhập gì nó là ", , ," — chuỗi toàn dấu phẩy vẫn TRUTHY. Đem nguyên chuỗi đó
+  // đi hỏi Google thì Google không hiểu và trả về CẢ THẾ GIỚI. Phải lọc bỏ phần
+  // rỗng trước; không còn phần nào thì mặc định Đà Nẵng.
+  const khuVucNhung =
+    hint.split(",").map((s) => s.trim()).filter(Boolean).join(", ") || "Đà Nẵng";
 
   return (
     <div className="space-y-2">
