@@ -41,6 +41,9 @@ export default function MapPicker({
   const chamRef = useRef<GMarker | null>(null);
   const onChangeRef = useRef(onChange);
   const [dangDinhVi, setDangDinhVi] = useState(false);
+  // Hàm định vị được gọi từ trong effect dựng bản đồ (chạy trước khi hàm được
+  // khai báo) nên phải đi vòng qua ref.
+  const viTriCuaToiRef = useRef<(ghimLuon?: boolean) => void>(() => {});
   const [loi, setLoi] = useState("");
   // Khoá Maps hỏng / Google từ chối → KHÔNG được để ô trắng. Lùi về bản nhúng để
   // người đăng vẫn nhìn thấy khu vực, và mở ô nhập toạ độ tay để vẫn ghim được.
@@ -152,18 +155,10 @@ export default function MapPicker({
         // CHỈ DỜI BẢN ĐỒ, không tự ghim — ghim vẫn là quyết định của khách.
         // Khách từ chối chia sẻ vị trí thì bản đồ vẫn ở Đà Nẵng, tự kéo được.
         const daNhapDiaChi = hint.split(",").some((s) => s.trim().length > 0);
-        if (!saved && !daNhapDiaChi && navigator.geolocation) {
-          navigator.geolocation.getCurrentPosition(
-            (pos) => {
-              if (huy || parseLatLng(value)) return;
-              const p = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-              map.setCenter(p);
-              map.setOptions({ zoom: 16 });
-              hienChamViTri(p);
-            },
-            () => {},
-            { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 },
-          );
+        if (!saved && !daNhapDiaChi) {
+          // Dùng CHUNG hàm định vị của nút, để lỡ máy chặn hay chưa bật GPS thì
+          // khách thấy ngay lời nhắc, không phải đoán.
+          setTimeout(() => { if (!huy) viTriCuaToiRef.current(false); }, 300);
         }
         // Google có thể nạp được thư viện mà vẫn KHÔNG vẽ (khoá sai, chưa bật
         // Maps JavaScript API, hết hạn mức) — lúc đó nó chỉ để lại một ô xám.
@@ -257,34 +252,55 @@ export default function MapPicker({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hint, hongBanDo]);
 
-  function viTriCuaToi() {
+  // Định vị THẤT BẠI thì phải nói rõ vì sao và bảo khách làm gì — im lặng là
+  // khách đứng nhìn không biết chuyện gì. Ba lý do hay gặp, mỗi lý do một cách xử.
+  function loiDinhVi(ma: number): string {
+    if (ma === 1)
+      return "Trình duyệt đang CHẶN định vị. Bấm biểu tượng ổ khoá 🔒 cạnh địa chỉ web ở trên → Quyền / Vị trí → chọn Cho phép, rồi bấm lại nút này.";
+    if (ma === 2)
+      return "Máy chưa BẬT GPS / Vị trí. Vào Cài đặt của điện thoại → Vị trí và bật lên, rồi bấm lại nút này.";
+    return "Định vị lâu quá chưa xong. Anh/chị ra chỗ thoáng hoặc bật GPS rồi bấm lại. Không được thì kéo bản đồ tới đúng chỗ và bấm để ghim.";
+  }
+
+  // `ghimLuon` = bấm nút "Tôi đang đứng ở đây" → vừa dời bản đồ vừa ghim.
+  // Gọi tự động lúc mở form thì chỉ DỜI bản đồ và hiện chấm xanh, không ghim.
+  function viTriCuaToi(ghimLuon = true) {
     if (!navigator.geolocation) {
-      setLoi("Máy không hỗ trợ định vị.");
+      setLoi("Trình duyệt này không hỗ trợ định vị. Anh/chị kéo bản đồ tới đúng chỗ rồi bấm để ghim.");
       return;
     }
+    setLoi("");
     setDangDinhVi(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setDangDinhVi(false);
+        setLoi("");
         const p = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-        onChange(formatLatLng(p));
         const map = mapRef.current;
         const g = window.google;
         if (map && g) {
           map.setCenter(p);
-          map.setOptions({ zoom: 18 });
+          map.setOptions({ zoom: ghimLuon ? 18 : 16 });
           hienChamViTri(p);
+        }
+        if (!ghimLuon) return;
+        onChange(formatLatLng(p));
+        if (map && g) {
           if (markerRef.current) markerRef.current.setPosition(p);
           else markerRef.current = new g.maps.Marker({ position: p, map, draggable: true });
         }
       },
-      () => {
+      (e) => {
         setDangDinhVi(false);
-        setLoi("Không lấy được vị trí. Anh/chị bấm thẳng lên bản đồ để ghim.");
+        setLoi(loiDinhVi(e.code));
       },
-      { enableHighAccuracy: true, timeout: 8000 },
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 },
     );
   }
+
+  useEffect(() => {
+    viTriCuaToiRef.current = viTriCuaToi;
+  });
 
   function xoaGhim() {
     onChange("");
@@ -351,7 +367,7 @@ export default function MapPicker({
       <div className="flex flex-wrap items-center gap-2">
         <button
           type="button"
-          onClick={viTriCuaToi}
+          onClick={() => viTriCuaToi(true)}
           disabled={dangDinhVi}
           className="inline-flex min-h-[42px] items-center gap-1.5 rounded-lg bg-cvr-blue px-4 text-sm font-semibold text-white transition hover:bg-cvr-blue-ink disabled:opacity-60"
         >
@@ -398,7 +414,26 @@ export default function MapPicker({
           ? "Kéo ghim đỏ để chỉnh cho khớp. Tin sẽ hiện đúng điểm này trên bản đồ."
           : "Chọn Tỉnh/Thành và Phường/Xã ở trên — bản đồ tự bay về đúng khu vực đó. Đang đứng tại bất động sản thì bấm “Tôi đang đứng ở đây” là ghim luôn. Còn lại chỉ cần bấm thẳng lên bản đồ đúng điểm cần ghim."}
       </p>
-      {loi && <p className="text-xs font-medium text-red-600">{loi}</p>}
+      {/* LỖI ĐỊNH VỊ — hiện thành khối rõ ràng kèm nút thử lại, không phải một
+          dòng chữ đỏ bé xíu dễ bị bỏ qua. */}
+      {loi && (
+        <div className="rounded-lg border border-amber-300 bg-amber-50 p-3">
+          <p className="flex items-start gap-2 text-[13px] font-medium leading-relaxed text-amber-900">
+            <svg className="mt-0.5 h-4 w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+            </svg>
+            {loi}
+          </p>
+          <button
+            type="button"
+            onClick={() => viTriCuaToi(true)}
+            disabled={dangDinhVi}
+            className="mt-2 inline-flex min-h-[36px] items-center rounded-lg border border-amber-400 bg-white px-3 text-[13px] font-semibold text-amber-900 transition hover:bg-amber-100 disabled:opacity-60"
+          >
+            {dangDinhVi ? "Đang định vị…" : "Bật xong rồi — thử lại"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
