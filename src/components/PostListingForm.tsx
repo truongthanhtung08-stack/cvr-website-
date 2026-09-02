@@ -491,14 +491,19 @@ export default function PostListingForm() {
         <Text label="Tiêu đề tin đăng *" value={title} onChange={setTitle} placeholder="VD: Bán căn hộ 2PN view sông Hàn, full nội thất" required />
         <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-3">
           <div className="sm:col-span-2">
-            <Label>Mức giá</Label>
-            <div className="flex gap-2">
+            <Label>Mức giá *</Label>
+            {/* ĐIỆN THOẠI: ô nhập giá chiếm TRỌN một hàng, ô đơn vị xuống hàng dưới.
+                Trước đây hai ô nằm cùng hàng mà ô đơn vị lại mang cả w-full lẫn
+                w-32 (hai lớp chiều rộng đá nhau) nên nó chiếm gần hết, ô nhập giá
+                teo lại chỉ còn một mẩu, không gõ nổi. Từ màn hình sm trở lên mới
+                xếp cạnh nhau, cột đơn vị cố định 9rem. */}
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_9rem]">
               {/* KHÔNG dùng type="number": trình duyệt loại bỏ dấu PHẨY nên khách gõ
                   "4,2" (đúng như gợi ý trong ô) thì ô thành rỗng, không lưu được giá.
                   Dùng text + inputMode="decimal" → điện thoại vẫn hiện bàn phím số,
                   mà gõ được cả dấu phẩy lẫn dấu chấm. */}
-              <input type="text" inputMode="decimal" value={priceValue} onChange={(e) => setPriceValue(e.target.value)} disabled={priceUnit === "Thoả thuận"} placeholder="VD: 4,2" className={inputCls + " flex-1 disabled:opacity-50"} />
-              <select value={priceUnit} onChange={(e) => setPriceUnit(e.target.value)} className={inputCls + " w-32"}>
+              <input type="text" inputMode="decimal" value={priceValue} onChange={(e) => setPriceValue(e.target.value)} disabled={priceUnit === "Thoả thuận"} placeholder="VD: 4,2" className={inputCls + " disabled:opacity-50"} />
+              <select value={priceUnit} onChange={(e) => setPriceUnit(e.target.value)} className={inputCls}>
                 {["tỷ", "triệu", "triệu/m²", "Thoả thuận"].map((u) => <option key={u} value={u}>{u}</option>)}
               </select>
             </div>

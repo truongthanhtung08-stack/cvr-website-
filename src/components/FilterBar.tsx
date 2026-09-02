@@ -1253,8 +1253,10 @@ function RangePanel({
 
       {/* Ô nhập khoảng tuỳ chỉnh */}
       <div className="flex items-center gap-2">
+        {/* type="text" chứ KHÔNG "number": trình duyệt loại bỏ dấu phẩy nên gõ
+            "4,2" là ô trống trơn. Hàm commit() đã hiểu cả dấu phẩy lẫn dấu chấm. */}
         <input
-          type="number" inputMode="decimal" step={step} min={0} placeholder="Tối thiểu"
+          type="text" inputMode="decimal" placeholder="Tối thiểu"
           value={draftMin}
           onChange={(e) => setDraftMin(e.target.value)}
           onBlur={() => commit(draftMin, draftMax)}
@@ -1262,7 +1264,7 @@ function RangePanel({
         />
         <span className="text-cvr-faint">–</span>
         <input
-          type="number" inputMode="decimal" step={step} min={0} placeholder="Tối đa"
+          type="text" inputMode="decimal" placeholder="Tối đa"
           value={draftMax}
           onChange={(e) => setDraftMax(e.target.value)}
           onBlur={() => commit(draftMin, draftMax)}
