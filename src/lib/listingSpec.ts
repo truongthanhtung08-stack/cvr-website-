@@ -93,7 +93,7 @@ export const categorySpecs: CategorySpec[] = [
       { key: "floor", label: "Tầng số (căn)", type: "text", placeholder: "VD: Tầng 18", main: true, batBuoc: true },
       { key: "block", label: "Block / Toà / Tháp", type: "text", placeholder: "VD: Block A" },
       { key: "buildingFloors", label: "Tổng số tầng toà", type: "text", placeholder: "VD: 30 tầng" },
-      { key: "balcony", label: "Hướng ban công", type: "select", options: directions },
+      { key: "balcony", label: "Hướng ban công", type: "select", options: directions, main: true },
       { key: "view", label: "Hướng view", type: "select", options: ["Biển", "Thành phố", "Hồ bơi", "Sông / công viên", "Nội khu"] },
     ],
   },
@@ -105,7 +105,7 @@ export const categorySpecs: CategorySpec[] = [
       { key: "floor", label: "Tầng số (căn)", type: "text", placeholder: "VD: Tầng 18", main: true, batBuoc: true },
       { key: "block", label: "Block / Toà / Tháp", type: "text", placeholder: "VD: Block A" },
       { key: "buildingFloors", label: "Tổng số tầng toà", type: "text", placeholder: "VD: 30 tầng" },
-      { key: "balcony", label: "Hướng ban công", type: "select", options: directions },
+      { key: "balcony", label: "Hướng ban công", type: "select", options: directions, main: true },
       { key: "view", label: "Hướng view", type: "select", options: ["Biển", "Thành phố", "Hồ bơi", "Sông / công viên", "Nội khu"] },
     ],
   },
@@ -225,7 +225,15 @@ export function fieldsFor(type: string, purpose?: string): Field[] {
 // trang tin KHÔNG hiện — không bao giờ để ô trống lửng lơ.
 export function fieldsSplit(type: string, purpose?: string): { chinh: Field[]; dacDiem: Field[] } {
   const all = fieldsFor(type, purpose);
-  return { chinh: all.filter((f) => f.main), dacDiem: all.filter((f) => !f.main) };
+  const t = (type ?? "").toLowerCase();
+  // NHÀ TRỌ và CĂN HỘ DỊCH VỤ: giá điện, giá nước là thứ người thuê hỏi ĐẦU TIÊN
+  // → đưa lên thông tin chính. Loại hình thuê khác để ở đặc điểm.
+  const dienNuocLaChinh = /trọ|dịch vụ/.test(t);
+  const laChinh = (f: Field) =>
+    f.main ||
+    (purpose === "thue" && f.key === "moveIn") ||
+    (dienNuocLaChinh && (f.key === "elecPrice" || f.key === "waterPrice"));
+  return { chinh: all.filter(laChinh), dacDiem: all.filter((f) => !laChinh(f)) };
 }
 
 // Những mục BẮT BUỘC của loại hình đang chọn còn đang để trống — form chặn đăng

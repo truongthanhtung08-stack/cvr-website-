@@ -257,18 +257,13 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
 
               {/* Đặc điểm bất động sản — chỉ những gì đã nhập */}
               <Section id="dac-diem" title="Đặc điểm bất động sản">
+                {/* KHÔNG LẶP LẠI mục đã nằm ở khối "Thông tin chính" phía trên
+                    (giá · diện tích · phòng ngủ · phòng tắm · hướng · nội thất và
+                    bộ mục chính của loại hình). Ở đây chỉ còn phần đặc điểm. */}
                 <div className="grid grid-cols-1 gap-x-8 sm:grid-cols-2">
                   <Row label="Loại hình" value={l.type} />
-                  <Row label={nhanDienTich} value={l.area} />
-                  {d.builtArea && <Row label="Diện tích xây dựng" value={d.builtArea} />}
-                  {l.beds ? <Row label="Phòng ngủ" value={`${l.beds}`} /> : null}
-                  {l.baths ? <Row label="Phòng tắm" value={`${l.baths}`} /> : null}
-                  {d.direction && <Row label="Hướng" value={d.direction} />}
-                  {/* Bảng đặc điểm liệt kê ĐỦ: mục chính trước, đặc điểm sau */}
-                  {d.specsChinh.map((f) => <Row key={f.label} label={f.label} value={f.value} />)}
                   {d.specs.map((f) => <Row key={f.label} label={f.label} value={f.value} />)}
                   <Row label="Tình trạng pháp lý" value={d.legal ?? "Chưa cập nhật"} />
-                  {d.furnish && <Row label="Tình trạng nội thất" value={d.furnish} />}
                 </div>
               </Section>
 

@@ -5,11 +5,12 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import {
-  categorySpecs, propertyCategories, demandTypes,
+  categorySpecs, demandTypes, specForType,
   coPhongNgu, coPhongTam, coDienTichXayDung, fieldsSplit, thieuMucBatBuoc, type Field,
   legalOptions, furnishLevels, amenityGroups, interiorItems, directions,
   purposeOfDemand, demandOfPurpose,
 } from "@/lib/listingSpec";
+import { typeGroupsFor } from "@/lib/filters";
 import { provinceNamesFor, districtsOf, wardsOf, wardsOfNew, type GeoMode } from "@/lib/locations";
 import ImagePicker from "@/components/admin/ImagePicker";
 import MapPicker from "@/components/MapPicker";
@@ -39,7 +40,10 @@ export default function PostListingForm() {
   const [editStatus, setEditStatus] = useState<string>("");
   const [editOwner, setEditOwner] = useState<string | null>(null);
   const [demand, setDemand] = useState(demandTypes[0]);
-  const [category, setCategory] = useState(propertyCategories[0]);
+  // LOẠI HÌNH phải lấy từ ĐÚNG danh mục của cả web (filters.ts) — trước đây form
+  // này dùng danh sách riêng nên khách chọn "Đất nền / Đất" trong khi bộ lọc và
+  // trang /mua-ban dùng "Đất nền / Đất nền dự án": tin đăng xong KHÔNG lọc ra được.
+  const [category, setCategory] = useState("");
   const [province, setProvince] = useState("");
   const [district, setDistrict] = useState("");
   const [ward, setWard] = useState("");
@@ -160,14 +164,35 @@ export default function PostListingForm() {
     return mienPhi ? "Miễn phí (ưu đãi thành viên mới)" : vnd(gia);
   };
 
-  const spec = useMemo(() => categorySpecs.find((c) => c.label === category) ?? categorySpecs[0], [category]);
+  // Danh mục loại hình đổi theo mục đích: bán và cho thuê KHÔNG giống nhau
+  const nhomLoaiHinh = useMemo(
+    () => typeGroupsFor(purposeOfDemand(demand) === "thue" ? "thue" : "ban"),
+    [demand],
+  );
+  // Đổi mục đích thì danh mục loại hình đổi theo (bán và thuê khác nhau). Loại
+  // hình đang chọn không còn trong danh mục mới thì coi như CHƯA chọn — không để
+  // lưu tin mang loại hình không tồn tại ở mục đích đó.
+  const loaiHinh = nhomLoaiHinh.some((g) => g.items.includes(category)) ? category : "";
+
+  const spec = useMemo(() => (loaiHinh ? specForType(loaiHinh) : categorySpecs[0]), [loaiHinh]);
+  // ── ĐƠN VỊ GIÁ THEO MỤC ĐÍCH ─────────────────────────────────────────────
+  // BÁN tính trọn giá trị bất động sản; CHO THUÊ luôn tính THEO THÁNG. Trước đây
+  // dùng chung một bộ đơn vị nên tin cho thuê vẫn hiện "tỷ" — sai hoàn toàn.
+  // Văn phòng / mặt bằng / kho thường báo giá theo nghìn đồng mỗi m² mỗi tháng.
+  const laThue = purposeOfDemand(demand) === "thue";
+  const donViGia = laThue
+    ? ["triệu/tháng", "triệu/6 tháng", "triệu/năm", "Thoả thuận"]
+    : ["tỷ", "triệu", "triệu/m²", "Thoả thuận"];
+  // Đổi mục đích mà đơn vị cũ không còn hợp lệ → tự về đơn vị đầu của nhóm mới.
+  const donVi = donViGia.includes(priceUnit) ? priceUnit : donViGia[0];
+
   // Bộ mục của loại hình đang chọn, tách sẵn 2 khối:
   //   · chinh    → nằm ngay trong "Thông tin chính" (bắt buộc, hiện đầu trang tin)
   //   · dacDiem  → xuống khối "Đặc điểm", để trống thì web không hiện
   // Tin CHO THUÊ có thêm 3 mục: thời gian vào ở · giá điện · giá nước.
   const { chinh: specChinh, dacDiem: specDacDiem } = useMemo(
-    () => fieldsSplit(category, purposeOfDemand(demand)),
-    [category, demand],
+    () => fieldsSplit(loaiHinh, purposeOfDemand(demand)),
+    [loaiHinh, demand],
   );
 
   // Ô nhập một mục đặc điểm — dùng chung cho cả hai khối để hai bên không lệch nhau
@@ -243,7 +268,7 @@ export default function PostListingForm() {
       if (error || !data) { setEditLoad("notfound"); return; }
       const r = data as ListingRow;
       setDemand(demandOfPurpose(r.purpose));
-      if (propertyCategories.includes(r.type)) setCategory(r.type);
+      if (r.type) setCategory(r.type);
       setProvince(r.province ?? "");
       setDistrict(r.district ?? "");
       setWard(r.ward ?? "");
@@ -251,6 +276,7 @@ export default function PostListingForm() {
       setDescription(r.description ?? "");
       // Giá VNĐ → ô nhập + đơn vị (ngược với priceToVnd)
       if (r.price_vnd == null) { setPriceUnit("Thoả thuận"); setPriceValue(""); }
+      else if (r.purpose === "thue") { setPriceUnit("triệu/tháng"); setPriceValue(String(Math.round((r.price_vnd / 1e6) * 10) / 10)); }
       else if (r.price_vnd >= 1e9) { setPriceUnit("tỷ"); setPriceValue(String(Math.round((r.price_vnd / 1e9) * 100) / 100)); }
       else { setPriceUnit("triệu"); setPriceValue(String(Math.round(r.price_vnd / 1e6))); }
       setArea(r.area_m2 != null ? String(r.area_m2) : "");
@@ -283,15 +309,19 @@ export default function PostListingForm() {
     set(list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
   }
 
-  // Giá → VNĐ theo đơn vị (tỷ / triệu / triệu/m² / Thoả thuận)
+  // Giá → VNĐ. Tin CHO THUÊ quy về VNĐ MỖI THÁNG (trang tin tự thêm chữ "/tháng").
   function priceToVnd(): number | null {
-    if (priceUnit === "Thoả thuận" || !priceValue.trim()) return null;
+    if (donVi === "Thoả thuận" || !priceValue.trim()) return null;
     const n = parseFloat(priceValue.replace(",", "."));
     if (Number.isNaN(n)) return null;
     const a = parseFloat(area.replace(",", "."));
-    if (priceUnit === "tỷ") return Math.round(n * 1e9);
-    if (priceUnit === "triệu") return Math.round(n * 1e6);
-    if (priceUnit === "triệu/m²") return Number.isNaN(a) ? null : Math.round(n * a * 1e6);
+    if (donVi === "tỷ") return Math.round(n * 1e9);
+    if (donVi === "triệu" || donVi === "triệu/tháng") return Math.round(n * 1e6);
+    if (donVi === "triệu/m²") return Number.isNaN(a) ? null : Math.round(n * a * 1e6);
+    // Báo giá theo kỳ dài thì QUY VỀ MỖI THÁNG — để tin cho thuê nào cũng cùng
+    // một thước đo, bộ lọc khoảng giá và sắp xếp mới chạy đúng.
+    if (donVi === "triệu/6 tháng") return Math.round((n * 1e6) / 6);
+    if (donVi === "triệu/năm") return Math.round((n * 1e6) / 12);
     return null;
   }
 
@@ -308,7 +338,8 @@ export default function PostListingForm() {
       if (!area.trim()) return setError("Chưa nhập diện tích.");
       // THÔNG TIN CHÍNH THEO LOẠI HÌNH — thiếu mục nào báo đúng tên mục đó,
       // không báo chung chung để người đăng khỏi phải dò cả trang.
-      const thieu = thieuMucBatBuoc(category, purposeOfDemand(demand), specValues);
+      if (!loaiHinh) return setError("Chưa chọn loại hình bất động sản.");
+      const thieu = thieuMucBatBuoc(loaiHinh, purposeOfDemand(demand), specValues);
       if (thieu.length) return setError(`Chưa nhập: ${thieu.join(" · ")}.`);
     }
     // LƯU NHÁP thì không chặn gì thêm — người đăng ghi tới đâu lưu tới đó.
@@ -318,7 +349,7 @@ export default function PostListingForm() {
     const values = {
       // Nhu cầu: Cần bán · Cho thuê · Cần mua · Cần thuê
       purpose: purposeOfDemand(demand),
-      type: category,
+      type: loaiHinh,
       title: title.trim(),
       description: description.trim() || null,
       price_vnd: priceToVnd(),
@@ -448,7 +479,22 @@ export default function PostListingForm() {
       <Card step="1" title="Loại tin đăng">
         <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
           <Pick label="Nhu cầu" value={demand} onChange={setDemand} options={demandTypes} />
-          <Pick label="Loại hình bất động sản" value={category} onChange={(v) => { setCategory(v); setSpecValues({}); }} options={propertyCategories} />
+          {/* Loại hình theo NHÓM cho dễ tìm — cùng danh mục với bộ lọc của web */}
+          <div>
+            <Label>Loại hình bất động sản *</Label>
+            <select
+              value={loaiHinh}
+              onChange={(e) => { setCategory(e.target.value); setSpecValues({}); }}
+              className={inputCls}
+            >
+              <option value="">Chọn loại hình</option>
+              {nhomLoaiHinh.map((g) => (
+                <optgroup key={g.label} label={g.label}>
+                  {g.items.map((o) => <option key={o} value={o}>{o}</option>)}
+                </optgroup>
+              ))}
+            </select>
+          </div>
         </div>
       </Card>
 
@@ -491,7 +537,7 @@ export default function PostListingForm() {
         <Text label="Tiêu đề tin đăng *" value={title} onChange={setTitle} placeholder="VD: Bán căn hộ 2PN view sông Hàn, full nội thất" required />
         <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-3">
           <div className="sm:col-span-2">
-            <Label>Mức giá *</Label>
+            <Label>{laThue ? "Giá thuê *" : "Giá bán *"}</Label>
             {/* ĐIỆN THOẠI: ô nhập giá chiếm TRỌN một hàng, ô đơn vị xuống hàng dưới.
                 Trước đây hai ô nằm cùng hàng mà ô đơn vị lại mang cả w-full lẫn
                 w-32 (hai lớp chiều rộng đá nhau) nên nó chiếm gần hết, ô nhập giá
@@ -502,11 +548,18 @@ export default function PostListingForm() {
                   "4,2" (đúng như gợi ý trong ô) thì ô thành rỗng, không lưu được giá.
                   Dùng text + inputMode="decimal" → điện thoại vẫn hiện bàn phím số,
                   mà gõ được cả dấu phẩy lẫn dấu chấm. */}
-              <input type="text" inputMode="decimal" value={priceValue} onChange={(e) => setPriceValue(e.target.value)} disabled={priceUnit === "Thoả thuận"} placeholder="VD: 4,2" className={inputCls + " disabled:opacity-50"} />
-              <select value={priceUnit} onChange={(e) => setPriceUnit(e.target.value)} className={inputCls}>
-                {["tỷ", "triệu", "triệu/m²", "Thoả thuận"].map((u) => <option key={u} value={u}>{u}</option>)}
+              <input type="text" inputMode="decimal" value={priceValue} onChange={(e) => setPriceValue(e.target.value)} disabled={donVi === "Thoả thuận"} placeholder={laThue ? "VD: 12 hoặc 8,5" : "VD: 4,2"} className={inputCls + " disabled:opacity-50"} />
+              <select value={donVi} onChange={(e) => setPriceUnit(e.target.value)} className={inputCls}>
+                {donViGia.map((u) => <option key={u} value={u}>{u}</option>)}
               </select>
             </div>
+            {laThue && (donVi === "triệu/6 tháng" || donVi === "triệu/năm") && priceValue.trim() && (
+              <p className="mt-1.5 text-xs text-cvr-muted">
+                Tin sẽ hiển thị <strong>{(priceToVnd() ?? 0) / 1e6 >= 1
+                  ? `${Math.round(((priceToVnd() ?? 0) / 1e6) * 10) / 10} triệu/tháng`
+                  : "—"}</strong> để khách so sánh với các tin thuê khác.
+              </p>
+            )}
           </div>
           <div>
             <Label>Diện tích đất (m²)</Label>
@@ -518,19 +571,19 @@ export default function PostListingForm() {
             Số cột co theo số mục còn lại nên không bao giờ chừa ô trống lửng lơ. */}
         {(() => {
           const oChinh = [
-            coDienTichXayDung(category) && (
+            coDienTichXayDung(loaiHinh) && (
               <div key="dtxd">
                 <Label>Diện tích xây dựng (m²)</Label>
                 <input type="text" inputMode="decimal" value={builtArea} onChange={(e) => setBuiltArea(e.target.value)} placeholder="VD: 95" className={inputCls} />
               </div>
             ),
-            coPhongNgu(category) && (
+            coPhongNgu(loaiHinh) && (
               <div key="pn">
                 <Label>Số phòng ngủ</Label>
                 <input type="text" inputMode="numeric" value={beds} onChange={(e) => setBeds(e.target.value)} placeholder="VD: 3" className={inputCls} />
               </div>
             ),
-            coPhongTam(category) && (
+            coPhongTam(loaiHinh) && (
               <div key="pt">
                 <Label>Số phòng tắm</Label>
                 <input type="text" inputMode="numeric" value={baths} onChange={(e) => setBaths(e.target.value)} placeholder="VD: 2" className={inputCls} />
