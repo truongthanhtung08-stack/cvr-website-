@@ -8,11 +8,13 @@
 //   · ANDROID — link https://www.google.com/maps/... được Google Maps đăng ký sẵn
 //     (App Links) nên hệ điều hành tự chuyển vào app Google Maps.
 //
-//   · IPHONE / IPAD — Safari hay giữ link https lại trong tab. Nên đi ba nấc:
-//       1. comgooglemaps://  → mở app Google Maps nếu khách có cài
-//       2. maps.apple.com    → 1,2 giây sau chưa rời trang tức là chưa cài
-//                              Google Maps → mở BẢN ĐỒ APPLE, máy nào cũng có sẵn
-//       3. (Apple Maps là app hệ thống nên luôn mở được, không cần nấc thứ tư)
+//   · IPHONE / IPAD — Safari hay giữ link https lại trong tab. Nên đi BA NẤC:
+//       1. comgooglemaps://  → mở app Google Maps nếu khách có cài (đa số có)
+//       2. maps.apple.com    → 1,2 giây sau chưa rời trang tức là chưa cài Google
+//                              Maps → mở BẢN ĐỒ APPLE (app hệ thống, gần như luôn có)
+//       3. google.com/maps   → thêm 1,2 giây nữa vẫn chưa rời trang tức là máy
+//                              KHÔNG CÓ app bản đồ nào (hiếm — khách đã xoá cả
+//                              Apple Maps) → lúc đó mới mở bản web
 //
 // LƯU Ý: dùng window.location.href chứ KHÔNG dùng window.open — trên iOS,
 // window.open bị coi là cửa sổ mới nên không kích hoạt được app.
@@ -30,20 +32,27 @@ function laIOS(): boolean {
   );
 }
 
-// Thử mở app Google Maps; 1,2 giây chưa rời trang thì chuyển sang bản đồ dự phòng
-function moTheoMay(appGoogle: string, duPhong: string, webAndroid: string) {
+// Đi lần lượt qua các nấc, nấc nào mở được app thì dừng ở đó.
+// Rời trang (pagehide/blur) = app đã bật → huỷ mọi nấc sau cho khỏi mở thừa.
+function moTheoMay(appGoogle: string, appApple: string, web: string) {
   if (typeof window === "undefined") return;
+  // Android: link https đã được Google Maps đăng ký nên hệ điều hành tự mở app;
+  // máy không có app nào thì chính link đó mở bản web. Một nấc là đủ.
   if (!laIOS()) {
-    window.location.href = webAndroid;
+    window.location.href = web;
     return;
   }
-  const hen = setTimeout(() => {
-    window.location.href = duPhong;
-  }, 1200);
-  // Rời trang được = app đã mở → huỷ dự phòng cho khỏi mở thừa
-  const huy = () => clearTimeout(hen);
+
+  const hen: ReturnType<typeof setTimeout>[] = [];
+  const huy = () => hen.forEach(clearTimeout);
   window.addEventListener("pagehide", huy, { once: true });
   window.addEventListener("blur", huy, { once: true });
+
+  // Nấc 2 — chưa cài Google Maps → Bản đồ Apple
+  hen.push(setTimeout(() => { window.location.href = appApple; }, 1200));
+  // Nấc 3 — không có app bản đồ nào (hiếm) → mở bản web
+  hen.push(setTimeout(() => { window.location.href = web; }, 2600));
+  // Nấc 1 — app Google Maps
   window.location.href = appGoogle;
 }
 
