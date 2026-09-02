@@ -68,6 +68,28 @@ export default function Gallery({
   const bigIsVideo = bigIdx < nVid;
   const mIsVideo = mCur < nVid;
 
+  // Huy hiệu nhỏ góc trái trên: tin này có bao nhiêu ẢNH và bao nhiêu VIDEO.
+  const demMedia = (
+    <span className="pointer-events-none absolute left-3 top-3 z-[5] flex items-center gap-2.5 rounded-md bg-black/65 px-2.5 py-1 text-[12px] font-semibold text-white backdrop-blur-sm">
+      <span className="flex items-center gap-1">
+        <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3 7.5h3l1.5-2h9L18 7.5h3v11H3v-11Z" />
+          <circle cx="12" cy="12.5" r="3.2" />
+        </svg>
+        {images.length}
+      </span>
+      {nVid > 0 && (
+        <span className="flex items-center gap-1">
+          <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+            <rect x="3" y="6" width="12" height="12" rx="2" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="m15 10.5 6-3v9l-6-3v-3Z" />
+          </svg>
+          {nVid}
+        </span>
+      )}
+    </span>
+  );
+
   return (
     <>
       {media.length === 1 ? (
@@ -130,13 +152,15 @@ export default function Gallery({
           <button
             type="button"
             onClick={() => setList(true)}
-            className={`absolute left-3 flex items-center gap-1.5 rounded-md bg-black/65 px-2.5 py-1 text-[13px] font-medium text-white backdrop-blur-sm active:bg-black/80 ${mIsVideo ? "top-3" : "bottom-3"}`}
+            className={`absolute left-3 flex items-center gap-1.5 rounded-md bg-black/65 px-2.5 py-1 text-[13px] font-medium text-white backdrop-blur-sm active:bg-black/80 ${mIsVideo ? "bottom-14" : "bottom-3"}`}
           >
             <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.9} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h10" />
             </svg>
             Xem tất cả {images.length} ảnh
           </button>
+
+          {demMedia}
         </div>
 
         {/* ── TABLET / MÁY TÍNH (≥ 640px): GIỮ NGUYÊN bố cục ảnh lớn + lưới 2×2 đã duyệt ── */}
@@ -154,9 +178,12 @@ export default function Gallery({
                 <Image key={bigIdx} src={media[bigIdx].src} alt={alt} fill priority quality={90} sizes="(max-width:1024px) 100vw, 50vw" className="object-cover animate-fadein" />
               </button>
             )}
-            <span className={`pointer-events-none absolute left-3 rounded-md bg-black/60 px-2.5 py-1 text-xs text-white backdrop-blur-sm ${bigIsVideo ? "top-3" : "bottom-3"}`}>
-              {bigIsVideo ? "Video" : `${imgIdx(bigIdx) + 1}/${images.length}`}
-            </span>
+            {demMedia}
+            {!bigIsVideo && (
+              <span className="pointer-events-none absolute bottom-3 left-3 rounded-md bg-black/60 px-2.5 py-1 text-xs text-white backdrop-blur-sm">
+                {imgIdx(bigIdx) + 1}/{images.length}
+              </span>
+            )}
             {/* Chấm chỉ vị trí slide — slide video thì ẩn, nhường góc phải cho nút Phóng to */}
             {!bigIsVideo && (
               <span className="pointer-events-none absolute bottom-3 right-3 flex gap-1">
