@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import {
   categorySpecs, demandTypes, specForType,
-  coPhongNgu, coPhongTam, coDienTichXayDung, fieldsSplit, thieuMucBatBuoc, type Field,
+  coPhongNgu, coPhongTam, coDienTichXayDung, fieldsSplit, thieuMucBatBuoc, nhanDienTich, type Field,
   legalOptions, furnishLevels, amenityGroups, interiorItems, directions,
   purposeOfDemand, demandOfPurpose,
 } from "@/lib/listingSpec";
@@ -562,7 +562,7 @@ export default function PostListingForm() {
             )}
           </div>
           <div>
-            <Label>Diện tích đất (m²)</Label>
+            <Label>{nhanDienTich(loaiHinh)} *</Label>
             <input type="text" inputMode="decimal" value={area} onChange={(e) => setArea(e.target.value)} placeholder="VD: 100" className={inputCls} />
           </div>
         </div>

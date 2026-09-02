@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { saleTypeGroups, rentTypeGroups } from "@/lib/filters";
 import { provinceNamesFor, districtsOf, wardsOf, wardsOfNew, type GeoMode } from "@/lib/locations";
-import { fieldsFor, interiorItems, amenityGroups, legalOptions, furnishLevels, directions, coPhongNgu, coPhongTam, coDienTichXayDung } from "@/lib/listingSpec";
+import { fieldsFor, interiorItems, amenityGroups, legalOptions, furnishLevels, directions, coPhongNgu, coPhongTam, coDienTichXayDung, nhanDienTich } from "@/lib/listingSpec";
 import ImagePicker from "@/components/admin/ImagePicker";
 import MapPicker from "@/components/MapPicker";
 import ContentEditor from "@/components/admin/ContentEditor";
@@ -318,7 +318,7 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
             mặt bằng không có phòng ngủ. Số cột co theo số mục còn lại. */}
         {(() => {
           const o = [
-            <Field key="dt" label="Diện tích đất (m², bắt buộc)">
+            <Field key="dt" label={`${nhanDienTich(type)} — bắt buộc`}>
               <input value={area} onChange={(e) => setArea(e.target.value)} inputMode="decimal" placeholder="VD: 100" className={inputCls} />
             </Field>,
             coDienTichXayDung(type) && (

@@ -68,6 +68,12 @@ const frontageField: Field = { key: "frontage", label: "Mặt tiền (chiều ng
 const depthField: Field = { key: "depth", label: "Chiều dài (chiều sâu)", type: "number", unit: "m", main: true };
 // (giữ nguyên nhãn "Chiều dài (chiều sâu)" — người đăng hay nhầm với chiều cao)
 const roadField: Field = { key: "roadWidth", label: "Đường vào", type: "number", unit: "m", main: true, batBuoc: true };
+// Nhà nào cũng cần: vào được bằng gì và xây năm nào — hai câu khách hỏi nhiều nhất
+// sau giá và diện tích. Là ĐẶC ĐIỂM (không chặn) vì tin cũ hay không ghi năm xây.
+const accessField: Field = { key: "access", label: "Vị trí lối vào", type: "select", options: ["Mặt tiền đường", "Kiệt / hẻm ô tô", "Kiệt / hẻm xe máy"] };
+const builtYearField: Field = { key: "builtYear", label: "Năm xây dựng", type: "text", placeholder: "VD: 2021" };
+// Chung cư / căn hộ: phí quản lý là khoản người mua và người thuê nào cũng hỏi.
+const mgmtFeeField: Field = { key: "mgmtFee", label: "Phí quản lý", type: "text", placeholder: "VD: 12.000đ/m²/tháng" };
 
 // Mỗi LOẠI HÌNH có bộ đặc điểm ĐẶC THÙ riêng. Thứ tự = ĐỘ ƯU TIÊN khớp
 // (loại đặc thù đứng trước loại chung: Biệt thự/Shophouse trước "nhà", Kho xưởng trước "đất").
@@ -95,6 +101,7 @@ export const categorySpecs: CategorySpec[] = [
       { key: "buildingFloors", label: "Tổng số tầng toà", type: "text", placeholder: "VD: 30 tầng" },
       { key: "balcony", label: "Hướng ban công", type: "select", options: directions, main: true },
       { key: "view", label: "Hướng view", type: "select", options: ["Biển", "Thành phố", "Hồ bơi", "Sông / công viên", "Nội khu"] },
+      mgmtFeeField,
     ],
   },
   {
@@ -107,6 +114,7 @@ export const categorySpecs: CategorySpec[] = [
       { key: "buildingFloors", label: "Tổng số tầng toà", type: "text", placeholder: "VD: 30 tầng" },
       { key: "balcony", label: "Hướng ban công", type: "select", options: directions, main: true },
       { key: "view", label: "Hướng view", type: "select", options: ["Biển", "Thành phố", "Hồ bơi", "Sông / công viên", "Nội khu"] },
+      mgmtFeeField,
     ],
   },
   {
@@ -140,6 +148,7 @@ export const categorySpecs: CategorySpec[] = [
       frontageField,
       depthField,
       roadField,
+      builtYearField,
       { key: "gardenArea", label: "Diện tích sân vườn", type: "number", unit: "m²" },
       { key: "pool", label: "Hồ bơi riêng", type: "select", options: ["Có", "Không"] },
       { key: "view", label: "View / cảnh quan", type: "select", options: ["Biển", "Sông / hồ", "Sân golf", "Công viên", "Nội khu"] },
@@ -155,6 +164,7 @@ export const categorySpecs: CategorySpec[] = [
       roadField,
       { key: "bizFloors", label: "Số tầng kinh doanh", type: "select", options: ["1", "2", "3", "Cả toà"], main: true },
       { key: "corner", label: "Vị trí", type: "select", options: ["Lô góc 2 mặt tiền", "1 mặt tiền", "Trong khu"] },
+      builtYearField,
     ],
   },
   {
@@ -166,6 +176,7 @@ export const categorySpecs: CategorySpec[] = [
       depthField,
       roadField,
       { key: "corner", label: "Vị trí", type: "select", options: ["Lô góc 2 mặt tiền", "1 mặt tiền"] },
+      builtYearField,
     ],
   },
   {
@@ -186,6 +197,8 @@ export const categorySpecs: CategorySpec[] = [
       frontageField,
       depthField,
       roadField,
+      accessField,
+      builtYearField,
     ],
   },
   {
@@ -254,7 +267,28 @@ export function thieuMucBatBuoc(
 // biết có phải điền không. Dùng chung cho form đăng tin của khách và của admin.
 const KHONG_PHONG_NGU = ["Đất nền / Đất", "Đất công nghiệp / Nhà xưởng / Kho bãi", "Văn phòng / Mặt bằng kinh doanh"];
 const KHONG_PHONG_TAM = ["Đất nền / Đất", "Đất công nghiệp / Nhà xưởng / Kho bãi"];
-const KHONG_DT_XAY_DUNG = ["Đất nền / Đất"];
+// Diện tích xây dựng CHỈ có nghĩa với nhà gắn liền đất. Căn hộ/chung cư/condotel
+// chỉ có một diện tích; văn phòng, mặt bằng, kho xưởng đã có "diện tích sử dụng"
+// riêng; đất nền thì không có gì để xây sẵn. Hiện thừa chỉ làm rối người đăng.
+const KHONG_DT_XAY_DUNG = [
+  "Đất nền / Đất",
+  "Chung cư",
+  "Căn hộ",
+  "Condotel / Nghỉ dưỡng",
+  "Văn phòng / Mặt bằng kinh doanh",
+  "Đất công nghiệp / Nhà xưởng / Kho bãi",
+  "Nhà trọ / Phòng trọ",
+];
+
+// Nhãn ô diện tích theo loại hình — "Diện tích đất" chỉ đúng với nhà và đất.
+export function nhanDienTich(type: string): string {
+  const l = type ? specForType(type).label : "";
+  if (["Chung cư", "Căn hộ", "Condotel / Nghỉ dưỡng"].includes(l)) return "Diện tích (m²)";
+  if (l === "Văn phòng / Mặt bằng kinh doanh") return "Diện tích sàn (m²)";
+  if (l === "Đất công nghiệp / Nhà xưởng / Kho bãi") return "Tổng diện tích khu đất (m²)";
+  if (l === "Nhà trọ / Phòng trọ") return "Tổng diện tích (m²)";
+  return "Diện tích đất (m²)";
+}
 
 export function coPhongNgu(type: string): boolean {
   return !!type && !KHONG_PHONG_NGU.includes(specForType(type).label);

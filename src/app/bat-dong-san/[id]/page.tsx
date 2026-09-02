@@ -9,6 +9,7 @@ import { HomeExpandProvider, HomeCollapsible } from "@/components/HomeExpand";
 import RecordView from "@/components/RecordView";
 import ShareButtons from "@/components/ShareButtons";
 import PriceHistory from "@/components/PriceHistory";
+import { nhanDienTich as nhanDienTichTheoLoai } from "@/lib/listingSpec";
 import ProjectNearby from "@/components/ProjectNearby";
 import ProjectNav from "@/components/ProjectNav";
 import { BreadcrumbJsonLd } from "@/components/Breadcrumb";
@@ -87,7 +88,8 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
   const purpose = l.purpose ?? "ban";
 
   // NHÃN DIỆN TÍCH theo loại hình — căn hộ / nhà phố mà ghi "Diện tích đất" là sai.
-  const nhanDienTich = l.type.includes("Đất") ? "Diện tích đất" : "Diện tích";
+  // Nhãn diện tích lấy chung một chỗ với form đăng tin để hai bên không lệch nhau
+  const nhanDienTich = nhanDienTichTheoLoai(l.type).replace(" (m²)", "");
   const nhanGia = purpose === "thue" ? "Giá thuê" : "Mức giá";
 
   // Tin tương tự — thứ tự ưu tiên đúng như đã chốt:
