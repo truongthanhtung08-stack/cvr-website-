@@ -5,6 +5,8 @@ import "leaflet/dist/leaflet.css";
 import type * as LType from "leaflet";
 import { docKhoangCach, khoangCachKm, layViTri, loiDinhVi } from "@/lib/dinhVi";
 import { timToaDo, type MucDoChinhXac } from "@/lib/timToaDo";
+import { centerOfArea } from "@/lib/geo";
+import { parseLatLng } from "@/lib/googleMaps";
 import NhacBatDinhVi from "@/components/NhacBatDinhVi";
 
 // ── BẢN ĐỒ TRONG TRANG TIN / TRANG DỰ ÁN ─────────────────────────────────────
@@ -45,6 +47,8 @@ export default function MapPaneLeaflet({
   const chamRef = useRef<LType.CircleMarker | null>(null);
   const vongRef = useRef<LType.CircleMarker | null>(null);
   const duongRef = useRef<LType.Polyline | null>(null);
+  const ghimRef = useRef<LType.Marker | null>(null);
+  const vongKhuVucRef = useRef<LType.Circle | null>(null);
   const bdsRef = useRef<[number, number] | null>(null);
 
   const [dangDinhVi, setDangDinhVi] = useState(false);
@@ -60,20 +64,23 @@ export default function MapPaneLeaflet({
   const GHI_NGUON = "© <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a>";
 
   // ── DỰNG BẢN ĐỒ + CẮM GHIM ĐỎ ──────────────────────────────────────────────
+  //
+  // ⚠️ LUẬT: VẼ BẢN ĐỒ NGAY, KHÔNG CHỜ TRA ĐỊA CHỈ.
+  // Đã mắc bẫy này một lần rồi: bắt bản đồ đợi dịch vụ tra địa chỉ trả lời mới vẽ
+  // → dịch vụ chậm hoặc bị chặn là khách nhìn thấy ô trống. Nên: vẽ ngay bằng thứ
+  // biết chắc (toạ độ ghim tay, hoặc tâm phường/xã tra trong bảng có sẵn của web),
+  // rồi tra tên đường CHẠY NGẦM; tra xong mới dời ghim cho sát hơn.
   useEffect(() => {
     let huy = false;
     (async () => {
-      const [L, diem] = await Promise.all([
-        import("leaflet") as unknown as Promise<typeof LType>,
-        timToaDo(query),
-      ]);
+      const L = (await import("leaflet")) as unknown as typeof LType;
       if (huy || !boxRef.current || mapRef.current) return;
       LRef.current = L;
 
-      const tam: [number, number] = diem ? [diem.lat, diem.lng] : [16.054, 108.202];
-      // Ghim tay / ra tên đường thì phóng sát; chỉ có phường/xã thì lùi ra cho
-      // khách hiểu đây là cả một vùng chứ không phải một điểm.
-      const mucZoom = !diem ? 12 : diem.mucDo === "khuVuc" ? Math.min(zoom, 14) : zoom;
+      const ghim = parseLatLng(query);
+      const kv = centerOfArea(query);
+      const tam: [number, number] = ghim ? [ghim.lat, ghim.lng] : kv ?? [16.054, 108.202];
+      const mucBanDau: MucDoChinhXac | null = ghim ? "ghim" : kv ? "khuVuc" : null;
 
       const map = L.map(boxRef.current, {
         zoomControl: true,
@@ -81,22 +88,24 @@ export default function MapPaneLeaflet({
         scrollWheelZoom: !locked,
         doubleClickZoom: !locked,
         touchZoom: !locked,
-      }).setView(tam, mucZoom);
+      }).setView(tam, ghim ? zoom : kv ? Math.min(zoom, 14) : 12);
 
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: GHI_NGUON,
         maxZoom: 19,
       }).addTo(map);
+      mapRef.current = map;
 
-      if (diem) {
-        bdsRef.current = [diem.lat, diem.lng];
-        setMucDo(diem.mucDo);
-        const icon = L.divIcon({ className: "", html: HTML_GHIM, iconSize: [30, 40], iconAnchor: [15, 39] });
-        L.marker([diem.lat, diem.lng], { icon }).addTo(map);
-        // Chỉ biết phường/xã thì khoanh vòng cho thấy "quanh quanh đây", đỡ hiểu lầm
-        // là ghim đúng số nhà.
-        if (diem.mucDo === "khuVuc") {
-          L.circle([diem.lat, diem.lng], {
+      const icon = L.divIcon({ className: "", html: HTML_GHIM, iconSize: [30, 40], iconAnchor: [15, 39] });
+
+      // Cắm ghim đỏ NGAY bằng thứ đang biết. Chỉ có tâm phường/xã thì khoanh thêm
+      // vòng đỏ mờ cho thấy "quanh quanh đây", đỡ hiểu lầm là đúng số nhà.
+      if (mucBanDau) {
+        bdsRef.current = tam;
+        setMucDo(mucBanDau);
+        ghimRef.current = L.marker(tam, { icon }).addTo(map);
+        if (mucBanDau === "khuVuc") {
+          vongKhuVucRef.current = L.circle(tam, {
             radius: 900,
             color: "#e11d48",
             weight: 1.5,
@@ -107,11 +116,23 @@ export default function MapPaneLeaflet({
         }
       }
 
-      mapRef.current = map;
-
       // Tự định vị nhẹ nhàng ngay khi mở: chỉ VẼ CHẤM và tính khoảng cách, KHÔNG
       // kéo bản đồ đi — khách đang muốn nhìn bất động sản, giật đi là hỏng.
       setTimeout(() => dinhVi(false), 500);
+
+      // TRA TÊN ĐƯỜNG CHẠY NGẦM — bản đồ đã vẽ xong rồi, tra được thì ghim sát hơn,
+      // tra không được cũng không sao.
+      if (!ghim) {
+        const diem = await timToaDo(query);
+        if (huy || !mapRef.current || !diem || diem.mucDo !== "duong") return;
+        bdsRef.current = [diem.lat, diem.lng];
+        setMucDo("duong");
+        vongKhuVucRef.current?.remove();
+        vongKhuVucRef.current = null;
+        if (ghimRef.current) ghimRef.current.setLatLng([diem.lat, diem.lng]);
+        else ghimRef.current = L.marker([diem.lat, diem.lng], { icon }).addTo(map);
+        map.setView([diem.lat, diem.lng], zoom);
+      }
     })();
 
     return () => {
@@ -121,6 +142,8 @@ export default function MapPaneLeaflet({
       chamRef.current = null;
       vongRef.current = null;
       duongRef.current = null;
+      ghimRef.current = null;
+      vongKhuVucRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
