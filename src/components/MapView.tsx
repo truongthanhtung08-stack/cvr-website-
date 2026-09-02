@@ -173,12 +173,15 @@ export default function MapView({ items, diem }: { items?: Listing[]; diem?: Die
     <div className="relative h-full w-full">
       <div ref={boxRef} aria-label="Bản đồ bất động sản" className="h-full w-full" />
 
-      {/* NÚT VỊ TRÍ — nổi trên bản đồ, góc dưới trái, tránh nút phóng to của Leaflet */}
+      {/* NÚT VỊ TRÍ — nổi trên bản đồ, góc dưới trái.
+          ⚠️ z-index phải TRÊN 800: Leaflet xếp lớp marker ở 600 và popup ở 700, để
+          z-500 thì nút bị marker che mất, bấm không trúng. Nút phóng to của Leaflet
+          nằm góc trên trái nên không đụng nhau. */}
       <button
         type="button"
         onClick={dinhVi}
         disabled={dangDinhVi}
-        className="absolute bottom-4 left-3 z-[500] inline-flex min-h-[40px] items-center gap-1.5 rounded-lg bg-white/95 px-3 text-[13px] font-semibold text-cvr-body shadow-[0_1px_5px_rgba(0,0,0,0.35)] backdrop-blur transition hover:text-cvr-ink disabled:opacity-60"
+        className="absolute bottom-4 left-3 z-[1000] inline-flex min-h-[40px] items-center gap-1.5 rounded-lg bg-cvr-blue px-3.5 text-[13px] font-semibold text-white shadow-[0_2px_8px_rgba(0,0,0,0.35)] transition hover:bg-cvr-blue-ink disabled:opacity-60"
       >
         <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.9} viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 12a2 2 0 100-4 2 2 0 000 4z" />
@@ -188,8 +191,9 @@ export default function MapView({ items, diem }: { items?: Listing[]; diem?: Die
         {dangDinhVi ? "Đang định vị…" : "Vị trí của tôi"}
       </button>
 
+      {/* Lời nhắc bật GPS — đặt NGAY TRÊN nút, không đè lên nút như trước */}
       {loi && (
-        <p className="absolute bottom-4 left-3 right-3 z-[500] rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-[13px] font-medium text-amber-900 shadow">
+        <p className="absolute bottom-[68px] left-3 right-3 z-[1000] rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-[13px] font-medium leading-snug text-amber-900 shadow-lg">
           {loi}
         </p>
       )}
