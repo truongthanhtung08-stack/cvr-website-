@@ -36,6 +36,9 @@ export default function MapPicker({
   const boxRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<GMap | null>(null);
   const markerRef = useRef<GMarker | null>(null);
+  // CHẤM XANH "Vị trí của bạn" — khác hẳn ghim đỏ. Đọc được vị trí máy mà không
+  // hiện gì thì khách không biết bản đồ vừa nhảy đi đâu và vì sao.
+  const chamRef = useRef<GMarker | null>(null);
   const onChangeRef = useRef(onChange);
   const [dangDinhVi, setDangDinhVi] = useState(false);
   const [loi, setLoi] = useState("");
@@ -48,6 +51,29 @@ export default function MapPicker({
   });
 
   const daGhim = parseLatLng(value);
+  const [daDocViTri, setDaDocViTri] = useState(false);
+
+  // Vẽ chấm xanh tại vị trí máy. Chấm này CHỈ để tham chiếu — không phải điểm
+  // ghim, khách vẫn tự bấm chọn đúng điểm bất động sản.
+  function hienChamViTri(p: LatLng) {
+    const g = window.google;
+    const map = mapRef.current;
+    if (!g || !map) return;
+    setDaDocViTri(true);
+    if (chamRef.current) {
+      chamRef.current.setPosition(p);
+      return;
+    }
+    chamRef.current = new g.maps.Marker({
+      position: p,
+      map,
+      clickable: false,
+      zIndex: 1,
+      title: "Vị trí của bạn",
+      // 0 = google.maps.SymbolPath.CIRCLE — chấm tròn xanh viền trắng, neo giữa
+      icon: { path: 0, scale: 7, fillColor: "#0071e3", fillOpacity: 1, strokeColor: "#ffffff", strokeWeight: 3 },
+    });
+  }
 
   // Dựng bản đồ MỘT LẦN. Sau đó mọi thay đổi chỉ dời ghim, không dựng lại —
   // dựng lại là tính thêm một lượt tải bản đồ với Google.
@@ -130,8 +156,10 @@ export default function MapPicker({
           navigator.geolocation.getCurrentPosition(
             (pos) => {
               if (huy || parseLatLng(value)) return;
-              map.setCenter({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+              const p = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+              map.setCenter(p);
               map.setOptions({ zoom: 16 });
+              hienChamViTri(p);
             },
             () => {},
             { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 },
@@ -245,6 +273,7 @@ export default function MapPicker({
         if (map && g) {
           map.setCenter(p);
           map.setOptions({ zoom: 18 });
+          hienChamViTri(p);
           if (markerRef.current) markerRef.current.setPosition(p);
           else markerRef.current = new g.maps.Marker({ position: p, map, draggable: true });
         }
@@ -301,6 +330,14 @@ export default function MapPicker({
             className="mt-2 h-10 w-full rounded-lg border border-amber-300 bg-white px-3 text-sm text-cvr-ink outline-none focus:border-amber-500"
           />
         </div>
+      )}
+
+      {daDocViTri && (
+        <p className="flex items-center gap-2 text-[13px] text-cvr-body">
+          <span className="inline-block h-3 w-3 shrink-0 rounded-full border-2 border-white bg-cvr-blue shadow-[0_0_0_1px_rgba(0,0,0,0.15)]" />
+          Chấm xanh là <strong>vị trí của bạn</strong>. Bất động sản ở ngay đây thì bấm ghim luôn,
+          không thì kéo bản đồ tới đúng chỗ rồi bấm.
+        </p>
       )}
 
       {/* Hướng dẫn NGẮN, đặt NGAY TRÊN các nút — người đăng nhìn là biết bấm gì */}
