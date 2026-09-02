@@ -54,7 +54,7 @@ export default function MapPicker({
   });
 
   const daGhim = parseLatLng(value);
-  const [daDocViTri, setDaDocViTri] = useState(false);
+
 
   // Vẽ chấm xanh tại vị trí máy. Chấm này CHỈ để tham chiếu — không phải điểm
   // ghim, khách vẫn tự bấm chọn đúng điểm bất động sản.
@@ -62,7 +62,6 @@ export default function MapPicker({
     const g = window.google;
     const map = mapRef.current;
     if (!g || !map) return;
-    setDaDocViTri(true);
     if (chamRef.current) {
       chamRef.current.setPosition(p);
       return;
@@ -335,8 +334,7 @@ export default function MapPicker({
         <div className="rounded-lg border border-amber-300 bg-amber-50 p-3">
           <p className="text-xs font-semibold text-amber-900">Bản đồ ghim đang tạm nghỉ</p>
           <p className="mt-1 text-xs leading-relaxed text-amber-800">
-            Bấm <strong>“Tôi đang đứng ở đây”</strong> khi đứng tại bất động sản là ghim được ngay.
-            Hoặc mở Google Maps, giữ lâu vào đúng điểm để lấy toạ độ rồi dán vào ô dưới.
+            Bấm <strong>“Tôi đang đứng ở đây”</strong> khi đang ở tại bất động sản là ghim được ngay.
           </p>
           <input
             value={value}
@@ -348,20 +346,19 @@ export default function MapPicker({
         </div>
       )}
 
-      {daDocViTri && (
-        <p className="flex items-center gap-2 text-[13px] text-cvr-body">
-          <span className="inline-block h-3 w-3 shrink-0 rounded-full border-2 border-white bg-cvr-blue shadow-[0_0_0_1px_rgba(0,0,0,0.15)]" />
-          Chấm xanh là <strong>vị trí của bạn</strong>. Bất động sản ở ngay đây thì bấm ghim luôn,
-          không thì kéo bản đồ tới đúng chỗ rồi bấm.
-        </p>
-      )}
-
-      {/* Hướng dẫn NGẮN, đặt NGAY TRÊN các nút — người đăng nhìn là biết bấm gì */}
-      {!daGhim && (
-        <p className="text-[13px] font-medium text-cvr-body">
-          Chưa biết ghim ở đâu? Bấm <strong>“Tôi đang đứng ở đây”</strong> nếu anh/chị đang ở tại
-          bất động sản, hoặc chọn Tỉnh/Phường phía trên rồi bấm thẳng lên bản đồ.
-        </p>
+      {/* HƯỚNG DẪN 3 DÒNG — đúng 3 việc khách cần: mình ở đâu · bất động sản ở
+          đâu · ghim chỗ nào. Ghim xong thì gọn còn một dòng. */}
+      {daGhim ? (
+        <p className="text-[13px] text-cvr-body">Kéo ghim đỏ nếu cần chỉnh lại cho đúng.</p>
+      ) : (
+        <ul className="space-y-1 text-[13px] text-cvr-body">
+          <li className="flex items-center gap-2">
+            <span className="inline-block h-3 w-3 shrink-0 rounded-full border-2 border-white bg-cvr-blue shadow-[0_0_0_1px_rgba(0,0,0,0.15)]" />
+            Chấm xanh: bạn đang ở đây
+          </li>
+          <li>Kéo và phóng bản đồ tới bất động sản</li>
+          <li>Bấm lên bản đồ để ghim</li>
+        </ul>
       )}
 
       <div className="flex flex-wrap items-center gap-2">
@@ -409,11 +406,6 @@ export default function MapPicker({
         )}
       </div>
 
-      <p className="text-xs leading-relaxed text-cvr-faint">
-        {daGhim
-          ? "Kéo ghim đỏ để chỉnh cho khớp. Tin sẽ hiện đúng điểm này trên bản đồ."
-          : "Chọn Tỉnh/Thành và Phường/Xã ở trên — bản đồ tự bay về đúng khu vực đó. Đang đứng tại bất động sản thì bấm “Tôi đang đứng ở đây” là ghim luôn. Còn lại chỉ cần bấm thẳng lên bản đồ đúng điểm cần ghim."}
-      </p>
       {/* LỖI ĐỊNH VỊ — hiện thành khối rõ ràng kèm nút thử lại, không phải một
           dòng chữ đỏ bé xíu dễ bị bỏ qua. */}
       {loi && (
