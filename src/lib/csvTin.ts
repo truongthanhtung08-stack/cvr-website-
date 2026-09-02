@@ -10,6 +10,9 @@ import { saleTypeGroups, rentTypeGroups } from "@/lib/filters";
 // Dùng CHUNG hàm tạo slug với form dự án trong admin → tên dự án trong file Excel
 // và slug dự án thật luôn khớp nhau, không bao giờ lệch quy tắc.
 import { slugify } from "@/lib/contentAdmin";
+// Bộ đặc điểm theo loại hình — để ghi số tầng / mặt tiền / đường vào đúng ô của
+// từng loại bất động sản, y như khi đăng tay bằng form.
+import { fieldsFor } from "@/lib/listingSpec";
 
 export type ListingTierId = "diamond" | "gold" | "silver" | "basic";
 
@@ -93,6 +96,18 @@ export const COT = {
   tinhTrangNoiThat: "tinh_trang_noi_that", // mức nội thất (Bàn giao thô / Đầy đủ…)
   noiThatBanGiao: "noi_that_ban_giao",  // danh sách nội thất, ngăn bằng dấu phẩy
   tienIch: "tien_ich",                  // danh sách tiện ích, ngăn bằng dấu phẩy
+  // ── KÍCH THƯỚC / SỐ TẦNG — vào bộ đặc điểm theo LOẠI HÌNH ──────────────────
+  duongVao: "duong_vao",                // bề rộng đường trước nhà (m)
+  matTien: "mat_tien",                  // chiều ngang mặt tiền (m)
+  soTang: "so_tang",                    // số tầng nhà (căn hộ: tổng số tầng toà)
+  // ── BA MỤC CHỈ CÓ Ở TIN CHO THUÊ ─────────────────────────────────────────
+  thoiGianVaoO: "thoi_gian_du_kien_vao_o",
+  giaDien: "muc_gia_dien",
+  giaNuoc: "muc_gia_nuoc",
+  // ── GHI CHÚ NỘI BỘ — LƯU LẠI NHƯNG KHÔNG HIỆN RA TRANG TIN ───────────────
+  ghiChu: "ghi_chu",                    // ghi chú của người nhập
+  nguon: "nguon",                       // link tin gốc (để đối chiếu khi cần)
+  linkAnh: "link_anh",                  // link ảnh gốc — dùng để TẢI ẢNH VỀ, không đăng thẳng
   // VIDEO — link YouTube/Vimeo hoặc tệp .mp4 đã có trên mạng. Nhiều link ngăn
   // bằng dấu |. Lưu chung vào cột images của tin; trang chi tiết tự tách ra mục
   // Video riêng (xem isVideoUrl trong media.ts).
@@ -287,6 +302,28 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
   const sdt = dsSdt[0] ?? "";
   const email = lay(COT.lienHeEmail).trim().toLowerCase();
 
+  // ── ĐẶC ĐIỂM THEO LOẠI HÌNH ────────────────────────────────────────────────
+  // Mỗi loại hình có bộ mục riêng (listingSpec.ts). CHỈ ghi vào mục mà loại hình
+  // đó thật sự có — ghi mục không thuộc loại hình thì trang chi tiết không hiện,
+  // chỉ tồn dữ liệu rác. Ba mục điện/nước/vào ở chỉ tồn tại ở tin CHO THUÊ.
+  const khoaCoSan = new Set(fieldsFor(loaiHinhChuan, mucDich).map((f) => f.key));
+  const specs: Record<string, string> = {};
+  const datSpec = (giaTri: string, ...uuTien: string[]) => {
+    const v = giaTri.trim();
+    if (!v) return;
+    const k = uuTien.find((x) => khoaCoSan.has(x));
+    if (k) specs[k] = v;
+  };
+  datSpec(lay(COT.huongBanCong), "balcony");
+  datSpec(lay(COT.matTien), "frontage");
+  datSpec(lay(COT.duongVao), "roadWidth");
+  // Nhà/biệt thự/shophouse: "số tầng" là của chính căn nhà. Căn hộ/chung cư
+  // không có mục ấy nên hiểu là TỔNG SỐ TẦNG CỦA TOÀ.
+  datSpec(lay(COT.soTang), "floors", "buildingFloors");
+  datSpec(lay(COT.thoiGianVaoO), "moveIn");
+  datSpec(lay(COT.giaDien), "elecPrice");
+  datSpec(lay(COT.giaNuoc), "waterPrice");
+
   const payload = {
     purpose: mucDich,
     type: loaiHinhChuan || null,
@@ -315,8 +352,14 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
       // ── 5 cột bổ sung ────────────────────────────────────────────────────
       // Dự án: lưu SLUG để trang chi tiết nối được với dự án tương ứng
       project: lay(COT.tenDuAn) ? slugify(lay(COT.tenDuAn)) : undefined,
-      // Hướng ban công nằm trong bộ đặc điểm theo loại hình (key "balcony")
-      specs: lay(COT.huongBanCong) ? { balcony: lay(COT.huongBanCong) } : undefined,
+      specs: Object.keys(specs).length ? specs : undefined,
+      // GHI CHÚ NỘI BỘ — lưu để đối chiếu về sau, KHÔNG hiện ra trang tin
+      // (trang chi tiết chỉ hiện những mục có trong bộ đặc điểm của loại hình).
+      ghiChuNoiBo: lay(COT.ghiChu) || undefined,
+      nguonTin: lay(COT.nguon) || undefined,
+      // Link ảnh gốc: để TẢI ẢNH VỀ cắt 4:3 rồi tải lên ở Bước 4 — KHÔNG đăng
+      // thẳng link của trang khác lên web.
+      linkAnhGoc: lay(COT.linkAnh) ? tachDanhSachAnh(lay(COT.linkAnh)) : undefined,
       furnish: lay(COT.tinhTrangNoiThat) || undefined,
       interior: lay(COT.noiThatBanGiao) ? tachDanhSach(lay(COT.noiThatBanGiao)) : undefined,
       amenities: lay(COT.tienIch) ? tachDanhSach(lay(COT.tienIch)) : undefined,

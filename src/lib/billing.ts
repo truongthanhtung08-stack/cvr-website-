@@ -22,13 +22,29 @@ export type Plan = {
   terms: PlanTerm[];
   note?: string;
   maxImages?: number; // SỐ ẢNH TỐI ĐA mỗi tin của cấp này (giữ dung lượng kho ảnh)
+  maxVideos?: number; // SỐ VIDEO TỐI ĐA mỗi tin của cấp này
 };
 
-// Số ảnh tối đa của một cấp tin. Chưa đặt trong admin → dùng mức mặc định bên dưới.
+// Số ảnh/video tối đa của một cấp tin. Chưa đặt trong admin → mức mặc định bên dưới.
 const ANH_MAC_DINH: Record<TierId, number> = { diamond: 15, gold: 12, silver: 10, basic: 7 };
+const VIDEO_MAC_DINH: Record<TierId, number> = { diamond: 3, gold: 2, silver: 1, basic: 1 };
+
+// ── MỨC CHUNG (giai đoạn hiện tại) ──────────────────────────────────────────
+// Chưa siết theo cấp tin: MỌI tin đều 15 ảnh + 1 video, kể cả tin Basic. Khi nào
+// bắt đầu thu tiền theo cấp thì bật "Giới hạn ảnh theo cấp tin" ở trang
+// /admin/gia-khuyen-mai → quay lại mức riêng từng cấp (Basic 7 · Silver 10 ·
+// Gold 12 · Diamond 15). Không phải sửa code.
+export const ANH_CHUNG_MAC_DINH = 15;
+export const VIDEO_CHUNG_MAC_DINH = 1;
 
 export function soAnhToiDa(data: BillingData, tierId: TierId): number {
+  if (!data.mediaTheoCap) return data.anhChung ?? ANH_CHUNG_MAC_DINH;
   return data.plans.find((p) => p.tierId === tierId)?.maxImages ?? ANH_MAC_DINH[tierId];
+}
+
+export function soVideoToiDa(data: BillingData, tierId: TierId): number {
+  if (!data.mediaTheoCap) return data.videoChung ?? VIDEO_CHUNG_MAC_DINH;
+  return data.plans.find((p) => p.tierId === tierId)?.maxVideos ?? VIDEO_MAC_DINH[tierId];
 }
 
 // ── GÓI DỰ ÁN (CVR-PJ) ──────────────────────────────────────────────────────
@@ -125,6 +141,11 @@ export type BillingData = {
   points: PointPolicy;
   levels: MemberLevel[];
   topupAmounts: number[];   // mệnh giá nạp nhanh
+  // GIỚI HẠN ẢNH/VIDEO — mặc định TẮT: mọi tin dùng CHUNG một mức (anhChung/
+  // videoChung). Bật lên = mỗi cấp tin một mức riêng theo maxImages/maxVideos.
+  mediaTheoCap?: boolean;
+  anhChung?: number;        // số ảnh tối đa khi CHƯA chia theo cấp
+  videoChung?: number;      // số video tối đa khi CHƯA chia theo cấp
 };
 
 // ── GIÁ GÓI DỰ ÁN CHUẨN (khớp mục "Gói Dự án" trong trang Báo giá) ──────────

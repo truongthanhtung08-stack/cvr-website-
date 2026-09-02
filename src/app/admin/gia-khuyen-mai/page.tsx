@@ -8,6 +8,9 @@ import {
   goiDuAn,
   soAnhDuAnToiDa,
   soAnhToiDa,
+  soVideoToiDa,
+  ANH_CHUNG_MAC_DINH,
+  VIDEO_CHUNG_MAC_DINH,
   tenGoiMienPhi,
   vnd,
   type Plan,
@@ -142,6 +145,12 @@ function PlansTab({ data, setData }: { data: BillingData; setData: (d: BillingDa
       plans: data.plans.map((p) => (p.tierId === tierId ? { ...p, maxImages } : p)),
     });
 
+  const setMaxVideos = (tierId: TierId, maxVideos: number) =>
+    setData({
+      ...data,
+      plans: data.plans.map((p) => (p.tierId === tierId ? { ...p, maxVideos } : p)),
+    });
+
   const setPrice = (tierId: TierId, days: number, price: number) =>
     setData({
       ...data,
@@ -152,7 +161,56 @@ function PlansTab({ data, setData }: { data: BillingData; setData: (d: BillingDa
       ),
     });
 
+  const theoCap = data.mediaTheoCap === true;
+
   return (
+    <>
+    {/* ── GIỚI HẠN ẢNH / VIDEO ────────────────────────────────────────────
+        Giai đoạn đầu để CHUNG một mức cho mọi tin (15 ảnh + 1 video). Khi bắt
+        đầu thu tiền theo cấp thì bật công tắc → mỗi cấp một mức riêng. */}
+    <Panel
+      title="Giới hạn ảnh & video mỗi tin"
+      desc="Đang để chung một mức cho mọi tin. Bật công tắc khi muốn mỗi cấp tin một mức riêng (quyền lợi để khách nâng gói)."
+    >
+      <label className="flex items-center gap-3 text-sm text-cvr-ink">
+        <input
+          type="checkbox"
+          checked={theoCap}
+          onChange={(e) => setData({ ...data, mediaTheoCap: e.target.checked })}
+          className="h-4 w-4 accent-cvr-ink"
+        />
+        <span className="font-medium">Giới hạn ảnh theo cấp tin</span>
+        <span className="text-cvr-muted">{theoCap ? "(đang bật — dùng cột trong bảng dưới)" : "(đang tắt — mọi tin dùng mức chung)"}</span>
+      </label>
+
+      {!theoCap && (
+        <div className="mt-4 flex flex-wrap gap-6">
+          <div>
+            <p className="mb-1 text-xs uppercase tracking-wide text-cvr-muted">Số ảnh tối đa / tin</p>
+            <input
+              type="number"
+              min={1}
+              max={50}
+              value={data.anhChung ?? ANH_CHUNG_MAC_DINH}
+              onChange={(e) => setData({ ...data, anhChung: Math.max(1, Number(e.target.value) || 1) })}
+              className="h-10 w-24 rounded-lg border border-cvr-line px-3 text-sm text-cvr-ink outline-none focus:border-cvr-ink"
+            />
+          </div>
+          <div>
+            <p className="mb-1 text-xs uppercase tracking-wide text-cvr-muted">Số video tối đa / tin</p>
+            <input
+              type="number"
+              min={0}
+              max={10}
+              value={data.videoChung ?? VIDEO_CHUNG_MAC_DINH}
+              onChange={(e) => setData({ ...data, videoChung: Math.max(0, Number(e.target.value) || 0) })}
+              className="h-10 w-24 rounded-lg border border-cvr-line px-3 text-sm text-cvr-ink outline-none focus:border-cvr-ink"
+            />
+          </div>
+        </div>
+      )}
+    </Panel>
+
     <Panel title="Giá chuẩn từng gói đăng tin" desc="Đây là giá gốc. Khuyến mãi và ưu đãi cấp thành viên sẽ trừ trên giá này.">
       <div className="overflow-x-auto">
         <table className="w-full min-w-[560px] text-sm">
@@ -163,6 +221,7 @@ function PlansTab({ data, setData }: { data: BillingData; setData: (d: BillingDa
                 <th key={t.days} className="py-2.5">{t.days} ngày</th>
               ))}
               <th className="py-2.5">Số ảnh tối đa</th>
+              <th className="py-2.5">Số video tối đa</th>
             </tr>
           </thead>
           <tbody>
@@ -196,12 +255,29 @@ function PlansTab({ data, setData }: { data: BillingData; setData: (d: BillingDa
                   />
                   <p className="mt-1 text-[11px] text-cvr-faint">ảnh / tin</p>
                 </td>
+                <td className="py-3 pr-3">
+                  <input
+                    type="number"
+                    min={0}
+                    max={10}
+                    value={p.maxVideos ?? soVideoToiDa(data, p.tierId)}
+                    onChange={(e) => setMaxVideos(p.tierId, Math.max(0, Number(e.target.value) || 0))}
+                    className="h-10 w-24 rounded-lg border border-cvr-line px-3 text-sm text-cvr-ink outline-none focus:border-cvr-ink"
+                  />
+                  <p className="mt-1 text-[11px] text-cvr-faint">video / tin</p>
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+      {!theoCap && (
+        <p className="mt-3 text-xs text-cvr-muted">
+          Công tắc đang TẮT nên hai cột ảnh/video ở đây chưa có hiệu lực — mọi tin dùng mức chung phía trên.
+        </p>
+      )}
     </Panel>
+    </>
   );
 }
 

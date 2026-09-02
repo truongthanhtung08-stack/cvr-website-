@@ -13,11 +13,18 @@ import {
   type ParsedRow,
 } from "@/lib/csvTin";
 import { docXlsx } from "@/lib/docXlsx";
-import { uploadImageFile } from "@/lib/uploadImage";
-import { soAnhToiDa } from "@/lib/billing";
+import { uploadImageFile, uploadVideoFile } from "@/lib/uploadImage";
+import { soAnhToiDa, soVideoToiDa } from "@/lib/billing";
 import { isVideoUrl } from "@/lib/media";
 import { useBilling } from "@/lib/useBilling";
 import type { TierId } from "@/lib/packages";
+
+// Lấy lại TÊN TỆP GỐC từ một link trong kho ảnh: kho lưu dạng
+// "<mốc thời gian>-<số ngẫu nhiên>-<tên tệp>" nên bỏ hai cụm đầu là ra tên gốc.
+function tenTepTuUrl(u: string): string {
+  const cuoi = decodeURIComponent(u.split("?")[0].split("/").pop() ?? "");
+  return cuoi.replace(/^\d+-\d+-/, "");
+}
 
 // ============================================================================
 // ADMIN — ĐĂNG NHIỀU TIN CÙNG LÚC BẰNG FILE (Excel/CSV)
@@ -46,7 +53,7 @@ export default function NhapHangLoatPage() {
   //      (ghi thiếu đuôi .jpg cũng khớp). Ghi sẵn link/đường dẫn thì dùng thẳng.
   //   2) Cột "ma_anh" → tự gom mọi ảnh tải lên có tên bắt đầu bằng mã đó,
   //      xếp theo SỐ cuối tên tệp nên ảnh …-1 làm ẢNH ĐẠI DIỆN.
-  const anhCuaTin = (r: ParsedRow): { urls: string[]; thieu: string[]; boBot: number; toiDa: number } => {
+  const anhCuaTin = (r: ParsedRow): { urls: string[]; thieu: string[]; boBot: number; toiDa: number; toiDaVideo: number } => {
     const urls: string[] = [];
     const thieu: string[] = [];
 
@@ -63,11 +70,22 @@ export default function NhapHangLoatPage() {
       .map((a) => a.url)
       .filter((u) => !urls.includes(u)); // đã lấy theo tên tệp thì không lấy lại
 
-    // GIỚI HẠN ẢNH THEO CẤP TIN (Basic 7 · Silver 10 · Gold 12 · Diamond 15)
+    // GIỚI HẠN ẢNH & VIDEO — mức chung 15 ảnh + 1 video (đổi ở /admin/gia-khuyen-mai).
+    // Cắt RIÊNG hai loại: video xếp chung cột images nhưng KHÔNG chiếm suất ảnh,
+    // và luôn xếp sau ảnh để ảnh đầu tiên vẫn là ảnh đại diện.
     const tier = (r.payload.tier as TierId) ?? "basic";
     const toiDa = soAnhToiDa(billing, tier);
+    const toiDaVideo = soVideoToiDa(billing, tier);
     const tatCa = [...urls, ...theoMa];
-    return { urls: tatCa.slice(0, toiDa), thieu, boBot: Math.max(0, tatCa.length - toiDa), toiDa };
+    const anhCat = tatCa.filter((u) => !isVideoUrl(u)).slice(0, toiDa);
+    const videoCat = tatCa.filter(isVideoUrl).slice(0, toiDaVideo);
+    return {
+      urls: [...anhCat, ...videoCat],
+      thieu,
+      boBot: tatCa.length - anhCat.length - videoCat.length,
+      toiDa,
+      toiDaVideo,
+    };
   };
 
   // ĐÚNG LUẬT nhưng CHƯA có ảnh thật (mới ghi ma_anh, chưa tải ảnh ở Bước 4)
@@ -80,13 +98,18 @@ export default function NhapHangLoatPage() {
   const chuaAnh = dungLuat.filter((r) => soAnhThat(r) === 0);
   const hopLe = dungLuat.filter((r) => soAnhThat(r) > 0);
 
+  // Nhận CẢ ẢNH LẪN VIDEO trong một lượt chọn: Cowork giao chung một thư mục,
+  // trong đó video đặt tên theo cùng mã tin (dn06-video.mp4) nên tự khớp về đúng tin.
+  const laTepVideo = (f: File) =>
+    f.type.startsWith("video/") || /\.(mp4|webm|mov|m4v|mkv)$/i.test(f.name);
+
   async function taiAnhHangLoat(files: FileList) {
     setLoiAnh("");
     const ds = Array.from(files);
     setDangTaiAnh(ds.length);
     const them: { ten: string; url: string }[] = [];
     for (const f of ds) {
-      const { url, error } = await uploadImageFile(f);
+      const { url, error } = laTepVideo(f) ? await uploadVideoFile(f) : await uploadImageFile(f);
       if (error) setLoiAnh(error);
       else if (url) them.push({ ten: f.name, url });
       setDangTaiAnh((n) => n - 1);
@@ -162,8 +185,20 @@ export default function NhapHangLoatPage() {
       let capNhat = 0;
       for (const r of tinCu) {
         const cu = daCo.get(r.maAnh)!;
-        const { urls, toiDa } = anhCuaTin(r);
-        const gop = [...cu.images, ...urls.filter((u) => !cu.images.includes(u))].slice(0, toiDa);
+        const { urls, toiDa, toiDaVideo } = anhCuaTin(r);
+        // Gộp ảnh mới vào sau ảnh cũ, bỏ trùng, rồi cắt RIÊNG ảnh và video theo
+        // giới hạn hiện hành (nới giới hạn lên là lần tải sau tự bổ sung thêm ảnh).
+        // ⚠️ Mỗi lần tải lên kho ảnh sinh một tên mới, nên CÙNG MỘT TẤM ẢNH tải
+        // hai lần sẽ ra hai URL khác nhau. Vì vậy so trùng bằng TÊN TỆP GỐC nằm
+        // ở cuối URL, không so bằng URL — không thì tải lại file là nhân đôi ảnh.
+        const tron = [
+          ...cu.images,
+          ...urls.filter((u) => !cu.images.some((c) => c === u || cungTenTep(tenTepTuUrl(c), tenTepTuUrl(u)))),
+        ];
+        const gop = [
+          ...tron.filter((u) => !isVideoUrl(u)).slice(0, toiDa),
+          ...tron.filter(isVideoUrl).slice(0, toiDaVideo),
+        ];
         if (gop.length === cu.images.length) continue; // không có ảnh nào mới
         const { error } = await supabase.from("listings").update({ images: gop }).eq("id", cu.id);
         if (error) {
@@ -239,7 +274,7 @@ export default function NhapHangLoatPage() {
       {/* BƯỚC 4 — TẢI ẢNH HÀNG LOẠT, TỰ KHỚP VÀO TIN THEO TÊN TỆP */}
       <section className="rounded-xl border border-cvr-line bg-white p-5">
         <p className="text-xs font-bold uppercase tracking-wider text-cvr-faint">Bước 4</p>
-        <h2 className="mt-1 text-base font-semibold text-cvr-ink">Tải ảnh cho tất cả tin — một lượt</h2>
+        <h2 className="mt-1 text-base font-semibold text-cvr-ink">Tải ảnh &amp; video cho tất cả tin — một lượt</h2>
         <p className="mt-1 text-sm text-cvr-muted">
           Ảnh để trong thư mục trên máy, tên ảnh khớp cột <code>ma_anh</code> trong file Excel.
           Chọn HẾT ảnh một lần — hệ thống tự chia về đúng từng tin, ảnh <strong>-1</strong> làm ảnh đại diện.
@@ -248,15 +283,20 @@ export default function NhapHangLoatPage() {
         <p className="mt-1 text-sm text-cvr-muted">
           Mọi ảnh tải lên đều được <strong>tự thu nhỏ + đóng dấu chìm “COASTAL LAND”</strong> ở góc dưới phải.
         </p>
+        <p className="mt-1 text-sm text-cvr-muted">
+          Chọn luôn cả <strong>video</strong> (mp4, mov…) đặt tên cùng mã tin — mỗi tin nhận
+          <strong> 15 ảnh + 1 video</strong>. Video phải <strong>dưới 50MB</strong>; nặng hơn thì
+          đưa lên YouTube rồi dán link vào cột <code>video</code> của file Excel (không tốn kho ảnh).
+        </p>
         <div className="mt-3 flex flex-wrap items-center gap-3">
           <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-cvr-line px-4 py-2 text-sm font-medium text-cvr-body hover:border-cvr-ink hover:text-cvr-ink">
             <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 16V4m0 0L8 8m4-4l4 4M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" />
             </svg>
-            Chọn nhiều ảnh từ máy
+            Chọn nhiều ảnh / video từ máy
             <input
               type="file"
-              accept="image/*"
+              accept="image/*,video/*"
               multiple
               className="hidden"
               onChange={(e) => { const f = e.target.files; if (f?.length) taiAnhHangLoat(f); e.target.value = ""; }}

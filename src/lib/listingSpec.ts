@@ -56,7 +56,7 @@ export const interiorItems = [
 //    loại chung, vd "Đất công nghiệp" phải khớp Kho xưởng TRƯỚC khi khớp "Đất".
 export type CategorySpec = { label: string; match: string[]; fields: Field[] };
 
-const floorsField: Field = { key: "floors", label: "Số tầng", type: "select", options: ["1", "2", "3", "4", "5", "6+"] };
+const floorsField: Field = { key: "floors", label: "Số tầng", type: "select", options: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10+"] };
 // Kích thước lô: mặt tiền = CHIỀU NGANG, depth = CHIỀU DÀI (chiều sâu). Đặt cạnh nhau
 // cho mọi loại gắn với thửa đất (nhà, đất) để nhập/hiển thị "ngang × dài" khoa học.
 const frontageField: Field = { key: "frontage", label: "Chiều ngang (mặt tiền)", type: "number", unit: "m" };
@@ -122,6 +122,7 @@ export const categorySpecs: CategorySpec[] = [
       { key: "usableArea", label: "Diện tích sử dụng", type: "number", unit: "m²" },
       { key: "floor", label: "Tầng số", type: "text", placeholder: "VD: Tầng 3" },
       frontageField,
+      roadField,
       { key: "grade", label: "Hạng toà nhà", type: "select", options: ["Hạng A", "Hạng B", "Hạng C", "Nhà phố"] },
     ],
   },
@@ -132,6 +133,7 @@ export const categorySpecs: CategorySpec[] = [
       floorsField,
       frontageField,
       depthField,
+      roadField,
       { key: "gardenArea", label: "Diện tích sân vườn", type: "number", unit: "m²" },
       { key: "pool", label: "Hồ bơi riêng", type: "select", options: ["Có", "Không"] },
       { key: "view", label: "View / cảnh quan", type: "select", options: ["Biển", "Sông / hồ", "Sân golf", "Công viên", "Nội khu"] },
@@ -193,6 +195,22 @@ export const categorySpecs: CategorySpec[] = [
     ],
   },
 ];
+
+// ── TRƯỜNG RIÊNG CHO TIN CHO THUÊ ───────────────────────────────────────────
+// Ba việc người thuê nào cũng hỏi trước khi đi xem. Áp cho MỌI loại hình nhưng
+// CHỈ khi tin là cho thuê, nên để riêng chứ không nhét vào categorySpecs.
+export const rentFields: Field[] = [
+  { key: "moveIn", label: "Thời gian dự kiến vào ở", type: "text", placeholder: "VD: Vào ở ngay" },
+  { key: "elecPrice", label: "Giá điện", type: "text", placeholder: "VD: 3.500đ/kWh · theo nhà nước" },
+  { key: "waterPrice", label: "Giá nước", type: "text", placeholder: "VD: 15.000đ/m³ · theo nhà nước" },
+];
+
+// Bộ đặc điểm ĐẦY ĐỦ của một tin = đặc điểm theo LOẠI HÌNH (+ phần cho thuê nếu có).
+// Dùng chung cho form đăng tin và trang chi tiết để hai bên không bao giờ lệch nhau.
+export function fieldsFor(type: string, purpose?: string): Field[] {
+  const base = specForType(type).fields;
+  return purpose === "thue" ? [...base, ...rentFields] : base;
+}
 
 // Bộ tối giản cho loại không xác định ("Bất động sản khác") — chỉ dùng trường chung.
 const genericSpec: CategorySpec = { label: "Bất động sản khác", match: [], fields: [] };

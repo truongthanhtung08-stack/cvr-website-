@@ -12,7 +12,7 @@ import type { Listing } from "@/lib/data";
 import { featuredListings, getListingById } from "@/lib/data";
 import { asset } from "@/lib/asset";
 import { isVideoUrl } from "@/lib/media";
-import { specForType, amenityGroups } from "@/lib/listingSpec";
+import { fieldsFor, amenityGroups } from "@/lib/listingSpec";
 
 // Thuộc tính linh hoạt lưu trong cột details (JSONB) — xem 0006_listing_details.sql
 export type ListingDetailsJson = {
@@ -241,7 +241,8 @@ function rowToDetail(r: Row): ListingFull {
   const videos = r.images.filter(isVideoUrl);
   const imageOnly = r.images.filter((s) => !isVideoUrl(s));
   const imgs = imageOnly.length ? imageOnly : [anhTam(r.type)];
-  const specDefs = specForType(r.type).fields;
+  // Đặc điểm theo LOẠI HÌNH, tin cho thuê có thêm phần điện/nước/thời gian vào ở
+  const specDefs = fieldsFor(r.type, r.purpose);
   const specs = specDefs
     .map((f) => ({ label: f.label + (f.unit ? ` (${f.unit})` : ""), value: (d.specs?.[f.key] ?? "").trim() }))
     .filter((s) => s.value);

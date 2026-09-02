@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useCompare } from "@/lib/useCompare";
+// Nút Zalo trỏ về OA (có tick), không phải nick cá nhân — lý do xem lib/lienHe.ts
+import { ZALO_OA_URL as ZALO_URL } from "@/lib/lienHe";
 
 // ════════════════════════════════════════════════════════════════════════════
 // NÚT CHAT NỔI — BẤM LÀ SANG THẲNG ZALO
@@ -13,17 +15,6 @@ import { useCompare } from "@/lib/useCompare";
 // Nhờ vậy khách nhắn thẳng cho người thật, không còn máy trả lời vòng vo.
 // ════════════════════════════════════════════════════════════════════════════
 
-// Trỏ về ZALO OFFICIAL ACCOUNT "Coastal Land" (OA ID 1928684637254080247), KHÔNG
-// phải nick cá nhân 0377985036 như trước.
-//
-// VÌ SAO ĐỔI (24/08/2026): nick cá nhân không bao giờ có dấu tick xác thực — Zalo
-// chỉ cấp tick cho OA. Khách bấm vào nick cá nhân thấy "Kết bạn" và không có tick
-// thì dễ nghĩ là giả mạo. OA đã được Zalo duyệt xác thực nên hiện "Quan tâm" kèm
-// tick và dòng "OA này đã được xác thực bởi Zalo".
-//
-// Ngoài ra chỉ OA mới gửi được ZNS (mã OTP đăng nhập, báo nạp tiền, báo duyệt tin)
-// — dồn khách về OA thì sau này nhắn tin cho họ được.
-const ZALO_URL = "https://zalo.me/1928684637254080247";
 
 // Trang ĐÃ CÓ thanh hành động bám đáy trên điện thoại (Gọi · Zalo ở trang chi
 // tiết) — nút chat nổi đúng vùng đó sẽ đè lên, nên ẩn hẳn trên mobile.

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import {
-  categorySpecs, propertyCategories, demandTypes,
+  categorySpecs, propertyCategories, demandTypes, rentFields,
   legalOptions, furnishLevels, amenityGroups, interiorItems, directions,
   purposeOfDemand, demandOfPurpose,
 } from "@/lib/listingSpec";
@@ -13,7 +13,7 @@ import { provinceNamesFor, districtsOf, wardsOf, wardsOfNew, type GeoMode } from
 import ImagePicker from "@/components/admin/ImagePicker";
 import MapPicker from "@/components/MapPicker";
 import ContentEditor from "@/components/admin/ContentEditor";
-import { freeNote, levelOf, quotePrice, soAnhToiDa, tenGoiMienPhi, vnd } from "@/lib/billing";
+import { freeNote, levelOf, quotePrice, soAnhToiDa, soVideoToiDa, tenGoiMienPhi, vnd } from "@/lib/billing";
 import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
 import { useBilling } from "@/lib/useBilling";
 import { getTier, type TierId } from "@/lib/packages";
@@ -160,6 +160,11 @@ export default function PostListingForm() {
   };
 
   const spec = useMemo(() => categorySpecs.find((c) => c.label === category) ?? categorySpecs[0], [category]);
+  // Tin CHO THUÊ có thêm 3 mục: thời gian vào ở · giá điện · giá nước
+  const specFields = useMemo(
+    () => (purposeOfDemand(demand) === "thue" ? [...spec.fields, ...rentFields] : spec.fields),
+    [spec, demand],
+  );
   // Hệ MỚI (sau sáp nhập): bỏ cấp Quận/Huyện — Tỉnh/Thành → thẳng Phường/Xã
   const provinceOptions = provinceNamesFor(geoMode);
   const districts = geoMode === "moi" ? [] : province ? districtsOf(province) : [];
@@ -493,7 +498,7 @@ export default function PostListingForm() {
       {/* 4. Đặc điểm theo loại hình (động) */}
       <Card step="4" title={`Đặc điểm — ${spec.label}`}>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {spec.fields.map((f) => (
+          {specFields.map((f) => (
             <div key={f.key}>
               <Label>{f.label}{f.unit ? ` (${f.unit})` : ""}</Label>
               {f.type === "select" ? (
@@ -574,6 +579,7 @@ export default function PostListingForm() {
           value={images}
           onChange={setImages}
           maxImages={soAnhToiDa(billing, planTier)}
+          maxVideos={soVideoToiDa(billing, planTier)}
           tierName={getTier(planTier).name}
         />
       </Card>

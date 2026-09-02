@@ -5,12 +5,12 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { saleTypeGroups, rentTypeGroups } from "@/lib/filters";
 import { provinceNamesFor, districtsOf, wardsOf, wardsOfNew, type GeoMode } from "@/lib/locations";
-import { specForType, interiorItems, amenityGroups, legalOptions, furnishLevels, directions } from "@/lib/listingSpec";
+import { fieldsFor, interiorItems, amenityGroups, legalOptions, furnishLevels, directions } from "@/lib/listingSpec";
 import ImagePicker from "@/components/admin/ImagePicker";
 import MapPicker from "@/components/MapPicker";
 import ContentEditor from "@/components/admin/ContentEditor";
 import { uploadImageFile } from "@/lib/uploadImage";
-import { soAnhToiDa } from "@/lib/billing";
+import { soAnhToiDa, soVideoToiDa } from "@/lib/billing";
 import { useBilling } from "@/lib/useBilling";
 import { getTier } from "@/lib/packages";
 import { Panel, Field } from "@/components/Ui";
@@ -142,7 +142,8 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
   }
 
   const typeGroups = purpose === "thue" ? rentTypeGroups : saleTypeGroups;
-  const specFields = type ? specForType(type).fields : [];
+  // Tin CHO THUÊ có thêm 3 mục: thời gian vào ở · giá điện · giá nước
+  const specFields = type ? fieldsFor(type, purpose) : [];
 
   // Danh sách quận/huyện & phường/xã liên động theo lựa chọn cấp trên
   // Hệ đơn vị hành chính: MỚI (sau sáp nhập) bỏ cấp Quận/Huyện
@@ -492,6 +493,7 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
           value={images}
           onChange={setImages}
           maxImages={soAnhToiDa(billing, tier)}
+          maxVideos={soVideoToiDa(billing, tier)}
           tierName={getTier(tier).name}
         />
       </Panel>

@@ -12,11 +12,13 @@ export default function ImagePicker({
   value,
   onChange,
   maxImages,
+  maxVideos,
   tierName,
 }: {
   value: string[];
   onChange: (imgs: string[]) => void;
-  maxImages?: number;   // giới hạn ảnh theo cấp tin (Basic 7 · Silver 10 · Gold 12 · Diamond 15)
+  maxImages?: number;   // giới hạn ẢNH — mức chung 15, hoặc theo cấp tin khi admin bật
+  maxVideos?: number;   // giới hạn VIDEO — mức chung 1, hoặc theo cấp tin khi admin bật
   tierName?: string;
 }) {
   const imgRef = useRef<HTMLInputElement>(null);
@@ -34,6 +36,10 @@ export default function ImagePicker({
   // Số ẢNH (không tính video) đang có và còn nhận thêm được bao nhiêu
   const soAnh = value.filter((v) => !isVideoUrl(v)).length;
   const conNhan = maxImages == null ? Infinity : Math.max(0, maxImages - soAnh);
+
+  // Số VIDEO đang có và còn nhận thêm được bao nhiêu (đếm riêng, không lẫn với ảnh)
+  const soVideo = value.filter(isVideoUrl).length;
+  const conNhanVideo = maxVideos == null ? Infinity : Math.max(0, maxVideos - soVideo);
 
   async function handleImageFiles(files: FileList | null) {
     if (!files || files.length === 0) return;
@@ -66,6 +72,11 @@ export default function ImagePicker({
     const file = files?.[0];
     if (!file) return;
     setError("");
+    if (conNhanVideo <= 0) {
+      setError(`Mỗi tin chỉ đăng tối đa ${maxVideos} video — xoá video cũ rồi thêm lại.`);
+      if (videoRef.current) videoRef.current.value = "";
+      return;
+    }
     setUploadingVideo(true);
     const { url, error: e } = await uploadVideoFile(file);
     setUploadingVideo(false);
@@ -80,6 +91,10 @@ export default function ImagePicker({
     if (!url) return;
     if (!isVideoUrl(url) && conNhan <= 0) {
       setError(`Tin ${tierName ?? ""} chỉ đăng tối đa ${maxImages} ảnh.`);
+      return;
+    }
+    if (isVideoUrl(url) && conNhanVideo <= 0) {
+      setError(`Mỗi tin chỉ đăng tối đa ${maxVideos} video.`);
       return;
     }
     onChange([...value, url]);
@@ -159,6 +174,11 @@ export default function ImagePicker({
       )}
 
       {/* Bộ đếm ảnh theo cấp tin — nhìn là biết còn được thêm bao nhiêu */}
+      {maxVideos != null && (
+        <p className="text-xs text-cvr-muted">
+          Video: <span className={soVideo >= maxVideos ? "text-red-600" : "text-cvr-ink"}>{soVideo}/{maxVideos}</span>
+        </p>
+      )}
       {maxImages != null && (
         <p className="text-sm font-medium text-cvr-body">
           Ảnh: <span className={soAnh >= maxImages ? "text-red-600" : "text-cvr-ink"}>{soAnh}/{maxImages}</span>
