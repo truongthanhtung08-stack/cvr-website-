@@ -156,13 +156,13 @@ export default function ListingBrowser({
           </p>
         </div>
         <div className="flex flex-1 flex-wrap items-center justify-end gap-3">
-              {/* XEM BẢN ĐỒ — CHỈ mobile. Trên PC nút này nằm NGAY CẠNH ô tìm kiếm
-                  (do FilterBar dựng, đúng bố cục Batdongsan) nên ở đây ẩn đi. */}
+              {/* XEM BẢN ĐỒ — LỐI VÀO DUY NHẤT, hiện trên mọi màn hình. Nút cũ
+                  của thanh lọc (cạnh ô tìm kiếm) đã bỏ vì trùng chức năng. */}
               <button
                 type="button"
                 onClick={() => setMapMode((v) => !v)}
                 aria-pressed={mapMode}
-                className={`mr-auto inline-flex min-h-[38px] items-center gap-2 rounded-lg px-3.5 text-sm font-semibold transition sm:hidden ${
+                className={`mr-auto inline-flex min-h-[38px] items-center gap-2 rounded-lg px-3.5 text-sm font-semibold transition ${
                   mapMode
                     ? "bg-cvr-ink text-white"
                     : "border border-cvr-line bg-white text-cvr-body hover:border-cvr-ink hover:text-cvr-ink"

@@ -743,24 +743,9 @@ export default function FilterBar({
         )}
       </div>
       {/* (Hero) Nút tìm đã nằm TRONG ô tìm ở trên — không còn nút rời bên ngoài. */}
-      {/* Nút Bản đồ cạnh ô tìm — CHỈ desktop (mobile chật → đưa xuống hàng chip lọc) */}
-      {!compact && onMap && (
-        <button
-          type="button"
-          onClick={onMap}
-          aria-pressed={mapActive}
-          // Nút PHỤ: viền mảnh, chữ xanh — để không tranh với nút "Tìm kiếm" (nút
-          // chính, nền xanh đặc). Bo góc + chiều cao khớp ô tìm cho đồng bộ.
-          className={`flex h-11 shrink-0 items-center gap-2 rounded-xl border px-3 text-sm font-semibold transition sm:px-4 ${
-            mapActive
-              ? "border-cvr-blue bg-cvr-blue text-white"
-              : "border-cvr-line bg-white text-cvr-blue-ink hover:border-cvr-blue hover:bg-cvr-blue/5"
-          }`}
-        >
-          <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4M9 7l6-3" /></svg>
-          Xem bản đồ
-        </button>
-      )}
+      {/* ĐÃ BỎ nút "Xem bản đồ" của thanh lọc. Trang /mua-ban và /cho-thue chỉ
+          còn MỘT lối vào bản đồ: nút ở hàng menu ngay trên danh sách tin
+          (ListingBrowser dựng). Trước đây có hai nút cùng chức năng. */}
     </div>
 
     {/* ===== MOBILE: TRANG TÌM TOÀN MÀN HÌNH kiểu Google — chạm ô tìm là mở ===== */}
