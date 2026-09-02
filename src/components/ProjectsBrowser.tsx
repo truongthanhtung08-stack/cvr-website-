@@ -10,7 +10,13 @@ import { provinceNamesFor, type GeoMode } from "@/lib/locations";
 import { projectHints } from "@/lib/searchHints";
 import { useTypingPlaceholder } from "@/lib/useTypingPlaceholder";
 import { cuonToiKetQua } from "@/lib/scroll";
+import dynamic from "next/dynamic";
+import { coordOf } from "@/lib/geo";
+import type { DiemBanDo } from "@/components/MapView";
 import type { Project, Article } from "@/lib/data";
+
+// Bản đồ chỉ chạy phía client (Leaflet đụng tới window) — nạp động, không SSR.
+const MapView = dynamic(() => import("@/components/MapView"), { ssr: false });
 
 const GEO_MODE_KEY = "cl-geo-mode"; // đồng bộ hệ đơn vị hành chính với FilterBar (Mua bán/Cho thuê)
 
@@ -181,6 +187,8 @@ export default function ProjectsBrowser({
   // Phân trang danh sách dự án: 9 dự án/trang (khớp yêu cầu "8–10/trang").
   const PER_PAGE = 9;
   const [page, setPage] = useState(1);
+  // CHẾ ĐỘ BẢN ĐỒ cho tab Dự án — giống Mua bán / Cho thuê, marker là TÊN DỰ ÁN.
+  const [mapMode, setMapMode] = useState(false);
   useEffect(() => { setPage(1); }, [q, status, province, type]); // đổi lọc → về trang 1
   const totalPages = Math.max(1, Math.ceil(visible.length / PER_PAGE));
   const current = Math.min(page, totalPages);
@@ -485,7 +493,55 @@ export default function ProjectsBrowser({
         Hiện có {visible.length} dự án căn hộ, khu đô thị và nghỉ dưỡng đang được cập nhật trên Coastal Land.
       </p>
 
-      <div className="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-3">
+      {/* NÚT XEM BẢN ĐỒ — cùng vị trí với trang Mua bán / Cho thuê để khách quen tay */}
+      <div className="mt-4 flex flex-wrap items-center gap-3">
+        <button
+          type="button"
+          onClick={() => setMapMode((v) => !v)}
+          aria-pressed={mapMode}
+          className={`inline-flex min-h-[40px] items-center gap-2 rounded-lg px-3.5 text-sm font-semibold transition ${
+            mapMode
+              ? "bg-cvr-ink text-white"
+              : "border border-cvr-line bg-white text-cvr-body hover:border-cvr-ink hover:text-cvr-ink"
+          }`}
+        >
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.9} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 4.5l6 2.4 5-2.4v14.4l-5 2.4-6-2.4-5 2.4V4.9l5-2.4v16.8" />
+          </svg>
+          {mapMode ? "Xem danh sách" : "Xem bản đồ"}
+        </button>
+      </div>
+
+      {/* ═══ CHẾ ĐỘ BẢN ĐỒ ═══ marker là TÊN DỰ ÁN, bấm ra thẻ mini dẫn tới trang
+          dự án. Có nút "Vị trí của tôi" ngay trên bản đồ, kéo một ngón. */}
+      {mapMode && (
+        <div className="mt-4 overflow-hidden rounded-xl border border-cvr-line">
+          <div className="h-[62vh] min-h-[380px] w-full">
+            <MapView
+              diem={visible.map((p): DiemBanDo => {
+                const [lat, lng] = coordOf(p.location, p.slug);
+                return {
+                  id: p.slug,
+                  lat,
+                  lng,
+                  nhan: p.name,
+                  title: p.name,
+                  phu: `${p.priceFrom} · ${p.status}`,
+                  loc: p.location,
+                  image: p.image,
+                  href: `/du-an/${p.slug}`,
+                };
+              })}
+            />
+          </div>
+          <p className="border-t border-cvr-line bg-cvr-surface px-3 py-2 text-xs text-cvr-muted">
+            Đang hiện <span className="font-semibold text-cvr-ink">{visible.length}</span> dự án theo bộ lọc.
+            Bấm vào tên dự án để xem nhanh.
+          </p>
+        </div>
+      )}
+
+      <div className={`mt-6 grid grid-cols-1 gap-8 lg:grid-cols-3 ${mapMode ? "hidden" : ""}`}>
         {/* ── Cột chính: thẻ dự án ngang ── */}
         <div className="lg:col-span-2">
           {/* Nhãn TẦNG kết quả — giống trang Mua bán / Cho thuê */}
