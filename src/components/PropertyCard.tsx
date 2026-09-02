@@ -130,9 +130,19 @@ export default function PropertyCard({
         {/* Mô tả — số dòng theo cấp (Diamond 2 · Gold 1 · Silver/Basic 0) */}
         {descLines > 0 && (
           <p className={`mt-1 text-sm leading-relaxed text-cvr-muted ${
-            /* Thẻ trang chủ trên MOBILE: ẩn mô tả cho thẻ gọn, màn hình đầu thấy trọn tin */
-            isTier ? "hidden sm:block " : ""
-          }${descLines === 1 ? "line-clamp-1" : "line-clamp-2 min-h-[2.2rem]"}`}>
+            /* Thẻ trang chủ trên MOBILE: ẩn mô tả cho thẻ gọn, màn hình đầu thấy trọn tin.
+               ⚠️ Trên PC phải bật lại bằng chính lớp sm:line-clamp-*, TUYỆT ĐỐI KHÔNG dùng
+               "sm:block": lớp block đè lên display:-webkit-box của line-clamp nên mô tả
+               HẾT bị cắt — tin Diamond/Gold xổ nguyên bài mô tả, thẻ cao gấp 3 lần thẻ
+               thường và vỡ cả hàng (lỗi 02/09/2026, chỉ thấy trên PC vì mobile đang ẩn). */
+            isTier
+              ? descLines === 1
+                ? "hidden sm:line-clamp-1"
+                : "hidden sm:line-clamp-2 min-h-[2.2rem]"
+              : descLines === 1
+                ? "line-clamp-1"
+                : "line-clamp-2 min-h-[2.2rem]"
+          }`}>
             {listingSummary(item)}
           </p>
         )}
