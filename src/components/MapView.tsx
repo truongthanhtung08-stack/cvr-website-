@@ -30,6 +30,7 @@ export default function MapView({ items, diem }: { items?: Listing[]; diem?: Die
   const mapRef = useRef<L.Map | null>(null);
   const layerRef = useRef<L.LayerGroup | null>(null);
   const chamRef = useRef<L.CircleMarker | null>(null);
+  const vongRef = useRef<L.CircleMarker | null>(null);
   const [dangDinhVi, setDangDinhVi] = useState(false);
   const [loi, setLoi] = useState("");
 
@@ -109,6 +110,17 @@ export default function MapView({ items, diem }: { items?: Listing[]; diem?: Die
     if (!map) return;
     const p: [number, number] = [lat, lng];
     if (doiTamNhin) map.setView(p, 14);
+    // Vòng mờ bên ngoài — chấm 7px một mình lọt thỏm giữa rừng viên giá, khách
+    // soi không ra. Có quầng xanh thì nhìn phát thấy ngay.
+    if (vongRef.current) vongRef.current.setLatLng(p);
+    else
+      vongRef.current = L.circleMarker(p, {
+        radius: 16,
+        stroke: false,
+        fillColor: "#0071e3",
+        fillOpacity: 0.18,
+        interactive: false,
+      }).addTo(map);
     if (chamRef.current) chamRef.current.setLatLng(p);
     else
       chamRef.current = L.circleMarker(p, {

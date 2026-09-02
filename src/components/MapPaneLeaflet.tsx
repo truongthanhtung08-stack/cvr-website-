@@ -9,15 +9,17 @@ import { parseLatLng } from "@/lib/googleMaps";
 // ── BẢN ĐỒ VỊ TRÍ TRONG TRANG TIN / TRANG DỰ ÁN ──────────────────────────────
 //
 // VÌ SAO KHÔNG DÙNG NỀN GOOGLE (chốt 02/09/2026): Google đóng cờ "prohibited
-// territory" vào tài khoản thanh toán (do bật VPN hôm 30/08) nên Maps JS không
-// vẽ được, khối bản đồ tụt về BẢN NHÚNG của Google — mà bản nhúng thì BẮT HAI
-// NGÓN mới kéo được và không có nút định vị. Leaflet + OpenStreetMap kéo MỘT
-// ngón, có định vị, không cần khoá và không bao giờ trắng.
-//
+// territory" vào tài khoản thanh toán nên Maps JS không vẽ được, khối bản đồ tụt
+// về BẢN NHÚNG của Google — mà bản nhúng thì BẮT HAI NGÓN mới kéo được và không
+// có nút định vị. Leaflet + OpenStreetMap kéo MỘT ngón, có định vị, không trắng.
 // Phần CHỈ ĐƯỜNG vẫn là Google Maps thật (nút bên dưới khối này, mở thẳng app).
 //
 // KHOÁ CỬ CHỈ: mặc định bản đồ KHÔNG nhận thao tác, để ngón tay lướt qua vẫn cuộn
 // trang bình thường. Chạm một cái là mở khoá, từ đó kéo/phóng bằng MỘT ngón.
+//
+// ⚠️ NÚT "VỊ TRÍ CỦA TÔI" PHẢI LUÔN HIỆN — kể cả lúc bản đồ đang khoá.
+// Bản trước giấu nút khi khoá, khách mở tin ra chỉ thấy lớp phủ "Chạm để xem bản
+// đồ", tưởng web không có định vị. Đừng bọc nút này trong điều kiện khoá nữa.
 export default function MapPaneLeaflet({
   query,
   zoom,
@@ -30,9 +32,12 @@ export default function MapPaneLeaflet({
   const boxRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<LType.Map | null>(null);
   const chamRef = useRef<LType.CircleMarker | null>(null);
+  const vongRef = useRef<LType.CircleMarker | null>(null);
   const LRef = useRef<typeof LType | null>(null);
+  const ghimRef = useRef<{ lat: number; lng: number } | null>(null);
   const [dangDinhVi, setDangDinhVi] = useState(false);
   const [loi, setLoi] = useState("");
+  const [khoangCach, setKhoangCach] = useState("");
 
   const HTML_GHIM =
     "<svg width=\"30\" height=\"40\" viewBox=\"0 0 30 40\" xmlns=\"http://www.w3.org/2000/svg\">" +
@@ -40,6 +45,19 @@ export default function MapPaneLeaflet({
     "<circle cx=\"15\" cy=\"14.5\" r=\"4.5\" fill=\"#fff\"/></svg>";
 
   const GHI_NGUON = "© <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a>";
+
+  // Khoảng cách đường chim bay giữa hai điểm (km) — chỉ để khách áng chừng
+  // "mình cách bất động sản này bao xa", không phải quãng đường đi thật.
+  function khoangCachKm(a: [number, number], b: [number, number]) {
+    const R = 6371;
+    const rad = (d: number) => (d * Math.PI) / 180;
+    const dLat = rad(b[0] - a[0]);
+    const dLng = rad(b[1] - a[1]);
+    const h =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos(rad(a[0])) * Math.cos(rad(b[0])) * Math.sin(dLng / 2) ** 2;
+    return 2 * R * Math.asin(Math.sqrt(h));
+  }
 
   // Dựng bản đồ một lần
   useEffect(() => {
@@ -54,6 +72,7 @@ export default function MapPaneLeaflet({
       const ghim = parseLatLng(query);
       const kv = centerOfArea(query);
       const tam: [number, number] = ghim ? [ghim.lat, ghim.lng] : kv ? [kv[0], kv[1]] : [16.054, 108.202];
+      if (ghim) ghimRef.current = { lat: ghim.lat, lng: ghim.lng };
 
       const map = L.map(boxRef.current, {
         zoomControl: true,
@@ -84,6 +103,7 @@ export default function MapPaneLeaflet({
       mapRef.current?.remove();
       mapRef.current = null;
       chamRef.current = null;
+      vongRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -92,8 +112,7 @@ export default function MapPaneLeaflet({
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
-    const bat = !locked;
-    if (bat) {
+    if (!locked) {
       map.dragging.enable();
       map.touchZoom.enable();
       map.doubleClickZoom.enable();
@@ -112,7 +131,18 @@ export default function MapPaneLeaflet({
     const L = LRef.current;
     const map = mapRef.current;
     if (!L || !map) return;
-    if (doiTamNhin) map.setView([lat, lng], 15);
+
+    // Vòng mờ bên ngoài cho dễ thấy giữa nền bản đồ nhiều chi tiết
+    if (vongRef.current) vongRef.current.setLatLng([lat, lng]);
+    else
+      vongRef.current = L.circleMarker([lat, lng], {
+        radius: 16,
+        stroke: false,
+        fillColor: "#0071e3",
+        fillOpacity: 0.18,
+        interactive: false,
+      }).addTo(map);
+
     if (chamRef.current) chamRef.current.setLatLng([lat, lng]);
     else
       chamRef.current = L.circleMarker([lat, lng], {
@@ -123,15 +153,34 @@ export default function MapPaneLeaflet({
         fillOpacity: 1,
         interactive: false,
       }).addTo(map);
+
+    const ghim = ghimRef.current;
+    if (ghim) {
+      const km = khoangCachKm([lat, lng], [ghim.lat, ghim.lng]);
+      setKhoangCach(km < 1 ? `Cách khoảng ${Math.round(km * 1000)} m` : `Cách khoảng ${km.toFixed(1)} km`);
+      // CHỈNH KHUNG NHÌN CHO THẤY CẢ HAI: chỗ khách đứng + bất động sản. Xa quá
+      // (trên 80 km) thì thôi, giữ nguyên bất động sản giữa màn cho khỏi mất hút.
+      if (doiTamNhin && km <= 80) {
+        map.fitBounds(
+          L.latLngBounds([
+            [lat, lng],
+            [ghim.lat, ghim.lng],
+          ]),
+          { padding: [50, 50], maxZoom: 16 },
+        );
+        return;
+      }
+    }
+    if (doiTamNhin && !ghim) map.setView([lat, lng], 15);
   }
 
-  function dinhVi() {
+  function dinhVi(tuBam: boolean) {
     if (!navigator.geolocation) {
-      setLoi("Trình duyệt không hỗ trợ định vị.");
+      if (tuBam) setLoi("Trình duyệt không hỗ trợ định vị.");
       return;
     }
     setLoi("");
-    setDangDinhVi(true);
+    if (tuBam) setDangDinhVi(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setDangDinhVi(false);
@@ -144,6 +193,9 @@ export default function MapPaneLeaflet({
       },
       (e) => {
         setDangDinhVi(false);
+        // Lúc TỰ ĐỘNG định vị mà khách chưa cho phép thì im lặng — nút vẫn nằm đó,
+        // khách bấm mới báo lý do. Không doạ khách bằng cảnh báo khi vừa mở tin.
+        if (!tuBam) return;
         setLoi(
           e.code === 1
             ? "Anh/chị đang CHẶN định vị. Bấm ổ khoá 🔒 cạnh địa chỉ web → Vị trí → Cho phép, rồi bấm lại."
@@ -156,32 +208,50 @@ export default function MapPaneLeaflet({
     );
   }
 
+  // TỰ ĐỘNG ĐỊNH VỊ KHI MỞ TIN — để khách thấy NGAY mình đang ở đâu so với bất
+  // động sản, không phải bấm gì. Trình duyệt chỉ hỏi quyền một lần cho cả web:
+  // khách đã cho phép ở trang bản đồ Mua bán/Cho thuê thì đây chạy im lặng.
+  useEffect(() => {
+    const t = setTimeout(() => dinhVi(false), 500);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const size = "h-[260px] w-full sm:h-[320px]";
 
   return (
     <div className="relative">
       <div ref={boxRef} aria-label="Bản đồ vị trí" className={`${size} bg-cvr-surface`} />
 
-      {/* NÚT VỊ TRÍ — chỉ hiện khi bản đồ đã mở khoá, để lúc cuộn trang không vướng.
-          z-index phải trên 800 vì Leaflet xếp marker 600 / popup 700. */}
-      {!locked && (
-        <button
-          type="button"
-          onClick={dinhVi}
-          disabled={dangDinhVi}
-          className="absolute bottom-3 left-3 z-[1000] inline-flex min-h-[38px] items-center gap-1.5 rounded-lg bg-cvr-blue px-3.5 text-[13px] font-semibold text-white shadow-[0_2px_8px_rgba(0,0,0,0.35)] transition hover:bg-cvr-blue-ink disabled:opacity-60"
-        >
-          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.9} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 12a2 2 0 100-4 2 2 0 000 4z" />
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v2m0 16v2M2 12h2m16 0h2" />
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 20a8 8 0 100-16 8 8 0 000 16z" />
-          </svg>
-          {dangDinhVi ? "Đang định vị…" : "Vị trí của tôi"}
-        </button>
+      {/* NÚT VỊ TRÍ — LUÔN HIỆN, kể cả khi bản đồ đang khoá (xem ghi chú đầu tệp).
+          Đặt góc trên bên PHẢI: góc trái đã có nút phóng to/thu nhỏ của bản đồ,
+          đáy giữa là chỗ lớp phủ "Chạm để xem bản đồ".
+          z-index phải trên 800 vì Leaflet xếp marker 600 / popup 700, và trên cả
+          lớp phủ khoá nằm ở khối cha. */}
+      <button
+        type="button"
+        onClick={() => dinhVi(true)}
+        disabled={dangDinhVi}
+        className="absolute right-3 top-3 z-[1200] inline-flex min-h-[36px] items-center gap-1.5 rounded-lg bg-cvr-blue px-3 text-[13px] font-semibold text-white shadow-[0_2px_10px_rgba(0,0,0,0.35)] transition hover:bg-cvr-blue-ink disabled:opacity-60"
+      >
+        <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.9} viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 12a2 2 0 100-4 2 2 0 000 4z" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v2m0 16v2M2 12h2m16 0h2" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 20a8 8 0 100-16 8 8 0 000 16z" />
+        </svg>
+        {dangDinhVi ? "Đang định vị…" : "Vị trí của tôi"}
+      </button>
+
+      {/* Đã biết khách đứng đâu → nói luôn cách bao xa, khỏi phải tự ước lượng */}
+      {khoangCach && !loi && (
+        <span className="absolute left-3 top-3 z-[1200] inline-flex items-center gap-1.5 rounded-lg bg-white/95 px-2.5 py-1.5 text-[12px] font-semibold text-cvr-ink shadow-[0_2px_10px_rgba(0,0,0,0.18)] ring-1 ring-black/5">
+          <span className="h-2.5 w-2.5 rounded-full bg-cvr-blue ring-2 ring-white" />
+          {khoangCach}
+        </span>
       )}
 
-      {loi && !locked && (
-        <p className="absolute bottom-[60px] left-3 right-3 z-[1000] rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-[13px] font-medium leading-snug text-amber-900 shadow-lg">
+      {loi && (
+        <p className="absolute left-3 right-3 top-[52px] z-[1200] rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-[13px] font-medium leading-snug text-amber-900 shadow-lg">
           {loi}
         </p>
       )}

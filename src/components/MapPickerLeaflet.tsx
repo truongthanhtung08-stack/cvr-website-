@@ -114,7 +114,9 @@ export default function MapPickerLeaflet({
   //   Chặng 2 — GPS chính xác chạy ngầm, có kết quả sát hơn thì tự dời lại.
   // Bật chính xác cao ngay từ đầu là sai lầm cũ: ngoài trời chờ 5–15 giây, trong
   // nhà treo luôn.
-  function dinhVi(ghimLuon: boolean) {
+  // doiTamNhin=false: chỉ VẼ CHẤM XANH chứ không kéo bản đồ đi — dùng khi khách đã
+  // gõ địa chỉ hoặc đã ghim sẵn, kéo đi là mất chỗ họ đang xem.
+  function dinhVi(ghimLuon: boolean, doiTamNhin = true) {
     if (!navigator.geolocation) {
       setLoi("Trình duyệt không hỗ trợ định vị. Anh/chị kéo bản đồ rồi bấm để ghim.");
       return;
@@ -124,7 +126,7 @@ export default function MapPickerLeaflet({
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setDangDinhVi(false);
-        hienCham(pos.coords.latitude, pos.coords.longitude, true, ghimLuon ? 18 : 16);
+        hienCham(pos.coords.latitude, pos.coords.longitude, doiTamNhin, ghimLuon ? 18 : 16);
         if (ghimLuon) datGhim({ lat: pos.coords.latitude, lng: pos.coords.longitude });
         navigator.geolocation.getCurrentPosition(
           (sat) => hienCham(sat.coords.latitude, sat.coords.longitude, false, 16),
@@ -199,10 +201,12 @@ export default function MapPickerLeaflet({
       if (daCo) datGhim(daCo);
       setSanSang(true);
 
-      // Chưa ghim và chưa nhập địa chỉ → XIN ĐỊNH VỊ NGAY để khách thấy mình ở đâu.
-      // GPS tắt thì khối cảnh báo hiện lên bảo khách bật, không im lặng.
+      // LUÔN XIN ĐỊNH VỊ NGAY khi mở bản đồ. Bản trước chỉ định vị khi khách CHƯA gõ
+      // địa chỉ — mà đăng tin thì bao giờ cũng gõ địa chỉ trước, nên chấm xanh không
+      // bao giờ hiện, trong khi phần hướng dẫn vẫn ghi "chấm xanh: bạn đang ở đây".
+      // Đã ghim sẵn hoặc đã gõ địa chỉ thì chỉ VẼ CHẤM, không kéo bản đồ đi chỗ khác.
       const daNhapDiaChi = hintRef.current.split(",").some((s) => s.trim().length > 0);
-      if (!daCo && !daNhapDiaChi) setTimeout(() => dinhVi(false), 300);
+      setTimeout(() => dinhVi(false, !daCo && !daNhapDiaChi), 300);
     })();
 
     return () => {
@@ -236,8 +240,15 @@ export default function MapPickerLeaflet({
 
   return (
     <div className="space-y-2">
-      <div className="overflow-hidden rounded-xl border border-cvr-line">
+      <div className="relative overflow-hidden rounded-xl border border-cvr-line">
         <div ref={boxRef} aria-label="Bản đồ ghim vị trí" className="h-[280px] w-full bg-cvr-surface" />
+
+        {/* CÁCH GHIM PHẢI VIẾT NGAY TRÊN BẢN ĐỒ. Để hướng dẫn ở dưới khung thì trên
+            điện thoại nó nằm dưới màn hình, người đăng nhìn bản đồ không biết làm gì.
+            z-index trên 700 vì Leaflet xếp marker 600 / popup 700. */}
+        <span className="pointer-events-none absolute left-1/2 top-3 z-[1200] -translate-x-1/2 whitespace-nowrap rounded-full bg-cvr-ink/85 px-3.5 py-1.5 text-[12.5px] font-semibold text-white shadow-[0_2px_10px_rgba(0,0,0,0.3)] backdrop-blur-sm">
+          {daGhim ? "Kéo ghim đỏ để chỉnh lại cho đúng" : "Bấm lên bản đồ để ghim vị trí"}
+        </span>
       </div>
 
       {/* HƯỚNG DẪN 3 DÒNG — đúng 3 việc người đăng cần: mình ở đâu · bất động sản ở
