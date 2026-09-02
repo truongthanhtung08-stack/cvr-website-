@@ -61,14 +61,20 @@ export default function MapPicker({
         const g = window.google;
         const saved = parseLatLng(value);
         const khuVuc = centerOfArea(hint);
-        // Chưa ghim gì → mở giữa khu vực đang nhập, không có thì mở Đà Nẵng.
+        // THỨ TỰ ƯU TIÊN chỗ mở bản đồ:
+        //   1. Đã ghim rồi          → đúng điểm đó
+        //   2. Đã chọn khu vực      → giữa khu vực đó
+        //   3. Chưa biết gì         → CẢ VIỆT NAM (không phải riêng Đà Nẵng —
+        //      tin đăng ở khắp nước), rồi ngay sau đó xin vị trí máy để bay về
+        //      chỗ khách đang đứng: chắc ăn nhất vì người đăng thường ở ngay
+        //      tại bất động sản.
         const center: LatLng =
-          saved ?? (khuVuc ? { lat: khuVuc[0], lng: khuVuc[1] } : { lat: 16.054, lng: 108.202 });
+          saved ?? (khuVuc ? { lat: khuVuc[0], lng: khuVuc[1] } : { lat: 16.0, lng: 107.5 });
 
         const map = new g.maps.Map(boxRef.current, {
           center,
-          // Mở đủ gần để thấy tên đường. Mức 11 cũ nhìn như cả tỉnh, không ghim nổi.
-          zoom: saved ? 17 : khuVuc ? 15 : 12,
+          // Mở đủ gần để thấy tên đường. Chưa biết khu vực thì mở cả nước (zoom 5).
+          zoom: saved ? 17 : khuVuc ? 15 : 5,
           gestureHandling: "greedy",
           mapTypeControl: false,
           streetViewControl: false,
@@ -112,6 +118,21 @@ export default function MapPicker({
           const p = e.latLng;
           if (p) dat({ lat: p.lat(), lng: p.lng() });
         });
+
+        // CHƯA ghim và CHƯA chọn khu vực → xin vị trí máy để đưa bản đồ về ngay
+        // chỗ khách đang đứng. CHỈ DỜI BẢN ĐỒ, không tự ghim — ghim là việc của
+        // khách. Khách từ chối chia sẻ vị trí thì thôi, bản đồ vẫn mở cả nước.
+        if (!saved && !khuVuc && navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            (pos) => {
+              if (huy || parseLatLng(value)) return;
+              map.setCenter({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+              map.setOptions({ zoom: 16 });
+            },
+            () => {},
+            { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 },
+          );
+        }
         // Google có thể nạp được thư viện mà vẫn KHÔNG vẽ (khoá sai, chưa bật
         // Maps JavaScript API, hết hạn mức) — lúc đó nó chỉ để lại một ô xám.
         // Kiểm lại sau 2 giây: không thấy lớp .gm-style thì coi như hỏng.
