@@ -535,7 +535,12 @@ export default function PostListingForm() {
         </div>
         <Text label="Địa chỉ cụ thể (số nhà, đường, dự án)" value={addressDetail} onChange={setAddressDetail} placeholder="VD: 123 Võ Nguyên Giáp / Dự án ..." />
         <div className="mt-4">
-          <p className="mb-2 text-sm font-semibold text-cvr-ink">Ghim vị trí trên bản đồ</p>
+          <p className="mb-2 flex flex-wrap items-center gap-2 text-sm font-semibold text-cvr-ink">
+            Ghim vị trí trên bản đồ
+            <span className="rounded-md bg-cvr-surface px-2 py-0.5 text-[11.5px] font-medium text-cvr-muted">
+              Không bắt buộc — nhưng ghim thì tin dễ tìm hơn hẳn
+            </span>
+          </p>
           <MapPicker value={mapPin} onChange={setMapPin} hint={`${addressDetail}, ${ward}, ${district}, ${province}`} />
         </div>
       </Card>

@@ -277,6 +277,16 @@ export default function MapPickerLeaflet({
       {/* Nhãn tên đường nổi trên đầu ghim đỏ */}
       <style>{`.cl-nhan-ghim{background:#1d1d1f;color:#fff;border:none;border-radius:8px;padding:4px 9px;font-size:12px;font-weight:600;box-shadow:0 2px 10px rgba(0,0,0,.3);white-space:normal;max-width:220px}.cl-nhan-ghim::before{border-top-color:#1d1d1f}`}</style>
 
+      {/* GHIM ĐỂ LÀM GÌ — phải nói NGAY TRƯỚC bản đồ. Người đăng bấm ra một dấu đỏ
+          rồi ngồi nhìn, không biết dấu đỏ đó dùng vào việc gì, cũng không biết
+          xong chưa. Câu này trả lời cả hai. */}
+      <p className="text-[13px] leading-relaxed text-cvr-body">
+        <span className="font-semibold text-cvr-ink">Ghim để làm gì:</span> ghim rồi thì tin của anh/chị
+        đứng <span className="font-semibold text-cvr-ink">đúng chỗ</span> trên bản đồ tìm kiếm, và người mua
+        bấm chỉ đường là tới đúng nơi. Không ghim thì tin chỉ hiện chung chung giữa phường/xã, người mua khó
+        tìm hơn.
+      </p>
+
       <div className="relative overflow-hidden rounded-xl border border-cvr-line">
         <div ref={boxRef} aria-label="Bản đồ ghim vị trí" className="h-[280px] w-full bg-cvr-surface" />
 
@@ -302,12 +312,17 @@ export default function MapPickerLeaflet({
           <p className="mt-1 text-[13px] leading-snug text-cvr-body">
             {diaChiGhim ? (
               <>
-                Điểm ghim nằm ở: <span className="font-medium text-cvr-ink">{diaChiGhim}</span>. Chưa đúng thì
-                kéo ghim đỏ tới đúng chỗ.
+                Điểm ghim đang nằm ở: <span className="font-medium text-cvr-ink">{diaChiGhim}</span>
               </>
             ) : (
-              "Kéo ghim đỏ nếu cần chỉnh lại cho đúng."
+              "Đã lưu điểm ghim."
             )}
+          </p>
+          {/* XONG RỒI THÌ LÀM SAO — câu này phải có. Thiếu nó là người đăng ghim
+              xong ngồi chờ, tưởng còn phải bấm lưu ở đâu đó. */}
+          <p className="mt-1.5 text-[13px] leading-snug text-green-800">
+            Đúng chỗ rồi thì <span className="font-semibold">không phải làm gì thêm</span> — cứ điền tiếp các
+            mục dưới, vị trí này tự lưu cùng tin. Chưa đúng thì kéo ghim đỏ tới đúng nơi.
           </p>
         </div>
       ) : (
