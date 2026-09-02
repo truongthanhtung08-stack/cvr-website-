@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { centerOfArea } from "@/lib/geo";
-import { MAP_KEY, loadMapsApi, onMapsAuthFailure, parseLatLng, type GMap, type LatLng } from "@/lib/googleMaps";
+import { MAP_KEY, loadMapsApi, onMapsAuthFailure, parseLatLng, type GMap, type GMarker, type LatLng } from "@/lib/googleMaps";
 
 // ── KHUNG BẢN ĐỒ VỊ TRÍ (dùng chung: chi tiết tin + chi tiết dự án) ────────────
 //
@@ -72,6 +72,10 @@ export default function MapPane({
   // KHÔNG được để nó nằm trong deps — mỗi lần khách mở/khoá mà dựng lại bản đồ
   // là tính thêm một lượt tải bản đồ với Google.
   const lockedRef = useRef(locked);
+  // Chấm xanh "vị trí của bạn" — mọi bản đồ trên web đều phải cho khách biết
+  // mình đang đứng ở đâu, rồi tự phóng / kéo tìm chỗ cần xem.
+  const chamRef = useRef<GMarker | null>(null);
+  const [dangDinhVi, setDangDinhVi] = useState(false);
   // "js" = bản đồ tự vẽ (kéo 1 ngón) · "iframe" = bản nhúng cũ khi chưa có key / lỗi
   const [mode, setMode] = useState<"js" | "iframe">(MAP_KEY ? "js" : "iframe");
 
@@ -153,6 +157,34 @@ export default function MapPane({
     mapRef.current?.setOptions({ gestureHandling: locked ? "none" : "greedy" });
   }, [locked]);
 
+  function viTriCuaToi() {
+    const map = mapRef.current;
+    const g = window.google;
+    if (!map || !g || !navigator.geolocation) return;
+    setDangDinhVi(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setDangDinhVi(false);
+        const p = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        map.setCenter(p);
+        map.setOptions({ zoom: 15 });
+        if (chamRef.current) chamRef.current.setPosition(p);
+        else
+          chamRef.current = new g.maps.Marker({
+            position: p,
+            map,
+            clickable: false,
+            zIndex: 1,
+            title: "Vị trí của bạn",
+            // 0 = SymbolPath.CIRCLE — chấm tròn xanh viền trắng, neo đúng giữa
+            icon: { path: 0, scale: 7, fillColor: "#0071e3", fillOpacity: 1, strokeColor: "#ffffff", strokeWeight: 3 },
+          });
+      },
+      () => setDangDinhVi(false),
+      { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 },
+    );
+  }
+
   const size = "h-[260px] w-full sm:h-[320px]";
 
   if (mode === "iframe") {
@@ -167,11 +199,31 @@ export default function MapPane({
   }
 
   return (
-    <div
-      ref={boxRef}
-      aria-label="Bản đồ vị trí"
-      className={`${size} bg-cvr-surface ${locked ? "pointer-events-none" : ""}`}
-    />
+    <div className="relative">
+      <div
+        ref={boxRef}
+        aria-label="Bản đồ vị trí"
+        className={`${size} bg-cvr-surface ${locked ? "pointer-events-none" : ""}`}
+      />
+      {/* Nút "Vị trí của tôi" — bấm là biết mình đang ở đâu so với bất động sản,
+          rồi tự phóng / kéo bản đồ tìm tiếp. Ẩn khi bản đồ đang khoá. */}
+      {!locked && (
+        <button
+          type="button"
+          onClick={viTriCuaToi}
+          disabled={dangDinhVi}
+          aria-label="Vị trí của tôi"
+          className="absolute bottom-3 left-3 inline-flex min-h-[38px] items-center gap-1.5 rounded-lg bg-white/95 px-3 text-[13px] font-semibold text-cvr-body shadow-[0_1px_4px_rgba(0,0,0,0.3)] backdrop-blur transition hover:text-cvr-ink disabled:opacity-60"
+        >
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.9} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 12a2 2 0 100-4 2 2 0 000 4z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v2m0 16v2M2 12h2m16 0h2" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 20a8 8 0 100-16 8 8 0 000 16z" />
+          </svg>
+          {dangDinhVi ? "Đang định vị…" : "Vị trí của tôi"}
+        </button>
+      )}
+    </div>
   );
 }
 
