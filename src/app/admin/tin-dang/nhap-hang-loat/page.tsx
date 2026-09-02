@@ -60,7 +60,7 @@ export default function NhapHangLoatPage() {
   //      (ghi thiếu đuôi .jpg cũng khớp). Ghi sẵn link/đường dẫn thì dùng thẳng.
   //   2) Cột "ma_anh" → tự gom mọi ảnh tải lên có tên bắt đầu bằng mã đó,
   //      xếp theo SỐ cuối tên tệp nên ảnh …-1 làm ẢNH ĐẠI DIỆN.
-  const anhCuaTin = (r: ParsedRow): { urls: string[]; thieu: string[]; boBot: number; toiDa: number; toiDaVideo: number } => {
+  const anhCuaTin = (r: ParsedRow): { urls: string[]; thieu: string[]; boBot: number; toiDa: number; toiDaVideo: number; linkGoc: boolean } => {
     const urls: string[] = [];
     const thieu: string[] = [];
 
@@ -84,14 +84,24 @@ export default function NhapHangLoatPage() {
     const toiDa = soAnhToiDa(billing, tier);
     const toiDaVideo = soVideoToiDa(billing, tier);
     const tatCa = [...urls, ...theoMa];
-    const anhCat = tatCa.filter((u) => !isVideoUrl(u)).slice(0, toiDa);
+    let anhCat = tatCa.filter((u) => !isVideoUrl(u)).slice(0, toiDa);
     const videoCat = tatCa.filter(isVideoUrl).slice(0, toiDaVideo);
+
+    // ẢNH TẠM TỪ LINK GỐC — chỉ dùng khi tin CHƯA có tấm ảnh thật nào. Người gom
+    // tin chưa kịp cắt/làm sạch ảnh thì vẫn điền cột "link_anh" để tin lên được;
+    // hôm sau bỏ ảnh sạch vào thư mục rồi tải lại đúng file đó là ảnh thật thay
+    // vào chỗ ảnh tạm (khớp theo ma_anh nên không đăng trùng tin).
+    const linkGocRaw = (r.payload.details as { linkAnhGoc?: string[] } | undefined)?.linkAnhGoc ?? [];
+    const dungLinkGoc = anhCat.length === 0 && linkGocRaw.some(laLinkAnh);
+    if (dungLinkGoc) anhCat = linkGocRaw.filter(laLinkAnh).slice(0, toiDa);
+
     return {
       urls: [...anhCat, ...videoCat],
       thieu,
-      boBot: tatCa.length - anhCat.length - videoCat.length,
+      boBot: dungLinkGoc ? 0 : tatCa.length - anhCat.length - videoCat.length,
       toiDa,
       toiDaVideo,
+      linkGoc: dungLinkGoc,
     };
   };
 
@@ -484,7 +494,7 @@ export default function NhapHangLoatPage() {
 // Ô "Ảnh" trong bảng xem trước: có bao nhiêu ảnh · thiếu ảnh nào (theo tên ghi trong file)
 // ĐẾM RIÊNG ảnh và video: urls là danh sách media gộp, nếu đếm chung thì tin
 // 15 ảnh + 1 video hiện thành "16/15 ảnh" — trông như vượt giới hạn dù không hề.
-function AnhCell({ urls, thieu, boBot, toiDa }: { urls: string[]; thieu: string[]; boBot: number; toiDa: number }) {
+function AnhCell({ urls, thieu, boBot, toiDa, linkGoc }: { urls: string[]; thieu: string[]; boBot: number; toiDa: number; linkGoc?: boolean }) {
   const soAnh = urls.filter((u) => !isVideoUrl(u)).length;
   const soVideo = urls.length - soAnh;
   return (
@@ -495,6 +505,9 @@ function AnhCell({ urls, thieu, boBot, toiDa }: { urls: string[]; thieu: string[
         </span>
       ) : (
         <span className="text-cvr-faint">chưa có</span>
+      )}
+      {linkGoc && (
+        <p className="mt-0.5 text-xs font-medium text-amber-700">Ảnh tạm từ link gốc — thay ảnh sạch khi có</p>
       )}
       {boBot > 0 && (
         <p className="mt-0.5 text-xs font-medium text-amber-700">
