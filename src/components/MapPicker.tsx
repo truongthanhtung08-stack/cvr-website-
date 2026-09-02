@@ -69,12 +69,14 @@ export default function MapPicker({
         //      chỗ khách đang đứng: chắc ăn nhất vì người đăng thường ở ngay
         //      tại bất động sản.
         const center: LatLng =
-          saved ?? (khuVuc ? { lat: khuVuc[0], lng: khuVuc[1] } : { lat: 16.0, lng: 107.5 });
+          saved ?? (khuVuc ? { lat: khuVuc[0], lng: khuVuc[1] } : { lat: 16.054, lng: 108.202 });
 
         const map = new g.maps.Map(boxRef.current, {
           center,
-          // Mở đủ gần để thấy tên đường. Chưa biết khu vực thì mở cả nước (zoom 5).
-          zoom: saved ? 17 : khuVuc ? 15 : 5,
+          // LUÔN mở ở mức nhìn thấy đường phố. TUYỆT ĐỐI không mở mức cả nước /
+          // cả thế giới — nhìn vào không biết ghim chỗ nào. Chưa biết khu vực thì
+          // mở Đà Nẵng rồi bay tiếp theo vị trí máy hoặc khu vực khách chọn.
+          zoom: saved ? 17 : khuVuc ? 15 : 13,
           gestureHandling: "greedy",
           mapTypeControl: false,
           streetViewControl: false,
@@ -277,12 +279,20 @@ export default function MapPicker({
         </div>
       )}
 
+      {/* Hướng dẫn NGẮN, đặt NGAY TRÊN các nút — người đăng nhìn là biết bấm gì */}
+      {!daGhim && (
+        <p className="text-[13px] font-medium text-cvr-body">
+          Chưa biết ghim ở đâu? Bấm <strong>“Tôi đang đứng ở đây”</strong> nếu anh/chị đang ở tại
+          bất động sản, hoặc chọn Tỉnh/Phường phía trên rồi bấm thẳng lên bản đồ.
+        </p>
+      )}
+
       <div className="flex flex-wrap items-center gap-2">
         <button
           type="button"
           onClick={viTriCuaToi}
           disabled={dangDinhVi}
-          className="inline-flex min-h-[38px] items-center gap-1.5 rounded-lg border border-cvr-line bg-white px-3 text-[13px] font-semibold text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink disabled:opacity-60"
+          className="inline-flex min-h-[42px] items-center gap-1.5 rounded-lg bg-cvr-blue px-4 text-sm font-semibold text-white transition hover:bg-cvr-blue-ink disabled:opacity-60"
         >
           <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 11a2 2 0 100-4 2 2 0 000 4z" />
