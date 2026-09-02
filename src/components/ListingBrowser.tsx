@@ -162,10 +162,10 @@ export default function ListingBrowser({
                 type="button"
                 onClick={() => setMapMode((v) => !v)}
                 aria-pressed={mapMode}
-                className={`mr-auto inline-flex min-h-[38px] items-center gap-2 rounded-lg px-3.5 text-sm font-semibold transition ${
-                  mapMode
-                    ? "bg-cvr-ink text-white"
-                    : "border border-cvr-line bg-white text-cvr-body hover:border-cvr-ink hover:text-cvr-ink"
+                // NỀN XANH cho dễ thấy — thống nhất với nút bản đồ ở tab Dự án.
+                // Đang mở bản đồ thì đậm hơn một nấc để biết mình đang ở chế độ nào.
+                className={`mr-auto inline-flex min-h-[38px] items-center gap-2 rounded-lg px-3.5 text-sm font-semibold text-white transition ${
+                  mapMode ? "bg-cvr-blue-ink" : "bg-cvr-blue hover:bg-cvr-blue-ink"
                 }`}
               >
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.9} viewBox="0 0 24 24">
