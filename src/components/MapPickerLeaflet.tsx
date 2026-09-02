@@ -3,32 +3,33 @@
 import { useEffect, useRef, useState } from "react";
 import "leaflet/dist/leaflet.css";
 import type * as LType from "leaflet";
-import { centerOfArea } from "@/lib/geo";
 import { formatLatLng, parseLatLng, type LatLng } from "@/lib/googleMaps";
 import { xemTrenBanDo } from "@/lib/moGoogleMaps";
-import { layViTri, loiDinhVi } from "@/lib/dinhVi";
+import { docKhoangCach, khoangCachKm, layViTri, loiDinhVi } from "@/lib/dinhVi";
+import { timToaDo, traDiaChi } from "@/lib/timToaDo";
 import NhacBatDinhVi from "@/components/NhacBatDinhVi";
 
 // ── GHIM VỊ TRÍ TRÊN BẢN ĐỒ (form đăng tin: khách & admin) ────────────────────
 //
-// VÌ SAO CẦN: rất nhiều bất động sản KHÔNG có địa chỉ chính xác — đất nền chưa có
-// số nhà, lô dự án, nhà trong hẻm. Bắt người đăng gõ địa chỉ rồi để máy đoán là
-// ghim sai. Cho họ tự bấm đúng điểm trên bản đồ mới chắc.
+// BẢN ĐỒ NÀY ĐỂ LÀM GÌ (chủ dự án chốt 03/09/2026) — khác hẳn bản đồ trang tin:
+// đây là bản đồ của NGƯỜI ĐĂNG, và nó phải chạy HAI CHIỀU:
+//   · Gõ địa chỉ  → bản đồ TỰ GHIM tới đó (có tên đường là ghim được rồi)
+//   · Bấm ghim    → HIỆN ĐỊA CHỈ của điểm vừa ghim, để người đăng kiểm lại
+// Chỉ hiện một dấu đỏ trơ trọi là người đăng không biết mình ghim đúng hay sai.
 //
-// VÌ SAO NỀN BẢN ĐỒ KHÔNG PHẢI CỦA GOOGLE (chốt 02/09/2026):
-//   Google đã đóng cờ "prohibited territory" vào tài khoản thanh toán (do bật VPN
-//   hôm 30/08) nên Maps JS KHÔNG vẽ được — ô xám trắng, hoặc tụt về bản nhúng mà
-//   bản nhúng thì BẮT HAI NGÓN và không ghim được. Leaflet + OpenStreetMap không
-//   cần khoá, không cần thanh toán, kéo MỘT ngón, bấm là ghim → không bao giờ trắng.
-//   Phần CHỈ ĐƯỜNG vẫn dùng Google Maps thật (link mở app, miễn phí) — xem
-//   src/lib/moGoogleMaps.ts.
+// VÌ SAO CẦN GHIM TAY: rất nhiều bất động sản KHÔNG có địa chỉ chính xác — đất nền
+// chưa có số nhà, lô dự án, nhà trong hẻm. Bắt gõ địa chỉ rồi để máy đoán là ghim sai.
 //
-// Toạ độ ghi ra là chuỗi "lat, lng" — ĐÚNG định dạng cũ, tầng dữ liệu không đổi gì,
-// nên sau này muốn quay lại nền bản đồ Google chỉ phải sửa đúng file này.
+// VÌ SAO NỀN KHÔNG PHẢI GOOGLE: Google đóng cờ "prohibited territory" vào tài khoản
+// thanh toán nên Maps JS không vẽ được, và bản nhúng thì bắt hai ngón, không ghim
+// được. Leaflet + OpenStreetMap không cần khoá, không cần thanh toán, kéo MỘT ngón.
+// Tra địa chỉ dùng Nominatim của OpenStreetMap, cũng miễn phí — xem src/lib/timToaDo.ts.
+//
+// Toạ độ ghi ra vẫn là chuỗi "lat, lng" như cũ, tầng dữ liệu không đổi gì.
 export default function MapPickerLeaflet({
   value,
   onChange,
-  // Địa chỉ khách đang gõ — dùng để đưa bản đồ về đúng chỗ, không ảnh hưởng ghim.
+  // Địa chỉ người đăng đang gõ — dùng để tự đưa bản đồ tới và tự ghim.
   hint = "",
 }: {
   value: string;
@@ -39,14 +40,19 @@ export default function MapPickerLeaflet({
   const mapRef = useRef<LType.Map | null>(null);
   const ghimRef = useRef<LType.Marker | null>(null);
   const chamRef = useRef<LType.CircleMarker | null>(null);
+  const vongRef = useRef<LType.CircleMarker | null>(null);
+  const duongRef = useRef<LType.Polyline | null>(null);
   const LRef = useRef<typeof LType | null>(null);
   const onChangeRef = useRef(onChange);
   const hintRef = useRef(hint);
+  const toiRef = useRef<[number, number] | null>(null);
 
   const [sanSang, setSanSang] = useState(false);
   const [dangDinhVi, setDangDinhVi] = useState(false);
   const [dangTimDiaChi, setDangTimDiaChi] = useState(false);
   const [loi, setLoi] = useState("");
+  const [diaChiGhim, setDiaChiGhim] = useState("");
+  const [khoangCach, setKhoangCach] = useState("");
 
   useEffect(() => {
     onChangeRef.current = onChange;
@@ -65,6 +71,17 @@ export default function MapPickerLeaflet({
   const GHI_NGUON =
     "© <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a>";
 
+  // Ghim xong là tra ngược ra địa chỉ và gắn ngay nhãn lên trên đầu ghim, để người
+  // đăng đọc được mình vừa ghim vào đâu chứ không phải đoán theo dấu đỏ.
+  async function hienTenChoGhim(p: LatLng) {
+    const ten = await traDiaChi(p.lat, p.lng);
+    setDiaChiGhim(ten ?? "");
+    const m = ghimRef.current;
+    if (!m) return;
+    if (ten) m.bindTooltip(ten, { permanent: true, direction: "top", offset: [0, -40], className: "cl-nhan-ghim" });
+    else m.unbindTooltip();
+  }
+
   function datGhim(p: LatLng) {
     const L = LRef.current;
     const map = mapRef.current;
@@ -76,10 +93,36 @@ export default function MapPickerLeaflet({
       m.on("dragend", () => {
         const q = m.getLatLng();
         onChangeRef.current(formatLatLng({ lat: q.lat, lng: q.lng }));
+        void hienTenChoGhim({ lat: q.lat, lng: q.lng });
+        noiToiVoiGhim();
       });
       ghimRef.current = m;
     }
     onChangeRef.current(formatLatLng(p));
+    void hienTenChoGhim(p);
+    noiToiVoiGhim();
+  }
+
+  // Đường đứt nối chỗ người đăng đang đứng với điểm vừa ghim + khoảng cách. Đứng
+  // ngay tại bất động sản thì thấy "cách 20 m" là biết ghim chuẩn.
+  function noiToiVoiGhim() {
+    const L = LRef.current;
+    const map = mapRef.current;
+    const toi = toiRef.current;
+    const m = ghimRef.current;
+    if (!L || !map || !toi || !m) return;
+    const g = m.getLatLng();
+    const bds: [number, number] = [g.lat, g.lng];
+    setKhoangCach(docKhoangCach(khoangCachKm(toi, bds)));
+    if (duongRef.current) duongRef.current.setLatLngs([toi, bds]);
+    else
+      duongRef.current = L.polyline([toi, bds], {
+        color: "#0071e3",
+        weight: 3,
+        opacity: 0.85,
+        dashArray: "7 7",
+        interactive: false,
+      }).addTo(map);
   }
 
   // Chấm xanh "vị trí của bạn" — chỉ để tham chiếu, KHÔNG phải điểm ghim
@@ -87,7 +130,19 @@ export default function MapPickerLeaflet({
     const L = LRef.current;
     const map = mapRef.current;
     if (!L || !map) return;
+    toiRef.current = [lat, lng];
     if (doiTamNhin) map.setView([lat, lng], zoom);
+
+    if (vongRef.current) vongRef.current.setLatLng([lat, lng]);
+    else
+      vongRef.current = L.circleMarker([lat, lng], {
+        radius: 16,
+        stroke: false,
+        fillColor: "#0071e3",
+        fillOpacity: 0.18,
+        interactive: false,
+      }).addTo(map);
+
     if (chamRef.current) chamRef.current.setLatLng([lat, lng]);
     else
       chamRef.current = L.circleMarker([lat, lng], {
@@ -98,13 +153,16 @@ export default function MapPickerLeaflet({
         fillOpacity: 1,
         interactive: false,
       }).addTo(map);
+
+    noiToiVoiGhim();
   }
 
-  // doiTamNhin=false: chỉ VẼ CHẤM XANH chứ không kéo bản đồ đi — dùng khi khách đã
-  // gõ địa chỉ hoặc đã ghim sẵn, kéo đi là mất chỗ họ đang xem.
-  function dinhVi(ghimLuon: boolean, doiTamNhin = true) {
+  // ghimLuon=true: bấm "Tôi đang đứng ở đây" → ghim luôn tại chỗ đang đứng.
+  // doiTamNhin=false: chỉ vẽ chấm, không kéo bản đồ đi (khi đã ghim / đã gõ địa chỉ).
+  // Khách TỰ BẤM thì ép máy đo lại vị trí — tức buộc bật GPS.
+  function dinhVi(ghimLuon: boolean, doiTamNhin = true, tuBam = true) {
     setLoi("");
-    setDangDinhVi(true);
+    if (tuBam) setDangDinhVi(true);
     layViTri(
       (lat, lng, chinhXacHon) => {
         setDangDinhVi(false);
@@ -113,41 +171,34 @@ export default function MapPickerLeaflet({
       },
       (ma) => {
         setDangDinhVi(false);
+        if (!tuBam && ma !== 1) return;
         setLoi(loiDinhVi(ma));
       },
+      tuBam,
     );
   }
 
-  // Đưa bản đồ về địa chỉ khách đang nhập. Tra bằng Nominatim của OpenStreetMap —
-  // miễn phí, không cần khoá.
-  async function veDiaChi() {
+  // ĐƯA BẢN ĐỒ VỀ ĐỊA CHỈ ĐANG NHẬP — và TỰ GHIM luôn nếu tra ra tới tên đường.
+  // Người đăng gõ "123 Nguyễn Văn Linh, Hoà Xuân, Đà Nẵng" là bản đồ nhảy tới đó
+  // và cắm ghim sẵn; sai chỗ thì kéo ghim vài chục mét là xong, nhanh hơn hẳn bắt
+  // họ tự dò từ đầu.
+  async function veDiaChi(tuBam: boolean) {
     const map = mapRef.current;
-    const phan = hintRef.current.split(",").map((s) => s.trim());
-    // Ô "Địa chỉ cụ thể" là phần ĐẦU TIÊN — có số nhà hoặc tên đường thì trỏ thẳng
-    // tới đó, chính xác hơn hẳn tâm phường.
-    const coDuong = phan[0].length >= 3;
-    const diaChi = phan.filter(Boolean).join(", ");
+    const diaChi = hintRef.current.split(",").map((s) => s.trim()).filter(Boolean).join(", ");
     if (!map || diaChi.length < 4) return;
 
-    if (!coDuong) {
-      const kv = centerOfArea(diaChi);
-      if (kv) {
-        map.setView([kv[0], kv[1]], 15);
-        return;
-      }
-    }
     setDangTimDiaChi(true);
-    try {
-      const r = await fetch(
-        "https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=vn&q=" +
-          encodeURIComponent(diaChi),
-      );
-      const ds = (await r.json()) as { lat: string; lon: string }[];
-      if (ds[0]) map.setView([Number(ds[0].lat), Number(ds[0].lon)], coDuong ? 17 : 15);
-    } catch {
-      // Tra không ra thì thôi, khách vẫn tự kéo bản đồ được
-    }
+    const kq = await timToaDo(diaChi);
     setDangTimDiaChi(false);
+    if (!kq) return;
+
+    const sat = kq.mucDo !== "khuVuc";
+    map.setView([kq.lat, kq.lng], sat ? 17 : 15);
+    // Tự ghim khi tra ra tới tên đường. Chỉ ra được tâm phường thì KHÔNG ghim —
+    // ghim giữa phường là ghim sai, để người đăng tự bấm đúng chỗ.
+    // Người đăng đã ghim rồi thì tuyệt đối không giật ghim của họ đi, trừ khi họ
+    // chủ động bấm nút "Về địa chỉ đã nhập".
+    if (sat && (!parseLatLng(value) || tuBam)) datGhim({ lat: kq.lat, lng: kq.lng });
   }
 
   // ── DỰNG BẢN ĐỒ MỘT LẦN ────────────────────────────────────────────────────
@@ -159,10 +210,10 @@ export default function MapPickerLeaflet({
       LRef.current = L;
 
       const daCo = parseLatLng(value);
-      const kv = centerOfArea(hintRef.current);
-      const tam: [number, number] = daCo ? [daCo.lat, daCo.lng] : kv ? [kv[0], kv[1]] : [16.054, 108.202];
-
-      const map = L.map(boxRef.current).setView(tam, daCo ? 17 : kv ? 14 : 13);
+      const map = L.map(boxRef.current).setView(
+        daCo ? [daCo.lat, daCo.lng] : [16.054, 108.202],
+        daCo ? 17 : 13,
+      );
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: GHI_NGUON,
         maxZoom: 19,
@@ -177,12 +228,13 @@ export default function MapPickerLeaflet({
       if (daCo) datGhim(daCo);
       setSanSang(true);
 
-      // LUÔN XIN ĐỊNH VỊ NGAY khi mở bản đồ. Bản trước chỉ định vị khi khách CHƯA gõ
-      // địa chỉ — mà đăng tin thì bao giờ cũng gõ địa chỉ trước, nên chấm xanh không
-      // bao giờ hiện, trong khi phần hướng dẫn vẫn ghi "chấm xanh: bạn đang ở đây".
-      // Đã ghim sẵn hoặc đã gõ địa chỉ thì chỉ VẼ CHẤM, không kéo bản đồ đi chỗ khác.
+      // Chưa ghim mà đã gõ địa chỉ → tự tra và ghim luôn.
+      if (!daCo) void veDiaChi(false);
+
+      // LUÔN định vị khi mở bản đồ để có chấm xanh làm mốc. Đã ghim / đã gõ địa chỉ
+      // thì chỉ vẽ chấm, không kéo bản đồ đi chỗ khác.
       const daNhapDiaChi = hintRef.current.split(",").some((s) => s.trim().length > 0);
-      setTimeout(() => dinhVi(false, !daCo && !daNhapDiaChi), 300);
+      setTimeout(() => dinhVi(false, !daCo && !daNhapDiaChi, false), 400);
     })();
 
     return () => {
@@ -191,16 +243,18 @@ export default function MapPickerLeaflet({
       mapRef.current = null;
       ghimRef.current = null;
       chamRef.current = null;
+      vongRef.current = null;
+      duongRef.current = null;
     };
     // Cố ý chạy một lần: value/hint đổi liên tục khi khách gõ.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Khách vừa chọn khu vực / gõ địa chỉ → tự đưa bản đồ về đó. Đã ghim rồi thì giữ
-  // nguyên, không giật ghim của khách đi chỗ khác.
+  // Người đăng vừa chọn khu vực / gõ tiếp địa chỉ → tra lại sau 800ms cho hết gõ.
+  // Đã ghim rồi thì veDiaChi() giữ nguyên ghim, chỉ dời khung nhìn.
   useEffect(() => {
-    if (!sanSang || parseLatLng(value)) return;
-    const t = setTimeout(() => void veDiaChi(), 800);
+    if (!sanSang) return;
+    const t = setTimeout(() => void veDiaChi(false), 800);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hint, sanSang]);
@@ -209,6 +263,10 @@ export default function MapPickerLeaflet({
     onChange("");
     ghimRef.current?.remove();
     ghimRef.current = null;
+    duongRef.current?.remove();
+    duongRef.current = null;
+    setDiaChiGhim("");
+    setKhoangCach("");
   }
 
   const nutPhu =
@@ -216,29 +274,50 @@ export default function MapPickerLeaflet({
 
   return (
     <div className="space-y-2">
+      {/* Nhãn tên đường nổi trên đầu ghim đỏ */}
+      <style>{`.cl-nhan-ghim{background:#1d1d1f;color:#fff;border:none;border-radius:8px;padding:4px 9px;font-size:12px;font-weight:600;box-shadow:0 2px 10px rgba(0,0,0,.3);white-space:normal;max-width:220px}.cl-nhan-ghim::before{border-top-color:#1d1d1f}`}</style>
+
       <div className="relative overflow-hidden rounded-xl border border-cvr-line">
         <div ref={boxRef} aria-label="Bản đồ ghim vị trí" className="h-[280px] w-full bg-cvr-surface" />
 
-        {/* CÁCH GHIM PHẢI VIẾT NGAY TRÊN BẢN ĐỒ. Để hướng dẫn ở dưới khung thì trên
-            điện thoại nó nằm dưới màn hình, người đăng nhìn bản đồ không biết làm gì.
-            z-index trên 700 vì Leaflet xếp marker 600 / popup 700. */}
+        {/* CÁCH GHIM PHẢI VIẾT NGAY TRÊN BẢN ĐỒ. Để hướng dẫn dưới khung thì trên
+            điện thoại nó tụt xuống dưới màn hình, người đăng nhìn bản đồ không
+            biết làm gì. z-index trên 700 vì Leaflet xếp marker 600 / popup 700. */}
         <span className="pointer-events-none absolute left-1/2 top-3 z-[1200] -translate-x-1/2 whitespace-nowrap rounded-full bg-cvr-ink/85 px-3.5 py-1.5 text-[12.5px] font-semibold text-white shadow-[0_2px_10px_rgba(0,0,0,0.3)] backdrop-blur-sm">
           {daGhim ? "Kéo ghim đỏ để chỉnh lại cho đúng" : "Bấm lên bản đồ để ghim vị trí"}
         </span>
       </div>
 
-      {/* HƯỚNG DẪN 3 DÒNG — đúng 3 việc người đăng cần: mình ở đâu · bất động sản ở
-          đâu · ghim chỗ nào. Ghim xong gọn còn một dòng. */}
+      {/* ĐÃ GHIM VÀO ĐÂU — tra ngược ra địa chỉ cho người đăng kiểm lại. Đây là thứ
+          bản trước thiếu: ghim xong chỉ thấy dấu đỏ, không biết đúng hay sai. */}
       {daGhim ? (
-        <p className="text-[13px] text-cvr-body">Kéo ghim đỏ nếu cần chỉnh lại cho đúng.</p>
+        <div className="rounded-xl border border-green-200 bg-green-50 px-3.5 py-2.5">
+          <p className="flex items-center gap-1.5 text-[13px] font-semibold text-green-800">
+            <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+            Đã ghim vị trí
+            {khoangCach && <span className="font-normal text-green-700">· cách chỗ anh/chị {khoangCach}</span>}
+          </p>
+          <p className="mt-1 text-[13px] leading-snug text-cvr-body">
+            {diaChiGhim ? (
+              <>
+                Điểm ghim nằm ở: <span className="font-medium text-cvr-ink">{diaChiGhim}</span>. Chưa đúng thì
+                kéo ghim đỏ tới đúng chỗ.
+              </>
+            ) : (
+              "Kéo ghim đỏ nếu cần chỉnh lại cho đúng."
+            )}
+          </p>
+        </div>
       ) : (
         <ul className="space-y-1 text-[13px] text-cvr-body">
           <li className="flex items-center gap-2">
             <span className="inline-block h-3 w-3 shrink-0 rounded-full border-2 border-white bg-cvr-blue shadow-[0_0_0_1px_rgba(0,0,0,0.15)]" />
             Chấm xanh: bạn đang ở đây
           </li>
-          <li>Kéo và phóng bản đồ tới bất động sản</li>
-          <li>Bấm lên bản đồ để ghim</li>
+          <li>Gõ địa chỉ có tên đường ở trên là bản đồ tự ghim tới nơi</li>
+          <li>Hoặc kéo bản đồ tới bất động sản rồi bấm để ghim</li>
         </ul>
       )}
 
@@ -256,8 +335,8 @@ export default function MapPickerLeaflet({
           {dangDinhVi ? "Đang định vị…" : "Tôi đang đứng ở đây"}
         </button>
 
-        <button type="button" onClick={() => void veDiaChi()} disabled={dangTimDiaChi} className={nutPhu}>
-          {dangTimDiaChi ? "Đang tìm…" : "Về địa chỉ đã nhập"}
+        <button type="button" onClick={() => void veDiaChi(true)} disabled={dangTimDiaChi} className={nutPhu}>
+          {dangTimDiaChi ? "Đang tìm…" : "Ghim theo địa chỉ đã nhập"}
         </button>
 
         {/* SOI LẠI TRÊN GOOGLE MAPS — mở thẳng app bản đồ trên máy để người đăng
@@ -274,15 +353,6 @@ export default function MapPickerLeaflet({
           <button type="button" onClick={xoaGhim} className={nutPhu}>
             Xoá ghim
           </button>
-        )}
-
-        {daGhim && (
-          <span className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-green-700">
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-            </svg>
-            Đã ghim vị trí
-          </span>
         )}
       </div>
 

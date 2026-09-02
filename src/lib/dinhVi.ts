@@ -69,9 +69,14 @@ export function loiDinhVi(ma: number): string {
 //   Chặng 2 — GPS chính xác chạy ngầm, có kết quả sát hơn thì gọi lại `nhan` để
 //     dời chấm cho đúng.
 // Bật chính xác cao ngay từ đầu là sai lầm cũ: ngoài trời chờ 5–15 giây, trong nhà treo luôn.
+// epGPS=true (khách TỰ BẤM nút định vị): không nhận vị trí cũ trong bộ nhớ nữa —
+// máy buộc phải đo lại, tức là buộc bật GPS. Tắt GPS thì rơi vào `bao()` và khối
+// hướng dẫn hiện lên bắt bật. Tự động định vị lúc mở trang thì để epGPS=false cho
+// nhanh, lấy vị trí cũ trong 10 phút là đủ.
 export function layViTri(
   nhan: (lat: number, lng: number, chinhXacHon: boolean) => void,
   bao: (ma: number) => void,
+  epGPS = false,
 ) {
   if (typeof navigator === "undefined" || !navigator.geolocation) {
     bao(2);
@@ -87,6 +92,22 @@ export function layViTri(
       );
     },
     (e) => bao(e.code),
-    { enableHighAccuracy: false, timeout: 8000, maximumAge: 600000 },
+    { enableHighAccuracy: false, timeout: 8000, maximumAge: epGPS ? 0 : 600000 },
   );
+}
+
+// Khoảng cách đường chim bay giữa hai điểm, tính bằng km. Chỉ để khách áng chừng
+// "mình cách chỗ này bao xa", KHÔNG phải quãng đường xe chạy.
+export function khoangCachKm(a: [number, number], b: [number, number]): number {
+  const R = 6371;
+  const rad = (d: number) => (d * Math.PI) / 180;
+  const dLat = rad(b[0] - a[0]);
+  const dLng = rad(b[1] - a[1]);
+  const h =
+    Math.sin(dLat / 2) ** 2 + Math.cos(rad(a[0])) * Math.cos(rad(b[0])) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+
+export function docKhoangCach(km: number): string {
+  return km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(1)} km`;
 }

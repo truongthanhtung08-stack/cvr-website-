@@ -3,25 +3,33 @@
 import { useEffect, useRef, useState } from "react";
 import "leaflet/dist/leaflet.css";
 import type * as LType from "leaflet";
-import { centerOfArea } from "@/lib/geo";
-import { parseLatLng } from "@/lib/googleMaps";
-import { layViTri, loiDinhVi } from "@/lib/dinhVi";
+import { docKhoangCach, khoangCachKm, layViTri, loiDinhVi } from "@/lib/dinhVi";
+import { timToaDo, type MucDoChinhXac } from "@/lib/timToaDo";
 import NhacBatDinhVi from "@/components/NhacBatDinhVi";
 
-// ── BẢN ĐỒ VỊ TRÍ TRONG TRANG TIN / TRANG DỰ ÁN ──────────────────────────────
+// ── BẢN ĐỒ TRONG TRANG TIN / TRANG DỰ ÁN ─────────────────────────────────────
 //
-// VÌ SAO KHÔNG DÙNG NỀN GOOGLE (chốt 02/09/2026): Google đóng cờ "prohibited
-// territory" vào tài khoản thanh toán nên Maps JS không vẽ được, khối bản đồ tụt
-// về BẢN NHÚNG của Google — mà bản nhúng thì BẮT HAI NGÓN mới kéo được và không
-// có nút định vị. Leaflet + OpenStreetMap kéo MỘT ngón, có định vị, không trắng.
-// Phần CHỈ ĐƯỜNG vẫn là Google Maps thật (nút bên dưới khối này, mở thẳng app).
+// BẢN ĐỒ NÀY ĐỂ LÀM GÌ (chủ dự án chốt 03/09/2026):
+//   Khách đang xem MỘT bất động sản. Bản đồ phải trả lời đúng hai câu:
+//     1. "Cái này nằm ở đâu?"  → GHIM ĐỎ, luôn luôn có, càng đúng càng tốt
+//     2. "Từ chỗ tôi tới đó thế nào?" → bấm định vị là vẽ đường TỪ CHỖ TÔI ĐẾN ĐÂY
+//   Thiếu một trong hai thì bản đồ mất nửa ý nghĩa.
 //
-// KHOÁ CỬ CHỈ: mặc định bản đồ KHÔNG nhận thao tác, để ngón tay lướt qua vẫn cuộn
-// trang bình thường. Chạm một cái là mở khoá, từ đó kéo/phóng bằng MỘT ngón.
+// GHIM ĐỎ LẤY Ở ĐÂU — ba mức, xem src/lib/timToaDo.ts:
+//   · "ghim"    người đăng ghim tay → đúng tuyệt đối
+//   · "duong"   tra tên đường ra toạ độ → đúng đoạn đường
+//   · "khuVuc"  chỉ biết phường/xã → ghim giữa khu vực, và PHẢI nói rõ là tương đối
+//   Không bao giờ để bản đồ trống ghim: khách nhìn vào không biết tin nằm ở đâu.
 //
-// ⚠️ NÚT "VỊ TRÍ CỦA TÔI" PHẢI LUÔN HIỆN — kể cả lúc bản đồ đang khoá.
-// Bản trước giấu nút khi khoá, khách mở tin ra chỉ thấy lớp phủ "Chạm để xem bản
-// đồ", tưởng web không có định vị. Đừng bọc nút này trong điều kiện khoá nữa.
+// VÌ SAO NỀN KHÔNG PHẢI GOOGLE: Google đóng cờ "prohibited territory" vào tài
+// khoản thanh toán nên Maps JS không vẽ được, khối bản đồ tụt về bản nhúng — mà
+// bản nhúng BẮT HAI NGÓN và không có nút định vị. Leaflet + OpenStreetMap kéo MỘT
+// ngón, có định vị, không bao giờ trắng. Phần chỉ đường mở app thật vẫn là Google
+// Maps (nút dưới khối này, xem src/lib/moGoogleMaps.ts).
+//
+// KHOÁ CỬ CHỈ: mặc định bản đồ không nhận thao tác để ngón tay lướt qua vẫn cuộn
+// trang. Chạm một cái là mở khoá. Nhưng NÚT ĐỊNH VỊ LUÔN HIỆN kể cả lúc khoá —
+// bản trước giấu nút khi khoá, khách mở tin ra không thấy nút nào, tưởng web hỏng.
 export default function MapPaneLeaflet({
   query,
   zoom,
@@ -33,13 +41,16 @@ export default function MapPaneLeaflet({
 }) {
   const boxRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<LType.Map | null>(null);
+  const LRef = useRef<typeof LType | null>(null);
   const chamRef = useRef<LType.CircleMarker | null>(null);
   const vongRef = useRef<LType.CircleMarker | null>(null);
-  const LRef = useRef<typeof LType | null>(null);
-  const ghimRef = useRef<{ lat: number; lng: number } | null>(null);
+  const duongRef = useRef<LType.Polyline | null>(null);
+  const bdsRef = useRef<[number, number] | null>(null);
+
   const [dangDinhVi, setDangDinhVi] = useState(false);
   const [loi, setLoi] = useState("");
   const [khoangCach, setKhoangCach] = useState("");
+  const [mucDo, setMucDo] = useState<MucDoChinhXac | null>(null);
 
   const HTML_GHIM =
     "<svg width=\"30\" height=\"40\" viewBox=\"0 0 30 40\" xmlns=\"http://www.w3.org/2000/svg\">" +
@@ -48,56 +59,59 @@ export default function MapPaneLeaflet({
 
   const GHI_NGUON = "© <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a>";
 
-  // Khoảng cách đường chim bay giữa hai điểm (km) — chỉ để khách áng chừng
-  // "mình cách bất động sản này bao xa", không phải quãng đường đi thật.
-  function khoangCachKm(a: [number, number], b: [number, number]) {
-    const R = 6371;
-    const rad = (d: number) => (d * Math.PI) / 180;
-    const dLat = rad(b[0] - a[0]);
-    const dLng = rad(b[1] - a[1]);
-    const h =
-      Math.sin(dLat / 2) ** 2 +
-      Math.cos(rad(a[0])) * Math.cos(rad(b[0])) * Math.sin(dLng / 2) ** 2;
-    return 2 * R * Math.asin(Math.sqrt(h));
-  }
-
-  // Dựng bản đồ một lần
+  // ── DỰNG BẢN ĐỒ + CẮM GHIM ĐỎ ──────────────────────────────────────────────
   useEffect(() => {
     let huy = false;
     (async () => {
-      const L = (await import("leaflet")) as unknown as typeof LType;
+      const [L, diem] = await Promise.all([
+        import("leaflet") as unknown as Promise<typeof LType>,
+        timToaDo(query),
+      ]);
       if (huy || !boxRef.current || mapRef.current) return;
       LRef.current = L;
 
-      // Toạ độ ghim tay (details.mapPin) chính xác tuyệt đối; không có thì lấy tâm
-      // khu vực — nói đúng "đây là giữa khu vực", không giả vờ đúng căn nhà.
-      const ghim = parseLatLng(query);
-      const kv = centerOfArea(query);
-      const tam: [number, number] = ghim ? [ghim.lat, ghim.lng] : kv ? [kv[0], kv[1]] : [16.054, 108.202];
-      if (ghim) ghimRef.current = { lat: ghim.lat, lng: ghim.lng };
+      const tam: [number, number] = diem ? [diem.lat, diem.lng] : [16.054, 108.202];
+      // Ghim tay / ra tên đường thì phóng sát; chỉ có phường/xã thì lùi ra cho
+      // khách hiểu đây là cả một vùng chứ không phải một điểm.
+      const mucZoom = !diem ? 12 : diem.mucDo === "khuVuc" ? Math.min(zoom, 14) : zoom;
 
       const map = L.map(boxRef.current, {
         zoomControl: true,
-        // Khoá lúc đầu → ngón tay lướt qua bản đồ vẫn cuộn được trang
         dragging: !locked,
         scrollWheelZoom: !locked,
         doubleClickZoom: !locked,
         touchZoom: !locked,
-      }).setView(tam, ghim ? zoom : Math.min(zoom, 14));
+      }).setView(tam, mucZoom);
 
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: GHI_NGUON,
         maxZoom: 19,
       }).addTo(map);
 
-      // Chỉ ghim khi biết ĐÚNG điểm — chỉ có tâm khu vực thì không cắm ghim để
-      // khách khỏi tưởng đó là đúng địa chỉ căn nhà.
-      if (ghim) {
+      if (diem) {
+        bdsRef.current = [diem.lat, diem.lng];
+        setMucDo(diem.mucDo);
         const icon = L.divIcon({ className: "", html: HTML_GHIM, iconSize: [30, 40], iconAnchor: [15, 39] });
-        L.marker([ghim.lat, ghim.lng], { icon }).addTo(map);
+        L.marker([diem.lat, diem.lng], { icon }).addTo(map);
+        // Chỉ biết phường/xã thì khoanh vòng cho thấy "quanh quanh đây", đỡ hiểu lầm
+        // là ghim đúng số nhà.
+        if (diem.mucDo === "khuVuc") {
+          L.circle([diem.lat, diem.lng], {
+            radius: 900,
+            color: "#e11d48",
+            weight: 1.5,
+            fillColor: "#e11d48",
+            fillOpacity: 0.07,
+            interactive: false,
+          }).addTo(map);
+        }
       }
 
       mapRef.current = map;
+
+      // Tự định vị nhẹ nhàng ngay khi mở: chỉ VẼ CHẤM và tính khoảng cách, KHÔNG
+      // kéo bản đồ đi — khách đang muốn nhìn bất động sản, giật đi là hỏng.
+      setTimeout(() => dinhVi(false), 500);
     })();
 
     return () => {
@@ -106,6 +120,7 @@ export default function MapPaneLeaflet({
       mapRef.current = null;
       chamRef.current = null;
       vongRef.current = null;
+      duongRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -127,17 +142,17 @@ export default function MapPaneLeaflet({
     }
   }, [locked]);
 
-  // ĐỊNH VỊ HAI CHẶNG CHO NHANH — chặng 1 lấy theo wifi/trạm phát sóng (dưới 1
-  // giây), chặng 2 GPS chính xác chạy ngầm rồi tự chỉnh lại.
-  function veCham(lat: number, lng: number, doiTamNhin: boolean) {
+  // Vẽ chấm xanh "tôi ở đây" + đường nối TỪ CHỖ TÔI ĐẾN BẤT ĐỘNG SẢN.
+  // noiLai=true là lúc khách chủ động bấm nút: kéo khung nhìn cho thấy cả hai đầu.
+  function veViTriToi(lat: number, lng: number, noiLai: boolean) {
     const L = LRef.current;
     const map = mapRef.current;
     if (!L || !map) return;
+    const toi: [number, number] = [lat, lng];
 
-    // Vòng mờ bên ngoài cho dễ thấy giữa nền bản đồ nhiều chi tiết
-    if (vongRef.current) vongRef.current.setLatLng([lat, lng]);
+    if (vongRef.current) vongRef.current.setLatLng(toi);
     else
-      vongRef.current = L.circleMarker([lat, lng], {
+      vongRef.current = L.circleMarker(toi, {
         radius: 16,
         stroke: false,
         fillColor: "#0071e3",
@@ -145,9 +160,9 @@ export default function MapPaneLeaflet({
         interactive: false,
       }).addTo(map);
 
-    if (chamRef.current) chamRef.current.setLatLng([lat, lng]);
+    if (chamRef.current) chamRef.current.setLatLng(toi);
     else
-      chamRef.current = L.circleMarker([lat, lng], {
+      chamRef.current = L.circleMarker(toi, {
         radius: 7,
         color: "#ffffff",
         weight: 3,
@@ -156,52 +171,49 @@ export default function MapPaneLeaflet({
         interactive: false,
       }).addTo(map);
 
-    const ghim = ghimRef.current;
-    if (ghim) {
-      const km = khoangCachKm([lat, lng], [ghim.lat, ghim.lng]);
-      setKhoangCach(km < 1 ? `Cách khoảng ${Math.round(km * 1000)} m` : `Cách khoảng ${km.toFixed(1)} km`);
-      // CHỈNH KHUNG NHÌN CHO THẤY CẢ HAI: chỗ khách đứng + bất động sản. Xa quá
-      // (trên 80 km) thì thôi, giữ nguyên bất động sản giữa màn cho khỏi mất hút.
-      if (doiTamNhin && km <= 80) {
-        map.fitBounds(
-          L.latLngBounds([
-            [lat, lng],
-            [ghim.lat, ghim.lng],
-          ]),
-          { padding: [50, 50], maxZoom: 16 },
-        );
-        return;
-      }
+    const bds = bdsRef.current;
+    if (!bds) {
+      if (noiLai) map.setView(toi, 15);
+      return;
     }
-    if (doiTamNhin && !ghim) map.setView([lat, lng], 15);
+
+    const km = khoangCachKm(toi, bds);
+    setKhoangCach(docKhoangCach(km));
+
+    // Đường đứt nối hai đầu — nhìn phát hiểu ngay "từ chỗ tôi tới đây".
+    if (duongRef.current) duongRef.current.setLatLngs([toi, bds]);
+    else
+      duongRef.current = L.polyline([toi, bds], {
+        color: "#0071e3",
+        weight: 3,
+        opacity: 0.85,
+        dashArray: "7 7",
+        interactive: false,
+      }).addTo(map);
+
+    if (noiLai) map.fitBounds(L.latLngBounds([toi, bds]), { padding: [55, 55], maxZoom: 16 });
   }
 
+  // tuBam=true: khách chủ động bấm → ÉP máy đo lại vị trí (buộc bật GPS), và kéo
+  // khung nhìn cho thấy trọn đường từ chỗ khách tới bất động sản.
   function dinhVi(tuBam: boolean) {
     setLoi("");
     if (tuBam) setDangDinhVi(true);
     layViTri(
       (lat, lng, chinhXacHon) => {
         setDangDinhVi(false);
-        veCham(lat, lng, !chinhXacHon);
+        veViTriToi(lat, lng, tuBam && !chinhXacHon);
       },
       (ma) => {
         setDangDinhVi(false);
-        // Tự động định vị mà khách CHƯA từng trả lời thì im lặng, đừng doạ khách
-        // ngay khi vừa mở tin. Nhưng nếu đang bị CHẶN hẳn (mã 1) thì phải nói —
-        // im lặng là khách bấm nút mãi không hiểu vì sao không lên.
+        // Tự động định vị mà khách chưa từng trả lời thì im lặng, đừng doạ khách
+        // ngay khi vừa mở tin. Nhưng đang bị CHẶN hẳn (mã 1) thì phải nói.
         if (!tuBam && ma !== 1) return;
         setLoi(loiDinhVi(ma));
       },
+      tuBam,
     );
   }
-
-  // TỰ ĐỘNG ĐỊNH VỊ KHI MỞ TIN — để khách thấy NGAY mình đang ở đâu so với bất
-  // động sản, không phải bấm gì.
-  useEffect(() => {
-    const t = setTimeout(() => dinhVi(false), 500);
-    return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const size = "h-[260px] w-full sm:h-[320px]";
 
@@ -209,10 +221,10 @@ export default function MapPaneLeaflet({
     <div className="relative">
       <div ref={boxRef} aria-label="Bản đồ vị trí" className={`${size} bg-cvr-surface`} />
 
-      {/* NÚT VỊ TRÍ — LUÔN HIỆN, kể cả khi bản đồ đang khoá (xem ghi chú đầu tệp).
-          Đặt góc trên bên PHẢI: góc trái đã có nút phóng to/thu nhỏ của bản đồ,
-          đáy giữa là chỗ lớp phủ "Chạm để xem bản đồ".
-          z-index phải trên 800 vì Leaflet xếp marker 600 / popup 700, và trên cả
+      {/* NÚT ĐỊNH VỊ — LUÔN HIỆN, kể cả khi bản đồ đang khoá (xem ghi chú đầu tệp).
+          Góc trên bên PHẢI: góc trái là nút phóng to của bản đồ, đáy giữa là lớp
+          phủ "Chạm để xem bản đồ".
+          z-index trên 800 vì Leaflet xếp marker 600 / popup 700, và phải trên cả
           lớp phủ khoá nằm ở khối cha. */}
       <button
         type="button"
@@ -225,14 +237,24 @@ export default function MapPaneLeaflet({
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v2m0 16v2M2 12h2m16 0h2" />
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 20a8 8 0 100-16 8 8 0 000 16z" />
         </svg>
-        {dangDinhVi ? "Đang định vị…" : "Vị trí của tôi"}
+        {dangDinhVi ? "Đang định vị…" : "Từ chỗ tôi đến đây"}
       </button>
 
-      {/* Đã biết khách đứng đâu → nói luôn cách bao xa, khỏi phải tự ước lượng */}
-      {khoangCach && !loi && (
-        <span className="absolute left-3 top-3 z-[1200] inline-flex items-center gap-1.5 rounded-lg bg-white/95 px-2.5 py-1.5 text-[12px] font-semibold text-cvr-ink shadow-[0_2px_10px_rgba(0,0,0,0.18)] ring-1 ring-black/5">
-          <span className="h-2.5 w-2.5 rounded-full bg-cvr-blue ring-2 ring-white" />
-          {khoangCach}
+      {/* Góc trên trái: đã biết khách đứng đâu thì nói luôn cách bao xa; chưa định
+          vị được mà ghim chỉ ở mức khu vực thì nói thật là vị trí tương đối. */}
+      {!loi && (khoangCach || mucDo === "khuVuc") && (
+        <span className="absolute left-3 top-3 z-[1200] inline-flex max-w-[52%] items-center gap-1.5 rounded-lg bg-white/95 px-2.5 py-1.5 text-left text-[12px] font-semibold leading-snug text-cvr-ink shadow-[0_2px_10px_rgba(0,0,0,0.18)] ring-1 ring-black/5">
+          {khoangCach ? (
+            <>
+              <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-cvr-blue ring-2 ring-white" />
+              Cách anh/chị khoảng {khoangCach}
+            </>
+          ) : (
+            <>
+              <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-rose-600 ring-2 ring-white" />
+              Vị trí tương đối trong khu vực
+            </>
+          )}
         </span>
       )}
 
