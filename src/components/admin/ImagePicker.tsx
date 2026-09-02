@@ -187,29 +187,43 @@ export default function ImagePicker({
         </p>
       )}
 
-      {/* Nút tải ảnh / video + dán link */}
+      {/* Nút tải ảnh / video + dán link
+          ⚠️ ĐIỆN THOẠI: ô chọn tệp phải nằm TRONG <label> và chỉ ẩn bằng sr-only.
+          Trước đây để className="hidden" (display:none) rồi gọi input.click() —
+          trình duyệt đời cũ trên Android/iOS bỏ qua ô đã display:none nên khách
+          bấm không mở được thư viện ảnh, hoặc mở mà không chọn được nhiều tấm.
+          Bấm thẳng vào nhãn là hành vi gốc của trình duyệt, máy nào cũng chạy. */}
       <div className="flex flex-wrap items-center gap-3">
-        <button
-          type="button"
-          onClick={() => imgRef.current?.click()}
-          disabled={uploadingImg}
-          className="inline-flex items-center gap-2 rounded-lg border border-cvr-line bg-white px-4 py-2 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink disabled:opacity-60"
+        <label
+          className={`inline-flex cursor-pointer items-center gap-2 rounded-lg border border-cvr-line bg-white px-4 py-2 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink ${uploadingImg ? "pointer-events-none opacity-60" : ""}`}
         >
           <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 16V4m0 0L8 8m4-4l4 4M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" /></svg>
-          {uploadingImg ? "Đang tải ảnh…" : "Tải ảnh từ máy"}
-        </button>
-        <input ref={imgRef} type="file" accept="image/*" multiple onChange={(e) => handleImageFiles(e.target.files)} className="hidden" />
+          {uploadingImg ? "Đang tải ảnh…" : "Chọn nhiều ảnh từ máy"}
+          <input
+            ref={imgRef}
+            type="file"
+            accept="image/*"
+            multiple
+            disabled={uploadingImg}
+            onChange={(e) => handleImageFiles(e.target.files)}
+            className="sr-only"
+          />
+        </label>
 
-        <button
-          type="button"
-          onClick={() => videoRef.current?.click()}
-          disabled={uploadingVideo}
-          className="inline-flex items-center gap-2 rounded-lg border border-cvr-line bg-white px-4 py-2 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink disabled:opacity-60"
+        <label
+          className={`inline-flex cursor-pointer items-center gap-2 rounded-lg border border-cvr-line bg-white px-4 py-2 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink ${uploadingVideo ? "pointer-events-none opacity-60" : ""}`}
         >
           <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 6h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z" /></svg>
           {uploadingVideo ? "Đang tải video…" : "Tải video từ máy"}
-        </button>
-        <input ref={videoRef} type="file" accept="video/*" onChange={(e) => handleVideoFile(e.target.files)} className="hidden" />
+          <input
+            ref={videoRef}
+            type="file"
+            accept="video/*"
+            disabled={uploadingVideo}
+            onChange={(e) => handleVideoFile(e.target.files)}
+            className="sr-only"
+          />
+        </label>
 
       </div>
 

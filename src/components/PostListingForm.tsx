@@ -468,7 +468,11 @@ export default function PostListingForm() {
           <div className="sm:col-span-2">
             <Label>Mức giá</Label>
             <div className="flex gap-2">
-              <input type="number" min="0" step="0.1" value={priceValue} onChange={(e) => setPriceValue(e.target.value)} disabled={priceUnit === "Thoả thuận"} placeholder="VD: 4,2" className={inputCls + " flex-1 disabled:opacity-50"} />
+              {/* KHÔNG dùng type="number": trình duyệt loại bỏ dấu PHẨY nên khách gõ
+                  "4,2" (đúng như gợi ý trong ô) thì ô thành rỗng, không lưu được giá.
+                  Dùng text + inputMode="decimal" → điện thoại vẫn hiện bàn phím số,
+                  mà gõ được cả dấu phẩy lẫn dấu chấm. */}
+              <input type="text" inputMode="decimal" value={priceValue} onChange={(e) => setPriceValue(e.target.value)} disabled={priceUnit === "Thoả thuận"} placeholder="VD: 4,2" className={inputCls + " flex-1 disabled:opacity-50"} />
               <select value={priceUnit} onChange={(e) => setPriceUnit(e.target.value)} className={inputCls + " w-32"}>
                 {["tỷ", "triệu", "triệu/m²", "Thoả thuận"].map((u) => <option key={u} value={u}>{u}</option>)}
               </select>
@@ -476,21 +480,21 @@ export default function PostListingForm() {
           </div>
           <div>
             <Label>Diện tích đất (m²)</Label>
-            <input type="number" min="0" value={area} onChange={(e) => setArea(e.target.value)} placeholder="VD: 100" className={inputCls} />
+            <input type="text" inputMode="decimal" value={area} onChange={(e) => setArea(e.target.value)} placeholder="VD: 100" className={inputCls} />
           </div>
         </div>
         <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-3">
           <div>
             <Label>Diện tích xây dựng (m²)</Label>
-            <input type="number" min="0" value={builtArea} onChange={(e) => setBuiltArea(e.target.value)} placeholder="VD: 95 (đất nền bỏ trống)" className={inputCls} />
+            <input type="text" inputMode="decimal" value={builtArea} onChange={(e) => setBuiltArea(e.target.value)} placeholder="VD: 95 (đất nền bỏ trống)" className={inputCls} />
           </div>
           <div>
             <Label>Số phòng ngủ</Label>
-            <input type="number" min="0" value={beds} onChange={(e) => setBeds(e.target.value)} placeholder="VD: 3" className={inputCls} />
+            <input type="text" inputMode="numeric" value={beds} onChange={(e) => setBeds(e.target.value)} placeholder="VD: 3" className={inputCls} />
           </div>
           <div>
             <Label>Số phòng tắm</Label>
-            <input type="number" min="0" value={baths} onChange={(e) => setBaths(e.target.value)} placeholder="VD: 2" className={inputCls} />
+            <input type="text" inputMode="numeric" value={baths} onChange={(e) => setBaths(e.target.value)} placeholder="VD: 2" className={inputCls} />
           </div>
         </div>
       </Card>
@@ -507,7 +511,7 @@ export default function PostListingForm() {
                   {f.options?.map((o) => <option key={o} value={o}>{o}</option>)}
                 </select>
               ) : (
-                <input type={f.type === "number" ? "number" : "text"} value={specValues[f.key] ?? ""} onChange={(e) => setSpecValues((s) => ({ ...s, [f.key]: e.target.value }))} placeholder={f.placeholder ?? ""} className={inputCls} />
+                <input type="text" inputMode={f.type === "number" ? "decimal" : undefined} value={specValues[f.key] ?? ""} onChange={(e) => setSpecValues((s) => ({ ...s, [f.key]: e.target.value }))} placeholder={f.placeholder ?? ""} className={inputCls} />
               )}
             </div>
           ))}
