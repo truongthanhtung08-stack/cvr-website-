@@ -67,7 +67,8 @@ export default function MapPicker({
 
         const map = new g.maps.Map(boxRef.current, {
           center,
-          zoom: saved ? 17 : khuVuc ? 13 : 11,
+          // Mở đủ gần để thấy tên đường. Mức 11 cũ nhìn như cả tỉnh, không ghim nổi.
+          zoom: saved ? 17 : khuVuc ? 15 : 12,
           gestureHandling: "greedy",
           mapTypeControl: false,
           streetViewControl: false,
@@ -133,6 +134,58 @@ export default function MapPicker({
 
   // Google từ chối khoá → chuyển sang bản nhúng ngay, không đợi hết 2 giây
   useEffect(() => onMapsAuthFailure(() => setHongBanDo(true)), []);
+
+  // ── ĐƯA BẢN ĐỒ VỀ ĐÚNG KHU VỰC KHÁCH ĐANG CHỌN ──────────────────────────
+  // Trước đây bản đồ mở cố định giữa Đà Nẵng ở mức phóng rất rộng và KHÔNG bao
+  // giờ dời, nên khách ở tỉnh khác nhìn vào không biết ghim chỗ nào. Nay cứ chọn
+  // xong Tỉnh/Phường là bản đồ tự bay về đó, phóng đủ gần để thấy từng con đường.
+  const hintRef = useRef(hint);
+  useEffect(() => {
+    hintRef.current = hint;
+  });
+
+  const [dangTimKhuVuc, setDangTimKhuVuc] = useState(false);
+
+  async function veKhuVuc() {
+    const map = mapRef.current;
+    const diaChi = hintRef.current.split(",").map((s) => s.trim()).filter(Boolean).join(", ");
+    if (!map || !diaChi) return;
+
+    // 1) Bảng toạ độ sẵn trong code — nhanh, miễn phí, nhưng chỉ có ít khu vực.
+    const kv = centerOfArea(diaChi);
+    if (kv) {
+      map.setCenter({ lat: kv[0], lng: kv[1] });
+      map.setOptions({ zoom: 15 });
+      return;
+    }
+    // 2) Không có trong bảng → nhờ Google tra đúng phường/xã (khoá đã bật
+    //    Geocoding API). Cả nước 3.321 phường/xã nên không thể liệt kê tay.
+    const g = window.google as unknown as {
+      maps?: { Geocoder?: new () => { geocode: (r: object) => Promise<{ results?: { geometry?: { location?: { lat: () => number; lng: () => number } } }[] }> } };
+    };
+    if (!g?.maps?.Geocoder) return;
+    setDangTimKhuVuc(true);
+    try {
+      const kq = await new g.maps.Geocoder().geocode({ address: diaChi + ", Việt Nam", region: "VN" });
+      const p = kq.results?.[0]?.geometry?.location;
+      if (p) {
+        map.setCenter({ lat: p.lat(), lng: p.lng() });
+        map.setOptions({ zoom: 16 });
+      }
+    } catch {
+      // Tra không ra thì thôi, khách vẫn tự kéo bản đồ được
+    }
+    setDangTimKhuVuc(false);
+  }
+
+  // Khách vừa chọn xong khu vực → tự bay về đó. CHƯA ghim mới bay; đã ghim rồi
+  // thì giữ nguyên, không giật ghim của khách đi chỗ khác.
+  useEffect(() => {
+    if (!hint.trim() || parseLatLng(value) || hongBanDo) return;
+    const t = setTimeout(() => { void veKhuVuc(); }, 700);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hint, hongBanDo]);
 
   function viTriCuaToi() {
     if (!navigator.geolocation) {
@@ -216,6 +269,17 @@ export default function MapPicker({
           </svg>
           {dangDinhVi ? "Đang định vị…" : "Tôi đang đứng ở đây"}
         </button>
+        <button
+          type="button"
+          onClick={() => void veKhuVuc()}
+          disabled={dangTimKhuVuc || hongBanDo || !hint.trim()}
+          className="inline-flex min-h-[38px] items-center gap-1.5 rounded-lg border border-cvr-line bg-white px-3 text-[13px] font-semibold text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink disabled:opacity-45"
+        >
+          <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z" />
+          </svg>
+          {dangTimKhuVuc ? "Đang tìm…" : "Về khu vực đã chọn"}
+        </button>
         {daGhim && (
           <button
             type="button"
@@ -235,7 +299,7 @@ export default function MapPicker({
       <p className="text-xs leading-relaxed text-cvr-faint">
         {daGhim
           ? "Kéo ghim đỏ để chỉnh cho khớp. Tin sẽ hiện đúng điểm này trên bản đồ."
-          : "Bấm thẳng lên bản đồ để ghim vị trí. Nên ghim khi bất động sản chưa có địa chỉ chính xác (đất nền, lô dự án, nhà trong hẻm) — ghim rồi thì bản đồ trang tin chỉ đúng điểm, không đoán theo tên đường nữa."}
+          : "Chọn Tỉnh/Thành và Phường/Xã ở trên — bản đồ tự bay về đúng khu vực đó. Đang đứng tại bất động sản thì bấm “Tôi đang đứng ở đây” là ghim luôn. Còn lại chỉ cần bấm thẳng lên bản đồ đúng điểm cần ghim."}
       </p>
       {loi && <p className="text-xs font-medium text-red-600">{loi}</p>}
     </div>
