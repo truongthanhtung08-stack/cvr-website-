@@ -6,6 +6,8 @@ import type * as LType from "leaflet";
 import { centerOfArea } from "@/lib/geo";
 import { formatLatLng, parseLatLng, type LatLng } from "@/lib/googleMaps";
 import { xemTrenBanDo } from "@/lib/moGoogleMaps";
+import { layViTri, loiDinhVi } from "@/lib/dinhVi";
+import NhacBatDinhVi from "@/components/NhacBatDinhVi";
 
 // ── GHIM VỊ TRÍ TRÊN BẢN ĐỒ (form đăng tin: khách & admin) ────────────────────
 //
@@ -98,47 +100,21 @@ export default function MapPickerLeaflet({
       }).addTo(map);
   }
 
-  // Định vị hỏng thì phải NÓI RÕ vì sao và bảo khách làm gì — im lặng là khách
-  // đứng nhìn không hiểu chuyện gì.
-  function loiDinhVi(ma: number): string {
-    if (ma === 1)
-      return "Anh/chị đang CHẶN định vị. Bấm ổ khoá 🔒 cạnh địa chỉ web → Vị trí → Cho phép, rồi bấm lại nút này.";
-    if (ma === 2)
-      return "Máy CHƯA BẬT GPS. Vào Cài đặt điện thoại → Vị trí, bật lên rồi bấm lại nút này.";
-    return "Định vị lâu quá. Bật GPS rồi bấm lại, hoặc kéo bản đồ tới đúng chỗ và bấm để ghim.";
-  }
-
-  // ĐỊNH VỊ HAI CHẶNG CHO NHANH:
-  //   Chặng 1 — không bắt GPS chính xác cao + nhận vị trí cũ trong 10 phút → máy
-  //     lấy theo wifi/trạm phát sóng, thường có NGAY DƯỚI 1 GIÂY.
-  //   Chặng 2 — GPS chính xác chạy ngầm, có kết quả sát hơn thì tự dời lại.
-  // Bật chính xác cao ngay từ đầu là sai lầm cũ: ngoài trời chờ 5–15 giây, trong
-  // nhà treo luôn.
   // doiTamNhin=false: chỉ VẼ CHẤM XANH chứ không kéo bản đồ đi — dùng khi khách đã
   // gõ địa chỉ hoặc đã ghim sẵn, kéo đi là mất chỗ họ đang xem.
   function dinhVi(ghimLuon: boolean, doiTamNhin = true) {
-    if (!navigator.geolocation) {
-      setLoi("Trình duyệt không hỗ trợ định vị. Anh/chị kéo bản đồ rồi bấm để ghim.");
-      return;
-    }
     setLoi("");
     setDangDinhVi(true);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
+    layViTri(
+      (lat, lng, chinhXacHon) => {
         setDangDinhVi(false);
-        hienCham(pos.coords.latitude, pos.coords.longitude, doiTamNhin, ghimLuon ? 18 : 16);
-        if (ghimLuon) datGhim({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-        navigator.geolocation.getCurrentPosition(
-          (sat) => hienCham(sat.coords.latitude, sat.coords.longitude, false, 16),
-          () => {},
-          { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 },
-        );
+        hienCham(lat, lng, doiTamNhin && !chinhXacHon, ghimLuon ? 18 : 16);
+        if (ghimLuon && !chinhXacHon) datGhim({ lat, lng });
       },
-      (e) => {
+      (ma) => {
         setDangDinhVi(false);
-        setLoi(loiDinhVi(e.code));
+        setLoi(loiDinhVi(ma));
       },
-      { enableHighAccuracy: false, timeout: 6000, maximumAge: 600000 },
     );
   }
 
@@ -311,17 +287,12 @@ export default function MapPickerLeaflet({
       </div>
 
       {loi && (
-        <div className="rounded-lg border border-amber-300 bg-amber-50 p-3">
-          <p className="text-[13px] font-medium leading-relaxed text-amber-900">{loi}</p>
-          <button
-            type="button"
-            onClick={() => dinhVi(true)}
-            disabled={dangDinhVi}
-            className="mt-2 inline-flex min-h-[36px] items-center rounded-lg border border-amber-400 bg-white px-3 text-[13px] font-semibold text-amber-900 transition hover:bg-amber-100 disabled:opacity-60"
-          >
-            {dangDinhVi ? "Đang định vị…" : "Thử lại"}
-          </button>
-        </div>
+        <NhacBatDinhVi
+          loi={loi}
+          onThuLai={() => dinhVi(true)}
+          dangDinhVi={dangDinhVi}
+          onDong={() => setLoi("")}
+        />
       )}
     </div>
   );

@@ -5,6 +5,8 @@ import * as L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import type { Listing } from "@/lib/data";
 import { coordOf } from "@/lib/geo";
+import { layViTri, loiDinhVi, quyenDinhVi } from "@/lib/dinhVi";
+import NhacBatDinhVi from "@/components/NhacBatDinhVi";
 
 // Chế độ Bản đồ (Leaflet + OpenStreetMap) — marker là viên chữ: ĐƠN GIÁ với tin
 // đăng, TÊN DỰ ÁN với dự án. Bấm ra popup thẻ mini dẫn tới trang chi tiết.
@@ -142,42 +144,37 @@ export default function MapView({ items, diem }: { items?: Listing[]; diem?: Die
   // Bật cờ enableHighAccuracy ngay từ đầu là sai lầm cũ: máy chờ bắt được GPS thật
   // mới trả về, ngoài trời cũng mất 5–15 giây, trong nhà thì treo luôn.
   function dinhVi() {
-    if (!navigator.geolocation) {
-      setLoi("Trình duyệt không hỗ trợ định vị.");
-      return;
-    }
     setLoi("");
     setDangDinhVi(true);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
+    layViTri(
+      (lat, lng, chinhXacHon) => {
         setDangDinhVi(false);
-        veCham(pos.coords.latitude, pos.coords.longitude, true);
-        // Chặng 2: tinh chỉnh ngầm, không hiện "đang định vị" nữa
-        navigator.geolocation.getCurrentPosition(
-          (chinhXac) => veCham(chinhXac.coords.latitude, chinhXac.coords.longitude, false),
-          () => {},
-          { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 },
-        );
+        veCham(lat, lng, !chinhXacHon);
       },
-      (e) => {
+      (ma) => {
         setDangDinhVi(false);
-        setLoi(
-          e.code === 1
-            ? "Anh/chị đang CHẶN định vị. Bấm ổ khoá 🔒 cạnh địa chỉ web → Vị trí → Cho phép, rồi bấm lại nút này."
-            : e.code === 2
-              ? "Máy CHƯA BẬT GPS. Vào Cài đặt điện thoại → Vị trí, bật lên rồi bấm lại nút này."
-              : "Định vị lâu quá. Bật GPS rồi bấm lại giúp em.",
-        );
+        setLoi(loiDinhVi(ma));
       },
-      { enableHighAccuracy: false, timeout: 6000, maximumAge: 600000 },
     );
   }
 
   // MỞ BẢN ĐỒ LÀ ĐỊNH VỊ LUÔN — khách thấy ngay mình đang ở đâu so với các bất
-  // động sản, không phải bấm thêm nút nào. Chặn định vị thì lời nhắc hiện lên.
+  // động sản, không phải bấm thêm nút nào.
+  // ⚠️ Trình duyệt đã nhớ "từ chối" thì nó KHÔNG hỏi lại nữa, gọi định vị chỉ tổ
+  // im re. Nên hỏi trạng thái quyền trước: đang bị chặn thì hiện luôn khối hướng
+  // dẫn bật lại, khỏi để khách ngồi đợi cái chấm xanh không bao giờ tới.
   useEffect(() => {
-    const t = setTimeout(dinhVi, 400);
-    return () => clearTimeout(t);
+    let huy = false;
+    void (async () => {
+      if ((await quyenDinhVi()) === "denied") {
+        if (!huy) setLoi(loiDinhVi(1));
+        return;
+      }
+      if (!huy) dinhVi();
+    })();
+    return () => {
+      huy = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -203,11 +200,11 @@ export default function MapView({ items, diem }: { items?: Listing[]; diem?: Die
         {dangDinhVi ? "Đang định vị…" : "Vị trí của tôi"}
       </button>
 
-      {/* Lời nhắc bật GPS — đặt NGAY TRÊN nút, không đè lên nút như trước */}
+      {/* Hướng dẫn bật lại định vị — đặt NGAY TRÊN nút, không đè lên nút */}
       {loi && (
-        <p className="absolute bottom-[68px] left-3 right-3 z-[1000] rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-[13px] font-medium leading-snug text-amber-900 shadow-lg">
-          {loi}
-        </p>
+        <div className="absolute bottom-[68px] left-3 right-3 z-[1000] sm:max-w-[360px]">
+          <NhacBatDinhVi loi={loi} onThuLai={dinhVi} dangDinhVi={dangDinhVi} onDong={() => setLoi("")} />
+        </div>
       )}
     </div>
   );

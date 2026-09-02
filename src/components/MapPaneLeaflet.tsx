@@ -5,6 +5,8 @@ import "leaflet/dist/leaflet.css";
 import type * as LType from "leaflet";
 import { centerOfArea } from "@/lib/geo";
 import { parseLatLng } from "@/lib/googleMaps";
+import { layViTri, loiDinhVi } from "@/lib/dinhVi";
+import NhacBatDinhVi from "@/components/NhacBatDinhVi";
 
 // ── BẢN ĐỒ VỊ TRÍ TRONG TRANG TIN / TRANG DỰ ÁN ──────────────────────────────
 //
@@ -175,42 +177,26 @@ export default function MapPaneLeaflet({
   }
 
   function dinhVi(tuBam: boolean) {
-    if (!navigator.geolocation) {
-      if (tuBam) setLoi("Trình duyệt không hỗ trợ định vị.");
-      return;
-    }
     setLoi("");
     if (tuBam) setDangDinhVi(true);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
+    layViTri(
+      (lat, lng, chinhXacHon) => {
         setDangDinhVi(false);
-        veCham(pos.coords.latitude, pos.coords.longitude, true);
-        navigator.geolocation.getCurrentPosition(
-          (sat) => veCham(sat.coords.latitude, sat.coords.longitude, false),
-          () => {},
-          { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 },
-        );
+        veCham(lat, lng, !chinhXacHon);
       },
-      (e) => {
+      (ma) => {
         setDangDinhVi(false);
-        // Lúc TỰ ĐỘNG định vị mà khách chưa cho phép thì im lặng — nút vẫn nằm đó,
-        // khách bấm mới báo lý do. Không doạ khách bằng cảnh báo khi vừa mở tin.
-        if (!tuBam) return;
-        setLoi(
-          e.code === 1
-            ? "Anh/chị đang CHẶN định vị. Bấm ổ khoá 🔒 cạnh địa chỉ web → Vị trí → Cho phép, rồi bấm lại."
-            : e.code === 2
-              ? "Máy CHƯA BẬT GPS. Vào Cài đặt điện thoại → Vị trí, bật lên rồi bấm lại."
-              : "Định vị lâu quá, bấm lại giúp em.",
-        );
+        // Tự động định vị mà khách CHƯA từng trả lời thì im lặng, đừng doạ khách
+        // ngay khi vừa mở tin. Nhưng nếu đang bị CHẶN hẳn (mã 1) thì phải nói —
+        // im lặng là khách bấm nút mãi không hiểu vì sao không lên.
+        if (!tuBam && ma !== 1) return;
+        setLoi(loiDinhVi(ma));
       },
-      { enableHighAccuracy: false, timeout: 6000, maximumAge: 600000 },
     );
   }
 
   // TỰ ĐỘNG ĐỊNH VỊ KHI MỞ TIN — để khách thấy NGAY mình đang ở đâu so với bất
-  // động sản, không phải bấm gì. Trình duyệt chỉ hỏi quyền một lần cho cả web:
-  // khách đã cho phép ở trang bản đồ Mua bán/Cho thuê thì đây chạy im lặng.
+  // động sản, không phải bấm gì.
   useEffect(() => {
     const t = setTimeout(() => dinhVi(false), 500);
     return () => clearTimeout(t);
@@ -251,9 +237,14 @@ export default function MapPaneLeaflet({
       )}
 
       {loi && (
-        <p className="absolute left-3 right-3 top-[52px] z-[1200] rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-[13px] font-medium leading-snug text-amber-900 shadow-lg">
-          {loi}
-        </p>
+        <div className="absolute left-3 right-3 top-[52px] z-[1200] sm:max-w-[360px]">
+          <NhacBatDinhVi
+            loi={loi}
+            onThuLai={() => dinhVi(true)}
+            dangDinhVi={dangDinhVi}
+            onDong={() => setLoi("")}
+          />
+        </div>
       )}
     </div>
   );
