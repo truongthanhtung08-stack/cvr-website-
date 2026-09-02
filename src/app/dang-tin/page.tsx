@@ -7,14 +7,14 @@ import PostListingForm from "@/components/PostListingForm";
 export const metadata: Metadata = {
   alternates: { canonical: "/dang-tin" },
   title: "Đăng tin bất động sản",
-  description: "Đăng tin bán / cho thuê nhà đất tại Đà Nẵng, Huế và Miền Trung trên Coastal Land — biểu mẫu chuyên nghiệp, đầy đủ thuộc tính theo loại hình, duyệt nhanh bằng AI.",
+  description: "Đăng tin bán / cho thuê nhà đất tại Đà Nẵng, Huế và Miền Trung trên Coastal Land — biểu mẫu đầy đủ thuộc tính theo loại hình, tin được duyệt nhanh.",
 };
 
 const steps = [
-  { n: "1", t: "Nhập thông tin", d: "Chọn loại hình, khu vực, giá, diện tích và đặc điểm bất động sản." },
-  { n: "2", t: "Tải hình ảnh", d: "Thêm ảnh thực tế, video và giấy tờ pháp lý để tăng độ tin cậy." },
-  { n: "3", t: "AI kiểm duyệt", d: "Tin được duyệt nhanh, lọc trùng và cảnh báo nội dung không hợp lệ." },
-  { n: "4", t: "Tiếp cận khách", d: "Tin hiển thị tới đúng người mua đang tìm tại khu vực của bạn." },
+  { n: "1", t: "Nhập thông tin", d: "Loại hình, khu vực, giá, diện tích." },
+  { n: "2", t: "Tải hình ảnh", d: "Ảnh thật và video của bất động sản." },
+  { n: "3", t: "Kiểm duyệt tin đăng", d: "Duyệt nhanh, lọc tin trùng và tin không hợp lệ." },
+  { n: "4", t: "Tiếp cận khách", d: "Tin đến đúng người đang tìm ở khu vực của bạn." },
 ];
 
 export default function DangTinPage() {

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { saleTypeGroups, rentTypeGroups } from "@/lib/filters";
 import { provinceNamesFor, districtsOf, wardsOf, wardsOfNew, type GeoMode } from "@/lib/locations";
-import { fieldsFor, interiorItems, amenityGroups, legalOptions, furnishLevels, directions } from "@/lib/listingSpec";
+import { fieldsFor, interiorItems, amenityGroups, legalOptions, furnishLevels, directions, coPhongNgu, coPhongTam, coDienTichXayDung } from "@/lib/listingSpec";
 import ImagePicker from "@/components/admin/ImagePicker";
 import MapPicker from "@/components/MapPicker";
 import ContentEditor from "@/components/admin/ContentEditor";
@@ -313,21 +313,33 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
           </div>
         </Field>
 
-        {/* Diện tích đất · Diện tích xây dựng · Phòng ngủ · Phòng tắm */}
-        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Field label="Diện tích đất (m², bắt buộc)">
-            <input value={area} onChange={(e) => setArea(e.target.value)} inputMode="decimal" placeholder="VD: 100" className={inputCls} />
-          </Field>
-          <Field label="Diện tích xây dựng (m²)">
-            <input value={builtArea} onChange={(e) => setBuiltArea(e.target.value)} inputMode="decimal" placeholder="VD: 95 (đất nền bỏ trống)" className={inputCls} />
-          </Field>
-          <Field label="Phòng ngủ">
-            <input value={beds} onChange={(e) => setBeds(e.target.value)} inputMode="numeric" placeholder="VD: 2" className={inputCls} />
-          </Field>
-          <Field label="Phòng tắm">
-            <input value={baths} onChange={(e) => setBaths(e.target.value)} inputMode="numeric" placeholder="VD: 2" className={inputCls} />
-          </Field>
-        </div>
+        {/* Diện tích · Phòng ngủ · Phòng tắm — CHỈ HIỆN MỤC THUỘC LOẠI HÌNH.
+            Đất nền không có phòng ngủ/phòng tắm/diện tích xây dựng; kho xưởng và
+            mặt bằng không có phòng ngủ. Số cột co theo số mục còn lại. */}
+        {(() => {
+          const o = [
+            <Field key="dt" label="Diện tích đất (m², bắt buộc)">
+              <input value={area} onChange={(e) => setArea(e.target.value)} inputMode="decimal" placeholder="VD: 100" className={inputCls} />
+            </Field>,
+            coDienTichXayDung(type) && (
+              <Field key="dtxd" label="Diện tích xây dựng (m²)">
+                <input value={builtArea} onChange={(e) => setBuiltArea(e.target.value)} inputMode="decimal" placeholder="VD: 95" className={inputCls} />
+              </Field>
+            ),
+            coPhongNgu(type) && (
+              <Field key="pn" label="Phòng ngủ">
+                <input value={beds} onChange={(e) => setBeds(e.target.value)} inputMode="numeric" placeholder="VD: 2" className={inputCls} />
+              </Field>
+            ),
+            coPhongTam(type) && (
+              <Field key="pt" label="Phòng tắm">
+                <input value={baths} onChange={(e) => setBaths(e.target.value)} inputMode="numeric" placeholder="VD: 2" className={inputCls} />
+              </Field>
+            ),
+          ].filter(Boolean);
+          const cot = o.length >= 4 ? "sm:grid-cols-2 lg:grid-cols-4" : o.length === 3 ? "sm:grid-cols-3" : o.length === 2 ? "sm:grid-cols-2" : "";
+          return <div className={`mt-4 grid grid-cols-1 gap-4 ${cot}`}>{o}</div>;
+        })()}
       </Panel>
 
       {/* Vị trí — 3 cấp CHỌN từ danh sách, liên động: Tỉnh → Quận/Huyện → Phường/Xã.

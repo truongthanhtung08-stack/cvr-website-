@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import {
   categorySpecs, propertyCategories, demandTypes, rentFields,
+  coPhongNgu, coPhongTam, coDienTichXayDung,
   legalOptions, furnishLevels, amenityGroups, interiorItems, directions,
   purposeOfDemand, demandOfPurpose,
 } from "@/lib/listingSpec";
@@ -483,20 +484,34 @@ export default function PostListingForm() {
             <input type="text" inputMode="decimal" value={area} onChange={(e) => setArea(e.target.value)} placeholder="VD: 100" className={inputCls} />
           </div>
         </div>
-        <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-3">
-          <div>
-            <Label>Diện tích xây dựng (m²)</Label>
-            <input type="text" inputMode="decimal" value={builtArea} onChange={(e) => setBuiltArea(e.target.value)} placeholder="VD: 95 (đất nền bỏ trống)" className={inputCls} />
-          </div>
-          <div>
-            <Label>Số phòng ngủ</Label>
-            <input type="text" inputMode="numeric" value={beds} onChange={(e) => setBeds(e.target.value)} placeholder="VD: 3" className={inputCls} />
-          </div>
-          <div>
-            <Label>Số phòng tắm</Label>
-            <input type="text" inputMode="numeric" value={baths} onChange={(e) => setBaths(e.target.value)} placeholder="VD: 2" className={inputCls} />
-          </div>
-        </div>
+        {/* CHỈ HIỆN MỤC THUỘC LOẠI HÌNH ĐANG CHỌN — đất nền không có phòng ngủ,
+            phòng tắm hay diện tích xây dựng; kho xưởng/mặt bằng không có phòng ngủ.
+            Số cột co theo số mục còn lại nên không bao giờ chừa ô trống lửng lơ. */}
+        {(() => {
+          const oChinh = [
+            coDienTichXayDung(category) && (
+              <div key="dtxd">
+                <Label>Diện tích xây dựng (m²)</Label>
+                <input type="text" inputMode="decimal" value={builtArea} onChange={(e) => setBuiltArea(e.target.value)} placeholder="VD: 95" className={inputCls} />
+              </div>
+            ),
+            coPhongNgu(category) && (
+              <div key="pn">
+                <Label>Số phòng ngủ</Label>
+                <input type="text" inputMode="numeric" value={beds} onChange={(e) => setBeds(e.target.value)} placeholder="VD: 3" className={inputCls} />
+              </div>
+            ),
+            coPhongTam(category) && (
+              <div key="pt">
+                <Label>Số phòng tắm</Label>
+                <input type="text" inputMode="numeric" value={baths} onChange={(e) => setBaths(e.target.value)} placeholder="VD: 2" className={inputCls} />
+              </div>
+            ),
+          ].filter(Boolean);
+          if (!oChinh.length) return null;
+          const cot = oChinh.length === 1 ? "" : oChinh.length === 2 ? " sm:grid-cols-2" : " sm:grid-cols-3";
+          return <div className={`grid min-w-0 grid-cols-1 gap-4${cot}`}>{oChinh}</div>;
+        })()}
       </Card>
 
       {/* 4. Đặc điểm theo loại hình (động) */}

@@ -373,8 +373,11 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                       thông tin pháp lý + mức độ xác thực, không "cam kết". */}
                   <p className="font-semibold text-cvr-ink">Pháp lý & xác thực</p>
                   <ul className="mt-3 space-y-2.5 leading-relaxed text-cvr-body">
+                    {/* Pháp lý ghi ĐÚNG những gì người đăng nhập (Sổ đỏ / Sổ hồng /
+                        Hợp đồng mua bán…); không nhập thì mới ghi "Liên hệ để biết chi tiết".
+                        KHÔNG lặp lại "Hướng" ở đây — hướng đã nằm trong bảng đặc điểm
+                        phía trên, để hai chỗ dễ lệch nhau và gây hiểu nhầm. */}
                     <li className="flex gap-2"><span className="text-cvr-gold-ink">✓</span> Pháp lý: {d.legal ?? "Liên hệ để biết chi tiết"}</li>
-                    {d.direction && <li className="flex gap-2"><span className="text-cvr-gold-ink">✓</span> Hướng: {d.direction}</li>}
                     <li className="flex gap-2"><span className="text-cvr-gold-ink">✓</span> Tin đã qua kiểm duyệt; Coastal Land nỗ lực xác thực thông tin trước khi đăng</li>
                     <li className="flex gap-2"><span className="text-cvr-gold-ink">✓</span> Thủ tục công chứng, sang tên do môi giới và hai bên thực hiện</li>
                   </ul>

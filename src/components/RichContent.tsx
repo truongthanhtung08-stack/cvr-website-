@@ -83,7 +83,10 @@ export default function RichContent({ paragraphs, title }: { paragraphs: string[
         const am = p.match(ALIGN_MARKER);
         const body = am ? p.slice(am[0].length) : p;
         return (
-          <p key={i} className={am ? ALIGN_CLASS[am[1]] : undefined}>
+          // Mặc định CANH ĐỀU hai bên (justify) cho mọi đoạn văn dài trên web —
+          // mô tả tin, tổng quan dự án, bài viết đều đi qua đây. Đoạn nào có
+          // marker căn lề riêng (giữa/phải) thì vẫn theo marker.
+          <p key={i} className={am ? ALIGN_CLASS[am[1]] : "text-justify"}>
             {renderInline(body)}
           </p>
         );

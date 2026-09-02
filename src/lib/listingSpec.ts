@@ -212,6 +212,24 @@ export function fieldsFor(type: string, purpose?: string): Field[] {
   return purpose === "thue" ? [...base, ...rentFields] : base;
 }
 
+// ── MỤC NÀO KHÔNG THUỘC LOẠI HÌNH THÌ ĐỪNG HIỆN ─────────────────────────────
+// Đất nền không có phòng ngủ/phòng tắm/diện tích xây dựng; kho xưởng và mặt bằng
+// không có phòng ngủ. Hiện ra chỉ làm form dài và rối, người đăng phân vân không
+// biết có phải điền không. Dùng chung cho form đăng tin của khách và của admin.
+const KHONG_PHONG_NGU = ["Đất nền / Đất", "Đất công nghiệp / Nhà xưởng / Kho bãi", "Văn phòng / Mặt bằng kinh doanh"];
+const KHONG_PHONG_TAM = ["Đất nền / Đất", "Đất công nghiệp / Nhà xưởng / Kho bãi"];
+const KHONG_DT_XAY_DUNG = ["Đất nền / Đất"];
+
+export function coPhongNgu(type: string): boolean {
+  return !!type && !KHONG_PHONG_NGU.includes(specForType(type).label);
+}
+export function coPhongTam(type: string): boolean {
+  return !!type && !KHONG_PHONG_TAM.includes(specForType(type).label);
+}
+export function coDienTichXayDung(type: string): boolean {
+  return !!type && !KHONG_DT_XAY_DUNG.includes(specForType(type).label);
+}
+
 // Bộ tối giản cho loại không xác định ("Bất động sản khác") — chỉ dùng trường chung.
 const genericSpec: CategorySpec = { label: "Bất động sản khác", match: [], fields: [] };
 
