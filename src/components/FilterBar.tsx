@@ -751,7 +751,7 @@ export default function FilterBar({
           aria-pressed={mapActive}
           // Nút PHỤ: viền mảnh, chữ xanh — để không tranh với nút "Tìm kiếm" (nút
           // chính, nền xanh đặc). Bo góc + chiều cao khớp ô tìm cho đồng bộ.
-          className={`hidden h-11 shrink-0 items-center gap-2 rounded-xl border px-4 text-sm font-semibold transition sm:flex ${
+          className={`flex h-11 shrink-0 items-center gap-2 rounded-xl border px-3 text-sm font-semibold transition sm:px-4 ${
             mapActive
               ? "border-cvr-blue bg-cvr-blue text-white"
               : "border-cvr-line bg-white text-cvr-blue-ink hover:border-cvr-blue hover:bg-cvr-blue/5"
@@ -864,20 +864,8 @@ export default function FilterBar({
           {/* Hàng chip lọc — CUỘN NGANG trên mobile (kiểu Batdongsan), tự xuống hàng trên desktop.
               -mx-2.5/px-2.5 để dải chip tràn sát mép thẻ, cuộn mượt hết bề rộng. */}
           <div className="no-scrollbar flex items-center gap-2 overflow-x-auto pb-0.5 sm:flex-wrap sm:overflow-visible">
-            {/* Bản đồ — chip mở/tắt chế độ bản đồ (chỉ mobile; desktop có nút cạnh ô tìm) */}
-            {onMap && (
-              <button
-                type="button"
-                onClick={onMap}
-                aria-pressed={mapActive}
-                className={`flex h-10 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-none border px-3.5 text-sm font-medium transition sm:hidden ${
-                  mapActive ? "border-cvr-blue bg-cvr-blue text-white" : "border-cvr-line bg-white text-cvr-body active:bg-cvr-surface"
-                }`}
-              >
-                <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4M9 7l6-3" /></svg>
-                Bản đồ
-              </button>
-            )}
+            {/* ĐÃ BỎ chip "Bản đồ" ở hàng ngay dưới thanh tìm kiếm — bị trùng với
+                nút "Xem bản đồ" nằm cạnh ô tìm phía trên. */}
             {/* Thứ tự chuẩn (mockup Mục I phần 2): Khu vực · Dự án · Loại BĐS · Mức giá · Diện tích · Lọc thêm.
                 2 công tắc Tin xác thực / Môi giới chuyên nghiệp đã chuyển vào "Lọc thêm". */}
             {locationDropdown}

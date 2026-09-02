@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import {
   categorySpecs, demandTypes, specForType,
-  coPhongNgu, coPhongTam, coDienTichXayDung, fieldsSplit, thieuMucBatBuoc, nhanDienTich, type Field,
+  coPhongNgu, coPhongTam, coDienTichXayDung, coNoiThat, fieldsSplit, thieuMucBatBuoc, nhanDienTich, type Field,
   legalOptions, furnishLevels, amenityGroups, interiorItems, directions,
   purposeOfDemand, demandOfPurpose,
 } from "@/lib/listingSpec";
@@ -194,6 +194,11 @@ export default function PostListingForm() {
     () => fieldsSplit(loaiHinh, purposeOfDemand(demand)),
     [loaiHinh, demand],
   );
+
+  // SỐ THỨ TỰ BƯỚC TỰ CHẠY — ẩn một khối (vd Nội thất với đất nền) thì các bước
+  // sau tự dồn lên, không bao giờ nhảy số hay trùng số như trước.
+  let demBuoc = 0;
+  const buoc = () => String(++demBuoc);
 
   // Ô nhập một mục đặc điểm — dùng chung cho cả hai khối để hai bên không lệch nhau
   const ONhapSpec = ({ f }: { f: Field }) => (
@@ -476,7 +481,7 @@ export default function PostListingForm() {
       )}
 
       {/* 1. Loại tin & loại hình */}
-      <Card step="1" title="Loại tin đăng">
+      <Card step={buoc()} title="Loại tin đăng">
         <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
           <Pick label="Nhu cầu" value={demand} onChange={setDemand} options={demandTypes} />
           {/* Loại hình theo NHÓM cho dễ tìm — cùng danh mục với bộ lọc của web */}
@@ -499,7 +504,7 @@ export default function PostListingForm() {
       </Card>
 
       {/* 2. Địa chỉ */}
-      <Card step="2" title="Địa chỉ bất động sản">
+      <Card step={buoc()} title="Địa chỉ bất động sản">
         {/* Chọn hệ đơn vị hành chính: MỚI (sau sáp nhập) hay CŨ */}
         <div className="mb-3 inline-flex rounded-lg border border-cvr-line bg-white p-1">
           {([
@@ -533,7 +538,7 @@ export default function PostListingForm() {
       </Card>
 
       {/* 3. Thông tin chính */}
-      <Card step="3" title="Thông tin chính">
+      <Card step={buoc()} title="Thông tin chính">
         <Text label="Tiêu đề tin đăng *" value={title} onChange={setTitle} placeholder="VD: Bán căn hộ 2PN view sông Hàn, full nội thất" required />
         <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-3">
           <div className="sm:col-span-2">
@@ -606,7 +611,7 @@ export default function PostListingForm() {
       </Card>
 
       {/* 4. Đặc điểm theo loại hình (động) */}
-      <Card step="4" title={`Đặc điểm — ${spec.label}`}>
+      <Card step={buoc()} title={`Đặc điểm — ${spec.label}`}>
         <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {specDacDiem.map((f) => <ONhapSpec key={f.key} f={f} />)}
           {/* Trường DÙNG CHUNG mọi loại hình: Hướng · Nội thất · Pháp lý */}
@@ -617,13 +622,15 @@ export default function PostListingForm() {
               {directions.map((o) => <option key={o} value={o}>{o}</option>)}
             </select>
           </div>
-          <div>
-            <Label>Tình trạng nội thất</Label>
-            <select value={furnish} onChange={(e) => setFurnish(e.target.value)} className={inputCls}>
-              <option value="">Chọn</option>
-              {furnishLevels.map((o) => <option key={o} value={o}>{o}</option>)}
-            </select>
-          </div>
+          {coNoiThat(loaiHinh) && (
+            <div>
+              <Label>Tình trạng nội thất</Label>
+              <select value={furnish} onChange={(e) => setFurnish(e.target.value)} className={inputCls}>
+                <option value="">Chọn</option>
+                {furnishLevels.map((o) => <option key={o} value={o}>{o}</option>)}
+              </select>
+            </div>
+          )}
           <div>
             <Label>Tình trạng pháp lý</Label>
             <select value={legal} onChange={(e) => setLegal(e.target.value)} className={inputCls}>
@@ -634,17 +641,19 @@ export default function PostListingForm() {
         </div>
       </Card>
 
-      {/* 5. Nội thất */}
-      <Card step="5" title="Nội thất (tick mục có sẵn)">
-        <div className="flex flex-wrap gap-2">
-          {interiorItems.map((it) => (
-            <Chip key={it} active={interior.includes(it)} onClick={() => toggle(interior, setInterior, it)}>{it}</Chip>
-          ))}
-        </div>
-      </Card>
+      {/* Nội thất — ĐẤT và KHO XƯỞNG không có nội thất nên ẩn hẳn cả khối */}
+      {coNoiThat(loaiHinh) && (
+        <Card step={buoc()} title="Nội thất (tick mục có sẵn)">
+          <div className="flex flex-wrap gap-2">
+            {interiorItems.map((it) => (
+              <Chip key={it} active={interior.includes(it)} onClick={() => toggle(interior, setInterior, it)}>{it}</Chip>
+            ))}
+          </div>
+        </Card>
+      )}
 
       {/* 6. Tiện ích */}
-      <Card step="6" title="Tiện ích (tick mục có sẵn)">
+      <Card step={buoc()} title="Tiện ích (tick mục có sẵn)">
         <div className="space-y-4">
           {amenityGroups.map((g) => (
             <div key={g.group}>
@@ -660,7 +669,7 @@ export default function PostListingForm() {
       </Card>
 
       {/* 7. Mô tả */}
-      <Card step="7" title="Mô tả chi tiết">
+      <Card step={buoc()} title="Mô tả chi tiết">
         {/* Cùng bộ công cụ với trang quản trị: in đậm · in nghiêng · canh
             trái/giữa/phải/đều · chèn ảnh, video giữa bài. */}
         <ContentEditor
@@ -672,7 +681,7 @@ export default function PostListingForm() {
       </Card>
 
       {/* 8. Hình ảnh — tải từ máy / dán link, ảnh đầu là ảnh đại diện */}
-      <Card step="8" title="Hình ảnh">
+      <Card step={buoc()} title="Hình ảnh">
         <ImagePicker
           value={images}
           onChange={setImages}
@@ -684,7 +693,7 @@ export default function PostListingForm() {
 
       {/* 9. Liên hệ */}
       {/* Chọn gói hiển thị — giá và khuyến mãi do quản trị đặt ở /admin/gia-khuyen-mai */}
-      <Card step="9" title="Chọn gói tin — thanh toán">
+      <Card step={buoc()} title="Chọn gói tin — thanh toán">
         <p className="-mt-1 mb-3 text-sm text-cvr-muted">
           Tin ở gói cao hiển thị nổi bật hơn — <span className="font-semibold text-cvr-ink">Diamond</span> có lượt xem trung bình cao gấp 20 lần tin thường.
         </p>
@@ -784,7 +793,7 @@ export default function PostListingForm() {
         )}
       </Card>
 
-      <Card step="10" title="Thông tin liên hệ">
+      <Card step={buoc()} title="Thông tin liên hệ">
         <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-3">
           <div><Label>Họ và tên *</Label><input value={contactName} onChange={(e) => setContactName(e.target.value)} placeholder="Nguyễn Văn A" className={inputCls} /></div>
           <div><Label>Số điện thoại *</Label><input type="tel" value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} placeholder="09xx xxx xxx" className={inputCls} /></div>
@@ -793,7 +802,7 @@ export default function PostListingForm() {
       </Card>
 
       {/* 10. Thuộc dự án (không bắt buộc) */}
-      <Card step="10" title="Thuộc dự án">
+      <Card step={buoc()} title="Thuộc dự án">
         <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <Label>Dự án</Label>

@@ -209,8 +209,13 @@ export const categorySpecs: CategorySpec[] = [
       frontageField,
       depthField,
       roadField,
+      { key: "resiArea", label: "Diện tích đất ở (thổ cư)", type: "number", unit: "m²", main: true },
+      { key: "landTerm", label: "Thời hạn sử dụng", type: "select", options: ["Lâu dài", "Có thời hạn"] },
+      { key: "corner", label: "Vị trí lô", type: "select", options: ["Lô góc 2 mặt tiền", "1 mặt tiền", "Trong khu / đường nội bộ"] },
       { key: "blocks", label: "Số lô / nền", type: "text", placeholder: "VD: Lô A12" },
       { key: "shape", label: "Hình dạng lô", type: "select", options: ["Vuông vức", "Nở hậu", "Thóp hậu", "Chữ L", "Khác"] },
+      { key: "landState", label: "Hiện trạng đất", type: "select", options: ["Đất trống", "Đã san lấp", "Đã có tường rào", "Có nhà cấp 4 trên đất", "Đang trồng cây"] },
+      { key: "planning", label: "Quy hoạch / lộ giới", type: "text", placeholder: "VD: Không dính quy hoạch · Lộ giới 5m" },
     ],
   },
 ];
@@ -270,6 +275,14 @@ const KHONG_PHONG_TAM = ["Đất nền / Đất", "Đất công nghiệp / Nhà 
 // Diện tích xây dựng CHỈ có nghĩa với nhà gắn liền đất. Căn hộ/chung cư/condotel
 // chỉ có một diện tích; văn phòng, mặt bằng, kho xưởng đã có "diện tích sử dụng"
 // riêng; đất nền thì không có gì để xây sẵn. Hiện thừa chỉ làm rối người đăng.
+// Nội thất chỉ có nghĩa với chỗ ở và chỗ làm việc. ĐẤT và KHO XƯỞNG không có
+// nội thất — hiện ra chỉ tổ rối, người đăng lại tưởng bắt buộc phải chọn.
+const KHONG_NOI_THAT = ["Đất nền / Đất", "Đất công nghiệp / Nhà xưởng / Kho bãi"];
+
+export function coNoiThat(type: string): boolean {
+  return !!type && !KHONG_NOI_THAT.includes(specForType(type).label);
+}
+
 const KHONG_DT_XAY_DUNG = [
   "Đất nền / Đất",
   "Chung cư",
