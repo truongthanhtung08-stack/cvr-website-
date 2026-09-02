@@ -27,8 +27,9 @@ export type DiemBanDo = {
   image: string;
   href: string;
   // true  = toạ độ THẬT do người đăng ghim tay → marker đứng đúng chỗ
-  // false = chỉ suy từ phường/xã → marker chỉ mang tính tương đối, phải nói rõ
-  //         trong popup, không để người xem tưởng bất động sản nằm đúng điểm đó.
+  // false = chỉ suy từ phường/xã → marker chỉ mang tính tương đối, popup phải nói
+  //         rõ, không để người xem tưởng bất động sản nằm đúng điểm đó.
+  // bỏ trống = không xét (dự án vốn là cả một khu, không có "đúng số nhà" để sai).
   chinhXac?: boolean;
 };
 
@@ -103,7 +104,7 @@ export default function MapView({ items, diem }: { items?: Listing[]; diem?: Die
           <span class="map-pop-body">
             <span class="map-pop-title">${d.title}</span>
             <span class="map-pop-price">${d.phu}</span>
-            <span class="map-pop-loc">${d.loc}${d.chinhXac ? "" : " · vị trí tương đối"}</span>
+            <span class="map-pop-loc">${d.loc}${d.chinhXac === false ? " · vị trí tương đối" : ""}</span>
           </span>
         </a>`,
         { closeButton: false, offset: L.point(0, -14) },
