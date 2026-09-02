@@ -6,6 +6,7 @@ import {
   MAP_KEY,
   formatLatLng,
   loadMapsApi,
+  onMapsAuthFailure,
   parseLatLng,
   type GMap,
   type GMarker,
@@ -38,6 +39,9 @@ export default function MapPicker({
   const onChangeRef = useRef(onChange);
   const [dangDinhVi, setDangDinhVi] = useState(false);
   const [loi, setLoi] = useState("");
+  // Khoá Maps hỏng / Google từ chối → KHÔNG được để ô trắng. Lùi về bản nhúng để
+  // người đăng vẫn nhìn thấy khu vực, và mở ô nhập toạ độ tay để vẫn ghim được.
+  const [hongBanDo, setHongBanDo] = useState(!MAP_KEY);
 
   useEffect(() => {
     onChangeRef.current = onChange;
@@ -107,8 +111,14 @@ export default function MapPicker({
           const p = e.latLng;
           if (p) dat({ lat: p.lat(), lng: p.lng() });
         });
+        // Google có thể nạp được thư viện mà vẫn KHÔNG vẽ (khoá sai, chưa bật
+        // Maps JavaScript API, hết hạn mức) — lúc đó nó chỉ để lại một ô xám.
+        // Kiểm lại sau 2 giây: không thấy lớp .gm-style thì coi như hỏng.
+        setTimeout(() => {
+          if (!huy && !boxRef.current?.querySelector(".gm-style")) setHongBanDo(true);
+        }, 2000);
       } catch {
-        if (!huy) setLoi("Không tải được bản đồ. Anh/chị vẫn có thể dán toạ độ vào ô bên dưới.");
+        if (!huy) setHongBanDo(true);
       }
     })();
     return () => {
@@ -120,6 +130,9 @@ export default function MapPicker({
     // theo từng phím là vừa giật vừa tốn lượt tải.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Google từ chối khoá → chuyển sang bản nhúng ngay, không đợi hết 2 giây
+  useEffect(() => onMapsAuthFailure(() => setHongBanDo(true)), []);
 
   function viTriCuaToi() {
     if (!navigator.geolocation) {
@@ -155,13 +168,40 @@ export default function MapPicker({
     markerRef.current = null;
   }
 
+  // Bản nhúng dự phòng mở đúng khu vực đang nhập (chỉ để nhìn, không ghim được)
+  const khuVucNhung = hint.trim() || "Đà Nẵng";
+
   return (
     <div className="space-y-2">
-      {MAP_KEY ? (
-        <div className="overflow-hidden rounded-xl border border-cvr-line">
+      <div className="overflow-hidden rounded-xl border border-cvr-line">
+        {hongBanDo ? (
+          <iframe
+            title="Bản đồ khu vực"
+            src={`https://maps.google.com/maps?q=${encodeURIComponent(khuVucNhung)}&z=13&output=embed`}
+            className="h-[280px] w-full"
+            loading="lazy"
+          />
+        ) : (
           <div ref={boxRef} aria-label="Bản đồ ghim vị trí" className="h-[280px] w-full bg-cvr-surface" />
+        )}
+      </div>
+
+      {hongBanDo && (
+        <div className="rounded-lg border border-amber-300 bg-amber-50 p-3">
+          <p className="text-xs font-semibold text-amber-900">Bản đồ ghim đang tạm nghỉ</p>
+          <p className="mt-1 text-xs leading-relaxed text-amber-800">
+            Bấm <strong>“Tôi đang đứng ở đây”</strong> khi đứng tại bất động sản là ghim được ngay.
+            Hoặc mở Google Maps, giữ lâu vào đúng điểm để lấy toạ độ rồi dán vào ô dưới.
+          </p>
+          <input
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            inputMode="decimal"
+            placeholder="VD: 16.054407, 108.202167"
+            className="mt-2 h-10 w-full rounded-lg border border-amber-300 bg-white px-3 text-sm text-cvr-ink outline-none focus:border-amber-500"
+          />
         </div>
-      ) : null}
+      )}
 
       <div className="flex flex-wrap items-center gap-2">
         <button
