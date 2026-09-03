@@ -74,17 +74,39 @@ export function onMapsAuthFailure(fn: () => void): () => void {
 }
 
 // Nạp thư viện Google Maps ĐÚNG MỘT LẦN cho cả trang (nhiều khối bản đồ vẫn chỉ 1 script).
-let mapsPromise: Promise<void> | null = null;
+// Lời hứa nằm trên chính `window`, KHÔNG giữ trong biến của module: Next chia code
+// thành nhiều mảnh nên module này có thể bị nhân bản, mỗi bản một biến riêng rồi
+// cùng chèn một script. Google thấy thư viện nạp hai lần thì báo
+// NotLoadingAPIFromGoogleMapsError và bỏ trắng khung — đúng lỗi đang gặp trên web.
 export function loadMapsApi(): Promise<void> {
   if (window.google?.maps) return Promise.resolve();
-  if (mapsPromise) return mapsPromise;
-  mapsPromise = new Promise<void>((resolve, reject) => {
+  const w = window as unknown as Record<string, unknown>;
+  const dangNap = w.__cvrMapsPromise as Promise<void> | undefined;
+  if (dangNap) return dangNap;
+
+  const p = new Promise<void>((resolve, reject) => {
     const cb = "__cvrGoogleMapsReady";
-    (window as unknown as Record<string, unknown>)[cb] = () => resolve();
-    (window as unknown as Record<string, unknown>).gm_authFailure = () => {
+    w[cb] = () => resolve();
+    w.gm_authFailure = () => {
       mapsAuthFailed = true;
       authFailSubs.forEach((f) => f());
     };
+
+    // Script đã nằm sẵn trong trang (mảnh code khác chèn trước) → chỉ CHỜ, không chèn nữa.
+    if (document.querySelector('script[src*="maps.googleapis.com/maps/api/js"]')) {
+      const dong = window.setInterval(() => {
+        if (window.google?.maps) {
+          window.clearInterval(dong);
+          resolve();
+        }
+      }, 120);
+      window.setTimeout(() => {
+        window.clearInterval(dong);
+        if (!window.google?.maps) reject(new Error("Không tải được Google Maps"));
+      }, 15000);
+      return;
+    }
+
     const s = document.createElement("script");
     s.src =
       "https://maps.googleapis.com/maps/api/js?key=" +
@@ -95,5 +117,7 @@ export function loadMapsApi(): Promise<void> {
     s.onerror = () => reject(new Error("Không tải được Google Maps"));
     document.head.appendChild(s);
   });
-  return mapsPromise;
+
+  w.__cvrMapsPromise = p;
+  return p;
 }
