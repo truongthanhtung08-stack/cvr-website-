@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import { useTamDung } from "@/lib/useAutoSlide";
 
 // ── ẢNH TỰ CHẠY TRONG THẺ (tin đăng · dự án) ─────────────────────────────────
 //
@@ -33,9 +34,14 @@ export default function AnhChay({
 }) {
   // Nhiều nhất 6 tấm: đủ khoe, không kéo theo cả chục ảnh nặng cho mỗi thẻ.
   const ds = images.filter(Boolean).slice(0, 6);
+  // Khoá ổn định của danh sách ảnh: mảng ds được dựng lại mỗi lần vẽ, đưa thẳng
+  // vào danh sách phụ thuộc thì bộ đếm bị đặt lại liên tục, ảnh không bao giờ đổi.
+  const khoa = ds.join("|");
   const boxRef = useRef<HTMLSpanElement>(null);
   const [i, setI] = useState(0);
-  const [dung, setDung] = useState(false);
+  // Chạm là dừng, vài giây sau tự chạy tiếp — trên điện thoại không có động tác
+  // "rê chuột ra" nên phải tự quay lại, nếu không chạm một cái là đứng vĩnh viễn.
+  const { dung, chamVao, setDung } = useTamDung(6000);
   const [trongTam, setTrongTam] = useState(false);
 
   useEffect(() => {
@@ -67,7 +73,8 @@ export default function AnhChay({
       clearTimeout(batDau);
       clearInterval(dem);
     };
-  }, [ds, dung, trongTam, nhip]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [khoa, dung, trongTam, nhip]);
 
   return (
     <span
@@ -75,7 +82,7 @@ export default function AnhChay({
       className="absolute inset-0 block"
       onMouseEnter={() => setDung(true)}
       onMouseLeave={() => setDung(false)}
-      onTouchStart={() => setDung(true)}
+      onTouchStart={chamVao}
     >
       {ds.map((src, k) => (
         <Image

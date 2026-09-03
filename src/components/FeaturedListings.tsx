@@ -8,7 +8,7 @@ import ListingBrowser from "@/components/ListingBrowser";
 import { useHomeSection } from "@/components/HomeExpand";
 import { tierRank } from "@/lib/packages";
 import { smoothScrollTo } from "@/lib/scroll";
-import { useAutoSlide, useAutoSlideThe } from "@/lib/useAutoSlide";
+import { useAutoSlide, useAutoSlideThe, useTamDung } from "@/lib/useAutoSlide";
 
 // ── Tab nhanh: kết hợp MỤC ĐÍCH (bán/thuê) × LOẠI SẢN PHẨM ────────────────────
 const isBan = (l: Listing) => (l.purpose ?? "ban") === "ban";
@@ -33,7 +33,7 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
   const [slideIdx, setSlideIdx] = useState(0);
   const [paused, setPaused] = useState(false);
   const diMobRef = useRef<HTMLDivElement>(null);
-  const [pausedMob, setPausedMob] = useState(false);
+  const { dung: pausedMob, chamVao: chamDaiMob } = useTamDung(6000);
   const trackRef = useRef<HTMLDivElement>(null);
   // PC: bấm "Xem thêm" → đổi sang bố cục trang danh sách (list + cột phải),
   // đồng thời ẩn mọi phần khác của trang chủ (trạng thái dùng chung qua context).
@@ -121,8 +121,7 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
                   dừng hẳn, không giành tay khách đang lướt. */}
               <div
                 ref={diMobRef}
-                onTouchStart={() => setPausedMob(true)}
-                onScroll={() => setPausedMob(true)}
+                onTouchStart={chamDaiMob}
                 className="no-scrollbar -mx-4 mt-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 sm:mt-5"
               >
                 {sorted.slice(0, SLIDE_COUNT * PER_SLIDE).map((item) => (

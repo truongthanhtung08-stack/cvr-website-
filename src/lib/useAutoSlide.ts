@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type RefObject } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import { smoothScrollTo } from "./scroll";
 
 // Tự chạy slider scroll-snap — dùng chung cho mọi slider trang chủ.
@@ -81,4 +81,27 @@ export function useAutoSlideThe(
     }, interval);
     return () => clearInterval(t);
   }, [paused, inView, soThe, interval, ref]);
+}
+
+// TẠM DỪNG KHI KHÁCH CHẠM — RỒI TỰ CHẠY LẠI.
+//
+// Bẫy đã mắc: chỉ có "chạm thì dừng" mà không có đường quay lại. Trên MÁY TÍNH
+// còn có rê chuột ra (mouseleave) để chạy tiếp, chứ trên ĐIỆN THOẠI thì không có
+// động tác "rời ngón" nào cả — khách chạm một cái là slide đứng im vĩnh viễn.
+// Vì phần lớn khách xem bằng điện thoại nên lỗi này giết luôn tính năng.
+//
+// Cách làm: chạm thì dừng, im được vài giây không đụng nữa thì tự chạy tiếp.
+export function useTamDung(nghi = 6000) {
+  const [dung, setDung] = useState(false);
+  const hen = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => { if (hen.current) clearTimeout(hen.current); }, []);
+
+  function chamVao() {
+    setDung(true);
+    if (hen.current) clearTimeout(hen.current);
+    hen.current = setTimeout(() => setDung(false), nghi);
+  }
+
+  return { dung, chamVao, setDung };
 }

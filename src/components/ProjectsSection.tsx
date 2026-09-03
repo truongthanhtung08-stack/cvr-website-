@@ -6,7 +6,7 @@ import Link from "next/link";
 import type { Project, Article } from "@/lib/data";
 import ProjectsBrowser from "@/components/ProjectsBrowser";
 import { smoothScrollTo } from "@/lib/scroll";
-import { useAutoSlide, useAutoSlideThe } from "@/lib/useAutoSlide";
+import { useAutoSlide, useAutoSlideThe, useTamDung } from "@/lib/useAutoSlide";
 import AnhChay from "@/components/AnhChay";
 import { sortProjectsByTier, ExpandToggle } from "@/components/ProjectSlider";
 import { useHomeSection } from "@/components/HomeExpand";
@@ -19,7 +19,7 @@ export default function ProjectsSection({ projects, articles = [] }: { projects:
   const [slide, setSlide] = useState(0);
   const [paused, setPaused] = useState(false);
   const diMobRef = useRef<HTMLDivElement>(null);
-  const [pausedMob, setPausedMob] = useState(false);
+  const { dung: pausedMob, chamVao: chamDaiMob } = useTamDung(6000);
   // Nút "Xem thêm" → khối này thành danh sách theo trang, các khối khác ẩn.
   const { expanded, hidden, toggle } = useHomeSection("du-an");
 
@@ -67,8 +67,7 @@ export default function ProjectsSection({ projects, articles = [] }: { projects:
           {/* Dải lướt ngang trên điện thoại: TỰ CHẠY từng thẻ; chạm là dừng hẳn. */}
           <div
             ref={diMobRef}
-            onTouchStart={() => setPausedMob(true)}
-            onScroll={() => setPausedMob(true)}
+            onTouchStart={chamDaiMob}
             className="no-scrollbar -mx-4 mt-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2"
           >
             {homeProjects.map((p) => (
