@@ -221,10 +221,21 @@ export default function PostListingForm() {
   // Hệ MỚI (sau sáp nhập): bỏ cấp Quận/Huyện — Tỉnh/Thành → thẳng Phường/Xã
   const provinceOptions = provinceNamesFor(geoMode);
   const districts = geoMode === "moi" ? [] : province ? districtsOf(province) : [];
+  // TỈNH CÓ DANH MỤC QUẬN/HUYỆN CŨ KHÔNG. Việt Nam đã BỎ cấp quận/huyện từ 2025
+  // nên web chỉ nhập danh mục cũ cho các tỉnh trọng điểm; 24/34 tỉnh còn lại không có.
+  // Không có thì ẨN LUÔN ô Quận/Huyện — để ô trống mà không chọn được gì thì
+  // người đăng tưởng web hỏng, mà ô đó vốn KHÔNG bắt buộc.
+  const coDanhMucQuan = geoMode === "cu" && !!province && districts.length > 0;
+
   const wards =
     geoMode === "moi"
       ? province ? wardsOfNew(province) : []
-      : province && district ? wardsOf(province, district) : [];
+      : province && district
+        ? wardsOf(province, district)
+        // Tỉnh chưa có danh mục quận/huyện cũ → không thể ra danh sách phường cũ.
+        // Dùng danh mục phường MỚI của chính tỉnh đó: cùng một chỗ trên thực địa,
+        // chỉ khác cách gọi cấp hành chính. Có danh sách để chọn còn hơn ô rỗng.
+        : province ? wardsOfNew(province) : [];
 
 
   // GHIM TRÊN BẢN ĐỒ → TỰ ĐIỀN ba ô Tỉnh/Thành · Quận/Huyện · Phường/Xã.
@@ -558,12 +569,12 @@ export default function PostListingForm() {
         {/* Trên ĐIỆN THOẠI xếp 2 cột: ba ô khu vực gói trong 1–2 dòng, để ô địa chỉ
             và bản đồ ngay bên dưới vẫn nằm chung một màn hình, khỏi kéo lên kéo xuống
             đối chiếu. */}
-        <div className={`grid grid-cols-2 gap-3 sm:gap-4 ${geoMode === "moi" ? "sm:grid-cols-2" : "sm:grid-cols-3"}`}>
+        <div className={`grid grid-cols-2 gap-3 sm:gap-4 ${coDanhMucQuan ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
           <Pick label="Tỉnh / Thành" value={province} onChange={(v) => { setProvince(v); setDistrict(""); setWard(""); }} options={provinceOptions} placeholder="Chọn Tỉnh / Thành" />
-          {geoMode === "cu" && (
+          {coDanhMucQuan && (
             <Pick label="Quận / Huyện" value={district} onChange={(v) => { setDistrict(v); setWard(""); }} options={districts} placeholder="Chọn Quận / Huyện" disabled={!province} />
           )}
-          <Pick label="Phường / Xã" value={ward} onChange={setWard} options={wards} placeholder="Chọn Phường / Xã" disabled={geoMode === "moi" ? !province : !district} />
+          <Pick label="Phường / Xã" value={ward} onChange={setWard} options={wards} placeholder="Chọn Phường / Xã" disabled={geoMode === "moi" ? !province : coDanhMucQuan ? !district : !province} />
         </div>
         {/* THANH ĐỊA CHỈ LÀ Ô RIÊNG, NẰM NGOÀI BẢN ĐỒ — chủ dự án chốt.
             Gõ tới đâu bản đồ bên dưới tự thu lại và trôi tới đó; ghim trên bản đồ
@@ -928,6 +939,10 @@ function Pick({ label, value, onChange, options, placeholder, disabled }: { labe
       <Label>{label}</Label>
       <select value={value} onChange={(e) => onChange(e.target.value)} disabled={disabled} className={inputCls + " disabled:cursor-not-allowed disabled:opacity-45"}>
         {placeholder && <option value="">{placeholder}</option>}
+        {/* Giá trị máy tự điền từ bản đồ có thể không nằm trong danh mục của web
+            (tên mới sau sáp nhập, tỉnh chưa nhập đủ danh mục). Không thêm vào thì
+            thẻ select hiện TRỐNG TRƠN dù dữ liệu đã có — người đăng tưởng hỏng. */}
+        {value && !options.includes(value) && <option value={value}>{value}</option>}
         {options.map((o) => <option key={o} value={o}>{o}</option>)}
       </select>
     </div>
