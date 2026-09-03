@@ -13,13 +13,23 @@ import { normalizeVi } from "@/lib/filters";
 
 export type DiaGioiBanDo = { tinh: string; quan: string; phuong: string };
 
+// Bỏ tiền tố cấp hành chính rồi bỏ dấu — để "Phường Hòa Khánh" và "Hòa Khánh Bắc"
+// còn so được với nhau.
+function loiTen(s: string): string {
+  return normalizeVi(s).replace(/^(thanh pho|tinh|quan|huyen|phuong|xa|thi tran|thi xa) /, "");
+}
+
 export function khopDanhMuc(ten: string, dsach: string[]): string {
-  const t = normalizeVi(ten).replace(/^(thanh pho|tinh|quan|huyen|phuong|xa|thi tran|thi xa) /, "");
+  const t = loiTen(ten);
   if (!t) return "";
+  // ⚠️ PHẢI LỘT TIỀN TỐ Ở CẢ HAI VẾ. Trước đây chỉ lột vế `ten`, còn danh mục để
+  // nguyên "Phường Hòa Khánh" → bản đồ trả "Hòa Khánh Bắc" là so trượt, ô Phường/Xã
+  // của hệ MỚI bỏ trống. Đây là chuyện xảy ra liên tục vì sau sáp nhập 2025, tên
+  // bản đồ và tên danh mục của web lệch nhau gần như ở mọi phường.
   return (
-    dsach.find((m) => normalizeVi(m) === t) ??
+    dsach.find((m) => loiTen(m) === t) ??
     dsach.find((m) => {
-      const x = normalizeVi(m);
+      const x = loiTen(m);
       return x.includes(t) || t.includes(x);
     }) ??
     ""
@@ -60,6 +70,12 @@ export function ganDiaGioi(
   if (!quan && dc.phuong) {
     quan = dsQuan.find((d) => khopDanhMuc(dc.phuong, wardsOf(tinh, d))) ?? "";
   }
+  // VẪN CHƯA RA → khớp thẳng TÊN PHƯỜNG với DANH SÁCH QUẬN.
+  // Sau sáp nhập 2025, rất nhiều phường mới mang đúng tên quận cũ: "Phường Ngũ
+  // Hành Sơn", "Phường Hải Châu", "Phường Thanh Khê", "Phường Sơn Trà"… Không có
+  // bước này thì ghim vào mấy chỗ đó là ô Quận/Huyện của hệ CŨ bỏ trống — đúng
+  // lỗi chủ dự án báo 03/09/2026 ("hệ mới hiện đúng, hệ cũ không có quận/huyện").
+  if (!quan && dc.phuong) quan = khopDanhMuc(dc.phuong, dsQuan);
   const quanDung = quan || (doiTinh ? "" : dangCo.district);
   if (!quanDung) return { province: tinh, district: "", ward: doiTinh ? "" : giuPhuong };
   const phuongKhop = khopDanhMuc(dc.phuong, wardsOf(tinh, quanDung));
