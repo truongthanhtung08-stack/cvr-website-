@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import "leaflet/dist/leaflet.css";
 import type * as LType from "leaflet";
-import { themNenBanDo, doLaiKhungBanDo } from "@/lib/nenBanDo";
+import { themNenBanDo, doLaiKhungBanDo, choKhungCoKichThuoc } from "@/lib/nenBanDo";
 import { formatLatLng, parseLatLng, type LatLng } from "@/lib/googleMaps";
 import { xemTrenBanDo } from "@/lib/moGoogleMaps";
 import { docKhoangCach, khoangCachKm, layViTri, loiDinhVi } from "@/lib/dinhVi";
@@ -391,6 +391,9 @@ export default function MapPickerLeaflet({
       if (huy || !boxRef.current || mapRef.current) return;
       LRef.current = L;
 
+      // Khung đang ẩn / chưa có chiều cao thì đợi — dựng vào khung 0×0 là ô trắng.
+      await choKhungCoKichThuoc(boxRef.current);
+      if (huy || !boxRef.current) return;
       const daCo = parseLatLng(value);
       const map = L.map(boxRef.current).setView(
         daCo ? [daCo.lat, daCo.lng] : [16.054, 108.202],

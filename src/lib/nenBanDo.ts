@@ -46,6 +46,37 @@ export function themNenBanDo(L: typeof LType, map: LType.Map): LType.TileLayer {
   return lop;
 }
 
+// ⚠️ CHỜ KHUNG CÓ KÍCH THƯỚC RỒI MỚI DỰNG BẢN ĐỒ — ĐỪNG BỎ.
+// Đo thật trên coastalland.vn 03/09/2026: khung bản đồ ở trang tin có
+// cao = 0, rộng = 0 vì nó nằm trong khối đang ẩn (mục chưa mở, ảnh phía trên
+// còn đang tải). Dựng Leaflet vào một khung 0×0 thì nó tính ra cần 0 ô ảnh và
+// không tải gì cả — để lại Ô TRẮNG vĩnh viễn, gọi invalidateSize sau cũng không
+// cứu được vì lớp ảnh chưa từng được khởi tạo tử tế.
+// Hàm này đợi tới khi khung có kích thước thật rồi mới cho dựng.
+export function choKhungCoKichThuoc(khung: HTMLElement, toiDaMs = 10000): Promise<void> {
+  if (khung.clientHeight > 0 && khung.clientWidth > 0) return Promise.resolve();
+  return new Promise((xong) => {
+    let da = false;
+    const ket = () => {
+      if (da) return;
+      da = true;
+      theoDoi?.disconnect();
+      clearTimeout(hen);
+      xong();
+    };
+    const theoDoi =
+      typeof ResizeObserver !== "undefined"
+        ? new ResizeObserver(() => {
+            if (khung.clientHeight > 0 && khung.clientWidth > 0) ket();
+          })
+        : null;
+    theoDoi?.observe(khung);
+    // Trình duyệt cũ không có ResizeObserver, hoặc khung mãi không hiện: đợi tối
+    // đa rồi cứ dựng, thà bản đồ nhỏ còn hơn không có gì.
+    const hen = window.setTimeout(ket, toiDaMs);
+  });
+}
+
 // ⚠️ PHẢI GỌI SAU KHI DỰNG BẢN ĐỒ — ĐỪNG BỎ.
 // Leaflet đo kích thước khung ĐÚNG MỘT LẦN lúc dựng. Trong form đăng tin, khung
 // bản đồ nằm sâu trong trang dài, phía trên còn ảnh và phông chữ đang tải nên

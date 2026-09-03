@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import "leaflet/dist/leaflet.css";
 import type * as LType from "leaflet";
-import { themNenBanDo, doLaiKhungBanDo } from "@/lib/nenBanDo";
+import { themNenBanDo, doLaiKhungBanDo, choKhungCoKichThuoc } from "@/lib/nenBanDo";
 import { docKhoangCach, khoangCachKm, layViTri, loiDinhVi } from "@/lib/dinhVi";
 import { timToaDo, type MucDoChinhXac } from "@/lib/timToaDo";
 import { centerOfArea } from "@/lib/geo";
@@ -79,6 +79,9 @@ export default function MapPaneLeaflet({
 
       const ghim = parseLatLng(query);
       const kv = centerOfArea(query);
+      // Khung đang ẩn / chưa có chiều cao thì đợi — dựng vào khung 0×0 là ô trắng.
+      await choKhungCoKichThuoc(boxRef.current);
+      if (huy || !boxRef.current) return;
       const tam: [number, number] = ghim ? [ghim.lat, ghim.lng] : kv ?? [16.054, 108.202];
       const mucBanDau: MucDoChinhXac | null = ghim ? "ghim" : kv ? "khuVuc" : null;
 

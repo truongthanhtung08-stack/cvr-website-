@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import * as L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { themNenBanDo, doLaiKhungBanDo } from "@/lib/nenBanDo";
+import { themNenBanDo, doLaiKhungBanDo, choKhungCoKichThuoc } from "@/lib/nenBanDo";
 import type { Listing } from "@/lib/data";
 import { coordOf } from "@/lib/geo";
 import { parseLatLng } from "@/lib/googleMaps";
@@ -75,16 +75,22 @@ export default function MapView({ items, diem }: { items?: Listing[]; diem?: Die
   // Khởi tạo bản đồ 1 lần
   useEffect(() => {
     if (!boxRef.current || mapRef.current) return;
-    const map = L.map(boxRef.current).setView([16.05, 108.22], 11);
-    themNenBanDo(L, map);
-    // Leaflet đo khung ĐÚNG MỘT LẦN lúc dựng; khung nằm sâu trong trang dài nên
-    // lúc đó chiều cao thường chưa đúng → không tải ô ảnh nào, để lại ô trắng.
-    const thoiDoKhung = doLaiKhungBanDo(map, boxRef.current);
-    layerRef.current = L.layerGroup().addTo(map);
-    mapRef.current = map;
+    let huy = false;
+    let thoiDoKhung: (() => void) | null = null;
+    const khung = boxRef.current;
+    // Khung đang ẩn / chưa có chiều cao thì đợi — dựng vào khung 0×0 là ô trắng.
+    void choKhungCoKichThuoc(khung).then(() => {
+      if (huy || mapRef.current) return;
+      const map = L.map(khung).setView([16.05, 108.22], 11);
+      themNenBanDo(L, map);
+      thoiDoKhung = doLaiKhungBanDo(map, khung);
+      layerRef.current = L.layerGroup().addTo(map);
+      mapRef.current = map;
+    });
     return () => {
-      thoiDoKhung();
-      map.remove();
+      huy = true;
+      thoiDoKhung?.();
+      mapRef.current?.remove();
       mapRef.current = null;
       layerRef.current = null;
       chamRef.current = null;
