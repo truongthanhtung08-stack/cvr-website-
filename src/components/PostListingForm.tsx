@@ -234,7 +234,7 @@ export default function PostListingForm() {
   const diaGioiTuBanDoRef = useRef<DiaGioiBanDo | null>(null);
 
   function apDungDiaGioi(dc: DiaGioiBanDo, heDiaChi: GeoMode, tinhCu: string, quanCu: string) {
-    const kq = ganDiaGioi(dc, heDiaChi, { province: tinhCu, district: quanCu });
+    const kq = ganDiaGioi(dc, heDiaChi, { province: tinhCu, district: quanCu, ward });
     setProvince(kq.province);
     setDistrict(kq.district);
     setWard(kq.ward);

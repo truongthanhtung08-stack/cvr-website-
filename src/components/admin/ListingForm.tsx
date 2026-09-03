@@ -157,7 +157,7 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
   const diaGioiTuBanDoRef = useRef<DiaGioiBanDo | null>(null);
 
   function apDungDiaGioi(dc: DiaGioiBanDo, he: GeoMode, tinhCu: string, quanCu: string) {
-    const kq = ganDiaGioi(dc, he, { province: tinhCu, district: quanCu });
+    const kq = ganDiaGioi(dc, he, { province: tinhCu, district: quanCu, ward });
     setProvince(kq.province);
     setDistrict(kq.district);
     setWard(kq.ward);

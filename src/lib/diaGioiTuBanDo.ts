@@ -32,14 +32,23 @@ export function khopDanhMuc(ten: string, dsach: string[]): string {
 export function ganDiaGioi(
   dc: DiaGioiBanDo,
   heDiaChi: GeoMode,
-  dangCo: { province: string; district: string },
+  dangCo: { province: string; district: string; ward?: string },
 ): { province: string; district: string; ward: string } {
+  // ⚠️ GIỮ Ô PHƯỜNG/XÃ NGƯỜI ĐĂNG ĐÃ CHỌN khi bản đồ đọc ra tên web không có
+  // (tên cũ, viết tắt, xã mới sáp nhập). Từ 03/09/2026 ghim ở đâu cũng cập nhật
+  // địa giới, nên nếu không giữ thì mỗi lần ghim là ô Phường/Xã của họ bị xoá
+  // trắng — chuyện xảy ra liên tục chứ không còn là trường hợp hiếm.
+  const giuPhuong = dangCo.ward ?? "";
   const tinhKhop = dc.tinh ? khopDanhMuc(dc.tinh, provinceNamesFor(heDiaChi)) : "";
   const tinh = tinhKhop || dangCo.province;
-  if (!tinh) return { province: dangCo.province, district: dangCo.district, ward: "" };
+  if (!tinh) return { province: dangCo.province, district: dangCo.district, ward: giuPhuong };
+
+  // Nhảy sang TỈNH KHÁC thì phường cũ chắc chắn không còn đúng — lúc đó mới xoá.
+  const doiTinh = !!tinhKhop && tinhKhop !== dangCo.province;
 
   if (heDiaChi === "moi") {
-    return { province: tinh, district: "", ward: khopDanhMuc(dc.phuong, wardsOfNew(tinh)) };
+    const p = khopDanhMuc(dc.phuong, wardsOfNew(tinh));
+    return { province: tinh, district: "", ward: p || (doiTinh ? "" : giuPhuong) };
   }
 
   // Hệ CŨ: phải có Quận/Huyện thì mới ra được danh sách Phường/Xã.
@@ -51,7 +60,8 @@ export function ganDiaGioi(
   if (!quan && dc.phuong) {
     quan = dsQuan.find((d) => khopDanhMuc(dc.phuong, wardsOf(tinh, d))) ?? "";
   }
-  const quanDung = quan || (tinhKhop && tinhKhop !== dangCo.province ? "" : dangCo.district);
-  if (!quanDung) return { province: tinh, district: "", ward: "" };
-  return { province: tinh, district: quanDung, ward: khopDanhMuc(dc.phuong, wardsOf(tinh, quanDung)) };
+  const quanDung = quan || (doiTinh ? "" : dangCo.district);
+  if (!quanDung) return { province: tinh, district: "", ward: doiTinh ? "" : giuPhuong };
+  const phuongKhop = khopDanhMuc(dc.phuong, wardsOf(tinh, quanDung));
+  return { province: tinh, district: quanDung, ward: phuongKhop || (doiTinh ? "" : giuPhuong) };
 }
