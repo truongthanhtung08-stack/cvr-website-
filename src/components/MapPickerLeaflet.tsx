@@ -28,9 +28,16 @@ import NhacBatDinhVi from "@/components/NhacBatDinhVi";
 //     cư mới — chuyện tất yếu. Ô này nhận MỌI dạng, và KHÔNG bắt buộc.
 //     Nhìn cho đúng chiều: người đăng ghim đúng nhà mình + gõ đúng địa chỉ là họ
 //     đang GIÚP BẢN ĐỒ CHÍNH XÁC LÊN, chứ không phải bản đồ đang sửa cho họ.
-//  2. Ô NÀO CÒN TRỐNG THÌ MÁY ĐIỀN HỘ. Không có gì để phá, lại đỡ một lần gõ.
-//  3. ĐỌC RA CHỮ KHÁC THÌ ĐỀ XUẤT, KHÔNG THAY. Hiện "bản đồ đọc được là …" kèm
-//     hai nút — người đăng quyết định, không phải máy.
+//  2. ĐỔI GHIM NGHĨA LÀ ĐỔI ĐỊA CHỈ — ĐỊA CHỈ PHẢI ĐỔI THEO.
+//     Ô còn trống, hoặc đang giữ đúng chữ MÁY vừa điền (khách chưa đụng vào) thì
+//     mỗi lần ghim sang chỗ khác là máy viết lại số nhà + tên đường của chỗ mới.
+//     Ghim một nơi mà tin ghi một nẻo là sai nghiêm trọng.
+//     ⚠️ Đừng rút gọn thành "chỉ điền khi ô rỗng": ngay sau lần ghim đầu ô đã có
+//     chữ của máy, mọi lần ghim sau sẽ đứng im — đúng lỗi bị bác 03/09/2026.
+//     Phân biệt bằng mayDienRef, không phải bằng "ô có rỗng hay không".
+//  3. KHÁCH ĐÃ GÕ TAY THÌ ĐỀ XUẤT, KHÔNG THAY. Hiện "bản đồ đọc được là …" kèm
+//     hai nút — người đăng quyết định, không phải máy. Bản đồ chỉ làm việc định
+//     vị lại cho gần đúng nhất, để khách hình dung và tự chỉnh.
 //  3b. BA KHỐI ĐỊA GIỚI (Tỉnh/Thành · Quận/Huyện · Phường/Xã) thì NGƯỢC LẠI: cứ
 //     cập nhật theo điểm ghim cho chính xác nhất có thể. Đó là sự thật khách quan
 //     suy từ toạ độ, không phải chuyện ý kiến — và tin phải lên đúng bộ lọc khu vực.
@@ -102,6 +109,11 @@ export default function MapPickerLeaflet({
   // làm chuỗi địa chỉ đổi, mà đổi thì hàm đưa bản đồ về địa chỉ lại chạy và kéo
   // bản đồ đi — ghim đỏ trôi mất. Trong 1,5 giây sau khi tự điền thì bỏ qua.
   const tuDienRef = useRef(0);
+  // Chuỗi địa chỉ cụ thể MÁY vừa tự điền lần gần nhất. Dùng để biết ô đang giữ
+  // chữ của máy hay chữ khách gõ tay — hai thứ đối xử khác hẳn nhau (xem
+  // hienTenChoGhim). Không có nó thì đổi ghim lần thứ hai trở đi là địa chỉ
+  // đứng im, ghim một nơi mà tin ghi một nẻo.
+  const mayDienRef = useRef("");
 
   const [sanSang, setSanSang] = useState(false);
   const [dangDinhVi, setDangDinhVi] = useState(false);
@@ -165,7 +177,6 @@ export default function MapPickerLeaflet({
     // Người đăng đã gõ gì chưa? hint do form ghép theo đúng thứ tự
     // "địa chỉ cụ thể, phường/xã, quận/huyện, tỉnh/thành".
     const phan = hintRef.current.split(",").map((s) => s.trim());
-    const daGoDiaChi = !!phan[0];
 
     // ── BA KHỐI ĐỊA GIỚI (Tỉnh/Thành · Quận/Huyện · Phường/Xã): LUÔN CẬP NHẬT ──
     // Đây là SỰ THẬT KHÁCH QUAN suy ra từ toạ độ — ghim nằm ở phường nào thì nó ở
@@ -174,12 +185,28 @@ export default function MapPickerLeaflet({
     if (ten.tinh || ten.phuong || ten.quan)
       onDiaGioiRef.current?.({ tinh: ten.tinh, quan: ten.quan, phuong: ten.phuong });
 
-    // ── SỐ NHÀ / ĐỊA CHỈ CỤ THỂ: QUYỀN CỦA KHÁCH ─────────────────────────────
-    // Ô trống → điền hộ. Đã có chữ người đăng gõ → giữ nguyên 100%, chỉ ĐỀ XUẤT.
-    // Bản đồ đọc trùng luôn cái họ gõ thì khỏi hỏi cho rối mắt.
-    if (!daGoDiaChi && ten.ngan) onDiaChiRef.current?.(ten.ngan);
-    const trungKhop = ten.ngan.trim().toLowerCase() === (phan[0] ?? "").toLowerCase();
-    setDeXuat(daGoDiaChi && !trungKhop && !!ten.ngan ? ten : null);
+    // ── SỐ NHÀ / ĐỊA CHỈ CỤ THỂ ──────────────────────────────────────────────
+    // ⚠️ PHẢI PHÂN BIỆT "MÁY ĐIỀN" VỚI "KHÁCH GÕ TAY" — ĐỪNG CHỈ XÉT Ô CÓ RỖNG HAY KHÔNG.
+    //
+    // Đổi ghim NGHĨA LÀ đổi địa chỉ. Ghim sang chỗ khác mà số nhà + tên đường
+    // đứng im là SAI NGHIÊM TRỌNG: tin nói một đằng, bản đồ chỉ một nẻo.
+    // Trước đây code chỉ điền khi ô còn RỖNG, nên ngay sau lần ghim đầu tiên
+    // (máy vừa điền vào) mọi lần ghim sau đều bị coi là "khách đã gõ" → đứng im.
+    //
+    // Nay: nhớ lại đúng chuỗi MÁY vừa viết ra. Ô đang trống, hoặc đang đúng bằng
+    // chuỗi đó (tức khách chưa đụng vào) → máy được phép cập nhật theo ghim mới.
+    // Khách đã sửa/gõ tay → GIỮ NGUYÊN 100%, chỉ đề xuất; vì số nhà là quyền của
+    // khách, bản đồ chỉ làm việc định vị lại cho gần đúng nhất để khách hình dung.
+    const oHienTai = phan[0] ?? "";
+    const khachChuaDungVao = !oHienTai || oHienTai === mayDienRef.current;
+    if (ten.ngan && khachChuaDungVao) {
+      onDiaChiRef.current?.(ten.ngan);
+      mayDienRef.current = ten.ngan;
+      setDeXuat(null);
+    } else {
+      const trungKhop = ten.ngan.trim().toLowerCase() === oHienTai.toLowerCase();
+      setDeXuat(!trungKhop && !!ten.ngan ? ten : null);
+    }
     tuDienRef.current = Date.now();
   }
 
@@ -426,12 +453,17 @@ export default function MapPickerLeaflet({
     setKhoangCach("");
     setMucDoGhim(null);
     setDeXuat(null);
+    mayDienRef.current = "";
   }
 
   // Người đăng bấm nhận đề xuất — LÚC NÀY mới được thay chữ họ đã gõ.
   function dungDeXuat() {
     if (!deXuat) return;
-    if (deXuat.ngan) onDiaChiRef.current?.(deXuat.ngan);
+    if (deXuat.ngan) {
+      onDiaChiRef.current?.(deXuat.ngan);
+      // Khách đã nhận chữ của bản đồ → coi như máy điền, ghim tiếp vẫn cập nhật.
+      mayDienRef.current = deXuat.ngan;
+    }
     if (deXuat.tinh || deXuat.quan || deXuat.phuong)
       onDiaGioiRef.current?.({ tinh: deXuat.tinh, quan: deXuat.quan, phuong: deXuat.phuong });
     tuDienRef.current = Date.now();
