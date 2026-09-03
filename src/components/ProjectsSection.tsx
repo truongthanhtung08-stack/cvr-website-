@@ -6,7 +6,8 @@ import Link from "next/link";
 import type { Project, Article } from "@/lib/data";
 import ProjectsBrowser from "@/components/ProjectsBrowser";
 import { smoothScrollTo } from "@/lib/scroll";
-import { useAutoSlide } from "@/lib/useAutoSlide";
+import { useAutoSlide, useAutoSlideThe } from "@/lib/useAutoSlide";
+import AnhChay from "@/components/AnhChay";
 import { sortProjectsByTier, ExpandToggle } from "@/components/ProjectSlider";
 import { useHomeSection } from "@/components/HomeExpand";
 
@@ -17,6 +18,8 @@ export default function ProjectsSection({ projects, articles = [] }: { projects:
   const trackRef = useRef<HTMLDivElement>(null);
   const [slide, setSlide] = useState(0);
   const [paused, setPaused] = useState(false);
+  const diMobRef = useRef<HTMLDivElement>(null);
+  const [pausedMob, setPausedMob] = useState(false);
   // Nút "Xem thêm" → khối này thành danh sách theo trang, các khối khác ẩn.
   const { expanded, hidden, toggle } = useHomeSection("du-an");
 
@@ -41,6 +44,7 @@ export default function ProjectsSection({ projects, articles = [] }: { projects:
   // trong khung nhìn & không tương tác. Lệch nhịp 10s của "BĐS dành cho bạn"
   // để 2 slider không chuyển cùng lúc (đỡ rối mắt).
   useAutoSlide(trackRef, totalSlides, paused, 7000);
+  useAutoSlideThe(diMobRef, homeProjects.length, pausedMob, 5000);
 
   if (projects.length === 0 || hidden) return null;
 
@@ -60,11 +64,17 @@ export default function ProjectsSection({ projects, articles = [] }: { projects:
         {/* ── MOBILE (< 640px): lướt ngang TỪNG thẻ dự án (như "BĐS dành cho bạn"),
             ló mép thẻ sau. ── */}
         <div className="sm:hidden">
-          <div className="no-scrollbar -mx-4 mt-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2">
+          {/* Dải lướt ngang trên điện thoại: TỰ CHẠY từng thẻ; chạm là dừng hẳn. */}
+          <div
+            ref={diMobRef}
+            onTouchStart={() => setPausedMob(true)}
+            onScroll={() => setPausedMob(true)}
+            className="no-scrollbar -mx-4 mt-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2"
+          >
             {homeProjects.map((p) => (
               <Link key={p.slug} href={`/du-an/${p.slug}`} className="flex w-[90%] shrink-0 snap-start flex-col overflow-hidden rounded-none bg-white shadow-lux">
                 <div className="relative aspect-[3/2] w-full overflow-hidden">
-                  <Image src={p.image} alt={p.name} fill sizes="90vw" className="object-cover" />
+                  <AnhChay images={[p.image, ...(p.photos ?? [])]} alt={p.name} sizes="90vw" />
                   <span className="absolute left-3 top-3 rounded-full bg-white/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.06em] text-cvr-ink shadow-[0_2px_10px_rgba(0,0,0,0.18)] ring-1 ring-white/60 backdrop-blur-md">{p.status}</span>
                 </div>
                 <div className="flex flex-1 flex-col p-4">

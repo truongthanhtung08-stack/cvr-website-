@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import Image from "next/image";
+import AnhChay from "@/components/AnhChay";
 import { chuThuan } from "@/lib/chuThuan";
 import Link from "next/link";
 import type { Project, Article } from "@/lib/data";
@@ -62,7 +63,7 @@ export function ProjectCard({ p }: { p: Project }) {
       className="group flex flex-col overflow-hidden rounded-none border-0 bg-white shadow-lux shadow-lux-hover transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1 sm:border sm:border-cvr-line"
     >
       <div className="relative aspect-[3/2] overflow-hidden bg-cvr-surface sm:aspect-[16/10]">
-        <Image src={p.image} alt={p.name} fill sizes="(max-width: 640px) 86vw, 25vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
+        <AnhChay images={[p.image, ...(p.photos ?? [])]} alt={p.name} sizes="(max-width: 640px) 86vw, 25vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
         <TierBadge tier={p.tier} />
         <span className="absolute right-3 top-3 rounded-full bg-white/80 px-2.5 py-[3px] text-[10px] font-semibold uppercase tracking-[0.06em] text-cvr-ink shadow-[0_2px_10px_rgba(0,0,0,0.18)] ring-1 ring-white/60 backdrop-blur-md">
           {p.status}
@@ -93,7 +94,7 @@ export function ProjectRow({ p }: { p: Project }) {
       className="group flex flex-col gap-3 overflow-hidden border border-cvr-line bg-white p-2.5 shadow-lux shadow-lux-hover transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 sm:flex-row sm:gap-4 sm:p-3"
     >
       <div className="relative aspect-[16/9] w-full shrink-0 overflow-hidden bg-cvr-surface sm:aspect-[4/3] sm:w-[38%] sm:min-w-[240px] sm:max-w-[420px]">
-        <Image src={p.image} alt={p.name} fill sizes="(max-width: 640px) 100vw, 38vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
+        <AnhChay images={[p.image, ...(p.photos ?? [])]} alt={p.name} sizes="(max-width: 640px) 100vw, 38vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
         <TierBadge tier={p.tier} />
       </div>
       <div className="flex min-w-0 flex-1 flex-col">

@@ -8,7 +8,7 @@ import ListingBrowser from "@/components/ListingBrowser";
 import { useHomeSection } from "@/components/HomeExpand";
 import { tierRank } from "@/lib/packages";
 import { smoothScrollTo } from "@/lib/scroll";
-import { useAutoSlide } from "@/lib/useAutoSlide";
+import { useAutoSlide, useAutoSlideThe } from "@/lib/useAutoSlide";
 
 // ── Tab nhanh: kết hợp MỤC ĐÍCH (bán/thuê) × LOẠI SẢN PHẨM ────────────────────
 const isBan = (l: Listing) => (l.purpose ?? "ban") === "ban";
@@ -32,6 +32,8 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
   const [activeTab, setActiveTab] = useState("Tất cả");
   const [slideIdx, setSlideIdx] = useState(0);
   const [paused, setPaused] = useState(false);
+  const diMobRef = useRef<HTMLDivElement>(null);
+  const [pausedMob, setPausedMob] = useState(false);
   const trackRef = useRef<HTMLDivElement>(null);
   // PC: bấm "Xem thêm" → đổi sang bố cục trang danh sách (list + cột phải),
   // đồng thời ẩn mọi phần khác của trang chủ (trạng thái dùng chung qua context).
@@ -55,6 +57,7 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
   // Tự chạy: 10s/slide (8 tin/slide cần thời gian đọc) — chỉ khi section hiện
   // trong khung nhìn & không tương tác; đổi tab lọc thì về slide đầu.
   useAutoSlide(trackRef, slides.length, paused, 10000);
+  useAutoSlideThe(diMobRef, Math.min(sorted.length, SLIDE_COUNT * PER_SLIDE), pausedMob, 5000);
   const active = Math.min(slideIdx, slides.length - 1);
 
   // Bấm "Xem thêm" mở danh sách ĐÚNG mục đích của tab đang chọn (tab "Cho thuê"
@@ -114,7 +117,14 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
             {/* ── ĐIỆN THOẠI (< 640px): lướt ngang TỪNG THẺ lớn, ló mép thẻ sau —
                 khách vuốt để xem hết tin. Thẻ cuối = "Xem tất cả". ── */}
             <div className="sm:hidden">
-              <div className="no-scrollbar -mx-4 mt-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 sm:mt-5">
+              {/* Dải lướt ngang trên điện thoại: TỰ CHẠY từng thẻ một. Chạm vào là
+                  dừng hẳn, không giành tay khách đang lướt. */}
+              <div
+                ref={diMobRef}
+                onTouchStart={() => setPausedMob(true)}
+                onScroll={() => setPausedMob(true)}
+                className="no-scrollbar -mx-4 mt-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 sm:mt-5"
+              >
                 {sorted.slice(0, SLIDE_COUNT * PER_SLIDE).map((item) => (
                   <div key={item.id} className="w-[90%] shrink-0 snap-start">
                     <PropertyCard item={item} variant="tier" />

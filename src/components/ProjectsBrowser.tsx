@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { chuThuan } from "@/lib/chuThuan";
+import AnhChay from "@/components/AnhChay";
 import Link from "next/link";
 import FilterDropdown, { FilterDropdownGroup } from "@/components/FilterDropdown";
 import Highlight from "@/components/Highlight";
@@ -558,10 +559,9 @@ export default function ProjectsBrowser({
               >
                 {/* MOBILE: ảnh TRÊN tràn viền · DESKTOP: ảnh trái */}
                 <div className="relative aspect-[16/9] w-full shrink-0 overflow-hidden rounded-none bg-cvr-surface sm:aspect-[4/3] sm:w-56 sm:rounded-xl md:w-64">
-                  <Image
-                    src={p.image}
+                  <AnhChay
+                    images={[p.image, ...(p.photos ?? [])]}
                     alt={p.name}
-                    fill
                     sizes="(max-width:640px) 33vw, 256px"
                     className="object-cover transition-transform duration-[700ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.06]"
                   />

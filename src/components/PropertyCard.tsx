@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import AnhChay from "@/components/AnhChay";
 import SaveButton from "@/components/SaveButton";
 import CompareButton from "@/components/CompareButton";
 import Highlight from "@/components/Highlight";
@@ -81,12 +82,10 @@ export default function PropertyCard({
       {/* Ảnh — Diamond khung rộng hơn (rất lớn), còn lại 4/3 */}
       {/* Thẻ trang chủ (tier) trên MOBILE: ảnh 16/10 thấp hơn để màn hình đầu thấy trọn thẻ */}
       <div className={`relative overflow-hidden bg-cvr-surface aspect-[3/2] sm:aspect-[16/10]`}>
-        <Image
-          src={item.image}
+        <AnhChay
+          images={item.images?.length ? item.images : [item.image]}
           alt={item.title}
-          fill
           sizes={isFeatured ? "(max-width: 640px) 100vw, 50vw" : "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"}
-          className="object-cover"
         />
         {tier && (
           <span
@@ -194,7 +193,7 @@ function PropertyRow({ item, showTime = false, terms = [] }: { item: Listing; sh
       className="flex flex-col gap-3 overflow-hidden rounded-none border border-cvr-line bg-white p-2.5 shadow-lux shadow-lux-hover transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 sm:flex-row sm:gap-4 sm:p-3"
     >
       <div className="relative aspect-[16/10] w-full shrink-0 overflow-hidden rounded-xl bg-cvr-surface sm:aspect-[16/10] sm:w-[38%] sm:min-w-[260px] sm:max-w-[380px]">
-        <Image src={item.image} alt={item.title} fill sizes="(max-width: 640px) 100vw, 38vw" className="object-cover" />
+        <AnhChay images={item.images?.length ? item.images : [item.image]} alt={item.title} sizes="(max-width: 640px) 100vw, 38vw" />
         {tier && (
           <span
             className="absolute left-2 top-2 px-1.5 py-0.5 text-[11px] font-bold uppercase"

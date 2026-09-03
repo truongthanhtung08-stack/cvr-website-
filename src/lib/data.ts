@@ -26,6 +26,9 @@ export type Listing = {
   image: string;
   // Số ẢNH thật của tin (để badge "📷 n" đúng, không cứng "1"). Không có → coi như 1.
   imageCount?: number;
+  // Vài ảnh ĐẦU của tin — để THẺ TIN tự chạy ảnh, khách lướt qua đã thấy được nhà
+  // đó ra sao thay vì chỉ mỗi ảnh bìa. Chỉ lấy ít tấm, không kéo cả bộ 15 ảnh.
+  images?: string[];
   badge?: "VIP" | "Nổi bật" | "Mới";
   // Mục đích tin: "ban" = mua bán (mặc định) · "thue" = cho thuê (giá tính theo tháng).
   // Phân tách rõ với "type" (sản phẩm/loại hình) để logic bán/thuê đúng trên mọi trang.
