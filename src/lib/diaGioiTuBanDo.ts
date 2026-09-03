@@ -77,19 +77,23 @@ export function ganDiaGioi(
       ward: dc.phuong || (doiTinh ? "" : giuPhuong),
     };
   }
-  let quan = khopDanhMuc(dc.quan, dsQuan);
-  // Việt Nam đã BỎ cấp Quận/Huyện từ 2025 nên bản đồ thế giới phần lớn không còn
-  // trả về tên quận → tự dò bằng danh mục của web: quận nào chứa cái phường/xã
-  // vừa ghim thì chính là quận đó.
-  if (!quan && dc.phuong) {
-    quan = dsQuan.find((d) => khopDanhMuc(dc.phuong, wardsOf(tinh, d))) ?? "";
-  }
-  // VẪN CHƯA RA → khớp thẳng TÊN PHƯỜNG với DANH SÁCH QUẬN.
-  // Sau sáp nhập 2025, rất nhiều phường mới mang đúng tên quận cũ: "Phường Ngũ
-  // Hành Sơn", "Phường Hải Châu", "Phường Thanh Khê", "Phường Sơn Trà"… Không có
-  // bước này thì ghim vào mấy chỗ đó là ô Quận/Huyện của hệ CŨ bỏ trống — đúng
-  // lỗi chủ dự án báo 03/09/2026 ("hệ mới hiện đúng, hệ cũ không có quận/huyện").
+  // ⚠️ THỨ TỰ BA BƯỚC NÀY QUAN TRỌNG — ĐỪNG ĐẢO LẠI.
+  // TÊN PHƯỜNG đáng tin hơn cấp trung gian mà bản đồ trả về. Dữ liệu
+  // OpenStreetMap sau sáp nhập 2025 còn gán sai cấp trung gian rất nhiều, ví dụ
+  // thật: "Phường Hòa Xuân, HỘI AN, Thành phố Đà Nẵng" — Hoà Xuân thuộc Cẩm Lệ,
+  // chẳng liên quan gì Hội An. Trước đây tin cấp trung gian trước nên ghim ở Hoà
+  // Xuân / Cẩm Lệ đều ra Quận "Hội An" (chủ dự án báo 03/09/2026).
+  //
+  // Bước 1 — QUẬN NÀO CHỨA CÁI PHƯỜNG NÀY. Chắc nhất: tra ngược bằng danh mục
+  // của chính web, không phụ thuộc bản đồ gán đúng hay sai.
+  let quan = dc.phuong ? dsQuan.find((d) => khopDanhMuc(dc.phuong, wardsOf(tinh, d))) ?? "" : "";
+  // Bước 2 — KHỚP THẲNG TÊN PHƯỜNG VỚI DANH SÁCH QUẬN. Sau sáp nhập, rất nhiều
+  // phường mới mang đúng tên quận cũ: "Phường Ngũ Hành Sơn", "Phường Hải Châu",
+  // "Phường Thanh Khê", "Phường Sơn Trà", "Phường Cẩm Lệ"…
   if (!quan && dc.phuong) quan = khopDanhMuc(dc.phuong, dsQuan);
+  // Bước 3 — ĐÀNH TIN cấp trung gian của bản đồ. Chỉ dùng khi hai bước trên bó
+  // tay (thường là huyện/xã vùng ven web chưa có trong danh mục phường cũ).
+  if (!quan) quan = khopDanhMuc(dc.quan, dsQuan);
   const quanDung = quan || (doiTinh ? "" : dangCo.district);
   // Việt Nam chạy SONG SONG hai hệ cho tới khi dân quen hệ mới → hệ CŨ cũng phải
   // điền được đủ ba khối. Bản đồ chỉ biết TÊN PHƯỜNG MỚI ("Phường Thuận Hoá"),
