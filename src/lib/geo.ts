@@ -33,6 +33,37 @@ const CENTERS: [name: string, lat: number, lng: number][] = [
   ["Quảng Trị", 16.816, 107.1],
   ["Lâm Đồng", 11.94, 108.458],
   ["Hà Nội", 21.028, 105.854],
+  // ── ĐỦ 34 TỈNH/THÀNH HỆ MỚI (sau sáp nhập 2025) ────────────────────────────
+  // ⚠️ ĐỪNG XOÁ BỚT. Đây là toạ độ TĨNH, không cần mạng, không cần GPS — nhờ nó
+  // mà chọn một tỉnh bất kỳ trong cả nước là bản đồ kéo về ngay lập tức, kể cả
+  // khi khách tắt định vị hoặc dịch vụ tra địa chỉ chậm/hỏng. Trước 03/09/2026
+  // bảng này chỉ có 9 tỉnh, 25 tỉnh còn lại chọn xong bản đồ đứng im.
+  // Toạ độ lấy ở trung tâm tỉnh lỵ — đủ để đặt khung nhìn, không phải để ghim.
+  ["Cao Bằng", 22.666, 106.257],
+  ["Tuyên Quang", 21.823, 105.214],
+  ["Điện Biên", 21.386, 103.017],
+  ["Lai Châu", 22.396, 103.458],
+  ["Sơn La", 21.327, 103.914],
+  ["Lào Cai", 22.486, 103.975],
+  ["Thái Nguyên", 21.593, 105.845],
+  ["Lạng Sơn", 21.853, 106.761],
+  ["Quảng Ninh", 21.006, 107.293],
+  ["Bắc Ninh", 21.186, 106.076],
+  ["Phú Thọ", 21.324, 105.402],
+  ["Hải Phòng", 20.865, 106.684],
+  ["Hưng Yên", 20.646, 106.051],
+  ["Ninh Bình", 20.254, 105.975],
+  ["Thanh Hóa", 19.807, 105.776],
+  ["Nghệ An", 18.679, 105.681],
+  ["Hà Tĩnh", 18.343, 105.906],
+  ["Đồng Nai", 10.945, 106.824],
+  ["Hồ Chí Minh", 10.776, 106.701],
+  ["Tây Ninh", 11.311, 106.098],
+  ["Đồng Tháp", 10.459, 105.633],
+  ["Vĩnh Long", 10.253, 105.972],
+  ["An Giang", 10.386, 105.436],
+  ["Cần Thơ", 10.045, 105.747],
+  ["Cà Mau", 9.177, 105.150],
 ];
 
 // Suy toạ độ từ chuỗi địa chỉ ("Phước Mỹ, Sơn Trà, Đà Nẵng") + jitter TẤT ĐỊNH

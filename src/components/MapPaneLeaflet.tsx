@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import "leaflet/dist/leaflet.css";
 import type * as LType from "leaflet";
+import { themNenBanDo, doLaiKhungBanDo } from "@/lib/nenBanDo";
 import { docKhoangCach, khoangCachKm, layViTri, loiDinhVi } from "@/lib/dinhVi";
 import { timToaDo, type MucDoChinhXac } from "@/lib/timToaDo";
 import { centerOfArea } from "@/lib/geo";
@@ -61,8 +62,6 @@ export default function MapPaneLeaflet({
     "<path d=\"M15 39C15 39 28 24.5 28 14.5A13 13 0 1 0 2 14.5C2 24.5 15 39 15 39Z\" fill=\"#e11d48\" stroke=\"#fff\" stroke-width=\"2.5\"/>" +
     "<circle cx=\"15\" cy=\"14.5\" r=\"4.5\" fill=\"#fff\"/></svg>";
 
-  const GHI_NGUON = "© <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a>";
-
   // ── DỰNG BẢN ĐỒ + CẮM GHIM ĐỎ ──────────────────────────────────────────────
   //
   // ⚠️ LUẬT: VẼ BẢN ĐỒ NGAY, KHÔNG CHỜ TRA ĐỊA CHỈ.
@@ -72,6 +71,7 @@ export default function MapPaneLeaflet({
   // rồi tra tên đường CHẠY NGẦM; tra xong mới dời ghim cho sát hơn.
   useEffect(() => {
     let huy = false;
+    let thoiDoKhung: (() => void) | null = null;
     (async () => {
       const L = (await import("leaflet")) as unknown as typeof LType;
       if (huy || !boxRef.current || mapRef.current) return;
@@ -90,10 +90,10 @@ export default function MapPaneLeaflet({
         touchZoom: !locked,
       }).setView(tam, ghim ? zoom : kv ? Math.min(zoom, 14) : 12);
 
-      L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: GHI_NGUON,
-        maxZoom: 19,
-      }).addTo(map);
+      themNenBanDo(L, map);
+      // Leaflet đo khung ĐÚNG MỘT LẦN lúc dựng; khung nằm sâu trong trang dài nên
+      // lúc đó chiều cao thường chưa đúng → không tải ô ảnh nào, để lại ô trắng.
+      thoiDoKhung = doLaiKhungBanDo(map, boxRef.current);
       mapRef.current = map;
 
       const icon = L.divIcon({ className: "", html: HTML_GHIM, iconSize: [30, 40], iconAnchor: [15, 39] });
@@ -136,6 +136,7 @@ export default function MapPaneLeaflet({
     })();
 
     return () => {
+      thoiDoKhung?.();
       huy = true;
       mapRef.current?.remove();
       mapRef.current = null;

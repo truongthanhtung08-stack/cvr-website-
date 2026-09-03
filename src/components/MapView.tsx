@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import * as L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import { themNenBanDo, doLaiKhungBanDo } from "@/lib/nenBanDo";
 import type { Listing } from "@/lib/data";
 import { coordOf } from "@/lib/geo";
 import { parseLatLng } from "@/lib/googleMaps";
@@ -75,13 +76,14 @@ export default function MapView({ items, diem }: { items?: Listing[]; diem?: Die
   useEffect(() => {
     if (!boxRef.current || mapRef.current) return;
     const map = L.map(boxRef.current).setView([16.05, 108.22], 11);
-    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-      maxZoom: 19,
-    }).addTo(map);
+    themNenBanDo(L, map);
+    // Leaflet đo khung ĐÚNG MỘT LẦN lúc dựng; khung nằm sâu trong trang dài nên
+    // lúc đó chiều cao thường chưa đúng → không tải ô ảnh nào, để lại ô trắng.
+    const thoiDoKhung = doLaiKhungBanDo(map, boxRef.current);
     layerRef.current = L.layerGroup().addTo(map);
     mapRef.current = map;
     return () => {
+      thoiDoKhung();
       map.remove();
       mapRef.current = null;
       layerRef.current = null;
