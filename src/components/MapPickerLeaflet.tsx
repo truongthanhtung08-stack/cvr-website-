@@ -31,10 +31,19 @@ export default function MapPickerLeaflet({
   onChange,
   // Địa chỉ người đăng đang gõ — dùng để tự đưa bản đồ tới và tự ghim.
   hint = "",
+  onDiaChi,
+  onDiaGioi,
 }: {
   value: string;
   onChange: (v: string) => void;
   hint?: string;
+  // GHIM XONG THÌ ĐIỀN LUÔN VÀO Ô ĐỊA CHỈ. Hai chiều thật sự: gõ địa chỉ thì bản
+  // đồ trỏ tới, ghim lên bản đồ thì ô địa chỉ tự có số nhà + tên đường. Nơi gọi
+  // không truyền thì chỉ hiện ra để đọc, không đụng vào ô nào.
+  onDiaChi?: (v: string) => void;
+  // Ghim xong thì trả về luôn TỈNH/THÀNH và PHƯỜNG/XÃ của điểm đó, để form tự
+  // chọn đúng mục trong hai ô kia — người đăng khỏi phải tự dò lại.
+  onDiaGioi?: (v: { tinh: string; phuong: string }) => void;
 }) {
   const boxRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<LType.Map | null>(null);
@@ -44,6 +53,8 @@ export default function MapPickerLeaflet({
   const duongRef = useRef<LType.Polyline | null>(null);
   const LRef = useRef<typeof LType | null>(null);
   const onChangeRef = useRef(onChange);
+  const onDiaChiRef = useRef(onDiaChi);
+  const onDiaGioiRef = useRef(onDiaGioi);
   const hintRef = useRef(hint);
   const toiRef = useRef<[number, number] | null>(null);
 
@@ -56,6 +67,8 @@ export default function MapPickerLeaflet({
 
   useEffect(() => {
     onChangeRef.current = onChange;
+    onDiaChiRef.current = onDiaChi;
+    onDiaGioiRef.current = onDiaGioi;
     hintRef.current = hint;
   });
 
@@ -75,10 +88,17 @@ export default function MapPickerLeaflet({
   // đăng đọc được mình vừa ghim vào đâu chứ không phải đoán theo dấu đỏ.
   async function hienTenChoGhim(p: LatLng) {
     const ten = await traDiaChi(p.lat, p.lng);
-    setDiaChiGhim(ten ?? "");
+    setDiaChiGhim(ten?.day ?? "");
+    // ĐIỀN THẲNG VÀO Ô ĐỊA CHỈ — đây là chiều ngược của "gõ địa chỉ thì bản đồ trỏ
+    // tới". Người đăng ghim đúng nhà mình là ô địa chỉ có sẵn số nhà + tên đường,
+    // khỏi gõ. Gõ sai chính tả tên đường cũng được sửa luôn theo bản đồ.
+    if (ten?.ngan) onDiaChiRef.current?.(ten.ngan);
+    // Trả cả Tỉnh/Thành + Phường/Xã về cho form tự chọn đúng mục trong hai ô kia.
+    if (ten && (ten.tinh || ten.phuong)) onDiaGioiRef.current?.({ tinh: ten.tinh, phuong: ten.phuong });
     const m = ghimRef.current;
     if (!m) return;
-    if (ten) m.bindTooltip(ten, { permanent: true, direction: "top", offset: [0, -40], className: "cl-nhan-ghim" });
+    if (ten?.day)
+      m.bindTooltip(ten.day, { permanent: true, direction: "top", offset: [0, -40], className: "cl-nhan-ghim" });
     else m.unbindTooltip();
   }
 
@@ -277,16 +297,9 @@ export default function MapPickerLeaflet({
       {/* Nhãn tên đường nổi trên đầu ghim đỏ */}
       <style>{`.cl-nhan-ghim{background:#1d1d1f;color:#fff;border:none;border-radius:8px;padding:4px 9px;font-size:12px;font-weight:600;box-shadow:0 2px 10px rgba(0,0,0,.3);white-space:normal;max-width:220px}.cl-nhan-ghim::before{border-top-color:#1d1d1f}`}</style>
 
-      {/* GHIM ĐỂ LÀM GÌ — phải nói NGAY TRƯỚC bản đồ. Người đăng bấm ra một dấu đỏ
-          rồi ngồi nhìn, không biết dấu đỏ đó dùng vào việc gì, cũng không biết
-          xong chưa. Câu này trả lời cả hai. */}
-      <p className="text-[13px] leading-relaxed text-cvr-body">
-        <span className="font-semibold text-cvr-ink">Ghim để làm gì:</span> ghim rồi thì tin của anh/chị
-        đứng <span className="font-semibold text-cvr-ink">đúng chỗ</span> trên bản đồ tìm kiếm, và người mua
-        bấm chỉ đường là tới đúng nơi. Không ghim thì tin chỉ hiện chung chung giữa phường/xã, người mua khó
-        tìm hơn.
-      </p>
-
+      {/* ⚠️ KHÔNG chèn hướng dẫn dài vào ĐÂY. Ô địa chỉ và bản đồ phải dính sát
+          nhau: gõ địa chỉ là bản đồ trỏ tới, ghim là ô địa chỉ tự điền. Nhét một
+          đoạn chữ vào giữa là đứt mạch đó. Lời nhắc để GỌN, đặt ở PHÍA SAU. */}
       <div className="relative overflow-hidden rounded-xl border border-cvr-line">
         <div ref={boxRef} aria-label="Bản đồ ghim vị trí" className="h-[280px] w-full bg-cvr-surface" />
 
@@ -297,44 +310,6 @@ export default function MapPickerLeaflet({
           {daGhim ? "Kéo ghim đỏ để chỉnh lại cho đúng" : "Bấm lên bản đồ để ghim vị trí"}
         </span>
       </div>
-
-      {/* ĐÃ GHIM VÀO ĐÂU — tra ngược ra địa chỉ cho người đăng kiểm lại. Đây là thứ
-          bản trước thiếu: ghim xong chỉ thấy dấu đỏ, không biết đúng hay sai. */}
-      {daGhim ? (
-        <div className="rounded-xl border border-green-200 bg-green-50 px-3.5 py-2.5">
-          <p className="flex items-center gap-1.5 text-[13px] font-semibold text-green-800">
-            <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-            </svg>
-            Đã ghim vị trí
-            {khoangCach && <span className="font-normal text-green-700">· cách chỗ anh/chị {khoangCach}</span>}
-          </p>
-          <p className="mt-1 text-[13px] leading-snug text-cvr-body">
-            {diaChiGhim ? (
-              <>
-                Điểm ghim đang nằm ở: <span className="font-medium text-cvr-ink">{diaChiGhim}</span>
-              </>
-            ) : (
-              "Đã lưu điểm ghim."
-            )}
-          </p>
-          {/* XONG RỒI THÌ LÀM SAO — câu này phải có. Thiếu nó là người đăng ghim
-              xong ngồi chờ, tưởng còn phải bấm lưu ở đâu đó. */}
-          <p className="mt-1.5 text-[13px] leading-snug text-green-800">
-            Đúng chỗ rồi thì <span className="font-semibold">không phải làm gì thêm</span> — cứ điền tiếp các
-            mục dưới, vị trí này tự lưu cùng tin. Chưa đúng thì kéo ghim đỏ tới đúng nơi.
-          </p>
-        </div>
-      ) : (
-        <ul className="space-y-1 text-[13px] text-cvr-body">
-          <li className="flex items-center gap-2">
-            <span className="inline-block h-3 w-3 shrink-0 rounded-full border-2 border-white bg-cvr-blue shadow-[0_0_0_1px_rgba(0,0,0,0.15)]" />
-            Chấm xanh: bạn đang ở đây
-          </li>
-          <li>Gõ địa chỉ có tên đường ở trên là bản đồ tự ghim tới nơi</li>
-          <li>Hoặc kéo bản đồ tới bất động sản rồi bấm để ghim</li>
-        </ul>
-      )}
 
       <div className="flex flex-wrap items-center gap-2">
         <button
@@ -370,6 +345,19 @@ export default function MapPickerLeaflet({
           </button>
         )}
       </div>
+
+      {daGhim && (
+        <p className="flex flex-wrap items-center gap-x-1.5 text-[13px] leading-snug text-cvr-body">
+          <span className="inline-flex items-center gap-1 font-semibold text-green-700">
+            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2.4} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+            Đã ghim
+          </span>
+          {diaChiGhim && <span className="font-medium text-cvr-ink">{diaChiGhim}</span>}
+          {khoangCach && <span className="text-cvr-muted">· cách chỗ anh/chị {khoangCach}</span>}
+        </p>
+      )}
 
       {loi && (
         <NhacBatDinhVi

@@ -10,7 +10,7 @@ import {
   legalOptions, furnishLevels, amenityGroups, interiorItems, directions,
   purposeOfDemand, demandOfPurpose,
 } from "@/lib/listingSpec";
-import { typeGroupsFor } from "@/lib/filters";
+import { normalizeVi, typeGroupsFor } from "@/lib/filters";
 import { provinceNamesFor, districtsOf, wardsOf, wardsOfNew, type GeoMode } from "@/lib/locations";
 import ImagePicker from "@/components/admin/ImagePicker";
 // BẢN ĐỒ GHIM — dùng bản Leaflet/OpenStreetMap. Bản chạy nền Google
@@ -224,6 +224,40 @@ export default function PostListingForm() {
     geoMode === "moi"
       ? province ? wardsOfNew(province) : []
       : province && district ? wardsOf(province, district) : [];
+
+
+  // GHIM TRÊN BẢN ĐỒ → TỰ CHỌN ĐÚNG MỤC trong ô Tỉnh/Thành và ô Phường/Xã.
+  // Đây là chiều ngược của "chọn khu vực thì bản đồ trỏ tới". Tên OpenStreetMap trả
+  // về không khớp từng chữ với danh mục của web ("Thành phố Đà Nẵng" ≠ "Đà Nẵng",
+  // "Phường Hoà Xuân" ≠ "Hòa Xuân") nên phải so KHÔNG DẤU và cho khớp lồng nhau.
+  function khopDanhMuc(ten: string, dsach: string[]): string {
+    const t = normalizeVi(ten).replace(/^(thanh pho|tinh|quan|huyen|phuong|xa|thi tran|thi xa) /, "");
+    if (!t) return "";
+    return (
+      dsach.find((m) => normalizeVi(m) === t) ??
+      dsach.find((m) => {
+        const x = normalizeVi(m);
+        return x.includes(t) || t.includes(x);
+      }) ??
+      ""
+    );
+  }
+
+  function nhanDiaGioiTuBanDo({ tinh, phuong }: { tinh: string; phuong: string }) {
+    const tinhKhop = tinh ? khopDanhMuc(tinh, provinceNamesFor(geoMode)) : "";
+    // Chỉ đổi khi tìm ra mục có thật trong danh mục — không tìm ra thì GIỮ NGUYÊN
+    // lựa chọn của người đăng, tuyệt đối không xoá trắng ô của họ.
+    const tinhDung = tinhKhop || province;
+    if (tinhKhop && tinhKhop !== province) {
+      setProvince(tinhKhop);
+      setDistrict("");
+      setWard("");
+    }
+    if (!phuong || !tinhDung) return;
+    const dsPhuong = geoMode === "moi" ? wardsOfNew(tinhDung) : [];
+    const phuongKhop = khopDanhMuc(phuong, dsPhuong);
+    if (phuongKhop) setWard(phuongKhop);
+  }
 
   // Nạp danh sách dự án đã đăng — cho ô "Thuộc dự án"
   useEffect(() => {
@@ -533,15 +567,17 @@ export default function PostListingForm() {
           )}
           <Pick label="Phường / Xã" value={ward} onChange={setWard} options={wards} placeholder="Chọn Phường / Xã" disabled={geoMode === "moi" ? !province : !district} />
         </div>
-        <Text label="Địa chỉ cụ thể (số nhà, đường, dự án)" value={addressDetail} onChange={setAddressDetail} placeholder="VD: 123 Võ Nguyên Giáp / Dự án ..." />
-        <div className="mt-4">
-          <p className="mb-2 flex flex-wrap items-center gap-2 text-sm font-semibold text-cvr-ink">
-            Ghim vị trí trên bản đồ
-            <span className="rounded-md bg-cvr-surface px-2 py-0.5 text-[11.5px] font-medium text-cvr-muted">
-              Không bắt buộc — nhưng ghim thì tin dễ tìm hơn hẳn
-            </span>
-          </p>
-          <MapPicker value={mapPin} onChange={setMapPin} hint={`${addressDetail}, ${ward}, ${district}, ${province}`} />
+        <div className="rounded-xl border border-cvr-line bg-cvr-surface/60 p-3 sm:p-4">
+          <Text label="Địa chỉ cụ thể (số nhà, đường, dự án)" value={addressDetail} onChange={setAddressDetail} placeholder="VD: 123 Võ Nguyên Giáp / Dự án ..." />
+          <div className="mt-3">
+            <MapPicker
+              value={mapPin}
+              onChange={setMapPin}
+              onDiaChi={setAddressDetail}
+              onDiaGioi={nhanDiaGioiTuBanDo}
+              hint={`${addressDetail}, ${ward}, ${district}, ${province}`}
+            />
+          </div>
         </div>
       </Card>
 

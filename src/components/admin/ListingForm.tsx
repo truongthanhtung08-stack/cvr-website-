@@ -432,7 +432,7 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
             bấm thẳng lên bản đồ dưới đây là ghim.
           </p>
           <div className="mt-3">
-            <MapPicker value={mapPin} onChange={setMapPin} hint={`${addressDetail}, ${ward}, ${district}, ${province}`} />
+            <MapPicker value={mapPin} onChange={setMapPin} onDiaChi={setAddressDetail} hint={`${addressDetail}, ${ward}, ${district}, ${province}`} />
           </div>
         </div>
         <p className="mt-3 text-xs text-cvr-faint">

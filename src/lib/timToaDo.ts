@@ -33,9 +33,20 @@ export function coTenDuong(diaChi: string): boolean {
 // ── CHIỀU NGƯỢC LẠI: TỪ TOẠ ĐỘ RA ĐỊA CHỈ ────────────────────────────────────
 // Người đăng bấm ghim lên bản đồ thì phải thấy mình vừa ghim vào ĐÂU. Chỉ hiện
 // một dấu đỏ trơ trọi thì họ không biết đúng hay sai, không kiểm được.
-const daTraNguoc = new Map<string, string | null>();
+export type DiaChiTra = {
+  // Đúng phần điền vào ô "Địa chỉ cụ thể": số nhà + tên đường. Không kèm phường,
+  // quận, tỉnh vì mấy mục đó có ô CHỌN riêng — trả về ở hai trường dưới.
+  ngan: string;
+  // Câu đầy đủ để người đăng đọc mà kiểm: "123, Mê Linh, Phường Nha Trang, Khánh Hòa"
+  day: string;
+  // Để form tự chọn đúng mục trong ô Tỉnh/Thành và ô Phường/Xã.
+  tinh: string;
+  phuong: string;
+};
 
-export async function traDiaChi(lat: number, lng: number): Promise<string | null> {
+const daTraNguoc = new Map<string, DiaChiTra | null>();
+
+export async function traDiaChi(lat: number, lng: number): Promise<DiaChiTra | null> {
   // Làm tròn 5 số lẻ (~1 m) để nhích ghim vài xăng-ti-mét không phải gọi lại.
   const khoa = `${lat.toFixed(5)},${lng.toFixed(5)}`;
   if (daTraNguoc.has(khoa)) return daTraNguoc.get(khoa) ?? null;
@@ -43,12 +54,26 @@ export async function traDiaChi(lat: number, lng: number): Promise<string | null
     const r = await fetch(
       `https://nominatim.openstreetmap.org/reverse?format=json&zoom=18&accept-language=vi&lat=${lat}&lon=${lng}`,
     );
-    const kq = (await r.json()) as { display_name?: string };
-    // Nominatim trả cả "Việt Nam" và mã bưu chính ở cuối — cắt bớt cho gọn, giữ
-    // 4 phần đầu là đủ đọc: số nhà / đường / phường / quận.
-    const ten = kq.display_name
+    const kq = (await r.json()) as {
+      display_name?: string;
+      address?: {
+        house_number?: string; road?: string; neighbourhood?: string; suburb?: string;
+        quarter?: string; village?: string; town?: string; city_district?: string;
+        city?: string; state?: string; province?: string;
+      };
+    };
+    const a = kq.address ?? {};
+    const ngan = [a.house_number, a.road || a.neighbourhood].filter(Boolean).join(" ").trim();
+    // Hệ địa giới MỚI của Việt Nam chỉ còn Tỉnh/Thành → Phường/Xã. OpenStreetMap
+    // xếp phường/xã vào nhiều khoá khác nhau tuỳ nơi nên phải dò lần lượt.
+    const phuong = a.quarter || a.suburb || a.village || a.town || a.city_district || "";
+    const tinh = a.city || a.province || a.state || "";
+    // display_name có cả "Việt Nam" và mã bưu chính ở cuối — cắt bớt cho gọn.
+    const day = kq.display_name
       ? kq.display_name.split(",").map((s) => s.trim()).slice(0, 4).join(", ")
-      : null;
+      : "";
+    const ten: DiaChiTra | null =
+      ngan || day ? { ngan, day: day || ngan, tinh, phuong } : null;
     daTraNguoc.set(khoa, ten);
     return ten;
   } catch {
@@ -72,20 +97,21 @@ export async function timToaDo(diaChi: string): Promise<ToaDoTim | null> {
     ? { lat: tamKhuVuc[0], lng: tamKhuVuc[1], mucDo: "khuVuc" }
     : null;
 
-  // Không có tên đường thì tra cũng chỉ ra tâm phường, khỏi tốn lượt gọi.
-  if (!coTenDuong(chuoi)) {
-    daTra.set(chuoi, duPhong);
-    return duPhong;
-  }
-
+  // ⚠️ VẪN PHẢI TRA kể cả khi chưa gõ tên đường. Bảng khu vực có sẵn trong web chỉ
+  // liệt kê được vài chục nơi; người đăng chọn "Phường Hoà Xuân, Đà Nẵng" mà bảng
+  // không có là bản đồ đứng im, họ không nhận ra mình đang xem chỗ nào.
+  // Nominatim tra tên phường/xã Việt Nam khá tốt, cứ hỏi rồi lấy bảng làm dự phòng.
   try {
     const r = await fetch(
       "https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=vn&q=" +
         encodeURIComponent(chuoi),
     );
     const ds = (await r.json()) as { lat: string; lon: string }[];
+    // Có tên đường mới gọi là "duong" (đủ chính xác để tự ghim). Mới chọn tới
+    // phường/xã thì vẫn là "khuVuc" — đưa bản đồ tới cho nhìn, nhưng KHÔNG tự ghim,
+    // vì ghim giữa phường là ghim sai.
     const kq: ToaDoTim | null = ds[0]
-      ? { lat: Number(ds[0].lat), lng: Number(ds[0].lon), mucDo: "duong" }
+      ? { lat: Number(ds[0].lat), lng: Number(ds[0].lon), mucDo: coTenDuong(chuoi) ? "duong" : "khuVuc" }
       : duPhong;
     daTra.set(chuoi, kq);
     return kq;
