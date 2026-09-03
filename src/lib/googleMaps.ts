@@ -111,7 +111,7 @@ export function loadMapsApi(): Promise<void> {
     s.src =
       "https://maps.googleapis.com/maps/api/js?key=" +
       encodeURIComponent(MAP_KEY) +
-      "&language=vi&region=VN&loading=async&callback=" +
+      "&language=vi&region=VN&callback=" +
       cb;
     s.async = true;
     s.onerror = () => reject(new Error("Không tải được Google Maps"));
