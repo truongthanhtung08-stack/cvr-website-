@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import Image from "next/image";
+import { chuThuan } from "@/lib/chuThuan";
 import Link from "next/link";
 import type { Project, Article } from "@/lib/data";
 import ProjectsBrowser from "@/components/ProjectsBrowser";
@@ -102,7 +103,7 @@ export function ProjectRow({ p }: { p: Project }) {
         <p className="mt-1.5 flex items-center gap-1.5 text-xs text-cvr-muted">
           <PinIcon /><span className="line-clamp-1">{p.location}</span>
         </p>
-        <p className="mt-1.5 hidden text-sm leading-relaxed text-cvr-muted sm:line-clamp-2">{p.overview[0]}</p>
+        <p className="mt-1.5 hidden text-sm leading-relaxed text-cvr-muted sm:line-clamp-2">{chuThuan(p.overview[0])}</p>
         <div className="mt-auto flex flex-wrap items-baseline gap-x-3 gap-y-1 pt-2">
           <span className="text-[15px] font-semibold text-cvr-ink">{p.priceFrom}</span>
           <span className="text-[13px] text-cvr-body">{p.type}</span>

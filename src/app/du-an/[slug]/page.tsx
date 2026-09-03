@@ -13,6 +13,7 @@ import PropertyCard from "@/components/PropertyCard";
 import RelatedListingsTabs from "@/components/RelatedListingsTabs";
 import LeadForm from "@/components/LeadForm";
 import RichContent from "@/components/RichContent";
+import { chuThuan } from "@/lib/chuThuan";
 import VideoEmbed from "@/components/VideoEmbed";
 import Breadcrumb from "@/components/Breadcrumb";
 import KhuVucLinks from "@/components/KhuVucLinks";
@@ -237,7 +238,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
     "@id": `${SITE}/du-an/${p.slug}#du-an`,
     name: p.name,
     url: `${SITE}/du-an/${p.slug}`,
-    description: p.overview?.[0] ?? `Dự án ${p.name} tại ${p.location}. Loại hình ${p.type}, tình trạng ${p.status}.`,
+    description: chuThuan(p.overview?.[0]) || `Dự án ${p.name} tại ${p.location}. Loại hình ${p.type}, tình trạng ${p.status}.`,
     image: (p.photos?.length ? p.photos : [p.image]).map((x) => (x.startsWith("http") ? x : `${SITE}${x}`)),
     address: { "@type": "PostalAddress", streetAddress: p.location, addressCountry: "VN" },
     ...(p.developer ? { developer: { "@type": "Organization", name: p.developer } } : {}),

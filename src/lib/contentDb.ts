@@ -13,6 +13,7 @@ import type { Article, Project } from "@/lib/data";
 import { articles as sampleArticles, projects as sampleProjects, getArticleBySlug, getProjectBySlug } from "@/lib/data";
 import { asset } from "@/lib/asset";
 import { isVideoUrl } from "@/lib/media";
+import { chuThuan } from "@/lib/chuThuan";
 import type { ArticleRow, ProjectRow } from "@/lib/contentAdmin";
 
 const ARTICLE_PLACEHOLDER = "/images/segments/canho1.jpg";
@@ -56,7 +57,9 @@ function articleRowToArticle(r: ArticleRow): Article {
   return {
     slug: r.slug,
     title: r.title,
-    excerpt: r.excerpt ?? "",
+    // Gỡ ký hiệu soạn thảo (::justify::, **đậm**…) — phần tóm tắt in ra thẳng
+    // chứ không qua bộ dựng nội dung, để nguyên là ký hiệu lòi ra ngoài web.
+    excerpt: chuThuan(r.excerpt),
     date: fmtDate(r.published_at ?? r.created_at),
     category: r.category,
     image: asset(r.image || ARTICLE_PLACEHOLDER),

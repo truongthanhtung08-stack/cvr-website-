@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
+import { chuThuan } from "@/lib/chuThuan";
 import Link from "next/link";
 import FilterDropdown, { FilterDropdownGroup } from "@/components/FilterDropdown";
 import Highlight from "@/components/Highlight";
@@ -583,7 +584,7 @@ export default function ProjectsBrowser({
                     <span className="truncate">{p.location}</span>
                   </p>
                   <p className="mb-3 mt-1.5 line-clamp-2 text-xs leading-relaxed text-cvr-muted">
-                    {p.type} · {p.overview[0]}
+                    {p.type} · {chuThuan(p.overview[0])}
                   </p>
                   <div className="mt-auto border-t border-cvr-line pt-2.5">
                     <span className="text-xs text-cvr-body">

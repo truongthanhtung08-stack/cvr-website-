@@ -2,6 +2,7 @@
 // Ảnh đặt theo từng phân khúc: villa, căn hộ, nhà phố, đất nền, condotel, đất CN, kho xưởng
 
 import { asset } from "@/lib/asset";
+import { chuThuan } from "@/lib/chuThuan";
 import { specForType, amenityGroups, interiorItems, furnishLevels } from "@/lib/listingSpec";
 import { directionOptions } from "@/lib/filters";
 
@@ -160,9 +161,10 @@ export function getListingById(id: string): Listing | undefined {
 // (Trước đây LUÔN dùng câu tự sinh → 500 tin hiện y hệt nhau, khách lướt không
 //  thu được thông tin gì.)
 export function listingSummary(l: Listing): string {
-  const that = (l.desc ?? "")
-    .replace(/\s+/g, " ")
-    .replace(/[•·▪◦*#=_~>-]{2,}/g, " ")
+  // chuThuan() gỡ ::justify::, **đậm**, ảnh/video chèn giữa bài — không gỡ thì
+  // mấy ký hiệu soạn thảo đó lòi thẳng ra thẻ tin.
+  const that = chuThuan(l.desc)
+    .replace(/[•·▪◦#=_~>-]{2,}/g, " ")
     .trim();
   if (that.length >= 30) return that;
 
