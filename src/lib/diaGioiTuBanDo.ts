@@ -71,10 +71,12 @@ export function ganDiaGioi(
   // gõ tay khi tỉnh chưa có danh mục, nên điền thẳng vào là dùng được ngay —
   // ba khối phải MẶC ĐỊNH có sẵn, người đăng chỉ lo mỗi số nhà.
   if (!dsQuan.length) {
+    // Vẫn ưu tiên tên chuẩn trong danh mục của web, tên thô của bản đồ là hạng chót.
+    const p = khopDanhMuc(dc.phuong, wardsOfNew(tinh));
     return {
       province: tinh,
       district: dc.quan || (doiTinh ? "" : dangCo.district),
-      ward: dc.phuong || (doiTinh ? "" : giuPhuong),
+      ward: p || dc.phuong || (doiTinh ? "" : giuPhuong),
     };
   }
   // ⚠️ THỨ TỰ BA BƯỚC NÀY QUAN TRỌNG — ĐỪNG ĐẢO LẠI.
@@ -100,7 +102,15 @@ export function ganDiaGioi(
   // mà danh mục phường CŨ của quận đó không có tên ấy → không khớp. Lúc đó cứ
   // điền thẳng tên bản đồ đọc được: cùng một chỗ trên thực địa, chỉ khác cách gọi
   // cấp hành chính. Để trống là người đăng phải tự dò, mà ba khối phải MẶC ĐỊNH.
-  const phuongThoTuBanDo = dc.phuong || (doiTinh ? "" : giuPhuong);
+  // ⚠️ DANH MỤC CỦA WEB LÀ CHUẨN, TÊN BẢN ĐỒ CHỈ LÀ MANH MỐI.
+  // OpenStreetMap cập nhật đơn vị hành chính Việt Nam không đầy đủ và không đều
+  // (nơi còn tên cũ, nơi đã tên mới, nơi gán sai cấp). Web mình có danh mục đầy
+  // đủ: 34 tỉnh · 3.321 phường/xã hệ mới. Vậy trước khi đành lấy tên thô của bản
+  // đồ, thử khớp thêm một nhịp nữa với DANH MỤC PHƯỜNG MỚI của chính tỉnh đó —
+  // ra được thì ô giữ đúng tên chuẩn của web, không phải tên lạ do bản đồ đặt.
+  const phuongTheoDanhMucMoi = khopDanhMuc(dc.phuong, wardsOfNew(tinh));
+  const phuongThoTuBanDo =
+    phuongTheoDanhMucMoi || dc.phuong || (doiTinh ? "" : giuPhuong);
   if (!quanDung) return { province: tinh, district: "", ward: phuongThoTuBanDo };
   const phuongKhop = khopDanhMuc(dc.phuong, wardsOf(tinh, quanDung));
   return { province: tinh, district: quanDung, ward: phuongKhop || phuongThoTuBanDo };
