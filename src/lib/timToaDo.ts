@@ -58,7 +58,7 @@ export async function traDiaChi(lat: number, lng: number): Promise<DiaChiTra | n
   if (daTraNguoc.has(khoa)) return daTraNguoc.get(khoa) ?? null;
   try {
     const r = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=json&zoom=18&accept-language=vi&lat=${lat}&lon=${lng}`,
+      `/api/dia-chi?viec=nguoc&lat=${lat}&lng=${lng}`,
     );
     const kq = (await r.json()) as {
       display_name?: string;
@@ -119,8 +119,7 @@ export async function timToaDo(diaChi: string): Promise<ToaDoTim | null> {
   // Nominatim tra tên phường/xã Việt Nam khá tốt, cứ hỏi rồi lấy bảng làm dự phòng.
   try {
     const r = await fetch(
-      "https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=vn&q=" +
-        encodeURIComponent(chuoi),
+      "/api/dia-chi?viec=tim&q=" + encodeURIComponent(chuoi),
     );
     const ds = (await r.json()) as { lat: string; lon: string }[];
     // Có tên đường mới gọi là "duong" (đủ chính xác để tự ghim). Mới chọn tới
@@ -159,8 +158,7 @@ export async function goiYDiaChi(tuKhoa: string, khuVuc = ""): Promise<GoiYDiaCh
   const truyVan = [q, khuVuc].filter(Boolean).join(", ");
   try {
     const r = await fetch(
-      "https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=6&countrycodes=vn&accept-language=vi&q=" +
-        encodeURIComponent(truyVan),
+      "/api/dia-chi?viec=goiy&q=" + encodeURIComponent(truyVan),
     );
     const ds = (await r.json()) as {
       lat: string;
