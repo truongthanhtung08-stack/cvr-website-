@@ -229,9 +229,10 @@ export default function MapPaneLeaflet({
       },
       (ma) => {
         setDangDinhVi(false);
-        // Tự động định vị mà khách chưa từng trả lời thì im lặng, đừng doạ khách
-        // ngay khi vừa mở tin. Nhưng đang bị CHẶN hẳn (mã 1) thì phải nói.
-        if (!tuBam && ma !== 1) return;
+        // ⚠️ Định vị TỰ ĐỘNG hỏng thì IM LẶNG. Khách vừa mở tin ra để xem bất động
+        // sản, chưa hỏi mình đang ở đâu — bung khối hướng dẫn bật GPS lên che mất
+        // bản đồ là phá. Chỉ nói khi khách TỰ BẤM nút.
+        if (!tuBam) return;
         setLoi(loiDinhVi(ma));
       },
       tuBam,

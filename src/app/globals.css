@@ -456,6 +456,28 @@ select option {
   color: #fff;
   transform: translate(-50%, -100%) scale(1.07);
 }
+/* CỤM TIN — phóng xa thì các tin gần nhau gộp thành một viên tròn ghi số lượng.
+   Không có nó thì 37 viên giá chồng lên nhau, nhìn ra được đúng năm cái. */
+.map-cum {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  transform: translate(-50%, -50%);
+  width: 46px;
+  height: 46px;
+  border-radius: 9999px;
+  background: var(--color-cvr-blue);
+  color: #fff;
+  font-weight: 700;
+  line-height: 1.05;
+  border: 3px solid #fff;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.28);
+  transition: transform 0.15s var(--ease-out-soft);
+}
+.map-cum b { font-size: 15px; }
+.map-cum span { font-size: 9px; font-weight: 600; opacity: 0.85; }
+.map-cum:hover { transform: translate(-50%, -50%) scale(1.08); }
 .leaflet-container { font-family: inherit; }
 .leaflet-tile { filter: grayscale(0.15) saturate(0.9); } /* tông bản đồ trầm, hợp giao diện */
 .leaflet-popup-content-wrapper {

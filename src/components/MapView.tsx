@@ -84,36 +84,95 @@ export default function MapView({ items, diem }: { items?: Listing[]; diem?: Die
     };
   }, []);
 
-  // Vẽ lại marker mỗi khi kết quả lọc đổi + tự khớp khung nhìn
-  useEffect(() => {
+  // ── VẼ MARKER, CÓ GOM CỤM ──────────────────────────────────────────────────
+  // Tin nằm rải từ Đà Nẵng tới Khánh Hoà, phóng ra xem hết thì mấy chục viên giá
+  // chồng đè lên nhau, nhìn ra được đúng vài cái — bản đồ thành vô dụng. Nên gom:
+  // các tin rơi vào cùng một ô lưới trên màn hình gộp thành MỘT viên tròn ghi số
+  // lượng; bấm vào là phóng vào đúng chỗ đó, tách dần ra tới từng tin.
+  // Gom theo lưới pixel (không phải theo km) nên phóng tới đâu tách tới đó.
+  const dsRef = useRef<DiemBanDo[]>([]);
+
+  function veMarker() {
     const map = mapRef.current;
     const layer = layerRef.current;
     if (!map || !layer) return;
     layer.clearLayers();
-    if (ds.length === 0) return;
+    const pts = dsRef.current;
+    if (pts.length === 0) return;
 
-    const bounds = L.latLngBounds([]);
-    for (const d of ds) {
-      bounds.extend([d.lat, d.lng]);
-      const marker = L.marker([d.lat, d.lng], {
-        icon: L.divIcon({ className: "map-pin", html: `<span class="map-pill">${d.nhan}</span>`, iconSize: [0, 0] }),
-      }).addTo(layer);
-      marker.bindPopup(
-        `<a class="map-pop" href="${d.href}">
-          <img src="${d.image}" alt="" loading="lazy" />
-          <span class="map-pop-body">
-            <span class="map-pop-title">${d.title}</span>
-            <span class="map-pop-price">${d.phu}</span>
-            <span class="map-pop-loc">${d.loc}${d.chinhXac === false ? " · vị trí tương đối" : ""}</span>
-          </span>
-        </a>`,
-        { closeButton: false, offset: L.point(0, -14) },
-      );
+    const O = 72; // cạnh ô lưới, tính bằng pixel màn hình
+    const nhom = new Map<string, DiemBanDo[]>();
+    for (const d of pts) {
+      const p = map.latLngToLayerPoint([d.lat, d.lng]);
+      const k = `${Math.floor(p.x / O)}:${Math.floor(p.y / O)}`;
+      const cu = nhom.get(k);
+      if (cu) cu.push(d);
+      else nhom.set(k, [d]);
     }
+
+    for (const cum of nhom.values()) {
+      if (cum.length === 1) {
+        const d = cum[0];
+        const marker = L.marker([d.lat, d.lng], {
+          icon: L.divIcon({ className: "map-pin", html: `<span class="map-pill">${d.nhan}</span>`, iconSize: [0, 0] }),
+        }).addTo(layer);
+        marker.bindPopup(
+          `<a class="map-pop" href="${d.href}">
+            <img src="${d.image}" alt="" loading="lazy" />
+            <span class="map-pop-body">
+              <span class="map-pop-title">${d.title}</span>
+              <span class="map-pop-price">${d.phu}</span>
+              <span class="map-pop-loc">${d.loc}${d.chinhXac === false ? " · vị trí tương đối" : ""}</span>
+            </span>
+          </a>`,
+          { closeButton: false, offset: L.point(0, -14) },
+        );
+        continue;
+      }
+
+      const lat = cum.reduce((s, d) => s + d.lat, 0) / cum.length;
+      const lng = cum.reduce((s, d) => s + d.lng, 0) / cum.length;
+      const nhan = diem ? "dự án" : "tin";
+      L.marker([lat, lng], {
+        icon: L.divIcon({
+          className: "map-pin",
+          html: `<span class="map-cum"><b>${cum.length}</b><span>${nhan}</span></span>`,
+          iconSize: [0, 0],
+        }),
+      })
+        .addTo(layer)
+        .on("click", () => {
+          const b = L.latLngBounds(cum.map((d) => [d.lat, d.lng] as [number, number]));
+          // Cả cụm nằm trùng một điểm thì fitBounds không phóng được → tự phóng thêm
+          map.fitBounds(b.pad(0.25), { maxZoom: Math.min(map.getZoom() + 4, 18) });
+        });
+    }
+  }
+
+  // Kết quả lọc đổi → vẽ lại và khớp khung nhìn bao trọn mọi tin
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || ds.length === 0) return;
+    dsRef.current = ds;
+    const bounds = L.latLngBounds(ds.map((d) => [d.lat, d.lng] as [number, number]));
     map.fitBounds(bounds.pad(0.15), { maxZoom: 14 });
+    veMarker();
     // ds dựng lại mỗi lần render nên so theo nội dung, không so tham chiếu
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [JSON.stringify(ds.map((d) => d.id + d.lat + d.lng))]);
+
+  // Phóng to / kéo bản đồ → gom lại theo mức phóng mới
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    map.on("zoomend", veMarker);
+    map.on("moveend", veMarker);
+    return () => {
+      map.off("zoomend", veMarker);
+      map.off("moveend", veMarker);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ── VỊ TRÍ CỦA TÔI ─────────────────────────────────────────────────────────
   // Khách cần biết mình đang đứng đâu so với các bất động sản, rồi mới tự phóng
@@ -178,18 +237,17 @@ export default function MapView({ items, diem }: { items?: Listing[]; diem?: Die
     );
   }
 
-  // MỞ BẢN ĐỒ LÀ ĐỊNH VỊ LUÔN — khách thấy ngay mình đang ở đâu so với các bất
-  // động sản, không phải bấm thêm nút nào.
-  // ⚠️ Trình duyệt đã nhớ "từ chối" thì nó KHÔNG hỏi lại nữa, gọi định vị chỉ tổ
-  // im re. Nên hỏi trạng thái quyền trước: đang bị chặn thì hiện luôn khối hướng
-  // dẫn bật lại, khỏi để khách ngồi đợi cái chấm xanh không bao giờ tới.
+  // MỞ BẢN ĐỒ LÀ ĐỊNH VỊ LUÔN, nhưng LẶNG LẼ: được thì hiện chấm xanh, không được
+  // thì thôi.
+  // ⚠️ TUYỆT ĐỐI KHÔNG bung khối hướng dẫn bật GPS lúc vừa mở. Bản trước làm vậy:
+  // khối vàng chiếm một phần ba mặt bản đồ, che mất tin, trong khi khách chỉ định
+  // mở ra XEM TIN chứ chưa hỏi mình đang ở đâu. Khối đó chỉ hiện khi khách TỰ BẤM
+  // nút định vị — lúc ấy họ mới thật sự cần biết vì sao không lên.
+  // Trình duyệt đã nhớ "từ chối" thì nó không hỏi lại nữa, gọi cũng vô ích → bỏ qua.
   useEffect(() => {
     let huy = false;
     void (async () => {
-      if ((await quyenDinhVi()) === "denied") {
-        if (!huy) setLoi(loiDinhVi(1));
-        return;
-      }
+      if (huy || (await quyenDinhVi()) === "denied") return;
       if (!huy) dinhVi(false);
     })();
     return () => {
