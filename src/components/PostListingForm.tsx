@@ -10,8 +10,9 @@ import {
   legalOptions, furnishLevels, amenityGroups, interiorItems, directions,
   purposeOfDemand, demandOfPurpose,
 } from "@/lib/listingSpec";
-import { normalizeVi, typeGroupsFor } from "@/lib/filters";
+import { typeGroupsFor } from "@/lib/filters";
 import { provinceNamesFor, districtsOf, wardsOf, wardsOfNew, type GeoMode } from "@/lib/locations";
+import { ganDiaGioi, type DiaGioiBanDo } from "@/lib/diaGioiTuBanDo";
 import ImagePicker from "@/components/admin/ImagePicker";
 // BẢN ĐỒ GHIM — dùng bản Leaflet/OpenStreetMap. Bản chạy nền Google
 // (components/MapPicker.tsx) GIỮ LẠI để sau này Google thông thì đổi về, chỉ
@@ -226,74 +227,22 @@ export default function PostListingForm() {
       : province && district ? wardsOf(province, district) : [];
 
 
-  // GHIM TRÊN BẢN ĐỒ → TỰ CHỌN ĐÚNG MỤC trong ô Tỉnh/Thành và ô Phường/Xã.
-  // Đây là chiều ngược của "chọn khu vực thì bản đồ trỏ tới". Tên OpenStreetMap trả
-  // về không khớp từng chữ với danh mục của web ("Thành phố Đà Nẵng" ≠ "Đà Nẵng",
-  // "Phường Hoà Xuân" ≠ "Hòa Xuân") nên phải so KHÔNG DẤU và cho khớp lồng nhau.
-  function khopDanhMuc(ten: string, dsach: string[]): string {
-    const t = normalizeVi(ten).replace(/^(thanh pho|tinh|quan|huyen|phuong|xa|thi tran|thi xa) /, "");
-    if (!t) return "";
-    return (
-      dsach.find((m) => normalizeVi(m) === t) ??
-      dsach.find((m) => {
-        const x = normalizeVi(m);
-        return x.includes(t) || t.includes(x);
-      }) ??
-      ""
-    );
+  // GHIM TRÊN BẢN ĐỒ → TỰ ĐIỀN ba ô Tỉnh/Thành · Quận/Huyện · Phường/Xã.
+  // Cách khớp tên nằm ở src/lib/diaGioiTuBanDo.ts (dùng chung với form admin).
+  // Nhớ lại địa giới đọc được để KHÁCH ĐỔI HỆ ĐỊA CHỈ lúc nào cũng điền lại được
+  // ngay, không bắt họ ghim lại từ đầu.
+  const diaGioiTuBanDoRef = useRef<DiaGioiBanDo | null>(null);
+
+  function apDungDiaGioi(dc: DiaGioiBanDo, heDiaChi: GeoMode, tinhCu: string, quanCu: string) {
+    const kq = ganDiaGioi(dc, heDiaChi, { province: tinhCu, district: quanCu });
+    setProvince(kq.province);
+    setDistrict(kq.district);
+    setWard(kq.ward);
   }
 
-  // Chạy được với CẢ HAI hệ địa chỉ: hệ CŨ ba cấp (Tỉnh → Quận/Huyện → Phường/Xã)
-  // và hệ MỚI hai cấp sau sáp nhập (Tỉnh → Phường/Xã). Người đăng đang ở hệ nào thì
-  // điền đúng các ô của hệ đó.
-  // Nhớ lại địa giới đọc được từ điểm ghim, để KHÁCH ĐỔI HỆ ĐỊA CHỈ lúc nào cũng
-  // điền lại được ngay — không bắt họ ghim lại từ đầu.
-  const diaGioiTuBanDoRef = useRef<{ tinh: string; quan: string; phuong: string } | null>(null);
-
-  function nhanDiaGioiTuBanDo(dc: { tinh: string; quan: string; phuong: string }) {
+  function nhanDiaGioiTuBanDo(dc: DiaGioiBanDo) {
     diaGioiTuBanDoRef.current = dc;
-    apDungDiaGioi(dc, geoMode);
-  }
-
-  function apDungDiaGioi(
-    { tinh, quan, phuong }: { tinh: string; quan: string; phuong: string },
-    heDiaChi: GeoMode,
-  ) {
-    const tinhKhop = tinh ? khopDanhMuc(tinh, provinceNamesFor(heDiaChi)) : "";
-    // Chỉ đổi khi tìm ra mục có thật trong danh mục — không tìm ra thì GIỮ NGUYÊN
-    // lựa chọn của người đăng, tuyệt đối không xoá trắng ô của họ.
-    const tinhDung = tinhKhop || province;
-    if (tinhKhop && tinhKhop !== province) {
-      setProvince(tinhKhop);
-      setDistrict("");
-      setWard("");
-    }
-    if (!tinhDung) return;
-
-    if (heDiaChi === "moi") {
-      const phuongKhop = khopDanhMuc(phuong, wardsOfNew(tinhDung));
-      if (phuongKhop) setWard(phuongKhop);
-      return;
-    }
-
-    // Hệ CŨ: phải có Quận/Huyện thì mới ra được danh sách Phường/Xã.
-    const dsQuan = districtsOf(tinhDung);
-    let quanKhop = khopDanhMuc(quan, dsQuan);
-    // Việt Nam đã BỎ cấp Quận/Huyện từ 2025 nên bản đồ thế giới phần lớn không
-    // còn trả về tên quận nữa → ghim xong ô Quận/Huyện bỏ trống, kéo theo ô
-    // Phường/Xã cũng không ra danh sách. Tự dò bằng danh mục của web: quận nào
-    // có chứa cái phường/xã vừa ghim thì chính là quận đó.
-    if (!quanKhop && phuong) {
-      quanKhop = dsQuan.find((d) => khopDanhMuc(phuong, wardsOf(tinhDung, d))) ?? "";
-    }
-    const quanDung = quanKhop || district;
-    if (quanKhop && quanKhop !== district) {
-      setDistrict(quanKhop);
-      setWard("");
-    }
-    if (!quanDung) return;
-    const phuongKhop = khopDanhMuc(phuong, wardsOf(tinhDung, quanDung));
-    if (phuongKhop) setWard(phuongKhop);
+    apDungDiaGioi(dc, geoMode, province, district);
   }
 
   // Nạp danh sách dự án đã đăng — cho ô "Thuộc dự án"
@@ -596,7 +545,7 @@ export default function PostListingForm() {
                 // Đã ghim trên bản đồ rồi thì đổi hệ xong ĐIỀN LẠI NGAY theo hệ mới
                 // chọn — khách không phải ghim lại lần nữa.
                 const dc = diaGioiTuBanDoRef.current;
-                if (dc) setTimeout(() => apDungDiaGioi(dc, m.id), 0);
+                if (dc) setTimeout(() => apDungDiaGioi(dc, m.id, "", ""), 0);
               }}
               className={`rounded-md px-3 py-1.5 text-xs font-medium transition ${
                 geoMode === m.id ? "bg-cvr-ink text-white" : "text-cvr-body hover:text-cvr-ink"
@@ -616,11 +565,10 @@ export default function PostListingForm() {
           )}
           <Pick label="Phường / Xã" value={ward} onChange={setWard} options={wards} placeholder="Chọn Phường / Xã" disabled={geoMode === "moi" ? !province : !district} />
         </div>
-        {/* Ô "Địa chỉ cụ thể" do CHÍNH khối bản đồ vẽ, nằm dính ngay trên mặt bản
-            đồ — gõ tới đâu bản đồ nhảy tới đó, đối chiếu tại chỗ. Đừng tách ra
-            thành ô riêng nữa. */}
+        {/* Thanh "Địa chỉ cụ thể" nằm NGAY TRONG khối bản đồ (sát trên mặt bản đồ),
+            có gợi ý tên đường. Khối tự vẽ nhãn nên ở đây KHÔNG đặt <Label> nữa,
+            đặt là ra hai nhãn chồng nhau. */}
         <div>
-          <Label>Địa chỉ cụ thể</Label>
           <MapPicker
             value={mapPin}
             onChange={setMapPin}

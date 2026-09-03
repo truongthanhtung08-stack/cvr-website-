@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { saleTypeGroups, rentTypeGroups } from "@/lib/filters";
 import { provinceNamesFor, districtsOf, wardsOf, wardsOfNew, type GeoMode } from "@/lib/locations";
+import { ganDiaGioi, type DiaGioiBanDo } from "@/lib/diaGioiTuBanDo";
 import { fieldsFor, interiorItems, amenityGroups, legalOptions, furnishLevels, directions, coPhongNgu, coPhongTam, coDienTichXayDung, nhanDienTich } from "@/lib/listingSpec";
 import ImagePicker from "@/components/admin/ImagePicker";
 // BẢN ĐỒ GHIM — dùng bản Leaflet/OpenStreetMap. Bản chạy nền Google
@@ -151,6 +152,16 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
   // Danh sách quận/huyện & phường/xã liên động theo lựa chọn cấp trên
   // Hệ đơn vị hành chính: MỚI (sau sáp nhập) bỏ cấp Quận/Huyện
   const [geoMode, setGeoMode] = useState<GeoMode>("moi");
+  // Nhớ địa giới đọc được từ điểm ghim → đổi hệ địa chỉ là điền lại được ngay
+  // theo hệ vừa chọn, không phải ghim lại.
+  const diaGioiTuBanDoRef = useRef<DiaGioiBanDo | null>(null);
+
+  function apDungDiaGioi(dc: DiaGioiBanDo, he: GeoMode, tinhCu: string, quanCu: string) {
+    const kq = ganDiaGioi(dc, he, { province: tinhCu, district: quanCu });
+    setProvince(kq.province);
+    setDistrict(kq.district);
+    setWard(kq.ward);
+  }
   const provinceOptions = provinceNamesFor(geoMode);
   const districtOptions = geoMode === "moi" ? [] : province ? districtsOf(province) : [];
   const wardOptions =
@@ -356,7 +367,15 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
                 <button
                   key={m.id}
                   type="button"
-                  onClick={() => { setGeoMode(m.id); setProvince(""); setDistrict(""); setWard(""); }}
+                  onClick={() => {
+                    setGeoMode(m.id);
+                    setProvince("");
+                    setDistrict("");
+                    setWard("");
+                    // Đã ghim rồi thì đổi hệ xong điền lại NGAY theo hệ vừa chọn.
+                    const dc = diaGioiTuBanDoRef.current;
+                    if (dc) setTimeout(() => apDungDiaGioi(dc, m.id, "", ""), 0);
+                  }}
                   className={`rounded-md px-3 py-1.5 text-xs font-medium transition ${geoMode === m.id ? "bg-cvr-ink text-white" : "text-cvr-body hover:text-cvr-ink"}`}
                 >
                   {m.label}
@@ -434,6 +453,10 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
               onChange={setMapPin}
               diaChi={addressDetail}
               onDiaChi={setAddressDetail}
+              onDiaGioi={(dc) => {
+                diaGioiTuBanDoRef.current = dc;
+                apDungDiaGioi(dc, geoMode, province, district);
+              }}
               hint={`${addressDetail}, ${ward}, ${district}, ${province}`}
             />
           </div>

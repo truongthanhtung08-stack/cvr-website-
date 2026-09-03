@@ -136,3 +136,54 @@ export async function timToaDo(diaChi: string): Promise<ToaDoTim | null> {
     return duPhong;
   }
 }
+
+// ── GỢI Ý ĐỊA CHỈ KHI ĐANG GÕ ────────────────────────────────────────────────
+//
+// Khác `timToaDo` ở chỗ: hàm kia tra MỘT chuỗi đã hoàn chỉnh rồi trả đúng một
+// điểm; hàm này trả VÀI lựa chọn để người dùng tự chọn cái đúng. Cần thiết vì
+// tên đường ở Việt Nam trùng nhau rất nhiều — "Nguyễn Văn Linh" tỉnh nào cũng có,
+// "Lê Lợi" thì phường nào cũng có. Bắt máy tự đoán là ghim sai.
+//
+// khuVuc: Tỉnh/Phường người dùng đã chọn — ghép vào truy vấn để kết quả ưu tiên
+// đúng vùng đó thay vì nhảy sang tỉnh khác.
+export type GoiYDiaChi = {
+  ten: string;   // dòng chính: số nhà + tên đường (hoặc tên địa điểm)
+  phu: string;   // dòng phụ: phường, quận, tỉnh
+  lat: number;
+  lng: number;
+};
+
+export async function goiYDiaChi(tuKhoa: string, khuVuc = ""): Promise<GoiYDiaChi[]> {
+  const q = tuKhoa.trim();
+  if (q.length < 3) return [];
+  const truyVan = [q, khuVuc].filter(Boolean).join(", ");
+  try {
+    const r = await fetch(
+      "https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=6&countrycodes=vn&accept-language=vi&q=" +
+        encodeURIComponent(truyVan),
+    );
+    const ds = (await r.json()) as {
+      lat: string;
+      lon: string;
+      display_name?: string;
+      address?: Record<string, string>;
+    }[];
+    return ds.map((d) => {
+      const a = d.address ?? {};
+      const ten =
+        [a.house_number, a.road].filter(Boolean).join(" ") ||
+        a.amenity || a.building || a.neighbourhood ||
+        (d.display_name ?? "").split(",")[0].trim();
+      const phu = [
+        a.quarter || a.suburb || a.village || a.town,
+        a.city_district || a.county,
+        a.city || a.province || a.state,
+      ]
+        .filter(Boolean)
+        .join(", ");
+      return { ten: ten || (d.display_name ?? ""), phu, lat: Number(d.lat), lng: Number(d.lon) };
+    });
+  } catch {
+    return [];
+  }
+}

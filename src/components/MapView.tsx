@@ -8,6 +8,7 @@ import { coordOf } from "@/lib/geo";
 import { parseLatLng } from "@/lib/googleMaps";
 import { layViTri, loiDinhVi, quyenDinhVi } from "@/lib/dinhVi";
 import NhacBatDinhVi from "@/components/NhacBatDinhVi";
+import TimDiaDiem from "@/components/TimDiaDiem";
 
 // Chế độ Bản đồ (Leaflet + OpenStreetMap) — marker là viên chữ: ĐƠN GIÁ với tin
 // đăng, TÊN DỰ ÁN với dự án. Bấm ra popup thẻ mini dẫn tới trang chi tiết.
@@ -41,6 +42,10 @@ export default function MapView({ items, diem }: { items?: Listing[]; diem?: Die
   const vongRef = useRef<L.CircleMarker | null>(null);
   const [dangDinhVi, setDangDinhVi] = useState(false);
   const [loi, setLoi] = useState("");
+  // Ô tìm địa điểm cho NGƯỜI XEM: gõ tên đường / khu vực là bản đồ bay tới đó,
+  // rồi tự xem quanh đó có tin nào. Không có nó thì khách phải kéo mò từ toàn
+  // cảnh cả nước xuống đúng con đường mình quan tâm.
+  const [tuKhoa, setTuKhoa] = useState("");
 
   // Gộp về MỘT dạng điểm: tin đăng thì lấy đơn giá làm nhãn, dự án dùng `diem` sẵn.
   const ds: DiemBanDo[] =
@@ -259,6 +264,19 @@ export default function MapView({ items, diem }: { items?: Listing[]; diem?: Die
   return (
     <div className="relative h-full w-full">
       <div ref={boxRef} aria-label="Bản đồ bất động sản" className="h-full w-full" />
+
+      {/* Ô TÌM ĐỊA ĐIỂM — góc trên bên PHẢI, chừa góc trái cho nút phóng to của
+          bản đồ. Trên điện thoại rộng gần hết bề ngang cho dễ gõ. */}
+      <div className="absolute left-14 right-3 top-3 z-[1300] sm:left-auto sm:w-[330px]">
+        <div className="rounded-xl bg-white shadow-[0_2px_14px_rgba(0,0,0,0.25)] ring-1 ring-black/5">
+          <TimDiaDiem
+            value={tuKhoa}
+            onChange={setTuKhoa}
+            onChon={(kq) => mapRef.current?.setView([kq.lat, kq.lng], 16)}
+            placeholder="Tìm tên đường, khu vực…"
+          />
+        </div>
+      </div>
 
       {/* NÚT VỊ TRÍ — nổi trên bản đồ, góc dưới trái.
           ⚠️ z-index phải TRÊN 800: Leaflet xếp lớp marker ở 600 và popup ở 700, để

@@ -9,6 +9,7 @@ import { docKhoangCach, khoangCachKm, layViTri, loiDinhVi } from "@/lib/dinhVi";
 import { timToaDo, traDiaChi } from "@/lib/timToaDo";
 import { centerOfArea } from "@/lib/geo";
 import NhacBatDinhVi from "@/components/NhacBatDinhVi";
+import TimDiaDiem from "@/components/TimDiaDiem";
 
 // ── GHIM VỊ TRÍ TRÊN BẢN ĐỒ (form đăng tin: khách & admin) ────────────────────
 //
@@ -62,13 +63,17 @@ export default function MapPickerLeaflet({
   const onDiaChiRef = useRef(onDiaChi);
   const onDiaGioiRef = useRef(onDiaGioi);
   const hintRef = useRef(hint);
+  // Phần KHU VỰC của hint (bỏ đoạn đầu là địa chỉ cụ thể) — ghép vào truy vấn gợi
+  // ý để kết quả ra đúng tỉnh/phường đang chọn, không nhảy sang tỉnh khác.
+  // Phần khu vực để lọc gợi ý — phải là STATE chứ không phải ref, vì nó được đọc
+  // lúc vẽ (ref đọc lúc vẽ là sai luật của React).
+  const khuVuc = hint.split(",").slice(1).map((x) => x.trim()).filter(Boolean).join(", ");
   const toiRef = useRef<[number, number] | null>(null);
 
   const [sanSang, setSanSang] = useState(false);
   const [dangDinhVi, setDangDinhVi] = useState(false);
   const [dangTimDiaChi, setDangTimDiaChi] = useState(false);
   const [loi, setLoi] = useState("");
-  const [diaChiGhim, setDiaChiGhim] = useState("");
   const [khoangCach, setKhoangCach] = useState("");
   // Ghim đang ở mức nào — hiện thành một nhãn nhỏ để người đăng tự thấy địa chỉ
   // của mình đã đủ chính xác chưa. Đây là THÔNG TIN, không phải câu nhắc nhở.
@@ -82,6 +87,13 @@ export default function MapPickerLeaflet({
   });
 
   const daGhim = parseLatLng(value);
+
+  // MỘT CHUỖI DUY NHẤT cho cả ba chỗ: ô khu vực phía trên → nhãn trên ghim đỏ →
+  // dòng chữ dưới bản đồ. Dựng từ chính giá trị các ô của form (truyền vào qua
+  // hint), nên không thể lệch nhau. Trước đây dòng dưới lấy nguyên câu thô của
+  // dịch vụ bản đồ ("Chợ Đầu mối…, Tổ dân phố 49") nên đọc một đằng, ô chọn phía
+  // trên một nẻo.
+  const chuoiDiaChi = hint.split(",").map((s) => s.trim()).filter(Boolean).join(", ");
 
   // Ghim đỏ vẽ bằng SVG trong divIcon — không dùng ảnh marker mặc định của Leaflet
   // vì đường dẫn ảnh đó hay vỡ khi qua bộ đóng gói.
@@ -101,7 +113,6 @@ export default function MapPickerLeaflet({
     setDangTimDiaChi(true);
     const ten = await traDiaChi(p.lat, p.lng);
     setDangTimDiaChi(false);
-    setDiaChiGhim(ten?.day ?? "");
     // ĐIỀN THẲNG VÀO Ô ĐỊA CHỈ — đây là chiều ngược của "gõ địa chỉ thì bản đồ trỏ
     // tới". Người đăng ghim đúng nhà mình là ô địa chỉ có sẵn số nhà + tên đường,
     // khỏi gõ. Gõ sai chính tả tên đường cũng được sửa luôn theo bản đồ.
@@ -110,12 +121,22 @@ export default function MapPickerLeaflet({
     if (ten && (ten.tinh || ten.phuong || ten.quan))
       onDiaGioiRef.current?.({ tinh: ten.tinh, quan: ten.quan, phuong: ten.phuong });
     setMucDoGhim(ten?.mucDo ?? null);
+  }
+
+  // Nhãn nổi trên đầu ghim đỏ luôn bám theo ĐÚNG chuỗi địa chỉ của form, cập nhật
+  // mỗi khi các ô đổi — để nhìn lên bản đồ và nhìn xuống ô nhập là một.
+  useEffect(() => {
     const m = ghimRef.current;
     if (!m) return;
-    if (ten?.day)
-      m.bindTooltip(ten.day, { permanent: true, direction: "top", offset: [0, -40], className: "cl-nhan-ghim" });
-    else m.unbindTooltip();
-  }
+    if (chuoiDiaChi) {
+      m.bindTooltip(chuoiDiaChi, {
+        permanent: true,
+        direction: "top",
+        offset: [0, -40],
+        className: "cl-nhan-ghim",
+      });
+    } else m.unbindTooltip();
+  }, [chuoiDiaChi, daGhim?.lat, daGhim?.lng]);
 
   function datGhim(p: LatLng) {
     const L = LRef.current;
@@ -308,8 +329,8 @@ export default function MapPickerLeaflet({
     ghimRef.current = null;
     duongRef.current?.remove();
     duongRef.current = null;
-    setDiaChiGhim("");
     setKhoangCach("");
+    setMucDoGhim(null);
   }
 
   const nutPhu =
@@ -330,19 +351,26 @@ export default function MapPickerLeaflet({
             bản đồ CAO — kéo xem và ghim thoải mái — mà cả ô địa chỉ lẫn bản đồ vẫn
             nằm trọn trong một màn hình, khỏi kéo lên kéo xuống đối chiếu.
             z-index trên 700 vì Leaflet xếp marker 600 / popup 700. */}
+        {/* THANH "ĐỊA CHỈ CỤ THỂ" — BẮT BUỘC, không được bỏ.
+            ⚠️ Nằm SÁT NGAY TRÊN bản đồ, chung một khung, KHÔNG nổi đè lên mặt bản
+            đồ nữa: đặt nổi thì lúc kéo/ghim nó che mất đúng chỗ đang cần nhìn.
+            Gõ vài chữ là ra gợi ý tên đường để chọn — chọn xong bản đồ bay tới và
+            ghim luôn. Bảng gợi ý là thứ DUY NHẤT được phép đè, và chỉ trong lúc gõ. */}
         {onDiaChi && (
-          <div className="absolute left-2.5 right-2.5 top-2.5 z-[1200] flex items-center rounded-xl bg-white/97 shadow-[0_2px_12px_rgba(0,0,0,0.22)] ring-1 ring-black/5 backdrop-blur-sm">
-            <svg className="ml-3 h-4 w-4 shrink-0 text-cvr-faint" fill="none" stroke="currentColor" strokeWidth={1.9} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 11a2 2 0 100-4 2 2 0 000 4z" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 22s7-6.5 7-12a7 7 0 10-14 0c0 5.5 7 12 7 12z" />
-            </svg>
-            <input
+          <div className="border-b border-cvr-line bg-white">
+            <TimDiaDiem
               value={diaChi}
-              onChange={(e) => onDiaChi(e.target.value)}
-              placeholder="Số nhà, tên đường… hoặc bấm thẳng lên bản đồ"
-              className="w-full bg-transparent px-2.5 py-2.5 text-[14px] text-cvr-ink outline-none placeholder:text-cvr-faint"
+              onChange={onDiaChi}
+              onChon={(kq) => {
+                mapRef.current?.setView([kq.lat, kq.lng], 18);
+                datGhim({ lat: kq.lat, lng: kq.lng });
+              }}
+              khuVuc={khuVuc}
+              nhan="Địa chỉ cụ thể (số nhà, tên đường)"
+              batBuoc
+              placeholder="Gõ tên đường rồi chọn — hoặc bấm thẳng lên bản đồ"
+              dangBan={dangTimDiaChi}
             />
-            {dangTimDiaChi && <span className="mr-3 shrink-0 text-[12px] text-cvr-faint">đang tìm…</span>}
           </div>
         )}
         {/* Cao theo màn hình để điện thoại nào cũng được một bản đồ đủ rộng mà vẫn
@@ -397,7 +425,7 @@ export default function MapPickerLeaflet({
             </svg>
             Đã ghim
           </span>
-          {diaChiGhim && <span className="font-medium text-cvr-ink">{diaChiGhim}</span>}
+          {chuoiDiaChi && <span className="font-medium text-cvr-ink">{chuoiDiaChi}</span>}
           {khoangCach && <span className="text-cvr-muted">· cách chỗ anh/chị {khoangCach}</span>}
           {/* Ghim đang chính xác tới đâu. Thấy "mới tới phường/xã" là người đăng tự
               biết nên kéo ghim sát hơn — không cần ai nhắc câu nào. */}

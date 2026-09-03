@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { huongDanBatDinhVi } from "@/lib/dinhVi";
 
 // Khối chỉ khách bật lại định vị. Dùng chung cho cả ba bản đồ (3 tab · trang tin ·
@@ -20,6 +21,11 @@ export default function NhacBatDinhVi({
   onDong?: () => void;
 }) {
   const buoc = huongDanBatDinhVi();
+  // MẶC ĐỊNH CHỈ MỘT DÒNG. Chủ dự án chốt: đừng bày bảng hướng dẫn ra màn hình.
+  // Web KHÔNG có quyền tự bật GPS của máy — đó là chặn của hệ điều hành, không
+  // phải thiếu code — nên vẫn phải nói được một câu, kèm chỗ mở ra xem cách bật
+  // cho ai cần. Ai không cần thì nhìn thấy đúng một dòng.
+  const [moRong, setMoRong] = useState(false);
   return (
     <div className="rounded-xl border border-amber-300 bg-amber-50 p-3 shadow-lg">
       <div className="flex items-start gap-2">
@@ -38,7 +44,17 @@ export default function NhacBatDinhVi({
         )}
       </div>
 
-      <ol className="mt-2 space-y-1.5">
+      {!moRong && (
+        <button
+          type="button"
+          onClick={() => setMoRong(true)}
+          className="mt-1.5 text-[12.5px] font-semibold text-amber-900 underline underline-offset-2"
+        >
+          Xem cách bật
+        </button>
+      )}
+
+      <ol className={`mt-2 space-y-1.5 ${moRong ? "" : "hidden"}`}>
         {buoc.map((b, i) => (
           <li key={i} className="flex gap-2 text-[13px] leading-snug text-amber-900">
             <span className="mt-[1px] flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full bg-amber-200 text-[11px] font-bold">
