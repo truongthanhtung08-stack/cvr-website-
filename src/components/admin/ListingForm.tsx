@@ -156,8 +156,8 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
   // theo hệ vừa chọn, không phải ghim lại.
   const diaGioiTuBanDoRef = useRef<DiaGioiBanDo | null>(null);
 
-  function apDungDiaGioi(dc: DiaGioiBanDo, he: GeoMode, tinhCu: string, quanCu: string) {
-    const kq = ganDiaGioi(dc, he, { province: tinhCu, district: quanCu, ward });
+  function apDungDiaGioi(dc: DiaGioiBanDo, he: GeoMode, tinhCu: string, quanCu: string, phuongCu: string) {
+    const kq = ganDiaGioi(dc, he, { province: tinhCu, district: quanCu, ward: phuongCu });
     setProvince(kq.province);
     setDistrict(kq.district);
     setWard(kq.ward);
@@ -374,7 +374,7 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
                     setWard("");
                     // Đã ghim rồi thì đổi hệ xong điền lại NGAY theo hệ vừa chọn.
                     const dc = diaGioiTuBanDoRef.current;
-                    if (dc) setTimeout(() => apDungDiaGioi(dc, m.id, "", ""), 0);
+                    if (dc) setTimeout(() => apDungDiaGioi(dc, m.id, "", "", ""), 0);
                   }}
                   className={`rounded-md px-3 py-1.5 text-xs font-medium transition ${geoMode === m.id ? "bg-cvr-ink text-white" : "text-cvr-body hover:text-cvr-ink"}`}
                 >
@@ -464,7 +464,7 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
               onDiaChi={setAddressDetail}
               onDiaGioi={(dc) => {
                 diaGioiTuBanDoRef.current = dc;
-                apDungDiaGioi(dc, geoMode, province, district);
+                apDungDiaGioi(dc, geoMode, province, district, ward);
               }}
               hint={`${addressDetail}, ${ward}, ${district}, ${province}`}
             />

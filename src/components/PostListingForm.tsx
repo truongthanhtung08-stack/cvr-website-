@@ -233,8 +233,8 @@ export default function PostListingForm() {
   // ngay, không bắt họ ghim lại từ đầu.
   const diaGioiTuBanDoRef = useRef<DiaGioiBanDo | null>(null);
 
-  function apDungDiaGioi(dc: DiaGioiBanDo, heDiaChi: GeoMode, tinhCu: string, quanCu: string) {
-    const kq = ganDiaGioi(dc, heDiaChi, { province: tinhCu, district: quanCu, ward });
+  function apDungDiaGioi(dc: DiaGioiBanDo, heDiaChi: GeoMode, tinhCu: string, quanCu: string, phuongCu: string) {
+    const kq = ganDiaGioi(dc, heDiaChi, { province: tinhCu, district: quanCu, ward: phuongCu });
     setProvince(kq.province);
     setDistrict(kq.district);
     setWard(kq.ward);
@@ -242,7 +242,7 @@ export default function PostListingForm() {
 
   function nhanDiaGioiTuBanDo(dc: DiaGioiBanDo) {
     diaGioiTuBanDoRef.current = dc;
-    apDungDiaGioi(dc, geoMode, province, district);
+    apDungDiaGioi(dc, geoMode, province, district, ward);
   }
 
   // Nạp danh sách dự án đã đăng — cho ô "Thuộc dự án"
@@ -545,7 +545,7 @@ export default function PostListingForm() {
                 // Đã ghim trên bản đồ rồi thì đổi hệ xong ĐIỀN LẠI NGAY theo hệ mới
                 // chọn — khách không phải ghim lại lần nữa.
                 const dc = diaGioiTuBanDoRef.current;
-                if (dc) setTimeout(() => apDungDiaGioi(dc, m.id, "", ""), 0);
+                if (dc) setTimeout(() => apDungDiaGioi(dc, m.id, "", "", ""), 0);
               }}
               className={`rounded-md px-3 py-1.5 text-xs font-medium transition ${
                 geoMode === m.id ? "bg-cvr-ink text-white" : "text-cvr-body hover:text-cvr-ink"
