@@ -68,6 +68,11 @@ export default function MapPickerLeaflet({
   // Phần KHU VỰC của hint (bỏ đoạn đầu là địa chỉ cụ thể) — ghép vào truy vấn gợi
   // ý để kết quả ra đúng tỉnh/phường đang chọn, không nhảy sang tỉnh khác.
   const toiRef = useRef<[number, number] | null>(null);
+  // Mốc thời gian lần CHÍNH KHỐI NÀY tự điền ngược vào các ô của form.
+  // Cần để phân biệt "người đăng gõ tay" với "máy vừa tự điền": máy tự điền cũng
+  // làm chuỗi địa chỉ đổi, mà đổi thì hàm đưa bản đồ về địa chỉ lại chạy và kéo
+  // bản đồ đi — ghim đỏ trôi mất. Trong 1,5 giây sau khi tự điền thì bỏ qua.
+  const tuDienRef = useRef(0);
 
   const [sanSang, setSanSang] = useState(false);
   const [dangDinhVi, setDangDinhVi] = useState(false);
@@ -119,6 +124,7 @@ export default function MapPickerLeaflet({
     // Trả cả Tỉnh/Thành + Phường/Xã về cho form tự chọn đúng mục trong hai ô kia.
     if (ten && (ten.tinh || ten.phuong || ten.quan))
       onDiaGioiRef.current?.({ tinh: ten.tinh, quan: ten.quan, phuong: ten.phuong });
+    tuDienRef.current = Date.now();
     setMucDoGhim(ten?.mucDo ?? null);
   }
 
@@ -253,15 +259,15 @@ export default function MapPickerLeaflet({
     const coPhuong = (phan[1] ?? "").length > 0;
     const mucZoom = coSoNha ? 18 : coDuong ? 17 : coPhuong ? 15 : 12;
 
-    const daCoGhim = !!parseLatLng(value);
+    // Chính khối này vừa tự điền ngược vào ô địa chỉ → bỏ qua, nếu không sẽ tự
+    // kéo bản đồ ra khỏi cái ghim vừa cắm.
+    if (!tuBam && Date.now() - tuDienRef.current < 1500) return;
 
     // TRỎ TỚI NGAY, ĐỪNG BẮT NGƯỜI ĐĂNG CHỜ. Web có sẵn bảng tâm các khu vực lớn —
     // dùng nó nhảy tới liền trong tích tắc, rồi mới hỏi dịch vụ tra địa chỉ để chỉnh
     // cho sát. Chờ mạng trả lời xong mới nhúc nhích thì bản đồ trông như đơ.
-    if (!daCoGhim) {
-      const kvNhanh = centerOfArea(diaChi);
-      if (kvNhanh) map.setView(kvNhanh, Math.min(mucZoom, 14));
-    }
+    const kvNhanh = centerOfArea(diaChi);
+    if (kvNhanh) map.setView(kvNhanh, Math.min(mucZoom, 14));
 
     setDangTimDiaChi(true);
     const kq = await timToaDo(diaChi);
@@ -270,15 +276,13 @@ export default function MapPickerLeaflet({
 
     const sat = kq.mucDo !== "khuVuc";
 
-    // ⚠️ ĐÃ GHIM RỒI THÌ TUYỆT ĐỐI KHÔNG DỜI BẢN ĐỒ.
-    // Lỗi cũ: ghim xong → ô địa chỉ tự điền → chuỗi địa chỉ đổi → hàm này chạy lại
-    // và KÉO BẢN ĐỒ đi chỗ khác, ghim đỏ trôi ra ngoài màn hình. Người đăng bấm
-    // ghim mà nhìn không thấy dấu đỏ đâu, tưởng ghim hỏng.
-    if (!daCoGhim || tuBam) map.setView([kq.lat, kq.lng], mucZoom);
+    // ĐỔI KHU VỰC / GÕ LẠI ĐỊA CHỈ LÀ BẢN ĐỒ PHẢI ĐỔI THEO — kể cả khi đã ghim.
+    // (Chỉ chặn đúng trường hợp máy tự điền, đã lọc ở đầu hàm.)
+    map.setView([kq.lat, kq.lng], mucZoom);
 
-    // Tự ghim khi tra ra tới tên đường. Chỉ ra được tâm phường thì KHÔNG ghim —
+    // Ra tới tên đường thì ghim luôn. Chỉ ra được tâm phường thì KHÔNG ghim —
     // ghim giữa phường là ghim sai, để người đăng tự bấm đúng chỗ.
-    if (sat && coDuong && (!daCoGhim || tuBam)) datGhim({ lat: kq.lat, lng: kq.lng });
+    if (sat && coDuong) datGhim({ lat: kq.lat, lng: kq.lng });
   }
 
   // ── DỰNG BẢN ĐỒ MỘT LẦN ────────────────────────────────────────────────────
@@ -332,6 +336,8 @@ export default function MapPickerLeaflet({
 
   // Người đăng vừa chọn khu vực / gõ tiếp địa chỉ → tra lại sau 800ms cho hết gõ.
   // Đã ghim rồi thì veDiaChi() giữ nguyên ghim, chỉ dời khung nhìn.
+  // Đổi Tỉnh/Phường, đổi hệ địa chỉ cũ↔mới, hay gõ lại số nhà/tên đường — tất cả
+  // đều làm chuỗi này đổi, và bản đồ phải đi theo.
   useEffect(() => {
     if (!sanSang) return;
     const t = setTimeout(() => void veDiaChi(false), 350);
