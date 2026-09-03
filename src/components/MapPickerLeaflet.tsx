@@ -305,6 +305,21 @@ export default function MapPickerLeaflet({
     const diaChi = phan.filter(Boolean).join(", ");
     if (!map || diaChi.length < 4) return;
 
+    // ── ĐÃ CÓ GHIM → GHIM LÀ CHỦ, ĐỊA CHỈ LÀ PHỤ ─────────────────────────────
+    // Chủ dự án chốt: "ghim không mất, và hiện trong khung hình".
+    // Ghim rồi thì mọi thay đổi ở ba ô địa chỉ — kể cả bấm ĐỔI HỆ cũ/mới, vốn làm
+    // ba ô đổi hết một lượt — đều KHÔNG được kéo bản đồ đi nơi khác. Chỉ lo đúng
+    // một việc: ghim mà trôi ra ngoài khung hình thì kéo về cho thấy lại.
+    // ⚠️ ĐÂY LÀ CHỖ GÂY "GHIM CHẠY LOẠN XẠ": trước đây hàm này luôn setView theo
+    // toạ độ tra được từ chuỗi địa chỉ, nên ghim đỏ bị đẩy ra khỏi màn hình mỗi
+    // lần ba ô thay đổi. ĐỪNG BỎ đoạn return này.
+    const ghim = ghimRef.current;
+    if (ghim) {
+      const p = ghim.getLatLng();
+      if (!map.getBounds().contains(p)) map.setView(p, Math.max(map.getZoom(), 15));
+      return;
+    }
+
     // BẢN ĐỒ THU DẦN THEO MỨC NHẬP — nhập càng chi tiết, bản đồ càng vào sát.
     // Chỉ chọn Tỉnh  → nhìn cả tỉnh
     // + Phường/Xã    → thu về phường
