@@ -4,7 +4,7 @@ import { useState } from "react";
 // BẢN ĐỒ VỊ TRÍ — dùng bản Leaflet/OpenStreetMap: kéo MỘT ngón, có nút định vị.
 // Bản chạy nền Google (components/MapPane.tsx) GIỮ LẠI để sau này Google thông
 // thì đổi về, chỉ phải sửa đúng dòng import này.
-import MapPane from "@/components/MapPaneLeaflet";
+import MapPane from "@/components/MapPaneGoogle";
 import { chiDuong, xemTrenBanDo } from "@/lib/moGoogleMaps";
 
 type Place = { category: string; name: string; distance: string };

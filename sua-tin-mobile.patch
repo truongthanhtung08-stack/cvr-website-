@@ -1,0 +1,593 @@
+diff --git a/scripts/chuan-hoa-anh.mjs b/scripts/chuan-hoa-anh.mjs
+new file mode 100644
+index 0000000..3c8fd28
+--- /dev/null
++++ b/scripts/chuan-hoa-anh.mjs
+@@ -0,0 +1,104 @@
++// ─────────────────────────────────────────────────────────────────────────────
++// CHUẨN HOÁ ẢNH TIN trước khi đăng lên web
++//
++// Dùng khi có một thư mục ảnh vừa chụp / vừa xuất từ Photoshop, cần đưa hết về
++// đúng chuẩn của Coastal Land rồi mới upload lên Supabase.
++//
++//   node scripts/chuan-hoa-anh.mjs <thư-mục-ảnh-vào> [thư-mục-ra]
++//
++// Không ghi đè ảnh gốc — kết quả ghi sang thư mục ra (mặc định: <vào>/da-chuan-hoa).
++//
++// Chuẩn áp dụng:
++//   · Cạnh dài tối đa 1600 px (ảnh nhỏ hơn giữ nguyên, KHÔNG phóng to cho vỡ)
++//   · JPEG mozjpeg chất lượng 72 — mắt thường không phân biệt được với bản gốc
++//   · LÀM NÉT SAU KHI THU NHỎ — đúng quy tắc ảnh web. Làm nét (High Pass) ở kích
++//     thước gốc rồi mới thu nhỏ thì độ nét bị xoá sạch lúc thu, chỉ còn lại dung
++//     lượng thừa. Thu trước - nét sau cho ảnh sắc hơn mà file nhẹ hơn hẳn.
++//   · Xoá toàn bộ metadata (máy ảnh, GPS, phần mềm) cho nhẹ và không lộ vị trí chụp
++//   · Tự xoay theo hướng EXIF rồi mới xoá EXIF (ảnh điện thoại không bị nằm ngang)
++//
++// Tuỳ chọn: thêm --3-2 để cắt đều về đúng tỷ lệ 3:2 (khung thẻ tin trên web),
++// cắt vào giữa khung ảnh. Không dùng cờ này thì giữ nguyên tỷ lệ gốc.
++// ─────────────────────────────────────────────────────────────────────────────
++import sharp from "sharp";
++import fs from "node:fs";
++import path from "node:path";
++
++const CANH_DAI = 1600;
++const CHAT_LUONG = 72;
++// Làm nét nhẹ sau khi thu nhỏ. sigma 0.7 = vừa đủ sắc, không tạo viền sáng (halo)
++// quanh cạnh vật thể như High Pass tay hay bị khi đẩy quá.
++const LAM_NET = { sigma: 0.7 };
++const DUOI_ANH = /\.(jpe?g|png|webp|avif|tiff?)$/i;
++
++const args = process.argv.slice(2).filter((a) => !a.startsWith("--"));
++const cat32 = process.argv.includes("--3-2");
++const thuMucVao = args[0];
++const thuMucRa = args[1] ?? (thuMucVao ? path.join(thuMucVao, "da-chuan-hoa") : null);
++
++if (!thuMucVao || !fs.existsSync(thuMucVao)) {
++  console.error("Thiếu thư mục ảnh. Ví dụ:\n  node scripts/chuan-hoa-anh.mjs \"D:/anh-tin-moi\"");
++  process.exit(1);
++}
++fs.mkdirSync(thuMucRa, { recursive: true });
++
++const danhSach = fs
++  .readdirSync(thuMucVao)
++  .filter((f) => DUOI_ANH.test(f) && fs.statSync(path.join(thuMucVao, f)).isFile());
++
++if (danhSach.length === 0) {
++  console.error(`Không thấy ảnh nào trong: ${thuMucVao}`);
++  process.exit(1);
++}
++
++const kb = (n) => (n / 1024).toFixed(0).padStart(4) + " KB";
++let tongTruoc = 0;
++let tongSau = 0;
++let soLoi = 0;
++
++console.log(`\nChuẩn hoá ${danhSach.length} ảnh — cạnh dài ${CANH_DAI}px, chất lượng ${CHAT_LUONG}${cat32 ? ", cắt 3:2" : ""}\n`);
++console.log("Tên ảnh".padEnd(28) + "Trước".padEnd(24) + "Sau");
++console.log("─".repeat(74));
++
++for (const ten of danhSach) {
++  const vao = path.join(thuMucVao, ten);
++  const ra = path.join(thuMucRa, ten.replace(DUOI_ANH, ".jpg"));
++  try {
++    const truoc = fs.statSync(vao).size;
++    const goc = await sharp(vao).metadata();
++
++    let anh = sharp(vao).rotate(); // xoay theo EXIF trước khi bỏ metadata
++
++    if (cat32) {
++      // Cắt vào GIỮA khung về đúng 3:2 rồi mới thu nhỏ — khớp khung thẻ tin.
++      const rong = Math.min(CANH_DAI, goc.width);
++      anh = anh.resize(rong, Math.round((rong * 2) / 3), { fit: "cover", position: "centre", withoutEnlargement: true });
++    } else {
++      anh = anh.resize(CANH_DAI, CANH_DAI, { fit: "inside", withoutEnlargement: true });
++    }
++
++    await anh.sharpen(LAM_NET).jpeg({ quality: CHAT_LUONG, mozjpeg: true, chromaSubsampling: "4:2:0" }).toFile(ra);
++
++    const sau = fs.statSync(ra).size;
++    const moi = await sharp(ra).metadata();
++    tongTruoc += truoc;
++    tongSau += sau;
++
++    const giam = Math.round((1 - sau / truoc) * 100);
++    console.log(
++      ten.slice(0, 26).padEnd(28) +
++        `${goc.width}x${goc.height} ${kb(truoc)}`.padEnd(24) +
++        `${moi.width}x${moi.height} ${kb(sau)}  ${giam > 0 ? "−" + giam + "%" : "giữ nguyên"}`,
++    );
++  } catch (e) {
++    soLoi++;
++    console.log(ten.slice(0, 26).padEnd(28) + "LỖI: " + e.message);
++  }
++}
++
++console.log("─".repeat(74));
++console.log(
++  `Tổng: ${kb(tongTruoc)} → ${kb(tongSau)}  (giảm ${Math.round((1 - tongSau / tongTruoc) * 100)}%)` +
++    (soLoi ? `  ·  ${soLoi} ảnh lỗi` : ""),
++);
++console.log(`Ảnh đã chuẩn hoá nằm ở: ${path.resolve(thuMucRa)}\n`);
+diff --git a/src/app/bat-dong-san/[id]/page.tsx b/src/app/bat-dong-san/[id]/page.tsx
+index 0dcb05a..7a7a04b 100644
+--- a/src/app/bat-dong-san/[id]/page.tsx
++++ b/src/app/bat-dong-san/[id]/page.tsx
+@@ -86,6 +86,10 @@ export default async function ListingDetailPage({ params }: { params: Promise<{
+   // Mục đích tin → breadcrumb + tin liên quan cùng mục đích (bán/thuê)
+   const purpose = l.purpose ?? "ban";
+ 
++  // NHÃN DIỆN TÍCH theo loại hình — căn hộ / nhà phố mà ghi "Diện tích đất" là sai.
++  const nhanDienTich = l.type.includes("Đất") ? "Diện tích đất" : "Diện tích";
++  const nhanGia = purpose === "thue" ? "Giá thuê" : "Mức giá";
++
+   // Tin tương tự — thứ tự ưu tiên đúng như đã chốt:
+   //   1) BẮT BUỘC cùng MỤC ĐÍCH (bán↔bán, thuê↔thuê)
+   //   2) cùng DỰ ÁN (+8) → 3) cùng QUẬN/HUYỆN (+4) → 4) cùng TỈNH (+2)
+@@ -146,32 +150,79 @@ export default async function ListingDetailPage({ params }: { params: Promise<{
+           <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+             {/* Cột chính */}
+             <div className="reveal is-visible cards-stagger lg:col-span-2">
+-              {/* Tiêu đề + giá */}
++              {/* ═══ TỔNG QUAN TIN ═══ mở tin ra là thấy ngay, theo đúng thứ tự mắt
++                  người đọc: tin có đáng tin không → là cái gì → ở đâu → bao nhiêu
++                  tiền → rộng bao nhiêu → thông số → thao tác. */}
+               <div>
+-                {tier ? (
+-                  <span className="mb-2 inline-block rounded px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-white" style={{ backgroundColor: tier.accent }}>
+-                    {tier.name}
+-                  </span>
+-                ) : (
+-                  <span className="mb-2 inline-block rounded bg-cvr-surface px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-cvr-muted ring-1 ring-cvr-line">
+-                    Tin thường
++                {/* Hàng nhận diện: hạng tin + mã tin — cho khách cảm giác tin có hồ
++                    sơ, có mã tra cứu. Trước đây mã tin nằm tít dưới cột phải, trên
++                    điện thoại gần như không ai nhìn thấy. */}
++                <div className="flex flex-wrap items-center gap-2">
++                  {tier ? (
++                    <span className="inline-block rounded px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-white" style={{ backgroundColor: tier.accent }}>
++                      {tier.name}
++                    </span>
++                  ) : (
++                    <span className="inline-block rounded bg-cvr-surface px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-cvr-muted ring-1 ring-cvr-line">
++                      Tin thường
++                    </span>
++                  )}
++                  <span className="text-[11px] font-medium tracking-wide text-cvr-faint">
++                    Mã tin: {l.id.slice(0, 8).toUpperCase()}
+                   </span>
+-                )}
+-                <h1 className="text-2xl font-semibold leading-tight tracking-tight text-cvr-ink sm:text-3xl">{l.title}</h1>
+-                <p className="mt-2 flex items-center gap-1.5 text-sm text-cvr-muted">
+-                  <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+-                  {d.addressDetail ? `${d.addressDetail}, ` : ""}{l.location}
++                </div>
++
++                {/* Tiêu đề — 22px trên điện thoại: đọc thoải mái mà vẫn thấy được
++                    giá ngay bên dưới trong cùng một màn hình. */}
++                <h1 className="mt-2.5 text-[22px] font-semibold leading-[1.25] tracking-tight text-cvr-ink sm:text-3xl">{l.title}</h1>
++
++                <p className="mt-2 flex items-start gap-1.5 text-[13px] leading-snug text-cvr-muted sm:text-sm">
++                  <svg className="mt-[2px] h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
++                  <span className="min-w-0">{d.addressDetail ? d.addressDetail + ", " : ""}{l.location}</span>
+                 </p>
+-                <div className="mt-4 flex flex-wrap items-end gap-x-8 gap-y-3 rounded-xl border border-cvr-line bg-cvr-surface p-4">
+-                  <Stat label="Mức giá" value={l.price} big accent />
+-                  <Stat label="Diện tích đất" value={l.area} big />
+-                  {d.builtArea && <Stat label="Diện tích XD" value={d.builtArea} />}
+-                  {l.pricePerM2 && <Stat label="Giá / m²" value={l.pricePerM2} />}
+-                  {l.beds && <Stat label="Phòng ngủ" value={`${l.beds}`} />}
+-                  {l.baths && <Stat label="Phòng tắm" value={`${l.baths}`} />}
++
++                {/* KHỐI GIÁ — giá và diện tích là hai con số khách tìm đầu tiên nên
++                    cho đứng riêng một hàng, cỡ lớn hẳn; thông số còn lại xếp lưới đều
++                    bên dưới. Trước đây tất cả nằm chung một hàng flex-wrap nên trên
++                    điện thoại rơi xuống so le, không đọc lướt được. */}
++                <div className="mt-4 rounded-2xl border border-cvr-line bg-cvr-surface p-4">
++                  <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
++                    <div className="min-w-0">
++                      <p className="text-xs text-cvr-muted">{nhanGia}</p>
++                      <p className="mt-0.5 text-[26px] font-bold leading-none text-red-500 sm:text-3xl">{l.price}</p>
++                      {l.pricePerM2 && <p className="mt-1.5 text-xs text-cvr-muted">≈ {l.pricePerM2}</p>}
++                    </div>
++                    <div className="min-w-0 text-right">
++                      <p className="text-xs text-cvr-muted">{nhanDienTich}</p>
++                      <p className="mt-0.5 text-[22px] font-semibold leading-none text-cvr-ink sm:text-2xl">{l.area}</p>
++                      {d.builtArea && <p className="mt-1.5 text-xs text-cvr-muted">XD {d.builtArea}</p>}
++                    </div>
++                  </div>
++
++                  {/* Thông số phụ — chỉ hiện mục ĐÃ CÓ dữ liệu, không đổ ô trống */}
++                  {(l.beds || l.baths || d.direction || d.furnish) && (
++                    <div className="mt-3.5 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-cvr-line pt-3.5 sm:grid-cols-4">
++                      {l.beds ? <MiniStat label="Phòng ngủ" value={l.beds + " PN"} /> : null}
++                      {l.baths ? <MiniStat label="Phòng tắm" value={l.baths + " WC"} /> : null}
++                      {d.direction && <MiniStat label="Hướng" value={d.direction} />}
++                      {d.furnish && <MiniStat label="Nội thất" value={d.furnish} />}
++                    </div>
++                  )}
++                </div>
++
++                {/* Hàng XÁC THỰC — chỉ nêu điều CÓ THẬT: tin phải qua kiểm duyệt mới
++                    hiển thị, pháp lý đúng như người đăng khai, số ảnh đếm được.
++                    ⚠️ KHÔNG viết "cam kết" / "đảm bảo" — Coastal Land là cổng thông
++                    tin, chỉ nỗ lực xác thực chứ không đứng ra giao dịch. */}
++                <div className="mt-3 flex flex-wrap gap-2">
++                  <TrustChip>Tin đã qua kiểm duyệt</TrustChip>
++                  {d.legal && <TrustChip>Pháp lý: {d.legal}</TrustChip>}
++                  {d.images.length > 1 && <TrustChip>{d.images.length} hình ảnh</TrustChip>}
++                  {d.videos.length > 0 && <TrustChip>Có video</TrustChip>}
+                 </div>
+-                {/* Lưu tin (yêu thích) · So sánh — trạng thái dùng chung với thẻ tin */}
+-                <ListingActions id={l.id} />
++
++                {/* Lưu tin · So sánh · Chia sẻ — trạng thái dùng chung với thẻ tin */}
++                <ListingActions id={l.id} title={l.title} />
+               </div>
+ 
+               {/* Menu dính — sáng theo mục đang xem, bấm để cuộn mượt (như trang dự án) */}
+@@ -262,7 +313,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{
+                   Vị trí lấy theo điểm admin GHIM (details.mapPin); chưa ghim thì
+                   tự tìm theo địa chỉ tin. */}
+               <Section id="vi-tri" title="Vị trí trên bản đồ">
+-                <ProjectNearby mapQuery={d.mapQuery} address={l.location} places={[]} />
++                <ProjectNearby mapQuery={d.mapQuery} address={l.location} places={[]} zoom={d.mapZoom} />
+               </Section>
+             </div>
+ 
+@@ -309,7 +360,6 @@ export default async function ListingDetailPage({ params }: { params: Promise<{
+                       Tin này chưa có thông tin liên hệ.
+                     </p>
+                   )}
+-                  <p className="mt-3 text-center text-[11px] text-cvr-faint">Mã tin: {l.id.slice(0, 8).toUpperCase()}</p>
+                 </div>
+ 
+                 <div className="rounded-none border border-cvr-line bg-white p-5 text-sm shadow-sm">
+@@ -374,7 +424,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{
+ function Section({ id, title, children }: { id?: string; title: string; children: React.ReactNode }) {
+   return (
+     // scroll-mt-28: bấm menu cuộn tới thì tiêu đề không bị header + menu dính che
+-    <section id={id} className="mt-8 scroll-mt-28 border-t border-cvr-line pt-6">
++    <section id={id} className="mt-7 scroll-mt-28 border-t border-cvr-line pt-5 sm:mt-8 sm:pt-6">
+       <h2 className="mb-4 text-lg font-semibold tracking-tight text-cvr-ink sm:text-xl">{title}</h2>
+       {children}
+     </section>
+@@ -390,11 +440,22 @@ function Row({ label, value }: { label: string; value: string }) {
+   );
+ }
+ 
+-function Stat({ label, value, big, accent }: { label: string; value: string; big?: boolean; accent?: boolean }) {
++// Thông số phụ trong khối giá — nhãn nhỏ mờ ở trên, giá trị đậm ở dưới.
++function MiniStat({ label, value }: { label: string; value: string }) {
+   return (
+-    <div>
+-      <p className="text-xs text-cvr-muted">{label}</p>
+-      <p className={`font-bold ${accent ? "text-red-500" : "text-cvr-ink"} ${big ? "text-xl" : "text-base"}`}>{value}</p>
++    <div className="min-w-0">
++      <p className="text-[11px] leading-tight text-cvr-muted">{label}</p>
++      <p className="mt-0.5 truncate text-sm font-semibold text-cvr-ink">{value}</p>
+     </div>
+   );
+ }
++
++// Viên thông tin XÁC THỰC dưới khối giá — chỉ nêu dữ kiện có thật, không hứa hẹn.
++function TrustChip({ children }: { children: React.ReactNode }) {
++  return (
++    <span className="inline-flex items-center gap-1.5 rounded-full border border-cvr-line bg-white px-3 py-1.5 text-[12px] font-medium text-cvr-body">
++      <svg className="h-3.5 w-3.5 shrink-0 text-cvr-gold-ink" fill="none" stroke="currentColor" strokeWidth={2.4} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
++      {children}
++    </span>
++  );
++}
+diff --git a/src/components/ListingActions.tsx b/src/components/ListingActions.tsx
+index 3fb4697..95afdfc 100644
+--- a/src/components/ListingActions.tsx
++++ b/src/components/ListingActions.tsx
+@@ -2,11 +2,12 @@
+ 
+ import { useSaved } from "@/lib/useSaved";
+ import { useCompare } from "@/lib/useCompare";
++import ShareButtons from "@/components/ShareButtons";
+ 
+-// Hàng thao tác trên TRANG CHI TIẾT tin: Lưu tin (yêu thích) · So sánh.
++// Hàng thao tác trên TRANG CHI TIẾT tin: Lưu tin (yêu thích) · So sánh · Chia sẻ.
+ // Trên thẻ tin đã có nút icon; ở trang chi tiết dùng nút CÓ CHỮ cho rõ ràng
+ // (giống batdongsan.com.vn / homedy). Trạng thái lưu chung một chỗ với thẻ tin.
+-export default function ListingActions({ id }: { id: string }) {
++export default function ListingActions({ id, title }: { id: string; title: string }) {
+   const { has: daLuu, toggle: luu } = useSaved();
+   const { has: dangSoSanh, toggle: soSanh, full } = useCompare();
+   const saved = daLuu(id);
+@@ -43,6 +44,8 @@ export default function ListingActions({ id }: { id: string }) {
+         </svg>
+         {compared ? "Đang so sánh" : "So sánh"}
+       </button>
++
++      <ShareButtons title={title} />
+     </div>
+   );
+ }
+diff --git a/src/components/ProjectNearby.tsx b/src/components/ProjectNearby.tsx
+index 5bcb239..b377bff 100644
+--- a/src/components/ProjectNearby.tsx
++++ b/src/components/ProjectNearby.tsx
+@@ -24,12 +24,21 @@ export default function ProjectNearby({
+   mapQuery,
+   address,
+   places,
++  zoom = 15,
+ }: {
+   mapQuery: string;
+   address: string;
+   places: Place[];
++  // Mức phóng bản đồ: 17 khi tin có toạ độ ghim / tên đường (thấy rõ đúng vị trí),
++  // 15 khi chỉ biết phường/xã. Trang dự án không truyền → giữ 15 như cũ.
++  zoom?: number;
+ }) {
+   const [locating, setLocating] = useState(false);
++  // KHOÁ CỬ CHỈ BẢN ĐỒ (mặc định) — khách lướt trang bằng MỘT ngón, ngón tay đi
++  // ngang qua bản đồ không bị bản đồ "nuốt" mất. Chạm một cái vào bản đồ là mở
++  // khoá, từ đó kéo / phóng to bằng MỘT ngón thoải mái; bấm "Khoá bản đồ" để
++  // cuộn trang tiếp. Đây là cách Batdongsan / Zillow đang làm.
++  const [mapOn, setMapOn] = useState(false);
+ 
+   function directionsFromMe() {
+     const dest = encodeURIComponent(mapQuery);
+@@ -57,32 +66,64 @@ export default function ProjectNearby({
+       {/* Bản đồ NHÚNG: chạm vào là phóng to / thu nhỏ / kéo xem NGAY TẠI TRANG,
+           không nhảy đi đâu. Chỉ khi bấm nút "Mở Google Maps" mới mở app/web
+           Google Maps ở TAB MỚI — xong bấm quay lại là về đúng tin đang xem. */}
+-      <div className="overflow-hidden rounded-xl border border-cvr-line">
++      <div className="relative overflow-hidden rounded-xl border border-cvr-line">
+         <iframe
+           title="Bản đồ vị trí"
+-          src={`https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}&z=15&output=embed`}
+-          className="h-[220px] w-full sm:h-[300px]"
++          src={`https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}&z=${zoom}&output=embed`}
++          className={`h-[260px] w-full sm:h-[320px] ${mapOn ? "" : "pointer-events-none"}`}
+           loading="lazy"
+         />
++
++        {/* Lớp phủ khi bản đồ đang KHOÁ — chạm là mở, không cần hai ngón */}
++        {!mapOn && (
++          <button
++            type="button"
++            onClick={() => setMapOn(true)}
++            aria-label="Chạm để xem và kéo bản đồ"
++            className="absolute inset-0 flex items-end justify-center bg-transparent pb-4 transition active:bg-black/5"
++          >
++            <span className="pointer-events-none inline-flex items-center gap-2 rounded-full bg-white/92 px-4 py-2 text-[13px] font-semibold text-cvr-ink shadow-[0_2px_12px_rgba(0,0,0,0.18)] ring-1 ring-black/5 backdrop-blur-md">
++              <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.9} viewBox="0 0 24 24">
++                <path strokeLinecap="round" strokeLinejoin="round" d="M9 4.5l6 2.4 5-2.4v14.4l-5 2.4-6-2.4-5 2.4V4.9l5-2.4v16.8" />
++              </svg>
++              Chạm để xem bản đồ
++            </span>
++          </button>
++        )}
++
++        {/* Đang mở khoá — nút trả bản đồ về trạng thái khoá để cuộn trang tiếp */}
++        {mapOn && (
++          <button
++            type="button"
++            onClick={() => setMapOn(false)}
++            className="absolute right-2.5 top-2.5 inline-flex items-center gap-1.5 rounded-full bg-white/92 px-3 py-1.5 text-[12px] font-semibold text-cvr-ink shadow-[0_2px_10px_rgba(0,0,0,0.18)] ring-1 ring-black/5 backdrop-blur-md"
++          >
++            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
++              <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
++            </svg>
++            Khoá bản đồ
++          </button>
++        )}
+       </div>
+       <p className="-mt-1 text-xs text-cvr-muted">
+-        Chạm vào bản đồ để phóng to, kéo xem xung quanh ngay tại đây. Bấm
+-        <span className="font-medium text-cvr-body"> Mở Google Maps </span>
+-        khi muốn mở app — xem xong bấm quay lại là về đúng tin này.
++        {mapOn
++          ? "Bản đồ đang mở — kéo bằng một ngón để xem xung quanh. Bấm “Khoá bản đồ” để cuộn trang tiếp."
++          : "Chạm một cái vào bản đồ rồi kéo bằng một ngón để xem xung quanh — không cần hai ngón."}
+       </p>
+ 
+-      <div className="flex flex-wrap items-center justify-between gap-2.5">
+-        <p className="flex items-center gap-1.5 text-sm text-cvr-muted">
++      <div className="grid grid-cols-1 gap-2.5 sm:flex sm:flex-wrap sm:items-center sm:justify-between">
++        <p className="flex items-start gap-1.5 text-sm leading-snug text-cvr-muted">
+           <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+-          {address}
++          <span className="min-w-0">{address}</span>
+         </p>
+         {/* Mở Google Maps: trên điện thoại có cài app sẽ bật APP, không thì mở WEB.
+             Mở ở TAB MỚI nên đóng tab là quay lại đúng trang tin đang xem. */}
++        <div className="grid grid-cols-2 gap-2.5 sm:contents">
+         <a
+           href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(mapQuery)}`}
+           target="_blank"
+           rel="noopener noreferrer"
+-          className="inline-flex items-center gap-1.5 rounded-lg border border-cvr-line bg-white px-3.5 py-2 text-sm font-semibold text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink"
++          className="inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-lg border border-cvr-line bg-white px-3 py-2 text-sm font-semibold text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink"
+         >
+           <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+             <path strokeLinecap="round" strokeLinejoin="round" d="M14 4h6v6M20 4l-8.5 8.5M18 14v5a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1h5" />
+@@ -93,11 +134,12 @@ export default function ProjectNearby({
+           type="button"
+           onClick={directionsFromMe}
+           disabled={locating}
+-          className="inline-flex items-center gap-1.5 rounded-lg bg-cvr-blue px-3.5 py-2 text-sm font-semibold text-white transition hover:bg-cvr-blue-ink disabled:opacity-60"
++          className="inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-lg bg-cvr-blue px-3 py-2 text-sm font-semibold text-white transition hover:bg-cvr-blue-ink disabled:opacity-60"
+         >
+           <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 11a2 2 0 100-4 2 2 0 000 4z" /><path strokeLinecap="round" strokeLinejoin="round" d="M12 22s7-6.5 7-12a7 7 0 10-14 0c0 5.5 7 12 7 12z" /></svg>
+-          {locating ? "Đang định vị…" : "Chỉ đường từ vị trí của bạn"}
++          {locating ? "Đang định vị…" : (<><span className="sm:hidden">Chỉ đường</span><span className="hidden sm:inline">Chỉ đường từ vị trí của bạn</span></>)}
+         </button>
++        </div>
+       </div>
+ 
+       {places.length > 0 && (
+diff --git a/src/components/ShareButtons.tsx b/src/components/ShareButtons.tsx
+new file mode 100644
+index 0000000..7c6a032
+--- /dev/null
++++ b/src/components/ShareButtons.tsx
+@@ -0,0 +1,117 @@
++"use client";
++
++import { useEffect, useRef, useState } from "react";
++
++// Nút CHIA SẺ tin — Zalo · Facebook · khay chia sẻ của máy · sao chép link.
++// Ưu tiên MOBILE: bấm là hiện bảng chọn đủ lớn để chạm bằng ngón tay (44px),
++// không dùng hover. Link chia sẻ lấy đúng địa chỉ trang đang xem.
++export default function ShareButtons({ title }: { title: string }) {
++  const [open, setOpen] = useState(false);
++  const [copied, setCopied] = useState(false);
++  const [url, setUrl] = useState("");
++  const boxRef = useRef<HTMLDivElement>(null);
++
++  // Địa chỉ trang chỉ có ở trình duyệt (không có khi render phía máy chủ)
++  useEffect(() => setUrl(window.location.href), []);
++
++  // Chạm ra ngoài / bấm Esc → đóng bảng chọn
++  useEffect(() => {
++    if (!open) return;
++    const ngoai = (e: MouseEvent | TouchEvent) => {
++      if (boxRef.current && !boxRef.current.contains(e.target as Node)) setOpen(false);
++    };
++    const esc = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
++    document.addEventListener("mousedown", ngoai);
++    document.addEventListener("touchstart", ngoai);
++    document.addEventListener("keydown", esc);
++    return () => {
++      document.removeEventListener("mousedown", ngoai);
++      document.removeEventListener("touchstart", ngoai);
++      document.removeEventListener("keydown", esc);
++    };
++  }, [open]);
++
++  const enc = encodeURIComponent(url);
++
++  // Máy có khay chia sẻ sẵn (điện thoại) → dùng luôn, khách chọn được MỌI ứng dụng
++  // đang cài (Zalo, Messenger, Telegram, tin nhắn…) thay vì chỉ 2 lựa chọn.
++  async function khayHeThong() {
++    try {
++      await navigator.share({ title, url });
++      setOpen(false);
++    } catch {
++      /* khách bấm huỷ — không làm gì */
++    }
++  }
++
++  async function chepLink() {
++    try {
++      await navigator.clipboard.writeText(url);
++      setCopied(true);
++      setTimeout(() => setCopied(false), 2000);
++    } catch {
++      /* trình duyệt chặn clipboard — bỏ qua */
++    }
++  }
++
++  const muc =
++    "flex min-h-[44px] w-full items-center gap-3 px-4 text-sm font-medium text-cvr-body transition hover:bg-cvr-surface active:bg-cvr-surface";
++
++  return (
++    <div ref={boxRef} className="relative">
++      <button
++        type="button"
++        onClick={() => setOpen((v) => !v)}
++        aria-expanded={open}
++        aria-label="Chia sẻ tin này"
++        className="inline-flex min-h-[44px] items-center gap-2 rounded-full border border-cvr-line bg-white px-4 text-sm font-semibold text-cvr-body transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 hover:border-cvr-ink hover:text-cvr-ink"
++      >
++        <svg className="h-[17px] w-[17px]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
++          <path strokeLinecap="round" strokeLinejoin="round" d="M8.7 10.7a3 3 0 100 2.6m0-2.6l6.6-3.4m-6.6 6l6.6 3.4M18 8a3 3 0 100-6 3 3 0 000 6zm0 14a3 3 0 100-6 3 3 0 000 6z" />
++        </svg>
++        Chia sẻ
++      </button>
++
++      {open && (
++        <div className="absolute left-0 top-[calc(100%+8px)] z-30 w-60 overflow-hidden rounded-2xl border border-cvr-line bg-white py-1.5 shadow-[0_12px_36px_rgba(0,0,0,0.16)]">
++          <a
++            href={`https://zalo.me/share/link?u=${enc}`}
++            target="_blank"
++            rel="noopener noreferrer"
++            onClick={() => setOpen(false)}
++            className={muc}
++          >
++            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#0068ff] text-[11px] font-bold text-white">Za</span>
++            Chia sẻ qua Zalo
++          </a>
++          <a
++            href={`https://www.facebook.com/sharer/sharer.php?u=${enc}`}
++            target="_blank"
++            rel="noopener noreferrer"
++            onClick={() => setOpen(false)}
++            className={muc}
++          >
++            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#1877f2] text-white">
++              <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M13.5 21v-8h2.7l.4-3.1h-3.1V7.9c0-.9.25-1.5 1.55-1.5h1.65V3.6c-.29-.04-1.27-.12-2.41-.12-2.38 0-4.01 1.45-4.01 4.12v2.3H7.6V13h2.68v8h3.22z" /></svg>
++            </span>
++            Chia sẻ qua Facebook
++          </a>
++          {typeof navigator !== "undefined" && "share" in navigator && (
++            <button type="button" onClick={khayHeThong} className={muc}>
++              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-cvr-surface text-cvr-body ring-1 ring-cvr-line">
++                <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v12m0-12L8 8m4-4l4 4M5 15v3a2 2 0 002 2h10a2 2 0 002-2v-3" /></svg>
++              </span>
++              Ứng dụng khác…
++            </button>
++          )}
++          <button type="button" onClick={chepLink} className={muc}>
++            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-cvr-surface text-cvr-body ring-1 ring-cvr-line">
++              <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13.8 10.2a4 4 0 010 5.6l-2.6 2.6a4 4 0 01-5.6-5.6l1.3-1.3m3.3-3.3l1.3-1.3a4 4 0 015.6 5.6l-2.6 2.6" /></svg>
++            </span>
++            {copied ? "Đã sao chép link" : "Sao chép link"}
++          </button>
++        </div>
++      )}
++    </div>
++  );
++}
+diff --git a/src/lib/listingsDb.ts b/src/lib/listingsDb.ts
+index 08c15fc..efc6b42 100644
+--- a/src/lib/listingsDb.ts
++++ b/src/lib/listingsDb.ts
+@@ -229,7 +229,8 @@ export type ListingFull = {
+   direction: string | null;
+   addressDetail: string | null;
+   contact: { name: string; phone: string; email: string; avatar: string | null } | null;
+-  mapQuery: string;            // chuỗi địa chỉ để nhúng bản đồ
++  mapQuery: string;            // chuỗi địa chỉ (hoặc toạ độ) để ghim bản đồ
++  mapZoom: number;             // mức phóng: 17 khi ghim đúng nhà/đường · 15 khi chỉ có phường
+   places: { category: string; name: string; distance: string }[]; // tiện ích quanh BĐS
+ };
+ 
+@@ -262,10 +263,19 @@ function rowToDetail(r: Row): ListingFull {
+     direction: d.direction || null,
+     addressDetail: d.addressDetail || null,
+     contact: c && (c.name || c.phone) ? { name: c.name ?? "", phone: c.phone ?? "", email: c.email ?? "", avatar: c.avatar ? asset(c.avatar) : null } : null,
+-    // Ưu tiên điểm admin GHIM (details.mapPin) → bản đồ trỏ ĐÚNG vị trí thật;
+-    // chưa ghim thì tìm theo Phường/Quận/Tỉnh như trước.
++    // GHIM BẢN ĐỒ — thứ tự ưu tiên, càng lên trên càng chính xác:
++    //   1) điểm admin GHIM tay (details.mapPin: toạ độ / link Maps) → đúng tuyệt đối
++    //   2) ĐỊA CHỈ CHI TIẾT (số nhà, tên đường) + Phường/Quận/Tỉnh → ghim đúng con đường
++    //   3) chỉ Phường/Quận/Tỉnh → ghim giữa khu vực
++    // Trước đây bỏ sót bước 2: tin ghi rõ "123 Nguyễn Văn Linh" vẫn chỉ ghim giữa
++    // phường, khách không biết bất động sản nằm ở đoạn đường nào.
+     places: d.places ?? [],
+-    mapQuery: d.mapPin?.trim() || [r.ward, r.district, r.province].filter(Boolean).join(", "),
++    mapQuery:
++      d.mapPin?.trim() ||
++      [d.addressDetail?.trim(), r.ward, r.district, r.province].filter(Boolean).join(", "),
++    // Có toạ độ ghim / có tên đường → phóng gần (17) thấy rõ vị trí;
++    // chỉ có phường/xã → giữ 15 nhìn bao quát khu vực.
++    mapZoom: d.mapPin?.trim() || d.addressDetail?.trim() ? 17 : 15,
+   };
+ }
+ 
+@@ -282,7 +292,7 @@ function mockToDetail(m: Listing): ListingFull {
+     amenityGroups: amenityGroups.map((g) => ({ group: g.group, items: g.items.map((name) => ({ name, active: false })) })),
+     legal: null, furnish: null, direction: null, addressDetail: null, contact: null,
+     places: [],
+-    mapQuery: m.location,
++    mapQuery: m.location, mapZoom: 15,
+   };
+ }
+ 

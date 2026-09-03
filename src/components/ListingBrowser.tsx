@@ -6,7 +6,7 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 
 // Bản đồ chỉ chạy phía trình duyệt (Leaflet đụng tới window) → nạp động, tắt SSR.
-const MapView = dynamic(() => import("@/components/MapView"), {
+const MapView = dynamic(() => import("@/components/MapViewGoogle"), {
   ssr: false,
   loading: () => <div className="flex h-full items-center justify-center text-sm text-cvr-muted">Đang tải bản đồ…</div>,
 });
