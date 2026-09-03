@@ -58,7 +58,7 @@ export function huongDanBatDinhVi(): string[] {
 
 // Câu ngắn nói VÌ SAO hỏng — đi kèm các bước ở trên.
 export function loiDinhVi(ma: number): string {
-  if (ma === 1) return "Trình duyệt đang CHẶN định vị trên coastalland.vn. Bật lại theo 4 bước dưới đây:";
+  if (ma === 1) return "Trình duyệt đang CHẶN định vị trên coastalland.vn. Bật lại theo 2 bước dưới đây:";
   if (ma === 2) return "Máy chưa bật Dịch vụ định vị (GPS). Bật theo các bước dưới đây:";
   return "Định vị lâu quá chưa có kết quả. Thử theo các bước dưới đây, hoặc ra chỗ thoáng rồi bấm lại:";
 }
@@ -92,7 +92,16 @@ export function layViTri(
       );
     },
     (e) => bao(e.code),
-    { enableHighAccuracy: false, timeout: 8000, maximumAge: epGPS ? 0 : 600000 },
+    // ⚠️ KHÁCH TỰ BẤM NÚT (epGPS) THÌ PHẢI enableHighAccuracy: true — ĐỪNG ĐỔI.
+    // Đây chính là chỗ làm ĐIỆN THOẠI TỰ NỔI HỘP BẬT GPS. Trên Android + Chrome,
+    // khi trang xin vị trí CHÍNH XÁC CAO mà máy đang tắt Vị trí, Google Play
+    // Services tự bung hộp thoại hệ thống "Để tiếp tục, hãy bật dịch vụ vị trí
+    // của thiết bị — [Không] [OK]", bấm OK là GPS bật ngay, không phải vào Cài đặt.
+    // Xin chính xác THẤP (như trước đây) thì Chrome lặng lẽ đo theo wifi/trạm phát
+    // rồi báo hỏng, KHÔNG bung hộp đó — nên khách tưởng web không làm gì.
+    // Hộp này chỉ hiện khi khách CHƯA bấm "Chặn" cho coastalland.vn; đã Chặn thì
+    // trình duyệt cắt từ đầu, lúc đó mới cần khối hướng dẫn hai bước.
+    { enableHighAccuracy: epGPS, timeout: epGPS ? 15000 : 8000, maximumAge: epGPS ? 0 : 600000 },
   );
 }
 
