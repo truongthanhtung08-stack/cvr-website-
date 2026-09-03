@@ -243,7 +243,10 @@ export default function PostListingForm() {
     );
   }
 
-  function nhanDiaGioiTuBanDo({ tinh, phuong }: { tinh: string; phuong: string }) {
+  // Chạy được với CẢ HAI hệ địa chỉ: hệ CŨ ba cấp (Tỉnh → Quận/Huyện → Phường/Xã)
+  // và hệ MỚI hai cấp sau sáp nhập (Tỉnh → Phường/Xã). Người đăng đang ở hệ nào thì
+  // điền đúng các ô của hệ đó.
+  function nhanDiaGioiTuBanDo({ tinh, quan, phuong }: { tinh: string; quan: string; phuong: string }) {
     const tinhKhop = tinh ? khopDanhMuc(tinh, provinceNamesFor(geoMode)) : "";
     // Chỉ đổi khi tìm ra mục có thật trong danh mục — không tìm ra thì GIỮ NGUYÊN
     // lựa chọn của người đăng, tuyệt đối không xoá trắng ô của họ.
@@ -253,9 +256,23 @@ export default function PostListingForm() {
       setDistrict("");
       setWard("");
     }
-    if (!phuong || !tinhDung) return;
-    const dsPhuong = geoMode === "moi" ? wardsOfNew(tinhDung) : [];
-    const phuongKhop = khopDanhMuc(phuong, dsPhuong);
+    if (!tinhDung) return;
+
+    if (geoMode === "moi") {
+      const phuongKhop = khopDanhMuc(phuong, wardsOfNew(tinhDung));
+      if (phuongKhop) setWard(phuongKhop);
+      return;
+    }
+
+    // Hệ CŨ: phải có Quận/Huyện thì mới ra được danh sách Phường/Xã.
+    const quanKhop = khopDanhMuc(quan, districtsOf(tinhDung));
+    const quanDung = quanKhop || district;
+    if (quanKhop && quanKhop !== district) {
+      setDistrict(quanKhop);
+      setWard("");
+    }
+    if (!quanDung) return;
+    const phuongKhop = khopDanhMuc(phuong, wardsOf(tinhDung, quanDung));
     if (phuongKhop) setWard(phuongKhop);
   }
 

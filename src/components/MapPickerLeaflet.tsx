@@ -7,6 +7,7 @@ import { formatLatLng, parseLatLng, type LatLng } from "@/lib/googleMaps";
 import { xemTrenBanDo } from "@/lib/moGoogleMaps";
 import { docKhoangCach, khoangCachKm, layViTri, loiDinhVi } from "@/lib/dinhVi";
 import { timToaDo, traDiaChi } from "@/lib/timToaDo";
+import { centerOfArea } from "@/lib/geo";
 import NhacBatDinhVi from "@/components/NhacBatDinhVi";
 
 // ── GHIM VỊ TRÍ TRÊN BẢN ĐỒ (form đăng tin: khách & admin) ────────────────────
@@ -47,7 +48,8 @@ export default function MapPickerLeaflet({
   onDiaChi?: (v: string) => void;
   // Ghim xong thì trả về luôn TỈNH/THÀNH và PHƯỜNG/XÃ của điểm đó, để form tự
   // chọn đúng mục trong hai ô kia — người đăng khỏi phải tự dò lại.
-  onDiaGioi?: (v: { tinh: string; phuong: string }) => void;
+  // Trả về cả Quận/Huyện vì web chạy song song hệ địa chỉ CŨ (3 cấp) và MỚI (2 cấp).
+  onDiaGioi?: (v: { tinh: string; quan: string; phuong: string }) => void;
 }) {
   const boxRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<LType.Map | null>(null);
@@ -68,6 +70,9 @@ export default function MapPickerLeaflet({
   const [loi, setLoi] = useState("");
   const [diaChiGhim, setDiaChiGhim] = useState("");
   const [khoangCach, setKhoangCach] = useState("");
+  // Ghim đang ở mức nào — hiện thành một nhãn nhỏ để người đăng tự thấy địa chỉ
+  // của mình đã đủ chính xác chưa. Đây là THÔNG TIN, không phải câu nhắc nhở.
+  const [mucDoGhim, setMucDoGhim] = useState<"soNha" | "duong" | "khuVuc" | null>(null);
 
   useEffect(() => {
     onChangeRef.current = onChange;
@@ -98,7 +103,9 @@ export default function MapPickerLeaflet({
     // khỏi gõ. Gõ sai chính tả tên đường cũng được sửa luôn theo bản đồ.
     if (ten?.ngan) onDiaChiRef.current?.(ten.ngan);
     // Trả cả Tỉnh/Thành + Phường/Xã về cho form tự chọn đúng mục trong hai ô kia.
-    if (ten && (ten.tinh || ten.phuong)) onDiaGioiRef.current?.({ tinh: ten.tinh, phuong: ten.phuong });
+    if (ten && (ten.tinh || ten.phuong || ten.quan))
+      onDiaGioiRef.current?.({ tinh: ten.tinh, quan: ten.quan, phuong: ten.phuong });
+    setMucDoGhim(ten?.mucDo ?? null);
     const m = ghimRef.current;
     if (!m) return;
     if (ten?.day)
@@ -211,6 +218,14 @@ export default function MapPickerLeaflet({
     const diaChi = hintRef.current.split(",").map((s) => s.trim()).filter(Boolean).join(", ");
     if (!map || diaChi.length < 4) return;
 
+    // TRỎ TỚI NGAY, ĐỪNG BẮT NGƯỜI ĐĂNG CHỜ. Web có sẵn bảng tâm các khu vực lớn —
+    // dùng nó nhảy tới liền trong tích tắc, rồi mới hỏi dịch vụ tra địa chỉ để chỉnh
+    // cho sát. Chờ mạng trả lời xong mới nhúc nhích thì bản đồ trông như đơ.
+    if (!parseLatLng(value)) {
+      const kvNhanh = centerOfArea(diaChi);
+      if (kvNhanh) map.setView(kvNhanh, 14);
+    }
+
     setDangTimDiaChi(true);
     const kq = await timToaDo(diaChi);
     setDangTimDiaChi(false);
@@ -278,7 +293,7 @@ export default function MapPickerLeaflet({
   // Đã ghim rồi thì veDiaChi() giữ nguyên ghim, chỉ dời khung nhìn.
   useEffect(() => {
     if (!sanSang) return;
-    const t = setTimeout(() => void veDiaChi(false), 800);
+    const t = setTimeout(() => void veDiaChi(false), 350);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hint, sanSang]);
@@ -366,6 +381,25 @@ export default function MapPickerLeaflet({
           </span>
           {diaChiGhim && <span className="font-medium text-cvr-ink">{diaChiGhim}</span>}
           {khoangCach && <span className="text-cvr-muted">· cách chỗ anh/chị {khoangCach}</span>}
+          {/* Ghim đang chính xác tới đâu. Thấy "mới tới phường/xã" là người đăng tự
+              biết nên kéo ghim sát hơn — không cần ai nhắc câu nào. */}
+          {mucDoGhim && (
+            <span
+              className={`rounded-md px-1.5 py-0.5 text-[11.5px] font-semibold ${
+                mucDoGhim === "soNha"
+                  ? "bg-green-100 text-green-800"
+                  : mucDoGhim === "duong"
+                    ? "bg-cvr-surface text-cvr-body"
+                    : "bg-amber-100 text-amber-900"
+              }`}
+            >
+              {mucDoGhim === "soNha"
+                ? "đúng số nhà"
+                : mucDoGhim === "duong"
+                  ? "đúng tên đường"
+                  : "mới tới phường/xã"}
+            </span>
+          )}
         </p>
       )}
 

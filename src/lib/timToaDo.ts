@@ -39,9 +39,15 @@ export type DiaChiTra = {
   ngan: string;
   // Câu đầy đủ để người đăng đọc mà kiểm: "123, Mê Linh, Phường Nha Trang, Khánh Hòa"
   day: string;
-  // Để form tự chọn đúng mục trong ô Tỉnh/Thành và ô Phường/Xã.
+  // Để form tự chọn đúng mục trong các ô địa giới. Trả về CẢ Quận/Huyện vì web
+  // đang chạy song song hai hệ: hệ CŨ 3 cấp (Tỉnh → Quận/Huyện → Phường/Xã) và
+  // hệ MỚI 2 cấp sau sáp nhập (Tỉnh → Phường/Xã). Người đăng chọn hệ nào cũng
+  // phải điền được.
   tinh: string;
+  quan: string;
   phuong: string;
+  // Ghim tới mức nào — để nói cho người đăng biết địa chỉ đã đủ chính xác chưa.
+  mucDo: "soNha" | "duong" | "khuVuc";
 };
 
 const daTraNguoc = new Map<string, DiaChiTra | null>();
@@ -58,22 +64,27 @@ export async function traDiaChi(lat: number, lng: number): Promise<DiaChiTra | n
       display_name?: string;
       address?: {
         house_number?: string; road?: string; neighbourhood?: string; suburb?: string;
-        quarter?: string; village?: string; town?: string; city_district?: string;
+        quarter?: string; village?: string; town?: string; hamlet?: string;
+        city_district?: string; county?: string; district?: string;
         city?: string; state?: string; province?: string;
       };
     };
     const a = kq.address ?? {};
-    const ngan = [a.house_number, a.road || a.neighbourhood].filter(Boolean).join(" ").trim();
-    // Hệ địa giới MỚI của Việt Nam chỉ còn Tỉnh/Thành → Phường/Xã. OpenStreetMap
-    // xếp phường/xã vào nhiều khoá khác nhau tuỳ nơi nên phải dò lần lượt.
-    const phuong = a.quarter || a.suburb || a.village || a.town || a.city_district || "";
+    const duong = a.road || a.neighbourhood || "";
+    const ngan = [a.house_number, duong].filter(Boolean).join(" ").trim();
+    // OpenStreetMap xếp phường/xã và quận/huyện vào nhiều khoá khác nhau tuỳ nơi,
+    // phải dò lần lượt. Tách RIÊNG quận/huyện với phường/xã: hệ địa chỉ CŨ cần cả
+    // hai, hệ MỚI (sau sáp nhập) chỉ dùng phường/xã.
+    const phuong = a.quarter || a.suburb || a.village || a.town || a.hamlet || "";
+    const quan = a.city_district || a.county || a.district || "";
     const tinh = a.city || a.province || a.state || "";
     // display_name có cả "Việt Nam" và mã bưu chính ở cuối — cắt bớt cho gọn.
     const day = kq.display_name
       ? kq.display_name.split(",").map((s) => s.trim()).slice(0, 4).join(", ")
       : "";
+    const mucDo: DiaChiTra["mucDo"] = a.house_number ? "soNha" : duong ? "duong" : "khuVuc";
     const ten: DiaChiTra | null =
-      ngan || day ? { ngan, day: day || ngan, tinh, phuong } : null;
+      ngan || day ? { ngan, day: day || ngan, tinh, quan, phuong, mucDo } : null;
     daTraNguoc.set(khoa, ten);
     return ten;
   } catch {
