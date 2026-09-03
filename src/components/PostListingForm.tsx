@@ -265,7 +265,15 @@ export default function PostListingForm() {
     }
 
     // Hệ CŨ: phải có Quận/Huyện thì mới ra được danh sách Phường/Xã.
-    const quanKhop = khopDanhMuc(quan, districtsOf(tinhDung));
+    const dsQuan = districtsOf(tinhDung);
+    let quanKhop = khopDanhMuc(quan, dsQuan);
+    // Việt Nam đã BỎ cấp Quận/Huyện từ 2025 nên bản đồ thế giới phần lớn không
+    // còn trả về tên quận nữa → ghim xong ô Quận/Huyện bỏ trống, kéo theo ô
+    // Phường/Xã cũng không ra danh sách. Tự dò bằng danh mục của web: quận nào
+    // có chứa cái phường/xã vừa ghim thì chính là quận đó.
+    if (!quanKhop && phuong) {
+      quanKhop = dsQuan.find((d) => khopDanhMuc(phuong, wardsOf(tinhDung, d))) ?? "";
+    }
     const quanDung = quanKhop || district;
     if (quanKhop && quanKhop !== district) {
       setDistrict(quanKhop);
@@ -577,7 +585,10 @@ export default function PostListingForm() {
             </button>
           ))}
         </div>
-        <div className={`grid grid-cols-1 gap-4 ${geoMode === "moi" ? "sm:grid-cols-2" : "sm:grid-cols-3"}`}>
+        {/* Trên ĐIỆN THOẠI xếp 2 cột: ba ô khu vực gói trong 1–2 dòng, để ô địa chỉ
+            và bản đồ ngay bên dưới vẫn nằm chung một màn hình, khỏi kéo lên kéo xuống
+            đối chiếu. */}
+        <div className={`grid grid-cols-2 gap-3 sm:gap-4 ${geoMode === "moi" ? "sm:grid-cols-2" : "sm:grid-cols-3"}`}>
           <Pick label="Tỉnh / Thành" value={province} onChange={(v) => { setProvince(v); setDistrict(""); setWard(""); }} options={provinceOptions} placeholder="Chọn Tỉnh / Thành" />
           {geoMode === "cu" && (
             <Pick label="Quận / Huyện" value={district} onChange={(v) => { setDistrict(v); setWard(""); }} options={districts} placeholder="Chọn Quận / Huyện" disabled={!province} />

@@ -320,10 +320,15 @@ export default function MapPickerLeaflet({
           nào. Người đăng gõ tới đâu nhìn bản đồ nhảy tới đó, đối chiếu tại chỗ;
           bấm ghim thì chữ trong ô này tự đổi theo. Tách hai thứ ra là mất cái đó.
           ⚠️ Đừng chèn tiêu đề hay lời nhắc nào vào giữa hai phần này. */}
-      <div className="overflow-hidden rounded-xl border border-cvr-line">
+      <div className="relative overflow-hidden rounded-xl border border-cvr-line">
+        {/* Ô địa chỉ NỔI TRÊN MẶT BẢN ĐỒ (kiểu thanh tìm của các app bản đồ) chứ
+            không chiếm thêm một hàng riêng. Nhờ vậy trên điện thoại vẫn đủ chỗ cho
+            bản đồ CAO — kéo xem và ghim thoải mái — mà cả ô địa chỉ lẫn bản đồ vẫn
+            nằm trọn trong một màn hình, khỏi kéo lên kéo xuống đối chiếu.
+            z-index trên 700 vì Leaflet xếp marker 600 / popup 700. */}
         {onDiaChi && (
-          <div className="flex items-center border-b border-cvr-line bg-white">
-            <svg className="ml-3.5 h-4 w-4 shrink-0 text-cvr-faint" fill="none" stroke="currentColor" strokeWidth={1.9} viewBox="0 0 24 24">
+          <div className="absolute left-2.5 right-2.5 top-2.5 z-[1200] flex items-center rounded-xl bg-white/97 shadow-[0_2px_12px_rgba(0,0,0,0.22)] ring-1 ring-black/5 backdrop-blur-sm">
+            <svg className="ml-3 h-4 w-4 shrink-0 text-cvr-faint" fill="none" stroke="currentColor" strokeWidth={1.9} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 11a2 2 0 100-4 2 2 0 000 4z" />
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 22s7-6.5 7-12a7 7 0 10-14 0c0 5.5 7 12 7 12z" />
             </svg>
@@ -331,12 +336,14 @@ export default function MapPickerLeaflet({
               value={diaChi}
               onChange={(e) => onDiaChi(e.target.value)}
               placeholder="Số nhà, tên đường… hoặc bấm thẳng lên bản đồ"
-              className="w-full bg-transparent px-3 py-3 text-[15px] text-cvr-ink outline-none placeholder:text-cvr-faint"
+              className="w-full bg-transparent px-2.5 py-2.5 text-[14px] text-cvr-ink outline-none placeholder:text-cvr-faint"
             />
-            {dangTimDiaChi && <span className="mr-3.5 shrink-0 text-[12px] text-cvr-faint">đang tìm…</span>}
+            {dangTimDiaChi && <span className="mr-3 shrink-0 text-[12px] text-cvr-faint">đang tìm…</span>}
           </div>
         )}
-        <div ref={boxRef} aria-label="Bản đồ ghim vị trí" className="h-[300px] w-full bg-cvr-surface" />
+        {/* Cao theo màn hình để điện thoại nào cũng được một bản đồ đủ rộng mà vẫn
+            còn chỗ cho ô khu vực bên trên và hàng nút bên dưới. */}
+        <div ref={boxRef} aria-label="Bản đồ ghim vị trí" className="h-[46vh] min-h-[280px] w-full bg-cvr-surface sm:h-[360px]" />
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
@@ -344,7 +351,7 @@ export default function MapPickerLeaflet({
           type="button"
           onClick={() => dinhVi(true)}
           disabled={dangDinhVi}
-          className="inline-flex min-h-[42px] items-center gap-1.5 rounded-lg bg-cvr-blue px-4 text-sm font-semibold text-white transition hover:bg-cvr-blue-ink disabled:opacity-60"
+          className="inline-flex min-h-[38px] items-center gap-1.5 rounded-lg bg-cvr-blue px-3.5 text-[13px] font-semibold text-white transition hover:bg-cvr-blue-ink disabled:opacity-60"
         >
           <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.9} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 11a2 2 0 100-4 2 2 0 000 4z" />
