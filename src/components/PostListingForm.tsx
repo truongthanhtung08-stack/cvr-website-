@@ -17,7 +17,7 @@ import ImagePicker from "@/components/admin/ImagePicker";
 // BẢN ĐỒ GHIM — dùng bản Leaflet/OpenStreetMap. Bản chạy nền Google
 // (components/MapPicker.tsx) GIỮ LẠI để sau này Google thông thì đổi về, chỉ
 // phải sửa đúng dòng import này.
-import MapPicker from "@/components/MapPickerLeaflet";
+import MapPicker from "@/components/MapPickerGoogle";
 import ContentEditor from "@/components/admin/ContentEditor";
 import { freeNote, levelOf, quotePrice, soAnhToiDa, soVideoToiDa, tenGoiMienPhi, vnd } from "@/lib/billing";
 import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
