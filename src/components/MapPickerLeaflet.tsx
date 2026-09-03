@@ -378,6 +378,13 @@ export default function MapPickerLeaflet({
         <div ref={boxRef} aria-label="Bản đồ ghim vị trí" className="h-[46vh] min-h-[280px] w-full bg-cvr-surface sm:h-[360px]" />
         {/* Mạng chậm thì bản đồ mất vài giây mới hiện. Không báo gì, người đăng
             nhìn ô xám trống là tưởng hỏng rồi bỏ đi. */}
+        {/* Đang tra địa chỉ / đang tự ghim — báo một chữ nhỏ để người đăng biết bản
+            đồ đang chạy chứ không phải đứng hình. */}
+        {sanSang && dangTimDiaChi && (
+          <span className="pointer-events-none absolute left-1/2 top-3 z-[1200] -translate-x-1/2 rounded-full bg-cvr-ink/85 px-3 py-1.5 text-[12px] font-semibold text-white shadow-[0_2px_10px_rgba(0,0,0,0.3)]">
+            Đang tìm địa chỉ…
+          </span>
+        )}
         {!sanSang && (
           <span className="pointer-events-none absolute inset-0 flex items-center justify-center text-[13px] font-medium text-cvr-muted">
             Đang mở bản đồ…
