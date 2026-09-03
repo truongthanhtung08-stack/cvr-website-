@@ -18,9 +18,12 @@ import { getListing, getListings, getListingDetail } from "@/lib/listingsDb";
 import { tierFromBadge, getTier } from "@/lib/packages";
 import RichContent from "@/components/RichContent";
 
-// Trang chi tiết đọc Supabase với cache no-store (admin sửa hiện NGAY) → BẮT BUỘC
-// render động theo yêu cầu. Không thì Next xếp tĩnh (SSG) rồi lỗi "static→dynamic" → 500.
-export const dynamic = "force-dynamic";
+// TRANG QUAN TRỌNG NHẤT CHO SEO (500 tin). Nay đọc tin qua cache theo thẻ "listings"
+// (xem listingsDb.ts) nên KHÔNG còn cần force-dynamic: trang được dựng sẵn theo yêu
+// cầu (ISR) rồi phục vụ từ edge → nhanh cho Google. Admin duyệt tin gọi
+// revalidateTag("listings") → trang tự dựng lại NGAY. Lỗi "static→dynamic" cũ là do
+// no-store; đã bỏ no-store nên gỡ được force-dynamic một cách an toàn.
+// ⚠️ ĐỪNG thêm lại force-dynamic — sẽ vô hiệu hoá toàn bộ cache vừa dựng.
 
 // Chuyển chuỗi giá VN ("33 tỷ", "7,2 tỷ", "15 triệu") → số VNĐ cho Schema. Không parse được → null.
 function parseVnd(s: string): number | null {
@@ -30,6 +33,20 @@ function parseVnd(s: string): number | null {
   if (t.includes("tỷ")) return Math.round(num * 1e9);
   if (t.includes("triệu") || t.includes("tr")) return Math.round(num * 1e6);
   return null;
+}
+
+// Tách TOẠ ĐỘ (lat,lng) từ điểm admin ghim — nhận cả "16.0471,108.2068" lẫn link
+// Google Maps dạng "…@16.0471,108.2068,17z". Có toạ độ → khai `geo` cho Schema, giúp
+// Google hiểu VỊ TRÍ THẬT của bất động sản (điều kiện cho rich result BĐS + tìm kiếm
+// theo bản đồ). Ngoài dải Việt Nam / không parse được → bỏ qua (không bịa toạ độ).
+function parseLatLng(s?: string): { lat: number; lng: number } | null {
+  if (!s) return null;
+  const m = s.match(/(-?\d{1,2}\.\d{3,})[,\s]+(\d{2,3}\.\d{3,})/);
+  if (!m) return null;
+  const lat = parseFloat(m[1]);
+  const lng = parseFloat(m[2]);
+  if (lat < 8 || lat > 24 || lng < 102 || lng > 110) return null; // ngoài Việt Nam → bỏ
+  return { lat, lng };
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -72,13 +89,26 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
   // Schema.org RealEstateListing (IV.2) — dữ liệu chuẩn cho Google.
   const priceVnd = parseVnd(l.price);
   const areaNum = parseFloat(l.area.replace(",", "."));
+  // TOẠ ĐỘ để khai `geo` (ưu tiên điểm admin ghim; không có thì thử chuỗi bản đồ).
+  const geo = parseLatLng(l.mapPin ?? d.mapQuery);
+  const tinhTP = provinceOf(l.location);
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "RealEstateListing",
     name: l.title,
     description: `${l.title} tại ${l.location}. Diện tích ${l.area}, giá ${l.price}.`,
+    // URL tuyệt đối + ngày đăng: Google nối đúng schema với trang + có tín hiệu độ tươi.
+    url: `https://coastalland.vn/bat-dong-san/${l.id}`,
     image: d.images,
-    address: { "@type": "PostalAddress", addressLocality: l.location, addressCountry: "VN" },
+    ...(l.postedAt ? { datePosted: l.postedAt } : {}),
+    address: {
+      "@type": "PostalAddress",
+      addressLocality: l.location,
+      ...(tinhTP ? { addressRegion: tinhTP } : {}),
+      addressCountry: "VN",
+    },
+    ...(geo ? { geo: { "@type": "GeoCoordinates", latitude: geo.lat, longitude: geo.lng } } : {}),
+    ...(l.beds ? { numberOfRooms: l.beds } : {}),
     ...(Number.isNaN(areaNum) ? {} : { floorSize: { "@type": "QuantitativeValue", value: areaNum, unitCode: "MTK" } }),
     ...(priceVnd == null ? {} : { offers: { "@type": "Offer", priceCurrency: "VND", price: priceVnd, availability: "https://schema.org/InStock" } }),
   };

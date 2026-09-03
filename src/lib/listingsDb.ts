@@ -165,7 +165,14 @@ async function rest(query: string): Promise<Row[] | null> {
   try {
     const res = await fetch(`${url}/rest/v1/listings?${query}`, {
       headers: { apikey: key, Authorization: `Bearer ${key}` },
-      cache: "no-store", // LUÔN lấy dữ liệu mới — admin sửa gì web hiện NGAY
+      // CACHE THEO THẺ "listings" (thay cho no-store cũ) — đây là đòn bẩy tốc độ:
+      //   · Khi admin DUYỆT tin, route /api/tin-dang/duyet gọi revalidateTag("listings")
+      //     → xoá cache NGAY → tin lên sóng tức thì (giữ đúng quy tắc "hiện NGAY").
+      //   · Giữa hai lần duyệt, Google & khách nhận HTML đã dựng sẵn phục vụ từ edge
+      //     (không đọc DB mỗi request như no-store) → Core Web Vitals / thứ hạng tốt hơn.
+      //   · revalidate 60s = lưới an toàn: mọi thay đổi ngoài luồng duyệt (admin ẩn/sửa
+      //     tin ghi thẳng Supabase từ trình duyệt) chậm tối đa 60 giây, không đứng mãi.
+      next: { tags: ["listings"], revalidate: 60 },
     });
     if (!res.ok) return null; // bảng chưa tạo (404) / lỗi khác → fallback
     return (await res.json()) as Row[];

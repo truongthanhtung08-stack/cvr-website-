@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { BILLING_DEFAULT, quotePrice, vnd, type BillingData } from "@/lib/billing";
@@ -77,6 +78,7 @@ export async function POST(request: Request) {
       .update({ status: "approved", published_at: new Date().toISOString(), tier: "basic" })
       .eq("id", id);
     if (error) return loi(error.message, 500);
+    revalidateTag("listings", "max"); // tin vừa lên sóng → purge cache để hiện NGAY
     // Mẫu ZNS "tin đã duyệt" khai 3 tham số nên cả 3 đều PHẢI có giá trị —
     // trước đây chỗ này truyền so_du rỗng, Zalo từ chối cả tin. Tin miễn phí
     // không trừ tiền nên số dư giữ nguyên, vẫn đọc ra để báo cho đúng.
@@ -198,6 +200,8 @@ export async function POST(request: Request) {
     })
     .eq("id", id);
   if (loiLen) return loi("Đã trừ tiền nhưng không đăng được tin: " + loiLen.message, 500);
+
+  revalidateTag("listings", "max"); // tin trả phí vừa lên sóng → purge cache để hiện NGAY
 
   // ── 9. BÁO KHÁCH (bắt buộc) ───────────────────────────────────────────────
   const kq = await baoKhach(admin, tin.owner_id, {
