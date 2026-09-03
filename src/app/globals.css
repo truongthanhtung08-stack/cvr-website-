@@ -52,12 +52,14 @@ html {
    khoảng dòng khác trình duyệt thường → 2 dòng chữ cao hơn 3em, dòng thứ hai bị
    XÉN NGANG THÂN CHỮ (nhìn như chữ đè lên nhau). Cắt theo DÒNG thì dù cỡ chữ
    thay đổi thế nào cũng không bao giờ cắt ngang chữ. */
+.clamp-3,
 .clamp-2,
 .clamp-1 {
   display: -webkit-box;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+.clamp-3 { -webkit-line-clamp: 3; line-clamp: 3; }
 .clamp-2 { -webkit-line-clamp: 2; line-clamp: 2; }
 .clamp-1 { -webkit-line-clamp: 1; line-clamp: 1; }
 

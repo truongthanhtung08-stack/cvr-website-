@@ -42,12 +42,13 @@ export default function AnhChay({
   // Chạm là dừng, vài giây sau tự chạy tiếp — trên điện thoại không có động tác
   // "rê chuột ra" nên phải tự quay lại, nếu không chạm một cái là đứng vĩnh viễn.
   const { dung, chamVao, setDung } = useTamDung(6000);
-  const [trongTam, setTrongTam] = useState(false);
+  // Mặc định coi như đang trong tầm nhìn — xem lý do ở useAutoSlideThe.
+  const [trongTam, setTrongTam] = useState(true);
 
   useEffect(() => {
     const el = boxRef.current;
     if (!el || ds.length < 2) return;
-    const io = new IntersectionObserver(([e]) => setTrongTam(e.isIntersecting), { threshold: 0.4 });
+    const io = new IntersectionObserver(([e]) => setTrongTam(e.isIntersecting), { threshold: 0.15 });
     io.observe(el);
     return () => io.disconnect();
   }, [ds.length]);

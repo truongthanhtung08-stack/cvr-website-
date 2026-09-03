@@ -53,12 +53,19 @@ export function useAutoSlideThe(
   paused: boolean,
   interval: number,
 ) {
-  const [inView, setInView] = useState(false);
+  // ⚠️ MẶC ĐỊNH COI NHƯ ĐANG TRONG TẦM NHÌN.
+  // Trước để mặc định false rồi chờ IntersectionObserver bật lên — máy nào bộ theo
+  // dõi đó không kích hoạt (tab nền, trình duyệt trong ứng dụng, khung xem trước)
+  // là slide đứng im vĩnh viễn mà không ai biết vì sao. Cho chạy trước, bộ theo dõi
+  // chỉ có việc TẮT khi dải trôi khỏi màn hình.
+  // Ngưỡng 0.15 chứ không phải 0.35: dải thẻ trên điện thoại cao gần bằng cả màn
+  // hình, đòi lộ ra 35% mới chạy là nhiều lúc không bao giờ đạt.
+  const [inView, setInView] = useState(true);
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const io = new IntersectionObserver(([e]) => setInView(e.isIntersecting), { threshold: 0.35 });
+    const io = new IntersectionObserver(([e]) => setInView(e.isIntersecting), { threshold: 0.15 });
     io.observe(el);
     return () => io.disconnect();
   }, [ref]);

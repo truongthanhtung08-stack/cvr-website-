@@ -257,12 +257,18 @@ export default function MapPickerLeaflet({
     if (!kq) return;
 
     const sat = kq.mucDo !== "khuVuc";
-    map.setView([kq.lat, kq.lng], sat ? 17 : 15);
+    const daCoGhim = !!parseLatLng(value);
+
+    // ⚠️ ĐÃ GHIM RỒI THÌ TUYỆT ĐỐI KHÔNG DỜI BẢN ĐỒ.
+    // Lỗi cũ: ghim xong → ô địa chỉ tự điền → chuỗi địa chỉ đổi → hàm này chạy lại
+    // và KÉO BẢN ĐỒ đi chỗ khác, ghim đỏ trôi ra ngoài màn hình. Người đăng bấm
+    // ghim mà nhìn không thấy dấu đỏ đâu, tưởng ghim hỏng.
+    // Chỉ dời khi CHƯA ghim, hoặc khi người đăng tự chọn một gợi ý địa chỉ.
+    if (!daCoGhim || tuBam) map.setView([kq.lat, kq.lng], sat ? 17 : 15);
+
     // Tự ghim khi tra ra tới tên đường. Chỉ ra được tâm phường thì KHÔNG ghim —
     // ghim giữa phường là ghim sai, để người đăng tự bấm đúng chỗ.
-    // Người đăng đã ghim rồi thì tuyệt đối không giật ghim của họ đi, trừ khi họ
-    // chủ động bấm nút "Về địa chỉ đã nhập".
-    if (sat && (!parseLatLng(value) || tuBam)) datGhim({ lat: kq.lat, lng: kq.lng });
+    if (sat && (!daCoGhim || tuBam)) datGhim({ lat: kq.lat, lng: kq.lng });
   }
 
   // ── DỰNG BẢN ĐỒ MỘT LẦN ────────────────────────────────────────────────────

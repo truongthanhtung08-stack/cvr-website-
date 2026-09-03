@@ -4,7 +4,7 @@
 import { asset } from "@/lib/asset";
 import { chuThuan } from "@/lib/chuThuan";
 import { specForType, amenityGroups, interiorItems, furnishLevels } from "@/lib/listingSpec";
-import { directionOptions } from "@/lib/filters";
+import { directionOptions, normalizeVi } from "@/lib/filters";
 
 // Ảnh dùng chung theo phân khúc (placeholder)
 const seg = (name: string) => asset(`/images/segments/${name}.jpg`);
@@ -166,9 +166,20 @@ export function getListingById(id: string): Listing | undefined {
 export function listingSummary(l: Listing): string {
   // chuThuan() gỡ ::justify::, **đậm**, ảnh/video chèn giữa bài — không gỡ thì
   // mấy ký hiệu soạn thảo đó lòi thẳng ra thẻ tin.
-  const that = chuThuan(l.desc)
+  let that = chuThuan(l.desc)
     .replace(/[•·▪◦#=_~>-]{2,}/g, " ")
     .trim();
+
+  // ⚠️ MÔ TẢ PHẢI LÀ NỘI DUNG, KHÔNG PHẢI CHÉP LẠI TIÊU ĐỀ.
+  // Rất nhiều người đăng mở đầu phần mô tả bằng đúng cái tiêu đề vừa gõ, nên thẻ
+  // tin hiện hai dòng y hệt nhau — đọc xong không biết thêm được gì. Cắt bỏ đoạn
+  // đầu trùng tiêu đề, còn lại mới là nội dung thật.
+  const tThat = normalizeVi(that);
+  const tTitle = normalizeVi(l.title);
+  if (tTitle.length > 10 && tThat.startsWith(tTitle)) {
+    that = that.slice(l.title.length).replace(/^[s.,:;–—-]+/, "").trim();
+  }
+
   if (that.length >= 30) return that;
 
   const place = l.location.split(",").slice(0, 2).map((s) => s.trim()).join(", ");

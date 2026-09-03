@@ -113,12 +113,15 @@ export default function PropertyCard({
       {/* Nội dung */}
       <div className={`flex flex-1 flex-col ${isFeatured ? "p-4" : isMini ? "p-2.5" : "p-3"}`}>
 
-        {/* Tiêu đề — 2 dòng, kiểu chữ theo cấp tin (Diamond/Gold VIẾT HOA) */}
-        {/* Tiêu đề: cắt ĐÚNG 2 DÒNG (.clamp-2 trong globals.css) — không đặt chiều
-            cao cứng nữa vì trình duyệt trong Zalo/Facebook chỉnh cỡ chữ khác làm
-            dòng 2 bị xén ngang thân chữ. min-h giữ các thẻ bằng nhau. */}
+        {/* Tiêu đề — kiểu chữ theo cấp tin (Diamond/Gold VIẾT HOA).
+            ⚠️ CHO DÃN TỚI 3 DÒNG. Tiêu đề tin bất động sản gần như luôn dài
+            ("CHO THUÊ NHÀ 3 TẦNG MỚI FULL NỘI THẤT CAO CẤP - HÒA XUÂN - ĐÀ NẴNG");
+            cắt cứng 2 dòng là mất nửa thông tin, khách nhìn không ra tin gì.
+            min-h giữ 2 dòng để các thẻ ngắn vẫn thẳng hàng nhau.
+            KHÔNG đặt chiều cao CỐ ĐỊNH: trình duyệt trong Zalo/Facebook chỉnh cỡ
+            chữ khác làm dòng cuối bị xén ngang thân chữ. */}
         <h3
-          className={`clamp-2 min-h-[3em] font-semibold leading-[1.5] text-cvr-ink ${tier?.uppercase ? "uppercase" : ""} ${
+          className={`clamp-3 min-h-[3em] font-semibold leading-[1.5] text-cvr-ink ${tier?.uppercase ? "uppercase" : ""} ${
             isFeatured ? "text-lg" : isMini ? "text-sm" : "text-[15px]"
           }`}
           style={tier?.titleColor ? { color: tier.titleColor } : undefined}
