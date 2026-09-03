@@ -6,37 +6,36 @@ import type * as LType from "leaflet";
 //   · MapPaneLeaflet   — xem vị trí ở trang tin / trang dự án
 //   · MapView          — chế độ bản đồ ở ba tab danh sách
 //
-// ⚠️ ĐỪNG QUAY LẠI tile.openstreetmap.org LÀM NỀN CHÍNH.
-// Đo thật 03/09/2026 từ Việt Nam:
-//     tile.openstreetmap.org   → fetch failed (không kết nối được)
-//     basemaps.cartocdn.com    → 200, 381–650 ms
-// Máy chủ ảnh của OpenStreetMap là hạ tầng thiện nguyện, chặn/chậm thất thường
-// và họ nói rõ là không dành cho web thương mại. Hậu quả đúng như chủ dự án báo:
-// khung bản đồ Ô TRẮNG TRƠN, chỉ còn nút phóng to và dòng ghi nguồn — Leaflet
-// chạy bình thường nhưng không có ảnh nào tải về, nên KHÔNG GHIM ĐƯỢC.
+// ⚠️ ĐÃ ĐO THẬT TỪ VIỆT NAM 03/09/2026 — ĐỪNG THỬ LẠI MẤY NGUỒN ĐÃ LOẠI:
+//     tile.openstreetmap.org     → ECONNREFUSED  (bị chặn)
+//     tile.openstreetmap.de      → ETIMEDOUT
+//     maps.wikimedia.org         → 403
+//     basemaps.cartocdn.com      → 200 nhưng ĐÓNG DẤU "API KEY REQUIRED" đầy mặt
+//     a.tile.opentopomap.org     → 200 nhưng gần 2 giây, ảnh rỗng
+//     server.arcgisonline.com    → 200, 437 ms, sạch, không cần khoá  ✅
 //
-// CARTO là CDN toàn cầu, dựng trên chính dữ liệu OpenStreetMap, không cần khoá,
-// không cần thanh toán. Vẫn giữ OSM làm đường lùi phòng khi CARTO trục trặc.
+// Máy chủ ảnh của OpenStreetMap là hạ tầng thiện nguyện, họ nói rõ không dành cho
+// web thương mại — và thực tế ở Việt Nam là chặn thẳng. Hậu quả đúng như chủ dự án
+// báo: khung bản đồ Ô TRẮNG TRƠN, chỉ còn nút phóng to và dòng ghi nguồn. Leaflet
+// chạy bình thường nhưng không có ảnh nào tải về, nên KHÔNG GHIM ĐƯỢC.
 // ════════════════════════════════════════════════════════════════════════════
 
-// Bắt buộc ghi nguồn cả hai bên — điều kiện dùng miễn phí.
-export const GHI_NGUON_NEN =
-  '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · ' +
-  '© <a href="https://carto.com/attributions">CARTO</a>';
+// Bắt buộc ghi nguồn — điều kiện dùng miễn phí.
+export const GHI_NGUON_NEN = 'Ảnh nền © <a href="https://www.esri.com/">Esri</a>';
 
-const NEN_CHINH = "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png";
-const NEN_DU_PHONG = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
+// ⚠️ CARTO ĐÃ BỊ LOẠI 03/09/2026. Họ vẫn trả ảnh nhưng ĐÓNG DẤU chằng chịt
+// "API KEY REQUIRED · carto.com/basemaps/apikey" lên khắp mặt bản đồ — nhìn như
+// web ăn cắp. Bản miễn phí không khoá coi như hết dùng được. Đừng quay lại.
+const NEN_CHINH = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}";
+const NEN_DU_PHONG = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}";
 
 export function themNenBanDo(L: typeof LType, map: LType.Map): LType.TileLayer {
   const lop = L.tileLayer(NEN_CHINH, {
     attribution: GHI_NGUON_NEN,
-    subdomains: "abcd",
-    maxZoom: 20,
-    // Màn hình điện thoại nét cao thì lấy ảnh @2x cho khỏi rỗ chữ.
-    detectRetina: true,
+    maxZoom: 19,
   }).addTo(map);
 
-  // Nền chính hỏng → lùi về OpenStreetMap, chỉ đổi MỘT lần rồi thôi.
+  // Nền chính hỏng → lùi sang bản đồ địa hình của cùng nhà, chỉ đổi MỘT lần.
   let daLui = false;
   lop.on("tileerror", () => {
     if (daLui) return;
