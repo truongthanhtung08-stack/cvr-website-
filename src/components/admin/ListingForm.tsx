@@ -435,11 +435,11 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
         <div className="mt-4">
         </div>
         <div className="mt-4">
-          <Field label="Địa chỉ cụ thể (số nhà, tên đường)">
+          <Field label="Địa chỉ cụ thể (số nhà, tên đường, số lô, block…)">
             <input
               value={addressDetail}
               onChange={(e) => setAddressDetail(e.target.value)}
-              placeholder="VD: 123 Võ Nguyên Giáp / Dự án ..."
+              placeholder="VD: 123 Võ Nguyên Giáp · Lô A12 khu B · Block 3 · hoặc chỉ tên đường"
               className={inputCls}
             />
           </Field>

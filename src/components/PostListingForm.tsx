@@ -569,10 +569,10 @@ export default function PostListingForm() {
             Gõ tới đâu bản đồ bên dưới tự thu lại và trôi tới đó; ghim trên bản đồ
             thì ô này tự điền ngược lại. ĐỪNG nhét ô này vào trong khung bản đồ. */}
         <Text
-          label="Địa chỉ cụ thể (số nhà, tên đường)"
+          label="Địa chỉ cụ thể (số nhà, tên đường, số lô, block…)"
           value={addressDetail}
           onChange={setAddressDetail}
-          placeholder="VD: 123 Võ Nguyên Giáp / Dự án ..."
+          placeholder="VD: 123 Võ Nguyên Giáp · Lô A12 khu B · Block 3 · hoặc chỉ tên đường"
         />
         <div className="mt-3">
           <MapPicker

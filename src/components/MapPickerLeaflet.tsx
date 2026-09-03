@@ -22,7 +22,12 @@ import NhacBatDinhVi from "@/components/NhacBatDinhVi";
 //     cập nhật, nên LUÔN ĐI SAU thực tế. Nhà mới xây, hẻm mới mở, đất nền chưa có
 //     số — bản đồ chưa kịp biết, người đăng thì biết. Vậy nên máy KHÔNG BAO GIỜ
 //     sửa số nhà / địa chỉ cụ thể họ đã gõ. Không phải "họ có thể sai" mà là
-//     "họ đúng, bản đồ mới là bên chưa cập nhật".
+//     "họ đúng, bản đồ mới là bên chưa cập nhật". Bản đồ lấy tư cách gì mà sửa?
+//     Cũng đừng lo họ bịa: không ai bịa số nhà bất động sản của mình. Có số thật
+//     thì gõ số; chưa có thì gõ tên đường, hoặc số lô / block / khu ở các khu dân
+//     cư mới — chuyện tất yếu. Ô này nhận MỌI dạng, và KHÔNG bắt buộc.
+//     Nhìn cho đúng chiều: người đăng ghim đúng nhà mình + gõ đúng địa chỉ là họ
+//     đang GIÚP BẢN ĐỒ CHÍNH XÁC LÊN, chứ không phải bản đồ đang sửa cho họ.
 //  2. Ô NÀO CÒN TRỐNG THÌ MÁY ĐIỀN HỘ. Không có gì để phá, lại đỡ một lần gõ.
 //  3. ĐỌC RA CHỮ KHÁC THÌ ĐỀ XUẤT, KHÔNG THAY. Hiện "bản đồ đọc được là …" kèm
 //     hai nút — người đăng quyết định, không phải máy.
