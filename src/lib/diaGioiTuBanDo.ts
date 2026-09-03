@@ -57,12 +57,26 @@ export function ganDiaGioi(
   const doiTinh = !!tinhKhop && tinhKhop !== dangCo.province;
 
   if (heDiaChi === "moi") {
-    const p = khopDanhMuc(dc.phuong, wardsOfNew(tinh));
+    const dsPhuongMoi = wardsOfNew(tinh);
+    // Chưa có danh mục phường của tỉnh này → nhận thẳng tên bản đồ đọc được.
+    const p = dsPhuongMoi.length ? khopDanhMuc(dc.phuong, dsPhuongMoi) : dc.phuong;
     return { province: tinh, district: "", ward: p || (doiTinh ? "" : giuPhuong) };
   }
 
   // Hệ CŨ: phải có Quận/Huyện thì mới ra được danh sách Phường/Xã.
   const dsQuan = districtsOf(tinh);
+  // ⚠️ TỈNH CHƯA CÓ DANH MỤC QUẬN/HUYỆN CŨ (Hải Phòng, Quảng Ninh, Thanh Hoá,
+  // Nghệ An, Cần Thơ… — web mới nhập đủ danh mục cho các tỉnh trọng điểm) thì
+  // NHẬN THẲNG tên bản đồ đọc được, đừng ép khớp rồi trả rỗng. Ô Quận/Huyện cho
+  // gõ tay khi tỉnh chưa có danh mục, nên điền thẳng vào là dùng được ngay —
+  // ba khối phải MẶC ĐỊNH có sẵn, người đăng chỉ lo mỗi số nhà.
+  if (!dsQuan.length) {
+    return {
+      province: tinh,
+      district: dc.quan || (doiTinh ? "" : dangCo.district),
+      ward: dc.phuong || (doiTinh ? "" : giuPhuong),
+    };
+  }
   let quan = khopDanhMuc(dc.quan, dsQuan);
   // Việt Nam đã BỎ cấp Quận/Huyện từ 2025 nên bản đồ thế giới phần lớn không còn
   // trả về tên quận → tự dò bằng danh mục của web: quận nào chứa cái phường/xã

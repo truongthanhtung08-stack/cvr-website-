@@ -305,20 +305,6 @@ export default function MapPickerLeaflet({
     const diaChi = phan.filter(Boolean).join(", ");
     if (!map || diaChi.length < 4) return;
 
-    // ── ĐÃ CÓ GHIM → GHIM LÀ CHỦ, ĐỊA CHỈ LÀ PHỤ ─────────────────────────────
-    // Chủ dự án chốt: "ghim không mất, và hiện trong khung hình".
-    // Ghim rồi thì mọi thay đổi ở ba ô địa chỉ — kể cả bấm ĐỔI HỆ cũ/mới, vốn làm
-    // ba ô đổi hết một lượt — đều KHÔNG được kéo bản đồ đi nơi khác. Chỉ lo đúng
-    // một việc: ghim mà trôi ra ngoài khung hình thì kéo về cho thấy lại.
-    // ⚠️ ĐÂY LÀ CHỖ GÂY "GHIM CHẠY LOẠN XẠ": trước đây hàm này luôn setView theo
-    // toạ độ tra được từ chuỗi địa chỉ, nên ghim đỏ bị đẩy ra khỏi màn hình mỗi
-    // lần ba ô thay đổi. ĐỪNG BỎ đoạn return này.
-    const ghim = ghimRef.current;
-    if (ghim) {
-      const p = ghim.getLatLng();
-      if (!map.getBounds().contains(p)) map.setView(p, Math.max(map.getZoom(), 15));
-      return;
-    }
 
     // BẢN ĐỒ THU DẦN THEO MỨC NHẬP — nhập càng chi tiết, bản đồ càng vào sát.
     // Chỉ chọn Tỉnh  → nhìn cả tỉnh
@@ -332,8 +318,17 @@ export default function MapPickerLeaflet({
     const coPhuong = (phan[1] ?? "").length > 0;
     const mucZoom = coSoNha ? 18 : coDuong ? 17 : coPhuong ? 15 : 12;
 
-    // Chính khối này vừa tự điền ngược vào ô địa chỉ → bỏ qua, nếu không sẽ tự
-    // kéo bản đồ ra khỏi cái ghim vừa cắm.
+    // ⚠️ HAI LOẠI THAY ĐỔI, ĐỐI XỬ KHÁC HẲN NHAU — ĐỪNG GỘP LẠI:
+    //
+    //  · MÁY vừa tự điền ngược ba ô sau khi người đăng ghim → KHÔNG được nhúc
+    //    nhích. Nhúc nhích là kéo bản đồ ra khỏi cái ghim vừa cắm, nhìn như ghim
+    //    chạy loạn xạ. Chặn trong 1,5 giây kể từ lúc tự điền.
+    //
+    //  · NGƯỜI ĐĂNG chủ động bấm chọn Tỉnh / Quận / Phường, hoặc gõ lại địa chỉ
+    //    → PHẢI trỏ bản đồ tới đó NGAY, kể cả khi đã có ghim. Họ bấm là họ muốn
+    //    nhìn chỗ đó (chủ dự án chốt: "khách bấm trường nào trỏ ngay đến vị trí
+    //    đó trước"). Ghim cũ vẫn giữ nguyên, không xoá — thấy ghim nằm sai chỗ
+    //    thì họ tự bấm lại một cái là xong.
     if (!tuBam && Date.now() - tuDienRef.current < 1500) return;
 
     // TRỎ TỚI NGAY, ĐỪNG BẮT NGƯỜI ĐĂNG CHỜ. Web có sẵn bảng tâm các khu vực lớn —

@@ -80,9 +80,36 @@ export async function traDiaChi(lat: number, lng: number): Promise<DiaChiTra | n
     // OpenStreetMap xếp phường/xã và quận/huyện vào nhiều khoá khác nhau tuỳ nơi,
     // phải dò lần lượt. Tách RIÊNG quận/huyện với phường/xã: hệ địa chỉ CŨ cần cả
     // hai, hệ MỚI (sau sáp nhập) chỉ dùng phường/xã.
-    const phuong = a.quarter || a.suburb || a.village || a.town || a.hamlet || "";
-    const quan = a.city_district || a.county || a.district || "";
-    const tinh = a.city || a.province || a.state || "";
+    // ── ĐỌC TỈNH · QUẬN/HUYỆN · PHƯỜNG/XÃ TỪ display_name ────────────────────
+    // ⚠️ ĐỪNG QUAY LẠI CHỈ DÙNG CÁC TRƯỜNG LẺ (a.city, a.state…). Sau sáp nhập
+    // 2025, OpenStreetMap nhét lung tung: Thanh Hoá ra a.city = "Phường Hạc
+    // Thành", Huế ra "Phường Thuận Hoá", Nha Trang ra "Nha Trang" — tức lấy tỉnh
+    // theo a.city là SAI ở phần lớn tỉnh. Đo thật 03/09/2026: 12/15 tỉnh hỏng.
+    //
+    // display_name thì luôn đủ và đúng thứ tự:
+    //   "…, Phường Quy Nhơn, Quy Nhơn, Tỉnh Gia Lai, 55111, Việt Nam"
+    //   "…, Phường Thuận Hoá, Thành phố Huế, 49118, Việt Nam"
+    // Bỏ "Việt Nam" và mã bưu chính thì:
+    //   · phần tử CUỐI            = Tỉnh/Thành
+    //   · phần tử ÁP CUỐI, nếu KHÔNG phải Phường/Xã = Thành phố/Huyện CŨ
+    //     (đây là thứ duy nhất còn sót để suy ra Quận/Huyện của hệ địa chỉ CŨ —
+    //      cấp quận/huyện đã bị xoá khỏi bản đồ vì Việt Nam đã bỏ cấp này)
+    //   · phần tử bắt đầu bằng Phường/Xã/Thị trấn = Phường/Xã
+    const manh = (kq.display_name ?? "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter((s) => s && !/^\d+$/.test(s) && s !== "Việt Nam");
+    const laPhuongXa = (s: string) => /^(phường|xã|thị trấn)\s/i.test(s);
+    const tinhTuTen = manh.length ? manh[manh.length - 1] : "";
+    const apCuoi = manh.length >= 2 ? manh[manh.length - 2] : "";
+    const phuongTuTen = [...manh].reverse().find(laPhuongXa) ?? "";
+
+    const phuong = phuongTuTen || a.quarter || a.suburb || a.village || a.town || a.hamlet || "";
+    const quan =
+      a.city_district || a.county || a.district ||
+      // Áp cuối là phường/xã nghĩa là không còn cấp trung gian nào để lấy.
+      (apCuoi && !laPhuongXa(apCuoi) ? apCuoi : "");
+    const tinh = tinhTuTen || a.state || a.province || a.city || "";
     // display_name có cả "Việt Nam" và mã bưu chính ở cuối — cắt bớt cho gọn.
     const day = kq.display_name
       ? kq.display_name.split(",").map((s) => s.trim()).slice(0, 4).join(", ")
