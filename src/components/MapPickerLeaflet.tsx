@@ -12,11 +12,35 @@ import NhacBatDinhVi from "@/components/NhacBatDinhVi";
 
 // ── GHIM VỊ TRÍ TRÊN BẢN ĐỒ (form đăng tin: khách & admin) ────────────────────
 //
-// BẢN ĐỒ NÀY ĐỂ LÀM GÌ (chủ dự án chốt 03/09/2026) — khác hẳn bản đồ trang tin:
-// đây là bản đồ của NGƯỜI ĐĂNG, và nó phải chạy HAI CHIỀU:
-//   · Gõ địa chỉ  → bản đồ TỰ GHIM tới đó (có tên đường là ghim được rồi)
-//   · Bấm ghim    → HIỆN ĐỊA CHỈ của điểm vừa ghim, để người đăng kiểm lại
+// ════════════════════════════════════════════════════════════════════════════
+// SÁU NGUYÊN TẮC CỦA BẢN ĐỒ HAI CHIỀU — chủ dự án chốt 03/09/2026.
+// Đọc hết trước khi sửa bất cứ dòng nào bên dưới. Mỗi nguyên tắc đều đổi bằng
+// một lần làm sai rồi bị bác, đừng làm lại vòng đó.
+//
+//  1. SỐ NHÀ LÀ QUYỀN CỦA NGƯỜI ĐĂNG, VÀ HỌ KHÔNG SAI.
+//     Bản đồ nào cũng vậy, kể cả Google: dữ liệu do người dùng và người vẽ bản đồ
+//     cập nhật, nên LUÔN ĐI SAU thực tế. Nhà mới xây, hẻm mới mở, đất nền chưa có
+//     số — bản đồ chưa kịp biết, người đăng thì biết. Vậy nên máy KHÔNG BAO GIỜ
+//     sửa số nhà / địa chỉ cụ thể họ đã gõ. Không phải "họ có thể sai" mà là
+//     "họ đúng, bản đồ mới là bên chưa cập nhật".
+//  2. Ô NÀO CÒN TRỐNG THÌ MÁY ĐIỀN HỘ. Không có gì để phá, lại đỡ một lần gõ.
+//  3. ĐỌC RA CHỮ KHÁC THÌ ĐỀ XUẤT, KHÔNG THAY. Hiện "bản đồ đọc được là …" kèm
+//     hai nút — người đăng quyết định, không phải máy.
+//  3b. BA KHỐI ĐỊA GIỚI (Tỉnh/Thành · Quận/Huyện · Phường/Xã) thì NGƯỢC LẠI: cứ
+//     cập nhật theo điểm ghim cho chính xác nhất có thể. Đó là sự thật khách quan
+//     suy từ toạ độ, không phải chuyện ý kiến — và tin phải lên đúng bộ lọc khu vực.
+//  4. GHIM LÀ QUYẾT ĐỊNH CỦA NGƯỜI ĐĂNG. Đã có ghim thì gõ lại địa chỉ hay đổi
+//     phường chỉ được DỜI KHUNG NHÌN, tuyệt đối không dời ghim.
+//  5. CHỈ GHIM KHI CHẮC. Tra ra tới tên đường mới tự ghim; chỉ ra tâm phường thì
+//     thôi — ghim giữa phường là ghim sai, thà để người đăng tự bấm.
+//  6. KHUYÊN BẬT GPS. Ghim ngay tại chỗ đang đứng là cách chính xác nhất. Khuyên
+//     đúng một dòng, không doạ, không bắt buộc.
+//
+// HAI CHIỀU nghĩa là:
+//   · Gõ địa chỉ  → bản đồ trỏ tới, và TỰ GHIM nếu chưa có ghim nào (nguyên tắc 4, 5)
+//   · Bấm ghim    → HIỆN ĐỊA CHỈ của điểm vừa ghim để kiểm lại (nguyên tắc 1, 2, 3)
 // Chỉ hiện một dấu đỏ trơ trọi là người đăng không biết mình ghim đúng hay sai.
+// ════════════════════════════════════════════════════════════════════════════
 //
 // VÌ SAO CẦN GHIM TAY: rất nhiều bất động sản KHÔNG có địa chỉ chính xác — đất nền
 // chưa có số nhà, lô dự án, nhà trong hẻm. Bắt gõ địa chỉ rồi để máy đoán là ghim sai.
@@ -89,6 +113,9 @@ export default function MapPickerLeaflet({
   //   nhà mình rõ hơn bản đồ. Máy chỉ ĐỀ XUẤT, họ bấm nhận thì mới thay.
   //   Ô nào còn TRỐNG thì điền luôn: không có gì để phá, lại đỡ họ một lần gõ.
   const [deXuat, setDeXuat] = useState<DiaChiTra | null>(null);
+  // Đã đọc được vị trí máy chưa (đã có chấm xanh). Chưa có thì KHUYÊN bật GPS —
+  // ghim theo vị trí thật là cách chính xác nhất, hơn hẳn tra theo tên đường.
+  const [coChamXanh, setCoChamXanh] = useState(false);
 
   useEffect(() => {
     onChangeRef.current = onChange;
@@ -134,17 +161,20 @@ export default function MapPickerLeaflet({
     // "địa chỉ cụ thể, phường/xã, quận/huyện, tỉnh/thành".
     const phan = hintRef.current.split(",").map((s) => s.trim());
     const daGoDiaChi = !!phan[0];
-    const daChonKhuVuc = phan.slice(1).some(Boolean);
 
-    // Ô TRỐNG → điền hộ. Ô ĐÃ CÓ CHỮ NGƯỜI ĐĂNG GÕ → tuyệt đối không đụng vào.
-    if (!daGoDiaChi && ten.ngan) onDiaChiRef.current?.(ten.ngan);
-    if (!daChonKhuVuc && (ten.tinh || ten.phuong || ten.quan))
+    // ── BA KHỐI ĐỊA GIỚI (Tỉnh/Thành · Quận/Huyện · Phường/Xã): LUÔN CẬP NHẬT ──
+    // Đây là SỰ THẬT KHÁCH QUAN suy ra từ toạ độ — ghim nằm ở phường nào thì nó ở
+    // phường đó, không phải chuyện ý kiến. Cập nhật cho chính xác nhất có thể còn
+    // để tin lên đúng bộ lọc khu vực; để lệch là khách tìm theo khu vực không ra tin.
+    if (ten.tinh || ten.phuong || ten.quan)
       onDiaGioiRef.current?.({ tinh: ten.tinh, quan: ten.quan, phuong: ten.phuong });
 
-    // Còn chỗ nào người đăng đã tự nhập thì đưa ra ĐỀ XUẤT để họ tự đối chiếu và
-    // quyết. Bản đồ đọc trùng luôn cái họ gõ thì khỏi hỏi cho rối mắt.
+    // ── SỐ NHÀ / ĐỊA CHỈ CỤ THỂ: QUYỀN CỦA KHÁCH ─────────────────────────────
+    // Ô trống → điền hộ. Đã có chữ người đăng gõ → giữ nguyên 100%, chỉ ĐỀ XUẤT.
+    // Bản đồ đọc trùng luôn cái họ gõ thì khỏi hỏi cho rối mắt.
+    if (!daGoDiaChi && ten.ngan) onDiaChiRef.current?.(ten.ngan);
     const trungKhop = ten.ngan.trim().toLowerCase() === (phan[0] ?? "").toLowerCase();
-    setDeXuat((daGoDiaChi || daChonKhuVuc) && !trungKhop ? ten : null);
+    setDeXuat(daGoDiaChi && !trungKhop && !!ten.ngan ? ten : null);
     tuDienRef.current = Date.now();
   }
 
@@ -212,6 +242,7 @@ export default function MapPickerLeaflet({
     const map = mapRef.current;
     if (!L || !map) return;
     toiRef.current = [lat, lng];
+    setCoChamXanh(true);
     if (doiTamNhin) map.setView([lat, lng], zoom);
 
     if (vongRef.current) vongRef.current.setLatLng([lat, lng]);
@@ -275,7 +306,9 @@ export default function MapPickerLeaflet({
     // + tên đường    → thu sát mặt đường và TỰ GHIM
     // + số nhà       → sát nhất
     const coDuong = phan[0].length >= 3;
-    const coSoNha = /d/.test(phan[0] ?? "");
+    // \d = CHỮ SỐ. Trước đây viết nhầm /d/ (chữ cái "d") nên mức phóng chọn sai:
+    // địa chỉ có số nhà mà không nhận ra, còn tên đường có chữ "d" lại tưởng có số.
+    const coSoNha = /\d/.test(phan[0] ?? "");
     const coPhuong = (phan[1] ?? "").length > 0;
     const mucZoom = coSoNha ? 18 : coDuong ? 17 : coPhuong ? 15 : 12;
 
@@ -300,9 +333,13 @@ export default function MapPickerLeaflet({
     // (Chỉ chặn đúng trường hợp máy tự điền, đã lọc ở đầu hàm.)
     map.setView([kq.lat, kq.lng], mucZoom);
 
-    // Ra tới tên đường thì ghim luôn. Chỉ ra được tâm phường thì KHÔNG ghim —
-    // ghim giữa phường là ghim sai, để người đăng tự bấm đúng chỗ.
-    if (sat && coDuong) datGhim({ lat: kq.lat, lng: kq.lng });
+    // ⚠️ CHỈ TỰ GHIM KHI CHƯA CÓ GHIM NÀO. Ghim là QUYẾT ĐỊNH CỦA NGƯỜI ĐĂNG —
+    // họ đã cắm đúng nhà mình rồi, sau đó chỉ sửa một chữ trong ô địa chỉ hay đổi
+    // phường mà máy dời ghim đi theo chỗ dịch vụ tra đoán, là máy phá việc của họ.
+    // Đã ghim thì hàm này chỉ dời KHUNG NHÌN, không đụng vào ghim.
+    // (Trước đây code vẫn dời ghim dù comment ngay trên đã hứa là không — sửa rồi.)
+    // Chỉ ra được tâm phường cũng KHÔNG ghim: ghim giữa phường là ghim sai.
+    if (sat && coDuong && !ghimRef.current) datGhim({ lat: kq.lat, lng: kq.lng });
   }
 
   // ── DỰNG BẢN ĐỒ MỘT LẦN ────────────────────────────────────────────────────
@@ -487,6 +524,17 @@ export default function MapPickerLeaflet({
         </p>
       )}
 
+      {/* KHUYÊN BẬT GPS — cách ghim chính xác nhất là ghim ngay tại chỗ đang đứng,
+          hơn hẳn để máy tra theo tên đường. Chỉ hiện khi CHƯA đọc được vị trí máy,
+          và chỉ MỘT DÒNG: đây là lời khuyên, không phải cảnh báo lỗi. Đọc được vị
+          trí rồi thì dòng này biến mất, nhường chỗ cho khoảng cách tới ghim. */}
+      {!coChamXanh && !loi && (
+        <p className="text-[12.5px] leading-relaxed text-cvr-muted">
+          💡 Bật GPS rồi bấm <span className="font-semibold text-cvr-body">“Tôi đang đứng ở đây”</span> — nếu
+          anh/chị đang ở ngay bất động sản, ghim sẽ đúng tới từng mét, khỏi phải dò tay.
+        </p>
+      )}
+
       {/* ĐỀ XUẤT ĐỊA CHỈ TỪ BẢN ĐỒ — chỉ hiện khi người đăng ĐÃ tự nhập và bản đồ
           đọc ra chữ khác. Máy nói mình đọc được gì, người đăng quyết giữ hay đổi.
           ⚠️ ĐỪNG biến khối này thành tự động thay: dữ liệu bản đồ ở Việt Nam sai
@@ -495,8 +543,8 @@ export default function MapPickerLeaflet({
         <div className="rounded-lg border border-cvr-line bg-cvr-surface px-3 py-2.5">
           <p className="text-[13px] leading-relaxed text-cvr-body">
             Bản đồ đọc điểm anh/chị vừa ghim là{" "}
-            <span className="font-semibold text-cvr-ink">{deXuat.day}</span>. Địa chỉ anh/chị
-            nhập vẫn được giữ nguyên.
+            <span className="font-semibold text-cvr-ink">{deXuat.ngan}</span>. Địa chỉ anh/chị
+            nhập vẫn giữ nguyên — bản đồ có thể chưa cập nhật kịp nhà mới, hẻm mới, đất nền.
           </p>
           <div className="mt-2 flex flex-wrap gap-2">
             <button
