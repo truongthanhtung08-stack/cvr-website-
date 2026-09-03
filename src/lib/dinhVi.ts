@@ -33,26 +33,26 @@ function laAndroid(): boolean {
 }
 
 // Các bước bật lại định vị — viết theo đúng máy khách đang cầm, không nói chung chung.
+//
+// ⚠️ ĐÚNG HAI BƯỚC, ĐỪNG VIẾT DÀI THÊM (chủ dự án chốt: "gợi ý ngắn gọn").
+// Web KHÔNG có quyền tự mở màn hình Cài đặt hay bật/tắt GPS của máy — hệ điều
+// hành chặn, mọi trang web đều vậy, không phải mình thiếu code. Thứ duy nhất web
+// gọi được là hộp thoại xin quyền của trình duyệt, mà hộp đó chỉ hiện khi khách
+// CHƯA từng bấm "Chặn". Đã bấm Chặn rồi thì chỉ còn cách chỉ họ tự bật.
 export function huongDanBatDinhVi(): string[] {
   if (laIOS())
     return [
-      "Vào Cài đặt của iPhone → Quyền riêng tư & Bảo mật → Dịch vụ định vị: BẬT",
-      "Vẫn màn hình đó, kéo tìm Safari (hoặc Chrome) → chọn Khi dùng ứng dụng",
-      "Quay lại trang này, bấm chữ ẢA bên trái địa chỉ web → Cài đặt trang web → Vị trí → Hỏi hoặc Cho phép",
-      "Tải lại trang rồi bấm lại nút định vị",
+      "Cài đặt → Quyền riêng tư & Bảo mật → Dịch vụ định vị: BẬT",
+      "Quay lại trang, bấm chữ ẢA bên trái thanh địa chỉ → Cài đặt trang web → Vị trí → Cho phép",
     ];
   if (laAndroid())
     return [
-      "Vào Cài đặt điện thoại → Vị trí: BẬT",
-      "Quay lại trang này, bấm ổ khoá 🔒 bên trái chữ coastalland.vn trên thanh địa chỉ",
-      "Chọn Quyền (Permissions) → Vị trí → Cho phép",
-      "Tải lại trang rồi bấm lại nút định vị",
+      "Vuốt từ trên xuống, bấm biểu tượng Vị trí cho sáng lên (hoặc Cài đặt → Vị trí: BẬT)",
+      "Quay lại trang, bấm ổ khoá 🔒 trên thanh địa chỉ → Quyền → Vị trí → Cho phép",
     ];
   return [
-    "Bấm ổ khoá 🔒 bên trái địa chỉ coastalland.vn trên thanh địa chỉ",
-    "Chọn Vị trí (Location) → Cho phép (Allow)",
-    "Máy Windows: Cài đặt → Quyền riêng tư và bảo mật → Vị trí: BẬT",
-    "Tải lại trang (phím F5) rồi bấm lại nút định vị",
+    "Bấm ổ khoá 🔒 trên thanh địa chỉ → Vị trí → Cho phép",
+    "Windows: Cài đặt → Quyền riêng tư và bảo mật → Vị trí: BẬT",
   ];
 }
 

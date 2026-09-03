@@ -6,7 +6,7 @@ import type * as LType from "leaflet";
 import { formatLatLng, parseLatLng, type LatLng } from "@/lib/googleMaps";
 import { xemTrenBanDo } from "@/lib/moGoogleMaps";
 import { docKhoangCach, khoangCachKm, layViTri, loiDinhVi } from "@/lib/dinhVi";
-import { timToaDo, traDiaChi } from "@/lib/timToaDo";
+import { timToaDo, traDiaChi, type DiaChiTra } from "@/lib/timToaDo";
 import { centerOfArea } from "@/lib/geo";
 import NhacBatDinhVi from "@/components/NhacBatDinhVi";
 
@@ -82,6 +82,13 @@ export default function MapPickerLeaflet({
   // Ghim đang ở mức nào — hiện thành một nhãn nhỏ để người đăng tự thấy địa chỉ
   // của mình đã đủ chính xác chưa. Đây là THÔNG TIN, không phải câu nhắc nhở.
   const [mucDoGhim, setMucDoGhim] = useState<"soNha" | "duong" | "khuVuc" | null>(null);
+  // ĐỊA CHỈ BẢN ĐỒ ĐỌC ĐƯỢC, ĐANG CHỜ NGƯỜI ĐĂNG QUYẾT.
+  // ⚠️ NGUYÊN TẮC CHỦ DỰ ÁN CHỐT — ĐỪNG SỬA LẠI THÀNH TỰ ĐIỀN ĐÈ:
+  //   Máy KHÔNG BAO GIỜ sửa địa chỉ người đăng đã gõ tay. Dữ liệu bản đồ ở Việt
+  //   Nam còn thiếu và sai nhiều (số nhà, hẻm, đất nền, khu mới) — người đăng biết
+  //   nhà mình rõ hơn bản đồ. Máy chỉ ĐỀ XUẤT, họ bấm nhận thì mới thay.
+  //   Ô nào còn TRỐNG thì điền luôn: không có gì để phá, lại đỡ họ một lần gõ.
+  const [deXuat, setDeXuat] = useState<DiaChiTra | null>(null);
 
   useEffect(() => {
     onChangeRef.current = onChange;
@@ -117,15 +124,28 @@ export default function MapPickerLeaflet({
     setDangTimDiaChi(true);
     const ten = await traDiaChi(p.lat, p.lng);
     setDangTimDiaChi(false);
-    // ĐIỀN THẲNG VÀO Ô ĐỊA CHỈ — đây là chiều ngược của "gõ địa chỉ thì bản đồ trỏ
-    // tới". Người đăng ghim đúng nhà mình là ô địa chỉ có sẵn số nhà + tên đường,
-    // khỏi gõ. Gõ sai chính tả tên đường cũng được sửa luôn theo bản đồ.
-    if (ten?.ngan) onDiaChiRef.current?.(ten.ngan);
-    // Trả cả Tỉnh/Thành + Phường/Xã về cho form tự chọn đúng mục trong hai ô kia.
-    if (ten && (ten.tinh || ten.phuong || ten.quan))
-      onDiaGioiRef.current?.({ tinh: ten.tinh, quan: ten.quan, phuong: ten.phuong });
-    tuDienRef.current = Date.now();
     setMucDoGhim(ten?.mucDo ?? null);
+    if (!ten) {
+      setDeXuat(null);
+      return;
+    }
+
+    // Người đăng đã gõ gì chưa? hint do form ghép theo đúng thứ tự
+    // "địa chỉ cụ thể, phường/xã, quận/huyện, tỉnh/thành".
+    const phan = hintRef.current.split(",").map((s) => s.trim());
+    const daGoDiaChi = !!phan[0];
+    const daChonKhuVuc = phan.slice(1).some(Boolean);
+
+    // Ô TRỐNG → điền hộ. Ô ĐÃ CÓ CHỮ NGƯỜI ĐĂNG GÕ → tuyệt đối không đụng vào.
+    if (!daGoDiaChi && ten.ngan) onDiaChiRef.current?.(ten.ngan);
+    if (!daChonKhuVuc && (ten.tinh || ten.phuong || ten.quan))
+      onDiaGioiRef.current?.({ tinh: ten.tinh, quan: ten.quan, phuong: ten.phuong });
+
+    // Còn chỗ nào người đăng đã tự nhập thì đưa ra ĐỀ XUẤT để họ tự đối chiếu và
+    // quyết. Bản đồ đọc trùng luôn cái họ gõ thì khỏi hỏi cho rối mắt.
+    const trungKhop = ten.ngan.trim().toLowerCase() === (phan[0] ?? "").toLowerCase();
+    setDeXuat((daGoDiaChi || daChonKhuVuc) && !trungKhop ? ten : null);
+    tuDienRef.current = Date.now();
   }
 
   // Nhãn nổi trên đầu ghim đỏ luôn bám theo ĐÚNG chuỗi địa chỉ của form, cập nhật
@@ -353,6 +373,17 @@ export default function MapPickerLeaflet({
     duongRef.current = null;
     setKhoangCach("");
     setMucDoGhim(null);
+    setDeXuat(null);
+  }
+
+  // Người đăng bấm nhận đề xuất — LÚC NÀY mới được thay chữ họ đã gõ.
+  function dungDeXuat() {
+    if (!deXuat) return;
+    if (deXuat.ngan) onDiaChiRef.current?.(deXuat.ngan);
+    if (deXuat.tinh || deXuat.quan || deXuat.phuong)
+      onDiaGioiRef.current?.({ tinh: deXuat.tinh, quan: deXuat.quan, phuong: deXuat.phuong });
+    tuDienRef.current = Date.now();
+    setDeXuat(null);
   }
 
   const nutPhu =
@@ -454,6 +485,32 @@ export default function MapPickerLeaflet({
             </span>
           )}
         </p>
+      )}
+
+      {/* ĐỀ XUẤT ĐỊA CHỈ TỪ BẢN ĐỒ — chỉ hiện khi người đăng ĐÃ tự nhập và bản đồ
+          đọc ra chữ khác. Máy nói mình đọc được gì, người đăng quyết giữ hay đổi.
+          ⚠️ ĐỪNG biến khối này thành tự động thay: dữ liệu bản đồ ở Việt Nam sai
+          số nhà rất nhiều, người đăng biết nhà mình rõ hơn bản đồ. */}
+      {deXuat && (
+        <div className="rounded-lg border border-cvr-line bg-cvr-surface px-3 py-2.5">
+          <p className="text-[13px] leading-relaxed text-cvr-body">
+            Bản đồ đọc điểm anh/chị vừa ghim là{" "}
+            <span className="font-semibold text-cvr-ink">{deXuat.day}</span>. Địa chỉ anh/chị
+            nhập vẫn được giữ nguyên.
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={dungDeXuat}
+              className="inline-flex min-h-[34px] items-center rounded-lg bg-cvr-ink px-3 text-[12.5px] font-semibold text-white transition hover:bg-cvr-body"
+            >
+              Dùng địa chỉ này
+            </button>
+            <button type="button" onClick={() => setDeXuat(null)} className={nutPhu}>
+              Giữ địa chỉ tôi nhập
+            </button>
+          </div>
+        </div>
       )}
 
       {loi && (
