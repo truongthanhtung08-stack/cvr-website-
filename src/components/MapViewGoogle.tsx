@@ -6,6 +6,7 @@ import { coordOf } from "@/lib/geo";
 import {
   MAP_KEY,
   loadMapsApi,
+  soatVeDuoc,
   onMapsAuthFailure,
   parseLatLng,
   type GMap,
@@ -194,6 +195,10 @@ export default function MapViewGoogle({ items, diem }: { items?: Listing[]; diem
         popupRef.current = new g.maps.InfoWindow({ disableAutoPan: false });
         map.addListener("idle", () => veMarker());
         setSanSang(true);
+        // Google nhận khoá nhưng không vẽ thì cũng phải biết mà lùi về dự phòng.
+        soatVeDuoc(boxRef.current, () => {
+          if (!huy) setHong(true);
+        });
       } catch {
         if (!huy) setHong(true);
       }

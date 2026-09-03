@@ -121,3 +121,18 @@ export function loadMapsApi(): Promise<void> {
   w.__cvrMapsPromise = p;
   return p;
 }
+
+// ── LƯỚI AN TOÀN: GOOGLE IM LẶNG KHÔNG VẼ ───────────────────────────────────
+// Có một kiểu hỏng Google KHÔNG báo gì cả: thư viện nạp xong, new Map() chạy êm,
+// gm_authFailure không hề được gọi, nhưng mặt bản đồ trống trơ. Đo được đúng kiểu
+// này ngày 3/9/2026, khi tài khoản Maps vừa nạp tiền mà máy chủ Google chưa công
+// nhận (Static Maps cùng lúc trả 403 "must enable Billing"). Cũng là kiểu hỏng
+// khi hết hạn mức tháng.
+// Bản đồ vẽ được thì Google chèn phần tử .gm-style vào khung. Soát sau vài giây,
+// không thấy thì coi như hỏng, để khối bản đồ lùi về phương án dự phòng.
+// Chủ dự án chốt: KHÔNG BAO GIỜ để mặt bản đồ trắng trơ — vào tin là phải thấy.
+export function soatVeDuoc(el: HTMLElement, onKhongVe: () => void): void {
+  window.setTimeout(() => {
+    if (!el.querySelector(".gm-style")) onKhongVe();
+  }, 5000);
+}

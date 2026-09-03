@@ -5,6 +5,7 @@ import {
   MAP_KEY,
   formatLatLng,
   loadMapsApi,
+  soatVeDuoc,
   onMapsAuthFailure,
   parseLatLng,
   type GMap,
@@ -202,6 +203,10 @@ export default function MapPickerGoogle({
         });
         mapRef.current = map;
         setSanSang(true);
+        // Google nhận khoá nhưng không vẽ thì cũng phải biết mà lùi về dự phòng.
+        soatVeDuoc(boxRef.current, () => {
+          if (!huy) setHong(true);
+        });
 
         // Bấm vào đâu là ghim vào đó — thao tác chính, ai cũng đoán được.
         map.addListener("click", (e) => {

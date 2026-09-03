@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   MAP_KEY,
   loadMapsApi,
+  soatVeDuoc,
   onMapsAuthFailure,
   parseLatLng,
   type GMap,
@@ -82,6 +83,10 @@ export default function MapPaneGoogle({
         });
         mapRef.current = map;
         setSanSang(true);
+        // Google nhận khoá nhưng không vẽ thì cũng phải biết mà lùi về dự phòng.
+        soatVeDuoc(boxRef.current, () => {
+          if (!huy) setHong(true);
+        });
 
         if (ghim) {
           ghimRef.current = new g.maps.Marker({ position: ghim, map });
