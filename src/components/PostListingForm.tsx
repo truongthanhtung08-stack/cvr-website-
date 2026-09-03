@@ -567,17 +567,19 @@ export default function PostListingForm() {
           )}
           <Pick label="Phường / Xã" value={ward} onChange={setWard} options={wards} placeholder="Chọn Phường / Xã" disabled={geoMode === "moi" ? !province : !district} />
         </div>
-        <div className="rounded-xl border border-cvr-line bg-cvr-surface/60 p-3 sm:p-4">
-          <Text label="Địa chỉ cụ thể (số nhà, đường, dự án)" value={addressDetail} onChange={setAddressDetail} placeholder="VD: 123 Võ Nguyên Giáp / Dự án ..." />
-          <div className="mt-3">
-            <MapPicker
-              value={mapPin}
-              onChange={setMapPin}
-              onDiaChi={setAddressDetail}
-              onDiaGioi={nhanDiaGioiTuBanDo}
-              hint={`${addressDetail}, ${ward}, ${district}, ${province}`}
-            />
-          </div>
+        {/* Ô "Địa chỉ cụ thể" do CHÍNH khối bản đồ vẽ, nằm dính ngay trên mặt bản
+            đồ — gõ tới đâu bản đồ nhảy tới đó, đối chiếu tại chỗ. Đừng tách ra
+            thành ô riêng nữa. */}
+        <div>
+          <Label>Địa chỉ cụ thể</Label>
+          <MapPicker
+            value={mapPin}
+            onChange={setMapPin}
+            diaChi={addressDetail}
+            onDiaChi={setAddressDetail}
+            onDiaGioi={nhanDiaGioiTuBanDo}
+            hint={`${addressDetail}, ${ward}, ${district}, ${province}`}
+          />
         </div>
       </Card>
 

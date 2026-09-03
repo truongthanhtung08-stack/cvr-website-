@@ -31,12 +31,16 @@ export default function MapPickerLeaflet({
   onChange,
   // Địa chỉ người đăng đang gõ — dùng để tự đưa bản đồ tới và tự ghim.
   hint = "",
+  // Chữ trong ô địa chỉ — ô này do CHÍNH khối bản đồ vẽ ra, nằm dính ngay trên
+  // mặt bản đồ. Form chỉ giữ giá trị, không tự dựng ô riêng nữa.
+  diaChi = "",
   onDiaChi,
   onDiaGioi,
 }: {
   value: string;
   onChange: (v: string) => void;
   hint?: string;
+  diaChi?: string;
   // GHIM XONG THÌ ĐIỀN LUÔN VÀO Ô ĐỊA CHỈ. Hai chiều thật sự: gõ địa chỉ thì bản
   // đồ trỏ tới, ghim lên bản đồ thì ô địa chỉ tự có số nhà + tên đường. Nơi gọi
   // không truyền thì chỉ hiện ra để đọc, không đụng vào ô nào.
@@ -297,18 +301,27 @@ export default function MapPickerLeaflet({
       {/* Nhãn tên đường nổi trên đầu ghim đỏ */}
       <style>{`.cl-nhan-ghim{background:#1d1d1f;color:#fff;border:none;border-radius:8px;padding:4px 9px;font-size:12px;font-weight:600;box-shadow:0 2px 10px rgba(0,0,0,.3);white-space:normal;max-width:220px}.cl-nhan-ghim::before{border-top-color:#1d1d1f}`}</style>
 
-      {/* ⚠️ KHÔNG chèn hướng dẫn dài vào ĐÂY. Ô địa chỉ và bản đồ phải dính sát
-          nhau: gõ địa chỉ là bản đồ trỏ tới, ghim là ô địa chỉ tự điền. Nhét một
-          đoạn chữ vào giữa là đứt mạch đó. Lời nhắc để GỌN, đặt ở PHÍA SAU. */}
-      <div className="relative overflow-hidden rounded-xl border border-cvr-line">
-        <div ref={boxRef} aria-label="Bản đồ ghim vị trí" className="h-[280px] w-full bg-cvr-surface" />
-
-        {/* CÁCH GHIM PHẢI VIẾT NGAY TRÊN BẢN ĐỒ. Để hướng dẫn dưới khung thì trên
-            điện thoại nó tụt xuống dưới màn hình, người đăng nhìn bản đồ không
-            biết làm gì. z-index trên 700 vì Leaflet xếp marker 600 / popup 700. */}
-        <span className="pointer-events-none absolute left-1/2 top-3 z-[1200] -translate-x-1/2 whitespace-nowrap rounded-full bg-cvr-ink/85 px-3.5 py-1.5 text-[12.5px] font-semibold text-white shadow-[0_2px_10px_rgba(0,0,0,0.3)] backdrop-blur-sm">
-          {daGhim ? "Kéo ghim đỏ để chỉnh lại cho đúng" : "Bấm lên bản đồ để ghim vị trí"}
-        </span>
+      {/* Ô ĐỊA CHỈ NẰM NGAY TRONG KHUNG BẢN ĐỒ — dính liền, không cách nhau dòng
+          nào. Người đăng gõ tới đâu nhìn bản đồ nhảy tới đó, đối chiếu tại chỗ;
+          bấm ghim thì chữ trong ô này tự đổi theo. Tách hai thứ ra là mất cái đó.
+          ⚠️ Đừng chèn tiêu đề hay lời nhắc nào vào giữa hai phần này. */}
+      <div className="overflow-hidden rounded-xl border border-cvr-line">
+        {onDiaChi && (
+          <div className="flex items-center border-b border-cvr-line bg-white">
+            <svg className="ml-3.5 h-4 w-4 shrink-0 text-cvr-faint" fill="none" stroke="currentColor" strokeWidth={1.9} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 11a2 2 0 100-4 2 2 0 000 4z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 22s7-6.5 7-12a7 7 0 10-14 0c0 5.5 7 12 7 12z" />
+            </svg>
+            <input
+              value={diaChi}
+              onChange={(e) => onDiaChi(e.target.value)}
+              placeholder="Số nhà, tên đường… hoặc bấm thẳng lên bản đồ"
+              className="w-full bg-transparent px-3 py-3 text-[15px] text-cvr-ink outline-none placeholder:text-cvr-faint"
+            />
+            {dangTimDiaChi && <span className="mr-3.5 shrink-0 text-[12px] text-cvr-faint">đang tìm…</span>}
+          </div>
+        )}
+        <div ref={boxRef} aria-label="Bản đồ ghim vị trí" className="h-[300px] w-full bg-cvr-surface" />
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
@@ -325,9 +338,6 @@ export default function MapPickerLeaflet({
           {dangDinhVi ? "Đang định vị…" : "Tôi đang đứng ở đây"}
         </button>
 
-        <button type="button" onClick={() => void veDiaChi(true)} disabled={dangTimDiaChi} className={nutPhu}>
-          {dangTimDiaChi ? "Đang tìm…" : "Ghim theo địa chỉ đã nhập"}
-        </button>
 
         {/* SOI LẠI TRÊN GOOGLE MAPS — mở thẳng app bản đồ trên máy để người đăng
             kiểm tra ảnh vệ tinh, tên đường quanh điểm vừa ghim. Đây KHÔNG phải nút
