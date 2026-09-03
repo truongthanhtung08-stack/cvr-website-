@@ -53,7 +53,7 @@ export function themNenBanDo(L: typeof LType, map: LType.Map): LType.TileLayer {
 // không tải gì cả — để lại Ô TRẮNG vĩnh viễn, gọi invalidateSize sau cũng không
 // cứu được vì lớp ảnh chưa từng được khởi tạo tử tế.
 // Hàm này đợi tới khi khung có kích thước thật rồi mới cho dựng.
-export function choKhungCoKichThuoc(khung: HTMLElement, toiDaMs = 10000): Promise<void> {
+export function choKhungCoKichThuoc(khung: HTMLElement, toiDaMs = 1200): Promise<void> {
   if (khung.clientHeight > 0 && khung.clientWidth > 0) return Promise.resolve();
   return new Promise((xong) => {
     let da = false;
@@ -71,8 +71,9 @@ export function choKhungCoKichThuoc(khung: HTMLElement, toiDaMs = 10000): Promis
           })
         : null;
     theoDoi?.observe(khung);
-    // Trình duyệt cũ không có ResizeObserver, hoặc khung mãi không hiện: đợi tối
-    // đa rồi cứ dựng, thà bản đồ nhỏ còn hơn không có gì.
+    // ⚠️ ĐỢI NGẮN THÔI (1,2 giây). Hàm này chỉ để tránh dựng vào khung 0×0 lúc
+    // trang mới tải; nó TUYỆT ĐỐI KHÔNG được biến thành thứ chặn bản đồ dựng.
+    // Hết giờ thì cứ dựng, doLaiKhungBanDo() phía sau lo việc đo lại khi khung hiện.
     const hen = window.setTimeout(ket, toiDaMs);
   });
 }
