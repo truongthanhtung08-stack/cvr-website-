@@ -9,7 +9,6 @@ import { docKhoangCach, khoangCachKm, layViTri, loiDinhVi } from "@/lib/dinhVi";
 import { timToaDo, traDiaChi } from "@/lib/timToaDo";
 import { centerOfArea } from "@/lib/geo";
 import NhacBatDinhVi from "@/components/NhacBatDinhVi";
-import TimDiaDiem from "@/components/TimDiaDiem";
 
 // ── GHIM VỊ TRÍ TRÊN BẢN ĐỒ (form đăng tin: khách & admin) ────────────────────
 //
@@ -27,22 +26,25 @@ import TimDiaDiem from "@/components/TimDiaDiem";
 // được. Leaflet + OpenStreetMap không cần khoá, không cần thanh toán, kéo MỘT ngón.
 // Tra địa chỉ dùng Nominatim của OpenStreetMap, cũng miễn phí — xem src/lib/timToaDo.ts.
 //
+// ⚠️ THANH "ĐỊA CHỈ CỤ THỂ" NẰM NGOÀI KHỐI NÀY, là một ô riêng của form (chủ dự án
+// chốt 03/09/2026: "thanh địa chỉ là riêng biệt với phần map, đó là bắt buộc").
+// Đã thử nhét ô đó vào trong khung bản đồ kèm bảng gợi ý — bị bác: che mất bản đồ
+// lúc thao tác, và bảng gợi ý rối. ĐỪNG LÀM LẠI.
+// Khối này chỉ nhận chuỗi địa chỉ qua tham số hint rồi tự đưa bản đồ tới, và trả
+// ngược địa chỉ + địa giới về form khi người đăng ghim.
+//
 // Toạ độ ghi ra vẫn là chuỗi "lat, lng" như cũ, tầng dữ liệu không đổi gì.
 export default function MapPickerLeaflet({
   value,
   onChange,
   // Địa chỉ người đăng đang gõ — dùng để tự đưa bản đồ tới và tự ghim.
   hint = "",
-  // Chữ trong ô địa chỉ — ô này do CHÍNH khối bản đồ vẽ ra, nằm dính ngay trên
-  // mặt bản đồ. Form chỉ giữ giá trị, không tự dựng ô riêng nữa.
-  diaChi = "",
   onDiaChi,
   onDiaGioi,
 }: {
   value: string;
   onChange: (v: string) => void;
   hint?: string;
-  diaChi?: string;
   // GHIM XONG THÌ ĐIỀN LUÔN VÀO Ô ĐỊA CHỈ. Hai chiều thật sự: gõ địa chỉ thì bản
   // đồ trỏ tới, ghim lên bản đồ thì ô địa chỉ tự có số nhà + tên đường. Nơi gọi
   // không truyền thì chỉ hiện ra để đọc, không đụng vào ô nào.
@@ -65,9 +67,6 @@ export default function MapPickerLeaflet({
   const hintRef = useRef(hint);
   // Phần KHU VỰC của hint (bỏ đoạn đầu là địa chỉ cụ thể) — ghép vào truy vấn gợi
   // ý để kết quả ra đúng tỉnh/phường đang chọn, không nhảy sang tỉnh khác.
-  // Phần khu vực để lọc gợi ý — phải là STATE chứ không phải ref, vì nó được đọc
-  // lúc vẽ (ref đọc lúc vẽ là sai luật của React).
-  const khuVuc = hint.split(",").slice(1).map((x) => x.trim()).filter(Boolean).join(", ");
   const toiRef = useRef<[number, number] | null>(null);
 
   const [sanSang, setSanSang] = useState(false);
@@ -240,15 +239,28 @@ export default function MapPickerLeaflet({
   // họ tự dò từ đầu.
   async function veDiaChi(tuBam: boolean) {
     const map = mapRef.current;
-    const diaChi = hintRef.current.split(",").map((s) => s.trim()).filter(Boolean).join(", ");
+    const phan = hintRef.current.split(",").map((x) => x.trim());
+    const diaChi = phan.filter(Boolean).join(", ");
     if (!map || diaChi.length < 4) return;
+
+    // BẢN ĐỒ THU DẦN THEO MỨC NHẬP — nhập càng chi tiết, bản đồ càng vào sát.
+    // Chỉ chọn Tỉnh  → nhìn cả tỉnh
+    // + Phường/Xã    → thu về phường
+    // + tên đường    → thu sát mặt đường và TỰ GHIM
+    // + số nhà       → sát nhất
+    const coDuong = phan[0].length >= 3;
+    const coSoNha = /d/.test(phan[0] ?? "");
+    const coPhuong = (phan[1] ?? "").length > 0;
+    const mucZoom = coSoNha ? 18 : coDuong ? 17 : coPhuong ? 15 : 12;
+
+    const daCoGhim = !!parseLatLng(value);
 
     // TRỎ TỚI NGAY, ĐỪNG BẮT NGƯỜI ĐĂNG CHỜ. Web có sẵn bảng tâm các khu vực lớn —
     // dùng nó nhảy tới liền trong tích tắc, rồi mới hỏi dịch vụ tra địa chỉ để chỉnh
     // cho sát. Chờ mạng trả lời xong mới nhúc nhích thì bản đồ trông như đơ.
-    if (!parseLatLng(value)) {
+    if (!daCoGhim) {
       const kvNhanh = centerOfArea(diaChi);
-      if (kvNhanh) map.setView(kvNhanh, 14);
+      if (kvNhanh) map.setView(kvNhanh, Math.min(mucZoom, 14));
     }
 
     setDangTimDiaChi(true);
@@ -257,18 +269,16 @@ export default function MapPickerLeaflet({
     if (!kq) return;
 
     const sat = kq.mucDo !== "khuVuc";
-    const daCoGhim = !!parseLatLng(value);
 
     // ⚠️ ĐÃ GHIM RỒI THÌ TUYỆT ĐỐI KHÔNG DỜI BẢN ĐỒ.
     // Lỗi cũ: ghim xong → ô địa chỉ tự điền → chuỗi địa chỉ đổi → hàm này chạy lại
     // và KÉO BẢN ĐỒ đi chỗ khác, ghim đỏ trôi ra ngoài màn hình. Người đăng bấm
     // ghim mà nhìn không thấy dấu đỏ đâu, tưởng ghim hỏng.
-    // Chỉ dời khi CHƯA ghim, hoặc khi người đăng tự chọn một gợi ý địa chỉ.
-    if (!daCoGhim || tuBam) map.setView([kq.lat, kq.lng], sat ? 17 : 15);
+    if (!daCoGhim || tuBam) map.setView([kq.lat, kq.lng], mucZoom);
 
     // Tự ghim khi tra ra tới tên đường. Chỉ ra được tâm phường thì KHÔNG ghim —
     // ghim giữa phường là ghim sai, để người đăng tự bấm đúng chỗ.
-    if (sat && (!daCoGhim || tuBam)) datGhim({ lat: kq.lat, lng: kq.lng });
+    if (sat && coDuong && (!daCoGhim || tuBam)) datGhim({ lat: kq.lat, lng: kq.lng });
   }
 
   // ── DỰNG BẢN ĐỒ MỘT LẦN ────────────────────────────────────────────────────
@@ -357,28 +367,6 @@ export default function MapPickerLeaflet({
             bản đồ CAO — kéo xem và ghim thoải mái — mà cả ô địa chỉ lẫn bản đồ vẫn
             nằm trọn trong một màn hình, khỏi kéo lên kéo xuống đối chiếu.
             z-index trên 700 vì Leaflet xếp marker 600 / popup 700. */}
-        {/* THANH "ĐỊA CHỈ CỤ THỂ" — BẮT BUỘC, không được bỏ.
-            ⚠️ Nằm SÁT NGAY TRÊN bản đồ, chung một khung, KHÔNG nổi đè lên mặt bản
-            đồ nữa: đặt nổi thì lúc kéo/ghim nó che mất đúng chỗ đang cần nhìn.
-            Gõ vài chữ là ra gợi ý tên đường để chọn — chọn xong bản đồ bay tới và
-            ghim luôn. Bảng gợi ý là thứ DUY NHẤT được phép đè, và chỉ trong lúc gõ. */}
-        {onDiaChi && (
-          <div className="border-b border-cvr-line bg-white">
-            <TimDiaDiem
-              value={diaChi}
-              onChange={onDiaChi}
-              onChon={(kq) => {
-                mapRef.current?.setView([kq.lat, kq.lng], 18);
-                datGhim({ lat: kq.lat, lng: kq.lng });
-              }}
-              khuVuc={khuVuc}
-              nhan="Địa chỉ cụ thể (số nhà, tên đường)"
-              batBuoc
-              placeholder="Gõ tên đường rồi chọn — hoặc bấm thẳng lên bản đồ"
-              dangBan={dangTimDiaChi}
-            />
-          </div>
-        )}
         {/* Cao theo màn hình để điện thoại nào cũng được một bản đồ đủ rộng mà vẫn
             còn chỗ cho ô khu vực bên trên và hàng nút bên dưới. */}
         <div ref={boxRef} aria-label="Bản đồ ghim vị trí" className="h-[46vh] min-h-[280px] w-full bg-cvr-surface sm:h-[360px]" />

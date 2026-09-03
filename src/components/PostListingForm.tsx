@@ -565,14 +565,19 @@ export default function PostListingForm() {
           )}
           <Pick label="Phường / Xã" value={ward} onChange={setWard} options={wards} placeholder="Chọn Phường / Xã" disabled={geoMode === "moi" ? !province : !district} />
         </div>
-        {/* Thanh "Địa chỉ cụ thể" nằm NGAY TRONG khối bản đồ (sát trên mặt bản đồ),
-            có gợi ý tên đường. Khối tự vẽ nhãn nên ở đây KHÔNG đặt <Label> nữa,
-            đặt là ra hai nhãn chồng nhau. */}
-        <div>
+        {/* THANH ĐỊA CHỈ LÀ Ô RIÊNG, NẰM NGOÀI BẢN ĐỒ — chủ dự án chốt.
+            Gõ tới đâu bản đồ bên dưới tự thu lại và trôi tới đó; ghim trên bản đồ
+            thì ô này tự điền ngược lại. ĐỪNG nhét ô này vào trong khung bản đồ. */}
+        <Text
+          label="Địa chỉ cụ thể (số nhà, tên đường)"
+          value={addressDetail}
+          onChange={setAddressDetail}
+          placeholder="VD: 123 Võ Nguyên Giáp / Dự án ..."
+        />
+        <div className="mt-3">
           <MapPicker
             value={mapPin}
             onChange={setMapPin}
-            diaChi={addressDetail}
             onDiaChi={setAddressDetail}
             onDiaGioi={nhanDiaGioiTuBanDo}
             hint={`${addressDetail}, ${ward}, ${district}, ${province}`}

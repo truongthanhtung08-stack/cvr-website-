@@ -435,6 +435,16 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
         <div className="mt-4">
         </div>
         <div className="mt-4">
+          <Field label="Địa chỉ cụ thể (số nhà, tên đường)">
+            <input
+              value={addressDetail}
+              onChange={(e) => setAddressDetail(e.target.value)}
+              placeholder="VD: 123 Võ Nguyên Giáp / Dự án ..."
+              className={inputCls}
+            />
+          </Field>
+        </div>
+        <div className="mt-4">
           <Field label="Ghim vị trí trên bản đồ (toạ độ hoặc link Google Maps)">
             <input
               value={mapPin}
@@ -451,7 +461,6 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
             <MapPicker
               value={mapPin}
               onChange={setMapPin}
-              diaChi={addressDetail}
               onDiaChi={setAddressDetail}
               onDiaGioi={(dc) => {
                 diaGioiTuBanDoRef.current = dc;
