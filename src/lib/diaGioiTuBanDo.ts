@@ -91,7 +91,13 @@ export function ganDiaGioi(
   // lỗi chủ dự án báo 03/09/2026 ("hệ mới hiện đúng, hệ cũ không có quận/huyện").
   if (!quan && dc.phuong) quan = khopDanhMuc(dc.phuong, dsQuan);
   const quanDung = quan || (doiTinh ? "" : dangCo.district);
-  if (!quanDung) return { province: tinh, district: "", ward: doiTinh ? "" : giuPhuong };
+  // Việt Nam chạy SONG SONG hai hệ cho tới khi dân quen hệ mới → hệ CŨ cũng phải
+  // điền được đủ ba khối. Bản đồ chỉ biết TÊN PHƯỜNG MỚI ("Phường Thuận Hoá"),
+  // mà danh mục phường CŨ của quận đó không có tên ấy → không khớp. Lúc đó cứ
+  // điền thẳng tên bản đồ đọc được: cùng một chỗ trên thực địa, chỉ khác cách gọi
+  // cấp hành chính. Để trống là người đăng phải tự dò, mà ba khối phải MẶC ĐỊNH.
+  const phuongThoTuBanDo = dc.phuong || (doiTinh ? "" : giuPhuong);
+  if (!quanDung) return { province: tinh, district: "", ward: phuongThoTuBanDo };
   const phuongKhop = khopDanhMuc(dc.phuong, wardsOf(tinh, quanDung));
-  return { province: tinh, district: quanDung, ward: phuongKhop || (doiTinh ? "" : giuPhuong) };
+  return { province: tinh, district: quanDung, ward: phuongKhop || phuongThoTuBanDo };
 }

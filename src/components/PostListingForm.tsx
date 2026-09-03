@@ -230,12 +230,16 @@ export default function PostListingForm() {
   const wards =
     geoMode === "moi"
       ? province ? wardsOfNew(province) : []
-      : province && district
-        ? wardsOf(province, district)
-        // Tỉnh chưa có danh mục quận/huyện cũ → không thể ra danh sách phường cũ.
-        // Dùng danh mục phường MỚI của chính tỉnh đó: cùng một chỗ trên thực địa,
-        // chỉ khác cách gọi cấp hành chính. Có danh sách để chọn còn hơn ô rỗng.
-        : province ? wardsOfNew(province) : [];
+      : province
+        // Việt Nam chạy SONG SONG hai hệ cho tới khi dân quen hệ mới, nên hệ CŨ
+        // phải dùng được y như hệ mới — không được để ô rỗng ở bất kỳ tỉnh nào.
+        // Ưu tiên danh mục phường CŨ của đúng quận/huyện đang chọn; tỉnh hoặc quận
+        // nào web chưa nhập đủ danh mục cũ thì lấy danh mục phường MỚI của chính
+        // tỉnh đó — cùng một chỗ trên thực địa, chỉ khác cách gọi cấp hành chính.
+        ? (district ? wardsOf(province, district) : []).length
+          ? wardsOf(province, district)
+          : wardsOfNew(province)
+        : [];
 
 
   // GHIM TRÊN BẢN ĐỒ → TỰ ĐIỀN ba ô Tỉnh/Thành · Quận/Huyện · Phường/Xã.
