@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -246,8 +246,20 @@ export default function PostListingForm() {
   // Chạy được với CẢ HAI hệ địa chỉ: hệ CŨ ba cấp (Tỉnh → Quận/Huyện → Phường/Xã)
   // và hệ MỚI hai cấp sau sáp nhập (Tỉnh → Phường/Xã). Người đăng đang ở hệ nào thì
   // điền đúng các ô của hệ đó.
-  function nhanDiaGioiTuBanDo({ tinh, quan, phuong }: { tinh: string; quan: string; phuong: string }) {
-    const tinhKhop = tinh ? khopDanhMuc(tinh, provinceNamesFor(geoMode)) : "";
+  // Nhớ lại địa giới đọc được từ điểm ghim, để KHÁCH ĐỔI HỆ ĐỊA CHỈ lúc nào cũng
+  // điền lại được ngay — không bắt họ ghim lại từ đầu.
+  const diaGioiTuBanDoRef = useRef<{ tinh: string; quan: string; phuong: string } | null>(null);
+
+  function nhanDiaGioiTuBanDo(dc: { tinh: string; quan: string; phuong: string }) {
+    diaGioiTuBanDoRef.current = dc;
+    apDungDiaGioi(dc, geoMode);
+  }
+
+  function apDungDiaGioi(
+    { tinh, quan, phuong }: { tinh: string; quan: string; phuong: string },
+    heDiaChi: GeoMode,
+  ) {
+    const tinhKhop = tinh ? khopDanhMuc(tinh, provinceNamesFor(heDiaChi)) : "";
     // Chỉ đổi khi tìm ra mục có thật trong danh mục — không tìm ra thì GIỮ NGUYÊN
     // lựa chọn của người đăng, tuyệt đối không xoá trắng ô của họ.
     const tinhDung = tinhKhop || province;
@@ -258,7 +270,7 @@ export default function PostListingForm() {
     }
     if (!tinhDung) return;
 
-    if (geoMode === "moi") {
+    if (heDiaChi === "moi") {
       const phuongKhop = khopDanhMuc(phuong, wardsOfNew(tinhDung));
       if (phuongKhop) setWard(phuongKhop);
       return;
@@ -576,7 +588,16 @@ export default function PostListingForm() {
             <button
               key={m.id}
               type="button"
-              onClick={() => { setGeoMode(m.id); setProvince(""); setDistrict(""); setWard(""); }}
+              onClick={() => {
+                setGeoMode(m.id);
+                setProvince("");
+                setDistrict("");
+                setWard("");
+                // Đã ghim trên bản đồ rồi thì đổi hệ xong ĐIỀN LẠI NGAY theo hệ mới
+                // chọn — khách không phải ghim lại lần nữa.
+                const dc = diaGioiTuBanDoRef.current;
+                if (dc) setTimeout(() => apDungDiaGioi(dc, m.id), 0);
+              }}
               className={`rounded-md px-3 py-1.5 text-xs font-medium transition ${
                 geoMode === m.id ? "bg-cvr-ink text-white" : "text-cvr-body hover:text-cvr-ink"
               }`}
