@@ -64,6 +64,7 @@ export async function traDiaChi(lat: number, lng: number): Promise<DiaChiTra | n
       display_name?: string;
       address?: {
         house_number?: string; road?: string; neighbourhood?: string; suburb?: string;
+        amenity?: string; building?: string; shop?: string; residential?: string;
         quarter?: string; village?: string; town?: string; hamlet?: string;
         city_district?: string; county?: string; district?: string;
         city?: string; state?: string; province?: string;
@@ -71,7 +72,11 @@ export async function traDiaChi(lat: number, lng: number): Promise<DiaChiTra | n
     };
     const a = kq.address ?? {};
     const duong = a.road || a.neighbourhood || "";
-    const ngan = [a.house_number, duong].filter(Boolean).join(" ").trim();
+    // Ghim vào chỗ CHƯA CÓ TÊN ĐƯỜNG — đất nền, lô trong dự án, đường mới mở —
+    // thì lấy tên địa điểm/khu dân cư gần nhất, chứ để ô địa chỉ trống trơn là
+    // người đăng tưởng ghim hỏng.
+    const moc = a.amenity || a.building || a.shop || a.residential || "";
+    const ngan = [a.house_number, duong || moc].filter(Boolean).join(" ").trim();
     // OpenStreetMap xếp phường/xã và quận/huyện vào nhiều khoá khác nhau tuỳ nơi,
     // phải dò lần lượt. Tách RIÊNG quận/huyện với phường/xã: hệ địa chỉ CŨ cần cả
     // hai, hệ MỚI (sau sáp nhập) chỉ dùng phường/xã.

@@ -90,7 +90,7 @@ export default function MapPaneLeaflet({
         touchZoom: !locked,
       }).setView(tam, ghim ? zoom : kv ? Math.min(zoom, 14) : 12);
 
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: GHI_NGUON,
         maxZoom: 19,
       }).addTo(map);

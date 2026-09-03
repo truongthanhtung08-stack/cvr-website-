@@ -96,7 +96,11 @@ export default function MapPickerLeaflet({
   // Ghim xong là tra ngược ra địa chỉ và gắn ngay nhãn lên trên đầu ghim, để người
   // đăng đọc được mình vừa ghim vào đâu chứ không phải đoán theo dấu đỏ.
   async function hienTenChoGhim(p: LatLng) {
+    // Tra ngược qua mạng, có khi mất một hai giây. Không báo gì thì người đăng
+    // ghim xong thấy ô địa chỉ đứng im, tưởng hỏng.
+    setDangTimDiaChi(true);
     const ten = await traDiaChi(p.lat, p.lng);
+    setDangTimDiaChi(false);
     setDiaChiGhim(ten?.day ?? "");
     // ĐIỀN THẲNG VÀO Ô ĐỊA CHỈ — đây là chiều ngược của "gõ địa chỉ thì bản đồ trỏ
     // tới". Người đăng ghim đúng nhà mình là ô địa chỉ có sẵn số nhà + tên đường,
@@ -253,7 +257,7 @@ export default function MapPickerLeaflet({
         daCo ? [daCo.lat, daCo.lng] : [16.054, 108.202],
         daCo ? 17 : 13,
       );
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: GHI_NGUON,
         maxZoom: 19,
       }).addTo(map);
@@ -344,6 +348,13 @@ export default function MapPickerLeaflet({
         {/* Cao theo màn hình để điện thoại nào cũng được một bản đồ đủ rộng mà vẫn
             còn chỗ cho ô khu vực bên trên và hàng nút bên dưới. */}
         <div ref={boxRef} aria-label="Bản đồ ghim vị trí" className="h-[46vh] min-h-[280px] w-full bg-cvr-surface sm:h-[360px]" />
+        {/* Mạng chậm thì bản đồ mất vài giây mới hiện. Không báo gì, người đăng
+            nhìn ô xám trống là tưởng hỏng rồi bỏ đi. */}
+        {!sanSang && (
+          <span className="pointer-events-none absolute inset-0 flex items-center justify-center text-[13px] font-medium text-cvr-muted">
+            Đang mở bản đồ…
+          </span>
+        )}
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
