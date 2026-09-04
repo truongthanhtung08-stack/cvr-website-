@@ -32,11 +32,11 @@ const BAT_FACEBOOK = false;
 // Thiếu một trong ba thì khách bấm vào sẽ nhập số rồi NGỒI CHỜ MÃ KHÔNG BAO GIỜ
 // TỚI — tệ hơn là không có nút. Nên mặc định TẮT.
 //
-// 👉 Xong cả ba: Vercel → Environment Variables → thêm
-//       NEXT_PUBLIC_BAT_SO_DIEN_THOAI = 1
-//    rồi Redeploy. Nút hiện ngay, không cần sửa code, không cần chờ ai.
-//    Thấy trục trặc thì xoá biến đó đi là nút ẩn lại.
-const BAT_SO_DIEN_THOAI = process.env.NEXT_PUBLIC_BAT_SO_DIEN_THOAI === "1";
+// ✅ 05/09/2026 — cả ba đã xong: Zalo duyệt mẫu 630638, Supabase đã bật Phone và
+//    đã cắm Send SMS Hook trỏ về /api/auth/sms-hook (chuỗi bí mật giữ trong bảng
+//    `bi_mat`). Nên mặc định BẬT. Cần tắt gấp thì đặt
+//    NEXT_PUBLIC_BAT_SO_DIEN_THOAI = 0 trên Vercel rồi Redeploy.
+const BAT_SO_DIEN_THOAI = process.env.NEXT_PUBLIC_BAT_SO_DIEN_THOAI !== "0";
 
 // ⚠️ TẠM ẨN NÚT ZALO (30/08/2026) — đã thử thật trên coastalland.vn, Zalo trả:
 //   {"error":-501,"message":"Personal information is limited due to IP address

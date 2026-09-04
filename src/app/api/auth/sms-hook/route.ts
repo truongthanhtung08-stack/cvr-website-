@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { guiZns } from "@/lib/thongBao";
 import { baoLoi } from "@/lib/baoLoi";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 // ============================================================================
 // SUPABASE "SEND SMS HOOK" — GỬI MÃ OTP ĐĂNG NHẬP QUA ZALO
@@ -33,9 +34,23 @@ import { baoLoi } from "@/lib/baoLoi";
 // ============================================================================
 export const dynamic = "force-dynamic";
 
+/** Mẫu ZNS "Mã OTP đăng nhập" Zalo đã duyệt — mã mẫu không phải bí mật. */
+const MAU_OTP_MAC_DINH = "630638";
+
+/**
+ * Chuỗi bí mật hook nằm trong bảng `bi_mat` (giống cách token Zalo OA được giữ),
+ * nên không phải cắm thêm biến môi trường mỗi lần Supabase xoay khoá.
+ */
+async function layHookSecret(): Promise<string | undefined> {
+  const admin = createAdminClient();
+  if (!admin) return undefined;
+  const { data } = await admin.from("bi_mat").select("data").eq("key", "sms_hook_secret").limit(1);
+  return (data?.[0]?.data as { secret?: string } | undefined)?.secret;
+}
+
 export async function POST(request: Request) {
-  const secret = process.env.SUPABASE_SMS_HOOK_SECRET;
-  const templateId = process.env.ZALO_ZNS_TEMPLATE_OTP;
+  const secret = process.env.SUPABASE_SMS_HOOK_SECRET || (await layHookSecret());
+  const templateId = process.env.ZALO_ZNS_TEMPLATE_OTP || MAU_OTP_MAC_DINH;
 
   // Thiếu cấu hình → trả lỗi RÕ RÀNG. Không im lặng nuốt, vì im lặng nghĩa là
   // khách bấm gửi mã mà mãi không nhận được, không ai biết vì sao.
@@ -113,13 +128,11 @@ export async function GET(request: Request) {
     }
   }
 
+  const secret = process.env.SUPABASE_SMS_HOOK_SECRET || (await layHookSecret());
   return NextResponse.json({
-    daCauHinh: Boolean(process.env.SUPABASE_SMS_HOOK_SECRET && process.env.ZALO_ZNS_TEMPLATE_OTP && process.env.ZALO_OA_ACCESS_TOKEN),
-    thieu: [
-      !process.env.SUPABASE_SMS_HOOK_SECRET && "SUPABASE_SMS_HOOK_SECRET",
-      !process.env.ZALO_OA_ACCESS_TOKEN && "ZALO_OA_ACCESS_TOKEN",
-      !process.env.ZALO_ZNS_TEMPLATE_OTP && "ZALO_ZNS_TEMPLATE_OTP",
-    ].filter(Boolean),
+    daCauHinh: Boolean(secret),
+    mauOtp: process.env.ZALO_ZNS_TEMPLATE_OTP || MAU_OTP_MAC_DINH,
+    nguonBiMat: process.env.SUPABASE_SMS_HOOK_SECRET ? "bien-moi-truong" : secret ? "bang-bi_mat" : "chua-co",
   });
 }
 
