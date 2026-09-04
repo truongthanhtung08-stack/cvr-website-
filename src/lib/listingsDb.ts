@@ -247,6 +247,16 @@ export type ListingFull = {
   places: { category: string; name: string; distance: string }[]; // tiện ích quanh BĐS
 };
 
+// Tách mô tả thành mảng DÒNG cho RichContent (chế độ WYSIWYG): GIỮ nguyên xuống dòng
+// + dòng trống người đăng gõ (dòng trống = NGẮT ĐOẠN), chỉ cắt dòng trống thừa đầu/cuối.
+// TRƯỚC ĐÂY .filter(Boolean) BỎ hết dòng trống → mất ngắt đoạn, mô tả dính "đều đều".
+function dongMoTa(text: string | null): string[] {
+  const lines = (text ?? "").replace(/\r\n/g, "\n").split("\n").map((s) => s.trim());
+  while (lines.length && lines[0] === "") lines.shift();
+  while (lines.length && lines[lines.length - 1] === "") lines.pop();
+  return lines;
+}
+
 function rowToDetail(r: Row): ListingFull {
   const d = r.details ?? {};
   // Tách ẢNH và VIDEO: thư viện ảnh chỉ nhận ảnh; video hiện ở mục Video riêng.
@@ -270,7 +280,7 @@ function rowToDetail(r: Row): ListingFull {
     images: imgs.map(asset),
     videos,
     builtArea: r.built_area_m2 != null ? `${fmtNum(r.built_area_m2, 0)} m²` : null,
-    descriptionParas: (r.description ?? "").split("\n").map((s) => s.trim()).filter(Boolean),
+    descriptionParas: dongMoTa(r.description),
     specsChinh,
     specs,
     interior: d.interior ?? [],

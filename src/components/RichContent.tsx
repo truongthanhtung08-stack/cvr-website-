@@ -58,7 +58,18 @@ export function videoMarkerUrl(line: string): string | null {
 // (toàn văn bản) vẫn hiện như trước — dòng nào không phải marker → đoạn văn <p>.
 // Ảnh chèn giữa bài BẤM ĐƯỢC: mở toàn màn hình + zoom + vuốt qua các ảnh khác
 // trong cùng bài (ContentPhoto → PhotoViewer).
-export default function RichContent({ paragraphs, title }: { paragraphs: string[]; title?: string }) {
+export default function RichContent({
+  paragraphs,
+  title,
+  wysiwyg = false,
+}: {
+  paragraphs: string[];
+  title?: string;
+  // wysiwyg = true (dùng cho MÔ TẢ TIN ĐĂNG): hiện Y HỆT người gõ — giữ nguyên xuống
+  // dòng + dòng trống làm ngắt đoạn. false (dự án/bài viết): giữ chế độ cũ (mỗi dòng
+  // 1 đoạn) để KHÔNG đổi hiển thị nội dung cũ của chúng.
+  wysiwyg?: boolean;
+}) {
   // Gom trước toàn bộ ảnh trong bài để bấm ảnh nào cũng vuốt qua lại được.
   // thuTuAnh: dòng thứ i trong bài là ảnh thứ mấy của bộ ảnh.
   const anhTrongBai: string[] = [];
@@ -71,23 +82,57 @@ export default function RichContent({ paragraphs, title }: { paragraphs: string[
     }
   });
 
+  // Ảnh / video / dòng có marker căn lề → luôn là MỘT KHỐI riêng (cả 2 chế độ).
+  // Mặc định CANH TRÁI (dễ đọc); ai gõ ::center::/::right::/::justify:: thì theo marker.
+  const khoiDacBiet = (p: string, i: number): React.ReactNode | null => {
+    const video = videoMarkerUrl(p);
+    if (video) return <VideoEmbed key={i} url={video} />;
+    const viTri = thuTuAnh.get(i);
+    if (viTri !== undefined) return <ContentPhoto key={i} images={anhTrongBai} index={viTri} title={title} />;
+    const am = p.match(ALIGN_MARKER);
+    if (am) return <p key={i} className={ALIGN_CLASS[am[1]]}>{renderInline(p.slice(am[0].length))}</p>;
+    return null;
+  };
+
+  // ── WYSIWYG: gom các dòng chữ liền nhau (kể cả dòng trống) thành 1 đoạn <p>
+  //    whitespace-pre-line → xuống dòng = xuống dòng, dòng trống = ngắt đoạn, đúng
+  //    y người đăng gõ. Không cần "đoán" đoạn. Gộp >1 dòng trống về 1 cho gọn. ──
+  if (wysiwyg) {
+    const blocks: React.ReactNode[] = [];
+    let buf: string[] = [];
+    const xaBuf = (key: string) => {
+      const text = buf.join("\n").replace(/^\n+|\n+$/g, "").replace(/\n{3,}/g, "\n\n");
+      buf = [];
+      if (text.trim()) {
+        blocks.push(
+          <p key={key} className="whitespace-pre-line text-left">
+            {renderInline(text)}
+          </p>,
+        );
+      }
+    };
+    paragraphs.forEach((p, i) => {
+      const kb = khoiDacBiet(p, i);
+      if (kb) {
+        xaBuf(`t${i}`);
+        blocks.push(kb);
+        return;
+      }
+      buf.push(p); // gom cả dòng trống → pre-line giữ đúng ngắt đoạn
+    });
+    xaBuf("end");
+    return <>{blocks}</>;
+  }
+
+  // ── Chế độ cũ (dự án / bài viết): mỗi dòng 1 đoạn, canh trái ──
   return (
     <>
       {paragraphs.map((p, i) => {
-        const video = videoMarkerUrl(p);
-        if (video) return <VideoEmbed key={i} url={video} />;
-        const viTri = thuTuAnh.get(i);
-        if (viTri !== undefined) {
-          return <ContentPhoto key={i} images={anhTrongBai} index={viTri} title={title} />;
-        }
-        const am = p.match(ALIGN_MARKER);
-        const body = am ? p.slice(am[0].length) : p;
+        const kb = khoiDacBiet(p, i);
+        if (kb) return kb;
         return (
-          // Mặc định CANH ĐỀU hai bên (justify) cho mọi đoạn văn dài trên web —
-          // mô tả tin, tổng quan dự án, bài viết đều đi qua đây. Đoạn nào có
-          // marker căn lề riêng (giữa/phải) thì vẫn theo marker.
-          <p key={i} className={am ? ALIGN_CLASS[am[1]] : "text-justify"}>
-            {renderInline(body)}
+          <p key={i} className="text-left">
+            {renderInline(p)}
           </p>
         );
       })}

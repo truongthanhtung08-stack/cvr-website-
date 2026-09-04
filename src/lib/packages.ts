@@ -30,8 +30,8 @@ export type Tier = {
 // Thứ tự cao → thấp: Diamond > Gold > Silver > Basic
 export const tiers: Tier[] = [
   { id: "diamond", name: "CVR Diamond", short: "Diamond", tagline: "Ưu tiên hiển thị cao nhất — x20 lượt xem", accent: "#141414", badgeText: "#e8c766", bar: "#c9a24a", titleColor: "#1d1d1f", uppercase: true, hot: true, rank: 0 },
-  { id: "gold", name: "CVR Gold", short: "Gold", tagline: "Hiển thị nổi bật — x10 lượt xem", accent: "#c9a24a", badgeText: "#ffffff", bar: "", titleColor: "#946f1f", uppercase: true, hot: true, rank: 1 },
-  { id: "silver", name: "CVR Silver", short: "Silver", tagline: "Tiết kiệm hiệu quả — x5 lượt xem", accent: "#8a8f98", badgeText: "#ffffff", bar: "", titleColor: "#565b63", uppercase: false, hot: true, rank: 2 },
+  { id: "gold", name: "CVR Gold", short: "Gold", tagline: "Hiển thị nổi bật — x10 lượt xem", accent: "#c9a24a", badgeText: "#ffffff", bar: "#c9a24a", titleColor: "#946f1f", uppercase: true, hot: true, rank: 1 },
+  { id: "silver", name: "CVR Silver", short: "Silver", tagline: "Tiết kiệm hiệu quả — x5 lượt xem", accent: "#8a8f98", badgeText: "#ffffff", bar: "#c3c8cf", titleColor: "#565b63", uppercase: false, hot: true, rank: 2 },
   { id: "basic", name: "CVR Basic", short: "Basic", tagline: "Tin thường, chi phí thấp nhất", accent: "#9aa0a6", badgeText: "#ffffff", bar: "", titleColor: "", uppercase: false, hot: false, rank: 3 },
 ];
 
@@ -190,15 +190,15 @@ export const benefitRows: BenefitRow[] = [
     values: { diamond: "Gấp 20 lần", gold: "Gấp 10 lần", silver: "Gấp 5 lần", basic: "—" },
   },
   {
-    label: "Kích thước tin đăng",
-    values: { diamond: "Rất lớn", gold: "Lớn", silver: "Trung bình", basic: "Nhỏ nhất" },
+    label: "Nội dung trên thẻ tin",
+    values: { diamond: "3 dòng mô tả", gold: "2 dòng", silver: "1 dòng", basic: "Không" },
   },
   {
-    label: "Tiêu đề tin",
+    label: "Nhận diện thẻ tin",
     values: {
-      diamond: "Đỏ · VIẾT HOA · đậm",
-      gold: "Vàng · VIẾT HOA · đậm",
-      silver: "Xanh · đậm",
+      diamond: "Kim Cương · dải vàng + huy hiệu đen chữ vàng kim · VIẾT HOA",
+      gold: "Vàng · dải vàng + huy hiệu vàng · VIẾT HOA",
+      silver: "Bạc · dải bạc + huy hiệu bạc · in đậm",
       basic: "Mặc định",
     },
   },

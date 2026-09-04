@@ -134,13 +134,20 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
   const curDistrict = districtOf(l.location);
   const all = await getListings(); // B2: tin tương tự cũng lấy từ Supabase
   const samePurpose = all.filter((x) => x.id !== l.id && (x.purpose ?? "ban") === purpose);
+  // HỆ SỐ X (tài liệu: "khuếch đại phân phối"): trong khối "Có thể bạn quan tâm",
+  // VIP được ưu tiên NỔI hơn — Diamond > Gold > Silver. Cộng < 1 nên CHỈ sắp VIP
+  // trước khi ĐỒNG độ liên quan, KHÔNG kéo tin VIP kém liên quan vượt tin khớp hơn
+  // (giữ minh bạch: độ liên quan vẫn quyết định chính).
+  const vipBoost = (badge?: string) =>
+    badge === "VIP" ? 0.9 : badge === "Nổi bật" ? 0.6 : badge === "Mới" ? 0.3 : 0;
   const relatedFill = pickRelated(
     samePurpose,
     (x) =>
       (l.projectSlug && x.projectSlug === l.projectSlug ? 8 : 0) +
       (curDistrict && districtOf(x.location) === curDistrict ? 4 : 0) +
       (provinceOf(x.location) === curProvince ? 2 : 0) +
-      (x.type === l.type ? 1 : 0),
+      (x.type === l.type ? 1 : 0) +
+      vipBoost(x.badge),
     samePurpose.length,
   );
 
@@ -274,8 +281,8 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
               {/* Mô tả — chỉ hiện khi người đăng có viết (không bịa) */}
               {d.descriptionParas.length > 0 && (
                 <Section id="mo-ta" title="Thông tin mô tả">
-                  <div className="space-y-3 whitespace-pre-line text-[15px] leading-relaxed text-cvr-body">
-                    <RichContent paragraphs={d.descriptionParas} title={l.title} />
+                  <div className="space-y-3 text-[15px] leading-relaxed text-cvr-body">
+                    <RichContent paragraphs={d.descriptionParas} title={l.title} wysiwyg />
                   </div>
                 </Section>
               )}
