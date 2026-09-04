@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { guiThongBao, type NoiDungThongBao } from "@/lib/thongBao";
+import { guiThongBao, MAU_NAP_TIEN, MAU_DUYET_TIN, type NoiDungThongBao } from "@/lib/thongBao";
 import { vnd } from "@/lib/billing";
 import { zaloOaConfig } from "@/lib/zaloOa";
 
@@ -56,8 +56,13 @@ export async function POST(request: Request) {
             { nhan: "Số dư hiện tại", giaTri: vnd(7_200_000) },
             { nhan: "Mã giao dịch", giaTri: "GUI-THU" },
           ],
-          znsTemplateId: process.env.ZALO_ZNS_TEMPLATE_NAP_TIEN,
-          znsData: { so_tien: vnd(5_000_000), so_du: vnd(7_200_000) },
+          znsTemplateId: MAU_NAP_TIEN,
+          znsData: {
+            ten_khach_hang: "Quý khách",
+            ma_giao_dich: "GUI-THU",
+            so_tien: vnd(5_000_000),
+            so_du: vnd(7_200_000),
+          },
         }
       : {
           tieuDe: "[GỬI THỬ] Tin của bạn đã được duyệt",
@@ -70,8 +75,14 @@ export async function POST(request: Request) {
             { nhan: "Đã trừ ví", giaTri: vnd(2_268_000) },
             { nhan: "Số dư còn lại", giaTri: vnd(4_932_000) },
           ],
-          znsTemplateId: process.env.ZALO_ZNS_TEMPLATE_DUYET_TIN,
-          znsData: { ten_tin: "Villa biển 3 tầng", so_tien: vnd(2_268_000), so_du: vnd(4_932_000) },
+          znsTemplateId: MAU_DUYET_TIN,
+          znsData: {
+            ten_khach_hang: "Quý khách",
+            ma_giao_dich: "GUI-THU",
+            ten_tin: "Villa biển 3 tầng",
+            so_tien: vnd(2_268_000),
+            so_du: vnd(4_932_000),
+          },
         };
 
   const ketQua = await guiThongBao({ email, phone, ...noiDung });
@@ -98,12 +109,13 @@ export async function GET() {
       // bắt buộc cắm ZALO_OA_REFRESH_TOKEN. Chỉ cần App ID + Secret (dùng chung
       // với ZALO_APP_ID / ZALO_APP_SECRET của phần đăng nhập Zalo).
       daCamKhoa: zaloOaConfig().daCauHinh || Boolean(process.env.ZALO_OA_ACCESS_TOKEN),
-      mauOtp: Boolean(process.env.ZALO_ZNS_TEMPLATE_OTP),
-      // Thông báo qua Zalo mặc định TẮT cho đỡ tốn (~300–500đ/tin), email miễn phí.
-      // OTP đăng nhập KHÔNG chịu ảnh hưởng công tắc này — luôn gửi.
-      guiThongBaoZalo: process.env.ZALO_THONG_BAO === "1",
-      mauNapTien: Boolean(process.env.ZALO_ZNS_TEMPLATE_NAP_TIEN),
-      mauDuyetTin: Boolean(process.env.ZALO_ZNS_TEMPLATE_DUYET_TIN),
+      mauOtp: true,
+      // Mã mẫu nay đặt cứng trong code nên luôn có; muốn tắt cho đỡ tốn
+      // (~300–500đ/tin) thì đặt ZALO_THONG_BAO=0. OTP đăng nhập KHÔNG chịu ảnh
+      // hưởng công tắc này — luôn gửi.
+      guiThongBaoZalo: process.env.ZALO_THONG_BAO !== "0",
+      mauNapTien: Boolean(MAU_NAP_TIEN),
+      mauDuyetTin: Boolean(MAU_DUYET_TIN),
     },
   });
 }

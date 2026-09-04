@@ -254,7 +254,7 @@ function KhoiGuiThu() {
           <Dong
             ok={cfg.zalo.guiThongBaoZalo}
             nhan="Gửi THÔNG BÁO kèm Zalo"
-            phu={cfg.zalo.guiThongBaoZalo ? "đang bật — mỗi tin ~300–500đ" : "đang TẮT cho đỡ tốn (email vẫn gửi bình thường) · bật bằng ZALO_THONG_BAO=1"}
+            phu={cfg.zalo.guiThongBaoZalo ? "đang bật — mỗi tin ~300–500đ" : "đang TẮT cho đỡ tốn (email vẫn gửi bình thường) · bỏ ZALO_THONG_BAO=0 để bật lại"}
           />
         </ul>
       )}

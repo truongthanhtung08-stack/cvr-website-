@@ -21,9 +21,12 @@
 //   ZALO_ZNS_TEMPLATE_DUYET_TIN mã mẫu tin ZNS "tin đã lên sóng"
 //
 // ── MẪU ĐÃ ĐĂNG KÝ VỚI ZALO (tạo 30/08/2026, OA Coastal Land · ZBS-311320) ──
-//   630636  Tin đăng đã duyệt   → ten_tin, so_tien, so_du   → ZALO_ZNS_TEMPLATE_DUYET_TIN
-//   630637  Nạp tiền vào ví     → so_tien, so_du            → ZALO_ZNS_TEMPLATE_NAP_TIEN
-//   630638  Mã OTP đăng nhập    → otp                       → ZALO_ZNS_TEMPLATE_OTP
+//   630636  Tin đăng đã duyệt   → ten_khach_hang, ma_giao_dich, ten_tin, so_tien, so_du
+//   630637  Nạp tiền vào ví     → ten_khach_hang, ma_giao_dich, so_tien, so_du
+//   630638  Mã OTP đăng nhập    → otp   (ĐÃ DUYỆT 05/09/2026)
+//
+// Mã mẫu KHÔNG phải bí mật nên đặt cứng làm mặc định — khỏi cắm biến trên Vercel.
+// Biến môi trường vẫn được ưu tiên, để đổi mẫu mà không cần sửa code.
 // Chưa tạo: mẫu tin bị từ chối (ten_tin, ly_do) · mẫu hóa đơn (so_hoa_don, so_tien).
 //
 // ⚠️ TÊN THAM SỐ Ở ĐÂY PHẢI KHỚP TỪNG CHỮ với mẫu bên Zalo. Sai một chữ là Zalo
@@ -31,6 +34,10 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 const ZNS_URL = "https://business.openapi.zalo.me/message/template";
+
+/** Mã mẫu ZNS mặc định — xem bảng ở đầu file. Biến môi trường được ưu tiên hơn. */
+export const MAU_NAP_TIEN = process.env.ZALO_ZNS_TEMPLATE_NAP_TIEN || "630637";
+export const MAU_DUYET_TIN = process.env.ZALO_ZNS_TEMPLATE_DUYET_TIN || "630636";
 
 export type KetQuaKenh = {
   kenh: "email" | "zalo";
@@ -108,10 +115,14 @@ async function guiZalo(t: NoiDungThongBao): Promise<KetQuaKenh> {
   // Nên THÔNG BÁO (nạp tiền, duyệt tin) mặc định chỉ gửi email. Muốn gửi kèm
   // Zalo thì đặt ZALO_THONG_BAO=1 trên Vercel.
   //
+  // 05/09/2026 — ĐẢO MẶC ĐỊNH THÀNH BẬT: mã mẫu đã đặt cứng trong code (xem
+  // MAU_NAP_TIEN / MAU_DUYET_TIN) nên không còn gì phải cắm trên Vercel; muốn
+  // tắt gấp cho đỡ tốn thì đặt ZALO_THONG_BAO=0.
+  //
   // ⚠️ Công tắc này KHÔNG ảnh hưởng mã OTP đăng nhập — route /api/auth/sms-hook
   // gọi thẳng guiZns(), luôn gửi, vì đó là đường đăng nhập duy nhất của khách.
-  if (process.env.ZALO_THONG_BAO !== "1") {
-    return { kenh: "zalo", daGui: false, lyDo: "đang tắt để tiết kiệm (đặt ZALO_THONG_BAO=1 để bật)" };
+  if (process.env.ZALO_THONG_BAO === "0") {
+    return { kenh: "zalo", daGui: false, lyDo: "đang tắt để tiết kiệm (bỏ ZALO_THONG_BAO=0 để bật lại)" };
   }
   if (!t.znsTemplateId) return { kenh: "zalo", daGui: false, lyDo: "chưa khai mã mẫu ZNS" };
   return guiZns(t.phone, t.znsTemplateId, t.znsData ?? {});
@@ -129,6 +140,8 @@ async function guiZalo(t: NoiDungThongBao): Promise<KetQuaKenh> {
 //   so_du    → kiểu "Số lượng / Số tiền"          =  20
 //   so_hoa_don → kiểu "Mã số"                     =  30
 //   otp      → kiểu "OTP"                         =  10
+//   ten_khach_hang → kiểu "Tên khách hàng"        =  30
+//   ma_giao_dich   → kiểu "Mã số"                 =  30
 //
 // ⚠️ Đổi kiểu tham số bên ZBS thì phải sửa bảng này cho khớp.
 const GIOI_HAN_THAM_SO: Record<string, number> = {
@@ -137,6 +150,8 @@ const GIOI_HAN_THAM_SO: Record<string, number> = {
   so_tien: 20,
   so_du: 20,
   so_hoa_don: 30,
+  ten_khach_hang: 30,
+  ma_giao_dich: 30,
   otp: 10,
 };
 

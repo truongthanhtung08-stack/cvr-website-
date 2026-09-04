@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { BILLING_DEFAULT, chuanHoaCapHoiVien, vnd, type BillingData, type MemberLevel } from "@/lib/billing";
-import { guiThongBao } from "@/lib/thongBao";
+import { guiThongBao, MAU_NAP_TIEN } from "@/lib/thongBao";
 import { baoLoi } from "@/lib/baoLoi";
 
 // ============================================================================
@@ -203,8 +203,13 @@ export async function POST(req: Request) {
         { nhan: "Số dư hiện tại", giaTri: vnd(soDuMoi) },
         { nhan: "Mã giao dịch", giaTri: String(don.id) },
       ],
-      znsTemplateId: process.env.ZALO_ZNS_TEMPLATE_NAP_TIEN,
-      znsData: { so_tien: vnd(soTien), so_du: vnd(soDuMoi) },
+      znsTemplateId: MAU_NAP_TIEN,
+      znsData: {
+        ten_khach_hang: cu?.full_name || "Quý khách",
+        ma_giao_dich: String(don.id),
+        so_tien: vnd(soTien),
+        so_du: vnd(soDuMoi),
+      },
     });
   }
 

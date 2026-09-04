@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { BILLING_DEFAULT, quotePrice, vnd, type BillingData } from "@/lib/billing";
 import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
-import { guiThongBao } from "@/lib/thongBao";
+import { guiThongBao, MAU_DUYET_TIN } from "@/lib/thongBao";
 import { baoLoi } from "@/lib/baoLoi";
 import type { TierId } from "@/lib/packages";
 
@@ -94,8 +94,13 @@ export async function POST(request: Request) {
         { nhan: "Tin đăng", giaTri: tin.title },
         { nhan: "Gói dịch vụ", giaTri: "Tin thường (miễn phí)" },
       ],
-      znsTemplateId: process.env.ZALO_ZNS_TEMPLATE_DUYET_TIN,
-      znsData: { ten_tin: tin.title, so_tien: vnd(0), so_du: vnd(soDuHienTai) },
+      znsTemplateId: MAU_DUYET_TIN,
+      znsData: {
+        ma_giao_dich: String(tin.id),
+        ten_tin: tin.title,
+        so_tien: vnd(0),
+        so_du: vnd(soDuHienTai),
+      },
     });
     return NextResponse.json({ ok: true, mienPhi: true });
   }
@@ -216,8 +221,9 @@ export async function POST(request: Request) {
       { nhan: "Số dư còn lại", giaTri: vnd(soDu - tien.tongTra) },
       { nhan: "Hiển thị đến", giaTri: new Date(hetHan).toLocaleDateString("vi-VN") },
     ],
-    znsTemplateId: process.env.ZALO_ZNS_TEMPLATE_DUYET_TIN,
+    znsTemplateId: MAU_DUYET_TIN,
     znsData: {
+      ma_giao_dich: String(tin.id),
       ten_tin: tin.title,
       so_tien: vnd(tien.tongTra),
       so_du: vnd(soDu - tien.tongTra),
@@ -252,12 +258,16 @@ async function baoKhach(
   try {
     let email = hoSo?.email ?? null;
     let phone = hoSo?.phone ?? null;
+    let ten = hoSo?.full_name ?? null;
     if (!hoSo && ownerId) {
-      const { data } = await admin.from("profiles").select("email,phone").eq("id", ownerId).limit(1);
+      const { data } = await admin.from("profiles").select("email,phone,full_name").eq("id", ownerId).limit(1);
       email = (data?.[0]?.email as string | null) ?? null;
       phone = (data?.[0]?.phone as string | null) ?? null;
+      ten = (data?.[0]?.full_name as string | null) ?? null;
     }
-    const kq = await guiThongBao({ ...noiDung, email, phone });
+    // Mẫu ZNS bắt buộc có tên khách; điền ở đây để mọi lối gọi đều đủ tham số.
+    const znsData = noiDung.znsData && { ten_khach_hang: ten || "Quý khách", ...noiDung.znsData };
+    const kq = await guiThongBao({ ...noiDung, znsData, email, phone });
 
     // Không kênh nào tới được khách = khách đã bị trừ tiền mà không biết tin đã
     // lên sóng. Im lặng ở đây là mất khách, nên báo ngay cho chủ dự án gọi tay.
