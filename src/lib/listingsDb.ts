@@ -131,6 +131,8 @@ function rowToListing(r: Row): Listing {
     image: asset(r.images.find((s) => !isVideoUrl(s)) ?? anhTam(r.type)),
     // Số ẢNH thật (không tính video) → badge "📷 n" đúng thay vì cứng "1"
     imageCount: r.images.filter((s) => !isVideoUrl(s)).length,
+    // Có ít nhất 1 video → thẻ hiện nhãn "▶ Video"
+    hasVideo: r.images.some((s) => isVideoUrl(s)),
     // 5 ảnh đầu cho thẻ tin tự chạy (xem components/AnhChay.tsx)
     images: r.images.filter((s) => !isVideoUrl(s)).slice(0, 5).map((s) => asset(s)),
     badge: TIER_BADGE[r.tier],

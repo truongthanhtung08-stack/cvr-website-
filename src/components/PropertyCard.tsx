@@ -109,10 +109,17 @@ export default function PropertyCard({
           <CompareButton id={item.id} className={isMini ? "h-7 w-7" : undefined} />
           {!showAgent && <SaveButton id={item.id} className={`sm:hidden ${isMini ? "h-7 w-7" : ""}`} />}
         </div>
-        {/* Badge số ảnh kiểu Homedy */}
-        <span className="absolute bottom-2 left-2 flex items-center gap-1 bg-black/55 px-1.5 py-0.5 text-[11px] font-medium text-white">
-          <CameraIcon />{item.imageCount || 1}
-        </span>
+        {/* Nhãn số ẢNH + VIDEO (kiểu Batdongsan/Homedy) — góc dưới trái ảnh */}
+        <div className="absolute bottom-2 left-2 flex items-center gap-1.5">
+          <span className="flex items-center gap-1 bg-black/55 px-1.5 py-0.5 text-[11px] font-medium text-white">
+            <CameraIcon />{item.imageCount || 1}
+          </span>
+          {item.hasVideo && (
+            <span className="flex items-center gap-1 bg-black/55 px-1.5 py-0.5 text-[11px] font-medium text-white">
+              <PlayIcon />Video
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Nội dung */}
@@ -207,9 +214,16 @@ function PropertyRow({ item, showTime = false, terms = [] }: { item: Listing; sh
           <SaveButton id={item.id} className="h-7 w-7" />
           <CompareButton id={item.id} className="h-7 w-7" />
         </div>
-        <span className="absolute bottom-2 left-2 flex items-center gap-1 bg-black/55 px-1.5 py-0.5 text-[11px] text-white">
-          <CameraIcon />{item.imageCount || 1}
-        </span>
+        <div className="absolute bottom-2 left-2 flex items-center gap-1.5">
+          <span className="flex items-center gap-1 bg-black/55 px-1.5 py-0.5 text-[11px] text-white">
+            <CameraIcon />{item.imageCount || 1}
+          </span>
+          {item.hasVideo && (
+            <span className="flex items-center gap-1 bg-black/55 px-1.5 py-0.5 text-[11px] text-white">
+              <PlayIcon />Video
+            </span>
+          )}
+        </div>
       </div>
       <div className="flex min-w-0 flex-1 flex-col">
         <h3
@@ -253,6 +267,14 @@ function CameraIcon() {
   return (
     <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 24 24">
       <path d="M9 3l-1.5 2H4a2 2 0 00-2 2v11a2 2 0 002 2h16a2 2 0 002-2V7a2 2 0 00-2-2h-3.5L15 3H9zm3 5a5 5 0 110 10 5 5 0 010-10z" />
+    </svg>
+  );
+}
+
+function PlayIcon() {
+  return (
+    <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 24 24">
+      <path d="M8 5v14l11-7z" />
     </svg>
   );
 }
