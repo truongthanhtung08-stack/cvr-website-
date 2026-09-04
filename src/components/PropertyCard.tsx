@@ -200,14 +200,16 @@ function PropertyRow({ item, showTime = false, terms = [] }: { item: Listing; sh
       // ĐIỆN THOẠI: ảnh TRÊN – nội dung DƯỚI (xếp dọc).
       // MÁY TÍNH: ảnh TRÁI – nội dung PHẢI, ảnh chiếm ~38% bề ngang thẻ
       // (đã tăng theo file V3 10.08.2026 — ảnh đại diện cũ nhỏ, lệch với nội dung).
-      className="flex flex-col gap-3 overflow-hidden rounded-none border border-cvr-line bg-white p-2.5 shadow-lux shadow-lux-hover transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 sm:flex-row sm:gap-4 sm:p-3"
+      className="relative flex flex-col gap-3 overflow-hidden rounded-none border border-cvr-line bg-white p-2.5 shadow-lux shadow-lux-hover transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 sm:flex-row sm:gap-4 sm:p-3"
     >
+      {/* Dải nhấn KIM LOẠI đỉnh thẻ — CHỈ Kim Cương (tier.bar), đồng bộ với thẻ lưới/trang chủ */}
+      {tier?.bar && <div className="absolute inset-x-0 top-0 z-10 h-[3px]" style={{ backgroundColor: tier.bar }} aria-hidden />}
       <div className="relative aspect-[16/10] w-full shrink-0 overflow-hidden rounded-xl bg-cvr-surface sm:aspect-[16/10] sm:w-[38%] sm:min-w-[260px] sm:max-w-[380px]">
         <AnhChay images={item.images?.length ? item.images : [item.image]} alt={item.title} sizes="(max-width: 640px) 100vw, 38vw" />
         {tier && (
           <span
-            className={`absolute left-2 top-2 px-1.5 py-0.5 text-[11px] font-bold uppercase ${tierId === "diamond" ? "ring-1 ring-[#d9b64e]/70" : ""}`}
-            style={{ backgroundColor: tier.accent, color: tier.badgeText }}
+            className={`absolute left-2 top-2 rounded-full px-2 py-[3px] text-[11px] font-semibold uppercase tracking-[0.06em] shadow-[0_2px_10px_rgba(0,0,0,0.28)] ring-1 backdrop-blur-md ${tierId === "diamond" ? "ring-[#d9b64e]/70" : "ring-white/25"}`}
+            style={{ backgroundColor: `${tier.accent}e6`, color: tier.badgeText }}
           >{tier.short}</span>
         )}
         <div className="absolute right-2 top-2 flex flex-col gap-1.5">
@@ -233,7 +235,7 @@ function PropertyRow({ item, showTime = false, terms = [] }: { item: Listing; sh
           <Highlight text={item.title} terms={terms} />
         </h3>
         {rowDesc > 0 && (
-          <p className={`mt-1 hidden text-sm leading-relaxed text-cvr-muted ${rowDesc >= 3 ? "sm:line-clamp-3" : rowDesc === 2 ? "sm:line-clamp-2" : "sm:line-clamp-1"}`}>{listingSummary(item)}</p>
+          <p className={`mt-1 text-sm leading-relaxed text-cvr-muted ${rowDesc >= 3 ? "line-clamp-3" : rowDesc === 2 ? "line-clamp-2" : "line-clamp-1"}`}>{listingSummary(item)}</p>
         )}
         <div className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <span className={`text-[16px] font-bold ${item.price === "Thỏa thuận" ? "text-cvr-muted" : "text-red-500"}`}>{item.price}</span>

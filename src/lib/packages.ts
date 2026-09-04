@@ -6,11 +6,12 @@
 // --- 4 CẤP TIN CVR — theo bảng "Giá đăng tin + QC" (D:\Coastal Land\Bảng giá truyền thông) ---
 // THANG NHẬN DIỆN KIM LOẠI (chốt 4/9/2026) — sang hơn, ĐỒNG NHẤT mọi nơi (trang chủ,
 // Mua bán/Cho thuê, chi tiết). Nội dung theo cấp: Kim Cương 3 dòng · Vàng 2 · Bạc 1 · Thường 0.
-//   Diamond (VIP Kim Cương): ĐEN + ÁNH VÀNG KIM (huy hiệu đen chữ vàng + dải vàng đỉnh thẻ),
-//     tiêu đề VIẾT HOA đậm — ưu tiên hiển thị cao nhất.
-//   Gold (VIP Vàng): VÀNG — huy hiệu vàng, tiêu đề VÀNG VIẾT HOA đậm.
-//   Silver (VIP Bạc): XÁM BẠC — huy hiệu xám, tiêu đề xám đậm (không viết hoa).
-//   Basic (tin thường): trơn, nằm dưới các tin cao cấp.
+// Mỗi cấp MỘT màu riêng ở HUY HIỆU + DẢI đỉnh thẻ để phân biệt bằng mắt.
+// TIÊU ĐỀ để ĐEN hết (dễ đọc + sang, đúng hướng Apple) — KHÔNG tô màu chữ theo cấp.
+//   Diamond (Kim Cương): ĐỎ — cao nhất.
+//   Gold (Vàng): VÀNG.
+//   Silver (Bạc): XANH.
+//   Basic (tin thường): trơn, không huy hiệu/dải.
 export type TierId = "diamond" | "gold" | "silver" | "basic";
 
 export type Tier = {
@@ -29,9 +30,9 @@ export type Tier = {
 
 // Thứ tự cao → thấp: Diamond > Gold > Silver > Basic
 export const tiers: Tier[] = [
-  { id: "diamond", name: "CVR Diamond", short: "Diamond", tagline: "Ưu tiên hiển thị cao nhất — x20 lượt xem", accent: "#141414", badgeText: "#e8c766", bar: "#c9a24a", titleColor: "#1d1d1f", uppercase: true, hot: true, rank: 0 },
-  { id: "gold", name: "CVR Gold", short: "Gold", tagline: "Hiển thị nổi bật — x10 lượt xem", accent: "#c9a24a", badgeText: "#ffffff", bar: "#c9a24a", titleColor: "#946f1f", uppercase: true, hot: true, rank: 1 },
-  { id: "silver", name: "CVR Silver", short: "Silver", tagline: "Tiết kiệm hiệu quả — x5 lượt xem", accent: "#8a8f98", badgeText: "#ffffff", bar: "#c3c8cf", titleColor: "#565b63", uppercase: false, hot: true, rank: 2 },
+  { id: "diamond", name: "CVR Diamond", short: "Diamond", tagline: "Ưu tiên hiển thị cao nhất — x20 lượt xem", accent: "#c1121f", badgeText: "#ffffff", bar: "#c1121f", titleColor: "", uppercase: true, hot: true, rank: 0 },
+  { id: "gold", name: "CVR Gold", short: "Gold", tagline: "Hiển thị nổi bật — x10 lượt xem", accent: "#b8860b", badgeText: "#ffffff", bar: "#d9b84e", titleColor: "", uppercase: true, hot: true, rank: 1 },
+  { id: "silver", name: "CVR Silver", short: "Silver", tagline: "Tiết kiệm hiệu quả — x5 lượt xem", accent: "#2f5d84", badgeText: "#ffffff", bar: "#7ea6c8", titleColor: "", uppercase: false, hot: true, rank: 2 },
   { id: "basic", name: "CVR Basic", short: "Basic", tagline: "Tin thường, chi phí thấp nhất", accent: "#9aa0a6", badgeText: "#ffffff", bar: "", titleColor: "", uppercase: false, hot: false, rank: 3 },
 ];
 
