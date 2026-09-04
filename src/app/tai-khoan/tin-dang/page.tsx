@@ -14,8 +14,13 @@ import {
 
 // Tin đăng của THÀNH VIÊN — tin của chính mình (mọi trạng thái, kể cả nháp).
 // RLS đảm bảo chỉ thấy tin owner_id = mình.
+// Lead = người ĐÃ ĐĂNG NHẬP đã bấm "hiện số" ở tin của mình (bảng listing_leads).
+type Lead = { id: string; listing_id: string; viewer_name: string | null; viewer_phone: string | null; created_at: string };
+
 export default function MyListingsPage() {
   const [rows, setRows] = useState<ListingRow[]>([]);
+  const [leadsByListing, setLeadsByListing] = useState<Record<string, Lead[]>>({});
+  const [openLeads, setOpenLeads] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<"all" | ListingStatus>("all");
 
@@ -29,8 +34,22 @@ export default function MyListingsPage() {
         .select("*")
         .eq("owner_id", user.id)
         .order("created_at", { ascending: false });
-      setRows((data ?? []) as ListingRow[]);
+      const list = (data ?? []) as ListingRow[];
+      setRows(list);
       setLoading(false);
+
+      // Lead cho MỌI tin của mình trong một lần gọi (RLS chỉ cho chủ tin đọc).
+      const ids = list.map((r) => r.id);
+      if (ids.length) {
+        const { data: leads } = await supabase
+          .from("listing_leads")
+          .select("id,listing_id,viewer_name,viewer_phone,created_at")
+          .in("listing_id", ids)
+          .order("created_at", { ascending: false });
+        const grouped: Record<string, Lead[]> = {};
+        for (const ld of (leads ?? []) as Lead[]) (grouped[ld.listing_id] ??= []).push(ld);
+        setLeadsByListing(grouped);
+      }
     })();
   }, []);
 
@@ -93,8 +112,11 @@ export default function MyListingsPage() {
       </div>
 
       <div className="space-y-3">
-        {filtered.map((r) => (
-          <div key={r.id} className="flex items-center gap-4 rounded-2xl border border-cvr-line bg-white p-4 shadow-sm">
+        {filtered.map((r) => {
+          const leads = leadsByListing[r.id] ?? [];
+          return (
+          <div key={r.id} className="rounded-2xl border border-cvr-line bg-white p-4 shadow-sm">
+            <div className="flex items-center gap-4">
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="truncate font-medium text-cvr-ink">{r.title || "(chưa có tiêu đề)"}</span>
@@ -116,6 +138,15 @@ export default function MyListingsPage() {
             </div>
             <div className="flex shrink-0 flex-col items-end gap-2 sm:flex-row sm:items-center sm:gap-3">
               <span className="text-xs text-cvr-faint">{r.view_count} lượt xem</span>
+              {r.status === "approved" && leads.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setOpenLeads(openLeads === r.id ? null : r.id)}
+                  className="flex h-9 items-center gap-1.5 rounded-full border border-cvr-line bg-cvr-surface px-4 text-sm font-semibold text-cvr-ink transition hover:border-cvr-ink"
+                >
+                  {leads.length} người quan tâm
+                </button>
+              )}
               {r.status === "approved" && (
                 <Link
                   href={`/bat-dong-san/${r.id}`}
@@ -144,8 +175,26 @@ export default function MyListingsPage() {
                 </button>
               )}
             </div>
+            </div>
+            {openLeads === r.id && leads.length > 0 && (
+              <div className="mt-3 space-y-2 border-t border-cvr-line pt-3">
+                <p className="text-xs font-semibold uppercase tracking-wider text-cvr-faint">Người đã bấm xem số</p>
+                {leads.map((ld) => (
+                  <div key={ld.id} className="flex items-center justify-between gap-3 text-sm">
+                    <span className="min-w-0 truncate text-cvr-ink">{ld.viewer_name || "Khách đã đăng nhập"}</span>
+                    <span className="flex shrink-0 items-center gap-3 text-cvr-muted">
+                      {ld.viewer_phone
+                        ? <a href={`tel:${ld.viewer_phone.replace(/\s/g, "")}`} className="font-medium text-cvr-ink hover:underline">{ld.viewer_phone}</a>
+                        : <span className="text-cvr-faint">chưa có SĐT</span>}
+                      <time className="text-xs text-cvr-faint">{new Date(ld.created_at).toLocaleDateString("vi-VN")}</time>
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        ))}
+          );
+        })}
         {filtered.length === 0 && (
           <p className="py-8 text-center text-sm text-cvr-muted">Không có tin nào ở mục này.</p>
         )}

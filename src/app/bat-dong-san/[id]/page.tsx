@@ -7,6 +7,7 @@ import Gallery from "@/components/Gallery";
 import ListingShowcase from "@/components/ListingShowcase";
 import { HomeExpandProvider, HomeCollapsible } from "@/components/HomeExpand";
 import RecordView from "@/components/RecordView";
+import { ContactActions, ContactBarMobile } from "@/components/LienHeReveal";
 import ShareButtons from "@/components/ShareButtons";
 import PriceHistory from "@/components/PriceHistory";
 import { nhanDienTich as nhanDienTichTheoLoai } from "@/lib/listingSpec";
@@ -83,8 +84,11 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
   // "0905 000 111", sau đó là hotline Coastal Land). Thà không có nút gọi còn hơn
   // đưa khách một số KHÔNG phải của người bán — Coastal Land không đứng ra giao dịch.
   const contact = d.contact;
-  const phoneTel = contact ? contact.phone.replace(/\s/g, "") : "";
-  const zalo = phoneTel.replace(/\D/g, "");
+  // CỔNG SĐT: full số CHỈ hiện khi khách đăng nhập (bấm → RPC reveal_contact ghi lead).
+  // Server chỉ phát chuỗi CHE (4 số đầu) — số thật không nằm trong HTML để không xem lén,
+  // nhờ vậy mỗi lượt xem số đều được ghi nhận thành lead cho người bán.
+  const phoneDigits = contact ? contact.phone.replace(/\D/g, "") : "";
+  const phoneMask = phoneDigits ? `${phoneDigits.slice(0, 4)} ••• •••` : "Xem số";
 
   // Schema.org RealEstateListing (IV.2) — dữ liệu chuẩn cho Google.
   const priceVnd = parseVnd(l.price);
@@ -372,15 +376,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                           <p className="text-xs text-cvr-muted">Người đăng tin</p>
                         </div>
                       </div>
-                      <div className="mt-4 space-y-2.5">
-                        <a href={`tel:${phoneTel}`} className="flex items-center justify-center gap-2 rounded-lg bg-cvr-ink px-4 py-3 text-sm font-bold text-white transition hover:bg-cvr-body">
-                          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.95.68l1.5 4.5a1 1 0 01-.5 1.2l-2.26 1.13a11 11 0 005.52 5.52l1.13-2.26a1 1 0 011.2-.5l4.5 1.5a1 1 0 01.68.95V19a2 2 0 01-2 2h-1C9.7 21 3 14.3 3 6V5z" /></svg>
-                          {contact.phone}
-                        </a>
-                        <a href={`https://zalo.me/${zalo}`} className="flex items-center justify-center gap-2 rounded-lg border border-cvr-line px-4 py-3 text-sm font-semibold text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink">
-                          Nhắn Zalo
-                        </a>
-                      </div>
+                      <ContactActions listingId={l.id} phoneMask={phoneMask} />
                     </>
                   ) : (
                     <p className="text-sm leading-relaxed text-cvr-muted">
@@ -430,19 +426,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
             Tin chưa có liên hệ thì KHÔNG hiện thanh này (không có số để gọi). */}
         {contact && (
         <div className="fixed inset-x-0 bottom-0 z-40 flex gap-2 border-t border-cvr-line bg-white/95 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur-md lg:hidden">
-          <a
-            href={`tel:${phoneTel}`}
-            className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-cvr-ink py-3 text-sm font-bold text-white transition active:scale-95"
-          >
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.95.68l1.5 4.5a1 1 0 01-.5 1.2l-2.26 1.13a11 11 0 005.52 5.52l1.13-2.26a1 1 0 011.2-.5l4.5 1.5a1 1 0 01.68.95V19a2 2 0 01-2 2h-1C9.7 21 3 14.3 3 6V5z" /></svg>
-            Gọi ngay
-          </a>
-          <a
-            href={`https://zalo.me/${zalo}`}
-            className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-cvr-line bg-white py-3 text-sm font-semibold text-cvr-body transition active:scale-95"
-          >
-            Nhắn Zalo
-          </a>
+          <ContactBarMobile listingId={l.id} phoneMask={phoneMask} />
         </div>
         )}
       </main>
