@@ -48,6 +48,7 @@ type Row = {
   province: string;
   images: string[];
   tier: "diamond" | "gold" | "silver" | "basic";
+  tier_expires_at: string | null; // hết hạn gói VIP → hạ về tin thường (null = admin nâng tay, vĩnh viễn)
   details: ListingDetailsJson | null;
   created_at: string;
 };
@@ -59,6 +60,16 @@ const TIER_BADGE: Record<Row["tier"], Listing["badge"]> = {
   silver: "Mới",
   basic: undefined,
 };
+
+// Hạng HIỂN THỊ = hạng đã mua, NHƯNG nếu gói đã hết hạn (tier_expires_at đã qua) thì
+// coi như TIN THƯỜNG NGAY — không chờ cron `nhac-xuat` (2 lần/ngày) hạ cột trong DB.
+// Cron vẫn ghi DB thật + gửi thông báo gia hạn; đây là lưới an toàn để web KHÔNG BAO
+// GIỜ hiện VIP quá hạn (dù trễ tới ~12h giữa hai lần cron).
+// tier_expires_at null = admin nâng tay, vĩnh viễn → giữ nguyên hạng.
+function tierHieuLuc(r: Row): Row["tier"] {
+  if (r.tier === "basic" || !r.tier_expires_at) return r.tier;
+  return new Date(r.tier_expires_at).getTime() < Date.now() ? "basic" : r.tier;
+}
 
 // Ảnh đại diện khi tin chưa có ảnh (admin đăng nhanh chưa kịp upload)
 const PLACEHOLDER_IMAGE = "/images/segments/canho1.jpg";
@@ -135,7 +146,7 @@ function rowToListing(r: Row): Listing {
     hasVideo: r.images.some((s) => isVideoUrl(s)),
     // 5 ảnh đầu cho thẻ tin tự chạy (xem components/AnhChay.tsx)
     images: r.images.filter((s) => !isVideoUrl(s)).slice(0, 5).map((s) => asset(s)),
-    badge: TIER_BADGE[r.tier],
+    badge: TIER_BADGE[tierHieuLuc(r)],
     postedAt: r.created_at,
     purpose: r.purpose,
     // Tên người đăng thật (khách hàng) — thẻ tin hiện đúng tên này, không phải admin
@@ -155,7 +166,7 @@ function rowToListing(r: Row): Listing {
 // Cột cho thẻ tin & danh sách — GỒM CẢ details để thẻ hiện đúng TÊN NGƯỜI ĐĂNG THẬT
 // (details.contact.name — cột details đã có trên production từ migration 0006).
 const COLS =
-  "id,purpose,type,title,description,price_vnd,area_m2,built_area_m2,beds,baths,ward,district,province,images,tier,created_at,details";
+  "id,purpose,type,title,description,price_vnd,area_m2,built_area_m2,beds,baths,ward,district,province,images,tier,tier_expires_at,created_at,details";
 const COLS_DETAIL = COLS;
 
 // Gọi PostgREST trực tiếp bằng fetch để dùng cache Next (revalidate) —
