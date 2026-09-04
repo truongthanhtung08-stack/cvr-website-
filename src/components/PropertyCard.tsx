@@ -65,9 +65,11 @@ export default function PropertyCard({
   const isMini = variant === "mini";
   const isTier = variant === "tier";
   const tierId = tier?.id ?? "basic";
-  // Lượng nội dung theo cấp (variant "tier") — các variant khác giữ nguyên hành vi cũ.
-  // Diamond & Gold: 2 dòng · Silver: 1 dòng · Basic: 0 dòng (theo cấp VIP thành viên).
-  const descLines = isTier ? (tierId === "diamond" || tierId === "gold" ? 2 : tierId === "silver" ? 1 : 0) : isMini ? 0 : 2;
+  // THANG NỘI DUNG THEO CẤP (chốt 4/9): Kim Cương 3 · Vàng 2 · Bạc 1 · Thường 0.
+  // Áp dụng ĐỒNG NHẤT cho CẢ trang chủ (variant "tier") LẪN Mua bán/Cho thuê (variant
+  // "grid") và thẻ rất lớn ("featured"). Chỉ "mini" mới ép 0 dòng.
+  const tierDesc = tierId === "diamond" ? 3 : tierId === "gold" ? 2 : tierId === "silver" ? 1 : 0;
+  const descLines = isMini ? 0 : tierDesc;
   // Thẻ trang chủ (tier): MỌI cấp đều hiện thông tin thành viên ở đáy (kể cả Silver/Basic)
   // để thẻ không bị trống — đồng bộ với tin VIP (yêu cầu T19 mobile).
   const showAgent = isTier ? true : !isMini;
@@ -79,6 +81,9 @@ export default function PropertyCard({
       // Cấp tin thể hiện qua huy hiệu + màu TIÊU ĐỀ (đúng bảng đặc điểm), không tô khung.
       className="flex flex-col overflow-hidden rounded-none border-0 bg-white shadow-lux shadow-lux-hover transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1 sm:border sm:border-cvr-line"
     >
+      {/* Dải nhấn KIM LOẠI trên đỉnh thẻ — CHỈ Kim Cương (tier.bar) → cảm giác "đen ánh
+          vàng kim" cao cấp; cao 3px nên gần như không thay đổi chiều cao thẻ. */}
+      {tier?.bar && <div className="h-[3px] w-full" style={{ backgroundColor: tier.bar }} aria-hidden />}
       {/* Ảnh — Diamond khung rộng hơn (rất lớn), còn lại 4/3 */}
       {/* Thẻ trang chủ (tier) trên MOBILE: ảnh 16/10 thấp hơn để màn hình đầu thấy trọn thẻ */}
       <div className={`relative overflow-hidden bg-cvr-surface aspect-[3/2] sm:aspect-[16/10]`}>
@@ -89,10 +94,10 @@ export default function PropertyCard({
         />
         {tier && (
           <span
-            // Huy hiệu cấp tin: viên thuốc KÍNH MỜ — nền màu hạng trong suốt nhẹ,
-            // viền sáng mảnh + bóng đổ → nổi rõ trên mọi ảnh mà không đè cứng lên ảnh.
-            className={`absolute left-2.5 top-2.5 rounded-full font-semibold uppercase tracking-[0.06em] text-white shadow-[0_2px_10px_rgba(0,0,0,0.28)] ring-1 ring-white/25 backdrop-blur-md ${isFeatured ? "px-2.5 py-1 text-[11px]" : "px-2 py-[3px] text-[11px]"}`}
-            style={{ backgroundColor: `${tier.accent}e6` }}
+            // Huy hiệu cấp tin: viên thuốc KÍNH MỜ — nền màu hạng + CHỮ theo badgeText
+            // (Kim Cương = chữ vàng kim trên nền đen), viền vàng riêng cho Kim Cương.
+            className={`absolute left-2.5 top-2.5 rounded-full font-semibold uppercase tracking-[0.06em] shadow-[0_2px_10px_rgba(0,0,0,0.28)] ring-1 backdrop-blur-md ${tierId === "diamond" ? "ring-[#d9b64e]/70" : "ring-white/25"} ${isFeatured ? "px-2.5 py-1 text-[11px]" : "px-2 py-[3px] text-[11px]"}`}
+            style={{ backgroundColor: `${tier.accent}e6`, color: tier.badgeText }}
           >
             {tier.short}
           </span>
@@ -129,21 +134,13 @@ export default function PropertyCard({
           <Highlight text={item.title} terms={terms} />
         </h3>
 
-        {/* Mô tả — số dòng theo cấp (Diamond 2 · Gold 1 · Silver/Basic 0) */}
+        {/* Mô tả — số dòng theo cấp (Kim Cương 3 · Vàng 2 · Bạc 1 · Thường 0), hiện ở
+            CẢ mobile & PC (chốt 4/9). CLAMP CỨNG đúng số dòng — TUYỆT ĐỐI KHÔNG thêm
+            "sm:block" đè lên line-clamp (đó là bug 02/09 làm tin Diamond xổ full, vỡ hàng
+            trên PC). Đáy thẻ vẫn thẳng hàng nhờ hàng "người đăng" mt-auto + grid tự giãn. */}
         {descLines > 0 && (
           <p className={`mt-1 text-sm leading-relaxed text-cvr-muted ${
-            /* Thẻ trang chủ trên MOBILE: ẩn mô tả cho thẻ gọn, màn hình đầu thấy trọn tin.
-               ⚠️ Trên PC phải bật lại bằng chính lớp sm:line-clamp-*, TUYỆT ĐỐI KHÔNG dùng
-               "sm:block": lớp block đè lên display:-webkit-box của line-clamp nên mô tả
-               HẾT bị cắt — tin Diamond/Gold xổ nguyên bài mô tả, thẻ cao gấp 3 lần thẻ
-               thường và vỡ cả hàng (lỗi 02/09/2026, chỉ thấy trên PC vì mobile đang ẩn). */
-            isTier
-              ? descLines === 1
-                ? "hidden sm:line-clamp-1"
-                : "hidden sm:line-clamp-2 min-h-[2.2rem]"
-              : descLines === 1
-                ? "line-clamp-1"
-                : "line-clamp-2 min-h-[2.2rem]"
+            descLines >= 3 ? "line-clamp-3" : descLines === 2 ? "line-clamp-2" : "line-clamp-1"
           }`}>
             {listingSummary(item)}
           </p>
@@ -167,7 +164,7 @@ export default function PropertyCard({
 
         {/* Đáy: thành viên đăng tin — chỉ cấp cao (variant "tier": Diamond/Gold) */}
         {showAgent && (
-          <div className={`flex items-center gap-2 border-t border-cvr-line pt-2.5 ${isTier ? "mt-auto" : "mt-2.5"}`}>
+          <div className="mt-auto flex items-center gap-2 border-t border-cvr-line pt-2.5">
             <AgentAvatar name={agentName} src={item.agentAvatar} size={7} />
             <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-cvr-body">{agentName}</span>
             {showTime && postedText(item.postedAt) && (
@@ -187,6 +184,9 @@ export default function PropertyCard({
 function PropertyRow({ item, showTime = false, terms = [] }: { item: Listing; showTime?: boolean; terms?: string[] }) {
   const agentName = agentNameOf(item);
   const tier = item.badge ? getTier(tierFromBadge(item.badge)) : null;
+  const tierId = tier?.id ?? "basic";
+  // Nội dung theo cấp trên hàng ngang (PC): Kim Cương 3 · Vàng 2 · Bạc 1 · Thường 0.
+  const rowDesc = tierId === "diamond" ? 3 : tierId === "gold" ? 2 : tierId === "silver" ? 1 : 0;
   return (
     <Link
       href={`/bat-dong-san/${item.id}`}
@@ -199,8 +199,8 @@ function PropertyRow({ item, showTime = false, terms = [] }: { item: Listing; sh
         <AnhChay images={item.images?.length ? item.images : [item.image]} alt={item.title} sizes="(max-width: 640px) 100vw, 38vw" />
         {tier && (
           <span
-            className="absolute left-2 top-2 px-1.5 py-0.5 text-[11px] font-bold uppercase"
-            style={{ backgroundColor: tier.accent, color: "#fff" }}
+            className={`absolute left-2 top-2 px-1.5 py-0.5 text-[11px] font-bold uppercase ${tierId === "diamond" ? "ring-1 ring-[#d9b64e]/70" : ""}`}
+            style={{ backgroundColor: tier.accent, color: tier.badgeText }}
           >{tier.short}</span>
         )}
         <div className="absolute right-2 top-2 flex flex-col gap-1.5">
@@ -218,7 +218,9 @@ function PropertyRow({ item, showTime = false, terms = [] }: { item: Listing; sh
         >
           <Highlight text={item.title} terms={terms} />
         </h3>
-        <p className="mt-1 hidden text-sm leading-relaxed text-cvr-muted sm:line-clamp-2">{listingSummary(item)}</p>
+        {rowDesc > 0 && (
+          <p className={`mt-1 hidden text-sm leading-relaxed text-cvr-muted ${rowDesc >= 3 ? "sm:line-clamp-3" : rowDesc === 2 ? "sm:line-clamp-2" : "sm:line-clamp-1"}`}>{listingSummary(item)}</p>
+        )}
         <div className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <span className={`text-[16px] font-bold ${item.price === "Thỏa thuận" ? "text-cvr-muted" : "text-red-500"}`}>{item.price}</span>
           <span className="text-sm text-cvr-body">{item.area}</span>

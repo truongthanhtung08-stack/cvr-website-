@@ -3,13 +3,14 @@
 // — chờ chủ dự án cung cấp số liệu thật của CVR rồi điền vào `tierBenefits`.
 // Sau này quản lý qua Admin/Supabase. Tham khảo cấu trúc: homedy.com/package.
 
-// --- 4 CẤP TIN CVR — theo bảng "Gia đăng tin + QC" (D:\Coastal Land\Bảng giá truyền thông) ---
-// Chuẩn hiển thị tham chiếu Batdongsan/Homedy:
-//   Diamond (VIP Kim Cương): tiêu đề ĐỎ + VIẾT HOA + đậm — x20 lượt xem,
-//     lên Trang chủ, box "BĐS nổi bật", nhân đôi hiển thị, kích thước tin rất lớn.
-//   Gold (VIP Vàng): tiêu đề VÀNG + VIẾT HOA + đậm — x10 lượt xem, box nổi bật.
-//   Silver (VIP Bạc): tiêu đề XANH + đậm (không viết hoa) — x5 lượt xem, đứng trên tin thường.
-//   Basic (tin thường): hiển thị mặc định, nằm dưới các tin cao cấp.
+// --- 4 CẤP TIN CVR — theo bảng "Giá đăng tin + QC" (D:\Coastal Land\Bảng giá truyền thông) ---
+// THANG NHẬN DIỆN KIM LOẠI (chốt 4/9/2026) — sang hơn, ĐỒNG NHẤT mọi nơi (trang chủ,
+// Mua bán/Cho thuê, chi tiết). Nội dung theo cấp: Kim Cương 3 dòng · Vàng 2 · Bạc 1 · Thường 0.
+//   Diamond (VIP Kim Cương): ĐEN + ÁNH VÀNG KIM (huy hiệu đen chữ vàng + dải vàng đỉnh thẻ),
+//     tiêu đề VIẾT HOA đậm — ưu tiên hiển thị cao nhất.
+//   Gold (VIP Vàng): VÀNG — huy hiệu vàng, tiêu đề VÀNG VIẾT HOA đậm.
+//   Silver (VIP Bạc): XÁM BẠC — huy hiệu xám, tiêu đề xám đậm (không viết hoa).
+//   Basic (tin thường): trơn, nằm dưới các tin cao cấp.
 export type TierId = "diamond" | "gold" | "silver" | "basic";
 
 export type Tier = {
@@ -17,7 +18,9 @@ export type Tier = {
   name: string; // "CVR Diamond"
   short: string; // nhãn ngắn trên huy hiệu thẻ tin: "Diamond"
   tagline: string; // mô tả ngắn
-  accent: string; // màu nhấn của hạng (huy hiệu trên ảnh)
+  accent: string; // màu NỀN huy hiệu cấp (trên ảnh)
+  badgeText: string; // màu CHỮ trên huy hiệu (Kim Cương = vàng kim trên nền đen)
+  bar: string; // dải nhấn mảnh trên đỉnh thẻ ("" = không có; hiện chỉ Kim Cương)
   titleColor: string; // màu tiêu đề tin (đủ tương phản WCAG trên nền trắng); "" = màu mặc định
   uppercase: boolean; // tiêu đề VIẾT HOA (chỉ Diamond & Gold)
   hot: boolean; // hiện icon HOT cạnh tiêu đề (các cấp VIP)
@@ -26,10 +29,10 @@ export type Tier = {
 
 // Thứ tự cao → thấp: Diamond > Gold > Silver > Basic
 export const tiers: Tier[] = [
-  { id: "diamond", name: "CVR Diamond", short: "Diamond", tagline: "Ưu tiên hiển thị cao nhất — x20 lượt xem", accent: "#d7263d", titleColor: "#c41f30", uppercase: true, hot: true, rank: 0 },
-  { id: "gold", name: "CVR Gold", short: "Gold", tagline: "Hiển thị nổi bật — x10 lượt xem", accent: "#c9a24a", titleColor: "#946f1f", uppercase: true, hot: true, rank: 1 },
-  { id: "silver", name: "CVR Silver", short: "Silver", tagline: "Tiết kiệm hiệu quả — x5 lượt xem", accent: "#0071e3", titleColor: "#0066cc", uppercase: false, hot: true, rank: 2 },
-  { id: "basic", name: "CVR Basic", short: "Basic", tagline: "Tin thường, chi phí thấp nhất", accent: "#9aa0a6", titleColor: "", uppercase: false, hot: false, rank: 3 },
+  { id: "diamond", name: "CVR Diamond", short: "Diamond", tagline: "Ưu tiên hiển thị cao nhất — x20 lượt xem", accent: "#141414", badgeText: "#e8c766", bar: "#c9a24a", titleColor: "#1d1d1f", uppercase: true, hot: true, rank: 0 },
+  { id: "gold", name: "CVR Gold", short: "Gold", tagline: "Hiển thị nổi bật — x10 lượt xem", accent: "#c9a24a", badgeText: "#ffffff", bar: "", titleColor: "#946f1f", uppercase: true, hot: true, rank: 1 },
+  { id: "silver", name: "CVR Silver", short: "Silver", tagline: "Tiết kiệm hiệu quả — x5 lượt xem", accent: "#8a8f98", badgeText: "#ffffff", bar: "", titleColor: "#565b63", uppercase: false, hot: true, rank: 2 },
+  { id: "basic", name: "CVR Basic", short: "Basic", tagline: "Tin thường, chi phí thấp nhất", accent: "#9aa0a6", badgeText: "#ffffff", bar: "", titleColor: "", uppercase: false, hot: false, rank: 3 },
 ];
 
 // Map huy hiệu tin (VIP/Nổi bật/Mới) → cấp CVR để tô màu thẻ tin.
