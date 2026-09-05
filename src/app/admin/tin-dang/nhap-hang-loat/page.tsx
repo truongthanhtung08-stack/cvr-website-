@@ -45,6 +45,8 @@ export default function NhapHangLoatPage() {
   const [anhDaTai, setAnhDaTai] = useState<{ ten: string; url: string }[]>([]);
   const [dangTaiAnh, setDangTaiAnh] = useState(0); // số ảnh còn lại đang tải
   const [loiAnh, setLoiAnh] = useState("");
+  // Bỏ qua đối chiếu mã ảnh — đăng thành tin mới hết (dùng khi mã trùng với đợt cũ)
+  const [luonTinMoi, setLuonTinMoi] = useState(false);
 
   const sai = rows.filter((r) => r.loi.length > 0);
 
@@ -169,7 +171,10 @@ export default function NhapHangLoatPage() {
       // ĐÃ ĐĂNG RỒI THÌ CHỈ BỔ SUNG ẢNH, KHÔNG ĐĂNG TRÙNG.
       // Ảnh thường về từng đợt (xin được tin nào bỏ tin đó), nên chủ dự án hay
       // phải tải cùng một file nhiều lần. Đối chiếu bằng mã ảnh đã lưu trong tin.
-      const maTrongFile = [...new Set(hopLe.map((r) => r.maAnh).filter(Boolean))];
+      // ⚠️ Mã ảnh LẶP LẠI GIỮA CÁC NGÀY (cowork đánh lại từ dn01 mỗi ngày) nên tin
+      // hôm nay dễ bị nhận nhầm là tin cũ → ảnh mới bị nhét vào tin của nhà khác.
+      // Tick "Luôn đăng thành tin mới" để bỏ qua bước đối chiếu này.
+      const maTrongFile = luonTinMoi ? [] : [...new Set(hopLe.map((r) => r.maAnh).filter(Boolean))];
       const daCo = new Map<string, { id: string; images: string[] }>();
       if (maTrongFile.length) {
         const { data } = await supabase
@@ -371,8 +376,16 @@ export default function NhapHangLoatPage() {
             >
               {dangGui ? "Đang đăng…" : `Đăng ${hopLe.length} tin`}
             </button>
+            <label className="flex w-full cursor-pointer items-start gap-2 rounded-lg bg-cvr-surface px-3 py-2.5">
+              <input type="checkbox" checked={luonTinMoi} onChange={(e) => setLuonTinMoi(e.target.checked)} className="mt-0.5 h-4 w-4 accent-cvr-ink" />
+              <span className="text-xs text-cvr-body">
+                <strong>Luôn đăng thành tin mới</strong> — bỏ qua đối chiếu <code>ma_anh</code>.
+                Tick khi đăng lại cả một đợt, hoặc khi mã tin (dn01, hue01…) <strong>trùng với đợt ngày khác</strong>
+                — không tick thì web tưởng là tin cũ, chỉ nhét thêm ảnh vào tin của người khác.
+              </span>
+            </label>
             <p className="w-full text-xs text-cvr-muted">
-              Tải cùng một file nhiều lần cũng <strong>không bị trùng tin</strong>: tin nào đã đăng rồi
+              Không tick: tải cùng một file nhiều lần cũng <strong>không bị trùng tin</strong> — tin nào đã đăng rồi
               (khớp theo <code>ma_anh</code>) thì chỉ <strong>bổ sung ảnh mới</strong>, không đăng lại.
               Nhờ vậy xin được ảnh tới đâu cứ bỏ vào thư mục rồi tải lên tới đó.
             </p>

@@ -23,6 +23,7 @@ export default function AdminListingsPage() {
   const [purpose, setPurpose] = useState<"all" | ListingPurpose>("all");
   const [tier, setTier] = useState<"all" | ListingTier>("all");
   const [status, setStatus] = useState<"all" | ListingStatus>("all");
+  const [chon, setChon] = useState<Set<string>>(new Set()); // tin đang tick để xoá hàng loạt
 
   useEffect(() => {
     const supabase = createClient();
@@ -131,6 +132,23 @@ export default function AdminListingsPage() {
   // XOÁ HẲN một tin — dùng khi nhập nhầm/nhập thừa từ file và muốn nhập lại.
   // Phải xoá thật khỏi bảng: mã ảnh còn nằm đó thì lần nhập sau chỉ bổ sung ảnh,
   // KHÔNG đăng lại tin (xem trang Đăng nhiều tin bằng file).
+  // XOÁ HÀNG LOẠT — tick chọn nhiều tin rồi xoá một lượt. Dùng khi nhập nhầm cả
+  // một đợt tin bằng file và muốn làm lại sạch từ đầu (33 tin mà bấm xoá từng cái
+  // thì mất cả buổi).
+  async function xoaNhieu() {
+    const ds = [...chon];
+    if (!ds.length) return;
+    if (!window.confirm(`XOÁ HẲN ${ds.length} tin đã chọn? Không lấy lại được.`)) return;
+    const supabase = createClient();
+    const { error } = await supabase.from("listings").delete().in("id", ds);
+    if (error) {
+      window.alert(`Xoá THẤT BẠI — chưa tin nào bị xoá.\nLỗi: ${error.message}`);
+      return;
+    }
+    setRows((rs) => rs.filter((r) => !chon.has(r.id)));
+    setChon(new Set());
+  }
+
   async function xoaTin(id: string, tieuDe: string) {
     if (!window.confirm(`XOÁ HẲN tin này? Không lấy lại được.\n\n${tieuDe}`)) return;
     const supabase = createClient();
@@ -208,11 +226,33 @@ export default function AdminListingsPage() {
         </select>
       </div>
 
+      {/* Thanh chọn nhiều tin — chỉ hiện khi đã tick ít nhất một tin */}
+      {chon.size > 0 && (
+        <div className="mt-4 flex flex-wrap items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+          <span className="text-sm font-semibold text-red-800">Đã chọn {chon.size} tin</span>
+          <button type="button" onClick={xoaNhieu} className="rounded-lg bg-red-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-800">
+            Xoá {chon.size} tin
+          </button>
+          <button type="button" onClick={() => setChon(new Set())} className="text-sm font-medium text-cvr-body hover:text-cvr-ink">
+            Bỏ chọn
+          </button>
+        </div>
+      )}
+
       {/* Bảng (desktop) */}
       <div className="mt-4 hidden overflow-hidden rounded-2xl border border-cvr-line bg-white shadow-lux md:block">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-cvr-line text-left text-xs uppercase tracking-wider text-cvr-faint">
+              <th className="w-10 px-4 py-3">
+                <input
+                  type="checkbox"
+                  aria-label="Chọn tất cả tin đang lọc"
+                  checked={filtered.length > 0 && filtered.every((r) => chon.has(r.id))}
+                  onChange={(e) => setChon(e.target.checked ? new Set(filtered.map((r) => r.id)) : new Set())}
+                  className="h-4 w-4 accent-red-700"
+                />
+              </th>
               <th className="px-4 py-3 font-medium">Tin đăng</th>
               <th className="px-4 py-3 font-medium">Giá · DT</th>
               <th className="px-4 py-3 font-medium">Hạng</th>
@@ -224,6 +264,22 @@ export default function AdminListingsPage() {
           <tbody>
             {filtered.map((r) => (
               <tr key={r.id} className="border-b border-cvr-line/70 last:border-0 hover:bg-cvr-surface/60">
+                <td className="px-4 py-3">
+                  <input
+                    type="checkbox"
+                    aria-label={`Chọn tin ${r.title}`}
+                    checked={chon.has(r.id)}
+                    onChange={(e) =>
+                      setChon((cu) => {
+                        const s = new Set(cu);
+                        if (e.target.checked) s.add(r.id);
+                        else s.delete(r.id);
+                        return s;
+                      })
+                    }
+                    className="h-4 w-4 accent-red-700"
+                  />
+                </td>
                 <td className="max-w-[320px] px-4 py-3">
                   <div className="truncate font-medium text-cvr-ink">{r.title}</div>
                   <div className="truncate text-xs text-cvr-muted">
