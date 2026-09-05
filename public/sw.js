@@ -12,10 +12,12 @@
    Chỉ những thứ bất biến (JS/CSS có mã băm trong tên) mới lấy từ bộ nhớ trước.
    ========================================================================== */
 
+// v4 (5/9/2026, chiều): ảnh trắng do máy còn giữ bản trang cũ trỏ qua bộ tối ưu
+// Vercel (đã tắt, trả 402). Nâng số hiệu để mọi máy đã cài xoá sạch cache cũ.
 // v3 (5/9/2026): máy đã cài kẹt cache JS/CSS cũ của cl-v2 → mở app chỉ thấy ảnh,
 // mất header/giao diện. Nâng số hiệu để activate XOÁ SẠCH cache cũ + tải bản mới.
 // (Nâng số này mỗi khi cần ép mọi máy đã cài bỏ cache cũ.)
-const VERSION = "cl-v3";
+const VERSION = "cl-v4";
 const SHELL = `${VERSION}-shell`; // trang báo mất mạng + icon
 const ASSETS = `${VERSION}-assets`; // JS/CSS/font có mã băm — bất biến
 const MEDIA = `${VERSION}-media`; // ảnh trong /images, /logo
