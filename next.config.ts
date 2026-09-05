@@ -12,10 +12,15 @@ const nextConfig: NextConfig = isPages
       trailingSlash: true,
     }
   : {
-      // Dev/Vercel: BẬT tối ưu ảnh của Next. Đây là đòn bẩy tốc độ lớn nhất trên mobile —
-      // điện thoại 375px chỉ tải bản ảnh ~640px định dạng AVIF/WebP thay vì nguyên PNG gốc
-      // ~2000px từ Supabase (giảm ~70–85% dung lượng ảnh), tải nhanh + mượt như apple.com.
+      // ⚠️ 5/9/2026 — TẮT tối ưu ảnh của Vercel.
+      // Gói Vercel miễn phí có hạn mức ảnh tối ưu; đăng đi đăng lại vài đợt tin là
+      // hết hạn mức → mọi ảnh trả về "402 Payment required"
+      // (OPTIMIZED_IMAGE_REQUEST_PAYMENT_REQUIRED) → TOÀN BỘ ảnh trên web trắng xoá,
+      // trong khi ảnh gốc ở Supabase vẫn nguyên vẹn. Đã xảy ra thật.
+      // Ảnh của mình vốn đã được nén sẵn lúc tải lên (WebP ~350KB) nên tải thẳng
+      // từ Supabase vẫn chấp nhận được. Bật lại chỉ khi đã lên gói Vercel trả phí.
       images: {
+        unoptimized: true,
         // AVIF trước (nhẹ nhất), WebP dự phòng cho máy cũ.
         formats: ["image/avif", "image/webp"],
         // Next 16 yêu cầu liệt kê mọi mức chất lượng được dùng trong code:
