@@ -16,12 +16,17 @@ export function useAutoSlide(
   paused: boolean,
   interval: number,
 ) {
-  const [inView, setInView] = useState(false);
+  // ⚠️ MẶC ĐỊNH COI NHƯ ĐANG TRONG TẦM NHÌN — y như useAutoSlideThe bên dưới.
+  // Để mặc định false rồi chờ IntersectionObserver bật lên thì máy nào bộ theo dõi
+  // không kích hoạt là slide ĐỨNG IM VĨNH VIỄN. Ngưỡng 0.35 cũng quá cao: một slide
+  // = 2 hàng × 4 tin, cao gần trọn màn hình, nhiều lúc không bao giờ lộ đủ 35%.
+  // → Cho chạy trước, bộ theo dõi chỉ có việc TẮT khi khối trôi khỏi màn hình.
+  const [inView, setInView] = useState(true);
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const io = new IntersectionObserver(([e]) => setInView(e.isIntersecting), { threshold: 0.35 });
+    const io = new IntersectionObserver(([e]) => setInView(e.isIntersecting), { threshold: 0.15 });
     io.observe(el);
     return () => io.disconnect();
   }, [ref]);

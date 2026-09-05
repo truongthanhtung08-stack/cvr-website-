@@ -128,6 +128,20 @@ export default function AdminListingsPage() {
     );
   }
 
+  // XOÁ HẲN một tin — dùng khi nhập nhầm/nhập thừa từ file và muốn nhập lại.
+  // Phải xoá thật khỏi bảng: mã ảnh còn nằm đó thì lần nhập sau chỉ bổ sung ảnh,
+  // KHÔNG đăng lại tin (xem trang Đăng nhiều tin bằng file).
+  async function xoaTin(id: string, tieuDe: string) {
+    if (!window.confirm(`XOÁ HẲN tin này? Không lấy lại được.\n\n${tieuDe}`)) return;
+    const supabase = createClient();
+    const { error } = await supabase.from("listings").delete().eq("id", id);
+    if (error) {
+      window.alert(`Xoá THẤT BẠI — tin chưa bị xoá.\nLỗi: ${error.message}`);
+      return;
+    }
+    setRows((rs) => rs.filter((r) => r.id !== id));
+  }
+
   if (dbMissing) {
     return (
       <div className="max-w-2xl">
@@ -224,7 +238,7 @@ export default function AdminListingsPage() {
                 <td className="px-4 py-3">{listingStatusBadge(r.status)}</td>
                 <td className="whitespace-nowrap px-4 py-3 text-cvr-muted">{fmtDate(r.created_at)}</td>
                 <td className="whitespace-nowrap px-4 py-3 text-right">
-                  <RowActions row={r} onStatus={setRowStatus} onTuChoi={tuChoi} />
+                  <RowActions row={r} onStatus={setRowStatus} onTuChoi={tuChoi} onXoa={xoaTin} />
                 </td>
               </tr>
             ))}
@@ -256,7 +270,7 @@ export default function AdminListingsPage() {
               </div>
             </Link>
             <div className="mt-3 border-t border-cvr-line pt-2 text-right">
-              <RowActions row={r} onStatus={setRowStatus} onTuChoi={tuChoi} />
+              <RowActions row={r} onStatus={setRowStatus} onTuChoi={tuChoi} onXoa={xoaTin} />
             </div>
           </div>
         ))}
@@ -275,10 +289,12 @@ function RowActions({
   row,
   onStatus,
   onTuChoi,
+  onXoa,
 }: {
   row: ListingRow;
   onStatus: (id: string, next: ListingStatus) => void;
   onTuChoi: (id: string) => void;
+  onXoa: (id: string, tieuDe: string) => void;
 }) {
   return (
     <span className="inline-flex items-center gap-3">
@@ -313,6 +329,9 @@ function RowActions({
       <Link href={`/admin/tin-dang/${row.id}`} className="text-sm font-medium text-cvr-blue-ink hover:text-cvr-blue">
         Sửa
       </Link>
+      <button type="button" onClick={() => onXoa(row.id, row.title)} className="text-sm font-medium text-red-700 hover:text-red-800">
+        Xoá
+      </button>
     </span>
   );
 }

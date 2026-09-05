@@ -231,6 +231,10 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
       images: images.map((s) => s.trim()).filter(Boolean),
       // Thuộc tính thật → cột details (trang chi tiết hiện đúng những gì nhập)
       details: {
+        // GIỮ NGUYÊN những trường form KHÔNG quản: mã ảnh (maAnh), nguồn tin, ghi chú
+        // nội bộ, link ảnh gốc… Trước đây mỗi lần sửa tin bằng form là xoá sạch chúng
+        // → mất mã ảnh, lần nhập file sau không nhận ra tin cũ nên đăng trùng.
+        ...(initial?.details ?? {}),
         specs: Object.fromEntries(Object.entries(specValues).filter(([, v]) => v && v.trim())),
         interior,
         amenities,
