@@ -228,7 +228,9 @@ export default function AdminListingsPage() {
 
       {/* Thanh chọn nhiều tin — chỉ hiện khi đã tick ít nhất một tin */}
       {chon.size > 0 && (
-        <div className="mt-4 flex flex-wrap items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+        // DÍNH THEO MÀN HÌNH: tick một dòng ở cuối bảng 80 tin mà thanh xoá nằm tít
+        // trên đầu trang thì coi như không có nút. Luôn nổi ở đáy màn hình.
+        <div className="sticky bottom-3 z-30 mt-4 flex flex-wrap items-center gap-3 rounded-xl border border-red-300 bg-red-50 px-4 py-3 shadow-lux">
           <span className="text-sm font-semibold text-red-800">Đã chọn {chon.size} tin</span>
           <button type="button" onClick={xoaNhieu} className="rounded-lg bg-red-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-800">
             Xoá {chon.size} tin
