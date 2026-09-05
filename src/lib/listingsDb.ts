@@ -271,7 +271,9 @@ function dongMoTa(text: string | null): string[] {
 function rowToDetail(r: Row): ListingFull {
   const d = r.details ?? {};
   // Tách ẢNH và VIDEO: thư viện ảnh chỉ nhận ảnh; video hiện ở mục Video riêng.
-  const videos = r.images.filter(isVideoUrl);
+  // Video tệp tải lên cũng đi qua /anh/… như ảnh (xem src/lib/asset.ts); link
+  // YouTube/Vimeo thì asset() giữ nguyên.
+  const videos = r.images.filter(isVideoUrl).map(asset);
   const imageOnly = r.images.filter((s) => !isVideoUrl(s));
   const imgs = imageOnly.length ? imageOnly : [anhTam(r.type)];
   // Bộ mục theo LOẠI HÌNH, tách sẵn THÔNG TIN CHÍNH và ĐẶC ĐIỂM. Tin cho thuê
