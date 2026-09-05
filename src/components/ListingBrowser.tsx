@@ -73,14 +73,32 @@ export default function ListingBrowser({
   // Chế độ BẢN ĐỒ (kiểu Batdongsan): bật là cả trang chuyển sang xem bản đồ,
   // marker chạy theo đúng bộ lọc đang áp dụng.
   const [mapMode, setMapMode] = useState(false);
-  const [page, setPage] = useState(1);
+  // SỐ TRANG NẰM TRONG ĐỊA CHỈ (?trang=3) — bắt buộc, đừng bỏ.
+  // Trước đây số trang chỉ nằm trong bộ nhớ: khách đang ở trang 3, bấm vào một tin
+  // rồi bấm Back là văng về trang 1, phải bấm lại 3 lần. Ghi vào địa chỉ thì bấm
+  // Back trình duyệt trả đúng ?trang=3, mà gửi link cho nhau cũng ra đúng trang.
+  const [page, setPage] = useState(() => {
+    const n = parseInt(params.get("trang") ?? "1", 10);
+    return Number.isFinite(n) && n > 0 ? n : 1;
+  });
 
   // Đổi bộ lọc → luôn quay về trang 1
-  const setFilters = (f: Filters) => { setFiltersState(f); setPage(1); };
+  const setFilters = (f: Filters) => { setFiltersState(f); setPage(1); ghiTrangVaoDiaChi(1); };
 
   // Bấm sang trang khác → hiện NGAY từ tin đầu tiên của trang đó (nhảy thẳng lên
   // đầu danh sách, không phải cuộn tay). Áp dụng cho mọi danh sách phân trang.
-  const goPage = (p: number) => { setPage(p); window.scrollTo({ top: 0 }); };
+  const goPage = (p: number) => { setPage(p); ghiTrangVaoDiaChi(p); window.scrollTo({ top: 0 }); };
+
+  // Ghi ?trang=N vào địa chỉ mà KHÔNG tải lại trang (replaceState, không thêm bước
+  // lịch sử — để nút Back vẫn quay ra chỗ khách vào danh sách, không phải bấm Back
+  // đúng bằng số lần đổi trang).
+  function ghiTrangVaoDiaChi(p: number) {
+    if (typeof window === "undefined") return;
+    const u = new URL(window.location.href);
+    if (p > 1) u.searchParams.set("trang", String(p));
+    else u.searchParams.delete("trang");
+    window.history.replaceState(window.history.state, "", u);
+  }
 
   // Nguồn tin theo đúng MỤC ĐÍCH của trang (bán / thuê)
   const base = useMemo(
