@@ -30,7 +30,6 @@ export default function GallerySlideVideo({
   const ref = useRef<HTMLVideoElement>(null);
   const [to, setTo] = useState(false);     // đang phóng to (lớp phủ toàn màn hình)
   const [chay, setChay] = useState(false); // đã bấm play (dùng cho YouTube/Vimeo)
-  const [tieng, setTieng] = useState(false); // khách đã bấm "Bật tiếng"
   const [posterSrc, setPosterSrc] = useState(poster?.hd ?? "");
   const holdRef = useRef(onHold);
   const playingRef = useRef(false);
@@ -51,7 +50,7 @@ export default function GallerySlideVideo({
   const [truoc, setTruoc] = useState(active);
   if (truoc !== active) {
     setTruoc(active);
-    if (!active) { setChay(false); setTieng(false); }
+    if (!active) setChay(false);
   }
 
   // Rời slide → dừng video, trả quyền tự chạy slide lại cho thư viện.
@@ -84,35 +83,16 @@ export default function GallerySlideVideo({
   useEffect(() => () => holdRef.current?.(false), []);
 
   const video = embed ? (
-    // YouTube/Vimeo — TỰ CHẠY khi tới lượt slide, TẮT TIẾNG (trình duyệt chỉ cho tự
-    // chạy khi tắt tiếng). Thư viện vẫn tự chuyển slide như ảnh; chỉ khi khách bấm
-    // "Bật tiếng" — tức là đang thật sự xem — mới giữ slide lại.
-    active || chay ? (
+    // YouTube/Vimeo — KHÔNG tự chạy (chủ dự án chốt 5/9). Slide video trôi qua như
+    // một tấm ảnh: hiện KHUNG HÌNH THẬT + nút play, khách bấm mới phát (có tiếng).
+    chay ? (
       <>
         <iframe
-          src={`${embed}${embed.includes("?") ? "&" : "?"}autoplay=1&mute=${tieng ? 0 : 1}`}
+          src={`${embed}${embed.includes("?") ? "&" : "?"}autoplay=1`}
           title="Video"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           className="h-full w-full bg-black"
         />
-        {!tieng && (
-          <button
-            type="button"
-            onClick={() => {
-              setTieng(true);
-              setChay(true);
-              playingRef.current = true;
-              bao();
-            }}
-            className="absolute bottom-3 left-3 z-10 flex items-center gap-1.5 rounded-md bg-black/70 px-2.5 py-1.5 text-[13px] font-medium text-white ring-1 ring-white/25 backdrop-blur-sm transition hover:bg-black/90"
-          >
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M11 5L6 9H2v6h4l5 4V5z" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15.5 8.5a5 5 0 010 7M18.5 5.5a9 9 0 010 13" />
-            </svg>
-            Bật tiếng
-          </button>
-        )}
       </>
     ) : (
       <button
@@ -151,15 +131,8 @@ export default function GallerySlideVideo({
       controls
       controlsList="nofullscreen"
       preload="metadata"
-      // Tự chạy tắt tiếng khi tới lượt slide — giống ảnh, không phải bấm mới có gì.
-      // Khách mở tiếng bằng nút loa sẵn có của trình phát thì lúc đó mới giữ slide.
-      autoPlay={active}
-      muted={!tieng}
-      onVolumeChange={(e) => {
-        if (!e.currentTarget.muted) setTieng(true);
-      }}
       onPlay={() => {
-        playingRef.current = tieng;
+        playingRef.current = true;
         bao();
       }}
       onPause={() => {
