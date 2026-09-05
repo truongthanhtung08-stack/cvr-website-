@@ -8,16 +8,14 @@
 // 60–80%, lại được CDN giữ 30 ngày nên lần sau mở là tức thì.
 // ============================================================================
 
-// Bề rộng Next cho phép (khớp deviceSizes mặc định) — chọn mức gần nhất trở lên
-const BE_RONG = [640, 750, 828, 1080, 1200, 1920, 2048, 3840];
-
-export function anhToiUu(src: string, beRong = 1080, chatLuong = 75): string {
-  if (!src) return src;
-  // Ảnh data:/blob: hoặc SVG → giữ nguyên, bộ tối ưu không xử lý
-  if (/^(data:|blob:)/i.test(src) || /\.svg($|\?)/i.test(src)) return src;
-
-  const w = BE_RONG.find((x) => x >= beRong) ?? BE_RONG[BE_RONG.length - 1];
-  return `/_next/image?url=${encodeURIComponent(src)}&w=${w}&q=${chatLuong}`;
+// ⚠️ 5/9/2026 — KHÔNG đi qua /_next/image nữa.
+// Gói Vercel miễn phí hết hạn mức tối ưu ảnh → mọi /_next/image trả về
+// "402 Payment required". Ảnh trong trang dùng <Image unoptimized> nên vẫn hiện,
+// nhưng BỘ XEM ẢNH TOÀN MÀN HÌNH gọi hàm này nên bấm vào ảnh là vỡ — đúng lỗi
+// chủ dự án gặp cả buổi 5/9. Nay trả thẳng đường dẫn ảnh (đã đi qua /anh/… của
+// chính mình, xem src/lib/asset.ts). Bật lại chỉ khi lên gói Vercel trả phí.
+export function anhToiUu(src: string, _beRong = 1080, _chatLuong = 75): string {
+  return src;
 }
 
 // Bề rộng cần tải theo màn hình thật (tính cả màn hình nét cao (retina),
