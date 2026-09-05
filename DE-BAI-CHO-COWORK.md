@@ -176,6 +176,46 @@ Fanpage / Zalo OA, và môi giới gửi thẳng qua Zalo cho chủ dự án.
 
 ---
 
+## 2C. SÁU LỖI CỦA ĐỢT 30/08 VÀ 02/09 — KHÔNG ĐƯỢC LẶP LẠI
+
+> Hai đợt vừa rồi chủ dự án phải sửa tay hơn 20 tin vì mấy lỗi dưới đây. Đọc kỹ mục này.
+
+**1. Giữ NGUYÊN xuống dòng và gạch đầu dòng của người đăng.**
+Người đăng viết mỗi ý một dòng (`- Diện tích: 68m²` · `+ Tầng 2: 2 phòng ngủ`) thì ô `mo_ta`
+phải xuống dòng y như vậy — trong Excel xuống dòng trong ô bằng **Alt + Enter**.
+Dồn hết thành MỘT ĐOẠN DÀI là sai: lên web đọc như một cục chữ, khách bỏ đi.
+*Đợt 30/08 có 21/34 tin bị dồn thành một đoạn.*
+
+**2. Không viết lại, không tóm tắt, không thêm câu của mình.**
+Đợt 02/09 cả 50 tin đều dài đúng 400–470 chữ, văn phong giống hệt nhau — đó là **viết lại**
+chứ không phải chép. Có tin còn lòi ra câu của người gom:
+*“Tin gốc niêm yết giá theo m2, cần đối chiếu lại tại link nguồn”* — câu này lên web là hỏng.
+Muốn nhắc gì cho chủ dự án thì ghi vào cột `ghi_chu`, KHÔNG ghi vào `mo_ta`.
+
+**3. Không làm vỡ số.**
+`2.000m2` không được thành `2. 000m2` · `11,5 tỷ` không được thành `11. 5 tỷ` ·
+`700.000đ` không được thành `700. 000đ`. Lỗi này sinh ra khi dán qua công cụ trung gian —
+dán xong phải đọc lại cột `mo_ta` một lượt.
+
+**4. Mã tin nào có trong bảng thì thư mục ảnh phải có ảnh của mã đó.**
+Đợt 02/09 giao 10 tin Quảng Trị nhưng ảnh chỉ có tới `qtri08` — hai tin `qtri09`, `qtri10`
+không đăng được, phải gạt ra. **Thiếu ảnh thì bỏ hẳn tin đó khỏi bảng.**
+
+**5. VIDEO — đây là chỗ tốn dung lượng nhất, làm sai là web hết chỗ đăng tin.**
+Kho ảnh của web chỉ có 1GB, mà 55 video đã ăn hết **1GB** (mỗi video 16–44MB, bằng cả trăm tấm ảnh).
+Từ nay:
+· **KHÔNG tải video về máy nữa.** Chỉ **dán link video** (YouTube hoặc link gốc) vào cột `video`.
+· Mỗi tin **tối đa 1 video**. Đã có link rồi thì đừng kèm thêm tệp, và ngược lại.
+· Tên tệp (khi nào chủ dự án yêu cầu tải) đặt gọn: `dn02-video.mp4` — đợt 02/09 đặt thành
+  `dn02-video.mp4.mp4`, thừa đuôi.
+
+**6. Chia làm nhiều đợt thì mỗi đợt MỘT FILE RIÊNG.**
+Đừng giao một file 50 tin rồi dặn “đợt 1 lấy 33 tin đầu”. Web đọc cả file nên tin của đợt sau
+vẫn nhảy vào bảng chờ đăng, chủ dự án phải ngồi gạt ra từng dòng.
+Đặt tên rõ: `Bang-<ngày>-DOT-1.csv`, `Bang-<ngày>-DOT-2.csv`; ảnh cũng tách thư mục theo đợt.
+
+---
+
 ## 3. ĐỊA GIỚI — BẮT BUỘC DÙNG HỆ MỚI 2 CẤP
 
 Từ 2025 **không còn Quận/Huyện**. Chỉ có: **Tỉnh/Thành → Phường/Xã**.

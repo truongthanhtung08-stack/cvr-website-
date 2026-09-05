@@ -78,7 +78,13 @@ function tachMucCoNhan(line) {
     if (out.length === 0 || coNhan || laMucLap || truocLaTieuDe) out.push(c);
     else out[out.length - 1] += " " + c;
   }
-  return out.join("\n");
+
+  // CÒN LẠI LÀ MỘT KHỐI VĂN XUÔI DÀI (tin cowork viết liền một mạch, không gạch đầu
+  // dòng, không nhãn) → mỗi CÂU một dòng. Không đổi một chữ nào, chỉ xuống dòng cho
+  // đọc được: tin BĐS mỗi câu là một ý (diện tích · hướng · pháp lý · vị trí…).
+  return out
+    .flatMap((d) => (d.length > 180 && d.split(/(?<=[.!?…])\s+/).length >= 3 ? d.split(/(?<=[.!?…])\s+/) : [d]))
+    .join("\n");
 }
 
 export function suaXuongDong(text) {

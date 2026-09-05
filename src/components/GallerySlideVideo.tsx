@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { asset } from "@/lib/asset";
-import { videoEmbedUrl } from "@/lib/media";
+import { videoEmbedUrl, videoPosterUrl } from "@/lib/media";
 import { khoaCuon } from "@/lib/khoaCuon";
 
 // VIDEO NẰM TRONG THƯ VIỆN ẢNH — coi như MỘT TẤM HÌNH của tin:
@@ -26,9 +26,12 @@ export default function GallerySlideVideo({
   onHold?: (giu: boolean) => void; // đang xem / đang phóng to → giữ slide, đừng tự chuyển
 }) {
   const embed = videoEmbedUrl(url);
+  const poster = videoPosterUrl(url);
   const ref = useRef<HTMLVideoElement>(null);
   const [to, setTo] = useState(false);     // đang phóng to (lớp phủ toàn màn hình)
   const [chay, setChay] = useState(false); // đã bấm play (dùng cho YouTube/Vimeo)
+  const [tieng, setTieng] = useState(false); // khách đã bấm "Bật tiếng"
+  const [posterSrc, setPosterSrc] = useState(poster?.hd ?? "");
   const holdRef = useRef(onHold);
   const playingRef = useRef(false);
   const toRef = useRef(false);
@@ -48,7 +51,7 @@ export default function GallerySlideVideo({
   const [truoc, setTruoc] = useState(active);
   if (truoc !== active) {
     setTruoc(active);
-    if (!active) setChay(false);
+    if (!active) { setChay(false); setTieng(false); }
   }
 
   // Rời slide → dừng video, trả quyền tự chạy slide lại cho thư viện.
@@ -81,14 +84,36 @@ export default function GallerySlideVideo({
   useEffect(() => () => holdRef.current?.(false), []);
 
   const video = embed ? (
-    // YouTube/Vimeo: bấm play mới nạp iframe → trang nhẹ, và không tự chạy.
-    chay ? (
-      <iframe
-        src={`${embed}${embed.includes("?") ? "&" : "?"}autoplay=1&playsinline=1`}
-        title="Video"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        className="h-full w-full bg-black"
-      />
+    // YouTube/Vimeo — TỰ CHẠY khi tới lượt slide, TẮT TIẾNG (trình duyệt chỉ cho tự
+    // chạy khi tắt tiếng). Thư viện vẫn tự chuyển slide như ảnh; chỉ khi khách bấm
+    // "Bật tiếng" — tức là đang thật sự xem — mới giữ slide lại.
+    active || chay ? (
+      <>
+        <iframe
+          src={`${embed}${embed.includes("?") ? "&" : "?"}autoplay=1&mute=${tieng ? 0 : 1}`}
+          title="Video"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          className="h-full w-full bg-black"
+        />
+        {!tieng && (
+          <button
+            type="button"
+            onClick={() => {
+              setTieng(true);
+              setChay(true);
+              playingRef.current = true;
+              bao();
+            }}
+            className="absolute bottom-3 left-3 z-10 flex items-center gap-1.5 rounded-md bg-black/70 px-2.5 py-1.5 text-[13px] font-medium text-white ring-1 ring-white/25 backdrop-blur-sm transition hover:bg-black/90"
+          >
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M11 5L6 9H2v6h4l5 4V5z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.5 8.5a5 5 0 010 7M18.5 5.5a9 9 0 010 13" />
+            </svg>
+            Bật tiếng
+          </button>
+        )}
+      </>
     ) : (
       <button
         type="button"
@@ -98,9 +123,20 @@ export default function GallerySlideVideo({
           bao();
         }}
         aria-label="Phát video"
-        className="flex h-full w-full items-center justify-center bg-black"
+        className="relative flex h-full w-full items-center justify-center bg-black"
       >
-        <span className="flex h-16 w-16 items-center justify-center rounded-full bg-white/90 transition hover:scale-105">
+        {/* KHUNG HÌNH CHỜ — không để ô đen trơn. Ảnh lấy thẳng từ YouTube nên không
+            tốn dung lượng kho của mình; maxres thiếu thì lùi về hq. */}
+        {poster && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={posterSrc}
+            alt=""
+            onError={() => setPosterSrc(poster.thuong)}
+            className="absolute inset-0 h-full w-full object-contain"
+          />
+        )}
+        <span className="relative flex h-16 w-16 items-center justify-center rounded-full bg-white/90 shadow-lg transition hover:scale-105">
           <svg className="ml-1 h-7 w-7 text-black" fill="currentColor" viewBox="0 0 24 24">
             <path d="M8 5v14l11-7z" />
           </svg>
@@ -115,8 +151,15 @@ export default function GallerySlideVideo({
       controls
       controlsList="nofullscreen"
       preload="metadata"
+      // Tự chạy tắt tiếng khi tới lượt slide — giống ảnh, không phải bấm mới có gì.
+      // Khách mở tiếng bằng nút loa sẵn có của trình phát thì lúc đó mới giữ slide.
+      autoPlay={active}
+      muted={!tieng}
+      onVolumeChange={(e) => {
+        if (!e.currentTarget.muted) setTieng(true);
+      }}
       onPlay={() => {
-        playingRef.current = true;
+        playingRef.current = tieng;
         bao();
       }}
       onPause={() => {

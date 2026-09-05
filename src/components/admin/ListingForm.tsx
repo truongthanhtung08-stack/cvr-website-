@@ -110,8 +110,14 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
       const defaultOwner = initial?.owner_id || (!editing && user ? user.id : "");
       if (!ownerId && defaultOwner) setOwnerId(defaultOwner);
 
-      // Điền liên hệ từ hồ sơ chủ tin (nếu tin chưa có sẵn contact)
-      const src = (list as Cust[] | null)?.find((x) => x.id === (initial?.owner_id || user?.id));
+      // Điền liên hệ từ hồ sơ chủ tin — CHỈ KHI ĐANG TẠO TIN MỚI.
+      // ⚠️ Tin ĐÃ CÓ mà thiếu liên hệ thì để TRỐNG. Trước đây tin không có chủ
+      // (nhập bằng file) rơi về hồ sơ ADMIN, nên admin chỉ cần mở tin của khách ra
+      // sửa một chữ là SỐ ĐIỆN THOẠI CỦA ADMIN bị đóng vào tin đó — khách gọi vào
+      // nhầm số chủ sàn. Đã xảy ra ngày 5/9/2026 với 8 tin.
+      const src = editing
+        ? null
+        : (list as Cust[] | null)?.find((x) => x.id === (initial?.owner_id || user?.id));
       if (src) {
         setCName((v) => v || src.full_name || "");
         setCPhone((v) => v || src.phone || "");
