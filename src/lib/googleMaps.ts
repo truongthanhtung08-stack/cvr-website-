@@ -116,6 +116,12 @@ export function loadMapsApi(): Promise<void> {
     s.async = true;
     s.onerror = () => reject(new Error("Không tải được Google Maps"));
     document.head.appendChild(s);
+    // Google có kiểu hỏng im lặng: script tải về nhưng callback không bao giờ chạy,
+    // cũng không onerror. Không đặt hạn giờ thì khối bản đồ kẹt ở "Đang mở bản đồ…"
+    // vĩnh viễn — đúng triệu chứng gặp trên web tháng 9/2026.
+    window.setTimeout(() => {
+      if (!window.google?.maps) reject(new Error("Không tải được Google Maps"));
+    }, 15000);
   });
 
   w.__cvrMapsPromise = p;

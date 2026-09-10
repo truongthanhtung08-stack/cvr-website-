@@ -12,7 +12,16 @@ import { saleTypeGroups, rentTypeGroups } from "@/lib/filters";
 import { slugify } from "@/lib/contentAdmin";
 // Bộ đặc điểm theo loại hình — để ghi số tầng / mặt tiền / đường vào đúng ô của
 // từng loại bất động sản, y như khi đăng tay bằng form.
-import { fieldsFor } from "@/lib/listingSpec";
+import { fieldsFor, coDonGiaM2 } from "@/lib/listingSpec";
+// SỐ ĐIỆN THOẠI — cùng một hàm với ô nhập trong admin và số hiện trên trang tin,
+// nên file của Cowork, cơ sở dữ liệu và web luôn ghi giống hệt nhau (0 + 10 số).
+import { chuanHoaSdt, laSdtVN, tachNhieuSdt } from "@/lib/phone";
+// TIỆN ÍCH / NỘI THẤT / PHÁP LÝ — dịch cách viết đời thường về đúng tên danh mục.
+// Không có bước này thì "Bảo vệ 24/7", "Máy lạnh", "Sổ hồng riêng" lên web là MẤT.
+import {
+  chuanHoaTienIch, chuanHoaNoiThat, chuanHoaPhapLy, chuanHoaMucNoiThat,
+  tienIchNgoaiDanhMuc, noiThatNgoaiDanhMuc,
+} from "@/lib/chuanHoaThuocTinh";
 
 export type ListingTierId = "diamond" | "gold" | "silver" | "basic";
 
@@ -20,7 +29,11 @@ export type RowIssue = { dong: number; loi: string[] };
 
 export type ParsedRow = {
   dong: number;                       // số dòng trong file (tính cả dòng tiêu đề)
-  loi: string[];                      // rỗng = hợp lệ
+  loi: string[];                      // rỗng = hợp lệ (ĐỎ — không đăng)
+  // CẢNH BÁO (VÀNG) — tin vẫn đăng được nhưng chủ dự án cần liếc qua: mô tả bị
+  // dồn thành một đoạn, tiện ích ghi tên lạ, số điện thoại không đúng 10 số,
+  // và ghi chú Cowork để lại khi họ có sửa tiêu đề / nội dung tin gốc.
+  canhBao: string[];
   payload: Record<string, unknown>;   // sẵn sàng insert vào bảng listings
   maAnh: string;                      // mã để khớp ảnh tải hàng loạt theo tên tệp
   tomTat: { tieuDe: string; mucDich: string; loaiHinh: string; gia: string; khuVuc: string; hang: string };
@@ -96,10 +109,30 @@ export const COT = {
   tinhTrangNoiThat: "tinh_trang_noi_that", // mức nội thất (Bàn giao thô / Đầy đủ…)
   noiThatBanGiao: "noi_that_ban_giao",  // danh sách nội thất, ngăn bằng dấu phẩy
   tienIch: "tien_ich",                  // danh sách tiện ích, ngăn bằng dấu phẩy
+  // ── ĐƠN GIÁ THUÊ THEO M² — NHÀ XƯỞNG · KHO BÃI · VĂN PHÒNG · MẶT BẰNG ────
+  // Thị trường báo giá "35.000đ/m²/tháng", KHÔNG báo tổng tiền tháng. Cowork ghi
+  // NGUYÊN con số đơn giá theo NGÀN ĐỒNG (35.000đ/m² → ghi 35), web tự nhân với
+  // diện tích ra tổng tiền mỗi tháng. Cowork hết phải tính nhẩm — chỗ sai nhiều nhất.
+  donGiaThue: "don_gia_thue",           // NGÀN đồng / m² / tháng
   // ── KÍCH THƯỚC / SỐ TẦNG — vào bộ đặc điểm theo LOẠI HÌNH ──────────────────
   duongVao: "duong_vao",                // bề rộng đường trước nhà (m)
   matTien: "mat_tien",                  // chiều ngang mặt tiền (m)
   soTang: "so_tang",                    // số tầng nhà (căn hộ: tổng số tầng toà)
+  chieuDai: "chieu_dai",                // chiều sâu thửa đất (m)
+  namXayDung: "nam_xay_dung",
+  tangSo: "tang_so",                    // căn hộ ở tầng mấy
+  // ── ĐẶC ĐIỂM RIÊNG CỦA KHO · NHÀ XƯỞNG · BÃI (chủ yếu tin CHO THUÊ) ──────
+  dienTichSuDung: "dien_tich_su_dung",  // diện tích xưởng/kho thực dùng (m²)
+  loaiKho: "loai_kho",                  // Xưởng sản xuất · Kho hàng khô · Kho lạnh…
+  chieuCao: "chieu_cao",                // chiều cao thông thuỷ (m)
+  taiTrongNen: "tai_trong_nen",         // VD: 3 tấn/m²
+  congSuatDien: "cong_suat_dien",       // VD: 560 KVA
+  pccc: "pccc",                         // Đã có / Chưa có
+  vanPhongTrongKho: "van_phong_trong_kho", // m²
+  xeContainer: "xe_container",          // Container 40 feet / 20 feet / Xe tải nhỏ
+  // ── HAI MỤC MỌI TIN CHO THUÊ ĐỀU CẦN ────────────────────────────────────
+  thoiHanThue: "thoi_han_thue",         // VD: 3 năm
+  tienCoc: "tien_coc",                  // VD: 3 tháng
   // ── BA MỤC CHỈ CÓ Ở TIN CHO THUÊ ─────────────────────────────────────────
   thoiGianVaoO: "thoi_gian_du_kien_vao_o",
   giaDien: "muc_gia_dien",
@@ -218,6 +251,7 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
     return k >= 0 ? (cells[k] ?? "").trim() : "";
   };
   const loi: string[] = [];
+  const canhBao: string[] = [];
 
   // ── ĐIỀU KIỆN ĐỂ GOOGLE NHẬN TIN ──────────────────────────────────────────
   // Cùng bộ quy tắc với form đăng tin trong admin. Nhập hàng loạt đăng thẳng
@@ -229,6 +263,11 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
 
   const moTa = lay(COT.moTa);
   if (moTa.trim().length < 50) loi.push(`Mô tả quá ngắn (${moTa.trim().length}/50 ký tự)`);
+  // XUỐNG DÒNG PHẢI KHỚP TIN GỐC. Người đăng viết mỗi ý một dòng; dán qua công cụ
+  // trung gian là dồn hết thành một cục chữ, lên web khách bỏ đi. Không chặn đăng
+  // (có tin gốc vốn viết liền) nhưng phải báo vàng để chủ dự án mở tin gốc đối chiếu.
+  if (moTa.trim().length >= 250 && moTa.indexOf(String.fromCharCode(10)) < 0)
+    canhBao.push("Mô tả dồn thành MỘT ĐOẠN — mở tin gốc xem lại xuống dòng/gạch đầu dòng");
 
   // ĐƠN VỊ HÀNH CHÍNH MỚI — 2 cấp: Tỉnh/Thành → Phường/Xã (KHÔNG còn Quận/Huyện).
   // Vì vậy chỗ bắt buộc là PHƯỜNG/XÃ. Tin theo hệ cũ chỉ ghi quan_huyen vẫn nhận.
@@ -253,13 +292,44 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
   const tinhThanh = lay(COT.tinhThanh);
   if (!tinhThanh) loi.push("Thiếu tỉnh/thành");
 
-  // Giá: BÁN nhập theo TỶ · THUÊ nhập theo TRIỆU/tháng (giống form đăng tin).
-  // Bỏ trống = Thỏa thuận.
+  const dienTichSo = soVN(lay(COT.dienTich));
+
+  // ── GIÁ ───────────────────────────────────────────────────────────────────
+  // BÁN nhập theo TỶ · THUÊ nhập theo TRIỆU/tháng (giống form đăng tin).
+  // Bỏ trống cả hai cột giá = Thỏa thuận.
   let giaVnd: number | null = null;
   if (lay(COT.gia)) {
     const n = soVN(lay(COT.gia));
     if (n == null) loi.push(`gia "${lay(COT.gia)}" không phải số`);
     else giaVnd = Math.round(n * (mucDich === "thue" ? 1e6 : 1e9));
+  }
+
+  // ── ĐƠN GIÁ THUÊ THEO M² — NHÀ XƯỞNG · KHO BÃI · VĂN PHÒNG · MẶT BẰNG ─────
+  // Tin gốc ghi "35.000đ/m²/tháng"; Cowork chép NGUYÊN con số theo NGÀN ĐỒNG
+  // (ghi 35), web nhân với diện tích ra tổng tiền mỗi tháng. Nhờ vậy không ai
+  // phải tính nhẩm — đây là chỗ đợt vừa rồi sai hết.
+  //   35 (nghìn/m²) × 2.000 m² = 70.000.000 đ/tháng
+  // Đơn giá bậc thang theo diện tích (dưới 1.000 m² một giá, trên 1.000 m² một
+  // giá rẻ hơn) thì ghi ĐÚNG mức áp cho diện tích của chính tin này.
+  const laGiaTheoM2 = coDonGiaM2(loaiHinhChuan, mucDich);
+  let donGiaThue: number | null = null;
+  if (lay(COT.donGiaThue)) {
+    const n = soVN(lay(COT.donGiaThue));
+    if (n == null) loi.push(`don_gia_thue "${lay(COT.donGiaThue)}" không phải số`);
+    else if (mucDich !== "thue") canhBao.push("don_gia_thue chỉ dùng cho tin CHO THUÊ — đã bỏ qua");
+    else if (dienTichSo == null) loi.push("Có don_gia_thue nhưng thiếu dien_tich — không tính được giá thuê");
+    else {
+      // Người ghi nhầm nguyên số đồng (35000 thay vì 35) vẫn hiểu đúng, không
+      // để tin ra giá 70 tỷ một tháng.
+      donGiaThue = n >= 1000 ? n / 1000 : n;
+      if (n >= 1000) canhBao.push(`don_gia_thue ghi ${lay(COT.donGiaThue)} — hiểu là ${donGiaThue} nghìn đ/m²/tháng`);
+      giaVnd = Math.round(donGiaThue * 1000 * dienTichSo);
+    }
+  } else if (laGiaTheoM2 && giaVnd != null && dienTichSo) {
+    // Chỉ ghi tổng tiền tháng vẫn nhận — tự suy ngược ra đơn giá để trang tin hiện.
+    donGiaThue = Math.round((giaVnd / 1000 / dienTichSo) * 10) / 10;
+  } else if (laGiaTheoM2 && giaVnd == null) {
+    canhBao.push("Kho/xưởng/mặt bằng cho thuê nên có don_gia_thue (ngàn đ/m²/tháng)");
   }
 
   const soHoacNull = (v: string, ten: string, nguyen = false): number | null => {
@@ -296,10 +366,16 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
   const video = tachDanhSachAnh(lay(COT.video)).filter(laLinkAnh);
 
   const ten = lay(COT.lienHeTen);
-  // SỐ ĐIỆN THOẠI — có thể nhiều số ngăn bằng | ; hoặc phẩy. Chỉ giữ chữ số.
-  // Đây là CHÌA KHOÁ để sau này gán tin đăng hộ về tài khoản khách, nên lưu ĐỦ.
-  const dsSdt = [...new Set(tachDanhSachAnh(lay(COT.lienHeSdt)).map((s) => s.replace(/D/g, "")).filter((s) => s.length >= 9))];
+  // ── SỐ ĐIỆN THOẠI NGƯỜI ĐĂNG ───────────────────────────────────────────────
+  // Chuẩn đã chốt: 10 chữ số, CÓ SỐ 0 phía trước. Cùng hàm chuanHoaSdt() với ô
+  // nhập trong admin và với số hiện trên trang tin, nên file Cowork · kho dữ liệu ·
+  // trang web luôn ghi giống hệt nhau. "0905.123.456" · "+84905123456" đều về
+  // "0905123456".
+  // Đây cũng là CHÌA KHOÁ gán tin đăng hộ về tài khoản khách sau này → lưu ĐỦ số.
+  const dsSdt = tachNhieuSdt(lay(COT.lienHeSdt));
   const sdt = dsSdt[0] ?? "";
+  const sdtLoi = tachDanhSachAnh(lay(COT.lienHeSdt)).filter((s) => s.trim() && !laSdtVN(s) && chuanHoaSdt(s).length !== 11);
+  if (sdtLoi.length) canhBao.push(`Số điện thoại không đúng chuẩn 10 số: ${sdtLoi.join(" · ")}`);
   const email = lay(COT.lienHeEmail).trim().toLowerCase();
 
   // ── ĐẶC ĐIỂM THEO LOẠI HÌNH ────────────────────────────────────────────────
@@ -320,9 +396,42 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
   // Nhà/biệt thự/shophouse: "số tầng" là của chính căn nhà. Căn hộ/chung cư
   // không có mục ấy nên hiểu là TỔNG SỐ TẦNG CỦA TOÀ.
   datSpec(lay(COT.soTang), "floors", "buildingFloors");
+  datSpec(lay(COT.chieuDai), "depth");
+  datSpec(lay(COT.namXayDung), "builtYear");
+  datSpec(lay(COT.tangSo), "floor");
+  // Kho · nhà xưởng · bãi — bộ đặc điểm riêng, phần lớn là tin CHO THUÊ.
+  datSpec(lay(COT.dienTichSuDung), "usableArea");
+  datSpec(lay(COT.loaiKho), "khoLoai");
+  datSpec(lay(COT.chieuCao), "clearHeight");
+  datSpec(lay(COT.taiTrongNen), "floorLoad");
+  datSpec(lay(COT.congSuatDien), "power");
+  datSpec(lay(COT.pccc), "pccc");
+  datSpec(lay(COT.vanPhongTrongKho), "officeArea");
+  datSpec(lay(COT.xeContainer), "container");
+  // Mọi tin cho thuê
   datSpec(lay(COT.thoiGianVaoO), "moveIn");
+  datSpec(lay(COT.thoiHanThue), "minTerm");
+  datSpec(lay(COT.tienCoc), "deposit");
   datSpec(lay(COT.giaDien), "elecPrice");
   datSpec(lay(COT.giaNuoc), "waterPrice");
+
+  // ── TIỆN ÍCH · NỘI THẤT · PHÁP LÝ — DỊCH VỀ ĐÚNG TÊN DANH MỤC ─────────────
+  // Trang tin chỉ hiện tiện ích/nội thất TRÙNG KHỚP danh mục chuẩn. Ghi "Bảo vệ
+  // 24/7" thay vì "An ninh 24/7" là mục đó biến mất, không báo lỗi gì. Ở đây dịch
+  // lại; mục thật sự lạ thì GIỮ NGUYÊN (trang tin gom vào nhóm "Tiện ích khác")
+  // và báo vàng để chủ dự án biết mà xem.
+  const tienIch = lay(COT.tienIch) ? chuanHoaTienIch(tachDanhSach(lay(COT.tienIch))) : [];
+  const noiThat = lay(COT.noiThatBanGiao) ? chuanHoaNoiThat(tachDanhSach(lay(COT.noiThatBanGiao))) : [];
+  const phapLy = chuanHoaPhapLy(lay(COT.phapLy));
+  const mucNoiThat = chuanHoaMucNoiThat(lay(COT.tinhTrangNoiThat));
+  const ngoaiDanhMuc = [...tienIchNgoaiDanhMuc(tienIch), ...noiThatNgoaiDanhMuc(noiThat)];
+  if (ngoaiDanhMuc.length)
+    canhBao.push(`Ngoài danh mục chuẩn (vẫn hiện ở mục "khác"): ${ngoaiDanhMuc.join(" · ")}`);
+
+  // ── GHI CHÚ CỦA COWORK ────────────────────────────────────────────────────
+  // Cowork có sửa tiêu đề / nội dung so với tin gốc thì BẮT BUỘC ghi vào cột
+  // ghi_chu. Đưa lên bảng xem trước để chủ dự án đối chiếu ngay, khỏi mở lại file.
+  if (lay(COT.ghiChu).trim()) canhBao.push(`Ghi chú Cowork: ${lay(COT.ghiChu).trim()}`);
 
   const payload = {
     purpose: mucDich,
@@ -342,16 +451,22 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
       // chỉ bổ sung ảnh còn thiếu thay vì đăng trùng một tin nữa.
       maAnh: (laDanhSachTenAnh(maAnhRaw) ? "" : maAnhRaw) || undefined,
       addressDetail: lay(COT.diaChi) || undefined,
-      legal: lay(COT.phapLy) || undefined,
+      legal: phapLy || undefined,
       direction: lay(COT.huong) || undefined,
       contact: ten || sdt || email
         ? { name: ten || undefined, phone: sdt || undefined,
             ...(dsSdt.length > 1 ? { phones: dsSdt } : {}),
             email: email || undefined }
         : undefined,
-      // ── 5 cột bổ sung ────────────────────────────────────────────────────
-      // Dự án: lưu SLUG để trang chi tiết nối được với dự án tương ứng
+      // ── DỰ ÁN ────────────────────────────────────────────────────────────
+      // Lưu CẢ HAI: slug để nối với trang dự án, và TÊN NGUYÊN VĂN để trang tin
+      // hiện được ngay cả khi dự án đó chưa được tạo trong admin (chủ dự án cập
+      // nhật dự án sau — yêu cầu 05/09). Trước đây chỉ lưu slug nên tên dự án
+      // không hiện ở đâu cả, và mở form sửa là mất luôn.
       project: lay(COT.tenDuAn) ? slugify(lay(COT.tenDuAn)) : undefined,
+      projectName: lay(COT.tenDuAn) || undefined,
+      // ĐƠN GIÁ THUÊ theo NGÀN đồng/m²/tháng — trang tin hiện "35.000 đ/m²/tháng"
+      donGiaThue: donGiaThue ?? undefined,
       specs: Object.keys(specs).length ? specs : undefined,
       // GHI CHÚ NỘI BỘ — lưu để đối chiếu về sau, KHÔNG hiện ra trang tin
       // (trang chi tiết chỉ hiện những mục có trong bộ đặc điểm của loại hình).
@@ -360,9 +475,9 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
       // Link ảnh gốc: để TẢI ẢNH VỀ cắt 4:3 rồi tải lên ở Bước 4 — KHÔNG đăng
       // thẳng link của trang khác lên web.
       linkAnhGoc: lay(COT.linkAnh) ? tachDanhSachAnh(lay(COT.linkAnh)) : undefined,
-      furnish: lay(COT.tinhTrangNoiThat) || undefined,
-      interior: lay(COT.noiThatBanGiao) ? tachDanhSach(lay(COT.noiThatBanGiao)) : undefined,
-      amenities: lay(COT.tienIch) ? tachDanhSach(lay(COT.tienIch)) : undefined,
+      furnish: mucNoiThat || undefined,
+      interior: noiThat.length ? noiThat : undefined,
+      amenities: tienIch.length ? tienIch : undefined,
     },
     tier: hang,
     status: "approved",
@@ -371,6 +486,7 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
   return {
     dong: soDong,
     loi,
+    canhBao,
     payload,
     maAnh,
     tomTat: {

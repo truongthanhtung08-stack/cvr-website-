@@ -49,6 +49,10 @@ export default function NhapHangLoatPage() {
   const [luonTinMoi, setLuonTinMoi] = useState(false);
 
   const sai = rows.filter((r) => r.loi.length > 0);
+  // CẢNH BÁO VÀNG — dòng vẫn đăng được nhưng chủ dự án cần liếc qua: mô tả bị dồn
+  // một đoạn, tiện ích ghi tên lạ, số điện thoại không đúng 10 số, và ghi chú
+  // Cowork để lại khi họ có sửa tiêu đề / nội dung so với tin gốc.
+  const cbao = rows.filter((r) => r.loi.length === 0 && r.canhBao.length > 0);
 
   // CHỌN LẠI CÙNG MỘT THƯ MỤC LẦN THỨ HAI: mỗi lần tải lên kho sinh một địa chỉ
   // khác nhau nên cùng một tấm ảnh sẽ nằm hai lần trong danh sách → tin nhận ảnh
@@ -366,6 +370,7 @@ export default function NhapHangLoatPage() {
               {chuaAnh.length > 0 && (
                 <span className="text-amber-700"> · {chuaAnh.length} tin chưa có ảnh — chưa đăng, bỏ ảnh vào thư mục rồi tải lại file là tự lên</span>
               )}
+              {cbao.length > 0 && <span className="text-amber-700"> · {cbao.length} dòng cần xem lại</span>}
               {sai.length > 0 && <span className="text-red-700"> · {sai.length} dòng lỗi (sẽ bỏ qua)</span>}
             </span>
             <button
@@ -404,6 +409,21 @@ export default function NhapHangLoatPage() {
             </div>
           )}
 
+          {cbao.length > 0 && (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+              <p className="text-sm font-semibold text-amber-800">
+                Vẫn đăng được, nhưng nên đối chiếu với tin gốc:
+              </p>
+              <ul className="mt-2 space-y-1 text-sm text-amber-800">
+                {cbao.map((r) => (
+                  <li key={r.dong}>
+                    Dòng {r.dong}: {r.canhBao.join(" · ")}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           <div className="overflow-x-auto rounded-xl border border-cvr-line bg-white">
             <table className="w-full min-w-[720px] text-left text-sm">
               <thead className="border-b border-cvr-line bg-cvr-surface text-xs uppercase tracking-wide text-cvr-muted">
@@ -420,7 +440,7 @@ export default function NhapHangLoatPage() {
               </thead>
               <tbody>
                 {rows.map((r) => (
-                  <tr key={r.dong} className={`border-b border-cvr-line/60 ${r.loi.length ? "bg-red-50/60" : ""}`}>
+                  <tr key={r.dong} className={`border-b border-cvr-line/60 ${r.loi.length ? "bg-red-50/60" : r.canhBao.length ? "bg-amber-50/60" : ""}`}>
                     <td className="px-3 py-2.5 text-cvr-muted">{r.dong}</td>
                     <td className="max-w-[280px] truncate px-3 py-2.5 font-medium text-cvr-ink">{r.tomTat.tieuDe}</td>
                     <td className="px-3 py-2.5 text-cvr-body">{r.tomTat.mucDich}</td>
@@ -448,6 +468,31 @@ export default function NhapHangLoatPage() {
           <li><strong>tieu_de</strong>: bắt buộc, <strong>tối thiểu 30 ký tự</strong> — nên có loại hình + tên phường/xã.</li>
           <li><strong>mo_ta</strong>: bắt buộc, <strong>tối thiểu 50 ký tự</strong> (khoảng 1–2 câu).</li>
           <li><strong>gia</strong>: tin bán ghi theo <strong>TỶ</strong> (7,2 = 7,2 tỷ) · tin thuê ghi theo <strong>TRIỆU/tháng</strong> (18 = 18 triệu). Bỏ trống = Thỏa thuận.</li>
+          <li>
+            <strong>don_gia_thue</strong> — chỉ dùng cho <strong>nhà xưởng · kho bãi · văn phòng · mặt bằng CHO THUÊ</strong>.
+            Ghi <strong>NGÀN đồng mỗi m² mỗi tháng</strong>, đúng như tin gốc niêm yết:
+            tin ghi <em>35.000đ/m²</em> → điền <code>35</code> · <em>25.000đ/m²</em> → điền <code>25</code>.
+            Web tự nhân với <code>dien_tich</code> ra tổng tiền mỗi tháng, và trang tin hiện
+            cả hai dòng: tổng tiền và <em>“35.000 đ/m²/tháng”</em>.
+            <strong> Đơn giá bậc thang</strong> (dưới 1.000 m² một giá, trên 1.000 m² một giá) thì ghi đúng
+            mức áp cho chính diện tích của tin đó. Có cột này rồi thì <strong>để trống cột <code>gia</code></strong>.
+          </li>
+          <li>
+            <strong>tien_ich</strong>, <strong>noi_that_ban_giao</strong>, <strong>phap_ly</strong>, <strong>tinh_trang_noi_that</strong>:
+            ghi theo cách nói thường cũng được — web tự dịch về đúng danh mục
+            (<em>Bảo vệ 24/7 → An ninh 24/7</em> · <em>Máy lạnh → Điều hoà</em> · <em>Sổ hồng riêng → Sổ đỏ / Sổ hồng chính chủ</em>).
+            Mục nào thật sự ngoài danh mục vẫn hiện ở nhóm <strong>“Tiện ích khác”</strong>, không bị mất.
+          </li>
+          <li>
+            <strong>ten_du_an</strong>: cứ ghi <strong>tên dự án như trong tin gốc</strong>. Trang tin hiện ngay tên đó,
+            kể cả khi dự án chưa được tạo trong mục Dự án — tạo sau là tự nối vào.
+          </li>
+          <li>
+            Kho / nhà xưởng còn có: <strong>dien_tich_su_dung</strong> · <strong>loai_kho</strong> · <strong>chieu_cao</strong> ·
+            <strong> tai_trong_nen</strong> · <strong>cong_suat_dien</strong> · <strong>pccc</strong> ·
+            <strong> van_phong_trong_kho</strong> · <strong>xe_container</strong>.
+            Mọi tin cho thuê có thêm <strong>thoi_han_thue</strong> · <strong>tien_coc</strong>.
+          </li>
           <li><strong>dien_tich</strong> (m²): bắt buộc · <strong>phong_ngu</strong>, <strong>phong_tam</strong>: chỉ ghi số.</li>
           <li>
             <strong>tinh_thanh</strong>, <strong>phuong_xa</strong>: bắt buộc — ghi theo{" "}

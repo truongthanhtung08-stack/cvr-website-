@@ -20,7 +20,7 @@ import {
   emptyFilters,
   hasActiveFilters,
   priceRangesFor,
-  areaRanges,
+  areaRangesFor,
   type Filters,
   type SortKey,
 } from "@/lib/filters";
@@ -307,7 +307,7 @@ export default function ListingBrowser({
 
             {/* Lọc theo diện tích */}
             <SidebarFilter title="Lọc theo diện tích">
-              {areaRanges.map((r) => {
+              {areaRangesFor(purpose).map((r) => {
                 const on = filters.areaMin === r.min && filters.areaMax === r.max;
                 return (
                   <SidebarLink

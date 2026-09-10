@@ -6,7 +6,8 @@ import { createClient } from "@/lib/supabase/client";
 import { saleTypeGroups, rentTypeGroups } from "@/lib/filters";
 import { provinceNamesFor, districtsOf, wardsOf, wardsOfNew, type GeoMode } from "@/lib/locations";
 import { ganDiaGioi, type DiaGioiBanDo } from "@/lib/diaGioiTuBanDo";
-import { fieldsFor, interiorItems, amenityGroups, legalOptions, furnishLevels, directions, coPhongNgu, coPhongTam, coDienTichXayDung, nhanDienTich } from "@/lib/listingSpec";
+import { fieldsFor, interiorItems, amenityGroups, legalOptions, furnishLevels, directions, coPhongNgu, coPhongTam, coDienTichXayDung, nhanDienTich, coDonGiaM2 } from "@/lib/listingSpec";
+import { chuanHoaSdt } from "@/lib/phone";
 import ImagePicker from "@/components/admin/ImagePicker";
 // BẢN ĐỒ GHIM — dùng bản Leaflet/OpenStreetMap. Bản chạy nền Google
 // (components/MapPicker.tsx) GIỮ LẠI để sau này Google thông thì đổi về, chỉ
@@ -178,12 +179,36 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
   const toggle = (list: string[], set: (v: string[]) => void, v: string) =>
     set(list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
 
+  // ── GIÁ TRỊ NGOÀI DANH MỤC CHUẨN — PHẢI GIỮ, KHÔNG ĐƯỢC XOÁ ───────────────
+  // Tin nhập từ file hay ghi theo cách nói của người đăng ("Kiệt ô tô", "Sổ hồng
+  // riêng", "Đầy đủ"). Trước đây ô chọn không có giá trị đó → mở form ra là ô
+  // trống, bấm Lưu là xoá sạch dữ liệu của khách. Nay bổ sung chính giá trị đang
+  // có vào danh sách chọn / thành thẻ riêng để giữ nguyên.
+  const themNeuThieu = (ds: string[], v: string) => (v && !ds.includes(v) ? [...ds, v] : ds);
+  const chonPhapLy = themNeuThieu(legalOptions, legal);
+  const chonNoiThat = themNeuThieu(furnishLevels, furnish);
+  const tienIchKhac = amenities.filter((a) => !amenityGroups.some((g) => g.items.includes(a)));
+  const noiThatKhac = interior.filter((a) => !interiorItems.includes(a));
+
+  // ── ĐƠN GIÁ THUÊ THEO M² — KHO XƯỞNG · KHO BÃI · VĂN PHÒNG · MẶT BẰNG ─────
+  // Thị trường báo "35.000đ/m²/tháng". Ô giá vẫn nhập TRIỆU/tháng (một thước đo
+  // duy nhất cho bộ lọc), nhưng hiện thêm đơn giá quy đổi ngay dưới ô để chủ dự
+  // án đối chiếu với tin gốc — nhập lệch một số 0 là thấy ngay.
+  const laGiaTheoM2 = coDonGiaM2(type, purpose);
+
   // VNĐ từ ô giá theo mục đích (bán = tỷ · thuê = triệu/tháng)
   const priceVnd = negotiable
     ? null
     : priceUnit.trim() === ""
       ? null
       : Math.round(parseFloat(priceUnit.replace(",", ".")) * (purpose === "thue" ? 1e6 : 1e9));
+
+  // Đơn giá quy đổi cho kho xưởng / kho bãi / văn phòng / mặt bằng cho thuê.
+  const dienTichSo = parseFloat(area.replace(",", "."));
+  const donGiaM2 =
+    laGiaTheoM2 && priceVnd != null && !Number.isNaN(priceVnd) && dienTichSo > 0
+      ? Math.round(priceVnd / dienTichSo)
+      : null;
 
   // asDraft = true → LƯU NHÁP (chỉ cần tiêu đề, không hiện trên web, vào tiếp được).
   // asDraft = false → ĐĂNG TIN (kiểm tra đủ thông tin rồi công khai — status 'approved').
@@ -251,7 +276,7 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
         mapPin: mapPin.trim() || undefined,
         project: projectSlug || undefined,
         contact: (cName.trim() || cPhone.trim() || cEmail.trim() || cAvatar.trim())
-          ? { name: cName.trim(), phone: cPhone.trim(), email: cEmail.trim(), avatar: cAvatar.trim() || undefined }
+          ? { name: cName.trim(), phone: chuanHoaSdt(cPhone), email: cEmail.trim(), avatar: cAvatar.trim() || undefined }
           : undefined,
       },
       tier,
@@ -510,13 +535,13 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
           <Field label="Tình trạng pháp lý">
             <select value={legal} onChange={(e) => setLegal(e.target.value)} className={inputCls}>
               <option value="">Chọn</option>
-              {legalOptions.map((o) => <option key={o} value={o}>{o}</option>)}
+              {chonPhapLy.map((o) => <option key={o} value={o}>{o}</option>)}
             </select>
           </Field>
           <Field label="Tình trạng nội thất">
             <select value={furnish} onChange={(e) => setFurnish(e.target.value)} className={inputCls}>
               <option value="">Chọn</option>
-              {furnishLevels.map((o) => <option key={o} value={o}>{o}</option>)}
+              {chonNoiThat.map((o) => <option key={o} value={o}>{o}</option>)}
             </select>
           </Field>
         </div>
@@ -527,6 +552,10 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
         <div className="flex flex-wrap gap-2">
           {interiorItems.map((it) => (
             <Chip key={it} active={interior.includes(it)} onClick={() => toggle(interior, setInterior, it)}>{it}</Chip>
+          ))}
+          {/* Mục người đăng ghi mà danh mục chuẩn không có — giữ nguyên, bấm để bỏ */}
+          {noiThatKhac.map((it) => (
+            <Chip key={it} active onClick={() => toggle(interior, setInterior, it)}>{it}</Chip>
           ))}
         </div>
       </Panel>
@@ -544,6 +573,16 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
               </div>
             </div>
           ))}
+          {tienIchKhac.length > 0 && (
+            <div>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-cvr-faint">Tiện ích khác (người đăng tự ghi)</p>
+              <div className="flex flex-wrap gap-2">
+                {tienIchKhac.map((it) => (
+                  <Chip key={it} active onClick={() => toggle(amenities, setAmenities, it)}>{it}</Chip>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </Panel>
 
@@ -664,6 +703,13 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
         {priceVnd != null && !Number.isNaN(priceVnd) && (
           <span className="ml-auto text-sm text-cvr-muted">
             = {priceVnd.toLocaleString("vi-VN")} đ{purpose === "thue" ? "/tháng" : ""}
+            {/* Kho xưởng · kho bãi · văn phòng · mặt bằng: tin gốc báo giá theo m²
+                nên hiện luôn đơn giá quy đổi — lệch một số 0 là thấy ngay. */}
+            {donGiaM2 != null && (
+              <strong className="ml-2 text-cvr-ink">
+                ({donGiaM2.toLocaleString("vi-VN")} đ/m²/tháng)
+              </strong>
+            )}
           </span>
         )}
       </div>

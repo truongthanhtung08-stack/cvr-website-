@@ -110,6 +110,27 @@ export const areaRanges: AreaRange[] = [
   { label: "Trên 500 m²", min: 500, max: null },
 ];
 
+// ── DIỆN TÍCH LỚN — CHO THUÊ KHO XƯỞNG / MẶT BẰNG ──────────────────────────
+// Kho bãi, nhà xưởng, mặt bằng cho thuê tính bằng NGÀN M² (2.000 · 5.000 m²).
+// Dừng bộ lọc ở "Trên 500 m²" thì cả nghìn tin dồn chung một mức, khách không
+// lọc được gì. Trang MUA BÁN giữ nguyên bộ mức cũ đã duyệt.
+export const areaRangesThue: AreaRange[] = [
+  ...areaRanges.slice(0, -1),
+  { label: "500 - 1.000 m²", min: 500, max: 1000 },
+  { label: "1.000 - 2.000 m²", min: 1000, max: 2000 },
+  { label: "2.000 - 5.000 m²", min: 2000, max: 5000 },
+  { label: "Trên 5.000 m²", min: 5000, max: null },
+];
+
+// Bộ mức diện tích theo mục đích tin — dùng chung cho FilterBar và ListingBrowser
+// để hai chỗ không bao giờ lệch nhau.
+export function areaRangesFor(purpose?: string): AreaRange[] {
+  return purpose === "thue" ? areaRangesThue : areaRanges;
+}
+
+// Gộp cả hai bộ — để đọc lại tham số ?dientich= trên URL không trượt mức.
+const MOI_MUC_DIEN_TICH: AreaRange[] = [...areaRangesThue, ...areaRanges];
+
 // Đổi chuỗi diện tích "1.500 m²" → số m² (dấu "." là phân tách hàng nghìn)
 export function areaToM2(area: string): number | null {
   const m = area.replace(/\./g, "").match(/\d+/);
@@ -239,7 +260,7 @@ export function filtersFromParams(params: URLSearchParams): Filters {
   } else {
     const dt = params.get("dientich");
     if (dt) {
-      const r = areaRanges.find((x) => x.label === dt);
+      const r = MOI_MUC_DIEN_TICH.find((x) => x.label === dt);
       if (r) { f.areaMin = r.min; f.areaMax = r.max; }
     }
   }

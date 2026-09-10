@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { chuanHoaSdt } from "@/lib/phone";
 
 // ============================================================================
 // CỔNG SỐ ĐIỆN THOẠI — full SĐT người đăng CHỈ hiện khi khách đã đăng nhập.
@@ -49,7 +50,9 @@ function useReveal(listingId: string) {
         p_listing_id: listingId,
       });
       if (rpcErr) throw rpcErr;
-      const num = (data as string | null)?.trim();
+      // Hiện ĐÚNG chuẩn 0 + 10 số — khớp với file gốc và với ô nhập trong admin,
+      // kể cả tin cũ đã lưu lẫn dấu chấm / khoảng trắng / +84.
+      const num = chuanHoaSdt((data as string | null) ?? "");
       if (!num) {
         setError("Tin này chưa có số điện thoại.");
         return;

@@ -122,10 +122,17 @@ export const categorySpecs: CategorySpec[] = [
     match: ["công nghiệp", "xưởng", "kho bãi", "nhà kho", "kho"],
     fields: [
       { key: "usableArea", label: "Diện tích xưởng/kho", type: "number", unit: "m²", main: true, batBuoc: true },
+      { key: "khoLoai", label: "Loại kho / xưởng", type: "select", options: ["Xưởng sản xuất", "Kho hàng khô", "Kho lạnh", "Kho + xưởng", "Bãi / đất trống"], main: true },
+      // Chiều cao thông thuỷ quyết định xếp được mấy tầng hàng — người thuê kho
+      // hỏi ngay sau diện tích và đơn giá, nên để ở THÔNG TIN CHÍNH.
+      { key: "clearHeight", label: "Chiều cao thông thuỷ", type: "number", unit: "m", main: true },
       { key: "roadWidth", label: "Đường container", type: "number", unit: "m", main: true, batBuoc: true },
+      { key: "floorLoad", label: "Tải trọng nền", type: "text", placeholder: "VD: 3 tấn/m²" },
       { key: "power", label: "Công suất điện", type: "text", placeholder: "VD: 560 KVA" },
       { key: "pccc", label: "Hệ thống PCCC", type: "select", options: ["Đã có", "Chưa có"] },
-      { key: "crane", label: "Cẩu trục / tải nền", type: "text", placeholder: "VD: 5 tấn/m²" },
+      { key: "crane", label: "Cẩu trục", type: "text", placeholder: "VD: Cầu trục 5 tấn" },
+      { key: "officeArea", label: "Văn phòng trong kho", type: "number", unit: "m²" },
+      { key: "container", label: "Xe container vào được", type: "select", options: ["Container 40 feet", "Container 20 feet", "Xe tải nhỏ"] },
       { key: "term", label: "Thời hạn sử dụng đất", type: "text", placeholder: "VD: Đến 2068" },
     ],
   },
@@ -225,9 +232,25 @@ export const categorySpecs: CategorySpec[] = [
 // CHỈ khi tin là cho thuê, nên để riêng chứ không nhét vào categorySpecs.
 export const rentFields: Field[] = [
   { key: "moveIn", label: "Thời gian dự kiến vào ở", type: "text", placeholder: "VD: Vào ở ngay" },
+  // Thuê kho xưởng / văn phòng luôn ràng thời hạn tối thiểu và tiền cọc — hai câu
+  // hỏi đầu tiên của khách thuê mặt bằng, tin nào cũng nên có.
+  { key: "minTerm", label: "Thời hạn thuê tối thiểu", type: "text", placeholder: "VD: 3 năm · 12 tháng" },
+  { key: "deposit", label: "Tiền cọc", type: "text", placeholder: "VD: 3 tháng" },
   { key: "elecPrice", label: "Giá điện", type: "text", placeholder: "VD: 3.500đ/kWh · theo nhà nước" },
   { key: "waterPrice", label: "Giá nước", type: "text", placeholder: "VD: 15.000đ/m³ · theo nhà nước" },
 ];
+
+// ── LOẠI HÌNH BÁO GIÁ THUÊ THEO M² ─────────────────────────────────────────
+// Nhà xưởng · kho bãi · văn phòng · mặt bằng: thị trường KHÔNG báo tổng tiền
+// tháng mà báo ĐƠN GIÁ NGHÌN ĐỒNG / M² / THÁNG (35.000đ/m², 25.000đ/m²…), và
+// đơn giá thường bậc thang theo diện tích (dưới 1.000 m² một giá, trên 1.000 m²
+// một giá). Web vẫn lưu tổng tiền mỗi tháng để bộ lọc khoảng giá và sắp xếp
+// chạy đúng, nhưng phải HIỆN thêm đơn giá/m² thì người thuê mới đọc được.
+const BAO_GIA_THEO_M2 = ["Đất công nghiệp / Nhà xưởng / Kho bãi", "Văn phòng / Mặt bằng kinh doanh"];
+
+export function coDonGiaM2(type: string, purpose?: string): boolean {
+  return purpose === "thue" && !!type && BAO_GIA_THEO_M2.includes(specForType(type).label);
+}
 
 // Bộ đặc điểm ĐẦY ĐỦ của một tin = đặc điểm theo LOẠI HÌNH (+ phần cho thuê nếu có).
 // Dùng chung cho form đăng tin và trang chi tiết để hai bên không bao giờ lệch nhau.

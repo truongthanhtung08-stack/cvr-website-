@@ -79,4 +79,5 @@ quyết R2 hay Supabase Pro.
    qua chính `coastalland.vn/anh/…`, không dùng bộ tối ưu, không phụ thuộc supabase.co.
 3. **Sửa tin bằng form làm mất mã ảnh** → lần nhập file sau đăng trùng tin. Nay giữ nguyên.
 
-Yêu cầu dành cho cowork nằm ở [`DE-BAI-CHO-COWORK.md`](DE-BAI-CHO-COWORK.md) — mục **2C**.
+Yêu cầu dành cho cowork nằm ở [`YEU-CAU-COWORK.md`](YEU-CAU-COWORK.md) — tài liệu **duy nhất**,
+bản gửi Cowork đặt ở `ProjectsTIN-HANG-NGAY_MAU`.

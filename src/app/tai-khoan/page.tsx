@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
 import { useProfile } from "@/lib/useProfile";
 import { roleLabel, statusBadge } from "@/lib/adminLabels";
 import { conThieuDeLenCap, freeNote, levelOf, levelTiepTheo, tenGoiMienPhi, vnd } from "@/lib/billing";
@@ -10,10 +12,43 @@ import DoDangKyMoi from "@/components/DoDangKyMoi";
 
 // Tổng quan tài khoản thành viên: ví (số dư · điểm · cấp) + gói dịch vụ +
 // lối tắt đăng tin (Mua bán / Cho thuê / Dự án) và quản lý tài khoản.
+type TomTatTin = { dangDang: number; choDuyet: number; luotXem: number; quanTam: number };
+
 export default function AccountOverviewPage() {
   const { profile, loading } = useProfile();
   // Giá · điểm · cấp thành viên lấy từ bản admin đã lưu (không phải giá cứng trong code)
   const { billing, loading: billingLoading } = useBilling();
+
+  // SỐ LIỆU THẬT CỦA TIN — trang tổng quan mà chỉ có mấy cái nút thì khách vào
+  // vẫn phải bấm tiếp mới biết tin mình sống chết ra sao. RLS chỉ trả tin của
+  // chính mình nên không cần lọc lại ở giao diện.
+  const [tomTat, setTomTat] = useState<TomTatTin | null>(null);
+  useEffect(() => {
+    const supabase = createClient();
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase
+        .from("listings")
+        .select("id,status,view_count")
+        .eq("owner_id", user.id);
+      const list = (data ?? []) as { id: string; status: string; view_count: number | null }[];
+      let quanTam = 0;
+      if (list.length) {
+        const { count } = await supabase
+          .from("listing_leads")
+          .select("id", { count: "exact", head: true })
+          .in("listing_id", list.map((l) => l.id));
+        quanTam = count ?? 0;
+      }
+      setTomTat({
+        dangDang: list.filter((l) => l.status === "approved").length,
+        choDuyet: list.filter((l) => l.status === "pending").length,
+        luotXem: list.reduce((s, l) => s + (l.view_count ?? 0), 0),
+        quanTam,
+      });
+    })();
+  }, []);
 
   if (loading || billingLoading) return <p className="text-sm text-cvr-muted">Đang tải…</p>;
   if (!profile) return <p className="text-sm text-cvr-muted">Không tải được hồ sơ. Vui lòng đăng nhập lại.</p>;
@@ -81,14 +116,36 @@ export default function AccountOverviewPage() {
             {freeNote(free, tenGoiMienPhi(billing))}
           </p>
         )}
+        {/* Báo giá nằm NGAY chỗ quyết định đăng tin — khách cần biết tốn bao
+            nhiêu trước khi bấm, chứ không phải đi tìm trong menu. */}
+        <Link
+          href="/bao-gia-dang-tin"
+          className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-cvr-blue-ink transition hover:underline"
+        >
+          Xem báo giá đăng tin &amp; gói VIP →
+        </Link>
       </div>
 
       {/* 2. TIN CỦA TÔI — gom hết lối vào quản lý tin về MỘT chỗ. Trước đây
              "Tin đã đăng"/"Tin đã lưu" nằm lẫn trong ô Trạng thái tài khoản. */}
       <div className="rounded-2xl border border-cvr-line bg-white p-5 shadow-sm">
-        <h2 className="text-base font-semibold text-cvr-ink">Tin của tôi</h2>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-base font-semibold text-cvr-ink">Tin của tôi</h2>
+          <Link href="/tai-khoan/tin-dang" className="text-sm font-semibold text-cvr-blue-ink transition hover:underline">
+            Xem tất cả →
+          </Link>
+        </div>
+
+        {/* Bốn con số nói ngay tình trạng tin, khỏi phải bấm vào từng trang */}
+        <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <SoNho nhan="Đang đăng" so={tomTat?.dangDang} />
+          <SoNho nhan="Chờ duyệt" so={tomTat?.choDuyet} />
+          <SoNho nhan="Lượt xem" so={tomTat?.luotXem} />
+          <SoNho nhan="Người quan tâm" so={tomTat?.quanTam} accent />
+        </div>
+
         <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <LoiTat href="/tai-khoan/tin-dang" title="Tin đã đăng" desc="Xem, sửa, gia hạn tin" />
+          <LoiTat href="/tai-khoan/tin-dang" title="Tin đã đăng" desc="Xem, sửa, xem thống kê từng tin" />
           <LoiTat href="/tin-luu" title="Tin đã lưu" desc="Bất động sản bạn quan tâm" />
           <LoiTat href="/tai-khoan/du-an" title="Dự án của tôi" desc={duocDangDuAn ? "Quản lý dự án đã đăng" : "Cần duyệt hồ sơ"} />
         </div>
@@ -182,6 +239,19 @@ function ChiSo({ label, value, sub, accent, color }: { label: string; value: str
         {value}
       </p>
       {sub && <p className="mt-0.5 text-xs text-cvr-muted">{sub}</p>}
+    </div>
+  );
+}
+
+// Con số nhỏ trong khối "Tin của tôi". Chưa tải xong thì để dấu "—", không để
+// số 0 nhấp nháy rồi nhảy sang số thật (khách tưởng mất tin).
+function SoNho({ nhan, so, accent }: { nhan: string; so?: number; accent?: boolean }) {
+  return (
+    <div className="rounded-xl bg-cvr-surface p-3">
+      <p className="text-xs text-cvr-muted">{nhan}</p>
+      <p className={`mt-0.5 text-xl font-semibold tracking-tight ${accent && (so ?? 0) > 0 ? "text-cvr-blue-ink" : "text-cvr-ink"}`}>
+        {so == null ? "—" : so}
+      </p>
     </div>
   );
 }

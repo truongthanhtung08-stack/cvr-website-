@@ -12,7 +12,8 @@ import type { Listing } from "@/lib/data";
 import { featuredListings, getListingById } from "@/lib/data";
 import { asset } from "@/lib/asset";
 import { isVideoUrl } from "@/lib/media";
-import { fieldsSplit, amenityGroups, type Field } from "@/lib/listingSpec";
+import { fieldsSplit, amenityGroups, coDonGiaM2, type Field } from "@/lib/listingSpec";
+import { chuanHoaSdt } from "@/lib/phone";
 
 // Thuộc tính linh hoạt lưu trong cột details (JSONB) — xem 0006_listing_details.sql
 export type ListingDetailsJson = {
@@ -29,6 +30,13 @@ export type ListingDetailsJson = {
   // ghép tin đăng hộ về đúng tài khoản khách — khách hay có 2 số.
   contact?: { name?: string; phone?: string; phones?: string[]; email?: string; avatar?: string };
   project?: string; // SLUG dự án tin này thuộc về — dùng cho "Tin liên quan tại dự án"
+  // TÊN dự án nguyên văn của người đăng. Giữ riêng slug vì dự án có thể CHƯA được
+  // tạo trong admin (tin nhập hàng loạt vào trước, chủ dự án cập nhật dự án sau) —
+  // không có tên này thì trang tin không hiện được dự án nào cả.
+  projectName?: string;
+  // Đơn giá thuê theo NGÀN đồng / m² / tháng — nhà xưởng · kho bãi · văn phòng ·
+  // mặt bằng. price_vnd vẫn là TỔNG tiền mỗi tháng để bộ lọc giá chạy đúng.
+  donGiaThue?: number;
 };
 
 // Hàng trong bảng `listings` (xem supabase/migrations/0002_listings.sql)
@@ -123,9 +131,14 @@ function buildSearchText(r: Row): string {
 
 function rowToListing(r: Row): Listing {
   const price = fmtPrice(r.price_vnd, r.purpose);
-  // Đơn giá đất "42 tr/m²" — chỉ hiện cho loại Đất (khớp dữ liệu mẫu cũ)
+  // ĐƠN GIÁ / M² — hai trường hợp, đơn vị khác hẳn nhau:
+  //   · MUA BÁN đất  → "42 tr/m²"
+  //   · CHO THUÊ kho xưởng · kho bãi · văn phòng · mặt bằng → "35.000 đ/m²/tháng"
+  //     (thị trường báo giá kiểu này chứ không báo tổng tiền tháng)
   const perM2 =
-    r.type.includes("Đất") && r.price_vnd != null && r.area_m2
+    coDonGiaM2(r.type, r.purpose) && r.price_vnd != null && r.area_m2
+      ? `${fmtNum(r.price_vnd / r.area_m2, 0)} đ/m²/tháng`
+      : r.type.includes("Đất") && r.purpose === "ban" && r.price_vnd != null && r.area_m2
       ? `${fmtNum(r.price_vnd / r.area_m2 / 1e6, 0)} tr/m²`
       : undefined;
   return {
@@ -252,6 +265,10 @@ export type ListingFull = {
   furnish: string | null;
   direction: string | null;
   addressDetail: string | null;
+  // TÊN dự án (nếu tin thuộc dự án) + slug để bấm sang trang dự án khi dự án đó
+  // đã được tạo. Chưa tạo thì vẫn hiện tên, chỉ không bấm được.
+  projectName: string | null;
+  projectSlug: string | null;
   contact: { name: string; phone: string; email: string; avatar: string | null } | null;
   mapQuery: string;            // chuỗi địa chỉ (hoặc toạ độ) để ghim bản đồ
   mapZoom: number;             // mức phóng: 17 khi ghim đúng nhà/đường · 15 khi chỉ có phường
@@ -287,6 +304,10 @@ function rowToDetail(r: Row): ListingFull {
   const specsChinh = doc(chinh);
   const specs = doc(dacDiem);
   const amenSet = new Set(d.amenities ?? []);
+  // Tiện ích người đăng ghi mà danh mục chuẩn không có ("Kiệt ô tô", "Gần KCN"…).
+  // Trước đây những mục này BIẾN MẤT im lặng vì trang tin chỉ duyệt danh mục chuẩn.
+  const tenChuan = new Set(amenityGroups.flatMap((g) => g.items));
+  const tienIchKhac = (d.amenities ?? []).filter((a) => a && !tenChuan.has(a));
   const c = d.contact;
   return {
     listing: rowToListing(r),
@@ -297,15 +318,24 @@ function rowToDetail(r: Row): ListingFull {
     specsChinh,
     specs,
     interior: d.interior ?? [],
-    amenityGroups: amenityGroups.map((g) => ({
-      group: g.group,
-      items: g.items.map((name) => ({ name, active: amenSet.has(name) })),
-    })),
+    amenityGroups: [
+      ...amenityGroups.map((g) => ({
+        group: g.group,
+        items: g.items.map((name) => ({ name, active: amenSet.has(name) })),
+      })),
+      ...(tienIchKhac.length
+        ? [{ group: "Tiện ích khác", items: tienIchKhac.map((name) => ({ name, active: true })) }]
+        : []),
+    ],
+    projectName: d.projectName ?? null,
+    projectSlug: d.project ?? null,
     legal: d.legal || null,
     furnish: d.furnish || null,
     direction: d.direction || null,
     addressDetail: d.addressDetail || null,
-    contact: c && (c.name || c.phone) ? { name: c.name ?? "", phone: c.phone ?? "", email: c.email ?? "", avatar: c.avatar ? asset(c.avatar) : null } : null,
+    // SỐ ĐIỆN THOẠI ra web luôn đi qua chuanHoaSdt() — dữ liệu cũ nhập lẫn dấu
+    // chấm / khoảng trắng / +84 vẫn hiện đúng chuẩn 0 + 10 số, khớp với file gốc.
+    contact: c && (c.name || c.phone) ? { name: c.name ?? "", phone: chuanHoaSdt(c.phone ?? ""), email: c.email ?? "", avatar: c.avatar ? asset(c.avatar) : null } : null,
     // GHIM BẢN ĐỒ — thứ tự ưu tiên, càng lên trên càng chính xác:
     //   1) điểm admin GHIM tay (details.mapPin: toạ độ / link Maps) → đúng tuyệt đối
     //   2) ĐỊA CHỈ CHI TIẾT (số nhà, tên đường) + Phường/Quận/Tỉnh → ghim đúng con đường
@@ -335,6 +365,7 @@ function mockToDetail(m: Listing): ListingFull {
     interior: [],
     amenityGroups: amenityGroups.map((g) => ({ group: g.group, items: g.items.map((name) => ({ name, active: false })) })),
     legal: null, furnish: null, direction: null, addressDetail: null, contact: null,
+    projectName: null, projectSlug: null,
     places: [],
     mapQuery: m.location, mapZoom: 15,
   };

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { donViGiaNenDung, goiYDienTich, goiYGia, goiYTieuDe } from "@/lib/goiYNhapTin";
 import {
   categorySpecs, demandTypes, specForType,
   coPhongNgu, coPhongTam, coDienTichXayDung, coNoiThat, fieldsSplit, thieuMucBatBuoc, nhanDienTich, type Field,
@@ -25,6 +26,7 @@ import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
 import { useBilling } from "@/lib/useBilling";
 import { getTier, type TierId } from "@/lib/packages";
 import type { ListingRow } from "@/lib/listingAdmin";
+import { chuanHoaSdt } from "@/lib/phone";
 
 // Form đăng tin cho KHÁCH HÀNG (/dang-tin) — nối Supabase thật.
 // Cùng cấu trúc với form admin: Lưu nháp (làm dở) / Đăng tin (gửi duyệt).
@@ -185,8 +187,11 @@ export default function PostListingForm() {
   // dùng chung một bộ đơn vị nên tin cho thuê vẫn hiện "tỷ" — sai hoàn toàn.
   // Văn phòng / mặt bằng / kho thường báo giá theo nghìn đồng mỗi m² mỗi tháng.
   const laThue = purposeOfDemand(demand) === "thue";
+  // Nhà xưởng · kho bãi · văn phòng · mặt bằng KHÔNG báo tổng tiền tháng mà báo
+  // NGHÌN ĐỒNG / M² / THÁNG (35.000đ/m²). Thiếu đơn vị này thì người đăng phải tự
+  // nhân với diện tích — chỗ sai nhiều nhất khi nhập tin kho xưởng.
   const donViGia = laThue
-    ? ["triệu/tháng", "triệu/6 tháng", "triệu/năm", "Thoả thuận"]
+    ? ["triệu/tháng", "nghìn/m²/tháng", "triệu/6 tháng", "triệu/năm", "Thoả thuận"]
     : ["tỷ", "triệu", "triệu/m²", "Thoả thuận"];
   // Đổi mục đích mà đơn vị cũ không còn hợp lệ → tự về đơn vị đầu của nhóm mới.
   const donVi = donViGia.includes(priceUnit) ? priceUnit : donViGia[0];
@@ -362,6 +367,8 @@ export default function PostListingForm() {
     if (donVi === "tỷ") return Math.round(n * 1e9);
     if (donVi === "triệu" || donVi === "triệu/tháng") return Math.round(n * 1e6);
     if (donVi === "triệu/m²") return Number.isNaN(a) ? null : Math.round(n * a * 1e6);
+    // 35 nghìn/m² × 2.000 m² = 70.000.000 đ/tháng
+    if (donVi === "nghìn/m²/tháng") return Number.isNaN(a) ? null : Math.round(n * 1e3 * a);
     // Báo giá theo kỳ dài thì QUY VỀ MỖI THÁNG — để tin cho thuê nào cũng cùng
     // một thước đo, bộ lọc khoảng giá và sắp xếp mới chạy đúng.
     if (donVi === "triệu/6 tháng") return Math.round((n * 1e6) / 6);
@@ -418,7 +425,7 @@ export default function PostListingForm() {
         plan: { tier: planTier, days: planDays },
         project: projectSlug || undefined,
         contact: (contactName.trim() || contactPhone.trim() || contactEmail.trim())
-          ? { name: contactName.trim(), phone: contactPhone.trim(), email: contactEmail.trim() }
+          ? { name: contactName.trim(), phone: chuanHoaSdt(contactPhone), email: contactEmail.trim() }
           : undefined,
       },
       status: asDraft ? ("draft" as const) : ("pending" as const), // khách đăng → chờ admin duyệt
@@ -606,7 +613,7 @@ export default function PostListingForm() {
 
       {/* 3. Thông tin chính */}
       <Card step={buoc()} title="Thông tin chính">
-        <Text label="Tiêu đề tin đăng *" value={title} onChange={setTitle} placeholder="VD: Bán căn hộ 2PN view sông Hàn, full nội thất" required />
+        <Text label="Tiêu đề tin đăng *" value={title} onChange={setTitle} placeholder={goiYTieuDe(loaiHinh, laThue)} required />
         <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-3">
           <div className="sm:col-span-2">
             <Label>{laThue ? "Giá thuê *" : "Giá bán *"}</Label>
@@ -620,7 +627,7 @@ export default function PostListingForm() {
                   "4,2" (đúng như gợi ý trong ô) thì ô thành rỗng, không lưu được giá.
                   Dùng text + inputMode="decimal" → điện thoại vẫn hiện bàn phím số,
                   mà gõ được cả dấu phẩy lẫn dấu chấm. */}
-              <input type="text" inputMode="decimal" value={priceValue} onChange={(e) => setPriceValue(e.target.value)} disabled={donVi === "Thoả thuận"} placeholder={laThue ? "VD: 12 hoặc 8,5" : "VD: 4,2"} className={inputCls + " disabled:opacity-50"} />
+              <input type="text" inputMode="decimal" value={priceValue} onChange={(e) => setPriceValue(e.target.value)} disabled={donVi === "Thoả thuận"} placeholder={goiYGia(donVi)} className={inputCls + " disabled:opacity-50"} />
               <select value={donVi} onChange={(e) => setPriceUnit(e.target.value)} className={inputCls}>
                 {donViGia.map((u) => <option key={u} value={u}>{u}</option>)}
               </select>
@@ -632,10 +639,39 @@ export default function PostListingForm() {
                   : "—"}</strong> để khách so sánh với các tin thuê khác.
               </p>
             )}
+
+            {/* NHẮC ĐÚNG ĐƠN VỊ CHO KHO XƯỞNG · VĂN PHÒNG · MẶT BẰNG.
+                Nhóm này báo giá theo m², nhưng ô đơn vị mặc định là "triệu/tháng"
+                → người đăng gõ 35 thành 35 triệu/tháng trong khi ý là 35.000 đ/m².
+                Chỉ GỢI Ý kèm nút đổi, KHÔNG tự đổi đơn vị của người ta. */}
+            {donViGiaNenDung(loaiHinh, laThue) && donVi !== donViGiaNenDung(loaiHinh, laThue) && (
+              <button
+                type="button"
+                onClick={() => setPriceUnit(donViGiaNenDung(loaiHinh, laThue) as string)}
+                className="mt-1.5 block w-full rounded-lg bg-cvr-blue/[0.06] px-3 py-2 text-left text-xs leading-relaxed text-cvr-blue-ink transition hover:bg-cvr-blue/[0.12]"
+              >
+                Kho xưởng · văn phòng · mặt bằng thường báo giá <strong>nghìn/m²/tháng</strong> (gõ 35 = 35.000 đ/m²/tháng). Bấm để đổi đơn vị →
+              </button>
+            )}
+
+            {/* Đơn giá theo m² thì phải cho thấy THÀNH TIỀN mỗi tháng — đó mới là
+                con số hiện trên tin và khách thuê dùng để so sánh. */}
+            {donVi === "nghìn/m²/tháng" && priceValue.trim() && (
+              <p className="mt-1.5 text-xs text-cvr-muted">
+                {area.trim() ? (
+                  <>
+                    {priceValue} nghìn/m² × {area} m² ={" "}
+                    <strong>{Math.round(((priceToVnd() ?? 0) / 1e6) * 10) / 10} triệu/tháng</strong> — số này hiện trên tin.
+                  </>
+                ) : (
+                  <>Nhập <strong>diện tích</strong> để web tính ra thành tiền mỗi tháng.</>
+                )}
+              </p>
+            )}
           </div>
           <div>
             <Label>{nhanDienTich(loaiHinh)} *</Label>
-            <input type="text" inputMode="decimal" value={area} onChange={(e) => setArea(e.target.value)} placeholder="VD: 100" className={inputCls} />
+            <input type="text" inputMode="decimal" value={area} onChange={(e) => setArea(e.target.value)} placeholder={goiYDienTich(loaiHinh)} className={inputCls} />
           </div>
         </div>
         {/* CHỈ HIỆN MỤC THUỘC LOẠI HÌNH ĐANG CHỌN — đất nền không có phòng ngủ,

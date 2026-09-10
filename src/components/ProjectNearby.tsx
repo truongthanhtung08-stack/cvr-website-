@@ -44,6 +44,9 @@ export default function ProjectNearby({
   // khoá, từ đó kéo / phóng to bằng MỘT ngón thoải mái; bấm "Khoá bản đồ" để
   // cuộn trang tiếp. Đây là cách Batdongsan / Zillow đang làm.
   const [mapOn, setMapOn] = useState(false);
+  // Bản đồ nhúng chưa chạy → ô bản đồ tự thành nút mở Google Maps, nên bỏ lớp phủ
+  // "Chạm để xem bản đồ" đi cho khỏi che.
+  const [mapHong, setMapHong] = useState(false);
 
   // CHỈ ĐƯỜNG TỪ VỊ TRÍ KHÁCH — mở thẳng APP bản đồ trên máy (Google Maps, iPhone
   // chưa cài thì Bản đồ Apple), không mở tab trình duyệt.
@@ -75,10 +78,10 @@ export default function ProjectNearby({
           không nhảy đi đâu. Chỉ khi bấm nút "Mở Google Maps" mới mở app/web
           Google Maps ở TAB MỚI — xong bấm quay lại là về đúng tin đang xem. */}
       <div className="relative overflow-hidden rounded-xl border border-cvr-line">
-        <MapPane query={mapQuery} zoom={zoom} locked={!mapOn} />
+        <MapPane query={mapQuery} zoom={zoom} locked={!mapOn} onHong={() => setMapHong(true)} />
 
         {/* Lớp phủ khi bản đồ đang KHOÁ — chạm là mở, không cần hai ngón */}
-        {!mapOn && (
+        {!mapOn && !mapHong && (
           <button
             type="button"
             onClick={() => setMapOn(true)}

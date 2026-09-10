@@ -16,7 +16,9 @@ import ProjectNav from "@/components/ProjectNav";
 import { BreadcrumbJsonLd } from "@/components/Breadcrumb";
 import { provinceOf, districtOf, pickRelated } from "@/lib/data";
 import { getListing, getListings, getListingDetail } from "@/lib/listingsDb";
+import { getProject } from "@/lib/contentDb";
 import { tierFromBadge, getTier } from "@/lib/packages";
+import { chuanHoaSdt } from "@/lib/phone";
 import RichContent from "@/components/RichContent";
 
 // TRANG QUAN TRỌNG NHẤT CHO SEO (500 tin). Nay đọc tin qua cache theo thẻ "listings"
@@ -84,10 +86,14 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
   // "0905 000 111", sau đó là hotline Coastal Land). Thà không có nút gọi còn hơn
   // đưa khách một số KHÔNG phải của người bán — Coastal Land không đứng ra giao dịch.
   const contact = d.contact;
+  // TIN THUỘC DỰ ÁN — hiện TÊN dự án ở khối Đặc điểm. Dự án đã tạo trong admin thì
+  // bấm sang được trang dự án; chưa tạo thì vẫn hiện tên (chủ dự án cập nhật sau),
+  // không để tên dự án rơi mất như trước.
+  const duAnCoThat = d.projectSlug ? Boolean(await getProject(d.projectSlug)) : false;
   // CỔNG SĐT: full số CHỈ hiện khi khách đăng nhập (bấm → RPC reveal_contact ghi lead).
   // Server chỉ phát chuỗi CHE (4 số đầu) — số thật không nằm trong HTML để không xem lén,
   // nhờ vậy mỗi lượt xem số đều được ghi nhận thành lead cho người bán.
-  const phoneDigits = contact ? contact.phone.replace(/\D/g, "") : "";
+  const phoneDigits = contact ? chuanHoaSdt(contact.phone) : "";
   const phoneMask = phoneDigits ? `${phoneDigits.slice(0, 4)} ••• •••` : "Xem số";
 
   // Schema.org RealEstateListing (IV.2) — dữ liệu chuẩn cho Google.
@@ -294,6 +300,23 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                     bộ mục chính của loại hình). Ở đây chỉ còn phần đặc điểm. */}
                 <div className="grid grid-cols-1 gap-x-8 sm:grid-cols-2">
                   <Row label="Loại hình" value={l.type} />
+                  {/* Tin thuộc dự án → hiện TÊN dự án. Dự án đã được tạo trong admin
+                      thì bấm sang trang dự án; chưa tạo vẫn hiện tên (chủ dự án cập
+                      nhật dự án sau), không để tên dự án rơi mất như trước. */}
+                  {d.projectName && (
+                    <Row
+                      label="Dự án"
+                      value={
+                        duAnCoThat ? (
+                          <Link href={`/du-an/${d.projectSlug}`} className="font-medium text-cvr-blue hover:underline">
+                            {d.projectName}
+                          </Link>
+                        ) : (
+                          d.projectName
+                        )
+                      }
+                    />
+                  )}
                   {d.specs.map((f) => <Row key={f.label} label={f.label} value={f.value} />)}
                   <Row label="Tình trạng pháp lý" value={d.legal ?? "Chưa cập nhật"} />
                 </div>
@@ -455,7 +478,7 @@ function Section({ id, title, children }: { id?: string; title: string; children
   );
 }
 
-function Row({ label, value }: { label: string; value: string }) {
+function Row({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex items-start justify-between gap-4 border-b border-cvr-line py-3 text-[15px]">
       <span className="shrink-0 whitespace-nowrap text-cvr-muted">{label}</span>

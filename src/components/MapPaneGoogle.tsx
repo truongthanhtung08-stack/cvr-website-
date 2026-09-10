@@ -15,6 +15,7 @@ import { centerOfArea } from "@/lib/geo";
 import { timToaDo } from "@/lib/timToaDo";
 import { layViTri, loiDinhVi, quyenDinhVi } from "@/lib/dinhVi";
 import NhacBatDinhVi from "@/components/NhacBatDinhVi";
+import { xemTrenBanDo } from "@/lib/moGoogleMaps";
 
 // ════════════════════════════════════════════════════════════════════════════
 // BẢN ĐỒ XEM VỊ TRÍ — trang chi tiết tin và trang chi tiết dự án. NỀN GOOGLE.
@@ -35,11 +36,15 @@ export default function MapPaneGoogle({
   query,
   zoom,
   locked,
+  onHong,
 }: {
   query: string;
   zoom: number;
   // Khách chưa chạm vào bản đồ → khoá cử chỉ để ngón tay lướt qua vẫn cuộn trang.
   locked: boolean;
+  // Bản đồ không vẽ được → báo lên cha để gỡ lớp phủ "Chạm để xem bản đồ" (chạm
+  // vào chẳng ra gì thì đừng mời khách chạm).
+  onHong?: () => void;
 }) {
   const boxRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<GMap | null>(null);
@@ -120,6 +125,11 @@ export default function MapPaneGoogle({
 
   useEffect(() => onMapsAuthFailure(() => setHong(true)), []);
 
+  useEffect(() => {
+    if (hong) onHong?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hong]);
+
   // Chấm xanh "vị trí của bạn" — để khách áng chừng mình cách chỗ này bao xa.
   function veCham(p: LatLng, doiTamNhin: boolean) {
     const g = window.google;
@@ -181,10 +191,22 @@ export default function MapPaneGoogle({
           Đang mở bản đồ…
         </span>
       )}
+      {/* Bản đồ nhúng chưa chạy → KHÔNG để khung xám trống. Cả ô thành một nút mở
+          thẳng Google Maps (link thường, không cần khoá API, không tốn tiền). */}
       {hong && (
-        <span className="pointer-events-none absolute inset-0 flex items-center justify-center px-6 text-center text-[13px] font-medium text-cvr-muted">
-          Chưa mở được bản đồ. Anh/chị bấm “Mở Google Maps” bên dưới để xem vị trí.
-        </span>
+        <button
+          type="button"
+          onClick={() => xemTrenBanDo(query)}
+          className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-cvr-surface px-6 transition active:bg-black/[0.04]"
+        >
+          <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-[0_2px_12px_rgba(0,0,0,0.10)] ring-1 ring-black/5">
+            <svg className="h-6 w-6 text-cvr-body" fill="none" stroke="currentColor" strokeWidth={1.7} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 11a2 2 0 100-4 2 2 0 000 4z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 22s7-6.5 7-12a7 7 0 10-14 0c0 5.5 7 12 7 12z" />
+            </svg>
+          </span>
+          <span className="text-[13.5px] font-semibold text-cvr-ink">Xem vị trí trên Google Maps</span>
+        </button>
       )}
 
       {/* Chỉ tra được tới khu vực thì NÓI THẲNG, đừng để khách tưởng ghim đúng nhà */}

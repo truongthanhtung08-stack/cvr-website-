@@ -8,7 +8,7 @@ import { projects, type Listing } from "@/lib/data";
 import {
   typeGroupsFor,
   priceRangesFor,
-  areaRanges,
+  areaRangesFor,
   bedroomOptions,
   directionOptions,
   priceRangeText,
@@ -444,10 +444,10 @@ export default function FilterBar({
           <RangePanel
             unit="m²"
             step={10}
-            sliderMax={500}
+            sliderMax={purpose === "thue" ? 5000 : 500}
             min={f.areaMin}
             max={f.areaMax}
-            presets={areaRanges}
+            presets={areaRangesFor(purpose)}
             onPick={(min, max) => set({ areaMin: min, areaMax: max })}
             onReset={() => set({ areaMin: null, areaMax: null })}
             onApply={() => { close(); chayTim(); }}
