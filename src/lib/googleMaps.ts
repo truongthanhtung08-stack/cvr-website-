@@ -108,16 +108,15 @@ export function loadMapsApi(): Promise<void> {
     }
 
     const s = document.createElement("script");
-    // ⚠️ KHÔNG THÊM `loading=async` — đã thử ngày 10/09/2026 và BẢN ĐỒ TRẮNG.
-    // Với loading=async, Google chuyển sang kiểu nạp thư viện động: callback chạy
-    // nhưng `google.maps.Marker` / `Geocoder` chưa sẵn sàng (phải await
-    // importLibrary), nên khối bản đồ dựng lên rỗng. Muốn dùng chế độ đó thì phải
-    // viết lại toàn bộ chỗ khởi tạo — không đáng, giữ cách nạp cổ điển này.
-    // v=weekly: ghim bản ổn định, tránh Google đổi bản giữa chừng làm vỡ giao diện.
+    // ⚠️ ĐỪNG THÊM THAM SỐ NÀO VÀO CHUỖI NÀY. Ngày 10/09/2026 đã thử thêm
+    // `loading=async` và `v=weekly` theo khuyến nghị của Google → bản đồ báo
+    // "NotLoadingAPIFromGoogleMapsError / Trang này đã không tải Google Maps đúng
+    // cách". Trả về đúng 4 tham số gốc thì chạy. Muốn đổi thì phải thử trên web
+    // thật trước, đừng tin mỗi tài liệu.
     s.src =
       "https://maps.googleapis.com/maps/api/js?key=" +
       encodeURIComponent(MAP_KEY) +
-      "&v=weekly&language=vi&region=VN&callback=" +
+      "&language=vi&region=VN&callback=" +
       cb;
     s.async = true;
     s.onerror = () => reject(new Error("Không tải được Google Maps"));
@@ -130,7 +129,7 @@ export function loadMapsApi(): Promise<void> {
     // cho mạng chậm, mà hỏng thì rơi ngay về nút "Xem trên Google Maps".
     window.setTimeout(() => {
       if (!window.google?.maps) reject(new Error("Không tải được Google Maps"));
-    }, 4000);
+    }, 8000);
   });
 
   w.__cvrMapsPromise = p;
