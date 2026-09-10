@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import PhanTrang from "@/components/PhanTrang";
 import Image from "next/image";
 import { chuThuan } from "@/lib/chuThuan";
 import AnhChay from "@/components/AnhChay";
@@ -603,15 +604,11 @@ export default function ProjectsBrowser({
           </div>
 
           {/* Phân trang dự án — mỗi trang 9 (đích của nút "Xem thêm" ở trang chủ) */}
-          {totalPages > 1 && (
-            <div className="mt-8 flex items-center justify-center gap-1.5">
-              <button type="button" disabled={current === 1} onClick={() => { setPage(current - 1); window.scrollTo({ top: 0 }); }} className="flex h-9 w-9 items-center justify-center rounded-lg border border-cvr-line text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink disabled:cursor-not-allowed disabled:opacity-30">‹</button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                <button key={p} type="button" onClick={() => { setPage(p); window.scrollTo({ top: 0 }); }} className={`h-9 min-w-9 rounded-lg px-3 text-sm font-medium transition ${p === current ? "bg-cvr-ink text-white" : "border border-cvr-line text-cvr-body hover:border-cvr-ink hover:text-cvr-ink"}`}>{p}</button>
-              ))}
-              <button type="button" disabled={current === totalPages} onClick={() => { setPage(current + 1); window.scrollTo({ top: 0 }); }} className="flex h-9 w-9 items-center justify-center rounded-lg border border-cvr-line text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink disabled:cursor-not-allowed disabled:opacity-30">›</button>
-            </div>
-          )}
+          <PhanTrang
+              hienTai={current}
+              tong={totalPages}
+              doiTrang={(p) => { setPage(p); window.scrollTo({ top: 0 }); }}
+            />
         </div>
 
         {/* ── Sidebar: lọc theo khu vực + tin tức (kiểu Batdongsan) ── */}

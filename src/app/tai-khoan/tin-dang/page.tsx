@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { PageHeader } from "@/components/Ui";
+import PhanTrang from "@/components/PhanTrang";
 import {
   type ListingRow,
   type ListingStatus,
@@ -241,76 +242,8 @@ export default function MyListingsPage() {
       </div>
 
       {tongTrang > 1 && (
-        <PhanTrang tong={tongTrang} hienTai={trangHienTai} doiTrang={doiTrang} soTin={filtered.length} />
+        <PhanTrang hienTai={trangHienTai} tong={tongTrang} doiTrang={doiTrang} ghiChu={`${filtered.length} tin`} className="pt-1" />
       )}
-    </div>
-  );
-}
-
-// ─── PHÂN TRANG ─────────────────────────────────────────────────────────────
-// Nhiều trang thì chỉ hiện quanh trang đang xem + trang đầu/cuối, chèn "…" ở
-// giữa — đăng vài trăm tin mà in ra 50 nút số thì tràn hết màn hình điện thoại.
-function PhanTrang({
-  tong,
-  hienTai,
-  doiTrang,
-  soTin,
-}: {
-  tong: number;
-  hienTai: number;
-  doiTrang: (p: number) => void;
-  soTin: number;
-}) {
-  const so: (number | "…")[] = [];
-  for (let p = 1; p <= tong; p++) {
-    if (p === 1 || p === tong || Math.abs(p - hienTai) <= 1) so.push(p);
-    else if (so[so.length - 1] !== "…") so.push("…");
-  }
-
-  return (
-    <div className="flex flex-col items-center gap-2 pt-1">
-      <div className="flex flex-wrap items-center justify-center gap-1.5">
-        <button
-          type="button"
-          disabled={hienTai === 1}
-          onClick={() => doiTrang(hienTai - 1)}
-          aria-label="Trang trước"
-          className="flex h-9 w-9 items-center justify-center rounded-lg border border-cvr-line text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink disabled:cursor-not-allowed disabled:opacity-30"
-        >
-          ‹
-        </button>
-        {so.map((p, i) =>
-          p === "…" ? (
-            <span key={`gap-${i}`} className="px-1 text-sm text-cvr-faint">…</span>
-          ) : (
-            <button
-              key={p}
-              type="button"
-              onClick={() => doiTrang(p)}
-              aria-current={p === hienTai ? "page" : undefined}
-              className={`h-9 min-w-9 rounded-lg px-3 text-sm font-medium transition ${
-                p === hienTai
-                  ? "bg-cvr-ink text-white"
-                  : "border border-cvr-line text-cvr-body hover:border-cvr-ink hover:text-cvr-ink"
-              }`}
-            >
-              {p}
-            </button>
-          ),
-        )}
-        <button
-          type="button"
-          disabled={hienTai === tong}
-          onClick={() => doiTrang(hienTai + 1)}
-          aria-label="Trang sau"
-          className="flex h-9 w-9 items-center justify-center rounded-lg border border-cvr-line text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink disabled:cursor-not-allowed disabled:opacity-30"
-        >
-          ›
-        </button>
-      </div>
-      <p className="text-xs text-cvr-faint">
-        Trang {hienTai}/{tong} · {soTin} tin
-      </p>
     </div>
   );
 }

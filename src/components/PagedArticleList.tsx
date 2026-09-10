@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import PhanTrang from "@/components/PhanTrang";
 import Image from "next/image";
 import Link from "next/link";
 import type { Article } from "@/lib/data";
@@ -39,15 +40,7 @@ export default function PagedArticleList({ articles }: { articles: Article[] }) 
         ))}
       </div>
 
-      {totalPages > 1 && (
-        <div className="mt-8 flex items-center justify-center gap-1.5">
-          <button type="button" disabled={current === 1} onClick={() => go(current - 1)} className="flex h-9 w-9 items-center justify-center rounded-lg border border-cvr-line text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink disabled:cursor-not-allowed disabled:opacity-30">‹</button>
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-            <button key={p} type="button" onClick={() => go(p)} className={`h-9 min-w-9 rounded-lg px-3 text-sm font-medium transition ${p === current ? "bg-cvr-ink text-white" : "border border-cvr-line text-cvr-body hover:border-cvr-ink hover:text-cvr-ink"}`}>{p}</button>
-          ))}
-          <button type="button" disabled={current === totalPages} onClick={() => go(current + 1)} className="flex h-9 w-9 items-center justify-center rounded-lg border border-cvr-line text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink disabled:cursor-not-allowed disabled:opacity-30">›</button>
-        </div>
-      )}
+      <PhanTrang hienTai={current} tong={totalPages} doiTrang={go} />
     </div>
   );
 }

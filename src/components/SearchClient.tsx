@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import PhanTrang from "@/components/PhanTrang";
 import { useSearchParams } from "next/navigation";
 import PropertyCard from "@/components/PropertyCard";
 import FilterBar from "@/components/FilterBar";
@@ -16,7 +17,7 @@ import {
 } from "@/lib/filters";
 import { smartFilter, smartSearch, TIER_LABEL } from "@/lib/smartSearch";
 
-const PER_PAGE = 8; // mỗi trang 8 tin (giống danh sách /mua-ban)
+const PER_PAGE = 10; // mỗi trang 10 tin (giống danh sách /mua-ban)
 
 // Trang kết quả tìm kiếm chung (đích của ô tìm kiếm ở Hero + nút "Xem thêm" trang chủ).
 // Dùng HỆ LỌC THÔNG MINH chung với /mua-ban, /cho-thue:
@@ -144,15 +145,7 @@ export default function SearchClient({ items = featuredListings }: { items?: Lis
             ))}
           </div>
 
-          {totalPages > 1 && (
-            <div className="mt-10 flex items-center justify-center gap-1.5">
-              <button type="button" disabled={current === 1} onClick={() => goPage(current - 1)} className="flex h-9 w-9 items-center justify-center rounded-lg border border-cvr-line text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink disabled:cursor-not-allowed disabled:opacity-30">‹</button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                <button key={p} type="button" onClick={() => goPage(p)} className={`h-9 min-w-9 rounded-lg px-3 text-sm font-medium transition ${p === current ? "bg-cvr-ink text-white" : "border border-cvr-line text-cvr-body hover:border-cvr-ink hover:text-cvr-ink"}`}>{p}</button>
-              ))}
-              <button type="button" disabled={current === totalPages} onClick={() => goPage(current + 1)} className="flex h-9 w-9 items-center justify-center rounded-lg border border-cvr-line text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink disabled:cursor-not-allowed disabled:opacity-30">›</button>
-            </div>
-          )}
+          <PhanTrang hienTai={current} tong={totalPages} doiTrang={goPage} className="mt-10" />
         </>
       ) : (
         <div className="flex flex-col items-center justify-center rounded-none border border-dashed border-cvr-line py-20 text-center">
