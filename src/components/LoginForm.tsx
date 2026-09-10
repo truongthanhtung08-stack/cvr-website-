@@ -4,11 +4,12 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { chuanHoaSdt, laSdtVN } from "@/lib/phone";
 import SocialAuth from "@/components/SocialAuth";
 
 // Dịch vài lỗi Supabase thường gặp sang tiếng Việt.
 function viError(msg: string): string {
-  if (/invalid login credentials/i.test(msg)) return "Email hoặc mật khẩu không đúng.";
+  if (/invalid login credentials/i.test(msg)) return "Email / số điện thoại hoặc mật khẩu không đúng.";
   if (/email not confirmed/i.test(msg)) return "Tài khoản chưa xác nhận email. Vui lòng kiểm tra hộp thư.";
   return msg || "Đăng nhập không thành công, vui lòng thử lại.";
 }
@@ -60,17 +61,22 @@ export default function LoginForm() {
     e.preventDefault();
     setNotice("");
     setSaiMatKhau(false);
-    if (!email.includes("@")) {
-      setNotice("Hiện đăng nhập bằng email. Đăng nhập bằng số điện thoại (OTP) sẽ sớm có.");
+    // Ô này ghi "Email hoặc số điện thoại" nên PHẢI nhận được cả hai.
+    // Trước đây gõ số điện thoại vào là bị chặn kèm câu "sẽ sớm có" — trong khi
+    // đăng nhập bằng SĐT + mật khẩu đã chạy được. Số điện thoại là định danh
+    // chính của phần lớn môi giới, chặn ở đây là chặn đúng nhóm khách đông nhất.
+    const soDT = chuanHoaSdt(email);
+    const dungSdt = !email.includes("@") && laSdtVN(soDT);
+    if (!email.includes("@") && !dungSdt) {
+      setNotice("Nhập email, hoặc số điện thoại đủ 10 số (VD: 0905123456).");
       return;
     }
     setLoading(true);
     try {
       const supabase = createClient();
-      const { error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password: pw,
-      });
+      const { error } = dungSdt
+        ? await supabase.auth.signInWithPassword({ phone: `+84${soDT.slice(1)}`, password: pw })
+        : await supabase.auth.signInWithPassword({ email: email.trim(), password: pw });
       if (error) {
         setNotice(viError(error.message));
         setSaiMatKhau(/invalid login credentials/i.test(error.message));
@@ -124,7 +130,7 @@ export default function LoginForm() {
                 <Link href="/quen-mat-khau" className="font-semibold underline">
                   Đặt lại mật khẩu
                 </Link>{" "}
-                — chúng tôi gửi liên kết về email của bạn.
+                — nhận mã 6 số qua email hoặc Zalo, đặt mật khẩu mới rồi vào luôn.
               </p>
               <p className="text-cvr-blue-ink/80">
                 Hoặc bạn từng vào bằng <strong>Google</strong>? Tài khoản đó không có mật khẩu —
@@ -147,7 +153,7 @@ export default function LoginForm() {
             onClick={() => setMoEmail(true)}
             className="flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-cvr-line text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink"
           >
-            Đăng nhập bằng email và mật khẩu
+            Đăng nhập bằng email hoặc số điện thoại
           </button>
         )}
       </div>
@@ -160,6 +166,10 @@ export default function LoginForm() {
             type="text"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            /* autoComplete chuẩn = trình duyệt mới mời "Lưu mật khẩu?" và tự điền
+               lần sau. Thiếu hai thuộc tính này thì Chrome/Safari im lặng, khách
+               phải gõ tay mỗi lần đăng nhập. */
+            autoComplete="username"
             placeholder="email@vidu.com hoặc 09xx xxx xxx"
             className="h-11 w-full rounded-lg border border-transparent bg-cvr-surface px-3 text-sm text-cvr-ink placeholder-cvr-faint outline-none transition focus:border-cvr-line focus:bg-white"
           />
@@ -171,6 +181,7 @@ export default function LoginForm() {
               type={show ? "text" : "password"}
               value={pw}
               onChange={(e) => setPw(e.target.value)}
+              autoComplete="current-password"
               placeholder="Nhập mật khẩu"
               className="h-11 w-full rounded-lg border border-transparent bg-cvr-surface pl-3 pr-12 text-sm text-cvr-ink placeholder-cvr-faint outline-none transition focus:border-cvr-line focus:bg-white"
             />

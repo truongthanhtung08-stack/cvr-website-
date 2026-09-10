@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { donViGiaNenDung, goiYDienTich, goiYGia, goiYTieuDe } from "@/lib/goiYNhapTin";
-import { dongBoHaiHe, chuHeCu, chuHeMoi } from "@/lib/diaChiHaiHe";
+import { dongBoHaiHe, chuHeCu, chuHeMoi, doiHeDiaChi, chuoiTimBanDo } from "@/lib/diaChiHaiHe";
 import {
   categorySpecs, demandTypes, specForType,
   coPhongNgu, coPhongTam, coDienTichXayDung, coNoiThat, fieldsSplit, thieuMucBatBuoc, nhanDienTich, type Field,
@@ -16,6 +16,7 @@ import { typeGroupsFor } from "@/lib/filters";
 import { provinceNamesFor, districtsOf, wardsOf, wardsOfNew, type GeoMode } from "@/lib/locations";
 import { ganDiaGioi, type DiaGioiBanDo } from "@/lib/diaGioiTuBanDo";
 import ImagePicker from "@/components/admin/ImagePicker";
+import OTieuDe from "@/components/OTieuDe";
 // BẢN ĐỒ GHIM — dùng bản Leaflet/OpenStreetMap. Bản chạy nền Google
 // (components/MapPicker.tsx) GIỮ LẠI để sau này Google thông thì đổi về, chỉ
 // phải sửa đúng dòng import này.
@@ -576,15 +577,17 @@ export default function PostListingForm() {
               key={m.id}
               type="button"
               onClick={() => {
-                setGeoMode(m.id);
-                setProvince("");
-                setDistrict("");
-                setWard("");
-                // Đã ghim trên bản đồ rồi thì đổi hệ xong ĐIỀN LẠI NGAY theo hệ mới
-                // chọn — khách không phải ghim lại lần nữa.
-                const dc = diaGioiTuBanDoRef.current;
-                if (dc) setTimeout(() => apDungDiaGioi(dc, m.id, "", "", ""), 0);
-              }}
+                  if (m.id === geoMode) return;
+                  // ĐỔI HỆ = TỰ ĐỒNG BỘ: suy thẳng địa chỉ đang nhập sang hệ vừa
+                  // chọn, không bắt người đăng chọn lại từ tỉnh.
+                  const d = doiHeDiaChi(m.id, { tinh: province, quan: district, phuong: ward });
+                  setGeoMode(m.id);
+                  setProvince(d.province);
+                  setDistrict(d.district);
+                  setWard(d.ward);
+                  const dc = diaGioiTuBanDoRef.current;
+                  if (dc && !d.ward) setTimeout(() => nhanDiaGioiTuBanDo(dc), 0);
+                }}
               className={`rounded-md px-3 py-1.5 text-xs font-medium transition ${
                 geoMode === m.id ? "bg-cvr-ink text-white" : "text-cvr-body hover:text-cvr-ink"
               }`}
@@ -636,14 +639,19 @@ export default function PostListingForm() {
             onChange={setMapPin}
             onDiaChi={setAddressDetail}
             onDiaGioi={nhanDiaGioiTuBanDo}
-            hint={`${addressDetail}, ${ward}, ${district}, ${province}`}
+            hint={chuoiTimBanDo(geoMode, { tinh: province, quan: district, phuong: ward }, addressDetail)}
           />
         </div>
       </Card>
 
       {/* 3. Thông tin chính */}
       <Card step={buoc()} title="Thông tin chính">
-        <Text label="Tiêu đề tin đăng *" value={title} onChange={setTitle} placeholder={goiYTieuDe(loaiHinh, laThue)} required />
+        {/* TIÊU ĐỀ — ô tự giãn cao để LUÔN THẤY TRỌN CÂU. Ô một dòng làm phần
+            đầu tiêu đề trôi mất khỏi khung, người đăng không soát lại được. */}
+        <div>
+          <Label>Tiêu đề tin đăng *</Label>
+          <OTieuDe value={title} onChange={setTitle} placeholder={goiYTieuDe(loaiHinh, laThue)} className={inputCls} required />
+        </div>
         <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-3">
           <div className="sm:col-span-2">
             <Label>{laThue ? "Giá thuê *" : "Giá bán *"}</Label>

@@ -3,96 +3,175 @@
 import { useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { chuanHoaSdt, laSdtVN } from "@/lib/phone";
+
+// ============================================================================
+// QUÊN MẬT KHẨU — MÃ 6 SỐ (chủ dự án chốt 11/09/2026)
+//
+// Trước đây gửi LIÊN KẾT đặt lại: khách phải rời trang, mở hộp thư, bấm vào một
+// đường dẫn dài — nhiều người ngại bấm, và thư dạng đó hay rơi vào mục quảng cáo.
+// Nay giống hệt bước đăng ký: nhận mã, gõ mã, đặt mật khẩu mới, đăng nhập luôn.
+//
+// NHẬN CẢ EMAIL LẪN SỐ ĐIỆN THOẠI trong cùng một ô:
+//   · gõ email        → mã gửi qua email
+//   · gõ số điện thoại → mã gửi qua Zalo
+// Áp dụng cho MỌI tài khoản, kể cả tài khoản chủ dự án tạo hộ và tài khoản khách
+// tự đăng ký. Rất nhiều môi giới chỉ có số điện thoại — bắt nhập email ở bước
+// quên mật khẩu là khoá luôn đường vào của nhóm khách đông nhất.
+// ============================================================================
 
 export default function ForgotPasswordForm() {
-  const [email, setEmail] = useState("");
-  const [notice, setNotice] = useState("");
-  const [done, setDone] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [buoc, setBuoc] = useState<"email" | "ma">("email");
+  // MỘT Ô cho cả email lẫn số điện thoại — khách được đăng tin hộ nhiều người
+  // chỉ có số điện thoại, bắt nhập email là khoá luôn đường vào của họ.
+  const [dinhDanh, setDinhDanh] = useState("");
+  const [kenh, setKenh] = useState<"email" | "zalo">("email");
+  const [ma, setMa] = useState("");
+  const [pw, setPw] = useState("");
+  const [pw2, setPw2] = useState("");
+  const [loi, setLoi] = useState("");
+  const [dangChay, setDangChay] = useState(false);
 
-  async function onSubmit(e: React.FormEvent) {
+  const oCls =
+    "mt-1 h-11 w-full rounded-lg border border-cvr-line px-4 text-[15px] text-cvr-ink outline-none transition placeholder:text-cvr-faint focus:border-cvr-ink";
+
+  async function guiMa(e: React.FormEvent) {
     e.preventDefault();
-    setNotice("");
-    setLoading(true);
+    setLoi("");
+    const v = dinhDanh.trim();
+    if (!v) return setLoi("Nhập email hoặc số điện thoại của tài khoản.");
+    const laSo = laSdtVN(chuanHoaSdt(v));
+    if (!laSo && !v.includes("@")) return setLoi("Nhập đúng email hoặc số điện thoại (10 số).");
+    setDangChay(true);
     try {
-      const supabase = createClient();
-      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-        redirectTo:
-          typeof window !== "undefined" ? `${window.location.origin}/dang-nhap` : undefined,
+      const r = await fetch("/api/xac-thuc/gui-ma", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(
+          laSo
+            ? { sdt: chuanHoaSdt(v), kenh: "zalo", viec: "quen-mat-khau" }
+            : { email: v, kenh: "email", viec: "quen-mat-khau" },
+        ),
       });
-      if (error) {
-        setNotice(error.message || "Không gửi được email, vui lòng thử lại.");
-        return;
-      }
-      setDone(true);
+      const kq = await r.json();
+      if (!kq.ok) return setLoi(kq.loi || "Không gửi được mã.");
+      setKenh(kq.kenh === "zalo" ? "zalo" : "email");
+      setBuoc("ma");
     } catch {
-      setNotice("Hệ thống tài khoản chưa sẵn sàng. Vui lòng thử lại sau.");
+      setLoi("Không kết nối được máy chủ.");
     } finally {
-      setLoading(false);
+      setDangChay(false);
+    }
+  }
+
+  async function datLai(e: React.FormEvent) {
+    e.preventDefault();
+    setLoi("");
+    if (ma.trim().length !== 6) return setLoi("Mã gồm 6 chữ số.");
+    if (pw.length < 6) return setLoi("Mật khẩu cần ít nhất 6 ký tự.");
+    if (pw !== pw2) return setLoi("Hai lần nhập mật khẩu chưa khớp nhau.");
+
+    setDangChay(true);
+    try {
+      const r = await fetch("/api/xac-thuc/doi-mat-khau", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...(kenh === "zalo" ? { sdt: chuanHoaSdt(dinhDanh) } : { email: dinhDanh.trim() }),
+          ma: ma.trim(),
+          matKhauMoi: pw,
+        }),
+      });
+      const kq = await r.json();
+      if (!kq.ok) { setDangChay(false); return setLoi(kq.loi || "Không đổi được mật khẩu."); }
+
+      // Đổi xong ĐĂNG NHẬP LUÔN — không bắt gõ lại mật khẩu vừa đặt.
+      const supabase = createClient();
+      const so = chuanHoaSdt(dinhDanh);
+      const { error } = kenh === "zalo"
+        ? await supabase.auth.signInWithPassword({ phone: `+84${so.slice(1)}`, password: pw })
+        : await supabase.auth.signInWithPassword({ email: dinhDanh.trim(), password: pw });
+      window.location.href = error ? "/dang-nhap" : "/tai-khoan";
+    } catch {
+      setDangChay(false);
+      setLoi("Không kết nối được máy chủ.");
     }
   }
 
   return (
-    <div className="w-full max-w-md rounded-none border border-cvr-line bg-white p-6 shadow-lux sm:p-8">
+    <div className="w-full max-w-md rounded-2xl border border-cvr-line bg-white p-6 shadow-lux sm:p-8">
       <h1 className="text-2xl font-semibold tracking-tight text-cvr-ink">Quên mật khẩu</h1>
-      <p className="mt-1.5 text-sm text-cvr-muted">
-        Nhập email tài khoản, chúng tôi sẽ gửi liên kết đặt lại mật khẩu.
-      </p>
 
-      {/* CÁI BẪY HAY GẶP: khách từng vào bằng Zalo/Google thì tài khoản KHÔNG có
-          mật khẩu (Zalo còn không trả email, hệ thống cấp email kỹ thuật theo ID).
-          Họ nhập email thật vào đây sẽ không nhận được thư nào và tưởng web hỏng.
-          Nói trước ngay đầu trang, đừng để họ chờ thư vô ích. */}
-      <div className="mt-4 rounded-lg border border-cvr-blue/30 bg-cvr-blue/[0.08] px-3 py-2.5 text-sm text-cvr-blue-ink">
-        Bạn từng vào bằng <strong>Google</strong>? Tài khoản đó{" "}
-        <strong>không có mật khẩu</strong> — quay lại{" "}
-        <Link href="/dang-nhap" className="font-semibold underline">trang đăng nhập</Link>{" "}
-        bấm đúng nút đó là vào ngay, không cần đặt lại gì.
-      </div>
-
-      {done ? (
-        <div className="mt-4 rounded-lg border border-cvr-line bg-cvr-surface px-3 py-3 text-sm text-cvr-body">
-          Nếu email tồn tại, liên kết đặt lại mật khẩu đã được gửi. Vui lòng kiểm tra hộp thư.
-          <br />
-          <span className="mt-1.5 block text-cvr-muted">
-            Chờ vài phút không thấy thì xem thư mục <strong>Spam / Quảng cáo</strong>. Vẫn không có
-            nghĩa là email này chưa từng đăng ký — thử vào bằng Google.
-          </span>
-        </div>
-      ) : (
+      {buoc === "email" ? (
         <>
-          {notice && (
-            <div className="mt-4 rounded-lg border border-cvr-blue/30 bg-cvr-blue/[0.08] px-3 py-2.5 text-sm text-cvr-blue-ink">
-              {notice}
-            </div>
-          )}
-          <form className="mt-5 space-y-4" onSubmit={onSubmit}>
-            <label className="block">
-              <span className="mb-1.5 block text-sm font-medium text-cvr-body">Email</span>
+          <p className="mt-1.5 text-sm leading-relaxed text-cvr-muted">
+            Nhập email hoặc số điện thoại của tài khoản, chúng tôi gửi mã 6 số để bạn đặt lại mật khẩu.
+          </p>
+          <form onSubmit={guiMa} className="mt-5 space-y-4">
+            <div>
+              <label className="text-sm font-medium text-cvr-body">Email hoặc số điện thoại</label>
               <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="email@vidu.com"
-                className="h-11 w-full rounded-lg border border-transparent bg-cvr-surface px-3 text-sm text-cvr-ink placeholder-cvr-faint outline-none transition focus:border-cvr-line focus:bg-white"
+                value={dinhDanh}
+                onChange={(e) => setDinhDanh(e.target.value)}
+                autoComplete="username"
+                placeholder="email@example.com hoặc 0905123456"
+                className={oCls}
               />
-            </label>
+            </div>
+            {loi && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-700">{loi}</p>}
             <button
               type="submit"
-              disabled={loading}
-              className="h-11 w-full rounded-lg bg-cvr-ink text-sm font-semibold text-white transition hover:bg-cvr-ink/90 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={dangChay}
+              className="h-12 w-full rounded-lg bg-cvr-ink text-[15px] font-semibold text-white transition hover:bg-cvr-ink/90 disabled:opacity-60"
             >
-              {loading ? "Đang gửi…" : "Gửi liên kết đặt lại"}
+              {dangChay ? "Đang gửi mã…" : "Gửi mã"}
+            </button>
+          </form>
+        </>
+      ) : (
+        <>
+          <p className="mt-1.5 text-sm leading-relaxed text-cvr-muted">
+            Mã 6 số vừa gửi tới{" "}
+            <strong className="font-semibold text-cvr-ink">
+              {kenh === "zalo" ? `Zalo ${chuanHoaSdt(dinhDanh)}` : dinhDanh.trim()}
+            </strong>
+            , hiệu lực 10 phút.
+          </p>
+          <form onSubmit={datLai} className="mt-5 space-y-4">
+            <input
+              value={ma}
+              onChange={(e) => setMa(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              autoFocus
+              placeholder="______"
+              className="h-14 w-full rounded-lg border border-cvr-line text-center text-2xl font-semibold tracking-[0.5em] text-cvr-ink outline-none focus:border-cvr-ink"
+            />
+            <div>
+              <label className="text-sm font-medium text-cvr-body">Mật khẩu mới</label>
+              <input type="password" value={pw} onChange={(e) => setPw(e.target.value)} autoComplete="new-password" placeholder="Ít nhất 6 ký tự" className={oCls} />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-cvr-body">Xác minh mật khẩu</label>
+              <input type="password" value={pw2} onChange={(e) => setPw2(e.target.value)} autoComplete="new-password" placeholder="Nhập lại mật khẩu mới" className={oCls} />
+            </div>
+            {loi && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-700">{loi}</p>}
+            <button
+              type="submit"
+              disabled={dangChay}
+              className="h-12 w-full rounded-lg bg-cvr-ink text-[15px] font-semibold text-white transition hover:bg-cvr-ink/90 disabled:opacity-60"
+            >
+              {dangChay ? "Đang đặt lại…" : "Đặt lại và đăng nhập"}
+            </button>
+            <button type="button" onClick={() => { setBuoc("email"); setMa(""); setLoi(""); }} className="w-full text-sm text-cvr-muted hover:text-cvr-ink">
+              ← Nhập lại email / số điện thoại
             </button>
           </form>
         </>
       )}
 
-      <p className="mt-6 text-center text-sm text-cvr-muted">
-        <Link href="/dang-nhap" className="font-semibold text-cvr-blue-ink hover:text-cvr-blue">
-          ← Về trang đăng nhập
-        </Link>
+      <p className="mt-5 text-center text-sm text-cvr-muted">
+        <Link href="/dang-nhap" className="font-semibold text-cvr-ink hover:underline">Quay lại đăng nhập</Link>
       </p>
     </div>
   );

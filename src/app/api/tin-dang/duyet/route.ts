@@ -259,12 +259,25 @@ async function baoKhach(
     let email = hoSo?.email ?? null;
     let phone = hoSo?.phone ?? null;
     let ten = hoSo?.full_name ?? null;
+    let vaiTro: string | null = null;
     if (!hoSo && ownerId) {
-      const { data } = await admin.from("profiles").select("email,phone,full_name").eq("id", ownerId).limit(1);
+      const { data } = await admin.from("profiles").select("email,phone,full_name,role").eq("id", ownerId).limit(1);
       email = (data?.[0]?.email as string | null) ?? null;
       phone = (data?.[0]?.phone as string | null) ?? null;
       ten = (data?.[0]?.full_name as string | null) ?? null;
+      vaiTro = (data?.[0]?.role as string | null) ?? null;
     }
+
+    // ⚠️ TIN CHỦ DỰ ÁN TỰ ĐĂNG (đăng hộ môi giới) → KHÔNG GỬI THƯ.
+    // Tin đăng hộ có owner_id là chính tài khoản quản trị, nên thư "tin đã lên
+    // sóng" gửi ngược về hộp thư của chủ dự án — không ai cần, mà lại rất tốn:
+    // đăng một đợt 500 tin là 500 thư trong một ngày.
+    //
+    // Resend gói Free chỉ cho 100 THƯ MỖI NGÀY. Tiêu vào đây là hết suất cho
+    // MÃ XÁC THỰC — thứ mà khách đang đứng ở màn đăng ký chờ từng giây. Mất mã
+    // là mất khách, còn mất một thư báo tin lên sóng gửi cho chính mình thì
+    // không mất gì. Ưu tiên rõ ràng: mã xác thực trước, thông báo sau.
+    if (vaiTro === "admin") return [{ kenh: "email" as const, daGui: false, lyDo: "tin do quản trị viên tự đăng — không cần báo" }];
     // Mẫu ZNS bắt buộc có tên khách; điền ở đây để mọi lối gọi đều đủ tham số.
     const znsData = noiDung.znsData && { ten_khach_hang: ten || "Quý khách", ...noiDung.znsData };
     const kq = await guiThongBao({ ...noiDung, znsData, email, phone });

@@ -53,36 +53,45 @@ function trung(a: string, b: string): boolean {
 export function suyRaHeCu(tinhMoi: string, phuongMoi: string): HaiHe["cu"] & { duToiPhuong: boolean } {
   const tinhCuUngVien = provinceMergers[tinhMoi] ?? [];
 
-  if (phuongMoi) {
-    for (const tenTinhCu of tinhCuUngVien) {
-      const tinhCu = provinces.find((p) => p.name === tenTinhCu);
-      if (!tinhCu) continue;
-      // 1) Phường mới trùng tên một QUẬN/HUYỆN cũ — trường hợp phổ biến nhất sau
-      //    sáp nhập ("Phường Hải Châu" ← "Quận Hải Châu").
-      const quanTrung = tinhCu.districts.find((d) => trung(d.name, phuongMoi));
-      if (quanTrung) return { tinh: tenTinhCu, quan: quanTrung.name, phuong: "", duToiPhuong: true };
-      // 2) Phường mới giữ nguyên tên một PHƯỜNG/XÃ cũ.
-      for (const d of tinhCu.districts) {
-        const phuongTrung = d.wards.find((w) => trung(w, phuongMoi));
-        if (phuongTrung) return { tinh: tenTinhCu, quan: d.name, phuong: phuongTrung, duToiPhuong: true };
-      }
-      // 3) Phường mới GỘP nhiều phường cũ cùng gốc tên: "An Hải" ← An Hải Bắc ·
-      //    An Hải Tây · An Hải Đông. Nêu đích danh một phường trong đó là SAI
-      //    (nó chỉ là một phần), nên chỉ trả về QUẬN/HUYỆN chứa cả nhóm — vừa
-      //    đúng vừa đủ để người quen hệ cũ nhận ra chỗ đó là đâu.
-      const quanChua = new Set<string>();
-      for (const d of tinhCu.districts) {
-        if (d.wards.some((w) => loiTen(w).startsWith(loiTen(phuongMoi) + " "))) quanChua.add(d.name);
-      }
-      if (quanChua.size === 1) {
-        return { tinh: tenTinhCu, quan: [...quanChua][0], phuong: "", duToiPhuong: true };
-      }
+  // ⚠️ DỮ LIỆU HỆ CŨ ĐƯỢC LƯU THEO **TÊN TỈNH MỚI**.
+  // `locations.ts` là bảng lai: tên tỉnh đã là tên MỚI ("Huế", "Đà Nẵng") nhưng
+  // cấp dưới vẫn là quận/huyện + phường/xã CŨ. Trước đây chỗ này dò bằng TÊN CŨ
+  // ("Thừa Thiên Huế") nên không khớp tỉnh nào → mọi tin đều rớt xuống nhánh cuối
+  // và chỉ hiện được mỗi tên tỉnh cũ. Đó chính là lỗi "Tên cũ: Thừa Thiên Huế"
+  // trong ảnh chủ dự án gửi, dù phường An Cựu CÓ trong dữ liệu (Quận Thuận Hóa).
+  const chiTietCu = provinces.find((p) => p.name === tinhMoi);
+
+  // Nhãn tỉnh cho dòng "tên cũ": tỉnh mới gộp từ ĐÚNG MỘT tỉnh cũ thì ghi tên cũ
+  // (Huế → Thừa Thiên Huế). Gộp từ nhiều tỉnh (Đà Nẵng ← Đà Nẵng + Quảng Nam) thì
+  // KHÔNG đoán, giữ tên tỉnh hiện hành — phần quận/huyện + phường mới là thứ giúp
+  // người quen hệ cũ nhận ra nơi đó.
+  const tenTinhCho = tinhCuUngVien.length === 1 ? tinhCuUngVien[0] : tinhMoi;
+
+  if (phuongMoi && chiTietCu) {
+    // 1) Phường mới trùng tên một QUẬN/HUYỆN cũ — trường hợp phổ biến nhất sau
+    //    sáp nhập ("Phường Hải Châu" ← "Quận Hải Châu").
+    const quanTrung = chiTietCu.districts.find((d) => trung(d.name, phuongMoi));
+    if (quanTrung) return { tinh: tenTinhCho, quan: quanTrung.name, phuong: "", duToiPhuong: true };
+
+    // 2) Phường mới giữ nguyên tên một PHƯỜNG/XÃ cũ ("An Cựu" ← Quận Thuận Hóa).
+    for (const d of chiTietCu.districts) {
+      const phuongTrung = d.wards.find((w) => trung(w, phuongMoi));
+      if (phuongTrung) return { tinh: tenTinhCho, quan: d.name, phuong: phuongTrung, duToiPhuong: true };
+    }
+
+    // 3) Phường mới GỘP nhiều phường cũ cùng gốc tên: "An Hải" ← An Hải Bắc ·
+    //    An Hải Tây · An Hải Đông. Nêu đích danh một phường trong đó là SAI (nó
+    //    chỉ là một phần), nên chỉ trả về QUẬN/HUYỆN chứa cả nhóm.
+    const quanChua = new Set<string>();
+    for (const d of chiTietCu.districts) {
+      if (d.wards.some((w) => loiTen(w).startsWith(loiTen(phuongMoi) + " "))) quanChua.add(d.name);
+    }
+    if (quanChua.size === 1) {
+      return { tinh: tenTinhCho, quan: [...quanChua][0], phuong: "", duToiPhuong: true };
     }
   }
 
-  // Không dò ra phường: tỉnh cũ chỉ chắc chắn khi tỉnh mới KHÔNG sáp nhập từ
-  // nhiều tỉnh (vd Hà Nội ← Hà Nội). Sáp nhập nhiều tỉnh mà không biết phường thì
-  // không thể đoán nó thuộc tỉnh cũ nào — để trống.
+  // Không dò ra phường: chỉ dám ghi tên tỉnh cũ khi tỉnh mới gộp từ đúng một tỉnh.
   const chiMotTinhCu = tinhCuUngVien.length === 1 ? tinhCuUngVien[0] : "";
   return { tinh: chiMotTinhCu, quan: "", phuong: "", duToiPhuong: false };
 }
@@ -130,6 +139,67 @@ export function dongBoHaiHe(
     cu: { tinh, quan, phuong },
     duToiPhuong: moi.duToiPhuong,
   };
+}
+
+// ─── ĐỔI HỆ: TỰ ĐIỀN SANG HỆ KIA ────────────────────────────────────────────
+// Người nhập bấm nút "Hệ mới ↔ Hệ cũ" thì ba ô địa giới phải TỰ ĐIỀN theo hệ vừa
+// chọn, KHÔNG bắt gõ lại từ đầu (yêu cầu của chủ dự án).
+//
+// Suy được tới đâu điền tới đó; chỗ nào không suy ra thì để TRỐNG cho người nhập
+// tự chọn — tuyệt đối không điền bừa một phường gần đúng, vì địa chỉ sai thì tin
+// lên nhầm khu vực, khách tìm không ra.
+export function doiHeDiaChi(
+  heDich: GeoMode,
+  dangCo: { tinh: string; quan?: string; phuong?: string },
+): { province: string; district: string; ward: string } {
+  const tinh = dangCo.tinh || "";
+  const quan = dangCo.quan || "";
+  const phuong = dangCo.phuong || "";
+  if (!tinh) return { province: "", district: "", ward: "" };
+
+  if (heDich === "cu") {
+    // Đang ở hệ MỚI (tỉnh + phường mới) → suy ra quận/huyện + phường cũ.
+    const cu = suyRaHeCu(tinh, phuong);
+    return { province: tinh, district: cu.quan, ward: cu.phuong };
+  }
+
+  // Đang ở hệ CŨ (tỉnh + quận/huyện + phường cũ) → suy ra phường theo hệ mới.
+  const moi = suyRaHeMoi(tinh, quan, phuong);
+  return { province: moi.tinh || tinh, district: "", ward: moi.phuong };
+}
+
+// ─── CHUỖI GỬI CHO BẢN ĐỒ — GỬI CẢ HAI HỆ ───────────────────────────────────
+// Bản đồ (Google lẫn bảng toạ độ tĩnh trong geo.ts) vẫn chạy theo TÊN CŨ: bảng
+// CENTERS khớp "Sơn Trà", "Thuận Hóa", "Hội An"… còn Google thì chưa cập nhật
+// hết tên phường mới sau sáp nhập. Vì vậy người đăng chọn "Phường An Hải" (hệ
+// mới) mà chỉ gửi đúng tên đó thì bản đồ dò không ra, chỉ kéo về giữa tỉnh.
+//
+// Gửi kèm tên theo hệ CÒN LẠI thì cả hai bên đều tra được: bên nào nhận ra tên
+// nào thì dùng tên đó. Đây là chiều "ô nhập → bản đồ" của cơ chế hai chiều
+// (chiều ngược lại — ghim bản đồ → điền ô — nằm ở diaGioiTuBanDo.ts).
+export function chuoiTimBanDo(
+  he: GeoMode,
+  diaChi: { tinh: string; quan?: string; phuong?: string },
+  soNha = "",
+): string {
+  const h = dongBoHaiHe(he, diaChi);
+  // Thứ tự: số nhà → tên hệ đang nhập → tên hệ kia → tỉnh. Trùng nhau thì bỏ.
+  const phan = he === "moi"
+    ? [soNha, h.moi.phuong, h.cu.phuong, h.cu.quan, h.moi.tinh]
+    : [soNha, h.cu.phuong, h.cu.quan, h.moi.phuong, h.cu.tinh || h.moi.tinh];
+  // Loại trùng theo TÊN LÕI: "Phường An Cựu" và "An Cựu" là một chỗ, nhắc hai lần
+  // chỉ làm loãng chuỗi tra cứu.
+  const daCo = new Set<string>();
+  return phan
+    .map((x) => (x ?? "").trim())
+    .filter((x) => {
+      if (!x) return false;
+      const loi = loiTen(x);
+      if (daCo.has(loi)) return false;
+      daCo.add(loi);
+      return true;
+    })
+    .join(", ");
 }
 
 // Tin đã lưu chỉ có ba cột ward/district/province, không ghi nó nhập theo hệ nào.

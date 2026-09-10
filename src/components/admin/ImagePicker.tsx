@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import MoBangChrome from "@/components/MoBangChrome";
 import { asset } from "@/lib/asset";
 import { isVideoUrl } from "@/lib/media";
 import { uploadImageFile, uploadVideoFile } from "@/lib/uploadImage";
@@ -198,6 +199,10 @@ export default function ImagePicker({
           trình duyệt đời cũ trên Android/iOS bỏ qua ô đã display:none nên khách
           bấm không mở được thư viện ảnh, hoặc mở mà không chọn được nhiều tấm.
           Bấm thẳng vào nhãn là hành vi gốc của trình duyệt, máy nào cũng chạy. */}
+      {/* Mở trong Zalo/Facebook thì nút chọn ảnh không ra được Bộ sưu tập —
+          hiện lối thoát sang Chrome ngay tại đây, đúng chỗ khách đang bấm. */}
+      <MoBangChrome />
+
       <div className="flex flex-wrap items-center gap-3">
         <label
           className={`inline-flex cursor-pointer items-center gap-2 rounded-lg border border-cvr-line bg-white px-4 py-2 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink ${uploadingImg ? "pointer-events-none opacity-60" : ""}`}

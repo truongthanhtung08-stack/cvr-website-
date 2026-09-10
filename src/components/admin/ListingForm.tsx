@@ -5,11 +5,12 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { saleTypeGroups, rentTypeGroups } from "@/lib/filters";
 import { provinceNamesFor, districtsOf, wardsOf, wardsOfNew, type GeoMode } from "@/lib/locations";
-import { dongBoHaiHe, chuHeCu, chuHeMoi } from "@/lib/diaChiHaiHe";
+import { dongBoHaiHe, chuHeCu, chuHeMoi, doiHeDiaChi, chuoiTimBanDo } from "@/lib/diaChiHaiHe";
 import { ganDiaGioi, type DiaGioiBanDo } from "@/lib/diaGioiTuBanDo";
 import { fieldsFor, interiorItems, amenityGroups, legalOptions, furnishLevels, directions, coPhongNgu, coPhongTam, coDienTichXayDung, nhanDienTich, coDonGiaM2 } from "@/lib/listingSpec";
 import { chuanHoaSdt } from "@/lib/phone";
 import ImagePicker from "@/components/admin/ImagePicker";
+import OTieuDe from "@/components/OTieuDe";
 // BẢN ĐỒ GHIM — dùng bản Leaflet/OpenStreetMap. Bản chạy nền Google
 // (components/MapPicker.tsx) GIỮ LẠI để sau này Google thông thì đổi về, chỉ
 // phải sửa đúng dòng import này.
@@ -335,7 +336,9 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
       <Panel title="Nội dung">
         <div className="space-y-4">
           <Field label="Tiêu đề tin (bắt buộc — tối thiểu 30 ký tự, nên có tên quận/phường)">
-            <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="VD: Bán căn hộ 2PN view sông Hàn, Hải Châu, Đà Nẵng" className={inputCls} />
+            {/* Ô tự giãn cao — tiêu đề dài mấy cũng thấy trọn, không trôi mất
+                phần đầu như ô một dòng. */}
+            <OTieuDe value={title} onChange={setTitle} placeholder="VD: Bán căn hộ 2PN view sông Hàn, Hải Châu, Đà Nẵng" className={inputCls} />
           </Field>
           <Field label="Mô tả (bắt buộc — tối thiểu 50 ký tự)">
             <ContentEditor value={description} onChange={setDescription} placeholder="Mô tả chi tiết: vị trí, nội thất, pháp lý, tiện ích xung quanh…" />
@@ -404,13 +407,20 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
                   key={m.id}
                   type="button"
                   onClick={() => {
+                    if (m.id === geoMode) return;
+                    // ĐỔI HỆ = TỰ ĐỒNG BỘ, KHÔNG XOÁ TRẮNG BẮT NHẬP LẠI.
+                    // Trước đây bấm sang hệ kia là ba ô về rỗng hết, người nhập
+                    // phải chọn lại từ tỉnh — vừa mất công vừa dễ nhập sai khu vực.
+                    // Nay suy thẳng sang hệ mới: suy được tới đâu điền tới đó,
+                    // chỗ không chắc để trống cho người nhập tự chọn.
+                    const d = doiHeDiaChi(m.id, { tinh: province, quan: district, phuong: ward });
                     setGeoMode(m.id);
-                    setProvince("");
-                    setDistrict("");
-                    setWard("");
-                    // Đã ghim rồi thì đổi hệ xong điền lại NGAY theo hệ vừa chọn.
+                    setProvince(d.province);
+                    setDistrict(d.district);
+                    setWard(d.ward);
+                    // Chưa suy ra được phường mà đã ghim bản đồ thì lấy từ điểm ghim.
                     const dc = diaGioiTuBanDoRef.current;
-                    if (dc) setTimeout(() => apDungDiaGioi(dc, m.id, "", "", ""), 0);
+                    if (dc && !d.ward) setTimeout(() => apDungDiaGioi(dc, m.id, d.province, d.district, ""), 0);
                   }}
                   className={`rounded-md px-3 py-1.5 text-xs font-medium transition ${geoMode === m.id ? "bg-cvr-ink text-white" : "text-cvr-body hover:text-cvr-ink"}`}
                 >
@@ -515,7 +525,7 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
                 diaGioiTuBanDoRef.current = dc;
                 apDungDiaGioi(dc, geoMode, province, district, ward);
               }}
-              hint={`${addressDetail}, ${ward}, ${district}, ${province}`}
+              hint={chuoiTimBanDo(geoMode, { tinh: province, quan: district, phuong: ward }, addressDetail)}
             />
           </div>
         </div>

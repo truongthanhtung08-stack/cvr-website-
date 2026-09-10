@@ -198,13 +198,15 @@ export default function PhoneLoginPage() {
                   {loading ? "Đang xử lý…" : "Đăng nhập"}
                 </button>
 
-                <button
-                  type="button"
-                  onClick={() => { setBuoc("nhapSo"); setNotice(""); }}
-                  className="w-full py-1 text-sm text-cvr-blue-ink underline"
-                >
-                  Lần đầu dùng số này · Quên mật khẩu?
-                </button>
+                {/* HAI VIỆC KHÁC NHAU, TRƯỚC ĐÂY GỘP LÀM MỘT và cùng chạy vào
+                    luồng OTP Zalo — mà Zalo ZNS đang không gửi được, nên bấm vào
+                    là cụt đường. Nay tách đúng hai lối đang chạy được:
+                      · chưa có tài khoản → sang trang Đăng ký
+                      · quên mật khẩu     → nhận mã qua email hoặc Zalo rồi đặt lại */}
+                <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 pt-1 text-sm">
+                  <a href="/dang-ky" className="text-cvr-blue-ink underline">Lần đầu dùng số này — Đăng ký</a>
+                  <a href="/quen-mat-khau" className="text-cvr-blue-ink underline">Quên mật khẩu?</a>
+                </div>
               </>
             )}
 

@@ -1,5 +1,6 @@
 import { provinceNamesFor, districtsOf, wardsOf, wardsOfNew, type GeoMode } from "@/lib/locations";
 import { normalizeVi } from "@/lib/filters";
+import { suyRaHeCu, suyRaHeMoi } from "@/lib/diaChiHaiHe";
 
 // ── GHIM TRÊN BẢN ĐỒ → ĐIỀN VÀO CÁC Ô KHU VỰC ────────────────────────────────
 //
@@ -59,7 +60,25 @@ export function ganDiaGioi(
   if (heDiaChi === "moi") {
     const dsPhuongMoi = wardsOfNew(tinh);
     // Chưa có danh mục phường của tỉnh này → nhận thẳng tên bản đồ đọc được.
-    const p = dsPhuongMoi.length ? khopDanhMuc(dc.phuong, dsPhuongMoi) : dc.phuong;
+    let p = dsPhuongMoi.length ? khopDanhMuc(dc.phuong, dsPhuongMoi) : dc.phuong;
+
+    // ⚠️ BẢN ĐỒ VẪN TRẢ TÊN CŨ. Google và OpenStreetMap chưa cập nhật hết tên
+    // phường mới sau sáp nhập, nên ghim đúng chỗ mà vẫn đọc ra "Quận Hải Châu",
+    // "An Hải Bắc"… → khớp với danh mục hệ MỚI là trượt, ô Phường/Xã bỏ trống.
+    // Trượt thì tra tiếp theo danh mục hệ CŨ rồi QUY ĐỔI sang tên hệ mới. Đây là
+    // nửa còn lại của cơ chế hai chiều (nửa kia: chuoiTimBanDo gửi cả hai hệ).
+    if (!p) {
+      const dsQuanCu = districtsOf(tinh);
+      const quanCu =
+        dsQuanCu.find((d) => khopDanhMuc(dc.phuong, wardsOf(tinh, d))) ||
+        khopDanhMuc(dc.phuong, dsQuanCu) ||
+        khopDanhMuc(dc.quan, dsQuanCu);
+      if (quanCu) {
+        const phuongCu = khopDanhMuc(dc.phuong, wardsOf(tinh, quanCu));
+        p = suyRaHeMoi(tinh, quanCu, phuongCu).phuong;
+      }
+    }
+
     return { province: tinh, district: "", ward: p || (doiTinh ? "" : giuPhuong) };
   }
 
@@ -96,6 +115,11 @@ export function ganDiaGioi(
   // Bước 3 — ĐÀNH TIN cấp trung gian của bản đồ. Chỉ dùng khi hai bước trên bó
   // tay (thường là huyện/xã vùng ven web chưa có trong danh mục phường cũ).
   if (!quan) quan = khopDanhMuc(dc.quan, dsQuan);
+  // Bước 4 — BẢN ĐỒ ĐỌC RA TÊN HỆ MỚI. Nơi nào Google/OSM đã cập nhật thì nó trả
+  // thẳng tên phường mới ("Phường An Cựu") — tên này không có trong danh mục
+  // quận/huyện cũ nên ba bước trên đều trượt. Quy đổi ngược về hệ cũ để lấy đúng
+  // quận/huyện. Đây là chiều còn lại của cơ chế hai chiều.
+  if (!quan && dc.phuong) quan = suyRaHeCu(tinh, dc.phuong).quan;
   const quanDung = quan || (doiTinh ? "" : dangCo.district);
   // Việt Nam chạy SONG SONG hai hệ cho tới khi dân quen hệ mới → hệ CŨ cũng phải
   // điền được đủ ba khối. Bản đồ chỉ biết TÊN PHƯỜNG MỚI ("Phường Thuận Hoá"),
