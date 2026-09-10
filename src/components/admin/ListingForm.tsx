@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { saleTypeGroups, rentTypeGroups } from "@/lib/filters";
 import { provinceNamesFor, districtsOf, wardsOf, wardsOfNew, type GeoMode } from "@/lib/locations";
+import { dongBoHaiHe, chuHeCu, chuHeMoi } from "@/lib/diaChiHaiHe";
 import { ganDiaGioi, type DiaGioiBanDo } from "@/lib/diaGioiTuBanDo";
 import { fieldsFor, interiorItems, amenityGroups, legalOptions, furnishLevels, directions, coPhongNgu, coPhongTam, coDienTichXayDung, nhanDienTich, coDonGiaM2 } from "@/lib/listingSpec";
 import { chuanHoaSdt } from "@/lib/phone";
@@ -467,8 +468,21 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
             )}
           </Field>
         </div>
-        <div className="mt-4">
-        </div>
+        {/* ĐỊA CHỈ HAI HỆ — admin nhập hệ nào cũng thấy ngay cách gọi hệ kia,
+            giống hệt form của khách. Nhập sai hệ là tin không lên đúng tìm kiếm
+            khu vực, nên phải thấy ngay tại chỗ nhập chứ không đợi lên web mới biết. */}
+        {province && (() => {
+          const hai = dongBoHaiHe(geoMode, { tinh: province, quan: district, phuong: ward });
+          const con = geoMode === "moi" ? chuHeCu(hai) : chuHeMoi(hai);
+          if (!con) return null;
+          return (
+            <p className="mt-3 rounded-lg bg-cvr-surface px-3 py-2 text-xs leading-relaxed text-cvr-muted">
+              {geoMode === "moi" ? "Theo tên cũ" : "Theo tên mới"}:{" "}
+              <strong className="font-semibold text-cvr-ink">{con}</strong>
+              {" — tin tìm được ở cả hai cách gọi."}
+            </p>
+          );
+        })()}
         <div className="mt-4">
           <Field label="Địa chỉ cụ thể (số nhà, tên đường, số lô, block…)">
             <input

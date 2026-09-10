@@ -150,6 +150,7 @@ function rowToListing(r: Row): Listing {
     ...(r.beds != null ? { beds: r.beds } : {}),
     ...(r.baths != null ? { baths: r.baths } : {}),
     location: [r.ward, r.district, r.province].filter(Boolean).join(", "),
+    diaGioi: { ward: r.ward ?? "", district: r.district ?? "", province: r.province ?? "" },
     type: r.type,
     // Ảnh đại diện = ẢNH đầu tiên (bỏ qua video nếu đứng trước)
     image: asset(r.images.find((s) => !isVideoUrl(s)) ?? anhTam(r.type)),

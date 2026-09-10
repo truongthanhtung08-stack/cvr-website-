@@ -22,6 +22,9 @@ export type Listing = {
   beds?: number;
   baths?: number;
   location: string;
+  // BA CẤP ĐỊA GIỚI GIỮ RIÊNG (ngoài chuỗi location đã ghép sẵn) — cần cho việc
+  // hiện địa chỉ theo CẢ HAI HỆ cũ/mới trên trang chi tiết tin.
+  diaGioi?: { ward: string; district: string; province: string };
   type: string;
   image: string;
   // Số ẢNH thật của tin (để badge "📷 n" đúng, không cứng "1"). Không có → coi như 1.

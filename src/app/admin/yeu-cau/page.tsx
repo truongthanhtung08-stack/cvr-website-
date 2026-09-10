@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import YeuCauNhanTin from "@/components/admin/YeuCauNhanTin";
 
 // ============================================================================
 // ADMIN — HỘP THƯ YÊU CẦU CỦA KHÁCH (mọi loại yêu cầu gửi từ web)
@@ -119,6 +120,10 @@ export default function YeuCauKhachPage() {
 
   return (
     <div className="space-y-4">
+      {/* Môi giới xin nhận lại tin đã được đăng hộ — để TRÊN CÙNG vì mỗi yêu cầu
+          duyệt xong là một người bán tự quản tin của họ, chủ dự án bớt việc. */}
+      <YeuCauNhanTin />
+
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-cvr-ink">

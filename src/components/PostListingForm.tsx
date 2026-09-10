@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { donViGiaNenDung, goiYDienTich, goiYGia, goiYTieuDe } from "@/lib/goiYNhapTin";
+import { dongBoHaiHe, chuHeCu, chuHeMoi } from "@/lib/diaChiHaiHe";
 import {
   categorySpecs, demandTypes, specForType,
   coPhongNgu, coPhongTam, coDienTichXayDung, coNoiThat, fieldsSplit, thieuMucBatBuoc, nhanDienTich, type Field,
@@ -27,6 +28,7 @@ import { useBilling } from "@/lib/useBilling";
 import { getTier, type TierId } from "@/lib/packages";
 import type { ListingRow } from "@/lib/listingAdmin";
 import { chuanHoaSdt } from "@/lib/phone";
+import { uploadImageFile } from "@/lib/uploadImage";
 
 // Form đăng tin cho KHÁCH HÀNG (/dang-tin) — nối Supabase thật.
 // Cùng cấu trúc với form admin: Lưu nháp (làm dở) / Đăng tin (gửi duyệt).
@@ -79,6 +81,10 @@ export default function PostListingForm() {
   const [contactName, setContactName] = useState("");
   const [contactPhone, setContactPhone] = useState("");
   const [contactEmail, setContactEmail] = useState("");
+  // ẢNH ĐẠI DIỆN NGƯỜI ĐĂNG — hiện trên thẻ tin và trong danh bạ chuyên gia.
+  // Người có ảnh thật được khách bấm gọi nhiều hơn hẳn ảnh chữ cái mặc định.
+  const [contactAvatar, setContactAvatar] = useState("");
+  const [dangTaiAvatar, setDangTaiAvatar] = useState(false);
   // Tin thuộc dự án nào (không bắt buộc) — hiện trong mục tin liên quan của dự án đó
   // Gói đăng tin khách chọn (giá do quản trị đặt ở /admin/gia-khuyen-mai)
   // Bảng giá HIỆN HÀNH (bản admin đã lưu ở /admin/gia-khuyen-mai), không phải giá cứng trong code
@@ -347,6 +353,7 @@ export default function PostListingForm() {
         setContactName(d.contact.name ?? "");
         setContactPhone(d.contact.phone ?? "");
         setContactEmail(d.contact.email ?? "");
+        setContactAvatar(d.contact.avatar ?? "");
       }
       setEditStatus(r.status);
       setEditOwner(r.owner_id);
@@ -424,8 +431,13 @@ export default function PostListingForm() {
         mapPin: mapPin.trim() || undefined,
         plan: { tier: planTier, days: planDays },
         project: projectSlug || undefined,
-        contact: (contactName.trim() || contactPhone.trim() || contactEmail.trim())
-          ? { name: contactName.trim(), phone: chuanHoaSdt(contactPhone), email: contactEmail.trim() }
+        contact: (contactName.trim() || contactPhone.trim() || contactEmail.trim() || contactAvatar.trim())
+          ? {
+              name: contactName.trim(),
+              phone: chuanHoaSdt(contactPhone),
+              email: contactEmail.trim(),
+              avatar: contactAvatar.trim() || undefined,
+            }
           : undefined,
       },
       status: asDraft ? ("draft" as const) : ("pending" as const), // khách đăng → chờ admin duyệt
@@ -591,6 +603,24 @@ export default function PostListingForm() {
           )}
           <Pick label="Phường / Xã" value={ward} onChange={setWard} options={wards} placeholder="Chọn Phường / Xã" disabled={geoMode === "moi" ? !province : coDanhMucQuan ? !district : !province} />
         </div>
+        {/* ĐỊA CHỈ HAI HỆ — nhập hệ nào cũng thấy ngay cách gọi của hệ kia.
+            Cả nước đang dùng song song hai cách gọi: người đăng quen hệ mới,
+            nhiều người mua vẫn tìm theo quận/huyện cũ. Hiện cả hai ngay lúc nhập
+            thì người đăng tự thấy tin của mình sẽ hiện ra sao cho cả hai nhóm.
+            CHỈ HIỆN khi suy ra được chắc chắn — không đoán bừa địa chỉ. */}
+        {province && (() => {
+          const hai = dongBoHaiHe(geoMode, { tinh: province, quan: district, phuong: ward });
+          const con = geoMode === "moi" ? chuHeCu(hai) : chuHeMoi(hai);
+          if (!con) return null;
+          return (
+            <p className="mt-2 rounded-lg bg-cvr-surface px-3 py-2 text-xs leading-relaxed text-cvr-muted">
+              {geoMode === "moi" ? "Theo tên cũ" : "Theo tên mới"}:{" "}
+              <strong className="font-semibold text-cvr-ink">{con}</strong>
+              {" — tin của bạn tìm được ở cả hai cách gọi."}
+            </p>
+          );
+        })()}
+
         {/* THANH ĐỊA CHỈ LÀ Ô RIÊNG, NẰM NGOÀI BẢN ĐỒ — chủ dự án chốt.
             Gõ tới đâu bản đồ bên dưới tự thu lại và trôi tới đó; ghim trên bản đồ
             thì ô này tự điền ngược lại. ĐỪNG nhét ô này vào trong khung bản đồ. */}
@@ -897,6 +927,49 @@ export default function PostListingForm() {
       </Card>
 
       <Card step={buoc()} title="Thông tin liên hệ">
+        {/* ẢNH ĐẠI DIỆN — ô chọn tệp nằm TRONG <label> và ẩn bằng sr-only.
+            KHÔNG dùng display:none rồi gọi .click(): điện thoại đời cũ bỏ qua,
+            khách bấm mãi không mở được thư viện ảnh. */}
+        <div className="mb-4 flex items-center gap-4">
+          {contactAvatar ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={contactAvatar} alt="Ảnh đại diện" className="h-16 w-16 rounded-full object-cover ring-1 ring-cvr-line" />
+          ) : (
+            <span className="flex h-16 w-16 items-center justify-center rounded-full bg-cvr-surface text-xs text-cvr-faint ring-1 ring-cvr-line">
+              Chưa có
+            </span>
+          )}
+          <div className="min-w-0">
+            <label className="inline-flex cursor-pointer items-center rounded-lg border border-cvr-line bg-white px-4 py-2 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink">
+              <input
+                type="file"
+                accept="image/*"
+                className="sr-only"
+                onChange={async (e) => {
+                  const f = e.target.files?.[0];
+                  if (!f) return;
+                  setDangTaiAvatar(true);
+                  const { url, error } = await uploadImageFile(f);
+                  setDangTaiAvatar(false);
+                  if (url) setContactAvatar(url);
+                  else if (error) alert(error);
+                  e.target.value = "";
+                }}
+              />
+              {dangTaiAvatar ? "Đang tải ảnh…" : contactAvatar ? "Đổi ảnh đại diện" : "Thêm ảnh đại diện"}
+            </label>
+            {contactAvatar && (
+              <button
+                type="button"
+                onClick={() => setContactAvatar("")}
+                className="ml-2 text-sm font-medium text-cvr-muted transition hover:text-red-600"
+              >
+                Bỏ ảnh
+              </button>
+            )}
+            <p className="mt-1.5 text-xs text-cvr-faint">Ảnh chân dung của bạn — hiện trên tin và trong danh bạ chuyên gia.</p>
+          </div>
+        </div>
         <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-3">
           <div><Label>Họ và tên *</Label><input value={contactName} onChange={(e) => setContactName(e.target.value)} placeholder="Nguyễn Văn A" className={inputCls} /></div>
           <div><Label>Số điện thoại *</Label><input type="tel" value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} placeholder="09xx xxx xxx" className={inputCls} /></div>

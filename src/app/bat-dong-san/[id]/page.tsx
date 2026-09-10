@@ -15,6 +15,7 @@ import ProjectNearby from "@/components/ProjectNearby";
 import ProjectNav from "@/components/ProjectNav";
 import { BreadcrumbJsonLd } from "@/components/Breadcrumb";
 import { provinceOf, districtOf, pickRelated } from "@/lib/data";
+import { dongBoHaiHe, heCuaTin, dongDiaChiConLai } from "@/lib/diaChiHaiHe";
 import { getListing, getListings, getListingDetail } from "@/lib/listingsDb";
 import { getProject } from "@/lib/contentDb";
 import { tierFromBadge, getTier } from "@/lib/packages";
@@ -233,6 +234,20 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                   <svg className="mt-[2px] h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                   <span className="min-w-0">{d.addressDetail ? d.addressDetail + ", " : ""}{l.location}</span>
                 </p>
+
+                {/* ĐỊA CHỈ THEO HỆ CÒN LẠI — cả nước đang gọi song song hai kiểu.
+                    Người quen "Quận Hải Châu" mà tin ghi "Phường Hải Châu" thì vẫn
+                    nhận ra ngay đây là đâu. Chỉ hiện khi suy ra được chắc chắn,
+                    không đoán bừa địa chỉ của khách. */}
+                {(() => {
+                  if (!l.diaGioi?.province) return null;
+                  const he = heCuaTin(l.diaGioi.district);
+                  const dong = dongDiaChiConLai(
+                    he,
+                    dongBoHaiHe(he, { tinh: l.diaGioi.province, quan: l.diaGioi.district, phuong: l.diaGioi.ward }),
+                  );
+                  return dong ? <p className="mt-1 pl-[22px] text-[13px] text-cvr-faint">{dong}</p> : null;
+                })()}
 
                 {/* KHỐI THÔNG TIN CHÍNH — mọi ô cùng bề ngang nên nội dung dài ngắn
                     khác nhau vẫn cân, không ô nào đẩy lệch ô nào. */}

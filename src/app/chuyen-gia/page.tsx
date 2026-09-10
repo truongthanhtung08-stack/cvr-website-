@@ -3,6 +3,7 @@ import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ExpertsBrowser from "@/components/ExpertsBrowser";
+import { getChuyenGia } from "@/lib/chuyenGiaDb";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/chuyen-gia" },
@@ -10,7 +11,9 @@ export const metadata: Metadata = {
   description: "Kết nối chuyên gia môi giới bất động sản uy tín, đã xác minh tại Đà Nẵng và Huế — tư vấn khách quan, hỗ trợ pháp lý và giao dịch an toàn.",
 };
 
-export default function ChuyenGiaPage() {
+export default async function ChuyenGiaPage() {
+  // Danh bạ dựng từ TIN THẬT — xem src/lib/chuyenGiaDb.ts
+  const ds = await getChuyenGia();
   return (
     <>
       <Header />
@@ -27,7 +30,7 @@ export default function ChuyenGiaPage() {
             </div>
           </div>
 
-          <ExpertsBrowser />
+          <ExpertsBrowser ds={ds} />
         </div>
       </main>
       <Footer />

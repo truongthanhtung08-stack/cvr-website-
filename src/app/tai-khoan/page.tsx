@@ -9,6 +9,7 @@ import { conThieuDeLenCap, freeNote, levelOf, levelTiepTheo, tenGoiMienPhi, vnd 
 import { useBilling } from "@/lib/useBilling";
 import { PageHeader } from "@/components/Ui";
 import DoDangKyMoi from "@/components/DoDangKyMoi";
+import NhanTinCuaToi from "@/components/NhanTinCuaToi";
 
 // Tổng quan tài khoản thành viên: ví (số dư · điểm · cấp) + gói dịch vụ +
 // lối tắt đăng tin (Mua bán / Cho thuê / Dự án) và quản lý tài khoản.
@@ -79,6 +80,10 @@ export default function AccountOverviewPage() {
       {/* Đếm "đăng ký thành công" cho Google Ads — chỉ tính tài khoản vừa tạo */}
       <DoDangKyMoi />
       <PageHeader title="Tổng quan" desc="Đăng tin, quản lý tin đã đăng và ví thành viên." />
+
+      {/* Môi giới được đăng tin hộ: mời nhận tin mang số điện thoại của mình về
+          tài khoản — đặt ngay đầu trang vì đó là việc cần làm trước tiên. */}
+      <NhanTinCuaToi />
 
       {/* 1. ĐĂNG TIN — việc chính, đưa lên TRÊN CÙNG. Viền xanh + nền xanh nhạt
              + icon từng loại để nhìn phát nhận ra ngay. */}
