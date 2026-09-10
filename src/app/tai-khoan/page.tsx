@@ -6,6 +6,7 @@ import { roleLabel, statusBadge } from "@/lib/adminLabels";
 import { conThieuDeLenCap, freeNote, levelOf, levelTiepTheo, tenGoiMienPhi, vnd } from "@/lib/billing";
 import { useBilling } from "@/lib/useBilling";
 import { PageHeader } from "@/components/Ui";
+import DoDangKyMoi from "@/components/DoDangKyMoi";
 
 // Tổng quan tài khoản thành viên: ví (số dư · điểm · cấp) + gói dịch vụ +
 // lối tắt đăng tin (Mua bán / Cho thuê / Dự án) và quản lý tài khoản.
@@ -40,6 +41,8 @@ export default function AccountOverviewPage() {
     // đâu. Nay còn 4 khối, mỗi khối MỘT việc, xếp từ việc chính xuống phụ:
     //   1. Đăng tin  →  2. Tin của tôi  →  3. Ví & hội viên  →  4. Tài khoản
     <div className="space-y-5">
+      {/* Đếm "đăng ký thành công" cho Google Ads — chỉ tính tài khoản vừa tạo */}
+      <DoDangKyMoi />
       <PageHeader title="Tổng quan" desc="Đăng tin, quản lý tin đã đăng và ví thành viên." />
 
       {/* 1. ĐĂNG TIN — việc chính, đưa lên TRÊN CÙNG. Viền xanh + nền xanh nhạt

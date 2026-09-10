@@ -4,6 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import SocialAuth from "@/components/SocialAuth";
+import { useBilling } from "@/lib/useBilling";
+import { freeNote, tenGoiMienPhi } from "@/lib/billing";
 
 function viError(msg: string): string {
   if (/already registered|already exists|user already/i.test(msg))
@@ -13,7 +15,11 @@ function viError(msg: string): string {
   return msg || "Đăng ký không thành công, vui lòng thử lại.";
 }
 
-export default function RegisterForm() {
+// uuDai: câu ưu đãi lấy sẵn từ MÁY CHỦ (trang đích quảng cáo truyền vào). Truyền
+// vào thì câu hiện đúng ngay từ lần vẽ đầu; để trống thì tự đọc bằng useBilling
+// như trang /dang-ky — nhưng lần vẽ đầu chưa có dữ liệu nên phải giấu đi, thà
+// hiện chậm nửa giây còn hơn loé lên con số sai rồi mới nhảy sang số đúng.
+export default function RegisterForm({ uuDai }: { uuDai?: string }) {
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -22,6 +28,12 @@ export default function RegisterForm() {
   const [notice, setNotice] = useState("");
   const [done, setDone] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Ưu đãi thành viên mới lấy từ cài đặt THẬT trong admin (/admin/gia-khuyen-mai)
+  // — không viết cứng, để sửa số tin / số ngày là trang đăng ký đổi theo.
+  const { billing, loading: billingLoading } = useBilling();
+  const dongUuDai =
+    uuDai ?? (billingLoading || !billing.free.active ? "" : freeNote(billing.free, tenGoiMienPhi(billing)));
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -86,13 +98,39 @@ export default function RegisterForm() {
       <h1 className="text-2xl font-semibold tracking-tight text-cvr-ink">Đăng ký tài khoản</h1>
       <p className="mt-1.5 text-sm text-cvr-muted">Tạo tài khoản để đăng tin, lưu tin và quản lý bất động sản.</p>
 
+      {/* ── LÝ DO ĐĂNG KÝ ────────────────────────────────────────────────────
+          Khách từ quảng cáo bấm vào là người LẠ — trước khi bắt họ điền 4 ô thì
+          phải cho họ thấy được gì. Ưu đãi này đã có sẵn trong bảng giá admin
+          nhưng trang đăng ký trước đây không hề nhắc → khách không có lý do để
+          điền form. */}
+      {dongUuDai && (
+        <div className="mt-4 flex items-start gap-2.5 rounded-xl border border-cvr-gold/35 bg-cvr-gold/[0.07] px-3.5 py-3">
+          <svg className="mt-0.5 h-4 w-4 shrink-0 text-cvr-gold-ink" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+          <p className="text-sm font-medium leading-snug text-cvr-gold-ink">{dongUuDai}</p>
+        </div>
+      )}
+
       {notice && (
         <div className="mt-4 rounded-lg border border-cvr-blue/30 bg-cvr-blue/[0.08] px-3 py-2.5 text-sm text-cvr-blue-ink">
           {notice}
         </div>
       )}
 
-      <form className="mt-5 space-y-4" onSubmit={onSubmit}>
+      {/* ── ĐĂNG KÝ NHANH ĐẶT TRƯỚC FORM ─────────────────────────────────────
+          Một cú bấm Google là xong, so với điền 4 ô rồi còn phải mở hộp thư bấm
+          xác nhận. Ai ngại điền sẽ thoát ngay ở màn hình đầu — nên để đường
+          nhanh lên trên, đường dài xuống dưới. */}
+      <div className="mt-5">
+        <SocialAuth />
+      </div>
+
+      <div className="my-5 flex items-center gap-3 text-xs text-cvr-faint">
+        <span className="h-px flex-1 bg-cvr-line" /> hoặc đăng ký bằng email <span className="h-px flex-1 bg-cvr-line" />
+      </div>
+
+      <form className="space-y-4" onSubmit={onSubmit}>
         <Field label="Họ và tên">
           <input
             type="text"
@@ -155,15 +193,11 @@ export default function RegisterForm() {
         </button>
       </form>
 
-      {/* Phân cách */}
-      <div className="my-5 flex items-center gap-3 text-xs text-cvr-faint">
-        <span className="h-px flex-1 bg-cvr-line" /> hoặc đăng ký nhanh <span className="h-px flex-1 bg-cvr-line" />
-      </div>
+      <p className="mt-4 text-center text-xs leading-relaxed text-cvr-faint">
+        Tạo tài khoản không mất phí. Số điện thoại chỉ dùng để liên hệ về tin đăng của bạn.
+      </p>
 
-      {/* Đăng ký mạng xã hội — Google chạy thật, Facebook/Zalo sắp có */}
-      <SocialAuth />
-
-      <p className="mt-6 text-center text-sm text-cvr-muted">
+      <p className="mt-5 text-center text-sm text-cvr-muted">
         Đã có tài khoản?{" "}
         <Link href="/dang-nhap" className="font-semibold text-cvr-blue-ink hover:text-cvr-blue">
           Đăng nhập
