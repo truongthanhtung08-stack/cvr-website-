@@ -315,16 +315,34 @@ export default function NhapHangLoatPage() {
           đưa lên YouTube rồi dán link vào cột <code>video</code> của file Excel (không tốn kho ảnh).
         </p>
         <div className="mt-3 flex flex-wrap items-center gap-3">
+          {/* HAI NÚT RIÊNG, KHÔNG GỘP MỘT Ô.
+              Một ô mà accept="image/*,video/*" thì trên Android bấm vào mở ứng
+              dụng Tệp/Documents chứ không mở bộ sưu tập ảnh — phải đi lục thư mục
+              mới thấy ảnh. Tách riêng, mỗi ô một kiểu, thì máy mở thẳng bộ sưu tập.
+              Ô chọn tệp ẩn bằng sr-only (không display:none) cho máy đời cũ. */}
           <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-cvr-line px-4 py-2 text-sm font-medium text-cvr-body hover:border-cvr-ink hover:text-cvr-ink">
             <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 16V4m0 0L8 8m4-4l4 4M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" />
             </svg>
-            Chọn nhiều ảnh / video từ máy
+            Chọn nhiều ảnh từ bộ sưu tập
             <input
               type="file"
-              accept="image/*,video/*"
+              accept="image/*"
               multiple
-              className="hidden"
+              className="sr-only"
+              onChange={(e) => { const f = e.target.files; if (f?.length) taiAnhHangLoat(f); e.target.value = ""; }}
+            />
+          </label>
+          <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-cvr-line px-4 py-2 text-sm font-medium text-cvr-body hover:border-cvr-ink hover:text-cvr-ink">
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 6h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z" />
+            </svg>
+            Chọn video từ bộ sưu tập
+            <input
+              type="file"
+              accept="video/*"
+              multiple
+              className="sr-only"
               onChange={(e) => { const f = e.target.files; if (f?.length) taiAnhHangLoat(f); e.target.value = ""; }}
             />
           </label>

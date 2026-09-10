@@ -188,7 +188,12 @@ export default function ImagePicker({
       )}
 
       {/* Nút tải ảnh / video + dán link
-          ⚠️ ĐIỆN THOẠI: ô chọn tệp phải nằm TRONG <label> và chỉ ẩn bằng sr-only.
+          ⚠️ ĐIỆN THOẠI — MỞ THẲNG BỘ SƯU TẬP ẢNH, KHÔNG QUA TRÌNH DUYỆT THƯ MỤC:
+          accept PHẢI là "image/*" (kiểu MIME), TUYỆT ĐỐI không ghi đuôi tệp kiểu
+          ".jpg,.png" và không trộn "image/*,video/*" vào một ô — cả hai cách đó làm
+          Android mở ứng dụng Tệp/Documents thay vì bộ sưu tập ảnh. Cũng KHÔNG thêm
+          thuộc tính capture (ép mở thẳng camera).
+          ô chọn tệp phải nằm TRONG <label> và chỉ ẩn bằng sr-only.
           Trước đây để className="hidden" (display:none) rồi gọi input.click() —
           trình duyệt đời cũ trên Android/iOS bỏ qua ô đã display:none nên khách
           bấm không mở được thư viện ảnh, hoặc mở mà không chọn được nhiều tấm.
@@ -198,7 +203,7 @@ export default function ImagePicker({
           className={`inline-flex cursor-pointer items-center gap-2 rounded-lg border border-cvr-line bg-white px-4 py-2 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink ${uploadingImg ? "pointer-events-none opacity-60" : ""}`}
         >
           <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 16V4m0 0L8 8m4-4l4 4M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" /></svg>
-          {uploadingImg ? "Đang tải ảnh…" : "Chọn nhiều ảnh từ máy"}
+          {uploadingImg ? "Đang tải ảnh…" : "Chọn ảnh từ bộ sưu tập"}
           <input
             ref={imgRef}
             type="file"
@@ -214,7 +219,7 @@ export default function ImagePicker({
           className={`inline-flex cursor-pointer items-center gap-2 rounded-lg border border-cvr-line bg-white px-4 py-2 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink ${uploadingVideo ? "pointer-events-none opacity-60" : ""}`}
         >
           <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 6h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z" /></svg>
-          {uploadingVideo ? "Đang tải video…" : "Tải video từ máy"}
+          {uploadingVideo ? "Đang tải video…" : "Chọn video từ bộ sưu tập"}
           <input
             ref={videoRef}
             type="file"
