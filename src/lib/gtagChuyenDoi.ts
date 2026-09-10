@@ -12,14 +12,17 @@
 //   2. KHÔNG bắn "đăng nhập" làm chuyển đổi chính. Người đăng nhập là khách CŨ —
 //      trả tiền quảng cáo để kéo khách cũ quay lại là lãng phí ngân sách.
 //
-// ── CẮM NHÃN CHUYỂN ĐỔI (việc của chủ dự án, làm trong Google Ads) ───────────
-// Google Ads → Mục tiêu → Chuyển đổi → Tóm tắt → chọn hành động chuyển đổi →
-// "Thiết lập thẻ" → chọn "Tự cài đặt thẻ" → phần "Thẻ sự kiện" sẽ hiện chuỗi:
+// ── CẮM NHÃN CHUYỂN ĐỔI ─────────────────────────────────────────────────────
+// Lấy nhãn: Google Ads → Mục tiêu → Chuyển đổi → Tóm tắt → chọn hành động →
+// "Thiết lập thẻ" → "Tự cài đặt thẻ" → phần "Thẻ sự kiện" hiện chuỗi:
 //        send_to: 'AW-18365884419/AbC-dEfGhIjKlMnOp'
-// Lấy PHẦN SAU dấu gạch chéo (AbC-dEfGhIjKlMnOp) — đó là "nhãn chuyển đổi".
-// Cắm vào Vercel → Settings → Environment Variables → Redeploy:
-//        NEXT_PUBLIC_ADS_NHAN_DANG_KY  = <nhãn của hành động "Đăng ký">
-//        NEXT_PUBLIC_ADS_NHAN_DANG_TIN = <nhãn của hành động "Đăng tin">
+// PHẦN SAU dấu gạch chéo (AbC-dEfGhIjKlMnOp) chính là nhãn — điền vào hai hằng
+// số NHAN_*_MAC_DINH ngay bên dưới.
+//
+// Vì sao ghi thẳng vào code chứ không cắm biến trên Vercel: nhãn chuyển đổi
+// KHÔNG phải khoá bí mật (nó lộ trong mã nguồn mọi trang có gắn thẻ Google),
+// nên ghi ở đây là đủ — đỡ phải vào Vercel đặt biến rồi Redeploy. Vẫn giữ đường
+// biến môi trường để đổi gấp mà không cần sửa code.
 //
 // CHƯA CẮM NHÃN THÌ SAO? Web vẫn chạy bình thường, vẫn bắn sự kiện sang GA4
 // (sign_up / dang_tin_thanh_cong) — chỉ là Google Ads chưa nhận trực tiếp. Đây
@@ -30,10 +33,13 @@ const ADS_ID = process.env.NEXT_PUBLIC_ADS_ID || "AW-18365884419";
 
 export type TenChuyenDoi = "dang_ky" | "dang_tin";
 
-// Nhãn chuyển đổi lấy từ Google Ads (xem hướng dẫn ở đầu file).
+// 👇 ĐIỀN NHÃN VÀO ĐÂY (xem cách lấy ở đầu file). Để trống là chưa bật.
+const NHAN_DANG_KY_MAC_DINH = "";
+const NHAN_DANG_TIN_MAC_DINH = "";
+
 const NHAN_ADS: Record<TenChuyenDoi, string> = {
-  dang_ky: process.env.NEXT_PUBLIC_ADS_NHAN_DANG_KY || "",
-  dang_tin: process.env.NEXT_PUBLIC_ADS_NHAN_DANG_TIN || "",
+  dang_ky: process.env.NEXT_PUBLIC_ADS_NHAN_DANG_KY || NHAN_DANG_KY_MAC_DINH,
+  dang_tin: process.env.NEXT_PUBLIC_ADS_NHAN_DANG_TIN || NHAN_DANG_TIN_MAC_DINH,
 };
 
 // Tên sự kiện gửi sang GA4. "sign_up" là tên chuẩn Google hiểu sẵn; tên tự đặt
