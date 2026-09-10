@@ -3,14 +3,43 @@
 //   · MapPane   — bản đồ XEM ở trang chi tiết tin / dự án
 //   · MapPicker — bản đồ GHIM ở form đăng tin (khách & admin)
 //
-// Vì sao không dùng bản đồ nhúng (iframe): bản nhúng của Google BẮT BUỘC hai
-// ngón mới kéo được trên điện thoại. Dùng thư viện JavaScript với
+// Vì sao trước đây không dùng bản đồ nhúng (iframe): bản nhúng của Google BẮT
+// BUỘC hai ngón mới kéo được trên điện thoại. Dùng thư viện JavaScript với
 // gestureHandling: "greedy" thì kéo MỘT ngón.
+// ⚠️ 10/09/2026: lý do đó KHÔNG còn dùng để chọn nữa — Google cấm hẳn Maps API
+// ở Việt Nam (xem hằng số JS_API_KHA_DUNG bên dưới), nên bản nhúng là cách duy
+// nhất còn ra được bản đồ Google. Hai ngón là cái giá phải trả, không có lựa chọn.
 //
 // CẦN BIẾN MÔI TRƯỜNG: NEXT_PUBLIC_GOOGLE_MAPS_KEY (Vercel → Environment Variables).
 // ════════════════════════════════════════════════════════════════════════════
 
 export const MAP_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY ?? "";
+
+// ── VIỆT NAM NẰM TRONG "PROHIBITED TERRITORIES" CỦA GOOGLE ───────────────────
+// Đo ngày 10/09/2026. Điều khoản Google Maps Platform liệt kê các lãnh thổ KHÔNG
+// được dùng Maps API, nguyên văn:
+//     "China, Crimea, Cuba, Iran, Myanmar, North Korea, Sudan, Syria, Vietnam"
+// Console của chính tài khoản công ty cũng chặn không cho gửi case hỗ trợ:
+//     "Your account has been detected within a prohibited territory…
+//      We cannot provide further assistance on this matter."
+// → Thư viện JavaScript của Google KHÔNG BAO GIỜ chạy được với tài khoản Việt
+//   Nam, dù khoá đúng, dù đã nạp tiền (đã thử 5 lần — xem docs/BAN-GIAO-GOOGLE-MAPS.md).
+//   Đây KHÔNG phải lỗi code, đừng đi sửa code nữa.
+// → Bản đồ NHÚNG (iframe) thì vẫn chạy: không cần khoá, không cần tài khoản,
+//   không tốn tiền. Đó là đường DUY NHẤT còn ra được bản đồ Google thật.
+// Ngày nào Google gỡ Việt Nam khỏi danh sách thì đổi hằng số này thành `true`,
+// toàn bộ đường JavaScript cũ còn nguyên bên dưới, không phải viết lại gì.
+export const JS_API_KHA_DUNG = false;
+
+// Địa chỉ bản đồ NHÚNG của Google — không khoá, không tài khoản, không tính tiền.
+// Có toạ độ ghim thì nhúng theo toạ độ (đúng tuyệt đối), không thì để Google tự
+// tra theo địa chỉ tin.
+export function nhungGoogleMaps(query: string, zoom: number): string {
+  const p = parseLatLng(query);
+  const q = p ? `${p.lat},${p.lng}` : query;
+  // Dùng www.google.com (maps.google.com bị chuyển hướng thêm một nhịp — đo 10/09/2026).
+  return `https://www.google.com/maps?q=${encodeURIComponent(q)}&z=${zoom}&hl=vi&output=embed`;
+}
 
 export type LatLng = { lat: number; lng: number };
 type GLatLng = { lat(): number; lng(): number };

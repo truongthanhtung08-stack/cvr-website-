@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import {
   MAP_KEY,
+  JS_API_KHA_DUNG,
+  nhungGoogleMaps,
   loadMapsApi,
   soatVeDuoc,
   onMapsAuthFailure,
@@ -52,8 +54,14 @@ export default function MapPaneGoogle({
   const chamRef = useRef<GMarker | null>(null);
   const lockedRef = useRef(locked);
 
+  // Google cấm Maps API ở Việt Nam → dùng thẳng bản đồ NHÚNG, không thử thư viện
+  // JavaScript nữa (thử cũng chỉ để khách ngồi nhìn "Đang mở bản đồ…" vài giây
+  // rồi hỏng). Đường JavaScript bên dưới GIỮ NGUYÊN, tự sống lại khi Google gỡ
+  // Việt Nam khỏi danh sách cấm — chỉ cần đổi JS_API_KHA_DUNG thành true.
+  const dungNhung = !MAP_KEY || !JS_API_KHA_DUNG;
+
   const [sanSang, setSanSang] = useState(false);
-  const [hong, setHong] = useState(!MAP_KEY);
+  const [hong, setHong] = useState(false);
   const [dangDinhVi, setDangDinhVi] = useState(false);
   const [loi, setLoi] = useState("");
   const [tuongDoi, setTuongDoi] = useState(false);
@@ -64,7 +72,7 @@ export default function MapPaneGoogle({
   }, [locked]);
 
   useEffect(() => {
-    if (!MAP_KEY) return;
+    if (dungNhung) return;
     let huy = false;
     (async () => {
       try {
@@ -181,6 +189,25 @@ export default function MapPaneGoogle({
   }, [sanSang]);
 
   const cao = "h-[260px] w-full sm:h-[320px]";
+
+  // ── BẢN ĐỒ GOOGLE NHÚNG (đường đang chạy) ─────────────────────────────────
+  // Bản đồ Google THẬT: có ghim đỏ, phóng to / thu nhỏ / kéo / xem vệ tinh ngay
+  // tại trang, có sẵn lối mở sang app Google Maps. Không dùng khoá API nên
+  // KHÔNG BAO GIỜ hỏng vì tài khoản hay hạn mức — thứ đã hành dự án suốt mấy tháng.
+  // Đánh đổi đã biết trước: trên điện thoại phải hai ngón mới kéo được bản đồ.
+  // Lớp phủ "Chạm để xem bản đồ" của ProjectNearby vẫn giữ nguyên tác dụng: ngón
+  // tay lướt qua vẫn cuộn được trang.
+  if (dungNhung) {
+    return (
+      <iframe
+        src={nhungGoogleMaps(query, zoom)}
+        title="Bản đồ vị trí"
+        loading="lazy"
+        referrerPolicy="no-referrer-when-downgrade"
+        className={`${cao} block border-0 bg-cvr-surface`}
+      />
+    );
+  }
 
   return (
     <div className="relative">
