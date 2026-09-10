@@ -108,13 +108,16 @@ export function loadMapsApi(): Promise<void> {
     }
 
     const s = document.createElement("script");
-    // loading=async: cách Google khuyến nghị từ 2023. Thiếu nó thì Chrome ghi
-    // cảnh báo hiệu năng trong console và thư viện tải chậm hơn.
+    // ⚠️ KHÔNG THÊM `loading=async` — đã thử ngày 10/09/2026 và BẢN ĐỒ TRẮNG.
+    // Với loading=async, Google chuyển sang kiểu nạp thư viện động: callback chạy
+    // nhưng `google.maps.Marker` / `Geocoder` chưa sẵn sàng (phải await
+    // importLibrary), nên khối bản đồ dựng lên rỗng. Muốn dùng chế độ đó thì phải
+    // viết lại toàn bộ chỗ khởi tạo — không đáng, giữ cách nạp cổ điển này.
     // v=weekly: ghim bản ổn định, tránh Google đổi bản giữa chừng làm vỡ giao diện.
     s.src =
       "https://maps.googleapis.com/maps/api/js?key=" +
       encodeURIComponent(MAP_KEY) +
-      "&v=weekly&loading=async&language=vi&region=VN&callback=" +
+      "&v=weekly&language=vi&region=VN&callback=" +
       cb;
     s.async = true;
     s.onerror = () => reject(new Error("Không tải được Google Maps"));
