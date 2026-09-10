@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { getProjects, getArticles } from "@/lib/contentDb";
 import { getListings } from "@/lib/listingsDb";
+import { getChuyenGia } from "@/lib/chuyenGiaDb";
 import { projectCategories, rentCategories, saleCategories } from "@/lib/categories";
 import { packages, utilityTools } from "@/lib/packages";
 import { khuVucList } from "@/lib/khuVuc";
@@ -56,8 +57,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const dynamic: MetadataRoute.Sitemap = [];
   try {
-    const [projects, articles, listings] = await Promise.all([
-      getProjects(), getArticles(), getListings(),
+    const [projects, articles, listings, chuyenGia] = await Promise.all([
+      getProjects(), getArticles(), getListings(), getChuyenGia(),
     ]);
     // KHAI CẢ ẢNH của từng trang (sitemap ảnh). Bất động sản là ngành khách xem
     // BẰNG MẮT: rất nhiều người tìm qua Google Hình ảnh rồi mới bấm vào web.
@@ -113,6 +114,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       dynamic.push({
         url: `${SITE}/bat-dong-san/${l.id}`, lastModified: now, changeFrequency: "weekly", priority: 0.7,
         images: anhTuyetDoi(l.image),
+      });
+    }
+    // HỒ SƠ CHUYÊN GIA — mỗi môi giới thật một trang, nội dung là tin thật của họ.
+    // Đây là loại trang Google rất chuộng cho truy vấn "môi giới bất động sản
+    // <khu vực>", mà lại sinh ra miễn phí từ dữ liệu đã có. Không khai vào sitemap
+    // thì Google gần như không tự tìm ra (trang chỉ được link từ danh bạ).
+    for (const cg of chuyenGia) {
+      dynamic.push({
+        url: `${SITE}/chuyen-gia/${cg.slug}`, lastModified: now, changeFrequency: "weekly", priority: 0.6,
+        images: anhTuyetDoi(cg.anh),
       });
     }
   } catch {
