@@ -108,10 +108,13 @@ export function loadMapsApi(): Promise<void> {
     }
 
     const s = document.createElement("script");
+    // loading=async: cách Google khuyến nghị từ 2023. Thiếu nó thì Chrome ghi
+    // cảnh báo hiệu năng trong console và thư viện tải chậm hơn.
+    // v=weekly: ghim bản ổn định, tránh Google đổi bản giữa chừng làm vỡ giao diện.
     s.src =
       "https://maps.googleapis.com/maps/api/js?key=" +
       encodeURIComponent(MAP_KEY) +
-      "&language=vi&region=VN&callback=" +
+      "&v=weekly&loading=async&language=vi&region=VN&callback=" +
       cb;
     s.async = true;
     s.onerror = () => reject(new Error("Không tải được Google Maps"));
@@ -119,9 +122,12 @@ export function loadMapsApi(): Promise<void> {
     // Google có kiểu hỏng im lặng: script tải về nhưng callback không bao giờ chạy,
     // cũng không onerror. Không đặt hạn giờ thì khối bản đồ kẹt ở "Đang mở bản đồ…"
     // vĩnh viễn — đúng triệu chứng gặp trên web tháng 9/2026.
+    // 4 giây, KHÔNG phải 15. Khoá hỏng / billing chưa thông thì Google im lặng
+    // luôn — 15 giây là khách ngồi nhìn ô "Đang mở bản đồ…" rồi bỏ đi. 4 giây đủ
+    // cho mạng chậm, mà hỏng thì rơi ngay về nút "Xem trên Google Maps".
     window.setTimeout(() => {
       if (!window.google?.maps) reject(new Error("Không tải được Google Maps"));
-    }, 15000);
+    }, 4000);
   });
 
   w.__cvrMapsPromise = p;
