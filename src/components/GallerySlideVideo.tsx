@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import { asset } from "@/lib/asset";
 import { videoEmbedUrl, videoPosterUrl } from "@/lib/media";
-import { khoaCuon } from "@/lib/khoaCuon";
 
 // VIDEO NẰM TRONG THƯ VIỆN ẢNH — coi như MỘT TẤM HÌNH của tin:
 //   · lấp đầy đúng khung ảnh (object-contain trên nền đen) → không bao giờ to quá khung
@@ -11,11 +10,16 @@ import { khoaCuon } from "@/lib/khoaCuon";
 //     không còn ô trắng trống; khách bấm nút play mới chạy (có tiếng).
 //   · Đang xem thì thư viện NGƯNG tự chuyển slide (onHold), xem xong chạy tiếp.
 //
-// PHÓNG TO / THU NHỎ — LÀM BẰNG LỚP PHỦ CỦA CHÍNH WEB, KHÔNG dùng chế độ full màn
-// hình của trình duyệt. Lý do: khi trình duyệt phóng to, nó phóng THẲNG THẺ VIDEO
-// nên mọi nút mình vẽ đều bị nuốt mất, khách phóng lên rồi không có đường thu lại.
-// Làm bằng lớp phủ thì nút "THU NHỎ" luôn nằm góc phải trên, không bao giờ tự ẩn,
-// bấm ra vùng nền đen hoặc phím Esc cũng thu lại được.
+// TOÀN MÀN HÌNH = NÚT MẶC ĐỊNH CỦA TRÌNH PHÁT (chủ dự án chốt trong file yêu cầu).
+// Trước đây web tự vẽ nút "Phóng to/Thu nhỏ" và CHẶN nút toàn màn hình của trình
+// duyệt (controlsList="nofullscreen"). Làm vậy trông không chuyên nghiệp và khác
+// hẳn thói quen của khách. Nay trả lại đúng bộ nút gốc: bấm toàn màn hình là
+// trình phát của máy lo — thoát cũng bằng nút của nó, giống YouTube, giống mọi
+// ứng dụng khác.
+//
+// XOAY NGANG TRÊN ĐIỆN THOẠI: vào toàn màn hình thì tự xin xoay ngang để video
+// lấp đầy màn (Android hỗ trợ). iPhone không cho web khoá hướng màn hình — nhưng
+// trình phát gốc của iOS tự xoay theo máy nên vẫn xem ngang bình thường.
 export default function GallerySlideVideo({
   url,
   active,
@@ -23,27 +27,21 @@ export default function GallerySlideVideo({
 }: {
   url: string;
   active: boolean;                 // đang là slide hiện tại
-  onHold?: (giu: boolean) => void; // đang xem / đang phóng to → giữ slide, đừng tự chuyển
+  onHold?: (giu: boolean) => void; // đang xem / đang toàn màn hình → giữ slide, đừng tự chuyển
 }) {
   const embed = videoEmbedUrl(url);
   const poster = videoPosterUrl(url);
   const ref = useRef<HTMLVideoElement>(null);
-  const [to, setTo] = useState(false);     // đang phóng to (lớp phủ toàn màn hình)
   const [chay, setChay] = useState(false); // đã bấm play (dùng cho YouTube/Vimeo)
   const [posterSrc, setPosterSrc] = useState(poster?.hd ?? "");
   const holdRef = useRef(onHold);
   const playingRef = useRef(false);
-  const toRef = useRef(false);
+  const fullRef = useRef(false);
 
   useEffect(() => {
     holdRef.current = onHold;
   });
-  const bao = () => holdRef.current?.(playingRef.current || toRef.current);
-  const datTo = (v: boolean) => {
-    toRef.current = v;
-    setTo(v);
-    bao();
-  };
+  const bao = () => holdRef.current?.(playingRef.current || fullRef.current);
 
   // Rời slide → về lại trạng thái "chưa bấm play" (chỉnh state ngay trong lượt vẽ,
   // đúng cách React khuyên khi state phải theo prop).
@@ -65,19 +63,38 @@ export default function GallerySlideVideo({
     bao();
   }, [active]);
 
-  // Đang phóng to: khoá cuộn trang nền + phím Esc để thu nhỏ.
+  // TOÀN MÀN HÌNH: giữ slide đứng yên + xin xoay ngang trên điện thoại.
+  // Mọi lời gọi đều bọc try/catch và .catch() — trình duyệt nào không cho khoá
+  // hướng màn hình (iPhone) thì bỏ qua, KHÔNG được ném lỗi ra làm chết trang.
   useEffect(() => {
-    if (!to) return;
-    const nha = khoaCuon();
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") datTo(false);
+    const doiToanManHinh = () => {
+      const dangFull =
+        !!document.fullscreenElement ||
+        !!(document as unknown as { webkitFullscreenElement?: Element }).webkitFullscreenElement;
+      fullRef.current = dangFull;
+      bao();
+      try {
+        const huong = (screen as unknown as { orientation?: { lock?: (o: string) => Promise<void>; unlock?: () => void } }).orientation;
+        if (dangFull) huong?.lock?.("landscape")?.catch(() => {});
+        else huong?.unlock?.();
+      } catch {
+        /* trình duyệt không hỗ trợ khoá hướng — kệ, xem dọc vẫn được */
+      }
     };
-    document.addEventListener("keydown", onKey);
+
+    document.addEventListener("fullscreenchange", doiToanManHinh);
+    document.addEventListener("webkitfullscreenchange", doiToanManHinh);
+    // iPhone: thẻ video bắn sự kiện riêng, không bắn fullscreenchange.
+    const v = ref.current;
+    v?.addEventListener("webkitbeginfullscreen", doiToanManHinh);
+    v?.addEventListener("webkitendfullscreen", doiToanManHinh);
     return () => {
-      document.removeEventListener("keydown", onKey);
-      nha();
+      document.removeEventListener("fullscreenchange", doiToanManHinh);
+      document.removeEventListener("webkitfullscreenchange", doiToanManHinh);
+      v?.removeEventListener("webkitbeginfullscreen", doiToanManHinh);
+      v?.removeEventListener("webkitendfullscreen", doiToanManHinh);
     };
-  }, [to]);
+  }, []);
 
   // Gỡ khỏi trang → nhả quyền giữ slide.
   useEffect(() => () => holdRef.current?.(false), []);
@@ -86,14 +103,15 @@ export default function GallerySlideVideo({
     // YouTube/Vimeo — KHÔNG tự chạy (chủ dự án chốt 5/9). Slide video trôi qua như
     // một tấm ảnh: hiện KHUNG HÌNH THẬT + nút play, khách bấm mới phát (có tiếng).
     chay ? (
-      <>
-        <iframe
-          src={`${embed}${embed.includes("?") ? "&" : "?"}autoplay=1`}
-          title="Video"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          className="h-full w-full bg-black"
-        />
-      </>
+      <iframe
+        src={`${embed}${embed.includes("?") ? "&" : "?"}autoplay=1`}
+        title="Video"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+        // allowFullScreen: thiếu thuộc tính này thì nút toàn màn hình CỦA YOUTUBE
+        // bấm không lên — khách tưởng web hỏng.
+        allowFullScreen
+        className="h-full w-full bg-black"
+      />
     ) : (
       <button
         type="button"
@@ -129,7 +147,6 @@ export default function GallerySlideVideo({
       src={`${asset(url)}#t=0.1`}
       playsInline
       controls
-      controlsList="nofullscreen"
       preload="metadata"
       onPlay={() => {
         playingRef.current = true;
@@ -149,40 +166,5 @@ export default function GallerySlideVideo({
     </video>
   );
 
-  // Nút PHÓNG TO ↔ THU NHỎ — một cặp, luôn ở góc phải trên, không bao giờ tự ẩn.
-  const nut = (
-    <button
-      type="button"
-      onClick={() => datTo(!to)}
-      className={`absolute right-3 top-3 z-10 flex items-center gap-1.5 rounded-md bg-black/70 font-medium text-white ring-1 ring-white/25 backdrop-blur-sm transition hover:bg-black/90 active:bg-black/90 ${
-        to ? "px-4 py-2.5 text-[15px]" : "px-2.5 py-1.5 text-[13px]"
-      }`}
-    >
-      {to ? (
-        <>
-          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 20v-5H4m11 5v-5h5M9 4v5H4m11-5v5h5" />
-          </svg>
-          Thu nhỏ
-        </>
-      ) : (
-        <>
-          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M4 9V4h5M20 9V4h-5M4 15v5h5m11-5v5h-5" />
-          </svg>
-          Phóng to
-        </>
-      )}
-    </button>
-  );
-
-  // Phóng to = đổi khung chứa từ "trong thư viện ảnh" thành "phủ kín màn hình".
-  // Vẫn CÙNG một thẻ video (chỉ đổi lớp CSS) nên đang xem tới đâu giữ nguyên tới
-  // đó, không bị tua lại từ đầu.
-  return (
-    <div className={to ? "fixed inset-0 z-[120] bg-black" : "absolute inset-0 bg-black"}>
-      {video}
-      {nut}
-    </div>
-  );
+  return <div className="absolute inset-0 bg-black">{video}</div>;
 }

@@ -29,7 +29,24 @@ export default function Gallery({
   const [list, setList] = useState(false); // danh sách ảnh kiểu Facebook (điện thoại)
   const [bigIdx, setBigIdx] = useState(0); // slide LỚN đang hiện (tự chạy)
   const [paused, setPaused] = useState(false);
-  const [hold, setHold] = useState(false); // đang phóng to video → tạm ngưng tự chuyển slide
+  const [hold, setHold] = useState(false); // đang xem video → tạm ngưng tự chuyển slide
+
+  // ── ĐIỀU KHIỂN SLIDE LỚN TRÊN MÁY TÍNH: TOUCHPAD · PHÍM · CHẠM ───────────
+  // Trước đây ảnh lớn chỉ TỰ CHẠY, khách muốn xem lại tấm vừa trôi qua thì không
+  // có cách nào ngoài ngồi đợi nó quay vòng. Nay:
+  //   · vuốt hai ngón ngang trên touchpad (và chuột có bánh xe ngang)
+  //   · phím ← → khi con trỏ đang ở khung ảnh
+  //   · quẹt ngón tay (màn hình cảm ứng trên máy tính, máy 2-trong-1)
+  // Một cú vuốt = MỘT tấm: có khoá thời gian 320ms, nếu không thì một cú vuốt
+  // touchpad bắn ra hàng chục sự kiện và ảnh chạy vèo qua hết cả bộ.
+  const lanCuoi = useRef(0);
+  const keo = useRef<number | null>(null);
+  const doiSlide = (buoc: number) => {
+    const gio = Date.now();
+    if (gio - lanCuoi.current < 320) return;
+    lanCuoi.current = gio;
+    setBigIdx((i) => (i + buoc + media.length) % media.length);
+  };
   const open = (i: number) => setLb(i);
   const close = () => setLb(-1);
 
@@ -187,7 +204,30 @@ export default function Gallery({
           <div
             onMouseEnter={() => setPaused(true)}
             onMouseLeave={() => setPaused(false)}
-            className="group relative col-span-2 aspect-[16/9] overflow-hidden rounded-none border border-cvr-line sm:row-span-2 sm:aspect-auto sm:h-full"
+            // Vuốt ngang bằng touchpad. Chỉ nhận khi độ lệch NGANG lớn hơn dọc —
+            // không thì cuộn trang bình thường cũng làm nhảy ảnh.
+            onWheel={(e) => {
+              if (Math.abs(e.deltaX) > Math.abs(e.deltaY) && Math.abs(e.deltaX) > 8) {
+                doiSlide(e.deltaX > 0 ? 1 : -1);
+              }
+            }}
+            // Quẹt ngón tay (màn hình cảm ứng trên máy tính / máy 2-trong-1)
+            onPointerDown={(e) => { if (e.pointerType !== "mouse") keo.current = e.clientX; }}
+            onPointerUp={(e) => {
+              if (keo.current === null) return;
+              const dx = e.clientX - keo.current;
+              keo.current = null;
+              if (Math.abs(dx) > 40) doiSlide(dx < 0 ? 1 : -1);
+            }}
+            // Phím ← → : khung ảnh phải nhận được tiêu điểm mới bắt được phím.
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "ArrowRight") { e.preventDefault(); doiSlide(1); }
+              if (e.key === "ArrowLeft") { e.preventDefault(); doiSlide(-1); }
+            }}
+            role="group"
+            aria-label="Ảnh và video của tin — vuốt ngang hoặc dùng phím mũi tên"
+            className="group relative col-span-2 aspect-[16/9] touch-pan-y overflow-hidden rounded-none border border-cvr-line outline-none sm:row-span-2 sm:aspect-auto sm:h-full"
           >
             {bigIsVideo ? (
               <GallerySlideVideo url={media[bigIdx].src} active onHold={setHold} />
