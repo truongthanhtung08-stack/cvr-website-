@@ -20,6 +20,7 @@ import ImagePicker from "@/components/admin/ImagePicker";
 import MapPicker from "@/components/MapPickerGoogle";
 import ContentEditor from "@/components/admin/ContentEditor";
 import { freeNote, levelOf, quotePrice, soAnhToiDa, soVideoToiDa, tenGoiMienPhi, vnd } from "@/lib/billing";
+import { banChuyenDoi } from "@/lib/gtagChuyenDoi";
 import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
 import { useBilling } from "@/lib/useBilling";
 import { getTier, type TierId } from "@/lib/packages";
@@ -451,6 +452,9 @@ export default function PostListingForm() {
 
     setSaving("");
     if (err) return setError(`Lưu thất bại: ${err.message}`);
+    // Đo chuyển đổi cho Google Ads: chỉ tính TIN MỚI GỬI DUYỆT. Lưu nháp không
+    // tính (chưa phải tin), sửa tin cũ cũng không tính (đã đếm lúc đăng lần đầu).
+    if (!asDraft && (!editId || editStatus === "draft")) banChuyenDoi("dang_tin");
     setDone(asDraft ? "draft" : "pending");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
