@@ -113,6 +113,15 @@ export default function BackBar() {
   const cha = doan.length > 1 ? (muc.chaCon ?? `/${goc}`) : muc.cha;
 
   function quayLai() {
+    // TRANG ĐĂNG TIN LUÔN LÙI VỀ TỔNG QUAN TÀI KHOẢN.
+    // Khách vào đăng tin từ đủ chỗ: trang chủ, danh sách tin, nút trên menu…
+    // Lùi thật thì mỗi lần rơi về một nơi khác nhau, còn bỏ dở giữa chừng mà bị
+    // ném ra trang chủ thì không biết tin mình đang ở đâu. Về tài khoản là chỗ
+    // quản lý tin, đúng nơi khách cần tới (chủ dự án chốt 11/9/2026).
+    if (goc === "dang-tin") {
+      router.push("/tai-khoan");
+      return;
+    }
     // NÚT BACK = LÙI THẬT. Còn lịch sử thì lùi đúng trang vừa xem.
     if (typeof window !== "undefined" && window.history.length > 1) {
       router.back();
