@@ -26,11 +26,14 @@ export default function GallerySlideVideo({
   url,
   active,
   onHold,
+  onTyLe,
   xemTruoc = false,
 }: {
   url: string;
   active: boolean;                 // đang là slide hiện tại
   onHold?: (giu: boolean) => void; // đang xem / đang toàn màn hình → giữ slide, đừng tự chuyển
+  /** Báo về tỉ lệ thật của video (rộng ÷ cao) để thư viện chỉnh khung cho vừa. */
+  onTyLe?: (tyLe: number) => void;
   /** Chỉ làm ảnh bìa (ô nhỏ trong dãy chọn): bỏ thanh điều khiển, không bắt chạm. */
   xemTruoc?: boolean;
 }) {
@@ -154,6 +157,12 @@ export default function GallerySlideVideo({
       controls={!xemTruoc}
       muted={xemTruoc}
       preload="metadata"
+      // Biết video quay dọc hay ngang ngay khi tải xong phần mô tả, để thư viện
+      // chỉnh khung cho vừa — khách quay bằng điện thoại là video dọc.
+      onLoadedMetadata={(e) => {
+        const v = e.currentTarget;
+        if (v.videoWidth > 0 && v.videoHeight > 0) onTyLe?.(v.videoWidth / v.videoHeight);
+      }}
       onPlay={() => {
         playingRef.current = true;
         bao();
