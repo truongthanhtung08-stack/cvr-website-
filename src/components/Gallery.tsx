@@ -172,11 +172,6 @@ export default function Gallery({
                       </svg>
                       Video{nVid > 1 ? ` ${i + 1}/${nVid}` : ""}
                     </span>
-                    {images.length > 0 && (
-                      <span className="text-[12.5px] font-medium text-white/85 drop-shadow">
-                        Vuốt xem {images.length} ảnh →
-                      </span>
-                    )}
                   </div>
                 </div>
               ) : (
