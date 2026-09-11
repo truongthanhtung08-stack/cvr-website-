@@ -360,3 +360,23 @@ export function bangGiaTheoLoai(tin: Listing[], mucDich: "ban" | "thue" = "ban")
     }))
     .sort((a, b) => b.soMau - a.soMau);
 }
+
+// ── CHƯA ĐỦ DỮ LIỆU THÌ NÓI THẲNG LÀ CHƯA ĐỦ ───────────────────────────────
+// Không bịa số, nhưng cũng không im lặng cho khối biến mất — nói rõ đang có bao
+// nhiêu tin, cần bao nhiêu. Người xem biết web chưa đủ căn cứ chứ không tưởng
+// web thiếu chức năng. Đây là chỗ khác các sàn khác: họ không bao giờ nói con số
+// của họ dựa trên mấy tin.
+
+export function demTinLamMau(tin: Listing, tatCa: Listing[]): number {
+  const loai = chuanTen(tin.type);
+  const tinh = chuanTen(tin.diaGioi?.province ?? "");
+  if (!tinh) return 0;
+  return tatCa.filter(
+    (x) =>
+      x.id !== tin.id &&
+      chuanTen(x.type) === loai &&
+      (x.purpose ?? "ban") === (tin.purpose ?? "ban") &&
+      chuanTen(x.diaGioi?.province ?? "") === tinh &&
+      giaMoiM2(x) !== null,
+  ).length;
+}

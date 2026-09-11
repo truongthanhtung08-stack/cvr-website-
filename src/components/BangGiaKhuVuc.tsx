@@ -23,7 +23,29 @@ export default function BangGiaKhuVuc({
   mucDich?: "ban" | "thue";
 }) {
   const bang = bangGiaTheoLoai(items, mucDich).slice(0, 8);
-  if (bang.length < 2) return null;
+  // Chưa đủ để lập bảng thì nói thẳng, đừng để khối biến mất làm người xem tưởng
+  // web thiếu chức năng.
+  if (bang.length < 2) {
+    const soTin = items.filter((x) => (x.purpose ?? "ban") === mucDich).length;
+    if (soTin < 3) return null;
+    return (
+      <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        <div className="flex gap-2.5 rounded-2xl border border-cvr-line bg-white px-5 py-4 shadow-lux">
+          <svg className="mt-0.5 h-4 w-4 shrink-0 text-cvr-muted" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="9" />
+            <path strokeLinecap="round" d="M12 11v5M12 8h.01" />
+          </svg>
+          <p className="text-[13px] leading-relaxed text-cvr-muted">
+            <strong className="font-semibold text-cvr-ink">
+              Chưa đủ tin để lập bảng giá tại {tenKhuVuc}.
+            </strong>{" "}
+            Mỗi loại hình cần ít nhất 3 tin mới đưa vào bảng — khu vực này đang có {soTin} tin, chia
+            ra chưa loại nào đủ. Coastal Land để trống chứ không đưa con số chưa đủ căn cứ.
+          </p>
+        </div>
+      </section>
+    );
+  }
 
   const laThue = mucDich === "thue";
   const max = Math.max(...bang.map((d) => d.trungVi));
@@ -35,7 +57,7 @@ export default function BangGiaKhuVuc({
           {laThue ? "Giá thuê" : "Giá bán"} theo loại hình tại {tenKhuVuc}
         </h2>
         <p className="mt-1 text-[13px] text-cvr-muted">
-          Giá mỗi m² tính từ tin đang đăng trên Coastal Land — cột bên phải là số tin làm mẫu.
+          Giá mỗi m² — cột bên phải là số tin làm mẫu của từng dòng.
         </p>
 
         <div className="mt-4 space-y-3">
@@ -60,10 +82,18 @@ export default function BangGiaKhuVuc({
           ))}
         </div>
 
-        <p className="mt-4 text-[12px] leading-relaxed text-cvr-faint">
-          Đây là giá rao trên tin đăng, không phải giá giao dịch đã chốt. Con số lấy trung vị và
-          khoảng phổ biến (bỏ 25% rẻ nhất và 25% đắt nhất) nên không bị một tin lệch kéo đi.
-        </p>
+        <div className="mt-4 flex gap-2.5 rounded-xl bg-cvr-surface px-4 py-3">
+          <svg className="mt-0.5 h-4 w-4 shrink-0 text-cvr-muted" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="9" />
+            <path strokeLinecap="round" d="M12 11v5M12 8h.01" />
+          </svg>
+          <p className="text-[12px] leading-relaxed text-cvr-muted">
+            Số liệu tổng hợp từ <strong className="font-semibold text-cvr-body">tin đang đăng trên
+            Coastal Land</strong>, là giá rao chứ không phải giá đã giao dịch. Trung vị và khoảng
+            phổ biến tính sau khi bỏ 25% rẻ nhất và 25% đắt nhất. Tin nằm ngoài khoảng giá này thì
+            nên hỏi kỹ và xác minh thêm trước khi giao dịch.
+          </p>
+        </div>
       </div>
     </section>
   );

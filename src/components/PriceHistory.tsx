@@ -26,6 +26,8 @@ export default function PriceHistory({
   soSanh = [],
   laThue = false,
   giaDat = null,
+  soTinCo = 0,
+  canToiThieu = 5,
 }: {
   chiSo: ChiSoKhuVuc | null;
   matBang: MatBangGia | null;
@@ -35,11 +37,31 @@ export default function PriceHistory({
   laThue?: boolean;
   /** Giá đất Nhà nước theo quyết định UBND tỉnh — dùng tính thuế phí. */
   giaDat?: GiaDatNhaNuoc | null;
+  /** Đang có bao nhiêu tin cùng loại trong khu vực (kể cả khi chưa đủ để tính). */
+  soTinCo?: number;
+  canToiThieu?: number;
 }) {
   const moc = (chiSo?.moc ?? []).filter((m) => m.giaM2 > 0).slice(-8);
   const coBieuDo = moc.length >= 2;
   const coSanh = soSanh.length >= 2;
-  if (!matBang && !coBieuDo && !coSanh && !giaDat) return null;
+  if (!matBang && !coBieuDo && !coSanh && !giaDat) {
+    if (soTinCo <= 0) return null;
+    return (
+      <div className="flex gap-2.5 rounded-xl bg-cvr-surface px-4 py-3">
+        <svg className="mt-0.5 h-4 w-4 shrink-0 text-cvr-muted" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="9" />
+          <path strokeLinecap="round" d="M12 11v5M12 8h.01" />
+        </svg>
+        <p className="text-[12px] leading-relaxed text-cvr-muted">
+          <strong className="font-semibold text-cvr-body">Chưa đủ dữ liệu để nói mặt bằng giá khu
+          vực này.</strong>{" "}
+          Coastal Land chỉ đưa ra con số khi có ít nhất {canToiThieu} tin cùng loại hình trong khu
+          vực — hiện mới có {soTinCo} tin. Chúng tôi thà để trống còn hơn đưa một con số chưa đủ
+          căn cứ.
+        </p>
+      </div>
+    );
+  }
 
   const dau = moc[0]?.giaM2 ?? 0;
   const cuoi = moc[moc.length - 1]?.giaM2 ?? 0;
@@ -114,7 +136,7 @@ export default function PriceHistory({
           )}
 
           <p className="mt-2 text-[12px] text-cvr-faint">
-            Tính từ {matBang.soMau} tin cùng loại hình đang đăng trên Coastal Land
+            Tính từ {matBang.soMau} tin cùng loại hình
             {matBang.pham === "tinh" ? " — gộp cả tỉnh vì khu vực này chưa đủ tin" : ""}
           </p>
         </div>
@@ -254,6 +276,20 @@ export default function PriceHistory({
           </div>
         </div>
       )}
+      {/* Một khung chú thích duy nhất cho cả khối — nói thẳng số ở đâu ra và
+          cảnh báo tin nằm ngoài khoảng giá, thay vì rải chữ nhỏ khắp nơi. */}
+      <div className="flex gap-2.5 rounded-xl bg-cvr-surface px-4 py-3">
+        <svg className="mt-0.5 h-4 w-4 shrink-0 text-cvr-muted" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="9" />
+          <path strokeLinecap="round" d="M12 11v5M12 8h.01" />
+        </svg>
+        <p className="text-[12px] leading-relaxed text-cvr-muted">
+          Số liệu tổng hợp từ <strong className="font-semibold text-cvr-body">tin đang đăng trên
+          Coastal Land</strong>, là giá rao chứ không phải giá đã giao dịch. Trung vị và khoảng
+          phổ biến tính sau khi bỏ 25% rẻ nhất và 25% đắt nhất để một tin lệch không kéo cả nhóm.
+          Tin nằm ngoài khoảng giá này thì nên hỏi kỹ và xác minh thêm trước khi giao dịch.
+        </p>
+      </div>
     </div>
   );
 }

@@ -10,7 +10,15 @@ import RecordView from "@/components/RecordView";
 import { ContactActions, ContactBarMobile } from "@/components/LienHeReveal";
 import ShareButtons from "@/components/ShareButtons";
 import PriceHistory from "@/components/PriceHistory";
-import { matBangGia, chiSoChoTin, soSanhKhuVuc, xuHuongCuaMinh, giaDatCuaTin } from "@/lib/chiSoGia";
+import {
+  matBangGia,
+  chiSoChoTin,
+  soSanhKhuVuc,
+  xuHuongCuaMinh,
+  giaDatCuaTin,
+  demTinLamMau,
+  MAU_TOI_THIEU,
+} from "@/lib/chiSoGia";
 import { getChiSoGia } from "@/lib/siteContent";
 import { nhanDienTich as nhanDienTichTheoLoai } from "@/lib/listingSpec";
 import ProjectNearby from "@/components/ProjectNearby";
@@ -147,6 +155,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
   const matBang = matBangGia(l, all);
   const soSanhKV = soSanhKhuVuc(l, all);
   const giaDat = await giaDatCuaTin(l.diaGioi?.province ?? "", d.addressDetail ?? "");
+  const soTinLamMau = demTinLamMau(l, all);
   // Ưu tiên SỐ CỦA CHÍNH MÌNH (kho gia_khu_vuc_thang tích luỹ mỗi tháng); chưa đủ
   // dày thì mới lùi về chỉ số nhập tay từ báo cáo thị trường.
   const chiSoTin =
@@ -397,9 +406,9 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
               {/* MẶT BẰNG GIÁ — chỉ hiện khi CÓ SỐ THẬT. Hoặc tính từ tin đang đăng
                   trên web, hoặc lấy báo cáo thị trường chủ dự án nhập trong admin.
                   Không đủ dữ liệu thì khối này biến mất, không chế số. */}
-              {(chiSoTin || matBang || giaDat || soSanhKV.length >= 2) && (
+              {(chiSoTin || matBang || giaDat || soSanhKV.length >= 2 || soTinLamMau > 0) && (
                 <Section id="lich-su-gia" title="Mặt bằng giá khu vực">
-                  <PriceHistory chiSo={chiSoTin} matBang={matBang} giaTinNayM2={giaTinNayM2} soSanh={soSanhKV} laThue={(l.purpose ?? "ban") === "thue"} giaDat={giaDat} />
+                  <PriceHistory chiSo={chiSoTin} matBang={matBang} giaTinNayM2={giaTinNayM2} soSanh={soSanhKV} laThue={(l.purpose ?? "ban") === "thue"} giaDat={giaDat} soTinCo={soTinLamMau} canToiThieu={MAU_TOI_THIEU} />
                 </Section>
               )}
 
