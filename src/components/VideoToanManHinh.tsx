@@ -9,7 +9,7 @@ import { videoEmbedUrl } from "@/lib/media";
 //
 //   ✕ Đóng           — rời trình xem, về lại tin
 //   ⟳ Xoay           — xoay ngang / dọc theo ý khách (KHÔNG tự ép)
-//   ⛶ Toàn màn hình  — và bấm lại để thoát toàn màn hình
+//   ⛶ Toàn màn hình  — MẶC ĐỊNH bật sẵn khi mở; bấm để thu nhỏ, bấm lại để bật
 //
 // Bản trước sai ở chỗ tự khoá xoay ngang bằng screen.orientation.lock() và phủ
 // một lớp chặn hết cú chạm, nên khách bị bẻ ngang màn hình mà không thoát ra
@@ -49,6 +49,12 @@ export default function VideoToanManHinh({ url, onClose }: { url: string; onClos
 
     const theoDoiFull = () => setDangFull(!!document.fullscreenElement);
     document.addEventListener("fullscreenchange", theoDoiFull);
+
+    // MẶC ĐỊNH LÀ TOÀN MÀN HÌNH — mở video ra là xem ngay, không phải bấm thêm.
+    // Gọi ngay lúc mở để còn nằm trong cú chạm của khách (trình duyệt chỉ cho
+    // vào toàn màn hình khi có thao tác người dùng). Máy nào từ chối thì thôi:
+    // trình xem vốn đã phủ kín màn, và nút "Toàn màn" vẫn đó để bấm tay.
+    boc.current?.requestFullscreen?.().catch(() => {});
 
     // Nút Back phải đóng video chứ không rời trang tin.
     history.pushState({ videoCVR: true }, "");
