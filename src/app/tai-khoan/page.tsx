@@ -79,7 +79,7 @@ export default function AccountOverviewPage() {
     <div className="space-y-5">
       {/* Đếm "đăng ký thành công" cho Google Ads — chỉ tính tài khoản vừa tạo */}
       <DoDangKyMoi />
-      <PageHeader title="Tổng quan" desc="Đăng tin, quản lý tin đã đăng và ví thành viên." />
+      <PageHeader title="Tổng quan" />
 
       {/* Môi giới được đăng tin hộ: mời nhận tin mang số điện thoại của mình về
           tài khoản — đặt ngay đầu trang vì đó là việc cần làm trước tiên. */}
@@ -96,7 +96,6 @@ export default function AccountOverviewPage() {
           </span>
           <div className="min-w-0">
             <h2 className="text-lg font-semibold tracking-tight text-cvr-ink">Đăng tin mới</h2>
-            <p className="mt-0.5 text-sm text-cvr-muted">Chọn loại tin bạn muốn đăng — chỉ mất 2 phút.</p>
           </div>
         </div>
         <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -150,8 +149,8 @@ export default function AccountOverviewPage() {
         </div>
 
         <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <LoiTat href="/tai-khoan/tin-dang" title="Tin đã đăng" desc="Xem, sửa, xem thống kê từng tin" />
-          <LoiTat href="/tin-luu" title="Tin đã lưu" desc="Bất động sản bạn quan tâm" />
+          <LoiTat href="/tai-khoan/tin-dang" title="Tin đã đăng" desc="Xem · sửa · thống kê" />
+          <LoiTat href="/tin-luu" title="Tin đã lưu" desc="Bất động sản đã lưu" />
           <LoiTat href="/tai-khoan/du-an" title="Dự án của tôi" desc={duocDangDuAn ? "Quản lý dự án đã đăng" : "Cần duyệt hồ sơ"} />
         </div>
       </div>
@@ -221,7 +220,6 @@ export default function AccountOverviewPage() {
       {profile.role === "admin" && (
         <div className="rounded-2xl border border-cvr-line bg-white p-5 shadow-sm">
           <h2 className="text-base font-semibold text-cvr-ink">Quản trị viên</h2>
-          <p className="mt-1 text-sm text-cvr-muted">Bạn có quyền quản trị nền tảng.</p>
           <Link href="/admin" className="mt-3 inline-block rounded-lg bg-cvr-blue px-4 py-2 text-sm font-semibold text-white transition hover:bg-cvr-blue-ink">
             Mở trang quản trị →
           </Link>

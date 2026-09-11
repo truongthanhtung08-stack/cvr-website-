@@ -140,10 +140,14 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
                   <span className="shrink-0 rounded-lg bg-cvr-ink px-3 py-1.5 text-xs font-semibold text-white">Nạp tiền</span>
                 </Link>
 
+                {/* MENU TỔNG vs MENU CON — phải nhìn phát ra ngay đâu là nhóm,
+                    đâu là mục. Tên nhóm để chữ đậm màu đen trên một đường kẻ
+                    tách bạch, các mục con nằm thụt xuống dưới. Trước đây tên
+                    nhóm mờ và bé bằng mục con nên nhìn lẫn hết vào nhau. */}
                 {nhomMuc.map((g, i) => (
-                  <div key={g.nhom || i} className="mt-4">
+                  <div key={g.nhom || i} className={g.nhom ? "mt-5 border-t border-cvr-line pt-4" : "mt-4"}>
                     {g.nhom && (
-                      <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-cvr-faint">{g.nhom}</p>
+                      <p className="mb-2.5 text-[13px] font-semibold text-cvr-ink">{g.nhom}</p>
                     )}
                     <div className="grid grid-cols-2 gap-2">
                       {g.items.map((m) => {
@@ -208,14 +212,14 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
                   <span className="shrink-0 text-xs font-semibold text-cvr-blue-ink">Nạp +</span>
                 </Link>
 
+                {/* Tên nhóm = chữ đen đậm trên đường kẻ; mục con thụt vào một
+                    nấc. Nhìn là phân biệt được ngay menu tổng với menu con. */}
                 {nhomMuc.map((g, i) => (
-                  <div key={g.nhom || i} className={i > 0 ? "mt-4" : ""}>
+                  <div key={g.nhom || i} className={g.nhom ? "mt-5 border-t border-cvr-line pt-4" : i > 0 ? "mt-4" : ""}>
                     {g.nhom && (
-                      <p className="mb-1.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-cvr-faint">
-                        {g.nhom}
-                      </p>
+                      <p className="mb-2 px-3 text-[13px] font-semibold text-cvr-ink">{g.nhom}</p>
                     )}
-                    <div className="space-y-0.5">
+                    <div className={`space-y-0.5 ${g.nhom ? "pl-1.5" : ""}`}>
                       {g.items.map((m) => {
                         const active = dangXem(m.href, pathname);
                         return (

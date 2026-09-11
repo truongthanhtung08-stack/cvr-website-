@@ -55,10 +55,7 @@ export default function HoaDonCuaToiPage() {
 
   return (
     <div className="space-y-5">
-      <PageHeader
-        title="Hóa đơn của tôi"
-        desc="Các giao dịch bạn đã dùng dịch vụ đăng tin. Tiền nạp vào ví chưa phải giao dịch dịch vụ nên không có ở đây."
-      />
+      <PageHeader title="Hóa đơn của tôi" desc="Tiền nạp vào ví không nằm ở đây — chỉ các giao dịch đã dùng dịch vụ." />
 
       {loi && (
         <div className="rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">{loi}</div>

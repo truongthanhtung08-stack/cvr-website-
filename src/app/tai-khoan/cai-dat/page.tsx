@@ -47,7 +47,7 @@ export default function AccountSettingsPage() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Cài đặt tài khoản" desc="Sửa thông tin cá nhân của bạn." />
+      <PageHeader title="Cài đặt tài khoản" />
 
       {/* Môi giới hay dùng 2 số để đăng tin — khai đủ ở đây thì tin mới gom về
           một tài khoản được. Xem src/components/SoDienThoaiKhac.tsx */}

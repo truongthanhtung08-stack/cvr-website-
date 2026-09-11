@@ -129,7 +129,7 @@ export default function MyListingsPage() {
 
   return (
     <div className="space-y-4">
-      <PageHeader title="Tin đã đăng" desc="Tin của bạn ở mọi trạng thái — kể cả nháp và tin đang chờ duyệt.">
+      <PageHeader title="Tin đã đăng">
         <Link href="/dang-tin" className="rounded-lg bg-cvr-ink px-4 py-2 text-sm font-semibold text-white transition hover:bg-cvr-ink/90">
           + Đăng tin mới
         </Link>
