@@ -69,26 +69,6 @@ export default function ImagePicker({
     if (imgRef.current) imgRef.current.value = "";
   }
 
-  // MỘT LẦN CHỌN, LẤY CẢ ẢNH LẪN VIDEO. Đây là cách đa số khách quen: mở thư
-  // viện của máy, tick mấy tấm ảnh và cái video rồi xong. Tự phân loại theo kiểu
-  // tệp rồi đưa về đúng luồng xử lý cũ (nén ảnh / kiểm dung lượng video).
-  async function handleThuVien(files: FileList | null) {
-    if (!files || files.length === 0) return;
-    const ds = Array.from(files);
-    const anh = ds.filter((f) => f.type.startsWith("image/"));
-    const video = ds.filter((f) => f.type.startsWith("video/"));
-    if (anh.length) {
-      const dt = new DataTransfer();
-      for (const f of anh) dt.items.add(f);
-      await handleImageFiles(dt.files);
-    }
-    if (video.length) {
-      const dt = new DataTransfer();
-      dt.items.add(video[0]); // mỗi lần một video, đúng như luồng cũ
-      await handleVideoFile(dt.files);
-    }
-  }
-
   async function handleVideoFile(files: FileList | null) {
     const file = files?.[0];
     if (!file) return;
@@ -209,12 +189,16 @@ export default function ImagePicker({
       )}
 
       {/* Nút tải ảnh / video + dán link
-          ⚠️ ĐIỆN THOẠI — MỞ THẲNG BỘ SƯU TẬP ẢNH, KHÔNG QUA TRÌNH DUYỆT THƯ MỤC:
+          ⚠️ ĐIỆN THOẠI — MỞ THẲNG BỘ SƯU TẬP, KHÔNG QUA TRÌNH DUYỆT THƯ MỤC.
+          Đa số khách up ảnh/video từ Bộ sưu tập chứ không ai đi tìm thư mục.
           accept PHẢI là "image/*" (kiểu MIME), TUYỆT ĐỐI không ghi đuôi tệp kiểu
           ".jpg,.png" và không trộn "image/*,video/*" vào một ô — cả hai cách đó làm
           Android mở ứng dụng Tệp/Documents thay vì bộ sưu tập ảnh. Cũng KHÔNG thêm
           thuộc tính capture (ép mở thẳng camera).
-          ô chọn tệp phải nằm TRONG <label> và chỉ ẩn bằng sr-only.
+          Nút gộp "ảnh & video" đã BỎ (11/9/2026): trộn hai loại thì Samsung hiện
+          bảng "Chọn một thao tác — Máy ảnh · File của bạn · Files", không có Bộ
+          sưu tập đâu cả. Tách riêng ảnh và video thì máy mở đúng thư viện.
+          Ô chọn tệp phải nằm TRONG <label> và chỉ ẩn bằng sr-only.
           Trước đây để className="hidden" (display:none) rồi gọi input.click() —
           trình duyệt đời cũ trên Android/iOS bỏ qua ô đã display:none nên khách
           bấm không mở được thư viện ảnh, hoặc mở mà không chọn được nhiều tấm.
@@ -224,30 +208,11 @@ export default function ImagePicker({
       <MoBangChrome />
 
       <div className="flex flex-wrap items-center gap-3">
-        {/* LỐI CHÍNH — MỞ THƯ VIỆN CỦA MÁY, CÓ CẢ ẢNH LẪN VIDEO.
-            Máy Android 13+ và iPhone mở thẳng trình chọn ảnh của hệ thống, tick
-            được nhiều tấm và cả video trong cùng một lần. Máy đời cũ không mở được
-            thẳng thì đã có hai nút chuyên biệt bên cạnh. */}
         <label
-          className={`inline-flex cursor-pointer items-center gap-2 rounded-lg bg-cvr-ink px-4 py-2 text-sm font-semibold text-white transition hover:bg-cvr-ink/90 ${uploadingImg || uploadingVideo ? "pointer-events-none opacity-60" : ""}`}
-        >
-          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-          Thư viện ảnh &amp; video
-          <input
-            type="file"
-            accept="image/*,video/*"
-            multiple
-            disabled={uploadingImg || uploadingVideo}
-            onChange={(e) => handleThuVien(e.target.files)}
-            className="sr-only"
-          />
-        </label>
-
-        <label
-          className={`inline-flex cursor-pointer items-center gap-2 rounded-lg border border-cvr-line bg-white px-4 py-2 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink ${uploadingImg ? "pointer-events-none opacity-60" : ""}`}
+          className={`inline-flex cursor-pointer items-center gap-2 rounded-lg bg-cvr-ink px-4 py-2 text-sm font-semibold text-white transition hover:bg-cvr-ink/90 ${uploadingImg ? "pointer-events-none opacity-60" : ""}`}
         >
           <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 16V4m0 0L8 8m4-4l4 4M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" /></svg>
-          {uploadingImg ? "Đang tải ảnh…" : "Chọn ảnh từ bộ sưu tập"}
+          {uploadingImg ? "Đang tải ảnh…" : "Chọn ảnh"}
           <input
             ref={imgRef}
             type="file"
@@ -259,32 +224,11 @@ export default function ImagePicker({
           />
         </label>
 
-        {/* ⚠️ HAI LỐI VÀO ẢNH — ĐỪNG GỘP LÀM MỘT.
-            Nút trên có multiple (chọn nhiều tấm một lần). Android kèm theo cờ "cho
-            chọn nhiều tệp", mà app thư viện nào KHÔNG hỗ trợ chọn nhiều thì bị loại
-            khỏi danh sách — màn hình "Chọn một thao tác" chỉ còn Máy ảnh · File ·
-            Files, khách không thấy Bộ sưu tập đâu (chủ dự án chụp lại 11/9/2026).
-            Nút này BỎ multiple nên mọi máy đều mở thẳng được bộ sưu tập ảnh, đổi
-            lại mỗi lần một tấm — bấm lại để thêm tấm nữa. */}
-        <label
-          className={`inline-flex cursor-pointer items-center gap-2 rounded-lg border border-cvr-line bg-white px-4 py-2 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink ${uploadingImg ? "pointer-events-none opacity-60" : ""}`}
-        >
-          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-          Mở bộ sưu tập (từng ảnh)
-          <input
-            type="file"
-            accept="image/*"
-            disabled={uploadingImg}
-            onChange={(e) => handleImageFiles(e.target.files)}
-            className="sr-only"
-          />
-        </label>
-
         <label
           className={`inline-flex cursor-pointer items-center gap-2 rounded-lg border border-cvr-line bg-white px-4 py-2 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink ${uploadingVideo ? "pointer-events-none opacity-60" : ""}`}
         >
           <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 6h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z" /></svg>
-          {uploadingVideo ? "Đang tải video…" : "Chọn video từ bộ sưu tập"}
+          {uploadingVideo ? "Đang tải video…" : "Chọn video"}
           <input
             ref={videoRef}
             type="file"
