@@ -11,7 +11,7 @@ import { getTier, tierFromBadge, type TierId, utilityTools } from "@/lib/package
 import { getListings } from "@/lib/listingsDb";
 import { getProjects } from "@/lib/contentDb";
 import { getBilling } from "@/lib/siteContent";
-import { priceLinesFor, bangUp, goiPr, ghiChuPr, bangBanner, dong } from "@/lib/billing";
+import { BILLING_DEFAULT, priceLinesFor, bangUp, goiPr, ghiChuPr, bangBanner, giaTra, priceLinesDuAn } from "@/lib/billing";
 import type { Listing, Project } from "@/lib/data";
 
 export const metadata: Metadata = {
@@ -42,11 +42,6 @@ const vipPkgs = [
       "Xuất hiện trong box “Bất động sản nổi bật”.",
       "Chèn 1 link bất kỳ dưới tin đăng.",
     ],
-    prices: [
-      { label: "Giá 1 tuần", price: "980.000đ" },
-      { label: "Giá 2 tuần (−15%)", original: "1.960.000đ", price: "1.700.000đ" },
-      { label: "Giá 4 tuần (−30%)", original: "3.920.000đ", price: "2.800.000đ" },
-    ] as PriceLine[],
   },
   {
     tierId: "gold" as TierId,
@@ -60,32 +55,17 @@ const vipPkgs = [
       "Tiêu đề màu vàng + Bôi đậm + Viết hoa.",
       "Xuất hiện trong box “Bất động sản nổi bật”.",
     ],
-    prices: [
-      { label: "Giá 1 tuần", price: "490.000đ" },
-      { label: "Giá 2 tuần (−20%)", original: "980.000đ", price: "800.000đ" },
-      { label: "Giá 4 tuần (−35%)", original: "1.960.000đ", price: "1.300.000đ" },
-    ] as PriceLine[],
   },
   {
     tierId: "silver" as TierId,
     benefits: ["Tăng lượt xem gấp 5 lần tin thường.", "Tiếp cận khách hàng tốt."],
     displays: ["Đứng trên CVR Basic.", "Tiêu đề màu xanh + Bôi đậm."],
-    prices: [
-      { label: "Giá 1 tuần", price: "170.000đ" },
-      { label: "Giá 2 tuần (−15%)", original: "340.000đ", price: "300.000đ" },
-      { label: "Giá 4 tuần (−30%)", original: "680.000đ", price: "500.000đ" },
-    ] as PriceLine[],
   },
 ];
 
 const basicPkg = {
   benefits: ["Tiếp cận khách hàng tốt.", "Chi phí thấp nhất."],
   displays: ["Nằm bên dưới các tin cao cấp.", "Tiêu đề hiển thị mặc định."],
-  prices: [
-    { label: "Giá 1 tuần", price: "15.000đ" },
-    { label: "Giá 2 tuần", price: "20.000đ" },
-    { label: "Giá 4 tuần", price: "30.000đ" },
-  ] as PriceLine[],
 };
 
 const pjPkgs = [
@@ -95,10 +75,6 @@ const pjPkgs = [
     img: "sun-cosmo-residence.jpg",
     sample: { title: "Sun Cosmo Residence", address: "Hòa Hải, Ngũ Hành Sơn, Đà Nẵng" },
     displays: ["Xuất hiện trên Trang chủ.", "Xuất hiện trên CVR-PJ Gold.", "Xuất hiện trên CVR Diamond.", "Icon màu đỏ nổi bật."],
-    prices: [
-      { label: "Giá 1 tuần", price: "6.800.000đ" },
-      { label: "Giá 2 tuần (−6%)", original: "13.600.000đ", price: "12.800.000đ" },
-    ] as PriceLine[],
   },
   {
     tierId: "gold" as TierId,
@@ -106,10 +82,6 @@ const pjPkgs = [
     img: "the-filmore-da-nang.jpg",
     sample: { title: "The Filmore Da Nang", address: "Hải Châu, Đà Nẵng" },
     displays: ["Xuất hiện trên CVR-PJ Silver.", "Xuất hiện trên CVR Gold.", "Icon màu vàng nổi bật."],
-    prices: [
-      { label: "Giá 1 tuần", price: "3.500.000đ" },
-      { label: "Giá 2 tuần (−6%)", original: "7.000.000đ", price: "6.600.000đ" },
-    ] as PriceLine[],
   },
   {
     tierId: "silver" as TierId,
@@ -117,10 +89,6 @@ const pjPkgs = [
     img: "khu-do-thi-fpt-city.jpg",
     sample: { title: "Khu đô thị FPT City", address: "Ngũ Hành Sơn, Đà Nẵng" },
     displays: ["Xuất hiện trên CVR-PJ Basic.", "Xuất hiện trên CVR Silver.", "Icon màu xanh nổi bật."],
-    prices: [
-      { label: "Giá 1 tuần", price: "2.000.000đ" },
-      { label: "Giá 2 tuần (−5%)", original: "4.000.000đ", price: "3.800.000đ" },
-    ] as PriceLine[],
   },
 ];
 
@@ -137,10 +105,10 @@ const featureRows: { label: string; values: [string, string, string, string] }[]
 ];
 
 const rules = [
-  // BẮT BUỘC PHẢI CÓ: giá niêm yết trong bảng là giá CHƯA gồm thuế
-  // (src/lib/thue.ts — GIA_DA_GOM_VAT = false), số thật trừ vào ví có cộng thêm
-  // 8%. Không ghi rõ thì khách nhìn 980.000đ mà bị trừ 1.058.400đ.
-  "Toàn bộ giá trong bảng là giá chưa bao gồm thuế GTGT 8%. Số tiền trừ vào ví khi tin lên sóng đã cộng thuế và được ghi rõ trong thông báo gửi cho khách hàng.",
+  // Giá bày ra đây LÀ SỐ KHÁCH THỰC TRẢ (đã gồm GTGT) — ví trừ đúng bằng số này.
+  // Trước đây bảng hiện giá chưa thuế mà ví trừ số khác, khách khiếu nại là đúng.
+  // Tiền hàng và tiền thuế vẫn tách riêng trong sổ doanh thu và trên hóa đơn.
+  "Toàn bộ giá trong bảng đã bao gồm thuế GTGT 8% — đúng bằng số tiền trừ vào ví khi tin được duyệt và lên sóng.",
   "(*) Ưu tiên hiển thị sớm: các tin VIP (CVR Diamond, CVR Gold và CVR Silver) được ưu tiên hiển thị và kiểm duyệt trước.",
   "(**) Không hiển thị quảng cáo: ở trang chi tiết tin đăng, trên cả giao diện desktop và mobile sẽ không xuất hiện banner quảng cáo — người xem tập trung tối đa vào nội dung tin.",
   "(***) Nhân đôi hiển thị: chức năng đặc biệt của CVR Diamond — khi tạo tin, khách hàng được tặng kèm một Tin thường hiển thị đồng thời ở trang kết quả tìm kiếm; khi Đẩy tin CVR Diamond, tin thường đi kèm cũng được đẩy miễn phí.",
@@ -180,9 +148,15 @@ const HOTLINE = "0377 985 036";
 // (không còn tin/ảnh mẫu cứng). Đăng hoặc sửa tin trong admin → trang này tự đổi theo.
 export default async function BaoGiaPage() {
   const [listings, allProjects, billing] = await Promise.all([getListings(), getProjects(), getBilling()]);
-  // GIÁ TIN lấy từ bảng giá admin (/admin/gia-khuyen-mai) — chưa lưu thì dùng giá
-  // in sẵn bên dưới. Trước đây giá viết cứng tại trang này nên sửa ở admin không đổi.
-  const giaTin = (id: TierId, macDinh: PriceLine[]): PriceLine[] => priceLinesFor(billing, id) ?? macDinh;
+  // MỌI GIÁ ĐỀU TỪ ADMIN (/admin/gia-khuyen-mai).
+  // Trang này trước đây còn một bảng giá viết cứng chạy song song — Diamond 1 tuần
+  // ghi 980.000đ trong khi bảng giá đang chạy là 1.050.000đ. Sửa giá trong admin mà
+  // quên sửa code là hai nơi nói hai giá khác nhau. Nay không còn số nào viết riêng
+  // trong trang: admin chưa lưu gì thì lùi về bảng giá chuẩn trong billing.ts.
+  const giaTin = (id: TierId): PriceLine[] =>
+    priceLinesFor(billing, id) ?? priceLinesFor(BILLING_DEFAULT, id) ?? [];
+  const giaDuAn = (id: TierId): PriceLine[] =>
+    priceLinesDuAn(billing, id) ?? priceLinesDuAn(BILLING_DEFAULT, id) ?? [];
   // ĐẨY TIN · PR · BANNER: lấy đúng bản chủ dự án đặt ở /admin/gia-khuyen-mai.
   // Chưa lưu gì thì hàm tự trả mức chuẩn — trang không bao giờ trống.
   const upRows = bangUp(billing);
@@ -238,7 +212,7 @@ export default async function BaoGiaPage() {
                       benefits={p.benefits}
                       displays={p.displays}
                       media={<TierSample listing={samples[p.tierId]} />}
-                      prices={giaTin(p.tierId, p.prices)}
+                      prices={giaTin(p.tierId)}
                       cta={{ label: "Đăng tin ngay", href: "/dang-tin" }}
                     />
                   ))}
@@ -255,7 +229,7 @@ export default async function BaoGiaPage() {
                     benefits={basicPkg.benefits}
                     displays={basicPkg.displays}
                     media={<TierSample listing={samples.basic} />}
-                    prices={giaTin("basic", basicPkg.prices)}
+                    prices={giaTin("basic")}
                     cta={{ label: "Đăng tin ngay", href: "/dang-tin" }}
                   />
                 </div>
@@ -285,8 +259,8 @@ export default async function BaoGiaPage() {
                           <td className="px-6 py-4 font-medium text-cvr-body">{r.label}</td>
                           {r.values.map((v, i) => (
                             <td key={i} className="px-4 py-4 text-center">
-                              {v.giaGoc ? <span className="mr-1.5 text-xs text-cvr-faint line-through">{dong(v.giaGoc)}</span> : null}
-                              <span className="font-semibold tracking-tight text-cvr-ink">{dong(v.gia)}</span>
+                              {v.giaGoc ? <span className="mr-1.5 text-xs text-cvr-faint line-through">{giaTra(v.giaGoc)}</span> : null}
+                              <span className="font-semibold tracking-tight text-cvr-ink">{giaTra(v.gia)}</span>
                             </td>
                           ))}
                         </tr>
@@ -307,7 +281,7 @@ export default async function BaoGiaPage() {
                       name={p.name}
                       displays={p.displays}
                       media={<ProjectTierSample project={projectOfTier(p.tierId)} />}
-                      prices={p.prices}
+                      prices={giaDuAn(p.tierId)}
                       cta={{ label: "Liên hệ tư vấn", href: "#lien-he" }}
                     />
                   ))}
@@ -330,7 +304,7 @@ export default async function BaoGiaPage() {
                         </ul>
                         <div className="mt-6 border-t border-cvr-line pt-5">
                           <p className="text-xs text-cvr-muted">Giá mỗi bài</p>
-                          <p className="mt-1 text-[26px] font-semibold tracking-tight text-cvr-ink">{dong(p.gia)}</p>
+                          <p className="mt-1 text-[26px] font-semibold tracking-tight text-cvr-ink">{giaTra(p.gia)}</p>
                           <a
                             href="#lien-he"
                             className="mt-4 block rounded-full bg-cvr-ink py-2.5 text-center text-sm font-semibold text-white transition hover:bg-cvr-ink/90 active:scale-[0.99]"
@@ -372,7 +346,7 @@ export default async function BaoGiaPage() {
                             <tr key={r.name} className="border-b border-cvr-line/60 transition-colors last:border-0 hover:bg-cvr-surface/50">
                               <td className="px-6 py-4 font-medium text-cvr-ink">{r.name}</td>
                               <td className="px-4 py-4 text-cvr-body">{r.size}</td>
-                              <td className="px-4 py-4 font-semibold tracking-tight text-cvr-ink">{dong(r.gia)}</td>
+                              <td className="px-4 py-4 font-semibold tracking-tight text-cvr-ink">{giaTra(r.gia)}</td>
                               <td className="px-4 py-4 text-cvr-body">{r.pos}</td>
                               <td className="px-4 py-4 text-cvr-muted">{r.note}</td>
                             </tr>

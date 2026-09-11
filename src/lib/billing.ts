@@ -8,6 +8,7 @@
 // ============================================================================
 
 import { getTier, type TierId } from "@/lib/packages";
+import { tachThue } from "@/lib/thue";
 
 // ── Gói đăng tin ────────────────────────────────────────────────────────────
 // Mỗi cấp tin (Diamond/Gold/Silver/Basic) có các mốc thời hạn kèm giá chuẩn.
@@ -489,13 +490,28 @@ export function priceLinesFor(data: BillingData, tierId: TierId): PriceLineOut[]
     const ten = t.days % 7 === 0 ? `Giá ${t.days / 7} tuần` : `Giá ${t.days} ngày`;
     return {
       label: giam > 0 ? `${ten} (−${giam}%)` : ten,
-      original: giam > 0 ? dong(goc) : undefined,
-      price: dong(t.price),
+      original: giam > 0 ? giaTra(goc) : undefined,
+      price: giaTra(t.price),
     };
   });
+}
+
+// GIÁ GÓI DỰ ÁN (CVR-PJ) cho trang báo giá — trước đây bảng này viết cứng trong
+// trang nên sửa ở /admin/gia-khuyen-mai → tab "Gói dự án" không đổi được gì.
+export function priceLinesDuAn(data: BillingData, tierId: TierId): PriceLineOut[] | null {
+  return priceLinesFor({ ...data, plans: goiDuAn(data) }, tierId);
 }
 
 // Tiền trên TRANG BÁO GIÁ: "7.500.000đ" — cả trang dùng chung một kiểu.
 export function dong(n: number): string {
   return n.toLocaleString("vi-VN") + "đ";
+}
+
+// ── SỐ TIỀN HIỆN CHO KHÁCH = SỐ KHÁCH THỰC TRẢ ─────────────────────────────
+// Giá gốc trong bảng giá là giá CHƯA thuế, nhưng khách bấm thanh toán là trừ ví
+// đúng số ĐÃ GỒM GTGT. Bày giá chưa thuế rồi trừ số khác là khách khiếu nại —
+// nên mọi giá hiện ra ngoài đều đi qua đây (chủ dự án chốt 11/9/2026).
+// Tiền hàng và tiền thuế vẫn tách riêng trong sổ doanh thu và trên hóa đơn.
+export function giaTra(giaChuaThue: number): string {
+  return dong(tachThue(giaChuaThue).tongTra);
 }
