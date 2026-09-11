@@ -17,9 +17,8 @@ import { videoEmbedUrl, videoPosterUrl } from "@/lib/media";
 // trình phát của máy lo — thoát cũng bằng nút của nó, giống YouTube, giống mọi
 // ứng dụng khác.
 //
-// XOAY NGANG TRÊN ĐIỆN THOẠI: vào toàn màn hình thì tự xin xoay ngang để video
-// lấp đầy màn (Android hỗ trợ). iPhone không cho web khoá hướng màn hình — nhưng
-// trình phát gốc của iOS tự xoay theo máy nên vẫn xem ngang bình thường.
+// XOAY MÀN HÌNH: web KHÔNG can thiệp. Khách xoay ngang thì video ngang, cầm dọc
+// thì xem dọc — trình phát của máy lo. Đừng bao giờ khoá hướng màn hình.
 export default function GallerySlideVideo({
   url,
   active,
@@ -67,23 +66,17 @@ export default function GallerySlideVideo({
     bao();
   }, [active]);
 
-  // TOÀN MÀN HÌNH: giữ slide đứng yên + xin xoay ngang trên điện thoại.
-  // Mọi lời gọi đều bọc try/catch và .catch() — trình duyệt nào không cho khoá
-  // hướng màn hình (iPhone) thì bỏ qua, KHÔNG được ném lỗi ra làm chết trang.
+  // TOÀN MÀN HÌNH: chỉ để giữ slide đứng yên trong lúc khách đang xem.
+  //
+  // KHÔNG khoá hướng màn hình. Bản trước gọi orientation.lock("landscape") nên
+  // khách cầm dọc cũng bị bẻ ngang, xoay lại không được — rất khó chịu (chủ dự
+  // án báo 11/9/2026). Xoay ngang hay dọc là quyền của người cầm điện thoại.
   useEffect(() => {
     const doiToanManHinh = () => {
-      const dangFull =
+      fullRef.current =
         !!document.fullscreenElement ||
         !!(document as unknown as { webkitFullscreenElement?: Element }).webkitFullscreenElement;
-      fullRef.current = dangFull;
       bao();
-      try {
-        const huong = (screen as unknown as { orientation?: { lock?: (o: string) => Promise<void>; unlock?: () => void } }).orientation;
-        if (dangFull) huong?.lock?.("landscape")?.catch(() => {});
-        else huong?.unlock?.();
-      } catch {
-        /* trình duyệt không hỗ trợ khoá hướng — kệ, xem dọc vẫn được */
-      }
     };
 
     document.addEventListener("fullscreenchange", doiToanManHinh);
