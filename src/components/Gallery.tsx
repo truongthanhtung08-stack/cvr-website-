@@ -217,63 +217,67 @@ export default function Gallery({
               ),
             )}
           </div>
-          {/* Đang xem tấm mấy */}
-          {!mIsVideo && (
-            <span className="pointer-events-none absolute bottom-3 right-3 rounded-md bg-black/65 px-2.5 py-1 text-[13px] font-medium text-white backdrop-blur-sm">
-              Ảnh {imgIdx(mCur) + 1}/{images.length}
-            </span>
-          )}
-
-          {/* Xem tất cả ảnh — mở danh sách ảnh xếp dọc kiểu Facebook */}
-          <button
-            type="button"
-            onClick={() => setList(true)}
-            className={`absolute left-3 flex items-center gap-1.5 rounded-md bg-black/65 px-2.5 py-1 text-[13px] font-medium text-white backdrop-blur-sm active:bg-black/80 ${mIsVideo ? "bottom-14" : "bottom-3"}`}
-          >
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.9} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h10" />
-            </svg>
-            Xem tất cả {images.length} ảnh
-          </button>
-
-          </div>
-
-          {/* DÃY Ô NHỎ — CUỘN NGANG, CÓ ĐỦ MỌI TẤM.
-              Bản cũ chỉ hiện 4 ô rồi đè ô thứ tư thành "+N": ảnh thứ 5 trở đi
-              không có cách nào chọn, dãy cũng không kéo được (chủ dự án báo
-              11/9/2026). Nay dãy kéo ngang tự do, ô đang xem viền đậm và TỰ
-              cuộn vào giữa tầm nhìn mỗi khi đổi ảnh. */}
-          {media.length > 1 && (
-            <div
-              ref={mThumbs}
-              className="no-scrollbar flex gap-1.5 overflow-x-auto overscroll-x-contain border-x border-b border-cvr-line bg-white p-1.5"
-            >
-              {media.map((m, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  data-o={i}
-                  onClick={() => nhayToi(i)}
-                  aria-label={m.kind === "video" ? "Xem video" : `Xem ảnh ${imgIdx(i) + 1}`}
-                  aria-current={i === mCur}
-                  className={`relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-cvr-surface transition ${
-                    i === mCur ? "ring-2 ring-cvr-ink" : "ring-1 ring-cvr-line opacity-70"
-                  }`}
-                >
-                  {m.kind === "video" ? (
-                    <>
-                      <GallerySlideVideo url={m.src} active={false} xemTruoc />
-                      <span className="absolute inset-0 flex items-center justify-center bg-black/25">
-                        <svg className="ml-0.5 h-5 w-5 text-white drop-shadow" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
-                      </span>
-                    </>
-                  ) : (
-                    <Image src={m.src} alt="" fill sizes="64px" className="object-cover" />
-                  )}
-                </button>
-              ))}
+          {/* ── LỚP ĐIỀU KHIỂN ĐÈ LÊN ĐÁY ẢNH ────────────────────────────────
+              Ảnh giữ nguyên khổ 4:3 đã duyệt, nhưng dãy ô nhỏ + hai nhãn nằm ĐÈ
+              lên đáy ảnh thay vì xếp bên dưới: không tốn thêm một pixel chiều
+              cao nào, phần thông tin tin đăng nhờ đó lên cao hơn hẳn. */}
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/35 to-transparent pb-1.5 pt-8">
+            <div className="mb-1.5 flex items-center justify-between px-2.5">
+              <button
+                type="button"
+                onClick={() => setList(true)}
+                className="pointer-events-auto flex items-center gap-1.5 text-[13px] font-medium text-white drop-shadow active:opacity-70"
+              >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.9} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h10" />
+                </svg>
+                Xem tất cả {images.length} ảnh
+              </button>
+              {!mIsVideo && (
+                <span className="text-[13px] font-medium text-white drop-shadow">
+                  {imgIdx(mCur) + 1}/{images.length}
+                </span>
+              )}
             </div>
-          )}
+
+            {/* DÃY Ô NHỎ — CUỘN NGANG, CÓ ĐỦ MỌI TẤM.
+                Bản cũ chỉ hiện 4 ô rồi đè ô thứ tư thành "+N": ảnh thứ 5 trở đi
+                không có cách nào chọn, dãy cũng không kéo được (chủ dự án báo
+                11/9/2026). Nay dãy kéo ngang tự do, ô đang xem viền trắng và TỰ
+                cuộn vào giữa tầm nhìn mỗi khi đổi ảnh. */}
+            {media.length > 1 && (
+              <div
+                ref={mThumbs}
+                className="no-scrollbar pointer-events-auto flex gap-1 overflow-x-auto overscroll-x-contain px-2"
+              >
+                {media.map((m, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    data-o={i}
+                    onClick={() => nhayToi(i)}
+                    aria-label={m.kind === "video" ? "Xem video" : `Xem ảnh ${imgIdx(i) + 1}`}
+                    aria-current={i === mCur}
+                    className={`relative h-9 w-12 shrink-0 overflow-hidden rounded bg-black/30 transition ${
+                      i === mCur ? "ring-2 ring-white" : "opacity-55 ring-1 ring-white/40"
+                    }`}
+                  >
+                    {m.kind === "video" ? (
+                      <>
+                        <GallerySlideVideo url={m.src} active={false} xemTruoc />
+                        <span className="absolute inset-0 flex items-center justify-center bg-black/25">
+                          <svg className="ml-0.5 h-4 w-4 text-white drop-shadow" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+                        </span>
+                      </>
+                    ) : (
+                      <Image src={m.src} alt="" fill sizes="48px" className="object-cover" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          </div>
         </div>
 
         {/* ── TABLET / MÁY TÍNH (≥ 640px): GIỮ NGUYÊN bố cục ảnh lớn + lưới 2×2 đã duyệt ── */}
