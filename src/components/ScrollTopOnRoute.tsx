@@ -89,12 +89,19 @@ export default function ScrollTopOnRoute() {
     const nenKhoiPhuc = (dauTien && taiLaiTrang) || quayLai.current;
     quayLai.current = false;
 
-    if (nenKhoiPhuc) {
-      const y = docBanDo()[diaChi()] ?? 0;
-      if (y <= 0) return; // chưa có vị trí đã lưu → để nguyên, không giật lên đầu
+    // Địa chỉ có NEO (#ket-qua…) → để trang cuộn tới neo, không ép về đầu.
+    if (!nenKhoiPhuc && window.location.hash) return;
 
-      // Cuộn lại nhiều nhịp: ngay → khung hình kế → khi ảnh tải xong. Ảnh vào
-      // muộn làm trang cao lên, cuộn một nhịp thường bị lệch vài trăm pixel.
+    {
+      // Khôi phục thì về đúng chỗ đã đọc; mở trang mới thì về ĐẦU TRANG.
+      const y = nenKhoiPhuc ? (docBanDo()[diaChi()] ?? 0) : 0;
+      if (nenKhoiPhuc && y <= 0) return; // chưa có vị trí đã lưu → để nguyên
+
+      // CUỘN NHIỀU NHỊP — kể cả khi về đầu trang. Bấm một thẻ tin từ giữa danh
+      // sách dài: trình duyệt giữ nguyên vị trí cũ cho tới khi trang mới dựng
+      // xong, rồi ảnh vào muộn lại đẩy trang cao lên. Cuộn đúng một nhịp là
+      // trang dừng lưng chừng giữa bài, không lên tới đầu (chủ dự án báo
+      // 11/9/2026). Lặp vài nhịp tới khi trang ổn định là hết.
       let con = true;
       const ve = () => { if (con) window.scrollTo(0, y); };
       // Người dùng tự cuộn/chạm trong lúc đang khôi phục → DỪNG NGAY, không
@@ -121,11 +128,6 @@ export default function ScrollTopOnRoute() {
         window.removeEventListener("keydown", dung);
       };
     }
-
-    // Địa chỉ có NEO (#ket-qua…) → để trang cuộn tới neo, không ép về đầu.
-    if (window.location.hash) return;
-
-    window.scrollTo({ top: 0 }); // mở trang mới → đầu trang thật (thấy logo)
   }, [pathname]);
 
   // Ghi nhớ vị trí đang đọc theo nhịp cuộn (gộp bằng rAF cho nhẹ). Ghi liên tục
