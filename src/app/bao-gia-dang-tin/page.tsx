@@ -137,6 +137,10 @@ const featureRows: { label: string; values: [string, string, string, string] }[]
 ];
 
 const rules = [
+  // BẮT BUỘC PHẢI CÓ: giá niêm yết trong bảng là giá CHƯA gồm thuế
+  // (src/lib/thue.ts — GIA_DA_GOM_VAT = false), số thật trừ vào ví có cộng thêm
+  // 8%. Không ghi rõ thì khách nhìn 980.000đ mà bị trừ 1.058.400đ.
+  "Toàn bộ giá trong bảng là giá chưa bao gồm thuế GTGT 8%. Số tiền trừ vào ví khi tin lên sóng đã cộng thuế và được ghi rõ trong thông báo gửi cho khách hàng.",
   "(*) Ưu tiên hiển thị sớm: các tin VIP (CVR Diamond, CVR Gold và CVR Silver) được ưu tiên hiển thị và kiểm duyệt trước.",
   "(**) Không hiển thị quảng cáo: ở trang chi tiết tin đăng, trên cả giao diện desktop và mobile sẽ không xuất hiện banner quảng cáo — người xem tập trung tối đa vào nội dung tin.",
   "(***) Nhân đôi hiển thị: chức năng đặc biệt của CVR Diamond — khi tạo tin, khách hàng được tặng kèm một Tin thường hiển thị đồng thời ở trang kết quả tìm kiếm; khi Đẩy tin CVR Diamond, tin thường đi kèm cũng được đẩy miễn phí.",

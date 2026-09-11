@@ -22,12 +22,15 @@
 -- Cộng số dư + tổng đã nạp trong MỘT lệnh. Trả về số dư mới để báo cho khách.
 -- p_cap: cấp hội viên tính lại theo tổng đã nạp (do phía web tính, vì ngưỡng cấp
 -- nằm trong site_content chứ không nằm trong CSDL).
+-- p_diem: điểm thưởng tặng kèm theo khoản nạp. Trang nạp tiền HỨA "được cộng X
+-- điểm" nên chỗ này bắt buộc phải cộng thật, nếu không khách nạp mãi vẫn 0 điểm.
 create or replace function public.cong_vi(
   p_user uuid,
   p_tien bigint,
-  p_cap  text default null
+  p_cap  text default null,
+  p_diem integer default 0
 )
-returns table (so_du bigint, tong_nap bigint)
+returns table (so_du bigint, tong_nap bigint, diem bigint)
 language plpgsql
 security definer
 set search_path = public as $$
@@ -40,13 +43,14 @@ begin
   update public.profiles
      set balance      = coalesce(balance, 0) + p_tien,
          total_topup  = coalesce(total_topup, 0) + p_tien,
+         points       = coalesce(points, 0) + greatest(coalesce(p_diem, 0), 0),
          member_level = coalesce(p_cap, member_level)
    where id = p_user
-  returning balance::bigint, total_topup::bigint;
+  returning balance::bigint, total_topup::bigint, points::bigint;
 end;
 $$;
 
-comment on function public.cong_vi(uuid, bigint, text) is
+comment on function public.cong_vi(uuid, bigint, text, integer) is
   'Cộng ví nguyên tử khi khách nạp tiền — chỉ webhook thanh toán gọi (service role).';
 
 -- 2) TRỪ VÍ (thu phí gói tin) ------------------------------------------------
@@ -102,9 +106,9 @@ comment on function public.dung_luot_mien_phi(uuid) is
 -- 4) QUYỀN GỌI ---------------------------------------------------------------
 -- KHÔNG cấp cho anon/authenticated: hai hàm này đổi tiền, chỉ máy chủ của web
 -- (service role) được gọi. Cấp cho người dùng thường là ai cũng tự cộng tiền.
-revoke all on function public.cong_vi(uuid, bigint, text)  from public, anon, authenticated;
+revoke all on function public.cong_vi(uuid, bigint, text, integer)  from public, anon, authenticated;
 revoke all on function public.tru_vi(uuid, bigint)         from public, anon, authenticated;
 revoke all on function public.dung_luot_mien_phi(uuid)     from public, anon, authenticated;
-grant execute on function public.cong_vi(uuid, bigint, text) to service_role;
+grant execute on function public.cong_vi(uuid, bigint, text, integer) to service_role;
 grant execute on function public.tru_vi(uuid, bigint)        to service_role;
 grant execute on function public.dung_luot_mien_phi(uuid)    to service_role;

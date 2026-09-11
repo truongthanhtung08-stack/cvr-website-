@@ -176,9 +176,22 @@ export async function POST(request: Request) {
     }
 
     if (conDuocMienPhi) {
+      // PHẢI ĐẶT HẠN HIỂN THỊ như tin trả phí. Miễn phí là miễn tiền, KHÔNG phải
+      // được đứng hạng cao vĩnh viễn — thiếu tier_expires_at thì tin Gold/Diamond
+      // tặng cho thành viên mới sẽ chiếm chỗ mãi mãi.
+      const hetHanMp = new Date(Date.now() + soNgay * 86_400_000).toISOString();
       const { error } = await admin
         .from("listings")
-        .update({ status: "approved", published_at: new Date().toISOString(), tier: goi })
+        .update({
+          status: "approved",
+          published_at: new Date().toISOString(),
+          tier: goi,
+          tier_expires_at: hetHanMp,
+          // Không thu tiền → không có doanh thu, thuế bằng 0.
+          gia_chua_thue: 0,
+          tien_thue: 0,
+          thue_suat: THUE_SUAT_GTGT,
+        })
         .eq("id", id);
       if (error) return loi(error.message, 500);
       revalidateTag("listings", "max");
@@ -186,7 +199,8 @@ export async function POST(request: Request) {
         tieuDe: "Tin của bạn đã được duyệt",
         cacDong: [
           { nhan: "Tin đăng", giaTri: tin.title },
-          { nhan: "Gói dịch vụ", giaTri: `${tenGoi(bang, goi)} ${soNgay} ngày — miễn phí` },
+          { nhan: "Gói dịch vụ", giaTri: `${tenGoi(bang, goi)} · ${soNgay} ngày — miễn phí` },
+          { nhan: "Hiển thị đến", giaTri: new Date(hetHanMp).toLocaleDateString("vi-VN") },
         ],
         znsTemplateId: MAU_DUYET_TIN,
         znsData: {

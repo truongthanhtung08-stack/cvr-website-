@@ -13,7 +13,30 @@ export default function RedeemPointsPage() {
   const { billing, loading: billingLoading } = useBilling();
   const cfg = billing.points;
   const [amount, setAmount] = useState<number>(cfg.minRedeem);
-  const [done, setDone] = useState(false);
+  const [dangDoi, setDangDoi] = useState(false);
+  const [ketQua, setKetQua] = useState<{ diem: number; tien: number; soDu: number } | null>(null);
+  const [loi, setLoi] = useState("");
+
+  // Đổi điểm ĂN NGAY. Trước đây nút này chỉ bật một dòng chữ "đã gửi yêu cầu, chờ
+  // quản trị viên xác nhận" nhưng KHÔNG ghi yêu cầu đi đâu — khách chờ mãi không
+  // được cộng tiền. Số tiền do máy chủ tính, trình duyệt chỉ gửi số điểm.
+  async function doiDiem(soDiem: number) {
+    setDangDoi(true);
+    setLoi("");
+    try {
+      const r = await fetch("/api/doi-diem", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ diem: soDiem }),
+      });
+      const j = await r.json();
+      if (!r.ok || !j.ok) setLoi(j.message || "Đổi điểm không thành công.");
+      else setKetQua({ diem: j.diemDaDoi, tien: j.soTien, soDu: j.soDuMoi });
+    } catch {
+      setLoi("Không kết nối được máy chủ. Thử lại giúp tôi.");
+    }
+    setDangDoi(false);
+  }
 
   // Tải xong cấu hình điểm của admin → đưa ô nhập về mức tối thiểu hiện hành
   useEffect(() => {
@@ -80,19 +103,23 @@ export default function RedeemPointsPage() {
             Bạn cần tối thiểu {cfg.minRedeem} điểm để đổi. Nạp tiền để tích thêm điểm.
           </p>
         )}
-        {done && (
+        {ketQua && (
           <p className="mt-3 rounded-lg bg-green-50 px-4 py-2.5 text-sm text-green-700">
-            Đã gửi yêu cầu đổi điểm. Số dư sẽ được cộng sau khi quản trị viên xác nhận.
+            Đã đổi {ketQua.diem} điểm thành <strong className="font-semibold">{vnd(ketQua.tien)}</strong>.
+            Số dư hiện tại: <strong className="font-semibold">{vnd(ketQua.soDu)}</strong>.
           </p>
+        )}
+        {loi && (
+          <p className="mt-3 rounded-lg bg-red-50 px-4 py-2.5 text-sm text-red-700">{loi}</p>
         )}
 
         <button
           type="button"
-          disabled={!canRedeem}
-          onClick={() => setDone(true)}
+          disabled={!canRedeem || dangDoi}
+          onClick={() => doiDiem(amount)}
           className="mt-4 h-12 w-full rounded-lg bg-cvr-ink text-sm font-bold text-white transition hover:bg-cvr-ink/90 disabled:opacity-40"
         >
-          Đổi {amount} điểm
+          {dangDoi ? "Đang đổi…" : `Đổi ${amount} điểm`}
         </button>
       </section>
     </div>

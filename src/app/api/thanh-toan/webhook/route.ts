@@ -176,21 +176,35 @@ export async function POST(req: Request) {
     // (update ... set balance = balance + x). Kiểu cũ đọc số dư rồi ghi đè cả
     // cột: admin duyệt tin đúng lúc khách nạp tiền là một trong hai khoản bị
     // ghi đè mất. Xem supabase/migrations/0028_vi_nguyen_tu.sql.
+    // ĐIỂM THƯỞNG — trang nạp tiền hứa với khách "Được cộng X điểm thưởng" ngay
+    // trước lúc bấm nạp, nên ở đây bắt buộc phải cộng thật và cộng ĐÚNG công
+    // thức đó. Trước đây webhook không đụng gì tới points: khách nạp bao nhiêu
+    // lần vẫn 0 điểm, vào trang Đổi điểm không có gì để đổi.
+    const cs = luu?.points ?? BILLING_DEFAULT.points;
+    const diemThuong = cs.active && cs.earnPerVnd > 0 ? Math.floor(soTien / cs.earnPerVnd) : 0;
+
     const { data: viMoi, error: loiRpc } = await supabase.rpc("cong_vi", {
       p_user: don.user_id,
       p_tien: soTien,
       p_cap: capTheoTongNap(levels, tongNapMoi),
+      p_diem: diemThuong,
     });
     // Chưa chạy migration 0028 thì chưa có hàm → quay về cách cũ để tiền của
     // khách vẫn vào ví, không kẹt lại ở cổng.
     const chuaCoHam = loiRpc && /function .* does not exist|schema cache|PGRST202/i.test(loiRpc.message);
     let loiVi = chuaCoHam ? null : loiRpc;
     if (chuaCoHam) {
+      const { data: diemCu } = await supabase
+        .from("profiles")
+        .select("points")
+        .eq("id", don.user_id)
+        .limit(1);
       ({ error: loiVi } = await supabase
         .from("profiles")
         .update({
           balance: soDuMoi,
           total_topup: tongNapMoi,
+          points: Number(diemCu?.[0]?.points ?? 0) + diemThuong,
           member_level: capTheoTongNap(levels, tongNapMoi),
         })
         .eq("id", don.user_id));
@@ -227,6 +241,7 @@ export async function POST(req: Request) {
       cacDong: [
         { nhan: "Số tiền nạp", giaTri: vnd(soTien) },
         { nhan: "Số dư hiện tại", giaTri: vnd(soDuBao) },
+        ...(diemThuong > 0 ? [{ nhan: "Điểm thưởng cộng thêm", giaTri: diemThuong + " điểm" }] : []),
         { nhan: "Mã giao dịch", giaTri: String(don.id) },
       ],
       znsTemplateId: MAU_NAP_TIEN,
