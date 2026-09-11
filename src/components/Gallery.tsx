@@ -176,18 +176,17 @@ export default function Gallery({
               ),
             )}
           </div>
-          {/* HUY HIỆU ĐẾM — mở tin ra là biết ngay tin có bao nhiêu video, bao
-              nhiêu ảnh. Video đứng đầu dãy nên nếu không có cái này, khách xem
-              xong video tưởng hết, không biết phía sau còn cả bộ ảnh. Đặt ở góc
-              trên TRÁI: góc phải là chỗ hai nút Xoay / Toàn màn hình của video. */}
-          {demMedia}
+          {/* HUY HIỆU ĐẾM — mở tin ra là biết tin có bao nhiêu video, bao nhiêu
+              ảnh; video đứng đầu dãy nên không có nó thì khách xem xong video
+              tưởng hết. Ở SLIDE VIDEO THÌ ẨN, xem lý do ở khối nút bên dưới. */}
+          {!mIsVideo && demMedia}
 
           {/* ── NÚT CHUYỂN TẤM Ở HAI BÊN ─────────────────────────────────────
-              Thay cho dãy ô nhỏ dưới đáy: không ăn chiều cao, và nằm ở giữa hai
-              cạnh nên KHÔNG bao giờ đè lên thanh điều khiển của trình phát video
-              (thanh đó nằm sát đáy). Ở tấm đầu thì ẩn nút trái, tấm cuối ẩn nút
-              phải — khách nhìn là biết còn tấm nào nữa hay không. */}
-          {media.length > 1 && (
+              CHỈ hiện ở slide ẢNH. Khung video phải TRỐNG TRƠN: mỗi thứ web đặt
+              đè lên đó đều ăn mất cú chạm và làm nút play / toàn màn hình của
+              trình phát bấm không lên (chủ dự án báo đi báo lại 11/9/2026).
+              Ở slide video khách vuốt để qua ảnh — trình phát giữ trọn khung. */}
+          {!mIsVideo && media.length > 1 && (
             <>
               {mCur > 0 && (
                 <button

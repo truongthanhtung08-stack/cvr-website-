@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 
 // ============================================================================
@@ -71,6 +72,29 @@ export default function BackBar() {
   const router = useRouter();
   const pathname = usePathname() || "/";
 
+  // TÊN TIN / TÊN DỰ ÁN ĐANG XEM — chữ "Chi tiết tin" chung chung không cho biết
+  // mình đang ở đâu trong web. Lấy thẳng tiêu đề <h1> của trang: khách mở nhiều
+  // tin liên tiếp vẫn biết đang đứng ở tin nào, và bấm Quay lại là về đúng danh
+  // sách vừa rời (chủ dự án chốt 11/9/2026).
+  const [tenTrang, setTenTrang] = useState("");
+  useEffect(() => {
+    let con = true;
+    const doc = () => {
+      if (!con) return;
+      const goc0 = pathname.split("/").filter(Boolean)[0] ?? "";
+      const laTrangChiTiet = goc0 === "bat-dong-san" || goc0 === "du-an" || goc0 === "tin-tuc";
+      setTenTrang(laTrangChiTiet ? (document.querySelector("h1")?.textContent?.trim() ?? "") : "");
+    };
+    // Đọc sau khi trang vẽ xong, rồi đọc lại một nhịp nữa cho nội dung vào muộn.
+    const r = requestAnimationFrame(doc);
+    const t = window.setTimeout(doc, 400);
+    return () => {
+      con = false;
+      cancelAnimationFrame(r);
+      window.clearTimeout(t);
+    };
+  }, [pathname]);
+
   if (pathname === "/") return null;
 
   const doan = pathname.split("/").filter(Boolean);
@@ -81,6 +105,8 @@ export default function BackBar() {
   // Tên hiển thị: ưu tiên tên trang con của khu tài khoản
   let ten = muc.ten;
   if (goc === "tai-khoan" && doan[1]) ten = TAI_KHOAN_CON[doan[1]] ?? muc.ten;
+  // Trang chi tiết (tin / dự án / bài viết) → hiện đúng tên đang xem
+  if (doan.length > 1 && tenTrang) ten = tenTrang;
 
   // Trang cha (chỉ dùng khi KHÔNG có lịch sử để lùi):
   // trang con → chaCon (đường dẫn có thật) · trang gốc của mục → cha
