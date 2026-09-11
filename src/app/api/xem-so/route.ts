@@ -95,20 +95,34 @@ async function traSo(listingId: string, sdtKhach: string, ten: string | undefine
 
   // GHI LEAD — người bán phải biết ai vừa hỏi số, kể cả khi người đó chưa có tài
   // khoản. viewer_id để trống, còn tên và SỐ ĐÃ XÁC THỰC thì có đủ để gọi lại.
+  //
+  // CHẶN TRÙNG 24 GIỜ, khớp với hàm reveal_contact dành cho thành viên: cùng một
+  // số bấm đi bấm lại một tin thì chỉ ghi một dòng. Không chặn thì danh sách của
+  // người bán ngập lên bằng cùng một cái tên, đọc không ra ai là khách mới.
+  //
   // Ghi hỏng cũng KHÔNG chặn khách xem số: họ đã xác thực đúng rồi, chặn lại là
   // phạt nhầm người.
-  await admin
-    .from("listing_leads")
-    .insert({
-      listing_id: listingId,
-      viewer_id: null,
-      viewer_name: (ten ?? "").trim() || null,
-      viewer_phone: sdtKhach,
-    })
-    .then(
-      () => undefined,
-      () => undefined,
-    );
+  try {
+    const hom_qua = new Date(Date.now() - 86_400_000).toISOString();
+    const { data: daCo } = await admin
+      .from("listing_leads")
+      .select("id")
+      .eq("listing_id", listingId)
+      .eq("viewer_phone", sdtKhach)
+      .gt("created_at", hom_qua)
+      .limit(1);
+
+    if (!daCo?.length) {
+      await admin.from("listing_leads").insert({
+        listing_id: listingId,
+        viewer_id: null,
+        viewer_name: (ten ?? "").trim() || null,
+        viewer_phone: sdtKhach,
+      });
+    }
+  } catch {
+    /* ghi lead hỏng → vẫn trả số cho khách */
+  }
 
   return NextResponse.json({ ok: true, sdt: soNguoiBan, ...(ve ? { ve } : {}) });
 }
