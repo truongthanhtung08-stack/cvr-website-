@@ -35,6 +35,28 @@ const nextConfig: NextConfig = isPages
         // Giữ bản tối ưu 30 ngày trên CDN Vercel → lần tải sau tức thì.
         minimumCacheTTL: 2592000,
       },
+
+      // ── CỨU "THỢ PHỤ" CỦA BẢN ĐỒ MAPLIBRE ─────────────────────────────────
+      // MapLibre 6 tìm file worker theo đường TƯƠNG ĐỐI so với chính nó, nên nó
+      // gọi /_next/static/chunks/maplibre-gl-worker.mjs — file KHÔNG hề tồn tại
+      // → 404 → worker chết câm → bản đồ TRẮNG TRƠN, không báo lỗi gì.
+      // Đo trên web thật 11/09/2026: bản dựng production có HAI bản thư viện,
+      // chỉ một bản nhận đường mà setWorkerUrl chỉ cho; bản còn lại vẫn đi tìm
+      // đường cũ. Nên phải chặn ngay ở máy chủ: ai hỏi đường cũ thì trả file
+      // thật trong public/maplibre/ (do scripts/chep-maplibre-worker.mjs chép ra).
+      // beforeFiles = xét TRƯỚC khi tìm file tĩnh, nên áp được cho cả /_next/static.
+      async rewrites() {
+        const toi = (f: string) => `/maplibre/${f}`;
+        return {
+          beforeFiles: [
+            { source: "/_next/static/chunks/maplibre-gl-worker.mjs", destination: toi("maplibre-gl-worker.js") },
+            { source: "/_next/static/chunks/maplibre-gl-shared.mjs", destination: toi("maplibre-gl-shared.js") },
+            { source: "/_next/static/chunks/maplibre-gl-shared.js", destination: toi("maplibre-gl-shared.js") },
+          ],
+          afterFiles: [],
+          fallback: [],
+        };
+      },
     };
 
 export default nextConfig;
