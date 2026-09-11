@@ -35,12 +35,23 @@ type NguoiXem = {
   soNgay: number;
 };
 
+type DanhGia = {
+  id: string;
+  listing_id: string;
+  sao: number;
+  sai_thong_tin: boolean;
+  khong_lien_lac: boolean;
+  da_ban: boolean;
+  created_at: string;
+};
+
 type DongTin = { id: string; title: string; hienThi: number; nguoiXem: number; xem7: number; xem30: number; tong: number; hoiSo: number };
 
 export default function TuongTacPage() {
   const [tin, setTin] = useState<DongTin[] | null>(null);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [nguoiXem, setNguoiXem] = useState<NguoiXem[]>([]);
+  const [danhGia, setDanhGia] = useState<DanhGia[]>([]);
   const [tenTin, setTenTin] = useState<Map<string, string>>(new Map());
 
   useEffect(() => {
@@ -68,7 +79,7 @@ export default function TuongTacPage() {
       const moc7 = moc(7);
       const moc30 = moc(30);
 
-      const [{ data: xem }, { data: ht }, { data: nx }, { data: ld }] = await Promise.all([
+      const [{ data: xem }, { data: ht }, { data: nx }, { data: ld }, { data: dg }] = await Promise.all([
         supabase.from("listing_view_daily").select("listing_id,ngay,luot").in("listing_id", ids).gte("ngay", moc30),
         // Lượt HIỂN THỊ 30 ngày — bảng này là migration 0030, chưa chạy thì cột
         // hiển thị để trống, phần còn lại của trang vẫn dùng bình thường.
@@ -84,6 +95,13 @@ export default function TuongTacPage() {
         supabase
           .from("listing_leads")
           .select("id,listing_id,viewer_name,viewer_phone,created_at")
+          .in("listing_id", ids)
+          .order("created_at", { ascending: false })
+          .limit(200),
+        // ĐÁNH GIÁ chất lượng tin (migration 0032). Chưa chạy thì để trống.
+        supabase
+          .from("danh_gia_tin")
+          .select("id,listing_id,sao,sai_thong_tin,khong_lien_lac,da_ban,created_at")
           .in("listing_id", ids)
           .order("created_at", { ascending: false })
           .limit(200),
@@ -130,6 +148,8 @@ export default function TuongTacPage() {
       const demXem = new Map<string, number>();
       for (const v of dsXem) demXem.set(v.listing_id, (demXem.get(v.listing_id) ?? 0) + 1);
 
+      setDanhGia((dg ?? []) as DanhGia[]);
+
       const dsLead = (ld ?? []) as Lead[];
       setLeads(dsLead);
       const demLead = new Map<string, number>();
@@ -158,6 +178,12 @@ export default function TuongTacPage() {
   const tongNguoiXem = (tin ?? []).reduce((s, t) => s + t.nguoiXem, 0);
   const tongHoiSo = (tin ?? []).reduce((s, t) => s + t.hoiSo, 0);
   const tyLe = tongHienThi > 0 ? (tongXem30 / tongHienThi) * 100 : 0;
+
+  // Điểm trung bình và các cảnh báo gộp từ đánh giá của khách.
+  const diemTb = danhGia.length ? danhGia.reduce((s2, d) => s2 + d.sao, 0) / danhGia.length : 0;
+  const soSai = danhGia.filter((d) => d.sai_thong_tin).length;
+  const soKhongGap = danhGia.filter((d) => d.khong_lien_lac).length;
+  const soDaBan = danhGia.filter((d) => d.da_ban).length;
 
   if (tin === null) return <p className="text-sm text-cvr-muted">Đang tải…</p>;
 
@@ -222,6 +248,59 @@ export default function TuongTacPage() {
       {/* ── TIN NÀO ĐANG CHẠY ────────────────────────────────────────────────
           Bấm vào tên tin là sang trang thống kê riêng của tin đó (biểu đồ 30
           ngày + danh sách người quan tâm của chính tin ấy). */}
+      {/* ── KHÁCH ĐÁNH GIÁ TIN ───────────────────────────────────────────────
+          Người đã liên hệ nói tin có đúng không. Đây là thứ người bán cần biết
+          NGAY: tin bị báo sai thông tin hoặc không liên lạc được mà cứ để vậy
+          thì càng chạy càng mất uy tín. */}
+      {danhGia.length > 0 && (
+        <section className="rounded-2xl border border-cvr-line bg-white p-5 shadow-sm">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h2 className="text-base font-semibold text-cvr-ink">Khách đánh giá tin</h2>
+            <p className="text-sm text-cvr-body">
+              <span className="text-[#f5a623]">★</span>{" "}
+              <strong className="font-semibold text-cvr-ink">{diemTb.toFixed(1)}</strong>
+              <span className="text-cvr-muted"> · {danhGia.length} lượt</span>
+            </p>
+          </div>
+
+          {/* Cảnh báo gộp — có vấn đề thì nói thẳng, đừng để người bán tự dò. */}
+          {(soSai > 0 || soKhongGap > 0 || soDaBan > 0) && (
+            <p className="mt-2.5 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
+              {[
+                soSai > 0 ? `${soSai} lượt báo sai thông tin` : "",
+                soKhongGap > 0 ? `${soKhongGap} lượt gọi không liên lạc được` : "",
+                soDaBan > 0 ? `${soDaBan} lượt báo đã bán` : "",
+              ]
+                .filter(Boolean)
+                .join(" · ")}
+              . Kiểm tra lại tin để khách không mất lòng tin.
+            </p>
+          )}
+
+          <ul className="mt-3 space-y-2">
+            {danhGia.slice(0, 10).map((d) => (
+              <li key={d.id} className="flex items-center justify-between gap-3 rounded-xl bg-cvr-surface px-3 py-2.5">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-cvr-ink">
+                    <span className="text-[#f5a623]">{"★".repeat(d.sao)}</span>
+                    <span className="text-cvr-line">{"★".repeat(5 - d.sao)}</span>
+                    {d.sai_thong_tin && <span className="ml-2 text-[12px] font-normal text-amber-700">sai thông tin</span>}
+                    {d.khong_lien_lac && <span className="ml-2 text-[12px] font-normal text-amber-700">không liên lạc được</span>}
+                    {d.da_ban && <span className="ml-2 text-[12px] font-normal text-cvr-muted">đã bán</span>}
+                  </p>
+                  <p className="truncate text-xs text-cvr-muted">
+                    <Link href={`/tai-khoan/tin-dang/${d.listing_id}`} className="hover:underline">
+                      {tenTin.get(d.listing_id) ?? "Tin đã xoá"}
+                    </Link>{" "}
+                    · {truocDay(d.created_at)}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       {/* ── THÀNH VIÊN ĐÃ XEM TIN ────────────────────────────────────────────
           Nhóm này LỚN HƠN NHIỀU nhóm đã hỏi số: phần lớn khách xem xong đóng
           lại, trước nay người bán không biết gì về họ.
