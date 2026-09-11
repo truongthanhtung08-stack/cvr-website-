@@ -87,6 +87,17 @@ export default function Gallery({
     if (el) setMCur(Math.round(el.scrollLeft / el.clientWidth));
   };
 
+  // Ô nhỏ đang xem phải TỰ trôi vào giữa dãy. Không có cái này thì xem tới tấm
+  // thứ 6 là ô đang chọn đã nằm ngoài màn, khách không biết mình đang ở đâu.
+  const mThumbs = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const dai = mThumbs.current;
+    const o = dai?.querySelector<HTMLElement>(`[data-o="${mCur}"]`);
+    if (!dai || !o) return;
+    const giua = o.offsetLeft - dai.clientWidth / 2 + o.clientWidth / 2;
+    dai.scrollTo({ left: Math.max(0, giua), behavior: "smooth" });
+  }, [mCur]);
+
   // ĐIỆN THOẠI cũng TỰ CHẠY slide 4s/slide như máy tính (video tính là một slide,
   // nó không tự phát nên vẫn trôi qua như ảnh). Ngưng khi: khách đang xem video /
   // phóng to, hoặc khách đã tự vuốt tay.
@@ -227,36 +238,40 @@ export default function Gallery({
 
           </div>
 
-          {/* Dải 4 ô: ô đầu là video, ô cuối ghi còn bao nhiêu tấm — bấm là nhảy tới. */}
+          {/* DÃY Ô NHỎ — CUỘN NGANG, CÓ ĐỦ MỌI TẤM.
+              Bản cũ chỉ hiện 4 ô rồi đè ô thứ tư thành "+N": ảnh thứ 5 trở đi
+              không có cách nào chọn, dãy cũng không kéo được (chủ dự án báo
+              11/9/2026). Nay dãy kéo ngang tự do, ô đang xem viền đậm và TỰ
+              cuộn vào giữa tầm nhìn mỗi khi đổi ảnh. */}
           {media.length > 1 && (
-            <div className="grid grid-cols-4 gap-1 border-x border-b border-cvr-line bg-white p-1">
-              {media.slice(0, 4).map((m, i) => {
-                const oCuoi = i === 3 && media.length > 4;
-                return (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => nhayToi(i)}
-                    aria-label={m.kind === "video" ? "Xem video" : `Xem ảnh ${imgIdx(i) + 1}`}
-                    className={`relative aspect-square overflow-hidden rounded-md bg-cvr-surface ring-1 transition ${
-                      i === mCur ? "ring-2 ring-cvr-ink" : "ring-cvr-line"
-                    }`}
-                  >
-                    {m.kind === "video" ? (
-                      <span className="absolute inset-0 flex items-center justify-center bg-black">
-                        <svg className="ml-0.5 h-6 w-6 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+            <div
+              ref={mThumbs}
+              className="no-scrollbar flex gap-1.5 overflow-x-auto overscroll-x-contain border-x border-b border-cvr-line bg-white p-1.5"
+            >
+              {media.map((m, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  data-o={i}
+                  onClick={() => nhayToi(i)}
+                  aria-label={m.kind === "video" ? "Xem video" : `Xem ảnh ${imgIdx(i) + 1}`}
+                  aria-current={i === mCur}
+                  className={`relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-cvr-surface transition ${
+                    i === mCur ? "ring-2 ring-cvr-ink" : "ring-1 ring-cvr-line opacity-70"
+                  }`}
+                >
+                  {m.kind === "video" ? (
+                    <>
+                      <GallerySlideVideo url={m.src} active={false} xemTruoc />
+                      <span className="absolute inset-0 flex items-center justify-center bg-black/25">
+                        <svg className="ml-0.5 h-5 w-5 text-white drop-shadow" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
                       </span>
-                    ) : (
-                      <Image src={m.src} alt="" fill sizes="25vw" className="object-cover" />
-                    )}
-                    {oCuoi && (
-                      <span className="absolute inset-0 flex items-center justify-center bg-black/60 text-[15px] font-semibold text-white">
-                        +{media.length - 4}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
+                    </>
+                  ) : (
+                    <Image src={m.src} alt="" fill sizes="64px" className="object-cover" />
+                  )}
+                </button>
+              ))}
             </div>
           )}
         </div>
