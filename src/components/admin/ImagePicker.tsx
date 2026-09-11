@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import MoBangChrome from "@/components/MoBangChrome";
 import { asset } from "@/lib/asset";
 import { isVideoUrl } from "@/lib/media";
-import { uploadImageFile, uploadVideoFile, kiemTraVideo } from "@/lib/uploadImage";
+import { uploadImageFile, uploadVideoFile } from "@/lib/uploadImage";
 
 // Quản lý MEDIA tin đăng/dự án: ẢNH và VIDEO — TẢI TỪ MÁY hoặc DÁN LINK.
 // value là mảng đường dẫn (ảnh + video xen kẽ theo thứ tự thêm). ẢNH ĐẠI DIỆN =
@@ -98,23 +98,11 @@ export default function ImagePicker({
       if (videoRef.current) videoRef.current.value = "";
       return;
     }
-    // Soi tệp TRƯỚC khi tải lên: sai định dạng hoặc quá dài thì chặn ngay, khỏi
-    // mất công tải hết mấy chục MB rồi mới biết hỏng.
-    const { loi, nhac } = await kiemTraVideo(file);
-    if (loi) {
-      setError(loi);
-      if (videoRef.current) videoRef.current.value = "";
-      return;
-    }
-
     setUploadingVideo(true);
     const { url, error: e } = await uploadVideoFile(file);
     setUploadingVideo(false);
     if (e) setError(e);
-    else if (url) {
-      onChange([...value, url]);
-      if (nhac) setError(nhac); // video vẫn lên, chỉ nhắc để lần sau quay ngang
-    }
+    else if (url) onChange([...value, url]);
     if (videoRef.current) videoRef.current.value = "";
   }
 
