@@ -20,7 +20,7 @@ import OTieuDe from "@/components/OTieuDe";
 // BẢN ĐỒ GHIM — dùng bản Leaflet/OpenStreetMap. Bản chạy nền Google
 // (components/MapPicker.tsx) GIỮ LẠI để sau này Google thông thì đổi về, chỉ
 // phải sửa đúng dòng import này.
-import MapPicker from "@/components/MapPickerGoogle";
+import MapPicker from "@/components/MapPickerMo";
 import ContentEditor from "@/components/admin/ContentEditor";
 import { freeNote, levelOf, quotePrice, soAnhToiDa, soVideoToiDa, tenGoiMienPhi, vnd } from "@/lib/billing";
 import { banChuyenDoi } from "@/lib/gtagChuyenDoi";

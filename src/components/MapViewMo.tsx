@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Map as MlMap, Marker as MlMarker } from "maplibre-gl";
 import type { Listing } from "@/lib/data";
+import { napMapLibre, STYLE_MO, vietHoaNhan } from "@/lib/banDoMo";
 import { parseLatLng } from "@/lib/googleMaps";
 import { coordOf } from "@/lib/geo";
 import type { DiemBanDo } from "@/components/MapViewGoogle";
@@ -19,7 +20,6 @@ import type { DiemBanDo } from "@/components/MapViewGoogle";
 // đó — tin rải từ Đà Nẵng tới Cà Mau mà không gom thì ghim chồng đè nhau.
 // ════════════════════════════════════════════════════════════════════════════
 
-const STYLE = "https://tiles.openfreemap.org/styles/liberty";
 const O_LUOI = 64; // cạnh ô gom cụm, tính bằng điểm ảnh trên màn hình
 
 export default function MapViewMo({ items, diem }: { items?: Listing[]; diem?: DiemBanDo[] }) {
@@ -59,13 +59,12 @@ export default function MapViewMo({ items, diem }: { items?: Listing[]; diem?: D
   useEffect(() => {
     let huy = false;
     void (async () => {
-      const ml = await import("maplibre-gl");
-      await import("maplibre-gl/dist/maplibre-gl.css");
+      const ml = await napMapLibre();
       if (huy || !boxRef.current) return;
 
       const map = new ml.Map({
         container: boxRef.current,
-        style: STYLE,
+        style: STYLE_MO,
         center: [108.2022, 16.0544],
         zoom: 11,
       });
@@ -73,6 +72,7 @@ export default function MapViewMo({ items, diem }: { items?: Listing[]; diem?: D
       map.addControl(new ml.NavigationControl({ showCompass: false }), "top-right");
       map.on("load", () => {
         if (huy) return;
+        vietHoaNhan(map);
         setSanSang(true);
       });
     })().catch(() => setLoi("Chưa mở được bản đồ. Anh/chị bấm “Xem danh sách” để xem tin bình thường."));
@@ -93,7 +93,7 @@ export default function MapViewMo({ items, diem }: { items?: Listing[]; diem?: D
     let hen: ReturnType<typeof setTimeout> | null = null;
 
     async function ve() {
-      const ml = await import("maplibre-gl");
+      const ml = await napMapLibre();
       if (huy || !map) return;
 
       for (const m of ghimRef.current) m.remove();

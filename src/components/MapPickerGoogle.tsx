@@ -392,11 +392,18 @@ export default function MapPickerGoogle({
                 {mucDo === "soNha" ? "đúng số nhà" : mucDo === "duong" ? "đúng tên đường" : "mới tới phường/xã"}
               </span>
             )}
-            <span className="text-cvr-muted"> — kéo ghim hoặc bấm chỗ khác để chỉnh.</span>
+            <span className="text-cvr-muted">
+              {dungNhung ? " — ghim lại bằng nút định vị hoặc dán link khác." : " — kéo ghim hoặc bấm chỗ khác để chỉnh."}
+            </span>
           </>
         ) : (
           <span className="text-cvr-muted">
-            Bấm lên bản đồ để ghim vị trí.
+            {/* Khung Google NHÚNG không bắt được cú chạm nên KHÔNG bấm lên bản đồ để ghim
+                được — mời khách bấm là để khách bấm hoài không ra gì rồi tưởng web hỏng.
+                Chỉ đúng hai đường: nút định vị GPS, hoặc dán link/toạ độ. */}
+            {dungNhung
+              ? "Chưa ghim — bấm “Tôi đang đứng ở đây” hoặc dán link Google Maps vào ô dưới."
+              : "Bấm lên bản đồ để ghim vị trí."}
           </span>
         )}
       </p>
