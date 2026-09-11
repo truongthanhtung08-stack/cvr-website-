@@ -267,7 +267,7 @@ export default function ImagePicker({
           <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
           </svg>
-          Bộ sưu tập (ảnh &amp; video)
+          Bộ sưu tập · Thư mục · Máy ảnh
           <input
             type="file"
             accept="image/*,video/*"
@@ -278,25 +278,6 @@ export default function ImagePicker({
           />
         </label>
 
-        {/* CHỤP TẠI CHỖ — thuộc tính capture mở thẳng máy ảnh, khách đang đứng ở
-            nhà đất thì chụp đăng luôn, khỏi qua bước lưu vào máy rồi tìm lại. */}
-        <label
-          className={`inline-flex cursor-pointer items-center gap-2 rounded-lg border border-cvr-line bg-white px-4 py-2 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink ${uploadingImg ? "pointer-events-none opacity-60" : ""}`}
-        >
-          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M3 7.5h3l1.5-2h9L18 7.5h3v11H3v-11Z" />
-            <circle cx="12" cy="12.5" r="3.2" />
-          </svg>
-          Chụp ảnh
-          <input
-            type="file"
-            accept="image/*"
-            capture="environment"
-            disabled={uploadingImg}
-            onChange={(e) => handleImageFiles(e.target.files)}
-            className="sr-only"
-          />
-        </label>
       </div>
 
 
