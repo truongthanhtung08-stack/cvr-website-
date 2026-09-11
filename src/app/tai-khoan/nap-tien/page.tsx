@@ -34,10 +34,24 @@ function TopUpForm() {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
 
-  // Tải xong mệnh giá của admin → chọn sẵn mệnh giá thứ hai như trước
+  // SỐ CÒN THIẾU từ trang đăng tin (?can=…). Khách bấm Đăng mà ví không đủ thì
+  // web đưa sang đây kèm đúng số còn thiếu — chọn sẵn mệnh giá vừa đủ, khỏi phải
+  // tự tính rồi nạp hụt, quay lại vẫn không đăng được.
+  const canNap = Number(params.get("can") || 0);
+
+  // Tải xong mệnh giá của admin → chọn sẵn mệnh giá thứ hai như trước.
+  // Có ?can= thì chọn mệnh giá nhỏ nhất mà vẫn đủ; lớn hơn mọi mệnh giá thì điền
+  // thẳng số còn thiếu vào ô nhập tay.
   useEffect(() => {
-    if (!billingLoading) setAmount(amounts[1] ?? amounts[0]);
-  }, [billingLoading, amounts]);
+    if (billingLoading) return;
+    if (canNap > 0) {
+      const vuaDu = amounts.find((a) => a >= canNap);
+      if (vuaDu) setAmount(vuaDu);
+      else setCustom(String(canNap));
+      return;
+    }
+    setAmount(amounts[1] ?? amounts[0]);
+  }, [billingLoading, amounts, canNap]);
 
   const finalAmount = custom.trim() ? Number(custom.replace(/\D/g, "")) || 0 : amount;
   const points = billing.points.active
@@ -87,6 +101,13 @@ function TopUpForm() {
           Số dư dùng để thanh toán phí đăng tin, đẩy tin và quảng cáo trên Coastal Land.
         </p>
       </div>
+
+      {canNap > 0 && (
+        <p className="rounded-lg border border-cvr-blue/30 bg-cvr-blue/[0.06] px-4 py-3 text-sm text-cvr-blue-ink">
+          Tin của bạn đã lưu nháp. Cần nạp thêm{" "}
+          <strong className="font-semibold">{canNap.toLocaleString("vi-VN")}đ</strong> để đăng.
+        </p>
+      )}
 
       {ketQua === "thanh-cong" && (
         <p className="rounded-lg bg-green-50 px-4 py-3 text-sm text-green-700">

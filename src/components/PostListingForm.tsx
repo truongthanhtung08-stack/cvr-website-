@@ -106,6 +106,7 @@ export default function PostListingForm() {
     free_quota: number;
     role: string;
     total_topup: number;
+    balance: number;
   } | null>(null);
   const [projectSlug, setProjectSlug] = useState("");
   // TÊN DỰ ÁN GÕ TAY — dự án của khách chưa có trên web thì vẫn ghi được tên,
@@ -116,6 +117,8 @@ export default function PostListingForm() {
 
   // Đang lưu nút nào — để 2 nút hiện trạng thái riêng, không lẫn nhau
   const [saving, setSaving] = useState<"" | "draft" | "publish">("");
+  // Ví không đủ tiền để đăng gói đã chọn — tin đã được lưu nháp, còn thiếu bao nhiêu.
+  const [thieuTien, setThieuTien] = useState<{ can: number; du: number } | null>(null);
   const [error, setError] = useState("");
 
   // Ngay bat dau mac dinh = hom nay; ngay ket thuc tu tinh theo so ngay cua goi
@@ -327,7 +330,7 @@ export default function PostListingForm() {
         // để tính ĐÚNG số tiền phải trả (ưu đãi thành viên mới, khuyến mãi, cấp).
         const { data: p } = await supabase
           .from("profiles")
-          .select("full_name, phone, email, created_at, free_quota, role, total_topup")
+          .select("full_name, phone, email, created_at, free_quota, role, total_topup, balance")
           .eq("id", user.id)
           .single();
         if (p) {
@@ -339,6 +342,8 @@ export default function PostListingForm() {
             free_quota: (p as { free_quota?: number }).free_quota ?? 0,
             role: (p as { role?: string }).role ?? "buyer",
             total_topup: (p as { total_topup?: number }).total_topup ?? 0,
+            // Cột balance có thể chưa bật trong CSDL → coi như 0.
+            balance: (p as { balance?: number }).balance ?? 0,
           });
         }
       }
@@ -449,7 +454,18 @@ export default function PostListingForm() {
       if (!planTier) return setError("Chưa chọn gói tin ở mục “Chọn gói tin — thanh toán”.");
     // LƯU NHÁP thì không chặn gì thêm — người đăng ghi tới đâu lưu tới đó.
 
-    setSaving(asDraft ? "draft" : "publish");
+    // VÍ KHÔNG ĐỦ TIỀN CHO GÓI ĐÃ CHỌN.
+    // Không chặn khan rồi để khách mất hết công nhập: LƯU NHÁP TOÀN BỘ tin đã
+    // điền, sau đó đưa thẳng sang trang nạp tiền. Nạp xong vào tin nháp bấm đăng
+    // là xong, không phải nhập lại từ đầu.
+    // SỐ PHẢI SO VỚI VÍ LÀ SỐ KHÁCH THỰC TRẢ = tổng đã gồm GTGT (tienThue.tongTra),
+    // KHÔNG phải giá gói. Giá web niêm yết chưa gồm VAT (thue.ts: GIA_DA_GOM_VAT =
+    // false) nên lấy nhầm giá gói là ví thiếu 8% mà web vẫn cho đăng.
+    const phaiTra = tienThue.tongTra;
+    const viThieu = !asDraft && phaiTra > 0 && (hoSoVi?.balance ?? 0) < phaiTra;
+    const luuNhap = asDraft || viThieu;
+
+    setSaving(luuNhap ? "draft" : "publish");
     // Dữ liệu chung cho cả THÊM MỚI và CẬP NHẬT
     const values = {
       // Nhu cầu: Cần bán · Cho thuê · Cần mua · Cần thuê
@@ -488,7 +504,7 @@ export default function PostListingForm() {
             }
           : undefined,
       },
-      status: asDraft ? ("draft" as const) : ("pending" as const), // khách đăng → chờ admin duyệt
+      status: luuNhap ? ("draft" as const) : ("pending" as const), // khách đăng → chờ admin duyệt
     };
 
     // HẠNG TIN = ĐÚNG GÓI NGƯỜI ĐĂNG ĐÃ CHỌN. Trước đây luôn ghi cứng "basic" nên
@@ -505,7 +521,7 @@ export default function PostListingForm() {
       ({ error: err } = await supabase
         .from("listings")
         .insert({ ...values, owner_id: userId, tier: hangTin, published_at: null }));
-    } else if (editStatus === "draft" && !asDraft) {
+    } else if (editStatus === "draft" && !luuNhap) {
       // ĐĂNG TIN NHÁP: tạo tin mới "chờ duyệt" + xoá nháp cũ.
       // (2 thao tác này chủ tin luôn có quyền — không phụ thuộc quyền đổi status trong DB)
       ({ error: err } = await supabase
@@ -527,8 +543,14 @@ export default function PostListingForm() {
     if (err) return setError(`Lưu thất bại: ${err.message}`);
     // Đo chuyển đổi cho Google Ads: chỉ tính TIN MỚI GỬI DUYỆT. Lưu nháp không
     // tính (chưa phải tin), sửa tin cũ cũng không tính (đã đếm lúc đăng lần đầu).
-    if (!asDraft && (!editId || editStatus === "draft")) banChuyenDoi("dang_tin");
-    setDone(asDraft ? "draft" : "pending");
+    if (!luuNhap && (!editId || editStatus === "draft")) banChuyenDoi("dang_tin");
+    // Thiếu tiền: tin đã nằm an toàn trong nháp → mời nạp ngay, kèm số còn thiếu.
+    if (viThieu) {
+      setThieuTien({ can: phaiTra, du: hoSoVi?.balance ?? 0 });
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+    setDone(luuNhap ? "draft" : "pending");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -541,6 +563,47 @@ export default function PostListingForm() {
         <Link href="/dang-nhap?next=/dang-tin" className="mt-5 inline-flex h-11 items-center justify-center rounded-lg bg-cvr-ink px-6 text-sm font-semibold text-white transition hover:bg-cvr-ink/90">
           Đăng nhập / Đăng ký
         </Link>
+      </div>
+    );
+  }
+
+  // VÍ CHƯA ĐỦ TIỀN — tin đã được lưu nháp nguyên vẹn, chỉ còn thiếu tiền.
+  // Đưa thẳng sang nạp tiền, kèm đúng số còn thiếu để khách khỏi phải tự tính.
+  if (thieuTien) {
+    const conThieu = Math.max(0, thieuTien.can - thieuTien.du);
+    return (
+      <div className="rounded-none border border-cvr-line bg-white p-10 text-center shadow-lux">
+        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-cvr-blue text-white">
+          <svg className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M6 6h12a3 3 0 013 3v6a3 3 0 01-3 3H6a3 3 0 01-3-3V9a3 3 0 013-3z" />
+          </svg>
+        </div>
+        <h3 className="text-xl font-semibold tracking-tight text-cvr-ink">Tin đã lưu — cần nạp thêm tiền để đăng</h3>
+
+        <div className="mx-auto mt-5 max-w-sm space-y-2 rounded-xl border border-cvr-line bg-cvr-surface px-4 py-3.5 text-sm">
+          <div className="flex justify-between"><span className="text-cvr-muted">Phải trả (đã gồm GTGT)</span><span className="font-semibold text-cvr-ink">{vnd(thieuTien.can)}</span></div>
+          <div className="flex justify-between"><span className="text-cvr-muted">Số dư ví</span><span className="font-medium text-cvr-body">{vnd(thieuTien.du)}</span></div>
+          <div className="flex justify-between border-t border-cvr-line pt-2">
+            <span className="font-semibold text-cvr-ink">Còn thiếu</span>
+            <span className="text-base font-semibold text-cvr-blue-ink">{vnd(conThieu)}</span>
+          </div>
+        </div>
+
+        <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
+          <Link
+            href={`/tai-khoan/nap-tien?can=${conThieu}`}
+            className="inline-flex h-11 w-full items-center justify-center rounded-full bg-cvr-ink px-7 text-sm font-semibold text-white transition hover:bg-cvr-ink/90 sm:w-auto"
+          >
+            Nạp tiền ngay
+          </Link>
+          <Link
+            href="/tai-khoan/tin-dang"
+            className="inline-flex h-11 w-full items-center justify-center rounded-full bg-cvr-surface px-6 text-sm font-semibold text-cvr-body ring-1 ring-inset ring-cvr-line transition hover:text-cvr-ink sm:w-auto"
+          >
+            Xem tin nháp
+          </Link>
+        </div>
+        <p className="mt-4 text-xs text-cvr-muted">Nạp xong, mở tin nháp và bấm Đăng — không phải nhập lại.</p>
       </div>
     );
   }
@@ -986,6 +1049,27 @@ export default function PostListingForm() {
             <p className="mt-2 text-xs text-cvr-muted">
               Trừ vào ví khi tin được duyệt và lên sóng. Tin bị từ chối thì không trừ đồng nào.
             </p>
+          )}
+
+          {/* SỐ DƯ VÍ ngay tại chỗ chọn gói — biết thiếu TRƯỚC khi bấm đăng, và
+              nạp được ngay tại đây, không phải đi tìm trang nạp tiền. */}
+          {thanhTien > 0 && hoSoVi && (
+            <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 border-t border-cvr-line pt-2.5 text-sm">
+              <span className="text-cvr-muted">Số dư ví</span>
+              <span className="flex items-center gap-2.5">
+                <span className={hoSoVi.balance < tienThue.tongTra ? "font-semibold text-red-600" : "font-semibold text-cvr-ink"}>
+                  {vnd(hoSoVi.balance)}
+                </span>
+                {hoSoVi.balance < tienThue.tongTra && (
+                  <Link
+                    href={`/tai-khoan/nap-tien?can=${tienThue.tongTra - hoSoVi.balance}`}
+                    className="rounded-full bg-cvr-ink px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-cvr-ink/90"
+                  >
+                    Nạp thêm {vnd(tienThue.tongTra - hoSoVi.balance)}
+                  </Link>
+                )}
+              </span>
+            </div>
           )}
         </div>
 
