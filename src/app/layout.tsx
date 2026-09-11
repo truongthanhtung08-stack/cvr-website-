@@ -11,6 +11,7 @@ import RouteMotion from "@/components/RouteMotion";
 import SiteJsonLd from "@/components/SiteJsonLd";
 import Analytics from "@/components/Analytics";
 import PwaRegister from "@/components/PwaRegister";
+import DemHienThi from "@/components/DemHienThi";
 
 // Font chính toàn site: Inter — hiện đại, chuyên nghiệp, "SF Pro của web" (kiểu Apple),
 // hỗ trợ tiếng Việt đầy đủ.
@@ -168,6 +169,9 @@ export default function RootLayout({
         {/* Cài web lên màn hình chính chạy như app (chỉ hoạt động ở bản thật) */}
         <PwaRegister />
         <ScrollTopOnRoute />
+        {/* Đếm lượt HIỂN THỊ tin — đặt ở layout gốc nên chạy cho mọi trang có thẻ
+            tin, không phải đi gắn từng nơi. */}
+        <DemHienThi />
         {/* Thanh tiến trình + hiệu ứng vào trang khi chuyển trang (thay cho rung) */}
         <RouteMotion />
         {children}

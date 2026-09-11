@@ -77,6 +77,8 @@ export default function PropertyCard({
   return (
     <Link
       href={`/bat-dong-san/${item.id}`}
+      // Dấu cho bộ đếm lượt hiển thị nhận ra đây là thẻ tin (src/lib/hienThi.ts).
+      data-tin={item.id}
       // Khung thẻ Apple thuần: viền tóc cvr-line + bóng mềm — KHÔNG viền màu theo cấp.
       // Cấp tin thể hiện qua huy hiệu + màu TIÊU ĐỀ (đúng bảng đặc điểm), không tô khung.
       className="flex flex-col overflow-hidden rounded-none border-0 bg-white shadow-lux shadow-lux-hover transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1 sm:border sm:border-cvr-line"
@@ -197,6 +199,8 @@ function PropertyRow({ item, showTime = false, terms = [] }: { item: Listing; sh
   return (
     <Link
       href={`/bat-dong-san/${item.id}`}
+      // Dấu cho bộ đếm lượt hiển thị nhận ra đây là thẻ tin (src/lib/hienThi.ts).
+      data-tin={item.id}
       // ĐIỆN THOẠI: ảnh TRÊN – nội dung DƯỚI (xếp dọc).
       // MÁY TÍNH: ảnh TRÁI – nội dung PHẢI, ảnh chiếm ~38% bề ngang thẻ
       // (đã tăng theo file V3 10.08.2026 — ảnh đại diện cũ nhỏ, lệch với nội dung).

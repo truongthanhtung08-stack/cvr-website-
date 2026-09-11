@@ -24,7 +24,7 @@ type Lead = {
   created_at: string;
 };
 
-type DongTin = { id: string; title: string; xem7: number; xem30: number; tong: number; hoiSo: number };
+type DongTin = { id: string; title: string; hienThi: number; xem7: number; xem30: number; tong: number; hoiSo: number };
 
 export default function TuongTacPage() {
   const [tin, setTin] = useState<DongTin[] | null>(null);
@@ -56,8 +56,11 @@ export default function TuongTacPage() {
       const moc7 = moc(7);
       const moc30 = moc(30);
 
-      const [{ data: xem }, { data: ld }] = await Promise.all([
+      const [{ data: xem }, { data: ht }, { data: ld }] = await Promise.all([
         supabase.from("listing_view_daily").select("listing_id,ngay,luot").in("listing_id", ids).gte("ngay", moc30),
+        // Lượt HIỂN THỊ 30 ngày — bảng này là migration 0030, chưa chạy thì cột
+        // hiển thị để trống, phần còn lại của trang vẫn dùng bình thường.
+        supabase.from("listing_impression_daily").select("listing_id,luot").in("listing_id", ids).gte("ngay", moc30),
         supabase
           .from("listing_leads")
           .select("id,listing_id,viewer_name,viewer_phone,created_at")
@@ -75,6 +78,11 @@ export default function TuongTacPage() {
         if (n >= moc7) bay.set(d.listing_id, (bay.get(d.listing_id) ?? 0) + l);
       }
 
+      const demHt = new Map<string, number>();
+      for (const d of (ht ?? []) as { listing_id: string; luot: number }[]) {
+        demHt.set(d.listing_id, (demHt.get(d.listing_id) ?? 0) + (Number(d.luot) || 0));
+      }
+
       const dsLead = (ld ?? []) as Lead[];
       setLeads(dsLead);
       const demLead = new Map<string, number>();
@@ -85,6 +93,7 @@ export default function TuongTacPage() {
           .map((l) => ({
             id: l.id,
             title: l.title,
+            hienThi: demHt.get(l.id) ?? 0,
             xem7: bay.get(l.id) ?? 0,
             xem30: bamuoi.get(l.id) ?? 0,
             tong: Number(l.view_count ?? 0),
@@ -94,6 +103,12 @@ export default function TuongTacPage() {
       );
     })();
   }, []);
+
+  // Cộng dồn 30 ngày để nói được câu chuyện Hiển thị → Xem → Hỏi số.
+  const tongHienThi = (tin ?? []).reduce((s, t) => s + t.hienThi, 0);
+  const tongXem30 = (tin ?? []).reduce((s, t) => s + t.xem30, 0);
+  const tongHoiSo = (tin ?? []).reduce((s, t) => s + t.hoiSo, 0);
+  const tyLe = tongHienThi > 0 ? (tongXem30 / tongHienThi) * 100 : 0;
 
   if (tin === null) return <p className="text-sm text-cvr-muted">Đang tải…</p>;
 
@@ -158,16 +173,37 @@ export default function TuongTacPage() {
       {/* ── TIN NÀO ĐANG CHẠY ────────────────────────────────────────────────
           Bấm vào tên tin là sang trang thống kê riêng của tin đó (biểu đồ 30
           ngày + danh sách người quan tâm của chính tin ấy). */}
+      {/* ── BA CON SỐ KỂ MỘT CÂU CHUYỆN ──────────────────────────────────────
+          Hiển thị → Xem tin → Hỏi số. Tỷ lệ giữa chúng cho biết phải sửa chỗ nào:
+          bày nhiều mà ít bấm là tiêu đề/ảnh chưa tốt; bấm nhiều mà không ai hỏi
+          số là giá chưa hợp lý. KHÔNG in chỉ tiêu nội bộ ra đây — đó là chuyện
+          của mình, khách chỉ cần số của chính tin họ. */}
       <section className="rounded-2xl border border-cvr-line bg-white p-5 shadow-sm">
-        <h2 className="text-base font-semibold text-cvr-ink">Lượt xem theo tin</h2>
+        <h2 className="text-base font-semibold text-cvr-ink">30 ngày qua</h2>
+        <div className="mt-3 grid grid-cols-3 gap-3">
+          <O nhan="Lượt hiển thị" so={tongHienThi} />
+          <O nhan="Lượt xem tin" so={tongXem30} />
+          <O nhan="Hỏi số" so={tongHoiSo} accent />
+        </div>
+        {tongHienThi > 0 && (
+          <p className="mt-3 text-sm text-cvr-body">
+            Tỷ lệ bấm vào tin:{" "}
+            <strong className="font-semibold text-cvr-ink">{tyLe.toFixed(1)}%</strong>
+          </p>
+        )}
+      </section>
+
+      <section className="rounded-2xl border border-cvr-line bg-white p-5 shadow-sm">
+        <h2 className="text-base font-semibold text-cvr-ink">Từng tin</h2>
         <div className="mt-3 overflow-x-auto">
-          <table className="w-full min-w-[460px] text-sm">
+          <table className="w-full min-w-[560px] text-sm">
             <thead>
               <tr className="border-b border-cvr-line text-left text-xs uppercase tracking-wide text-cvr-muted">
                 <th className="py-2.5">Tin đăng</th>
-                <th className="py-2.5 text-right">7 ngày</th>
-                <th className="py-2.5 text-right">30 ngày</th>
-                <th className="py-2.5 text-right">Tổng</th>
+                <th className="py-2.5 text-right">Hiển thị</th>
+                <th className="py-2.5 text-right">Xem 7 ngày</th>
+                <th className="py-2.5 text-right">Xem 30 ngày</th>
+                <th className="py-2.5 text-right">Tổng xem</th>
                 <th className="py-2.5 text-right">Hỏi số</th>
               </tr>
             </thead>
@@ -179,6 +215,7 @@ export default function TuongTacPage() {
                       {t.title}
                     </Link>
                   </td>
+                  <td className="py-3 text-right text-cvr-body">{t.hienThi || "—"}</td>
                   <td className="py-3 text-right font-semibold text-cvr-ink">{t.xem7}</td>
                   <td className="py-3 text-right text-cvr-body">{t.xem30}</td>
                   <td className="py-3 text-right text-cvr-body">{t.tong}</td>
@@ -203,4 +240,15 @@ function truocDay(iso: string): string {
   if (gio < 24) return `${gio} giờ trước`;
   const ngay = Math.round(gio / 24);
   return ngay < 30 ? `${ngay} ngày trước` : new Date(iso).toLocaleDateString("vi-VN");
+}
+
+function O({ nhan, so, accent }: { nhan: string; so: number; accent?: boolean }) {
+  return (
+    <div className="rounded-xl bg-cvr-surface p-3">
+      <p className="text-xs text-cvr-muted">{nhan}</p>
+      <p className={`mt-0.5 text-xl font-semibold tracking-tight ${accent && so > 0 ? "text-cvr-blue-ink" : "text-cvr-ink"}`}>
+        {so.toLocaleString("vi-VN")}
+      </p>
+    </div>
+  );
 }
