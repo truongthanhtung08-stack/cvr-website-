@@ -47,6 +47,22 @@ export async function GET(req: Request) {
   const lat = u.searchParams.get("lat");
   const lng = u.searchParams.get("lng");
 
+  // GIẢI LINK RÚT GỌN CỦA GOOGLE MAPS (maps.app.goo.gl/…).
+  // Bấm "Chia sẻ" trong app Google Maps ra link rút gọn, trong đó KHÔNG có toạ độ.
+  // Gọi thử link đó rồi đọc địa chỉ nó chuyển tới — toạ độ nằm trong địa chỉ dài.
+  // Phải làm ở máy chủ vì trình duyệt không đọc được nơi link chuyển tới.
+  if (viec === "mo-rong") {
+    const laLinkGoogle = ["maps.app.goo.gl", "goo.gl", "maps.google.", "google.com/maps"].some((x) => q.includes(x));
+    if (!q.startsWith("http") || !laLinkGoogle)
+      return NextResponse.json({ loi: "link khong hop le" }, { status: 400 });
+    try {
+      const r = await fetch(q, { redirect: "follow" });
+      return NextResponse.json({ url: r.url });
+    } catch {
+      return NextResponse.json({ loi: "khong mo duoc link" }, { status: 502 });
+    }
+  }
+
   let duong = "";
   if (viec === "nguoc") {
     if (!lat || !lng) return NextResponse.json({ loi: "thieu lat/lng" }, { status: 400 });

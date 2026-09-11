@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import {
   MAP_KEY,
+  JS_API_KHA_DUNG,
+  nhungGoogleMaps,
   formatLatLng,
   loadMapsApi,
   soatVeDuoc,
@@ -82,6 +84,17 @@ export default function MapPickerGoogle({
   });
 
   const daGhim = parseLatLng(value);
+  // Google cấm khoá Maps ở Việt Nam → đường JavaScript (chạm để ghim) không dùng
+  // được. Rơi về bản NHÚNG: vẫn thấy bản đồ Google thật, vẫn ghim được vị trí,
+  // chỉ là lấy toạ độ bằng GPS hoặc dán link thay vì chạm lên bản đồ.
+  const dungNhung = !MAP_KEY || !JS_API_KHA_DUNG;
+  const [dangGiai, setDangGiai] = useState(false);
+  const [nhungQ, setNhungQ] = useState("");
+  useEffect(() => {
+    const t = setTimeout(() => setNhungQ(hint), 700);
+    return () => clearTimeout(t);
+  }, [hint]);
+  const [loiDan, setLoiDan] = useState("");
 
   // ── Ghim xong → tra ngược ra địa chỉ, trả về form ────────────────────────
   async function traVeDiaChi(p: LatLng) {
@@ -255,21 +268,50 @@ export default function MapPickerGoogle({
     setMucDo(null);
   }
 
+  // Nhận thứ người dùng dán: toạ độ thẳng "16.06,108.22", link dài của Google
+  // (có @lat,lng), hoặc link RÚT GỌN maps.app.goo.gl — loại này không chứa toạ độ
+  // nên phải nhờ máy chủ mở ra xem nó dẫn tới đâu.
+  async function nhanChuoiDan(txt: string): Promise<boolean> {
+    const t = txt.trim();
+    if (!t) return false;
+    const ngay = parseLatLng(t);
+    if (ngay) { onChangeRef.current(formatLatLng(ngay)); traVeDiaChi(ngay); return true; }
+    if (!t.startsWith("http")) return false;
+    setDangGiai(true);
+    try {
+      const r = await fetch("/api/dia-chi?viec=mo-rong&q=" + encodeURIComponent(t));
+      const d = (await r.json()) as { url?: string };
+      const p = d.url ? parseLatLng(d.url) : null;
+      if (p) { onChangeRef.current(formatLatLng(p)); traVeDiaChi(p); return true; }
+    } catch { /* mạng hỏng — để người dùng thử lại */ }
+    finally { setDangGiai(false); }
+    return false;
+  }
+
   const nutPhu =
     "inline-flex min-h-[38px] items-center rounded-lg border border-cvr-line bg-white px-3 text-[13px] font-semibold text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink";
 
   return (
     <div className="space-y-3">
       <div className="relative overflow-hidden rounded-xl border border-cvr-line">
-        <div ref={boxRef} aria-label="Bản đồ ghim vị trí" className="h-[300px] w-full bg-cvr-surface sm:h-[360px]" />
-        {!sanSang && !hong && (
+        {dungNhung ? (
+          // Bản đồ NHÚNG: không cần khoá, không tốn tiền, nhưng chỉ XEM được —
+          // không bắt được cú chạm để lấy toạ độ. Việc lấy toạ độ giao cho nút định
+          // vị (GPS của máy) và ô dán link Google Maps bên dưới.
+          <iframe
+            key={daGhim ? `${daGhim.lat},${daGhim.lng}` : nhungQ}
+            src={nhungGoogleMaps(daGhim ? `${daGhim.lat},${daGhim.lng}` : nhungQ || hint || "Đà Nẵng", daGhim ? 17 : 14)}
+            title="Bản đồ vị trí"
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            className="block h-[300px] w-full border-0 bg-cvr-surface sm:h-[360px]"
+          />
+        ) : (
+          <div ref={boxRef} aria-label="Bản đồ ghim vị trí" className="h-[300px] w-full bg-cvr-surface sm:h-[360px]" />
+        )}
+        {!sanSang && !hong && !dungNhung && (
           <span className="pointer-events-none absolute inset-0 flex items-center justify-center text-[13px] font-medium text-cvr-muted">
             Đang mở bản đồ…
-          </span>
-        )}
-        {hong && (
-          <span className="pointer-events-none absolute inset-0 flex items-center justify-center px-6 text-center text-[13px] font-medium text-cvr-muted">
-            Chưa mở được bản đồ. Anh/chị vẫn đăng tin bình thường, phần vị trí điền sau cũng được.
           </span>
         )}
         {sanSang && dangTra && (
@@ -292,12 +334,53 @@ export default function MapPickerGoogle({
           </svg>
           {dangDinhVi ? "Đang định vị…" : "Tôi đang đứng ở đây"}
         </button>
+        {dungNhung && (
+          <a
+            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(hint || "Đà Nẵng")}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={nutPhu}
+          >
+            Mở Google Maps để lấy vị trí ↗
+          </a>
+        )}
         {daGhim && (
           <button type="button" onClick={xoaGhim} className={nutPhu}>
             Xoá ghim
           </button>
         )}
       </div>
+
+      {dungNhung && (
+        <div className="rounded-xl bg-cvr-surface px-3 py-3">
+          <input
+            type="text"
+            inputMode="text"
+            defaultValue=""
+            placeholder="Dán link Google Maps hoặc toạ độ (VD: 16.0678, 108.2208)"
+            onChange={async (e) => {
+              const o = e.target;
+              const xong = await nhanChuoiDan(o.value);
+              if (xong) { o.value = ""; setLoiDan(""); }
+              else if (o.value.trim().length > 12) setLoiDan("Chưa đọc được vị trí từ chuỗi này — thử dán lại link Google Maps.");
+            }}
+            onPaste={async (e) => {
+              const txt = e.clipboardData.getData("text");
+              e.preventDefault();
+              const xong = await nhanChuoiDan(txt);
+              setLoiDan(xong ? "" : "Chưa đọc được vị trí từ link này — thử dán toạ độ dạng 16.0678, 108.2208.");
+            }}
+            className="h-11 w-full rounded-lg border border-transparent bg-white px-3 text-sm text-cvr-ink placeholder-cvr-faint outline-none transition focus:border-cvr-line"
+          />
+          {dangGiai && <p className="mt-2 text-[12px] font-medium text-cvr-blue-ink">Đang đọc vị trí từ link…</p>}
+          {loiDan && <p className="mt-2 text-[12px] font-medium text-red-600">{loiDan}</p>}
+          <p className="mt-2 text-[12px] leading-relaxed text-cvr-muted">
+            Đứng tại bất động sản thì bấm <strong className="font-semibold text-cvr-ink">Tôi đang đứng ở đây</strong> là
+            xong. Ở xa thì mở Google Maps, giữ ngón tay vào đúng chỗ để thả ghim, bấm{" "}
+            <strong className="font-semibold text-cvr-ink">Chia sẻ</strong> rồi dán vào ô trên.
+          </p>
+        </div>
+      )}
 
       <p className="text-[13px] leading-relaxed text-cvr-body">
         {daGhim ? (

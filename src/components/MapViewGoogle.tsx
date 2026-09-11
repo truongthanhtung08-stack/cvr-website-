@@ -5,6 +5,7 @@ import type { Listing } from "@/lib/data";
 import { coordOf } from "@/lib/geo";
 import {
   MAP_KEY,
+  nhungGoogleMaps,
   loadMapsApi,
   soatVeDuoc,
   onMapsAuthFailure,
@@ -77,6 +78,16 @@ export default function MapViewGoogle({ items, diem }: { items?: Listing[]; diem
       }),
     [diem, items],
   );
+
+  // Tâm để khung nhúng trỏ tới: trung bình toạ độ các tin đang lọc; không tin nào
+  // có toạ độ thì lấy Đà Nẵng.
+  const tamKhuVuc = useMemo(() => {
+    const co = ds.filter((x) => Number.isFinite(x.lat) && Number.isFinite(x.lng));
+    if (!co.length) return "Đà Nẵng";
+    const lat = co.reduce((t, x) => t + x.lat, 0) / co.length;
+    const lng = co.reduce((t, x) => t + x.lng, 0) / co.length;
+    return `${lat.toFixed(5)},${lng.toFixed(5)}`;
+  }, [ds]);
   const dsRef = useRef<DiemBanDo[]>(ds);
   useEffect(() => {
     dsRef.current = ds;
@@ -291,9 +302,19 @@ export default function MapViewGoogle({ items, diem }: { items?: Listing[]; diem
         </span>
       )}
       {hong && (
-        <span className="pointer-events-none absolute inset-0 flex items-center justify-center px-6 text-center text-[13px] font-medium text-cvr-muted">
-          Chưa mở được bản đồ. Anh/chị bấm “Xem danh sách” để xem tin bình thường.
-        </span>
+        <>
+          <iframe
+            key={tamKhuVuc}
+            src={nhungGoogleMaps(tamKhuVuc, 12)}
+            title="Bản đồ khu vực"
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            className="absolute inset-0 h-full w-full border-0"
+          />
+          <span className="pointer-events-none absolute inset-x-3 bottom-3 rounded-lg bg-black/70 px-3 py-2 text-center text-[12px] font-medium text-white backdrop-blur-sm">
+            Đang hiện bản đồ khu vực. Bấm “Xem danh sách” để xem từng tin kèm vị trí.
+          </span>
+        </>
       )}
 
       {/* Ô tìm địa điểm — góc trên phải, chừa góc trái cho nút phóng to */}
