@@ -217,7 +217,15 @@ export default function GallerySlideVideo({
     <div className={`absolute inset-0 bg-black ${xemTruoc ? "pointer-events-none" : ""}`}>
       {video}
 
-      {!xemTruoc && !loiPhat && (
+      {/* NÚT XEM LỚN — CHỈ CHO VIDEO TỰ ĐĂNG (thẻ <video>).
+          Video YouTube thì KHÔNG vẽ nút này: trình phát của YouTube đã có sẵn nút
+          toàn màn hình ở góc dưới phải, và nó làm tốt hơn hẳn.
+          Chủ dự án chốt 11/9/2026 sau khi thử: nút tự vẽ mở trình xem riêng của
+          web, ở đó khung nhúng bị ép 16:9 nên video QUAY DỌC co lại bé tí ("bấm
+          full sao ra nhỏ vậy"), lại còn chạy lại từ đầu vì iframe nạp mới.
+          Nút của YouTube thì phóng to ngay video ĐANG CHẠY, đúng tỉ lệ thật,
+          xoay máy cũng tự xoay theo. */}
+      {!xemTruoc && !loiPhat && !embed && (
         <button
           type="button"
           onClick={moLon}

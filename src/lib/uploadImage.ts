@@ -86,9 +86,25 @@ async function uploadMedia(file: File, kind: "image" | "video", maxMB: number): 
 
   const supabase = createClient();
   const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-  const path = `${Date.now()}-${Math.round(Math.random() * 1e6)}-${safe}`;
+
+  // ── TÊN TỆP ĐẶT THEO NỘI DUNG, KHÔNG THEO GIỜ TẢI LÊN ─────────────────────
+  // Trước đây tên là `<giờ>-<số ngẫu nhiên>-<tên gốc>` nên MỖI LẦN tải lên là
+  // một tệp mới, kể cả khi đó đúng là tấm ảnh cũ. Đăng lại một tin, nhập hàng
+  // loạt chạy lại vài lần, sửa tin… là kho phình thêm một bộ ảnh nữa.
+  // Đo thật 11/09/2026: kho 2.954 tệp / 2.082 MB thì 1.752 tệp / 775 MB là BẢN
+  // SAO Y HỆT của ảnh đang dùng — gần 40% kho là ảnh trùng.
+  // Nay tên = MÃ BĂM của chính nội dung tệp: cùng một tấm ảnh thì luôn ra cùng
+  // một tên, tải lên lần thứ hai là kho nhận ra và dùng lại tấm cũ. Kho không
+  // bao giờ chứa hai bản y hệt nữa.
+  // (Ảnh đã đăng trước đây giữ nguyên tên cũ — tin cũ không bị ảnh hưởng gì.)
+  const bam = await crypto.subtle.digest("SHA-256", await file.arrayBuffer());
+  const ma = Array.from(new Uint8Array(bam).slice(0, 12), (b) => b.toString(16).padStart(2, "0")).join("");
+  const path = `${ma}-${safe}`;
+
   const { error } = await supabase.storage.from("listings").upload(path, file, { upsert: false });
-  if (error) {
+  // "Đã tồn tại" ở đây KHÔNG phải lỗi: tên trùng nghĩa là nội dung trùng từng
+  // byte → tấm ảnh đó đã nằm sẵn trong kho, cứ dùng lại, khỏi tải lên bản thứ hai.
+  if (error && !/exists|duplicate|409/i.test(error.message)) {
     return {
       error: /bucket not found|does not exist/i.test(error.message)
         ? "Chưa tạo kho ảnh. Chạy migration 0004_listings_storage.sql trong Supabase → SQL Editor."

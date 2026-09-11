@@ -121,15 +121,20 @@ export default function VideoToanManHinh({
           }
         >
           {embed ? (
-            <div className="relative w-full pt-[56.25%]">
-              <iframe
-                src={`${embed}${embed.includes("?") ? "&" : "?"}autoplay=1`}
-                title="Video"
-                allow="accelerometer; autoplay; encrypted-media; gyroscope; fullscreen"
-                allowFullScreen
-                className="absolute inset-0 h-full w-full"
-              />
-            </div>
+            // LẤP TRỌN KHUNG, KHÔNG ÉP TỈ LỆ 16:9.
+            // Bản cũ bọc iframe trong khung padding-top 56.25% (ép 16:9). Video
+            // QUAY DỌC bằng điện thoại — phần lớn video bất động sản — lọt vào
+            // khung ngang đó thì co lại bé tí giữa màn hình (chủ dự án báo
+            // 11/9/2026: "bấm full sao ra nhỏ vậy").
+            // Để iframe chiếm trọn màn thì trình phát YouTube tự căn video theo
+            // đúng tỉ lệ thật: video dọc cao hết màn, video ngang rộng hết màn.
+            <iframe
+              src={`${embed}${embed.includes("?") ? "&" : "?"}autoplay=1`}
+              title="Video"
+              allow="accelerometer; autoplay; encrypted-media; gyroscope; fullscreen"
+              allowFullScreen
+              className="h-full w-full"
+            />
           ) : (
             <video
               ref={vRef}

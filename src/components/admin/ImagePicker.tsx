@@ -86,13 +86,17 @@ export default function ImagePicker({
       for (const f of anh) dt.items.add(f);
       await handleImageFiles(dt.files);
     }
+    // Video chọn từ thư mục: KHÔNG tải lên kho nữa (xem ghi chú chỗ nút "Thêm video"
+    // đã bỏ). Nói rõ phải làm gì thay vì im lặng bỏ qua — khách đang cầm video trong tay.
     if (video.length) {
-      const dt = new DataTransfer();
-      dt.items.add(video[0]);
-      await handleVideoFile(dt.files);
+      setError("Video đăng bằng link YouTube: tải video lên YouTube rồi dán link vào ô bên dưới.");
     }
   }
 
+  // Đang KHÔNG dùng: nút "Thêm video" đã bỏ 11/09/2026 (video đăng bằng link YouTube).
+  // Giữ nguyên hàm để ngày nào lên gói trả phí muốn cho tải video lên lại thì chỉ
+  // việc trả khối nút về, không phải viết lại.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async function handleVideoFile(files: FileList | null) {
     const file = files?.[0];
     if (!file) return;
@@ -237,7 +241,7 @@ export default function ImagePicker({
           rồi tưởng web không mở được bộ sưu tập (chủ dự án chốt 11/9/2026). */}
       <div className="grid grid-cols-2 gap-2.5">
         <label
-          className={`relative inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-cvr-ink px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-cvr-ink/90 ${uploadingImg ? "pointer-events-none opacity-60" : ""}`}
+          className={`relative col-span-2 inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-cvr-ink px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-cvr-ink/90 ${uploadingImg ? "pointer-events-none opacity-60" : ""}`}
         >
           <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 16V4m0 0L8 8m4-4l4 4M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" /></svg>
           {uploadingImg ? "Đang tải ảnh…" : "Thêm ảnh"}
@@ -252,20 +256,14 @@ export default function ImagePicker({
           />
         </label>
 
-        <label
-          className={`relative inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-cvr-line bg-white px-4 py-2.5 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink ${uploadingVideo ? "pointer-events-none opacity-60" : ""}`}
-        >
-          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 6h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z" /></svg>
-          {uploadingVideo ? "Đang tải video…" : "Thêm video"}
-          <input
-            ref={videoRef}
-            type="file"
-            accept="video/*"
-            disabled={uploadingVideo}
-            onChange={(e) => handleVideoFile(e.target.files)}
-            className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-          />
-        </label>
+        {/* NÚT "THÊM VIDEO" ĐÃ BỎ (11/09/2026, chủ dự án chốt: "kiểu gì cũng phải
+            chuyển qua kênh YouTube"). Video nay chỉ nhận LINK YOUTUBE ở ô bên dưới.
+            Lý do: một video tải lên ăn ~16 MB kho, bằng 40 tấm ảnh — 14 video đã
+            chiếm 41% cả kho trong khi 889 tấm ảnh mới chiếm phần còn lại. Link
+            YouTube thì tốn 0 MB, mà trên trang tin hiện y hệt: vẫn nằm trong thư
+            viện ảnh, vẫn bấm play chạy tại chỗ, vẫn xem lớn và xoay được.
+            Hàm handleVideoFile GIỮ NGUYÊN bên trên — ngày nào lên gói trả phí
+            muốn mở lại thì chỉ việc trả khối nút này về. */}
 
         {/* LỐI THỨ BA — THƯ MỤC. Chiếm trọn hàng dưới.
             Ô này CỐ Ý KHÔNG khai accept. Khai "image/*" thì trình duyệt tệp bị
@@ -297,13 +295,13 @@ export default function ImagePicker({
       {/* Ô dán link nằm HẲN Ở DÒNG RIÊNG bên dưới hai nút — không đứng chung
           hàng nữa nên không bao giờ bị đẩy ra ngoài mép màn hình. */}
       <div className="mt-3">
-        <p className="mb-1.5 text-xs text-cvr-faint">Hoặc dán link ảnh / video</p>
+        <p className="mb-1.5 text-xs text-cvr-faint">Thêm video (link YouTube) hoặc link ảnh</p>
         <div className="flex w-full min-w-0 items-center gap-2">
           <input
             value={link}
             onChange={(e) => setLink(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addLink(); } }}
-            placeholder="Dán link ảnh hoặc video (YouTube/Vimeo/mp4)…"
+            placeholder="Dán link YouTube của video, hoặc link ảnh…"
             // min-w-0 (KHÔNG đặt bề rộng tối thiểu cứng) → trên điện thoại ô co lại
             // vừa màn hình, nút "Thêm" không bị đẩy ra ngoài mép phải.
             className="h-10 w-full min-w-0 flex-1 rounded-lg border border-cvr-line bg-white px-3 text-sm text-cvr-ink placeholder-cvr-faint outline-none transition focus:border-cvr-ink"
