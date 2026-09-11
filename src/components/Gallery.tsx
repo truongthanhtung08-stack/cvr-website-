@@ -168,7 +168,7 @@ export default function Gallery({
                 // không ai xem kiểu đó.
                 <div
                   key={i}
-                  className="relative aspect-[16/10] w-full shrink-0 snap-center overflow-hidden border border-cvr-line bg-black"
+                  className="relative aspect-video w-full shrink-0 snap-center overflow-hidden border border-cvr-line bg-black"
                 >
                   <GallerySlideVideo url={m.src} active={i === mCur} onHold={setHold} />
                   {/* Nhãn ở ĐỈNH khung, không bao giờ xuống đáy: đáy là chỗ thanh
@@ -196,7 +196,7 @@ export default function Gallery({
                   type="button"
                   onClick={() => open(imgIdx(i))}
                   aria-label={`Ảnh ${imgIdx(i) + 1}`}
-                  className="relative aspect-[16/10] w-full shrink-0 snap-center overflow-hidden border border-cvr-line bg-cvr-surface"
+                  className="relative aspect-video w-full shrink-0 snap-center overflow-hidden border border-cvr-line bg-cvr-surface"
                 >
                   <Image src={m.src} alt={`${alt} ${imgIdx(i) + 1}`} fill priority={i === nVid} quality={90} sizes="100vw" className="object-cover" />
                 </button>
