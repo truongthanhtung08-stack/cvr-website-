@@ -19,7 +19,7 @@ import type { DiemBanDo } from "@/components/MapViewGoogle";
 import type { Project, Article } from "@/lib/data";
 
 // Bản đồ chỉ chạy phía client (Leaflet đụng tới window) — nạp động, không SSR.
-const MapView = dynamic(() => import("@/components/MapViewGoogle"), { ssr: false });
+const MapView = dynamic(() => import("@/components/MapViewMo"), { ssr: false });
 
 const GEO_MODE_KEY = "cl-geo-mode"; // đồng bộ hệ đơn vị hành chính với FilterBar (Mua bán/Cho thuê)
 
