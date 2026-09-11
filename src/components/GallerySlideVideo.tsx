@@ -42,6 +42,9 @@ export default function GallerySlideVideo({
   const ref = useRef<HTMLVideoElement>(null);
   const khungRef = useRef<HTMLIFrameElement>(null);
   const [posterSrc, setPosterSrc] = useState(poster?.hd ?? "");
+  const bocRef = useRef<HTMLDivElement>(null);
+  const [dangFull, setDangFull] = useState(false);
+  const [xoay, setXoay] = useState(false);
   const holdRef = useRef(onHold);
   const playingRef = useRef(false);
   const fullRef = useRef(false);
@@ -88,17 +91,34 @@ export default function GallerySlideVideo({
     holdRef.current?.(playingRef.current || fullRef.current || dungVaoRef.current);
   }, [active]);
 
-  // TOÀN MÀN HÌNH: chỉ để giữ slide đứng yên trong lúc khách đang xem.
+  // TOÀN MÀN HÌNH + NÚT XOAY.
   //
-  // KHÔNG khoá hướng màn hình. Bản trước gọi orientation.lock("landscape") nên
-  // khách cầm dọc cũng bị bẻ ngang, xoay lại không được — rất khó chịu (chủ dự
-  // án báo 11/9/2026). Xoay ngang hay dọc là quyền của người cầm điện thoại.
+  // Khách bấm nút toàn màn hình MẶC ĐỊNH của trình phát. Trình phát phóng to
+  // đúng thẻ <video>, mà bên trong thẻ đó web không đặt được gì — nên không có
+  // chỗ cho nút Xoay. Cách xử: ngay khi nó phóng to, web chuyển sang phóng to
+  // CẢ KHUNG BỌC; thẻ video vẫn lấp đầy màn và giữ nguyên bộ nút của nó
+  // (play · tua · âm lượng · thu nhỏ để thoát), còn web có chỗ đặt đúng MỘT nút
+  // Xoay ở góc trên. Bấm Xoay → ngang, bấm lại → dọc. Thoát vẫn bằng nút thu
+  // nhỏ của trình phát, và thoát thì tự trả về chiều dọc.
   useEffect(() => {
     const doiToanManHinh = () => {
+      const el = document.fullscreenElement;
+
+      // Trình phát vừa phóng to riêng thẻ video → nâng lên thành cả khung bọc.
+      if (el && el === ref.current && bocRef.current) {
+        void document
+          .exitFullscreen()
+          .then(() => bocRef.current?.requestFullscreen())
+          .catch(() => {});
+        return;
+      }
+
       const co =
-        !!document.fullscreenElement ||
+        !!el ||
         !!(document as unknown as { webkitFullscreenElement?: Element }).webkitFullscreenElement;
       fullRef.current = co;
+      setDangFull(co);
+      if (!co) setXoay(false); // thoát toàn màn hình → trả video về chiều dọc
       bao();
     };
 
@@ -186,12 +206,38 @@ export default function GallerySlideVideo({
     </video>
   );
 
-  // MỘT TRÌNH PHÁT, MỘT BỘ NÚT. Web không vẽ thêm nút nào, không mở trình xem
-  // riêng nào: bấm nút toàn màn hình MẶC ĐỊNH của trình phát là xong, nút thoát
-  // cũng là của nó. Bản trước web tự thêm nút phóng to nên khung có tới hai nút
-  // giống hệt nhau, bấm vào thì video trong khung và video phóng to chạy cùng
-  // lúc, nghe hai tiếng chồng nhau (chủ dự án báo 11/9/2026).
+  // Trong khung: KHÔNG nút nào của web — bấm play xem tại chỗ, muốn to thì bấm
+  // nút toàn màn hình mặc định của trình phát.
+  // Khi đã toàn màn hình: thêm ĐÚNG MỘT nút Xoay ở góc trên, vì không trình phát
+  // nào có sẵn nút này. Thoát vẫn là nút thu nhỏ của trình phát.
   return (
-    <div className={`absolute inset-0 bg-black ${xemTruoc ? "pointer-events-none" : ""}`}>{video}</div>
+    <div
+      ref={bocRef}
+      className={`absolute inset-0 bg-black ${xemTruoc ? "pointer-events-none" : ""} ${
+        dangFull ? "flex items-center justify-center" : ""
+      }`}
+    >
+      <div
+        className={dangFull ? "flex items-center justify-center transition-transform duration-200" : "h-full w-full"}
+        style={xoay ? { width: "100vh", height: "100vw", transform: "rotate(90deg)" } : undefined}
+      >
+        {video}
+      </div>
+
+      {dangFull && (
+        <button
+          type="button"
+          onClick={() => setXoay((v) => !v)}
+          aria-label={xoay ? "Xoay về dọc" : "Xoay ngang"}
+          className="absolute right-3 top-[max(12px,env(safe-area-inset-top))] z-[6] flex h-11 items-center gap-2 rounded-full bg-black/55 px-4 text-[15px] font-medium text-white backdrop-blur-sm active:bg-black/75"
+        >
+          <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.9} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 9a8 8 0 0113.6-4.6L20 7M20 15a8 8 0 01-13.6 4.6L4 17" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M20 4v3h-3M4 20v-3h3" />
+          </svg>
+          Xoay
+        </button>
+      )}
+    </div>
   );
 }
