@@ -18,6 +18,7 @@ export type ListingDetails = {
   places?: { category: string; name: string; distance: string }[]; // tiện ích xung quanh
   contact?: { name?: string; phone?: string; email?: string; avatar?: string }; // người đăng (avatar = ảnh đại diện)
   project?: string;                 // SLUG dự án tin này thuộc về ("" = không thuộc dự án nào)
+  projectName?: string;             // TÊN dự án nguyên văn — dự án chưa được tạo trên web vẫn giữ được tên
   ly_do_tu_choi?: string;           // admin ghi khi từ chối — khách đọc để biết cần sửa gì
   tu_choi_luc?: string;             // thời điểm từ chối (ISO)
 };

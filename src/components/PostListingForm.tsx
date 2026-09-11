@@ -12,7 +12,7 @@ import {
   legalOptions, furnishLevels, amenityGroups, interiorItems, directions,
   purposeOfDemand, demandOfPurpose,
 } from "@/lib/listingSpec";
-import { typeGroupsFor } from "@/lib/filters";
+import { typeGroupsFor, normalizeVi } from "@/lib/filters";
 import { provinceNamesFor, districtsOf, wardsOf, wardsOfNew, wardsOfAny, type GeoMode } from "@/lib/locations";
 import { ganDiaGioi, type DiaGioiBanDo } from "@/lib/diaGioiTuBanDo";
 import ImagePicker from "@/components/admin/ImagePicker";
@@ -36,6 +36,10 @@ import { uploadImageFile } from "@/lib/uploadImage";
 // Khách đăng → status 'pending' (chờ admin duyệt). Nháp → 'draft'.
 // CHỈNH SỬA tin cũ: mở /dang-tin?id=<id tin> — form tự nạp tin (RLS chỉ cho chủ tin),
 // lưu = update. Tin đã duyệt sửa xong sẽ quay về "Chờ duyệt".
+// Giá trị đánh dấu "dự án chưa có trên web" trong ô chọn dự án — KHÔNG lưu
+// xuống DB, chỉ để biết phải hiện ô gõ tên.
+const DU_AN_KHAC = "__khac";
+
 export default function PostListingForm() {
   const router = useRouter();
   const editId = useSearchParams().get("id");
@@ -104,6 +108,10 @@ export default function PostListingForm() {
     total_topup: number;
   } | null>(null);
   const [projectSlug, setProjectSlug] = useState("");
+  // TÊN DỰ ÁN GÕ TAY — dự án của khách chưa có trên web thì vẫn ghi được tên,
+  // trang tin hiện tên đó (chưa có trang dự án thì hiện chữ trơn, tạo dự án sau
+  // là tự thành liên kết). Không bắt buộc, bỏ trống cũng được.
+  const [projectName, setProjectName] = useState("");
   const [projectOptions, setProjectOptions] = useState<{ slug: string; name: string }[]>([]);
 
   // Đang lưu nút nào — để 2 nút hiện trạng thái riêng, không lẫn nhau
@@ -111,6 +119,10 @@ export default function PostListingForm() {
   const [error, setError] = useState("");
 
   // Ngay bat dau mac dinh = hom nay; ngay ket thuc tu tinh theo so ngay cua goi
+  // Ngày phải lấy theo MÁY KHÁCH, mà máy chủ dựng trang trước nên không được đặt
+  // sẵn lúc khởi tạo — đặt sẵn thì máy chủ và máy khách ra hai ngày khác nhau,
+  // React báo lệch và ô ngày nhảy. Vì vậy đặt sau khi trang đã dựng xong.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { if (!planStart) setPlanStart(new Date().toISOString().slice(0, 10)); }, [planStart]);
   const planEnd = useMemo(() => {
     if (!planStart) return "";
@@ -122,6 +134,10 @@ export default function PostListingForm() {
   useEffect(() => {
     if (!billingLoading) {
       const terms = billing.plans.find((p) => p.tierId === planTier)?.terms ?? [];
+      // Bảng giá do admin đặt, tải về sau khi trang đã dựng → chỉ lúc này mới biết
+      // gói có những mốc thời hạn nào. Thời hạn đang chọn không còn trong bảng giá
+      // hiện hành thì kéo về mốc đầu, nếu không khách trả tiền theo mốc đã bỏ.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (terms.length && !terms.some((t) => t.days === planDays)) setPlanDays(terms[0].days);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -134,6 +150,9 @@ export default function PostListingForm() {
   // đó là phần nâng cấp để tin hiển thị nổi bật hơn.
   const laThanhVienMoi = useMemo(() => {
     if (!hoSoVi?.created_at) return false;
+    // Đọc giờ hiện tại để biết tài khoản mở được bao nhiêu ngày — chỉ tính lại khi
+    // hồ sơ hoặc chính sách miễn phí đổi, không phụ thuộc lần vẽ lại nào.
+    // eslint-disable-next-line react-hooks/purity
     const soNgay = (Date.now() - new Date(hoSoVi.created_at).getTime()) / 86_400_000;
     return soNgay <= billing.free.days;
   }, [hoSoVi, billing.free.days]);
@@ -361,7 +380,8 @@ export default function PostListingForm() {
       setDirection(d.direction ?? "");
       setAddressDetail(d.addressDetail ?? "");
       setMapPin(d.mapPin ?? "");
-      setProjectSlug(d.project ?? "");
+      setProjectSlug(d.project ? d.project : d.projectName ? DU_AN_KHAC : "");
+      setProjectName(d.projectName ?? "");
       if (d.contact) {
         setContactName(d.contact.name ?? "");
         setContactPhone(d.contact.phone ?? "");
@@ -394,6 +414,17 @@ export default function PostListingForm() {
     if (donVi === "triệu/6 tháng") return Math.round((n * 1e6) / 6);
     if (donVi === "triệu/năm") return Math.round((n * 1e6) / 12);
     return null;
+  }
+
+  // SLUG DỰ ÁN ĐỂ LƯU.
+  // Khách gõ tay tên dự án mà tên đó TRÙNG một dự án đã có trên web thì phải nối
+  // thẳng vào dự án đó — slug là thứ bộ lọc "Dự án", trang dự án và mục "Tin liên
+  // quan tại dự án" chạy theo; bỏ trống slug là tin nằm ngoài mọi liên kết đó.
+  function slugDuAn(): string {
+    if (projectSlug && projectSlug !== DU_AN_KHAC) return projectSlug;
+    const ten = normalizeVi(projectName.trim());
+    if (!ten) return "";
+    return projectOptions.find((o) => normalizeVi(o.name) === ten)?.slug ?? "";
   }
 
   async function save(asDraft: boolean) {
@@ -446,7 +477,8 @@ export default function PostListingForm() {
         addressDetail: addressDetail.trim() || undefined,
         mapPin: mapPin.trim() || undefined,
         plan: { tier: planTier, days: planDays },
-        project: projectSlug || undefined,
+        project: slugDuAn() || undefined,
+        projectName: projectName.trim() || undefined,
         contact: (contactName.trim() || contactPhone.trim() || contactEmail.trim() || contactAvatar.trim())
           ? {
               name: contactName.trim(),
@@ -1023,17 +1055,53 @@ export default function PostListingForm() {
         <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <Label>Dự án</Label>
-            <select value={projectSlug} onChange={(e) => setProjectSlug(e.target.value)} className={inputCls}>
+            <select
+              value={projectSlug}
+              onChange={(e) => {
+                const v = e.target.value;
+                setProjectSlug(v);
+                // Chọn dự án có sẵn → tên lấy luôn theo dự án đó.
+                // Chọn "dự án khác" → để trống cho khách tự gõ.
+                setProjectName(v === DU_AN_KHAC ? "" : (projectOptions.find((o) => o.slug === v)?.name ?? ""));
+              }}
+              className={inputCls}
+            >
               <option value="">— Không thuộc dự án nào —</option>
               {projectOptions.map((o) => (
                 <option key={o.slug} value={o.slug}>{o.name}</option>
               ))}
+              {/* DỰ ÁN CHƯA CÓ TRÊN WEB vẫn phải ghi được tên: trước đây chỉ có
+                  danh sách dự án đã tạo nên tên dự án của khách rơi mất. Trang tin
+                  đã biết hiện details.projectName — chưa có trang dự án thì hiện
+                  chữ trơn, tạo dự án sau là tự thành liên kết. */}
+              <option value={DU_AN_KHAC}>Dự án khác — tự ghi tên</option>
             </select>
           </div>
+
+          {projectSlug === DU_AN_KHAC && (
+            <div>
+              <Label>Tên dự án</Label>
+              {/* Gõ tới đâu gợi ý tên dự án đã có tới đó — gõ trúng tên có sẵn thì
+                  tin tự nối vào dự án đó (bộ lọc Dự án, trang dự án, "Tin liên quan
+                  tại dự án" đều chạy theo slug). */}
+              <input
+                value={projectName}
+                onChange={(e) => setProjectName(e.target.value)}
+                placeholder="Tên dự án"
+                list="ds-du-an"
+                className={inputCls}
+              />
+              <datalist id="ds-du-an">
+                {projectOptions.map((o) => <option key={o.slug} value={o.name} />)}
+              </datalist>
+              {slugDuAn() && (
+                <p className="mt-1.5 text-xs font-medium text-cvr-blue-ink">
+                  Đã nối vào dự án {projectOptions.find((o) => o.slug === slugDuAn())?.name} trên web.
+                </p>
+              )}
+            </div>
+          )}
         </div>
-        <p className="mt-2 text-xs text-cvr-faint">
-          Chọn dự án → tin của bạn hiện thêm ở trang dự án đó, tiếp cận đúng khách đang quan tâm dự án.
-        </p>
       </Card>
 
       {error && (
