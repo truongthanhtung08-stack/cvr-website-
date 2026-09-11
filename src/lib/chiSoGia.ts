@@ -261,3 +261,102 @@ export async function xuHuongCuaMinh(
     return null;
   }
 }
+
+// ── GIÁ ĐẤT NHÀ NƯỚC ───────────────────────────────────────────────────────
+// Số trong quyết định của UBND tỉnh — dùng để tính thuế trước bạ, phí công
+// chứng. Đặt cạnh giá thị trường cho khách thấy khoảng cách giữa hai con số.
+//
+// KHỚP TƯƠNG ĐỐI, KHÔNG ĐÒI TUYỆT ĐỐI: bảng giá đất chia theo TUYẾN ĐƯỜNG và
+// ĐOẠN, còn tin đăng chỉ ghi số nhà + tên đường, không ai ghi "đoạn từ A đến B".
+// Nên khớp tới tên đường là đủ; đường có nhiều đoạn thì lấy mức mặt tiền (vị
+// trí 1) của đoạn đắt nhất và NÓI RÕ đó là mức cao nhất của tuyến.
+
+export type GiaDatNhaNuoc = {
+  duong: string;
+  doan: string;
+  viTri: number;
+  giaM2: number;
+  canCu: string;
+  nhieuDoan: boolean;
+};
+
+/** Tách tên đường ra khỏi chuỗi địa chỉ khách nhập: "123 Võ Nguyên Giáp" → "Võ Nguyên Giáp" */
+export function tenDuongTu(diaChi: string): string {
+  let t = (diaChi || "").split(",")[0].trim();
+  // Bỏ số nhà / số lô ở đầu: "123", "12A", "Lô A12", "Số 5"
+  t = t.replace(/^(số|lô|kiệt|hẻm|ngõ)\s+/i, "");
+  t = t.replace(/^[0-9]+[a-zA-Z]?(\s*\/\s*[0-9]+[a-zA-Z]?)*\s+/, "");
+  return t.trim();
+}
+
+export async function giaDatCuaTin(
+  tinh: string,
+  diaChi: string,
+): Promise<GiaDatNhaNuoc | null> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const duong = tenDuongTu(diaChi);
+  if (!url || !anon || !tinh || duong.length < 3) return null;
+
+  try {
+    const q =
+      `${url}/rest/v1/gia_dat_nha_nuoc` +
+      `?select=duong,doan,vi_tri,gia_m2,can_cu` +
+      `&tinh=eq.${encodeURIComponent(tinh)}` +
+      `&duong=ilike.${encodeURIComponent(duong)}` +
+      `&vi_tri=eq.1&order=gia_m2.desc&limit=20`;
+    const r = await fetch(q, {
+      headers: { apikey: anon, Authorization: `Bearer ${anon}` },
+      cache: "no-store",
+    });
+    if (!r.ok) return null;
+    const ds = (await r.json()) as {
+      duong: string;
+      doan: string;
+      vi_tri: number;
+      gia_m2: number;
+      can_cu: string;
+    }[];
+    if (!Array.isArray(ds) || !ds.length) return null;
+    return {
+      duong: ds[0].duong,
+      doan: ds[0].doan,
+      viTri: ds[0].vi_tri,
+      giaM2: ds[0].gia_m2,
+      canCu: ds[0].can_cu,
+      nhieuDoan: ds.length > 1,
+    };
+  } catch {
+    return null;
+  }
+}
+
+// ── MẶT BẰNG GIÁ THEO LOẠI HÌNH CHO CẢ MỘT KHU VỰC ─────────────────────────
+// Dùng ở trang khu vực (/mua-ban/da-nang…): khách vào xem "nhà đất Đà Nẵng" thì
+// câu đầu tiên họ muốn biết là mỗi loại hình đang bao nhiêu một mét vuông.
+
+export type DongBangGia = { loai: string; trungVi: number; thap: number; cao: number; soMau: number };
+
+export function bangGiaTheoLoai(tin: Listing[], mucDich: "ban" | "thue" = "ban"): DongBangGia[] {
+  const nhom = new Map<string, number[]>();
+  for (const x of tin) {
+    if ((x.purpose ?? "ban") !== mucDich) continue;
+    const loai = (x.type ?? "").trim();
+    if (!loai) continue;
+    const v = giaMoiM2(x);
+    if (v === null) continue;
+    const cu = nhom.get(loai);
+    if (cu) cu.push(v);
+    else nhom.set(loai, [v]);
+  }
+  return [...nhom.entries()]
+    .filter(([, ds]) => ds.length >= MAU_SO_SANH)
+    .map(([loai, ds]) => ({
+      loai,
+      trungVi: trungVi(ds),
+      thap: phanVi(ds, 0.25),
+      cao: phanVi(ds, 0.75),
+      soMau: ds.length,
+    }))
+    .sort((a, b) => b.soMau - a.soMau);
+}

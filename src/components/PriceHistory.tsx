@@ -1,4 +1,4 @@
-import type { ChiSoKhuVuc, MatBangGia, OSanh } from "@/lib/chiSoGia";
+import type { ChiSoKhuVuc, GiaDatNhaNuoc, MatBangGia, OSanh } from "@/lib/chiSoGia";
 import { vndM2, tenNguonHienThi } from "@/lib/chiSoGia";
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -25,6 +25,7 @@ export default function PriceHistory({
   giaTinNayM2,
   soSanh = [],
   laThue = false,
+  giaDat = null,
 }: {
   chiSo: ChiSoKhuVuc | null;
   matBang: MatBangGia | null;
@@ -32,11 +33,13 @@ export default function PriceHistory({
   soSanh?: OSanh[];
   /** Tin cho thuê thì giá mỗi m² là giá THUÊ mỗi tháng — đơn vị và chữ khác hẳn. */
   laThue?: boolean;
+  /** Giá đất Nhà nước theo quyết định UBND tỉnh — dùng tính thuế phí. */
+  giaDat?: GiaDatNhaNuoc | null;
 }) {
   const moc = (chiSo?.moc ?? []).filter((m) => m.giaM2 > 0).slice(-8);
   const coBieuDo = moc.length >= 2;
   const coSanh = soSanh.length >= 2;
-  if (!matBang && !coBieuDo && !coSanh) return null;
+  if (!matBang && !coBieuDo && !coSanh && !giaDat) return null;
 
   const dau = moc[0]?.giaM2 ?? 0;
   const cuoi = moc[moc.length - 1]?.giaM2 ?? 0;
@@ -113,6 +116,36 @@ export default function PriceHistory({
           <p className="mt-2 text-[12px] text-cvr-faint">
             Tính từ {matBang.soMau} tin cùng loại hình đang đăng trên Coastal Land
             {matBang.pham === "tinh" ? " — gộp cả tỉnh vì khu vực này chưa đủ tin" : ""}
+          </p>
+        </div>
+      )}
+
+      {/* ── 1B. GIÁ ĐẤT NHÀ NƯỚC — con số để tính thuế trước bạ, phí công chứng.
+              Chỉ hiện với tin BÁN; tin thuê không liên quan. Khớp tới TÊN ĐƯỜNG là
+              đủ — bảng giá đất chia theo đoạn, mà tin đăng không ai ghi đoạn, nên
+              nói rõ "mức cao nhất của tuyến" thay vì giả vờ khớp chính xác. */}
+      {giaDat && !laThue && (
+        <div className="rounded-xl bg-cvr-surface p-4">
+          <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+            <span className="text-sm text-cvr-muted">
+              Giá đất Nhà nước · {giaDat.duong}
+            </span>
+            <span className="text-[17px] font-bold text-cvr-ink">{vndM2(giaDat.giaM2)}</span>
+          </div>
+          {matBang && (
+            <p className="mt-1 text-[13px] text-cvr-body">
+              Giá thị trường đang gấp{" "}
+              <strong className="font-semibold">
+                {(matBang.trungVi / giaDat.giaM2).toFixed(1).replace(".", ",")} lần
+              </strong>{" "}
+              giá Nhà nước
+            </p>
+          )}
+          <p className="mt-2 text-[12px] leading-relaxed text-cvr-faint">
+            {giaDat.nhieuDoan
+              ? "Mức cao nhất của tuyến đường này (vị trí mặt tiền). "
+              : "Vị trí mặt tiền. "}
+            Dùng để tính thuế trước bạ và phí công chứng · {giaDat.canCu}
           </p>
         </div>
       )}

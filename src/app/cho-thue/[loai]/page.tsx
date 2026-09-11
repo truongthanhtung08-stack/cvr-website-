@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ListingBrowser from "@/components/ListingBrowser";
+import BangGiaKhuVuc from "@/components/BangGiaKhuVuc";
 import Breadcrumb from "@/components/Breadcrumb";
 import KhuVucLinks from "@/components/KhuVucLinks";
 import { ListingListJsonLd } from "@/components/ListJsonLd";
@@ -110,6 +111,9 @@ export default async function DanhMucChoThuePage({ params }: { params: Promise<{
               initialProvince={kv.name}
             />
           </Suspense>
+          {/* Mặt bằng giá của khu vực — khách vào trang này muốn biết ngay mỗi
+              loại hình bao nhiêu một m², trước cả khi xem tin. */}
+          <BangGiaKhuVuc items={tinTrongTinh} tenKhuVuc={kv.name} mucDich="thue" />
           <KhuVucLinks base="/cho-thue" demTheoTinh={demTheoTinh} tinhDangXem={kv.name} />
         </main>
         <Footer />
