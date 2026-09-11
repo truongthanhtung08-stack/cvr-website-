@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { taiCsv, homNay } from "@/lib/xuatCsv";
 
 // ════════════════════════════════════════════════════════════════════════════
 // NHẬP BẢNG GIÁ ĐẤT NHÀ NƯỚC TỪ TỆP CSV.
@@ -95,6 +96,43 @@ export default function GiaDatPage() {
   const [dangLuu, setDangLuu] = useState(false);
   const [daCo, setDaCo] = useState<number | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const [dangXuat, setDangXuat] = useState(false);
+
+  // Tải toàn bộ bảng giá đất đã nhập ra CSV — dùng làm báo cáo, hoặc để đối
+  // chiếu lại với văn bản gốc khi cần.
+  async function xuatKho() {
+    setDangXuat(true);
+    const ds: Record<string, unknown>[] = [];
+    for (let tu = 0; ; tu += 1000) {
+      const { data } = await createClient()
+        .from("gia_dat_nha_nuoc")
+        .select("tinh,phuong,duong,doan,vi_tri,gia_m2,can_cu,hieu_luc_tu")
+        .order("tinh", { ascending: true })
+        .range(tu, tu + 999);
+      if (!data?.length) break;
+      ds.push(...data);
+      if (data.length < 1000) break;
+    }
+    setDangXuat(false);
+    if (!ds.length) {
+      setMsg("Kho chưa có dòng nào để tải.");
+      return;
+    }
+    taiCsv(
+      `bang-gia-dat-${homNay()}.csv`,
+      ["Tỉnh/Thành", "Phường/Xã", "Đường", "Đoạn", "Vị trí", "Giá (triệu/m²)", "Căn cứ", "Hiệu lực từ"],
+      ds.map((r) => [
+        r.tinh,
+        r.phuong,
+        r.duong,
+        r.doan,
+        r.vi_tri,
+        (Number(r.gia_m2) / 1e6).toFixed(1).replace(".", ","),
+        r.can_cu,
+        r.hieu_luc_tu ?? "",
+      ]),
+    );
+  }
 
   const demKho = async () => {
     const { count } = await createClient()
@@ -176,6 +214,16 @@ export default function GiaDatPage() {
               className="sr-only"
             />
           </label>
+          {daCo !== null && daCo > 0 && (
+            <button
+              type="button"
+              onClick={xuatKho}
+              disabled={dangXuat}
+              className="rounded-lg border border-cvr-line px-4 py-2 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink disabled:opacity-60"
+            >
+              {dangXuat ? "Đang tải…" : "Tải kho ra CSV"}
+            </button>
+          )}
           {daCo !== null && (
             <span className="text-[13px] text-cvr-muted">
               Kho đang có <strong className="font-semibold text-cvr-ink">{daCo}</strong> dòng

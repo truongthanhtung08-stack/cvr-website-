@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { ChiSoGiaData, ChiSoKhuVuc } from "@/lib/chiSoGia";
 import { provinceNamesFor } from "@/lib/locations";
+import { taiCsv, homNay } from "@/lib/xuatCsv";
 
 // ════════════════════════════════════════════════════════════════════════════
 // CHỈ SỐ GIÁ THEO QUÝ — chủ dự án nhập tay mỗi quý một lần.
@@ -57,6 +58,44 @@ export default function ChiSoGiaPage() {
   const [dangTai, setDangTai] = useState(true);
   const [msg, setMsg] = useState("");
   const [kho, setKho] = useState<{ dong: number; thang: string[]; khuVuc: number } | null>(null);
+  const [dangXuat, setDangXuat] = useState(false);
+
+  // Tải TOÀN BỘ kho giá ra CSV để chủ dự án tự làm báo cáo thống kê bằng Excel,
+  // khỏi phải vào Supabase gõ lệnh.
+  async function xuatKho() {
+    setDangXuat(true);
+    const ds: Record<string, unknown>[] = [];
+    for (let tu = 0; ; tu += 1000) {
+      const { data } = await createClient()
+        .from("gia_khu_vuc_thang")
+        .select("thang,tinh,phuong,loai_hinh,muc_dich,trung_vi,thap,cao,so_mau")
+        .order("thang", { ascending: true })
+        .range(tu, tu + 999);
+      if (!data?.length) break;
+      ds.push(...data);
+      if (data.length < 1000) break;
+    }
+    setDangXuat(false);
+    if (!ds.length) {
+      setMsg("Kho chưa có dòng nào để tải.");
+      return;
+    }
+    taiCsv(
+      `kho-gia-khu-vuc-${homNay()}.csv`,
+      ["Tháng", "Tỉnh/Thành", "Phường/Xã", "Loại hình", "Bán/Thuê", "Trung vị (triệu/m²)", "Thấp (triệu/m²)", "Cao (triệu/m²)", "Số tin làm mẫu"],
+      ds.map((r) => [
+        r.thang,
+        r.tinh,
+        r.phuong || "(cả tỉnh)",
+        r.loai_hinh,
+        r.muc_dich === "thue" ? "Cho thuê" : "Bán",
+        (Number(r.trung_vi) / 1e6).toFixed(1).replace(".", ","),
+        (Number(r.thap) / 1e6).toFixed(1).replace(".", ","),
+        (Number(r.cao) / 1e6).toFixed(1).replace(".", ","),
+        r.so_mau,
+      ]),
+    );
+  }
   const tinhs = provinceNamesFor("moi");
 
   useEffect(() => {
@@ -147,6 +186,16 @@ export default function ChiSoGiaPage() {
               <p className="mt-0.5 text-[19px] font-bold text-cvr-ink">{kho.dong}</p>
             </div>
           </div>
+        )}
+        {kho && kho.dong > 0 && (
+          <button
+            type="button"
+            onClick={xuatKho}
+            disabled={dangXuat}
+            className="mt-3 rounded-lg border border-cvr-line px-4 py-2 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink disabled:opacity-60"
+          >
+            {dangXuat ? "Đang tải…" : "Tải toàn bộ kho ra CSV (để làm báo cáo)"}
+          </button>
         )}
         {kho && kho.thang.length > 0 && (
           <p className="mt-2 text-[12px] text-cvr-faint">
