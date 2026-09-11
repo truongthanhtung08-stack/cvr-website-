@@ -15,6 +15,17 @@ import NhanTinCuaToi from "@/components/NhanTinCuaToi";
 // lối tắt đăng tin (Mua bán / Cho thuê / Dự án) và quản lý tài khoản.
 type TomTatTin = { dangDang: number; choDuyet: number; luotXem: number; quanTam: number };
 
+// TƯƠNG TÁC 7 NGÀY — người trả tiền cần thấy tiền mình bỏ ra đổi lấy cái gì.
+// Bốn con số cộng dồn từ đầu không nói được tin đang lên hay đang nguội, cũng
+// không cho biết AI vừa hỏi tin — mà đó mới là thứ người bán cần để gọi lại.
+type TuongTac = {
+  xem7: number;          // lượt xem 7 ngày gần nhất
+  xem7Truoc: number;     // 7 ngày liền trước — để biết đang lên hay đang xuống
+  quanTam7: number;      // số người bấm xem số trong 7 ngày
+  tinTot: { id: string; title: string; luot: number } | null; // tin chạy tốt nhất
+  leadMoi: { id: string; ten: string; sdt: string; tin: string; luc: string }[];
+};
+
 export default function AccountOverviewPage() {
   const { profile, loading } = useProfile();
   // Giá · điểm · cấp thành viên lấy từ bản admin đã lưu (không phải giá cứng trong code)
@@ -47,6 +58,92 @@ export default function AccountOverviewPage() {
         choDuyet: list.filter((l) => l.status === "pending").length,
         luotXem: list.reduce((s, l) => s + (l.view_count ?? 0), 0),
         quanTam,
+      });
+    })();
+  }, []);
+
+
+  // ── TƯƠNG TÁC 7 NGÀY ──────────────────────────────────────────────────────
+  // Dữ liệu đã có sẵn trong CSDL từ lâu (listing_view_daily 0023, listing_leads
+  // 0022) nhưng khách phải bấm vào TỪNG TIN mới thấy. Gom về tổng quan: mở tài
+  // khoản là biết ngay tuần này tin đang lên hay đang nguội, và AI vừa hỏi tin.
+  const [tuongTac, setTuongTac] = useState<TuongTac | null>(null);
+  useEffect(() => {
+    const supabase = createClient();
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: tinCuaToi } = await supabase
+        .from("listings")
+        .select("id,title")
+        .eq("owner_id", user.id);
+      const ds = (tinCuaToi ?? []) as { id: string; title: string }[];
+      if (!ds.length) return;                      // chưa có tin nào → không hiện khối
+      const ids = ds.map((l) => l.id);
+      const tenTin = new Map(ds.map((l) => [l.id, l.title]));
+
+      const ngay = (lui: number) => {
+        const d = new Date();
+        d.setDate(d.getDate() - lui);
+        return d.toISOString().slice(0, 10);
+      };
+      const moc7 = ngay(7);
+      const moc14 = ngay(14);
+
+      // Lượt xem 14 ngày: 7 ngày này so với 7 ngày liền trước.
+      // Bảng theo ngày là migration 0023 — chưa chạy thì phần biểu đồ bỏ trống,
+      // KHÔNG làm hỏng cả khối.
+      const { data: xem } = await supabase
+        .from("listing_view_daily")
+        .select("listing_id,ngay,luot")
+        .in("listing_id", ids)
+        .gte("ngay", moc14);
+
+      let xem7 = 0;
+      let xem7Truoc = 0;
+      const theoTin = new Map<string, number>();
+      for (const d of (xem ?? []) as { listing_id: string; ngay: string; luot: number }[]) {
+        const n = String(d.ngay).slice(0, 10);
+        const l = Number(d.luot) || 0;
+        if (n >= moc7) {
+          xem7 += l;
+          theoTin.set(d.listing_id, (theoTin.get(d.listing_id) ?? 0) + l);
+        } else xem7Truoc += l;
+      }
+
+      // Tin chạy tốt nhất tuần này
+      let tinTot: TuongTac["tinTot"] = null;
+      for (const [id, luot] of theoTin) {
+        if (!tinTot || luot > tinTot.luot) tinTot = { id, title: tenTin.get(id) ?? "", luot };
+      }
+
+      // AI VỪA QUAN TÂM — tên + số điện thoại để người bán gọi lại được ngay.
+      // Đây là thứ giá trị nhất với người trả tiền, trước nay nằm im trong CSDL.
+      const { data: leads } = await supabase
+        .from("listing_leads")
+        .select("id,listing_id,viewer_name,viewer_phone,created_at")
+        .in("listing_id", ids)
+        .order("created_at", { ascending: false })
+        .limit(50);
+
+      const dsLead = (leads ?? []) as {
+        id: string; listing_id: string; viewer_name: string | null;
+        viewer_phone: string | null; created_at: string;
+      }[];
+
+      setTuongTac({
+        xem7,
+        xem7Truoc,
+        quanTam7: dsLead.filter((l) => l.created_at.slice(0, 10) >= moc7).length,
+        tinTot,
+        leadMoi: dsLead.slice(0, 3).map((l) => ({
+          id: l.id,
+          ten: l.viewer_name || "Khách",
+          sdt: l.viewer_phone || "",
+          tin: tenTin.get(l.listing_id) ?? "",
+          luc: l.created_at,
+        })),
       });
     })();
   }, []);
@@ -142,10 +239,10 @@ export default function AccountOverviewPage() {
 
         {/* Bốn con số nói ngay tình trạng tin, khỏi phải bấm vào từng trang */}
         <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <SoNho nhan="Đang đăng" so={tomTat?.dangDang} />
-          <SoNho nhan="Chờ duyệt" so={tomTat?.choDuyet} />
-          <SoNho nhan="Lượt xem" so={tomTat?.luotXem} />
-          <SoNho nhan="Người quan tâm" so={tomTat?.quanTam} accent />
+          <SoNho nhan="Đang đăng" so={tomTat?.dangDang} href="/tai-khoan/tin-dang" />
+          <SoNho nhan="Chờ duyệt" so={tomTat?.choDuyet} href="/tai-khoan/tin-dang" />
+          <SoNho nhan="Lượt xem" so={tomTat?.luotXem} href="/tai-khoan/tuong-tac" />
+          <SoNho nhan="Người quan tâm" so={tomTat?.quanTam} href="/tai-khoan/tuong-tac" accent />
         </div>
 
         <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -154,6 +251,85 @@ export default function AccountOverviewPage() {
           <LoiTat href="/tai-khoan/du-an" title="Dự án của tôi" desc={duocDangDuAn ? "Quản lý dự án đã đăng" : "Cần duyệt hồ sơ"} />
         </div>
       </div>
+
+      {/* 2B. TUẦN QUA — chỉ hiện khi đã có tin và đã có người xem.
+             Chưa có gì thì ẩn hẳn, không bày khối rỗng ra cho khách nhìn. */}
+      {tuongTac && (tuongTac.xem7 > 0 || tuongTac.leadMoi.length > 0) && (
+        <div className="rounded-2xl border border-cvr-line bg-white p-5 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-base font-semibold text-cvr-ink">Tuần qua</h2>
+            <Link href="/tai-khoan/tuong-tac" className="text-sm font-semibold text-cvr-blue-ink transition hover:underline">
+              Xem chi tiết →
+            </Link>
+          </div>
+
+          <div className="mt-3 grid grid-cols-2 gap-3">
+            <div className="rounded-xl bg-cvr-surface p-3">
+              <p className="text-xs text-cvr-muted">Lượt xem 7 ngày</p>
+              <p className="mt-0.5 flex items-baseline gap-1.5">
+                <span className="text-xl font-semibold tracking-tight text-cvr-ink">{tuongTac.xem7}</span>
+                {/* So với 7 ngày liền trước — biết tin đang lên hay đang nguội.
+                    Tuần trước bằng 0 thì không có gì để so, đừng hiện +∞%. */}
+                {tuongTac.xem7Truoc > 0 && (
+                  <span
+                    className={`text-xs font-semibold ${
+                      tuongTac.xem7 >= tuongTac.xem7Truoc ? "text-green-600" : "text-red-600"
+                    }`}
+                  >
+                    {tuongTac.xem7 >= tuongTac.xem7Truoc ? "▲" : "▼"}{" "}
+                    {Math.abs(Math.round(((tuongTac.xem7 - tuongTac.xem7Truoc) / tuongTac.xem7Truoc) * 100))}%
+                  </span>
+                )}
+              </p>
+            </div>
+            <div className="rounded-xl bg-cvr-surface p-3">
+              <p className="text-xs text-cvr-muted">Người hỏi số</p>
+              <p className="mt-0.5 text-xl font-semibold tracking-tight text-cvr-blue-ink">{tuongTac.quanTam7}</p>
+            </div>
+          </div>
+
+          {tuongTac.tinTot && tuongTac.tinTot.luot > 0 && (
+            <p className="mt-3 truncate text-sm text-cvr-body">
+              Tin được xem nhiều nhất:{" "}
+              <Link
+                href={`/tai-khoan/tin-dang/${tuongTac.tinTot.id}`}
+                className="font-semibold text-cvr-ink hover:underline"
+              >
+                {tuongTac.tinTot.title}
+              </Link>{" "}
+              <span className="text-cvr-muted">· {tuongTac.tinTot.luot} lượt</span>
+            </p>
+          )}
+
+          {/* AI VỪA HỎI SỐ — thứ giá trị nhất với người bán: gọi lại được ngay.
+              Trước nay nằm im trong cơ sở dữ liệu, phải bấm vào từng tin mới thấy. */}
+          {tuongTac.leadMoi.length > 0 && (
+            <div className="mt-4 border-t border-cvr-line pt-3">
+              <p className="text-sm font-semibold text-cvr-ink">Khách vừa hỏi số</p>
+              <ul className="mt-2 space-y-2">
+                {tuongTac.leadMoi.map((l) => (
+                  <li key={l.id} className="flex items-center justify-between gap-3 rounded-xl bg-cvr-surface px-3 py-2.5">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-cvr-ink">{l.ten}</p>
+                      <p className="truncate text-xs text-cvr-muted">
+                        {l.tin} · {truocDay(l.luc)}
+                      </p>
+                    </div>
+                    {l.sdt && (
+                      <a
+                        href={`tel:${l.sdt.replace(/\s/g, "")}`}
+                        className="shrink-0 rounded-full bg-cvr-ink px-3.5 py-1.5 text-xs font-semibold text-white"
+                      >
+                        Gọi lại
+                      </a>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* 3. VÍ & HỘI VIÊN — gộp 6 ô cũ thành MỘT khối: 3 chỉ số chính trên một
              hàng, thông tin gói để ở dòng phụ, nút nạp/đổi ngay trong khối. */}
@@ -248,14 +424,23 @@ function ChiSo({ label, value, sub, accent, color }: { label: string; value: str
 
 // Con số nhỏ trong khối "Tin của tôi". Chưa tải xong thì để dấu "—", không để
 // số 0 nhấp nháy rồi nhảy sang số thật (khách tưởng mất tin).
-function SoNho({ nhan, so, accent }: { nhan: string; so?: number; accent?: boolean }) {
-  return (
-    <div className="rounded-xl bg-cvr-surface p-3">
+// Con số phải BẤM ĐƯỢC. Thấy "3 người quan tâm" mà không vào xem được là ai thì
+// con số đó chỉ để ngắm, không giúp bán được gì (chủ dự án chốt 11/9/2026).
+function SoNho({ nhan, so, href, accent }: { nhan: string; so?: number; href?: string; accent?: boolean }) {
+  const ruot = (
+    <>
       <p className="text-xs text-cvr-muted">{nhan}</p>
       <p className={`mt-0.5 text-xl font-semibold tracking-tight ${accent && (so ?? 0) > 0 ? "text-cvr-blue-ink" : "text-cvr-ink"}`}>
         {so == null ? "—" : so}
       </p>
-    </div>
+    </>
+  );
+  return href ? (
+    <Link href={href} className="block rounded-xl bg-cvr-surface p-3 transition hover:bg-cvr-line/40 active:scale-[0.98]">
+      {ruot}
+    </Link>
+  ) : (
+    <div className="rounded-xl bg-cvr-surface p-3">{ruot}</div>
   );
 }
 
@@ -318,4 +503,16 @@ function PostType({ href, icon, title, desc }: { href: string; icon: string; tit
       </span>
     </Link>
   );
+}
+
+// "12 phút trước" dễ hình dung hơn "11/9/2026 14:03" — khách cần biết lead này
+// còn nóng hay đã nguội để quyết gọi ngay hay để sau.
+function truocDay(iso: string): string {
+  const phut = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
+  if (phut < 1) return "vừa xong";
+  if (phut < 60) return phut + " phút trước";
+  const gio = Math.round(phut / 60);
+  if (gio < 24) return gio + " giờ trước";
+  const ngay = Math.round(gio / 24);
+  return ngay < 30 ? ngay + " ngày trước" : new Date(iso).toLocaleDateString("vi-VN");
 }

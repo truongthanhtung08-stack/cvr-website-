@@ -62,6 +62,8 @@ const MUC: Record<string, { ten: string; cha: string; chaCon?: string }> = {
 // Tên riêng cho các trang con của khu tài khoản (admin của khách hàng)
 const TAI_KHOAN_CON: Record<string, string> = {
   "tin-dang": "Tin đã đăng",
+  "tuong-tac": "Tương tác",
+  "hoa-don": "Hóa đơn của tôi",
   "nap-tien": "Nạp tiền",
   "doi-diem": "Đổi điểm",
   "cai-dat": "Cài đặt",

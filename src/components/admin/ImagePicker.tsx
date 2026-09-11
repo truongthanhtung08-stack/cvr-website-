@@ -69,6 +69,30 @@ export default function ImagePicker({
     if (imgRef.current) imgRef.current.value = "";
   }
 
+  // CHỌN TỪ THƯ MỤC — ô này KHÔNG khai accept nên trình duyệt tệp mở đầy đủ,
+  // vào được mọi thư mục. Đổi lại là có thể lẫn tệp khác, nên phân loại tại đây:
+  // ảnh đi đường ảnh, video đi đường video, còn lại bỏ qua.
+  async function handleThuMuc(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    const ds = Array.from(files);
+    const anh = ds.filter((f) => f.type.startsWith("image/"));
+    const video = ds.filter((f) => f.type.startsWith("video/"));
+    if (!anh.length && !video.length) {
+      setError("Tệp vừa chọn không phải ảnh hoặc video.");
+      return;
+    }
+    if (anh.length) {
+      const dt = new DataTransfer();
+      for (const f of anh) dt.items.add(f);
+      await handleImageFiles(dt.files);
+    }
+    if (video.length) {
+      const dt = new DataTransfer();
+      dt.items.add(video[0]);
+      await handleVideoFile(dt.files);
+    }
+  }
+
   async function handleVideoFile(files: FileList | null) {
     const file = files?.[0];
     if (!file) return;
@@ -239,6 +263,28 @@ export default function ImagePicker({
             accept="video/*"
             disabled={uploadingVideo}
             onChange={(e) => handleVideoFile(e.target.files)}
+            className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+          />
+        </label>
+
+        {/* LỐI THỨ BA — THƯ MỤC. Chiếm trọn hàng dưới.
+            Ô này CỐ Ý KHÔNG khai accept. Khai "image/*" thì trình duyệt tệp bị
+            lọc chỉ còn ảnh, vào thư mục nào cũng thấy trống nên bấm như không
+            (chủ dự án báo 11/9/2026). Không khai loại thì nó mở đầy đủ, vào được
+            mọi thư mục — tệp lẫn lộn đã có handleThuMuc phân loại lại.
+            Chạy được trên cả hai hệ: Android mở trình duyệt tệp, iPhone mở Files. */}
+        <label
+          className={`relative col-span-2 inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-cvr-line bg-white px-3 py-2 text-[13px] font-medium text-cvr-muted transition hover:border-cvr-ink hover:text-cvr-ink ${uploadingImg || uploadingVideo ? "pointer-events-none opacity-60" : ""}`}
+        >
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
+          </svg>
+          Chọn từ thư mục
+          <input
+            type="file"
+            multiple
+            disabled={uploadingImg || uploadingVideo}
+            onChange={(e) => handleThuMuc(e.target.files)}
             className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
           />
         </label>

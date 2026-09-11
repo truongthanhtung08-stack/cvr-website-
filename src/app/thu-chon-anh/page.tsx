@@ -63,6 +63,8 @@ export default function ThuChonAnhPage() {
 
   return (
     <main className="mx-auto max-w-lg px-4 py-8">
+      {/* Trang chỉ dùng để đo trên máy thật — chặn Google đánh chỉ mục. */}
+      <meta name="robots" content="noindex, nofollow" />
       <h1 className="text-xl font-semibold tracking-tight text-cvr-ink">Thử cách mở Bộ sưu tập</h1>
       <p className="mt-1.5 text-sm text-cvr-muted">
         Bấm lần lượt từng nút, xem cách nào mở ra Bộ sưu tập trên máy này.
