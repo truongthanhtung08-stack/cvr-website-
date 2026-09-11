@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import LeadForm from "@/components/LeadForm";
+import TraCuuGiaDat from "@/components/TraCuuGiaDat";
 import { packages, utilityTools, getPackage, tiers, benefitRows } from "@/lib/packages";
 
 export function generateStaticParams() {
@@ -92,12 +93,17 @@ export default async function PackagePage({ params }: { params: Promise<{ slug: 
                 <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-cvr-gold-ink">Công cụ tiện ích</p>
                 <h2 className="mt-3 text-2xl font-semibold tracking-tight text-cvr-ink">{p.title}</h2>
                 <p className="mt-3 max-w-2xl text-base leading-relaxed text-cvr-muted">{p.description}</p>
-                <div className="mt-6 rounded-xl border border-cvr-line bg-white p-5 shadow-[0_1px_10px_rgba(0,0,0,0.05)]">
-                  <p className="text-base font-semibold text-cvr-ink">Tính năng này đang được chuẩn bị.</p>
-                  <p className="mt-2 text-sm leading-relaxed text-cvr-muted">
-                    Coastal Land sẽ sớm cập nhật nội dung, dữ liệu và công cụ tương tác cho mục này để bạn sử dụng thuận tiện hơn.
-                  </p>
-                </div>
+                {/* Giá đất Nhà nước có công cụ tra cứu thật; các tiện ích còn lại
+                    vẫn là khối "đang chuẩn bị" cho tới khi có dữ liệu của chúng. */}
+                {slug === "gia-nha-dat" ? (
+                  <div className="mt-6">
+                    <TraCuuGiaDat />
+                  </div>
+                ) : (
+                  <div className="mt-6 rounded-xl border border-cvr-line bg-white p-5 shadow-[0_1px_10px_rgba(0,0,0,0.05)]">
+                    <p className="text-base font-semibold text-cvr-ink">Nội dung đang được cập nhật.</p>
+                  </div>
+                )}
               </div>
             </section>
           ) : (

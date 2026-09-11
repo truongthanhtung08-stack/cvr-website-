@@ -81,8 +81,7 @@ export default function YeuCauDangDuAnPage() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-cvr-ink">Yêu cầu đăng dự án</h1>
         <p className="mt-1 text-sm text-cvr-muted">
-          Để lại thông tin liên hệ — Coastal Land gọi lại xác minh hồ sơ Chủ đầu tư / Công ty phân
-          phối rồi mở quyền đăng dự án cho bạn.
+          Để lại thông tin, Coastal Land gọi lại xác minh và mở quyền đăng dự án.
         </p>
       </div>
 

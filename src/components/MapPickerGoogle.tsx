@@ -396,8 +396,7 @@ export default function MapPickerGoogle({
           </>
         ) : (
           <span className="text-cvr-muted">
-            Bấm thẳng lên bản đồ để ghim đúng vị trí bất động sản. Đang đứng tại đó thì bấm
-            “Tôi đang đứng ở đây” cho nhanh và chính xác nhất.
+            Bấm lên bản đồ để ghim vị trí.
           </span>
         )}
       </p>

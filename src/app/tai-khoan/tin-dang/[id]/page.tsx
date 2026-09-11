@@ -160,8 +160,8 @@ export default function ChiTietTinCuaToiPage() {
         </div>
 
         {chuaCoBangNgay ? (
-          <p className="mt-3 rounded-xl bg-cvr-surface px-4 py-3 text-sm leading-relaxed text-cvr-muted">
-            Thống kê theo ngày bắt đầu ghi nhận từ khi bật tính năng — tin cũ chỉ có số tổng.
+          <p className="mt-3 rounded-xl bg-cvr-surface px-4 py-3 text-sm text-cvr-muted">
+            Tin này chỉ có số tổng, chưa tách theo ngày.
           </p>
         ) : xem30Ngay === 0 ? (
           <p className="mt-3 rounded-xl bg-cvr-surface px-4 py-3 text-sm leading-relaxed text-cvr-muted">
@@ -198,7 +198,7 @@ export default function ChiTietTinCuaToiPage() {
       <section className="rounded-2xl border border-cvr-line bg-white p-5 shadow-lux">
         <h2 className="text-base font-semibold text-cvr-ink">Ai đã quan tâm tin này</h2>
         <p className="mt-1 text-sm leading-relaxed text-cvr-muted">
-          Người đã đăng nhập và bấm xem số điện thoại của bạn. Gọi lại sớm thì tỉ lệ chốt cao hơn nhiều.
+          Người đã bấm xem số điện thoại của bạn.
         </p>
 
         {leads.length === 0 ? (

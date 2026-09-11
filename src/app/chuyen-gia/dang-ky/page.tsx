@@ -25,7 +25,7 @@ export default function DangKyChuyenGiaPage() {
           <div className="grid grid-cols-1 gap-10 lg:grid-cols-2 lg:items-start">
             <div>
               <h1 className="text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">Trở thành chuyên gia Coastal Land</h1>
-              <p className="mt-2 text-sm leading-relaxed text-cvr-muted">Gia nhập mạng lưới chuyên gia môi giới uy tín tại Miền Trung. Điền thông tin, đội ngũ Coastal Land sẽ liên hệ xác minh và kích hoạt hồ sơ của bạn.</p>
+              <p className="mt-2 text-sm leading-relaxed text-cvr-muted">Điền thông tin, Coastal Land liên hệ xác minh và kích hoạt hồ sơ.</p>
 
               <div className="mt-6 space-y-4">
                 {benefits.map((b, i) => (

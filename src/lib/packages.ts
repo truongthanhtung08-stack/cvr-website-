@@ -122,9 +122,10 @@ export const utilityTools: Pkg[] = [
   },
   {
     slug: "gia-nha-dat",
-    label: "Giá nhà đất",
-    title: "Giá nhà đất",
-    description: "Theo dõi và tra cứu xu hướng giá nhà đất theo khu vực.",
+    label: "Giá đất Nhà nước",
+    title: "Tra cứu giá đất Nhà nước",
+    description:
+      "Giá đất theo quyết định của UBND tỉnh — căn cứ tính thuế trước bạ, phí công chứng và thuế thu nhập khi chuyển nhượng.",
     icon: "boost",
     kind: "tool",
   },

@@ -166,8 +166,7 @@ function KhoiHoaDon({ profile }: { profile: { id: string; email: string | null }
     <form onSubmit={luu} className="rounded-2xl border border-cvr-line bg-white p-5 shadow-sm sm:p-6">
       <h2 className="text-base font-semibold text-cvr-ink">Thông tin xuất hóa đơn</h2>
       <p className="mt-1 text-sm text-cvr-muted">
-        Mua dịch vụ cho công ty và cần hóa đơn giá trị gia tăng để hạch toán? Khai một lần ở đây,
-        các lần sau tự động xuất hóa đơn mang tên công ty bạn.
+        Khai một lần, các lần sau tự xuất hóa đơn mang tên công ty bạn.
       </p>
 
       {notice && (
@@ -213,8 +212,7 @@ function KhoiHoaDon({ profile }: { profile: { id: string; email: string | null }
 
       {!bat && (
         <p className="mt-3 text-sm text-cvr-muted">
-          Không bật cũng không sao — giao dịch của bạn vẫn được xuất hóa đơn đầy đủ theo quy định,
-          chỉ là không xuất riêng thành hóa đơn mang tên công ty.
+          Không bật thì hóa đơn vẫn xuất đầy đủ, chỉ là không mang tên công ty.
         </p>
       )}
 

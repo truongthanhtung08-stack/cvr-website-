@@ -1,7 +1,8 @@
-tinh,phuong,duong,doan,vi_tri,gia_m2_trieu,can_cu,hieu_luc_tu
-Huế,Phường An Cựu,Hùng Vương,Từ cầu An Cựu đến Nguyễn Huệ,1,32.5,Quyết định 47/2024/QĐ-UBND tỉnh Thừa Thiên Huế,2025-01-01
-Huế,Phường An Cựu,Hùng Vương,Từ cầu An Cựu đến Nguyễn Huệ,2,19.5,Quyết định 47/2024/QĐ-UBND tỉnh Thừa Thiên Huế,2025-01-01
-Huế,Phường An Cựu,Hùng Vương,Từ cầu An Cựu đến Nguyễn Huệ,3,13,Quyết định 47/2024/QĐ-UBND tỉnh Thừa Thiên Huế,2025-01-01
-Đà Nẵng,Phường Hải Châu,Nguyễn Văn Linh,Từ Trần Phú đến Nguyễn Tri Phương,1,68,Quyết định 09/2025/QĐ-UBND TP Đà Nẵng,2025-01-01
-Đà Nẵng,Phường Hải Châu,Nguyễn Văn Linh,Từ Trần Phú đến Nguyễn Tri Phương,2,40.8,Quyết định 09/2025/QĐ-UBND TP Đà Nẵng,2025-01-01
-Đà Nẵng,Phường An Hải,Võ Nguyên Giáp,Toàn tuyến,1,95,Quyết định 09/2025/QĐ-UBND TP Đà Nẵng,2025-01-01
+﻿sep=;
+tinh;phuong;duong;doan;vi_tri;gia_m2_trieu;can_cu;hieu_luc_tu
+Huế;Phường An Cựu;Hùng Vương;Từ cầu An Cựu đến Nguyễn Huệ;1;32.5;Quyết định 47/2024/QĐ-UBND tỉnh Thừa Thiên Huế;2025-01-01
+Huế;Phường An Cựu;Hùng Vương;Từ cầu An Cựu đến Nguyễn Huệ;2;19.5;Quyết định 47/2024/QĐ-UBND tỉnh Thừa Thiên Huế;2025-01-01
+Huế;Phường An Cựu;Hùng Vương;Từ cầu An Cựu đến Nguyễn Huệ;3;13;Quyết định 47/2024/QĐ-UBND tỉnh Thừa Thiên Huế;2025-01-01
+Đà Nẵng;Phường Hải Châu;Nguyễn Văn Linh;Từ Trần Phú đến Nguyễn Tri Phương;1;68;Quyết định 09/2025/QĐ-UBND TP Đà Nẵng;2025-01-01
+Đà Nẵng;Phường Hải Châu;Nguyễn Văn Linh;Từ Trần Phú đến Nguyễn Tri Phương;2;40.8;Quyết định 09/2025/QĐ-UBND TP Đà Nẵng;2025-01-01
+Đà Nẵng;Phường An Hải;Võ Nguyên Giáp;Toàn tuyến;1;95;Quyết định 09/2025/QĐ-UBND TP Đà Nẵng;2025-01-01

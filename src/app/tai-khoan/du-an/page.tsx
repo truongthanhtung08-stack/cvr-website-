@@ -88,10 +88,7 @@ function NoiDung() {
           >
             Gửi yêu cầu
           </Link>
-          <p className="mt-3 text-xs text-cvr-muted">
-            Coastal Land gọi lại trong 1–2 ngày làm việc để xác minh hồ sơ Chủ đầu tư / uỷ quyền
-            phân phối. Duyệt xong bạn đăng dự án ngay tại đây.
-          </p>
+          <p className="mt-3 text-xs text-cvr-muted">Coastal Land gọi lại trong 1–2 ngày làm việc.</p>
         </div>
       </div>
     );

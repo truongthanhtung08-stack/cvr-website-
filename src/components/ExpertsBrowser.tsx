@@ -57,15 +57,15 @@ export default function ExpertsBrowser({
         </div>
       )}
 
-      {/* Chưa có chuyên gia thật nào → KHÔNG hiện "0 chuyên gia" trống trơn mà
-          nói rõ đang cập nhật + mời đăng ký. Xem lý do trong src/lib/experts.ts. */}
+      {/* Chưa có chuyên gia thật nào → biến chỗ trống thành LỜI MỜI, không kể lể
+          quy trình xác minh của mình. Xem lý do trong src/lib/experts.ts. */}
       {list.length === 0 ? (
         <div className="mt-6 rounded-none border border-cvr-line bg-cvr-surface px-6 py-12 text-center">
-          <p className="text-[15px] font-semibold text-cvr-ink">Danh bạ đang được cập nhật</p>
+          <p className="text-[15px] font-semibold text-cvr-ink">
+            Bạn là môi giới{tab !== "Tất cả" ? ` tại ${tab}` : " tại Đà Nẵng, Huế"}?
+          </p>
           <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-cvr-muted">
-            Coastal Land đang xác minh hồ sơ chuyên gia
-            {tab !== "Tất cả" ? ` tại ${tab}` : " tại Đà Nẵng và Huế"}. Chỉ những hồ sơ
-            đã kiểm chứng mới được đưa lên danh bạ.
+            Có mặt trong danh bạ để khách tìm thấy bạn trước.
           </p>
           <Link
             href="/chuyen-gia/dang-ky"

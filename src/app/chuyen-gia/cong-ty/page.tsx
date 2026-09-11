@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { agencies } from "@/lib/experts";
@@ -24,17 +25,18 @@ export default function CongTyPage() {
               Lý do đầy đủ: src/lib/experts.ts */}
           {agencies.length === 0 && (
             <div className="mt-6 rounded-none border border-cvr-line bg-cvr-surface px-6 py-12 text-center">
-              <p className="text-[15px] font-semibold text-cvr-ink">Danh sách đang được cập nhật</p>
-              <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-cvr-muted">
-                Coastal Land đang kết nối với các sàn giao dịch và công ty bất động sản
-                tại Đà Nẵng, Huế. Đơn vị muốn hợp tác xin liên hệ qua trang Đăng ký.
+              <p className="text-[15px] font-semibold text-cvr-ink">
+                Sàn giao dịch, công ty bất động sản tại Đà Nẵng, Huế
               </p>
-              <a
+              <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-cvr-muted">
+                Hợp tác cùng Coastal Land để tiếp cận khách hàng Miền Trung.
+              </p>
+              <Link
                 href="/chuyen-gia/dang-ky"
                 className="mt-6 inline-flex min-h-[44px] items-center rounded-lg bg-cvr-ink px-5 text-sm font-semibold text-white transition hover:bg-cvr-body"
               >
                 Đăng ký hợp tác
-              </a>
+              </Link>
             </div>
           )}
 

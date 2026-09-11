@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { taiCsv, homNay } from "@/lib/xuatCsv";
+import { taiCsv, homNay, tachBangCsv } from "@/lib/xuatCsv";
+import { docBangXlsx, laXlsx } from "@/lib/docXlsx";
 
 // ════════════════════════════════════════════════════════════════════════════
 // NHẬP BẢNG GIÁ ĐẤT NHÀ NƯỚC TỪ TỆP CSV.
@@ -12,7 +13,7 @@ import { taiCsv, homNay } from "@/lib/xuatCsv";
 // Việc kiểm tra nằm ở bước xem trước: dòng nào sai định dạng thì báo đỏ, sửa
 // trong Excel rồi tải lại. Dòng sai KHÔNG được lưu.
 //
-// Mẫu tệp: /mau-gia-dat-nha-nuoc.csv — hướng dẫn: docs/HUONG-DAN-NHAP-GIA-DAT.md
+// Mẫu tệp: /mau-gia-dat-nha-nuoc.xlsx — tài liệu: docs/DU-LIEU-GIA.md
 // ════════════════════════════════════════════════════════════════════════════
 
 type Dong = {
@@ -29,36 +30,14 @@ type Dong = {
 
 const COT = ["tinh", "phuong", "duong", "doan", "vi_tri", "gia_m2_trieu", "can_cu", "hieu_luc_tu"];
 
-/** Tách một dòng CSV, hiểu cả ô bọc trong dấu ngoặc kép có chứa dấu phẩy. */
-function tachDong(s: string): string[] {
-  const ra: string[] = [];
-  let o = "";
-  let trongNgoac = false;
-  for (let i = 0; i < s.length; i++) {
-    const c = s[i];
-    if (c === '"') {
-      if (trongNgoac && s[i + 1] === '"') {
-        o += '"';
-        i++;
-      } else trongNgoac = !trongNgoac;
-    } else if (c === "," && !trongNgoac) {
-      ra.push(o.trim());
-      o = "";
-    } else o += c;
-  }
-  ra.push(o.trim());
-  return ra;
-}
+/** Nhận bảng đã tách — dùng chung cho tệp Excel (.xlsx) và tệp CSV. */
+function docBang(bang: string[][]): Dong[] {
+  if (!bang.length) return [];
 
-function docCsv(text: string): Dong[] {
-  const dong = text.split(/\r?\n/).filter((d) => d.trim());
-  if (!dong.length) return [];
-
-  const dau = tachDong(dong[0]).map((x) => x.toLowerCase().replace(/^﻿/, ""));
+  const dau = bang[0].map((x) => x.toLowerCase().replace(/^﻿/, ""));
   const viTriCot = COT.map((c) => dau.indexOf(c));
 
-  return dong.slice(1).map((d) => {
-    const o = tachDong(d);
+  return bang.slice(1).map((o) => {
     const lay = (i: number) => (viTriCot[i] >= 0 ? (o[viTriCot[i]] ?? "").trim() : "");
 
     const tinh = lay(0);
@@ -147,7 +126,11 @@ export default function GiaDatPage() {
   async function chonFile(f: File) {
     setMsg("");
     setTenFile(f.name);
-    setDs(docCsv(await f.text()));
+    try {
+      setDs(docBang(laXlsx(f) ? await docBangXlsx(f) : tachBangCsv(await f.text())));
+    } catch (err) {
+      setMsg(`Không đọc được tệp — ${err instanceof Error ? err.message : "định dạng lạ"}`);
+    }
   }
 
   const dung = ds.filter((d) => !d.loi);
@@ -195,18 +178,18 @@ export default function GiaDatPage() {
       <div className="rounded-2xl border border-cvr-line bg-white p-4 shadow-sm sm:p-5">
         <div className="flex flex-wrap items-center gap-3">
           <a
-            href="/mau-gia-dat-nha-nuoc.csv"
+            href="/mau-gia-dat-nha-nuoc.xlsx"
             download
             className="rounded-lg border border-cvr-line px-4 py-2 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink"
           >
-            Tải tệp mẫu
+            Tải tệp mẫu Excel
           </a>
           <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-cvr-ink px-4 py-2 text-sm font-semibold text-white transition hover:bg-cvr-ink/90">
-            Chọn tệp CSV
+            Chọn tệp Excel
             <input
               ref={fileRef}
               type="file"
-              accept=".csv,text/csv"
+              accept=".xlsx,.csv"
               onChange={(e) => {
                 const f = e.target.files?.[0];
                 if (f) void chonFile(f);
@@ -326,7 +309,7 @@ export default function GiaDatPage() {
           <li>Chép đúng số trong quyết định, không tự ước lượng đoạn không có trong văn bản.</li>
         </ul>
         <p className="mt-2">
-          Hướng dẫn đầy đủ cho người nhập: <code>docs/HUONG-DAN-NHAP-GIA-DAT.md</code>
+          Tài liệu đầy đủ: <code>docs/DU-LIEU-GIA.md</code>
         </p>
       </div>
     </div>

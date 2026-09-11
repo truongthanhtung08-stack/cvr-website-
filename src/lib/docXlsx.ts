@@ -132,3 +132,17 @@ function docSheet(xml: string, kho: string[]): string[][] {
   // Bỏ dòng trống hoàn toàn (giống khi đọc CSV)
   return bang.filter((r) => r.some((v) => v.trim() !== ""));
 }
+
+// ── Tiện ích dùng ở các trang nhập liệu ─────────────────────────────────────
+// Trang nhập giá nhận CẢ .xlsx lẫn .csv: bắt người nhập "Save as CSV" là nguồn
+// lỗi triền miên (Excel vùng Việt Nam xuất dấu chấm phẩy, quên UTF-8 là vỡ dấu).
+
+/** Tệp có phải Excel không — xét theo đuôi, đủ dùng cho ô chọn tệp. */
+export function laXlsx(tep: File): boolean {
+  return tep.name.toLowerCase().endsWith(".xlsx");
+}
+
+/** Đọc thẳng một File .xlsx thành bảng chuỗi, cùng dạng đầu ra với tachBangCsv. */
+export async function docBangXlsx(tep: File): Promise<string[][]> {
+  return docXlsx(await tep.arrayBuffer());
+}
