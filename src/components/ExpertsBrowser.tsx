@@ -77,7 +77,7 @@ export default function ExpertsBrowser({
       ) : (
         <>
           <p className="mt-4 text-sm text-cvr-body">
-            <span className="font-bold text-cvr-ink">{list.length}</span> chuyên gia
+            Chuyên gia
             {tab !== "Tất cả" ? ` tại ${tab}` : ""}
           </p>
 

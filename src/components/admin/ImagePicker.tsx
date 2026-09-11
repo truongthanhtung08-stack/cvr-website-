@@ -226,12 +226,16 @@ export default function ImagePicker({
           hiện lối thoát sang Chrome ngay tại đây, đúng chỗ khách đang bấm. */}
       <MoBangChrome />
 
-      <div className="flex flex-wrap items-center gap-3">
+      {/* ĐA SỐ KHÁCH UP ẢNH TỪ BỘ SƯU TẬP. Hai nút đó chiếm trọn hàng trên, gọi
+          đúng tên khách đi tìm; Thư mục và Máy ảnh lùi xuống hàng dưới, nhỏ hơn
+          — vẫn đủ ba lối vào, nhưng không để khách bấm nhầm sang trình duyệt tệp
+          rồi tưởng web không mở được bộ sưu tập (chủ dự án chốt 11/9/2026). */}
+      <div className="grid grid-cols-2 gap-2.5">
         <label
-          className={`inline-flex cursor-pointer items-center gap-2 rounded-lg bg-cvr-ink px-4 py-2 text-sm font-semibold text-white transition hover:bg-cvr-ink/90 ${uploadingImg ? "pointer-events-none opacity-60" : ""}`}
+          className={`relative inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-cvr-ink px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-cvr-ink/90 ${uploadingImg ? "pointer-events-none opacity-60" : ""}`}
         >
           <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 16V4m0 0L8 8m4-4l4 4M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" /></svg>
-          {uploadingImg ? "Đang tải ảnh…" : "Chọn ảnh"}
+          {uploadingImg ? "Đang tải ảnh…" : "Bộ sưu tập ảnh"}
           <input
             ref={imgRef}
             type="file"
@@ -239,25 +243,31 @@ export default function ImagePicker({
             multiple
             disabled={uploadingImg}
             onChange={(e) => handleImageFiles(e.target.files)}
-            className="sr-only"
+            className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
           />
         </label>
 
         <label
-          className={`inline-flex cursor-pointer items-center gap-2 rounded-lg border border-cvr-line bg-white px-4 py-2 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink ${uploadingVideo ? "pointer-events-none opacity-60" : ""}`}
+          className={`relative inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-cvr-line bg-white px-4 py-2.5 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink ${uploadingVideo ? "pointer-events-none opacity-60" : ""}`}
         >
           <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 6h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z" /></svg>
-          {uploadingVideo ? "Đang tải video…" : "Chọn video"}
+          {uploadingVideo ? "Đang tải video…" : "Bộ sưu tập video"}
           <input
             ref={videoRef}
             type="file"
             accept="video/*"
             disabled={uploadingVideo}
             onChange={(e) => handleVideoFile(e.target.files)}
-            className="sr-only"
+            className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
           />
         </label>
 
+      </div>
+
+      {/* HAI LỐI PHỤ — THƯ MỤC và MÁY ẢNH. Để hàng riêng, chữ nhỏ hơn: vẫn có đủ
+          ba lối vào như chủ dự án yêu cầu, nhưng khách nhìn là biết ngay đường
+          chính nằm ở hàng trên. */}
+      <div className="mt-2.5 grid grid-cols-2 gap-2.5">
         {/* LỐI THỨ BA — THƯ MỤC.
             Nút này TRƯỚC ĐÂY ghi "Bộ sưu tập · Thư mục · Máy ảnh" nhưng bấm vào
             Samsung chỉ hiện "Máy ảnh · File của bạn · Files" — KHÔNG có Bộ sưu
@@ -265,7 +275,7 @@ export default function ImagePicker({
             (chủ dự án chụp lại 11/9/2026). Tên nút hứa một đằng, máy mở một nẻo.
             → Gọi đúng tên việc nó làm: THƯ MỤC. Bộ sưu tập đã có hai nút trên. */}
         <label
-          className={`inline-flex cursor-pointer items-center gap-2 rounded-lg border border-cvr-line bg-white px-4 py-2 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink ${uploadingImg || uploadingVideo ? "pointer-events-none opacity-60" : ""}`}
+          className={`relative inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-cvr-line bg-white px-3 py-2 text-[13px] font-medium text-cvr-muted transition hover:border-cvr-ink hover:text-cvr-ink ${uploadingImg || uploadingVideo ? "pointer-events-none opacity-60" : ""}`}
         >
           <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
@@ -277,7 +287,7 @@ export default function ImagePicker({
             multiple
             disabled={uploadingImg || uploadingVideo}
             onChange={(e) => handleThuMuc(e.target.files)}
-            className="sr-only"
+            className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
           />
         </label>
 
@@ -285,7 +295,7 @@ export default function ImagePicker({
             Bộ sưu tập ở trên tuyệt đối không được kèm capture, kèm vào là máy
             nhảy thẳng vào chụp ảnh, khách không vào được thư viện. */}
         <label
-          className={`inline-flex cursor-pointer items-center gap-2 rounded-lg border border-cvr-line bg-white px-4 py-2 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink ${uploadingImg ? "pointer-events-none opacity-60" : ""}`}
+          className={`relative inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-cvr-line bg-white px-3 py-2 text-[13px] font-medium text-cvr-muted transition hover:border-cvr-ink hover:text-cvr-ink ${uploadingImg ? "pointer-events-none opacity-60" : ""}`}
         >
           <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h1.5l1.2-1.8A1 1 0 019.5 5h5a1 1 0 01.8.4L16.5 7H19a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
@@ -298,7 +308,7 @@ export default function ImagePicker({
             capture="environment"
             disabled={uploadingImg}
             onChange={(e) => handleImageFiles(e.target.files)}
-            className="sr-only"
+            className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
           />
         </label>
 

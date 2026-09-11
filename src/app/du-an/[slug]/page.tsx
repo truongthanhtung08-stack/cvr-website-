@@ -123,7 +123,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
           <Breadcrumb items={[{ name: "Dự án", href: "/du-an" }, { name: cat.label, href: `/du-an/${cat.slug}` }]} />
           <div className="mx-auto max-w-7xl px-4 pb-footer sm:px-6 lg:px-8">
             <h1 className="mb-1 mt-3 text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">{cat.h1}</h1>
-            <p className="mb-4 text-sm text-cvr-muted">{items.length} dự án · {cat.desc}</p>
+            <p className="mb-4 text-sm text-cvr-muted">{cat.desc}</p>
             <ProjectsBrowser projects={items} articles={articles} />
           </div>
         </main>
@@ -158,7 +158,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               Dự án bất động sản tại {kv.name}
             </h1>
             <p className="mb-4 text-sm text-cvr-muted">
-              {items.length} dự án · {moTaKhuVuc("duan", kv.name, items.length)}
+              {moTaKhuVuc("duan", kv.name, items.length)}
             </p>
             <ProjectsBrowser projects={items} articles={articles} />
           </div>

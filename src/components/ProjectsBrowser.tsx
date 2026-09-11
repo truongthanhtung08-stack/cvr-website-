@@ -493,7 +493,7 @@ export default function ProjectsBrowser({
       <p className="mt-1.5 text-sm text-cvr-muted">
         {/* Coastal Land là CỔNG THÔNG TIN — không phân phối, không mua bán dự án.
             Câu này chỉ nói về thông tin đang đăng tải, không được hàm ý môi giới. */}
-        Hiện có {visible.length} dự án căn hộ, khu đô thị và nghỉ dưỡng đang được cập nhật trên Coastal Land.
+        Dự án căn hộ, khu đô thị và nghỉ dưỡng đang được cập nhật trên Coastal Land.
       </p>
 
       {/* NÚT XEM BẢN ĐỒ — cùng vị trí với trang Mua bán / Cho thuê để khách quen tay */}
@@ -537,7 +537,7 @@ export default function ProjectsBrowser({
             />
           </div>
           <p className="border-t border-cvr-line bg-cvr-surface px-3 py-2 text-xs text-cvr-muted">
-            Đang hiện <span className="font-semibold text-cvr-ink">{visible.length}</span> dự án theo bộ lọc.
+
             Bấm vào tên dự án để xem nhanh.
           </p>
         </div>

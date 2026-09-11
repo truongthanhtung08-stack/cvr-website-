@@ -137,7 +137,13 @@ export default function GallerySlideVideo({
     // YouTube/Vimeo — tới lượt slide này thì nạp thẳng trình phát của họ để có
     // nút play, tua, âm lượng gốc. Slide chưa tới lượt thì chỉ hiện khung hình
     // chờ, không nạp iframe cho nhẹ trang.
-    active ? (
+    //
+    // `!xemLon`: MỞ LỚN THÌ PHẢI GỠ HẲN IFRAME NÀY RA.
+    // Video tự đăng là thẻ <video> nên gọi pause() được, còn YouTube/Vimeo là
+    // iframe — ref.current bằng null, pause() không ăn vào đâu cả. Hậu quả: bấm
+    // xem lớn thì khung nhỏ VẪN CHẠY, thành hai video hai tiếng cùng lúc (chủ dự
+    // án báo 11/9/2026). Gỡ iframe là nó im ngay; đóng lại thì nạp lại.
+    active && !xemLon ? (
       <iframe
         ref={khungRef}
         src={embed}
@@ -224,7 +230,18 @@ export default function GallerySlideVideo({
         </button>
       )}
 
-      {xemLon && <VideoToanManHinh url={url} batDau={giay} onClose={() => setXemLon(false)} />}
+      {xemLon && (
+        <VideoToanManHinh
+          url={url}
+          batDau={giay}
+          onClose={(giayDangXem) => {
+            // Thu về khung nhỏ ĐÚNG CHỖ vừa xem dở, không nhảy về đầu.
+            const v = ref.current;
+            if (v && typeof giayDangXem === "number" && giayDangXem > 0) v.currentTime = giayDangXem;
+            setXemLon(false);
+          }}
+        />
+      )}
 
       {loiPhat && !xemTruoc && (
         <a

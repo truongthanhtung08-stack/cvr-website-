@@ -98,7 +98,7 @@ export default function SearchClient({ items = featuredListings }: { items?: Lis
           id="ket-qua": bấm Tìm / Enter / chọn gợi ý là cuộn thẳng xuống đây. */}
       <div id="ket-qua" className="mb-5 mt-5 flex scroll-mt-20 flex-wrap items-center justify-between gap-3 sm:scroll-mt-24">
         <p className="text-sm text-cvr-body">
-          <span className="font-bold text-cvr-ink">{results.length}</span> bất động sản{active ? " phù hợp" : ""}
+          {active ? <><span className="font-bold text-cvr-ink">{results.length}</span> bất động sản phù hợp</> : "Bất động sản tại Đà Nẵng, Huế & Miền Trung"}
         </p>
         <div className="flex items-center gap-3">
           {active && (

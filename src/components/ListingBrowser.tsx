@@ -170,9 +170,11 @@ export default function ListingBrowser({
       <div id="ket-qua" className="mt-4 flex scroll-mt-20 flex-wrap items-end justify-between gap-x-4 gap-y-2 sm:scroll-mt-24">
         <div className="min-w-0">
           <h1 className="text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">{heading}</h1>
-          {/* Câu đếm TẠM ẨN trên mobile (theo yêu cầu) */}
+          {/* KHÔNG in số lượng tin ra đây — web đang ít tin, nói ra là tự phơi
+              điểm yếu với khách (chủ dự án chốt 11/9/2026). Câu này chỉ còn nói
+              phạm vi hoạt động. Ẩn trên mobile cho gọn như trước. */}
           <p className="mt-1 hidden text-sm text-cvr-muted sm:block">
-            Hiện có <span className="font-semibold text-cvr-ink">{results.length}</span> bất động sản{active ? " phù hợp " : " "}tại Đà Nẵng, Huế &amp; Miền Trung.
+            Bất động sản{active ? " phù hợp " : " "}tại Đà Nẵng, Huế &amp; Miền Trung.
           </p>
         </div>
         <div className="flex flex-1 flex-wrap items-center justify-end gap-3">
@@ -230,7 +232,6 @@ export default function ListingBrowser({
             <MapView items={results} />
           </div>
           <p className="border-t border-cvr-line bg-cvr-surface px-3 py-2 text-xs text-cvr-muted">
-            Đang hiện <span className="font-semibold text-cvr-ink">{results.length}</span> bất động sản theo bộ lọc.
             Bấm vào viên giá để xem nhanh tin.
           </p>
         </div>
@@ -271,7 +272,6 @@ export default function ListingBrowser({
                 hienTai={current}
                 tong={totalPages}
                 doiTrang={goPage}
-                ghiChu={`${results.length} tin`}
                 className="mt-10"
               />
             </>

@@ -88,9 +88,12 @@ export default function PhanTrang({
         </button>
       </div>
 
-      <p className="text-xs text-cvr-faint">
-        Trang {hienTai}/{tong}{ghiChu ? ` · ${ghiChu}` : ""}
-      </p>
+      {/* KHÔNG in "Trang 2/7 · 67 tin" ra trang khách: các nút số ở trên đã cho
+          biết đang ở trang nào, còn tổng số tin là chuyện nội bộ — web đang ít
+          tin thì nói ra chỉ tự phơi điểm yếu (chủ dự án chốt 11/9/2026).
+          Dòng này chỉ hiện khi nơi gọi TỰ ĐƯA ghi chú, ví dụ trang "Tin đã đăng"
+          trong tài khoản — đó là tin của chính khách, họ biết là đúng. */}
+      {ghiChu && <p className="text-xs text-cvr-faint">{ghiChu}</p>}
     </nav>
   );
 }

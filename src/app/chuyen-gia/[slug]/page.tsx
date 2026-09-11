@@ -63,9 +63,7 @@ export default async function HoSoChuyenGiaPage({
                 Tin đang đăng của {cg.ten}
               </h1>
               <p className="mt-1.5 text-sm text-cvr-muted">
-                {tin.length > 0
-                  ? `${tin.length} tin đang hiển thị trên Coastal Land${cg.khuVuc.length ? ` · ${cg.khuVuc.join(" · ")}` : ""}`
-                  : "Hiện chưa có tin nào đang hiển thị."}
+                {tin.length > 0 ? cg.khuVuc.join(" · ") : "Hiện chưa có tin nào đang hiển thị."}
               </p>
 
               {tin.length > 0 && (

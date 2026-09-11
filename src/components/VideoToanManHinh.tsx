@@ -26,12 +26,17 @@ export default function VideoToanManHinh({
   batDau = 0,
 }: {
   url: string;
-  onClose: () => void;
+  /** Đóng lại — trả về giây đang xem dở để khung nhỏ xem tiếp đúng chỗ. */
+  onClose: (giayDangXem?: number) => void;
   /** Giây đang xem dở ở khung nhỏ — mở lớn là xem tiếp, không tua lại từ đầu. */
   batDau?: number;
 }) {
   const embed = videoEmbedUrl(url);
   const [xoay, setXoay] = useState(false);
+  const vRef = useRef<HTMLVideoElement>(null);
+  // Đóng lại thì báo về đang xem tới giây nào — khung nhỏ tua đúng chỗ đó, khách
+  // không phải dò lại từ đầu.
+  const dong = () => onClose(vRef.current?.currentTime);
 
   // VIDEO NGẮN: hai nút nằm nguyên đó. VIDEO DÀI (hơn 1 phút): xem được vài giây
   // thì nút lùi đi cho khỏi che hình, CHẠM một cái là hiện lại ngay.
@@ -57,7 +62,7 @@ export default function VideoToanManHinh({
     const cuonCu = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") dong();
     };
     document.addEventListener("keydown", onKey);
     return () => {
@@ -90,7 +95,7 @@ export default function VideoToanManHinh({
           </svg>
           Xoay
         </button>
-        <button type="button" onClick={onClose} className={nut} aria-label="Thoát toàn màn hình">
+        <button type="button" onClick={dong} className={nut} aria-label="Thoát toàn màn hình">
           <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" />
           </svg>
@@ -127,6 +132,7 @@ export default function VideoToanManHinh({
             </div>
           ) : (
             <video
+              ref={vRef}
               src={asset(url)}
               autoPlay
               controls
