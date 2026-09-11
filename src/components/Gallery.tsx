@@ -32,15 +32,6 @@ export default function Gallery({
   const [bigIdx, setBigIdx] = useState(0); // slide LỚN đang hiện (tự chạy)
   const [paused, setPaused] = useState(false);
   const [hold, setHold] = useState(false); // đang xem video → tạm ngưng tự chuyển slide
-  // KHUNG TỰ CO THEO VIDEO. Khách quay bằng điện thoại là ra video DỌC; nhét vào
-  // khung ngang 16:9 thì video tí xíu, hai bên hai dải đen to đùng. Đọc tỉ lệ
-  // thật của video rồi chỉnh khung cho vừa — kẹp trong khoảng 16:9 … 4:5 để
-  // video dọc không kéo khung cao quá, đẩy hết phần tin xuống dưới.
-  const [tyLe, setTyLe] = useState(16 / 9);
-  const nhanTyLe = (r: number) => {
-    if (!Number.isFinite(r) || r <= 0) return;
-    setTyLe(Math.max(0.8, Math.min(16 / 9, r)));
-  };
 
   // ── ĐIỀU KHIỂN SLIDE LỚN TRÊN MÁY TÍNH: TOUCHPAD · PHÍM · CHẠM ───────────
   // Trước đây ảnh lớn chỉ TỰ CHẠY, khách muốn xem lại tấm vừa trôi qua thì không
@@ -141,8 +132,8 @@ export default function Gallery({
     <>
       {media.length === 1 ? (
         media[0].kind === "video" ? (
-          <div style={{ aspectRatio: tyLe }} className="relative w-full overflow-hidden rounded-none border border-cvr-line bg-black">
-            <GallerySlideVideo url={media[0].src} active onHold={setHold} onTyLe={nhanTyLe} />
+          <div className="relative aspect-[2/1] w-full overflow-hidden rounded-none border border-cvr-line bg-black">
+            <GallerySlideVideo url={media[0].src} active onHold={setHold} />
           </div>
         ) : (
           <button type="button" onClick={() => open(0)} className="group relative block aspect-[2/1] w-full overflow-hidden rounded-none border border-cvr-line">
@@ -151,7 +142,7 @@ export default function Gallery({
         )
       ) : (
         <>
-        {/* ── ĐIỆN THOẠI: vuốt ngang đổi tấm; khung tự co theo tỉ lệ video ── */}
+        {/* ── ĐIỆN THOẠI: vuốt ngang đổi tấm, khung ảnh giữ khổ chuẩn 16:9 ── */}
         <div className="sm:hidden">
           <div className="relative">
           <div
@@ -168,10 +159,9 @@ export default function Gallery({
                 // không ai xem kiểu đó.
                 <div
                   key={i}
-                  style={{ aspectRatio: tyLe }}
-                  className="relative w-full shrink-0 snap-center overflow-hidden border border-cvr-line bg-black"
+                  className="relative aspect-video w-full shrink-0 snap-center overflow-hidden border border-cvr-line bg-black"
                 >
-                  <GallerySlideVideo url={m.src} active={i === mCur} onHold={setHold} onTyLe={nhanTyLe} />
+                  <GallerySlideVideo url={m.src} active={i === mCur} onHold={setHold} />
                 </div>
               ) : (
                 <button
@@ -179,8 +169,7 @@ export default function Gallery({
                   type="button"
                   onClick={() => open(imgIdx(i))}
                   aria-label={`Ảnh ${imgIdx(i) + 1}`}
-                  style={{ aspectRatio: tyLe }}
-                  className="relative w-full shrink-0 snap-center overflow-hidden border border-cvr-line bg-cvr-surface"
+                  className="relative aspect-video w-full shrink-0 snap-center overflow-hidden border border-cvr-line bg-cvr-surface"
                 >
                   <Image src={m.src} alt={`${alt} ${imgIdx(i) + 1}`} fill priority={i === nVid} quality={90} sizes="100vw" className="object-cover" />
                 </button>
