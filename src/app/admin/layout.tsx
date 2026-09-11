@@ -29,6 +29,7 @@ const navGroups: { group: string; items: { label: string; href: string; icon: st
       { label: "Yêu cầu khách hàng", href: "/admin/yeu-cau", icon: "check" },
       { label: "Khách hàng", href: "/admin/khach-hang", icon: "users" },
       { label: "Giá & khuyến mãi", href: "/admin/gia-khuyen-mai", icon: "tag" },
+      { label: "Chỉ số giá thị trường", href: "/admin/chi-so-gia", icon: "tag" },
       { label: "Thanh toán", href: "/admin/thanh-toan", icon: "card" },
       { label: "Hóa đơn & thuế", href: "/admin/hoa-don-thue", icon: "card" },
     ],

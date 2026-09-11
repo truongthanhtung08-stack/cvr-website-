@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { chupGiaKhuVuc } from "@/lib/chupGiaKhuVuc";
 import { guiThongBao, soDienThoaiZalo } from "@/lib/thongBao";
 import { baoLoi } from "@/lib/baoLoi";
 import { quetTinHetHan } from "@/lib/hetHanTin";
@@ -35,6 +36,11 @@ export async function GET(request: Request) {
     return NextResponse.json({ ok: false, message: "Không có quyền" }, { status: 401 });
   }
 
+  // GỘP THÊM VIỆC CHỤP GIÁ KHU VỰC vào đây. Gói Vercel đang dùng chỉ cho 2 suất
+  // việc định kỳ, đã dùng hết cho nhắc hoá đơn — thêm suất thứ ba là hỏng deploy.
+  // Việc này chạy độc lập, hỏng cũng không ảnh hưởng phần nhắc hoá đơn bên dưới.
+  const anhGia = await chupGiaKhuVuc().catch(() => null);
+
   const supabase = createAdminClient();
   if (!supabase) {
     return NextResponse.json(
@@ -64,7 +70,7 @@ export async function GET(request: Request) {
 
   const ds = data ?? [];
   if (ds.length === 0) {
-    return NextResponse.json({ ok: true, canNhac: false, hetHan, message: "Không có giao dịch nào chờ xuất hóa đơn." });
+    return NextResponse.json({ ok: true, canNhac: false, hetHan, anhGia, message: "Không có giao dịch nào chờ xuất hóa đơn." });
   }
 
   // ── Gom theo ngày để biết phải ký mấy tờ ──────────────────────────────────

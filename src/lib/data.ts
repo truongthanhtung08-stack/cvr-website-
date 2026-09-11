@@ -24,6 +24,10 @@ export type Listing = {
   location: string;
   // BA CẤP ĐỊA GIỚI GIỮ RIÊNG (ngoài chuỗi location đã ghép sẵn) — cần cho việc
   // hiện địa chỉ theo CẢ HAI HỆ cũ/mới trên trang chi tiết tin.
+  /** Giá và diện tích dạng SỐ — để tính giá mỗi m², mặt bằng giá khu vực.
+   *  Chuỗi price/area ở trên đã định dạng sẵn để hiển thị, không tính được. */
+  priceVnd?: number | null;
+  areaM2?: number | null;
   /** Cùng chỗ đó gọi theo hệ CŨ — hiện ở dòng dưới, nhãn "Địa chỉ hệ cũ". */
   locationCu?: string;
   /** Gộp cả hai cách gọi — dùng để LỌC/TÌM khu vực, không hiển thị. Thiếu nó thì
@@ -66,6 +70,10 @@ export type Listing = {
   // 12/08/2026" theo mốc này. Không có → thẻ không hiện thời gian (thà không hiện
   // còn hơn ghi cứng "Hôm nay" cho cả tin đăng ba tháng trước).
   postedAt?: string;
+  /** Hết hạn gói tin (theo tier_expires_at). null = không đặt hạn. */
+  hetHanLuc?: string | null;
+  /** Hạng tin đã mua: diamond · gold · silver · basic */
+  hangTin?: "diamond" | "gold" | "silver" | "basic";
 };
 
 // Lọc tin theo mục đích (mặc định không có purpose = "ban")

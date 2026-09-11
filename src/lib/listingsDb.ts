@@ -148,6 +148,10 @@ function rowToListing(r: Row): Listing {
     price,
     ...(perM2 ? { pricePerM2: perM2 } : {}),
     area: r.area_m2 != null ? `${fmtNum(r.area_m2, 0)} m²` : "—",
+    priceVnd: r.price_vnd ?? null,
+    hetHanLuc: r.tier_expires_at ?? null,
+    hangTin: tierHieuLuc(r),
+    areaM2: r.area_m2 ?? null,
     ...(r.beds != null ? { beds: r.beds } : {}),
     ...(r.baths != null ? { baths: r.baths } : {}),
     // ĐỊA CHỈ HIỂN THỊ THEO HỆ MỚI — áp cho MỌI tin, kể cả tin đã đăng từ trước.

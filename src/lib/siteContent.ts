@@ -4,6 +4,7 @@
 // dùng NỘI DUNG MẶC ĐỊNH trong code (web không bao giờ trống).
 // ============================================================================
 
+import type { ChiSoGiaData } from "@/lib/chiSoGia";
 import { asset } from "@/lib/asset";
 import { homeBanners, projectBanners, type Banner } from "@/lib/banners";
 import { landings as LANDINGS_DEFAULT, type Landing } from "@/lib/landings";
@@ -313,4 +314,12 @@ export async function getBilling(): Promise<BillingData> {
     levels: chuanHoaCapHoiVien(data.levels),
     topupAmounts: data.topupAmounts?.length ? data.topupAmounts : BILLING_DEFAULT.topupAmounts,
   };
+}
+
+// ── CHỈ SỐ GIÁ THEO QUÝ ─────────────────────────────────────────────────────
+// Lưu key "chi_so_gia". Chủ dự án nhập tay mỗi quý một lần từ báo cáo thị
+// trường (Batdongsan · CBRE · Savills · DKRA). Chưa nhập → null, trang tin
+// không vẽ biểu đồ xu hướng, chỉ còn mặt bằng giá tính từ tin trên web.
+export async function getChiSoGia(): Promise<ChiSoGiaData | null> {
+  return fetchBlock<ChiSoGiaData>("chi_so_gia");
 }
