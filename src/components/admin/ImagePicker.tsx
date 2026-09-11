@@ -69,6 +69,25 @@ export default function ImagePicker({
     if (imgRef.current) imgRef.current.value = "";
   }
 
+  // Chọn từ thư mục: một lần lấy cả ảnh lẫn video, tự phân loại rồi đưa về đúng
+  // luồng cũ.
+  async function handleThuMuc(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    const ds = Array.from(files);
+    const anh = ds.filter((f) => f.type.startsWith("image/"));
+    const video = ds.filter((f) => f.type.startsWith("video/"));
+    if (anh.length) {
+      const dt = new DataTransfer();
+      for (const f of anh) dt.items.add(f);
+      await handleImageFiles(dt.files);
+    }
+    if (video.length) {
+      const dt = new DataTransfer();
+      dt.items.add(video[0]);
+      await handleVideoFile(dt.files);
+    }
+  }
+
   async function handleVideoFile(files: FileList | null) {
     const file = files?.[0];
     if (!file) return;
@@ -239,6 +258,25 @@ export default function ImagePicker({
           />
         </label>
 
+        {/* LỐI THỨ BA — THƯ MỤC. Hai nút trên mở thẳng Bộ sưu tập; nút này khai
+            cả ảnh lẫn video nên máy đưa ra bảng chọn đầy đủ (Máy ảnh · Thư mục ·
+            Files). Khách muốn vào đâu thì vào, web không ép đường nào. */}
+        <label
+          className={`inline-flex cursor-pointer items-center gap-2 rounded-lg border border-cvr-line bg-white px-4 py-2 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink ${uploadingImg || uploadingVideo ? "pointer-events-none opacity-60" : ""}`}
+        >
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
+          </svg>
+          Bộ sưu tập (ảnh &amp; video)
+          <input
+            type="file"
+            accept="image/*,video/*"
+            multiple
+            disabled={uploadingImg || uploadingVideo}
+            onChange={(e) => handleThuMuc(e.target.files)}
+            className="sr-only"
+          />
+        </label>
       </div>
 
 
