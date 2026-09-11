@@ -93,6 +93,8 @@ export default function AdminPaymentsPage() {
         )}
       </section>
 
+      <CongViTay />
+
       {/* Webhook — bước BẮT BUỘC để tiền tự vào ví */}
       <section className="rounded-2xl border border-cvr-line bg-white p-4 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -305,3 +307,109 @@ function Dong({ ok, nhan, phu }: { ok: boolean; nhan: string; phu?: string }) {
     </li>
   );
 }
+
+// ════════════════════════════════════════════════════════════════════════════
+// CỘNG VÍ TAY — lối thoát khi tiền về mà máy không khớp được vào đơn nào.
+// PayOS báo tiền về không khớp đơn (khách tạo đơn ở máy khác, chuyển khoản sai
+// nội dung…) thì hệ thống gửi cảnh báo và dừng ở đó; chỗ này là nơi xử lý nốt.
+// Mỗi lần cộng đều ghi một dòng trong sổ giao dịch, có tên người cộng và lý do.
+// ════════════════════════════════════════════════════════════════════════════
+function CongViTay() {
+  const [tim, setTim] = useState("");
+  const [soTien, setSoTien] = useState("");
+  const [lyDo, setLyDo] = useState("");
+  const [dangChay, setDangChay] = useState(false);
+  const [ok, setOk] = useState("");
+  const [err, setErr] = useState("");
+
+  // Nhập tiền dạng chữ có dấu chấm cho dễ đọc, gửi đi chỉ lấy chữ số.
+  const tienSo = Number(soTien.replace(/\D/g, "")) || 0;
+
+  async function cong() {
+    setOk("");
+    setErr("");
+    if (!confirm(`Cộng ${vnd(tienSo)} vào ví của "${tim}"?\n\nTiền cộng vào ví không tự thu lại được.`)) return;
+    setDangChay(true);
+    try {
+      const r = await fetch("/api/thanh-toan/cong-vi-tay", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tim: tim.trim(), soTien: tienSo, lyDo: lyDo.trim() }),
+      });
+      const j = await r.json();
+      if (!r.ok || !j.ok) setErr(j.message || "Cộng ví không thành công.");
+      else {
+        setOk(`Đã cộng ${vnd(j.soTien)} cho ${j.khach}. Số dư mới: ${vnd(j.soDuMoi)}.`);
+        setTim("");
+        setSoTien("");
+        setLyDo("");
+      }
+    } catch {
+      setErr("Không kết nối được máy chủ.");
+    }
+    setDangChay(false);
+  }
+
+  return (
+    <section className="rounded-2xl border border-cvr-line bg-white p-4 shadow-sm">
+      <h2 className="text-base font-semibold text-cvr-ink">Cộng ví tay cho khách</h2>
+      <p className="mt-1 text-sm text-cvr-muted">
+        Dùng khi đã đối chiếu sao kê ngân hàng và chắc chắn tiền của khách đã về.
+      </p>
+
+      <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <label className="block">
+          <span className="mb-1.5 block text-sm font-medium text-cvr-body">Email hoặc số điện thoại</span>
+          <input
+            value={tim}
+            onChange={(e) => setTim(e.target.value)}
+            placeholder="khach@email.com"
+            className={oNhap}
+          />
+        </label>
+        <label className="block">
+          <span className="mb-1.5 block text-sm font-medium text-cvr-body">Số tiền (₫)</span>
+          {/* KHÔNG dùng type="number": nhập tiền hàng triệu mà không có dấu phân
+              cách rất dễ thừa/thiếu một số 0. Ở đây gõ tự do, tự lọc chữ số và
+              hiện lại đúng số sẽ cộng ngay bên dưới. */}
+          <input
+            value={soTien}
+            onChange={(e) => setSoTien(e.target.value)}
+            inputMode="numeric"
+            placeholder="500.000"
+            className={oNhap}
+          />
+        </label>
+        <label className="block">
+          <span className="mb-1.5 block text-sm font-medium text-cvr-body">Lý do / mã đơn</span>
+          <input
+            value={lyDo}
+            onChange={(e) => setLyDo(e.target.value)}
+            placeholder="Mã đơn PayOS 1234567890"
+            className={oNhap}
+          />
+        </label>
+      </div>
+
+      {tienSo > 0 && (
+        <p className="mt-2 text-sm text-cvr-body">
+          Sẽ cộng: <strong className="font-semibold text-cvr-ink">{vnd(tienSo)}</strong>
+        </p>
+      )}
+      {ok && <p className="mt-3 rounded-lg bg-green-50 px-4 py-2.5 text-sm text-green-700">{ok}</p>}
+      {err && <p className="mt-3 rounded-lg bg-red-50 px-4 py-2.5 text-sm text-red-700">{err}</p>}
+
+      <button
+        type="button"
+        onClick={cong}
+        disabled={dangChay || tienSo <= 0 || !tim.trim() || !lyDo.trim()}
+        className="mt-3 rounded-lg bg-cvr-ink px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-cvr-ink/90 disabled:opacity-40"
+      >
+        {dangChay ? "Đang cộng…" : "Cộng vào ví"}
+      </button>
+    </section>
+  );
+}
+
+const oNhap =
+  "h-10 w-full rounded-lg border border-cvr-line px-3 text-sm text-cvr-ink outline-none focus:border-cvr-ink";
