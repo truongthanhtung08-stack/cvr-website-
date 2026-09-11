@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { donViGiaNenDung, goiYDienTich, goiYGia, goiYTieuDe } from "@/lib/goiYNhapTin";
-import { dongBoHaiHe, chuHeCu, chuHeMoi, doiHeDiaChi, chuoiTimBanDo } from "@/lib/diaChiHaiHe";
+import { haiDongDiaChi, doiHeDiaChi, chuoiTimBanDo } from "@/lib/diaChiHaiHe";
 import {
   categorySpecs, demandTypes, specForType,
   coPhongNgu, coPhongTam, coDienTichXayDung, coNoiThat, fieldsSplit, thieuMucBatBuoc, nhanDienTich, type Field,
@@ -13,7 +13,7 @@ import {
   purposeOfDemand, demandOfPurpose,
 } from "@/lib/listingSpec";
 import { typeGroupsFor } from "@/lib/filters";
-import { provinceNamesFor, districtsOf, wardsOf, wardsOfNew, type GeoMode } from "@/lib/locations";
+import { provinceNamesFor, districtsOf, wardsOf, wardsOfNew, wardsOfAny, type GeoMode } from "@/lib/locations";
 import { ganDiaGioi, type DiaGioiBanDo } from "@/lib/diaGioiTuBanDo";
 import ImagePicker from "@/components/admin/ImagePicker";
 import OTieuDe from "@/components/OTieuDe";
@@ -251,7 +251,7 @@ export default function PostListingForm() {
         // tỉnh đó — cùng một chỗ trên thực địa, chỉ khác cách gọi cấp hành chính.
         ? (district ? wardsOf(province, district) : []).length
           ? wardsOf(province, district)
-          : wardsOfNew(province)
+          : wardsOfAny(province)
         : [];
 
 
@@ -260,6 +260,8 @@ export default function PostListingForm() {
   // Nhớ lại địa giới đọc được để KHÁCH ĐỔI HỆ ĐỊA CHỈ lúc nào cũng điền lại được
   // ngay, không bắt họ ghim lại từ đầu.
   const diaGioiTuBanDoRef = useRef<DiaGioiBanDo | null>(null);
+  // Nhớ bộ ba hệ CŨ người nhập đã chọn → đổi hệ qua lại vẫn về đúng chỗ đó.
+  const nhoHeCu = useRef<{ tinh: string; quan?: string; phuong?: string } | null>(null);
 
   function apDungDiaGioi(dc: DiaGioiBanDo, heDiaChi: GeoMode, tinhCu: string, quanCu: string, phuongCu: string) {
     const kq = ganDiaGioi(dc, heDiaChi, { province: tinhCu, district: quanCu, ward: phuongCu });
@@ -568,9 +570,12 @@ export default function PostListingForm() {
       {/* 2. Địa chỉ */}
       <Card step={buoc()} title="Địa chỉ bất động sản">
         {/* Chọn hệ đơn vị hành chính: MỚI (sau sáp nhập) hay CŨ */}
-        <div className="mb-3 inline-flex rounded-lg border border-cvr-line bg-white p-1">
+        {/* HAI NÚT CHIA ĐÔI HÀNG, CHỮ KHÔNG GÃY DÒNG. Nhãn cũ dài gần 30 ký tự nên
+            trên điện thoại 375px hộp bị bóp, chữ rớt xuống hai dòng và nút bên cạnh
+            cũng vỡ theo ("Địa chỉ / cũ") — chủ dự án chụp lại đúng chỗ này. */}
+        <div className="mb-3 grid w-full grid-cols-2 gap-1 rounded-lg border border-cvr-line bg-white p-1">
           {([
-            { id: "moi" as GeoMode, label: "Tỉnh/Thành mới (sau sáp nhập)" },
+            { id: "moi" as GeoMode, label: "Địa chỉ mới" },
             { id: "cu" as GeoMode, label: "Địa chỉ cũ" },
           ]).map((m) => (
             <button
@@ -580,7 +585,10 @@ export default function PostListingForm() {
                   if (m.id === geoMode) return;
                   // ĐỔI HỆ = TỰ ĐỒNG BỘ: suy thẳng địa chỉ đang nhập sang hệ vừa
                   // chọn, không bắt người đăng chọn lại từ tỉnh.
-                  const d = doiHeDiaChi(m.id, { tinh: province, quan: district, phuong: ward });
+                  const d = doiHeDiaChi(m.id, { tinh: province, quan: district, phuong: ward }, nhoHeCu.current);
+                  // Rời hệ cũ thì nhớ lại chỗ đã chọn, quay về là trả đúng cái đó — một phường
+                  // mới gộp 2–4 phường cũ nên máy tự suy không thể biết họ ở phường nào.
+                  if (geoMode === "cu" && province) nhoHeCu.current = { tinh: province, quan: district, phuong: ward };
                   setGeoMode(m.id);
                   setProvince(d.province);
                   setDistrict(d.district);
@@ -588,7 +596,7 @@ export default function PostListingForm() {
                   const dc = diaGioiTuBanDoRef.current;
                   if (dc && !d.ward) setTimeout(() => nhanDiaGioiTuBanDo(dc), 0);
                 }}
-              className={`rounded-md px-3 py-1.5 text-xs font-medium transition ${
+              className={`whitespace-nowrap rounded-md px-2 py-2 text-center text-[13px] font-medium transition ${
                 geoMode === m.id ? "bg-cvr-ink text-white" : "text-cvr-body hover:text-cvr-ink"
               }`}
             >
@@ -612,14 +620,12 @@ export default function PostListingForm() {
             thì người đăng tự thấy tin của mình sẽ hiện ra sao cho cả hai nhóm.
             CHỈ HIỆN khi suy ra được chắc chắn — không đoán bừa địa chỉ. */}
         {province && (() => {
-          const hai = dongBoHaiHe(geoMode, { tinh: province, quan: district, phuong: ward });
-          const con = geoMode === "moi" ? chuHeCu(hai) : chuHeMoi(hai);
-          if (!con) return null;
+          const hai = haiDongDiaChi(geoMode, { tinh: province, quan: district, phuong: ward });
+          if (!hai.moi) return null;
           return (
             <p className="mt-2 rounded-lg bg-cvr-surface px-3 py-2 text-xs leading-relaxed text-cvr-muted">
-              {geoMode === "moi" ? "Theo tên cũ" : "Theo tên mới"}:{" "}
-              <strong className="font-semibold text-cvr-ink">{con}</strong>
-              {" — tin của bạn tìm được ở cả hai cách gọi."}
+              Tin sẽ hiện: <strong className="font-semibold text-cvr-ink">{hai.moi}</strong>
+              {hai.cu ? <> · <span className="text-cvr-faint">Địa chỉ hệ cũ: {hai.cu}</span></> : null}
             </p>
           );
         })()}

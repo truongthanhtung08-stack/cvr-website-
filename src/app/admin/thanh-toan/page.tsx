@@ -115,7 +115,9 @@ export default function AdminPaymentsPage() {
         </p>
 
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          <code className="min-w-0 flex-1 truncate rounded-lg bg-cvr-surface px-3 py-2 text-[13px] text-cvr-ink">{webhookUrl}</code>
+          {/* Địa chỉ webhook hiện TRỌN (xuống dòng nếu dài) — cắt cụt thì chép
+              tay sang PayOS là sai, mà đây là chỗ không được phép sai. */}
+          <code className="min-w-0 flex-1 break-all rounded-lg bg-cvr-surface px-3 py-2 text-[13px] text-cvr-ink">{webhookUrl}</code>
           <button
             type="button"
             onClick={() => {

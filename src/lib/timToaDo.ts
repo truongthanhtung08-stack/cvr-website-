@@ -144,23 +144,39 @@ export async function timToaDo(diaChi: string): Promise<ToaDoTim | null> {
   // liệt kê được vài chục nơi; người đăng chọn "Phường Hoà Xuân, Đà Nẵng" mà bảng
   // không có là bản đồ đứng im, họ không nhận ra mình đang xem chỗ nào.
   // Nominatim tra tên phường/xã Việt Nam khá tốt, cứ hỏi rồi lấy bảng làm dự phòng.
-  try {
-    const r = await fetch(
-      "/api/dia-chi?viec=tim&q=" + encodeURIComponent(chuoi),
-    );
-    const ds = (await r.json()) as { lat: string; lon: string }[];
-    // Có tên đường mới gọi là "duong" (đủ chính xác để tự ghim). Mới chọn tới
-    // phường/xã thì vẫn là "khuVuc" — đưa bản đồ tới cho nhìn, nhưng KHÔNG tự ghim,
-    // vì ghim giữa phường là ghim sai.
-    const kq: ToaDoTim | null = ds[0]
-      ? { lat: Number(ds[0].lat), lng: Number(ds[0].lon), mucDo: coTenDuong(chuoi) ? "duong" : "khuVuc" }
-      : duPhong;
-    daTra.set(chuoi, kq);
-    return kq;
-  } catch {
-    daTra.set(chuoi, duPhong);
-    return duPhong;
+  // LÙI DẦN TỪNG CẤP CHO TỚI KHI BẢN ĐỒ NHẬN RA.
+  // Bản đồ nền (OpenStreetMap) chưa cập nhật hết tên phường/xã sau sáp nhập 2025, và
+  // nhiều đường mới mở cũng chưa có. Hỏi nguyên chuỗi mà không ra thì bỏ dần phần
+  // CHI TIẾT NHẤT ở đầu (số nhà → tên đường → phường) rồi hỏi lại, nên luôn trỏ tới
+  // chỗ chính xác NHẤT CÓ THỂ thay vì đứng im giữa bản đồ.
+  //
+  // Mức độ hạ theo: còn tên đường thì "duong" (tự ghim được), lùi tới cấp phường trở
+  // lên chỉ là "khuVuc" — đưa bản đồ tới cho nhìn chứ KHÔNG tự ghim, vì ghim giữa
+  // phường là ghim sai chỗ.
+  const phan = chuoi.split(",").map((x) => x.trim()).filter(Boolean);
+  for (let bo = 0; bo < Math.min(phan.length, 4); bo++) {
+    const thu = phan.slice(bo).join(", ");
+    if (!thu) break;
+    try {
+      const r = await fetch("/api/dia-chi?viec=tim&q=" + encodeURIComponent(thu));
+      const ds = (await r.json()) as { lat: string; lon: string }[];
+      if (ds[0]) {
+        const kq: ToaDoTim = {
+          lat: Number(ds[0].lat),
+          lng: Number(ds[0].lon),
+          // Chỉ giữ mức "duong" khi chuỗi hỏi được VẪN còn tên đường — lùi quá tên
+          // đường rồi thì đó chỉ còn là khu vực.
+          mucDo: coTenDuong(thu) ? "duong" : "khuVuc",
+        };
+        daTra.set(chuoi, kq);
+        return kq;
+      }
+    } catch {
+      break; // mất mạng thì thôi, dùng bảng toạ độ sẵn có bên dưới
+    }
   }
+  daTra.set(chuoi, duPhong);
+  return duPhong;
 }
 
 // ── GỢI Ý ĐỊA CHỈ KHI ĐANG GÕ ────────────────────────────────────────────────

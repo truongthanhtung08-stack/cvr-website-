@@ -4,8 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { saleTypeGroups, rentTypeGroups } from "@/lib/filters";
-import { provinceNamesFor, districtsOf, wardsOf, wardsOfNew, type GeoMode } from "@/lib/locations";
-import { dongBoHaiHe, chuHeCu, chuHeMoi, doiHeDiaChi, chuoiTimBanDo } from "@/lib/diaChiHaiHe";
+import { provinceNamesFor, districtsOf, wardsOf, wardsOfNew, wardsOfAny, type GeoMode } from "@/lib/locations";
+import { haiDongDiaChi, doiHeDiaChi, chuoiTimBanDo } from "@/lib/diaChiHaiHe";
 import { ganDiaGioi, type DiaGioiBanDo } from "@/lib/diaGioiTuBanDo";
 import { fieldsFor, interiorItems, amenityGroups, legalOptions, furnishLevels, directions, coPhongNgu, coPhongTam, coDienTichXayDung, nhanDienTich, coDonGiaM2 } from "@/lib/listingSpec";
 import { chuanHoaSdt } from "@/lib/phone";
@@ -161,6 +161,8 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
   // Danh sách quận/huyện & phường/xã liên động theo lựa chọn cấp trên
   // Hệ đơn vị hành chính: MỚI (sau sáp nhập) bỏ cấp Quận/Huyện
   const [geoMode, setGeoMode] = useState<GeoMode>("moi");
+  // Nhớ bộ ba hệ CŨ người nhập đã chọn → đổi hệ qua lại vẫn về đúng chỗ đó.
+  const nhoHeCu = useRef<{ tinh: string; quan?: string; phuong?: string } | null>(null);
   // Nhớ địa giới đọc được từ điểm ghim → đổi hệ địa chỉ là điền lại được ngay
   // theo hệ vừa chọn, không phải ghim lại.
   const diaGioiTuBanDoRef = useRef<DiaGioiBanDo | null>(null);
@@ -176,7 +178,12 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
   const wardOptions =
     geoMode === "moi"
       ? province ? wardsOfNew(province) : []
-      : province && district ? wardsOf(province, district) : [];
+      // Tỉnh cũ nào web chưa nhập danh mục phường (Hà Nội, TP.HCM…) thì lấy danh
+      // mục phường hệ MỚI của tỉnh đó — cùng một chỗ, chỉ khác cách gọi cấp.
+      // Để ô rỗng là người nhập tưởng web hỏng.
+      : province && district
+        ? wardsOf(province, district).length ? wardsOf(province, district) : wardsOfAny(province)
+        : [];
 
   const toggle = (list: string[], set: (v: string[]) => void, v: string) =>
     set(list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
@@ -401,8 +408,10 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
       <Panel title="Vị trí">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <Field label="Hệ địa chỉ">
-            <div className="inline-flex rounded-lg border border-cvr-line bg-white p-1">
-              {([{ id: "moi" as GeoMode, label: "Tỉnh/Thành mới" }, { id: "cu" as GeoMode, label: "Địa chỉ cũ" }]).map((m) => (
+            {/* Hai nút chia đôi hàng, chữ không gãy dòng — cùng cách với form
+                đăng tin của khách. */}
+            <div className="grid w-full grid-cols-2 gap-1 rounded-lg border border-cvr-line bg-white p-1">
+              {([{ id: "moi" as GeoMode, label: "Địa chỉ mới" }, { id: "cu" as GeoMode, label: "Địa chỉ cũ" }]).map((m) => (
                 <button
                   key={m.id}
                   type="button"
@@ -413,7 +422,10 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
                     // phải chọn lại từ tỉnh — vừa mất công vừa dễ nhập sai khu vực.
                     // Nay suy thẳng sang hệ mới: suy được tới đâu điền tới đó,
                     // chỗ không chắc để trống cho người nhập tự chọn.
-                    const d = doiHeDiaChi(m.id, { tinh: province, quan: district, phuong: ward });
+                    const d = doiHeDiaChi(m.id, { tinh: province, quan: district, phuong: ward }, nhoHeCu.current);
+                    // Rời hệ cũ thì nhớ lại chỗ đã chọn, quay về là trả đúng cái đó — một phường
+                    // mới gộp 2–4 phường cũ nên máy tự suy không thể biết họ ở phường nào.
+                    if (geoMode === "cu" && province) nhoHeCu.current = { tinh: province, quan: district, phuong: ward };
                     setGeoMode(m.id);
                     setProvince(d.province);
                     setDistrict(d.district);
@@ -482,14 +494,12 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
             giống hệt form của khách. Nhập sai hệ là tin không lên đúng tìm kiếm
             khu vực, nên phải thấy ngay tại chỗ nhập chứ không đợi lên web mới biết. */}
         {province && (() => {
-          const hai = dongBoHaiHe(geoMode, { tinh: province, quan: district, phuong: ward });
-          const con = geoMode === "moi" ? chuHeCu(hai) : chuHeMoi(hai);
-          if (!con) return null;
+          const hai = haiDongDiaChi(geoMode, { tinh: province, quan: district, phuong: ward });
+          if (!hai.moi) return null;
           return (
             <p className="mt-3 rounded-lg bg-cvr-surface px-3 py-2 text-xs leading-relaxed text-cvr-muted">
-              {geoMode === "moi" ? "Theo tên cũ" : "Theo tên mới"}:{" "}
-              <strong className="font-semibold text-cvr-ink">{con}</strong>
-              {" — tin tìm được ở cả hai cách gọi."}
+              Tin sẽ hiện: <strong className="font-semibold text-cvr-ink">{hai.moi}</strong>
+              {hai.cu ? <> · <span className="text-cvr-faint">Địa chỉ hệ cũ: {hai.cu}</span></> : null}
             </p>
           );
         })()}

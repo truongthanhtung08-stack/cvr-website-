@@ -103,10 +103,11 @@ export default function AdminArticlesPage() {
         {filtered.map((r) => (
           <div key={r.id} className="flex flex-wrap items-center gap-3 border-b border-cvr-line/70 px-4 py-3 last:border-0 hover:bg-cvr-surface/60">
             <div className="min-w-0 flex-1">
-              <Link href={`/admin/tin-tuc/${r.id}`} className="block truncate font-medium text-cvr-ink hover:text-cvr-blue-ink">
+              {/* Tiêu đề bài + đường dẫn xuống tối đa 2 dòng thay vì cắt cụt. */}
+              <Link href={`/admin/tin-tuc/${r.id}`} className="block line-clamp-2 font-medium text-cvr-ink hover:text-cvr-blue-ink">
                 {r.title}
               </Link>
-              <p className="truncate text-xs text-cvr-muted">
+              <p className="line-clamp-2 break-all text-xs text-cvr-muted">
                 {r.category} · /tin-tuc/{r.slug} · {fmtDate(r.published_at ?? r.created_at)}
               </p>
             </div>

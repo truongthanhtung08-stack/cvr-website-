@@ -106,10 +106,12 @@ export default function AdminProjectsPage() {
         {filtered.map((r) => (
           <div key={r.id} className="flex flex-wrap items-center gap-3 border-b border-cvr-line/70 px-4 py-3 last:border-0 hover:bg-cvr-surface/60">
             <div className="min-w-0 flex-1">
-              <Link href={`/admin/du-an/${r.id}`} className="block truncate font-medium text-cvr-ink hover:text-cvr-blue-ink">
+              {/* Tên + dòng phụ xuống tối đa 2 dòng thay vì cắt cụt: hai dự án
+                  cùng chủ đầu tư chỉ khác nhau ở khúc đuôi tên. */}
+              <Link href={`/admin/du-an/${r.id}`} className="block line-clamp-2 font-medium text-cvr-ink hover:text-cvr-blue-ink">
                 {r.name}
               </Link>
-              <p className="truncate text-xs text-cvr-muted">
+              <p className="line-clamp-2 text-xs text-cvr-muted">
                 {[r.status_text, r.price_from, [r.district, r.province].filter(Boolean).join(", ")].filter(Boolean).join(" · ")}
               </p>
             </div>

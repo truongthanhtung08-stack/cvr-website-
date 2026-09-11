@@ -3,7 +3,7 @@
 // Khớp KHÔNG phân biệt dấu (normalizeVi) + sửa lỗi gõ (fuzzy theo từ).
 // Chọn Khu vực/Loại hình → đổ vào bộ lọc; chọn Sản phẩm/Dự án/Tin tức → mở trang chi tiết.
 
-import { provinces } from "@/lib/locations";
+import { provinces, oldProvinces } from "@/lib/locations";
 import { provincesNew } from "@/lib/provincesNew";
 import { propertyTypeOptions, normalizeVi } from "@/lib/filters";
 import { featuredListings, projects, articles } from "@/lib/data";
@@ -49,6 +49,15 @@ for (const p of provinces) {
       ENTRIES.push({ label: wl, kind: "Khu vực", province: p.name, district: d.name, ward: w, norm: toNorm(wl), primary: toNorm(w) });
     }
   }
+}
+
+// 1A) TÊN TỈNH CŨ trước sáp nhập — "Thừa Thiên Huế", "Quảng Nam", "Bình Định"…
+// Bảng khu vực ở trên khoá theo tên tỉnh HIỆN HÀNH nên gõ tên cũ không ra gì, mà
+// rất nhiều người mua vẫn tìm theo tên cũ. Ghi kèm tên mới để họ biết nay gọi là gì.
+for (const o of oldProvinces) {
+  if (o.name === o.newName) continue;
+  const nhan = `${o.name} (nay là ${o.newName})`;
+  ENTRIES.push({ label: nhan, kind: "Khu vực", province: o.name, norm: toNorm(nhan), primary: toNorm(o.name) });
 }
 
 // 1B) Khu vực theo ĐƠN VỊ HÀNH CHÍNH MỚI — 2 cấp: Tỉnh/Thành phố → Phường/Xã.

@@ -9,6 +9,7 @@
 // ============================================================================
 
 import type { Listing } from "@/lib/data";
+import { haiDongDiaChi, heCuaTin } from "@/lib/diaChiHaiHe";
 import { featuredListings, getListingById } from "@/lib/data";
 import { asset } from "@/lib/asset";
 import { isVideoUrl } from "@/lib/media";
@@ -149,7 +150,27 @@ function rowToListing(r: Row): Listing {
     area: r.area_m2 != null ? `${fmtNum(r.area_m2, 0)} m²` : "—",
     ...(r.beds != null ? { beds: r.beds } : {}),
     ...(r.baths != null ? { baths: r.baths } : {}),
-    location: [r.ward, r.district, r.province].filter(Boolean).join(", "),
+    // ĐỊA CHỈ HIỂN THỊ THEO HỆ MỚI — áp cho MỌI tin, kể cả tin đã đăng từ trước.
+    // Người đăng nhập theo hệ nào cũng được, người xem luôn thấy tên đang dùng hiện
+    // nay; cách gọi cũ nằm ở dòng "Địa chỉ hệ cũ" ngay dưới. Suy không ra tới cấp
+    // phường thì giữ nguyên chuỗi khách đã nhập, không hiện địa chỉ nửa vời.
+    ...((): { location: string; locationCu?: string; diaChiTim?: string } => {
+      const goc = [r.ward, r.district, r.province].filter(Boolean).join(", ");
+      if (!r.province) return { location: goc };
+      const hai = haiDongDiaChi(heCuaTin(r.district), {
+        tinh: r.province,
+        quan: r.district ?? "",
+        phuong: r.ward ?? "",
+      });
+      const moi = hai.moi || goc;
+      const cu = hai.cu && hai.cu !== moi ? hai.cu : "";
+      return {
+        location: moi,
+        ...(cu ? { locationCu: cu } : {}),
+        // Lọc/tìm khu vực dò trên chuỗi này để tin không mất hút khi đổi cách gọi.
+        diaChiTim: [moi, cu, goc].filter(Boolean).join(" · "),
+      };
+    })(),
     diaGioi: { ward: r.ward ?? "", district: r.district ?? "", province: r.province ?? "" },
     type: r.type,
     // Ảnh đại diện = ẢNH đầu tiên (bỏ qua video nếu đứng trước)

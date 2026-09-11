@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { goiDuAn, quotePriceDuAn, soAnhDuAnToiDa, vnd } from "@/lib/billing";
 import { useBilling } from "@/lib/useBilling";
-import { provinceNamesFor, districtsOf, wardsOf, wardsOfNew, type GeoMode } from "@/lib/locations";
+import { provinceNamesFor, districtsOf, wardsOf, wardsOfNew, wardsOfAny, type GeoMode } from "@/lib/locations";
+import { doiHeDiaChi } from "@/lib/diaChiHaiHe";
 import ImagePicker from "@/components/admin/ImagePicker";
 import ContentEditor from "@/components/admin/ContentEditor";
 import { uploadImageFile } from "@/lib/uploadImage";
@@ -164,12 +165,19 @@ export default function ProjectForm({
 
   // Hệ đơn vị hành chính: MỚI (sau sáp nhập, bỏ cấp Quận/Huyện) hoặc CŨ
   const [geoMode, setGeoMode] = useState<GeoMode>("moi");
+  // Nhớ bộ ba hệ CŨ người nhập đã chọn → bấm đổi qua đổi lại vẫn về đúng chỗ đó.
+  const nhoHeCu = useRef<{ tinh: string; quan?: string; phuong?: string } | null>(null);
   const provinceOptions = provinceNamesFor(geoMode);
   const districtOptions = geoMode === "moi" ? [] : province ? districtsOf(province) : [];
   const wardOptions =
     geoMode === "moi"
       ? province ? wardsOfNew(province) : []
-      : province && district ? wardsOf(province, district) : [];
+      // Tỉnh cũ nào web chưa nhập danh mục phường (Hà Nội, TP.HCM…) thì lấy danh
+      // mục phường hệ MỚI của tỉnh đó — cùng một chỗ, chỉ khác cách gọi cấp.
+      // Để ô rỗng là người nhập tưởng web hỏng.
+      : province && district
+        ? wardsOf(province, district).length ? wardsOf(province, district) : wardsOfAny(province)
+        : [];
 
   function onNameChange(v: string) {
     setName(v);
@@ -405,12 +413,25 @@ export default function ProjectForm({
       <Panel title="Vị trí">
         <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-3">
           <Field label="Hệ địa chỉ">
-            <div className="inline-flex rounded-lg border border-cvr-line bg-white p-1">
-              {([{ id: "moi" as GeoMode, label: "Tỉnh/Thành mới" }, { id: "cu" as GeoMode, label: "Địa chỉ cũ" }]).map((m) => (
+            {/* Hai nút chia đôi hàng, chữ không gãy dòng — cùng cách với form
+                đăng tin của khách. */}
+            <div className="grid w-full grid-cols-2 gap-1 rounded-lg border border-cvr-line bg-white p-1">
+              {([{ id: "moi" as GeoMode, label: "Địa chỉ mới" }, { id: "cu" as GeoMode, label: "Địa chỉ cũ" }]).map((m) => (
                 <button
                   key={m.id}
                   type="button"
-                  onClick={() => { setGeoMode(m.id); setProvince(""); setDistrict(""); setWard(""); }}
+                  onClick={() => {
+                    if (m.id === geoMode) return;
+                    // ĐỔI HỆ = QUY ĐỔI, KHÔNG XOÁ TRẮNG. Trước đây bấm sang hệ kia là
+                    // ba ô về rỗng, người nhập phải chọn lại từ tỉnh — giống hệt lỗi
+                    // đã sửa ở form tin đăng.
+                    const d = doiHeDiaChi(m.id, { tinh: province, quan: district, phuong: ward }, nhoHeCu.current);
+                    if (geoMode === "cu" && province) nhoHeCu.current = { tinh: province, quan: district, phuong: ward };
+                    setGeoMode(m.id);
+                    setProvince(d.province);
+                    setDistrict(d.district);
+                    setWard(d.ward);
+                  }}
                   className={`rounded-md px-3 py-1.5 text-xs font-medium transition ${geoMode === m.id ? "bg-cvr-ink text-white" : "text-cvr-body hover:text-cvr-ink"}`}
                 >
                   {m.label}

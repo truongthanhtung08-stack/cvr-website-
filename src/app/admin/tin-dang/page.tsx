@@ -243,7 +243,10 @@ export default function AdminListingsPage() {
 
       {/* Bảng (desktop) */}
       <div className="mt-4 hidden overflow-hidden rounded-2xl border border-cvr-line bg-white shadow-lux md:block">
-        <table className="w-full text-sm">
+        {/* Bảng 7 cột không vừa màn hẹp (iPad dọc) — bọc lớp cuộn ngang, nếu không
+            cột Thao tác bên phải bị khung bo góc cắt mất, bấm không tới. */}
+        <div className="overflow-x-auto">
+        <table className="w-full min-w-[900px] text-sm">
           <thead>
             <tr className="border-b border-cvr-line text-left text-xs uppercase tracking-wider text-cvr-faint">
               <th className="w-10 px-4 py-3">
@@ -283,8 +286,10 @@ export default function AdminListingsPage() {
                   />
                 </td>
                 <td className="max-w-[320px] px-4 py-3">
-                  <div className="truncate font-medium text-cvr-ink">{r.title}</div>
-                  <div className="truncate text-xs text-cvr-muted">
+                  {/* Tiêu đề tin xuống tối đa 2 dòng thay vì cắt cụt một dòng —
+                      cắt cụt thì hai tin cùng khu vực nhìn y hệt nhau. */}
+                  <div className="line-clamp-2 font-medium text-cvr-ink">{r.title}</div>
+                  <div className="line-clamp-2 text-xs text-cvr-muted">
                     {purposeLabel(r.purpose)} · {r.type} · {[r.district, r.province].filter(Boolean).join(", ")}
                   </div>
                 </td>
@@ -309,6 +314,7 @@ export default function AdminListingsPage() {
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
       {/* Thẻ (mobile) */}

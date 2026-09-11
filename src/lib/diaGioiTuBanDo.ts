@@ -1,4 +1,13 @@
-import { provinceNamesFor, districtsOf, wardsOf, wardsOfNew, type GeoMode } from "@/lib/locations";
+import {
+  provinceNamesFor,
+  districtsOf,
+  wardsOf,
+  wardsOfNew,
+  wardsOfAny,
+  quanHuyenToanTinh,
+  newProvinceOf,
+  type GeoMode,
+} from "@/lib/locations";
 import { normalizeVi } from "@/lib/filters";
 import { suyRaHeCu, suyRaHeMoi } from "@/lib/diaChiHaiHe";
 
@@ -17,7 +26,20 @@ export type DiaGioiBanDo = { tinh: string; quan: string; phuong: string };
 // Bỏ tiền tố cấp hành chính rồi bỏ dấu — để "Phường Hòa Khánh" và "Hòa Khánh Bắc"
 // còn so được với nhau.
 function loiTen(s: string): string {
-  return normalizeVi(s).replace(/^(thanh pho|tinh|quan|huyen|phuong|xa|thi tran|thi xa) /, "");
+  return normalizeVi(s).replace(/^(thanh pho|tp.?|tinh|quan|huyen|phuong|xa|thi tran|thi xa|dac khu) /, "").trim();
+}
+
+// "Hòa Khánh" nằm trong "Hòa Khánh Bắc" — đúng. Nhưng "An Phú" KHÔNG nằm trong
+// "Trần Phú", dù chuỗi ký tự có chứa nhau. Vì vậy chỉ chấp nhận khi tên ngắn là
+// TRỌN VẸN MỘT CỤM TỪ của tên dài, không phải mẩu cắt giữa chừng — ghim Quy Nhơn
+// từng ra "Phường An Phú" chính vì so bằng chuỗi con.
+function chuaTronTu(dai: string, ngan: string): boolean {
+  return (
+    dai === ngan ||
+    dai.startsWith(ngan + " ") ||
+    dai.endsWith(" " + ngan) ||
+    dai.includes(" " + ngan + " ")
+  );
 }
 
 export function khopDanhMuc(ten: string, dsach: string[]): string {
@@ -31,7 +53,7 @@ export function khopDanhMuc(ten: string, dsach: string[]): string {
     dsach.find((m) => loiTen(m) === t) ??
     dsach.find((m) => {
       const x = loiTen(m);
-      return x.includes(t) || t.includes(x);
+      return chuaTronTu(x, t) || chuaTronTu(t, x);
     }) ??
     ""
   );
@@ -68,22 +90,57 @@ export function ganDiaGioi(
     // Trượt thì tra tiếp theo danh mục hệ CŨ rồi QUY ĐỔI sang tên hệ mới. Đây là
     // nửa còn lại của cơ chế hai chiều (nửa kia: chuoiTimBanDo gửi cả hai hệ).
     if (!p) {
-      const dsQuanCu = districtsOf(tinh);
+      // Tra TOÀN BỘ quận/huyện cũ của tỉnh hiện hành — kể cả phần thuộc các tỉnh
+      // cũ đã gộp vào (Đà Nẵng còn có Hội An, Điện Bàn… của Quảng Nam).
+      const dsQuanCu = quanHuyenToanTinh(tinh);
+      // Cùng thứ tự với nhánh hệ cũ: phường nằm trong danh mục phường của quận →
+      // cấp trung gian bản đồ trả về → cuối cùng mới thử tên phường khớp tên quận.
+      // "Phường 1" của Vũng Tàu mà thử bước cuối trước là dính ngay "Quận 1".
       const quanCu =
-        dsQuanCu.find((d) => khopDanhMuc(dc.phuong, wardsOf(tinh, d))) ||
-        khopDanhMuc(dc.phuong, dsQuanCu) ||
-        khopDanhMuc(dc.quan, dsQuanCu);
+        dsQuanCu.find((d) => khopDanhMuc(dc.phuong, d.wards)) ||
+        dsQuanCu.find((d) => khopDanhMuc(dc.quan, [d.name])) ||
+        dsQuanCu.find((d) => khopDanhMuc(dc.phuong, [d.name]));
       if (quanCu) {
-        const phuongCu = khopDanhMuc(dc.phuong, wardsOf(tinh, quanCu));
-        p = suyRaHeMoi(tinh, quanCu, phuongCu).phuong;
+        const phuongCu = khopDanhMuc(dc.phuong, quanCu.wards);
+        p = suyRaHeMoi(quanCu.tinhCu ?? tinh, quanCu.name, phuongCu).phuong;
       }
     }
 
     return { province: tinh, district: "", ward: p || (doiTinh ? "" : giuPhuong) };
   }
 
+  // ── TÊN TỈNH BẢN ĐỒ TRẢ VỀ LÀ TÊN HIỆN HÀNH, HỆ CŨ LẠI CHỌN THEO TÊN TRƯỚC
+  // SÁP NHẬP. Ghim ở Hội An thì bản đồ nói "Đà Nẵng", mà trước sáp nhập Hội An
+  // thuộc Quảng Nam — giữ nguyên "Đà Nẵng" thì danh sách quận/huyện không có Hội
+  // An, ba ô địa giới bỏ trống. Vì vậy dò địa danh bản đồ đọc được trong TOÀN BỘ
+  // quận/huyện của tỉnh hiện hành rồi lấy đúng tỉnh cũ chứa nó.
+  const dsToanTinh = quanHuyenToanTinh(tinh);
+  // Thứ tự dò: phường nằm trong danh mục phường của quận (chắc nhất) → cấp trung
+  // gian bản đồ trả về → cuối cùng mới thử tên phường khớp tên quận. Không được
+  // đảo hai bước cuối: tên phường kiểu số ("Phường 1") khớp lung tung với quận
+  // kiểu số ("Quận 1") — ghim Vũng Tàu từng ra "TP.HCM / Quận 1" vì lẽ đó.
+  // Thứ tự dò, từ chắc nhất xuống:
+  //   1. Quận bản đồ nói ĐÚNG và quận đó CÓ CHỨA cái phường bản đồ nói — hai vế
+  //      cùng khớp thì gần như không thể sai.
+  //   2. Chỉ DUY NHẤT một quận trong cả tỉnh chứa cái phường đó (dùng khi bản đồ
+  //      không trả cấp trung gian, hoặc trả sai như "Hòa Xuân, HỘI AN").
+  //   3. Đành tin cấp trung gian bản đồ trả về.
+  //   4. Tên phường trùng tên một quận (sau sáp nhập rất nhiều phường như vậy).
+  // Không được dò theo tên phường trước cấp trung gian: cả nước có hàng trăm
+  // "Phường 1", ghim Vũng Tàu từng nhảy sang Gò Vấp vì thế.
+  const theoPhuong = dc.phuong ? dsToanTinh.filter((d) => khopDanhMuc(dc.phuong, d.wards)) : [];
+  const theoQuan = dc.quan ? dsToanTinh.filter((d) => khopDanhMuc(dc.quan, [d.name])) : [];
+  const quanToanTinh =
+    theoQuan.find((d) => theoPhuong.includes(d)) ??
+    (theoPhuong.length === 1 ? theoPhuong[0] : undefined) ??
+    theoQuan[0] ??
+    (dc.phuong ? dsToanTinh.find((d) => khopDanhMuc(dc.phuong, [d.name])) : undefined);
+  const tinhCu = quanToanTinh?.tinhCu ?? tinh;
+  // Nhảy sang tỉnh khác thì phường/quận cũ không còn đúng — so theo tỉnh CŨ vừa suy ra.
+  const doiTinhCu = !!tinhKhop && tinhCu !== dangCo.province;
+
   // Hệ CŨ: phải có Quận/Huyện thì mới ra được danh sách Phường/Xã.
-  const dsQuan = districtsOf(tinh);
+  const dsQuan = districtsOf(tinhCu);
   // ⚠️ TỈNH CHƯA CÓ DANH MỤC QUẬN/HUYỆN CŨ (Hải Phòng, Quảng Ninh, Thanh Hoá,
   // Nghệ An, Cần Thơ… — web mới nhập đủ danh mục cho các tỉnh trọng điểm) thì
   // NHẬN THẲNG tên bản đồ đọc được, đừng ép khớp rồi trả rỗng. Ô Quận/Huyện cho
@@ -91,11 +148,11 @@ export function ganDiaGioi(
   // ba khối phải MẶC ĐỊNH có sẵn, người đăng chỉ lo mỗi số nhà.
   if (!dsQuan.length) {
     // Vẫn ưu tiên tên chuẩn trong danh mục của web, tên thô của bản đồ là hạng chót.
-    const p = khopDanhMuc(dc.phuong, wardsOfNew(tinh));
+    const p = khopDanhMuc(dc.phuong, wardsOfAny(tinhCu));
     return {
-      province: tinh,
-      district: dc.quan || (doiTinh ? "" : dangCo.district),
-      ward: p || dc.phuong || (doiTinh ? "" : giuPhuong),
+      province: tinhCu,
+      district: dc.quan || (doiTinhCu ? "" : dangCo.district),
+      ward: p || dc.phuong || (doiTinhCu ? "" : giuPhuong),
     };
   }
   // ⚠️ THỨ TỰ BA BƯỚC NÀY QUAN TRỌNG — ĐỪNG ĐẢO LẠI.
@@ -107,7 +164,7 @@ export function ganDiaGioi(
   //
   // Bước 1 — QUẬN NÀO CHỨA CÁI PHƯỜNG NÀY. Chắc nhất: tra ngược bằng danh mục
   // của chính web, không phụ thuộc bản đồ gán đúng hay sai.
-  let quan = dc.phuong ? dsQuan.find((d) => khopDanhMuc(dc.phuong, wardsOf(tinh, d))) ?? "" : "";
+  let quan = dc.phuong ? dsQuan.find((d) => khopDanhMuc(dc.phuong, wardsOf(tinhCu, d))) ?? "" : "";
   // Bước 2 — KHỚP THẲNG TÊN PHƯỜNG VỚI DANH SÁCH QUẬN. Sau sáp nhập, rất nhiều
   // phường mới mang đúng tên quận cũ: "Phường Ngũ Hành Sơn", "Phường Hải Châu",
   // "Phường Thanh Khê", "Phường Sơn Trà", "Phường Cẩm Lệ"…
@@ -119,8 +176,8 @@ export function ganDiaGioi(
   // thẳng tên phường mới ("Phường An Cựu") — tên này không có trong danh mục
   // quận/huyện cũ nên ba bước trên đều trượt. Quy đổi ngược về hệ cũ để lấy đúng
   // quận/huyện. Đây là chiều còn lại của cơ chế hai chiều.
-  if (!quan && dc.phuong) quan = suyRaHeCu(tinh, dc.phuong).quan;
-  const quanDung = quan || (doiTinh ? "" : dangCo.district);
+  if (!quan && dc.phuong) quan = suyRaHeCu(newProvinceOf(tinhCu), dc.phuong).quan;
+  const quanDung = quan || (doiTinhCu ? "" : dangCo.district);
   // Việt Nam chạy SONG SONG hai hệ cho tới khi dân quen hệ mới → hệ CŨ cũng phải
   // điền được đủ ba khối. Bản đồ chỉ biết TÊN PHƯỜNG MỚI ("Phường Thuận Hoá"),
   // mà danh mục phường CŨ của quận đó không có tên ấy → không khớp. Lúc đó cứ
@@ -132,10 +189,10 @@ export function ganDiaGioi(
   // đủ: 34 tỉnh · 3.321 phường/xã hệ mới. Vậy trước khi đành lấy tên thô của bản
   // đồ, thử khớp thêm một nhịp nữa với DANH MỤC PHƯỜNG MỚI của chính tỉnh đó —
   // ra được thì ô giữ đúng tên chuẩn của web, không phải tên lạ do bản đồ đặt.
-  const phuongTheoDanhMucMoi = khopDanhMuc(dc.phuong, wardsOfNew(tinh));
+  const phuongTheoDanhMucMoi = khopDanhMuc(dc.phuong, wardsOfAny(tinhCu));
   const phuongThoTuBanDo =
-    phuongTheoDanhMucMoi || dc.phuong || (doiTinh ? "" : giuPhuong);
-  if (!quanDung) return { province: tinh, district: "", ward: phuongThoTuBanDo };
-  const phuongKhop = khopDanhMuc(dc.phuong, wardsOf(tinh, quanDung));
-  return { province: tinh, district: quanDung, ward: phuongKhop || phuongThoTuBanDo };
+    phuongTheoDanhMucMoi || dc.phuong || (doiTinhCu ? "" : giuPhuong);
+  if (!quanDung) return { province: tinhCu, district: "", ward: phuongThoTuBanDo };
+  const phuongKhop = khopDanhMuc(dc.phuong, wardsOf(tinhCu, quanDung));
+  return { province: tinhCu, district: quanDung, ward: phuongKhop || phuongThoTuBanDo };
 }

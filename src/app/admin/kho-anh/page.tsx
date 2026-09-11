@@ -163,7 +163,9 @@ export default function KhoAnhPage() {
               <ul className="divide-y divide-cvr-line/70 text-sm">
                 {[...rac].sort((a, b) => b.co - a.co).slice(0, 20).map((t) => (
                   <li key={t.ten} className="flex items-center justify-between gap-4 px-4 py-2.5">
-                    <span className="truncate text-cvr-body">{t.ten}</span>
+                    {/* Tên tệp hiện TRỌN (xuống dòng nếu dài) — đây là danh sách
+                        sắp bị xoá, cắt cụt tên thì không đối chiếu được. */}
+                    <span className="min-w-0 break-all text-cvr-body">{t.ten}</span>
                     <span className="shrink-0 text-xs text-cvr-muted">{MB(t.co)} · {t.ngay}</span>
                   </li>
                 ))}

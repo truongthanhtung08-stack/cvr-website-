@@ -24,6 +24,11 @@ export type Listing = {
   location: string;
   // BA CẤP ĐỊA GIỚI GIỮ RIÊNG (ngoài chuỗi location đã ghép sẵn) — cần cho việc
   // hiện địa chỉ theo CẢ HAI HỆ cũ/mới trên trang chi tiết tin.
+  /** Cùng chỗ đó gọi theo hệ CŨ — hiện ở dòng dưới, nhãn "Địa chỉ hệ cũ". */
+  locationCu?: string;
+  /** Gộp cả hai cách gọi — dùng để LỌC/TÌM khu vực, không hiển thị. Thiếu nó thì
+   *  tin nhập theo hệ cũ ("Sơn Trà") mất hút khi location đã đổi sang tên mới. */
+  diaChiTim?: string;
   diaGioi?: { ward: string; district: string; province: string };
   type: string;
   image: string;
@@ -324,7 +329,10 @@ export function buildListingDetail(l: Listing): ListingDetail {
 export type Project = {
   slug: string;
   name: string;
+  /** Địa chỉ HIỂN THỊ — theo hệ MỚI khi suy ra được, giống bên tin đăng. */
   location: string;
+  /** Cùng chỗ đó gọi theo hệ CŨ — dòng dưới, nhãn "Địa chỉ hệ cũ". */
+  locationCu?: string;
   priceFrom: string;
   type: string;
   status: string;

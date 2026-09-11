@@ -87,7 +87,9 @@ export default function CustomersPage() {
 
       {/* Bảng (desktop) */}
       <div className="mt-4 hidden overflow-hidden rounded-2xl border border-cvr-line bg-white shadow-lux md:block">
-        <table className="w-full text-sm">
+        {/* Bảng 7 cột — bọc lớp cuộn ngang để cột cuối không bị khung cắt mất. */}
+        <div className="overflow-x-auto">
+        <table className="w-full min-w-[880px] text-sm">
           <thead>
             <tr className="border-b border-cvr-line text-left text-xs uppercase tracking-wider text-cvr-faint">
               <th className="px-4 py-3 font-medium">Khách hàng</th>
@@ -130,6 +132,7 @@ export default function CustomersPage() {
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
       {/* Thẻ (mobile) */}

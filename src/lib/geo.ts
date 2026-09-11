@@ -1,3 +1,5 @@
+import { oldProvinces } from "@/lib/locations";
+
 // Toạ độ tâm khu vực (xấp xỉ) cho chế độ Bản đồ — đủ dùng với dữ liệu mẫu
 // (tin chưa có toạ độ thật; sau này lấy lat/lng từ Supabase thì thay ở tầng gọi).
 // ⚠️ Mục CỤ THỂ (quận/phường) đặt TRƯỚC mục tỉnh/thành — so khớp theo thứ tự.
@@ -85,5 +87,14 @@ export function coordOf(location: string, seed: string): [number, number] {
 // Không khớp khu vực nào → null (nơi gọi tự quyết định làm gì).
 export function centerOfArea(location: string): [number, number] | null {
   const hit = CENTERS.find(([name]) => location.includes(name));
-  return hit ? [hit[1], hit[2]] : null;
+  if (hit) return [hit[1], hit[2]];
+  // Bảng trên chỉ có tên tỉnh HIỆN HÀNH. Tin ghi theo hệ cũ ("Quảng Nam",
+  // "Bình Định", "Bà Rịa - Vũng Tàu"…) thì quy về tỉnh mới rồi tra lại — không
+  // thì bản đồ không có tâm, tin rơi về giữa Biển Đông.
+  for (const { name, newName } of oldProvinces) {
+    if (!location.includes(name)) continue;
+    const h = CENTERS.find(([ten]) => ten === newName || newName.includes(ten));
+    if (h) return [h[1], h[2]];
+  }
+  return null;
 }

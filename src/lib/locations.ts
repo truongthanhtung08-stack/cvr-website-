@@ -1,17 +1,22 @@
-// Danh mục đơn vị hành chính — CẬP NHẬT THEO SÁT NHẬP 2025 (34 đơn vị toàn quốc).
-// Cấu trúc: Tỉnh/Thành phố → Quận/Huyện/Thị xã → Phường/Xã/Thị trấn.
-//
-// 👉 8 đơn vị LÕI vùng DUYÊN HẢI MIỀN TRUNG + TÂY NGUYÊN (Quảng Trị, Huế, Đà Nẵng,
-//    Quảng Ngãi, Gia Lai, Đắk Lắk, Khánh Hòa, Lâm Đồng) có quận/huyện chi tiết;
-//    các tỉnh còn lại để mức tỉnh (bổ sung dần). Có thể thay bằng Supabase (bảng `locations`).
+// Danh mục đơn vị hành chính — HAI HỆ, ĐỦ TOÀN QUỐC.
+//   • Hệ CŨ (trước sáp nhập 2025): `provincesOld` — 63 tỉnh · 697 quận/huyện · 10.972 phường/xã,
+//     mỗi phường cũ kèm CHỈ SỐ phường mới tương ứng (ánh xạ chính thức, không phải dò tên).
+//   • Hệ MỚI (sau sáp nhập 2025):  `provincesNew` — 34 tỉnh · 3.321 phường/xã (bỏ cấp Quận/Huyện).
+// Hai bảng đó là dữ liệu gốc, sinh tự động từ nguồn mở — không sửa tay. File này
+// chỉ nối hai hệ lại với nhau (`provinceMergers`) và cung cấp hàm tra cứu.
 
 import { provincesNew } from "./provincesNew";
+import { provincesOld } from "./provincesOld";
 
 export type Ward = string;
 
 export type District = {
   name: string;
   wards: Ward[];
+  /** Tỉnh CŨ (trước sáp nhập 2025) mà quận/huyện này thuộc về. Phải ghi ở mọi tỉnh
+   *  mới gộp từ NHIỀU tỉnh cũ — không ghi thì chọn "Địa chỉ cũ" sẽ ra những cặp
+   *  sai như "Đà Nẵng → Hội An" (Hội An vốn thuộc Quảng Nam). */
+  tinhCu?: string;
 };
 
 export type Province = {
@@ -19,207 +24,43 @@ export type Province = {
   districts: District[];
 };
 
-export const provinces: Province[] = [
-  // ===== 7 ĐƠN VỊ LÕI — DUYÊN HẢI TRUNG BỘ (sau sát nhập) =====
-  {
-    // TP. Huế trở thành thành phố trực thuộc TW (từ Thừa Thiên Huế)
-    name: "Huế",
-    districts: [
-      { name: "Quận Phú Xuân", wards: ["Phú Hậu", "Phú Hội", "Phú Nhuận", "Vĩnh Ninh", "Phước Vĩnh", "Thuận Lộc", "Tây Lộc", "Kim Long", "Hương Long"] },
-      { name: "Quận Thuận Hóa", wards: ["Trường An", "An Cựu", "An Đông", "An Tây", "Thủy Xuân", "Vỹ Dạ", "Xuân Phú", "Phú Thượng", "Thủy Vân"] },
-      { name: "Hương Thủy", wards: ["Phú Bài", "Thủy Châu", "Thủy Dương", "Thủy Lương", "Thủy Phương", "Thủy Thanh"] },
-      { name: "Hương Trà", wards: ["Tứ Hạ", "Hương Văn", "Hương Vân", "Hương Xuân", "Hương Chữ", "Hương An", "Hương Hồ"] },
-      { name: "Phong Điền", wards: ["Phong Điền (TT)", "Phong Hòa", "Phong Bình", "Phong Chương", "Điền Hương", "Điền Lộc", "Phong Mỹ"] },
-      { name: "Quảng Điền", wards: ["Sịa (TT)", "Quảng Phú", "Quảng Vinh", "Quảng An", "Quảng Thành", "Quảng Lợi"] },
-      { name: "Phú Vang", wards: ["Thuận An", "Phú Đa (TT)", "Phú Mỹ", "Phú Hồ", "Vinh Thanh", "Phú Diên"] },
-      { name: "Phú Lộc", wards: ["Phú Lộc (TT)", "Lăng Cô", "Lộc Sơn", "Lộc Bổn", "Lộc Trì", "Vinh Hiền", "Lộc Vĩnh"] },
-      { name: "Nam Đông", wards: ["Khe Tre (TT)", "Hương Phú", "Hương Sơn", "Thượng Quảng", "Thượng Long"] },
-      { name: "A Lưới", wards: ["A Lưới (TT)", "Hồng Vân", "Hồng Kim", "Hồng Bắc", "Quảng Nhâm", "Hương Phong"] },
-    ],
-  },
-  {
-    // Đà Nẵng (TP trực thuộc TW) = Đà Nẵng + Quảng Nam
-    name: "Đà Nẵng",
-    districts: [
-      { name: "Hải Châu", wards: ["Hải Châu I", "Hải Châu II", "Thạch Thang", "Thanh Bình", "Thuận Phước", "Bình Hiên", "Bình Thuận", "Hòa Cường Bắc", "Hòa Cường Nam"] },
-      { name: "Thanh Khê", wards: ["Tam Thuận", "Thanh Khê Đông", "Thanh Khê Tây", "Xuân Hà", "Tân Chính", "Chính Gián", "Vĩnh Trung", "Thạc Gián", "An Khê", "Hòa Khê"] },
-      { name: "Sơn Trà", wards: ["Thọ Quang", "Nại Hiên Đông", "Mân Thái", "An Hải Bắc", "Phước Mỹ", "An Hải Tây", "An Hải Đông"] },
-      { name: "Ngũ Hành Sơn", wards: ["Mỹ An", "Khuê Mỹ", "Hòa Quý", "Hòa Hải"] },
-      { name: "Liên Chiểu", wards: ["Hòa Hiệp Bắc", "Hòa Hiệp Nam", "Hòa Khánh Bắc", "Hòa Khánh Nam", "Hòa Minh"] },
-      { name: "Cẩm Lệ", wards: ["Khuê Trung", "Hòa Phát", "Hòa An", "Hòa Thọ Tây", "Hòa Thọ Đông", "Hòa Xuân"] },
-      { name: "Hòa Vang", wards: ["Hòa Bắc", "Hòa Liên", "Hòa Ninh", "Hòa Sơn", "Hòa Nhơn", "Hòa Phú", "Hòa Phong", "Hòa Châu", "Hòa Tiến", "Hòa Khương", "Hòa Phước"] },
-      // — Khu vực Quảng Nam (cũ) nay thuộc Đà Nẵng —
-      { name: "Hội An", wards: ["Minh An", "Cẩm Phô", "Sơn Phong", "Thanh Hà", "Tân An", "Cẩm Châu", "Cửa Đại", "Cẩm Nam", "Tân Hiệp (Cù Lao Chàm)"] },
-      { name: "Tam Kỳ", wards: ["An Mỹ", "An Sơn", "An Xuân", "Hòa Hương", "Tân Thạnh", "Trường Xuân", "An Phú", "Tam Thanh"] },
-      { name: "Điện Bàn", wards: ["Vĩnh Điện", "Điện An", "Điện Ngọc", "Điện Nam Bắc", "Điện Nam Trung", "Điện Dương", "Điện Thắng Bắc"] },
-      { name: "Duy Xuyên", wards: ["Nam Phước (TT)", "Duy Hải", "Duy Nghĩa", "Duy Thành", "Duy Vinh"] },
-      { name: "Thăng Bình", wards: ["Hà Lam (TT)", "Bình Minh", "Bình Dương", "Bình Nguyên", "Bình Hải"] },
-      { name: "Núi Thành", wards: ["Núi Thành (TT)", "Tam Hiệp", "Tam Hòa", "Tam Anh Bắc", "Tam Quang", "Tam Nghĩa"] },
-      { name: "Đại Lộc", wards: ["Ái Nghĩa (TT)", "Đại Hiệp", "Đại Nghĩa", "Đại Hồng", "Đại Quang"] },
-    ],
-  },
-  {
-    // Quảng Ngãi = Quảng Ngãi + Kon Tum
-    name: "Quảng Ngãi",
-    districts: [
-      { name: "TP. Quảng Ngãi", wards: ["Trần Phú", "Nguyễn Nghiêm", "Lê Hồng Phong", "Trần Hưng Đạo", "Nghĩa Chánh", "Chánh Lộ", "Nghĩa Lộ", "Nghĩa Dũng", "Tịnh Khê"] },
-      { name: "Bình Sơn", wards: ["Châu Ổ (TT)", "Bình Dương", "Bình Thạnh", "Bình Đông", "Bình Trị"] },
-      { name: "Sơn Tịnh", wards: ["Tịnh Hà", "Tịnh Ấn Tây", "Tịnh Phong", "Tịnh Thọ", "Tịnh Bắc"] },
-      { name: "Tư Nghĩa", wards: ["La Hà (TT)", "Sông Vệ (TT)", "Nghĩa Hòa", "Nghĩa Thương", "Nghĩa Phương"] },
-      { name: "Mộ Đức", wards: ["Mộ Đức (TT)", "Đức Nhuận", "Đức Thắng", "Đức Chánh", "Đức Lợi"] },
-      { name: "Đức Phổ", wards: ["Nguyễn Nghiêm", "Phổ Hòa", "Phổ Văn", "Phổ Ninh", "Phổ Châu"] },
-      { name: "Lý Sơn", wards: [] },
-      // — Khu vực Kon Tum (cũ) —
-      { name: "TP. Kon Tum", wards: ["Quang Trung", "Duy Tân", "Thắng Lợi", "Thống Nhất", "Trường Chinh"] },
-      { name: "Ngọc Hồi", wards: [] },
-      { name: "Đăk Hà", wards: [] },
-      { name: "Sa Thầy", wards: [] },
-      { name: "Kon Plông", wards: [] },
-    ],
-  },
-  {
-    // Gia Lai = Bình Định + Gia Lai (biển ở Quy Nhơn)
-    name: "Gia Lai",
-    districts: [
-      { name: "TP. Quy Nhơn", wards: ["Trần Hưng Đạo", "Lê Lợi", "Lê Hồng Phong", "Trần Phú", "Lý Thường Kiệt", "Nguyễn Văn Cừ", "Ngô Mây", "Ghềnh Ráng", "Nhơn Bình", "Nhơn Phú", "Bùi Thị Xuân", "Nhơn Lý", "Nhơn Hải", "Nhơn Châu"] },
-      { name: "An Nhơn", wards: ["Bình Định", "Đập Đá", "Nhơn Hưng", "Nhơn Thành", "Nhơn Hậu", "Nhơn An"] },
-      { name: "Hoài Nhơn", wards: ["Bồng Sơn", "Tam Quan", "Hoài Hảo", "Hoài Thanh", "Hoài Hương", "Tam Quan Bắc"] },
-      { name: "Tuy Phước", wards: ["Tuy Phước (TT)", "Diêu Trì (TT)", "Phước Sơn", "Phước Hòa", "Phước Nghĩa"] },
-      { name: "Phù Cát", wards: ["Ngô Mây (TT)", "Cát Tiến", "Cát Hải", "Cát Khánh", "Cát Trinh"] },
-      { name: "Phù Mỹ", wards: ["Phù Mỹ (TT)", "Bình Dương (TT)", "Mỹ Thành", "Mỹ Thọ", "Mỹ An"] },
-      { name: "Tây Sơn", wards: ["Phú Phong (TT)", "Tây Giang", "Bình Nghi", "Tây Phú", "Bình Thành"] },
-      // — Khu vực Gia Lai (cũ) —
-      { name: "TP. Pleiku", wards: ["Hoa Lư", "Diên Hồng", "Ia Kring", "Hội Thương", "Yên Đỗ", "Thống Nhất"] },
-      { name: "An Khê", wards: [] },
-      { name: "Ayun Pa", wards: [] },
-      { name: "Chư Sê", wards: [] },
-      { name: "Đăk Đoa", wards: [] },
-    ],
-  },
-  {
-    // Đắk Lắk = Phú Yên + Đắk Lắk (biển ở Tuy Hòa)
-    name: "Đắk Lắk",
-    districts: [
-      { name: "TP. Tuy Hòa", wards: ["Phường 1", "Phường 2", "Phường 3", "Phường 7", "Phường 9", "Bình Kiến", "Hòa Kiến"] },
-      { name: "Sông Cầu", wards: ["Xuân Phú", "Xuân Thành", "Xuân Đài", "Xuân Yên"] },
-      { name: "Đông Hòa", wards: ["Hòa Hiệp Trung", "Hòa Hiệp Bắc", "Hòa Hiệp Nam", "Hòa Vinh", "Hòa Xuân Tây"] },
-      { name: "Tây Hòa", wards: ["Phú Thứ (TT)", "Hòa Bình 1", "Hòa Phong", "Hòa Mỹ Đông"] },
-      // — Khu vực Đắk Lắk (cũ) —
-      { name: "TP. Buôn Ma Thuột", wards: ["Tân Lập", "Tân Hòa", "Thành Công", "Thắng Lợi", "Tự An", "Ea Tam", "Tân Tiến"] },
-      { name: "Buôn Hồ", wards: [] },
-      { name: "Ea Kar", wards: [] },
-      { name: "Krông Pắc", wards: [] },
-      { name: "Cư M'gar", wards: [] },
-    ],
-  },
-  {
-    // Khánh Hòa = Khánh Hòa + Ninh Thuận
-    name: "Khánh Hòa",
-    districts: [
-      { name: "TP. Nha Trang", wards: ["Lộc Thọ", "Tân Lập", "Phước Hải", "Vĩnh Hải", "Vĩnh Phước", "Vĩnh Nguyên", "Phước Long", "Vĩnh Hòa", "Vĩnh Trường"] },
-      { name: "TP. Cam Ranh", wards: ["Cam Nghĩa", "Cam Phúc Bắc", "Cam Phúc Nam", "Cam Lộc", "Cam Lợi", "Cam Thuận", "Ba Ngòi"] },
-      { name: "Ninh Hòa", wards: ["Ninh Hiệp", "Ninh Đa", "Ninh Giang", "Ninh Hà", "Ninh Diêm", "Ninh Thủy"] },
-      { name: "Diên Khánh", wards: ["Diên Khánh (TT)", "Diên An", "Diên Toàn", "Diên Phú", "Diên Lạc"] },
-      { name: "Vạn Ninh", wards: ["Vạn Giã (TT)", "Đại Lãnh", "Vạn Thọ", "Vạn Phước", "Vạn Long"] },
-      // — Khu vực Ninh Thuận (cũ) —
-      { name: "TP. Phan Rang - Tháp Chàm", wards: ["Mỹ Hải", "Mỹ Bình", "Mỹ Đông", "Đạo Long", "Đông Hải", "Văn Hải", "Tấn Tài"] },
-      { name: "Ninh Hải", wards: ["Khánh Hải (TT)", "Vĩnh Hải", "Nhơn Hải", "Thanh Hải"] },
-      { name: "Ninh Phước", wards: ["Phước Dân (TT)", "Phước Thuận", "An Hải", "Phước Hải"] },
-      { name: "Ninh Sơn", wards: ["Tân Sơn (TT)", "Lâm Sơn", "Lương Sơn", "Quảng Sơn"] },
-    ],
-  },
-  {
-    // Quảng Trị = Quảng Bình + Quảng Trị
-    name: "Quảng Trị",
-    districts: [
-      { name: "TP. Đông Hà", wards: ["Đông Lễ", "Đông Lương", "Đông Thanh", "Đông Giang", "Phường 1", "Phường 2", "Phường 3", "Phường 5"] },
-      { name: "Thị xã Quảng Trị", wards: ["Phường 1", "Phường 2", "Phường 3", "An Đôn", "Hải Lệ"] },
-      { name: "Vĩnh Linh", wards: ["Hồ Xá (TT)", "Cửa Tùng", "Bến Quan", "Vĩnh Thái", "Vĩnh Tú"] },
-      { name: "Gio Linh", wards: ["Gio Linh (TT)", "Cửa Việt", "Gio Việt", "Gio Hải", "Trung Giang"] },
-      { name: "Triệu Phong", wards: ["Ái Tử (TT)", "Triệu Thành", "Triệu Đông", "Triệu An", "Triệu Vân"] },
-      { name: "Hải Lăng", wards: ["Hải Lăng (TT)", "Hải An", "Hải Khê", "Hải Ba", "Hải Dương"] },
-      // — Khu vực Quảng Bình (cũ) —
-      { name: "TP. Đồng Hới", wards: ["Hải Thành", "Đồng Phú", "Đồng Mỹ", "Bắc Lý", "Nam Lý", "Hải Đình", "Bảo Ninh"] },
-      { name: "Ba Đồn", wards: ["Ba Đồn (TT)", "Quảng Long", "Quảng Thọ", "Quảng Phúc", "Quảng Thuận"] },
-      { name: "Bố Trạch", wards: ["Hoàn Lão (TT)", "Phong Nha (TT)", "Thanh Trạch", "Đức Trạch", "Nhân Trạch"] },
-      { name: "Lệ Thủy", wards: ["Kiến Giang (TT)", "Lệ Ninh (TT)", "Hồng Thủy", "Ngư Thủy Bắc", "Cam Thủy"] },
-      { name: "Quảng Ninh", wards: ["Quán Hàu (TT)", "Hải Ninh", "Võ Ninh", "Gia Ninh", "Lương Ninh"] },
-    ],
-  },
 
-  {
-    // Lâm Đồng = Lâm Đồng + Đắk Nông + Bình Thuận (Tây Nguyên + biển Bình Thuận)
-    name: "Lâm Đồng",
-    districts: [
-      { name: "TP. Đà Lạt", wards: ["Phường 1", "Phường 2", "Phường 3", "Phường 4", "Phường 8", "Phường 9", "Phường 10", "Phường 11", "Xuân Hương", "Cam Ly", "Xuân Trường", "Trạm Hành"] },
-      { name: "TP. Bảo Lộc", wards: ["Lộc Phát", "Lộc Tiến", "Lộc Sơn", "B'Lao", "Lộc Nga", "Lộc Châu", "Đại Lào"] },
-      { name: "Đức Trọng", wards: ["Liên Nghĩa (TT)", "Liên Hiệp", "Hiệp Thạnh", "Phú Hội", "Tân Hội", "Bình Thạnh"] },
-      { name: "Di Linh", wards: ["Di Linh (TT)", "Đinh Lạc", "Tân Nghĩa", "Gung Ré", "Hòa Ninh"] },
-      { name: "Lâm Hà", wards: ["Đinh Văn (TT)", "Nam Ban (TT)", "Tân Hà", "Đạ Đờn", "Phú Sơn"] },
-      { name: "Bảo Lâm", wards: ["Lộc Thắng (TT)", "Lộc An", "Lộc Đức", "Lộc Ngãi", "B'Lá"] },
-      { name: "Đơn Dương", wards: ["Thạnh Mỹ (TT)", "D'Ran (TT)", "Lạc Xuân", "Ka Đô", "Quảng Lập"] },
-      // — Khu vực Bình Thuận (cũ) — biển —
-      { name: "TP. Phan Thiết", wards: ["Phú Thủy", "Phú Trinh", "Đức Long", "Hàm Tiến", "Mũi Né", "Thanh Hải", "Bình Hưng", "Đức Nghĩa", "Phú Hài"] },
-      { name: "La Gi", wards: ["Phước Hội", "Phước Lộc", "Tân An", "Tân Thiện", "Bình Tân"] },
-      { name: "Hàm Thuận Nam", wards: ["Thuận Nam (TT)", "Tân Thành", "Tân Thuận", "Thuận Quý", "Hàm Cường"] },
-      { name: "Hàm Thuận Bắc", wards: ["Ma Lâm (TT)", "Phú Long (TT)", "Hàm Đức", "Hàm Liêm", "Hồng Sơn"] },
-      { name: "Tuy Phong", wards: ["Liên Hương (TT)", "Phan Rí Cửa (TT)", "Vĩnh Tân", "Bình Thạnh", "Chí Công"] },
-      // — Khu vực Đắk Nông (cũ) — Tây Nguyên —
-      { name: "TP. Gia Nghĩa", wards: ["Nghĩa Đức", "Nghĩa Thành", "Nghĩa Phú", "Nghĩa Tân", "Nghĩa Trung", "Quảng Thành"] },
-      { name: "Đắk Mil", wards: ["Đắk Mil (TT)", "Đắk Lao", "Đắk Sắk", "Đức Mạnh", "Thuận An"] },
-      { name: "Đắk R'lấp", wards: ["Kiến Đức (TT)", "Nhân Cơ", "Nghĩa Thắng", "Đắk Wer", "Quảng Tín"] },
-      { name: "Krông Nô", wards: ["Đắk Mâm (TT)", "Nâm Nung", "Đắk Sôr", "Buôn Choáh", "Nam Đà"] },
-      { name: "Cư Jút", wards: ["Ea T'ling (TT)", "Đắk Wil", "Nam Dong", "Tâm Thắng", "Cư Knia"] },
-    ],
-  },
-
-  // ===== HAI ĐÔ THỊ LỚN (giữ quận để lọc; HCM sau sát nhập gồm Bình Dương + BR-VT) =====
-  {
-    name: "Hà Nội",
-    districts: [
-      "Hoàn Kiếm", "Ba Đình", "Đống Đa", "Hai Bà Trưng", "Tây Hồ", "Cầu Giấy", "Thanh Xuân",
-      "Hoàng Mai", "Long Biên", "Hà Đông", "Nam Từ Liêm", "Bắc Từ Liêm", "Thanh Trì",
-      "Gia Lâm", "Đông Anh", "Hoài Đức",
-    ].map((name) => ({ name, wards: [] })),
-  },
-  {
-    name: "TP. Hồ Chí Minh",
-    districts: [
-      "Quận 1", "Quận 3", "Quận 4", "Quận 5", "Quận 6", "Quận 7", "Quận 8", "Quận 10", "Quận 11",
-      "Quận 12", "Bình Thạnh", "Phú Nhuận", "Tân Bình", "Tân Phú", "Gò Vấp", "Bình Tân",
-      "TP. Thủ Đức", "Nhà Bè", "Bình Chánh", "Hóc Môn", "Củ Chi",
-      // — Bình Dương + Bà Rịa - Vũng Tàu (cũ) nay thuộc TP.HCM —
-      "TP. Thủ Dầu Một", "Dĩ An", "Thuận An", "TP. Vũng Tàu", "Bà Rịa",
-    ].map((name) => ({ name, wards: [] })),
-  },
-
-  // ===== CÁC TỈNH/THÀNH CÒN LẠI (sau sát nhập 2025) — mức tỉnh, bổ sung dần =====
-  ...[
-    "Hải Phòng", "Cần Thơ",
-    "Tuyên Quang", "Lào Cai", "Thái Nguyên", "Phú Thọ", "Bắc Ninh", "Hưng Yên", "Ninh Bình",
-    "Quảng Ninh", "Cao Bằng", "Lạng Sơn", "Lai Châu", "Điện Biên", "Sơn La",
-    "Thanh Hóa", "Nghệ An", "Hà Tĩnh", "Đồng Nai", "Tây Ninh",
-    "Vĩnh Long", "Đồng Tháp", "Cà Mau", "An Giang",
-  ].map((name) => ({ name, districts: [] as District[] })),
-];
-
-// Tên các tỉnh/thành — dùng cho select cấp 1
-export const provinceNames: string[] = provinces.map((p) => p.name);
-
-// Lấy danh sách quận/huyện theo tên tỉnh (rỗng nếu không khớp)
-export function districtsOf(provinceName: string): string[] {
-  return provinces.find((p) => p.name === provinceName)?.districts.map((d) => d.name) ?? [];
+// Quận/huyện của MỘT TỈNH CŨ. Cấp quận/huyện chỉ còn tồn tại ở hệ cũ, nên tham số
+// ở đây là TÊN TỈNH TRƯỚC SÁP NHẬP ("Quảng Nam", "Bình Định"…).
+//
+// Bảng `provinces` là bảng LAI: khoá theo tên tỉnh MỚI nhưng cấp dưới là quận/huyện
+// CŨ gộp chung của nhiều tỉnh cũ. Vì vậy phải quy về tỉnh mới để tìm, rồi lọc lại
+// theo `tinhCu` — nếu không sẽ ra những cặp sai như "Đà Nẵng → Hội An".
+function quanHuyenCua(provinceName: string): District[] {
+  // Tên tỉnh CŨ → tra thẳng danh mục 63 tỉnh trước sáp nhập.
+  const cu = provincesOld.find((x) => x.name === provinceName);
+  if (cu) return cu.districts.map((d) => ({ ...d, tinhCu: provinceName }));
+  // Tin cũ lưu theo TÊN MỚI ("Đà Nẵng", "Huế") → trả trọn quận/huyện của mọi tỉnh
+  // cũ đã gộp vào, để dữ liệu đã đăng vẫn tra được.
+  return quanHuyenToanTinh(provinceName);
 }
 
-// Lấy danh sách phường/xã theo tỉnh + quận/huyện (rỗng nếu không khớp)
+// Toàn bộ quận/huyện CŨ nằm trong một tỉnh — gồm MỌI tỉnh cũ đã gộp vào nó.
+// Dùng khi chỉ biết tên tỉnh hiện hành (bản đồ trả về) mà cần dò xem một địa danh
+// thuộc tỉnh cũ nào: ghim ở Hội An, bản đồ nói "Đà Nẵng", tra bảng này ra Quảng Nam.
+export function quanHuyenToanTinh(tenTinh: string): District[] {
+  const tinhMoi = newProvinceOf(tenTinh);
+  return provinces.find((p) => p.name === tinhMoi)?.districts ?? [];
+}
+
+// Lấy danh sách quận/huyện theo tên tỉnh cũ (rỗng nếu không khớp)
+export function districtsOf(provinceName: string): string[] {
+  return quanHuyenCua(provinceName).map((d) => d.name);
+}
+
+// Lấy danh sách phường/xã theo tỉnh cũ + quận/huyện (rỗng nếu không khớp)
 export function wardsOf(provinceName: string, districtName: string): string[] {
-  const p = provinces.find((p) => p.name === provinceName);
-  return p?.districts.find((d) => d.name === districtName)?.wards ?? [];
+  return quanHuyenCua(provinceName).find((d) => d.name === districtName)?.wards ?? [];
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
 // HAI HỆ ĐƠN VỊ HÀNH CHÍNH — khách chọn 1 trong 2 (nút bật/tắt trên bộ lọc):
-//   • "cu"  = TRƯỚC sát nhập — 3 cấp: Tỉnh → Quận/Huyện → Phường/Xã (dữ liệu `provinces` ở trên)
+//   • "cu"  = TRƯỚC sát nhập — 3 cấp: Tỉnh → Quận/Huyện → Phường/Xã (dữ liệu `provincesOld`)
 //   • "moi" = SAU sát nhập 2025 — 2 cấp: Tỉnh → Phường/Xã (dữ liệu `provincesNew`, bỏ Quận/Huyện)
 // Áp dụng đồng bộ cho Dự án · Mua bán · Cho thuê, cả PC & Mobile.
 // ═══════════════════════════════════════════════════════════════════════════
@@ -228,9 +69,19 @@ export type GeoMode = "cu" | "moi";
 // Tên tỉnh/thành hệ MỚI — dùng cho select cấp 1 khi mode = "moi"
 export const provinceNamesNew: string[] = provincesNew.map((p) => p.name);
 
-// Danh sách tỉnh/thành theo hệ đã chọn
+// Danh sách tỉnh/thành theo hệ đã chọn.
+// Hệ CŨ = tên tỉnh TRƯỚC sáp nhập (63 tỉnh). Trước đây chỗ này trả về danh sách
+// tỉnh MỚI nên chọn "Địa chỉ cũ" vẫn hiện "Đà Nẵng" rồi cho chọn quận "Hội An" —
+// sai, vì trước sáp nhập Hội An thuộc Quảng Nam.
 export function provinceNamesFor(mode: GeoMode): string[] {
-  return mode === "moi" ? provinceNamesNew : provinceNames;
+  return mode === "moi" ? provinceNamesNew : oldProvinceNames;
+}
+
+// Phường/xã hệ MỚI của tỉnh chứa `provinceName` — nhận cả tên tỉnh cũ lẫn tên mới.
+// Dùng làm phương án dự phòng khi một tỉnh cũ chưa có danh mục quận/huyện: thà cho
+// chọn phường theo tên mới còn hơn để ô trống không chọn được gì.
+export function wardsOfAny(provinceName: string): string[] {
+  return wardsOfNew(newProvinceOf(provinceName));
 }
 
 // Phường/xã trực thuộc tỉnh (hệ MỚI — 2 cấp, không qua quận/huyện)
@@ -254,7 +105,7 @@ export const provinceMergers: Record<string, string[]> = {
   "Huế": ["Thừa Thiên Huế"],
   "Hải Phòng": ["Hải Phòng", "Hải Dương"],
   "Đà Nẵng": ["Đà Nẵng", "Quảng Nam"],
-  "TP. Hồ Chí Minh": ["TP. Hồ Chí Minh", "Bình Dương", "Bà Rịa - Vũng Tàu"],
+  "Hồ Chí Minh": ["TP. Hồ Chí Minh", "Bình Dương", "Bà Rịa - Vũng Tàu"],
   "Cần Thơ": ["Cần Thơ", "Sóc Trăng", "Hậu Giang"],
   // — MIỀN NÚI & TRUNG DU BẮC BỘ —
   "Tuyên Quang": ["Tuyên Quang", "Hà Giang"],
@@ -327,4 +178,115 @@ export function tenTinhTuongDuong(ten: string): string[] {
     // không kéo luôn tin của tỉnh cũ khác.
   }
   return [...ds];
+}
+
+// ── BẢNG LAI: TỈNH MỚI → QUẬN/HUYỆN CŨ ──────────────────────────────────────
+// Sinh tự động từ `provincesOld` (63 tỉnh trước sáp nhập) + `provinceMergers`,
+// KHÔNG còn gõ tay. Trước đây bảng này nhập tay và chỉ có 8 tỉnh lõi Miền Trung,
+// nên 43/63 tỉnh cũ không chọn được Quận/Huyện, và dữ liệu dễ lệch với danh mục
+// gốc. Mỗi quận/huyện mang sẵn `tinhCu` để tra ngược ra tỉnh trước sáp nhập.
+export const provinces: Province[] = provinceNamesNew.map((tenMoi) => ({
+  name: tenMoi,
+  districts: (provinceMergers[tenMoi] ?? [tenMoi]).flatMap((tinhCu) =>
+    (provincesOld.find((x) => x.name === tinhCu)?.districts ?? []).map((d) => ({
+      name: d.name,
+      wards: d.wards,
+      tinhCu,
+    })),
+  ),
+}));
+
+// Tên các tỉnh/thành — dùng cho select cấp 1
+export const provinceNames: string[] = provinces.map((p) => p.name);
+
+// ── ÁNH XẠ CHÍNH THỨC CŨ ↔ MỚI (Nghị quyết 202/2025/QH15) ───────────────────
+// provincesOld ghi sẵn: phường cũ thứ i thuộc quận d nằm ở phường mới `d.moi[i]`
+// của tỉnh mới. Hai bảng tra dưới đây dựng MỘT LẦN khi nạp module, sau đó tra tức
+// thì — không phải dò tên nữa, nên đúng 100% thay vì ~90%.
+
+type ChoCu = { tinh: string; quan: string; phuong: string };
+
+function khoaCu(tinh: string, quan: string, phuong: string): string {
+  return `${chuanTen(tinh)}|${chuanTen(quan)}|${chuanTen(phuong)}`;
+}
+
+// Bỏ dấu + bỏ tiền tố cấp để hai nguồn tên khác nhau vẫn gặp nhau.
+// Các cấp hành chính đứng trước tên riêng. "Đặc khu" là cấp MỚI từ 2025 (13 đảo).
+const CAP_HANH_CHINH = [
+  "tinh", "thanh pho", "tp.", "tp", "thi xa", "tx.", "tx",
+  "quan", "huyen", "phuong", "xa", "thi tran", "dac khu",
+];
+
+// Bỏ dấu tiếng Việt, gom khoảng trắng, chuẩn hoá dấu gạch nối.
+function moc(t: string): string {
+  const khongDau = Array.from((t || "").normalize("NFD"))
+    .filter((ch) => { const m = ch.codePointAt(0) ?? 0; return m < 0x300 || m > 0x36f; })
+    .join("")
+    .split("đ").join("d")
+    .split("Đ").join("d")
+    .toLowerCase();
+  return khongDau
+    .split("-").map((x) => x.trim()).join(" - ")
+    .split(" ").filter(Boolean).join(" ")
+    .trim();
+}
+
+/** Tên riêng: bỏ dấu VÀ bỏ tiền tố cấp — "Thành phố Hội An" và "Hội An" thành một. */
+export function chuanTen(t: string): string {
+  const x = moc(t);
+  for (const c of CAP_HANH_CHINH) if (x.startsWith(c + " ")) return x.slice(c.length + 1).trim();
+  return x;
+}
+
+/** Như chuanTen nhưng GIỮ cấp, viết gọn một lối: "Thành phố Quảng Ngãi" và
+ *  "TP. Quảng Ngãi" cùng ra "tp. quang ngai", còn tỉnh "Quảng Ngãi" ra "quang ngai".
+ *  Cần nó để phân biệt huyện/thành phố trùng tên tỉnh. */
+export function chuanTenCap(t: string): string {
+  const x = moc(t);
+  if (x.startsWith("thanh pho ")) return "tp. " + x.slice(10).trim();
+  if (x.startsWith("thi xa ")) return "tx. " + x.slice(7).trim();
+  return x;
+}
+
+// Như chuanTen nhưng GIỮ cấp, viết gọn về một lối: "Thành phố Quảng Ngãi" và
+// "TP. Quảng Ngãi" cùng ra "tp. quang ngai", còn tỉnh "Quảng Ngãi" ra "quang ngai".
+
+const _cuSangMoi = new Map<string, { tinh: string; phuong: string }>();
+const _moiSangCu = new Map<string, ChoCu[]>();
+for (const p of provincesOld) {
+  const tinhMoi = newProvinceOf(p.name);
+  const dsPhuongMoi = provincesNew.find((x) => x.name === tinhMoi)?.wards ?? [];
+  for (const d of p.districts) {
+    for (let i = 0; i < d.wards.length; i++) {
+      const pm = dsPhuongMoi[d.moi[i]];
+      if (!pm) continue;
+      _cuSangMoi.set(khoaCu(p.name, d.name, d.wards[i]), { tinh: tinhMoi, phuong: pm });
+      const k = `${chuanTen(tinhMoi)}|${chuanTen(pm)}`;
+      const ds = _moiSangCu.get(k);
+      const cho: ChoCu = { tinh: p.name, quan: d.name, phuong: d.wards[i] };
+      if (ds) ds.push(cho);
+      else _moiSangCu.set(k, [cho]);
+    }
+  }
+}
+
+/** Phường/xã CŨ → tên theo hệ mới. Không có trong bảng → null (không đoán). */
+export function phuongMoiCua(tinhCu: string, quanCu: string, phuongCu: string) {
+  return _cuSangMoi.get(khoaCu(tinhCu, quanCu, phuongCu)) ?? null;
+}
+
+/** Phường/xã MỚI → những chỗ cũ đã gộp vào nó (một phường mới thường gộp 2–4 phường cũ). */
+export function choCuCua(tinhMoi: string, phuongMoi: string): ChoCu[] {
+  return _moiSangCu.get(`${chuanTen(tinhMoi)}|${chuanTen(phuongMoi)}`) ?? [];
+}
+
+/** Cả quận/huyện CŨ này nay nằm ở những phường/xã mới nào (không trùng lặp). */
+export function phuongMoiCuaQuan(tinhCu: string, quanCu: string): string[] {
+  const p = provincesOld.find((x) => chuanTen(x.name) === chuanTen(tinhCu));
+  const d = p?.districts.find((x) => chuanTenCap(x.name) === chuanTenCap(quanCu) || chuanTen(x.name) === chuanTen(quanCu));
+  if (!p || !d) return [];
+  const ds = provincesNew.find((x) => x.name === newProvinceOf(p.name))?.wards ?? [];
+  const ra = new Set<string>();
+  for (const i of d.moi) { const w = ds[i]; if (w) ra.add(w); }
+  return [...ra];
 }

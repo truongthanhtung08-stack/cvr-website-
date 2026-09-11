@@ -2,7 +2,7 @@
 // 👉 Thêm/bớt loại hình hoặc mức giá tại đây — toàn bộ bộ lọc tự cập nhật.
 
 import { tierRank } from "./packages";
-import { tenTinhTuongDuong } from "./locations";
+import { tenTinhTuongDuong, chuanTen, chuanTenCap } from "./locations";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // LOẠI HÌNH (sản phẩm) PHÂN THEO MỤC ĐÍCH — chuẩn Brief + Kế hoạch V3.
@@ -326,9 +326,22 @@ function matchType(itemType: string, option: string): boolean {
   return itemType.toLowerCase().includes(head);
 }
 
+// Chuỗi địa chỉ ("Phường Hội An, Đà Nẵng · Minh An, Hội An, Quảng Nam") → mảng tên
+// riêng đã bỏ dấu, bỏ tiền tố cấp, để so cho khớp giữa hai hệ và hai lối viết.
+function tachDiaChi(s: string): string[] {
+  return (s || "").split(/[,·]/).map((x) => chuanTen(x)).filter(Boolean);
+}
+
+// Như trên nhưng GIỮ cấp hành chính — để phân biệt huyện/thành phố trùng tên tỉnh.
+function tachDiaChiCap(s: string): string[] {
+  return (s || "").split(/[,·]/).map((x) => chuanTenCap(x)).filter(Boolean);
+}
+
 type FilterableListing = {
   id: string; title: string; price: string; area: string;
   beds?: number; location: string; type: string; badge?: string;
+  // Địa chỉ gộp cả hai hệ cũ/mới — lọc & tìm khu vực dò trên chuỗi này.
+  diaChiTim?: string;
   desc?: string;       // mô tả tin
   agentName?: string;  // người đăng
   // Mọi trường còn lại đã nhập (pháp lý, hướng, nội thất, tiện ích, đặc điểm…)
@@ -345,14 +358,36 @@ export function applyFilters<T extends FilterableListing>(items: T[], f: Filters
     if (f.broker && !listingProBroker(item.id)) return false;
     if (f.locations.length) {
       // Khớp cả TÊN TỈNH CŨ và MỚI (sau sáp nhập) — xem tenTinhTuongDuong()
-      const inArea = f.locations.some((l) =>
-        tenTinhTuongDuong(l.province).some((ten) => item.location.includes(ten)) &&
-        (!l.district || item.location.includes(l.district)) &&
-        (!l.ward || item.location.includes(l.ward)),
-      );
+      // Dò trên chuỗi gộp CẢ HAI hệ: tin hiện "Phường Hội An, Đà Nẵng" vẫn phải
+      // ra khi người mua lọc theo "Quảng Nam → Hội An" của hệ cũ, và ngược lại.
+      //
+      // So theo TÊN RIÊNG đã bỏ dấu và bỏ tiền tố cấp, KHÔNG so chuỗi thô: bộ lọc
+      // gửi "TP. Quảng Ngãi" mà tin lưu "Quảng Ngãi" (hoặc "Thành phố Quảng Ngãi")
+      // thì so thô là trượt, người dùng lọc xong thấy trống dù tin có thật.
+      const noi = item.diaChiTim ?? item.location;
+      const phan = tachDiaChi(noi);        // tên riêng, đã bỏ tiền tố cấp
+      const phanCap = tachDiaChiCap(noi);  // giữ cấp: "tp. quang ngai"
+      const coTen = (ten: string) => {
+        const t = chuanTen(ten);
+        return !!t && phan.some((x) => x === t || x.includes(t));
+      };
+      const inArea = f.locations.some((l) => {
+        if (!tenTinhTuongDuong(l.province).some(coTen)) return false;
+        // QUẬN/HUYỆN TRÙNG TÊN TỈNH ("TP. Quảng Ngãi" trong tỉnh "Quảng Ngãi"):
+        // bỏ cấp đi thì mọi tin trong tỉnh đều khớp, lọc thành vô nghĩa. Nên với
+        // tên trùng tên tỉnh thì BẮT BUỘC khớp cả cấp.
+        const tenTinh = new Set(tenTinhTuongDuong(l.province).map(chuanTen));
+        const khopCap = (ten: string) => {
+          const coCap = chuanTenCap(ten);
+          if (phanCap.some((x) => x === coCap)) return true;
+          const khongCap = chuanTen(ten);
+          return !tenTinh.has(khongCap) && coTen(ten);
+        };
+        return (!l.district || khopCap(l.district)) && (!l.ward || khopCap(l.ward));
+      });
       if (!inArea) return false;
     }
-    if (proj && !normalizeVi(`${item.title} ${item.location}`).includes(proj)) return false;
+    if (proj && !normalizeVi(`${item.title} ${item.diaChiTim ?? item.location}`).includes(proj)) return false;
     if (f.types.length && !f.types.some((t) => matchType(item.type, t))) return false;
 
     const ty = priceToTy(item.price);
@@ -377,7 +412,7 @@ export function applyFilters<T extends FilterableListing>(items: T[], f: Filters
     if (
       kw &&
       !normalizeVi(
-        `${item.title} ${item.location} ${item.type} ${item.price} ${item.area} ${item.agentName ?? ""} ${item.desc ?? ""} ${item.searchText ?? ""}`,
+        `${item.title} ${item.diaChiTim ?? item.location} ${item.type} ${item.price} ${item.area} ${item.agentName ?? ""} ${item.desc ?? ""} ${item.searchText ?? ""}`,
       ).includes(kw)
     )
       return false;

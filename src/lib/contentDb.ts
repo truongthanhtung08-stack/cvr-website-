@@ -10,6 +10,7 @@
 // ============================================================================
 
 import type { Article, Project } from "@/lib/data";
+import { haiDongDiaChi, heCuaTin } from "@/lib/diaChiHaiHe";
 import { articles as sampleArticles, projects as sampleProjects, getArticleBySlug, getProjectBySlug } from "@/lib/data";
 import { asset } from "@/lib/asset";
 import { isVideoUrl } from "@/lib/media";
@@ -90,11 +91,18 @@ export async function getArticle(slug: string): Promise<Article | null> {
 // ── DỰ ÁN ───────────────────────────────────────────────────────────────────
 
 function projectRowToProject(r: ProjectRow): Project {
-  // ĐỊA CHỈ ĐẦY ĐỦ: số nhà/đường (admin nhập) + Phường/Xã + Quận/Huyện + Tỉnh/Thành
-  const location = [r.details?.addressDetail, r.ward, r.district, r.province]
-    .map((s) => s?.trim())
-    .filter(Boolean)
-    .join(", ");
+  // ĐỊA CHỈ ĐẦY ĐỦ: số nhà/đường (admin nhập) + Phường/Xã + Quận/Huyện + Tỉnh/Thành.
+  // Cùng luật với tin đăng: dòng chính theo hệ MỚI, cách gọi cũ để ở locationCu.
+  const soNha = r.details?.addressDetail?.trim();
+  const goc = [soNha, r.ward, r.district, r.province].map((s) => s?.trim()).filter(Boolean).join(", ");
+  const hai = r.province
+    ? haiDongDiaChi(heCuaTin(r.district), {
+        tinh: r.province, quan: r.district ?? "", phuong: r.ward ?? "",
+      })
+    : { moi: "", cu: "" };
+  const location = hai.moi ? [soNha, hai.moi].filter(Boolean).join(", ") : goc;
+  // Dòng hệ cũ KHÔNG nhắc lại số nhà/đường — chúng không đổi sau sáp nhập.
+  const locationCu = hai.cu;
   const overview = paras(r.overview);
   // Tách ẢNH và VIDEO: thư viện ảnh chỉ nhận ảnh; video hiện ở mục Video riêng.
   const media = (r.images ?? []).filter(Boolean);
@@ -110,6 +118,7 @@ function projectRowToProject(r: ProjectRow): Project {
     slug: r.slug,
     name: r.name,
     location: location || "Đang cập nhật",
+    ...(locationCu ? { locationCu } : {}),
     priceFrom: r.price_from || "Liên hệ",
     type: r.type || "Dự án bất động sản",
     status: r.status_text || "Đang mở bán",

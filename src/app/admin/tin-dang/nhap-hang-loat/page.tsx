@@ -293,7 +293,7 @@ export default function NhapHangLoatPage() {
               onChange={(e) => { const f = e.target.files?.[0]; if (f) chonFile(f); e.target.value = ""; }}
             />
           </label>
-          {tenFile && <p className="mt-2 truncate text-xs text-cvr-muted">Đang xem: {tenFile}</p>}
+          {tenFile && <p className="mt-2 break-all text-xs text-cvr-muted">Đang xem: {tenFile}</p>}
         </Buoc>
       </div>
 
@@ -460,11 +460,11 @@ export default function NhapHangLoatPage() {
                 {rows.map((r) => (
                   <tr key={r.dong} className={`border-b border-cvr-line/60 ${r.loi.length ? "bg-red-50/60" : r.canhBao.length ? "bg-amber-50/60" : ""}`}>
                     <td className="px-3 py-2.5 text-cvr-muted">{r.dong}</td>
-                    <td className="max-w-[280px] truncate px-3 py-2.5 font-medium text-cvr-ink">{r.tomTat.tieuDe}</td>
+                    <td className="max-w-[280px] px-3 py-2.5 font-medium text-cvr-ink"><span className="line-clamp-2">{r.tomTat.tieuDe}</span></td>
                     <td className="px-3 py-2.5 text-cvr-body">{r.tomTat.mucDich}</td>
                     <td className="px-3 py-2.5 text-cvr-body">{r.tomTat.loaiHinh}</td>
                     <td className="px-3 py-2.5 text-cvr-body">{r.tomTat.gia}</td>
-                    <td className="max-w-[220px] truncate px-3 py-2.5 text-cvr-body">{r.tomTat.khuVuc}</td>
+                    <td className="max-w-[220px] px-3 py-2.5 text-cvr-body"><span className="line-clamp-2">{r.tomTat.khuVuc}</span></td>
                     <td className="px-3 py-2.5 uppercase text-cvr-muted">{r.tomTat.hang}</td>
                     <td className="px-3 py-2.5">
                       <AnhCell {...anhCuaTin(r)} />

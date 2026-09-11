@@ -275,8 +275,12 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             <h1 className="mt-3 text-[21px] font-semibold leading-[1.3] tracking-tight text-cvr-ink sm:text-[28px]">{p.name}</h1>
             <p className="mt-2 flex items-start gap-1.5 text-[14px] leading-relaxed text-cvr-muted sm:text-[15px]">
               <svg className="mt-0.5 h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-              <span>{p.location}</span>
+              <span className="min-w-0">{p.location}</span>
             </p>
+            {/* Cách gọi theo hệ 3 cấp cũ — số nhà/đường không đổi nên không nhắc lại. */}
+            {p.locationCu && (
+              <p className="mt-1 pl-[22px] text-[13px] text-cvr-faint">Địa chỉ hệ cũ: {p.locationCu}</p>
+            )}
 
             {/* Dải thông tin nhanh — cân đối, dễ đọc từng tiêu chí */}
             <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4">

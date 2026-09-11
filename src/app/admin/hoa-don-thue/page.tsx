@@ -282,7 +282,8 @@ export default function AdminThuePage() {
           </button>
         </div>
 
-        <table className="mt-4 w-full border-collapse text-sm">
+        <div className="mt-4 overflow-x-auto">
+        <table className="w-full border-collapse text-sm">
           <tbody>
             <ChiTieu ma="23" ten="Giá trị hàng hóa, dịch vụ mua vào" tien={t.hangVao} />
             <ChiTieu ma="24" ten="Thuế GTGT của hàng hóa, dịch vụ mua vào" tien={t.thueVao} />
@@ -304,6 +305,7 @@ export default function AdminThuePage() {
             </tr>
           </tbody>
         </table>
+        </div>
 
         {t.thueVaoNgoai > 0 && (
           <p className="mt-4 rounded-lg border border-cvr-line bg-cvr-surface px-3 py-2.5 text-xs leading-relaxed text-cvr-body">
@@ -324,7 +326,8 @@ export default function AdminThuePage() {
       {/* ── TẠM NỘP TNDN ────────────────────────────────────────────────── */}
       <div className="rounded-2xl border border-cvr-line bg-white p-5 shadow-sm sm:p-6">
         <h2 className="text-base font-semibold text-cvr-ink">Tạm nộp thuế TNDN · {nhan}</h2>
-        <table className="mt-4 w-full border-collapse text-sm">
+        <div className="mt-4 overflow-x-auto">
+        <table className="w-full border-collapse text-sm">
           <tbody>
             <ChiTieu ma="" ten="Doanh thu chưa thuế trong kỳ" tien={t.dtChuaThue} />
             <ChiTieu ma="" ten="Chi phí có hóa đơn trong kỳ" tien={t.tongChiPhi} />
@@ -335,6 +338,7 @@ export default function AdminThuePage() {
             </tr>
           </tbody>
         </table>
+        </div>
         <p className="mt-4 rounded-lg bg-cvr-surface px-3 py-2.5 text-xs leading-relaxed text-cvr-muted">
           Thuế suất 15% áp dụng cho doanh nghiệp có tổng doanh thu năm không quá 3 tỷ đồng
           (Luật Thuế TNDN 67/2025/QH15). Đây là số <strong>tạm nộp quý</strong> — quyết toán năm
