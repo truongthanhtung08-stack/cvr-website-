@@ -84,6 +84,23 @@ export default function AdminListingsPage() {
       return;
     }
 
+    // ẨN MỘT TIN KHÁCH ĐÃ TRẢ TIỀN = LẤY MẤT NHỮNG NGÀY HỌ ĐÃ MUA.
+    // Trước đây bấm Ẩn chỉ lặng lẽ đổi trạng thái, không ai biết tin đó khách đã
+    // trả tiền cho tới tận ngày nào. Ẩn thì vẫn ẩn được (tin vi phạm phải gỡ),
+    // nhưng phải nói rõ đang lấy đi cái gì để admin còn tính chuyện bù cho khách.
+    if (next === "hidden") {
+      const tin = rows.find((r) => r.id === id);
+      const hetHan = tin?.tier_expires_at ? new Date(tin.tier_expires_at) : null;
+      const conNgay = hetHan ? Math.ceil((hetHan.getTime() - Date.now()) / 86_400_000) : 0;
+      const daTraTien = tin?.status === "approved" && conNgay > 0;
+      const hoi = daTraTien
+        ? `Ẩn tin "${tin?.title}"?\n\n` +
+          `Khách đã trả tiền cho gói này, còn ${conNgay} ngày hiển thị (đến ${hetHan?.toLocaleDateString("vi-VN")}).\n` +
+          `Ẩn là khách mất số ngày đó — cân nhắc hoàn tiền hoặc bù thêm ngày cho họ.`
+        : `Ẩn tin "${tin?.title ?? id}"?`;
+      if (!window.confirm(hoi)) return;
+    }
+
     const supabase = createClient();
     const patch: Partial<ListingRow> = { status: next };
     const { error } = await supabase.from("listings").update(patch).eq("id", id);
