@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { BILLING_DEFAULT, quotePrice, vnd, type BillingData } from "@/lib/billing";
+import { BILLING_DEFAULT, levelOf, quotePrice, vnd, type BillingData } from "@/lib/billing";
 import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
 import { guiThongBao, MAU_DUYET_TIN } from "@/lib/thongBao";
 import { baoLoi } from "@/lib/baoLoi";
@@ -27,6 +27,10 @@ export const dynamic = "force-dynamic";
 
 type HoSo = {
   balance: number | null;
+  created_at: string | null;
+  total_topup: number | null;
+  role: string | null;
+  free_quota: number | null;
   email: string | null;
   phone: string | null;
   full_name: string | null;
@@ -112,20 +116,99 @@ export async function POST(request: Request) {
 
   const { data: hsArr } = await admin
     .from("profiles")
-    .select("balance,email,phone,full_name,member_level,xuat_hoa_don,hd_ten_cong_ty,hd_mst,hd_dia_chi,hd_email")
+    .select("balance,created_at,total_topup,role,free_quota,email,phone,full_name,member_level,xuat_hoa_don,hd_ten_cong_ty,hd_mst,hd_dia_chi,hd_email")
     .eq("id", tin.owner_id)
     .limit(1);
   const hs = hsArr?.[0] as HoSo | undefined;
   if (!hs) return loi("Tin không có chủ sở hữu hợp lệ", 400);
+
+  // PHẢI TÍNH GIỐNG HỆT LÚC KHÁCH BẤM ĐĂNG, nếu không web báo một giá mà ví bị
+  // trừ giá khác — khách khiếu nại là đúng. Trước đây chỗ này:
+  //   · KHÔNG truyền isNewMember → khuyến mãi dành riêng "Thành viên mới" bị bỏ
+  //     qua, trừ NHIỀU HƠN số đã báo.
+  //   · levelId lấy cột member_level, trong khi form tính bằng levelOf(total_topup)
+  //     → chỉ cần sửa ngưỡng cấp trong admin là hai bên ra hai số khác nhau.
+  // Nay cả hai lấy CÙNG một nguồn: ngày mở tài khoản + tổng tiền đã nạp.
+  const soNgayMoTk = hs.created_at
+    ? (Date.now() - new Date(hs.created_at).getTime()) / 86_400_000
+    : Number.POSITIVE_INFINITY;
 
   const bao = quotePrice({
     data: bang,
     tierId: goi,
     days: soNgay,
     today: new Date().toISOString().slice(0, 10),
-    levelId: hs.member_level ?? undefined,
+    isNewMember: soNgayMoTk <= bang.free.days,
+    levelId: levelOf(bang, Number(hs.total_topup ?? 0))?.id,
   });
-  const tien = tachThue(bao.total);
+
+  // ── CHÍNH SÁCH MIỄN PHÍ THÀNH VIÊN MỚI ────────────────────────────────────
+  // Form đăng tin hiện "0 ₫ — Miễn phí" cho khách thuộc diện này, nhưng trước
+  // đây chỗ duyệt chỉ coi gói Basic là miễn phí: khách được hứa miễn phí ở gói
+  // Gold/Diamond vẫn BỊ TRỪ TIỀN THẬT. Nay xét đúng bằng điều kiện của form.
+  const f = bang.free;
+  const hopDoiTuong =
+    f.audience === "all" ||
+    (f.audience === "new" && soNgayMoTk <= f.days) ||
+    f.audience === (hs.role ?? "buyer");
+  const conLuot = f.quota === 0 || Number(hs.free_quota ?? 0) > 0;
+  const thuocDienMienPhi = f.active && goi === f.tierId && hopDoiTuong && conLuot;
+
+  if (thuocDienMienPhi) {
+    // Trừ một lượt miễn phí TRƯỚC (nguyên tử) rồi mới duyệt không thu tiền.
+    // Hạn mức 0 = không giới hạn, không phải trừ gì.
+    let conDuocMienPhi = true;
+    if (f.quota !== 0) {
+      const { data: luot, error: loiLuot } = await admin.rpc("dung_luot_mien_phi", { p_user: tin.owner_id });
+      const chuaCoHamLuot = loiLuot && /function .* does not exist|schema cache|PGRST202/i.test(loiLuot.message);
+      if (chuaCoHamLuot) {
+        // Chưa chạy migration 0028 → trừ theo cách cũ, vẫn có điều kiện còn lượt.
+        const { data: tru } = await admin
+          .from("profiles")
+          .update({ free_quota: Number(hs.free_quota ?? 0) - 1 })
+          .eq("id", tin.owner_id)
+          .gt("free_quota", 0)
+          .select("id");
+        conDuocMienPhi = Boolean(tru && tru.length);
+      } else {
+        conDuocMienPhi = Boolean(luot && (luot as unknown[]).length);
+      }
+    }
+
+    if (conDuocMienPhi) {
+      const { error } = await admin
+        .from("listings")
+        .update({ status: "approved", published_at: new Date().toISOString(), tier: goi })
+        .eq("id", id);
+      if (error) return loi(error.message, 500);
+      revalidateTag("listings", "max");
+      await baoKhach(admin, tin.owner_id, {
+        tieuDe: "Tin của bạn đã được duyệt",
+        cacDong: [
+          { nhan: "Tin đăng", giaTri: tin.title },
+          { nhan: "Gói dịch vụ", giaTri: `${tenGoi(bang, goi)} ${soNgay} ngày — miễn phí` },
+        ],
+        znsTemplateId: MAU_DUYET_TIN,
+        znsData: {
+          ma_giao_dich: String(tin.id),
+          ten_tin: tin.title,
+          so_tien: vnd(0),
+          so_du: vnd(Number(hs.balance ?? 0)),
+        },
+      });
+      return NextResponse.json({ ok: true, mienPhi: true });
+    }
+    // Hết lượt thật (khách vừa dùng ở tin khác) → đi tiếp, thu tiền bình thường.
+  }
+
+  // KHÔNG BAO GIỜ TRỪ NHIỀU HƠN SỐ ĐÃ BÁO CHO KHÁCH LÚC ĐĂNG.
+  // Giữa lúc đăng và lúc admin duyệt, khuyến mãi có thể hết hạn hoặc bảng giá
+  // đổi → tính lại ra giá cao hơn. Khách đã nhìn thấy con số nào thì trả đúng
+  // con số đó; tính ra rẻ hơn thì khách được hưởng giá rẻ hơn.
+  const giaDaBao = Number(
+    (tin.details as { plan?: { giaBao?: number } } | null)?.plan?.giaBao ?? Number.NaN,
+  );
+  const tien = tachThue(Number.isFinite(giaDaBao) ? Math.min(bao.total, giaDaBao) : bao.total);
 
   const soDu = Number(hs.balance ?? 0);
   if (soDu < tien.tongTra) {
@@ -148,10 +231,32 @@ export async function POST(request: Request) {
   }
 
   // ── 6. Trừ ví ─────────────────────────────────────────────────────────────
-  const { error: loiVi } = await admin
-    .from("profiles")
-    .update({ balance: soDu - tien.tongTra })
-    .eq("id", tin.owner_id);
+  // TRỪ NGUYÊN TỬ: để CSDL tự trừ trên số dư hiện tại và CHỈ trừ khi đủ tiền.
+  // Kiểu cũ (đọc soDu ở bước 4 rồi ghi đè cả cột) làm mất tiền khi khách nạp
+  // đúng lúc admin bấm Duyệt: khoản vừa nạp bị ghi đè bằng số dư cũ trừ phí.
+  // Xem supabase/migrations/0028_vi_nguyen_tu.sql.
+  const { data: viSau, error: loiRpc } = await admin.rpc("tru_vi", {
+    p_user: tin.owner_id,
+    p_tien: tien.tongTra,
+  });
+  const chuaCoHam = loiRpc && /function .* does not exist|schema cache|PGRST202/i.test(loiRpc.message);
+  let loiVi = chuaCoHam ? null : loiRpc;
+  let soDuConLai = Number((viSau as { so_du?: number }[] | null)?.[0]?.so_du ?? soDu - tien.tongTra);
+
+  if (chuaCoHam) {
+    // Chưa chạy migration 0028 → tạm dùng cách cũ để không chặn việc duyệt tin.
+    ({ error: loiVi } = await admin
+      .from("profiles")
+      .update({ balance: soDu - tien.tongTra })
+      .eq("id", tin.owner_id));
+    soDuConLai = soDu - tien.tongTra;
+  } else if (!loiVi && (!viSau || (viSau as unknown[]).length === 0)) {
+    // Hàm chạy nhưng không trừ được dòng nào = ví KHÔNG ĐỦ TIỀN ngay tại thời
+    // điểm trừ (số dư đã đổi kể từ lúc đọc ở bước 4). Trả lại quyền, không duyệt.
+    await admin.from("listings").update({ da_tru_vi: false }).eq("id", id);
+    return loi(`Ví khách không đủ ${vnd(tien.tongTra)} tại thời điểm trừ tiền. Nhắc khách nạp thêm rồi duyệt lại.`, 400);
+  }
+
   if (loiVi) {
     await admin.from("listings").update({ da_tru_vi: false }).eq("id", id); // trả lại quyền
     return loi("Trừ ví thất bại: " + loiVi.message, 500);
@@ -218,7 +323,7 @@ export async function POST(request: Request) {
       { nhan: "Tiền dịch vụ", giaTri: vnd(tien.tienHang) },
       { nhan: `Thuế GTGT ${(THUE_SUAT_GTGT * 100).toFixed(0)}%`, giaTri: vnd(tien.tienThue) },
       { nhan: "Đã trừ ví", giaTri: vnd(tien.tongTra) },
-      { nhan: "Số dư còn lại", giaTri: vnd(soDu - tien.tongTra) },
+      { nhan: "Số dư còn lại", giaTri: vnd(soDuConLai) },
       { nhan: "Hiển thị đến", giaTri: new Date(hetHan).toLocaleDateString("vi-VN") },
     ],
     znsTemplateId: MAU_DUYET_TIN,
@@ -226,14 +331,14 @@ export async function POST(request: Request) {
       ma_giao_dich: String(tin.id),
       ten_tin: tin.title,
       so_tien: vnd(tien.tongTra),
-      so_du: vnd(soDu - tien.tongTra),
+      so_du: vnd(soDuConLai),
     },
   }, hs);
 
   return NextResponse.json({
     ok: true,
     daTru: tien.tongTra,
-    soDuMoi: soDu - tien.tongTra,
+    soDuMoi: soDuConLai,
     hoaDon: canHoaDon ? "xuất riêng" : "gom hóa đơn tổng cuối ngày",
     thongBao: kq,
   });

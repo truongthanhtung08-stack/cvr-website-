@@ -135,12 +135,20 @@ export async function POST(req: Request) {
   // Số tiền lấy theo ĐƠN GỐC trong sổ, không tin số PayOS gửi lên.
   const soTien = Number(don.amount) || 0;
 
-  const { error: loiCapNhat } = await supabase
+  // GIÀNH QUYỀN CỘNG TIỀN. Phải đọc `.select("id")` để biết lệnh này có đổi được
+  // dòng nào không: PayOS gửi webhook hai lần sát nhau thì CẢ HAI đều đọc thấy
+  // "pending" ở trên, nhưng chỉ MỘT lệnh update khớp điều kiện. Không kiểm số
+  // dòng thì lệnh trượt vẫn chạy tiếp xuống dưới và CỘNG VÍ LẦN THỨ HAI.
+  const { data: gianh, error: loiCapNhat } = await supabase
     .from("payments")
     .update({ status: "paid", note: "PayOS xác nhận đã nhận tiền." })
     .eq("id", don.id)
-    .eq("status", "pending"); // chốt chặn cuối: chỉ cộng khi vẫn đang chờ
+    .eq("status", "pending") // chốt chặn cuối: chỉ cộng khi vẫn đang chờ
+    .select("id");
   if (loiCapNhat) return NextResponse.json({ ok: false, message: loiCapNhat.message }, { status: 500 });
+  if (!gianh || gianh.length === 0) {
+    return NextResponse.json({ ok: true, message: "Đơn vừa được xử lý bởi lần gọi khác." });
+  }
 
   // ── Cộng ví + tổng đã nạp + xét lại cấp hội viên ──────────────────────────
   if (don.user_id && soTien > 0) {
@@ -164,14 +172,32 @@ export async function POST(req: Request) {
     const luu = bill?.[0]?.data as Partial<BillingData> | undefined;
     const levels = chuanHoaCapHoiVien(luu?.levels) ?? BILLING_DEFAULT.levels;
 
-    const { error: loiVi } = await supabase
-      .from("profiles")
-      .update({
-        balance: soDuMoi,
-        total_topup: tongNapMoi,
-        member_level: capTheoTongNap(levels, tongNapMoi),
-      })
-      .eq("id", don.user_id);
+    // CỘNG VÍ NGUYÊN TỬ — để CSDL tự cộng trên số dư hiện tại
+    // (update ... set balance = balance + x). Kiểu cũ đọc số dư rồi ghi đè cả
+    // cột: admin duyệt tin đúng lúc khách nạp tiền là một trong hai khoản bị
+    // ghi đè mất. Xem supabase/migrations/0028_vi_nguyen_tu.sql.
+    const { data: viMoi, error: loiRpc } = await supabase.rpc("cong_vi", {
+      p_user: don.user_id,
+      p_tien: soTien,
+      p_cap: capTheoTongNap(levels, tongNapMoi),
+    });
+    // Chưa chạy migration 0028 thì chưa có hàm → quay về cách cũ để tiền của
+    // khách vẫn vào ví, không kẹt lại ở cổng.
+    const chuaCoHam = loiRpc && /function .* does not exist|schema cache|PGRST202/i.test(loiRpc.message);
+    let loiVi = chuaCoHam ? null : loiRpc;
+    if (chuaCoHam) {
+      ({ error: loiVi } = await supabase
+        .from("profiles")
+        .update({
+          balance: soDuMoi,
+          total_topup: tongNapMoi,
+          member_level: capTheoTongNap(levels, tongNapMoi),
+        })
+        .eq("id", don.user_id));
+    }
+    // Số dư báo cho khách: lấy số CSDL vừa trả về (chính xác tuyệt đối), chỉ khi
+    // chưa có hàm mới dùng số tự tính.
+    const soDuBao = Number((viMoi as { so_du?: number }[] | null)?.[0]?.so_du ?? soDuMoi);
     // Ví lỗi mà đơn đã "paid" → trả 500 để PayOS gửi lại; đơn vẫn "paid" nên
     // lần sau vào nhánh "đã xử lý", KHÔNG cộng hai lần. Dòng tiền vẫn nằm trong
     // sổ payments để đối soát tay.
@@ -200,7 +226,7 @@ export async function POST(req: Request) {
       loiNhan: `Coastal Land đã nhận được khoản nạp của ${cu?.full_name || "quý khách"}.`,
       cacDong: [
         { nhan: "Số tiền nạp", giaTri: vnd(soTien) },
-        { nhan: "Số dư hiện tại", giaTri: vnd(soDuMoi) },
+        { nhan: "Số dư hiện tại", giaTri: vnd(soDuBao) },
         { nhan: "Mã giao dịch", giaTri: String(don.id) },
       ],
       znsTemplateId: MAU_NAP_TIEN,
@@ -208,7 +234,7 @@ export async function POST(req: Request) {
         ten_khach_hang: cu?.full_name || "Quý khách",
         ma_giao_dich: String(don.id),
         so_tien: vnd(soTien),
-        so_du: vnd(soDuMoi),
+        so_du: vnd(soDuBao),
       },
     });
   }

@@ -492,7 +492,11 @@ export default function PostListingForm() {
         direction: direction || undefined,
         addressDetail: addressDetail.trim() || undefined,
         mapPin: mapPin.trim() || undefined,
-        plan: { tier: planTier, days: planDays },
+        // giaBao = SỐ TIỀN WEB ĐÃ BÁO CHO KHÁCH ngay lúc bấm Đăng (chưa gồm GTGT,
+        // cùng thang với quotePrice). Lúc admin duyệt, máy chủ tính lại giá; nếu
+        // khuyến mãi đã hết hạn hay bảng giá đã đổi thì giá mới có thể cao hơn —
+        // khi đó vẫn chỉ thu đúng con số khách đã nhìn thấy ở đây.
+        plan: { tier: planTier, days: planDays, giaBao: thanhTien },
         project: slugDuAn() || undefined,
         projectName: projectName.trim() || undefined,
         contact: (contactName.trim() || contactPhone.trim() || contactEmail.trim() || contactAvatar.trim())
