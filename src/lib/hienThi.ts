@@ -25,8 +25,8 @@ import { createClient } from "@/lib/supabase/client";
 
 const TOI_DA_GOM = 25;            // đủ bấy nhiêu thì gửi ngay
 const CHO_TOI_DA = 6_000;         // hoặc chờ tối đa bấy nhiêu mili giây
-const CACH_NHAU = 30_000;         // cùng một tin phải cách nhau bấy nhiêu mới tính tiếp
-const NHIN_THAY = 400;            // nằm lại trên màn hình bấy nhiêu mới coi là đã thấy
+const CACH_NHAU = 10_000;         // cùng một tin phải cách nhau bấy nhiêu mới tính tiếp
+const NHIN_THAY = 200;            // nằm lại trên màn hình bấy nhiêu mới coi là đã thấy
 
 const hangDoi: string[] = [];
 let hen: ReturnType<typeof setTimeout> | null = null;
@@ -106,8 +106,10 @@ export function theoDoiThe(el: Element, id: string): () => void {
         }
       }
     },
-    // Phải thấy được quá nửa thẻ mới coi là đã bày ra trước mắt khách.
-    { threshold: 0.5 },
+    // Thấy được một phần tư thẻ là tin đã bày ra trước mắt khách rồi. Ngưỡng
+    // nửa thẻ là chuẩn của quảng cáo hình, chặt hơn mức cần cho danh sách nội
+    // dung — mà mỗi lượt bỏ sót là một lượt có thật không được ghi nhận.
+    { threshold: 0.25 },
   );
   io.observe(el);
 

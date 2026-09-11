@@ -11,6 +11,8 @@ export default function ListingList({ items }: { items: Listing[] }) {
         <li key={l.id}>
           <Link
             href={`/bat-dong-san/${l.id}`}
+            // Dấu cho bộ đếm lượt hiển thị (src/lib/hienThi.ts).
+            data-tin={l.id}
             // MOBILE: thẻ DỌC — ảnh trên, nội dung dưới. DESKTOP: giữ hàng ngang.
             className="group flex flex-col gap-3 p-3 transition-colors hover:bg-cvr-surface sm:flex-row sm:gap-4 sm:p-4"
           >
