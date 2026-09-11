@@ -1,18 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { asset } from "@/lib/asset";
 import { videoEmbedUrl } from "@/lib/media";
 
 // ════════════════════════════════════════════════════════════════════════════
-// XEM VIDEO LỚN — THANH NÚT LUÔN NẰM ĐÓ, KHÔNG TỰ ẨN.
+// XEM VIDEO LỚN — ĐÚNG HAI NÚT, ĐÈ THẲNG LÊN VIDEO.
 //
-// Chế độ toàn màn hình của trình duyệt giấu hết nút sau vài giây; video tin BĐS
-// chỉ dài một hai phút nên chẳng có lý do gì phải giấu, mà giấu rồi khách tìm
-// không ra nút xoay lẫn nút thoát (chủ dự án báo 11/9/2026). Ở đây web tự dựng:
-//   [Thoát]                    [Xoay]
-// hai nút này LUÔN hiện, máy nào cũng như nhau. Play · tua · âm lượng vẫn là
-// thanh gốc của trình phát nằm sát đáy — không có gì đè lên nó.
+//   [Xoay]                                   [⛶ thu nhỏ]
+//
+// Bấm nút nào cũng đảo lại được: Xoay → xoay về, ⛶ → thoát. Nút ⛶ nằm ĐÚNG chỗ
+// nút phóng to ở khung nhỏ, bấm một chỗ mở, bấm lại chỗ đó đóng.
+//
+// Video NGẮN (dưới 1 phút): hai nút nằm nguyên đó. Video DÀI: nút lùi đi sau vài
+// giây cho khỏi che hình, chạm một cái là hiện lại. KHÔNG mượn chế độ toàn màn
+// hình của trình duyệt — nút của nó tự ẩn theo kiểu riêng từng máy, khách tìm
+// không ra lối thoát (chủ dự án báo 11/9/2026).
+//
+// Play · tua · âm lượng vẫn là thanh gốc của trình phát nằm sát đáy.
 // ════════════════════════════════════════════════════════════════════════════
 
 export default function VideoToanManHinh({
@@ -27,6 +32,26 @@ export default function VideoToanManHinh({
 }) {
   const embed = videoEmbedUrl(url);
   const [xoay, setXoay] = useState(false);
+
+  // VIDEO NGẮN: hai nút nằm nguyên đó. VIDEO DÀI (hơn 1 phút): xem được vài giây
+  // thì nút lùi đi cho khỏi che hình, CHẠM một cái là hiện lại ngay.
+  const [hienNut, setHienNut] = useState(true);
+  const [dai, setDai] = useState(0);
+  const henRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const danhThuc = () => {
+    setHienNut(true);
+    if (henRef.current) clearTimeout(henRef.current);
+    if (dai > 60) henRef.current = setTimeout(() => setHienNut(false), 3500);
+  };
+
+  useEffect(() => {
+    if (dai <= 60) return; // video ngắn thì để yên, không ẩn
+    henRef.current = setTimeout(() => setHienNut(false), 3500);
+    return () => {
+      if (henRef.current) clearTimeout(henRef.current);
+    };
+  }, [dai]);
 
   useEffect(() => {
     const cuonCu = document.body.style.overflow;
@@ -45,12 +70,14 @@ export default function VideoToanManHinh({
     "flex h-11 items-center gap-2 rounded-full px-4 text-[15px] font-medium text-white active:bg-white/20";
 
   return (
-    <div className="fixed inset-0 z-[100] bg-black">
+    <div className="fixed inset-0 z-[100] bg-black" onPointerDown={danhThuc}>
       {/* HAI NÚT ĐÈ THẲNG LÊN VIDEO, LUÔN HIỆN — không tự ẩn như nút của trình
           duyệt. Nút thu nhỏ đặt ĐÚNG GÓC TRÊN PHẢI, cùng chỗ với nút phóng to ở
           khung nhỏ: bấm một chỗ để mở, bấm lại chính chỗ đó để thoát. Nút Xoay
           bấm lại thì xoay về. Chỉ hai nút này, không hơn. */}
-      <div className="absolute inset-x-0 top-0 z-10 flex items-center justify-between bg-gradient-to-b from-black/60 to-transparent px-1 pb-8 pt-[max(6px,env(safe-area-inset-top))]">
+      <div
+        className={`absolute inset-x-0 top-0 z-10 flex items-center justify-between bg-gradient-to-b from-black/60 to-transparent px-1 pb-8 pt-[max(6px,env(safe-area-inset-top))] transition-opacity duration-200 ${hienNut ? "opacity-100" : "pointer-events-none opacity-0"}`}
+      >
         <button
           type="button"
           onClick={() => setXoay((v) => !v)}
@@ -108,6 +135,7 @@ export default function VideoToanManHinh({
               disablePictureInPicture
               onLoadedMetadata={(e) => {
                 if (batDau > 0) e.currentTarget.currentTime = batDau;
+                setDai(e.currentTarget.duration || 0);
               }}
               className="h-full w-full object-contain"
             >
