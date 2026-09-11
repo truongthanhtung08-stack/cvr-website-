@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { asset } from "@/lib/asset";
 import { videoEmbedUrl, videoPosterUrl } from "@/lib/media";
+import VideoToanManHinh from "@/components/VideoToanManHinh";
 
 // ════════════════════════════════════════════════════════════════════════════
 // VIDEO TRONG THƯ VIỆN ẢNH — PHÁT TẠI CHỖ, DÙNG NÚT GỐC CỦA TRÌNH PHÁT.
@@ -43,6 +44,18 @@ export default function GallerySlideVideo({
   const khungRef = useRef<HTMLIFrameElement>(null);
   const [posterSrc, setPosterSrc] = useState(poster?.hd ?? "");
   const [loiPhat, setLoiPhat] = useState(false);
+  // Mở lớn = trình xem của web (nút Thoát/Xoay luôn hiện). Mở thì DỪNG video ở
+  // khung nhỏ, không để hai cái cùng chạy.
+  const [xemLon, setXemLon] = useState(false);
+  const [giay, setGiay] = useState(0);
+  const moLon = () => {
+    const v = ref.current;
+    if (v) {
+      setGiay(v.currentTime);
+      v.pause();
+    }
+    setXemLon(true);
+  };
   const holdRef = useRef(onHold);
   const playingRef = useRef(false);
   const fullRef = useRef(false);
@@ -159,7 +172,7 @@ export default function GallerySlideVideo({
       // Dẹp bớt nút thừa trên thanh điều khiển: bỏ nút tải về và nút đổi tốc độ
       // phát, bỏ nút thu nhỏ góc màn. Còn lại đúng những nút khách cần — play,
       // tua, âm lượng, toàn màn hình.
-      controlsList="nodownload noplaybackrate"
+      controlsList="nodownload noplaybackrate nofullscreen"
       disablePictureInPicture
       muted={xemTruoc}
       preload="metadata"
@@ -191,11 +204,27 @@ export default function GallerySlideVideo({
     </video>
   );
 
-  // MỘT TRÌNH PHÁT, MỘT BỘ NÚT: play, tua, âm lượng, toàn màn hình đều là nút
-  // mặc định của trình phát. Web không vẽ thêm nút nào.
+  // Trong khung: play · tua · âm lượng là thanh gốc của trình phát, nằm sát đáy.
+  // Nút phóng to đặt ở GÓC TRÊN PHẢI và là nút DUY NHẤT — nút toàn màn hình mặc
+  // định đã tắt, nên không còn cảnh hai nút giống nhau như bản trước.
   return (
     <div className={`absolute inset-0 bg-black ${xemTruoc ? "pointer-events-none" : ""}`}>
       {video}
+
+      {!xemTruoc && !loiPhat && (
+        <button
+          type="button"
+          onClick={moLon}
+          aria-label="Xem lớn"
+          className="absolute right-2 top-2 z-[6] flex h-10 w-10 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-sm active:bg-black/80"
+        >
+          <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />
+          </svg>
+        </button>
+      )}
+
+      {xemLon && <VideoToanManHinh url={url} batDau={giay} onClose={() => setXemLon(false)} />}
 
       {loiPhat && !xemTruoc && (
         <a
