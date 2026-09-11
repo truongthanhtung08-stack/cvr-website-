@@ -16,6 +16,9 @@ import { chuanTen } from "@/lib/locations";
 
 /** Dưới mức này thì mẫu quá ít, nói ra không có nghĩa gì. */
 export const MAU_TOI_THIEU = 5;
+/** Bảng so sánh giữa các phường chỉ cần 3 tin — nó nói KHOẢNG GIÁ chứ không
+ *  khẳng định con số, và luôn ghi kèm số mẫu để người xem tự cân nhắc. */
+export const MAU_SO_SANH = 3;
 
 export type MatBangGia = {
   /** Giá trung vị mỗi m² (đồng) */
@@ -45,6 +48,13 @@ function trungVi(ds: number[]): number {
   return s.length % 2 ? s[g] : Math.round((s[g - 1] + s[g]) / 2);
 }
 
+/** Phân vị thứ p (0–1) — dùng để cắt bỏ giá dị biệt ở hai đầu. */
+function phanVi(ds: number[], p: number): number {
+  const s = [...ds].sort((a, b) => a - b);
+  const i = Math.min(s.length - 1, Math.max(0, Math.round((s.length - 1) * p)));
+  return s[i];
+}
+
 /**
  * Mặt bằng giá của khu vực, tính từ các tin ĐANG ĐĂNG cùng loại hình.
  * Đủ mẫu ở cấp phường thì lấy phường; không đủ thì lùi ra cấp tỉnh; vẫn không
@@ -60,7 +70,10 @@ export function matBangGia(
   if (!tinh) return null;
 
   const cungLoai = tatCa.filter(
-    (x) => x.id !== tin.id && chuanTen(x.type) === loai && x.purpose === tin.purpose,
+    (x) =>
+      x.id !== tin.id &&
+      chuanTen(x.type) === loai &&
+      (x.purpose ?? "ban") === (tin.purpose ?? "ban"),
   );
 
   const theo = (loc: (x: Listing) => boolean) =>
@@ -71,8 +84,8 @@ export function matBangGia(
     if (ds.length >= MAU_TOI_THIEU)
       return {
         trungVi: trungVi(ds),
-        thap: Math.min(...ds),
-        cao: Math.max(...ds),
+        thap: phanVi(ds, 0.25),
+        cao: phanVi(ds, 0.75),
         soMau: ds.length,
         pham: "phuong",
         tenPham: tin.diaGioi?.ward ?? "",
@@ -83,8 +96,8 @@ export function matBangGia(
   if (dsTinh.length >= MAU_TOI_THIEU)
     return {
       trungVi: trungVi(dsTinh),
-      thap: Math.min(...dsTinh),
-      cao: Math.max(...dsTinh),
+      thap: phanVi(dsTinh, 0.25),
+      cao: phanVi(dsTinh, 0.75),
       soMau: dsTinh.length,
       pham: "tinh",
       tenPham: tin.diaGioi?.province ?? "",
@@ -117,6 +130,15 @@ export type ChiSoKhuVuc = {
 
 export type ChiSoGiaData = { items: ChiSoKhuVuc[] };
 
+/** Tên nguồn để HIỆN LÊN WEB. Số lấy ở đâu thì admin cứ ghi đúng cho mình nhớ,
+ *  nhưng ra ngoài thì không nêu tên sàn đối thủ — ghi chung là báo cáo thị trường. */
+export function tenNguonHienThi(nguon: string): string {
+  const doiThu = ["batdongsan", "chotot", "nhatot", "alonhadat", "mogi", "homedy", "muaban", "rever", "propzy"];
+  // Phải BỎ DẤU rồi mới so: "Chợ Tốt Nhà" viết có dấu, có khoảng trắng, so thô là trượt.
+  const t = chuanTen(nguon).split(" ").join("").split(".").join("");
+  return doiThu.some((x) => t.includes(x)) ? "báo cáo thị trường tổng hợp" : nguon;
+}
+
 /** Lấy dãy quý hợp với tin này. Không có thì trả null — không vẽ biểu đồ. */
 export function chiSoChoTin(tin: Listing, data: ChiSoGiaData | null): ChiSoKhuVuc | null {
   if (!data?.items?.length) return null;
@@ -132,12 +154,14 @@ export function chiSoChoTin(tin: Listing, data: ChiSoGiaData | null): ChiSoKhuVu
   );
 }
 
-/** Đổi đồng/m² sang chuỗi gọn: 78,5 triệu/m² */
-export function vndM2(v: number): string {
-  if (v >= 1e9) return `${(v / 1e9).toFixed(1).replace(".", ",")} tỷ/m²`;
-  if (v >= 1e6) return `${(v / 1e6).toFixed(1).replace(".", ",")} triệu/m²`;
-  return `${Math.round(v / 1000).toLocaleString("vi-VN")} nghìn/m²`;
+/** Đổi đồng/m² sang chuỗi gọn: 78,5 triệu/m². Tin cho thuê thì thêm "/tháng". */
+export function vndM2(v: number, laThue = false): string {
+  const duoi = laThue ? "/tháng" : "";
+  if (v >= 1e9) return `${(v / 1e9).toFixed(1).replace(".", ",")} tỷ/m²${duoi}`;
+  if (v >= 1e6) return `${(v / 1e6).toFixed(1).replace(".", ",")} triệu/m²${duoi}`;
+  return `${Math.round(v / 1000).toLocaleString("vi-VN")} nghìn/m²${duoi}`;
 }
+
 
 // ── SO SÁNH VỚI KHU VỰC LÂN CẬN ────────────────────────────────────────────
 // Người mua luôn hỏi "chỗ này so với mấy phường bên cạnh thì sao". Đây là câu
@@ -166,7 +190,7 @@ export function soSanhKhuVuc(tin: Listing, tatCa: Listing[], toiDa = 5): OSanh[]
 
   const cuaTin = chuanTen(tin.diaGioi?.ward ?? "");
   return [...nhom.entries()]
-    .filter(([, ds]) => ds.length >= MAU_TOI_THIEU)
+    .filter(([, ds]) => ds.length >= MAU_SO_SANH)
     .map(([ten, ds]) => ({
       ten,
       trungVi: trungVi(ds),

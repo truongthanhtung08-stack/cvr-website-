@@ -17,7 +17,10 @@ import { provinceNamesFor } from "@/lib/locations";
 // chỉ còn mặt bằng giá tính từ tin đang đăng.
 // ════════════════════════════════════════════════════════════════════════════
 
-const NGUON_GOI_Y = ["Batdongsan.com.vn", "CBRE", "Savills", "DKRA", "Bộ Xây dựng", "Tự khảo sát"];
+// Gợi ý nguồn để chủ dự án chọn nhanh. Ghi tên nào ở đây cũng được — riêng tên
+// các sàn đối thủ thì web TỰ ĐỔI thành "báo cáo thị trường tổng hợp" khi hiện ra
+// cho khách, không quảng cáo không công cho họ (xem tenNguonHienThi).
+const NGUON_GOI_Y = ["CBRE", "Savills", "DKRA", "JLL", "Bộ Xây dựng", "Tự khảo sát"];
 
 const inputCls =
   "h-11 w-full rounded-lg border border-transparent bg-cvr-surface px-3 text-sm text-cvr-ink placeholder-cvr-faint outline-none transition focus:border-cvr-line focus:bg-white";
@@ -267,13 +270,16 @@ export default function ChiSoGiaPage() {
       <div className="rounded-2xl bg-cvr-surface p-4 text-[13px] leading-relaxed text-cvr-muted">
         <p className="font-semibold text-cvr-ink">Lấy số ở đâu</p>
         <p className="mt-1">
-          Báo cáo thị trường quý của Batdongsan.com.vn, CBRE, Savills, DKRA đều công bố công khai,
-          tải về đọc miễn phí. Bộ Xây dựng cũng công bố chỉ số giá giao dịch bất động sản theo quý.
-          Mỗi quý vào đây cập nhật một lần là đủ.
+          Báo cáo thị trường quý của CBRE, Savills, DKRA, JLL đều công bố công khai, tải về đọc
+          miễn phí. Bộ Xây dựng cũng công bố chỉ số giá giao dịch bất động sản theo quý. Mỗi quý
+          vào đây cập nhật một lần là đủ.
         </p>
         <p className="mt-2">
           Khu vực nào chưa nhập thì trang tin <strong>không vẽ biểu đồ</strong> — chỉ hiện mặt bằng
           giá tính từ tin đang đăng trên web. Thiếu thì để trống, đừng điền số ước chừng.
+          <br />
+          Lấy số từ sàn khác cũng được, nhưng web sẽ ghi là{" "}
+          <strong>“báo cáo thị trường tổng hợp”</strong> chứ không nêu tên họ.
         </p>
       </div>
     </div>

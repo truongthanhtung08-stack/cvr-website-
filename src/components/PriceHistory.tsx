@@ -1,5 +1,5 @@
 import type { ChiSoKhuVuc, MatBangGia, OSanh } from "@/lib/chiSoGia";
-import { vndM2 } from "@/lib/chiSoGia";
+import { vndM2, tenNguonHienThi } from "@/lib/chiSoGia";
 
 // ════════════════════════════════════════════════════════════════════════════
 // MẶT BẰNG GIÁ — CÔNG CỤ ĐỂ NGƯỜI MUA RA QUYẾT ĐỊNH, KHÔNG PHẢI HÌNH TRANG TRÍ.
@@ -24,11 +24,14 @@ export default function PriceHistory({
   matBang,
   giaTinNayM2,
   soSanh = [],
+  laThue = false,
 }: {
   chiSo: ChiSoKhuVuc | null;
   matBang: MatBangGia | null;
   giaTinNayM2: number | null;
   soSanh?: OSanh[];
+  /** Tin cho thuê thì giá mỗi m² là giá THUÊ mỗi tháng — đơn vị và chữ khác hẳn. */
+  laThue?: boolean;
 }) {
   const moc = (chiSo?.moc ?? []).filter((m) => m.giaM2 > 0).slice(-8);
   const coBieuDo = moc.length >= 2;
@@ -66,9 +69,9 @@ export default function PriceHistory({
         <div className="rounded-xl bg-white p-4 ring-1 ring-cvr-line">
           <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
             <span className="text-sm text-cvr-muted">
-              Giá phổ biến tại {matBang.tenPham}
+              {laThue ? "Giá thuê phổ biến" : "Giá bán phổ biến"} tại {matBang.tenPham}
             </span>
-            <span className="text-[19px] font-bold text-cvr-ink">{vndM2(matBang.trungVi)}</span>
+            <span className="text-[19px] font-bold text-cvr-ink">{vndM2(matBang.trungVi, laThue)}</span>
           </div>
 
           {viTri !== null && giaTinNayM2 && (
@@ -81,15 +84,16 @@ export default function PriceHistory({
                   aria-hidden
                 />
               </div>
-              <div className="mt-2 flex justify-between text-[12px] text-cvr-faint">
-                <span>{vndM2(matBang.thap)}</span>
-                <span>{vndM2(matBang.cao)}</span>
+              <div className="mt-2 flex items-baseline justify-between text-[12px] text-cvr-faint">
+                <span>{vndM2(matBang.thap, laThue)}</span>
+                <span className="text-[11px]">khoảng phổ biến</span>
+                <span>{vndM2(matBang.cao, laThue)}</span>
               </div>
 
               <div className="mt-3 flex flex-wrap items-baseline justify-between gap-x-4 border-t border-cvr-line pt-3">
                 <span className="text-sm text-cvr-muted">Tin này</span>
                 <span className="text-sm font-semibold text-cvr-ink">
-                  {vndM2(giaTinNayM2)}
+                  {vndM2(giaTinNayM2, laThue)}
                   <span
                     className={`ml-2 font-bold ${
                       nganh ? "text-cvr-muted" : (lech ?? 0) > 0 ? "text-red-600" : "text-green-700"
@@ -107,7 +111,8 @@ export default function PriceHistory({
           )}
 
           <p className="mt-2 text-[12px] text-cvr-faint">
-            Tính từ {matBang.soMau} tin cùng loại đang đăng trên Coastal Land
+            Tính từ {matBang.soMau} tin cùng loại hình đang đăng trên Coastal Land
+            {matBang.pham === "tinh" ? " — gộp cả tỉnh vì khu vực này chưa đủ tin" : ""}
           </p>
         </div>
       )}
@@ -117,7 +122,7 @@ export default function PriceHistory({
         <div>
           <div className="mb-3 flex flex-wrap items-baseline gap-2">
             <span className="text-sm font-semibold text-cvr-ink">
-              Xu hướng {moc.length} quý gần nhất
+              Xu hướng {laThue ? "giá thuê" : "giá bán"} toàn {chiSo.tinh} · {moc.length} quý gần nhất
             </span>
             <span
               className={`text-sm font-bold ${tang >= 0 ? "text-cvr-gold-ink" : "text-green-700"}`}
@@ -157,7 +162,7 @@ export default function PriceHistory({
                       fontSize="11"
                       fontWeight="600"
                     >
-                      {vndM2(m.giaM2).replace("/m²", "")}
+                      {vndM2(m.giaM2, laThue).replace("/m²", "")}
                     </text>
                     <text
                       x={x + barW / 2}
@@ -175,7 +180,8 @@ export default function PriceHistory({
           </div>
 
           <p className="mt-1 text-xs leading-relaxed text-cvr-faint">
-            Giá trung bình mỗi m² theo <strong className="font-semibold">{chiSo.nguon}</strong>
+            Giá trung bình mỗi m² theo{" "}
+            <strong className="font-semibold">{tenNguonHienThi(chiSo.nguon)}</strong>
             {chiSo.loaiHinh ? ` · ${chiSo.loaiHinh}` : ""} · cập nhật {chiSo.capNhat}
           </p>
         </div>
@@ -184,7 +190,12 @@ export default function PriceHistory({
       {/* ── 3. SO VỚI PHƯỜNG BÊN CẠNH ───────────────────────────────────── */}
       {coSanh && (
         <div>
-          <p className="mb-3 text-sm font-semibold text-cvr-ink">Giá các khu vực lân cận</p>
+          <p className="mb-1 text-sm font-semibold text-cvr-ink">
+            {laThue ? "Giá thuê" : "Giá bán"} các khu vực lân cận
+          </p>
+          <p className="mb-3 text-[12px] text-cvr-faint">
+            Cùng loại hình, tính từ tin đang đăng — số trong ngoặc là số tin làm mẫu
+          </p>
           <div className="space-y-2">
             {soSanh.map((o) => (
               <div key={o.ten} className="flex items-center gap-3">
@@ -202,7 +213,7 @@ export default function PriceHistory({
                     o.chinhNo ? "font-semibold text-cvr-ink" : "text-cvr-muted"
                   }`}
                 >
-                  {vndM2(o.trungVi)}
+                  {vndM2(o.trungVi, laThue)}
                   <span className="ml-1 text-[11px] text-cvr-faint">({o.soMau} tin)</span>
                 </span>
               </div>

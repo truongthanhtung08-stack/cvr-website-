@@ -55,8 +55,12 @@ export async function chupGiaKhuVuc(): Promise<{ ghi: number; boQua: number } | 
     const mucDich = (r.purpose ?? "ban").trim();
     const phuong = (r.ward ?? "").trim();
 
-    for (const key of [`${tinh}|${phuong}|${loai}|${mucDich}`, `${tinh}||${loai}|${mucDich}`]) {
-      if (!phuong && key.includes("||") === false) continue;
+    // Ghi hai mức: theo phường (chi tiết, mỏng) và gộp cả tỉnh (thô, dày).
+    // Tin không ghi phường thì chỉ vào được mức tỉnh.
+    const khoa = phuong
+      ? [`${tinh}|${phuong}|${loai}|${mucDich}`, `${tinh}||${loai}|${mucDich}`]
+      : [`${tinh}||${loai}|${mucDich}`];
+    for (const key of khoa) {
       const cu = nhom.get(key);
       if (cu) cu.push(m2);
       else nhom.set(key, [m2]);

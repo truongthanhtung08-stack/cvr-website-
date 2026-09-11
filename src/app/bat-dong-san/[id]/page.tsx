@@ -398,7 +398,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                   Không đủ dữ liệu thì khối này biến mất, không chế số. */}
               {(chiSoTin || matBang || soSanhKV.length >= 2) && (
                 <Section id="lich-su-gia" title="Mặt bằng giá khu vực">
-                  <PriceHistory chiSo={chiSoTin} matBang={matBang} giaTinNayM2={giaTinNayM2} soSanh={soSanhKV} />
+                  <PriceHistory chiSo={chiSoTin} matBang={matBang} giaTinNayM2={giaTinNayM2} soSanh={soSanhKV} laThue={(l.purpose ?? "ban") === "thue"} />
                 </Section>
               )}
 
