@@ -11,7 +11,7 @@ import { getTier, tierFromBadge, type TierId, utilityTools } from "@/lib/package
 import { getListings } from "@/lib/listingsDb";
 import { getProjects } from "@/lib/contentDb";
 import { getBilling } from "@/lib/siteContent";
-import { priceLinesFor } from "@/lib/billing";
+import { priceLinesFor, bangUp, goiPr, ghiChuPr, bangBanner, dong } from "@/lib/billing";
 import type { Listing, Project } from "@/lib/data";
 
 export const metadata: Metadata = {
@@ -88,14 +88,6 @@ const basicPkg = {
   ] as PriceLine[],
 };
 
-const upRows: { label: string; values: { original?: string; price: string }[] }[] = [
-  { label: "Up ngay", values: [{ price: "90.000đ" }, { price: "46.000đ" }, { price: "17.000đ" }, { price: "5.000đ" }] },
-  { label: "Up 3 lần (−20%)", values: [{ original: "270.000đ", price: "216.000đ" }, { original: "138.000đ", price: "110.400đ" }, { original: "51.000đ", price: "40.800đ" }, { original: "15.000đ", price: "12.000đ" }] },
-  { label: "Up 7 lần (−30%)", values: [{ original: "630.000đ", price: "441.000đ" }, { original: "322.000đ", price: "225.400đ" }, { original: "119.000đ", price: "83.300đ" }, { original: "35.000đ", price: "24.500đ" }] },
-  { label: "Up 13 lần (−40%)", values: [{ original: "1.170.000đ", price: "702.000đ" }, { original: "598.000đ", price: "358.800đ" }, { original: "221.000đ", price: "132.600đ" }, { original: "65.000đ", price: "39.000đ" }] },
-  { label: "Up 27 lần (−50%)", values: [{ original: "2.430.000đ", price: "1.215.000đ" }, { original: "1.242.000đ", price: "621.000đ" }, { original: "459.000đ", price: "229.500đ" }, { original: "135.000đ", price: "67.500đ" }] },
-];
-
 const pjPkgs = [
   {
     tierId: "diamond" as TierId,
@@ -129,49 +121,6 @@ const pjPkgs = [
       { label: "Giá 1 tuần", price: "2.000.000đ" },
       { label: "Giá 2 tuần (−5%)", original: "4.000.000đ", price: "3.800.000đ" },
     ] as PriceLine[],
-  },
-];
-
-const prPkgs = [
-  { tierId: "diamond" as TierId, name: "CVR-PR Diamond", price: "8.900.000đ", displays: ["Xuất hiện trên Trang chủ: box Tin tức.", "Xuất hiện trên trang chuyên mục Tin tức.", "Chia sẻ trên Fanpage Facebook của Coastal Land."] },
-  { tierId: "gold" as TierId, name: "CVR-PR Gold", price: "5.900.000đ", displays: ["Xuất hiện trên Trang chủ: box Tin tức.", "Xuất hiện trên trang chuyên mục Tin tức."] },
-  { tierId: "silver" as TierId, name: "CVR-PR Silver", price: "2.900.000đ", displays: ["Xuất hiện trên trang chuyên mục Tin tức."] },
-];
-
-const prNotes = [
-  "Một bài PR không quá 5 ảnh minh hoạ.",
-  "Bài PR gửi trước 2 ngày.",
-  "Bài PR xuất hiện ở Trang chủ trong 1 ngày, xuất hiện trên trang chuyên mục Tin tức vĩnh viễn.",
-];
-
-const bannerTables = [
-  {
-    title: "Banner Web",
-    sizeLabel: "Kích thước (px)",
-    rows: [
-      { name: "CVR-BANNER Homepage 1", size: "370 × 300", price: "7.500.000đ", pos: "Trang chủ", note: "Chia sẻ 3" },
-      { name: "CVR-BANNER Homepage 2", size: "370 × 312", price: "5.000.000đ", pos: "Trang chủ", note: "Chia sẻ 3" },
-      { name: "CVR-BANNER Homepage 3", size: "370 × 430", price: "6.000.000đ", pos: "Trang chủ", note: "Chia sẻ 3" },
-      { name: "CVR-BANNER Listing 1", size: "370 × 600", price: "7.000.000đ", pos: "Trang danh sách Tin đăng / Dự án", note: "Chia sẻ 3" },
-      { name: "CVR-BANNER Listing 2", size: "370 × 320", price: "3.000.000đ", pos: "Trang danh sách Tin đăng / Dự án", note: "Chia sẻ 3" },
-      { name: "CVR-BANNER Listing 3", size: "370 × 430", price: "5.000.000đ", pos: "Trang danh sách Tin đăng / Dự án", note: "Chia sẻ 3" },
-    ],
-  },
-  {
-    title: "Banner Mobile Web",
-    sizeLabel: "Kích thước (px)",
-    rows: [
-      { name: "CVR-BANNER Mobile Homepage", size: "345 × 200", price: "5.000.000đ", pos: "Trang chủ (mobile)", note: "Chia sẻ 3" },
-      { name: "CVR-BANNER Mobile Listing", size: "345 × 150", price: "3.000.000đ", pos: "Trang chủ + Tin đăng (mobile)", note: "Bao toàn tỉnh lẻ: 1.500.000đ" },
-    ],
-  },
-  {
-    title: "Banner Web + Mobile Web (Combo)",
-    sizeLabel: "Sản phẩm",
-    rows: [
-      { name: "CVR-BANNER Combo Homepage", size: "Banner Homepage 1 + Mobile Homepage", price: "10.000.000đ", pos: "Web + Mobile", note: "Chiết khấu 20%" },
-      { name: "CVR-BANNER Combo Listing", size: "Banner Listing 1 + Mobile Listing", price: "8.900.000đ", pos: "Web + Mobile", note: "Chiết khấu 15%" },
-    ],
   },
 ];
 
@@ -230,6 +179,12 @@ export default async function BaoGiaPage() {
   // GIÁ TIN lấy từ bảng giá admin (/admin/gia-khuyen-mai) — chưa lưu thì dùng giá
   // in sẵn bên dưới. Trước đây giá viết cứng tại trang này nên sửa ở admin không đổi.
   const giaTin = (id: TierId, macDinh: PriceLine[]): PriceLine[] => priceLinesFor(billing, id) ?? macDinh;
+  // ĐẨY TIN · PR · BANNER: lấy đúng bản chủ dự án đặt ở /admin/gia-khuyen-mai.
+  // Chưa lưu gì thì hàm tự trả mức chuẩn — trang không bao giờ trống.
+  const upRows = bangUp(billing);
+  const prPkgs = goiPr(billing);
+  const prNotes = ghiChuPr(billing);
+  const bannerTables = bangBanner(billing);
   const newestOfTier = (id: TierId): Listing | null =>
     listings.find((l) => tierFromBadge(l.badge) === id) ?? null;
   const samples: Record<TierId, Listing | null> = {
@@ -326,8 +281,8 @@ export default async function BaoGiaPage() {
                           <td className="px-6 py-4 font-medium text-cvr-body">{r.label}</td>
                           {r.values.map((v, i) => (
                             <td key={i} className="px-4 py-4 text-center">
-                              {v.original && <span className="mr-1.5 text-xs text-cvr-faint line-through">{v.original}</span>}
-                              <span className="font-semibold tracking-tight text-cvr-ink">{v.price}</span>
+                              {v.giaGoc ? <span className="mr-1.5 text-xs text-cvr-faint line-through">{dong(v.giaGoc)}</span> : null}
+                              <span className="font-semibold tracking-tight text-cvr-ink">{dong(v.gia)}</span>
                             </td>
                           ))}
                         </tr>
@@ -371,7 +326,7 @@ export default async function BaoGiaPage() {
                         </ul>
                         <div className="mt-6 border-t border-cvr-line pt-5">
                           <p className="text-xs text-cvr-muted">Giá mỗi bài</p>
-                          <p className="mt-1 text-[26px] font-semibold tracking-tight text-cvr-ink">{p.price}</p>
+                          <p className="mt-1 text-[26px] font-semibold tracking-tight text-cvr-ink">{dong(p.gia)}</p>
                           <a
                             href="#lien-he"
                             className="mt-4 block rounded-full bg-cvr-ink py-2.5 text-center text-sm font-semibold text-white transition hover:bg-cvr-ink/90 active:scale-[0.99]"
@@ -413,7 +368,7 @@ export default async function BaoGiaPage() {
                             <tr key={r.name} className="border-b border-cvr-line/60 transition-colors last:border-0 hover:bg-cvr-surface/50">
                               <td className="px-6 py-4 font-medium text-cvr-ink">{r.name}</td>
                               <td className="px-4 py-4 text-cvr-body">{r.size}</td>
-                              <td className="px-4 py-4 font-semibold tracking-tight text-cvr-ink">{r.price}</td>
+                              <td className="px-4 py-4 font-semibold tracking-tight text-cvr-ink">{dong(r.gia)}</td>
                               <td className="px-4 py-4 text-cvr-body">{r.pos}</td>
                               <td className="px-4 py-4 text-cvr-muted">{r.note}</td>
                             </tr>

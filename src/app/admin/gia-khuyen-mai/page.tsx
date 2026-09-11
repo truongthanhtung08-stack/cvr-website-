@@ -6,6 +6,10 @@ import {
   BILLING_DEFAULT,
   freeNote,
   goiDuAn,
+  bangUp,
+  goiPr,
+  ghiChuPr,
+  bangBanner,
   soAnhDuAnToiDa,
   soAnhToiDa,
   soVideoToiDa,
@@ -16,6 +20,9 @@ import {
   type Plan,
   type BillingData,
   type Promo,
+  type UpRow,
+  type PrPkg,
+  type BannerTable,
   type PromoAudience,
 } from "@/lib/billing";
 import { getTier, type TierId } from "@/lib/packages";
@@ -33,6 +40,9 @@ import { Panel, Field as UiField } from "@/components/Ui";
 const TABS = [
   { id: "plans", label: "Gói đăng tin & giá" },
   { id: "projects", label: "Gói dự án" },
+  { id: "up", label: "Đẩy tin" },
+  { id: "pr", label: "Bài PR" },
+  { id: "banners", label: "Banner" },
   { id: "promos", label: "Khuyến mãi" },
   { id: "free", label: "Miễn phí thành viên mới" },
   { id: "points", label: "Điểm & cấp thành viên" },
@@ -144,6 +154,9 @@ export default function AdminBillingPage() {
       {tab === "plans" && <PlansTab data={data} setData={setData} />}
       {tab === "promos" && <PromosTab data={data} setData={setData} />}
       {tab === "projects" && <ProjectPlansTab data={data} setData={setData} />}
+      {tab === "up" && <UpTab data={data} setData={setData} />}
+      {tab === "pr" && <PrTab data={data} setData={setData} />}
+      {tab === "banners" && <BannerTab data={data} setData={setData} />}
       {tab === "free" && <FreeTab data={data} setData={setData} />}
       {tab === "points" && <PointsTab data={data} setData={setData} />}
     </div>
@@ -592,4 +605,211 @@ const inputCls = "h-10 w-full rounded-lg border border-cvr-line px-3 text-sm tex
 // (nhiều cột trên một hàng) nên giữ biến thể `nho` của Field dùng chung.
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return <UiField nho label={label}>{children}</UiField>;
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// ĐẨY TIN · BÀI PR · BANNER
+// Ba bảng này trước đây ghi cứng trong trang Báo giá dịch vụ, sửa ở admin không
+// ăn thua. Nay chúng nằm cùng một chỗ với giá gói tin: sửa xong bấm Lưu là trang
+// Báo giá đổi ngay.
+// ════════════════════════════════════════════════════════════════════════════
+
+// Bốn cột của bảng Đẩy tin, đúng thứ tự dùng ở trang Báo giá.
+const COT_UP: TierId[] = ["diamond", "gold", "silver", "basic"];
+
+function UpTab({ data, setData }: { data: BillingData; setData: (d: BillingData) => void }) {
+  const ds = bangUp(data);
+  const ghi = (rows: UpRow[]) => setData({ ...data, up: rows });
+  const suaO = (iDong: number, iCot: number, patch: { giaGoc?: number; gia?: number }) =>
+    ghi(ds.map((r, i) => (i !== iDong ? r : { ...r, values: r.values.map((v, j) => (j === iCot ? { ...v, ...patch } : v)) })));
+
+  return (
+    <Panel title="Đẩy tin (UP)" desc="Giá mỗi lượt đẩy tin lên đầu danh sách, theo từng cấp tin. Giá gốc để 0 thì không hiện giá gạch ngang.">
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[760px] text-sm">
+          <thead>
+            <tr className="border-b border-cvr-line text-left text-xs uppercase tracking-wide text-cvr-muted">
+              <th className="py-2.5">Gói đẩy</th>
+              {COT_UP.map((t) => <th key={t} className="py-2.5">{getTier(t).name}</th>)}
+              <th className="py-2.5" />
+            </tr>
+          </thead>
+          <tbody>
+            {ds.map((r, iDong) => (
+              <tr key={iDong} className="border-b border-cvr-line/70 align-top">
+                <td className="py-3 pr-3">
+                  <input
+                    value={r.label}
+                    onChange={(e) => ghi(ds.map((x, i) => (i === iDong ? { ...x, label: e.target.value } : x)))}
+                    className={inputCls + " min-w-[150px]"}
+                  />
+                </td>
+                {COT_UP.map((_, iCot) => {
+                  const v = r.values[iCot] ?? { gia: 0 };
+                  return (
+                    <td key={iCot} className="py-3 pr-3">
+                      <Field label="Giá bán (₫)">
+                        <input type="number" min={0} step={1000} value={v.gia}
+                          onChange={(e) => suaO(iDong, iCot, { gia: Number(e.target.value) || 0 })}
+                          className={inputCls + " w-32"} />
+                      </Field>
+                      <div className="mt-1.5">
+                        <Field label="Giá gốc (₫)">
+                          <input type="number" min={0} step={1000} value={v.giaGoc ?? 0}
+                            onChange={(e) => suaO(iDong, iCot, { giaGoc: Number(e.target.value) || undefined })}
+                            className={inputCls + " w-32"} />
+                        </Field>
+                      </div>
+                    </td>
+                  );
+                })}
+                <td className="py-3">
+                  <NutXoa onClick={() => ghi(ds.filter((_, i) => i !== iDong))} />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <NutThem
+        onClick={() => ghi([...ds, { label: "Gói đẩy mới", values: COT_UP.map(() => ({ gia: 0 })) }])}
+        chu="Thêm gói đẩy"
+      />
+    </Panel>
+  );
+}
+
+function PrTab({ data, setData }: { data: BillingData; setData: (d: BillingData) => void }) {
+  const ds = goiPr(data);
+  const notes = ghiChuPr(data);
+  const ghi = (pr: PrPkg[]) => setData({ ...data, pr });
+  const sua = (i: number, patch: Partial<PrPkg>) => ghi(ds.map((x, j) => (j === i ? { ...x, ...patch } : x)));
+
+  return (
+    <div className="space-y-4">
+      <Panel title="Gói bài PR" desc="Giá mỗi bài viết truyền thông và những chỗ bài đó được hiện.">
+        <div className="space-y-3">
+          {ds.map((p, i) => (
+            <div key={i} className="rounded-xl border border-cvr-line p-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <Field label="Tên gói">
+                  <input value={p.name} onChange={(e) => sua(i, { name: e.target.value })} className={inputCls} />
+                </Field>
+                <Field label="Giá mỗi bài (₫)">
+                  <input type="number" min={0} step={100000} value={p.gia}
+                    onChange={(e) => sua(i, { gia: Number(e.target.value) || 0 })} className={inputCls} />
+                </Field>
+                <Field label="Cấp tin (lấy màu nhãn)">
+                  <select value={p.tierId} onChange={(e) => sua(i, { tierId: e.target.value as TierId })} className={inputCls}>
+                    {COT_UP.map((t) => <option key={t} value={t}>{getTier(t).name}</option>)}
+                  </select>
+                </Field>
+              </div>
+              <div className="mt-3">
+                <Field label="Bài PR hiện ở đâu — mỗi dòng một chỗ">
+                  <textarea
+                    value={p.displays.join("\n")}
+                    onChange={(e) => sua(i, { displays: e.target.value.split("\n").map((x) => x.trim()).filter(Boolean) })}
+                    rows={3}
+                    className="w-full rounded-lg border border-cvr-line p-3 text-sm text-cvr-ink outline-none focus:border-cvr-ink"
+                  />
+                </Field>
+              </div>
+              <div className="mt-2 flex justify-end">
+                <NutXoa onClick={() => ghi(ds.filter((_, j) => j !== i))} />
+              </div>
+            </div>
+          ))}
+        </div>
+        <NutThem onClick={() => ghi([...ds, { tierId: "silver", name: "CVR-PR mới", gia: 0, displays: [] }])} chu="Thêm gói PR" />
+      </Panel>
+
+      <Panel title="Điều kiện kèm bảng PR" desc="Mỗi dòng một điều kiện — hiện ngay dưới bảng giá PR.">
+        <textarea
+          value={notes.join("\n")}
+          onChange={(e) => setData({ ...data, prNotes: e.target.value.split("\n").map((x) => x.trim()).filter(Boolean) })}
+          rows={4}
+          className="w-full rounded-lg border border-cvr-line p-3 text-sm text-cvr-ink outline-none focus:border-cvr-ink"
+        />
+      </Panel>
+    </div>
+  );
+}
+
+function BannerTab({ data, setData }: { data: BillingData; setData: (d: BillingData) => void }) {
+  const ds = bangBanner(data);
+  const ghi = (banners: BannerTable[]) => setData({ ...data, banners });
+  const suaBang = (i: number, patch: Partial<BannerTable>) => ghi(ds.map((x, j) => (j === i ? { ...x, ...patch } : x)));
+  const suaDong = (iBang: number, iDong: number, patch: Partial<BannerTable["rows"][number]>) =>
+    suaBang(iBang, { rows: ds[iBang].rows.map((r, j) => (j === iDong ? { ...r, ...patch } : r)) });
+
+  return (
+    <div className="space-y-4">
+      {ds.map((tbl, iBang) => (
+        <Panel key={iBang} title={tbl.title} desc="Giá tính theo tuần.">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <Field label="Tên bảng">
+              <input value={tbl.title} onChange={(e) => suaBang(iBang, { title: e.target.value })} className={inputCls} />
+            </Field>
+            <Field label="Tiêu đề cột thứ hai">
+              <input value={tbl.sizeLabel} onChange={(e) => suaBang(iBang, { sizeLabel: e.target.value })} className={inputCls} />
+            </Field>
+          </div>
+
+          <div className="mt-3 space-y-3">
+            {tbl.rows.map((r, iDong) => (
+              <div key={iDong} className="rounded-xl border border-cvr-line p-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  <Field label="Tên gói">
+                    <input value={r.name} onChange={(e) => suaDong(iBang, iDong, { name: e.target.value })} className={inputCls} />
+                  </Field>
+                  <Field label={tbl.sizeLabel}>
+                    <input value={r.size} onChange={(e) => suaDong(iBang, iDong, { size: e.target.value })} className={inputCls} />
+                  </Field>
+                  <Field label="Giá mỗi tuần (₫)">
+                    <input type="number" min={0} step={100000} value={r.gia}
+                      onChange={(e) => suaDong(iBang, iDong, { gia: Number(e.target.value) || 0 })} className={inputCls} />
+                  </Field>
+                  <Field label="Vị trí hiển thị">
+                    <input value={r.pos} onChange={(e) => suaDong(iBang, iDong, { pos: e.target.value })} className={inputCls} />
+                  </Field>
+                  <Field label="Ghi chú">
+                    <input value={r.note} onChange={(e) => suaDong(iBang, iDong, { note: e.target.value })} className={inputCls} />
+                  </Field>
+                </div>
+                <div className="mt-2 flex justify-end">
+                  <NutXoa onClick={() => suaBang(iBang, { rows: tbl.rows.filter((_, j) => j !== iDong) })} />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <NutThem
+            onClick={() => suaBang(iBang, { rows: [...tbl.rows, { name: "Banner mới", size: "", gia: 0, pos: "", note: "" }] })}
+            chu="Thêm vị trí banner"
+          />
+        </Panel>
+      ))}
+    </div>
+  );
+}
+
+function NutThem({ onClick, chu }: { onClick: () => void; chu: string }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="mt-3 rounded-lg border border-cvr-line px-4 py-2 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink"
+    >
+      + {chu}
+    </button>
+  );
+}
+
+function NutXoa({ onClick }: { onClick: () => void }) {
+  return (
+    <button type="button" onClick={onClick} className="text-sm font-medium text-red-600 transition hover:text-red-700">
+      Xoá
+    </button>
+  );
 }

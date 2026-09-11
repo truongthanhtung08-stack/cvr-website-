@@ -133,9 +133,47 @@ export function chuanHoaCapHoiVien(levels: LegacyMemberLevel[] | undefined): Mem
   }));
 }
 
+// ── BA BẢNG GIÁ DỊCH VỤ CÒN LẠI: ĐẨY TIN · PR · BANNER ─────────────────────
+// Trước đây ba bảng này ghi cứng trong trang Báo giá dịch vụ nên sửa ở admin
+// không đổi được gì. Nay gom về đây cùng một chỗ với giá gói tin: mọi chương
+// trình · giá · khuyến mãi đều sửa ở /admin/gia-khuyen-mai, không sửa trong code.
+// Giá để dạng SỐ (VNĐ) — web tự định dạng, admin không phải gõ dấu chấm.
+
+// Một dòng trong bảng Đẩy tin: mỗi cột là một cấp tin (Diamond·Gold·Silver·Basic).
+// giaGoc có thì hiện gạch ngang bên cạnh giá bán.
+export type UpRow = {
+  label: string;
+  values: { giaGoc?: number; gia: number }[];
+};
+
+export type PrPkg = {
+  tierId: TierId;
+  name: string;
+  gia: number;
+  displays: string[];       // bài PR này xuất hiện ở đâu
+};
+
+export type BannerRow = {
+  name: string;
+  size: string;             // "370 × 300" hoặc tên sản phẩm trong bảng combo
+  gia: number;
+  pos: string;              // vị trí hiển thị
+  note: string;             // ghi chú tự do ("Chia sẻ 3", "Chiết khấu 20%"…)
+};
+
+export type BannerTable = {
+  title: string;
+  sizeLabel: string;        // tiêu đề cột 2: "Kích thước (px)" hay "Sản phẩm"
+  rows: BannerRow[];
+};
+
 export type BillingData = {
   plans: Plan[];
   projectPlans?: Plan[];    // GÓI DỰ ÁN (CVR-PJ) — cùng cấu trúc với gói tin đăng
+  up?: UpRow[];             // bảng ĐẨY TIN (UP)
+  pr?: PrPkg[];             // gói PR / bài viết
+  prNotes?: string[];       // điều kiện kèm bảng PR
+  banners?: BannerTable[];  // bảng BANNER (Web · Mobile · Combo)
   promos: Promo[];
   free: FreePolicy;
   points: PointPolicy;
@@ -195,6 +233,77 @@ export const PROJECT_PLANS_DEFAULT: Plan[] = [
 ];
 
 // ── GIÁ CHUẨN HIỆN TẠI (khớp bảng giá đang đăng trên web) ───────────────────
+// ── ĐẨY TIN · PR · BANNER: MỨC CHUẨN ───────────────────────────────────────
+// Bốn cột của bảng Đẩy tin theo đúng thứ tự Diamond · Gold · Silver · Basic.
+export const UP_DEFAULT: UpRow[] = [
+  { label: "Up ngay", values: [{ gia: 90_000 }, { gia: 46_000 }, { gia: 17_000 }, { gia: 5_000 }] },
+  { label: "Up 3 lần (−20%)", values: [
+    { giaGoc: 270_000, gia: 216_000 }, { giaGoc: 138_000, gia: 110_400 },
+    { giaGoc: 51_000, gia: 40_800 }, { giaGoc: 15_000, gia: 12_000 },
+  ] },
+  { label: "Up 7 lần (−30%)", values: [
+    { giaGoc: 630_000, gia: 441_000 }, { giaGoc: 322_000, gia: 225_400 },
+    { giaGoc: 119_000, gia: 83_300 }, { giaGoc: 35_000, gia: 24_500 },
+  ] },
+  { label: "Up 13 lần (−40%)", values: [
+    { giaGoc: 1_170_000, gia: 702_000 }, { giaGoc: 598_000, gia: 358_800 },
+    { giaGoc: 221_000, gia: 132_600 }, { giaGoc: 65_000, gia: 39_000 },
+  ] },
+  { label: "Up 27 lần (−50%)", values: [
+    { giaGoc: 2_430_000, gia: 1_215_000 }, { giaGoc: 1_242_000, gia: 621_000 },
+    { giaGoc: 459_000, gia: 229_500 }, { giaGoc: 135_000, gia: 67_500 },
+  ] },
+];
+
+export const PR_DEFAULT: PrPkg[] = [
+  { tierId: "diamond", name: "CVR-PR Diamond", gia: 8_900_000, displays: ["Xuất hiện trên Trang chủ: box Tin tức.", "Xuất hiện trên trang chuyên mục Tin tức.", "Chia sẻ trên Fanpage Facebook của Coastal Land."] },
+  { tierId: "gold", name: "CVR-PR Gold", gia: 5_900_000, displays: ["Xuất hiện trên Trang chủ: box Tin tức.", "Xuất hiện trên trang chuyên mục Tin tức."] },
+  { tierId: "silver", name: "CVR-PR Silver", gia: 2_900_000, displays: ["Xuất hiện trên trang chuyên mục Tin tức."] },
+];
+
+export const PR_NOTES_DEFAULT: string[] = [
+  "Một bài PR không quá 5 ảnh minh hoạ.",
+  "Bài PR gửi trước 2 ngày.",
+  "Bài PR xuất hiện ở Trang chủ trong 1 ngày, xuất hiện trên trang chuyên mục Tin tức vĩnh viễn.",
+];
+
+export const BANNERS_DEFAULT: BannerTable[] = [
+  {
+    title: "Banner Web",
+    sizeLabel: "Kích thước (px)",
+    rows: [
+      { name: "CVR-BANNER Homepage 1", size: "370 × 300", gia: 7_500_000, pos: "Trang chủ", note: "Chia sẻ 3" },
+      { name: "CVR-BANNER Homepage 2", size: "370 × 312", gia: 5_000_000, pos: "Trang chủ", note: "Chia sẻ 3" },
+      { name: "CVR-BANNER Homepage 3", size: "370 × 430", gia: 6_000_000, pos: "Trang chủ", note: "Chia sẻ 3" },
+      { name: "CVR-BANNER Listing 1", size: "370 × 600", gia: 7_000_000, pos: "Trang danh sách Tin đăng / Dự án", note: "Chia sẻ 3" },
+      { name: "CVR-BANNER Listing 2", size: "370 × 320", gia: 3_000_000, pos: "Trang danh sách Tin đăng / Dự án", note: "Chia sẻ 3" },
+      { name: "CVR-BANNER Listing 3", size: "370 × 430", gia: 5_000_000, pos: "Trang danh sách Tin đăng / Dự án", note: "Chia sẻ 3" },
+    ],
+  },
+  {
+    title: "Banner Mobile Web",
+    sizeLabel: "Kích thước (px)",
+    rows: [
+      { name: "CVR-BANNER Mobile Homepage", size: "345 × 200", gia: 5_000_000, pos: "Trang chủ (mobile)", note: "Chia sẻ 3" },
+      { name: "CVR-BANNER Mobile Listing", size: "345 × 150", gia: 3_000_000, pos: "Trang chủ + Tin đăng (mobile)", note: "Bao toàn tỉnh lẻ: 1.500.000đ" },
+    ],
+  },
+  {
+    title: "Banner Web + Mobile Web (Combo)",
+    sizeLabel: "Sản phẩm",
+    rows: [
+      { name: "CVR-BANNER Combo Homepage", size: "Banner Homepage 1 + Mobile Homepage", gia: 10_000_000, pos: "Web + Mobile", note: "Chiết khấu 20%" },
+      { name: "CVR-BANNER Combo Listing", size: "Banner Listing 1 + Mobile Listing", gia: 8_900_000, pos: "Web + Mobile", note: "Chiết khấu 15%" },
+    ],
+  },
+];
+
+// Admin chưa lưu bảng nào thì dùng mức chuẩn — trang báo giá không bao giờ trống.
+export const bangUp = (d: BillingData): UpRow[] => (d.up?.length ? d.up : UP_DEFAULT);
+export const goiPr = (d: BillingData): PrPkg[] => (d.pr?.length ? d.pr : PR_DEFAULT);
+export const ghiChuPr = (d: BillingData): string[] => (d.prNotes?.length ? d.prNotes : PR_NOTES_DEFAULT);
+export const bangBanner = (d: BillingData): BannerTable[] => (d.banners?.length ? d.banners : BANNERS_DEFAULT);
+
 export const BILLING_DEFAULT: BillingData = {
   plans: [
     {
@@ -264,6 +373,10 @@ export const BILLING_DEFAULT: BillingData = {
   ],
   topupAmounts: [200_000, 500_000, 1_000_000, 2_000_000, 5_000_000, 10_000_000],
   projectPlans: PROJECT_PLANS_DEFAULT,
+  up: UP_DEFAULT,
+  pr: PR_DEFAULT,
+  prNotes: PR_NOTES_DEFAULT,
+  banners: BANNERS_DEFAULT,
 };
 
 // ── TÍNH GIÁ ────────────────────────────────────────────────────────────────
@@ -382,6 +495,7 @@ export function priceLinesFor(data: BillingData, tierId: TierId): PriceLineOut[]
   });
 }
 
-function dong(n: number): string {
+// Tiền trên TRANG BÁO GIÁ: "7.500.000đ" — cả trang dùng chung một kiểu.
+export function dong(n: number): string {
   return n.toLocaleString("vi-VN") + "đ";
 }
