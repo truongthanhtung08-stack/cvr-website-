@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { chuanHoaSdt } from "@/lib/phone";
-import HopXacThucSo from "@/components/HopXacThucSo";
+import HopXacThucSo, { veDaLuu } from "@/components/HopXacThucSo";
 
 // ============================================================================
 // CỔNG SỐ ĐIỆN THOẠI — full SĐT người đăng chỉ hiện sau khi khách tự định danh.
@@ -47,6 +47,27 @@ function useReveal(listingId: string) {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
+        // ĐÃ XÁC THỰC SỐ Ở TIN TRƯỚC → dùng lại vé, xem số ngay, khỏi nhập mã
+        // lại. Khách đang so mấy tin cùng lúc mà tin nào cũng bắt chờ mã thì
+        // không ai chịu nổi.
+        const ve = veDaLuu();
+        if (ve) {
+          const r = await fetch("/api/xem-so", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ listingId, ve }),
+          });
+          const j = await r.json();
+          if (j.ok && j.sdt) {
+            const num = chuanHoaSdt(j.sdt as string);
+            if (num) {
+              setPhone(num);
+              window.dispatchEvent(new CustomEvent(EVENT, { detail: { id: listingId, phone: num } }));
+              return;
+            }
+          }
+          // Vé hết hạn hoặc hỏng → hỏi lại từ đầu như khách mới.
+        }
         // Chưa đăng nhập → XÁC THỰC SỐ NGAY TẠI CHỖ, không đá sang trang đăng
         // nhập nữa. Bắt đặt mật khẩu và điền hồ sơ là phần lớn khách bỏ cuộc
         // ngay đó; hỏi số rồi gửi mã thì rào cản thấp hơn hẳn, mà sàn vẫn thu

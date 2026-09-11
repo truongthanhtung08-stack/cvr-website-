@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { phatMa, kiemMa, guiMaQuaZalo } from "@/lib/maXacThuc";
 import { chuanHoaSdt, laSdtVN } from "@/lib/phone";
+import { phatVe, docVe } from "@/lib/veXemSo";
 
 // ════════════════════════════════════════════════════════════════════════════
 // XEM SỐ NGƯỜI BÁN BẰNG CÁCH XÁC THỰC SỐ CỦA MÌNH (không cần tạo tài khoản)
@@ -22,7 +23,7 @@ import { chuanHoaSdt, laSdtVN } from "@/lib/phone";
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {
-  let body: { listingId?: string; sdt?: string; ma?: string; ten?: string };
+  let body: { listingId?: string; sdt?: string; ma?: string; ten?: string; ve?: string };
   try {
     body = await req.json();
   } catch {
@@ -32,8 +33,14 @@ export async function POST(req: Request) {
   const listingId = (body.listingId ?? "").trim();
   const sdt = chuanHoaSdt(body.sdt ?? "");
   const ma = (body.ma ?? "").trim();
+  // VÉ — đã xác thực số ở một tin trước đó thì không phải nhập mã lại.
+  const sdtTuVe = docVe(body.ve);
 
   if (!listingId) return loi("Thiếu mã tin.", 400);
+
+  // Có vé còn hạn → bỏ qua cả hai bước mã, trả số ngay.
+  if (sdtTuVe) return traSo(listingId, sdtTuVe, body.ten, null);
+
   if (!laSdtVN(sdt)) return loi("Số điện thoại chưa đúng.", 400);
 
   // ── BƯỚC 1: PHÁT MÃ ───────────────────────────────────────────────────────
@@ -61,6 +68,15 @@ export async function POST(req: Request) {
   const kiem = await kiemMa(sdt, "xac-minh-sdt", ma);
   if (!kiem.ok) return loi(kiem.loi, 400);
 
+  // Mã đúng → phát vé để lần sau xem tin khác khỏi phải nhập mã lại.
+  return traSo(listingId, sdt, body.ten, phatVe(sdt));
+}
+
+// ── TRẢ SỐ NGƯỜI BÁN + GHI LEAD ─────────────────────────────────────────────
+// Dùng chung cho cả hai đường vào: vừa nhập mã xong, hoặc đã có vé từ trước.
+// Cả hai đều là người đã xác thực số, nên đều phải ghi lead — người bán cần biết
+// ai vừa hỏi số ở tin nào, kể cả khách quay lại xem tin thứ hai thứ ba.
+async function traSo(listingId: string, sdtKhach: string, ten: string | undefined, ve: string | null) {
   const admin = createAdminClient();
   if (!admin) return loi("Máy chủ chưa cấu hình đủ.", 500);
 
@@ -86,15 +102,15 @@ export async function POST(req: Request) {
     .insert({
       listing_id: listingId,
       viewer_id: null,
-      viewer_name: (body.ten ?? "").trim() || null,
-      viewer_phone: sdt,
+      viewer_name: (ten ?? "").trim() || null,
+      viewer_phone: sdtKhach,
     })
     .then(
       () => undefined,
       () => undefined,
     );
 
-  return NextResponse.json({ ok: true, sdt: soNguoiBan });
+  return NextResponse.json({ ok: true, sdt: soNguoiBan, ...(ve ? { ve } : {}) });
 }
 
 function loi(message: string, status: number) {

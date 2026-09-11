@@ -16,6 +16,18 @@ import { useState } from "react";
 // KHÔNG bắt khách ngồi đợi một cái mã không bao giờ tới.
 // ════════════════════════════════════════════════════════════════════════════
 
+// Vé xác thực để trong máy khách. Vé do MÁY CHỦ ký, khách không tự chế được vé
+// mang số người khác.
+export const KHOA_VE = "cl-ve-xem-so";
+
+export function veDaLuu(): string | null {
+  try {
+    return localStorage.getItem(KHOA_VE);
+  } catch {
+    return null;
+  }
+}
+
 export default function HopXacThucSo({
   listingId,
   onXong,
@@ -44,7 +56,12 @@ export default function HopXacThucSo({
         body: JSON.stringify({ listingId, sdt: sdt.trim(), ten: ten.trim(), ...kem }),
       });
       const j = await r.json();
-      if (j.ok && j.sdt) return onXong(j.sdt as string);
+      if (j.ok && j.sdt) {
+        // Nhớ vé: lần sau xem tin khác không phải nhập mã lại. Vé chỉ nói "số
+        // này đã xác thực", không mở được tài khoản hay ví.
+        if (j.ve) { try { localStorage.setItem(KHOA_VE, j.ve as string); } catch { /* chặn lưu trữ → lần sau nhập mã lại */ } }
+        return onXong(j.sdt as string);
+      }
       if (j.ok && j.daGui) {
         setBuoc("ma");
         return;
