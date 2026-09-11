@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { asset } from "@/lib/asset";
 import { videoEmbedUrl, videoPosterUrl } from "@/lib/media";
+import VideoToanManHinh from "@/components/VideoToanManHinh";
 
 // ════════════════════════════════════════════════════════════════════════════
 // VIDEO TRONG THƯ VIỆN ẢNH — PHÁT TẠI CHỖ, DÙNG NÚT GỐC CỦA TRÌNH PHÁT.
@@ -42,6 +43,8 @@ export default function GallerySlideVideo({
   const ref = useRef<HTMLVideoElement>(null);
   const khungRef = useRef<HTMLIFrameElement>(null);
   const [posterSrc, setPosterSrc] = useState(poster?.hd ?? "");
+  // Bấm nút phóng to → mở trình xem riêng của web (nút Thoát và Xoay luôn hiện).
+  const [xemFull, setXemFull] = useState(false);
   const holdRef = useRef(onHold);
   const playingRef = useRef(false);
   const fullRef = useRef(false);
@@ -158,7 +161,7 @@ export default function GallerySlideVideo({
       // Dẹp bớt nút thừa trên thanh điều khiển: bỏ nút tải về và nút đổi tốc độ
       // phát, bỏ nút thu nhỏ góc màn. Còn lại đúng những nút khách cần — play,
       // tua, âm lượng, toàn màn hình.
-      controlsList="nodownload noplaybackrate"
+      controlsList="nodownload noplaybackrate nofullscreen"
       disablePictureInPicture
       muted={xemTruoc}
       preload="metadata"
@@ -186,13 +189,26 @@ export default function GallerySlideVideo({
     </video>
   );
 
-  // KHUNG VIDEO PHẢI TRỐNG TRƠN. Không huy hiệu, không nút của web, không lớp
-  // phủ nào — mọi thứ đè lên đây đều ăn mất cú chạm của khách và làm nút play /
-  // toàn màn hình của trình phát bấm không lên (chủ dự án báo đi báo lại 11/9/2026).
-  // Điều khiển video = NÚT CỦA CHÍNH TRÌNH PHÁT, không có ngoại lệ.
+  // Trong khung: thanh play/tua/âm lượng là của trình phát, nằm sát ĐÁY.
+  // Nút phóng to của web đặt ở GÓC TRÊN PHẢI — hai bên không bao giờ chồng nhau.
   return (
     <div className={`absolute inset-0 bg-black ${xemTruoc ? "pointer-events-none" : ""}`}>
       {video}
+
+      {!xemTruoc && active && (
+        <button
+          type="button"
+          onClick={() => setXemFull(true)}
+          aria-label="Xem toàn màn hình"
+          className="absolute right-2 top-2 z-[6] flex h-10 w-10 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm active:bg-black/75"
+        >
+          <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.9} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />
+          </svg>
+        </button>
+      )}
+
+      {xemFull && <VideoToanManHinh url={url} onClose={() => setXemFull(false)} />}
     </div>
   );
 }
