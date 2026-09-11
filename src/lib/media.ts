@@ -9,9 +9,15 @@ export function isVideoUrl(url: string): boolean {
 // rel=0: hết phim KHÔNG hiện gợi ý video của kênh khác (đối thủ) đè lên tin của mình.
 export function videoEmbedUrl(url: string): string | null {
   const yt = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,})/i);
-  if (yt) return `https://www.youtube.com/embed/${yt[1]}?rel=0&modestbranding=1&playsinline=1`;
+  // Bớt tối đa những thứ YouTube nhét thêm vào khung: gợi ý video kênh khác khi
+  // hết (rel=0), chú thích nổi (iv_load_policy=3), logo lớn (modestbranding=1),
+  // nút chia sẻ / xem sau (disablekb + fs=1 giữ lại đúng nút toàn màn hình).
+  // Khách chỉ cần play, tua, âm lượng, toàn màn hình — càng ít nút càng dễ bấm.
+  if (yt)
+    return `https://www.youtube.com/embed/${yt[1]}?rel=0&modestbranding=1&playsinline=1&iv_load_policy=3&fs=1&color=white`;
   const vi = url.match(/vimeo\.com\/(?:video\/)?(\d+)/i);
-  if (vi) return `https://player.vimeo.com/video/${vi[1]}`;
+  // Vimeo: tắt ảnh đại diện, tên kênh và nút chia sẻ trên khung phát.
+  if (vi) return `https://player.vimeo.com/video/${vi[1]}?byline=0&portrait=0&title=0`;
   return null;
 }
 

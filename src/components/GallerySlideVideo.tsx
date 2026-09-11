@@ -155,6 +155,11 @@ export default function GallerySlideVideo({
       src={`${asset(url)}#t=0.1`}
       playsInline
       controls={!xemTruoc}
+      // Dẹp bớt nút thừa trên thanh điều khiển: bỏ nút tải về và nút đổi tốc độ
+      // phát, bỏ nút thu nhỏ góc màn. Còn lại đúng những nút khách cần — play,
+      // tua, âm lượng, toàn màn hình.
+      controlsList="nodownload noplaybackrate"
+      disablePictureInPicture
       muted={xemTruoc}
       preload="metadata"
       // Biết video quay dọc hay ngang ngay khi tải xong phần mô tả, để thư viện
