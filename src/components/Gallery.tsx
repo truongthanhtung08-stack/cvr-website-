@@ -5,7 +5,6 @@ import Image from "next/image";
 import PhotoViewer from "@/components/PhotoViewer";
 import PhotoList from "@/components/PhotoList";
 import GallerySlideVideo from "@/components/GallerySlideVideo";
-import VideoToanManHinh from "@/components/VideoToanManHinh";
 
 // Thư viện ảnh trang chi tiết BĐS — bố cục kiểu Homedy:
 // 1 ảnh lớn bên trái + lưới 2×2 ảnh nhỏ bên phải.
@@ -13,8 +12,10 @@ import VideoToanManHinh from "@/components/VideoToanManHinh";
 // ảnh xếp dọc full bề ngang (cuộn tiếp ở cuối trang là thoát — xem PhotoList)
 // → bấm 1 ảnh mở toàn màn hình (vuốt ngang đổi ảnh, vuốt xuống thoát, zoom
 // không kéo ra ngoài khung) — xem PhotoViewer.
-// VIDEO của tin nằm NGAY TRONG thư viện này, là slide đầu tiên — trượt qua lại
-// như một tấm hình, tới lượt thì tự chạy (tắt tiếng).
+// VIDEO của tin nằm NGAY TRONG thư viện này, là slide ĐẦU TIÊN — khách xem tin là
+// xem cả ảnh lẫn video, hai thứ đi chung một dãy. Trên điện thoại KHÔNG tự chạy
+// slide: khách tự vuốt, bấm play thì video chạy ngay trong khung, nút toàn màn
+// hình là nút gốc của trình phát.
 export default function Gallery({
   images,
   videos = [],
@@ -31,8 +32,6 @@ export default function Gallery({
   const [bigIdx, setBigIdx] = useState(0); // slide LỚN đang hiện (tự chạy)
   const [paused, setPaused] = useState(false);
   const [hold, setHold] = useState(false); // đang xem video → tạm ngưng tự chuyển slide
-  // Video đang mở toàn màn hình (null = không mở).
-  const [videoFull, setVideoFull] = useState<string | null>(null);
 
   // ── ĐIỀU KHIỂN SLIDE LỚN TRÊN MÁY TÍNH: TOUCHPAD · PHÍM · CHẠM ───────────
   // Trước đây ảnh lớn chỉ TỰ CHẠY, khách muốn xem lại tấm vừa trôi qua thì không
@@ -61,26 +60,20 @@ export default function Gallery({
     ...images.map((src) => ({ kind: "image" as const, src })),
   ];
   const imgIdx = (m: number) => m - nVid;
+  // Slide hiện tại có phải video không — quyết định nhịp tự chạy và lớp phủ.
+  const bigIsVideo = bigIdx < nVid;
 
   // MOBILE: carousel vuốt 1 ảnh (kiểu Homedy) — theo dõi ảnh đang xem để đếm "Ảnh x/y".
   const [mCur, setMCur] = useState(0);
-  // Khách vừa vuốt/bấm → tạm ngưng tự chạy 8 giây rồi chạy tiếp.
-  const [mCham, setMCham] = useState(false);
-  const hetCham = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const chamVao = () => {
-    setMCham(true);
-    if (hetCham.current) clearTimeout(hetCham.current);
-    hetCham.current = setTimeout(() => setMCham(false), 8000);
-  };
-  useEffect(() => () => { if (hetCham.current) clearTimeout(hetCham.current); }, []);
   const mTrack = useRef<HTMLDivElement>(null);
   // Bấm ô nhỏ → nhảy thẳng tới slide đó.
   const nhayToi = (i: number) => {
     const el = mTrack.current;
     if (!el) return;
-    chamVao(); // khách vừa chọn tay → tạm ngưng tự chạy, 8 giây sau chạy tiếp
     el.scrollTo({ left: i * el.clientWidth, behavior: "smooth" });
   };
+
+  const mIsVideo = mCur < nVid;
 
   const onMScroll = () => {
     const el = mTrack.current;
@@ -98,20 +91,13 @@ export default function Gallery({
     dai.scrollTo({ left: Math.max(0, giua), behavior: "smooth" });
   }, [mCur]);
 
-  // ĐIỆN THOẠI cũng TỰ CHẠY slide 4s/slide như máy tính (video tính là một slide,
-  // nó không tự phát nên vẫn trôi qua như ảnh). Ngưng khi: khách đang xem video /
-  // phóng to, hoặc khách đã tự vuốt tay.
-  useEffect(() => {
-    if (hold || mCham || media.length < 2) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const t = setTimeout(() => {
-      const el = mTrack.current;
-      if (!el || el.clientWidth === 0) return; // đang ở khổ máy tính → bỏ qua
-      const ke = (Math.round(el.scrollLeft / el.clientWidth) + 1) % media.length;
-      el.scrollTo({ left: ke * el.clientWidth, behavior: "smooth" });
-    }, 4000);
-    return () => clearTimeout(t);
-  }, [hold, mCham, mCur, media.length]);
+  // ĐIỆN THOẠI: KHÔNG tự chạy slide — KHÁCH TỰ VUỐT (chủ dự án chốt 11/9/2026).
+  //
+  // Ảnh và video nằm chung một dãy, mà tự chạy thì lúc nào cũng có chỗ sai: đang
+  // đọc kỹ một tấm thì nó trôi mất, tới video thì hoặc cắt ngang người đang xem,
+  // hoặc phải đứng yên khiến khách tưởng máy treo. Bỏ hẳn tự chạy là xong: vuốt
+  // ngang đổi tấm, bấm ô nhỏ nhảy thẳng tới tấm muốn xem — đơn giản, không có gì
+  // để hiểu nhầm.
 
   // Slide lớn TỰ CHẠY qua tất cả ảnh (4s/slide, mờ nhẹ) — dừng khi rê chuột,
   // tôn trọng prefers-reduced-motion. Slide video chạy đúng nhịp mặc định như ảnh;
@@ -119,17 +105,15 @@ export default function Gallery({
   useEffect(() => {
     if (paused || hold || media.length < 2) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const t = setTimeout(() => setBigIdx((i) => (i + 1) % media.length), 4000);
+    const t = setTimeout(() => setBigIdx((i) => (i + 1) % media.length), bigIsVideo ? 7000 : 4000);
     return () => clearTimeout(t);
-  }, [paused, hold, bigIdx, media.length]);
+  }, [paused, hold, bigIdx, bigIsVideo, media.length]);
 
   if (media.length === 0) return null;
 
   // Ô nhỏ bên phải: 4 slide sau slide lớn
   const rightThumbs = media.slice(1, 5);
   const extra = media.length - 5; // số ảnh còn dư (hiện "+N" ở ô cuối)
-  const bigIsVideo = bigIdx < nVid;
-  const mIsVideo = mCur < nVid;
 
   // Huy hiệu nhỏ góc trái trên: tin này có bao nhiêu ẢNH và bao nhiêu VIDEO.
   const demMedia = (
@@ -157,19 +141,9 @@ export default function Gallery({
     <>
       {media.length === 1 ? (
         media[0].kind === "video" ? (
-          <button
-            type="button"
-            onClick={() => setVideoFull(media[0].src)}
-            aria-label="Xem video của tin"
-            className="relative aspect-[2/1] w-full overflow-hidden rounded-none border border-cvr-line bg-black"
-          >
-            <GallerySlideVideo url={media[0].src} active={false} xemTruoc />
-            <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
-              <span className="flex h-14 w-14 items-center justify-center rounded-full bg-white/90 shadow-lg">
-                <svg className="ml-1 h-7 w-7 text-black" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
-              </span>
-            </span>
-          </button>
+          <div className="relative aspect-[2/1] w-full overflow-hidden rounded-none border border-cvr-line bg-black">
+            <GallerySlideVideo url={media[0].src} active onHold={setHold} />
+          </div>
         ) : (
           <button type="button" onClick={() => open(0)} className="group relative block aspect-[2/1] w-full overflow-hidden rounded-none border border-cvr-line">
             <Image src={media[0].src} alt={alt} fill priority quality={90} sizes="(max-width:1024px) 100vw, 66vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
@@ -177,40 +151,52 @@ export default function Gallery({
         )
       ) : (
         <>
-        {/* ── ĐIỆN THOẠI: carousel vuốt 1 ảnh, tỷ lệ 4:3 to rõ, đếm "Ảnh x/y" (kiểu Homedy) ── */}
+        {/* ── ĐIỆN THOẠI: vuốt ngang đổi tấm, khổ 16:10 cho gọn chỗ ── */}
         <div className="sm:hidden">
           <div className="relative">
           <div
             ref={mTrack}
             onScroll={onMScroll}
-            onTouchStart={chamVao}
-            onPointerDown={chamVao}
             className="no-scrollbar flex snap-x snap-mandatory overflow-x-auto overscroll-x-contain"
           >
             {media.map((m, i) =>
               m.kind === "video" ? (
-                <button
+                // VIDEO PHÁT NGAY TẠI KHUNG ẢNH — bấm play là chạy tại chỗ, bấm
+                // nút toàn màn hình của trình phát mới phóng to, thoát ra thì thu
+                // về đúng khung này và vẫn đang chạy (chủ dự án chốt 11/9/2026).
+                // Trước đây bấm vào là nhảy thẳng sang một trình xem riêng —
+                // không ai xem kiểu đó.
+                <div
                   key={i}
-                  type="button"
-                  onClick={() => setVideoFull(m.src)}
-                  aria-label="Xem video của tin"
-                  className="relative aspect-[4/3] w-full shrink-0 snap-center overflow-hidden border border-cvr-line bg-black"
+                  className="relative aspect-[16/10] w-full shrink-0 snap-center overflow-hidden border border-cvr-line bg-black"
                 >
-
-                  <GallerySlideVideo url={m.src} active={false} xemTruoc />
-                  <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                    <span className="flex h-14 w-14 items-center justify-center rounded-full bg-white/90 shadow-lg">
-                      <svg className="ml-1 h-7 w-7 text-black" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+                  <GallerySlideVideo url={m.src} active={i === mCur} onHold={setHold} />
+                  {/* Nhãn ở ĐỈNH khung, không bao giờ xuống đáy: đáy là chỗ thanh
+                      điều khiển của trình phát. Cho khách biết đang ở video thứ
+                      mấy và ảnh vẫn còn ở bên phải — sau này tin nhiều video thì
+                      càng cần. */}
+                  <div className="pointer-events-none absolute inset-x-0 top-0 z-[5] flex items-start justify-between bg-gradient-to-b from-black/55 to-transparent px-2.5 pb-6 pt-2">
+                    <span className="flex items-center gap-1.5 text-[12.5px] font-medium text-white drop-shadow">
+                      <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+                        <rect x="3" y="6" width="12" height="12" rx="2" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="m15 10.5 6-3v9l-6-3v-3Z" />
+                      </svg>
+                      Video{nVid > 1 ? ` ${i + 1}/${nVid}` : ""}
                     </span>
-                  </span>
-                </button>
+                    {images.length > 0 && (
+                      <span className="text-[12.5px] font-medium text-white/85 drop-shadow">
+                        Vuốt xem {images.length} ảnh →
+                      </span>
+                    )}
+                  </div>
+                </div>
               ) : (
                 <button
                   key={i}
                   type="button"
                   onClick={() => open(imgIdx(i))}
                   aria-label={`Ảnh ${imgIdx(i) + 1}`}
-                  className="relative aspect-[4/3] w-full shrink-0 snap-center overflow-hidden border border-cvr-line bg-cvr-surface"
+                  className="relative aspect-[16/10] w-full shrink-0 snap-center overflow-hidden border border-cvr-line bg-cvr-surface"
                 >
                   <Image src={m.src} alt={`${alt} ${imgIdx(i) + 1}`} fill priority={i === nVid} quality={90} sizes="100vw" className="object-cover" />
                 </button>
@@ -218,23 +204,36 @@ export default function Gallery({
             )}
           </div>
           {/* ── LỚP ĐIỀU KHIỂN ĐÈ LÊN ĐÁY ẢNH ────────────────────────────────
-              Ảnh giữ nguyên khổ 4:3 đã duyệt, nhưng dãy ô nhỏ + hai nhãn nằm ĐÈ
-              lên đáy ảnh thay vì xếp bên dưới: không tốn thêm một pixel chiều
-              cao nào, phần thông tin tin đăng nhờ đó lên cao hơn hẳn. */}
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/35 to-transparent pb-1.5 pt-8">
-            <div className="mb-1.5 flex items-center justify-between px-2.5">
+              Dãy ô nhỏ + hai nhãn nằm ĐÈ lên đáy ảnh thay vì xếp bên dưới: không
+              tốn thêm một pixel chiều cao nào, phần thông tin tin đăng nhờ đó lên
+              cao hơn hẳn.
+              TỚI SLIDE VIDEO THÌ LỚP NÀY BIẾN MẤT — đáy khung là chỗ trình phát
+              đặt thanh play / toàn màn hình; đè lên đó thì khách bấm nút nào cũng
+              trượt, tưởng video hỏng. */}
+          <div
+            className={`pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/35 to-transparent pb-1.5 pt-8 transition-opacity ${
+              mIsVideo ? "invisible opacity-0" : "opacity-100"
+            }`}
+          >
+            {/* Một hàng duy nhất, chữ tối giản kiểu Batdongsan: bên trái là lối
+                mở toàn bộ ảnh, bên phải là vị trí đang xem. Không khung, không
+                nền — chữ trắng trên dải mờ là đủ đọc. */}
+            <div className="mb-1 flex items-center justify-between px-2.5">
               <button
                 type="button"
                 onClick={() => setList(true)}
-                className="pointer-events-auto flex items-center gap-1.5 text-[13px] font-medium text-white drop-shadow active:opacity-70"
+                className="pointer-events-auto flex items-center gap-1.5 text-[12.5px] font-medium text-white drop-shadow active:opacity-70"
               >
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.9} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h10" />
+                  <rect x="3" y="3" width="7" height="7" rx="1.2" />
+                  <rect x="14" y="3" width="7" height="7" rx="1.2" />
+                  <rect x="3" y="14" width="7" height="7" rx="1.2" />
+                  <rect x="14" y="14" width="7" height="7" rx="1.2" />
                 </svg>
-                Xem tất cả {images.length} ảnh
+                Tất cả ảnh
               </button>
               {!mIsVideo && (
-                <span className="text-[13px] font-medium text-white drop-shadow">
+                <span className="text-[12.5px] font-medium text-white drop-shadow">
                   {imgIdx(mCur) + 1}/{images.length}
                 </span>
               )}
@@ -384,7 +383,6 @@ export default function Gallery({
           onClose={close}
         />
       )}
-      {videoFull && <VideoToanManHinh url={videoFull} onClose={() => setVideoFull(null)} />}
     </>
   );
 }

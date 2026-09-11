@@ -4,21 +4,24 @@ import { useEffect, useRef, useState } from "react";
 import { asset } from "@/lib/asset";
 import { videoEmbedUrl, videoPosterUrl } from "@/lib/media";
 
-// VIDEO NẰM TRONG THƯ VIỆN ẢNH — coi như MỘT TẤM HÌNH của tin:
-//   · lấp đầy đúng khung ảnh (object-contain trên nền đen) → không bao giờ to quá khung
-//   · KHÔNG tự chạy: hiện sẵn KHUNG HÌNH ĐẦU (preload="metadata" + "#t=0.1") nên
-//     không còn ô trắng trống; khách bấm nút play mới chạy (có tiếng).
-//   · Đang xem thì thư viện NGƯNG tự chuyển slide (onHold), xem xong chạy tiếp.
+// ════════════════════════════════════════════════════════════════════════════
+// VIDEO TRONG THƯ VIỆN ẢNH — PHÁT TẠI CHỖ, DÙNG NÚT GỐC CỦA TRÌNH PHÁT.
 //
-// TOÀN MÀN HÌNH = NÚT MẶC ĐỊNH CỦA TRÌNH PHÁT (chủ dự án chốt trong file yêu cầu).
-// Trước đây web tự vẽ nút "Phóng to/Thu nhỏ" và CHẶN nút toàn màn hình của trình
-// duyệt (controlsList="nofullscreen"). Làm vậy trông không chuyên nghiệp và khác
-// hẳn thói quen của khách. Nay trả lại đúng bộ nút gốc: bấm toàn màn hình là
-// trình phát của máy lo — thoát cũng bằng nút của nó, giống YouTube, giống mọi
-// ứng dụng khác.
+// Luồng chuẩn (chủ dự án chốt 11/9/2026):
+//   bấm play → chạy ngay trong khung ảnh
+//   bấm nút toàn màn hình của trình phát → phóng to
+//   thoát toàn màn hình → thu về đúng khung ảnh, vẫn đang chạy
+//
+// KHÔNG VẼ THÊM NÚT NÀO. Play, toàn màn hình, âm lượng, tua — tất cả là nút gốc
+// của trình phát, khách đã quen tay ở YouTube và mọi ứng dụng khác. Web từng tự
+// vẽ nút "Phóng to/Thu nhỏ", rồi cả một trình xem riêng có nút Đóng/Xoay — đều
+// đã bỏ: tự vẽ thì vừa xấu vừa dễ kẹt, mà không thêm được gì.
 //
 // XOAY MÀN HÌNH: web KHÔNG can thiệp. Khách xoay ngang thì video ngang, cầm dọc
-// thì xem dọc — trình phát của máy lo. Đừng bao giờ khoá hướng màn hình.
+// thì xem dọc. Đừng bao giờ khoá hướng màn hình.
+//
+// Đang xem thì thư viện NGƯNG tự chuyển slide (onHold), xem xong chạy tiếp.
+// ════════════════════════════════════════════════════════════════════════════
 export default function GallerySlideVideo({
   url,
   active,
@@ -28,14 +31,13 @@ export default function GallerySlideVideo({
   url: string;
   active: boolean;                 // đang là slide hiện tại
   onHold?: (giu: boolean) => void; // đang xem / đang toàn màn hình → giữ slide, đừng tự chuyển
-  // Chỉ làm ảnh bìa: bỏ thanh điều khiển, không bắt chạm (bấm cả khung sẽ mở
-  // trình xem toàn màn hình — xem Gallery.tsx).
+  /** Chỉ làm ảnh bìa (ô nhỏ trong dãy chọn): bỏ thanh điều khiển, không bắt chạm. */
   xemTruoc?: boolean;
 }) {
   const embed = videoEmbedUrl(url);
   const poster = videoPosterUrl(url);
   const ref = useRef<HTMLVideoElement>(null);
-  const [chay, setChay] = useState(false); // đã bấm play (dùng cho YouTube/Vimeo)
+  const khungRef = useRef<HTMLIFrameElement>(null);
   const [posterSrc, setPosterSrc] = useState(poster?.hd ?? "");
   const holdRef = useRef(onHold);
   const playingRef = useRef(false);
@@ -44,26 +46,43 @@ export default function GallerySlideVideo({
   useEffect(() => {
     holdRef.current = onHold;
   });
-  const bao = () => holdRef.current?.(playingRef.current || fullRef.current);
+  // KHÁCH ĐÃ ĐỘNG VÀO VIDEO THÌ SLIDE ĐỨNG YÊN, CHƯA ĐỘNG THÌ VẪN TRÔI.
+  //
+  // Đứng yên vĩnh viễn ở slide video cũng sai: khách mở tin ra, chưa muốn xem
+  // video, mà thư viện không bao giờ trôi sang ảnh thì tưởng web đứng máy.
+  // Nên: chưa bấm gì → slide trôi bình thường (chỉ chậm hơn một nhịp); đã bấm
+  // play → giữ nguyên tới khi khách tự vuốt đi.
+  const dungVaoRef = useRef(false);
+  const bao = () =>
+    holdRef.current?.(playingRef.current || fullRef.current || dungVaoRef.current);
 
-  // Rời slide → về lại trạng thái "chưa bấm play" (chỉnh state ngay trong lượt vẽ,
-  // đúng cách React khuyên khi state phải theo prop).
-  const [truoc, setTruoc] = useState(active);
-  if (truoc !== active) {
-    setTruoc(active);
-    if (!active) setChay(false);
-  }
-
-  // Rời slide → dừng video, trả quyền tự chạy slide lại cho thư viện.
+  // YouTube/Vimeo không báo cho mình biết khách đã bấm play hay chưa. Mẹo chuẩn:
+  // khi khách chạm vào iframe, tiêu điểm nhảy vào chính iframe đó — bắt được là
+  // biết khách đang xem.
   useEffect(() => {
-    if (active) return;
-    const v = ref.current;
-    if (v) {
-      v.pause();
-      v.currentTime = 0;
+    if (!embed || !active) return;
+    const nhinTieuDiem = () => {
+      if (document.activeElement === khungRef.current) {
+        dungVaoRef.current = true;
+        bao();
+      }
+    };
+    window.addEventListener("blur", nhinTieuDiem);
+    return () => window.removeEventListener("blur", nhinTieuDiem);
+  }, [embed, active]);
+
+  // Rời slide → dừng hẳn video tự đăng, trả quyền tự chạy lại cho thư viện.
+  useEffect(() => {
+    if (!active) {
+      const v = ref.current;
+      if (v) {
+        v.pause();
+        v.currentTime = 0;
+      }
+      playingRef.current = false;
+      dungVaoRef.current = false;
     }
-    playingRef.current = false;
-    bao();
+    holdRef.current?.(playingRef.current || fullRef.current || dungVaoRef.current);
   }, [active]);
 
   // TOÀN MÀN HÌNH: chỉ để giữ slide đứng yên trong lúc khách đang xem.
@@ -97,11 +116,14 @@ export default function GallerySlideVideo({
   useEffect(() => () => holdRef.current?.(false), []);
 
   const video = embed ? (
-    // YouTube/Vimeo — KHÔNG tự chạy (chủ dự án chốt 5/9). Slide video trôi qua như
-    // một tấm ảnh: hiện KHUNG HÌNH THẬT + nút play, khách bấm mới phát (có tiếng).
-    chay ? (
+    // YouTube/Vimeo — KHÔNG vẽ thêm nút nào. Tới lượt slide này thì nạp thẳng
+    // trình phát của họ: nút play, toàn màn hình, âm lượng đều là nút GỐC, khách
+    // đã quen tay (chủ dự án chốt 11/9/2026). Slide chưa tới lượt thì chỉ hiện
+    // khung hình chờ — không nạp iframe cho nhẹ trang.
+    active ? (
       <iframe
-        src={`${embed}${embed.includes("?") ? "&" : "?"}autoplay=1`}
+        ref={khungRef}
+        src={embed}
         title="Video"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
         // allowFullScreen: thiếu thuộc tính này thì nút toàn màn hình CỦA YOUTUBE
@@ -110,16 +132,7 @@ export default function GallerySlideVideo({
         className="h-full w-full bg-black"
       />
     ) : (
-      <button
-        type="button"
-        onClick={() => {
-          setChay(true);
-          playingRef.current = true;
-          bao();
-        }}
-        aria-label="Phát video"
-        className="relative flex h-full w-full items-center justify-center bg-black"
-      >
+      <div className="relative flex h-full w-full items-center justify-center bg-black">
         {/* KHUNG HÌNH CHỜ — không để ô đen trơn. Ảnh lấy thẳng từ YouTube nên không
             tốn dung lượng kho của mình; maxres thiếu thì lùi về hq. */}
         {poster && (
@@ -131,12 +144,7 @@ export default function GallerySlideVideo({
             className="absolute inset-0 h-full w-full object-contain"
           />
         )}
-        <span className="relative flex h-16 w-16 items-center justify-center rounded-full bg-white/90 shadow-lg transition hover:scale-105">
-          <svg className="ml-1 h-7 w-7 text-black" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M8 5v14l11-7z" />
-          </svg>
-        </span>
-      </button>
+      </div>
     )
   ) : (
     <video
