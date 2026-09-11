@@ -10,12 +10,20 @@ export default function RecordView({ id }: { id: string }) {
     recordView(id); // lịch sử "đã xem" (localStorage) — cho mục "Dành cho bạn"
 
     // Đếm LƯỢT XEM THẬT vào DB (cột listings.view_count) qua RPC increment_listing_view.
-    // Mỗi phiên trình duyệt chỉ tính 1 lần/tin để không thổi phồng con số cho người bán.
+    //
+    // MỖI LẦN MỞ TIN LÀ MỘT LƯỢT XEM — khách đóng rồi mở lại, hoặc hôm sau quay
+    // lại xem tiếp, đều là lượt xem có thật. Trước đây chặn cứng "một lần mỗi
+    // phiên trình duyệt" nên bảng người xem ghi 5 lần mà lượt xem chỉ tăng 1,
+    // hai con số nói hai chuyện khác nhau.
+    //
+    // Vẫn phải có khoảng cách để F5 liên tục không thổi số: 30 PHÚT, đúng mốc mà
+    // các công cụ thống kê vẫn dùng để tính một phiên xem mới.
     // Không await — trang không phụ thuộc kết quả; lỗi/thiếu env thì bỏ qua êm.
     try {
       const key = `cl_viewed_${id}`;
-      if (!sessionStorage.getItem(key)) {
-        sessionStorage.setItem(key, "1");
+      const truoc = Number(sessionStorage.getItem(key) || 0);
+      if (Date.now() - truoc > 30 * 60_000) {
+        sessionStorage.setItem(key, String(Date.now()));
         createClient().rpc("increment_listing_view", { p_listing_id: id });
       }
 

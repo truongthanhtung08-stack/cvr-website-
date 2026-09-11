@@ -31,6 +31,8 @@ type NguoiXem = {
   viewer_name: string | null;
   viewer_phone: string | null;
   lan_cuoi: string;
+  /** Số NGÀY khách này quay lại xem tin — gom từ nhiều dòng theo ngày. */
+  soNgay: number;
 };
 
 type DongTin = { id: string; title: string; hienThi: number; nguoiXem: number; xem7: number; xem30: number; tong: number; hoiSo: number };
@@ -101,8 +103,30 @@ export default function TuongTacPage() {
         demHt.set(d.listing_id, (demHt.get(d.listing_id) ?? 0) + (Number(d.luot) || 0));
       }
 
-      const dsXem = (nx ?? []) as NguoiXem[];
+      // GOM THEO TỪNG KHÁCH. Bảng lưu mỗi người mỗi tin MỖI NGÀY một dòng, nên
+      // khách xem ba ngày liên tiếp sẽ ra ba dòng cùng tên — người bán nhìn vào
+      // tưởng ba người. Cộng lại thành: khách này xem TỔNG bao nhiêu lần, quay
+      // lại mấy ngày, lần gần nhất lúc nào. Đó mới là thứ đo được độ quan tâm.
+      const goi = new Map<string, NguoiXem>();
+      for (const v of (nx ?? []) as NguoiXem[]) {
+        const khoa = v.listing_id + "|" + v.viewer_id;
+        const cu = goi.get(khoa);
+        if (!cu) {
+          goi.set(khoa, { ...v, soNgay: 1 });
+          continue;
+        }
+        cu.lan_xem += Number(v.lan_xem) || 0;
+        cu.soNgay += 1;
+        // Danh sách đã sắp theo lan_cuoi giảm dần nên dòng đầu là mới nhất;
+        // tên/số lấy dòng nào có thì giữ.
+        cu.viewer_name = cu.viewer_name ?? v.viewer_name;
+        cu.viewer_phone = cu.viewer_phone ?? v.viewer_phone;
+      }
+      const dsXem = [...goi.values()].sort((a, b) => b.lan_xem - a.lan_xem);
       setNguoiXem(dsXem);
+
+      // Đếm SỐ KHÁCH của mỗi tin (không phải số dòng) — một người xem mười lần
+      // vẫn là một người quan tâm.
       const demXem = new Map<string, number>();
       for (const v of dsXem) demXem.set(v.listing_id, (demXem.get(v.listing_id) ?? 0) + 1);
 
@@ -210,7 +234,7 @@ export default function TuongTacPage() {
           <ul className="mt-3 space-y-2">
             {nguoiXem.map((v) => (
               <li
-                key={`${v.listing_id}-${v.viewer_id}-${v.lan_cuoi}`}
+                key={`${v.listing_id}-${v.viewer_id}`}
                 className="flex items-center justify-between gap-3 rounded-xl bg-cvr-surface px-3 py-2.5"
               >
                 <div className="min-w-0">
@@ -224,6 +248,7 @@ export default function TuongTacPage() {
                     {v.lan_xem > 1 && (
                       <span className="ml-1.5 rounded-full bg-cvr-blue/10 px-2 py-0.5 text-[11px] font-semibold text-cvr-blue-ink">
                         xem {v.lan_xem} lần
+                        {v.soNgay > 1 ? " · " + v.soNgay + " ngày" : ""}
                       </span>
                     )}
                   </p>
