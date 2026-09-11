@@ -24,11 +24,21 @@ type Lead = {
   created_at: string;
 };
 
-type DongTin = { id: string; title: string; hienThi: number; xem7: number; xem30: number; tong: number; hoiSo: number };
+type NguoiXem = {
+  listing_id: string;
+  viewer_id: string;
+  lan_xem: number;
+  viewer_name: string | null;
+  viewer_phone: string | null;
+  lan_cuoi: string;
+};
+
+type DongTin = { id: string; title: string; hienThi: number; nguoiXem: number; xem7: number; xem30: number; tong: number; hoiSo: number };
 
 export default function TuongTacPage() {
   const [tin, setTin] = useState<DongTin[] | null>(null);
   const [leads, setLeads] = useState<Lead[]>([]);
+  const [nguoiXem, setNguoiXem] = useState<NguoiXem[]>([]);
   const [tenTin, setTenTin] = useState<Map<string, string>>(new Map());
 
   useEffect(() => {
@@ -56,11 +66,19 @@ export default function TuongTacPage() {
       const moc7 = moc(7);
       const moc30 = moc(30);
 
-      const [{ data: xem }, { data: ht }, { data: ld }] = await Promise.all([
+      const [{ data: xem }, { data: ht }, { data: nx }, { data: ld }] = await Promise.all([
         supabase.from("listing_view_daily").select("listing_id,ngay,luot").in("listing_id", ids).gte("ngay", moc30),
         // Lượt HIỂN THỊ 30 ngày — bảng này là migration 0030, chưa chạy thì cột
         // hiển thị để trống, phần còn lại của trang vẫn dùng bình thường.
         supabase.from("listing_impression_daily").select("listing_id,luot").in("listing_id", ids).gte("ngay", moc30),
+        // NGƯỜI XEM — thành viên đăng nhập đã mở tin (migration 0031). Chưa chạy
+        // thì phần này để trống, trang vẫn dùng bình thường.
+        supabase
+          .from("listing_viewer")
+          .select("listing_id,viewer_id,lan_xem,viewer_name,viewer_phone,lan_cuoi")
+          .in("listing_id", ids)
+          .order("lan_cuoi", { ascending: false })
+          .limit(200),
         supabase
           .from("listing_leads")
           .select("id,listing_id,viewer_name,viewer_phone,created_at")
@@ -83,6 +101,11 @@ export default function TuongTacPage() {
         demHt.set(d.listing_id, (demHt.get(d.listing_id) ?? 0) + (Number(d.luot) || 0));
       }
 
+      const dsXem = (nx ?? []) as NguoiXem[];
+      setNguoiXem(dsXem);
+      const demXem = new Map<string, number>();
+      for (const v of dsXem) demXem.set(v.listing_id, (demXem.get(v.listing_id) ?? 0) + 1);
+
       const dsLead = (ld ?? []) as Lead[];
       setLeads(dsLead);
       const demLead = new Map<string, number>();
@@ -94,6 +117,7 @@ export default function TuongTacPage() {
             id: l.id,
             title: l.title,
             hienThi: demHt.get(l.id) ?? 0,
+            nguoiXem: demXem.get(l.id) ?? 0,
             xem7: bay.get(l.id) ?? 0,
             xem30: bamuoi.get(l.id) ?? 0,
             tong: Number(l.view_count ?? 0),
@@ -107,6 +131,7 @@ export default function TuongTacPage() {
   // Cộng dồn 30 ngày để nói được câu chuyện Hiển thị → Xem → Hỏi số.
   const tongHienThi = (tin ?? []).reduce((s, t) => s + t.hienThi, 0);
   const tongXem30 = (tin ?? []).reduce((s, t) => s + t.xem30, 0);
+  const tongNguoiXem = (tin ?? []).reduce((s, t) => s + t.nguoiXem, 0);
   const tongHoiSo = (tin ?? []).reduce((s, t) => s + t.hoiSo, 0);
   const tyLe = tongHienThi > 0 ? (tongXem30 / tongHienThi) * 100 : 0;
 
@@ -173,6 +198,48 @@ export default function TuongTacPage() {
       {/* ── TIN NÀO ĐANG CHẠY ────────────────────────────────────────────────
           Bấm vào tên tin là sang trang thống kê riêng của tin đó (biểu đồ 30
           ngày + danh sách người quan tâm của chính tin ấy). */}
+      {/* ── THÀNH VIÊN ĐÃ XEM TIN ────────────────────────────────────────────
+          Nhóm này LỚN HƠN NHIỀU nhóm đã hỏi số: phần lớn khách xem xong đóng
+          lại, trước nay người bán không biết gì về họ.
+          SỐ ĐIỆN THOẠI CHE BỚT cho tới khi chính họ bấm "hiện số" — lộ hết số
+          của người mới chỉ xem lướt thì người mua sẽ ngại xem, mà người mua là
+          nguồn sống của sàn. Ai đã hỏi số thì đã nằm ở khối trên, có số đầy đủ. */}
+      {nguoiXem.length > 0 && (
+        <section className="rounded-2xl border border-cvr-line bg-white p-5 shadow-sm">
+          <h2 className="text-base font-semibold text-cvr-ink">Thành viên đã xem tin</h2>
+          <ul className="mt-3 space-y-2">
+            {nguoiXem.map((v) => (
+              <li
+                key={`${v.listing_id}-${v.viewer_id}-${v.lan_cuoi}`}
+                className="flex items-center justify-between gap-3 rounded-xl bg-cvr-surface px-3 py-2.5"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-cvr-ink">
+                    {v.viewer_name || "Thành viên"}
+                    {v.viewer_phone && (
+                      <span className="font-normal text-cvr-muted"> · {cheSo(v.viewer_phone)}</span>
+                    )}
+                    {/* Xem đi xem lại nhiều lần là dấu hiệu quan tâm thật — đáng
+                        để người bán chú ý hơn người chỉ ghé một lần. */}
+                    {v.lan_xem > 1 && (
+                      <span className="ml-1.5 rounded-full bg-cvr-blue/10 px-2 py-0.5 text-[11px] font-semibold text-cvr-blue-ink">
+                        xem {v.lan_xem} lần
+                      </span>
+                    )}
+                  </p>
+                  <p className="truncate text-xs text-cvr-muted">
+                    <Link href={`/tai-khoan/tin-dang/${v.listing_id}`} className="hover:underline">
+                      {tenTin.get(v.listing_id) ?? "Tin đã xoá"}
+                    </Link>{" "}
+                    · {truocDay(v.lan_cuoi)}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       {/* ── BA CON SỐ KỂ MỘT CÂU CHUYỆN ──────────────────────────────────────
           Hiển thị → Xem tin → Hỏi số. Tỷ lệ giữa chúng cho biết phải sửa chỗ nào:
           bày nhiều mà ít bấm là tiêu đề/ảnh chưa tốt; bấm nhiều mà không ai hỏi
@@ -180,9 +247,10 @@ export default function TuongTacPage() {
           của mình, khách chỉ cần số của chính tin họ. */}
       <section className="rounded-2xl border border-cvr-line bg-white p-5 shadow-sm">
         <h2 className="text-base font-semibold text-cvr-ink">30 ngày qua</h2>
-        <div className="mt-3 grid grid-cols-3 gap-3">
+        <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
           <O nhan="Lượt hiển thị" so={tongHienThi} />
           <O nhan="Lượt xem tin" so={tongXem30} />
+          <O nhan="Thành viên đã xem" so={tongNguoiXem} />
           <O nhan="Hỏi số" so={tongHoiSo} accent />
         </div>
         {tongHienThi > 0 && (
@@ -251,4 +319,13 @@ function O({ nhan, so, accent }: { nhan: string; so: number; accent?: boolean })
       </p>
     </div>
   );
+}
+
+// Che giữa số điện thoại: 0912 *** 456. Người bán biết có khách thật đang quan
+// tâm, nhưng số đầy đủ chỉ hiện khi chính khách bấm "hiện số" — người mua mới
+// chỉ xem lướt mà đã lộ hết số thì lần sau họ ngại xem.
+function cheSo(sdt: string): string {
+  const so = sdt.replace(/\D/g, "");
+  if (so.length < 7) return "***";
+  return so.slice(0, 4) + " *** " + so.slice(-3);
 }
