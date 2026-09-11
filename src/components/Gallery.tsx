@@ -80,17 +80,6 @@ export default function Gallery({
     if (el) setMCur(Math.round(el.scrollLeft / el.clientWidth));
   };
 
-  // Ô nhỏ đang xem phải TỰ trôi vào giữa dãy. Không có cái này thì xem tới tấm
-  // thứ 6 là ô đang chọn đã nằm ngoài màn, khách không biết mình đang ở đâu.
-  const mThumbs = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const dai = mThumbs.current;
-    const o = dai?.querySelector<HTMLElement>(`[data-o="${mCur}"]`);
-    if (!dai || !o) return;
-    const giua = o.offsetLeft - dai.clientWidth / 2 + o.clientWidth / 2;
-    dai.scrollTo({ left: Math.max(0, giua), behavior: "smooth" });
-  }, [mCur]);
-
   // ĐIỆN THOẠI: KHÔNG tự chạy slide — KHÁCH TỰ VUỐT (chủ dự án chốt 11/9/2026).
   //
   // Ảnh và video nằm chung một dãy, mà tự chạy thì lúc nào cũng có chỗ sai: đang
@@ -203,13 +192,43 @@ export default function Gallery({
               ),
             )}
           </div>
-          {/* ── LỚP ĐIỀU KHIỂN ĐÈ LÊN ĐÁY ẢNH ────────────────────────────────
-              Dãy ô nhỏ + hai nhãn nằm ĐÈ lên đáy ảnh thay vì xếp bên dưới: không
-              tốn thêm một pixel chiều cao nào, phần thông tin tin đăng nhờ đó lên
-              cao hơn hẳn.
-              TỚI SLIDE VIDEO THÌ LỚP NÀY BIẾN MẤT — đáy khung là chỗ trình phát
-              đặt thanh play / toàn màn hình; đè lên đó thì khách bấm nút nào cũng
-              trượt, tưởng video hỏng. */}
+          {/* ── NÚT CHUYỂN TẤM Ở HAI BÊN ─────────────────────────────────────
+              Thay cho dãy ô nhỏ dưới đáy: không ăn chiều cao, và nằm ở giữa hai
+              cạnh nên KHÔNG bao giờ đè lên thanh điều khiển của trình phát video
+              (thanh đó nằm sát đáy). Ở tấm đầu thì ẩn nút trái, tấm cuối ẩn nút
+              phải — khách nhìn là biết còn tấm nào nữa hay không. */}
+          {media.length > 1 && (
+            <>
+              {mCur > 0 && (
+                <button
+                  type="button"
+                  onClick={() => nhayToi(mCur - 1)}
+                  aria-label="Tấm trước"
+                  className="absolute left-2 top-1/2 z-[6] flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 text-white backdrop-blur-sm active:bg-black/65"
+                >
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+              )}
+              {mCur < media.length - 1 && (
+                <button
+                  type="button"
+                  onClick={() => nhayToi(mCur + 1)}
+                  aria-label="Tấm sau"
+                  className="absolute right-2 top-1/2 z-[6] flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 text-white backdrop-blur-sm active:bg-black/65"
+                >
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              )}
+            </>
+          )}
+
+          {/* ── NHÃN ĐÈ ĐÁY ẢNH — chỉ một hàng chữ, không ăn chiều cao.
+              TỚI SLIDE VIDEO THÌ ẨN: đáy khung là chỗ trình phát đặt thanh play /
+              toàn màn hình; đè lên đó thì khách bấm nút nào cũng trượt. */}
           <div
             className={`pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/35 to-transparent pb-1.5 pt-8 transition-opacity ${
               mIsVideo ? "invisible opacity-0" : "opacity-100"
@@ -239,42 +258,6 @@ export default function Gallery({
               )}
             </div>
 
-            {/* DÃY Ô NHỎ — CUỘN NGANG, CÓ ĐỦ MỌI TẤM.
-                Bản cũ chỉ hiện 4 ô rồi đè ô thứ tư thành "+N": ảnh thứ 5 trở đi
-                không có cách nào chọn, dãy cũng không kéo được (chủ dự án báo
-                11/9/2026). Nay dãy kéo ngang tự do, ô đang xem viền trắng và TỰ
-                cuộn vào giữa tầm nhìn mỗi khi đổi ảnh. */}
-            {media.length > 1 && (
-              <div
-                ref={mThumbs}
-                className="no-scrollbar pointer-events-auto flex gap-1 overflow-x-auto overscroll-x-contain px-2"
-              >
-                {media.map((m, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    data-o={i}
-                    onClick={() => nhayToi(i)}
-                    aria-label={m.kind === "video" ? "Xem video" : `Xem ảnh ${imgIdx(i) + 1}`}
-                    aria-current={i === mCur}
-                    className={`relative h-9 w-12 shrink-0 overflow-hidden rounded bg-black/30 transition ${
-                      i === mCur ? "ring-2 ring-white" : "opacity-55 ring-1 ring-white/40"
-                    }`}
-                  >
-                    {m.kind === "video" ? (
-                      <>
-                        <GallerySlideVideo url={m.src} active={false} xemTruoc />
-                        <span className="absolute inset-0 flex items-center justify-center bg-black/25">
-                          <svg className="ml-0.5 h-4 w-4 text-white drop-shadow" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
-                        </span>
-                      </>
-                    ) : (
-                      <Image src={m.src} alt="" fill sizes="48px" className="object-cover" />
-                    )}
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
           </div>
         </div>
