@@ -46,14 +46,10 @@ export default function VideoToanManHinh({
 
   return (
     <div className="fixed inset-0 z-[100] flex flex-col bg-black">
-      {/* THANH NÚT — luôn hiện, nằm trên video, z cao hơn */}
+      {/* THANH NÚT — luôn hiện, nằm trên video, z cao hơn.
+          Nút thu nhỏ đặt ĐÚNG GÓC TRÊN PHẢI, cùng chỗ với nút phóng to ở khung
+          nhỏ: bấm một chỗ để mở, bấm lại chính chỗ đó để thoát. */}
       <div className="relative z-10 flex shrink-0 items-center justify-between px-1 pt-[max(6px,env(safe-area-inset-top))]">
-        <button type="button" onClick={onClose} className={nut} aria-label="Thoát">
-          <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-          </svg>
-          Thoát
-        </button>
         <button
           type="button"
           onClick={() => setXoay((v) => !v)}
@@ -65,6 +61,11 @@ export default function VideoToanManHinh({
             <path strokeLinecap="round" strokeLinejoin="round" d="M20 4v3h-3M4 20v-3h3" />
           </svg>
           Xoay
+        </button>
+        <button type="button" onClick={onClose} className={nut} aria-label="Thoát toàn màn hình">
+          <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" />
+          </svg>
         </button>
       </div>
 
