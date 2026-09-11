@@ -45,11 +45,12 @@ export default function VideoToanManHinh({
     "flex h-11 items-center gap-2 rounded-full px-4 text-[15px] font-medium text-white active:bg-white/20";
 
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col bg-black">
-      {/* THANH NÚT — luôn hiện, nằm trên video, z cao hơn.
-          Nút thu nhỏ đặt ĐÚNG GÓC TRÊN PHẢI, cùng chỗ với nút phóng to ở khung
-          nhỏ: bấm một chỗ để mở, bấm lại chính chỗ đó để thoát. */}
-      <div className="relative z-10 flex shrink-0 items-center justify-between px-1 pt-[max(6px,env(safe-area-inset-top))]">
+    <div className="fixed inset-0 z-[100] bg-black">
+      {/* HAI NÚT ĐÈ THẲNG LÊN VIDEO, LUÔN HIỆN — không tự ẩn như nút của trình
+          duyệt. Nút thu nhỏ đặt ĐÚNG GÓC TRÊN PHẢI, cùng chỗ với nút phóng to ở
+          khung nhỏ: bấm một chỗ để mở, bấm lại chính chỗ đó để thoát. Nút Xoay
+          bấm lại thì xoay về. Chỉ hai nút này, không hơn. */}
+      <div className="absolute inset-x-0 top-0 z-10 flex items-center justify-between bg-gradient-to-b from-black/60 to-transparent px-1 pb-8 pt-[max(6px,env(safe-area-inset-top))]">
         <button
           type="button"
           onClick={() => setXoay((v) => !v)}
@@ -69,9 +70,9 @@ export default function VideoToanManHinh({
         </button>
       </div>
 
-      {/* VIDEO — lấp đầy phần màn còn lại. Khi xoay thì tách khỏi luồng và quay
-          90° quanh tâm màn, nhờ vậy video ngang phủ trọn màn dọc. */}
-      <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden">
+      {/* VIDEO — lấp trọn màn. Khi xoay thì tách khỏi luồng và quay 90° quanh tâm
+          màn, nhờ vậy video ngang phủ kín màn dọc. */}
+      <div className="relative flex h-full w-full items-center justify-center overflow-hidden">
         <div
           className="flex h-full w-full items-center justify-center transition-transform duration-200"
           style={
