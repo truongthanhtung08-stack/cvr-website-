@@ -553,6 +553,8 @@ export default function PostListingForm() {
 
   return (
     <form onSubmit={(e) => { e.preventDefault(); save(false); }} className="space-y-6">
+      <ThanhBuoc />
+
       {/* Băng rôn chế độ SỬA — nói rõ đang sửa tin nào, trạng thái gì */}
       {editId && (
         <div className="flex flex-wrap items-center justify-between gap-2 rounded-none border border-cvr-blue/30 bg-cvr-blue/[0.06] px-4 py-3">
@@ -564,7 +566,7 @@ export default function PostListingForm() {
       )}
 
       {/* 1. Loại tin & loại hình */}
-      <Card step={buoc()} title="Loại tin đăng">
+      <Card id="b-loai" step={buoc()} title="Loại tin đăng">
         <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
           <Pick label="Nhu cầu" value={demand} onChange={setDemand} options={demandTypes} />
           {/* Loại hình theo NHÓM cho dễ tìm — cùng danh mục với bộ lọc của web */}
@@ -587,7 +589,7 @@ export default function PostListingForm() {
       </Card>
 
       {/* 2. Địa chỉ */}
-      <Card step={buoc()} title="Địa chỉ bất động sản">
+      <Card id="b-vitri" step={buoc()} title="Địa chỉ bất động sản">
         {/* Chọn hệ đơn vị hành chính: MỚI (sau sáp nhập) hay CŨ */}
         {/* HAI NÚT CHIA ĐÔI HÀNG, CHỮ KHÔNG GÃY DÒNG. Nhãn cũ dài gần 30 ký tự nên
             trên điện thoại 375px hộp bị bóp, chữ rớt xuống hai dòng và nút bên cạnh
@@ -670,7 +672,7 @@ export default function PostListingForm() {
       </Card>
 
       {/* 3. Thông tin chính */}
-      <Card step={buoc()} title="Thông tin chính">
+      <Card id="b-thongtin" step={buoc()} title="Thông tin chính">
         {/* TIÊU ĐỀ — ô tự giãn cao để LUÔN THẤY TRỌN CÂU. Ô một dòng làm phần
             đầu tiêu đề trôi mất khỏi khung, người đăng không soát lại được. */}
         <div>
@@ -835,7 +837,7 @@ export default function PostListingForm() {
       </Card>
 
       {/* 7. Mô tả */}
-      <Card step={buoc()} title="Mô tả chi tiết">
+      <Card id="b-mota" step={buoc()} title="Mô tả chi tiết">
         {/* Cùng bộ công cụ với trang quản trị: in đậm · in nghiêng · canh
             trái/giữa/phải/đều · chèn ảnh, video giữa bài. */}
         <ContentEditor
@@ -847,7 +849,7 @@ export default function PostListingForm() {
       </Card>
 
       {/* 8. Hình ảnh — tải từ máy / dán link, ảnh đầu là ảnh đại diện */}
-      <Card step={buoc()} title="Hình ảnh">
+      <Card id="b-anh" step={buoc()} title="Hình ảnh">
         <ImagePicker
           value={images}
           onChange={setImages}
@@ -859,7 +861,7 @@ export default function PostListingForm() {
 
       {/* 9. Liên hệ */}
       {/* Chọn gói hiển thị — giá và khuyến mãi do quản trị đặt ở /admin/gia-khuyen-mai */}
-      <Card step={buoc()} title="Chọn gói tin — thanh toán">
+      <Card id="b-goi" step={buoc()} title="Chọn gói tin — thanh toán">
         <p className="-mt-1 mb-3 text-sm text-cvr-muted">
           Tin ở gói cao hiển thị nổi bật hơn — <span className="font-semibold text-cvr-ink">Diamond</span> có lượt xem trung bình cao gấp 20 lần tin thường.
         </p>
@@ -965,7 +967,7 @@ export default function PostListingForm() {
         )}
       </Card>
 
-      <Card step={buoc()} title="Thông tin liên hệ">
+      <Card id="b-lienhe" step={buoc()} title="Thông tin liên hệ">
         {/* ẢNH ĐẠI DIỆN — ô chọn tệp nằm TRONG <label> và ẩn bằng sr-only.
             KHÔNG dùng display:none rồi gọi .click(): điện thoại đời cũ bỏ qua,
             khách bấm mãi không mở được thư viện ảnh. */}
@@ -1073,13 +1075,93 @@ export default function PostListingForm() {
 
 const inputCls = "h-11 w-full rounded-lg border border-transparent bg-cvr-surface px-3 text-sm text-cvr-ink placeholder-cvr-faint outline-none transition focus:border-cvr-line focus:bg-white";
 
+// ════════════════════════════════════════════════════════════════════════════
+// THANH BƯỚC — dính trên đầu, bấm là tới thẳng phần đó.
+// Form đăng tin là MỘT TRANG (môi giới đăng nhiều tin thì một trang nhanh hơn
+// chia bước, và sửa lại mục đã qua không phải lùi từng bước). Đổi lại, trang dài
+// thì dễ lạc → thanh này thay cho việc cuộn mò: luôn thấy đang ở phần nào và
+// nhảy thẳng tới phần cần sửa (chủ dự án chốt 11/9/2026).
+// ════════════════════════════════════════════════════════════════════════════
+const MOC_BUOC = [
+  { id: "b-loai", ten: "Loại tin" },
+  { id: "b-vitri", ten: "Vị trí" },
+  { id: "b-thongtin", ten: "Thông tin" },
+  { id: "b-mota", ten: "Mô tả" },
+  { id: "b-anh", ten: "Ảnh & video" },
+  { id: "b-goi", ten: "Gói tin" },
+  { id: "b-lienhe", ten: "Liên hệ" },
+];
+
+function ThanhBuoc() {
+  const [dangO, setDangO] = useState(MOC_BUOC[0].id);
+  const bocRef = useRef<HTMLDivElement>(null);
+
+  // Phần nào đang nằm trong tầm nhìn thì mốc đó sáng lên.
+  useEffect(() => {
+    const els = MOC_BUOC.map((m) => document.getElementById(m.id)).filter(Boolean) as HTMLElement[];
+    if (!els.length) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        const hien = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+        if (hien) setDangO(hien.target.id);
+      },
+      { rootMargin: "-180px 0px -55% 0px" },
+    );
+    els.forEach((el) => io.observe(el));
+    return () => io.disconnect();
+  }, []);
+
+  // Điện thoại không đủ chỗ cho 7 mốc → thanh cuộn ngang, mốc đang xem tự kéo
+  // vào giữa tầm nhìn để lúc nào cũng thấy mình đang ở đâu.
+  useEffect(() => {
+    const boc = bocRef.current;
+    const nut = boc?.querySelector<HTMLElement>(`[data-moc="${dangO}"]`);
+    if (!boc || !nut) return;
+    boc.scrollTo({ left: nut.offsetLeft - boc.clientWidth / 2 + nut.offsetWidth / 2, behavior: "smooth" });
+  }, [dangO]);
+
+  return (
+    <div className="sticky top-[calc(113px+env(safe-area-inset-top))] z-20 -mx-4 border-b border-cvr-line bg-white/95 px-4 backdrop-blur sm:-mx-6 sm:px-6 lg:top-[60px] lg:-mx-8 lg:px-8">
+      <div ref={bocRef} className="flex gap-1.5 overflow-x-auto py-2.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {MOC_BUOC.map((m, i) => {
+          const o = dangO === m.id;
+          return (
+            <button
+              key={m.id}
+              type="button"
+              data-moc={m.id}
+              onClick={() => document.getElementById(m.id)?.scrollIntoView({ behavior: "smooth", block: "start" })}
+              className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium transition ${
+                o ? "bg-cvr-ink text-white" : "bg-cvr-surface text-cvr-body active:bg-cvr-line"
+              }`}
+            >
+              <span
+                className={`flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-bold ${
+                  o ? "bg-white/20 text-white" : "bg-white text-cvr-ink"
+                }`}
+              >
+                {i + 1}
+              </span>
+              {m.ten}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function Label({ children }: { children: React.ReactNode }) {
   return <label className="mb-1.5 block text-sm font-medium text-cvr-body">{children}</label>;
 }
 
-function Card({ step, title, children }: { step: string; title: string; children: React.ReactNode }) {
+function Card({ id, step, title, children }: { id?: string; step: string; title: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-none border border-cvr-line bg-white p-5 shadow-lux sm:p-6">
+    // scroll-mt: chừa chỗ cho header + thanh quay lại + thanh bước, nếu không thì
+    // bấm mốc xong tiêu đề khối bị các thanh dính che mất.
+    <section id={id} className="scroll-mt-[168px] rounded-none border border-cvr-line bg-white p-5 shadow-lux sm:p-6 lg:scroll-mt-[120px]">
       <h2 className="mb-4 flex items-center gap-2.5 text-lg font-semibold tracking-tight text-cvr-ink">
         <span className="flex h-7 w-7 items-center justify-center rounded-full bg-cvr-ink text-sm text-white">{step}</span>
         {title}

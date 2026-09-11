@@ -249,10 +249,9 @@ export default function ContentEditor({
         )}
       </div>
 
-      <p className="text-xs text-cvr-faint">
-        Mỗi <strong>đoạn</strong> xuống 1 dòng. Bấm <strong>“Chèn ảnh”</strong> / <strong>“Chèn video”</strong> để thêm ngay giữa bài — ảnh &amp; video sẽ hiện đúng vị trí đó trên web.
-        Bôi đen chữ rồi bấm <strong>B</strong> / <strong>I</strong> để in đậm, in nghiêng; nút canh lề áp cho dòng đang đứng con trỏ.
-      </p>
+      {/* Các nút trên thanh công cụ đã tự nói nó làm gì (B, I, Chèn ảnh, Chèn
+          video) — chỉ giữ lại điều duy nhất khách không tự đoán ra. */}
+      <p className="text-xs text-cvr-faint">Mỗi đoạn xuống một dòng.</p>
     </div>
   );
 }

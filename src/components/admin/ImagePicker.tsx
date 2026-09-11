@@ -258,22 +258,46 @@ export default function ImagePicker({
           />
         </label>
 
-        {/* LỐI THỨ BA — THƯ MỤC. Hai nút trên mở thẳng Bộ sưu tập; nút này khai
-            cả ảnh lẫn video nên máy đưa ra bảng chọn đầy đủ (Máy ảnh · Thư mục ·
-            Files). Khách muốn vào đâu thì vào, web không ép đường nào. */}
+        {/* LỐI THỨ BA — THƯ MỤC.
+            Nút này TRƯỚC ĐÂY ghi "Bộ sưu tập · Thư mục · Máy ảnh" nhưng bấm vào
+            Samsung chỉ hiện "Máy ảnh · File của bạn · Files" — KHÔNG có Bộ sưu
+            tập, vì khai cả ảnh lẫn video thì máy chuyển sang trình duyệt tệp
+            (chủ dự án chụp lại 11/9/2026). Tên nút hứa một đằng, máy mở một nẻo.
+            → Gọi đúng tên việc nó làm: THƯ MỤC. Bộ sưu tập đã có hai nút trên. */}
         <label
           className={`inline-flex cursor-pointer items-center gap-2 rounded-lg border border-cvr-line bg-white px-4 py-2 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink ${uploadingImg || uploadingVideo ? "pointer-events-none opacity-60" : ""}`}
         >
           <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
           </svg>
-          Bộ sưu tập · Thư mục · Máy ảnh
+          Thư mục
           <input
             type="file"
             accept="image/*,video/*"
             multiple
             disabled={uploadingImg || uploadingVideo}
             onChange={(e) => handleThuMuc(e.target.files)}
+            className="sr-only"
+          />
+        </label>
+
+        {/* LỐI THỨ TƯ — MÁY ẢNH. Chỉ mở máy ảnh KHI KHÁCH BẤM vào đây; hai nút
+            Bộ sưu tập ở trên tuyệt đối không được kèm capture, kèm vào là máy
+            nhảy thẳng vào chụp ảnh, khách không vào được thư viện. */}
+        <label
+          className={`inline-flex cursor-pointer items-center gap-2 rounded-lg border border-cvr-line bg-white px-4 py-2 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink ${uploadingImg ? "pointer-events-none opacity-60" : ""}`}
+        >
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h1.5l1.2-1.8A1 1 0 019.5 5h5a1 1 0 01.8.4L16.5 7H19a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+            <circle cx="12" cy="13" r="3.2" />
+          </svg>
+          Máy ảnh
+          <input
+            type="file"
+            accept="image/*"
+            capture="environment"
+            disabled={uploadingImg}
+            onChange={(e) => handleImageFiles(e.target.files)}
             className="sr-only"
           />
         </label>
@@ -309,12 +333,10 @@ export default function ImagePicker({
       {error && (
         <p className="rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-700 ring-1 ring-inset ring-red-600/20">{error}</p>
       )}
-      <p className="text-xs text-cvr-faint">
-        Ảnh có nhãn <strong>“Ảnh đại diện”</strong> hiện trên thẻ tin (video không làm đại diện). Bấm <strong>“Đặt làm đại diện”</strong> dưới ảnh bất kỳ để đổi. Ảnh ≤ 10MB · Video ≤ 50MB.
-      </p>
-      <p className="text-xs text-cvr-faint">
-        💡 Nên <strong>tải ảnh/video từ máy</strong> để chắc chắn hiện được. Link video hỗ trợ YouTube, Vimeo hoặc link .mp4 trực tiếp.
-      </p>
+      {/* Nhãn "Ảnh đại diện" và nút "Đặt làm đại diện" đã nằm ngay dưới từng ảnh,
+          ô dán link đã ghi rõ nhận YouTube/Vimeo/mp4 → chỉ còn giữ giới hạn dung
+          lượng, thứ duy nhất khách không nhìn ra được. */}
+      <p className="text-xs text-cvr-faint">Ảnh ≤ 10MB · Video ≤ 50MB.</p>
     </div>
   );
 }
