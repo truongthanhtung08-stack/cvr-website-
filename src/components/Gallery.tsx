@@ -104,16 +104,11 @@ export default function Gallery({
   const rightThumbs = media.slice(1, 5);
   const extra = media.length - 5; // số ảnh còn dư (hiện "+N" ở ô cuối)
 
-  // Huy hiệu nhỏ góc trái trên: tin này có bao nhiêu ẢNH và bao nhiêu VIDEO.
+  // Huy hiệu đếm ở góc trên trái: tin có bao nhiêu VIDEO và bao nhiêu ẢNH.
+  // Xếp video trước vì video đứng đầu dãy — đọc huy hiệu là hình dung đúng thứ
+  // tự sẽ gặp khi vuốt.
   const demMedia = (
     <span className="pointer-events-none absolute left-3 top-3 z-[5] flex items-center gap-2.5 rounded-md bg-black/65 px-2.5 py-1 text-[12px] font-semibold text-white backdrop-blur-sm">
-      <span className="flex items-center gap-1">
-        <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M3 7.5h3l1.5-2h9L18 7.5h3v11H3v-11Z" />
-          <circle cx="12" cy="12.5" r="3.2" />
-        </svg>
-        {images.length}
-      </span>
       {nVid > 0 && (
         <span className="flex items-center gap-1">
           <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
@@ -123,6 +118,13 @@ export default function Gallery({
           {nVid}
         </span>
       )}
+      <span className="flex items-center gap-1">
+        <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3 7.5h3l1.5-2h9L18 7.5h3v11H3v-11Z" />
+          <circle cx="12" cy="12.5" r="3.2" />
+        </svg>
+        {images.length}
+      </span>
     </span>
   );
 
@@ -160,19 +162,6 @@ export default function Gallery({
                   className="relative aspect-video w-full shrink-0 snap-center overflow-hidden border border-cvr-line bg-black"
                 >
                   <GallerySlideVideo url={m.src} active={i === mCur} onHold={setHold} />
-                  {/* Nhãn ở ĐỈNH khung, không bao giờ xuống đáy: đáy là chỗ thanh
-                      điều khiển của trình phát. Cho khách biết đang ở video thứ
-                      mấy và ảnh vẫn còn ở bên phải — sau này tin nhiều video thì
-                      càng cần. */}
-                  <div className="pointer-events-none absolute inset-x-0 top-0 z-[5] flex items-start justify-between bg-gradient-to-b from-black/55 to-transparent px-2.5 pb-6 pt-2">
-                    <span className="flex items-center gap-1.5 text-[12.5px] font-medium text-white drop-shadow">
-                      <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-                        <rect x="3" y="6" width="12" height="12" rx="2" />
-                        <path strokeLinecap="round" strokeLinejoin="round" d="m15 10.5 6-3v9l-6-3v-3Z" />
-                      </svg>
-                      Video{nVid > 1 ? ` ${i + 1}/${nVid}` : ""}
-                    </span>
-                  </div>
                 </div>
               ) : (
                 <button
@@ -187,6 +176,12 @@ export default function Gallery({
               ),
             )}
           </div>
+          {/* HUY HIỆU ĐẾM — mở tin ra là biết ngay tin có bao nhiêu video, bao
+              nhiêu ảnh. Video đứng đầu dãy nên nếu không có cái này, khách xem
+              xong video tưởng hết, không biết phía sau còn cả bộ ảnh. Đặt ở góc
+              trên TRÁI: góc phải là chỗ hai nút Xoay / Toàn màn hình của video. */}
+          {demMedia}
+
           {/* ── NÚT CHUYỂN TẤM Ở HAI BÊN ─────────────────────────────────────
               Thay cho dãy ô nhỏ dưới đáy: không ăn chiều cao, và nằm ở giữa hai
               cạnh nên KHÔNG bao giờ đè lên thanh điều khiển của trình phát video
