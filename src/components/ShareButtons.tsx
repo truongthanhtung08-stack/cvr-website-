@@ -35,6 +35,9 @@ export default function ShareButtons({ title }: { title: string }) {
 
   // Máy có khay chia sẻ sẵn (điện thoại) → dùng luôn, khách chọn được MỌI ứng dụng
   // đang cài (Zalo, Messenger, Telegram, tin nhắn…) thay vì chỉ 2 lựa chọn.
+  // Máy có khay chia sẻ sẵn không (điện thoại gần như luôn có).
+  const coKhay = () => typeof navigator !== "undefined" && typeof navigator.share === "function";
+
   async function khayHeThong() {
     try {
       await navigator.share({ title, url });
@@ -61,7 +64,15 @@ export default function ShareButtons({ title }: { title: string }) {
     <div ref={boxRef} className="relative shrink-0">
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => {
+          // ĐIỆN THOẠI: bật thẳng khay chia sẻ của máy — trong đó có sẵn Zalo,
+          // Messenger, Facebook, tin nhắn… và bấm vào là VÀO ĐÚNG APP kèm link.
+          // Web không có quyền mở thẳng một app cụ thể kèm nội dung, nên đi qua
+          // khay hệ thống là đường ngắn nhất tới đúng app khách muốn.
+          // MÁY TÍNH (không có khay) mới mở danh sách Zalo · Facebook · Sao chép.
+          if (coKhay()) { khayHeThong(); return; }
+          setOpen((v) => !v);
+        }}
         aria-expanded={open}
         aria-label="Chia sẻ tin này"
         className="inline-flex min-h-[36px] items-center justify-center gap-1.5 rounded-full border border-cvr-line bg-white px-3.5 text-[13px] font-semibold text-cvr-body transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 hover:border-cvr-ink hover:text-cvr-ink"

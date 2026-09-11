@@ -23,6 +23,10 @@ import { createAdminClient } from "@/lib/supabase/admin";
 // ════════════════════════════════════════════════════════════════════════════
 
 const CACH_NHAU_MS = 60 * 60 * 1000; // 1 giờ giữa hai email cùng khoá
+// TRẦN CỨNG mỗi ngày. Gói Resend đang dùng chỉ cho 100 thư/ngày, mà phần lớn phải
+// để dành cho mã OTP và thông báo gửi khách. Sự cố nhiều tới mấy cũng chỉ báo tối
+// đa chừng này thư, phần còn lại vẫn ghi đủ vào sổ và hiện ở trang /admin.
+const TRAN_MOI_NGAY = 20;
 
 /** chet = mất tiền / khách không dùng được web · nang = sai lệch dữ liệu · nhe = phiền */
 export type MucDo = "chet" | "nang" | "nhe";
@@ -73,7 +77,9 @@ export async function baoLoi(t: SuCo): Promise<void> {
  */
 async function ghiSo(khoa: string, t: SuCo): Promise<boolean> {
   const admin = createAdminClient();
-  if (!admin) return false;
+  // Không ghi sổ được thì IM LẶNG, đừng gửi mail. Hạn mức thư mỗi ngày còn phải
+  // để dành cho mã OTP và thông báo của khách.
+  if (!admin) return true;
 
   const { data } = await admin
     .from("su_co")
@@ -84,7 +90,18 @@ async function ghiSo(khoa: string, t: SuCo): Promise<boolean> {
     .limit(1);
 
   const lanCuoi = data?.[0]?.bao_luc as string | undefined;
-  const conMoi = Boolean(lanCuoi && Date.now() - new Date(lanCuoi).getTime() < CACH_NHAU_MS);
+  let conMoi = Boolean(lanCuoi && Date.now() - new Date(lanCuoi).getTime() < CACH_NHAU_MS);
+
+  // Đã chạm trần thư trong ngày → thôi gửi, chỉ ghi sổ.
+  if (!conMoi) {
+    const dauNgay = new Date();
+    dauNgay.setHours(0, 0, 0, 0);
+    const { count } = await admin
+      .from("su_co")
+      .select("id", { count: "exact", head: true })
+      .gte("bao_luc", dauNgay.toISOString());
+    if ((count ?? 0) >= TRAN_MOI_NGAY) conMoi = true;
+  }
 
   await admin.from("su_co").insert({
     khoa,

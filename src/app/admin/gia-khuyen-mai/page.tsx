@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import {
   BILLING_DEFAULT,
@@ -48,6 +48,13 @@ const AUDIENCES: { id: PromoAudience; label: string }[] = [
 
 export default function AdminBillingPage() {
   const [tab, setTab] = useState<TabId>("plans");
+  // Hàng mục cuộn ngang: mục đang xem phải nằm trong tầm mắt, không thì người dùng
+  // tưởng web chỉ có mấy mục đầu.
+  const hangMuc = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = hangMuc.current?.querySelector(`[data-tab="${tab}"]`);
+    el?.scrollIntoView({ block: "nearest", inline: "center", behavior: "smooth" });
+  }, [tab]);
   const [data, setData] = useState<BillingData>(BILLING_DEFAULT);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -111,13 +118,21 @@ export default function AdminBillingPage() {
         </p>
       )}
 
-      <div className="flex flex-wrap gap-2">
+      {/* HÀNG MỤC DÍNH THEO TRANG. Mỗi mục ở đây dài cả màn hình, cuộn xuống giữa
+          bảng giá là hàng mục trôi mất, muốn sang mục khác phải cuộn ngược lên đầu.
+          Nay nó dính ngay dưới thanh điều hướng (mobile) / thanh trên (PC), cuộn
+          ngang một dòng, và mục đang xem tự trượt vào tầm mắt. */}
+      <div
+        ref={hangMuc}
+        className="no-scrollbar sticky top-[104px] z-10 -mx-4 flex gap-2 overflow-x-auto border-b border-cvr-line bg-white/95 px-4 py-2 backdrop-blur sm:top-[116px] md:top-16 md:mx-0 md:border-0 md:bg-transparent md:px-0 md:backdrop-blur-none"
+      >
         {TABS.map((t) => (
           <button
             key={t.id}
             type="button"
+            data-tab={t.id}
             onClick={() => setTab(t.id)}
-            className={`rounded-full px-4 py-2 text-sm font-medium transition ${
+            className={`shrink-0 whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition ${
               tab === t.id ? "bg-cvr-ink text-white" : "border border-cvr-line text-cvr-body hover:border-cvr-ink hover:text-cvr-ink"
             }`}
           >

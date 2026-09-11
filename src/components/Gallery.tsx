@@ -5,6 +5,7 @@ import Image from "next/image";
 import PhotoViewer from "@/components/PhotoViewer";
 import PhotoList from "@/components/PhotoList";
 import GallerySlideVideo from "@/components/GallerySlideVideo";
+import VideoToanManHinh from "@/components/VideoToanManHinh";
 
 // Thư viện ảnh trang chi tiết BĐS — bố cục kiểu Homedy:
 // 1 ảnh lớn bên trái + lưới 2×2 ảnh nhỏ bên phải.
@@ -30,6 +31,8 @@ export default function Gallery({
   const [bigIdx, setBigIdx] = useState(0); // slide LỚN đang hiện (tự chạy)
   const [paused, setPaused] = useState(false);
   const [hold, setHold] = useState(false); // đang xem video → tạm ngưng tự chuyển slide
+  // Video đang mở toàn màn hình (null = không mở).
+  const [videoFull, setVideoFull] = useState<string | null>(null);
 
   // ── ĐIỀU KHIỂN SLIDE LỚN TRÊN MÁY TÍNH: TOUCHPAD · PHÍM · CHẠM ───────────
   // Trước đây ảnh lớn chỉ TỰ CHẠY, khách muốn xem lại tấm vừa trôi qua thì không
@@ -61,8 +64,24 @@ export default function Gallery({
 
   // MOBILE: carousel vuốt 1 ảnh (kiểu Homedy) — theo dõi ảnh đang xem để đếm "Ảnh x/y".
   const [mCur, setMCur] = useState(0);
-  const [mCham, setMCham] = useState(false); // khách đã tự vuốt → thôi tự chạy, để khách chủ động
+  // Khách vừa vuốt/bấm → tạm ngưng tự chạy 8 giây rồi chạy tiếp.
+  const [mCham, setMCham] = useState(false);
+  const hetCham = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const chamVao = () => {
+    setMCham(true);
+    if (hetCham.current) clearTimeout(hetCham.current);
+    hetCham.current = setTimeout(() => setMCham(false), 8000);
+  };
+  useEffect(() => () => { if (hetCham.current) clearTimeout(hetCham.current); }, []);
   const mTrack = useRef<HTMLDivElement>(null);
+  // Bấm ô nhỏ → nhảy thẳng tới slide đó.
+  const nhayToi = (i: number) => {
+    const el = mTrack.current;
+    if (!el) return;
+    chamVao(); // khách vừa chọn tay → tạm ngưng tự chạy, 8 giây sau chạy tiếp
+    el.scrollTo({ left: i * el.clientWidth, behavior: "smooth" });
+  };
+
   const onMScroll = () => {
     const el = mTrack.current;
     if (el) setMCur(Math.round(el.scrollLeft / el.clientWidth));
@@ -127,9 +146,19 @@ export default function Gallery({
     <>
       {media.length === 1 ? (
         media[0].kind === "video" ? (
-          <div className="relative aspect-[2/1] w-full overflow-hidden rounded-none border border-cvr-line">
-            <GallerySlideVideo url={media[0].src} active />
-          </div>
+          <button
+            type="button"
+            onClick={() => setVideoFull(media[0].src)}
+            aria-label="Xem video của tin"
+            className="relative aspect-[2/1] w-full overflow-hidden rounded-none border border-cvr-line bg-black"
+          >
+            <GallerySlideVideo url={media[0].src} active={false} xemTruoc />
+            <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
+              <span className="flex h-14 w-14 items-center justify-center rounded-full bg-white/90 shadow-lg">
+                <svg className="ml-1 h-7 w-7 text-black" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+              </span>
+            </span>
+          </button>
         ) : (
           <button type="button" onClick={() => open(0)} className="group relative block aspect-[2/1] w-full overflow-hidden rounded-none border border-cvr-line">
             <Image src={media[0].src} alt={alt} fill priority quality={90} sizes="(max-width:1024px) 100vw, 66vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
@@ -138,48 +167,49 @@ export default function Gallery({
       ) : (
         <>
         {/* ── ĐIỆN THOẠI: carousel vuốt 1 ảnh, tỷ lệ 4:3 to rõ, đếm "Ảnh x/y" (kiểu Homedy) ── */}
-        <div className="relative sm:hidden">
+        <div className="sm:hidden">
+          <div className="relative">
           <div
             ref={mTrack}
             onScroll={onMScroll}
-            onTouchStart={() => setMCham(true)}
-            onPointerDown={() => setMCham(true)}
+            onTouchStart={chamVao}
+            onPointerDown={chamVao}
             className="no-scrollbar flex snap-x snap-mandatory overflow-x-auto overscroll-x-contain"
           >
             {media.map((m, i) =>
               m.kind === "video" ? (
-                <div
+                <button
                   key={i}
-                  className="relative aspect-[2/1] w-full shrink-0 snap-center overflow-hidden border border-cvr-line bg-black"
+                  type="button"
+                  onClick={() => setVideoFull(m.src)}
+                  aria-label="Xem video của tin"
+                  className="relative aspect-[4/3] w-full shrink-0 snap-center overflow-hidden border border-cvr-line bg-black"
                 >
-                  <GallerySlideVideo url={m.src} active={i === mCur} onHold={setHold} />
-                </div>
+
+                  <GallerySlideVideo url={m.src} active={false} xemTruoc />
+                  <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                    <span className="flex h-14 w-14 items-center justify-center rounded-full bg-white/90 shadow-lg">
+                      <svg className="ml-1 h-7 w-7 text-black" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+                    </span>
+                  </span>
+                </button>
               ) : (
                 <button
                   key={i}
                   type="button"
                   onClick={() => open(imgIdx(i))}
                   aria-label={`Ảnh ${imgIdx(i) + 1}`}
-                  className="relative aspect-[2/1] w-full shrink-0 snap-center overflow-hidden border border-cvr-line bg-cvr-surface"
+                  className="relative aspect-[4/3] w-full shrink-0 snap-center overflow-hidden border border-cvr-line bg-cvr-surface"
                 >
                   <Image src={m.src} alt={`${alt} ${imgIdx(i) + 1}`} fill priority={i === nVid} quality={90} sizes="100vw" className="object-cover" />
                 </button>
               ),
             )}
           </div>
-          {/* Ở slide video thì đẩy các nhãn lên TRÊN để không đè thanh điều khiển video */}
-          {/* Đếm ảnh — chữ cỡ đọc được (13px), nền tối rõ */}
+          {/* Đang xem tấm mấy */}
           {!mIsVideo && (
             <span className="pointer-events-none absolute bottom-3 right-3 rounded-md bg-black/65 px-2.5 py-1 text-[13px] font-medium text-white backdrop-blur-sm">
               Ảnh {imgIdx(mCur) + 1}/{images.length}
-            </span>
-          )}
-          {/* Chấm vị trí */}
-          {!mIsVideo && (
-            <span className="pointer-events-none absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5">
-              {media.slice(0, Math.min(media.length, 8)).map((_, i) => (
-                <span key={i} className={`h-1.5 rounded-full transition-all ${i === mCur % 8 ? "w-4 bg-white" : "w-1.5 bg-white/55"}`} />
-              ))}
             </span>
           )}
 
@@ -195,7 +225,40 @@ export default function Gallery({
             Xem tất cả {images.length} ảnh
           </button>
 
-          {demMedia}
+          </div>
+
+          {/* Dải 4 ô: ô đầu là video, ô cuối ghi còn bao nhiêu tấm — bấm là nhảy tới. */}
+          {media.length > 1 && (
+            <div className="grid grid-cols-4 gap-1 border-x border-b border-cvr-line bg-white p-1">
+              {media.slice(0, 4).map((m, i) => {
+                const oCuoi = i === 3 && media.length > 4;
+                return (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => nhayToi(i)}
+                    aria-label={m.kind === "video" ? "Xem video" : `Xem ảnh ${imgIdx(i) + 1}`}
+                    className={`relative aspect-square overflow-hidden rounded-md bg-cvr-surface ring-1 transition ${
+                      i === mCur ? "ring-2 ring-cvr-ink" : "ring-cvr-line"
+                    }`}
+                  >
+                    {m.kind === "video" ? (
+                      <span className="absolute inset-0 flex items-center justify-center bg-black">
+                        <svg className="ml-0.5 h-6 w-6 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+                      </span>
+                    ) : (
+                      <Image src={m.src} alt="" fill sizes="25vw" className="object-cover" />
+                    )}
+                    {oCuoi && (
+                      <span className="absolute inset-0 flex items-center justify-center bg-black/60 text-[15px] font-semibold text-white">
+                        +{media.length - 4}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* ── TABLET / MÁY TÍNH (≥ 640px): GIỮ NGUYÊN bố cục ảnh lớn + lưới 2×2 đã duyệt ── */}
@@ -302,6 +365,7 @@ export default function Gallery({
           onClose={close}
         />
       )}
+      {videoFull && <VideoToanManHinh url={videoFull} onClose={() => setVideoFull(null)} />}
     </>
   );
 }

@@ -90,7 +90,10 @@ export default function PostListingForm() {
   // Gói đăng tin khách chọn (giá do quản trị đặt ở /admin/gia-khuyen-mai)
   // Bảng giá HIỆN HÀNH (bản admin đã lưu ở /admin/gia-khuyen-mai), không phải giá cứng trong code
   const { billing, loading: billingLoading } = useBilling();
-  const [planTier, setPlanTier] = useState<TierId>("basic");
+  // KHÔNG chọn sẵn gói nào — người đăng phải tự chọn, kể cả khi gói đó đang miễn
+  // phí. Chọn sẵn thì họ bấm đăng luôn mà không biết mình vừa mua gói gì, đến lúc
+  // ví bị trừ là khiếu nại.
+  const [planTier, setPlanTier] = useState<TierId | "">("");
   const [planDays, setPlanDays] = useState<number>(billing.plans[0]?.terms[0]?.days ?? 7);
   const [planStart, setPlanStart] = useState<string>("");
   // Thông tin ví/hồ sơ dùng để tính ưu đãi (null = chưa đăng nhập hoặc chưa tải xong)
@@ -140,17 +143,21 @@ export default function PostListingForm() {
     [billing, hoSoVi],
   );
 
+  // Gói dùng để XEM TRƯỚC khi chưa chọn (số ảnh tối đa, giá tạm tính) — lấy gói
+  // đầu bảng. Việc gửi tin vẫn chặn tới khi người đăng tự chọn.
+  const goiXemTruoc: TierId = (planTier || billing.plans[0]?.tierId || "basic") as TierId;
+
   const baoGia = useMemo(
     () =>
       quotePrice({
         data: billing,
-        tierId: planTier,
+        tierId: goiXemTruoc,
         days: planDays,
         today: new Date().toISOString().slice(0, 10),
         isNewMember: laThanhVienMoi,
         levelId: capThanhVien?.id, // chưa có cấp hội viên → không giảm theo cấp
       }),
-    [billing, planTier, planDays, laThanhVienMoi, capThanhVien],
+    [billing, goiXemTruoc, planDays, laThanhVienMoi, capThanhVien],
   );
 
   // Gói này có được miễn phí cho khách đang đăng nhập không?
@@ -173,9 +180,12 @@ export default function PostListingForm() {
   const giaCuaGoi = (tierId: TierId): string => {
     const p = billing.plans.find((x) => x.tierId === tierId);
     const gia = (p?.terms.find((t) => t.days === planDays) ?? p?.terms[0])?.price ?? 0;
+    // Ghi thẳng "Miễn phí" khi gói đó không mất tiền — để người đăng nhìn ô chọn là
+    // biết ngay gói nào free, gói nào trả tiền, không phải đoán.
     const mienPhi =
       billing.free.active && tierId === billing.free.tierId && hoSoVi && laThanhVienMoi;
-    return mienPhi ? "Miễn phí (ưu đãi thành viên mới)" : vnd(gia);
+    if (mienPhi) return "Miễn phí (ưu đãi thành viên mới)";
+    return gia > 0 ? vnd(gia) : "Miễn phí";
   };
 
   // Danh mục loại hình đổi theo mục đích: bán và cho thuê KHÔNG giống nhau
@@ -403,6 +413,9 @@ export default function PostListingForm() {
       const thieu = thieuMucBatBuoc(loaiHinh, purposeOfDemand(demand), specValues);
       if (thieu.length) return setError(`Chưa nhập: ${thieu.join(" · ")}.`);
     }
+      // GÓI TIN: bắt buộc chọn, kể cả gói đang được miễn phí. Không mặc định sẵn,
+      // không tự đoán hộ — đây là thứ quyết định số tiền phải trả.
+      if (!planTier) return setError("Chưa chọn gói tin ở mục “Chọn gói tin — thanh toán”.");
     // LƯU NHÁP thì không chặn gì thêm — người đăng ghi tới đâu lưu tới đó.
 
     setSaving(asDraft ? "draft" : "publish");
@@ -446,6 +459,12 @@ export default function PostListingForm() {
       status: asDraft ? ("draft" as const) : ("pending" as const), // khách đăng → chờ admin duyệt
     };
 
+    // HẠNG TIN = ĐÚNG GÓI NGƯỜI ĐĂNG ĐÃ CHỌN. Trước đây luôn ghi cứng "basic" nên
+    // khách trả tiền gói Gold/Diamond mà tin vẫn nằm hạng thường, gói đã chọn chỉ
+    // còn nằm trong details.plan. Tin khách vẫn qua bước admin duyệt nên không có
+    // chuyện tự phong hạng cao rồi lên thẳng trang chủ.
+    const hangTin: TierId = (planTier || "basic") as TierId;
+
     const supabase = createClient();
     let err: { message: string } | null = null;
 
@@ -453,13 +472,13 @@ export default function PostListingForm() {
       // TIN MỚI
       ({ error: err } = await supabase
         .from("listings")
-        .insert({ ...values, owner_id: userId, tier: "basic", published_at: null }));
+        .insert({ ...values, owner_id: userId, tier: hangTin, published_at: null }));
     } else if (editStatus === "draft" && !asDraft) {
       // ĐĂNG TIN NHÁP: tạo tin mới "chờ duyệt" + xoá nháp cũ.
       // (2 thao tác này chủ tin luôn có quyền — không phụ thuộc quyền đổi status trong DB)
       ({ error: err } = await supabase
         .from("listings")
-        .insert({ ...values, owner_id: editOwner ?? userId, tier: "basic", published_at: null }));
+        .insert({ ...values, owner_id: editOwner ?? userId, tier: hangTin, published_at: null }));
       if (!err) await supabase.from("listings").delete().eq("id", editId);
     } else {
       // SỬA tin (nháp→nháp, chờ duyệt, đã duyệt…)
@@ -832,9 +851,9 @@ export default function PostListingForm() {
         <ImagePicker
           value={images}
           onChange={setImages}
-          maxImages={soAnhToiDa(billing, planTier)}
-          maxVideos={soVideoToiDa(billing, planTier)}
-          tierName={getTier(planTier).name}
+          maxImages={soAnhToiDa(billing, goiXemTruoc)}
+          maxVideos={soVideoToiDa(billing, goiXemTruoc)}
+          tierName={getTier(goiXemTruoc).name}
         />
       </Card>
 
@@ -846,8 +865,14 @@ export default function PostListingForm() {
         </p>
         <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <Label>Loại tin</Label>
-            <select value={planTier} onChange={(e) => setPlanTier(e.target.value as TierId)} className={inputCls}>
+            <Label>Loại tin *</Label>
+            <select
+              value={planTier}
+              onChange={(e) => setPlanTier(e.target.value as TierId | "")}
+              required
+              className={inputCls + (planTier ? "" : " ring-1 ring-inset ring-cvr-blue/40")}
+            >
+              <option value="">— Chọn gói tin —</option>
               {billing.plans.map((p) => (
                 <option key={p.tierId} value={p.tierId}>
                   {getTier(p.tierId).name} — {giaCuaGoi(p.tierId)}
@@ -875,7 +900,7 @@ export default function PostListingForm() {
         {/* BẢNG TÍNH TIỀN — nói rõ từng khoản để khách không bao giờ thấy giá "trên trời" */}
         <div className="mt-4 rounded-xl bg-cvr-surface px-4 py-3">
           <div className="flex items-center justify-between gap-2 text-sm text-cvr-body">
-            <span>Giá gói {getTier(planTier).name} · {planDays} ngày</span>
+            <span>{planTier ? "Giá gói " + getTier(goiXemTruoc).name : "Tạm tính — chưa chọn gói"} · {planDays} ngày</span>
             <span className={thanhTien < baoGia.base ? "text-cvr-muted line-through" : "font-semibold text-cvr-ink"}>
               {vnd(baoGia.base)}
             </span>

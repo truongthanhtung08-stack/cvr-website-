@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import ChuyenGiaCard from "@/components/ChuyenGiaCard";
 import type { ChuyenGia } from "@/lib/chuyenGiaDb";
@@ -24,18 +24,28 @@ export default function ExpertsBrowser({
   }, [ds]);
 
   const [tab, setTab] = useState<string>(initialCity ?? "Tất cả");
+  const hangTp = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    hangTp.current?.querySelector(`[data-tp="${tab}"]`)?.scrollIntoView({ block: "nearest", inline: "center", behavior: "smooth" });
+  }, [tab]);
   const list = tab === "Tất cả" ? ds : ds.filter((e) => e.khuVuc.includes(tab));
 
   return (
     <>
       {ds.length > 0 && tabs.length > 1 && (
-        <div className="mt-5 flex flex-wrap gap-2">
+        <div
+          ref={hangTp}
+          /* Một dòng cuộn ngang — danh sách thành phố dài, để xuống hàng là chiếm
+             nửa màn hình điện thoại. Mục đang chọn tự trượt vào giữa tầm mắt. */
+          className="no-scrollbar -mx-1 mt-5 flex gap-2 overflow-x-auto px-1 py-0.5"
+        >
           {tabs.map((t) => (
             <button
               key={t}
               type="button"
+              data-tp={t}
               onClick={() => setTab(t)}
-              className={`rounded-full px-4 py-1.5 text-sm font-medium transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+              className={`shrink-0 whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-medium transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
                 tab === t
                   ? "scale-105 bg-cvr-ink text-white shadow-lg shadow-black/10"
                   : "border border-black/15 text-cvr-body hover:border-black/40 hover:text-cvr-ink"

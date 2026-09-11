@@ -85,13 +85,22 @@ export async function POST(request: Request) {
   if (!kq.daGui) {
     // Gửi mã hỏng = khách KHÔNG đăng nhập được. Gộp mọi lần hỏng vào một khoá:
     // khi Zalo sập thì cả trăm người cùng hỏng, chỉ cần một tiếng chuông.
+    // LỖI ĐÃ BIẾT thì chỉ ghi sổ, KHÔNG gửi mail. Zalo chỉ cho gửi ZNS qua API từ
+    // gói OA "Tăng trưởng" trở lên, nên chừng nào chưa nâng gói thì mã -120 còn
+    // trả về mỗi lần khách bấm gửi mã — báo mail mỗi lần chỉ tổ đầy hòm thư và ăn
+    // hết hạn mức thư trong ngày, trong khi hạn mức đó phải để dành gửi mã cho khách.
+    const daBiet = /-120|permission|not have permission|-124|-201/i.test(kq.lyDo ?? "");
     await baoLoi({
       noi: "sms-hook",
-      mucDo: "chet",
-      tomTat: "Không gửi được mã OTP qua Zalo — khách đang không đăng nhập được",
+      mucDo: daBiet ? "nhe" : "chet",
+      tomTat: daBiet
+        ? "Zalo chưa cho gửi ZNS (gói OA chưa đủ) — khách không nhận được mã qua Zalo"
+        : "Không gửi được mã OTP qua Zalo — khách đang không đăng nhập được",
       chiTiet: kq.lyDo,
-      hauQua: "Zalo là đường đăng nhập bằng số điện thoại duy nhất đang chạy.",
-      canLam: "Kiểm tra token Zalo OA và số dư ZNS. Trong lúc chờ, bảo khách đăng nhập bằng Google hoặc email.",
+      hauQua: "Khách đăng nhập bằng số điện thoại sẽ không nhận được mã.",
+      canLam: daBiet
+        ? "Zalo chỉ cho gửi ZNS qua API từ gói OA Tăng trưởng (2,5 triệu/năm). Hoặc chuyển mã sang SMS/email — xem ghi chú trong tệp này."
+        : "Kiểm tra token Zalo OA và số dư ZNS. Trong lúc chờ, bảo khách đăng nhập bằng Google hoặc email.",
     });
     // Trả lỗi để Supabase báo ngược cho khách "không gửi được mã", thay vì để
     // khách ngồi chờ một tin nhắn không bao giờ tới.

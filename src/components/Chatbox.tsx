@@ -58,7 +58,41 @@ export default function Chatbox() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const anTrenMobile = vuongMobile ? "hidden lg:flex" : "flex";
+  // (c) ĐANG NHẬP LIỆU THÌ BIẾN MẤT. Form đăng tin có ô nhập chạy sát mép phải,
+  //     nút nổi đè đúng lên đó — khách đang gõ mà bấm nhầm sang Zalo là mất cả bài.
+  //     Rời ô nhập thì nút hiện lại.
+  const [dangNhapLieu, setDangNhapLieu] = useState(false);
+  useEffect(() => {
+    const laOnhap = (t: EventTarget | null) => {
+      const el = t as HTMLElement | null;
+      const ten = el?.tagName;
+      return ten === "INPUT" || ten === "TEXTAREA" || ten === "SELECT" || el?.isContentEditable === true;
+    };
+    const vao = (e: FocusEvent) => { if (laOnhap(e.target)) setDangNhapLieu(true); };
+    const ra = (e: FocusEvent) => { if (laOnhap(e.target)) setDangNhapLieu(false); };
+    document.addEventListener("focusin", vao);
+    document.addEventListener("focusout", ra);
+    return () => { document.removeEventListener("focusin", vao); document.removeEventListener("focusout", ra); };
+  }, []);
+
+  // (d) ĐỂ YÊN THÌ NÉP VÀO MÉP. Sau 3 giây không đụng tới, nút trượt bớt ra mép
+  //     phải và mờ đi, chỉ còn ló một nửa — vẫn thấy để bấm, mà không che nội dung.
+  //     Chạm/rê chuột vào là bung ra đủ ngay.
+  const [nepMep, setNepMep] = useState(false);
+  useEffect(() => {
+    let h: ReturnType<typeof setTimeout>;
+    const hen = () => { clearTimeout(h); setNepMep(false); h = setTimeout(() => setNepMep(true), 3000); };
+    hen();
+    for (const ev of ["pointerdown", "pointermove", "scroll", "keydown"] as const)
+      window.addEventListener(ev, hen, { passive: true });
+    return () => {
+      clearTimeout(h);
+      for (const ev of ["pointerdown", "pointermove", "scroll", "keydown"] as const)
+        window.removeEventListener(ev, hen);
+    };
+  }, []);
+
+  const anTrenMobile = vuongMobile || dangNhapLieu ? "hidden lg:flex" : "flex";
   // Nút chat KÉO–THẢ được để không che nội dung (yêu cầu 14/7). Vị trí lưu localStorage.
   const [pos, setPos] = useState<ChatPos | null>(null);
   const drag = useRef<{ startX: number; startY: number; base: ChatPos; moved: boolean } | null>(null);
@@ -107,14 +141,17 @@ export default function Chatbox() {
       onPointerMove={onBtnPointerMove}
       onPointerUp={onBtnPointerUp}
       style={pos ? { right: pos.right, bottom: pos.bottom } : undefined}
-      className={`float-above-tabbar fixed bottom-5 right-5 z-[60] ${anTrenMobile} h-12 w-12 touch-none select-none items-center justify-center rounded-full bg-cvr-blue text-white shadow-lg shadow-black/20 ring-1 ring-white/15 transition-[opacity,transform,background-color] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:bg-cvr-blue-ink ${
+      onPointerEnter={() => setNepMep(false)}
+      className={`float-above-tabbar fixed bottom-5 right-4 z-[60] ${anTrenMobile} h-11 w-11 touch-none select-none items-center justify-center rounded-full bg-cvr-blue text-white shadow-lg shadow-black/20 ring-1 ring-white/15 transition-[opacity,transform,background-color] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:bg-cvr-blue-ink hover:!translate-x-0 hover:!opacity-100 ${
         anKhiCuon
           ? "max-lg:pointer-events-none max-lg:scale-0 max-lg:opacity-0"
-          : "opacity-100"
+          : nepMep
+            ? "translate-x-[38%] opacity-45"
+            : "opacity-100"
       }`}
     >
       {/* Icon Tin nhắn kiểu iMessage — bong bóng đặc, đuôi góc dưới-trái */}
-      <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <svg className="h-[22px] w-[22px]" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
         <path d="M12 2.25c-5.385 0-9.75 3.24-9.75 7.5 0 2.68 1.72 5.03 4.32 6.4-.14.86-.5 1.9-1.2 2.86a.375.375 0 0 0 .35.6c1.7-.2 3.06-.78 4.02-1.35.73.16 1.5.24 2.26.24 5.385 0 9.75-3.24 9.75-7.5S17.385 2.25 12 2.25Z" />
       </svg>
     </button>

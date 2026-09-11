@@ -298,37 +298,37 @@ function MobileMenu({
         <div className="mb-7">
           {user ? (
             // Đã đăng nhập — kiểu Batdongsan: [avatar + tên] … [🔔], gần đầu menu.
-            <div className="mb-3 flex items-center gap-3">
+            <div className="mb-2 flex items-center gap-2.5">
               <Link href="/tai-khoan" onClick={onClose} className="flex min-w-0 flex-1 items-center gap-3">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/15 text-[16px] font-semibold text-white">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/15 text-[14px] font-semibold text-white">
                   {displayName(user).trim().charAt(0).toUpperCase() || "T"}
                 </span>
-                <span className="min-w-0 truncate text-[16px] font-semibold text-white">{displayName(user)}</span>
+                <span className="min-w-0 truncate text-[15px] font-semibold text-white">{displayName(user)}</span>
               </Link>
               <Link
                 href="/tai-khoan"
                 onClick={onClose}
                 aria-label="Thông báo"
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white/80 transition-colors active:bg-white/10"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white/80 transition-colors active:bg-white/10"
               >
-                <svg className="h-[22px] w-[22px]" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+                <svg className="h-[19px] w-[19px]" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                 </svg>
               </Link>
             </div>
           ) : (
-            <div className="mb-3 grid grid-cols-2 gap-2.5">
+            <div className="mb-2 grid grid-cols-2 gap-2">
               <Link
                 href="/dang-nhap"
                 onClick={onClose}
-                className="flex min-h-[46px] items-center justify-center rounded-full text-[15px] font-semibold text-white ring-1 ring-inset ring-white/25 transition-colors active:bg-white/10"
+                className="flex min-h-[40px] items-center justify-center rounded-full text-[14px] font-semibold text-white ring-1 ring-inset ring-white/25 transition-colors active:bg-white/10"
               >
                 Đăng nhập
               </Link>
               <Link
                 href="/dang-ky"
                 onClick={onClose}
-                className="flex min-h-[46px] items-center justify-center rounded-full bg-white text-[15px] font-semibold text-cvr-ink transition-transform active:scale-[0.98]"
+                className="flex min-h-[40px] items-center justify-center rounded-full bg-white text-[14px] font-semibold text-cvr-ink transition-transform active:scale-[0.98]"
               >
                 Đăng ký
               </Link>
@@ -338,9 +338,9 @@ function MobileMenu({
           <Link
             href="/dang-tin"
             onClick={onClose}
-            className="press flex min-h-[48px] items-center justify-center gap-1.5 rounded-full bg-cvr-blue text-[15px] font-semibold text-white"
+            className="press flex min-h-[42px] items-center justify-center gap-1.5 rounded-full bg-cvr-blue text-[14px] font-semibold text-white"
           >
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+            <svg className="h-[15px] w-[15px]" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
             </svg>
             Đăng tin ngay

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { PageHeader } from "@/components/Ui";
@@ -27,6 +27,11 @@ export default function MyListingsPage() {
   const [leadsByListing, setLeadsByListing] = useState<Record<string, Lead[]>>({});
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<"all" | ListingStatus>("all");
+  // Mục đang chọn phải nằm trong tầm mắt của dòng cuộn ngang.
+  const hangLoc = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    hangLoc.current?.querySelector(`[data-loc="${tab}"]`)?.scrollIntoView({ block: "nearest", inline: "center", behavior: "smooth" });
+  }, [tab]);
   const [tuKhoa, setTuKhoa] = useState("");
   const [trang, setTrang] = useState(1);
 
@@ -133,13 +138,17 @@ export default function MyListingsPage() {
       {/* Thanh lọc: mục trạng thái bên trái, ô tìm bên phải. Ô tìm chỉ tìm trong
           tin của CHÍNH MÌNH — có vài trăm tin thì cuộn tay không nổi. */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap gap-2">
+        {/* MỘT DÒNG CUỘN NGANG, KHÔNG XUỐNG HÀNG. Sáu mục trạng thái mà để tự
+            xuống hàng thì trên điện thoại chiếm ba dòng, đẩy danh sách tin xuống
+            dưới màn hình. Mục đang chọn tự trượt vào giữa tầm mắt. */}
+        <div ref={hangLoc} className="no-scrollbar -mx-1 flex max-w-full gap-2 overflow-x-auto px-1 py-0.5">
           {tabs.map((t) => (
             <button
               key={t.key}
               type="button"
+              data-loc={t.key}
               onClick={() => chonTab(t.key)}
-              className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition ${
+              className={`shrink-0 whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm font-medium transition ${
                 tab === t.key ? "bg-cvr-ink text-white" : "border border-cvr-line text-cvr-body hover:border-cvr-ink hover:text-cvr-ink"
               }`}
             >

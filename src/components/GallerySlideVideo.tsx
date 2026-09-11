@@ -24,10 +24,14 @@ export default function GallerySlideVideo({
   url,
   active,
   onHold,
+  xemTruoc = false,
 }: {
   url: string;
   active: boolean;                 // đang là slide hiện tại
   onHold?: (giu: boolean) => void; // đang xem / đang toàn màn hình → giữ slide, đừng tự chuyển
+  // Chỉ làm ảnh bìa: bỏ thanh điều khiển, không bắt chạm (bấm cả khung sẽ mở
+  // trình xem toàn màn hình — xem Gallery.tsx).
+  xemTruoc?: boolean;
 }) {
   const embed = videoEmbedUrl(url);
   const poster = videoPosterUrl(url);
@@ -146,7 +150,8 @@ export default function GallerySlideVideo({
       ref={ref}
       src={`${asset(url)}#t=0.1`}
       playsInline
-      controls
+      controls={!xemTruoc}
+      muted={xemTruoc}
       preload="metadata"
       onPlay={() => {
         playingRef.current = true;
@@ -166,5 +171,5 @@ export default function GallerySlideVideo({
     </video>
   );
 
-  return <div className="absolute inset-0 bg-black">{video}</div>;
+  return <div className={`absolute inset-0 bg-black ${xemTruoc ? "pointer-events-none" : ""}`}>{video}</div>;
 }
