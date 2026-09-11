@@ -5,6 +5,7 @@ import { guiThongBao, soDienThoaiZalo } from "@/lib/thongBao";
 import { baoLoi } from "@/lib/baoLoi";
 import { quetTinHetHan } from "@/lib/hetHanTin";
 import { vnd } from "@/lib/billing";
+import { hanThueSuat, HAN_THUE_SUAT, THUE_SUAT_GTGT } from "@/lib/thue";
 
 // ============================================================================
 // NHẮC XUẤT HÓA ĐƠN CUỐI NGÀY — chạy tự động mỗi tối
@@ -54,6 +55,29 @@ export async function GET(request: Request) {
   // Phải chạy TRƯỚC các lệnh return sớm bên dưới — không thì hôm nào không có
   // hóa đơn chờ ký là hôm đó tin hết hạn cũng không ai quét.
   const hetHan = await quetTinHetHan(supabase);
+
+  // ── THUẾ SUẤT GTGT SẮP HẾT HIỆU LỰC ───────────────────────────────────────
+  // Thuế suất 8% là chính sách CÓ THỜI HẠN. Qua hạn mà chưa ai sửa thì mọi hóa
+  // đơn xuất ra đều sai thuế suất, kéo theo sai tờ khai — mà không có gì báo cho
+  // biết. Nhắc từ 45 ngày trước, nhắc tiếp mỗi ngày cho tới khi được xử lý.
+  const han = hanThueSuat();
+  if (han.canNhac) {
+    await baoLoi({
+      noi: "hoa-don",
+      mucDo: han.conHieuLuc ? "nang" : "chet",
+      tomTat: han.conHieuLuc
+        ? `Thuế suất GTGT ${(THUE_SUAT_GTGT * 100).toFixed(0)}% còn hiệu lực ${han.conLai} ngày`
+        : `Thuế suất GTGT ${(THUE_SUAT_GTGT * 100).toFixed(0)}% ĐÃ HẾT HIỆU LỰC ${-han.conLai} ngày`,
+      chiTiet: `Hạn cuối: ${HAN_THUE_SUAT} (Nghị quyết 204/2025/QH15).`,
+      hauQua: han.conHieuLuc
+        ? "Qua hạn mà chưa sửa thì mọi hóa đơn xuất ra sẽ sai thuế suất, kéo theo sai tờ khai GTGT."
+        : "Hóa đơn đang xuất SAI THUẾ SUẤT — phải điều chỉnh với cơ quan thuế.",
+      canLam:
+        "Hỏi kế toán xem Quốc hội có gia hạn không. Còn 8% thì sửa HAN_THUE_SUAT sang mốc mới; quay lại 10% thì sửa THUE_SUAT_GTGT trong src/lib/thue.ts và đăng ký lại bên VNPT nếu cần.",
+      // Mỗi ngày một cảnh báo riêng — không nuốt mất, ngày nào cũng thấy.
+      khoa: `thue:han-thue-suat:${new Date().toISOString().slice(0, 10)}`,
+    });
+  }
 
   // ── Giao dịch còn chờ xuất hóa đơn ────────────────────────────────────────
   // Lấy CẢ những ngày trước, không chỉ hôm nay: quên một hôm thì hôm sau vẫn

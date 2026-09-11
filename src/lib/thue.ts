@@ -14,6 +14,39 @@
 export const THUE_SUAT_GTGT = 0.08;
 
 /**
+ * NGÀY CUỐI CÙNG thuế suất trên còn hiệu lực (Nghị quyết 204/2025/QH15).
+ * Qua ngày này mà chưa ai sửa thì mọi hóa đơn xuất ra ĐỀU SAI THUẾ SUẤT — sai
+ * hóa đơn là sai tờ khai, phải điều chỉnh với cơ quan thuế.
+ *
+ * KHÔNG tự động nhảy về 10%: Quốc hội có thể gia hạn tiếp, đoán bừa cũng sai như
+ * nhau. Thay vào đó web TỰ GÀO LÊN trước hạn (xem hanThueSuat bên dưới) để chủ
+ * dự án hỏi kế toán rồi sửa đúng một dòng THUE_SUAT_GTGT ở trên.
+ */
+export const HAN_THUE_SUAT = "2026-12-31";
+
+/** Nhắc trước bao nhiêu ngày thì bắt đầu cảnh báo. */
+const NHAC_TRUOC_NGAY = 45;
+
+export type HanThueSuat = {
+  /** Còn trong thời gian hiệu lực không */
+  conHieuLuc: boolean;
+  /** Còn mấy ngày nữa hết hiệu lực (âm = đã quá hạn bấy nhiêu ngày) */
+  conLai: number;
+  /** Đã tới lúc phải nhắc chưa (sắp hết hạn hoặc đã quá hạn) */
+  canNhac: boolean;
+};
+
+/**
+ * Thuế suất đang khai còn dùng được tới bao giờ.
+ * Dùng cho cảnh báo trên trang admin và trong việc nhắc xuất hóa đơn hằng ngày.
+ */
+export function hanThueSuat(homNay: Date = new Date()): HanThueSuat {
+  const han = new Date(`${HAN_THUE_SUAT}T23:59:59+07:00`);
+  const conLai = Math.ceil((han.getTime() - homNay.getTime()) / 86_400_000);
+  return { conHieuLuc: conLai >= 0, conLai, canNhac: conLai <= NHAC_TRUOC_NGAY };
+}
+
+/**
  * Giá hiển thị trên web đã bao gồm VAT chưa?
  * false = giá niêm yết là tiền hàng, khách trả thêm 8% (đang chọn).
  * true  = giá niêm yết là số khách trả, VAT nằm trong đó.

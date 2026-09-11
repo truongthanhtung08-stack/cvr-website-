@@ -8,6 +8,8 @@ import {
   DVT_HOA_DON_TONG,
   KY_HIEU_HOA_DON,
   THUE_SUAT_GTGT,
+  HAN_THUE_SUAT,
+  hanThueSuat,
   khoangQuy,
   tachThue,
 } from "@/lib/thue";
@@ -223,8 +225,34 @@ export default function AdminThuePage() {
 
   const nhan = `Quý ${quy}/${nam}`;
 
+  // Thuế suất 8% là chính sách CÓ THỜI HẠN. Qua hạn mà chưa sửa thì mọi hóa đơn
+  // xuất ra đều sai thuế suất → sai tờ khai, phải điều chỉnh với cơ quan thuế.
+  // Băng này hiện ngay đầu trang từ 45 ngày trước hạn, đỏ hẳn khi đã quá hạn.
+  const hanThue = hanThueSuat();
+
   return (
     <div className="space-y-5">
+      {hanThue.canNhac && (
+        <div
+          className={`rounded-xl border px-4 py-3 text-sm ${
+            hanThue.conHieuLuc
+              ? "border-amber-300 bg-amber-50 text-amber-800"
+              : "border-red-300 bg-red-50 text-red-700"
+          }`}
+        >
+          <p className="font-semibold">
+            {hanThue.conHieuLuc
+              ? `Thuế suất GTGT ${(THUE_SUAT_GTGT * 100).toFixed(0)}% còn hiệu lực ${hanThue.conLai} ngày (đến ${HAN_THUE_SUAT}).`
+              : `Thuế suất GTGT ${(THUE_SUAT_GTGT * 100).toFixed(0)}% đã hết hiệu lực từ ${HAN_THUE_SUAT} — hóa đơn đang xuất SAI THUẾ SUẤT.`}
+          </p>
+          <p className="mt-1">
+            Hỏi kế toán xem có gia hạn không, rồi sửa <code>THUE_SUAT_GTGT</code> và{" "}
+            <code>HAN_THUE_SUAT</code> trong <code>src/lib/thue.ts</code>. Sang năm mới còn phải đổi ký hiệu hóa đơn
+            (<code>{KY_HIEU_HOA_DON}</code>) và đăng ký dải mới bên VNPT.
+          </p>
+        </div>
+      )}
+
       <div>
         <h1 className="text-xl font-semibold tracking-tight text-cvr-ink">Hóa đơn &amp; báo cáo thuế</h1>
         <p className="mt-1 text-sm text-cvr-muted">
