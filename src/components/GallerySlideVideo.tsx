@@ -42,6 +42,7 @@ export default function GallerySlideVideo({
   const ref = useRef<HTMLVideoElement>(null);
   const khungRef = useRef<HTMLIFrameElement>(null);
   const [posterSrc, setPosterSrc] = useState(poster?.hd ?? "");
+  const [loiPhat, setLoiPhat] = useState(false);
   const holdRef = useRef(onHold);
   const playingRef = useRef(false);
   const fullRef = useRef(false);
@@ -180,18 +181,37 @@ export default function GallerySlideVideo({
         playingRef.current = false;
         bao();
       }}
+      // Máy này không giải mã nổi (thường là video iPhone quay ở chế độ "Hiệu
+      // quả cao" — mã HEVC, Android không đọc được) → ĐỪNG để ô đen câm. Mở
+      // thẳng bằng trình phát của máy, nó xem được.
+      onError={() => setLoiPhat(true)}
       className="h-full w-full bg-black object-contain"
     >
       Trình duyệt không hỗ trợ phát video.
     </video>
   );
 
-  // MỘT TRÌNH PHÁT, MỘT BỘ NÚT. Web không vẽ thêm nút nào, không mở trình xem
-  // riêng nào: bấm nút toàn màn hình MẶC ĐỊNH của trình phát là xong, nút thoát
-  // cũng là của nó. Bản trước web tự thêm nút phóng to nên khung có tới hai nút
-  // giống hệt nhau, bấm vào thì video trong khung và video phóng to chạy cùng
-  // lúc, nghe hai tiếng chồng nhau (chủ dự án báo 11/9/2026).
+  // MỘT TRÌNH PHÁT, MỘT BỘ NÚT: play, tua, âm lượng, toàn màn hình đều là nút
+  // mặc định của trình phát. Web không vẽ thêm nút nào.
   return (
-    <div className={`absolute inset-0 bg-black ${xemTruoc ? "pointer-events-none" : ""}`}>{video}</div>
+    <div className={`absolute inset-0 bg-black ${xemTruoc ? "pointer-events-none" : ""}`}>
+      {video}
+
+      {loiPhat && !xemTruoc && (
+        <a
+          href={asset(url)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black text-white"
+        >
+          <span className="flex h-16 w-16 items-center justify-center rounded-full bg-white/90">
+            <svg className="ml-1 h-7 w-7 text-black" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M8 5v14l11-7z" />
+            </svg>
+          </span>
+          <span className="text-[13px] font-medium">Mở video</span>
+        </a>
+      )}
+    </div>
   );
 }
