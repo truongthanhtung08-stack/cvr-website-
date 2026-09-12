@@ -279,6 +279,57 @@ export function doiHeDiaChi(
   return { province: moi.tinh || newProvinceOf(tinh), district: quan, ward: moi.phuong };
 }
 
+// ─── ĐỔI HỆ KHÔNG MẤT DỮ LIỆU ───────────────────────────────────────────────
+// Suy ra địa giới hệ kia là việc ĐOÁN, mà đoán thì có chiều đúng chiều sai:
+// đo ngày 12/09/2026 trên toàn bộ danh mục — hệ CŨ → MỚI khớp 10.786/10.786,
+// nhưng hệ MỚI → CŨ thì 1.120/3.321 phường (34%) không suy nổi ra phường cũ nên
+// ô Phường/Xã về trắng; bấm quay lại hệ mới, 786 trường hợp (24%) rơi vào MỘT
+// PHƯỜNG KHÁC hẳn ("Phường Hồng Hà" quay về thành "Phường Tây Hồ") — sai mà im
+// lặng, người nhập không hề biết tin của mình vừa bị đổi khu vực.
+//
+// Cách chữa: đừng đoán lại thứ mình đã biết. Mỗi lần đổi hệ thì CHỤP LẠI cả hai
+// bên; lần đổi sau, nếu người nhập chưa động vào ô nào thì TRẢ NGUYÊN bản chụp
+// của hệ kia — không suy diễn gì hết. Chỉ khi họ thật sự sửa ô thì mới suy lại,
+// và lúc đó bản chụp cũ bị bỏ vì đã lạc hậu.
+export type BoBaDiaGioi = { tinh: string; quan: string; phuong: string };
+export type NhoHaiHe = { cu?: BoBaDiaGioi; moi?: BoBaDiaGioi };
+
+export function doiHeGiuNguyen(
+  heDangO: GeoMode,
+  heDich: GeoMode,
+  dangCo: { tinh: string; quan?: string; phuong?: string },
+  nho: NhoHaiHe | null,
+): { ket: { province: string; district: string; ward: string }; nho: NhoHaiHe } {
+  const hienTai: BoBaDiaGioi = {
+    tinh: dangCo.tinh || "",
+    quan: dangCo.quan || "",
+    phuong: dangCo.phuong || "",
+  };
+  const dangChup = nho?.[heDangO];
+  const chuaSua =
+    !!dangChup &&
+    dangChup.tinh === hienTai.tinh &&
+    dangChup.quan === hienTai.quan &&
+    dangChup.phuong === hienTai.phuong;
+  const chupBenKia = nho?.[heDich];
+
+  if (chuaSua && chupBenKia) {
+    return {
+      ket: { province: chupBenKia.tinh, district: chupBenKia.quan, ward: chupBenKia.phuong },
+      nho: { ...nho, [heDangO]: hienTai },
+    };
+  }
+
+  const d = doiHeDiaChi(heDich, hienTai, heDich === "cu" ? nho?.cu : undefined);
+  return {
+    ket: d,
+    nho: {
+      [heDangO]: hienTai,
+      [heDich]: { tinh: d.province, quan: d.district, phuong: d.ward },
+    },
+  };
+}
+
 // ─── CHUỖI GỬI CHO BẢN ĐỒ — GỬI CẢ HAI HỆ ───────────────────────────────────
 // Bản đồ (Google lẫn bảng toạ độ tĩnh trong geo.ts) vẫn chạy theo TÊN CŨ: bảng
 // CENTERS khớp "Sơn Trà", "Thuận Hóa", "Hội An"… còn Google thì chưa cập nhật

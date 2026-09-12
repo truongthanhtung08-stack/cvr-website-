@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { lamMoiWeb } from "@/lib/lamMoiWeb";
 import { saleTypeGroups, rentTypeGroups } from "@/lib/filters";
 import { provinceNamesFor, districtsOf, wardsOf, wardsOfNew, wardsOfAny, type GeoMode } from "@/lib/locations";
-import { haiDongDiaChi, doiHeDiaChi, chuoiTimBanDo } from "@/lib/diaChiHaiHe";
+import { haiDongDiaChi, doiHeGiuNguyen, chuoiTimBanDo, type NhoHaiHe } from "@/lib/diaChiHaiHe";
 import { ganDiaGioi, type DiaGioiBanDo } from "@/lib/diaGioiTuBanDo";
 import { fieldsFor, interiorItems, amenityGroups, legalOptions, furnishLevels, directions, coPhongNgu, coPhongTam, coDienTichXayDung, nhanDienTich, coDonGiaM2 } from "@/lib/listingSpec";
 import { chuanHoaSdt } from "@/lib/phone";
@@ -162,8 +162,8 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
   // Danh sách quận/huyện & phường/xã liên động theo lựa chọn cấp trên
   // Hệ đơn vị hành chính: MỚI (sau sáp nhập) bỏ cấp Quận/Huyện
   const [geoMode, setGeoMode] = useState<GeoMode>("moi");
-  // Nhớ bộ ba hệ CŨ người nhập đã chọn → đổi hệ qua lại vẫn về đúng chỗ đó.
-  const nhoHeCu = useRef<{ tinh: string; quan?: string; phuong?: string } | null>(null);
+  // Nhớ chỗ đã chọn Ở CẢ HAI HỆ → đổi hệ qua lại là trả nguyên, không suy diễn lại.
+  const nhoHai = useRef<NhoHaiHe | null>(null);
   // Nhớ địa giới đọc được từ điểm ghim → đổi hệ địa chỉ là điền lại được ngay
   // theo hệ vừa chọn, không phải ghim lại.
   const diaGioiTuBanDoRef = useRef<DiaGioiBanDo | null>(null);
@@ -425,10 +425,13 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
                     // phải chọn lại từ tỉnh — vừa mất công vừa dễ nhập sai khu vực.
                     // Nay suy thẳng sang hệ mới: suy được tới đâu điền tới đó,
                     // chỗ không chắc để trống cho người nhập tự chọn.
-                    const d = doiHeDiaChi(m.id, { tinh: province, quan: district, phuong: ward }, nhoHeCu.current);
-                    // Rời hệ cũ thì nhớ lại chỗ đã chọn, quay về là trả đúng cái đó — một phường
-                    // mới gộp 2–4 phường cũ nên máy tự suy không thể biết họ ở phường nào.
-                    if (geoMode === "cu" && province) nhoHeCu.current = { tinh: province, quan: district, phuong: ward };
+                    const { ket: d, nho } = doiHeGiuNguyen(
+                      geoMode,
+                      m.id,
+                      { tinh: province, quan: district, phuong: ward },
+                      nhoHai.current,
+                    );
+                    nhoHai.current = nho;
                     setGeoMode(m.id);
                     setProvince(d.province);
                     setDistrict(d.district);

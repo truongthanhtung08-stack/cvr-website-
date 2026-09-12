@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { donViGiaNenDung, goiYDienTich, goiYGia, goiYTieuDe } from "@/lib/goiYNhapTin";
-import { haiDongDiaChi, doiHeDiaChi, chuoiTimBanDo } from "@/lib/diaChiHaiHe";
+import { haiDongDiaChi, doiHeGiuNguyen, chuoiTimBanDo, type NhoHaiHe } from "@/lib/diaChiHaiHe";
 import {
   categorySpecs, demandTypes, specForType,
   coPhongNgu, coPhongTam, coDienTichXayDung, coNoiThat, fieldsSplit, thieuMucBatBuoc, nhanDienTich, type Field,
@@ -292,8 +292,8 @@ export default function PostListingForm() {
   // Nhớ lại địa giới đọc được để KHÁCH ĐỔI HỆ ĐỊA CHỈ lúc nào cũng điền lại được
   // ngay, không bắt họ ghim lại từ đầu.
   const diaGioiTuBanDoRef = useRef<DiaGioiBanDo | null>(null);
-  // Nhớ bộ ba hệ CŨ người nhập đã chọn → đổi hệ qua lại vẫn về đúng chỗ đó.
-  const nhoHeCu = useRef<{ tinh: string; quan?: string; phuong?: string } | null>(null);
+  // Nhớ chỗ đã chọn Ở CẢ HAI HỆ → đổi hệ qua lại là trả nguyên, không suy diễn lại.
+  const nhoHai = useRef<NhoHaiHe | null>(null);
 
   function apDungDiaGioi(dc: DiaGioiBanDo, heDiaChi: GeoMode, tinhCu: string, quanCu: string, phuongCu: string) {
     const kq = ganDiaGioi(dc, heDiaChi, { province: tinhCu, district: quanCu, ward: phuongCu });
@@ -705,10 +705,13 @@ export default function PostListingForm() {
                   if (m.id === geoMode) return;
                   // ĐỔI HỆ = TỰ ĐỒNG BỘ: suy thẳng địa chỉ đang nhập sang hệ vừa
                   // chọn, không bắt người đăng chọn lại từ tỉnh.
-                  const d = doiHeDiaChi(m.id, { tinh: province, quan: district, phuong: ward }, nhoHeCu.current);
-                  // Rời hệ cũ thì nhớ lại chỗ đã chọn, quay về là trả đúng cái đó — một phường
-                  // mới gộp 2–4 phường cũ nên máy tự suy không thể biết họ ở phường nào.
-                  if (geoMode === "cu" && province) nhoHeCu.current = { tinh: province, quan: district, phuong: ward };
+                  const { ket: d, nho } = doiHeGiuNguyen(
+                    geoMode,
+                    m.id,
+                    { tinh: province, quan: district, phuong: ward },
+                    nhoHai.current,
+                  );
+                  nhoHai.current = nho;
                   setGeoMode(m.id);
                   setProvince(d.province);
                   setDistrict(d.district);

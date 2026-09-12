@@ -5,7 +5,7 @@ import type { Map as MlMap, Marker as MlMarker } from "maplibre-gl";
 import { napMapLibre, STYLE_MO, vietHoaNhan } from "@/lib/banDoMo";
 import { formatLatLng, parseLatLng, type LatLng } from "@/lib/googleMaps";
 import { centerOfArea } from "@/lib/geo";
-import { traDiaChi } from "@/lib/timToaDo";
+import { traDiaChi, timToaDo } from "@/lib/timToaDo";
 import { docKhoangCach, khoangCachKm, layViTri, loiDinhVi } from "@/lib/dinhVi";
 import NhacBatDinhVi from "@/components/NhacBatDinhVi";
 
@@ -65,6 +65,13 @@ export default function MapPickerMo({
   const [loiDan, setLoiDan] = useState("");
   const [khoangCach, setKhoangCach] = useState("");
   const [mucDo, setMucDo] = useState<"soNha" | "duong" | "khuVuc" | null>(null);
+  // Địa chỉ đọc được NGAY TẠI ĐIỂM GHIM — luôn hiện cho người đăng thấy, kể cả
+  // khi web không tự điền vào ô (vì ô đang có chữ của họ). Thấy rồi thì tự so:
+  // trùng là yên tâm, lệch thì bấm một nút là lấy, hoặc kéo ghim cho khớp.
+  const [diaChiGhim, setDiaChiGhim] = useState("");
+  // Phần số nhà / tên đường của điểm ghim — đúng thứ sẽ đặt vào ô "Địa chỉ cụ thể"
+  // nếu người đăng bấm nút sửa. Tách riêng để không nhét cả tên phường, tỉnh vào ô đó.
+  const [soNhaGhim, setSoNhaGhim] = useState("");
 
   useEffect(() => {
     onChangeRef.current = onChange;
@@ -82,7 +89,13 @@ export default function MapPickerMo({
     const ten = await traDiaChi(p.lat, p.lng);
     setDangTra(false);
     setMucDo(ten?.mucDo ?? null);
-    if (!ten) return;
+    if (!ten) {
+      setDiaChiGhim("");
+      setSoNhaGhim("");
+      return;
+    }
+    setDiaChiGhim([ten.ngan, ten.phuong, ten.quan, ten.tinh].filter(Boolean).join(", "));
+    setSoNhaGhim(ten.ngan ?? "");
 
     // Ba khối địa giới: luôn cập nhật, đó là sự thật suy từ toạ độ.
     if (ten.tinh || ten.quan || ten.phuong)
@@ -211,20 +224,33 @@ export default function MapPickerMo({
 
   // ── Khách chọn tỉnh / gõ địa chỉ → BAY TỚI, và CHỈ BAY ───────────────────
   // ⚠️ TUYỆT ĐỐI KHÔNG đụng vào ghim ở đây — xem nguyên tắc 2 và 3.
+  //
+  // TRỎ ĐÚNG TỚI ĐÂU HAY TỚI ĐÓ: trước đây chỗ này chỉ tra bảng khu vực có sẵn
+  // trong web (centerOfArea) — bảng đó chỉ biết vài chục nơi và chỉ tới cấp
+  // phường, nên gõ đủ số nhà tên đường thì bản đồ vẫn đứng giữa phường, người
+  // đăng phải tự kéo đi tìm. Nay hỏi thẳng bản đồ (timToaDo, tự lùi dần số nhà →
+  // đường → phường → tỉnh cho tới khi nhận ra), lấy bảng làm đường lui khi mạng
+  // hỏng. Ra tới số nhà thì phóng sát để ghim chỉ còn là một cú bấm.
   useEffect(() => {
     if (!sanSang) return;
     const map = mapRef.current;
-    if (!map || ghimRef.current) return;
-    const kv = centerOfArea(hint);
-    if (!kv) return;
-    const t = setTimeout(() => {
-      map.easeTo({
+    if (!map || ghimRef.current || !hint.trim()) return;
+    let huy = false;
+    const t = setTimeout(async () => {
+      const diem = await timToaDo(hint);
+      if (huy || !mapRef.current || ghimRef.current) return;
+      const kv = diem ? ([diem.lat, diem.lng] as [number, number]) : centerOfArea(hint);
+      if (!kv) return;
+      mapRef.current.easeTo({
         center: [kv[1], kv[0]],
-        zoom: hint.split(",").filter((s) => s.trim()).length >= 2 ? 14 : 12,
+        zoom: diem?.mucDo === "ghim" ? 17 : diem?.mucDo === "duong" ? 16 : hint.split(",").filter((s) => s.trim()).length >= 2 ? 14 : 12,
         duration: 600,
       });
-    }, 250);
-    return () => clearTimeout(t);
+    }, 500);
+    return () => {
+      huy = true;
+      clearTimeout(t);
+    };
   }, [hint, sanSang]);
 
   function xoaGhim() {
@@ -234,6 +260,8 @@ export default function MapPickerMo({
     mayDienRef.current = "";
     setKhoangCach("");
     setMucDo(null);
+    setDiaChiGhim("");
+    setSoNhaGhim("");
   }
 
   // Nhận thứ người dùng dán: toạ độ thẳng "16.06,108.22", link dài của Google
@@ -356,6 +384,30 @@ export default function MapPickerMo({
           <span className="text-cvr-muted">Bấm lên bản đồ để ghim vị trí.</span>
         )}
       </p>
+
+      {/* ĐỊA CHỈ TẠI ĐIỂM GHIM — hiện thẳng ra, và người đăng tự quyết có lấy hay
+          không. Web KHÔNG tự đè lên chữ họ đã gõ (số nhà là quyền của khách,
+          bản đồ luôn đi sau thực tế), nhưng giấu luôn thứ mình đọc được thì họ
+          không có cách nào biết ghim đang nằm đúng hay lệch. */}
+      {daGhim && diaChiGhim && (
+        <div className="rounded-xl bg-cvr-surface px-3 py-2.5">
+          <p className="text-[13px] leading-relaxed text-cvr-body">
+            Địa chỉ tại điểm ghim: <strong className="font-semibold text-cvr-ink">{diaChiGhim}</strong>
+          </p>
+          {soNhaGhim && soNhaGhim !== (hint.split(",")[0] ?? "").trim() && (
+            <button
+              type="button"
+              onClick={() => {
+                onDiaChiRef.current?.(soNhaGhim);
+                mayDienRef.current = soNhaGhim;
+              }}
+              className="mt-2 inline-flex min-h-[36px] items-center rounded-lg border border-cvr-line bg-white px-3 text-[13px] font-semibold text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink"
+            >
+              Sửa địa chỉ theo điểm ghim
+            </button>
+          )}
+        </div>
+      )}
 
       {loi && (
         <NhacBatDinhVi loi={loi} onThuLai={() => dinhVi(true)} dangDinhVi={dangDinhVi} onDong={() => setLoi("")} />
