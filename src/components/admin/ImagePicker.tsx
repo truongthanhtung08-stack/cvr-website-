@@ -5,39 +5,28 @@ import { asset } from "@/lib/asset";
 import { isVideoUrl } from "@/lib/media";
 import { uploadImageFile, uploadVideoFile } from "@/lib/uploadImage";
 
-// BA LỐI CHỌN ẢNH — xem ghi chú ⛔ ở chỗ dùng, dưới phần return.
-// Samsung Internet KHÔNG đưa Bộ sưu tập vào bảng khi ô khai "image/*" (đo trên
-// máy thật 12/09/2026, bản Samsung Internet mới nhất, thử đủ có/không multiple,
-// có/không accept — lối nào cũng chỉ ra Máy ảnh · File của bạn · Files).
-// Chrome cùng máy thì mở thẳng lưới ảnh, nên khai báo của mình không sai.
-// Cách còn lại chưa thử: kê thẳng từng kiểu ảnh thay vì "image/*". CHỈ áp cho
-// Samsung Internet — Chrome đang chạy đúng, không được đụng vào.
-const ANH_CU_THE = "image/jpeg,image/png,image/webp,image/heic,image/heif,image/gif,image/bmp";
-
-function laSamsung() {
-  return typeof navigator !== "undefined" && /SamsungBrowser/i.test(navigator.userAgent);
-}
-
 // PHÂN BIỆT MÁY — quyết định có hiện dòng "Máy ảnh" hay không.
-//   · Điện thoại (Android, iPhone)  → CÓ máy ảnh cầm tay → hiện
-//   · Máy tính bảng (Android tablet, iPad) → CÓ → hiện
+//   · Điện thoại (Android, iPhone) · Máy tính bảng, iPad → CÓ máy ảnh cầm tay → hiện
 //   · Máy tính bàn / laptop (Windows, macOS, Linux) → KHÔNG → ẩn
 // iPad đời mới khai mình là "Macintosh", chỉ lộ ra ở chỗ có nhiều điểm chạm —
-// nên phải kiểm maxTouchPoints, không thể chỉ đọc tên hệ máy.
+// nên phải kiểm maxTouchPoints, không thể chỉ đọc tên hệ máy. Laptop cảm ứng
+// Windows thì vẫn là máy tính, phải đọc tên hệ máy TRƯỚC.
 // Bề rộng màn hình KHÔNG dùng làm căn cứ: tablet ngang rộng bằng laptop.
 function coMayAnhCamTay() {
   if (typeof navigator === "undefined") return false;
   const ua = navigator.userAgent;
-  if (/Android|iPhone|iPod/i.test(ua)) return true;              // điện thoại
-  if (/iPad/i.test(ua)) return true;                             // iPad đời cũ
-  if (/Macintosh/i.test(ua) && navigator.maxTouchPoints > 1) return true; // iPad đời mới
-  if (/Windows|Macintosh|Linux|CrOS/i.test(ua)) return false;    // máy tính bàn/laptop
+  if (/Android|iPhone|iPod/i.test(ua)) return true;
+  if (/iPad/i.test(ua)) return true;
+  if (/Macintosh/i.test(ua) && navigator.maxTouchPoints > 1) return true;
+  if (/Windows|Macintosh|Linux|CrOS/i.test(ua)) return false;
   return typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
 }
 
-function acceptThuVien() {
-  return laSamsung() ? ANH_CU_THE : "image/*";
-}
+// ⛔ accept CỦA DÒNG "THƯ VIỆN ẢNH" PHẢI LÀ "image/*" TRẦN — đừng kê dãy kiểu
+// ảnh cụ thể (image/jpeg,image/png,…). Đo trên máy thật 12/09/2026: Samsung
+// Internet không đọc được dãy đó, rơi về "chọn tệp bất kỳ" nên dòng Thư viện ra
+// đúng cùng một bảng với dòng Thư mục (Máy ảnh · Máy quay · Files).
+// Cũng đừng thêm "android/allowCamera": Chrome mất luôn lưới ảnh.
 
 // BA LỐI CHỌN ẢNH. Mỗi lối một LOGO ĐẶC TRƯNG, đúng kiểu khách vẫn thấy trên
 // điện thoại (ảnh núi-mặt trời xanh · thư mục vàng · máy ảnh đen), để nhìn phát
@@ -117,8 +106,6 @@ export default function ImagePicker({
   const [broken, setBroken] = useState<string[]>([]);
   // Đang mở bảng ba lối chọn ảnh hay chưa (bảng của mình, không phải của máy).
   const [moChon, setMoChon] = useState(false);
-  // Ô chọn tệp để "thật" (phủ kín dòng) hay ẩn sr-only — xem ghi chú ở chỗ dùng.
-  const oThat = moChon && laSamsung();
 
   // Điện thoại và máy tính bảng: đủ BA lối. Máy tính bàn/laptop: HAI lối.
   // Thuộc tính `capture` chỉ có tác dụng trên máy có máy ảnh cầm tay; để dòng
@@ -348,7 +335,7 @@ export default function ImagePicker({
             {uploadingImg ? "Đang tải ảnh…" : "Thêm ảnh"}
           </button>
         ) : (
-          <div className="overflow-hidden rounded-2xl border border-cvr-line bg-white shadow-[0_10px_30px_rgba(0,0,0,0.12)] motion-safe:animate-[xoBang_.18s_ease-out]" data-o-that={oThat ? "1" : "0"}>
+          <div className="overflow-hidden rounded-2xl border border-cvr-line bg-white shadow-[0_10px_30px_rgba(0,0,0,0.12)] motion-safe:animate-[xoBang_.18s_ease-out]">
             <style>{"@keyframes xoBang{from{opacity:0;transform:translateY(-6px) scale(.98)}to{opacity:1;transform:none}}"}</style>
             {loiHien.map((lo, i) => (
               <label
@@ -364,7 +351,7 @@ export default function ImagePicker({
                 <input
                   ref={lo.ma === "thuvien" ? imgRef : undefined}
                   type="file"
-                  {...(lo.ma === "thuvien" ? { accept: acceptThuVien() } : lo.accept ? { accept: lo.accept } : {})}
+                  {...(lo.accept ? { accept: lo.accept } : {})}
                   {...(lo.capture ? { capture: "environment" as const } : {})}
                   {...(lo.nhieu ? { multiple: true } : {})}
                   disabled={uploadingImg}
@@ -374,7 +361,7 @@ export default function ImagePicker({
                   // về bảng chọn chung ở CẢ BA lối (kể cả lối Thư mục) — đây là thứ
                   // duy nhất còn khác so với các trang web thường. Trình duyệt khác
                   // giữ sr-only vì đang chạy đúng.
-                  className={oThat ? "absolute inset-0 h-full w-full cursor-pointer opacity-0" : "sr-only"}
+                  className="sr-only"
                 />
               </label>
             ))}
