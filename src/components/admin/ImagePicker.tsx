@@ -51,8 +51,14 @@ const LOI_CHON = [
   },
   {
     ma: "thumuc",
+    // ⛔ KHAI THEO ĐUÔI TỆP, ĐỪNG ĐỂ TRỐNG. Ô không khai gì thì trình duyệt hiểu
+    // là "tệp bất kỳ" và TỰ THÊM Máy ảnh + Máy quay vào bảng — bấm Thư mục lại
+    // ra ba thứ, không vào thẳng thư mục (đo trên máy thật 12/09/2026, cả Chrome
+    // lẫn Samsung Internet). Kê đuôi tệp thì trình duyệt mở THẲNG trình duyệt
+    // tệp, và chỉ hiện ảnh cho khỏi lẫn. Cũng đừng khai "image/*" ở dòng này —
+    // khai vậy là ra lưới ảnh, trùng với dòng Thư viện ảnh.
     ten: "Thư mục",
-    accept: "",
+    accept: ".jpg,.jpeg,.png,.webp,.heic,.heif,.gif,.bmp",
     capture: false,
     nhieu: true,
     nen: "bg-[#fff3d6] text-[#e5a00d]",
