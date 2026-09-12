@@ -14,9 +14,12 @@ import { uploadImageFile, uploadVideoFile } from "@/lib/uploadImage";
 // Samsung Internet — Chrome đang chạy đúng, không được đụng vào.
 const ANH_CU_THE = "image/jpeg,image/png,image/webp,image/heic,image/heif,image/gif,image/bmp";
 
+function laSamsung() {
+  return typeof navigator !== "undefined" && /SamsungBrowser/i.test(navigator.userAgent);
+}
+
 function acceptThuVien() {
-  if (typeof navigator === "undefined") return "image/*";
-  return /SamsungBrowser/i.test(navigator.userAgent) ? ANH_CU_THE : "image/*";
+  return laSamsung() ? ANH_CU_THE : "image/*";
 }
 
 // BA LỐI CHỌN ẢNH. Mỗi lối một LOGO ĐẶC TRƯNG, đúng kiểu khách vẫn thấy trên
@@ -97,6 +100,8 @@ export default function ImagePicker({
   const [broken, setBroken] = useState<string[]>([]);
   // Đang mở bảng ba lối chọn ảnh hay chưa (bảng của mình, không phải của máy).
   const [moChon, setMoChon] = useState(false);
+  // Ô chọn tệp để "thật" (phủ kín dòng) hay ẩn sr-only — xem ghi chú ở chỗ dùng.
+  const oThat = moChon && laSamsung();
 
   // MÁY ĐO TẠM — gửi về máy chủ xem trang đang chạy trong trình duyệt hay trong
   // ứng dụng đã cài ra màn hình chính, để tìm vì sao bảng chọn ảnh thiếu Bộ sưu
@@ -340,13 +345,13 @@ export default function ImagePicker({
             {uploadingImg ? "Đang tải ảnh…" : "Thêm ảnh"}
           </button>
         ) : (
-          <div className="overflow-hidden rounded-2xl border border-cvr-line bg-white shadow-[0_10px_30px_rgba(0,0,0,0.12)] motion-safe:animate-[xoBang_.18s_ease-out]">
+          <div className="overflow-hidden rounded-2xl border border-cvr-line bg-white shadow-[0_10px_30px_rgba(0,0,0,0.12)] motion-safe:animate-[xoBang_.18s_ease-out]" data-o-that={oThat ? "1" : "0"}>
             <style>{"@keyframes xoBang{from{opacity:0;transform:translateY(-6px) scale(.98)}to{opacity:1;transform:none}}"}</style>
             {LOI_CHON.map((lo, i) => (
               <label
                 key={lo.ma}
                 onClick={() => setMoChon(false)}
-                className={`flex cursor-pointer items-center gap-3.5 px-4 py-3.5 transition active:bg-cvr-surface ${i > 0 ? "border-t border-cvr-line" : ""}`}
+                className={`relative flex cursor-pointer items-center gap-3.5 px-4 py-3.5 transition active:bg-cvr-surface ${i > 0 ? "border-t border-cvr-line" : ""}`}
               >
                 <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${lo.nen}`}>
                   {lo.icon}
@@ -361,7 +366,12 @@ export default function ImagePicker({
                   {...(lo.nhieu ? { multiple: true } : {})}
                   disabled={uploadingImg}
                   onChange={(e) => (lo.ma === "thumuc" ? handleThuMuc(e.target.files) : handleImageFiles(e.target.files))}
-                  className="sr-only"
+                  // Samsung Internet: ô chọn tệp phải là Ô THẬT phủ kín dòng, không
+                  // phải ô ẩn 1px. Đo 12/09/2026: với ô sr-only, trình duyệt đó rơi
+                  // về bảng chọn chung ở CẢ BA lối (kể cả lối Thư mục) — đây là thứ
+                  // duy nhất còn khác so với các trang web thường. Trình duyệt khác
+                  // giữ sr-only vì đang chạy đúng.
+                  className={oThat ? "absolute inset-0 h-full w-full cursor-pointer opacity-0" : "sr-only"}
                 />
               </label>
             ))}
