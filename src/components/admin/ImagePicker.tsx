@@ -121,11 +121,21 @@ const LOI_CHON = [
     // (nhận mọi thứ). Khai hai loại, trong đó có một loại không phải ảnh, thì
     // rơi ra khỏi cả hai trường hợp đó: không chèn máy ảnh nữa, mà cũng không
     // bung lưới ảnh (lưới ảnh chỉ bung khi mọi loại đều là ảnh/video).
-    // Còn lại đúng một nơi nhận → vào thẳng TRÌNH DUYỆT TỆP — trên Chrome/Samsung
-    // Internet, trình duyệt tệp đó CHÍNH LÀ app quản lý tệp mặc định của máy
-    // (Samsung: My Files/"File của bạn"; iPhone không chạy nhánh này — máy Apple
-    // dùng thẳng bảng ba lối của Safari, có sẵn "Chọn tệp" mở app Files của Apple).
-    // Khách lỡ chọn tệp PDF thì handleThuMuc lọc ra và báo, không sao.
+    // Còn lại đúng một nơi nhận → vào thẳng TRÌNH DUYỆT TỆP.
+    // ⛔ SỬA LẠI 12/9/2026: trước ghi "Files" trên Chrome = My Files của Samsung —
+    // SAI, chủ dự án đo trên máy thật: "Files" ở đây là app "Files" CỦA GOOGLE,
+    // không phải My Files. Nguyên nhân: accept 2 loại khiến Android hỏi "app nào
+    // nhận ACTION_GET_CONTENT loại này" — trên máy này chỉ Files của Google đăng
+    // ký nhận, My Files thì không (My Files chỉ đăng ký cho yêu cầu ẢNH thuần).
+    //
+    // → THÊM `webkitdirectory` bên dưới (chỗ render input): ép trình duyệt mở
+    // bộ chọn THƯ MỤC thật (Storage Access Framework, ACTION_OPEN_DOCUMENT_TREE)
+    // thay vì xin "một tệp bất kỳ" (ACTION_GET_CONTENT). Hai loại yêu cầu này
+    // Android định tuyến khác nhau — chọn thư mục thường do app quản lý tệp gốc
+    // của máy (My Files) xử lý, không phải app "Files" phụ trợ của Google.
+    // CHƯA AI THỬ TRÊN MÁY THẬT — nếu trình duyệt không hỗ trợ webkitdirectory,
+    // thuộc tính bị bỏ qua, quay lại đúng hành vi accept hiện tại (không hỏng gì
+    // thêm). Khách lỡ chọn tệp PDF thì handleThuMuc lọc ra và báo, không sao.
     ten: "Thư mục",
     accept: "image/*,application/pdf",
     capture: false,
@@ -483,6 +493,9 @@ export default function ImagePicker({
             })()}
             {...(lo.capture ? { capture: "environment" as const } : {})}
             {...(lo.nhieu ? { multiple: true } : {})}
+            {...(lo.ma === "thumuc"
+              ? ({ webkitdirectory: "" } as unknown as Record<string, string>)
+              : {})}
             disabled={lo.ma === "video" ? uploadingVideo || conNhanVideo <= 0 : uploadingImg}
             onChange={(e) => {
               if (lo.ma === "video") handleVideoFile(e.target.files);
