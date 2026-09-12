@@ -206,10 +206,6 @@ export default function ImagePicker({
           trình duyệt đời cũ trên Android/iOS bỏ qua ô đã display:none nên khách
           bấm không mở được thư viện ảnh, hoặc mở mà không chọn được nhiều tấm.
           Bấm thẳng vào nhãn là hành vi gốc của trình duyệt, máy nào cũng chạy. */}
-      {/* `android/allowCamera` trong accept KHÔNG phải gõ nhầm. Từ Android 14,
-          Google bỏ mục Máy ảnh khỏi ô chọn ảnh; thêm mẩu này thì Chrome trả lại
-          Máy ảnh bên cạnh thư viện ảnh. Trình duyệt khác không hiểu thì bỏ qua,
-          coi như chỉ khai image/*. Gỡ mẩu này là mất mục Máy ảnh. */}
       {/* ĐÚNG MỘT NÚT — BẤM LÀ RA THƯ VIỆN ẢNH. Không nút phụ, không lời nhắn.
           Ô chọn tệp ẩn bằng sr-only và nằm TRONG nhãn: khách bấm trúng NHÃN, nhãn
           chuyển tiếp xuống ô — đúng khuôn mẫu mọi trang khác dùng. KHÔNG phủ ô
@@ -223,7 +219,7 @@ export default function ImagePicker({
           <input
             ref={imgRef}
             type="file"
-            accept="image/*,android/allowCamera"
+            accept="image/*"
             multiple
             disabled={uploadingImg}
             onChange={(e) => handleImageFiles(e.target.files)}
