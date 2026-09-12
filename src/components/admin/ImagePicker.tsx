@@ -5,6 +5,10 @@ import { asset } from "@/lib/asset";
 import { isVideoUrl } from "@/lib/media";
 import { uploadImageFile, uploadVideoFile } from "@/lib/uploadImage";
 
+// Bộ sưu tập của Samsung có tật KHÔNG nhận cờ "cho chọn nhiều tấm" của trình
+// duyệt (nó dùng tham số riêng của Samsung), nên khi ô có cờ này thì nó không
+// nhận lời mời và rớt khỏi bảng chọn. Vì vậy tắt cờ đó — đúng ở dòng Thư viện
+// ảnh, đúng trên Samsung Internet. Mọi trình duyệt khác giữ nguyên chọn nhiều tấm.
 function laSamsungInternet() {
   return typeof navigator !== "undefined" && /SamsungBrowser/i.test(navigator.userAgent);
 }
@@ -391,11 +395,6 @@ export default function ImagePicker({
             type="file"
             {...(lo.accept ? { accept: lo.accept } : {})}
             {...(lo.capture ? { capture: "environment" as const } : {})}
-            {/* Bộ sưu tập của Samsung có tật KHÔNG nhận cờ "cho chọn nhiều tấm"
-                của trình duyệt (nó dùng tham số riêng của Samsung), nên khi có cờ
-                này nó không nhận lời mời và rớt khỏi bảng chọn. Tắt cờ đúng ở
-                dòng Thư viện ảnh, đúng trên Samsung Internet. Mọi trình duyệt
-                khác giữ nguyên chọn nhiều tấm. */}
             {...(lo.nhieu && !(lo.ma === "thuvien" && laSamsungInternet()) ? { multiple: true } : {})}
             disabled={uploadingImg}
             onChange={(e) => (lo.ma === "thumuc" ? handleThuMuc(e.target.files) : handleImageFiles(e.target.files))}
