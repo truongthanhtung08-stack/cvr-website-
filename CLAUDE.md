@@ -37,20 +37,31 @@
 
 ---
 
-## 0A. 🔴 UP ẢNH KHI ĐĂNG TIN — CHƯA XONG, ĐÃ BÀN GIAO (13/09/2026)
+## 0A. ✅ UP ẢNH KHI ĐĂNG TIN — ĐÃ XONG, ĐÃ CHỐT (12/09/2026)
 
-> **ĐỌC `docs/BAN-GIAO-UP-ANH-13-09.md` TRƯỚC KHI SỬA MỘT DÒNG NÀO.**
-> Trong đó có: yêu cầu nguyên văn · đang chạy gì · **những cách đã thử và đã hỏng** ·
-> việc phải làm theo thứ tự · và **cảnh báo đừng tin kết luận của phiên trước**.
+> **VIỆC NÀY ĐÃ KẾT THÚC. ĐỪNG MỞ LẠI, ĐỪNG VIẾT LẠI.**
+> Chủ dự án chốt tối 12/09/2026 sau khi tự xem trên máy: **đạt yêu cầu.**
+> Bản đang chạy: commit `68e7771`, đã lên `coastalland.vn` (xác minh bằng tên gói mã).
 >
-> Chủ dự án dừng việc ngày 13/09 và giao lại cho người khác, vì phiên trước đoán sai
-> hai lần và bắt chủ dự án làm người thử hết lần này tới lần khác. **Đo cho chắc rồi
-> mới đưa ra thử.**
+> Bấm **Thêm ảnh** → bảng **bốn lối**, máy nào trình duyệt nào cũng như nhau:
+> **Thư viện ảnh · Video · Thư mục · Máy ảnh** (máy tính bàn ẩn Máy ảnh).
+> Chủ dự án nói rõ: *"chỉ có vậy, không cần hơn"*.
 >
-> Vướng còn lại: bấm **"Folder"** phải ra **app thư mục của chính máy đó**
-> ("File của bạn" trên Samsung), không phải "Files" của Google.
+> **Chốt về dòng "Thư mục" (Folder):** chỉ cần ra **app quản lý tệp MẶC ĐỊNH của
+> chính cái máy đó** — máy nào app nấy (Samsung ra "File của bạn", Chrome ra "Files",
+> iPhone ra "Tệp" của Apple). **KHÔNG ép cứng một app cụ thể** — yêu cầu cũ "bắt buộc
+> phải là File của bạn" ĐÃ ĐƯỢC THAY BẰNG CHỐT NÀY.
+>
+> **Chốt về Samsung Internet:** dòng "Thư viện ảnh" không ra thẳng Bộ sưu tập mà ra
+> bảng "Máy ảnh · File của bạn · Files" → vào "File của bạn" chọn nhiều ảnh bình
+> thường. **Chủ dự án đã xem màn hình đó và chấp nhận.** Đừng thử thêm `accept` nào nữa.
+>
+> **⛔ ĐỪNG THÊM LẠI `webkitdirectory`** (đã gỡ 12/9): điện thoại bỏ qua nó, còn máy
+> tính thì nó biến dòng Thư mục thành chọn nguyên cả thư mục — sai chức năng.
+>
+> Lịch sử đầy đủ (những cách đã thử và đã hỏng): `docs/BAN-GIAO-UP-ANH-13-09.md`.
 
-(phần ghi ngày 13/09 bên dưới giữ làm lịch sử — có chỗ đã bị chủ dự án bác)
+(phần bên dưới giữ làm lịch sử — viết trước khi chốt, nhiều chỗ đã bị chủ dự án bác)
 
 > **CHỦ DỰ ÁN ĐÃ CHỐT: PHẦN CODE LÀ XONG, ĐỦ YÊU CẦU. ĐỪNG VIẾT LẠI.**
 > Việc còn lại DUY NHẤT là bấm thử trên máy thật (iPhone · Samsung · Firefox/Edge/Opera
