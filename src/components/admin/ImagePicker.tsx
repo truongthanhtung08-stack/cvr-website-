@@ -206,14 +206,16 @@ export default function ImagePicker({
           trình duyệt đời cũ trên Android/iOS bỏ qua ô đã display:none nên khách
           bấm không mở được thư viện ảnh, hoặc mở mà không chọn được nhiều tấm.
           Bấm thẳng vào nhãn là hành vi gốc của trình duyệt, máy nào cũng chạy. */}
-      {/* ĐÚNG MỘT NÚT. Bấm là ra thẳng Bộ sưu tập (bảng của máy vẫn có sẵn lối
-          Files và Máy ảnh cho ai cần). Không nút phụ, không lời nhắn nào khác. */}
+      {/* ĐÚNG MỘT NÚT — BẤM LÀ RA THƯ VIỆN ẢNH. Không nút phụ, không lời nhắn.
+          Ô chọn tệp ẩn bằng sr-only và nằm TRONG nhãn: khách bấm trúng NHÃN, nhãn
+          chuyển tiếp xuống ô — đúng khuôn mẫu mọi trang khác dùng. KHÔNG phủ ô
+          absolute lên nút, cũng KHÔNG display:none (máy đời cũ bỏ qua ô đã ẩn). */}
       <div>
         <label
-          className={`relative flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-cvr-ink px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-cvr-ink/90 ${uploadingImg ? "pointer-events-none opacity-60" : ""}`}
+          className={`flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-cvr-ink px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-cvr-ink/90 ${uploadingImg ? "pointer-events-none opacity-60" : ""}`}
         >
           <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 16V4m0 0L8 8m4-4l4 4M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" /></svg>
-          {uploadingImg ? "Đang tải ảnh…" : "Thêm ảnh"}
+          {uploadingImg ? "Đang tải ảnh…" : "Thư viện ảnh"}
           <input
             ref={imgRef}
             type="file"
@@ -221,7 +223,7 @@ export default function ImagePicker({
             multiple
             disabled={uploadingImg}
             onChange={(e) => handleImageFiles(e.target.files)}
-            className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+            className="sr-only"
           />
         </label>
 
