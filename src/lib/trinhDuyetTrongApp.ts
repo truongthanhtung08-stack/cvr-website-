@@ -17,13 +17,18 @@
 // cho web tự mở app khác, nên chỉ chỉ đúng một thao tác: bấm ••• → Mở trong Safari.
 // ============================================================================
 
-export type LoaiTrongApp = "zalo" | "facebook" | "khac" | null;
+export type LoaiTrongApp = "zalo" | "facebook" | "samsung" | "khac" | null;
 
 // Chỉ nhận diện những app người Việt thật sự hay dùng để mở link.
 export function trinhDuyetTrongApp(ua = typeof navigator !== "undefined" ? navigator.userAgent : ""): LoaiTrongApp {
   if (!ua) return null;
   const s = ua.toLowerCase();
   if (/zalo/.test(s)) return "zalo";
+  // SAMSUNG INTERNET — trình duyệt THẬT, không phải WebView, nhưng bộ chọn tệp
+  // của nó cũng không đưa Bộ sưu tập vào bảng "Chọn một thao tác" (chủ dự án
+  // chụp lại 12/09/2026 trên máy Samsung: chỉ có Máy ảnh · File của bạn · Files).
+  // Phải kiểm TRƯỚC mấy dòng dưới vì chuỗi nhận dạng của nó cũng chứa "Chrome".
+  if (/samsungbrowser/.test(s)) return "samsung";
   if (/fban|fbav|fb_iab|instagram|messenger/.test(s)) return "facebook";
   // WebView Android chung (TikTok, Shopee, app nội bộ…): có "; wv)" trong UA.
   if (/;\s*wv\)/.test(s) || /line\//.test(s)) return "khac";

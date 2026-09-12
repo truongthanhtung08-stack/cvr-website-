@@ -17,6 +17,7 @@ import { trinhDuyetTrongApp, laIOS, duongDanMoChrome, type LoaiTrongApp } from "
 const TEN: Record<Exclude<LoaiTrongApp, null>, string> = {
   zalo: "Zalo",
   facebook: "Facebook",
+  samsung: "Samsung Internet",
   khac: "ứng dụng",
 };
 
@@ -40,7 +41,7 @@ export default function MoBangChrome() {
   return (
     <div className="mb-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3">
       <p className="text-sm leading-relaxed text-amber-900">
-        Đang mở trong <strong className="font-semibold">{TEN[loai]}</strong> nên không chọn được ảnh từ Bộ sưu tập.
+        Đang mở bằng <strong className="font-semibold">{TEN[loai]}</strong> nên không chọn được ảnh từ Bộ sưu tập.
       </p>
 
       {ios ? (

@@ -1259,17 +1259,42 @@ function ThanhBuoc() {
   useEffect(() => {
     const els = MOC_BUOC.map((m) => document.getElementById(m.id)).filter(Boolean) as HTMLElement[];
     if (!els.length) return;
-    const io = new IntersectionObserver(
-      (entries) => {
-        const hien = entries
-          .filter((e) => e.isIntersecting)
-          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
-        if (hien) setDangO(hien.target.id);
-      },
-      { rootMargin: "-180px 0px -55% 0px" },
-    );
+    // TÍNH LẠI TỪ ĐẦU MỖI LẦN CUỘN, KHÔNG DỰA VÀO MỤC VỪA ĐỔI.
+    //
+    // Bản cũ chỉ xét những mục VỪA thay đổi trạng thái, rồi lấy mục trên cùng
+    // trong số đó. Cuộn từ "Mô tả" xuống "Hình ảnh" mà mục Mô tả rời dải quan
+    // sát trước khi mục Hình ảnh lọt vào thì không có mục nào để chọn → thanh
+    // đứng nguyên ở chữ cũ. Chủ dự án gặp thật 12/09/2026: đang ở phần "Hình
+    // ảnh" mà thanh vẫn sáng "Mô tả".
+    //
+    // Nay mỗi lần có thay đổi thì quét LẠI TOÀN BỘ và lấy mục CUỐI CÙNG đã đi
+    // qua vạch 200px kể từ đỉnh màn hình — luôn có đáp án, không bao giờ kẹt.
+    const chon = () => {
+      let id = els[0].id;
+      for (const el of els) if (el.getBoundingClientRect().top <= 200) id = el.id;
+      setDangO(id);
+    };
+    const io = new IntersectionObserver(chon, { rootMargin: "-180px 0px -55% 0px", threshold: [0, 0.01, 1] });
     els.forEach((el) => io.observe(el));
-    return () => io.disconnect();
+
+    // Nghe cả lúc cuộn: một mục dài (như phần Hình ảnh) có thể chiếm hết màn
+    // hình, cuộn chậm bên trong nó thì bộ quan sát không phát tín hiệu nào cả.
+    // Gom vào một khung hình để cuộn nhanh cỡ nào cũng không làm giật máy yếu.
+    let cho = false;
+    const khiCuon = () => {
+      if (cho) return;
+      cho = true;
+      requestAnimationFrame(() => {
+        cho = false;
+        chon();
+      });
+    };
+    window.addEventListener("scroll", khiCuon, { passive: true });
+    chon();
+    return () => {
+      io.disconnect();
+      window.removeEventListener("scroll", khiCuon);
+    };
   }, []);
 
   // Điện thoại không đủ chỗ cho 7 mốc → thanh cuộn ngang, mốc đang xem tự kéo
