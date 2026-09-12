@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, useState } from "react";
-import MoBangChrome from "@/components/MoBangChrome";
 import { asset } from "@/lib/asset";
 import { isVideoUrl } from "@/lib/media";
 import { uploadImageFile, uploadVideoFile } from "@/lib/uploadImage";
@@ -30,10 +29,6 @@ export default function ImagePicker({
   const [error, setError] = useState("");
   // Link ảnh không tải được (trang nguồn chặn hotlink / không phải ảnh trực tiếp)
   const [broken, setBroken] = useState<string[]>([]);
-  // MỘT NÚT "Thêm ảnh", bấm mới xổ ra các lối chọn. Ba nút dàn hàng chiếm ba
-  // dòng trên điện thoại, đẩy phần còn lại của biểu mẫu xuống quá sâu (chủ dự án
-  // chốt 12/09/2026). Gói lại một nút, mở ra mới thấy — gọn mà vẫn đủ lối.
-  const [moChon, setMoChon] = useState(false);
 
   // Chỉ số ẢNH ĐẠI DIỆN = ảnh (không phải video) ĐẦU TIÊN trong mảng.
   const coverIdx = value.findIndex((v) => !isVideoUrl(v));
@@ -71,30 +66,6 @@ export default function ImagePicker({
     if (added.length) onChange([...value, ...added]);
     setUploadingImg(false);
     if (imgRef.current) imgRef.current.value = "";
-  }
-
-  // CHỌN TỪ THƯ MỤC — ô này KHÔNG khai accept nên trình duyệt tệp mở đầy đủ,
-  // vào được mọi thư mục. Đổi lại là có thể lẫn tệp khác, nên phân loại tại đây:
-  // ảnh đi đường ảnh, video đi đường video, còn lại bỏ qua.
-  async function handleThuMuc(files: FileList | null) {
-    if (!files || files.length === 0) return;
-    const ds = Array.from(files);
-    const anh = ds.filter((f) => f.type.startsWith("image/"));
-    const video = ds.filter((f) => f.type.startsWith("video/"));
-    if (!anh.length && !video.length) {
-      setError("Tệp vừa chọn không phải ảnh hoặc video.");
-      return;
-    }
-    if (anh.length) {
-      const dt = new DataTransfer();
-      for (const f of anh) dt.items.add(f);
-      await handleImageFiles(dt.files);
-    }
-    // Video chọn từ thư mục: KHÔNG tải lên kho nữa (xem ghi chú chỗ nút "Thêm video"
-    // đã bỏ). Nói rõ phải làm gì thay vì im lặng bỏ qua — khách đang cầm video trong tay.
-    if (video.length) {
-      setError("Video đăng bằng link YouTube: tải video lên YouTube rồi dán link vào ô bên dưới.");
-    }
   }
 
   // Đang KHÔNG dùng: nút "Thêm video" đã bỏ 11/09/2026 (video đăng bằng link YouTube).
@@ -235,32 +206,14 @@ export default function ImagePicker({
           trình duyệt đời cũ trên Android/iOS bỏ qua ô đã display:none nên khách
           bấm không mở được thư viện ảnh, hoặc mở mà không chọn được nhiều tấm.
           Bấm thẳng vào nhãn là hành vi gốc của trình duyệt, máy nào cũng chạy. */}
-      {/* Mở trong Zalo/Facebook thì nút chọn ảnh không ra được Bộ sưu tập —
-          hiện lối thoát sang Chrome ngay tại đây, đúng chỗ khách đang bấm. */}
-      <MoBangChrome />
-
-      {/* ĐA SỐ KHÁCH UP ẢNH TỪ BỘ SƯU TẬP. Hai nút đó chiếm trọn hàng trên, gọi
-          đúng tên khách đi tìm; Thư mục và Máy ảnh lùi xuống hàng dưới, nhỏ hơn
-          — vẫn đủ ba lối vào, nhưng không để khách bấm nhầm sang trình duyệt tệp
-          rồi tưởng web không mở được bộ sưu tập (chủ dự án chốt 11/9/2026). */}
-      {!moChon && (
-        <button
-          type="button"
-          onClick={() => setMoChon(true)}
-          disabled={uploadingImg}
-          className={`inline-flex w-full items-center justify-center gap-2 rounded-lg bg-cvr-ink px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-cvr-ink/90 ${uploadingImg ? "pointer-events-none opacity-60" : ""}`}
+      {/* ĐÚNG MỘT NÚT. Bấm là ra thẳng Bộ sưu tập (bảng của máy vẫn có sẵn lối
+          Files và Máy ảnh cho ai cần). Không nút phụ, không lời nhắn nào khác. */}
+      <div>
+        <label
+          className={`relative flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-cvr-ink px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-cvr-ink/90 ${uploadingImg ? "pointer-events-none opacity-60" : ""}`}
         >
           <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 16V4m0 0L8 8m4-4l4 4M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" /></svg>
           {uploadingImg ? "Đang tải ảnh…" : "Thêm ảnh"}
-        </button>
-      )}
-
-      <div className={`grid grid-cols-2 gap-2.5 ${moChon ? "" : "hidden"}`}>
-        <label
-          className={`relative col-span-2 inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-cvr-ink px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-cvr-ink/90 ${uploadingImg ? "pointer-events-none opacity-60" : ""}`}
-        >
-          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 16V4m0 0L8 8m4-4l4 4M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" /></svg>
-          {uploadingImg ? "Đang tải ảnh…" : "Thư viện ảnh"}
           <input
             ref={imgRef}
             type="file"
@@ -268,7 +221,7 @@ export default function ImagePicker({
             multiple
             disabled={uploadingImg}
             onChange={(e) => handleImageFiles(e.target.files)}
-            className="sr-only"
+            className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
           />
         </label>
 
@@ -281,51 +234,19 @@ export default function ImagePicker({
             Hàm handleVideoFile GIỮ NGUYÊN bên trên — ngày nào lên gói trả phí
             muốn mở lại thì chỉ việc trả khối nút này về. */}
 
-        {/* LỐI THỨ BA — THƯ MỤC. Chiếm trọn hàng dưới.
-            Ô này CỐ Ý KHÔNG khai accept. Khai "image/*" thì trình duyệt tệp bị
-            lọc chỉ còn ảnh, vào thư mục nào cũng thấy trống nên bấm như không
-            (chủ dự án báo 11/9/2026). Không khai loại thì nó mở đầy đủ, vào được
-            mọi thư mục — tệp lẫn lộn đã có handleThuMuc phân loại lại.
-            Chạy được trên cả hai hệ: Android mở trình duyệt tệp, iPhone mở Files. */}
-        <label
-          className={`relative col-span-2 inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-cvr-line bg-white px-3 py-2 text-[13px] font-medium text-cvr-muted transition hover:border-cvr-ink hover:text-cvr-ink ${uploadingImg || uploadingVideo ? "pointer-events-none opacity-60" : ""}`}
-        >
-          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
-          </svg>
-          Chọn từ thư mục
-          <input
-            type="file"
-            multiple
-            disabled={uploadingImg || uploadingVideo}
-            onChange={(e) => handleThuMuc(e.target.files)}
-            className="sr-only"
-          />
-        </label>
+        {/* ⛔ ĐỪNG THÊM LẠI NÚT "CHỌN TỪ THƯ MỤC" — đã gỡ 12/09/2026.
 
-        {/* MÁY ẢNH — lối vào DUY NHẤT không phụ thuộc trình duyệt.
-            Thuộc tính `capture` bảo trình duyệt mở THẲNG máy ảnh, bỏ qua bảng
-            "Chọn một thao tác" của Android. Nên Samsung Internet, Zalo hay trình
-            duyệt lạ nào thì nút này vẫn chạy đúng — khác nút Thư viện ảnh, cái đó
-            còn tuỳ trình duyệt có nối vào Bộ sưu tập hay không.
-            Chụp từng tấm một là giới hạn của máy ảnh, không phải của web. */}
-        <label
-          className={`relative col-span-2 inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-cvr-line bg-white px-3 py-2 text-[13px] font-medium text-cvr-muted transition hover:border-cvr-ink hover:text-cvr-ink ${uploadingImg ? "pointer-events-none opacity-60" : ""}`}
-        >
-          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M3 7.5h3l1.5-2h9L18 7.5h3v11H3v-11Z" />
-            <circle cx="12" cy="12.5" r="3.2" />
-          </svg>
-          Máy ảnh
-          <input
-            type="file"
-            accept="image/*"
-            capture="environment"
-            disabled={uploadingImg}
-            onChange={(e) => handleImageFiles(e.target.files)}
-            className="sr-only"
-          />
-        </label>
+            Ô đó cố ý không khai accept. Không khai loại tệp thì Android gửi ý
+            định chọn tệp CHUNG CHUNG, mà app Thư viện (Bộ sưu tập) chỉ đăng ký
+            nhận yêu cầu ảnh — nên nó BIẾN MẤT khỏi bảng "Chọn một thao tác",
+            chỉ còn Máy ảnh · File của bạn · Files. Đúng cái bảng chủ dự án chụp
+            lại và đã phải nhắc rất nhiều lần.
+
+            Với accept="image/*" đơn thuần, bảng của Android TỰ CÓ đủ ba lối:
+            Bộ sưu tập · Files · Máy ảnh. Nên MỘT nút là đủ; thêm nút phụ chỉ tạo
+            chỗ cho khách bấm nhầm rồi tưởng web không mở được thư viện ảnh.
+
+            Chỗ này đã phá đi dựng lại nhiều lần. ĐỂ YÊN. */}
 
       </div>
 
