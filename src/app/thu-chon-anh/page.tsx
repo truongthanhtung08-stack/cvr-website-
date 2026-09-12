@@ -3,100 +3,65 @@
 import { useState } from "react";
 
 // ════════════════════════════════════════════════════════════════════════════
-// TRANG ĐO — BẤM THỬ ĐỂ BIẾT CÁCH NÀO MỞ ĐƯỢC BỘ SƯU TẬP TRÊN MÁY THẬT
-// ----------------------------------------------------------------------------
-// Mỗi hệ điều hành, mỗi hãng máy, mỗi trình duyệt gọi bộ chọn tệp một kiểu; ngồi
-// đoán thì mất cả buổi mà vẫn không chắc. Trang này bày đúng 6 cách khai ô chọn
-// tệp, bấm từng cái trên chính máy đang dùng rồi xem cách nào ra Bộ sưu tập —
-// biết chắc rồi mới sửa vào form đăng tin.
+// TRANG THỬ — TÌM CÁCH MỞ ĐƯỢC THƯ VIỆN ẢNH TRÊN TỪNG MÁY
 //
-// Trang KHÔNG nằm trong menu nào, chỉ mở khi cần đo: /thu-chon-anh
-// Không tải tệp lên đâu cả, chỉ hiện tên tệp vừa chọn.
+// VÌ SAO CÓ: trên Samsung Internet, ô chọn tệp khai `accept="image/*"` vẫn ra
+// bảng "Chọn một thao tác — Máy ảnh · File của bạn · Files", KHÔNG có Bộ sưu
+// tập (chủ dự án chụp lại 12/09/2026). Mỗi trình duyệt Android lại dịch khai
+// báo đó thành một ý định (intent) khác nhau, và không có tài liệu nào nói
+// chính xác cách nào ra Bộ sưu tập trên máy nào.
+//
+// Nên thay vì đoán: bày ra đủ các cách, để bấm thử ngay trên MÁY THẬT, cách nào
+// mở được Bộ sưu tập thì đem cách đó về dùng cho ô đăng tin.
+//
+// Trang này KHÔNG có liên kết nào trỏ tới, chỉ ai biết đường dẫn mới vào được.
+// Dò xong thì xoá cả thư mục này đi.
 // ════════════════════════════════════════════════════════════════════════════
 
-type Cach = {
-  ten: string;
-  giaiThich: string;
-  accept?: string;
-  multiple?: boolean;
-  capture?: "environment" | "user";
-};
+const CACH = [
+  { ma: "A", ten: "image/* + nhiều ảnh", accept: "image/*", multiple: true },
+  { ma: "B", ten: "image/* + MỘT ảnh", accept: "image/*", multiple: false },
+  { ma: "C", ten: "Liệt kê đuôi ảnh cụ thể", accept: "image/jpeg,image/png,image/webp,image/heic", multiple: true },
+  { ma: "D", ten: "Không khai loại tệp", accept: "", multiple: true },
+  { ma: "E", ten: "Ảnh + video chung", accept: "image/*,video/*", multiple: true },
+] as const;
 
-const CACH: Cach[] = [
-  {
-    ten: "A — Ảnh, chọn nhiều",
-    giaiThich: 'accept="image/*" + multiple (cách form đăng tin đang dùng)',
-    accept: "image/*",
-    multiple: true,
-  },
-  {
-    ten: "B — Ảnh, chọn một",
-    giaiThich: 'accept="image/*", KHÔNG multiple',
-    accept: "image/*",
-  },
-  {
-    ten: "C — Ảnh + video, chọn nhiều",
-    giaiThich: 'accept="image/*,video/*" + multiple (nghi là cách làm mất Bộ sưu tập)',
-    accept: "image/*,video/*",
-    multiple: true,
-  },
-  {
-    ten: "D — Không khai loại",
-    giaiThich: "không có accept, cho chọn nhiều",
-    multiple: true,
-  },
-  {
-    ten: "E — Video",
-    giaiThich: 'accept="video/*"',
-    accept: "video/*",
-  },
-  {
-    ten: "F — Máy ảnh",
-    giaiThich: 'accept="image/*" + capture — phải mở thẳng máy ảnh',
-    accept: "image/*",
-    capture: "environment",
-  },
-];
-
-export default function ThuChonAnhPage() {
-  const [ketQua, setKetQua] = useState<Record<string, string>>({});
+export default function ThuChonAnh() {
+  const [ket, setKet] = useState<Record<string, string>>({});
 
   return (
-    <main className="mx-auto max-w-lg px-4 py-8">
-      {/* Trang chỉ dùng để đo trên máy thật — chặn Google đánh chỉ mục. */}
-      <meta name="robots" content="noindex, nofollow" />
-      <h1 className="text-xl font-semibold tracking-tight text-cvr-ink">Thử cách mở Bộ sưu tập</h1>
-      <p className="mt-1.5 text-sm text-cvr-muted">
-        Bấm lần lượt từng nút, xem cách nào mở ra Bộ sưu tập trên máy này.
+    <main className="mx-auto max-w-md px-4 py-8">
+      <h1 className="text-xl font-semibold">Thử cách mở Thư viện ảnh</h1>
+      <p className="mt-2 text-sm text-cvr-muted">
+        Bấm lần lượt từng nút. Nút nào mở ra <strong>Bộ sưu tập / Thư viện ảnh</strong> thì nhớ chữ cái
+        của nút đó.
       </p>
 
       <div className="mt-5 space-y-3">
         {CACH.map((c) => (
           <label
-            key={c.ten}
-            className="relative block cursor-pointer rounded-xl border border-cvr-line bg-white p-4 shadow-sm active:bg-cvr-surface"
+            key={c.ma}
+            className="relative flex cursor-pointer items-center gap-3 rounded-xl border border-cvr-line bg-white px-4 py-3.5"
           >
-            <span className="block text-[15px] font-semibold text-cvr-ink">{c.ten}</span>
-            <span className="mt-0.5 block text-xs text-cvr-muted">{c.giaiThich}</span>
-            {ketQua[c.ten] && (
-              <span className="mt-2 block rounded-lg bg-green-50 px-3 py-2 text-xs text-green-700">
-                {ketQua[c.ten]}
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-cvr-ink text-sm font-bold text-white">
+              {c.ma}
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-semibold text-cvr-ink">{c.ten}</span>
+              <span className="block text-xs text-cvr-faint">
+                {ket[c.ma] ? `→ chọn được: ${ket[c.ma]}` : "chưa thử"}
               </span>
-            )}
+            </span>
             <input
               type="file"
-              accept={c.accept}
-              multiple={c.multiple}
-              capture={c.capture}
+              {...(c.accept ? { accept: c.accept } : {})}
+              {...(c.multiple ? { multiple: true } : {})}
               onChange={(e) => {
-                const fs = e.target.files;
-                setKetQua((k) => ({
-                  ...k,
-                  [c.ten]: fs?.length
-                    ? `Đã chọn ${fs.length} tệp: ${Array.from(fs).map((f) => f.name).join(", ").slice(0, 120)}`
-                    : "Không chọn tệp nào",
+                const f = e.target.files;
+                setKet((t) => ({
+                  ...t,
+                  [c.ma]: f && f.length ? `${f.length} tệp — ${f[0].name.slice(0, 24)}` : "không chọn gì",
                 }));
-                e.target.value = "";
               }}
               className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
             />
@@ -104,8 +69,11 @@ export default function ThuChonAnhPage() {
         ))}
       </div>
 
-      <p className="mt-6 text-sm text-cvr-body">
-        Cách nào mở đúng Bộ sưu tập thì báo lại chữ cái đầu (A, B, C…) — form đăng tin sẽ dùng đúng cách đó.
+      <p className="mt-6 rounded-xl bg-cvr-surface px-4 py-3 text-xs leading-relaxed text-cvr-muted">
+        Trình duyệt đang dùng:
+        <span className="mt-1 block break-all font-mono text-[11px] text-cvr-ink">
+          {typeof navigator !== "undefined" ? navigator.userAgent : ""}
+        </span>
       </p>
     </main>
   );
