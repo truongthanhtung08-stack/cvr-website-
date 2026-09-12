@@ -51,14 +51,14 @@ const LOI_CHON = [
   },
   {
     ma: "thumuc",
-    // ⛔ KHAI THEO ĐUÔI TỆP, ĐỪNG ĐỂ TRỐNG. Ô không khai gì thì trình duyệt hiểu
-    // là "tệp bất kỳ" và TỰ THÊM Máy ảnh + Máy quay vào bảng — bấm Thư mục lại
-    // ra ba thứ, không vào thẳng thư mục (đo trên máy thật 12/09/2026, cả Chrome
-    // lẫn Samsung Internet). Kê đuôi tệp thì trình duyệt mở THẲNG trình duyệt
-    // tệp, và chỉ hiện ảnh cho khỏi lẫn. Cũng đừng khai "image/*" ở dòng này —
-    // khai vậy là ra lưới ảnh, trùng với dòng Thư viện ảnh.
+    // ⛔ DÒNG NÀY PHẢI ĐỂ TRỐNG accept. Đo trên máy thật 12/09/2026:
+    //   · khai "image/*"        → ra LƯỚI ẢNH, trùng y hệt dòng Thư viện ảnh
+    //   · khai đuôi .jpg .png…  → Chrome vẫn hiểu là ảnh, cũng ra lưới ảnh
+    //   · để trống              → đi vào TRÌNH DUYỆT TỆP, đúng nghĩa "thư mục"
+    // Cái giá của việc để trống: Android tự chèn thêm Máy ảnh + Máy quay vào
+    // bảng chọn. Đó là Android chèn, web không gỡ được.
     ten: "Thư mục",
-    accept: ".jpg,.jpeg,.png,.webp,.heic,.heif,.gif,.bmp",
+    accept: "",
     capture: false,
     nhieu: true,
     nen: "bg-[#fff3d6] text-[#e5a00d]",
