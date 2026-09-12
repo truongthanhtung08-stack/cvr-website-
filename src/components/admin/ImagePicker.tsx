@@ -103,6 +103,13 @@ export default function ImagePicker({
   // Ô chọn tệp để "thật" (phủ kín dòng) hay ẩn sr-only — xem ghi chú ở chỗ dùng.
   const oThat = moChon && laSamsung();
 
+  // Ba lối trên điện thoại, HAI lối trên máy tính: thuộc tính `capture` chỉ có
+  // tác dụng trên máy có máy ảnh cầm tay. Để dòng "Máy ảnh" trên máy bàn thì bấm
+  // vào lại ra hộp chọn tệp — dòng ghi một đằng làm một nẻo, sai quy chuẩn.
+  const loiHien = moChon
+    ? LOI_CHON.filter((lo) => lo.ma !== "mayanh" || (typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches))
+    : LOI_CHON;
+
   // Chỉ số ẢNH ĐẠI DIỆN = ảnh (không phải video) ĐẦU TIÊN trong mảng.
   const coverIdx = value.findIndex((v) => !isVideoUrl(v));
 
@@ -327,7 +334,7 @@ export default function ImagePicker({
         ) : (
           <div className="overflow-hidden rounded-2xl border border-cvr-line bg-white shadow-[0_10px_30px_rgba(0,0,0,0.12)] motion-safe:animate-[xoBang_.18s_ease-out]" data-o-that={oThat ? "1" : "0"}>
             <style>{"@keyframes xoBang{from{opacity:0;transform:translateY(-6px) scale(.98)}to{opacity:1;transform:none}}"}</style>
-            {LOI_CHON.map((lo, i) => (
+            {loiHien.map((lo, i) => (
               <label
                 key={lo.ma}
                 onClick={() => setMoChon(false)}
