@@ -216,11 +216,16 @@ export default function ImagePicker({
         >
           <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 16V4m0 0L8 8m4-4l4 4M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" /></svg>
           {uploadingImg ? "Đang tải ảnh…" : "Thư viện ảnh"}
+          {/* ⛔ KHÔNG THÊM LẠI `multiple` — gỡ 12/09/2026.
+              Đo trên máy thật (Samsung Internet): để `multiple` thì bảng chọn của
+              máy chỉ ra Máy ảnh · File của bạn · Files, KHÔNG có Bộ sưu tập. Bỏ
+              `multiple` thì trình duyệt đi đường chọn ảnh của hệ thống, ra thẳng
+              thư viện ảnh. Đổi lại là chọn từng tấm — chủ dự án chốt: mở được
+              thư viện ảnh quan trọng hơn chọn nhiều tấm một lúc. */}
           <input
             ref={imgRef}
             type="file"
             accept="image/*"
-            multiple
             disabled={uploadingImg}
             onChange={(e) => handleImageFiles(e.target.files)}
             className="sr-only"
