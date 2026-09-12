@@ -88,6 +88,25 @@ const LOI_CHON = [
     ),
   },
   {
+    ma: "video",
+    // Dòng riêng cho VIDEO, accept="video/*" MỘT LOẠI DUY NHẤT — không gộp
+    // chung với ảnh (image/*,video/*). Đã đo 11/9/2026: gộp hai loại vào một ô
+    // làm Samsung Internet mất hẳn Bộ sưu tập (rơi về "Máy ảnh · File của bạn ·
+    // Files"). Tách riêng thế này, dòng Thư viện ảnh vẫn giữ nguyên "image/*".
+    ten: "Video",
+    accept: "video/*",
+    capture: false,
+    nhieu: false,
+    nen: "bg-[#f0e6ff] text-[#7c3aed]",
+    icon: (
+      <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none">
+        <path d="M4.5 6h8a2 2 0 012 2v8a2 2 0 01-2 2h-8a2 2 0 01-2-2V8a2 2 0 012-2z" fill="currentColor" opacity=".18" />
+        <path d="M4.5 6h8a2 2 0 012 2v8a2 2 0 01-2 2h-8a2 2 0 01-2-2V8a2 2 0 012-2z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+        <path d="M14.5 10l4.55-2.28A1 1 0 0120.5 8.62v6.76a1 1 0 01-1.45.9L14.5 14" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+  },
+  {
     ma: "thumuc",
     // ⛔ accept CỦA DÒNG NÀY PHẢI LÀ "ẢNH + MỘT LOẠI KHÔNG PHẢI ẢNH".
     // Đã đo trên máy thật (12–13/09/2026), lần lượt:
@@ -102,7 +121,10 @@ const LOI_CHON = [
     // (nhận mọi thứ). Khai hai loại, trong đó có một loại không phải ảnh, thì
     // rơi ra khỏi cả hai trường hợp đó: không chèn máy ảnh nữa, mà cũng không
     // bung lưới ảnh (lưới ảnh chỉ bung khi mọi loại đều là ảnh/video).
-    // Còn lại đúng một nơi nhận → vào thẳng TRÌNH DUYỆT TỆP.
+    // Còn lại đúng một nơi nhận → vào thẳng TRÌNH DUYỆT TỆP — trên Chrome/Samsung
+    // Internet, trình duyệt tệp đó CHÍNH LÀ app quản lý tệp mặc định của máy
+    // (Samsung: My Files/"File của bạn"; iPhone không chạy nhánh này — máy Apple
+    // dùng thẳng bảng ba lối của Safari, có sẵn "Chọn tệp" mở app Files của Apple).
     // Khách lỡ chọn tệp PDF thì handleThuMuc lọc ra và báo, không sao.
     ten: "Thư mục",
     accept: "image/*,application/pdf",
@@ -128,25 +150,6 @@ const LOI_CHON = [
         <path d="M4 8.5A1.5 1.5 0 015.5 7h1.9l1.2-1.7h6.8L16.6 7h1.9A1.5 1.5 0 0120 8.5v8.6a1.5 1.5 0 01-1.5 1.5h-13A1.5 1.5 0 014 17.1V8.5z" fill="currentColor" opacity=".18" />
         <path d="M4 8.5A1.5 1.5 0 015.5 7h1.9l1.2-1.7h6.8L16.6 7h1.9A1.5 1.5 0 0120 8.5v8.6a1.5 1.5 0 01-1.5 1.5h-13A1.5 1.5 0 014 17.1V8.5z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
         <circle cx="12" cy="12.8" r="3.3" stroke="currentColor" strokeWidth="1.7" />
-      </svg>
-    ),
-  },
-  {
-    ma: "video",
-    // Dòng riêng cho VIDEO, accept="video/*" MỘT LOẠI DUY NHẤT — không gộp
-    // chung với ảnh (image/*,video/*). Đã đo 11/9/2026: gộp hai loại vào một ô
-    // làm Samsung Internet mất hẳn Bộ sưu tập (rơi về "Máy ảnh · File của bạn ·
-    // Files"). Tách riêng thế này, dòng Thư viện ảnh vẫn giữ nguyên "image/*".
-    ten: "Video",
-    accept: "video/*",
-    capture: false,
-    nhieu: false,
-    nen: "bg-[#f0e6ff] text-[#7c3aed]",
-    icon: (
-      <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none">
-        <path d="M4.5 6h8a2 2 0 012 2v8a2 2 0 01-2 2h-8a2 2 0 01-2-2V8a2 2 0 012-2z" fill="currentColor" opacity=".18" />
-        <path d="M4.5 6h8a2 2 0 012 2v8a2 2 0 01-2 2h-8a2 2 0 01-2-2V8a2 2 0 012-2z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
-        <path d="M14.5 10l4.55-2.28A1 1 0 0120.5 8.62v6.76a1 1 0 01-1.45.9L14.5 14" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     ),
   },
