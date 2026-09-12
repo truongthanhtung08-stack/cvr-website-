@@ -30,6 +30,10 @@ export default function ImagePicker({
   const [error, setError] = useState("");
   // Link ảnh không tải được (trang nguồn chặn hotlink / không phải ảnh trực tiếp)
   const [broken, setBroken] = useState<string[]>([]);
+  // MỘT NÚT "Thêm ảnh", bấm mới xổ ra các lối chọn. Ba nút dàn hàng chiếm ba
+  // dòng trên điện thoại, đẩy phần còn lại của biểu mẫu xuống quá sâu (chủ dự án
+  // chốt 12/09/2026). Gói lại một nút, mở ra mới thấy — gọn mà vẫn đủ lối.
+  const [moChon, setMoChon] = useState(false);
 
   // Chỉ số ẢNH ĐẠI DIỆN = ảnh (không phải video) ĐẦU TIÊN trong mảng.
   const coverIdx = value.findIndex((v) => !isVideoUrl(v));
@@ -239,7 +243,19 @@ export default function ImagePicker({
           đúng tên khách đi tìm; Thư mục và Máy ảnh lùi xuống hàng dưới, nhỏ hơn
           — vẫn đủ ba lối vào, nhưng không để khách bấm nhầm sang trình duyệt tệp
           rồi tưởng web không mở được bộ sưu tập (chủ dự án chốt 11/9/2026). */}
-      <div className="grid grid-cols-2 gap-2.5">
+      {!moChon && (
+        <button
+          type="button"
+          onClick={() => setMoChon(true)}
+          disabled={uploadingImg}
+          className={`inline-flex w-full items-center justify-center gap-2 rounded-lg bg-cvr-ink px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-cvr-ink/90 ${uploadingImg ? "pointer-events-none opacity-60" : ""}`}
+        >
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 16V4m0 0L8 8m4-4l4 4M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" /></svg>
+          {uploadingImg ? "Đang tải ảnh…" : "Thêm ảnh"}
+        </button>
+      )}
+
+      <div className={`grid grid-cols-2 gap-2.5 ${moChon ? "" : "hidden"}`}>
         <label
           className={`relative col-span-2 inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-cvr-ink px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-cvr-ink/90 ${uploadingImg ? "pointer-events-none opacity-60" : ""}`}
         >
@@ -272,7 +288,7 @@ export default function ImagePicker({
             mọi thư mục — tệp lẫn lộn đã có handleThuMuc phân loại lại.
             Chạy được trên cả hai hệ: Android mở trình duyệt tệp, iPhone mở Files. */}
         <label
-          className={`relative col-span-2 hidden cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-cvr-line bg-white px-3 py-2 text-[13px] font-medium text-cvr-muted transition hover:border-cvr-ink hover:text-cvr-ink sm:inline-flex ${uploadingImg || uploadingVideo ? "pointer-events-none opacity-60" : ""}`}
+          className={`relative col-span-2 inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-cvr-line bg-white px-3 py-2 text-[13px] font-medium text-cvr-muted transition hover:border-cvr-ink hover:text-cvr-ink ${uploadingImg || uploadingVideo ? "pointer-events-none opacity-60" : ""}`}
         >
           <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
