@@ -73,7 +73,7 @@ export default function ProjectsSection({ projects, articles = [] }: { projects:
             {homeProjects.map((p) => (
               <Link key={p.slug} href={`/du-an/${p.slug}`} className="flex w-[90%] shrink-0 snap-start flex-col overflow-hidden rounded-none bg-white shadow-lux">
                 <div className="relative aspect-[3/2] w-full overflow-hidden">
-                  <AnhChay images={[p.image, ...(p.photos ?? [])]} alt={p.name} sizes="90vw" />
+                  <AnhChay images={[p.image, ...(p.photos ?? [])]} alt={p.name} sizes="90vw" chay={false} />
                   <span className="absolute left-3 top-3 rounded-full bg-white/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.06em] text-cvr-ink shadow-[0_2px_10px_rgba(0,0,0,0.18)] ring-1 ring-white/60 backdrop-blur-md">{p.status}</span>
                 </div>
                 <div className="flex flex-1 flex-col p-4">

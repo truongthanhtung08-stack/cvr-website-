@@ -26,12 +26,22 @@ export default function AnhChay({
   sizes,
   className = "object-cover",
   nhip = 4500,
+  chay = true,
 }: {
   images: string[];
   alt: string;
   sizes: string;
   className?: string;
   nhip?: number;
+  /**
+   * Cho ảnh tự đổi hay không.
+   *
+   * TRANG CHỦ: ĐỂ FALSE (chủ dự án chốt 12/09/2026). Ngoài trang chủ thẻ chỉ
+   * được khoe ẢNH ĐẠI DIỆN — tấm người đăng chọn làm bộ mặt của tin. Cho ảnh
+   * chạy thì khách lướt qua gặp đúng tấm nào là tuỳ may rủi, ảnh đại diện mất
+   * ý nghĩa. Dải thẻ vẫn tự trôi ngang như thường.
+   */
+  chay?: boolean;
 }) {
   // Nhiều nhất 6 tấm: đủ khoe, không kéo theo cả chục ảnh nặng cho mỗi thẻ.
   const ds = images.filter(Boolean).slice(0, 6);
@@ -65,7 +75,7 @@ export default function AnhChay({
 
 
   useEffect(() => {
-    if (ds.length < 2 || dung || !trongTam) return;
+    if (!chay || ds.length < 2 || dung || !trongTam) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     // Trễ mở màn riêng cho từng thẻ, suy từ tên tệp ảnh → cùng một thẻ luôn ra
     // cùng một nhịp (không nhảy loạn mỗi lần vẽ lại), mà các thẻ thì lệch nhau.
@@ -86,14 +96,14 @@ export default function AnhChay({
       clearInterval(dem);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [khoa, dung, trongTam, nhip]);
+  }, [khoa, dung, trongTam, nhip, chay]);
 
   // Dựng đúng BA tấm: tấm trước, tấm đang hiện, tấm kế. Tấm trước phải còn
   // trong DOM thì hiệu ứng mờ dần mới có chỗ mà mờ đi; tấm kế nạp sẵn để lúc
   // đổi không bị chớp trắng. Các tấm còn lại chưa tải — đó là chỗ tiết kiệm.
   const truoc = (i - 1 + ds.length) % ds.length;
   const ke = (i + 1) % ds.length;
-  const canDung = (k: number) => k === i || k === ke || k === truoc;
+  const canDung = (k: number) => (chay ? k === i || k === ke || k === truoc : k === 0);
 
   return (
     <span
