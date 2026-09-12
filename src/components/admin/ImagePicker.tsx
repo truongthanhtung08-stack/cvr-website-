@@ -18,6 +18,23 @@ function laSamsung() {
   return typeof navigator !== "undefined" && /SamsungBrowser/i.test(navigator.userAgent);
 }
 
+// PHÂN BIỆT MÁY — quyết định có hiện dòng "Máy ảnh" hay không.
+//   · Điện thoại (Android, iPhone)  → CÓ máy ảnh cầm tay → hiện
+//   · Máy tính bảng (Android tablet, iPad) → CÓ → hiện
+//   · Máy tính bàn / laptop (Windows, macOS, Linux) → KHÔNG → ẩn
+// iPad đời mới khai mình là "Macintosh", chỉ lộ ra ở chỗ có nhiều điểm chạm —
+// nên phải kiểm maxTouchPoints, không thể chỉ đọc tên hệ máy.
+// Bề rộng màn hình KHÔNG dùng làm căn cứ: tablet ngang rộng bằng laptop.
+function coMayAnhCamTay() {
+  if (typeof navigator === "undefined") return false;
+  const ua = navigator.userAgent;
+  if (/Android|iPhone|iPod/i.test(ua)) return true;              // điện thoại
+  if (/iPad/i.test(ua)) return true;                             // iPad đời cũ
+  if (/Macintosh/i.test(ua) && navigator.maxTouchPoints > 1) return true; // iPad đời mới
+  if (/Windows|Macintosh|Linux|CrOS/i.test(ua)) return false;    // máy tính bàn/laptop
+  return typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
+}
+
 function acceptThuVien() {
   return laSamsung() ? ANH_CU_THE : "image/*";
 }
@@ -103,12 +120,11 @@ export default function ImagePicker({
   // Ô chọn tệp để "thật" (phủ kín dòng) hay ẩn sr-only — xem ghi chú ở chỗ dùng.
   const oThat = moChon && laSamsung();
 
-  // Ba lối trên điện thoại, HAI lối trên máy tính: thuộc tính `capture` chỉ có
-  // tác dụng trên máy có máy ảnh cầm tay. Để dòng "Máy ảnh" trên máy bàn thì bấm
-  // vào lại ra hộp chọn tệp — dòng ghi một đằng làm một nẻo, sai quy chuẩn.
-  const loiHien = moChon
-    ? LOI_CHON.filter((lo) => lo.ma !== "mayanh" || (typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches))
-    : LOI_CHON;
+  // Điện thoại và máy tính bảng: đủ BA lối. Máy tính bàn/laptop: HAI lối.
+  // Thuộc tính `capture` chỉ có tác dụng trên máy có máy ảnh cầm tay; để dòng
+  // "Máy ảnh" trên máy bàn thì bấm vào lại ra hộp chọn tệp — ghi một đằng làm
+  // một nẻo. Xem coMayAnhCamTay() ở đầu tệp.
+  const loiHien = moChon ? LOI_CHON.filter((lo) => lo.ma !== "mayanh" || coMayAnhCamTay()) : LOI_CHON;
 
   // Chỉ số ẢNH ĐẠI DIỆN = ảnh (không phải video) ĐẦU TIÊN trong mảng.
   const coverIdx = value.findIndex((v) => !isVideoUrl(v));
