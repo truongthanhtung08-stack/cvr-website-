@@ -5,6 +5,48 @@ import { asset } from "@/lib/asset";
 import { isVideoUrl } from "@/lib/media";
 import { uploadImageFile, uploadVideoFile } from "@/lib/uploadImage";
 
+// BA LỐI CHỌN ẢNH — xem ghi chú ⛔ ở chỗ dùng, dưới phần return.
+const LOI_CHON = [
+  {
+    ma: "thuvien",
+    ten: "Thư viện ảnh",
+    accept: "image/*",
+    capture: false,
+    nhieu: true,
+    icon: (
+      <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16v12H4zM4 15l4.5-4.5a2 2 0 012.8 0L16 15m-2-2l1.5-1.5a2 2 0 012.8 0L20 13" />
+        <circle cx="9" cy="9.5" r="1.2" />
+      </svg>
+    ),
+  },
+  {
+    ma: "thumuc",
+    ten: "Thư mục",
+    accept: "",
+    capture: false,
+    nhieu: true,
+    icon: (
+      <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
+      </svg>
+    ),
+  },
+  {
+    ma: "mayanh",
+    ten: "Máy ảnh",
+    accept: "image/*",
+    capture: true,
+    nhieu: false,
+    icon: (
+      <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M4 8h3l1.5-2h7L17 8h3v11H4z" />
+        <circle cx="12" cy="13" r="3.2" />
+      </svg>
+    ),
+  },
+] as const;
+
 // Quản lý MEDIA tin đăng/dự án: ẢNH và VIDEO — TẢI TỪ MÁY hoặc DÁN LINK.
 // value là mảng đường dẫn (ảnh + video xen kẽ theo thứ tự thêm). ẢNH ĐẠI DIỆN =
 // ẢNH ĐẦU TIÊN trong mảng (video không làm đại diện). "Đặt làm đại diện" = đưa ảnh đó lên đầu.
@@ -29,6 +71,8 @@ export default function ImagePicker({
   const [error, setError] = useState("");
   // Link ảnh không tải được (trang nguồn chặn hotlink / không phải ảnh trực tiếp)
   const [broken, setBroken] = useState<string[]>([]);
+  // Đang mở bảng ba lối chọn ảnh hay chưa (bảng của mình, không phải của máy).
+  const [moChon, setMoChon] = useState(false);
 
   // Chỉ số ẢNH ĐẠI DIỆN = ảnh (không phải video) ĐẦU TIÊN trong mảng.
   const coverIdx = value.findIndex((v) => !isVideoUrl(v));
@@ -66,6 +110,21 @@ export default function ImagePicker({
     if (added.length) onChange([...value, ...added]);
     setUploadingImg(false);
     if (imgRef.current) imgRef.current.value = "";
+  }
+
+  // Lối "Thư mục" cố ý không khai loại tệp (khai vào thì trình duyệt tệp lọc sạch,
+  // vào thư mục nào cũng thấy trống). Đổi lại là có thể lẫn tệp khác, nên lọc tại đây.
+  async function handleThuMuc(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    const ds = Array.from(files);
+    const anh = ds.filter((f) => f.type.startsWith("image/"));
+    if (!anh.length) {
+      setError("Tệp vừa chọn không phải ảnh.");
+      return;
+    }
+    const dt = new DataTransfer();
+    for (const f of anh) dt.items.add(f);
+    await handleImageFiles(dt.files);
   }
 
   // Đang KHÔNG dùng: nút "Thêm video" đã bỏ 11/09/2026 (video đăng bằng link YouTube).
@@ -210,26 +269,58 @@ export default function ImagePicker({
           Mẹo đó được đồn là kéo lại mục Máy ảnh trên Android 14/15. Đo trên máy
           thật (Chrome, Android): thêm vào thì MẤT HẲN lưới ảnh, bảng chỉ còn
           Máy ảnh · Files. Tệ hơn hẳn. accept phải đúng "image/*" trần. */}
-      {/* ĐÚNG MỘT NÚT — BẤM LÀ RA THƯ VIỆN ẢNH. Không nút phụ, không lời nhắn.
-          Ô chọn tệp ẩn bằng sr-only và nằm TRONG nhãn: khách bấm trúng NHÃN, nhãn
-          chuyển tiếp xuống ô — đúng khuôn mẫu mọi trang khác dùng. KHÔNG phủ ô
-          absolute lên nút, cũng KHÔNG display:none (máy đời cũ bỏ qua ô đã ẩn). */}
+
+      {/* ⛔ BA LỐI NÀY LÀ YÊU CẦU CỨNG CỦA CHỦ DỰ ÁN — ĐỪNG RÚT BỚT.
+          "1 bấm up ảnh: trở ra CẢ 3 (Thư viện ảnh, Thư mục, Máy ảnh)".
+
+          Vì sao mình tự dựng bảng thay vì để bảng của máy lo: bảng của Android
+          KHÔNG ổn định. Đo trên máy thật 12/09/2026, cùng một điện thoại:
+            · Chrome + accept="image/*"          → lưới ảnh, KHÔNG có Máy ảnh
+            · Samsung Internet + accept="image/*" → Máy ảnh · File của bạn · Files,
+                                                    KHÔNG có Bộ sưu tập
+          Nên bảng này do mình vẽ: ba lối luôn có mặt, máy nào trình duyệt nào
+          cũng như nhau. Mỗi lối là một ô chọn tệp riêng, khai riêng:
+            · Thư viện ảnh → accept="image/*"                (mở thư viện/lưới ảnh)
+            · Thư mục      → KHÔNG khai accept                (mở trình duyệt tệp)
+            · Máy ảnh      → accept="image/*" + capture       (mở thẳng máy ảnh)
+          Ô "Thư mục" nhận lẫn tệp khác nên có handleThuMuc lọc lại. */}
       <div>
-        <label
-          className={`flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-cvr-ink px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-cvr-ink/90 ${uploadingImg ? "pointer-events-none opacity-60" : ""}`}
-        >
-          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 16V4m0 0L8 8m4-4l4 4M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" /></svg>
-          {uploadingImg ? "Đang tải ảnh…" : "Thư viện ảnh"}
-          <input
-            ref={imgRef}
-            type="file"
-            accept="image/*"
-            multiple
+        {!moChon ? (
+          <button
+            type="button"
+            onClick={() => setMoChon(true)}
             disabled={uploadingImg}
-            onChange={(e) => handleImageFiles(e.target.files)}
-            className="sr-only"
-          />
-        </label>
+            className={`flex w-full items-center justify-center gap-2 rounded-lg bg-cvr-ink px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-cvr-ink/90 ${uploadingImg ? "pointer-events-none opacity-60" : ""}`}
+          >
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 16V4m0 0L8 8m4-4l4 4M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" /></svg>
+            {uploadingImg ? "Đang tải ảnh…" : "Thêm ảnh"}
+          </button>
+        ) : (
+          <div className="overflow-hidden rounded-xl border border-cvr-line bg-white">
+            {LOI_CHON.map((lo, i) => (
+              <label
+                key={lo.ma}
+                onClick={() => setMoChon(false)}
+                className={`flex cursor-pointer items-center gap-3 px-4 py-3.5 transition active:bg-cvr-surface ${i > 0 ? "border-t border-cvr-line" : ""}`}
+              >
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-cvr-surface text-cvr-ink">
+                  {lo.icon}
+                </span>
+                <span className="text-sm font-semibold text-cvr-ink">{lo.ten}</span>
+                <input
+                  ref={lo.ma === "thuvien" ? imgRef : undefined}
+                  type="file"
+                  {...(lo.accept ? { accept: lo.accept } : {})}
+                  {...(lo.capture ? { capture: "environment" as const } : {})}
+                  {...(lo.nhieu ? { multiple: true } : {})}
+                  disabled={uploadingImg}
+                  onChange={(e) => (lo.ma === "thumuc" ? handleThuMuc(e.target.files) : handleImageFiles(e.target.files))}
+                  className="sr-only"
+                />
+              </label>
+            ))}
+          </div>
+        )}
 
         {/* NÚT "THÊM VIDEO" ĐÃ BỎ (11/09/2026, chủ dự án chốt: "kiểu gì cũng phải
             chuyển qua kênh YouTube"). Video nay chỉ nhận LINK YOUTUBE ở ô bên dưới.
