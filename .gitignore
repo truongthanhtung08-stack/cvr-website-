@@ -2,6 +2,8 @@
 .env
 .env.local
 .env*.local
+# Moi bien the cua .env (ke ca .bak, .cu, .txt) - khoa bi mat khong duoc len git
+.env*
 
 # ===== Node / Next.js =====
 node_modules/

@@ -12,10 +12,10 @@
 //   cũng tên "dn06-video" → khớp được, không cần copy dán link tay từng cái.
 //   ⚠️ VÌ VẬY: lúc tải lên YouTube ĐỪNG ĐỔI TÊN. Đổi tên là mất đường khớp.
 //
-// LẤY DANH SÁCH KÊNH: dùng đường công khai của YouTube, KHÔNG cần khoá API,
-// không đụng tới Google Cloud (tài khoản Google của dự án đang bị gắn cờ vì vụ
-// Maps — xem docs/BAN-GIAO-GOOGLE-MAPS.md). Đổi lại: chỉ đọc được 15 video MỚI
-// NHẤT. Nhiều hơn thì tải lên làm nhiều đợt, mỗi đợt ≤15 rồi chạy script này.
+// LẤY DANH SÁCH KÊNH: đọc trang kênh công khai (scripts/doc-video-kenh.mjs),
+// KHÔNG cần khoá API, không đụng tới Google Cloud (tài khoản Google của dự án
+// đang bị gắn cờ vì vụ Maps — xem docs/BAN-GIAO-GOOGLE-MAPS.md). Đọc được CẢ
+// SHORTS và lật hết các trang, nên tải lên bao nhiêu đợt cũng khớp được.
 //   → Video PHẢI để chế độ CÔNG KHAI. Để "không công khai" là danh sách bị giấu,
 //     script không thấy gì cả.
 //
@@ -29,6 +29,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import { docVideoKenh } from "./doc-video-kenh.mjs";
 
 const GOC = path.resolve(import.meta.dirname, "..");
 const env = Object.fromEntries(
@@ -41,7 +42,7 @@ const env = Object.fromEntries(
 
 const URL_ = env.NEXT_PUBLIC_SUPABASE_URL;
 const KHOA = process.env.SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_SERVICE_ROLE_KEY;
-const KENH = "UCm68jy5CoSd_dgcNVaHh8gw"; // kênh Coastal Land (youtube.com/@CoastalLandvn)
+const TEN_KENH = "@CoastalLandvn"; // kênh Coastal Land
 const AP = process.argv.includes("--ap");
 const XOA_TEP = process.argv.includes("--xoa-tep");
 
@@ -79,33 +80,67 @@ function nhanDang(ten) {
 }
 
 // ── 1. VIDEO TRÊN KÊNH ──────────────────────────────────────────────────────
-const xml = await (await fetch(`https://www.youtube.com/feeds/videos.xml?channel_id=${KENH}`)).text();
-const tren = [...xml.matchAll(/<entry>([\s\S]*?)<\/entry>/g)].map((m) => {
-  const k = m[1];
-  const lay = (the) => (k.match(new RegExp(`<${the}>([\\s\\S]*?)</${the}>`)) ?? [, ""])[1];
-  return {
-    id: lay("yt:videoId"),
-    ten: lay("media:title").replace(/&amp;/g, "&"),
-    xem: Number((k.match(/media:statistics views="(\d+)"/) ?? [, 0])[1]),
-  };
-});
-console.log(`Kênh Coastal Land: ${tren.length} video (đường công khai chỉ trả 15 video mới nhất)\n`);
+// ĐỌC CẢ SHORTS. Bản đầu đọc RSS `feeds/videos.xml` và ngày 12/09/2026 trả về
+// ĐÚNG 0 VIDEO trong khi kênh có 14 — vì video bất động sản quay dọc dưới 3 phút
+// bị YouTube tự xếp thành Shorts, mà RSS thì không liệt kê Shorts (RSS cũng chỉ
+// trả 15 video mới nhất, qua 15 tin là hụt). Nay đọc thẳng trang kênh công khai.
+const tren = await docVideoKenh(TEN_KENH);
+console.log(`Kênh Coastal Land: ${tren.length} video công khai (tính cả Shorts)\n`);
 if (tren.length === 0) {
   console.log("Chưa có video nào — tải lên kênh xong rồi chạy lại.");
   console.log("⚠️ Nhớ: để chế độ CÔNG KHAI và ĐỪNG ĐỔI TÊN tệp khi tải lên.");
   process.exit(0);
 }
 
+// MỘT MÃ TIN LÊN KÊNH HAI LẦN thì phải chọn một. Ưu tiên bản NHIỀU LƯỢT XEM hơn
+// — đó là bản khách đang thật sự xem, đổi sang bản mới là vứt hết lượt xem cũ.
+const trungMa = new Map();
+for (const v of tren) {
+  const ma = nhanDang(v.ten);
+  const cu = trungMa.get(ma);
+  if (!cu) trungMa.set(ma, [v]);
+  else cu.push(v);
+}
+// (Chọn bản nào nằm ở bước 3, sau khi biết tin đang gắn video nào.)
+
 // ── 2. TIN ĐANG DÙNG VIDEO TẢI LÊN ──────────────────────────────────────────
 const tin = await (await fetch(`${URL_}/rest/v1/listings?select=id,title,images&limit=20000`, { headers: H })).json();
 const laTepVideo = (u) => /\.(mp4|webm|mov|m4v|ogg)(\?|$)/i.test(u) && !/youtu|vimeo/i.test(u);
+// TÁCH BẠCH BA THỨ, đừng gộp rồi báo sai:
+//   · viec  — video NẰM TRONG KHO của mình, đây mới là việc phải làm
+//   · ngoai — video nhúng thẳng từ sàn khác (vn1-cdn.pgimgs.com của
+//             batdongsan.com.vn). KHÔNG phải của mình, không tải lên kênh được,
+//             và cũng không tốn kho. Gộp chúng vào "chưa khớp" là báo cáo láo.
+//   · daGan — mã video YouTube đã gắn sẵn trong tin, để biết cái nào trên kênh
+//             còn nằm không.
 const viec = [];
+const ngoai = [];
+const daGan = new Set();
 for (const t of tin)
-  for (const u of t.images || [])
-    if (laTepVideo(u)) viec.push({ tin: t.id, tieuDe: t.title, url: u, ma: nhanDang(u) });
+  for (const u of t.images || []) {
+    const yt = String(u).match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|shorts\/|embed\/))([\w-]{11})/);
+    if (yt) { daGan.add(yt[1]); continue; }
+    if (!laTepVideo(u)) continue;
+    const muc = { tin: t.id, tieuDe: t.title, url: u, ma: nhanDang(u) };
+    if (String(u).startsWith(URL_)) viec.push(muc);
+    else ngoai.push(muc);
+  }
 
 // ── 3. KHỚP ─────────────────────────────────────────────────────────────────
-const theoMa = new Map(tren.map((v) => [nhanDang(v.ten), v]));
+// MỘT MÃ TIN LÊN KÊNH HAI LẦN thì phải chọn một bản. Thứ tự ưu tiên:
+//   ① bản ĐANG GẮN trong tin — đổi sang bản khác là đổi link đang chạy tốt,
+//     vứt luôn lượt xem đã tích;  ② bản nhiều lượt xem hơn.
+for (const [ma, ds] of trungMa) {
+  ds.sort((a, b) => Number(daGan.has(b.id)) - Number(daGan.has(a.id)) || b.xem - a.xem);
+  if (ds.length > 1) {
+    console.log(`⚠️ Mã "${ma}" có ${ds.length} video trên kênh — chỉ dùng một:`);
+    for (const v of ds)
+      console.log(
+        `     ${v === ds[0] ? "→ DÙNG" : "  bỏ  "} https://youtu.be/${v.id} (${v.xem} lượt xem${daGan.has(v.id) ? ", đang gắn trong tin" : ""})`,
+      );
+  }
+}
+const theoMa = new Map([...trungMa].map(([ma, ds]) => [ma, ds[0]]));
 const khop = [], hut = [];
 for (const v of viec) {
   const y = theoMa.get(v.ma);
@@ -113,17 +148,29 @@ for (const v of viec) {
   else hut.push(v);
 }
 
-console.log(`KHỚP ĐƯỢC: ${khop.length}/${viec.length} video`);
+console.log(`VIDEO CÒN TRONG KHO: ${viec.length} — khớp được ${khop.length}`);
 for (const k of khop)
   console.log(`  ✓ ${k.ma.padEnd(22)} → https://youtu.be/${k.yt.id}  (${k.yt.xem} lượt xem)  ${String(k.tieuDe).slice(0, 40)}`);
 if (hut.length) {
   console.log(`\nCHƯA KHỚP: ${hut.length} — chưa tải lên kênh, hoặc đã đổi tên lúc tải:`);
-  for (const h of hut) console.log(`  · ${h.ma}`);
+  for (const h of hut) console.log(`  · ${h.ma}  ${String(h.tieuDe).slice(0, 50)}`);
 }
-const thua = tren.filter((v) => !viec.some((x) => x.ma === nhanDang(v.ten)));
-if (thua.length) {
-  console.log(`\nTrên kênh có ${thua.length} video không ứng với tin nào (video marketing, hoặc tên đã đổi):`);
-  for (const v of thua) console.log(`  · ${v.ten}`);
+
+const chuaGan = tren.filter((v) => !daGan.has(v.id));
+console.log(`\nĐÃ GẮN VÀO TIN: ${tren.length - chuaGan.length}/${tren.length} video trên kênh`);
+if (chuaGan.length) {
+  console.log(`Còn ${chuaGan.length} video trên kênh chưa tin nào dùng:`);
+  for (const v of chuaGan) console.log(`  · https://youtu.be/${v.id}  ${v.ten.slice(0, 60)}`);
+}
+
+if (ngoai.length) {
+  console.log(`\n${ngoai.length} video NHÚNG TỪ SÀN KHÁC (không phải của mình, không tốn kho, script bỏ qua):`);
+  const theoNha = new Map();
+  for (const n of ngoai) {
+    const nha = new URL(n.url).hostname;
+    theoNha.set(nha, (theoNha.get(nha) ?? 0) + 1);
+  }
+  for (const [nha, so] of theoNha) console.log(`  · ${nha}: ${so} video`);
 }
 
 if (!AP && !XOA_TEP) {

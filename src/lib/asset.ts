@@ -15,3 +15,25 @@ export const asset = (path: string) => {
   if (KHO_SUPABASE.test(path)) return `${BASE}/anh/${path.replace(KHO_SUPABASE, "")}`;
   return /^(https?:|data:|\/\/)/.test(path) ? path : `${BASE}${path}`;
 };
+
+// ── BẢN ẢNH NHỎ — dùng cho THẺ, không dùng cho phần xem lớn ─────────────────
+//
+// VÌ SAO (đo thật 12/09/2026): trang chủ bắt khách tải **65 MB ảnh** một lượt
+// xem (106 ảnh — mỗi thẻ tin tự chạy tới 6 tấm). Gói Supabase miễn phí cho 5 GB
+// băng thông/tháng → chịu được đúng ~78 lượt, và tổ chức ĐÃ bị gắn cờ vượt hạn
+// mức, doạ khoá dự án từ 08/10/2026.
+//
+// Cái vô lý: thẻ tin rộng chừng 400px mà đang tải ảnh 2000px. Nên có thêm một
+// bản hẹp hơn nằm ở `nho/` ngay cạnh ảnh gốc; THẺ dùng bản này, còn thư viện
+// ảnh và phần xem toàn màn hình vẫn dùng ẢNH GỐC nguyên độ nét.
+//
+// KHÔNG SỢ THIẾU: đường /anh/… nếu không thấy bản nhỏ thì tự trả ảnh gốc
+// (xem src/app/anh/[...duong]/route.ts). Nên tin mới đăng chưa kịp tạo bản nhỏ
+// vẫn hiện bình thường, không bao giờ vỡ ảnh.
+//
+// Ảnh của sàn khác (batdongsan…) không đi qua /anh/ nên hàm này bỏ qua, giữ nguyên.
+export const anhNho = (duong: string) => {
+  const m = /^(.*\/anh\/)([^/]+)\/(.+)$/.exec(duong || "");
+  if (!m || m[3].startsWith("nho/")) return duong;
+  return `${m[1]}${m[2]}/nho/${m[3]}`;
+};

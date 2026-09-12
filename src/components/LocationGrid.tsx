@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useHomeSection } from "@/components/HomeExpand";
-import { asset } from "@/lib/asset";
+import { asset, anhNho } from "@/lib/asset";
 import { HOME_AREAS_DEFAULT, areaImages, type AreaCard } from "@/lib/siteContent";
 
 // Bố cục Homedy: gói gọn 2 HÀNG — ô ĐẦU là địa điểm LÕI 2×2, kèm 4 địa điểm nhỏ.
@@ -81,7 +81,7 @@ function AreaTile({ area, big, running, delay }: { area: AreaCard; big: boolean;
       {images.map((src, k) => (
         <Image
           key={src}
-          src={asset(src)}
+          src={anhNho(asset(src))}
           alt={k === 0 ? area.name : ""}
           fill
           sizes={big ? "(max-width: 1024px) 100vw, 50vw" : "(max-width: 1024px) 50vw, 25vw"}

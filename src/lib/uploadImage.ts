@@ -36,12 +36,12 @@ function dongDauCvr(ctx: CanvasRenderingContext2D, w: number, h: number) {
   ctx.restore();
 }
 
-async function nenAnh(file: File): Promise<File> {
+async function nenAnh(file: File, canhToiDa = CANH_TOI_DA, chatLuong = CHAT_LUONG): Promise<File> {
   // Môi trường không có canvas (SSR) hoặc ảnh dạng đặc biệt → giữ nguyên
   if (typeof document === "undefined" || !/^image\/(jpeg|png|webp)$/i.test(file.type)) return file;
   try {
     const bitmap = await createImageBitmap(file);
-    const ti = Math.min(1, CANH_TOI_DA / Math.max(bitmap.width, bitmap.height));
+    const ti = Math.min(1, canhToiDa / Math.max(bitmap.width, bitmap.height));
     const w = Math.round(bitmap.width * ti);
     const h = Math.round(bitmap.height * ti);
 
@@ -60,7 +60,7 @@ async function nenAnh(file: File): Promise<File> {
 
     // WebP trước; trình duyệt cũ không xuất được thì lùi về JPEG.
     // toBlob trả về đúng loại đã yêu cầu — kiểm blob.type để biết có lùi hay không.
-    let blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, "image/webp", CHAT_LUONG));
+    let blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, "image/webp", chatLuong));
     if (!blob || blob.type !== "image/webp")
       blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, "image/jpeg", CHAT_LUONG_JPEG));
     // Dùng bản qua canvas KỂ CẢ khi không nhẹ hơn — vì bản này mới có đóng dấu
@@ -119,6 +119,30 @@ async function uploadMedia(file: File, kind: "image" | "video", maxMB: number): 
 export const uploadImageFile = async (file: File) => {
   if (file.size > 15 * 1024 * 1024)
     return { error: `Ảnh "${file.name}" quá 15MB — chọn ảnh nhỏ hơn.` };
-  return uploadMedia(await nenAnh(file), "image", 15);
+  const nen = await nenAnh(file);
+  const kq = await uploadMedia(nen, "image", 15);
+  if (kq.url) void taoBanNho(nen, kq.url);
+  return kq;
 };
+
+// ── BẢN NHỎ CHO THẺ TIN ─────────────────────────────────────────────────────
+// Đo thật 12/09/2026: trang chủ bắt khách tải 65 MB ảnh một lượt xem, vì thẻ tin
+// chạy tới 6 tấm mà tấm nào cũng là ảnh gốc 2048px — trong khi thẻ rộng ~400px.
+// Supabase gói miễn phí chỉ cho 5 GB băng thông/tháng, tổ chức đã bị gắn cờ vượt
+// hạn mức. Nên mỗi ảnh có thêm một bản 1280px nằm ở `nho/`, THẺ dùng bản đó; thư
+// viện ảnh và xem toàn màn hình vẫn dùng ẢNH GỐC nguyên độ nét.
+//
+// Chạy NGẦM, cố ý không chặn và không báo lỗi: tạo hụt thì đường /anh/… tự trả
+// ảnh gốc (route.ts), tin vẫn hiện đủ — chỉ nặng hơn chút. Để nó làm hỏng được
+// việc đăng tin của khách thì lợi bất cập hại.
+async function taoBanNho(file: File, url: string) {
+  try {
+    const ten = decodeURIComponent(url.split("/").pop() ?? "");
+    if (!ten) return;
+    const nho = await nenAnh(file, 1280, 0.78);
+    await createClient().storage.from("listings").upload(`nho/${ten}`, nho, { upsert: true });
+  } catch {
+    /* không có bản nhỏ thì dùng ảnh gốc — không việc gì phải báo khách */
+  }
+}
 export const uploadVideoFile = (file: File) => uploadMedia(file, "video", 50);

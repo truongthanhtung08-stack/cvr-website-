@@ -18,7 +18,17 @@ export async function GET(_req: Request, ctx: { params: Promise<{ duong: string[
   const { duong } = await ctx.params;
   const duongDan = duong.map(encodeURIComponent).join("/");
 
-  const res = await fetch(`${KHO}/${duongDan}`, { cache: "no-store" });
+  let res = await fetch(`${KHO}/${duongDan}`, { cache: "no-store" });
+
+  // KHÔNG CÓ BẢN NHỎ THÌ TRẢ ẢNH GỐC. Thẻ tin xin ảnh ở `nho/` (xem anhNho()
+  // trong src/lib/asset.ts) để trang nhẹ đi, nhưng tin vừa đăng thì bản nhỏ
+  // chưa kịp sinh ra. Không có lối lui này là ảnh vỡ ngay khi khách đăng tin —
+  // hỏng đúng chỗ đau nhất. Có lối lui thì chậm hơn chút chứ không bao giờ vỡ.
+  if (res.status === 404 && duong[1] === "nho") {
+    const goc = [duong[0], ...duong.slice(2)].map(encodeURIComponent).join("/");
+    res = await fetch(`${KHO}/${goc}`, { cache: "no-store" });
+  }
+
   if (!res.ok || !res.body) {
     return new Response("Không tìm thấy ảnh", { status: res.status === 404 ? 404 : 502 });
   }

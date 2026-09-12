@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useTamDung } from "@/lib/useAutoSlide";
+import { anhNho } from "@/lib/asset";
 
 // ── ẢNH TỰ CHẠY TRONG THẺ (tin đăng · dự án) ─────────────────────────────────
 //
@@ -39,6 +40,19 @@ export default function AnhChay({
   const khoa = ds.join("|");
   const boxRef = useRef<HTMLSpanElement>(null);
   const [i, setI] = useState(0);
+  // Khởi đầu chỉ dựng 2 tấm: tấm đang hiện + tấm kế (để đổi không bị chớp).
+  // Các tấm sau nạp dần khi tới lượt, xem hàm toi() bên dưới.
+  const [daNap, setDaNap] = useState<Set<number>>(() => new Set([0, 1]));
+  const iRef = useRef(0);
+
+  // ── CHỈ NẠP TẤM ĐANG CẦN, KHÔNG NẠP CẢ 6 TẤM NGAY ─────────────────────────
+  // Trước đây vẽ sẵn cả 6 <Image> chồng lên nhau. `loading="lazy"` KHÔNG cứu
+  // được, vì 6 tấm nằm đúng một chỗ nên trình duyệt coi tấm nào cũng đang trong
+  // tầm nhìn → tải hết. Đo thật 12/09/2026: trang chủ nuốt 62–106 ảnh một lượt
+  // xem, trong khi mắt khách mỗi lúc chỉ thấy ĐÚNG MỘT tấm mỗi thẻ.
+  // Nay chỉ dựng tấm đang hiện + tấm kế tiếp; ảnh sau nạp dần khi tới lượt, và
+  // bộ đếm chỉ chạy khi thẻ nằm trong tầm nhìn nên thẻ dưới đáy trang không tốn
+  // gì cả. Nhìn vẫn y hệt: vẫn chạy ảnh, vẫn mờ dần, vẫn dừng khi rê chuột.
   // Chạm là dừng, vài giây sau tự chạy tiếp — trên điện thoại không có động tác
   // "rê chuột ra" nên phải tự quay lại, nếu không chạm một cái là đứng vĩnh viễn.
   const { dung, chamVao, setDung } = useTamDung(6000);
@@ -53,6 +67,7 @@ export default function AnhChay({
     return () => io.disconnect();
   }, [ds.length]);
 
+
   useEffect(() => {
     if (ds.length < 2 || dung || !trongTam) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -63,7 +78,15 @@ export default function AnhChay({
     const tre = h % 2600;
 
     let dem: ReturnType<typeof setInterval>;
-    const toi = () => setI((n) => (n + 1) % ds.length);
+    // Nhích một tấm, đồng thời NẠP TRƯỚC tấm kế tiếp. Tấm đã nạp thì giữ lại
+    // trong DOM, đổi qua đổi lại không phải tải lần nữa.
+    const toi = () => {
+      const k = (iRef.current + 1) % ds.length;
+      iRef.current = k;
+      setI(k);
+      const ke = (k + 1) % ds.length;
+      setDaNap((cu) => (cu.has(k) && cu.has(ke) ? cu : new Set([...cu, k, ke])));
+    };
     const batDau = setTimeout(() => {
       toi();
       dem = setInterval(() => {
@@ -85,18 +108,20 @@ export default function AnhChay({
       onMouseLeave={() => setDung(false)}
       onTouchStart={chamVao}
     >
-      {ds.map((src, k) => (
-        <Image
-          key={src}
-          src={src}
-          alt={k === 0 ? alt : ""}
-          fill
-          sizes={sizes}
-          className={`${className} transition-opacity duration-700 ease-out ${k === i ? "opacity-100" : "opacity-0"}`}
-          // Chỉ tấm đầu được ưu tiên tải; các tấm sau tải lười cho nhẹ trang.
-          loading={k === 0 ? undefined : "lazy"}
-        />
-      ))}
+      {ds.map((src, k) =>
+        daNap.has(k) ? (
+          <Image
+            key={src}
+            src={anhNho(src)}
+            alt={k === 0 ? alt : ""}
+            fill
+            sizes={sizes}
+            className={`${className} transition-opacity duration-700 ease-out ${k === i ? "opacity-100" : "opacity-0"}`}
+            // Chỉ tấm đầu được ưu tiên tải; các tấm sau tải lười cho nhẹ trang.
+            loading={k === 0 ? undefined : "lazy"}
+          />
+        ) : null,
+      )}
     </span>
   );
 }
