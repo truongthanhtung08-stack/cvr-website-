@@ -272,7 +272,7 @@ export default function ImagePicker({
             mọi thư mục — tệp lẫn lộn đã có handleThuMuc phân loại lại.
             Chạy được trên cả hai hệ: Android mở trình duyệt tệp, iPhone mở Files. */}
         <label
-          className={`relative col-span-2 inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-cvr-line bg-white px-3 py-2 text-[13px] font-medium text-cvr-muted transition hover:border-cvr-ink hover:text-cvr-ink ${uploadingImg || uploadingVideo ? "pointer-events-none opacity-60" : ""}`}
+          className={`relative col-span-2 hidden cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-cvr-line bg-white px-3 py-2 text-[13px] font-medium text-cvr-muted transition hover:border-cvr-ink hover:text-cvr-ink sm:inline-flex ${uploadingImg || uploadingVideo ? "pointer-events-none opacity-60" : ""}`}
         >
           <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
@@ -294,7 +294,7 @@ export default function ImagePicker({
             còn tuỳ trình duyệt có nối vào Bộ sưu tập hay không.
             Chụp từng tấm một là giới hạn của máy ảnh, không phải của web. */}
         <label
-          className={`relative inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-cvr-line bg-white px-3 py-2 text-[13px] font-medium text-cvr-muted transition hover:border-cvr-ink hover:text-cvr-ink ${uploadingImg ? "pointer-events-none opacity-60" : ""}`}
+          className={`relative col-span-2 inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-cvr-line bg-white px-3 py-2 text-[13px] font-medium text-cvr-muted transition hover:border-cvr-ink hover:text-cvr-ink ${uploadingImg ? "pointer-events-none opacity-60" : ""}`}
         >
           <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M3 7.5h3l1.5-2h9L18 7.5h3v11H3v-11Z" />
