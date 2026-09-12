@@ -127,7 +127,20 @@ export default function ImagePicker({
   // Thuộc tính `capture` chỉ có tác dụng trên máy có máy ảnh cầm tay; để dòng
   // "Máy ảnh" trên máy bàn thì bấm vào lại ra hộp chọn tệp — ghi một đằng làm
   // một nẻo. Xem coMayAnhCamTay() ở đầu tệp.
-  const loiHien = moChon ? LOI_CHON.filter((lo) => lo.ma !== "mayanh" || coMayAnhCamTay()) : LOI_CHON;
+  // ⛔ ĐIỆN THOẠI/TABLET: Thư viện ảnh · Máy ảnh — KHÔNG có dòng Thư mục.
+  //    MÁY TÍNH: Thư viện ảnh · Thư mục — KHÔNG có dòng Máy ảnh.
+  // Nguyên tắc: dòng nào cũng phải mở THẲNG đúng nơi nó ghi, không bảng trung gian.
+  //   · Trên điện thoại, ô "thư mục" buộc phải để trống loại tệp, mà để trống thì
+  //     Android LUÔN chèn thêm Máy ảnh + Máy quay vào một bảng chọn — ghi "Thư mục"
+  //     mà bấm ra ba thứ (đo trên máy thật 12/09/2026, cả Chrome lẫn Samsung
+  //     Internet). Thư mục vẫn vào được từ trong lưới ảnh: nút ⋮ → Duyệt.
+  //   · Trên máy tính thì ngược lại: không có máy ảnh cầm tay, mà hộp chọn tệp của
+  //     Windows/macOS mở thẳng thư mục thật.
+  const loiHien = !moChon
+    ? LOI_CHON
+    : LOI_CHON.filter((lo) =>
+        lo.ma === "mayanh" ? coMayAnhCamTay() : lo.ma === "thumuc" ? !coMayAnhCamTay() : true,
+      );
 
   // Chỉ số ẢNH ĐẠI DIỆN = ảnh (không phải video) ĐẦU TIÊN trong mảng.
   const coverIdx = value.findIndex((v) => !isVideoUrl(v));
