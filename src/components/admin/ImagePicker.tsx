@@ -102,7 +102,9 @@ export default function ImagePicker({
   maxVideos?: number;   // giới hạn VIDEO — mức chung 1, hoặc theo cấp tin khi admin bật
   tierName?: string;
 }) {
-  const imgRef = useRef<HTMLInputElement>(null);
+  const imgRef = useRef<HTMLInputElement | null>(null);
+  // Mỗi lối chọn ảnh giữ riêng ô chọn tệp của mình, để nút bấm gọi đúng ô đó.
+  const oRef = useRef<Record<string, HTMLInputElement | null>>({});
   const videoRef = useRef<HTMLInputElement>(null);
   const [uploadingImg, setUploadingImg] = useState(false);
   const [uploadingVideo, setUploadingVideo] = useState(false);
@@ -343,36 +345,54 @@ export default function ImagePicker({
         ) : (
           <div className="overflow-hidden rounded-2xl border border-cvr-line bg-white shadow-[0_10px_30px_rgba(0,0,0,0.12)] motion-safe:animate-[xoBang_.18s_ease-out]">
             <style>{"@keyframes xoBang{from{opacity:0;transform:translateY(-6px) scale(.98)}to{opacity:1;transform:none}}"}</style>
+            {/* ⛔ ĐỪNG QUAY VỀ KIỂU <label> BỌC Ô CHỌN TỆP.
+                Kiểu đó dựa vào việc trình duyệt tự chuyển cú bấm từ nhãn xuống ô
+                bên trong. Samsung Internet làm sai đúng chỗ này: bấm dòng nào
+                cũng mở cùng một hộp, nên "Thư viện ảnh" và "Thư mục" ra y hệt
+                nhau (đo trên máy thật 12/09/2026), trong khi Chrome thì đúng.
+                Nay mỗi dòng là một cái nút, bấm là gọi THẲNG đúng ô của dòng đó
+                bằng .click() — không nhờ trình duyệt chuyển tiếp hộ nữa. */}
             {loiHien.map((lo, i) => (
-              <label
+              <button
                 key={lo.ma}
-                onClick={() => setMoChon(false)}
-                className={`relative flex cursor-pointer items-center gap-3.5 px-4 py-3.5 transition active:bg-cvr-surface ${i > 0 ? "border-t border-cvr-line" : ""}`}
+                type="button"
+                disabled={uploadingImg}
+                onClick={() => {
+                  const o = oRef.current[lo.ma];
+                  if (o) o.click();
+                  setMoChon(false);
+                }}
+                className={`flex w-full items-center gap-3.5 px-4 py-3.5 text-left transition active:bg-cvr-surface ${i > 0 ? "border-t border-cvr-line" : ""}`}
               >
                 <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${lo.nen}`}>
                   {lo.icon}
                 </span>
                 <span className="flex-1 text-[15px] font-semibold text-cvr-ink">{lo.ten}</span>
                 <svg className="h-4 w-4 shrink-0 text-cvr-faint" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
-                <input
-                  ref={lo.ma === "thuvien" ? imgRef : undefined}
-                  type="file"
-                  {...(lo.accept ? { accept: lo.accept } : {})}
-                  {...(lo.capture ? { capture: "environment" as const } : {})}
-                  {...(lo.nhieu ? { multiple: true } : {})}
-                  disabled={uploadingImg}
-                  onChange={(e) => (lo.ma === "thumuc" ? handleThuMuc(e.target.files) : handleImageFiles(e.target.files))}
-                  // Samsung Internet: ô chọn tệp phải là Ô THẬT phủ kín dòng, không
-                  // phải ô ẩn 1px. Đo 12/09/2026: với ô sr-only, trình duyệt đó rơi
-                  // về bảng chọn chung ở CẢ BA lối (kể cả lối Thư mục) — đây là thứ
-                  // duy nhất còn khác so với các trang web thường. Trình duyệt khác
-                  // giữ sr-only vì đang chạy đúng.
-                  className="sr-only"
-                />
-              </label>
+              </button>
             ))}
           </div>
         )}
+
+        {/* BA Ô CHỌN TỆP THẬT — mỗi lối một ô riêng, ẩn bằng sr-only (KHÔNG dùng
+            display:none: máy Android/iOS đời cũ bỏ qua ô đã display:none nên bấm
+            không mở được gì). Nút ở trên gọi thẳng đúng ô của mình. */}
+        {LOI_CHON.map((lo) => (
+          <input
+            key={lo.ma}
+            ref={(el) => {
+              oRef.current[lo.ma] = el;
+              if (lo.ma === "thuvien") imgRef.current = el;
+            }}
+            type="file"
+            {...(lo.accept ? { accept: lo.accept } : {})}
+            {...(lo.capture ? { capture: "environment" as const } : {})}
+            {...(lo.nhieu ? { multiple: true } : {})}
+            disabled={uploadingImg}
+            onChange={(e) => (lo.ma === "thumuc" ? handleThuMuc(e.target.files) : handleImageFiles(e.target.files))}
+            className="sr-only"
+          />
+        ))}
 
         {/* NÚT "THÊM VIDEO" ĐÃ BỎ (11/09/2026, chủ dự án chốt: "kiểu gì cũng phải
             chuyển qua kênh YouTube"). Video nay chỉ nhận LINK YOUTUBE ở ô bên dưới.
