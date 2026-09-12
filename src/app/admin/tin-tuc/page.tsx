@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { lamMoiWeb } from "@/lib/lamMoiWeb";
 import { type ArticleRow, type ContentStatus, contentStatusBadge } from "@/lib/contentAdmin";
 
 // Quản lý bài viết Tin tức: danh sách + lọc + Đăng/Ẩn nhanh.
@@ -41,6 +42,7 @@ export default function AdminArticlesPage() {
     const patch: Partial<ArticleRow> = { status: next };
     if (next === "published") patch.published_at = new Date().toISOString();
     const { error } = await supabase.from("articles").update(patch).eq("id", id);
+    if (!error) await lamMoiWeb();  // nội dung đổi → web bỏ cache, hiện ngay
     if (error) {
       window.alert(`Đổi trạng thái THẤT BẠI — bài chưa thay đổi.\nLỗi: ${error.message}`);
       return;

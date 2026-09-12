@@ -11,7 +11,7 @@ import NewsSection from "@/components/NewsSection";
 import { AdBannerAll } from "@/components/HomeAdBanners";
 import Footer from "@/components/Footer";
 import { HomeExpandProvider, HomeCollapsible } from "@/components/HomeExpand";
-import { getListings } from "@/lib/listingsDb";
+import { getListingsThe } from "@/lib/listingsDb";
 import { getArticles, getProjects } from "@/lib/contentDb";
 import { getHeroBanners, getHomeAd, getHomeAreas, getFeaturedArticleSlug } from "@/lib/siteContent";
 
@@ -29,7 +29,7 @@ export default async function Home() {
   // Dự án + Tin tức: nội dung admin tự tạo (contentDb) — chưa có → mẫu
   // Hero + 2 banner cuối + khu vực: ảnh/chữ admin sửa được (siteContent) — chưa nhập → mặc định
   const [listings, projects, articles, heroBanners, homeAd, homeAreas, featuredSlug] = await Promise.all([
-    getListings(), getProjects(), getArticles(), getHeroBanners(), getHomeAd(), getHomeAreas(),
+    getListingsThe(), getProjects(), getArticles(), getHeroBanners(), getHomeAd(), getHomeAreas(),
     getFeaturedArticleSlug(),
   ]);
   return (
@@ -43,7 +43,7 @@ export default async function Home() {
           <HomeCollapsible>
             {/* searchItems: câu gợi ý chạy trong ô tìm bám TIN MỚI + TIN HOT.
                 Chỉ đưa 60 tin mới nhất — đủ để tính, khỏi phình trang. */}
-            <Hero banners={heroBanners} mobileTwoLine searchItems={listings.slice(0, 60)} />
+            <Hero banners={heroBanners} mobileTwoLine searchItems={listings.slice(0, 60).map((l) => ({ purpose: l.purpose, type: l.type, location: l.location, badge: l.badge, price: l.price }))} />
           </HomeCollapsible>
 
           {/* 4 khối có nút "Xem thêm" — mỗi khối tự ẩn khi khối khác đang mở.

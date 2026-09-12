@@ -3,8 +3,7 @@
 import { useState } from "react";
 import FilterBar from "@/components/FilterBar";
 import { emptyFilters, filtersToParams, type Filters } from "@/lib/filters";
-import type { HintMode } from "@/lib/searchHints";
-import type { Listing } from "@/lib/data";
+import type { HintMode, TinGoiY } from "@/lib/searchHints";
 
 const tabs = ["Mua bán", "Cho thuê", "Dự án"];
 
@@ -13,7 +12,7 @@ const tabs = ["Mua bán", "Cho thuê", "Dự án"];
 // tìm từ khoá, khu vực đa chọn, dự án, loại hình, khoảng giá, diện tích…
 // Chỉ phần NHÌN của hàng tab trên máy tính được làm lại theo UI mẫu:
 // viên thuốc nền tối mờ, mục đang chọn nền trắng chữ đen.
-export default function HomeSearch({ defaultTab, items }: { defaultTab?: string; items?: Listing[] }) {
+export default function HomeSearch({ defaultTab, items }: { defaultTab?: string; items?: TinGoiY[] }) {
   const [tab, setTab] = useState(defaultTab && tabs.includes(defaultTab) ? defaultTab : tabs[0]);
   const [filters, setFilters] = useState<Filters>(emptyFilters());
 

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import FilterDropdown, { PanelActions, FilterDropdownGroup } from "@/components/FilterDropdown";
 import { districtsOf, wardsOf, wardsOfNew, provinceNamesFor, type GeoMode } from "@/lib/locations";
-import { projects, type Listing } from "@/lib/data";
+import { projects } from "@/lib/data";
 import {
   typeGroupsFor,
   priceRangesFor,
@@ -26,7 +26,7 @@ import {
 } from "@/lib/filters";
 import { suggest, popularSuggestions, type Suggestion } from "@/lib/suggest";
 import { goiYNoiLong, parseQuery } from "@/lib/smartSearch";
-import { hintsFor, listingHints, type HintMode } from "@/lib/searchHints";
+import { hintsFor, listingHints, type HintMode, type TinGoiY } from "@/lib/searchHints";
 import { useTypingPlaceholder } from "@/lib/useTypingPlaceholder";
 import { cuonToiKetQua } from "@/lib/scroll";
 
@@ -69,7 +69,7 @@ export default function FilterBar({
   hintMode?: HintMode;
   // Kho tin để dựng câu gợi ý theo TIN MỚI + TIN HOT (đổi theo từng đợt đăng tin).
   // Không truyền → dùng bộ câu theo cơ cấu.
-  hintItems?: Listing[];
+  hintItems?: TinGoiY[];
 }) {
   const f = value;
   // Danh mục loại hình theo đúng mục đích trang

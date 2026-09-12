@@ -12,6 +12,23 @@ export async function middleware(request: NextRequest) {
   // Chưa cấu hình Supabase (vd worktree chưa có .env.local) → bỏ qua, không chặn gì.
   if (!url || !anon) return response;
 
+  // ── KHÁCH LẠ THÌ ĐỪNG HỎI SUPABASE "BẠN LÀ AI" ───────────────────────────
+  // Middleware chạy trước MỌI trang. Trước đây lượt nào cũng gọi auth.getUser(),
+  // tức mỗi lần ai đó mở trang chủ là web phải đi một vòng sang Supabase ở Tokyo
+  // để hỏi danh tính — kể cả người chưa từng đăng nhập, chẳng có gì để hỏi.
+  // Đo 12/09/2026: đó là phần lớn quãng 500–600 ms khách phải chờ trước khi
+  // thấy trang, và khách lạ thì chiếm đa số lượt truy cập.
+  //
+  // Người ĐÃ đăng nhập luôn mang theo cookie tên bắt đầu "sb-". Không có cookie
+  // đó, lại không vào vùng cần gác, thì cho đi thẳng: không có phiên nào để làm
+  // mới, không có quyền nào để kiểm.
+  // ⚠️ ĐỪNG bỏ nhánh getUser() bên dưới: người đã đăng nhập VẪN phải gọi để làm
+  // mới token, bỏ là session hết hạn ngẫu nhiên giữa chừng.
+  const path0 = request.nextUrl.pathname;
+  const coPhien = request.cookies.getAll().some((c) => c.name.startsWith("sb-"));
+  const vungCanGac = path0.startsWith("/admin") || path0.startsWith("/tai-khoan");
+  if (!coPhien && !vungCanGac) return response;
+
   const supabase = createServerClient(url, anon, {
     cookies: {
       getAll() {

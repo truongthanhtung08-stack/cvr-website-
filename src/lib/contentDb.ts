@@ -28,7 +28,17 @@ async function rest<T>(table: string, query: string): Promise<T[] | null> {
   try {
     const res = await fetch(`${url}/rest/v1/${table}?${query}`, {
       headers: { apikey: key, Authorization: `Bearer ${key}` },
-      cache: "no-store", // LUÔN lấy dữ liệu mới — admin sửa gì web hiện NGAY
+      // CACHE THEO THẺ "noi-dung" — thay cho `cache: "no-store"` cũ.
+      // Nguyên tắc "admin sửa gì web hiện NGAY" GIỮ NGUYÊN, chỉ đổi cách giữ:
+      // admin lưu xong thì trang admin gọi /api/lam-moi → revalidateTag("noi-dung")
+      // → cache bay sạch → lượt sau đã là bản mới.
+      // Vì sao bỏ no-store: nó khiến MỌI trang thành động, không lượt khách nào
+      // được dùng lại. Đo 12/09/2026: khách chờ 500–600 ms và Fast Origin Transfer
+      // của Vercel vượt trần miễn phí (16,86 GB / 10 GB) vì lượt nào cũng phải
+      // đẩy lại nguyên trang từ Tokyo.
+      // 300 giây là lưới an toàn cho trường hợp sửa thẳng trong bảng Supabase
+      // (không qua giao diện admin nên không ai gọi làm mới).
+      next: { tags: ["noi-dung"], revalidate: 300 },
     });
     if (!res.ok) return null; // bảng chưa tạo (404) / lỗi khác → fallback
     return (await res.json()) as T[];

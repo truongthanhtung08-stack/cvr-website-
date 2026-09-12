@@ -19,7 +19,14 @@ async function fetchBlock<T>(key: string): Promise<T | null> {
   try {
     const res = await fetch(
       `${url}/rest/v1/site_content?key=eq.${encodeURIComponent(key)}&select=data&limit=1`,
-      { headers: { apikey: anon, Authorization: `Bearer ${anon}` }, cache: "no-store" },
+      {
+        headers: { apikey: anon, Authorization: `Bearer ${anon}` },
+        // CACHE THEO THẺ "noi-dung" thay cho `cache: "no-store"` cũ — xem ghi chú
+        // đầy đủ ở src/lib/contentDb.ts và src/app/api/lam-moi/route.ts.
+        // Admin lưu trong /admin/noi-dung → gọi /api/lam-moi → cache bay ngay,
+        // nên "sửa là hiện" vẫn đúng, mà khách lạ được phục vụ bản dựng sẵn.
+        next: { tags: ["noi-dung"], revalidate: 300 },
+      },
     );
     if (!res.ok) return null;
     const rows = (await res.json()) as { data: T }[];

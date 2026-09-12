@@ -5,8 +5,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { asset } from "@/lib/asset";
 import HomeSearch from "@/components/HomeSearch";
+import type { TinGoiY } from "@/lib/searchHints";
 import { homeBanners, type Banner } from "@/lib/banners";
-import type { Listing } from "@/lib/data";
 
 const DURATION = 6000;
 
@@ -19,7 +19,7 @@ type HeroProps = {
   searchTab?: string; // tab bộ lọc chọn sẵn (vd "Dự án")
   fit?: "cover" | "contain"; // "cover" (mặc định): ảnh phủ kín, có cắt · "contain": ôm TRỌN ảnh, nền 2 bên lấp bằng ảnh mờ
   mobileTwoLine?: boolean; // MOBILE: chỉ 2 dòng text (tiêu đề + phụ đề, ẩn nhãn), mỗi dòng 1 câu KHÔNG ngắt dòng
-  searchItems?: Listing[]; // kho tin để câu gợi ý trong ô tìm bám TIN MỚI + TIN HOT
+  searchItems?: TinGoiY[]; // kho tin để câu gợi ý trong ô tìm bám TIN MỚI + TIN HOT
 };
 
 export default function Hero({

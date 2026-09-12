@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { lamMoiWeb } from "@/lib/lamMoiWeb";
 import ImagePicker from "@/components/admin/ImagePicker";
 import ContentEditor from "@/components/admin/ContentEditor";
 import { isVideoUrl } from "@/lib/media";
@@ -86,6 +87,8 @@ export default function ArticleForm({ initial }: { initial?: ArticleRow }) {
       ? await supabase.from("articles").update(payload).eq("id", initial!.id)
       : await supabase.from("articles").insert(payload);
 
+    // Lưu xong → web bỏ cache, bài hiện ngay (xem src/lib/lamMoiWeb.ts)
+    if (!err) await lamMoiWeb("noi-dung");
     setSaving(false);
     if (err) {
       return setError(

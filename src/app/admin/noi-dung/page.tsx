@@ -82,6 +82,10 @@ export default function AdminSiteContentPage() {
     setSaving(true);
     const supabase = createClient();
     const { error } = await supabase.from("site_content").upsert({ key, data });
+    // LƯU XONG PHẢI BÁO WEB XOÁ CACHE — nếu không, trang ngoài còn giữ bản cũ tới
+    // 5 phút. Trang này ghi thẳng vào Supabase từ trình duyệt nên máy chủ không
+    // hề biết có thay đổi; /api/lam-moi là chỗ báo. Xem src/lib/contentDb.ts.
+    if (!error) await fetch("/api/lam-moi", { method: "POST", body: JSON.stringify({ the: "noi-dung" }) }).catch(() => {});
     setSaving(false);
     setMsg(error ? `Lưu thất bại: ${error.message}` : "✓ Đã lưu — web cập nhật ngay.");
   }

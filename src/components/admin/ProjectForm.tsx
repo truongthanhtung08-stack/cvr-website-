@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { lamMoiWeb } from "@/lib/lamMoiWeb";
 import { goiDuAn, quotePriceDuAn, soAnhDuAnToiDa, vnd } from "@/lib/billing";
 import { useBilling } from "@/lib/useBilling";
 import { provinceNamesFor, districtsOf, wardsOf, wardsOfNew, wardsOfAny, type GeoMode } from "@/lib/locations";
@@ -268,6 +269,8 @@ export default function ProjectForm({
       ? await supabase.from("projects").update(payload).eq("id", initial!.id)
       : await supabase.from("projects").insert(payload);
 
+    // Lưu xong → web bỏ cache, dự án hiện ngay (xem src/lib/lamMoiWeb.ts)
+    if (!err) await lamMoiWeb("noi-dung");
     setSaving(false);
     if (err) {
       return setError(

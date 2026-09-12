@@ -250,6 +250,26 @@ export async function getListings(): Promise<Listing[]> {
   return rows.filter((r) => !isSeedRow(r)).map(rowToListing);
 }
 
+// ── BẢN NHẸ CHO TRANG CHỈ HIỆN THẺ TIN (trang chủ) ──────────────────────────
+//
+// VÌ SAO CÓ: mọi thứ hàm trên trả về đều bị Next gói vào HTML gửi xuống máy khách.
+// Đo trang chủ ngày 11/09/2026: HTML 638 KB, trong đó 556 KB là dữ liệu tin —
+// mà màn hình chỉ hiện 16 thẻ. Nặng nhất là hai thứ THẺ TIN KHÔNG HỀ DÙNG:
+//   · desc       — mô tả đầy đủ, trung bình 580 ký tự/tin, cái dài nhất 2.666
+//   · searchText — vùng chữ gộp nội thất/tiện ích/đặc điểm để ô tìm dò
+// Hai trường đó chỉ cần ở trang CÓ Ô TÌM VÀ BỘ LỌC (/mua-ban, /cho-thue,
+// /tim-kiem) — những trang đó vẫn gọi getListings() đầy đủ như cũ.
+//
+// ⚠️ ĐỪNG dùng hàm này cho trang có tìm kiếm/lọc: thiếu desc + searchText thì
+// gõ "gần biển", "nội thất đầy đủ" sẽ không ra tin.
+export async function getListingsThe(): Promise<Listing[]> {
+  const ds = await getListings();
+  return ds.map((l) => {
+    const { desc: _desc, searchText: _searchText, ...the } = l;
+    return the;
+  });
+}
+
 // Một tin theo id (trang chi tiết) — fallback tìm trong dữ liệu mẫu
 export async function getListing(id: string): Promise<Listing | null> {
   if (isSeedId(id)) return null; // tin demo (id số) → coi như không tồn tại

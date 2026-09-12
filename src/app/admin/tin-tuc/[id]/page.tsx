@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { lamMoiWeb } from "@/lib/lamMoiWeb";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -29,6 +30,7 @@ export default function EditArticlePage() {
     setDeleting(true);
     const supabase = createClient();
     const { error } = await supabase.from("articles").delete().eq("id", row.id);
+    if (!error) await lamMoiWeb();  // nội dung đổi → web bỏ cache, hiện ngay
     setDeleting(false);
     if (error) {
       window.alert(`Xoá thất bại: ${error.message}`);

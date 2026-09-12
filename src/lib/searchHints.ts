@@ -74,13 +74,18 @@ const gomTrung = (xs: string[]) => Array.from(new Set(xs.filter(Boolean)));
 //   • MỚI   = loại hình & khu vực của những tin vừa đăng (kho trả về mới nhất trước).
 //   • GIÁ   = ghép thêm tầm giá đang nhiều tin nhất của cặp hot nhất.
 // Xen kẽ HOT ↔ MỚI cho phong phú. Kho rỗng → lùi về bộ theo cơ cấu.
-export function listingHints(items: Listing[], purpose: "ban" | "thue"): string[] {
+// Ô tìm chỉ cần 5 trường này. Nhận kiểu RÚT GỌN chứ không nhận cả tin: trang chủ
+// gửi 60 tin cho ô tìm, gửi nguyên tin là 60 tin đó bị nhồi vào HTML lần thứ hai
+// (đo 11/09/2026 — mỗi tin lặp 1,7 lần trong trang).
+export type TinGoiY = Pick<Listing, "purpose" | "type" | "location" | "badge" | "price">;
+
+export function listingHints(items: TinGoiY[], purpose: "ban" | "thue"): string[] {
   const mac = purpose === "thue" ? HINT_THUE : HINT_BAN;
   const ds = items.filter((l) => (l.purpose ?? "ban") === purpose);
   if (ds.length === 0) return mac;
 
   // Điểm HOT: mỗi tin cộng điểm cho cặp "loại hình × tỉnh" của nó
-  const diemCua = (l: Listing) => (l.badge === "VIP" ? 3 : l.badge === "Nổi bật" ? 2 : 1);
+  const diemCua = (l: TinGoiY) => (l.badge === "VIP" ? 3 : l.badge === "Nổi bật" ? 2 : 1);
   const diem = new Map<string, number>();
   for (const l of ds) {
     const k = `${loaiCua(l.type)}|${tinhCua(l.location)}`;
@@ -120,7 +125,7 @@ export function listingHints(items: Listing[], purpose: "ban" | "thue"): string[
 }
 
 // Tầm giá nhiều tin nhất, viết đúng cú pháp bộ máy đọc được ("dưới 3 tỷ", "1 - 2 tỷ")
-function tamGiaPhoBien(items: Listing[], purpose: "ban" | "thue"): string | null {
+function tamGiaPhoBien(items: TinGoiY[], purpose: "ban" | "thue"): string | null {
   const bac: [string, (n: number) => boolean][] =
     purpose === "thue"
       ? [

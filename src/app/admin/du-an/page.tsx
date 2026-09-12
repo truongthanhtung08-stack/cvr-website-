@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { lamMoiWeb } from "@/lib/lamMoiWeb";
 import { type ProjectRow, type ContentStatus, contentStatusBadge } from "@/lib/contentAdmin";
 
 // Quản lý dự án: danh sách + lọc + Đăng/Ẩn nhanh.
@@ -43,6 +44,7 @@ export default function AdminProjectsPage() {
     const patch: Partial<ProjectRow> = { status: next };
     if (next === "published") patch.published_at = new Date().toISOString();
     const { error } = await supabase.from("projects").update(patch).eq("id", id);
+    if (!error) await lamMoiWeb();  // nội dung đổi → web bỏ cache, hiện ngay
     if (error) {
       window.alert(`Đổi trạng thái THẤT BẠI — dự án chưa thay đổi.\nLỗi: ${error.message}`);
       return;

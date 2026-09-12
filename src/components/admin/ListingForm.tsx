@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { lamMoiWeb } from "@/lib/lamMoiWeb";
 import { saleTypeGroups, rentTypeGroups } from "@/lib/filters";
 import { provinceNamesFor, districtsOf, wardsOf, wardsOfNew, wardsOfAny, type GeoMode } from "@/lib/locations";
 import { haiDongDiaChi, doiHeDiaChi, chuoiTimBanDo } from "@/lib/diaChiHaiHe";
@@ -299,6 +300,8 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
       ? await supabase.from("listings").update(payload).eq("id", initial!.id)
       : await supabase.from("listings").insert(payload);
 
+    // Lưu xong → web bỏ cache, hiện ngay (xem src/lib/lamMoiWeb.ts)
+    if (!err) await lamMoiWeb("listings");
     setSaving(false);
     if (err) return setError(`Lưu thất bại: ${err.message}`);
     router.push("/admin/tin-dang");

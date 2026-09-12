@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { lamMoiWeb } from "@/lib/lamMoiWeb";
 import {
   BILLING_DEFAULT,
   freeNote,
@@ -94,6 +95,7 @@ export default function AdminBillingPage() {
     try {
       const supabase = createClient();
       const { error } = await supabase.from("site_content").upsert({ key: "billing", data });
+    if (!error) await lamMoiWeb();  // nội dung đổi → web bỏ cache, hiện ngay
       setMsg(error ? `Lỗi lưu: ${error.message}` : "Đã lưu — giá mới áp dụng ngay trên web.");
     } catch {
       setMsg("Không kết nối được cơ sở dữ liệu.");
