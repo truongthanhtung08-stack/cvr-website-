@@ -102,6 +102,49 @@ export default function PhotoViewer({
     return () => window.removeEventListener("keydown", onKey);
   }, [doiAnh, onClose]);
 
+  // ── TOUCHPAD TRÊN MÁY TÍNH ────────────────────────────────────────────────
+  // Trên điện thoại thì vuốt ngón tay, còn trên máy tính người ta vuốt TOUCHPAD —
+  // trước đây chỉ bấm được mũi tên hoặc phím, vuốt không ăn gì (chủ dự án báo
+  // 12/09/2026). Trình duyệt gửi cử chỉ touchpad dưới dạng sự kiện `wheel`:
+  //   · vuốt 2 ngón NGANG  → deltaX  → chuyển ảnh
+  //   · chụm/mở 2 ngón     → wheel kèm ctrlKey → phóng to / thu nhỏ
+  //   · vuốt DỌC khi đang phóng to → kéo ảnh đi xem chỗ khác
+  //   · vuốt DỌC khi chưa phóng   → cũng chuyển ảnh (chuột lăn dùng được luôn)
+  // Phải addEventListener tay với passive:false thì preventDefault mới chặn
+  // được cuộn trang nền; onWheel của React là passive nên không chặn nổi.
+  const khoaVuot = useRef(0);
+  const vuotTouchpad = useCallback(
+    (e: WheelEvent) => {
+      e.preventDefault();
+      // Chụm 2 ngón trên touchpad = wheel + ctrlKey (chuẩn của mọi trình duyệt).
+      if (e.ctrlKey) {
+        datZoom(scale * (1 - e.deltaY * 0.01));
+        return;
+      }
+      // Đang phóng to → vuốt để kéo ảnh, không nhảy sang ảnh khác.
+      if (scale > 1) {
+        setPan((p) => gioiHanPan({ x: p.x - e.deltaX, y: p.y - e.deltaY }, scale));
+        return;
+      }
+      // Một cú vuốt touchpad bắn ra hàng chục sự kiện. Không chặn thì lướt nhẹ
+      // một cái là nhảy chục tấm. Khoá 320ms cho mỗi lần đổi ảnh.
+      const gio = Date.now();
+      if (gio - khoaVuot.current < 320) return;
+      const d = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+      if (Math.abs(d) < 12) return;
+      khoaVuot.current = gio;
+      setMuot(true);
+      doiAnh(d > 0 ? 1 : -1);
+    },
+    [doiAnh, datZoom, gioiHanPan, scale],
+  );
+  useEffect(() => {
+    const el = khung.current;
+    if (!el) return;
+    el.addEventListener("wheel", vuotTouchpad, { passive: false });
+    return () => el.removeEventListener("wheel", vuotTouchpad);
+  }, [vuotTouchpad]);
+
   // Khoá cuộn trang nền. Bộ đếm dùng chung (khoaCuon.ts): mở từ DANH SÁCH ẢNH
   // thì đóng bộ xem ảnh KHÔNG nhả trang nền, danh sách vẫn giữ đúng chỗ đang xem.
   useEffect(khoaCuon, []);

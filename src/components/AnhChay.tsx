@@ -40,10 +40,6 @@ export default function AnhChay({
   const khoa = ds.join("|");
   const boxRef = useRef<HTMLSpanElement>(null);
   const [i, setI] = useState(0);
-  // Khởi đầu chỉ dựng 2 tấm: tấm đang hiện + tấm kế (để đổi không bị chớp).
-  // Các tấm sau nạp dần khi tới lượt, xem hàm toi() bên dưới.
-  const [daNap, setDaNap] = useState<Set<number>>(() => new Set([0, 1]));
-  const iRef = useRef(0);
 
   // ── CHỈ NẠP TẤM ĐANG CẦN, KHÔNG NẠP CẢ 6 TẤM NGAY ─────────────────────────
   // Trước đây vẽ sẵn cả 6 <Image> chồng lên nhau. `loading="lazy"` KHÔNG cứu
@@ -78,15 +74,7 @@ export default function AnhChay({
     const tre = h % 2600;
 
     let dem: ReturnType<typeof setInterval>;
-    // Nhích một tấm, đồng thời NẠP TRƯỚC tấm kế tiếp. Tấm đã nạp thì giữ lại
-    // trong DOM, đổi qua đổi lại không phải tải lần nữa.
-    const toi = () => {
-      const k = (iRef.current + 1) % ds.length;
-      iRef.current = k;
-      setI(k);
-      const ke = (k + 1) % ds.length;
-      setDaNap((cu) => (cu.has(k) && cu.has(ke) ? cu : new Set([...cu, k, ke])));
-    };
+    const toi = () => setI((n) => (n + 1) % ds.length);
     const batDau = setTimeout(() => {
       toi();
       dem = setInterval(() => {
@@ -100,6 +88,13 @@ export default function AnhChay({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [khoa, dung, trongTam, nhip]);
 
+  // Dựng đúng BA tấm: tấm trước, tấm đang hiện, tấm kế. Tấm trước phải còn
+  // trong DOM thì hiệu ứng mờ dần mới có chỗ mà mờ đi; tấm kế nạp sẵn để lúc
+  // đổi không bị chớp trắng. Các tấm còn lại chưa tải — đó là chỗ tiết kiệm.
+  const truoc = (i - 1 + ds.length) % ds.length;
+  const ke = (i + 1) % ds.length;
+  const canDung = (k: number) => k === i || k === ke || k === truoc;
+
   return (
     <span
       ref={boxRef}
@@ -109,7 +104,7 @@ export default function AnhChay({
       onTouchStart={chamVao}
     >
       {ds.map((src, k) =>
-        daNap.has(k) ? (
+        canDung(k) ? (
           <Image
             key={src}
             src={anhNho(src)}
