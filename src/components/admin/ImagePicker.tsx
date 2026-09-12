@@ -268,7 +268,7 @@ export default function ImagePicker({
             multiple
             disabled={uploadingImg}
             onChange={(e) => handleImageFiles(e.target.files)}
-            className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+            className="sr-only"
           />
         </label>
 
@@ -299,7 +299,7 @@ export default function ImagePicker({
             multiple
             disabled={uploadingImg || uploadingVideo}
             onChange={(e) => handleThuMuc(e.target.files)}
-            className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+            className="sr-only"
           />
         </label>
 
@@ -323,7 +323,7 @@ export default function ImagePicker({
             capture="environment"
             disabled={uploadingImg}
             onChange={(e) => handleImageFiles(e.target.files)}
-            className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+            className="sr-only"
           />
         </label>
 
