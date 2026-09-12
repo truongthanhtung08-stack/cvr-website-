@@ -59,7 +59,15 @@ Phù hợp và tương thích cho mọi trình duyệt trên điện thoại c�
   bảng mình nữa là bắt khách bấm hai bảng); máy tính hai lối (máy bàn không có máy
   ảnh cầm tay). Đã bỏ `new DataTransfer()` (Safari <14.1 văng lỗi) và xoá cả ba ô
   chọn tệp sau mỗi lần nhận ảnh.
-- 🚩 **Samsung Internet: CHƯA KẾT LUẬN ĐƯỢC — bản đang chạy chưa ai thử.**
+- ⛔ **Samsung Internet: ĐÃ ĐO TRÊN BẢN ĐÚNG (13/9) — VẪN KHÔNG RA BỘ SƯU TẬP.**
+  Chủ dự án chụp hai ảnh: dòng Thư viện ảnh → "Máy ảnh · File của bạn · Files";
+  dòng Thư mục → "Máy ảnh · Máy quay · Files". Giả thuyết "do bản cũ bấm nhầm ô"
+  **đã bị bác bằng phép đo**. Nguyên nhân: Chrome mở bộ chọn ảnh của hệ thống, còn
+  Samsung Internet hỏi "app nào nhận" mà app Bộ sưu tập KHÔNG đăng ký nhận việc đó.
+  **Web không có thuộc tính nào chen vào — ĐỪNG THỬ THÊM KHAI BÁO accept NÀO NỮA.**
+  Khách Samsung vẫn up được: bấm "File của bạn" (Samsung My Files) có mục ảnh, chọn
+  nhiều tấm bình thường — mất thêm một chạm.
+- (cũ, đã bác) Samsung Internet: CHƯA KẾT LUẬN ĐƯỢC — bản đang chạy chưa ai thử.
   Sửa quan trọng nhất (`c674b79` 19:15 — mỗi dòng gọi thẳng ô của mình) **build hỏng
   nên không bao giờ lên web**; `29aa434` lúc bàn giao cũng chưa lên. Bảng "Máy ảnh ·
   File của bạn · Files" mà chủ dự án chụp là chữ ký của ô khai `accept=""` — hồi đó

@@ -68,14 +68,23 @@ const LOI_CHON = [
   },
   {
     ma: "thumuc",
-    // ⛔ DÒNG NÀY PHẢI ĐỂ TRỐNG accept. Đo trên máy thật 12/09/2026:
+    // ⛔ accept CỦA DÒNG NÀY PHẢI LÀ "ẢNH + MỘT LOẠI KHÔNG PHẢI ẢNH".
+    // Đã đo trên máy thật (12–13/09/2026), lần lượt:
     //   · khai "image/*"        → ra LƯỚI ẢNH, trùng y hệt dòng Thư viện ảnh
     //   · khai đuôi .jpg .png…  → Chrome vẫn hiểu là ảnh, cũng ra lưới ảnh
-    //   · để trống              → đi vào TRÌNH DUYỆT TỆP, đúng nghĩa "thư mục"
-    // Cái giá của việc để trống: Android tự chèn thêm Máy ảnh + Máy quay vào
-    // bảng chọn. Đó là Android chèn, web không gỡ được.
+    //   · ĐỂ TRỐNG              → vào được trình duyệt tệp, NHƯNG Android chèn
+    //     thêm Máy ảnh + Máy quay → bấm "Thư mục" mà ra bảng "Chọn một thao tác:
+    //     Máy ảnh · Máy quay · Files". Chủ dự án chụp lại 13/09, ĐÚNG LÀ SAI.
+    //
+    // Vì sao thêm "application/pdf" lại chữa được: Android chỉ chèn Máy ảnh /
+    // Máy quay khi ô chọn tệp khai ĐÚNG MỘT loại là ảnh, hoặc không khai gì
+    // (nhận mọi thứ). Khai hai loại, trong đó có một loại không phải ảnh, thì
+    // rơi ra khỏi cả hai trường hợp đó: không chèn máy ảnh nữa, mà cũng không
+    // bung lưới ảnh (lưới ảnh chỉ bung khi mọi loại đều là ảnh/video).
+    // Còn lại đúng một nơi nhận → vào thẳng TRÌNH DUYỆT TỆP.
+    // Khách lỡ chọn tệp PDF thì handleThuMuc lọc ra và báo, không sao.
     ten: "Thư mục",
-    accept: "",
+    accept: "image/*,application/pdf",
     capture: false,
     nhieu: true,
     nen: "bg-[#fff3d6] text-[#e5a00d]",
