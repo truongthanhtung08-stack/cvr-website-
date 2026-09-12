@@ -22,22 +22,13 @@ function coMayAnhCamTay() {
   return typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
 }
 
-// iPHONE / iPAD — Safari TỰ BUNG BẢNG BA LỐI CỦA APPLE.
-// Bấm một ô chọn ảnh trên máy Apple, Safari luôn hiện sẵn bảng:
-//     Thư viện ảnh · Chụp ảnh hoặc quay video · Chọn tệp
-// Đúng ba chức năng chủ dự án yêu cầu, do chính Apple vẽ, KHÔNG TẮT ĐƯỢC.
-// Nên trên máy Apple ta KHÔNG xổ bảng của mình nữa — xổ vào thì khách phải bấm
-// qua HAI bảng chồng nhau mới tới được ảnh. Bấm "Thêm ảnh" là ra thẳng bảng của
-// Apple, một chạm, vẫn đủ ba lối.
-// (Android thì ngược lại: bảng của máy không ổn định giữa các trình duyệt nên
-//  vẫn phải dùng bảng của mình — xem khối ghi chú ở phần thân.)
-function laMayApple() {
-  if (typeof navigator === "undefined") return false;
-  const ua = navigator.userAgent;
-  if (/iPhone|iPod|iPad/i.test(ua)) return true;
-  // iPad đời mới khai mình là "Macintosh", chỉ lộ ra ở chỗ có nhiều điểm chạm.
-  return /Macintosh/i.test(ua) && navigator.maxTouchPoints > 1;
-}
+// ⛔ iPHONE / iPAD CŨNG DÙNG BẢNG CỦA MÌNH — ĐỪNG QUAY LẠI KIỂU "để Safari tự bung".
+// Bản trước bấm "Thêm ảnh" trên máy Apple là gọi thẳng ô Thư viện ảnh
+// (accept="image/*") để Safari tự bung bảng ba lối của Apple. Đủ ảnh, nhưng
+// bảng đó lọc THEO accept nên THƯ VIỆN CHỈ HIỆN ẢNH — khách iPhone KHÔNG CÓ
+// lối nào chọn VIDEO từ máy. Yêu cầu của chủ dự án là up được cả ảnh lẫn video
+// trên mọi loại máy, nên nay máy nào cũng xổ bảng bốn lối của mình; bấm dòng
+// nào thì Safari mới bung bảng của nó, đã lọc sẵn đúng loại của dòng đó.
 
 // SAMSUNG INTERNET — nhận biết để dòng "Thư mục" khai riêng (xem ACCEPT_THU_MUC).
 function laSamsungInternet() {
@@ -128,14 +119,16 @@ const LOI_CHON = [
     // nhận ACTION_GET_CONTENT loại này" — trên máy này chỉ Files của Google đăng
     // ký nhận, My Files thì không (My Files chỉ đăng ký cho yêu cầu ẢNH thuần).
     //
-    // → THÊM `webkitdirectory` bên dưới (chỗ render input): ép trình duyệt mở
-    // bộ chọn THƯ MỤC thật (Storage Access Framework, ACTION_OPEN_DOCUMENT_TREE)
-    // thay vì xin "một tệp bất kỳ" (ACTION_GET_CONTENT). Hai loại yêu cầu này
-    // Android định tuyến khác nhau — chọn thư mục thường do app quản lý tệp gốc
-    // của máy (My Files) xử lý, không phải app "Files" phụ trợ của Google.
-    // CHƯA AI THỬ TRÊN MÁY THẬT — nếu trình duyệt không hỗ trợ webkitdirectory,
-    // thuộc tính bị bỏ qua, quay lại đúng hành vi accept hiện tại (không hỏng gì
-    // thêm). Khách lỡ chọn tệp PDF thì handleThuMuc lọc ra và báo, không sao.
+    // ⛔ ĐÃ GỠ `webkitdirectory` (12/9/2026) — ĐỪNG THÊM LẠI. Thêm vào để ép mở
+    // bộ chọn THƯ MỤC thật: Android bỏ qua thuộc tính này nên không đổi được gì,
+    // còn trên máy tính thì nó biến dòng "Thư mục" thành chọn NGUYÊN CẢ thư mục,
+    // không chọn được vài tấm lẻ — sai chức năng.
+    //
+    // ✅ CHỦ DỰ ÁN ĐÃ CHỐT (12/9/2026): bấm "Thư mục" ra trình duyệt tệp là ĐẠT,
+    // máy mở app nào thì dùng app đó (Chrome ra "Files", Samsung Internet ra
+    // "File của bạn"). Web không có cách chỉ định app — muốn chỉ định phải đóng
+    // gói thành app thật. Việc này COI NHƯ XONG, đừng mở lại.
+    // Khách lỡ chọn tệp PDF thì handleThuMuc lọc ra và báo, không sao.
     ten: "Thư mục",
     accept: "image/*,application/pdf",
     capture: false,
@@ -430,12 +423,7 @@ export default function ImagePicker({
         {!moChon ? (
           <button
             type="button"
-            onClick={() => {
-              // Máy Apple: đi thẳng vào ô Thư viện ảnh — Safari sẽ tự bung bảng
-              // ba lối của nó. Máy khác: xổ bảng ba lối của mình.
-              if (laMayApple()) oRef.current.thuvien?.click();
-              else setMoChon(true);
-            }}
+            onClick={() => setMoChon(true)}
             disabled={uploadingImg}
             className={`flex w-full items-center justify-center gap-2 rounded-lg bg-cvr-ink px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-cvr-ink/90 ${uploadingImg ? "pointer-events-none opacity-60" : ""}`}
           >
@@ -493,9 +481,6 @@ export default function ImagePicker({
             })()}
             {...(lo.capture ? { capture: "environment" as const } : {})}
             {...(lo.nhieu ? { multiple: true } : {})}
-            {...(lo.ma === "thumuc"
-              ? ({ webkitdirectory: "" } as unknown as Record<string, string>)
-              : {})}
             disabled={lo.ma === "video" ? uploadingVideo || conNhanVideo <= 0 : uploadingImg}
             onChange={(e) => {
               if (lo.ma === "video") handleVideoFile(e.target.files);
