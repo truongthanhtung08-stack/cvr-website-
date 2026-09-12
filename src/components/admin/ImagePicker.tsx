@@ -19,6 +19,10 @@ function acceptThuVien() {
   return /SamsungBrowser/i.test(navigator.userAgent) ? ANH_CU_THE : "image/*";
 }
 
+// BA LỐI CHỌN ẢNH. Mỗi lối một LOGO ĐẶC TRƯNG, đúng kiểu khách vẫn thấy trên
+// điện thoại (ảnh núi-mặt trời xanh · thư mục vàng · máy ảnh đen), để nhìn phát
+// biết bấm cái nào — chủ dự án chốt 12/09/2026: bảng xổ ra mà nhạt quá thì
+// "thấy như đứng yên, không ai biết mà chọn".
 const LOI_CHON = [
   {
     ma: "thuvien",
@@ -26,10 +30,13 @@ const LOI_CHON = [
     accept: "image/*",
     capture: false,
     nhieu: true,
+    nen: "bg-[#e8f1fe] text-[#0071e3]",
     icon: (
-      <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16v12H4zM4 15l4.5-4.5a2 2 0 012.8 0L16 15m-2-2l1.5-1.5a2 2 0 012.8 0L20 13" />
-        <circle cx="9" cy="9.5" r="1.2" />
+      <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none">
+        <rect x="3" y="5" width="18" height="14" rx="2.5" fill="currentColor" opacity=".16" />
+        <rect x="3" y="5" width="18" height="14" rx="2.5" stroke="currentColor" strokeWidth="1.7" />
+        <circle cx="8.6" cy="9.6" r="1.5" fill="currentColor" />
+        <path d="M4 17.2l4.4-4.4a2 2 0 012.9 0l2.3 2.4 2-2a2 2 0 012.9 0L20 15.4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     ),
   },
@@ -39,9 +46,11 @@ const LOI_CHON = [
     accept: "",
     capture: false,
     nhieu: true,
+    nen: "bg-[#fff3d6] text-[#e5a00d]",
     icon: (
-      <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
+      <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none">
+        <path d="M3 7.5A2.5 2.5 0 015.5 5h3.2l2 2.2h8A2.3 2.3 0 0121 9.5V17a2 2 0 01-2 2H5a2 2 0 01-2-2V7.5z" fill="currentColor" opacity=".2" />
+        <path d="M3 7.5A2.5 2.5 0 015.5 5h3.2l2 2.2h8A2.3 2.3 0 0121 9.5V17a2 2 0 01-2 2H5a2 2 0 01-2-2V7.5z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
       </svg>
     ),
   },
@@ -51,10 +60,12 @@ const LOI_CHON = [
     accept: "image/*",
     capture: true,
     nhieu: false,
+    nen: "bg-[#eceef1] text-[#3a3a3c]",
     icon: (
-      <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M4 8h3l1.5-2h7L17 8h3v11H4z" />
-        <circle cx="12" cy="13" r="3.2" />
+      <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none">
+        <path d="M4 8.5A1.5 1.5 0 015.5 7h1.9l1.2-1.7h6.8L16.6 7h1.9A1.5 1.5 0 0120 8.5v8.6a1.5 1.5 0 01-1.5 1.5h-13A1.5 1.5 0 014 17.1V8.5z" fill="currentColor" opacity=".18" />
+        <path d="M4 8.5A1.5 1.5 0 015.5 7h1.9l1.2-1.7h6.8L16.6 7h1.9A1.5 1.5 0 0120 8.5v8.6a1.5 1.5 0 01-1.5 1.5h-13A1.5 1.5 0 014 17.1V8.5z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+        <circle cx="12" cy="12.8" r="3.3" stroke="currentColor" strokeWidth="1.7" />
       </svg>
     ),
   },
@@ -329,17 +340,19 @@ export default function ImagePicker({
             {uploadingImg ? "Đang tải ảnh…" : "Thêm ảnh"}
           </button>
         ) : (
-          <div className="overflow-hidden rounded-xl border border-cvr-line bg-white">
+          <div className="overflow-hidden rounded-2xl border border-cvr-line bg-white shadow-[0_10px_30px_rgba(0,0,0,0.12)] motion-safe:animate-[xoBang_.18s_ease-out]">
+            <style>{"@keyframes xoBang{from{opacity:0;transform:translateY(-6px) scale(.98)}to{opacity:1;transform:none}}"}</style>
             {LOI_CHON.map((lo, i) => (
               <label
                 key={lo.ma}
                 onClick={() => setMoChon(false)}
-                className={`flex cursor-pointer items-center gap-3 px-4 py-3.5 transition active:bg-cvr-surface ${i > 0 ? "border-t border-cvr-line" : ""}`}
+                className={`flex cursor-pointer items-center gap-3.5 px-4 py-3.5 transition active:bg-cvr-surface ${i > 0 ? "border-t border-cvr-line" : ""}`}
               >
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-cvr-surface text-cvr-ink">
+                <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${lo.nen}`}>
                   {lo.icon}
                 </span>
-                <span className="text-sm font-semibold text-cvr-ink">{lo.ten}</span>
+                <span className="flex-1 text-[15px] font-semibold text-cvr-ink">{lo.ten}</span>
+                <svg className="h-4 w-4 shrink-0 text-cvr-faint" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
                 <input
                   ref={lo.ma === "thuvien" ? imgRef : undefined}
                   type="file"
