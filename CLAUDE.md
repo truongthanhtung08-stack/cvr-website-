@@ -37,7 +37,20 @@
 
 ---
 
-## 0A. UP ẢNH KHI ĐĂNG TIN — ✅ ĐÃ CODE HẾT THEO YÊU CẦU (13/09/2026)
+## 0A. 🔴 UP ẢNH KHI ĐĂNG TIN — CHƯA XONG, ĐÃ BÀN GIAO (13/09/2026)
+
+> **ĐỌC `docs/BAN-GIAO-UP-ANH-13-09.md` TRƯỚC KHI SỬA MỘT DÒNG NÀO.**
+> Trong đó có: yêu cầu nguyên văn · đang chạy gì · **những cách đã thử và đã hỏng** ·
+> việc phải làm theo thứ tự · và **cảnh báo đừng tin kết luận của phiên trước**.
+>
+> Chủ dự án dừng việc ngày 13/09 và giao lại cho người khác, vì phiên trước đoán sai
+> hai lần và bắt chủ dự án làm người thử hết lần này tới lần khác. **Đo cho chắc rồi
+> mới đưa ra thử.**
+>
+> Vướng còn lại: bấm **"Folder"** phải ra **app thư mục của chính máy đó**
+> ("File của bạn" trên Samsung), không phải "Files" của Google.
+
+(phần ghi ngày 13/09 bên dưới giữ làm lịch sử — có chỗ đã bị chủ dự án bác)
 
 > **CHỦ DỰ ÁN ĐÃ CHỐT: PHẦN CODE LÀ XONG, ĐỦ YÊU CẦU. ĐỪNG VIẾT LẠI.**
 > Việc còn lại DUY NHẤT là bấm thử trên máy thật (iPhone · Samsung · Firefox/Edge/Opera

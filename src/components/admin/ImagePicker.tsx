@@ -39,6 +39,27 @@ function laMayApple() {
   return /Macintosh/i.test(ua) && navigator.maxTouchPoints > 1;
 }
 
+// SAMSUNG INTERNET — nhận biết để dòng "Thư mục" khai riêng (xem ACCEPT_THU_MUC).
+function laSamsungInternet() {
+  if (typeof navigator === "undefined") return false;
+  return /SamsungBrowser/i.test(navigator.userAgent);
+}
+
+// accept CỦA DÒNG "THƯ MỤC" — KHÁC NHAU GIỮA HAI TRÌNH DUYỆT, CÓ LÝ DO.
+// Đo trên máy thật 13/09/2026, cùng một điện thoại Samsung:
+//   · khai ĐÚNG MỘT loại "image/*"  → bảng có "File của bạn" (app thư mục CỦA MÁY)
+//   · khai để trống                  → Máy ảnh · Máy quay · Files  (mất "File của bạn")
+//   · khai hai loại trở lên          → Máy ảnh · Files             (mất "File của bạn")
+// Lý do: "File của bạn" chỉ nhận yêu cầu loại ẢNH. Khai trống hoặc khai từ hai loại
+// thì Android hạ yêu cầu xuống "tệp bất kỳ", app đó không nhận nên rớt khỏi bảng.
+//
+// Nhưng CHROME thì khai đúng "image/*" lại KHÔNG hỏi app nào — nó tự bung lưới ảnh,
+// trùng y hệt dòng Thư viện ảnh. Nên Chrome phải khai hai loại để rơi về bảng chọn app.
+// ⛔ ĐỪNG GỘP HAI TRƯỜNG HỢP NÀY LÀM MỘT. Gộp kiểu nào cũng hỏng một bên.
+function acceptThuMuc() {
+  return laSamsungInternet() ? "image/*" : "image/*,application/pdf";
+}
+
 // ⛔ accept CỦA DÒNG "THƯ VIỆN ẢNH" PHẢI LÀ "image/*" TRẦN — đừng kê dãy kiểu
 // ảnh cụ thể (image/jpeg,image/png,…). Đo trên máy thật 12/09/2026: Samsung
 // Internet không đọc được dãy đó, rơi về "chọn tệp bất kỳ" nên dòng Thư viện ra
@@ -107,6 +128,25 @@ const LOI_CHON = [
         <path d="M4 8.5A1.5 1.5 0 015.5 7h1.9l1.2-1.7h6.8L16.6 7h1.9A1.5 1.5 0 0120 8.5v8.6a1.5 1.5 0 01-1.5 1.5h-13A1.5 1.5 0 014 17.1V8.5z" fill="currentColor" opacity=".18" />
         <path d="M4 8.5A1.5 1.5 0 015.5 7h1.9l1.2-1.7h6.8L16.6 7h1.9A1.5 1.5 0 0120 8.5v8.6a1.5 1.5 0 01-1.5 1.5h-13A1.5 1.5 0 014 17.1V8.5z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
         <circle cx="12" cy="12.8" r="3.3" stroke="currentColor" strokeWidth="1.7" />
+      </svg>
+    ),
+  },
+  {
+    ma: "video",
+    // Dòng riêng cho VIDEO, accept="video/*" MỘT LOẠI DUY NHẤT — không gộp
+    // chung với ảnh (image/*,video/*). Đã đo 11/9/2026: gộp hai loại vào một ô
+    // làm Samsung Internet mất hẳn Bộ sưu tập (rơi về "Máy ảnh · File của bạn ·
+    // Files"). Tách riêng thế này, dòng Thư viện ảnh vẫn giữ nguyên "image/*".
+    ten: "Video",
+    accept: "video/*",
+    capture: false,
+    nhieu: false,
+    nen: "bg-[#f0e6ff] text-[#7c3aed]",
+    icon: (
+      <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none">
+        <path d="M4.5 6h8a2 2 0 012 2v8a2 2 0 01-2 2h-8a2 2 0 01-2-2V8a2 2 0 012-2z" fill="currentColor" opacity=".18" />
+        <path d="M4.5 6h8a2 2 0 012 2v8a2 2 0 01-2 2h-8a2 2 0 01-2-2V8a2 2 0 012-2z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+        <path d="M14.5 10l4.55-2.28A1 1 0 0120.5 8.62v6.76a1 1 0 01-1.45.9L14.5 14" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     ),
   },
@@ -218,10 +258,8 @@ export default function ImagePicker({
     await handleImageFiles(anh);
   }
 
-  // Đang KHÔNG dùng: nút "Thêm video" đã bỏ 11/09/2026 (video đăng bằng link YouTube).
-  // Giữ nguyên hàm để ngày nào lên gói trả phí muốn cho tải video lên lại thì chỉ
-  // việc trả khối nút về, không phải viết lại.
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  // Tải video từ máy — chủ dự án chốt lại 12/9/2026: bắt buộc phải có nút này,
+  // không chỉ dán link YouTube.
   async function handleVideoFile(files: FileList | null) {
     const file = files?.[0];
     if (!file) return;
@@ -423,33 +461,34 @@ export default function ImagePicker({
           </div>
         )}
 
-        {/* BA Ô CHỌN TỆP THẬT — mỗi lối một ô riêng, ẩn bằng sr-only (KHÔNG dùng
+        {/* BỐN Ô CHỌN TỆP THẬT — mỗi lối một ô riêng, ẩn bằng sr-only (KHÔNG dùng
             display:none: máy Android/iOS đời cũ bỏ qua ô đã display:none nên bấm
-            không mở được gì). Nút ở trên gọi thẳng đúng ô của mình. */}
+            không mở được gì). Nút ở trên gọi thẳng đúng ô của mình. Dòng "video"
+            gọi handleVideoFile riêng (giới hạn 1 tệp/lần, đếm theo maxVideos),
+            còn lại gọi handleImageFiles/handleThuMuc như cũ. */}
         {LOI_CHON.map((lo) => (
           <input
             key={lo.ma}
             ref={(el) => {
               oRef.current[lo.ma] = el;
+              if (lo.ma === "video") videoRef.current = el;
             }}
             type="file"
-            {...(lo.accept ? { accept: lo.accept } : {})}
+            {...(() => {
+              const ac = lo.ma === "thumuc" ? acceptThuMuc() : lo.accept;
+              return ac ? { accept: ac } : {};
+            })()}
             {...(lo.capture ? { capture: "environment" as const } : {})}
             {...(lo.nhieu ? { multiple: true } : {})}
-            disabled={uploadingImg}
-            onChange={(e) => (lo.ma === "thumuc" ? handleThuMuc(e.target.files) : handleImageFiles(e.target.files))}
+            disabled={lo.ma === "video" ? uploadingVideo || conNhanVideo <= 0 : uploadingImg}
+            onChange={(e) => {
+              if (lo.ma === "video") handleVideoFile(e.target.files);
+              else if (lo.ma === "thumuc") handleThuMuc(e.target.files);
+              else handleImageFiles(e.target.files);
+            }}
             className="sr-only"
           />
         ))}
-
-        {/* NÚT "THÊM VIDEO" ĐÃ BỎ (11/09/2026, chủ dự án chốt: "kiểu gì cũng phải
-            chuyển qua kênh YouTube"). Video nay chỉ nhận LINK YOUTUBE ở ô bên dưới.
-            Lý do: một video tải lên ăn ~16 MB kho, bằng 40 tấm ảnh — 14 video đã
-            chiếm 41% cả kho trong khi 889 tấm ảnh mới chiếm phần còn lại. Link
-            YouTube thì tốn 0 MB, mà trên trang tin hiện y hệt: vẫn nằm trong thư
-            viện ảnh, vẫn bấm play chạy tại chỗ, vẫn xem lớn và xoay được.
-            Hàm handleVideoFile GIỮ NGUYÊN bên trên — ngày nào lên gói trả phí
-            muốn mở lại thì chỉ việc trả khối nút này về. */}
 
         {/* ⛔ ĐỪNG THÊM LẠI NÚT "CHỌN TỪ THƯ MỤC" — đã gỡ 12/09/2026.
 
