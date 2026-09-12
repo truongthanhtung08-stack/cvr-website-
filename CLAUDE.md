@@ -37,6 +37,24 @@
 
 ---
 
+## 0A. 🚩 VIỆC ĐANG DANG DỞ — UP ẢNH KHI ĐĂNG TIN (12/09/2026)
+
+> **Ai vào làm tiếp phần up ảnh: ĐỌC `docs/BAO-CAO-UP-ANH.md` TRƯỚC KHI SỬA MỘT DÒNG NÀO.**
+> Trong đó có: yêu cầu nguyên văn của chủ dự án · việc đã xong · việc chưa xong ·
+> **bảng những cách đã thử và đã hỏng** (đừng thử lại) · phép đo còn thiếu · các bẫy kỹ thuật.
+
+**Yêu cầu (nguyên văn):** *"Up ảnh khi khách vào đăng tin, bấm up ảnh, ra ba lựa chọn gồm:
+Bộ sưu tập ảnh (Thư viện), Folder, Máy ảnh. Đúng chức năng của 3 mục này, trỏ tới để khách UP.
+Phù hợp và tương thích cho mọi trình duyệt trên điện thoại của khách hàng. Hết."*
+
+- ✅ Đã xong: ba lựa chọn có logo riêng, mỗi dòng gọi thẳng ô chọn tệp của mình, chọn nhiều tấm,
+  Chrome điện thoại chạy đủ. Mã ở `src/components/admin/ImagePicker.tsx` (có ghi chú ⛔ tại chỗ).
+- ❌ Chưa xong: **Samsung Internet không gọi ra Bộ sưu tập** (Chrome cùng máy thì ra).
+- ⚠️ **Luôn chạy `npx next build` cho chạy hết trước khi nói "đã lên web"** — `tsc --noEmit`
+  KHÔNG bắt được lỗi JSX; đã có bản build hỏng nên không bao giờ lên, mà vẫn báo là đã lên.
+
+---
+
 ## 0B. QUY TRÌNH BẮT BUỘC — đọc `QUY-TRINH-LAM-VIEC.md`
 
 > 📌 **File chi tiết: [`QUY-TRINH-LAM-VIEC.md`](QUY-TRINH-LAM-VIEC.md) — PHẢI đọc và tuân thủ.**
