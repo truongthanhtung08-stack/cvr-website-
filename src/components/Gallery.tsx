@@ -289,6 +289,38 @@ export default function Gallery({
                 <Image key={bigIdx} src={media[bigIdx].src} alt={alt} fill priority quality={90} sizes="(max-width:1024px) 100vw, 50vw" className="object-cover animate-fadein" />
               </button>
             )}
+            {/* ── NÚT CHUYỂN ‹ › ────────────────────────────────────────────
+                Vuốt touchpad chỉ ăn khi con trỏ nằm trên phần của mình. Lúc slide
+                lớn là VIDEO, khung nhúng của YouTube nuốt sạch thao tác chuột —
+                vuốt không nhúc nhích, mà ô lớn thì không có nút nào, khách đang
+                xem video muốn xem ảnh phải mò xuống ô nhỏ (chủ dự án báo 12/09/2026).
+                Hai nút này nằm ĐÈ LÊN khung video nên bấm được cả khi video đang
+                chạy; chuyển slide là iframe bị gỡ → video tắt hẳn, không còn tiếng
+                chạy ngầm. Ẩn lúc bình thường, hiện khi rê chuột vào ô lớn. */}
+            {media.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => doiSlide(-1)}
+                  aria-label="Ảnh trước"
+                  className="absolute left-2 top-1/2 z-[7] flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 text-white opacity-0 backdrop-blur-sm transition hover:bg-black/70 focus-visible:opacity-100 group-hover:opacity-100"
+                >
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m15 19-7-7 7-7" />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => doiSlide(1)}
+                  aria-label="Ảnh sau"
+                  className="absolute right-2 top-1/2 z-[7] flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 text-white opacity-0 backdrop-blur-sm transition hover:bg-black/70 focus-visible:opacity-100 group-hover:opacity-100"
+                >
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m9 5 7 7-7 7" />
+                  </svg>
+                </button>
+              </>
+            )}
             {demMedia}
             {!bigIsVideo && (
               <span className="pointer-events-none absolute bottom-3 left-3 rounded-md bg-black/60 px-2.5 py-1 text-xs text-white backdrop-blur-sm">
