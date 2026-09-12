@@ -6,6 +6,19 @@ import { isVideoUrl } from "@/lib/media";
 import { uploadImageFile, uploadVideoFile } from "@/lib/uploadImage";
 
 // BA LỐI CHỌN ẢNH — xem ghi chú ⛔ ở chỗ dùng, dưới phần return.
+// Samsung Internet KHÔNG đưa Bộ sưu tập vào bảng khi ô khai "image/*" (đo trên
+// máy thật 12/09/2026, bản Samsung Internet mới nhất, thử đủ có/không multiple,
+// có/không accept — lối nào cũng chỉ ra Máy ảnh · File của bạn · Files).
+// Chrome cùng máy thì mở thẳng lưới ảnh, nên khai báo của mình không sai.
+// Cách còn lại chưa thử: kê thẳng từng kiểu ảnh thay vì "image/*". CHỈ áp cho
+// Samsung Internet — Chrome đang chạy đúng, không được đụng vào.
+const ANH_CU_THE = "image/jpeg,image/png,image/webp,image/heic,image/heif,image/gif,image/bmp";
+
+function acceptThuVien() {
+  if (typeof navigator === "undefined") return "image/*";
+  return /SamsungBrowser/i.test(navigator.userAgent) ? ANH_CU_THE : "image/*";
+}
+
 const LOI_CHON = [
   {
     ma: "thuvien",
@@ -330,7 +343,7 @@ export default function ImagePicker({
                 <input
                   ref={lo.ma === "thuvien" ? imgRef : undefined}
                   type="file"
-                  {...(lo.accept ? { accept: lo.accept } : {})}
+                  {...(lo.ma === "thuvien" ? { accept: acceptThuVien() } : lo.accept ? { accept: lo.accept } : {})}
                   {...(lo.capture ? { capture: "environment" as const } : {})}
                   {...(lo.nhieu ? { multiple: true } : {})}
                   disabled={uploadingImg}
