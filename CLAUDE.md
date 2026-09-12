@@ -37,23 +37,37 @@
 
 ---
 
-## 0A. 🚩 VIỆC ĐANG DANG DỞ — UP ẢNH KHI ĐĂNG TIN (12/09/2026)
+## 0A. UP ẢNH KHI ĐĂNG TIN — ✅ ĐÃ CODE HẾT THEO YÊU CẦU (13/09/2026)
 
-> **Ai vào làm tiếp phần up ảnh: ĐỌC `docs/BAO-CAO-UP-ANH.md` TRƯỚC KHI SỬA MỘT DÒNG NÀO.**
-> Trong đó có: yêu cầu nguyên văn của chủ dự án · việc đã xong · việc chưa xong ·
-> **bảng những cách đã thử và đã hỏng** (đừng thử lại) · phép đo còn thiếu · các bẫy kỹ thuật.
+> **CHỦ DỰ ÁN ĐÃ CHỐT: PHẦN CODE LÀ XONG, ĐỦ YÊU CẦU. ĐỪNG VIẾT LẠI.**
+> Việc còn lại DUY NHẤT là bấm thử trên máy thật (iPhone · Samsung · Firefox/Edge/Opera
+> Android). Thiếu xác nhận KHÔNG có nghĩa là thiếu code.
+
+> **Trước khi sửa một dòng nào trong phần up ảnh: ĐỌC `docs/BAO-CAO-UP-ANH.md`,**
+> nhất là **mục 5 — những cách đã thử và đã hỏng, đừng thử lại.**
 
 **Yêu cầu (nguyên văn):** *"Up ảnh khi khách vào đăng tin, bấm up ảnh, ra ba lựa chọn gồm:
 Bộ sưu tập ảnh (Thư viện), Folder, Máy ảnh. Đúng chức năng của 3 mục này, trỏ tới để khách UP.
 Phù hợp và tương thích cho mọi trình duyệt trên điện thoại của khách hàng. Hết."*
 
-- ✅ Đã xong: ba lựa chọn có logo riêng, mỗi dòng gọi thẳng ô chọn tệp của mình, chọn nhiều tấm,
-  Chrome điện thoại chạy đủ. Mã ở `src/components/admin/ImagePicker.tsx` (có ghi chú ⛔ tại chỗ).
-- ❌ Chưa xong: **Samsung Internet không gọi ra Bộ sưu tập** (Chrome cùng máy thì ra).
+- ✅ Ba lựa chọn có logo riêng, mỗi dòng gọi thẳng ô chọn tệp của mình, chọn nhiều tấm.
+  Mã ở `src/components/admin/ImagePicker.tsx` (có ghi chú ⛔ tại chỗ).
+- ✅ Đã lên web và **đã kiểm chứng bằng cách so tên gói mã** (xem mục 5B của báo cáo),
+  không phải chỉ "đã push".
+- ✅ **Đã code đủ cho mọi trình duyệt** (13/9): Android ra bảng ba lối của mình;
+  iPhone/iPad ra thẳng bảng ba lối của Apple (Safari tự bung, tắt không được — xổ
+  bảng mình nữa là bắt khách bấm hai bảng); máy tính hai lối (máy bàn không có máy
+  ảnh cầm tay). Đã bỏ `new DataTransfer()` (Safari <14.1 văng lỗi) và xoá cả ba ô
+  chọn tệp sau mỗi lần nhận ảnh.
+- 🚩 **Samsung Internet: CHƯA KẾT LUẬN ĐƯỢC — bản đang chạy chưa ai thử.**
+  Sửa quan trọng nhất (`c674b79` 19:15 — mỗi dòng gọi thẳng ô của mình) **build hỏng
+  nên không bao giờ lên web**; `29aa434` lúc bàn giao cũng chưa lên. Bảng "Máy ảnh ·
+  File của bạn · Files" mà chủ dự án chụp là chữ ký của ô khai `accept=""` — hồi đó
+  bấm dòng nào cũng rơi vào ô đó. **Việc đầu tiên: thử lại dòng "Thư viện ảnh" bằng
+  Samsung Internet trên bản đang chạy.** Chưa thử thì ĐỪNG kết luận theo hướng nào.
+  (Khách Samsung KHÔNG bị chặn: kể cả trường hợp xấu nhất vẫn up được qua "File của bạn".)
 - ⚠️ **Luôn chạy `npx next build` cho chạy hết trước khi nói "đã lên web"** — `tsc --noEmit`
   KHÔNG bắt được lỗi JSX; đã có bản build hỏng nên không bao giờ lên, mà vẫn báo là đã lên.
-
----
 
 ## 0B. QUY TRÌNH BẮT BUỘC — đọc `QUY-TRINH-LAM-VIEC.md`
 

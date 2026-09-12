@@ -22,6 +22,23 @@ function coMayAnhCamTay() {
   return typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
 }
 
+// iPHONE / iPAD — Safari TỰ BUNG BẢNG BA LỐI CỦA APPLE.
+// Bấm một ô chọn ảnh trên máy Apple, Safari luôn hiện sẵn bảng:
+//     Thư viện ảnh · Chụp ảnh hoặc quay video · Chọn tệp
+// Đúng ba chức năng chủ dự án yêu cầu, do chính Apple vẽ, KHÔNG TẮT ĐƯỢC.
+// Nên trên máy Apple ta KHÔNG xổ bảng của mình nữa — xổ vào thì khách phải bấm
+// qua HAI bảng chồng nhau mới tới được ảnh. Bấm "Thêm ảnh" là ra thẳng bảng của
+// Apple, một chạm, vẫn đủ ba lối.
+// (Android thì ngược lại: bảng của máy không ổn định giữa các trình duyệt nên
+//  vẫn phải dùng bảng của mình — xem khối ghi chú ở phần thân.)
+function laMayApple() {
+  if (typeof navigator === "undefined") return false;
+  const ua = navigator.userAgent;
+  if (/iPhone|iPod|iPad/i.test(ua)) return true;
+  // iPad đời mới khai mình là "Macintosh", chỉ lộ ra ở chỗ có nhiều điểm chạm.
+  return /Macintosh/i.test(ua) && navigator.maxTouchPoints > 1;
+}
+
 // ⛔ accept CỦA DÒNG "THƯ VIỆN ẢNH" PHẢI LÀ "image/*" TRẦN — đừng kê dãy kiểu
 // ảnh cụ thể (image/jpeg,image/png,…). Đo trên máy thật 12/09/2026: Samsung
 // Internet không đọc được dãy đó, rơi về "chọn tệp bất kỳ" nên dòng Thư viện ra
@@ -102,7 +119,6 @@ export default function ImagePicker({
   maxVideos?: number;   // giới hạn VIDEO — mức chung 1, hoặc theo cấp tin khi admin bật
   tierName?: string;
 }) {
-  const imgRef = useRef<HTMLInputElement | null>(null);
   // Mỗi lối chọn ảnh giữ riêng ô chọn tệp của mình, để nút bấm gọi đúng ô đó.
   const oRef = useRef<Record<string, HTMLInputElement | null>>({});
   const videoRef = useRef<HTMLInputElement>(null);
@@ -140,7 +156,16 @@ export default function ImagePicker({
   const soVideo = value.filter(isVideoUrl).length;
   const conNhanVideo = maxVideos == null ? Infinity : Math.max(0, maxVideos - soVideo);
 
-  async function handleImageFiles(files: FileList | null) {
+  // Xoá nội dung CẢ BA ô chọn tệp sau mỗi lần nhận ảnh. Trước đây chỉ xoá ô
+  // "Thư viện ảnh", nên khách chọn ở ô Máy ảnh hoặc ô Thư mục rồi chọn lại ĐÚNG
+  // tấm đó thì trình duyệt thấy giá trị ô không đổi, không báo gì — bấm như
+  // không bấm.
+  function xoaOChon() {
+    for (const o of Object.values(oRef.current)) if (o) o.value = "";
+  }
+
+  // Nhận cả FileList (từ ô chọn tệp) lẫn mảng File đã lọc sẵn (lối Thư mục).
+  async function handleImageFiles(files: FileList | File[] | null) {
     if (!files || files.length === 0) return;
     setError("");
 
@@ -152,7 +177,7 @@ export default function ImagePicker({
           ? `Tin ${tierName ?? ""} chỉ đăng tối đa ${maxImages} ảnh — xoá bớt ảnh cũ hoặc nâng cấp gói tin.`
           : `Chỉ nhận thêm ${conNhan} ảnh (tối đa ${maxImages} ảnh cho tin ${tierName ?? ""}). Các ảnh chọn dư đã bỏ qua.`,
       );
-      if (conNhan === 0) { if (imgRef.current) imgRef.current.value = ""; return; }
+      if (conNhan === 0) { xoaOChon(); return; }
     }
 
     setUploadingImg(true);
@@ -164,7 +189,7 @@ export default function ImagePicker({
     }
     if (added.length) onChange([...value, ...added]);
     setUploadingImg(false);
-    if (imgRef.current) imgRef.current.value = "";
+    xoaOChon();
   }
 
   // Lối "Thư mục" cố ý không khai loại tệp (khai vào thì trình duyệt tệp lọc sạch,
@@ -175,11 +200,13 @@ export default function ImagePicker({
     const anh = ds.filter((f) => f.type.startsWith("image/"));
     if (!anh.length) {
       setError("Tệp vừa chọn không phải ảnh.");
+      xoaOChon();
       return;
     }
-    const dt = new DataTransfer();
-    for (const f of anh) dt.items.add(f);
-    await handleImageFiles(dt.files);
+    // ⛔ ĐỪNG gói lại bằng `new DataTransfer()`: Safari dưới 14.1 không có hàm
+    // dựng đó, gọi vào là văng lỗi và dòng "Thư mục" chết câm trên iPhone cũ.
+    // Truyền thẳng mảng File đã lọc — handleImageFiles nhận được cả hai kiểu.
+    await handleImageFiles(anh);
   }
 
   // Đang KHÔNG dùng: nút "Thêm video" đã bỏ 11/09/2026 (video đăng bằng link YouTube).
@@ -343,7 +370,12 @@ export default function ImagePicker({
         {!moChon ? (
           <button
             type="button"
-            onClick={() => setMoChon(true)}
+            onClick={() => {
+              // Máy Apple: đi thẳng vào ô Thư viện ảnh — Safari sẽ tự bung bảng
+              // ba lối của nó. Máy khác: xổ bảng ba lối của mình.
+              if (laMayApple()) oRef.current.thuvien?.click();
+              else setMoChon(true);
+            }}
             disabled={uploadingImg}
             className={`flex w-full items-center justify-center gap-2 rounded-lg bg-cvr-ink px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-cvr-ink/90 ${uploadingImg ? "pointer-events-none opacity-60" : ""}`}
           >
@@ -390,7 +422,6 @@ export default function ImagePicker({
             key={lo.ma}
             ref={(el) => {
               oRef.current[lo.ma] = el;
-              if (lo.ma === "thuvien") imgRef.current = el;
             }}
             type="file"
             {...(lo.accept ? { accept: lo.accept } : {})}
