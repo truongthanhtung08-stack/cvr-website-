@@ -1,9 +1,28 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useSyncExternalStore } from "react";
 import { asset } from "@/lib/asset";
 import { isVideoUrl } from "@/lib/media";
 import { uploadImageFile, uploadVideoFile } from "@/lib/uploadImage";
+
+// ⛔ ĐỪNG GỠ — quyết định cách ô chọn ảnh mở ra Bộ sưu tập hay không.
+//
+// Ứng dụng Bộ sưu tập của Samsung KHÔNG nhận tín hiệu "cho chọn nhiều tệp" mà
+// trình duyệt gửi kèm (nó dùng tham số riêng của Samsung). Nên trên Samsung
+// Internet, ô khai `multiple` bị rơi về bảng chọn chung "Chọn một thao tác" —
+// Máy ảnh · File của bạn · Files, KHÔNG có Bộ sưu tập. Bỏ `multiple` thì máy mở
+// thẳng thư viện ảnh.
+//
+// Mọi trình duyệt khác (Chrome, Safari, Cốc Cốc, Firefox, Edge…) vừa mở thư viện
+// vừa cho chọn nhiều tấm cùng lúc, nên giữ nguyên `multiple` ở đó.
+//
+// => Ưu tiên tuyệt đối: BẤM LÀ RA THƯ VIỆN ẢNH, trên mọi máy, mọi trình duyệt.
+// Ở Samsung Internet khách chọn từng tấm rồi bấm thêm lần nữa — ảnh cộng dồn,
+// không mất tấm nào. Không in một dòng giải thích nào lên màn hình khách.
+function chonDuocNhieuAnh() {
+  if (typeof navigator === "undefined") return true;
+  return !/SamsungBrowser/i.test(navigator.userAgent);
+}
 
 // Quản lý MEDIA tin đăng/dự án: ẢNH và VIDEO — TẢI TỪ MÁY hoặc DÁN LINK.
 // value là mảng đường dẫn (ảnh + video xen kẽ theo thứ tự thêm). ẢNH ĐẠI DIỆN =
@@ -29,6 +48,13 @@ export default function ImagePicker({
   const [error, setError] = useState("");
   // Link ảnh không tải được (trang nguồn chặn hotlink / không phải ảnh trực tiếp)
   const [broken, setBroken] = useState<string[]>([]);
+
+  // Đọc ở máy khách (máy chủ không biết trình duyệt nào) — xem ghi chú đầu file.
+  const chonNhieu = useSyncExternalStore(
+    () => () => {},
+    chonDuocNhieuAnh,
+    () => true,
+  );
 
   // Chỉ số ẢNH ĐẠI DIỆN = ảnh (không phải video) ĐẦU TIÊN trong mảng.
   const coverIdx = value.findIndex((v) => !isVideoUrl(v));
@@ -216,16 +242,12 @@ export default function ImagePicker({
         >
           <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 16V4m0 0L8 8m4-4l4 4M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" /></svg>
           {uploadingImg ? "Đang tải ảnh…" : "Thư viện ảnh"}
-          {/* ⛔ KHÔNG THÊM LẠI `multiple` — gỡ 12/09/2026.
-              Đo trên máy thật (Samsung Internet): để `multiple` thì bảng chọn của
-              máy chỉ ra Máy ảnh · File của bạn · Files, KHÔNG có Bộ sưu tập. Bỏ
-              `multiple` thì trình duyệt đi đường chọn ảnh của hệ thống, ra thẳng
-              thư viện ảnh. Đổi lại là chọn từng tấm — chủ dự án chốt: mở được
-              thư viện ảnh quan trọng hơn chọn nhiều tấm một lúc. */}
+          {/* `multiple` bật/tắt theo trình duyệt — xem ghi chú ⛔ ở đầu file. */}
           <input
             ref={imgRef}
             type="file"
             accept="image/*"
+            multiple={chonNhieu}
             disabled={uploadingImg}
             onChange={(e) => handleImageFiles(e.target.files)}
             className="sr-only"
