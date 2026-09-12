@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { asset } from "@/lib/asset";
 import { isVideoUrl } from "@/lib/media";
 import { uploadImageFile, uploadVideoFile } from "@/lib/uploadImage";
@@ -73,6 +73,26 @@ export default function ImagePicker({
   const [broken, setBroken] = useState<string[]>([]);
   // Đang mở bảng ba lối chọn ảnh hay chưa (bảng của mình, không phải của máy).
   const [moChon, setMoChon] = useState(false);
+
+  // MÁY ĐO TẠM — gửi về máy chủ xem trang đang chạy trong trình duyệt hay trong
+  // ứng dụng đã cài ra màn hình chính, để tìm vì sao bảng chọn ảnh thiếu Bộ sưu
+  // tập. Không hiện gì cho khách. XOÁ KHỐI NÀY khi dò xong (đặt 12/09/2026).
+  useEffect(() => {
+    try {
+      const m = (q: string) => window.matchMedia(q).matches;
+      fetch("/api/do-may", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ua: navigator.userAgent,
+          appDaCai: m("(display-mode: standalone)") || m("(display-mode: minimal-ui)") || m("(display-mode: fullscreen)"),
+          kieuHienThi: m("(display-mode: standalone)") ? "standalone" : m("(display-mode: minimal-ui)") ? "minimal-ui" : m("(display-mode: fullscreen)") ? "fullscreen" : "browser",
+          manHinh: `${window.innerWidth}x${window.innerHeight}`,
+        }),
+        keepalive: true,
+      }).catch(() => {});
+    } catch { /* không cản trở việc đăng tin */ }
+  }, []);
 
   // Chỉ số ẢNH ĐẠI DIỆN = ảnh (không phải video) ĐẦU TIÊN trong mảng.
   const coverIdx = value.findIndex((v) => !isVideoUrl(v));
