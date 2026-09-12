@@ -202,18 +202,36 @@ export async function guiZns(
   const so = soDienThoaiZalo(phone);
   if (!so) return { kenh: "zalo", daGui: false, lyDo: "số điện thoại không hợp lệ" };
 
-  try {
+  const goiZalo = async (accessToken: string) => {
     const res = await fetch(ZNS_URL, {
       method: "POST",
-      headers: { access_token: token, "Content-Type": "application/json" },
+      headers: { access_token: accessToken, "Content-Type": "application/json" },
       body: JSON.stringify({
         phone: so,
         template_id: templateId,
         template_data: chuanHoaThamSo(data),
       }),
     });
-    const kq = (await res.json()) as { error?: number; message?: string };
     // Zalo trả HTTP 200 kèm error !== 0 khi hỏng → phải xem thân trả về, không xem status.
+    return (await res.json()) as { error?: number; message?: string };
+  };
+
+  try {
+    let kq = await goiZalo(token);
+
+    // ── ZALO CHÊ TOKEN → LÀM MỚI RỒI THỬ LẠI ĐÚNG MỘT LẦN ───────────────────
+    // Đo thật 12/09/2026: Zalo trả -124 "Access token invalid" trong khi kho vẫn
+    // ghi token còn hạn 11 tiếng nữa. Token bị vô hiệu sớm hơn hạn đã lưu (cấp
+    // quyền lại OA ở nơi khác, Zalo thu hồi…). Trước đây gặp vậy là bỏ cuộc luôn,
+    // mà lần sau gọi lại vẫn lấy đúng token chết đó ra dùng — hỏng vĩnh viễn, khách
+    // bấm gửi mã bao nhiêu lần cũng không nhận được, không ai biết vì sao.
+    //   -124 access token invalid · -216 access token expired
+    if (kq.error === -124 || kq.error === -216) {
+      const { layAccessToken } = await import("@/lib/zaloOa");
+      const tokenMoi = await layAccessToken(true); // bỏ qua hạn đang lưu, làm mới ngay
+      if (tokenMoi && tokenMoi !== token) kq = await goiZalo(tokenMoi);
+    }
+
     if (kq.error && kq.error !== 0) {
       return { kenh: "zalo", daGui: false, lyDo: `ZNS lỗi ${kq.error}: ${kq.message ?? ""}` };
     }

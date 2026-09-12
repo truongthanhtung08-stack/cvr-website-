@@ -137,6 +137,37 @@ export async function GET(request: Request) {
     }
   }
 
+  // ?kiem-tra-token=1 — TOKEN THẬT còn sống không, mà KHÔNG gửi tin, không tốn tiền.
+  //
+  // Khác hẳn ?kiem-tra-ip=1 ở trên: chỗ đó cố ý dùng token GIẢ để dò xem Zalo có
+  // chặn IP máy chủ không, nên nó LUÔN trả -124 — đừng nhìn -124 ở đó rồi kết luận
+  // token hỏng (đã nhầm đúng kiểu này ngày 12/09/2026).
+  //
+  // Ở đây lấy token thật rồi hỏi Zalo thông tin OA (getoa) — đọc thông tin thì
+  // miễn phí, không đụng tới hạn mức ZNS.
+  //   · error 0            → token sống, đường gửi mã OK
+  //   · -124 / -216        → token chết mà web không tự làm mới được → phải cấp quyền lại OA
+  //   · thiếu token        → chưa cắm ZALO_OA_APP_ID / ZALO_OA_APP_SECRET, hoặc mất refresh token
+  if (new URL(request.url).searchParams.get("kiem-tra-token")) {
+    try {
+      const { layAccessToken } = await import("@/lib/zaloOa");
+      const token = await layAccessToken();
+      if (!token) return NextResponse.json({ token: "KHÔNG lấy được", canLam: "Cấp quyền lại OA ở developers.zalo.me rồi cắm ZALO_OA_REFRESH_TOKEN" });
+      const res = await fetch("https://openapi.zalo.me/v2.0/oa/getoa", {
+        headers: { access_token: token },
+        cache: "no-store",
+      });
+      const kq = (await res.json()) as { error?: number; message?: string; data?: { name?: string } };
+      return NextResponse.json({
+        tokenLayDuoc: token.slice(0, 8) + "…",
+        zaloTraVe: { error: kq.error, message: kq.message, tenOA: kq.data?.name },
+        ketLuan: kq.error === 0 ? "✅ Token SỐNG — đường gửi mã qua Zalo dùng được" : "❌ Token hỏng — cần cấp quyền lại OA",
+      });
+    } catch (e) {
+      return NextResponse.json({ loiGoi: String(e) });
+    }
+  }
+
   const secret = process.env.SUPABASE_SMS_HOOK_SECRET || (await layHookSecret());
   return NextResponse.json({
     daCauHinh: Boolean(secret),

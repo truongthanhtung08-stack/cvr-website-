@@ -51,8 +51,17 @@ export function zaloOaConfig() {
 /**
  * Trả về access token còn hiệu lực. Tự làm mới khi cần.
  * Chưa cấu hình hoặc làm mới hỏng → trả null kèm log, nơi gọi tự báo lỗi.
+ *
+ * `epLamMoi` — BỎ QUA hạn đang lưu, làm mới ngay lập tức.
+ *
+ * VÌ SAO CẦN (đo thật 12/09/2026): Zalo trả `-124 Access token invalid` trong khi
+ * kho vẫn ghi token còn hạn tới 11 tiếng nữa. Token bị Zalo vô hiệu sớm hơn hạn
+ * ghi trong kho — xảy ra khi cấp quyền lại OA ở nơi khác, đổi mật khẩu, hoặc Zalo
+ * thu hồi. Web tin vào cái hạn đó nên KHÔNG BAO GIỜ làm mới, cứ đem token chết đi
+ * gửi, khách bấm gửi mã bao nhiêu lần cũng hỏng mà không ai biết vì sao.
+ * Nay nơi gọi gặp -124/-216 thì gọi lại với epLamMoi=true để tự cứu.
  */
-export async function layAccessToken(): Promise<string | null> {
+export async function layAccessToken(epLamMoi = false): Promise<string | null> {
   const { appId, secret, daCauHinh } = zaloOaConfig();
   if (!daCauHinh || !appId || !secret) {
     console.warn("[zalo-oa] chưa cắm ZALO_OA_APP_ID / ZALO_OA_APP_SECRET");
@@ -69,7 +78,8 @@ export async function layAccessToken(): Promise<string | null> {
   const { data } = await admin.from(BANG).select("data").eq("key", KHOA).limit(1);
   const luu = data?.[0]?.data as BanGhiToken | undefined;
 
-  if (luu?.access_token && luu.het_han_luc - DEM_TRUOC_MS > Date.now()) {
+  // epLamMoi = Zalo vừa chê token này, đừng tin cái hạn đang lưu nữa.
+  if (!epLamMoi && luu?.access_token && luu.het_han_luc - DEM_TRUOC_MS > Date.now()) {
     return luu.access_token;
   }
 
