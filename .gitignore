@@ -49,6 +49,10 @@ render-tmp.js
 video-quang-cao/
 token.txt
 hook-secret.txt
+vercel-token.txt
+khoa-r2.txt
+*-token.txt
+khoa-*.txt
 
 # ===== File tam / sao luu du lieu (khong dua len git) =====
 .tmp-*

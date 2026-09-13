@@ -125,6 +125,30 @@ Buộc phải đụng vào vì lý do kỹ thuật → **DỪNG, HỎI TRƯỚC.
 
 ---
 
+## 0C. 🔧 VIỆC HẠ TẦNG ĐANG CHẠY — Vercel Pro · Cloudflare R2
+
+> **Kế hoạch đầy đủ + bảng theo dõi từng bước: [`docs/KE-HOACH-HA-TANG.md`](docs/KE-HOACH-HA-TANG.md).**
+> Mở phiên mới là **đọc file đó trước**, xem đang dừng ở bước nào rồi làm tiếp — **KHÔNG bắt
+> chủ dự án kể lại từ đầu**, mọi thứ đã chốt nằm hết trong đó.
+>
+> **Thứ tự đã chốt, không đảo:** xử lý thẻ → mua **Vercel Pro** → tạo **Cloudflare R2** →
+> Claude chuyển 903 ảnh sang R2 → *(sau, lúc rảnh)* chuyển DNS sang Cloudflare.
+>
+> **Hai lý do bắt buộc lên Pro:** ① Hobby ghi rõ "non-commercial" mà web có ĐKKD + bán gói tin;
+> ② Fluid Active CPU gói Hobby chỉ **4 giờ/tháng**, vượt là Vercel **tự động tạm dừng dự án** —
+> web cũ vẫn chạy nhưng **bản mới không lên được**.
+>
+> **R2 cứu cả hai nhà cung cấp cùng lúc:** Supabase hết bị tính băng thông (đang bị doạ khoá
+> **08/10/2026** vì vượt egress 5 GB/tháng) và Vercel hết phải chạy hàm đọc ảnh `/anh/`.
+>
+> **Phạm vi sửa code, không hơn:** R2 = đúng 1 file `src/app/anh/[...duong]/route.ts` + 1 script
+> chuyển ảnh · Vercel Pro = KHÔNG sửa gì · Supabase = KHÔNG sửa gì.
+>
+> ⛔ **Khoá bí mật** (`token.txt`, `vercel-token.txt`, `khoa-r2.txt`) nằm trong thư mục dự án và
+> **đã chặn khỏi git** — đừng bao giờ dán nội dung chúng vào chat hay commit.
+
+---
+
 ## 1. Dự án là gì
 
 > ⚡ **Đây KHÔNG chỉ là một website thông thường — đây là Dự án COASTAL LAND PLATFORM.**
