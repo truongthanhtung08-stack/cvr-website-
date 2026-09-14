@@ -8,6 +8,7 @@ import ProjectsBrowser from "@/components/ProjectsBrowser";
 import { smoothScrollTo } from "@/lib/scroll";
 import { useAutoSlide, useAutoSlideThe, useTamDung } from "@/lib/useAutoSlide";
 import AnhChay from "@/components/AnhChay";
+import { anhNho } from "@/lib/asset";
 import { sortProjectsByTier, ExpandToggle } from "@/components/ProjectSlider";
 import { useHomeSection } from "@/components/HomeExpand";
 
@@ -117,7 +118,9 @@ export default function ProjectsSection({ projects, articles = [] }: { projects:
                       <span className="card-sheen" aria-hidden />
                       <div className="relative aspect-[3/2] overflow-hidden sm:aspect-[4/3]">
                         <Image
-                          src={p.image}
+                          // Thẻ dự án rộng ~25vw — dùng BẢN NHỎ. Bản gốc (có tấm 469 KB)
+                          // vẫn được tải về mà không hiện ra, đo trên web thật 14/09/2026.
+                          src={anhNho(p.image)}
                           alt={p.name}
                           fill
                           sizes="(max-width: 768px) 100vw, 25vw"
