@@ -6,6 +6,7 @@ import Link from "next/link";
 import ArticleBrowser from "@/components/ArticleBrowser";
 import { useHomeSection } from "@/components/HomeExpand";
 import type { Article } from "@/lib/data";
+import { anhNho } from "@/lib/asset";
 
 const PER_PAGE = 8;
 
@@ -18,7 +19,7 @@ function ArticleRow({ a }: { a: Article }) {
       className="group flex flex-col gap-3 overflow-hidden border border-cvr-line bg-white p-2.5 shadow-lux shadow-lux-hover transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 sm:flex-row sm:gap-4 sm:p-3"
     >
       <div className="relative aspect-[16/10] w-full shrink-0 overflow-hidden rounded-xl bg-cvr-surface sm:aspect-[4/3] sm:w-[32%] sm:min-w-[220px] sm:max-w-[360px]">
-        <Image src={a.image} alt={a.title} fill sizes="(max-width: 640px) 100vw, 32vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
+        <Image src={anhNho(a.image)} alt={a.title} fill sizes="(max-width: 640px) 100vw, 32vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
       </div>
       <div className="flex min-w-0 flex-1 flex-col">
         <p className="flex items-center gap-2 text-xs text-cvr-muted">
@@ -109,7 +110,7 @@ export default function NewsSection({
             <span className="card-sheen" aria-hidden />
             <div className="relative aspect-[2/1] overflow-hidden">
               <Image
-                src={featured.image}
+                src={anhNho(featured.image)}
                 alt={featured.title}
                 fill
                 sizes="(max-width: 1024px) 100vw, 40vw"
@@ -138,7 +139,7 @@ export default function NewsSection({
                     PC: ảnh + chữ TO hơn để cân với bài nổi bật bên trái (file V3 10.08.2026). */}
                 <div className="relative aspect-[16/9] w-full shrink-0 overflow-hidden rounded-lg sm:w-44">
                   <Image
-                    src={a.image}
+                    src={anhNho(a.image)}
                     alt={a.title}
                     fill
                     sizes="176px"
@@ -165,7 +166,7 @@ export default function NewsSection({
               {rest.slice(0, 10).map((a) => (
                 <Link key={a.slug} href={`/tin-tuc/${a.slug}`} className="flex w-[80%] shrink-0 snap-start flex-col overflow-hidden rounded-none bg-white shadow-lux">
                   <div className="relative aspect-[16/9] w-full overflow-hidden">
-                    <Image src={a.image} alt={a.title} fill sizes="80vw" className="object-cover" />
+                    <Image src={anhNho(a.image)} alt={a.title} fill sizes="80vw" className="object-cover" />
                   </div>
                   <div className="p-3">
                     <h3 className="clamp-2 min-h-[3em] font-semibold leading-[1.5] text-cvr-ink">{a.title}</h3>
