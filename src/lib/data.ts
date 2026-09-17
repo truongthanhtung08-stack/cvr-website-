@@ -70,6 +70,8 @@ export type Listing = {
   // 12/08/2026" theo mốc này. Không có → thẻ không hiện thời gian (thà không hiện
   // còn hơn ghi cứng "Hôm nay" cho cả tin đăng ba tháng trước).
   postedAt?: string;
+  /** Lần ĐẨY TIN gần nhất (gói UP). Ngày đăng ở trên KHÔNG bị sửa theo nó. */
+  bumpedAt?: string;
   /** Hết hạn gói tin (theo tier_expires_at). null = không đặt hạn. */
   hetHanLuc?: string | null;
   /** Hạng tin đã mua: diamond · gold · silver · basic */
@@ -205,16 +207,49 @@ export function listingSummary(l: Listing): string {
   return `${l.type} tại ${place}. Diện tích ${l.area}${beds}.`;
 }
 
-// "Hôm nay" · "3 ngày trước" · "12/08/2026" — từ ngày đăng thật.
+// "Vừa xong" · "25 phút trước" · "3 giờ trước" · "Hôm qua" · "12/08/2026".
+//
+// PHẢI CÓ MỨC GIỜ/PHÚT thì gói Đẩy tin mới có nghĩa. Trước đây mốc nhỏ nhất là
+// "Hôm nay": khách bỏ tiền đẩy tin lên đầu, nhưng người mua nhìn vào vẫn thấy
+// "Hôm nay" y hệt mọi tin khác cũng "Hôm nay" — đẩy mấy lần cũng không ai cảm
+// nhận được, tức là bán một thứ khách không nhận được. (Đối chiếu homedy.com:
+// "Vừa xong" · "2 giờ trước" — xem docs/NGHIEN-CUU-CO-CHE-HIEN-THI.md.)
 export function postedText(iso?: string): string {
   if (!iso) return "";
   const t = new Date(iso).getTime();
   if (Number.isNaN(t)) return "";
-  const ngay = Math.floor((Date.now() - t) / 86400000);
-  if (ngay <= 0) return "Hôm nay";
+  const giay = Math.floor((Date.now() - t) / 1000);
+  if (giay < 0) return "Vừa xong";          // lệch giờ máy khách → không nói "âm phút"
+  if (giay < 90) return "Vừa xong";
+  const phut = Math.floor(giay / 60);
+  if (phut < 60) return `${phut} phút trước`;
+  const gio = Math.floor(phut / 60);
+  if (gio < 24) return `${gio} giờ trước`;
+  const ngay = Math.floor(giay / 86400);
   if (ngay === 1) return "Hôm qua";
   if (ngay < 30) return `${ngay} ngày trước`;
   return new Date(iso).toLocaleDateString("vi-VN");
+}
+
+// DÒNG THỜI GIAN TRÊN THẺ TIN — nói thật cả hai phía.
+//
+// Người bán mua gói Đẩy tin để tin nổi lại; người mua cần biết tin rao từ bao
+// giờ. Hai nhu cầu đó chỏi nhau, và cách các sàn hay làm là SỬA LUÔN ngày đăng
+// (tài liệu cơ chế gọi là "Dynamic Timestamp Refresh") — người mua bị lừa.
+//
+// Coastal Land tách hẳn hai chữ:
+//   · chưa đẩy  → "3 giờ trước"            (ngày đăng thật)
+//   · đã đẩy    → "Làm mới 10 phút trước"  (nói rõ là LÀM MỚI, không phải đăng)
+// Người bán vẫn nhận đúng thứ đã trả tiền: tin lên đầu và trông tươi. Người mua
+// không bị nói dối, và muốn biết ngày đăng gốc thì mở trang tin là thấy.
+export function freshText(postedAt?: string, bumpedAt?: string): string {
+  if (!bumpedAt) return postedText(postedAt);
+  const b = new Date(bumpedAt).getTime();
+  const p = postedAt ? new Date(postedAt).getTime() : 0;
+  if (Number.isNaN(b)) return postedText(postedAt);
+  // Chênh dưới 2 phút = mốc đẩy do migration gán bằng ngày đăng, chưa đẩy thật.
+  if (b - p < 120_000) return postedText(postedAt);
+  return `Làm mới ${postedText(bumpedAt).replace(/^Vừa xong$/, "vừa xong")}`;
 }
 
 export type ListingDetail = {

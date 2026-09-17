@@ -47,6 +47,10 @@ export type ListingRow = {
   tier_expires_at: string | null;
   tier_yeu_cau?: ListingTier | null; // gói khách đăng ký (migration 0017) — dùng khi tin chưa duyệt
   tier_days?: number | null;         // thời hạn gói khách chọn: 7 · 15 · 30
+  bumped_at?: string | null;         // lần đẩy tin gần nhất (0034) — không liên quan tới ngày đăng
+  bump_credits?: number | null;     // kho lượt đẩy đã mua theo gói (0035)
+  bump_auto?: boolean | null;       // tự đẩy vào khung giờ vàng
+  bump_lich?: string | null;        // hang_ngay | cuoi_tuan
   status: ListingStatus;
   published_at: string | null;
   expires_at: string | null;

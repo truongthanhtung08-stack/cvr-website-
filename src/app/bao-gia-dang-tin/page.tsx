@@ -7,7 +7,7 @@ import LeadForm from "@/components/LeadForm";
 import PricingSidebar, { type SidebarGroup } from "@/components/PricingSidebar";
 import PropertyCard from "@/components/PropertyCard";
 import { ProjectCard, ProjectRow } from "@/components/ProjectSlider";
-import { getTier, tierFromBadge, type TierId, utilityTools } from "@/lib/packages";
+import { getTier, tierFromBadge, SUAT_GHIM, type TierId, utilityTools } from "@/lib/packages";
 import { getListings } from "@/lib/listingsDb";
 import { getProjects } from "@/lib/contentDb";
 import { getBilling } from "@/lib/siteContent";
@@ -41,7 +41,7 @@ const vipPkgs = [
     ],
     displays: [
       getTier("diamond").viTri + ".",
-      "Xuất hiện trên Trang chủ.",
+      `Đảm bảo ${SUAT_GHIM.diamond} suất hàng đầu trên Trang chủ.`,
       "Đứng trên CVR Gold.",
       getTier("diamond").nhanDien + ".",
       "Chèn 1 link bất kỳ dưới tin đăng.",

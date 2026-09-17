@@ -65,6 +65,10 @@ type Row = {
   details: ListingDetailsJson | null;
   created_at: string;     // lúc khách BẤM TẠO tin (kể cả còn là nháp)
   published_at: string | null; // lúc tin ĐƯỢC DUYỆT và lên sóng — đây mới là "ngày đăng"
+  // Lần ĐẨY TIN gần nhất (gói UP). CHỈ dùng để xếp thứ tự và để tính "độ tươi"
+  // hiển thị. KHÔNG bao giờ ghi đè published_at — người mua luôn đọc được tin
+  // này thực sự rao từ bao giờ. Xem 0034_day_tin.sql.
+  bumped_at: string | null;
 };
 
 // Hạng CVR → huy hiệu FE đang dùng (tierFromBadge trong packages.ts làm chiều ngược lại)
@@ -203,6 +207,7 @@ function rowToListing(r: Row): Listing {
     // trước đây lấy created_at nên tin vừa lên sóng đã hiện "8 ngày trước" và bị
     // xếp tụt sau tin khác. Tin cũ không có mốc lên sóng thì lùi về created_at.
     postedAt: r.published_at ?? r.created_at,
+    ...(r.bumped_at ? { bumpedAt: r.bumped_at } : {}),
     purpose: r.purpose,
     // Tên người đăng thật (khách hàng) — thẻ tin hiện đúng tên này, không phải admin
     agentName: r.details?.contact?.name || undefined,
@@ -221,7 +226,7 @@ function rowToListing(r: Row): Listing {
 // Cột cho thẻ tin & danh sách — GỒM CẢ details để thẻ hiện đúng TÊN NGƯỜI ĐĂNG THẬT
 // (details.contact.name — cột details đã có trên production từ migration 0006).
 const COLS =
-  "id,purpose,type,title,description,price_vnd,area_m2,built_area_m2,beds,baths,ward,district,province,images,tier,tier_expires_at,created_at,published_at,details";
+  "id,purpose,type,title,description,price_vnd,area_m2,built_area_m2,beds,baths,ward,district,province,images,tier,tier_expires_at,created_at,published_at,bumped_at,details";
 const COLS_DETAIL = COLS;
 
 // Gọi PostgREST trực tiếp bằng fetch để dùng cache Next (revalidate) —
@@ -261,7 +266,7 @@ const isSeedId = (id: string) => /^\d+$/.test(id);
 // TIN THẬT 100%: DB trả 0 tin thật → hiện trống thật (KHÔNG độn dữ liệu mẫu).
 // Chỉ fallback mẫu khi Supabase LỖI/chưa cấu hình (rows=null) để web không trắng trang.
 export async function getListings(): Promise<Listing[]> {
-  const rows = await rest(`select=${COLS}&status=eq.approved&order=published_at.desc.nullslast,created_at.desc&limit=500`);
+  const rows = await rest(`select=${COLS}&status=eq.approved&order=bumped_at.desc.nullslast,published_at.desc.nullslast,created_at.desc&limit=500`);
   if (!rows) return featuredListings; // lỗi kết nối/chưa cấu hình → fallback mẫu
   return rows.filter((r) => !isSeedRow(r)).map(rowToListing);
 }

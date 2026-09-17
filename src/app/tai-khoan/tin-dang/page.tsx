@@ -15,6 +15,9 @@ import {
   thongTinGoi,
   ngayGon,
 } from "@/lib/listingAdmin";
+import { giaDayTin, goiUpNhieuLuot, vnd } from "@/lib/billing";
+import { useBilling } from "@/lib/useBilling";
+import { tachThue } from "@/lib/thue";
 
 // Tin đăng của THÀNH VIÊN — tin của chính mình (mọi trạng thái, kể cả nháp).
 // RLS đảm bảo chỉ thấy tin owner_id = mình.
@@ -26,6 +29,8 @@ type Lead = { id: string; listing_id: string; viewer_name: string | null; viewer
 const MOI_TRANG = 10;
 
 export default function MyListingsPage() {
+  // Giá đẩy tin lấy từ bảng admin đang lưu — chủ dự án đổi giá là nút đổi theo.
+  const { billing } = useBilling();
   const [rows, setRows] = useState<ListingRow[]>([]);
   const [leadsByListing, setLeadsByListing] = useState<Record<string, Lead[]>>({});
   const [loading, setLoading] = useState(true);
@@ -72,6 +77,96 @@ export default function MyListingsPage() {
     if (!window.confirm(`Xoá tin nháp "${r.title || "(chưa có tiêu đề)"}"?`)) return;
     const { error } = await createClient().from("listings").delete().eq("id", r.id);
     if (!error) setRows((rows) => rows.filter((x) => x.id !== r.id));
+  }
+
+  // ── ĐẨY TIN (UP) ──────────────────────────────────────────────────────────
+  // Hỏi xác nhận kèm SỐ TIỀN trước khi trừ: đây là tiền thật, không được trừ
+  // chỉ vì một cú bấm nhầm. Máy chủ mới là nơi tính giá và chặn quá 1 lượt/ngày;
+  // ở đây chỉ hiển thị và khoá nút trong lúc gọi.
+  const [dangDay, setDangDay] = useState<string | null>(null);
+  async function handleDay(r: ListingRow) {
+    const goi = thongTinGoi(r);
+    const kho = Number(r.bump_credits ?? 0);
+    const gia = giaDayTin(billing, goi.cap);
+    const phaiTra = tachThue(gia).tongTra;
+    // Còn lượt trong kho thì KHÔNG mất thêm tiền — phải nói rõ, đừng doạ khách
+    // bằng con số tiền khi họ đã trả từ lúc mua gói.
+    const loiNhac = kho > 0
+      ? `Dùng 1 lượt trong gói đã mua (còn ${kho} lượt). Không mất thêm tiền.`
+      : `Phí: ${vnd(phaiTra)} (đã gồm thuế GTGT) — trừ thẳng vào ví.`;
+    if (!window.confirm(
+      `Đẩy tin "${r.title || "(chưa có tiêu đề)"}" lên đầu danh sách?\n\n` +
+      `${loiNhac}\n` +
+      `Mỗi tin đẩy được 1 lần mỗi ngày. Ngày đăng của tin KHÔNG bị sửa.`
+    )) return;
+
+    setDangDay(r.id);
+    try {
+      const res = await fetch("/api/tin-dang/day", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: r.id }),
+      });
+      const kq = await res.json().catch(() => ({}));
+      if (!res.ok || !kq.ok) {
+        window.alert(kq.loi || "Đẩy tin không thành công.");
+        return;
+      }
+      // Cập nhật ngay tại chỗ để khách thấy kết quả, khỏi tải lại trang.
+      setRows((rows) => rows.map((x) => (x.id === r.id
+        ? { ...x, bumped_at: kq.bumpedAt, ...(kq.dungLuot ? { bump_credits: kq.conLai } : {}) }
+        : x)));
+      window.alert(kq.dungLuot
+        ? `Đã đẩy tin lên đầu bằng gói đã mua. Còn ${kq.conLai} lượt.`
+        : `Đã đẩy tin lên đầu. Trừ ${vnd(kq.daTru)}, số dư còn ${vnd(kq.soDu)}.`);
+    } finally {
+      setDangDay(null);
+    }
+  }
+
+  // ── MUA GÓI UP NHIỀU LƯỢT ─────────────────────────────────────────────────
+  // Mua sỉ rẻ hơn đẩy lẻ 20–50%. Bày thẳng đơn giá mỗi lượt để khách thấy được
+  // cái lợi, khỏi phải tự chia.
+  const [dangMua, setDangMua] = useState<string | null>(null);
+  async function handleMuaGoi(r: ListingRow) {
+    const goi = thongTinGoi(r);
+    const dsGoi = goiUpNhieuLuot(billing, goi.cap);
+    if (!dsGoi.length) { window.alert("Chưa có gói đẩy nào cho cấp tin này."); return; }
+
+    const giaLe = tachThue(giaDayTin(billing, goi.cap)).tongTra;
+    const dong = dsGoi.map((g, i) => {
+      const tra = tachThue(g.gia).tongTra;
+      const moiLuot = Math.round(tra / g.soLuot);
+      const re = giaLe > 0 ? Math.round((1 - moiLuot / giaLe) * 100) : 0;
+      return `${i + 1}. ${g.soLuot} lượt — ${vnd(tra)}  (${vnd(moiLuot)}/lượt${re > 0 ? `, rẻ hơn ${re}%` : ""})`;
+    });
+    const chon = window.prompt(
+      `Mua gói đẩy cho tin "${r.title || "(chưa có tiêu đề)"}" (${goi.tenGoi})\n` +
+      `Đẩy lẻ hiện là ${vnd(giaLe)}/lượt.\n\n${dong.join("\n")}\n\n` +
+      `Gõ số thứ tự gói muốn mua (1–${dsGoi.length}), hoặc để trống để thoát:`
+    );
+    const i = Number(chon) - 1;
+    if (!chon || !dsGoi[i]) return;
+    const g = dsGoi[i];
+    if (!window.confirm(
+      `Mua ${g.soLuot} lượt đẩy — ${vnd(tachThue(g.gia).tongTra)} (đã gồm thuế GTGT), trừ thẳng vào ví.\n\n` +
+      `Sau khi mua, hệ thống tự đẩy tin mỗi ngày 1 lần vào đầu giờ sáng cho tới khi hết lượt.`
+    )) return;
+
+    setDangMua(r.id);
+    try {
+      const res = await fetch("/api/tin-dang/mua-goi-up", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: r.id, soLuot: g.soLuot }),
+      });
+      const kq = await res.json().catch(() => ({}));
+      if (!res.ok || !kq.ok) { window.alert(kq.loi || "Mua gói không thành công."); return; }
+      setRows((rows) => rows.map((x) => (x.id === r.id ? { ...x, bump_credits: kq.conLai } : x)));
+      window.alert(`Đã mua ${g.soLuot} lượt. Trừ ${vnd(kq.daTru)}, số dư còn ${vnd(kq.soDu)}.\nTin có ${kq.conLai} lượt trong kho.`);
+    } finally {
+      setDangMua(null);
+    }
   }
 
   const count = (s: ListingStatus) => rows.filter((r) => r.status === s).length;
@@ -217,6 +312,9 @@ export default function MyListingsPage() {
                       </>
                 )}
                 {goi.daDuyet && !goi.hetHan && goi.cap === "basic" && " · không giới hạn thời gian"}
+                {/* Đã bỏ tiền đẩy thì phải thấy lần đẩy gần nhất, không thì
+                    khách không biết mình đã đẩy hôm nay chưa. */}
+                {r.bumped_at && ` · Đẩy lần cuối ${ngayGon(r.bumped_at)}`}
               </p>
             )}
 
@@ -257,6 +355,36 @@ export default function MyListingsPage() {
               >
                 Thống kê
               </Link>
+              {/* ĐẨY TIN — chỉ có nghĩa với tin đang đăng. Nhãn nói luôn giá để
+                  khách không phải bấm thử mới biết mất bao nhiêu. */}
+              {r.status === "approved" && (
+                <button
+                  type="button"
+                  disabled={dangDay === r.id}
+                  onClick={() => handleDay(r)}
+                  className="flex h-9 items-center gap-1.5 rounded-full border border-cvr-blue/30 bg-cvr-blue/[0.06] px-4 text-sm font-semibold text-cvr-blue-ink transition hover:border-cvr-blue disabled:opacity-50"
+                >
+                  <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                  </svg>
+                  {dangDay === r.id
+                    ? "Đang đẩy…"
+                    : Number(r.bump_credits ?? 0) > 0
+                      ? `Đẩy tin · còn ${r.bump_credits} lượt`
+                      : `Đẩy tin · ${vnd(tachThue(giaDayTin(billing, goi.cap)).tongTra)}`}
+                </button>
+              )}
+              {/* MUA GÓI — rẻ hơn đẩy lẻ 20–50%, và hệ thống tự đẩy giúp mỗi sáng. */}
+              {r.status === "approved" && (
+                <button
+                  type="button"
+                  disabled={dangMua === r.id}
+                  onClick={() => handleMuaGoi(r)}
+                  className="flex h-9 items-center rounded-full border border-cvr-line px-4 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink disabled:opacity-50"
+                >
+                  {dangMua === r.id ? "Đang mua…" : "Mua gói đẩy"}
+                </button>
+              )}
               {r.status === "draft" && (
                 <button
                   type="button"

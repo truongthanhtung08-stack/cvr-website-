@@ -74,6 +74,16 @@ export const tiers: Tier[] = [
   },
 ];
 
+// ── SUẤT GHIM ĐẦU TRANG (Position Pinning) ─────────────────────────────────
+// Tài liệu cơ chế: "các vị trí index từ 1 đến N thuộc về nhóm VIP Kim Cương và
+// Vàng; tin mới đăng dạng thường hoàn toàn không thể chen chân vào".
+// Quy ra bố cục thật của web: lưới PC 4 thẻ một hàng →
+//   · Kim Cương: 4 suất = trọn HÀNG ĐẦU TIÊN ("từ vị trí số 1 đến hết hàng đầu")
+//   · Vàng:      4 suất kế = hàng thứ hai, vẫn trong nửa trên màn hình đầu
+// Đây là suất ĐẢM BẢO, không phải mức trần: dư tin VIP thì vẫn đứng trước tiếp.
+// Thiếu tin VIP thì lấp bằng cấp thấp hơn để trang không hở.
+export const SUAT_GHIM = { diamond: 4, gold: 4 } as const;
+
 // Map huy hiệu tin (VIP/Nổi bật/Mới) → cấp CVR để tô màu thẻ tin.
 // (Dữ liệu mẫu dùng badge; khi có bảng listings thật (B2) sẽ dùng thẳng cột tier.)
 export function tierFromBadge(badge?: string): TierId {
@@ -254,13 +264,24 @@ export const benefitRows: BenefitRow[] = [
     label: "Nhận diện thẻ tin",
     values: theoCap((t) => t.nhanDien),
   },
+  // ĐẤT VÀNG — nói đúng cái web làm được, không hứa độc quyền.
+  // Cơ chế: N suất đầu mỗi trang danh sách dành cho nhóm VIP (SUAT_GHIM bên
+  // dưới) — hàng 1 Kim Cương, hàng 2 Vàng. Tin thường KHÔNG chen vào được.
+  // Nhưng khi chưa đủ tin VIP, phần trống được lấp bằng cấp thấp hơn để trang
+  // không bị hở — nên chữ phải là "đảm bảo suất", không phải "chỉ Diamond mới
+  // được lên trang chủ" (điều đó không đúng với cái đang chạy).
   {
-    label: "Xuất hiện Trang chủ",
-    values: { diamond: "✓", gold: "—", silver: "—", basic: "—" },
+    label: "Suất đảm bảo trên Trang chủ",
+    values: {
+      diamond: `${SUAT_GHIM.diamond} suất hàng đầu`,
+      gold: `${SUAT_GHIM.gold} suất kế tiếp`,
+      silver: "Sau nhóm VIP",
+      basic: "Sau cùng, theo thời gian",
+    },
   },
   {
     label: "Box “Bất động sản nổi bật”",
-    values: { diamond: "✓", gold: "✓", silver: "—", basic: "—" },
+    values: { diamond: "Ưu tiên 1", gold: "Ưu tiên 2", silver: "Khi còn chỗ", basic: "Khi còn chỗ" },
   },
   {
     label: "Ưu tiên hiển thị & duyệt sớm",

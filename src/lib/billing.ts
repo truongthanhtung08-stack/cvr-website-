@@ -307,6 +307,52 @@ export const BANNERS_DEFAULT: BannerTable[] = [
 
 // Admin chưa lưu bảng nào thì dùng mức chuẩn — trang báo giá không bao giờ trống.
 export const bangUp = (d: BillingData): UpRow[] => (d.up?.length ? d.up : UP_DEFAULT);
+
+// Thứ tự CỘT của bảng Đẩy tin — đúng thứ tự trang báo giá đang render.
+const COT_UP: TierId[] = ["diamond", "gold", "silver", "basic"];
+
+// ── GÓI UP NHIỀU LƯỢT ───────────────────────────────────────────────────────
+// Bảng Đẩy tin có 2 loại dòng, khác hẳn nhau về cách bán:
+//   · dòng đầu  "Up ngay"        → mua LẺ 1 lượt, bấm là trừ ví.
+//   · dòng sau  "Up 7 lần (−30%)" → mua SỈ nhiều lượt, rẻ hơn, tiêu dần mỗi ngày.
+// Số lượt đọc THẲNG từ nhãn dòng nên chủ dự án thêm/sửa dòng trong admin là web
+// hiểu ngay, không phải sửa code (vd gõ "Up 10 lần (−35%)" là có gói 10 lượt).
+export type GoiUp = {
+  label: string;   // nguyên văn nhãn dòng, để hiện cho khách
+  soLuot: number;  // số lượt trong gói
+  gia: number;     // giá CHƯA thuế cho trọn gói, theo cấp tin
+  giaGoc?: number; // giá gạch ngang (nếu có khuyến mãi)
+};
+
+// "Up 7 lần (−30%)" → 7 · "Up ngay" → 1
+function soLuotTuNhan(label: string): number {
+  const m = label.match(/(\d+)\s*lần/i);
+  return m ? Number(m[1]) : 1;
+}
+
+// Danh sách gói NHIỀU LƯỢT (bỏ dòng "Up ngay" vì đó là mua lẻ) của một cấp tin.
+export function goiUpNhieuLuot(d: BillingData, tierId: TierId): GoiUp[] {
+  const cot = COT_UP.indexOf(tierId);
+  if (cot < 0) return [];
+  return bangUp(d)
+    .map((r) => ({
+      label: r.label,
+      soLuot: soLuotTuNhan(r.label),
+      gia: r.values[cot]?.gia ?? 0,
+      ...(r.values[cot]?.giaGoc ? { giaGoc: r.values[cot].giaGoc } : {}),
+    }))
+    .filter((g) => g.soLuot > 1 && g.gia > 0);
+}
+
+// GIÁ MỘT LƯỢT ĐẨY NGAY của một cấp tin (dòng đầu bảng Đẩy tin, "Up ngay").
+// Giá CHƯA gồm GTGT — cộng thuế ở chỗ trừ ví, giống mọi khoản khác.
+// Đọc từ bảng admin đang lưu nên chủ dự án đổi giá ở /admin/gia-khuyen-mai là
+// đổi luôn số tiền trừ khi khách bấm Đẩy, không phải sửa code.
+export function giaDayTin(d: BillingData, tierId: TierId): number {
+  const cot = COT_UP.indexOf(tierId);
+  const dong = bangUp(d)[0];
+  return cot >= 0 ? dong?.values[cot]?.gia ?? 0 : 0;
+}
 export const goiPr = (d: BillingData): PrPkg[] => (d.pr?.length ? d.pr : PR_DEFAULT);
 export const ghiChuPr = (d: BillingData): string[] => (d.prNotes?.length ? d.prNotes : PR_NOTES_DEFAULT);
 export const bangBanner = (d: BillingData): BannerTable[] => (d.banners?.length ? d.banners : BANNERS_DEFAULT);
