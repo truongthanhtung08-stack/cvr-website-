@@ -540,7 +540,7 @@ export default function ImagePicker({
       {/* Nhãn "Ảnh đại diện" và nút "Đặt làm đại diện" đã nằm ngay dưới từng ảnh,
           ô dán link đã ghi rõ nhận YouTube/Vimeo/mp4 → chỉ còn giữ giới hạn dung
           lượng, thứ duy nhất khách không nhìn ra được. */}
-      <p className="text-xs text-cvr-faint">Ảnh ≤ 10MB · Video ≤ 50MB.</p>
+      <p className="text-xs text-cvr-faint">Ảnh ≤ 10MB · Video ≤ 100MB.</p>
     </div>
   );
 }
