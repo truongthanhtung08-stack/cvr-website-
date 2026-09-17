@@ -59,8 +59,31 @@ function maTuTenTep(f) {
 // thì video "Bán nhà Bàu Làng 2" khớp bừa sang tin của nhà khác. Video cũ đặt
 // tên không có ngoặc vuông thì BỎ QUA, thà không gắn còn hơn gắn nhầm nhà.
 function maTuTieuDe(ten) {
-  const m = /\[\s*([a-z]{2,10}\d{1,3})\s*\]/i.exec(String(ten));
-  return m ? m[1].toLowerCase() : "";
+  const t = String(ten).trim();
+  // ① Còn nguyên ngoặc vuông thì lấy trong ngoặc.
+  const trongNgoac = /\[\s*([a-z]{2,10}\d{1,3})\s*\]/i.exec(t);
+  if (trongNgoac) return trongNgoac[1].toLowerCase();
+  // ② YouTube hay cắt mất ngoặc → lấy cụm chữ+số Ở CUỐI tiêu đề.
+  //    NEO VÀO CUỐI CHUỖI, không dò giữa câu: dò giữa câu thì tiêu đề
+  //    "… Bàu Làng 2 …" khớp bừa sang tin của nhà khác (đo thật 17/09/2026).
+  const cuoi = /(?:^|[\s\-–—|,.])([a-z]{2,10}\d{1,3})\s*$/i.exec(t);
+  return cuoi ? cuoi[1].toLowerCase() : "";
+}
+
+// Tiêu đề video có đúng là của tin này không: bỏ dấu, bỏ ký tự lạ rồi so 32 ký tự
+// đầu. Tên tệp đặt theo tiêu đề tin nên phần đầu luôn trùng; YouTube có cắt đuôi
+// hay bỏ ngoặc cũng không ảnh hưởng phần đầu.
+function cungMotTin(tenVideo, tieuDeTin) {
+  const goi = (x) =>
+    String(x ?? "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "");
+  const a = goi(tenVideo), b = goi(tieuDeTin);
+  if (!a || !b) return false;
+  const n = Math.min(32, a.length, b.length);
+  return n >= 12 && a.slice(0, n) === b.slice(0, n);
 }
 
 // ── Đọc bảng tin của đợt (CSV) để lấy tiêu đề theo mã ────────────────────────
@@ -169,9 +192,12 @@ if (lenh === "gan") {
   const laYt = (u) => /youtu\.be\/|youtube\.com\/(watch\?v=|shorts\/|embed\/)/i.test(String(u));
   const viec = [];
   const daCoRoi = [];
+  const lechTieuDe = [];
   for (const [ma, v] of theoMa) {
     const t = tinMoiNhat.get(ma);
     if (!t) continue;
+    // HAI ĐIỀU KIỆN, THIẾU MỘT LÀ KHÔNG GẮN: mã khớp VÀ tiêu đề khớp.
+    if (!cungMotTin(v.ten, t.title)) { lechTieuDe.push({ ma, v, t }); continue; }
     const imgs = t.images ?? [];
     if (imgs.some(laYt)) { daCoRoi.push(ma); continue; }   // đã có video → bỏ qua
     viec.push({ t, v, images: [...imgs, `https://youtu.be/${v.id}`] });
@@ -182,6 +208,11 @@ if (lenh === "gan") {
     console.log(`  [${t.details.maAnh}] ${(t.title ?? "").slice(0, 52)}\n        ← ${v.ten.slice(0, 60)} (youtu.be/${v.id})`);
 
   const khongCoTin = [...theoMa.keys()].filter((ma) => !tinMoiNhat.has(ma));
+  if (lechTieuDe.length) {
+    console.log(`\nKHÔNG GẮN ${lechTieuDe.length} video vì tiêu đề không khớp tin (mã trùng nhưng khác nhà):`);
+    for (const x of lechTieuDe)
+      console.log(`  [${x.ma}] tin: ${(x.t.title ?? "").slice(0, 44)}\n        video: ${(x.v.ten ?? "").slice(0, 44)}`);
+  }
   if (daCoRoi.length) console.log(`\nBỏ qua ${daCoRoi.length} mã vì tin đã có video: ${daCoRoi.join(", ")}`);
   if (khongCoTin.length) console.log(`Video trên kênh không có tin nào mang mã: ${khongCoTin.join(", ")}`);
 
