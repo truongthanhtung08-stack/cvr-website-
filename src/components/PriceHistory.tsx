@@ -1,5 +1,5 @@
 import type { ChiSoKhuVuc, MatBangGia, OSanh } from "@/lib/chiSoGia";
-import { vndM2, tenNguonHienThi } from "@/lib/chiSoGia";
+import { vndM2, tenNguonHienThi, coDuDeHienLichSuGia } from "@/lib/chiSoGia";
 
 // ════════════════════════════════════════════════════════════════════════════
 // LỊCH SỬ GIÁ — nói về THỊ TRƯỜNG, không nói lại về tin đang xem:
@@ -7,7 +7,7 @@ import { vndM2, tenNguonHienThi } from "@/lib/chiSoGia";
 //   2. So với phường bên cạnh thì sao?                → bảng khu vực lân cận
 //
 // Ba quy tắc không phá:
-//   · KHÔNG BỊA. Thiếu dữ liệu thì không vẽ, nói thẳng là chưa đủ.
+//   · KHÔNG BỊA, và chưa đủ số thì ẨN HẲN khối — không vẽ, cũng không phân trần.
 //   · KHÔNG PHÔ SỐ MẪU. Ngưỡng tối thiểu vẫn giữ nguyên bên trong, nhưng không
 //     in "tính từ 6 tin" lên màn hình — web còn ít tin, nói ra chỉ làm người xem
 //     mất tin tưởng vào con số vốn đã tính đúng.
@@ -52,15 +52,10 @@ export default function PriceHistory({
   const coDuong = moc.length >= 2;
   const coSanh = soSanh.length >= 2;
 
-  // Chưa có số thì MỘT DÒNG, trung tính, hướng về phía trước. Không kể đang có
-  // mấy tin, không nêu ngưỡng, không phân trần "thà để trống còn hơn…" — đó là
-  // chuyện nội bộ, khách không cần nghe.
-  if (!matBang && !coDuong && !coSanh)
-    return (
-      <p className="text-[13px] text-cvr-muted">
-        Chưa đủ dữ liệu, sẽ cập nhật khi có báo cáo mới.
-      </p>
-    );
+  // CHƯA ĐỦ SỐ THÌ KHÔNG HIỆN GÌ CẢ. Trang tin dùng chung hàm này để bỏ luôn cả
+  // tiêu đề khối, nên ở đây chỉ cần trả về rỗng — không in dòng nào, kể cả dòng
+  // "chưa có dữ liệu": khách không cần biết kho số của mình dày mỏng ra sao.
+  if (!coDuDeHienLichSuGia(chiSo, matBang, soSanh)) return null;
 
   // ── Toạ độ biểu đồ đường ─────────────────────────────────────────────────
   const W = 480;

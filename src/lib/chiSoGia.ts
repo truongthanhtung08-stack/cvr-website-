@@ -229,13 +229,23 @@ function doiGia(s: string): number {
   return parseFloat((s || "").split(".").join("").split(",").join("."));
 }
 
-/** "2025-Q1" · "2025Q1" · "Q1/2025" · "2025" → chuẩn hoá, sai thì trả "". */
+/** Ba mức kỳ, đều nhận: THÁNG "2026-08" · QUÝ "2025-Q1" · NĂM "2025".
+ *  Viết kiểu nào cũng đọc được ("Q1/2025", "8/2026", "T8/2026"); sai thì trả "".
+ *  Tháng đứng đầu danh sách vì báo cáo của các trang lớn phần nhiều theo tháng,
+ *  mà kho web tự chụp cũng theo tháng — cùng đơn vị thì sau này đổi nguồn không
+ *  gãy biểu đồ. */
 export function chuanKy(s: string): string {
   const t = (s || "").trim().toUpperCase().split(" ").join("");
+  const thang = (nam: string, so: string) =>
+    +so >= 1 && +so <= 12 ? `${nam}-${String(+so).padStart(2, "0")}` : "";
   let m = t.match(/^(\d{4})-?Q([1-4])$/);
   if (m) return `${m[1]}-Q${m[2]}`;
   m = t.match(/^Q([1-4])[/-](\d{4})$/);
   if (m) return `${m[2]}-Q${m[1]}`;
+  m = t.match(/^(\d{4})[-/](\d{1,2})$/);
+  if (m) return thang(m[1], m[2]);
+  m = t.match(/^T?(\d{1,2})[-/](\d{4})$/);
+  if (m) return thang(m[2], m[1]);
   m = t.match(/^(\d{4})$/);
   if (m) return m[1];
   return "";
@@ -271,7 +281,10 @@ export function docBangChiSo(bang: string[][]): { items: ChiSoKhuVuc[]; loi: Loi
       continue;
     }
     if (!ky) {
-      loi.push({ dong: i + 1, ly: `Kỳ "${lay(4)}" không đọc được — viết 2025-Q1 hoặc 2025` });
+      loi.push({
+        dong: i + 1,
+        ly: `Kỳ "${lay(4)}" không đọc được — viết 2026-08 (tháng), 2026-Q2 (quý) hoặc 2025 (năm)`,
+      });
       continue;
     }
     if (!Number.isFinite(gia) || gia <= 0) {
@@ -406,14 +419,19 @@ export async function xuHuongCuaMinh(
       cao: number;
       so_mau: number;
     }[];
-    if (!Array.isArray(ds) || ds.length < 2) return null;
+    if (!Array.isArray(ds)) return null;
+
+    // Tháng nào mẫu quá mỏng thì BỎ HẲN mốc đó: một chấm tính từ 3 tin đứng
+    // cạnh chấm tính từ 40 tin là vẽ ra một đoạn dốc không có thật.
+    const duMau = ds.filter((d) => d.so_mau >= MAU_TOI_THIEU);
+    if (duMau.length < 2) return null;
 
     // VẼ THEO THÁNG, không gom quý. Kho này web tự chụp mỗi ngày nên nó là nguồn
     // bám sát thị trường nhất mình có — gom về quý là tự tay làm chậm số liệu đi
     // ba tháng. Số nhập tay từ báo cáo thì vẫn theo quý, nhưng hai nguồn không
-    // bao giờ vẽ chung một biểu đồ (nguồn này luôn được ưu tiên trước).
+    // bao giờ vẽ chung một biểu đồ (nơi gọi chọn nguồn DÀY HƠN — xem chonNguonDay).
     // Mỗi mốc giữ đủ ba mức: phổ biến (trung vị) · thấp · cao.
-    const moc: MocQuy[] = ds.slice(-12).map((d) => ({
+    const moc: MocQuy[] = duMau.slice(-12).map((d) => ({
       quy: d.thang.slice(0, 7),
       giaM2: Math.round(d.trung_vi),
       thap: d.thap > 0 ? Math.round(d.thap) : undefined,
@@ -426,12 +444,49 @@ export async function xuHuongCuaMinh(
       loaiHinh,
       mucDich: mucDich === "thue" ? "thue" : "ban",
       nguon: "tin đăng trên Coastal Land",
-      capNhat: ds[ds.length - 1].thang,
+      capNhat: duMau[duMau.length - 1].thang,
       moc,
     };
   } catch {
     return null;
   }
+}
+
+/**
+ * CÓ ĐỦ SỐ ĐỂ HIỆN KHỐI LỊCH SỬ GIÁ KHÔNG.
+ *
+ * Chưa đủ thì ẩn HẲN cả khối — không tiêu đề, không một dòng phân trần. Khách
+ * vào xem tin không cần biết kho số của mình dày mỏng ra sao; hiện một khối
+ * trống chỉ để nói "chưa có" là tự khai điểm yếu.
+ *
+ * Dùng chung cho trang tin (quyết định có dựng khối không) và cho chính biểu đồ,
+ * để không bao giờ xảy ra cảnh tiêu đề có mà bên dưới rỗng.
+ */
+export function coDuDeHienLichSuGia(
+  chiSo: ChiSoKhuVuc | null,
+  matBang: MatBangGia | null,
+  soSanh: { trungVi: number }[] = [],
+): boolean {
+  const soMoc = chiSo?.moc?.filter((m) => m.giaM2 > 0).length ?? 0;
+  return !!matBang || soMoc >= 2 || soSanh.length >= 2;
+}
+
+/**
+ * HAI NGUỒN, CHỌN NGUỒN NÀO — lấy nguồn có NHIỀU MỐC HƠN, hoà thì lấy số của
+ * chính mình.
+ *
+ * Kho tự chụp mỗi tháng thêm đúng một mốc, nên lúc mới chạy nó luôn ngắn hơn
+ * hẳn dãy nhập tay (7 quý). Nếu cứ hễ có 2 mốc là dùng thì tới đầu tháng sau,
+ * một đường hai chấm sẽ đè mất đường bảy quý vừa nhập — vừa mất công nhập, vừa
+ * nói lên ít hơn. Khi kho của mình dài hơn thì nó thắng, và web tự chuyển sang
+ * số của chính mình, không ai phải bấm gì.
+ */
+export function chonNguonDay(
+  cuaMinh: ChiSoKhuVuc | null,
+  nhapTay: ChiSoKhuVuc | null,
+): ChiSoKhuVuc | null {
+  const dem = (x: ChiSoKhuVuc | null) => x?.moc?.filter((m) => m.giaM2 > 0).length ?? 0;
+  return dem(cuaMinh) >= dem(nhapTay) ? (cuaMinh ?? nhapTay) : nhapTay;
 }
 
 // ── MẶT BẰNG GIÁ THEO LOẠI HÌNH CHO CẢ MỘT KHU VỰC ─────────────────────────

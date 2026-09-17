@@ -13,6 +13,8 @@ import PriceHistory from "@/components/PriceHistory";
 import {
   matBangGia,
   chiSoChoTin,
+  chonNguonDay,
+  coDuDeHienLichSuGia,
   soSanhKhuVuc,
   xuHuongCuaMinh,
 } from "@/lib/chiSoGia";
@@ -175,11 +177,13 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
   // Chỉ số theo quý: chủ dự án nhập trong admin từ báo cáo thị trường.
   const matBang = matBangGia(l, all);
   const soSanhKV = soSanhKhuVuc(l, all);
-  // Ưu tiên SỐ CỦA CHÍNH MÌNH (kho gia_khu_vuc_thang tích luỹ mỗi tháng); chưa đủ
-  // dày thì mới lùi về chỉ số nhập tay từ báo cáo thị trường.
-  const chiSoTin =
-    (await xuHuongCuaMinh(l.diaGioi?.province ?? "", l.type, l.purpose ?? "ban")) ??
-    chiSoChoTin(l, await getChiSoGia());
+  // Hai nguồn: kho gia_khu_vuc_thang tự chụp mỗi tháng và dãy nhập tay từ báo
+  // cáo thị trường. Lấy nguồn DÀY HƠN — kho của mình còn mỏng thì chưa được đè
+  // lên dãy bảy quý; dài hơn rồi thì tự thay, không ai phải bấm gì.
+  const chiSoTin = chonNguonDay(
+    await xuHuongCuaMinh(l.diaGioi?.province ?? "", l.type, l.purpose ?? "ban"),
+    chiSoChoTin(l, await getChiSoGia()),
+  );
   const samePurpose = all.filter((x) => x.id !== l.id && (x.purpose ?? "ban") === purpose);
   // HỆ SỐ X (tài liệu: "khuếch đại phân phối"): trong khối "Có thể bạn quan tâm",
   // VIP được ưu tiên NỔI hơn — Diamond > Gold > Silver. Cộng < 1 nên CHỈ sắp VIP
@@ -427,9 +431,10 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                 </Section>
               )}
 
-              {/* LỊCH SỬ GIÁ — số thật thì vẽ, chưa có thì một dòng ngắn. Tuyệt
-                  đối không chế số cho đủ hình. */}
-              {priceVnd != null && (
+              {/* LỊCH SỬ GIÁ — có số thật thì vẽ, chưa đủ thì ẨN HẲN cả khối (kể
+                  cả tiêu đề). Tuyệt đối không chế số cho đủ hình, cũng không để
+                  lại một dòng "chưa có dữ liệu" nói hộ điểm yếu của mình. */}
+              {priceVnd != null && coDuDeHienLichSuGia(chiSoTin, matBang, soSanhKV) && (
                 <Section id="lich-su-gia" title="Lịch sử giá khu vực">
                   <PriceHistory chiSo={chiSoTin} matBang={matBang} soSanh={soSanhKV} laThue={(l.purpose ?? "ban") === "thue"} />
                 </Section>
