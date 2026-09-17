@@ -187,15 +187,21 @@ export default function NhapHangLoatPage() {
     try {
       const { data } = await createClient()
         .from("listings")
-        .select("title,created_at,details->>maAnh")
+        .select("title,created_at,details->>maAnh,details->>nguonTin")
         .in("details->>maAnh", ma)
         .lt("created_at", mocCungDot());
       // Tiêu đề khớp = vẫn là tin đó (chỉ bổ sung ảnh), không phải "trùng mã".
       const goi = (s: string) => (s ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "");
       const tieuDeTheoMa = new Map(ds.filter((r) => r.maAnh).map((r) => [r.maAnh, goi(r.tomTat.tieuDe)]));
+      // Tin sẽ được GỘP (cùng link tin gốc, hoặc tiêu đề khớp) thì không phải
+      // 'trùng mã' — đừng doạ chủ dự án bằng cảnh báo thừa.
+      const nguonTrongFile = new Set(
+        ds.map((r) => (r.payload.details as { nguonTin?: string })?.nguonTin).filter(Boolean) as string[],
+      );
       setMaDoiLap(
-        ((data ?? []) as { title: string | null; created_at: string; maAnh: string }[])
+        ((data ?? []) as { title: string | null; created_at: string; maAnh: string; nguonTin: string | null }[])
           .filter((r) => r.maAnh && goi(r.title ?? "") !== tieuDeTheoMa.get(r.maAnh))
+          .filter((r) => !(r.nguonTin && nguonTrongFile.has(r.nguonTin)))
           .map((r) => ({ ma: r.maAnh, ngay: (r.created_at ?? "").slice(0, 10), tieuDe: r.title ?? "" })),
       );
     } catch {
@@ -211,24 +217,39 @@ export default function NhapHangLoatPage() {
       const supabase = createClient();
       const now = new Date().toISOString();
 
-      // ĐÃ ĐĂNG RỒI THÌ CHỈ BỔ SUNG ẢNH, KHÔNG ĐĂNG TRÙNG.
-      // Ảnh thường về từng đợt (xin được tin nào bỏ tin đó), nên chủ dự án hay
-      // phải tải cùng một file nhiều lần. Đối chiếu bằng mã ảnh đã lưu trong tin.
-      // ⚠️ MÃ LẶP GIỮA CÁC NGÀY (Cowork đánh lại dn01… mỗi ngày) — đợt 10/09/2026
+      // UP LẠI MỘT TIN LÀ BỔ SUNG, KHÔNG ĐẺ TIN MỚI.
+      // ⚠️ Mã ảnh LẶP GIỮA CÁC ĐỢT (Cowork đánh lại dn01… mỗi ngày) — đợt 10/09/2026
       // vì vậy mà 30/34 tin không lên, ảnh mới lại chui vào tin của nhà khác.
-      // HAI ĐIỀU KIỆN mới coi là CÙNG MỘT TIN (đủ một trong hai là được):
-      //   · tin đó đăng TRONG 3 NGÀY (đúng đợt đang làm, tải lại file lần hai), hoặc
-      //   · TIÊU ĐỀ khớp nhau (cùng căn nhà, dù đăng đã lâu).
-      // Khác cả hai = nhà khác trùng mã → đăng thành tin mới, không đụng tin cũ.
+      // KHOÁ NHẬN DIỆN 'CÙNG MỘT TIN' — theo thứ tự tin cậy:
+      //   ① LINK TIN GỐC (details.nguonTin): mỗi tin gốc một URL, không lặp giữa
+      //      các đợt → up lại lần 2, 3, 4 là nhận ra ngay, dù mã ảnh có đổi.
+      //   ② mã ảnh + (đăng trong 3 ngày HOẶC tiêu đề khớp) — cho tin không có link.
+      // Nhận ra rồi thì BỔ SUNG vào tin cũ (ảnh mới, video, nội dung mới nhất),
+      // KHÔNG đăng thêm một tin nữa.
       const maTrongFile = luonTinMoi ? [] : [...new Set(hopLe.map((r) => r.maAnh).filter(Boolean))];
-      const daCo = new Map<string, { id: string; images: string[] }>();
+      const nguonTrongFile = luonTinMoi
+        ? []
+        : [...new Set(hopLe.map((r) => (r.payload.details as { nguonTin?: string })?.nguonTin).filter(Boolean) as string[])];
+      type TinCu = { id: string; images: string[] };
+      const daCo = new Map<string, TinCu>();        // khoá: mã ảnh
+      const daCoTheoNguon = new Map<string, TinCu>(); // khoá: link tin gốc
+      const goi = (x: string) => (x ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "");
+
+      if (nguonTrongFile.length) {
+        const { data } = await supabase
+          .from("listings")
+          .select("id,images,details->>nguonTin")
+          .in("details->>nguonTin", nguonTrongFile);
+        for (const r of (data ?? []) as { id: string; images: string[] | null; nguonTin: string }[])
+          if (r.nguonTin && !daCoTheoNguon.has(r.nguonTin)) daCoTheoNguon.set(r.nguonTin, { id: r.id, images: r.images ?? [] });
+      }
+
       if (maTrongFile.length) {
         const { data } = await supabase
           .from("listings")
           .select("id,images,title,created_at,details->>maAnh")
           .in("details->>maAnh", maTrongFile);
         const moc = mocCungDot();
-        const goi = (s: string) => (s ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "");
         const tieuDeTheoMa = new Map(hopLe.filter((r) => r.maAnh).map((r) => [r.maAnh, goi(r.tomTat.tieuDe)]));
         for (const r of (data ?? []) as { id: string; images: string[] | null; title: string | null; created_at: string; maAnh: string }[]) {
           if (!r.maAnh) continue;
@@ -237,8 +258,13 @@ export default function NhapHangLoatPage() {
         }
       }
 
-      const tinMoi = hopLe.filter((r) => !r.maAnh || !daCo.has(r.maAnh));
-      const tinCu = hopLe.filter((r) => r.maAnh && daCo.has(r.maAnh));
+      // Tin nào trong file đã có trên web → lấy đúng bản ghi cũ của nó.
+      const tinCuCua = (r: ParsedRow): TinCu | undefined => {
+        const nguon = (r.payload.details as { nguonTin?: string })?.nguonTin;
+        return (nguon ? daCoTheoNguon.get(nguon) : undefined) ?? (r.maAnh ? daCo.get(r.maAnh) : undefined);
+      };
+      const tinMoi = hopLe.filter((r) => !tinCuCua(r));
+      const tinCu = hopLe.filter((r) => tinCuCua(r));
 
       let xong = 0;
       // Chia lô 50 tin/lần cho nhẹ đường truyền và dễ biết dừng ở đâu nếu lỗi
@@ -258,13 +284,11 @@ export default function NhapHangLoatPage() {
       // Tin cũ: gộp ảnh mới vào sau ảnh đã có, bỏ ảnh trùng, cắt theo hạng tin
       let capNhat = 0;
       for (const r of tinCu) {
-        const cu = daCo.get(r.maAnh)!;
+        const cu = tinCuCua(r)!;
         const { urls, toiDa, toiDaVideo } = anhCuaTin(r);
         // Gộp ảnh mới vào sau ảnh cũ, bỏ trùng, rồi cắt RIÊNG ảnh và video theo
-        // giới hạn hiện hành (nới giới hạn lên là lần tải sau tự bổ sung thêm ảnh).
-        // ⚠️ Mỗi lần tải lên kho ảnh sinh một tên mới, nên CÙNG MỘT TẤM ẢNH tải
-        // hai lần sẽ ra hai URL khác nhau. Vì vậy so trùng bằng TÊN TỆP GỐC nằm
-        // ở cuối URL, không so bằng URL — không thì tải lại file là nhân đôi ảnh.
+        // giới hạn hiện hành. So trùng bằng TÊN TỆP GỐC nằm ở cuối URL, không so
+        // bằng URL — tải lại cùng một tấm ảnh vẫn ra đúng một bản.
         const tron = [
           ...cu.images,
           ...urls.filter((u) => !cu.images.some((c) => c === u || cungTenTep(tenTepTuUrl(c), tenTepTuUrl(u)))),
@@ -273,8 +297,11 @@ export default function NhapHangLoatPage() {
           ...tron.filter((u) => !isVideoUrl(u)).slice(0, toiDa),
           ...tron.filter(isVideoUrl).slice(0, toiDaVideo),
         ];
-        if (gop.length === cu.images.length) continue; // không có ảnh nào mới
-        const { error } = await supabase.from("listings").update({ images: gop }).eq("id", cu.id);
+        // UP LẠI LẦN 2, 3, 4 = BỔ SUNG, KHÔNG ĐẺ TIN MỚI (chốt 17/09/2026).
+        // Lấy luôn NỘI DUNG mới nhất trong file: tiêu đề, mô tả, giá, diện tích,
+        // địa chỉ (kể cả hệ cũ), pháp lý, liên hệ… — file là bản chuẩn.
+        const { images: _bo, ...noiDung } = r.payload as Record<string, unknown>;
+        const { error } = await supabase.from("listings").update({ ...noiDung, images: gop }).eq("id", cu.id);
         if (error) {
           setKetQua(`Đã đăng ${xong} tin, cập nhật ${capNhat} tin thì gặp lỗi: ${error.message}`);
           setDangGui(false);
@@ -285,8 +312,8 @@ export default function NhapHangLoatPage() {
 
       setKetQua(
         `Đã đăng ${xong} tin mới` +
-          (capNhat ? ` · bổ sung ảnh cho ${capNhat} tin đã đăng` : "") +
-          (tinCu.length - capNhat ? ` · ${tinCu.length - capNhat} tin đã đăng, không có ảnh mới` : "") +
+          (capNhat ? ` · bổ sung ảnh/video và cập nhật nội dung cho ${capNhat} tin đã đăng` : "") +
+
           ". Web cập nhật trong vòng 60 giây.",
       );
       setRows([]);

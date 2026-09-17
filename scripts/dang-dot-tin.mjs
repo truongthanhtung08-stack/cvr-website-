@@ -110,10 +110,16 @@ if (!Array.isArray(daCoRaw)) {
 }
 const goi = (s) => (s ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "");
 const moc = new Date(Date.now() - 3 * 24 * 3600 * 1000).toISOString();
-const cungTin = new Map(); // maAnh → { id, images }
+const cungTin = new Map();       // maAnh → tin cũ
+const cungTinTheoNguon = new Map(); // link tin gốc → tin cũ
 for (const r of daCoRaw) {
   const ma = r.details?.maAnh;
   if (!ma) continue;
+  const nguon = r.details?.nguonTin;
+  // ① LINK TIN GỐC là khoá chắc nhất: mỗi tin gốc một URL, không lặp giữa các đợt.
+  if (nguon && !cungTinTheoNguon.has(nguon))
+    cungTinTheoNguon.set(nguon, { id: r.id, images: r.images ?? [], details: r.details ?? {} });
+  // ② Không có link thì mới xét mã ảnh + (trong 3 ngày HOẶC tiêu đề khớp).
   const dong = hopLe.find((x) => x.maAnh === ma);
   if (!dong) continue;
   if (r.created_at >= moc || goi(r.title) === goi(dong.tomTat.tieuDe))
@@ -130,7 +136,8 @@ for (const r of hopLe) {
   const video = tuFile.filter(isVideoUrl).slice(0, 1);
   const images = [...anh, ...video];
   if (!anh.length) { chuaAnh.push(r); continue; }
-  const cu = cungTin.get(r.maAnh);
+  const nguonTin = r.payload.details?.nguonTin;
+  const cu = (nguonTin ? cungTinTheoNguon.get(nguonTin) : undefined) ?? cungTin.get(r.maAnh);
   if (cu) {
     // Giữ ảnh tin đó đã có, chỉ thêm tấm chưa có (so bằng URL) — không làm mất ảnh cũ.
     const gop = [...cu.images, ...images.filter((u) => !cu.images.includes(u))];
