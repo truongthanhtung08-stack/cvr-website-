@@ -75,7 +75,7 @@ export function AdBannerAll({ data = HOME_AD_DEFAULT }: { data?: HomeAdData }) {
 
           {/* ── Nền chung (mẫu "DT banner 1") ── */}
           <Image
-            src={asset("/images/banner-app-bg.jpg")}
+            src={asset("/images/banner-app-bg.webp")}
             alt=""
             aria-hidden
             fill
@@ -101,7 +101,7 @@ export function AdBannerAll({ data = HOME_AD_DEFAULT }: { data?: HomeAdData }) {
               — lấp trọn khoảng giữa chữ và mép phải. Màn hẹp/mobile chỉ 1 máy cho gọn.
               Máy SAU vẽ trước để nằm dưới máy TRƯỚC. */}
           <Image
-            src={asset("/images/app-phone-2026-b.png")}
+            src={asset("/images/app-phone-2026-b.webp")}
             alt="Màn hình Dự án trên ứng dụng COASTAL LAND"
             width={702}
             height={1340}
@@ -112,7 +112,7 @@ export function AdBannerAll({ data = HOME_AD_DEFAULT }: { data?: HomeAdData }) {
             className="pointer-events-none absolute -bottom-[4%] hidden w-auto max-w-none lg:right-[26%] lg:block lg:h-[100%] xl:right-[28.5%] xl:h-[104%]"
           />
           <Image
-            src={asset("/images/app-phone-2026.png")}
+            src={asset("/images/app-phone-2026.webp")}
             alt="Ứng dụng COASTAL LAND trên iPhone"
             width={796}
             height={1387}
