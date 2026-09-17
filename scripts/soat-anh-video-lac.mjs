@@ -128,17 +128,34 @@ if (!boVideo && videoTheoTin.size) {
   try {
     const { docVideoKenh } = await import("./doc-video-kenh.mjs");
     const dsKenh = await docVideoKenh("@CoastalLandvn");
-    const maTheoId = new Map();
-    for (const v of dsKenh) {
-      const m = /\[\s*([a-z]{2,10}\d{1,3})\s*\]/i.exec(v.ten ?? "");
-      if (m) maTheoId.set(v.id, m[1].toLowerCase());
-    }
+    // Mã trong tiêu đề video: còn ngoặc vuông thì lấy trong ngoặc, không thì lấy
+    // cụm chữ+số Ở CUỐI (YouTube cắt mất ngoặc — đo thật 17/09/2026).
+    const maCuaVideo = (ten) => {
+      const t = String(ten ?? "").trim();
+      const trongNgoac = /\[\s*([a-z]{2,10}\d{1,3})\s*\]/i.exec(t);
+      if (trongNgoac) return trongNgoac[1].toLowerCase();
+      const cuoi = /(?:^|[\s\-–—|,.])([a-z]{2,10}\d{1,3})\s*$/i.exec(t);
+      return cuoi ? cuoi[1].toLowerCase() : "";
+    };
+    // Tiêu đề video có đúng của tin này không — tên tệp đặt theo tiêu đề tin nên
+    // phần đầu phải trùng. Đây là thứ bắt được video lạc khi mã trùng giữa hai đợt.
+    const goiTen = (x) =>
+      String(x ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "");
+    const khopTieuDe = (tenVideo, tieuDeTin) => {
+      const a = goiTen(tenVideo), b = goiTen(tieuDeTin);
+      if (!a || !b) return false;
+      const n = Math.min(32, a.length, b.length);
+      return n >= 12 && a.slice(0, n) === b.slice(0, n);
+    };
+    const tenTheoId = new Map(dsKenh.map((v) => [v.id, v.ten ?? ""]));
     for (const [id, ds] of videoTheoTin) {
-      const maVideo = maTheoId.get(id);
-      if (!maVideo) { videoKhongMa++; continue; }
+      const ten = tenTheoId.get(id);
+      if (!ten) { videoKhongMa++; continue; }   // video không còn trên kênh → không kết luận
+      const maVideo = maCuaVideo(ten);
       for (const t of ds) {
-        const maTin = (t.details?.maAnh ?? "").toLowerCase();
-        if (maTin && maVideo !== maTin) videoLac.push({ t, id, maVideo });
+        // CHỈ XÉT TIÊU ĐỀ. Lệch mã không phải lỗi: video đời cũ đánh mã hệ khác
+        // (bds02…) trong khi tin mang mã qngai09, hue05… mà nội dung vẫn đúng nhà.
+        if (!khopTieuDe(ten, t.title)) videoLac.push({ t, id, maVideo: maVideo || "—", ten });
       }
     }
   } catch (e) {
@@ -161,7 +178,7 @@ in_("ẢNH DÙNG CHUNG (một tệp ảnh ở nhiều tin)", anhDungChung,
 in_("ẢNH LẶP TRONG CÙNG MỘT TIN", anhTrungTrongTin,
   (x) => `${nhan(x.t)} — ${x.ten}`);
 in_("VIDEO LẠC TIN (video mã khác nằm trong tin)", videoLac,
-  (x) => `${nhan(x.t)}  ←  video của mã "${x.maVideo}": youtu.be/${x.id}`);
+  (x) => `${nhan(x.t)}\n        ← video "${String(x.ten ?? "").slice(0, 44)}" (mã ${x.maVideo}, youtu.be/${x.id})`);
 in_("VIDEO DÙNG CHUNG (một video ở nhiều tin)", videoDungChung,
   ([id, ds]) => `youtu.be/${id} → ${ds.length} tin: ${ds.map(nhan).join(" | ")}`);
 
