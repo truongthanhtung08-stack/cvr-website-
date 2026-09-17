@@ -60,3 +60,6 @@ khoa-*.txt
 
 # thư mục tạm của công cụ kiểm mã
 .kttmp/
+
+# Ban sao anh truoc khi go (script go-anh-lan-tin.mjs) — chi de hoan tac tren may
+sao-luu-anh-truoc-khi-go-*.json
