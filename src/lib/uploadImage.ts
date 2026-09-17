@@ -149,6 +149,5 @@ async function taoBanNho(file: File, url: string) {
 // Khách đăng tin phải up thẳng tệp video lên Coastal Land, KHÔNG bắt họ đi vòng
 // qua YouTube rồi dán link (chốt 17/09/2026). Mức 50MB cũ chặn cả video quay
 // điện thoại 1–2 phút — đo thật: hai video của đợt 10/09 nặng 54MB và 51MB.
-// ⚠️ Kho Supabase gói miễn phí chỉ 1GB (đang dùng ~244MB) nên mức này CHỈ chịu
-// được vài video; phải chuyển kho sang Cloudflare R2 — xem docs/KE-HOACH-HA-TANG.md.
+// Kho: đã lên Supabase Pro (17/09/2026) — 100GB, không còn kẹt 1GB như gói miễn phí.
 export const uploadVideoFile = (file: File) => uploadMedia(file, "video", 200);
