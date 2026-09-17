@@ -6,6 +6,7 @@ import {
   wardsOfAny,
   quanHuyenToanTinh,
   newProvinceOf,
+  oldNamesOf,
   type GeoMode,
 } from "@/lib/locations";
 import { normalizeVi } from "@/lib/filters";
@@ -72,7 +73,25 @@ export function ganDiaGioi(
   // địa giới, nên nếu không giữ thì mỗi lần ghim là ô Phường/Xã của họ bị xoá
   // trắng — chuyện xảy ra liên tục chứ không còn là trường hợp hiếm.
   const giuPhuong = dangCo.ward ?? "";
-  const tinhKhop = dc.tinh ? khopDanhMuc(dc.tinh, provinceNamesFor(heDiaChi)) : "";
+  // TÊN TỈNH BẢN ĐỒ ĐỌC ĐƯỢC CÓ THỂ THUỘC HỆ KIA — phải quy đổi, đừng bỏ trống.
+  // Đo toàn quốc 17/09/2026: OpenStreetMap nhiều nơi còn tên tỉnh CŨ ("Bà Rịa -
+  // Vũng Tàu", "Bình Dương"…). Form ở hệ MỚI khớp với danh mục 34 tỉnh mới thì
+  // trượt → ô Tỉnh bỏ trống: 4.189/10.786 ca hỏng. Chiều ngược lại cũng thế.
+  let tinhKhop = dc.tinh ? khopDanhMuc(dc.tinh, provinceNamesFor(heDiaChi)) : "";
+  if (!tinhKhop && dc.tinh) {
+    const heKia: GeoMode = heDiaChi === "moi" ? "cu" : "moi";
+    const tenHeKia = khopDanhMuc(dc.tinh, provinceNamesFor(heKia));
+    if (tenHeKia) {
+      // Hệ MỚI: tên cũ → tỉnh mới chứa nó. Hệ CŨ: tên mới → tỉnh cũ, nhưng một
+      // tỉnh mới gộp nhiều tỉnh cũ nên chỉ nhận khi gộp từ ĐÚNG MỘT tỉnh; còn
+      // lại để phần dò quận/huyện bên dưới quyết (nó biết phường nằm ở tỉnh nào).
+      if (heDiaChi === "moi") tinhKhop = newProvinceOf(tenHeKia);
+      else {
+        const dsCu = oldNamesOf(tenHeKia);
+        if (dsCu.length === 1) tinhKhop = dsCu[0];
+      }
+    }
+  }
   const tinh = tinhKhop || dangCo.province;
   if (!tinh) return { province: dangCo.province, district: dangCo.district, ward: giuPhuong };
 
