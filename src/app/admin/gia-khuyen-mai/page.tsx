@@ -17,6 +17,7 @@ import {
   ANH_CHUNG_MAC_DINH,
   VIDEO_CHUNG_MAC_DINH,
   tenGoiMienPhi,
+  freeDangChay,
   vnd,
   type Plan,
   type BillingData,
@@ -525,6 +526,15 @@ function FreeTab({ data, setData }: { data: BillingData; setData: (d: BillingDat
             {AUDIENCES.map((a) => <option key={a.id} value={a.id}>{a.label}</option>)}
           </select>
         </Field>
+        {/* HẠN CỦA CHÍNH CHƯƠNG TRÌNH — khác ô "trong bao nhiêu ngày" ở trên.
+            Ô trên đếm từ lúc TỪNG KHÁCH đăng ký; hai ô này đóng/mở cả chương
+            trình: qua ngày kết thúc là không ai còn được đăng miễn phí nữa. */}
+        <Field label="Chương trình chạy từ ngày">
+          <input type="date" value={f.from ?? ""} onChange={(e) => set({ from: e.target.value })} className={inputCls} />
+        </Field>
+        <Field label="Đến hết ngày (trống = không giới hạn)">
+          <input type="date" value={f.to ?? ""} onChange={(e) => set({ to: e.target.value })} className={inputCls} />
+        </Field>
         {/* Câu thông báo TỰ SINH từ đúng cài đặt trên — không cho gõ tay nữa để web
             không bao giờ nói sai ưu đãi (trước đây đổi số tin mà quên sửa câu). */}
         <div className="sm:col-span-2 lg:col-span-4">
@@ -533,8 +543,13 @@ function FreeTab({ data, setData }: { data: BillingData; setData: (d: BillingDat
             {freeNote(f, tenGoiMienPhi(data))}
           </p>
           <p className="mt-1.5 text-xs text-cvr-muted">
-            Câu này tự viết theo 4 ô ở trên — sửa số tin hoặc số ngày là câu đổi theo ngay.
+            Câu này tự viết theo các ô ở trên — sửa số tin, số ngày hay hạn chót là câu đổi theo ngay.
           </p>
+          {!freeDangChay(f, new Date().toISOString().slice(0, 10)) && f.active && (
+            <p className="mt-1.5 rounded-lg bg-amber-50 px-4 py-2.5 text-sm font-medium text-amber-800">
+              Chương trình đang BẬT nhưng ngoài khoảng ngày ở trên → web không áp miễn phí cho ai cả.
+            </p>
+          )}
         </div>
       </div>
     </Panel>

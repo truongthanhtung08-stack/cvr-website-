@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { BILLING_DEFAULT, levelOf, quotePrice, vnd, type BillingData } from "@/lib/billing";
+import { BILLING_DEFAULT, freeDangChay, levelOf, quotePrice, vnd, type BillingData } from "@/lib/billing";
 import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
 import { guiThongBao, MAU_DUYET_TIN } from "@/lib/thongBao";
 import { baoLoi } from "@/lib/baoLoi";
@@ -152,7 +152,10 @@ export async function POST(request: Request) {
     (f.audience === "new" && soNgayMoTk <= f.days) ||
     f.audience === (hs.role ?? "buyer");
   const conLuot = f.quota === 0 || Number(hs.free_quota ?? 0) > 0;
-  const thuocDienMienPhi = f.active && goi === f.tierId && hopDoiTuong && conLuot;
+  // Chương trình hết hạn (`to`) thì thu tiền bình thường — nếu không, tin gửi
+  // từ thời còn ưu đãi vẫn được duyệt free mãi về sau.
+  const thuocDienMienPhi =
+    freeDangChay(f, new Date().toISOString().slice(0, 10)) && goi === f.tierId && hopDoiTuong && conLuot;
 
   if (thuocDienMienPhi) {
     // Trừ một lượt miễn phí TRƯỚC (nguyên tử) rồi mới duyệt không thu tiền.

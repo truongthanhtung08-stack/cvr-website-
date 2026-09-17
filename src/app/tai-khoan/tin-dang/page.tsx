@@ -11,6 +11,9 @@ import {
   purposeLabel,
   listingStatusBadge,
   adminPriceText,
+  tierBadge,
+  thongTinGoi,
+  ngayGon,
 } from "@/lib/listingAdmin";
 
 // Tin đăng của THÀNH VIÊN — tin của chính mình (mọi trạng thái, kể cả nháp).
@@ -168,6 +171,7 @@ export default function MyListingsPage() {
       <div id="dau-danh-sach" className="space-y-3 scroll-mt-32">
         {tinTrongTrang.map((r) => {
           const leads = leadsByListing[r.id] ?? [];
+          const goi = thongTinGoi(r);
           return (
           <article key={r.id} className="rounded-2xl border border-cvr-line bg-white p-4 shadow-sm">
             {/* TIÊU ĐỀ HIỆN ĐỦ, KHÔNG CẮT.
@@ -177,6 +181,9 @@ export default function MyListingsPage() {
                 tự xuống dòng; cụm nút tụt xuống dưới. */}
             <div className="flex flex-wrap items-center gap-2">
               {listingStatusBadge(r.status)}
+              {/* HUY HIỆU CẤP — chỉ hiện khi tin thực sự ở cấp VIP. Tin thường
+                  không cần huy hiệu, đúng như ngoài trang kết quả. */}
+              {goi.cap !== "basic" && tierBadge(goi.cap)}
               <span className="text-xs text-cvr-faint">{r.view_count} lượt xem</span>
               {leads.length > 0 && (
                 <span className="text-xs font-semibold text-cvr-blue-ink">· {leads.length} người quan tâm</span>
@@ -190,6 +197,28 @@ export default function MyListingsPage() {
               {r.area_m2 != null ? ` · ${r.area_m2} m²` : ""}
               {r.province ? ` · ${r.province}` : ""}
             </p>
+
+            {/* GÓI ĐANG DÙNG — phần khách trả tiền, nên nói đủ: gói nào, mua bao
+                nhiêu ngày, đăng hôm nào, chạy đến hôm nào và còn mấy ngày.
+                Tin nháp chưa chọn gói thì không bịa ra dòng này. */}
+            {(goi.daDuyet || goi.soNgay != null) && (
+              <p className="mt-1.5 text-[13px] leading-relaxed text-cvr-body">
+                <span className="font-semibold text-cvr-ink">{goi.tenGoi}</span>
+                {goi.soNgay != null && ` · ${goi.soNgay} ngày`}
+                {!goi.daDuyet && " · chờ duyệt mới bắt đầu tính"}
+                {goi.daDuyet && r.published_at && ` · Đăng ${ngayGon(r.published_at)}`}
+                {goi.daDuyet && goi.hetHan && (
+                  goi.conLai != null && goi.conLai <= 0
+                    ? <span className="font-medium text-amber-700"> · Đã hết hạn {ngayGon(r.tier_expires_at)} — tin về mức hiển thị thường</span>
+                    : <> · Hiển thị đến {ngayGon(r.tier_expires_at)}
+                        <span className={goi.conLai != null && goi.conLai <= 3 ? "font-semibold text-amber-700" : ""}>
+                          {` (còn ${goi.conLai} ngày)`}
+                        </span>
+                      </>
+                )}
+                {goi.daDuyet && !goi.hetHan && goi.cap === "basic" && " · không giới hạn thời gian"}
+              </p>
+            )}
 
             {/* Tin bị từ chối: nói thẳng lý do ngay tại đây. Chỉ báo qua email thì
                 khách mất thư là chịu, vào trang này chỉ thấy chữ "Bị từ chối" trơ trọi. */}

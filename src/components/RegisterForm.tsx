@@ -5,7 +5,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import SocialAuth from "@/components/SocialAuth";
 import { useBilling } from "@/lib/useBilling";
-import { freeNote, tenGoiMienPhi } from "@/lib/billing";
+import { freeDangChay, freeNote, tenGoiMienPhi } from "@/lib/billing";
 import { chuanHoaSdt, laSdtVN } from "@/lib/phone";
 
 // ============================================================================
@@ -60,7 +60,10 @@ export default function RegisterForm({ uuDai }: { uuDai?: string }) {
 
   const { billing, loading: billingLoading } = useBilling();
   const dongUuDai =
-    uuDai ?? (billingLoading || !billing.free.active ? "" : freeNote(billing.free, tenGoiMienPhi(billing)));
+    uuDai ??
+    (billingLoading || !freeDangChay(billing.free, new Date().toISOString().slice(0, 10))
+      ? ""
+      : freeNote(billing.free, tenGoiMienPhi(billing)));
 
   // ── BƯỚC 1 → 2: kiểm tại chỗ rồi xin mã ───────────────────────────────────
   async function xinMa(e: React.FormEvent) {

@@ -26,14 +26,52 @@ export type Tier = {
   uppercase: boolean; // tiêu đề VIẾT HOA (chỉ Diamond & Gold)
   hot: boolean; // hiện icon HOT cạnh tiêu đề (các cấp VIP)
   rank: number; // thứ hạng sắp xếp: nhỏ = đứng trước
+  // ── BA TRƯỜNG DƯỚI ĐÂY LÀ CƠ CHẾ, KHÔNG PHẢI TRANG TRÍ ───────────────────
+  // Lấy đúng bảng "CẤP ĐỘ VIP · HỆ SỐ TIẾP CẬN · VỊ TRÍ HIỂN THỊ · ĐẶC ĐIỂM
+  // TRỰC QUAN" trong tài liệu cơ chế hiển thị của chủ dự án. Mọi nơi nói về
+  // quyền lợi gói (trang báo giá, form đăng tin, bảng so sánh) PHẢI đọc từ đây
+  // — trước kia mỗi trang chép một kiểu nên web hứa x20/x10/x5 trong khi cơ
+  // chế thật là X30/X15/X8.
+  heSo: number; // hệ số tiếp cận: 30 · 15 · 8 · 1 (tin thường = cơ sở)
+  heSoText: string; // dạng hiển thị cho khách: "X30" … "Cơ sở (1x)"
+  viTri: string; // vị trí hiển thị theo bảng cơ chế
+  nhanDien: string; // đặc điểm trực quan theo bảng cơ chế
 };
 
 // Thứ tự cao → thấp: Diamond > Gold > Silver > Basic
 export const tiers: Tier[] = [
-  { id: "diamond", name: "CVR Diamond", short: "Diamond", tagline: "Ưu tiên hiển thị cao nhất — x20 lượt xem", accent: "#c1121f", badgeText: "#ffffff", bar: "#c1121f", titleColor: "", uppercase: true, hot: true, rank: 0 },
-  { id: "gold", name: "CVR Gold", short: "Gold", tagline: "Hiển thị nổi bật — x10 lượt xem", accent: "#b8860b", badgeText: "#ffffff", bar: "#d9b84e", titleColor: "", uppercase: true, hot: true, rank: 1 },
-  { id: "silver", name: "CVR Silver", short: "Silver", tagline: "Tiết kiệm hiệu quả — x5 lượt xem", accent: "#2f5d84", badgeText: "#ffffff", bar: "#7ea6c8", titleColor: "", uppercase: false, hot: true, rank: 2 },
-  { id: "basic", name: "CVR Basic", short: "Basic", tagline: "Tin thường, chi phí thấp nhất", accent: "#9aa0a6", badgeText: "#ffffff", bar: "", titleColor: "", uppercase: false, hot: false, rank: 3 },
+  {
+    id: "diamond", name: "CVR Diamond", short: "Diamond",
+    tagline: "Ưu tiên hiển thị cao nhất — hệ số tiếp cận X30",
+    accent: "#c1121f", badgeText: "#ffffff", bar: "#c1121f", titleColor: "", uppercase: true, hot: true, rank: 0,
+    heSo: 30, heSoText: "X30",
+    viTri: "Đỉnh trang — từ vị trí số 1 đến hết hàng đầu tiên của kết quả tìm kiếm",
+    nhanDien: "Dải nhấn đỉnh thẻ, huy hiệu độc quyền, tiêu đề VIẾT HOA, 3 dòng mô tả",
+  },
+  {
+    id: "gold", name: "CVR Gold", short: "Gold",
+    tagline: "Hiển thị nổi bật — hệ số tiếp cận X15",
+    accent: "#b8860b", badgeText: "#ffffff", bar: "#d9b84e", titleColor: "", uppercase: true, hot: true, rank: 1,
+    heSo: 15, heSoText: "X15",
+    viTri: "Ngay dưới tầng Kim Cương, trong nửa trên màn hình đầu tiên",
+    nhanDien: "Dải nhấn vàng, huy hiệu nhận diện, tiêu đề VIẾT HOA, 2 dòng mô tả",
+  },
+  {
+    id: "silver", name: "CVR Silver", short: "Silver",
+    tagline: "Tiết kiệm hiệu quả — hệ số tiếp cận X8",
+    accent: "#2f5d84", badgeText: "#ffffff", bar: "#7ea6c8", titleColor: "", uppercase: false, hot: true, rank: 2,
+    heSo: 8, heSoText: "X8",
+    viTri: "Tiếp dưới nhóm Vàng, trước phân khúc tin thường",
+    nhanDien: "Dải nhấn xanh, nhãn phân biệt, tiêu đề in đậm, 1 dòng mô tả",
+  },
+  {
+    id: "basic", name: "CVR Basic", short: "Basic",
+    tagline: "Tin thường — hiển thị theo thời gian đăng",
+    accent: "#9aa0a6", badgeText: "#ffffff", bar: "", titleColor: "", uppercase: false, hot: false, rank: 3,
+    heSo: 1, heSoText: "Cơ sở (1x)",
+    viTri: "Dưới các tầng VIP, xếp thuần theo thời gian đăng",
+    nhanDien: "Trình bày mặc định, không dải nhấn, không huy hiệu",
+  },
 ];
 
 // Map huy hiệu tin (VIP/Nổi bật/Mới) → cấp CVR để tô màu thẻ tin.
@@ -174,6 +212,16 @@ export type BenefitRow = {
   values: Record<TierId, string>; // giá trị theo cấp
 };
 
+// Lấy một thuộc tính CƠ CHẾ của cả 4 cấp thành một dòng bảng.
+export function theoCap(lay: (t: Tier) => string): Record<TierId, string> {
+  return {
+    diamond: lay(getTier("diamond")),
+    gold: lay(getTier("gold")),
+    silver: lay(getTier("silver")),
+    basic: lay(getTier("basic")),
+  };
+}
+
 export const benefitRows: BenefitRow[] = [
   {
     label: "Đơn giá 1 tuần",
@@ -187,9 +235,16 @@ export const benefitRows: BenefitRow[] = [
     label: "Gói 4 tuần",
     values: { diamond: "2.800.000 đ (−30%)", gold: "1.300.000 đ (−35%)", silver: "500.000 đ (−30%)", basic: "30.000 đ" },
   },
+  // BA DÒNG CƠ CHẾ — đọc thẳng từ `tiers` ở đầu file, KHÔNG chép tay lại.
+  // Chép tay chính là lý do bảng này từng ghi "gấp 20 lần" và "huy hiệu đen chữ
+  // vàng kim" trong khi cơ chế thật là X30 và huy hiệu đỏ.
   {
-    label: "Lượt xem so với tin thường",
-    values: { diamond: "Gấp 20 lần", gold: "Gấp 10 lần", silver: "Gấp 5 lần", basic: "—" },
+    label: "Hệ số tiếp cận",
+    values: theoCap((t) => t.heSoText),
+  },
+  {
+    label: "Vị trí hiển thị",
+    values: theoCap((t) => t.viTri),
   },
   {
     label: "Nội dung trên thẻ tin",
@@ -197,12 +252,7 @@ export const benefitRows: BenefitRow[] = [
   },
   {
     label: "Nhận diện thẻ tin",
-    values: {
-      diamond: "Kim Cương · dải vàng + huy hiệu đen chữ vàng kim · VIẾT HOA",
-      gold: "Vàng · dải vàng + huy hiệu vàng · VIẾT HOA",
-      silver: "Bạc · dải bạc + huy hiệu bạc · in đậm",
-      basic: "Mặc định",
-    },
+    values: theoCap((t) => t.nhanDien),
   },
   {
     label: "Xuất hiện Trang chủ",

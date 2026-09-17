@@ -95,6 +95,12 @@ export type FreePolicy = {
   tierId: TierId;      // đăng ở cấp tin nào
   audience: PromoAudience;
   note: string;        // dòng hiển thị cho khách
+  // THỜI HẠN CỦA CHÍNH CHƯƠNG TRÌNH (khác `days` — `days` là "khách mới trong
+  // bao nhiêu ngày kể từ lúc họ đăng ký"). Hai mốc này đóng/mở cả chương trình:
+  // hết `to` là không ai còn được đăng miễn phí nữa, kể cả người vừa đăng ký.
+  // Rỗng = không giới hạn (chương trình chạy mãi).
+  from?: string;       // "YYYY-MM-DD"
+  to?: string;         // "YYYY-MM-DD" — áp đến HẾT ngày này
 };
 
 // ── Điểm thưởng ─────────────────────────────────────────────────────────────
@@ -315,7 +321,7 @@ export const BILLING_DEFAULT: BillingData = {
         { days: 15, price: 2_100_000 },
         { days: 30, price: 3_900_000 },
       ],
-      note: "Ưu tiên hiển thị cao nhất — x20 lượt xem",
+      note: "Ưu tiên hiển thị cao nhất — hệ số tiếp cận X30",
       maxImages: 15,
     },
     {
@@ -326,7 +332,7 @@ export const BILLING_DEFAULT: BillingData = {
         { days: 15, price: 1_260_000 },
         { days: 30, price: 2_340_000 },
       ],
-      note: "Hiển thị nổi bật — x10 lượt xem",
+      note: "Hiển thị nổi bật — hệ số tiếp cận X15",
       maxImages: 12,
     },
     {
@@ -337,7 +343,7 @@ export const BILLING_DEFAULT: BillingData = {
         { days: 15, price: 560_000 },
         { days: 30, price: 1_040_000 },
       ],
-      note: "Tiết kiệm hiệu quả — x5 lượt xem",
+      note: "Tiết kiệm hiệu quả — hệ số tiếp cận X8",
       maxImages: 10,
     },
     {
@@ -348,7 +354,7 @@ export const BILLING_DEFAULT: BillingData = {
         { days: 15, price: 140_000 },
         { days: 30, price: 260_000 },
       ],
-      note: "Tin thường, chi phí thấp nhất",
+      note: "Tin thường — hiển thị theo thời gian đăng",
       maxImages: 7,
     },
   ],
@@ -360,6 +366,11 @@ export const BILLING_DEFAULT: BillingData = {
     tierId: "basic",
     audience: "new",
     note: "Thành viên mới được đăng 3 tin miễn phí trong 30 ngày đầu.",
+    // Chủ dự án chốt 17/9/2026: chương trình chạy TỪ HÔM NAY ĐẾN HẾT 1 THÁNG SAU.
+    // Muốn gia hạn hay đóng sớm thì sửa ở /admin/gia-khuyen-mai → tab Miễn phí,
+    // không phải sửa code.
+    from: "2026-09-17",
+    to: "2026-10-17",
   },
   points: { active: true, earnPerVnd: 10_000, redeemRate: 100, minRedeem: 100 },
   // CẤP HỘI VIÊN — ĐÚNG 4 CẤP, TRÙNG TÊN với 4 hạng tin (Basic · Silver · Gold ·
@@ -463,7 +474,25 @@ export function freeNote(f: FreePolicy, tenGoi?: string): string {
   const thoiHan =
     f.days % 30 === 0 && f.days >= 30 ? `${f.days / 30} tháng đầu` : `${f.days} ngày đầu`;
   const goi = tenGoi ? ` (gói ${tenGoi})` : "";
-  return `Thành viên mới: đăng miễn phí ${soTin} trong ${thoiHan}${goi}.`;
+  // Chương trình có hạn chót thì PHẢI nói ra — khách cần biết ưu đãi còn mấy ngày,
+  // và web không được tiếp tục hứa miễn phí sau khi chương trình đã đóng.
+  const hanChot = f.to ? ` Chương trình áp dụng đến hết ngày ${ngayVn(f.to)}.` : "";
+  return `Thành viên mới: đăng miễn phí ${soTin} trong ${thoiHan}${goi}.${hanChot}`;
+}
+
+// Chương trình miễn phí có đang chạy vào ngày `today` ("YYYY-MM-DD") không?
+// Tắt bằng nút Trạng thái, hoặc hết hạn `to` — cả hai đều chặn như nhau.
+export function freeDangChay(f: FreePolicy, today: string): boolean {
+  if (!f.active) return false;
+  if (f.from && today < f.from) return false;
+  if (f.to && today > f.to) return false;
+  return true;
+}
+
+// "2026-10-17" → "17/10/2026". Không dùng new Date() để khỏi lệch múi giờ.
+export function ngayVn(iso: string): string {
+  const [y, m, d] = iso.split("-");
+  return d && m && y ? `${d}/${m}/${y}` : iso;
 }
 
 // Tên gói của chính sách miễn phí — để câu thông báo nói rõ miễn phí ở gói nào.

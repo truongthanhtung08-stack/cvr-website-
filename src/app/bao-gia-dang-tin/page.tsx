@@ -27,45 +27,52 @@ export const metadata: Metadata = {
 
 type PriceLine = { label: string; original?: string; price: string };
 
+// QUYỀN LỢI 4 CẤP — hệ số tiếp cận, vị trí và nhận diện lấy THẲNG từ
+// `packages.ts` (nguồn duy nhất của cơ chế). Trước đây trang này chép tay nên
+// vẫn rao "gấp 20 lần" và "tiêu đề màu đỏ" trong khi cơ chế thật là X30 và
+// tiêu đề đã để đen từ 5/9 — bán một đằng, hiện một nẻo.
 const vipPkgs = [
   {
     tierId: "diamond" as TierId,
     benefits: [
-      "Tăng lượt xem gấp 20 lần tin thường.",
+      `Hệ số tiếp cận ${getTier("diamond").heSoText} so với tin thường.`,
+      "Được ưu tiên nạp vào “Bất động sản nổi bật” và “Có thể bạn quan tâm”.",
       "Tiếp cận nhiều khách hàng nhất.",
-      "Xuất hiện nhiều trên các vị trí nổi bật của Website.",
     ],
     displays: [
+      getTier("diamond").viTri + ".",
       "Xuất hiện trên Trang chủ.",
       "Đứng trên CVR Gold.",
-      "Tiêu đề màu đỏ + Bôi đậm + Viết hoa.",
-      "Xuất hiện trong box “Bất động sản nổi bật”.",
+      getTier("diamond").nhanDien + ".",
       "Chèn 1 link bất kỳ dưới tin đăng.",
     ],
   },
   {
     tierId: "gold" as TierId,
     benefits: [
-      "Tăng lượt xem gấp 10 lần tin thường.",
+      `Hệ số tiếp cận ${getTier("gold").heSoText} so với tin thường.`,
+      "Được ưu tiên nạp vào “Bất động sản nổi bật”.",
       "Tiếp cận nhiều khách hàng.",
-      "Xuất hiện nhiều trên các vị trí nổi bật của Website.",
     ],
     displays: [
+      getTier("gold").viTri + ".",
       "Đứng trên CVR Silver.",
-      "Tiêu đề màu vàng + Bôi đậm + Viết hoa.",
-      "Xuất hiện trong box “Bất động sản nổi bật”.",
+      getTier("gold").nhanDien + ".",
     ],
   },
   {
     tierId: "silver" as TierId,
-    benefits: ["Tăng lượt xem gấp 5 lần tin thường.", "Tiếp cận khách hàng tốt."],
-    displays: ["Đứng trên CVR Basic.", "Tiêu đề màu xanh + Bôi đậm."],
+    benefits: [
+      `Hệ số tiếp cận ${getTier("silver").heSoText} so với tin thường.`,
+      "Tiếp cận khách hàng tốt.",
+    ],
+    displays: [getTier("silver").viTri + ".", "Đứng trên CVR Basic.", getTier("silver").nhanDien + "."],
   },
 ];
 
 const basicPkg = {
-  benefits: ["Tiếp cận khách hàng tốt.", "Chi phí thấp nhất."],
-  displays: ["Nằm bên dưới các tin cao cấp.", "Tiêu đề hiển thị mặc định."],
+  benefits: [`Mức hiển thị ${getTier("basic").heSoText}.`, "Chi phí thấp nhất."],
+  displays: [getTier("basic").viTri + ".", getTier("basic").nhanDien + "."],
 };
 
 const pjPkgs = [
@@ -94,7 +101,14 @@ const pjPkgs = [
 
 const featureRows: { label: string; values: [string, string, string, string] }[] = [
   { label: "Thứ hạng tin đăng", values: ["1", "2", "3", "4"] },
-  { label: "Kích thước tin đăng", values: ["Rất lớn", "Lớn", "Trung bình", "Nhỏ nhất"] },
+  // Hệ số tiếp cận — con số cốt lõi của cơ chế, đọc từ packages.ts.
+  {
+    label: "Hệ số tiếp cận",
+    values: [getTier("diamond").heSoText, getTier("gold").heSoText, getTier("silver").heSoText, getTier("basic").heSoText],
+  },
+  // "Kích thước tin đăng" đã BỎ: thẻ tin trong lưới phải cùng khổ, làm to nhỏ
+  // theo cấp là vỡ layout. Cảm giác "nổi hơn" nằm ở vị trí + số dòng mô tả.
+  { label: "Nội dung trên thẻ tin", values: ["3 dòng mô tả", "2 dòng", "1 dòng", "Không"] },
   { label: "Hiển thị mô tả tin đăng", values: ["✓", "✓", "✓", "✓"] },
   { label: "Hiển thị thông tin người bán", values: ["✓", "✓", "✓", "✓"] },
   { label: "Hiển thị nút gọi điện", values: ["✓", "✓", "✓", "✓"] },

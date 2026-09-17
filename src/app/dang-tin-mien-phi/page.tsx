@@ -4,7 +4,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import RegisterForm from "@/components/RegisterForm";
 import { getBilling } from "@/lib/siteContent";
-import { freeNote, tenGoiMienPhi } from "@/lib/billing";
+import { freeDangChay, freeNote, tenGoiMienPhi } from "@/lib/billing";
 
 // ============================================================================
 // TRANG ĐÍCH CHO QUẢNG CÁO GOOGLE — nơi thả khách bấm từ mẫu quảng cáo tìm kiếm.
@@ -53,7 +53,9 @@ const LY_DO = [
 
 export default async function DangTinMienPhiPage() {
   const billing = await getBilling();
-  const uuDai = billing.free.active ? freeNote(billing.free, tenGoiMienPhi(billing)) : "";
+  const uuDai = freeDangChay(billing.free, new Date().toISOString().slice(0, 10))
+    ? freeNote(billing.free, tenGoiMienPhi(billing))
+    : "";
 
   return (
     <>

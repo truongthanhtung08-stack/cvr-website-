@@ -22,7 +22,7 @@ import OTieuDe from "@/components/OTieuDe";
 // phải sửa đúng dòng import này.
 import MapPicker from "@/components/MapPickerMo";
 import ContentEditor from "@/components/admin/ContentEditor";
-import { freeNote, levelOf, quotePrice, soAnhToiDa, soVideoToiDa, tenGoiMienPhi, vnd } from "@/lib/billing";
+import { freeDangChay, freeNote, levelOf, quotePrice, soAnhToiDa, soVideoToiDa, tenGoiMienPhi, vnd } from "@/lib/billing";
 import { banChuyenDoi } from "@/lib/gtagChuyenDoi";
 import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
 import { useBilling } from "@/lib/useBilling";
@@ -183,9 +183,12 @@ export default function PostListingForm() {
   );
 
   // Gói này có được miễn phí cho khách đang đăng nhập không?
+  // Xét cả HẠN CỦA CHƯƠNG TRÌNH (from/to), không chỉ nút bật/tắt: hết hạn là
+  // form phải tính tiền như bình thường, không được hiện "0 ₫ — Miễn phí" nữa.
   const duocMienPhi = useMemo(() => {
     const f = billing.free;
-    if (!f.active || planTier !== f.tierId || !hoSoVi) return false;
+    const homNay = new Date().toISOString().slice(0, 10);
+    if (!freeDangChay(f, homNay) || planTier !== f.tierId || !hoSoVi) return false;
     const hopDoiTuong =
       f.audience === "all" || (f.audience === "new" && laThanhVienMoi) || f.audience === hoSoVi.role;
     const conLuot = f.quota === 0 || hoSoVi.free_quota > 0; // quota 0 = không giới hạn
@@ -205,7 +208,8 @@ export default function PostListingForm() {
     // Ghi thẳng "Miễn phí" khi gói đó không mất tiền — để người đăng nhìn ô chọn là
     // biết ngay gói nào free, gói nào trả tiền, không phải đoán.
     const mienPhi =
-      billing.free.active && tierId === billing.free.tierId && hoSoVi && laThanhVienMoi;
+      freeDangChay(billing.free, new Date().toISOString().slice(0, 10)) &&
+      tierId === billing.free.tierId && hoSoVi && laThanhVienMoi;
     if (mienPhi) return "Miễn phí (ưu đãi thành viên mới)";
     return gia > 0 ? vnd(gia) : "Miễn phí";
   };
@@ -1080,7 +1084,7 @@ export default function PostListingForm() {
           )}
         </div>
 
-        {billing.free.active && (
+        {freeDangChay(billing.free, new Date().toISOString().slice(0, 10)) && (
           <p className="mt-3 rounded-lg border border-cvr-blue/25 bg-cvr-blue/[0.06] px-3 py-2 text-xs text-cvr-blue-ink">
             {freeNote(billing.free, tenGoiMienPhi(billing))}
             {!hoSoVi && " Đăng nhập để hệ thống áp ưu đãi cho bạn."}

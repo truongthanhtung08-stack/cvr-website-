@@ -259,6 +259,13 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                     <span className="text-[12px] font-medium tracking-wide text-cvr-faint">
                       Mã tin: {l.id.slice(0, 8).toUpperCase()}
                     </span>
+                    {/* NGÀY ĐĂNG THẬT (mốc tin lên sóng). Tin có hồ sơ thì phải
+                        có ngày — khách xem nhà đất luôn hỏi "tin này đăng lâu chưa". */}
+                    {l.postedAt && (
+                      <span className="text-[12px] font-medium tracking-wide text-cvr-faint">
+                        · Đăng {new Date(l.postedAt).toLocaleDateString("vi-VN")}
+                      </span>
+                    )}
                   </div>
                   {/* CHIA SẺ — đặt ngay đầu tin, ngang tầm mắt, không chiếm thêm
                       dòng nào. Nút Lưu / So sánh bỏ đi vì đã có sẵn trên từng thẻ

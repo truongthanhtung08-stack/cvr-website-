@@ -5,7 +5,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { useProfile } from "@/lib/useProfile";
 import { roleLabel, statusBadge } from "@/lib/adminLabels";
-import { conThieuDeLenCap, freeNote, levelOf, levelTiepTheo, tenGoiMienPhi, vnd } from "@/lib/billing";
+import { conThieuDeLenCap, freeDangChay, freeNote, levelOf, levelTiepTheo, tenGoiMienPhi, vnd } from "@/lib/billing";
 import { useBilling } from "@/lib/useBilling";
 import { PageHeader } from "@/components/Ui";
 import DoDangKyMoi from "@/components/DoDangKyMoi";
@@ -166,6 +166,8 @@ export default function AccountOverviewPage() {
   const conThieu = conThieuDeLenCap(billing, totalTopup);
   const pointValue = points * billing.points.redeemRate;
   const free = billing.free;
+  // Ưu đãi chỉ được nói ra khi chương trình CÒN HẠN (from/to trong admin).
+  const freeConChay = freeDangChay(free, new Date().toISOString().slice(0, 10));
 
   return (
     // ── BỐ CỤC XẾP THEO VIỆC KHÁCH CẦN LÀM, KHÔNG THEO CON SỐ ────────────────
@@ -212,7 +214,7 @@ export default function AccountOverviewPage() {
             moKhoa={duocDangDuAn}
           />
         </div>
-        {free.active && (
+        {freeConChay && (
           <p className="mt-4 rounded-xl border border-cvr-blue/25 bg-white px-4 py-3 text-sm text-cvr-blue-ink">
             {freeNote(free, tenGoiMienPhi(billing))}
           </p>
@@ -355,7 +357,7 @@ export default function AccountOverviewPage() {
           Vai trò: <strong className="font-semibold text-cvr-ink">{roleLabel(profile.role)}</strong>
           {" · "}Gói dịch vụ: <strong className="font-semibold text-cvr-ink">{profile.plan || "Basic (miễn phí)"}</strong>
           {" · "}
-          {free.active && free.quota === 0
+          {freeConChay && free.quota === 0
             ? <>Tin miễn phí: <strong className="font-semibold text-cvr-ink">Không giới hạn</strong></>
             : <>Tin miễn phí còn lại: <strong className="font-semibold text-cvr-ink">{profile.free_quota} tin</strong></>}
         </p>

@@ -21,6 +21,7 @@ export type ListingDetails = {
   projectName?: string;             // TÊN dự án nguyên văn — dự án chưa được tạo trên web vẫn giữ được tên
   ly_do_tu_choi?: string;           // admin ghi khi từ chối — khách đọc để biết cần sửa gì
   tu_choi_luc?: string;             // thời điểm từ chối (ISO)
+  plan?: { tier?: string; days?: number; giaBao?: number }; // gói khách CHỌN lúc đăng (chờ duyệt mới dùng tới)
 };
 
 export type ListingRow = {
@@ -44,6 +45,8 @@ export type ListingRow = {
   details: ListingDetails | null;
   tier: ListingTier;
   tier_expires_at: string | null;
+  tier_yeu_cau?: ListingTier | null; // gói khách đăng ký (migration 0017) — dùng khi tin chưa duyệt
+  tier_days?: number | null;         // thời hạn gói khách chọn: 7 · 15 · 30
   status: ListingStatus;
   published_at: string | null;
   expires_at: string | null;
@@ -73,6 +76,46 @@ export function tierBadge(t: ListingTier) {
       {tierLabel(t)}
     </span>
   );
+}
+
+// ── GÓI ĐANG DÙNG CỦA MỘT TIN ───────────────────────────────────────────────
+// Khách trả tiền theo CẤP × SỐ NGÀY nên phải thấy đúng cả hai, cộng với mốc
+// đăng và mốc hết hạn. Trước đây trang "Tin đăng của tôi" không hiện gì cả:
+// khách mua CVR Gold 15 ngày mà nhìn vào không biết mình đang ở gói nào, còn
+// mấy ngày — đúng phần dính tiền lại là phần mù nhất.
+//
+// Tin ĐÃ DUYỆT đọc cột thật (`tier`, `tier_expires_at`); tin CHƯA DUYỆT đọc
+// gói khách đăng ký (`tier_yeu_cau`/`details.plan`) vì cột thật chưa được ghi.
+export type ThongTinGoi = {
+  cap: ListingTier;      // cấp để vẽ huy hiệu
+  tenGoi: string;        // "CVR Gold"
+  soNgay: number | null; // 7 · 15 · 30 (null = không rõ)
+  daDuyet: boolean;      // true = đang chạy gói thật, false = mới đăng ký
+  hetHan: Date | null;   // mốc hết hạn hiển thị
+  conLai: number | null; // số ngày còn lại (âm = đã hết hạn)
+};
+
+export function thongTinGoi(r: ListingRow): ThongTinGoi {
+  const daDuyet = r.status === "approved";
+  const capDangKy = (r.tier_yeu_cau ?? (r.details?.plan?.tier as ListingTier | undefined) ?? r.tier) as ListingTier;
+  const cap = daDuyet ? r.tier : capDangKy;
+  const hetHan = r.tier_expires_at ? new Date(r.tier_expires_at) : null;
+
+  // Số ngày: ưu tiên con số khách đã chọn; không có thì suy ra từ hai mốc thật.
+  let soNgay = r.tier_days ?? r.details?.plan?.days ?? null;
+  if (soNgay == null && hetHan && r.published_at) {
+    soNgay = Math.round((hetHan.getTime() - new Date(r.published_at).getTime()) / 86_400_000);
+  }
+
+  const conLai = hetHan ? Math.ceil((hetHan.getTime() - Date.now()) / 86_400_000) : null;
+  return { cap, tenGoi: `CVR ${tierLabel(cap)}`, soNgay, daDuyet, hetHan, conLai };
+}
+
+// "17/09/2026" — mốc ngày cho khách đọc.
+export function ngayGon(iso?: string | null): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? "" : d.toLocaleDateString("vi-VN");
 }
 
 export function listingStatusLabel(s: ListingStatus): string {

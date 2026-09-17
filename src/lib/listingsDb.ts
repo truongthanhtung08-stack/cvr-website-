@@ -63,7 +63,8 @@ type Row = {
   tier: "diamond" | "gold" | "silver" | "basic";
   tier_expires_at: string | null; // hết hạn gói VIP → hạ về tin thường (null = admin nâng tay, vĩnh viễn)
   details: ListingDetailsJson | null;
-  created_at: string;
+  created_at: string;     // lúc khách BẤM TẠO tin (kể cả còn là nháp)
+  published_at: string | null; // lúc tin ĐƯỢC DUYỆT và lên sóng — đây mới là "ngày đăng"
 };
 
 // Hạng CVR → huy hiệu FE đang dùng (tierFromBadge trong packages.ts làm chiều ngược lại)
@@ -197,7 +198,11 @@ function rowToListing(r: Row): Listing {
     // 5 ảnh đầu cho thẻ tin tự chạy (xem components/AnhChay.tsx)
     images: r.images.filter((s) => !isVideoUrl(s)).slice(0, 5).map((s) => asset(s)),
     badge: TIER_BADGE[tierHieuLuc(r)],
-    postedAt: r.created_at,
+    // NGÀY ĐĂNG = lúc tin lên sóng, KHÔNG phải lúc khách bấm tạo. Tin soạn nháp
+    // từ tuần trước mà hôm nay mới duyệt thì ngoài trang vẫn phải ghi "Hôm nay":
+    // trước đây lấy created_at nên tin vừa lên sóng đã hiện "8 ngày trước" và bị
+    // xếp tụt sau tin khác. Tin cũ không có mốc lên sóng thì lùi về created_at.
+    postedAt: r.published_at ?? r.created_at,
     purpose: r.purpose,
     // Tên người đăng thật (khách hàng) — thẻ tin hiện đúng tên này, không phải admin
     agentName: r.details?.contact?.name || undefined,
@@ -216,7 +221,7 @@ function rowToListing(r: Row): Listing {
 // Cột cho thẻ tin & danh sách — GỒM CẢ details để thẻ hiện đúng TÊN NGƯỜI ĐĂNG THẬT
 // (details.contact.name — cột details đã có trên production từ migration 0006).
 const COLS =
-  "id,purpose,type,title,description,price_vnd,area_m2,built_area_m2,beds,baths,ward,district,province,images,tier,tier_expires_at,created_at,details";
+  "id,purpose,type,title,description,price_vnd,area_m2,built_area_m2,beds,baths,ward,district,province,images,tier,tier_expires_at,created_at,published_at,details";
 const COLS_DETAIL = COLS;
 
 // Gọi PostgREST trực tiếp bằng fetch để dùng cache Next (revalidate) —
@@ -256,7 +261,7 @@ const isSeedId = (id: string) => /^\d+$/.test(id);
 // TIN THẬT 100%: DB trả 0 tin thật → hiện trống thật (KHÔNG độn dữ liệu mẫu).
 // Chỉ fallback mẫu khi Supabase LỖI/chưa cấu hình (rows=null) để web không trắng trang.
 export async function getListings(): Promise<Listing[]> {
-  const rows = await rest(`select=${COLS}&status=eq.approved&order=created_at.desc&limit=500`);
+  const rows = await rest(`select=${COLS}&status=eq.approved&order=published_at.desc.nullslast,created_at.desc&limit=500`);
   if (!rows) return featuredListings; // lỗi kết nối/chưa cấu hình → fallback mẫu
   return rows.filter((r) => !isSeedRow(r)).map(rowToListing);
 }
