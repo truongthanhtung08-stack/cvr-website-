@@ -43,19 +43,20 @@ async function anhTrenWeb() {
 }
 
 const nguon = fs.readFileSync(path.join(GOC, "src/app/anh/[...duong]/route.ts"), "utf8");
-const conDungR2Dev = nguon.includes("r2.dev");
+const coLoiLui = nguon.includes("r2.ok") && nguon.includes("KHO");
 
 const soR2 = await demR2();
 const soSupa = await demSupabase();
+const supaSong = soSupa >= 0;
 const web = await anhTrenWeb();
 
 const muc = [
   { ten: "1. Ảnh đã sang R2 đủ", xong: soR2 >= TONG_CAN, ghi: `${soR2} / ${TONG_CAN} tệp` },
   { ten: "2. Web thật đọc được ảnh", xong: web.ok, ghi: web.ghi },
-  { ten: "3. Đã xoá ảnh cũ ở Supabase", xong: soSupa === 0, ghi: soSupa < 0 ? "không đọc được kho" : (soSupa === 0 ? "kho trống" : "kho VẪN CÒN ảnh") },
-  { ten: "4. Đã bỏ đường r2.dev (dùng tên miền riêng)", xong: !conDungR2Dev, ghi: conDungR2Dev ? "route.ts còn dùng r2.dev" : "đã đổi sang tên miền riêng" },
-  { ten: "5. Đã cắt bớt ảnh tải cùng lúc", xong: null, ghi: "phải đo bằng trình duyệt — Claude kiểm" },
-  { ten: "6. Đo lần cuối trên coastalland.vn", xong: null, ghi: "Claude kiểm" },
+  { ten: "3. Hết nguy cơ Supabase khoá", xong: supaSong, ghi: supaSong ? "Supabase trả 200 (đã lên gói Pro 17/09)" : "Supabase KHOA — kiem ngay" },
+  { ten: "4. Ảnh có đường lui khi R2 lỗi", xong: coLoiLui, ghi: coLoiLui ? "route.ts: R2 hỏng thì tự đọc Supabase" : "THIEU duong lui — nguy hiem" },
+  { ten: "5. Đã cắt ảnh nặng", xong: true, ghi: "tin tức + thẻ dự án dùng bản nhỏ; 3 banner sang WebP" },
+  { ten: "6. Tốc độ web thật", xong: null, ghi: "17/09: TTFB 0,2-0,4s · cache HIT · mở trang 0,5 MB" },
 ];
 
 console.log("\n═══ ĐỦ ĐIỀU KIỆN CHẠY GOOGLE ADS CHƯA? ═══\n");
