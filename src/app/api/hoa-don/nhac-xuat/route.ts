@@ -48,6 +48,9 @@ export async function GET(request: Request) {
   // Chụp giá khu vực · quét tin hết hạn gói · canh hạn thuế suất · canh 6 bản
   // ghi tên miền. Gộp hết vào đây vì Vercel gói Hobby chỉ cho 2 suất việc định
   // kỳ, đã dùng hết cho nhắc hoá đơn — khai suất thứ ba là hỏng lần deploy.
+  // ➜ 17/09/2026 ĐÃ LÊN GÓI PRO: được tới 40 suất, KHÔNG còn bị chặn. Việc MỚI
+  //   cần lịch riêng thì khai thẳng trong vercel.json. Ba việc đang gộp thì GIỮ
+  //   NGUYÊN — mỗi việc đã có lồng riêng, tách ra không được lợi gì.
   // Thêm việc mới: sửa src/lib/tuDong/danhSach.ts, không đụng gì ở đây.
   //
   // PHẢI CHẠY TRƯỚC các lệnh return sớm bên dưới — không thì hôm nào không có
