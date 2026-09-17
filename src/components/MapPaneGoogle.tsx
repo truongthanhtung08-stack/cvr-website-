@@ -17,6 +17,7 @@ import { centerOfArea } from "@/lib/geo";
 import { timToaDo } from "@/lib/timToaDo";
 import { layViTri, loiDinhVi, quyenDinhVi } from "@/lib/dinhVi";
 import NhacBatDinhVi from "@/components/NhacBatDinhVi";
+import MapPaneMo from "@/components/MapPaneMo";
 import { xemTrenBanDo } from "@/lib/moGoogleMaps";
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -197,16 +198,16 @@ export default function MapPaneGoogle({
   // Đánh đổi đã biết trước: trên điện thoại phải hai ngón mới kéo được bản đồ.
   // Lớp phủ "Chạm để xem bản đồ" của ProjectNearby vẫn giữ nguyên tác dụng: ngón
   // tay lướt qua vẫn cuộn được trang.
+  // ⛔ KHUNG NHÚNG GOOGLE ĐÃ CHẾT — ĐỪNG BẬT LẠI (17/09/2026).
+  // Đo thật cùng ngày: cả ba kiểu địa chỉ nhúng đều trả 404 kèm
+  // `X-Frame-Options: SAMEORIGIN`, nên trình duyệt chặn khung và khách thấy dòng
+  // "Trang web hiện không khả dụng … ERR_BLOCKED_BY_RESPONSE" nằm giữa trang tin
+  // (khách đã kêu). Hệ quả cuối của việc Google xếp Việt Nam vào "prohibited
+  // territories" — không sửa được bằng khoá hay cấu hình.
+  // Nay khối XEM vị trí chạy nền mở (MapLibre + OpenFreeMap): miễn phí, không
+  // khoá, kéo MỘT ngón trên điện thoại. Nút "Chỉ đường" vẫn mở app Google Maps.
   if (dungNhung) {
-    return (
-      <iframe
-        src={nhungGoogleMaps(query, zoom)}
-        title="Bản đồ vị trí"
-        loading="lazy"
-        referrerPolicy="no-referrer-when-downgrade"
-        className={`${cao} block border-0 bg-cvr-surface`}
-      />
-    );
+    return <MapPaneMo query={query} zoom={zoom} cao={cao} />;
   }
 
   return (
