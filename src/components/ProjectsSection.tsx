@@ -18,7 +18,9 @@ const PER_SLIDE = 4; // 1 hàng × 4 dự án mỗi slide (số slide KHÔNG gi�
 export default function ProjectsSection({ projects, articles = [] }: { projects: Project[]; articles?: Article[] }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [slide, setSlide] = useState(0);
-  const [paused, setPaused] = useState(false);
+  // Chạm thì dừng rồi TỰ CHẠY LẠI — màn cảm ứng không có động tác rê chuột ra,
+  // để setPaused(true) trơ như cũ là chạm một cái slide chết tới khi tải lại trang.
+  const { dung: paused, chamVao: chamDai, setDung: setPaused } = useTamDung(6000);
   const diMobRef = useRef<HTMLDivElement>(null);
   const { dung: pausedMob, chamVao: chamDaiMob } = useTamDung(6000);
   // Nút "Xem thêm" → khối này thành danh sách theo trang, các khối khác ẩn.
@@ -104,7 +106,7 @@ export default function ProjectsSection({ projects, articles = [] }: { projects:
             }
             onMouseEnter={() => setPaused(true)}
             onMouseLeave={() => setPaused(false)}
-            onTouchStart={() => setPaused(true)}
+            onTouchStart={chamDai}
           >
             {slides.map((group, gi) => (
               <div key={gi} className="w-full shrink-0 snap-start">

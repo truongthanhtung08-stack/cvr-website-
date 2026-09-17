@@ -31,7 +31,9 @@ const SLIDE_COUNT = 2; // chạy 2 slides
 export default function FeaturedListings({ items = featuredListings }: { items?: Listing[] }) {
   const [activeTab, setActiveTab] = useState("Tất cả");
   const [slideIdx, setSlideIdx] = useState(0);
-  const [paused, setPaused] = useState(false);
+  // Chạm thì dừng rồi TỰ CHẠY LẠI — màn cảm ứng không có động tác rê chuột ra,
+  // để setPaused(true) trơ như cũ là chạm một cái slide chết tới khi tải lại trang.
+  const { dung: paused, chamVao: chamDai, setDung: setPaused } = useTamDung(6000);
   const diMobRef = useRef<HTMLDivElement>(null);
   const { dung: pausedMob, chamVao: chamDaiMob } = useTamDung(6000);
   const trackRef = useRef<HTMLDivElement>(null);
@@ -156,7 +158,7 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
                 }
                 onMouseEnter={() => setPaused(true)}
                 onMouseLeave={() => setPaused(false)}
-                onTouchStart={() => setPaused(true)}
+                onTouchStart={chamDai}
               >
                 {slides.map((items, i) => (
                   <div key={i} className="w-full shrink-0 snap-start">
