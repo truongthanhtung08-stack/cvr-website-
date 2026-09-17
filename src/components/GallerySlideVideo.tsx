@@ -47,6 +47,12 @@ export default function GallerySlideVideo({
   // Mở lớn = trình xem của web (nút Thoát/Xoay luôn hiện). Mở thì DỪNG video ở
   // khung nhỏ, không để hai cái cùng chạy.
   const [xemLon, setXemLon] = useState(false);
+  // YOUTUBE: CHƯA BẤM THÌ CHƯA NẠP TRÌNH PHÁT.
+  // Nạp iframe sẵn thì YouTube tự đắp lên khung một lớp nút của họ — nút chia sẻ,
+  // nút xem sau, dải "Watch on YouTube" — rối mắt và dẫn khách rời trang mình
+  // (chủ dự án báo 17/09/2026). Nay chỉ hiện ẢNH BÌA + một nút play duy nhất;
+  // bấm mới nạp iframe kèm autoplay nên video chạy thẳng, không kịp hiện lớp đó.
+  const [daBam, setDaBam] = useState(false);
   const [giay, setGiay] = useState(0);
   const moLon = () => {
     const v = ref.current;
@@ -98,6 +104,7 @@ export default function GallerySlideVideo({
       }
       playingRef.current = false;
       dungVaoRef.current = false;
+      setDaBam(false);
     }
     holdRef.current?.(playingRef.current || fullRef.current || dungVaoRef.current);
   }, [active]);
@@ -143,10 +150,10 @@ export default function GallerySlideVideo({
     // iframe — ref.current bằng null, pause() không ăn vào đâu cả. Hậu quả: bấm
     // xem lớn thì khung nhỏ VẪN CHẠY, thành hai video hai tiếng cùng lúc (chủ dự
     // án báo 11/9/2026). Gỡ iframe là nó im ngay; đóng lại thì nạp lại.
-    active && !xemLon ? (
+    active && !xemLon && daBam ? (
       <iframe
         ref={khungRef}
-        src={embed}
+        src={`${embed}&autoplay=1`}
         title="Video"
         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
         // allowFullScreen: thiếu thuộc tính này thì nút toàn màn hình CỦA YOUTUBE
@@ -166,6 +173,25 @@ export default function GallerySlideVideo({
             onError={() => setPosterSrc(poster.thuong)}
             className="absolute inset-0 h-full w-full object-contain"
           />
+        )}
+        {/* MỘT NÚT PLAY DUY NHẤT — bấm là nạp trình phát và chạy ngay. */}
+        {!xemTruoc && (
+          <button
+            type="button"
+            onClick={() => {
+              setDaBam(true);
+              dungVaoRef.current = true;
+              bao();
+            }}
+            aria-label="Phát video"
+            className="absolute inset-0 z-[5] flex items-center justify-center"
+          >
+            <span className="flex h-[62px] w-[62px] items-center justify-center rounded-full bg-black/55 backdrop-blur-sm transition active:scale-95 sm:h-[70px] sm:w-[70px]">
+              <svg className="ml-1 h-7 w-7 text-white sm:h-8 sm:w-8" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+            </span>
+          </button>
         )}
       </div>
     )

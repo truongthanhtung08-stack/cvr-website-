@@ -70,7 +70,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
         <HomeExpandProvider>
         {/* Nội dung bài — ẩn khi bấm "Xem thêm" ở mục tin liên quan bên dưới */}
         <HomeCollapsible>
-        <article className="mx-auto max-w-3xl px-4 pb-16 pt-6 sm:px-6">
+        <article className="mx-auto max-w-3xl px-4 pb-4 pt-6 sm:px-6 sm:pb-6">
 
           <div className="flex items-center gap-2 text-xs text-cvr-muted">
             <span className="rounded-full bg-cvr-surface px-2.5 py-0.5 font-medium text-cvr-body">{a.category}</span>

@@ -179,14 +179,16 @@ export default function Gallery({
           {/* HUY HIỆU ĐẾM — mở tin ra là biết tin có bao nhiêu video, bao nhiêu
               ảnh; video đứng đầu dãy nên không có nó thì khách xem xong video
               tưởng hết. Ở SLIDE VIDEO THÌ ẨN, xem lý do ở khối nút bên dưới. */}
-          {!mIsVideo && demMedia}
+          {(!mIsVideo || !hold) && demMedia}
 
           {/* ── NÚT CHUYỂN TẤM Ở HAI BÊN ─────────────────────────────────────
-              CHỈ hiện ở slide ẢNH. Khung video phải TRỐNG TRƠN: mỗi thứ web đặt
-              đè lên đó đều ăn mất cú chạm và làm nút play / toàn màn hình của
-              trình phát bấm không lên (chủ dự án báo đi báo lại 11/9/2026).
-              Ở slide video khách vuốt để qua ảnh — trình phát giữ trọn khung. */}
-          {!mIsVideo && media.length > 1 && (
+              Slide ẢNH: hiện bình thường.
+              Slide VIDEO: hiện khi khách CHƯA bấm play — video đứng đầu dãy nên
+              không có mũi tên thì khách tưởng tin chỉ có mỗi video, không biết
+              phía sau còn ảnh (chủ dự án báo 17/09/2026). Vừa bấm play là gỡ hết
+              ngay: mọi thứ đè lên khung đang phát đều ăn mất cú chạm và làm nút
+              của trình phát bấm không lên (bài học 11/9/2026). */}
+          {(!mIsVideo || !hold) && media.length > 1 && (
             <>
               {mCur > 0 && (
                 <button

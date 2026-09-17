@@ -97,13 +97,20 @@ export default function ScrollTopOnRoute() {
       const y = nenKhoiPhuc ? (docBanDo()[diaChi()] ?? 0) : 0;
       if (nenKhoiPhuc && y <= 0) return; // chưa có vị trí đã lưu → để nguyên
 
-      // CUỘN NHIỀU NHỊP — kể cả khi về đầu trang. Bấm một thẻ tin từ giữa danh
+      // BÁM THEO KHUNG HÌNH — kể cả khi về đầu trang. Bấm một thẻ tin từ giữa danh
       // sách dài: trình duyệt giữ nguyên vị trí cũ cho tới khi trang mới dựng
       // xong, rồi ảnh vào muộn lại đẩy trang cao lên. Cuộn đúng một nhịp là
       // trang dừng lưng chừng giữa bài, không lên tới đầu (chủ dự án báo
       // 11/9/2026). Lặp vài nhịp tới khi trang ổn định là hết.
       let con = true;
-      const ve = () => { if (con) window.scrollTo(0, y); };
+      // NHẢY TỨC THÌ, KHÔNG TRƯỢT MƯỢT.
+      // globals.css đặt `html { scroll-behavior: smooth }` cho cả trang (để bấm neo
+      // thì trượt êm). Nhưng ở đây trượt êm là hỏng: cuộn từ giữa danh sách về đầu
+      // mất cả giây, mà mỗi khung hình lại gọi cuộn một lần nên animation khởi động
+      // lại liên tục — đo thật 17/09/2026: mở một tin từ giữa danh sách thì trang
+      // kẹt ở y = 53 hơn hai giây rồi mới bò về đầu. Ép `behavior: instant` cho
+      // riêng thao tác này; neo trong trang vẫn trượt êm như cũ.
+      const ve = () => { if (con) window.scrollTo({ top: y, left: 0, behavior: "instant" }); };
       // Người dùng tự cuộn/chạm trong lúc đang khôi phục → DỪNG NGAY, không
       // được giật họ về chỗ cũ (đây là lỗi kinh điển của cách làm nhiều nhịp).
       const dung = () => { con = false; };
@@ -112,16 +119,33 @@ export default function ScrollTopOnRoute() {
       window.addEventListener("touchstart", dung, optsThuDong);
       window.addEventListener("keydown", dung);
 
+      // GIỮ ĐẦU TRANG CHO TỚI KHI TRANG ĐỨNG YÊN — không chỉ vài nhịp rời rạc.
+      // Đo thật 17/09/2026 trên coastalland.vn: bấm một thẻ tin từ giữa danh sách
+      // thì trang tin dừng ở y = 53, không phải đầu trang. Lý do: sau khi mình cuộn
+      // về 0, Next dựng xong nội dung rồi tự cuộn tới đầu vùng nội dung — việc đó
+      // xảy ra MUỘN HƠN nhịp cuối cùng (400 ms) nên không còn ai kéo lại.
+      // Nay bám theo từng khung hình trong ~1,2 giây: lệch quá 2px là kéo về ngay.
+      // Khách tự cuộn/chạm/gõ phím thì dừng lập tức (dung() ở trên).
+      // MỞ TRANG MỚI: 1,2 giây là đủ (chỉ cần giữ y = 0).
+      // KHÔI PHỤC (F5 / Quay lại): cần lâu hơn — trang phải dựng đủ CHIỀU CAO thì
+      // mới cuộn xuống sâu được. Đo 17/09/2026: F5 ở y = 2000 mà chỉ về được 1302
+      // vì lúc khôi phục ảnh chưa vào, trang còn ngắn.
+      const HAN = nenKhoiPhuc ? 4000 : 1200;
+      const batDau = performance.now();
+      let idFrame = 0;
+      const bam = () => {
+        if (!con) return;
+        if (Math.abs(window.scrollY - y) > 2) window.scrollTo({ top: y, left: 0, behavior: "instant" });
+        if (performance.now() - batDau < HAN) idFrame = requestAnimationFrame(bam);
+      };
+
       ve();
-      requestAnimationFrame(ve);
-      const hen1 = window.setTimeout(ve, 120);
-      const hen2 = window.setTimeout(ve, 400);
+      idFrame = requestAnimationFrame(bam);
       window.addEventListener("load", ve, { once: true });
 
       return () => {
         con = false;
-        window.clearTimeout(hen1);
-        window.clearTimeout(hen2);
+        cancelAnimationFrame(idFrame);
         window.removeEventListener("load", ve);
         window.removeEventListener("wheel", dung);
         window.removeEventListener("touchstart", dung);
