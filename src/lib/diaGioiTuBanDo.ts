@@ -135,9 +135,33 @@ export function ganDiaGioi(
     (theoPhuong.length === 1 ? theoPhuong[0] : undefined) ??
     theoQuan[0] ??
     (dc.phuong ? dsToanTinh.find((d) => khopDanhMuc(dc.phuong, [d.name])) : undefined);
-  const tinhCu = quanToanTinh?.tinhCu ?? tinh;
+  let tinhCu = quanToanTinh?.tinhCu ?? tinh;
   // Nhảy sang tỉnh khác thì phường/quận cũ không còn đúng — so theo tỉnh CŨ vừa suy ra.
   const doiTinhCu = !!tinhKhop && tinhCu !== dangCo.province;
+
+  // ⚠️ TÊN TỈNH TRÙNG NHAU GIỮA HAI HỆ — phải chốt tỉnh cũ TRƯỚC khi lấy danh
+  // sách quận. Ca thật 17/09/2026: bản đồ nói "Tỉnh Gia Lai" (tên MỚI), hệ cũ
+  // cũng có một tỉnh tên "Gia Lai" nên khớp trúng nó — nhưng chỗ ghim là Hoài
+  // Nhơn, vốn thuộc BÌNH ĐỊNH. Giữ "Gia Lai" thì danh sách quận không có Hoài
+  // Nhơn, ô Quận/Huyện trống trơn, người đăng tưởng mất dữ liệu.
+  // Vì vậy: tên phường bản đồ đọc được là tên hệ MỚI thì quy đổi qua bảng ánh xạ
+  // chính thức để lấy ĐÚNG CẢ TỈNH CŨ LẪN QUẬN CŨ.
+  let quanTuPhuongMoi = "";
+  if (dc.phuong) {
+    // Tên bản đồ đọc được có phải PHƯỜNG HỆ MỚI CÓ THẬT của tỉnh này không?
+    // Nếu đúng thì quy đổi bằng bảng ánh xạ chính thức (Nghị quyết 202/2025) —
+    // chắc hơn hẳn việc dò tên trong danh mục phường CŨ, vì dò tên khớp lỏng:
+    // "Phường Hoài Nhơn Đông" từng trúng xã "Đông" của huyện KBang, ra
+    // "Gia Lai · KBang · Đông" (đo 17/09/2026).
+    const tinhMoiCuaNo = newProvinceOf(tinhCu);
+    if (khopDanhMuc(dc.phuong, wardsOfNew(tinhMoiCuaNo))) {
+      const cu = suyRaHeCu(tinhMoiCuaNo, dc.phuong);
+      if (cu.quan) {
+        quanTuPhuongMoi = cu.quan;
+        if (cu.tinh) tinhCu = cu.tinh;
+      }
+    }
+  }
 
   // Hệ CŨ: phải có Quận/Huyện thì mới ra được danh sách Phường/Xã.
   const dsQuan = districtsOf(tinhCu);
@@ -164,7 +188,8 @@ export function ganDiaGioi(
   //
   // Bước 1 — QUẬN NÀO CHỨA CÁI PHƯỜNG NÀY. Chắc nhất: tra ngược bằng danh mục
   // của chính web, không phụ thuộc bản đồ gán đúng hay sai.
-  let quan = dc.phuong ? dsQuan.find((d) => khopDanhMuc(dc.phuong, wardsOf(tinhCu, d))) ?? "" : "";
+  // Bảng ánh xạ chính thức đã cho kết quả thì dùng luôn, khỏi dò tên.
+  let quan = quanTuPhuongMoi || (dc.phuong ? dsQuan.find((d) => khopDanhMuc(dc.phuong, wardsOf(tinhCu, d))) ?? "" : "");
   // Bước 2 — KHỚP THẲNG TÊN PHƯỜNG VỚI DANH SÁCH QUẬN. Sau sáp nhập, rất nhiều
   // phường mới mang đúng tên quận cũ: "Phường Ngũ Hành Sơn", "Phường Hải Châu",
   // "Phường Thanh Khê", "Phường Sơn Trà", "Phường Cẩm Lệ"…
@@ -176,7 +201,7 @@ export function ganDiaGioi(
   // thẳng tên phường mới ("Phường An Cựu") — tên này không có trong danh mục
   // quận/huyện cũ nên ba bước trên đều trượt. Quy đổi ngược về hệ cũ để lấy đúng
   // quận/huyện. Đây là chiều còn lại của cơ chế hai chiều.
-  if (!quan && dc.phuong) quan = suyRaHeCu(newProvinceOf(tinhCu), dc.phuong).quan;
+  if (!quan) quan = quanTuPhuongMoi;
   const quanDung = quan || (doiTinhCu ? "" : dangCo.district);
   // Việt Nam chạy SONG SONG hai hệ cho tới khi dân quen hệ mới → hệ CŨ cũng phải
   // điền được đủ ba khối. Bản đồ chỉ biết TÊN PHƯỜNG MỚI ("Phường Thuận Hoá"),

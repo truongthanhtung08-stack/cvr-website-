@@ -67,6 +67,10 @@ export default function AdminDashboard() {
              hoặc chính Resend hỏng; đây là đường thứ hai để lỗi không nằm im. */}
       <SuCoBang />
 
+      {/* 0b. MẠCH TỰ ĐỘNG — mỗi ngày web tự chạy mấy việc nền. Lúc chạy tốt và
+             lúc chết hẳn đều im lặng như nhau, nên phải có chỗ nhìn thấy mạch đập. */}
+      <MachTuDong />
+
       {/* 1. VIỆC CẦN LÀM — luôn đứng đầu. Hết việc thì báo rõ "không còn việc",
              không để khoảng trống khiến người dùng tưởng trang lỗi. */}
       <Panel title="Việc cần làm" className="mt-6">
@@ -227,5 +231,80 @@ function ChiSo({ label, value, href, accent }: { label: string; value?: number |
         {value ?? "…"}
       </p>
     </Link>
+  );
+}
+
+// ── MẠCH TỰ ĐỘNG ───────────────────────────────────────────────────────────
+// Mỗi ngày hai lần (20:00 và 08:30) web tự chạy: chụp giá khu vực · quét tin hết
+// hạn gói · canh hạn thuế suất · canh 6 bản ghi tên miền.
+//
+// VÌ SAO PHẢI HIỆN RA ĐÂY: thứ tự động lúc chạy tốt và lúc chết hẳn trông giống
+// hệt nhau — đều im lặng. Cron ngừng chạy (dự án bị tạm dừng, đổi CRON_SECRET,
+// một lần deploy hỏng) thì tin VIP hết hạn vẫn cứ VIP, mà không có gì báo.
+// Quá 1 ngày rưỡi không có dòng mới → ô này chuyển đỏ.
+//
+// Bảng chưa tạo (chưa chạy migration 0033) → ẩn hẳn, không báo lỗi đỏ vô nghĩa.
+type DongTuDong = { ma: string; ten: string; ok: boolean; tom_tat: string; chay_luc: string };
+
+function MachTuDong() {
+  const [ds, setDs] = useState<DongTuDong[] | null>(null);
+  // Đọc giờ MỘT LẦN lúc tải, không đọc lúc vẽ: React cấm gọi Date.now() trong
+  // thân component (mỗi lần vẽ lại ra một kết quả khác).
+  const [bayGio, setBayGio] = useState(0);
+
+  useEffect(() => {
+    const supabase = createClient();
+    (async () => {
+      const { data } = await supabase
+        .from("nhat_ky_tu_dong")
+        .select("ma,ten,ok,tom_tat,chay_luc")
+        .order("chay_luc", { ascending: false })
+        .limit(12);
+      setDs((data ?? []) as DongTuDong[]);
+      setBayGio(Date.now());
+    })();
+  }, []);
+
+  if (!ds || ds.length === 0) return null;
+
+  // Chỉ hiện LẦN CHẠY GẦN NHẤT — mỗi lần chạy ghi một dòng cho mỗi việc, các
+  // dòng cùng lần cách nhau vài giây, nên gom theo khoảng 5 phút là đủ gọn.
+  const moiNhat = new Date(ds[0].chay_luc).getTime();
+  const lanCuoi = ds.filter((d) => moiNhat - new Date(d.chay_luc).getTime() < 5 * 60 * 1000);
+  const hong = lanCuoi.filter((d) => !d.ok);
+  // Chạy 2 lần/ngày → quá 36 giờ im lặng là chắc chắn có chuyện, không phải trễ giờ.
+  const imLang = bayGio - moiNhat > 36 * 3600 * 1000;
+
+  const vien = imLang || hong.length > 0 ? "border-amber-300 bg-amber-50/70" : "border-cvr-line bg-white";
+
+  return (
+    <div className={`mt-6 rounded-2xl border p-5 shadow-sm sm:p-6 ${vien}`}>
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h2 className="text-base font-semibold text-cvr-ink">
+          Máy tự làm việc · {lanCuoi.length - hong.length}/{lanCuoi.length} việc xong
+        </h2>
+        <span className="text-xs text-cvr-faint">
+          Lần gần nhất: {new Date(moiNhat).toLocaleString("vi-VN")}
+        </span>
+      </div>
+
+      {imLang && (
+        <p className="mt-2 text-sm font-medium text-amber-900">
+          Đã hơn 36 giờ không chạy — nhiều khả năng lịch tự động đã ngừng. Kiểm tra
+          Vercel → Settings → Cron Jobs, và biến CRON_SECRET.
+        </p>
+      )}
+
+      <div className="mt-3 space-y-1.5">
+        {lanCuoi.map((d) => (
+          <p key={d.ma} className="text-sm text-cvr-body">
+            <span className={d.ok ? "text-cvr-faint" : "font-semibold text-amber-900"}>
+              {d.ok ? "✓" : "✕"}
+            </span>{" "}
+            <span className="font-medium text-cvr-ink">{d.ten}</span> — {d.tom_tat}
+          </p>
+        ))}
+      </div>
+    </div>
   );
 }
