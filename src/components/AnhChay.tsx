@@ -26,7 +26,7 @@ export default function AnhChay({
   sizes,
   className = "object-cover",
   nhip = 4500,
-  chay = true,
+  chay = false,
 }: {
   images: string[];
   alt: string;
@@ -36,10 +36,12 @@ export default function AnhChay({
   /**
    * Cho ảnh tự đổi hay không.
    *
-   * TRANG CHỦ: ĐỂ FALSE (chủ dự án chốt 12/09/2026). Ngoài trang chủ thẻ chỉ
-   * được khoe ẢNH ĐẠI DIỆN — tấm người đăng chọn làm bộ mặt của tin. Cho ảnh
-   * chạy thì khách lướt qua gặp đúng tấm nào là tuỳ may rủi, ảnh đại diện mất
-   * ý nghĩa. Dải thẻ vẫn tự trôi ngang như thường.
+   * MẶC ĐỊNH ĐỨNG YÊN (chủ dự án chốt 17/09/2026) — mọi trang danh sách, kể cả
+   * trang chủ, /mua-ban, /cho-thue, /du-an. Thẻ chỉ khoe ẢNH ĐẠI DIỆN — tấm
+   * người đăng chọn làm bộ mặt của tin. Khách hay mở tin ra tab riêng để so
+   * sánh, nhìn thẻ phải nhận ra ngay tin nào; ảnh tự đổi thì mỗi lúc thấy một
+   * tấm, ảnh đại diện mất ý nghĩa. Ảnh chỉ xem được hết ở TRANG CHI TIẾT.
+   * Dải thẻ vẫn tự trôi ngang như thường.
    */
   chay?: boolean;
 }) {

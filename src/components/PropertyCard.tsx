@@ -90,6 +90,8 @@ export default function PropertyCard({
       {/* Thẻ trang chủ (tier) trên MOBILE: ảnh 16/10 thấp hơn để màn hình đầu thấy trọn thẻ */}
       <div className={`relative overflow-hidden bg-cvr-surface aspect-[3/2] sm:aspect-[16/10]`}>
         <AnhChay
+          // ĐỨNG YÊN — thẻ chỉ khoe ảnh đại diện (chốt 17/09/2026).
+          chay={false}
           images={item.images?.length ? item.images : [item.image]}
           alt={item.title}
           sizes={isFeatured ? "(max-width: 640px) 100vw, 50vw" : "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"}
@@ -209,7 +211,7 @@ function PropertyRow({ item, showTime = false, terms = [] }: { item: Listing; sh
       {/* Dải nhấn KIM LOẠI đỉnh thẻ — CHỈ Kim Cương (tier.bar), đồng bộ với thẻ lưới/trang chủ */}
       {tier?.bar && <div className="absolute inset-x-0 top-0 z-10 h-px" style={{ backgroundColor: tier.bar }} aria-hidden />}
       <div className="relative aspect-[16/10] w-full shrink-0 overflow-hidden rounded-xl bg-cvr-surface sm:aspect-[16/10] sm:w-[38%] sm:min-w-[260px] sm:max-w-[380px]">
-        <AnhChay images={item.images?.length ? item.images : [item.image]} alt={item.title} sizes="(max-width: 640px) 100vw, 38vw" />
+        <AnhChay chay={false} images={item.images?.length ? item.images : [item.image]} alt={item.title} sizes="(max-width: 640px) 100vw, 38vw" />
         {tier && (
           <span
             className={`absolute left-2 top-2 rounded-full px-2 py-[3px] text-[11px] font-semibold uppercase tracking-[0.06em] shadow-[0_2px_10px_rgba(0,0,0,0.28)] ring-1 backdrop-blur-md ${tierId === "diamond" ? "ring-[#d9b64e]/70" : "ring-white/25"}`}

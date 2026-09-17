@@ -561,6 +561,7 @@ export default function ProjectsBrowser({
                 {/* MOBILE: ảnh TRÊN tràn viền · DESKTOP: ảnh trái */}
                 <div className="relative aspect-[16/9] w-full shrink-0 overflow-hidden rounded-none bg-cvr-surface sm:aspect-[4/3] sm:w-56 sm:rounded-xl md:w-64">
                   <AnhChay
+                    chay={false}
                     images={[p.image, ...(p.photos ?? [])]}
                     alt={p.name}
                     sizes="(max-width:640px) 33vw, 256px"
