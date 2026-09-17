@@ -25,6 +25,10 @@ export type ListingDetailsJson = {
   furnish?: string;
   direction?: string;
   addressDetail?: string;
+  // ĐỊA CHỈ HỆ CŨ do người nhập chép NGUYÊN từ tin gốc (cột phuong_xa_cu /
+  // quan_huyen_cu khi nhập hàng loạt). Có thì dùng thẳng — suy ngược từ hệ mới
+  // không bao giờ ra đúng phường cũ vì một phường mới gộp nhiều phường cũ.
+  diaChiCu?: { phuong?: string; quan?: string; tinh?: string };
   mapPin?: string; // toạ độ / link Google Maps admin ghim tay
   places?: { category: string; name: string; distance: string }[]; // tiện ích xung quanh
   // phones: MỌI số của người đăng (số đầu = số hiển thị). Giữ đủ để sau này
@@ -167,7 +171,14 @@ function rowToListing(r: Row): Listing {
         phuong: r.ward ?? "",
       });
       const moi = hai.moi || goc;
-      const cu = hai.cu && hai.cu !== moi ? hai.cu : "";
+      // ĐỊA CHỈ CŨ NHẬP TAY ĐI TRƯỚC — chép nguyên từ tin gốc nên luôn đúng;
+      // chỉ khi tin không có mới dùng bản web suy ngược (mất cấp phường ở nhiều tin).
+      const dcCu = r.details?.diaChiCu;
+      const cuNhapTay = [dcCu?.phuong, dcCu?.quan, dcCu?.tinh ?? hai.cuTinh]
+        .filter((s) => s && String(s).trim())
+        .join(", ");
+      const cuTho = cuNhapTay || hai.cu;
+      const cu = cuTho && cuTho !== moi ? cuTho : "";
       return {
         location: moi,
         ...(cu ? { locationCu: cu } : {}),

@@ -74,6 +74,12 @@ const accessField: Field = { key: "access", label: "Vị trí lối vào", type:
 const builtYearField: Field = { key: "builtYear", label: "Năm xây dựng", type: "text", placeholder: "VD: 2021" };
 // Chung cư / căn hộ: phí quản lý là khoản người mua và người thuê nào cũng hỏi.
 const mgmtFeeField: Field = { key: "mgmtFee", label: "Phí quản lý", type: "text", placeholder: "VD: 12.000đ/m²/tháng" };
+// Hai mục NHÀ nào cũng có mà trước đây chỉ khai cho căn hộ/kho — đo đợt 10/09:
+// 14 ô Cowork đã gõ (diện tích sử dụng, hướng ban công của nhà riêng, biệt thự,
+// nhà mặt phố, shophouse) bị web bỏ lặng lẽ vì loại hình không khai mục đó.
+// Để là ĐẶC ĐIỂM (không `batBuoc`) nên form đăng tin của khách không bị ép nhập thêm.
+const usableAreaField: Field = { key: "usableArea", label: "Diện tích sử dụng", type: "number", unit: "m²" };
+const balconyField: Field = { key: "balcony", label: "Hướng ban công", type: "select", options: directions };
 
 // Mỗi LOẠI HÌNH có bộ đặc điểm ĐẶC THÙ riêng. Thứ tự = ĐỘ ƯU TIÊN khớp
 // (loại đặc thù đứng trước loại chung: Biệt thự/Shophouse trước "nhà", Kho xưởng trước "đất").
@@ -127,6 +133,7 @@ export const categorySpecs: CategorySpec[] = [
       // hỏi ngay sau diện tích và đơn giá, nên để ở THÔNG TIN CHÍNH.
       { key: "clearHeight", label: "Chiều cao thông thuỷ", type: "number", unit: "m", main: true },
       { key: "roadWidth", label: "Đường container", type: "number", unit: "m", main: true, batBuoc: true },
+      { key: "frontage", label: "Mặt tiền (chiều ngang)", type: "number", unit: "m" },
       { key: "floorLoad", label: "Tải trọng nền", type: "text", placeholder: "VD: 3 tấn/m²" },
       { key: "power", label: "Công suất điện", type: "text", placeholder: "VD: 560 KVA" },
       { key: "pccc", label: "Hệ thống PCCC", type: "select", options: ["Đã có", "Chưa có"] },
@@ -144,6 +151,8 @@ export const categorySpecs: CategorySpec[] = [
       { key: "floor", label: "Tầng số", type: "text", placeholder: "VD: Tầng 3", main: true },
       frontageField,
       roadField,
+      { key: "floors", label: "Số tầng", type: "select", options: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10+"] },
+      { key: "pccc", label: "Hệ thống PCCC", type: "select", options: ["Đã có", "Chưa có"] },
       { key: "grade", label: "Hạng toà nhà", type: "select", options: ["Hạng A", "Hạng B", "Hạng C", "Nhà phố"] },
     ],
   },
@@ -156,6 +165,8 @@ export const categorySpecs: CategorySpec[] = [
       depthField,
       roadField,
       builtYearField,
+      usableAreaField,
+      balconyField,
       { key: "gardenArea", label: "Diện tích sân vườn", type: "number", unit: "m²" },
       { key: "pool", label: "Hồ bơi riêng", type: "select", options: ["Có", "Không"] },
       { key: "view", label: "View / cảnh quan", type: "select", options: ["Biển", "Sông / hồ", "Sân golf", "Công viên", "Nội khu"] },
@@ -169,8 +180,11 @@ export const categorySpecs: CategorySpec[] = [
       frontageField,
       depthField,
       roadField,
+      usableAreaField,
+      balconyField,
       { key: "bizFloors", label: "Số tầng kinh doanh", type: "select", options: ["1", "2", "3", "Cả toà"], main: true },
       { key: "corner", label: "Vị trí", type: "select", options: ["Lô góc 2 mặt tiền", "1 mặt tiền", "Trong khu"] },
+      { key: "pccc", label: "Hệ thống PCCC", type: "select", options: ["Đã có", "Chưa có"] },
       builtYearField,
     ],
   },
@@ -182,6 +196,8 @@ export const categorySpecs: CategorySpec[] = [
       frontageField,
       depthField,
       roadField,
+      usableAreaField,
+      balconyField,
       { key: "corner", label: "Vị trí", type: "select", options: ["Lô góc 2 mặt tiền", "1 mặt tiền"] },
       builtYearField,
     ],
@@ -204,6 +220,8 @@ export const categorySpecs: CategorySpec[] = [
       frontageField,
       depthField,
       roadField,
+      usableAreaField,
+      balconyField,
       accessField,
       builtYearField,
     ],

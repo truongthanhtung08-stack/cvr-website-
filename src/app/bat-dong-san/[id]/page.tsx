@@ -59,17 +59,41 @@ function parseLatLng(s?: string): { lat: number; lng: number } | null {
   return { lat, lng };
 }
 
+// ── TIÊU ĐỀ CHO GOOGLE (thẻ <title>) ────────────────────────────────────────
+// Tiêu đề người bán tự viết thường hỏng một trong hai kiểu: DÀI lê thê (đo 34 tin
+// đợt 10/09: 17 tin trên 80 ký tự, Google cắt mất phần sau) hoặc THIẾU ĐỊA DANH
+// ("Cho thuê nhà Mỹ Gia gói 2 đối diện công viên" — không có Nha Trang lẫn Khánh
+// Hoà, mất hẳn từ khoá địa phương). Chỗ này chuẩn hoá lại cho thẻ <title>:
+// cắt gọn + ghép địa danh còn thiếu. H1 trên trang vẫn giữ NGUYÊN VĂN của người
+// bán — không sửa chữ của khách.
+function tieuDeSeo(tieuDe: string, location: string, price: string): string {
+  const kd = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/gi, "d").toLowerCase();
+  let t = tieuDe.trim().replace(/\s+/g, " ");
+  if (t.length > 62) {
+    const cat = t.slice(0, 62);
+    const khoang = cat.lastIndexOf(" ");
+    t = (khoang > 40 ? cat.slice(0, khoang) : cat).replace(/[\s,\-–—:;.]+$/, "");
+  }
+  // Ghép những cấp địa danh mà tiêu đề CHƯA nhắc tới (phường/xã, tỉnh/thành)
+  const thieu = location
+    .split(",")
+    .map((s) => s.trim())
+    .filter((p) => p && !kd(t).includes(kd(p.replace(/^(Phường|Xã|Thị trấn|Đặc khu)\s+/i, ""))));
+  return [t, thieu.join(", ")].filter(Boolean).join(", ") + ` — ${price}`;
+}
+
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
   const l = await getListing(id); // B2: đọc Supabase, fallback dữ liệu mẫu
   if (!l) return { title: "Không tìm thấy", robots: { index: false, follow: true } };
   const desc = `${l.title} tại ${l.location}. Giá ${l.price}${l.area ? `, diện tích ${l.area}` : ""}. Hình thật, liên hệ trực tiếp người đăng trên Coastal Land.`;
+  const tieuDe = tieuDeSeo(l.title, l.location, l.price);
   return {
-    title: `${l.title} — ${l.price}`,
+    title: tieuDe,
     description: desc,
     alternates: { canonical: `/bat-dong-san/${id}` },
     openGraph: {
-      title: `${l.title} — ${l.price}`,
+      title: tieuDe,
       description: desc,
       url: `/bat-dong-san/${id}`,
       type: "website",

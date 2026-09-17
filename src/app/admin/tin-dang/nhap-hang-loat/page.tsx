@@ -38,6 +38,8 @@ export default function NhapHangLoatPage() {
   const [rows, setRows] = useState<ParsedRow[]>([]);
   const [tenFile, setTenFile] = useState("");
   const [loiChung, setLoiChung] = useState("");
+  // File soạn trên BẢN MẪU CŨ (thiếu hẳn cột) — vẫn đăng được nhưng phải báo rõ.
+  const [canhBaoFile, setCanhBaoFile] = useState("");
   const [dangGui, setDangGui] = useState(false);
   const [ketQua, setKetQua] = useState("");
 
@@ -47,6 +49,10 @@ export default function NhapHangLoatPage() {
   const [loiAnh, setLoiAnh] = useState("");
   // Bỏ qua đối chiếu mã ảnh — đăng thành tin mới hết (dùng khi mã trùng với đợt cũ)
   const [luonTinMoi, setLuonTinMoi] = useState(false);
+  // MÃ TRÙNG VỚI ĐỢT NGÀY KHÁC — dò ngay khi đọc file, báo TRƯỚC khi bấm Đăng.
+  // Đợt 10/09/2026 hỏng vì chỗ này: Cowork đánh lại dn01…pt06 mỗi ngày, web tưởng
+  // là tin cũ nên 30/34 tin không lên, còn ảnh mới thì chui vào tin của nhà khác.
+  const [maDoiLap, setMaDoiLap] = useState<{ ma: string; ngay: string; tieuDe: string }[]>([]);
 
   const sai = rows.filter((r) => r.loi.length > 0);
   // CẢNH BÁO VÀNG — dòng vẫn đăng được nhưng chủ dự án cần liếc qua: mô tả bị dồn
@@ -146,21 +152,54 @@ export default function NhapHangLoatPage() {
   async function chonFile(file: File) {
     setKetQua("");
     setLoiChung("");
+    setCanhBaoFile("");
     setRows([]);
     setTenFile(file.name);
     try {
       const laExcel = /\.xlsx$/i.test(file.name);
-      const { rows: r, loiChung: err } = laExcel
+      const { rows: r, loiChung: err, canhBaoChung } = laExcel
         ? docTinTuBang(await docXlsx(await file.arrayBuffer()))
         : docTinTuCsv(await file.text());
       if (err) setLoiChung(err);
+      setCanhBaoFile(canhBaoChung ?? "");
       setRows(r);
+      doMaTrungDotCu(r);
     } catch (e) {
       setLoiChung(
         /\.xls$/i.test(file.name)
           ? "File .xls đời cũ chưa đọc được — mở bằng Excel rồi Lưu thành .xlsx."
           : `Không đọc được file: ${e instanceof Error ? e.message : "lỗi không rõ"}`,
       );
+    }
+  }
+
+  // MỐC "CÙNG ĐỢT" — tin đã đăng trong 3 ngày gần đây mới coi là tin của chính
+  // đợt đang làm. Xa hơn thì mã trùng chỉ là do Cowork đánh lại mã từ đầu mỗi
+  // ngày, KHÔNG phải cùng một căn nhà.
+  const mocCungDot = () => new Date(Date.now() - 3 * 24 * 3600 * 1000).toISOString();
+
+  // Dò ngay lúc đọc file: mã nào trùng tin đã đăng từ đợt NGÀY KHÁC. Báo trước khi
+  // bấm Đăng để chủ dự án thấy, chứ không để phát hiện sau khi ảnh đã lẫn tin.
+  async function doMaTrungDotCu(ds: ParsedRow[]) {
+    setMaDoiLap([]);
+    const ma = [...new Set(ds.filter((r) => !r.loi.length).map((r) => r.maAnh).filter(Boolean))];
+    if (!ma.length) return;
+    try {
+      const { data } = await createClient()
+        .from("listings")
+        .select("title,created_at,details->>maAnh")
+        .in("details->>maAnh", ma)
+        .lt("created_at", mocCungDot());
+      // Tiêu đề khớp = vẫn là tin đó (chỉ bổ sung ảnh), không phải "trùng mã".
+      const goi = (s: string) => (s ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "");
+      const tieuDeTheoMa = new Map(ds.filter((r) => r.maAnh).map((r) => [r.maAnh, goi(r.tomTat.tieuDe)]));
+      setMaDoiLap(
+        ((data ?? []) as { title: string | null; created_at: string; maAnh: string }[])
+          .filter((r) => r.maAnh && goi(r.title ?? "") !== tieuDeTheoMa.get(r.maAnh))
+          .map((r) => ({ ma: r.maAnh, ngay: (r.created_at ?? "").slice(0, 10), tieuDe: r.title ?? "" })),
+      );
+    } catch {
+      /* không dò được thì thôi — lúc đăng vẫn lọc theo mốc cùng đợt */
     }
   }
 
@@ -175,18 +214,27 @@ export default function NhapHangLoatPage() {
       // ĐÃ ĐĂNG RỒI THÌ CHỈ BỔ SUNG ẢNH, KHÔNG ĐĂNG TRÙNG.
       // Ảnh thường về từng đợt (xin được tin nào bỏ tin đó), nên chủ dự án hay
       // phải tải cùng một file nhiều lần. Đối chiếu bằng mã ảnh đã lưu trong tin.
-      // ⚠️ Mã ảnh LẶP LẠI GIỮA CÁC NGÀY (cowork đánh lại từ dn01 mỗi ngày) nên tin
-      // hôm nay dễ bị nhận nhầm là tin cũ → ảnh mới bị nhét vào tin của nhà khác.
-      // Tick "Luôn đăng thành tin mới" để bỏ qua bước đối chiếu này.
+      // ⚠️ MÃ LẶP GIỮA CÁC NGÀY (Cowork đánh lại dn01… mỗi ngày) — đợt 10/09/2026
+      // vì vậy mà 30/34 tin không lên, ảnh mới lại chui vào tin của nhà khác.
+      // HAI ĐIỀU KIỆN mới coi là CÙNG MỘT TIN (đủ một trong hai là được):
+      //   · tin đó đăng TRONG 3 NGÀY (đúng đợt đang làm, tải lại file lần hai), hoặc
+      //   · TIÊU ĐỀ khớp nhau (cùng căn nhà, dù đăng đã lâu).
+      // Khác cả hai = nhà khác trùng mã → đăng thành tin mới, không đụng tin cũ.
       const maTrongFile = luonTinMoi ? [] : [...new Set(hopLe.map((r) => r.maAnh).filter(Boolean))];
       const daCo = new Map<string, { id: string; images: string[] }>();
       if (maTrongFile.length) {
         const { data } = await supabase
           .from("listings")
-          .select("id,images,details->>maAnh")
+          .select("id,images,title,created_at,details->>maAnh")
           .in("details->>maAnh", maTrongFile);
-        for (const r of (data ?? []) as { id: string; images: string[] | null; maAnh: string }[])
-          if (r.maAnh) daCo.set(r.maAnh, { id: r.id, images: r.images ?? [] });
+        const moc = mocCungDot();
+        const goi = (s: string) => (s ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "");
+        const tieuDeTheoMa = new Map(hopLe.filter((r) => r.maAnh).map((r) => [r.maAnh, goi(r.tomTat.tieuDe)]));
+        for (const r of (data ?? []) as { id: string; images: string[] | null; title: string | null; created_at: string; maAnh: string }[]) {
+          if (!r.maAnh) continue;
+          const cungTin = r.created_at >= moc || goi(r.title ?? "") === tieuDeTheoMa.get(r.maAnh);
+          if (cungTin) daCo.set(r.maAnh, { id: r.id, images: r.images ?? [] });
+        }
       }
 
       const tinMoi = hopLe.filter((r) => !r.maAnh || !daCo.has(r.maAnh));
@@ -300,7 +348,7 @@ export default function NhapHangLoatPage() {
       {/* BƯỚC 4 — TẢI ẢNH HÀNG LOẠT, TỰ KHỚP VÀO TIN THEO TÊN TỆP */}
       <section className="rounded-xl border border-cvr-line bg-white p-5">
         <p className="text-xs font-bold uppercase tracking-wider text-cvr-faint">Bước 4</p>
-        <h2 className="mt-1 text-base font-semibold text-cvr-ink">Tải ảnh &amp; video cho tất cả tin — một lượt</h2>
+        <h2 className="mt-1 text-base font-semibold text-cvr-ink">Tải ảnh cho tất cả tin — một lượt</h2>
         <p className="mt-1 text-sm text-cvr-muted">
           Ảnh để trong thư mục trên máy, tên ảnh khớp cột <code>ma_anh</code> trong file Excel.
           Chọn HẾT ảnh một lần — hệ thống tự chia về đúng từng tin, ảnh <strong>-1</strong> làm ảnh đại diện.
@@ -309,10 +357,11 @@ export default function NhapHangLoatPage() {
         <p className="mt-1 text-sm text-cvr-muted">
           Mọi ảnh tải lên đều được <strong>tự thu nhỏ + đóng dấu chìm “COASTAL LAND”</strong> ở góc dưới phải.
         </p>
-        <p className="mt-1 text-sm text-cvr-muted">
-          Chọn luôn cả <strong>video</strong> (mp4, mov…) đặt tên cùng mã tin — mỗi tin nhận
-          <strong> 15 ảnh + 1 video</strong>. Video phải <strong>dưới 50MB</strong>; nặng hơn thì
-          đưa lên YouTube rồi dán link vào cột <code>video</code> của file Excel (không tốn kho ảnh).
+        <p className="mt-1 rounded-lg bg-cvr-surface px-3 py-2 text-sm text-cvr-body">
+          <strong>VIDEO ĐI QUA KÊNH YOUTUBE — không tải tệp video lên đây.</strong> Đưa video lên
+          kênh Coastal Land để <strong>Công khai</strong>, copy link, dán vào cột <code>video</code>
+          của đúng dòng tin trong file Excel. Mỗi tin <strong>15 ảnh + 1 video</strong>.
+          Video nằm trên YouTube thì <strong>không tốn kho ảnh</strong> (một video ăn bằng 40 tấm ảnh).
         </p>
         <div className="mt-3 flex flex-wrap items-center gap-3">
           {/* HAI NÚT RIÊNG, KHÔNG GỘP MỘT Ô.
@@ -333,19 +382,8 @@ export default function NhapHangLoatPage() {
               onChange={(e) => { const f = e.target.files; if (f?.length) taiAnhHangLoat(f); e.target.value = ""; }}
             />
           </label>
-          <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-cvr-line px-4 py-2 text-sm font-medium text-cvr-body hover:border-cvr-ink hover:text-cvr-ink">
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 6h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z" />
-            </svg>
-            Chọn video từ bộ sưu tập
-            <input
-              type="file"
-              accept="video/*"
-              multiple
-              className="sr-only"
-              onChange={(e) => { const f = e.target.files; if (f?.length) taiAnhHangLoat(f); e.target.value = ""; }}
-            />
-          </label>
+          {/* KHÔNG có nút chọn video: quy trình chốt 11/09/2026 — mọi video đăng
+              bằng LINK YouTube (cột `video` trong file), không lưu tệp trong kho ảnh. */}
           {dangTaiAnh > 0 && <span className="text-sm text-cvr-muted">Đang tải… còn {dangTaiAnh} ảnh</span>}
           {anhDaTai.length > 0 && dangTaiAnh === 0 && (
             <span className="text-sm font-medium text-green-700">
@@ -372,6 +410,11 @@ export default function NhapHangLoatPage() {
       </section>
 
       {loiChung && <p className="rounded-lg bg-red-50 px-4 py-2.5 text-sm text-red-700">{loiChung}</p>}
+      {canhBaoFile && (
+        <p className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-2.5 text-sm font-medium text-amber-900">
+          {canhBaoFile}
+        </p>
+      )}
       {ketQua && (
         <p className={`rounded-lg px-4 py-2.5 text-sm ${ketQua.startsWith("Đã đăng") && !ketQua.includes("lỗi") ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>
           {ketQua}
@@ -403,8 +446,9 @@ export default function NhapHangLoatPage() {
               <input type="checkbox" checked={luonTinMoi} onChange={(e) => setLuonTinMoi(e.target.checked)} className="mt-0.5 h-4 w-4 accent-cvr-ink" />
               <span className="text-xs text-cvr-body">
                 <strong>Luôn đăng thành tin mới</strong> — bỏ qua đối chiếu <code>ma_anh</code>.
-                Tick khi đăng lại cả một đợt, hoặc khi mã tin (dn01, hue01…) <strong>trùng với đợt ngày khác</strong>
-                — không tick thì web tưởng là tin cũ, chỉ nhét thêm ảnh vào tin của người khác.
+                Bình thường không cần tick: web chỉ đối chiếu với tin đăng <strong>trong 3 ngày</strong>,
+                nên mã trùng đợt ngày khác (dn01, hue01…) đã tự đăng thành tin mới.
+                Tick khi muốn đăng lại một đợt vừa đăng hôm nay thành tin khác.
               </span>
             </label>
             <p className="w-full text-xs text-cvr-muted">
@@ -413,6 +457,25 @@ export default function NhapHangLoatPage() {
               Nhờ vậy xin được ảnh tới đâu cứ bỏ vào thư mục rồi tải lên tới đó.
             </p>
           </div>
+
+          {maDoiLap.length > 0 && (
+            <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
+              <p className="text-sm font-semibold text-blue-800">
+                {maDoiLap.length} mã tin trong file trùng mã của đợt ngày khác — vẫn đăng thành
+                <strong> tin mới</strong>, không đụng vào tin cũ:
+              </p>
+              <ul className="mt-2 space-y-1 text-sm text-blue-800">
+                {maDoiLap.map((m) => (
+                  <li key={m.ma + m.ngay}>
+                    <code>{m.ma}</code> — đã có tin đăng {m.ngay}: {m.tieuDe.slice(0, 60)}
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-2 text-xs text-blue-800">
+                Đặt <code>ma_anh</code> kèm ngày (<code>dn01-1009</code>) thì không còn cảnh báo này.
+              </p>
+            </div>
+          )}
 
           {sai.length > 0 && (
             <div className="rounded-xl border border-red-200 bg-red-50 p-4">

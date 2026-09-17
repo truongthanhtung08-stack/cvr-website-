@@ -94,6 +94,14 @@ export const COT = {
   phuongXa: "phuong_xa",
   quanHuyen: "quan_huyen",
   tinhThanh: "tinh_thanh",
+  // ── ĐỊA CHỈ HỆ CŨ, CHÉP NGUYÊN TỪ TIN GỐC ─────────────────────────────────
+  // Một phường mới gộp 2–4 phường cũ nên KHÔNG có cách nào suy ngược từ hệ mới
+  // ra đúng phường cũ: đo trên 34 tin ngày 10/09 thì 13 tin mất cấp phường, vài
+  // tin ra sai hẳn ("Thủy Vân" thành "Vỹ Dạ"). Tin gốc vốn ghi theo hệ cũ, nên
+  // Cowork chép nguyên vào hai cột này; có thì web dùng thẳng, không suy nữa.
+  phuongXaCu: "phuong_xa_cu",
+  quanHuyenCu: "quan_huyen_cu",
+  tinhCu: "tinh_cu",             // tỉnh trước sáp nhập (Bình Định, Bình Thuận…)
   hangTin: "hang_tin",
   anh: "anh",
   maAnh: "ma_anh",
@@ -219,12 +227,29 @@ export function docCsv(text: string): string[][] {
 }
 
 // ── KIỂM TRA & CHUYỂN THÀNH TIN ─────────────────────────────────────────────
-export function docTinTuCsv(text: string): { rows: ParsedRow[]; loiChung: string | null } {
+// Kết quả đọc cả file: lỗi chung (đỏ, không đọc được) và cảnh báo chung (vàng,
+// vẫn đăng được) — vd file soạn theo BẢN MẪU CŨ nên thiếu hẳn vài cột.
+export type KetQuaDoc = { rows: ParsedRow[]; loiChung: string | null; canhBaoChung?: string };
+
+// CỘT CỦA BẢN MẪU HIỆN HÀNH. Thiếu cột nào trong đây nghĩa là file đang soạn trên
+// bản mẫu CŨ — cả cột đó sẽ trống trên web mà không ai biết. Đợt 10/09 hỏng một
+// phần vì chuyện này: bản mẫu 48 cột không có 3 cột địa chỉ hệ cũ.
+const COT_BAN_MOI: { cot: string; ten: string }[] = [
+  { cot: COT.phuongXaCu, ten: "địa chỉ hệ cũ" },
+  { cot: COT.quanHuyenCu, ten: "địa chỉ hệ cũ" },
+  { cot: COT.tinhCu, ten: "địa chỉ hệ cũ" },
+  { cot: COT.donGiaThue, ten: "đơn giá thuê theo m²" },
+  { cot: COT.nguon, ten: "link tin gốc" },
+  { cot: COT.linkAnh, ten: "link ảnh gốc" },
+  { cot: COT.ghiChu, ten: "ghi chú" },
+];
+
+export function docTinTuCsv(text: string): KetQuaDoc {
   return docTinTuBang(docCsv(text));
 }
 
 // Dùng chung cho CSV và Excel (.xlsx) — cả hai đều quy về bảng string[][]
-export function docTinTuBang(bang: string[][]): { rows: ParsedRow[]; loiChung: string | null } {
+export function docTinTuBang(bang: string[][]): KetQuaDoc {
   if (bang.length < 2) return { rows: [], loiChung: "File chưa có dữ liệu (cần dòng tiêu đề + ít nhất 1 dòng tin)." };
 
   // TÌM DÒNG TÊN CỘT — không bắt buộc phải là dòng đầu tiên: chủ dự án hay chèn
@@ -239,10 +264,25 @@ export function docTinTuBang(bang: string[][]): { rows: ParsedRow[]; loiChung: s
   if (thieu.length)
     return { rows: [], loiChung: `File thiếu cột bắt buộc: ${thieu.join(", ")}. Hãy tải file mẫu và nhập theo đúng cột.` };
 
+  // FILE SOẠN TRÊN BẢN MẪU CŨ — báo ngay, đừng để đăng xong mới phát hiện mất cột.
+  const cotThieu = COT_BAN_MOI.filter((c) => !header.includes(c.cot));
+  const tenNhom = [...new Set(cotThieu.map((c) => c.ten))];
+
   const rows = bang
     .slice(viTriHeader + 1)
     .map((cells, i) => docMotDong(header, cells, viTriHeader + i + 2));
-  return { rows, loiChung: null };
+  return {
+    rows,
+    loiChung: null,
+    ...(cotThieu.length
+      ? {
+          canhBaoChung:
+            `File đang theo BẢN MẪU CŨ — thiếu ${cotThieu.length} cột: ` +
+            `${cotThieu.map((c) => c.cot).join(", ")} (${tenNhom.join(" · ")}). ` +
+            `Tin vẫn đăng được nhưng những mục đó sẽ TRỐNG trên web — tải lại file mẫu mới rồi bảo Cowork nhập theo bản đó.`,
+        }
+      : {}),
+  };
 }
 
 function docMotDong(header: string[], cells: string[], soDong: number): ParsedRow {
@@ -263,6 +303,17 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
 
   const moTa = lay(COT.moTa);
   if (moTa.trim().length < 50) loi.push(`Mô tả quá ngắn (${moTa.trim().length}/50 ký tự)`);
+  // ── CHUẨN SEO CHO TIÊU ĐỀ & MÔ TẢ (cảnh báo vàng, vẫn đăng được) ───────────
+  // Đo 34 tin ngày 10/09: 17 tiêu đề dài trên 80 ký tự (Google cắt mất đuôi) và
+  // 26 tiêu đề không có tên phường/xã hoặc tỉnh — mất từ khoá địa phương, đúng
+  // thứ Coastal Land mạnh nhất. Thẻ <title> đã được web tự chuẩn hoá, nhưng sửa
+  // từ gốc vẫn hơn: tiêu đề là dòng khách đọc trên thẻ tin.
+  if (tieuDe && tieuDe.length > 75) canhBao.push(`Tiêu đề dài ${tieuDe.length} ký tự — nên 45–70, Google cắt phần sau`);
+  if (tieuDe && /siêu phẩm|sập sàn|giá sốc|cực hot|gấp gấp|[\u{1F300}-\u{1FAFF}☀-➿]/iu.test(tieuDe))
+    canhBao.push("Tiêu đề có từ câu khách / biểu tượng cảm xúc — bỏ đi, Google coi là tin rác");
+  if (tieuDe && /\b0\d{8,10}\b/.test(tieuDe)) canhBao.push("Tiêu đề có số điện thoại — bỏ khỏi tiêu đề");
+  if (moTa.trim().length >= 50 && moTa.trim().length < 300)
+    canhBao.push(`Mô tả ${moTa.trim().length} ký tự — dưới 300 Google coi là nội dung mỏng`);
   // XUỐNG DÒNG PHẢI KHỚP TIN GỐC. Người đăng viết mỗi ý một dòng; dán qua công cụ
   // trung gian là dồn hết thành một cục chữ, lên web khách bỏ đi. Không chặn đăng
   // (có tin gốc vốn viết liền) nhưng phải báo vàng để chủ dự án mở tin gốc đối chiếu.
@@ -291,6 +342,31 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
 
   const tinhThanh = lay(COT.tinhThanh);
   if (!tinhThanh) loi.push("Thiếu tỉnh/thành");
+  // SEO ĐỊA PHƯƠNG — tiêu đề nên có tên phường/xã và tỉnh (bỏ tiền tố cấp khi so).
+  const trongTieuDe = (s: string) =>
+    !!s && chuanHoa(tieuDe).includes(chuanHoa(s.replace(/^(Phường|Xã|Thị trấn|Đặc khu)\s+/i, "")));
+  const thieuDiaDanh = [
+    phuongXa && !trongTieuDe(phuongXa) ? "phường/xã" : "",
+    tinhThanh && !trongTieuDe(tinhThanh) ? "tỉnh/thành" : "",
+  ].filter(Boolean);
+  if (tieuDe && thieuDiaDanh.length)
+    canhBao.push(`Tiêu đề thiếu ${thieuDiaDanh.join(" và ")} — thêm vào để tin ra trong tìm kiếm theo khu vực`);
+  // MỤC ĐÍCH PHẢI ĐỌC ĐƯỢC NGAY Ở TIÊU ĐỀ. Khách lướt danh sách chỉ đọc dòng tiêu
+  // đề; "Studio The Camellia 30m2 tầng 5" không cho biết bán hay cho thuê, mà đó
+  // cũng là cụm từ khoá người tìm gõ vào Google ("bán căn hộ…", "cho thuê nhà…").
+  {
+    const t = chuanHoa(tieuDe);
+    const noiBan = /(^|_)ban(_|$)|chuyen_nhuong|sang_nhuong|can_ban|cat_lo/.test(t);
+    const noiThue = /cho_thue|(^|_)thue(_|$)|cho_muon/.test(t);
+    if (tieuDe && mucDich === "ban" && !noiBan)
+      canhBao.push('Tiêu đề không cho biết là tin BÁN — mở đầu bằng "Bán …" (hoặc "Chuyển nhượng …")');
+    if (tieuDe && mucDich === "thue" && !noiThue)
+      canhBao.push('Tiêu đề không cho biết là tin CHO THUÊ — mở đầu bằng "Cho thuê …"');
+    if (tieuDe && mucDich === "ban" && noiThue && !noiBan)
+      canhBao.push("muc_dich ghi BÁN nhưng tiêu đề nói CHO THUÊ — kiểm tra lại cả dòng");
+    if (tieuDe && mucDich === "thue" && noiBan && !noiThue)
+      canhBao.push("muc_dich ghi CHO THUÊ nhưng tiêu đề nói BÁN — kiểm tra lại cả dòng");
+  }
 
   const dienTichSo = soVN(lay(COT.dienTich));
 
@@ -375,7 +451,15 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
   const dsSdt = tachNhieuSdt(lay(COT.lienHeSdt));
   const sdt = dsSdt[0] ?? "";
   const sdtLoi = tachDanhSachAnh(lay(COT.lienHeSdt)).filter((s) => s.trim() && !laSdtVN(s) && chuanHoaSdt(s).length !== 11);
-  if (sdtLoi.length) canhBao.push(`Số điện thoại không đúng chuẩn 10 số: ${sdtLoi.join(" · ")}`);
+  // SỐ ĐIỆN THOẠI LÀ BẮT BUỘC — chốt của chủ dự án: đủ 10 chữ số, CÓ SỐ 0 đầu.
+  // Không có số thì tin vô dụng (khách không liên hệ được), mà nguy hơn nữa là
+  // form admin từng tự điền hồ sơ người đăng nhập vào chỗ trống → số của chủ dự
+  // án bị đóng vào tin của khách. Vì vậy chặn ngay ở đây, không cho lên web.
+  // ⚠️ Excel hay NUỐT SỐ 0 ĐẦU khi ô để kiểu Số ("0905…" thành 905…) — cũng chặn.
+  if (!lay(COT.lienHeSdt).trim()) loi.push("Thiếu số điện thoại người đăng (lien_he_sdt)");
+  else if (!sdt) loi.push(`Số điện thoại không đọc được: "${lay(COT.lienHeSdt)}"`);
+  else if (sdtLoi.length)
+    loi.push(`Số điện thoại phải đủ 10 chữ số và có số 0 đầu — đang ghi: ${sdtLoi.join(" · ")}`);
   const email = lay(COT.lienHeEmail).trim().toLowerCase();
 
   // ── ĐẶC ĐIỂM THEO LOẠI HÌNH ────────────────────────────────────────────────
@@ -384,36 +468,39 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
   // chỉ tồn dữ liệu rác. Ba mục điện/nước/vào ở chỉ tồn tại ở tin CHO THUÊ.
   const khoaCoSan = new Set(fieldsFor(loaiHinhChuan, mucDich).map((f) => f.key));
   const specs: Record<string, string> = {};
-  const datSpec = (giaTri: string, ...uuTien: string[]) => {
+  // Ô có dữ liệu mà loại hình KHÔNG có mục đó thì trước đây bị bỏ lặng lẽ — Cowork
+  // gõ công mà không ai biết là mất. Nay báo vàng kèm TÊN CỘT để sửa cho đúng chỗ.
+  const datSpec = (giaTri: string, tenCot: string, ...uuTien: string[]) => {
     const v = giaTri.trim();
     if (!v) return;
     const k = uuTien.find((x) => khoaCoSan.has(x));
     if (k) specs[k] = v;
+    else canhBao.push(`Cột "${tenCot}" không thuộc loại hình "${loaiHinhChuan}" — ô này KHÔNG hiện trên trang tin`);
   };
-  datSpec(lay(COT.huongBanCong), "balcony");
-  datSpec(lay(COT.matTien), "frontage");
-  datSpec(lay(COT.duongVao), "roadWidth");
+  datSpec(lay(COT.huongBanCong), COT.huongBanCong, "balcony");
+  datSpec(lay(COT.matTien), COT.matTien, "frontage");
+  datSpec(lay(COT.duongVao), COT.duongVao, "roadWidth");
   // Nhà/biệt thự/shophouse: "số tầng" là của chính căn nhà. Căn hộ/chung cư
   // không có mục ấy nên hiểu là TỔNG SỐ TẦNG CỦA TOÀ.
-  datSpec(lay(COT.soTang), "floors", "buildingFloors");
-  datSpec(lay(COT.chieuDai), "depth");
-  datSpec(lay(COT.namXayDung), "builtYear");
-  datSpec(lay(COT.tangSo), "floor");
+  datSpec(lay(COT.soTang), COT.soTang, "floors", "buildingFloors");
+  datSpec(lay(COT.chieuDai), COT.chieuDai, "depth");
+  datSpec(lay(COT.namXayDung), COT.namXayDung, "builtYear");
+  datSpec(lay(COT.tangSo), COT.tangSo, "floor");
   // Kho · nhà xưởng · bãi — bộ đặc điểm riêng, phần lớn là tin CHO THUÊ.
-  datSpec(lay(COT.dienTichSuDung), "usableArea");
-  datSpec(lay(COT.loaiKho), "khoLoai");
-  datSpec(lay(COT.chieuCao), "clearHeight");
-  datSpec(lay(COT.taiTrongNen), "floorLoad");
-  datSpec(lay(COT.congSuatDien), "power");
-  datSpec(lay(COT.pccc), "pccc");
-  datSpec(lay(COT.vanPhongTrongKho), "officeArea");
-  datSpec(lay(COT.xeContainer), "container");
+  datSpec(lay(COT.dienTichSuDung), COT.dienTichSuDung, "usableArea");
+  datSpec(lay(COT.loaiKho), COT.loaiKho, "khoLoai");
+  datSpec(lay(COT.chieuCao), COT.chieuCao, "clearHeight");
+  datSpec(lay(COT.taiTrongNen), COT.taiTrongNen, "floorLoad");
+  datSpec(lay(COT.congSuatDien), COT.congSuatDien, "power");
+  datSpec(lay(COT.pccc), COT.pccc, "pccc");
+  datSpec(lay(COT.vanPhongTrongKho), COT.vanPhongTrongKho, "officeArea");
+  datSpec(lay(COT.xeContainer), COT.xeContainer, "container");
   // Mọi tin cho thuê
-  datSpec(lay(COT.thoiGianVaoO), "moveIn");
-  datSpec(lay(COT.thoiHanThue), "minTerm");
-  datSpec(lay(COT.tienCoc), "deposit");
-  datSpec(lay(COT.giaDien), "elecPrice");
-  datSpec(lay(COT.giaNuoc), "waterPrice");
+  datSpec(lay(COT.thoiGianVaoO), COT.thoiGianVaoO, "moveIn");
+  datSpec(lay(COT.thoiHanThue), COT.thoiHanThue, "minTerm");
+  datSpec(lay(COT.tienCoc), COT.tienCoc, "deposit");
+  datSpec(lay(COT.giaDien), COT.giaDien, "elecPrice");
+  datSpec(lay(COT.giaNuoc), COT.giaNuoc, "waterPrice");
 
   // ── TIỆN ÍCH · NỘI THẤT · PHÁP LÝ — DỊCH VỀ ĐÚNG TÊN DANH MỤC ─────────────
   // Trang tin chỉ hiện tiện ích/nội thất TRÙNG KHỚP danh mục chuẩn. Ghi "Bảo vệ
@@ -451,6 +538,16 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
       // chỉ bổ sung ảnh còn thiếu thay vì đăng trùng một tin nữa.
       maAnh: (laDanhSachTenAnh(maAnhRaw) ? "" : maAnhRaw) || undefined,
       addressDetail: lay(COT.diaChi) || undefined,
+      // ĐỊA CHỈ HỆ CŨ NGUYÊN VĂN — trang tin ưu tiên dòng này thay vì suy ngược.
+      ...(lay(COT.phuongXaCu) || lay(COT.quanHuyenCu) || lay(COT.tinhCu)
+        ? {
+            diaChiCu: {
+              phuong: lay(COT.phuongXaCu) || undefined,
+              quan: lay(COT.quanHuyenCu) || undefined,
+              tinh: lay(COT.tinhCu) || undefined,
+            },
+          }
+        : {}),
       legal: phapLy || undefined,
       direction: lay(COT.huong) || undefined,
       contact: ten || sdt || email

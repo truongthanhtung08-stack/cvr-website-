@@ -392,7 +392,7 @@ export function chuHeCu(h: HaiHe): string {
 export function haiDongDiaChi(
   he: GeoMode,
   diaChi: { tinh: string; quan?: string; phuong?: string },
-): { moi: string; cu: string } {
+): { moi: string; cu: string; cuTinh: string } {
   const h = dongBoHaiHe(he, diaChi);
   const duMoi = he === "moi" || h.duToiPhuong;
   const moi = duMoi ? chuHeMoi(h) : "";
@@ -409,7 +409,9 @@ export function haiDongDiaChi(
     !h.cu.phuong &&
     (!h.cu.quan || giong(h.cu.quan, h.moi.phuong)) &&
     (!h.cu.tinh || giong(h.cu.tinh, h.moi.tinh));
-  return { moi, cu: cu.length && !changThemGi ? cu.join(", ") : "" };
+  // cuTinh: tên TỈNH theo hệ cũ, trả riêng để nơi gọi ghép với phường/quận cũ mà
+  // người nhập chép tay từ tin gốc (khi đó phần suy ngược ở trên không dùng tới).
+  return { moi, cu: cu.length && !changThemGi ? cu.join(", ") : "", cuTinh: h.cu.tinh };
 }
 
 // Hai tên chỉ CÙNG MỘT CHỖ khi lõi tên trùng nhau ("Phường Hội An" = "Hội An").

@@ -21,7 +21,7 @@ Mỗi ngày giao **hai gói**, vào **đúng ba file**, trong thư mục của n
 
 | Gói | File | Nội dung |
 |---|---|---|
-| **A** | `Bang-<ngày>.csv` | **34 tin** bất động sản · 48 cột |
+| **A** | `Bang-<ngày>.csv` | **34 tin** bất động sản · 51 cột |
 | **B** | `TinTuc-<ngày>.csv` | **5 bài** tin tức chuẩn SEO · 9 cột |
 | — | `bao-cao.txt` | Báo cáo chung cho cả hai gói |
 
@@ -68,7 +68,7 @@ C:\Users\X1 GEN 8\Projects\TIN-HANG-NGAY\
 │
 ├── _MAU\                                   ← KHUÔN GỐC. KHÔNG SỬA, KHÔNG XOÁ.
 │   ├── YEU-CAU-COWORK.md                   ← chính file này
-│   ├── mau-nhap-tin-hang-loat.csv          ← khuôn GÓI A (48 cột + 17 dòng ví dụ)
+│   ├── mau-nhap-tin-hang-loat.csv          ← khuôn GÓI A (51 cột + 17 dòng ví dụ)
 │   ├── mau-tin-tuc-hang-ngay.csv           ← khuôn GÓI B (9 cột + 2 bài mẫu)
 │   ├── DANH-SACH-PHUONG-XA-MIEN-TRUNG.txt  ← 734 phường/xã, chép tên từ đây
 │   └── anh-tin.mjs                         ← công cụ của chủ dự án, Cowork không dùng
@@ -96,25 +96,32 @@ web đọc cả file, tin đợt sau vẫn nhảy vào bảng.
 
 # 🅰️ GÓI A — 34 TIN BẤT ĐỘNG SẢN
 
-## A1. Định mức — 34 tin, 5 khu vực
+## A1. Định mức — 34 tin, 7 khu vực (mở rộng 17/09/2026)
 
 | Khu vực | `tinh_thanh` (hệ MỚI) | Địa bàn trọng tâm | Tin/ngày | Mã ảnh |
 |---|---|---|---|---|
-| **Đà Nẵng** | `Đà Nẵng` | Sơn Trà · An Hải · Hải Châu · Ngũ Hành Sơn · Hòa Xuân · Hội An · Điện Bàn | **10** | `dn01`–`dn10` |
-| **Huế** | `Huế` | Phú Xuân · Thuận Hóa · Vỹ Dạ · An Cựu · Thuận An · Hương Thủy | **6** | `hue01`–`hue06` |
-| **Quy Nhơn** | **`Gia Lai`** | Quy Nhơn · Quy Nhơn Bắc/Nam/Đông/Tây · An Nhơn | **6** | `qnhon01`–`qnhon06` |
-| **Nha Trang** | **`Khánh Hòa`** | Nha Trang · Bắc/Tây/Nam Nha Trang · Cam Ranh | **6** | `nt01`–`nt06` |
-| **Phan Thiết** | **`Lâm Đồng`** | Phan Thiết · Mũi Né · Phú Thủy · Tiến Thành · La Gi | **6** | `pt01`–`pt06` |
+| **Đà Nẵng** | `Đà Nẵng` | Sơn Trà · An Hải · Hải Châu · Ngũ Hành Sơn · Hòa Xuân · Hội An · Điện Bàn | **6** | `dn01-<ngày>`–`dn06-<ngày>` |
+| **Huế** | `Huế` | Phú Xuân · Thuận Hóa · Vỹ Dạ · An Cựu · Thuận An · Hương Thủy | **5** | `hue01-<ngày>`–`hue05-<ngày>` |
+| **Quy Nhơn** | **`Gia Lai`** | Quy Nhơn · Quy Nhơn Bắc/Nam/Đông/Tây · An Nhơn | **5** | `qnhon01-<ngày>`–`qnhon05-<ngày>` |
+| **Nha Trang** | **`Khánh Hòa`** | Nha Trang · Bắc/Tây/Nam Nha Trang · Cam Ranh | **5** | `nt01-<ngày>`–`nt05-<ngày>` |
+| **Phan Thiết** | **`Lâm Đồng`** | Phan Thiết · Mũi Né · Phú Thủy · Tiến Thành · La Gi | **5** | `pt01-<ngày>`–`pt05-<ngày>` |
+| **Quảng Trị** ⭐ | `Quảng Trị` | Đông Hà · Quảng Trị · Cửa Việt · Gio Linh · Đồng Hới (Quảng Bình cũ) | **4** | `qtri01-<ngày>`–`qtri04-<ngày>` |
+| **Quảng Ngãi** ⭐ | `Quảng Ngãi` | TP. Quảng Ngãi · Sơn Tịnh · Tư Nghĩa · Bình Sơn (Dung Quất) · Đức Phổ | **4** | `qngai01-<ngày>`–`qngai04-<ngày>` |
 | | | **Tổng** | **34** | |
+
+**Mã ảnh kèm NGÀY** — `dn01-1009` cho gói ngày 10/09 (xem A13). Tên tệp ảnh cũng theo mã đó: `dn01-1009-1.jpg`.
+
+**Phân bổ phải ĐỀU — không dồn tin vào một vài khu vực dễ tìm.** Khu vực nào gom
+không đủ thì lấy bù từ khu vực liền kề, nhưng **mỗi khu vực phải có ít nhất 3 tin**
+và phải ghi rõ trong `bao-cao.txt` đã bù bao nhiêu, từ đâu sang đâu.
 
 Mỗi khu vực phải có **cả tin mua bán LẪN tin cho thuê**, tỷ lệ khoảng **70% bán · 30% thuê**.
 
-⚠️ **Hai tỉnh dễ ghi nhầm** — sáp nhập 2025 đổi tỉnh chủ quản:
-**Quy Nhơn** nay thuộc **Gia Lai** · **Phan Thiết** nay thuộc **Lâm Đồng**.
-Ghi `Bình Định` / `Bình Thuận` là **SAI**, tin không lọc được theo khu vực.
-
-**Khu vực dự bị** khi một khu vực không gom đủ: Quảng Nam/Hội An (thuộc `Đà Nẵng`),
-Quảng Ngãi, Quảng Trị, Đắk Lắk.
+⚠️ **Bốn tỉnh dễ ghi nhầm** — sáp nhập 2025 đổi tỉnh chủ quản:
+**Quy Nhơn** nay thuộc **Gia Lai** · **Phan Thiết** nay thuộc **Lâm Đồng** ·
+**Đồng Hới / Quảng Bình cũ** nay thuộc **Quảng Trị** · **Kon Tum** nay thuộc **Quảng Ngãi**.
+Ghi `Bình Định` / `Bình Thuận` / `Quảng Bình` ở cột `tinh_thanh` là **SAI**, tin không lọc
+được theo khu vực — tên cũ đó thuộc về cột `tinh_cu`.
 
 > Không gom đủ số tin **thật** thì **giao thiếu** và ghi rõ trong `bao-cao.txt` —
 > **tuyệt đối không bịa thêm cho đủ số.**
@@ -133,15 +140,56 @@ Từ 2025 **không còn Quận/Huyện**. Chỉ có: **Tỉnh/Thành → Phườ
   `Phường Quy Nhơn` (Gia Lai) · `Phường Nha Trang` (Khánh Hòa) · `Phường Đông Hà` (Quảng Trị).
 - Cột `quan_huyen` **không có trong mẫu mới** — đừng thêm vào.
 
+### ⭐ MỚI (17/09/2026) — BA CỘT ĐỊA CHỈ HỆ CŨ: `phuong_xa_cu` · `quan_huyen_cu` · `tinh_cu`
+
+Tin gốc gần như luôn ghi theo **địa giới CŨ**. Trước đây Cowork chỉ ghi hệ mới rồi để web
+tự suy ngược ra hệ cũ — **cách đó KHÔNG BAO GIỜ đúng được**, vì một phường mới gộp 2–4
+phường cũ. Đo thật trên 34 tin ngày 10/09: **13 tin mất hẳn cấp phường**, và có tin ra
+**sai người sai chỗ** ("Phường Thủy Vân" thành "Vỹ Dạ").
+
+Từ nay **chép NGUYÊN địa chỉ cũ của tin gốc vào ba cột này** — có sẵn ngay trên trang nguồn:
+
+| Tin gốc ghi | `phuong_xa` (mới) | `phuong_xa_cu` | `quan_huyen_cu` | `tinh_cu` |
+|---|---|---|---|---|
+| Phường Mân Thái, Quận Sơn Trà, Đà Nẵng | `Phường Sơn Trà` | `Mân Thái` | `Sơn Trà` | `Đà Nẵng` |
+| Phường Thủy Vân, TP Huế | `Phường Vỹ Dạ` | `Thủy Vân` | `Thuận Hóa` | `Thừa Thiên Huế` |
+| Xã Nhơn Lý, TP Quy Nhơn, Bình Định | `Phường Quy Nhơn Đông` | `Nhơn Lý` | `Quy Nhơn` | `Bình Định` |
+| Phường Phú Hài, Phan Thiết, Bình Thuận | `Phường Phú Thủy` | `Phú Hài` | `Phan Thiết` | `Bình Thuận` |
+
+- **Bỏ tiền tố cấp** ở hai cột `_cu` cho gọn: ghi `Mân Thái`, không ghi `Phường Mân Thái`.
+- `tinh_cu` là tên tỉnh **trước sáp nhập**: `Bình Định` (nay Gia Lai) · `Bình Thuận` (nay
+  Lâm Đồng) · `Thừa Thiên Huế` (nay Huế) · `Quảng Nam` (nay Đà Nẵng).
+- Tin gốc **không ghi hệ cũ** → để trống cả ba, web tự suy như trước. **Đừng đoán.**
+- Vẫn giữ thói quen ghi `tin gốc ghi: …` vào `ghi_chu` — hai chỗ đối chiếu được nhau.
+
+Trang tin hiện: dòng trên là địa chỉ hệ MỚI (kèm số nhà/đường), dòng dưới nhỏ hơn
+`Địa chỉ hệ cũ: Mân Thái, Sơn Trà, Đà Nẵng`.
+
 ## A3. Nguồn tin — thứ tự ưu tiên
 
 | # | Nguồn | Vì sao xếp ở đây |
 |---|---|---|
-| 1 | **batdongsan.com.vn** | **Nguồn chính.** Cập nhật liên tục, nhiều nhất, ảnh to rõ, nội dung đầy đủ nhất |
-| 2 | **homedy.com** | Tin có kiểm duyệt, ảnh khá, mô tả đủ |
-| 3 | **mogi.vn** | Tương tự Homedy |
-| 4 | **alonhadat.com.vn** | **Lấy ít thôi** — tin không xác thực, ảnh xấu (đo thật: tối đa 670px). Chỉ dùng khi ba nguồn trên không đủ |
-| 5 | Nhóm **Zalo · Facebook** | Cần đăng nhập → **bỏ qua**, chủ dự án tự lấy tay |
+| 1 | **batdongsan.com.vn** | Cập nhật liên tục, nhiều nhất, ảnh to rõ, nội dung đầy đủ nhất |
+| 2 | **nhatot.com** (Nhà Tốt) | Rất nhiều tin chính chủ, ảnh chụp thật, hay có tin mà batdongsan không có |
+| 3 | **homedy.com** | Tin có kiểm duyệt, ảnh khá, mô tả đủ |
+| 4 | **mogi.vn** | Tương tự Homedy |
+| 5 | **muaban.net · dothi.net · bds123.vn** | Bổ sung cho tỉnh lẻ (Quảng Trị · Quảng Ngãi) — nơi ba nguồn trên ít tin |
+| 6 | **alonhadat.com.vn** | **Lấy ít thôi** — tin không xác thực, ảnh xấu (đo thật: tối đa 670px). Chỉ khi các nguồn trên không đủ |
+| 7 | Nhóm **Zalo · Facebook** | Cần đăng nhập → **bỏ qua**, chủ dự án tự lấy tay |
+
+> ### ⭐ ĐA DẠNG NGUỒN (chốt 17/09/2026) — không lấy hết từ một trang
+> Đợt 10/09 **34/34 tin đều từ batdongsan.com.vn**. Một nguồn thì trùng tin với chính
+> mình, và hôm nào Cloudflare chặn là mất cả ngày.
+> **Luật: không quá 60% số tin mỗi ngày (tối đa 20/34) từ một trang.** Ghi rõ trong
+> `bao-cao.txt`: mỗi nguồn bao nhiêu tin.
+>
+> **Ba tiêu chí xếp thứ tự khi chọn giữa nhiều tin cùng khu vực:**
+> 1. **Đầy đủ thông tin nhất** — điền được nhiều cột nhất (xem A14), nhất là pháp lý,
+>    hướng, kết cấu, nội thất, tiện ích.
+> 2. **Mới nhất** — ưu tiên tin đăng trong **3 ngày**; quá 7 ngày chỉ lấy khi khu vực
+>    đó thiếu tin.
+> 3. **Ảnh đúng chuẩn** — cạnh ngắn **≥ 1200px**, ảnh chụp thật, không chụp màn hình,
+>    không watermark to, cắt 4:3 vẫn nét.
 
 **Cách tìm:** trên chính trang đó, lọc theo **tỉnh + loại hình**, sắp xếp **Tin mới nhất**,
 lấy tin đăng trong **3 ngày gần đây**.
@@ -171,6 +219,23 @@ Tin không đủ tiêu chí thì **bỏ, tìm tin khác** — đừng cố nhét
 
 Người bán tự đặt tiêu đề bao giờ cũng sát thực tế hơn câu do máy ghép.
 **Chỉ sửa khi không đạt chuẩn SEO:**
+
+> ### ⭐ CHUẨN SEO CHO TIÊU ĐỀ (chốt 17/09/2026) — web báo vàng nếu không đạt
+>
+> **Công thức:** `Bán|Cho thuê` + `loại hình` + `diện tích / đặc điểm chính` +
+> `đường hoặc dự án` + `, phường/xã, tỉnh` — **45–70 ký tự**.
+>
+> `Bán nhà riêng 2 tầng kiệt Trương Định, Phường Sơn Trà, Đà Nẵng` ✅ (62 ký tự)
+>
+> | Luật | Vì sao |
+> |---|---|
+> | **1. Mở đầu bằng "Bán…" hoặc "Cho thuê…"** | Khách lướt danh sách chỉ đọc tiêu đề; đó cũng đúng cụm người ta gõ Google. Đo 34 tin ngày 10/09: **9 tiêu đề không cho biết bán hay thuê** ("Studio The Camellia 30m2 tầng 5") |
+> | **2. Có TÊN PHƯỜNG/XÃ và TỈNH** | Mất từ khoá địa phương là mất thế mạnh của Coastal Land. Đo: **26/34 tiêu đề thiếu** một trong hai |
+> | **3. Dài 45–70 ký tự** | Trên 75 ký tự Google cắt mất đuôi. Đo: **17 tiêu đề trên 80 ký tự** |
+> | **4. Không "siêu phẩm · sập sàn · giá sốc", không emoji, không số điện thoại** | Google xếp vào nhóm tin rác |
+> | **5. Đúng mục đích** | `muc_dich` ghi `ban` mà tiêu đề nói "cho thuê" là sai cả dòng — web báo vàng |
+>
+> Sửa tiêu đề thì **ghi `ghi_chu`**: `đã sửa tiêu đề: gốc 98 ký tự, thiếu phường và tỉnh`.
 
 | Tiêu đề gốc | Vì sao phải sửa | Sửa thành |
 |---|---|---|
@@ -334,7 +399,19 @@ Thuê đất / Nhà xưởng / Kho bãi · Bất động sản khác
 | đất ruộng · đất vườn · đất nông nghiệp | `Đất nông nghiệp` |
 | không xếp được vào đâu | `Bất động sản khác` + ghi rõ vào `ghi_chu` |
 
-## A10. Số điện thoại — 10 chữ số, CÓ SỐ 0 ĐỨNG ĐẦU
+## A10. Số điện thoại — BẮT BUỘC, 10 chữ số, CÓ SỐ 0 ĐỨNG ĐẦU
+
+> ### ⛔ TỪ 17/09/2026: THIẾU HOẶC SAI SỐ LÀ WEB BÁO ĐỎ, TIN KHÔNG LÊN ĐƯỢC
+> Trước đây chỉ báo vàng nên tin thiếu số vẫn lọt lên web. Nay `lien_he_sdt` nằm trong
+> nhóm **bắt buộc**: để trống, ghi thiếu số, hay rơi mất số 0 đầu đều bị chặn ngay ở
+> bước đọc file.
+>
+> **⚠️ Bẫy Excel nuốt số 0:** ô để kiểu *Số* thì `0905123456` tự thành `905123456`.
+> Trước khi lưu file: bôi cả cột `lien_he_sdt` → **Format Cells → Text**, rồi nhìn lại
+> xem mọi ô còn số 0 đầu không.
+>
+> Số bị giấu sau nút "Hiện số" mà không bấm được thì **bỏ tin đó, tìm tin khác** —
+> đừng giao tin không có số.
 
 | Tin gốc ghi | Ghi vào `lien_he_sdt` |
 |---|---|
@@ -350,6 +427,32 @@ Không dấu chấm, không khoảng trắng, không `+84`.
 > người bán. Sau này người bán tạo tài khoản trên web, hệ thống dựa vào **số điện thoại / email**
 > để trả tin về đúng tài khoản của họ — khỏi phải đăng lại. Thiếu số là mất luôn mối nối đó,
 > sau không sửa được.
+
+## A10b. `dia_chi` — CÓ SỐ NHÀ THÌ PHẢI CÓ SỐ NHÀ
+
+`dia_chi` = phần địa chỉ **ngoài** đơn vị hành chính: số nhà + tên đường (hoặc tên khu,
+lô, kiệt/hẻm). Tin gốc ghi tới đâu **chép tới đó**, đừng cắt bớt cho gọn:
+
+**Thứ tự viết: SỐ NHÀ — hoặc TÊN DỰ ÁN — đứng TRƯỚC, rồi mới tới tên đường.**
+
+| Tin gốc | Ghi vào `dia_chi` |
+|---|---|
+| `77 Đặng Văn Chấn` | `77 Đường Đặng Văn Chấn` |
+| `K83/12 Huỳnh Ngọc Huệ` | `Kiệt 83/12 Huỳnh Ngọc Huệ` |
+| `Lô A12 KĐT An Phú Thịnh` | `Lô A12, Khu đô thị An Phú Thịnh` |
+| Căn hộ dự án Ocean Dunes, đường Tôn Đức Thắng | `Dự án Ocean Dunes, Đường Tôn Đức Thắng` |
+| Biệt thự NovaWorld Phan Thiết, đường Lạc Long Quân | `NovaWorld Phan Thiết, Đường Lạc Long Quân` |
+| Chỉ ghi `đường Trần Phú` | `Đường Trần Phú` |
+
+- Có **cả số nhà lẫn dự án** thì viết: `Lô A12, Dự án An Phú Thịnh, Đường Huỳnh Tấn Phát`.
+- Tin thuộc dự án **vẫn phải điền `ten_du_an`** — `dia_chi` là dòng hiện cho khách đọc,
+  `ten_du_an` là chìa nối tin với trang dự án. Ghi một chỗ là mất chỗ kia.
+
+- Tin thuộc **dự án** thì ghi cả hai: `dia_chi` = đường, `ten_du_an` = tên dự án.
+- Số nhà nằm trong **mô tả** chứ không ở ô địa chỉ của trang nguồn → vẫn phải đưa lên
+  `dia_chi`. Web hiện dòng `<số nhà, đường>, <phường>, <tỉnh>` nên thiếu số nhà là khách
+  không tìm ra nhà.
+- Tin gốc **không cho số nhà** (rất hay gặp) → ghi tên đường là đủ, **không bịa số**.
 
 ## A11. Tên dự án
 
@@ -422,9 +525,18 @@ Không cần tải, không cần đặt tên, không cần viết script — cô
 
 | Cột | Ghi gì |
 |---|---|
-| `ma_anh` | Mã của tin, có tiền tố khu vực: `dn01`, `hue01`, `nt01`… (một mã cho cả tin, dù tin có 10 ảnh) |
+| `ma_anh` | Mã của tin, có tiền tố khu vực **kèm NGÀY**: `dn01-1009`, `hue01-1009`, `nt01-1009`… (một mã cho cả tin, dù tin có 10 ảnh) |
 | `link_anh` | **TOÀN BỘ** link ảnh trực tiếp (`.jpg`/`.png`/`.webp`), ngăn bằng `\|` |
 | `anh` | **ĐỂ TRỐNG.** Dán link trang ngoài vào đây là ảnh vỡ trắng trên web |
+
+> ### ⛔ MÃ ẢNH PHẢI KÈM NGÀY — bài học đợt 10/09/2026
+> Trước đây mỗi ngày Cowork đánh lại mã từ `dn01`, nên mã ngày 10/09 trùng y hệt mã
+> ngày 05/09. Web dùng `ma_anh` để nhận ra "tin này đã đăng rồi" → **30/34 tin của đợt
+> 10/09 không lên được**, mà ảnh mới thì chui vào **tin của người khác** cùng mã.
+>
+> Nay web đã tự chống (chỉ đối chiếu với tin đăng trong 3 ngày), nhưng **mã kèm ngày là
+> cách chắc chắn nhất**: `dn01-1009` (ngày 10 tháng 09). **Tên tệp ảnh cũng theo mã đó**:
+> `dn01-1009-1.jpg`, `dn01-1009-2.jpg`… — ảnh khớp về tin theo tiền tố tên tệp.
 
 - **Ghi link Y NHƯ trang đó cho, đừng tự sửa** — kể cả link có đoạn thu nhỏ
   `file4.batdongsan.com.vn/resize/1275x717/…`. Công cụ **tự bỏ đoạn `/resize/…/`** để lấy bản gốc
@@ -455,9 +567,39 @@ Thứ tự ưu tiên khi thời gian có hạn:
 
 **Lấy đủ ≠ đoán bừa.** Ô nào tin gốc không nói thì **để trống**, ghi thiếu gì vào `ghi_chu`.
 
-## A15. Bảng cột đầy đủ — 48 cột
+### ⭐ MỚI (17/09/2026) — BÓC CẢ THÔNG TIN NẰM TRONG BÀI VIẾT, KHÔNG CHỈ Ở BẢNG THÔNG SỐ
 
-> ### ⚠️ FILE MẪU ĐÃ ĐỔI: 25 CỘT → 48 CỘT
+Trang nguồn có **bảng thông số** (diện tích, hướng, pháp lý…) và có **bài mô tả** người bán tự
+viết. Rất nhiều thứ **chỉ nằm trong bài mô tả**, không có trong bảng thông số — trước đây bị
+bỏ qua hết, nên tin lên web trống trơn dù tin gốc nói đủ.
+
+**Luật: đọc HẾT bài mô tả, thấy thông tin nào khớp một cột của Coastal Land thì đưa vào
+đúng cột đó** — kể cả khi trang nguồn không có mục ấy.
+
+| Trong bài mô tả người bán viết | Bóc vào cột |
+|---|---|
+| "nhà 3 tầng, đúc kiên cố" | `so_tang` = `3` |
+| "đường trước nhà 7,5m, ô tô tránh nhau" | `duong_vao` = `7.5` |
+| "ngang 5m dài 21m" | `mat_tien` = `5` · `chieu_dai` = `21` |
+| "sổ hồng riêng, công chứng ngay" | `phap_ly` = `Sổ hồng` |
+| "hướng Đông Nam, ban công hướng biển" | `huong` = `Đông Nam` · `huong_ban_cong` = ghi đúng hướng |
+| "nhà xây 2019" | `nam_xay_dung` = `2019` |
+| "căn tầng 12 toà A" | `tang_so` = `12` |
+| "full nội thất: máy lạnh, tủ bếp, giường…" | `tinh_trang_noi_that` = `Đầy đủ` · `noi_that_ban_giao` = liệt kê đúng danh mục A12 |
+| "hồ bơi, gym, an ninh 24/7" | `tien_ich` = theo danh mục A12 |
+| "cọc 3 tháng, thuê tối thiểu 1 năm" | `tien_coc` = `3 tháng` · `thoi_han_thue` = `1 năm` |
+| "điện 3.500đ/kWh, nước theo giá nhà nước" | `muc_gia_dien` · `muc_gia_nuoc` |
+| "xưởng cao 8m, có PCCC, xe container vào tận nơi" | `chieu_cao` · `pccc` · `xe_container` |
+| "dọn vào ở ngay sau Tết" | `thoi_gian_du_kien_vao_o` |
+
+**Ba ranh giới không được vượt:**
+1. **Chỉ bóc thứ người bán THẬT SỰ viết.** "Gần biển" không thành `Gần biển 500m`.
+2. **Bóc ra cột riêng thì VẪN GIỮ NGUYÊN câu đó trong `mo_ta`** — không cắt chữ của người bán.
+3. Câu mơ hồ ("nhà mới đẹp", "giá tốt") **không phải thông tin** — đừng nhét vào cột nào.
+
+## A15. Bảng cột đầy đủ — 51 cột
+
+> ### ⚠️ FILE MẪU ĐÃ ĐỔI: 25 CỘT → 51 CỘT
 > Bản Cowork dùng trước đây chỉ có **25 cột**, thiếu 23 cột — trong đó có cả `nguon`,
 > `link_anh`, `ghi_chu`, `duong_vao`, `mat_tien`, `so_tang`.
 > **Tải lại `mau-nhap-tin-hang-loat.csv`.** Dùng bản cũ là mất dữ liệu đã gom.
@@ -467,7 +609,8 @@ Mỗi dòng đúng một tin. Lưu dạng **`.csv` (UTF-8)** hoặc **`.xlsx`** 
 
 | Nhóm | Cột |
 |---|---|
-| **Bắt buộc** — thiếu là web báo đỏ, không đăng được | `tieu_de` · `mo_ta` · `dien_tich` · `muc_dich` · `loai_hinh` · `tinh_thanh` · `phuong_xa` · `ma_anh` |
+| **Bắt buộc** — thiếu là web báo đỏ, không đăng được | `tieu_de` · `mo_ta` · `dien_tich` · `muc_dich` · `loai_hinh` · `tinh_thanh` · `phuong_xa` · `ma_anh` · **`lien_he_sdt`** ⭐ |
+| **Địa chỉ hệ CŨ** ⭐ *(mới 17/09)* | `phuong_xa_cu` · `quan_huyen_cu` · `tinh_cu` |
 | **Giá** | `gia` · **`don_gia_thue`** ⭐ |
 | **Quy mô, kích thước** | `duong_vao` · `mat_tien` · `so_tang` · **`chieu_dai`** ⭐ · **`nam_xay_dung`** ⭐ · **`tang_so`** ⭐ · `phong_ngu` · `phong_tam` |
 | **Kho · nhà xưởng · bãi** | **`dien_tich_su_dung`** ⭐ · **`loai_kho`** ⭐ · **`chieu_cao`** ⭐ · **`tai_trong_nen`** ⭐ · **`cong_suat_dien`** ⭐ · **`pccc`** ⭐ · **`van_phong_trong_kho`** ⭐ · **`xe_container`** ⭐ |
@@ -478,7 +621,8 @@ Mỗi dòng đúng một tin. Lưu dạng **`.csv` (UTF-8)** hoặc **`.xlsx`** 
 | **Nội bộ** *(không lên web)* | `ghi_chu` · `nguon` · `link_anh` |
 | **Ảnh / video** | `anh` *(để trống)* · `video` |
 
-⭐ = **14 cột MỚI** so với bản mẫu 25 cột trước đây.
+⭐ = cột **MỚI** so với bản mẫu cũ. Đợt 17/09/2026 thêm **3 cột địa chỉ hệ cũ**
+(`phuong_xa_cu` · `quan_huyen_cu` · `tinh_cu`) và chuyển `lien_he_sdt` sang nhóm **bắt buộc**.
 
 **`hang_tin` LUÔN ĐỂ TRỐNG.** Cowork không quyết hạng tin — chủ dự án tự nâng khi đăng.
 **`nguon`** — mọi dòng đều phải có **link tin gốc**. Không có link thì ghi nơi lấy + ngày giờ thấy tin.
@@ -505,9 +649,48 @@ Web có sẵn **6 chuyên mục**. Mỗi ngày phân bổ:
 Chuyên mục chỉ được chọn trong **6 tên này**, chép đúng nguyên văn:
 `Phân tích thị trường` · `Cẩm nang` · `Đầu tư` · `Tài chính` · `Quy hoạch` · `Dự án`
 
-**Địa bàn:** ưu tiên **Đà Nẵng · Huế · Quy Nhơn · Nha Trang · Phan Thiết**.
+**Địa bàn:** ưu tiên **Đà Nẵng · Huế · Quy Nhơn · Nha Trang · Phan Thiết · Quảng Trị · Quảng Ngãi**.
 Mỗi ngày phải có **ít nhất 3 bài gắn địa danh cụ thể** — đây là điểm mạnh cạnh tranh của
 Coastal Land so với các trang toàn quốc.
+
+> ### ⭐ CHỐT 17/09/2026 — ĐỦ 5 BÀI · ĐA DẠNG · MỖI BÀI PHẢI ĐƯỢC "FINAL"
+>
+> **1. Đủ 5 bài mỗi ngày**, không ngày nào giao 3–4 bài rồi ghi "không tìm được tư liệu".
+>
+> **2. Đa dạng theo đúng cấu trúc chuyên mục của web** — 5 bài KHÔNG được rơi hết vào một
+> chuyên mục hay một khu vực. Mỗi ngày: **ít nhất 3 chuyên mục khác nhau** và
+> **ít nhất 3 khu vực khác nhau** trong 7 khu vực ở A1.
+>
+> **3. Tư liệu lấy từ NHIỀU nguồn, và phải là nguồn tra được:** cổng thông tin tỉnh/thành,
+> Sở Xây dựng, Tổng cục Thống kê, báo lớn (VnExpress, Tuổi Trẻ, Thanh Niên, CafeF,
+> CafeLand, Báo Đầu tư), công bố của chủ đầu tư. **Không lấy số từ bài của trang rao vặt
+> khác rồi chép lại.**
+>
+> **4. FINAL từng bài trước khi giao** — tự rà đủ 6 mục này, bài nào chưa đạt thì viết lại,
+> **đừng giao bản nháp**:
+>
+> - [ ] Từ khoá chính xuất hiện đủ **5 chỗ** (B2), mật độ 1–2%, không nhồi
+> - [ ] `tieu_de` 50–65 ký tự · `mo_ta_ngan` 140–160 ký tự · `slug` không dấu, có từ khoá
+> - [ ] Nội dung **≥ 800 chữ**, có tiêu đề phụ, đoạn ngắn 3–4 dòng
+> - [ ] **Mọi con số đều ghi rõ nguồn và mốc thời gian** ("theo Sở Xây dựng Đà Nẵng,
+>       quý II/2026") — không có nguồn thì **bỏ con số đó đi**, đừng viết chung chung
+> - [ ] Tự viết 100%, **không chép đoạn nào** của bài khác
+> - [ ] Không câu nào biến Coastal Land thành bên môi giới / định giá / nhận ký gửi
+>
+> **Thông tin sai một lần là mất uy tín cả trang** — thà bài ngắn mà đúng.
+>
+> **5. NỘI DUNG VÀ NGÔN NGỮ PHẢI LÀ CỦA NGƯỜI VIỆT, VIẾT CHO NGƯỜI VIỆT:**
+> - **Tiếng Việt có dấu, đúng chính tả**, viết hoa tên riêng đúng chuẩn.
+> - **Không văn dịch máy**: không "điều này cho phép…", "một trong những… nhất", câu bị động
+>   dài dòng. Viết như người Việt nói: câu ngắn, chủ ngữ rõ, xuống dòng thoáng.
+> - **Không chèn tiếng Anh khi tiếng Việt có từ**: viết *căn hộ* không phải *apartment*,
+>   *mặt bằng bán lẻ* không phải *retail space*, *dòng tiền* không phải *cashflow*.
+>   Thuật ngữ buộc phải dùng thì mở ngoặc giải thích một lần.
+> - **Bối cảnh phải là Việt Nam**: đơn vị **m² · tỷ · triệu · VNĐ**, pháp lý theo luật Việt
+>   Nam (sổ đỏ, sổ hồng, quy hoạch 1/500), mốc thời gian theo lịch dương Việt Nam.
+>   Không lấy ví dụ, số liệu hay tên cơ quan của nước ngoài.
+> - **Giọng văn**: người trong nghề nói chuyện với người mua nhà — thẳng, dễ hiểu,
+>   không hoa mỹ, không hô khẩu hiệu, không hứa lợi nhuận.
 
 ## B2. Chuẩn SEO longtail — luật cứng
 
@@ -756,7 +939,7 @@ kèm project. ĐỌC HẾT FILE ĐÓ TRƯỚC KHI LÀM. Có gì không rõ thì 
 
 GHI VÀO THƯ MỤC CỦA NGÀY HÔM ĐÓ:
   C:\Users\X1 GEN 8\Projects\TIN-HANG-NGAY\Tin-<NĂM-THÁNG-NGÀY>\
-    - Bang-<NĂM-THÁNG-NGÀY>.csv      (GÓI A — 34 tin, 48 cột)
+    - Bang-<NĂM-THÁNG-NGÀY>.csv      (GÓI A — 34 tin, 51 cột)
     - TinTuc-<NĂM-THÁNG-NGÀY>.csv    (GÓI B — 5 bài, 9 cột)
     - bao-cao.txt                     (báo cáo chung cho cả hai gói)
 Đúng ba file. Không tạo file phụ, không tạo bản v2, không tạo file .ps1.
@@ -774,7 +957,7 @@ Không gom đủ số thì GIAO THIẾU và ghi rõ trong bao-cao.txt. KHÔNG b�
 ```
 Hôm nay làm gói ngày <NGÀY>.
 Ghi vào: C:\Users\X1 GEN 8\Projects\TIN-HANG-NGAY\Tin-<NGÀY>\
-  - Bang-<NGÀY>.csv     (34 tin bất động sản, 48 cột)
+  - Bang-<NGÀY>.csv     (34 tin bất động sản, 51 cột)
   - TinTuc-<NGÀY>.csv   (5 bài tin tức, 9 cột)
   - bao-cao.txt
 Làm đúng như hướng dẫn của project. Xong báo tôi.
@@ -787,7 +970,7 @@ Làm đúng như hướng dẫn của project. Xong báo tôi.
 
 ```
 _MAU\YEU-CAU-COWORK.md                    (tài liệu DUY NHẤT)
-_MAU\mau-nhap-tin-hang-loat.csv           (khuôn gói A — 48 cột + 17 ví dụ)
+_MAU\mau-nhap-tin-hang-loat.csv           (khuôn gói A — 51 cột + 17 ví dụ)
 _MAU\mau-tin-tuc-hang-ngay.csv            (khuôn gói B — 9 cột + 2 bài mẫu)
 _MAU\DANH-SACH-PHUONG-XA-MIEN-TRUNG.txt   (734 phường/xã, 8 tỉnh)
 ```
