@@ -15,11 +15,6 @@ import { vndM2, tenNguonHienThi, coDuDeHienLichSuGia } from "@/lib/chiSoGia";
 //     thêm "tin này đắt hơn X%" vào đây là nói thừa — khách tự đối chiếu được.
 // ════════════════════════════════════════════════════════════════════════════
 
-/** Số trên biểu đồ bỏ đuôi "/m²" và "/tháng" cho đỡ chật — đơn vị đã nói ở trên. */
-function soGon(v: number, laThue: boolean): string {
-  return vndM2(v, laThue).replace("/m²", "").replace("/tháng", "");
-}
-
 /** "2025-Q1" → "Q1/25" · "2026-09" → "T9/26" · "2025" → "2025" */
 function nhanKy(q: string): string {
   const quy = q.match(/^(\d{4})-?Q([1-4])$/i);
@@ -27,6 +22,30 @@ function nhanKy(q: string): string {
   const thang = q.match(/^(\d{4})-(\d{2})$/);
   if (thang) return `T${Number(thang[2])}/${thang[1].slice(2)}`;
   return q;
+}
+
+/** Bước chia trục dọc, bo về bội số dễ đọc: 1 · 2 · 2,5 · 5 · 10 nhân luỹ thừa 10. */
+function buocTron(tho: number): number {
+  const mu = Math.pow(10, Math.floor(Math.log10(Math.max(tho, 1))));
+  return (([1, 2, 2.5, 5, 10].find((h) => h * mu >= tho) ?? 10) as number) * mu;
+}
+
+/** Số trên trục dọc: chỉ con số, đơn vị đã ghi một lần ở đầu trục. */
+function soTruc(v: number, laThue: boolean): string {
+  const n = laThue ? v / 1_000 : v / 1_000_000;
+  return new Intl.NumberFormat("vi-VN", { maximumFractionDigits: n < 10 ? 1 : 0 }).format(n);
+}
+
+/** Lùi đúng một năm: "2026-08" → "2025-08" · "2026-Q2" → "2025-Q2" · "2026" → "2025".
+ *  Dùng để nói "tăng bao nhiêu trong một năm qua" — so đúng cùng kỳ năm trước,
+ *  không so với mốc đầu dãy (dãy dài ngắn khác nhau thì con số vô nghĩa). */
+function luiMotNam(q: string): string {
+  const thang = q.match(/^(\d{4})-(\d{2})$/);
+  if (thang) return `${Number(thang[1]) - 1}-${thang[2]}`;
+  const quy = q.match(/^(\d{4})-Q([1-4])$/i);
+  if (quy) return `${Number(quy[1]) - 1}-Q${quy[2]}`;
+  const nam = q.match(/^(\d{4})$/);
+  return nam ? String(Number(nam[1]) - 1) : "";
 }
 
 /** Gọi mốc là "tháng", "quý" hay "năm" — nói sai đơn vị là mất tin ngay. */
@@ -41,14 +60,20 @@ export default function PriceHistory({
   matBang,
   soSanh = [],
   laThue = false,
+  giaTinM2,
 }: {
   chiSo: ChiSoKhuVuc | null;
   matBang: MatBangGia | null;
   soSanh?: OSanh[];
+  /** Giá mỗi m² của chính tin đang xem (đồng) — chấm đỏ trên biểu đồ. */
+  giaTinM2?: number | null;
   /** Tin cho thuê thì giá mỗi m² là giá THUÊ mỗi tháng — đơn vị và chữ khác hẳn. */
   laThue?: boolean;
 }) {
-  const moc = (chiSo?.moc ?? []).filter((m) => m.giaM2 > 0).slice(-8);
+  // Vẽ 8 mốc cuối (bản đã duyệt), nhưng BA SỐ TÓM TẮT tính trên TOÀN dãy: mức
+  // thay đổi một năm và đỉnh hai năm nằm ngoài tám mốc vẽ ra.
+  const caDay = (chiSo?.moc ?? []).filter((m) => m.giaM2 > 0);
+  const moc = caDay.slice(-8);
   const coDuong = moc.length >= 2;
   const coSanh = soSanh.length >= 2;
 
@@ -74,10 +99,17 @@ export default function PriceHistory({
     : gia;
   const minV = Math.min(...tatCaGia);
   const maxV = Math.max(...tatCaGia);
-  // Nới hai đầu 8% để đường không dính sát mép trên/dưới khung.
-  const dem = (maxV - minV) * 0.08 || maxV * 0.05 || 1;
-  const day = minV - dem;
-  const bien = maxV + dem - day;
+  // Thang trục bo về BỘI SỐ TRÒN để vạch đọc ra số đẹp (25 · 100 · 175) thay vì
+  // "47,5 · 109,0 · 170,5" — số lẻ làm biểu đồ trông như máy in ra, khó đối chiếu.
+  const buoc = buocTron((maxV - minV) / 5 || maxV * 0.05 || 1);
+  let day = Math.floor(minV / buoc) * buoc;
+  let tran = Math.ceil(maxV / buoc) * buoc;
+  if (tran <= day) tran = day + buoc * 2;
+  // Số bước phải chẵn thì vạch giữa mới rơi đúng một mức tròn. Nới xuống DƯỚI
+  // chứ không nới lên trên: chừa trống phía trên làm đường bị dẹt xuống đáy.
+  if (Math.round((tran - day) / buoc) % 2 === 1) day = Math.max(0, day - buoc);
+  if (Math.round((tran - day) / buoc) % 2 === 1) tran += buoc;
+  const bien = tran - day;
   const toaX = (i: number) => traiX + (i * (phaiX - traiX)) / Math.max(1, moc.length - 1);
   const toaY = (v: number) => dayY - ((v - day) / bien) * (dayY - dinhY);
   const veDuong = (lay: (m: (typeof moc)[number]) => number) =>
@@ -99,40 +131,113 @@ export default function PriceHistory({
 
   const maxSanh = coSanh ? Math.max(...soSanh.map((x) => x.trungVi)) : 1;
 
+  // ── BA SỐ TÓM TẮT (đọc trước khi nhìn biểu đồ) ────────────────────────────
+  const mocCuoi = caDay[caDay.length - 1];
+  const mocNamTruoc = mocCuoi
+    ? caDay.find((m) => m.quy === luiMotNam(mocCuoi.quy))
+    : undefined;
+  const doiMotNam =
+    mocNamTruoc && mocNamTruoc.giaM2 > 0
+      ? ((mocCuoi.giaM2 - mocNamTruoc.giaM2) / mocNamTruoc.giaM2) * 100
+      : null;
+  const mocDinh = caDay.reduce((a, b) => (b.giaM2 > a.giaM2 ? b : a), caDay[0]);
+  // Cách đỉnh dưới 1% thì coi như đang ở đỉnh — nói "thấp hơn đỉnh 0,3%" là bắt bẻ.
+  const soVoiDinh =
+    mocDinh && mocDinh.giaM2 > 0 ? ((mocCuoi.giaM2 - mocDinh.giaM2) / mocDinh.giaM2) * 100 : 0;
+  const dangODinh = soVoiDinh > -1;
+
   return (
     <div className="space-y-5">
       {/* ── 1. GIÁ KHU VỰC + ĐƯỜNG LỊCH SỬ THEO QUÝ ─────────────────────── */}
       {(matBang || coDuong) && (
         <div className="rounded-xl bg-white p-4 ring-1 ring-cvr-line sm:p-5">
-          <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-            <span className="text-[13px] text-cvr-muted">
-              {laThue ? "Giá thuê phổ biến" : "Giá bán phổ biến"}
-              {matBang ? ` tại ${matBang.tenPham}` : chiSo ? ` tại ${chiSo.khuVuc || chiSo.tinh}` : ""}
-            </span>
-            <span className="text-[23px] font-bold leading-none tracking-tight text-cvr-ink">
-              {vndM2(matBang ? matBang.trungVi : cuoi, laThue)}
-            </span>
-          </div>
-
-          {matBang && (
-            <p className="mt-1.5 text-[12.5px] text-cvr-muted">
-              Khoảng phổ biến {vndM2(matBang.thap, laThue).replace("/m²", "")} –{" "}
-              {vndM2(matBang.cao, laThue)}
-            </p>
+          {/* Không có đường lịch sử thì mới hiện mặt bằng giá hiện tại ở đây; có
+              đường rồi thì ba ô bên dưới đã nói mức mới nhất — in hai lần một con
+              số là chỗ làm người xem khựng lại. */}
+          {!coDuong && (
+            <>
+              <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                <span className="text-[13px] text-cvr-muted">
+                  {laThue ? "Giá thuê phổ biến" : "Giá bán phổ biến"}
+                  {matBang ? ` tại ${matBang.tenPham}` : chiSo ? ` tại ${chiSo.khuVuc || chiSo.tinh}` : ""}
+                </span>
+                <span className="text-[23px] font-bold leading-none tracking-tight text-cvr-ink">
+                  {vndM2(matBang ? matBang.trungVi : cuoi, laThue)}
+                </span>
+              </div>
+              {matBang && (
+                <p className="mt-1.5 text-[12.5px] text-cvr-muted">
+                  Khoảng phổ biến {vndM2(matBang.thap, laThue).replace("/m²", "")} –{" "}
+                  {vndM2(matBang.cao, laThue)}
+                </p>
+              )}
+            </>
           )}
 
           {coDuong && (
             <>
-              <div className="mt-4 flex flex-wrap items-baseline gap-x-2 gap-y-1 border-t border-cvr-line pt-4">
-                <span className="text-[13px] font-semibold text-cvr-ink">
-                  Lịch sử {laThue ? "giá thuê" : "giá bán"} · {moc.length} {tenKy(moc[0].quy)} gần
-                  nhất
-                </span>
-                <span className={`text-[13px] font-bold ${tang >= 0 ? "text-red-600" : "text-green-700"}`}>
-                  {tang >= 0 ? "+" : ""}
-                  {tang}%
-                </span>
+              {/* BA SỐ ĐỌC TRƯỚC: mức mới nhất · một năm qua · so với đỉnh. Người
+                  xem nắm được tình hình mà chưa cần nhìn đường vẽ. */}
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-0 sm:divide-x sm:divide-cvr-line">
+                <div className="sm:pr-4">
+                  <p className="text-[19px] font-bold leading-none tracking-tight text-cvr-ink">
+                    {vndM2(mocCuoi.giaM2, laThue)}
+                  </p>
+                  <p className="mt-1.5 text-[12.5px] text-cvr-muted">
+                    Giá {laThue ? "thuê" : "bán"} phổ biến nhất {nhanKy(mocCuoi.quy)}
+                  </p>
+                </div>
+
+                <div className="sm:px-4">
+                  {doiMotNam === null ? (
+                    <>
+                      <p className={`text-[19px] font-bold leading-none ${tang >= 0 ? "text-red-600" : "text-green-700"}`}>
+                        {tang >= 0 ? "▲" : "▼"} {Math.abs(tang)}%
+                      </p>
+                      <p className="mt-1.5 text-[12.5px] text-cvr-muted">
+                        {tang >= 0 ? "Tăng" : "Giảm"} từ {nhanKy(caDay[0].quy)} đến{" "}
+                        {nhanKy(mocCuoi.quy)}
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className={`text-[19px] font-bold leading-none ${doiMotNam >= 0 ? "text-red-600" : "text-green-700"}`}>
+                        {doiMotNam >= 0 ? "▲" : "▼"} {Math.abs(doiMotNam).toFixed(1).replace(".", ",")}%
+                      </p>
+                      <p className="mt-1.5 text-[12.5px] text-cvr-muted">
+                        {doiMotNam >= 0 ? "Đã tăng" : "Đã giảm"} trong một năm qua ·{" "}
+                        {nhanKy(luiMotNam(mocCuoi.quy))} – {nhanKy(mocCuoi.quy)}
+                      </p>
+                    </>
+                  )}
+                </div>
+
+                <div className="sm:pl-4">
+                  {dangODinh ? (
+                    <>
+                      <p className="text-[19px] font-bold leading-none text-cvr-ink">
+                        {vndM2(mocDinh.giaM2, laThue)}
+                      </p>
+                      <p className="mt-1.5 text-[12.5px] text-cvr-muted">
+                        Đang ở mức cao nhất trong {caDay.length} {tenKy(caDay[0].quy)} gần nhất
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-[19px] font-bold leading-none text-green-700">
+                        ▼ {Math.abs(soVoiDinh).toFixed(1).replace(".", ",")}%
+                      </p>
+                      <p className="mt-1.5 text-[12.5px] text-cvr-muted">
+                        Thấp hơn đỉnh {vndM2(mocDinh.giaM2, laThue)} vào {nhanKy(mocDinh.quy)}
+                      </p>
+                    </>
+                  )}
+                </div>
               </div>
+
+              <p className="mt-4 text-[13px] font-semibold text-cvr-ink">
+                Lịch sử {laThue ? "giá thuê" : "giá bán"} · {moc.length} {tenKy(moc[0].quy)} gần nhất
+              </p>
 
               <svg
                 viewBox={`0 0 ${W} ${H}`}
@@ -144,13 +249,28 @@ export default function PriceHistory({
                 <line x1="0" y1={(dinhY + dayY) / 2} x2={W} y2={(dinhY + dayY) / 2} stroke="#ededf0" />
                 <line x1="0" y1={dayY} x2={W} y2={dayY} stroke="#e3e3e7" />
 
+                {/* Vạch giá trị trên trục dọc — vẽ TRƯỚC các đường giá để nếu có
+                    trùng chỗ thì đường đè lên chữ, không phải chữ đè lên đường. */}
+                <text x="0" y={dinhY - 18} fontSize="9.5" fill="#86868b">
+                  {laThue ? "nghìn/m²/tháng" : "tr/m²"}
+                </text>
+                {[
+                  { y: dinhY, v: tran },
+                  { y: (dinhY + dayY) / 2, v: day + bien / 2 },
+                  { y: dayY, v: day },
+                ].map((vach) => (
+                  <text key={vach.y} x="0" y={vach.y - 4} fontSize="9.5" fill="#86868b">
+                    {soTruc(vach.v, laThue)}
+                  </text>
+                ))}
+
                 <path d={nen} fill="#0071e3" fillOpacity={0.06} />
 
                 {/* Hai đường biên mảnh hơn và nhạt hơn — đường phổ biến phải là
                     thứ mắt bắt được trước, hai đường kia chỉ nói khoảng dao động. */}
                 {coBien && (
                   <>
-                    <path d={duongCao} fill="none" stroke="#dc2626" strokeWidth={1.6} strokeOpacity={0.75} strokeLinecap="round" strokeLinejoin="round" />
+                    <path d={duongCao} fill="none" stroke="#8b5cf6" strokeWidth={1.6} strokeOpacity={0.75} strokeLinecap="round" strokeLinejoin="round" />
                     <path d={duongThap} fill="none" stroke="#0f8a5f" strokeWidth={1.6} strokeOpacity={0.75} strokeLinecap="round" strokeLinejoin="round" />
                   </>
                 )}
@@ -161,30 +281,23 @@ export default function PriceHistory({
                   <circle key={m.quy} cx={toaX(i)} cy={toaY(m.giaM2)} r={3} fill="#fff" stroke="#0071e3" strokeWidth={2} />
                 ))}
 
-                {/* Nhãn giá ở kỳ CUỐI của từng đường. Ba đường mà rải số khắp nơi
-                    là rối ngay — chỉ ghi mức mới nhất, phần còn lại nhìn dốc là đủ. */}
-                {coBien ? (
-                  <>
-                    <text x={phaiX} y={toaY(moc[moc.length - 1].cao as number) - 8} textAnchor="end" fontSize="10.5" fontWeight="600" fill="#c0392b">
-                      {soGon(moc[moc.length - 1].cao as number, laThue)}
-                    </text>
-                    <text x={phaiX} y={toaY(cuoi) - 9} textAnchor="end" fontSize="11.5" fontWeight="700" fill="#1d1d1f">
-                      {soGon(cuoi, laThue)}
-                    </text>
-                    <text x={phaiX} y={toaY(moc[moc.length - 1].thap as number) + 15} textAnchor="end" fontSize="10.5" fontWeight="600" fill="#0f8a5f">
-                      {soGon(moc[moc.length - 1].thap as number, laThue)}
-                    </text>
-                  </>
-                ) : (
-                  <>
-                    <text x={traiX} y={toaY(dau) - 11} textAnchor="start" fontSize="11" fontWeight="600" fill="#6e6e73">
-                      {soGon(dau, laThue)}
-                    </text>
-                    <text x={phaiX} y={toaY(cuoi) - 11} textAnchor="end" fontSize="11.5" fontWeight="700" fill="#1d1d1f">
-                      {soGon(cuoi, laThue)}
-                    </text>
-                  </>
+                {/* Giá của CHÍNH tin đang xem, đặt ở mốc mới nhất: người xem thấy
+                    ngay tin này đang nằm ở đâu so với mặt bằng khu vực. Giá vượt
+                    ngoài khung thì ghim vào mép, không vẽ lạc ra ngoài biểu đồ. */}
+                {giaTinM2 != null && giaTinM2 > 0 && (
+                  <circle
+                    cx={phaiX}
+                    cy={Math.min(dayY, Math.max(dinhY, toaY(giaTinM2)))}
+                    r={4}
+                    fill="#dc2626"
+                    stroke="#fff"
+                    strokeWidth={1.8}
+                  />
                 )}
+
+                {/* KHÔNG rải số lên các đường: trục dọc đã có vạch giá trị và ba ô
+                    trên đầu đã nói mức mới nhất. Ghi thêm nữa là ba lần một thông
+                    tin, đúng thứ làm biểu đồ trông rối. */}
 
                 {moc.map((m, i) => (
                   <text
@@ -200,20 +313,30 @@ export default function PriceHistory({
                 ))}
               </svg>
 
-              {coBien && (
+              {(coBien || (giaTinM2 != null && giaTinM2 > 0)) && (
                 <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-[11.5px] text-cvr-muted">
-                  <span className="inline-flex items-center gap-1.5">
-                    <span className="inline-block h-[3px] w-4 rounded-full bg-[#0071e3]" />
-                    Phổ biến
-                  </span>
-                  <span className="inline-flex items-center gap-1.5">
-                    <span className="inline-block h-[2px] w-4 rounded-full bg-[#dc2626]" />
-                    Cao nhất
-                  </span>
-                  <span className="inline-flex items-center gap-1.5">
-                    <span className="inline-block h-[2px] w-4 rounded-full bg-[#0f8a5f]" />
-                    Thấp nhất
-                  </span>
+                  {coBien && (
+                    <>
+                      <span className="inline-flex items-center gap-1.5">
+                        <span className="inline-block h-[3px] w-4 rounded-full bg-[#0071e3]" />
+                        Phổ biến
+                      </span>
+                      <span className="inline-flex items-center gap-1.5">
+                        <span className="inline-block h-[2px] w-4 rounded-full bg-[#8b5cf6]" />
+                        Cao nhất
+                      </span>
+                      <span className="inline-flex items-center gap-1.5">
+                        <span className="inline-block h-[2px] w-4 rounded-full bg-[#0f8a5f]" />
+                        Thấp nhất
+                      </span>
+                    </>
+                  )}
+                  {giaTinM2 != null && giaTinM2 > 0 && (
+                    <span className="inline-flex items-center gap-1.5">
+                      <span className="inline-block h-2.5 w-2.5 rounded-full bg-[#dc2626] ring-1 ring-white" />
+                      Giá tin đang xem ~{vndM2(giaTinM2, laThue)}
+                    </span>
+                  )}
                 </div>
               )}
             </>

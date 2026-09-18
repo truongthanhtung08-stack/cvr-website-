@@ -435,8 +435,19 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                   cả tiêu đề). Tuyệt đối không chế số cho đủ hình, cũng không để
                   lại một dòng "chưa có dữ liệu" nói hộ điểm yếu của mình. */}
               {priceVnd != null && coDuDeHienLichSuGia(chiSoTin, matBang, soSanhKV) && (
-                <Section id="lich-su-gia" title="Lịch sử giá khu vực">
-                  <PriceHistory chiSo={chiSoTin} matBang={matBang} soSanh={soSanhKV} laThue={(l.purpose ?? "ban") === "thue"} />
+                <Section
+                  id="lich-su-gia"
+                  title={`Lịch sử giá ${purpose === "thue" ? "thuê" : "bán"} ${l.type.toLowerCase()} tại ${
+                    matBang?.tenPham || chiSoTin?.khuVuc || chiSoTin?.tinh || l.diaGioi?.province || "khu vực"
+                  }`}
+                >
+                  <PriceHistory
+                    chiSo={chiSoTin}
+                    matBang={matBang}
+                    soSanh={soSanhKV}
+                    laThue={purpose === "thue"}
+                    giaTinM2={priceVnd != null && l.areaM2 ? priceVnd / l.areaM2 : null}
+                  />
                 </Section>
               )}
 
