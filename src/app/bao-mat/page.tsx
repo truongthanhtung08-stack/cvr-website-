@@ -111,8 +111,8 @@ export default function BaoMatPage() {
         />
         <p>
           Để yêu cầu <strong className="font-semibold text-cvr-ink">xoá tài khoản và dữ liệu</strong>, gửi email từ chính địa chỉ bạn đã đăng ký tới{" "}
-          <a href="mailto:lienhe@coastalland.vn" className="font-semibold text-cvr-blue-ink underline">
-            lienhe@coastalland.vn
+          <a href="mailto:hotro@coastalland.vn" className="font-semibold text-cvr-blue-ink underline">
+            hotro@coastalland.vn
           </a>{" "}
           với tiêu đề &ldquo;Yêu cầu xoá tài khoản&rdquo;. Chúng tôi xử lý trong vòng 30 ngày làm việc và sẽ báo lại cho bạn khi hoàn tất.
         </p>
@@ -149,7 +149,7 @@ export default function BaoMatPage() {
             ...(PHAP_LY.tenCongTy ? [<>Đơn vị chủ quản: <strong className="font-semibold text-cvr-ink">{PHAP_LY.tenCongTy}</strong></>] : []),
             ...(DONG_GIAY_PHEP ? [<>{DONG_GIAY_PHEP}</>] : []),
             <>Địa chỉ: {PHAP_LY.diaChiDayDu}</>,
-            <>Email: <a href="mailto:lienhe@coastalland.vn" className="font-semibold text-cvr-blue-ink underline">lienhe@coastalland.vn</a></>,
+            <>Email: <a href="mailto:hotro@coastalland.vn" className="font-semibold text-cvr-blue-ink underline">hotro@coastalland.vn</a></>,
             <>Hotline / Zalo: <a href="tel:+84377985036" className="font-semibold text-cvr-blue-ink underline">0377 985 036</a></>,
             "Website: coastalland.vn",
           ]}

@@ -64,8 +64,8 @@ export default function TuyenDungPage() {
         <p>
           Điền thông tin bên dưới, ghi rõ mảng bạn muốn cộng tác và kinh nghiệm liên quan. Có hồ sơ, portfolio hoặc bài viết
           mẫu thì gửi kèm link, hoặc email về{" "}
-          <a href="mailto:lienhe@coastalland.vn" className="font-semibold text-cvr-blue-ink underline">
-            lienhe@coastalland.vn
+          <a href="mailto:hotro@coastalland.vn" className="font-semibold text-cvr-blue-ink underline">
+            hotro@coastalland.vn
           </a>{" "}
           với tiêu đề “Ứng tuyển — [mảng bạn chọn]”.
         </p>

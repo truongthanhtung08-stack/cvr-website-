@@ -28,7 +28,7 @@ export const metadata: Metadata = {
 // Thông tin liên hệ chuẩn (trùng với footer + trang Điều khoản).
 const HOTLINE = "0377 985 036";
 const HOTLINE_TEL = "+84377985036";
-const EMAIL = "lienhe@coastalland.vn";
+const EMAIL = "hotro@coastalland.vn";
 // Địa chỉ lấy từ src/lib/phapLy.ts — MỘT nguồn duy nhất, khớp giấy ĐKKD và footer.
 const DIA_CHI = PHAP_LY.diaChiDayDu;
 

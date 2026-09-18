@@ -147,7 +147,7 @@ export default function QuyChePage() {
           items={[
             ...(PHAP_LY.tenCongTy ? [<>Đơn vị chủ quản: <strong className="font-semibold text-cvr-ink">{PHAP_LY.tenCongTy}</strong></>] : []),
             <>Hotline / Zalo: <a href="tel:+84377985036" className="font-semibold text-cvr-blue-ink underline">0377 985 036</a></>,
-            <>Email: <a href="mailto:lienhe@coastalland.vn" className="font-semibold text-cvr-blue-ink underline">lienhe@coastalland.vn</a></>,
+            <>Email: <a href="mailto:hotro@coastalland.vn" className="font-semibold text-cvr-blue-ink underline">hotro@coastalland.vn</a></>,
             <>Địa chỉ: {PHAP_LY.diaChiDayDu}</>,
             <>Trang <Link href="/lien-he" className="font-semibold text-cvr-blue-ink underline">Liên hệ</Link> — gửi yêu cầu trực tuyến.</>,
             // Lấy từ giấy ĐKKD — sửa tại src/lib/phapLy.ts, để trống thì tự ẩn.

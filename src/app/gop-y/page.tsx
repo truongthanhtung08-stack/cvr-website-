@@ -83,8 +83,8 @@ export default function GopYPage() {
             0377 985 036
           </a>{" "}
           hoặc email{" "}
-          <a href="mailto:lienhe@coastalland.vn" className="font-semibold text-cvr-blue-ink underline">
-            lienhe@coastalland.vn
+          <a href="mailto:hotro@coastalland.vn" className="font-semibold text-cvr-blue-ink underline">
+            hotro@coastalland.vn
           </a>
           .
         </p>

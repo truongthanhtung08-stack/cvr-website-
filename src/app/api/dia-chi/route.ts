@@ -23,7 +23,7 @@ import { NextResponse } from "next/server";
 
 const NOMINATIM = "https://nominatim.openstreetmap.org";
 // Nominatim yêu cầu khai báo ứng dụng + cách liên hệ. Khai đúng thì họ không chặn.
-const UA = "CoastalLand/1.0 (+https://coastalland.vn; lienhe@coastalland.vn)";
+const UA = "CoastalLand/1.0 (+https://coastalland.vn; hotro@coastalland.vn)";
 
 // Nhớ trong bộ nhớ máy chủ. Đủ cho nhu cầu hiện tại; hết đời tiến trình thì thôi.
 const nho = new Map<string, unknown>();

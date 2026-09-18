@@ -141,7 +141,7 @@ export default function DieuKhoanPage() {
             ...(PHAP_LY.tenCongTy ? [<>Đơn vị chủ quản: <strong className="font-semibold text-cvr-ink">{PHAP_LY.tenCongTy}</strong></>] : []),
             ...(DONG_GIAY_PHEP ? [<>{DONG_GIAY_PHEP}</>] : []),
             <>Địa chỉ: {PHAP_LY.diaChiDayDu}</>,
-            <>Email: <a href="mailto:lienhe@coastalland.vn" className="font-semibold text-cvr-blue-ink underline">lienhe@coastalland.vn</a></>,
+            <>Email: <a href="mailto:hotro@coastalland.vn" className="font-semibold text-cvr-blue-ink underline">hotro@coastalland.vn</a></>,
             <>Hotline / Zalo: <a href="tel:+84377985036" className="font-semibold text-cvr-blue-ink underline">0377 985 036</a></>,
             "Website: coastalland.vn",
           ]}
