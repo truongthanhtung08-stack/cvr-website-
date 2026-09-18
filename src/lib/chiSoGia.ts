@@ -287,6 +287,11 @@ export function docBangChiSo(bang: string[][]): { items: ChiSoKhuVuc[]; loi: Loi
       });
       continue;
     }
+    // Ô giá BỎ TRỐNG là bình thường, không phải lỗi: khung dựng sẵn hàng nghìn
+    // dòng cho nhiều đợt, mỗi lần chỉ điền một phần. Báo chúng thành lỗi thì
+    // mỗi lần nộp lại hiện hàng nghìn dòng đỏ, người nộp hết dám tin cái nào là
+    // lỗi thật. Chỉ báo khi ô CÓ CHỮ mà đọc không ra số.
+    if (!lay(5).trim()) continue;
     if (!Number.isFinite(gia) || gia <= 0) {
       loi.push({ dong: i + 1, ly: `Giá "${lay(5)}" không hợp lệ — đơn vị triệu đồng, VD 78,5` });
       continue;
