@@ -88,16 +88,27 @@ const columns = [
   },
   {
     title: "Khu vực",
+    // ⚠️ TRỎ VÀO TRANG KHU VỰC THẬT (/mua-ban/da-nang), KHÔNG dùng ?tinh=Đà Nẵng.
+    // Sửa ngày 18/09/2026. Trước đây cả 9 dòng này đều trỏ /mua-ban?tinh=<tên tỉnh>,
+    // mà footer thì có mặt trên MỌI trang — nghĩa là:
+    //   · Trang khu vực thật (/mua-ban/da-nang) có tiêu đề riêng, bảng giá riêng,
+    //     mô tả riêng nhưng KHÔNG nhận được một liên kết nội bộ nào từ cả website,
+    //     chỉ nằm trơ trong sitemap. Google gọi đây là trang "mồ côi" và gần như
+    //     không bao giờ xếp hạng nổi.
+    //   · Còn /mua-ban?tinh=… thì tự khai canonical về /mua-ban, nên toàn bộ sức
+    //     mạnh của 9 liên kết × mọi trang rơi vào hư không.
+    // Nhóm truy vấn địa phương ("bất động sản Đà Nẵng", "nhà đất Huế") là nhóm
+    // đông nhất ngành — đây là chỗ đáng giá nhất của liên kết nội bộ.
     links: [
-      { label: "BĐS Đà Nẵng", href: "/mua-ban?tinh=Đà Nẵng" },
-      { label: "BĐS Huế", href: "/mua-ban?tinh=Huế" },
-      { label: "BĐS Quảng Trị", href: "/mua-ban?tinh=Quảng Trị" },
-      { label: "BĐS Quảng Ngãi", href: "/mua-ban?tinh=Quảng Ngãi" },
-      { label: "BĐS Khánh Hòa", href: "/mua-ban?tinh=Khánh Hòa" },
-      { label: "BĐS Lâm Đồng", href: "/mua-ban?tinh=Lâm Đồng" },
-      { label: "BĐS Gia Lai", href: "/mua-ban?tinh=Gia Lai" },
-      { label: "BĐS Hà Nội", href: "/mua-ban?tinh=Hà Nội" },
-      { label: "BĐS Hồ Chí Minh", href: "/mua-ban?tinh=Hồ Chí Minh" },
+      { label: "BĐS Đà Nẵng", href: "/mua-ban/da-nang" },
+      { label: "BĐS Huế", href: "/mua-ban/hue" },
+      { label: "BĐS Quảng Trị", href: "/mua-ban/quang-tri" },
+      { label: "BĐS Quảng Ngãi", href: "/mua-ban/quang-ngai" },
+      { label: "BĐS Khánh Hòa", href: "/mua-ban/khanh-hoa" },
+      { label: "BĐS Lâm Đồng", href: "/mua-ban/lam-dong" },
+      { label: "BĐS Gia Lai", href: "/mua-ban/gia-lai" },
+      { label: "BĐS Hà Nội", href: "/mua-ban/ha-noi" },
+      { label: "BĐS Hồ Chí Minh", href: "/mua-ban/ho-chi-minh" },
     ],
   },
 ];

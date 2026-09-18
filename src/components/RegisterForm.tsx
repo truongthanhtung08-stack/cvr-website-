@@ -36,7 +36,12 @@ import { chuanHoaSdt, laSdtVN } from "@/lib/phone";
 
 type Cach = "chon" | "email" | "sdt";
 
-export default function RegisterForm({ uuDai }: { uuDai?: string }) {
+// capThe: thẻ tiêu đề của khung đăng ký. Mặc định "h1" (trang /dang-ky chỉ có mỗi
+// khung này nên nó chính là tiêu đề trang). Trang đích quảng cáo /dang-tin-mien-phi
+// đã có H1 riêng ở trên, nên truyền "h2" — một trang chỉ nên có MỘT H1, hai H1 làm
+// Google phân vân trang nói về cái gì. Chữ và kích cỡ giữ nguyên, chỉ đổi tên thẻ.
+export default function RegisterForm({ uuDai, capThe = "h1" }: { uuDai?: string; capThe?: "h1" | "h2" }) {
+  const TheTieuDe = capThe;
   const [cach, setCach] = useState<Cach>("chon");
 
   // Bước nhập
@@ -173,7 +178,7 @@ export default function RegisterForm({ uuDai }: { uuDai?: string }) {
   if (cach === "chon") {
     return (
       <div className="w-full max-w-md rounded-2xl border border-cvr-line bg-white p-6 shadow-lux sm:p-8">
-        <h1 className="text-2xl font-semibold tracking-tight text-cvr-ink">Tạo tài khoản</h1>
+        <TheTieuDe className="text-2xl font-semibold tracking-tight text-cvr-ink">Tạo tài khoản</TheTieuDe>
         <p className="mt-1.5 text-sm leading-relaxed text-cvr-muted">
           {dongUuDai || "Đăng tin, quản lý tin và lưu bất động sản bạn quan tâm."}
         </p>
@@ -217,7 +222,7 @@ export default function RegisterForm({ uuDai }: { uuDai?: string }) {
   if (choMa) {
     return (
       <div className="w-full max-w-md rounded-2xl border border-cvr-line bg-white p-6 shadow-lux sm:p-8">
-        <h1 className="text-2xl font-semibold tracking-tight text-cvr-ink">Nhập mã xác thực</h1>
+        <TheTieuDe className="text-2xl font-semibold tracking-tight text-cvr-ink">Nhập mã xác thực</TheTieuDe>
         <p className="mt-1.5 text-sm leading-relaxed text-cvr-muted">
           Mã 6 số vừa gửi tới{" "}
           <strong className="font-semibold text-cvr-ink">
@@ -271,9 +276,9 @@ export default function RegisterForm({ uuDai }: { uuDai?: string }) {
       <button type="button" onClick={() => { setCach("chon"); setLoi(""); }} className="text-sm text-cvr-muted transition hover:text-cvr-ink">
         ← Chọn cách khác
       </button>
-      <h1 className="mt-3 text-2xl font-semibold tracking-tight text-cvr-ink">
+      <TheTieuDe className="mt-3 text-2xl font-semibold tracking-tight text-cvr-ink">
         {laSdt ? "Đăng ký bằng số điện thoại" : "Đăng ký bằng email"}
-      </h1>
+      </TheTieuDe>
 
       <form onSubmit={xinMa} className="mt-5 space-y-4">
         <div>

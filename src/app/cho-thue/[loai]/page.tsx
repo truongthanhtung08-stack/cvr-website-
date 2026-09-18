@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ListingBrowser from "@/components/ListingBrowser";
+import KhungChoDanhMuc from "@/components/KhungChoDanhMuc";
 import BangGiaKhuVuc from "@/components/BangGiaKhuVuc";
 import Breadcrumb from "@/components/Breadcrumb";
 import KhuVucLinks from "@/components/KhuVucLinks";
@@ -102,7 +103,15 @@ export default async function DanhMucChoThuePage({ params }: { params: Promise<{
               { name: kv.name, href: `/cho-thue/${kv.slug}` },
             ]}
           />
-          <Suspense fallback={<div className="mx-auto h-[104px] max-w-7xl px-4 sm:px-6 lg:px-8" />}>
+          <Suspense
+            fallback={
+              <KhungChoDanhMuc
+                heading={tieuDeKhuVuc("thue", kv.name)}
+                moTa={moTaKhuVuc("thue", kv.name, tinTrongTinh.length)}
+                items={tinTrongTinh}
+              />
+            }
+          >
             <ListingBrowser
               purpose="thue"
               heading={`Cho thuê nhà đất tại ${kv.name}`}
@@ -132,7 +141,15 @@ export default async function DanhMucChoThuePage({ params }: { params: Promise<{
             { name: c!.label, href: `/cho-thue/${c!.slug}` },
           ]}
         />
-        <Suspense fallback={<div className="mx-auto h-[104px] max-w-7xl px-4 sm:px-6 lg:px-8" />}>
+        <Suspense
+          fallback={
+            <KhungChoDanhMuc
+              heading={c!.title}
+              moTa={c!.desc}
+              items={tinThue.filter((l) => c!.types.includes(l.type))}
+            />
+          }
+        >
           <ListingBrowser
             purpose="thue"
             heading={c!.h1}

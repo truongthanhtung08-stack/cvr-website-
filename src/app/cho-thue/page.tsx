@@ -4,6 +4,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { ListingListJsonLd } from "@/components/ListJsonLd";
 import ListingBrowser from "@/components/ListingBrowser";
+import KhungChoDanhMuc from "@/components/KhungChoDanhMuc";
 import { getListings } from "@/lib/listingsDb";
 import { getArticles } from "@/lib/contentDb";
 
@@ -23,7 +24,15 @@ export default async function ChoThuePage() {
       <main className="flex-1 bg-white">
         {/* Khung chờ: CHỈ cao bằng thanh lọc thật (không pt-32 như trước — đó chính là
             mảng trắng 128px nằm ngay dưới header lúc trang đang tải). */}
-        <Suspense fallback={<div className="mx-auto h-[104px] max-w-7xl px-4 sm:px-6 lg:px-8" />}>
+        <Suspense
+          fallback={
+            <KhungChoDanhMuc
+              heading="Nhà đất cho thuê tại Đà Nẵng, Huế & Miền Trung"
+              moTa="Tin cho thuê căn hộ, nhà nguyên căn, phòng trọ, văn phòng, mặt bằng kinh doanh và kho xưởng tại Đà Nẵng, Huế và các tỉnh Duyên hải Miền Trung. Lọc theo tỉnh, phường/xã, loại hình, khoảng giá và diện tích."
+              items={listings.filter((l) => (l.purpose ?? "ban") === "thue")}
+            />
+          }
+        >
           <ListingBrowser purpose="thue" heading="Nhà đất cho thuê" items={listings} articles={articles} />
         </Suspense>
       </main>

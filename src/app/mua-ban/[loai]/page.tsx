@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ListingBrowser from "@/components/ListingBrowser";
+import KhungChoDanhMuc from "@/components/KhungChoDanhMuc";
 import BangGiaKhuVuc from "@/components/BangGiaKhuVuc";
 import Breadcrumb from "@/components/Breadcrumb";
 import KhuVucLinks from "@/components/KhuVucLinks";
@@ -102,7 +103,15 @@ export default async function DanhMucMuaBanPage({ params }: { params: Promise<{ 
               { name: kv.name, href: `/mua-ban/${kv.slug}` },
             ]}
           />
-          <Suspense fallback={<div className="mx-auto h-[104px] max-w-7xl px-4 sm:px-6 lg:px-8" />}>
+          <Suspense
+            fallback={
+              <KhungChoDanhMuc
+                heading={tieuDeKhuVuc("ban", kv.name)}
+                moTa={moTaKhuVuc("ban", kv.name, tinTrongTinh.length)}
+                items={tinTrongTinh}
+              />
+            }
+          >
             <ListingBrowser
               purpose="ban"
               heading={`Nhà đất bán tại ${kv.name}`}
@@ -132,7 +141,15 @@ export default async function DanhMucMuaBanPage({ params }: { params: Promise<{ 
             { name: c!.label, href: `/mua-ban/${c!.slug}` },
           ]}
         />
-        <Suspense fallback={<div className="mx-auto h-[104px] max-w-7xl px-4 sm:px-6 lg:px-8" />}>
+        <Suspense
+          fallback={
+            <KhungChoDanhMuc
+              heading={c!.title}
+              moTa={c!.desc}
+              items={tinBan.filter((l) => c!.types.includes(l.type))}
+            />
+          }
+        >
           <ListingBrowser
             purpose="ban"
             heading={c!.h1}

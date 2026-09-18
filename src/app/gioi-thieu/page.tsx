@@ -9,8 +9,11 @@ import { getAbout } from "@/lib/siteContent";
 export const metadata: Metadata = {
   alternates: { canonical: "/gioi-thieu" },
   title: "Giới thiệu",
+  // 149 ký tự — Google hiển thị được khoảng 155. Bản cũ 188 ký tự bị cắt mất câu
+  // cuối. Chữ "thực hiện giao dịch" cũng đã bỏ: Coastal Land là CỔNG THÔNG TIN,
+  // không đứng ra môi giới hay giao dịch hộ ai.
   description:
-    "Coastal Land (coastalland.vn) — nền tảng công nghệ và cổng thông tin Bất động sản trực tuyến hàng đầu tại Việt Nam. Hệ thống ưu việt giúp khách hàng kết nối và thực hiện giao dịch dễ dàng.",
+    "Coastal Land (coastalland.vn) — cổng thông tin bất động sản Đà Nẵng, Huế và Duyên hải Miền Trung. Nơi người bán đăng tin và người mua tìm đúng nhà đất.",
 };
 
 /* ════════════════════════════════════════════════════════════════════════════

@@ -26,7 +26,10 @@ import { freeDangChay, freeNote, tenGoiMienPhi } from "@/lib/billing";
 // ============================================================================
 
 export const metadata: Metadata = {
-  title: "Đăng tin bất động sản miễn phí — Đà Nẵng, Huế & Miền Trung",
+  // 59 ký tự kể cả đuôi " | COASTAL LAND" mà layout tự nối — vừa khít khung Google
+  // hiển thị (~60). Bản cũ 73 ký tự bị cắt mất chữ "Miền Trung" lẫn tên thương hiệu,
+  // mà đây lại đúng là trang đích của quảng cáo nên tiêu đề phải hiện trọn.
+  title: "Đăng tin bất động sản miễn phí ở Đà Nẵng, Huế",
   description:
     "Tạo tài khoản Coastal Land và đăng tin bán / cho thuê nhà đất miễn phí cho thành viên mới. Tin được duyệt nhanh, đến đúng người đang tìm tại khu vực của bạn.",
   alternates: { canonical: "/dang-tin-mien-phi" },
@@ -95,7 +98,8 @@ export default async function DangTinMienPhiPage() {
             {/* Form đăng ký — dùng lại đúng component của /dang-ky để sau này
                 sửa một chỗ là cả hai trang đổi theo. */}
             <div className="flex justify-center lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:justify-end">
-              <RegisterForm uuDai={uuDai} />
+              {/* capThe="h2": trang này đã có H1 "Đăng tin bất động sản miễn phí…" ở trên */}
+              <RegisterForm uuDai={uuDai} capThe="h2" />
             </div>
 
             {/* Lý do chọn Coastal Land */}

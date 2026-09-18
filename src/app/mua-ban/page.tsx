@@ -4,6 +4,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { ListingListJsonLd } from "@/components/ListJsonLd";
 import ListingBrowser from "@/components/ListingBrowser";
+import KhungChoDanhMuc from "@/components/KhungChoDanhMuc";
 import { getListings } from "@/lib/listingsDb";
 import { getArticles } from "@/lib/contentDb";
 
@@ -22,8 +23,18 @@ export default async function MuaBanPage() {
       <Header />
       <main className="flex-1 bg-white">
         {/* Khung chờ: CHỈ cao bằng thanh lọc thật (không pt-32 như trước — đó chính là
-            mảng trắng 128px nằm ngay dưới header lúc trang đang tải). */}
-        <Suspense fallback={<div className="mx-auto h-[104px] max-w-7xl px-4 sm:px-6 lg:px-8" />}>
+            mảng trắng 128px nằm ngay dưới header lúc trang đang tải).
+            Khung chờ này kiêm luôn phần nội dung MÁY CHỦ dựng sẵn cho Google đọc —
+            xem lý do đầy đủ trong KhungChoDanhMuc.tsx. */}
+        <Suspense
+          fallback={
+            <KhungChoDanhMuc
+              heading="Nhà đất bán tại Đà Nẵng, Huế & Miền Trung"
+              moTa="Tin bán nhà riêng, căn hộ chung cư, đất nền, nhà mặt phố và biệt thự tại Đà Nẵng, Huế và các tỉnh Duyên hải Miền Trung. Lọc theo tỉnh, phường/xã, dự án, loại hình, khoảng giá và diện tích."
+              items={listings.filter((l) => (l.purpose ?? "ban") === "ban")}
+            />
+          }
+        >
           <ListingBrowser purpose="ban" heading="Nhà đất bán" items={listings} articles={articles} />
         </Suspense>
       </main>

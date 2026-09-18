@@ -149,6 +149,27 @@ Buộc phải đụng vào vì lý do kỹ thuật → **DỪNG, HỎI TRƯỚC.
 
 ---
 
+## 0D. 📈 GOOGLE ADS + SEO — topic riêng, theo dõi lâu dài
+
+> **Bảng theo dõi đầy đủ: [`docs/KE-HOACH-GOOGLE-ADS-SEO.md`](docs/KE-HOACH-GOOGLE-ADS-SEO.md).**
+> Mở phiên mới là **đọc file đó trước**, xem đang dừng ở bước nào rồi làm tiếp — đừng bắt
+> chủ dự án kể lại. Làm xong bước nào thì **sửa bảng trong file đó ngay**.
+>
+> Mở 17/09/2026. Bối cảnh: web chạy thử 1 tháng rồi thương mại hoá; **bán được gói tin hay
+> không phụ thuộc có TRAFFIC hay không**, nên Google Ads + SEO đi cùng nhau, không tách rời.
+>
+> Tài khoản Ads **334-211-0750 Coastal Land** · thẻ Google **AW-18365884419**.
+> Ba việc đang chặn: ① chiến dịch bị Google khoá vì chuyển đổi "định cấu hình sai";
+> ② trang danh mục (`/mua-ban`, `/cho-thue`, `/mua-ban/<khu-vực>`) **HTML máy chủ không có
+> chữ** (khách xem vẫn bình thường — chỉ Google đọc chậm, và giá mỗi lượt bấm đắt lên);
+> ③ ngân sách 5.000 đ/ngày không mua nổi một lượt bấm.
+>
+> ✅ **Nghi vấn "/mua-ban trắng" của phiên 17/9 ĐÃ GIẢI (18/9): KHÔNG CÓ LỖI** — phép đo cũ
+> chạy trên thẻ trình duyệt chưa hiển thị nên chỉ thấy khung chờ. Kết luận "trang trắng"
+> phải chứng minh bằng ẢNH CHỤP, không bằng `querySelector`.
+
+---
+
 ## 1. Dự án là gì
 
 > ⚡ **Đây KHÔNG chỉ là một website thông thường — đây là Dự án COASTAL LAND PLATFORM.**

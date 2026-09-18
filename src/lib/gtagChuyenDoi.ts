@@ -34,7 +34,11 @@ const ADS_ID = process.env.NEXT_PUBLIC_ADS_ID || "AW-18365884419";
 export type TenChuyenDoi = "dang_ky" | "dang_tin";
 
 // 👇 ĐIỀN NHÃN VÀO ĐÂY (xem cách lấy ở đầu file). Để trống là chưa bật.
-const NHAN_DANG_KY_MAC_DINH = "";
+// Nhãn hành động "Đăng ký thành viên" (ID 7751511110, tạo 7/9/2026) — lấy trong
+// Google Ads → Mục tiêu → Lượt đăng ký → Đăng ký thành viên → "Xem đoạn mã sự
+// kiện" ngày 17/9/2026. Trước khi cắm nhãn này, hành động đó nằm ở trạng thái
+// "Không hoạt động" vì web chưa bao giờ bắn về một lượt chuyển đổi nào.
+const NHAN_DANG_KY_MAC_DINH = "0Y9KCMbYmvAcEIPQxLVE";
 const NHAN_DANG_TIN_MAC_DINH = "";
 
 const NHAN_ADS: Record<TenChuyenDoi, string> = {

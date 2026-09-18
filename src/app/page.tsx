@@ -36,6 +36,13 @@ export default async function Home() {
     <>
       <Header />
       <main className="flex-1">
+        {/* H1 CỦA TRANG CHỦ — chỉ dành cho Google và trình đọc màn hình, KHÔNG hiện
+            trên màn hình (sr-only) nên bố cục đã duyệt giữ nguyên tuyệt đối.
+            Vì sao cần: trang chủ trước đây không có thẻ <h1> nào, chỉ có h2/h3 — mà
+            H1 chính là câu trả lời cho "trang này nói về cái gì". Thiếu nó là bỏ không
+            một điểm cộng miễn phí, nhất là khi đang chạy Google Ads (bot chấm trang
+            đích đọc cấu trúc tiêu đề). Câu chữ trùng đúng câu định vị chuẩn ở layout. */}
+        <h1 className="sr-only">COASTAL LAND — Bất động sản Duyên hải Miền Trung</h1>
         {/* Hero: khung GIỮ NGUYÊN — ảnh PHỦ KÍN khung (cover), không hụt 2 bên.
             mobileTwoLine: mobile chỉ 2 dòng text (tiêu đề + phụ đề) canh dưới-trái, không ngắt dòng */}
         <HomeExpandProvider>

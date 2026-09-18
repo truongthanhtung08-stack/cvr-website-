@@ -24,6 +24,16 @@ import type { Listing } from "@/lib/data";
 // hiện. Không trùng tên thì để riêng, thà tách nhầm còn hơn nhập nhầm hai người.
 // ============================================================================
 
+// ── NGƯỠNG CHO GOOGLE LẬP CHỈ MỤC HỒ SƠ (chủ dự án chốt 18/09/2026) ─────────
+// Hồ sơ có ÍT HƠN ngần này tin thì vẫn xem được bình thường nhưng KHÔNG cho vào
+// chỉ mục Google và KHÔNG khai trong sitemap. Lý do: đo ngày 18/09/2026 thấy
+// 29/40 hồ sơ chỉ có đúng một tin — trang như vậy chỉ chép lại một tin đã có
+// trang riêng, Google chấm là "trang mỏng" + trùng lặp nội bộ, gom cả trăm trang
+// thì kéo điểm cả tên miền xuống.
+// Đăng thêm tin cho đủ ngưỡng là trang tự vào chỉ mục lại, không phải sửa code.
+// Dùng CHUNG một hằng số này ở cả trang hồ sơ lẫn sitemap — đổi một chỗ là xong.
+export const NGUONG_INDEX_HO_SO = 3;
+
 export type ChuyenGia = {
   slug: string;
   ten: string;

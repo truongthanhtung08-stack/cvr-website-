@@ -68,27 +68,102 @@ function parseLatLng(s?: string): { lat: number; lng: number } | null {
 // Hoà, mất hẳn từ khoá địa phương). Chỗ này chuẩn hoá lại cho thẻ <title>:
 // cắt gọn + ghép địa danh còn thiếu. H1 trên trang vẫn giữ NGUYÊN VĂN của người
 // bán — không sửa chữ của khách.
+// ── LÀM SẠCH TIÊU ĐỀ TRƯỚC KHI ĐƯA LÊN GOOGLE (chốt 18/09/2026) ─────────────
+// Tiêu đề thật đang chạy: "🏡 NẮM CHỦ NHÀ ĐẸP 3 TẦNG – 2 MẶT TIỀN 📍 Sát cầu Hòa
+// Xuân 🌿 …". Hai chỗ hỏng khi lên kết quả tìm kiếm:
+//   · EMOJI — Google gần như luôn lược bỏ khi hiển thị, nhưng vẫn tính vào độ dài
+//     nên đẩy phần chữ có nghĩa ra ngoài chỗ bị cắt.
+//   · VIẾT HOA TOÀN BỘ — bị chấm là tiêu đề rao vặt; Google hay tự viết lại tiêu
+//     đề, và khi nó tự viết thì mình mất quyền quyết định hiện cái gì.
+// ⚠️ CHỈ đụng vào thẻ <title>/<description> gửi Google. NỘI DUNG TIN TRÊN WEB
+// (H1, mô tả) GIỮ NGUYÊN VĂN 100% — đúng chốt "tin lấy nguyên, không sửa".
+// Viết tắt của ngành phải giữ nguyên chữ hoa — hạ xuống thành "Shr", "Hđmb" là
+// sai và trông cẩu thả. Thêm vào đây khi gặp thêm từ mới trong tin thật.
+const VIET_TAT = new Set([
+  "SHR", "SHCC", "HĐMB", "HDMB", "GPXD", "KDC", "KCN", "TMDV", "QL", "DT", "TT",
+  "BĐS", "BDS", "CC", "NĐT", "NDT", "VP", "MT", "MTĐ", "HXH", "TTTM", "CĐT", "CDT",
+]);
+
+function lamSachTieuDe(raw: string): string {
+  // Bỏ emoji + ký hiệu trang trí, giữ lại chữ, số, dấu câu thường dùng.
+  let t = raw
+    .replace(/[\u{1F000}-\u{1FAFF}\u{2190}-\u{2BFF}\u{FE0F}\u{20E3}\u{2600}-\u{27BF}]/gu, " ")
+    .replace(/\s+/g, " ")
+    .replace(/^[\s,\-–—:;.·|]+/, "")
+    .trim();
+
+  // Đếm tỷ lệ chữ HOA trên tổng số chữ cái. Trên 70% coi như viết hoa cả câu →
+  // hạ về kiểu viết hoa đầu mỗi từ, để địa danh và tên riêng vẫn đúng chính tả
+  // ("Hòa Xuân", "Đà Nẵng") thay vì thành chữ thường hết.
+  const chuCai = t.replace(/[^\p{L}]/gu, "");
+  const soHoa = [...chuCai].filter((c) => c === c.toLocaleUpperCase("vi") && c !== c.toLocaleLowerCase("vi")).length;
+  if (chuCai.length >= 8 && soHoa / chuCai.length > 0.7) {
+    t = t
+      .split(" ")
+      .map((tu) => {
+        // Từ có chữ số (3PN, 100M2, 263,3M²) giữ nguyên — hạ xuống là sai nghĩa.
+        if (/\d/.test(tu)) return tu;
+        // Viết tắt quen thuộc của ngành: giữ nguyên chữ hoa.
+        if (VIET_TAT.has(tu.replace(/[^\p{L}]/gu, "").toUpperCase())) return tu;
+        return tu.charAt(0).toLocaleUpperCase("vi") + tu.slice(1).toLocaleLowerCase("vi");
+      })
+      .join(" ");
+  }
+  return t;
+}
+
+// NGÂN SÁCH KÝ TỰ CHO THẺ <title> (đo ngày 18/09/2026: tiêu đề tin đang dài 128
+// ký tự — Google cắt còn chưa tới một nửa, mất sạch phần địa danh và giá nằm ở đuôi).
+// Google hiển thị khoảng 60 ký tự. Layout tự nối thêm " | COASTAL LAND" (15 ký tự),
+// nên phần do trang này sinh ra chỉ được khoảng 50.
+// Thứ tự ưu tiên khi phải cắt: GIÁ và ĐỊA DANH giữ lại bằng mọi giá (đó mới là từ
+// khoá khách gõ), phần chữ người bán tự viết chịu cắt trước.
+const NGAN_SACH_TITLE = 50;
+
 function tieuDeSeo(tieuDe: string, location: string, price: string): string {
   const kd = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/gi, "d").toLowerCase();
-  let t = tieuDe.trim().replace(/\s+/g, " ");
-  if (t.length > 62) {
-    const cat = t.slice(0, 62);
-    const khoang = cat.lastIndexOf(" ");
-    t = (khoang > 40 ? cat.slice(0, khoang) : cat).replace(/[\s,\-–—:;.]+$/, "");
-  }
-  // Ghép những cấp địa danh mà tiêu đề CHƯA nhắc tới (phường/xã, tỉnh/thành)
-  const thieu = location
+  let t = lamSachTieuDe(tieuDe);
+
+  // Ghép những cấp địa danh mà tiêu đề CHƯA nhắc tới (phường/xã, tỉnh/thành).
+  // Chỉ lấy cấp CUỐI (tỉnh/thành) khi chỗ không còn rộng — "Đà Nẵng" đáng giá hơn
+  // "Phường Hòa Xuân" với người đang tìm kiếm.
+  const conThieu = location
     .split(",")
     .map((s) => s.trim())
     .filter((p) => p && !kd(t).includes(kd(p.replace(/^(Phường|Xã|Thị trấn|Đặc khu)\s+/i, ""))));
-  return [t, thieu.join(", ")].filter(Boolean).join(", ") + ` — ${price}`;
+
+  const duoi = ` — ${price}`;
+  const chonDiaDanh = (() => {
+    if (conThieu.length === 0) return "";
+    const dayDu = conThieu.join(", ");
+    // Đủ chỗ cho cả chuỗi địa danh (chừa ít nhất 20 ký tự cho phần chữ) thì lấy hết
+    if (dayDu.length + duoi.length + 20 <= NGAN_SACH_TITLE) return dayDu;
+    return conThieu[conThieu.length - 1]; // chật thì giữ mỗi tỉnh/thành
+  })();
+
+  const choConLai = NGAN_SACH_TITLE - duoi.length - (chonDiaDanh ? chonDiaDanh.length + 2 : 0);
+  if (t.length > choConLai) {
+    const cat = t.slice(0, Math.max(choConLai, 24));
+    const khoang = cat.lastIndexOf(" ");
+    t = (khoang > 14 ? cat.slice(0, khoang) : cat).replace(/[\s,\-–—:;.]+$/, "");
+  }
+  return [t, chonDiaDanh].filter(Boolean).join(", ") + duoi;
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
   const l = await getListing(id); // B2: đọc Supabase, fallback dữ liệu mẫu
   if (!l) return { title: "Không tìm thấy", robots: { index: false, follow: true } };
-  const desc = `${l.title} tại ${l.location}. Giá ${l.price}${l.area ? `, diện tích ${l.area}` : ""}. Hình thật, liên hệ trực tiếp người đăng trên Coastal Land.`;
+  // Mô tả cũng dùng bản đã làm sạch — cùng lý do với thẻ <title> ở trên.
+  // Google hiển thị khoảng 155 ký tự; bản cũ dài 331 nên câu chốt "Hình thật, liên
+  // hệ trực tiếp người đăng" không bao giờ hiện ra. Nay đặt THÔNG TIN QUYẾT ĐỊNH
+  // (loại hình, giá, diện tích, địa danh) lên đầu rồi mới tới câu mời.
+  const moTaGon = (() => {
+    const dau = `${l.type} tại ${l.location}. Giá ${l.price}${l.area ? `, ${l.area}` : ""}${l.beds ? `, ${l.beds} phòng ngủ` : ""}.`;
+    const moi = " Hình thật, liên hệ trực tiếp người đăng trên Coastal Land.";
+    return (dau + moi).length <= 158 ? dau + moi : dau.slice(0, 158);
+  })();
+  const desc = moTaGon;
   const tieuDe = tieuDeSeo(l.title, l.location, l.price);
   return {
     title: tieuDe,

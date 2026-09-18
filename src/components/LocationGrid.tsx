@@ -6,6 +6,31 @@ import Link from "next/link";
 import { useHomeSection } from "@/components/HomeExpand";
 import { asset, anhNho } from "@/lib/asset";
 import { HOME_AREAS_DEFAULT, areaImages, type AreaCard } from "@/lib/siteContent";
+import { slugKhuVuc, timKhuVuc } from "@/lib/khuVuc";
+
+// ── ĐƯỜNG DẪN CỦA MỘT THẺ KHU VỰC (sửa 18/09/2026) ──────────────────────────
+// Dữ liệu khối này do admin nhập ở /admin/noi-dung, và từ trước tới nay đều ghi
+// dạng "/mua-ban?tinh=Đà Nẵng". Với người dùng thì vẫn ra đúng danh sách, nhưng
+// với Google đó là một địa chỉ TỰ KHAI canonical về /mua-ban — nghĩa là:
+//   · trang khu vực thật (/mua-ban/da-nang: có tiêu đề riêng, mô tả riêng, bảng
+//     giá riêng) không nhận được liên kết nào từ trang chủ → trang "mồ côi";
+//   · sức mạnh của khối khu vực ngay trang chủ rơi vào hư không.
+//
+// Chuyển đổi Ở CHỖ HIỂN THỊ chứ không sửa dữ liệu, vì hai lý do:
+//   1. Nội dung admin trong Supabase ĐÈ lên mặc định trong code — sửa code mà
+//      admin đã lưu thì không ăn thua.
+//   2. Chủ dự án không phải vào sửa lại 11 dòng bằng tay, và sau này nhập thêm
+//      khu vực mới vẫn tự đúng.
+//
+// Chỉ đổi khi tên đúng là một TỈNH/THÀNH có trang riêng. Thẻ ghi địa danh nhỏ
+// hơn tỉnh ("Nha Trang", "Quy Nhơn", "Hội An") giữ nguyên ?tinh= — không có
+// trang riêng cho chúng, đổi bừa là dẫn khách vào trang không tồn tại.
+function duongDanKhuVuc(area: AreaCard): string {
+  const ten = area.href.match(/[?&]tinh=([^&]+)/)?.[1];
+  if (!ten) return area.href;
+  const slug = slugKhuVuc(decodeURIComponent(ten));
+  return timKhuVuc(slug) ? `/mua-ban/${slug}` : area.href;
+}
 
 // Bố cục Homedy: gói gọn 2 HÀNG — ô ĐẦU là địa điểm LÕI 2×2, kèm 4 địa điểm nhỏ.
 // Dữ liệu admin sửa được (getHomeAreas) — chưa nhập → mặc định trong code.
@@ -72,7 +97,7 @@ function AreaTile({ area, big, running, delay }: { area: AreaCard; big: boolean;
 
   return (
     <Link
-      href={area.href}
+      href={duongDanKhuVuc(area)}
       className={`card-lux group relative overflow-hidden shadow-lux transition-transform hover:-translate-y-1.5 shadow-lux-hover hover:ring-cvr-blue/40 sm:ring-1 sm:ring-black/5 ${
         big ? "col-span-2 row-span-1 sm:row-span-2" : ""
       }`}

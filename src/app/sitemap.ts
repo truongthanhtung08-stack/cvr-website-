@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { getProjects, getArticles } from "@/lib/contentDb";
 import { getListings } from "@/lib/listingsDb";
-import { getChuyenGia } from "@/lib/chuyenGiaDb";
+import { getChuyenGia, NGUONG_INDEX_HO_SO } from "@/lib/chuyenGiaDb";
 import { projectCategories, rentCategories, saleCategories } from "@/lib/categories";
 import { packages, utilityTools } from "@/lib/packages";
 import { khuVucList } from "@/lib/khuVuc";
@@ -120,7 +120,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Đây là loại trang Google rất chuộng cho truy vấn "môi giới bất động sản
     // <khu vực>", mà lại sinh ra miễn phí từ dữ liệu đã có. Không khai vào sitemap
     // thì Google gần như không tự tìm ra (trang chỉ được link từ danh bạ).
+    // CHỈ khai hồ sơ ĐỦ TIN (xem NGUONG_INDEX_HO_SO trong chuyenGiaDb.ts). Hồ sơ
+    // mỏng đã tự gắn noindex; khai chúng trong sitemap nữa là vừa mời Google vào
+    // một trang mình bảo đừng lập chỉ mục, vừa tự báo cáo là site nhiều trang mỏng.
     for (const cg of chuyenGia) {
+      if (cg.soTin < NGUONG_INDEX_HO_SO) continue;
       dynamic.push({
         url: `${SITE}/chuyen-gia/${cg.slug}`, lastModified: now, changeFrequency: "weekly", priority: 0.6,
         images: anhTuyetDoi(cg.anh),
