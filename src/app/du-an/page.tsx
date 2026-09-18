@@ -5,8 +5,20 @@ import Footer from "@/components/Footer";
 import { ProjectListJsonLd } from "@/components/ListJsonLd";
 import Hero from "@/components/Hero";
 import ProjectsBrowser from "@/components/ProjectsBrowser";
+import KhuVucLinks from "@/components/KhuVucLinks";
 import { getProjects, getArticles } from "@/lib/contentDb";
 import { getProjectBanners } from "@/lib/siteContent";
+
+// Đếm dự án theo tỉnh — cho khối "Dự án theo khu vực" ở cuối trang.
+const tinhCua = (location: string) => location.split(",").pop()?.trim() ?? "";
+function demTheoTinh(items: { location: string }[]): [string, number][] {
+  const m = new Map<string, number>();
+  for (const p of items) {
+    const t = tinhCua(p.location);
+    if (t) m.set(t, (m.get(t) ?? 0) + 1);
+  }
+  return [...m.entries()].sort((a, b) => b[1] - a[1]);
+}
 
 export const metadata: Metadata = {
   alternates: { canonical: "/du-an" },
@@ -37,6 +49,8 @@ export default async function DuAnPage() {
             hero={<Hero banners={projBanners} heightClass="aspect-[2/1] sm:aspect-auto sm:h-[400px]" search={false} />}
           />
         </div>
+        {/* Đường bò tới trang dự án theo khu vực — cùng lý do như ở /mua-ban. */}
+        <KhuVucLinks base="/du-an" demTheoTinh={demTheoTinh(projects)} />
       </main>
       <Footer />
     </>
