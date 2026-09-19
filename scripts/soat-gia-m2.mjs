@@ -10,7 +10,7 @@ const { mauSoCuaLoaiHinh, TEN_MAU_SO, specForType, coDonGiaM2 } = await jiti.imp
 const env = Object.fromEntries(fs.readFileSync(ROOT + "/.env.local", "utf8").split(/\r?\n/)
   .filter((l) => l && !l.startsWith("#") && l.includes("="))
   .map((l) => [l.slice(0, l.indexOf("=")).trim(), l.slice(l.indexOf("=") + 1).trim()]));
-const rows = await (await fetch(`${env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/listings?select=id,title,type,purpose,price_vnd,area_m2,built_area_m2&limit=2000`,
+const rows = await (await fetch(`${env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/listings?select=id,title,type,purpose,price_vnd,area_m2,built_area_m2,details&limit=2000`,
   { headers: { apikey: env.SUPABASE_SERVICE_ROLE_KEY, Authorization: "Bearer " + env.SUPABASE_SERVICE_ROLE_KEY } })).json();
 
 const nhom = new Map();
@@ -19,7 +19,8 @@ for (const r of rows) {
   const k = `${r.purpose === "thue" ? "THUÊ " : "BÁN  "}${specForType(r.type).label}`;
   const o = nhom.get(k) ?? { n: 0, tinhDuoc: 0, mau: TEN_MAU_SO[mau] };
   o.n++;
-  const dt = coDonGiaM2(r.type, r.purpose) ? r.area_m2 : mau === "san" ? r.built_area_m2 : r.area_m2;
+  // Nhà chưa khai m² sàn thì dùng số SUY RA từ nội dung tin (details.dtSanUocTinh).
+  const dt = coDonGiaM2(r.type, r.purpose) ? r.area_m2 : mau === "san" ? r.built_area_m2 ?? r.details?.dtSanUocTinh : r.area_m2;
   if (r.price_vnd != null && dt) o.tinhDuoc++;
   nhom.set(k, o);
 }

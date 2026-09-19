@@ -12,7 +12,7 @@ import { saleTypeGroups, rentTypeGroups } from "@/lib/filters";
 import { slugify } from "@/lib/contentAdmin";
 // Bộ đặc điểm theo loại hình — để ghi số tầng / mặt tiền / đường vào đúng ô của
 // từng loại bất động sản, y như khi đăng tay bằng form.
-import { fieldsFor, coDonGiaM2, coDienTichXayDung } from "@/lib/listingSpec";
+import { fieldsFor, coDonGiaM2, coDienTichXayDung, mauSoCuaLoaiHinh } from "@/lib/listingSpec";
 // SỐ ĐIỆN THOẠI — cùng một hàm với ô nhập trong admin và số hiện trên trang tin,
 // nên file của Cowork, cơ sở dữ liệu và web luôn ghi giống hệt nhau (0 + 10 số).
 import { chuanHoaSdt, laSdtVN, tachNhieuSdt } from "@/lib/phone";
@@ -195,13 +195,47 @@ function chuanHoa(s: string): string {
 // Đọc số theo cách người Việt gõ, KHÔNG được nhầm 5,5 tỷ thành 55 tỷ:
 //   · Có dấu PHẨY  → phẩy là dấu thập phân, chấm là dấu nghìn: "1.234,5" → 1234.5
 //   · Không có phẩy → chấm là dấu thập phân (kiểu Excel tiếng Anh): "5.5" → 5.5
+// Đọc số kiểu Việt lẫn kiểu Anh. Luật: dấu nào đứng SAU CÙNG và chỉ xuất hiện
+// MỘT LẦN thì đó là dấu thập phân; dấu lặp nhiều lần là phân cách nghìn.
+//   "62,5"      → 62,5      · "62.5"        → 62,5
+//   "1.234.567" → 1234567   · "1,234.56"    → 1234,56
+// ⚠️ CÒN MỘT CHỖ MÁY KHÔNG TỰ QUYẾT ĐƯỢC: một dấu chấm với ĐÚNG BA chữ số sau
+// nó ("2.222") vừa có thể là 2222 (phân cách nghìn) vừa có thể là 2,222 (thập
+// phân) — hai cách hiểu lệch nhau 1000 lần. Ở đây vẫn hiểu là THẬP PHÂN như cũ,
+// nhưng phần kiểm tra bên dưới soi lại ĐƠN GIÁ MỖI M²: ra ngoài khoảng hợp lý
+// thì báo vàng. Đợt 19/09 có 3 tin sai đúng kiểu này lọt lên web (2.222 m² thành
+// 2,222 m², 2,246 tỷ thành 2.246 tỷ) — không ai thấy cho tới khi soi đơn giá.
 function soVN(s: string): number | null {
-  const t = s.trim();
+  const t = s.trim().split(" ").join("");
   if (!t) return null;
-  const chuan = t.includes(",") ? t.replace(/\./g, "").replace(",", ".") : t;
+  const soCham = (t.match(/\./g) ?? []).length;
+  const soPhay = (t.match(/,/g) ?? []).length;
+  let chuan = t;
+  if (soCham && soPhay) {
+    const thapPhan = t.lastIndexOf(".") > t.lastIndexOf(",") ? "." : ",";
+    const nghin = thapPhan === "." ? "," : ".";
+    chuan = t.split(nghin).join("").split(thapPhan).join(".");
+  } else if (soCham > 1) chuan = t.split(".").join("");
+  else if (soPhay > 1) chuan = t.split(",").join("");
+  else if (soPhay === 1) chuan = t.split(",").join(".");
   const n = Number(chuan);
   return Number.isNaN(n) ? null : n;
 }
+
+// ── SOI LẠI ĐƠN GIÁ MỖI M² TRƯỚC KHI ĐĂNG ──────────────────────────────────
+// Giá và diện tích đọc riêng lẻ thì ô nào cũng "trông hợp lệ"; chỉ khi chia ra
+// đơn giá mới lộ chuyện sai dấu chấm. Đây là cửa chặn cuối, bắt cả lỗi người gõ
+// lẫn lỗi máy đọc — không chặn đăng, chỉ báo vàng để mở tin gốc đối chiếu.
+// Ngưỡng đo trên 134 tin thật ngày 19/09: nới tới mức KHÔNG kêu oan tin đúng,
+// nhưng vẫn tóm được lỗi sai dấu chấm (lệch 1000 lần thì vượt rất xa mọi ngưỡng).
+//   · Sàn dưới của thuê để 5 nghìn: đất xưởng/bãi ngoại thành có tin thật
+//     "2.000 m² giá 20 triệu/tháng" = 10 nghìn đ/m²/tháng.
+//   · Trần của bán để 400 triệu: đất mặt tiền ven biển Đà Nẵng chạm mức này, và
+//     tin tiền tỷ như vậy thì ĐÁNG được liếc lại — cảnh báo vàng, không chặn đăng.
+const KHOANG_DON_GIA = {
+  ban: { thap: 0.3e6, cao: 400e6, ten: "triệu/m²" },   // 0,3 – 400 triệu mỗi m²
+  thue: { thap: 5e3, cao: 3e6, ten: "đ/m²/tháng" },    // 5 nghìn – 3 triệu mỗi m² mỗi tháng
+};
 
 // ── ĐỌC CSV ─────────────────────────────────────────────────────────────────
 // Tự nhận dấu phân cách , hoặc ; (Excel tiếng Việt hay xuất bằng ;), hiểu ô có
@@ -444,6 +478,25 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
     donGiaThue = Math.round((giaVnd / 1000 / dienTichSo) * 10) / 10;
   } else if (laGiaTheoM2 && giaVnd == null) {
     canhBao.push("Kho/xưởng/mặt bằng cho thuê nên có don_gia_thue (ngàn đ/m²/tháng)");
+  }
+
+  // CỬA CHẶN CUỐI — chia giá cho diện tích, ra ngoài khoảng hợp lý là báo vàng.
+  // Bắt được cả ba tin sai dấu chấm của đợt 19/09 mà từng ô riêng lẻ trông vẫn ổn.
+  if (giaVnd != null) {
+    const mau = mauSoCuaLoaiHinh(loaiHinhChuan);
+    const mauSan = mau === "san" && !coDonGiaM2(loaiHinhChuan, mucDich);
+    const dtDonGia = mauSan ? soVN(lay(COT.dienTichXayDung)) : dienTichSo;
+    const k = KHOANG_DON_GIA[mucDich];
+    if (dtDonGia && dtDonGia > 0) {
+      const don = giaVnd / dtDonGia;
+      if (don < k.thap || don > k.cao) {
+        const hien = mucDich === "thue" ? `${Math.round(don).toLocaleString("vi-VN")} đ` : `${(don / 1e6).toLocaleString("vi-VN", { maximumFractionDigits: 1 })} triệu`;
+        canhBao.push(
+          `Đơn giá ra ${hien}/m² — ngoài khoảng thường gặp (${mucDich === "thue" ? "20 nghìn – 3 triệu" : "0,3 – 400 triệu"} ${k.ten}). ` +
+            `Kiểm tra lại dấu chấm ở gia / dien_tich: "2.222" web hiểu là 2,222 chứ không phải 2222.`,
+        );
+      }
+    }
   }
 
   const soHoacNull = (v: string, ten: string, nguyen = false): number | null => {
