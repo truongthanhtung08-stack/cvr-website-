@@ -44,9 +44,12 @@ export type MatBangGia = {
  * một chỉ số tính trên m² SÀN là ra kết luận sai hẳn cho người xem.
  */
 export function giaTinSoDuocVoiChiSo(tin: Listing, chiSo: ChiSoKhuVuc | null): number | null {
-  if (!chiSo?.mauSo) return null;
-  if (chiSo.mauSo !== mauSoCuaLoaiHinh(tin.type)) return null;
-  return giaMoiM2(tin);
+  // Chấm giá tin phải nằm trên CÙNG MỘT THANG với đường thị trường, nên tính
+  // theo ĐÚNG mẫu số mà dãy chỉ số đang dùng — không áp mẫu số mặc định của loại
+  // hình. Trang tin vẫn hiện đơn giá theo luật của nó (nhà tính trên m² sàn);
+  // riêng biểu đồ này là chỗ SO SÁNH nên phải theo bên kia, và nói rõ ra.
+  // Dãy chưa khai mẫu số thì đứng lại, không đoán.
+  return chiSo?.mauSo ? giaMoiM2Theo(tin, chiSo.mauSo) : null;
 }
 
 /** Đọc ô `mau_so` của tệp chỉ số. Bỏ trống thì KHÔNG đoán bừa theo loại hình:
@@ -61,13 +64,19 @@ function docMauSo(raw: string, loaiHinh: string): MauSo | undefined {
   return loaiHinh ? mauSoCuaLoaiHinh(raw) : undefined;
 }
 
+/** Giá mỗi m² của tin theo ĐÚNG luật của loại hình (đất→m² đất · nhà→m² sàn · căn hộ→m² căn). */
 export function giaMoiM2(l: Listing): number | null {
+  return giaMoiM2Theo(l, mauSoCuaLoaiHinh(l.type));
+}
+
+/** Giá mỗi m² của tin chia theo MỘT mẫu số chỉ định — dùng khi phải so với một
+ *  dãy số bên ngoài đang tính trên cơ sở khác. */
+export function giaMoiM2Theo(l: Listing, mau: MauSo): number | null {
   // Chuỗi giá đã định dạng sẵn để hiển thị nên không tin được; dùng số thô.
   const gia = l.priceVnd;
-  // Nhà gắn liền đất PHẢI chia cho m² sàn. Tin chưa khai diện tích xây dựng thì
-  // KHÔNG có mẫu số đúng → trả null, tin đó không góp vào thống kê và không được
-  // vẽ lên biểu đồ. Thà thiếu một điểm còn hơn đưa vào một con số khác bản chất.
-  const mau = mauSoCuaLoaiHinh(l.type);
+  // Chia theo m² sàn thì tin chưa khai diện tích xây dựng là KHÔNG có mẫu số →
+  // trả null, tin đó không góp vào thống kê và không được vẽ lên biểu đồ. Thà
+  // thiếu một điểm còn hơn đưa vào một con số khác bản chất.
   const dt = mau === "san" ? l.builtAreaM2 ?? l.builtAreaM2Uoc ?? null : l.areaM2;
   if (!gia || !dt || dt <= 0) return null;
   const v = gia / dt;

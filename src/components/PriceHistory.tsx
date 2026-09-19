@@ -1,5 +1,5 @@
 import type { ChiSoKhuVuc, MatBangGia, OSanh } from "@/lib/chiSoGia";
-import { vndM2, tenNguonHienThi, coDuDeHienLichSuGia, TEN_VI_TRI } from "@/lib/chiSoGia";
+import { vndM2, tenNguonHienThi, coDuDeHienLichSuGia, TEN_VI_TRI, TEN_MAU_SO } from "@/lib/chiSoGia";
 
 // ════════════════════════════════════════════════════════════════════════════
 // LỊCH SỬ GIÁ — nói về THỊ TRƯỜNG, không nói lại về tin đang xem:
@@ -204,6 +204,7 @@ export default function PriceHistory({
                       Dãy chưa tách tới phường thì ghi thẳng "toàn <tỉnh>". */}
                   <p className="mt-1.5 text-[12.5px] text-cvr-muted">
                     Giá {laThue ? "thuê" : "bán"} phổ biến nhất {nhanKy(mocCuoi.quy)}
+                    {chiSo?.mauSo ? ` · mỗi ${TEN_MAU_SO[chiSo.mauSo]}` : ""}
                     {chiSo?.tinh ? ` · ${chiSo.khuVuc ? chiSo.khuVuc : `toàn ${chiSo.tinh}`}` : ""}
                     {chiSo?.viTri ? ` · ${TEN_VI_TRI[chiSo.viTri]}` : ""}
                   </p>
@@ -355,7 +356,11 @@ export default function PriceHistory({
                   {giaTinM2 != null && giaTinM2 > 0 && (
                     <span className="inline-flex items-center gap-1.5">
                       <span className="inline-block h-2.5 w-2.5 rounded-full ring-1 ring-white" style={{ backgroundColor: MAU.tinNay }} />
+                      {/* Chấm này tính theo ĐÚNG mẫu số của dãy chỉ số (xem
+                          giaTinSoDuocVoiChiSo), nên phải ghi ra — đơn giá ở đầu
+                          trang tin có thể tính trên mẫu số khác. */}
                       Giá tin đang xem ~{vndM2(giaTinM2, laThue)}
+                      {chiSo?.mauSo ? ` mỗi ${TEN_MAU_SO[chiSo.mauSo]}` : ""}
                     </span>
                   )}
                 </div>
