@@ -40,6 +40,23 @@ const CHI_SO_HONG = ["Chung cư", "Căn hộ", "Condotel / Nghỉ dưỡng"];
 /** Loại hình CHỈ có sổ đỏ — đất trống, chưa có công trình để ghi vào sổ. */
 const CHI_SO_DO = ["Đất nền / Đất", "Đất công nghiệp / Nhà xưởng / Kho bãi"];
 
+// ── BỐN MỤC ĐÍCH, HAI THỊ TRƯỜNG ───────────────────────────────────────────
+// Form đăng tin có bốn nhu cầu: Cần bán · Cho thuê · Cần mua · Cần thuê. Nhưng
+// về mặt GIÁ thì chỉ có hai thị trường:
+//   · MUA BÁN  (ban · mua)      → giá trọn gói, tính bằng TỶ, đơn giá theo m².
+//   · CHO THUÊ (thue · can-thue) → giá MỖI THÁNG, tính bằng TRIỆU, đơn giá đ/m²/tháng.
+//
+// ⚠️ Trước 19/09 mọi chỗ đều kiểm `purpose === "thue"` nên tin **Cần thuê** rơi
+// hết sang nhánh mua bán: giá "12 triệu/tháng" hiện thành "12 TỶ", và giá mỗi m²
+// bị ngưỡng của thị trường mua bán loại sạch. Chưa lộ ra vì chưa ai đăng tin loại
+// đó, nhưng form vẫn cho đăng — nên chốt lại bằng hai hàm dùng chung này.
+export function laTinThue(purpose?: string): boolean {
+  return purpose === "thue" || purpose === "can-thue";
+}
+export function laTinBan(purpose?: string): boolean {
+  return purpose === "ban" || purpose === "mua";
+}
+
 /** Danh mục pháp lý ĐÚNG cho một loại hình. Không truyền loại hình = danh mục đầy đủ. */
 export function phapLyCho(type?: string): string[] {
   const l = type ? specForType(type).label : "";
@@ -297,14 +314,14 @@ export const rentFields: Field[] = [
 const BAO_GIA_THEO_M2 = ["Đất công nghiệp / Nhà xưởng / Kho bãi", "Văn phòng / Mặt bằng kinh doanh"];
 
 export function coDonGiaM2(type: string, purpose?: string): boolean {
-  return purpose === "thue" && !!type && BAO_GIA_THEO_M2.includes(specForType(type).label);
+  return laTinThue(purpose) && !!type && BAO_GIA_THEO_M2.includes(specForType(type).label);
 }
 
 // Bộ đặc điểm ĐẦY ĐỦ của một tin = đặc điểm theo LOẠI HÌNH (+ phần cho thuê nếu có).
 // Dùng chung cho form đăng tin và trang chi tiết để hai bên không bao giờ lệch nhau.
 export function fieldsFor(type: string, purpose?: string): Field[] {
   const base = specForType(type).fields;
-  return purpose === "thue" ? [...base, ...rentFields] : base;
+  return laTinThue(purpose) ? [...base, ...rentFields] : base;
 }
 
 // ── TÁCH "THÔNG TIN CHÍNH" VÀ "ĐẶC ĐIỂM" ───────────────────────────────────
@@ -320,7 +337,7 @@ export function fieldsSplit(type: string, purpose?: string): { chinh: Field[]; d
   const dienNuocLaChinh = /trọ|dịch vụ/.test(t);
   const laChinh = (f: Field) =>
     f.main ||
-    (purpose === "thue" && f.key === "moveIn") ||
+    (laTinThue(purpose) && f.key === "moveIn") ||
     (dienNuocLaChinh && (f.key === "elecPrice" || f.key === "waterPrice"));
   return { chinh: all.filter(laChinh), dacDiem: all.filter((f) => !laChinh(f)) };
 }

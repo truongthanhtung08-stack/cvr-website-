@@ -14,7 +14,7 @@ import { mauSoCuaLoaiHinh } from "@/lib/chiSoGia";
 import { featuredListings, getListingById } from "@/lib/data";
 import { asset } from "@/lib/asset";
 import { isVideoUrl } from "@/lib/media";
-import { fieldsSplit, amenityGroups, coDonGiaM2, viTriTuDuongVao, viTriTuAccess, type Field } from "@/lib/listingSpec";
+import { fieldsSplit, amenityGroups, coDonGiaM2, viTriTuDuongVao, viTriTuAccess, laTinThue, laTinBan, type Field } from "@/lib/listingSpec";
 import { chuanHoaSdt } from "@/lib/phone";
 
 // Thuộc tính linh hoạt lưu trong cột details (JSONB) — xem 0006_listing_details.sql
@@ -132,7 +132,8 @@ function fmtNum(n: number, maxFrac = 1): string {
 // price_vnd → chuỗi giá FE: bán "33 tỷ"/"850 triệu" · thuê "18 triệu/tháng" · null "Thỏa thuận"
 function fmtPrice(v: number | null, purpose: Row["purpose"]): string {
   if (v == null) return "Thỏa thuận";
-  if (purpose === "thue") return `${fmtNum(v / 1e6)} triệu/tháng`;
+  // Cả "thue" lẫn "can-thue" đều là giá MỖI THÁNG — xem laTinThue().
+  if (laTinThue(purpose)) return `${fmtNum(v / 1e6)} triệu/tháng`;
   return v >= 1e9 ? `${fmtNum(v / 1e9)} tỷ` : `${fmtNum(v / 1e6)} triệu`;
 }
 
@@ -169,7 +170,7 @@ function rowToListing(r: Row): Listing {
     if (r.price_vnd == null) return undefined;
     if (coDonGiaM2(r.type, r.purpose))
       return r.area_m2 ? `${fmtNum(r.price_vnd / r.area_m2, 0)} đ/m²/tháng` : undefined;
-    if (r.purpose !== "ban") return undefined;
+    if (!laTinBan(r.purpose)) return undefined;
     const mau = mauSoCuaLoaiHinh(r.type);
     // ⛔ NHÀ GẮN LIỀN ĐẤT: KHÔNG HIỆN ĐƠN GIÁ MỖI M² TRÊN TIN — chủ dự án chốt
     // 19/09. Người bán nhà báo TỔNG GIÁ của cả căn (đất + nhà), không ai niêm yết

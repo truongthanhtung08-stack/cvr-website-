@@ -1,6 +1,6 @@
 import type { Listing } from "@/lib/data";
 import { chuanTen } from "@/lib/locations";
-import { mauSoCuaLoaiHinh, dungODienTichXayDung, TEN_MAU_SO, TEN_VI_TRI, docViTri, type MauSo, type ViTriGia } from "@/lib/listingSpec";
+import { mauSoCuaLoaiHinh, dungODienTichXayDung, laTinThue, TEN_MAU_SO, TEN_VI_TRI, docViTri, type MauSo, type ViTriGia } from "@/lib/listingSpec";
 export { mauSoCuaLoaiHinh, TEN_MAU_SO, TEN_VI_TRI };
 export type { MauSo, ViTriGia };
 import { tachBangCsv } from "@/lib/xuatCsv";
@@ -91,7 +91,7 @@ export function giaMoiM2Theo(l: Listing, mau: MauSo): number | null {
   // tin THUÊ chỉ vài chục nghìn mỗi m² mỗi tháng. Trước 19/09 chỉ có một ngưỡng
   // "≥ 1 triệu" dùng chung nên 35/37 tin cho thuê bị loại sạch — mọi khối mặt
   // bằng giá của thị trường thuê im lặng biến mất mà không ai biết.
-  const laThue = (l.purpose ?? "ban") === "thue";
+  const laThue = laTinThue(l.purpose);
   const [thap, cao] = laThue ? [1_000, 5_000_000] : [1_000_000, 1_000_000_000];
   return v >= thap && v <= cao ? v : null;
 }
@@ -127,7 +127,7 @@ export function matBangGia(
     (x) =>
       x.id !== tin.id &&
       chuanTen(x.type) === loai &&
-      (x.purpose ?? "ban") === (tin.purpose ?? "ban"),
+      laTinThue(x.purpose) === laTinThue(tin.purpose),
   );
 
   const theo = (loc: (x: Listing) => boolean) =>
@@ -246,7 +246,7 @@ export function chiSoChoTin(tin: Listing, data: ChiSoGiaData | null): ChiSoKhuVu
   const tinh = chuanTen(tin.diaGioi?.province ?? "");
   const phuong = chuanTen(tin.diaGioi?.ward ?? "");
   const loai = chuanTen(tin.type);
-  const mucDich = (tin.purpose ?? "ban") === "thue" ? "thue" : "ban";
+  const mucDich = laTinThue(tin.purpose) ? "thue" : "ban";
 
   let tot: ChiSoKhuVuc | null = null;
   let diemTot = -1;
@@ -616,7 +616,8 @@ export type DongBangGia = { loai: string; trungVi: number; thap: number; cao: nu
 export function bangGiaTheoLoai(tin: Listing[], mucDich: "ban" | "thue" = "ban"): DongBangGia[] {
   const nhom = new Map<string, number[]>();
   for (const x of tin) {
-    if ((x.purpose ?? "ban") !== mucDich) continue;
+    // "can-thue" cũng thuộc thị trường cho thuê — xem laTinThue().
+    if ((laTinThue(x.purpose) ? "thue" : "ban") !== mucDich) continue;
     const loai = (x.type ?? "").trim();
     if (!loai) continue;
     const v = giaMoiM2(x);
@@ -651,7 +652,7 @@ export function demTinLamMau(tin: Listing, tatCa: Listing[]): number {
     (x) =>
       x.id !== tin.id &&
       chuanTen(x.type) === loai &&
-      (x.purpose ?? "ban") === (tin.purpose ?? "ban") &&
+      laTinThue(x.purpose) === laTinThue(tin.purpose) &&
       chuanTen(x.diaGioi?.province ?? "") === tinh &&
       giaMoiM2(x) !== null,
   ).length;
