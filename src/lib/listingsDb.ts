@@ -14,7 +14,7 @@ import { mauSoCuaLoaiHinh } from "@/lib/chiSoGia";
 import { featuredListings, getListingById } from "@/lib/data";
 import { asset } from "@/lib/asset";
 import { isVideoUrl } from "@/lib/media";
-import { fieldsSplit, amenityGroups, coDonGiaM2, type Field } from "@/lib/listingSpec";
+import { fieldsSplit, amenityGroups, coDonGiaM2, viTriTuDuongVao, viTriTuAccess, type Field } from "@/lib/listingSpec";
 import { chuanHoaSdt } from "@/lib/phone";
 
 // Thuộc tính linh hoạt lưu trong cột details (JSONB) — xem 0006_listing_details.sql
@@ -186,6 +186,12 @@ function rowToListing(r: Row): Listing {
     areaM2: r.area_m2 ?? null,
     builtAreaM2: r.built_area_m2 ?? null,
     builtAreaM2Uoc: r.details?.dtSanUocTinh ?? null,
+    ...((): { viTri?: "lon" | "nho" | "kiet" } => {
+      // Bề rộng đường vào là số đo khách quan và đã có ở nhiều tin; ô "Vị trí lối
+      // vào" gần như không ai điền nên chỉ dùng làm nguồn dự phòng.
+      const v = viTriTuDuongVao(r.details?.specs?.roadWidth) ?? viTriTuAccess(r.details?.specs?.access);
+      return v ? { viTri: v } : {};
+    })(),
     ...(r.beds != null ? { beds: r.beds } : {}),
     ...(r.baths != null ? { baths: r.baths } : {}),
     // ĐỊA CHỈ HIỂN THỊ THEO HỆ MỚI — áp cho MỌI tin, kể cả tin đã đăng từ trước.

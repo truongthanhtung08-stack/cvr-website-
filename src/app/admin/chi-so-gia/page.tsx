@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import type { ChiSoGiaData, ChiSoKhuVuc, LoiCsv, MauSo } from "@/lib/chiSoGia";
-import { docBangChiSo, docCsvChiSo, TINH_MIEN_TRUNG } from "@/lib/chiSoGia";
+import type { ChiSoGiaData, ChiSoKhuVuc, LoiCsv, MauSo, ViTriGia } from "@/lib/chiSoGia";
+import { docBangChiSo, docCsvChiSo, TINH_MIEN_TRUNG, TEN_VI_TRI } from "@/lib/chiSoGia";
 import { docBangXlsx, laXlsx } from "@/lib/docXlsx";
 import { chuanTen, provinceNamesFor } from "@/lib/locations";
 import { taiCsv, homNay } from "@/lib/xuatCsv";
@@ -11,8 +11,12 @@ import { taiCsv, homNay } from "@/lib/xuatCsv";
 // ════════════════════════════════════════════════════════════════════════════
 // LỊCH SỬ GIÁ — NHẬP SỐ VÀO ĐÂY, TRANG TIN HIỆN NGAY.
 //
-// Mỗi dãy số được định danh bằng BỐN chiều, thiếu một chiều là số vô nghĩa:
-//      Tỉnh/Thành  ×  Khu vực (phường/xã)  ×  Loại hình  ×  Bán / Cho thuê
+// Mỗi dãy số được định danh bằng NĂM chiều, xếp từ chiều quyết định nhiều nhất
+// tới ít nhất — thiếu một chiều là số vô nghĩa:
+//   Tỉnh/Thành → KHU VỰC (phường/xã) → VỊ TRÍ (đường lớn · đường nhỏ · kiệt)
+//   → LOẠI HÌNH → Bán / Cho thuê
+// Vị trí nằm trên loại hình vì trong cùng một phường, mặt tiền đường 10,5 m và
+// nhà trong kiệt 3 m lệch nhau 2–3 lần — xa hơn khoảng cách giữa các loại hình.
 // rồi trong mỗi dãy là giá mỗi m² theo từng KỲ (quý hoặc năm).
 //
 // Hai đường nhập:
@@ -65,7 +69,7 @@ function quyGanDay(n: number): string[] {
 
 /** Khoá định danh một dãy số — trùng khoá thì lần nhập sau ghi đè lần trước. */
 function khoaDay(x: ChiSoKhuVuc): string {
-  return [chuanTen(x.tinh), chuanTen(x.khuVuc ?? ""), chuanTen(x.loaiHinh ?? ""), x.mucDich ?? "ban"].join("|");
+  return [chuanTen(x.tinh), chuanTen(x.khuVuc ?? ""), chuanTen(x.loaiHinh ?? ""), x.mucDich ?? "ban", x.viTri ?? ""].join("|");
 }
 
 export default function ChiSoGiaPage() {
@@ -200,8 +204,8 @@ export default function ChiSoGiaPage() {
       <div>
         <h1 className="text-xl font-semibold tracking-tight text-cvr-ink">Lịch sử giá</h1>
         <p className="mt-1 text-sm text-cvr-muted">
-          Giá mỗi m² theo <strong>tỉnh × khu vực × loại hình × bán/thuê</strong>, từng quý hoặc từng
-          năm. Nhập xong bấm Lưu là trang tin vẽ biểu đồ ngay.
+          Giá mỗi m² theo <strong>tỉnh × khu vực × vị trí × loại hình × bán/thuê</strong>, từng
+          quý hoặc từng năm. Nhập xong bấm Lưu là trang tin vẽ biểu đồ ngay.
         </p>
       </div>
 
@@ -321,7 +325,7 @@ export default function ChiSoGiaPage() {
                 {xemTruoc.items.slice(0, 8).map((x, i) => (
                   <li key={i}>
                     {x.tinh}
-                    {x.khuVuc ? ` · ${x.khuVuc}` : ""} · {x.loaiHinh || "mọi loại hình"} ·{" "}
+                    {x.khuVuc ? ` · ` : ""}{x.viTri ? ` · ` : ""} · {x.loaiHinh || "mọi loại hình"} ·{" "}
                     {x.mucDich === "thue" ? "cho thuê" : "bán"} — {x.moc.length} kỳ
                   </li>
                 ))}
@@ -463,6 +467,22 @@ export default function ChiSoGiaPage() {
                 <option value="dat">m² đất</option>
                 <option value="san">m² sàn xây dựng</option>
                 <option value="can">m² căn hộ</option>
+              </select>
+            </label>
+            {/* VỊ TRÍ — chiều phân loại thứ hai sau khu vực. Cùng một phường, mặt
+                tiền đường 10,5 m với nhà trong kiệt 3 m lệch 2–3 lần, nên dãy nào
+                tách được theo vị trí thì con số mới nói đúng về từng căn. */}
+            <label className="block">
+              <span className="mb-1 block text-[13px] font-medium text-cvr-body">Vị trí</span>
+              <select
+                value={kv.viTri ?? ""}
+                onChange={(e) => sua(i, { viTri: (e.target.value || undefined) as ViTriGia | undefined })}
+                className={inputCls}
+              >
+                <option value="">— gộp cả khu vực (chưa tách) —</option>
+                <option value="lon">Mặt tiền đường lớn (từ 10 m)</option>
+                <option value="nho">Mặt tiền đường nhỏ (5 – 10 m)</option>
+                <option value="kiet">Kiệt / hẻm (dưới 5 m)</option>
               </select>
             </label>
             <label className="block">

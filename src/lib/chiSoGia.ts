@@ -1,8 +1,8 @@
 import type { Listing } from "@/lib/data";
 import { chuanTen } from "@/lib/locations";
-import { mauSoCuaLoaiHinh, TEN_MAU_SO, type MauSo } from "@/lib/listingSpec";
-export { mauSoCuaLoaiHinh, TEN_MAU_SO };
-export type { MauSo };
+import { mauSoCuaLoaiHinh, TEN_MAU_SO, TEN_VI_TRI, docViTri, type MauSo, type ViTriGia } from "@/lib/listingSpec";
+export { mauSoCuaLoaiHinh, TEN_MAU_SO, TEN_VI_TRI };
+export type { MauSo, ViTriGia };
 import { tachBangCsv } from "@/lib/xuatCsv";
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -176,6 +176,11 @@ export type ChiSoKhuVuc = {
    *  vẫn vẽ được đường thị trường của chính nó, nhưng KHÔNG được đem so với giá
    *  của tin đang xem — so hai mẫu số khác nhau là ra một con số sai. */
   mauSo?: MauSo;
+  /** VỊ TRÍ dãy số này nói tới: mặt tiền đường lớn · đường nhỏ · kiệt/hẻm.
+   *  Để trống = gộp mọi vị trí trong khu vực — vẫn dùng được, nhưng phải nói rõ
+   *  với người xem rằng đó là mức chung của cả khu, không phải giá của đúng
+   *  con đường trước căn nhà họ đang xem (chênh nhau 2–3 lần là chuyện thường). */
+  viTri?: ViTriGia;
   /** Ai công bố: CBRE · Savills · DKRA · khảo sát của Coastal Land… */
   nguon: string;
   /** Ngày chủ dự án cập nhật, dạng 2026-09-11 */
@@ -234,8 +239,13 @@ export function chiSoChoTin(tin: Listing, data: ChiSoGiaData | null): ChiSoKhuVu
     if ((x.mucDich ?? "ban") !== mucDich) continue;
     if (x.khuVuc && chuanTen(x.khuVuc) !== phuong) continue;
     if (x.loaiHinh && chuanTen(x.loaiHinh) !== loai) continue;
+    // VỊ TRÍ — dãy có khai vị trí thì chỉ dùng cho tin đúng vị trí đó. Tin chưa
+    // ghi bề rộng đường vào thì không khớp được, đành lùi về dãy gộp cả khu vực.
+    if (x.viTri && x.viTri !== tin.viTri) continue;
     if (!x.moc?.some((m) => m.giaM2 > 0)) continue;
-    const diem = (x.khuVuc ? 2 : 0) + (x.loaiHinh ? 1 : 0);
+    // Càng sát tin càng thắng. Trong một tỉnh, KHU VỰC quyết định nhiều nhất, kế
+    // đến là VỊ TRÍ (mặt tiền đường lớn khác kiệt 2–3 lần), sau mới tới loại hình.
+    const diem = (x.khuVuc ? 4 : 0) + (x.viTri ? 2 : 0) + (x.loaiHinh ? 1 : 0);
     if (diem > diemTot) {
       diemTot = diem;
       tot = x;
@@ -265,7 +275,7 @@ const COT_CSV = [
 
 /** Cột tuỳ chọn — có thì tốt, không có vẫn nhập được. Cả hai chỉ phục vụ việc
  *  KIỂM CHỨNG trong admin, không hiện ra cho khách. */
-const COT_THEM = ["gia_thap_trieu", "gia_cao_trieu", "so_mau", "nguon_link", "mau_so"] as const;
+const COT_THEM = ["gia_thap_trieu", "gia_cao_trieu", "so_mau", "nguon_link", "mau_so", "vi_tri"] as const;
 
 /**
  * Đọc một ô giá về SỐ TRIỆU, chấp nhận cả bốn lối viết đang gặp thật:
@@ -376,7 +386,11 @@ export function docBangChiSo(bang: string[][]): { items: ChiSoKhuVuc[]; loi: Loi
     const thap = doiGia(themLay(0));
     const cao = doiGia(themLay(1));
     const soMau = Math.round(Number(themLay(2).split(".").join("")));
-    const khoa = [chuanTen(tinh), chuanTen(khuVuc), chuanTen(loaiHinh), mucDich].join("|");
+    // KHOÁ GOM PHẢI CÓ ĐỦ NĂM CHIỀU, kể cả VỊ TRÍ. Thiếu nó thì hai dãy "mặt tiền
+    // đường lớn" và "kiệt hẻm" của cùng một phường bị gom làm một, số của dãy sau
+    // đè lên dãy trước — mất hẳn phần phân loại vừa thu thập.
+    const vt = docViTri(themLay(5));
+    const khoa = [chuanTen(tinh), chuanTen(khuVuc), chuanTen(loaiHinh), mucDich, vt ?? ""].join("|");
     let muc = gom.get(khoa);
     if (!muc) {
       muc = {
@@ -388,6 +402,7 @@ export function docBangChiSo(bang: string[][]): { items: ChiSoKhuVuc[]; loi: Loi
         capNhat: lay(7) || new Date().toISOString().slice(0, 10),
         nguonLink: themLay(3) || undefined,
         mauSo: docMauSo(themLay(4), loaiHinh),
+        viTri: vt,
         moc: [],
       };
       gom.set(khoa, muc);

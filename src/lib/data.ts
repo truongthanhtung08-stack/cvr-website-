@@ -35,6 +35,9 @@ export type Listing = {
   /** m² sàn SUY RA từ nội dung tin khi người đăng không khai — dùng cho thống kê
    *  và đơn giá (hiện kèm dấu ≈), không bao giờ hiện thành "Diện tích xây dựng". */
   builtAreaM2Uoc?: number | null;
+  /** Nhóm vị trí suy từ bề rộng đường vào: "lon" | "nho" | "kiet" — để so giá với
+   *  đúng hạng đường, vì trong cùng một phường mặt tiền và kiệt lệch 2–3 lần. */
+  viTri?: "lon" | "nho" | "kiet";
   /** Cùng chỗ đó gọi theo hệ CŨ — hiện ở dòng dưới, nhãn "Địa chỉ hệ cũ". */
   locationCu?: string;
   /** Gộp cả hai cách gọi — dùng để LỌC/TÌM khu vực, không hiển thị. Thiếu nó thì

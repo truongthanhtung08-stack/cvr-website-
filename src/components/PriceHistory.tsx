@@ -1,5 +1,5 @@
 import type { ChiSoKhuVuc, MatBangGia, OSanh } from "@/lib/chiSoGia";
-import { vndM2, tenNguonHienThi, coDuDeHienLichSuGia } from "@/lib/chiSoGia";
+import { vndM2, tenNguonHienThi, coDuDeHienLichSuGia, TEN_VI_TRI } from "@/lib/chiSoGia";
 
 // ════════════════════════════════════════════════════════════════════════════
 // LỊCH SỬ GIÁ — nói về THỊ TRƯỜNG, không nói lại về tin đang xem:
@@ -205,6 +205,7 @@ export default function PriceHistory({
                   <p className="mt-1.5 text-[12.5px] text-cvr-muted">
                     Giá {laThue ? "thuê" : "bán"} phổ biến nhất {nhanKy(mocCuoi.quy)}
                     {chiSo?.tinh ? ` · ${chiSo.khuVuc ? chiSo.khuVuc : `toàn ${chiSo.tinh}`}` : ""}
+                    {chiSo?.viTri ? ` · ${TEN_VI_TRI[chiSo.viTri]}` : ""}
                   </p>
                 </div>
 
@@ -363,10 +364,23 @@ export default function PriceHistory({
           )}
 
           {coDuong && chiSo && (
-            <p className="mt-2 text-[11.5px] text-cvr-faint">
-              Nguồn: {tenNguonHienThi(chiSo.nguon)}
-              {chiSo.loaiHinh ? ` · ${chiSo.loaiHinh}` : ""} · cập nhật {chiSo.capNhat}
-            </p>
+            <>
+              {/* NÓI THẲNG ĐÂY LÀ MỨC CHUNG. Trong cùng một phường, giá còn lệch
+                  2–3 lần theo con đường trước nhà — mặt tiền 10,5 m khác hẳn kiệt
+                  3 m. Dãy chưa tách theo vị trí mà để trần thì người xem đọc thành
+                  giá của đúng căn họ đang xem, rồi thấy lệch là mất tin ngay.
+                  Tách rồi thì dòng này tự biến mất. */}
+              {!chiSo.viTri && (
+                <p className="mt-2 text-[11.5px] text-cvr-muted">
+                  Mức chung của cả khu vực — chưa tách theo vị trí (mặt tiền đường lớn ·
+                  đường nhỏ · kiệt hẻm), là ba hạng thường lệch nhau vài lần.
+                </p>
+              )}
+              <p className="mt-2 text-[11.5px] text-cvr-faint">
+                Nguồn: {tenNguonHienThi(chiSo.nguon)}
+                {chiSo.loaiHinh ? ` · ${chiSo.loaiHinh}` : ""} · cập nhật {chiSo.capNhat}
+              </p>
+            </>
           )}
         </div>
       )}

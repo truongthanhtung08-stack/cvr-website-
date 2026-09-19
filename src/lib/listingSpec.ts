@@ -404,6 +404,48 @@ export function mauSoCuaLoaiHinh(type: string): MauSo {
   return "san";
 }
 
+// ── VỊ TRÍ: CHIỀU THỨ NĂM CỦA GIÁ ─────────────────────────────────────────
+// Cùng một phường, giá vẫn lệch 2–3 lần tuỳ con đường trước nhà: mặt tiền đường
+// 10,5 m khác hẳn nhà trong kiệt 3 m. Nói "giá nhà riêng ở Hòa Xuân là 80 triệu/m²"
+// mà không kèm vị trí thì đúng với cả khu nhưng sai với gần như mọi căn cụ thể.
+//
+// Căn cứ phân loại là BỀ RỘNG ĐƯỜNG VÀO (ô `roadWidth`) — số đo khách quan, đã có
+// ở 67/134 tin. Ô "Vị trí lối vào" (`access`) gần như không ai điền nên chỉ dùng
+// làm nguồn dự phòng.
+export type ViTriGia = "lon" | "nho" | "kiet";
+
+export const TEN_VI_TRI: Record<ViTriGia, string> = {
+  lon: "mặt tiền đường lớn (từ 10 m)",
+  nho: "mặt tiền đường nhỏ (5 – 10 m)",
+  kiet: "kiệt / hẻm (dưới 5 m)",
+};
+
+/** Bề rộng đường vào (m) → nhóm vị trí. Không có số thì trả undefined, không đoán. */
+export function viTriTuDuongVao(rong?: string | number | null): ViTriGia | undefined {
+  const n = typeof rong === "number" ? rong : parseFloat(String(rong ?? "").replace(",", "."));
+  if (!Number.isFinite(n) || n <= 0) return undefined;
+  return n >= 10 ? "lon" : n >= 5 ? "nho" : "kiet";
+}
+
+/** Nguồn dự phòng khi tin không ghi bề rộng đường: ô "Vị trí lối vào". */
+export function viTriTuAccess(access?: string | null): ViTriGia | undefined {
+  const t = (access ?? "").toLowerCase();
+  if (t.includes("mặt tiền")) return "lon";
+  if (t.includes("ô tô")) return "nho";
+  if (t.includes("kiệt") || t.includes("hẻm")) return "kiet";
+  return undefined;
+}
+
+/** Đọc ô `vi_tri` của tệp chỉ số — nhận cả mã lẫn cách viết đời thường. */
+export function docViTri(raw: string): ViTriGia | undefined {
+  const t = (raw ?? "").trim().toLowerCase();
+  if (!t) return undefined;
+  if (t.startsWith("lon") || t.includes("đường lớn") || t.includes("duong lon")) return "lon";
+  if (t.startsWith("nho") || t.includes("đường nhỏ") || t.includes("duong nho")) return "nho";
+  if (t.startsWith("kiet") || t.includes("kiệt") || t.includes("hẻm") || t.includes("hem")) return "kiet";
+  return undefined;
+}
+
 export const TEN_MAU_SO: Record<MauSo, string> = {
   dat: "m² đất",
   san: "m² sàn xây dựng",
