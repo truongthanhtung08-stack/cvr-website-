@@ -24,6 +24,9 @@ export type ListingDetails = {
   // xây dựng" trên trang tin là số người đăng KHAI. Xem scripts/bu-dien-tich-xay-dung.mjs
   dtSanUocTinh?: number;
   dtSanNguon?: string;
+  // Đơn giá mỗi m² do chính NGƯỜI BÁN niêm yết (đồng/m²) — có thì trang tin hiện,
+  // không có thì thôi, web không tự chia tổng giá ra. Xem listingsDb.ts.
+  donGiaBan?: number;
   places?: { category: string; name: string; distance: string }[]; // tiện ích xung quanh
   contact?: { name?: string; phone?: string; email?: string; avatar?: string }; // người đăng (avatar = ảnh đại diện)
   project?: string;                 // SLUG dự án tin này thuộc về ("" = không thuộc dự án nào)

@@ -137,6 +137,12 @@ export const COT = {
   // nhẩm để sai — cứ chép NGUYÊN con số của tin gốc vào `gia`/`don_gia_thue`
   // rồi ghi kỳ vào đây, web tự quy về đồng mỗi tháng. Bỏ trống = theo tháng.
   chuKyThue: "chu_ky_thue",
+  // ── ĐƠN GIÁ BÁN MỖI M² — CHỈ KHI TIN GỐC CÓ GHI ─────────────────────────
+  // Người bán nhà niêm yết TỔNG GIÁ, không ai báo giá mỗi m² sàn, nên web KHÔNG
+  // tự chia ra rồi in lên tin. Nhưng tin nào người bán CÓ ghi ("giá 45 triệu/m²
+  // sàn") thì chép vào đây theo TRIỆU đồng — đó là con số của họ, phải hiện.
+  // Tin không ghi thì BỎ TRỐNG, đừng tự tính.
+  donGiaBan: "don_gia_ban",              // TRIỆU đồng / m² (sàn với nhà)
   // ── KÍCH THƯỚC / SỐ TẦNG — vào bộ đặc điểm theo LOẠI HÌNH ──────────────────
   duongVao: "duong_vao",                // bề rộng đường trước nhà (m)
   matTien: "mat_tien",                  // chiều ngang mặt tiền (m)
@@ -683,6 +689,12 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
       projectName: lay(COT.tenDuAn) || undefined,
       // ĐƠN GIÁ THUÊ theo NGÀN đồng/m²/tháng — trang tin hiện "35.000 đ/m²/tháng"
       donGiaThue: donGiaThue ?? undefined,
+      ...((): { donGiaBan?: number } => {
+        // Chỉ nhận khi tin gốc CÓ ghi — không suy từ tổng giá.
+        const n = soVN(lay(COT.donGiaBan));
+        if (n == null) return {};
+        return { donGiaBan: Math.round(n * 1e6) };
+      })(),
       specs: Object.keys(specs).length ? specs : undefined,
       // GHI CHÚ NỘI BỘ — lưu để đối chiếu về sau, KHÔNG hiện ra trang tin
       // (trang chi tiết chỉ hiện những mục có trong bộ đặc điểm của loại hình).

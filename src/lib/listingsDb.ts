@@ -51,6 +51,11 @@ export type ListingDetailsJson = {
   // Đơn giá thuê theo NGÀN đồng / m² / tháng — nhà xưởng · kho bãi · văn phòng ·
   // mặt bằng. price_vnd vẫn là TỔNG tiền mỗi tháng để bộ lọc giá chạy đúng.
   donGiaThue?: number;
+  // ĐƠN GIÁ MỖI M² DO CHÍNH NGƯỜI BÁN NIÊM YẾT (đồng/m² sàn với nhà). Người bán
+  // nhà thường chỉ báo TỔNG GIÁ nên web không tự chia ra rồi in lên tin; nhưng
+  // tin nào người bán CÓ ghi thì đương nhiên phải hiện — đó là con số của họ,
+  // không phải mình suy. Chủ dự án chốt 19/09.
+  donGiaBan?: number;
 };
 
 // Hàng trong bảng `listings` (xem supabase/migrations/0002_listings.sql)
@@ -174,7 +179,12 @@ function rowToListing(r: Row): Listing {
     // Số ước tính mỗi m² sàn VẪN được tính, nhưng chỉ dùng trong khối Lịch sử giá
     // để so với mặt bằng thị trường — đúng chỗ của một ước lượng.
     // Đất và căn hộ thì ngược lại: thị trường vốn niêm yết theo m², nên vẫn hiện.
-    if (mau === "san") return undefined;
+    if (mau === "san") {
+      // …TRỪ KHI chính người bán niêm yết đơn giá. Lúc đó đây là con số của họ,
+      // không phải mình suy ra — đương nhiên phải hiện.
+      const khai = r.details?.donGiaBan;
+      return khai ? `${fmtNum(khai / 1e6, 0)} tr/m² sàn` : undefined;
+    }
     const dt = r.area_m2;
     if (!dt) return undefined;
     return `${fmtNum(r.price_vnd / dt / 1e6, 0)} tr/${mau === "can" ? "m² căn hộ" : "m² đất"}`;

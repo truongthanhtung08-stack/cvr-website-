@@ -21,7 +21,7 @@ Mỗi ngày giao **hai gói**, vào **đúng ba file**, trong thư mục của n
 
 | Gói | File | Nội dung |
 |---|---|---|
-| **A** | `Bang-<ngày>.csv` | **34 tin** bất động sản · 53 cột |
+| **A** | `Bang-<ngày>.csv` | **34 tin** bất động sản · 54 cột |
 | **B** | `TinTuc-<ngày>.csv` | **5 bài** tin tức chuẩn SEO · 9 cột |
 | — | `bao-cao.txt` | Báo cáo chung cho cả hai gói |
 
@@ -68,7 +68,7 @@ C:\Users\X1 GEN 8\Projects\TIN-HANG-NGAY\
 │
 ├── _MAU\                                   ← KHUÔN GỐC. KHÔNG SỬA, KHÔNG XOÁ.
 │   ├── YEU-CAU-COWORK.md                   ← chính file này
-│   ├── mau-nhap-tin-hang-loat.csv          ← khuôn GÓI A (53 cột + 17 dòng ví dụ)
+│   ├── mau-nhap-tin-hang-loat.csv          ← khuôn GÓI A (54 cột + 17 dòng ví dụ)
 │   ├── mau-tin-tuc-hang-ngay.csv           ← khuôn GÓI B (9 cột + 2 bài mẫu)
 │   ├── DANH-SACH-PHUONG-XA-MIEN-TRUNG.txt  ← 734 phường/xã, chép tên từ đây
 │   └── anh-tin.mjs                         ← công cụ của chủ dự án, Cowork không dùng
@@ -674,7 +674,7 @@ bỏ qua hết, nên tin lên web trống trơn dù tin gốc nói đủ.
 2. **Bóc ra cột riêng thì VẪN GIỮ NGUYÊN câu đó trong `mo_ta`** — không cắt chữ của người bán.
 3. Câu mơ hồ ("nhà mới đẹp", "giá tốt") **không phải thông tin** — đừng nhét vào cột nào.
 
-## A15. Bảng cột đầy đủ — 53 cột
+## A15. Bảng cột đầy đủ — 54 cột
 
 > ### ⚠️ FILE MẪU ĐÃ ĐỔI: 25 CỘT → 53 CỘT
 > Bản Cowork dùng trước đây chỉ có **25 cột**, thiếu 23 cột — trong đó có cả `nguon`,
@@ -689,7 +689,7 @@ Mỗi dòng đúng một tin. Lưu dạng **`.csv` (UTF-8)** hoặc **`.xlsx`** 
 |---|---|
 | **Bắt buộc** — thiếu là web báo đỏ, không đăng được | `tieu_de` · `mo_ta` · `dien_tich` · `muc_dich` · `loai_hinh` · `tinh_thanh` · `phuong_xa` · `ma_anh` · **`lien_he_sdt`** ⭐ |
 | **Địa chỉ hệ CŨ** ⭐ *(mới 17/09)* | `phuong_xa_cu` · `quan_huyen_cu` · `tinh_cu` |
-| **Giá** | `gia` · **`don_gia_thue`** ⭐ · **`chu_ky_thue`** ⭐ |
+| **Giá** | `gia` · **`don_gia_thue`** ⭐ · **`chu_ky_thue`** ⭐ · **`don_gia_ban`** ⭐ |
 | **Quy mô, kích thước** | **`dien_tich_xay_dung`** ⭐ · `duong_vao` · `mat_tien` · `so_tang` · **`chieu_dai`** ⭐ · **`nam_xay_dung`** ⭐ · **`tang_so`** ⭐ · `phong_ngu` · `phong_tam` |
 | **Kho · nhà xưởng · bãi** | **`dien_tich_su_dung`** ⭐ · **`loai_kho`** ⭐ · **`chieu_cao`** ⭐ · **`tai_trong_nen`** ⭐ · **`cong_suat_dien`** ⭐ · **`pccc`** ⭐ · **`van_phong_trong_kho`** ⭐ · **`xe_container`** ⭐ |
 | **Riêng tin cho thuê** | `thoi_gian_du_kien_vao_o` · **`thoi_han_thue`** ⭐ · **`tien_coc`** ⭐ · `muc_gia_dien` · `muc_gia_nuoc` |
@@ -1019,7 +1019,7 @@ kèm project. ĐỌC HẾT FILE ĐÓ TRƯỚC KHI LÀM. Có gì không rõ thì 
 
 GHI VÀO THƯ MỤC CỦA NGÀY HÔM ĐÓ:
   C:\Users\X1 GEN 8\Projects\TIN-HANG-NGAY\Tin-<NĂM-THÁNG-NGÀY>\
-    - Bang-<NĂM-THÁNG-NGÀY>.csv      (GÓI A — 34 tin, 53 cột)
+    - Bang-<NĂM-THÁNG-NGÀY>.csv      (GÓI A — 34 tin, 54 cột)
     - TinTuc-<NĂM-THÁNG-NGÀY>.csv    (GÓI B — 5 bài, 9 cột)
     - bao-cao.txt                     (báo cáo chung cho cả hai gói)
 Đúng ba file. Không tạo file phụ, không tạo bản v2, không tạo file .ps1.
@@ -1037,7 +1037,7 @@ Không gom đủ số thì GIAO THIẾU và ghi rõ trong bao-cao.txt. KHÔNG b�
 ```
 Hôm nay làm gói ngày <NGÀY>.
 Ghi vào: C:\Users\X1 GEN 8\Projects\TIN-HANG-NGAY\Tin-<NGÀY>\
-  - Bang-<NGÀY>.csv     (34 tin bất động sản, 53 cột)
+  - Bang-<NGÀY>.csv     (34 tin bất động sản, 54 cột)
   - TinTuc-<NGÀY>.csv   (5 bài tin tức, 9 cột)
   - bao-cao.txt
 Làm đúng như hướng dẫn của project. Xong báo tôi.
@@ -1050,7 +1050,7 @@ Làm đúng như hướng dẫn của project. Xong báo tôi.
 
 ```
 _MAU\YEU-CAU-COWORK.md                    (tài liệu DUY NHẤT)
-_MAU\mau-nhap-tin-hang-loat.csv           (khuôn gói A — 53 cột + 17 ví dụ)
+_MAU\mau-nhap-tin-hang-loat.csv           (khuôn gói A — 54 cột + 17 ví dụ)
 _MAU\mau-tin-tuc-hang-ngay.csv            (khuôn gói B — 9 cột + 2 bài mẫu)
 _MAU\DANH-SACH-PHUONG-XA-MIEN-TRUNG.txt   (734 phường/xã, 8 tỉnh)
 ```
