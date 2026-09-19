@@ -89,6 +89,27 @@ function nhanDang(ten) {
   return ma.length ? ma[ma.length - 1][1] : s.trim();
 }
 
+// MÃ ĐẦY ĐỦ — giữ NGUYÊN cả phần đuôi ngày ("dn02-1709"), không cắt như nhanDang.
+//
+// VÌ SAO CẦN CẢ HAI: từ đợt 17/09 mã tin có thêm ngày để không đụng đợt trước
+// ("dn02" của 05/09 khác "dn02-1709" của 17/09 — hai tin hoàn toàn khác nhau).
+// nhanDang() chỉ lấy cụm chữ+số nên "dn02-1709" bị rút còn "dn02" → đụng nhau.
+// Vì vậy khớp theo thứ tự: ① mã ĐẦY ĐỦ khớp chính xác `details.maAnh` →
+// ② mới lùi về mã ngắn. Có mã đầy đủ thì không bao giờ gắn nhầm tin.
+function maDayDu(ten) {
+  const s = ten.replace(/^.*[\\/]/, "").replace(/(\.(mp4|webm|mov|m4v|ogg))+$/i, "").trim();
+  const trongNgoac = s.match(/\[([^\]]+)\]\s*$/);      // "… [dn02-1709]"
+  if (trongNgoac) return trongNgoac[1].toLowerCase().replace(/-video$/i, "").trim();
+  const t = s.toLowerCase();
+  // YouTube hay NUỐT DẤU NGOẶC khi hiển thị → "… Đà Nẵng dn02-1709". Vẫn đọc được:
+  // bắt cụm mã ở CUỐI chuỗi.
+  const cuoi = t.match(/\b([a-z]{2,10}\d{1,3}-\d{2,8})(?:-video)?\s*$/);
+  if (cuoi) return cuoi[1];
+  // Tên chỉ có mã ở đầu: "dn02-1709-video.mp4".
+  const dau = t.match(/^([a-z]{2,10}\d{1,3}(?:-\d{2,8})?)/);
+  return dau ? dau[1] : "";
+}
+
 // ── 1. VIDEO TRÊN KÊNH ──────────────────────────────────────────────────────
 // ĐỌC CẢ SHORTS. Bản đầu đọc RSS `feeds/videos.xml` và ngày 12/09/2026 trả về
 // ĐÚNG 0 VIDEO trong khi kênh có 14 — vì video bất động sản quay dọc dưới 3 phút
@@ -192,7 +213,12 @@ const mapMo = [];     // trùng mã, tiêu đề không chốt được → hỏ
 for (const v of chuaGan) {
   const ma = nhanDang(v.ten);
   if (theoMa.get(ma) !== v) continue;          // bản trùng bị loại ở bước 3 → bỏ
-  const ds = (tinTheoMa.get(ma) ?? []).filter((t) => !(t.images ?? []).some((u) => String(u).includes(v.id)));
+  // ① MÃ ĐẦY ĐỦ trước ("dn02-1709" khớp đúng một tin, khỏi phải đoán);
+  // ② không có thì mới lùi về mã ngắn ("dn02" — có thể đụng nhiều tin).
+  const day = maDayDu(v.ten);
+  const chuaCoVideo = (t) => !(t.images ?? []).some((u) => String(u).includes(v.id));
+  const theoDay = day && day !== ma ? (tinTheoMa.get(day) ?? []).filter(chuaCoVideo) : [];
+  const ds = theoDay.length ? theoDay : (tinTheoMa.get(ma) ?? []).filter(chuaCoVideo);
   if (!ds.length) continue;                     // không tin nào mang mã này
   if (ds.length === 1) { themMoi.push({ tin: ds[0], yt: v }); continue; }
   // Trùng mã → đếm số từ của tiêu đề tin xuất hiện trong tên video.
