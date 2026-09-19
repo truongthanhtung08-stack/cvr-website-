@@ -15,6 +15,45 @@
 
 ---
 
+## 🆕 CẬP NHẬT 19/09/2026 — ĐỌC PHẦN NÀY TRƯỚC
+
+Toàn bộ thay đổi nằm ở **số liệu giá và địa chỉ** — thứ Coastal Land hơn các sàn khác.
+Chi tiết ở các mục ghi trong cột cuối; đọc 5 phút là đủ.
+
+### ⚠️ Việc đầu tiên: TẢI LẠI HAI FILE MẪU
+
+| File | Lấy ở đâu | Đổi gì |
+|---|---|---|
+| `mau-nhap-tin-hang-loat.csv` | admin → **Nhập tin hàng loạt** | 51 → **54 cột** |
+| `mau-lich-su-gia.csv` | admin → **Lịch sử giá** | thêm `mau_so` + `vi_tri` |
+
+**Dùng bản cũ là mất dữ liệu đã gom.**
+
+### Bảy thay đổi
+
+| # | Thay đổi | Đọc mục |
+|---|---|---|
+| 1 | **Giá mỗi m² mỗi loại hình một kiểu** — đất chia m² đất · nhà chia m² sàn · căn hộ chia m² căn | **A6b** |
+| 2 | Cột mới **`don_gia_ban`** — tin nhà chỉ hiện đơn giá **khi người bán có ghi** | **A6b** |
+| 3 | 🔴 **Dấu chấm trong ô số** — vừa làm 3 tin sai gấp 1000 lần | **A7b** |
+| 4 | Cột mới **`dien_tich_xay_dung`** — m² sàn của nhà | **A8** |
+| 5 | Cột mới **`chu_ky_thue`** — tin báo giá theo quý / năm | **A7** |
+| 6 | **Pháp lý tách sổ đỏ / sổ hồng** theo loại hình | **A12** |
+| 7 | 🔴 **Ba cột địa chỉ hệ cũ là BẮT BUỘC** — đo 19/09: 41/134 tin đang thiếu | **A2** |
+
+### Hai gói mới
+
+| Gói | Nội dung | Đọc mục |
+|---|---|---|
+| **C** | File **lịch sử giá** — thêm `mau_so` (nhà thu theo **m² sàn**) và `vi_tri` (đường lớn · đường nhỏ · kiệt) | **GÓI C** |
+| **B6** | Đặt **2 bài "loạn giá nhà đất"** cho phiên tới | **B6** |
+
+> ### Một câu gói gọn tinh thần đợt này
+> **Chỉ ghi những gì người bán ghi.** Giá mỗi m² người bán có ghi thì mình ghi, không ghi
+> thì thôi — mình tự tính chỉ để tham khảo cho lịch sử giá, không in lên tin.
+
+---
+
 ## 📌 TÓM TẮT MỘT PHÚT
 
 Mỗi ngày giao **hai gói**, vào **đúng ba file**, trong thư mục của ngày hôm đó:
