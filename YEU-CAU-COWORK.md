@@ -24,6 +24,7 @@ Mỗi ngày giao **hai gói**, vào **đúng ba file**, trong thư mục của n
 | **A** | `Bang-<ngày>.csv` | **34 tin** bất động sản · 54 cột |
 | **B** | `TinTuc-<ngày>.csv` | **5 bài** tin tức chuẩn SEO · 9 cột |
 | — | `bao-cao.txt` | Báo cáo chung cho cả hai gói |
+| **C** | `LichSuGia-<ngày>.csv` | **KHÔNG làm hằng ngày** — chỉ khi được yêu cầu riêng (xem **GÓI C**) |
 
 **Sáu câu gói gọn cả việc:**
 
@@ -315,6 +316,31 @@ Lỗi này sinh ra khi dán qua công cụ trung gian — dán xong phải đọ
 | `7tr5` (tin thuê) | `7,5` |
 | `giá thương lượng` · `LH` · `thoả thuận` | **để trống** |
 
+## A6b. ⭐ `don_gia_ban` — ĐƠN GIÁ MỖI M² **CHỈ KHI NGƯỜI BÁN CÓ GHI**
+
+> **Nguyên tắc chủ dự án chốt 19/09:** *chỉ ghi những gì người bán ghi. Giá mỗi m² người
+> bán ghi thì mình ghi, không ghi thì thôi. Mình tự tính chỉ để tham khảo cho lịch sử giá.*
+
+Người bán **nhà** niêm yết **tổng giá cả căn** (đất + nhà), không ai báo giá mỗi m² sàn.
+Web tự chia ra rồi in lên tin là đặt vào miệng người bán một con số họ chưa từng nói.
+
+| Loại hình | Trang tin hiện đơn giá mỗi m²? | Chia cho |
+|---|---|---|
+| **Đất** nền · nông nghiệp · công nghiệp | ✔ **luôn** — thị trường vốn tính theo m² đất | m² **đất** |
+| **Căn hộ** · chung cư · condotel | ✔ **luôn** — báo tổng giá nhưng chia m² căn được | m² **căn** |
+| **Nhà** riêng · mặt phố · biệt thự · shophouse | ✔ **chỉ khi** có `don_gia_ban` | m² **sàn** |
+
+Tin nhà không có `don_gia_ban` thì trang tin chỉ hiện **Diện tích đất · Diện tích xây dựng ·
+Mức giá (tổng)** — đủ để người mua tự tính.
+
+| Tin gốc ghi | `gia` | `don_gia_ban` |
+|---|---|---|
+| *"Nhà 12 tỷ, 100m² đất, 300m² sàn"* | `12` | **để trống** |
+| *"Nhà 12 tỷ, giá 40 triệu/m² sàn"* | `12` | `40` |
+| *"Bán 45 triệu/m² sàn, tổng 13,5 tỷ"* | `13,5` | `45` |
+
+Đơn vị **TRIỆU đồng mỗi m²**. ⛔ **Tin không ghi thì BỎ TRỐNG — tuyệt đối không tự chia.**
+
 ## A7. ⚠️ ĐƠN GIÁ THUÊ NHÀ XƯỞNG · KHO BÃI · VĂN PHÒNG · MẶT BẰNG
 
 > **Đợt vừa rồi sai HẾT nhóm này.** Đọc kỹ mục này trước khi gom tin cho thuê.
@@ -385,6 +411,30 @@ Bộ lọc trên web đã có sẵn các mức 500–1.000 · 1.000–2.000 · 2
 `thoi_han_thue` (`3 năm`) · `tien_coc` (`3 tháng`).
 
 > Xem hai dòng ví dụ `tin16` (nhà xưởng) và `tin17` (kho bãi) trong file mẫu.
+
+## A7b. 🔴 DẤU CHẤM TRONG Ô SỐ — chỗ vừa làm 3 tin sai GẤP 1000 LẦN
+
+Ngày 19/09 phát hiện 3 tin **đã lên web** với số sai 1000 lần, chỉ vì một dấu chấm:
+
+| Tin gốc | File ghi | Web hiểu thành | Đơn giá ra |
+|---|---|---|---|
+| `Diện tích: 2.222 m²` | `2.222` | **2,222 m²** | 3.690 triệu/m² |
+| `1. 668m2` | `1.668` | **1,668 m²** | 522 triệu/m² |
+| `giá 2,246 tỷ` | `2.246` | **2.246 tỷ** | 74.867 triệu/m² |
+
+> **LUẬT: ô số chỉ ghi CON SỐ. Dấu PHẨY là thập phân. KHÔNG dùng dấu chấm phân cách hàng nghìn.**
+
+| Tin gốc | ✔ Ghi đúng | ✘ Đừng ghi |
+|---|---|---|
+| 2.222 m² | `2222` | `2.222` |
+| 1.668 m² | `1668` | `1. 668` |
+| 62,5 m² | `62,5` | `62.5` |
+| 2,246 tỷ | `2,246` | `2.246` |
+| 850 triệu | `0,85` | `850` |
+
+**Web nay có cửa chặn cuối:** chia giá cho diện tích, đơn giá ra ngoài khoảng thường gặp
+(bán `0,3 – 400 triệu/m²` · thuê `5 nghìn – 3 triệu đ/m²/tháng`) là **báo vàng ngay lúc nộp
+file**, kèm đúng câu nhắc về dấu chấm. Thấy dòng đó thì **mở tin gốc đối chiếu lại**.
 
 ## A8. Diện tích — ⭐ TỪ 19/09 CÓ THÊM CỘT `dien_tich_xay_dung`
 
@@ -576,7 +626,9 @@ Bàn giao thô · Nội thất cơ bản · Nội thất đầy đủ · Nội t
 | Máy lạnh · Máy điều hoà | Điều hoà |
 | Máy nước nóng · Nóng lạnh | Bình nóng lạnh |
 | Bếp ga · Bếp gas · Bếp từ · Bếp điện | Bếp từ / gas |
-| Sổ hồng riêng · Sổ đỏ · Sổ hồng lâu dài · Chính chủ | Sổ đỏ / Sổ hồng chính chủ |
+| Sổ hồng riêng · Sổ hồng lâu dài | Sổ hồng chính chủ |
+| Sổ đỏ riêng · Sổ đỏ | Sổ đỏ chính chủ |
+| Chính chủ · Đã có sổ · Sẵn sổ | web tự chốt theo loại hình (xem **A12**) |
 | Đầy đủ · Full nội thất | Nội thất đầy đủ |
 
 Mục thật sự không có trong danh mục (`Kiệt ô tô`, `Gần KCN`, `Wifi miễn phí`) thì **cứ ghi** —
@@ -676,7 +728,7 @@ bỏ qua hết, nên tin lên web trống trơn dù tin gốc nói đủ.
 
 ## A15. Bảng cột đầy đủ — 54 cột
 
-> ### ⚠️ FILE MẪU ĐÃ ĐỔI: 25 CỘT → 53 CỘT
+> ### ⚠️ FILE MẪU ĐÃ ĐỔI: 25 CỘT → 54 CỘT
 > Bản Cowork dùng trước đây chỉ có **25 cột**, thiếu 23 cột — trong đó có cả `nguon`,
 > `link_anh`, `ghi_chu`, `duong_vao`, `mat_tien`, `so_tang`. Đợt 19/09 thêm cột thứ 52:
 > **`dien_tich_xay_dung`**.
@@ -701,13 +753,80 @@ Mỗi dòng đúng một tin. Lưu dạng **`.csv` (UTF-8)** hoặc **`.xlsx`** 
 
 ⭐ = cột **MỚI** so với bản mẫu cũ. Đợt 17/09/2026 thêm **3 cột địa chỉ hệ cũ**
 (`phuong_xa_cu` · `quan_huyen_cu` · `tinh_cu`) và chuyển `lien_he_sdt` sang nhóm **bắt buộc**.
-Đợt 19/09/2026 thêm **`dien_tich_xay_dung`** — m² sàn của nhà gắn liền đất, là mẫu số
-để web tính đúng giá mỗi m² (xem **A8**).
+Đợt 19/09/2026 thêm **3 cột nữa**: **`dien_tich_xay_dung`** (m² sàn của nhà — xem **A8**),
+**`don_gia_ban`** (đơn giá người bán tự niêm yết — xem **A6b**), **`chu_ky_thue`**
+(tin báo giá theo quý/năm — xem **A7**).
 
 **`hang_tin` LUÔN ĐỂ TRỐNG.** Cowork không quyết hạng tin — chủ dự án tự nâng khi đăng.
 **`nguon`** — mọi dòng đều phải có **link tin gốc**. Không có link thì ghi nơi lấy + ngày giờ thấy tin.
 
 ---
+---
+
+# 🅲 GÓI C — LỊCH SỬ GIÁ THEO KHU VỰC ⭐ MỚI 19/09/2026
+
+> Đây là kho số làm nên biểu đồ **Lịch sử giá** trên từng trang tin — thứ khách xem để biết
+> khu đó đang lên hay xuống. Nộp bằng file mẫu **`mau-lich-su-gia.csv`**
+> (admin → **Lịch sử giá** → *Tải tệp mẫu*). File đã dựng sẵn khung, chỉ việc điền cột giá.
+
+## C1. Mỗi dãy số định danh bằng NĂM chiều
+
+> **Tỉnh/Thành → KHU VỰC (phường/xã) → VỊ TRÍ (đường) → LOẠI HÌNH → Bán/Thuê**
+
+Xếp từ chiều quyết định nhiều nhất tới ít nhất. **Vị trí đứng trên loại hình**, vì trong
+cùng một phường thì khoảng cách giữa mặt tiền đường lớn và kiệt hẻm còn xa hơn khoảng cách
+giữa hai loại hình.
+
+## C2. ⭐ Cột `mau_so` — giá này tính trên m² GÌ
+
+| Loại hình | `mau_so` | Cách thu |
+|---|---|---|
+| Đất nền · nông nghiệp · công nghiệp | `dat` | tổng giá lô ÷ **m² đất** |
+| **Nhà** riêng · mặt phố · biệt thự · shophouse | **`san`** | tổng giá cả căn ÷ **tổng m² sàn** |
+| Căn hộ · chung cư · condotel | `can` | tổng giá căn ÷ **m² căn** |
+
+File mẫu **đã điền sẵn đúng cho từng dòng** — cứ theo đó mà thu, đừng sửa.
+
+> ### ⚠️ ĐỔI CÁCH THU CHO NHÀ
+> Số cũ trong hệ thống thu theo **m² đất** (đo 7/7 dãy đều vậy) — thông lệ báo cáo thị
+> trường, không sai, nhưng **không đem so với tin được**.
+>
+> Nhà 12 tỷ · 99,5 m² đất · 263,3 m² sàn:
+> chia m² đất ra **121 triệu/m²**, chia m² sàn ra **46 triệu/m²** — lệch 2,6 lần.
+>
+> **Nguồn:** tin rao ghi đủ *DT đất + DT sàn + tổng giá* thì tự chia ra; báo cáo nào công bố
+> theo m² sàn thì ghi rõ nguồn. **Không có số theo m² sàn thì để trống dòng đó** — đừng lấy
+> số m² đất điền vào rồi ghi `san`.
+
+## C3. ⭐ Cột `vi_tri` — con đường trước nhà
+
+Giá lệch rất xa **ngay trong cùng một phường**, tuỳ con đường:
+
+| Ghi | Nghĩa |
+|---|---|
+| `lon` | mặt tiền đường lớn — từ **10 m** |
+| `nho` | mặt tiền đường nhỏ — **5 – 10 m** |
+| `kiet` | kiệt / hẻm — **dưới 5 m** |
+| *(để trống)* | mức chung cả khu vực, chưa tách |
+
+Ví dụ thật, cùng phường cùng loại hình: `lon` **95** · *(trống)* **70** · `kiet` **48** triệu/m².
+
+Tách được thì tách — số mới nói đúng về từng căn. Chưa tách cũng không sao, web tự ghi thêm
+dòng *"Mức chung của cả khu vực — chưa tách theo vị trí"* để người xem không hiểu nhầm.
+
+## C4. Các cột còn lại
+
+| Cột | Ghi gì |
+|---|---|
+| `ky` | `2026-08` (tháng) · `2026-Q2` (quý) · `2025` (năm) |
+| `gia_m2_trieu` | giá phổ biến, đơn vị **TRIỆU đồng/m²** (`78,5`) |
+| `gia_thap_trieu` · `gia_cao_trieu` | mức thấp / cao của kỳ → vẽ hai đường biên |
+| `so_mau` | kỳ này tính từ bao nhiêu tin — **không hiện ra cho khách** |
+| `nguon` · `nguon_link` | ai công bố + link tra lại. **Số nào cũng phải truy được về gốc.** |
+
+⛔ **Ô giá bỏ trống là bình thường** — khung dựng sẵn nhiều dòng, mỗi đợt điền một phần.
+Chỉ đừng điền số mà không có nguồn.
+
 ---
 
 # 🅱️ GÓI B — 5 BÀI TIN TỨC MỖI NGÀY, CHUẨN SEO
@@ -857,7 +976,40 @@ Nguồn bị chặn (Cloudflare, cần đăng nhập) → **ghi vào `bao-cao.tx
 ---
 ---
 
-# 📊 TỔNG KẾT HAI SHEET
+
+## B6. 📝 ĐẶT BÀI RIÊNG — **LOẠN GIÁ NHÀ ĐẤT** ⭐ phiên tới
+
+**Chuyên mục:** `Phân tích thị trường` · **2 bài** · Đà Nẵng (bài 1) · Huế hoặc Nha Trang (bài 2)
+
+Đây đúng là vấn đề Coastal Land vừa giải bằng dữ liệu, nên viết được sâu hơn nơi khác.
+
+### Bài phải trả lời được 4 câu
+
+1. **Vì sao cùng một khu mà giá loạn?** — vị trí (đường lớn / đường nhỏ / kiệt hẻm), pháp lý
+   (sổ riêng · sổ chung · chờ sổ), tình trạng công trình, tin rao "giá ảo" để câu cuộc gọi.
+2. **Cùng một căn sao lại có hai con số?** — giá trên **m² đất** và trên **m² sàn** là hai
+   thứ khác nhau. Lấy ví dụ tính ra số cụ thể cho người đọc thấy.
+3. **Người mua tự kiểm bằng cách nào?** — đối chiếu ít nhất 3 tin cùng phường **cùng hạng
+   đường**, hỏi rõ đơn giá tính trên m² gì, kiểm loại sổ đúng với loại hình.
+4. **Mức giá tham chiếu khu vực đó đang bao nhiêu?** — số phải có nguồn và mốc thời gian.
+
+### Ràng buộc
+
+- ⛔ **Không** viết Coastal Land định giá, thẩm định, môi giới hay bảo đảm giá.
+  Cách đúng: *"Coastal Land là cổng thông tin; mức giá tham chiếu tổng hợp từ báo cáo thị
+  trường và tin đăng, người mua vẫn cần tự kiểm tra thực địa."*
+- ⛔ **Không** nêu tên sàn đối thủ khi nói về tin rao giá ảo.
+- ✔ Mọi con số kèm **nguồn + mốc thời gian**; không có nguồn thì bỏ con số đó.
+- ✔ Có **ví dụ tính tay** để người đọc làm theo được.
+
+### Từ khoá gợi ý
+
+`loạn giá nhà đất Đà Nẵng` · `giá nhà đất mỗi m² tính thế nào` ·
+`giá đất theo mặt tiền và kiệt hẻm` · `cách kiểm tra giá nhà đất có hợp lý không`
+
+---
+
+# 📊 TỔNG KẾT CÁC SHEET
 
 | | **Sheet A — Tin đăng** | **Sheet B — Tin tức** |
 |---|---|---|
@@ -955,7 +1107,7 @@ trang trí phía trên dòng tên cột. Hệ thống vẫn đọc đúng.
 
 ---
 
-# 📝 `bao-cao.txt` — CHUNG CHO CẢ HAI GÓI
+# 📝 `bao-cao.txt` — CHUNG CHO CẢ BA GÓI
 
 ```
 NGÀY: <NGÀY>
