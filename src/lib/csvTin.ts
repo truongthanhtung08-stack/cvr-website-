@@ -7,6 +7,9 @@
 // ============================================================================
 
 import { saleTypeGroups, rentTypeGroups } from "@/lib/filters";
+// Máy KHÔNG suy ngược được phường cũ khi một phường mới gộp nhiều phường cũ —
+// dùng để báo vàng khi file thiếu ba cột địa chỉ hệ cũ.
+import { ungVienPhuongCu } from "@/lib/diaChiHaiHe";
 // Dùng CHUNG hàm tạo slug với form dự án trong admin → tên dự án trong file Excel
 // và slug dự án thật luôn khớp nhau, không bao giờ lệch quy tắc.
 import { slugify } from "@/lib/contentAdmin";
@@ -392,8 +395,24 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
   if (loaiHinhChuan && coDienTichXayDung(loaiHinhChuan) && !lay(COT.dienTichXayDung).trim())
     canhBao.push("Thiếu dien_tich_xay_dung — loại hình này cần m² sàn để tính đúng giá mỗi m²");
 
+
   const tinhThanh = lay(COT.tinhThanh);
   if (!tinhThanh) loi.push("Thiếu tỉnh/thành");
+
+  // ĐỊA CHỈ HỆ CŨ — báo vàng khi phường mới này gộp NHIỀU phường cũ mà file không
+  // chép tên phường cũ. Máy không có cách nào suy ngược ra đúng cái nào (Phường
+  // Nha Trang gộp 10 phường cũ), nên thiếu là dòng "Địa chỉ hệ cũ" cụt mất cấp
+  // phường vĩnh viễn. Đo 19/09: 41/134 tin cũ đang thiếu vì chưa có cửa chặn này.
+  if (!lay(COT.phuongXaCu).trim() && !lay(COT.quanHuyenCu).trim()) {
+    const uv = ungVienPhuongCu("moi", tinhThanh, phuongXa);
+    if (uv.length)
+      canhBao.push(
+        `Thiếu phuong_xa_cu — "${phuongXa}" gộp từ ${uv.length} phường/xã cũ ` +
+          `(${uv.slice(0, 4).map((x) => x.phuong).join(" · ")}${uv.length > 4 ? "…" : ""}), ` +
+          `máy không suy ngược ra được. Tin gốc ghi phường cũ nào thì chép vào.`,
+      );
+  }
+
   // SEO ĐỊA PHƯƠNG — tiêu đề nên có tên phường/xã và tỉnh (bỏ tiền tố cấp khi so).
   const trongTieuDe = (s: string) =>
     !!s && chuanHoa(tieuDe).includes(chuanHoa(s.replace(/^(Phường|Xã|Thị trấn|Đặc khu)\s+/i, "")));
