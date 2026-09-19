@@ -1,4 +1,4 @@
-import type { ChiSoKhuVuc, MatBangGia, OSanh } from "@/lib/chiSoGia";
+import type { ChiSoKhuVuc, MatBangGia, OSanh, MauSo } from "@/lib/chiSoGia";
 import { vndM2, tenNguonHienThi, coDuDeHienLichSuGia, TEN_VI_TRI, TEN_MAU_SO } from "@/lib/chiSoGia";
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -76,6 +76,7 @@ export default function PriceHistory({
   soSanh = [],
   laThue = false,
   giaTinM2,
+  mauSoTin,
 }: {
   chiSo: ChiSoKhuVuc | null;
   matBang: MatBangGia | null;
@@ -84,6 +85,10 @@ export default function PriceHistory({
   giaTinM2?: number | null;
   /** Tin cho thuê thì giá mỗi m² là giá THUÊ mỗi tháng — đơn vị và chữ khác hẳn. */
   laThue?: boolean;
+  /** Mẫu số của CHÍNH TIN này (đất → m² đất · nhà → m² sàn · căn hộ → m² căn).
+   *  Khối mặt bằng giá tính từ tin trên web nên luôn theo mẫu số này — phải ghi ra,
+   *  không để trần một con số "triệu/m²" mà người xem không biết chia cho gì. */
+  mauSoTin?: MauSo;
 }) {
   // Vẽ 8 mốc cuối (bản đã duyệt), nhưng BA SỐ TÓM TẮT tính trên TOÀN dãy: mức
   // thay đổi một năm và đỉnh hai năm nằm ngoài tám mốc vẽ ra.
@@ -174,6 +179,7 @@ export default function PriceHistory({
               <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
                 <span className="text-[13px] text-cvr-muted">
                   {laThue ? "Giá thuê phổ biến" : "Giá bán phổ biến"}
+                  {mauSoTin ? ` mỗi ${TEN_MAU_SO[mauSoTin]}` : ""}
                   {matBang ? ` tại ${matBang.tenPham}` : chiSo ? ` tại ${chiSo.khuVuc || chiSo.tinh}` : ""}
                 </span>
                 <span className="text-[23px] font-bold leading-none tracking-tight text-cvr-ink">
