@@ -224,9 +224,40 @@ const COT_CSV = [
  *  KIỂM CHỨNG trong admin, không hiện ra cho khách. */
 const COT_THEM = ["gia_thap_trieu", "gia_cao_trieu", "so_mau", "nguon_link"] as const;
 
-/** Đọc một ô giá viết kiểu Việt ("78,5") hoặc kiểu Anh ("78.5") → số triệu. */
+/**
+ * Đọc một ô giá về SỐ TRIỆU, chấp nhận cả bốn lối viết đang gặp thật:
+ *   "78,5"        → 78,5   (thập phân kiểu Việt)
+ *   "78.5"        → 78,5   (thập phân kiểu Anh — máy tính xuất ra kiểu này)
+ *   "1.234.567"   → 1234567 (dấu chấm phân cách nghìn kiểu Việt)
+ *   "1,234.56"    → 1234,56 (phân cách nghìn kiểu Anh)
+ *
+ * Luật: dấu nào xuất hiện SAU CÙNG và chỉ một lần thì đó là dấu thập phân;
+ * dấu lặp lại nhiều lần là phân cách nghìn.
+ *
+ * ⛔ Bản cũ xoá MỌI dấu chấm rồi mới đổi phẩy thành chấm, nên "94.1" thành
+ * 941 và "94.09999999999999" thành 9.409.999.999.999.999 — sai gấp cả triệu
+ * lần. Lỗi này nằm im vì mọi lần thử đều gõ tay kiểu "78,5"; chỉ lộ ra khi
+ * nhận tệp do máy xuất (18/09/2026), lúc đó 55/76 dãy bị chặn oan vì "giá
+ * nhảy bất thường".
+ */
 function doiGia(s: string): number {
-  return parseFloat((s || "").split(".").join("").split(",").join("."));
+  const t = (s || "").trim().split(" ").join("");
+  if (!t) return NaN;
+  const soCham = (t.match(/\./g) ?? []).length;
+  const soPhay = (t.match(/,/g) ?? []).length;
+
+  // Có cả hai dấu: dấu đứng sau là thập phân, dấu kia là phân cách nghìn.
+  if (soCham && soPhay) {
+    const thapPhan = t.lastIndexOf(".") > t.lastIndexOf(",") ? "." : ",";
+    const nghin = thapPhan === "." ? "," : ".";
+    return parseFloat(t.split(nghin).join("").split(thapPhan).join("."));
+  }
+  // Một loại dấu lặp nhiều lần → chắc chắn là phân cách nghìn.
+  if (soCham > 1) return parseFloat(t.split(".").join(""));
+  if (soPhay > 1) return parseFloat(t.split(",").join(""));
+  // Đúng một dấu → thập phân. Trong đơn vị TRIỆU đồng mỗi m², "1.234" là
+  // 1,234 triệu chứ không thể là 1.234 triệu (một tỷ hai mỗi mét vuông).
+  return parseFloat(t.split(",").join("."));
 }
 
 /** Ba mức kỳ, đều nhận: THÁNG "2026-08" · QUÝ "2025-Q1" · NĂM "2025".
