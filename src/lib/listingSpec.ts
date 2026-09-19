@@ -393,15 +393,37 @@ export function coDienTichXayDung(type: string): boolean {
 //   · can — căn hộ/chung cư/condotel: chia cho m² CĂN (chỉ có một diện tích).
 export type MauSo = "dat" | "san" | "can";
 
+// Thị trường mua bán có RẤT NHIỀU loại hình, mỗi loại quen một cách tính. Khai
+// đích danh từng nhóm, KHÔNG để rơi vào mặc định — rơi nhầm là con số sai bản chất.
+//   · can — chỉ có MỘT diện tích, chính là diện tích căn.
+//   · dat — bán cả thửa đất / cả khu đất, tính trên m² đất.
+//   · san — có đất VÀ công trình trên đất, tính trên m² sàn.
 const MAU_SO_CAN = ["Chung cư", "Căn hộ", "Condotel / Nghỉ dưỡng"];
-const MAU_SO_DAT = ["Đất nền / Đất", "Đất công nghiệp / Nhà xưởng / Kho bãi", "Văn phòng / Mặt bằng kinh doanh"];
+const MAU_SO_DAT = ["Đất nền / Đất", "Đất công nghiệp / Nhà xưởng / Kho bãi"];
+// Văn phòng · mặt bằng bán lẻ: ô diện tích của chúng ĐÃ LÀ SÀN (xem nhanDienTich),
+// nên mẫu số là m² sàn — trước 19/09 xếp nhầm vào nhóm "m² đất", nhãn nói một
+// đằng số tính một nẻo.
+const MAU_SO_SAN = ["Văn phòng / Mặt bằng kinh doanh", "Nhà trọ / Phòng trọ"];
 
 /** Giá mỗi m² của loại hình này phải chia cho cái gì. */
 export function mauSoCuaLoaiHinh(type: string): MauSo {
   const l = type ? specForType(type).label : "";
   if (MAU_SO_CAN.includes(l)) return "can";
   if (MAU_SO_DAT.includes(l)) return "dat";
-  return "san";
+  if (MAU_SO_SAN.includes(l)) return "san";
+  // Loại hình có ô "Diện tích xây dựng" = nhà gắn liền đất → m² sàn.
+  // Còn lại (kể cả "Bất động sản khác", vốn hỏi "Diện tích đất") → m² đất.
+  return coDienTichXayDung(type) ? "san" : "dat";
+}
+
+/**
+ * Lấy m² sàn từ ô nào: nhà gắn liền đất có Ô RIÊNG "Diện tích xây dựng"; còn văn
+ * phòng · mặt bằng · nhà trọ thì CHÍNH ô diện tích đã là sàn rồi, không có ô riêng.
+ * Tách hàm này ra vì "m² gì" và "lấy ở ô nào" là hai chuyện khác nhau — gộp lại
+ * chính là chỗ làm văn phòng bị chia nhầm sang m² đất.
+ */
+export function dungODienTichXayDung(type: string): boolean {
+  return mauSoCuaLoaiHinh(type) === "san" && coDienTichXayDung(type);
 }
 
 // ── VỊ TRÍ: CHIỀU THỨ NĂM CỦA GIÁ ─────────────────────────────────────────

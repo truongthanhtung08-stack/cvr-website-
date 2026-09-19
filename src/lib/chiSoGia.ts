@@ -1,6 +1,6 @@
 import type { Listing } from "@/lib/data";
 import { chuanTen } from "@/lib/locations";
-import { mauSoCuaLoaiHinh, TEN_MAU_SO, TEN_VI_TRI, docViTri, type MauSo, type ViTriGia } from "@/lib/listingSpec";
+import { mauSoCuaLoaiHinh, dungODienTichXayDung, TEN_MAU_SO, TEN_VI_TRI, docViTri, type MauSo, type ViTriGia } from "@/lib/listingSpec";
 export { mauSoCuaLoaiHinh, TEN_MAU_SO, TEN_VI_TRI };
 export type { MauSo, ViTriGia };
 import { tachBangCsv } from "@/lib/xuatCsv";
@@ -80,7 +80,11 @@ export function giaMoiM2Theo(l: Listing, mau: MauSo): number | null {
   // Chia theo m² sàn thì tin chưa khai diện tích xây dựng là KHÔNG có mẫu số →
   // trả null, tin đó không góp vào thống kê và không được vẽ lên biểu đồ. Thà
   // thiếu một điểm còn hơn đưa vào một con số khác bản chất.
-  const dt = mau === "san" ? l.builtAreaM2 ?? l.builtAreaM2Uoc ?? null : l.areaM2;
+  // "m² sàn" lấy ở ô nào tuỳ loại hình: nhà có ô riêng, văn phòng/mặt bằng thì
+  // chính ô diện tích đã là sàn (xem dungODienTichXayDung).
+  const dt = mau === "san" && dungODienTichXayDung(l.type)
+    ? l.builtAreaM2 ?? l.builtAreaM2Uoc ?? null
+    : l.areaM2;
   if (!gia || !dt || dt <= 0) return null;
   const v = gia / dt;
   // Chặn số vô lý. Hai thang hoàn toàn khác nhau: tin BÁN tính bằng triệu mỗi m²,
@@ -254,6 +258,13 @@ export function chiSoChoTin(tin: Listing, data: ChiSoGiaData | null): ChiSoKhuVu
     // VỊ TRÍ — dãy có khai vị trí thì chỉ dùng cho tin đúng vị trí đó. Tin chưa
     // ghi bề rộng đường vào thì không khớp được, đành lùi về dãy gộp cả khu vực.
     if (x.viTri && x.viTri !== tin.viTri) continue;
+    // MẪU SỐ PHẢI ĐÚNG LUẬT CỦA LOẠI HÌNH — đất tính trên m² đất, NHÀ trên m² sàn,
+    // căn hộ trên m² căn. Dãy nào khai mẫu số khác thì BỎ HẲN, không mượn tạm:
+    // đưa lên trang tin nhà một con số "giá bán nhà riêng · mỗi m² ĐẤT" là tự mâu
+    // thuẫn với chính cách web tính đơn giá cho nhà, dù có ghi rõ nhãn đi nữa.
+    // Không còn dãy nào hợp lệ thì khối Lịch sử giá tự ẩn — đúng nguyên tắc
+    // "không đủ số liệu thì không hiện".
+    if (x.mauSo && x.mauSo !== mauSoCuaLoaiHinh(tin.type)) continue;
     if (!x.moc?.some((m) => m.giaM2 > 0)) continue;
     // Càng sát tin càng thắng. Trong một tỉnh, KHU VỰC quyết định nhiều nhất, kế
     // đến là VỊ TRÍ (mặt tiền đường lớn khác kiệt 2–3 lần), sau mới tới loại hình.
