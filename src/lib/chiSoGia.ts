@@ -1,5 +1,8 @@
 import type { Listing } from "@/lib/data";
 import { chuanTen } from "@/lib/locations";
+import { mauSoCuaLoaiHinh, TEN_MAU_SO, type MauSo } from "@/lib/listingSpec";
+export { mauSoCuaLoaiHinh, TEN_MAU_SO };
+export type { MauSo };
 import { tachBangCsv } from "@/lib/xuatCsv";
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -33,14 +36,48 @@ export type MatBangGia = {
   tenPham: string;
 };
 
-function giaMoiM2(l: Listing): number | null {
+
+/**
+ * Chấm "giá tin đang xem" CHỈ được đặt lên biểu đồ khi hai bên cùng một mẫu số.
+ * Dãy chỉ số chưa khai `mau_so` thì đứng lại — đường thị trường vẫn vẽ (nó nhất
+ * quán với chính nó), nhưng không đem giá tin ra so, vì so 120 triệu/m² ĐẤT với
+ * một chỉ số tính trên m² SÀN là ra kết luận sai hẳn cho người xem.
+ */
+export function giaTinSoDuocVoiChiSo(tin: Listing, chiSo: ChiSoKhuVuc | null): number | null {
+  if (!chiSo?.mauSo) return null;
+  if (chiSo.mauSo !== mauSoCuaLoaiHinh(tin.type)) return null;
+  return giaMoiM2(tin);
+}
+
+/** Đọc ô `mau_so` của tệp chỉ số. Bỏ trống thì KHÔNG đoán bừa theo loại hình:
+ *  trả undefined để nơi so sánh biết là chưa khai mà đứng lại. */
+function docMauSo(raw: string, loaiHinh: string): MauSo | undefined {
+  const t = chuanTen(raw);
+  if (!t) return undefined;
+  if (t.startsWith("dat")) return "dat";
+  if (t.startsWith("san")) return "san";
+  if (t.startsWith("can")) return "can";
+  // Người nộp ghi thẳng tên loại hình cũng hiểu được.
+  return loaiHinh ? mauSoCuaLoaiHinh(raw) : undefined;
+}
+
+export function giaMoiM2(l: Listing): number | null {
   // Chuỗi giá đã định dạng sẵn để hiển thị nên không tin được; dùng số thô.
   const gia = l.priceVnd;
-  const dt = l.areaM2;
+  // Nhà gắn liền đất PHẢI chia cho m² sàn. Tin chưa khai diện tích xây dựng thì
+  // KHÔNG có mẫu số đúng → trả null, tin đó không góp vào thống kê và không được
+  // vẽ lên biểu đồ. Thà thiếu một điểm còn hơn đưa vào một con số khác bản chất.
+  const mau = mauSoCuaLoaiHinh(l.type);
+  const dt = mau === "san" ? l.builtAreaM2 ?? l.builtAreaM2Uoc ?? null : l.areaM2;
   if (!gia || !dt || dt <= 0) return null;
   const v = gia / dt;
-  // Chặn số vô lý: dưới 1 triệu hoặc trên 1 tỷ mỗi m² là dữ liệu nhập sai.
-  return v >= 1_000_000 && v <= 1_000_000_000 ? v : null;
+  // Chặn số vô lý. Hai thang hoàn toàn khác nhau: tin BÁN tính bằng triệu mỗi m²,
+  // tin THUÊ chỉ vài chục nghìn mỗi m² mỗi tháng. Trước 19/09 chỉ có một ngưỡng
+  // "≥ 1 triệu" dùng chung nên 35/37 tin cho thuê bị loại sạch — mọi khối mặt
+  // bằng giá của thị trường thuê im lặng biến mất mà không ai biết.
+  const laThue = (l.purpose ?? "ban") === "thue";
+  const [thap, cao] = laThue ? [1_000, 5_000_000] : [1_000_000, 1_000_000_000];
+  return v >= thap && v <= cao ? v : null;
 }
 
 function trungVi(ds: number[]): number {
@@ -133,6 +170,12 @@ export type ChiSoKhuVuc = {
   loaiHinh?: string;
   /** Bán hay cho thuê — hai thị trường khác hẳn, trộn vào nhau là hỏng số. */
   mucDich?: "ban" | "thue";
+  /** GIÁ NÀY CHIA CHO CÁI GÌ: m² đất · m² sàn xây dựng · m² căn hộ.
+   *  Bắt buộc phải khai, vì cùng một "104 triệu/m²" cho biệt thự có thể là giá
+   *  trên đất (đúng) hay trên sàn (cao gấp đôi thực tế). Dòng nào không khai thì
+   *  vẫn vẽ được đường thị trường của chính nó, nhưng KHÔNG được đem so với giá
+   *  của tin đang xem — so hai mẫu số khác nhau là ra một con số sai. */
+  mauSo?: MauSo;
   /** Ai công bố: CBRE · Savills · DKRA · khảo sát của Coastal Land… */
   nguon: string;
   /** Ngày chủ dự án cập nhật, dạng 2026-09-11 */
@@ -222,7 +265,7 @@ const COT_CSV = [
 
 /** Cột tuỳ chọn — có thì tốt, không có vẫn nhập được. Cả hai chỉ phục vụ việc
  *  KIỂM CHỨNG trong admin, không hiện ra cho khách. */
-const COT_THEM = ["gia_thap_trieu", "gia_cao_trieu", "so_mau", "nguon_link"] as const;
+const COT_THEM = ["gia_thap_trieu", "gia_cao_trieu", "so_mau", "nguon_link", "mau_so"] as const;
 
 /**
  * Đọc một ô giá về SỐ TRIỆU, chấp nhận cả bốn lối viết đang gặp thật:
@@ -344,6 +387,7 @@ export function docBangChiSo(bang: string[][]): { items: ChiSoKhuVuc[]; loi: Loi
         nguon: lay(6) || "Khảo sát của Coastal Land",
         capNhat: lay(7) || new Date().toISOString().slice(0, 10),
         nguonLink: themLay(3) || undefined,
+        mauSo: docMauSo(themLay(4), loaiHinh),
         moc: [],
       };
       gom.set(khoa, muc);

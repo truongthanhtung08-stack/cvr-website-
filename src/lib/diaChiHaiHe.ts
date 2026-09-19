@@ -29,6 +29,7 @@ import {
   oldProvinceNames,
   chuanTenCap,
   chuanTen,
+  boTienToCap,
   type GeoMode,
 } from "@/lib/locations";
 import { normalizeVi } from "@/lib/filters";
@@ -46,7 +47,9 @@ export type HaiHe = {
 // So tên địa giới: bỏ tiền tố cấp ("Phường", "Xã", "Quận", "Thị trấn"…) rồi bỏ dấu.
 // "Phường Hải Châu" và "Hải Châu" phải coi là một.
 function loiTen(s: string): string {
-  return normalizeVi(s || "").replace(/^(thanh pho|tp\.?|tinh|quan|huyen|phuong|xa|thi tran|thi xa|dac khu) /, "").trim();
+  // Cắt tiền tố khi chữ CÒN DẤU (boTienToCap) — bỏ dấu trước rồi cắt thì "Tịnh Khê"
+  // bị xén nhầm thành "khe". Xem ghi chú dài ở locations.ts.
+  return normalizeVi(boTienToCap(s)).trim();
 }
 
 function trung(a: string, b: string): boolean {
@@ -417,6 +420,38 @@ export function haiDongDiaChi(
 // Hai tên chỉ CÙNG MỘT CHỖ khi lõi tên trùng nhau ("Phường Hội An" = "Hội An").
 function giong(a: string, b: string): boolean {
   return !!a && !!b && loiTen(a) === loiTen(b);
+}
+
+// ─── PHƯỜNG/XÃ CŨ: CHỖ DUY NHẤT MÁY KHÔNG SUY RA NỔI ────────────────────────
+// Chiều CŨ → MỚI khớp 100%. Chiều ngược lại thì một phường mới gộp 2–10 phường
+// cũ (Phường Nha Trang ← 10 phường, Phường Thanh Khê ← 9, Phường An Hải ← 5) —
+// nêu đại một cái trong đó là ghi SAI địa chỉ tin của khách. Chỉ người đăng mới
+// biết, nên form phải HỎI, và hỏi bằng đúng danh sách trong bảng ánh xạ chính
+// thức chứ không để gõ tay.
+//
+// Trả [] khi KHÔNG cần hỏi — giữ form gọn, chỉ hiện thêm ô khi thật sự bí:
+//   · người đăng đang nhập theo hệ cũ (ba ô đã là hệ cũ rồi),
+//   · máy đã suy ra được phường cũ (Phường Hòa Xuân ← Hòa Xuân, Cẩm Lệ),
+//   · bảng chỉ có một ứng viên.
+export type UngVienCu = { nhan: string; phuong: string; quan: string; tinh: string };
+
+export function ungVienPhuongCu(he: GeoMode, tinhMoi: string, phuongMoi: string): UngVienCu[] {
+  if (he !== "moi" || !tinhMoi || !phuongMoi) return [];
+  if (suyRaHeCu(tinhMoi, phuongMoi).phuong) return [];
+  const ds = choCuCua(tinhMoi, phuongMoi).filter((x) => x.phuong);
+  if (ds.length < 2) return [];
+  // Kèm tên quận/huyện chỉ khi danh sách trải trên nhiều quận (Phường Mỹ Thượng
+  // gộp phường của cả Thuận Hóa lẫn Phú Vang) — cùng một quận thì ghi thêm là thừa.
+  const nhieuQuan = new Set(ds.map((x) => x.quan)).size > 1;
+  const ra: UngVienCu[] = [];
+  const da = new Set<string>();
+  for (const x of ds) {
+    const nhan = nhieuQuan && x.quan ? `${x.phuong} (${x.quan})` : x.phuong;
+    if (da.has(nhan)) continue;
+    da.add(nhan);
+    ra.push({ nhan, phuong: x.phuong, quan: x.quan, tinh: x.tinh });
+  }
+  return ra;
 }
 
 // Dòng phụ hiện dưới địa chỉ chính: chỉ ra cách gọi theo hệ CÒN LẠI.

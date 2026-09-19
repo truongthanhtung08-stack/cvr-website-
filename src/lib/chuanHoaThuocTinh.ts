@@ -13,7 +13,7 @@
 //      vứt đi — trang tin hiện chúng ở nhóm "Tiện ích khác".
 // ============================================================================
 
-import { amenityGroups, interiorItems, legalOptions, furnishLevels } from "@/lib/listingSpec";
+import { amenityGroups, interiorItems, legalOptions, furnishLevels, phapLyCho } from "@/lib/listingSpec";
 
 // Bỏ dấu, bỏ hoa/thường, gộp mọi dấu ngăn thành một khoảng trắng — để so tên
 // không phụ thuộc cách gõ ("Bảo vệ 24/7" ≈ "bao ve 24 7").
@@ -110,20 +110,36 @@ const DN_NOI_THAT: Record<string, string> = {
 };
 
 // ── ĐỒNG NGHĨA PHÁP LÝ ─────────────────────────────────────────────────────
-// Chủ dự án đã chốt: NHÀ = sổ hồng · ĐẤT = sổ đỏ. Danh mục chuẩn gộp làm một mục
-// "Sổ đỏ / Sổ hồng chính chủ" nên mọi cách viết sổ riêng đều quy về đó.
+// Chủ dự án chốt lại 19/09/2026: ĐẤT chỉ có sổ đỏ · CĂN HỘ chỉ có sổ hồng ·
+// NHÀ gắn liền đất thì có thể là sổ đỏ HOẶC sổ hồng, tuỳ hồ sơ từng căn.
+// (Ghi chú cũ ở đây nói "NHÀ = sổ hồng" và gộp hai loại giấy làm một mục — đã bỏ.)
+// Người đăng viết mập mờ cả hai vế ("sổ đỏ/sổ hồng", "chính chủ", "đã có sổ").
+// Giữ nguyên chữ mập mờ đó rồi để CHÍNH LOẠI HÌNH chốt: đất ra sổ đỏ, căn hộ ra
+// sổ hồng, nhà gắn liền đất thì đúng là chưa biết nên giữ nguyên vế đôi.
+const HAI_VE = "Sổ đỏ / Sổ hồng";
+
+// ⚠️ SỔ ĐỎ VÀ SỔ HỒNG LÀ HAI THỨ KHÁC NHAU — xem ghi chú dài ở listingSpec.ts.
+// Trước 19/09 bảng này gom HẾT mọi biến thể về một chuỗi "Sổ đỏ / Sổ hồng chính
+// chủ", nên tin đất cũng chào sổ hồng còn tin căn hộ cũng chào sổ đỏ. Nay giữ
+// đúng loại giấy người đăng ghi; chỉ khi họ viết mập mờ ("sổ đỏ/sổ hồng") mới
+// để nguyên vế đôi, và nơi gọi sẽ tự chốt theo loại hình.
 const DN_PHAP_LY: Record<string, string> = {
-  "Sổ hồng riêng": "Sổ đỏ / Sổ hồng chính chủ",
-  "Sổ hồng": "Sổ đỏ / Sổ hồng chính chủ",
-  "Sổ hồng lâu dài": "Sổ đỏ / Sổ hồng chính chủ",
-  "Sổ đỏ": "Sổ đỏ / Sổ hồng chính chủ",
-  "Sổ đỏ riêng": "Sổ đỏ / Sổ hồng chính chủ",
-  "Sổ riêng": "Sổ đỏ / Sổ hồng chính chủ",
-  "Sổ hồng chính chủ": "Sổ đỏ / Sổ hồng chính chủ",
-  "Sổ đỏ chính chủ": "Sổ đỏ / Sổ hồng chính chủ",
-  "Chính chủ": "Sổ đỏ / Sổ hồng chính chủ",
-  "Đã có sổ": "Sổ đỏ / Sổ hồng chính chủ",
-  "Sẵn sổ": "Sổ đỏ / Sổ hồng chính chủ",
+  "Sổ hồng riêng": "Sổ hồng chính chủ",
+  "Sổ hồng": "Sổ hồng chính chủ",
+  "Sổ hồng lâu dài": "Sổ hồng chính chủ",
+  "Sổ hồng chính chủ": "Sổ hồng chính chủ",
+  "Sổ đỏ": "Sổ đỏ chính chủ",
+  "Sổ đỏ riêng": "Sổ đỏ chính chủ",
+  "Sổ đỏ chính chủ": "Sổ đỏ chính chủ",
+  // Người đăng viết mập mờ cả hai vế — không tự chọn hộ, để nơi gọi chốt theo loại hình.
+  "Sổ đỏ / Sổ hồng": HAI_VE,
+  "Sổ đỏ / Sổ hồng chính chủ": HAI_VE,
+  "Sổ đỏ, sổ hồng": HAI_VE,
+  "Sổ đỏ hoặc sổ hồng": HAI_VE,
+  "Sổ riêng": HAI_VE,
+  "Chính chủ": HAI_VE,
+  "Đã có sổ": HAI_VE,
+  "Sẵn sổ": HAI_VE,
   "HĐMB": "Hợp đồng mua bán",
   "Hợp đồng": "Hợp đồng mua bán",
   "Chờ sổ": "Đang chờ sổ",
@@ -171,8 +187,26 @@ export const chuanHoaTienIch = (ds: string[]): string[] => dichDanhSach(ds, TRA_
 export const chuanHoaNoiThat = (ds: string[]): string[] => dichDanhSach(ds, TRA_NOI_THAT);
 
 // Một giá trị đơn (ô select) — không tra được thì giữ nguyên để không mất dữ liệu.
-export const chuanHoaPhapLy = (v: string): string =>
-  v.trim() ? (TRA_PHAP_LY.get(khoa(v)) ?? v.trim()) : "";
+//
+// `type` quyết định vế mập mờ ngả về đâu: tin gốc ghi "sổ đỏ/sổ hồng" thì lô ĐẤT
+// chỉ có thể là sổ đỏ, CĂN HỘ chỉ có thể là sổ hồng — chốt được thì chốt luôn.
+// Nhà gắn liền đất thì hai vế đều có thật, giữ nguyên chứ không chọn hộ người ta.
+export const chuanHoaPhapLy = (v: string, type?: string): string => {
+  const raw = v.trim();
+  if (!raw) return "";
+  const chuan = TRA_PHAP_LY.get(khoa(raw)) ?? raw;
+  if (chuan !== HAI_VE) return chuan;
+  const dsHopLe = phapLyCho(type);
+  const chiMot = dsHopLe.filter((x) => x.startsWith("Sổ đỏ") || x.startsWith("Sổ hồng"));
+  return chiMot.length === 1 ? chiMot[0] : HAI_VE;
+};
+
+/** Giấy này có đúng với loại hình đó không — sai thì nơi gọi báo vàng để người ta xem lại. */
+export const phapLyLechLoaiHinh = (v: string, type?: string): boolean => {
+  const chuan = chuanHoaPhapLy(v, type);
+  if (!chuan || chuan === HAI_VE) return false;
+  return !phapLyCho(type).includes(chuan);
+};
 export const chuanHoaMucNoiThat = (v: string): string =>
   v.trim() ? (TRA_MUC_NOI_THAT.get(khoa(v)) ?? v.trim()) : "";
 

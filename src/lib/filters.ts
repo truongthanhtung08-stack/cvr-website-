@@ -3,6 +3,7 @@
 
 import { tierRank } from "./packages";
 import { tenTinhTuongDuong, chuanTen, chuanTenCap } from "./locations";
+import { mauSoCuaLoaiHinh } from "./listingSpec";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // LOẠI HÌNH (sản phẩm) PHÂN THEO MỤC ĐÍCH — chuẩn Brief + Kế hoạch V3.
@@ -340,6 +341,12 @@ function tachDiaChiCap(s: string): string[] {
 type FilterableListing = {
   id: string; title: string; price: string; area: string;
   beds?: number; location: string; type: string; badge?: string;
+  // Số thô để sắp xếp theo GIÁ MỖI M² — chuỗi price/area đã định dạng để đọc,
+  // tính lại từ chuỗi là chỗ đẻ ra lỗi dấu chấm/dấu phẩy.
+  priceVnd?: number | null;
+  areaM2?: number | null;
+  builtAreaM2?: number | null;
+  builtAreaM2Uoc?: number | null;
   // Địa chỉ gộp cả hai hệ cũ/mới — lọc & tìm khu vực dò trên chuỗi này.
   diaChiTim?: string;
   desc?: string;       // mô tả tin
@@ -425,10 +432,16 @@ export function applyFilters<T extends FilterableListing>(items: T[], f: Filters
 // (dùng cho "Bất động sản tương tự": cùng dự án → cùng khu vực → cùng loại hình).
 export type SortKey = "moi" | "gia-tang" | "gia-giam" | "dt-giam" | "gia-m2" | "lien-quan";
 
-// Đơn giá (tỷ/m²) — để so sánh Giá/m²; null nếu thiếu giá hoặc diện tích.
-function pricePerM2(price: string, area: string): number | null {
-  const ty = priceToTy(price); const m2 = areaToM2(area);
-  return ty == null || !m2 ? null : ty / m2;
+// Đơn giá mỗi m² để SẮP XẾP. Mẫu số phải đúng theo loại hình: nhà gắn liền đất
+// chia m² SÀN XÂY DỰNG, đất và căn hộ chia m² đã ghi ở ô diện tích. Chia đổ đồng
+// cho m² đất thì nhà 3 tầng luôn "đắt gấp 3" đất cạnh nó — xếp hạng vô nghĩa.
+// Tin thiếu mẫu số đúng thì trả null và bị đẩy xuống cuối, không đoán thay.
+function pricePerM2(l: FilterableListing): number | null {
+  const gia = l.priceVnd ?? priceToTy(l.price);
+  if (gia == null) return null;
+  const canSan = mauSoCuaLoaiHinh(l.type) === "san";
+  const m2 = canSan ? l.builtAreaM2 ?? l.builtAreaM2Uoc ?? null : l.areaM2 ?? areaToM2(l.area);
+  return !m2 || m2 <= 0 ? null : gia / m2;
 }
 
 // Sắp xếp theo cấp tin (chuẩn Batdongsan/Homedy): Diamond → Gold → Silver → Basic.
@@ -443,7 +456,7 @@ export function sortListings<T extends FilterableListing>(items: T[], sort: Sort
   if (sort === "gia-tang") s.sort((a, b) => ((priceToTy(a.price) ?? 1e9) - (priceToTy(b.price) ?? 1e9)) || byTier(a, b));
   if (sort === "gia-giam") s.sort((a, b) => ((priceToTy(b.price) ?? -1) - (priceToTy(a.price) ?? -1)) || byTier(a, b));
   if (sort === "dt-giam") s.sort((a, b) => ((areaToM2(b.area) ?? -1) - (areaToM2(a.area) ?? -1)) || byTier(a, b));
-  if (sort === "gia-m2") s.sort((a, b) => ((pricePerM2(a.price, a.area) ?? 1e9) - (pricePerM2(b.price, b.area) ?? 1e9)) || byTier(a, b));
+  if (sort === "gia-m2") s.sort((a, b) => ((pricePerM2(a) ?? Infinity) - (pricePerM2(b) ?? Infinity)) || byTier(a, b));
   return s;
 }
 

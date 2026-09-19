@@ -10,6 +10,7 @@
 
 import type { Listing } from "@/lib/data";
 import { haiDongDiaChi, heCuaTin } from "@/lib/diaChiHaiHe";
+import { mauSoCuaLoaiHinh } from "@/lib/chiSoGia";
 import { featuredListings, getListingById } from "@/lib/data";
 import { asset } from "@/lib/asset";
 import { isVideoUrl } from "@/lib/media";
@@ -29,6 +30,14 @@ export type ListingDetailsJson = {
   // quan_huyen_cu khi nhập hàng loạt). Có thì dùng thẳng — suy ngược từ hệ mới
   // không bao giờ ra đúng phường cũ vì một phường mới gộp nhiều phường cũ.
   diaChiCu?: { phuong?: string; quan?: string; tinh?: string };
+  // ── m² SÀN SUY RA, KHÔNG PHẢI SỐ NGƯỜI ĐĂNG KHAI ─────────────────────────
+  // Giá mỗi m² của NHÀ phải chia m² sàn, mà tin cũ phần lớn không khai. Số liệu
+  // đó vẫn nằm trong chính nội dung tin ("nhà 3 tầng"), suy ra được nên THỐNG KÊ
+  // dùng nó. Nhưng CỐ Ý KHÔNG ghi đè built_area_m2: ô "Diện tích xây dựng" trên
+  // trang tin là số NGƯỜI ĐĂNG KHAI, đắp một con số suy ra vào đó là biến ước
+  // tính thành lời khẳng định. Đơn giá tính từ nó luôn có dấu ≈.
+  dtSanUocTinh?: number;
+  dtSanNguon?: string; // cách suy: "100 m² đất × 3 tầng"
   mapPin?: string; // toạ độ / link Google Maps admin ghim tay
   places?: { category: string; name: string; distance: string }[]; // tiện ích xung quanh
   // phones: MỌI số của người đăng (số đầu = số hiển thị). Giữ đủ để sau này
@@ -141,16 +150,30 @@ function buildSearchText(r: Row): string {
 
 function rowToListing(r: Row): Listing {
   const price = fmtPrice(r.price_vnd, r.purpose);
-  // ĐƠN GIÁ / M² — hai trường hợp, đơn vị khác hẳn nhau:
-  //   · MUA BÁN đất  → "42 tr/m²"
+  // ĐƠN GIÁ / M² — MẪU SỐ KHÁC NHAU THEO LOẠI HÌNH, VÀ PHẢI GHI RÕ LÀ M² GÌ.
   //   · CHO THUÊ kho xưởng · kho bãi · văn phòng · mặt bằng → "35.000 đ/m²/tháng"
   //     (thị trường báo giá kiểu này chứ không báo tổng tiền tháng)
-  const perM2 =
-    coDonGiaM2(r.type, r.purpose) && r.price_vnd != null && r.area_m2
-      ? `${fmtNum(r.price_vnd / r.area_m2, 0)} đ/m²/tháng`
-      : r.type.includes("Đất") && r.purpose === "ban" && r.price_vnd != null && r.area_m2
-      ? `${fmtNum(r.price_vnd / r.area_m2 / 1e6, 0)} tr/m²`
-      : undefined;
+  //   · MUA BÁN đất     → "42 tr/m² đất"
+  //   · MUA BÁN căn hộ  → "48 tr/m² căn hộ"
+  //   · MUA BÁN nhà     → "48 tr/m² sàn"  — chia cho m² SÀN XÂY DỰNG, KHÔNG phải
+  //     m² đất. Biệt thự 24 tỷ / 200 m² đất / 500 m² sàn: chia đất ra 120 tr/m²,
+  //     gấp 2,5 lần con số thật — người mua đối chiếu mặt bằng giá là thấy sai ngay.
+  //     Tin chưa khai diện tích xây dựng thì KHÔNG hiện dòng này, chứ không chia
+  //     tạm m² đất cho có.
+  const perM2 = ((): string | undefined => {
+    if (r.price_vnd == null) return undefined;
+    if (coDonGiaM2(r.type, r.purpose))
+      return r.area_m2 ? `${fmtNum(r.price_vnd / r.area_m2, 0)} đ/m²/tháng` : undefined;
+    if (r.purpose !== "ban") return undefined;
+    const mau = mauSoCuaLoaiHinh(r.type);
+    // Nhà chưa khai m² sàn thì dùng số SUY RA từ nội dung tin — nhưng phải gắn
+    // dấu ≈ để người xem biết đây là ước tính, không phải số người đăng khai.
+    const uoc = mau === "san" && !r.built_area_m2 ? r.details?.dtSanUocTinh ?? null : null;
+    const dt = mau === "san" ? r.built_area_m2 ?? uoc : r.area_m2;
+    if (!dt) return undefined;
+    const duoi = mau === "san" ? "m² sàn" : mau === "can" ? "m² căn hộ" : "m² đất";
+    return `${uoc ? "≈ " : ""}${fmtNum(r.price_vnd / dt / 1e6, 0)} tr/${duoi}`;
+  })();
   return {
     id: r.id,
     title: r.title,
@@ -161,6 +184,8 @@ function rowToListing(r: Row): Listing {
     hetHanLuc: r.tier_expires_at ?? null,
     hangTin: tierHieuLuc(r),
     areaM2: r.area_m2 ?? null,
+    builtAreaM2: r.built_area_m2 ?? null,
+    builtAreaM2Uoc: r.details?.dtSanUocTinh ?? null,
     ...(r.beds != null ? { beds: r.beds } : {}),
     ...(r.baths != null ? { baths: r.baths } : {}),
     // ĐỊA CHỈ HIỂN THỊ THEO HỆ MỚI — áp cho MỌI tin, kể cả tin đã đăng từ trước.
@@ -176,13 +201,24 @@ function rowToListing(r: Row): Listing {
         phuong: r.ward ?? "",
       });
       const moi = hai.moi || goc;
-      // ĐỊA CHỈ CŨ NHẬP TAY ĐI TRƯỚC — chép nguyên từ tin gốc nên luôn đúng;
-      // chỉ khi tin không có mới dùng bản web suy ngược (mất cấp phường ở nhiều tin).
+      // ĐỊA CHỈ CŨ NHẬP TAY ĐI TRƯỚC — chép nguyên từ tin gốc nên luôn đúng.
+      // Nhưng chỉ khi họ ghi TỚI CẤP PHƯỜNG/QUẬN: có mỗi tên tỉnh thì đó chưa phải
+      // địa chỉ, lúc đó dùng bộ ba web suy ngược để dòng hệ cũ đủ 3 cấp.
+      // ⚠️ Trước đây chỗ này viết `dcCu?.tinh ?? hai.cuTinh` nên chuỗi nhập tay
+      // LUÔN có ít nhất tên tỉnh → nhánh dự phòng `|| hai.cu` không bao giờ chạy,
+      // và 100/134 tin chỉ hiện đúng một chữ "Địa chỉ hệ cũ: Đà Nẵng".
       const dcCu = r.details?.diaChiCu;
-      const cuNhapTay = [dcCu?.phuong, dcCu?.quan, dcCu?.tinh ?? hai.cuTinh]
-        .filter((s) => s && String(s).trim())
-        .join(", ");
-      const cuTho = cuNhapTay || hai.cu;
+      const tay = {
+        phuong: (dcCu?.phuong ?? "").trim(),
+        quan: (dcCu?.quan ?? "").trim(),
+        tinh: (dcCu?.tinh ?? "").trim(),
+      };
+      // Lấy trọn một bộ, không trộn hai nguồn: quận của người nhập ghép với phường
+      // máy suy ra rất dễ thành cặp không thuộc về nhau.
+      const cuTho =
+        tay.phuong || tay.quan
+          ? [tay.phuong, tay.quan, tay.tinh || hai.cuTinh].filter(Boolean).join(", ")
+          : hai.cu;
       const cu = cuTho && cuTho !== moi ? cuTho : "";
       return {
         location: moi,

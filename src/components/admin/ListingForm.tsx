@@ -5,10 +5,10 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { lamMoiWeb } from "@/lib/lamMoiWeb";
 import { saleTypeGroups, rentTypeGroups } from "@/lib/filters";
-import { provinceNamesFor, districtsOf, wardsOf, wardsOfNew, wardsOfAny, type GeoMode } from "@/lib/locations";
-import { haiDongDiaChi, doiHeGiuNguyen, chuoiTimBanDo, type NhoHaiHe } from "@/lib/diaChiHaiHe";
+import { provinceNamesFor, districtsOf, wardsOf, wardsOfNew, wardsOfAny, chuanTen, type GeoMode } from "@/lib/locations";
+import { haiDongDiaChi, doiHeGiuNguyen, chuoiTimBanDo, ungVienPhuongCu, type NhoHaiHe } from "@/lib/diaChiHaiHe";
 import { ganDiaGioi, type DiaGioiBanDo } from "@/lib/diaGioiTuBanDo";
-import { fieldsFor, interiorItems, amenityGroups, legalOptions, furnishLevels, directions, coPhongNgu, coPhongTam, coDienTichXayDung, nhanDienTich, coDonGiaM2 } from "@/lib/listingSpec";
+import { fieldsFor, interiorItems, amenityGroups, phapLyCho, furnishLevels, directions, coPhongNgu, coPhongTam, coDienTichXayDung, nhanDienTich, coDonGiaM2 } from "@/lib/listingSpec";
 import { chuanHoaSdt } from "@/lib/phone";
 import ImagePicker from "@/components/admin/ImagePicker";
 import OTieuDe from "@/components/OTieuDe";
@@ -162,6 +162,15 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
   // Danh sách quận/huyện & phường/xã liên động theo lựa chọn cấp trên
   // Hệ đơn vị hành chính: MỚI (sau sáp nhập) bỏ cấp Quận/Huyện
   const [geoMode, setGeoMode] = useState<GeoMode>("moi");
+  // Phường/xã CŨ do người nhập chỉ đích danh — chỉ hỏi khi một phường mới gộp
+  // nhiều phường cũ, lúc đó máy không có cách nào suy ra (xem ungVienPhuongCu).
+  // Giữ theo NHÃN trong danh sách vì hai phường cũ khác quận có thể trùng tên.
+  const [phuongCu, setPhuongCu] = useState(
+    () =>
+      ungVienPhuongCu("moi", initial?.province ?? "", initial?.ward ?? "").find(
+        (x) => chuanTen(x.phuong) === chuanTen(initial?.details?.diaChiCu?.phuong ?? ""),
+      )?.nhan ?? "",
+  );
   // Nhớ chỗ đã chọn Ở CẢ HAI HỆ → đổi hệ qua lại là trả nguyên, không suy diễn lại.
   const nhoHai = useRef<NhoHaiHe | null>(null);
   // Nhớ địa giới đọc được từ điểm ghim → đổi hệ địa chỉ là điền lại được ngay
@@ -195,7 +204,8 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
   // trống, bấm Lưu là xoá sạch dữ liệu của khách. Nay bổ sung chính giá trị đang
   // có vào danh sách chọn / thành thẻ riêng để giữ nguyên.
   const themNeuThieu = (ds: string[], v: string) => (v && !ds.includes(v) ? [...ds, v] : ds);
-  const chonPhapLy = themNeuThieu(legalOptions, legal);
+  // Danh mục pháp lý theo ĐÚNG loại hình: đất chỉ sổ đỏ, căn hộ chỉ sổ hồng.
+  const chonPhapLy = themNeuThieu(phapLyCho(type), legal);
   const chonNoiThat = themNeuThieu(furnishLevels, furnish);
   const tienIchKhac = amenities.filter((a) => !amenityGroups.some((g) => g.items.includes(a)));
   const noiThatKhac = interior.filter((a) => !interiorItems.includes(a));
@@ -284,6 +294,12 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
         direction: direction || undefined,
         addressDetail: addressDetail.trim() || undefined,
         mapPin: mapPin.trim() || undefined,
+        // Phường/xã cũ vừa chọn → dòng "Địa chỉ hệ cũ" trên trang tin đủ 3 cấp.
+        // KHÔNG chọn thì giữ nguyên cái đã có (file nhập tin có thể đã ghi sẵn).
+        ...((): { diaChiCu?: { phuong: string; quan: string; tinh: string } } => {
+          const c = ungVienPhuongCu(geoMode, province, ward).find((x) => x.nhan === phuongCu);
+          return c ? { diaChiCu: { phuong: c.phuong, quan: c.quan, tinh: c.tinh } } : {};
+        })(),
         project: projectSlug || undefined,
         contact: (cName.trim() || cPhone.trim() || cEmail.trim() || cAvatar.trim())
           ? { name: cName.trim(), phone: chuanHoaSdt(cPhone), email: cEmail.trim(), avatar: cAvatar.trim() || undefined }
@@ -436,6 +452,9 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
                     setProvince(d.province);
                     setDistrict(d.district);
                     setWard(d.ward);
+                    // Đổi hệ là đổi luôn phường/xã đang chọn → lựa chọn cũ không
+                    // còn thuộc về nó nữa, phải bỏ chứ không để lại giá trị lạc.
+                    setPhuongCu("");
                     // Chưa suy ra được phường mà đã ghim bản đồ thì lấy từ điểm ghim.
                     const dc = diaGioiTuBanDoRef.current;
                     if (dc && !d.ward) setTimeout(() => apDungDiaGioi(dc, m.id, d.province, d.district, ""), 0);
@@ -495,6 +514,27 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
               <input value={ward} onChange={(e) => setWard(e.target.value)} placeholder="Nhập Phường/Xã" className={inputCls} />
             )}
           </Field>
+
+          {/* PHƯỜNG/XÃ CŨ — CHỈ HIỆN KHI MÁY BÍ. Phường mới gộp 2–10 phường cũ thì
+              không suy ngược ra được, mà người mua quen hệ cũ lại tìm theo đúng tên
+              đó. Danh sách lấy thẳng từ bảng sáp nhập chính thức, không gõ tay. */}
+          {(() => {
+            const uv = ungVienPhuongCu(geoMode, province, ward);
+            if (!uv.length) return null;
+            return (
+              <Field label="Phường/Xã trước sáp nhập">
+                <select
+                  // Lựa chọn lạc (đổi tỉnh, ghim lại bản đồ…) coi như chưa chọn.
+                  value={uv.some((x) => x.nhan === phuongCu) ? phuongCu : ""}
+                  onChange={(e) => setPhuongCu(e.target.value)}
+                  className={inputCls}
+                >
+                  <option value="">— {ward} gộp {uv.length} phường/xã cũ —</option>
+                  {uv.map((x) => <option key={x.nhan} value={x.nhan}>{x.nhan}</option>)}
+                </select>
+              </Field>
+            );
+          })()}
         </div>
         {/* ĐỊA CHỈ HAI HỆ — admin nhập hệ nào cũng thấy ngay cách gọi hệ kia,
             giống hệt form của khách. Nhập sai hệ là tin không lên đúng tìm kiếm
@@ -502,10 +542,13 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
         {province && (() => {
           const hai = haiDongDiaChi(geoMode, { tinh: province, quan: district, phuong: ward });
           if (!hai.moi) return null;
+          // Vừa chọn phường/xã cũ thì dòng dưới phải đổi theo NGAY.
+          const chon = ungVienPhuongCu(geoMode, province, ward).find((x) => x.nhan === phuongCu);
+          const cuHien = chon ? [chon.phuong, chon.quan, chon.tinh].filter(Boolean).join(", ") : hai.cu;
           return (
             <p className="mt-3 rounded-lg bg-cvr-surface px-3 py-2 text-xs leading-relaxed text-cvr-muted">
               Tin sẽ hiện: <strong className="font-semibold text-cvr-ink">{hai.moi}</strong>
-              {hai.cu ? <> · <span className="text-cvr-faint">Địa chỉ hệ cũ: {hai.cu}</span></> : null}
+              {cuHien ? <> · <span className="text-cvr-faint">Địa chỉ hệ cũ: {cuHien}</span></> : null}
             </p>
           );
         })()}

@@ -12,14 +12,14 @@ import { saleTypeGroups, rentTypeGroups } from "@/lib/filters";
 import { slugify } from "@/lib/contentAdmin";
 // Bộ đặc điểm theo loại hình — để ghi số tầng / mặt tiền / đường vào đúng ô của
 // từng loại bất động sản, y như khi đăng tay bằng form.
-import { fieldsFor, coDonGiaM2 } from "@/lib/listingSpec";
+import { fieldsFor, coDonGiaM2, coDienTichXayDung } from "@/lib/listingSpec";
 // SỐ ĐIỆN THOẠI — cùng một hàm với ô nhập trong admin và số hiện trên trang tin,
 // nên file của Cowork, cơ sở dữ liệu và web luôn ghi giống hệt nhau (0 + 10 số).
 import { chuanHoaSdt, laSdtVN, tachNhieuSdt } from "@/lib/phone";
 // TIỆN ÍCH / NỘI THẤT / PHÁP LÝ — dịch cách viết đời thường về đúng tên danh mục.
 // Không có bước này thì "Bảo vệ 24/7", "Máy lạnh", "Sổ hồng riêng" lên web là MẤT.
 import {
-  chuanHoaTienIch, chuanHoaNoiThat, chuanHoaPhapLy, chuanHoaMucNoiThat,
+  chuanHoaTienIch, chuanHoaNoiThat, chuanHoaPhapLy, chuanHoaMucNoiThat, phapLyLechLoaiHinh,
   tienIchNgoaiDanhMuc, noiThatNgoaiDanhMuc,
 } from "@/lib/chuanHoaThuocTinh";
 
@@ -89,6 +89,12 @@ export const COT = {
   moTa: "mo_ta",
   gia: "gia",
   dienTich: "dien_tich",
+  // ── DIỆN TÍCH XÂY DỰNG — MẪU SỐ CỦA GIÁ/M² Ở NHÀ GẮN LIỀN ĐẤT ────────────
+  // Giá mỗi m² của ĐẤT chia cho m² đất, nhưng của NHÀ phải chia cho m² SÀN XÂY
+  // DỰNG — hai con số lệch nhau vài lần: biệt thự 24 tỷ / 200 m² đất = 120 tr/m²,
+  // còn chia 500 m² sàn chỉ 48 tr/m². Trước 19/09 file nhập tin KHÔNG có cột này
+  // nên 129/134 tin trống diện tích xây dựng, web không có gì để tính cho đúng.
+  dienTichXayDung: "dien_tich_xay_dung", // m² sàn xây dựng (cộng hết các tầng)
   phongNgu: "phong_ngu",
   phongTam: "phong_tam",
   phuongXa: "phuong_xa",
@@ -121,7 +127,13 @@ export const COT = {
   // Thị trường báo giá "35.000đ/m²/tháng", KHÔNG báo tổng tiền tháng. Cowork ghi
   // NGUYÊN con số đơn giá theo NGÀN ĐỒNG (35.000đ/m² → ghi 35), web tự nhân với
   // diện tích ra tổng tiền mỗi tháng. Cowork hết phải tính nhẩm — chỗ sai nhiều nhất.
-  donGiaThue: "don_gia_thue",           // NGÀN đồng / m² / tháng
+  donGiaThue: "don_gia_thue",           // NGÀN đồng / m² / kỳ (xem chu_ky_thue)
+  // ── KỲ BÁO GIÁ THUÊ: thang · quy · nam ────────────────────────────────────
+  // Văn phòng, kho xưởng, đất thuê rất hay niêm yết "150 triệu/quý" hay
+  // "1,2 tỷ/năm". Bắt Cowork tự chia 3 hoặc chia 12 là lại đẻ ra một chỗ tính
+  // nhẩm để sai — cứ chép NGUYÊN con số của tin gốc vào `gia`/`don_gia_thue`
+  // rồi ghi kỳ vào đây, web tự quy về đồng mỗi tháng. Bỏ trống = theo tháng.
+  chuKyThue: "chu_ky_thue",
   // ── KÍCH THƯỚC / SỐ TẦNG — vào bộ đặc điểm theo LOẠI HÌNH ──────────────────
   duongVao: "duong_vao",                // bề rộng đường trước nhà (m)
   matTien: "mat_tien",                  // chiều ngang mặt tiền (m)
@@ -340,6 +352,12 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
     loi.push(`loai_hinh "${loaiHinh}" không có trong danh mục ${mucDich === "thue" ? "cho thuê" : "mua bán"}`);
   const loaiHinhChuan = dsLoai.find((x) => chuanHoa(x) === chuanHoa(loaiHinh)) ?? loaiHinh;
 
+  // NHÀ GẮN LIỀN ĐẤT THIẾU DIỆN TÍCH XÂY DỰNG = thiếu MẪU SỐ để tính giá mỗi m²
+  // sàn. Không chặn đăng (tin gốc có khi không ghi) nhưng phải báo vàng, vì thiếu
+  // nó thì trang tin chỉ ra được giá trên m² đất — con số khác hẳn về ý nghĩa.
+  if (loaiHinhChuan && coDienTichXayDung(loaiHinhChuan) && !lay(COT.dienTichXayDung).trim())
+    canhBao.push("Thiếu dien_tich_xay_dung — loại hình này cần m² sàn để tính đúng giá mỗi m²");
+
   const tinhThanh = lay(COT.tinhThanh);
   if (!tinhThanh) loi.push("Thiếu tỉnh/thành");
   // SEO ĐỊA PHƯƠNG — tiêu đề nên có tên phường/xã và tỉnh (bỏ tiền tố cấp khi so).
@@ -370,14 +388,32 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
 
   const dienTichSo = soVN(lay(COT.dienTich));
 
+  // ── KỲ BÁO GIÁ THUÊ ───────────────────────────────────────────────────────
+  // Tin gốc báo "150 triệu/quý" hay "1,2 tỷ/năm" thì Cowork chép nguyên con số
+  // vào `gia`, ghi kỳ vào `chu_ky_thue`; web chia ra đồng mỗi tháng để bộ lọc
+  // khoảng giá và sắp xếp so được với mọi tin khác. Bỏ trống = theo tháng.
+  const KY: Record<string, { soThang: number; nhan: string }> = {
+    thang: { soThang: 1, nhan: "Theo tháng" },
+    quy: { soThang: 3, nhan: "Theo quý" },
+    nam: { soThang: 12, nhan: "Theo năm" },
+  };
+  const chuKyRaw = chuanHoa(lay(COT.chuKyThue));
+  const chuKy = KY[chuKyRaw] ?? KY.thang;
+  if (chuKyRaw && !KY[chuKyRaw])
+    loi.push(`chu_ky_thue "${lay(COT.chuKyThue)}" không hợp lệ (chỉ nhận: thang · quy · nam)`);
+  if (chuKyRaw && chuKyRaw !== "thang" && mucDich !== "thue")
+    canhBao.push("chu_ky_thue chỉ dùng cho tin CHO THUÊ — đã bỏ qua");
+  // Chỉ tin THUÊ mới chia kỳ; tin bán là một lần trả đứt, không có kỳ nào cả.
+  const soThang = mucDich === "thue" ? chuKy.soThang : 1;
+
   // ── GIÁ ───────────────────────────────────────────────────────────────────
-  // BÁN nhập theo TỶ · THUÊ nhập theo TRIỆU/tháng (giống form đăng tin).
+  // BÁN nhập theo TỶ · THUÊ nhập theo TRIỆU cho MỘT KỲ (mặc định là tháng).
   // Bỏ trống cả hai cột giá = Thỏa thuận.
   let giaVnd: number | null = null;
   if (lay(COT.gia)) {
     const n = soVN(lay(COT.gia));
     if (n == null) loi.push(`gia "${lay(COT.gia)}" không phải số`);
-    else giaVnd = Math.round(n * (mucDich === "thue" ? 1e6 : 1e9));
+    else giaVnd = Math.round((n * (mucDich === "thue" ? 1e6 : 1e9)) / soThang);
   }
 
   // ── ĐƠN GIÁ THUÊ THEO M² — NHÀ XƯỞNG · KHO BÃI · VĂN PHÒNG · MẶT BẰNG ─────
@@ -398,8 +434,10 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
       // Người ghi nhầm nguyên số đồng (35000 thay vì 35) vẫn hiểu đúng, không
       // để tin ra giá 70 tỷ một tháng.
       donGiaThue = n >= 1000 ? n / 1000 : n;
-      if (n >= 1000) canhBao.push(`don_gia_thue ghi ${lay(COT.donGiaThue)} — hiểu là ${donGiaThue} nghìn đ/m²/tháng`);
-      giaVnd = Math.round(donGiaThue * 1000 * dienTichSo);
+      if (n >= 1000) canhBao.push(`don_gia_thue ghi ${lay(COT.donGiaThue)} — hiểu là ${donGiaThue} nghìn đ/m²/kỳ`);
+      giaVnd = Math.round((donGiaThue * 1000 * dienTichSo) / soThang);
+      // Đơn giá hiện trên trang tin luôn là đ/m²/THÁNG, nên cũng phải chia kỳ.
+      if (soThang > 1) donGiaThue = Math.round((donGiaThue / soThang) * 10) / 10;
     }
   } else if (laGiaTheoM2 && giaVnd != null && dienTichSo) {
     // Chỉ ghi tổng tiền tháng vẫn nhận — tự suy ngược ra đơn giá để trang tin hiện.
@@ -477,6 +515,9 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
     if (k) specs[k] = v;
     else canhBao.push(`Cột "${tenCot}" không thuộc loại hình "${loaiHinhChuan}" — ô này KHÔNG hiện trên trang tin`);
   };
+  // Tin gốc báo theo quý/năm thì phải NÓI RA: giá trên web đã quy về mỗi tháng,
+  // nhưng người thuê cần biết mình ký và trả một lần theo kỳ nào.
+  if (mucDich === "thue" && soThang > 1) datSpec(chuKy.nhan, COT.chuKyThue, "billingCycle");
   datSpec(lay(COT.huongBanCong), COT.huongBanCong, "balcony");
   datSpec(lay(COT.matTien), COT.matTien, "frontage");
   datSpec(lay(COT.duongVao), COT.duongVao, "roadWidth");
@@ -509,7 +550,12 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
   // và báo vàng để chủ dự án biết mà xem.
   const tienIch = lay(COT.tienIch) ? chuanHoaTienIch(tachDanhSach(lay(COT.tienIch))) : [];
   const noiThat = lay(COT.noiThatBanGiao) ? chuanHoaNoiThat(tachDanhSach(lay(COT.noiThatBanGiao))) : [];
-  const phapLy = chuanHoaPhapLy(lay(COT.phapLy));
+  // PHÁP LÝ CHỐT THEO LOẠI HÌNH — đất chỉ sổ đỏ, căn hộ chỉ sổ hồng. Tin gốc ghi
+  // mập mờ "sổ đỏ/sổ hồng" thì loại hình tự chốt hộ; ghi sai hẳn loại giấy thì
+  // báo vàng để người duyệt mở tin gốc xem lại, chứ không lặng lẽ đăng ra.
+  const phapLy = chuanHoaPhapLy(lay(COT.phapLy), loaiHinhChuan);
+  if (phapLyLechLoaiHinh(lay(COT.phapLy), loaiHinhChuan))
+    canhBao.push(`phap_ly "${lay(COT.phapLy)}" không đúng với loại hình "${loaiHinhChuan}" — đất chỉ có sổ đỏ, căn hộ chỉ có sổ hồng`);
   const mucNoiThat = chuanHoaMucNoiThat(lay(COT.tinhTrangNoiThat));
   const ngoaiDanhMuc = [...tienIchNgoaiDanhMuc(tienIch), ...noiThatNgoaiDanhMuc(noiThat)];
   if (ngoaiDanhMuc.length)
@@ -527,6 +573,7 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
     description: lay(COT.moTa) || null,
     price_vnd: giaVnd,
     area_m2: soHoacNull(lay(COT.dienTich), "dien_tich"),
+    built_area_m2: soHoacNull(lay(COT.dienTichXayDung), "dien_tich_xay_dung"),
     beds: soHoacNull(lay(COT.phongNgu), "phong_ngu", true),
     baths: soHoacNull(lay(COT.phongTam), "phong_tam", true),
     ward: phuongXa || null,

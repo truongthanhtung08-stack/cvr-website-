@@ -15,6 +15,21 @@ import { vndM2, tenNguonHienThi, coDuDeHienLichSuGia } from "@/lib/chiSoGia";
 //     thêm "tin này đắt hơn X%" vào đây là nói thừa — khách tự đối chiếu được.
 // ════════════════════════════════════════════════════════════════════════════
 
+// ── QUY ƯỚC MÀU SỐ LIỆU GIÁ — chủ dự án chốt 19/09/2026 ────────────────────
+// Một quy ước duy nhất cho MỌI chỗ nói về giá, giống bảng điện chứng khoán mà
+// người Việt nào cũng đọc được ngay, không phải tra chú thích:
+//   XANH LÁ = TĂNG · ĐỎ = GIẢM · VÀNG = mức phổ biến (đường giữa, giá trung bình)
+// Trước đây khối này tô NGƯỢC (tăng ra đỏ, giảm ra xanh) vì nhìn từ phía người
+// mua "giá lên là xấu" — nhưng biểu đồ là số liệu thị trường, không phải lời
+// khuyên, nên phải theo quy ước chung.
+const MAU = {
+  tang: "#0f8a5f",   // xanh lá — đường cao nhất, mũi tên đi lên
+  giam: "#dc2626",   // đỏ — đường thấp nhất, mũi tên đi xuống
+  phoBien: "#c8a250", // vàng thương hiệu — đường giá phổ biến, dày nhất
+  tinNay: "#1d1d1f",  // chấm giá của chính tin đang xem — trung tính, không tranh màu
+};
+const CHU = { tang: "text-[#0f8a5f]", giam: "text-[#dc2626]" };
+
 /** "2025-Q1" → "Q1/25" · "2026-09" → "T9/26" · "2025" → "2025" */
 function nhanKy(q: string): string {
   const quy = q.match(/^(\d{4})-?Q([1-4])$/i);
@@ -65,7 +80,7 @@ export default function PriceHistory({
   chiSo: ChiSoKhuVuc | null;
   matBang: MatBangGia | null;
   soSanh?: OSanh[];
-  /** Giá mỗi m² của chính tin đang xem (đồng) — chấm đỏ trên biểu đồ. */
+  /** Giá mỗi m² của chính tin đang xem (đồng) — chấm đen trên biểu đồ. */
   giaTinM2?: number | null;
   /** Tin cho thuê thì giá mỗi m² là giá THUÊ mỗi tháng — đơn vị và chữ khác hẳn. */
   laThue?: boolean;
@@ -191,7 +206,7 @@ export default function PriceHistory({
                 <div className="sm:px-4">
                   {doiMotNam === null ? (
                     <>
-                      <p className={`text-[19px] font-bold leading-none ${tang >= 0 ? "text-red-600" : "text-green-700"}`}>
+                      <p className={`text-[19px] font-bold leading-none ${tang >= 0 ? CHU.tang : CHU.giam}`}>
                         {tang >= 0 ? "▲" : "▼"} {Math.abs(tang)}%
                       </p>
                       <p className="mt-1.5 text-[12.5px] text-cvr-muted">
@@ -201,7 +216,7 @@ export default function PriceHistory({
                     </>
                   ) : (
                     <>
-                      <p className={`text-[19px] font-bold leading-none ${doiMotNam >= 0 ? "text-red-600" : "text-green-700"}`}>
+                      <p className={`text-[19px] font-bold leading-none ${doiMotNam >= 0 ? CHU.tang : CHU.giam}`}>
                         {doiMotNam >= 0 ? "▲" : "▼"} {Math.abs(doiMotNam).toFixed(1).replace(".", ",")}%
                       </p>
                       <p className="mt-1.5 text-[12.5px] text-cvr-muted">
@@ -224,7 +239,7 @@ export default function PriceHistory({
                     </>
                   ) : (
                     <>
-                      <p className="text-[19px] font-bold leading-none text-green-700">
+                      <p className={`text-[19px] font-bold leading-none ${CHU.giam}`}>
                         ▼ {Math.abs(soVoiDinh).toFixed(1).replace(".", ",")}%
                       </p>
                       <p className="mt-1.5 text-[12.5px] text-cvr-muted">
@@ -264,21 +279,21 @@ export default function PriceHistory({
                   </text>
                 ))}
 
-                <path d={nen} fill="#0071e3" fillOpacity={0.06} />
+                <path d={nen} fill={MAU.phoBien} fillOpacity={0.08} />
 
                 {/* Hai đường biên mảnh hơn và nhạt hơn — đường phổ biến phải là
                     thứ mắt bắt được trước, hai đường kia chỉ nói khoảng dao động. */}
                 {coBien && (
                   <>
-                    <path d={duongCao} fill="none" stroke="#8b5cf6" strokeWidth={1.6} strokeOpacity={0.75} strokeLinecap="round" strokeLinejoin="round" />
-                    <path d={duongThap} fill="none" stroke="#0f8a5f" strokeWidth={1.6} strokeOpacity={0.75} strokeLinecap="round" strokeLinejoin="round" />
+                    <path d={duongCao} fill="none" stroke={MAU.tang} strokeWidth={1.6} strokeOpacity={0.75} strokeLinecap="round" strokeLinejoin="round" />
+                    <path d={duongThap} fill="none" stroke={MAU.giam} strokeWidth={1.6} strokeOpacity={0.75} strokeLinecap="round" strokeLinejoin="round" />
                   </>
                 )}
 
-                <path d={duong} fill="none" stroke="#0071e3" strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round" />
+                <path d={duong} fill="none" stroke={MAU.phoBien} strokeWidth={2.8} strokeLinecap="round" strokeLinejoin="round" />
 
                 {moc.map((m, i) => (
-                  <circle key={m.quy} cx={toaX(i)} cy={toaY(m.giaM2)} r={3} fill="#fff" stroke="#0071e3" strokeWidth={2} />
+                  <circle key={m.quy} cx={toaX(i)} cy={toaY(m.giaM2)} r={3} fill="#fff" stroke={MAU.phoBien} strokeWidth={2} />
                 ))}
 
                 {/* Giá của CHÍNH tin đang xem, đặt ở mốc mới nhất: người xem thấy
@@ -289,7 +304,7 @@ export default function PriceHistory({
                     cx={phaiX}
                     cy={Math.min(dayY, Math.max(dinhY, toaY(giaTinM2)))}
                     r={4}
-                    fill="#dc2626"
+                    fill={MAU.tinNay}
                     stroke="#fff"
                     strokeWidth={1.8}
                   />
@@ -318,22 +333,22 @@ export default function PriceHistory({
                   {coBien && (
                     <>
                       <span className="inline-flex items-center gap-1.5">
-                        <span className="inline-block h-[3px] w-4 rounded-full bg-[#0071e3]" />
+                        <span className="inline-block h-[3px] w-4 rounded-full" style={{ backgroundColor: MAU.phoBien }} />
                         Phổ biến
                       </span>
                       <span className="inline-flex items-center gap-1.5">
-                        <span className="inline-block h-[2px] w-4 rounded-full bg-[#8b5cf6]" />
+                        <span className="inline-block h-[2px] w-4 rounded-full" style={{ backgroundColor: MAU.tang }} />
                         Cao nhất
                       </span>
                       <span className="inline-flex items-center gap-1.5">
-                        <span className="inline-block h-[2px] w-4 rounded-full bg-[#0f8a5f]" />
+                        <span className="inline-block h-[2px] w-4 rounded-full" style={{ backgroundColor: MAU.giam }} />
                         Thấp nhất
                       </span>
                     </>
                   )}
                   {giaTinM2 != null && giaTinM2 > 0 && (
                     <span className="inline-flex items-center gap-1.5">
-                      <span className="inline-block h-2.5 w-2.5 rounded-full bg-[#dc2626] ring-1 ring-white" />
+                      <span className="inline-block h-2.5 w-2.5 rounded-full ring-1 ring-white" style={{ backgroundColor: MAU.tinNay }} />
                       Giá tin đang xem ~{vndM2(giaTinM2, laThue)}
                     </span>
                   )}

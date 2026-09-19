@@ -7,6 +7,7 @@ import {
   quanHuyenToanTinh,
   newProvinceOf,
   oldNamesOf,
+  boTienToCap,
   type GeoMode,
 } from "@/lib/locations";
 import { normalizeVi } from "@/lib/filters";
@@ -27,7 +28,9 @@ export type DiaGioiBanDo = { tinh: string; quan: string; phuong: string };
 // Bỏ tiền tố cấp hành chính rồi bỏ dấu — để "Phường Hòa Khánh" và "Hòa Khánh Bắc"
 // còn so được với nhau.
 function loiTen(s: string): string {
-  return normalizeVi(s).replace(/^(thanh pho|tp.?|tinh|quan|huyen|phuong|xa|thi tran|thi xa|dac khu) /, "").trim();
+  // Cắt tiền tố khi chữ CÒN DẤU — bỏ dấu trước rồi cắt thì "Tịnh Khê" hoá "tinh khe"
+  // và bị xén nhầm chữ "Tỉnh". Xem ghi chú dài ở locations.ts.
+  return normalizeVi(boTienToCap(s)).trim();
 }
 
 // "Hòa Khánh" nằm trong "Hòa Khánh Bắc" — đúng. Nhưng "An Phú" KHÔNG nằm trong

@@ -18,13 +18,38 @@ export type Field = {
 export const directions = ["Đông", "Tây", "Nam", "Bắc", "Đông Bắc", "Đông Nam", "Tây Bắc", "Tây Nam"];
 
 // Tình trạng pháp lý
-export const legalOptions = [
-  "Sổ đỏ / Sổ hồng chính chủ",
+// ── PHÁP LÝ — KHÔNG ĐỔ ĐỒNG MỘT DANH SÁCH CHO MỌI LOẠI HÌNH ────────────────
+// Sổ đỏ và sổ hồng là HAI loại giấy khác nhau, không phải hai cách gọi một thứ:
+//   · Sổ đỏ  — giấy của QUYỀN SỬ DỤNG ĐẤT. Lô đất trống chỉ có thể có sổ đỏ.
+//   · Sổ hồng — giấy có thêm QUYỀN SỞ HỮU NHÀ / CĂN HỘ gắn trên đất đó.
+// Vì vậy: ĐẤT chỉ chào sổ đỏ · CĂN HỘ chỉ chào sổ hồng (căn hộ không bao giờ có
+// sổ đỏ riêng) · NHÀ GẮN LIỀN ĐẤT thì tuỳ hồ sơ, có thể là một trong hai.
+// Chào "sổ hồng" cho một lô đất là sai bản chất giấy tờ — người mua đọc là mất
+// tin ngay, mà đó lại là thứ họ tra kỹ nhất trước khi đặt cọc.
+const PHAP_LY_SO_DO = "Sổ đỏ chính chủ";
+const PHAP_LY_SO_HONG = "Sổ hồng chính chủ";
+const PHAP_LY_CHUNG = [
   "Hợp đồng mua bán",
   "Đang chờ sổ",
   "Sổ chung / vi bằng",
   "Đang cập nhật",
 ];
+
+/** Loại hình CHỈ có sổ hồng — căn hộ không có phần đất riêng để cấp sổ đỏ. */
+const CHI_SO_HONG = ["Chung cư", "Căn hộ", "Condotel / Nghỉ dưỡng"];
+/** Loại hình CHỈ có sổ đỏ — đất trống, chưa có công trình để ghi vào sổ. */
+const CHI_SO_DO = ["Đất nền / Đất", "Đất công nghiệp / Nhà xưởng / Kho bãi"];
+
+/** Danh mục pháp lý ĐÚNG cho một loại hình. Không truyền loại hình = danh mục đầy đủ. */
+export function phapLyCho(type?: string): string[] {
+  const l = type ? specForType(type).label : "";
+  if (CHI_SO_HONG.includes(l)) return [PHAP_LY_SO_HONG, ...PHAP_LY_CHUNG];
+  if (CHI_SO_DO.includes(l)) return [PHAP_LY_SO_DO, ...PHAP_LY_CHUNG];
+  return [PHAP_LY_SO_DO, PHAP_LY_SO_HONG, ...PHAP_LY_CHUNG];
+}
+
+/** Danh mục GỘP — chỉ dùng cho bộ lọc (lọc cắt ngang mọi loại hình). */
+export const legalOptions = phapLyCho();
 
 // Tình trạng nội thất (mức độ)
 export const furnishLevels = [
@@ -250,6 +275,11 @@ export const categorySpecs: CategorySpec[] = [
 // CHỈ khi tin là cho thuê, nên để riêng chứ không nhét vào categorySpecs.
 export const rentFields: Field[] = [
   { key: "moveIn", label: "Thời gian dự kiến vào ở", type: "text", placeholder: "VD: Vào ở ngay" },
+  // KỲ BÁO GIÁ — văn phòng, kho xưởng, đất thuê rất hay niêm yết theo QUÝ hoặc
+  // theo NĂM. Web luôn quy về ĐỒNG MỖI THÁNG để bộ lọc khoảng giá và sắp xếp so
+  // được với nhau, nhưng phải nói rõ tin gốc báo theo kỳ nào — đó là điều khoản
+  // thương mại thật, người thuê cần biết mình phải trả một lần bao nhiêu.
+  { key: "billingCycle", label: "Kỳ báo giá", type: "select", options: ["Theo tháng", "Theo quý", "Theo năm"] },
   // Thuê kho xưởng / văn phòng luôn ràng thời hạn tối thiểu và tiền cọc — hai câu
   // hỏi đầu tiên của khách thuê mặt bằng, tin nào cũng nên có.
   { key: "minTerm", label: "Thời hạn thuê tối thiểu", type: "text", placeholder: "VD: 3 năm · 12 tháng" },
@@ -353,6 +383,32 @@ export function coPhongTam(type: string): boolean {
 export function coDienTichXayDung(type: string): boolean {
   return !!type && !KHONG_DT_XAY_DUNG.includes(specForType(type).label);
 }
+
+// ── MẪU SỐ CỦA GIÁ MỖI M² — KHÔNG ĐỔ ĐỒNG ─────────────────────────────────
+// "Giá mỗi m²" của ba nhóm dưới đây là ba con số KHÁC BẢN CHẤT, chia cho ba thứ
+// khác nhau. Trộn chung là biểu đồ so nhầm, mà số sai thì thà không hiện:
+//   · dat — đất trống: chia cho m² THỬA ĐẤT.
+//   · san — nhà gắn liền đất: chia cho m² SÀN XÂY DỰNG. Biệt thự 24 tỷ trên
+//           200 m² đất / 500 m² sàn ra 120 tr/m² đất nhưng chỉ 48 tr/m² sàn.
+//   · can — căn hộ/chung cư/condotel: chia cho m² CĂN (chỉ có một diện tích).
+export type MauSo = "dat" | "san" | "can";
+
+const MAU_SO_CAN = ["Chung cư", "Căn hộ", "Condotel / Nghỉ dưỡng"];
+const MAU_SO_DAT = ["Đất nền / Đất", "Đất công nghiệp / Nhà xưởng / Kho bãi", "Văn phòng / Mặt bằng kinh doanh"];
+
+/** Giá mỗi m² của loại hình này phải chia cho cái gì. */
+export function mauSoCuaLoaiHinh(type: string): MauSo {
+  const l = type ? specForType(type).label : "";
+  if (MAU_SO_CAN.includes(l)) return "can";
+  if (MAU_SO_DAT.includes(l)) return "dat";
+  return "san";
+}
+
+export const TEN_MAU_SO: Record<MauSo, string> = {
+  dat: "m² đất",
+  san: "m² sàn xây dựng",
+  can: "m² căn hộ",
+};
 
 // Bộ tối giản cho loại không xác định ("Bất động sản khác") — chỉ dùng trường chung.
 const genericSpec: CategorySpec = { label: "Bất động sản khác", match: [], fields: [] };

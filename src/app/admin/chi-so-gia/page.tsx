@@ -271,12 +271,16 @@ export default function ChiSoGiaPage() {
         <div className="mt-3 flex flex-wrap items-center gap-3">
           {/* Mẫu tĩnh ở public/ — đã dựng sẵn khung Đà Nẵng + Huế × 10 loại hình
               × 8 quý, chỉ việc điền cột giá rồi tải lên. */}
+          {/* ⚠️ TRỎ VÀO BẢN .CSV, KHÔNG PHẢI .XLSX. Bản .xlsx còn là khung 12 cột
+              cũ, thiếu cột `mau_so` (giá này tính trên m² đất hay m² sàn) thêm
+              ngày 19/09 — thiếu nó thì biểu đồ không dám đem giá tin ra so, vì so
+              hai mẫu số khác nhau là ra một con số sai. Excel mở .csv bình thường. */}
           <a
-            href="/mau-lich-su-gia.xlsx"
+            href="/mau-lich-su-gia.csv"
             download
             className="rounded-lg border border-cvr-line px-4 py-2 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink"
           >
-            Tải tệp mẫu Excel (đã dựng sẵn khung)
+            Tải tệp mẫu (đã dựng sẵn khung)
           </a>
           <input
             ref={oTep}

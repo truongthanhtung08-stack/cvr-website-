@@ -15,6 +15,15 @@ export type ListingDetails = {
   direction?: string;               // hướng
   addressDetail?: string;           // địa chỉ cụ thể
   mapPin?: string;                  // toạ độ / link Google Maps admin ghim tay
+  // Phường/xã CŨ — chỉ có khi một phường mới gộp nhiều phường cũ nên máy không
+  // suy ngược ra được; người đăng (hoặc file nhập tin) chỉ đích danh. Nhờ nó mà
+  // dòng "Địa chỉ hệ cũ" trên trang tin đủ 3 cấp. Xem ungVienPhuongCu().
+  diaChiCu?: { phuong?: string; quan?: string; tinh?: string };
+  // m² SÀN SUY RA từ nội dung tin ("nhà 3 tầng" × m² đất) — chỉ để THỐNG KÊ và
+  // tính đơn giá (luôn kèm dấu ≈). KHÔNG ghi đè built_area_m2, vì ô "Diện tích
+  // xây dựng" trên trang tin là số người đăng KHAI. Xem scripts/bu-dien-tich-xay-dung.mjs
+  dtSanUocTinh?: number;
+  dtSanNguon?: string;
   places?: { category: string; name: string; distance: string }[]; // tiện ích xung quanh
   contact?: { name?: string; phone?: string; email?: string; avatar?: string }; // người đăng (avatar = ảnh đại diện)
   project?: string;                 // SLUG dự án tin này thuộc về ("" = không thuộc dự án nào)

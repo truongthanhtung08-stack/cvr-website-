@@ -28,6 +28,13 @@ export type Listing = {
    *  Chuỗi price/area ở trên đã định dạng sẵn để hiển thị, không tính được. */
   priceVnd?: number | null;
   areaM2?: number | null;
+  /** m² SÀN XÂY DỰNG — mẫu số bắt buộc khi tính giá mỗi m² của NHÀ gắn liền đất
+   *  (xem mauSoCuaLoaiHinh trong chiSoGia.ts). Thiếu nó thì tin đó KHÔNG được
+   *  tính giá mỗi m², chứ không lấy tạm m² đất thay vào. */
+  builtAreaM2?: number | null;
+  /** m² sàn SUY RA từ nội dung tin khi người đăng không khai — dùng cho thống kê
+   *  và đơn giá (hiện kèm dấu ≈), không bao giờ hiện thành "Diện tích xây dựng". */
+  builtAreaM2Uoc?: number | null;
   /** Cùng chỗ đó gọi theo hệ CŨ — hiện ở dòng dưới, nhãn "Địa chỉ hệ cũ". */
   locationCu?: string;
   /** Gộp cả hai cách gọi — dùng để LỌC/TÌM khu vực, không hiển thị. Thiếu nó thì

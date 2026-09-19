@@ -212,10 +212,18 @@ function khoaCu(tinh: string, quan: string, phuong: string): string {
 
 // Bỏ dấu + bỏ tiền tố cấp để hai nguồn tên khác nhau vẫn gặp nhau.
 // Các cấp hành chính đứng trước tên riêng. "Đặc khu" là cấp MỚI từ 2025 (13 đảo).
-const CAP_HANH_CHINH = [
-  "tinh", "thanh pho", "tp.", "tp", "thi xa", "tx.", "tx",
-  "quan", "huyen", "phuong", "xa", "thi tran", "dac khu",
-];
+//
+// ⚠️ CẮT TIỀN TỐ PHẢI LÀM KHI CHỮ CÒN DẤU. Bỏ dấu trước rồi mới cắt thì "Tịnh Khê"
+// hoá "tinh khe" và bị xén nhầm chữ "Tỉnh", chỉ còn trơ "khe" — cả nước có 91 địa
+// danh dính bẫy này: Phương Sài · Phương Liệt · Quán Thánh · Quan Lạn · Quan Hoa ·
+// Tịnh Thới · Tịnh Khê… Hậu quả: tra cũ ↔ mới trượt, tin ở những nơi đó mất hút
+// khỏi tìm kiếm theo khu vực và dòng "Địa chỉ hệ cũ" cụt mất cấp phường.
+const CAP_CO_DAU = /^(Thành phố|TP\.|TP|Tỉnh|Thị xã|TX\.|TX|Quận|Huyện|Phường|Xã|Thị trấn|Đặc khu)\s+/i;
+
+/** Bỏ tiền tố cấp, GIỮ NGUYÊN dấu: "Thành phố Hội An" → "Hội An", "Tịnh Khê" → "Tịnh Khê". */
+export function boTienToCap(t: string): string {
+  return (t || "").trim().replace(CAP_CO_DAU, "");
+}
 
 // Bỏ dấu tiếng Việt, gom khoảng trắng, chuẩn hoá dấu gạch nối.
 function moc(t: string): string {
@@ -233,9 +241,7 @@ function moc(t: string): string {
 
 /** Tên riêng: bỏ dấu VÀ bỏ tiền tố cấp — "Thành phố Hội An" và "Hội An" thành một. */
 export function chuanTen(t: string): string {
-  const x = moc(t);
-  for (const c of CAP_HANH_CHINH) if (x.startsWith(c + " ")) return x.slice(c.length + 1).trim();
-  return x;
+  return moc(boTienToCap(t));
 }
 
 /** Như chuanTen nhưng GIỮ cấp, viết gọn một lối: "Thành phố Quảng Ngãi" và

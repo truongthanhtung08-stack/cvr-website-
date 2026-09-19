@@ -17,6 +17,7 @@ import {
   coDuDeHienLichSuGia,
   soSanhKhuVuc,
   xuHuongCuaMinh,
+  giaTinSoDuocVoiChiSo,
 } from "@/lib/chiSoGia";
 import { getChiSoGia } from "@/lib/siteContent";
 import { nhanDienTich as nhanDienTichTheoLoai } from "@/lib/listingSpec";
@@ -521,7 +522,9 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                     matBang={matBang}
                     soSanh={soSanhKV}
                     laThue={purpose === "thue"}
-                    giaTinM2={priceVnd != null && l.areaM2 ? priceVnd / l.areaM2 : null}
+                    /* Giá mỗi m² của tin CHỈ đưa lên biểu đồ khi cùng mẫu số với dãy chỉ
+                       số: bán NHÀ phải là giá trên m² SÀN, chia m² đất là sai nghiêm trọng. */
+                    giaTinM2={giaTinSoDuocVoiChiSo(l, chiSoTin)}
                   />
                 </Section>
               )}

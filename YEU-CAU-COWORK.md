@@ -21,7 +21,7 @@ Mỗi ngày giao **hai gói**, vào **đúng ba file**, trong thư mục của n
 
 | Gói | File | Nội dung |
 |---|---|---|
-| **A** | `Bang-<ngày>.csv` | **34 tin** bất động sản · 51 cột |
+| **A** | `Bang-<ngày>.csv` | **34 tin** bất động sản · 53 cột |
 | **B** | `TinTuc-<ngày>.csv` | **5 bài** tin tức chuẩn SEO · 9 cột |
 | — | `bao-cao.txt` | Báo cáo chung cho cả hai gói |
 
@@ -68,7 +68,7 @@ C:\Users\X1 GEN 8\Projects\TIN-HANG-NGAY\
 │
 ├── _MAU\                                   ← KHUÔN GỐC. KHÔNG SỬA, KHÔNG XOÁ.
 │   ├── YEU-CAU-COWORK.md                   ← chính file này
-│   ├── mau-nhap-tin-hang-loat.csv          ← khuôn GÓI A (51 cột + 17 dòng ví dụ)
+│   ├── mau-nhap-tin-hang-loat.csv          ← khuôn GÓI A (53 cột + 17 dòng ví dụ)
 │   ├── mau-tin-tuc-hang-ngay.csv           ← khuôn GÓI B (9 cột + 2 bài mẫu)
 │   ├── DANH-SACH-PHUONG-XA-MIEN-TRUNG.txt  ← 734 phường/xã, chép tên từ đây
 │   └── anh-tin.mjs                         ← công cụ của chủ dự án, Cowork không dùng
@@ -289,6 +289,19 @@ Lỗi này sinh ra khi dán qua công cụ trung gian — dán xong phải đọ
 | **THUÊ** | theo **TRIỆU/tháng** | `18` = 18 triệu/tháng |
 | Thoả thuận / LH | **để trống** | |
 
+> ### 🧭 Giá và diện tích đi liền nhau — web lấy hai cái đó chia ra giá mỗi m²
+>
+> | Tin là gì | Web tính giá mỗi m² bằng | Cột Cowork phải có |
+> |---|---|---|
+> | **Bán đất** | giá ÷ **m² đất** | `gia` · `dien_tich` |
+> | **Bán nhà** (nhà riêng · mặt phố · biệt thự · shophouse) | giá ÷ **m² sàn xây dựng** | `gia` · `dien_tich` · **`dien_tich_xay_dung`** ⭐ |
+> | **Bán căn hộ · chung cư · condotel** | giá ÷ **m² căn** | `gia` · `dien_tich` |
+> | **Thuê kho xưởng · văn phòng · mặt bằng** | **đơn giá ÷ m²/tháng** — xem A7 | `don_gia_thue` · `dien_tich` |
+> | **Thuê nhà · căn hộ trọn gói** | **tổng tiền mỗi tháng**, KHÔNG chia m² | `gia` · `dien_tich` |
+>
+> Ghi sai một ô là con số trên web sai gấp mấy lần. Đọc kỹ **A7** (giá thuê theo m²)
+> và **A8** (hai ô diện tích) trước khi gom tin.
+
 ⚠️ Ghi `5.5` sẽ ra 5,5 — nhưng ghi `5,5 tỷ` (kèm chữ) là **lỗi**.
 
 **Quy đổi từ chữ người đăng viết:**
@@ -321,6 +334,23 @@ Tự nhân ra `70` cũng dễ sai (nhầm dấu chấm, nhầm bậc giá).
 | 25.000đ/m²/tháng, 5.000m² | `25` | `5000` | **để trống** | 125.000.000 đ/tháng |
 | 120.000đ/m²/tháng (văn phòng), 90m² | `120` | `90` | **để trống** | 10.800.000 đ/tháng |
 | Tin báo trọn gói 18 triệu/tháng | để trống | `90` | `18` | 18.000.000 đ/tháng |
+
+### ⭐ MỚI 19/09 — TIN BÁO GIÁ THEO **QUÝ** HAY **NĂM**: cột `chu_ky_thue`
+
+Văn phòng, kho xưởng, đất thuê rất hay niêm yết *"150 triệu/quý"* hoặc *"1,2 tỷ/năm"*.
+**ĐỪNG tự chia 3 hay chia 12** — cứ chép NGUYÊN con số của tin gốc, ghi kỳ vào cột mới,
+web tự quy về tiền mỗi tháng.
+
+| Tin gốc ghi | `gia` | `don_gia_thue` | `chu_ky_thue` | Web tính ra |
+|---|---|---|---|---|
+| 18 triệu/tháng | `18` | — | để trống *(= tháng)* | 18 triệu/tháng |
+| 54 triệu/**quý** | `54` | — | `quy` | 18 triệu/tháng |
+| 216 triệu/**năm** | `216` | — | `nam` | 18 triệu/tháng |
+| 120.000đ/m²/tháng, 90m² | — | `120` | để trống | 10,8 triệu/tháng |
+| 360.000đ/m²/**quý**, 90m² | — | `360` | `quy` | 10,8 triệu/tháng |
+
+Chỉ nhận đúng ba chữ: **`thang`** · **`quy`** · **`nam`** (không dấu). Ghi chữ khác web báo **đỏ**.
+Trang tin sẽ hiện thêm dòng *"Kỳ báo giá: Theo quý"* — người thuê cần biết mình trả một lần bao nhiêu.
 
 ### Đơn giá BẬC THANG theo diện tích
 
@@ -356,7 +386,7 @@ Bộ lọc trên web đã có sẵn các mức 500–1.000 · 1.000–2.000 · 2
 
 > Xem hai dòng ví dụ `tin16` (nhà xưởng) và `tin17` (kho bãi) trong file mẫu.
 
-## A8. Diện tích
+## A8. Diện tích — ⭐ TỪ 19/09 CÓ THÊM CỘT `dien_tich_xay_dung`
 
 | Người đăng viết | Ghi vào `dien_tich` |
 |---|---|
@@ -367,6 +397,40 @@ Bộ lọc trên web đã có sẵn các mức 500–1.000 · 1.000–2.000 · 2
 | Không nói diện tích | **để trống**, `ghi_chu` = `tin không ghi diện tích` |
 
 Chỉ ghi **số**, không ghi `62m2`.
+
+### ⚠️ HAI Ô DIỆN TÍCH — ĐỪNG DỒN VÀO MỘT
+
+Web dùng diện tích làm **mẫu số để tính giá mỗi m²**. Đất chia cho m² đất, nhà chia
+cho m² **sàn xây dựng** — hai con số lệch nhau vài lần, ghi nhầm ô là giá mỗi m²
+của tin sai hẳn.
+
+> Biệt thự 24 tỷ · **200 m² đất** · **500 m² sàn**
+> → trên m² đất: **120 triệu/m²** · trên m² sàn: **48 triệu/m²**
+
+| Cột | Ghi gì | Loại hình nào phải có |
+|---|---|---|
+| `dien_tich` | Diện tích **THỬA ĐẤT** (nhà gắn liền đất) hoặc **diện tích thông thuỷ của căn** (căn hộ, chung cư, condotel) | ⛔ **Mọi tin** |
+| `dien_tich_xay_dung` ⭐ | **Tổng m² SÀN**, cộng hết các tầng (kể cả tầng lửng, áp mái nếu tin gốc ghi) | Nhà riêng · Nhà mặt phố · Nhà biệt thự / Liền kề · Shophouse |
+
+**Cách đọc ra `dien_tich_xay_dung` từ tin gốc:**
+
+| Tin gốc ghi | `dien_tich` | `dien_tich_xay_dung` |
+|---|---|---|
+| `DT đất 100m2, DT sàn 263,3m2` | `100` | `263,3` |
+| `Đất 5x20 (100m2), nhà 3 tầng` | `100` | `300` *(100 × 3 tầng)* |
+| `100m2, 3 tầng + lửng` | `100` | `350` *(100 × 3,5)* |
+| `Nhà 4 tầng, mỗi sàn 80m2, đất 90m2` | `90` | `320` |
+| Tin không ghi số tầng, không ghi DT sàn | `100` | **để trống** + `ghi_chu` = `tin không ghi diện tích sàn` |
+
+⛔ **KHÔNG tự đoán số tầng.** Tin gốc không nói số tầng và không nói m² sàn thì để
+trống — web hiện giá trên m² đất là xong, còn hơn bịa ra một con số sai.
+
+⛔ **Căn hộ · chung cư · condotel · đất nền · kho xưởng · văn phòng: ĐỂ TRỐNG cột này.**
+Căn hộ chỉ có một diện tích, đã ghi ở `dien_tich`. Kho xưởng có ô riêng
+`dien_tich_su_dung`. Ghi vào đây là thừa, web bỏ qua.
+
+> Thiếu cột này ở nhà gắn liền đất, web báo **vàng** (vẫn đăng được) với dòng
+> *"Thiếu dien_tich_xay_dung — loại hình này cần m² sàn để tính đúng giá mỗi m²"*.
 
 ## A9. Loại hình — chép đúng nguyên văn
 
@@ -478,8 +542,21 @@ Gần TTTM · Gần công viên · Gần sân bay · Mặt tiền đường lớ
 Tủ quần áo · Sofa · Bàn ăn · Bình nóng lạnh · Rèm cửa · Tivi · Lò vi sóng ·
 Bàn làm việc · Đèn trang trí
 
-**`phap_ly`:**
-Sổ đỏ / Sổ hồng chính chủ · Hợp đồng mua bán · Đang chờ sổ · Sổ chung / vi bằng · Đang cập nhật
+**`phap_ly` — ⭐ ĐỔI 19/09: SỔ ĐỎ VÀ SỔ HỒNG LÀ HAI THỨ, KHÔNG ĐỔ ĐỒNG**
+
+Sổ đỏ là giấy của **quyền sử dụng đất**; sổ hồng có thêm **quyền sở hữu nhà / căn hộ**
+trên đất đó. Chào "sổ hồng" cho một lô đất trống là sai bản chất giấy tờ — đây lại là
+thứ người mua tra kỹ nhất trước khi đặt cọc.
+
+| Loại hình | Được ghi |
+|---|---|
+| **Đất** nền · đất nông nghiệp · đất công nghiệp | `Sổ đỏ chính chủ` |
+| **Nhà** riêng · mặt phố · biệt thự · shophouse | `Sổ đỏ chính chủ` **hoặc** `Sổ hồng chính chủ` — theo đúng tin gốc |
+| **Căn hộ** · chung cư · condotel | `Sổ hồng chính chủ` |
+| Mọi loại hình | `Hợp đồng mua bán` · `Đang chờ sổ` · `Sổ chung / vi bằng` · `Đang cập nhật` |
+
+Tin gốc viết mập mờ ("sổ đỏ/sổ hồng", "chính chủ", "đã có sổ") thì **chép nguyên** —
+web tự chốt theo loại hình. Ghi sai loại giấy so với loại hình thì web báo **vàng**.
 
 **`tinh_trang_noi_that`:**
 Bàn giao thô · Nội thất cơ bản · Nội thất đầy đủ · Nội thất cao cấp
@@ -581,7 +658,7 @@ bỏ qua hết, nên tin lên web trống trơn dù tin gốc nói đủ.
 | "nhà 3 tầng, đúc kiên cố" | `so_tang` = `3` |
 | "đường trước nhà 7,5m, ô tô tránh nhau" | `duong_vao` = `7.5` |
 | "ngang 5m dài 21m" | `mat_tien` = `5` · `chieu_dai` = `21` |
-| "sổ hồng riêng, công chứng ngay" | `phap_ly` = `Sổ hồng` |
+| "sổ hồng riêng, công chứng ngay" | `phap_ly` = `Sổ hồng chính chủ` |
 | "hướng Đông Nam, ban công hướng biển" | `huong` = `Đông Nam` · `huong_ban_cong` = ghi đúng hướng |
 | "nhà xây 2019" | `nam_xay_dung` = `2019` |
 | "căn tầng 12 toà A" | `tang_so` = `12` |
@@ -597,11 +674,12 @@ bỏ qua hết, nên tin lên web trống trơn dù tin gốc nói đủ.
 2. **Bóc ra cột riêng thì VẪN GIỮ NGUYÊN câu đó trong `mo_ta`** — không cắt chữ của người bán.
 3. Câu mơ hồ ("nhà mới đẹp", "giá tốt") **không phải thông tin** — đừng nhét vào cột nào.
 
-## A15. Bảng cột đầy đủ — 51 cột
+## A15. Bảng cột đầy đủ — 53 cột
 
-> ### ⚠️ FILE MẪU ĐÃ ĐỔI: 25 CỘT → 51 CỘT
+> ### ⚠️ FILE MẪU ĐÃ ĐỔI: 25 CỘT → 53 CỘT
 > Bản Cowork dùng trước đây chỉ có **25 cột**, thiếu 23 cột — trong đó có cả `nguon`,
-> `link_anh`, `ghi_chu`, `duong_vao`, `mat_tien`, `so_tang`.
+> `link_anh`, `ghi_chu`, `duong_vao`, `mat_tien`, `so_tang`. Đợt 19/09 thêm cột thứ 52:
+> **`dien_tich_xay_dung`**.
 > **Tải lại `mau-nhap-tin-hang-loat.csv`.** Dùng bản cũ là mất dữ liệu đã gom.
 
 Giữ nguyên dòng tên cột, **không đổi tên, không xoá cột, không đổi thứ tự**.
@@ -611,8 +689,8 @@ Mỗi dòng đúng một tin. Lưu dạng **`.csv` (UTF-8)** hoặc **`.xlsx`** 
 |---|---|
 | **Bắt buộc** — thiếu là web báo đỏ, không đăng được | `tieu_de` · `mo_ta` · `dien_tich` · `muc_dich` · `loai_hinh` · `tinh_thanh` · `phuong_xa` · `ma_anh` · **`lien_he_sdt`** ⭐ |
 | **Địa chỉ hệ CŨ** ⭐ *(mới 17/09)* | `phuong_xa_cu` · `quan_huyen_cu` · `tinh_cu` |
-| **Giá** | `gia` · **`don_gia_thue`** ⭐ |
-| **Quy mô, kích thước** | `duong_vao` · `mat_tien` · `so_tang` · **`chieu_dai`** ⭐ · **`nam_xay_dung`** ⭐ · **`tang_so`** ⭐ · `phong_ngu` · `phong_tam` |
+| **Giá** | `gia` · **`don_gia_thue`** ⭐ · **`chu_ky_thue`** ⭐ |
+| **Quy mô, kích thước** | **`dien_tich_xay_dung`** ⭐ · `duong_vao` · `mat_tien` · `so_tang` · **`chieu_dai`** ⭐ · **`nam_xay_dung`** ⭐ · **`tang_so`** ⭐ · `phong_ngu` · `phong_tam` |
 | **Kho · nhà xưởng · bãi** | **`dien_tich_su_dung`** ⭐ · **`loai_kho`** ⭐ · **`chieu_cao`** ⭐ · **`tai_trong_nen`** ⭐ · **`cong_suat_dien`** ⭐ · **`pccc`** ⭐ · **`van_phong_trong_kho`** ⭐ · **`xe_container`** ⭐ |
 | **Riêng tin cho thuê** | `thoi_gian_du_kien_vao_o` · **`thoi_han_thue`** ⭐ · **`tien_coc`** ⭐ · `muc_gia_dien` · `muc_gia_nuoc` |
 | **Vị trí** | `dia_chi` · `ten_du_an` |
@@ -623,6 +701,8 @@ Mỗi dòng đúng một tin. Lưu dạng **`.csv` (UTF-8)** hoặc **`.xlsx`** 
 
 ⭐ = cột **MỚI** so với bản mẫu cũ. Đợt 17/09/2026 thêm **3 cột địa chỉ hệ cũ**
 (`phuong_xa_cu` · `quan_huyen_cu` · `tinh_cu`) và chuyển `lien_he_sdt` sang nhóm **bắt buộc**.
+Đợt 19/09/2026 thêm **`dien_tich_xay_dung`** — m² sàn của nhà gắn liền đất, là mẫu số
+để web tính đúng giá mỗi m² (xem **A8**).
 
 **`hang_tin` LUÔN ĐỂ TRỐNG.** Cowork không quyết hạng tin — chủ dự án tự nâng khi đăng.
 **`nguon`** — mọi dòng đều phải có **link tin gốc**. Không có link thì ghi nơi lấy + ngày giờ thấy tin.
@@ -939,7 +1019,7 @@ kèm project. ĐỌC HẾT FILE ĐÓ TRƯỚC KHI LÀM. Có gì không rõ thì 
 
 GHI VÀO THƯ MỤC CỦA NGÀY HÔM ĐÓ:
   C:\Users\X1 GEN 8\Projects\TIN-HANG-NGAY\Tin-<NĂM-THÁNG-NGÀY>\
-    - Bang-<NĂM-THÁNG-NGÀY>.csv      (GÓI A — 34 tin, 51 cột)
+    - Bang-<NĂM-THÁNG-NGÀY>.csv      (GÓI A — 34 tin, 53 cột)
     - TinTuc-<NĂM-THÁNG-NGÀY>.csv    (GÓI B — 5 bài, 9 cột)
     - bao-cao.txt                     (báo cáo chung cho cả hai gói)
 Đúng ba file. Không tạo file phụ, không tạo bản v2, không tạo file .ps1.
@@ -957,7 +1037,7 @@ Không gom đủ số thì GIAO THIẾU và ghi rõ trong bao-cao.txt. KHÔNG b�
 ```
 Hôm nay làm gói ngày <NGÀY>.
 Ghi vào: C:\Users\X1 GEN 8\Projects\TIN-HANG-NGAY\Tin-<NGÀY>\
-  - Bang-<NGÀY>.csv     (34 tin bất động sản, 51 cột)
+  - Bang-<NGÀY>.csv     (34 tin bất động sản, 53 cột)
   - TinTuc-<NGÀY>.csv   (5 bài tin tức, 9 cột)
   - bao-cao.txt
 Làm đúng như hướng dẫn của project. Xong báo tôi.
@@ -970,7 +1050,7 @@ Làm đúng như hướng dẫn của project. Xong báo tôi.
 
 ```
 _MAU\YEU-CAU-COWORK.md                    (tài liệu DUY NHẤT)
-_MAU\mau-nhap-tin-hang-loat.csv           (khuôn gói A — 51 cột + 17 ví dụ)
+_MAU\mau-nhap-tin-hang-loat.csv           (khuôn gói A — 53 cột + 17 ví dụ)
 _MAU\mau-tin-tuc-hang-ngay.csv            (khuôn gói B — 9 cột + 2 bài mẫu)
 _MAU\DANH-SACH-PHUONG-XA-MIEN-TRUNG.txt   (734 phường/xã, 8 tỉnh)
 ```
