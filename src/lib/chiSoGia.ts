@@ -44,12 +44,15 @@ export type MatBangGia = {
  * một chỉ số tính trên m² SÀN là ra kết luận sai hẳn cho người xem.
  */
 export function giaTinSoDuocVoiChiSo(tin: Listing, chiSo: ChiSoKhuVuc | null): number | null {
-  // Chấm giá tin phải nằm trên CÙNG MỘT THANG với đường thị trường, nên tính
-  // theo ĐÚNG mẫu số mà dãy chỉ số đang dùng — không áp mẫu số mặc định của loại
-  // hình. Trang tin vẫn hiện đơn giá theo luật của nó (nhà tính trên m² sàn);
-  // riêng biểu đồ này là chỗ SO SÁNH nên phải theo bên kia, và nói rõ ra.
-  // Dãy chưa khai mẫu số thì đứng lại, không đoán.
-  return chiSo?.mauSo ? giaMoiM2Theo(tin, chiSo.mauSo) : null;
+  // Hai điều kiện, thiếu một là không đặt chấm lên:
+  //   ① dãy chỉ số phải KHAI mẫu số — chưa khai thì không biết nó chia cho gì;
+  //   ② mẫu số đó phải ĐÚNG luật của loại hình (đất→m² đất · nhà→m² sàn ·
+  //      căn hộ→m² căn). Chỉ số nhà thu theo m² đất là hợp lệ với chính nó,
+  //      nhưng đem so với tin nhà thì sai thang — thà không so.
+  // Đường thị trường vẫn vẽ bình thường, chỉ thiếu cái chấm.
+  if (!chiSo?.mauSo) return null;
+  if (chiSo.mauSo !== mauSoCuaLoaiHinh(tin.type)) return null;
+  return giaMoiM2Theo(tin, chiSo.mauSo);
 }
 
 /** Đọc ô `mau_so` của tệp chỉ số. Bỏ trống thì KHÔNG đoán bừa theo loại hình:

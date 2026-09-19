@@ -166,13 +166,18 @@ function rowToListing(r: Row): Listing {
       return r.area_m2 ? `${fmtNum(r.price_vnd / r.area_m2, 0)} đ/m²/tháng` : undefined;
     if (r.purpose !== "ban") return undefined;
     const mau = mauSoCuaLoaiHinh(r.type);
-    // Nhà chưa khai m² sàn thì dùng số SUY RA từ nội dung tin — nhưng phải gắn
-    // dấu ≈ để người xem biết đây là ước tính, không phải số người đăng khai.
-    const uoc = mau === "san" && !r.built_area_m2 ? r.details?.dtSanUocTinh ?? null : null;
-    const dt = mau === "san" ? r.built_area_m2 ?? uoc : r.area_m2;
+    // ⛔ NHÀ GẮN LIỀN ĐẤT: KHÔNG HIỆN ĐƠN GIÁ MỖI M² TRÊN TIN — chủ dự án chốt
+    // 19/09. Người bán nhà báo TỔNG GIÁ của cả căn (đất + nhà), không ai niêm yết
+    // giá mỗi m² sàn. Mình tự chia ra rồi in lên tin là đặt vào miệng người bán
+    // một con số họ chưa từng nói — mà con số đó lại phụ thuộc m² sàn, thứ phần
+    // lớn tin cũ chỉ suy ra được chứ không khai.
+    // Số ước tính mỗi m² sàn VẪN được tính, nhưng chỉ dùng trong khối Lịch sử giá
+    // để so với mặt bằng thị trường — đúng chỗ của một ước lượng.
+    // Đất và căn hộ thì ngược lại: thị trường vốn niêm yết theo m², nên vẫn hiện.
+    if (mau === "san") return undefined;
+    const dt = r.area_m2;
     if (!dt) return undefined;
-    const duoi = mau === "san" ? "m² sàn" : mau === "can" ? "m² căn hộ" : "m² đất";
-    return `${uoc ? "≈ " : ""}${fmtNum(r.price_vnd / dt / 1e6, 0)} tr/${duoi}`;
+    return `${fmtNum(r.price_vnd / dt / 1e6, 0)} tr/${mau === "can" ? "m² căn hộ" : "m² đất"}`;
   })();
   return {
     id: r.id,
