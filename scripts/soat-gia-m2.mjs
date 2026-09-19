@@ -5,7 +5,7 @@ import path from "node:path";
 import { createJiti } from "jiti";
 const ROOT = path.resolve(import.meta.dirname, "..");
 const jiti = createJiti(ROOT + "/kiem.mjs", { alias: { "@": ROOT + "/src" }, jsx: { runtime: "automatic" } });
-const { mauSoCuaLoaiHinh, TEN_MAU_SO, specForType, coDonGiaM2 } = await jiti.import(ROOT + "/src/lib/listingSpec.ts");
+const { mauSoCuaLoaiHinh, TEN_MAU_SO, specForType, coDonGiaM2, dungODienTichXayDung, laTinThue } = await jiti.import(ROOT + "/src/lib/listingSpec.ts");
 
 const env = Object.fromEntries(fs.readFileSync(ROOT + "/.env.local", "utf8").split(/\r?\n/)
   .filter((l) => l && !l.startsWith("#") && l.includes("="))
@@ -32,3 +32,27 @@ for (const [k, o] of [...nhom.entries()].sort()) {
   console.log(k.padEnd(46), String(o.n).padStart(3), String(o.tinhDuoc).padStart(9), ` ${co}  ${o.mau}`);
 }
 console.log(`\nTổng: ${duoc}/${tong} tin hiện được giá mỗi m² đúng mẫu số.`);
+
+// ── ĐƠN GIÁ NGOÀI KHOẢNG THƯỜNG GẶP ────────────────────────────────────────
+// Cửa chặn cuối: chia giá cho diện tích, ra ngoài khoảng là in ra để người xem lại.
+// Tin nào chủ dự án đã kiểm và xác nhận đúng thì ghi `details.giaDaKiem` — lần
+// sau bỏ qua, khỏi báo lại một chuyện đã chốt (VD đất 2 mặt tiền khu đất vàng
+// Võ Văn Kiệt: 221 tỷ / 515,4 m² = 429 tr/m², cao thật chứ không sai).
+const ngoai = [];
+for (const r of rows) {
+  if (r.price_vnd == null || r.details?.giaDaKiem) continue;
+  const mau = mauSoCuaLoaiHinh(r.type);
+  const dt = coDonGiaM2(r.type, r.purpose)
+    ? r.area_m2
+    : mau === "san" && dungODienTichXayDung(r.type)
+    ? r.built_area_m2 ?? r.details?.dtSanUocTinh
+    : r.area_m2;
+  if (!dt) continue;
+  const don = r.price_vnd / dt;
+  const [thap, cao] = laTinThue(r.purpose) ? [5e3, 3e6] : [0.3e6, 400e6];
+  if (don < thap || don > cao) ngoai.push(`  ${(don / 1e6).toFixed(1)} tr/m² · ${r.id.slice(0, 8)} · ${(r.title ?? "").slice(0, 46)}`);
+}
+console.log(`\nĐơn giá ngoài khoảng thường gặp: ${ngoai.length ? "" : "(không có)"}`);
+ngoai.forEach((x) => console.log(x));
+const daKiem = rows.filter((r) => r.details?.giaDaKiem).length;
+if (daKiem) console.log(`(${daKiem} tin đã được chủ dự án kiểm và xác nhận đúng — bỏ qua)`);
