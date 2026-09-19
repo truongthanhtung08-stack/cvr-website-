@@ -5,12 +5,22 @@
 // 41% kho Supabase. Đưa lên YouTube thì tốn 0 MB, mà trên trang tin hiện y hệt
 // (vẫn nằm trong thư viện ảnh, bấm play chạy tại chỗ, xem lớn và xoay được).
 //
+// ⭐ CÁCH ĐẶT TÊN TỆP TRƯỚC KHI TẢI LÊN — QUAN TRỌNG NHẤT, CHỐT 19/09/2026:
+//
+//        <Tiêu đề tin> [<mã tin>].mp4
+//        VD: "Tìm đâu ra căn thứ hai! ... trung tâm Thanh Khê [dn01].mp4"
+//
+// ⛔ ĐỪNG đặt tên chỉ có mã kiểu "dn02-1709-video.mp4". Đo ngày 19/09 trên 26 tệp
+//    thật: kiểu "<tiêu đề> [mã]" khớp 21/22 tệp, kiểu "<mã>-<ngày>-video" khớp
+//    0/4 — vì MÃ TIN KHÔNG DUY NHẤT ("dn06" có 3 tin; "dn01/dn02/qnhon01/qnhon02"
+//    mỗi mã 2 tin). Chỉ có mã thì máy không biết gắn vào tin nào; có tiêu đề thì
+//    trùng mã vẫn chốt được. Ngày tháng trong tên KHÔNG giúp gì (không phải mã).
+//
 // CÁCH KHỚP — DỰA VÀO TÊN:
-//   Tệp trong kho tên "1788319772900-566360-dn06-video.mp4.mp4"
-//   → phần nhận dạng là "dn06-video"
 //   YouTube khi tải hàng loạt TỰ LẤY TÊN TỆP LÀM TIÊU ĐỀ, nên video trên kênh
-//   cũng tên "dn06-video" → khớp được, không cần copy dán link tay từng cái.
-//   ⚠️ VÌ VẬY: lúc tải lên YouTube ĐỪNG ĐỔI TÊN. Đổi tên là mất đường khớp.
+//   giữ nguyên tên tệp → khớp được, không cần copy dán link tay từng cái.
+//   Tệp trong kho cũ tên "1788319772900-566360-dn06-video.mp4.mp4" cũng đọc ra "dn06".
+//   ⚠️ Sửa tiêu đề trên YouTube thì GIỮ LẠI phần trong ngoặc vuông.
 //
 // LẤY DANH SÁCH KÊNH: đọc trang kênh công khai (scripts/doc-video-kenh.mjs),
 // KHÔNG cần khoá API, không đụng tới Google Cloud (tài khoản Google của dự án
@@ -104,7 +114,7 @@ for (const v of tren) {
 // (Chọn bản nào nằm ở bước 3, sau khi biết tin đang gắn video nào.)
 
 // ── 2. TIN ĐANG DÙNG VIDEO TẢI LÊN ──────────────────────────────────────────
-const tin = await (await fetch(`${URL_}/rest/v1/listings?select=id,title,images&limit=20000`, { headers: H })).json();
+const tin = await (await fetch(`${URL_}/rest/v1/listings?select=id,title,images,details&limit=20000`, { headers: H })).json();
 const laTepVideo = (u) => /\.(mp4|webm|mov|m4v|ogg)(\?|$)/i.test(u) && !/youtu|vimeo/i.test(u);
 // TÁCH BẠCH BA THỨ, đừng gộp rồi báo sai:
 //   · viec  — video NẰM TRONG KHO của mình, đây mới là việc phải làm
@@ -156,11 +166,62 @@ if (hut.length) {
   for (const h of hut) console.log(`  · ${h.ma}  ${String(h.tieuDe).slice(0, 50)}`);
 }
 
+// ── 3b. VIDEO TẢI THẲNG LÊN YOUTUBE, TIN CHƯA TỪNG CÓ FILE TRONG KHO ────────
+// Bước 3 chỉ THAY video sẵn có trong kho. Nhưng chủ dự án còn quay video rồi tải
+// THẲNG lên kênh, không qua kho — lúc đó tin không có gì để thay nên script cũ bỏ
+// qua im lặng (ngày 19/09 video "Tìm đâu ra căn thứ hai" 202 lượt xem nằm không
+// trên kênh, phải gắn tay). Nhánh này khớp bằng MÃ TIN (`details.maAnh`).
+//
+// ⚠️ MÃ TIN KHÔNG DUY NHẤT: đo 19/09 — "dn06" có 3 tin, "dn01/dn02/qnhon01" mỗi
+// mã 2 tin. Nên trùng mã thì chốt tiếp bằng TIÊU ĐỀ (tên tệp lúc tải lên chính là
+// tiêu đề tin — xem quy ước đặt tên ở đầu file). Vẫn không chốt được thì IN RA
+// HỎI, tuyệt đối không gắn bừa: gắn nhầm là video nhà này nằm trong tin nhà khác.
+const kdTen = (s) =>
+  (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/gi, "d")
+    .toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+
+const tinTheoMa = new Map();
+for (const t of tin) {
+  const m = String(t.details?.maAnh ?? "").toLowerCase().trim();
+  if (m) tinTheoMa.set(m, (tinTheoMa.get(m) ?? []).concat(t));
+}
+
 const chuaGan = tren.filter((v) => !daGan.has(v.id));
+const themMoi = [];   // gắn được: { tin, yt }
+const mapMo = [];     // trùng mã, tiêu đề không chốt được → hỏi chủ dự án
+for (const v of chuaGan) {
+  const ma = nhanDang(v.ten);
+  if (theoMa.get(ma) !== v) continue;          // bản trùng bị loại ở bước 3 → bỏ
+  const ds = (tinTheoMa.get(ma) ?? []).filter((t) => !(t.images ?? []).some((u) => String(u).includes(v.id)));
+  if (!ds.length) continue;                     // không tin nào mang mã này
+  if (ds.length === 1) { themMoi.push({ tin: ds[0], yt: v }); continue; }
+  // Trùng mã → đếm số từ của tiêu đề tin xuất hiện trong tên video.
+  const ten = kdTen(v.ten.replace(/\[.*?\]/g, ""));
+  const diem = ds
+    .map((t) => ({ t, d: kdTen(t.title).split(" ").filter((w) => w.length > 2 && ten.includes(w)).length }))
+    .sort((a, b) => b.d - a.d);
+  if (diem[0].d >= 3 && diem[0].d > diem[1].d) themMoi.push({ tin: diem[0].t, yt: v });
+  else mapMo.push({ yt: v, ma, ds });
+}
+
 console.log(`\nĐÃ GẮN VÀO TIN: ${tren.length - chuaGan.length}/${tren.length} video trên kênh`);
-if (chuaGan.length) {
-  console.log(`Còn ${chuaGan.length} video trên kênh chưa tin nào dùng:`);
-  for (const v of chuaGan) console.log(`  · https://youtu.be/${v.id}  ${v.ten.slice(0, 60)}`);
+if (themMoi.length) {
+  console.log(`\nGẮN THÊM ĐƯỢC ${themMoi.length} video tải thẳng lên kênh (tin chưa có file trong kho):`);
+  for (const k of themMoi)
+    console.log(`  + https://youtu.be/${k.yt.id}  (${k.yt.xem} lượt xem) → ${k.tin.id.slice(0, 8)} · ${String(k.tin.title).slice(0, 44)}`);
+}
+if (mapMo.length) {
+  console.log(`\n⚠️ ${mapMo.length} video TRÙNG MÃ, tiêu đề không chốt được — KHÔNG gắn, cần xem tay:`);
+  for (const m of mapMo) {
+    console.log(`  ? https://youtu.be/${m.yt.id}  mã "${m.ma}"  ${m.yt.ten.slice(0, 52)}`);
+    for (const t of m.ds) console.log(`      có thể là: ${t.id.slice(0, 8)} · ${String(t.title).slice(0, 56)}`);
+  }
+  console.log(`  → Cách chữa gọn nhất: đổi TÊN VIDEO trên kênh thành "<tiêu đề tin> [${mapMo[0].ma}]" rồi chạy lại.`);
+}
+const conLai = chuaGan.filter((v) => !themMoi.some((k) => k.yt === v) && !mapMo.some((m) => m.yt === v));
+if (conLai.length) {
+  console.log(`\nCòn ${conLai.length} video trên kênh chưa tin nào dùng:`);
+  for (const v of conLai) console.log(`  · https://youtu.be/${v.id}  ${v.ten.slice(0, 60)}`);
 }
 
 if (ngoai.length) {
@@ -198,6 +259,22 @@ if (AP) {
     });
     if (r.ok) { xong++; process.stdout.write(`\r  ${xong}/${theoTin.size} tin`); }
     else console.log(`\n  ✗ tin ${maTin}: ${r.status} ${(await r.text()).slice(0, 120)}`);
+  }
+
+  // GẮN THÊM video tải thẳng lên kênh (tin chưa có file video trong kho) —
+  // THÊM vào cuối danh sách media, không thay gì cả. Thư viện ảnh của tin hiện
+  // ẢNH TRƯỚC, VIDEO SAU (xem rowToListing trong listingsDb.ts) nên xếp cuối là đúng.
+  if (themMoi.length) {
+    console.log(`\n\nĐang gắn ${themMoi.length} video tải thẳng lên kênh…`);
+    for (const k of themMoi) {
+      const anh = [...(k.tin.images ?? []), `https://youtu.be/${k.yt.id}`];
+      const r2 = await fetch(`${URL_}/rest/v1/listings?id=eq.${encodeURIComponent(k.tin.id)}`, {
+        method: "PATCH",
+        headers: { ...H, Prefer: "return=minimal" },
+        body: JSON.stringify({ images: anh }),
+      });
+      console.log(`  ${r2.ok ? "+" : "✗"} ${k.tin.id.slice(0, 8)} ← https://youtu.be/${k.yt.id}  ${String(k.tin.title).slice(0, 44)}`);
+    }
   }
   console.log(`\nĐã thay link cho ${xong} tin.`);
   console.log("→ Mở web kiểm vài tin thấy video chạy, rồi mới chạy --xoa-tep để dọn kho.");
