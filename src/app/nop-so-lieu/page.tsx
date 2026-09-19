@@ -21,11 +21,13 @@ type KetQua = {
   tongDay?: number;
   day?: string[];
   chan?: { day: string; ly: string }[];
+  choQua?: { day: string; ly: string }[];
   dongLoi?: { dong: number; ly: string }[];
 };
 
 export default function NopSoLieu() {
   const [ma, setMa] = useState("");
+  const [daKiemNhay, setDaKiemNhay] = useState(false);
   const [dangGui, setDangGui] = useState(false);
   const [kq, setKq] = useState<KetQua | null>(null);
   const oTep = useRef<HTMLInputElement>(null);
@@ -40,6 +42,7 @@ export default function NopSoLieu() {
     const form = new FormData();
     form.set("ma", ma);
     form.set("tep", tep);
+    if (daKiemNhay) form.set("da_kiem_nhay", "1");
     try {
       const r = await fetch("/api/chi-so-gia/nop", { method: "POST", body: form });
       setKq(await r.json());
@@ -79,6 +82,20 @@ export default function NopSoLieu() {
           />
         </label>
 
+        {/* Lối thoát cho trường hợp thị trường nhảy THẬT — mở sẵn thì người nộp
+            tick bừa cho nhanh, nên để cuối, chữ nhỏ, và mặc định tắt. */}
+        <label className="flex cursor-pointer items-start gap-2.5 rounded-xl bg-cvr-surface px-3.5 py-3">
+          <input
+            type="checkbox"
+            checked={daKiemNhay}
+            onChange={(e) => setDaKiemNhay(e.target.checked)}
+            className="mt-0.5 h-4 w-4 shrink-0 accent-[#0071e3]"
+          />
+          <span className="text-[13px] leading-relaxed text-cvr-muted">
+            Đã mở lại nguồn kiểm từng mốc, giá nhảy mạnh là đúng thị trường — nhận cả những dãy này.
+          </span>
+        </label>
+
         <button
           type="submit"
           disabled={dangGui || !ma}
@@ -110,6 +127,21 @@ export default function NopSoLieu() {
             </>
           ) : (
             <p className="text-[15px] font-semibold text-amber-900">{kq.loi}</p>
+          )}
+
+          {!!kq.choQua?.length && (
+            <div className="mt-3.5 border-t border-green-200 pt-3">
+              <p className="text-[13.5px] font-semibold text-green-900">
+                {kq.choQua.length} dãy nhảy mạnh nhưng đã nhận vì bạn xác nhận kiểm lại nguồn:
+              </p>
+              <ul className="mt-1.5 space-y-0.5 text-[13px] text-green-900">
+                {kq.choQua.map((c) => (
+                  <li key={c.day}>
+                    · {c.day} — {c.ly}
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
 
           {!!kq.chan?.length && (

@@ -68,6 +68,10 @@ export async function POST(req: Request) {
   const form = await req.formData().catch(() => null);
   const ma = String(form?.get("ma") ?? "");
   const tep = form?.get("tep");
+  // Người nộp đã mở lại nguồn, đọc lại đúng hai mốc bị báo và xác nhận thị
+  // trường nhảy thật. Lúc đó lớp chặn số 3 thành ra cản đường — cho qua, nhưng
+  // vẫn ghi rõ dãy nào được cho qua vào màn hình và vào thư báo, để còn truy lại.
+  const daKiemNhay = String(form?.get("da_kiem_nhay") ?? "") === "1";
   if (ma !== maDung) return NextResponse.json({ ok: false, loi: "Mã nộp không đúng." }, { status: 401 });
   if (!(tep instanceof File)) return NextResponse.json({ ok: false, loi: "Chưa chọn tệp." }, { status: 400 });
 
@@ -95,10 +99,14 @@ export async function POST(req: Request) {
   // ── Lớp kiểm thứ ba: chặn dãy có bước nhảy vô lý ──────────────────────────
   const nhan: ChiSoKhuVuc[] = [];
   const chan: { day: string; ly: string }[] = [];
+  const choQua: { day: string; ly: string }[] = [];
   for (const x of items) {
     const batThuong = nhayBatThuong(x);
-    if (batThuong) chan.push({ day: tenDay(x), ly: batThuong });
-    else nhan.push(x);
+    if (!batThuong) nhan.push(x);
+    else if (daKiemNhay) {
+      choQua.push({ day: tenDay(x), ly: batThuong });
+      nhan.push(x);
+    } else chan.push({ day: tenDay(x), ly: batThuong });
   }
   if (!nhan.length) {
     return NextResponse.json({ ok: false, loi: "Mọi dãy đều có bước nhảy bất thường.", chan }, { status: 400 });
@@ -133,6 +141,7 @@ export async function POST(req: Request) {
     moc: soMoc,
     tongDay: tatCa.length,
     chan,
+    choQua,
     dongLoi: loi.slice(0, 20),
     day: nhan.map(tenDay),
   };
@@ -143,13 +152,30 @@ export async function POST(req: Request) {
   return NextResponse.json(tomTat);
 }
 
-async function baoChoChu(t: { nhan: number; moc: number; tongDay: number; chan: { day: string; ly: string }[] }, tenTep: string) {
+async function baoChoChu(
+  t: {
+    nhan: number;
+    moc: number;
+    tongDay: number;
+    chan: { day: string; ly: string }[];
+    choQua: { day: string; ly: string }[];
+  },
+  tenTep: string,
+) {
   const key = process.env.RESEND_API_KEY;
   const nhan = (process.env.ADMIN_EMAIL ?? "").split(",").map((s) => s.trim()).filter(Boolean);
   if (!key || !nhan.length) return;
 
   const canhBao = t.chan.length
     ? `<p style="margin:16px 0 0;color:#b45309;font-size:14px">Chặn ${t.chan.length} dãy vì giá nhảy bất thường:<br>${t.chan
+        .map((c) => `${c.day} — ${c.ly}`)
+        .join("<br>")}</p>`
+    : "";
+
+  // Dãy được cho qua phải báo RÕ HƠN cả dãy bị chặn: đây là chỗ duy nhất lưới
+  // an toàn bị tắt, nên nếu người nộp xác nhận sai thì đây là dấu vết để truy.
+  const daCoQua = t.choQua.length
+    ? `<p style="margin:16px 0 0;color:#0f6b3f;font-size:14px">Cho qua ${t.choQua.length} dãy do người nộp xác nhận đã kiểm lại nguồn:<br>${t.choQua
         .map((c) => `${c.day} — ${c.ly}`)
         .join("<br>")}</p>`
     : "";
@@ -165,6 +191,7 @@ async function baoChoChu(t: { nhan: number; moc: number; tongDay: number; chan: 
         <p style="margin:0;font-size:15px">Tệp <b>${tenTep}</b> đã được nạp lên website.</p>
         <p style="margin:12px 0 0;font-size:15px">Nhận <b>${t.nhan}</b> dãy, <b>${t.moc}</b> mốc giá. Kho hiện có <b>${t.tongDay}</b> dãy.</p>
         ${canhBao}
+        ${daCoQua}
         <p style="margin:20px 0 0;color:#6e6e73;font-size:13px">Xem và sửa tại /admin/chi-so-gia</p>
       </div>`,
     }),
