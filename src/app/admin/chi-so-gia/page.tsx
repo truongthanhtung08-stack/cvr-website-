@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import type { ChiSoGiaData, ChiSoKhuVuc, LoiCsv } from "@/lib/chiSoGia";
+import type { ChiSoGiaData, ChiSoKhuVuc, LoiCsv, MauSo } from "@/lib/chiSoGia";
 import { docBangChiSo, docCsvChiSo, TINH_MIEN_TRUNG } from "@/lib/chiSoGia";
 import { docBangXlsx, laXlsx } from "@/lib/docXlsx";
 import { chuanTen, provinceNamesFor } from "@/lib/locations";
@@ -443,6 +443,26 @@ export default function ChiSoGiaPage() {
               >
                 <option value="ban">Bán</option>
                 <option value="thue">Cho thuê</option>
+              </select>
+            </label>
+            {/* MẪU SỐ — con số mỗi m² này CHIA CHO CÁI GÌ. Bắt buộc, vì cùng một
+                "80 triệu/m²" cho nhà riêng có thể là giá trên m² ĐẤT (thị trường
+                hay báo kiểu này) hay trên m² SÀN — lệch nhau vài lần. Chưa khai
+                thì biểu đồ vẫn vẽ đường thị trường nhưng KHÔNG đặt chấm giá tin
+                lên so, vì so hai mẫu số khác nhau là ra kết luận sai. */}
+            <label className="block">
+              <span className="mb-1 block text-[13px] font-medium text-cvr-body">
+                Giá này tính trên <span className="text-red-500">*</span>
+              </span>
+              <select
+                value={kv.mauSo ?? ""}
+                onChange={(e) => sua(i, { mauSo: (e.target.value || undefined) as MauSo | undefined })}
+                className={`${inputCls} ${kv.mauSo ? "" : "border-amber-400 bg-amber-50"}`}
+              >
+                <option value="">— chưa khai (chưa đem so với giá tin) —</option>
+                <option value="dat">m² đất</option>
+                <option value="san">m² sàn xây dựng</option>
+                <option value="can">m² căn hộ</option>
               </select>
             </label>
             <label className="block">

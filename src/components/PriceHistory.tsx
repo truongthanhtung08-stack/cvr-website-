@@ -198,8 +198,13 @@ export default function PriceHistory({
                   <p className="text-[19px] font-bold leading-none tracking-tight text-cvr-ink">
                     {vndM2(mocCuoi.giaM2, laThue)}
                   </p>
+                  {/* PHẢI NÓI RÕ CON SỐ NÀY LÀ CỦA ĐÂU. Trong một tỉnh, giá giữa
+                      các phường lệch nhau rất xa — 80 triệu/m² "tại Đà Nẵng" mà
+                      để trần thì người xem đọc thành giá của đúng phường có tin.
+                      Dãy chưa tách tới phường thì ghi thẳng "toàn <tỉnh>". */}
                   <p className="mt-1.5 text-[12.5px] text-cvr-muted">
                     Giá {laThue ? "thuê" : "bán"} phổ biến nhất {nhanKy(mocCuoi.quy)}
+                    {chiSo?.tinh ? ` · ${chiSo.khuVuc ? chiSo.khuVuc : `toàn ${chiSo.tinh}`}` : ""}
                   </p>
                 </div>
 

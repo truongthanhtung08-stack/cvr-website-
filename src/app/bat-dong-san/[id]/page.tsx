@@ -513,8 +513,13 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
               {priceVnd != null && coDuDeHienLichSuGia(chiSoTin, matBang, soSanhKV) && (
                 <Section
                   id="lich-su-gia"
+                  /* TÊN KHỐI PHẢI THEO PHẠM VI CỦA CHÍNH CON SỐ LỚN (chỉ số), chứ
+                     không lấy phạm vi của mặt bằng giá: hai nguồn có thể khác cấp
+                     — mặt bằng tính được tới PHƯỜNG trong khi chỉ số mới có cả
+                     TỈNH. Đề "tại Phường Hòa Xuân" mà số là giá toàn Đà Nẵng thì
+                     người xem hiểu sai hẳn, vì giá giữa các phường lệch rất xa. */
                   title={`Lịch sử giá ${purpose === "thue" ? "thuê" : "bán"} ${l.type.toLowerCase()} tại ${
-                    matBang?.tenPham || chiSoTin?.khuVuc || chiSoTin?.tinh || l.diaGioi?.province || "khu vực"
+                    chiSoTin?.khuVuc || chiSoTin?.tinh || matBang?.tenPham || l.diaGioi?.province || "khu vực"
                   }`}
                 >
                   <PriceHistory
