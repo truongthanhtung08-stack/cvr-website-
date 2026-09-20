@@ -102,9 +102,10 @@ function maDayDu(ten) {
   if (trongNgoac) return trongNgoac[1].toLowerCase().replace(/-video$/i, "").trim();
   const t = s.toLowerCase();
   // YouTube hay NUỐT DẤU NGOẶC khi hiển thị → "… Đà Nẵng dn02-1709". Vẫn đọc được:
-  // bắt cụm mã ở CUỐI chuỗi.
-  const cuoi = t.match(/\b([a-z]{2,10}\d{1,3}-\d{2,8})(?:-video)?\s*$/);
-  if (cuoi) return cuoi[1];
+  // bắt cụm mã ở CUỐI chuỗi. Đo ngày 20/09: YouTube còn đổi luôn dấu gạch thành
+  // KHOẢNG TRẮNG ("… Đà Nẵng dn02 1709") nên nhận cả hai kiểu ngăn cách.
+  const cuoi = t.match(/\b([a-z]{2,10}\d{1,3})[-\s](\d{2,8})(?:-video)?\s*$/);
+  if (cuoi) return `${cuoi[1]}-${cuoi[2]}`;
   // Tên chỉ có mã ở đầu: "dn02-1709-video.mp4".
   const dau = t.match(/^([a-z]{2,10}\d{1,3}(?:-\d{2,8})?)/);
   return dau ? dau[1] : "";
@@ -212,10 +213,13 @@ const themMoi = [];   // gắn được: { tin, yt }
 const mapMo = [];     // trùng mã, tiêu đề không chốt được → hỏi chủ dự án
 for (const v of chuaGan) {
   const ma = nhanDang(v.ten);
-  if (theoMa.get(ma) !== v) continue;          // bản trùng bị loại ở bước 3 → bỏ
   // ① MÃ ĐẦY ĐỦ trước ("dn02-1709" khớp đúng một tin, khỏi phải đoán);
   // ② không có thì mới lùi về mã ngắn ("dn02" — có thể đụng nhiều tin).
   const day = maDayDu(v.ten);
+  // Bước 3 gom trùng theo MÃ NGẮN nên video "dn02-1709" của đợt mới bị xếp chung
+  // với video "dn02" của tin cũ rồi bị loại (đo 20/09: mất 2 video đúng). Video
+  // mang mã đầy đủ riêng thì không dính luật đó — nó chỉ vào đúng một tin.
+  if ((!day || day === ma) && theoMa.get(ma) !== v) continue;
   const chuaCoVideo = (t) => !(t.images ?? []).some((u) => String(u).includes(v.id));
   const theoDay = day && day !== ma ? (tinTheoMa.get(day) ?? []).filter(chuaCoVideo) : [];
   const ds = theoDay.length ? theoDay : (tinTheoMa.get(ma) ?? []).filter(chuaCoVideo);

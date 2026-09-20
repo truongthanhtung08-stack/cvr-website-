@@ -58,8 +58,11 @@ function tenTrongKho(url) {
 }
 
 // Mã tin đứng ĐẦU tên tệp: "dn01-3.webp" → "dn01"; tên không theo quy ước → ""
+// Từ đợt 17/09 mã tin mang thêm HẬU TỐ NGÀY ("dn01-1709") cho khỏi lẫn giữa các
+// đợt. Không nhận hậu tố này thì "dn01-1709-1.webp" bị đọc thành mã "dn01" và cả
+// đợt bị báo lạc tin (đo ngày 20/09: 255 báo giả).
 function maCuaAnh(url) {
-  const m = /^([a-z]{2,10}\d{1,3})[-_. (]/i.exec(tenGoc(url));
+  const m = /^([a-z]{2,10}\d{1,3}(?:-\d{4})?)[-_. (]/i.exec(tenGoc(url));
   return m ? m[1].toLowerCase() : "";
 }
 

@@ -43,6 +43,9 @@ type HoSo = {
 };
 
 export async function POST(request: Request) {
+  // Mốc tin LÊN SÓNG — ghi vào cả published_at (ngày đăng thật) lẫn bumped_at
+  // (mốc xếp thứ tự). Bỏ trống bumped_at là tin mới chìm xuống dưới tin cũ.
+  const len = new Date().toISOString();
   // ── 1. Chỉ admin ──────────────────────────────────────────────────────────
   const ssr = await createClient();
   const { data: { user } } = await ssr.auth.getUser();
@@ -79,7 +82,9 @@ export async function POST(request: Request) {
   if (mienPhi) {
     const { error } = await admin
       .from("listings")
-      .update({ status: "approved", published_at: new Date().toISOString(), tier: "basic" })
+      // bumped_at = ngày đăng — nếu bỏ trống, tin vừa duyệt nằm dưới mọi tin cũ
+      // (xếp theo bumped_at desc nulls last). Xem ghi chú ở trang nhập hàng loạt.
+      .update({ status: "approved", published_at: len, bumped_at: len, tier: "basic" })
       .eq("id", id);
     if (error) return loi(error.message, 500);
     revalidateTag("listings", "max"); // tin vừa lên sóng → purge cache để hiện NGAY
@@ -187,7 +192,8 @@ export async function POST(request: Request) {
         .from("listings")
         .update({
           status: "approved",
-          published_at: new Date().toISOString(),
+          published_at: len,
+          bumped_at: len,
           tier: goi,
           tier_expires_at: hetHanMp,
           // Không thu tiền → không có doanh thu, thuế bằng 0.
@@ -318,7 +324,8 @@ export async function POST(request: Request) {
     .from("listings")
     .update({
       status: "approved",
-      published_at: new Date().toISOString(),
+      published_at: len,
+      bumped_at: len,
       tier: goi,
       tier_expires_at: hetHan,
       gia_chua_thue: tien.tienHang,

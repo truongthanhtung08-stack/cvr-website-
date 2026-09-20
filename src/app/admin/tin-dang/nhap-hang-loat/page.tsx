@@ -271,7 +271,12 @@ export default function NhapHangLoatPage() {
       for (let i = 0; i < tinMoi.length; i += 50) {
         const lo = tinMoi
           .slice(i, i + 50)
-          .map((r) => ({ ...r.payload, images: anhCuaTin(r).urls, published_at: now }));
+          // bumped_at = ngày đăng: danh sách xếp theo `bumped_at desc nulls last`
+          // nên tin mới bỏ trống cột này sẽ nằm DƯỚI mọi tin cũ (migration 0034 đã
+          // gán mốc cho toàn bộ tin đời trước). Đo ngày 20/09: 34 tin vừa đăng rơi
+          // xuống cuối danh sách. Thẻ tin KHÔNG hiện "Làm mới" vì freshText bỏ qua
+          // mốc chênh dưới 2 phút so với ngày đăng.
+          .map((r) => ({ ...r.payload, images: anhCuaTin(r).urls, published_at: now, bumped_at: now }));
         const { error } = await supabase.from("listings").insert(lo);
         if (error) {
           setKetQua(`Đã đăng ${xong} tin thì gặp lỗi: ${error.message}`);
