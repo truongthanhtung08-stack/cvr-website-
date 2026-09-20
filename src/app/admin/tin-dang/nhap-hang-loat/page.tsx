@@ -306,7 +306,14 @@ export default function NhapHangLoatPage() {
         // Lấy luôn NỘI DUNG mới nhất trong file: tiêu đề, mô tả, giá, diện tích,
         // địa chỉ (kể cả hệ cũ), pháp lý, liên hệ… — file là bản chuẩn.
         const { images: _bo, ...noiDung } = r.payload as Record<string, unknown>;
-        const { error } = await supabase.from("listings").update({ ...noiDung, images: gop }).eq("id", cu.id);
+        // TIN TRÙNG THÌ ĐẨY, KHÔNG ĐẺ TIN MỚI: ngày đăng giữ nguyên của tin gốc
+        // (không giả ngày đăng), nhưng bumped_at = hôm nay để tin lên đầu danh
+        // sách — không đẩy thì tin vừa bổ sung ảnh vẫn nằm im chỗ cũ, coi như
+        // công up lại đổ sông. Thẻ tin ghi "Làm mới X phút trước".
+        const { error } = await supabase
+          .from("listings")
+          .update({ ...noiDung, images: gop, bumped_at: now })
+          .eq("id", cu.id);
         if (error) {
           setKetQua(`Đã đăng ${xong} tin, cập nhật ${capNhat} tin thì gặp lỗi: ${error.message}`);
           setDangGui(false);
