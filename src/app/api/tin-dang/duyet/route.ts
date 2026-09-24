@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { BILLING_DEFAULT, freeDangChay, levelOf, quotePrice, vnd, type BillingData } from "@/lib/billing";
+import { BILLING_DEFAULT, bangTheoMucDich, freeDangChay, levelOf, quotePrice, vnd, type BillingData } from "@/lib/billing";
 import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
 import { guiThongBao, MAU_DUYET_TIN } from "@/lib/thongBao";
 import { baoLoi } from "@/lib/baoLoi";
@@ -63,7 +63,7 @@ export async function POST(request: Request) {
   // ── 2. Lấy tin ────────────────────────────────────────────────────────────
   const { data: tin, error: loiTin } = await admin
     .from("listings")
-    .select("id,title,owner_id,status,tier_yeu_cau,tier_days,da_tru_vi,details")
+    .select("id,title,owner_id,status,purpose,tier_yeu_cau,tier_days,da_tru_vi,details")
     .eq("id", id)
     .single();
   if (loiTin || !tin) return loi("Không tìm thấy tin", 404);
@@ -117,7 +117,8 @@ export async function POST(request: Request) {
   // ── 4. Tính tiền — máy chủ tự tính từ bảng giá, KHÔNG nhận từ client ──────
   const { data: sc } = await admin.from("site_content").select("data").eq("key", "billing").limit(1);
   const luu = sc?.[0]?.data as Partial<BillingData> | undefined;
-  const bang: BillingData = { ...BILLING_DEFAULT, ...(luu ?? {}) };
+  // Bảng giá theo MỤC ĐÍCH của tin (bán / cho thuê) — đúng bảng form đã báo khách.
+  const bang: BillingData = bangTheoMucDich({ ...BILLING_DEFAULT, ...(luu ?? {}) }, tin.purpose);
 
   const { data: hsArr } = await admin
     .from("profiles")
@@ -231,7 +232,13 @@ export async function POST(request: Request) {
   const giaDaBao = Number(
     (tin.details as { plan?: { giaBao?: number } } | null)?.plan?.giaBao ?? Number.NaN,
   );
-  const tien = tachThue(Number.isFinite(giaDaBao) ? Math.min(bao.total, giaDaBao) : bao.total);
+  // Bảng giá mới có thể không còn mốc thời hạn khách đã chọn (vd VIP 30 ngày gửi
+  // trước khi công bố bảng VIP 7/10/15). Khi đó quotePrice rơi về mốc đầu bảng —
+  // giá của MỐC KHÁC — nên dùng thẳng số đã báo lúc khách gửi.
+  const conMocNgay = bang.plans.find((p) => p.tierId === goi)?.terms.some((t) => t.days === soNgay);
+  const tien = tachThue(
+    Number.isFinite(giaDaBao) ? (conMocNgay ? Math.min(bao.total, giaDaBao) : giaDaBao) : bao.total,
+  );
 
   const soDu = Number(hs.balance ?? 0);
   if (soDu < tien.tongTra) {

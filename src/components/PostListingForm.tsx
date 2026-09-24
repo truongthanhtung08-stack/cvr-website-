@@ -22,7 +22,7 @@ import OTieuDe from "@/components/OTieuDe";
 // phải sửa đúng dòng import này.
 import MapPicker from "@/components/MapPickerMo";
 import ContentEditor from "@/components/admin/ContentEditor";
-import { freeDangChay, freeNote, levelOf, quotePrice, soAnhToiDa, soVideoToiDa, tenGoiMienPhi, vnd } from "@/lib/billing";
+import { bangTheoMucDich, freeDangChay, freeNote, levelOf, quotePrice, soAnhToiDa, soVideoToiDa, tenGoiMienPhi, vnd } from "@/lib/billing";
 import { banChuyenDoi } from "@/lib/gtagChuyenDoi";
 import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
 import { useBilling } from "@/lib/useBilling";
@@ -97,6 +97,9 @@ export default function PostListingForm() {
   // Gói đăng tin khách chọn (giá do quản trị đặt ở /admin/gia-khuyen-mai)
   // Bảng giá HIỆN HÀNH (bản admin đã lưu ở /admin/gia-khuyen-mai), không phải giá cứng trong code
   const { billing, loading: billingLoading } = useBilling();
+  // Bảng giá gói tin theo NHU CẦU đang chọn (bán / cho thuê) — cùng bảng máy chủ
+  // dùng lúc duyệt tin, nên số báo ở đây là số bị trừ.
+  const bangGia = useMemo(() => bangTheoMucDich(billing, purposeOfDemand(demand)), [billing, demand]);
   // KHÔNG chọn sẵn gói nào — người đăng phải tự chọn, kể cả khi gói đó đang miễn
   // phí. Chọn sẵn thì họ bấm đăng luôn mà không biết mình vừa mua gói gì, đến lúc
   // ví bị trừ là khiếu nại.
@@ -139,7 +142,7 @@ export default function PostListingForm() {
   // Tải xong bảng giá admin → đưa thời hạn về mốc đầu tiên của bảng giá hiện hành
   useEffect(() => {
     if (!billingLoading) {
-      const terms = billing.plans.find((p) => p.tierId === planTier)?.terms ?? [];
+      const terms = bangGia.plans.find((p) => p.tierId === planTier)?.terms ?? [];
       // Bảng giá do admin đặt, tải về sau khi trang đã dựng → chỉ lúc này mới biết
       // gói có những mốc thời hạn nào. Thời hạn đang chọn không còn trong bảng giá
       // hiện hành thì kéo về mốc đầu, nếu không khách trả tiền theo mốc đã bỏ.
@@ -147,7 +150,7 @@ export default function PostListingForm() {
       if (terms.length && !terms.some((t) => t.days === planDays)) setPlanDays(terms[0].days);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [billingLoading, planTier, billing.plans]);
+  }, [billingLoading, planTier, bangGia.plans]);
 
   // ── SỐ TIỀN THỰC PHẢI TRẢ ─────────────────────────────────────────────────
   // Giá gói → trừ khuyến mãi đang chạy → trừ ưu đãi theo cấp thành viên.
@@ -170,19 +173,19 @@ export default function PostListingForm() {
 
   // Gói dùng để XEM TRƯỚC khi chưa chọn (số ảnh tối đa, giá tạm tính) — lấy gói
   // đầu bảng. Việc gửi tin vẫn chặn tới khi người đăng tự chọn.
-  const goiXemTruoc: TierId = (planTier || billing.plans[0]?.tierId || "basic") as TierId;
+  const goiXemTruoc: TierId = (planTier || bangGia.plans[0]?.tierId || "basic") as TierId;
 
   const baoGia = useMemo(
     () =>
       quotePrice({
-        data: billing,
+        data: bangGia,
         tierId: goiXemTruoc,
         days: planDays,
         today: new Date().toISOString().slice(0, 10),
         isNewMember: laThanhVienMoi,
         levelId: capThanhVien?.id, // chưa có cấp hội viên → không giảm theo cấp
       }),
-    [billing, goiXemTruoc, planDays, laThanhVienMoi, capThanhVien],
+    [bangGia, goiXemTruoc, planDays, laThanhVienMoi, capThanhVien],
   );
 
   // Gói này có được miễn phí cho khách đang đăng nhập không?
@@ -206,7 +209,7 @@ export default function PostListingForm() {
 
   // Giá hiển thị cạnh tên từng gói trong ô chọn (để nhìn là biết chọn gì)
   const giaCuaGoi = (tierId: TierId): string => {
-    const p = billing.plans.find((x) => x.tierId === tierId);
+    const p = bangGia.plans.find((x) => x.tierId === tierId);
     const gia = (p?.terms.find((t) => t.days === planDays) ?? p?.terms[0])?.price ?? 0;
     // Ghi thẳng "Miễn phí" khi gói đó không mất tiền — để người đăng nhìn ô chọn là
     // biết ngay gói nào free, gói nào trả tiền, không phải đoán.
@@ -1024,7 +1027,7 @@ export default function PostListingForm() {
               className={inputCls + (planTier ? "" : " ring-1 ring-inset ring-cvr-blue/40")}
             >
               <option value="">— Chọn gói tin —</option>
-              {billing.plans.map((p) => (
+              {bangGia.plans.map((p) => (
                 <option key={p.tierId} value={p.tierId}>
                   {getTier(p.tierId).name} — {giaCuaGoi(p.tierId)}
                 </option>
@@ -1034,7 +1037,7 @@ export default function PostListingForm() {
           <div>
             <Label>Thời gian</Label>
             <select value={planDays} onChange={(e) => setPlanDays(Number(e.target.value))} className={inputCls}>
-              {(billing.plans.find((p) => p.tierId === planTier)?.terms ?? []).map((t) => (
+              {(bangGia.plans.find((p) => p.tierId === planTier)?.terms ?? []).map((t) => (
                 <option key={t.days} value={t.days}>{t.days} ngày</option>
               ))}
             </select>

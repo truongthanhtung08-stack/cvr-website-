@@ -125,7 +125,14 @@ Buộc phải đụng vào vì lý do kỹ thuật → **DỪNG, HỎI TRƯỚC.
 
 ---
 
-## 0C. 🔧 VIỆC HẠ TẦNG ĐANG CHẠY — Vercel Pro · Cloudflare R2
+## 0C. 🔧 VIỆC HẠ TẦNG — Vercel Pro · Cloudflare R2
+
+> ✅ **TRẠNG THÁI 24/09/2026 (đã đo trên web thật):** **Vercel Pro ĐÃ CHẠY từ 14/09** ·
+> **PayOS ĐÃ NỐI XONG** (`/api/thanh-toan/webhook` trả `daCauHinh:true`) · Supabase Pro từ 17/09.
+> Ba việc này **đã xong — cấm đưa lại vào danh sách "đang chặn"**. Chủ dự án chốt:
+> *"Cái gì đã xong, cấm thay đổi. Chỉ thay đổi khi tôi yêu cầu."* Muốn ghi việc gì là "đang kẹt"
+> thì phải đo lại trên web thật trước — ghi chú cũ không phải bằng chứng.
+> (Phần dưới giữ làm lịch sử của kế hoạch.)
 
 > **Kế hoạch đầy đủ + bảng theo dõi từng bước: [`docs/KE-HOACH-HA-TANG.md`](docs/KE-HOACH-HA-TANG.md).**
 > Mở phiên mới là **đọc file đó trước**, xem đang dừng ở bước nào rồi làm tiếp — **KHÔNG bắt

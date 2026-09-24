@@ -154,6 +154,15 @@ export default function AdminBillingPage() {
         ))}
       </div>
 
+      {/* Đã công bố giá theo mục đích ở /admin/gia-chuan → khách dùng bảng đó,
+          bảng Gói đăng tin + Đẩy tin ở đây không còn tác dụng. Nói rõ để khỏi sửa nhầm. */}
+      {data.congBo && (tab === "plans" || tab === "up") && (
+        <p className="rounded-lg bg-amber-50 px-4 py-2.5 text-sm text-amber-900">
+          Giá gói tin và đẩy tin đang lấy từ trang{" "}
+          <a href="/admin/gia-chuan" className="font-semibold underline">Giá chuẩn &amp; công bố</a>{" "}
+          (công bố lúc {new Date(data.congBo.luc).toLocaleString("vi-VN")}). Sửa bảng ở mục này KHÔNG đổi giá khách thấy.
+        </p>
+      )}
       {tab === "plans" && <PlansTab data={data} setData={setData} />}
       {tab === "promos" && <PromosTab data={data} setData={setData} />}
       {tab === "projects" && <ProjectPlansTab data={data} setData={setData} />}

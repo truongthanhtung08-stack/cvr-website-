@@ -15,7 +15,7 @@ import {
   thongTinGoi,
   ngayGon,
 } from "@/lib/listingAdmin";
-import { giaDayTin, goiUpNhieuLuot, vnd } from "@/lib/billing";
+import { bangTheoMucDich, giaDayTin, goiUpNhieuLuot, vnd } from "@/lib/billing";
 import { useBilling } from "@/lib/useBilling";
 import { tachThue } from "@/lib/thue";
 
@@ -87,7 +87,7 @@ export default function MyListingsPage() {
   async function handleDay(r: ListingRow) {
     const goi = thongTinGoi(r);
     const kho = Number(r.bump_credits ?? 0);
-    const gia = giaDayTin(billing, goi.cap);
+    const gia = giaDayTin(bangTheoMucDich(billing, r.purpose), goi.cap);
     const phaiTra = tachThue(gia).tongTra;
     // Còn lượt trong kho thì KHÔNG mất thêm tiền — phải nói rõ, đừng doạ khách
     // bằng con số tiền khi họ đã trả từ lúc mua gói.
@@ -130,10 +130,10 @@ export default function MyListingsPage() {
   const [dangMua, setDangMua] = useState<string | null>(null);
   async function handleMuaGoi(r: ListingRow) {
     const goi = thongTinGoi(r);
-    const dsGoi = goiUpNhieuLuot(billing, goi.cap);
+    const dsGoi = goiUpNhieuLuot(bangTheoMucDich(billing, r.purpose), goi.cap);
     if (!dsGoi.length) { window.alert("Chưa có gói đẩy nào cho cấp tin này."); return; }
 
-    const giaLe = tachThue(giaDayTin(billing, goi.cap)).tongTra;
+    const giaLe = tachThue(giaDayTin(bangTheoMucDich(billing, r.purpose), goi.cap)).tongTra;
     const dong = dsGoi.map((g, i) => {
       const tra = tachThue(g.gia).tongTra;
       const moiLuot = Math.round(tra / g.soLuot);
@@ -371,7 +371,7 @@ export default function MyListingsPage() {
                     ? "Đang đẩy…"
                     : Number(r.bump_credits ?? 0) > 0
                       ? `Đẩy tin · còn ${r.bump_credits} lượt`
-                      : `Đẩy tin · ${vnd(tachThue(giaDayTin(billing, goi.cap)).tongTra)}`}
+                      : `Đẩy tin · ${vnd(tachThue(giaDayTin(bangTheoMucDich(billing, r.purpose), goi.cap)).tongTra)}`}
                 </button>
               )}
               {/* MUA GÓI — rẻ hơn đẩy lẻ 20–50%, và hệ thống tự đẩy giúp mỗi sáng. */}

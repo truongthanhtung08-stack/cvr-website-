@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { BILLING_DEFAULT, giaDayTin, vnd, type BillingData } from "@/lib/billing";
+import { BILLING_DEFAULT, bangTheoMucDich, giaDayTin, vnd, type BillingData } from "@/lib/billing";
 import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
 import { baoLoi } from "@/lib/baoLoi";
 import { getTier, type TierId } from "@/lib/packages";
@@ -45,7 +45,7 @@ export async function POST(request: Request) {
   // ── 1. Tin phải là của chính người bấm, và đang đăng ──────────────────────
   const { data: tin, error: loiTin } = await admin
     .from("listings")
-    .select("id,title,owner_id,status,tier,tier_expires_at,bump_credits")
+    .select("id,title,owner_id,status,purpose,tier,tier_expires_at,bump_credits")
     .eq("id", id)
     .single();
   if (loiTin || !tin) return loi("Không tìm thấy tin.", 404);
@@ -78,7 +78,7 @@ export async function POST(request: Request) {
   const cap = (conHan ? tin.tier : "basic") as TierId;
 
   const { data: sc } = await admin.from("site_content").select("data").eq("key", "billing").limit(1);
-  const bang: BillingData = { ...BILLING_DEFAULT, ...((sc?.[0]?.data as Partial<BillingData>) ?? {}) };
+  const bang: BillingData = bangTheoMucDich({ ...BILLING_DEFAULT, ...((sc?.[0]?.data as Partial<BillingData>) ?? {}) }, tin.purpose);
   const tien = tachThue(giaDayTin(bang, cap));
 
   // ── 3. Đẩy: trừ ví + ghi nhật ký + đặt mốc đẩy, trong MỘT giao dịch ───────

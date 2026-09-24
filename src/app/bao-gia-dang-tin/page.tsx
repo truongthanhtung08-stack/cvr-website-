@@ -11,7 +11,7 @@ import { getTier, tierFromBadge, SUAT_GHIM, type TierId, utilityTools } from "@/
 import { getListings } from "@/lib/listingsDb";
 import { getProjects } from "@/lib/contentDb";
 import { getBilling } from "@/lib/siteContent";
-import { BILLING_DEFAULT, priceLinesFor, bangUp, goiPr, ghiChuPr, bangBanner, giaTra, priceLinesDuAn } from "@/lib/billing";
+import { BILLING_DEFAULT, bangTheoMucDich, priceLinesFor, bangUp, goiPr, ghiChuPr, bangBanner, giaTra, priceLinesDuAn } from "@/lib/billing";
 import type { Listing, Project } from "@/lib/data";
 
 export const metadata: Metadata = {
@@ -167,13 +167,15 @@ export default async function BaoGiaPage() {
   // ghi 980.000đ trong khi bảng giá đang chạy là 1.050.000đ. Sửa giá trong admin mà
   // quên sửa code là hai nơi nói hai giá khác nhau. Nay không còn số nào viết riêng
   // trong trang: admin chưa lưu gì thì lùi về bảng giá chuẩn trong billing.ts.
+  // Đã công bố giá theo mục đích (/admin/gia-chuan) thì trang này bày bảng BÁN.
+  const bangBan = bangTheoMucDich(billing, "ban");
   const giaTin = (id: TierId): PriceLine[] =>
-    priceLinesFor(billing, id) ?? priceLinesFor(BILLING_DEFAULT, id) ?? [];
+    priceLinesFor(bangBan, id) ?? priceLinesFor(BILLING_DEFAULT, id) ?? [];
   const giaDuAn = (id: TierId): PriceLine[] =>
     priceLinesDuAn(billing, id) ?? priceLinesDuAn(BILLING_DEFAULT, id) ?? [];
   // ĐẨY TIN · PR · BANNER: lấy đúng bản chủ dự án đặt ở /admin/gia-khuyen-mai.
   // Chưa lưu gì thì hàm tự trả mức chuẩn — trang không bao giờ trống.
-  const upRows = bangUp(billing);
+  const upRows = bangUp(bangBan);
   const prPkgs = goiPr(billing);
   const prNotes = ghiChuPr(billing);
   const bannerTables = bangBanner(billing);

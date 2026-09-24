@@ -191,7 +191,40 @@ export type BillingData = {
   mediaTheoCap?: boolean;
   anhChung?: number;        // số ảnh tối đa khi CHƯA chia theo cấp
   videoChung?: number;      // số video tối đa khi CHƯA chia theo cấp
+  // GIÁ CÔNG BỐ THEO MỤC ĐÍCH — do nút "Công bố" ở /admin/gia-chuan ghi vào.
+  // Có khối này thì bảng giá tin đăng + đẩy tin lấy theo tin BÁN hay CHO THUÊ,
+  // thay cho `plans` / `up` ở trên. Chỉ chứa GIÁ ĐÃ TÍNH SẴN: giá chuẩn và % của
+  // chương trình nằm trong bảng bi_mat, khách không đọc được (xem giaChuan.ts).
+  congBo?: CongBo;
 };
+
+export type MucDichGia = "ban" | "thue";
+export type GiaCongBo = { plans: Plan[]; up: UpRow[] };
+export type CongBo = {
+  ban: GiaCongBo;
+  thue: GiaCongBo;
+  chuongTrinh?: string;   // tên chương trình đang áp dụng lúc công bố (để hiện cho khách)
+  luc: string;            // thời điểm công bố (ISO)
+};
+
+// Mục đích của tin → bảng giá nào. "Cần thuê" tính như cho thuê, "Cần mua" như bán.
+export function mucDichGia(purpose?: string | null): MucDichGia {
+  return purpose === "thue" || purpose === "can-thue" ? "thue" : "ban";
+}
+
+// Bảng giá ĐÚNG cho một tin: đã công bố giá theo mục đích thì thay `plans` + `up`
+// bằng bảng của mục đích đó; chưa công bố thì giữ nguyên như trước. Mọi chỗ tính
+// tiền (form đăng tin, duyệt tin, đẩy tin, mua gói đẩy) đi qua hàm này nên báo
+// giá và trừ tiền luôn cùng một bảng.
+export function bangTheoMucDich(d: BillingData, purpose?: string | null): BillingData {
+  const cb = d.congBo?.[mucDichGia(purpose)];
+  if (!cb) return d;
+  return {
+    ...d,
+    plans: cb.plans.length ? cb.plans : d.plans,
+    up: cb.up.length ? cb.up : d.up,
+  };
+}
 
 // ── GIÁ GÓI DỰ ÁN CHUẨN (khớp mục "Gói Dự án" trong trang Báo giá) ──────────
 // Giai đoạn đầu: CVR-PJ Basic để 0đ (miễn phí) cho dự án chạy trước.
