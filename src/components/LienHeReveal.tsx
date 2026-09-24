@@ -47,7 +47,15 @@ function useReveal(listingId: string) {
     try {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      // Thành viên CHƯA CÓ SỐ trong hồ sơ (đăng ký bằng Google/email) cũng đi
+      // đường xác thực số như khách — nếu không, người bán nhận một "khách hỏi
+      // số" mà không có số nào để gọi lại (đo thật 25/09/2026).
+      let coSo = false;
+      if (user) {
+        const { data: hs } = await supabase.from("profiles").select("phone").eq("id", user.id).maybeSingle();
+        coSo = !!(hs as { phone?: string | null } | null)?.phone?.trim();
+      }
+      if (!user || !coSo) {
         // ĐÃ XÁC THỰC SỐ Ở TIN TRƯỚC → dùng lại vé, xem số ngay, khỏi nhập mã
         // lại. Khách đang so mấy tin cùng lúc mà tin nào cũng bắt chờ mã thì
         // không ai chịu nổi.

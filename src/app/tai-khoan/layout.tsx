@@ -82,7 +82,16 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
                 <div className="space-y-0.5">{MUC_CHINH.map((m) => dong(m))}</div>
 
                 <div className="mt-4 border-t border-cvr-line pt-4">
-                  <p className="mb-2 px-3 text-[13px] font-semibold text-cvr-ink">Tài khoản</p>
+                  {/* Tiêu đề nhóm = trang Tài khoản (menu avatar trỏ tới đây) → bấm được, sáng khi đang đứng */}
+                  <Link
+                    href="/tai-khoan/ca-nhan"
+                    aria-current={pathname === "/tai-khoan/ca-nhan" ? "page" : undefined}
+                    className={`mb-2 block rounded-lg px-3 py-1.5 text-[13px] font-semibold transition ${
+                      pathname === "/tai-khoan/ca-nhan" ? "bg-cvr-ink text-white" : "text-cvr-ink hover:bg-cvr-surface"
+                    }`}
+                  >
+                    Tài khoản
+                  </Link>
                   <div className="space-y-0.5">
                     {MUC_TAI_KHOAN.map((m) =>
                       dong(

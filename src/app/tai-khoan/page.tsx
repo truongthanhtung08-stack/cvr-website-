@@ -7,6 +7,7 @@ import { useProfile } from "@/lib/useProfile";
 import { conThieuDeLenCap, freeDangChay, freeNote, levelOf, levelTiepTheo, tenGoiMienPhi, vnd } from "@/lib/billing";
 import { useBilling } from "@/lib/useBilling";
 import { ngayVN, tuNgayVN } from "@/lib/ngayVN";
+import { khoaKhach } from "@/lib/khachHang";
 import { PageHeader } from "@/components/Ui";
 import DoDangKyMoi from "@/components/DoDangKyMoi";
 import NhanTinCuaToi from "@/components/NhanTinCuaToi";
@@ -72,7 +73,7 @@ export default function AccountOverviewPage() {
         supabase.from("listing_leads").select("id,created_at,viewer_id,viewer_phone").in("listing_id", ids)
           .gte("created_at", mocKhach && mocKhach < `${moc14}T00:00:00+07:00` ? mocKhach : `${moc14}T00:00:00+07:00`),
         mocKhach
-          ? supabase.from("listing_viewer").select("viewer_id").in("listing_id", ids).gt("lan_cuoi", mocKhach)
+          ? supabase.from("listing_viewer").select("viewer_id,viewer_phone").in("listing_id", ids).gt("lan_cuoi", mocKhach)
           : Promise.resolve({ data: [] as { viewer_id: string }[] }),
       ]);
 
@@ -97,9 +98,9 @@ export default function AccountOverviewPage() {
       const nguoiMoi = new Set<string>();
       if (mocKhach) {
         for (const l of dsLead) {
-          if (l.created_at > mocKhach) nguoiMoi.add(l.viewer_id ?? `sdt:${(l.viewer_phone ?? "").replace(/\D/g, "") || l.id}`);
+          if (l.created_at > mocKhach) nguoiMoi.add(khoaKhach(l.viewer_id, l.viewer_phone, l.id));
         }
-        for (const v of (viewers ?? []) as { viewer_id: string }[]) nguoiMoi.add(v.viewer_id);
+        for (const v of (viewers ?? []) as { viewer_id: string; viewer_phone: string | null }[]) nguoiMoi.add(khoaKhach(v.viewer_id, v.viewer_phone, v.viewer_id));
       }
       const baNgayNua = Date.now() + 3 * 86_400_000;
       setSo({
@@ -112,7 +113,8 @@ export default function AccountOverviewPage() {
         tongXem: list.reduce((s, l) => s + (l.view_count ?? 0), 0),
         xem7,
         xem7Truoc,
-        hoiSo7: dsLead.filter((l) => ngayVN(l.created_at) >= moc7).length,
+        // Đếm NGƯỜI hỏi số (một người hỏi 2 tin vẫn là 1) — khớp trang Khách hàng.
+        hoiSo7: new Set(dsLead.filter((l) => ngayVN(l.created_at) >= moc7).map((l) => khoaKhach(l.viewer_id, l.viewer_phone, l.id))).size,
         khachMoi: nguoiMoi.size,
         tinTot,
       });

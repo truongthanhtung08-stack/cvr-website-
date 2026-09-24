@@ -112,7 +112,8 @@ async function traSo(listingId: string, sdtKhach: string, ten: string | undefine
       .gt("created_at", hom_qua)
       .limit(1);
 
-    if (!daCo?.length) {
+    // Chính người đăng tin tự xác thực xem số tin mình → không phải khách.
+    if (!daCo?.length && chuanHoaSdt(sdtKhach) !== soNguoiBan) {
       await admin.from("listing_leads").insert({
         listing_id: listingId,
         viewer_id: null,

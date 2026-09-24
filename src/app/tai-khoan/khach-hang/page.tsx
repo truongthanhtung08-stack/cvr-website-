@@ -4,7 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { PageHeader } from "@/components/Ui";
-import { tuNgayVN } from "@/lib/ngayVN";
+import { ngayVN, tuNgayVN } from "@/lib/ngayVN";
+import { khoaKhach } from "@/lib/khachHang";
 
 // ════════════════════════════════════════════════════════════════════════════
 // KHÁCH HÀNG — AI ĐANG QUAN TÂM TIN CỦA TÔI (thay cho trang "Tương tác")
@@ -25,7 +26,7 @@ import { tuNgayVN } from "@/lib/ngayVN";
 // ════════════════════════════════════════════════════════════════════════════
 
 type Lead = { id: string; listing_id: string; viewer_id: string | null; viewer_name: string | null; viewer_phone: string | null; created_at: string };
-type Viewer = { listing_id: string; viewer_id: string; lan_xem: number; viewer_name: string | null; viewer_phone: string | null; lan_cuoi: string };
+type Viewer = { listing_id: string; viewer_id: string; ngay: string; lan_xem: number; viewer_name: string | null; viewer_phone: string | null; lan_cuoi: string };
 type DanhGia = { id: string; listing_id: string; sao: number; sai_thong_tin: boolean; khong_lien_lac: boolean; da_ban: boolean; created_at: string };
 type SuKien = { id: number; listing_id: string; luc: string; thiet_bi: string | null; nguon: string | null; la_thanh_vien: boolean };
 type DongTin = { id: string; title: string; hienThi: number; nguoiXem: number; xem7: number; xem30: number; tong: number; hoiSo: number };
@@ -91,7 +92,7 @@ export default function KhachHangPage() {
       const [{ data: xem }, { data: ht }, { data: nx }, { data: ld }, { data: dg }, { data: sk }] = await Promise.all([
         supabase.from("listing_view_daily").select("listing_id,ngay,luot").in("listing_id", ids).gte("ngay", moc30),
         supabase.from("listing_impression_daily").select("listing_id,luot").in("listing_id", ids).gte("ngay", moc30),
-        supabase.from("listing_viewer").select("listing_id,viewer_id,lan_xem,viewer_name,viewer_phone,lan_cuoi")
+        supabase.from("listing_viewer").select("listing_id,viewer_id,ngay,lan_xem,viewer_name,viewer_phone,lan_cuoi")
           .in("listing_id", ids).order("lan_cuoi", { ascending: false }).limit(500),
         supabase.from("listing_leads").select("id,listing_id,viewer_id,viewer_name,viewer_phone,created_at")
           .in("listing_id", ids).order("created_at", { ascending: false }).limit(500),
@@ -122,14 +123,19 @@ export default function KhachHangPage() {
       setDanhGia((dg ?? []) as DanhGia[]);
       setSuKien((sk ?? []) as SuKien[]);
 
-      // Số NGƯỜI xem mỗi tin (không phải số dòng theo ngày).
+      // Số NGƯỜI xem / hỏi số mỗi tin trong 30 NGÀY — cùng kỳ với các cột khác.
       const nguoiTheoTin = new Map<string, Set<string>>();
       for (const v of dsViewer) {
+        if (String(v.ngay).slice(0, 10) < moc30) continue;
         if (!nguoiTheoTin.has(v.listing_id)) nguoiTheoTin.set(v.listing_id, new Set());
         nguoiTheoTin.get(v.listing_id)!.add(v.viewer_id);
       }
-      const demLead = new Map<string, number>();
-      for (const l of dsLead) demLead.set(l.listing_id, (demLead.get(l.listing_id) ?? 0) + 1);
+      const demLead = new Map<string, Set<string>>();
+      for (const l of dsLead) {
+        if (ngayVN(l.created_at) < moc30) continue;
+        if (!demLead.has(l.listing_id)) demLead.set(l.listing_id, new Set());
+        demLead.get(l.listing_id)!.add(khoaKhach(l.viewer_id, l.viewer_phone, l.id));
+      }
 
       setTin(
         list
@@ -141,7 +147,7 @@ export default function KhachHangPage() {
             xem7: bay.get(l.id) ?? 0,
             xem30: bamuoi.get(l.id) ?? 0,
             tong: Number(l.view_count ?? 0),
-            hoiSo: demLead.get(l.id) ?? 0,
+            hoiSo: demLead.get(l.id)?.size ?? 0,
           }))
           .sort((a, b) => b.xem7 - a.xem7 || b.tong - a.tong),
       );
@@ -169,7 +175,7 @@ export default function KhachHangPage() {
       return t;
     };
     for (const v of viewers) {
-      const k = lay(v.viewer_id, v.viewer_name, v.viewer_phone);
+      const k = lay(khoaKhach(v.viewer_id, v.viewer_phone, v.viewer_id), v.viewer_name, v.viewer_phone);
       const t = tinCua(k, v.listing_id);
       const n = Number(v.lan_xem) || 0;
       k.lanXem += n; t.lanXem += n;
@@ -177,8 +183,7 @@ export default function KhachHangPage() {
       if (v.lan_cuoi > t.luc) t.luc = v.lan_cuoi;
     }
     for (const l of leads) {
-      const khoa = l.viewer_id ?? `sdt:${(l.viewer_phone ?? "").replace(/\D/g, "") || l.id}`;
-      const k = lay(khoa, l.viewer_name, l.viewer_phone);
+      const k = lay(khoaKhach(l.viewer_id, l.viewer_phone, l.id), l.viewer_name, l.viewer_phone);
       const t = tinCua(k, l.listing_id);
       k.daHoiSo = true; t.hoiSo = true;
       if (l.created_at > k.luc) k.luc = l.created_at;
@@ -197,8 +202,10 @@ export default function KhachHangPage() {
 
   const tongHienThi = (tin ?? []).reduce((s, t) => s + t.hienThi, 0);
   const tongXem30 = (tin ?? []).reduce((s, t) => s + t.xem30, 0);
-  const tongNguoiXem = khach.filter((k) => k.lanXem > 0).length;
-  const tongHoiSo = khach.filter((k) => k.daHoiSo).length;
+  // Ô số liệu ghi "30 ngày qua" → đếm ĐÚNG 30 ngày, mỗi người một lần.
+  const moc30 = tuNgayVN(30);
+  const tongNguoiXem = new Set(viewers.filter((v) => String(v.ngay).slice(0, 10) >= moc30).map((v) => khoaKhach(v.viewer_id, v.viewer_phone, v.viewer_id))).size;
+  const tongHoiSo = new Set(leads.filter((l) => ngayVN(l.created_at) >= moc30).map((l) => khoaKhach(l.viewer_id, l.viewer_phone, l.id))).size;
   const soMoi = mocCu ? khach.filter((k) => k.luc > mocCu).length : 0;
 
   const diemTb = danhGia.length ? danhGia.reduce((s2, d) => s2 + d.sao, 0) / danhGia.length : 0;
@@ -345,8 +352,8 @@ export default function KhachHangPage() {
                   <th className="py-2.5 text-right">Xem 7n</th>
                   <th className="py-2.5 text-right">Xem 30n</th>
                   <th className="py-2.5 text-right">Tổng xem</th>
-                  <th className="py-2.5 text-right">Thành viên</th>
-                  <th className="py-2.5 text-right">Hỏi số</th>
+                  <th className="py-2.5 text-right">Thành viên 30n</th>
+                  <th className="py-2.5 text-right">Hỏi số 30n</th>
                 </tr>
               </thead>
               <tbody>

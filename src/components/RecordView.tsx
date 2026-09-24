@@ -36,17 +36,18 @@ export default function RecordView({ id }: { id: string }) {
         const sb = createClient();
         sb.rpc("increment_listing_view", { p_listing_id: id, p_thiet_bi: thietBi(), p_nguon: nguonDen() })
           .then(({ error }) => { if (error) sb.rpc("increment_listing_view", { p_listing_id: id }); });
-      }
 
-      // GHI NGƯỜI XEM — thành viên đăng nhập mở tin ra thì người bán biết được
-      // ai đang quan tâm, chứ không chỉ biết mỗi nhóm đã bấm "hiện số" (nhóm đó
-      // rất nhỏ). Hàm tự đọc phiên đăng nhập ở máy chủ: chưa đăng nhập, tin chưa
-      // duyệt, hoặc chính chủ tin đang xem lại thì nó tự bỏ qua.
-      //
-      // Gọi MỖI LẦN MỞ TIN, không chặn theo phiên như lượt xem ở trên: bảng đếm
-      // luôn số lần xem trong ngày — khách quay lại tin nhiều lần là dấu hiệu
-      // quan tâm thật, người bán cần thấy điều đó.
-      createClient().rpc("ghi_nguoi_xem", { p_listing_id: id });
+        // GHI NGƯỜI XEM — thành viên đăng nhập mở tin ra thì người bán biết được
+        // ai đang quan tâm. Hàm tự đọc phiên đăng nhập ở máy chủ: chưa đăng nhập,
+        // tin chưa duyệt, hoặc chính chủ tin đang xem lại thì nó tự bỏ qua.
+        //
+        // CÙNG MỐC 30 PHÚT với lượt xem (sửa 25/09/2026): trước đây F5 một lần là
+        // "xem thêm 1 lần" → số lần xem của khách bị thổi, lệch với lượt xem tin.
+        // Nay "xem 3 lần" nghĩa là 3 lần quay lại thật.
+        // PHẢI có .then(): thư viện Supabase chỉ GỬI yêu cầu khi được chờ. Thiếu nó,
+        // lệnh này chưa từng chạy từ 0031 tới 25/09/2026 (bảng người xem 0 dòng).
+        sb.rpc("ghi_nguoi_xem", { p_listing_id: id }).then(() => {});
+      }
     } catch {
       /* thiếu env / RPC chưa có → không sao, chỉ là đếm xem */
     }
