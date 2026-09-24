@@ -156,7 +156,7 @@ export default function RegisterForm({ uuDai, capThe = "h1" }: { uuDai?: string;
         ? await supabase.auth.signInWithPassword({ email: email.trim(), password: pw })
         : await supabase.auth.signInWithPassword({ phone: `+84${soDT.slice(1)}`, password: pw });
 
-      window.location.href = error ? "/dang-nhap" : "/tai-khoan";
+      window.location.replace(error ? "/dang-nhap" : "/tai-khoan");
     } catch {
       setDangChay(false);
       setLoi("Không kết nối được máy chủ. Vui lòng thử lại.");

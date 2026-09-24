@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useProfile } from "@/lib/useProfile";
-import { signOut } from "@/lib/useAuth";
+import { signOut, useAuth, anhDaiDien } from "@/lib/useAuth";
+import AnhDaiDien from "@/components/AnhDaiDien";
 import { roleLabel, statusBadge } from "@/lib/adminLabels";
 import { vnd } from "@/lib/billing";
 import { MUC_TAI_KHOAN } from "@/lib/menuTaiKhoan";
@@ -17,6 +18,7 @@ import { PageHeader } from "@/components/Ui";
 // ============================================================================
 export default function TaiKhoanCaNhanPage() {
   const { profile, loading } = useProfile();
+  const { user } = useAuth();
   if (loading) return <p className="text-sm text-cvr-muted">Đang tải…</p>;
   if (!profile) return <p className="text-sm text-cvr-muted">Không tải được hồ sơ. Vui lòng đăng nhập lại.</p>;
 
@@ -32,7 +34,8 @@ export default function TaiKhoanCaNhanPage() {
 
       {/* Thông tin người dùng */}
       <section className="flex items-center justify-between gap-3 rounded-2xl border border-cvr-line bg-white p-4 shadow-sm">
-        <div className="min-w-0">
+        <AnhDaiDien url={profile.avatar_url || anhDaiDien(user)} ten={profile.full_name || "T"} className="h-14 w-14 bg-cvr-surface text-xl text-cvr-ink ring-1 ring-cvr-line" />
+        <div className="min-w-0 flex-1">
           <p className="truncate text-[15px] font-semibold text-cvr-ink">{profile.full_name || "Thành viên"}</p>
           <p className="truncate text-sm text-cvr-muted">
             {[profile.phone, profile.email].filter(Boolean).join(" · ")}

@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useProfile } from "@/lib/useProfile";
+import { useAuth, anhDaiDien } from "@/lib/useAuth";
+import AnhDaiDien from "@/components/AnhDaiDien";
 import { signOut } from "@/lib/useAuth";
 import { vnd } from "@/lib/billing";
 import { MUC_TAI_KHOAN } from "@/lib/menuTaiKhoan";
@@ -40,6 +42,7 @@ function dangXem(href: string, pathname: string): boolean {
 export default function AccountLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { profile, loading } = useProfile();
+  const { user } = useAuth();
   // Số dư ví: cột balance có thể chưa bật trong CSDL → coi như 0.
   const soDu = (profile as unknown as { balance?: number } | null)?.balance ?? 0;
 
@@ -70,9 +73,12 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
             {/* MÁY TÍNH — cột điều hướng dính theo cuộn */}
             <aside className="hidden lg:block">
               <div className="no-scrollbar sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto rounded-2xl border border-cvr-line bg-white p-3 shadow-lux">
-                <p className="truncate px-3 pb-2 pt-1 text-sm text-cvr-muted">
-                  {loading ? "Tài khoản" : <>Xin chào, <strong className="font-semibold text-cvr-ink">{profile?.full_name || "bạn"}</strong></>}
-                </p>
+                <div className="flex items-center gap-2.5 px-3 pb-3 pt-1">
+                  <AnhDaiDien url={profile?.avatar_url || anhDaiDien(user)} ten={profile?.full_name || "T"} className="h-9 w-9 bg-cvr-surface text-sm text-cvr-ink ring-1 ring-cvr-line" />
+                  <p className="min-w-0 truncate text-sm text-cvr-muted">
+                    {loading ? "Tài khoản" : <>Xin chào, <strong className="font-semibold text-cvr-ink">{profile?.full_name || "bạn"}</strong></>}
+                  </p>
+                </div>
                 <div className="space-y-0.5">{MUC_CHINH.map((m) => dong(m))}</div>
 
                 <div className="mt-4 border-t border-cvr-line pt-4">

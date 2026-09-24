@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { chuanHoaSdt, laSdtVN } from "@/lib/phone";
 import SocialAuth from "@/components/SocialAuth";
+import { dichSauDangNhap, trangWebTruocDo } from "@/lib/dieuHuong";
 
 // Dịch vài lỗi Supabase thường gặp sang tiếng Việt.
 function viError(msg: string): string {
@@ -43,6 +44,15 @@ export default function LoginForm() {
   // gõ mật khẩu. Phiên đăng nhập thì Supabase vốn giữ tới khi bấm Đăng xuất,
   // không phụ thuộc ô này. Trước đây ô này là hộp trống không nối vào đâu.
   const [ghiNho, setGhiNho] = useState(true);
+
+  // ĐÃ ĐĂNG NHẬP MÀ VẪN RƠI VÀO ĐÂY — thường do bấm back cứng từ khu quản lý.
+  // Không hiện lại form đăng nhập: đưa thẳng về trang web đang xem trước đó.
+  useEffect(() => {
+    createClient().auth.getUser().then(({ data }) => {
+      if (data.user) window.location.replace(trangWebTruocDo());
+    }).catch(() => { /* chưa cấu hình → cứ hiện form */ });
+  }, []);
+
   useEffect(() => {
     try {
       const cu = localStorage.getItem("cl-dang-nhap-email");
@@ -93,9 +103,9 @@ export default function LoginForm() {
         }
       } catch { /* trình duyệt chặn localStorage — không chặn đăng nhập vì lý do đó */ }
 
-      const next = new URLSearchParams(window.location.search).get("next");
+      const next = dichSauDangNhap("");
       if (next) {
-        window.location.href = next;
+        window.location.replace(next);
         return;
       }
       // Không có đích cụ thể → về đúng nơi theo vai trò: admin → /admin, khách → /tai-khoan
@@ -103,7 +113,7 @@ export default function LoginForm() {
       const { data: profile } = user
         ? await supabase.from("profiles").select("role").eq("id", user.id).single()
         : { data: null };
-      window.location.href = profile?.role === "admin" ? "/admin" : "/tai-khoan";
+      window.location.replace(profile?.role === "admin" ? "/admin" : "/tai-khoan");
     } catch {
       setNotice("Hệ thống tài khoản chưa sẵn sàng. Vui lòng thử lại sau.");
     } finally {

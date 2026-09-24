@@ -54,6 +54,12 @@ export function useAuth() {
   return { user, loading };
 }
 
+// Ảnh đại diện thật do Google / Zalo cấp lúc đăng nhập ("" nếu không có).
+export function anhDaiDien(user: User | null): string {
+  const meta = (user?.user_metadata ?? {}) as Record<string, unknown>;
+  return (meta.avatar_url as string) || (meta.picture as string) || "";
+}
+
 // Tên hiển thị: ưu tiên full_name (đặt lúc đăng ký) → email → SĐT.
 export function displayName(user: User | null): string {
   if (!user) return "";
@@ -72,6 +78,7 @@ export async function signOut() {
   try {
     await createClient().auth.signOut();
   } finally {
-    window.location.href = "/";
+    // THAY trang: đăng xuất rồi bấm back không quay lại khu quản lý nữa.
+    window.location.replace("/");
   }
 }

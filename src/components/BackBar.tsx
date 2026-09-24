@@ -59,16 +59,59 @@ const MUC: Record<string, { ten: string; cha: string; chaCon?: string }> = {
   "quen-mat-khau": { ten: "Quên mật khẩu", cha: "/dang-nhap" },
 };
 
-// Tên riêng cho các trang con của khu tài khoản (admin của khách hàng)
+// ── KHU QUẢN LÝ CỦA KHÁCH (/tai-khoan) — LỐI ĐI ĐÃ CHỐT 25/09/2026 ────────────
+//   Website → Đăng nhập → Khu quản lý → chuyển qua lại các mục → Quay lại
+//
+//   · TẦNG 1 = 4 mục ở thanh dưới (Tổng quan · Tin đăng · Khách hàng · Tài khoản).
+//     Chuyển mục là THAY trang (MobileTabBar), nên Quay lại ở tầng này nghĩa là
+//     RA KHỎI khu quản lý → về đúng trang web khách đang xem trước khi vào
+//     (bỏ qua trang đăng nhập); không có thì về trang chủ. Thanh ghi "Về trang web".
+//   · TẦNG 2+ = trang con. Quay lại → về trang vừa bấm sang (nếu đó là trang
+//     trong khu quản lý), còn vào thẳng từ link thì về MỤC CHA của nó.
+//   · Trang Đăng tin giữ luật cũ: luôn về Tổng quan.
+const TANG_1 = ["/tai-khoan", "/tai-khoan/tin-dang", "/tai-khoan/khach-hang", "/tai-khoan/ca-nhan"];
+
+// Tên trang con (tầng 2+) — khớp tiêu đề của chính trang đó.
 const TAI_KHOAN_CON: Record<string, string> = {
-  "tin-dang": "Tin đã đăng",
-  "tuong-tac": "Tương tác",
+  "tuong-tac": "Khách hàng",
   "hoa-don": "Hóa đơn của tôi",
   "nap-tien": "Nạp tiền",
-  "doi-diem": "Đổi điểm",
-  "cai-dat": "Cài đặt",
+  "doi-diem": "Đổi điểm thưởng",
+  "cai-dat": "Cài đặt tài khoản",
   "du-an": "Dự án của tôi",
 };
+const TAI_KHOAN_CHAU: Record<string, string> = {
+  moi: "Đăng dự án mới",
+  "ho-so": "Yêu cầu đăng dự án",
+};
+
+// Mục cha của trang con: tin → danh sách tin; dự án con → Dự án của tôi;
+// ví, hoá đơn, điểm, cài đặt, dự án → Tài khoản (nơi chứa các mục đó).
+function chaTaiKhoan(doan: string[]): string {
+  if (doan[1] === "tin-dang") return "/tai-khoan/tin-dang";
+  if (doan[1] === "du-an" && doan[2]) return "/tai-khoan/du-an";
+  return "/tai-khoan/ca-nhan";
+}
+
+const laKhuQuanLy = (p: string) => p.startsWith("/tai-khoan") || p.startsWith("/dang-tin");
+const laTrangDangNhap = (p: string) => /^\/(dang-nhap|dang-ky|quen-mat-khau|auth)(\/|$)/.test(p);
+
+// Ghi lại đường đi trong phiên (sessionStorage — Header gắn lại mỗi trang nên
+// không giữ được trong bộ nhớ component).
+function ghiDuongDi(pathname: string) {
+  try {
+    const hienTai = sessionStorage.getItem("cl_trang_hien");
+    if (hienTai === pathname) return;
+    if (hienTai) sessionStorage.setItem("cl_trang_truoc", hienTai);
+    sessionStorage.setItem("cl_trang_hien", pathname);
+    if (!laKhuQuanLy(pathname) && !laTrangDangNhap(pathname) && !pathname.startsWith("/admin")) {
+      sessionStorage.setItem("cl_trang_web", pathname + location.search);
+    }
+  } catch { /* bị chặn bộ nhớ → dùng luật mặc định */ }
+}
+function docPhien(khoa: string): string {
+  try { return sessionStorage.getItem(khoa) ?? ""; } catch { return ""; }
+}
 
 export default function BackBar() {
   const router = useRouter();
@@ -79,6 +122,7 @@ export default function BackBar() {
   // tin liên tiếp vẫn biết đang đứng ở tin nào, và bấm Quay lại là về đúng danh
   // sách vừa rời (chủ dự án chốt 11/9/2026).
   const [tenTrang, setTenTrang] = useState("");
+  useEffect(() => { ghiDuongDi(pathname); }, [pathname]);
   useEffect(() => {
     let con = true;
     const doc = () => {
@@ -106,7 +150,11 @@ export default function BackBar() {
 
   // Tên hiển thị: ưu tiên tên trang con của khu tài khoản
   let ten = muc.ten;
-  if (goc === "tai-khoan" && doan[1]) ten = TAI_KHOAN_CON[doan[1]] ?? muc.ten;
+  const tang1 = goc === "tai-khoan" && TANG_1.includes(pathname.replace(/\/$/, ""));
+  if (tang1) ten = "Về trang web";
+  else if (goc === "tai-khoan" && doan[1]) {
+    ten = doan[1] === "tin-dang" ? "Chi tiết tin đăng" : (doan[2] && TAI_KHOAN_CHAU[doan[2]]) || TAI_KHOAN_CON[doan[1]] || muc.ten;
+  }
   // Trang chi tiết (tin / dự án / bài viết) → hiện đúng tên đang xem
   if (doan.length > 1 && tenTrang) ten = tenTrang;
 
@@ -122,6 +170,17 @@ export default function BackBar() {
     // quản lý tin, đúng nơi khách cần tới (chủ dự án chốt 11/9/2026).
     if (goc === "dang-tin") {
       router.push("/tai-khoan");
+      return;
+    }
+    // KHU QUẢN LÝ — tầng 1: ra khỏi khu, về trang web đang xem trước khi vào.
+    if (tang1) {
+      router.push(docPhien("cl_trang_web") || "/");
+      return;
+    }
+    // Tầng 2+: vừa bấm sang từ trang trong khu → lùi đúng trang đó; không thì về mục cha.
+    if (goc === "tai-khoan") {
+      if (laKhuQuanLy(docPhien("cl_trang_truoc")) && window.history.length > 1) router.back();
+      else router.push(chaTaiKhoan(doan));
       return;
     }
     // NÚT BACK = LÙI THẬT. Còn lịch sử thì lùi đúng trang vừa xem.

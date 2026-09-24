@@ -55,6 +55,13 @@ const BAT_ZALO = process.env.NEXT_PUBLIC_BAT_ZALO === "1";
 
 export default function SocialAuth() {
   const [notice, setNotice] = useState("");
+  // Mang theo ?next sang trang đăng nhập bằng số điện thoại — trước đây bị rơi
+  // mất, khách bấm Đăng tin → đăng nhập bằng số → bị đưa về Tổng quan thay vì Đăng tin.
+  const [nextSdt, setNextSdt] = useState("");
+  useEffect(() => {
+    const n = new URLSearchParams(window.location.search).get("next");
+    if (n) setNextSdt(`?next=${encodeURIComponent(n)}`);
+  }, []);
   // Nút NÀO đang chờ thì CHỈ nút đó báo "Đang chuyển tới…". Trước đây dùng một cờ
   // chung nên bấm Zalo lại thấy nút Google đổi chữ → tưởng web đá sang Google.
   const [loading, setLoading] = useState<null | "google" | "facebook" | "zalo">(null);
@@ -201,7 +208,7 @@ export default function SocialAuth() {
 
       {BAT_SO_DIEN_THOAI && (
         <Link
-          href="/dang-nhap/so-dien-thoai"
+          href={`/dang-nhap/so-dien-thoai${nextSdt}`}
           className="flex h-11 w-full items-center justify-center gap-2.5 rounded-lg border border-cvr-line bg-white text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink"
         >
           <PhoneIcon />

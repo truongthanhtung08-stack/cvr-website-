@@ -8,7 +8,8 @@ import { resetHomeIfOnHome } from "@/components/HomeExpand";
 import { packages, utilityTools } from "@/lib/packages";
 import { projectCategories, rentCategories, saleCategories } from "@/lib/categories";
 import { useSaved } from "@/lib/useSaved";
-import { useAuth, displayName, signOut } from "@/lib/useAuth";
+import { useAuth, displayName, anhDaiDien, signOut } from "@/lib/useAuth";
+import AnhDaiDien from "@/components/AnhDaiDien";
 
 // href KHÔNG bắt buộc: mục chỉ có `children` là NHÃN NHÓM (không bấm được),
 // dùng để gom danh mục — tránh link cha trỏ trùng một mục con.
@@ -209,13 +210,14 @@ function SaveButton() {
 }
 
 // Menu tài khoản khi đã đăng nhập (avatar + dropdown)
-function AccountMenu({ name, onLogout }: { name: string; onLogout: () => void }) {
-  const initial = name.trim().charAt(0).toUpperCase() || "T";
+function AccountMenu({ name, anh, onLogout }: { name: string; anh: string; onLogout: () => void }) {
+  // KHỚP khu quản lý (25/09/2026): đúng các mục chính, cùng tên gọi.
   const links: { label: string; href: string }[] = [
     { label: "Tổng quan", href: "/tai-khoan" },
-    { label: "Tin đã đăng", href: "/tai-khoan/tin-dang" },
-    { label: "Tin đã lưu", href: "/tin-luu" },
-    { label: "Cài đặt tài khoản", href: "/tai-khoan/cai-dat" },
+    { label: "Tin đăng", href: "/tai-khoan/tin-dang" },
+    { label: "Khách hàng", href: "/tai-khoan/khach-hang" },
+    { label: "Đăng tin", href: "/dang-tin" },
+    { label: "Tài khoản", href: "/tai-khoan/ca-nhan" },
   ];
 
   return (
@@ -224,9 +226,7 @@ function AccountMenu({ name, onLogout }: { name: string; onLogout: () => void })
         type="button"
         className="flex items-center gap-2 rounded-full py-1 pl-1 pr-1.5 transition-colors"
       >
-        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-sm font-semibold text-white ring-1 ring-white/15">
-          {initial}
-        </span>
+        <AnhDaiDien url={anh} ten={name} className="h-8 w-8 bg-white/10 text-sm text-white ring-1 ring-white/15" />
         <span className="hidden max-w-[8rem] truncate text-sm font-medium text-cvr-line group-hover:text-white lg:inline">
           {name}
         </span>
@@ -297,23 +297,12 @@ function MobileMenu({
             (avatar + ♡ + 🔔), KHÔNG lặp lại khối tài khoản trong menu drawer. ── */}
         <div className="mb-7">
           {user ? (
-            // Đã đăng nhập — kiểu Batdongsan: [avatar + tên] … [🔔], gần đầu menu.
+            // Đã đăng nhập: [ảnh đại diện + tên] → Tổng quan. (Chuông đã bỏ 25/09 — chưa có
+            // thông báo thật thì không đặt chuông giả.)
             <div className="mb-2 flex items-center gap-2.5">
               <Link href="/tai-khoan" onClick={onClose} className="flex min-w-0 flex-1 items-center gap-3">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/15 text-[14px] font-semibold text-white">
-                  {displayName(user).trim().charAt(0).toUpperCase() || "T"}
-                </span>
+                <AnhDaiDien url={anhDaiDien(user)} ten={displayName(user)} className="h-9 w-9 bg-white/15 text-[14px] text-white" />
                 <span className="min-w-0 truncate text-[15px] font-semibold text-white">{displayName(user)}</span>
-              </Link>
-              <Link
-                href="/tai-khoan"
-                onClick={onClose}
-                aria-label="Thông báo"
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white/80 transition-colors active:bg-white/10"
-              >
-                <svg className="h-[19px] w-[19px]" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                </svg>
               </Link>
             </div>
           ) : (
@@ -532,7 +521,7 @@ export default function Header() {
               drawer menu (kiểu Batdongsan) → thanh header mobile chỉ Logo · ♡ · ☰. */}
           <div className="hidden items-center lg:flex">
             {user ? (
-              <AccountMenu name={displayName(user)} onLogout={signOut} />
+              <AccountMenu name={displayName(user)} anh={anhDaiDien(user)} onLogout={signOut} />
             ) : (
               <Link
                 href="/dang-nhap"

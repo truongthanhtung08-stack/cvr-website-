@@ -622,6 +622,7 @@ export default function PostListingForm() {
           </Link>
           <Link
             href="/tai-khoan/tin-dang"
+            replace
             className="inline-flex h-11 w-full items-center justify-center rounded-full bg-cvr-surface px-6 text-sm font-semibold text-cvr-body ring-1 ring-inset ring-cvr-line transition hover:text-cvr-ink sm:w-auto"
           >
             Xem tin nháp
@@ -647,7 +648,7 @@ export default function PostListingForm() {
             : "Tin của bạn đang chờ Coastal Land kiểm duyệt và sẽ hiển thị sau ít phút."}
         </p>
         <div className="mt-5 flex flex-wrap justify-center gap-3">
-          <Link href="/tai-khoan/tin-dang" className="rounded-full bg-cvr-ink px-5 py-2 text-sm font-semibold text-white transition hover:bg-cvr-ink/90">Tin đăng của tôi</Link>
+          <Link href="/tai-khoan/tin-dang" replace className="rounded-full bg-cvr-ink px-5 py-2 text-sm font-semibold text-white transition hover:bg-cvr-ink/90">Tin đăng của tôi</Link>
           {!editId && (
             <button type="button" onClick={() => { setDone(""); setTitle(""); setImages([]); }} className="rounded-full border border-cvr-line px-5 py-2 text-sm font-medium text-cvr-body hover:border-cvr-ink hover:text-cvr-ink">Đăng tin khác</button>
           )}

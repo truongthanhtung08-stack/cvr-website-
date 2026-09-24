@@ -16,6 +16,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import TrangPhapLy, { Muc, DanhSach } from "@/components/TrangPhapLy";
 import { PHAP_LY, DONG_GIAY_PHEP } from "@/lib/phapLy";
+import { ZALO_OA_URL } from "@/lib/lienHe";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/quy-che" },
@@ -146,7 +147,8 @@ export default function QuyChePage() {
         <DanhSach
           items={[
             ...(PHAP_LY.tenCongTy ? [<>Đơn vị chủ quản: <strong className="font-semibold text-cvr-ink">{PHAP_LY.tenCongTy}</strong></>] : []),
-            <>Hotline / Zalo: <a href="tel:+84377985036" className="font-semibold text-cvr-blue-ink underline">0377 985 036</a></>,
+            <>Hotline: <a href="tel:+84377985036" className="font-semibold text-cvr-blue-ink underline">0377 985 036</a></>,
+            <>Zalo OA: <a href={ZALO_OA_URL} target="_blank" rel="noopener noreferrer" className="font-semibold text-cvr-blue-ink underline">Coastal Land</a></>,
             <>Email: <a href="mailto:hotro@coastalland.vn" className="font-semibold text-cvr-blue-ink underline">hotro@coastalland.vn</a></>,
             <>Địa chỉ: {PHAP_LY.diaChiDayDu}</>,
             <>Trang <Link href="/lien-he" className="font-semibold text-cvr-blue-ink underline">Liên hệ</Link> — gửi yêu cầu trực tuyến.</>,

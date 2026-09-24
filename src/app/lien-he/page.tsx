@@ -17,6 +17,7 @@ import Link from "next/link";
 import TrangPhapLy, { Muc, DanhSach } from "@/components/TrangPhapLy";
 import YeuCauForm from "@/components/YeuCauForm";
 import { PHAP_LY } from "@/lib/phapLy";
+import { ZALO_OA_URL } from "@/lib/lienHe";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/lien-he" },
@@ -46,12 +47,13 @@ export default function LienHePage() {
               ? [<>Đơn vị chủ quản: <strong className="font-semibold text-cvr-ink">{PHAP_LY.tenCongTy}</strong>{PHAP_LY.maSoThue ? ` — MSDN ${PHAP_LY.maSoThue}` : ""}</>]
               : []),
             <>
-              Hotline / Zalo:{" "}
+              Hotline:{" "}
               <a href={`tel:${HOTLINE_TEL}`} className="font-semibold text-cvr-blue-ink underline">
                 {HOTLINE}
               </a>{" "}
               — nhanh nhất, hỗ trợ trực tiếp.
             </>,
+            <>Zalo OA: <a href={ZALO_OA_URL} target="_blank" rel="noopener noreferrer" className="font-semibold text-cvr-blue-ink underline">Coastal Land</a> — nhắn tin, nhận thông báo từ Coastal Land.</>,
             <>
               Email:{" "}
               <a href={`mailto:${EMAIL}`} className="font-semibold text-cvr-blue-ink underline">

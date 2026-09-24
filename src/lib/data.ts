@@ -5,6 +5,7 @@ import { asset } from "@/lib/asset";
 import { chuThuan } from "@/lib/chuThuan";
 import { specForType, amenityGroups, interiorItems, furnishLevels } from "@/lib/listingSpec";
 import { directionOptions, normalizeVi } from "@/lib/filters";
+import { ZALO_OA_ID } from "@/lib/lienHe";
 
 // Ảnh dùng chung theo phân khúc (placeholder)
 const seg = (name: string) => asset(`/images/segments/${name}.jpg`);
@@ -358,7 +359,7 @@ export function buildListingDetail(l: Listing): ListingDetail {
   // LIÊN HỆ CHUNG — chỉ tên và số CÔNG TY. Tuyệt đối không đưa tên riêng hay số
   // điện thoại cá nhân vào mã nguồn (kho mã này công khai trên GitHub).
   const agents = [
-    { name: "Coastal Land", role: "Hỗ trợ khách hàng", phone: "0377 985 036", zalo: "0377985036" },
+    { name: "Coastal Land", role: "Hỗ trợ khách hàng", phone: "0377 985 036", zalo: ZALO_OA_ID },
   ];
 
   return {

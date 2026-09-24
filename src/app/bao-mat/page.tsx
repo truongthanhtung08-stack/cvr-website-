@@ -16,6 +16,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import TrangPhapLy, { Muc, DanhSach } from "@/components/TrangPhapLy";
 import { PHAP_LY, DONG_GIAY_PHEP } from "@/lib/phapLy";
+import { ZALO_OA_URL } from "@/lib/lienHe";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/bao-mat" },
@@ -150,7 +151,8 @@ export default function BaoMatPage() {
             ...(DONG_GIAY_PHEP ? [<>{DONG_GIAY_PHEP}</>] : []),
             <>Địa chỉ: {PHAP_LY.diaChiDayDu}</>,
             <>Email: <a href="mailto:hotro@coastalland.vn" className="font-semibold text-cvr-blue-ink underline">hotro@coastalland.vn</a></>,
-            <>Hotline / Zalo: <a href="tel:+84377985036" className="font-semibold text-cvr-blue-ink underline">0377 985 036</a></>,
+            <>Hotline: <a href="tel:+84377985036" className="font-semibold text-cvr-blue-ink underline">0377 985 036</a></>,
+            <>Zalo OA: <a href={ZALO_OA_URL} target="_blank" rel="noopener noreferrer" className="font-semibold text-cvr-blue-ink underline">Coastal Land</a></>,
             "Website: coastalland.vn",
           ]}
         />

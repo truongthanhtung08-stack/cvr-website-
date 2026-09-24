@@ -6,6 +6,7 @@ import BrandLogo from "@/components/BrandLogo";
 import { createClient } from "@/lib/supabase/client";
 import { FOOTER_DEFAULT, type FooterData } from "@/lib/siteContent";
 import { PHAP_LY, MIEN_TRU, DONG_GIAY_PHEP } from "@/lib/phapLy";
+import { ZALO_OA_URL } from "@/lib/lienHe";
 
 // Đường dẫn icon SVG theo tên mạng xã hội (link do admin nhập, icon giữ trong code).
 const SOCIAL_PATHS: Record<string, string> = {
@@ -47,20 +48,18 @@ function ZaloMark({ className }: { className?: string }) {
 }
 
 // Link mạng xã hội: admin nhập link nào thì dùng link đó (/admin/noi-dung).
-// Riêng ZALO chưa nhập → tự trỏ thẳng tới số Hỗ trợ kỹ thuật (mở chat Zalo).
+// Riêng ZALO LUÔN trỏ về ZALO OA của công ty (chốt 25/09/2026) — mọi việc với
+// Zalo về sau (tin nhắn, thông báo, mini app) đều đi qua OA, không qua nick cá nhân.
 // Mạng chưa có link → icon VẪN hiện nhưng chưa bấm được (kích hoạt khi có link).
 // Bảo đảm luôn có Zalo trong danh sách mạng xã hội (dù admin lưu thiếu).
 function withZalo(list: FooterData["socials"]): FooterData["socials"] {
   return list.some((s) => s.label === "Zalo") ? list : [{ label: "Zalo", href: "#" }, ...list];
 }
 
-function socialHref(label: string, href: string, hotline: string): string | null {
+function socialHref(label: string, href: string): string | null {
+  if (label === "Zalo") return ZALO_OA_URL;
   const v = (href ?? "").trim();
   if (v && v !== "#") return v;
-  if (label === "Zalo") {
-    const digits = hotline.replace(/\D/g, "").replace(/^84/, "0");
-    return digits ? `https://zalo.me/${digits}` : null;
-  }
   return null;
 }
 
@@ -177,7 +176,7 @@ export default function Footer() {
             {/* Mạng xã hội — icon TO, bấm là nối thẳng tới trang/kênh tương ứng */}
             <div className="mt-6 flex flex-wrap gap-3.5">
               {f.socials.map((s) => {
-                const href = socialHref(s.label, s.href, f.hotline);
+                const href = socialHref(s.label, s.href);
                 const box = "flex h-12 w-12 items-center justify-center rounded-full border border-black/10 bg-white shadow-sm transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]";
                 const icon = s.label === "Zalo" ? (
                   <ZaloMark className="h-[26px] w-[26px]" />

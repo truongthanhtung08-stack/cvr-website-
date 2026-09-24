@@ -5,6 +5,7 @@ import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { createClient } from "@/lib/supabase/client";
+import { dichSauDangNhap } from "@/lib/dieuHuong";
 
 // ============================================================================
 // ĐĂNG NHẬP BẰNG SỐ ĐIỆN THOẠI — TIẾT KIỆM TIN NHẮN
@@ -68,7 +69,7 @@ export default function PhoneLoginPage() {
             : error.message,
         );
       } else {
-        window.location.href = "/tai-khoan";
+        window.location.replace(dichSauDangNhap());
         return;
       }
     } catch {
@@ -128,7 +129,7 @@ export default function PhoneLoginPage() {
       const { error } = await supabase.auth.updateUser({ password: mkMoi });
       if (error) setNotice(error.message);
       else {
-        window.location.href = "/tai-khoan";
+        window.location.replace(dichSauDangNhap());
         return;
       }
     } catch {
