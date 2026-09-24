@@ -185,10 +185,8 @@ export default function MobileTabBar() {
         on: pathname !== "/tai-khoan" && !pathname.startsWith("/tai-khoan/tin-dang") && !pathname.startsWith("/tai-khoan/khach-hang"),
       },
     ];
-    // Chuyển qua lại giữa 4 mục quản lý là THAY trang, không chồng lịch sử —
-    // như app: bấm Quay lại ở bất kỳ mục nào là ra khỏi khu quản lý luôn,
-    // không phải lùi qua từng mục đã bấm.
-    return <ThanhTab tabs={tabsBan} count={0} thayTrang />;
+    // Nút ‹ trong khu quản lý đi theo tầng, Tổng quan là trang chủ (BackBar.tsx).
+    return <ThanhTab tabs={tabsBan} count={0} nutDangTinNoi />;
   }
 
   const tabs = [
@@ -208,7 +206,7 @@ export default function MobileTabBar() {
 }
 
 // Khung thanh tab — dùng chung cho chế độ người mua và chế độ người bán.
-function ThanhTab({ tabs, count, thayTrang = false }: { tabs: { href: string; label: string; icon: keyof typeof ICONS; on: boolean }[]; count: number; thayTrang?: boolean }) {
+function ThanhTab({ tabs, count, nutDangTinNoi = false }: { tabs: { href: string; label: string; icon: keyof typeof ICONS; on: boolean }[]; count: number; nutDangTinNoi?: boolean }) {
   return (
     <>
       {/* Chỗ trống cuối trang để tab bar không che nội dung/footer */}
@@ -221,7 +219,7 @@ function ThanhTab({ tabs, count, thayTrang = false }: { tabs: { href: string; la
         <ul className="flex items-stretch">
           {tabs.map((t) => (
             <li key={t.href} className="flex-1">
-              {thayTrang && t.href === "/dang-tin" ? (
+              {nutDangTinNoi && t.href === "/dang-tin" ? (
                 // ĐĂNG TIN = NÚT CHÍNH của khu quản lý (chủ dự án yêu cầu 25/09):
                 // tròn, to, nhô lên khỏi thanh — như nút giữa của app Batdongsan.
                 <Link href={t.href} aria-label="Đăng tin" className="press flex h-[49px] flex-col items-center justify-end pb-[5px]">
@@ -235,7 +233,6 @@ function ThanhTab({ tabs, count, thayTrang = false }: { tabs: { href: string; la
               ) : (
               <Link
                 href={t.href}
-                replace={thayTrang && t.href.startsWith("/tai-khoan")}
                 onClick={() => { if (t.href === "/") resetHomeIfOnHome(); }}
                 aria-current={t.on ? "page" : undefined}
                 className="block"
