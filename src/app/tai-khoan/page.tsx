@@ -243,8 +243,8 @@ export default function AccountOverviewPage() {
         <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
           <SoNho nhan="Đang đăng" so={tomTat?.dangDang} href="/tai-khoan/tin-dang" />
           <SoNho nhan="Chờ duyệt" so={tomTat?.choDuyet} href="/tai-khoan/tin-dang" />
-          <SoNho nhan="Lượt xem" so={tomTat?.luotXem} href="/tai-khoan/tuong-tac" />
-          <SoNho nhan="Người quan tâm" so={tomTat?.quanTam} href="/tai-khoan/tuong-tac" accent />
+          <SoNho nhan="Lượt xem" so={tomTat?.luotXem} href="/tai-khoan/khach-hang" />
+          <SoNho nhan="Người quan tâm" so={tomTat?.quanTam} href="/tai-khoan/khach-hang" accent />
         </div>
 
         <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -260,7 +260,7 @@ export default function AccountOverviewPage() {
         <div className="rounded-2xl border border-cvr-line bg-white p-5 shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-base font-semibold text-cvr-ink">Tuần qua</h2>
-            <Link href="/tai-khoan/tuong-tac" className="text-sm font-semibold text-cvr-blue-ink transition hover:underline">
+            <Link href="/tai-khoan/khach-hang" className="text-sm font-semibold text-cvr-blue-ink transition hover:underline">
               Xem chi tiết →
             </Link>
           </div>

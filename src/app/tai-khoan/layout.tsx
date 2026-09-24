@@ -39,7 +39,7 @@ const nhomMuc: { nhom: string; items: Muc[] }[] = [
       { label: "Tin đã đăng", href: "/tai-khoan/tin-dang", icon: "doc" },
       // TƯƠNG TÁC nằm ngay dưới Tin đã đăng: xem tin xong là xem luôn ai đang
       // quan tâm, không phải đi tìm ở mục khác.
-      { label: "Tương tác", href: "/tai-khoan/tuong-tac", icon: "doc" },
+      { label: "Khách hàng", href: "/tai-khoan/khach-hang", icon: "doc" },
       { label: "Dự án của tôi", href: "/tai-khoan/du-an", icon: "building" },
       { label: "Tin đã lưu", href: "/tin-luu", icon: "heart" },
     ],

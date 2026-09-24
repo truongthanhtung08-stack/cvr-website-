@@ -13,6 +13,7 @@ import { getProjects } from "@/lib/contentDb";
 import { getBilling } from "@/lib/siteContent";
 import { BILLING_DEFAULT, bangTheoMucDich, priceLinesFor, bangUp, goiPr, ghiChuPr, bangBanner, giaTra, priceLinesDuAn } from "@/lib/billing";
 import type { Listing, Project } from "@/lib/data";
+import NutMucDichGia from "@/components/NutMucDichGia";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/bao-gia-dang-tin" },
@@ -176,6 +177,12 @@ export default async function BaoGiaPage() {
   // ĐẨY TIN · PR · BANNER: lấy đúng bản chủ dự án đặt ở /admin/gia-khuyen-mai.
   // Chưa lưu gì thì hàm tự trả mức chuẩn — trang không bao giờ trống.
   const upRows = bangUp(bangBan);
+  // CHO THUÊ có bảng riêng CHỈ KHI đã công bố giá theo mục đích — trước đó giá
+  // bán và thuê là một, hiện nút gạt Bán | Cho thuê chỉ thừa.
+  const coThue = !!billing.congBo;
+  const bangThue = bangTheoMucDich(billing, "thue");
+  const giaTinThue = (id: TierId): PriceLine[] => priceLinesFor(bangThue, id) ?? [];
+  const upRowsThue = bangUp(bangThue);
   const prPkgs = goiPr(billing);
   const prNotes = ghiChuPr(billing);
   const bannerTables = bangBanner(billing);
@@ -216,6 +223,15 @@ export default async function BaoGiaPage() {
             <PricingSidebar groups={serviceGroups} hotline={HOTLINE} />
 
             <div className="min-w-0 space-y-12 sm:space-y-14">
+              {/* KHUNG 3 BẢNG GIÁ THEO MỤC ĐÍCH — nút gạt Bán | Cho thuê đổi `data-md`,
+                  mọi con số bên trong đổi theo (xem NutMucDichGia). */}
+              <div id="vung-bang-gia" data-md="ban" className="group/gia space-y-12 sm:space-y-14">
+              {coThue && (
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="text-sm text-cvr-muted">Xem giá cho</span>
+                  <NutMucDichGia />
+                </div>
+              )}
               {/* 1. GÓI ĐĂNG TIN VIP */}
               <section id="goi-vip" className="scroll-mt-24">
                 <SectionTitle no="01" title="Gói đăng tin VIP" desc="Giải pháp tiếp cận tin đăng hiệu quả tới khách hàng tiềm năng." />
@@ -229,6 +245,7 @@ export default async function BaoGiaPage() {
                       displays={p.displays}
                       media={<TierSample listing={samples[p.tierId]} />}
                       prices={giaTin(p.tierId)}
+                      pricesThue={coThue ? giaTinThue(p.tierId) : undefined}
                       cta={{ label: "Đăng tin ngay", href: "/dang-tin" }}
                     />
                   ))}
@@ -246,6 +263,7 @@ export default async function BaoGiaPage() {
                     displays={basicPkg.displays}
                     media={<TierSample listing={samples.basic} />}
                     prices={giaTin("basic")}
+                    pricesThue={coThue ? giaTinThue("basic") : undefined}
                     cta={{ label: "Đăng tin ngay", href: "/dang-tin" }}
                   />
                 </div>
@@ -254,6 +272,7 @@ export default async function BaoGiaPage() {
               {/* 3. GÓI ĐẨY TIN */}
               <section id="goi-day-tin" className="scroll-mt-24">
                 <SectionTitle no="03" title="Gói Đẩy tin" desc="Đẩy tin đăng lên trên đầu của từng loại tin. Gói nhiều lần đẩy tin trong nhiều ngày, mỗi ngày 1 lần." />
+                {coThue && <div className="mt-4"><NutMucDichGia /></div>}
                 <div className="mt-6 overflow-x-auto rounded-2xl border border-cvr-line bg-white shadow-lux">
                   <table className="w-full min-w-[680px] text-sm">
                     <thead>
@@ -269,8 +288,12 @@ export default async function BaoGiaPage() {
                         })}
                       </tr>
                     </thead>
-                    <tbody>
-                      {upRows.map((r) => (
+                    {[{ md: "ban", rows: upRows }, ...(coThue ? [{ md: "thue", rows: upRowsThue }] : [])].map(({ md, rows }) => (
+                    <tbody
+                      key={md}
+                      className={!coThue ? "" : md === "ban" ? "group-data-[md=thue]/gia:hidden" : "hidden group-data-[md=thue]/gia:table-row-group"}
+                    >
+                      {rows.map((r) => (
                         <tr key={r.label} className="border-b border-cvr-line/60 transition-colors last:border-0 hover:bg-cvr-surface/50">
                           <td className="px-6 py-4 font-medium text-cvr-body">{r.label}</td>
                           {r.values.map((v, i) => (
@@ -282,9 +305,11 @@ export default async function BaoGiaPage() {
                         </tr>
                       ))}
                     </tbody>
+                    ))}
                   </table>
                 </div>
               </section>
+              </div>
 
               {/* 4. GÓI DỰ ÁN */}
               <section id="goi-du-an" className="scroll-mt-24">
@@ -483,6 +508,7 @@ function PkgCard({
   displays,
   media,
   prices,
+  pricesThue,
   cta,
 }: {
   tierId: TierId;
@@ -491,6 +517,7 @@ function PkgCard({
   displays: string[];
   media: React.ReactNode;
   prices: PriceLine[];
+  pricesThue?: PriceLine[]; // có = đã công bố bảng Cho thuê riêng, nút gạt đổi giữa hai bộ
   cta: { label: string; href: string };
 }) {
   const t = getTier(tierId);
@@ -532,17 +559,14 @@ function PkgCard({
         {/* Bảng giá — dính đầu khi cuộn để luôn ngang tầm nội dung bên trái */}
         <aside className="flex flex-col border-t border-cvr-line bg-cvr-surface/70 p-5 sm:p-7 md:border-l md:border-t-0">
           <div className="md:sticky md:top-24">
-            {prices.map((pr, i) => (
-              <div key={pr.label} className={`py-3.5 ${i > 0 ? "border-t border-cvr-line/70" : "pt-0"}`}>
-                <p className="text-[13px] text-cvr-muted">{pr.label}</p>
-                <p className="mt-0.5">
-                  {pr.original && (
-                    <span className="mr-2 text-[13px] text-cvr-faint line-through">{pr.original}</span>
-                  )}
-                  <span className="text-[20px] font-semibold tracking-tight text-cvr-ink">{pr.price}</span>
-                </p>
-              </div>
-            ))}
+            {pricesThue ? (
+              <>
+                <div className="group-data-[md=thue]/gia:hidden"><DongGia prices={prices} /></div>
+                <div className="hidden group-data-[md=thue]/gia:block"><DongGia prices={pricesThue} /></div>
+              </>
+            ) : (
+              <DongGia prices={prices} />
+            )}
             <Link
               href={cta.href}
               className="mt-5 block rounded-full bg-cvr-ink py-3 text-center text-sm font-semibold text-white transition hover:bg-cvr-ink/90 active:scale-[0.99]"
@@ -553,6 +577,25 @@ function PkgCard({
         </aside>
       </div>
     </article>
+  );
+}
+
+// Các dòng "số ngày → giá" trong cột giá của một thẻ gói.
+function DongGia({ prices }: { prices: PriceLine[] }) {
+  return (
+    <>
+      {prices.map((pr, i) => (
+        <div key={pr.label} className={`py-3.5 ${i > 0 ? "border-t border-cvr-line/70" : "pt-0"}`}>
+          <p className="text-[13px] text-cvr-muted">{pr.label}</p>
+          <p className="mt-0.5">
+            {pr.original && (
+              <span className="mr-2 text-[13px] text-cvr-faint line-through">{pr.original}</span>
+            )}
+            <span className="text-[20px] font-semibold tracking-tight text-cvr-ink">{pr.price}</span>
+          </p>
+        </div>
+      ))}
+    </>
   );
 }
 

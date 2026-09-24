@@ -24,7 +24,13 @@ export default function RecordView({ id }: { id: string }) {
       const truoc = Number(sessionStorage.getItem(key) || 0);
       if (Date.now() - truoc > 30 * 60_000) {
         sessionStorage.setItem(key, String(Date.now()));
-        createClient().rpc("increment_listing_view", { p_listing_id: id });
+        // Kèm THIẾT BỊ + NGUỒN để người đăng tin thấy từng lượt xem ra sao
+        // (0036). Không gửi gì định danh người xem — ẩn danh vẫn là ẩn danh.
+        // Supabase chưa chạy 0036 thì hàm chưa nhận 3 tham số → lỗi PGRST202;
+        // khi đó gửi lại kiểu cũ để KHÔNG MẤT lượt xem nào trong lúc chuyển.
+        const sb = createClient();
+        sb.rpc("increment_listing_view", { p_listing_id: id, p_thiet_bi: thietBi(), p_nguon: nguonDen() })
+          .then(({ error }) => { if (error) sb.rpc("increment_listing_view", { p_listing_id: id }); });
       }
 
       // GHI NGƯỜI XEM — thành viên đăng nhập mở tin ra thì người bán biết được
@@ -41,4 +47,26 @@ export default function RecordView({ id }: { id: string }) {
     }
   }, [id]);
   return null;
+}
+
+// Điện thoại hay máy tính — chỉ để người đăng tin biết khách xem bằng gì.
+function thietBi(): "dien_thoai" | "may_tinh" {
+  return /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ? "dien_thoai" : "may_tinh";
+}
+
+// Khách tới tin này từ đâu. Ưu tiên utm_source (link mình tự rải có gắn nhãn),
+// sau đó tới trang giới thiệu (referrer), cuối cùng là trình duyệt nhúng trong
+// app Zalo/Facebook (mở link trong app thì referrer thường trống).
+function nguonDen(): "google" | "zalo" | "facebook" | "khac" | "truc_tiep" | "trong_web" {
+  const utm = new URLSearchParams(location.search).get("utm_source")?.toLowerCase() ?? "";
+  const ua = navigator.userAgent;
+  const ref = document.referrer;
+  let host = "";
+  try { host = ref ? new URL(ref).hostname : ""; } catch { /* referrer lạ → bỏ qua */ }
+  if (/google/.test(utm) || /(^|\.)google\./.test(host)) return "google";
+  if (/zalo/.test(utm) || /zalo/.test(host) || /Zalo/i.test(ua)) return "zalo";
+  if (/facebook|fb/.test(utm) || /facebook\.|fb\.|messenger\./.test(host) || /FBAN|FBAV|FB_IAB/.test(ua)) return "facebook";
+  if (host && host === location.hostname) return "trong_web";
+  if (!host) return "truc_tiep";
+  return "khac";
 }
