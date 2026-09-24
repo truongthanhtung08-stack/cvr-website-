@@ -5,8 +5,9 @@ import { createClient } from "@/lib/supabase/client";
 // ════════════════════════════════════════════════════════════════════════════
 // ĐẾM LƯỢT HIỂN THỊ TIN
 // ----------------------------------------------------------------------------
-// Đếm theo ĐÚNG CÁCH CÁC NỀN TẢNG QUẢNG CÁO VẪN ĐẾM (chuẩn IAB): một lượt hiển
-// thị = thẻ tin lọt vào màn hình quá nửa và nằm lại đủ lâu để mắt người kịp thấy.
+// Đếm theo ĐÚNG CHUẨN Google Active View / IAB-MRC: một lượt hiển thị = thẻ tin
+// lọt vào màn hình ÍT NHẤT MỘT NỬA và nằm lại LIÊN TỤC ít nhất 1 GIÂY.
+// Máy tự động (Googlebot, công cụ đo, bot đọc trang) KHÔNG được tính — xem laMayTuDong().
 // Khách cuộn xuống rồi cuộn lên gặp lại tin đó là MỘT LƯỢT MỚI — vì tin đã được
 // bày ra trước mắt họ thêm một lần nữa thật.
 //
@@ -25,8 +26,8 @@ import { createClient } from "@/lib/supabase/client";
 
 const TOI_DA_GOM = 25;            // đủ bấy nhiêu thì gửi ngay
 const CHO_TOI_DA = 6_000;         // hoặc chờ tối đa bấy nhiêu mili giây
-const CACH_NHAU = 10_000;         // cùng một tin phải cách nhau bấy nhiêu mới tính tiếp
-const NHIN_THAY = 200;            // nằm lại trên màn hình bấy nhiêu mới coi là đã thấy
+const CACH_NHAU = 30_000;         // cùng một tin phải cách nhau bấy nhiêu mới tính tiếp
+const NHIN_THAY = 1_000;          // nằm lại LIÊN TỤC bấy nhiêu mới coi là đã thấy (chuẩn MRC)
 
 const hangDoi: string[] = [];
 let hen: ReturnType<typeof setTimeout> | null = null;
@@ -34,6 +35,21 @@ let daGanSuKien = false;
 
 // Lần cuối mỗi tin được tính — giữ trong bộ nhớ, không đụng tới ổ đĩa máy khách.
 const lanCuoi = new Map<string, number>();
+
+/**
+ * Máy tự động chứ không phải người: Googlebot & các bot tìm kiếm (chúng CHẠY
+ * JavaScript nên nếu không chặn sẽ tự cộng lượt xem/hiển thị), bot xem trước
+ * link của Facebook/Zalo, công cụ đo tốc độ, trình duyệt bị điều khiển.
+ * Giống Google Analytics: lưu lượng của bot bị loại khỏi số liệu.
+ */
+export function laMayTuDong(): boolean {
+  if (typeof navigator === "undefined") return true;
+  if (navigator.webdriver) return true;
+  // "bot/", "bot;", "bot)" — Googlebot/2.1, bingbot/2.0… (không bắt nhầm máy CUBOT_…)
+  return /bot[/;)]|crawl|spider|slurp|mediapartners|google-inspectiontool|lighthouse|pagespeed|headlesschrome|phantomjs|facebookexternalhit|prerender/i.test(
+    navigator.userAgent,
+  );
+}
 
 async function day() {
   if (hen) {
@@ -66,7 +82,7 @@ function ganSuKienRoiTrang() {
  * Cùng một tin gọi dồn dập chỉ tính một lần trong mỗi 30 giây.
  */
 export function danhDauHienThi(id: string) {
-  if (!id) return;
+  if (!id || laMayTuDong()) return;
   const gio = Date.now();
   const truoc = lanCuoi.get(id) ?? 0;
   if (gio - truoc < CACH_NHAU) return;
@@ -106,10 +122,8 @@ export function theoDoiThe(el: Element, id: string): () => void {
         }
       }
     },
-    // Thấy được một phần tư thẻ là tin đã bày ra trước mắt khách rồi. Ngưỡng
-    // nửa thẻ là chuẩn của quảng cáo hình, chặt hơn mức cần cho danh sách nội
-    // dung — mà mỗi lượt bỏ sót là một lượt có thật không được ghi nhận.
-    { threshold: 0.25 },
+    // Ít nhất MỘT NỬA thẻ lọt vào màn hình — chuẩn Google Active View / MRC.
+    { threshold: 0.5 },
   );
   io.observe(el);
 

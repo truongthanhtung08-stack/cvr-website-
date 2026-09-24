@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { PageHeader } from "@/components/Ui";
+import { tuNgayVN } from "@/lib/ngayVN";
 
 // ════════════════════════════════════════════════════════════════════════════
 // KHÁCH HÀNG — AI ĐANG QUAN TÂM TIN CỦA TÔI (thay cho trang "Tương tác")
@@ -14,8 +15,9 @@ import { PageHeader } from "@/components/Ui";
 // theo TIN, mới nhất lên đầu, khách mới làm nổi bật, liên hệ được ngay.
 //
 // Danh tính chỉ có khi người xem ĐĂNG NHẬP / nhập OTP (không kỹ thuật nào lấy
-// được danh tính người ẩn danh). Người chỉ xem → số điện thoại che giữa; người
-// đã bấm hỏi số → số đầy đủ + Gọi / Zalo / Chép số.
+// được danh tính người ẩn danh). Thành viên đã đăng nhập xem tin hay đã bấm xem
+// số đều là khách thật → hiện SỐ ĐẦY ĐỦ + Gọi / Zalo / Chép số (chủ dự án chốt
+// 24/09/2026: "người xem đăng nhập vào xem tin thì có khác gì, sao lại che số").
 //
 // Nguồn dữ liệu (đều có RLS: chỉ CHỦ TIN đọc được tin của mình):
 //   listing_leads (0022) · listing_view_daily (0023) · listing_impression_daily (0030)
@@ -55,6 +57,9 @@ export default function KhachHangPage() {
   const [loc, setLoc] = useState<"all" | "hoi-so" | "chi-xem">("all");
   const [tim, setTim] = useState("");
   const [mocCu, setMocCu] = useState<string>("");
+  // Khách "chỉ xem tin": số tạm che (người đứng cạnh không nhìn thấy), người
+  // đăng tin chạm "Hiện số" là hiện ngay — không phải hỏi ai (chủ dự án chốt 24/09).
+  const [daHien, setDaHien] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     // Khách nào tương tác SAU lần mở trang trước là khách mới. Đọc mốc cũ rồi
@@ -79,13 +84,9 @@ export default function KhachHangPage() {
       const ids = list.map((l) => l.id);
       setTenTin(new Map(list.map((l) => [l.id, l.title])));
 
-      const moc = (lui: number) => {
-        const d = new Date();
-        d.setDate(d.getDate() - lui);
-        return d.toISOString().slice(0, 10);
-      };
-      const moc7 = moc(7);
-      const moc30 = moc(30);
+      // Ngày theo giờ VN, đúng 7 / 30 ngày kể cả hôm nay.
+      const moc7 = tuNgayVN(7);
+      const moc30 = tuNgayVN(30);
 
       const [{ data: xem }, { data: ht }, { data: nx }, { data: ld }, { data: dg }, { data: sk }] = await Promise.all([
         supabase.from("listing_view_daily").select("listing_id,ngay,luot").in("listing_id", ids).gte("ngay", moc30),
@@ -191,7 +192,7 @@ export default function KhachHangPage() {
     const qSo = q.replace(/\D/g, "");
     return khach
       .filter((k) => (loc === "hoi-so" ? k.daHoiSo : loc === "chi-xem" ? !k.daHoiSo : true))
-      .filter((k) => !q || k.ten.toLowerCase().includes(q) || (k.daHoiSo && qSo.length >= 3 && (k.sdt ?? "").replace(/\D/g, "").includes(qSo)));
+      .filter((k) => !q || k.ten.toLowerCase().includes(q) || (qSo.length >= 3 && (k.sdt ?? "").replace(/\D/g, "").includes(qSo)));
   }, [khach, loc, tim]);
 
   const tongHienThi = (tin ?? []).reduce((s, t) => s + t.hienThi, 0);
@@ -291,13 +292,19 @@ export default function KhachHangPage() {
                             ? <span className="rounded-full bg-cvr-blue/10 px-2 py-0.5 text-[11px] font-semibold text-cvr-blue-ink">Đã hỏi số</span>
                             : <span className="rounded-full bg-cvr-surface px-2 py-0.5 text-[11px] font-medium text-cvr-muted">Chỉ xem tin</span>}
                         </p>
-                        <p className="mt-0.5 text-sm tabular-nums text-cvr-body">
-                          {k.sdt ? (k.daHoiSo ? k.sdt : cheSo(k.sdt)) : "Chưa có số điện thoại"}
+                        <p className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-sm tabular-nums text-cvr-body">
+                          {!k.sdt ? "Chưa có số điện thoại" : (k.daHoiSo || daHien.has(k.khoa)) ? k.sdt : (
+                            <>
+                              {cheSo(k.sdt)}
+                              <button type="button" onClick={() => setDaHien((s) => new Set(s).add(k.khoa))}
+                                className="font-semibold text-cvr-blue-ink hover:underline">Hiện số</button>
+                            </>
+                          )}
                           {k.lanXem > 0 && <span className="text-cvr-muted"> · xem {k.lanXem} lần</span>}
                         </p>
                         <p className="mt-0.5 text-[13px] text-cvr-muted">Gần nhất: {ngayGio(k.luc)} · {truocDay(k.luc)}</p>
                       </div>
-                      {k.daHoiSo && so && (
+                      {so && (k.daHoiSo || daHien.has(k.khoa)) && (
                         <div className="flex shrink-0 gap-1.5">
                           <a href={`tel:${so}`} className="rounded-full bg-cvr-ink px-3.5 py-1.5 text-xs font-semibold text-white">Gọi</a>
                           <a href={`https://zalo.me/${so.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer"
@@ -493,7 +500,8 @@ function truocDay(iso: string): string {
   return ngay < 30 ? `${ngay} ngày trước` : new Date(iso).toLocaleDateString("vi-VN", VN);
 }
 
-// Che giữa số: 0912 *** 456 — người chỉ xem tin chưa đồng ý đưa số cho người bán.
+// Che giữa số: 0912 *** 456 — chỉ để người đứng cạnh không nhìn thấy; người đăng
+// tin chạm "Hiện số" là thấy đủ.
 function cheSo(sdt: string): string {
   const so = sdt.replace(/\D/g, "");
   if (so.length < 7) return "***";

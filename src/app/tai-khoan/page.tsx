@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useProfile } from "@/lib/useProfile";
 import { conThieuDeLenCap, freeDangChay, freeNote, levelOf, levelTiepTheo, tenGoiMienPhi, vnd } from "@/lib/billing";
 import { useBilling } from "@/lib/useBilling";
+import { ngayVN, tuNgayVN } from "@/lib/ngayVN";
 import { PageHeader } from "@/components/Ui";
 import DoDangKyMoi from "@/components/DoDangKyMoi";
 import NhanTinCuaToi from "@/components/NhanTinCuaToi";
@@ -58,13 +59,9 @@ export default function AccountOverviewPage() {
       if (!list.length) return setSo(rong);
 
       const ids = list.map((l) => l.id);
-      const ngay = (lui: number) => {
-        const d = new Date();
-        d.setDate(d.getDate() - lui);
-        return d.toISOString().slice(0, 10);
-      };
-      const moc7 = ngay(7);
-      const moc14 = ngay(14);
+      // Ngày theo giờ VN, đúng 7 ngày (kể cả hôm nay) so với 7 ngày liền trước.
+      const moc7 = tuNgayVN(7);
+      const moc14 = tuNgayVN(14);
       let mocKhach = "";
       try { mocKhach = localStorage.getItem(KHOA_DA_XEM) ?? ""; } catch { /* bị chặn → không đếm khách mới */ }
 
@@ -73,7 +70,7 @@ export default function AccountOverviewPage() {
         // Lấy từ mốc SỚM HƠN trong hai mốc (14 ngày trước / lần cuối xem Khách hàng)
         // để đếm "khách mới" khớp tuyệt đối với trang Khách hàng.
         supabase.from("listing_leads").select("id,created_at,viewer_id,viewer_phone").in("listing_id", ids)
-          .gte("created_at", mocKhach && mocKhach < moc14 ? mocKhach : moc14),
+          .gte("created_at", mocKhach && mocKhach < `${moc14}T00:00:00+07:00` ? mocKhach : `${moc14}T00:00:00+07:00`),
         mocKhach
           ? supabase.from("listing_viewer").select("viewer_id").in("listing_id", ids).gt("lan_cuoi", mocKhach)
           : Promise.resolve({ data: [] as { viewer_id: string }[] }),
@@ -115,7 +112,7 @@ export default function AccountOverviewPage() {
         tongXem: list.reduce((s, l) => s + (l.view_count ?? 0), 0),
         xem7,
         xem7Truoc,
-        hoiSo7: dsLead.filter((l) => l.created_at.slice(0, 10) >= moc7).length,
+        hoiSo7: dsLead.filter((l) => ngayVN(l.created_at) >= moc7).length,
         khachMoi: nguoiMoi.size,
         tinTot,
       });

@@ -3,11 +3,16 @@
 import { useEffect } from "react";
 import { recordView } from "@/lib/useRecentlyViewed";
 import { createClient } from "@/lib/supabase/client";
+import { laMayTuDong } from "@/lib/hienThi";
 
 // Ghi lại tin vừa xem (đặt trong trang chi tiết BĐS).
 export default function RecordView({ id }: { id: string }) {
   useEffect(() => {
     recordView(id); // lịch sử "đã xem" (localStorage) — cho mục "Dành cho bạn"
+
+    // Googlebot và các máy tự động khác chạy được JavaScript → không chặn là
+    // chúng tự cộng lượt xem cho tin. Chỉ NGƯỜI THẬT mới được đếm.
+    if (laMayTuDong()) return;
 
     // Đếm LƯỢT XEM THẬT vào DB (cột listings.view_count) qua RPC increment_listing_view.
     //
