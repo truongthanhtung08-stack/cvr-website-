@@ -51,11 +51,12 @@ const BAT_SO_DIEN_THOAI = process.env.NEXT_PUBLIC_BAT_SO_DIEN_THOAI !== "0";
 //
 // 👉 Khi nào gỡ được (trạm trung chuyển đặt tại VN, hoặc Zalo mở IP cho app):
 //    Vercel → thêm NEXT_PUBLIC_BAT_ZALO = 1 → Redeploy.
-// ✅ 25/09/2026: đo lại — Zalo KHÔNG còn chặn máy chủ ngoài VN (gọi từ Tokyo trả
-// 452 "Session key invalid" y như từ máy ở VN, không còn -501). Mã phiên cất ở
-// máy chủ (0046) nên Zalo trả về trình duyệt khác vẫn vào được. BẬT MẶC ĐỊNH;
-// muốn tắt: Vercel đặt NEXT_PUBLIC_BAT_ZALO = 0 rồi Redeploy.
-const BAT_ZALO = process.env.NEXT_PUBLIC_BAT_ZALO !== "0";
+// ⛔ 25/09/2026 ĐĂNG NHẬP THẬT (chủ dự án thử trên điện thoại): Zalo VẪN CHẶN
+// máy chủ ngoài VN khi chìa khoá THẬT: -501 "not inside Vietnam: 52.69.47.130".
+// Phép đo bằng chìa khoá GIẢ trả 452 là SAI LẦM — Zalo kiểm chìa khoá trước, kiểm
+// IP sau. Cần trạm trung chuyển tại VN (tools/zalo-proxy-vn) mới bật lại được:
+// Vercel → NEXT_PUBLIC_BAT_ZALO = 1 → Redeploy.
+const BAT_ZALO = process.env.NEXT_PUBLIC_BAT_ZALO === "1";
 
 export default function SocialAuth() {
   const [notice, setNotice] = useState("");
