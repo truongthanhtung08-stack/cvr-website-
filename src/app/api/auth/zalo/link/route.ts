@@ -8,6 +8,7 @@ import {
   taoVerifier,
   zaloConfig,
 } from "@/lib/zalo";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 // ============================================================================
 // LẤY SẴN ĐƯỜNG DẪN ZALO — để nút là MỘT CÚ BẤM THẲNG, không qua chuyển hướng
@@ -58,6 +59,13 @@ export async function GET(request: Request) {
   url.searchParams.set("redirect_uri", `${origin}/auth/zalo/callback`);
   url.searchParams.set("code_challenge", challenge);
   url.searchParams.set("state", state);
+
+  // Cất mã phiên ở MÁY CHỦ (0046) — Zalo có thể trả về bằng trình duyệt khác.
+  const admin = createAdminClient();
+  if (admin) {
+    await admin.from("zalo_phien_tam").delete().lt("tao_luc", new Date(Date.now() - 3_600_000).toISOString());
+    await admin.from("zalo_phien_tam").insert({ state, verifier, tiep: next });
+  }
 
   const res = NextResponse.json({ ok: true, url: url.toString() });
   const chung = {

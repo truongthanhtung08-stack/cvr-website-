@@ -41,10 +41,29 @@ export async function GET(request: Request) {
       .find((c) => c.startsWith(`${ten}=`))
       ?.slice(ten.length + 1);
 
-  const verifier = doc(COOKIE_VERIFIER);
+  let verifier = doc(COOKIE_VERIFIER);
   const stateLuu = doc(COOKIE_STATE);
-  const next = decodeURIComponent(doc(COOKIE_NEXT) ?? "/tai-khoan");
-  if (!verifier || !stateLuu || stateLuu !== state) return loi("zalo_sai_phien");
+  let next = decodeURIComponent(doc(COOKIE_NEXT) ?? "/tai-khoan");
+
+  // Không có cookie (Zalo trả về bằng TRÌNH DUYỆT KHÁC — hay gặp trên điện thoại
+  // khi đi qua app Zalo) → lấy mã phiên đã cất ở máy chủ theo state (0046).
+  // Dùng MỘT LẦN, hạn 30 phút (bằng hạn cookie của đường /api/auth/zalo/link).
+  if (!verifier || !stateLuu || stateLuu !== state) {
+    const { createAdminClient } = await import("@/lib/supabase/admin");
+    const adminPhien = createAdminClient();
+    const { data: phien } = state && adminPhien
+      ? await adminPhien.from("zalo_phien_tam").select("verifier,tiep")
+          .eq("state", state).gt("tao_luc", new Date(Date.now() - 1_800_000).toISOString()).limit(1)
+      : { data: null };
+    if (!phien?.[0]) return loi("zalo_sai_phien");
+    verifier = phien[0].verifier as string;
+    next = (phien[0].tiep as string) || "/tai-khoan";
+  }
+  // Mã phiên chỉ dùng một lần
+  if (state) {
+    const { createAdminClient } = await import("@/lib/supabase/admin");
+    await createAdminClient()?.from("zalo_phien_tam").delete().eq("state", state);
+  }
 
   try {
     // ── 1. Đổi code lấy access_token ────────────────────────────────────────

@@ -8,6 +8,7 @@ import {
   taoVerifier,
   zaloConfig,
 } from "@/lib/zalo";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 // BƯỚC 1 của đăng nhập Zalo: đẩy khách sang trang cho phép của Zalo.
 // Sinh code_verifier (PKCE) + state chống giả mạo, cất tạm vào cookie httpOnly
@@ -39,6 +40,14 @@ export async function GET(request: Request) {
   url.searchParams.set("redirect_uri", `${origin}/auth/zalo/callback`);
   url.searchParams.set("code_challenge", challenge);
   url.searchParams.set("state", state);
+
+  // Cất mã phiên ở MÁY CHỦ (0046): trên điện thoại, Zalo có thể trả khách về
+  // bằng trình duyệt khác → cookie bên dưới không đi theo. Hỏng thì vẫn còn cookie.
+  const admin = createAdminClient();
+  if (admin) {
+    await admin.from("zalo_phien_tam").delete().lt("tao_luc", new Date(Date.now() - 3_600_000).toISOString());
+    await admin.from("zalo_phien_tam").insert({ state, verifier, tiep: next });
+  }
 
   const res = NextResponse.redirect(url.toString());
   const chung = {
