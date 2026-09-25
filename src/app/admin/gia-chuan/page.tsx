@@ -2,19 +2,24 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Panel } from "@/components/Ui";
+import QuyDinhGiaEditor from "@/components/admin/QuyDinhGiaEditor";
 import { getTier, type TierId } from "@/lib/packages";
 import { tachThue } from "@/lib/thue";
-import type { CongBo, Plan, UpRow } from "@/lib/billing";
+import { TEN_VOUCHER, type CongBo, type LoaiVoucher, type Plan, type UpRow } from "@/lib/billing";
 import {
   NHAP_TRONG,
   THU_TU_CAP,
   bangX,
+  canhBaoHoiVien,
   canhBaoLogic,
+  giaTriVoucherThang,
   hanChuongTrinhGanNhat,
   tinhCongBo,
+  tinhHoiVien,
   type BangChuan,
   type ChuongTrinh,
   type GiaChuanNhap,
+  type GoiHoiVienChuan,
 } from "@/lib/giaChuan";
 
 // ============================================================================
@@ -44,7 +49,7 @@ function OSo({ value, onChange, className = "" }: { value: number; onChange: (n:
   );
 }
 
-type MucDich = "ban" | "thue";
+type MucDich = "ban" | "thue" | "hoi-vien" | "quy-dinh";
 
 export default function GiaChuanPage() {
   const [nhap, setNhap] = useState<GiaChuanNhap>(NHAP_TRONG);
@@ -57,6 +62,7 @@ export default function GiaChuanPage() {
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [hoiCongBo, setHoiCongBo] = useState(false);
   const [daSua, setDaSua] = useState(false);
+  const [hoiVienLuc, setHoiVienLuc] = useState<string | null>(null);
 
   async function tai() {
     const res = await fetch("/api/admin/gia-chuan", { cache: "no-store" });
@@ -66,6 +72,7 @@ export default function GiaChuanPage() {
     } else {
       setNhap(kq.nhap);
       setCongBo(kq.congBo);
+      setHoiVienLuc(kq.hoiVienLuc ?? null);
       setPlansHienTai(kq.plansHienTai ?? []);
       setUpHienTai(kq.upHienTai ?? []);
       setDaSua(false);
@@ -75,8 +82,9 @@ export default function GiaChuanPage() {
   useEffect(() => { void tai(); }, []);
 
   const sua = (next: GiaChuanNhap) => { setNhap(next); setDaSua(true); setMsg(null); };
-  const bang = nhap[md];
-  const suaBang = (b: BangChuan) => sua({ ...nhap, [md]: b });
+  const mdGia = md === "thue" ? "thue" : "ban"; // tab Gói hội viên không có bảng tin riêng
+  const bang = nhap[mdGia];
+  const suaBang = (b: BangChuan) => sua({ ...nhap, [mdGia]: b });
 
   // Xem trước — cùng hàm máy chủ dùng khi bấm Công bố.
   const homNay = homNayVN();
@@ -88,6 +96,30 @@ export default function GiaChuanPage() {
   const canhBaoChuan = useMemo(() => canhBaoLogic(nhap.ban, nhap.thue, tenCap), [nhap]);
   const canhBaoCongBo = useMemo(() => canhBaoLogic(xemTruoc.ban, xemTruoc.thue, tenCap), [xemTruoc]);
   const hanGan = hanChuongTrinhGanNhat(nhap.chuongTrinh, homNay);
+
+  // Giá CAO NHẤT (chưa VAT) của từng loại dịch vụ mà voucher áp vào — voucher lớn
+  // hơn số này thì không bao giờ trừ hết. So với CẢ giá đang chạy trên web lẫn giá
+  // sẽ có khi bấm Công bố giá tin: gói hội viên công bố riêng, có thể đi trước.
+  const giaCao = (bangs: { plans: Plan[]; up: UpRow[] }[]) => {
+    const cao = (ds: number[]) => { const d = ds.filter((n) => n > 0); return d.length ? Math.max(...d) : undefined; };
+    const tin = (vip: boolean) => cao(bangs.flatMap((b) =>
+      b.plans.filter((p) => (p.tierId === "basic") !== vip).flatMap((p) => p.terms.map((t) => t.price))));
+    const iBasic = THU_TU_CAP.indexOf("basic");
+    const day = cao(bangs.flatMap((b) => {
+      const r = b.up[0]; // dòng đầu = đẩy lẻ 1 lượt
+      return r ? [r.values[iBasic]?.gia ?? 0] : [];
+    }));
+    return { "tin-thuong": tin(false), "tin-vip": tin(true), "day-thuong": day } as Partial<Record<LoaiVoucher, number>>;
+  };
+  const hoiVienXemTruoc = useMemo(() => tinhHoiVien(nhap.hoiVien ?? [], nhap.chuongTrinh, homNay), [nhap.hoiVien, nhap.chuongTrinh, homNay]);
+  const canhBaoHv = useMemo(() => {
+    const dangChay = congBo ? [congBo.ban, congBo.thue] : [{ plans: plansHienTai, up: upHienTai }];
+    const seCongBo = [xemTruoc.ban, xemTruoc.thue];
+    return [...new Set([
+      ...canhBaoHoiVien(hoiVienXemTruoc, giaCao(dangChay), "giá đang chạy trên web"),
+      ...canhBaoHoiVien(hoiVienXemTruoc, giaCao(seCongBo), "giá sẽ công bố"),
+    ])];
+  }, [hoiVienXemTruoc, congBo, plansHienTai, upHienTai, xemTruoc]);
 
   async function luuNhap() {
     setDangLam("luu");
@@ -104,7 +136,7 @@ export default function GiaChuanPage() {
     setMsg({ ok: true, text: "Đã lưu nháp. Khách chưa thấy gì — bấm Công bố khi đã chốt." });
   }
 
-  async function goi(hanhDong: "cong-bo" | "go-cong-bo") {
+  async function goi(hanhDong: "cong-bo" | "go-cong-bo" | "cong-bo-hoi-vien" | "go-hoi-vien") {
     setDangLam(hanhDong);
     const res = await fetch("/api/admin/gia-chuan", {
       method: "POST",
@@ -120,7 +152,11 @@ export default function GiaChuanPage() {
       ok: true,
       text: hanhDong === "cong-bo"
         ? "Đã công bố — khách thấy giá mới ngay."
-        : "Đã gỡ giá công bố — web quay về bảng giá ở trang Giá & khuyến mãi.",
+        : hanhDong === "cong-bo-hoi-vien"
+          ? "Đã công bố gói hội viên — khách xem và mua được ngay. Giá đăng tin không đổi."
+          : hanhDong === "go-hoi-vien"
+            ? "Đã gỡ gói hội viên khỏi web. Gói khách đã mua vẫn chạy đến hết hạn."
+            : "Đã gỡ giá công bố — web quay về bảng giá ở trang Giá & khuyến mãi.",
     });
   }
 
@@ -130,7 +166,7 @@ export default function GiaChuanPage() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-cvr-ink">Giá chuẩn & công bố giá</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-cvr-ink">Giá & quy định</h1>
           <p className="mt-1 max-w-2xl text-sm text-cvr-muted">
             Giá chuẩn không công bố. Chương trình quyết định giảm bao nhiêu %. Khách chỉ thấy giá sau khi bấm Công bố.
           </p>
@@ -161,7 +197,7 @@ export default function GiaChuanPage() {
         <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
           <p className="font-semibold">Công bố giá mới cho khách?</p>
           <p className="mt-1">
-            Web sẽ đổi giá NGAY theo bảng “Giá khách thấy” bên dưới (cả Bán và Cho thuê).
+            Web sẽ đổi giá NGAY theo bảng “Giá khách thấy” bên dưới (cả Bán và Cho thuê). Gói hội viên có nút công bố riêng.
             Tin khách đã gửi trước lúc này vẫn chỉ bị trừ đúng số đã báo lúc gửi.
             {canhBaoCongBo.length > 0 && <b> Đang có {canhBaoCongBo.length} cảnh báo logic giá — xem lại trước khi công bố.</b>}
             {hanGan && <> Chương trình sớm hết hạn nhất: <b>{hanGan.split("-").reverse().join("/")}</b> — tới ngày đó phải công bố lại.</>}
@@ -178,14 +214,41 @@ export default function GiaChuanPage() {
 
       {/* Chọn mục đích — giá chuẩn gộp còn 2 bảng: Bán · Cho thuê */}
       <div className="flex gap-2">
-        {(["ban", "thue"] as const).map((m) => (
+        {(["ban", "thue", "hoi-vien", "quy-dinh"] as const).map((m) => (
           <button key={m} type="button" onClick={() => setMd(m)}
             className={`rounded-full px-4 py-2 text-sm font-semibold transition ${md === m ? "bg-cvr-ink text-white" : "bg-cvr-mist text-cvr-ink hover:bg-cvr-line"}`}>
-            {m === "ban" ? "Bán" : "Cho thuê"}
+            {m === "ban" ? "Bán" : m === "thue" ? "Cho thuê" : m === "hoi-vien" ? "Gói hội viên" : "Quy định & quyền lợi"}
           </button>
         ))}
       </div>
 
+      {md === "quy-dinh" ? (
+        <QuyDinhGiaEditor />
+      ) : md === "hoi-vien" ? (
+        <>
+          <BangHoiVien ds={nhap.hoiVien ?? []} onChange={(ds) => sua({ ...nhap, hoiVien: ds })} />
+          <DanhSachChuongTrinh ds={nhap.chuongTrinh} onChange={(ds) => sua({ ...nhap, chuongTrinh: ds })} homNay={homNay} />
+          <XemTruocHoiVien chuan={nhap.hoiVien ?? []} congBo={hoiVienXemTruoc} canhBao={canhBaoHv} />
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-cvr-line bg-white p-4">
+            <p className="text-sm text-cvr-muted">
+              Gói hội viên công bố <b className="text-cvr-ink">riêng</b> — không đụng giá đăng tin.
+              {" "}Công bố lần cuối: <b className="text-cvr-ink">{hoiVienLuc ? new Date(hoiVienLuc).toLocaleString("vi-VN") : "chưa công bố (khách chưa thấy gói)"}</b>
+            </p>
+            <div className="flex gap-2">
+              {hoiVienLuc && (
+                <button type="button" onClick={() => goi("go-hoi-vien")} disabled={!!dangLam}
+                  className="rounded-lg px-3 py-2 text-xs text-cvr-muted underline hover:text-red-600 disabled:opacity-60">Gỡ khỏi web</button>
+              )}
+              <button type="button" onClick={() => goi("cong-bo-hoi-vien")} disabled={!!dangLam || daSua || !hoiVienXemTruoc.length}
+                title={daSua ? "Lưu nháp trước rồi mới công bố" : ""}
+                className="rounded-lg bg-cvr-ink px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-cvr-ink/90 disabled:opacity-50">
+                {dangLam === "cong-bo-hoi-vien" ? "Đang công bố…" : "Công bố gói hội viên"}
+              </button>
+            </div>
+          </div>
+        </>
+      ) : (
+      <>
       <BangGoiTin bang={bang} onChange={suaBang} tenMucDich={md === "ban" ? "Bán" : "Cho thuê"} />
       <BangDayTin bang={bang} onChange={suaBang} tenMucDich={md === "ban" ? "Bán" : "Cho thuê"} />
       <DanhSachChuongTrinh ds={nhap.chuongTrinh} onChange={(ds) => sua({ ...nhap, chuongTrinh: ds })} homNay={homNay} />
@@ -203,7 +266,7 @@ export default function GiaChuanPage() {
               </tr>
             </thead>
             <tbody>
-              {xemTruoc[md].plans.flatMap((p) => p.terms.map((t, i) => {
+              {xemTruoc[mdGia].plans.flatMap((p) => p.terms.map((t, i) => {
                 const chuan = bang.plans.find((x) => x.tierId === p.tierId)?.terms.find((x) => x.days === t.days)?.price ?? 0;
                 const pt = chuan ? Math.round((1 - t.price / chuan) * 100) : 0;
                 return (
@@ -219,7 +282,7 @@ export default function GiaChuanPage() {
             </tbody>
           </table>
         </div>
-        {xemTruoc[md].up.length > 0 && (
+        {xemTruoc[mdGia].up.length > 0 && (
           <div className="mt-4 overflow-x-auto">
             <table className="w-full min-w-[520px] text-sm">
               <thead>
@@ -229,7 +292,7 @@ export default function GiaChuanPage() {
                 </tr>
               </thead>
               <tbody>
-                {xemTruoc[md].up.map((r) => (
+                {xemTruoc[mdGia].up.map((r) => (
                   <tr key={r.label} className="border-b border-cvr-line/60">
                     <td className="py-2">{r.label}</td>
                     {r.values.map((v, i) => <td key={i} className="py-2 text-right tabular-nums">{v.gia ? tra(v.gia) : "—"}</td>)}
@@ -277,6 +340,8 @@ export default function GiaChuanPage() {
         <CanhBao ten="Giá chuẩn" ds={canhBaoChuan} />
         <CanhBao ten="Giá công bố" ds={canhBaoCongBo} />
       </Panel>
+      </>
+      )}
 
       {congBo && (
         <div className="flex justify-end">
@@ -414,7 +479,7 @@ function DanhSachChuongTrinh({ ds, onChange, homNay }: { ds: ChuongTrinh[]; onCh
             </label>
             <label className="text-xs text-cvr-muted sm:col-span-2">Sản phẩm
               <select value={c.sanPham} onChange={(e) => sua(c.id, { sanPham: e.target.value as ChuongTrinh["sanPham"] })} className={inputCls}>
-                <option value="all">Gói tin và Đẩy tin</option><option value="tin">Chỉ gói tin</option><option value="day">Chỉ đẩy tin</option>
+                <option value="all">Tất cả (gói tin, đẩy tin, gói hội viên)</option><option value="tin">Chỉ gói tin</option><option value="day">Chỉ đẩy tin</option><option value="hoi-vien">Chỉ gói hội viên</option>
               </select>
             </label>
             <div className="text-xs text-cvr-muted sm:col-span-2">Hạng tin (bỏ trống = mọi hạng)
@@ -437,6 +502,123 @@ function DanhSachChuongTrinh({ ds, onChange, homNay }: { ds: ChuongTrinh[]; onCh
           + Thêm chương trình
         </button>
       </div>
+    </Panel>
+  );
+}
+
+// ── Gói hội viên: giá chuẩn theo tháng + voucher mỗi 30 ngày ─────────────────
+const LOAI_VOUCHER: LoaiVoucher[] = ["tin-thuong", "tin-vip", "day-thuong"];
+
+function BangHoiVien({ ds, onChange }: { ds: GoiHoiVienChuan[]; onChange: (ds: GoiHoiVienChuan[]) => void }) {
+  const suaGoi = (i: number, g: Partial<GoiHoiVienChuan>) => onChange(ds.map((x, j) => (j === i ? { ...x, ...g } : x)));
+  const them = () => onChange([...ds, { id: `goi-${Date.now().toString(36)}`, ten: "", thoiHan: [{ thang: 1, price: 0 }], voucher: [], quyenLoi: [] }]);
+  return (
+    <Panel title="Giá chuẩn gói hội viên" desc="Giá CHƯA GTGT (Batdongsan cũng niêm yết chưa VAT). Voucher cấp lại mỗi 30 ngày, hạn dùng 30 ngày, tự trừ vào giá khi duyệt tin / đẩy tin. Gói khách đã mua giữ nguyên quyền lợi lúc mua dù sau này sửa ở đây.">
+      <div className="space-y-4">
+        {ds.map((g, i) => (
+          <div key={g.id} className="rounded-xl border border-cvr-line p-3">
+            <div className="flex flex-wrap items-end gap-2">
+              <label className="min-w-[200px] flex-1 text-xs text-cvr-muted">Tên gói (khách thấy)
+                <input value={g.ten} onChange={(e) => suaGoi(i, { ten: e.target.value })} className={inputCls} />
+              </label>
+              <p className="pb-2 text-xs text-cvr-muted">Voucher mỗi tháng đáng: <b className="text-cvr-ink">{dong(giaTriVoucherThang(g))}</b></p>
+              <button type="button" onClick={() => onChange(ds.filter((_, j) => j !== i))} className="pb-2 text-xs text-cvr-muted hover:text-red-600">Xoá gói</button>
+            </div>
+
+            <div className="mt-3 flex items-center justify-between">
+              <p className="text-xs font-semibold uppercase tracking-wide text-cvr-muted">Thời hạn & giá chuẩn</p>
+              <button type="button" onClick={() => suaGoi(i, { thoiHan: [...g.thoiHan, { thang: 0, price: 0 }] })} className="text-xs font-semibold text-cvr-blue">+ Thêm thời hạn</button>
+            </div>
+            <div className="mt-1 grid gap-2 sm:grid-cols-3">
+              {g.thoiHan.map((t, k) => (
+                <div key={k} className="flex items-end gap-2">
+                  <label className="w-20 text-xs text-cvr-muted">Số tháng
+                    <OSo value={t.thang} onChange={(n) => suaGoi(i, { thoiHan: g.thoiHan.map((x, j) => (j === k ? { ...x, thang: n } : x)) })} />
+                  </label>
+                  <label className="flex-1 text-xs text-cvr-muted">Giá chuẩn
+                    <OSo value={t.price} onChange={(n) => suaGoi(i, { thoiHan: g.thoiHan.map((x, j) => (j === k ? { ...x, price: n } : x)) })} />
+                    <span className="mt-0.5 block text-[11px] text-cvr-faint">{t.price ? `gồm GTGT: ${tra(t.price)}${t.thang > 1 ? ` · ${dong(t.price / t.thang)}/tháng` : ""}` : ""}</span>
+                  </label>
+                  <button type="button" aria-label="Xoá thời hạn" onClick={() => suaGoi(i, { thoiHan: g.thoiHan.filter((_, j) => j !== k) })} className="mb-5 text-cvr-muted hover:text-red-600">×</button>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-3 flex items-center justify-between">
+              <p className="text-xs font-semibold uppercase tracking-wide text-cvr-muted">Voucher mỗi 30 ngày</p>
+              <button type="button" onClick={() => suaGoi(i, { voucher: [...g.voucher, { loai: "tin-thuong", giam: 0, soLuong: 0 }] })} className="text-xs font-semibold text-cvr-blue">+ Thêm voucher</button>
+            </div>
+            <div className="mt-1 space-y-2">
+              {g.voucher.map((v, k) => (
+                <div key={k} className="flex flex-wrap items-end gap-2">
+                  <label className="w-44 text-xs text-cvr-muted">Áp cho
+                    <select value={v.loai} onChange={(e) => suaGoi(i, { voucher: g.voucher.map((x, j) => (j === k ? { ...x, loai: e.target.value as LoaiVoucher } : x)) })} className={inputCls}>
+                      {LOAI_VOUCHER.map((l) => <option key={l} value={l}>{TEN_VOUCHER[l]}</option>)}
+                    </select>
+                  </label>
+                  <label className="w-40 text-xs text-cvr-muted">Giảm mỗi lần
+                    <OSo value={v.giam} onChange={(n) => suaGoi(i, { voucher: g.voucher.map((x, j) => (j === k ? { ...x, giam: n } : x)) })} />
+                  </label>
+                  <label className="w-24 text-xs text-cvr-muted">Số lượng
+                    <OSo value={v.soLuong} onChange={(n) => suaGoi(i, { voucher: g.voucher.map((x, j) => (j === k ? { ...x, soLuong: n } : x)) })} />
+                  </label>
+                  <button type="button" aria-label="Xoá voucher" onClick={() => suaGoi(i, { voucher: g.voucher.filter((_, j) => j !== k) })} className="mb-2 text-cvr-muted hover:text-red-600">×</button>
+                </div>
+              ))}
+              {!g.voucher.length && <p className="text-xs text-cvr-muted">Chưa có voucher nào.</p>}
+            </div>
+
+            <label className="mt-3 block text-xs text-cvr-muted">Quyền lợi khác — mỗi dòng một quyền lợi. CHỈ ghi thứ web đã làm thật.
+              <textarea rows={2} value={g.quyenLoi.join("\n")}
+                onChange={(e) => suaGoi(i, { quyenLoi: e.target.value.split("\n") })}
+                onBlur={() => suaGoi(i, { quyenLoi: g.quyenLoi.map((x) => x.trim()).filter(Boolean) })}
+                className="mt-1 w-full rounded-lg border border-cvr-line px-2.5 py-2 text-sm text-cvr-ink outline-none focus:border-cvr-ink" />
+            </label>
+          </div>
+        ))}
+        <button type="button" onClick={them} className="rounded-lg border border-dashed border-cvr-line px-4 py-2 text-sm font-semibold text-cvr-ink hover:border-cvr-ink">+ Thêm gói</button>
+      </div>
+    </Panel>
+  );
+}
+
+function XemTruocHoiVien({ chuan, congBo, canhBao }: {
+  chuan: GoiHoiVienChuan[];
+  congBo: { id: string; ten: string; thoiHan: { thang: number; price: number }[]; voucher: { giam: number; soLuong: number }[] }[];
+  canhBao: string[];
+}) {
+  return (
+    <Panel title="Gói hội viên — giá khách thấy (xem trước, đã gồm GTGT)" desc="“Lời tối đa” = giá trị voucher 30 ngày − giá gói mỗi tháng (chưa VAT), khi khách dùng HẾT voucher. Dùng ít hơn mức hoà vốn là khách lỗ.">
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[640px] text-sm">
+          <thead>
+            <tr className="border-b border-cvr-line text-left text-xs uppercase tracking-wide text-cvr-muted">
+              <th className="py-2">Gói</th><th className="py-2">Thời hạn</th><th className="py-2 text-right">Giá chuẩn</th>
+              <th className="py-2 text-right">Khách trả</th><th className="py-2 text-right">Mỗi tháng</th><th className="py-2 text-right">Lời tối đa/tháng</th><th className="py-2 text-right">Hoà vốn</th>
+            </tr>
+          </thead>
+          <tbody>
+            {congBo.flatMap((g) => g.thoiHan.map((t, k) => {
+              const goc = chuan.find((x) => x.id === g.id)?.thoiHan.find((x) => x.thang === t.thang)?.price ?? 0;
+              const thang = t.price / t.thang;
+              const gt = giaTriVoucherThang(g);
+              return (
+                <tr key={`${g.id}-${t.thang}`} className="border-b border-cvr-line/60">
+                  <td className="py-2 font-semibold text-cvr-ink">{k === 0 ? g.ten : ""}</td>
+                  <td className="py-2">{t.thang} tháng</td>
+                  <td className="py-2 text-right tabular-nums text-cvr-muted">{goc && goc !== t.price ? <s>{tra(goc)}</s> : "—"}</td>
+                  <td className="py-2 text-right tabular-nums font-semibold text-cvr-ink">{tra(t.price)}</td>
+                  <td className="py-2 text-right tabular-nums">{dong(thang)}</td>
+                  <td className={`py-2 text-right tabular-nums ${gt - thang > 0 ? "text-green-700" : "text-red-600"}`}>{dong(gt - thang)}</td>
+                  <td className="py-2 text-right tabular-nums">{gt ? `dùng ≥ ${Math.ceil((thang / gt) * 100)}%` : "—"}</td>
+                </tr>
+              );
+            }))}
+          </tbody>
+        </table>
+        {!congBo.length && <p className="py-3 text-sm text-cvr-muted">Chưa có gói nào có giá — khách sẽ không thấy mục Gói hội viên.</p>}
+      </div>
+      <CanhBao ten="Gói hội viên" ds={canhBao} />
     </Panel>
   );
 }

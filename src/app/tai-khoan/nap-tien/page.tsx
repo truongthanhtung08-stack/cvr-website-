@@ -54,7 +54,8 @@ function TopUpForm() {
   }, [billingLoading, amounts, canNap]);
 
   const finalAmount = custom.trim() ? Number(custom.replace(/\D/g, "")) || 0 : amount;
-  const points = billing.points.active
+  // Hệ cấp theo tổng nạp + điểm thưởng đã BỎ 25/09/2026, thay bằng Gói hội viên (0040).
+  const points = false
     ? Math.floor(finalAmount / billing.points.earnPerVnd)
     : 0;
 

@@ -28,7 +28,7 @@ const navGroups: { group: string; items: { label: string; href: string; icon: st
     items: [
       { label: "Yêu cầu khách hàng", href: "/admin/yeu-cau", icon: "check" },
       { label: "Khách hàng", href: "/admin/khach-hang", icon: "users" },
-      { label: "Giá chuẩn & công bố", href: "/admin/gia-chuan", icon: "tag" },
+      { label: "Giá & quy định", href: "/admin/gia-chuan", icon: "tag" },
       { label: "Giá & khuyến mãi", href: "/admin/gia-khuyen-mai", icon: "tag" },
       { label: "Lịch sử giá", href: "/admin/chi-so-gia", icon: "tag" },
       { label: "Giá đất Nhà nước", href: "/admin/gia-dat", icon: "tag" },

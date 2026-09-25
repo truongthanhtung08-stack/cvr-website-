@@ -1,10 +1,17 @@
+import { revalidateTag } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getTier, type TierId } from "@/lib/packages";
 import { guiThongBao } from "@/lib/thongBao";
 import { baoLoi } from "@/lib/baoLoi";
 
 // ════════════════════════════════════════════════════════════════════════════
-// TIN HẾT HẠN GÓI — NHẮC TRƯỚC 3 NGÀY, HẾT HẠN THÌ VỀ TIN THƯỜNG
+// TIN HẾT HẠN GÓI — NHẮC TRƯỚC 3 NGÀY, HẾT HẠN THÌ NGỪNG HIỂN THỊ (như BĐS)
+//
+// ĐỔI 25/09/2026 (chủ dự án chốt, theo Batdongsan): hết hạn → trạng thái
+// 'expired'. Tin RỜI KHỎI mọi danh sách, KHÔNG xoá; link cũ vẫn mở, trang tin
+// ghi "đã hết hạn" và ẩn số. Khách "Up tin" (gia hạn, ngày tính lại từ đầu) để
+// hiện lại. Áp cho MỌI hạng, kể cả tin thường. Tin nhập từ admin (không có
+// tier_expires_at) không bao giờ hết hạn. Đoạn dưới đây là ghi chú của cách cũ.
 //
 // LỖ HỔNG TRƯỚC ĐÂY: lúc duyệt tin web có ghi `tier_expires_at`, nhưng KHÔNG có
 // gì đọc tới cột đó. Khách mua Diamond 30 ngày thì 30 ngày sau vẫn Diamond, mãi
@@ -45,12 +52,11 @@ export async function quetTinHetHan(
   let daNhac = 0;
 
   try {
-    // ── 1) ĐÃ HẾT HẠN → hạ về tin thường ──────────────────────────────────
+    // ── 1) ĐÃ HẾT HẠN → ngừng hiển thị ('expired'), mọi hạng ──────────────
     const { data: hetHan } = await admin
       .from("listings")
       .select("id,title,owner_id,tier,tier_expires_at,details")
       .eq("status", "approved")
-      .neq("tier", "basic")
       .lt("tier_expires_at", bayGio.toISOString())
       .limit(200);
 
@@ -60,17 +66,17 @@ export async function quetTinHetHan(
     for (const tin of dsHet) {
       const { error } = await admin
         .from("listings")
-        .update({ tier: "basic" })
+        .update({ status: "expired" })
         .eq("id", tin.id)
-        .eq("tier", tin.tier); // ai giành được mới báo — chạy hai lần không báo hai lần
+        .eq("status", "approved"); // ai giành được mới báo — chạy hai lần không báo hai lần
       if (error) {
         await baoLoi({
           noi: "het-han-tin",
           mucDo: "nang",
-          tomTat: "Không hạ được tin hết hạn về tin thường",
+          tomTat: "Không chuyển được tin hết hạn sang trạng thái hết hạn",
           chiTiet: `Tin ${tin.id} — ${error.message}`,
-          hauQua: "Khách hết hạn gói nhưng vẫn giữ vị trí ưu tiên — không công bằng với người đang trả tiền.",
-          canLam: `Vào /admin/tin-dang sửa tin "${tin.title}" về gói thường.`,
+          hauQua: "Tin hết hạn vẫn hiển thị miễn phí — không công bằng với người đang trả tiền.",
+          canLam: `Vào /admin/tin-dang chuyển tin "${tin.title}" sang Hết hạn.`,
           khoa: `het-han:ha-tier:${tin.id}`,
         });
         continue;
@@ -81,10 +87,10 @@ export async function quetTinHetHan(
       await guiThongBao({
         email: chu?.email,
         phone: chu?.phone,
-        tieuDe: "Gói tin của bạn đã hết hạn",
+        tieuDe: "Tin của bạn đã hết hạn hiển thị",
         loiNhan:
-          `Tin vẫn đang hiển thị bình thường, chỉ không còn ở vị trí ưu tiên nữa. ` +
-          `Muốn lấy lại vị trí, vào coastalland.vn/tai-khoan/tin-dang chọn tin rồi mua gói mới.`,
+          `Tin đã tạm ngừng hiển thị trên Coastal Land (nội dung, ảnh vẫn giữ nguyên). ` +
+          `Để hiện lại, vào coastalland.vn/tai-khoan/tin-dang chọn tin rồi bấm Up tin.`,
         cacDong: [
           { nhan: "Tin đăng", giaTri: tin.title },
           { nhan: "Gói vừa hết hạn", giaTri: getTier(tin.tier).name },
@@ -93,12 +99,11 @@ export async function quetTinHetHan(
       });
     }
 
-    // ── 2) SẮP HẾT HẠN → nhắc trước 3 ngày ────────────────────────────────
+    // ── 2) SẮP HẾT HẠN → nhắc trước 3 ngày (mọi hạng) ─────────────────────
     const { data: sapHet } = await admin
       .from("listings")
       .select("id,title,owner_id,tier,tier_expires_at,details")
       .eq("status", "approved")
-      .neq("tier", "basic")
       .gte("tier_expires_at", bayGio.toISOString())
       .lte("tier_expires_at", moc.toISOString())
       .limit(200);
@@ -119,8 +124,8 @@ export async function quetTinHetHan(
         phone: chu?.phone,
         tieuDe: `Còn ${conLai} ngày là hết hạn gói tin`,
         loiNhan:
-          `Hết hạn thì tin vẫn hiển thị, nhưng tụt về tin thường và mất vị trí ưu tiên. ` +
-          `Gia hạn tại coastalland.vn/tai-khoan/tin-dang.`,
+          `Hết hạn thì tin tạm ngừng hiển thị cho tới khi bạn Up tin. ` +
+          `Up tin tại coastalland.vn/tai-khoan/tin-dang.`,
         cacDong: [
           { nhan: "Tin đăng", giaTri: tin.title },
           { nhan: "Gói hiện tại", giaTri: getTier(tin.tier).name },
@@ -147,6 +152,8 @@ export async function quetTinHetHan(
     });
   }
 
+  // Tin vừa hết hạn phải rời danh sách NGAY, không chờ cache 60 giây.
+  if (daHa > 0) revalidateTag("listings", "max");
   return { daHa, daNhac };
 }
 

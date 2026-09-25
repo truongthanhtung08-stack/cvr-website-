@@ -81,7 +81,7 @@ const TAI_KHOAN_CON: Record<string, string> = {
   "tuong-tac": "Khách hàng",
   "hoa-don": "Hóa đơn của tôi",
   "nap-tien": "Nạp tiền",
-  "doi-diem": "Đổi điểm thưởng",
+  "hoi-vien": "Gói hội viên",
   "cai-dat": "Cài đặt tài khoản",
   "du-an": "Dự án của tôi",
 };

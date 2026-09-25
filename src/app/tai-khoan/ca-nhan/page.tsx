@@ -22,10 +22,9 @@ export default function TaiKhoanCaNhanPage() {
   if (loading) return <p className="text-sm text-cvr-muted">Đang tải…</p>;
   if (!profile) return <p className="text-sm text-cvr-muted">Không tải được hồ sơ. Vui lòng đăng nhập lại.</p>;
 
-  const p = profile as unknown as { balance?: number; points?: number };
+  const p = profile as unknown as { balance?: number };
   const giaTri: Record<string, string> = {
     "/tai-khoan/nap-tien": vnd(p.balance ?? 0),
-    "/tai-khoan/doi-diem": `${p.points ?? 0} điểm`,
   };
 
   return (

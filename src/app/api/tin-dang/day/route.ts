@@ -16,7 +16,7 @@ import { getTier, type TierId } from "@/lib/packages";
 // ngày đăng thật giữ nguyên, người mua đọc được sự thật, người bán vẫn mua được
 // chỗ đứng. Thẻ tin ghi "Làm mới X phút trước", không giả thành "Đăng X phút trước".
 //
-// GIÁ: lấy từ bảng Đẩy tin trong admin (dòng "Up ngay", theo cấp tin), máy chủ
+// GIÁ: lấy từ bảng Đẩy tin trong admin (dòng đầu "Đẩy 1 lượt", theo cấp tin), máy chủ
 // TỰ TÍNH — không nhận số tiền từ trình duyệt.
 //
 // MỖI TIN 1 LƯỢT/NGÀY: chặn bằng unique index trong CSDL (0034), không chỉ bằng
@@ -79,7 +79,22 @@ export async function POST(request: Request) {
 
   const { data: sc } = await admin.from("site_content").select("data").eq("key", "billing").limit(1);
   const bang: BillingData = bangTheoMucDich({ ...BILLING_DEFAULT, ...((sc?.[0]?.data as Partial<BillingData>) ?? {}) }, tin.purpose);
-  const tien = tachThue(giaDayTin(bang, cap));
+  let tien = tachThue(giaDayTin(bang, cap));
+
+  // VOUCHER GÓI HỘI VIÊN "đẩy tin thường" (0040) — chỉ cho lượt đẩy lẻ của tin
+  // thường, như Batdongsan. Lần đẩy không thành thì hoàn voucher (hoanVoucher).
+  let voucher: { id: number; giam: number } | null = null;
+  if (cap === "basic" && tien.tienHang > 0) {
+    const { data: vc } = await admin.rpc("dung_voucher", { p_user: user.id, p_loai: "day-thuong" });
+    const v = (vc as { id: number; giam: number }[] | null)?.[0];
+    if (v) {
+      voucher = { id: v.id, giam: Math.min(Number(v.giam), tien.tienHang) };
+      tien = tachThue(tien.tienHang - voucher.giam);
+    }
+  }
+  const hoanVoucher = async () => {
+    if (voucher) await admin.rpc("hoan_voucher", { p_id: voucher.id });
+  };
 
   // ── 3. Đẩy: trừ ví + ghi nhật ký + đặt mốc đẩy, trong MỘT giao dịch ───────
   const { data: kq, error: loiDay } = await admin.rpc("day_tin", {
@@ -89,6 +104,7 @@ export async function POST(request: Request) {
   });
 
   if (loiDay) {
+    await hoanVoucher();
     if (/VI_KHONG_DU/.test(loiDay.message)) {
       const { data: vi } = await admin.from("profiles").select("balance").eq("id", user.id).limit(1);
       const soDu = Number(vi?.[0]?.balance ?? 0);
@@ -106,6 +122,7 @@ export async function POST(request: Request) {
   // Không trả dòng nào = đã đẩy trong hôm nay rồi (unique index chặn).
   const dong = (kq as { so_du: number; moc_day: string }[] | null)?.[0];
   if (!dong) {
+    await hoanVoucher();
     return loi("Hôm nay tin này đã được đẩy rồi — mỗi tin đẩy 1 lần mỗi ngày.");
   }
 
@@ -124,7 +141,7 @@ export async function POST(request: Request) {
     user_id: user.id,
     listing_id: id,
     loai: "day_tin",
-    mo_ta: `Đẩy tin CVR-UP ${getTier(cap).short} — ${tin.title}`,
+    mo_ta: `Đẩy tin ${getTier(cap).name} — ${tin.title}${voucher ? ` (voucher hội viên −${vnd(voucher.giam)})` : ""}`,
     tien_hang: tien.tienHang,
     tien_thue: tien.tienThue,
     thue_suat: THUE_SUAT_GTGT,

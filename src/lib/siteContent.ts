@@ -4,6 +4,7 @@
 // dùng NỘI DUNG MẶC ĐỊNH trong code (web không bao giờ trống).
 // ============================================================================
 
+import { ghepQuyDinh, KHOA_QUY_DINH_GIA, type QuyDinhGia } from "@/lib/quyDinhGia";
 import type { ChiSoGiaData } from "@/lib/chiSoGia";
 import { asset } from "@/lib/asset";
 import { homeBanners, projectBanners, type Banner } from "@/lib/banners";
@@ -307,6 +308,11 @@ export async function getPricing(): Promise<PricingData> {
 
 // ── GÓI ĐĂNG TIN · KHUYẾN MÃI · ĐIỂM · CẤP THÀNH VIÊN ────────────────────────
 // Lưu key 'billing' (toàn bộ BillingData). Admin sửa ở /admin/gia-khuyen-mai.
+// Quy định & quyền lợi gói — nguồn duy nhất là admin (/admin/gia-chuan → tab Quy định).
+export async function getQuyDinhGia(): Promise<QuyDinhGia> {
+  return ghepQuyDinh(await fetchBlock<Partial<QuyDinhGia>>(KHOA_QUY_DINH_GIA));
+}
+
 export async function getBilling(): Promise<BillingData> {
   const data = await fetchBlock<Partial<BillingData>>("billing");
   if (!data) return BILLING_DEFAULT;

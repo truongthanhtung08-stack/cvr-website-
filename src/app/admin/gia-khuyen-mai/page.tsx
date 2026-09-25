@@ -47,7 +47,7 @@ const TABS = [
   { id: "banners", label: "Banner" },
   { id: "promos", label: "Khuyến mãi" },
   { id: "free", label: "Miễn phí thành viên mới" },
-  { id: "points", label: "Điểm & cấp thành viên" },
+  { id: "points", label: "Gói hội viên" },
 ] as const;
 type TabId = (typeof TABS)[number]["id"];
 
@@ -170,7 +170,12 @@ export default function AdminBillingPage() {
       {tab === "pr" && <PrTab data={data} setData={setData} />}
       {tab === "banners" && <BannerTab data={data} setData={setData} />}
       {tab === "free" && <FreeTab data={data} setData={setData} />}
-      {tab === "points" && <PointsTab data={data} setData={setData} />}
+      {/* Cấp theo tổng nạp + điểm thưởng đã BỎ 25/09/2026 → Gói hội viên sửa ở /admin/gia-chuan */}
+      {tab === "points" && (
+        <Panel title="Gói hội viên" desc="Cấp hội viên theo tổng tiền nạp và điểm thưởng đã được thay bằng Gói hội viên (cơ chế Batdongsan: mua theo tháng, voucher mỗi 30 ngày).">
+          <a href="/admin/gia-chuan" className="inline-flex h-10 items-center rounded-lg bg-cvr-ink px-4 text-sm font-semibold text-white">Sửa gói hội viên ở trang Giá chuẩn →</a>
+        </Panel>
+      )}
     </div>
   );
 }
@@ -565,70 +570,8 @@ function FreeTab({ data, setData }: { data: BillingData; setData: (d: BillingDat
   );
 }
 
-// ── 4) ĐIỂM THƯỞNG & CẤP THÀNH VIÊN ────────────────────────────────────────
-function PointsTab({ data, setData }: { data: BillingData; setData: (d: BillingData) => void }) {
-  const p = data.points;
-  const set = (patch: Partial<typeof p>) => setData({ ...data, points: { ...p, ...patch } });
-  const setLevel = (i: number, patch: Partial<BillingData["levels"][number]>) =>
-    setData({ ...data, levels: data.levels.map((l, k) => (k === i ? { ...l, ...patch } : l)) });
-
-  return (
-    <div className="space-y-4">
-      <Panel title="Điểm thưởng" desc="Khách nạp tiền được cộng điểm, điểm dùng để trừ vào phí đăng tin.">
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <Field label="Trạng thái">
-            <button
-              type="button"
-              onClick={() => set({ active: !p.active })}
-              className={`h-10 rounded-lg px-4 text-sm font-semibold transition ${p.active ? "bg-green-600 text-white" : "border border-cvr-line text-cvr-muted"}`}
-            >
-              {p.active ? "Đang bật" : "Đã tắt"}
-            </button>
-          </Field>
-          <Field label="Nạp bao nhiêu ₫ được 1 điểm">
-            <input type="number" min={1000} step={1000} value={p.earnPerVnd} onChange={(e) => set({ earnPerVnd: Number(e.target.value) || 1000 })} className={inputCls} />
-          </Field>
-          <Field label="1 điểm đổi được (₫)">
-            <input type="number" min={1} value={p.redeemRate} onChange={(e) => set({ redeemRate: Number(e.target.value) || 1 })} className={inputCls} />
-          </Field>
-          <Field label="Đổi tối thiểu (điểm)">
-            <input type="number" min={0} value={p.minRedeem} onChange={(e) => set({ minRedeem: Number(e.target.value) || 0 })} className={inputCls} />
-          </Field>
-        </div>
-      </Panel>
-
-      <Panel
-        title="Cấp hội viên"
-        desc="Bốn cấp: Basic · Silver · Gold · Diamond. Khách LÊN CẤP theo TỔNG TIỀN ĐÃ NẠP vào ví — nạp đủ mốc nào là tự lên cấp đó, tiền còn trong ví vẫn được tính. Cấp càng cao càng được giảm thêm khi đăng tin."
-      >
-        <div className="space-y-3">
-          {data.levels.map((l, i) => (
-            <div key={l.id} className="grid grid-cols-1 gap-3 rounded-xl border border-cvr-line p-3 sm:grid-cols-4">
-              <Field label="Tên cấp">
-                <input value={l.name} onChange={(e) => setLevel(i, { name: e.target.value })} className={inputCls} />
-              </Field>
-              <Field label="Tổng tiền nạp từ (₫)">
-                <input type="number" min={0} step={100000} value={l.minTopup} onChange={(e) => setLevel(i, { minTopup: Number(e.target.value) || 0 })} className={inputCls} />
-              </Field>
-              <Field label="Giảm thêm (%)">
-                <input type="number" min={0} max={100} value={l.discount} onChange={(e) => setLevel(i, { discount: Number(e.target.value) || 0 })} className={inputCls} />
-              </Field>
-              <Field label="Màu nhãn">
-                <input type="color" value={l.color} onChange={(e) => setLevel(i, { color: e.target.value })} className="h-10 w-full rounded-lg border border-cvr-line" />
-              </Field>
-            </div>
-          ))}
-        </div>
-      </Panel>
-    </div>
-  );
-}
-
-// ── Thành phần dùng chung ───────────────────────────────────────────────────
 const inputCls = "h-10 w-full rounded-lg border border-cvr-line px-3 text-sm text-cvr-ink outline-none focus:border-cvr-ink";
 
-// Panel đã gom về @/components/Ui. Riêng bảng giá dùng nhãn DÀY ĐẶC
-// (nhiều cột trên một hàng) nên giữ biến thể `nho` của Field dùng chung.
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return <UiField nho label={label}>{children}</UiField>;
 }

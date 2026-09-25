@@ -22,7 +22,7 @@ import OTieuDe from "@/components/OTieuDe";
 // phải sửa đúng dòng import này.
 import MapPicker from "@/components/MapPickerMo";
 import ContentEditor from "@/components/admin/ContentEditor";
-import { bangTheoMucDich, freeDangChay, freeNote, levelOf, quotePrice, soAnhToiDa, soVideoToiDa, tenGoiMienPhi, vnd } from "@/lib/billing";
+import { bangTheoMucDich, freeDangChay, freeNote, quotePrice, soAnhToiDa, soVideoToiDa, tenGoiMienPhi, vnd } from "@/lib/billing";
 import { banChuyenDoi } from "@/lib/gtagChuyenDoi";
 import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
 import { useBilling } from "@/lib/useBilling";
@@ -166,10 +166,6 @@ export default function PostListingForm() {
     return soNgay <= billing.free.days;
   }, [hoSoVi, billing.free.days]);
 
-  const capThanhVien = useMemo(
-    () => levelOf(billing, hoSoVi?.total_topup ?? 0),
-    [billing, hoSoVi],
-  );
 
   // Gói dùng để XEM TRƯỚC khi chưa chọn (số ảnh tối đa, giá tạm tính) — lấy gói
   // đầu bảng. Việc gửi tin vẫn chặn tới khi người đăng tự chọn.
@@ -183,9 +179,8 @@ export default function PostListingForm() {
         days: planDays,
         today: new Date().toISOString().slice(0, 10),
         isNewMember: laThanhVienMoi,
-        levelId: capThanhVien?.id, // chưa có cấp hội viên → không giảm theo cấp
       }),
-    [bangGia, goiXemTruoc, planDays, laThanhVienMoi, capThanhVien],
+    [bangGia, goiXemTruoc, planDays, laThanhVienMoi],
   );
 
   // Gói này có được miễn phí cho khách đang đăng nhập không?
@@ -1072,12 +1067,6 @@ export default function PostListingForm() {
                 <div className="mt-1.5 flex items-center justify-between gap-2 text-sm text-cvr-blue-ink">
                   <span>Khuyến mãi: {baoGia.promo.name} (−{baoGia.promo.percent}%)</span>
                   <span className="font-semibold">− {vnd(baoGia.promoOff)}</span>
-                </div>
-              )}
-              {baoGia.levelOff > 0 && capThanhVien && (
-                <div className="mt-1.5 flex items-center justify-between gap-2 text-sm text-cvr-blue-ink">
-                  <span>Ưu đãi hội viên {capThanhVien.name} (−{capThanhVien.discount}%)</span>
-                  <span className="font-semibold">− {vnd(baoGia.levelOff)}</span>
                 </div>
               )}
             </>

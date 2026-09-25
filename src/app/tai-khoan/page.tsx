@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { useProfile } from "@/lib/useProfile";
-import { conThieuDeLenCap, freeDangChay, freeNote, levelOf, levelTiepTheo, tenGoiMienPhi, vnd } from "@/lib/billing";
+import { freeDangChay, freeNote, tenGoiMienPhi, vnd } from "@/lib/billing";
 import { useBilling } from "@/lib/useBilling";
 import { ngayVN, tuNgayVN } from "@/lib/ngayVN";
 import { khoaKhach } from "@/lib/khachHang";
@@ -43,6 +43,20 @@ export default function AccountOverviewPage() {
   const { profile, loading } = useProfile();
   const { billing, loading: billingLoading } = useBilling();
   const [so, setSo] = useState<SoLieu | null>(null);
+  const [goiHv, setGoiHv] = useState<{ ten_goi: string; het_han: string } | null>(null);
+
+  // Gói hội viên đang chạy (bảng hoi_vien, 0040 — RLS: chỉ đọc được của mình).
+  useEffect(() => {
+    const sb = createClient();
+    (async () => {
+      const { data: { user } } = await sb.auth.getUser();
+      if (!user) return;
+      // PHẢI lọc user_id: tài khoản admin đọc được gói của mọi người (RLS).
+      const { data } = await sb.from("hoi_vien").select("ten_goi,het_han").eq("user_id", user.id)
+        .gt("het_han", new Date().toISOString()).order("het_han", { ascending: false }).limit(1);
+      setGoiHv((data?.[0] as { ten_goi: string; het_han: string } | undefined) ?? null);
+    })();
+  }, []);
 
   useEffect(() => {
     const supabase = createClient();
@@ -124,11 +138,7 @@ export default function AccountOverviewPage() {
   if (loading || billingLoading) return <p className="text-sm text-cvr-muted">Đang tải…</p>;
   if (!profile) return <p className="text-sm text-cvr-muted">Không tải được hồ sơ. Vui lòng đăng nhập lại.</p>;
 
-  const p = profile as unknown as { balance?: number; points?: number; total_topup?: number };
-  const totalTopup = p.total_topup ?? 0;
-  const level = levelOf(billing, totalTopup);
-  const capKeTiep = levelTiepTheo(billing, totalTopup);
-  const conThieu = conThieuDeLenCap(billing, totalTopup);
+  const p = profile as unknown as { balance?: number };
   const freeConChay = freeDangChay(billing.free, new Date().toISOString().slice(0, 10));
 
   const viec = so ? [
@@ -155,13 +165,21 @@ export default function AccountOverviewPage() {
           </div>
           <Link href="/tai-khoan/nap-tien" className="shrink-0 text-sm font-semibold text-cvr-blue-ink hover:underline">Nạp tiền →</Link>
         </div>
+        {/* Gói hội viên (thay cấp theo tổng nạp + điểm thưởng từ 25/09/2026) */}
         <p className="mt-3 border-t border-cvr-line pt-3 text-sm text-cvr-muted">
-          <Link href="/tai-khoan/doi-diem" className="hover:text-cvr-ink">
-            Điểm thưởng: <strong className="font-semibold text-cvr-ink">{p.points ?? 0}</strong>
-          </Link>
-          {" · "}Hội viên:{" "}
-          <strong className="font-semibold" style={level?.color ? { color: level.color } : undefined}>{level ? level.name : "Chưa có cấp"}</strong>
-          {capKeTiep && <> · nạp thêm {vnd(conThieu)} để lên {capKeTiep.name}</>}
+          Hội viên:{" "}
+          {goiHv ? (
+            <>
+              <strong className="font-semibold text-cvr-ink">{goiHv.ten_goi}</strong> đến{" "}
+              {new Date(goiHv.het_han).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}
+              {" · "}<Link href="/tai-khoan/hoi-vien" className="font-semibold text-cvr-blue-ink hover:underline">Xem voucher</Link>
+            </>
+          ) : (
+            <>
+              <strong className="font-semibold text-cvr-ink">Thành viên thường</strong>
+              {(billing.hoiVien?.length ?? 0) > 0 && <>{" · "}<Link href="/tai-khoan/hoi-vien" className="font-semibold text-cvr-blue-ink hover:underline">Xem gói hội viên</Link></>}
+            </>
+          )}
         </p>
         {freeConChay && (
           <p className="mt-2 text-sm text-cvr-blue-ink">

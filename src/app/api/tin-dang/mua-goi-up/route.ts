@@ -93,7 +93,7 @@ export async function POST(request: Request) {
     user_id: user.id,
     listing_id: id,
     loai: "day_tin",
-    mo_ta: `Gói đẩy tin CVR-UP ${getTier(cap).short} — ${goi.soLuot} lượt — ${tin.title}`,
+    mo_ta: `Gói đẩy tin ${getTier(cap).name} — ${goi.soLuot} lượt — ${tin.title}`,
     tien_hang: tien.tienHang,
     tien_thue: tien.tienThue,
     thue_suat: THUE_SUAT_GTGT,

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { BILLING_DEFAULT, bangTheoMucDich, freeDangChay, levelOf, quotePrice, vnd, type BillingData } from "@/lib/billing";
+import { BILLING_DEFAULT, bangTheoMucDich, freeDangChay, loaiVoucherTin, quotePrice, vnd, type BillingData } from "@/lib/billing";
 import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
 import { guiThongBao, MAU_DUYET_TIN } from "@/lib/thongBao";
 import { baoLoi } from "@/lib/baoLoi";
@@ -145,7 +145,6 @@ export async function POST(request: Request) {
     days: soNgay,
     today: new Date().toISOString().slice(0, 10),
     isNewMember: soNgayMoTk <= bang.free.days,
-    levelId: levelOf(bang, Number(hs.total_topup ?? 0))?.id,
   });
 
   // ── CHÍNH SÁCH MIỄN PHÍ THÀNH VIÊN MỚI ────────────────────────────────────
@@ -236,12 +235,30 @@ export async function POST(request: Request) {
   // trước khi công bố bảng VIP 7/10/15). Khi đó quotePrice rơi về mốc đầu bảng —
   // giá của MỐC KHÁC — nên dùng thẳng số đã báo lúc khách gửi.
   const conMocNgay = bang.plans.find((p) => p.tierId === goi)?.terms.some((t) => t.days === soNgay);
-  const tien = tachThue(
+  let tien = tachThue(
     Number.isFinite(giaDaBao) ? (conMocNgay ? Math.min(bao.total, giaDaBao) : giaDaBao) : bao.total,
   );
 
+  // ── VOUCHER GÓI HỘI VIÊN (0040) — trừ thẳng vào giá chưa thuế ─────────────
+  // Tin thường → voucher "tin-thuong", tin VIP → "tin-vip". Chỉ dùng khi thật sự
+  // có tiền phải trả (tin miễn phí đã đi nhánh trên, không tốn voucher). Voucher
+  // dùng rồi mà lần thu này KHÔNG thành thì hoàn lại (hoanVoucher bên dưới).
+  let voucher: { id: number; giam: number } | null = null;
+  if (tien.tienHang > 0) {
+    const { data: vc } = await admin.rpc("dung_voucher", { p_user: tin.owner_id, p_loai: loaiVoucherTin(goi) });
+    const v = (vc as { id: number; giam: number }[] | null)?.[0];
+    if (v) {
+      voucher = { id: v.id, giam: Math.min(Number(v.giam), tien.tienHang) };
+      tien = tachThue(tien.tienHang - voucher.giam);
+    }
+  }
+  const hoanVoucher = async () => {
+    if (voucher) await admin.rpc("hoan_voucher", { p_id: voucher.id });
+  };
+
   const soDu = Number(hs.balance ?? 0);
   if (soDu < tien.tongTra) {
+    await hoanVoucher();
     return loi(
       `Ví khách không đủ: cần ${vnd(tien.tongTra)}, còn ${vnd(soDu)}. Nhắc khách nạp thêm rồi duyệt lại.`,
       400,
@@ -255,8 +272,9 @@ export async function POST(request: Request) {
     .eq("id", id)
     .eq("da_tru_vi", false)
     .select("id");
-  if (loiGianh) return loi(loiGianh.message, 500);
+  if (loiGianh) { await hoanVoucher(); return loi(loiGianh.message, 500); }
   if (!gianh || gianh.length === 0) {
+    await hoanVoucher();
     return NextResponse.json({ ok: true, boQua: "Tin này đã được trừ tiền trước đó" });
   }
 
@@ -265,10 +283,11 @@ export async function POST(request: Request) {
   // Kiểu cũ (đọc soDu ở bước 4 rồi ghi đè cả cột) làm mất tiền khi khách nạp
   // đúng lúc admin bấm Duyệt: khoản vừa nạp bị ghi đè bằng số dư cũ trừ phí.
   // Xem supabase/migrations/0028_vi_nguyen_tu.sql.
-  const { data: viSau, error: loiRpc } = await admin.rpc("tru_vi", {
-    p_user: tin.owner_id,
-    p_tien: tien.tongTra,
-  });
+  // Voucher hội viên phủ hết giá → 0đ phải trả: KHÔNG gọi trừ ví (hàm từ chối
+  // trừ 0đ, tin sẽ kẹt không duyệt được) — coi như đã trừ xong, số dư giữ nguyên.
+  const { data: viSau, error: loiRpc } = tien.tongTra > 0
+    ? await admin.rpc("tru_vi", { p_user: tin.owner_id, p_tien: tien.tongTra })
+    : { data: [{ so_du: soDu }], error: null };
   const chuaCoHam = loiRpc && /function .* does not exist|schema cache|PGRST202/i.test(loiRpc.message);
   let loiVi = chuaCoHam ? null : loiRpc;
   let soDuConLai = Number((viSau as { so_du?: number }[] | null)?.[0]?.so_du ?? soDu - tien.tongTra);
@@ -284,11 +303,13 @@ export async function POST(request: Request) {
     // Hàm chạy nhưng không trừ được dòng nào = ví KHÔNG ĐỦ TIỀN ngay tại thời
     // điểm trừ (số dư đã đổi kể từ lúc đọc ở bước 4). Trả lại quyền, không duyệt.
     await admin.from("listings").update({ da_tru_vi: false }).eq("id", id);
+    await hoanVoucher();
     return loi(`Ví khách không đủ ${vnd(tien.tongTra)} tại thời điểm trừ tiền. Nhắc khách nạp thêm rồi duyệt lại.`, 400);
   }
 
   if (loiVi) {
     await admin.from("listings").update({ da_tru_vi: false }).eq("id", id); // trả lại quyền
+    await hoanVoucher();
     return loi("Trừ ví thất bại: " + loiVi.message, 500);
   }
 
@@ -297,7 +318,7 @@ export async function POST(request: Request) {
   const { error: loiSo } = await admin.from("doanh_thu").insert({
     user_id: tin.owner_id,
     listing_id: id,
-    mo_ta: `${tenGoi(bang, goi)} ${soNgay} ngày — ${tin.title}`,
+    mo_ta: `${tenGoi(bang, goi)} ${soNgay} ngày — ${tin.title}${voucher ? ` (voucher hội viên −${vnd(voucher.giam)})` : ""}`,
     tien_hang: tien.tienHang,
     tien_thue: tien.tienThue,
     thue_suat: THUE_SUAT_GTGT,
@@ -351,6 +372,7 @@ export async function POST(request: Request) {
     cacDong: [
       { nhan: "Tin đăng", giaTri: tin.title },
       { nhan: "Gói dịch vụ", giaTri: `${tenGoi(bang, goi)} · ${soNgay} ngày` },
+      ...(voucher ? [{ nhan: "Voucher hội viên", giaTri: `−${vnd(voucher.giam)} (chưa thuế)` }] : []),
       { nhan: "Tiền dịch vụ", giaTri: vnd(tien.tienHang) },
       { nhan: `Thuế GTGT ${(THUE_SUAT_GTGT * 100).toFixed(0)}%`, giaTri: vnd(tien.tienThue) },
       { nhan: "Đã trừ ví", giaTri: vnd(tien.tongTra) },

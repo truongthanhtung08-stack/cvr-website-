@@ -196,6 +196,10 @@ export type BillingData = {
   // thay cho `plans` / `up` ở trên. Chỉ chứa GIÁ ĐÃ TÍNH SẴN: giá chuẩn và % của
   // chương trình nằm trong bảng bi_mat, khách không đọc được (xem giaChuan.ts).
   congBo?: CongBo;
+  // Gói hội viên đã công bố — nút công bố RIÊNG, không kéo theo giá đăng tin
+  // (giá tin giữ nguyên trong thời gian miễn phí, chủ dự án chốt 25/09/2026).
+  hoiVien?: GoiHoiVien[];
+  hoiVienLuc?: string;
 };
 
 export type MucDichGia = "ban" | "thue";
@@ -206,6 +210,27 @@ export type CongBo = {
   chuongTrinh?: string;   // tên chương trình đang áp dụng lúc công bố (để hiện cho khách)
   luc: string;            // thời điểm công bố (ISO)
 };
+
+// ── GÓI HỘI VIÊN (chốt 25/09/2026 — một hệ duy nhất, cơ chế theo Batdongsan) ──
+// Chưa mua gói = thành viên thường. Quyền lợi là VOUCHER cấp mỗi 30 ngày, hạn
+// dùng 30 ngày, tự trừ vào giá lúc thu tiền. Mọi số tiền CHƯA GTGT.
+export type LoaiVoucher = "tin-thuong" | "tin-vip" | "day-thuong";
+export const TEN_VOUCHER: Record<LoaiVoucher, string> = {
+  "tin-thuong": "đăng tin thường",
+  "tin-vip": "đăng tin VIP",
+  "day-thuong": "đẩy tin thường",
+};
+export type VoucherGoi = { loai: LoaiVoucher; giam: number; soLuong: number };
+export type GoiHoiVien = {
+  id: string;                                   // co-ban · tieu-chuan · cao-cap
+  ten: string;                                  // "Hội viên Cơ bản"
+  thoiHan: { thang: number; price: number; giaGoc?: number }[]; // giaGoc: trước chương trình giảm
+  voucher: VoucherGoi[];                        // mỗi 30 ngày
+  quyenLoi: string[];                           // quyền lợi khác — CHỈ ghi thứ web đã làm thật
+};
+
+// Loại voucher áp cho một lần ĐĂNG TIN theo hạng tin.
+export const loaiVoucherTin = (tierId: string): LoaiVoucher => (tierId === "basic" ? "tin-thuong" : "tin-vip");
 
 // Mục đích của tin → bảng giá nào. "Cần thuê" tính như cho thuê, "Cần mua" như bán.
 export function mucDichGia(purpose?: string | null): MucDichGia {
@@ -276,20 +301,20 @@ export const PROJECT_PLANS_DEFAULT: Plan[] = [
 // ── ĐẨY TIN · PR · BANNER: MỨC CHUẨN ───────────────────────────────────────
 // Bốn cột của bảng Đẩy tin theo đúng thứ tự Diamond · Gold · Silver · Basic.
 export const UP_DEFAULT: UpRow[] = [
-  { label: "Up ngay", values: [{ gia: 90_000 }, { gia: 46_000 }, { gia: 17_000 }, { gia: 5_000 }] },
-  { label: "Up 3 lần (−20%)", values: [
+  { label: "Đẩy 1 lượt", values: [{ gia: 90_000 }, { gia: 46_000 }, { gia: 17_000 }, { gia: 5_000 }] },
+  { label: "Đẩy 3 lượt (−20%)", values: [
     { giaGoc: 270_000, gia: 216_000 }, { giaGoc: 138_000, gia: 110_400 },
     { giaGoc: 51_000, gia: 40_800 }, { giaGoc: 15_000, gia: 12_000 },
   ] },
-  { label: "Up 7 lần (−30%)", values: [
+  { label: "Đẩy 7 lượt (−30%)", values: [
     { giaGoc: 630_000, gia: 441_000 }, { giaGoc: 322_000, gia: 225_400 },
     { giaGoc: 119_000, gia: 83_300 }, { giaGoc: 35_000, gia: 24_500 },
   ] },
-  { label: "Up 13 lần (−40%)", values: [
+  { label: "Đẩy 13 lượt (−40%)", values: [
     { giaGoc: 1_170_000, gia: 702_000 }, { giaGoc: 598_000, gia: 358_800 },
     { giaGoc: 221_000, gia: 132_600 }, { giaGoc: 65_000, gia: 39_000 },
   ] },
-  { label: "Up 27 lần (−50%)", values: [
+  { label: "Đẩy 27 lượt (−50%)", values: [
     { giaGoc: 2_430_000, gia: 1_215_000 }, { giaGoc: 1_242_000, gia: 621_000 },
     { giaGoc: 459_000, gia: 229_500 }, { giaGoc: 135_000, gia: 67_500 },
   ] },
@@ -346,10 +371,10 @@ const COT_UP: TierId[] = ["diamond", "gold", "silver", "basic"];
 
 // ── GÓI UP NHIỀU LƯỢT ───────────────────────────────────────────────────────
 // Bảng Đẩy tin có 2 loại dòng, khác hẳn nhau về cách bán:
-//   · dòng đầu  "Up ngay"        → mua LẺ 1 lượt, bấm là trừ ví.
-//   · dòng sau  "Up 7 lần (−30%)" → mua SỈ nhiều lượt, rẻ hơn, tiêu dần mỗi ngày.
+//   · dòng đầu  "Đẩy 1 lượt"     → mua LẺ 1 lượt, bấm là trừ ví.
+//   · dòng sau  "Đẩy 7 lượt (−30%)" → mua SỈ nhiều lượt, rẻ hơn, tiêu dần mỗi ngày.
 // Số lượt đọc THẲNG từ nhãn dòng nên chủ dự án thêm/sửa dòng trong admin là web
-// hiểu ngay, không phải sửa code (vd gõ "Up 10 lần (−35%)" là có gói 10 lượt).
+// hiểu ngay, không phải sửa code (vd gõ "Đẩy 10 lượt (−35%)" là có gói 10 lượt).
 export type GoiUp = {
   label: string;   // nguyên văn nhãn dòng, để hiện cho khách
   soLuot: number;  // số lượt trong gói
@@ -357,13 +382,14 @@ export type GoiUp = {
   giaGoc?: number; // giá gạch ngang (nếu có khuyến mãi)
 };
 
-// "Up 7 lần (−30%)" → 7 · "Up ngay" → 1
+// "Đẩy 7 lượt (−30%)" → 7 · "Đẩy 1 lượt" → 1. Nhận cả nhãn cũ "Up 7 lần"
+// (bảng admin lưu trước 25/09/2026) để không gãy dữ liệu cũ.
 function soLuotTuNhan(label: string): number {
-  const m = label.match(/(\d+)\s*lần/i);
+  const m = label.match(/(\d+)\s*(lần|lượt)/i);
   return m ? Number(m[1]) : 1;
 }
 
-// Danh sách gói NHIỀU LƯỢT (bỏ dòng "Up ngay" vì đó là mua lẻ) của một cấp tin.
+// Danh sách gói NHIỀU LƯỢT (bỏ dòng "Đẩy 1 lượt" vì đó là mua lẻ) của một cấp tin.
 export function goiUpNhieuLuot(d: BillingData, tierId: TierId): GoiUp[] {
   const cot = COT_UP.indexOf(tierId);
   if (cot < 0) return [];
@@ -377,7 +403,7 @@ export function goiUpNhieuLuot(d: BillingData, tierId: TierId): GoiUp[] {
     .filter((g) => g.soLuot > 1 && g.gia > 0);
 }
 
-// GIÁ MỘT LƯỢT ĐẨY NGAY của một cấp tin (dòng đầu bảng Đẩy tin, "Up ngay").
+// GIÁ MỘT LƯỢT ĐẨY NGAY của một cấp tin (dòng đầu bảng Đẩy tin, "Đẩy 1 lượt").
 // Giá CHƯA gồm GTGT — cộng thuế ở chỗ trừ ví, giống mọi khoản khác.
 // Đọc từ bảng admin đang lưu nên chủ dự án đổi giá ở /admin/gia-khuyen-mai là
 // đổi luôn số tiền trừ khi khách bấm Đẩy, không phải sửa code.

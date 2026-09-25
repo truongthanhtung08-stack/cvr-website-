@@ -15,7 +15,7 @@
 // Mọi giá trong file này là giá CHƯA GTGT (giống toàn bộ billing.ts).
 // ============================================================================
 
-import type { Plan, PlanTerm, UpRow, GiaCongBo, CongBo, MucDichGia } from "@/lib/billing";
+import type { Plan, PlanTerm, UpRow, GiaCongBo, CongBo, MucDichGia, GoiHoiVien, LoaiVoucher } from "@/lib/billing";
 import type { TierId } from "@/lib/packages";
 
 export const KHOA_GIA_CHUAN = "gia_chuan";
@@ -38,14 +38,19 @@ export type ChuongTrinh = {
   tu: string;               // "YYYY-MM-DD", rỗng = không giới hạn
   den: string;              // "YYYY-MM-DD", áp đến HẾT ngày này; rỗng = không giới hạn
   mucDich: "all" | MucDichGia;
-  sanPham: "all" | "tin" | "day";
+  sanPham: "all" | "tin" | "day" | "hoi-vien";
   tiers: TierId[];          // rỗng = mọi cấp tin
   bat: boolean;
 };
 
+// Gói hội viên — giá chuẩn (từ Batdongsan) theo SỐ THÁNG; voucher & quyền lợi
+// là thứ khách nhận. Admin sửa được mọi con số, kể cả thêm/bớt thời hạn.
+export type GoiHoiVienChuan = Omit<GoiHoiVien, "thoiHan"> & { thoiHan: { thang: number; price: number }[] };
+
 export type GiaChuanNhap = {
   ban: BangChuan;
   thue: BangChuan;
+  hoiVien?: GoiHoiVienChuan[];
   chuongTrinh: ChuongTrinh[];
   capNhat?: string;         // lần lưu nháp gần nhất (ISO)
   congBoLuc?: string;       // lần công bố gần nhất (ISO)
@@ -69,16 +74,16 @@ export function chuongTrinhDangChay(c: ChuongTrinh, homNay: string): boolean {
 export function chuongTrinhApDung(
   ds: ChuongTrinh[],
   homNay: string,
-  mucDich: MucDichGia,
-  sanPham: "tin" | "day",
-  tier: TierId,
+  mucDich: MucDichGia | "all",
+  sanPham: "tin" | "day" | "hoi-vien",
+  tier: TierId | null,
 ): ChuongTrinh | null {
   return (
     ds
       .filter((c) => chuongTrinhDangChay(c, homNay))
-      .filter((c) => c.mucDich === "all" || c.mucDich === mucDich)
+      .filter((c) => mucDich === "all" || c.mucDich === "all" || c.mucDich === mucDich)
       .filter((c) => c.sanPham === "all" || c.sanPham === sanPham)
-      .filter((c) => c.tiers.length === 0 || c.tiers.includes(tier))
+      .filter((c) => tier === null || c.tiers.length === 0 || c.tiers.includes(tier))
       .sort((a, b) => b.phanTram - a.phanTram)[0] ?? null
   );
 }
@@ -95,9 +100,9 @@ export function giaMoiLuot(bac: BacDay[], soLuot: number): number {
   return hop.length ? hop[hop.length - 1].gia : 0;
 }
 
-// "Up 7 lần (−30%)" → 7 · "Up ngay" → 1 (cùng quy tắc với billing.ts)
+// "Đẩy 7 lượt (−30%)" → 7 · "Đẩy 1 lượt" → 1 (cùng quy tắc với billing.ts, nhận cả nhãn cũ "Up N lần")
 function soLuotTuNhan(label: string): number {
-  const m = label.match(/(\d+)\s*lần/i);
+  const m = label.match(/(\d+)\s*(lần|lượt)/i);
   return m ? Number(m[1]) : 1;
 }
 
@@ -145,7 +150,7 @@ export function tinhMotMucDich(
     // Nhãn tự sinh — không giữ chữ "(−20%)" cũ vì mức giảm đã đổi theo bảng mới.
     const ref = values.find((v) => v.giaGoc && v.gia);
     const pt = ref?.giaGoc ? Math.round((1 - ref.gia / ref.giaGoc) * 100) : 0;
-    const label = n === 1 ? "Up ngay" : `Up ${n} lần${pt > 0 ? ` (−${pt}%)` : ""}`;
+    const label = `Đẩy ${n} lượt${pt > 0 ? ` (−${pt}%)` : ""}`;
     return { label, values };
   });
 
@@ -163,7 +168,79 @@ export function tinhCongBo(
   const dangChay = nhap.chuongTrinh
     .filter((c) => chuongTrinhDangChay(c, homNay) && c.phanTram > 0)
     .sort((a, b) => b.phanTram - a.phanTram)[0];
-  return { ban, thue, chuongTrinh: dangChay?.ten || undefined, luc: new Date().toISOString() };
+  return {
+    ban,
+    thue,
+    chuongTrinh: dangChay?.ten || undefined,
+    luc: new Date().toISOString(),
+  };
+}
+
+// Gói hội viên: giá công bố = giá chuẩn trừ % chương trình (sản phẩm "hoi-vien"
+// hoặc "all"; không xét mục đích / hạng tin). Làm tròn nghìn đồng.
+export function tinhHoiVien(ds: GoiHoiVienChuan[], ct: ChuongTrinh[], homNay: string): GoiHoiVien[] {
+  const c = chuongTrinhApDung(ct, homNay, "all", "hoi-vien", null);
+  return ds
+    .filter((g) => g.thoiHan.some((t) => t.price > 0))
+    .map((g) => ({
+      ...g,
+      thoiHan: [...g.thoiHan]
+        .filter((t) => t.price > 0)
+        .sort((a, b) => a.thang - b.thang)
+        .map((t) => {
+          const gia = tronNghin(giam(t.price, c));
+          return gia < t.price ? { thang: t.thang, price: gia, giaGoc: t.price } : { thang: t.thang, price: gia };
+        }),
+    }));
+}
+
+// ── KIỂM LOGIC GÓI HỘI VIÊN (như cơ chế X của giá tin) ──────────────────────
+// Giá trị voucher 30 ngày = Σ(giảm × số lượng). Gói phải "đáng mua":
+//   1. Giá trị voucher mỗi tháng ≥ giá gói mỗi tháng (không thì mua lẻ còn rẻ hơn).
+//   2. Gói cao hơn: giá cao hơn VÀ voucher nhiều hơn gói dưới.
+//   3. Mua dài hơn không đắt hơn tính theo tháng.
+//   4. Voucher không lớn hơn giá CAO NHẤT của chính dịch vụ đó — lớn hơn giá rẻ
+//      nhất thì bình thường (khách dùng cho kỳ dài hơn, BĐS cũng vậy), lớn hơn cả
+//      giá cao nhất thì KHÔNG BAO GIỜ trừ hết, khách mất phần dư.
+const TEN_LOAI: Record<LoaiVoucher, string> = { "tin-thuong": "đăng tin thường", "tin-vip": "đăng tin VIP", "day-thuong": "đẩy tin thường" };
+
+export function giaTriVoucherThang(g: { voucher: { giam: number; soLuong: number }[] }): number {
+  return g.voucher.reduce((s, v) => s + v.giam * v.soLuong, 0);
+}
+
+export function canhBaoHoiVien(
+  ds: { ten: string; thoiHan: { thang: number; price: number }[]; voucher: { loai: LoaiVoucher; giam: number; soLuong: number }[] }[],
+  giaCaoNhat: Partial<Record<LoaiVoucher, number>>, // giá cao nhất (chưa VAT) đang bán của từng loại dịch vụ
+  nhanGia = "",                                    // "giá đang chạy" / "giá sẽ công bố" — ghi vào câu cảnh báo
+): string[] {
+  const loi: string[] = [];
+  const thang1 = (g: (typeof ds)[number]) => {
+    const t = [...g.thoiHan].filter((x) => x.price > 0).sort((a, b) => a.thang - b.thang)[0];
+    return t ? t.price / t.thang : 0;
+  };
+  const vnd = (n: number) => Math.round(n).toLocaleString("vi-VN") + "đ";
+  for (const g of ds) {
+    const gt = giaTriVoucherThang(g), gia = thang1(g);
+    if (gia > 0 && gt < gia) loi.push(`${g.ten}: voucher mỗi tháng chỉ đáng ${vnd(gt)}, thấp hơn giá gói ${vnd(gia)}/tháng — khách mua lẻ còn rẻ hơn.`);
+    const th = [...g.thoiHan].filter((x) => x.price > 0).sort((a, b) => a.thang - b.thang);
+    for (let i = 1; i < th.length; i++) {
+      if (th[i].price / th[i].thang > th[i - 1].price / th[i - 1].thang + 0.5) {
+        loi.push(`${g.ten}: ${th[i].thang} tháng đắt hơn ${th[i - 1].thang} tháng nếu tính theo tháng.`);
+      }
+    }
+    for (const v of g.voucher) {
+      const cao = giaCaoNhat[v.loai];
+      if (cao !== undefined && cao > 0 && v.giam > cao) {
+        loi.push(`${g.ten}: voucher ${TEN_LOAI[v.loai]} giảm ${vnd(v.giam)} lớn hơn cả giá cao nhất của dịch vụ đó${nhanGia ? ` theo ${nhanGia}` : ""} (${vnd(cao)}) — không bao giờ trừ hết.`);
+      }
+    }
+  }
+  for (let i = 1; i < ds.length; i++) {
+    const duoi = ds[i - 1], tren = ds[i];
+    if (thang1(tren) <= thang1(duoi)) loi.push(`${tren.ten} không đắt hơn ${duoi.ten} — thứ tự gói bị ngược.`);
+    if (giaTriVoucherThang(tren) <= giaTriVoucherThang(duoi)) loi.push(`${tren.ten} có voucher không nhiều hơn ${duoi.ten}.`);
+  }
+  return loi;
 }
 
 // Chương trình sớm hết hạn nhất trong số đang chạy — admin cần biết để công bố lại.
@@ -190,10 +267,17 @@ export function kiemNhap(x: unknown): GiaChuanNhap | null {
   const ctHopLe = o.chuongTrinh.every((c) =>
     typeof c.id === "string" && typeof c.ten === "string" && soDuong(c.phanTram) && c.phanTram <= 100 &&
     typeof c.tu === "string" && typeof c.den === "string" &&
-    ["all", "ban", "thue"].includes(c.mucDich) && ["all", "tin", "day"].includes(c.sanPham) &&
+    ["all", "ban", "thue"].includes(c.mucDich) && ["all", "tin", "day", "hoi-vien"].includes(c.sanPham) &&
     Array.isArray(c.tiers) && c.tiers.every(capHopLe) && typeof c.bat === "boolean");
   if (!ctHopLe) return null;
-  return { ban: o.ban, thue: o.thue, chuongTrinh: o.chuongTrinh, capNhat: o.capNhat, congBoLuc: o.congBoLuc };
+  const hv = o.hoiVien ?? [];
+  const hvHopLe = Array.isArray(hv) && hv.every((g) =>
+    typeof g.id === "string" && /^[a-z0-9-]{1,30}$/.test(g.id) && typeof g.ten === "string" && g.ten.trim().length > 0 &&
+    Array.isArray(g.thoiHan) && g.thoiHan.every((t) => soDuong(t.thang) && t.thang >= 1 && t.thang <= 36 && soDuong(t.price)) &&
+    Array.isArray(g.voucher) && g.voucher.every((v) => ["tin-thuong", "tin-vip", "day-thuong"].includes(v.loai) && soDuong(v.giam) && soDuong(v.soLuong)) &&
+    Array.isArray(g.quyenLoi) && g.quyenLoi.every((q) => typeof q === "string"));
+  if (!hvHopLe) return null;
+  return { ban: o.ban, thue: o.thue, hoiVien: hv, chuongTrinh: o.chuongTrinh, capNhat: o.capNhat, congBoLuc: o.congBoLuc };
 }
 
 // ── KIỂM TRA LOGIC GIÁ THEO HỆ SỐ X ─────────────────────────────────────────

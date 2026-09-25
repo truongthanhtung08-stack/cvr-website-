@@ -6,6 +6,8 @@ import Footer from "@/components/Footer";
 import LeadForm from "@/components/LeadForm";
 import TraCuuGiaDat from "@/components/TraCuuGiaDat";
 import { packages, utilityTools, getPackage, tiers, benefitRows } from "@/lib/packages";
+import { getBilling } from "@/lib/siteContent";
+import { bangTheoMucDich, priceLinesFor } from "@/lib/billing";
 
 export function generateStaticParams() {
   return [...packages, ...utilityTools].map((p) => ({ slug: p.slug }));
@@ -45,6 +47,8 @@ export default async function PackagePage({ params }: { params: Promise<{ slug: 
   const { slug } = await params;
   const p = getPackage(slug);
   if (!p) notFound();
+  // Giá từng cấp: CÙNG NGUỒN với trang Bảng giá (admin) — không viết số ở đây.
+  const bangBan = bangTheoMucDich(await getBilling(), "ban");
 
   return (
     <>
@@ -127,6 +131,15 @@ export default async function PackagePage({ params }: { params: Promise<{ slug: 
                     </div>
 
                     <div className="flex-1 divide-y divide-cvr-line/70 px-5">
+                      {(priceLinesFor(bangBan, t.id) ?? []).map((g) => (
+                        <div key={g.label} className="flex items-center justify-between gap-3 py-3 text-sm">
+                          <span className="text-cvr-muted">{g.label}</span>
+                          <span className="text-right">
+                            {g.original && <span className="mr-1.5 text-xs text-cvr-faint line-through">{g.original}</span>}
+                            <span className="font-medium text-cvr-ink">{g.price}</span>
+                          </span>
+                        </div>
+                      ))}
                       {benefitRows.map((row) => (
                         <div key={row.label} className="flex items-center justify-between gap-3 py-3 text-sm">
                           <span className="text-cvr-muted">{row.label}</span>
@@ -148,7 +161,7 @@ export default async function PackagePage({ params }: { params: Promise<{ slug: 
               </div>
 
               <p className="mt-4 text-xs text-cvr-faint">
-                * Tin VIP được ưu tiên kiểm duyệt và hiển thị sớm. Giá đã gồm ưu đãi theo thời hạn gói — liên hệ Coastal Land để được tư vấn cấp tin phù hợp.
+                * Giá tin bán, đã gồm VAT. Giá tin cho thuê, đẩy tin và gói hội viên xem tại <Link href="/bao-gia-dang-tin" className="underline hover:text-cvr-ink">Bảng giá dịch vụ</Link>.
               </p>
             </section>
           )}

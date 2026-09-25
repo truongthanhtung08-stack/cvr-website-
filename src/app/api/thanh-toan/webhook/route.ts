@@ -180,13 +180,13 @@ export async function POST(req: Request) {
     // trước lúc bấm nạp, nên ở đây bắt buộc phải cộng thật và cộng ĐÚNG công
     // thức đó. Trước đây webhook không đụng gì tới points: khách nạp bao nhiêu
     // lần vẫn 0 điểm, vào trang Đổi điểm không có gì để đổi.
-    const cs = luu?.points ?? BILLING_DEFAULT.points;
-    const diemThuong = cs.active && cs.earnPerVnd > 0 ? Math.floor(soTien / cs.earnPerVnd) : 0;
+    // Hệ cấp theo tổng nạp + điểm thưởng đã BỎ 25/09/2026, thay bằng Gói hội viên (0040).
+    const diemThuong = 0;
 
     const { data: viMoi, error: loiRpc } = await supabase.rpc("cong_vi", {
       p_user: don.user_id,
       p_tien: soTien,
-      p_cap: capTheoTongNap(levels, tongNapMoi),
+      p_cap: null,
       p_diem: diemThuong,
     });
     // Chưa chạy migration 0028 thì chưa có hàm → quay về cách cũ để tiền của

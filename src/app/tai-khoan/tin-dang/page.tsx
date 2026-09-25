@@ -169,6 +169,36 @@ export default function MyListingsPage() {
     }
   }
 
+  // ── UP TIN = GIA HẠN (chốt 25/09/2026): chọn hạng + thời hạn như đăng mới,
+  // ngày đăng và hạn tính lại TỪ HÔM NAY, ngày còn dư của gói cũ bỏ.
+  const [upCho, setUpCho] = useState<ListingRow | null>(null);
+  const [upChon, setUpChon] = useState<{ tier: string; soNgay: number } | null>(null);
+  const [dangUp, setDangUp] = useState(false);
+  async function xacNhanUp() {
+    if (!upCho || !upChon) return;
+    setDangUp(true);
+    try {
+      const res = await fetch("/api/tin-dang/up", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: upCho.id, tier: upChon.tier, soNgay: upChon.soNgay }),
+      });
+      const kq = await res.json().catch(() => ({}));
+      if (!res.ok || !kq.ok) { window.alert(kq.loi || "Up tin không thành công."); return; }
+      const bayGio = new Date().toISOString();
+      setRows((ds) => ds.map((x) => (x.id === upCho.id
+        ? { ...x, status: "approved", tier: upChon.tier as ListingRow["tier"], published_at: bayGio, bumped_at: bayGio, tier_expires_at: kq.hetHan }
+        : x)));
+      window.alert(kq.mienPhi
+        ? "Đã Up tin — miễn phí theo chương trình thành viên mới."
+        : `Đã Up tin. Trừ ${vnd(kq.daTru)}, số dư còn ${vnd(kq.soDu)}.`);
+      setUpCho(null);
+      setUpChon(null);
+    } finally {
+      setDangUp(false);
+    }
+  }
+
   const count = (s: ListingStatus) => rows.filter((r) => r.status === s).length;
 
   // Lọc theo mục đang chọn + ô tìm trong tin của mình (tiêu đề / địa chỉ).
@@ -224,6 +254,7 @@ export default function MyListingsPage() {
   ];
   // Chỉ hiện mục "Bị từ chối" khi thật sự có — không ai cần một mục luôn bằng 0.
   if (count("rejected") > 0) tabs.push({ key: "rejected", label: `Bị từ chối (${count("rejected")})` });
+  if (count("expired") > 0) tabs.push({ key: "expired", label: `Hết hạn (${count("expired")})` });
 
   return (
     <div className="space-y-4">
@@ -304,7 +335,7 @@ export default function MyListingsPage() {
                 {goi.daDuyet && r.published_at && ` · Đăng ${ngayGon(r.published_at)}`}
                 {goi.daDuyet && goi.hetHan && (
                   goi.conLai != null && goi.conLai <= 0
-                    ? <span className="font-medium text-amber-700"> · Đã hết hạn {ngayGon(r.tier_expires_at)} — tin về mức hiển thị thường</span>
+                    ? <span className="font-medium text-amber-700"> · Đã hết hạn {ngayGon(r.tier_expires_at)} — tin ngừng hiển thị, Up tin để hiện lại</span>
                     : <> · Hiển thị đến {ngayGon(r.tier_expires_at)}
                         <span className={goi.conLai != null && goi.conLai <= 3 ? "font-semibold text-amber-700" : ""}>
                           {` (còn ${goi.conLai} ngày)`}
@@ -385,6 +416,16 @@ export default function MyListingsPage() {
                   {dangMua === r.id ? "Đang mua…" : "Mua gói đẩy"}
                 </button>
               )}
+              {/* UP TIN — gia hạn gói, ngày tính lại từ hôm nay (tin đang đăng hoặc hết hạn) */}
+              {(r.status === "approved" || r.status === "expired") && (
+                <button
+                  type="button"
+                  onClick={() => { setUpCho(r); setUpChon(null); }}
+                  className={`flex h-9 items-center rounded-full px-4 text-sm font-semibold transition ${r.status === "expired" ? "bg-cvr-blue text-white hover:bg-cvr-blue-ink" : "border border-cvr-line text-cvr-body hover:border-cvr-ink hover:text-cvr-ink"}`}
+                >
+                  Up tin
+                </button>
+              )}
               {r.status === "draft" && (
                 <button
                   type="button"
@@ -410,6 +451,45 @@ export default function MyListingsPage() {
       {tongTrang > 1 && (
         <PhanTrang hienTai={trangHienTai} tong={tongTrang} doiTrang={doiTrang} ghiChu={`${filtered.length} tin`} className="pt-1" />
       )}
+      {upCho && (
+        <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4" onClick={() => !dangUp && setUpCho(null)}>
+          <div className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-white p-5 shadow-xl sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
+            <p className="text-sm text-cvr-muted">Up tin</p>
+            <h3 className="mt-0.5 line-clamp-2 text-base font-semibold text-cvr-ink">{upCho.title || "(chưa có tiêu đề)"}</h3>
+            <p className="mt-2 text-[13px] leading-relaxed text-cvr-muted">
+              Ngày đăng và hạn hiển thị tính lại từ hôm nay; ngày còn lại của gói cũ không cộng dồn.
+              Miễn phí thành viên mới và voucher hội viên tự áp khi xác nhận.
+            </p>
+            <div className="mt-4 space-y-3">
+              {bangTheoMucDich(billing, upCho.purpose).plans.map((p) => (
+                <div key={p.tierId}>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-cvr-muted">{p.name}</p>
+                  <div className="mt-1.5 grid grid-cols-3 gap-2">
+                    {[...p.terms].sort((a, b) => a.days - b.days).map((t) => {
+                      const chon = upChon?.tier === p.tierId && upChon.soNgay === t.days;
+                      return (
+                        <button key={t.days} type="button" onClick={() => setUpChon({ tier: p.tierId, soNgay: t.days })}
+                          className={`rounded-xl border px-2 py-2 text-center transition ${chon ? "border-cvr-ink bg-cvr-ink text-white" : "border-cvr-line hover:border-cvr-ink"}`}>
+                          <span className="block text-sm font-semibold">{t.days} ngày</span>
+                          <span className={`block text-xs tabular-nums ${chon ? "text-white" : "text-cvr-muted"}`}>{vnd(tachThue(t.price).tongTra)}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-5 flex gap-2">
+              <button type="button" onClick={() => setUpCho(null)} disabled={dangUp} className="h-11 flex-1 rounded-full border border-cvr-line text-sm font-medium text-cvr-body">Huỷ</button>
+              <button type="button" onClick={xacNhanUp} disabled={!upChon || dangUp}
+                className="h-11 flex-[2] rounded-full bg-cvr-ink text-sm font-semibold text-white disabled:opacity-50">
+                {dangUp ? "Đang Up…" : upChon ? "Xác nhận Up tin" : "Chọn hạng và thời hạn"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

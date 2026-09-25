@@ -3,7 +3,7 @@ import { revalidateTag } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { BILLING_DEFAULT, bangUp, type BillingData } from "@/lib/billing";
-import { KHOA_GIA_CHUAN, NHAP_TRONG, kiemNhap, tinhCongBo, type GiaChuanNhap } from "@/lib/giaChuan";
+import { KHOA_GIA_CHUAN, NHAP_TRONG, kiemNhap, tinhCongBo, tinhHoiVien, type GiaChuanNhap } from "@/lib/giaChuan";
 
 // ============================================================================
 // GIÁ CHUẨN — API CHỈ DÀNH CHO ADMIN
@@ -49,6 +49,7 @@ export async function GET() {
     ok: true,
     nhap,
     congBo: luu.congBo ?? null,
+    hoiVienLuc: luu.hoiVienLuc ?? null,
     plansHienTai: bang.plans,
     upHienTai: bangUp(bang),
   });
@@ -76,6 +77,27 @@ export async function POST(request: Request) {
   if (hanhDong === "go-cong-bo") {
     const { congBo: _bo, ...conLai } = luu;
     void _bo;
+    const { error } = await admin.from("site_content").upsert({ key: "billing", data: conLai });
+    if (error) return loi(`Lỗi: ${error.message}`, 500);
+    revalidateTag("noi-dung", "max");
+    return NextResponse.json({ ok: true });
+  }
+
+  // ── GÓI HỘI VIÊN: công bố / gỡ RIÊNG, không đụng giá đăng tin ──────────────
+  if (hanhDong === "cong-bo-hoi-vien") {
+    const nhapHv = await docNhap(admin);
+    const homNayHv = new Date(Date.now() + 7 * 3600_000).toISOString().slice(0, 10);
+    const hoiVien = tinhHoiVien(nhapHv.hoiVien ?? [], nhapHv.chuongTrinh, homNayHv);
+    if (!hoiVien.length) return loi("Bản nháp chưa có gói hội viên nào có giá — lưu nháp trước rồi mới công bố.");
+    const hoiVienLuc = new Date().toISOString();
+    const { error } = await admin.from("site_content").upsert({ key: "billing", data: { ...luu, hoiVien, hoiVienLuc } });
+    if (error) return loi(`Lỗi công bố: ${error.message}`, 500);
+    revalidateTag("noi-dung", "max");
+    return NextResponse.json({ ok: true, hoiVien, hoiVienLuc });
+  }
+  if (hanhDong === "go-hoi-vien") {
+    const { hoiVien: _hv, hoiVienLuc: _l, ...conLai } = luu;
+    void _hv; void _l;
     const { error } = await admin.from("site_content").upsert({ key: "billing", data: conLai });
     if (error) return loi(`Lỗi: ${error.message}`, 500);
     revalidateTag("noi-dung", "max");

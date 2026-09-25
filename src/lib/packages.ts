@@ -233,18 +233,9 @@ export function theoCap(lay: (t: Tier) => string): Record<TierId, string> {
 }
 
 export const benefitRows: BenefitRow[] = [
-  {
-    label: "Đơn giá 1 tuần",
-    values: { diamond: "980.000 đ", gold: "490.000 đ", silver: "170.000 đ", basic: "15.000 đ" },
-  },
-  {
-    label: "Gói 2 tuần",
-    values: { diamond: "1.700.000 đ (−15%)", gold: "800.000 đ (−20%)", silver: "300.000 đ (−15%)", basic: "20.000 đ" },
-  },
-  {
-    label: "Gói 4 tuần",
-    values: { diamond: "2.800.000 đ (−30%)", gold: "1.300.000 đ (−35%)", silver: "500.000 đ (−30%)", basic: "30.000 đ" },
-  },
+  // GIÁ KHÔNG VIẾT Ở ĐÂY NỮA (bỏ 25/09/2026): 3 dòng "Đơn giá 1 tuần / Gói 2 tuần /
+  // Gói 4 tuần" viết cứng 980.000 đ… đã lệch bảng giá thật. Trang /tien-ich đọc
+  // giá từ billing (cùng nguồn trang Bảng giá) qua priceLinesFor.
   // BA DÒNG CƠ CHẾ — đọc thẳng từ `tiers` ở đầu file, KHÔNG chép tay lại.
   // Chép tay chính là lý do bảng này từng ghi "gấp 20 lần" và "huy hiệu đen chữ
   // vàng kim" trong khi cơ chế thật là X30 và huy hiệu đỏ.

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { BILLING_DEFAULT, chuanHoaCapHoiVien, vnd, type BillingData, type MemberLevel } from "@/lib/billing";
+import { vnd } from "@/lib/billing";
 import { guiThongBao, MAU_NAP_TIEN } from "@/lib/thongBao";
 
 // ============================================================================
@@ -20,11 +20,6 @@ import { guiThongBao, MAU_NAP_TIEN } from "@/lib/thongBao";
 //     vì sao. Cộng tay mà không để lại vết là sổ sách không bao giờ khớp.
 // ============================================================================
 export const dynamic = "force-dynamic";
-
-function capTheoTongNap(levels: MemberLevel[], tongNap: number): string {
-  const dat = [...levels].sort((a, b) => a.minTopup - b.minTopup).filter((l) => tongNap >= l.minTopup);
-  return dat.length ? dat[dat.length - 1].id : levels[0]?.id ?? "basic";
-}
 
 export async function POST(request: Request) {
   const ssr = await createClient();
@@ -60,18 +55,13 @@ export async function POST(request: Request) {
   if (tv.length > 1) return loi(`Có ${tv.length} tài khoản trùng "${khoa}". Dùng email chính xác để khỏi cộng nhầm người.`, 409);
   const kh = tv[0];
 
-  // Chính sách điểm + ngưỡng cấp: lấy bản admin đã lưu, giống hệt webhook
-  const { data: sc } = await admin.from("site_content").select("data").eq("key", "billing").limit(1);
-  const luu = sc?.[0]?.data as Partial<BillingData> | undefined;
-  const levels = chuanHoaCapHoiVien(luu?.levels) ?? BILLING_DEFAULT.levels;
-  const cs = luu?.points ?? BILLING_DEFAULT.points;
-  const diemThuong = cs.active && cs.earnPerVnd > 0 ? Math.floor(tienCong / cs.earnPerVnd) : 0;
-  const tongNapMoi = Number(kh.total_topup ?? 0) + tienCong;
+  // Hệ cấp theo tổng nạp + điểm thưởng đã BỎ 25/09/2026, thay bằng Gói hội viên (0040).
+  const diemThuong = 0;
 
   const { data: viMoi, error: loiRpc } = await admin.rpc("cong_vi", {
     p_user: kh.id,
     p_tien: tienCong,
-    p_cap: capTheoTongNap(levels, tongNapMoi),
+    p_cap: null,
     p_diem: diemThuong,
   });
   if (loiRpc) {

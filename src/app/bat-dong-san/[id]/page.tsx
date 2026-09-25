@@ -26,7 +26,7 @@ import ProjectNearby from "@/components/ProjectNearby";
 import ProjectNav from "@/components/ProjectNav";
 import { BreadcrumbJsonLd } from "@/components/Breadcrumb";
 import { provinceOf, districtOf, pickRelated } from "@/lib/data";
-import { getListing, getListings, getListingDetail } from "@/lib/listingsDb";
+import { getListing, getListings, getListingDetail, tinDaHetHan } from "@/lib/listingsDb";
 import { getProject } from "@/lib/contentDb";
 import { tierFromBadge, getTier } from "@/lib/packages";
 import { chuanHoaSdt } from "@/lib/phone";
@@ -167,7 +167,10 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   })();
   const desc = moTaGon;
   const tieuDe = tieuDeSeo(l.title, l.location, l.price);
+  // Tin hết hạn: link vẫn mở cho người đã lưu, nhưng báo Google bỏ khỏi kết quả.
+  const hetHan = await tinDaHetHan(id);
   return {
+    ...(hetHan ? { robots: { index: false, follow: true } } : {}),
     title: tieuDe,
     description: desc,
     alternates: { canonical: `/bat-dong-san/${id}` },
@@ -183,7 +186,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
 export default async function ListingDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const d = await getListingDetail(id); // DỮ LIỆU THẬT: ảnh, đặc điểm, tiện ích, người đăng
+  const [d, hetHan] = await Promise.all([getListingDetail(id), tinDaHetHan(id)]); // DỮ LIỆU THẬT: ảnh, đặc điểm, tiện ích, người đăng
   if (!d) notFound();
   const l = d.listing;
   // Hạng CVR của tin (đồng bộ với thẻ tin V.7). Không có huy hiệu → tin thường.
@@ -293,7 +296,8 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
   return (
     <>
       <Header />
-      <RecordView id={l.id} />
+      {/* Tin hết hạn không đếm lượt xem — tin không còn đăng nữa. */}
+      {!hetHan && <RecordView id={l.id} />}
       {/* Schema.org RealEstateListing — dữ liệu chuẩn cho Google (IV.2) */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       {/* Cây phân cấp cho Google (không hiện trên màn hình — giữ nguyên bố cục đã duyệt) */}
@@ -356,6 +360,13 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
 
                 {/* Tiêu đề — 21px trên điện thoại: đọc thoải mái mà vẫn thấy được
                     giá ngay bên dưới trong cùng một màn hình. */}
+                {/* TIN HẾT HẠN (chốt 25/09/2026, theo Batdongsan): link cũ vẫn mở,
+                    nói thẳng tin đã hết hạn, ẩn số người đăng, gợi ý tin tương tự bên dưới. */}
+                {hetHan && (
+                  <p className="mt-3 rounded-xl bg-amber-50 px-4 py-3 text-sm leading-relaxed text-amber-900">
+                    <b className="font-semibold">Tin đã hết hạn hiển thị.</b> Thông tin liên hệ tạm ẩn — xem các tin tương tự bên dưới.
+                  </p>
+                )}
                 <h1 className="mt-3 text-[21px] font-semibold leading-[1.3] tracking-tight text-cvr-ink sm:text-[28px]">{l.title}</h1>
 
                 {/* ĐỊA CHỈ HAI DÒNG — người đăng nhập theo hệ nào cũng vậy:
@@ -574,7 +585,9 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                           <p className="text-xs text-cvr-muted">Người đăng tin</p>
                         </div>
                       </div>
-                      <ContactActions listingId={l.id} phoneMask={phoneMask} />
+                      {hetHan
+                        ? <p className="text-sm text-cvr-muted">Tin đã hết hạn — liên hệ tạm ẩn.</p>
+                        : <ContactActions listingId={l.id} phoneMask={phoneMask} />}
                     </>
                   ) : (
                     <p className="text-sm leading-relaxed text-cvr-muted">
@@ -622,7 +635,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
 
         {/* Thanh liên hệ DÍNH (mobile) — Gọi / Zalo bám đáy màn hình (III.4).
             Tin chưa có liên hệ thì KHÔNG hiện thanh này (không có số để gọi). */}
-        {contact && (
+        {contact && !hetHan && (
         <div className="fixed inset-x-0 bottom-0 z-40 flex gap-2 border-t border-cvr-line bg-white/95 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur-md lg:hidden">
           <ContactBarMobile listingId={l.id} phoneMask={phoneMask} />
         </div>

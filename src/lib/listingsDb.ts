@@ -496,6 +496,14 @@ function mockToDetail(m: Listing): ListingFull {
   };
 }
 
+// Tin đã HẾT HẠN chưa ('expired', 0041)? Trang tin dùng để hiện thông báo hết
+// hạn, ẩn số điện thoại và báo Google bỏ tin khỏi kết quả — link cũ vẫn mở được.
+export async function tinDaHetHan(id: string): Promise<boolean> {
+  if (isSeedId(id)) return false;
+  const rows = (await rest(`select=status&id=eq.${encodeURIComponent(id)}&limit=1`)) as unknown as { status?: string }[] | null;
+  return rows?.[0]?.status === "expired";
+}
+
 export async function getListingDetail(id: string): Promise<ListingFull | null> {
   if (isSeedId(id)) return null; // tin demo (id số) → trang chi tiết trả 404
   const q = `&id=eq.${encodeURIComponent(id)}&limit=1`;

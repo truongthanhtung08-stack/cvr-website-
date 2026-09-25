@@ -6,7 +6,7 @@ export type MucTaiKhoan = { label: string; href: string; icon: string };
 export const MUC_TAI_KHOAN: MucTaiKhoan[] = [
   { label: "Ví & nạp tiền", href: "/tai-khoan/nap-tien", icon: "card" },
   { label: "Hóa đơn", href: "/tai-khoan/hoa-don", icon: "bill" },
-  { label: "Điểm thưởng", href: "/tai-khoan/doi-diem", icon: "star" },
+  { label: "Gói hội viên", href: "/tai-khoan/hoi-vien", icon: "star" },
   { label: "Bảng giá dịch vụ", href: "/bao-gia-dang-tin", icon: "tag" },
   { label: "Dự án của tôi", href: "/tai-khoan/du-an", icon: "building" },
   { label: "Tin đã lưu", href: "/tin-luu", icon: "heart" },

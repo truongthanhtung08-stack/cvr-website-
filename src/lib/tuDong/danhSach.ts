@@ -32,14 +32,14 @@ const viecChupGia: Viec = {
   },
 };
 
-/** Tin hết hạn gói thì hạ về tin thường; sắp hết hạn thì nhắc khách gia hạn. */
+/** Tin hết hạn gói thì ngừng hiển thị (như BĐS); sắp hết hạn thì nhắc khách Up tin. */
 const viecHetHanTin: Viec = {
   ma: "quet-tin-het-han",
   ten: "Quét tin hết hạn gói",
-  hauQua: "Khách mua gói 30 ngày vẫn giữ hạng VIP mãi mãi — mất toàn bộ doanh thu gia hạn.",
+  hauQua: "Tin hết hạn vẫn hiển thị miễn phí mãi — mất toàn bộ doanh thu Up tin.",
   async chay(admin) {
     const kq = await quetTinHetHan(admin);
-    return { tomTat: `Hạ ${kq.daHa} tin hết hạn, nhắc ${kq.daNhac} tin sắp hết`, soLieu: { ...kq } };
+    return { tomTat: `Ngừng hiển thị ${kq.daHa} tin hết hạn, nhắc ${kq.daNhac} tin sắp hết`, soLieu: { ...kq } };
   },
 };
 
