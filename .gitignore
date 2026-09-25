@@ -63,3 +63,6 @@ khoa-*.txt
 
 # Ban sao anh truoc khi go (script go-anh-lan-tin.mjs) — chi de hoan tac tren may
 sao-luu-anh-truoc-khi-go-*.json
+
+# Tệp tạm cho Zalo Mini App (giấy tờ công ty, ảnh nộp Zalo) — KHÔNG commit
+.tam-miniapp/

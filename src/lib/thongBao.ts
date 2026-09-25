@@ -71,13 +71,20 @@ export function soDienThoaiZalo(phone: string | null | undefined): string | null
 }
 
 /**
- * Gửi thông báo qua mọi kênh đang cắm khoá. Không bao giờ ném lỗi.
- * Trả về kết quả từng kênh để nơi gọi ghi log.
+ * Gửi thông báo — MỖI SỰ KIỆN MỘT KÊNH, không gửi trùng (chủ dự án chốt 25/09/2026):
+ *   · Khách có email thật → CHỈ email (miễn phí).
+ *   · Không có email (đăng nhập bằng SĐT / Zalo) hoặc email gửi hỏng → Zalo ZBS.
+ * Email kỹ thuật của khách đăng nhập Zalo (…@users.coastalland.vn) không tính là email.
+ * Mã OTP không đi qua hàm này. Không bao giờ ném lỗi.
  */
 export async function guiThongBao(t: NoiDungThongBao): Promise<KetQuaKenh[]> {
-  const ketQua = await Promise.all([guiEmail(t), guiZalo(t)]);
+  const emailThat = t.email && !/@users\.coastalland\.vn$/i.test(t.email) ? t.email : null;
+  const quaEmail = await guiEmail({ ...t, email: emailThat });
+  const ketQua = quaEmail.daGui
+    ? [quaEmail, { kenh: "zalo" as const, daGui: false, lyDo: "đã báo qua email — không gửi trùng" }]
+    : [quaEmail, await guiZalo(t)];
   for (const k of ketQua) {
-    if (!k.daGui && k.lyDo) console.warn(`[thong-bao] ${k.kenh}: ${k.lyDo}`);
+    if (!k.daGui && k.lyDo && !quaEmail.daGui) console.warn(`[thong-bao] ${k.kenh}: ${k.lyDo}`);
   }
   return ketQua;
 }
