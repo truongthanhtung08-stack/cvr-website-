@@ -202,6 +202,15 @@ export type BillingData = {
   hoiVienLuc?: string;
 };
 
+// GHÉP BẢNG GIÁ ĐÃ LƯU VỚI MẶC ĐỊNH — MỌI chỗ máy chủ tính tiền PHẢI dùng hàm này.
+// Lỗi tìm ra 25/09/2026: máy chủ ghép kiểu { ...MẶC_ĐỊNH, ...đã_lưu } nên khối
+// `free` đã lưu (thiếu from/to) ĐÈ MẤT ngày kết thúc chương trình → duyệt tin /
+// Up tin miễn phí MÃI MÃI, trong khi trang web (useBilling, getBilling vốn ghép
+// sâu) báo "áp dụng đến 17/10". Nay hai phía ghép giống hệt nhau.
+export function ghepBillingLuu(luu?: Partial<BillingData> | null): BillingData {
+  return { ...BILLING_DEFAULT, ...(luu ?? {}), free: { ...BILLING_DEFAULT.free, ...(luu?.free ?? {}) } };
+}
+
 export type MucDichGia = "ban" | "thue";
 export type GiaCongBo = { plans: Plan[]; up: UpRow[] };
 export type CongBo = {

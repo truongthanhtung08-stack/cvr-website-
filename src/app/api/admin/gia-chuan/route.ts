@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { BILLING_DEFAULT, bangUp, type BillingData } from "@/lib/billing";
+import { ghepBillingLuu, bangUp, type BillingData } from "@/lib/billing";
 import { KHOA_GIA_CHUAN, NHAP_TRONG, kiemNhap, tinhCongBo, tinhHoiVien, type GiaChuanNhap } from "@/lib/giaChuan";
 
 // ============================================================================
@@ -44,7 +44,7 @@ export async function GET() {
   const { admin, err } = await chiAdmin();
   if (err) return err;
   const [nhap, luu] = await Promise.all([docNhap(admin), docBilling(admin)]);
-  const bang: BillingData = { ...BILLING_DEFAULT, ...luu };
+  const bang: BillingData = ghepBillingLuu(luu);
   return NextResponse.json({
     ok: true,
     nhap,
@@ -111,7 +111,7 @@ export async function POST(request: Request) {
   if (!nhap.ban.plans.length || !nhap.thue.plans.length) {
     return loi("Bản nháp chưa có đủ giá chuẩn cho cả Bán và Cho thuê — lưu nháp trước rồi mới công bố.");
   }
-  const bang: BillingData = { ...BILLING_DEFAULT, ...luu };
+  const bang: BillingData = ghepBillingLuu(luu);
   // Theo giờ Việt Nam: chương trình "đến hết ngày 17/10" phải còn tác dụng tới 23:59 giờ VN.
   const homNay = new Date(Date.now() + 7 * 3600_000).toISOString().slice(0, 10);
   const congBo = tinhCongBo(nhap, homNay, bang.plans, bangUp(bang));

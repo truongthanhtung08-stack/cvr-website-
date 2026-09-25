@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { BILLING_DEFAULT, bangTheoMucDich, freeDangChay, loaiVoucherTin, quotePrice, vnd, type BillingData } from "@/lib/billing";
+import { ghepBillingLuu, bangTheoMucDich, freeDangChay, loaiVoucherTin, quotePrice, vnd, type BillingData } from "@/lib/billing";
 import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
 import { baoLoi } from "@/lib/baoLoi";
 import { guiThongBao } from "@/lib/thongBao";
@@ -35,7 +35,7 @@ export async function thucHienUpTin(
   if (tin.status !== "approved" && tin.status !== "expired") return { ok: false, loi: "Chỉ Up được tin đang đăng hoặc đã hết hạn." };
 
   const { data: sc } = await admin.from("site_content").select("data").eq("key", "billing").limit(1);
-  const bang: BillingData = bangTheoMucDich({ ...BILLING_DEFAULT, ...((sc?.[0]?.data as Partial<BillingData>) ?? {}) }, tin.purpose);
+  const bang: BillingData = bangTheoMucDich(ghepBillingLuu(sc?.[0]?.data as Partial<BillingData> | undefined), tin.purpose);
   if (!bang.plans.find((p) => p.tierId === goi)?.terms.some((t) => t.days === soNgay)) {
     return { ok: false, loi: "Hạng tin hoặc thời hạn này hiện không bán." };
   }
