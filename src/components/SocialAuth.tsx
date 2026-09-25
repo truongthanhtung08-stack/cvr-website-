@@ -51,7 +51,11 @@ const BAT_SO_DIEN_THOAI = process.env.NEXT_PUBLIC_BAT_SO_DIEN_THOAI !== "0";
 //
 // 👉 Khi nào gỡ được (trạm trung chuyển đặt tại VN, hoặc Zalo mở IP cho app):
 //    Vercel → thêm NEXT_PUBLIC_BAT_ZALO = 1 → Redeploy.
-const BAT_ZALO = process.env.NEXT_PUBLIC_BAT_ZALO === "1";
+// ✅ 25/09/2026: đo lại — Zalo KHÔNG còn chặn máy chủ ngoài VN (gọi từ Tokyo trả
+// 452 "Session key invalid" y như từ máy ở VN, không còn -501). Mã phiên cất ở
+// máy chủ (0046) nên Zalo trả về trình duyệt khác vẫn vào được. BẬT MẶC ĐỊNH;
+// muốn tắt: Vercel đặt NEXT_PUBLIC_BAT_ZALO = 0 rồi Redeploy.
+const BAT_ZALO = process.env.NEXT_PUBLIC_BAT_ZALO !== "0";
 
 export default function SocialAuth() {
   const [notice, setNotice] = useState("");
@@ -154,30 +158,15 @@ export default function SocialAuth() {
         </p>
       )}
 
-      {/* GOOGLE ĐỨNG ĐẦU — trên điện thoại đây là đường DUY NHẤT vào được bằng
-          một chạm: máy Android/Chrome đã sẵn tài khoản, bấm là ra danh sách chọn
-          rồi vào thẳng. Viền đậm + chữ đậm để mắt rơi vào đây trước.
-          Zalo xuống ngay dưới: Zalo Web luôn bắt đăng nhập lại (phiên rất ngắn,
-          và mở trong trình duyệt phụ là mất phiên), nên KHÔNG thể một chạm —
-          muốn Zalo một chạm thì phải đi đường OTP qua ZNS hoặc app riêng. */}
-      <button
-        type="button"
-        onClick={withGoogle}
-        disabled={loading !== null}
-        className="flex h-11 w-full items-center justify-center gap-2.5 rounded-lg border border-cvr-ink bg-white text-sm font-semibold text-cvr-ink transition hover:bg-cvr-surface disabled:opacity-60"
-      >
-        <GoogleIcon />
-        {loading === "google" ? "Đang chuyển tới Google…" : "Tiếp tục với Google"}
-      </button>
-
-      {/* Có đường dẫn dựng sẵn thì dùng THẺ LIÊN KẾT — cú chạm đi thẳng sang Zalo,
+      {/* ZALO ĐỨNG ĐẦU (25/09/2026): ~90% khách có app Zalo — chạm "Đăng nhập qua ứng
+          dụng Zalo" là vào. Có đường dẫn dựng sẵn thì dùng THẺ LIÊN KẾT — cú chạm đi thẳng sang Zalo,
           đó là điều kiện để điện thoại có thể giao sang app Zalo. Chưa có thì
           quay về nút bấm như cũ (vẫn vào được, chỉ là qua trình duyệt). */}
       {BAT_ZALO && (zaloUrl ? (
         <a
           href={zaloUrl}
           onClick={() => setLoading("zalo")}
-          className="flex h-11 w-full items-center justify-center gap-2.5 rounded-lg border border-cvr-line bg-white text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink"
+          className="flex h-11 w-full items-center justify-center gap-2.5 rounded-lg border border-cvr-ink bg-white text-sm font-semibold text-cvr-ink transition hover:border-cvr-ink hover:text-cvr-ink"
         >
           <ZaloIcon />
           {loading === "zalo" ? "Đang chuyển tới Zalo…" : "Tiếp tục với Zalo"}
@@ -187,12 +176,28 @@ export default function SocialAuth() {
           type="button"
           onClick={() => withZalo()}
           disabled={loading !== null}
-          className="flex h-11 w-full items-center justify-center gap-2.5 rounded-lg border border-cvr-line bg-white text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink disabled:opacity-60"
+          className="flex h-11 w-full items-center justify-center gap-2.5 rounded-lg border border-cvr-ink bg-white text-sm font-semibold text-cvr-ink transition hover:border-cvr-ink hover:text-cvr-ink disabled:opacity-60"
         >
           <ZaloIcon />
           {loading === "zalo" ? "Đang chuyển tới Zalo…" : "Tiếp tục với Zalo"}
         </button>
       ))}
+
+      {/* GOOGLE ĐỨNG THỨ HAI (trước 25/09 đứng đầu) — trên điện thoại đây là đường DUY NHẤT vào được bằng
+          một chạm: máy Android/Chrome đã sẵn tài khoản, bấm là ra danh sách chọn
+          rồi vào thẳng. Viền đậm + chữ đậm để mắt rơi vào đây trước.
+          Zalo xuống ngay dưới: Zalo Web luôn bắt đăng nhập lại (phiên rất ngắn,
+          và mở trong trình duyệt phụ là mất phiên), nên KHÔNG thể một chạm —
+          muốn Zalo một chạm thì phải đi đường OTP qua ZNS hoặc app riêng. */}
+      <button
+        type="button"
+        onClick={withGoogle}
+        disabled={loading !== null}
+        className="flex h-11 w-full items-center justify-center gap-2.5 rounded-lg border border-cvr-line bg-white text-sm font-medium text-cvr-body transition hover:bg-cvr-surface disabled:opacity-60"
+      >
+        <GoogleIcon />
+        {loading === "google" ? "Đang chuyển tới Google…" : "Tiếp tục với Google"}
+      </button>
 
       {BAT_FACEBOOK && (
         <button
