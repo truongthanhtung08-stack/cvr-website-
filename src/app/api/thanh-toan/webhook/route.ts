@@ -4,6 +4,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { BILLING_DEFAULT, chuanHoaCapHoiVien, vnd, type BillingData, type MemberLevel } from "@/lib/billing";
 import { guiThongBao, MAU_NAP_TIEN } from "@/lib/thongBao";
 import { baoLoi } from "@/lib/baoLoi";
+import { revalidateTag } from "next/cache";
+import { xuLyUpCho } from "@/lib/upTin";
 
 // ============================================================================
 // PayOS GỌI NGƯỢC VỀ WEB KHI KHÁCH ĐÃ CHUYỂN TIỀN (webhook)
@@ -252,6 +254,11 @@ export async function POST(req: Request) {
         so_du: vnd(soDuBao),
       },
     });
+
+    // TIỀN VỪA VÀO VÍ → tự Up các tin khách đang CHỜ NẠP (0044). Hàm không bao
+    // giờ ném lỗi — tiền đã vào ví, lỗi ở đây không được làm PayOS gọi lại.
+    const daUp = await xuLyUpCho(supabase, don.user_id);
+    if (daUp > 0) revalidateTag("listings", "max");
   }
 
   return NextResponse.json({ ok: true, message: "Đã cộng vào ví." });

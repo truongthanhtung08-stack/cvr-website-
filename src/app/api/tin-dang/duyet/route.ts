@@ -315,7 +315,8 @@ export async function POST(request: Request) {
 
   // ── 7. Ghi sổ doanh thu (nguồn lập tờ khai thuế) ──────────────────────────
   const canHoaDon = Boolean(hs.xuat_hoa_don);
-  const { error: loiSo } = await admin.from("doanh_thu").insert({
+  // Gói 0đ (tin thường miễn phí, hoặc voucher phủ hết) → không có doanh thu, không ghi sổ.
+  const { error: loiSo } = tien.tongTra <= 0 ? { error: null } : await admin.from("doanh_thu").insert({
     user_id: tin.owner_id,
     listing_id: id,
     mo_ta: `${tenGoi(bang, goi)} ${soNgay} ngày — ${tin.title}${voucher ? ` (voucher hội viên −${vnd(voucher.giam)})` : ""}`,

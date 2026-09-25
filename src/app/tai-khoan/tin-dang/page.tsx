@@ -174,6 +174,17 @@ export default function MyListingsPage() {
   const [upCho, setUpCho] = useState<ListingRow | null>(null);
   const [upChon, setUpChon] = useState<{ tier: string; soNgay: number } | null>(null);
   const [dangUp, setDangUp] = useState(false);
+  // Tin đang có yêu cầu "Up khi nạp đủ tiền" (bảng up_cho, 0044)
+  const [choUp, setChoUp] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    const sb = createClient();
+    (async () => {
+      const { data: { user } } = await sb.auth.getUser();
+      if (!user) return;
+      const { data } = await sb.from("up_cho").select("listing_id").eq("user_id", user.id).eq("trang_thai", "cho");
+      setChoUp(new Set(((data ?? []) as { listing_id: string }[]).map((x) => x.listing_id)));
+    })();
+  }, []);
   async function xacNhanUp() {
     if (!upCho || !upChon) return;
     setDangUp(true);
@@ -184,7 +195,20 @@ export default function MyListingsPage() {
         body: JSON.stringify({ id: upCho.id, tier: upChon.tier, soNgay: upChon.soNgay }),
       });
       const kq = await res.json().catch(() => ({}));
+      // VÍ THIẾU → yêu cầu Up đã được ghi (up_cho). Nạp đủ là máy tự Up đúng gói
+      // + thời hạn vừa chọn, khách không phải quay lại bấm.
+      if (res.status === 402 && kq.viThieu) {
+        if (kq.choUp) setChoUp((ds) => new Set(ds).add(upCho.id));
+        const di = window.confirm(
+          `${kq.loi}\n\nNạp thêm ${vnd(kq.viThieu)} — tiền vào ví là tin tự Up đúng gói bạn vừa chọn, không phải bấm lại.\n\nĐi tới trang nạp tiền?`,
+        );
+        setUpCho(null);
+        setUpChon(null);
+        if (di) window.location.href = `/tai-khoan/nap-tien?can=${kq.viThieu}`;
+        return;
+      }
       if (!res.ok || !kq.ok) { window.alert(kq.loi || "Up tin không thành công."); return; }
+      setChoUp((ds) => { const m = new Set(ds); m.delete(upCho.id); return m; });
       const bayGio = new Date().toISOString();
       setRows((ds) => ds.map((x) => (x.id === upCho.id
         ? { ...x, status: "approved", tier: upChon.tier as ListingRow["tier"], published_at: bayGio, bumped_at: bayGio, tier_expires_at: kq.hetHan }
@@ -311,6 +335,11 @@ export default function MyListingsPage() {
                   không cần huy hiệu, đúng như ngoài trang kết quả. */}
               {goi.cap !== "basic" && tierBadge(goi.cap)}
               <span className="text-xs text-cvr-faint">{r.view_count} lượt xem</span>
+              {choUp.has(r.id) && (
+                <Link href="/tai-khoan/nap-tien" className="rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-800">
+                  Chờ nạp tiền để Up
+                </Link>
+              )}
               {leads.length > 0 && (
                 <span className="text-xs font-semibold text-cvr-blue-ink">· {leads.length} người quan tâm</span>
               )}

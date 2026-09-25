@@ -625,6 +625,8 @@ export function priceLinesFor(data: BillingData, tierId: TierId): PriceLineOut[]
     return {
       label: giam > 0 ? `${ten} (−${giam}%)` : ten,
       original: giam > 0 ? giaTra(goc) : undefined,
+      // Gói 0đ (vd tin thường Bán 7 ngày, như BĐS) là gói KHÔNG TÍNH PHÍ — ghi
+      // "0 đ", không ghi "Miễn phí" (chữ đó dành cho chương trình thành viên mới).
       price: giaTra(t.price),
     };
   });

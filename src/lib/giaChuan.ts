@@ -296,7 +296,7 @@ export type DongX = {
 
 export function bangX(plans: { tierId: TierId; terms: PlanTerm[] }[], heSoCua: (t: TierId) => number): DongX[] {
   const giaNgay = (t: TierId) => {
-    const terms = [...(plans.find((p) => p.tierId === t)?.terms ?? [])].sort((a, b) => a.days - b.days);
+    const terms = [...(plans.find((p) => p.tierId === t)?.terms ?? [])].filter((x) => x.price > 0).sort((a, b) => a.days - b.days);
     return terms[0] ? terms[0].price / terms[0].days : 0;
   };
   const coSo = giaNgay("basic");
@@ -316,7 +316,7 @@ export function canhBaoLogic(
   const tungMucDich = (ten: string, b: typeof ban) => {
     // 1. Giá mỗi ngày tăng dần theo cấp: Basic < Silver < Gold < Diamond
     const ngay = (t: TierId) => {
-      const terms = [...(b.plans.find((p) => p.tierId === t)?.terms ?? [])].sort((x, y) => x.days - y.days);
+      const terms = [...(b.plans.find((p) => p.tierId === t)?.terms ?? [])].filter((x) => x.price > 0).sort((x, y) => x.days - y.days);
       return terms[0] ? terms[0].price / terms[0].days : 0;
     };
     const tuThapLenCao = [...THU_TU_CAP].reverse().filter((t) => ngay(t) > 0);
@@ -328,7 +328,7 @@ export function canhBaoLogic(
     }
     // 2. Mua dài hơn không được đắt hơn tính theo ngày
     for (const p of b.plans) {
-      const terms = [...p.terms].sort((x, y) => x.days - y.days);
+      const terms = [...p.terms].filter((x) => x.price > 0).sort((x, y) => x.days - y.days);
       for (let i = 1; i < terms.length; i++) {
         const a = terms[i - 1], c = terms[i];
         if (a.days > 0 && c.days > 0 && c.price / c.days > a.price / a.days + 0.5) {

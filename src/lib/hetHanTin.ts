@@ -31,6 +31,12 @@ import { baoLoi } from "@/lib/baoLoi";
 
 const NGAY_NHAC_TRUOC = 3;
 
+// TIN THƯỜNG SAU VIP (chủ dự án chốt 25/09/2026): tin VIP có ghi mốc này trong
+// details thì hết hạn VIP KHÔNG ngừng hiển thị ngay mà TỤT VỀ TIN THƯỜNG, chạy
+// tới đúng mốc đó rồi mới hết hạn như mọi tin. Máy chỉ làm theo mốc đã ghi,
+// không tự suy ra. Up tin xoá mốc này (reset từ đầu).
+export const KHOA_SAU_VIP = "sau_vip_thuong_den";
+
 type Tin = {
   id: string;
   title: string;
@@ -64,6 +70,36 @@ export async function quetTinHetHan(
     const nguoi = await layNguoi(admin, dsHet.map((t) => t.owner_id));
 
     for (const tin of dsHet) {
+      // ── VIP có "tin thường sau VIP" còn hạn → tụt về tin thường, KHÔNG ẩn ──
+      const sauVip = tin.details?.[KHOA_SAU_VIP];
+      if (tin.tier !== "basic" && typeof sauVip === "string" && new Date(sauVip).getTime() > bayGio.getTime()) {
+        const { [KHOA_SAU_VIP]: _bo, nhac_het_han: _nhac, ...conLai } = tin.details ?? {};
+        void _bo; void _nhac;
+        const { data: tut, error: loiTut } = await admin
+          .from("listings")
+          .update({ tier: "basic", tier_expires_at: sauVip, details: conLai })
+          .eq("id", tin.id)
+          .eq("status", "approved")
+          .eq("tier", tin.tier) // ai giành được mới báo — chạy hai lần không báo hai lần
+          .select("id");
+        if (loiTut || !tut?.length) continue;
+        daHa++;
+        const chuTut = nguoi.get(tin.owner_id ?? "");
+        await guiThongBao({
+          email: chuTut?.email,
+          phone: chuTut?.phone,
+          tieuDe: "Gói VIP của tin đã hết hạn",
+          loiNhan: `Tin chuyển về tin thường và vẫn hiển thị đến ${new Date(sauVip).toLocaleDateString("vi-VN")}. ` +
+            `Muốn lấy lại vị trí VIP, vào coastalland.vn/tai-khoan/tin-dang bấm Up tin.`,
+          cacDong: [
+            { nhan: "Tin đăng", giaTri: tin.title },
+            { nhan: "Gói vừa hết hạn", giaTri: getTier(tin.tier).name },
+            { nhan: "Tin thường đến", giaTri: new Date(sauVip).toLocaleDateString("vi-VN") },
+          ],
+        });
+        continue;
+      }
+
       const { error } = await admin
         .from("listings")
         .update({ status: "expired" })
@@ -118,14 +154,18 @@ export async function quetTinHetHan(
       const chu = nguoi2.get(tin.owner_id ?? "");
       const hetNgay = new Date(tin.tier_expires_at);
       const conLai = Math.max(0, Math.ceil((hetNgay.getTime() - bayGio.getTime()) / 86_400_000));
+      const sauVipNhac = tin.details?.[KHOA_SAU_VIP];
+      const tutVeThuong = tin.tier !== "basic" && typeof sauVipNhac === "string";
 
       await guiThongBao({
         email: chu?.email,
         phone: chu?.phone,
         tieuDe: `Còn ${conLai} ngày là hết hạn gói tin`,
-        loiNhan:
-          `Hết hạn thì tin tạm ngừng hiển thị cho tới khi bạn Up tin. ` +
-          `Up tin tại coastalland.vn/tai-khoan/tin-dang.`,
+        loiNhan: tutVeThuong
+          ? `Hết hạn VIP thì tin về tin thường, hiển thị đến ${new Date(sauVipNhac).toLocaleDateString("vi-VN")}. ` +
+            `Up tin tại coastalland.vn/tai-khoan/tin-dang để giữ vị trí VIP.`
+          : `Hết hạn thì tin tạm ngừng hiển thị cho tới khi bạn Up tin. ` +
+            `Up tin tại coastalland.vn/tai-khoan/tin-dang.`,
         cacDong: [
           { nhan: "Tin đăng", giaTri: tin.title },
           { nhan: "Gói hiện tại", giaTri: getTier(tin.tier).name },

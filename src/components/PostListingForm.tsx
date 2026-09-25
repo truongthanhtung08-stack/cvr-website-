@@ -212,7 +212,7 @@ export default function PostListingForm() {
       freeDangChay(billing.free, new Date().toISOString().slice(0, 10)) &&
       tierId === billing.free.tierId && hoSoVi && laThanhVienMoi;
     if (mienPhi) return "Miễn phí (ưu đãi thành viên mới)";
-    return gia > 0 ? vnd(gia) : "Miễn phí";
+    return vnd(gia); // gói 0đ là "không tính phí" — ghi 0 ₫, không ghi "Miễn phí"
   };
 
   // Danh mục loại hình đổi theo mục đích: bán và cho thuê KHÔNG giống nhau
@@ -559,6 +559,8 @@ export default function PostListingForm() {
     }
 
     setSaving("");
+    // Tin đã đăng đổi sang BĐS khác (0045) → nói thẳng, không kèm mã lỗi kỹ thuật.
+    if (err && /BDS_KHAC/.test(err.message)) return setError(err.message.replace(/^.*BDS_KHAC:\s*/, ""));
     if (err) return setError(`Lưu thất bại: ${err.message}`);
     // Đo chuyển đổi cho Google Ads: chỉ tính TIN MỚI GỬI DUYỆT. Lưu nháp không
     // tính (chưa phải tin), sửa tin cũ cũng không tính (đã đếm lúc đăng lần đầu).
@@ -675,6 +677,12 @@ export default function PostListingForm() {
         <div className="flex flex-wrap items-center justify-between gap-2 rounded-none border border-cvr-blue/30 bg-cvr-blue/[0.06] px-4 py-3">
           <p className="text-sm font-medium text-cvr-blue-ink">
             Đang chỉnh sửa tin{editStatus === "draft" ? " nháp" : editStatus === "approved" ? " (đã duyệt — lưu xong sẽ duyệt lại)" : ""}
+            {/* Quy tắc 0045: tin đã đăng chỉ sửa nội dung của chính căn đó */}
+            {editStatus && editStatus !== "draft" && (
+              <span className="mt-0.5 block text-[13px] font-normal text-cvr-body">
+                Mục đích, loại hình và địa chỉ giữ nguyên — bất động sản khác vui lòng đăng tin mới.
+              </span>
+            )}
           </p>
           <Link href="/tai-khoan/tin-dang" className="text-sm font-medium text-cvr-muted transition hover:text-cvr-ink">← Về danh sách tin</Link>
         </div>
@@ -1088,7 +1096,7 @@ export default function PostListingForm() {
           <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 border-t border-cvr-line pt-2.5">
             <span className="text-sm font-semibold uppercase tracking-wide text-cvr-body">Thành tiền</span>
             <span className="text-lg font-bold text-cvr-blue-ink">
-              {thanhTien === 0 ? "0 ₫ — Miễn phí" : vnd(tienThue.tongTra)}
+              {duocMienPhi ? "0 ₫ — Miễn phí" : vnd(tienThue.tongTra)}
             </span>
           </div>
 

@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { vnd } from "@/lib/billing";
+import { revalidateTag } from "next/cache";
+import { xuLyUpCho } from "@/lib/upTin";
 import { guiThongBao, MAU_NAP_TIEN } from "@/lib/thongBao";
 
 // ============================================================================
@@ -102,8 +104,13 @@ export async function POST(request: Request) {
     },
   });
 
+  // Tiền vào ví → tự Up các tin khách đang chờ nạp (giống webhook PayOS).
+  const daUp = await xuLyUpCho(admin, kh.id);
+  if (daUp > 0) revalidateTag("listings", "max");
+
   return NextResponse.json({
     ok: true,
+    daUp,
     khach: kh.full_name || kh.email || kh.phone,
     soTien: tienCong,
     soDuMoi: Number(dong.so_du ?? 0),
