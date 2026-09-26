@@ -53,10 +53,14 @@ const H = { apikey: KEY, Authorization: `Bearer ${KEY}`, "Content-Type": "applic
 
 // ── Đọc file bằng chính bộ kiểm tra của web ─────────────────────────────────
 const jiti = createJiti(import.meta.url, { alias: { "@": ROOT + "/src" }, jsx: { runtime: "automatic" } });
-const { docTinTuCsv, anhThuocMa } = await jiti.import(ROOT + "/src/lib/csvTin.ts");
+const { docTinTuCsv, docTinTuBang, anhThuocMa } = await jiti.import(ROOT + "/src/lib/csvTin.ts");
+const { docXlsx } = await jiti.import(ROOT + "/src/lib/docXlsx.ts");
 const { isVideoUrl } = await jiti.import(ROOT + "/src/lib/media.ts");
 
-const kq = docTinTuCsv(readFileSync(duongDan, "utf8"));
+// Nhận cả Excel (.xlsx) như trang admin — khỏi phải "Save as CSV"
+const kq = /.xlsx$/i.test(duongDan)
+  ? docTinTuBang(await docXlsx(new Uint8Array(readFileSync(duongDan)).buffer))
+  : docTinTuCsv(readFileSync(duongDan, "utf8"));
 if (kq.loiChung) {
   console.error("Không đọc được file:", kq.loiChung);
   process.exit(1);
@@ -181,7 +185,7 @@ if (!ghiThat) {
 const now = new Date().toISOString();
 let xong = 0;
 for (let i = 0; i < themMoi.length; i += 25) {
-  const lo = themMoi.slice(i, i + 25).map(({ r, images }) => ({ ...r.payload, images, published_at: now }));
+  const lo = themMoi.slice(i, i + 25).map(({ r, images }) => ({ ...r.payload, images, published_at: now, bumped_at: now })); // bumped_at trống là tin chìm dưới tin cũ (bẫy 20/09)
   const res = await fetch(`${URL_SB}/rest/v1/listings`, { method: "POST", headers: H, body: JSON.stringify(lo) });
   if (!res.ok) {
     console.error(`Đăng được ${xong} tin thì lỗi:`, await res.text());
