@@ -23,7 +23,7 @@ const data = {
       taxID: "0402353502",
       url: SITE,
       logo: `${SITE}/logo/logo-horizontal-dark.svg`,
-      image: `${SITE}/images/hero-thanh-pho-hien-dai-26.jpg`,
+      image: `${SITE}/anh/listings/1788248553343-22261-Danang_beach_1.webp`,
       description:
         "Sàn giao dịch bất động sản trực tuyến tại Đà Nẵng, Huế và Duyên hải Miền Trung — mua bán, cho thuê nhà đất, căn hộ, đất nền và dự án.",
       slogan: "Bất động sản Duyên hải Miền Trung",

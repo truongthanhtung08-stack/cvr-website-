@@ -7,6 +7,12 @@
       "runtimeArgs": ["run", "dev"],
       "port": 3000,
       "autoPort": true
+    },
+    {
+      "name": "zalo-mini-app",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "zalo-mini-app", "run", "dev", "--", "--port", "3100", "--host"],
+      "port": 3100
     }
   ]
 }

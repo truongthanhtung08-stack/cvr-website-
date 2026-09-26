@@ -1,0 +1,15 @@
+{
+  "app": {
+    "title": "Coastal Land",
+    "headerColor": "#1d1d1f",
+    "textColor": "white",
+    "statusBarColor": "#1d1d1f",
+    "leftButton": "back",
+    "statusBar": "normal",
+    "actionBarHidden": true
+  },
+  "debug": false,
+  "listCSS": [],
+  "listSyncJS": [],
+  "listAsyncJS": []
+}

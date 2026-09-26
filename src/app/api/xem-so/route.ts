@@ -22,7 +22,27 @@ import { phatVe, docVe } from "@/lib/veXemSo";
 // ════════════════════════════════════════════════════════════════════════════
 export const runtime = "nodejs";
 
+// ZALO MINI APP gọi cùng địa chỉ này từ tên miền của Zalo → phải cho phép gọi
+// chéo tên miền (CORS), chỉ với tên miền Zalo (+ localhost khi chạy thử).
+function choPhep(req: Request): Record<string, string> {
+  const nguon = req.headers.get("origin") ?? "";
+  const hopLe = /^https:\/\/([a-z0-9-]+\.)*(zdn\.vn|zalo\.me|zaloapp\.com|zaloplatforms\.com)$/i.test(nguon) || /^http:\/\/(localhost|192\.168\.\d+\.\d+):\d+$/.test(nguon);
+  return hopLe
+    ? { "Access-Control-Allow-Origin": nguon, "Access-Control-Allow-Methods": "POST, OPTIONS", "Access-Control-Allow-Headers": "Content-Type", Vary: "Origin" }
+    : {};
+}
+
+export function OPTIONS(req: Request) {
+  return new NextResponse(null, { status: 204, headers: choPhep(req) });
+}
+
 export async function POST(req: Request) {
+  const res = await xuLy(req);
+  for (const [k, v] of Object.entries(choPhep(req))) res.headers.set(k, v);
+  return res;
+}
+
+async function xuLy(req: Request) {
   let body: { listingId?: string; sdt?: string; ma?: string; ten?: string; ve?: string };
   try {
     body = await req.json();

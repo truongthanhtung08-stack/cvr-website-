@@ -26,7 +26,7 @@ export const homeBanners: Banner[] = [
   // ===== 2 BANNER CÔNG TY (quảng cáo / landing page công ty) =====
   {
     id: "lp-gioi-thieu",
-    image: "/images/hero-thanh-pho-hien-dai-26.jpg",
+    image: "/anh/listings/1788248553343-22261-Danang_beach_1.webp",
     status: "Bất Động Sản", // dòng 1 (nhãn)
     title: "Duyên hải Việt Nam", // dòng 2 (1 dòng)
     subtitle: "Kết nối & uy tín", // dòng 3
@@ -38,7 +38,7 @@ export const homeBanners: Banner[] = [
   },
   {
     id: "lp-dich-vu",
-    image: "/images/hero-pho-bien-9-26.jpg",
+    image: "/anh/listings/1788248566018-91716-Hero_Nha_Trang_1.webp",
     status: "Cổng Thông Tin", // dòng 1 (nhãn — tự hiển thị IN HOA)
     title: "BĐS trực tuyến", // dòng 2 (1 dòng)
     subtitle: "Mua bán & cho thuê", // dòng 3
@@ -51,7 +51,7 @@ export const homeBanners: Banner[] = [
   // ===== 1 BANNER DỰ ÁN (dòng 1 = TÊN dự án, dòng 2 = ĐỊA ĐIỂM) =====
   {
     id: "lp-vinhomes",
-    image: "/images/hero-villa-view-bien-12-26.jpg",
+    image: "/anh/listings/1788248575757-684686-Galaxy_project.webp",
     // CHỈ hiện dòng 2 (bỏ nhãn dòng 1 + mô tả dòng 3)
     title: "Dự án nổi bật", // dòng 2
     // cta: "Xem dự án", // ẨN dòng cuối (CTA) — bỏ // để hiện
