@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { phatMa, kiemMa, guiMaQuaZalo } from "@/lib/maXacThuc";
 import { chuanHoaSdt, laSdtVN } from "@/lib/phone";
 import { phatVe, docVe } from "@/lib/veXemSo";
+import { guiThongBao, MAU_CO_NGUOI_QUAN_TAM } from "@/lib/thongBao";
 
 // ════════════════════════════════════════════════════════════════════════════
 // XEM SỐ NGƯỜI BÁN BẰNG CÁCH XÁC THỰC SỐ CỦA MÌNH (không cần tạo tài khoản)
@@ -140,12 +141,51 @@ async function traSo(listingId: string, sdtKhach: string, ten: string | undefine
         viewer_name: (ten ?? "").trim() || null,
         viewer_phone: sdtKhach,
       });
+      await baoCoNguoiQuanTam(admin, listingId);
     }
   } catch {
     /* ghi lead hỏng → vẫn trả số cho khách */
   }
 
   return NextResponse.json({ ok: true, sdt: soNguoiBan, ...(ve ? { ve } : {}) });
+}
+
+// ── BÁO NGƯỜI ĐĂNG "CÓ NGƯỜI QUAN TÂM" ─────────────────────────────────────
+// Tối đa MỘT tin mỗi ngày cho mỗi tin đăng (chống làm phiền, ZBS tính tiền từng tin):
+// chỉ báo khi đây là lượt xem số ĐẦU TIÊN của tin trong ngày (giờ Việt Nam).
+// KHÔNG đưa SĐT người xem vào tin — bảo vệ dữ liệu người mua.
+async function baoCoNguoiQuanTam(admin: NonNullable<ReturnType<typeof createAdminClient>>, listingId: string) {
+  const dauNgayVN = new Date(new Date(Date.now() + 7 * 3_600_000).toISOString().slice(0, 10) + "T00:00:00+07:00").toISOString();
+  const { count: homNay } = await admin
+    .from("listing_leads")
+    .select("id", { count: "exact", head: true })
+    .eq("listing_id", listingId)
+    .gte("created_at", dauNgayVN);
+  if ((homNay ?? 0) !== 1) return;
+
+  const { count: tong } = await admin
+    .from("listing_leads")
+    .select("id", { count: "exact", head: true })
+    .eq("listing_id", listingId);
+  const { data: tin } = await admin.from("listings").select("id,title,owner_id").eq("id", listingId).maybeSingle();
+  if (!tin?.owner_id) return;
+  const { data: chu } = await admin.from("profiles").select("email,phone,full_name").eq("id", tin.owner_id).maybeSingle();
+  if (!chu) return;
+
+  const luc = new Date().toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric" });
+  await guiThongBao({
+    email: chu.email,
+    phone: chu.phone,
+    tieuDe: "Tin đăng của bạn vừa có người quan tâm",
+    loiNhan: "Một khách hàng vừa xem số điện thoại liên hệ trên tin đăng của bạn. Xem chi tiết tại coastalland.vn/tai-khoan/khach-hang.",
+    cacDong: [
+      { nhan: "Tin đăng", giaTri: tin.title },
+      { nhan: "Thời gian", giaTri: luc },
+      { nhan: "Tổng lượt quan tâm", giaTri: String(tong ?? 1) },
+    ],
+    znsTemplateId: MAU_CO_NGUOI_QUAN_TAM,
+    znsData: { ten_khach_hang: chu.full_name || "Quý khách", ten_tin: tin.title, thoi_gian: luc, so_luot: String(tong ?? 1) },
+  });
 }
 
 function loi(message: string, status: number) {

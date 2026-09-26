@@ -40,8 +40,8 @@ body { background: var(--cl-surface); color: var(--cl-ink); }
 /* Khung Zalo: thanh tiêu đề ZaUI cố định trên cùng (chừa sẵn thanh trạng thái + cụm ⋯ ✕ của Zalo)
    → mọi trang chừa đúng chiều cao đó. Thanh tiêu đề màu đen thương hiệu, liền với khối tìm kiếm. */
 :root {
-  --zaui-light-header-background-color: #1d1d1f;
-  --zaui-light-header-color: #fff;
+  --zaui-light-header-background-color: #fff;
+  --zaui-light-header-color: #1d1d1f;
 }
 .zaui-page { padding-top: calc(var(--zaui-safe-area-inset-top, 0px) + 44px); }
 .thanh-loc { display: flex; gap: 8px; overflow-x: auto; padding: 12px; background: #fff; border-bottom: 1px solid var(--cl-line); scrollbar-width: none; position: sticky; top: calc(var(--zaui-safe-area-inset-top, 0px) + 44px); z-index: 5; }
@@ -50,7 +50,7 @@ body { background: var(--cl-surface); color: var(--cl-ink); }
 .thanh-loc button.bat { border-color: var(--cl-blue); color: var(--cl-blue); background: #eef4ff; }
 .dong-chon { display: flex; justify-content: space-between; align-items: center; padding: 12px 4px; border-bottom: 1px solid var(--cl-surface); font-size: 15px; }
 .dong-chon .zaui-icon { color: var(--cl-blue); }
-.zaui-header .zaui-header-back, .zaui-header .zaui-header-back .zaui-icon, .zaui-header .zaui-icon { color: #fff; }
+.zaui-header { border-bottom: 1px solid #ececf0; }
 .chip { font-size: 13px; padding: 4px 10px; border-radius: 999px; background: var(--cl-surface); color: var(--cl-body); }
 .o-tron { width: 40px; height: 40px; border-radius: 50%; background: var(--cl-surface); display: grid; place-items: center; color: var(--cl-muted); }
 
@@ -59,7 +59,7 @@ body { background: var(--cl-surface); color: var(--cl-ink); }
 .nut-tim { position: absolute; top: 8px; right: 8px; width: 32px; height: 32px; border-radius: 50%; border: 0; background: rgba(0,0,0,.35); display: grid; place-items: center; }
 .so-anh { position: absolute; left: 8px; bottom: 8px; display: flex; align-items: center; gap: 4px; background: rgba(0,0,0,.55); color: #fff; font-size: 11px; font-weight: 500; padding: 2px 6px; }
 .than-the { padding: 12px; }
-.tieu-de { margin: 0; font-size: 15px; font-weight: 600; line-height: 1.5; color: var(--cl-ink); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.tieu-de { margin: 0; font-size: 15px; font-weight: 600; line-height: 1.5; color: var(--cl-ink); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .tieu-de.hoa { text-transform: uppercase; }
 .mo-ta { margin: 4px 0 0; font-size: 14px; line-height: 1.55; color: var(--cl-muted); display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; }
 .gia-dt { margin-top: 10px; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 13px; color: var(--cl-body); }
@@ -117,3 +117,57 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 .muc-tin { font-size: 17px; font-weight: 700; margin: 14px 0 8px; color: var(--cl-ink); }
 .nut-goi { width: 100%; height: 48px; border: 0; border-radius: 12px; background: var(--cl-ink); color: #fff; font-size: 15px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; }
 .nut-goi:disabled { opacity: .6; }
+
+
+/* ── Kiểu Mini App Zalo (27/09): nền trắng, logo tròn, lưới dịch vụ, thẻ ngang ── */
+.dau-app { background: #fff; padding: calc(var(--zaui-safe-area-inset-top, 0px) + 6px) 16px 12px; }
+.hang-app { height: 44px; display: flex; align-items: center; gap: 10px; padding-right: 100px; }
+.hang-app img { width: 34px; height: 34px; border-radius: 50%; display: block; }
+.hang-app strong { display: block; font-size: 16px; font-weight: 700; color: var(--cl-ink); line-height: 1.2; }
+.hang-app span { display: block; font-size: 12px; color: var(--cl-muted); }
+.dau-app > div:last-child { margin-top: 10px; }
+.khung-banner { background: #fff; padding: 0 16px 4px; }
+.khung-banner .banner-khung { border-radius: 14px; overflow: hidden; }
+.khung-banner .banner img { aspect-ratio: 21 / 9; }
+.khung-banner .banner-chu strong { font-size: 17px; }
+.luoi-dv { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px 4px; padding: 14px 8px 16px; background: #fff; }
+.luoi-dv button { border: 0; background: none; padding: 0; display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 12.5px; color: var(--cl-ink); }
+.luoi-dv .o { width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center; }
+.truot-ngang > .the-tin { flex-basis: 62%; }
+.khung-tim { background: #fff; padding: 12px 16px 4px; display: grid; gap: 10px; }
+.thanh-loc { top: calc(var(--zaui-safe-area-inset-top, 0px) + 44px); }
+.tieu-de-ds { margin: 0; padding: 12px 16px 4px; font-size: 13px; color: var(--cl-muted); }
+.ds-ngang { background: #fff; }
+.the-ngang-tin { display: flex; gap: 12px; padding: 12px 16px; border-bottom: 1px solid #f0f0f3; }
+.the-ngang-tin .anh { position: relative; flex: none; width: 112px; height: 112px; border-radius: 10px; overflow: hidden; background: var(--cl-line); }
+.the-ngang-tin .anh img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.the-ngang-tin .anh span { position: absolute; right: 4px; bottom: 4px; background: rgba(0,0,0,.55); color: #fff; font-size: 10.5px; padding: 1px 5px; border-radius: 4px; }
+.the-ngang-tin .than { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.the-ngang-tin h3 { margin: 0; font-size: 14.5px; font-weight: 600; line-height: 1.4; color: var(--cl-ink); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.the-ngang-tin h3 em { font-style: normal; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; border: 1px solid; border-radius: 3px; padding: 0 4px; margin-right: 5px; vertical-align: 2px; }
+.the-ngang-tin .gia-dong { margin: 0; font-size: 13px; color: var(--cl-body); }
+.the-ngang-tin .gia-dong strong { color: #d70018; font-size: 15px; margin-right: 4px; }
+.the-ngang-tin .phu { margin: 0; font-size: 12.5px; color: var(--cl-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.the-ngang-tin .phu.nho { font-size: 11.5px; color: #86868b; margin-top: auto; }
+
+/* ── Chi tiết tin kiểu Zalo: khối trắng trên nền xám ─────────────────────── */
+.khoi-ct { background: #fff; margin-top: 8px; padding: 14px 16px; }
+.khoi-ct .muc-tin { margin: 0 0 10px; font-size: 16px; }
+.gia-ct { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 12px; }
+.gia-ct strong { font-size: 22px; font-weight: 700; color: #d70018; }
+.gia-ct span { font-size: 14px; color: var(--cl-body); }
+.khoi-ct .tieu-de-tin { font-size: 17px; margin: 8px 0 6px; }
+.dong-dc { margin: 0; display: flex; gap: 6px; font-size: 13.5px; color: var(--cl-body); }
+.dong-dc .zaui-icon { flex: none; color: var(--cl-muted); margin-top: 1px; }
+.dong-dc small { display: block; font-size: 12px; color: var(--cl-muted); margin-top: 2px; }
+.meta-ct { margin-top: 10px; display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--cl-muted); }
+.nut-ct { margin-left: auto; display: flex; gap: 4px; }
+.nut-ct button { width: 36px; height: 36px; border: 0; border-radius: 50%; background: var(--cl-surface); color: var(--cl-ink); display: grid; place-items: center; padding: 0; }
+.dong-ds > div { display: flex; justify-content: space-between; gap: 16px; padding: 10px 0; border-bottom: 1px solid #f0f0f3; font-size: 14px; }
+.dong-ds > div:last-child { border-bottom: 0; }
+.dong-ds span { color: var(--cl-muted); flex: none; }
+.dong-ds strong { font-weight: 500; color: var(--cl-ink); text-align: right; display: flex; align-items: center; gap: 2px; }
+.khoi-ct.dong-ds { padding-top: 4px; padding-bottom: 4px; }
+.mo-ta-ct { margin: 0; white-space: pre-line; font-size: 14px; line-height: 1.7; color: var(--cl-body); }
+.mo-ta-ct.gon { display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical; overflow: hidden; }
+.xem-them-ct { margin-top: 6px; border: 0; background: none; padding: 0; color: var(--cl-blue); font-size: 14px; font-weight: 500; }

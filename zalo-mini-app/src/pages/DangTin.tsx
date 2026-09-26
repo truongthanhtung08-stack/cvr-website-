@@ -6,6 +6,7 @@ import { layBangGia } from "../lib/tin";
 import { soVN, supabase, usePhien } from "../lib/supabase";
 import { chonAnh, taiAnhLen } from "../lib/taiAnh";
 import { useTai } from "../lib/useTai";
+import { layNguoiZalo } from "../lib/zalo";
 
 const { Option } = Select;
 
@@ -73,7 +74,11 @@ export default function DangTin() {
   useEffect(() => {
     if (nguoiDung?.phone && !sdt) setSdt(soVN(nguoiDung.phone));
     if (hoSo.data?.full_name && !ten) setTen(hoSo.data.full_name);
-  }, [nguoiDung?.phone, hoSo.data]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [nguoiDung?.phone, hoSo.data]);
+  // Chưa có tên trong hồ sơ → lấy tên Zalo của khách điền sẵn.
+  useEffect(() => {
+    if (phien && !ten) layNguoiZalo().then((z) => z && setTen((cu) => cu || z.name));
+  }, [phien]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Gói tin thường theo mục đích + ưu đãi thành viên mới (cùng điều kiện với web).
   const goi = bangGia.data?.[md].plans.find((p) => p.tierId === "basic");
@@ -166,6 +171,12 @@ export default function DangTin() {
     setDangGui(false);
     if (error) return setLoi(/BDS_KHAC/.test(error.message) ? error.message.replace(/^.*BDS_KHAC:\s*/, "") : `Gửi tin thất bại: ${error.message}`);
     setXong(viThieu ? "draft" : "pending");
+    // Tin vào hàng chờ duyệt → nhờ máy chủ web báo khách "đã nhận tin" (máy chủ tự kiểm, không báo trùng).
+    if (!viThieu) {
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (token) fetch("https://coastalland.vn/api/tin-dang/da-nhan", { method: "POST", headers: { Authorization: `Bearer ${token}` } }).catch(() => {});
+    }
   };
 
   if (!san) return <Page><Header title="Đăng tin" /><Box flex justifyContent="center" p={6}><Spinner /></Box></Page>;

@@ -19,21 +19,24 @@ import DangNhap from "./pages/DangNhap";
 import DangTin from "./pages/DangTin";
 import TinCuaToi from "./pages/TinCuaToi";
 
-// 4 tab dưới; các trang con dùng thanh tiêu đề có nút quay lại.
-// Thanh dưới giống hệt thanh tab của web trên điện thoại (src/components/MobileTabBar.tsx).
+// 5 tab dưới kiểu Mini App Zalo; các trang con dùng thanh tiêu đề có nút quay lại.
 const TAB = [
   { duong: "/", nhan: "Trang chủ", icon: "home" },
-  { duong: "/ds/ban", nhan: "Mua bán", icon: "muaBan" },
-  { duong: "/ds/thue", nhan: "Cho thuê", icon: "choThue" },
-  { duong: "/du-an", nhan: "Dự án", icon: "duAn" },
-  { duong: "/tai-khoan", nhan: "Tài khoản", icon: "taiKhoan" },
+  { duong: "/ds/ban", nhan: "Tìm tin", icon: "timKiem" },
+  { duong: "/dang-tin", nhan: "Đăng tin", icon: "dangTin" },
+  { duong: "/da-luu", nhan: "Đã lưu", icon: "daLuu" },
+  { duong: "/tai-khoan", nhan: "Cá nhân", icon: "taiKhoan" },
 ] as const;
+// Trang nào thuộc tab nào (Tìm tin gồm cả Mua bán lẫn Cho thuê).
+const tabCua = (p: string) => (p.startsWith("/ds/") ? "/ds/ban" : p);
 
 function ThanhDuoi() {
   const { pathname } = useLocation();
-  if (!TAB.some((t) => t.duong === pathname)) return null;
+  const tab = tabCua(pathname);
+  // Đăng tin mở toàn màn hình (có thanh nút gửi ở đáy) — không hiện thanh tab.
+  if (tab === "/dang-tin" || !TAB.some((t) => t.duong === tab)) return null;
   return (
-    <BottomNavigation fixed activeKey={pathname}>
+    <BottomNavigation fixed activeKey={tab}>
       {TAB.map((t) => (
         <BottomNavigation.Item key={t.duong} itemKey={t.duong} label={t.nhan} icon={<IconCL ten={t.icon} />} linkTo={t.duong} />
       ))}

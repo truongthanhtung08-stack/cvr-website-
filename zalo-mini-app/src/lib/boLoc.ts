@@ -1,4 +1,6 @@
 // Bộ lọc — cùng các mức với web (src/lib/filters.ts). Sửa mức ở web thì sửa cả ở đây.
+import { danhMucTheo } from "./danhMuc";
+
 export type MucDich = "ban" | "thue";
 
 export type BoLoc = {
@@ -12,32 +14,14 @@ export type BoLoc = {
 
 export const BO_LOC_TRONG: BoLoc = { sapXep: "moi" };
 
-// Loại hình: nhãn hiển thị + chuỗi khớp cột type (tin cũ ghi nhiều biến thể, vd "Đất nền / Đất").
-type Loai = { nhan: string; khop: string };
-const LOAI_BAN: Loai[] = [
-  { nhan: "Căn hộ, chung cư", khop: "Căn hộ" },
-  { nhan: "Nhà riêng", khop: "Nhà riêng" },
-  { nhan: "Nhà mặt phố", khop: "Nhà mặt phố" },
-  { nhan: "Biệt thự, liền kề", khop: "Biệt thự" },
-  { nhan: "Shophouse, nhà phố thương mại", khop: "Nhà phố thương mại" },
-  { nhan: "Đất nền", khop: "Đất nền" },
-  { nhan: "Đất nông nghiệp", khop: "Đất nông nghiệp" },
-  { nhan: "Villa, biệt thự biển", khop: "Villa" },
-  { nhan: "Condotel", khop: "Condotel" },
-  { nhan: "Kho, nhà xưởng", khop: "Kho" },
-];
-const LOAI_THUE: Loai[] = [
-  { nhan: "Căn hộ, chung cư", khop: "Căn hộ" },
-  { nhan: "Nhà riêng", khop: "Nhà riêng" },
-  { nhan: "Nhà mặt phố", khop: "Nhà mặt phố" },
-  { nhan: "Nhà phố thương mại", khop: "Nhà phố thương mại" },
-  { nhan: "Biệt thự, liền kề", khop: "Biệt thự" },
-  { nhan: "Nhà trọ, phòng trọ", khop: "trọ" },
-  { nhan: "Văn phòng", khop: "Văn phòng" },
-  { nhan: "Mặt bằng, cửa hàng", khop: "Mặt bằng" },
-  { nhan: "Đất, nhà xưởng, kho bãi", khop: "Nhà xưởng" },
-];
-export const loaiTheo = (md: MucDich) => (md === "thue" ? LOAI_THUE : LOAI_BAN);
+// Loại BĐS = danh mục của web (menu Mua bán / Cho thuê — src/lib/categories.ts).
+export const loaiTheo = (md: MucDich) => danhMucTheo(md).map((d) => ({ nhan: d.nhan, types: d.types }));
+
+// Khớp loại hình như web (filters.ts matchType): lấy CHỮ ĐẦU từng loại hình, dò chuỗi con trong cột type.
+function orLoai(types: string[]): string {
+  const dau = [...new Set(types.map((t) => t.split(/[ /]/)[0]))];
+  return `or(${dau.map((d) => `type.ilike.*${encodeURIComponent(d)}*`).join(",")})`;
+}
 
 // Mức giá theo ĐỒNG (web tính theo tỷ; quy ra đồng để lọc thẳng cột price_vnd).
 type Muc = { nhan: string; min: number; max: number | null };
@@ -98,13 +82,15 @@ export const SAP_XEP: { gt: BoLoc["sapXep"]; nhan: string }[] = [
 // Bộ lọc → tham số PostgREST.
 export function thamSo(md: MucDich, b: BoLoc): string {
   const q: string[] = [];
+  const nhomOr: string[] = []; // nhiều nhóm "hoặc" → gộp and=(or(..),or(..)) cho PostgREST
   if (b.tinh) q.push(`province=eq.${encodeURIComponent(b.tinh)}`);
   if (b.khuVuc) {
     const k = encodeURIComponent(b.khuVuc.replace(/[(),*]/g, " "));
-    q.push(`or=(province.ilike.*${k}*,ward.ilike.*${k}*,district.ilike.*${k}*)`);
+    nhomOr.push(`or(province.ilike.*${k}*,ward.ilike.*${k}*,district.ilike.*${k}*)`);
   }
   const loai = loaiTheo(md).find((l) => l.nhan === b.loai);
-  if (loai) q.push(`type=ilike.*${encodeURIComponent(loai.khop)}*`);
+  if (loai) nhomOr.push(orLoai(loai.types));
+  if (nhomOr.length) q.push(`and=(${nhomOr.join(",")})`);
   const gia = giaTheo(md).find((g) => g.nhan === b.gia);
   if (gia) {
     q.push(`price_vnd=gte.${gia.min}`);

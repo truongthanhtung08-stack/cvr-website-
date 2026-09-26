@@ -38,6 +38,19 @@ const ZNS_URL = "https://business.openapi.zalo.me/message/template";
 /** Mã mẫu ZNS mặc định — xem bảng ở đầu file. Biến môi trường được ưu tiên hơn. */
 export const MAU_NAP_TIEN = process.env.ZALO_ZNS_TEMPLATE_NAP_TIEN || "630637";
 export const MAU_DUYET_TIN = process.env.ZALO_ZNS_TEMPLATE_DUYET_TIN || "630636";
+// 8 mẫu ZBS gửi duyệt 25/09/2026 (nội dung + tham số: docs/MAU-ZBS-MOI.md). Mẫu chưa duyệt thì
+// Zalo từ chối lặng lẽ, không tính tiền — duyệt xong là tự chạy, không phải sửa gì thêm.
+export const MAU_DA_NHAN_TIN = process.env.ZALO_ZNS_TEMPLATE_DA_NHAN_TIN || "641611";
+export const MAU_TU_CHOI = process.env.ZALO_ZNS_TEMPLATE_TU_CHOI || "641610";
+export const MAU_CO_NGUOI_QUAN_TAM = process.env.ZALO_ZNS_TEMPLATE_QUAN_TAM || "641609";
+export const MAU_SAP_HET_HAN = process.env.ZALO_ZNS_TEMPLATE_SAP_HET_HAN || "641608";
+export const MAU_DA_HET_HAN = process.env.ZALO_ZNS_TEMPLATE_DA_HET_HAN || "641607";
+export const MAU_THANH_TOAN = process.env.ZALO_ZNS_TEMPLATE_THANH_TOAN || "641606";
+export const MAU_HOI_VIEN_SAP_HET = process.env.ZALO_ZNS_TEMPLATE_HOI_VIEN_SAP_HET || "641605";
+export const MAU_BAO_CAO_TUAN = process.env.ZALO_ZNS_TEMPLATE_BAO_CAO_TUAN || "641604";
+
+/** Mã tin hiện cho khách — giống dòng "Mã tin" trên trang tin (8 ký tự đầu của id, viết hoa). */
+export const maTin = (id: string) => id.slice(0, 8).toUpperCase();
 
 export type KetQuaKenh = {
   kenh: "email" | "zalo";
@@ -160,6 +173,22 @@ const GIOI_HAN_THAM_SO: Record<string, number> = {
   ten_khach_hang: 30,
   ma_giao_dich: 30,
   otp: 10,
+  // tham số của 8 mẫu gửi duyệt 25/09 (kiểu kỹ thuật khai trên ZBS — docs/MAU-ZBS-MOI.md)
+  ma_tin: 30,
+  ten_dich_vu: 200,
+  goi_tin: 30,
+  ten_goi: 30,
+  thoi_gian: 20,
+  ngay_het_han: 20,
+  tu_ngay: 20,
+  den_ngay: 20,
+  so_ngay: 20,
+  so_luot: 20,
+  so_voucher: 20,
+  so_tin: 20,
+  luot_hien_thi: 20,
+  luot_xem: 20,
+  luot_xem_so: 20,
 };
 
 /** Tham số Zalo đánh dấu "Loại dữ liệu: number" — phải giữ đúng dạng đã duyệt. */

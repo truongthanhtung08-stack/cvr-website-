@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { guiThongBao, type KetQuaKenh } from "@/lib/thongBao";
+import { guiThongBao, maTin, MAU_TU_CHOI, type KetQuaKenh } from "@/lib/thongBao";
 import { baoLoi } from "@/lib/baoLoi";
 
 // ============================================================================
@@ -94,8 +94,8 @@ export async function POST(request: Request) {
         { nhan: "Tin đăng", giaTri: tin.title },
         { nhan: "Lý do", giaTri: ly },
       ],
-      znsTemplateId: process.env.ZALO_ZNS_TEMPLATE_TU_CHOI,
-      znsData: { ten_tin: tin.title, ly_do: ly },
+      znsTemplateId: MAU_TU_CHOI,
+      znsData: { ten_khach_hang: chu?.full_name || "Quý khách", ma_tin: maTin(tin.id), ten_tin: tin.title, ly_do: ly },
     });
   } catch (e) {
     // Mức 'nhẹ': chỉ ghi sổ, không bắn email. Khách vào /tai-khoan/tin-dang vẫn

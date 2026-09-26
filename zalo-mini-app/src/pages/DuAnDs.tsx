@@ -7,8 +7,8 @@ import { useTai } from "../lib/useTai";
 export default function DuAnDs() {
   const { data, dangTai } = useTai(() => layDuAn(), [], []);
   return (
-    <Page style={{ paddingBottom: 72 }}>
-      <Header title="Dự án" showBackIcon={false} />
+    <Page>
+      <Header title="Dự án" />
       {dangTai ? (
         <Box flex justifyContent="center" p={6}><Spinner /></Box>
       ) : (

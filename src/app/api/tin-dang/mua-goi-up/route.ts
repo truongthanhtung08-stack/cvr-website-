@@ -1,3 +1,4 @@
+import { baoThanhToan } from "@/lib/baoThanhToan";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -117,5 +118,6 @@ export async function POST(request: Request) {
     });
   }
 
+  await baoThanhToan(admin, user.id, { dichVu: `Gói đẩy tin ${getTier(cap).name} ${goi.soLuot} lượt — ${tin.title}`, soTien: tien.tongTra, soDu: dong.so_du });
   return NextResponse.json({ ok: true, daTru: tien.tongTra, soDu: dong.so_du, conLai: dong.con_lai });
 }

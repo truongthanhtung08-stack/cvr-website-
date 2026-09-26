@@ -1,17 +1,32 @@
 import React, { useState } from "react";
-import { Box, Button, Input, Page, Spinner, Text, useNavigate } from "zmp-ui";
+import { Box, Input, Page, Spinner, useNavigate } from "zmp-ui";
 import Banner from "../components/Banner";
 import Khoi from "../components/Khoi";
 import TheTin from "../components/TheTin";
 import TheDuAn from "../components/TheDuAn";
 import TheBaiViet from "../components/TheBaiViet";
-import { anh, layBaiViet, layBanner, layDuAn, layKhuVuc, layTinDanhChoBan, NHOM_DANH_CHO_BAN } from "../lib/tin";
+import IconCL, { type TenIcon } from "../components/IconCL";
+import { anh, layBaiViet, layBanner, layDuAn, layKhuVuc, layTinDanhChoBan, layTinVip, NHOM_DANH_CHO_BAN } from "../lib/tin";
 import { useTai } from "../lib/useTai";
-import logo from "../assets/logo-trang.svg";
+import { nhanCoastalLand } from "../lib/zalo";
+import logoTron from "../assets/logo-tron.svg";
 
-// TRANG CHỦ — theo đúng thứ tự trang chủ web (bản điện thoại):
-// Banner · Bất động sản dành cho bạn · Dự án nổi bật · Bất động sản theo khu vực · Tin nổi bật · Đăng tin ngay.
+// TRANG CHỦ — cấu trúc chuẩn Mini App Zalo (không bê nguyên web):
+// Đầu trang (logo tròn + tên app, ngang cụm ⋯ ✕) · ô tìm · banner · lưới dịch vụ ·
+// Tin VIP · Dành cho bạn · Dự án nổi bật · Theo khu vực · Tin tức.
 // Banner, khu vực lấy từ /admin/noi-dung — admin đổi là web và Mini App cùng đổi.
+
+type DichVu = { nhan: string; icon: TenIcon; nen: string; mau: string } & ({ duong: string } | { bam: () => void });
+const DICH_VU: DichVu[] = [
+  { nhan: "Mua bán", icon: "muaBan", nen: "#eef4ff", mau: "#0071e3", duong: "/ds/ban" },
+  { nhan: "Cho thuê", icon: "choThue", nen: "#eaf7ef", mau: "#1a8f4c", duong: "/ds/thue" },
+  { nhan: "Dự án", icon: "duAn", nen: "#fbf4e6", mau: "#8a6d2e", duong: "/du-an" },
+  { nhan: "Đăng tin", icon: "dangTin", nen: "#fff0f0", mau: "#d70018", duong: "/dang-tin" },
+  { nhan: "Tin tức", icon: "tinTuc", nen: "#f2efff", mau: "#6b4fd8", duong: "/tin-tuc" },
+  { nhan: "Bảng giá", icon: "bangGia", nen: "#eef4ff", mau: "#0071e3", duong: "/bang-gia" },
+  { nhan: "Tính vay", icon: "tinhVay", nen: "#eaf7ef", mau: "#1a8f4c", duong: "/tinh-vay" },
+  { nhan: "Tư vấn", icon: "tuVan", nen: "#fbf4e6", mau: "#8a6d2e", bam: () => nhanCoastalLand() },
+];
 
 function Cho({ dang }: { dang: boolean }) {
   return dang ? <Box flex justifyContent="center" p={4}><Spinner /></Box> : null;
@@ -33,6 +48,7 @@ export default function TrangChu() {
   const dieuHuong = useNavigate();
   const [nhom, setNhom] = useState(0);
   const banner = useTai(() => layBanner(), [], []);
+  const vip = useTai(() => layTinVip(10), [], []);
   const danhCho = useTai(() => layTinDanhChoBan(NHOM_DANH_CHO_BAN[nhom]), [nhom], []);
   const duAn = useTai(() => layDuAn(8), [], []);
   const khuVuc = useTai(() => layKhuVuc(), [], []);
@@ -42,19 +58,41 @@ export default function TrangChu() {
 
   return (
     <Page style={{ paddingBottom: 72, paddingTop: 0 }}>
-      {/* Đầu trang như web: logo + ô tìm. Logo nằm cùng hàng cụm ⋯ ✕ của Zalo. */}
-      <Box px={4} pb={3} style={{ background: "var(--cl-ink)", paddingTop: "calc(var(--zaui-safe-area-inset-top, 0px) + 10px)" }}>
-        <div style={{ height: 32, display: "flex", alignItems: "center" }}>
-          <img src={logo} alt="COASTAL LAND" style={{ height: 26, display: "block" }} />
+      <div className="dau-app">
+        <div className="hang-app">
+          <img src={logoTron} alt="" />
+          <div>
+            <strong>Coastal Land</strong>
+            <span>Nhà đất Miền Trung</span>
+          </div>
         </div>
-        <Box mt={3} onClick={() => dieuHuong("/tim-kiem")}>
-          <Input.Search placeholder="Nhà riêng tại Đà Nẵng" readOnly />
-        </Box>
-      </Box>
+        <div onClick={() => dieuHuong("/tim-kiem")}>
+          <Input.Search placeholder="Tìm nhà đất, khu vực, dự án…" readOnly />
+        </div>
+      </div>
 
-      {banner.data.length > 0 && <Banner ds={banner.data} bam={(s) => { const d = duongMiniApp(s.href); if (d) dieuHuong(d); }} />}
+      {banner.data.length > 0 && (
+        <div className="khung-banner">
+          <Banner ds={banner.data} bam={(s) => { const d = duongMiniApp(s.href); if (d) dieuHuong(d); }} />
+        </div>
+      )}
 
-      <Khoi tieuDe="Bất động sản dành cho bạn" xemThem={xemThemDanhCho}>
+      <div className="luoi-dv">
+        {DICH_VU.map((d) => (
+          <button key={d.nhan} onClick={() => ("bam" in d ? d.bam() : dieuHuong(d.duong))}>
+            <span className="o" style={{ background: d.nen, color: d.mau }}><IconCL ten={d.icon} co={24} /></span>
+            {d.nhan}
+          </button>
+        ))}
+      </div>
+
+      {vip.data.length > 0 && (
+        <Khoi tieuDe="Tin VIP nổi bật" xemThem="/ds/ban">
+          <div className="truot-ngang">{vip.data.map((t) => <TheTin key={t.id} tin={t} />)}</div>
+        </Khoi>
+      )}
+
+      <Khoi tieuDe="Dành cho bạn" xemThem={xemThemDanhCho}>
         <div className="chip-loc">
           {NHOM_DANH_CHO_BAN.map((g, i) => (
             <button key={g.nhan} className={i === nhom ? "bat" : ""} onClick={() => setNhom(i)}>{g.nhan}</button>
@@ -71,7 +109,7 @@ export default function TrangChu() {
       )}
 
       {khuVuc.data.length > 0 && (
-        <Khoi tieuDe="Bất động sản theo khu vực">
+        <Khoi tieuDe="Theo khu vực">
           <div className="luoi-khu-vuc">
             {khuVuc.data.map((k, i) => (
               <div
@@ -91,16 +129,10 @@ export default function TrangChu() {
       )}
 
       {bai.data.length > 0 && (
-        <Khoi tieuDe="Tin nổi bật" xemThem="/tin-tuc">
+        <Khoi tieuDe="Tin tức thị trường" xemThem="/tin-tuc">
           {bai.data.map((b) => <TheBaiViet key={b.slug} bai={b} />)}
         </Khoi>
       )}
-
-      <section className="khoi" style={{ padding: 20, textAlign: "center", background: "var(--cl-ink)", color: "#fff" }}>
-        <img src={logo} alt="COASTAL LAND" style={{ height: 24, margin: "0 auto 10px", display: "block" }} />
-        <Text size="small" style={{ color: "#d2d2d7", marginBottom: 14 }}>Cổng đăng tin mua bán, cho thuê bất động sản</Text>
-        <Button onClick={() => dieuHuong("/dich-vu")}>Đăng tin ngay</Button>
-      </section>
     </Page>
   );
 }

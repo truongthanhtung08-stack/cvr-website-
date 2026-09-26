@@ -1,3 +1,4 @@
+import { baoThanhToan } from "@/lib/baoThanhToan";
 import { NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
@@ -166,6 +167,7 @@ export async function POST(request: Request) {
   }
 
   revalidateTag("listings", "max"); // tin vừa lên đầu → xoá cache để hiện NGAY
+  await baoThanhToan(admin, user.id, { dichVu: `Đẩy tin ${getTier(cap).name} — ${tin.title}`, soTien: tien.tongTra, soDu: dong.so_du });
 
   return NextResponse.json({
     ok: true,

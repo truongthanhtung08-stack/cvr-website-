@@ -3,6 +3,7 @@ import { ghepBillingLuu, bangTheoMucDich, freeDangChay, loaiVoucherTin, quotePri
 import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
 import { baoLoi } from "@/lib/baoLoi";
 import { guiThongBao } from "@/lib/thongBao";
+import { baoThanhToan } from "@/lib/baoThanhToan";
 import type { TierId } from "@/lib/packages";
 
 // ============================================================================
@@ -165,6 +166,11 @@ export async function xuLyUpCho(admin: SupabaseClient, userId: string): Promise<
       }).eq("id", y.id);
       if (!kq.ok) continue;
       daUp++;
+      // Có trừ tiền → báo bằng mẫu "Thanh toán thành công" (có mẫu Zalo); 0đ thì báo thường.
+      if (kq.daTru > 0) {
+        await baoThanhToan(admin, userId, { dichVu: `Up tin tự động ${kq.tenGoi} ${y.so_ngay} ngày — ${kq.tieuDe}`, soTien: kq.daTru, soDu: kq.soDu });
+        continue;
+      }
       await guiThongBao({
         email: hs?.[0]?.email,
         phone: hs?.[0]?.phone,

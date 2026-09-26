@@ -1,7 +1,7 @@
 import { revalidateTag } from "next/cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getTier, type TierId } from "@/lib/packages";
-import { guiThongBao } from "@/lib/thongBao";
+import { guiThongBao, maTin, MAU_DA_HET_HAN, MAU_SAP_HET_HAN } from "@/lib/thongBao";
 import { baoLoi } from "@/lib/baoLoi";
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -132,6 +132,13 @@ export async function quetTinHetHan(
           { nhan: "Gói vừa hết hạn", giaTri: getTier(tin.tier).name },
           { nhan: "Hết hạn ngày", giaTri: new Date(tin.tier_expires_at).toLocaleDateString("vi-VN") },
         ],
+        znsTemplateId: MAU_DA_HET_HAN,
+        znsData: {
+          ten_khach_hang: chu?.full_name || "Quý khách",
+          ngay_het_han: new Date(tin.tier_expires_at).toLocaleDateString("vi-VN"),
+          ma_tin: maTin(tin.id),
+          ten_tin: tin.title,
+        },
       });
     }
 
@@ -171,6 +178,15 @@ export async function quetTinHetHan(
           { nhan: "Gói hiện tại", giaTri: getTier(tin.tier).name },
           { nhan: "Hết hạn ngày", giaTri: hetNgay.toLocaleDateString("vi-VN") },
         ],
+        znsTemplateId: MAU_SAP_HET_HAN,
+        znsData: {
+          ten_khach_hang: chu?.full_name || "Quý khách",
+          so_ngay: String(conLai),
+          ngay_het_han: hetNgay.toLocaleDateString("vi-VN"),
+          ma_tin: maTin(tin.id),
+          ten_tin: tin.title,
+          goi_tin: getTier(tin.tier).name,
+        },
       });
 
       // Đánh dấu ngay cả khi gửi hỏng — không thì mỗi lần chạy lại gửi lại,

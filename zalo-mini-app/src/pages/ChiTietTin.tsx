@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Box, Header, Icon, Page, Spinner, Text, useNavigate } from "zmp-ui";
 import { useParams } from "react-router-dom";
-import TheTin from "../components/TheTin";
+import TheTinNgang from "../components/TheTinNgang";
 import XemSo from "../components/XemSo";
 import { anh, hangHieuLuc, layTinChiTiet, layTinTuongTu, type TinChiTiet } from "../lib/tin";
 import { gia, dienTich, diaChi, ngay } from "../lib/dinhDang";
@@ -11,10 +11,8 @@ import { ghiDaXem } from "../lib/daXem";
 import { chiaSeTin } from "../lib/zalo";
 import { useTai } from "../lib/useTai";
 
-// CHI TIẾT TIN — theo đúng trang /bat-dong-san/<id> của web (bản điện thoại):
-// ảnh (số ảnh, 1/N) · nhãn hạng + Mã tin + Chia sẻ · ngày đăng · tiêu đề · địa chỉ mới + hệ cũ ·
-// khung Mức giá / Diện tích / Giá m² + thông số 2 cột · Mô tả · Tiện ích · BĐS tương tự ·
-// nút đen cố định "0981 ••• ••• · Hiện số để gọi".
+// CHI TIẾT TIN — kiểu Mini App Zalo: ảnh · các khối trắng trên nền xám (giá + tiêu đề ·
+// đặc điểm dạng dòng · mô tả thu gọn · tiện ích · dự án · người đăng · tin tương tự) · nút gọi cố định.
 
 const NHAN_HANG: Record<string, { ten: string; mau: string }> = {
   diamond: { ten: "Tin Diamond", mau: "#c1121f" },
@@ -94,91 +92,97 @@ export default function ChiTietTin() {
   const tienIch = [...(tin.tien_ich ?? []), ...(tin.noi_that_ds ?? [])];
 
   return (
-    <Page style={{ paddingBottom: 96, background: "#fff" }}>
+    <Page style={{ paddingBottom: 96 }}>
       <Header title="Chi tiết tin" />
       <AnhTin ds={tin.images?.length ? tin.images : [undefined]} tieuDe={tin.title} />
 
-      <Box px={4} pt={3}>
-        <Box flex alignItems="center" style={{ gap: 8, flexWrap: "wrap" }}>
-          <span className="nhan-loai" style={{ color: hang.mau, borderColor: `${hang.mau}55` }}>{hang.ten}</span>
-          <Text size="xSmall" className="chu-phu">Mã tin: {tin.id.slice(0, 8).toUpperCase()}</Text>
-          <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
-            <button className="nut-vien" onClick={() => setLuu(doiLuu(tin.id))} aria-label="Lưu tin">
-              <Icon icon={luu ? "zi-heart-solid" : "zi-heart"} size={18} style={luu ? { color: "#e11d48" } : undefined} />
-            </button>
-            <button className="nut-vien" onClick={() => chiaSeTin(tin.title, `${gia(tin)} · ${diaChi(tin)}`, anh(tin.images?.[0]))}>
-              <Icon icon="zi-share-external-1" size={18} /> Chia sẻ
-            </button>
-          </div>
-        </Box>
-        {tin.published_at && <Text size="xSmall" className="chu-phu" style={{ marginTop: 6 }}>· Đăng {ngay(tin.published_at)}</Text>}
-        <h1 className="tieu-de-tin">{tin.title}</h1>
-        <Box flex style={{ gap: 6 }}>
-          <Icon icon="zi-location" size={18} style={{ color: "var(--cl-muted)", flex: "none" }} />
-          <div>
-            <Text size="small" style={{ color: "var(--cl-body)" }}>{diaChi(tin)}</Text>
-            {diaChiCu && <Text size="xSmall" className="chu-phu" style={{ marginTop: 2 }}>Địa chỉ hệ cũ: {diaChiCu}</Text>}
-          </div>
-        </Box>
-      </Box>
-
-      <div className="khung-gia">
-        <div className="luoi-2">
-          <div><span>Mức giá</span><strong className="gia">{gia(tin)}</strong></div>
-          <div><span>{laDat(tin) ? "Diện tích đất" : "Diện tích"}</span><strong>{dienTich(tin) ?? "—"}</strong></div>
-          {dg && <div><span>Giá / m²</span><strong>{dg}</strong></div>}
+      <section className="khoi-ct">
+        <div className="gia-ct">
+          <strong>{gia(tin)}</strong>
+          {dienTich(tin) && <span>{dienTich(tin)}</span>}
+          {dg && <span>{dg}</span>}
         </div>
-        {thongSo.length > 0 && (
-          <div className="luoi-2" style={{ borderTop: "1px solid var(--cl-line)", marginTop: 14, paddingTop: 14 }}>
-            {thongSo.map(([k, v]) => <div key={k}><span>{k}</span><strong>{v}</strong></div>)}
+        <h1 className="tieu-de-tin">{tin.title}</h1>
+        <p className="dong-dc">
+          <Icon icon="zi-location" size={16} />
+          <span>
+            {diaChi(tin)}
+            {diaChiCu && <small>Hệ cũ: {diaChiCu}</small>}
+          </span>
+        </p>
+        <div className="meta-ct">
+          <span className="nhan-loai" style={{ color: hang.mau, borderColor: `${hang.mau}55` }}>{hang.ten}</span>
+          <span>Mã {tin.id.slice(0, 8).toUpperCase()}</span>
+          {tin.published_at && <span>· {ngay(tin.published_at)}</span>}
+          <div className="nut-ct">
+            <button onClick={() => setLuu(doiLuu(tin.id))} aria-label="Lưu tin">
+              <Icon icon={luu ? "zi-heart-solid" : "zi-heart"} size={20} style={luu ? { color: "#e11d48" } : undefined} />
+            </button>
+            <button onClick={() => chiaSeTin(tin.title, `${gia(tin)} · ${diaChi(tin)}`, anh(tin.images?.[0]))} aria-label="Chia sẻ">
+              <Icon icon="zi-share-external-1" size={20} />
+            </button>
           </div>
-        )}
-      </div>
+        </div>
+      </section>
 
-      {tin.description && (
-        <Box px={4} pt={2}>
-          <h2 className="muc-tin">Thông tin mô tả</h2>
-          <Text size="small" style={{ whiteSpace: "pre-line", lineHeight: 1.7, color: "var(--cl-body)" }}>{tin.description}</Text>
-        </Box>
-      )}
+      <section className="khoi-ct">
+        <h2 className="muc-tin">Đặc điểm</h2>
+        <div className="dong-ds">
+          {[[laDat(tin) ? "Diện tích đất" : "Diện tích", dienTich(tin) ?? "—"] as [string, string], ...thongSo].map(([k, v]) => (
+            <div key={k}><span>{k}</span><strong>{v}</strong></div>
+          ))}
+        </div>
+      </section>
+
+      {tin.description && <MoTa noiDung={tin.description} />}
 
       {tienIch.length > 0 && (
-        <Box px={4} pt={2}>
+        <section className="khoi-ct">
           <h2 className="muc-tin">Tiện ích</h2>
           <Box flex style={{ flexWrap: "wrap", gap: 8 }}>{tienIch.map((x) => <span key={x} className="chip">{x}</span>)}</Box>
-        </Box>
+        </section>
       )}
 
-      {tin.du_an && (
-        <Box px={4} pt={2}>
-          <h2 className="muc-tin">Dự án</h2>
-          <Box flex justifyContent="space-between" alignItems="center" onClick={() => tin.du_an_slug && dieuHuong(`/du-an/${tin.du_an_slug}`)}>
-            <Text size="small" style={{ fontWeight: 600 }}>{tin.du_an}</Text>
-            {tin.du_an_slug && <Icon icon="zi-chevron-right" />}
-          </Box>
-        </Box>
-      )}
-
-      {tin.nguoi_dang && (
-        <Box px={4} pt={2} pb={2}>
-          <h2 className="muc-tin">Người đăng</h2>
-          <Box flex alignItems="center" style={{ gap: 12 }}>
-            <span className="o-tron"><Icon icon="zi-user" /></span>
-            <Text style={{ fontWeight: 600 }}>{tin.nguoi_dang}</Text>
-          </Box>
-        </Box>
+      {(tin.du_an || tin.nguoi_dang) && (
+        <section className="khoi-ct dong-ds dong-bam">
+          {tin.du_an && (
+            <div onClick={() => tin.du_an_slug && dieuHuong(`/du-an/${tin.du_an_slug}`)}>
+              <span>Dự án</span>
+              <strong>{tin.du_an}{tin.du_an_slug && <Icon icon="zi-chevron-right" size={18} />}</strong>
+            </div>
+          )}
+          {tin.nguoi_dang && (
+            <div>
+              <span>Người đăng</span>
+              <strong>{tin.nguoi_dang}</strong>
+            </div>
+          )}
+        </section>
       )}
 
       {tuongTu.data.length > 0 && (
-        <section className="khoi" style={{ background: "var(--cl-surface)" }}>
-          <div className="khoi-dau"><Text.Title size="small">Bất động sản tương tự</Text.Title></div>
-          <div className="truot-ngang">{tuongTu.data.map((t) => <TheTin key={t.id} tin={t} />)}</div>
+        <section className="khoi-ct" style={{ padding: "14px 0 0" }}>
+          <h2 className="muc-tin" style={{ padding: "0 16px" }}>Tin tương tự</h2>
+          <div className="ds-ngang">{tuongTu.data.slice(0, 6).map((t) => <TheTinNgang key={t.id} tin={t} />)}</div>
         </section>
       )}
 
       <div className="nut-chinh">
-        <div style={{ flex: 1, minWidth: 0 }}><XemSo listingId={tin.id} soAn={tin.sdt_an} /></div>
+        <div style={{ flex: 1, minWidth: 0 }}><XemSo sdt={tin.sdt} soAn={tin.sdt_an} /></div>
       </div>
     </Page>
+  );
+}
+
+// Mô tả dài thu gọn 6 dòng, bấm "Xem thêm" mới mở hết (kiểu Zalo).
+function MoTa({ noiDung }: { noiDung: string }) {
+  const [mo, setMo] = useState(false);
+  const dai = noiDung.length > 280;
+  return (
+    <section className="khoi-ct">
+      <h2 className="muc-tin">Mô tả</h2>
+      <p className={`mo-ta-ct${mo || !dai ? "" : " gon"}`}>{noiDung}</p>
+      {dai && <button className="xem-them-ct" onClick={() => setMo(!mo)}>{mo ? "Thu gọn" : "Xem thêm"}</button>}
+    </section>
   );
 }

@@ -10,6 +10,27 @@ export function gia(t: Tin): string {
   return v >= 1e9 ? `${so(v / 1e9)} tỷ` : `${so(v / 1e6)} triệu`;
 }
 
+// "3 giờ trước" / "Làm mới hôm qua" — chép freshText + postedText của web (src/lib/data.ts).
+function truoc(iso: string): string {
+  const giay = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+  if (Number.isNaN(giay)) return "";
+  if (giay < 90) return "Vừa xong";
+  const phut = Math.floor(giay / 60);
+  if (phut < 60) return `${phut} phút trước`;
+  const gio = Math.floor(phut / 60);
+  if (gio < 24) return `${gio} giờ trước`;
+  const ngay = Math.floor(giay / 86400);
+  if (ngay === 1) return "Hôm qua";
+  if (ngay < 30) return `${ngay} ngày trước`;
+  return new Date(iso).toLocaleDateString("vi-VN");
+}
+export function luc(t: Tin): string {
+  const p = t.published_at;
+  const b = t.bumped_at;
+  if (!b || (p && new Date(b).getTime() - new Date(p).getTime() < 120_000)) return p ? truoc(p) : "";
+  return `Làm mới ${truoc(b).replace(/^Vừa xong$/, "vừa xong")}`;
+}
+
 export function dienTich(t: Tin): string | null {
   return t.area_m2 ? `${so(t.area_m2)} m²` : null;
 }

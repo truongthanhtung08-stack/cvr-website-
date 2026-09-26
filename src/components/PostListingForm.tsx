@@ -565,6 +565,8 @@ export default function PostListingForm() {
     // Đo chuyển đổi cho Google Ads: chỉ tính TIN MỚI GỬI DUYỆT. Lưu nháp không
     // tính (chưa phải tin), sửa tin cũ cũng không tính (đã đếm lúc đăng lần đầu).
     if (!luuNhap && (!editId || editStatus === "draft")) banChuyenDoi("dang_tin");
+    // Tin vừa vào hàng chờ duyệt → nhờ máy chủ báo khách "đã nhận tin" (máy chủ tự kiểm, không báo trùng).
+    if (!luuNhap && !viThieu && (!editId || editStatus === "draft")) fetch("/api/tin-dang/da-nhan", { method: "POST" }).catch(() => {});
     // Thiếu tiền: tin đã nằm an toàn trong nháp → mời nạp ngay, kèm số còn thiếu.
     if (viThieu) {
       setThieuTien({ can: phaiTra, du: hoSoVi?.balance ?? 0 });
