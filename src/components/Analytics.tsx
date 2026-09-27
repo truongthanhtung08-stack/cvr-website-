@@ -43,8 +43,26 @@ export default function Analytics() {
           window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}
           gtag('js', new Date());
-          gtag('config', '${id}');
+          // NGUỒN KHÁCH TỪ TRONG APP ZALO / FACEBOOK: mở link trong app thì thường không có
+          // referrer → GA4 xếp vào "trực tiếp", không đo được Zalo mang về bao nhiêu khách.
+          // Link chưa gắn utm mà trình duyệt là của Zalo/Facebook → tự gắn nguồn cho LƯỢT ĐẦU
+          // (chỉ trong số liệu gửi GA4, KHÔNG đổi địa chỉ trên thanh trình duyệt).
+          var cl_ua = navigator.userAgent, cl_url = location.href, cl_cfg = {};
+          if (!/[?&]utm_source=/.test(cl_url)) {
+            var cl_nguon = /Zalo/i.test(cl_ua) ? 'zalo' : /FBAN|FBAV|FB_IAB/.test(cl_ua) ? 'facebook' : '';
+            if (cl_nguon) cl_cfg.page_location = cl_url + (cl_url.indexOf('?') < 0 ? '?' : '&') + 'utm_source=' + cl_nguon + '&utm_medium=app_trinh_duyet';
+          }
+          gtag('config', '${id}', cl_cfg);
           ${adsId ? `gtag('config', '${adsId}');` : ""}
+          // CẦU NỐI GOOGLE → ZALO: khách bấm nhắn Zalo (OA / người đăng) hoặc bấm gọi → sự kiện GA4
+          // để biết khách đến từ Google có sang Zalo không. KHÔNG phải chuyển đổi Ads (chỉ đo).
+          document.addEventListener('click', function (e) {
+            var a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
+            if (!a) return;
+            var h = a.getAttribute('href') || '';
+            if (/zalo\\.me\\//.test(h)) gtag('event', 'lien_he_zalo', { link_url: h, trang: location.pathname });
+            else if (/^tel:/.test(h)) gtag('event', 'bam_goi', { trang: location.pathname });
+          }, true);
         `}
       </Script>
     </>
