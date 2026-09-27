@@ -28,7 +28,8 @@ import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
 import { useBilling } from "@/lib/useBilling";
 import { getTier, type TierId } from "@/lib/packages";
 import type { ListingRow } from "@/lib/listingAdmin";
-import { chuanHoaSdt } from "@/lib/phone";
+import { chuanHoaSdt, tachNhieuSdt } from "@/lib/phone";
+import XacMinhSdt from "@/components/XacMinhSdt";
 import { uploadImageFile } from "@/lib/uploadImage";
 
 // Form đăng tin cho KHÁCH HÀNG (/dang-tin) — nối Supabase thật.
@@ -47,6 +48,9 @@ export default function PostListingForm() {
   // Ai đang đăng nhập (cần để gắn owner_id + prefill liên hệ)
   const [userId, setUserId] = useState<string | null>(null);
   const [authReady, setAuthReady] = useState(false);
+  // Tài khoản đã có số điện thoại XÁC MINH chưa (bắt buộc trước khi đăng — chốt 27/09/2026).
+  // null = chưa biết; admin không phải qua bước này.
+  const [soDaXacMinh, setSoDaXacMinh] = useState<boolean | null>(null);
 
   const [done, setDone] = useState<"" | "draft" | "pending">("");
   // Chế độ SỬA: nạp tin cũ ("loading") · nạp xong ("ok") · không thấy/không có quyền ("notfound")
@@ -335,10 +339,13 @@ export default function PostListingForm() {
         // để tính ĐÚNG số tiền phải trả (ưu đãi thành viên mới, khuyến mãi, cấp).
         const { data: p } = await supabase
           .from("profiles")
-          .select("full_name, phone, email, created_at, free_quota, role, total_topup, balance")
+          .select("full_name, phone, email, created_at, free_quota, role, total_topup, balance, phone_verified")
           .eq("id", user.id)
           .single();
         if (p) {
+          const pv = p as { phone_verified?: boolean; role?: string };
+          // Số khách đăng ký bằng số (Supabase đã nhận mã) cũng coi là đã xác minh.
+          setSoDaXacMinh(!!pv.phone_verified || pv.role === "admin" || !!user.phone_confirmed_at);
           setContactName((v) => v || p.full_name || "");
           setContactPhone((v) => v || p.phone || "");
           setContactEmail((v) => v || p.email || "");
@@ -450,8 +457,11 @@ export default function PostListingForm() {
     }
     if (!title.trim()) return setError(asDraft ? "Nhập tiêu đề để lưu nháp." : "Chưa nhập tiêu đề tin.");
     if (!asDraft) {
+      if (soDaXacMinh === false) return setError("Xác minh số điện thoại của bạn (ô ở đầu trang) trước khi đăng tin.");
       if (!province) return setError("Chưa chọn Tỉnh/Thành.");
       if (!contactName.trim() || !contactPhone.trim()) return setError("Nhập họ tên và số điện thoại liên hệ.");
+      // Số điện thoại là BẮT BUỘC ở mọi tin (chủ dự án chốt 27/09/2026) — phải là số gọi được, không chỉ "có chữ".
+      if (!tachNhieuSdt(contactPhone).length) return setError("Số điện thoại liên hệ chưa đúng (VD: 0905123456).");
       if (!area.trim()) return setError("Chưa nhập diện tích.");
       // THÔNG TIN CHÍNH THEO LOẠI HÌNH — thiếu mục nào báo đúng tên mục đó,
       // không báo chung chung để người đăng khỏi phải dò cả trang.
@@ -673,6 +683,13 @@ export default function PostListingForm() {
   return (
     <form onSubmit={(e) => { e.preventDefault(); save(false); }} className="space-y-6">
       <ThanhBuoc />
+
+      {soDaXacMinh === false && (
+        <XacMinhSdt
+          soGoiY={contactPhone}
+          onXong={(so) => { setSoDaXacMinh(true); setContactPhone((v) => v || so); setError(""); }}
+        />
+      )}
 
       {/* Băng rôn chế độ SỬA — nói rõ đang sửa tin nào, trạng thái gì */}
       {editId && (

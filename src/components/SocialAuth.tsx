@@ -58,7 +58,9 @@ const BAT_SO_DIEN_THOAI = process.env.NEXT_PUBLIC_BAT_SO_DIEN_THOAI !== "0";
 // Vercel → NEXT_PUBLIC_BAT_ZALO = 1 → Redeploy.
 const BAT_ZALO = process.env.NEXT_PUBLIC_BAT_ZALO === "1";
 
-export default function SocialAuth() {
+// onSoDienThoai / onEmail: trang Đăng ký truyền vào để hai nút mở form đăng ký ngay tại chỗ;
+// trang Đăng nhập: số điện thoại sang /dang-nhap/so-dien-thoai, email mở khối email + mật khẩu.
+export default function SocialAuth({ onSoDienThoai, onEmail }: { onSoDienThoai?: () => void; onEmail?: () => void } = {}) {
   const [notice, setNotice] = useState("");
   // Mang theo ?next sang trang đăng nhập bằng số điện thoại — trước đây bị rơi
   // mất, khách bấm Đăng tin → đăng nhập bằng số → bị đưa về Tổng quan thay vì Đăng tin.
@@ -159,8 +161,38 @@ export default function SocialAuth() {
         </p>
       )}
 
-      {/* ZALO ĐỨNG ĐẦU (25/09/2026): ~90% khách có app Zalo — chạm "Đăng nhập qua ứng
-          dụng Zalo" là vào. Có đường dẫn dựng sẵn thì dùng THẺ LIÊN KẾT — cú chạm đi thẳng sang Zalo,
+      {/* THỨ TỰ CHỦ DỰ ÁN CHỐT 27/09/2026: 1. Gmail (Google) · 2. Số điện thoại · 3. Zalo ·
+          4. Email (cột riêng cho khách doanh nghiệp). */}
+      <button
+        type="button"
+        onClick={withGoogle}
+        disabled={loading !== null}
+        className="flex h-11 w-full items-center justify-center gap-2.5 rounded-lg border border-cvr-line bg-white text-sm font-medium text-cvr-body transition hover:bg-cvr-surface disabled:opacity-60"
+      >
+        <GoogleIcon />
+        {loading === "google" ? "Đang chuyển tới Google…" : "Tiếp tục với Google"}
+      </button>
+
+      {BAT_SO_DIEN_THOAI && (onSoDienThoai ? (
+        <button
+          type="button"
+          onClick={onSoDienThoai}
+          className="flex h-11 w-full items-center justify-center gap-2.5 rounded-lg border border-cvr-line bg-white text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink"
+        >
+          <PhoneIcon />
+          Tiếp tục với số điện thoại
+        </button>
+      ) : (
+        <Link
+          href={`/dang-nhap/so-dien-thoai${nextSdt}`}
+          className="flex h-11 w-full items-center justify-center gap-2.5 rounded-lg border border-cvr-line bg-white text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink"
+        >
+          <PhoneIcon />
+          Tiếp tục với số điện thoại
+        </Link>
+      ))}
+
+      {/* ZALO: có đường dẫn dựng sẵn thì dùng THẺ LIÊN KẾT — cú chạm đi thẳng sang Zalo,
           đó là điều kiện để điện thoại có thể giao sang app Zalo. Chưa có thì
           quay về nút bấm như cũ (vẫn vào được, chỉ là qua trình duyệt). */}
       {BAT_ZALO && (zaloUrl ? (
@@ -184,21 +216,16 @@ export default function SocialAuth() {
         </button>
       ))}
 
-      {/* GOOGLE ĐỨNG THỨ HAI (trước 25/09 đứng đầu) — trên điện thoại đây là đường DUY NHẤT vào được bằng
-          một chạm: máy Android/Chrome đã sẵn tài khoản, bấm là ra danh sách chọn
-          rồi vào thẳng. Viền đậm + chữ đậm để mắt rơi vào đây trước.
-          Zalo xuống ngay dưới: Zalo Web luôn bắt đăng nhập lại (phiên rất ngắn,
-          và mở trong trình duyệt phụ là mất phiên), nên KHÔNG thể một chạm —
-          muốn Zalo một chạm thì phải đi đường OTP qua ZNS hoặc app riêng. */}
-      <button
-        type="button"
-        onClick={withGoogle}
-        disabled={loading !== null}
-        className="flex h-11 w-full items-center justify-center gap-2.5 rounded-lg border border-cvr-line bg-white text-sm font-medium text-cvr-body transition hover:bg-cvr-surface disabled:opacity-60"
-      >
-        <GoogleIcon />
-        {loading === "google" ? "Đang chuyển tới Google…" : "Tiếp tục với Google"}
-      </button>
+      {onEmail && (
+        <button
+          type="button"
+          onClick={onEmail}
+          className="flex h-11 w-full items-center justify-center gap-2.5 rounded-lg border border-cvr-line bg-white text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink"
+        >
+          <MailIcon />
+          Tiếp tục với email
+        </button>
+      )}
 
       {BAT_FACEBOOK && (
         <button
@@ -211,17 +238,16 @@ export default function SocialAuth() {
           {loading === "facebook" ? "Đang chuyển tới Facebook…" : "Tiếp tục với Facebook"}
         </button>
       )}
-
-      {BAT_SO_DIEN_THOAI && (
-        <Link
-          href={`/dang-nhap/so-dien-thoai${nextSdt}`}
-          className="flex h-11 w-full items-center justify-center gap-2.5 rounded-lg border border-cvr-line bg-white text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink"
-        >
-          <PhoneIcon />
-          Tiếp tục với số điện thoại
-        </Link>
-      )}
     </div>
+  );
+}
+
+function MailIcon() {
+  return (
+    <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden>
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 7l9 6 9-6" />
+    </svg>
   );
 }
 

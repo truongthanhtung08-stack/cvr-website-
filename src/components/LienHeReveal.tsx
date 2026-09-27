@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { Fragment, useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { chuanHoaSdt } from "@/lib/phone";
+import { tachNhieuSdt } from "@/lib/phone";
 import HopXacThucSo, { veDaLuu } from "@/components/HopXacThucSo";
 import HopDanhGiaTin from "@/components/HopDanhGiaTin";
 
@@ -25,7 +25,9 @@ const telOf = (p: string) => p.replace(/\s/g, "");
 const digitsOf = (p: string) => p.replace(/\D/g, "");
 
 function useReveal(listingId: string) {
-  const [phone, setPhone] = useState<string | null>(null);
+  // Người đăng có thể ghi 2 số → giữ ĐỦ danh sách, mỗi số một nút gọi riêng.
+  const [phones, setPhones] = useState<string[] | null>(null);
+  const phone = phones?.[0] ?? null;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hoiSo, setHoiSo] = useState(false);
@@ -33,8 +35,8 @@ function useReveal(listingId: string) {
   // Đồng bộ giữa các nút cùng tin trên một trang (bên phải ↔ thanh mobile).
   useEffect(() => {
     const h = (e: Event) => {
-      const d = (e as CustomEvent).detail as { id: string; phone: string };
-      if (d?.id === listingId) setPhone(d.phone);
+      const d = (e as CustomEvent).detail as { id: string; phones: string[] };
+      if (d?.id === listingId) setPhones(d.phones);
     };
     window.addEventListener(EVENT, h);
     return () => window.removeEventListener(EVENT, h);
@@ -68,10 +70,10 @@ function useReveal(listingId: string) {
           });
           const j = await r.json();
           if (j.ok && j.sdt) {
-            const num = chuanHoaSdt(j.sdt as string);
-            if (num) {
-              setPhone(num);
-              window.dispatchEvent(new CustomEvent(EVENT, { detail: { id: listingId, phone: num } }));
+            const ds = tachNhieuSdt(j.sdt as string);
+            if (ds.length) {
+              setPhones(ds);
+              window.dispatchEvent(new CustomEvent(EVENT, { detail: { id: listingId, phones: ds } }));
               return;
             }
           }
@@ -90,13 +92,13 @@ function useReveal(listingId: string) {
       if (rpcErr) throw rpcErr;
       // Hiện ĐÚNG chuẩn 0 + 10 số — khớp với file gốc và với ô nhập trong admin,
       // kể cả tin cũ đã lưu lẫn dấu chấm / khoảng trắng / +84.
-      const num = chuanHoaSdt((data as string | null) ?? "");
-      if (!num) {
+      const ds = tachNhieuSdt((data as string | null) ?? "");
+      if (!ds.length) {
         setError("Tin này chưa có số điện thoại.");
         return;
       }
-      setPhone(num);
-      window.dispatchEvent(new CustomEvent(EVENT, { detail: { id: listingId, phone: num } }));
+      setPhones(ds);
+      window.dispatchEvent(new CustomEvent(EVENT, { detail: { id: listingId, phones: ds } }));
     } catch {
       setError("Không mở được số, thử lại sau.");
     } finally {
@@ -107,16 +109,16 @@ function useReveal(listingId: string) {
   // Xác thực xong → hiện số người bán ở MỌI nút cùng tin trên trang.
   const nhanSo = useCallback(
     (so: string) => {
-      const num = chuanHoaSdt(so);
-      if (!num) return;
-      setPhone(num);
+      const ds = tachNhieuSdt(so);
+      if (!ds.length) return;
+      setPhones(ds);
       setHoiSo(false);
-      window.dispatchEvent(new CustomEvent(EVENT, { detail: { id: listingId, phone: num } }));
+      window.dispatchEvent(new CustomEvent(EVENT, { detail: { id: listingId, phones: ds } }));
     },
     [listingId],
   );
 
-  return { phone, loading, error, reveal, hoiSo, setHoiSo, nhanSo };
+  return { phone, phones, loading, error, reveal, hoiSo, setHoiSo, nhanSo };
 }
 
 const PhoneIcon = () => (
@@ -127,20 +129,23 @@ const PhoneIcon = () => (
 
 // ── Khối liên hệ bên phải (desktop + mobile trong luồng trang) ──────────────
 export function ContactActions({ listingId, phoneMask }: { listingId: string; phoneMask: string }) {
-  const { phone, loading, error, reveal, hoiSo, setHoiSo, nhanSo } = useReveal(listingId);
+  const { phone, phones, loading, error, reveal, hoiSo, setHoiSo, nhanSo } = useReveal(listingId);
 
   return (
     <div className="mt-4 space-y-2.5">
-      {phone ? (
-        <>
-          <a href={`tel:${telOf(phone)}`} className="flex items-center justify-center gap-2 rounded-lg bg-cvr-ink px-4 py-3 text-sm font-bold text-white transition hover:bg-cvr-body">
-            <PhoneIcon />
-            {phone}
-          </a>
-          <a href={`https://zalo.me/${digitsOf(phone)}`} className="flex items-center justify-center gap-2 rounded-lg border border-cvr-line px-4 py-3 text-sm font-semibold text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink">
-            Nhắn Zalo
-          </a>
-        </>
+      {phone && phones ? (
+        // Mỗi số một cặp nút Gọi + Zalo riêng. Một số thì y như cũ; hai số thì nút Zalo ghi rõ số nào.
+        phones.map((p) => (
+          <Fragment key={p}>
+            <a href={`tel:${telOf(p)}`} className="flex items-center justify-center gap-2 rounded-lg bg-cvr-ink px-4 py-3 text-sm font-bold text-white transition hover:bg-cvr-body">
+              <PhoneIcon />
+              {p}
+            </a>
+            <a href={`https://zalo.me/${digitsOf(p)}`} className="flex items-center justify-center gap-2 rounded-lg border border-cvr-line px-4 py-3 text-sm font-semibold text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink">
+              {phones.length > 1 ? `Nhắn Zalo ${p}` : "Nhắn Zalo"}
+            </a>
+          </Fragment>
+        ))
       ) : (
         <>
           <button type="button" onClick={reveal} disabled={loading} className="flex w-full items-center justify-center gap-2 rounded-lg bg-cvr-ink px-4 py-3 text-sm font-bold text-white transition hover:bg-cvr-body disabled:opacity-60">
@@ -165,7 +170,43 @@ export function ContactActions({ listingId, phoneMask }: { listingId: string; ph
 // ── Thanh liên hệ DÍNH đáy màn hình (mobile) ────────────────────────────────
 // Trả về các NÚT bên trong (khung fixed do trang chi tiết giữ nguyên bọc ngoài).
 export function ContactBarMobile({ listingId, phoneMask }: { listingId: string; phoneMask: string }) {
-  const { phone, loading, reveal, hoiSo, setHoiSo, nhanSo } = useReveal(listingId);
+  const { phone, phones, loading, reveal, hoiSo, setHoiSo, nhanSo } = useReveal(listingId);
+  const [chon, setChon] = useState<"goi" | "zalo" | null>(null);
+
+  // Người đăng có 2 số → thanh đáy giữ nguyên 2 nút; bấm vào thì mở bảng chọn số nào.
+  if (phone && phones && phones.length > 1) {
+    const nut = "flex flex-1 items-center justify-center gap-2 rounded-lg py-3 text-sm font-bold transition active:scale-95";
+    return (
+      <>
+        <button type="button" onClick={() => setChon("goi")} className={`${nut} bg-cvr-ink text-white`}>
+          <PhoneIcon />
+          Gọi ngay
+        </button>
+        <button type="button" onClick={() => setChon("zalo")} className={`${nut} border border-cvr-line bg-white font-semibold text-cvr-body`}>
+          Nhắn Zalo
+        </button>
+        {chon && (
+          <div className="fixed inset-0 z-[80] flex items-end bg-black/40" onClick={() => setChon(null)}>
+            <div className="w-full space-y-2.5 rounded-t-2xl bg-white p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]" onClick={(e) => e.stopPropagation()}>
+              <p className="text-center text-sm font-semibold text-cvr-ink">{chon === "goi" ? "Gọi số nào?" : "Nhắn Zalo số nào?"}</p>
+              {phones.map((p) => (
+                <a
+                  key={p}
+                  href={chon === "goi" ? `tel:${telOf(p)}` : `https://zalo.me/${digitsOf(p)}`}
+                  onClick={() => setChon(null)}
+                  className="flex items-center justify-center gap-2 rounded-lg bg-cvr-ink py-3 text-sm font-bold text-white"
+                >
+                  {chon === "goi" && <PhoneIcon />}
+                  {p}
+                </a>
+              ))}
+              <button type="button" onClick={() => setChon(null)} className="w-full py-2 text-sm text-cvr-muted">Đóng</button>
+            </div>
+          </div>
+        )}
+      </>
+    );
+  }
 
   if (phone) {
     return (

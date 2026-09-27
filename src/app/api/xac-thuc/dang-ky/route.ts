@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { kiemMa } from "@/lib/maXacThuc";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { chuanHoaSdt, laSdtVN } from "@/lib/phone";
+import { timTaiKhoan } from "@/lib/taiKhoanTheoSdt";
 
 // ============================================================================
 // POST /api/xac-thuc/dang-ky — TẠO TÀI KHOẢN SAU KHI MÃ ĐÚNG
@@ -68,19 +69,34 @@ export async function POST(req: Request) {
     if (!sdt) return NextResponse.json({ ok: false, loi: "Thiếu số điện thoại để kiểm mã." }, { status: 400 });
     const kiem = await kiemMa(sdt, "dang-ky", ma);
     if (!kiem.ok) return NextResponse.json({ ok: false, loi: kiem.loi }, { status: 400 });
+  } else {
+    // Quy tắc 27/09/2026: không tạo tài khoản nào khi chưa chứng minh được email hoặc số.
+    // (Trước đây Zalo không gửi được mã thì vẫn tạo — tài khoản không có cửa nào đã xác minh.)
+    return NextResponse.json(
+      { ok: false, loi: "Chưa gửi được mã xác thực. Vui lòng thử lại sau ít phút, hoặc đăng ký bằng email." },
+      { status: 400 },
+    );
   }
 
   const db = createAdminClient();
   if (!db) return NextResponse.json({ ok: false, loi: "Hệ thống chưa sẵn sàng." }, { status: 503 });
 
+  // 1 SỐ = 1 TÀI KHOẢN: số đã xác minh ở tài khoản khác (kể cả tài khoản email) thì không tạo thêm.
+  if (sdt && kenh === "zalo" && (await timTaiKhoan(db, sdt)))
+    return NextResponse.json(
+      { ok: false, loi: "Số điện thoại này đã có tài khoản. Bạn đăng nhập hoặc dùng 'Quên mật khẩu'.", daCo: true },
+      { status: 409 },
+    );
+
   // Tạo tài khoản. Email coi như đã xác thực vì mã vừa gửi tới chính hộp thư đó.
-  // Số điện thoại đặt phone_confirm = true để Supabase cho đăng nhập bằng
-  // SĐT + mật khẩu; việc "số này đúng là của bạn" vẫn do phone_verified trong
-  // hồ sơ quyết định, KHÔNG dùng cờ này.
+  // Số điện thoại CHỈ thành cửa đăng nhập (phone_confirm) khi mã đã đi qua Zalo tới
+  // đúng số đó (chốt 27/09/2026). Đăng ký bằng email kèm số thì số chỉ nằm trong hồ
+  // sơ, chưa xác minh — khách xác minh ở trang Đăng tin. Nếu không, ai cũng lấy được
+  // số người khác làm cửa vào tài khoản của mình.
   const { data, error } = await db.auth.admin.createUser({
     ...(coEmail ? { email, email_confirm: true } : {}),
     password: matKhau,
-    ...(sdt ? { phone: `+84${sdt.slice(1)}`, phone_confirm: true } : {}),
+    ...(sdt && kenh === "zalo" ? { phone: `+84${sdt.slice(1)}`, phone_confirm: true } : {}),
     user_metadata: { full_name: hoTen, phone: sdt },
   });
 

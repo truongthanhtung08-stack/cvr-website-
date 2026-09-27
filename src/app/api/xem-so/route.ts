@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { phatMa, kiemMa, guiMaQuaZalo } from "@/lib/maXacThuc";
-import { chuanHoaSdt, laSdtVN } from "@/lib/phone";
+import { chuanHoaSdt, laSdtVN, tachNhieuSdt } from "@/lib/phone";
 import { phatVe, docVe } from "@/lib/veXemSo";
 import { guiThongBao, MAU_CO_NGUOI_QUAN_TAM } from "@/lib/thongBao";
 
@@ -109,9 +109,12 @@ async function traSo(listingId: string, sdtKhach: string, ten: string | undefine
 
   if (!tin || tin.status !== "approved") return loi("Tin không còn hiển thị.", 404);
 
-  const soNguoiBan = chuanHoaSdt(
+  // Người đăng hay ghi HAI SỐ trong một ô ("0707.435.555 / 0918.339.739") → giữ đủ cả hai,
+  // trang tin hiện riêng từng số để bấm gọi được (gộp lại thì không gọi được số nào).
+  const dsSoNguoiBan = tachNhieuSdt(
     (tin.details as { contact?: { phone?: string } } | null)?.contact?.phone ?? "",
   );
+  const soNguoiBan = dsSoNguoiBan[0];
   if (!soNguoiBan) return loi("Tin này chưa có số điện thoại.", 404);
 
   // GHI LEAD — người bán phải biết ai vừa hỏi số, kể cả khi người đó chưa có tài
@@ -134,7 +137,7 @@ async function traSo(listingId: string, sdtKhach: string, ten: string | undefine
       .limit(1);
 
     // Chính người đăng tin tự xác thực xem số tin mình → không phải khách.
-    if (!daCo?.length && chuanHoaSdt(sdtKhach) !== soNguoiBan) {
+    if (!daCo?.length && !dsSoNguoiBan.includes(chuanHoaSdt(sdtKhach))) {
       await admin.from("listing_leads").insert({
         listing_id: listingId,
         viewer_id: null,
@@ -147,7 +150,7 @@ async function traSo(listingId: string, sdtKhach: string, ten: string | undefine
     /* ghi lead hỏng → vẫn trả số cho khách */
   }
 
-  return NextResponse.json({ ok: true, sdt: soNguoiBan, ...(ve ? { ve } : {}) });
+  return NextResponse.json({ ok: true, sdt: dsSoNguoiBan.join(" / "), ...(ve ? { ve } : {}) });
 }
 
 // ── BÁO NGƯỜI ĐĂNG "CÓ NGƯỜI QUAN TÂM" ─────────────────────────────────────

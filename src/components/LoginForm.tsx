@@ -84,9 +84,22 @@ export default function LoginForm() {
     setLoading(true);
     try {
       const supabase = createClient();
-      const { error } = dungSdt
+      let { error } = dungSdt
         ? await supabase.auth.signInWithPassword({ phone: `+84${soDT.slice(1)}`, password: pw })
         : await supabase.auth.signInWithPassword({ email: email.trim(), password: pw });
+      // Số không khớp trực tiếp → có thể là SỐ THỨ HAI, hoặc số khai trong tài khoản email.
+      // Máy chủ dò đúng tài khoản giữ số này rồi đăng nhập bằng mật khẩu của nó.
+      if (error && dungSdt && /invalid login credentials/i.test(error.message)) {
+        const r = await fetch("/api/xac-thuc/dang-nhap-sdt", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ buoc: "mat-khau", sdt: soDT, matKhau: pw }),
+        }).then((x) => x.json()).catch(() => null);
+        if (r?.ok) {
+          await supabase.auth.setSession({ access_token: r.access_token, refresh_token: r.refresh_token });
+          error = null;
+        }
+      }
       if (error) {
         setNotice(viError(error.message));
         setSaiMatKhau(/invalid login credentials/i.test(error.message));
@@ -155,32 +168,24 @@ export default function LoginForm() {
           Chủ dự án chốt: có bao nhiêu phương thức thì bày ra bấy nhiêu, để khách
           nhìn một cái là thấy hết đường vào, không phải mở thêm khối nào. */}
       <div className="mt-5 space-y-3">
-        <SocialAuth />
-
-        {!moEmail && (
-          <button
-            type="button"
-            onClick={() => setMoEmail(true)}
-            className="flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-cvr-line text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink"
-          >
-            Đăng nhập bằng email hoặc số điện thoại
-          </button>
-        )}
+        {/* 4 cửa theo thứ tự chủ dự án chốt 27/09/2026: Gmail · Số điện thoại · Zalo · Email.
+            Nút Email mở khối email + mật khẩu ngay bên dưới. */}
+        <SocialAuth onEmail={moEmail ? undefined : () => setMoEmail(true)} />
       </div>
 
 
       {moEmail && (
       <form className="space-y-4" onSubmit={onSubmit}>
-        <Field label="Email hoặc số điện thoại">
+        <Field label="Email">
           <input
             type="text"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             /* autoComplete chuẩn = trình duyệt mới mời "Lưu mật khẩu?" và tự điền
                lần sau. Thiếu hai thuộc tính này thì Chrome/Safari im lặng, khách
-               phải gõ tay mỗi lần đăng nhập. */
+               phải gõ tay mỗi lần đăng nhập. Ô vẫn nhận số điện thoại cho ai quen gõ số. */
             autoComplete="username"
-            placeholder="email@vidu.com hoặc 09xx xxx xxx"
+            placeholder="email@congty.com"
             className="h-11 w-full rounded-lg border border-transparent bg-cvr-surface px-3 text-sm text-cvr-ink placeholder-cvr-faint outline-none transition focus:border-cvr-line focus:bg-white"
           />
         </Field>
@@ -225,13 +230,15 @@ export default function LoginForm() {
         >
           {loading ? "Đang đăng nhập…" : "Đăng nhập"}
         </button>
-
-        <p className="text-center text-sm text-cvr-muted">
-          Chưa có tài khoản?{" "}
-          <Link href="/dang-ky" className="font-semibold text-cvr-blue-ink hover:text-cvr-blue">Đăng ký bằng email</Link>
-        </p>
       </form>
       )}
+
+      {/* Luôn hiện (trước đây nằm trong khối email nên đóng khối là mất) — cặp với
+          dòng "Đã có tài khoản? Đăng nhập" bên trang Đăng ký. */}
+      <p className="mt-6 text-center text-sm text-cvr-muted">
+        Chưa có tài khoản?{" "}
+        <Link href="/dang-ky" className="font-semibold text-cvr-ink hover:underline">Đăng ký</Link>
+      </p>
     </div>
   );
 }

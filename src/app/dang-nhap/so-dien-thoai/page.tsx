@@ -20,12 +20,26 @@ import { dichSauDangNhap } from "@/lib/dieuHuong";
 // So với gửi mã mỗi lần đăng nhập: 1.000 khách vào 20 lần/năm là 20.000 tin,
 // cách này chỉ ~1.000 tin — rẻ hơn khoảng 20 lần.
 //
-// ⚠️ Vẫn cần cắm dịch vụ gửi SMS trong Supabase → Authentication → Providers →
-// Phone. Ở Việt Nam phải là nhà cung cấp có brandname đã đăng ký (eSMS.vn,
-// VietGuys…), không thì nhà mạng chặn tin. Chưa cắm thì màn hình tự báo rõ.
+// Mã gửi qua Zalo bằng /api/xac-thuc/dang-nhap-sdt (từ 27/09/2026, thay OTP của
+// Supabase): số nào khách đã khai — số chính, số thứ hai, hay số của tài khoản
+// email — cũng vào đúng MỘT tài khoản, và số được đánh dấu đã xác minh.
 // ============================================================================
 
 type Buoc = "matKhau" | "nhapSo" | "nhapMa" | "datMatKhau";
+
+type KqDangNhap = { ok: true; access_token: string; refresh_token: string } | { ok: false; loi: string };
+async function goiDangNhap(body: Record<string, string>): Promise<KqDangNhap> {
+  try {
+    const r = await fetch("/api/xac-thuc/dang-nhap-sdt", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return (await r.json()) as KqDangNhap;
+  } catch {
+    return { ok: false, loi: "Không kết nối được hệ thống. Vui lòng thử lại." };
+  }
+}
 
 export default function PhoneLoginPage() {
   const [buoc, setBuoc] = useState<Buoc>("matKhau");
@@ -47,10 +61,6 @@ export default function PhoneLoginPage() {
   };
 
   const soHopLe = phone.replace(/\D/g, "").length >= 9;
-  const loiSMS = (m: string) =>
-    /provider|not enabled|unsupported|sms/i.test(m)
-      ? "Đăng nhập bằng tin nhắn chưa được bật. Vui lòng dùng cách khác trong lúc chờ."
-      : m;
 
   // ── Đăng nhập bằng số + mật khẩu (không tốn tin nhắn) ─────────────────────
   async function dangNhap() {
@@ -62,11 +72,21 @@ export default function PhoneLoginPage() {
         phone: e164(phone),
         password: matKhau,
       });
-      if (error) {
+      // Không khớp trực tiếp → có thể là SỐ THỨ HAI, hoặc tài khoản đăng ký bằng email có
+      // khai số này. Hỏi máy chủ dò đúng tài khoản rồi đăng nhập bằng mật khẩu của nó.
+      let loiCuoi = error;
+      if (error && /invalid login credentials/i.test(error.message)) {
+        const j = await goiDangNhap({ buoc: "mat-khau", sdt: phone, matKhau });
+        if (j.ok) {
+          await supabase.auth.setSession({ access_token: j.access_token, refresh_token: j.refresh_token });
+          loiCuoi = null;
+        }
+      }
+      if (loiCuoi) {
         setNotice(
-          /invalid login credentials/i.test(error.message)
+          /invalid login credentials/i.test(loiCuoi.message)
             ? "Số điện thoại hoặc mật khẩu chưa đúng. Chưa có mật khẩu thì bấm “Lần đầu dùng số này” bên dưới."
-            : error.message,
+            : loiCuoi.message,
         );
       } else {
         window.location.replace(dichSauDangNhap());
@@ -83,9 +103,10 @@ export default function PhoneLoginPage() {
     setLoading(true);
     setNotice("");
     try {
-      const supabase = createClient();
-      const { error } = await supabase.auth.signInWithOtp({ phone: e164(phone) });
-      if (error) setNotice(loiSMS(error.message));
+      // Mã do máy chủ Coastal Land gửi qua Zalo (không qua OTP của Supabase): xác nhận
+      // xong số được đánh dấu ĐÃ XÁC MINH → tin đăng hộ tự về tài khoản.
+      const j = await goiDangNhap({ buoc: "gui-ma", sdt: phone });
+      if (!j.ok) setNotice(j.loi);
       else {
         setBuoc("nhapMa");
         setNotice("Đã gửi mã xác thực. Vui lòng kiểm tra tin nhắn.");
@@ -101,14 +122,10 @@ export default function PhoneLoginPage() {
     setLoading(true);
     setNotice("");
     try {
-      const supabase = createClient();
-      const { error } = await supabase.auth.verifyOtp({
-        phone: e164(phone),
-        token: otp,
-        type: "sms",
-      });
-      if (error) setNotice("Mã xác thực không đúng hoặc đã hết hạn.");
+      const j = await goiDangNhap({ buoc: "xac-nhan", sdt: phone, ma: otp });
+      if (!j.ok) setNotice(j.loi);
       else {
+        await createClient().auth.setSession({ access_token: j.access_token, refresh_token: j.refresh_token });
         setBuoc("datMatKhau");
         setNotice("Xác thực thành công. Đặt mật khẩu để lần sau vào thẳng, không cần chờ tin nhắn.");
       }

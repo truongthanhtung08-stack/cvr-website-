@@ -105,16 +105,16 @@ export default function ForgotPasswordForm() {
       {buoc === "email" ? (
         <>
           <p className="mt-1.5 text-sm leading-relaxed text-cvr-muted">
-            Nhập email hoặc số điện thoại của tài khoản, chúng tôi gửi mã 6 số để bạn đặt lại mật khẩu.
+            Nhập số điện thoại hoặc email của tài khoản, chúng tôi gửi mã 6 số để bạn đặt lại mật khẩu.
           </p>
           <form onSubmit={guiMa} className="mt-5 space-y-4">
             <div>
-              <label className="text-sm font-medium text-cvr-body">Email hoặc số điện thoại</label>
+              <label className="text-sm font-medium text-cvr-body">Số điện thoại hoặc email</label>
               <input
                 value={dinhDanh}
                 onChange={(e) => setDinhDanh(e.target.value)}
                 autoComplete="username"
-                placeholder="email@example.com hoặc 0905123456"
+                placeholder="0905123456 hoặc email@congty.com"
                 className={oCls}
               />
             </div>

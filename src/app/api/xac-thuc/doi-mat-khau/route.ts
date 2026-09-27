@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { kiemMa } from "@/lib/maXacThuc";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { chuanHoaSdt } from "@/lib/phone";
+import { timTaiKhoan } from "@/lib/taiKhoanTheoSdt";
 
 // ============================================================================
 // POST /api/xac-thuc/doi-mat-khau — QUÊN MẬT KHẨU BẰNG MÃ 6 SỐ
@@ -53,12 +54,11 @@ export async function POST(req: Request) {
   const { data: ds, error: loiDs } = await db.auth.admin.listUsers({ page: 1, perPage: 1000 });
   if (loiDs) return NextResponse.json({ ok: false, loi: "Không tra được tài khoản." }, { status: 500 });
 
-  const e164 = sdt ? `+84${sdt.slice(1)}` : "";
-  const user = ds.users.find((u) =>
-    email
-      ? (u.email ?? "").toLowerCase() === email
-      : chuanHoaSdt(u.phone ?? "") === sdt || (u.phone ?? "") === e164,
-  );
+  // Theo SỐ: dùng chung quy tắc 1 số = 1 tài khoản (chỉ số ĐÃ XÁC MINH mới tính) — nhờ vậy
+  // tài khoản đăng ký bằng email đã xác minh số cũng lấy lại mật khẩu bằng số được.
+  const tim = sdt && !email ? await timTaiKhoan(db, sdt) : null;
+  const idTheoSo = tim && tim !== "trung" ? tim.id : null;
+  const user = ds.users.find((u) => (email ? (u.email ?? "").toLowerCase() === email : u.id === idTheoSo));
   if (!user) {
     // Mã đúng nhưng email không có tài khoản → nói chung chung, không xác nhận
     // sự tồn tại của tài khoản nào cả.

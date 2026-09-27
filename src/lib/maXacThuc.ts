@@ -21,7 +21,7 @@ const SAI_TOI_DA = 5;      // nhập sai quá số này là huỷ mã
 const CHO_GIUA_2_LAN = 60; // giây — chặn bấm "gửi lại" liên tục
 
 export type Kenh = "email" | "zalo";
-export type Viec = "dang-ky" | "quen-mat-khau" | "xac-minh-sdt";
+export type Viec = "dang-ky" | "quen-mat-khau" | "xac-minh-sdt" | "dang-nhap";
 
 const bam = (ma: string) => createHash("sha256").update(ma).digest("hex");
 

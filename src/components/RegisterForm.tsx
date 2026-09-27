@@ -63,6 +63,66 @@ export default function RegisterForm({ uuDai, capThe = "h1" }: { uuDai?: string;
   const [loi, setLoi] = useState("");
   const [dangChay, setDangChay] = useState(false);
 
+  // KIỂM NGAY KHI GÕ XONG (chủ dự án yêu cầu 27/09/2026) — không để khách điền hết
+  // form, nhận mã rồi mới biết "đã có tài khoản".
+  //   · daCo    : số / email này đã có tài khoản → mời đăng nhập, khoá nút Tiếp tục
+  //   · soTinCho: số chưa có tài khoản nhưng có tin Coastal Land đăng hộ → báo tin tự
+  //               về, và nhận mã qua ZALO (mã Zalo mới chứng minh số → tin mới tự về)
+  const [daCo, setDaCo] = useState<{ loai: "sdt" | "email"; giaTri: string } | null>(null);
+  const [soTinCho, setSoTinCho] = useState(0);
+
+  async function kiemTaiKhoan(loai: "sdt" | "email", v: string) {
+    const giaTri = loai === "sdt" ? chuanHoaSdt(v) : v.trim().toLowerCase();
+    if (loai === "sdt" ? !laSdtVN(giaTri) : !giaTri.includes("@")) return;
+    try {
+      const r = await fetch("/api/xac-thuc/kiem-tai-khoan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(loai === "sdt" ? { sdt: giaTri } : { email: giaTri }),
+      });
+      const kq = await r.json();
+      if (!kq.ok) return;
+      if (kq.coTaiKhoan) return setDaCo({ loai, giaTri });
+      if (loai === "sdt") {
+        setSoTinCho(Number(kq.soTin) || 0);
+        if (Number(kq.soTin) > 0) setKenh("zalo");
+      }
+    } catch {
+      /* mất mạng → bỏ qua, bước tạo tài khoản vẫn chặn trùng như cũ */
+    }
+  }
+  const doiO = (loai: "sdt" | "email") => {
+    if (daCo?.loai === loai) setDaCo(null);
+    if (loai === "sdt") setSoTinCho(0);
+  };
+  const dep = (s: string) => s.replace(/^(\d{4})(\d{3})(\d{3})$/, "$1 $2 $3");
+  // Điền sẵn số / email ở trang đăng nhập (LoginForm đọc khoá này khi mở).
+  const nhoDinhDanh = () => {
+    try { if (daCo) localStorage.setItem("cl-dang-nhap-email", daCo.giaTri); } catch { /* bỏ qua */ }
+  };
+  const hopDaCo = (loai: "sdt" | "email") =>
+    daCo?.loai === loai && (
+      <div className="mt-2 rounded-xl border border-cvr-line bg-cvr-surface p-4">
+        <p className="text-sm font-semibold text-cvr-ink">
+          {loai === "sdt" ? `Số ${dep(daCo.giaTri)}` : daCo.giaTri} đã có tài khoản Coastal Land
+        </p>
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <Link href="/dang-nhap" onClick={nhoDinhDanh} className="flex h-10 items-center justify-center rounded-lg bg-cvr-ink text-sm font-semibold text-white transition hover:bg-cvr-ink/90">
+            Đăng nhập
+          </Link>
+          <Link href="/quen-mat-khau" className="flex h-10 items-center justify-center rounded-lg border border-cvr-line bg-white text-sm font-semibold text-cvr-ink transition hover:border-cvr-ink">
+            Quên mật khẩu
+          </Link>
+        </div>
+      </div>
+    );
+  const dongTinCho =
+    soTinCho > 0 && !daCo && (
+      <p className="mt-2 rounded-lg bg-cvr-surface px-3 py-2 text-sm text-cvr-body">
+        Số này đang có <strong className="font-semibold text-cvr-ink">{soTinCho} tin đăng</strong> trên Coastal Land — đăng ký xong, tin tự về tài khoản của bạn.
+      </p>
+    );
+
   const { billing, loading: billingLoading } = useBilling();
   const dongUuDai =
     uuDai ??
@@ -110,14 +170,13 @@ export default function RegisterForm({ uuDai, capThe = "h1" }: { uuDai?: string;
         return;
       }
 
-      // Zalo chưa gửi được (số dư ZBS = 0đ) mà khách KHÔNG có email → vẫn cho tạo
-      // tài khoản, đừng chặn đường vào của nhóm khách đông nhất. Số để CHƯA XÁC
-      // MINH, tin cũ chuyển sau khi Coastal Land đối chiếu.
-      if (kq.khongGuiDuoc && !email.trim()) {
-        await taoTaiKhoan("", "khong");
-        return;
-      }
-      setLoi(kq.loi || "Không gửi được mã. Vui lòng thử lại.");
+      // Zalo chưa gửi được mã → KHÔNG tạo tài khoản chưa xác minh (quy tắc 27/09/2026:
+      // mọi tài khoản phải có số hoặc email đã chứng minh). Báo khách thử lại / dùng email.
+      setLoi(
+        kq.khongGuiDuoc && !email.trim()
+          ? "Chưa gửi được mã qua Zalo. Vui lòng thử lại sau ít phút, hoặc đăng ký bằng email."
+          : kq.loi || "Không gửi được mã. Vui lòng thử lại.",
+      );
     } catch {
       setLoi("Không kết nối được máy chủ. Vui lòng thử lại.");
     } finally {
@@ -156,6 +215,10 @@ export default function RegisterForm({ uuDai, capThe = "h1" }: { uuDai?: string;
         ? await supabase.auth.signInWithPassword({ email: email.trim(), password: pw })
         : await supabase.auth.signInWithPassword({ phone: `+84${soDT.slice(1)}`, password: pw });
 
+      // Số vừa xác minh qua Zalo → tin Coastal Land đăng hộ tự về tài khoản ngay
+      // (chưa xác minh thì hàm tự từ chối, khối "tin của bạn" ở trang tài khoản lo tiếp).
+      if (!error && kenhMa === "zalo") await supabase.rpc("tu_nhan_tin_theo_sdt").then(() => {}, () => {});
+
       window.location.replace(error ? "/dang-nhap" : "/tai-khoan");
     } catch {
       setDangChay(false);
@@ -183,31 +246,10 @@ export default function RegisterForm({ uuDai, capThe = "h1" }: { uuDai?: string;
           {dongUuDai || "Đăng tin, quản lý tin và lưu bất động sản bạn quan tâm."}
         </p>
 
+        {/* 4 cửa theo thứ tự chủ dự án chốt 27/09/2026: Gmail · Số điện thoại · Zalo · Email
+            (email là cột riêng cho khách doanh nghiệp). Số điện thoại & email mở form ngay tại đây. */}
         <div className="mt-5">
-          <SocialAuth />
-        </div>
-
-        <div className="my-5 flex items-center gap-3">
-          <span className="h-px flex-1 bg-cvr-line" />
-          <span className="text-xs text-cvr-faint">hoặc</span>
-          <span className="h-px flex-1 bg-cvr-line" />
-        </div>
-
-        <div className="space-y-2.5">
-          <button
-            type="button"
-            onClick={() => setCach("email")}
-            className="flex h-12 w-full items-center justify-center rounded-lg border border-cvr-line text-[15px] font-semibold text-cvr-ink transition hover:border-cvr-ink"
-          >
-            Đăng ký bằng email
-          </button>
-          <button
-            type="button"
-            onClick={() => setCach("sdt")}
-            className="flex h-12 w-full items-center justify-center rounded-lg border border-cvr-line text-[15px] font-semibold text-cvr-ink transition hover:border-cvr-ink"
-          >
-            Đăng ký bằng số điện thoại
-          </button>
+          <SocialAuth onSoDienThoai={() => setCach("sdt")} onEmail={() => setCach("email")} />
         </div>
 
         <p className="mt-6 text-center text-sm text-cvr-muted">
@@ -291,22 +333,23 @@ export default function RegisterForm({ uuDai, capThe = "h1" }: { uuDai?: string;
           <>
             <div>
               <label className="text-sm font-medium text-cvr-body">Số điện thoại</label>
-              <input value={sdt} onChange={(e) => setSdt(e.target.value)} inputMode="tel" placeholder="0905123456" className={oCls} />
-            </div>
-            <div>
-              <label className="text-sm font-medium text-cvr-body">Email — không bắt buộc</label>
-              <input value={email} onChange={(e) => setEmail(e.target.value)} inputMode="email" placeholder="Có email thì nhận mã xác thực ngay" className={oCls} />
+              <input value={sdt} onChange={(e) => { setSdt(e.target.value); doiO("sdt"); }} onBlur={(e) => kiemTaiKhoan("sdt", e.target.value)} inputMode="tel" placeholder="0905123456" className={oCls} />
+              {hopDaCo("sdt")}
+              {dongTinCho}
             </div>
           </>
         ) : (
           <>
             <div>
               <label className="text-sm font-medium text-cvr-body">Email</label>
-              <input value={email} onChange={(e) => setEmail(e.target.value)} inputMode="email" placeholder="email@example.com" className={oCls} />
+              <input value={email} onChange={(e) => { setEmail(e.target.value); doiO("email"); }} onBlur={(e) => kiemTaiKhoan("email", e.target.value)} inputMode="email" placeholder="email@example.com" className={oCls} />
+              {hopDaCo("email")}
             </div>
             <div>
               <label className="text-sm font-medium text-cvr-body">Số điện thoại — không bắt buộc</label>
-              <input value={sdt} onChange={(e) => setSdt(e.target.value)} inputMode="tel" placeholder="0905123456" className={oCls} />
+              <input value={sdt} onChange={(e) => { setSdt(e.target.value); doiO("sdt"); }} onBlur={(e) => kiemTaiKhoan("sdt", e.target.value)} inputMode="tel" placeholder="0905123456" className={oCls} />
+              {hopDaCo("sdt")}
+              {dongTinCho}
             </div>
           </>
         )}
@@ -371,7 +414,7 @@ export default function RegisterForm({ uuDai, capThe = "h1" }: { uuDai?: string;
 
         <button
           type="submit"
-          disabled={dangChay}
+          disabled={dangChay || !!daCo}
           className="h-12 w-full rounded-lg bg-cvr-ink text-[15px] font-semibold text-white transition hover:bg-cvr-ink/90 disabled:opacity-60"
         >
           {dangChay ? "Đang gửi mã…" : "Tiếp tục"}
