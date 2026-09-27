@@ -18,6 +18,7 @@ import DaXem from "./pages/DaXem";
 import DangNhap from "./pages/DangNhap";
 import DangTin from "./pages/DangTin";
 import TinCuaToi from "./pages/TinCuaToi";
+import NapTien from "./pages/NapTien";
 
 // 5 tab dưới kiểu Mini App Zalo; các trang con dùng thanh tiêu đề có nút quay lại.
 // Đăng tin ở GIỮA, nổi bật (nút tròn xanh) — việc chính của người bán; mở toàn màn hình, không hiện thanh tab.
@@ -68,6 +69,7 @@ export default function UngDung() {
             <Route path="/dang-nhap" element={<DangNhap />} />
             <Route path="/dang-tin" element={<DangTin />} />
             <Route path="/tin-cua-toi" element={<TinCuaToi />} />
+            <Route path="/nap-tien" element={<NapTien />} />
           </AnimationRoutes>
           <ThanhDuoi />
         </ZMPRouter>

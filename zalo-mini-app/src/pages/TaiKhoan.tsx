@@ -32,6 +32,7 @@ export default function TaiKhoan() {
       <section className="khoi">
         <List>
           {muc("zi-list-1", "Tin của tôi", () => dieuHuong("/tin-cua-toi"))}
+          {muc("zi-poll", "Nạp tiền vào ví", () => dieuHuong("/nap-tien"))}
           {muc("zi-reminder", "Tin đã xem", () => dieuHuong("/da-xem"))}
           {muc("zi-star", "Gói tin & dịch vụ", () => dieuHuong("/dich-vu"))}
           {muc("zi-more-diamond-solid", "Bảng giá đăng tin", () => dieuHuong("/bang-gia"))}

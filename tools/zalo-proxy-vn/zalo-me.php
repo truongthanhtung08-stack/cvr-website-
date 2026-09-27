@@ -10,7 +10,7 @@
  * AN TOÀN:
  *   · Chỉ nhận POST kèm đúng mã bí mật → người ngoài gọi vào bị chặn
  *   · KHÔNG lưu gì cả, không ghi log, chỉ chuyển tiếp đúng một lời gọi
- *   · Chỉ gọi được duy nhất API "lấy thông tin người dùng" của Zalo
+ *   · Chỉ gọi được 2 API của Zalo: thông tin người dùng + đổi mã số điện thoại (Mini App)
  *
  * CÀI ĐẶT:
  *   1. Tạo file ma-bi-mat.php CẠNH file này, nội dung: <?php return '<mã mới>';
@@ -62,15 +62,31 @@ if (!preg_match('/^[a-z_]+(,[a-z_]+)*$/', $fields)) {
 }
 
 // ── Gọi Zalo (từ IP Việt Nam) ───────────────────────────────────────────────
-$url = 'https://graph.zalo.me/v2.0/me?fields=' . rawurlencode($fields)
-     . '&access_token=' . rawurlencode($token);
-
-$ch = curl_init($url);
+// Hai việc DUY NHẤT trạm được làm:
+//   · loai = "sdt" → đổi mã số điện thoại của Zalo Mini App (getPhoneNumber) ra SỐ THẬT:
+//                    graph.zalo.me/v2.0/me/info (header access_token, code, secret_key)
+//   · mặc định     → lấy tên + ảnh người dùng (đăng nhập Zalo trên web): graph.zalo.me/v2.0/me
+$loai = isset($body['loai']) ? (string) $body['loai'] : '';
+if ($loai === 'sdt') {
+    $code = isset($body['code']) ? trim((string) $body['code']) : '';
+    $secret = isset($body['secret_key']) ? trim((string) $body['secret_key']) : '';
+    if ($code === '' || $secret === '') {
+        http_response_code(400);
+        echo json_encode(['error' => 'thieu_code_hoac_secret']);
+        exit;
+    }
+    $ch = curl_init('https://graph.zalo.me/v2.0/me/info');
+    $dauMuc = ['access_token: ' . $token, 'code: ' . $code, 'secret_key: ' . $secret];
+} else {
+    $ch = curl_init('https://graph.zalo.me/v2.0/me?fields=' . rawurlencode($fields)
+        . '&access_token=' . rawurlencode($token));
+    $dauMuc = ['access_token: ' . $token];
+}
 curl_setopt_array($ch, [
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_TIMEOUT        => 15,
     CURLOPT_CONNECTTIMEOUT => 10,
-    CURLOPT_HTTPHEADER     => ['access_token: ' . $token],
+    CURLOPT_HTTPHEADER     => $dauMuc,
 ]);
 $ketQua = curl_exec($ch);
 

@@ -62,6 +62,7 @@ export default function DangTin() {
   const [video, setVideo] = useState(""); // link YouTube — như web, video không lưu kho, chỉ gắn link
   const [ten, setTen] = useState("");
   const [sdt, setSdt] = useState("");
+  const [hang, setHang] = useState("basic"); // hạng tin: diamond · gold · silver · basic (như web)
   const [soNgay, setSoNgay] = useState<number>();
   const [dangGui, setDangGui] = useState(false);
   const [loi, setLoi] = useState<string>();
@@ -83,8 +84,9 @@ export default function DangTin() {
     if (phien && !ten) layNguoiZalo().then((z) => z && setTen((cu) => cu || z.name));
   }, [phien]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Gói tin thường theo mục đích + ưu đãi thành viên mới (cùng điều kiện với web).
-  const goi = bangGia.data?.[md].plans.find((p) => p.tierId === "basic");
+  // Gói theo HẠNG đã chọn + mục đích (cùng bảng giá admin với web). Ưu đãi thành viên mới chỉ áp gói thường.
+  const dsGoi = bangGia.data?.[md].plans ?? [];
+  const goi = dsGoi.find((p) => p.tierId === hang) ?? dsGoi.find((p) => p.tierId === "basic");
   useEffect(() => {
     if (goi?.terms.length && !goi.terms.some((t) => t.days === soNgay)) setSoNgay(goi.terms[0].days);
   }, [goi, md]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -97,7 +99,7 @@ export default function DangTin() {
     const laMoi = !!hoSo.data?.created_at && (Date.now() - new Date(hoSo.data.created_at).getTime()) / 86_400_000 <= (f?.days ?? 0);
     const hopDoiTuong = f?.audience === "all" || (f?.audience === "new" && laMoi) || f?.audience === hoSo.data?.role;
     const conLuot = f?.quota === 0 || (hoSo.data?.free_quota ?? 0) > 0;
-    const mienPhi = dangChay && f?.tierId === "basic" && hopDoiTuong && laMoi && conLuot;
+    const mienPhi = dangChay && goi?.tierId === "basic" && f?.tierId === "basic" && hopDoiTuong && laMoi && conLuot;
     const thanhTien = mienPhi ? 0 : giaGoi;
     return { mienPhi, thanhTien, tongTra: thanhTien + Math.round(thanhTien * VAT), viCo: Number(hoSo.data?.balance ?? 0) };
   }, [goi, soNgay, bangGia.data, hoSo.data]);
@@ -163,13 +165,13 @@ export default function DangTin() {
         legal: phapLy || undefined,
         direction: huong || undefined,
         addressDetail: diaChi.trim() || undefined,
-        plan: { tier: "basic", days: soNgay, giaBao: tien.thanhTien },
+        plan: { tier: goi?.tierId ?? "basic", days: soNgay, giaBao: tien.thanhTien },
         contact: { name: ten.trim(), phone: sdt.replace(/\D/g, "") },
         nguonDang: "zalo-mini-app",
       },
       status: viThieu ? "draft" : "pending",
       owner_id: nguoiDung.id,
-      tier: "basic",
+      tier: goi?.tierId ?? "basic", // như web: hạng khách chọn; tiền chỉ trừ khi admin duyệt
       published_at: null,
     });
     setDangGui(false);
@@ -209,7 +211,8 @@ export default function DangTin() {
               ? "Coastal Land sẽ báo kết quả duyệt qua Zalo."
               : `Ví chưa đủ ${vnd(tien.tongTra)} cho gói đã chọn. Tin đã lưu nháp nguyên vẹn — nạp tiền xong là đăng tiếp.`}
           </Text>
-          <Button fullWidth onClick={() => dieuHuong("/tin-cua-toi", { replace: true })}>Xem tin của tôi</Button>
+          {xong === "draft" && <Button fullWidth onClick={() => dieuHuong("/nap-tien")}>Nạp tiền để đăng tin</Button>}
+          <Button fullWidth variant={xong === "draft" ? "secondary" : "primary"} onClick={() => dieuHuong("/tin-cua-toi", { replace: true })}>Xem tin của tôi</Button>
           <Button fullWidth variant="secondary" onClick={() => dieuHuong("/", { replace: true })}>Về trang chủ</Button>
         </Box>
       </Page>
@@ -293,7 +296,14 @@ export default function DangTin() {
         <Input label="Số điện thoại" inputMode="tel" value={sdt} onChange={(e) => setSdt(e.target.value)} />
       </Nhom>
 
-      <Nhom tieuDe="Gói tin thường">
+      <Nhom tieuDe="Gói tin">
+        {dsGoi.length > 1 && (
+          <div className="chip-loc" style={{ padding: 0, flexWrap: "wrap" }}>
+            {dsGoi.map((g) => (
+              <button key={g.tierId} className={g.tierId === goi?.tierId ? "bat" : ""} onClick={() => setHang(g.tierId)}>{g.name}</button>
+            ))}
+          </div>
+        )}
         {goi ? (
           <div className="chip-loc" style={{ padding: 0, flexWrap: "wrap" }}>
             {goi.terms.map((t) => (

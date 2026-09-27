@@ -12,6 +12,7 @@ import { daLuu, doiLuu } from "../lib/daLuu";
 import { ghiDaXem } from "../lib/daXem";
 import { chiaSeTin } from "../lib/zalo";
 import { useTai } from "../lib/useTai";
+import { supabase } from "../lib/supabase";
 import { nhungVideo, tachAnh, tachVideo } from "../lib/media";
 
 // CHI TIẾT TIN — kiểu Mini App Zalo: ảnh · các khối trắng trên nền xám (giá + tiêu đề ·
@@ -102,7 +103,21 @@ export default function ChiTietTin() {
   const tuongTu = useTai(() => (tin ? layTinTuongTu(tin) : Promise.resolve([])), [tin?.id], []);
   const [luu, setLuu] = useState(() => daLuu(id));
   useEffect(() => {
-    if (tin) ghiDaXem(tin.id);
+    if (!tin) return;
+    ghiDaXem(tin.id);
+    // ĐẾM LƯỢT XEM THẬT — cùng hàm với web (RecordView.tsx), cùng mốc 30 phút chống F5 thổi số.
+    // Nguồn = "zalo": người đăng thấy lượt xem đến từ Zalo trong thống kê tin của họ.
+    // Khách đã đăng nhập → ghi_nguoi_xem: người đăng biết ai đang quan tâm (hàm tự bỏ qua chủ tin).
+    try {
+      const khoa = `cl_da_xem_${tin.id}`;
+      if (Date.now() - Number(sessionStorage.getItem(khoa) || 0) > 30 * 60_000) {
+        sessionStorage.setItem(khoa, String(Date.now()));
+        supabase.rpc("increment_listing_view", { p_listing_id: tin.id, p_thiet_bi: "dien_thoai", p_nguon: "zalo" }).then(() => {}, () => {});
+        supabase.rpc("ghi_nguoi_xem", { p_listing_id: tin.id }).then(() => {}, () => {});
+      }
+    } catch {
+      /* không có sessionStorage → bỏ qua đếm */
+    }
   }, [tin]);
 
   if (dangTai) return <Page><TieuDe title="Chi tiết tin" /><Box flex justifyContent="center" p={6}><Spinner /></Box></Page>;
@@ -226,7 +241,7 @@ export default function ChiTietTin() {
       )}
 
       <div className="nut-chinh">
-        <div style={{ flex: 1, minWidth: 0 }}><XemSo sdt={tin.sdt} soAn={tin.sdt_an} /></div>
+        <XemSo id={tin.id} sdt={tin.sdt} soAn={tin.sdt_an} />
       </div>
     </Page>
   );
