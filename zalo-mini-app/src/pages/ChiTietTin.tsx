@@ -12,6 +12,7 @@ import { daLuu, doiLuu } from "../lib/daLuu";
 import { ghiDaXem } from "../lib/daXem";
 import { chiaSeTin } from "../lib/zalo";
 import { useTai } from "../lib/useTai";
+import { nhungVideo, tachAnh, tachVideo } from "../lib/media";
 
 // CHI TIẾT TIN — kiểu Mini App Zalo: ảnh · các khối trắng trên nền xám (giá + tiêu đề ·
 // đặc điểm dạng dòng · mô tả thu gọn · tiện ích · dự án · người đăng · tin tương tự) · nút gọi cố định.
@@ -33,42 +34,59 @@ function giaM2(t: TinChiTiet): string | null {
   return tr(t.price_vnd / t.area_m2);
 }
 
-// ẢNH TIN — chép đúng khung ảnh web điện thoại (src/components/Gallery.tsx, khối sm:hidden):
-// khung 16:9 vuốt ngang từng tấm (KHÔNG tự chạy) · huy hiệu số ảnh góc trên trái ·
-// nút ‹ › hai bên (ẩn ở tấm đầu/cuối) · dải mờ đáy: "Tất cả ảnh" trái, "n/N" phải ·
+// ẢNH + VIDEO TIN — chép đúng khung ảnh web điện thoại (src/components/Gallery.tsx, khối sm:hidden):
+// khung 16:9 vuốt ngang từng tấm (KHÔNG tự chạy), VIDEO ĐỨNG ĐẦU DÃY và phát ngay tại khung ·
+// huy hiệu số video + số ảnh góc trên trái · nút ‹ › hai bên (ẩn ở tấm đầu/cuối) ·
+// dải mờ đáy "Tất cả ảnh" + "n/N" (ẩn khi đang ở video để không đè nút của trình phát) ·
 // chạm ảnh → xem lớn toàn màn hình (ImageViewer của Zalo, vuốt + phóng to được).
-function AnhTin({ ds, tieuDe }: { ds: (string | undefined)[]; tieuDe: string }) {
+function AnhTin({ anhs, videos, tieuDe }: { anhs: string[]; videos: string[]; tieuDe: string }) {
   const khung = useRef<HTMLDivElement>(null);
   const [dang, setDang] = useState(0);
   const [xemLon, setXemLon] = useState<number | null>(null);
   const [tatCa, setTatCa] = useState(false);
+  const dsAnh = anhs.length ? anhs : [undefined];
+  const tong = videos.length + dsAnh.length;
+  const laVideoDang = dang < videos.length;
   const toi = (i: number) => khung.current?.scrollTo({ left: i * khung.current.clientWidth, behavior: "smooth" });
-  const anhLon = ds.map((u) => ({ src: anh(u), alt: tieuDe }));
+  const anhLon = dsAnh.map((u) => ({ src: anh(u), alt: tieuDe }));
 
   return (
     <div className="anh-tin">
       <div ref={khung} className="anh-tin-khung" onScroll={(e) => setDang(Math.round(e.currentTarget.scrollLeft / e.currentTarget.clientWidth))}>
-        {ds.map((u, i) => (
+        {videos.map((v, i) => {
+          const nhung = nhungVideo(v);
+          return nhung ? (
+            <iframe key={`v${i}`} className="anh-tin-video" src={nhung} title={`Video ${i + 1}`} allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowFullScreen />
+          ) : (
+            <video key={`v${i}`} className="anh-tin-video" src={anh(v)} controls playsInline preload="metadata" />
+          );
+        })}
+        {dsAnh.map((u, i) => (
           <img key={i} src={anh(u)} alt={`${tieuDe} ${i + 1}`} onClick={() => setXemLon(i)} />
         ))}
       </div>
-      <span className="anh-tin-dem">
-        <Icon icon="zi-camera" size={14} /> {ds.length}
-      </span>
-      {ds.length > 1 && dang > 0 && (
+      {!laVideoDang && (
+        <span className="anh-tin-dem">
+          {videos.length > 0 && <><Icon icon="zi-video" size={14} /> {videos.length}&nbsp;&nbsp;</>}
+          <Icon icon="zi-camera" size={14} /> {anhs.length}
+        </span>
+      )}
+      {tong > 1 && dang > 0 && (
         <button className="anh-tin-nut trai" aria-label="Tấm trước" onClick={() => toi(dang - 1)}><Icon icon="zi-chevron-left" size={20} /></button>
       )}
-      {ds.length > 1 && dang < ds.length - 1 && (
+      {tong > 1 && dang < tong - 1 && (
         <button className="anh-tin-nut phai" aria-label="Tấm sau" onClick={() => toi(dang + 1)}><Icon icon="zi-chevron-right" size={20} /></button>
       )}
-      <div className="anh-tin-day">
-        <button onClick={() => setTatCa(true)}><Icon icon="zi-gallery" size={16} /> Tất cả ảnh</button>
-        <span>{dang + 1}/{ds.length}</span>
-      </div>
+      {!laVideoDang && (
+        <div className="anh-tin-day">
+          <button onClick={() => setTatCa(true)}><Icon icon="zi-gallery" size={16} /> Tất cả ảnh</button>
+          <span>{dang - videos.length + 1}/{dsAnh.length}</span>
+        </div>
+      )}
       <ImageViewer images={anhLon} activeIndex={xemLon ?? 0} visible={xemLon !== null} onClose={() => setXemLon(null)} maskStyle={{ background: "#000" }} />
-      <Sheet visible={tatCa} onClose={() => setTatCa(false)} mask handler swipeToClose title={`Tất cả ảnh (${ds.length})`}>
+      <Sheet visible={tatCa} onClose={() => setTatCa(false)} mask handler swipeToClose title={`Tất cả ảnh (${dsAnh.length})`}>
         <div className="anh-tat-ca">
-          {ds.map((u, i) => (
+          {dsAnh.map((u, i) => (
             <img key={i} src={anh(u)} alt={`${tieuDe} ${i + 1}`} loading="lazy" onClick={() => { setTatCa(false); setXemLon(i); }} />
           ))}
         </div>
@@ -122,7 +140,7 @@ export default function ChiTietTin() {
   return (
     <Page style={{ paddingBottom: 96 }}>
       <TieuDe title="Chi tiết tin" />
-      <AnhTin ds={tin.images?.length ? tin.images : [undefined]} tieuDe={tin.title} />
+      <AnhTin anhs={tachAnh(tin.images)} videos={tachVideo(tin.images)} tieuDe={tin.title} />
 
       <section className="khoi-ct">
         <div className="gia-ct">
@@ -146,7 +164,7 @@ export default function ChiTietTin() {
             <button onClick={() => setLuu(doiLuu(tin.id))} aria-label="Lưu tin">
               <Icon icon={luu ? "zi-heart-solid" : "zi-heart"} size={20} style={luu ? { color: "#e11d48" } : undefined} />
             </button>
-            <button onClick={() => chiaSeTin(tin.title, `${gia(tin)} · ${diaChi(tin)}`, anh(tin.images?.[0]))} aria-label="Chia sẻ">
+            <button onClick={() => chiaSeTin(tin.title, `${gia(tin)} · ${diaChi(tin)}`, anh(tachAnh(tin.images)[0]))} aria-label="Chia sẻ">
               <Icon icon="zi-share-external-1" size={20} />
             </button>
           </div>
@@ -170,6 +188,18 @@ export default function ChiTietTin() {
           <Box flex style={{ flexWrap: "wrap", gap: 8 }}>{tienIch.map((x) => <span key={x} className="chip">{x}</span>)}</Box>
         </section>
       )}
+
+      {/* VỊ TRÍ TRÊN BẢN ĐỒ — như web (src/lib/googleMaps.ts nhungGoogleMaps): bản nhúng Google,
+          không khoá, không tính tiền. Ghim toạ độ nếu có, không thì số nhà + tên đường + phường/tỉnh. */}
+      <section className="khoi-ct">
+        <h2 className="muc-tin">Vị trí trên bản đồ</h2>
+        <iframe
+          className="ban-do"
+          title="Vị trí trên bản đồ"
+          loading="lazy"
+          src={`https://www.google.com/maps?q=${encodeURIComponent(tin.ghim?.trim() || [tin.dia_chi_ct?.trim(), tin.ward, tin.district, tin.province].filter(Boolean).join(", "))}&z=${tin.ghim?.trim() || tin.dia_chi_ct?.trim() ? 17 : 15}&hl=vi&output=embed`}
+        />
+      </section>
 
       {(tin.du_an || tin.nguoi_dang) && (
         <section className="khoi-ct dong-ds dong-bam">

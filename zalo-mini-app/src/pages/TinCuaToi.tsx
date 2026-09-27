@@ -2,6 +2,7 @@ import React from "react";
 import { Box, Button, Page, Spinner, Text, useNavigate } from "zmp-ui";
 import TieuDe from "../components/TieuDe";
 import { anh } from "../lib/tin";
+import { tachAnh } from "../lib/media";
 import { ngay } from "../lib/dinhDang";
 import { supabase, usePhien } from "../lib/supabase";
 import { useTai } from "../lib/useTai";
@@ -46,7 +47,7 @@ export default function TinCuaToi() {
           const tt = TRANG_THAI[t.status] ?? { nhan: t.status, mau: "#6e6e73" };
           return (
             <div key={t.id} className="the-ngang" onClick={() => t.status === "approved" && dieuHuong(`/tin/${t.id}`)}>
-              <img src={anh(t.images?.[0])} alt="" />
+              <img src={anh(tachAnh(t.images)[0])} alt="" />
               <div>
                 <Text size="small" style={{ fontWeight: 600 }} className="cat-dong">{t.title}</Text>
                 <Text size="xSmall" style={{ color: tt.mau, fontWeight: 600, marginTop: 4 }}>{tt.nhan}</Text>

@@ -176,3 +176,5 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 html.xem-thu { --zaui-safe-area-inset-top: 0px; }
 html.xem-thu .dau-app { padding-top: 10px; }
 html.xem-thu .hang-app { padding-right: 0; }
+.anh-tin-video { flex: 0 0 100%; width: 100%; aspect-ratio: 16 / 9; border: 0; scroll-snap-align: center; display: block; background: #000; }
+.ban-do { width: 100%; aspect-ratio: 4 / 3; border: 0; border-radius: 12px; display: block; background: var(--cl-surface); }

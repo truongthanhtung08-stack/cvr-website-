@@ -6,6 +6,7 @@ import { provincesNew } from "../lib/provincesNew";
 import { layBangGia } from "../lib/tin";
 import { soVN, supabase, usePhien } from "../lib/supabase";
 import { chonAnh, taiAnhLen } from "../lib/taiAnh";
+import { laVideo } from "../lib/media";
 import { useTai } from "../lib/useTai";
 import { layNguoiZalo } from "../lib/zalo";
 
@@ -58,6 +59,7 @@ export default function DangTin() {
   const [huong, setHuong] = useState("");
   const [anh, setAnh] = useState<string[]>([]);
   const [dangTaiAnh, setDangTaiAnh] = useState(false);
+  const [video, setVideo] = useState(""); // link YouTube — như web, video không lưu kho, chỉ gắn link
   const [ten, setTen] = useState("");
   const [sdt, setSdt] = useState("");
   const [soNgay, setSoNgay] = useState<number>();
@@ -154,7 +156,8 @@ export default function DangTin() {
       ward: phuong || null,
       district: null,
       province: tinh,
-      images: anh,
+      // Video (link YouTube) ĐỨNG ĐẦU mảng images — đúng cách web lưu và hiện video đầu dãy.
+      images: laVideo(video.trim()) ? [video.trim(), ...anh] : anh,
       details: {
         specs,
         legal: phapLy || undefined,
@@ -281,6 +284,8 @@ export default function DangTin() {
             </button>
           )}
         </div>
+        <Input label="Video YouTube (nếu có)" placeholder="https://youtu.be/…" value={video} onChange={(e) => setVideo(e.target.value)} />
+        {video.trim() && !laVideo(video.trim()) && <Text size="xSmall" style={{ color: "#d70018" }}>Link chưa đúng — dán link YouTube của video.</Text>}
       </Nhom>
 
       <Nhom tieuDe="Liên hệ">

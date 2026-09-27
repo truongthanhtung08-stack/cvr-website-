@@ -188,12 +188,15 @@ export type TinChiTiet = Tin & {
   dia_chi_cu: { phuong?: string; quan?: string; tinh?: string } | null;
   don_gia_ban: number | null;
   sdt: string | null; // SĐT người đăng — trong Mini App khách đã đăng nhập Zalo nên bấm là hiện (chủ dự án chốt 27/09)
-  sdt_an: string | null; // bản che "0981 ••• •••" hiện trước khi bấm, như web
+  sdt_an: string | null;
+  ghim: string | null; // toạ độ ghim trên bản đồ (nếu người đăng đã ghim)
+  dia_chi_ct: string | null; // số nhà, tên đường // bản che "0981 ••• •••" hiện trước khi bấm, như web
 };
 const COT_CHI_TIET =
   `${COT},built_area_m2,dac_diem:details->specs,phap_ly:details->>legal,huong:details->>direction,noi_that:details->>furnish,` +
   "tien_ich:details->amenities,noi_that_ds:details->interior,du_an:details->>projectName," +
-  "du_an_slug:details->>project,dia_chi_cu:details->diaChiCu,don_gia_ban:details->donGiaBan,sdt_goc:details->contact->>phone";
+  "du_an_slug:details->>project,dia_chi_cu:details->diaChiCu,don_gia_ban:details->donGiaBan,sdt_goc:details->contact->>phone," +
+  "ghim:details->>mapPin,dia_chi_ct:details->>addressDetail";
 
 export async function layTinChiTiet(id: string): Promise<TinChiTiet | null> {
   const r = (await rest(`select=${COT_CHI_TIET}&status=eq.approved&id=eq.${encodeURIComponent(id)}&limit=1`)) as (TinChiTiet & { sdt_goc?: string | null })[];

@@ -3,6 +3,7 @@ import { useNavigate } from "zmp-ui";
 import { anh, hangHieuLuc, type Tin } from "../lib/tin";
 import { gia, dienTich, diaChi, luc, tomTatTin } from "../lib/dinhDang";
 import { daLuu, doiLuu } from "../lib/daLuu";
+import { tachAnh, tachVideo } from "../lib/media";
 
 // Thẻ tin ẢNH TRÊN · CHỮ DƯỚI (chủ dự án chốt 27/09 — app chạy trên điện thoại).
 // Ảnh vừa phải để nhường chỗ cho tiêu đề + nội dung: hạng · số ảnh · tim trên ảnh;
@@ -19,14 +20,16 @@ export default function TheTin({ tin }: { tin: Tin }) {
   const h = HANG[hangHieuLuc(tin)];
   const [luu, setLuu] = useState(() => daLuu(tin.id));
   const moTa = tomTatTin(tin);
-  const soAnh = tin.images?.length ?? 0;
+  const anhs = tachAnh(tin.images);
+  const coVideo = tachVideo(tin.images).length > 0;
+  const soAnh = anhs.length;
 
   return (
     <article className="the-tin" onClick={() => dieuHuong(`/tin/${tin.id}`)}>
       <div className="anh-the">
-        <img src={anh(tin.images?.[0])} alt={tin.title} loading="lazy" />
+        <img src={anh(anhs[0])} alt={tin.title} loading="lazy" />
         {h && <span className="nhan-hang" style={{ background: `${h.mau}e6` }}>{h.ten}</span>}
-        {soAnh > 1 && <span className="so-anh">{soAnh} ảnh</span>}
+        {(soAnh > 1 || coVideo) && <span className="so-anh">{coVideo ? "▶ Video · " : ""}{soAnh} ảnh</span>}
         <button
           className="nut-tim"
           aria-label="Lưu tin"
