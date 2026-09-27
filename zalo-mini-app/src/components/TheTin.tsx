@@ -1,11 +1,13 @@
 import React, { useState } from "react";
 import { useNavigate } from "zmp-ui";
 import { anh, hangHieuLuc, type Tin } from "../lib/tin";
-import { gia, dienTich, diaChi } from "../lib/dinhDang";
+import { gia, dienTich, diaChi, luc, tomTatTin } from "../lib/dinhDang";
 import { daLuu, doiLuu } from "../lib/daLuu";
 
-// Thẻ tin DỌC gọn cho các dải trượt ngang ở trang chủ (kiểu Mini App Zalo):
-// ảnh + hạng + tim · tiêu đề 2 dòng · giá · diện tích · địa chỉ.
+// Thẻ tin ẢNH TRÊN · CHỮ DƯỚI (chủ dự án chốt 27/09 — app chạy trên điện thoại).
+// Ảnh vừa phải để nhường chỗ cho tiêu đề + nội dung: hạng · số ảnh · tim trên ảnh;
+// dưới ảnh: tiêu đề 2 dòng · nội dung 2 dòng · giá + diện tích · địa chỉ + thời gian.
+// Dùng chung cho danh sách dọc (.ds-doc) và dải trượt ngang (.truot-ngang).
 const HANG: Record<string, { ten: string; mau: string }> = {
   diamond: { ten: "Diamond", mau: "#c1121f" },
   gold: { ten: "Gold", mau: "#b8860b" },
@@ -16,12 +18,15 @@ export default function TheTin({ tin }: { tin: Tin }) {
   const dieuHuong = useNavigate();
   const h = HANG[hangHieuLuc(tin)];
   const [luu, setLuu] = useState(() => daLuu(tin.id));
+  const moTa = tomTatTin(tin);
+  const soAnh = tin.images?.length ?? 0;
 
   return (
     <article className="the-tin" onClick={() => dieuHuong(`/tin/${tin.id}`)}>
-      <div style={{ position: "relative" }}>
+      <div className="anh-the">
         <img src={anh(tin.images?.[0])} alt={tin.title} loading="lazy" />
         {h && <span className="nhan-hang" style={{ background: `${h.mau}e6` }}>{h.ten}</span>}
+        {soAnh > 1 && <span className="so-anh">{soAnh} ảnh</span>}
         <button
           className="nut-tim"
           aria-label="Lưu tin"
@@ -37,11 +42,15 @@ export default function TheTin({ tin }: { tin: Tin }) {
       </div>
       <div className="than-the">
         <h3 className="tieu-de">{tin.title}</h3>
+        {moTa && <p className="mo-ta">{moTa}</p>}
         <div className="gia-dt">
           <span className="gia" style={tin.price_vnd == null ? { color: "var(--cl-muted)" } : undefined}>{gia(tin)}</span>
-          <span>{dienTich(tin)}</span>
+          {dienTich(tin) && <span>{dienTich(tin)}</span>}
         </div>
-        <p className="dia-chi"><span>{diaChi(tin)}</span></p>
+        <div className="day-the-moi">
+          <span>{diaChi(tin)}</span>
+          <span>{luc(tin)}</span>
+        </div>
       </div>
     </article>
   );

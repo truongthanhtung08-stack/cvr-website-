@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Box, Header, Input, Page, Text } from "zmp-ui";
+import { Box, Input, Page, Text } from "zmp-ui";
+import TieuDe from "../components/TieuDe";
 
 // Máy tính khoản vay mua nhà — trả góp đều hằng tháng (gốc + lãi).
 // Ô nhập dùng text + inputMode, KHÔNG dùng type="number" (quy ước dự án).
@@ -24,7 +25,7 @@ export default function TinhVay() {
 
   return (
     <Page style={{ background: "#fff" }}>
-      <Header title="Tính khoản vay" />
+      <TieuDe title="Tính khoản vay" />
       <Box p={4} style={{ display: "grid", gap: 12 }}>
         <Input label="Số tiền vay (đồng)" inputMode="numeric" value={vay} onChange={(e) => setVay(dinhDangTien(e.target.value))} />
         <Input label="Lãi suất (%/năm)" inputMode="decimal" value={laiNam} onChange={(e) => setLaiNam(e.target.value)} />

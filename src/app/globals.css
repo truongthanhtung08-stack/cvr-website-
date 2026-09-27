@@ -39,11 +39,17 @@
   --color-cvr-stone: #e6e6e6;
 }
 
+/* KHOẢNG CHỪA ĐỈNH MÁY (tai thỏ / thanh trạng thái) — dùng var(--at) thay cho env() trực tiếp.
+   Trình duyệt TRONG ZALO báo sai: đã có thanh địa chỉ của Zalo mà vẫn trả về chiều cao thanh
+   trạng thái → đầu trang hở một khoảng vô lý (chủ dự án chụp 27/09/2026). Mở trong Zalo thì
+   layout.tsx chèn thêm style :root{--at:0px} (theo user agent, không đụng thuộc tính <html> của React). */
+:root { --at: env(safe-area-inset-top, 0px); }
+
 html {
   scroll-behavior: smooth;
   /* Chừa chỗ cho thanh header dính khi trang tự cuộn tới một mục (link có #,
      mở từ Zalo/Facebook) → tiêu đề mục không bị header đè lên. */
-  scroll-padding-top: calc(60px + env(safe-area-inset-top, 0px));
+  scroll-padding-top: calc(60px + var(--at));
 }
 
 /* ── CẮT CHỮ ĐÚNG THEO DÒNG (2 dòng / 1 dòng) ──────────────────────────────
@@ -641,7 +647,7 @@ body {
 /* Header: trong chế độ ứng dụng đã cài (standalone), nền đen chạy lên tận đỉnh máy,
    nội dung header đẩy xuống dưới thanh trạng thái. Trên trình duyệt thường = 0px. */
 .nav-glass {
-  padding-top: env(safe-area-inset-top, 0px);
+  padding-top: var(--at);
 }
 
 /* Phần tử nổi dưới đáy (Chatbox · thanh So sánh) phải nằm TRÊN thanh tab, không đè lên nhau */

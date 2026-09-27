@@ -143,7 +143,7 @@ export default function PhotoList({
           willChange: "transform",
         }}
       >
-        <div className="sticky top-0 z-10 flex items-center gap-2 border-b border-cvr-line bg-white/95 px-2 py-2.5 pt-[calc(0.625rem+env(safe-area-inset-top))] backdrop-blur">
+        <div className="sticky top-0 z-10 flex items-center gap-2 border-b border-cvr-line bg-white/95 px-2 py-2.5 pt-[calc(0.625rem+var(--at))] backdrop-blur">
           <button
             type="button"
             aria-label="Quay lại"

@@ -1,5 +1,6 @@
 import React from "react";
-import { Box, Button, Header, Page, Spinner, Text, useNavigate } from "zmp-ui";
+import { Box, Button, Page, Spinner, Text, useNavigate } from "zmp-ui";
+import TieuDe from "../components/TieuDe";
 import { anh } from "../lib/tin";
 import { ngay } from "../lib/dinhDang";
 import { supabase, usePhien } from "../lib/supabase";
@@ -30,7 +31,7 @@ export default function TinCuaToi() {
 
   return (
     <Page>
-      <Header title="Tin của tôi" />
+      <TieuDe title="Tin của tôi" />
       {!san || dangTai ? (
         <Box flex justifyContent="center" p={6}><Spinner /></Box>
       ) : !nguoiDung ? (

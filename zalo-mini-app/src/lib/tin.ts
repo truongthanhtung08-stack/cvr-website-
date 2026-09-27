@@ -44,18 +44,32 @@ async function rest(query: string): Promise<Tin[]> {
 
 const THU_TU = "order=bumped_at.desc.nullslast,published_at.desc.nullslast,created_at.desc";
 
-export function layTinMoi(mucDich: "ban" | "thue", soLuong = 30) {
-  const md = `eq.${mucDich}`;
-  return rest(`select=${COT}&status=eq.approved&purpose=${md}&${THU_TU}&limit=${soLuong}`);
-}
+// Bỏ dấu tiếng Việt — giống normalizeVi của web (src/lib/filters.ts): gõ "da nang" vẫn ra "Đà Nẵng".
+export const boDau = (s: string) =>
+  s.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[đĐ]/g, "d").toLowerCase().replace(/\s+/g, " ").trim();
 
-export function timTin(tuKhoa: string, mucDich: "ban" | "thue") {
-  const md = `eq.${mucDich}`;
-  const q = tuKhoa.trim().replace(/[(),*]/g, " ");
-  const loc = q
-    ? `&or=(title.ilike.*${encodeURIComponent(q)}*,province.ilike.*${encodeURIComponent(q)}*,ward.ilike.*${encodeURIComponent(q)}*,type.ilike.*${encodeURIComponent(q)}*)`
-    : "";
-  return rest(`select=${COT}&status=eq.approved&purpose=${md}${loc}&${THU_TU}&limit=50`);
+// Từ đệm khách hay gõ nhưng không giúp lọc ("bán nhà tại Đà Nẵng" → nha, da, nang).
+const TU_DEM = new Set(["tai", "o", "khu", "vuc", "can", "mua", "ban", "cho", "thue", "gia", "re", "tim", "va", "gan"]);
+
+// TÌM TIN — tách từng từ, bỏ dấu, dò trong tiêu đề · loại hình · địa chỉ · dự án · mô tả.
+// Khớp ĐỦ mọi từ thì xếp trước; không tin nào khớp đủ thì trả tin khớp NHIỀU từ nhất
+// kèm cờ lienQuan (web cũng vậy — không bao giờ để màn hình trống).
+// Tin đang hiển thị chỉ vài trăm nên lọc ngay trên máy, không cần máy chủ tìm kiếm.
+export async function timTin(tuKhoa: string, mucDich: "ban" | "thue"): Promise<{ ds: Tin[]; lienQuan: boolean }> {
+  const ds = (await rest(
+    `select=${COT},dc:details->>addressDetail,da:details->>projectName&status=eq.approved&purpose=eq.${mucDich}&${THU_TU}&limit=500`,
+  )) as (Tin & { dc: string | null; da: string | null })[];
+  const tu = boDau(tuKhoa).split(" ").filter((t) => t && !TU_DEM.has(t));
+  if (!tu.length) return { ds: ds.slice(0, 50), lienQuan: false };
+
+  const diem = ds.map((t) => {
+    const chu = boDau([t.title, t.type, t.ward, t.district, t.province, t.dc, t.da, t.description?.slice(0, 400)].filter(Boolean).join(" "));
+    return { t, khop: tu.filter((w) => chu.includes(w)).length };
+  });
+  const du = diem.filter((d) => d.khop === tu.length).map((d) => d.t);
+  if (du.length) return { ds: du.slice(0, 100), lienQuan: false };
+  const gan = diem.filter((d) => d.khop > 0).sort((a, b) => b.khop - a.khop).map((d) => d.t);
+  return { ds: gan.slice(0, 50), lienQuan: true };
 }
 
 export async function layTin(id: string): Promise<Tin | null> {
@@ -82,10 +96,16 @@ export function hangHieuLuc(t: Tin): Tin["tier"] {
   return new Date(t.tier_expires_at).getTime() < Date.now() ? "basic" : t.tier;
 }
 
-// ── Tin VIP (hạng còn hiệu lực) ─────────────────────────────────────────────
-export async function layTinVip(soLuong = 10) {
-  const ds = await rest(`select=${COT}&status=eq.approved&tier=neq.basic&${THU_TU}&limit=${soLuong * 2}`);
-  return ds.filter((t) => hangHieuLuc(t) !== "basic").slice(0, soLuong);
+// ── Tin trang chủ theo mục đích: hạng CÒN HIỆU LỰC xếp trước (Diamond → Gold → Silver → thường),
+// cùng hạng thì tin mới/vừa đẩy trước. Trang chủ chỉ có 2 khối song song: Bán · Cho thuê.
+const THU_HANG: Record<Tin["tier"], number> = { diamond: 0, gold: 1, silver: 2, basic: 3 };
+export async function layTinTrangChu(mucDich: "ban" | "thue", soLuong = 12) {
+  const ds = await rest(`select=${COT}&status=eq.approved&purpose=eq.${mucDich}&${THU_TU}&limit=60`);
+  return ds
+    .map((t, i) => ({ t, i }))
+    .sort((a, b) => THU_HANG[hangHieuLuc(a.t)] - THU_HANG[hangHieuLuc(b.t)] || a.i - b.i)
+    .slice(0, soLuong)
+    .map((x) => x.t);
 }
 
 // ── Dự án · Tin tức · Bảng giá: cùng bảng với web, chỉ đọc bản đã công bố ────
@@ -143,7 +163,7 @@ export async function layBangGia(): Promise<BangGia | null> {
 }
 
 // ── Lọc tin theo bộ lọc (giống trang danh sách trên web) ────────────────────
-export function locTin(mucDich: "ban" | "thue", b: BoLoc, soLuong = 60) {
+export function locTin(mucDich: "ban" | "thue", b: BoLoc, soLuong = 300) {
   return rest(`select=${COT}&status=eq.approved&purpose=eq.${mucDich}&${thamSo(mucDich, b)}&limit=${soLuong}`);
 }
 
@@ -192,29 +212,4 @@ export async function layTinTuongTu(t: Tin, soLuong = 6) {
     `select=${COT}&status=eq.approved&purpose=eq.${t.purpose}&province=eq.${encodeURIComponent(t.province)}&id=neq.${t.id}&${THU_TU}&limit=${soLuong}`,
   );
   return ds;
-}
-
-// ── Nội dung trang chủ do admin sửa ở /admin/noi-dung (cùng khoá với web) ────
-export type Slide = { id: string; href?: string; image: string; title?: string; status?: string; subtitle?: string; showText?: boolean };
-export type KhuVuc = { name: string; count?: string; image: string; href?: string };
-async function khoiNoiDung<T>(khoa: string): Promise<T | null> {
-  const r = await doc<{ data: T }>("site_content", `select=data&key=eq.${khoa}&limit=1`);
-  return r[0]?.data ?? null;
-}
-export const layBanner = async () => (await khoiNoiDung<{ slides: Slide[] }>("hero_home"))?.slides?.filter((s) => s.image) ?? [];
-export const layKhuVuc = async () => (await khoiNoiDung<{ items: KhuVuc[] }>("home_areas"))?.items?.filter((a) => a.name && a.image) ?? [];
-
-// "Bất động sản dành cho bạn" — cùng 5 nút lọc nhanh như trang chủ web.
-export const NHOM_DANH_CHO_BAN = [
-  { nhan: "Tất cả" },
-  { nhan: "Bán đất", md: "ban", khop: "Đất", loai: "Đất" },
-  { nhan: "Bán nhà riêng", md: "ban", khop: "Nhà riêng", loai: "Nhà riêng" },
-  { nhan: "Bán căn hộ", md: "ban", khop: "Căn hộ", loai: "Căn hộ chung cư" },
-  { nhan: "Cho thuê", md: "thue" },
-] as const;
-export function layTinDanhChoBan(nhom: (typeof NHOM_DANH_CHO_BAN)[number], soLuong = 10) {
-  const q: string[] = [];
-  if ("md" in nhom) q.push(`purpose=eq.${nhom.md}`);
-  if ("khop" in nhom) q.push(`type=ilike.*${encodeURIComponent(nhom.khop)}*`);
-  return rest(`select=${COT}&status=eq.approved&${q.join("&")}${q.length ? "&" : ""}${THU_TU}&limit=${soLuong}`);
 }

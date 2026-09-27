@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Box, Button, Header, Input, Page, Text, useNavigate } from "zmp-ui";
+import { Box, Button, Input, Page, Text, useNavigate } from "zmp-ui";
+import TieuDe from "../components/TieuDe";
 import { useSearchParams } from "react-router-dom";
 import { e164, supabase } from "../lib/supabase";
 
@@ -34,7 +35,7 @@ export default function DangNhap() {
 
   return (
     <Page style={{ background: "#fff" }}>
-      <Header title="Đăng nhập" />
+      <TieuDe title="Đăng nhập" />
       <Box p={4} style={{ display: "grid", gap: 12 }}>
         <Text.Title size="large">{buoc === "so" ? "Số điện thoại của bạn" : "Nhập mã xác thực"}</Text.Title>
         {buoc === "so" ? (

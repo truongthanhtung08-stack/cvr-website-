@@ -1,31 +1,33 @@
-import React, { useState } from "react";
-import { Box, Header, Input, Page } from "zmp-ui";
+import React, { useEffect, useState } from "react";
+import { Box, Input, Page, Text } from "zmp-ui";
+import TieuDe from "../components/TieuDe";
 import ChonMucDich from "../components/ChonMucDich";
 import DanhSachTin from "../components/DanhSachTin";
-import { layTinMoi, timTin, type Tin } from "../lib/tin";
-import { Text } from "zmp-ui";
+import { timTin, type Tin } from "../lib/tin";
 import { useTai } from "../lib/useTai";
 
+// TÌM KIẾM — gõ tới đâu tìm tới đó (chờ 0,3 giây sau lần gõ cuối), không cần bấm Enter.
 export default function TimKiem() {
   const [mucDich, setMucDich] = useState<"ban" | "thue">("ban");
   const [tuKhoa, setTuKhoa] = useState("");
   const [daTim, setDaTim] = useState("");
+  useEffect(() => {
+    const h = setTimeout(() => setDaTim(tuKhoa), 300);
+    return () => clearTimeout(h);
+  }, [tuKhoa]);
+
   // Hết tin khớp vẫn hiện tin liên quan kèm nhãn báo (giống web — không để trang trống).
   const { data, dangTai, loi } = useTai<{ ds: Tin[]; lienQuan: boolean }>(
-    async () => {
-      const ds = await timTin(daTim, mucDich);
-      if (ds.length || !daTim) return { ds, lienQuan: false };
-      return { ds: await layTinMoi(mucDich, 20), lienQuan: true };
-    },
+    () => timTin(daTim, mucDich),
     [daTim, mucDich],
     { ds: [], lienQuan: false },
   );
   return (
     <Page>
-      <Header title="Tìm kiếm" />
-      <Box p={3} style={{ display: "grid", gap: 12 }}>
+      <TieuDe title="Tìm kiếm" />
+      <Box p={3} style={{ display: "grid", gap: 12, background: "#fff" }}>
         <Input.Search
-          placeholder="Đà Nẵng, Hòa Xuân, căn hộ, đất nền…"
+          placeholder="Nhà riêng Hòa Xuân, căn hộ 2 phòng ngủ…"
           value={tuKhoa}
           onChange={(e) => setTuKhoa(e.target.value)}
           onSearch={(v) => setDaTim(v)}
@@ -33,8 +35,12 @@ export default function TimKiem() {
         />
         <ChonMucDich giaTri={mucDich} doi={setMucDich} />
       </Box>
-      {data.lienQuan && !dangTai && (
-        <Box px={3}><Text size="small" className="chu-phu">Chưa có tin khớp “{daTim}” — tin liên quan:</Text></Box>
+      {!dangTai && daTim.trim() && (
+        <Box px={4} pt={3}>
+          <Text size="small" className="chu-phu">
+            {data.lienQuan ? `Chưa có tin khớp đủ “${daTim}” — tin gần giống:` : `${data.ds.length} tin khớp “${daTim}”`}
+          </Text>
+        </Box>
       )}
       <DanhSachTin ds={data.ds} dangTai={dangTai} loi={loi} trong="Chưa có tin." />
     </Page>

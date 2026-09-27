@@ -298,7 +298,7 @@ export default function PhotoViewer({
 
       {/* ── THANH TRÊN: quay lại · tiêu đề · số thứ tự · chia sẻ · trái tim ── */}
       <div
-        className="absolute inset-x-0 top-0 z-10 bg-gradient-to-b from-black/75 to-transparent pt-[env(safe-area-inset-top)] transition-opacity duration-200"
+        className="absolute inset-x-0 top-0 z-10 bg-gradient-to-b from-black/75 to-transparent pt-[var(--at)] transition-opacity duration-200"
         style={{ opacity: hienNut && !dangDong ? 1 : 0, pointerEvents: hienNut ? "auto" : "none" }}
       >
         <div className="flex items-center gap-2 px-2 py-2.5">

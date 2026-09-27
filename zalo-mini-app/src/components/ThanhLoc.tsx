@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Box, Button, Icon, Sheet, Text } from "zmp-ui";
 import { dtTheo, giaTheo, loaiTheo, SAP_XEP, type BoLoc, type MucDich } from "../lib/boLoc";
 
@@ -7,6 +7,26 @@ type O = "tinh" | "loai" | "gia" | "dienTich" | "sapXep";
 // Thanh lọc gọn kiểu Zalo: hàng nút trượt ngang, bấm nút nào mở bảng chọn dưới lên.
 export default function ThanhLoc({ md, boLoc, doi, dsTinh }: { md: MucDich; boLoc: BoLoc; doi: (b: BoLoc) => void; dsTinh: string[] }) {
   const [mo, setMo] = useState<O | null>(null);
+
+  // BÁM NGAY DƯỚI THANH TIÊU ĐỀ khi cuộn. Không đặt số cố định: chiều cao thanh tiêu đề
+  // mỗi nơi một khác (Zalo, trình duyệt trong Zalo, máy có tai thỏ) — đo thật trên máy khách:
+  // mép dưới thanh tiêu đề − (mép trên khung cuộn + lớp đệm trên) = khoảng cách bám.
+  const thanh = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = thanh.current;
+    const khung = el?.closest(".zaui-page") as HTMLElement | null;
+    const dau = (khung?.querySelector(".zaui-header") ?? document.querySelector(".zaui-header")) as HTMLElement | null;
+    if (!el || !khung) return;
+    const dat = () => {
+      // Trình duyệt tính chỗ bám từ mép trong khung cuộn (đã trừ lớp đệm trên chừa cho thanh tiêu đề).
+      const dem = parseFloat(getComputedStyle(khung).paddingTop) || 0;
+      const top = (dau ? dau.getBoundingClientRect().bottom : 0) - khung.getBoundingClientRect().top - dem;
+      el.style.top = `${Math.max(0, Math.round(top))}px`;
+    };
+    dat();
+    window.addEventListener("resize", dat);
+    return () => window.removeEventListener("resize", dat);
+  }, []);
 
   const luaChon: Record<O, { tieuDe: string; ds: string[] }> = {
     tinh: { tieuDe: "Khu vực", ds: dsTinh },
@@ -32,7 +52,7 @@ export default function ThanhLoc({ md, boLoc, doi, dsTinh }: { md: MucDich; boLo
 
   return (
     <>
-      <div className="thanh-loc">
+      <div ref={thanh} className="thanh-loc">
         {(["tinh", "loai", "gia", "dienTich", "sapXep"] as O[]).map((o) => {
           const gt = giaTriNut(o);
           const bat = o !== "sapXep" && !!gt;

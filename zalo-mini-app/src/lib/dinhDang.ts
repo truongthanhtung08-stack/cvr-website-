@@ -57,3 +57,10 @@ export function ngay(iso: string | null): string {
 export function diaChiDuAn(d: { ward: string | null; district: string | null; province: string | null }) {
   return [d.ward, d.district, d.province].filter(Boolean).join(", ");
 }
+
+// Đoạn nội dung ngắn cho thẻ tin: bỏ ký hiệu định dạng, bỏ phần lặp lại tiêu đề.
+export function tomTatTin(t: Tin): string {
+  let mo = (t.description ?? "").replace(/::\w+::|\*\*|!\[[^\]]*\]\([^)]*\)/g, " ").replace(/\s+/g, " ").trim();
+  if (mo.toLowerCase().startsWith(t.title.toLowerCase().slice(0, 40))) mo = mo.slice(t.title.length).replace(/^[\s.,:;–—-]+/, "");
+  return mo;
+}

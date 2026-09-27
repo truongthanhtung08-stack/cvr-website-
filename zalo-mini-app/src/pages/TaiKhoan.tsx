@@ -1,5 +1,6 @@
 import React from "react";
-import { Box, Button, Header, Icon, List, Page, Text, useNavigate } from "zmp-ui";
+import { Box, Button, Icon, List, Page, Text, useNavigate } from "zmp-ui";
+import TieuDe from "../components/TieuDe";
 import { goiHotline, layNguoiZalo, nhanCoastalLand, quanTamOA } from "../lib/zalo";
 import { useTai } from "../lib/useTai";
 import { soVN, supabase, usePhien } from "../lib/supabase";
@@ -13,7 +14,7 @@ export default function TaiKhoan() {
   );
   return (
     <Page style={{ paddingBottom: 72 }}>
-      <Header title="Cá nhân" showBackIcon={false} />
+      <TieuDe title="Cá nhân" showBackIcon={false} />
       <Box p={4} style={{ background: "#fff" }}>
         {nguoiDung ? (
           <Box flex alignItems="center" style={{ gap: 12 }}>

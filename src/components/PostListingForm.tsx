@@ -1357,7 +1357,7 @@ function ThanhBuoc() {
   }, [dangO]);
 
   return (
-    <div className="sticky top-[calc(113px+env(safe-area-inset-top))] z-20 -mx-4 border-b border-cvr-line bg-white/95 px-4 backdrop-blur sm:-mx-6 sm:px-6 lg:top-[60px] lg:-mx-8 lg:px-8">
+    <div className="sticky top-[calc(113px+var(--at))] z-20 -mx-4 border-b border-cvr-line bg-white/95 px-4 backdrop-blur sm:-mx-6 sm:px-6 lg:top-[60px] lg:-mx-8 lg:px-8">
       <div ref={bocRef} className="flex gap-1.5 overflow-x-auto py-2.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {MOC_BUOC.map((m, i) => {
           const o = dangO === m.id;

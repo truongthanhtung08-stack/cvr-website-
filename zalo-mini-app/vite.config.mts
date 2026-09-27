@@ -7,5 +7,7 @@ export default () =>
   defineConfig({
     base: "",
     build: { outDir: "www", emptyOutDir: true },
+    // Cho mở bản chạy thử qua link cloudflared (*.trycloudflare.com) để chủ dự án xem trên điện thoại.
+    server: { allowedHosts: [".trycloudflare.com"] },
     plugins: [zaloMiniApp(), react()],
   });

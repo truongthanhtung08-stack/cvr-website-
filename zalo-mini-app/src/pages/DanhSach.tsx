@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Header, Input, Page, useNavigate } from "zmp-ui";
+import { Input, Page, useNavigate } from "zmp-ui";
+import TieuDe from "../components/TieuDe";
 import { useParams, useSearchParams } from "react-router-dom";
 import DanhSachTin from "../components/DanhSachTin";
 import ThanhLoc from "../components/ThanhLoc";
@@ -27,7 +28,7 @@ export default function DanhSach() {
 
   return (
     <Page style={{ paddingBottom: 72 }}>
-      <Header title="Tìm tin" showBackIcon={false} />
+      <TieuDe title="Tìm tin" showBackIcon={false} />
       <div className="khung-tim">
         <ChonMucDich giaTri={md} doi={(v) => dieuHuong(`/ds/${v}`, { replace: true, animate: false })} />
         <div onClick={() => dieuHuong("/tim-kiem")}>

@@ -1,7 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Box, Header, Icon, Page, Spinner, Text, useNavigate } from "zmp-ui";
+import { Box, Icon, ImageViewer, Page, Sheet, Spinner, Text, useNavigate } from "zmp-ui";
+import TieuDe from "../components/TieuDe";
 import { useParams } from "react-router-dom";
-import TheTinNgang from "../components/TheTinNgang";
+import TheTin from "../components/TheTin";
+import TruotNgang from "../components/TruotNgang";
 import XemSo from "../components/XemSo";
 import { anh, hangHieuLuc, layTinChiTiet, layTinTuongTu, type TinChiTiet } from "../lib/tin";
 import { gia, dienTich, diaChi, ngay } from "../lib/dinhDang";
@@ -31,20 +33,46 @@ function giaM2(t: TinChiTiet): string | null {
   return tr(t.price_vnd / t.area_m2);
 }
 
+// ẢNH TIN — chép đúng khung ảnh web điện thoại (src/components/Gallery.tsx, khối sm:hidden):
+// khung 16:9 vuốt ngang từng tấm (KHÔNG tự chạy) · huy hiệu số ảnh góc trên trái ·
+// nút ‹ › hai bên (ẩn ở tấm đầu/cuối) · dải mờ đáy: "Tất cả ảnh" trái, "n/N" phải ·
+// chạm ảnh → xem lớn toàn màn hình (ImageViewer của Zalo, vuốt + phóng to được).
 function AnhTin({ ds, tieuDe }: { ds: (string | undefined)[]; tieuDe: string }) {
   const khung = useRef<HTMLDivElement>(null);
-  const [so, setSo] = useState(1);
+  const [dang, setDang] = useState(0);
+  const [xemLon, setXemLon] = useState<number | null>(null);
+  const [tatCa, setTatCa] = useState(false);
+  const toi = (i: number) => khung.current?.scrollTo({ left: i * khung.current.clientWidth, behavior: "smooth" });
+  const anhLon = ds.map((u) => ({ src: anh(u), alt: tieuDe }));
+
   return (
-    <div style={{ position: "relative" }}>
-      <div ref={khung} className="banner-khung" onScroll={(e) => setSo(Math.round(e.currentTarget.scrollLeft / e.currentTarget.clientWidth) + 1)}>
+    <div className="anh-tin">
+      <div ref={khung} className="anh-tin-khung" onScroll={(e) => setDang(Math.round(e.currentTarget.scrollLeft / e.currentTarget.clientWidth))}>
         {ds.map((u, i) => (
-          <img key={i} src={anh(u)} alt={tieuDe} style={{ flex: "0 0 100%", width: "100%", aspectRatio: "16 / 10", objectFit: "cover", scrollSnapAlign: "start" }} />
+          <img key={i} src={anh(u)} alt={`${tieuDe} ${i + 1}`} onClick={() => setXemLon(i)} />
         ))}
       </div>
-      <span className="so-anh" style={{ top: 10, bottom: "auto", left: 10 }}>
+      <span className="anh-tin-dem">
         <Icon icon="zi-camera" size={14} /> {ds.length}
       </span>
-      {ds.length > 1 && <span className="so-anh" style={{ left: "auto", right: 10 }}>{so}/{ds.length}</span>}
+      {ds.length > 1 && dang > 0 && (
+        <button className="anh-tin-nut trai" aria-label="Tấm trước" onClick={() => toi(dang - 1)}><Icon icon="zi-chevron-left" size={20} /></button>
+      )}
+      {ds.length > 1 && dang < ds.length - 1 && (
+        <button className="anh-tin-nut phai" aria-label="Tấm sau" onClick={() => toi(dang + 1)}><Icon icon="zi-chevron-right" size={20} /></button>
+      )}
+      <div className="anh-tin-day">
+        <button onClick={() => setTatCa(true)}><Icon icon="zi-gallery" size={16} /> Tất cả ảnh</button>
+        <span>{dang + 1}/{ds.length}</span>
+      </div>
+      <ImageViewer images={anhLon} activeIndex={xemLon ?? 0} visible={xemLon !== null} onClose={() => setXemLon(null)} maskStyle={{ background: "#000" }} />
+      <Sheet visible={tatCa} onClose={() => setTatCa(false)} mask handler swipeToClose title={`Tất cả ảnh (${ds.length})`}>
+        <div className="anh-tat-ca">
+          {ds.map((u, i) => (
+            <img key={i} src={anh(u)} alt={`${tieuDe} ${i + 1}`} loading="lazy" onClick={() => { setTatCa(false); setXemLon(i); }} />
+          ))}
+        </div>
+      </Sheet>
     </div>
   );
 }
@@ -59,11 +87,11 @@ export default function ChiTietTin() {
     if (tin) ghiDaXem(tin.id);
   }, [tin]);
 
-  if (dangTai) return <Page><Header title="Chi tiết tin" /><Box flex justifyContent="center" p={6}><Spinner /></Box></Page>;
+  if (dangTai) return <Page><TieuDe title="Chi tiết tin" /><Box flex justifyContent="center" p={6}><Spinner /></Box></Page>;
   if (loi || !tin)
     return (
       <Page>
-        <Header title="Chi tiết tin" />
+        <TieuDe title="Chi tiết tin" />
         <Box p={4}><Text className="chu-phu">{loi ?? "Tin này không còn hiển thị."}</Text></Box>
       </Page>
     );
@@ -93,7 +121,7 @@ export default function ChiTietTin() {
 
   return (
     <Page style={{ paddingBottom: 96 }}>
-      <Header title="Chi tiết tin" />
+      <TieuDe title="Chi tiết tin" />
       <AnhTin ds={tin.images?.length ? tin.images : [undefined]} tieuDe={tin.title} />
 
       <section className="khoi-ct">
@@ -161,9 +189,9 @@ export default function ChiTietTin() {
       )}
 
       {tuongTu.data.length > 0 && (
-        <section className="khoi-ct" style={{ padding: "14px 0 0" }}>
+        <section className="khoi-ct" style={{ padding: "14px 0 16px" }}>
           <h2 className="muc-tin" style={{ padding: "0 16px" }}>Tin tương tự</h2>
-          <div className="ds-ngang">{tuongTu.data.slice(0, 6).map((t) => <TheTinNgang key={t.id} tin={t} />)}</div>
+          <TruotNgang>{tuongTu.data.slice(0, 8).map((t) => <TheTin key={t.id} tin={t} />)}</TruotNgang>
         </section>
       )}
 

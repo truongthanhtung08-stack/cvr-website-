@@ -13,13 +13,20 @@
  *   · Chỉ gọi được duy nhất API "lấy thông tin người dùng" của Zalo
  *
  * CÀI ĐẶT:
- *   1. Sửa dòng $MA_BI_MAT bên dưới (phải TRÙNG biến ZALO_PROXY_KEY trên Vercel)
+ *   1. Tạo file ma-bi-mat.php CẠNH file này, nội dung: <?php return '<mã mới>';
+ *      (mã phải TRÙNG biến ZALO_PROXY_KEY trên Vercel). KHÔNG đưa mã vào repo —
+ *      repo công khai; mã cũ từng nằm ở đây ĐÃ LỘ, cấm dùng lại.
  *   2. Tải file này lên thư mục gốc website của hosting (thường là public_html)
  *   3. Địa chỉ file sẽ là:  https://<tên-miền-hosting>/zalo-me.php
  *      → dán địa chỉ đó vào biến ZALO_PROXY_URL trên Vercel
  * ========================================================================== */
 
-$MA_BI_MAT = 'l5IUHC2XJVJNDUa_4uk0xZkRTu7BolzA';
+$MA_BI_MAT = @include __DIR__ . '/ma-bi-mat.php';
+if (!is_string($MA_BI_MAT) || strlen($MA_BI_MAT) < 24) {
+    http_response_code(500);
+    echo json_encode(['error' => 'chua_cai_ma_bi_mat']);
+    exit;
+}
 
 header('Content-Type: application/json; charset=utf-8');
 header('X-Robots-Tag: noindex');

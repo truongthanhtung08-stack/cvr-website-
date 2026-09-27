@@ -81,7 +81,7 @@ export default function VideoToanManHinh({
           khung nhỏ: bấm một chỗ để mở, bấm lại chính chỗ đó để thoát. Nút Xoay
           bấm lại thì xoay về. Chỉ hai nút này, không hơn. */}
       <div
-        className={`absolute inset-x-0 top-0 z-10 flex items-center justify-between bg-gradient-to-b from-black/60 to-transparent px-1 pb-8 pt-[max(6px,env(safe-area-inset-top))] transition-opacity duration-200 ${hienNut ? "opacity-100" : "pointer-events-none opacity-0"}`}
+        className={`absolute inset-x-0 top-0 z-10 flex items-center justify-between bg-gradient-to-b from-black/60 to-transparent px-1 pb-8 pt-[max(6px,var(--at))] transition-opacity duration-200 ${hienNut ? "opacity-100" : "pointer-events-none opacity-0"}`}
       >
         <button
           type="button"

@@ -1,5 +1,6 @@
 import React from "react";
-import { Header, Page } from "zmp-ui";
+import { Page } from "zmp-ui";
+import TieuDe from "../components/TieuDe";
 import DanhSachTin from "../components/DanhSachTin";
 import { dsDaXem } from "../lib/daXem";
 import { layNhieuTin } from "../lib/tin";
@@ -15,7 +16,7 @@ export default function DaXem() {
   );
   return (
     <Page>
-      <Header title="Tin đã xem" />
+      <TieuDe title="Tin đã xem" />
       <DanhSachTin ds={data} dangTai={dangTai} loi={loi} trong="Chưa xem tin nào." />
     </Page>
   );

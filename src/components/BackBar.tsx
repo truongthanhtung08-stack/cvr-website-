@@ -220,7 +220,7 @@ export default function BackBar() {
         title={`Quay lại — ${ten}`}
         // top = header 60px + lề trên thanh tìm 6px + 4px → nút THẲNG HÀNG với ô tìm
       // (ô tìm cao 44px, tâm ở 88px; nút cao 36px, tâm cũng 88px).
-      className="fixed left-2 top-[calc(60px+env(safe-area-inset-top)+10px)] z-40 flex h-9 w-9 items-center justify-center rounded-full border border-black/5 bg-white/90 text-cvr-ink shadow-[0_2px_10px_rgba(0,0,0,0.18)] backdrop-blur-md transition active:scale-95 active:bg-white lg:hidden"
+      className="fixed left-2 top-[calc(60px+var(--at)+10px)] z-40 flex h-9 w-9 items-center justify-center rounded-full border border-black/5 bg-white/90 text-cvr-ink shadow-[0_2px_10px_rgba(0,0,0,0.18)] backdrop-blur-md transition active:scale-95 active:bg-white lg:hidden"
       >
         <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
@@ -230,7 +230,7 @@ export default function BackBar() {
   }
 
   return (
-    <div className="sticky top-[calc(60px+env(safe-area-inset-top))] z-30 border-b border-cvr-line bg-white/95 backdrop-blur lg:hidden">
+    <div className="sticky top-[calc(60px+var(--at))] z-30 border-b border-cvr-line bg-white/95 backdrop-blur lg:hidden">
       <div className="flex items-center gap-2 px-3 py-2">
         <button
           type="button"

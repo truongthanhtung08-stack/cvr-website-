@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Box, Button, Header, Icon, Input, Page, Select, Spinner, Text, useNavigate } from "zmp-ui";
+import { Box, Button, Icon, Input, Page, Select, Spinner, Text, useNavigate } from "zmp-ui";
+import TieuDe from "../components/TieuDe";
 import { useSearchParams } from "react-router-dom";
 import { provincesNew } from "../lib/provincesNew";
 import { layBangGia } from "../lib/tin";
@@ -179,12 +180,12 @@ export default function DangTin() {
     }
   };
 
-  if (!san) return <Page><Header title="Đăng tin" /><Box flex justifyContent="center" p={6}><Spinner /></Box></Page>;
+  if (!san) return <Page><TieuDe title="Đăng tin" /><Box flex justifyContent="center" p={6}><Spinner /></Box></Page>;
 
   if (!phien)
     return (
       <Page style={{ background: "#fff" }}>
-        <Header title="Đăng tin" />
+        <TieuDe title="Đăng tin" ve="/" />
         <Box p={4} style={{ display: "grid", gap: 12, textAlign: "center", marginTop: 24 }}>
           <Text.Title size="large">Đăng nhập để đăng tin</Text.Title>
           <Text className="chu-phu">Tin gắn với tài khoản để bạn quản lý và theo dõi trạng thái duyệt — dùng chung tài khoản với coastalland.vn.</Text>
@@ -196,7 +197,7 @@ export default function DangTin() {
   if (xong)
     return (
       <Page style={{ background: "#fff" }}>
-        <Header title="Đăng tin" />
+        <TieuDe title="Đăng tin" />
         <Box p={4} style={{ display: "grid", gap: 12, textAlign: "center", marginTop: 24 }}>
           <Icon icon="zi-check-circle-solid" size={56} style={{ color: "var(--cl-blue)", margin: "0 auto" }} />
           <Text.Title size="large">{xong === "pending" ? "Đã gửi tin, đang chờ duyệt" : "Đã lưu nháp tin"}</Text.Title>
@@ -206,13 +207,14 @@ export default function DangTin() {
               : `Ví chưa đủ ${vnd(tien.tongTra)} cho gói đã chọn. Tin đã lưu nháp nguyên vẹn — nạp tiền xong là đăng tiếp.`}
           </Text>
           <Button fullWidth onClick={() => dieuHuong("/tin-cua-toi", { replace: true })}>Xem tin của tôi</Button>
+          <Button fullWidth variant="secondary" onClick={() => dieuHuong("/", { replace: true })}>Về trang chủ</Button>
         </Box>
       </Page>
     );
 
   return (
     <Page style={{ paddingBottom: 96 }}>
-      <Header title="Đăng tin" />
+      <TieuDe title="Đăng tin" />
 
       <Nhom tieuDe="Nhu cầu & loại hình">
         <div className="tab-md">

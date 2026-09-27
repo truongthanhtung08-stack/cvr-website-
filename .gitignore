@@ -66,3 +66,4 @@ sao-luu-anh-truoc-khi-go-*.json
 
 # Tệp tạm cho Zalo Mini App (giấy tờ công ty, ảnh nộp Zalo) — KHÔNG commit
 .tam-miniapp/
+tools/zalo-proxy-vn/ma-bi-mat.php

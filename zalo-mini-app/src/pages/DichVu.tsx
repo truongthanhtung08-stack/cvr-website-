@@ -1,5 +1,6 @@
 import React from "react";
-import { Box, Button, Header, Icon, List, Page, Text, useNavigate } from "zmp-ui";
+import { Box, Button, Icon, List, Page, Text, useNavigate } from "zmp-ui";
+import TieuDe from "../components/TieuDe";
 import { nhanCoastalLand } from "../lib/zalo";
 
 // Tab "Đăng tin": dịch vụ chính (tin mua bán · cho thuê) + các gói của công ty.
@@ -17,7 +18,7 @@ export default function DichVu() {
   const dieuHuong = useNavigate();
   return (
     <Page>
-      <Header title="Đăng tin" />
+      <TieuDe title="Đăng tin" />
       <Box p={4} style={{ background: "var(--cl-ink)" }}>
         <Text size="small" style={{ color: "#d2d2d7" }}>Mua bán, cho thuê nhà đất trên Coastal Land</Text>
         <Box mt={4} flex style={{ gap: 8 }}>

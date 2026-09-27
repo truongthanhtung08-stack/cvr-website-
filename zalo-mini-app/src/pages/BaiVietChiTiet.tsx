@@ -1,5 +1,6 @@
 import React from "react";
-import { Box, Header, Page, Spinner, Text } from "zmp-ui";
+import { Box, Page, Spinner, Text } from "zmp-ui";
+import TieuDe from "../components/TieuDe";
 import { useParams } from "react-router-dom";
 import NoiDung from "../components/NoiDung";
 import { anh, layMotBaiViet } from "../lib/tin";
@@ -13,13 +14,13 @@ export default function BaiVietChiTiet() {
   if (!b)
     return (
       <Page>
-        <Header title="Tin tức" />
+        <TieuDe title="Tin tức" />
         <Box p={4}><Text className="chu-phu">Bài viết không còn hiển thị.</Text></Box>
       </Page>
     );
   return (
     <Page style={{ background: "#fff" }}>
-      <Header title="Tin tức" />
+      <TieuDe title="Tin tức" />
       {b.image && <img src={anh(b.image)} alt={b.title} style={{ width: "100%", aspectRatio: "16 / 9", objectFit: "cover", display: "block" }} />}
       <Box p={4}>
         <Text.Title size="large">{b.title}</Text.Title>

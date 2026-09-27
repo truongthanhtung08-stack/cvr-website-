@@ -1,5 +1,6 @@
 import React from "react";
-import { Box, Button, Header, Page, Spinner, Swiper, Text } from "zmp-ui";
+import { Box, Button, Page, Spinner, Swiper, Text } from "zmp-ui";
+import TieuDe from "../components/TieuDe";
 import { useParams } from "react-router-dom";
 import NoiDung from "../components/NoiDung";
 import { anh, layMotDuAn } from "../lib/tin";
@@ -14,7 +15,7 @@ export default function DuAnChiTiet() {
   if (!d)
     return (
       <Page>
-        <Header title="Dự án" />
+        <TieuDe title="Dự án" />
         <Box p={4}><Text className="chu-phu">Dự án này không còn hiển thị.</Text></Box>
       </Page>
     );
@@ -27,7 +28,7 @@ export default function DuAnChiTiet() {
   const anhs = d.images?.length ? d.images : [undefined];
   return (
     <Page style={{ paddingBottom: 88 }}>
-      <Header title={d.name} />
+      <TieuDe title={d.name} />
       <Swiper dots loop={anhs.length > 1}>
         {anhs.map((u, i) => (
           <Swiper.Slide key={i}>

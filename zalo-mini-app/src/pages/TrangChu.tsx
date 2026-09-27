@@ -1,20 +1,20 @@
-import React, { useState } from "react";
+import React from "react";
 import { Box, Input, Page, Spinner, useNavigate } from "zmp-ui";
-import Banner from "../components/Banner";
 import Khoi from "../components/Khoi";
 import TheTin from "../components/TheTin";
 import TheDuAn from "../components/TheDuAn";
-import TheBaiViet from "../components/TheBaiViet";
+import TruotNgang from "../components/TruotNgang";
 import IconCL, { type TenIcon } from "../components/IconCL";
-import { anh, layBaiViet, layBanner, layDuAn, layKhuVuc, layTinDanhChoBan, layTinVip, NHOM_DANH_CHO_BAN } from "../lib/tin";
+import { layDuAn, layTinhCoTin, layTinTrangChu } from "../lib/tin";
 import { useTai } from "../lib/useTai";
 import { nhanCoastalLand } from "../lib/zalo";
 import logoTron from "../assets/logo-tron.svg";
 
 // TRANG CHỦ — cấu trúc chuẩn Mini App Zalo (không bê nguyên web):
-// Đầu trang (logo tròn + tên app, ngang cụm ⋯ ✕) · ô tìm · banner · lưới dịch vụ ·
-// Tin VIP · Dành cho bạn · Dự án nổi bật · Theo khu vực · Tin tức.
-// Banner, khu vực lấy từ /admin/noi-dung — admin đổi là web và Mini App cùng đổi.
+// Đầu trang (logo tròn + tên app, ngang cụm ⋯ ✕) · ô tìm ·
+// Menu dịch vụ 2 hàng (hàng 1 = mua bán/cho thuê/dự án/đăng tin · hàng 2 = tiện ích) ·
+// Nhà đất bán · Nhà đất cho thuê (mỗi khối: VIP trước, tin mới sau, slide tự trôi như web) · Dự án · Khu vực.
+// Phần lớn trang là TIN (80/20). Không banner (chủ dự án bỏ 27/09).
 
 type DichVu = { nhan: string; icon: TenIcon; nen: string; mau: string } & ({ duong: string } | { bam: () => void });
 const DICH_VU: DichVu[] = [
@@ -32,29 +32,12 @@ function Cho({ dang }: { dang: boolean }) {
   return dang ? <Box flex justifyContent="center" p={4}><Spinner /></Box> : null;
 }
 
-// Đường dẫn của web (trong nội dung admin) → trang tương ứng trong Mini App.
-function duongMiniApp(href?: string): string | null {
-  if (!href) return null;
-  const duAn = href.match(/^\/du-an\/([^/?#]+)/);
-  if (duAn) return `/du-an/${duAn[1]}`;
-  const tinh = href.match(/[?&]tinh=([^&]+)/);
-  if (tinh) return `/ds/${href.startsWith("/cho-thue") ? "thue" : "ban"}?kv=${tinh[1]}`;
-  if (href.startsWith("/mua-ban")) return "/ds/ban";
-  if (href.startsWith("/cho-thue")) return "/ds/thue";
-  return null;
-}
-
 export default function TrangChu() {
   const dieuHuong = useNavigate();
-  const [nhom, setNhom] = useState(0);
-  const banner = useTai(() => layBanner(), [], []);
-  const vip = useTai(() => layTinVip(10), [], []);
-  const danhCho = useTai(() => layTinDanhChoBan(NHOM_DANH_CHO_BAN[nhom]), [nhom], []);
+  const ban = useTai(() => layTinTrangChu("ban"), [], []);
+  const thue = useTai(() => layTinTrangChu("thue"), [], []);
   const duAn = useTai(() => layDuAn(8), [], []);
-  const khuVuc = useTai(() => layKhuVuc(), [], []);
-  const bai = useTai(() => layBaiViet(4), [], []);
-  const n = NHOM_DANH_CHO_BAN[nhom];
-  const xemThemDanhCho = "md" in n ? `/ds/${n.md}${"loai" in n ? `?loai=${encodeURIComponent(n.loai)}` : ""}` : "/ds/ban";
+  const tinh = useTai(() => layTinhCoTin("ban"), [], []); // tỉnh đang có tin thật — không ảnh, không số bịa
 
   return (
     <Page style={{ paddingBottom: 72, paddingTop: 0 }}>
@@ -63,19 +46,13 @@ export default function TrangChu() {
           <img src={logoTron} alt="" />
           <div>
             <strong>Coastal Land</strong>
-            <span>Nhà đất Miền Trung</span>
+            <span>Cổng đăng tin nhà đất</span>
           </div>
         </div>
         <div onClick={() => dieuHuong("/tim-kiem")}>
           <Input.Search placeholder="Tìm nhà đất, khu vực, dự án…" readOnly />
         </div>
       </div>
-
-      {banner.data.length > 0 && (
-        <div className="khung-banner">
-          <Banner ds={banner.data} bam={(s) => { const d = duongMiniApp(s.href); if (d) dieuHuong(d); }} />
-        </div>
-      )}
 
       <div className="luoi-dv">
         {DICH_VU.map((d) => (
@@ -86,53 +63,33 @@ export default function TrangChu() {
         ))}
       </div>
 
-      {vip.data.length > 0 && (
-        <Khoi tieuDe="Tin VIP nổi bật" xemThem="/ds/ban">
-          <div className="truot-ngang">{vip.data.map((t) => <TheTin key={t.id} tin={t} />)}</div>
-        </Khoi>
-      )}
+      {/* Hai khối tin song song: BÁN · CHO THUÊ — mỗi khối tin VIP xếp trước, rồi tin mới. */}
+      <Khoi tieuDe="Nhà đất bán" xemThem="/ds/ban">
+        <Cho dang={ban.dangTai} />
+        {!ban.dangTai && <TruotNgang>{ban.data.map((t) => <TheTin key={t.id} tin={t} />)}</TruotNgang>}
+      </Khoi>
 
-      <Khoi tieuDe="Dành cho bạn" xemThem={xemThemDanhCho}>
-        <div className="chip-loc">
-          {NHOM_DANH_CHO_BAN.map((g, i) => (
-            <button key={g.nhan} className={i === nhom ? "bat" : ""} onClick={() => setNhom(i)}>{g.nhan}</button>
-          ))}
-        </div>
-        <Cho dang={danhCho.dangTai} />
-        {!danhCho.dangTai && <div className="truot-ngang">{danhCho.data.map((t) => <TheTin key={t.id} tin={t} />)}</div>}
+      <Khoi tieuDe="Nhà đất cho thuê" xemThem="/ds/thue">
+        <Cho dang={thue.dangTai} />
+        {!thue.dangTai && <TruotNgang>{thue.data.map((t) => <TheTin key={t.id} tin={t} />)}</TruotNgang>}
       </Khoi>
 
       {duAn.data.length > 0 && (
         <Khoi tieuDe="Dự án nổi bật" xemThem="/du-an">
-          <div className="truot-ngang">{duAn.data.map((d) => <TheDuAn key={d.slug} duAn={d} />)}</div>
+          <TruotNgang>{duAn.data.map((d) => <TheDuAn key={d.slug} duAn={d} />)}</TruotNgang>
         </Khoi>
       )}
 
-      {khuVuc.data.length > 0 && (
-        <Khoi tieuDe="Theo khu vực">
-          <div className="luoi-khu-vuc">
-            {khuVuc.data.map((k, i) => (
-              <div
-                key={k.name}
-                className={`o-khu-vuc${i === 0 ? " lon" : ""}`}
-                onClick={() => dieuHuong(duongMiniApp(k.href) ?? `/ds/ban?kv=${encodeURIComponent(k.name)}`)}
-              >
-                <img src={anh(k.image)} alt={k.name} loading="lazy" />
-                <div>
-                  <strong>{k.name}</strong>
-                  {k.count && <span>{k.count}</span>}
-                </div>
-              </div>
+      {tinh.data.length > 0 && (
+        <Khoi tieuDe="Tìm theo khu vực">
+          <div className="chip-loc boc">
+            {tinh.data.map((t) => (
+              <button key={t} onClick={() => dieuHuong(`/ds/ban?kv=${encodeURIComponent(t)}`)}>{t}</button>
             ))}
           </div>
         </Khoi>
       )}
 
-      {bai.data.length > 0 && (
-        <Khoi tieuDe="Tin tức thị trường" xemThem="/tin-tuc">
-          {bai.data.map((b) => <TheBaiViet key={b.slug} bai={b} />)}
-        </Khoi>
-      )}
     </Page>
   );
 }

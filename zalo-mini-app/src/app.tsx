@@ -20,6 +20,7 @@ import DangTin from "./pages/DangTin";
 import TinCuaToi from "./pages/TinCuaToi";
 
 // 5 tab dưới kiểu Mini App Zalo; các trang con dùng thanh tiêu đề có nút quay lại.
+// Đăng tin ở GIỮA, nổi bật (nút tròn xanh) — việc chính của người bán; mở toàn màn hình, không hiện thanh tab.
 const TAB = [
   { duong: "/", nhan: "Trang chủ", icon: "home" },
   { duong: "/ds/ban", nhan: "Tìm tin", icon: "timKiem" },
@@ -38,7 +39,7 @@ function ThanhDuoi() {
   return (
     <BottomNavigation fixed activeKey={tab}>
       {TAB.map((t) => (
-        <BottomNavigation.Item key={t.duong} itemKey={t.duong} label={t.nhan} icon={<IconCL ten={t.icon} />} linkTo={t.duong} />
+        <BottomNavigation.Item key={t.duong} itemKey={t.duong} label={t.nhan} icon={t.duong === "/dang-tin" ? <span className="tab-dang-tin"><IconCL ten="cong" co={24} net={2.4} /></span> : <IconCL ten={t.icon} />} linkTo={t.duong} />
       ))}
     </BottomNavigation>
   );

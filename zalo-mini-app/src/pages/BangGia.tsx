@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Box, Button, Header, Page, Spinner, Text } from "zmp-ui";
+import { Box, Button, Page, Spinner, Text } from "zmp-ui";
+import TieuDe from "../components/TieuDe";
 import ChonMucDich from "../components/ChonMucDich";
 import { layBangGia } from "../lib/tin";
 import { tien } from "../lib/dinhDang";
@@ -13,14 +14,14 @@ const HANG = ["diamond", "gold", "silver", "basic"];
 export default function BangGia() {
   const [md, setMd] = useState<"ban" | "thue">("ban");
   const { data, dangTai } = useTai(() => layBangGia(), [], null);
-  if (dangTai) return <Page><Header title="Bảng giá" /><Box flex justifyContent="center" p={6}><Spinner /></Box></Page>;
-  if (!data) return <Page><Header title="Bảng giá" /><Box p={4}><Text className="chu-phu">Chưa có bảng giá.</Text></Box></Page>;
+  if (dangTai) return <Page><TieuDe title="Bảng giá" /><Box flex justifyContent="center" p={6}><Spinner /></Box></Page>;
+  if (!data) return <Page><TieuDe title="Bảng giá" /><Box p={4}><Text className="chu-phu">Chưa có bảng giá.</Text></Box></Page>;
   const bang = data[md];
   const plans = [...bang.plans].sort((a, b) => HANG.indexOf(a.tierId) - HANG.indexOf(b.tierId));
 
   return (
     <Page style={{ paddingBottom: 88 }}>
-      <Header title="Bảng giá dịch vụ" />
+      <TieuDe title="Bảng giá dịch vụ" />
       <Box p={3} style={{ background: "#fff" }}><ChonMucDich giaTri={md} doi={setMd} /></Box>
 
       <section className="khoi">
