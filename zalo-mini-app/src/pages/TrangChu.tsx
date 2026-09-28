@@ -9,6 +9,7 @@ import { layDuAn, layTinhCoTin, layTinTrangChu } from "../lib/tin";
 import { useTai } from "../lib/useTai";
 import { nhanCoastalLand } from "../lib/zalo";
 import logoTron from "../assets/logo-tron.svg";
+import ChanTrang from "../components/ChanTrang";
 
 // TRANG CHỦ — cấu trúc chuẩn Mini App Zalo (không bê nguyên web):
 // Đầu trang (logo tròn + tên app, ngang cụm ⋯ ✕) · ô tìm ·
@@ -21,10 +22,9 @@ const DICH_VU: DichVu[] = [
   { nhan: "Mua bán", icon: "muaBan", nen: "#eef4ff", mau: "#0071e3", duong: "/ds/ban" },
   { nhan: "Cho thuê", icon: "choThue", nen: "#eaf7ef", mau: "#1a8f4c", duong: "/ds/thue" },
   { nhan: "Dự án", icon: "duAn", nen: "#fbf4e6", mau: "#8a6d2e", duong: "/du-an" },
-  { nhan: "Đăng tin", icon: "dangTin", nen: "#fff0f0", mau: "#d70018", duong: "/dang-tin" },
+  { nhan: "Đăng tin", icon: "dangTin", nen: "#0071e3", mau: "#ffffff", duong: "/dang-tin" },
   { nhan: "Tin tức", icon: "tinTuc", nen: "#f2efff", mau: "#6b4fd8", duong: "/tin-tuc" },
   { nhan: "Bảng giá", icon: "bangGia", nen: "#eef4ff", mau: "#0071e3", duong: "/bang-gia" },
-  { nhan: "Tính vay", icon: "tinhVay", nen: "#eaf7ef", mau: "#1a8f4c", duong: "/tinh-vay" },
   { nhan: "Tư vấn", icon: "tuVan", nen: "#fbf4e6", mau: "#8a6d2e", bam: () => nhanCoastalLand() },
 ];
 
@@ -90,6 +90,7 @@ export default function TrangChu() {
         </Khoi>
       )}
 
+      <ChanTrang />
     </Page>
   );
 }

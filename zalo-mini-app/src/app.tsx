@@ -12,7 +12,6 @@ import DuAnChiTiet from "./pages/DuAnChiTiet";
 import TinTucDs from "./pages/TinTucDs";
 import BaiVietChiTiet from "./pages/BaiVietChiTiet";
 import BangGia from "./pages/BangGia";
-import TinhVay from "./pages/TinhVay";
 import DaLuu from "./pages/DaLuu";
 import DaXem from "./pages/DaXem";
 import DangNhap from "./pages/DangNhap";
@@ -40,7 +39,7 @@ function ThanhDuoi() {
   return (
     <BottomNavigation fixed activeKey={tab}>
       {TAB.map((t) => (
-        <BottomNavigation.Item key={t.duong} itemKey={t.duong} label={t.nhan} icon={t.duong === "/dang-tin" ? <span className="tab-dang-tin"><IconCL ten="cong" co={24} net={2.4} /></span> : <IconCL ten={t.icon} />} linkTo={t.duong} />
+        <BottomNavigation.Item key={t.duong} itemKey={t.duong} label={t.nhan} icon={t.duong === "/dang-tin" ? <span className="tab-dang-tin"><IconCL ten="cong" co={30} net={2.6} /></span> : <IconCL ten={t.icon} />} linkTo={t.duong} />
       ))}
     </BottomNavigation>
   );
@@ -63,7 +62,6 @@ export default function UngDung() {
             <Route path="/tin-tuc" element={<TinTucDs />} />
             <Route path="/tin-tuc/:slug" element={<BaiVietChiTiet />} />
             <Route path="/bang-gia" element={<BangGia />} />
-            <Route path="/tinh-vay" element={<TinhVay />} />
             <Route path="/da-luu" element={<DaLuu />} />
             <Route path="/da-xem" element={<DaXem />} />
             <Route path="/dang-nhap" element={<DangNhap />} />

@@ -216,3 +216,10 @@ export async function layTinTuongTu(t: Tin, soLuong = 6) {
   );
   return ds;
 }
+
+// Nội dung footer do admin sửa trên web (/admin/noi-dung → bảng site_content, khoá "footer").
+export type ChanTrang = { tagline?: string; description?: string; hotline?: string; email?: string; address?: string };
+export async function layChanTrang(): Promise<ChanTrang> {
+  const r = await doc<{ data: ChanTrang }>("site_content", "select=data&key=eq.footer&limit=1").catch(() => []);
+  return r[0]?.data ?? {};
+}
