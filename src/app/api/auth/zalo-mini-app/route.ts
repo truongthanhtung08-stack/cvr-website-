@@ -122,6 +122,9 @@ async function xuLy(req: Request) {
   if (loiPhien) ({ data: phien, error: loiPhien } = await sb.auth.verifyOtp({ type: "magiclink", token_hash: hash }));
   if (loiPhien || !phien.session) return loi("khong_mo_duoc_phien", 500);
 
+  // Tin Coastal Land đăng hộ mang số này tự về tài khoản (chung quy tắc web, 28/09/2026).
+  await sb.rpc("tu_nhan_tin_theo_sdt").then(() => {}, () => {});
+
   return NextResponse.json({
     ok: true,
     access_token: phien.session.access_token,

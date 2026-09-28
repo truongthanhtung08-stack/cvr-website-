@@ -39,7 +39,25 @@ function clientThuong() {
   return taoClient(url, anon, { auth: { persistSession: false, autoRefreshToken: false } });
 }
 
+// Zalo Mini App (chạy ở *.zdn.vn / zalo.me…) gọi chung đường này để đăng nhập bằng mã —
+// cho phép đúng các nguồn đó (giống /api/auth/zalo-mini-app), web thì cùng nguồn sẵn.
+function choPhep(req: Request): Record<string, string> {
+  const nguon = req.headers.get("origin") ?? "";
+  const hopLe = /^https:\/\/([a-z0-9-]+\.)*(zdn\.vn|zalo\.me|zaloapp\.com|zaloplatforms\.com)$/i.test(nguon) || /^http:\/\/(localhost|192\.168\.\d+\.\d+):\d+$/.test(nguon);
+  return hopLe
+    ? { "Access-Control-Allow-Origin": nguon, "Access-Control-Allow-Methods": "POST, OPTIONS", "Access-Control-Allow-Headers": "Content-Type", Vary: "Origin" }
+    : {};
+}
+export function OPTIONS(req: Request) {
+  return new NextResponse(null, { status: 204, headers: choPhep(req) });
+}
 export async function POST(req: Request) {
+  const res = await xuLy(req);
+  for (const [k, v] of Object.entries(choPhep(req))) res.headers.set(k, v);
+  return res;
+}
+
+async function xuLy(req: Request) {
   let b: { buoc?: string; sdt?: string; ma?: string; matKhau?: string };
   try {
     b = await req.json();

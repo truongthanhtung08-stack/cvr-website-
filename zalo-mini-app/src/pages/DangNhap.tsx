@@ -3,7 +3,7 @@ import { Box, Button, Input, Page, Text, useNavigate } from "zmp-ui";
 import { getAccessToken, getPhoneNumber } from "zmp-sdk";
 import TieuDe from "../components/TieuDe";
 import { useSearchParams } from "react-router-dom";
-import { e164, supabase } from "../lib/supabase";
+import { supabase } from "../lib/supabase";
 import { layNguoiZalo } from "../lib/zalo";
 
 // ĐĂNG NHẬP — chung tài khoản với coastalland.vn.
@@ -51,22 +51,43 @@ export default function DangNhap() {
     }
   };
 
+  // Mã do máy chủ web gửi qua Zalo (/api/xac-thuc/dang-nhap-sdt) — CHUNG quy tắc với web
+  // (chốt 28/09/2026): 1 số = 1 tài khoản, số được đánh dấu đã xác minh, tài khoản email cũ
+  // có số này thì vào đúng tài khoản đó, tin Coastal Land đăng hộ tự về. Không dùng OTP của
+  // Supabase nữa (mã đúng nhưng số không được xác minh → tin không về, dễ đẻ tài khoản trùng).
+  const goiMa = async (body: Record<string, string>) => {
+    try {
+      const r = await fetch(`${WEB}/api/xac-thuc/dang-nhap-sdt`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      return (await r.json()) as { ok: boolean; loi?: string; access_token?: string; refresh_token?: string };
+    } catch {
+      return { ok: false, loi: "Không kết nối được. Vui lòng thử lại." };
+    }
+  };
+
   const guiMa = async () => {
     setDang(true);
     setLoi(undefined);
-    const { error } = await supabase.auth.signInWithOtp({ phone: e164(so) });
+    const j = await goiMa({ buoc: "gui-ma", sdt: so });
     setDang(false);
-    if (error) setLoi(/provider|not enabled|unsupported|sms/i.test(error.message) ? "Chưa gửi được mã. Vui lòng thử lại sau." : error.message);
+    if (!j.ok) setLoi(j.loi || "Chưa gửi được mã. Vui lòng thử lại sau.");
     else setBuoc("ma");
   };
 
   const xacThuc = async () => {
     setDang(true);
     setLoi(undefined);
-    const { error } = await supabase.auth.verifyOtp({ phone: e164(so), token: ma, type: "sms" });
+    const j = await goiMa({ buoc: "xac-nhan", sdt: so, ma });
+    if (j.ok && j.access_token && j.refresh_token) {
+      const { error } = await supabase.auth.setSession({ access_token: j.access_token, refresh_token: j.refresh_token });
+      setDang(false);
+      if (!error) return dieuHuong(tiep, { replace: true });
+    }
     setDang(false);
-    if (error) setLoi("Mã xác thực không đúng hoặc đã hết hạn.");
-    else dieuHuong(tiep, { replace: true });
+    setLoi(j.loi || "Mã xác thực không đúng hoặc đã hết hạn.");
   };
 
   return (
