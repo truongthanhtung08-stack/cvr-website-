@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 // ============================================================================
@@ -9,12 +9,21 @@ import { createClient } from "@/lib/supabase/client";
 // 27/09/2026: mọi tài khoản bắt buộc có số điện thoại, 1 số = 1 tài khoản.
 // Hai bước ngay tại chỗ: nhập số → nhận mã Zalo → nhập mã. Xong là đăng tin tiếp.
 // ============================================================================
-export default function XacMinhSdt({ soGoiY, onXong }: { soGoiY?: string; onXong: (sdt: string, soTinGop: number) => void }) {
+// tuGui: mở ra là GỬI MÃ LUÔN (dùng trong hộp bật lên khi bấm Đăng tin) — khách chỉ việc nhập mã.
+export default function XacMinhSdt({ soGoiY, onXong, tuGui, tieuDe = "Xác minh số điện thoại để đăng tin" }: { soGoiY?: string; onXong: (sdt: string, soTinGop: number) => void; tuGui?: boolean; tieuDe?: string }) {
   const [sdt, setSdt] = useState(soGoiY ?? "");
   const [ma, setMa] = useState("");
   const [daGui, setDaGui] = useState(false);
   const [dang, setDang] = useState(false);
   const [loi, setLoi] = useState("");
+  const daTuGui = useRef(false);
+  useEffect(() => {
+    if (tuGui && !daTuGui.current && sdt.replace(/\D/g, "").length >= 10) {
+      daTuGui.current = true;
+      goi("gui-ma");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tuGui]);
 
   async function goi(buoc: "gui-ma" | "xac-nhan") {
     setDang(true);
@@ -42,7 +51,8 @@ export default function XacMinhSdt({ soGoiY, onXong }: { soGoiY?: string; onXong
 
   return (
     <div className="rounded-xl border border-cvr-line bg-cvr-surface p-4 sm:p-5">
-      <p className="text-[15px] font-semibold text-cvr-ink">Xác minh số điện thoại để đăng tin</p>
+      <p className="text-[15px] font-semibold text-cvr-ink">{tieuDe}</p>
+      {daGui && <p className="mt-1 text-sm text-cvr-muted">Mã 6 số vừa gửi tới Zalo của số này.</p>}
       <div className="mt-3 flex gap-2">
         <input
           value={sdt}

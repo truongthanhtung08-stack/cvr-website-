@@ -51,7 +51,7 @@ export default function PostListingForm() {
   // Tài khoản đã có số điện thoại XÁC MINH chưa (bắt buộc trước khi đăng — chốt 27/09/2026).
   // null = chưa biết; admin không phải qua bước này.
   const [soDaXacMinh, setSoDaXacMinh] = useState<boolean | null>(null);
-  const [dongBo, setDongBo] = useState(""); // báo kết quả đồng bộ tài khoản sau khi xác minh số
+  const [moXacMinh, setMoXacMinh] = useState(false); // hộp nhập mã Zalo bật lên khi bấm Đăng tin
 
   const [done, setDone] = useState<"" | "draft" | "pending">("");
   // Chế độ SỬA: nạp tin cũ ("loading") · nạp xong ("ok") · không thấy/không có quyền ("notfound")
@@ -450,7 +450,7 @@ export default function PostListingForm() {
     return projectOptions.find((o) => normalizeVi(o.name) === ten)?.slug ?? "";
   }
 
-  async function save(asDraft: boolean) {
+  async function save(asDraft: boolean, daXacMinhXong = false) {
     setError("");
     if (!userId) {
       router.push("/dang-nhap?next=/dang-tin");
@@ -458,7 +458,6 @@ export default function PostListingForm() {
     }
     if (!title.trim()) return setError(asDraft ? "Nhập tiêu đề để lưu nháp." : "Chưa nhập tiêu đề tin.");
     if (!asDraft) {
-      if (soDaXacMinh === false) return setError("Xác minh số điện thoại của bạn (ô ở đầu trang) trước khi đăng tin.");
       if (!province) return setError("Chưa chọn Tỉnh/Thành.");
       if (!contactName.trim() || !contactPhone.trim()) return setError("Nhập họ tên và số điện thoại liên hệ.");
       // Số điện thoại là BẮT BUỘC ở mọi tin (chủ dự án chốt 27/09/2026) — phải là số gọi được, không chỉ "có chữ".
@@ -474,6 +473,25 @@ export default function PostListingForm() {
       // không tự đoán hộ — đây là thứ quyết định số tiền phải trả.
       if (!planTier) return setError("Chưa chọn gói tin ở mục “Chọn gói tin — thanh toán”.");
     // LƯU NHÁP thì không chặn gì thêm — người đăng ghi tới đâu lưu tới đó.
+
+    // SỐ CHƯA XÁC MINH (tài khoản email/Google) — chủ dự án chốt 28/09/2026:
+    //   · số MỚI (không tài khoản, không tin cũ) → KHÔNG hỏi gì, đăng luôn, ghi số vào hồ sơ.
+    //   · số ĐANG CÓ tài khoản / tin đăng hộ → hỏi mã Zalo 1 lần (tự gửi) rồi gộp ngầm —
+    //     không có mã thì ai gõ số người khác cũng lấy được tin của họ.
+    if (!asDraft && soDaXacMinh === false && !daXacMinhXong) {
+      const so = chuanHoaSdt(contactPhone);
+      const kq = await fetch("/api/xac-thuc/kiem-tai-khoan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sdt: so }),
+      }).then((r) => r.json()).catch(() => null);
+      if (kq?.coTaiKhoan || Number(kq?.soTin) > 0) {
+        setMoXacMinh(true);
+        return;
+      }
+      // Số mới → đăng luôn. KHÔNG tự ghi số liên hệ vào hồ sơ: số đó có thể là của chủ nhà
+      // (môi giới đăng hộ) — ghi vào là sau này chủ nhà đăng ký bị gộp nhầm sang tài khoản này.
+    }
 
     // VÍ KHÔNG ĐỦ TIỀN CHO GÓI ĐÃ CHỌN.
     // Không chặn khan rồi để khách mất hết công nhập: LƯU NHÁP TOÀN BỘ tin đã
@@ -685,19 +703,29 @@ export default function PostListingForm() {
     <form onSubmit={(e) => { e.preventDefault(); save(false); }} className="space-y-6">
       <ThanhBuoc />
 
-      {soDaXacMinh === false && (
-        <XacMinhSdt
-          soGoiY={contactPhone}
-          onXong={(so, gop) => {
-            setSoDaXacMinh(true);
-            setContactPhone((v) => v || so);
-            setError("");
-            setDongBo(gop > 0 ? `Đã đồng bộ: ${gop} tin đăng của số ${so} đã về tài khoản của bạn.` : `Đã xác minh số ${so}.`);
-          }}
-        />
-      )}
-      {dongBo && (
-        <p className="rounded-xl border border-cvr-line bg-cvr-surface px-4 py-3 text-sm font-medium text-cvr-ink">{dongBo}</p>
+      {moXacMinh && (
+        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4" onClick={() => setMoXacMinh(false)}>
+          <div className="w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+            <XacMinhSdt
+              tuGui
+              tieuDe="Xác nhận số điện thoại để đăng tin"
+              soGoiY={chuanHoaSdt(contactPhone)}
+              onXong={() => {
+                setSoDaXacMinh(true);
+                setMoXacMinh(false);
+                save(false, true);
+              }}
+            />
+            {/* Môi giới đăng hộ chủ nhà, số liên hệ là của chủ nhà → không có mã, không gộp. */}
+            <button
+              type="button"
+              onClick={() => { setMoXacMinh(false); save(false, true); }}
+              className="mt-2 w-full rounded-xl bg-white py-3 text-sm text-cvr-muted"
+            >
+              Đây không phải số của tôi — đăng tin, không gộp
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Băng rôn chế độ SỬA — nói rõ đang sửa tin nào, trạng thái gì */}
