@@ -51,6 +51,7 @@ export default function PostListingForm() {
   // Tài khoản đã có số điện thoại XÁC MINH chưa (bắt buộc trước khi đăng — chốt 27/09/2026).
   // null = chưa biết; admin không phải qua bước này.
   const [soDaXacMinh, setSoDaXacMinh] = useState<boolean | null>(null);
+  const [dongBo, setDongBo] = useState(""); // báo kết quả đồng bộ tài khoản sau khi xác minh số
 
   const [done, setDone] = useState<"" | "draft" | "pending">("");
   // Chế độ SỬA: nạp tin cũ ("loading") · nạp xong ("ok") · không thấy/không có quyền ("notfound")
@@ -687,8 +688,16 @@ export default function PostListingForm() {
       {soDaXacMinh === false && (
         <XacMinhSdt
           soGoiY={contactPhone}
-          onXong={(so) => { setSoDaXacMinh(true); setContactPhone((v) => v || so); setError(""); }}
+          onXong={(so, gop) => {
+            setSoDaXacMinh(true);
+            setContactPhone((v) => v || so);
+            setError("");
+            setDongBo(gop > 0 ? `Đã đồng bộ: ${gop} tin đăng của số ${so} đã về tài khoản của bạn.` : `Đã xác minh số ${so}.`);
+          }}
         />
+      )}
+      {dongBo && (
+        <p className="rounded-xl border border-cvr-line bg-cvr-surface px-4 py-3 text-sm font-medium text-cvr-ink">{dongBo}</p>
       )}
 
       {/* Băng rôn chế độ SỬA — nói rõ đang sửa tin nào, trạng thái gì */}

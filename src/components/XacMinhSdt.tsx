@@ -9,7 +9,7 @@ import { createClient } from "@/lib/supabase/client";
 // 27/09/2026: mọi tài khoản bắt buộc có số điện thoại, 1 số = 1 tài khoản.
 // Hai bước ngay tại chỗ: nhập số → nhận mã Zalo → nhập mã. Xong là đăng tin tiếp.
 // ============================================================================
-export default function XacMinhSdt({ soGoiY, onXong }: { soGoiY?: string; onXong: (sdt: string) => void }) {
+export default function XacMinhSdt({ soGoiY, onXong }: { soGoiY?: string; onXong: (sdt: string, soTinGop: number) => void }) {
   const [sdt, setSdt] = useState(soGoiY ?? "");
   const [ma, setMa] = useState("");
   const [daGui, setDaGui] = useState(false);
@@ -29,7 +29,7 @@ export default function XacMinhSdt({ soGoiY, onXong }: { soGoiY?: string; onXong
       const j = await r.json();
       if (!j.ok) return setLoi(j.loi || "Chưa xác minh được. Vui lòng thử lại.");
       if (buoc === "gui-ma") setDaGui(true);
-      else onXong(j.sdt);
+      else onXong(j.sdt, Number(j.soTinGop) || 0);
     } catch {
       setLoi("Không kết nối được hệ thống. Vui lòng thử lại.");
     } finally {

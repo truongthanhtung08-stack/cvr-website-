@@ -88,6 +88,29 @@ export async function POST(req: Request) {
       { status: 409 },
     );
 
+  // GỘP LÀM MỘT (chủ dự án chốt 28/09/2026): số này đang ghi trong hồ sơ một tài khoản CŨ
+  // (đăng ký bằng Gmail/email, số chưa xác minh) mà khách vừa nhận đúng mã Zalo ở số đó
+  // → cùng một người. KHÔNG tạo tài khoản mới: gắn số vào tài khoản cũ (đã xác minh), đặt
+  // mật khẩu vừa nhập — vào bằng email hay số đều ra một tài khoản. Nhiều tài khoản cùng
+  // ghi số này thì không đoán, mời liên hệ.
+  if (sdt && kenh === "zalo") {
+    const so84 = `84${sdt.slice(1)}`;
+    const { data: cu } = await db
+      .from("profiles")
+      .select("id")
+      .or(`phone.eq.${sdt},phone.eq.${so84},phone.eq.+${so84}`)
+      .eq("phone_verified", false);
+    if ((cu ?? []).length > 1)
+      return NextResponse.json({ ok: false, loi: "Số này đang gắn với nhiều tài khoản. Vui lòng liên hệ Coastal Land để được hỗ trợ." }, { status: 409 });
+    if (cu?.length === 1) {
+      const id = cu[0].id as string;
+      const { error: loiGop } = await db.auth.admin.updateUserById(id, { phone: `+${so84}`, phone_confirm: true, password: matKhau });
+      if (loiGop) return NextResponse.json({ ok: false, loi: "Chưa gộp được vào tài khoản cũ. Vui lòng liên hệ Coastal Land." }, { status: 500 });
+      await db.from("profiles").update({ phone: sdt, phone_verified: true }).eq("id", id);
+      return NextResponse.json({ ok: true, gop: true });
+    }
+  }
+
   // Tạo tài khoản. Email coi như đã xác thực vì mã vừa gửi tới chính hộp thư đó.
   // Số điện thoại CHỈ thành cửa đăng nhập (phone_confirm) khi mã đã đi qua Zalo tới
   // đúng số đó (chốt 27/09/2026). Đăng ký bằng email kèm số thì số chỉ nằm trong hồ
