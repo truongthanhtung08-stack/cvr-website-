@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "zmp-ui";
 import { anh, hangHieuLuc, type Tin } from "../lib/tin";
 import { gia, dienTich, diaChi, luc, tomTatTin } from "../lib/dinhDang";
 import { daLuu, doiLuu } from "../lib/daLuu";
 import { tachAnh, tachVideo } from "../lib/media";
+import { theoDoiThe } from "../lib/hienThi";
 
 // Thẻ tin ẢNH TRÊN · CHỮ DƯỚI (chủ dự án chốt 27/09 — app chạy trên điện thoại).
 // Ảnh vừa phải để nhường chỗ cho tiêu đề + nội dung: hạng · số ảnh · tim trên ảnh;
@@ -23,9 +24,12 @@ export default function TheTin({ tin }: { tin: Tin }) {
   const anhs = tachAnh(tin.images);
   const coVideo = tachVideo(tin.images).length > 0;
   const soAnh = anhs.length;
+  // Đếm lượt hiển thị chung với web (người đăng thấy ở trang Khách hàng).
+  const the = useRef<HTMLElement>(null);
+  useEffect(() => (the.current ? theoDoiThe(the.current, tin.id) : undefined), [tin.id]);
 
   return (
-    <article className="the-tin" onClick={() => dieuHuong(`/tin/${tin.id}`)}>
+    <article ref={the} className="the-tin" onClick={() => dieuHuong(`/tin/${tin.id}`)}>
       <div className="anh-the">
         <img src={anh(anhs[0])} alt={tin.title} loading="lazy" />
         {h && <span className="nhan-hang" style={{ background: `${h.mau}e6` }}>{h.ten}</span>}

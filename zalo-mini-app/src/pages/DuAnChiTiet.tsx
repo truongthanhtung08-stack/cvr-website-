@@ -58,7 +58,7 @@ export default function DuAnChiTiet() {
         </Box>
       )}
       <div className="nut-chinh">
-        <Button variant="secondary" onClick={() => chiaSeTin(d.name, diaChiDuAn(d), anh(d.images?.[0]))}>Chia sẻ</Button>
+        <Button variant="secondary" onClick={() => chiaSeTin(d.name, diaChiDuAn(d), anh(d.images?.[0]), `/du-an/${slug}`)}>Chia sẻ</Button>
         <Button fullWidth onClick={() => nhanCoastalLand(`Tôi quan tâm dự án ${d.name}`)}>Nhận thông tin dự án</Button>
       </div>
     </Page>

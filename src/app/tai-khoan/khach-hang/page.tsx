@@ -25,7 +25,7 @@ import { khoaKhach } from "@/lib/khachHang";
 //   listing_viewer (0031) · danh_gia_tin (0032) · listing_view_event (0036)
 // ════════════════════════════════════════════════════════════════════════════
 
-type Lead = { id: string; listing_id: string; viewer_id: string | null; viewer_name: string | null; viewer_phone: string | null; created_at: string };
+type Lead = { id: string; listing_id: string; viewer_id: string | null; viewer_name: string | null; viewer_phone: string | null; created_at: string; nguon?: string | null };
 type Viewer = { listing_id: string; viewer_id: string; ngay: string; lan_xem: number; viewer_name: string | null; viewer_phone: string | null; lan_cuoi: string };
 type DanhGia = { id: string; listing_id: string; sao: number; sai_thong_tin: boolean; khong_lien_lac: boolean; da_ban: boolean; created_at: string };
 type SuKien = { id: number; listing_id: string; luc: string; thiet_bi: string | null; nguon: string | null; la_thanh_vien: boolean };
@@ -39,7 +39,7 @@ type Khach = {
   daHoiSo: boolean;
   lanXem: number;
   luc: string;                       // tương tác gần nhất
-  tin: { id: string; hoiSo: boolean; lanXem: number; luc: string }[];
+  tin: { id: string; hoiSo: boolean; quaZalo?: boolean; lanXem: number; luc: string }[];
 };
 
 const NGUON: Record<string, string> = {
@@ -94,7 +94,7 @@ export default function KhachHangPage() {
         supabase.from("listing_impression_daily").select("listing_id,luot").in("listing_id", ids).gte("ngay", moc30),
         supabase.from("listing_viewer").select("listing_id,viewer_id,ngay,lan_xem,viewer_name,viewer_phone,lan_cuoi")
           .in("listing_id", ids).order("lan_cuoi", { ascending: false }).limit(500),
-        supabase.from("listing_leads").select("id,listing_id,viewer_id,viewer_name,viewer_phone,created_at")
+        supabase.from("listing_leads").select("id,listing_id,viewer_id,viewer_name,viewer_phone,created_at,nguon")
           .in("listing_id", ids).order("created_at", { ascending: false }).limit(500),
         supabase.from("danh_gia_tin").select("id,listing_id,sao,sai_thong_tin,khong_lien_lac,da_ban,created_at")
           .in("listing_id", ids).order("created_at", { ascending: false }).limit(200),
@@ -186,6 +186,7 @@ export default function KhachHangPage() {
       const k = lay(khoaKhach(l.viewer_id, l.viewer_phone, l.id), l.viewer_name, l.viewer_phone);
       const t = tinCua(k, l.listing_id);
       k.daHoiSo = true; t.hoiSo = true;
+      if (l.nguon === "zalo") t.quaZalo = true; // hỏi số trong Zalo Mini App
       if (l.created_at > k.luc) k.luc = l.created_at;
       if (l.created_at > t.luc) t.luc = l.created_at;
     }
@@ -328,7 +329,7 @@ export default function KhachHangPage() {
                             {tenTin.get(t.id) ?? "Tin đã xoá"}
                           </Link>
                           <span className="shrink-0 text-cvr-muted">
-                            {[t.hoiSo ? "hỏi số" : "", t.lanXem ? `xem ${t.lanXem} lần` : ""].filter(Boolean).join(" · ")} · {ngayGio(t.luc)}
+                            {[t.hoiSo ? (t.quaZalo ? "hỏi số qua Zalo" : "hỏi số") : "", t.lanXem ? `xem ${t.lanXem} lần` : ""].filter(Boolean).join(" · ")} · {ngayGio(t.luc)}
                           </span>
                         </li>
                       ))}

@@ -11,11 +11,11 @@ export function quanTamOA() {
   return followOA({ id: OA_ID }).catch(() => {});
 }
 
-// Chia sẻ đúng trang tin đang xem — người nhận bấm là mở thẳng vào tin trong Mini App.
-export function chiaSeTin(tieuDe: string, moTa: string, anhDaiDien: string) {
+// Chia sẻ đúng trang đang xem (path) — người nhận bấm là mở thẳng vào tin/dự án trong Mini App.
+export function chiaSeTin(tieuDe: string, moTa: string, anhDaiDien: string, duong?: string) {
   return openShareSheet({
     type: "zmp_deep_link",
-    data: { title: tieuDe, description: moTa, thumbnail: anhDaiDien },
+    data: { title: tieuDe, description: moTa, thumbnail: anhDaiDien, path: duong },
   }).catch(() => {});
 }
 

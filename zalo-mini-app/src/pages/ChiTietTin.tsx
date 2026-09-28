@@ -179,7 +179,7 @@ export default function ChiTietTin() {
             <button onClick={() => setLuu(doiLuu(tin.id))} aria-label="Lưu tin">
               <Icon icon={luu ? "zi-heart-solid" : "zi-heart"} size={20} style={luu ? { color: "#e11d48" } : undefined} />
             </button>
-            <button onClick={() => chiaSeTin(tin.title, `${gia(tin)} · ${diaChi(tin)}`, anh(tachAnh(tin.images)[0]))} aria-label="Chia sẻ">
+            <button onClick={() => chiaSeTin(tin.title, `${gia(tin)} · ${diaChi(tin)}`, anh(tachAnh(tin.images)[0]), `/tin/${tin.id}`)} aria-label="Chia sẻ">
               <Icon icon="zi-share-external-1" size={20} />
             </button>
           </div>

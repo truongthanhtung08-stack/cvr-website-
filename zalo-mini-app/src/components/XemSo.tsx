@@ -17,7 +17,7 @@ export default function XemSo({ id, sdt, soAn }: { id: string; sdt?: string | nu
 
   const moSo = async () => {
     setHien(true);
-    if (nguoiDung) await supabase.rpc("reveal_contact", { p_listing_id: id }).then(() => {}, () => {});
+    if (nguoiDung) await supabase.rpc("reveal_contact", { p_listing_id: id, p_nguon: "zalo" }).then(() => {}, () => {});
   };
   const nhanZalo = async () => {
     if (!hien) await moSo();

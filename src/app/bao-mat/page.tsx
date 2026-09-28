@@ -29,7 +29,7 @@ export default function BaoMatPage() {
   return (
     <TrangPhapLy
       title="Chính sách bảo mật"
-      capNhat="15/08/2026"
+      capNhat="28/09/2026"
       moDau="Coastal Land (coastalland.vn) là cổng thông tin bất động sản. Trang này nói rõ chúng tôi thu thập dữ liệu gì của bạn, dùng để làm gì, chia sẻ với ai và bạn có quyền gì đối với dữ liệu đó. Bằng việc sử dụng website, bạn đồng ý với chính sách này."
     >
       <Muc so={1} title="Chúng tôi thu thập dữ liệu gì">
@@ -51,6 +51,16 @@ export default function BaoMatPage() {
               </strong>{" "}
               để người mua liên hệ với bạn — đó là mục đích của việc đăng tin. Đừng nhập vào đây thông tin bạn không muốn công khai.
             </>,
+          ]}
+        />
+        {/* Zalo bắt buộc điều khoản ghi rõ quyền + dữ liệu cá nhân Mini App dùng (gửi duyệt 28/09/2026). */}
+        <p className="pt-2"><strong className="font-semibold text-cvr-ink">Khi bạn dùng Zalo Mini App “Coastal Land”:</strong></p>
+        <DanhSach
+          items={[
+            "Số điện thoại Zalo — chỉ khi bạn bấm “Đăng nhập nhanh bằng Zalo” và đồng ý chia sẻ. Số dùng làm tài khoản đăng nhập chung với coastalland.vn, không hiển thị công khai.",
+            "Tên và ảnh đại diện Zalo — để hiện tên tài khoản của bạn trong Mini App.",
+            "Ảnh bạn chọn từ thư viện hoặc chụp bằng camera — chỉ khi bạn bấm “Thêm ảnh” ở trang Đăng tin; ảnh chỉ dùng để hiển thị trong tin đăng của chính bạn.",
+            "Bạn có thể rút lại sự đồng ý bất cứ lúc nào trong phần quyền của Zalo. Khi nhận được yêu cầu rút đồng ý và xoá dữ liệu (từ Zalo hoặc gửi tới hotro@coastalland.vn), chúng tôi xoá dữ liệu cá nhân gắn với tài khoản của bạn trong vòng 30 ngày.",
           ]}
         />
         <p className="pt-2"><strong className="font-semibold text-cvr-ink">Lưu ngay trên trình duyệt của bạn:</strong></p>

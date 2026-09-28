@@ -17,7 +17,11 @@ const PHAP_LY = { tenCongTy: "COASTAL LAND", mst: "0402353502", diaChi: "220 Ngu
 // RÚT GỌN (chủ dự án 28/09/2026: không bê nguyên web) — một hàng liên kết chính.
 const LINK = [["Giới thiệu", "/gioi-thieu"], ["Quy chế", "/quy-che"], ["Điều khoản", "/dieu-khoan"], ["Bảo mật", "/bao-mat"], ["Liên hệ", "/lien-he"]];
 
-const moWeb = (duong: string) => openWebview({ url: `${WEB}${duong}` }).catch(() => { window.location.href = `${WEB}${duong}`; });
+// Gắn utm_source=zalo → web + Google Analytics tính lượt này là traffic từ kênh Zalo Mini App.
+const moWeb = (duong: string) => {
+  const url = `${WEB}${duong}?utm_source=zalo&utm_medium=mini_app`;
+  openWebview({ url }).catch(() => { window.location.href = url; });
+};
 
 export default function ChanTrang() {
   const nd = useTai(layChanTrang, [], {});
