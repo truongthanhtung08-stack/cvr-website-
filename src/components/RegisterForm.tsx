@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import SocialAuth from "@/components/SocialAuth";
@@ -43,6 +43,11 @@ type Cach = "chon" | "email" | "sdt";
 export default function RegisterForm({ uuDai, capThe = "h1" }: { uuDai?: string; capThe?: "h1" | "h2" }) {
   const TheTieuDe = capThe;
   const [cach, setCach] = useState<Cach>("chon");
+  // /dang-ky?cach=sdt (từ trang đăng nhập bằng số) → mở thẳng form, khỏi chọn lại cách.
+  useEffect(() => {
+    const c = new URLSearchParams(window.location.search).get("cach");
+    if (c === "sdt" || c === "email") setCach(c);
+  }, []);
 
   // Bước nhập
   const [hoTen, setHoTen] = useState("");

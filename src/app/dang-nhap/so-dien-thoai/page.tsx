@@ -8,49 +8,19 @@ import { createClient } from "@/lib/supabase/client";
 import { dichSauDangNhap } from "@/lib/dieuHuong";
 
 // ============================================================================
-// ĐĂNG NHẬP BẰNG SỐ ĐIỆN THOẠI — TIẾT KIỆM TIN NHẮN
-//
-// Cách làm (chủ dự án chốt 20/8/2026): CHỈ tốn tin nhắn ở lần đầu và khi quên
-// mật khẩu. Bình thường khách đăng nhập bằng số + mật khẩu, không tốn đồng nào.
-//
-//   Lần đầu       : nhập số → nhận mã → xác thực → TỰ ĐẶT MẬT KHẨU   (1 tin)
-//   Những lần sau : số điện thoại + mật khẩu → vào thẳng             (0 tin)
-//   Quên mật khẩu : nhận mã → xác thực → đặt mật khẩu mới            (1 tin)
-//
-// So với gửi mã mỗi lần đăng nhập: 1.000 khách vào 20 lần/năm là 20.000 tin,
-// cách này chỉ ~1.000 tin — rẻ hơn khoảng 20 lần.
-//
-// Mã gửi qua Zalo bằng /api/xac-thuc/dang-nhap-sdt (từ 27/09/2026, thay OTP của
-// Supabase): số nào khách đã khai — số chính, số thứ hai, hay số của tài khoản
-// email — cũng vào đúng MỘT tài khoản, và số được đánh dấu đã xác minh.
+// ĐĂNG NHẬP BẰNG SỐ ĐIỆN THOẠI — chuẩn như các sàn lớn (chủ dự án chốt 28/09/2026):
+// Đăng nhập là đăng nhập (số + mật khẩu + "Quên mật khẩu?"), Đăng ký là đăng ký
+// (/dang-ky). Không hỏi "lần đầu hay lần sau", không luồng mã nằm lẫn ở đây.
+// Đăng nhập không tốn tin nhắn; mã Zalo chỉ gửi khi đăng ký và khi quên mật khẩu.
 // ============================================================================
 
-type Buoc = "matKhau" | "nhapSo" | "nhapMa" | "datMatKhau";
-
-type KqDangNhap = { ok: true; access_token: string; refresh_token: string } | { ok: false; loi: string };
-async function goiDangNhap(body: Record<string, string>): Promise<KqDangNhap> {
-  try {
-    const r = await fetch("/api/xac-thuc/dang-nhap-sdt", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    return (await r.json()) as KqDangNhap;
-  } catch {
-    return { ok: false, loi: "Không kết nối được hệ thống. Vui lòng thử lại." };
-  }
-}
-
 export default function PhoneLoginPage() {
-  const [buoc, setBuoc] = useState<Buoc>("matKhau");
   const [phone, setPhone] = useState("");
   const [matKhau, setMatKhau] = useState("");
-  const [otp, setOtp] = useState("");
-  const [mkMoi, setMkMoi] = useState("");
-  const [mkLai, setMkLai] = useState("");
   const [hien, setHien] = useState(false);
   const [loading, setLoading] = useState(false);
   const [notice, setNotice] = useState("");
+  const [chuaCo, setChuaCo] = useState(false); // số chưa có tài khoản → mời đăng ký
 
   // 0905… → +84905… (Supabase yêu cầu định dạng quốc tế)
   const e164 = (v: string) => {
@@ -59,96 +29,43 @@ export default function PhoneLoginPage() {
     if (d.startsWith("0")) return `+84${d.slice(1)}`;
     return `+84${d}`;
   };
+  const soHopLe = phone.replace(/\D/g, "").length >= 10;
 
-  const soHopLe = phone.replace(/\D/g, "").length >= 9;
-
-  // ── Đăng nhập bằng số + mật khẩu (không tốn tin nhắn) ─────────────────────
-  async function dangNhap() {
+  async function dangNhap(e: React.FormEvent) {
+    e.preventDefault();
     setLoading(true);
     setNotice("");
+    setChuaCo(false);
     try {
       const supabase = createClient();
-      const { error } = await supabase.auth.signInWithPassword({
-        phone: e164(phone),
-        password: matKhau,
-      });
-      // Không khớp trực tiếp → có thể là SỐ THỨ HAI, hoặc tài khoản đăng ký bằng email có
-      // khai số này. Hỏi máy chủ dò đúng tài khoản rồi đăng nhập bằng mật khẩu của nó.
-      let loiCuoi = error;
+      let { error } = await supabase.auth.signInWithPassword({ phone: e164(phone), password: matKhau });
+      // Không khớp trực tiếp → có thể là tài khoản đăng ký bằng email/Google đã xác minh số
+      // này. Máy chủ dò đúng tài khoản rồi đăng nhập bằng mật khẩu của nó.
       if (error && /invalid login credentials/i.test(error.message)) {
-        const j = await goiDangNhap({ buoc: "mat-khau", sdt: phone, matKhau });
-        if (j.ok) {
-          await supabase.auth.setSession({ access_token: j.access_token, refresh_token: j.refresh_token });
-          loiCuoi = null;
+        const r = await fetch("/api/xac-thuc/dang-nhap-sdt", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ buoc: "mat-khau", sdt: phone, matKhau }),
+        }).then((x) => x.json()).catch(() => null);
+        if (r?.ok) {
+          await supabase.auth.setSession({ access_token: r.access_token, refresh_token: r.refresh_token });
+          error = null;
         }
       }
-      if (loiCuoi) {
-        setNotice(
-          /invalid login credentials/i.test(loiCuoi.message)
-            ? "Số điện thoại hoặc mật khẩu chưa đúng. Chưa có mật khẩu thì bấm “Lần đầu dùng số này” bên dưới."
-            : loiCuoi.message,
-        );
-      } else {
+      if (!error) {
         window.location.replace(dichSauDangNhap());
         return;
       }
-    } catch {
-      setNotice("Không kết nối được hệ thống. Vui lòng thử lại.");
-    }
-    setLoading(false);
-  }
-
-  // ── Gửi mã xác thực (tốn 1 tin nhắn) ──────────────────────────────────────
-  async function guiMa() {
-    setLoading(true);
-    setNotice("");
-    try {
-      // Mã do máy chủ Coastal Land gửi qua Zalo (không qua OTP của Supabase): xác nhận
-      // xong số được đánh dấu ĐÃ XÁC MINH → tin đăng hộ tự về tài khoản.
-      const j = await goiDangNhap({ buoc: "gui-ma", sdt: phone });
-      if (!j.ok) setNotice(j.loi);
-      else {
-        setBuoc("nhapMa");
-        setNotice("Đã gửi mã xác thực. Vui lòng kiểm tra tin nhắn.");
-      }
-    } catch {
-      setNotice("Không kết nối được hệ thống. Vui lòng thử lại.");
-    }
-    setLoading(false);
-  }
-
-  // ── Xác thực mã → sang bước đặt mật khẩu ──────────────────────────────────
-  async function xacThuc() {
-    setLoading(true);
-    setNotice("");
-    try {
-      const j = await goiDangNhap({ buoc: "xac-nhan", sdt: phone, ma: otp });
-      if (!j.ok) setNotice(j.loi);
-      else {
-        await createClient().auth.setSession({ access_token: j.access_token, refresh_token: j.refresh_token });
-        setBuoc("datMatKhau");
-        setNotice("Xác thực thành công. Đặt mật khẩu để lần sau vào thẳng, không cần chờ tin nhắn.");
-      }
-    } catch {
-      setNotice("Không kết nối được hệ thống. Vui lòng thử lại.");
-    }
-    setLoading(false);
-  }
-
-  // ── Đặt mật khẩu rồi vào trang tài khoản ──────────────────────────────────
-  async function datMatKhau() {
-    if (mkMoi.length < 6) return setNotice("Mật khẩu cần ít nhất 6 ký tự.");
-    if (mkMoi !== mkLai) return setNotice("Hai ô mật khẩu chưa giống nhau.");
-    setLoading(true);
-    setNotice("");
-    try {
-      const supabase = createClient();
-      const { error } = await supabase.auth.updateUser({ password: mkMoi });
-      if (error) setNotice(error.message);
-      else {
-        window.location.replace(dichSauDangNhap());
-        return;
-      }
+      if (/invalid login credentials/i.test(error.message)) {
+        // Sai vì CHƯA CÓ TÀI KHOẢN hay vì SAI MẬT KHẨU — nói đúng cái nào.
+        const kq = await fetch("/api/xac-thuc/kiem-tai-khoan", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sdt: phone }),
+        }).then((x) => x.json()).catch(() => null);
+        if (kq?.ok && !kq.coTaiKhoan) setChuaCo(true);
+        else setNotice("Mật khẩu chưa đúng.");
+      } else setNotice(error.message);
     } catch {
       setNotice("Không kết nối được hệ thống. Vui lòng thử lại.");
     }
@@ -156,7 +73,7 @@ export default function PhoneLoginPage() {
   }
 
   const oCls =
-    "h-11 w-full rounded-lg border border-cvr-line px-3 text-sm text-cvr-ink outline-none transition focus:border-cvr-ink disabled:bg-cvr-surface";
+    "h-11 w-full rounded-lg border border-cvr-line px-3 text-sm text-cvr-ink outline-none transition focus:border-cvr-ink";
 
   return (
     <>
@@ -170,153 +87,65 @@ export default function PhoneLoginPage() {
               {notice}
             </p>
           )}
+          {chuaCo && (
+            <p className="mt-4 rounded-lg border border-cvr-blue/30 bg-cvr-blue/[0.08] px-3 py-2 text-sm text-cvr-blue-ink">
+              Số này chưa có tài khoản.{" "}
+              <Link href="/dang-ky?cach=sdt" className="font-semibold underline">Đăng ký</Link>
+            </p>
+          )}
 
-          <div className="mt-5 space-y-3">
+          <form className="mt-5 space-y-3" onSubmit={dangNhap}>
             <label className="block">
               <span className="mb-1.5 block text-xs font-medium text-cvr-muted">Số điện thoại</span>
               <input
                 inputMode="tel"
+                autoComplete="username"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 placeholder="09xx xxx xxx"
-                disabled={buoc === "nhapMa" || buoc === "datMatKhau"}
                 className={oCls}
               />
             </label>
-
-            {/* ── Đăng nhập thường: số + mật khẩu ── */}
-            {buoc === "matKhau" && (
-              <>
-                <label className="block">
-                  <span className="mb-1.5 block text-xs font-medium text-cvr-muted">Mật khẩu</span>
-                  <div className="relative">
-                    <input
-                      type={hien ? "text" : "password"}
-                      value={matKhau}
-                      onChange={(e) => setMatKhau(e.target.value)}
-                      placeholder="Nhập mật khẩu"
-                      className={`${oCls} pr-14`}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setHien((s) => !s)}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md px-2 py-1 text-xs text-cvr-muted hover:text-cvr-ink"
-                    >
-                      {hien ? "Ẩn" : "Hiện"}
-                    </button>
-                  </div>
-                </label>
-
+            <label className="block">
+              <span className="mb-1.5 block text-xs font-medium text-cvr-muted">Mật khẩu</span>
+              <div className="relative">
+                <input
+                  type={hien ? "text" : "password"}
+                  autoComplete="current-password"
+                  value={matKhau}
+                  onChange={(e) => setMatKhau(e.target.value)}
+                  placeholder="Nhập mật khẩu"
+                  className={`${oCls} pr-14`}
+                />
                 <button
                   type="button"
-                  onClick={dangNhap}
-                  disabled={loading || !soHopLe || matKhau.length < 1}
-                  className="h-12 w-full rounded-lg bg-cvr-ink text-sm font-bold text-white transition hover:bg-cvr-ink/90 disabled:opacity-40"
+                  onClick={() => setHien((s) => !s)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md px-2 py-1 text-xs text-cvr-muted hover:text-cvr-ink"
                 >
-                  {loading ? "Đang xử lý…" : "Đăng nhập"}
+                  {hien ? "Ẩn" : "Hiện"}
                 </button>
+              </div>
+            </label>
 
-                {/* HAI VIỆC KHÁC NHAU, TRƯỚC ĐÂY GỘP LÀM MỘT và cùng chạy vào
-                    luồng OTP Zalo — mà Zalo ZNS đang không gửi được, nên bấm vào
-                    là cụt đường. Nay tách đúng hai lối đang chạy được:
-                      · chưa có tài khoản → sang trang Đăng ký
-                      · quên mật khẩu     → nhận mã qua email hoặc Zalo rồi đặt lại */}
-                <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 pt-1 text-sm">
-                  <a href="/dang-ky" className="text-cvr-blue-ink underline">Lần đầu dùng số này — Đăng ký</a>
-                  <a href="/quen-mat-khau" className="text-cvr-blue-ink underline">Quên mật khẩu?</a>
-                </div>
-              </>
-            )}
+            <div className="text-right text-sm">
+              <Link href="/quen-mat-khau" className="text-cvr-body hover:text-cvr-ink">Quên mật khẩu?</Link>
+            </div>
 
-            {/* ── Xin mã qua tin nhắn ── */}
-            {buoc === "nhapSo" && (
-              <>
-                <button
-                  type="button"
-                  onClick={guiMa}
-                  disabled={loading || !soHopLe}
-                  className="h-12 w-full rounded-lg bg-cvr-ink text-sm font-bold text-white transition hover:bg-cvr-ink/90 disabled:opacity-40"
-                >
-                  {loading ? "Đang gửi…" : "Gửi mã xác thực"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setBuoc("matKhau"); setNotice(""); }}
-                  className="w-full py-1 text-sm text-cvr-muted underline"
-                >
-                  Quay lại đăng nhập bằng mật khẩu
-                </button>
-              </>
-            )}
-
-            {/* ── Nhập mã 6 số ── */}
-            {buoc === "nhapMa" && (
-              <>
-                <label className="block">
-                  <span className="mb-1.5 block text-xs font-medium text-cvr-muted">Mã xác thực</span>
-                  <input
-                    inputMode="numeric"
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value)}
-                    placeholder="6 số"
-                    className={`${oCls} text-center text-lg tracking-[0.3em]`}
-                  />
-                </label>
-                <button
-                  type="button"
-                  onClick={xacThuc}
-                  disabled={loading || otp.length < 4}
-                  className="h-12 w-full rounded-lg bg-cvr-ink text-sm font-bold text-white transition hover:bg-cvr-ink/90 disabled:opacity-40"
-                >
-                  {loading ? "Đang xác thực…" : "Xác nhận"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setBuoc("nhapSo"); setOtp(""); setNotice(""); }}
-                  className="w-full py-1 text-sm text-cvr-muted underline"
-                >
-                  Đổi số điện thoại
-                </button>
-              </>
-            )}
-
-            {/* ── Đặt mật khẩu (lần đầu hoặc đổi mới) ── */}
-            {buoc === "datMatKhau" && (
-              <>
-                <label className="block">
-                  <span className="mb-1.5 block text-xs font-medium text-cvr-muted">Mật khẩu mới</span>
-                  <input
-                    type={hien ? "text" : "password"}
-                    value={mkMoi}
-                    onChange={(e) => setMkMoi(e.target.value)}
-                    placeholder="Ít nhất 6 ký tự"
-                    className={oCls}
-                  />
-                </label>
-                <label className="block">
-                  <span className="mb-1.5 block text-xs font-medium text-cvr-muted">Nhập lại mật khẩu</span>
-                  <input
-                    type={hien ? "text" : "password"}
-                    value={mkLai}
-                    onChange={(e) => setMkLai(e.target.value)}
-                    placeholder="Nhập lại cho khớp"
-                    className={oCls}
-                  />
-                </label>
-                <button
-                  type="button"
-                  onClick={datMatKhau}
-                  disabled={loading || mkMoi.length < 6}
-                  className="h-12 w-full rounded-lg bg-cvr-ink text-sm font-bold text-white transition hover:bg-cvr-ink/90 disabled:opacity-40"
-                >
-                  {loading ? "Đang lưu…" : "Lưu mật khẩu và vào tài khoản"}
-                </button>
-              </>
-            )}
-          </div>
+            <button
+              type="submit"
+              disabled={loading || !soHopLe || !matKhau}
+              className="h-12 w-full rounded-lg bg-cvr-ink text-sm font-bold text-white transition hover:bg-cvr-ink/90 disabled:opacity-40"
+            >
+              {loading ? "Đang đăng nhập…" : "Đăng nhập"}
+            </button>
+          </form>
 
           <p className="mt-6 text-center text-sm text-cvr-muted">
-            <Link href="/dang-nhap" className="font-medium text-cvr-blue-ink">← Quay lại các cách đăng nhập khác</Link>
+            Chưa có tài khoản?{" "}
+            <Link href="/dang-ky?cach=sdt" className="font-semibold text-cvr-ink hover:underline">Đăng ký</Link>
+          </p>
+          <p className="mt-3 text-center text-sm">
+            <Link href="/dang-nhap" className="text-cvr-muted hover:text-cvr-ink">← Cách đăng nhập khác</Link>
           </p>
         </div>
       </main>
