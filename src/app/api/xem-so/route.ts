@@ -187,7 +187,8 @@ async function baoCoNguoiQuanTam(admin: NonNullable<ReturnType<typeof createAdmi
       { nhan: "Tổng lượt quan tâm", giaTri: String(tong ?? 1) },
     ],
     znsTemplateId: MAU_CO_NGUOI_QUAN_TAM,
-    znsData: { ten_khach_hang: chu.full_name || "Quý khách", ten_tin: tin.title, thoi_gian: luc, so_luot: String(tong ?? 1) },
+    // so_dien_thoai: Zalo bắt mẫu có cặp định danh TÊN + SỐ ĐIỆN THOẠI (lỗi CT_13, 28/09/2026).
+    znsData: { ten_khach_hang: chu.full_name || "Quý khách", so_dien_thoai: chuanHoaSdt(chu.phone ?? ""), ten_tin: tin.title, thoi_gian: luc, so_luot: String(tong ?? 1) },
   });
 }
 

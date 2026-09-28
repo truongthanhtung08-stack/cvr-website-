@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { guiThongBao, MAU_BAO_CAO_TUAN, MAU_HOI_VIEN_SAP_HET } from "@/lib/thongBao";
 import { baoLoi } from "@/lib/baoLoi";
+import { chuanHoaSdt } from "@/lib/phone";
 
 // ============================================================================
 // THÔNG BÁO ĐỊNH KỲ — cron 8h sáng giờ VN mỗi ngày (vercel.json: 0 1 * * * UTC)
@@ -68,11 +69,13 @@ export async function GET(request: Request) {
         ],
         znsTemplateId: MAU_HOI_VIEN_SAP_HET,
         znsData: {
+          // Zalo 28/09/2026: bắt cặp TÊN + SỐ ĐIỆN THOẠI (CT_13); nhắc voucher là hậu mãi,
+          // không được ở tag chăm sóc khách hàng (CT_32) → mẫu Zalo bỏ voucher, email vẫn giữ.
           ten_khach_hang: n?.full_name || "Quý khách",
+          so_dien_thoai: chuanHoaSdt(n?.phone ?? ""),
           so_ngay: String(soNgay),
           ngay_het_han: ngayVN(new Date(g.het_han)),
           ten_goi: g.ten_goi,
-          so_voucher: String(soVoucher),
         },
       });
       hoiVien++;
@@ -125,6 +128,7 @@ export async function GET(request: Request) {
           znsTemplateId: MAU_BAO_CAO_TUAN,
           znsData: {
             ten_khach_hang: n.full_name || "Quý khách",
+            so_dien_thoai: chuanHoaSdt(n.phone ?? ""), // cặp định danh Zalo bắt buộc (CT_13)
             tu_ngay: tuChu,
             den_ngay: denChu,
             so_tin: String(ids.length),
