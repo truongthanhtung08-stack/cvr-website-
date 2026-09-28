@@ -51,7 +51,8 @@ export default function PostListingForm() {
   // Tài khoản đã có số điện thoại XÁC MINH chưa (bắt buộc trước khi đăng — chốt 27/09/2026).
   // null = chưa biết; admin không phải qua bước này.
   const [soDaXacMinh, setSoDaXacMinh] = useState<boolean | null>(null);
-  const [moXacMinh, setMoXacMinh] = useState(false); // hộp nhập mã Zalo bật lên khi bấm Đăng tin
+  const [moXacMinh, setMoXacMinh] = useState(false); // hộp "Số điện thoại của bạn" bật lên khi bấm Đăng tin
+  const [soTaiKhoan, setSoTaiKhoan] = useState(""); // số của TÀI KHOẢN (khác số liên hệ trong tin)
 
   const [done, setDone] = useState<"" | "draft" | "pending">("");
   // Chế độ SỬA: nạp tin cũ ("loading") · nạp xong ("ok") · không thấy/không có quyền ("notfound")
@@ -347,6 +348,7 @@ export default function PostListingForm() {
           const pv = p as { phone_verified?: boolean; role?: string };
           // Số khách đăng ký bằng số (Supabase đã nhận mã) cũng coi là đã xác minh.
           setSoDaXacMinh(!!pv.phone_verified || pv.role === "admin" || !!user.phone_confirmed_at);
+          setSoTaiKhoan(chuanHoaSdt(p.phone ?? ""));
           setContactName((v) => v || p.full_name || "");
           setContactPhone((v) => v || p.phone || "");
           setContactEmail((v) => v || p.email || "");
@@ -474,23 +476,25 @@ export default function PostListingForm() {
       if (!planTier) return setError("Chưa chọn gói tin ở mục “Chọn gói tin — thanh toán”.");
     // LƯU NHÁP thì không chặn gì thêm — người đăng ghi tới đâu lưu tới đó.
 
-    // SỐ CHƯA XÁC MINH (tài khoản email/Google) — chủ dự án chốt 28/09/2026:
-    //   · số MỚI (không tài khoản, không tin cũ) → KHÔNG hỏi gì, đăng luôn, ghi số vào hồ sơ.
-    //   · số ĐANG CÓ tài khoản / tin đăng hộ → hỏi mã Zalo 1 lần (tự gửi) rồi gộp ngầm —
-    //     không có mã thì ai gõ số người khác cũng lấy được tin của họ.
+    // SỐ CỦA TÀI KHOẢN (người đăng) — TÁCH HẲN khỏi số liên hệ trong tin (số liên hệ là quyền
+    // của khách, ghi số ai cũng được). Chủ dự án chốt 28/09/2026, tài khoản email/Google:
+    //   · chưa có số tài khoản → hộp nhỏ hỏi "Số điện thoại của bạn"
+    //   · số MỚI → không hỏi mã, lưu làm số tài khoản, đăng luôn
+    //   · số ĐANG CÓ tài khoản / tin cũ → mã Zalo 1 lần → gộp ngầm, đăng luôn
     if (!asDraft && soDaXacMinh === false && !daXacMinhXong) {
-      const so = chuanHoaSdt(contactPhone);
+      if (!soTaiKhoan) {
+        setMoXacMinh(true);
+        return;
+      }
       const kq = await fetch("/api/xac-thuc/kiem-tai-khoan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sdt: so }),
+        body: JSON.stringify({ sdt: soTaiKhoan }),
       }).then((r) => r.json()).catch(() => null);
       if (kq?.coTaiKhoan || Number(kq?.soTin) > 0) {
         setMoXacMinh(true);
         return;
       }
-      // Số mới → đăng luôn. KHÔNG tự ghi số liên hệ vào hồ sơ: số đó có thể là của chủ nhà
-      // (môi giới đăng hộ) — ghi vào là sau này chủ nhà đăng ký bị gộp nhầm sang tài khoản này.
     }
 
     // VÍ KHÔNG ĐỦ TIỀN CHO GÓI ĐÃ CHỌN.
@@ -706,24 +710,26 @@ export default function PostListingForm() {
       {moXacMinh && (
         <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4" onClick={() => setMoXacMinh(false)}>
           <div className="w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+            {/* Đã có số tài khoản (số đó có tài khoản/tin cũ) → mã tự gửi để gộp.
+                Chưa có số → hỏi "Số điện thoại của bạn": số mới lưu luôn, số cũ mới hỏi mã. */}
             <XacMinhSdt
-              tuGui
-              tieuDe="Xác nhận số điện thoại để đăng tin"
-              soGoiY={chuanHoaSdt(contactPhone)}
+              tuGui={!!soTaiKhoan}
+              tieuDe={soTaiKhoan ? "Xác nhận số điện thoại của bạn" : "Số điện thoại của bạn"}
+              soGoiY={soTaiKhoan}
+              onSoMoi={async (so) => {
+                const s = chuanHoaSdt(so);
+                if (userId) await createClient().from("profiles").update({ phone: s }).eq("id", userId);
+                setSoTaiKhoan(s);
+                setSoDaXacMinh(true);
+                setMoXacMinh(false);
+                save(false, true);
+              }}
               onXong={() => {
                 setSoDaXacMinh(true);
                 setMoXacMinh(false);
                 save(false, true);
               }}
             />
-            {/* Môi giới đăng hộ chủ nhà, số liên hệ là của chủ nhà → không có mã, không gộp. */}
-            <button
-              type="button"
-              onClick={() => { setMoXacMinh(false); save(false, true); }}
-              className="mt-2 w-full rounded-xl bg-white py-3 text-sm text-cvr-muted"
-            >
-              Đây không phải số của tôi — đăng tin, không gộp
-            </button>
           </div>
         </div>
       )}

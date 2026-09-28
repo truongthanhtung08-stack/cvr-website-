@@ -10,7 +10,7 @@ import { createClient } from "@/lib/supabase/client";
 // Hai bước ngay tại chỗ: nhập số → nhận mã Zalo → nhập mã. Xong là đăng tin tiếp.
 // ============================================================================
 // tuGui: mở ra là GỬI MÃ LUÔN (dùng trong hộp bật lên khi bấm Đăng tin) — khách chỉ việc nhập mã.
-export default function XacMinhSdt({ soGoiY, onXong, tuGui, tieuDe = "Xác minh số điện thoại để đăng tin" }: { soGoiY?: string; onXong: (sdt: string, soTinGop: number) => void; tuGui?: boolean; tieuDe?: string }) {
+export default function XacMinhSdt({ soGoiY, onXong, onSoMoi, tuGui, tieuDe = "Xác minh số điện thoại để đăng tin" }: { soGoiY?: string; onXong: (sdt: string, soTinGop: number) => void; onSoMoi?: (sdt: string) => void; tuGui?: boolean; tieuDe?: string }) {
   const [sdt, setSdt] = useState(soGoiY ?? "");
   const [ma, setMa] = useState("");
   const [daGui, setDaGui] = useState(false);
@@ -46,6 +46,22 @@ export default function XacMinhSdt({ soGoiY, onXong, tuGui, tieuDe = "Xác minh 
     }
   }
 
+  // onSoMoi (dùng ở Đăng tin): số MỚI → không hỏi mã, trả số cho nơi gọi lưu làm số tài khoản;
+  // số đang có tài khoản / tin cũ → gửi mã Zalo để gộp (chủ dự án chốt 28/09/2026).
+  async function tiepTuc() {
+    setDang(true);
+    setLoi("");
+    const kq = await fetch("/api/xac-thuc/kiem-tai-khoan", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sdt }),
+    }).then((r) => r.json()).catch(() => null);
+    setDang(false);
+    if (!kq?.ok) return setLoi("Số điện thoại chưa đúng hoặc mất kết nối. Vui lòng thử lại.");
+    if (kq.coTaiKhoan || Number(kq.soTin) > 0) return goi("gui-ma");
+    onSoMoi?.(sdt);
+  }
+
   const oCls = "h-11 w-full rounded-lg border border-cvr-line bg-white px-3 text-sm text-cvr-ink outline-none focus:border-cvr-ink";
   const nutCls = "h-11 shrink-0 rounded-lg bg-cvr-ink px-4 text-sm font-semibold text-white transition hover:bg-cvr-ink/90 disabled:opacity-60";
 
@@ -61,8 +77,8 @@ export default function XacMinhSdt({ soGoiY, onXong, tuGui, tieuDe = "Xác minh 
           placeholder="Số điện thoại của bạn"
           className={oCls}
         />
-        <button type="button" onClick={() => goi("gui-ma")} disabled={dang || sdt.replace(/\D/g, "").length < 10} className={nutCls}>
-          {daGui ? "Gửi lại" : "Nhận mã Zalo"}
+        <button type="button" onClick={() => (onSoMoi && !daGui ? tiepTuc() : goi("gui-ma"))} disabled={dang || sdt.replace(/\D/g, "").length < 10} className={nutCls}>
+          {daGui ? "Gửi lại" : onSoMoi ? "Tiếp tục" : "Nhận mã Zalo"}
         </button>
       </div>
       {daGui && (
