@@ -379,7 +379,7 @@ export const BANNERS_DEFAULT: BannerTable[] = [
 export const bangUp = (d: BillingData): UpRow[] => (d.up?.length ? d.up : UP_DEFAULT);
 
 // Thứ tự CỘT của bảng Đẩy tin — đúng thứ tự trang báo giá đang render.
-const COT_UP: TierId[] = ["diamond", "gold", "silver", "basic"];
+export const COT_UP: TierId[] = ["diamond", "gold", "silver", "basic"];
 
 // ── GÓI UP NHIỀU LƯỢT ───────────────────────────────────────────────────────
 // Bảng Đẩy tin có 2 loại dòng, khác hẳn nhau về cách bán:
@@ -396,7 +396,7 @@ export type GoiUp = {
 
 // "Đẩy 7 lượt (−30%)" → 7 · "Đẩy 1 lượt" → 1. Nhận cả nhãn cũ "Up 7 lần"
 // (bảng admin lưu trước 25/09/2026) để không gãy dữ liệu cũ.
-function soLuotTuNhan(label: string): number {
+export function soLuotTuNhan(label: string): number {
   const m = label.match(/(\d+)\s*(lần|lượt)/i);
   return m ? Number(m[1]) : 1;
 }

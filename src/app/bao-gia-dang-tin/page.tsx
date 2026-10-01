@@ -14,6 +14,7 @@ import { getBilling, getQuyDinhGia } from "@/lib/siteContent";
 import { dienMa } from "@/lib/quyDinhGia";
 import { bangTheoMucDich, priceLinesFor, bangUp, goiPr, ghiChuPr, bangBanner, giaTra, priceLinesDuAn, freeDangChay, freeNote, tenGoiMienPhi } from "@/lib/billing";
 import BangGiaGoiTin from "@/components/BangGiaGoiTin";
+import BangGiaDayTin from "@/components/BangGiaDayTin";
 import type { Listing, Project } from "@/lib/data";
 import NutMucDichGia from "@/components/NutMucDichGia";
 import GoiHoiVienCards, { DieuKienHoiVien } from "@/components/GoiHoiVienCards";
@@ -246,42 +247,12 @@ export default async function BaoGiaPage() {
 
               {/* 3. GÓI ĐẨY TIN */}
               <section id="goi-day-tin" className="scroll-mt-24">
-                <SectionTitle no="03" title="Gói Đẩy tin" desc="Đưa tin đang hiển thị lên đầu trong cùng loại tin — ngày đăng và thời hạn giữ nguyên. Gói nhiều lượt: lượt đầu đẩy ngay khi mua, sau đó mỗi ngày 1 lượt, dùng trong thời hạn hiển thị của tin." />
+                <SectionTitle no="03" title="Gói Đẩy tin" desc="Đưa tin đang hiển thị lên đầu trong cùng loại tin." />
                 {coThue && <div className="mt-4"><NutMucDichGia /></div>}
-                <div className="mt-6 overflow-x-auto rounded-2xl border border-cvr-line bg-white shadow-lux">
-                  <table className="w-full min-w-[680px] text-sm">
-                    <thead>
-                      <tr className="border-b border-cvr-line text-left">
-                        <th className="px-6 py-4 font-semibold text-cvr-ink">Gói</th>
-                        {(["diamond", "gold", "silver", "basic"] as const).map((id) => {
-                          const t = getTier(id);
-                          return (
-                            <th key={id} className="px-4 py-4 text-center font-semibold tracking-tight" style={{ color: t.accent }}>
-                              {t.name}
-                            </th>
-                          );
-                        })}
-                      </tr>
-                    </thead>
-                    {[{ md: "ban", rows: upRows }, ...(coThue ? [{ md: "thue", rows: upRowsThue }] : [])].map(({ md, rows }) => (
-                    <tbody
-                      key={md}
-                      className={!coThue ? "" : md === "ban" ? "group-data-[md=thue]/gia:hidden" : "hidden group-data-[md=thue]/gia:table-row-group"}
-                    >
-                      {rows.map((r) => (
-                        <tr key={r.label} className="border-b border-cvr-line/60 transition-colors last:border-0 hover:bg-cvr-surface/50">
-                          <td className="px-6 py-4 font-medium text-cvr-body">{r.label}</td>
-                          {r.values.map((v, i) => (
-                            <td key={i} className="px-4 py-4 text-center">
-                              {v.giaGoc ? <span className="mr-1.5 text-xs text-cvr-faint line-through">{giaTra(v.giaGoc)}</span> : null}
-                              <span className="font-semibold tracking-tight text-cvr-ink">{giaTra(v.gia)}</span>
-                            </td>
-                          ))}
-                        </tr>
-                      ))}
-                    </tbody>
-                    ))}
-                  </table>
+                {/* CÙNG KIỂU bảng giá tin đăng (Batdongsan) — chung với hộp Mua gói đẩy của khách */}
+                <div className="mt-6">
+                  <div className={coThue ? "group-data-[md=thue]/gia:hidden" : ""}><BangGiaDayTin rows={upRows} /></div>
+                  {coThue && <div className="hidden group-data-[md=thue]/gia:block"><BangGiaDayTin rows={upRowsThue} /></div>}
                 </div>
               </section>
               </div>

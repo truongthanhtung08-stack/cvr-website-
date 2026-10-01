@@ -1155,7 +1155,6 @@ export default function PostListingForm() {
                   <span className="text-[15px] font-semibold text-cvr-ink">Tổng tiền</span>
                   <span className="text-xl font-bold tabular-nums tracking-tight text-cvr-ink">{thanhTien > 0 ? vnd(tienThue.tongTra) : "0 ₫"}</span>
                 </div>
-                {thanhTien > 0 && <p className="mt-1.5 text-right text-xs text-cvr-muted">Trừ vào ví khi tin được duyệt · tin bị từ chối không trừ</p>}
                 {/* Số dư ví ngay tại chỗ — biết thiếu TRƯỚC khi bấm đăng, nạp được ngay. */}
                 {thanhTien > 0 && hoSoVi && (
                   <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white px-3.5 py-2.5">

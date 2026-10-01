@@ -17,6 +17,14 @@ import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
 
 const THU_TU: TierId[] = ["basic", "silver", "gold", "diamond"];
 
+// QUY ĐỊNH ĐI KÈM BẢNG GIÁ — ngắn, đúng cơ chế đang chạy (chốt 01/10/2026).
+const QUY_DINH = [
+  "Tin bắt đầu hiển thị khi được duyệt; số ngày tính từ lúc duyệt.",
+  "Phí trừ vào ví lúc duyệt. Tin bị từ chối không trừ phí.",
+  "Hết hạn, tin ngừng hiển thị. Bấm Đăng lại để hiển thị tiếp (duyệt như tin mới).",
+  "Sửa tin không đổi gói, ngày đăng và thời hạn.",
+];
+
 export default function BangGiaGoiTin({
   plans,
   chon,
@@ -110,6 +118,9 @@ export default function BangGiaGoiTin({
         </span>
         Giá bao gồm {(THUE_SUAT_GTGT * 100).toFixed(0)}% VAT
       </label>
+      <ul className="mt-3 space-y-1 text-[13px] leading-relaxed text-cvr-muted">
+        {QUY_DINH.map((d) => <li key={d} className="flex gap-2"><span aria-hidden>·</span><span>{d}</span></li>)}
+      </ul>
     </div>
   );
 }

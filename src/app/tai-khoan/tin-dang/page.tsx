@@ -15,7 +15,8 @@ import {
   thongTinGoi,
   ngayGon,
 } from "@/lib/listingAdmin";
-import { bangTheoMucDich, giaDayTin, goiUpNhieuLuot, vnd } from "@/lib/billing";
+import { bangTheoMucDich, bangUp, giaDayTin, goiUpNhieuLuot, soLuotTuNhan, vnd } from "@/lib/billing";
+import BangGiaDayTin from "@/components/BangGiaDayTin";
 import { soNgayConDay } from "@/lib/luotUp";
 import BangGiaGoiTin from "@/components/BangGiaGoiTin";
 import type { TierId } from "@/lib/packages";
@@ -147,28 +148,19 @@ export default function MyListingsPage() {
         : "Tin không còn ngày nào để đẩy thêm trong thời hạn hiển thị.");
       return;
     }
+    // Mở bảng giá đẩy tin (cùng kiểu trang Báo giá) — khách bấm ô gói muốn mua.
+    setMuaCho({ r, conDay, cap: goi.cap });
+    setLuotChon(null);
+  }
 
-    const giaLe = tachThue(giaDayTin(bangTheoMucDich(billing, r.purpose), goi.cap)).tongTra;
-    const dong = dsGoi.map((g, i) => {
-      const tra = tachThue(g.gia).tongTra;
-      const moiLuot = Math.round(tra / g.soLuot);
-      const re = giaLe > 0 ? Math.round((1 - moiLuot / giaLe) * 100) : 0;
-      return `${i + 1}. ${g.soLuot} lượt — ${vnd(tra)}  (${vnd(moiLuot)}/lượt${re > 0 ? `, rẻ hơn ${re}%` : ""})`;
-    });
-    const chon = window.prompt(
-      `Mua gói đẩy cho tin "${r.title || "(chưa có tiêu đề)"}" (${goi.tenGoi})\n` +
-      `Đẩy lẻ hiện là ${vnd(giaLe)}/lượt.\n\n${dong.join("\n")}\n\n` +
-      `Gõ số thứ tự gói muốn mua (1–${dsGoi.length}), hoặc để trống để thoát:`
-    );
-    const i = Number(chon) - 1;
-    if (!chon || !dsGoi[i]) return;
-    const g = dsGoi[i];
-    if (!window.confirm(
-      `Mua ${g.soLuot} lượt đẩy — ${vnd(tachThue(g.gia).tongTra)} (đã gồm thuế GTGT), trừ thẳng vào ví.\n\n` +
-      `Lần đẩy đầu chạy ngay khi mua; sau đó hệ thống tự đẩy mỗi ngày 1 lần vào đầu giờ sáng cho tới khi hết lượt. ` +
-      `Lượt dùng trong thời hạn hiển thị của tin — tin hết hạn thì lượt còn lại hết theo.`
-    )) return;
-
+  // Hộp "Mua gói đẩy": bảng giá đẩy tin của đúng loại tin, bấm ô là chọn gói.
+  const [muaCho, setMuaCho] = useState<{ r: ListingRow; conDay: number; cap: TierId } | null>(null);
+  const [luotChon, setLuotChon] = useState<number | null>(null);
+  async function xacNhanMuaGoi() {
+    if (!muaCho || !luotChon) return;
+    const r = muaCho.r;
+    const g = { soLuot: luotChon };
+    setMuaCho(null);
     setDangMua(r.id);
     try {
       const res = await fetch("/api/tin-dang/mua-goi-up", {
@@ -508,6 +500,30 @@ export default function MyListingsPage() {
 
       {tongTrang > 1 && (
         <PhanTrang hienTai={trangHienTai} tong={tongTrang} doiTrang={doiTrang} ghiChu={`${filtered.length} tin`} className="pt-1" />
+      )}
+      {muaCho && (
+        <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4" onClick={() => setMuaCho(null)}>
+          <div className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-white p-5 shadow-xl sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
+            <p className="text-sm text-cvr-muted">Mua gói đẩy tin</p>
+            <h3 className="mt-0.5 line-clamp-2 text-base font-semibold text-cvr-ink">{muaCho.r.title || "(chưa có tiêu đề)"}</h3>
+            <div className="mt-4">
+              <BangGiaDayTin
+                rows={bangUp(bangTheoMucDich(billing, muaCho.r.purpose)).filter((x) => soLuotTuNhan(x.label) > 1)}
+                chiCap={muaCho.cap}
+                chonLuot={luotChon ?? undefined}
+                onChon={setLuotChon}
+                toiDaLuot={muaCho.conDay}
+              />
+            </div>
+            <div className="mt-5 flex gap-2">
+              <button type="button" onClick={() => setMuaCho(null)} className="h-11 flex-1 rounded-full border border-cvr-line text-sm font-medium text-cvr-body">Huỷ</button>
+              <button type="button" onClick={xacNhanMuaGoi} disabled={!luotChon}
+                className="h-11 flex-[2] rounded-full bg-cvr-ink text-sm font-semibold text-white disabled:opacity-50">
+                {luotChon ? `Mua gói ${luotChon} lượt — trừ vào ví` : "Chọn gói đẩy"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
       {upCho && (
         <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4" onClick={() => !dangUp && setUpCho(null)}>
