@@ -4,7 +4,6 @@ import { Fragment, useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { tachNhieuSdt } from "@/lib/phone";
 import HopXacThucSo, { veDaLuu } from "@/components/HopXacThucSo";
-import HopDanhGiaTin from "@/components/HopDanhGiaTin";
 
 // ============================================================================
 // CỔNG SỐ ĐIỆN THOẠI — full SĐT người đăng chỉ hiện sau khi khách tự định danh.
@@ -159,10 +158,6 @@ export function ContactActions({ listingId, phoneMask }: { listingId: string; ph
         </>
       )}
       {hoiSo && <HopXacThucSo listingId={listingId} onXong={nhanSo} onDong={() => setHoiSo(false)} />}
-      {/* Xem số xong rồi mới hỏi chất lượng tin — người vừa liên hệ là người
-          duy nhất biết tin thật hay ảo. Đặt ở ĐÂY, không đặt thêm ở thanh
-          mobile: hai chỗ cùng bật là hiện hai hộp chồng nhau. */}
-      {phone && <HopDanhGiaTin listingId={listingId} />}
     </div>
   );
 }

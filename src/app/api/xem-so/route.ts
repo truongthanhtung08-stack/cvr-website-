@@ -44,7 +44,7 @@ export async function POST(req: Request) {
 }
 
 async function xuLy(req: Request) {
-  let body: { listingId?: string; sdt?: string; ma?: string; ten?: string; ve?: string };
+  let body: { listingId?: string; sdt?: string; ma?: string; ten?: string; ve?: string; chiXacMinh?: boolean };
   try {
     body = await req.json();
   } catch {
@@ -58,6 +58,11 @@ async function xuLy(req: Request) {
   const sdtTuVe = docVe(body.ve);
 
   if (!listingId) return loi("Thiếu mã tin.", 400);
+
+  // CHỈ XÁC MINH SỐ (vd để gửi đánh giá — chủ dự án chốt 01/10/2026): không trả số người
+  // đăng, không ghi lead; xác minh xong chỉ phát vé.
+  const chiXacMinh = body.chiXacMinh === true;
+  if (sdtTuVe && chiXacMinh) return NextResponse.json({ ok: true, ve: body.ve });
 
   // Có vé còn hạn → bỏ qua cả hai bước mã, trả số ngay.
   if (sdtTuVe) return traSo(listingId, sdtTuVe, body.ten, null);
@@ -90,6 +95,7 @@ async function xuLy(req: Request) {
   if (!kiem.ok) return loi(kiem.loi, 400);
 
   // Mã đúng → phát vé để lần sau xem tin khác khỏi phải nhập mã lại.
+  if (chiXacMinh) return NextResponse.json({ ok: true, ve: phatVe(sdt) });
   return traSo(listingId, sdt, body.ten, phatVe(sdt));
 }
 

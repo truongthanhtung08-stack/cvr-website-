@@ -32,11 +32,14 @@ export default function HopXacThucSo({
   listingId,
   onXong,
   onDong,
+  chiXacMinh = false,
 }: {
   listingId: string;
-  /** Xác thực xong — trả về số điện thoại người bán. */
+  /** Xác thực xong — trả về số điện thoại người bán ("" khi chiXacMinh). */
   onXong: (sdtNguoiBan: string) => void;
   onDong: () => void;
+  /** Chỉ xác minh số của khách (vd để gửi đánh giá) — KHÔNG lấy số người đăng, không ghi lead. */
+  chiXacMinh?: boolean;
 }) {
   const [buoc, setBuoc] = useState<"sdt" | "ma">("sdt");
   const [sdt, setSdt] = useState("");
@@ -53,14 +56,14 @@ export default function HopXacThucSo({
       const r = await fetch("/api/xem-so", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ listingId, sdt: sdt.trim(), ten: ten.trim(), ...kem }),
+        body: JSON.stringify({ listingId, sdt: sdt.trim(), ten: ten.trim(), chiXacMinh, ...kem }),
       });
       const j = await r.json();
-      if (j.ok && j.sdt) {
+      if (j.ok && (j.sdt || (chiXacMinh && j.ve))) {
         // Nhớ vé: lần sau xem tin khác không phải nhập mã lại. Vé chỉ nói "số
         // này đã xác thực", không mở được tài khoản hay ví.
         if (j.ve) { try { localStorage.setItem(KHOA_VE, j.ve as string); } catch { /* chặn lưu trữ → lần sau nhập mã lại */ } }
-        return onXong(j.sdt as string);
+        return onXong((j.sdt as string) ?? "");
       }
       if (j.ok && j.daGui) {
         setBuoc("ma");
@@ -84,7 +87,7 @@ export default function HopXacThucSo({
         onClick={(e) => e.stopPropagation()}
       >
         <h3 className="text-lg font-semibold tracking-tight text-cvr-ink">
-          {buoc === "sdt" ? "Xem số điện thoại người đăng" : "Nhập mã xác thực"}
+          {buoc === "sdt" ? (chiXacMinh ? "Xác minh số để gửi đánh giá" : "Xem số điện thoại người đăng") : "Nhập mã xác thực"}
         </h3>
         <p className="mt-1 text-sm text-cvr-muted">
           {buoc === "sdt"
@@ -127,7 +130,7 @@ export default function HopXacThucSo({
             href={`/dang-nhap?next=${encodeURIComponent(next)}`}
             className="mt-4 flex h-12 items-center justify-center rounded-full bg-cvr-ink text-sm font-bold text-white"
           >
-            Đăng nhập để xem số
+            {chiXacMinh ? "Đăng nhập để đánh giá" : "Đăng nhập để xem số"}
           </a>
         ) : (
           <button
@@ -136,7 +139,7 @@ export default function HopXacThucSo({
             disabled={dangChay || (buoc === "sdt" ? sdt.trim().length < 9 : ma.length < 6)}
             className="mt-4 h-12 w-full rounded-full bg-cvr-ink text-sm font-bold text-white disabled:opacity-40"
           >
-            {dangChay ? "Đang xử lý…" : buoc === "sdt" ? "Nhận mã" : "Xem số"}
+            {dangChay ? "Đang xử lý…" : buoc === "sdt" ? "Nhận mã" : chiXacMinh ? "Xác minh" : "Xem số"}
           </button>
         )}
 

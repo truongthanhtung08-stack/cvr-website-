@@ -8,6 +8,7 @@ import ListingShowcase from "@/components/ListingShowcase";
 import { HomeExpandProvider, HomeCollapsible } from "@/components/HomeExpand";
 import RecordView from "@/components/RecordView";
 import { ContactActions, ContactBarMobile } from "@/components/LienHeReveal";
+import KhoiDanhGiaTin from "@/components/KhoiDanhGiaTin";
 import ShareButtons from "@/components/ShareButtons";
 import PriceHistory from "@/components/PriceHistory";
 import {
@@ -555,6 +556,10 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
               <Section id="vi-tri" title="Vị trí trên bản đồ">
                 <ProjectNearby mapQuery={d.mapQuery} address={l.location} places={[]} zoom={d.mapZoom} />
               </Section>
+
+              {/* ĐÁNH GIÁ TIN — ai đọc tin cũng đánh giá được, không cần xem số người đăng;
+                  bấm gửi mới xác minh (đã đăng nhập / đã xác minh số thì gửi luôn). */}
+              <KhoiDanhGiaTin listingId={l.id} />
             </div>
 
             {/* Cột phụ — môi giới (dính khi cuộn) */}
