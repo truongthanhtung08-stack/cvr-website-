@@ -32,7 +32,7 @@ export default function DanhSachTin({ ds, dangTai, loi, trong }: { ds: Tin[]; da
   };
   return (
     <>
-      <div ref={dau} className="ds-doc" style={{ scrollMarginTop: 120 }}>{ds.slice(trang * MOI_TRANG, (trang + 1) * MOI_TRANG).map((t) => <TheTin key={t.id} tin={t} />)}</div>
+      <div ref={dau} className="ds-doc" style={{ scrollMarginTop: 120 }}>{ds.slice(trang * MOI_TRANG, (trang + 1) * MOI_TRANG).map((t) => <TheTin key={t.banSao ? `${t.id}-kem` : t.id} tin={t} />)}</div>
       {soTrang > 1 && (
         <div className="phan-trang">
           <button disabled={trang === 0} onClick={() => den(trang - 1)}>‹</button>

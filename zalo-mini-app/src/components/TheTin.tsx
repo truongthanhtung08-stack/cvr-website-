@@ -10,10 +10,15 @@ import { theoDoiThe } from "../lib/hienThi";
 // Ảnh vừa phải để nhường chỗ cho tiêu đề + nội dung: hạng · số ảnh · tim trên ảnh;
 // dưới ảnh: tiêu đề 2 dòng · nội dung 2 dòng · giá + diện tích · địa chỉ + thời gian.
 // Dùng chung cho danh sách dọc (.ds-doc) và dải trượt ngang (.truot-ngang).
-const HANG: Record<string, { ten: string; mau: string }> = {
-  diamond: { ten: "Diamond", mau: "#c1121f" },
-  gold: { ten: "Gold", mau: "#b8860b" },
-  silver: { ten: "Silver", mau: "#2f5d84" },
+// QUY ĐỊNH HẠNG — Y HỆT WEB (src/lib/packages.ts, chốt 01/10/2026):
+//   Diamond: dải nhấn đỏ · huy hiệu · tiêu đề VIẾT HOA, in đậm · 3 dòng mô tả
+//   Gold:    dải nhấn vàng · huy hiệu · tiêu đề VIẾT HOA, in đậm · 2 dòng mô tả
+//   Silver:  dải nhấn xanh · huy hiệu · tiêu đề in đậm · 1 dòng mô tả
+//   Basic:   trình bày mặc định — không dải nhấn, không huy hiệu, không mô tả
+const HANG: Record<string, { ten: string; mau: string; dai: string; hoa: boolean; dong: number }> = {
+  diamond: { ten: "Diamond", mau: "#c1121f", dai: "#c1121f", hoa: true, dong: 3 },
+  gold: { ten: "Gold", mau: "#b8860b", dai: "#d9b84e", hoa: true, dong: 2 },
+  silver: { ten: "Silver", mau: "#2f5d84", dai: "#7ea6c8", hoa: false, dong: 1 },
 };
 
 export default function TheTin({ tin }: { tin: Tin }) {
@@ -30,6 +35,7 @@ export default function TheTin({ tin }: { tin: Tin }) {
 
   return (
     <article ref={the} className="the-tin" onClick={() => dieuHuong(`/tin/${tin.id}`)}>
+      {h && <div className="dai-nhan" style={{ background: h.dai }} aria-hidden />}
       <div className="anh-the">
         <img src={anh(anhs[0])} alt={tin.title} loading="lazy" />
         {h && <span className="nhan-hang" style={{ background: `${h.mau}e6` }}>{h.ten}</span>}
@@ -48,8 +54,8 @@ export default function TheTin({ tin }: { tin: Tin }) {
         </button>
       </div>
       <div className="than-the">
-        <h3 className="tieu-de">{tin.title}</h3>
-        {moTa && <p className="mo-ta">{moTa}</p>}
+        <h3 className={`tieu-de ${h ? "dam" : "vua"} ${h?.hoa ? "hoa" : ""}`}>{tin.title}</h3>
+        {h && moTa && <p className="mo-ta" style={{ WebkitLineClamp: h.dong }}>{moTa}</p>}
         <div className="gia-dt">
           <span className="gia" style={tin.price_vnd == null ? { color: "var(--cl-muted)" } : undefined}>{gia(tin)}</span>
           {dienTich(tin) && <span>{dienTich(tin)}</span>}

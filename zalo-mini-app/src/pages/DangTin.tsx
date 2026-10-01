@@ -9,6 +9,7 @@ import { chonAnh, taiAnhLen } from "../lib/taiAnh";
 import { laVideo } from "../lib/media";
 import { useTai } from "../lib/useTai";
 import { layNguoiZalo } from "../lib/zalo";
+import BangGiaMaTran, { TEN_HANG } from "../components/BangGiaMaTran";
 
 const { Option } = Select;
 
@@ -97,11 +98,15 @@ export default function DangTin() {
     const homNay = new Date().toISOString().slice(0, 10);
     const dangChay = !!f?.active && (!f.from || homNay >= f.from) && (!f.to || homNay <= f.to);
     const laMoi = !!hoSo.data?.created_at && (Date.now() - new Date(hoSo.data.created_at).getTime()) / 86_400_000 <= (f?.days ?? 0);
-    const hopDoiTuong = f?.audience === "all" || (f?.audience === "new" && laMoi) || f?.audience === hoSo.data?.role;
+    // CÙNG MỘT điều kiện khuyến mãi với web (huongKhuyenMai, src/lib/billing.ts): chương trình
+    // đang chạy · đúng hạng của chương trình · đúng đối tượng · còn lượt — lấy từ admin.
+    const hopDoiTuong = f?.audience === "all" || (f?.audience === "new" && laMoi) || f?.audience === (hoSo.data?.role ?? "buyer");
     const conLuot = f?.quota === 0 || (hoSo.data?.free_quota ?? 0) > 0;
-    const mienPhi = dangChay && goi?.tierId === "basic" && f?.tierId === "basic" && hopDoiTuong && laMoi && conLuot;
+    const mienPhi = !!hoSo.data && dangChay && !!goi && goi.tierId === f?.tierId && hopDoiTuong && conLuot;
     const thanhTien = mienPhi ? 0 : giaGoi;
-    return { mienPhi, thanhTien, tongTra: thanhTien + Math.round(thanhTien * VAT), viCo: Number(hoSo.data?.balance ?? 0) };
+    // Số ngày tin THẬT SỰ hiển thị: hưởng khuyến mãi → đúng số ngày của chương trình (như web).
+    const soNgayThat = mienPhi ? (f?.days ?? soNgay ?? 0) : (soNgay ?? 0);
+    return { mienPhi, thanhTien, soNgayThat, tongTra: thanhTien + Math.round(thanhTien * VAT), viCo: Number(hoSo.data?.balance ?? 0) };
   }, [goi, soNgay, bangGia.data, hoSo.data]);
 
   const dsPhuong = provincesNew.find((p) => p.name === tinh)?.wards ?? [];
@@ -297,30 +302,32 @@ export default function DangTin() {
       </Nhom>
 
       <Nhom tieuDe="Gói tin">
-        {dsGoi.length > 1 && (
-          <div className="chip-loc" style={{ padding: 0, flexWrap: "wrap" }}>
-            {dsGoi.map((g) => (
-              <button key={g.tierId} className={g.tierId === goi?.tierId ? "bat" : ""} onClick={() => setHang(g.tierId)}>{g.name}</button>
-            ))}
-          </div>
-        )}
-        {goi ? (
-          <div className="chip-loc" style={{ padding: 0, flexWrap: "wrap" }}>
-            {goi.terms.map((t) => (
-              <button key={t.days} className={t.days === soNgay ? "bat" : ""} onClick={() => setSoNgay(t.days)}>
-                {t.days} ngày · {tien.mienPhi ? "Miễn phí" : t.price === 0 ? "Không tính phí" : vnd(t.price)}
-              </button>
-            ))}
-          </div>
+        {/* BẢNG GIÁ MA TRẬN như web — bấm ô = chọn hạng + số ngày. Giá từ admin, đã gồm VAT. */}
+        {dsGoi.length ? (
+          <BangGiaMaTran
+            plans={dsGoi}
+            chon={{ tier: goi?.tierId ?? "", days: soNgay ?? 0 }}
+            onChon={(t, d) => { setHang(t); setSoNgay(d); }}
+          />
         ) : (
           <Spinner />
         )}
-        {tien.thanhTien > 0 && (
-          <Text size="small" className="chu-phu">
-            {vnd(tien.thanhTien)} + VAT 8% = <strong>{vnd(tien.tongTra)}</strong> · Ví hiện có {vnd(tien.viCo)}
-          </Text>
+        {goi && (
+          <div className="tom-tat-goi">
+            <div><span>Loại tin</span><b>{TEN_HANG[goi.tierId] ?? goi.name}</b></div>
+            <div><span>Thời gian đăng</span><b>{tien.soNgayThat} ngày</b></div>
+            <div><span>Bắt đầu hiển thị</span><b>Khi tin được duyệt</b></div>
+            {tien.mienPhi ? (
+              <div><span>Ưu đãi thành viên mới</span><b>Miễn phí</b></div>
+            ) : (
+              <>
+                <div><span>Phí + VAT 8%</span><b>{vnd(tien.tongTra)}</b></div>
+                {tien.thanhTien > 0 && <div><span>Ví hiện có</span><b>{vnd(tien.viCo)}</b></div>}
+              </>
+            )}
+          </div>
         )}
-        {tien.mienPhi && <Text size="small" className="chu-phu">Ưu đãi thành viên mới — không trừ tiền ví.</Text>}
+
       </Nhom>
 
       {loi && <Box p={4}><Text size="small" style={{ color: "#d70018" }}>{loi}</Text></Box>}

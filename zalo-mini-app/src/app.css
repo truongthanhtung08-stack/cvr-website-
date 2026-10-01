@@ -58,6 +58,11 @@ body { background: var(--cl-surface); color: var(--cl-ink); }
 .than-the { padding: 12px; }
 .tieu-de { margin: 0; font-size: 15px; font-weight: 600; line-height: 1.5; color: var(--cl-ink); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .tieu-de.hoa { text-transform: uppercase; }
+/* Độ đậm tiêu đề theo hạng — y hệt web: Basic vừa · Silver/Gold/Diamond in đậm */
+.tieu-de.vua { font-weight: 500; }
+.tieu-de.dam { font-weight: 700; }
+/* Dải nhấn đỉnh thẻ theo hạng (Silver xanh · Gold vàng · Diamond đỏ) */
+.the-tin .dai-nhan { height: 1px; width: 100%; }
 .mo-ta { margin: 4px 0 0; font-size: 14px; line-height: 1.55; color: var(--cl-muted); display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; }
 .gia-dt { margin-top: 10px; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: 13px; color: var(--cl-body); }
 .gia-dt .gia { font-size: 16px; color: #ef4444; }
@@ -227,3 +232,25 @@ html.xem-thu .hang-app { padding-right: 0; }
 .luoi-tt > div { background: #fff; padding: 10px 12px; }
 .luoi-tt dt { font-size: 12px; color: var(--cl-muted); }
 .luoi-tt dd { margin: 2px 0 0; font-size: 14px; font-weight: 600; color: var(--cl-ink); }
+
+/* ── Bảng giá ma trận — y hệt web (BangGiaGoiTin / BangGiaDayTin), 01/10/2026 ── */
+.cuon-bang { margin: 0 12px; overflow-x: auto; border: 1px solid var(--cl-line); border-radius: 14px; background: #fff; }
+.bang-mt { width: 100%; min-width: 460px; border-collapse: collapse; font-size: 13px; }
+.bang-mt th { background: #f5f5f7; padding: 10px 6px; border-bottom: 1px solid var(--cl-line); text-align: center; }
+.bang-mt td { padding: 10px 6px; border-top: 1px solid var(--cl-line); border-left: 1px solid var(--cl-line); text-align: center; vertical-align: middle; }
+.bang-mt tr:first-child td { border-top: 0; }
+.bang-mt .ghim { position: sticky; left: 0; z-index: 1; background: #fff; text-align: left; font-weight: 600; white-space: nowrap; border-left: 0; padding-left: 12px; }
+.bang-mt th.ghim { background: #f5f5f7; }
+.bang-mt td b { display: block; color: var(--cl-ink); font-weight: 600; white-space: nowrap; }
+.bang-mt .trong { color: #86868b; }
+.nhan-bang { display: inline-block; white-space: nowrap; color: #fff; font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 999px; }
+.giam { display: inline-block; margin-top: 3px; border: 1px solid #fca5a5; color: #b91c1c; font-size: 11px; font-weight: 600; padding: 0 6px; border-radius: 999px; }
+.moi-luot { display: block; margin-top: 2px; font-size: 11px; color: #6e6e73; }
+.qd-bang { margin: 8px 16px 4px; padding: 0; list-style: none; font-size: 12.5px; line-height: 1.5; color: #6e6e73; }
+.qd-bang li::before { content: "· "; }
+/* Ô bấm chọn gói trong bảng ma trận (trang Đăng tin) + tóm tắt gói đã chọn */
+.bang-mt td.o-chon { cursor: pointer; }
+.bang-mt td.dang-chon { box-shadow: inset 0 0 0 2px var(--cl-ink); background: rgba(29,29,31,.04); }
+.tom-tat-goi { margin-top: 10px; background: #f5f5f7; border-radius: 12px; padding: 10px 12px; font-size: 13px; }
+.tom-tat-goi div { display: flex; justify-content: space-between; gap: 8px; padding: 3px 0; color: var(--cl-body); }
+.tom-tat-goi b { color: var(--cl-ink); font-weight: 600; text-align: right; }

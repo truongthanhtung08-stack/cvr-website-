@@ -23,6 +23,8 @@ export type Tin = {
   images: string[];
   tier: "diamond" | "gold" | "silver" | "basic";
   tier_expires_at: string | null;
+  /** Bản kèm "Nhân đôi hiển thị" của tin CVR Diamond — không phải tin riêng (giống web). */
+  banSao?: boolean;
   published_at: string | null;
   bumped_at: string | null;
   nguoi_dang: string | null; // tên người đăng — hiện ở đáy thẻ như web
@@ -67,9 +69,9 @@ export async function timTin(tuKhoa: string, mucDich: "ban" | "thue"): Promise<{
     return { t, khop: tu.filter((w) => chu.includes(w)).length };
   });
   const du = diem.filter((d) => d.khop === tu.length).map((d) => d.t);
-  if (du.length) return { ds: du.slice(0, 100), lienQuan: false };
+  if (du.length) return { ds: nhanDoiHienThi(du.slice(0, 100)), lienQuan: false };
   const gan = diem.filter((d) => d.khop > 0).sort((a, b) => b.khop - a.khop).map((d) => d.t);
-  return { ds: gan.slice(0, 50), lienQuan: true };
+  return { ds: nhanDoiHienThi(gan.slice(0, 50)), lienQuan: true };
 }
 
 export async function layTin(id: string): Promise<Tin | null> {
@@ -163,9 +165,25 @@ export async function layBangGia(): Promise<BangGia | null> {
 }
 
 // ── Lọc tin theo bộ lọc (giống trang danh sách trên web) ────────────────────
-export function locTin(mucDich: "ban" | "thue", b: BoLoc, soLuong = 300) {
-  return rest(`select=${COT}&status=eq.approved&purpose=eq.${mucDich}&${thamSo(mucDich, b)}&limit=${soLuong}`);
+// Kết quả lọc XẾP THEO HẠNG như web: Diamond → Gold → Silver → Basic, cùng hạng giữ thứ tự
+// thời gian (mới / vừa đẩy trước) + nhân đôi hiển thị tin Diamond.
+export async function locTin(mucDich: "ban" | "thue", b: BoLoc, soLuong = 300) {
+  const ds = await rest(`select=${COT}&status=eq.approved&purpose=eq.${mucDich}&${thamSo(mucDich, b)}&limit=${soLuong}`);
+  return xepTheoHang(nhanDoiHienThi(ds));
 }
+
+// NHÂN ĐÔI HIỂN THỊ — quyền lợi CVR Diamond, Y HỆT WEB (src/lib/nhanDoiHienThi.ts): ở kết quả
+// tìm kiếm, mỗi tin Diamond còn hạn hiện thêm một thẻ CVR Basic (cùng tin → đẩy/sửa/hết hạn cùng lúc).
+export function nhanDoiHienThi(ds: Tin[]): Tin[] {
+  const ra: Tin[] = [];
+  for (const t of ds) {
+    ra.push(t);
+    if (hangHieuLuc(t) === "diamond") ra.push({ ...t, tier: "basic", tier_expires_at: null, banSao: true });
+  }
+  return ra;
+}
+export const xepTheoHang = (ds: Tin[]) =>
+  ds.map((t, i) => ({ t, i })).sort((a, b) => THU_HANG[hangHieuLuc(a.t)] - THU_HANG[hangHieuLuc(b.t)] || a.i - b.i).map((x) => x.t);
 
 // Tỉnh/thành đang có tin (chỉ để hiện lựa chọn — không hiện số tin).
 export async function layTinhCoTin(mucDich: "ban" | "thue"): Promise<string[]> {

@@ -163,7 +163,7 @@ export default function TimKiem() {
         <>
           <div style={{ padding: "10px 16px 0" }}>
             <Text size="small" className="chu-phu">
-              {ketQua.lienQuan ? `Chưa có tin khớp đủ “${ketQua.tu}” — tin gần giống:` : `${ketQua.ds.length} tin khớp “${ketQua.tu}”`}
+              {ketQua.lienQuan ? `Chưa có tin khớp đủ “${ketQua.tu}” — tin gần giống:` : `${ketQua.ds.filter((x) => !x.banSao).length} tin khớp “${ketQua.tu}”`}
             </Text>
           </div>
           <DanhSachTin ds={ketQua.ds} dangTai={dangTai} loi={undefined} trong="Chưa có tin." />

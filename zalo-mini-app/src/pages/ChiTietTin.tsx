@@ -19,10 +19,10 @@ import { nhungVideo, tachAnh, tachVideo } from "../lib/media";
 // đặc điểm dạng dòng · mô tả thu gọn · tiện ích · dự án · người đăng · tin tương tự) · nút gọi cố định.
 
 const NHAN_HANG: Record<string, { ten: string; mau: string }> = {
-  diamond: { ten: "Tin Diamond", mau: "#c1121f" },
-  gold: { ten: "Tin Gold", mau: "#b8860b" },
-  silver: { ten: "Tin Silver", mau: "#2f5d84" },
-  basic: { ten: "Tin thường", mau: "#6e6e73" },
+  diamond: { ten: "CVR Diamond", mau: "#c1121f" },
+  gold: { ten: "CVR Gold", mau: "#b8860b" },
+  silver: { ten: "CVR Silver", mau: "#2f5d84" },
+  basic: { ten: "CVR Basic", mau: "#6e6e73" },
 };
 
 const laDat = (t: TinChiTiet) => /đất/i.test(t.type);
