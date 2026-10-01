@@ -70,7 +70,9 @@ export default function NhanTinCuaToi() {
       <p className="text-sm font-medium text-cvr-ink">Có {soTin} tin đăng mang số {soGoiY} — xác minh số để nhận về tài khoản.</p>
       <XacMinhSdt
         soGoiY={soGoiY}
-        onXong={(so, gop) => {
+        onXong={(so, gop, idMoi) => {
+          // Tài khoản Zalo vừa gộp vào tài khoản cũ của số → tải lại để hiện đúng tài khoản đó.
+          if (idMoi) return window.location.reload();
           setKetQua(gop > 0 ? `${gop} tin đăng đã về tài khoản của bạn.` : `Đã xác minh số ${so}, tin mang số này đã về tài khoản.`);
           setTt("xong");
         }}

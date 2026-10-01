@@ -47,6 +47,9 @@ export default function PostListingForm() {
 
   // Ai đang đăng nhập (cần để gắn owner_id + prefill liên hệ)
   const [userId, setUserId] = useState<string | null>(null);
+  // Tài khoản Zalo vừa GỘP vào tài khoản cũ của số (XacMinhSdt) → lưu tin vào tài khoản cũ
+  // ngay trong lần bấm Đăng tin này (state userId chưa kịp đổi trong lần save đang chạy).
+  const uidGop = useRef<string | null>(null);
   const [authReady, setAuthReady] = useState(false);
   // Tài khoản đã có số điện thoại XÁC MINH chưa (bắt buộc trước khi đăng — chốt 27/09/2026).
   // null = chưa biết; admin không phải qua bước này.
@@ -454,7 +457,8 @@ export default function PostListingForm() {
 
   async function save(asDraft: boolean, daXacMinhXong = false) {
     setError("");
-    if (!userId) {
+    const uid = uidGop.current ?? userId;
+    if (!uid) {
       router.push("/dang-nhap?next=/dang-tin");
       return;
     }
@@ -572,13 +576,13 @@ export default function PostListingForm() {
       // TIN MỚI
       ({ error: err } = await supabase
         .from("listings")
-        .insert({ ...values, owner_id: userId, tier: hangTin, published_at: null }));
+        .insert({ ...values, owner_id: uid, tier: hangTin, published_at: null }));
     } else if (editStatus === "draft" && !luuNhap) {
       // ĐĂNG TIN NHÁP: tạo tin mới "chờ duyệt" + xoá nháp cũ.
       // (2 thao tác này chủ tin luôn có quyền — không phụ thuộc quyền đổi status trong DB)
       ({ error: err } = await supabase
         .from("listings")
-        .insert({ ...values, owner_id: editOwner ?? userId, tier: hangTin, published_at: null }));
+        .insert({ ...values, owner_id: editOwner ?? uid, tier: hangTin, published_at: null }));
       if (!err) await supabase.from("listings").delete().eq("id", editId);
     } else {
       // SỬA tin (nháp→nháp, chờ duyệt, đã duyệt…)
@@ -724,7 +728,8 @@ export default function PostListingForm() {
                 setMoXacMinh(false);
                 save(false, true);
               }}
-              onXong={() => {
+              onXong={(_so, _gop, idMoi) => {
+                if (idMoi) { uidGop.current = idMoi; setUserId(idMoi); }
                 setSoDaXacMinh(true);
                 setMoXacMinh(false);
                 save(false, true);

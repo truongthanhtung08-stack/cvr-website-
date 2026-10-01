@@ -133,7 +133,7 @@ export async function GET(request: Request) {
       );
     }
 
-    const email = emailKyThuat(me.id);
+    let email = emailKyThuat(me.id);
     const hoTen = me.name?.trim() || "Người dùng Zalo";
     const anh = me.picture?.data?.url ?? null;
 
@@ -143,13 +143,25 @@ export async function GET(request: Request) {
       auth: { autoRefreshToken: false, persistSession: false },
     });
 
-    // Chưa có thì tạo; đã có thì bỏ qua lỗi trùng email.
-    const { error: loiTao } = await admin.auth.admin.createUser({
-      email,
-      email_confirm: true,
-      user_metadata: { full_name: hoTen, avatar_url: anh, provider: "zalo", zalo_id: me.id },
-    });
-    if (loiTao && !/already/i.test(loiTao.message)) return loi("zalo_tao_tai_khoan_that_bai");
+    // Zalo đã GẮN vào một tài khoản (0049 — vd đã gộp vào tài khoản theo số) → vào ĐÚNG
+    // tài khoản đó, không đẻ tài khoản Zalo riêng (1 số = 1 tài khoản).
+    const { data: daGan } = await admin.from("profiles").select("id").eq("zalo_id", me.id).maybeSingle();
+    if (daGan) {
+      const { data: uGan } = await admin.auth.admin.getUserById(daGan.id);
+      if (uGan?.user?.email) email = uGan.user.email;
+      else {
+        const { error } = await admin.auth.admin.updateUserById(daGan.id, { email, email_confirm: true });
+        if (error) return loi("zalo_tao_phien_that_bai");
+      }
+    } else {
+      // Chưa có thì tạo; đã có thì bỏ qua lỗi trùng email.
+      const { error: loiTao } = await admin.auth.admin.createUser({
+        email,
+        email_confirm: true,
+        user_metadata: { full_name: hoTen, avatar_url: anh, provider: "zalo", zalo_id: me.id },
+      });
+      if (loiTao && !/already/i.test(loiTao.message)) return loi("zalo_tao_tai_khoan_that_bai");
+    }
 
     // Sinh liên kết đăng nhập một lần rồi tự đổi thành phiên (cookie) ngay tại đây
     const { data: link, error: loiLink } = await admin.auth.admin.generateLink({
@@ -158,6 +170,10 @@ export async function GET(request: Request) {
     });
     const hash = link?.properties?.hashed_token;
     if (loiLink || !hash) return loi("zalo_tao_phien_that_bai");
+    // Tài khoản Zalo (mới tạo, hoặc tạo trước 0049) chưa ghi zalo_id → ghi để lần sau tìm theo cột.
+    if (!daGan && link.user?.id) {
+      await admin.from("profiles").update({ zalo_id: me.id }).eq("id", link.user.id).is("zalo_id", null);
+    }
 
     // Supabase đổi tên loại mã theo phiên bản: bản mới dùng "email", bản cũ dùng
     // "magiclink". Thử lần lượt cả hai để không phụ thuộc phiên bản.

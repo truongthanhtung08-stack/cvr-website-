@@ -10,7 +10,7 @@ import { createClient } from "@/lib/supabase/client";
 // Hai bước ngay tại chỗ: nhập số → nhận mã Zalo → nhập mã. Xong là đăng tin tiếp.
 // ============================================================================
 // tuGui: mở ra là GỬI MÃ LUÔN (dùng trong hộp bật lên khi bấm Đăng tin) — khách chỉ việc nhập mã.
-export default function XacMinhSdt({ soGoiY, onXong, onSoMoi, tuGui, tieuDe = "Xác minh số điện thoại để đăng tin" }: { soGoiY?: string; onXong: (sdt: string, soTinGop: number) => void; onSoMoi?: (sdt: string) => void; tuGui?: boolean; tieuDe?: string }) {
+export default function XacMinhSdt({ soGoiY, onXong, onSoMoi, tuGui, tieuDe = "Xác minh số điện thoại để đăng tin" }: { soGoiY?: string; onXong: (sdt: string, soTinGop: number, idTaiKhoanMoi?: string) => void; onSoMoi?: (sdt: string) => void; tuGui?: boolean; tieuDe?: string }) {
   const [sdt, setSdt] = useState(soGoiY ?? "");
   const [ma, setMa] = useState("");
   const [daGui, setDaGui] = useState(false);
@@ -38,7 +38,13 @@ export default function XacMinhSdt({ soGoiY, onXong, onSoMoi, tuGui, tieuDe = "X
       const j = await r.json();
       if (!j.ok) return setLoi(j.loi || "Chưa xác minh được. Vui lòng thử lại.");
       if (buoc === "gui-ma") setDaGui(true);
-      else onXong(j.sdt, Number(j.soTinGop) || 0);
+      else {
+        // Tài khoản Zalo vừa gộp vào tài khoản cũ của số này → chuyển sang phiên tài khoản cũ.
+        if (j.doiTaiKhoan) {
+          await createClient().auth.setSession({ access_token: j.doiTaiKhoan.access_token, refresh_token: j.doiTaiKhoan.refresh_token });
+        }
+        onXong(j.sdt, Number(j.soTinGop) || 0, j.doiTaiKhoan?.id);
+      }
     } catch {
       setLoi("Không kết nối được hệ thống. Vui lòng thử lại.");
     } finally {

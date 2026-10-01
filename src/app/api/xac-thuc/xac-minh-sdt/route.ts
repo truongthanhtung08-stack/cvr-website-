@@ -41,7 +41,10 @@ export async function POST(req: Request) {
   const tim = await timTaiKhoan(admin, sdt);
   if (tim === "trung") return loi("Số này đang gắn với nhiều tài khoản. Vui lòng liên hệ Coastal Land.", 409);
   const idCu = tim && tim.id !== uid ? tim.id : null;
-  if (idCu) {
+  // Tài khoản sinh ra từ Zalo → gộp NGƯỢC vào tài khoản cũ (giữ nguyên ví/gói của tài khoản cũ),
+  // nên không cần chặn theo số dư tài khoản cũ.
+  const laTkZalo = /^zalo_.+@users\.coastalland\.vn$/.test(u.user?.email ?? "");
+  if (idCu && !laTkZalo) {
     const [{ data: hs }, { data: hv }] = await Promise.all([
       admin.from("profiles").select("balance").eq("id", idCu).maybeSingle(),
       admin.from("hoi_vien").select("user_id").eq("user_id", idCu).gt("het_han", new Date().toISOString()).limit(1),
@@ -63,6 +66,56 @@ export async function POST(req: Request) {
   if (!kiem.ok) return loi(kiem.loi);
 
   let soTinGop = 0;
+
+  // TÀI KHOẢN SINH RA TỪ ZALO (email kỹ thuật zalo_…) mà số này đã có tài khoản cũ → gộp
+  // NGƯỢC: tài khoản Zalo nhập vào tài khoản cũ, Zalo gắn sang tài khoản cũ (0049), mở
+  // phiên tài khoản cũ. Không cửa đăng nhập nào bị mất (Gmail/số + mật khẩu của tài khoản
+  // cũ vẫn vào được; bấm Zalo lần sau tìm theo zalo_id → ra tài khoản cũ).
+  if (idCu && laTkZalo) {
+    const [{ data: hsMoi }, { data: hvMoi }] = await Promise.all([
+      admin.from("profiles").select("balance,zalo_id").eq("id", uid).maybeSingle(),
+      admin.from("hoi_vien").select("user_id").eq("user_id", uid).gt("het_han", new Date().toISOString()).limit(1),
+    ]);
+    if (Number(hsMoi?.balance ?? 0) > 0 || (hvMoi ?? []).length)
+      return loi("Tài khoản Zalo này còn số dư ví hoặc gói hội viên. Vui lòng liên hệ Coastal Land để gộp tài khoản.", 409);
+    const { data: hsCu } = await admin.from("profiles").select("zalo_id").eq("id", idCu).maybeSingle();
+    const zaloId = hsMoi?.zalo_id ?? u.user!.email!.replace(/^zalo_|@users\.coastalland\.vn$/g, "");
+    if (hsCu?.zalo_id && hsCu.zalo_id !== zaloId)
+      return loi("Số này đã gắn với một tài khoản Zalo khác. Vui lòng liên hệ Coastal Land.", 409);
+
+    const { data: chuyen } = await admin.from("listings").update({ owner_id: idCu }).eq("owner_id", uid).select("id");
+    soTinGop = (chuyen ?? []).length;
+    // Nhả zalo_id ở tài khoản Zalo trước (cột duy nhất) rồi gắn sang tài khoản cũ.
+    await admin.from("profiles").update({ zalo_id: null }).eq("id", uid);
+    await admin.from("profiles").update({ zalo_id: zaloId, phone: sdt, phone_verified: true }).eq("id", idCu);
+    await admin.auth.admin.updateUserById(uid, { ban_duration: "876000h" }).then(() => {}, () => {});
+
+    // Mở phiên cho tài khoản cũ (chưa có email thì gắn email kỹ thuật theo số).
+    const { data: uCu } = await admin.auth.admin.getUserById(idCu);
+    let emailCu = uCu?.user?.email ?? null;
+    if (!emailCu) {
+      emailCu = `sdt_${sdt}@users.coastalland.vn`;
+      const { error } = await admin.auth.admin.updateUserById(idCu, { email: emailCu, email_confirm: true });
+      if (error) return loi("Đã gộp nhưng chưa mở được phiên. Vui lòng đăng nhập lại bằng Zalo.", 500);
+    }
+    const sbMo = taoClient(url, anon, { auth: { persistSession: false, autoRefreshToken: false } });
+    const { data: link } = await admin.auth.admin.generateLink({ type: "magiclink", email: emailCu });
+    const hash = link?.properties?.hashed_token;
+    let phien = hash ? (await sbMo.auth.verifyOtp({ type: "email", token_hash: hash })).data.session : null;
+    if (!phien && hash) phien = (await sbMo.auth.verifyOtp({ type: "magiclink", token_hash: hash })).data.session;
+    if (!phien) return loi("Đã gộp nhưng chưa mở được phiên. Vui lòng đăng nhập lại bằng Zalo.", 500);
+
+    const sbCu = taoClient(url, anon, {
+      auth: { persistSession: false, autoRefreshToken: false },
+      global: { headers: { Authorization: `Bearer ${phien.access_token}` } },
+    });
+    await sbCu.rpc("tu_nhan_tin_theo_sdt").then(() => {}, () => {});
+    return NextResponse.json({
+      ok: true, sdt, soTinGop,
+      doiTaiKhoan: { id: idCu, access_token: phien.access_token, refresh_token: phien.refresh_token },
+    });
+  }
+
   if (idCu) {
     // Gộp: tin của tài khoản cũ sang tài khoản này; tài khoản cũ nhả số rồi khoá đăng nhập.
     const { data: chuyen } = await admin.from("listings").update({ owner_id: uid }).eq("owner_id", idCu).select("id");
