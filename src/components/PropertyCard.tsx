@@ -131,7 +131,8 @@ export default function PropertyCard({
       {/* Nội dung */}
       <div className={`flex flex-1 flex-col ${isFeatured ? "p-4" : isMini ? "p-2.5" : "p-3"}`}>
 
-        {/* Tiêu đề — kiểu chữ theo cấp tin (Diamond/Gold VIẾT HOA).
+        {/* Tiêu đề — kiểu chữ theo cấp tin (quy định packages.ts, chốt 01/10/2026):
+            Basic trình bày mặc định (đậm vừa) · Silver/Gold/Diamond IN ĐẬM · Gold/Diamond VIẾT HOA.
             ⚠️ CHO DÃN TỚI 3 DÒNG. Tiêu đề tin bất động sản gần như luôn dài
             ("CHO THUÊ NHÀ 3 TẦNG MỚI FULL NỘI THẤT CAO CẤP - HÒA XUÂN - ĐÀ NẴNG");
             cắt cứng 2 dòng là mất nửa thông tin, khách nhìn không ra tin gì.
@@ -139,7 +140,7 @@ export default function PropertyCard({
             KHÔNG đặt chiều cao CỐ ĐỊNH: trình duyệt trong Zalo/Facebook chỉnh cỡ
             chữ khác làm dòng cuối bị xén ngang thân chữ. */}
         <h3
-          className={`clamp-3 min-h-[3em] font-semibold leading-[1.5] text-cvr-ink ${tier?.uppercase ? "uppercase" : ""} ${
+          className={`clamp-3 min-h-[3em] ${tierId === "basic" ? "font-medium" : "font-bold"} leading-[1.5] text-cvr-ink ${tier?.uppercase ? "uppercase" : ""} ${
             isFeatured ? "text-lg" : isMini ? "text-sm" : "text-[15px]"
           }`}
           style={tier?.titleColor ? { color: tier.titleColor } : undefined}
@@ -237,7 +238,7 @@ function PropertyRow({ item, showTime = false, terms = [] }: { item: Listing; sh
       </div>
       <div className="flex min-w-0 flex-1 flex-col">
         <h3
-          className={`clamp-2 min-h-[3em] text-sm font-semibold leading-[1.5] text-cvr-ink sm:text-base ${tier?.uppercase ? "uppercase" : ""}`}
+          className={`clamp-2 min-h-[3em] text-sm ${tierId === "basic" ? "font-medium" : "font-bold"} leading-[1.5] text-cvr-ink sm:text-base ${tier?.uppercase ? "uppercase" : ""}`}
           style={tier?.titleColor ? { color: tier.titleColor } : undefined}
         >
           <Highlight text={item.title} terms={terms} />
