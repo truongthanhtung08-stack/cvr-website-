@@ -4,7 +4,7 @@
 // ============================================================================
 import type { TierId } from "@/lib/packages";
 
-export type PriceLine = { label: string; original?: string; price: string };
+export type PriceLine = { label: string; original?: string; price: string; perDay?: string };
 export type Sample = { image: string; title: string; address: string; price?: string };
 
 export type VipPkg = { tierId: TierId; benefits: string[]; displays: string[]; sample: Sample; prices: PriceLine[] };

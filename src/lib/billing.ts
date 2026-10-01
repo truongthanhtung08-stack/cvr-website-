@@ -661,10 +661,13 @@ export function priceLinesFor(data: BillingData, tierId: TierId): PriceLineOut[]
   return terms.map((t) => {
     const goc = Math.round(perWeek * (t.days / 7));
     const giam = goc > t.price ? Math.round(((goc - t.price) / goc) * 100) : 0;
-    const ten = t.days % 7 === 0 ? `Giá ${t.days / 7} tuần` : `Giá ${t.days} ngày`;
+    // Gọi theo SỐ NGÀY như form đăng tin (7 / 15 / 30 ngày) — một cách gọi khắp web.
+    const ten = `${t.days} ngày`;
     return {
       label: giam > 0 ? `${ten} (−${giam}%)` : ten,
       original: giam > 0 ? giaTra(goc) : undefined,
+      // ĐƠN GIÁ / NGÀY như Batdongsan — khách so gói dễ hơn.
+      perDay: t.price > 0 ? `${giaTra(Math.round(t.price / t.days))}/ngày` : undefined,
       // Gói 0đ (vd tin thường Bán 7 ngày, như BĐS) là gói KHÔNG TÍNH PHÍ — ghi
       // "0 đ", không ghi "Miễn phí" (chữ đó dành cho chương trình thành viên mới).
       price: giaTra(t.price),

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import BangGiaGoiTin from "@/components/BangGiaGoiTin";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { donViGiaNenDung, goiYDienTich, goiYGia, goiYTieuDe } from "@/lib/goiYNhapTin";
@@ -22,7 +23,7 @@ import OTieuDe from "@/components/OTieuDe";
 // phải sửa đúng dòng import này.
 import MapPicker from "@/components/MapPickerMo";
 import ContentEditor from "@/components/admin/ContentEditor";
-import { bangTheoMucDich, freeDangChay, huongKhuyenMai, freeNote, quotePrice, soAnhToiDa, soVideoToiDa, tenGoiMienPhi, vnd } from "@/lib/billing";
+import { bangTheoMucDich, freeDangChay, huongKhuyenMai, soNgayHienThi, freeNote, quotePrice, soAnhToiDa, soVideoToiDa, tenGoiMienPhi, vnd } from "@/lib/billing";
 import { banChuyenDoi } from "@/lib/gtagChuyenDoi";
 import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
 import { useBilling } from "@/lib/useBilling";
@@ -116,7 +117,8 @@ export default function PostListingForm() {
   // ví bị trừ là khiếu nại.
   const [planTier, setPlanTier] = useState<TierId | "">("");
   const [planDays, setPlanDays] = useState<number>(billing.plans[0]?.terms[0]?.days ?? 7);
-  const [planStart, setPlanStart] = useState<string>("");
+  // Tin ĐANG HIỂN THỊ / ĐÃ HẾT HẠN đang sửa → gói cố định, chỉ hiện thông tin gói (không chọn lại).
+  const [goiDangDung, setGoiDangDung] = useState<{ tier: TierId; het: string | null } | null>(null);
   // Thông tin ví/hồ sơ dùng để tính ưu đãi (null = chưa đăng nhập hoặc chưa tải xong)
   const [hoSoVi, setHoSoVi] = useState<{
     created_at: string | null;
@@ -138,18 +140,8 @@ export default function PostListingForm() {
   const [thieuTien, setThieuTien] = useState<{ can: number; du: number } | null>(null);
   const [error, setError] = useState("");
 
-  // Ngay bat dau mac dinh = hom nay; ngay ket thuc tu tinh theo so ngay cua goi
-  // Ngày phải lấy theo MÁY KHÁCH, mà máy chủ dựng trang trước nên không được đặt
-  // sẵn lúc khởi tạo — đặt sẵn thì máy chủ và máy khách ra hai ngày khác nhau,
-  // React báo lệch và ô ngày nhảy. Vì vậy đặt sau khi trang đã dựng xong.
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { if (!planStart) setPlanStart(new Date().toISOString().slice(0, 10)); }, [planStart]);
-  const planEnd = useMemo(() => {
-    if (!planStart) return "";
-    const d = new Date(planStart);
-    d.setDate(d.getDate() + planDays);
-    return d.toISOString().slice(0, 10);
-  }, [planStart, planDays]);
+  // KHÔNG còn ô "Ngày bắt đầu" tự chọn: tin bắt đầu hiển thị LÚC ĐƯỢC DUYỆT (một luật,
+  // 01/10/2026) — cho chọn ngày là hứa một mốc web không làm đúng.
   // Tải xong bảng giá admin → đưa thời hạn về mốc đầu tiên của bảng giá hiện hành
   useEffect(() => {
     if (!billingLoading) {
@@ -214,18 +206,19 @@ export default function PostListingForm() {
   // nếu không khách thấy giá 1.050.000đ mà ví bị trừ 1.134.000đ là khiếu nại.
   const tienThue = tachThue(thanhTien);
 
-  // Giá hiển thị cạnh tên từng gói trong ô chọn (để nhìn là biết chọn gì)
-  const giaCuaGoi = (tierId: TierId): string => {
-    const p = bangGia.plans.find((x) => x.tierId === tierId);
-    const gia = (p?.terms.find((t) => t.days === planDays) ?? p?.terms[0])?.price ?? 0;
-    // Ghi thẳng "Miễn phí" khi gói đó không mất tiền — để người đăng nhìn ô chọn là
-    // biết ngay gói nào free, gói nào trả tiền, không phải đoán.
-    const mienPhi =
-      freeDangChay(billing.free, new Date().toISOString().slice(0, 10)) &&
-      tierId === billing.free.tierId && hoSoVi && laThanhVienMoi;
-    if (mienPhi) return "Miễn phí (ưu đãi thành viên mới)";
-    return vnd(gia); // gói 0đ là "không tính phí" — ghi 0 ₫, không ghi "Miễn phí"
+  // BẢNG GÓI KIỂU BATDONGSAN — bày SẴN mọi loại tin kèm giá, không bắt chọn mới thấy.
+  // Khuyến mãi xét bằng CÙNG một hàm với máy chủ (huongKhuyenMai) cho TỪNG loại tin.
+  const huongKmCua = (tierId: TierId): boolean => {
+    if (!hoSoVi) return false;
+    // eslint-disable-next-line react-hooks/purity
+    const soNgayMoTk = hoSoVi.created_at ? (Date.now() - new Date(hoSoVi.created_at).getTime()) / 86_400_000 : Infinity;
+    return huongKhuyenMai(billing.free, {
+      goi: tierId, homNay: new Date().toISOString().slice(0, 10), coChu: true,
+      soNgayMoTk, role: hoSoVi.role, freeQuota: hoSoVi.free_quota,
+    });
   };
+  // Số ngày tin THẬT SỰ hiển thị (khuyến mãi thành viên mới → số ngày của chương trình).
+  const soNgayThat = planTier ? soNgayHienThi(bangGia, planTier as TierId, planDays, duocMienPhi) : planDays;
 
   // Danh mục loại hình đổi theo mục đích: bán và cho thuê KHÔNG giống nhau
   const nhomLoaiHinh = useMemo(
@@ -381,6 +374,7 @@ export default function PostListingForm() {
       const { data, error } = await supabase.from("listings").select("*").eq("id", editId).single();
       if (error || !data) { setEditLoad("notfound"); return; }
       const r = data as ListingRow;
+      if (r.status === "approved" || r.status === "expired") setGoiDangDung({ tier: r.tier as TierId, het: r.tier_expires_at });
       setDemand(demandOfPurpose(r.purpose));
       if (r.type) setCategory(r.type);
       setProvince(r.province ?? "");
@@ -1104,123 +1098,87 @@ export default function PostListingForm() {
       {/* 9. Liên hệ */}
       {/* Chọn gói hiển thị — giá và khuyến mãi do quản trị đặt ở /admin/gia-khuyen-mai */}
       <Card id="b-goi" step={buoc()} title="Chọn gói tin — thanh toán">
-        <p className="-mt-1 mb-3 text-sm text-cvr-muted">
-          Tin ở gói cao hiển thị nổi bật hơn — <span className="font-semibold text-cvr-ink">Diamond</span> có lượt xem trung bình cao gấp 20 lần tin thường.
-        </p>
-        <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
-          <div>
-            <Label>Loại tin *</Label>
-            <select
-              value={planTier}
-              onChange={(e) => setPlanTier(e.target.value as TierId | "")}
-              required
-              className={inputCls + (planTier ? "" : " ring-1 ring-inset ring-cvr-blue/40")}
-            >
-              <option value="">— Chọn gói tin —</option>
-              {bangGia.plans.map((p) => (
-                <option key={p.tierId} value={p.tierId}>
-                  {getTier(p.tierId).name} — {giaCuaGoi(p.tierId)}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <Label>Thời gian</Label>
-            <select value={planDays} onChange={(e) => setPlanDays(Number(e.target.value))} className={inputCls}>
-              {(bangGia.plans.find((p) => p.tierId === planTier)?.terms ?? []).map((t) => (
-                <option key={t.days} value={t.days}>{t.days} ngày</option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <Label>Ngày bắt đầu</Label>
-            <input type="date" value={planStart} onChange={(e) => setPlanStart(e.target.value)} className={inputCls} />
-          </div>
-          <div>
-            <Label>Ngày kết thúc</Label>
-            <input type="date" value={planEnd} readOnly className={`${inputCls} bg-cvr-surface text-cvr-muted`} />
-          </div>
-        </div>
-        {/* BẢNG TÍNH TIỀN — nói rõ từng khoản để khách không bao giờ thấy giá "trên trời" */}
-        <div className="mt-4 rounded-xl bg-cvr-surface px-4 py-3">
-          <div className="flex items-center justify-between gap-2 text-sm text-cvr-body">
-            <span>{planTier ? "Giá gói " + getTier(goiXemTruoc).name : "Tạm tính — chưa chọn gói"} · {planDays} ngày</span>
-            <span className={thanhTien < baoGia.base ? "text-cvr-muted line-through" : "font-semibold text-cvr-ink"}>
-              {vnd(baoGia.base)}
-            </span>
-          </div>
-
-          {duocMienPhi ? (
-            <div className="mt-1.5 flex items-center justify-between gap-2 text-sm text-cvr-blue-ink">
-              <span>Ưu đãi thành viên mới</span>
-              <span className="font-semibold">− {vnd(baoGia.base)}</span>
-            </div>
-          ) : (
-            <>
-              {baoGia.promo && baoGia.promoOff > 0 && (
-                <div className="mt-1.5 flex items-center justify-between gap-2 text-sm text-cvr-blue-ink">
-                  <span>Khuyến mãi: {baoGia.promo.name} (−{baoGia.promo.percent}%)</span>
-                  <span className="font-semibold">− {vnd(baoGia.promoOff)}</span>
-                </div>
-              )}
-            </>
-          )}
-
-          {thanhTien > 0 && (
-            <>
-              <div className="mt-2.5 flex items-center justify-between gap-2 border-t border-cvr-line pt-2.5 text-sm text-cvr-body">
-                <span>Cộng tiền dịch vụ</span>
-                <span className="font-semibold text-cvr-ink">{vnd(tienThue.tienHang)}</span>
-              </div>
-              <div className="mt-1.5 flex items-center justify-between gap-2 text-sm text-cvr-body">
-                <span>Thuế GTGT {(THUE_SUAT_GTGT * 100).toFixed(0)}%</span>
-                <span className="font-semibold text-cvr-ink">{vnd(tienThue.tienThue)}</span>
-              </div>
-            </>
-          )}
-
-          <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 border-t border-cvr-line pt-2.5">
-            <span className="text-sm font-semibold uppercase tracking-wide text-cvr-body">Thành tiền</span>
-            <span className="text-lg font-bold text-cvr-blue-ink">
-              {duocMienPhi ? "0 ₫ — Miễn phí" : vnd(tienThue.tongTra)}
-            </span>
-          </div>
-
-          {thanhTien > 0 && (
-            <p className="mt-2 text-xs text-cvr-muted">
-              Trừ vào ví khi tin được duyệt và lên sóng. Tin bị từ chối thì không trừ đồng nào.
+        {goiDangDung ? (
+          // TIN ĐÃ ĐĂNG đang sửa: gói cố định (chuẩn Batdongsan) — chỉ hiện gói đang dùng.
+          <div className="rounded-2xl border border-cvr-line bg-cvr-surface px-5 py-4 text-sm text-cvr-body">
+            <Dong nhan="Loại tin" giaTri={getTier(goiDangDung.tier).name} />
+            <Dong
+              nhan={editStatus === "expired" ? "Đã hết hạn" : "Hiển thị đến"}
+              giaTri={goiDangDung.het ? new Date(goiDangDung.het).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" }) : "—"}
+            />
+            <p className="mt-3 text-xs text-cvr-muted">
+              {editStatus === "expired" ? "Chọn gói mới khi bấm Đăng lại trong Tin đăng của tôi." : "Sửa thông tin không đổi gói, ngày đăng và thời hạn."}
             </p>
-          )}
-
-          {/* SỐ DƯ VÍ ngay tại chỗ chọn gói — biết thiếu TRƯỚC khi bấm đăng, và
-              nạp được ngay tại đây, không phải đi tìm trang nạp tiền. */}
-          {thanhTien > 0 && hoSoVi && (
-            <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 border-t border-cvr-line pt-2.5 text-sm">
-              <span className="text-cvr-muted">Số dư ví</span>
-              <span className="flex items-center gap-2.5">
-                <span className={hoSoVi.balance < tienThue.tongTra ? "font-semibold text-red-600" : "font-semibold text-cvr-ink"}>
-                  {vnd(hoSoVi.balance)}
-                </span>
-                {hoSoVi.balance < tienThue.tongTra && (
-                  <Link
-                    href={`/tai-khoan/nap-tien?can=${tienThue.tongTra - hoSoVi.balance}`}
-                    className="rounded-full bg-cvr-ink px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-cvr-ink/90"
-                  >
-                    Nạp thêm {vnd(tienThue.tongTra - hoSoVi.balance)}
-                  </Link>
-                )}
-              </span>
+          </div>
+        ) : (
+          <>
+            {/* BẢNG GIÁ KIỂU BATDONGSAN — bày hết loại tin × số ngày, bấm ô nào chọn gói đó. Giá từ admin. */}
+            {bangGia.plans.some((p) => huongKmCua(p.tierId)) && (
+              <p className="mb-3 rounded-xl border border-cvr-blue/25 bg-cvr-blue/[0.06] px-3.5 py-2.5 text-sm text-cvr-blue-ink">
+                Ưu đãi của bạn: <span className="font-semibold">{getTier(billing.free.tierId).name} miễn phí {billing.free.days} ngày</span>
+              </p>
+            )}
+            <div className={planTier ? "" : "rounded-2xl ring-1 ring-cvr-blue/40 ring-offset-2"}>
+              <BangGiaGoiTin
+                plans={bangGia.plans}
+                chon={{ tier: planTier, days: planDays }}
+                onChon={(t, d) => { setPlanTier(t); setPlanDays(d); }}
+              />
             </div>
-          )}
-        </div>
 
-        {freeDangChay(billing.free, new Date().toISOString().slice(0, 10)) && (
-          <p className="mt-3 rounded-lg border border-cvr-blue/25 bg-cvr-blue/[0.06] px-3 py-2 text-xs text-cvr-blue-ink">
-            {freeNote(billing.free, tenGoiMienPhi(billing))}
-            {!hoSoVi && " Đăng nhập để hệ thống áp ưu đãi cho bạn."}
-            {hoSoVi && !duocMienPhi && planTier !== billing.free.tierId &&
-              ` Gói ${tenGoiMienPhi(billing)} đang miễn phí cho bạn — các gói khác là bản nâng cấp hiển thị nổi bật hơn, có tính phí.`}
-          </p>
+            {/* THANH TOÁN — đủ từng khoản như Batdongsan; các dòng cộng lại đúng bằng tổng */}
+            {planTier && (
+              <div className="mt-5 rounded-2xl border border-cvr-line bg-cvr-surface px-5 py-4 text-sm text-cvr-body">
+                <Dong nhan="Loại tin" giaTri={getTier(planTier as TierId).name} />
+                {!duocMienPhi && <Dong nhan="Đơn giá / ngày" giaTri={vnd(planDays > 0 ? Math.round(baoGia.base / planDays) : 0)} />}
+                <Dong nhan="Thời gian đăng" giaTri={`${soNgayThat} ngày`} />
+                <Dong nhan="Bắt đầu hiển thị" giaTri="Khi tin được duyệt" />
+                <div className="my-3 border-t border-cvr-line" />
+                {duocMienPhi ? (
+                  <Dong nhan="Ưu đãi thành viên mới" giaTri="Miễn phí" nhan2 />
+                ) : (
+                  <>
+                    <Dong nhan="Phí đăng tin" giaTri={vnd(baoGia.base)} />
+                    {baoGia.promo && baoGia.promoOff > 0 && (
+                      <Dong nhan={`Khuyến mãi: ${baoGia.promo.name} (−${baoGia.promo.percent}%)`} giaTri={`− ${vnd(baoGia.promoOff)}`} nhan2 />
+                    )}
+                    {baoGia.levelOff > 0 && <Dong nhan="Ưu đãi hạng thành viên" giaTri={`− ${vnd(baoGia.levelOff)}`} nhan2 />}
+                    {thanhTien > 0 && (
+                      <>
+                        <Dong nhan="Tạm tính" giaTri={vnd(tienThue.tienHang)} />
+                        <Dong nhan={`VAT ${(THUE_SUAT_GTGT * 100).toFixed(0)}%`} giaTri={vnd(tienThue.tienThue)} />
+                      </>
+                    )}
+                  </>
+                )}
+                <div className="mt-3 flex items-baseline justify-between gap-2 border-t border-cvr-line pt-3">
+                  <span className="text-[15px] font-semibold text-cvr-ink">Tổng tiền</span>
+                  <span className="text-xl font-bold tabular-nums tracking-tight text-cvr-ink">{thanhTien > 0 ? vnd(tienThue.tongTra) : "0 ₫"}</span>
+                </div>
+                {thanhTien > 0 && <p className="mt-1.5 text-right text-xs text-cvr-muted">Trừ vào ví khi tin được duyệt · tin bị từ chối không trừ</p>}
+                {/* Số dư ví ngay tại chỗ — biết thiếu TRƯỚC khi bấm đăng, nạp được ngay. */}
+                {thanhTien > 0 && hoSoVi && (
+                  <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white px-3.5 py-2.5">
+                    <span className="text-cvr-muted">Số dư ví</span>
+                    <span className="flex items-center gap-2.5">
+                      <span className={hoSoVi.balance < tienThue.tongTra ? "font-semibold tabular-nums text-red-600" : "font-semibold tabular-nums text-cvr-ink"}>{vnd(hoSoVi.balance)}</span>
+                      {hoSoVi.balance < tienThue.tongTra && (
+                        <Link href={`/tai-khoan/nap-tien?can=${tienThue.tongTra - hoSoVi.balance}`} className="rounded-full bg-cvr-ink px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-cvr-ink/90">
+                          Nạp thêm {vnd(tienThue.tongTra - hoSoVi.balance)}
+                        </Link>
+                      )}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {freeDangChay(billing.free, new Date().toISOString().slice(0, 10)) && !hoSoVi && (
+              <p className="mt-3 rounded-xl border border-cvr-blue/25 bg-cvr-blue/[0.06] px-3.5 py-2.5 text-xs text-cvr-blue-ink">
+                {freeNote(billing.free, tenGoiMienPhi(billing))} Đăng nhập để hệ thống áp ưu đãi cho bạn.
+              </p>
+            )}
+          </>
         )}
       </Card>
 
@@ -1519,5 +1477,15 @@ function Chip({ active, onClick, children }: { active: boolean; onClick: () => v
     <button type="button" onClick={onClick} className={`rounded-lg border px-3 py-2 text-xs font-medium transition ${active ? "border-cvr-ink bg-cvr-ink text-white" : "border-cvr-line text-cvr-body hover:border-cvr-ink hover:text-cvr-ink"}`}>
       {children}
     </button>
+  );
+}
+
+// Một dòng trong bảng thanh toán gói tin: nhãn trái, giá trị phải (nhan2 = dòng ưu đãi, màu xanh).
+function Dong({ nhan, giaTri, nhan2 }: { nhan: string; giaTri: string; nhan2?: boolean }) {
+  return (
+    <div className={`flex items-baseline justify-between gap-3 py-1 ${nhan2 ? "text-cvr-blue-ink" : ""}`}>
+      <span>{nhan}</span>
+      <span className={`text-right font-semibold tabular-nums ${nhan2 ? "" : "text-cvr-ink"}`}>{giaTri}</span>
+    </div>
   );
 }

@@ -12,7 +12,8 @@ import { getListings } from "@/lib/listingsDb";
 import { getProjects } from "@/lib/contentDb";
 import { getBilling, getQuyDinhGia } from "@/lib/siteContent";
 import { dienMa } from "@/lib/quyDinhGia";
-import { BILLING_DEFAULT, bangTheoMucDich, priceLinesFor, bangUp, goiPr, ghiChuPr, bangBanner, giaTra, priceLinesDuAn } from "@/lib/billing";
+import { bangTheoMucDich, priceLinesFor, bangUp, goiPr, ghiChuPr, bangBanner, giaTra, priceLinesDuAn, freeDangChay, freeNote, tenGoiMienPhi } from "@/lib/billing";
+import BangGiaGoiTin from "@/components/BangGiaGoiTin";
 import type { Listing, Project } from "@/lib/data";
 import NutMucDichGia from "@/components/NutMucDichGia";
 import GoiHoiVienCards, { DieuKienHoiVien } from "@/components/GoiHoiVienCards";
@@ -28,7 +29,7 @@ export const metadata: Metadata = {
 // Nguồn: file "Gia đăng tin + QC" (D:\Coastal Land\Bảng giá truyền thông).
 // Các gói Đẩy tin / Dự án / PR / Banner: đối chuẩn thị trường, đổi giá chỉ sửa tại đây.
 
-type PriceLine = { label: string; original?: string; price: string };
+type PriceLine = { label: string; original?: string; price: string; perDay?: string };
 
 // QUYỀN LỢI 4 CẤP + QUY ĐỊNH CHUNG — chữ nằm ở ADMIN (src/lib/quyDinhGia.ts,
 // /admin/gia-chuan → tab Quy định). Hệ số X, vị trí, nhận diện vẫn lấy THẲNG từ
@@ -123,10 +124,12 @@ export default async function BaoGiaPage() {
   // trong trang: admin chưa lưu gì thì lùi về bảng giá chuẩn trong billing.ts.
   // Đã công bố giá theo mục đích (/admin/gia-chuan) thì trang này bày bảng BÁN.
   const bangBan = bangTheoMucDich(billing, "ban");
-  const giaTin = (id: TierId): PriceLine[] =>
-    priceLinesFor(bangBan, id) ?? priceLinesFor(BILLING_DEFAULT, id) ?? [];
-  const giaDuAn = (id: TierId): PriceLine[] =>
-    priceLinesDuAn(billing, id) ?? priceLinesDuAn(BILLING_DEFAULT, id) ?? [];
+  // MỘT NGUỒN (01/10/2026): KHÔNG lùi về giá viết sẵn trong code khi admin thiếu một gói —
+  // giá chỉ đến từ admin; gói admin chưa đặt giá thì không có dòng giá.
+  const giaTin = (id: TierId): PriceLine[] => priceLinesFor(bangBan, id) ?? [];
+  const giaDuAn = (id: TierId): PriceLine[] => priceLinesDuAn(billing, id) ?? [];
+  // CHƯƠNG TRÌNH KHUYẾN MÃI đang chạy (admin → Giá & quy định → Miễn phí) — báo cho khách.
+  const kmDangChay = freeDangChay(billing.free, new Date().toISOString().slice(0, 10));
   // ĐẨY TIN · PR · BANNER: lấy đúng bản chủ dự án đặt ở /admin/gia-khuyen-mai.
   // Chưa lưu gì thì hàm tự trả mức chuẩn — trang không bao giờ trống.
   const upRows = bangUp(bangBan);
@@ -170,7 +173,7 @@ export default async function BaoGiaPage() {
             </h1>
             <p className="mx-auto mt-3 max-w-xl text-[15px] leading-relaxed text-cvr-muted">
               Giải pháp đăng tin và quảng cáo giúp người bán, môi giới, chủ đầu tư
-              tiếp cận đúng khách hàng tiềm năng tại Miền Trung.
+              tiếp cận đúng khách hàng tiềm năng.
             </p>
           </div>
         </section>
@@ -189,6 +192,21 @@ export default async function BaoGiaPage() {
                   <NutMucDichGia />
                 </div>
               )}
+              {/* BẢNG GIÁ TIN ĐĂNG KIỂU BATDONGSAN — số ngày × loại tin, giá từ admin, gạt VAT */}
+              <section id="bang-gia-tin" className="scroll-mt-24">
+                <SectionTitle title="Bảng giá tin đăng" desc="Giá theo loại tin và số ngày hiển thị — chọn gói ngay khi đăng tin." />
+                <div className="mt-6">
+                  <div className={coThue ? "group-data-[md=thue]/gia:hidden" : ""}><BangGiaGoiTin plans={bangBan.plans} /></div>
+                  {coThue && <div className="hidden group-data-[md=thue]/gia:block"><BangGiaGoiTin plans={bangThue.plans} /></div>}
+                </div>
+                {kmDangChay && (
+                  <div className="mt-4 rounded-2xl border border-cvr-blue/25 bg-cvr-blue/[0.06] px-5 py-4">
+                    <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-cvr-blue-ink">Khuyến mãi đang áp dụng</p>
+                    <p className="mt-1.5 text-[15px] leading-relaxed text-cvr-ink">{freeNote(billing.free, tenGoiMienPhi(billing))}</p>
+                  </div>
+                )}
+              </section>
+
               {/* 1. GÓI ĐĂNG TIN VIP */}
               <section id="goi-vip" className="scroll-mt-24">
                 <SectionTitle no="01" title="Gói đăng tin VIP" desc="Giải pháp tiếp cận tin đăng hiệu quả tới khách hàng tiềm năng." />
@@ -215,7 +233,7 @@ export default async function BaoGiaPage() {
                 <div className="mt-6">
                   <PkgCard
                     tierId="basic"
-                    name="CVR Basic"
+                    name={getTier("basic").name}
                     benefits={loiIch("basic")}
                     displays={hienThi("basic")}
                     media={<TierSample listing={samples.basic} />}
@@ -228,7 +246,7 @@ export default async function BaoGiaPage() {
 
               {/* 3. GÓI ĐẨY TIN */}
               <section id="goi-day-tin" className="scroll-mt-24">
-                <SectionTitle no="03" title="Gói Đẩy tin" desc="Đẩy tin đăng lên trên đầu của từng loại tin. Gói nhiều lần đẩy tin trong nhiều ngày, mỗi ngày 1 lần." />
+                <SectionTitle no="03" title="Gói Đẩy tin" desc="Đưa tin đang hiển thị lên đầu trong cùng loại tin — ngày đăng và thời hạn giữ nguyên. Gói nhiều lượt: lượt đầu đẩy ngay khi mua, sau đó mỗi ngày 1 lượt, dùng trong thời hạn hiển thị của tin." />
                 {coThue && <div className="mt-4"><NutMucDichGia /></div>}
                 <div className="mt-6 overflow-x-auto rounded-2xl border border-cvr-line bg-white shadow-lux">
                   <table className="w-full min-w-[680px] text-sm">
@@ -561,6 +579,7 @@ function DongGia({ prices }: { prices: PriceLine[] }) {
             )}
             <span className="text-[20px] font-semibold tracking-tight text-cvr-ink">{pr.price}</span>
           </p>
+          {pr.perDay && <p className="mt-0.5 text-[13px] tabular-nums text-cvr-muted">{pr.perDay}</p>}
         </div>
       ))}
     </>
