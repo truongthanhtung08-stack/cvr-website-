@@ -32,11 +32,11 @@ const viecChupGia: Viec = {
   },
 };
 
-/** Tin hết hạn gói thì ngừng hiển thị (như BĐS); sắp hết hạn thì nhắc khách Up tin. */
+/** Tin hết hạn gói thì ngừng hiển thị (như BĐS); sắp hết hạn thì nhắc khách đăng lại. */
 const viecHetHanTin: Viec = {
   ma: "quet-tin-het-han",
   ten: "Quét tin hết hạn gói",
-  hauQua: "Tin hết hạn vẫn hiển thị miễn phí mãi — mất toàn bộ doanh thu Up tin.",
+  hauQua: "Tin hết hạn vẫn hiển thị miễn phí mãi — mất toàn bộ doanh thu đăng lại.",
   async chay(admin) {
     const kq = await quetTinHetHan(admin);
     return { tomTat: `Ngừng hiển thị ${kq.daHa} tin hết hạn, nhắc ${kq.daNhac} tin sắp hết`, soLieu: { ...kq } };

@@ -18,7 +18,7 @@ import OTieuDe from "@/components/OTieuDe";
 import MapPicker from "@/components/MapPickerMo";
 import ContentEditor from "@/components/admin/ContentEditor";
 import { uploadImageFile } from "@/lib/uploadImage";
-import { soAnhToiDa, soVideoToiDa } from "@/lib/billing";
+import { soAnhToiDa, soVideoToiDa, bangTheoMucDich, freeDangChay } from "@/lib/billing";
 import { useBilling } from "@/lib/useBilling";
 import { getTier } from "@/lib/packages";
 import { Panel, Field } from "@/components/Ui";
@@ -57,6 +57,9 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
   const [province, setProvince] = useState(initial?.province ?? "");
   const [images, setImages] = useState<string[]>(initial?.images ?? []);
   const [tier, setTier] = useState<ListingTier>(initial?.tier ?? "basic");
+  // THỜI HẠN GÓI — admin cũng chọn đúng gói trong Giá & quy định, không ngoại lệ (01/10/2026).
+  // Đổi hạng / thời hạn của tin đang hiển thị = bắt đầu kỳ mới, CSDL tự tính hạn (0053).
+  const [soNgayGoi, setSoNgayGoi] = useState<number>(initial?.tier_days ?? 0);
 
   // Thuộc tính chi tiết (lưu vào cột details JSONB) — nhập gì web hiện nấy
   const [addressDetail, setAddressDetail] = useState(initial?.details?.addressDetail ?? "");
@@ -306,6 +309,7 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
           : undefined,
       },
       tier,
+      tier_days: soNgayGoi || null,
       status: newStatus,
       // Ghi thời điểm đăng lần đầu khi công khai (giữ nguyên nếu tin đã có)
       published_at: newStatus === "approved" ? (initial?.published_at ?? new Date().toISOString()) : initial?.published_at ?? null,
@@ -328,7 +332,7 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
     <form onSubmit={(e) => { e.preventDefault(); save(false); }} className="space-y-4">
       {/* Mục đích + Loại hình + Hạng (trạng thái do 2 nút Lưu nháp / Đăng tin quyết định) */}
       <Panel title="Phân loại">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Field label="Mục đích">
             <select value={purpose} onChange={(e) => { setPurpose(e.target.value as ListingPurpose); setType(""); }} className={inputCls}>
               <option value="ban">Mua bán</option>
@@ -353,6 +357,22 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
               <option value="gold">Gold — nổi bật</option>
               <option value="silver">Silver — ưu tiên</option>
               <option value="basic">Thường</option>
+            </select>
+          </Field>
+          <Field label="Thời hạn">
+            <select value={soNgayGoi} onChange={(e) => setSoNgayGoi(Number(e.target.value))} className={inputCls}>
+              {(() => {
+                const bang = bangTheoMucDich(billing, purpose);
+                // Tin admin đăng hộ tính như thành viên mới: chương trình đang chạy thì đúng số ngày của chương trình.
+                if (tier === bang.free.tierId && freeDangChay(bang.free, new Date().toISOString().slice(0, 10))) {
+                  return <option value={0}>{bang.free.days} ngày · khuyến mãi thành viên mới</option>;
+                }
+                const ds = [...(bang.plans.find((p) => p.tierId === tier)?.terms ?? [])].sort((a, b) => a.days - b.days);
+                return <>
+                  <option value={0}>{ds[0] ? `${ds[0].days} ngày (gói ngắn nhất)` : "Gói ngắn nhất"}</option>
+                  {ds.map((t) => <option key={t.days} value={t.days}>{t.days} ngày</option>)}
+                </>;
+              })()}
             </select>
           </Field>
         </div>

@@ -45,7 +45,7 @@ export default function HuongDanPage() {
 
       <Muc so={2} title="Đăng nhập tài khoản">
         <p>
-          Tin đăng gắn với tài khoản của bạn để sau này còn sửa, gia hạn và xem lượt quan tâm. Chưa có tài khoản thì{" "}
+          Tin đăng gắn với tài khoản của bạn để sau này còn sửa, đăng lại và xem lượt quan tâm. Chưa có tài khoản thì{" "}
           <Link href="/dang-ky" className="font-semibold text-cvr-blue-ink underline">
             đăng ký
           </Link>{" "}
@@ -134,7 +134,7 @@ export default function HuongDanPage() {
           <Link href="/tai-khoan/tin-dang" className="font-semibold text-cvr-blue-ink underline">
             Tin đăng của tôi
           </Link>{" "}
-          để sửa nội dung, gia hạn hoặc gỡ tin khi đã bán. Bán xong mà quên gỡ, người mua vẫn gọi và tin của bạn bị đánh
+          để sửa nội dung, đăng lại hoặc gỡ tin khi đã bán. Bán xong mà quên gỡ, người mua vẫn gọi và tin của bạn bị đánh
           giá là tin ảo — nên gỡ ngay giúp chúng tôi.
         </p>
         <p>

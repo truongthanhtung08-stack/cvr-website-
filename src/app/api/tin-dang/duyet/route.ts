@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { ghepBillingLuu, bangTheoMucDich, freeDangChay, loaiVoucherTin, quotePrice, vnd, type BillingData } from "@/lib/billing";
+import { ghepBillingLuu, bangTheoMucDich, freeDangChay, soNgayHienThi, loaiVoucherTin, quotePrice, vnd, type BillingData } from "@/lib/billing";
 import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
 import { guiThongBao, MAU_DUYET_TIN } from "@/lib/thongBao";
 import { baoLoi } from "@/lib/baoLoi";
@@ -63,10 +63,26 @@ export async function POST(request: Request) {
   // ── 2. Lấy tin ────────────────────────────────────────────────────────────
   const { data: tin, error: loiTin } = await admin
     .from("listings")
-    .select("id,title,owner_id,status,purpose,tier_yeu_cau,tier_days,da_tru_vi,details")
+    .select("id,title,owner_id,status,purpose,tier_yeu_cau,tier_days,da_tru_vi,details,tier_expires_at")
     .eq("id", id)
     .single();
   if (loiTin || !tin) return loi("Không tìm thấy tin", 404);
+
+  // ── DUYỆT LẠI TIN ĐÃ SỬA (chuẩn Batdongsan, chốt 01/10/2026) ──────────────
+  // Tin từng lên sóng (đã có hạn) mà khách sửa → quay về chờ duyệt. Duyệt lại CHỈ là
+  // duyệt nội dung: giữ nguyên hạng, ngày đăng, hạn; không thu tiền lần hai. Trước đây
+  // tin thường được kỳ mới từ đầu (sửa tin = gia hạn miễn phí), tin VIP thì kẹt ở chờ
+  // duyệt vì "đã trừ tiền". Kỳ đã qua trong lúc chờ duyệt → hết hạn, khách Đăng lại.
+  if (tin.tier_expires_at) {
+    const conHan = new Date(tin.tier_expires_at).getTime() > Date.now();
+    const { error } = await admin
+      .from("listings")
+      .update({ status: conHan ? "approved" : "expired" })
+      .eq("id", id);
+    if (error) return loi(error.message, 500);
+    revalidateTag("listings", "max");
+    return NextResponse.json({ ok: true, duyetLai: true, hetHan: !conHan });
+  }
 
   // Gói khách chọn nằm ở HAI chỗ tuỳ tin đăng lúc nào:
   //   · details.plan = { tier, days }  ← form đăng tin ghi vào đây từ trước tới nay
@@ -83,13 +99,14 @@ export async function POST(request: Request) {
     // HẠN HIỂN THỊ (chủ dự án chốt 01/10/2026): THÀNH VIÊN MỚI (trong chương trình Giá &
     // quy định) — tin thường ĐÚNG 30 NGÀY; thành viên cũ — theo số ngày đã chọn (7/15/30).
     const { data: scMp } = await admin.from("site_content").select("data").eq("key", "billing").limit(1);
-    const fMp = ghepBillingLuu(scMp?.[0]?.data as Partial<BillingData> | undefined).free;
+    const bangMp = bangTheoMucDich(ghepBillingLuu(scMp?.[0]?.data as Partial<BillingData> | undefined), tin.purpose);
+    const fMp = bangMp.free;
     const { data: hsMp } = tin.owner_id
       ? await admin.from("profiles").select("created_at").eq("id", tin.owner_id).maybeSingle()
       : { data: null };
     const ngayMoTkMp = hsMp?.created_at ? (Date.now() - new Date(hsMp.created_at).getTime()) / 86_400_000 : Infinity;
     const laTvMoi = freeDangChay(fMp, new Date().toISOString().slice(0, 10)) && ngayMoTkMp <= fMp.days;
-    const soNgayHien = laTvMoi ? fMp.days : soNgay > 0 ? soNgay : 7;
+    const soNgayHien = soNgayHienThi(bangMp, "basic", soNgay, laTvMoi);
     const { error } = await admin
       .from("listings")
       // bumped_at = ngày đăng — nếu bỏ trống, tin vừa duyệt nằm dưới mọi tin cũ

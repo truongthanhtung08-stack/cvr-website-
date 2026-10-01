@@ -59,7 +59,7 @@ export default function QuyChePage() {
             "Tin chuyển sang trạng thái chờ duyệt. Ban quản trị kiểm tra tính hợp lệ theo Quy định đăng tin.",
             "Tin đạt yêu cầu được hiển thị công khai; tin chưa đạt bị trả về kèm lý do để thành viên sửa và gửi lại.",
             "Trong thời gian hiển thị, thành viên có thể sửa, ẩn hoặc gỡ tin trong khu vực tài khoản.",
-            "Hết thời hạn của gói, tin tự ẩn; thành viên có thể gia hạn hoặc đăng lại.",
+            "Hết thời hạn của gói, tin tự ẩn; thành viên có thể đăng lại với gói mới.",
           ]}
         />
         <p>

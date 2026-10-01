@@ -603,6 +603,19 @@ export function freeDangChay(f: FreePolicy, today: string): boolean {
   return true;
 }
 
+// SỐ NGÀY HIỂN THỊ CỦA MỘT TIN — MỘT LUẬT DUY NHẤT cho mọi đường lên sóng (duyệt tin,
+// Up tin; CSDL có bản y hệt: so_ngay_hien_mac_dinh, 0053). Chủ dự án chốt 01/10/2026:
+//   · Hưởng chương trình khuyến mãi (Giá & quy định → free) ở đúng hạng của chương trình
+//     → đúng free.days (thành viên mới: tin thường 30 ngày).
+//   · Còn lại → đúng số ngày của gói đã chọn; không chọn → gói NGẮN NHẤT của hạng đó.
+// Hết số ngày là hết hạn, ngừng hiển thị — không trường hợp riêng nào.
+export function soNgayHienThi(bang: BillingData, goi: TierId, soNgayChon: number, huongKhuyenMai: boolean): number {
+  if (huongKhuyenMai && goi === bang.free.tierId) return bang.free.days;
+  if (soNgayChon > 0) return soNgayChon;
+  const ngan = bang.plans.find((p) => p.tierId === goi)?.terms.map((t) => t.days).sort((a, b) => a - b)[0];
+  return ngan ?? 7;
+}
+
 // "2026-10-17" → "17/10/2026". Không dùng new Date() để khỏi lệch múi giờ.
 export function ngayVn(iso: string): string {
   const [y, m, d] = iso.split("-");

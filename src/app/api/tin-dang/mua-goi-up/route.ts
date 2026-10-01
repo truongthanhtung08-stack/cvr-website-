@@ -1,11 +1,13 @@
 import { baoThanhToan } from "@/lib/baoThanhToan";
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ghepBillingLuu, bangTheoMucDich, goiUpNhieuLuot, vnd, type BillingData } from "@/lib/billing";
 import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
 import { baoLoi } from "@/lib/baoLoi";
 import { getTier, type TierId } from "@/lib/packages";
+import { soNgayConDay } from "@/lib/luotUp";
 
 // ============================================================================
 // MUA GÓI UP NHIỀU LƯỢT — trả tiền MỘT LẦN, tiêu dần mỗi ngày
@@ -36,7 +38,7 @@ export async function POST(request: Request) {
 
   const { data: tin, error: loiTin } = await admin
     .from("listings")
-    .select("id,title,owner_id,status,purpose,tier,tier_expires_at")
+    .select("id,title,owner_id,status,purpose,tier,tier_expires_at,bump_credits,bump_lich")
     .eq("id", id)
     .single();
   if (loiTin || !tin) return loi("Không tìm thấy tin.", 404);
@@ -53,6 +55,21 @@ export async function POST(request: Request) {
   // Gói khách chọn phải CÓ THẬT trong bảng giá — không cho gửi số lượt tuỳ ý.
   const goi = goiUpNhieuLuot(bang, cap).find((g) => g.soLuot === Number(soLuot));
   if (!goi) return loi("Gói đẩy này không có trong bảng giá.");
+
+  // MỖI TIN MỘT GÓI MỘT LÚC (chuẩn Batdongsan): còn lượt thì dùng hết mới mua gói mới.
+  if (Number(tin.bump_credits ?? 0) > 0) {
+    return loi(`Tin đang có gói đẩy (còn ${tin.bump_credits} lượt). Dùng hết lượt mới mua được gói mới.`);
+  }
+
+  // LƯỢT GẮN VỚI KỲ HIỂN THỊ (luotUp.ts): không bán quá số ngày tin còn đẩy được.
+  const homNay = new Date(Date.now() + 7 * 3_600_000).toISOString().slice(0, 10);
+  const { data: daDay } = await admin.from("listing_bumps").select("listing_id").eq("listing_id", id).eq("ngay", homNay).limit(1);
+  const conDay = soNgayConDay(tin.tier_expires_at, tin.bump_lich, Boolean(daDay?.length));
+  if (goi.soLuot > conDay) {
+    return loi(conDay > 0
+      ? `Tin còn đẩy được tối đa ${conDay} lượt trong thời hạn hiển thị — chọn gói nhỏ hơn.`
+      : "Tin không còn ngày nào để đẩy thêm trong thời hạn hiển thị.");
+  }
 
   const tien = tachThue(goi.gia);
 
@@ -119,5 +136,11 @@ export async function POST(request: Request) {
   }
 
   await baoThanhToan(admin, user.id, { dichVu: `Gói đẩy tin ${getTier(cap).name} ${goi.soLuot} lượt — ${tin.title}`, soTien: tien.tongTra, soDu: dong.so_du });
-  return NextResponse.json({ ok: true, daTru: tien.tongTra, soDu: dong.so_du, conLai: dong.con_lai });
+
+  // LẦN ĐẨY ĐẦU CHẠY NGAY khi mua (chuẩn Batdongsan); các lượt sau tự đẩy mỗi sáng.
+  // Hôm nay tin đã đẩy rồi thì hàm trả rỗng, không tiêu lượt — lượt đầu chạy sáng mai.
+  const { data: dayNgay } = await admin.rpc("day_tin_bang_luot", { p_listing: id, p_user: user.id });
+  const d = (dayNgay as { con_lai: number; moc_day: string }[] | null)?.[0];
+  if (d) revalidateTag("listings", "max");
+  return NextResponse.json({ ok: true, daTru: tien.tongTra, soDu: dong.so_du, conLai: d?.con_lai ?? dong.con_lai, bumpedAt: d?.moc_day ?? null });
 }

@@ -593,7 +593,7 @@ function UpTab({ data, setData }: { data: BillingData; setData: (d: BillingData)
     ghi(ds.map((r, i) => (i !== iDong ? r : { ...r, values: r.values.map((v, j) => (j === iCot ? { ...v, ...patch } : v)) })));
 
   return (
-    <Panel title="Đẩy tin (UP)" desc="Giá mỗi lượt đẩy tin lên đầu danh sách, theo từng cấp tin. Giá gốc để 0 thì không hiện giá gạch ngang.">
+    <Panel title="Đẩy tin" desc="Giá mỗi lượt đẩy tin lên đầu danh sách, theo từng cấp tin. Giá gốc để 0 thì không hiện giá gạch ngang.">
       <div className="overflow-x-auto">
         <table className="w-full min-w-[760px] text-sm">
           <thead>

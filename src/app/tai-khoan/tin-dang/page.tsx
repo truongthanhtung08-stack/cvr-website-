@@ -16,6 +16,7 @@ import {
   ngayGon,
 } from "@/lib/listingAdmin";
 import { bangTheoMucDich, giaDayTin, goiUpNhieuLuot, vnd } from "@/lib/billing";
+import { soNgayConDay } from "@/lib/luotUp";
 import { useBilling } from "@/lib/useBilling";
 import { tachThue } from "@/lib/thue";
 
@@ -130,8 +131,20 @@ export default function MyListingsPage() {
   const [dangMua, setDangMua] = useState<string | null>(null);
   async function handleMuaGoi(r: ListingRow) {
     const goi = thongTinGoi(r);
-    const dsGoi = goiUpNhieuLuot(bangTheoMucDich(billing, r.purpose), goi.cap);
-    if (!dsGoi.length) { window.alert("Chưa có gói đẩy nào cho cấp tin này."); return; }
+    // Chỉ bày gói vừa với số ngày tin còn đẩy được trong thời hạn hiển thị (luotUp.ts).
+    // MỖI TIN MỘT GÓI MỘT LÚC (chuẩn Batdongsan): còn lượt thì dùng hết mới mua gói mới.
+    if (Number(r.bump_credits ?? 0) > 0) {
+      window.alert(`Tin đang có gói đẩy (còn ${r.bump_credits} lượt). Dùng hết lượt mới mua được gói mới.`);
+      return;
+    }
+    const conDay = soNgayConDay(r.tier_expires_at, r.bump_lich, false);
+    const dsGoi = goiUpNhieuLuot(bangTheoMucDich(billing, r.purpose), goi.cap).filter((g) => g.soLuot <= conDay);
+    if (!dsGoi.length) {
+      window.alert(conDay > 0
+        ? `Tin còn đẩy được tối đa ${conDay} lượt trong thời hạn hiển thị — không gói nào vừa. Dùng Đẩy tin lẻ.`
+        : "Tin không còn ngày nào để đẩy thêm trong thời hạn hiển thị.");
+      return;
+    }
 
     const giaLe = tachThue(giaDayTin(bangTheoMucDich(billing, r.purpose), goi.cap)).tongTra;
     const dong = dsGoi.map((g, i) => {
@@ -150,7 +163,8 @@ export default function MyListingsPage() {
     const g = dsGoi[i];
     if (!window.confirm(
       `Mua ${g.soLuot} lượt đẩy — ${vnd(tachThue(g.gia).tongTra)} (đã gồm thuế GTGT), trừ thẳng vào ví.\n\n` +
-      `Sau khi mua, hệ thống tự đẩy tin mỗi ngày 1 lần vào đầu giờ sáng cho tới khi hết lượt.`
+      `Lần đẩy đầu chạy ngay khi mua; sau đó hệ thống tự đẩy mỗi ngày 1 lần vào đầu giờ sáng cho tới khi hết lượt. ` +
+      `Lượt dùng trong thời hạn hiển thị của tin — tin hết hạn thì lượt còn lại hết theo.`
     )) return;
 
     setDangMua(r.id);
@@ -162,8 +176,11 @@ export default function MyListingsPage() {
       });
       const kq = await res.json().catch(() => ({}));
       if (!res.ok || !kq.ok) { window.alert(kq.loi || "Mua gói không thành công."); return; }
-      setRows((rows) => rows.map((x) => (x.id === r.id ? { ...x, bump_credits: kq.conLai } : x)));
-      window.alert(`Đã mua ${g.soLuot} lượt. Trừ ${vnd(kq.daTru)}, số dư còn ${vnd(kq.soDu)}.\nTin có ${kq.conLai} lượt trong kho.`);
+      setRows((rows) => rows.map((x) => (x.id === r.id ? { ...x, bump_credits: kq.conLai, ...(kq.bumpedAt ? { bumped_at: kq.bumpedAt } : {}) } : x)));
+      window.alert(`Đã mua ${g.soLuot} lượt. Trừ ${vnd(kq.daTru)}, số dư còn ${vnd(kq.soDu)}.\n` +
+        (kq.bumpedAt
+          ? `Đã đẩy lần đầu ngay bây giờ. Còn ${kq.conLai} lượt, tự đẩy mỗi sáng.`
+          : `Hôm nay tin đã được đẩy rồi — lượt đầu chạy sáng mai. Còn ${kq.conLai} lượt.`));
     } finally {
       setDangMua(null);
     }
@@ -200,22 +217,22 @@ export default function MyListingsPage() {
       if (res.status === 402 && kq.viThieu) {
         if (kq.choUp) setChoUp((ds) => new Set(ds).add(upCho.id));
         const di = window.confirm(
-          `${kq.loi}\n\nNạp thêm ${vnd(kq.viThieu)} — tiền vào ví là tin tự Up đúng gói bạn vừa chọn, không phải bấm lại.\n\nĐi tới trang nạp tiền?`,
+          `${kq.loi}\n\nNạp thêm ${vnd(kq.viThieu)} — tiền vào ví là tin tự đăng lại đúng gói bạn vừa chọn, không phải bấm lại.\n\nĐi tới trang nạp tiền?`,
         );
         setUpCho(null);
         setUpChon(null);
         if (di) window.location.href = `/tai-khoan/nap-tien?can=${kq.viThieu}`;
         return;
       }
-      if (!res.ok || !kq.ok) { window.alert(kq.loi || "Up tin không thành công."); return; }
+      if (!res.ok || !kq.ok) { window.alert(kq.loi || "Đăng lại không thành công."); return; }
       setChoUp((ds) => { const m = new Set(ds); m.delete(upCho.id); return m; });
       const bayGio = new Date().toISOString();
       setRows((ds) => ds.map((x) => (x.id === upCho.id
         ? { ...x, status: "approved", tier: upChon.tier as ListingRow["tier"], published_at: bayGio, bumped_at: bayGio, tier_expires_at: kq.hetHan }
         : x)));
       window.alert(kq.mienPhi
-        ? "Đã Up tin — miễn phí theo chương trình thành viên mới."
-        : `Đã Up tin. Trừ ${vnd(kq.daTru)}, số dư còn ${vnd(kq.soDu)}.`);
+        ? "Đã đăng lại tin — miễn phí theo chương trình thành viên mới."
+        : `Đã đăng lại tin. Trừ ${vnd(kq.daTru)}, số dư còn ${vnd(kq.soDu)}.`);
       setUpCho(null);
       setUpChon(null);
     } finally {
@@ -364,7 +381,7 @@ export default function MyListingsPage() {
                 {goi.daDuyet && r.published_at && ` · Đăng ${ngayGon(r.published_at)}`}
                 {goi.daDuyet && goi.hetHan && (
                   goi.conLai != null && goi.conLai <= 0
-                    ? <span className="font-medium text-amber-700"> · Đã hết hạn {ngayGon(r.tier_expires_at)} — tin ngừng hiển thị, Up tin để hiện lại</span>
+                    ? <span className="font-medium text-amber-700"> · Đã hết hạn {ngayGon(r.tier_expires_at)} — tin ngừng hiển thị, bấm Đăng lại để hiện lại</span>
                     : <> · Hiển thị đến {ngayGon(r.tier_expires_at)}
                         <span className={goi.conLai != null && goi.conLai <= 3 ? "font-semibold text-amber-700" : ""}>
                           {` (còn ${goi.conLai} ngày)`}
@@ -445,14 +462,14 @@ export default function MyListingsPage() {
                   {dangMua === r.id ? "Đang mua…" : "Mua gói đẩy"}
                 </button>
               )}
-              {/* UP TIN — gia hạn gói, ngày tính lại từ hôm nay (tin đang đăng hoặc hết hạn) */}
-              {(r.status === "approved" || r.status === "expired") && (
+              {/* ĐĂNG LẠI — chỉ tin ĐÃ HẾT HẠN (chuẩn Batdongsan): chọn gói mới, ngày đăng và hạn tính lại từ hôm nay */}
+              {r.status === "expired" && (
                 <button
                   type="button"
                   onClick={() => { setUpCho(r); setUpChon(null); }}
-                  className={`flex h-9 items-center rounded-full px-4 text-sm font-semibold transition ${r.status === "expired" ? "bg-cvr-blue text-white hover:bg-cvr-blue-ink" : "border border-cvr-line text-cvr-body hover:border-cvr-ink hover:text-cvr-ink"}`}
+                  className="flex h-9 items-center rounded-full bg-cvr-blue px-4 text-sm font-semibold text-white transition hover:bg-cvr-blue-ink"
                 >
-                  Up tin
+                  Đăng lại
                 </button>
               )}
               {r.status === "draft" && (
@@ -483,10 +500,10 @@ export default function MyListingsPage() {
       {upCho && (
         <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4" onClick={() => !dangUp && setUpCho(null)}>
           <div className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-white p-5 shadow-xl sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
-            <p className="text-sm text-cvr-muted">Up tin</p>
+            <p className="text-sm text-cvr-muted">Đăng lại tin</p>
             <h3 className="mt-0.5 line-clamp-2 text-base font-semibold text-cvr-ink">{upCho.title || "(chưa có tiêu đề)"}</h3>
             <p className="mt-2 text-[13px] leading-relaxed text-cvr-muted">
-              Ngày đăng và hạn hiển thị tính lại từ hôm nay; ngày còn lại của gói cũ không cộng dồn.
+              Ngày đăng và hạn hiển thị tính lại từ hôm nay.
               Miễn phí thành viên mới và voucher hội viên tự áp khi xác nhận.
             </p>
             <div className="mt-4 space-y-3">
@@ -512,7 +529,7 @@ export default function MyListingsPage() {
               <button type="button" onClick={() => setUpCho(null)} disabled={dangUp} className="h-11 flex-1 rounded-full border border-cvr-line text-sm font-medium text-cvr-body">Huỷ</button>
               <button type="button" onClick={xacNhanUp} disabled={!upChon || dangUp}
                 className="h-11 flex-[2] rounded-full bg-cvr-ink text-sm font-semibold text-white disabled:opacity-50">
-                {dangUp ? "Đang Up…" : upChon ? "Xác nhận Up tin" : "Chọn hạng và thời hạn"}
+                {dangUp ? "Đang đăng lại…" : upChon ? "Xác nhận đăng lại" : "Chọn hạng và thời hạn"}
               </button>
             </div>
           </div>

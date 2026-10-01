@@ -79,17 +79,19 @@ export default function QuyDinhPage() {
         />
       </Muc>
 
-      <Muc so={5} title="Thời hạn và gia hạn">
+      <Muc so={5} title="Thời hạn, đăng lại và đẩy tin">
         <p>
           Mỗi tin hiển thị theo thời hạn của gói đã chọn (xem{" "}
           <Link href="/bao-gia-dang-tin" className="font-semibold text-cvr-blue-ink underline">
             Báo giá dịch vụ
           </Link>
-          ). Hết hạn, tin tự ẩn khỏi danh sách; bạn có thể gia hạn hoặc đăng lại trong mục{" "}
+          ). Hết hạn, tin tự ẩn khỏi danh sách; bạn có thể đăng lại (chọn gói mới, ngày đăng và thời hạn tính lại từ lúc đăng lại) trong mục{" "}
           <Link href="/tai-khoan/tin-dang" className="font-semibold text-cvr-blue-ink underline">
             Tin đăng của tôi
           </Link>
-          . Bất động sản đã giao dịch xong, đề nghị gỡ tin ngay.
+          . Đẩy tin chỉ áp dụng cho tin đang hiển thị: tin lên đầu danh sách, ngày đăng và thời hạn giữ nguyên; lượt
+          đẩy của gói dùng trong thời hạn hiển thị, tin hết hạn thì lượt còn lại hết theo. Bất động sản đã giao dịch
+          xong, đề nghị gỡ tin ngay.
         </p>
       </Muc>
 

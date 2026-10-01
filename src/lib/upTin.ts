@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { ghepBillingLuu, bangTheoMucDich, freeDangChay, loaiVoucherTin, quotePrice, vnd, type BillingData } from "@/lib/billing";
+import { ghepBillingLuu, bangTheoMucDich, freeDangChay, soNgayHienThi, loaiVoucherTin, quotePrice, vnd, type BillingData } from "@/lib/billing";
 import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
 import { baoLoi } from "@/lib/baoLoi";
 import { guiThongBao } from "@/lib/thongBao";
@@ -33,7 +33,9 @@ export async function thucHienUpTin(
   const { data: tin } = await admin.from("listings").select("id,title,owner_id,status,purpose").eq("id", id).single();
   if (!tin) return { ok: false, loi: "Không tìm thấy tin.", code: 404 };
   if (tin.owner_id !== userId) return { ok: false, loi: "Tin này không phải của bạn.", code: 403 };
-  if (tin.status !== "approved" && tin.status !== "expired") return { ok: false, loi: "Chỉ Up được tin đang đăng hoặc đã hết hạn." };
+  // ĐĂNG LẠI chỉ cho tin ĐÃ HẾT HẠN (chuẩn Batdongsan, chốt 01/10/2026): tin đang hiển thị
+  // mà làm lại từ đầu là khách mất số ngày còn lại. Muốn lên đầu khi đang hiển thị → Đẩy tin.
+  if (tin.status !== "expired") return { ok: false, loi: "Chỉ đăng lại được tin đã hết hạn. Tin đang hiển thị muốn lên đầu thì dùng Đẩy tin." };
 
   const { data: sc } = await admin.from("site_content").select("data").eq("key", "billing").limit(1);
   const bang: BillingData = bangTheoMucDich(ghepBillingLuu(sc?.[0]?.data as Partial<BillingData> | undefined), tin.purpose);
@@ -88,8 +90,10 @@ export async function thucHienUpTin(
   }
 
   // ── Up: trừ ví + đặt lại ngày trong MỘT hàm CSDL ─────────────────────────
+  // Số ngày hiển thị theo CÙNG luật với duyệt tin (soNgayHienThi): hưởng khuyến mãi
+  // thành viên mới thì đúng số ngày của chương trình, không thì đúng gói đã chọn.
   const { data: kq, error } = await admin.rpc("up_tin", {
-    p_listing: id, p_user: userId, p_tier: goi, p_so_ngay: soNgay, p_tien: tien.tongTra,
+    p_listing: id, p_user: userId, p_tier: goi, p_so_ngay: soNgayHienThi(bang, goi, soNgay, mienPhi), p_tien: tien.tongTra,
   });
   if (error) {
     if (voucher) await admin.rpc("hoan_voucher", { p_id: voucher.id });
@@ -114,7 +118,7 @@ export async function thucHienUpTin(
       user_id: userId,
       listing_id: id,
       loai: "up_tin",
-      mo_ta: `Up tin ${tenGoi} ${soNgay} ngày — ${tin.title}${voucher ? ` (voucher hội viên −${vnd(voucher.giam)})` : ""}`,
+      mo_ta: `Đăng lại tin ${tenGoi} ${soNgay} ngày — ${tin.title}${voucher ? ` (voucher hội viên −${vnd(voucher.giam)})` : ""}`,
       tien_hang: tien.tienHang,
       tien_thue: tien.tienThue,
       thue_suat: THUE_SUAT_GTGT,
@@ -130,10 +134,10 @@ export async function thucHienUpTin(
       await baoLoi({
         noi: "up-tin",
         mucDo: "chet",
-        tomTat: "Đã trừ tiền Up tin nhưng KHÔNG ghi được sổ doanh thu",
+        tomTat: "Đã trừ tiền đăng lại tin nhưng KHÔNG ghi được sổ doanh thu",
         chiTiet: `Tin ${id} — ${loiSo.message}`,
         hauQua: "Tờ khai thuế thiếu một khoản thu, khách cũng không được xuất hóa đơn khoản này.",
-        canLam: `Vào /admin/hoa-don-thue → ghi tay khoản ${vnd(tien.tongTra)} (Up tin "${tin.title}").`,
+        canLam: `Vào /admin/hoa-don-thue → ghi tay khoản ${vnd(tien.tongTra)} (Đăng lại tin "${tin.title}").`,
         khoa: `up-tin:doanh-thu:${id}:${homNay}`,
       });
     }
@@ -168,14 +172,14 @@ export async function xuLyUpCho(admin: SupabaseClient, userId: string): Promise<
       daUp++;
       // Có trừ tiền → báo bằng mẫu "Thanh toán thành công" (có mẫu Zalo); 0đ thì báo thường.
       if (kq.daTru > 0) {
-        await baoThanhToan(admin, userId, { dichVu: `Up tin tự động ${kq.tenGoi} ${y.so_ngay} ngày — ${kq.tieuDe}`, soTien: kq.daTru, soDu: kq.soDu });
+        await baoThanhToan(admin, userId, { dichVu: `Đăng lại tin tự động ${kq.tenGoi} ${y.so_ngay} ngày — ${kq.tieuDe}`, soTien: kq.daTru, soDu: kq.soDu });
         continue;
       }
       await guiThongBao({
         email: hs?.[0]?.email,
         phone: hs?.[0]?.phone,
-        tieuDe: "Tin của bạn đã được Up tự động",
-        loiNhan: "Tiền nạp đã vào ví, tin đã được Up theo đúng gói bạn chọn.",
+        tieuDe: "Tin của bạn đã được đăng lại tự động",
+        loiNhan: "Tiền nạp đã vào ví, tin đã được đăng lại theo đúng gói bạn chọn.",
         cacDong: [
           { nhan: "Tin đăng", giaTri: kq.tieuDe },
           { nhan: "Gói", giaTri: `${kq.tenGoi} · ${y.so_ngay} ngày` },
@@ -188,10 +192,10 @@ export async function xuLyUpCho(admin: SupabaseClient, userId: string): Promise<
     await baoLoi({
       noi: "up-tin-cho-nap",
       mucDo: "nang",
-      tomTat: "Tự Up tin sau khi nạp tiền bị lỗi",
+      tomTat: "Tự đăng lại tin sau khi nạp tiền bị lỗi",
       chiTiet: String(e),
-      hauQua: "Khách đã nạp tiền nhưng tin chưa được Up tự động.",
-      canLam: "Vào /admin kiểm bảng up_cho của khách, Up tay giúp khách.",
+      hauQua: "Khách đã nạp tiền nhưng tin chưa được đăng lại tự động.",
+      canLam: "Vào /admin kiểm bảng up_cho của khách, đăng lại giúp khách.",
       khoa: `up-cho:${userId}`,
     }).catch(() => {});
   }

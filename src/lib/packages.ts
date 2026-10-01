@@ -128,7 +128,7 @@ export const packages: Pkg[] = [
   {
     slug: "goi-day-tin",
     label: "Gói Đẩy tin",
-    title: "Gói Đẩy tin (Up tin)",
+    title: "Gói Đẩy tin",
     description: "Đẩy tin lên đầu danh sách, làm mới thời gian đăng để luôn nằm trong tầm mắt người mua.",
     icon: "boost",
     kind: "service",

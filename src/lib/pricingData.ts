@@ -100,11 +100,11 @@ export const PRICING_DEFAULT: PricingData = {
     ],
   },
   upRows: [
-    { label: "Up ngay", values: [{ price: "90.000đ" }, { price: "46.000đ" }, { price: "17.000đ" }, { price: "5.000đ" }] },
-    { label: "Up 3 lần (−20%)", values: [{ original: "270.000đ", price: "216.000đ" }, { original: "138.000đ", price: "110.400đ" }, { original: "51.000đ", price: "40.800đ" }, { original: "15.000đ", price: "12.000đ" }] },
-    { label: "Up 7 lần (−30%)", values: [{ original: "630.000đ", price: "441.000đ" }, { original: "322.000đ", price: "225.400đ" }, { original: "119.000đ", price: "83.300đ" }, { original: "35.000đ", price: "24.500đ" }] },
-    { label: "Up 13 lần (−40%)", values: [{ original: "1.170.000đ", price: "702.000đ" }, { original: "598.000đ", price: "358.800đ" }, { original: "221.000đ", price: "132.600đ" }, { original: "65.000đ", price: "39.000đ" }] },
-    { label: "Up 27 lần (−50%)", values: [{ original: "2.430.000đ", price: "1.215.000đ" }, { original: "1.242.000đ", price: "621.000đ" }, { original: "459.000đ", price: "229.500đ" }, { original: "135.000đ", price: "67.500đ" }] },
+    { label: "Đẩy 1 lượt", values: [{ price: "90.000đ" }, { price: "46.000đ" }, { price: "17.000đ" }, { price: "5.000đ" }] },
+    { label: "Đẩy 3 lượt (−20%)", values: [{ original: "270.000đ", price: "216.000đ" }, { original: "138.000đ", price: "110.400đ" }, { original: "51.000đ", price: "40.800đ" }, { original: "15.000đ", price: "12.000đ" }] },
+    { label: "Đẩy 7 lượt (−30%)", values: [{ original: "630.000đ", price: "441.000đ" }, { original: "322.000đ", price: "225.400đ" }, { original: "119.000đ", price: "83.300đ" }, { original: "35.000đ", price: "24.500đ" }] },
+    { label: "Đẩy 13 lượt (−40%)", values: [{ original: "1.170.000đ", price: "702.000đ" }, { original: "598.000đ", price: "358.800đ" }, { original: "221.000đ", price: "132.600đ" }, { original: "65.000đ", price: "39.000đ" }] },
+    { label: "Đẩy 27 lượt (−50%)", values: [{ original: "2.430.000đ", price: "1.215.000đ" }, { original: "1.242.000đ", price: "621.000đ" }, { original: "459.000đ", price: "229.500đ" }, { original: "135.000đ", price: "67.500đ" }] },
   ],
   pjPkgs: [
     {

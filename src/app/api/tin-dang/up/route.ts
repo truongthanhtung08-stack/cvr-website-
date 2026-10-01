@@ -43,6 +43,6 @@ export async function POST(request: Request) {
   }
 
   revalidateTag("listings", "max"); // tin vừa Up → lên đầu, hiện lại NGAY
-  await baoThanhToan(admin, user.id, { dichVu: `Up tin ${kq.tenGoi} ${soNgay} ngày — ${kq.tieuDe}`, soTien: kq.daTru, soDu: kq.soDu });
+  await baoThanhToan(admin, user.id, { dichVu: `Đăng lại tin ${kq.tenGoi} ${soNgay} ngày — ${kq.tieuDe}`, soTien: kq.daTru, soDu: kq.soDu });
   return NextResponse.json({ ok: true, daTru: kq.daTru, mienPhi: kq.mienPhi, soDu: kq.soDu, hetHan: kq.hetHan });
 }

@@ -70,6 +70,12 @@ export default function AdminListingsPage() {
         window.alert(`Duyệt tin THẤT BẠI — tin chưa thay đổi.\n${j.message ?? ""}`);
         return;
       }
+      // Duyệt lại tin đã sửa: giữ nguyên ngày đăng + hạn; kỳ đã qua thì tin về Hết hạn.
+      if (j.duyetLai) {
+        setRows((rs) => rs.map((x) => (x.id === id ? { ...x, status: j.hetHan ? "expired" : "approved" } : x)));
+        if (j.hetHan) window.alert("Nội dung đã duyệt, nhưng thời hạn hiển thị của tin đã hết — tin chuyển Hết hạn, khách bấm Đăng lại.");
+        return;
+      }
       setRows((rs) =>
         rs.map((x) => (x.id === id ? { ...x, status: next, published_at: new Date().toISOString() } : x)),
       );
