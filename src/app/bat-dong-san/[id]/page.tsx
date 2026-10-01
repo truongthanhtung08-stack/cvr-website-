@@ -459,6 +459,16 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                 </Section>
               )}
 
+              {/* LINK CHÈN DƯỚI TIN — quyền lợi CVR Diamond, chỉ hiện khi tin còn hạng Diamond */}
+              {tier?.id === "diamond" && d.linkChen && (
+                <p className="-mt-2 mb-6 text-[15px]">
+                  <span className="text-cvr-muted">Xem thêm: </span>
+                  <a href={d.linkChen} target="_blank" rel="nofollow noopener noreferrer" className="break-all font-medium text-cvr-blue-ink underline">
+                    {d.linkChen.replace(/^https?:\/\//, "").replace(/\/$/, "")}
+                  </a>
+                </p>
+              )}
+
               {/* Đặc điểm bất động sản — chỉ những gì đã nhập */}
               <Section id="dac-diem" title="Đặc điểm bất động sản">
                 {/* KHÔNG LẶP LẠI mục đã nằm ở khối "Thông tin chính" phía trên

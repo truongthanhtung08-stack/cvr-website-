@@ -55,6 +55,8 @@ export type Listing = {
   // đó ra sao thay vì chỉ mỗi ảnh bìa. Chỉ lấy ít tấm, không kéo cả bộ 15 ảnh.
   images?: string[];
   badge?: "VIP" | "Nổi bật" | "Mới";
+  /** Bản kèm "Nhân đôi hiển thị" của tin CVR Diamond (nhanDoiHienThi.ts) — không phải tin riêng. */
+  banSao?: boolean;
   // Mục đích tin: "ban" = mua bán (mặc định) · "thue" = cho thuê (giá tính theo tháng).
   // Phân tách rõ với "type" (sản phẩm/loại hình) để logic bán/thuê đúng trên mọi trang.
   purpose?: "ban" | "thue" | "mua" | "can-thue";

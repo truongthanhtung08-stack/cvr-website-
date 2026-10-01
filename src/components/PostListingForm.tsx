@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import BangGiaGoiTin from "@/components/BangGiaGoiTin";
+import { linkHopLe } from "@/lib/linkChen";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { donViGiaNenDung, goiYDienTich, goiYGia, goiYTieuDe } from "@/lib/goiYNhapTin";
@@ -79,6 +80,8 @@ export default function PostListingForm() {
   // phường cũ, lúc đó máy không có cách nào suy ra (xem ungVienPhuongCu).
   const [phuongCu, setPhuongCu] = useState("");
   const [addressDetail, setAddressDetail] = useState("");
+  // LINK CHÈN DƯỚI TIN — quyền lợi CVR Diamond (quy định gói); hạng khác không có ô này.
+  const [linkChen, setLinkChen] = useState("");
   // GHIM VỊ TRÍ: rất nhiều bất động sản chưa có địa chỉ chính xác (đất nền, lô
   // dự án, nhà trong hẻm). Cho người đăng tự bấm đúng điểm trên bản đồ thay vì
   // để máy đoán theo tên đường. Lưu chuỗi "lat, lng" vào details.mapPin.
@@ -401,6 +404,7 @@ export default function PostListingForm() {
       setFurnish(d.furnish ?? "");
       setDirection(d.direction ?? "");
       setAddressDetail(d.addressDetail ?? "");
+      setLinkChen(d.linkChen ?? "");
       setMapPin(d.mapPin ?? "");
       // Phường/xã cũ đã lưu → chọn lại đúng dòng trong ô, đừng bắt chọn lại từ đầu.
       if (d.diaChiCu?.phuong) {
@@ -542,6 +546,8 @@ export default function PostListingForm() {
         furnish: furnish || undefined,
         direction: direction || undefined,
         addressDetail: addressDetail.trim() || undefined,
+        // Chỉ lưu khi tin là CVR Diamond (gói đang chọn hoặc gói đang dùng).
+        linkChen: (goiDangDung?.tier ?? planTier) === "diamond" ? linkHopLe(linkChen) ?? undefined : undefined,
         mapPin: mapPin.trim() || undefined,
         // Phường/xã cũ người đăng tự chọn → dòng "Địa chỉ hệ cũ" đủ 3 cấp.
         ...((): { diaChiCu?: { phuong: string; quan: string; tinh: string } } => {
@@ -1082,6 +1088,23 @@ export default function PostListingForm() {
           rows={5}
           placeholder="Mô tả vị trí, kết cấu, tiện ích, pháp lý, lý do bán… (nội dung càng đầy đủ càng dễ chốt)"
         />
+        {/* Quyền lợi CVR Diamond: chèn 1 link bất kỳ dưới tin đăng */}
+        {(goiDangDung?.tier ?? planTier) === "diamond" && (
+          <div className="mt-4">
+            <Label>Link chèn dưới tin (CVR Diamond)</Label>
+            <input
+              type="url"
+              inputMode="url"
+              value={linkChen}
+              onChange={(e) => setLinkChen(e.target.value)}
+              placeholder="https://… (video, trang dự án, tài liệu…)"
+              className={inputCls}
+            />
+            {linkChen.trim() && !linkHopLe(linkChen) && (
+              <p className="mt-1 text-xs text-red-600">Link phải bắt đầu bằng http:// hoặc https://</p>
+            )}
+          </div>
+        )}
       </Card>
 
       {/* 8. Hình ảnh — tải từ máy / dán link, ảnh đầu là ảnh đại diện */}

@@ -14,6 +14,7 @@ export type ListingDetails = {
   furnish?: string;                 // mức nội thất
   direction?: string;               // hướng
   addressDetail?: string;           // địa chỉ cụ thể
+  linkChen?: string;                // link chèn dưới tin — quyền lợi CVR Diamond
   mapPin?: string;                  // toạ độ / link Google Maps admin ghim tay
   // Phường/xã CŨ — chỉ có khi một phường mới gộp nhiều phường cũ nên máy không
   // suy ngược ra được; người đăng (hoặc file nhập tin) chỉ đích danh. Nhờ nó mà

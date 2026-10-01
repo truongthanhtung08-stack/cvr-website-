@@ -40,7 +40,7 @@ export default function AdminListingsPage() {
 
   const filtered = useMemo(() => {
     const kw = q.trim().toLowerCase();
-    return rows.filter((r) => {
+    const ds = rows.filter((r) => {
       if (purpose !== "all" && r.purpose !== purpose) return false;
       if (tier !== "all" && r.tier !== tier) return false;
       // "Đã sửa — chờ kiểm" (0054): tin đang hiển thị khách vừa sửa, bản sửa đã hiện ngay.
@@ -51,6 +51,15 @@ export default function AdminListingsPage() {
         .filter(Boolean)
         .some((v) => (v as string).toLowerCase().includes(kw));
     });
+    // ƯU TIÊN KIỂM DUYỆT TRƯỚC cho tin VIP (quy định chung gói tin, chốt 01/10/2026):
+    // xem mục "Chờ duyệt" → Diamond → Gold → Silver → Basic theo GÓI KHÁCH ĐÃ CHỌN,
+    // cùng hạng thì tin gửi TRƯỚC duyệt trước.
+    if (status !== "pending") return ds;
+    const HANG_DUYET: Record<string, number> = { diamond: 0, gold: 1, silver: 2, basic: 3 };
+    const goiChon = (r: ListingRow) => (r.tier_yeu_cau ?? r.details?.plan?.tier ?? r.tier ?? "basic") as string;
+    return [...ds].sort((a, b) =>
+      (HANG_DUYET[goiChon(a)] ?? 3) - (HANG_DUYET[goiChon(b)] ?? 3) ||
+      new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
   }, [rows, q, purpose, tier, status]);
 
   const pendingCount = rows.filter((r) => r.status === "pending").length;

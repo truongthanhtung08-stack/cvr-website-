@@ -26,6 +26,7 @@ import {
   type SortKey,
 } from "@/lib/filters";
 import { smartFilter, smartSearch, TIER_LABEL } from "@/lib/smartSearch";
+import { nhanDoiHienThi, khoaThe } from "@/lib/nhanDoiHienThi";
 
 // 10 tin/trang (chủ dự án chốt 10/9/2026) — trước là 8.
 const PER_PAGE = 10;
@@ -103,8 +104,9 @@ export default function ListingBrowser({
   }
 
   // Nguồn tin theo đúng MỤC ĐÍCH của trang (bán / thuê)
+  // + NHÂN ĐÔI HIỂN THỊ của CVR Diamond (bản kèm dạng CVR Basic — nhanDoiHienThi.ts)
   const base = useMemo(
-    () => items.filter((l) => (l.purpose ?? "ban") === purpose),
+    () => nhanDoiHienThi(items.filter((l) => (l.purpose ?? "ban") === purpose)),
     [items, purpose],
   );
 
@@ -127,6 +129,7 @@ export default function ListingBrowser({
   const provinces = useMemo(() => {
     const m = new Map<string, number>();
     for (const l of base) {
+      if (l.banSao) continue; // bản kèm không phải tin riêng — không đếm
       const p = l.location.split(",").pop()?.trim() ?? "";
       if (p) m.set(p, (m.get(p) ?? 0) + 1);
     }
@@ -229,7 +232,7 @@ export default function ListingBrowser({
       {mapMode && (
         <div className="mt-4 overflow-hidden rounded-xl border border-cvr-line">
           <div className="h-[62vh] min-h-[380px] w-full">
-            <MapView items={results} />
+            <MapView items={results.filter((l) => !l.banSao)} />
           </div>
           <p className="border-t border-cvr-line bg-cvr-surface px-3 py-2 text-xs text-cvr-muted">
             Bấm vào viên giá để xem nhanh tin.
@@ -252,7 +255,7 @@ export default function ListingBrowser({
                   không phụ thuộc JS → chắc chắn đúng trên mọi máy) */}
               <div className="reveal is-visible cards-stagger grid grid-cols-1 gap-5 sm:hidden">
                 {pageItems.map((item) => (
-                  <PropertyCard key={item.id} item={item} layout="grid" showTime terms={termsById.get(item.id) ?? []} />
+                  <PropertyCard key={khoaThe(item)} item={item} layout="grid" showTime terms={termsById.get(item.id) ?? []} />
                 ))}
               </div>
               {/* DESKTOP (≥ 640px): theo chế độ xem đã chọn (Danh sách = thẻ ngang · Lưới = thẻ dọc) */}
@@ -264,7 +267,7 @@ export default function ListingBrowser({
                 }`}
               >
                 {pageItems.map((item) => (
-                  <PropertyCard key={item.id} item={item} layout={view} showTime terms={termsById.get(item.id) ?? []} />
+                  <PropertyCard key={khoaThe(item)} item={item} layout={view} showTime terms={termsById.get(item.id) ?? []} />
                 ))}
               </div>
 

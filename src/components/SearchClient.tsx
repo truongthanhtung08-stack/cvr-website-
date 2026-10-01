@@ -16,6 +16,7 @@ import {
   type SortKey,
 } from "@/lib/filters";
 import { smartFilter, smartSearch, TIER_LABEL } from "@/lib/smartSearch";
+import { nhanDoiHienThi, khoaThe } from "@/lib/nhanDoiHienThi";
 
 const PER_PAGE = 10; // mỗi trang 10 tin (giống danh sách /mua-ban)
 
@@ -43,8 +44,9 @@ export default function SearchClient({ items = featuredListings }: { items?: Lis
 
   // Nguồn tin theo mục đích (bán/thuê) — giá bán tính TỶ, giá thuê tính TRIỆU/THÁNG
   // nên tách riêng để lọc giá đúng đơn vị. Trong mỗi mục đích: KHÔNG giới hạn khu vực.
+  // + NHÂN ĐÔI HIỂN THỊ của CVR Diamond (bản kèm dạng CVR Basic — nhanDoiHienThi.ts)
   const base = useMemo(
-    () => items.filter((l) => (l.purpose ?? "ban") === purpose),
+    () => nhanDoiHienThi(items.filter((l) => (l.purpose ?? "ban") === purpose)),
     [items, purpose],
   );
 
@@ -98,7 +100,7 @@ export default function SearchClient({ items = featuredListings }: { items?: Lis
           id="ket-qua": bấm Tìm / Enter / chọn gợi ý là cuộn thẳng xuống đây. */}
       <div id="ket-qua" className="mb-5 mt-5 flex scroll-mt-20 flex-wrap items-center justify-between gap-3 sm:scroll-mt-24">
         <p className="text-sm text-cvr-body">
-          {active ? <><span className="font-bold text-cvr-ink">{results.length}</span> bất động sản phù hợp</> : "Bất động sản tại Đà Nẵng, Huế & Miền Trung"}
+          {active ? <><span className="font-bold text-cvr-ink">{results.filter((l) => !l.banSao).length}</span> bất động sản phù hợp</> : "Bất động sản tại Đà Nẵng, Huế & Miền Trung"}
         </p>
         <div className="flex items-center gap-3">
           {active && (
@@ -141,7 +143,7 @@ export default function SearchClient({ items = featuredListings }: { items?: Lis
 
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {pageItems.map((item) => (
-              <PropertyCard key={item.id} item={item} terms={hitById.get(item.id)?.matched ?? []} />
+              <PropertyCard key={khoaThe(item)} item={item} terms={hitById.get(item.id)?.matched ?? []} />
             ))}
           </div>
 

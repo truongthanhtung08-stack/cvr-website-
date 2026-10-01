@@ -9,6 +9,7 @@
 // ============================================================================
 
 import type { Listing } from "@/lib/data";
+import { linkHopLe } from "@/lib/linkChen";
 import { haiDongDiaChi, heCuaTin } from "@/lib/diaChiHaiHe";
 import { mauSoCuaLoaiHinh } from "@/lib/chiSoGia";
 import { featuredListings, getListingById } from "@/lib/data";
@@ -26,6 +27,8 @@ export type ListingDetailsJson = {
   furnish?: string;
   direction?: string;
   addressDetail?: string;
+  // LINK CHÈN DƯỚI TIN — quyền lợi CVR Diamond (chỉ hiện khi tin còn hạng Diamond)
+  linkChen?: string;
   // ĐỊA CHỈ HỆ CŨ do người nhập chép NGUYÊN từ tin gốc (cột phuong_xa_cu /
   // quan_huyen_cu khi nhập hàng loạt). Có thì dùng thẳng — suy ngược từ hệ mới
   // không bao giờ ra đúng phường cũ vì một phường mới gộp nhiều phường cũ.
@@ -390,6 +393,7 @@ export type ListingFull = {
   furnish: string | null;
   direction: string | null;
   addressDetail: string | null;
+  linkChen: string | null;       // link chèn dưới tin (CVR Diamond)
   // TÊN dự án (nếu tin thuộc dự án) + slug để bấm sang trang dự án khi dự án đó
   // đã được tạo. Chưa tạo thì vẫn hiện tên, chỉ không bấm được.
   projectName: string | null;
@@ -458,6 +462,7 @@ function rowToDetail(r: Row): ListingFull {
     furnish: d.furnish || null,
     direction: d.direction || null,
     addressDetail: d.addressDetail || null,
+    linkChen: linkHopLe(d.linkChen),
     // SỐ ĐIỆN THOẠI ra web luôn đi qua chuanHoaSdt() — dữ liệu cũ nhập lẫn dấu
     // chấm / khoảng trắng / +84 vẫn hiện đúng chuẩn 0 + 10 số, khớp với file gốc.
     contact: c && (c.name || c.phone) ? { name: c.name ?? "", phone: chuanHoaSdt(c.phone ?? ""), email: c.email ?? "", avatar: c.avatar ? asset(c.avatar) : null } : null,
@@ -489,7 +494,7 @@ function mockToDetail(m: Listing): ListingFull {
     specs: [],
     interior: [],
     amenityGroups: amenityGroups.map((g) => ({ group: g.group, items: g.items.map((name) => ({ name, active: false })) })),
-    legal: null, furnish: null, direction: null, addressDetail: null, contact: null,
+    legal: null, furnish: null, direction: null, addressDetail: null, linkChen: null, contact: null,
     projectName: null, projectSlug: null,
     places: [],
     mapQuery: m.location, mapZoom: 15,
@@ -518,3 +523,4 @@ export async function getListingDetail(id: string): Promise<ListingFull | null> 
   if (rows.length === 0) return null;
   return rowToDetail(rows[0]);
 }
+

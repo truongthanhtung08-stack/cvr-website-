@@ -55,16 +55,9 @@ export default function QuyDinhGiaEditor() {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
-        <p className="font-semibold">Đang ghi trên web nhưng CHƯA làm thật (đo ngày 25/09/2026)</p>
-        <ul className="mt-1 list-disc pl-5">
-          <li>“Nhân đôi hiển thị” của CVR Diamond — web chưa tặng kèm tin thường, chưa đẩy kèm.</li>
-          <li>“Chèn 1 link bất kỳ dưới tin đăng” — form đăng tin chưa có ô chèn link.</li>
-          <li>“Ưu tiên kiểm duyệt trước” cho tin VIP — hàng chờ duyệt chưa xếp theo hạng.</li>
-        </ul>
-        <p className="mt-1">Sửa hoặc bỏ các dòng này trước khi thu tiền thật, hoặc giao làm thật rồi giữ.</p>
-      </div>
-
+      {/* 01/10/2026: ba quyền lợi từng "ghi mà chưa làm" (nhân đôi hiển thị, chèn link,
+          ưu tiên kiểm duyệt) ĐÃ LÀM THẬT — gỡ khung cảnh báo. Thêm quyền lợi mới ở đây thì
+          PHẢI làm thật trên web trước, không ghi trước. */}
       <Panel title="Quyền lợi từng hạng tin" desc="Mã tự điền theo cơ chế đang chạy: {X} hệ số tiếp cận · {VI_TRI} vị trí hiển thị · {NHAN_DIEN} nhận diện thẻ tin · {SUAT_GHIM} số suất trên Trang chủ. Mỗi dòng một ý.">
         <div className="space-y-4">
           {HANG.map((t) => (
