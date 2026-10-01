@@ -3,7 +3,7 @@ import { Icon } from "zmp-ui";
 import { openPhone, openWebview } from "zmp-sdk";
 import { supabase, usePhien } from "../lib/supabase";
 
-// LIÊN HỆ NGƯỜI ĐĂNG — thanh đáy trang tin, như web: [Zalo] [0981 ••• ••• · Hiện số để gọi].
+// LIÊN HỆ NGƯỜI ĐĂNG — thanh đáy trang tin, như web: [Zalo] [0981 234 ••• · Hiện số để gọi].
 // Trong Mini App KHÔNG bắt xác thực để xem số (chủ dự án chốt 27/09/2026).
 // Khách ĐÃ ĐĂNG NHẬP thì mở số qua hàm reveal_contact của web → ghi thành KHÁCH QUAN TÂM
 // cho người đăng (cùng bảng listing_leads, người đăng thấy ở trang Khách hàng trên web).

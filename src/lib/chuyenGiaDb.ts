@@ -14,7 +14,7 @@ import type { Listing } from "@/lib/data";
 //
 // ⚠️ CỔNG SỐ ĐIỆN THOẠI — KHÔNG ĐƯỢC PHÁ:
 // Số đầy đủ TUYỆT ĐỐI không đi ra HTML công khai. Trang chỉ nhận số đã che
-// ("0905 *** 456"). Muốn xem đủ thì bấm nút → gọi RPC reveal_contact(tin) như
+// ("0905 123 •••", chỉ che 3 số cuối). Muốn xem đủ thì bấm nút → gọi RPC reveal_contact(tin) như
 // trang chi tiết tin: người xem phải đăng nhập, và chuyên gia được ghi nhận một
 // lead. Đưa số ra thẳng HTML là mất trắng cơ chế lead đó (và mất luôn lý do để
 // khách trả tiền).
@@ -52,12 +52,12 @@ type Row = {
   details: { contact?: { name?: string; phone?: string; avatar?: string } } | null;
 };
 
-// "0905123456" → "0905 *** 456". Đủ để người quen nhận ra số của mình mà người
-// lạ không lấy được số để gọi rác.
+// "0905123456" → "0905 123 •••" — chuẩn chung toàn web: số 10 chữ số, CHỈ che 3 số cuối
+// (chủ dự án chốt 01/10/2026).
 export function cheSdt(so: string): string {
   const d = chuanHoaSdt(so);
   if (d.length < 7) return "";
-  return `${d.slice(0, 4)} *** ${d.slice(-3)}`;
+  return `${d.slice(0, 4)} ${d.slice(4, 7)} •••`;
 }
 
 function slugTu(ten: string, so: string): string {

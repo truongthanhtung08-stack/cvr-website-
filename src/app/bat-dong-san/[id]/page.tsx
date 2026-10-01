@@ -204,10 +204,10 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
   // không để tên dự án rơi mất như trước.
   const duAnCoThat = d.projectSlug ? Boolean(await getProject(d.projectSlug)) : false;
   // CỔNG SĐT: full số CHỈ hiện khi khách đăng nhập (bấm → RPC reveal_contact ghi lead).
-  // Server chỉ phát chuỗi CHE (4 số đầu) — số thật không nằm trong HTML để không xem lén,
-  // nhờ vậy mỗi lượt xem số đều được ghi nhận thành lead cho người bán.
+  // Server chỉ phát chuỗi CHE — số 10 chữ số, CHỈ che 3 số cuối (chủ dự án chốt 01/10/2026):
+  // "0905 374 •••". Số đủ không nằm trong HTML, mỗi lượt xem số vẫn ghi thành lead cho người bán.
   const phoneDigits = contact ? chuanHoaSdt(contact.phone) : "";
-  const phoneMask = phoneDigits ? `${phoneDigits.slice(0, 4)} ••• •••` : "Xem số";
+  const phoneMask = phoneDigits ? `${phoneDigits.slice(0, 4)} ${phoneDigits.slice(4, 7)} •••` : "Xem số";
 
   // Schema.org RealEstateListing (IV.2) — dữ liệu chuẩn cho Google.
   const priceVnd = parseVnd(l.price);

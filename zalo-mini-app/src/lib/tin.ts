@@ -190,7 +190,7 @@ export type TinChiTiet = Tin & {
   sdt: string | null; // SĐT người đăng — trong Mini App khách đã đăng nhập Zalo nên bấm là hiện (chủ dự án chốt 27/09)
   sdt_an: string | null;
   ghim: string | null; // toạ độ ghim trên bản đồ (nếu người đăng đã ghim)
-  dia_chi_ct: string | null; // số nhà, tên đường // bản che "0981 ••• •••" hiện trước khi bấm, như web
+  dia_chi_ct: string | null; // số nhà, tên đường // bản che "0981 234 •••" (chỉ che 3 số cuối) hiện trước khi bấm, như web
 };
 const COT_CHI_TIET =
   `${COT},built_area_m2,dac_diem:details->specs,phap_ly:details->>legal,huong:details->>direction,noi_that:details->>furnish,` +
@@ -207,7 +207,7 @@ export async function layTinChiTiet(id: string): Promise<TinChiTiet | null> {
   if (d && !d.startsWith("0")) d = `0${d}`; // kho lưu số không kèm 0 đầu
   const { sdt_goc: _bo, ...tin } = t;
   const coSo = d.length >= 9;
-  return { ...tin, sdt: coSo ? d : null, sdt_an: coSo ? `${d.slice(0, 4)} ••• •••` : null };
+  return { ...tin, sdt: coSo ? d : null, sdt_an: coSo ? `${d.slice(0, 4)} ${d.slice(4, 7)} •••` : null }; // chỉ che 3 số cuối, như web
 }
 
 export async function layTinTuongTu(t: Tin, soLuong = 6) {
