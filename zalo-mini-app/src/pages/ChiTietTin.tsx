@@ -193,6 +193,18 @@ export default function ChiTietTin() {
             <div key={k}><span>{k}</span><strong>{v}</strong></div>
           ))}
         </div>
+        {/* THÔNG TIN TIN ĐĂNG — giống web (src/app/bat-dong-san/[id]/page.tsx):
+            Ngày đăng · Ngày hết hạn · Loại tin · Mã tin. */}
+        <dl className="luoi-tt">
+          {[
+            ["Ngày đăng", tin.published_at ? new Date(tin.published_at).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" }) : "—"],
+            ["Ngày hết hạn", tin.tier_expires_at ? new Date(tin.tier_expires_at).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" }) : "—"],
+            ["Loại tin", hang.ten],
+            ["Mã tin", tin.id.slice(0, 8).toUpperCase()],
+          ].map(([k, v]) => (
+            <div key={k}><dt>{k}</dt><dd>{v}</dd></div>
+          ))}
+        </dl>
       </section>
 
       {tin.description && <MoTa noiDung={tin.description} />}
