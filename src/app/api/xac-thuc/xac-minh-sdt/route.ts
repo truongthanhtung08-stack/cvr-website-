@@ -33,25 +33,16 @@ export async function POST(req: Request) {
   const uid = u?.user?.id;
   if (!uid) return loi("Vui lòng đăng nhập lại.", 401);
 
-  // ĐỒNG BỘ TÀI KHOẢN (chủ dự án chốt 28/09/2026): khách đăng ký bằng email/Google, lúc
-  // nhập số (khi đăng tin) mà số đó ĐÃ CÓ tài khoản cũ (vd tài khoản Coastal Land tạo hộ,
-  // đã có tin) → nhận đúng mã Zalo = cùng một người → GỘP tài khoản cũ vào tài khoản đang
-  // đăng nhập: tin chuyển sang, số về đây, tài khoản cũ khoá lại. Tài khoản cũ còn TIỀN
-  // trong ví hoặc gói hội viên còn hạn thì không tự gộp (tránh sai tiền) — mời liên hệ.
+  // PHÂN TÀI KHOẢN THEO CÁCH ĐĂNG NHẬP (chủ dự án chốt 01/10/2026):
+  //   · Nhóm SĐT (Zalo + Số điện thoại): định danh = số. Tài khoản sinh từ Zalo (web không
+  //     lấy được số) khai số ĐÃ CÓ tài khoản → GỘP vào tài khoản của số, Zalo gắn sang đó.
+  //   · Nhóm Email (Email + Google): định danh = email, GIỮ RIÊNG. Khai số đã thuộc tài khoản
+  //     khác → nhận mã = số của mình → ghi là SỐ LIÊN HỆ ĐÃ XÁC MINH (0050), không gộp, không
+  //     khoá ai, không giành số của tài khoản SĐT.
   const tim = await timTaiKhoan(admin, sdt);
   if (tim === "trung") return loi("Số này đang gắn với nhiều tài khoản. Vui lòng liên hệ Coastal Land.", 409);
   const idCu = tim && tim.id !== uid ? tim.id : null;
-  // Tài khoản sinh ra từ Zalo → gộp NGƯỢC vào tài khoản cũ (giữ nguyên ví/gói của tài khoản cũ),
-  // nên không cần chặn theo số dư tài khoản cũ.
   const laTkZalo = /^zalo_.+@users\.coastalland\.vn$/.test(u.user?.email ?? "");
-  if (idCu && !laTkZalo) {
-    const [{ data: hs }, { data: hv }] = await Promise.all([
-      admin.from("profiles").select("balance").eq("id", idCu).maybeSingle(),
-      admin.from("hoi_vien").select("user_id").eq("user_id", idCu).gt("het_han", new Date().toISOString()).limit(1),
-    ]);
-    if (Number(hs?.balance ?? 0) > 0 || (hv ?? []).length)
-      return loi("Số này thuộc một tài khoản còn số dư ví hoặc gói hội viên. Vui lòng liên hệ Coastal Land để gộp tài khoản.", 409);
-  }
 
   if (b.buoc === "gui-ma") {
     const phat = await phatMa(sdt, "zalo", "xac-minh-sdt");
@@ -117,14 +108,12 @@ export async function POST(req: Request) {
   }
 
   if (idCu) {
-    // Gộp: tin của tài khoản cũ sang tài khoản này; tài khoản cũ nhả số rồi khoá đăng nhập.
-    const { data: chuyen } = await admin.from("listings").update({ owner_id: uid }).eq("owner_id", idCu).select("id");
-    soTinGop = (chuyen ?? []).length;
-    await admin.from("profiles").update({ phone: null, phone_verified: false }).eq("id", idCu);
-    // Supabase KHÔNG cho xoá trắng số đăng nhập (phone ""/null bị bỏ qua — đo 28/09/2026) →
-    // đổi sang số giả đầu 8400… (không phải số di động VN nào) để nhả số thật cho tài khoản này.
-    const soGia = "8400" + String(parseInt(idCu.replace(/-/g, "").slice(0, 10), 16)).slice(0, 9);
-    await admin.auth.admin.updateUserById(idCu, { phone: soGia, phone_confirm: true, ban_duration: "876000h" }).then(() => {}, () => {});
+    // Nhóm Email: số đã thuộc tài khoản khác → chỉ là SỐ LIÊN HỆ ĐÃ XÁC MINH của tài khoản
+    // email này (được đăng tin). Không gộp, không khoá, không đụng tài khoản của số đó.
+    const { error } = await admin.from("profiles")
+      .update({ phone: sdt, phone_verified: false, sdt_lien_he_xac_minh: true }).eq("id", uid);
+    if (error) return loi("Chưa lưu được số. Vui lòng thử lại.", 500);
+    return NextResponse.json({ ok: true, sdt, soTinGop: 0 });
   }
 
   const { error } = await admin.from("profiles").update({ phone: sdt, phone_verified: true }).eq("id", uid);

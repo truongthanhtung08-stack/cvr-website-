@@ -1,0 +1,11 @@
+-- ============================================================================
+-- 0050 — TÀI KHOẢN NHÓM EMAIL GIỮ RIÊNG (01/10/2026)
+-- ----------------------------------------------------------------------------
+-- Chủ dự án chốt: phân tài khoản theo cách đăng nhập.
+--   · Nhóm SĐT  (Zalo + Số điện thoại): định danh = SỐ ĐIỆN THOẠI, Zalo gắn với số.
+--   · Nhóm Email (Email + Google):      định danh = EMAIL, giữ RIÊNG, không gộp.
+-- Tài khoản email khai một số ĐÃ THUỘC tài khoản khác (lúc đăng tin): nhận mã Zalo là
+-- chứng minh số đó của mình → được đăng tin, số chỉ là SỐ LIÊN HỆ ĐÃ XÁC MINH, KHÔNG
+-- thành chủ số (không đụng tới tài khoản SĐT của số đó, không gộp, không khoá ai).
+-- ============================================================================
+alter table public.profiles add column if not exists sdt_lien_he_xac_minh boolean not null default false;

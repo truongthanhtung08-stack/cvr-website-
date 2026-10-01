@@ -344,13 +344,14 @@ export default function PostListingForm() {
         // để tính ĐÚNG số tiền phải trả (ưu đãi thành viên mới, khuyến mãi, cấp).
         const { data: p } = await supabase
           .from("profiles")
-          .select("full_name, phone, email, created_at, free_quota, role, total_topup, balance, phone_verified")
+          .select("full_name, phone, email, created_at, free_quota, role, total_topup, balance, phone_verified, sdt_lien_he_xac_minh")
           .eq("id", user.id)
           .single();
         if (p) {
-          const pv = p as { phone_verified?: boolean; role?: string };
-          // Số khách đăng ký bằng số (Supabase đã nhận mã) cũng coi là đã xác minh.
-          setSoDaXacMinh(!!pv.phone_verified || pv.role === "admin" || !!user.phone_confirmed_at);
+          const pv = p as { phone_verified?: boolean; sdt_lien_he_xac_minh?: boolean; role?: string };
+          // Số khách đăng ký bằng số (Supabase đã nhận mã) cũng coi là đã xác minh; nhóm Email đã
+          // nhận mã cho số liên hệ (0050) cũng được đăng tin.
+          setSoDaXacMinh(!!pv.phone_verified || !!pv.sdt_lien_he_xac_minh || pv.role === "admin" || !!user.phone_confirmed_at);
           setSoTaiKhoan(chuanHoaSdt(p.phone ?? ""));
           setContactName((v) => v || p.full_name || "");
           setContactPhone((v) => v || p.phone || "");
