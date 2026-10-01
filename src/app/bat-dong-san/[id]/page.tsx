@@ -349,7 +349,14 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                         có ngày — khách xem nhà đất luôn hỏi "tin này đăng lâu chưa". */}
                     {l.postedAt && (
                       <span className="text-[12px] font-medium tracking-wide text-cvr-faint">
-                        · Đăng {new Date(l.postedAt).toLocaleDateString("vi-VN")}
+                        · Đăng {new Date(l.postedAt).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}
+                      </span>
+                    )}
+                    {/* NGÀY KẾT THÚC hiển thị (chủ dự án chốt 01/10/2026: mỗi tin ghi rõ ngày đăng,
+                        ngày kết thúc — như Batdongsan). */}
+                    {l.hetHanLuc && (
+                      <span className="text-[12px] font-medium tracking-wide text-cvr-faint">
+                        · Hết hạn {new Date(l.hetHanLuc).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}
                       </span>
                     )}
                   </div>
@@ -479,6 +486,22 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                   {d.specs.map((f) => <Row key={f.label} label={f.label} value={f.value} />)}
                   <Row label="Tình trạng pháp lý" value={d.legal ?? "Chưa cập nhật"} />
                 </div>
+                {/* THÔNG TIN TIN ĐĂNG — mọi tin đều có, chuẩn như Batdongsan (chủ dự án chốt
+                    01/10/2026): Ngày đăng · Ngày hết hạn · Loại tin · Mã tin. Ngày hết hạn lấy
+                    đúng hạn hiển thị theo Giá & quy định (tier_expires_at). */}
+                <dl className="mt-5 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-cvr-line bg-cvr-line sm:grid-cols-4">
+                  {[
+                    { nhan: "Ngày đăng", gt: l.postedAt ? new Date(l.postedAt).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" }) : "—" },
+                    { nhan: "Ngày hết hạn", gt: l.hetHanLuc ? new Date(l.hetHanLuc).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" }) : "—" },
+                    { nhan: "Loại tin", gt: tier ? tier.name : "Tin thường" },
+                    { nhan: "Mã tin", gt: l.id.slice(0, 8).toUpperCase() },
+                  ].map((o) => (
+                    <div key={o.nhan} className="bg-white px-4 py-3">
+                      <dt className="text-[12px] text-cvr-muted">{o.nhan}</dt>
+                      <dd className="mt-0.5 text-[14px] font-semibold text-cvr-ink">{o.gt}</dd>
+                    </div>
+                  ))}
+                </dl>
               </Section>
 
               {/* Nội thất — chỉ khi người đăng tick */}

@@ -80,11 +80,24 @@ export async function POST(request: Request) {
 
   // ── 3. Tin miễn phí: duyệt thẳng, không dính tiền nong ────────────────────
   if (mienPhi) {
+    // HẠN HIỂN THỊ (chủ dự án chốt 01/10/2026): THÀNH VIÊN MỚI (trong chương trình Giá &
+    // quy định) — tin thường ĐÚNG 30 NGÀY; thành viên cũ — theo số ngày đã chọn (7/15/30).
+    const { data: scMp } = await admin.from("site_content").select("data").eq("key", "billing").limit(1);
+    const fMp = ghepBillingLuu(scMp?.[0]?.data as Partial<BillingData> | undefined).free;
+    const { data: hsMp } = tin.owner_id
+      ? await admin.from("profiles").select("created_at").eq("id", tin.owner_id).maybeSingle()
+      : { data: null };
+    const ngayMoTkMp = hsMp?.created_at ? (Date.now() - new Date(hsMp.created_at).getTime()) / 86_400_000 : Infinity;
+    const laTvMoi = freeDangChay(fMp, new Date().toISOString().slice(0, 10)) && ngayMoTkMp <= fMp.days;
+    const soNgayHien = laTvMoi ? fMp.days : soNgay > 0 ? soNgay : 7;
     const { error } = await admin
       .from("listings")
       // bumped_at = ngày đăng — nếu bỏ trống, tin vừa duyệt nằm dưới mọi tin cũ
       // (xếp theo bumped_at desc nulls last). Xem ghi chú ở trang nhập hàng loạt.
-      .update({ status: "approved", published_at: len, bumped_at: len, tier: "basic" })
+      .update({
+        status: "approved", published_at: len, bumped_at: len, tier: "basic",
+        tier_expires_at: new Date(Date.now() + soNgayHien * 86_400_000).toISOString(),
+      })
       .eq("id", id);
     if (error) return loi(error.message, 500);
     revalidateTag("listings", "max"); // tin vừa lên sóng → purge cache để hiện NGAY
