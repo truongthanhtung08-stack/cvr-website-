@@ -31,6 +31,11 @@ function useReveal(listingId: string) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hoiSo, setHoiSo] = useState(false);
+  // Đã đăng nhập → bấm là hiện số, không cần dòng nhắc "xác thực số".
+  const [daDangNhap, setDaDangNhap] = useState(false);
+  useEffect(() => {
+    createClient().auth.getSession().then(({ data }) => setDaDangNhap(!!data.session), () => {});
+  }, []);
 
   // Đồng bộ giữa các nút cùng tin trên một trang (bên phải ↔ thanh mobile).
   useEffect(() => {
@@ -49,15 +54,10 @@ function useReveal(listingId: string) {
     try {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
-      // Thành viên CHƯA CÓ SỐ trong hồ sơ (đăng ký bằng Google/email) cũng đi
-      // đường xác thực số như khách — nếu không, người bán nhận một "khách hỏi
-      // số" mà không có số nào để gọi lại (đo thật 25/09/2026).
-      let coSo = false;
-      if (user) {
-        const { data: hs } = await supabase.from("profiles").select("phone").eq("id", user.id).maybeSingle();
-        coSo = !!(hs as { phone?: string | null } | null)?.phone?.trim();
-      }
-      if (!user || !coSo) {
+      // ĐÃ ĐĂNG NHẬP (Zalo/Google/Email/Số) → hiện số NGAY, không bắt nhập mã (chủ dự án chốt
+      // 01/10/2026). Thành viên chưa có số trong hồ sơ thì khách quan tâm ghi theo tên tài khoản.
+      // Chỉ khách CHƯA ĐĂNG NHẬP mới đi đường xác thực số.
+      if (!user) {
         // ĐÃ XÁC THỰC SỐ Ở TIN TRƯỚC → dùng lại vé, xem số ngay, khỏi nhập mã
         // lại. Khách đang so mấy tin cùng lúc mà tin nào cũng bắt chờ mã thì
         // không ai chịu nổi.
@@ -118,7 +118,7 @@ function useReveal(listingId: string) {
     [listingId],
   );
 
-  return { phone, phones, loading, error, reveal, hoiSo, setHoiSo, nhanSo };
+  return { phone, phones, loading, error, reveal, hoiSo, setHoiSo, nhanSo, daDangNhap };
 }
 
 const PhoneIcon = () => (
@@ -129,7 +129,7 @@ const PhoneIcon = () => (
 
 // ── Khối liên hệ bên phải (desktop + mobile trong luồng trang) ──────────────
 export function ContactActions({ listingId, phoneMask }: { listingId: string; phoneMask: string }) {
-  const { phone, phones, loading, error, reveal, hoiSo, setHoiSo, nhanSo } = useReveal(listingId);
+  const { phone, phones, loading, error, reveal, hoiSo, setHoiSo, nhanSo, daDangNhap } = useReveal(listingId);
 
   return (
     <div className="mt-4 space-y-2.5">
@@ -154,7 +154,7 @@ export function ContactActions({ listingId, phoneMask }: { listingId: string; ph
               <span>{phoneMask} <span className="font-medium opacity-80">· Bấm để hiện số</span></span>
             )}
           </button>
-          <p className="text-center text-[12px] text-cvr-muted">Xác thực số của bạn để xem số người đăng</p>
+          {!daDangNhap && <p className="text-center text-[12px] text-cvr-muted">Xác thực số của bạn để xem số người đăng</p>}
           {error && <p className="text-center text-[12px] text-red-600">{error}</p>}
         </>
       )}
