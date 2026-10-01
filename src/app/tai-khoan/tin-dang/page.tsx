@@ -17,6 +17,8 @@ import {
 } from "@/lib/listingAdmin";
 import { bangTheoMucDich, giaDayTin, goiUpNhieuLuot, vnd } from "@/lib/billing";
 import { soNgayConDay } from "@/lib/luotUp";
+import BangGiaGoiTin from "@/components/BangGiaGoiTin";
+import type { TierId } from "@/lib/packages";
 import { useBilling } from "@/lib/useBilling";
 import { tachThue } from "@/lib/thue";
 
@@ -509,31 +511,20 @@ export default function MyListingsPage() {
       )}
       {upCho && (
         <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4" onClick={() => !dangUp && setUpCho(null)}>
-          <div className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-t-2xl bg-white p-5 shadow-xl sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
+          <div className="max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-t-2xl bg-white p-5 shadow-xl sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
             <p className="text-sm text-cvr-muted">Đăng lại tin</p>
             <h3 className="mt-0.5 line-clamp-2 text-base font-semibold text-cvr-ink">{upCho.title || "(chưa có tiêu đề)"}</h3>
             <p className="mt-2 text-[13px] leading-relaxed text-cvr-muted">
               Tin chờ kiểm duyệt như tin mới; duyệt xong mới trừ phí, ngày đăng và thời hạn tính từ lúc duyệt. Mã tin, lượt xem và người quan tâm giữ nguyên.
               Miễn phí thành viên mới và voucher hội viên tự áp khi xác nhận.
             </p>
-            <div className="mt-4 space-y-3">
-              {bangTheoMucDich(billing, upCho.purpose).plans.map((p) => (
-                <div key={p.tierId}>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-cvr-muted">{p.name}</p>
-                  <div className="mt-1.5 grid grid-cols-3 gap-2">
-                    {[...p.terms].sort((a, b) => a.days - b.days).map((t) => {
-                      const chon = upChon?.tier === p.tierId && upChon.soNgay === t.days;
-                      return (
-                        <button key={t.days} type="button" onClick={() => setUpChon({ tier: p.tierId, soNgay: t.days })}
-                          className={`rounded-xl border px-2 py-2 text-center transition ${chon ? "border-cvr-ink bg-cvr-ink text-white" : "border-cvr-line hover:border-cvr-ink"}`}>
-                          <span className="block text-sm font-semibold">{t.days} ngày</span>
-                          <span className={`block text-xs tabular-nums ${chon ? "text-white" : "text-cvr-muted"}`}>{vnd(tachThue(t.price).tongTra)}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
+            {/* CÙNG MỘT bảng giá kiểu Batdongsan với form đăng tin + trang Báo giá — bấm ô là chọn gói */}
+            <div className="mt-4">
+              <BangGiaGoiTin
+                plans={bangTheoMucDich(billing, upCho.purpose).plans}
+                chon={{ tier: (upChon?.tier ?? "") as TierId | "", days: upChon?.soNgay ?? 0 }}
+                onChon={(t, d) => setUpChon({ tier: t, soNgay: d })}
+              />
             </div>
             <div className="mt-5 flex gap-2">
               <button type="button" onClick={() => setUpCho(null)} disabled={dangUp} className="h-11 flex-1 rounded-full border border-cvr-line text-sm font-medium text-cvr-body">Huỷ</button>

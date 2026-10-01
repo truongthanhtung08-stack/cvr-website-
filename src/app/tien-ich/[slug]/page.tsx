@@ -7,7 +7,8 @@ import LeadForm from "@/components/LeadForm";
 import TraCuuGiaDat from "@/components/TraCuuGiaDat";
 import { packages, utilityTools, getPackage, tiers, benefitRows } from "@/lib/packages";
 import { getBilling } from "@/lib/siteContent";
-import { bangTheoMucDich, priceLinesFor } from "@/lib/billing";
+import { bangTheoMucDich } from "@/lib/billing";
+import BangGiaGoiTin from "@/components/BangGiaGoiTin";
 
 export function generateStaticParams() {
   return [...packages, ...utilityTools].map((p) => ({ slug: p.slug }));
@@ -115,6 +116,11 @@ export default async function PackagePage({ params }: { params: Promise<{ slug: 
               <div className="mb-5 flex flex-wrap items-end justify-between gap-2">
                 <h2 className="text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">Bảng giá theo cấp tin</h2>
               </div>
+              {/* GIÁ: cùng một bảng kiểu Batdongsan với trang Báo giá + form đăng tin (giá từ admin). */}
+              <BangGiaGoiTin plans={bangBan.plans} />
+
+              {/* QUYỀN LỢI: phần riêng, tách khỏi giá */}
+              <h3 className="mb-4 mt-10 text-lg font-semibold tracking-tight text-cvr-ink">Quyền lợi từng cấp tin</h3>
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {tiers.map((t) => (
@@ -131,15 +137,6 @@ export default async function PackagePage({ params }: { params: Promise<{ slug: 
                     </div>
 
                     <div className="flex-1 divide-y divide-cvr-line/70 px-5">
-                      {(priceLinesFor(bangBan, t.id) ?? []).map((g) => (
-                        <div key={g.label} className="flex items-center justify-between gap-3 py-3 text-sm">
-                          <span className="text-cvr-muted">{g.label}</span>
-                          <span className="text-right">
-                            {g.original && <span className="mr-1.5 text-xs text-cvr-faint line-through">{g.original}</span>}
-                            <span className="font-medium text-cvr-ink">{g.price}</span>
-                          </span>
-                        </div>
-                      ))}
                       {benefitRows.map((row) => (
                         <div key={row.label} className="flex items-center justify-between gap-3 py-3 text-sm">
                           <span className="text-cvr-muted">{row.label}</span>

@@ -3,7 +3,8 @@ import { revalidateTag } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ghepBillingLuu, bangUp, type BillingData } from "@/lib/billing";
-import { KHOA_GIA_CHUAN, NHAP_TRONG, kiemNhap, tinhCongBo, tinhHoiVien, type GiaChuanNhap } from "@/lib/giaChuan";
+import { KHOA_GIA_CHUAN, NHAP_TRONG, kiemNhap, type GiaChuanNhap } from "@/lib/giaChuan";
+import { congBoTin, congBoHoiVien } from "@/lib/congBoGia";
 
 // ============================================================================
 // GIÁ CHUẨN — API CHỈ DÀNH CHO ADMIN
@@ -85,15 +86,10 @@ export async function POST(request: Request) {
 
   // ── GÓI HỘI VIÊN: công bố / gỡ RIÊNG, không đụng giá đăng tin ──────────────
   if (hanhDong === "cong-bo-hoi-vien") {
-    const nhapHv = await docNhap(admin);
-    const homNayHv = new Date(Date.now() + 7 * 3600_000).toISOString().slice(0, 10);
-    const hoiVien = tinhHoiVien(nhapHv.hoiVien ?? [], nhapHv.chuongTrinh, homNayHv);
-    if (!hoiVien.length) return loi("Bản nháp chưa có gói hội viên nào có giá — lưu nháp trước rồi mới công bố.");
-    const hoiVienLuc = new Date().toISOString();
-    const { error } = await admin.from("site_content").upsert({ key: "billing", data: { ...luu, hoiVien, hoiVienLuc } });
-    if (error) return loi(`Lỗi công bố: ${error.message}`, 500);
-    revalidateTag("noi-dung", "max");
-    return NextResponse.json({ ok: true, hoiVien, hoiVienLuc });
+    // MỘT ĐƯỜNG: cùng hàm với cron tự công bố 0h (src/lib/congBoGia.ts).
+    const kq = await congBoHoiVien(admin);
+    if ("loi" in kq) return loi(kq.loi, 400);
+    return NextResponse.json({ ok: true, ...kq });
   }
   if (hanhDong === "go-hoi-vien") {
     const { hoiVien: _hv, hoiVienLuc: _l, ...conLai } = luu;
@@ -107,22 +103,8 @@ export async function POST(request: Request) {
   if (hanhDong !== "cong-bo") return loi("Thiếu hành động.");
 
   // Tính từ bản nháp ĐÃ LƯU trên máy chủ — không nhận giá từ trình duyệt.
-  const nhap = await docNhap(admin);
-  if (!nhap.ban.plans.length || !nhap.thue.plans.length) {
-    return loi("Bản nháp chưa có đủ giá chuẩn cho cả Bán và Cho thuê — lưu nháp trước rồi mới công bố.");
-  }
-  const bang: BillingData = ghepBillingLuu(luu);
-  // Theo giờ Việt Nam: chương trình "đến hết ngày 17/10" phải còn tác dụng tới 23:59 giờ VN.
-  const homNay = new Date(Date.now() + 7 * 3600_000).toISOString().slice(0, 10);
-  const congBo = tinhCongBo(nhap, homNay, bang.plans, bangUp(bang));
-
-  const { error } = await admin.from("site_content").upsert({ key: "billing", data: { ...luu, congBo } });
-  if (error) return loi(`Lỗi công bố: ${error.message}`, 500);
-  await admin.from("bi_mat").upsert({
-    key: KHOA_GIA_CHUAN,
-    data: { ...nhap, congBoLuc: congBo.luc },
-    updated_at: new Date().toISOString(),
-  });
-  revalidateTag("noi-dung", "max");
-  return NextResponse.json({ ok: true, congBo });
+  // MỘT ĐƯỜNG: cùng hàm với cron tự công bố 0h (src/lib/congBoGia.ts).
+  const kq = await congBoTin(admin);
+  if ("loi" in kq) return loi(kq.loi, 400);
+  return NextResponse.json({ ok: true, congBo: kq.congBo });
 }

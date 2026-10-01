@@ -21,7 +21,6 @@ import {
   vnd,
   type Plan,
   type BillingData,
-  type Promo,
   type UpRow,
   type PrPkg,
   type BannerTable,
@@ -45,7 +44,6 @@ const TABS = [
   { id: "up", label: "Đẩy tin" },
   { id: "pr", label: "Bài PR" },
   { id: "banners", label: "Banner" },
-  { id: "promos", label: "Khuyến mãi" },
   { id: "free", label: "Miễn phí thành viên mới" },
   { id: "points", label: "Gói hội viên" },
 ] as const;
@@ -158,13 +156,12 @@ export default function AdminBillingPage() {
           bảng Gói đăng tin + Đẩy tin ở đây không còn tác dụng. Nói rõ để khỏi sửa nhầm. */}
       {data.congBo && (tab === "plans" || tab === "up") && (
         <p className="rounded-lg bg-amber-50 px-4 py-2.5 text-sm text-amber-900">
-          Giá gói tin và đẩy tin đang lấy từ trang{" "}
+          MỘT ĐƯỜNG: giá gói tin, đẩy tin, hội viên và khuyến mãi % chỉ sửa ở{" "}
           <a href="/admin/gia-chuan" className="font-semibold underline">Giá chuẩn &amp; công bố</a>{" "}
-          (công bố lúc {new Date(data.congBo.luc).toLocaleString("vi-VN")}). Sửa bảng ở mục này KHÔNG đổi giá khách thấy.
+          (công bố lúc {new Date(data.congBo.luc).toLocaleString("vi-VN")}; tự công bố lại mỗi ngày 0h). Ô giá ở đây đã khoá — mục này chỉ còn số ảnh / video và cỡ gói đẩy.
         </p>
       )}
       {tab === "plans" && <PlansTab data={data} setData={setData} />}
-      {tab === "promos" && <PromosTab data={data} setData={setData} />}
       {tab === "projects" && <ProjectPlansTab data={data} setData={setData} />}
       {tab === "up" && <UpTab data={data} setData={setData} />}
       {tab === "pr" && <PrTab data={data} setData={setData} />}
@@ -283,8 +280,9 @@ function PlansTab({ data, setData }: { data: BillingData; setData: (d: BillingDa
                       min={0}
                       step={10000}
                       value={t.price}
+                      disabled={Boolean(data.congBo)}
                       onChange={(e) => setPrice(p.tierId, t.days, Number(e.target.value) || 0)}
-                      className="h-10 w-36 rounded-lg border border-cvr-line px-3 text-sm text-cvr-ink outline-none focus:border-cvr-ink"
+                      className="h-10 w-36 rounded-lg border border-cvr-line px-3 text-sm text-cvr-ink outline-none focus:border-cvr-ink disabled:bg-cvr-surface disabled:text-cvr-muted"
                     />
                     <p className="mt-1 text-[11px] text-cvr-faint">{vnd(t.price)}</p>
                   </td>
@@ -323,111 +321,6 @@ function PlansTab({ data, setData }: { data: BillingData; setData: (d: BillingDa
       )}
     </Panel>
     </>
-  );
-}
-
-// ── 2) KHUYẾN MÃI ───────────────────────────────────────────────────────────
-function PromosTab({ data, setData }: { data: BillingData; setData: (d: BillingData) => void }) {
-  const add = () =>
-    setData({
-      ...data,
-      promos: [
-        ...data.promos,
-        {
-          id: `km-${data.promos.length + 1}-${data.plans.length}`,
-          name: "Chương trình mới",
-          percent: 10,
-          audience: "all",
-          tiers: [],
-          from: "",
-          to: "",
-          active: true,
-        },
-      ],
-    });
-  const update = (i: number, patch: Partial<Promo>) =>
-    setData({ ...data, promos: data.promos.map((p, k) => (k === i ? { ...p, ...patch } : p)) });
-  const remove = (i: number) => setData({ ...data, promos: data.promos.filter((_, k) => k !== i) });
-
-  return (
-    <Panel
-      title="Chương trình khuyến mãi"
-      desc="Giảm theo phần trăm trên giá chuẩn. Nhiều chương trình cùng chạy thì hệ thống áp cái giảm nhiều nhất."
-    >
-      <div className="space-y-4">
-        {data.promos.length === 0 && (
-          <p className="rounded-lg border border-dashed border-cvr-line bg-cvr-surface px-4 py-6 text-center text-sm text-cvr-muted">
-            Chưa có chương trình nào. Bấm “Thêm chương trình” để tạo.
-          </p>
-        )}
-
-        {data.promos.map((p, i) => (
-          <div key={i} className="rounded-xl border border-cvr-line p-4">
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <Field label="Tên chương trình">
-                <input value={p.name} onChange={(e) => update(i, { name: e.target.value })} className={inputCls} />
-              </Field>
-              <Field label="Giảm (%)">
-                <input
-                  type="number" min={0} max={100}
-                  value={p.percent}
-                  onChange={(e) => update(i, { percent: Number(e.target.value) || 0 })}
-                  className={inputCls}
-                />
-              </Field>
-              <Field label="Áp dụng cho">
-                <select value={p.audience} onChange={(e) => update(i, { audience: e.target.value as PromoAudience })} className={inputCls}>
-                  {AUDIENCES.map((a) => <option key={a.id} value={a.id}>{a.label}</option>)}
-                </select>
-              </Field>
-              <Field label="Đang bật">
-                <button
-                  type="button"
-                  onClick={() => update(i, { active: !p.active })}
-                  className={`h-10 rounded-lg px-4 text-sm font-semibold transition ${p.active ? "bg-green-600 text-white" : "border border-cvr-line text-cvr-muted"}`}
-                >
-                  {p.active ? "Đang chạy" : "Đã tắt"}
-                </button>
-              </Field>
-              <Field label="Từ ngày">
-                <input type="date" value={p.from} onChange={(e) => update(i, { from: e.target.value })} className={inputCls} />
-              </Field>
-              <Field label="Đến ngày">
-                <input type="date" value={p.to} onChange={(e) => update(i, { to: e.target.value })} className={inputCls} />
-              </Field>
-              <Field label="Gói áp dụng (bỏ trống = tất cả)">
-                <div className="flex flex-wrap gap-1.5">
-                  {data.plans.map((pl) => {
-                    const on = p.tiers.includes(pl.tierId);
-                    return (
-                      <button
-                        key={pl.tierId}
-                        type="button"
-                        onClick={() =>
-                          update(i, { tiers: on ? p.tiers.filter((t) => t !== pl.tierId) : [...p.tiers, pl.tierId] })
-                        }
-                        className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${on ? "bg-cvr-ink text-white" : "border border-cvr-line text-cvr-body"}`}
-                      >
-                        {pl.name.replace("CVR ", "")}
-                      </button>
-                    );
-                  })}
-                </div>
-              </Field>
-              <Field label=" ">
-                <button type="button" onClick={() => remove(i)} className="h-10 rounded-lg border border-red-200 px-4 text-sm font-medium text-red-600 transition hover:bg-red-50">
-                  Xoá chương trình
-                </button>
-              </Field>
-            </div>
-          </div>
-        ))}
-
-        <button type="button" onClick={add} className="rounded-lg border border-cvr-line px-4 py-2.5 text-sm font-semibold text-cvr-ink transition hover:bg-cvr-surface">
-          + Thêm chương trình
-        </button>
-      </div>
-    </Panel>
   );
 }
 
@@ -618,15 +511,15 @@ function UpTab({ data, setData }: { data: BillingData; setData: (d: BillingData)
                   return (
                     <td key={iCot} className="py-3 pr-3">
                       <Field label="Giá bán (₫)">
-                        <input type="number" min={0} step={1000} value={v.gia}
+                        <input type="number" min={0} step={1000} value={v.gia} disabled={Boolean(data.congBo)}
                           onChange={(e) => suaO(iDong, iCot, { gia: Number(e.target.value) || 0 })}
-                          className={inputCls + " w-32"} />
+                          className={inputCls + " w-32 disabled:bg-cvr-surface disabled:text-cvr-muted"} />
                       </Field>
                       <div className="mt-1.5">
                         <Field label="Giá gốc (₫)">
-                          <input type="number" min={0} step={1000} value={v.giaGoc ?? 0}
+                          <input type="number" min={0} step={1000} value={v.giaGoc ?? 0} disabled={Boolean(data.congBo)}
                             onChange={(e) => suaO(iDong, iCot, { giaGoc: Number(e.target.value) || undefined })}
-                            className={inputCls + " w-32"} />
+                            className={inputCls + " w-32 disabled:bg-cvr-surface disabled:text-cvr-muted"} />
                         </Field>
                       </div>
                     </td>

@@ -257,6 +257,9 @@ export function bangTheoMucDich(d: BillingData, purpose?: string | null): Billin
     ...d,
     plans: cb.plans.length ? cb.plans : d.plans,
     up: cb.up.length ? cb.up : d.up,
+    // MỘT ĐƯỜNG khuyến mãi: giá công bố ĐÃ trừ % chương trình (Giá chuẩn) — không trừ
+    // thêm khuyến mãi cũ của "Giá & quy định" (tránh giảm hai lần).
+    promos: [],
   };
 }
 
