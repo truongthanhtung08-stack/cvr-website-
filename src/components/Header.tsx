@@ -5,7 +5,7 @@ import Link from "next/link";
 import BrandLogo from "@/components/BrandLogo";
 import BackBar from "@/components/BackBar";
 import { resetHomeIfOnHome } from "@/components/HomeExpand";
-import { packages, utilityTools } from "@/lib/packages";
+import { utilityTools } from "@/lib/packages";
 import { projectCategories, rentCategories, saleCategories } from "@/lib/categories";
 import { useSaved } from "@/lib/useSaved";
 import { useAuth, displayName, anhDaiDien, signOut } from "@/lib/useAuth";
@@ -24,6 +24,7 @@ const ICONS = {
   choThue: "M3 21h18M6 21V7a1 1 0 011-1h4a1 1 0 011 1v14M14 21V11a1 1 0 011-1h3a1 1 0 011 1v10M8.5 9h.01M8.5 13h.01",
   tinTuc: "M4 5a1 1 0 011-1h10a1 1 0 011 1v14a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM16 8h3a1 1 0 011 1v9a2 2 0 01-2 2M7 8h6M7 12h6M7 16h4",
   chuyenGia: "M16 20v-1a4 4 0 00-4-4H8a4 4 0 00-4 4v1M10 11a4 4 0 100-8 4 4 0 000 8zM18 8v6M21 11h-6",
+  baoGia: "M7 7h.01M7 3h5a1.99 1.99 0 011.41.59l7 7a2 2 0 010 2.82l-7 7a2 2 0 01-2.82 0l-7-7A1.99 1.99 0 013 12V7a4 4 0 014-4z",
   tienIch: "M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z",
 };
 
@@ -42,32 +43,40 @@ const danhMucChuyenGia: NavChild[] = [
   { label: "Trở thành chuyên gia", href: "/chuyen-gia/dang-ky" },
 ];
 
-// Menu Tiện ích — Báo giá dịch vụ ở TRÊN CÙNG, dưới là 2 nhóm: Dịch vụ · Công cụ tiện ích.
-// "Dịch vụ" / "Công cụ tiện ích" chỉ là NHÃN NHÓM (không có href) — trước đây trỏ trùng
-// mục con đầu tiên (goi-dang-tin, so-sanh-nha-dat) gây link thừa.
-const danhMucTienIch: NavChild[] = [
+// MENU BÁO GIÁ (chủ dự án chốt 01/10/2026): MỌI THỨ VỀ GIÁ vào MỘT menu, trỏ về MỘT trang
+// Báo giá (từng mục là một phần của trang). Công cụ tiện ích tách sang menu Tiện ích.
+// Gọn 2 nhóm: Đăng tin (người bán / môi giới) · Quảng cáo (chủ đầu tư, thương hiệu).
+const danhMucBaoGia: NavChild[] = [
+  { label: "Xem toàn bộ báo giá", href: "/bao-gia-dang-tin" },
   {
-    label: "Báo giá dịch vụ và truyền thông",
-    href: "/bao-gia-dang-tin",
+    label: "Đăng tin",
+    children: [
+      { label: "Gói tin đăng CVR", href: "/bao-gia-dang-tin#bang-gia-tin" },
+      { label: "Gói đẩy tin", href: "/bao-gia-dang-tin#goi-day-tin" },
+      { label: "Gói hội viên", href: "/bao-gia-dang-tin#goi-hoi-vien" },
+    ],
   },
   {
-    label: "Dịch vụ",
-    children: packages.map((item) => ({ label: item.label, href: `/tien-ich/${item.slug}` })),
-  },
-  {
-    label: "Công cụ tiện ích",
-    children: utilityTools.map((item) => ({ label: item.label, href: `/tien-ich/${item.slug}` })),
+    label: "Quảng cáo",
+    children: [
+      { label: "Gói dự án", href: "/bao-gia-dang-tin#goi-du-an" },
+      { label: "Bài PR", href: "/bao-gia-dang-tin#goi-pr" },
+      { label: "Banner", href: "/bao-gia-dang-tin#goi-banner" },
+    ],
   },
 ];
+// MENU TIỆN ÍCH — chỉ công cụ (không còn giá).
+const danhMucTienIch: NavChild[] = utilityTools.map((item) => ({ label: item.label, href: `/tien-ich/${item.slug}` }));
 
-// Thứ tự menu: Dự án · Mua bán · Cho thuê · Tin tức · Chuyên gia · Tiện ích
+// Thứ tự menu: Dự án · Mua bán · Cho thuê · Tin tức · Chuyên gia · Báo giá · Tiện ích
 const navItems: NavItem[] = [
   { label: "Dự án", href: "/du-an", children: loaiHinhDuAn, icon: ICONS.duAn },
   { label: "Mua bán", href: "/mua-ban", children: loaiHinhBan, icon: ICONS.muaBan },
   { label: "Cho thuê", href: "/cho-thue", children: loaiHinhThue, icon: ICONS.choThue },
   { label: "Tin tức", href: "/tin-tuc", icon: ICONS.tinTuc },
   { label: "Chuyên gia", href: "/chuyen-gia", children: danhMucChuyenGia, icon: ICONS.chuyenGia },
-  { label: "Tiện ích", href: "/bao-gia-dang-tin", children: danhMucTienIch, icon: ICONS.tienIch },
+  { label: "Báo giá", href: "/bao-gia-dang-tin", children: danhMucBaoGia, icon: ICONS.baoGia },
+  { label: "Tiện ích", href: `/tien-ich/${utilityTools[0].slug}`, children: danhMucTienIch, icon: ICONS.tienIch },
 ];
 
 const chevronDown = (

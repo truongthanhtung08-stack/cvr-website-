@@ -117,7 +117,7 @@ function GoiHoiVienCuaToi() {
           ) : (
             <p className="mt-2 text-sm text-cvr-muted">Kỳ này không còn voucher.</p>
           )}
-          <p className="mt-3 text-[13px] text-cvr-muted">Voucher tự trừ khi tin được duyệt hoặc khi đẩy tin thường.</p>
+          <p className="mt-3 text-[13px] text-cvr-muted">Voucher tự trừ khi tin được duyệt hoặc khi đẩy tin CVR Basic.</p>
         </section>
       ) : !dsGoi.length ? (
         <p className="rounded-2xl border border-cvr-line bg-white p-6 text-center text-sm text-cvr-muted">Gói hội viên sắp mở bán.</p>

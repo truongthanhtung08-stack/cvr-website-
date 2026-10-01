@@ -50,16 +50,16 @@ export default function BangGiaGoiTin({
   return (
     <div>
       <div className="overflow-x-auto rounded-2xl border border-cvr-line bg-white shadow-lux">
-        <table className="w-full min-w-[560px] border-collapse text-sm">
+        <table className="w-full min-w-[520px] border-collapse text-sm">
           <thead>
             <tr className="bg-cvr-surface">
-              <th className="w-[96px] border-b border-cvr-line px-4 py-3.5 text-left font-semibold text-cvr-ink">Thời gian</th>
+              <th className="sticky left-0 z-10 w-[84px] whitespace-nowrap border-b border-cvr-line bg-cvr-surface px-3 py-3.5 text-left font-semibold text-cvr-ink sm:w-[96px] sm:px-4">Thời gian</th>
               {cot.map((p) => {
                 const t = getTier(p.tierId);
                 return (
-                  <th key={p.tierId} className="border-b border-l border-cvr-line px-3 py-3.5 text-center">
+                  <th key={p.tierId} className="border-b border-l border-cvr-line px-2 py-3.5 text-center sm:px-3">
                     <span
-                      className="inline-block rounded-full px-3 py-1 text-xs font-semibold tracking-tight"
+                      className="inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-semibold tracking-tight sm:px-3 sm:text-xs"
                       style={{ backgroundColor: t.accent, color: t.badgeText }}
                     >
                       {t.name}
@@ -72,7 +72,7 @@ export default function BangGiaGoiTin({
           <tbody>
             {hang.map((ngay) => (
               <tr key={ngay} className="border-b border-cvr-line/70 last:border-0">
-                <td className="px-4 py-3 font-semibold text-cvr-body">{ngay} ngày</td>
+                <td className="sticky left-0 z-10 whitespace-nowrap bg-white px-3 py-3 font-semibold text-cvr-body sm:px-4">{ngay} ngày</td>
                 {cot.map((p) => {
                   const term = p.terms.find((x) => x.days === ngay);
                   if (!term) {

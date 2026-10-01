@@ -113,25 +113,6 @@ export default function PricingSidebar({
         ))}
       </div>
 
-      {/* Hỗ trợ kỹ thuật — nền đen luxury, CTA vàng */}
-      <div className="mt-3 overflow-hidden rounded-2xl bg-gradient-to-br from-cvr-ink to-[#2b2b2e] p-6 text-center shadow-lux">
-        <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-cvr-gold-soft">
-          Hỗ trợ kỹ thuật
-        </p>
-        <a
-          href={`tel:${hotline.replace(/\s/g, "")}`}
-          className="mt-1.5 block text-2xl font-bold tracking-tight text-white"
-        >
-          {hotline}
-        </a>
-        <p className="mt-1 text-xs text-cvr-line">Hỗ trợ 8:00 – 21:00 hằng ngày</p>
-        <a
-          href="#lien-he"
-          className="mt-4 block rounded-full bg-cvr-gold py-2.5 text-sm font-bold text-white transition hover:bg-cvr-gold-soft"
-        >
-          Nhận tư vấn miễn phí
-        </a>
-      </div>
       </aside>
     </>
   );

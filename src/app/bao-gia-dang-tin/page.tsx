@@ -7,15 +7,14 @@ import LeadForm from "@/components/LeadForm";
 import PricingSidebar, { type SidebarGroup } from "@/components/PricingSidebar";
 import PropertyCard from "@/components/PropertyCard";
 import { ProjectCard, ProjectRow } from "@/components/ProjectSlider";
-import { getTier, tierFromBadge, type TierId, utilityTools } from "@/lib/packages";
-import { getListings } from "@/lib/listingsDb";
 import { getProjects } from "@/lib/contentDb";
+import type { Listing, Project } from "@/lib/data";
+import { getTier, type TierId } from "@/lib/packages";
 import { getBilling, getQuyDinhGia } from "@/lib/siteContent";
 import { dienMa } from "@/lib/quyDinhGia";
-import { bangTheoMucDich, priceLinesFor, bangUp, goiPr, ghiChuPr, bangBanner, giaTra, priceLinesDuAn, freeDangChay, freeNote, tenGoiMienPhi } from "@/lib/billing";
+import { bangTheoMucDich, bangUp, goiPr, ghiChuPr, bangBanner, giaTra, priceLinesDuAn, freeDangChay, freeNote, tenGoiMienPhi } from "@/lib/billing";
 import BangGiaGoiTin from "@/components/BangGiaGoiTin";
 import BangGiaDayTin from "@/components/BangGiaDayTin";
-import type { Listing, Project } from "@/lib/data";
 import NutMucDichGia from "@/components/NutMucDichGia";
 import GoiHoiVienCards, { DieuKienHoiVien } from "@/components/GoiHoiVienCards";
 
@@ -23,7 +22,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/bao-gia-dang-tin" },
   title: "Báo giá dịch vụ và truyền thông",
   description:
-    "Bảng giá dịch vụ Coastal Land: gói đăng tin VIP (CVR Diamond, Gold, Silver), tin đăng lẻ, đẩy tin, gói dự án, bài PR và banner quảng cáo.",
+    "Bảng giá dịch vụ Coastal Land: gói tin đăng CVR Basic, CVR Silver, CVR Gold, CVR Diamond, đẩy tin, gói hội viên, gói dự án, bài PR và banner quảng cáo.",
 };
 
 // ═══════════════ DỮ LIỆU BẢNG GIÁ ═══════════════
@@ -81,40 +80,72 @@ const featureRows: { label: string; values: [string, string, string, string] }[]
 
 // Quy định chung + quyền lợi từng hạng: sửa ở admin (src/lib/quyDinhGia.ts).
 
-// Menu sidebar — 2 PHẦN. Phần "Danh sách dịch vụ" KHÔNG còn mục Công cụ tiện ích;
-// Công cụ tiện ích tách thành phần riêng nằm PHÍA SAU.
+// Menu sidebar — CHỈ dịch vụ + giá. Công cụ tiện ích (giá đất Nhà nước, so sánh…)
+// KHÔNG thuộc báo giá — đã gỡ khỏi trang này (01/10/2026), vẫn ở menu Tiện ích.
+// CÙNG 2 NHÓM với menu Báo giá trên đầu trang (Header.tsx) — hai nơi luôn khớp nhau.
 const nhomDichVu = (coHoiVien: boolean): SidebarGroup[] => [
   {
-    title: "Danh sách dịch vụ",
+    title: "Đăng tin",
     items: [
-      { label: "1. Gói đăng tin VIP", href: "#goi-vip" },
-      { label: "2. Gói tin đăng lẻ", href: "#goi-le" },
-      { label: "3. Gói Đẩy tin", href: "#goi-day-tin" },
-      ...(coHoiVien ? [{ label: "4. Gói Hội viên", href: "#goi-hoi-vien" }] : []),
-      { label: `${coHoiVien ? 5 : 4}. Gói Dự án`, href: "#goi-du-an" },
-      { label: `${coHoiVien ? 6 : 5}. Gói bài PR`, href: "#goi-pr" },
-      { label: `${coHoiVien ? 7 : 6}. Gói Banner`, href: "#goi-banner" },
-      { label: "Loại tin & đặc điểm", href: "#dac-diem" },
-      { label: "Quy định chung", href: "#quy-dinh" },
-      { label: "Nhận báo giá", href: "#lien-he" },
+      { label: "Gói tin đăng CVR", href: "#bang-gia-tin" },
+      { label: "Gói đẩy tin", href: "#goi-day-tin" },
+      ...(coHoiVien ? [{ label: "Gói hội viên", href: "#goi-hoi-vien" }] : []),
     ],
   },
   {
-    title: "Công cụ tiện ích",
+    title: "Quảng cáo",
     items: [
-      { label: "Tất cả công cụ", href: "#cong-cu-tien-ich" },
-      ...utilityTools.map((t) => ({ label: t.label, href: `/tien-ich/${t.slug}` })),
+      { label: "Gói dự án", href: "#goi-du-an" },
+      { label: "Bài PR", href: "#goi-pr" },
+      { label: "Banner", href: "#goi-banner" },
+    ],
+  },
+  {
+    title: "Thông tin",
+    items: [
+      { label: "Quy định chung", href: "#quy-dinh" },
+      { label: "Nhận báo giá", href: "#lien-he" },
     ],
   },
 ];
 
 const HOTLINE = "0377 985 036";
 
+// ═══════════════ VÍ DỤ MINH HOẠ TỪNG LOẠI TIN ═══════════════
+// Chủ dự án chốt 01/10/2026: CHỈ LẤY ẢNH THẬT (ảnh chuẩn nhất của tin thật đang ở đúng
+// hạng), KHÔNG dùng tiêu đề / thông tin của tin thật — tiêu đề là VÍ DỤ chuẩn SEO
+// (loại giao dịch · loại nhà · đặc điểm · đường/khu · phường · tỉnh). Ảnh lưu CỐ ĐỊNH ở đây
+// nên tin VIP hết hạn thì minh hoạ vẫn còn (ảnh trong kho không bị xoá khi tin hết hạn).
+// Ảnh chọn bằng mắt 01/10: bỏ ảnh bìa là băng rôn khuyến mãi / ảnh cận đồ trang trí.
+const KHO = "https://miyugmacyerqvzhgmbyd.supabase.co/storage/v1/object/public/listings/";
+// Mô tả ví dụ ĐỦ DÀI để thẻ hiện đúng số dòng của từng hạng (Kim cương 3 · Vàng 2 · Bạc 1 ·
+// Thường 0) — tiêu đề viết hoa, dải nhấn, huy hiệu do PropertyCard tự áp theo hạng.
+const viDu = (id: string, title: string, image: string, location: string, desc: string): Listing =>
+  ({ id, title, image, location, desc, price: "Thoả thuận", area: "" }) as Listing;
+// Tiêu đề + mô tả ĐỦ DÀI và DÀI NGANG NHAU ở cả 4 hạng — để khách thấy rõ khác biệt hiển thị
+// (tiêu đề VIẾT HOA hay không · mô tả 3/2/1/0 dòng), không phải do nội dung ngắn dài khác nhau.
+const MO_TA_CHUNG =
+  " Pháp lý sổ hồng chính chủ, sẵn sàng giao dịch. Khu dân cư hiện hữu, gần trường học, chợ, bệnh viện và các trục đường chính, thuận tiện di chuyển vào trung tâm.";
+const VI_DU_MINH_HOA: Record<TierId, Listing> = {
+  diamond: { ...viDu("vi-du-diamond", "Bán nhà 3 tầng 2 mặt tiền đường 10,5m, nội thất gỗ cao cấp, sổ hồng chính chủ, phường Hòa Xuân, Đà Nẵng",
+    KHO + "1788255659524-763311-IMG_1787991692267_1787991698851.webp", "Phường Hòa Xuân, Đà Nẵng",
+    "Nhà xây kiên cố, phòng khách rộng thoáng, 4 phòng ngủ, 4 phòng tắm, bếp liên thông phòng ăn, sân thượng rộng." + MO_TA_CHUNG), badge: "VIP" },
+  gold: { ...viDu("vi-du-gold", "Bán nhà phố liền kề 4 tầng khu đô thị mới, đường nội khu 13,5m, sổ hồng riêng, phường Thuận Hóa, Huế",
+    KHO + "1788251683728-709049-hue07-5.webp", "Phường Thuận Hóa, Huế",
+    "Thiết kế hiện đại đồng bộ cả dãy, 4 phòng ngủ, mặt tiền rộng phù hợp vừa ở vừa kinh doanh, an ninh 24/7." + MO_TA_CHUNG), badge: "Nổi bật" },
+  silver: { ...viDu("vi-du-silver", "Bán villa 2 mặt tiền thiết kế hiện đại, đầy đủ nội thất cao cấp, trung tâm phường Hải Châu, Đà Nẵng",
+    KHO + "1788251609839-665955-dn15-5.webp", "Phường Hải Châu, Đà Nẵng",
+    "Phòng khách thông tầng, 5 phòng ngủ, sân vườn và chỗ đậu ô tô trong nhà, hoàn thiện cao cấp dọn vào ở ngay." + MO_TA_CHUNG), badge: "Mới" },
+  basic: viDu("vi-du-basic", "Bán nhà 3 tầng mới xây, đường trước nhà 7,5m, kết cấu chắc chắn, sổ hồng chính chủ, phường Hòa Xuân, Đà Nẵng",
+    KHO + "fbded30f4d07e2de6aeb383a-1784362006949-284895-1.webp", "Phường Hòa Xuân, Đà Nẵng",
+    "Nhà 3 phòng ngủ, 3 phòng tắm, hoàn thiện mới, khu dân cư đông đúc." + MO_TA_CHUNG),
+};
+
 // ═══════════════ TRANG ═══════════════
 // Thẻ tin minh hoạ từng cấp = TIN THẬT mới nhất của cấp đó trong Supabase
 // (không còn tin/ảnh mẫu cứng). Đăng hoặc sửa tin trong admin → trang này tự đổi theo.
 export default async function BaoGiaPage() {
-  const [listings, allProjects, billing, quyDinh] = await Promise.all([getListings(), getProjects(), getBilling(), getQuyDinhGia()]);
+  const [allProjects, billing, quyDinh] = await Promise.all([getProjects(), getBilling(), getQuyDinhGia()]);
   // Quyền lợi từng hạng + quy định chung: sửa ở admin, không viết trong trang.
   const loiIch = (t: TierId) => quyDinh.quyenLoi[t].loiIch.map((d) => dienMa(d, t));
   const hienThi = (t: TierId) => quyDinh.quyenLoi[t].hienThi.map((d) => dienMa(d, t));
@@ -127,7 +158,6 @@ export default async function BaoGiaPage() {
   const bangBan = bangTheoMucDich(billing, "ban");
   // MỘT NGUỒN (01/10/2026): KHÔNG lùi về giá viết sẵn trong code khi admin thiếu một gói —
   // giá chỉ đến từ admin; gói admin chưa đặt giá thì không có dòng giá.
-  const giaTin = (id: TierId): PriceLine[] => priceLinesFor(bangBan, id) ?? [];
   const giaDuAn = (id: TierId): PriceLine[] => priceLinesDuAn(billing, id) ?? [];
   // CHƯƠNG TRÌNH KHUYẾN MÃI đang chạy (admin → Giá & quy định → Miễn phí) — báo cho khách.
   const kmDangChay = freeDangChay(billing.free, new Date().toISOString().slice(0, 10));
@@ -138,7 +168,6 @@ export default async function BaoGiaPage() {
   // bán và thuê là một, hiện nút gạt Bán | Cho thuê chỉ thừa.
   const coThue = !!billing.congBo;
   const bangThue = bangTheoMucDich(billing, "thue");
-  const giaTinThue = (id: TierId): PriceLine[] => priceLinesFor(bangThue, id) ?? [];
   const upRowsThue = bangUp(bangThue);
   const prPkgs = goiPr(billing);
   const prNotes = ghiChuPr(billing);
@@ -147,17 +176,11 @@ export default async function BaoGiaPage() {
   const goiHoiVien = billing.hoiVien ?? [];
   const coHv = goiHoiVien.length > 0;
   const so = (n: number) => String(n + (coHv ? 1 : 0)).padStart(2, "0"); // mục sau Gói hội viên dồn số
-  const newestOfTier = (id: TierId): Listing | null =>
-    listings.find((l) => tierFromBadge(l.badge) === id) ?? null;
-  const samples: Record<TierId, Listing | null> = {
-    diamond: newestOfTier("diamond"),
-    gold: newestOfTier("gold"),
-    silver: newestOfTier("silver"),
-    basic: newestOfTier("basic"),
-  };
-  // Dự án mẫu từng cấp CVR-PJ — dự án thật mới nhất của cấp đó
+  const tinMau = (id: TierId): Listing => VI_DU_MINH_HOA[id];
+  // Dự án mẫu từng cấp CVR-PJ — dự án thật của cấp đó
   const projectOfTier = (id: TierId): Project | null =>
     allProjects.find((x) => (x.tier ?? "basic") === id) ?? null;
+
 
   return (
     <>
@@ -195,7 +218,7 @@ export default async function BaoGiaPage() {
               )}
               {/* BẢNG GIÁ TIN ĐĂNG KIỂU BATDONGSAN — số ngày × loại tin, giá từ admin, gạt VAT */}
               <section id="bang-gia-tin" className="scroll-mt-24">
-                <SectionTitle title="Bảng giá tin đăng" desc="Giá theo loại tin và số ngày hiển thị — chọn gói ngay khi đăng tin." />
+                <SectionTitle no="01" title="Gói tin đăng CVR" desc="Giá theo loại tin và số ngày hiển thị." />
                 <div className="mt-6">
                   <div className={coThue ? "group-data-[md=thue]/gia:hidden" : ""}><BangGiaGoiTin plans={bangBan.plans} /></div>
                   {coThue && <div className="hidden group-data-[md=thue]/gia:block"><BangGiaGoiTin plans={bangThue.plans} /></div>}
@@ -206,48 +229,50 @@ export default async function BaoGiaPage() {
                     <p className="mt-1.5 text-[15px] leading-relaxed text-cvr-ink">{freeNote(billing.free, tenGoiMienPhi(billing))}</p>
                   </div>
                 )}
-              </section>
 
-              {/* 1. GÓI ĐĂNG TIN VIP */}
-              <section id="goi-vip" className="scroll-mt-24">
-                <SectionTitle no="01" title="Gói đăng tin VIP" desc="Giải pháp tiếp cận tin đăng hiệu quả tới khách hàng tiềm năng." />
-                <div className="mt-6 space-y-6">
-                  {(["diamond", "gold", "silver"] as const).map((tierId) => (
-                    <PkgCard
-                      key={tierId}
-                      tierId={tierId}
-                      name={getTier(tierId).name}
-                      benefits={loiIch(tierId)}
-                      displays={hienThi(tierId)}
-                      media={<TierSample listing={samples[tierId]} />}
-                      prices={giaTin(tierId)}
-                      pricesThue={coThue ? giaTinThue(tierId) : undefined}
-                      cta={{ label: "Đăng tin ngay", href: "/dang-tin" }}
-                    />
+                {/* QUYỀN LỢI TỪNG LOẠI TIN — nội dung từ admin (Giá chuẩn → Quy định), không ảnh, không lặp giá */}
+                <h3 className="mt-10 text-lg font-semibold tracking-tight text-cvr-ink">Quyền lợi từng loại tin</h3>
+                <div className="mt-4 space-y-4">
+                  {(["basic", "silver", "gold", "diamond"] as const).map((id) => (
+                    <QuyenLoiCap key={id} tierId={id} benefits={loiIch(id)} displays={hienThi(id)} mau={<TierSample listing={tinMau(id)} />} />
                   ))}
                 </div>
-              </section>
-
-              {/* 2. GÓI TIN ĐĂNG LẺ */}
-              <section id="goi-le" className="scroll-mt-24">
-                <SectionTitle no="02" title="Gói tin đăng lẻ" desc="CVR Basic — đăng tin tiết kiệm, phù hợp nhu cầu cơ bản." />
-                <div className="mt-6">
-                  <PkgCard
-                    tierId="basic"
-                    name={getTier("basic").name}
-                    benefits={loiIch("basic")}
-                    displays={hienThi("basic")}
-                    media={<TierSample listing={samples.basic} />}
-                    prices={giaTin("basic")}
-                    pricesThue={coThue ? giaTinThue("basic") : undefined}
-                    cta={{ label: "Đăng tin ngay", href: "/dang-tin" }}
-                  />
+              {/* LOẠI TIN & ĐẶC ĐIỂM */}
+              <div id="dac-diem" className="mt-10 scroll-mt-24">
+                <h3 className="text-lg font-semibold tracking-tight text-cvr-ink">So sánh đặc điểm hiển thị</h3>
+                <div className="mt-6 overflow-x-auto rounded-2xl border border-cvr-line bg-white shadow-lux">
+                  <table className="w-full min-w-[640px] text-sm">
+                    <thead>
+                      <tr className="border-b border-cvr-line text-left">
+                        <th className="px-6 py-4 font-semibold text-cvr-ink">Đặc điểm</th>
+                        {(["basic", "silver", "gold", "diamond"] as const).map((id) => {
+                          const t = getTier(id);
+                          return (
+                            <th key={id} className="px-4 py-4 text-center font-semibold tracking-tight" style={{ color: t.accent }}>
+                              {t.name}
+                            </th>
+                          );
+                        })}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {featureRows.map((r) => (
+                        <tr key={r.label} className="border-b border-cvr-line/60 transition-colors last:border-0 hover:bg-cvr-surface/50">
+                          <td className="px-6 py-3.5 text-cvr-body">{r.label}</td>
+                          {[...r.values].reverse().map((v, i) => (
+                            <td key={i} className={`px-4 py-3.5 text-center ${v === "✓" ? "font-semibold text-cvr-ink" : "text-cvr-muted"}`}>{v}</td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
+              </div>
               </section>
 
               {/* 3. GÓI ĐẨY TIN */}
               <section id="goi-day-tin" className="scroll-mt-24">
-                <SectionTitle no="03" title="Gói Đẩy tin" desc="Đưa tin đang hiển thị lên đầu trong cùng loại tin." />
+                <SectionTitle no="02" title="Gói Đẩy tin" desc="Đưa tin đang hiển thị lên đầu trong cùng loại tin." />
                 {coThue && <div className="mt-4"><NutMucDichGia /></div>}
                 {/* CÙNG KIỂU bảng giá tin đăng (Batdongsan) — chung với hộp Mua gói đẩy của khách */}
                 <div className="mt-6">
@@ -260,7 +285,7 @@ export default async function BaoGiaPage() {
               {/* 4. GÓI HỘI VIÊN — mua theo tháng, voucher mỗi 30 ngày (cơ chế Batdongsan) */}
               {coHv && (
                 <section id="goi-hoi-vien" className="scroll-mt-24">
-                  <SectionTitle no="04" title="Gói Hội viên" desc="Dành cho môi giới đăng tin thường xuyên — mua theo tháng, nhận voucher giảm giá đăng tin và đẩy tin mỗi 30 ngày." />
+                  <SectionTitle no="03" title="Gói Hội viên" desc="Dành cho môi giới đăng tin thường xuyên — mua theo tháng, nhận voucher giảm giá đăng tin và đẩy tin mỗi 30 ngày." />
                   <div className="mt-6">
                     <GoiHoiVienCards goi={goiHoiVien} />
                     <DieuKienHoiVien dong={quyDinh.dieuKienHoiVien} />
@@ -270,7 +295,7 @@ export default async function BaoGiaPage() {
 
               {/* 4. GÓI DỰ ÁN */}
               <section id="goi-du-an" className="scroll-mt-24">
-                <SectionTitle no={so(4)} title="Gói Dự án" desc="Vị trí dự án nổi bật dành cho chủ đầu tư và đại lý phân phối." />
+                <SectionTitle no={so(3)} title="Gói Dự án" desc="Vị trí dự án nổi bật dành cho chủ đầu tư và đại lý phân phối." />
                 <div className="mt-6 space-y-6">
                   {pjPkgs.map((p) => (
                     <PkgCard
@@ -288,7 +313,7 @@ export default async function BaoGiaPage() {
 
               {/* 5. GÓI BÀI PR */}
               <section id="goi-pr" className="scroll-mt-24">
-                <SectionTitle no={so(5)} title="Gói bài PR" desc="Bài viết truyền thông trên chuyên mục Tin tức — tăng độ tin cậy và nhận diện thương hiệu." />
+                <SectionTitle no={so(4)} title="Gói bài PR" desc="Bài viết truyền thông trên chuyên mục Tin tức — tăng độ tin cậy và nhận diện thương hiệu." />
                 <div className="mt-6 grid grid-cols-1 gap-5 md:grid-cols-3">
                   {prPkgs.map((p) => {
                     const t = getTier(p.tierId);
@@ -324,7 +349,7 @@ export default async function BaoGiaPage() {
 
               {/* 6. GÓI BANNER */}
               <section id="goi-banner" className="scroll-mt-24">
-                <SectionTitle no={so(6)} title="Gói Banner quảng cáo" desc="Vị trí banner nổi bật trên Trang chủ và các trang danh sách — tiếp cận toàn bộ khách truy cập." />
+                <SectionTitle no={so(5)} title="Gói Banner quảng cáo" desc="Vị trí banner nổi bật trên Trang chủ và các trang danh sách — tiếp cận toàn bộ khách truy cập." />
                 {bannerTables.map((tbl) => (
                   <div key={tbl.title} className="mt-7">
                     <h3 className="mb-3 text-base font-semibold tracking-tight text-cvr-ink">{tbl.title}</h3>
@@ -360,38 +385,6 @@ export default async function BaoGiaPage() {
                 </p>
               </section>
 
-              {/* LOẠI TIN & ĐẶC ĐIỂM */}
-              <section id="dac-diem" className="scroll-mt-24">
-                <SectionTitle title="Loại tin và đặc điểm" desc="So sánh đặc điểm hiển thị giữa các cấp tin." />
-                <div className="mt-6 overflow-x-auto rounded-2xl border border-cvr-line bg-white shadow-lux">
-                  <table className="w-full min-w-[640px] text-sm">
-                    <thead>
-                      <tr className="border-b border-cvr-line text-left">
-                        <th className="px-6 py-4 font-semibold text-cvr-ink">Đặc điểm</th>
-                        {(["diamond", "gold", "silver", "basic"] as const).map((id) => {
-                          const t = getTier(id);
-                          return (
-                            <th key={id} className="px-4 py-4 text-center font-semibold tracking-tight" style={{ color: t.accent }}>
-                              {t.name}
-                            </th>
-                          );
-                        })}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {featureRows.map((r) => (
-                        <tr key={r.label} className="border-b border-cvr-line/60 transition-colors last:border-0 hover:bg-cvr-surface/50">
-                          <td className="px-6 py-3.5 text-cvr-body">{r.label}</td>
-                          {r.values.map((v, i) => (
-                            <td key={i} className={`px-4 py-3.5 text-center ${v === "✓" ? "font-semibold text-cvr-ink" : "text-cvr-muted"}`}>{v}</td>
-                          ))}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </section>
-
               {/* QUY ĐỊNH CHUNG */}
               <section id="quy-dinh" className="scroll-mt-24">
                 <SectionTitle title="Quy định chung" desc="" />
@@ -402,32 +395,13 @@ export default async function BaoGiaPage() {
                 </div>
               </section>
 
-              {/* CÔNG CỤ TIỆN ÍCH — phần 2 của menu, nằm SAU toàn bộ danh sách dịch vụ */}
-              <section id="cong-cu-tien-ich" className="scroll-mt-24">
-                <SectionTitle title="Công cụ tiện ích" desc="Bộ công cụ miễn phí đi kèm dịch vụ — tra cứu giá, so sánh, tính lãi vay, pháp lý và phong thủy." />
-                <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-                  {utilityTools.map((tool) => (
-                    <Link
-                      key={tool.slug}
-                      href={`/tien-ich/${tool.slug}`}
-                      className="group flex flex-col rounded-2xl border border-cvr-line bg-white p-5 shadow-lux transition hover:-translate-y-0.5 hover:border-cvr-gold-ink"
-                    >
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-cvr-gold-ink">Tiện ích</p>
-                      <h3 className="mt-2 text-lg font-semibold tracking-tight text-cvr-ink">{tool.label}</h3>
-                      <p className="mt-2 text-sm leading-relaxed text-cvr-muted">{tool.description}</p>
-                      <span className="mt-auto pt-4 inline-flex text-sm font-semibold text-cvr-ink transition group-hover:text-cvr-gold-ink">Xem ngay →</span>
-                    </Link>
-                  ))}
-                </div>
-              </section>
-
               {/* LIÊN HỆ */}
               <section id="lien-he" className="scroll-mt-24">
                 <SectionTitle title="Nhận báo giá và tư vấn" desc="Để lại thông tin, chuyên viên Coastal Land liên hệ trong 5 phút." />
                 <div className="mt-6 max-w-2xl">
                   <LeadForm
                     cta="Nhận báo giá ngay"
-                    topics={["Gói đăng tin VIP", "Gói Đẩy tin", "Gói Dự án", "Gói bài PR", "Gói Banner", "Khác"]}
+                    topics={["Gói tin đăng CVR", "Gói Đẩy tin", "Gói Dự án", "Gói bài PR", "Gói Banner", "Khác"]}
                   />
                 </div>
               </section>
@@ -472,7 +446,7 @@ function PkgCard({
   name: string;
   benefits?: string[];
   displays: string[];
-  media: React.ReactNode;
+  media?: React.ReactNode;
   prices: PriceLine[];
   pricesThue?: PriceLine[]; // có = đã công bố bảng Cho thuê riêng, nút gạt đổi giữa hai bộ
   cta: { label: string; href: string };
@@ -557,6 +531,23 @@ function DongGia({ prices }: { prices: PriceLine[] }) {
   );
 }
 
+// Thẻ QUYỀN LỢI một loại tin — chỉ chữ (không ảnh, không giá; giá ở bảng phía trên).
+function QuyenLoiCap({ tierId, benefits, displays, mau }: { tierId: TierId; benefits: string[]; displays: string[]; mau: React.ReactNode }) {
+  const t = getTier(tierId);
+  return (
+    <article className="rounded-2xl border border-cvr-line bg-white p-5 shadow-lux sm:p-6" style={{ borderTop: `3px solid ${t.accent}` }}>
+      <h4 className="text-[17px] font-semibold tracking-tight" style={{ color: tierId === "basic" ? "#1d1d1f" : t.accent }}>{t.name}</h4>
+      <ul className="mt-3 space-y-2 text-sm leading-relaxed text-cvr-body">
+        {[...benefits, ...displays].map((d) => (
+          <li key={d} className="flex gap-2"><CheckIcon /> <span>{d}</span></li>
+        ))}
+      </ul>
+      {/* Tin mẫu: tin thật của hạng này, hiển thị đúng như trên sàn */}
+      {mau}
+    </article>
+  );
+}
+
 // ── THẺ TIN MINH HOẠ TỪNG CẤP ────────────────────────────────────────────────
 // Tin có HAI kiểu bố trí, thẻ mẫu tự đổi theo thiết bị đang xem — mỗi lúc MỘT thẻ,
 // KHÔNG hiện 2 thẻ cùng lúc (sẽ lặp lại đúng một tấm ảnh):
@@ -564,29 +555,17 @@ function DongGia({ prices }: { prices: PriceLine[] }) {
 //   · Dưới sm (điện thoại)      → ảnh Ở TRÊN,   nội dung Ở DƯỚI   (variant="tier")
 // Cả hai đều là component thật đang chạy trên sàn, dữ liệu là TIN THẬT mới nhất
 // của cấp đó → đăng/sửa tin trong admin là thẻ này tự thay theo.
-function TierSample({ listing }: { listing: Listing | null }) {
-  // Chưa có tin ở cấp này → VẪN dựng khung, báo trống (đừng để trắng trơn).
-  if (!listing) {
-    return (
-      <div className="mt-6 max-w-[420px] rounded-2xl border border-dashed border-cvr-line bg-cvr-surface/60 px-4 py-8 text-center">
-        <p className="text-sm text-cvr-muted">
-          Chưa có tin ở cấp này — có tin được duyệt là thẻ mẫu tự hiện.
-        </p>
-      </div>
-    );
-  }
-
+function TierSample({ listing }: { listing: Listing }) {
+  // VÍ DỤ MINH HOẠ: khung y hệt thẻ tin trên sàn nhưng KHÔNG bấm được (không phải tin thật).
   return (
-    <>
-      {/* PC/tablet: ảnh trái – nội dung phải */}
-      <div className="mt-6 hidden sm:block">
-        <PropertyCard item={listing} layout="list" />
+    <div className="relative mt-5">
+      <span className="absolute left-3 top-3 z-10 rounded-full bg-white/95 px-2.5 py-1 text-[11px] font-semibold text-cvr-body shadow">Ví dụ minh hoạ</span>
+      <div className="pointer-events-none select-none" aria-hidden>
+        {/* PC/tablet: ảnh trái – nội dung phải · Điện thoại: ảnh trên – nội dung dưới */}
+        <div className="hidden sm:block"><PropertyCard item={listing} layout="list" /></div>
+        <div className="max-w-[320px] sm:hidden"><PropertyCard item={listing} variant="tier" /></div>
       </div>
-      {/* Điện thoại: ảnh trên – nội dung dưới */}
-      <div className="mt-6 max-w-[320px] sm:hidden">
-        <PropertyCard item={listing} variant="tier" />
-      </div>
-    </>
+    </div>
   );
 }
 
@@ -614,6 +593,8 @@ function ProjectTierSample({ project }: { project: Project | null }) {
     </>
   );
 }
+
+
 
 function CheckIcon() {
   return (

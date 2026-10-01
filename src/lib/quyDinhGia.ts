@@ -28,7 +28,7 @@ export const QUY_DINH_MAC_DINH: QuyDinhGia = {
   quyenLoi: {
     diamond: {
       loiIch: [
-        "Hệ số tiếp cận {X} so với tin thường.",
+        "Hệ số tiếp cận {X} so với CVR Basic.",
         "Được ưu tiên nạp vào “Bất động sản nổi bật” và “Có thể bạn quan tâm”.",
         "Tiếp cận nhiều khách hàng nhất.",
       ],
@@ -42,14 +42,14 @@ export const QUY_DINH_MAC_DINH: QuyDinhGia = {
     },
     gold: {
       loiIch: [
-        "Hệ số tiếp cận {X} so với tin thường.",
+        "Hệ số tiếp cận {X} so với CVR Basic.",
         "Được ưu tiên nạp vào “Bất động sản nổi bật”.",
         "Tiếp cận nhiều khách hàng.",
       ],
       hienThi: ["{VI_TRI}.", "Đứng trên CVR Silver.", "{NHAN_DIEN}."],
     },
     silver: {
-      loiIch: ["Hệ số tiếp cận {X} so với tin thường.", "Tiếp cận khách hàng tốt."],
+      loiIch: ["Hệ số tiếp cận {X} so với CVR Basic.", "Tiếp cận khách hàng tốt."],
       hienThi: ["{VI_TRI}.", "Đứng trên CVR Basic.", "{NHAN_DIEN}."],
     },
     basic: {
@@ -59,10 +59,10 @@ export const QUY_DINH_MAC_DINH: QuyDinhGia = {
   },
   quyDinhChung: [
     "Toàn bộ giá trong bảng đã bao gồm thuế GTGT 8% — đúng bằng số tiền trừ vào ví khi tin được duyệt và lên sóng.",
-    "(*) Ưu tiên hiển thị sớm: các tin VIP (CVR Diamond, CVR Gold và CVR Silver) được ưu tiên hiển thị và kiểm duyệt trước.",
+    "(*) Ưu tiên hiển thị sớm: các tin CVR Diamond, CVR Gold và CVR Silver được ưu tiên hiển thị và kiểm duyệt trước.",
     "(**) Không hiển thị quảng cáo: ở trang chi tiết tin đăng, trên cả giao diện desktop và mobile sẽ không xuất hiện banner quảng cáo — người xem tập trung tối đa vào nội dung tin.",
-    "(***) Nhân đôi hiển thị: chức năng đặc biệt của CVR Diamond — khi tạo tin, khách hàng được tặng kèm một Tin thường hiển thị đồng thời ở trang kết quả tìm kiếm; khi Đẩy tin CVR Diamond, tin thường đi kèm cũng được đẩy miễn phí.",
-    "Việc hiển thị tin đăng trên Sàn dựa trên các tiêu chí gồm nhưng không giới hạn ở: loại gói dịch vụ (tin thường, CVR Silver, CVR Gold, CVR Diamond), thời điểm đăng tin và các tiêu chí kỹ thuật khác theo quy định của Sàn tại từng thời điểm.",
+    "(***) Nhân đôi hiển thị: chức năng đặc biệt của CVR Diamond — khi tạo tin, khách hàng được tặng kèm một tin CVR Basic hiển thị đồng thời ở trang kết quả tìm kiếm; khi Đẩy tin CVR Diamond, tin CVR Basic đi kèm cũng được đẩy miễn phí.",
+    "Việc hiển thị tin đăng trên Sàn dựa trên các tiêu chí gồm nhưng không giới hạn ở: loại gói dịch vụ (CVR Basic, CVR Silver, CVR Gold, CVR Diamond), thời điểm đăng tin và các tiêu chí kỹ thuật khác theo quy định của Sàn tại từng thời điểm.",
   ],
   dieuKienHoiVien: [
     "Voucher cấp lại mỗi 30 ngày trong thời hạn gói, hạn dùng 30 ngày, tự trừ khi tin được duyệt hoặc đẩy tin.",

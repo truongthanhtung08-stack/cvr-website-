@@ -339,7 +339,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                       </span>
                     ) : (
                       <span className="inline-block rounded bg-cvr-surface px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-cvr-muted ring-1 ring-cvr-line">
-                        Tin thường
+                        {getTier("basic").name}
                       </span>
                     )}
                     <span className="text-[12px] font-medium tracking-wide text-cvr-faint">
@@ -493,7 +493,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                   {[
                     { nhan: "Ngày đăng", gt: l.postedAt ? new Date(l.postedAt).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" }) : "—" },
                     { nhan: "Ngày hết hạn", gt: l.hetHanLuc ? new Date(l.hetHanLuc).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" }) : "—" },
-                    { nhan: "Loại tin", gt: tier ? tier.name : "Tin thường" },
+                    { nhan: "Loại tin", gt: tier ? tier.name : getTier("basic").name },
                     { nhan: "Mã tin", gt: l.id.slice(0, 8).toUpperCase() },
                   ].map((o) => (
                     <div key={o.nhan} className="bg-white px-4 py-3">

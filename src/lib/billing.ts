@@ -225,9 +225,9 @@ export type CongBo = {
 // dùng 30 ngày, tự trừ vào giá lúc thu tiền. Mọi số tiền CHƯA GTGT.
 export type LoaiVoucher = "tin-thuong" | "tin-vip" | "day-thuong";
 export const TEN_VOUCHER: Record<LoaiVoucher, string> = {
-  "tin-thuong": "đăng tin thường",
-  "tin-vip": "đăng tin VIP",
-  "day-thuong": "đẩy tin thường",
+  "tin-thuong": "đăng tin CVR Basic",
+  "tin-vip": "đăng tin CVR Silver / Gold / Diamond",
+  "day-thuong": "đẩy tin CVR Basic",
 };
 export type VoucherGoi = { loai: LoaiVoucher; giam: number; soLuong: number };
 export type GoiHoiVien = {

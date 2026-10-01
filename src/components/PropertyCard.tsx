@@ -26,11 +26,13 @@ function AgentAvatar({ name, src, size = 6 }: { name: string; src?: string; size
       />
     );
   }
-  const initials = name.split(" ").slice(-2).map(w => w[0]).join("").toUpperCase();
+  // Tên công ty Coastal Land viết tắt là CVR (chủ dự án chốt 01/10/2026), không phải "CL".
+  const laCongTy = /^coastal land$/i.test(name.trim());
+  const initials = laCongTy ? "CVR" : name.split(" ").slice(-2).map(w => w[0]).join("").toUpperCase();
   return (
     <span
       className="flex shrink-0 items-center justify-center rounded-full bg-cvr-surface font-bold text-cvr-body ring-1 ring-cvr-line"
-      style={{ width: dim, height: dim, fontSize: `${size * 1.6}px` }}
+      style={{ width: dim, height: dim, fontSize: `${size * (laCongTy ? 1.2 : 1.6)}px` }}
     >
       {initials}
     </span>

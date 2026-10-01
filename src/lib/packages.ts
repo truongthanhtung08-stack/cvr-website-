@@ -53,7 +53,7 @@ export const tiers: Tier[] = [
     tagline: "Hiển thị nổi bật — hệ số tiếp cận X15",
     accent: "#b8860b", badgeText: "#ffffff", bar: "#d9b84e", titleColor: "", uppercase: true, hot: true, rank: 1,
     heSo: 15, heSoText: "X15",
-    viTri: "Ngay dưới tầng Kim Cương, trong nửa trên màn hình đầu tiên",
+    viTri: "Ngay dưới tầng CVR Diamond, trong nửa trên màn hình đầu tiên",
     nhanDien: "Dải nhấn vàng, huy hiệu nhận diện, tiêu đề VIẾT HOA, 2 dòng mô tả",
   },
   {
@@ -61,15 +61,15 @@ export const tiers: Tier[] = [
     tagline: "Tiết kiệm hiệu quả — hệ số tiếp cận X8",
     accent: "#2f5d84", badgeText: "#ffffff", bar: "#7ea6c8", titleColor: "", uppercase: false, hot: true, rank: 2,
     heSo: 8, heSoText: "X8",
-    viTri: "Tiếp dưới nhóm Vàng, trước phân khúc tin thường",
+    viTri: "Tiếp dưới nhóm CVR Gold, trước phân khúc CVR Basic",
     nhanDien: "Dải nhấn xanh, nhãn phân biệt, tiêu đề in đậm, 1 dòng mô tả",
   },
   {
     id: "basic", name: "CVR Basic", short: "Basic",
-    tagline: "Tin thường — hiển thị theo thời gian đăng",
+    tagline: "Hiển thị theo thời gian đăng",
     accent: "#9aa0a6", badgeText: "#ffffff", bar: "", titleColor: "", uppercase: false, hot: false, rank: 3,
     heSo: 1, heSoText: "Cơ sở (1x)",
-    viTri: "Dưới các tầng VIP, xếp thuần theo thời gian đăng",
+    viTri: "Dưới CVR Silver, Gold, Diamond, xếp thuần theo thời gian đăng",
     nhanDien: "Trình bày mặc định, không dải nhấn, không huy hiệu",
   },
 ];
