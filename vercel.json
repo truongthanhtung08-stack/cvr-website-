@@ -15,6 +15,10 @@
     {
       "path": "/api/thong-bao/dinh-ky",
       "schedule": "0 1 * * *"
+    },
+    {
+      "path": "/api/tin-dang/het-han",
+      "schedule": "0 * * * *"
     }
   ]
 }

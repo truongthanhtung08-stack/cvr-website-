@@ -10,8 +10,9 @@ import { baoLoi } from "@/lib/baoLoi";
 // ĐỔI 25/09/2026 (chủ dự án chốt, theo Batdongsan): hết hạn → trạng thái
 // 'expired'. Tin RỜI KHỎI mọi danh sách, KHÔNG xoá; link cũ vẫn mở, trang tin
 // ghi "đã hết hạn" và ẩn số. Khách "Up tin" (gia hạn, ngày tính lại từ đầu) để
-// hiện lại. Áp cho MỌI hạng, kể cả tin thường. Tin nhập từ admin (không có
-// tier_expires_at) không bao giờ hết hạn. Đoạn dưới đây là ghi chú của cách cũ.
+// hiện lại. Áp cho MỌI hạng, kể cả tin thường VÀ tin admin đăng hộ (01/10/2026: mọi tin
+// lên sóng đều có hạn — trigger 0052 lấy số ngày từ Giá & quy định). Quét MỖI GIỜ
+// (/api/tin-dang/het-han) + kèm cron hoá đơn. Đoạn dưới đây là ghi chú của cách cũ.
 //
 // LỖ HỔNG TRƯỚC ĐÂY: lúc duyệt tin web có ghi `tier_expires_at`, nhưng KHÔNG có
 // gì đọc tới cột đó. Khách mua Diamond 30 ngày thì 30 ngày sau vẫn Diamond, mãi

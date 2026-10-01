@@ -1,0 +1,37 @@
+import { NextResponse } from "next/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { quetTinHetHan } from "@/lib/hetHanTin";
+import { baoLoi } from "@/lib/baoLoi";
+
+// ════════════════════════════════════════════════════════════════════════════
+// QUÉT TIN HẾT HẠN — MỖI GIỜ (vercel.json, chủ dự án chốt 01/10/2026)
+// Trước đây chỉ quét kèm cron hoá đơn 2 lần/ngày → tin quá "Ngày hết hạn" vẫn hiện
+// thêm tới ~12 tiếng. Nay mỗi giờ một lần: tin ngừng hiển thị chậm nhất 1 giờ sau mốc.
+// Chạy lặp vô hại: tin đã hạ không khớp lại, tin đã nhắc có dấu trong details.
+// Bảo mật: Vercel Cron tự gắn "Authorization: Bearer $CRON_SECRET".
+// ════════════════════════════════════════════════════════════════════════════
+export const dynamic = "force-dynamic";
+
+export async function GET(request: Request) {
+  const khoaCron = process.env.CRON_SECRET;
+  if (khoaCron && request.headers.get("authorization") !== `Bearer ${khoaCron}`) {
+    return NextResponse.json({ ok: false, loi: "Không có quyền" }, { status: 401 });
+  }
+  const admin = createAdminClient();
+  if (!admin) return NextResponse.json({ ok: false, loi: "Thiếu khoá máy chủ" }, { status: 500 });
+  try {
+    const kq = await quetTinHetHan(admin);
+    return NextResponse.json({ ok: true, ...kq });
+  } catch (e) {
+    await baoLoi({
+      noi: "het-han-tin",
+      mucDo: "nang",
+      tomTat: "Quét tin hết hạn (mỗi giờ) bị lỗi",
+      chiTiet: e instanceof Error ? e.message : String(e),
+      hauQua: "Tin quá hạn vẫn hiển thị cho tới lần quét thành công kế tiếp.",
+      canLam: "Xem log Vercel của /api/tin-dang/het-han.",
+      khoa: `het-han-tin:${new Date().toISOString().slice(0, 13)}`,
+    });
+    return NextResponse.json({ ok: false }, { status: 500 });
+  }
+}
