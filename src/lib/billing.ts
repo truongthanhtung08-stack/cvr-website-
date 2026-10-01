@@ -603,6 +603,22 @@ export function freeDangChay(f: FreePolicy, today: string): boolean {
   return true;
 }
 
+// CÓ HƯỞNG CHƯƠNG TRÌNH KHUYẾN MÃI (Giá & quy định → free) KHÔNG — MỘT ĐIỀU KIỆN DUY NHẤT
+// cho form đăng tin, duyệt tin, đăng lại, form admin (CSDL: so_ngay_hien_thi, 0054).
+// Chương trình đang chạy (bật + trong from/to) · đúng hạng của chương trình · đúng đối
+// tượng (all / thành viên mới trong free.days ngày / đúng vai trò) · còn lượt (quota 0 =
+// không giới hạn). Tin ADMIN đăng hộ (không có chủ) tính như thành viên mới, không trừ lượt.
+export function huongKhuyenMai(
+  f: FreePolicy,
+  k: { goi: TierId; homNay: string; coChu: boolean; soNgayMoTk: number; role?: string | null; freeQuota?: number | null },
+): boolean {
+  if (!freeDangChay(f, k.homNay) || k.goi !== f.tierId) return false;
+  if (!k.coChu) return true;
+  const hopDoiTuong = f.audience === "all" || (f.audience === "new" && k.soNgayMoTk <= f.days) || f.audience === (k.role ?? "buyer");
+  const conLuot = f.quota === 0 || Number(k.freeQuota ?? 0) > 0;
+  return hopDoiTuong && conLuot;
+}
+
 // SỐ NGÀY HIỂN THỊ CỦA MỘT TIN — MỘT LUẬT DUY NHẤT cho mọi đường lên sóng (duyệt tin,
 // Up tin; CSDL có bản y hệt: so_ngay_hien_mac_dinh, 0053). Chủ dự án chốt 01/10/2026:
 //   · Hưởng chương trình khuyến mãi (Giá & quy định → free) ở đúng hạng của chương trình
@@ -611,8 +627,10 @@ export function freeDangChay(f: FreePolicy, today: string): boolean {
 // Hết số ngày là hết hạn, ngừng hiển thị — không trường hợp riêng nào.
 export function soNgayHienThi(bang: BillingData, goi: TierId, soNgayChon: number, huongKhuyenMai: boolean): number {
   if (huongKhuyenMai && goi === bang.free.tierId) return bang.free.days;
-  if (soNgayChon > 0) return soNgayChon;
-  const ngan = bang.plans.find((p) => p.tierId === goi)?.terms.map((t) => t.days).sort((a, b) => a - b)[0];
+  const terms = bang.plans.find((p) => p.tierId === goi)?.terms ?? [];
+  // Chỉ nhận số ngày CÓ TRONG BẢNG GIÁ — số ngày tuỳ ý (gửi từ trình duyệt) không được tính.
+  if (soNgayChon > 0 && terms.some((t) => t.days === soNgayChon)) return soNgayChon;
+  const ngan = terms.map((t) => t.days).sort((a, b) => a - b)[0];
   return ngan ?? 7;
 }
 

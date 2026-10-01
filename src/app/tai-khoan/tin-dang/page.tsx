@@ -202,6 +202,15 @@ export default function MyListingsPage() {
       setChoUp(new Set(((data ?? []) as { listing_id: string }[]).map((x) => x.listing_id)));
     })();
   }, []);
+  // ĐĂNG LẠI NHANH: chọn sẵn GÓI LẦN TRƯỚC (hạng + số ngày) nếu bảng giá hiện hành còn
+  // bán đúng gói đó — khách chỉ bấm Xác nhận; muốn đổi thì chọn gói khác.
+  function goiLanTruoc(r: ListingRow): { tier: string; soNgay: number } | null {
+    const plan = r.details?.plan as { tier?: string; days?: number } | undefined;
+    const soNgay = Number(r.tier_days ?? (plan?.tier === r.tier ? plan?.days : 0)) || 0;
+    const coBan = bangTheoMucDich(billing, r.purpose).plans
+      .find((p) => p.tierId === r.tier)?.terms.some((t) => t.days === soNgay);
+    return coBan ? { tier: r.tier, soNgay } : null;
+  }
   async function xacNhanUp() {
     if (!upCho || !upChon) return;
     setDangUp(true);
@@ -217,7 +226,7 @@ export default function MyListingsPage() {
       if (res.status === 402 && kq.viThieu) {
         if (kq.choUp) setChoUp((ds) => new Set(ds).add(upCho.id));
         const di = window.confirm(
-          `${kq.loi}\n\nNạp thêm ${vnd(kq.viThieu)} — tiền vào ví là tin tự đăng lại đúng gói bạn vừa chọn, không phải bấm lại.\n\nĐi tới trang nạp tiền?`,
+          `${kq.loi}\n\nNạp thêm ${vnd(kq.viThieu)} — tiền vào ví là tin tự gửi đăng lại đúng gói bạn vừa chọn, không phải bấm lại.\n\nĐi tới trang nạp tiền?`,
         );
         setUpCho(null);
         setUpChon(null);
@@ -226,13 +235,14 @@ export default function MyListingsPage() {
       }
       if (!res.ok || !kq.ok) { window.alert(kq.loi || "Đăng lại không thành công."); return; }
       setChoUp((ds) => { const m = new Set(ds); m.delete(upCho.id); return m; });
-      const bayGio = new Date().toISOString();
       setRows((ds) => ds.map((x) => (x.id === upCho.id
-        ? { ...x, status: "approved", tier: upChon.tier as ListingRow["tier"], published_at: bayGio, bumped_at: bayGio, tier_expires_at: kq.hetHan }
+        ? { ...x, status: "pending", tier_expires_at: null, details: { ...(x.details ?? {}), plan: { tier: upChon.tier, days: upChon.soNgay } } }
         : x)));
-      window.alert(kq.mienPhi
-        ? "Đã đăng lại tin — miễn phí theo chương trình thành viên mới."
-        : `Đã đăng lại tin. Trừ ${vnd(kq.daTru)}, số dư còn ${vnd(kq.soDu)}.`);
+      window.alert(
+        "Đã gửi đăng lại — tin chờ kiểm duyệt như tin mới.\n" +
+        (kq.mienPhi ? "Miễn phí theo chương trình thành viên mới." : `Phí ${vnd(kq.phaiTra)} trừ vào ví lúc tin được duyệt.`) +
+        "\nDuyệt xong tin hiển thị lại, ngày đăng và thời hạn tính từ lúc duyệt.",
+      );
       setUpCho(null);
       setUpChon(null);
     } finally {
@@ -466,7 +476,7 @@ export default function MyListingsPage() {
               {r.status === "expired" && (
                 <button
                   type="button"
-                  onClick={() => { setUpCho(r); setUpChon(null); }}
+                  onClick={() => { setUpCho(r); setUpChon(goiLanTruoc(r)); }}
                   className="flex h-9 items-center rounded-full bg-cvr-blue px-4 text-sm font-semibold text-white transition hover:bg-cvr-blue-ink"
                 >
                   Đăng lại
@@ -503,7 +513,7 @@ export default function MyListingsPage() {
             <p className="text-sm text-cvr-muted">Đăng lại tin</p>
             <h3 className="mt-0.5 line-clamp-2 text-base font-semibold text-cvr-ink">{upCho.title || "(chưa có tiêu đề)"}</h3>
             <p className="mt-2 text-[13px] leading-relaxed text-cvr-muted">
-              Ngày đăng và hạn hiển thị tính lại từ hôm nay.
+              Tin chờ kiểm duyệt như tin mới; duyệt xong mới trừ phí, ngày đăng và thời hạn tính từ lúc duyệt. Mã tin, lượt xem và người quan tâm giữ nguyên.
               Miễn phí thành viên mới và voucher hội viên tự áp khi xác nhận.
             </p>
             <div className="mt-4 space-y-3">

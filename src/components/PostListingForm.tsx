@@ -22,7 +22,7 @@ import OTieuDe from "@/components/OTieuDe";
 // phải sửa đúng dòng import này.
 import MapPicker from "@/components/MapPickerMo";
 import ContentEditor from "@/components/admin/ContentEditor";
-import { bangTheoMucDich, freeDangChay, freeNote, quotePrice, soAnhToiDa, soVideoToiDa, tenGoiMienPhi, vnd } from "@/lib/billing";
+import { bangTheoMucDich, freeDangChay, huongKhuyenMai, freeNote, quotePrice, soAnhToiDa, soVideoToiDa, tenGoiMienPhi, vnd } from "@/lib/billing";
 import { banChuyenDoi } from "@/lib/gtagChuyenDoi";
 import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
 import { useBilling } from "@/lib/useBilling";
@@ -50,6 +50,8 @@ export default function PostListingForm() {
   // Tài khoản Zalo vừa GỘP vào tài khoản cũ của số (XacMinhSdt) → lưu tin vào tài khoản cũ
   // ngay trong lần bấm Đăng tin này (state userId chưa kịp đổi trong lần save đang chạy).
   const uidGop = useRef<string | null>(null);
+  // details GỐC của tin đang sửa — tin đã đăng giữ nguyên gói (plan) và các khoá nội bộ.
+  const chiTietGoc = useRef<Record<string, unknown>>({});
   const [authReady, setAuthReady] = useState(false);
   // Tài khoản đã có số điện thoại XÁC MINH chưa (bắt buộc trước khi đăng — chốt 27/09/2026).
   // null = chưa biết; admin không phải qua bước này.
@@ -57,7 +59,7 @@ export default function PostListingForm() {
   const [moXacMinh, setMoXacMinh] = useState(false); // hộp "Số điện thoại của bạn" bật lên khi bấm Đăng tin
   const [soTaiKhoan, setSoTaiKhoan] = useState(""); // số của TÀI KHOẢN (khác số liên hệ trong tin)
 
-  const [done, setDone] = useState<"" | "draft" | "pending">("");
+  const [done, setDone] = useState<"" | "draft" | "pending" | "capNhat">("");
   // Chế độ SỬA: nạp tin cũ ("loading") · nạp xong ("ok") · không thấy/không có quyền ("notfound")
   const [editLoad, setEditLoad] = useState<"" | "loading" | "ok" | "notfound">(editId ? "loading" : "");
   const [editStatus, setEditStatus] = useState<string>("");
@@ -195,15 +197,16 @@ export default function PostListingForm() {
   // Gói này có được miễn phí cho khách đang đăng nhập không?
   // Xét cả HẠN CỦA CHƯƠNG TRÌNH (from/to), không chỉ nút bật/tắt: hết hạn là
   // form phải tính tiền như bình thường, không được hiện "0 ₫ — Miễn phí" nữa.
+  // CÙNG MỘT điều kiện với duyệt tin + đăng lại (huongKhuyenMai) — chương trình trong admin.
   const duocMienPhi = useMemo(() => {
-    const f = billing.free;
-    const homNay = new Date().toISOString().slice(0, 10);
-    if (!freeDangChay(f, homNay) || planTier !== f.tierId || !hoSoVi) return false;
-    const hopDoiTuong =
-      f.audience === "all" || (f.audience === "new" && laThanhVienMoi) || f.audience === hoSoVi.role;
-    const conLuot = f.quota === 0 || hoSoVi.free_quota > 0; // quota 0 = không giới hạn
-    return hopDoiTuong && laThanhVienMoi && conLuot;
-  }, [billing.free, planTier, hoSoVi, laThanhVienMoi]);
+    if (!hoSoVi || !planTier) return false;
+    // eslint-disable-next-line react-hooks/purity
+    const soNgayMoTk = hoSoVi.created_at ? (Date.now() - new Date(hoSoVi.created_at).getTime()) / 86_400_000 : Infinity;
+    return huongKhuyenMai(billing.free, {
+      goi: planTier as TierId, homNay: new Date().toISOString().slice(0, 10), coChu: true,
+      soNgayMoTk, role: hoSoVi.role, freeQuota: hoSoVi.free_quota,
+    });
+  }, [billing.free, planTier, hoSoVi]);
 
   const thanhTien = duocMienPhi ? 0 : baoGia.total;
 
@@ -396,6 +399,7 @@ export default function PostListingForm() {
       setBaths(r.baths != null ? String(r.baths) : "");
       setImages(r.images ?? []);
       const d = r.details ?? {};
+      chiTietGoc.current = d as Record<string, unknown>;
       setSpecValues(d.specs ?? {});
       setInterior(d.interior ?? []);
       setAmenities(d.amenities ?? []);
@@ -510,7 +514,12 @@ export default function PostListingForm() {
     // KHÔNG phải giá gói. Giá web niêm yết chưa gồm VAT (thue.ts: GIA_DA_GOM_VAT =
     // false) nên lấy nhầm giá gói là ví thiếu 8% mà web vẫn cho đăng.
     const phaiTra = tienThue.tongTra;
-    const viThieu = !asDraft && phaiTra > 0 && (hoSoVi?.balance ?? 0) < phaiTra;
+    // TIN ĐÃ ĐĂNG (đang hiển thị / đã hết hạn) — SỬA THÔNG TIN, KHÔNG phải đăng mới (chuẩn
+    // Batdongsan, chốt 01/10/2026): gói, ngày đăng, hạn giữ nguyên, không tính tiền, không
+    // đổi trạng thái. Đang hiển thị → bản sửa hiện NGAY, admin kiểm sau (CSDL tự đánh dấu
+    // "đã sửa", 0054). Đã hết hạn → lưu nội dung, bấm Đăng lại để gửi duyệt.
+    const daDang = Boolean(editId) && (editStatus === "approved" || editStatus === "expired");
+    const viThieu = !asDraft && !daDang && phaiTra > 0 && (hoSoVi?.balance ?? 0) < phaiTra;
     const luuNhap = asDraft || viThieu;
 
     setSaving(luuNhap ? "draft" : "publish");
@@ -587,7 +596,12 @@ export default function PostListingForm() {
       if (!err) await supabase.from("listings").delete().eq("id", editId);
     } else {
       // SỬA tin (nháp→nháp, chờ duyệt, đã duyệt…)
-      ({ error: err } = await supabase.from("listings").update(values).eq("id", editId));
+      const { status: _giu, ...noiDung } = values;
+      void _giu;
+      const capNhat = daDang
+        ? { ...noiDung, details: { ...chiTietGoc.current, ...values.details, plan: chiTietGoc.current.plan } }
+        : values;
+      ({ error: err } = await supabase.from("listings").update(capNhat).eq("id", editId));
       if (err && /đặc quyền|dac quyen|privileged/i.test(err.message)) {
         // DB chưa cho chủ tin đổi trạng thái (chưa chạy migration 0007)
         // → vẫn lưu TOÀN BỘ nội dung, giữ nguyên trạng thái cũ.
@@ -611,7 +625,7 @@ export default function PostListingForm() {
       window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
-    setDone(luuNhap ? "draft" : "pending");
+    setDone(daDang ? "capNhat" : luuNhap ? "draft" : "pending");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -677,10 +691,14 @@ export default function PostListingForm() {
           <svg className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
         </div>
         <h3 className="text-xl font-semibold tracking-tight text-cvr-ink">
-          {done === "draft" ? "Đã lưu nháp!" : editId ? "Đã cập nhật — tin chờ duyệt lại!" : "Tin đăng đã được gửi!"}
+          {done === "capNhat" ? "Đã cập nhật thông tin tin đăng!" : done === "draft" ? "Đã lưu nháp!" : editId ? "Đã cập nhật — tin chờ duyệt lại!" : "Tin đăng đã được gửi!"}
         </h3>
         <p className="mt-2 text-sm text-cvr-muted">
-          {done === "draft"
+          {done === "capNhat"
+            ? editStatus === "expired"
+              ? "Tin đã hết hạn — bấm Đăng lại trong Tin đăng của tôi để gửi duyệt và hiển thị lại."
+              : "Thông tin mới đã hiển thị. Gói, ngày đăng và thời hạn giữ nguyên."
+            : done === "draft"
             ? "Tin nháp được lưu trong tài khoản. Bạn có thể vào làm tiếp bất cứ lúc nào."
             : "Tin của bạn đang chờ Coastal Land kiểm duyệt và sẽ hiển thị sau ít phút."}
         </p>
@@ -744,7 +762,7 @@ export default function PostListingForm() {
       {editId && (
         <div className="flex flex-wrap items-center justify-between gap-2 rounded-none border border-cvr-blue/30 bg-cvr-blue/[0.06] px-4 py-3">
           <p className="text-sm font-medium text-cvr-blue-ink">
-            Đang chỉnh sửa tin{editStatus === "draft" ? " nháp" : editStatus === "approved" ? " (đã duyệt — lưu xong sẽ duyệt lại)" : ""}
+            Đang chỉnh sửa tin{editStatus === "draft" ? " nháp" : editStatus === "approved" ? " (đang hiển thị — lưu xong cập nhật ngay; gói và ngày đăng giữ nguyên)" : editStatus === "expired" ? " (đã hết hạn — sửa xong bấm Đăng lại)" : ""}
             {/* Quy tắc 0045: tin đã đăng chỉ sửa nội dung của chính căn đó */}
             {editStatus && editStatus !== "draft" && (
               <span className="mt-0.5 block text-[13px] font-normal text-cvr-body">

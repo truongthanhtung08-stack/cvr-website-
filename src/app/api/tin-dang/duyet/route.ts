@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { ghepBillingLuu, bangTheoMucDich, freeDangChay, soNgayHienThi, loaiVoucherTin, quotePrice, vnd, type BillingData } from "@/lib/billing";
+import { ghepBillingLuu, bangTheoMucDich, soNgayHienThi, huongKhuyenMai, loaiVoucherTin, quotePrice, vnd, type BillingData } from "@/lib/billing";
 import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
 import { guiThongBao, MAU_DUYET_TIN } from "@/lib/thongBao";
 import { baoLoi } from "@/lib/baoLoi";
@@ -92,20 +92,33 @@ export async function POST(request: Request) {
   const plan = (tin.details as { plan?: { tier?: string; days?: number } } | null)?.plan;
   const goi = ((tin.tier_yeu_cau ?? plan?.tier ?? "basic") as TierId);
   const soNgay = Number(tin.tier_days ?? plan?.days) || 0;
-  const mienPhi = goi === "basic" || soNgay <= 0;
+  // TIN THƯỜNG CHỈ MIỄN PHÍ KHI GÓI ĐÓ 0đ trong bảng giá (vd 7 ngày). Trước đây MỌI tin
+  // thường đều đi nhánh miễn phí → chọn gói thường 15/30 ngày (có phí) vẫn được duyệt 0đ.
+  // Gói thường có phí đi nhánh tính tiền bên dưới (khuyến mãi thành viên mới xét ở đó).
+  const { data: scMp } = await admin.from("site_content").select("data").eq("key", "billing").limit(1);
+  const bangMp = bangTheoMucDich(ghepBillingLuu(scMp?.[0]?.data as Partial<BillingData> | undefined), tin.purpose);
+  const giaGoiChon = bangMp.plans.find((p) => p.tierId === goi)?.terms.find((t) => t.days === soNgay)?.price;
+  const mienPhi = soNgay <= 0 || (goi === "basic" && giaGoiChon === 0);
 
   // ── 3. Tin miễn phí: duyệt thẳng, không dính tiền nong ────────────────────
   if (mienPhi) {
     // HẠN HIỂN THỊ (chủ dự án chốt 01/10/2026): THÀNH VIÊN MỚI (trong chương trình Giá &
     // quy định) — tin thường ĐÚNG 30 NGÀY; thành viên cũ — theo số ngày đã chọn (7/15/30).
-    const { data: scMp } = await admin.from("site_content").select("data").eq("key", "billing").limit(1);
-    const bangMp = bangTheoMucDich(ghepBillingLuu(scMp?.[0]?.data as Partial<BillingData> | undefined), tin.purpose);
     const fMp = bangMp.free;
     const { data: hsMp } = tin.owner_id
-      ? await admin.from("profiles").select("created_at").eq("id", tin.owner_id).maybeSingle()
+      ? await admin.from("profiles").select("created_at,role,free_quota").eq("id", tin.owner_id).maybeSingle()
       : { data: null };
     const ngayMoTkMp = hsMp?.created_at ? (Date.now() - new Date(hsMp.created_at).getTime()) / 86_400_000 : Infinity;
-    const laTvMoi = freeDangChay(fMp, new Date().toISOString().slice(0, 10)) && ngayMoTkMp <= fMp.days;
+    // Khuyến mãi: CÙNG MỘT điều kiện với mọi nơi (huongKhuyenMai) — lấy từ chương trình trong admin.
+    let laTvMoi = huongKhuyenMai(fMp, {
+      goi: "basic", homNay: new Date().toISOString().slice(0, 10), coChu: Boolean(tin.owner_id),
+      soNgayMoTk: ngayMoTkMp, role: hsMp?.role, freeQuota: hsMp?.free_quota,
+    });
+    // Chương trình có giới hạn số tin → hưởng thì trừ một lượt (nguyên tử); hết lượt thì không hưởng.
+    if (laTvMoi && tin.owner_id && fMp.quota !== 0) {
+      const { data: luot } = await admin.rpc("dung_luot_mien_phi", { p_user: tin.owner_id });
+      laTvMoi = Boolean(luot && (luot as unknown[]).length);
+    }
     const soNgayHien = soNgayHienThi(bangMp, "basic", soNgay, laTvMoi);
     const { error } = await admin
       .from("listings")
@@ -182,15 +195,12 @@ export async function POST(request: Request) {
   // đây chỗ duyệt chỉ coi gói Basic là miễn phí: khách được hứa miễn phí ở gói
   // Gold/Diamond vẫn BỊ TRỪ TIỀN THẬT. Nay xét đúng bằng điều kiện của form.
   const f = bang.free;
-  const hopDoiTuong =
-    f.audience === "all" ||
-    (f.audience === "new" && soNgayMoTk <= f.days) ||
-    f.audience === (hs.role ?? "buyer");
-  const conLuot = f.quota === 0 || Number(hs.free_quota ?? 0) > 0;
   // Chương trình hết hạn (`to`) thì thu tiền bình thường — nếu không, tin gửi
-  // từ thời còn ưu đãi vẫn được duyệt free mãi về sau.
-  const thuocDienMienPhi =
-    freeDangChay(f, new Date().toISOString().slice(0, 10)) && goi === f.tierId && hopDoiTuong && conLuot;
+  // từ thời còn ưu đãi vẫn được duyệt free mãi về sau. Điều kiện chung: huongKhuyenMai.
+  const thuocDienMienPhi = huongKhuyenMai(f, {
+    goi, homNay: new Date().toISOString().slice(0, 10), coChu: true,
+    soNgayMoTk, role: hs.role, freeQuota: hs.free_quota,
+  });
 
   if (thuocDienMienPhi) {
     // Trừ một lượt miễn phí TRƯỚC (nguyên tử) rồi mới duyệt không thu tiền.
@@ -217,7 +227,12 @@ export async function POST(request: Request) {
       // PHẢI ĐẶT HẠN HIỂN THỊ như tin trả phí. Miễn phí là miễn tiền, KHÔNG phải
       // được đứng hạng cao vĩnh viễn — thiếu tier_expires_at thì tin Gold/Diamond
       // tặng cho thành viên mới sẽ chiếm chỗ mãi mãi.
-      const hetHanMp = new Date(Date.now() + soNgay * 86_400_000).toISOString();
+      // Số ngày theo luật chung: hưởng khuyến mãi ở đúng hạng chương trình → free.days.
+      // Gói / số ngày phải có trong bảng giá — không nhận số ngày tuỳ ý từ trình duyệt.
+      if (!bang.plans.find((p) => p.tierId === goi)?.terms.some((t) => t.days === soNgay)) {
+        return loi(`Gói ${tenGoi(bang, goi)} ${soNgay} ngày không có trong bảng giá hiện hành — nhắc khách chọn lại gói rồi gửi lại.`, 400);
+      }
+      const hetHanMp = new Date(Date.now() + soNgayHienThi(bang, goi, soNgay, true) * 86_400_000).toISOString();
       const { error } = await admin
         .from("listings")
         .update({
@@ -238,7 +253,7 @@ export async function POST(request: Request) {
         tieuDe: "Tin của bạn đã được duyệt",
         cacDong: [
           { nhan: "Tin đăng", giaTri: tin.title },
-          { nhan: "Gói dịch vụ", giaTri: `${tenGoi(bang, goi)} · ${soNgay} ngày — miễn phí` },
+          { nhan: "Gói dịch vụ", giaTri: `${tenGoi(bang, goi)} · ${soNgayHienThi(bang, goi, soNgay, true)} ngày — miễn phí` },
           { nhan: "Hiển thị đến", giaTri: new Date(hetHanMp).toLocaleDateString("vi-VN") },
         ],
         znsTemplateId: MAU_DUYET_TIN,
@@ -265,9 +280,24 @@ export async function POST(request: Request) {
   // trước khi công bố bảng VIP 7/10/15). Khi đó quotePrice rơi về mốc đầu bảng —
   // giá của MỐC KHÁC — nên dùng thẳng số đã báo lúc khách gửi.
   const conMocNgay = bang.plans.find((p) => p.tierId === goi)?.terms.some((t) => t.days === soNgay);
-  let tien = tachThue(
-    Number.isFinite(giaDaBao) ? (conMocNgay ? Math.min(bao.total, giaDaBao) : giaDaBao) : bao.total,
-  );
+  // CHẶN GIÁ GIẢ (01/10/2026): giaBao và số ngày do TRÌNH DUYỆT gửi lên — sửa được qua API.
+  // Trước đây: gói không còn bán thì thu đúng giaBao (gửi 0đ + 365 ngày = VIP miễn phí cả
+  // năm); giaBao thấp hơn giá thì thu giaBao (gửi 0đ = VIP miễn phí). Nay máy chủ tự tính:
+  //   · gói / số ngày không có trong bảng giá hiện hành → không duyệt
+  //   · giá đã báo THẤP hơn giá hiện hành → không duyệt tự động (khách gửi lại theo giá đúng)
+  // Vẫn giữ: không bao giờ thu CAO hơn số khách đã thấy (giá tăng → cũng dừng, không thu).
+  if (!conMocNgay) {
+    return loi(`Gói ${tenGoi(bang, goi)} ${soNgay} ngày không có trong bảng giá hiện hành — nhắc khách chọn lại gói rồi gửi lại.`, 400);
+  }
+  // Giá hiện hành RẺ HƠN số đã báo → thu giá rẻ hơn (khách có lợi), đi tiếp bình thường.
+  if (Number.isFinite(giaDaBao) && Math.round(giaDaBao) < Math.round(bao.total)) {
+    return loi(
+      `Giá khách thấy lúc gửi (${vnd(giaDaBao)}) khác giá hiện hành (${vnd(bao.total)}, chưa VAT) — ` +
+      `bảng giá hoặc khuyến mãi đã đổi. Nhắc khách mở tin bấm gửi lại để xác nhận giá mới.`,
+      400,
+    );
+  }
+  let tien = tachThue(bao.total);
 
   // ── VOUCHER GÓI HỘI VIÊN (0040) — trừ thẳng vào giá chưa thuế ─────────────
   // Tin thường → voucher "tin-thuong", tin VIP → "tin-vip". Chỉ dùng khi thật sự
@@ -349,7 +379,10 @@ export async function POST(request: Request) {
   const { error: loiSo } = tien.tongTra <= 0 ? { error: null } : await admin.from("doanh_thu").insert({
     user_id: tin.owner_id,
     listing_id: id,
-    mo_ta: `${tenGoi(bang, goi)} ${soNgay} ngày — ${tin.title}${voucher ? ` (voucher hội viên −${vnd(voucher.giam)})` : ""}`,
+    // Tin ĐĂNG LẠI (upTin.ts) là khoản thu mới của cùng tin — loại riêng, không đụng
+    // ràng buộc "mỗi tin một khoản đăng tin" (uq_doanh_thu_listing, 0034).
+    loai: (tin.details as { dang_lai?: boolean } | null)?.dang_lai ? "dang_lai" : "dang_tin",
+    mo_ta: `${(tin.details as { dang_lai?: boolean } | null)?.dang_lai ? "Đăng lại · " : ""}${tenGoi(bang, goi)} ${soNgay} ngày — ${tin.title}${voucher ? ` (voucher hội viên −${vnd(voucher.giam)})` : ""}`,
     tien_hang: tien.tienHang,
     tien_thue: tien.tienThue,
     thue_suat: THUE_SUAT_GTGT,

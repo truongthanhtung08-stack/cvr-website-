@@ -1,4 +1,3 @@
-import { baoThanhToan } from "@/lib/baoThanhToan";
 import { NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
@@ -7,11 +6,10 @@ import { HANG_UP, thucHienUpTin } from "@/lib/upTin";
 import type { TierId } from "@/lib/packages";
 
 // ============================================================================
-// UP TIN = GIA HẠN GÓI TIN (chủ dự án chốt 25/09/2026) — logic ở src/lib/upTin.ts
-//   · Được Up BẤT CỨ LÚC NÀO (tin đang đăng hoặc đã hết hạn), ngày tính lại
-//     từ hôm nay, ngày còn dư của gói cũ bỏ.
+// ĐĂNG LẠI TIN ĐÃ HẾT HẠN — gửi duyệt như tin mới (chốt 01/10/2026), logic ở src/lib/upTin.ts.
+//   · Chỉ tin đã hết hạn. Tiền trừ lúc admin duyệt, không trừ ở đây.
 //   · VÍ THIẾU → ghi yêu cầu vào up_cho (0044) rồi báo số cần nạp. Nạp xong,
-//     webhook tự Up đúng gói + thời hạn khách đã chọn — khách không phải bấm lại.
+//     webhook tự gửi đăng lại đúng gói + thời hạn khách đã chọn.
 // ============================================================================
 export const dynamic = "force-dynamic";
 
@@ -42,7 +40,6 @@ export async function POST(request: Request) {
     return loi(kq.loi, kq.code ?? 400);
   }
 
-  revalidateTag("listings", "max"); // tin vừa Up → lên đầu, hiện lại NGAY
-  await baoThanhToan(admin, user.id, { dichVu: `Đăng lại tin ${kq.tenGoi} ${soNgay} ngày — ${kq.tieuDe}`, soTien: kq.daTru, soDu: kq.soDu });
-  return NextResponse.json({ ok: true, daTru: kq.daTru, mienPhi: kq.mienPhi, soDu: kq.soDu, hetHan: kq.hetHan });
+  revalidateTag("listings", "max");
+  return NextResponse.json({ ok: true, choDuyet: true, phaiTra: kq.phaiTra, mienPhi: kq.mienPhi });
 }

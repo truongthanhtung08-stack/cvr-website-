@@ -32,6 +32,7 @@ export type ListingDetails = {
   project?: string;                 // SLUG dự án tin này thuộc về ("" = không thuộc dự án nào)
   projectName?: string;             // TÊN dự án nguyên văn — dự án chưa được tạo trên web vẫn giữ được tên
   ly_do_tu_choi?: string;           // admin ghi khi từ chối — khách đọc để biết cần sửa gì
+  da_sua_luc?: string;              // khách sửa tin đang hiển thị → admin kiểm sau (0054)
   tu_choi_luc?: string;             // thời điểm từ chối (ISO)
   plan?: { tier?: string; days?: number; giaBao?: number }; // gói khách CHỌN lúc đăng (chờ duyệt mới dùng tới)
 };

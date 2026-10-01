@@ -32,6 +32,8 @@ import { baoLoi } from "@/lib/baoLoi";
 // hạ rồi thì không khớp điều kiện nữa, tin đã nhắc rồi thì có dấu trong details.
 // ════════════════════════════════════════════════════════════════════════════
 
+// KHÔNG TỰ ĐĂNG LẠI (chủ dự án chốt 01/10/2026): đăng lại hay không là QUYỀN CỦA KHÁCH
+// (bất động sản có thể đã giao dịch). Trách nhiệm của web là NHẮC: trước 3 ngày + lúc hết hạn.
 const NGAY_NHAC_TRUOC = 3;
 
 type Tin = {
@@ -93,8 +95,8 @@ export async function quetTinHetHan(
         phone: chu?.phone,
         tieuDe: "Tin của bạn đã hết hạn hiển thị",
         loiNhan:
-          `Tin đã tạm ngừng hiển thị trên Coastal Land (nội dung, ảnh vẫn giữ nguyên). ` +
-          `Để hiện lại, vào coastalland.vn/tai-khoan/tin-dang chọn tin rồi bấm Đăng lại.`,
+          `Tin của bạn đã hết hạn hiển thị ngày ${new Date(tin.tier_expires_at).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}. ` +
+          `Mời bạn đăng lại tại coastalland.vn/tai-khoan/tin-dang.`,
         cacDong: [
           { nhan: "Tin đăng", giaTri: tin.title },
           { nhan: "Gói vừa hết hạn", giaTri: getTier(tin.tier).name },
@@ -135,8 +137,8 @@ export async function quetTinHetHan(
         phone: chu?.phone,
         tieuDe: `Còn ${conLai} ngày là hết hạn gói tin`,
         loiNhan:
-          `Hết hạn thì tin tạm ngừng hiển thị; muốn hiện lại, bấm Đăng lại tại ` +
-            `coastalland.vn/tai-khoan/tin-dang.`,
+          `Tin của bạn sẽ hết hạn hiển thị ngày ${hetNgay.toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}. ` +
+            `Hết hạn, mời bạn đăng lại tại coastalland.vn/tai-khoan/tin-dang.`,
         cacDong: [
           { nhan: "Tin đăng", giaTri: tin.title },
           { nhan: "Gói hiện tại", giaTri: getTier(tin.tier).name },

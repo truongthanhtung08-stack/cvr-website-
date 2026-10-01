@@ -22,7 +22,7 @@ export default function AdminListingsPage() {
   const [q, setQ] = useState("");
   const [purpose, setPurpose] = useState<"all" | ListingPurpose>("all");
   const [tier, setTier] = useState<"all" | ListingTier>("all");
-  const [status, setStatus] = useState<"all" | ListingStatus>("all");
+  const [status, setStatus] = useState<"all" | "da_sua" | ListingStatus>("all");
   const [chon, setChon] = useState<Set<string>>(new Set()); // tin đang tick để xoá hàng loạt
 
   useEffect(() => {
@@ -43,7 +43,9 @@ export default function AdminListingsPage() {
     return rows.filter((r) => {
       if (purpose !== "all" && r.purpose !== purpose) return false;
       if (tier !== "all" && r.tier !== tier) return false;
-      if (status !== "all" && r.status !== status) return false;
+      // "Đã sửa — chờ kiểm" (0054): tin đang hiển thị khách vừa sửa, bản sửa đã hiện ngay.
+      if (status === "da_sua") { if (!(r.status === "approved" && r.details?.da_sua_luc)) return false; }
+      else if (status !== "all" && r.status !== status) return false;
       if (!kw) return true;
       return [r.title, r.type, r.ward, r.district, r.province]
         .filter(Boolean)
@@ -53,6 +55,16 @@ export default function AdminListingsPage() {
 
   const pendingCount = rows.filter((r) => r.status === "pending").length;
   const draftCount = rows.filter((r) => r.status === "draft").length;
+  const daSuaCount = rows.filter((r) => r.status === "approved" && r.details?.da_sua_luc).length;
+
+  // KIỂM SAU: xem bản sửa ổn → bấm "Đã kiểm" xoá dấu. Vi phạm → Ẩn / Từ chối như thường.
+  async function daKiem(r: ListingRow) {
+    const { da_sua_luc: _bo, ...conLai } = r.details ?? {};
+    void _bo;
+    const { error } = await createClient().from("listings").update({ details: conLai }).eq("id", r.id);
+    if (error) { window.alert(`Không lưu được: ${error.message}`); return; }
+    setRows((rs) => rs.map((x) => (x.id === r.id ? { ...x, details: conLai } : x)));
+  }
 
   // Thao tác nhanh: đổi trạng thái 1 tin (Duyệt / Ẩn / Hiện lại)
   // KHÔNG nuốt lỗi: thất bại phải báo ngay để admin biết tin CHƯA đổi trạng thái.
@@ -207,7 +219,7 @@ export default function AdminListingsPage() {
           <p className="mt-1 text-sm text-cvr-muted">
             {loading
               ? "Đang tải…"
-              : `${filtered.length} / ${rows.length} tin${pendingCount ? ` · ${pendingCount} chờ duyệt` : ""}${draftCount ? ` · ${draftCount} nháp` : ""}`}
+              : `${filtered.length} / ${rows.length} tin${pendingCount ? ` · ${pendingCount} chờ duyệt` : ""}${draftCount ? ` · ${draftCount} nháp` : ""}${daSuaCount ? ` · ${daSuaCount} đã sửa chờ kiểm` : ""}`}
           </p>
         </div>
         <Link
@@ -242,6 +254,7 @@ export default function AdminListingsPage() {
           <option value="all">Tất cả trạng thái</option>
           <option value="draft">Nháp</option>
           <option value="pending">Chờ duyệt</option>
+          <option value="da_sua">Đã sửa — chờ kiểm</option>
           <option value="approved">Đang đăng</option>
           <option value="hidden">Đã ẩn</option>
           <option value="rejected">Từ chối</option>
@@ -312,6 +325,12 @@ export default function AdminListingsPage() {
                   {/* Tiêu đề tin xuống tối đa 2 dòng thay vì cắt cụt một dòng —
                       cắt cụt thì hai tin cùng khu vực nhìn y hệt nhau. */}
                   <div className="line-clamp-2 font-medium text-cvr-ink">{r.title}</div>
+                  {r.status === "approved" && r.details?.da_sua_luc && (
+                    <div className="mt-1 flex items-center gap-2 text-xs">
+                      <span className="rounded-full bg-amber-50 px-2 py-0.5 font-medium text-amber-800">Đã sửa {fmtDate(r.details.da_sua_luc)} · chờ kiểm</span>
+                      <button type="button" onClick={() => daKiem(r)} className="font-semibold text-cvr-blue-ink hover:underline">Đã kiểm</button>
+                    </div>
+                  )}
                   <div className="line-clamp-2 text-xs text-cvr-muted">
                     {purposeLabel(r.purpose)} · {r.type} · {[r.district, r.province].filter(Boolean).join(", ")}
                   </div>
@@ -356,6 +375,12 @@ export default function AdminListingsPage() {
                 {tierBadge(r.tier)} <span>{purposeLabel(r.purpose)} · {[r.district, r.province].filter(Boolean).join(", ")}</span>
               </div>
             </Link>
+            {r.status === "approved" && r.details?.da_sua_luc && (
+              <div className="mt-2 flex items-center gap-2 text-xs">
+                <span className="rounded-full bg-amber-50 px-2 py-0.5 font-medium text-amber-800">Đã sửa · chờ kiểm</span>
+                <button type="button" onClick={() => daKiem(r)} className="font-semibold text-cvr-blue-ink hover:underline">Đã kiểm</button>
+              </div>
+            )}
             <div className="mt-3 border-t border-cvr-line pt-2 text-right">
               <RowActions row={r} onStatus={setRowStatus} onTuChoi={tuChoi} onXoa={xoaTin} />
             </div>
