@@ -222,3 +222,8 @@ html.xem-thu .hang-app { padding-right: 0; }
 .ct-phap-ly { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--cl-line, #d2d2d7); display: grid; gap: 3px; font-size: 11.5px; line-height: 1.5; color: var(--cl-faint, #86868b); }
 .ct-phap-ly b { color: var(--cl-body); }
 .ct-phap-ly p { margin: 0; }
+/* Thông tin tin đăng (Ngày đăng · Ngày hết hạn · Loại tin · Mã tin) — lưới 2 cột như web trên điện thoại */
+.luoi-tt { margin: 14px 0 0; display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--cl-line); border: 1px solid var(--cl-line); border-radius: 12px; overflow: hidden; }
+.luoi-tt > div { background: #fff; padding: 10px 12px; }
+.luoi-tt dt { font-size: 12px; color: var(--cl-muted); }
+.luoi-tt dd { margin: 2px 0 0; font-size: 14px; font-weight: 600; color: var(--cl-ink); }
