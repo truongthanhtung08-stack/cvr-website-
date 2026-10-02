@@ -36,10 +36,12 @@
 ### Giai đoạn A — Sửa web (Claude làm, chủ dự án duyệt từng bước)
 | # | Việc | Vì sao | Trạng thái |
 |---|---|---|---|
-| A1 | **Sổ khách hàng theo thuế** — gom doanh thu theo MST, cột hóa đơn chưa xuất, CSV | Nhìn ra khách nào còn thiếu hóa đơn | ✅ xong, chờ "Push" |
-| A2 | Tờ khai 01/GTGT thêm ô **[22] — thuế còn được khấu trừ kỳ trước** | Hiện trang bỏ qua [22] → quý trước còn dư khấu trừ thì [40] bị **tính cao hơn thực tế** | ⏳ chờ duyệt (đụng khối đã duyệt) |
-| A3 | **Phụ lục giảm thuế GTGT 8%** (tải CSV đúng cột phụ lục) | Kỳ xuất hóa đơn 8% phải nộp kèm; web chưa có | ⏳ |
-| A4 | Mục **TNCN** (khai quý 05/KK + quyết toán 05/QTT) | Web chưa có gì về TNCN | ⏳ chỉ làm nếu công ty có trả lương/hoa hồng (B4) |
+| A1 | **Sổ khách hàng theo thuế** — gom doanh thu theo MST, cột hóa đơn chưa xuất, CSV | Nhìn ra khách nào còn thiếu hóa đơn | ✅ đã lên web 02/10 |
+| A2 | Tờ khai 01/GTGT thêm ô **[22] — thuế còn được khấu trừ kỳ trước** | Trước đây trang bỏ qua [22] → quý trước còn dư khấu trừ thì [40] bị **tính cao hơn thực tế** | ✅ 02/10 — ô nhập trong khối tờ khai, nhớ theo từng quý trên máy |
+| A3 | **Phụ lục giảm thuế GTGT 8%** (mẫu 01 Phụ lục III Nghị định 174/2025) | Kỳ xuất hóa đơn 8% phải nộp kèm | ✅ 02/10 — có trong bản in quý |
+| A4 | Mục **TNCN** (khai quý 05/KK + quyết toán 05/QTT) | Web chưa có gì về TNCN | ✅ 02/10 — ⚠️ **phải chạy `supabase/migrations/0057_tncn_chi_tra.sql` trong Supabase SQL Editor một lần** thì mới lưu được |
+| A5 | **Trang IN BÁO CÁO** `/admin/hoa-don-thue/in` — bố cục theo mẫu tờ khai, in A4 / lưu PDF | Mục tiêu chủ dự án: **nhập liệu xong là in báo cáo** | ✅ 02/10 — quý: 01/GTGT · phụ lục giảm thuế · bảng tính tạm nộp TNDN · 05/KK-TNCN · bảng kê hóa đơn. Năm: tổng hợp GTGT 4 quý · số liệu quyết toán TNDN · 05/QTT-TNCN + bảng kê 05-1, 05-2 |
+| A6 | Xuất file **XML** nộp thẳng lên cổng thuế | Đỡ gõ tay | ⛔ chưa làm — chưa có đặc tả XML chính thức (XSD) của ngành thuế; đoán sai cấu trúc thì cổng từ chối. Hiện: chép số từ bản in vào "khai trực tuyến" trên cổng (01/GTGT chỉ ~10 ô có số) |
 
 ### Giai đoạn B — Chủ dự án cung cấp (xem mục 7)
 | # | Việc | Trạng thái |
@@ -55,10 +57,19 @@
 ### Giai đoạn C — Kế toán xác nhận (không tự kết luận được)
 | # | Câu hỏi | Trạng thái |
 |---|---|---|
+| **C5** | 🔴 **ƯU TIÊN SỐ 1 — Dịch vụ của Coastal Land có được giảm thuế 8% không?** Phụ lục I/III Nghị định 174/2025/NĐ-CP **loại trừ** "kinh doanh bất động sản" (gồm môi giới, sàn giao dịch BĐS) và "sản phẩm, dịch vụ công nghệ thông tin". Web đang xuất hóa đơn **8%**. Nếu kế toán kết luận thuộc diện loại trừ → phải áp **10%** từ 01/7/2025: mọi hóa đơn đã xuất thiếu 2% → điều chỉnh hóa đơn + khai bổ sung. Hỏi kèm **mã ngành chính trên ĐKKD**. Sửa code chỉ 1 dòng `THUE_SUAT_GTGT` trong `src/lib/thue.ts` — **chỉ sửa khi kế toán chốt**. | ⏳ |
 | C1 | Các chỗ 🔎 trong file này (mã mẫu mới theo TT 89/2026, ngưỡng thuế TNCN, ngưỡng chi phí tiền mặt) | ⏳ |
 | C2 | ⚠️ **Tiền khách NẠP VÍ có phải xuất hóa đơn ngay lúc nạp không?** Web hiện ghi doanh thu + xuất hóa đơn lúc **dùng** (duyệt tin), không phải lúc nạp. Nghị định 123/2020 (Điều 9) coi thu tiền trước khi cung cấp dịch vụ là thời điểm lập hóa đơn, trừ tiền đặt cọc/tạm ứng. Ví nạp trước thuộc loại nào → kế toán chốt. **Đổi cách này là đổi lớn — không tự sửa.** | ⏳ |
 | C3 | Hóa đơn trạng thái "đã hủy" có còn tính doanh thu không (hiện vẫn tính) | ⏳ |
 | C4 | Coastal Land có thuộc diện **sàn khấu trừ/khai thay thuế cho người đăng tin** (Nghị định 117/2025) hay phải **cung cấp thông tin người bán** cho cơ quan thuế không | ⏳ |
+
+### CÁCH DÙNG HẰNG QUÝ (sau khi đã có A1–A5)
+1. `/admin/hoa-don-thue` → chọn Quý / Năm.
+2. Nhập: hóa đơn mua vào (XML), hóa đơn nước ngoài, doanh thu doanh nghiệp, **ô [22]**, **chi trả TNCN** (mỗi lần trả lương/hoa hồng).
+3. Khối "Việc thuế cần làm" xanh hết.
+4. Bấm **"In báo cáo Quý X/…"** → tab mới → **In / Lưu PDF**.
+5. Mở cổng thuế, khai trực tuyến 01/GTGT (+ phụ lục) và 05/KK-TNCN (nếu có khấu trừ), chép số từ bản in → ký số → nộp → nộp tiền.
+6. Cuối năm: bấm **"In báo cáo cả năm"** → đưa kế toán lập 03/TNDN + BCTC, nộp 05/QTT-TNCN.
 
 ### Giai đoạn D — Nộp quý 3/2026 (hạn **31/10/2026**)
 D1 làm xong A2 + B1–B3 + B5 → D2 khối "Việc thuế cần làm" xanh hết → D3 Claude soạn tờ khai điền sẵn
