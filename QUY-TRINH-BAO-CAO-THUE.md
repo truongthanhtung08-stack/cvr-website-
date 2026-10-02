@@ -11,6 +11,47 @@
 
 ---
 
+## 0. KẾ HOẠCH TỔNG THỂ — làm từng bước, xong bước nào đánh dấu bước đó
+
+> Rà soát toàn bộ phần thuế trong code ngày 02/10/2026. Đã có sẵn: ghi doanh thu tự động
+> (duyệt tin, đẩy tin, gói up, hội viên), xuất hóa đơn VNPT + nhắc 20:00/08:30, tờ khai 01/GTGT,
+> tạm nộp TNDN, hóa đơn mua vào (XML), thuế nhà thầu nước ngoài, khối "Việc thuế cần làm".
+
+### Giai đoạn A — Sửa web (Claude làm, chủ dự án duyệt từng bước)
+| # | Việc | Vì sao | Trạng thái |
+|---|---|---|---|
+| A1 | **Sổ khách hàng theo thuế** — gom doanh thu theo MST, cột hóa đơn chưa xuất, CSV | Nhìn ra khách nào còn thiếu hóa đơn | ✅ xong, chờ "Push" |
+| A2 | Tờ khai 01/GTGT thêm ô **[22] — thuế còn được khấu trừ kỳ trước** | Hiện trang bỏ qua [22] → quý trước còn dư khấu trừ thì [40] bị **tính cao hơn thực tế** | ⏳ chờ duyệt (đụng khối đã duyệt) |
+| A3 | **Phụ lục giảm thuế GTGT 8%** (tải CSV đúng cột phụ lục) | Kỳ xuất hóa đơn 8% phải nộp kèm; web chưa có | ⏳ |
+| A4 | Mục **TNCN** (khai quý 05/KK + quyết toán 05/QTT) | Web chưa có gì về TNCN | ⏳ chỉ làm nếu công ty có trả lương/hoa hồng (B4) |
+
+### Giai đoạn B — Chủ dự án cung cấp (xem mục 7)
+| # | Việc | Trạng thái |
+|---|---|---|
+| B1 | Chữ ký số: loại + ngày hết hạn | ⏳ |
+| B2 | Tài khoản thuế điện tử + email nhận thông báo + ngân hàng liên kết | ⏳ |
+| B3 | Đã nộp tờ khai GTGT Q1, Q2/2026 chưa · số [43] của tờ khai gần nhất | ⏳ |
+| B4 | Có trả lương/hoa hồng cho cá nhân không | ⏳ |
+| B5 | Hóa đơn mua vào quý 3 chưa có trên web | ⏳ trước 25/10 |
+
+### Giai đoạn C — Kế toán xác nhận (không tự kết luận được)
+| # | Câu hỏi | Trạng thái |
+|---|---|---|
+| C1 | Các chỗ 🔎 trong file này (mã mẫu mới theo TT 89/2026, ngưỡng thuế TNCN, ngưỡng chi phí tiền mặt) | ⏳ |
+| C2 | ⚠️ **Tiền khách NẠP VÍ có phải xuất hóa đơn ngay lúc nạp không?** Web hiện ghi doanh thu + xuất hóa đơn lúc **dùng** (duyệt tin), không phải lúc nạp. Nghị định 123/2020 (Điều 9) coi thu tiền trước khi cung cấp dịch vụ là thời điểm lập hóa đơn, trừ tiền đặt cọc/tạm ứng. Ví nạp trước thuộc loại nào → kế toán chốt. **Đổi cách này là đổi lớn — không tự sửa.** | ⏳ |
+| C3 | Hóa đơn trạng thái "đã hủy" có còn tính doanh thu không (hiện vẫn tính) | ⏳ |
+
+### Giai đoạn D — Nộp quý 3/2026 (hạn **31/10/2026**)
+D1 làm xong A2 + B1–B3 + B5 → D2 khối "Việc thuế cần làm" xanh hết → D3 Claude soạn tờ khai điền sẵn
+từng ô → D4 chủ dự án ký số, nộp trên cổng (mục 6.3) → D5 nộp tiền GTGT + tạm nộp TNDN → D6 lưu hồ sơ.
+
+### Giai đoạn E — Cuối năm
+E1 trước 15/12: hỏi kế toán thuế suất 2027 (8% hết 31/12/2026) → sửa `src/lib/thue.ts`, đổi ký hiệu
+hóa đơn `1C27TCL`, đăng ký dải mới VNPT · E2 trước 31/1/2027: tờ khai Q4 + tạm nộp TNDN đủ 80% ·
+E3 trước 31/3/2027: quyết toán TNDN + BCTC + quyết toán TNCN (nếu có).
+
+---
+
 ## 1. Thông tin người nộp thuế
 
 | | |
