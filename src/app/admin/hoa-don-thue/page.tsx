@@ -474,7 +474,8 @@ function gomTheoKhach(rows: DongDoanhThu[]): DongKhach[] {
     k.tienHang += Number(d.tien_hang || 0);
     k.tienThue += Number(d.tien_thue || 0);
     k.tongTra += Number(d.tong_tra || 0);
-    if (d.hoa_don_trang_thai === "chua_xuat") k.chuaXuat += 1;
+    // 'loi' = VNPT từ chối → coi như chưa xuất, phải làm lại.
+    if (d.hoa_don_trang_thai === "chua_xuat" || d.hoa_don_trang_thai === "loi") k.chuaXuat += 1;
     m.set(khoa, k);
   }
   return [...m.values()].sort((x, y) => y.tongTra - x.tongTra);
