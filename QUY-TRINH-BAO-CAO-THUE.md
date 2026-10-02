@@ -39,7 +39,7 @@
 | A1 | **Sổ khách hàng theo thuế** — gom doanh thu theo MST, cột hóa đơn chưa xuất, CSV | Nhìn ra khách nào còn thiếu hóa đơn | ✅ đã lên web 02/10 |
 | A2 | Tờ khai 01/GTGT thêm ô **[22] — thuế còn được khấu trừ kỳ trước** | Trước đây trang bỏ qua [22] → quý trước còn dư khấu trừ thì [40] bị **tính cao hơn thực tế** | ✅ 02/10 — ô nhập trong khối tờ khai, nhớ theo từng quý trên máy |
 | A3 | **Phụ lục giảm thuế GTGT 8%** (mẫu 01 Phụ lục III Nghị định 174/2025) | Kỳ xuất hóa đơn 8% phải nộp kèm | ✅ 02/10 — có trong bản in quý |
-| A4 | Mục **TNCN** (khai quý 05/KK + quyết toán 05/QTT) | Web chưa có gì về TNCN | ✅ 02/10 — ⚠️ **phải chạy `supabase/migrations/0057_tncn_chi_tra.sql` trong Supabase SQL Editor một lần** thì mới lưu được |
+| A4 | Mục **TNCN** (khai quý 05/KK + quyết toán 05/QTT) | Web chưa có gì về TNCN | ✅ 02/10 — dùng ngay trên trình duyệt, KHÔNG cần chạy SQL (lưu trong bảng `bi_mat` có sẵn, chỉ admin đọc được) |
 | A5 | **Trang IN BÁO CÁO** `/admin/hoa-don-thue/in` — bố cục theo mẫu tờ khai, in A4 / lưu PDF | Mục tiêu chủ dự án: **nhập liệu xong là in báo cáo** | ✅ 02/10 — quý: 01/GTGT · phụ lục giảm thuế · bảng tính tạm nộp TNDN · 05/KK-TNCN · bảng kê hóa đơn. Năm: tổng hợp GTGT 4 quý · số liệu quyết toán TNDN · 05/QTT-TNCN + bảng kê 05-1, 05-2 |
 | A6 | Xuất file **XML** nộp thẳng lên cổng thuế | Đỡ gõ tay | ⛔ chưa làm — chưa có đặc tả XML chính thức (XSD) của ngành thuế; đoán sai cấu trúc thì cổng từ chối. Hiện: chép số từ bản in vào "khai trực tuyến" trên cổng (01/GTGT chỉ ~10 ô có số) |
 

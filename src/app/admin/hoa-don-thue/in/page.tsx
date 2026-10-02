@@ -14,7 +14,7 @@ import {
   type DongNgoai,
   type DongVao,
 } from "@/lib/soLieuThue";
-import { COT_TNCN, bangKe051, bangKe052, tongHop05, type DongChiTra } from "@/lib/thueTncn";
+import { bangKe051, bangKe052, napChiTra, tongHop05, type DongChiTra } from "@/lib/thueTncn";
 
 // ============================================================================
 // IN BÁO CÁO THUẾ — mở từ nút "In báo cáo" ở /admin/hoa-don-thue
@@ -71,13 +71,7 @@ function BoHoSo() {
 
       const tu = khoangQuy(nam, quy || 1).tu;
       const den = khoangQuy(nam, quy || 4).den;
-      const { data } = await supabase
-        .from("tncn_chi_tra")
-        .select(COT_TNCN)
-        .gte("ngay_tra", ngayISO(tu))
-        .lte("ngay_tra", ngayISO(den))
-        .order("ngay_tra", { ascending: true });
-      setTncn((data ?? []) as DongChiTra[]);
+      setTncn((await napChiTra(supabase, ngayISO(tu), ngayISO(den))).rows);
     })();
   }, [nam, quy]);
 

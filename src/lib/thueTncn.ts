@@ -102,7 +102,39 @@ export type DongChiTra = ChiTra & {
   thue_khau_tru: number;
 };
 
-export const COT_TNCN = "id,ngay_tra,ho_ten,ma_so,loai,dien_giai,thu_nhap,bao_hiem,so_npt,thue_khau_tru";
+// ── Lưu trữ ────────────────────────────────────────────────────────────────
+// Sổ chi trả nằm trong bảng `bi_mat` (đã có sẵn, CHỈ admin + máy chủ đọc được —
+// lương là dữ liệu cá nhân, tuyệt đối không để ở site_content công khai). Dùng
+// bảng có sẵn để KHÔNG phải chạy SQL gì thêm trong Supabase.
+// Mỗi lần chi trả = một dòng, khóa "tncn:<ngày trả>:<id>" → lọc theo kỳ bằng khóa.
+
+type Supa = { from: (bang: string) => any }; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+const TIEN_TO = "tncn:";
+
+export async function napChiTra(supabase: Supa, tuNgay: string, denNgay: string): Promise<{ rows: DongChiTra[]; loi: string }> {
+  const { data, error } = await supabase
+    .from("bi_mat")
+    .select("key,data")
+    .gte("key", `${TIEN_TO}${tuNgay}`)
+    .lte("key", `${TIEN_TO}${denNgay}~`)
+    .order("key", { ascending: true });
+  if (error) return { rows: [], loi: error.message };
+  return { rows: ((data ?? []) as { data: DongChiTra }[]).map((d) => d.data), loi: "" };
+}
+
+export async function ghiChiTra(supabase: Supa, d: Omit<DongChiTra, "id">): Promise<string> {
+  const id = crypto.randomUUID();
+  const { error } = await supabase
+    .from("bi_mat")
+    .insert({ key: `${TIEN_TO}${d.ngay_tra}:${id}`, data: { ...d, id }, updated_at: new Date().toISOString() });
+  return error ? error.message : "";
+}
+
+export async function xoaChiTra(supabase: Supa, d: Pick<DongChiTra, "id" | "ngay_tra">): Promise<string> {
+  const { error } = await supabase.from("bi_mat").delete().eq("key", `${TIEN_TO}${d.ngay_tra}:${d.id}`);
+  return error ? error.message : "";
+}
 
 /** Một người = mã số (MST/CCCD) nếu có, không thì họ tên. */
 function khoaNguoi(d: { ma_so: string | null; ho_ten: string }): string {

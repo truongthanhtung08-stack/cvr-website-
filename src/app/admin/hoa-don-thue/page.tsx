@@ -25,8 +25,10 @@ import {
 } from "@/lib/thueNhaThau";
 import { docHoaDonNgoai } from "@/lib/docHoaDonNgoai";
 import {
-  COT_TNCN,
   NHAN_LOAI,
+  ghiChiTra,
+  napChiTra,
+  xoaChiTra,
   tinhKhauTru,
   tongHop05,
   type DongChiTra,
@@ -514,23 +516,9 @@ function KhoiTncn({ tu, den, nhan }: { tu: Date; den: Date; nhan: string }) {
   const [notice, setNotice] = useState("");
 
   const nap = useCallback(async () => {
-    const { data, error } = await createClient()
-      .from("tncn_chi_tra")
-      .select(COT_TNCN)
-      .gte("ngay_tra", ngayISO(tu))
-      .lte("ngay_tra", ngayISO(den))
-      .order("ngay_tra", { ascending: true });
-    if (error) {
-      setLoi(
-        /does not exist|schema cache/i.test(error.message)
-          ? "Chưa có bảng sổ chi trả TNCN. Vào Supabase → SQL Editor → chạy file supabase/migrations/0057_tncn_chi_tra.sql rồi tải lại trang."
-          : error.message,
-      );
-      setRows([]);
-      return;
-    }
-    setLoi("");
-    setRows((data ?? []) as DongChiTra[]);
+    const kq = await napChiTra(createClient(), ngayISO(tu), ngayISO(den));
+    setLoi(kq.loi);
+    setRows(kq.rows);
   }, [tu, den]);
 
   useEffect(() => {
@@ -552,7 +540,7 @@ function KhoiTncn({ tu, den, nhan }: { tu: Date; den: Date; nhan: string }) {
     if (!(Number(f.thu_nhap) > 0)) return setNotice("Chưa điền thu nhập.");
     setSaving(true);
     setNotice("");
-    const { error } = await createClient().from("tncn_chi_tra").insert({
+    const error = await ghiChiTra(createClient(), {
       ngay_tra: f.ngay_tra,
       ho_ten: f.ho_ten.trim(),
       ma_so: f.ma_so.trim() || null,
@@ -564,17 +552,17 @@ function KhoiTncn({ tu, den, nhan }: { tu: Date; den: Date; nhan: string }) {
       thue_khau_tru: xem.thue,
     });
     setSaving(false);
-    if (error) return setNotice("Lưu thất bại: " + error.message);
+    if (error) return setNotice("Lưu thất bại: " + error);
     // Giữ người + loại để nhập tiếp tháng sau của cùng người cho nhanh.
     setF({ ...f, dien_giai: "", thu_nhap: "" });
     setNotice(`Đã ghi ✓ Thuế phải khấu trừ ${vnd(xem.thue)} — trả cho người nhận ${vnd((Number(f.thu_nhap) || 0) - (f.loai === "hdld" ? Number(f.bao_hiem) || 0 : 0) - xem.thue)}.`);
     void nap();
   }
 
-  async function xoa(id: string) {
+  async function xoa(d: DongChiTra) {
     if (!confirm("Xoá dòng chi trả này?")) return;
-    const { error } = await createClient().from("tncn_chi_tra").delete().eq("id", id);
-    if (error) return alert("Xoá thất bại: " + error.message);
+    const error = await xoaChiTra(createClient(), d);
+    if (error) return alert("Xoá thất bại: " + error);
     void nap();
   }
 
@@ -689,7 +677,7 @@ function KhoiTncn({ tu, den, nhan }: { tu: Date; den: Date; nhan: string }) {
                   <td className="py-2 pr-3 text-right tabular-nums text-cvr-ink">{vnd(d.thu_nhap)}</td>
                   <td className="py-2 pr-3 text-right tabular-nums text-cvr-ink">{vnd(d.thue_khau_tru)}</td>
                   <td className="py-2 text-right">
-                    <button onClick={() => xoa(d.id)} className="text-xs text-cvr-muted hover:text-red-600">Xoá</button>
+                    <button onClick={() => xoa(d)} className="text-xs text-cvr-muted hover:text-red-600">Xoá</button>
                   </td>
                 </tr>
               ))}
