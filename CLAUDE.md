@@ -177,6 +177,18 @@ Buộc phải đụng vào vì lý do kỹ thuật → **DỪNG, HỎI TRƯỚC.
 
 ---
 
+## 0E. 🧾 THUẾ CÔNG TY (GTGT · TNDN · TNCN) — topic riêng, theo dõi lâu dài
+
+> **Sổ tay + kế hoạch: [`QUY-TRINH-BAO-CAO-THUE.md`](QUY-TRINH-BAO-CAO-THUE.md) — mục 0 là bảng
+> tiến độ.** Mở phiên mới là **đọc file đó trước**, xem bước nào chưa ✅ rồi làm tiếp — **KHÔNG làm
+> lại từ đầu, KHÔNG bắt chủ dự án kể lại.** Xong bước nào sửa bảng trong file đó ngay.
+>
+> Mở 02/10/2026. Đã rà soát toàn bộ code thuế (trang `/admin/hoa-don-thue`, `src/lib/thue.ts`,
+> `src/lib/thueNhaThau.ts`, các route ghi `doanh_thu`). Hạn gần nhất: **tờ khai quý 3 — 31/10/2026**.
+> Câu hỏi C2 (tiền nạp ví có phải xuất hóa đơn lúc nạp) **chờ kế toán — không tự sửa luồng ví.**
+
+---
+
 ## 1. Dự án là gì
 
 > ⚡ **Đây KHÔNG chỉ là một website thông thường — đây là Dự án COASTAL LAND PLATFORM.**
