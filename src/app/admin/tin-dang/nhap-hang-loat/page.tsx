@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { lamMoiWeb } from "@/lib/lamMoiWeb";
 import {
   anhThuocMa,
   cungTenTep,
@@ -322,11 +323,12 @@ export default function NhapHangLoatPage() {
         capNhat++;
       }
 
+      // Báo web bỏ cache → tin vừa đăng hiện NGAY (trước đây chờ lượt làm mới tự động).
+      await lamMoiWeb("listings");
       setKetQua(
         `Đã đăng ${xong} tin mới` +
           (capNhat ? ` · bổ sung ảnh/video và cập nhật nội dung cho ${capNhat} tin đã đăng` : "") +
-
-          ". Web cập nhật trong vòng 60 giây.",
+          ". Tin đã hiện trên web.",
       );
       setRows([]);
       setTenFile("");

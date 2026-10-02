@@ -36,7 +36,12 @@ const COT =
   "bumped_at,nguoi_dang:details->contact->>name";
 
 async function rest(query: string): Promise<Tin[]> {
-  const res = await fetch(`${URL_DB}/rest/v1/listings?${query}`, {
+  // Y HỆT WEB (listingsDb conHan, 02/10/2026): tin đã duyệt mà QUA giờ hết hạn là ngừng
+  // hiển thị ngay — không chờ cron mỗi giờ đổi status sang 'expired'.
+  const conHan = query.includes("status=eq.approved")
+    ? `&or=(tier_expires_at.is.null,tier_expires_at.gt.${new Date().toISOString()})`
+    : "";
+  const res = await fetch(`${URL_DB}/rest/v1/listings?${query}${conHan}`, {
     headers: { apikey: KHOA, Authorization: `Bearer ${KHOA}` },
   });
   if (!res.ok) throw new Error(`Không đọc được tin (${res.status})`);

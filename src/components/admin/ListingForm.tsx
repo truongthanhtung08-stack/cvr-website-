@@ -318,7 +318,9 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
     const supabase = createClient();
     const { error: err } = editing
       ? await supabase.from("listings").update(payload).eq("id", initial!.id)
-      : await supabase.from("listings").insert(payload);
+      // Tin MỚI: bumped_at = ngày đăng — danh sách xếp theo `bumped_at desc nulls last`,
+      // bỏ trống là tin chìm dưới mọi tin cũ (bẫy 20/09; nhập hàng loạt đã ghi từ trước).
+      : await supabase.from("listings").insert({ ...payload, bumped_at: payload.published_at });
 
     // Lưu xong → web bỏ cache, hiện ngay (xem src/lib/lamMoiWeb.ts)
     if (!err) await lamMoiWeb("listings");

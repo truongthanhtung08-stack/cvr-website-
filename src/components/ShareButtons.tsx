@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from "react";
 export default function ShareButtons({ title }: { title: string }) {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [chepZalo, setChepZalo] = useState(false);
   const [url, setUrl] = useState("");
   const boxRef = useRef<HTMLDivElement>(null);
 
@@ -57,6 +58,34 @@ export default function ShareButtons({ title }: { title: string }) {
     }
   }
 
+  // CHIA SẺ QUA ZALO — đúng cách bộ mã chính thức của Zalo (sp.zalo.me/plugins/sdk.js) làm:
+  //   · Android → lệnh chia sẻ của máy gửi thẳng vào app Zalo
+  //   · iPhone  → khung chia sẻ của app Zalo (zaloshareext://)
+  //   · Máy tính → Zalo không có địa chỉ chia sẻ cho web (zalo.me/share/link cũ trả về
+  //     trang "không tìm thấy") → chép sẵn link rồi mở Zalo Web để khách dán vào chat.
+  async function quaZalo() {
+    const ua = navigator.userAgent;
+    if (/Android/i.test(ua)) {
+      setOpen(false);
+      window.location.href = `intent://zaloapp.com/#Intent;action=android.intent.action.SEND;type=text/plain;S.android.intent.extra.SUBJECT=;S.android.intent.extra.TEXT=${enc};B.hidePostFeed=false;B.backToSource=true;end`;
+      return;
+    }
+    if (/iPhone|iPad|iPod/i.test(ua)) {
+      setOpen(false);
+      window.location.href = `zaloshareext://shareext?url=${enc}&type=8&version=1`;
+      return;
+    }
+    // Chép TRƯỚC khi mở tab mới — trang mất focus thì trình duyệt chặn ghi clipboard.
+    try {
+      await navigator.clipboard.writeText(url);
+      setChepZalo(true);
+      setTimeout(() => setChepZalo(false), 3000);
+    } catch {
+      /* trình duyệt chặn clipboard — bỏ qua */
+    }
+    window.open("https://chat.zalo.me/", "_blank", "noopener,noreferrer");
+  }
+
   const muc =
     "flex min-h-[44px] w-full items-center gap-3 px-4 text-sm font-medium text-cvr-body transition hover:bg-cvr-surface active:bg-cvr-surface";
 
@@ -85,16 +114,10 @@ export default function ShareButtons({ title }: { title: string }) {
 
       {open && (
         <div className="absolute right-0 top-[calc(100%+8px)] z-30 w-60 overflow-hidden rounded-2xl border border-cvr-line bg-white py-1.5 shadow-[0_12px_36px_rgba(0,0,0,0.16)]">
-          <a
-            href={`https://zalo.me/share/link?u=${enc}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => setOpen(false)}
-            className={muc}
-          >
+          <button type="button" onClick={quaZalo} className={muc}>
             <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#0068ff] text-[11px] font-bold text-white">Za</span>
-            Chia sẻ qua Zalo
-          </a>
+            {chepZalo ? "Đã chép link — dán vào Zalo" : "Chia sẻ qua Zalo"}
+          </button>
           <a
             href={`https://www.facebook.com/sharer/sharer.php?u=${enc}`}
             target="_blank"

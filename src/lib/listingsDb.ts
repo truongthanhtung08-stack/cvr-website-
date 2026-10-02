@@ -319,6 +319,11 @@ async function rest(query: string): Promise<Row[] | null> {
 // WEB PHẢI THẬT (18/7): loại tin mẫu khỏi mọi trang, kể cả khi chưa xoá trong DB
 // (migration 0008 xoá hẳn; lớp lọc này đảm bảo ngay cả khi chưa chạy SQL).
 const isSeedRow = (r: Row) => /^\d+$/.test(r.id);
+// CÒN HẠN HIỂN THỊ (luật chốt 01/10/2026: hết hạn là NGỪNG hiển thị, không hạ về tin
+// thường). Cron /api/tin-dang/het-han mỗi giờ mới đổi status → 'expired'; lớp lọc này
+// bảo đảm từ đúng giây hết hạn tin đã rời mọi danh sách, không chờ cron.
+// tier_expires_at null = tin không có hạn (admin nâng tay) → vẫn hiện.
+const conHan = (r: Row) => !r.tier_expires_at || new Date(r.tier_expires_at).getTime() > Date.now();
 // Tin THẬT của khách luôn có id dạng UUID; tin DEMO seed (0002) có id SỐ ('1'..'33').
 // Dùng để chặn cả trang chi tiết /bat-dong-san/<số> mở ra tin demo.
 const isSeedId = (id: string) => /^\d+$/.test(id);
@@ -329,7 +334,7 @@ const isSeedId = (id: string) => /^\d+$/.test(id);
 export async function getListings(): Promise<Listing[]> {
   const rows = await rest(`select=${COLS}&status=eq.approved&order=bumped_at.desc.nullslast,published_at.desc.nullslast,created_at.desc&limit=500`);
   if (!rows) return featuredListings; // lỗi kết nối/chưa cấu hình → fallback mẫu
-  return rows.filter((r) => !isSeedRow(r)).map(rowToListing);
+  return rows.filter((r) => !isSeedRow(r) && conHan(r)).map(rowToListing);
 }
 
 // ── BẢN NHẸ CHO TRANG CHỈ HIỆN THẺ TIN (trang chủ) ──────────────────────────
@@ -370,7 +375,7 @@ export async function getListingsByIds(ids: string[]): Promise<Listing[]> {
   const inList = wanted.map(encodeURIComponent).join(",");
   const rows = await rest(`select=${COLS}&status=eq.approved&id=in.(${inList})&limit=${wanted.length}`);
   if (!rows) return [];
-  const byId = new Map(rows.map((r) => [r.id, rowToListing(r)]));
+  const byId = new Map(rows.filter(conHan).map((r) => [r.id, rowToListing(r)]));
   return wanted.map((id) => byId.get(id)).filter((x): x is Listing => Boolean(x));
 }
 
@@ -505,8 +510,12 @@ function mockToDetail(m: Listing): ListingFull {
 // hạn, ẩn số điện thoại và báo Google bỏ tin khỏi kết quả — link cũ vẫn mở được.
 export async function tinDaHetHan(id: string): Promise<boolean> {
   if (isSeedId(id)) return false;
-  const rows = (await rest(`select=status&id=eq.${encodeURIComponent(id)}&limit=1`)) as unknown as { status?: string }[] | null;
-  return rows?.[0]?.status === "expired";
+  const rows = (await rest(`select=status,tier_expires_at&id=eq.${encodeURIComponent(id)}&limit=1`)) as unknown as
+    { status?: string; tier_expires_at?: string | null }[] | null;
+  const r = rows?.[0];
+  if (!r) return false;
+  // Qua giờ hết hạn là hết hạn ngay — không chờ cron đổi status.
+  return r.status === "expired" || (r.status === "approved" && !!r.tier_expires_at && new Date(r.tier_expires_at).getTime() <= Date.now());
 }
 
 export async function getListingDetail(id: string): Promise<ListingFull | null> {
