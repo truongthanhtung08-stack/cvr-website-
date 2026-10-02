@@ -186,8 +186,8 @@ Buộc phải đụng vào vì lý do kỹ thuật → **DỪNG, HỎI TRƯỚC.
 > Mở 02/10/2026. Đã rà soát toàn bộ code thuế (trang `/admin/hoa-don-thue`, `src/lib/thue.ts`,
 > `src/lib/thueNhaThau.ts`, các route ghi `doanh_thu`). Hạn gần nhất: **tờ khai quý 3 — 31/10/2026**.
 > Câu hỏi C2 (tiền nạp ví có phải xuất hóa đơn lúc nạp) **chờ kế toán — không tự sửa luồng ví.**
-> 🔴 Câu hỏi C5 (dịch vụ có được giảm thuế 8% không — Nghị định 174/2025 loại trừ kinh doanh BĐS và
-> dịch vụ CNTT) **chờ kế toán — không tự đổi `THUE_SUAT_GTGT`.**
+> ✅ C5 CHỐT 02/10: **báo cáo thuế khai 10%** (`THUE_SUAT_KHAI` trong `src/lib/thue.ts`). Web thu khách +
+> hóa đơn VNPT vẫn `THUE_SUAT_GTGT = 0.08` — **chủ dự án tự kiểm tra và sửa phần web, đừng tự đổi.**
 > Mục tiêu chủ dự án chốt 02/10: **"nhập liệu xong là in báo cáo / lấy báo cáo gửi theo quy định"** →
 > trang in `/admin/hoa-don-thue/in`. Số liệu tính ở MỘT chỗ `src/lib/soLieuThue.ts` (+ `thueTncn.ts`).
 

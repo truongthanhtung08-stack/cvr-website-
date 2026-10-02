@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { HAN_THUE_SUAT, THUE_SUAT_GTGT, khoangQuy } from "@/lib/thue";
+import { THUE_SUAT_KHAI, khoangQuy } from "@/lib/thue";
 import {
   NGUOI_NOP_THUE,
   congSo,
@@ -19,7 +19,7 @@ import { COT_TNCN, bangKe051, bangKe052, tongHop05, type DongChiTra } from "@/li
 // ============================================================================
 // IN BÁO CÁO THUẾ — mở từ nút "In báo cáo" ở /admin/hoa-don-thue
 // ----------------------------------------------------------------------------
-//   ?nam=2026&quy=3  → bộ hồ sơ QUÝ: 01/GTGT · phụ lục giảm thuế · tạm nộp TNDN ·
+//   ?nam=2026&quy=3  → bộ hồ sơ QUÝ: 01/GTGT · tạm nộp TNDN ·
 //                       05/KK-TNCN · bảng kê hóa đơn ra/vào
 //   ?nam=2026        → bộ hồ sơ NĂM: tổng hợp GTGT 4 quý · số liệu quyết toán TNDN ·
 //                       05/QTT-TNCN + bảng kê 05-1, 05-2
@@ -126,7 +126,6 @@ function HoSoQuy({ nam, quy, ky, ct22, tncn }: { nam: number; quy: number; ky: K
   return (
     <>
       <ToKhaiGtgt kyThue={kyThue} t={t} ct22={ct22} />
-      <PhuLucGiamThue kyThue={kyThue} t={t} />
       <TamNopTndn kyThue={kyThue} t={t} />
       <ToKhai05 kyThue={kyThue} th={th} mau="05/KK-TNCN" />
       <BangKeRaVao kyThue={kyThue} ky={ky} />
@@ -343,7 +342,7 @@ function ToKhaiGtgt({ kyThue, t, ct22 }: { kyThue: string; t: T; ct22: number })
           <tr><td>2</td><td>Hàng hóa, dịch vụ bán ra chịu thuế GTGT <b>[27]</b>=[29]+[30]+[32]+[32a]; <b>[28]</b>=[31]+[33]</td><td className="so">{so(t.dtChuaThue)}</td><td className="so">{so(t.thueRa)}</td></tr>
           <tr><td>a</td><td>Hàng hoá, dịch vụ bán ra chịu thuế suất 0% <b>[29]</b></td><td className="so">0</td><td></td></tr>
           <tr><td>b</td><td>Hàng hoá, dịch vụ bán ra chịu thuế suất 5% <b>[30] [31]</b></td><td className="so">0</td><td className="so">0</td></tr>
-          <tr><td>c</td><td>Hàng hoá, dịch vụ bán ra chịu thuế suất 10% <b>[32] [33]</b> (áp dụng giảm còn {(THUE_SUAT_GTGT * 100).toFixed(0)}% — xem phụ lục)</td><td className="so">{so(t.dtChuaThue)}</td><td className="so">{so(t.thueRa)}</td></tr>
+          <tr><td>c</td><td>Hàng hoá, dịch vụ bán ra chịu thuế suất 10% <b>[32] [33]</b></td><td className="so">{so(t.dtChuaThue)}</td><td className="so">{so(t.thueRa)}</td></tr>
           <tr><td>d</td><td>Hàng hoá, dịch vụ bán ra không phải kê khai, tính nộp thuế GTGT <b>[32a]</b></td><td className="so">0</td><td></td></tr>
           <tr><td>3</td><td>Tổng doanh thu và thuế GTGT của HHDV bán ra <b>[34]</b>=[26]+[27]; <b>[35]</b>=[28]</td><td className="so">{so(t.dtChuaThue)}</td><td className="so">{so(t.thueRa)}</td></tr>
           <tr><td>III</td><td>Thuế GTGT phát sinh trong kỳ <b>[36]</b>=[35]−[25]</td><td></td><td className="so">{so(t.phaiNop)}</td></tr>
@@ -362,63 +361,10 @@ function ToKhaiGtgt({ kyThue, t, ct22 }: { kyThue: string; t: T; ct22: number })
       </table>
       <GhiChu>
         Trong [23] [24] đã gồm {so(t.thueVaoNgoai)} đ thuế GTGT nộp thay nhà thầu nước ngoài (đã nộp Kho bạc — Nghị định
-        181/2025/NĐ-CP). Thuế suất {(THUE_SUAT_GTGT * 100).toFixed(0)}% theo Nghị quyết 204/2025/QH15 (đến {HAN_THUE_SUAT}),
-        nộp kèm Phụ lục giảm thuế ở trang sau. Khi khai trên cổng, nhập phụ lục trước rồi đối chiếu lại [33] cổng tự tính.
+        181/2025/NĐ-CP). Khai thuế suất {(THUE_SUAT_KHAI * 100).toFixed(0)}% — dịch vụ đăng tin bất động sản không thuộc
+        diện giảm thuế (Nghị định 174/2025/NĐ-CP loại trừ kinh doanh bất động sản, dịch vụ công nghệ thông tin).
+        {t.chenhLechThue !== 0 ? ` Hóa đơn trong kỳ ghi thuế ${so(t.thueTrenHoaDon)} đ — lệch ${so(t.chenhLechThue)} đ so với số khai, phải lập hóa đơn điều chỉnh.` : ""}
       </GhiChu>
-      <ChuKy />
-    </Trang>
-  );
-}
-
-function PhuLucGiamThue({ kyThue, t }: { kyThue: string; t: T }) {
-  // Chỉ có phụ lục khi đang áp thuế suất giảm (8% thay cho 10%).
-  if (THUE_SUAT_GTGT >= 0.1) return null;
-  const goc = 0.1;
-  const dong = [
-    { ten: "Dịch vụ đăng tin quảng cáo bất động sản trực tuyến", gt: t.dtTinDang },
-    { ten: "Dịch vụ quảng cáo cho doanh nghiệp", gt: t.dtDoanhNghiep },
-  ].filter((d) => d.gt > 0);
-  const tong = dong.reduce((s, d) => s + d.gt, 0);
-  const giam = (gt: number) => Math.round(gt * (goc - THUE_SUAT_GTGT));
-  return (
-    <Trang>
-      <TieuDe ten="PHỤ LỤC BẢNG KÊ HÀNG HÓA, DỊCH VỤ ĐƯỢC GIẢM THUẾ GIÁ TRỊ GIA TĂNG" phu="Theo Nghị quyết 204/2025/QH15 — Mẫu số 01, Phụ lục III kèm Nghị định 174/2025/NĐ-CP. Kèm theo Tờ khai 01/GTGT" />
-      <ThongTinNnt kyThue={kyThue} />
-      <table className="bang">
-        <thead>
-          <tr>
-            <th>STT</th>
-            <th>Tên hàng hóa, dịch vụ</th>
-            <th>Giá trị HHDV chưa có thuế GTGT</th>
-            <th>Thuế suất theo quy định (a)</th>
-            <th>Thuế suất sau giảm (b = a × 80%)</th>
-            <th>Thuế GTGT được giảm (c = giá trị × (a − b))</th>
-          </tr>
-        </thead>
-        <tbody>
-          {dong.length === 0 && (
-            <tr><td colSpan={6} className="giua">Kỳ này không phát sinh doanh thu chịu thuế suất giảm.</td></tr>
-          )}
-          {dong.map((d, i) => (
-            <tr key={i}>
-              <td>{i + 1}</td>
-              <td>{d.ten}</td>
-              <td className="so">{so(d.gt)}</td>
-              <td className="giua">10%</td>
-              <td className="giua">{(THUE_SUAT_GTGT * 100).toFixed(0)}%</td>
-              <td className="so">{so(giam(d.gt))}</td>
-            </tr>
-          ))}
-          <tr className="dam">
-            <td></td>
-            <td>Tổng cộng</td>
-            <td className="so">{so(tong)}</td>
-            <td></td>
-            <td></td>
-            <td className="so">{so(dong.reduce((s, d) => s + giam(d.gt), 0))}</td>
-          </tr>
-        </tbody>
-      </table>
       <ChuKy />
     </Trang>
   );
@@ -515,7 +461,7 @@ function BangKeRaVao({ kyThue, ky }: { kyThue: string; ky: Ky | null }) {
       <p className="muc">1. Hàng hóa, dịch vụ bán ra ({ra.length} giao dịch)</p>
       <table className="bang nho">
         <thead>
-          <tr><th>STT</th><th>Ngày</th><th>Số hóa đơn</th><th>Người mua</th><th>MST</th><th>Nội dung</th><th>Tiền hàng</th><th>Thuế GTGT</th></tr>
+          <tr><th>STT</th><th>Ngày</th><th>Số hóa đơn</th><th>Người mua</th><th>MST</th><th>Nội dung</th><th>Tiền hàng</th><th>Thuế ghi trên hóa đơn</th></tr>
         </thead>
         <tbody>
           {ra.map((d, i) => (

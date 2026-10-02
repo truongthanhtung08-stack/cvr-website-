@@ -14,6 +14,18 @@
 export const THUE_SUAT_GTGT = 0.08;
 
 /**
+ * Thuế suất dùng để KHAI THUẾ (trang /admin/hoa-don-thue, tờ khai, bản in).
+ *
+ * TÁCH RIÊNG với THUE_SUAT_GTGT ở trên — chủ dự án chốt 02/10/2026: phần báo cáo
+ * thuế khai 10%, vì Nghị định 174/2025/NĐ-CP KHÔNG giảm thuế cho kinh doanh bất
+ * động sản và dịch vụ công nghệ thông tin. Phần web (giá thu khách, hóa đơn VNPT)
+ * vẫn 8% — chủ dự án tự kiểm tra và sửa THUE_SUAT_GTGT sau.
+ *
+ * Khi hai số còn lệch nhau, trang thuế tự hiện khoản chênh lệch công ty phải chịu.
+ */
+export const THUE_SUAT_KHAI = 0.1;
+
+/**
  * NGÀY CUỐI CÙNG thuế suất trên còn hiệu lực (Nghị quyết 204/2025/QH15).
  * Qua ngày này mà chưa ai sửa thì mọi hóa đơn xuất ra ĐỀU SAI THUẾ SUẤT — sai
  * hóa đơn là sai tờ khai, phải điều chỉnh với cơ quan thuế.
