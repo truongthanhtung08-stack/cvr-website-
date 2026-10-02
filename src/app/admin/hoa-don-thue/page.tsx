@@ -8,7 +8,6 @@ import {
   DVT_HOA_DON_TONG,
   KY_HIEU_HOA_DON,
   THUE_SUAT_GTGT,
-  THUE_SUAT_KHAI,
   HAN_THUE_SUAT,
   hanThueSuat,
   khoangQuy,
@@ -282,7 +281,7 @@ export default function AdminThuePage() {
             <ChiTieu ma="25" ten="Tổng số thuế GTGT được khấu trừ kỳ này" tien={t.thueVao} dam />
             <ChiTieu
               ma="32"
-              ten={`Doanh thu hàng hóa, dịch vụ bán ra chịu thuế (thuế suất ${(THUE_SUAT_KHAI * 100).toFixed(0)}%)`}
+              ten={`Doanh thu hàng hóa, dịch vụ bán ra chịu thuế (thuế suất ${(THUE_SUAT_GTGT * 100).toFixed(0)}%)`}
               tien={t.dtChuaThue}
             />
             <ChiTieu ma="33" ten="Thuế GTGT của hàng hóa, dịch vụ bán ra" tien={t.thueRa} />
@@ -308,19 +307,10 @@ export default function AdminThuePage() {
           </p>
         )}
 
-        {t.chenhLechThue !== 0 && (
-          <p className="mt-4 rounded-lg border border-red-300 bg-red-50 px-3 py-2.5 text-xs leading-relaxed text-red-800">
-            Hóa đơn trong kỳ đang ghi thuế {vnd(t.thueTrenHoaDon)} (web còn xuất {(THUE_SUAT_GTGT * 100).toFixed(0)}%),
-            tờ khai khai {(THUE_SUAT_KHAI * 100).toFixed(0)}% = {vnd(t.thueRa)}. Chênh lệch{" "}
-            <strong className="font-semibold">{vnd(t.chenhLechThue)}</strong> — công ty chịu, và các hóa đơn đó phải lập
-            hóa đơn điều chỉnh. Sửa thuế suất trên web (<code>THUE_SUAT_GTGT</code>) để hết lệch.
-          </p>
-        )}
-
         <p className="mt-4 rounded-lg bg-cvr-surface px-3 py-2.5 text-xs leading-relaxed text-cvr-muted">
-          Khai thuế suất {(THUE_SUAT_KHAI * 100).toFixed(0)}%: dịch vụ đăng tin bất động sản không thuộc diện giảm
-          thuế của Nghị quyết 204/2025/QH15 (Nghị định 174/2025/NĐ-CP loại trừ kinh doanh bất động sản và dịch vụ công
-          nghệ thông tin). Đây là số liệu tổng hợp, không thay thế tờ khai chính thức.
+          Thuế suất {(THUE_SUAT_GTGT * 100).toFixed(0)}% theo Nghị quyết 204/2025/QH15 (áp dụng đến hết 31/12/2026).
+          Kỳ áp dụng thuế suất giảm thường phải nộp kèm <strong>phụ lục giảm thuế GTGT</strong> — kiểm tra lại
+          trên eTax trước khi nộp. Đây là số liệu tổng hợp, không thay thế tờ khai chính thức.
         </p>
       </div>
 

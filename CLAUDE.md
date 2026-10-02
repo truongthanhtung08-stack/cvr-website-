@@ -186,8 +186,8 @@ Buộc phải đụng vào vì lý do kỹ thuật → **DỪNG, HỎI TRƯỚC.
 > Mở 02/10/2026. Đã rà soát toàn bộ code thuế (trang `/admin/hoa-don-thue`, `src/lib/thue.ts`,
 > `src/lib/thueNhaThau.ts`, các route ghi `doanh_thu`). Hạn gần nhất: **tờ khai quý 3 — 31/10/2026**.
 > Câu hỏi C2 (tiền nạp ví có phải xuất hóa đơn lúc nạp) **chờ kế toán — không tự sửa luồng ví.**
-> ✅ C5 CHỐT 02/10: **báo cáo thuế khai 10%** (`THUE_SUAT_KHAI` trong `src/lib/thue.ts`). Web thu khách +
-> hóa đơn VNPT vẫn `THUE_SUAT_GTGT = 0.08` — **chủ dự án tự kiểm tra và sửa phần web, đừng tự đổi.**
+> ✅ C5 CHỐT 02/10: dịch vụ đăng tin = **quảng cáo → 8%** (đến 31/12/2026, batdongsan.com.vn cũng 8%).
+> Chỉ hoa hồng môi giới / tư vấn BĐS (nếu sau này có) mới 10%. Đừng đổi `THUE_SUAT_GTGT`.
 > Mục tiêu chủ dự án chốt 02/10: **"nhập liệu xong là in báo cáo / lấy báo cáo gửi theo quy định"** →
 > trang in `/admin/hoa-don-thue/in`. Số liệu tính ở MỘT chỗ `src/lib/soLieuThue.ts` (+ `thueTncn.ts`).
 

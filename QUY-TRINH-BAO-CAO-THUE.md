@@ -27,7 +27,7 @@
 | **Khai thay — nhà thầu nước ngoài** | Vercel, Supabase, Anthropic… chưa đăng ký thuế VN → mình khai **01/NTNN** theo tháng, hạn ngày 20 | ✅ đọc PDF hóa đơn, tính GTGT 5% + TNDN 5%, tải CSV tờ khai, đánh dấu đã nộp, tự cộng khấu trừ | Không |
 | **Khai thay — TNCN người lao động** | Công ty khấu trừ, khai 05/KK, quyết toán 05/QTT | ❌ chưa có | B4 → A4 |
 | **Khai thay — người đăng tin (sàn)** | Nghị định 117/2025/NĐ-CP: sàn thương mại điện tử **có chức năng thanh toán** phải khấu trừ, khai nộp thay thuế cho hộ/cá nhân bán hàng trên sàn | Không áp dụng nếu đúng như hiện tại: web **chỉ thu phí đăng tin**, không thu hộ tiền mua bán/cho thuê giữa người mua và người bán | **C4**: kế toán xác nhận Coastal Land không thuộc diện này; và có phải **cung cấp thông tin người bán** định kỳ cho cơ quan thuế không 🔎 |
-| **Tờ khai GTGT quý** | 01/GTGT, khai thuế suất **10%** | ✅ tính sẵn chỉ tiêu + bản in | — |
+| **Tờ khai GTGT quý** | 01/GTGT + phụ lục giảm thuế 8% | ✅ tính sẵn chỉ tiêu | A2 ô [22] · A3 phụ lục |
 | **TNDN** | Tạm nộp quý · quyết toán 03/TNDN | ✅ tạm nộp quý | Quyết toán làm cùng kế toán (E3) |
 | **Báo cáo tài chính năm** | Nộp cùng quyết toán TNDN, hạn 31/3 | ❌ ngoài web | Kế toán lập — B7 |
 | **Nộp tiền thuế** | Giấy nộp tiền điện tử qua ngân hàng liên kết | Không (làm trên cổng thuế) | B2 |
@@ -38,9 +38,9 @@
 |---|---|---|---|
 | A1 | **Sổ khách hàng theo thuế** — gom doanh thu theo MST, cột hóa đơn chưa xuất, CSV | Nhìn ra khách nào còn thiếu hóa đơn | ✅ đã lên web 02/10 |
 | A2 | Tờ khai 01/GTGT thêm ô **[22] — thuế còn được khấu trừ kỳ trước** | Trước đây trang bỏ qua [22] → quý trước còn dư khấu trừ thì [40] bị **tính cao hơn thực tế** | ✅ 02/10 — ô nhập trong khối tờ khai, nhớ theo từng quý trên máy |
-| A3 | ~~Phụ lục giảm thuế GTGT 8%~~ | — | ❌ **BỎ 02/10** — chủ dự án chốt khai 10% (xem C5), không còn phụ lục giảm thuế |
+| A3 | **Phụ lục giảm thuế GTGT 8%** (mẫu 01 Phụ lục III Nghị định 174/2025) | Kỳ xuất hóa đơn 8% phải nộp kèm | ✅ 02/10 — có trong bản in quý |
 | A4 | Mục **TNCN** (khai quý 05/KK + quyết toán 05/QTT) | Web chưa có gì về TNCN | ✅ 02/10 — ⚠️ **phải chạy `supabase/migrations/0057_tncn_chi_tra.sql` trong Supabase SQL Editor một lần** thì mới lưu được |
-| A5 | **Trang IN BÁO CÁO** `/admin/hoa-don-thue/in` — bố cục theo mẫu tờ khai, in A4 / lưu PDF | Mục tiêu chủ dự án: **nhập liệu xong là in báo cáo** | ✅ 02/10 — quý: 01/GTGT · bảng tính tạm nộp TNDN · 05/KK-TNCN · bảng kê hóa đơn. Năm: tổng hợp GTGT 4 quý · số liệu quyết toán TNDN · 05/QTT-TNCN + bảng kê 05-1, 05-2 |
+| A5 | **Trang IN BÁO CÁO** `/admin/hoa-don-thue/in` — bố cục theo mẫu tờ khai, in A4 / lưu PDF | Mục tiêu chủ dự án: **nhập liệu xong là in báo cáo** | ✅ 02/10 — quý: 01/GTGT · phụ lục giảm thuế · bảng tính tạm nộp TNDN · 05/KK-TNCN · bảng kê hóa đơn. Năm: tổng hợp GTGT 4 quý · số liệu quyết toán TNDN · 05/QTT-TNCN + bảng kê 05-1, 05-2 |
 | A6 | Xuất file **XML** nộp thẳng lên cổng thuế | Đỡ gõ tay | ⛔ chưa làm — chưa có đặc tả XML chính thức (XSD) của ngành thuế; đoán sai cấu trúc thì cổng từ chối. Hiện: chép số từ bản in vào "khai trực tuyến" trên cổng (01/GTGT chỉ ~10 ô có số) |
 
 ### Giai đoạn B — Chủ dự án cung cấp (xem mục 7)
@@ -57,7 +57,7 @@
 ### Giai đoạn C — Kế toán xác nhận (không tự kết luận được)
 | # | Câu hỏi | Trạng thái |
 |---|---|---|
-| **C5** | ✅ **CHỐT 02/10 — khai thuế suất 10%.** Nghị định 174/2025/NĐ-CP loại trừ kinh doanh BĐS và dịch vụ CNTT khỏi diện giảm 8%. Phần báo cáo thuế dùng `THUE_SUAT_KHAI = 0.1` (`src/lib/thue.ts`). **Phần web (giá thu khách, hóa đơn VNPT) vẫn `THUE_SUAT_GTGT = 0.08` — chủ dự án tự kiểm tra và sửa sau.** Lúc chốt chưa có doanh thu, chưa xuất hóa đơn nào → không có hóa đơn phải điều chỉnh. Còn lệch thì trang thuế hiện ô đỏ số chênh lệch. | ✅ báo cáo · ⏳ web |
+| **C5** | ✅ **CHỐT 02/10/2026 — 8%.** Phí đăng tin, đẩy tin, gói up, hội viên, banner có bản chất là **dịch vụ quảng cáo** (công ty không mua bán, không môi giới căn nào) → được giảm còn 8% theo Nghị quyết 204/2025/QH15 + Nghị định 174/2025/NĐ-CP đến hết 31/12/2026. Thuế suất xét theo **dịch vụ thực tế bán ra**, không theo tên công ty / ngành đăng ký / ngành của khách. batdongsan.com.vn cũng đang áp 8%. Nghị định 174 chỉ còn loại trừ (liên quan mình): **kinh doanh bất động sản** — nên nếu sau này có thu **hoa hồng môi giới / phí tư vấn BĐS** thì khoản đó **10%**. (Ghi chú cũ "loại trừ dịch vụ CNTT" là SAI — đó là Nghị định 180/2024, Nghị định 174 đã bỏ.) Để chắc: hóa đơn ghi nội dung "Dịch vụ quảng cáo đăng tin"; tránh tự gọi là "sàn giao dịch BĐS" trên hóa đơn. Muốn có văn bản bảo vệ → hỏi Thuế cơ sở 4 Đà Nẵng. | ✅ |
 | C1 | Các chỗ 🔎 trong file này (mã mẫu mới theo TT 89/2026, ngưỡng thuế TNCN, ngưỡng chi phí tiền mặt) | ⏳ |
 | C2 | ⚠️ **Tiền khách NẠP VÍ có phải xuất hóa đơn ngay lúc nạp không?** Web hiện ghi doanh thu + xuất hóa đơn lúc **dùng** (duyệt tin), không phải lúc nạp. Nghị định 123/2020 (Điều 9) coi thu tiền trước khi cung cấp dịch vụ là thời điểm lập hóa đơn, trừ tiền đặt cọc/tạm ứng. Ví nạp trước thuộc loại nào → kế toán chốt. **Đổi cách này là đổi lớn — không tự sửa.** | ⏳ |
 | C3 | Hóa đơn trạng thái "đã hủy" có còn tính doanh thu không (hiện vẫn tính) | ⏳ |
@@ -68,7 +68,7 @@
 2. Nhập: hóa đơn mua vào (XML), hóa đơn nước ngoài, doanh thu doanh nghiệp, **ô [22]**, **chi trả TNCN** (mỗi lần trả lương/hoa hồng).
 3. Khối "Việc thuế cần làm" xanh hết.
 4. Bấm **"In báo cáo Quý X/…"** → tab mới → **In / Lưu PDF**.
-5. Mở cổng thuế, khai trực tuyến 01/GTGT và 05/KK-TNCN (nếu có khấu trừ), chép số từ bản in → ký số → nộp → nộp tiền.
+5. Mở cổng thuế, khai trực tuyến 01/GTGT (+ phụ lục) và 05/KK-TNCN (nếu có khấu trừ), chép số từ bản in → ký số → nộp → nộp tiền.
 6. Cuối năm: bấm **"In báo cáo cả năm"** → đưa kế toán lập 03/TNDN + BCTC, nộp 05/QTT-TNCN.
 
 ### Giai đoạn D — Nộp quý 3/2026 (hạn **31/10/2026**)
@@ -76,7 +76,7 @@ D1 làm xong A2 + B1–B3 + B5 → D2 khối "Việc thuế cần làm" xanh h�
 từng ô → D4 chủ dự án ký số, nộp trên cổng (mục 6.3) → D5 nộp tiền GTGT + tạm nộp TNDN → D6 lưu hồ sơ.
 
 ### Giai đoạn E — Cuối năm
-E1 trước 15/12: đưa thuế suất web (`THUE_SUAT_GTGT`) về 10% cho khớp phần khai, đổi ký hiệu
+E1 trước 15/12: hỏi kế toán thuế suất 2027 (8% hết 31/12/2026) → sửa `src/lib/thue.ts`, đổi ký hiệu
 hóa đơn `1C27TCL`, đăng ký dải mới VNPT · E2 trước 31/1/2027: tờ khai Q4 + tạm nộp TNDN đủ 80% ·
 E3 trước 31/3/2027: quyết toán TNDN + BCTC + quyết toán TNCN (nếu có).
 
@@ -91,7 +91,7 @@ E3 trước 31/3/2027: quyết toán TNDN + BCTC + quyết toán TNCN (nếu có
 | Cơ quan thuế quản lý | Thuế cơ sở 4 thành phố Đà Nẵng |
 | Kỳ khai GTGT | **Theo quý** (doanh nghiệp mới thành lập, doanh thu năm trước ≤ 50 tỷ) |
 | Phương pháp GTGT | Khấu trừ |
-| Thuế suất GTGT dịch vụ đăng tin | **Khai 10%** (chốt 02/10/2026 — không thuộc diện giảm của Nghị quyết 204/2025/QH15). ⚠️ Web còn thu khách + xuất hóa đơn 8% — chủ dự án sửa sau |
+| Thuế suất GTGT dịch vụ đăng tin | **8%** (Nghị quyết 204/2025/QH15) — **hết 31/12/2026**, từ 2027 có thể quay lại 10% |
 | Thuế suất TNDN | **15%** (doanh thu năm ≤ 3 tỷ — Luật 67/2025/QH15) |
 | Hóa đơn điện tử | VNPT Invoice — ký hiệu xem `KY_HIEU_HOA_DON` trong `src/lib/thue.ts` |
 | Số liệu trên web | **`/admin/hoa-don-thue`** |
@@ -135,14 +135,15 @@ tính sẵn các chỉ tiêu; bấm **Tải CSV** để lưu bản giấy làm v
 | [23] | Giá trị HHDV mua vào | Web |
 | [24] | Thuế GTGT mua vào | Web |
 | [25] | Thuế GTGT được khấu trừ kỳ này | Web |
-| [32] | Doanh thu chịu thuế suất 10% | Web |
+| [32] | Doanh thu chịu thuế suất 8%/10% | Web (🔎 trên eTax 8% thường nằm chung dòng 10% + phụ lục giảm thuế) |
 | [33] | Thuế GTGT đầu ra | Web |
 | [34] [35] | Tổng doanh thu / tổng thuế đầu ra | Web |
 | [36] | Thuế phát sinh = [35] − [25] | Web |
 | [40] | **Thuế còn phải nộp** | Web — số này đi nộp tiền |
 | [43] | Thuế còn được khấu trừ chuyển kỳ sau | Web — ghi lại để điền [22] quý sau |
 
-**Phụ lục kèm theo:** không có phụ lục giảm thuế (khai 10%). Bảng kê hóa đơn mua vào/bán ra **không còn bắt buộc** nộp kèm —
+**Phụ lục kèm theo:** 🔎 **Phụ lục giảm thuế GTGT** theo Nghị quyết 204/2025/QH15 (kỳ nào
+xuất hóa đơn 8% thì kèm). Bảng kê hóa đơn mua vào/bán ra **không còn bắt buộc** nộp kèm —
 nhưng vẫn lưu bản CSV "Bảng kê hóa đơn đầu ra" và "Sổ khách hàng theo thuế" làm hồ sơ.
 
 ### 3.3 Các bước mỗi quý
@@ -150,7 +151,7 @@ nhưng vẫn lưu bản CSV "Bảng kê hóa đơn đầu ra" và "Sổ khách h
    (hóa đơn đã xuất đủ — xem cột "Hóa đơn" của **Sổ khách hàng theo thuế**; hóa đơn mua vào đã nhập đủ).
 2. Đối chiếu tổng tiền hóa đơn đầu ra trên web với **tra cứu hóa đơn trên cổng hóa đơn điện tử**
    (`hoadondientu.gdt.gov.vn`) — lệch là thiếu hóa đơn, phải tìm ra trước khi khai.
-3. Điền tờ khai 01/GTGT trên cổng thuế (mục 6) theo bảng 3.2.
+3. Điền tờ khai 01/GTGT trên cổng thuế (mục 6) theo bảng 3.2, đính phụ lục giảm thuế.
 4. Ký số → nộp → chờ **Thông báo chấp nhận** (email về hộp thư đăng ký với thuế).
 5. Nộp tiền chỉ tiêu [40] (nếu > 0) cùng hạn.
 6. Lưu: file XML tờ khai + thông báo chấp nhận + giấy nộp tiền + CSV của web vào thư mục `Thuế/2026/Q3/`.

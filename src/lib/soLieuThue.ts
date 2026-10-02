@@ -7,7 +7,6 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { LoaiDichVu, NhomNcc } from "@/lib/thueNhaThau";
-import { THUE_SUAT_KHAI } from "@/lib/thue";
 
 export type DongDoanhThu = {
   id: string;
@@ -100,19 +99,13 @@ export type SoLieuKy = ReturnType<typeof congSo>;
 /** Cộng sổ một kỳ: ra chỉ tiêu tờ khai 01/GTGT và số tạm nộp TNDN. */
 export function congSo(dsRa: DongDoanhThu[], dsVao: DongVao[], dsNgoai: DongNgoai[]) {
   const dtChuaThue = dsRa.reduce((s, d) => s + Number(d.tien_hang || 0), 0);
-  // Thuế đầu ra KHAI theo THUE_SUAT_KHAI trên doanh thu chưa thuế — KHÔNG lấy số
-  // thuế ghi trên hóa đơn (hóa đơn web còn xuất theo THUE_SUAT_GTGT).
-  const thueRa = Math.round(dtChuaThue * THUE_SUAT_KHAI);
-  // Số thuế đã ghi trên hóa đơn / đã thu của khách — để thấy khoản chênh lệch.
-  const thueTrenHoaDon = dsRa.reduce((s, d) => s + Number(d.tien_thue || 0), 0);
+  const thueRa = dsRa.reduce((s, d) => s + Number(d.tien_thue || 0), 0);
 
   // Tách hai nguồn doanh thu để báo cáo nhìn ra ngay mảng nào đang chạy.
   // Dòng cũ chưa có cột `nguon` thì mặc định là tin đăng.
   const laDoanhNghiep = (d: DongDoanhThu) => d.nguon === "doanh_nghiep";
-  const cong = (ds: DongDoanhThu[], k: "tien_hang" | "tien_thue") => {
-    const hang = ds.reduce((s, d) => s + Number(d.tien_hang || 0), 0);
-    return k === "tien_hang" ? hang : Math.round(hang * THUE_SUAT_KHAI);
-  };
+  const cong = (ds: DongDoanhThu[], k: "tien_hang" | "tien_thue") =>
+    ds.reduce((s, d) => s + Number(d[k] || 0), 0);
   const raTin = dsRa.filter((d) => !laDoanhNghiep(d));
   const raDn = dsRa.filter(laDoanhNghiep);
   const khauTru = dsVao.filter((d) => d.duoc_khau_tru);
@@ -135,9 +128,6 @@ export function congSo(dsRa: DongDoanhThu[], dsVao: DongVao[], dsNgoai: DongNgoa
   return {
     dtChuaThue,
     thueRa,
-    thueTrenHoaDon,
-    /** Dương = khai nhiều hơn số thuế đã thu của khách → công ty tự chịu phần này. */
-    chenhLechThue: thueRa - thueTrenHoaDon,
     hangVao,
     thueVao,
     thueVaoNgoai,
