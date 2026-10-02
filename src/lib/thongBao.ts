@@ -48,6 +48,8 @@ export const MAU_DA_HET_HAN = process.env.ZALO_ZNS_TEMPLATE_DA_HET_HAN || "64160
 export const MAU_THANH_TOAN = process.env.ZALO_ZNS_TEMPLATE_THANH_TOAN || "641606";
 export const MAU_HOI_VIEN_SAP_HET = process.env.ZALO_ZNS_TEMPLATE_HOI_VIEN_SAP_HET || "641605";
 export const MAU_BAO_CAO_TUAN = process.env.ZALO_ZNS_TEMPLATE_BAO_CAO_TUAN || "641604";
+// Tag 3 Hậu mãi, gửi duyệt 02/10/2026 — tham số: ten_khach_hang, han_uu_dai.
+export const MAU_UU_DAI_THANH_VIEN_MOI = process.env.ZALO_ZNS_TEMPLATE_UU_DAI_MOI || "644528";
 
 /** Mã tin hiện cho khách — giống dòng "Mã tin" trên trang tin (8 ký tự đầu của id, viết hoa). */
 export const maTin = (id: string) => id.slice(0, 8).toUpperCase();

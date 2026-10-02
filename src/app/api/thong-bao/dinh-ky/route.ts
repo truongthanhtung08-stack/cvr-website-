@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { guiThongBao, MAU_BAO_CAO_TUAN, MAU_HOI_VIEN_SAP_HET } from "@/lib/thongBao";
+import { guiThongBao, MAU_BAO_CAO_TUAN, MAU_HOI_VIEN_SAP_HET, MAU_UU_DAI_THANH_VIEN_MOI } from "@/lib/thongBao";
+import { docBillingLuu, homNayVn } from "@/lib/congBoGia";
+import { freeDangChay, ngayVn } from "@/lib/billing";
 import { baoLoi } from "@/lib/baoLoi";
 import { chuanHoaSdt } from "@/lib/phone";
 
@@ -14,6 +16,12 @@ import { chuanHoaSdt } from "@/lib/phone";
 // 2) BÁO CÁO TUẦN (mẫu ZBS 641604): chỉ sáng THỨ HAI (giờ VN), cho khách đang có
 //    tin hiển thị. Số liệu lấy đúng bảng đo thật của 7 ngày trước — không làm
 //    tròn lên, không bịa.
+// 3) ƯU ĐÃI THÀNH VIÊN MỚI (mẫu ZBS 644528, tag 3 Hậu mãi — chủ dự án duyệt 02/10/2026):
+//    người mở tài khoản trong 24 giờ trước lúc chạy → mỗi người đúng MỘT tin. Chỉ gửi khi
+//    chương trình "free" trong admin Giá & quy định đang chạy, đúng diện thành viên mới,
+//    gói CVR Basic — tin nhắn không bao giờ hứa điều web không áp dụng. Hạn ưu đãi của
+//    từng người = ngày mở tài khoản + free.days, không quá ngày kết thúc chương trình.
+//    Cron 8h sáng nằm trong khung 7h–22h Zalo cho phép tag 3 (từ 15/10/2026).
 // Bảo mật: Vercel Cron tự gắn "Authorization: Bearer $CRON_SECRET".
 // ============================================================================
 export const dynamic = "force-dynamic";
@@ -37,6 +45,7 @@ export async function GET(request: Request) {
 
   let hoiVien = 0;
   let baoCao = 0;
+  let uuDai = 0;
 
   // ── 1) Gói hội viên sắp hết hạn ─────────────────────────────────────────
   try {
@@ -82,6 +91,40 @@ export async function GET(request: Request) {
     }
   } catch (e) {
     await baoLoi({ noi: "thong-bao-dinh-ky", mucDo: "nhe", tomTat: "Nhắc gói hội viên sắp hết hạn bị lỗi", chiTiet: String(e) });
+  }
+
+  // ── 3) Ưu đãi thành viên mới ───────────────────────────────────────────
+  try {
+    const free = (await docBillingLuu(admin)).free;
+    if (free && freeDangChay(free, homNayVn()) && free.audience === "new" && free.tierId === "basic") {
+      const bayGio = Date.now();
+      const { data: moi } = await admin
+        .from("profiles")
+        .select("id,email,phone,full_name,role,created_at")
+        .gte("created_at", new Date(bayGio - 86_400_000).toISOString())
+        .lt("created_at", new Date(bayGio).toISOString());
+      for (const n of (moi ?? []) as (Nguoi & { created_at: string })[]) {
+        if (n.role === "admin") continue;
+        const hetUuDai = new Date(new Date(n.created_at).getTime() + free.days * 86_400_000 + 7 * 3_600_000).toISOString().slice(0, 10);
+        const han = ngayVn(free.to && free.to < hetUuDai ? free.to : hetUuDai);
+        await guiThongBao({
+          email: n.email,
+          phone: n.phone,
+          tieuDe: "Đăng tin miễn phí cho thành viên mới",
+          loiNhan: "Coastal Land là cổng đăng tin mua bán, cho thuê nhà đất. Người bán và người mua kết nối trực tiếp với nhau, nhanh chóng và hiệu quả. Coastal Land hỗ trợ thành viên mới đăng tin miễn phí. Đăng tin tại coastalland.vn/dang-tin.",
+          cacDong: [
+            { nhan: "Ưu đãi", giaTri: "Tin CVR Basic miễn phí" },
+            { nhan: "Hiển thị", giaTri: "30 ngày từ ngày duyệt tin" },
+            { nhan: "Hạn ưu đãi", giaTri: han },
+          ],
+          znsTemplateId: MAU_UU_DAI_THANH_VIEN_MOI,
+          znsData: { ten_khach_hang: n.full_name || "Quý khách", han_uu_dai: han },
+        });
+        uuDai++;
+      }
+    }
+  } catch (e) {
+    await baoLoi({ noi: "thong-bao-dinh-ky", mucDo: "nhe", tomTat: "Gửi ưu đãi thành viên mới bị lỗi", chiTiet: String(e) });
   }
 
   // ── 2) Báo cáo tuần — chỉ sáng Thứ Hai giờ VN ──────────────────────────
@@ -144,5 +187,5 @@ export async function GET(request: Request) {
     }
   }
 
-  return NextResponse.json({ ok: true, hoiVien, baoCao });
+  return NextResponse.json({ ok: true, hoiVien, baoCao, uuDai });
 }
