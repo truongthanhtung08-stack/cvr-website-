@@ -17,6 +17,22 @@
 > (duyệt tin, đẩy tin, gói up, hội viên), xuất hóa đơn VNPT + nhắc 20:00/08:30, tờ khai 01/GTGT,
 > tạm nộp TNDN, hóa đơn mua vào (XML), thuế nhà thầu nước ngoài, khối "Việc thuế cần làm".
 
+### Bản đồ mọi mảng liên quan đến thuế (để không sót)
+
+| Mảng | Gồm những gì | Web đã có | Còn thiếu / cần hỏi |
+|---|---|---|---|
+| **Chữ ký số** | Một USB token của công ty dùng cho **3 việc**: ký hóa đơn VNPT · ký tờ khai thuế · ký giấy nộp tiền | Không thể có — máy chủ không cắm được token, nên web chỉ **nhắc**, người ký bằng tay | B1: loại token, nhà cung cấp, **ngày hết hạn**; có dùng chung một token cho VNPT và cổng thuế không |
+| **Hóa đơn điện tử ĐẦU RA** (VNPT) | Ký hiệu `1C26TCL` · hóa đơn riêng cho khách có MST · hóa đơn tổng cuối ngày cho khách lẻ · VNPT **chặn ký quá 1 ngày** | ✅ gom giao dịch chờ xuất, tải file cho VNPT, nhắc 20:00 + 08:30, khách tự xem ở `/tai-khoan/hoa-don`, Sổ khách hàng theo thuế | E1: đổi ký hiệu `1C27TCL` + đăng ký dải mới khi sang 2027 · C2: hóa đơn lúc nạp ví? |
+| **Hóa đơn điện tử ĐẦU VÀO** | Hóa đơn GTGT mua trong nước (XML) | ✅ tải XML / nhập tay | B5: gửi hóa đơn quý 3 · đối chiếu với `hoadondientu.gdt.gov.vn` |
+| **Khai thay — nhà thầu nước ngoài** | Vercel, Supabase, Anthropic… chưa đăng ký thuế VN → mình khai **01/NTNN** theo tháng, hạn ngày 20 | ✅ đọc PDF hóa đơn, tính GTGT 5% + TNDN 5%, tải CSV tờ khai, đánh dấu đã nộp, tự cộng khấu trừ | Không |
+| **Khai thay — TNCN người lao động** | Công ty khấu trừ, khai 05/KK, quyết toán 05/QTT | ❌ chưa có | B4 → A4 |
+| **Khai thay — người đăng tin (sàn)** | Nghị định 117/2025/NĐ-CP: sàn thương mại điện tử **có chức năng thanh toán** phải khấu trừ, khai nộp thay thuế cho hộ/cá nhân bán hàng trên sàn | Không áp dụng nếu đúng như hiện tại: web **chỉ thu phí đăng tin**, không thu hộ tiền mua bán/cho thuê giữa người mua và người bán | **C4**: kế toán xác nhận Coastal Land không thuộc diện này; và có phải **cung cấp thông tin người bán** định kỳ cho cơ quan thuế không 🔎 |
+| **Tờ khai GTGT quý** | 01/GTGT + phụ lục giảm thuế 8% | ✅ tính sẵn chỉ tiêu | A2 ô [22] · A3 phụ lục |
+| **TNDN** | Tạm nộp quý · quyết toán 03/TNDN | ✅ tạm nộp quý | Quyết toán làm cùng kế toán (E3) |
+| **Báo cáo tài chính năm** | Nộp cùng quyết toán TNDN, hạn 31/3 | ❌ ngoài web | Kế toán lập — B7 |
+| **Nộp tiền thuế** | Giấy nộp tiền điện tử qua ngân hàng liên kết | Không (làm trên cổng thuế) | B2 |
+| **Lưu hồ sơ** | Tờ khai, thông báo chấp nhận, chứng từ nộp tiền, hóa đơn — **lưu 10 năm** | Hóa đơn nằm ở VNPT + Supabase | Chốt một thư mục lưu cố định (Google Drive `Thuế/<năm>/<quý>/`) |
+
 ### Giai đoạn A — Sửa web (Claude làm, chủ dự án duyệt từng bước)
 | # | Việc | Vì sao | Trạng thái |
 |---|---|---|---|
@@ -33,6 +49,8 @@
 | B3 | Đã nộp tờ khai GTGT Q1, Q2/2026 chưa · số [43] của tờ khai gần nhất | ⏳ |
 | B4 | Có trả lương/hoa hồng cho cá nhân không | ⏳ |
 | B5 | Hóa đơn mua vào quý 3 chưa có trên web | ⏳ trước 25/10 |
+| B6 | Hợp đồng/tài khoản VNPT Invoice: gói đã mua còn bao nhiêu số hóa đơn, hạn dùng | ⏳ |
+| B7 | Có kế toán / dịch vụ kế toán không — ai lập báo cáo tài chính năm | ⏳ |
 
 ### Giai đoạn C — Kế toán xác nhận (không tự kết luận được)
 | # | Câu hỏi | Trạng thái |
@@ -40,6 +58,7 @@
 | C1 | Các chỗ 🔎 trong file này (mã mẫu mới theo TT 89/2026, ngưỡng thuế TNCN, ngưỡng chi phí tiền mặt) | ⏳ |
 | C2 | ⚠️ **Tiền khách NẠP VÍ có phải xuất hóa đơn ngay lúc nạp không?** Web hiện ghi doanh thu + xuất hóa đơn lúc **dùng** (duyệt tin), không phải lúc nạp. Nghị định 123/2020 (Điều 9) coi thu tiền trước khi cung cấp dịch vụ là thời điểm lập hóa đơn, trừ tiền đặt cọc/tạm ứng. Ví nạp trước thuộc loại nào → kế toán chốt. **Đổi cách này là đổi lớn — không tự sửa.** | ⏳ |
 | C3 | Hóa đơn trạng thái "đã hủy" có còn tính doanh thu không (hiện vẫn tính) | ⏳ |
+| C4 | Coastal Land có thuộc diện **sàn khấu trừ/khai thay thuế cho người đăng tin** (Nghị định 117/2025) hay phải **cung cấp thông tin người bán** cho cơ quan thuế không | ⏳ |
 
 ### Giai đoạn D — Nộp quý 3/2026 (hạn **31/10/2026**)
 D1 làm xong A2 + B1–B3 + B5 → D2 khối "Việc thuế cần làm" xanh hết → D3 Claude soạn tờ khai điền sẵn
