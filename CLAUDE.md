@@ -187,7 +187,11 @@ Buộc phải đụng vào vì lý do kỹ thuật → **DỪNG, HỎI TRƯỚC.
 > `src/lib/thueNhaThau.ts`, các route ghi `doanh_thu`). Hạn gần nhất: **tờ khai quý 3 — 31/10/2026**.
 > Câu hỏi C2 (tiền nạp ví có phải xuất hóa đơn lúc nạp) **chờ kế toán — không tự sửa luồng ví.**
 > ✅ C5 CHỐT 02/10: dịch vụ đăng tin = **quảng cáo → 8%** (đến 31/12/2026, batdongsan.com.vn cũng 8%).
-> Chỉ hoa hồng môi giới / tư vấn BĐS (nếu sau này có) mới 10%. Đừng đổi `THUE_SUAT_GTGT`.
+> **Công ty KHÔNG môi giới, không tư vấn, không mua bán BĐS** (chủ dự án xác nhận) — mọi doanh thu
+> là quảng cáo đăng tin. Đừng đổi `THUE_SUAT_GTGT` trừ khi luật đổi (hết hạn 31/12/2026 hoặc gia hạn).
+> ⛔ **BÀI HỌC 02/10:** Claude từng đổi 8% → 10% → 8% vì một ý sai chưa kiểm ("Nghị định 174 loại trừ
+> dịch vụ CNTT" — thật ra là nghị định cũ 180/2024). **Việc thuế/pháp lý: phải đối chiếu được VĂN BẢN
+> GỐC trước khi sửa code. Không mở được văn bản gốc → nói rõ là chưa kiểm được, KHÔNG sửa.**
 > Mục tiêu chủ dự án chốt 02/10: **"nhập liệu xong là in báo cáo / lấy báo cáo gửi theo quy định"** →
 > trang in `/admin/hoa-don-thue/in`. Số liệu tính ở MỘT chỗ `src/lib/soLieuThue.ts` (+ `thueTncn.ts`).
 
