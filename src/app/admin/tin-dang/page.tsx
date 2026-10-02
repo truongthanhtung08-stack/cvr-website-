@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import TuKiemTin from "@/components/admin/TuKiemTin";
 import {
   type ListingRow,
   type ListingTier,
@@ -238,6 +239,8 @@ export default function AdminListingsPage() {
           + Đăng tin mới
         </Link>
       </div>
+
+      <TuKiemTin />
 
       {/* Bộ lọc */}
       <div className="mt-5 flex flex-wrap gap-3">
