@@ -47,10 +47,16 @@ export async function POST(req: Request) {
       khoa: `zalo-mini-app:revoke:${data.userId}`,
     });
   } else if (suKien === "versions.review.done") {
+    // Trạng thái âm = BỊ TỪ CHỐI (đo 29/09: bản 27 bị từ chối, Zalo gửi -1). Kết quả xét duyệt
+    // là việc admin phải xử lý → mức "nang" để có email về hòm thư công ty.
+    const biTuChoi = Number(data.status) < 0;
     await baoLoi({
       noi: "zalo-mini-app",
-      mucDo: "nhe",
-      tomTat: `Zalo đã duyệt xong phiên bản Mini App ${data.versionId} (trạng thái ${data.status})`,
+      mucDo: "nang",
+      tomTat: `Mini App phiên bản ${data.versionId} ${biTuChoi ? "BỊ ZALO TỪ CHỐI" : "đã được Zalo duyệt"} (trạng thái ${data.status})`,
+      canLam: biTuChoi
+        ? "Mở miniapp.zaloplatforms.com → Danh sách phiên bản / Quản lý xác thực để xem lý do, sửa rồi gửi lại."
+        : "Mở miniapp.zaloplatforms.com để phát hành phiên bản.",
       chiTiet: String(data.description ?? ""),
       khoa: `zalo-mini-app:review:${data.versionId}`,
     });

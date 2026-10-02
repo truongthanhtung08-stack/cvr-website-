@@ -121,7 +121,7 @@ async function ghiSo(khoa: string, t: SuCo): Promise<boolean> {
 
 async function guiMail(khoa: string, t: SuCo): Promise<void> {
   const key = process.env.RESEND_API_KEY;
-  const nhan = (process.env.ADMIN_EMAIL ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+  const nhan = (process.env.ADMIN_EMAIL || "hotro@coastalland.vn").split(",").map((s) => s.trim()).filter(Boolean);
   if (!key || nhan.length === 0) {
     console.error("[su-co] KHÔNG gửi được email: thiếu RESEND_API_KEY hoặc ADMIN_EMAIL");
     return;
