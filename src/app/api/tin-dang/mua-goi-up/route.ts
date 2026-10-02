@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { viKhaDung, cauThieuTien } from "@/lib/viKhaDung";
 import { ghepBillingLuu, bangTheoMucDich, goiUpNhieuLuot, vnd, type BillingData } from "@/lib/billing";
 import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
 import { baoLoi } from "@/lib/baoLoi";
@@ -82,10 +83,7 @@ export async function POST(request: Request) {
 
   if (loiMua) {
     if (/VI_KHONG_DU/.test(loiMua.message)) {
-      const { data: vi } = await admin.from("profiles").select("balance").eq("id", user.id).limit(1);
-      return loi(
-        `Ví không đủ: cần ${vnd(tien.tongTra)}, còn ${vnd(Number(vi?.[0]?.balance ?? 0))}. Nạp thêm rồi mua lại.`,
-      );
+      return loi(cauThieuTien(tien.tongTra, await viKhaDung(admin, user.id), "mua gói đẩy tin"));
     }
     if (/function .* does not exist|schema cache|PGRST202/i.test(loiMua.message)) {
       return loi("Tính năng gói đẩy chưa được bật trên máy chủ. Vui lòng báo quản trị viên.", 503);

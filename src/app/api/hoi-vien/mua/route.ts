@@ -2,6 +2,7 @@ import { baoThanhToan } from "@/lib/baoThanhToan";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { viKhaDung, cauThieuTien } from "@/lib/viKhaDung";
 import { vnd, type BillingData } from "@/lib/billing";
 import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
 import { baoLoi } from "@/lib/baoLoi";
@@ -52,8 +53,7 @@ export async function POST(request: Request) {
   if (error) {
     if (/DANG_CO_GOI/.test(error.message)) return loi("Bạn đang có một gói hội viên còn hạn — mỗi tài khoản dùng một gói tại một thời điểm.");
     if (/VI_KHONG_DU/.test(error.message)) {
-      const { data: vi } = await admin.from("profiles").select("balance").eq("id", user.id).limit(1);
-      return loi(`Ví không đủ: cần ${vnd(tien.tongTra)}, còn ${vnd(Number(vi?.[0]?.balance ?? 0))}. Nạp thêm rồi mua lại.`);
+      return loi(cauThieuTien(tien.tongTra, await viKhaDung(admin, user.id), "mua gói hội viên"));
     }
     return loi(error.message, 500);
   }

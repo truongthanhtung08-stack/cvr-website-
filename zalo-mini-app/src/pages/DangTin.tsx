@@ -146,7 +146,10 @@ export default function DangTin() {
     if (!soNgay) return setLoi("Chưa chọn thời hạn đăng tin.");
 
     // Ví không đủ → lưu nháp nguyên vẹn (như web), khách nạp tiền rồi đăng tiếp.
-    const viThieu = tien.tongTra > 0 && tien.viCo < tien.tongTra;
+    // So với KHẢ DỤNG = số dư − tiền tạm giữ cho tin chờ duyệt khác (0056, y như web + CSDL).
+    const { data: vi } = await supabase.rpc("so_du_kha_dung");
+    const khaDung = Number((vi as { kha_dung: number }[] | null)?.[0]?.kha_dung ?? tien.viCo);
+    const viThieu = tien.tongTra > 0 && khaDung < tien.tongTra;
     setDangGui(true);
     const specs: Record<string, string> = {};
     if (matTien.trim()) specs.frontage = matTien.trim();
@@ -180,6 +183,10 @@ export default function DangTin() {
       published_at: null,
     });
     setDangGui(false);
+    if (error && /VI_KHONG_DU/.test(error.message)) {
+      const m = error.message.match(/(\d+)\s*đ/);
+      return setLoi(m ? `Nạp thêm ${Number(m[1]).toLocaleString("vi-VN")} đ để đăng tin.` : "Ví không đủ tiền để đăng tin.");
+    }
     if (error) return setLoi(/BDS_KHAC/.test(error.message) ? error.message.replace(/^.*BDS_KHAC:\s*/, "") : `Gửi tin thất bại: ${error.message}`);
     setXong(viThieu ? "draft" : "pending");
     // Tin vào hàng chờ duyệt → nhờ máy chủ web báo khách "đã nhận tin" (máy chủ tự kiểm, không báo trùng).

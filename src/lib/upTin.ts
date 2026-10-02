@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { ghepBillingLuu, bangTheoMucDich, huongKhuyenMai, quotePrice, vnd, type BillingData } from "@/lib/billing";
 import { tachThue } from "@/lib/thue";
 import { baoLoi } from "@/lib/baoLoi";
+import { viKhaDung, cauThieuTien } from "@/lib/viKhaDung";
 import { guiThongBao, MAU_DA_NHAN_TIN, maTin } from "@/lib/thongBao";
 import type { TierId } from "@/lib/packages";
 
@@ -37,8 +38,10 @@ export async function thucHienUpTin(
   const { data: tin } = await admin.from("listings").select("id,title,owner_id,status,purpose,details").eq("id", id).single();
   if (!tin) return { ok: false, loi: "Không tìm thấy tin.", code: 404 };
   if (tin.owner_id !== userId) return { ok: false, loi: "Tin này không phải của bạn.", code: 403 };
-  // Chỉ tin ĐÃ HẾT HẠN. Tin đang hiển thị muốn lên đầu thì dùng Đẩy tin.
-  if (tin.status !== "expired") return { ok: false, loi: "Chỉ đăng lại được tin đã hết hạn. Tin đang hiển thị muốn lên đầu thì dùng Đẩy tin." };
+  // Tin ĐÃ HẾT HẠN (đăng lại) hoặc TIN NHÁP lưu lại vì ví thiếu tiền (02/10/2026: nạp đủ
+  // là tự gửi duyệt). Tin đang hiển thị muốn lên đầu thì dùng Đẩy tin.
+  const laNhap = tin.status === "draft";
+  if (tin.status !== "expired" && !laNhap) return { ok: false, loi: "Chỉ đăng lại được tin đã hết hạn. Tin đang hiển thị muốn lên đầu thì dùng Đẩy tin." };
 
   const { data: sc } = await admin.from("site_content").select("data").eq("key", "billing").limit(1);
   const bang: BillingData = bangTheoMucDich(ghepBillingLuu(sc?.[0]?.data as Partial<BillingData> | undefined), tin.purpose);
@@ -65,9 +68,10 @@ export async function thucHienUpTin(
   const giaBao = mienPhi ? 0 : bao.total;
   const phaiTra = tachThue(giaBao).tongTra;
 
-  if (phaiTra > Number(hs.balance ?? 0)) {
-    const du = Number(hs.balance ?? 0);
-    return { ok: false, loi: `Ví không đủ: cần ${vnd(phaiTra)}, còn ${vnd(du)}.`, viThieu: phaiTra - du };
+  // So với KHẢ DỤNG (0056: trừ tiền đang tạm giữ cho các tin chờ duyệt khác).
+  const vi = await viKhaDung(admin, userId, id);
+  if (phaiTra > vi.khaDung) {
+    return { ok: false, loi: cauThieuTien(phaiTra, vi, laNhap ? "đăng tin" : "đăng lại tin"), viThieu: phaiTra - vi.khaDung };
   }
 
   // ── Gửi duyệt: tin rời trạng thái hết hạn, chờ admin như tin mới ───────────
@@ -84,13 +88,15 @@ export async function thucHienUpTin(
       tier_days: null,
       tier_expires_at: null,
       da_tru_vi: false,
-      details: { ...chiTiet, plan: { tier: goi, days: soNgay, giaBao }, dang_lai: true },
+      details: laNhap
+        ? { ...chiTiet, plan: { tier: goi, days: soNgay, giaBao }, bao_da_nhan: true }
+        : { ...chiTiet, plan: { tier: goi, days: soNgay, giaBao }, dang_lai: true },
     })
     .eq("id", id)
-    .eq("status", "expired") // bấm hai lần không gửi hai lần
+    .eq("status", tin.status) // bấm hai lần không gửi hai lần
     .select("id");
   if (error) return { ok: false, loi: error.message, code: 500 };
-  if (!daGui?.length) return { ok: false, loi: "Tin đã được gửi đăng lại rồi." };
+  if (!daGui?.length) return { ok: false, loi: laNhap ? "Tin đã được gửi duyệt rồi." : "Tin đã được gửi đăng lại rồi." };
 
   // ĐÃ GỬI → huỷ mọi yêu cầu "chờ nạp" của tin này, không thì lần nạp sau gửi lại lần nữa.
   await admin.from("up_cho").update({ trang_thai: "huy", ghi_chu: "Tin đã gửi đăng lại", xong_luc: new Date().toISOString() })
@@ -99,9 +105,12 @@ export async function thucHienUpTin(
   await guiThongBao({
     email: hs.email,
     phone: hs.phone,
-    tieuDe: "Coastal Land đã nhận yêu cầu đăng lại tin",
-    loiNhan: "Tin đang chờ kiểm duyệt như tin mới. Duyệt xong tin hiển thị lại, ngày đăng và thời hạn tính từ lúc duyệt; " +
-      "phí gói (nếu có) trừ vào ví lúc duyệt. Theo dõi tại coastalland.vn/tai-khoan/tin-dang.",
+    tieuDe: laNhap ? "Coastal Land đã nhận tin đăng của bạn" : "Coastal Land đã nhận yêu cầu đăng lại tin",
+    loiNhan: laNhap
+      ? "Ví đã đủ tiền, tin nháp của bạn đã được gửi đi và đang chờ kiểm duyệt. Phí gói trừ vào ví lúc duyệt; " +
+        "ngày đăng và thời hạn tính từ lúc duyệt. Theo dõi tại coastalland.vn/tai-khoan/tin-dang."
+      : "Tin đang chờ kiểm duyệt như tin mới. Duyệt xong tin hiển thị lại, ngày đăng và thời hạn tính từ lúc duyệt; " +
+        "phí gói (nếu có) trừ vào ví lúc duyệt. Theo dõi tại coastalland.vn/tai-khoan/tin-dang.",
     cacDong: [
       { nhan: "Tin đăng", giaTri: tin.title },
       { nhan: "Gói", giaTri: `${tenGoi} · ${soNgay} ngày` },

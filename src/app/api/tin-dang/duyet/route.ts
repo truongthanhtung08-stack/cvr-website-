@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { viKhaDung, cauThieuTien } from "@/lib/viKhaDung";
 import { ghepBillingLuu, bangTheoMucDich, soNgayHienThi, huongKhuyenMai, loaiVoucherTin, quotePrice, vnd, type BillingData } from "@/lib/billing";
 import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
 import { guiThongBao, MAU_DUYET_TIN } from "@/lib/thongBao";
@@ -317,12 +318,12 @@ export async function POST(request: Request) {
   };
 
   const soDu = Number(hs.balance ?? 0);
-  if (soDu < tien.tongTra) {
+  // So với KHẢ DỤNG (0056): tiền các tin chờ duyệt KHÁC của khách vẫn giữ nguyên cho tin đó.
+  // Tin đang duyệt đã được giữ tiền từ lúc gửi nên bình thường luôn đủ.
+  const vi = await viKhaDung(admin, tin.owner_id, id);
+  if (vi.khaDung < tien.tongTra) {
     await hoanVoucher();
-    return loi(
-      `Ví khách không đủ: cần ${vnd(tien.tongTra)}, còn ${vnd(soDu)}. Nhắc khách nạp thêm rồi duyệt lại.`,
-      400,
-    );
+    return loi(`Ví khách không đủ — ${cauThieuTien(tien.tongTra, vi, "duyệt tin này")}`, 400);
   }
 
   // ── 5. GIÀNH QUYỀN TRỪ TIỀN (chống bấm Duyệt hai lần) ─────────────────────

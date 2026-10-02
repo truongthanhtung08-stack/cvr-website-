@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useProfile } from "@/lib/useProfile";
 import { vnd } from "@/lib/billing";
 import { useBilling } from "@/lib/useBilling";
+import { createClient } from "@/lib/supabase/client";
 
 // ============================================================================
 // NẠP TIỀN VÀO TÀI KHOẢN — cổng thanh toán PayOS.
@@ -23,6 +24,15 @@ export default function TopUpPage() {
 
 function TopUpForm() {
   const { profile } = useProfile();
+  const [viGiu, setViGiu] = useState<{ tam_giu: number; kha_dung: number } | null>(null);
+  useEffect(() => {
+    createClient()
+      .rpc("so_du_kha_dung")
+      .then(({ data }) => {
+        const v = (data as { tam_giu: number; kha_dung: number }[] | null)?.[0];
+        if (v) setViGiu({ tam_giu: Number(v.tam_giu), kha_dung: Number(v.kha_dung) });
+      });
+  }, []);
   const params = useSearchParams();
   const ketQua = params.get("ket-qua");
 
@@ -106,8 +116,16 @@ function TopUpForm() {
       {canNap > 0 && (
         <p className="rounded-lg border border-cvr-blue/30 bg-cvr-blue/[0.06] px-4 py-3 text-sm text-cvr-blue-ink">
           Tin của bạn đã lưu nháp. Cần nạp thêm{" "}
-          <strong className="font-semibold">{canNap.toLocaleString("vi-VN")}đ</strong> để đăng.
+          <strong className="font-semibold">{canNap.toLocaleString("vi-VN")}đ</strong> để đăng — nạp đủ là tin tự gửi duyệt.
         </p>
+      )}
+
+      {/* TẠM GIỮ (0056): tiền của tin đang chờ duyệt đã khoá trong ví, duyệt mới trừ. */}
+      {viGiu && viGiu.tam_giu > 0 && (
+        <div className="rounded-xl border border-cvr-line bg-white px-4 py-3 text-sm">
+          <div className="flex justify-between"><span className="text-cvr-muted">Đang tạm giữ cho tin chờ duyệt</span><span className="font-semibold text-cvr-ink">{vnd(viGiu.tam_giu)}</span></div>
+          <div className="mt-1 flex justify-between"><span className="text-cvr-muted">Số dư khả dụng</span><span className="font-semibold text-cvr-ink">{vnd(viGiu.kha_dung)}</span></div>
+        </div>
       )}
 
       {ketQua === "thanh-cong" && (

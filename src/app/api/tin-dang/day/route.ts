@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { viKhaDung, cauThieuTien } from "@/lib/viKhaDung";
 import { ghepBillingLuu, bangTheoMucDich, giaDayTin, vnd, type BillingData } from "@/lib/billing";
 import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
 import { baoLoi } from "@/lib/baoLoi";
@@ -107,11 +108,7 @@ export async function POST(request: Request) {
   if (loiDay) {
     await hoanVoucher();
     if (/VI_KHONG_DU/.test(loiDay.message)) {
-      const { data: vi } = await admin.from("profiles").select("balance").eq("id", user.id).limit(1);
-      const soDu = Number(vi?.[0]?.balance ?? 0);
-      return loi(
-        `Ví không đủ: cần ${vnd(tien.tongTra)}, còn ${vnd(soDu)}. Nạp thêm rồi đẩy lại.`,
-      );
+      return loi(cauThieuTien(tien.tongTra, await viKhaDung(admin, user.id), "đẩy tin"));
     }
     // Chưa chạy migration 0034 → nói thẳng, đừng để khách bấm mãi không hiểu vì sao.
     if (/function .* does not exist|schema cache|PGRST202/i.test(loiDay.message)) {

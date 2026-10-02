@@ -141,6 +141,8 @@ export default function PostListingForm() {
   const [saving, setSaving] = useState<"" | "draft" | "publish">("");
   // Ví không đủ tiền để đăng gói đã chọn — tin đã được lưu nháp, còn thiếu bao nhiêu.
   const [thieuTien, setThieuTien] = useState<{ can: number; du: number } | null>(null);
+  // Tiền đang tạm giữ cho các tin chờ duyệt khác của khách (0056).
+  const [tamGiu, setTamGiu] = useState(0);
   const [error, setError] = useState("");
 
   // KHÔNG còn ô "Ngày bắt đầu" tự chọn: tin bắt đầu hiển thị LÚC ĐƯỢC DUYỆT (một luật,
@@ -363,6 +365,14 @@ export default function PostListingForm() {
             // Cột balance có thể chưa bật trong CSDL → coi như 0.
             balance: (p as { balance?: number }).balance ?? 0,
           });
+          // TẠM GIỮ (0056): tiền của các tin đang chờ duyệt đã khoá trong ví → mọi phép so
+          // "đủ tiền" trong form dùng số KHẢ DỤNG (số dư − tạm giữ), y như CSDL kiểm.
+          const { data: vi } = await supabase.rpc("so_du_kha_dung");
+          const v = (vi as { kha_dung: number; tam_giu: number }[] | null)?.[0];
+          if (v) {
+            setHoSoVi((h) => (h ? { ...h, balance: Number(v.kha_dung) } : h));
+            setTamGiu(Number(v.tam_giu));
+          }
         }
       }
       setAuthReady(true);
@@ -517,7 +527,11 @@ export default function PostListingForm() {
     // đổi trạng thái. Đang hiển thị → bản sửa hiện NGAY, admin kiểm sau (CSDL tự đánh dấu
     // "đã sửa", 0054). Đã hết hạn → lưu nội dung, bấm Đăng lại để gửi duyệt.
     const daDang = Boolean(editId) && (editStatus === "approved" || editStatus === "expired");
-    const viThieu = !asDraft && !daDang && phaiTra > 0 && (hoSoVi?.balance ?? 0) < phaiTra;
+    // Sửa CHÍNH tin đang chờ duyệt: tiền giữ của tin này đã nằm trong tạm giữ → cộng lại
+    // phần đó vào khả dụng, chỉ so phần TĂNG thêm (đổi lên gói đắt hơn).
+    const giaCu = editStatus === "pending" ? Number((chiTietGoc.current.plan as { giaBao?: number } | undefined)?.giaBao ?? 0) : 0;
+    const khaDung = (hoSoVi?.balance ?? 0) + (giaCu > 0 ? tachThue(giaCu).tongTra : 0);
+    const viThieu = !asDraft && !daDang && phaiTra > 0 && khaDung < phaiTra;
     const luuNhap = asDraft || viThieu;
 
     setSaving(luuNhap ? "draft" : "publish");
@@ -581,12 +595,17 @@ export default function PostListingForm() {
 
     const supabase = createClient();
     let err: { message: string } | null = null;
+    let maTinNhap: string | null = editId ?? null; // tin nháp đang chờ tiền (ví thiếu)
 
     if (!editId) {
       // TIN MỚI
-      ({ error: err } = await supabase
+      const kq = await supabase
         .from("listings")
-        .insert({ ...values, owner_id: uid, tier: hangTin, published_at: null }));
+        .insert({ ...values, owner_id: uid, tier: hangTin, published_at: null })
+        .select("id")
+        .single();
+      err = kq.error;
+      maTinNhap = (kq.data as { id: string } | null)?.id ?? null;
     } else if (editStatus === "draft" && !luuNhap) {
       // ĐĂNG TIN NHÁP: tạo tin mới "chờ duyệt" + xoá nháp cũ.
       // (2 thao tác này chủ tin luôn có quyền — không phụ thuộc quyền đổi status trong DB)
@@ -613,6 +632,11 @@ export default function PostListingForm() {
     setSaving("");
     // Tin đã đăng đổi sang BĐS khác (0045) → nói thẳng, không kèm mã lỗi kỹ thuật.
     if (err && /BDS_KHAC/.test(err.message)) return setError(err.message.replace(/^.*BDS_KHAC:\s*/, ""));
+    // CSDL chặn vì khả dụng không đủ (0056 — vd vừa tiêu tiền ở thẻ khác) → nói đúng số phải nạp.
+    if (err && /VI_KHONG_DU/.test(err.message)) {
+      const m = err.message.match(/(\d+)\s*đ/);
+      return setError(m ? `Nạp thêm ${vnd(Number(m[1]))} để đăng tin.` : "Ví không đủ tiền để đăng tin.");
+    }
     if (err) return setError(`Lưu thất bại: ${err.message}`);
     // Đo chuyển đổi cho Google Ads: chỉ tính TIN MỚI GỬI DUYỆT. Lưu nháp không
     // tính (chưa phải tin), sửa tin cũ cũng không tính (đã đếm lúc đăng lần đầu).
@@ -621,7 +645,16 @@ export default function PostListingForm() {
     if (!luuNhap && !viThieu && (!editId || editStatus === "draft")) fetch("/api/tin-dang/da-nhan", { method: "POST" }).catch(() => {});
     // Thiếu tiền: tin đã nằm an toàn trong nháp → mời nạp ngay, kèm số còn thiếu.
     if (viThieu) {
-      setThieuTien({ can: phaiTra, du: hoSoVi?.balance ?? 0 });
+      // Ghi "chờ nạp" (up_cho, dùng chung với Đăng lại): nạp đủ tiền là máy TỰ gửi tin
+      // nháp này đi duyệt đúng gói đã chọn + báo khách — không phải quay lại bấm đăng.
+      if (maTinNhap) {
+        await fetch("/api/tin-dang/up", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: maTinNhap, tier: hangTin, soNgay: planDays }),
+        }).catch(() => {});
+      }
+      setThieuTien({ can: phaiTra, du: khaDung });
       window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
@@ -653,11 +686,13 @@ export default function PostListingForm() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M6 6h12a3 3 0 013 3v6a3 3 0 01-3 3H6a3 3 0 01-3-3V9a3 3 0 013-3z" />
           </svg>
         </div>
-        <h3 className="text-xl font-semibold tracking-tight text-cvr-ink">Tin đã lưu — cần nạp thêm tiền để đăng</h3>
+        {/* Chủ dự án chốt 02/10/2026: nói thẳng SỐ TIỀN phải nạp + tin đã tự lưu nháp. */}
+        <h3 className="text-xl font-semibold tracking-tight text-cvr-ink">Nạp thêm {vnd(conThieu)} để đăng tin</h3>
+        <p className="mt-2 text-sm text-cvr-muted">Tin đã tự động lưu nháp. Nạp đủ số tiền trên là tin tự gửi duyệt.</p>
 
         <div className="mx-auto mt-5 max-w-sm space-y-2 rounded-xl border border-cvr-line bg-cvr-surface px-4 py-3.5 text-sm">
           <div className="flex justify-between"><span className="text-cvr-muted">Phải trả (đã gồm GTGT)</span><span className="font-semibold text-cvr-ink">{vnd(thieuTien.can)}</span></div>
-          <div className="flex justify-between"><span className="text-cvr-muted">Số dư ví</span><span className="font-medium text-cvr-body">{vnd(thieuTien.du)}</span></div>
+          <div className="flex justify-between"><span className="text-cvr-muted">Số dư khả dụng</span><span className="font-medium text-cvr-body">{vnd(thieuTien.du)}</span></div>
           <div className="flex justify-between border-t border-cvr-line pt-2">
             <span className="font-semibold text-cvr-ink">Còn thiếu</span>
             <span className="text-base font-semibold text-cvr-blue-ink">{vnd(conThieu)}</span>
@@ -1181,7 +1216,10 @@ export default function PostListingForm() {
                 {/* Số dư ví ngay tại chỗ — biết thiếu TRƯỚC khi bấm đăng, nạp được ngay. */}
                 {thanhTien > 0 && hoSoVi && (
                   <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white px-3.5 py-2.5">
-                    <span className="text-cvr-muted">Số dư ví</span>
+                    <span className="text-cvr-muted">
+                      {tamGiu > 0 ? "Số dư khả dụng" : "Số dư ví"}
+                      {tamGiu > 0 && <span className="block text-xs text-cvr-faint">Đang tạm giữ {vnd(tamGiu)} cho tin chờ duyệt</span>}
+                    </span>
                     <span className="flex items-center gap-2.5">
                       <span className={hoSoVi.balance < tienThue.tongTra ? "font-semibold tabular-nums text-red-600" : "font-semibold tabular-nums text-cvr-ink"}>{vnd(hoSoVi.balance)}</span>
                       {hoSoVi.balance < tienThue.tongTra && (
