@@ -426,6 +426,9 @@ export default function AdminThuePage() {
         )}
       </div>
 
+      {/* ── SỔ KHÁCH HÀNG THEO THUẾ ─────────────────────────────────────── */}
+      <KhoiSoKhachHang rows={ra} nhan={nhan} tenFile={`so-khach-hang-Q${quy}-${nam}.csv`} />
+
       {/* ── HÓA ĐƠN CHỜ PHÁT HÀNH ───────────────────────────────────────── */}
       <KhoiXuatHoaDon onSaved={nap} />
 
@@ -434,6 +437,97 @@ export default function AdminThuePage() {
 
       {/* ── HÓA ĐƠN NƯỚC NGOÀI & THUẾ NHÀ THẦU ──────────────────────────── */}
       <KhoiThueNhaThau onSaved={nap} />
+    </div>
+  );
+}
+
+// ── SỔ KHÁCH HÀNG THEO THUẾ ─────────────────────────────────────────────────
+// Bảng kê đầu ra nhìn theo TỪNG GIAO DỊCH; sổ này gom lại theo TỪNG NGƯỜI MUA
+// (khóa = MST) để biết khách doanh nghiệp nào trả bao nhiêu, thuế bao nhiêu,
+// còn mấy giao dịch chưa xuất hóa đơn. Khách không lấy hóa đơn gom chung một dòng.
+
+type DongKhach = {
+  ten: string;
+  mst: string | null;
+  soGd: number;
+  tienHang: number;
+  tienThue: number;
+  tongTra: number;
+  chuaXuat: number;
+};
+
+function gomTheoKhach(rows: DongDoanhThu[]): DongKhach[] {
+  const m = new Map<string, DongKhach>();
+  for (const d of rows) {
+    const mst = d.mst_nguoi_mua?.trim() || null;
+    const khoa = mst ?? "__le__";
+    const k = m.get(khoa) ?? {
+      ten: mst ? d.ten_nguoi_mua?.trim() || "(chưa ghi tên)" : "Khách lẻ không lấy hóa đơn",
+      mst,
+      soGd: 0,
+      tienHang: 0,
+      tienThue: 0,
+      tongTra: 0,
+      chuaXuat: 0,
+    };
+    k.soGd += 1;
+    k.tienHang += Number(d.tien_hang || 0);
+    k.tienThue += Number(d.tien_thue || 0);
+    k.tongTra += Number(d.tong_tra || 0);
+    if (d.hoa_don_trang_thai === "chua_xuat") k.chuaXuat += 1;
+    m.set(khoa, k);
+  }
+  return [...m.values()].sort((x, y) => y.tongTra - x.tongTra);
+}
+
+function KhoiSoKhachHang({ rows, nhan, tenFile }: { rows: DongDoanhThu[] | null; nhan: string; tenFile: string }) {
+  const ds = useMemo(() => gomTheoKhach(rows ?? []), [rows]);
+  return (
+    <div className="rounded-2xl border border-cvr-line bg-white p-5 shadow-sm sm:p-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-base font-semibold text-cvr-ink">
+          Sổ khách hàng theo thuế · {nhan} — {ds.length} người mua
+        </h2>
+        <button onClick={() => taiCsv(tenFile, csvSoKhach(ds))} className={btnPhu}>
+          Tải CSV
+        </button>
+      </div>
+      {!rows ? (
+        <p className="mt-3 text-sm text-cvr-muted">Đang tải…</p>
+      ) : ds.length === 0 ? (
+        <p className="mt-3 text-sm text-cvr-muted">Chưa có giao dịch nào trong kỳ này.</p>
+      ) : (
+        <div className="mt-3 overflow-x-auto">
+          <table className="w-full min-w-[720px] border-collapse text-sm">
+            <thead>
+              <tr className="border-b border-cvr-line text-left text-xs uppercase tracking-wide text-cvr-muted">
+                <th className="py-2 pr-3 font-medium">Người mua</th>
+                <th className="py-2 pr-3 font-medium">MST</th>
+                <th className="py-2 pr-3 text-right font-medium">Số GD</th>
+                <th className="py-2 pr-3 text-right font-medium">Tiền hàng</th>
+                <th className="py-2 pr-3 text-right font-medium">Thuế GTGT</th>
+                <th className="py-2 pr-3 text-right font-medium">Tổng trả</th>
+                <th className="py-2 font-medium">Hóa đơn</th>
+              </tr>
+            </thead>
+            <tbody>
+              {ds.map((k) => (
+                <tr key={k.mst ?? "__le__"} className="border-b border-cvr-line/60">
+                  <td className="py-2 pr-3 text-cvr-body">{k.ten}</td>
+                  <td className="py-2 pr-3 tabular-nums text-cvr-body">{k.mst ?? "—"}</td>
+                  <td className="py-2 pr-3 text-right tabular-nums text-cvr-ink">{k.soGd}</td>
+                  <td className="py-2 pr-3 text-right tabular-nums text-cvr-ink">{vnd(k.tienHang)}</td>
+                  <td className="py-2 pr-3 text-right tabular-nums text-cvr-ink">{vnd(k.tienThue)}</td>
+                  <td className="py-2 pr-3 text-right tabular-nums font-semibold text-cvr-ink">{vnd(k.tongTra)}</td>
+                  <td className={`py-2 text-xs ${k.chuaXuat ? "text-amber-700" : "text-cvr-muted"}`}>
+                    {k.chuaXuat ? `${k.chuaXuat} GD chưa xuất` : "Đã xuất đủ"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
@@ -2246,6 +2340,12 @@ function csvToKhai(t: { hangVao: number; thueVao: number; dtChuaThue: number; th
     ["35", o("Tong so thue GTGT cua hang hoa, dich vu ban ra"), t.thueRa].join(","),
     ["36", o("Thue GTGT phat sinh trong ky"), t.phaiNop].join(","),
     [t.phaiNop >= 0 ? "40" : "43", o(t.phaiNop >= 0 ? "Thue GTGT con phai nop" : "Thue GTGT con duoc khau tru chuyen ky sau"), Math.abs(t.phaiNop)].join(","),
+  ].join("\n");
+}
+function csvSoKhach(ds: DongKhach[]): string {
+  return [
+    ["Nguoi mua", "MST", "So giao dich", "Tien hang", "Tien thue", "Tong tra", "GD chua xuat hoa don"].join(","),
+    ...ds.map((k) => [o(k.ten), o(k.mst), k.soGd, k.tienHang, k.tienThue, k.tongTra, k.chuaXuat].join(",")),
   ].join("\n");
 }
 function csvDauRa(rows: DongDoanhThu[]): string {
