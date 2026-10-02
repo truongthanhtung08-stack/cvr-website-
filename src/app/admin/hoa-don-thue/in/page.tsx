@@ -97,6 +97,11 @@ function BoHoSo() {
           máy in &ldquo;Lưu dưới dạng PDF&rdquo;. Bản in dùng để <strong>chép vào cổng thuế điện tử và lưu hồ sơ</strong> —
           nộp chính thức vẫn là ký số trên cổng.
         </p>
+        <p className="w-full rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-800">
+          ⚠️ Bố cục đang theo mẫu Thông tư 80/2021. Từ kỳ tháng 7/2026 tờ khai dùng mẫu mới Thông tư 89/2026
+          (01/GTGT thêm chỉ tiêu [32b], [34a], đổi công thức [27]; 05/KK-TNCN thêm chỉ tiêu miễn thuế) — đang cập
+          nhật. Khi khai trên cổng, chép SỐ theo TÊN chỉ tiêu, không theo mã số.
+        </p>
         {loi && <p className="w-full text-sm text-red-700">Lỗi đọc số liệu: {loi}</p>}
       </div>
 

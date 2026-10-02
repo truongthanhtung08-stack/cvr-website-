@@ -41,6 +41,7 @@
 | A3 | **Phụ lục giảm thuế GTGT 8%** (mẫu 01 Phụ lục III Nghị định 174/2025) | Kỳ xuất hóa đơn 8% phải nộp kèm | ✅ 02/10 — có trong bản in quý |
 | A4 | Mục **TNCN** (khai quý 05/KK + quyết toán 05/QTT) | Web chưa có gì về TNCN | ✅ 02/10 — dùng ngay trên trình duyệt, KHÔNG cần chạy SQL (lưu trong bảng `bi_mat` có sẵn, chỉ admin đọc được) |
 | A5 | **Trang IN BÁO CÁO** `/admin/hoa-don-thue/in` — bố cục theo mẫu tờ khai, in A4 / lưu PDF | Mục tiêu chủ dự án: **nhập liệu xong là in báo cáo** | ✅ 02/10 — quý: 01/GTGT · phụ lục giảm thuế · bảng tính tạm nộp TNDN · 05/KK-TNCN · bảng kê hóa đơn. Năm: tổng hợp GTGT 4 quý · số liệu quyết toán TNDN · 05/QTT-TNCN + bảng kê 05-1, 05-2 |
+| A7 | **Cập nhật bản in theo mẫu Thông tư 89/2026** (áp dụng từ kỳ tháng 7/2026: 01/GTGT thêm [32b] [34a], đổi công thức [27], bỏ [11b]; 05/KK-TNCN thêm chỉ tiêu miễn thuế) | Tờ khai quý 3/2026 trở đi PHẢI theo mẫu mới | ⏳ đang làm — cần mở mạng tới trang luật để lấy mẫu gốc |
 | A6 | Xuất file **XML** nộp thẳng lên cổng thuế | Đỡ gõ tay | ⛔ chưa làm — chưa có đặc tả XML chính thức (XSD) của ngành thuế; đoán sai cấu trúc thì cổng từ chối. Hiện: chép số từ bản in vào "khai trực tuyến" trên cổng (01/GTGT chỉ ~10 ô có số) |
 
 ### Giai đoạn B — Chủ dự án cung cấp (xem mục 7)
@@ -88,7 +89,7 @@ E3 trước 31/3/2027: quyết toán TNDN + BCTC + quyết toán TNCN (nếu có
 |---|---|
 | Tên | CÔNG TY TNHH BẤT ĐỘNG SẢN COASTAL LAND |
 | MST | 0402353502 |
-| Cơ quan thuế quản lý | Thuế cơ sở 4 thành phố Đà Nẵng |
+| Cơ quan thuế quản lý | Thuế cơ sở 4 thành phố Đà Nẵng — **08 Nguyễn Nhàn, phường Cẩm Lệ, TP Đà Nẵng · ĐT 0236 3674 198** · quản lý địa bàn phường Liên Chiểu, Hải Vân, Cẩm Lệ, Hòa Xuân, xã Hòa Vang, Hòa Tiến, Bà Nà (Quyết định 1378/QĐ-CT ngày 30/6/2025, hiệu lực 01/7/2025) |
 | Kỳ khai GTGT | **Theo quý** (doanh nghiệp mới thành lập, doanh thu năm trước ≤ 50 tỷ) |
 | Phương pháp GTGT | Khấu trừ |
 | Thuế suất GTGT dịch vụ đăng tin | **8%** (Nghị quyết 204/2025/QH15) — **hết 31/12/2026**, từ 2027 có thể quay lại 10% |
