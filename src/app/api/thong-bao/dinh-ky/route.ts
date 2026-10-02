@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { guiThongBao, MAU_BAO_CAO_TUAN, MAU_HOI_VIEN_SAP_HET, MAU_UU_DAI_THANH_VIEN_MOI } from "@/lib/thongBao";
+import { guiThongBao, MAU_BAO_CAO_TUAN, MAU_HOI_VIEN_SAP_HET, MAU_UU_DAI_THANH_VIEN_MOI, MAU_TIM_KIEM_MOI, MAU_TIN_NHAP } from "@/lib/thongBao";
 import { docBillingLuu, homNayVn } from "@/lib/congBoGia";
 import { freeDangChay, ngayVn } from "@/lib/billing";
 import { baoLoi } from "@/lib/baoLoi";
 import { chuanHoaSdt } from "@/lib/phone";
+import { getListings } from "@/lib/listingsDb";
+import { filtersFromParams } from "@/lib/filters";
+import { smartFilter, smartSearch } from "@/lib/smartSearch";
 
 // ============================================================================
 // THÔNG BÁO ĐỊNH KỲ — cron 8h sáng giờ VN mỗi ngày (vercel.json: 0 1 * * * UTC)
@@ -46,6 +49,8 @@ export async function GET(request: Request) {
   let hoiVien = 0;
   let baoCao = 0;
   let uuDai = 0;
+  let timKiem = 0;
+  let nhap = 0;
 
   // ── 1) Gói hội viên sắp hết hạn ─────────────────────────────────────────
   try {
@@ -127,6 +132,81 @@ export async function GET(request: Request) {
     await baoLoi({ noi: "thong-bao-dinh-ky", mucDo: "nhe", tomTat: "Gửi ưu đãi thành viên mới bị lỗi", chiTiet: String(e) });
   }
 
+  // ── 4) Tìm kiếm đã lưu — tin MỚI ĐĂNG khớp ĐỦ bộ lọc khách lưu (0055) ─────
+  // Lọc bằng CHÍNH lõi của trang danh sách (smartFilter tầng 1 + smartSearch tầng 1) →
+  // tin báo khách là tin khách bấm link sẽ thấy ngay đầu trang. Mốc = lần báo trước
+  // (chưa báo lần nào = lúc lưu) → mỗi tin báo một lần.
+  try {
+    const { data: luu } = await admin.from("tim_kiem_luu").select("id,user_id,muc_dich,tham_so,ten,bao_luc,created_at");
+    const ds = (luu ?? []) as { id: string; user_id: string; muc_dich: "ban" | "thue"; tham_so: string; ten: string; bao_luc: string | null; created_at: string }[];
+    if (ds.length) {
+      const tin = await getListings();
+      const nguoi = await layNguoi(ds.map((d) => d.user_id));
+      for (const d of ds) {
+        const moc = Date.parse(d.bao_luc ?? d.created_at);
+        const f = filtersFromParams(new URLSearchParams(d.tham_so));
+        const moi = tin.filter((l) => (l.purpose ?? "ban") === d.muc_dich && Date.parse(l.postedAt ?? "") > moc);
+        const day = smartFilter(moi, { ...f, keyword: "" }).filter((h) => h.tier === 1).map((h) => h.item);
+        const khop = smartSearch(day, f.keyword).hits.filter((h) => h.tier === 1).map((h) => h.item);
+        if (!khop.length) continue;
+        const n = nguoi.get(d.user_id);
+        const link = `coastalland.vn/${d.muc_dich === "ban" ? "mua-ban" : "cho-thue"}${d.tham_so ? `?${d.tham_so}` : ""}`;
+        await guiThongBao({
+          email: n?.email,
+          phone: n?.phone,
+          tieuDe: `${khop.length} tin mới khớp tìm kiếm của bạn`,
+          loiNhan: `Có ${khop.length} tin mới khớp tìm kiếm "${d.ten}" bạn đã lưu. Xem tại ${link}`,
+          cacDong: khop.slice(0, 5).map((l) => ({ nhan: l.price, giaTri: l.title.slice(0, 80) })),
+          znsTemplateId: MAU_TIM_KIEM_MOI,
+          znsData: {
+            ten_khach_hang: n?.full_name || "Quý khách",
+            so_tin: String(khop.length),
+            ten_tim_kiem: d.ten.slice(0, 100),
+            so_dien_thoai: chuanHoaSdt(n?.phone ?? ""),
+          },
+        });
+        await admin.from("tim_kiem_luu").update({ bao_luc: new Date().toISOString() }).eq("id", d.id);
+        timKiem++;
+      }
+    }
+  } catch (e) {
+    await baoLoi({ noi: "thong-bao-dinh-ky", mucDo: "nhe", tomTat: "Báo tin mới theo tìm kiếm đã lưu bị lỗi", chiTiet: String(e) });
+  }
+
+  // ── 5) Nhắc tin nháp chưa gửi — nháp để yên từ 24 đến 48 giờ trước (mỗi nháp 1 lần) ─
+  try {
+    const bayGio = Date.now();
+    const { data: nhapRaw } = await admin
+      .from("listings")
+      .select("id,owner_id,title")
+      .eq("status", "draft")
+      .not("owner_id", "is", null)
+      .gte("updated_at", new Date(bayGio - 48 * 3_600_000).toISOString())
+      .lt("updated_at", new Date(bayGio - 24 * 3_600_000).toISOString());
+    const dsNhap = (nhapRaw ?? []) as { id: string; owner_id: string; title: string | null }[];
+    const nguoi = await layNguoi(dsNhap.map((t) => t.owner_id));
+    for (const t of dsNhap) {
+      const n = nguoi.get(t.owner_id);
+      if (!n || n.role === "admin") continue;
+      await guiThongBao({
+        email: n.email,
+        phone: n.phone,
+        tieuDe: "Tin nháp của bạn chưa được gửi",
+        loiNhan: "Tin đăng của bạn đang lưu nháp, chưa gửi duyệt nên chưa hiển thị. Hoàn tất và gửi tin tại coastalland.vn/tai-khoan/tin-dang.",
+        cacDong: [{ nhan: "Tin nháp", giaTri: (t.title ?? "(chưa có tiêu đề)").slice(0, 80) }],
+        znsTemplateId: MAU_TIN_NHAP,
+        znsData: {
+          ten_khach_hang: n.full_name || "Quý khách",
+          ten_tin: (t.title ?? "Tin chưa có tiêu đề").slice(0, 100),
+          so_dien_thoai: chuanHoaSdt(n.phone ?? ""),
+        },
+      });
+      nhap++;
+    }
+  } catch (e) {
+    await baoLoi({ noi: "thong-bao-dinh-ky", mucDo: "nhe", tomTat: "Nhắc tin nháp bị lỗi", chiTiet: String(e) });
+  }
+
   // ── 2) Báo cáo tuần — chỉ sáng Thứ Hai giờ VN ──────────────────────────
   const homNayVN = new Date(Date.now() + 7 * 3_600_000);
   if (homNayVN.getUTCDay() === 1) {
@@ -187,5 +267,5 @@ export async function GET(request: Request) {
     }
   }
 
-  return NextResponse.json({ ok: true, hoiVien, baoCao, uuDai });
+  return NextResponse.json({ ok: true, hoiVien, baoCao, uuDai, timKiem, nhap });
 }

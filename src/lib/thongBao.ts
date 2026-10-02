@@ -50,6 +50,12 @@ export const MAU_HOI_VIEN_SAP_HET = process.env.ZALO_ZNS_TEMPLATE_HOI_VIEN_SAP_H
 export const MAU_BAO_CAO_TUAN = process.env.ZALO_ZNS_TEMPLATE_BAO_CAO_TUAN || "641604";
 // Tag 3 Hậu mãi, gửi duyệt 02/10/2026 — tham số: ten_khach_hang, han_uu_dai.
 export const MAU_UU_DAI_THANH_VIEN_MOI = process.env.ZALO_ZNS_TEMPLATE_UU_DAI_MOI || "644528";
+// Tag 2 CSKH, soạn 02/10/2026 (khách dùng SĐT không có email vẫn phải nhận thông báo):
+//   tin mới khớp tìm kiếm đã lưu → ten_khach_hang, so_tin, ten_tim_kiem, so_dien_thoai
+//   nhắc tin nháp chưa gửi       → ten_khach_hang, ten_tin, so_dien_thoai
+// Trống = chưa có mã duyệt → bỏ qua kênh Zalo (email vẫn gửi).
+export const MAU_TIM_KIEM_MOI = process.env.ZALO_ZNS_TEMPLATE_TIM_KIEM_MOI || "";
+export const MAU_TIN_NHAP = process.env.ZALO_ZNS_TEMPLATE_TIN_NHAP || "";
 
 /** Mã tin hiện cho khách — giống dòng "Mã tin" trên trang tin (8 ký tự đầu của id, viết hoa). */
 export const maTin = (id: string) => id.slice(0, 8).toUpperCase();

@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { ghepBillingLuu, bangTheoMucDich, huongKhuyenMai, quotePrice, vnd, type BillingData } from "@/lib/billing";
 import { tachThue } from "@/lib/thue";
 import { baoLoi } from "@/lib/baoLoi";
-import { guiThongBao } from "@/lib/thongBao";
+import { guiThongBao, MAU_DA_NHAN_TIN, maTin } from "@/lib/thongBao";
 import type { TierId } from "@/lib/packages";
 
 // ============================================================================
@@ -107,6 +107,15 @@ export async function thucHienUpTin(
       { nhan: "Gói", giaTri: `${tenGoi} · ${soNgay} ngày` },
       { nhan: "Phí", giaTri: mienPhi ? "Miễn phí" : vnd(phaiTra) },
     ],
+    // Khách chỉ dùng SĐT (không email) vẫn phải được báo → mẫu ZBS "đã nhận tin, chờ duyệt"
+    // (641611, đã duyệt) — đăng lại cũng là gửi tin chờ duyệt như tin mới.
+    znsTemplateId: MAU_DA_NHAN_TIN,
+    znsData: {
+      ten_khach_hang: hs.full_name || "Quý khách",
+      ma_tin: maTin(id),
+      ten_tin: tin.title,
+      thoi_gian: new Date().toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric" }),
+    },
   });
 
   return { ok: true, phaiTra, mienPhi, tieuDe: tin.title, tenGoi };

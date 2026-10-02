@@ -18,6 +18,7 @@ import { featuredListings, type Article, type Listing } from "@/lib/data";
 import {
   sortListings,
   filtersFromParams,
+  filtersToParams,
   emptyFilters,
   hasActiveFilters,
   priceRangesFor,
@@ -27,6 +28,7 @@ import {
 } from "@/lib/filters";
 import { smartFilter, smartSearch, TIER_LABEL } from "@/lib/smartSearch";
 import { nhanDoiHienThi, khoaThe } from "@/lib/nhanDoiHienThi";
+import LuuTimKiem from "./LuuTimKiem";
 
 // 10 tin/trang (chủ dự án chốt 10/9/2026) — trước là 8.
 const PER_PAGE = 10;
@@ -198,6 +200,8 @@ export default function ListingBrowser({
                 </svg>
                 {mapMode ? "Xem danh sách" : "Xem bản đồ"}
               </button>
+              {/* Đang lọc → cho lưu bộ lọc để nhận tin mới khớp (Tìm kiếm đã lưu). */}
+              {active && <LuuTimKiem key={filtersToParams(filters).toString()} purpose={purpose} filters={filters} />}
               {active && (
                 <button
                   type="button"

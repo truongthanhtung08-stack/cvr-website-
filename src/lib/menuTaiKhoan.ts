@@ -10,5 +10,6 @@ export const MUC_TAI_KHOAN: MucTaiKhoan[] = [
   { label: "Bảng giá dịch vụ", href: "/bao-gia-dang-tin", icon: "tag" },
   { label: "Dự án của tôi", href: "/tai-khoan/du-an", icon: "building" },
   { label: "Tin đã lưu", href: "/tin-luu", icon: "heart" },
+  { label: "Tìm kiếm đã lưu", href: "/tai-khoan/tim-kiem", icon: "bell" },
   { label: "Cài đặt", href: "/tai-khoan/cai-dat", icon: "gear" },
 ];
