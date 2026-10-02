@@ -179,6 +179,7 @@ Buộc phải đụng vào vì lý do kỹ thuật → **DỪNG, HỎI TRƯỚC.
 
 ## 0E. 🧾 THUẾ CÔNG TY (GTGT · TNDN · TNCN) — topic riêng, theo dõi lâu dài
 
+> 📌 **Bàn giao mới nhất: [`BAN-GIAO-THUE-02-10.md`](BAN-GIAO-THUE-02-10.md) — đọc TRƯỚC.** Việc gấp: A7 (mẫu TT89 cho tờ khai Q3, hạn 31/10).
 > **Sổ tay + kế hoạch: [`QUY-TRINH-BAO-CAO-THUE.md`](QUY-TRINH-BAO-CAO-THUE.md) — mục 0 là bảng
 > tiến độ.** Mở phiên mới là **đọc file đó trước**, xem bước nào chưa ✅ rồi làm tiếp — **KHÔNG làm
 > lại từ đầu, KHÔNG bắt chủ dự án kể lại.** Xong bước nào sửa bảng trong file đó ngay.
