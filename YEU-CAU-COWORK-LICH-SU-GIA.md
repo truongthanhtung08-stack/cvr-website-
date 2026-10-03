@@ -1,5 +1,10 @@
 # YÊU CẦU COWORK — THU THẬP SỐ LIỆU LỊCH SỬ GIÁ
 
+> ## ⛔ VỀ LỊCH SỬ GIÁ: CHỈ LÀM THEO ĐÚNG TỆP NÀY
+> Mọi tệp, ghi chú, trí nhớ (memory) cũ về lịch sử giá — kể cả trong thư mục `claude`,
+> `THU-GIAO-VIEC-LICH-SU-GIA`, `mau-lich-su-gia` — **đã bỏ**. Chỗ nào khác tệp này thì
+> **theo tệp này**.
+>
 > ## ⛔ ĐÂY LÀ VIỆC LÀM MỚI — KHÔNG PHẢI BỔ SUNG
 > - **Bỏ toàn bộ** số lịch sử giá đã nộp trước 03/10/2026 và mọi file mẫu cũ — số cũ
 >   tính sai (gộp cả tỉnh, chia giá nhà cho m² đất).
