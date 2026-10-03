@@ -81,7 +81,6 @@ export async function quetTinHetHan(
       .limit(200);
 
     const dsHet = (hetHan ?? []) as Tin[];
-    const nguoi = await layNguoi(admin, dsHet.map((t) => t.owner_id));
 
     for (const tin of dsHet) {
       const { error } = await admin
@@ -89,7 +88,7 @@ export async function quetTinHetHan(
         // Lượt Up còn lại hết theo tin (luotUp.ts — lượt gắn với kỳ hiển thị).
         .update({ status: "expired", bump_credits: 0 })
         .eq("id", tin.id)
-        .eq("status", "approved"); // ai giành được mới báo — chạy hai lần không báo hai lần
+        .eq("status", "approved");
       if (error) {
         await baoLoi({
           noi: "het-han-tin",
@@ -103,98 +102,78 @@ export async function quetTinHetHan(
         continue;
       }
       daHa++;
-
-      if (!BAO_KHACH_HET_HAN) continue; // đang tắt báo khách — tin vẫn chuyển Hết hạn đúng giờ
-      const chu = nguoi.get(tin.owner_id ?? "");
-      if (!tuDang(tin, chu)) continue; // tin admin đăng hộ / nhập hàng loạt — không nhắn
-      await baoDaHetHan(admin, tin, chu);
     }
 
-    // ── 1b) GỬI BÙ: tin trong tài khoản khách ĐÃ hết hạn mà CHƯA được nhắn ──────
-    // (hạ tay, hoặc hết hạn lúc công tắc nhắn còn tắt). Dấu details.bao_het_han = hạn
-    // của kỳ đã báo → mỗi kỳ hết hạn nhắn đúng MỘT lần, không bao giờ sót (03/10/2026).
-    if (BAO_KHACH_HET_HAN) {
-      const { data: chuaBao } = await admin
-        .from("listings")
-        .select("id,title,owner_id,tier,tier_expires_at,details")
-        .eq("status", "expired")
-        .not("owner_id", "is", null)
-        .limit(500);
-      const dsBu = ((chuaBao ?? []) as Tin[]).filter((t) => t.details?.bao_het_han !== t.tier_expires_at);
-      const nguoiBu = await layNguoi(admin, dsBu.map((t) => t.owner_id));
-      for (const tin of dsBu) {
-        const chu = nguoiBu.get(tin.owner_id ?? "");
-        if (!tuDang(tin, chu)) continue;
-        await baoDaHetHan(admin, tin, chu);
-      }
-    }
-
-    // ── 2) SẮP HẾT HẠN → nhắc trước 3 ngày (mọi hạng) ─────────────────────
-    // Đang tắt báo khách → bỏ HẲN bước nhắc (không đánh dấu đã nhắc), để khi bật lại
-    // các tin sắp hết hạn vẫn được nhắc đúng.
     if (!BAO_KHACH_HET_HAN) {
       if (daHa > 0) revalidateTag("listings", "max");
       return { daHa, daNhac };
     }
+
+    // ── NHẮN KHÁCH — KHÔNG ĐỂ ZALO KHOÁ (chủ dự án 03/10/2026) ─────────────────
+    // · Mỗi KỲ hết hạn của một tin nhắn đúng MỘT lần (dấu theo mốc hạn trong details).
+    // · Mỗi KHÁCH tối đa MỘT tin nhắn mỗi 24 giờ cho mỗi loại (sắp hết / đã hết):
+    //   nhiều tin cùng lúc thì GỘP vào một tin nhắn; tin tới sau 24 giờ mới nhắn tiếp.
+    // · Chỉ tin trong tài khoản khách (tuDang). Tin đăng hộ không nhắn.
+    const moc24h = bayGio.getTime() - 86_400_000;
+
+    // ── 1) ĐÃ HẾT HẠN (kể cả gửi bù tin hết hạn mà chưa được nhắn) ──────────────
+    const { data: daHet } = await admin
+      .from("listings")
+      .select("id,title,owner_id,tier,tier_expires_at,details")
+      .eq("status", "expired")
+      .not("owner_id", "is", null)
+      .limit(1000);
+    await nhanTheoKhach(admin, (daHet ?? []) as Tin[], "bao_het_han", moc24h, (ds, chu) => {
+      const t = ds[0];
+      const ngay = ngayVn(t.tier_expires_at);
+      return {
+        email: chu.email,
+        phone: chu.phone,
+        tieuDe: ds.length > 1 ? `${ds.length} tin của bạn đã hết hạn hiển thị` : "Tin của bạn đã hết hạn hiển thị",
+        loiNhan: `${ds.length > 1 ? `${ds.length} tin` : "Tin"} của bạn đã hết hạn hiển thị. Mời bạn đăng lại tại coastalland.vn/tai-khoan/tin-dang.`,
+        cacDong: ds.map((x) => ({ nhan: `${getTier(x.tier).name} · hết hạn ${ngayVn(x.tier_expires_at)}`, giaTri: x.title })),
+        znsTemplateId: MAU_DA_HET_HAN,
+        znsData: { ten_khach_hang: chu.full_name || "Quý khách", ngay_het_han: ngay, ma_tin: maTin(t.id), ten_tin: tenGop(ds) },
+      };
+    });
+
+    // ── 2) SẮP HẾT HẠN → nhắc trước 3 ngày ─────────────────────────────────────
     const { data: sapHet } = await admin
       .from("listings")
       .select("id,title,owner_id,tier,tier_expires_at,details")
       .eq("status", "approved")
+      .not("owner_id", "is", null)
       .gte("tier_expires_at", bayGio.toISOString())
       .lte("tier_expires_at", moc.toISOString())
-      .limit(200);
-
-    const dsSap = (sapHet ?? []) as Tin[];
-    // Đã nhắc cho ĐÚNG mốc hết hạn này rồi thì thôi. So theo mốc chứ không theo
-    // cờ đúng/sai: khách gia hạn xong mốc đổi, lần tới vẫn được nhắc lại.
-    const canNhac = dsSap.filter((t) => t.details?.nhac_het_han !== t.tier_expires_at);
-    const nguoi2 = await layNguoi(admin, canNhac.map((t) => t.owner_id));
-
-    for (const tin of canNhac) {
-      const chu = nguoi2.get(tin.owner_id ?? "");
-      if (!tuDang(tin, chu)) continue; // tin admin đăng hộ / nhập hàng loạt — không nhắc
-      const hetNgay = new Date(tin.tier_expires_at);
-      const conLai = Math.max(0, Math.ceil((hetNgay.getTime() - bayGio.getTime()) / 86_400_000));
-
-      await guiThongBao({
-        email: chu?.email,
-        phone: chu?.phone,
-        tieuDe: `Còn ${conLai} ngày là hết hạn gói tin`,
-        loiNhan:
-          `Tin của bạn sẽ hết hạn hiển thị ngày ${hetNgay.toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}. ` +
-            `Hết hạn, mời bạn đăng lại tại coastalland.vn/tai-khoan/tin-dang.`,
-        cacDong: [
-          { nhan: "Tin đăng", giaTri: tin.title },
-          { nhan: "Gói hiện tại", giaTri: getTier(tin.tier).name },
-          { nhan: "Hết hạn ngày", giaTri: hetNgay.toLocaleDateString("vi-VN") },
-        ],
+      .limit(500);
+    daNhac = await nhanTheoKhach(admin, (sapHet ?? []) as Tin[], "nhac_het_han", moc24h, (ds, chu) => {
+      const t = ds[0];
+      const conLai = Math.max(0, Math.ceil((new Date(t.tier_expires_at).getTime() - bayGio.getTime()) / 86_400_000));
+      return {
+        email: chu.email,
+        phone: chu.phone,
+        tieuDe: `Còn ${conLai} ngày là hết hạn ${ds.length > 1 ? `${ds.length} tin` : "tin"} của bạn`,
+        loiNhan: `${ds.length > 1 ? `${ds.length} tin` : "Tin"} của bạn sắp hết hạn hiển thị. Hết hạn, mời bạn đăng lại tại coastalland.vn/tai-khoan/tin-dang.`,
+        cacDong: ds.map((x) => ({ nhan: `${getTier(x.tier).name} · hết hạn ${ngayVn(x.tier_expires_at)}`, giaTri: x.title })),
         znsTemplateId: MAU_SAP_HET_HAN,
         znsData: {
-          ten_khach_hang: chu?.full_name || "Quý khách",
+          ten_khach_hang: chu.full_name || "Quý khách",
           so_ngay: String(conLai),
-          ngay_het_han: hetNgay.toLocaleDateString("vi-VN"),
-          ma_tin: maTin(tin.id),
-          ten_tin: tin.title,
-          goi_tin: getTier(tin.tier).name,
+          ngay_het_han: ngayVn(t.tier_expires_at),
+          ma_tin: maTin(t.id),
+          ten_tin: tenGop(ds),
+          goi_tin: getTier(t.tier).name,
         },
-      });
-
-      // Đánh dấu ngay cả khi gửi hỏng — không thì mỗi lần chạy lại gửi lại,
-      // ngày hai lần, suốt ba ngày. Thư hỏng đã có sổ sự cố lo.
-      await admin
-        .from("listings")
-        .update({ details: { ...(tin.details ?? {}), nhac_het_han: tin.tier_expires_at } })
-        .eq("id", tin.id);
-      daNhac++;
-    }
+      };
+    });
   } catch (e) {
     await baoLoi({
       noi: "het-han-tin",
       mucDo: "nang",
       tomTat: "Quét tin hết hạn bị lỗi",
       chiTiet: String(e),
-      hauQua: "Tin hết gói vẫn giữ vị trí ưu tiên, và khách không được nhắc gia hạn.",
-      canLam: "Xem log route /api/hoa-don/nhac-xuat.",
+      hauQua: "Tin hết hạn có thể còn hiện, và khách không được nhắc.",
+      canLam: "Xem log route /api/tin-dang/het-han.",
     });
   }
 
@@ -203,35 +182,49 @@ export async function quetTinHetHan(
   return { daHa, daNhac };
 }
 
-/** Lấy email/điện thoại của các chủ tin trong MỘT lần hỏi, không hỏi từng người. */
-// Nhắn khách "tin đã hết hạn" rồi đánh dấu đã nhắn cho ĐÚNG kỳ này (details.bao_het_han).
-async function baoDaHetHan(admin: SupabaseClient, tin: Tin, chu: Nguoi) {
-  await guiThongBao({
-    email: chu.email,
-    phone: chu.phone,
-    tieuDe: "Tin của bạn đã hết hạn hiển thị",
-    loiNhan:
-      `Tin của bạn đã hết hạn hiển thị ngày ${new Date(tin.tier_expires_at).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}. ` +
-      `Mời bạn đăng lại tại coastalland.vn/tai-khoan/tin-dang.`,
-    cacDong: [
-      { nhan: "Tin đăng", giaTri: tin.title },
-      { nhan: "Gói vừa hết hạn", giaTri: getTier(tin.tier).name },
-      { nhan: "Hết hạn ngày", giaTri: new Date(tin.tier_expires_at).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" }) },
-    ],
-    znsTemplateId: MAU_DA_HET_HAN,
-    znsData: {
-      ten_khach_hang: chu.full_name || "Quý khách",
-      ngay_het_han: new Date(tin.tier_expires_at).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" }),
-      ma_tin: maTin(tin.id),
-      ten_tin: tin.title,
-    },
-  });
-  await admin
-    .from("listings")
-    .update({ details: { ...(tin.details ?? {}), bao_het_han: tin.tier_expires_at } })
-    .eq("id", tin.id);
+const ngayVn = (iso: string) => new Date(iso).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" });
+const tenGop = (ds: Tin[]) => (ds.length > 1 ? `${ds[0].title} (và ${ds.length - 1} tin khác)` : ds[0].title);
+
+// Gom tin CHƯA nhắn theo từng khách → mỗi khách MỘT tin nhắn, tối đa một lần / 24 giờ.
+// dau = khoá trong details: lưu mốc hạn đã nhắn (dau) + giờ nhắn (dau + "_luc").
+async function nhanTheoKhach(
+  admin: SupabaseClient,
+  ds: Tin[],
+  dau: "bao_het_han" | "nhac_het_han",
+  moc24h: number,
+  soan: (ds: Tin[], chu: Nguoi) => Parameters<typeof guiThongBao>[0],
+): Promise<number> {
+  const chuaNhan = ds.filter((t) => t.details?.[dau] !== t.tier_expires_at);
+  if (chuaNhan.length === 0) return 0;
+  const nguoi = await layNguoi(admin, chuaNhan.map((t) => t.owner_id));
+  const theoKhach = new Map<string, Tin[]>();
+  for (const t of chuaNhan) {
+    const chu = nguoi.get(t.owner_id ?? "");
+    if (!tuDang(t, chu)) continue;
+    theoKhach.set(chu.id, [...(theoKhach.get(chu.id) ?? []), t]);
+  }
+  let daGui = 0;
+  for (const [id, cuaKhach] of theoKhach) {
+    const vuaNhan = ds.some((t) => {
+      const luc = t.owner_id === id ? t.details?.[`${dau}_luc`] : null;
+      return typeof luc === "string" && new Date(luc).getTime() > moc24h;
+    });
+    if (vuaNhan) continue; // đã nhắn khách này trong 24 giờ — để lượt sau, không dồn tin nhắn
+    await guiThongBao(soan(cuaKhach, nguoi.get(id)!));
+    // Đánh dấu ngay cả khi gửi hỏng — không thì mỗi phút lại gửi lại. Thư hỏng có sổ sự cố lo.
+    const luc = new Date().toISOString();
+    for (const t of cuaKhach) {
+      await admin
+        .from("listings")
+        .update({ details: { ...(t.details ?? {}), [dau]: t.tier_expires_at, [`${dau}_luc`]: luc } })
+        .eq("id", t.id);
+    }
+    daGui++;
+  }
+  return daGui;
 }
 
+/** Lấy email/điện thoại của các chủ tin trong MỘT lần hỏi, không hỏi từng người. */
 async function layNguoi(admin: SupabaseClient, ids: (string | null)[]): Promise<Map<string, Nguoi>> {
   const co = [...new Set(ids.filter((x): x is string => Boolean(x)))];
   if (co.length === 0) return new Map();
