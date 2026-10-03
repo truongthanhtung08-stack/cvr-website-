@@ -14,14 +14,13 @@ import ShareButtons from "@/components/ShareButtons";
 import PriceHistory from "@/components/PriceHistory";
 import {
   chiSoChoTin,
-  chonNguonDay,
   coDuLichSuGia,
-  xuHuongCuaMinh,
+  khoCuaMinh,
   giaTinSoDuocVoiChiSo,
   tenPhamVi,
 } from "@/lib/chiSoGia";
 import { getChiSoGia } from "@/lib/siteContent";
-import { nhanDienTich as nhanDienTichTheoLoai } from "@/lib/listingSpec";
+import { nhanDienTich as nhanDienTichTheoLoai, laTinThue } from "@/lib/listingSpec";
 import ProjectNearby from "@/components/ProjectNearby";
 import ProjectNav from "@/components/ProjectNav";
 import { BreadcrumbJsonLd } from "@/components/Breadcrumb";
@@ -266,14 +265,17 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
   const curDistrict = districtOf(l.location);
   const all = await getListings(); // B2: tin tương tự cũng lấy từ Supabase
 
-  // Mặt bằng giá: tính từ chính tin đang đăng (cùng loại hình, cùng khu vực).
-  // Chỉ số theo quý: chủ dự án nhập trong admin từ báo cáo thị trường.
-  // Hai nguồn: kho gia_khu_vuc_thang tự chụp mỗi tháng và dãy nhập tay từ báo
-  // cáo thị trường. Lấy nguồn DÀY HƠN — kho của mình còn mỏng thì chưa được đè
-  // lên dãy bảy quý; dài hơn rồi thì tự thay, không ai phải bấm gì.
-  const chiSoTin = chonNguonDay(
-    l.diaGioi?.ward ? await xuHuongCuaMinh(l.diaGioi?.province ?? "", l.type, l.purpose ?? "ban", l.diaGioi.ward) : null,
-    chiSoChoTin(l, await getChiSoGia(), { duAn: d.projectName, diaChi: d.addressDetail }),
+  // Hai nguồn đưa chung vào bộ chọn 4 bậc: kho tự tính từ tin trên web + số Cowork nhập.
+  const nhapTay = await getChiSoGia();
+  const chiSoTin = chiSoChoTin(
+    l,
+    {
+      items: [
+        ...(await khoCuaMinh(l.diaGioi?.province ?? "", l.type, laTinThue(l.purpose) ? "thue" : "ban")),
+        ...(nhapTay?.items ?? []),
+      ],
+    },
+    { duAn: d.projectName, diaChi: d.addressDetail },
   );
   const samePurpose = all.filter((x) => x.id !== l.id && (x.purpose ?? "ban") === purpose);
   // HỆ SỐ X (tài liệu: "khuếch đại phân phối"): trong khối "Có thể bạn quan tâm",
@@ -612,7 +614,11 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                      TỈNH. Đề "tại Phường Hòa Xuân" mà số là giá toàn Đà Nẵng thì
                      người xem hiểu sai hẳn, vì giá giữa các phường lệch rất xa. */
                   title={`Lịch sử giá ${purpose === "thue" ? "thuê" : "bán"} ${l.type.toLowerCase()} tại ${
-                    chiSoTin ? tenPhamVi(chiSoTin) : ""
+                    chiSoTin?.duAn && chiSoTin.duAn === l.projectSlug && d.projectName
+                      ? d.projectName
+                      : chiSoTin
+                        ? tenPhamVi(chiSoTin)
+                        : ""
                   }`}
                 >
                   <PriceHistory

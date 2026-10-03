@@ -23,7 +23,10 @@ type Dong = {
   price_vnd: number | null;
   area_m2: number | null;
   built_area_m2: number | null;
-  details: { dtSanUocTinh?: number | null } | null;
+  details: {
+    dtSanUocTinh?: number | null;
+    project?: string | null;
+  } | null;
 };
 
 function trungVi(ds: number[]): number {
@@ -43,33 +46,41 @@ export async function chupGiaKhuVuc(): Promise<{ ghi: number; boQua: number } | 
     .limit(20000);
   if (error || !data) return null;
 
-  // Chỉ gom theo PHƯỜNG + LOẠI HÌNH (chủ dự án 03/10/2026): không có số "cả tỉnh" —
-  // giá cả thành phố không được dùng nói thay cho một khu vực.
+  // GOM THEO ĐÚNG PHÂN KHÚC + VỊ TRÍ (chủ dự án 03/10/2026), hai kiểu nhóm:
+  //   · theo DỰ ÁN:  tỉnh + dự án + loại hình + bán/thuê
+  //   · theo PHƯỜNG: tỉnh + phường + loại hình + bán/thuê
+  // Không có nhóm "cả tỉnh" — số cả tỉnh chỉ nhận từ nguồn công bố, không tự gộp.
   const nhom = new Map<string, number[]>();
+  const them = (key: string, v: number) => {
+    const cu = nhom.get(key);
+    if (cu) cu.push(v);
+    else nhom.set(key, [v]);
+  };
   for (const r of data as Dong[]) {
     const tinh = (r.province ?? "").trim();
     const loai = (r.type ?? "").trim();
     if (!tinh || !loai) continue;
+    // Chỉ tin RAO BÁN / CHO THUÊ — tin cần mua, cần thuê là giá mong muốn, không phải giá rao.
+    const mucDich = r.purpose === "thue" ? "thue" : r.purpose === "ban" || !r.purpose ? "ban" : "";
+    if (!mucDich) continue;
     // Giá mỗi m² ĐÚNG LUẬT CỦA LOẠI HÌNH (đất → m² đất · nhà → m² sàn · căn hộ →
     // m² căn) — cùng một hàm với trang tin. Tin nhà chưa có m² sàn thì không góp.
     const m2 = giaMoiM2({
       type: loai,
-      purpose: r.purpose,
+      purpose: mucDich,
       priceVnd: r.price_vnd,
       areaM2: r.area_m2,
       builtAreaM2: r.built_area_m2,
       builtAreaM2Uoc: r.details?.dtSanUocTinh ?? null,
     } as Listing);
     if (m2 == null) continue;
-    const mucDich = (r.purpose ?? "ban").trim();
-    const phuong = (r.ward ?? "").trim();
 
-    // Tin không ghi phường thì không góp vào đâu cả.
+    const duAn = (r.details?.project ?? "").trim();
+    if (duAn) them([tinh, "", loai, mucDich, duAn].join("|"), m2);
+
+    const phuong = (r.ward ?? "").trim();
     if (!phuong) continue;
-    const key = `${tinh}|${phuong}|${loai}|${mucDich}`;
-    const cu = nhom.get(key);
-    if (cu) cu.push(m2);
-    else nhom.set(key, [m2]);
+    them([tinh, phuong, loai, mucDich, ""].join("|"), m2);
   }
 
   const thang = new Date();
@@ -83,11 +94,12 @@ export async function chupGiaKhuVuc(): Promise<{ ghi: number; boQua: number } | 
       boQua++;
       continue;
     }
-    const [tinh, phuong, loai, mucDich] = key.split("|");
+    const [tinh, phuong, loai, mucDich, duAn] = key.split("|");
     rows.push({
       thang: mocThang,
       tinh,
       phuong,
+      du_an: duAn,
       loai_hinh: loai,
       muc_dich: mucDich,
       trung_vi: Math.round(trungVi(ds)),

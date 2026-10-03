@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { ChiSoGiaData, ChiSoKhuVuc, LoiCsv, MauSo, ViTriGia } from "@/lib/chiSoGia";
-import { docBangChiSo, docCsvChiSo, TINH_MIEN_TRUNG, TEN_VI_TRI } from "@/lib/chiSoGia";
+import { docBangChiSo, docCsvChiSo, TINH_MIEN_TRUNG, TEN_VI_TRI, mauSoCuaLoaiHinh, MAU_TOI_THIEU } from "@/lib/chiSoGia";
 import { docBangXlsx, laXlsx } from "@/lib/docXlsx";
 import { chuanTen, provinceNamesFor } from "@/lib/locations";
 import { taiCsv, homNay } from "@/lib/xuatCsv";
@@ -122,6 +122,92 @@ export default function ChiSoGiaPage() {
         r.so_mau,
       ]),
     );
+  }
+
+  // DANH SÁCH CÒN THIẾU — gửi Cowork lọc bổ sung. Dựng từ CHÍNH TIN ĐANG ĐĂNG:
+  // mỗi tin cần một dãy theo phường (và theo dự án nếu tin thuộc dự án), cùng loại
+  // hình + bán/thuê. Đối chiếu 24 tháng gần nhất với số đã có (kho tự tính đủ mẫu +
+  // số đã nhập); tháng nào chưa có thì xuất thành một dòng đúng khuôn tệp mẫu.
+  async function xuatThieu() {
+    setDangXuat(true);
+    const sb = createClient();
+    const tin: { province: string | null; ward: string | null; type: string | null; purpose: string | null; details: { project?: string; projectName?: string } | null }[] = [];
+    for (let tu = 0; ; tu += 1000) {
+      const { data } = await sb.from("listings").select("province,ward,type,purpose,details").eq("status", "approved").range(tu, tu + 999);
+      if (!data?.length) break;
+      tin.push(...(data as typeof tin));
+      if (data.length < 1000) break;
+    }
+    const kho: { thang: string; tinh: string; phuong: string; du_an?: string; loai_hinh: string; muc_dich: string; so_mau: number }[] = [];
+    for (let tu = 0; ; tu += 1000) {
+      const { data } = await sb.from("gia_khu_vuc_thang").select("*").range(tu, tu + 999);
+      if (!data?.length) break;
+      kho.push(...(data as typeof kho));
+      if (data.length < 1000) break;
+    }
+
+    // Dãy cần có: khoá = tỉnh|phường|dự án|loại hình|bán/thuê (chuẩn hoá để so).
+    type Day = { tinh: string; phuong: string; duAn: string; duAnSlug: string; loai: string; md: "ban" | "thue" };
+    const k = (tinh: string, phuong: string, duAn: string, loai: string, md: string) =>
+      [chuanTen(tinh), chuanTen(phuong), chuanTen(duAn), chuanTen(loai), md].join("|");
+    const can = new Map<string, Day>();
+    for (const t of tin) {
+      const md = t.purpose === "thue" ? "thue" : t.purpose === "ban" || !t.purpose ? "ban" : null;
+      const tinh = (t.province ?? "").trim();
+      const loai = (t.type ?? "").trim();
+      if (!md || !tinh || !loai) continue;
+      const phuong = (t.ward ?? "").trim();
+      if (phuong) can.set(k(tinh, phuong, "", loai, md), { tinh, phuong, duAn: "", duAnSlug: "", loai, md });
+      const slug = (t.details?.project ?? "").trim();
+      if (slug) {
+        const ten = (t.details?.projectName ?? "").trim() || slug;
+        can.set(k(tinh, "", ten, loai, md), { tinh, phuong: "", duAn: ten, duAnSlug: slug, loai, md });
+      }
+    }
+
+    // Tháng đã có số: kho tự tính (đủ mẫu) + số đã nhập (đúng mẫu số).
+    const co = new Map<string, Set<string>>();
+    const danh = (khoa: string, thang: string) => {
+      if (!co.has(khoa)) co.set(khoa, new Set());
+      co.get(khoa)!.add(thang);
+    };
+    const slugSangTen = new Map([...can.values()].filter((d) => d.duAnSlug).map((d) => [d.duAnSlug, d.duAn]));
+    for (const r of kho) {
+      if (r.so_mau < MAU_TOI_THIEU) continue;
+      const duAn = r.du_an ? slugSangTen.get(r.du_an) ?? r.du_an : "";
+      danh(k(r.tinh, duAn ? "" : r.phuong, duAn, r.loai_hinh, r.muc_dich), String(r.thang).slice(0, 7));
+    }
+    for (const x of items) {
+      if (!x.loaiHinh || x.mauSo !== mauSoCuaLoaiHinh(x.loaiHinh) || x.viTri) continue;
+      for (const m of x.moc) if (m.giaM2 > 0) danh(k(x.tinh, x.duAn ? "" : x.khuVuc ?? "", x.duAn ?? "", x.loaiHinh, x.mucDich ?? "ban"), m.quy);
+    }
+
+    // 24 tháng gần nhất, không tính tháng đang chạy (tháng này web tự tính).
+    const thang: string[] = [];
+    const now = new Date();
+    for (let i = 24; i >= 1; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      thang.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+    }
+    const dong: unknown[][] = [];
+    for (const [khoa, d] of can) {
+      const daCo = co.get(khoa) ?? new Set();
+      for (const t of thang) {
+        if (daCo.has(t)) continue;
+        dong.push([d.tinh, d.phuong, d.loai, d.md, t, "", "", "", "", "", "", "", mauSoCuaLoaiHinh(d.loai), "", d.duAn, ""]);
+      }
+    }
+    setDangXuat(false);
+    if (!dong.length) {
+      setMsg("Mọi dãy của tin đang đăng đã đủ số 24 tháng.");
+      return;
+    }
+    taiCsv(
+      `lich-su-gia-con-thieu-${homNay()}.csv`,
+      ["tinh", "khu_vuc", "loai_hinh", "muc_dich", "ky", "gia_m2_trieu", "gia_thap_trieu", "gia_cao_trieu", "nguon", "cap_nhat", "so_mau", "nguon_link", "mau_so", "vi_tri", "du_an", "duong"],
+      dong,
+    );
+    setMsg(`Đã xuất ${dong.length} dòng còn thiếu (${can.size} dãy) — gửi Cowork điền theo YEU-CAU-COWORK-LICH-SU-GIA.md.`);
   }
 
   async function chonTep(e: React.ChangeEvent<HTMLInputElement>) {
@@ -396,6 +482,14 @@ export default function ChiSoGiaPage() {
             </div>
           </div>
         )}
+        <button
+          type="button"
+          onClick={xuatThieu}
+          disabled={dangXuat}
+          className="mt-3 mr-2 rounded-lg bg-cvr-ink px-4 py-2 text-sm font-semibold text-white transition disabled:opacity-60"
+        >
+          {dangXuat ? "Đang tải…" : "Tải danh sách còn thiếu (gửi Cowork)"}
+        </button>
         {kho && kho.dong > 0 && (
           <button
             type="button"

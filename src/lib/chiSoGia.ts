@@ -245,12 +245,6 @@ export function tenNguonHienThi(nguon: string): string {
  * dòng cả tỉnh, khớp đúng loại hình ăn đứt dòng chung. Tỉnh chưa có dòng nào thì
  * trả null: không vẽ, chứ không mượn số tỉnh khác đắp vào.
  */
-/** Loại hình này có xét VỊ TRÍ đường không. Căn hộ/chung cư/condotel nằm trong
- *  toà nhà — vị trí của chúng là DỰ ÁN, không phải bề rộng đường trước cửa. */
-export function canViTri(loaiHinh: string): boolean {
-  return mauSoCuaLoaiHinh(loaiHinh) !== "can";
-}
-
 /** Phạm vi của một dãy: du-an · duong · phuong · tinh. */
 export function bacCuaDay(x: ChiSoKhuVuc): "du-an" | "duong" | "phuong" | "tinh" {
   return x.duAn ? "du-an" : x.duong ? "duong" : x.khuVuc ? "phuong" : "tinh";
@@ -272,9 +266,9 @@ function coDuong(diaChi: string, duong: string): boolean {
 }
 
 /**
- * CHỌN DÃY CHO MỘT TIN — BỐN BẬC, chủ dự án chốt 03/10/2026:
- *   ① cùng DỰ ÁN → ② cùng TUYẾN ĐƯỜNG → ③ cùng PHƯỜNG + cùng VỊ TRÍ (đường lớn /
- *   đường nhỏ / kiệt) → ④ cả TỈNH khi dãy đó nhập đủ số.
+ * CHỌN DÃY CHO MỘT TIN — BỐN BẬC, chủ dự án chốt 03/10/2026 (cùng phân khúc,
+ * cùng vị trí): ① cùng DỰ ÁN → ② cùng TUYẾN ĐƯỜNG → ③ cùng PHƯỜNG → ④ cả TỈNH
+ * khi dãy đó nhập đủ số.
  * Bậc nào cũng bắt buộc: cùng tỉnh · cùng loại hình · cùng bán/thuê · đúng mẫu số
  * của loại hình · ĐỦ SỐ (13 tháng liền). Bậc trên không đủ số mới xuống bậc dưới.
  * Không bậc nào đủ → null, khối Lịch sử giá ẩn hẳn.
@@ -290,7 +284,6 @@ export function chiSoChoTin(
   const loai = chuanTen(tin.type);
   const mucDich = laTinThue(tin.purpose) ? "thue" : "ban";
   const mau = mauSoCuaLoaiHinh(tin.type);
-  const xetViTri = canViTri(tin.type);
   const duAn = chuanTen(them.duAn ?? "");
   const diaChi = them.diaChi ?? "";
   if (!tinh) return null;
@@ -302,26 +295,24 @@ export function chiSoChoTin(
       (x.mucDich ?? "ban") === mucDich &&
       !!x.loaiHinh && chuanTen(x.loaiHinh) === loai &&
       x.mauSo === mau &&
+      !x.viTri && // cùng phân khúc + cùng vị trí; không chia nhỏ theo bề rộng đường
       coDuLichSuGia(x),
   );
-  // Cùng vị trí: loại hình có xét vị trí thì dãy PHẢI khai vị trí và trùng vị trí của tin.
-  const cungViTri = (x: ChiSoKhuVuc) => !xetViTri || (!!x.viTri && x.viTri === tin.viTri);
 
   const bac: ((x: ChiSoKhuVuc) => boolean)[] = [
     // ① cùng dự án
-    (x) => !!duAn && !!x.duAn && chuanTen(x.duAn) === duAn,
-    // ② cùng tuyến đường (trong đúng phường) + cùng vị trí
-    (x) => !x.duAn && !!x.duong && !!phuong && chuanTen(x.khuVuc ?? "") === phuong &&
-      coDuong(diaChi, x.duong) && cungViTri(x),
-    // ③ cùng phường + cùng vị trí
-    (x) => !x.duAn && !x.duong && !!phuong && chuanTen(x.khuVuc ?? "") === phuong && cungViTri(x),
+    (x) => !!x.duAn && ((!!duAn && chuanTen(x.duAn) === duAn) || (!!tin.projectSlug && x.duAn === tin.projectSlug)),
+    // ② cùng tuyến đường (trong đúng phường)
+    (x) => !x.duAn && !!x.duong && !!phuong && chuanTen(x.khuVuc ?? "") === phuong && coDuong(diaChi, x.duong),
+    // ③ cùng phường
+    (x) => !x.duAn && !x.duong && !!phuong && chuanTen(x.khuVuc ?? "") === phuong,
     // ④ cả tỉnh — dãy nhập đủ cho cả tỉnh (không ghi phường/đường/dự án)
-    (x) => !x.duAn && !x.duong && !x.khuVuc && (!x.viTri || cungViTri(x)),
+    (x) => !x.duAn && !x.duong && !x.khuVuc,
   ];
   for (const dung of bac) {
-    const ds = hop.filter(dung);
-    // Cùng bậc mà có dãy khai đúng vị trí thì ưu tiên hơn dãy chung.
-    if (ds.length) return ds.find((x) => x.viTri && x.viTri === tin.viTri) ?? ds[0];
+    // Cùng bậc: ưu tiên dãy dài hơn (nhiều tháng liền hơn).
+    const ds = hop.filter(dung).sort((a, b) => soKyLienMach(b) - soKyLienMach(a));
+    if (ds.length) return ds[0];
   }
   return null;
 }
@@ -457,7 +448,7 @@ export function docBangChiSo(bang: string[][]): { items: ChiSoKhuVuc[]; loi: Loi
     const loaiHinh = lay(2);
     const duAnO = themLay(6).trim();
     const duongO = themLay(7).trim();
-    // BỐN BẬC (chủ dự án 03/10/2026): dự án → tuyến đường → phường + vị trí → cả tỉnh.
+    // BỐN BẬC (chủ dự án 03/10/2026): dự án → tuyến đường → phường → cả tỉnh.
     // Dòng nào không đủ điều kiện của bậc mình thì trang tin không bao giờ dùng tới →
     // chặn ngay khi nhập, không để nằm trong kho như số liệu hợp lệ.
     if (!loaiHinh.trim()) {
@@ -473,8 +464,8 @@ export function docBangChiSo(bang: string[][]): { items: ChiSoKhuVuc[]; loi: Loi
       loi.push({ dong: i + 1, ly: "Có duong thì phải ghi khu_vuc (phường/xã của tuyến đường đó)" });
       continue;
     }
-    if (!duAnO && khuVuc.trim() && canViTri(loaiHinh) && !docViTri(themLay(5))) {
-      loi.push({ dong: i + 1, ly: `Thiếu vi_tri (lon · nho · kiet) — ${loaiHinh} phải tách theo vị trí đường` });
+    if (themLay(5).trim()) {
+      loi.push({ dong: i + 1, ly: "Bỏ trống vi_tri — lịch sử giá chỉ tách theo dự án / tuyến đường / phường" });
       continue;
     }
     if (!duAnO && !khuVuc.trim() && !themLay(3).trim()) {
@@ -580,78 +571,77 @@ export function soSanhKhuVuc(tin: Listing, tatCa: Listing[], toiDa = 5): OSanh[]
 // Bảng gia_khu_vuc_thang chụp mặt bằng giá mỗi tháng và giữ lại vĩnh viễn. Khi
 // kho đủ dày (mỗi quý có mẫu), web tự vẽ đường giá của mình và KHÔNG cần số
 // mượn bên ngoài nữa — đây chính là cách Batdongsan làm, chỉ khác quy mô.
-// Chưa đủ thì trả null, nơi gọi lùi về chỉ số nhập tay từ báo cáo.
+// Trả mọi dãy của tỉnh + loại hình + bán/thuê (theo dự án, theo phường)
+// để bộ chọn 4 bậc (chiSoChoTin) lấy dãy sát nhất mà đủ số.
 
-export async function xuHuongCuaMinh(
+export async function khoCuaMinh(
   tinh: string,
   loaiHinh: string,
   mucDich: string,
-  phuong = "",
-): Promise<ChiSoKhuVuc | null> {
+): Promise<ChiSoKhuVuc[]> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !anon || !tinh || !loaiHinh) return null;
-  // Kho tự chụp mới gom theo PHƯỜNG, chưa tách vị trí đường — chỉ dùng được cho
-  // loại hình không xét vị trí (căn hộ). Nhà, đất phải cùng vị trí (bậc ③).
-  if (canViTri(loaiHinh)) return null;
+  if (!url || !anon || !tinh || !loaiHinh) return [];
 
   const q =
     `${url}/rest/v1/gia_khu_vuc_thang` +
-    `?select=thang,trung_vi,thap,cao,so_mau` +
+    `?select=thang,phuong,du_an,trung_vi,thap,cao,so_mau` +
     `&tinh=eq.${encodeURIComponent(tinh)}` +
-    `&phuong=eq.${encodeURIComponent(phuong)}` +
     `&loai_hinh=eq.${encodeURIComponent(loaiHinh)}` +
     `&muc_dich=eq.${encodeURIComponent(mucDich)}` +
-    `&order=thang.desc&limit=36`; // 36 tháng MỚI NHẤT
+    `&order=thang.desc&limit=5000`;
 
   try {
     const r = await fetch(q, {
       headers: { apikey: anon, Authorization: `Bearer ${anon}` },
       cache: "no-store",
     });
-    if (!r.ok) return null;
+    if (!r.ok) return [];
     const ds = (await r.json()) as {
       thang: string;
+      phuong: string;
+      du_an?: string;
       trung_vi: number;
       thap: number;
       cao: number;
       so_mau: number;
     }[];
-    if (!Array.isArray(ds)) return null;
-    ds.reverse();
+    if (!Array.isArray(ds)) return [];
 
-    // Tháng nào mẫu quá mỏng thì BỎ HẲN mốc đó: một chấm tính từ 3 tin đứng
-    // cạnh chấm tính từ 40 tin là vẽ ra một đoạn dốc không có thật.
-    const duMau = ds.filter((d) => d.so_mau >= MAU_TOI_THIEU);
-    if (duMau.length < 2) return null;
-
-    // VẼ THEO THÁNG, không gom quý. Kho này web tự chụp mỗi ngày nên nó là nguồn
-    // bám sát thị trường nhất mình có — gom về quý là tự tay làm chậm số liệu đi
-    // ba tháng. Số nhập tay từ báo cáo thì vẫn theo quý, nhưng hai nguồn không
-    // bao giờ vẽ chung một biểu đồ (nơi gọi chọn nguồn DÀY HƠN — xem chonNguonDay).
-    // Mỗi mốc giữ đủ ba mức: phổ biến (trung vị) · thấp · cao.
-    // Giữ tới 25 tháng: so cùng kỳ năm trước cần 13 mốc, xem 2 năm cần 25.
-    // (Bản cũ cắt còn 12 mốc nên dãy của mình KHÔNG BAO GIỜ đủ để hiện.)
-    const moc: MocQuy[] = duMau.slice(-25).map((d) => ({
-      quy: d.thang.slice(0, 7),
-      giaM2: Math.round(d.trung_vi),
-      thap: d.thap > 0 ? Math.round(d.thap) : undefined,
-      cao: d.cao > 0 ? Math.round(d.cao) : undefined,
-    }));
-    if (moc.length < 2) return null;
-
-    return {
-      tinh,
-      khuVuc: phuong || undefined,
-      loaiHinh,
-      mucDich: mucDich === "thue" ? "thue" : "ban",
-      mauSo: mauSoCuaLoaiHinh(loaiHinh),
-      nguon: "tin đăng trên Coastal Land",
-      capNhat: duMau[duMau.length - 1].thang,
-      moc,
-    };
+    // Gom từng dãy: theo dự án, hoặc theo phường. Tháng nào dưới 5 tin
+    // thì BỎ HẲN mốc đó (dãy hổng tháng đó → coDuLichSuGia tự không cho hiện).
+    const gom = new Map<string, ChiSoKhuVuc>();
+    for (const d of ds) {
+      if (d.so_mau < MAU_TOI_THIEU) continue;
+      const duAn = d.du_an ?? "";
+      const khoa = [d.phuong, duAn].join("|");
+      let x = gom.get(khoa);
+      if (!x) {
+        x = {
+          tinh,
+          khuVuc: duAn ? undefined : d.phuong || undefined,
+          duAn: duAn || undefined,
+          loaiHinh,
+          mucDich: mucDich === "thue" ? "thue" : "ban",
+          mauSo: mauSoCuaLoaiHinh(loaiHinh),
+          nguon: "tin đăng trên Coastal Land",
+          capNhat: d.thang,
+          moc: [],
+        };
+        gom.set(khoa, x);
+      }
+      x.moc.push({
+        quy: d.thang.slice(0, 7),
+        giaM2: Math.round(d.trung_vi),
+        thap: d.thap > 0 ? Math.round(d.thap) : undefined,
+        cao: d.cao > 0 ? Math.round(d.cao) : undefined,
+        soMau: d.so_mau,
+      });
+    }
+    // Đang xếp mới → cũ; đảo lại và giữ tới 25 tháng (đủ xem 2 năm).
+    return [...gom.values()].map((x) => ({ ...x, moc: x.moc.reverse().slice(-25) }));
   } catch {
-    return null;
+    return [];
   }
 }
 
@@ -684,16 +674,6 @@ export function coDuDeHienLichSuGia(
  * nói lên ít hơn. Khi kho của mình dài hơn thì nó thắng, và web tự chuyển sang
  * số của chính mình, không ai phải bấm gì.
  */
-export function chonNguonDay(
-  cuaMinh: ChiSoKhuVuc | null,
-  nhapTay: ChiSoKhuVuc | null,
-): ChiSoKhuVuc | null {
-  // Nguồn nào đủ số để hiện (có cùng kỳ năm trước) thì được ưu tiên trước.
-  const du = (x: ChiSoKhuVuc | null) => coDuLichSuGia(x);
-  if (du(cuaMinh) !== du(nhapTay)) return du(cuaMinh) ? cuaMinh : nhapTay;
-  const dem = (x: ChiSoKhuVuc | null) => x?.moc?.filter((m) => m.giaM2 > 0).length ?? 0;
-  return dem(cuaMinh) >= dem(nhapTay) ? (cuaMinh ?? nhapTay) : nhapTay;
-}
 
 // ── MẶT BẰNG GIÁ THEO LOẠI HÌNH CHO CẢ MỘT KHU VỰC ─────────────────────────
 // Dùng ở trang khu vực (/mua-ban/da-nang…): khách vào xem "nhà đất Đà Nẵng" thì
