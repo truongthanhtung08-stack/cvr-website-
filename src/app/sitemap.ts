@@ -9,7 +9,10 @@ import { khuVucList } from "@/lib/khuVuc";
 // TỰ LÀM MỚI MỖI GIỜ. Trước đây để `force-static` (di sản thời GitHub Pages):
 // sitemap chỉ sinh 1 lần lúc build, nên MỌI tin/dự án/bài viết đăng sau lần
 // deploy gần nhất đều KHÔNG có trong sitemap → Google không biết mà vào lấy.
-export const revalidate = 3600;
+// 03/10/2026: đo thật bản lưu sẵn 9 tiếng chưa làm mới (Age 32920) → tin vừa hết hạn vẫn
+// nằm trong sitemap. Dựng mới mỗi lượt đọc: dữ liệu bên dưới vẫn có cache theo thẻ
+// "listings" (60s, xoá ngay khi tin hết hạn/duyệt) nên không chậm, mà luôn đúng.
+export const dynamic = "force-dynamic";
 
 // sitemap.xml (Next tự sinh khi build) — giúp Google phát hiện & lập chỉ mục nhanh.
 // Gồm các trang tĩnh chính + trang chi tiết động (dự án, tin tức, bất động sản).

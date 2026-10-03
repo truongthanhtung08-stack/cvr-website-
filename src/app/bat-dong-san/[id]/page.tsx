@@ -187,8 +187,19 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
 export default async function ListingDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [d, hetHan] = await Promise.all([getListingDetail(id), tinDaHetHan(id)]); // DỮ LIỆU THẬT: ảnh, đặc điểm, tiện ích, người đăng
-  if (!d) notFound();
+  const [dGoc, hetHan] = await Promise.all([getListingDetail(id), tinDaHetHan(id)]); // DỮ LIỆU THẬT: ảnh, đặc điểm, tiện ích, người đăng
+  if (!dGoc) notFound();
+  // TIN HẾT HẠN: liên hệ tạm ẩn — kể cả số người đăng TỰ GHI trong mô tả ("Liên hệ 0905…").
+  // Che ngay ở dữ liệu (trước khi gửi xuống trình duyệt) để số không lọt vào mã trang.
+  // Đúng dạng SĐT Việt Nam (0/+84 + 3/5/7/8/9 + 8 số, cho phép cách/chấm/gạch) — không chạm giá tiền.
+  const cheSo = (s: string) => s.replace(/(?<![\d.,])(?:\+?84[\s.\-]?|0)[35789](?:[\s.\-]?\d){8}(?!\d)/g, "••••");
+  const d = hetHan
+    ? {
+        ...dGoc,
+        descriptionParas: dGoc.descriptionParas.map(cheSo),
+        listing: { ...dGoc.listing, ...(dGoc.listing.desc ? { desc: cheSo(dGoc.listing.desc) } : {}) },
+      }
+    : dGoc;
   const l = d.listing;
   // Hạng CVR của tin (đồng bộ với thẻ tin V.7). Không có huy hiệu → tin thường.
   const tier = l.badge ? getTier(tierFromBadge(l.badge)) : null;
@@ -313,8 +324,38 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
         <div className="mx-auto max-w-7xl px-4 pt-0 pb-footer sm:px-6 sm:pt-0 lg:px-8">
 
           <HomeExpandProvider>
+          {/* TIN HẾT HẠN — CẤU TRÚC NHƯ BATDONGSAN (đo trang thật 03/10/2026):
+              thông báo + "Xem nội dung tin" → BĐS dành cho bạn (gợi ý LÊN TRƯỚC) →
+              "Nội dung tin đăng" (giữ nội dung cũ, số trong mô tả đã che, không liên hệ). */}
+          {hetHan && (
+            <>
+              <div className="mt-4 rounded-2xl border border-cvr-line bg-cvr-surface px-5 py-5 text-center sm:mt-6">
+                <p className="text-[17px] font-semibold tracking-tight text-cvr-ink">Tin đăng này đã hết hạn trên Coastal Land.</p>
+                <p className="mt-1.5 text-sm leading-relaxed text-cvr-muted">
+                  Bạn có thể tham khảo những gợi ý dưới đây hoặc dùng công cụ tìm kiếm để tìm những tin đăng mới nhất.
+                </p>
+                <a href="#noi-dung-tin" className="mt-4 inline-flex h-10 items-center rounded-full border border-cvr-line bg-white px-5 text-sm font-semibold text-cvr-ink transition hover:border-cvr-ink">
+                  Xem nội dung tin
+                </a>
+              </div>
+              <ListingShowcase
+                items={relatedFill}
+                sectionKey="bds-tuong-tu"
+                purpose={purpose === "thue" || purpose === "can-thue" ? "thue" : "ban"}
+                title="Bất động sản dành cho bạn"
+                heading="Bất động sản dành cho bạn"
+                relevance
+                emptyNote="Chưa có bất động sản tương tự."
+              />
+            </>
+          )}
           {/* Toàn bộ nội dung tin — ẩn khi bấm "Xem thêm" ở mục BĐS tương tự */}
           <HomeCollapsible>
+          {hetHan && (
+            <h2 id="noi-dung-tin" className="mb-4 mt-8 scroll-mt-28 text-[19px] font-semibold tracking-tight text-cvr-ink sm:text-[22px]">
+              Nội dung tin đăng
+            </h2>
+          )}
 
           {/* Thư viện ảnh THẬT — MOBILE tràn viền sát 2 mép + sát header (không khoảng trống) */}
           <div className="-mx-4 mb-5 sm:mx-0">
@@ -370,11 +411,6 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                     giá ngay bên dưới trong cùng một màn hình. */}
                 {/* TIN HẾT HẠN (chốt 25/09/2026, theo Batdongsan): link cũ vẫn mở,
                     nói thẳng tin đã hết hạn, ẩn số người đăng, gợi ý tin tương tự bên dưới. */}
-                {hetHan && (
-                  <p className="mt-3 rounded-xl bg-amber-50 px-4 py-3 text-sm leading-relaxed text-amber-900">
-                    <b className="font-semibold">Tin đã hết hạn hiển thị.</b> Thông tin liên hệ tạm ẩn — xem các tin tương tự bên dưới.
-                  </p>
-                )}
                 <h1 className="mt-3 text-[21px] font-semibold leading-[1.3] tracking-tight text-cvr-ink sm:text-[28px]">{l.title}</h1>
 
                 {/* ĐỊA CHỈ HAI DÒNG — người đăng nhập theo hệ nào cũng vậy:
@@ -659,6 +695,8 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
               giữ ĐÚNG thứ tự ưu tiên tương tự; nội dung tin phía trên ẩn đi.
               Tiêu đề do chính khối tự dựng (ẩn khi mở danh sách → không lặp chữ,
               không chừa khoảng trống trên đầu). */}
+          {/* Tin hết hạn đã đưa gợi ý lên đầu trang — không lặp lại ở cuối. */}
+          {!hetHan && (
           <ListingShowcase
             items={relatedFill}
             sectionKey="bds-tuong-tu"
@@ -668,6 +706,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
             relevance
             emptyNote="Chưa có bất động sản tương tự."
           />
+          )}
           </HomeExpandProvider>
         </div>
 

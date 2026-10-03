@@ -4,6 +4,20 @@ import { getTier, type TierId } from "@/lib/packages";
 import { guiThongBao, maTin, MAU_DA_HET_HAN, MAU_SAP_HET_HAN } from "@/lib/thongBao";
 import { baoLoi } from "@/lib/baoLoi";
 
+// CÔNG TẮC BÁO KHÁCH VỀ HẾT HẠN (email/Zalo "sắp hết hạn" + "đã hết hạn").
+// Chủ dự án chốt 03/10/2026: chỉ đổi khi CHỦ DỰ ÁN YÊU CẦU. Tắt thì tin vẫn chuyển
+// 'expired' đúng giờ, rời mọi danh sách, chỉ không nhắn khách.
+// 03/10 (sau): BẬT — nhưng CHỈ nhắn khách TỰ đăng ký · đăng nhập · đăng tin (xem tuDang).
+// Tin admin đăng hộ / nhập hàng loạt → không nhắn. Đặt false = tắt hẳn.
+const BAO_KHACH_HET_HAN = true;
+
+// KHÁCH TỰ ĐĂNG: tin có chủ là khách (không phải admin) và gửi qua FORM CỦA KHÁCH
+// (web PostListingForm / Mini App — chỉ 2 form này ghi details.plan = gói khách tự chọn;
+// form admin đăng hộ và nhập hàng loạt không ghi). Tự đăng tin thì đã tự đăng ký + đăng nhập.
+function tuDang(tin: Tin, chu: Nguoi | undefined): chu is Nguoi {
+  return !!chu && chu.role !== "admin" && !!tin.details && "plan" in tin.details;
+}
+
 // ════════════════════════════════════════════════════════════════════════════
 // TIN HẾT HẠN GÓI — NHẮC TRƯỚC 3 NGÀY, HẾT HẠN THÌ NGỪNG HIỂN THỊ (như BĐS)
 //
@@ -45,7 +59,7 @@ type Tin = {
   details: Record<string, unknown> | null;
 };
 
-type Nguoi = { id: string; email: string | null; phone: string | null; full_name: string | null };
+type Nguoi = { id: string; email: string | null; phone: string | null; full_name: string | null; role: string | null };
 
 export async function quetTinHetHan(
   admin: SupabaseClient,
@@ -89,7 +103,9 @@ export async function quetTinHetHan(
       }
       daHa++;
 
+      if (!BAO_KHACH_HET_HAN) continue; // đang tắt báo khách — tin vẫn chuyển Hết hạn đúng giờ
       const chu = nguoi.get(tin.owner_id ?? "");
+      if (!tuDang(tin, chu)) continue; // tin admin đăng hộ / nhập hàng loạt — không nhắn
       await guiThongBao({
         email: chu?.email,
         phone: chu?.phone,
@@ -113,6 +129,12 @@ export async function quetTinHetHan(
     }
 
     // ── 2) SẮP HẾT HẠN → nhắc trước 3 ngày (mọi hạng) ─────────────────────
+    // Đang tắt báo khách → bỏ HẲN bước nhắc (không đánh dấu đã nhắc), để khi bật lại
+    // các tin sắp hết hạn vẫn được nhắc đúng.
+    if (!BAO_KHACH_HET_HAN) {
+      if (daHa > 0) revalidateTag("listings", "max");
+      return { daHa, daNhac };
+    }
     const { data: sapHet } = await admin
       .from("listings")
       .select("id,title,owner_id,tier,tier_expires_at,details")
@@ -129,6 +151,7 @@ export async function quetTinHetHan(
 
     for (const tin of canNhac) {
       const chu = nguoi2.get(tin.owner_id ?? "");
+      if (!tuDang(tin, chu)) continue; // tin admin đăng hộ / nhập hàng loạt — không nhắc
       const hetNgay = new Date(tin.tier_expires_at);
       const conLai = Math.max(0, Math.ceil((hetNgay.getTime() - bayGio.getTime()) / 86_400_000));
 
@@ -183,6 +206,6 @@ export async function quetTinHetHan(
 async function layNguoi(admin: SupabaseClient, ids: (string | null)[]): Promise<Map<string, Nguoi>> {
   const co = [...new Set(ids.filter((x): x is string => Boolean(x)))];
   if (co.length === 0) return new Map();
-  const { data } = await admin.from("profiles").select("id,email,phone,full_name").in("id", co);
+  const { data } = await admin.from("profiles").select("id,email,phone,full_name,role").in("id", co);
   return new Map(((data ?? []) as Nguoi[]).map((n) => [n.id, n]));
 }
