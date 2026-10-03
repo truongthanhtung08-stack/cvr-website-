@@ -17,6 +17,7 @@ import {
   coDuLichSuGia,
   khoCuaMinh,
   tenPhamVi,
+  soSanhKhuVuc,
 } from "@/lib/chiSoGia";
 import { getChiSoGia } from "@/lib/siteContent";
 import { nhanDienTich as nhanDienTichTheoLoai, laTinThue } from "@/lib/listingSpec";
@@ -271,16 +272,12 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
 
   // Hai nguồn đưa chung vào bộ chọn 4 bậc: kho tự tính từ tin trên web + số Cowork nhập.
   const nhapTay = await getChiSoGia();
-  const chiSoTin = chiSoChoTin(
-    l,
-    {
-      items: [
-        ...(await khoCuaMinh(l.diaGioi?.province ?? "", l.type, laTinThue(l.purpose) ? "thue" : "ban")),
-        ...(nhapTay?.items ?? []),
-      ],
-    },
-    { duAn: d.projectName, diaChi: d.addressDetail },
-  );
+  const dayGia = [
+    ...(await khoCuaMinh(l.diaGioi?.province ?? "", l.type, laTinThue(l.purpose) ? "thue" : "ban")),
+    ...(nhapTay?.items ?? []),
+  ];
+  const chiSoTin = chiSoChoTin(l, { items: dayGia }, { duAn: d.projectName, diaChi: d.addressDetail });
+  const lanCan = chiSoTin ? soSanhKhuVuc(l, dayGia, chiSoTin.moc[chiSoTin.moc.length - 1]?.quy ?? "") : [];
   const samePurpose = all.filter((x) => x.id !== l.id && (x.purpose ?? "ban") === purpose);
   // HỆ SỐ X (tài liệu: "khuếch đại phân phối"): trong khối "Có thể bạn quan tâm",
   // VIP được ưu tiên NỔI hơn — Diamond > Gold > Silver. Cộng < 1 nên CHỈ sắp VIP
@@ -617,7 +614,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                      — mặt bằng tính được tới PHƯỜNG trong khi chỉ số mới có cả
                      TỈNH. Đề "tại Phường Hòa Xuân" mà số là giá toàn Đà Nẵng thì
                      người xem hiểu sai hẳn, vì giá giữa các phường lệch rất xa. */
-                  title={`Lịch sử giá ${purpose === "thue" ? "thuê" : "bán"} ${l.type.toLowerCase()} tại ${
+                  title={`Lịch sử giá ${laTinThue(l.purpose) ? "thuê" : "bán"} ${l.type.toLowerCase()} tại ${
                     chiSoTin?.duAn && chiSoTin.duAn === l.projectSlug && d.projectName
                       ? d.projectName
                       : chiSoTin
@@ -627,7 +624,8 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                 >
                   <PriceHistory
                     chiSo={chiSoTin}
-                    laThue={purpose === "thue"}
+                    laThue={laTinThue(l.purpose)}
+                    lanCan={lanCan}
                   />
                 </Section>
               )}

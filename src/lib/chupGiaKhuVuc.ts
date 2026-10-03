@@ -1,5 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { giaMoiM2 } from "@/lib/chiSoGia";
+import { giaChoLichSu } from "@/lib/chiSoGia";
 import type { Listing } from "@/lib/data";
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -12,8 +12,8 @@ import type { Listing } from "@/lib/data";
 // mình tới cấp phường, không phải mượn số của ai nữa.
 // ════════════════════════════════════════════════════════════════════════════
 
-/** Dưới mức này thì mẫu quá mỏng, ghi vào chỉ làm nhiễu kho. */
-const MAU_TOI_THIEU = 3;
+/** Như Batdongsan: có tin là ghi, kèm số tin (so_mau) để hiện cho người xem. */
+const MAU_TOI_THIEU = 1;
 
 type Dong = {
   province: string | null;
@@ -63,9 +63,9 @@ export async function chupGiaKhuVuc(): Promise<{ ghi: number; boQua: number } | 
     // Chỉ tin RAO BÁN / CHO THUÊ — tin cần mua, cần thuê là giá mong muốn, không phải giá rao.
     const mucDich = r.purpose === "thue" ? "thue" : r.purpose === "ban" || !r.purpose ? "ban" : "";
     if (!mucDich) continue;
-    // Giá mỗi m² ĐÚNG LUẬT CỦA LOẠI HÌNH (đất → m² đất · nhà → m² sàn · căn hộ →
-    // m² căn) — cùng một hàm với trang tin. Tin nhà chưa có m² sàn thì không góp.
-    const m2 = giaMoiM2({
+    // BÁN: giá mỗi m² đúng luật loại hình (đất → m² đất · nhà → m² sàn · căn hộ →
+    // m² căn). THUÊ: tổng tiền/tháng. Cùng một hàm với trang tin.
+    const m2 = giaChoLichSu({
       type: loai,
       purpose: mucDich,
       priceVnd: r.price_vnd,

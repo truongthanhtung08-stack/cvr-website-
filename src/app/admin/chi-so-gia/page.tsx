@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { ChiSoGiaData, ChiSoKhuVuc, LoiCsv, MauSo } from "@/lib/chiSoGia";
-import { docBangChiSo, docCsvChiSo, TINH_MIEN_TRUNG, mauSoCuaLoaiHinh, MAU_TOI_THIEU } from "@/lib/chiSoGia";
+import { docBangChiSo, docCsvChiSo, TINH_MIEN_TRUNG, mauSoCuaLoaiHinh, veQuy } from "@/lib/chiSoGia";
 import { docBangXlsx, laXlsx } from "@/lib/docXlsx";
 import { chuanTen, provinceNamesFor } from "@/lib/locations";
 import { taiCsv, homNay } from "@/lib/xuatCsv";
@@ -122,8 +122,8 @@ export default function ChiSoGiaPage() {
 
   // DANH SÁCH CÒN THIẾU — gửi Cowork lọc bổ sung. Dựng từ CHÍNH TIN ĐANG ĐĂNG:
   // mỗi tin cần một dãy theo phường (và theo dự án nếu tin thuộc dự án), cùng loại
-  // hình + bán/thuê. Đối chiếu 24 tháng gần nhất với số đã có (kho tự tính đủ mẫu +
-  // số đã nhập); tháng nào chưa có thì xuất thành một dòng đúng khuôn tệp mẫu.
+  // hình + bán/thuê. Đối chiếu 8 quý gần nhất với số đã có (kho tự tính + số đã
+  // nhập); quý nào chưa có thì xuất thành một dòng đúng khuôn tệp mẫu.
   async function xuatThieu() {
     setDangXuat(true);
     const sb = createClient();
@@ -169,33 +169,35 @@ export default function ChiSoGiaPage() {
     };
     const slugSangTen = new Map([...can.values()].filter((d) => d.duAnSlug).map((d) => [d.duAnSlug, d.duAn]));
     for (const r of kho) {
-      if (r.so_mau < MAU_TOI_THIEU) continue;
       const duAn = r.du_an ? slugSangTen.get(r.du_an) ?? r.du_an : "";
-      danh(k(r.tinh, duAn ? "" : r.phuong, duAn, r.loai_hinh, r.muc_dich), String(r.thang).slice(0, 7));
+      const [y, m] = String(r.thang).slice(0, 7).split("-");
+      danh(k(r.tinh, duAn ? "" : r.phuong, duAn, r.loai_hinh, r.muc_dich), `${y}-Q${Math.ceil(Number(m) / 3)}`);
     }
-    for (const x of items) {
-      if (!x.loaiHinh || x.mauSo !== mauSoCuaLoaiHinh(x.loaiHinh) || x.viTri) continue;
+    for (const x of items.map(veQuy)) {
+      if (!x.loaiHinh || x.viTri) continue;
+      if (x.mucDich === "thue" ? !!x.mauSo : x.mauSo !== mauSoCuaLoaiHinh(x.loaiHinh)) continue;
       for (const m of x.moc) if (m.giaM2 > 0) danh(k(x.tinh, x.duAn ? "" : x.khuVuc ?? "", x.duAn ?? "", x.loaiHinh, x.mucDich ?? "ban"), m.quy);
     }
 
-    // 24 tháng gần nhất, không tính tháng đang chạy (tháng này web tự tính).
+    // 8 quý gần nhất (2 năm), không tính quý đang chạy (quý này web tự tính).
     const thang: string[] = [];
     const now = new Date();
-    for (let i = 24; i >= 1; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      thang.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+    const quyNay = now.getFullYear() * 4 + Math.floor(now.getMonth() / 3);
+    for (let i = 8; i >= 1; i--) {
+      const q = quyNay - i;
+      thang.push(`${Math.floor(q / 4)}-Q${(q % 4) + 1}`);
     }
     const dong: unknown[][] = [];
     for (const [khoa, d] of can) {
       const daCo = co.get(khoa) ?? new Set();
       for (const t of thang) {
         if (daCo.has(t)) continue;
-        dong.push([d.tinh, d.phuong, d.loai, d.md, t, "", "", "", "", "", "", "", mauSoCuaLoaiHinh(d.loai), "", d.duAn, ""]);
+        dong.push([d.tinh, d.phuong, d.loai, d.md, t, "", "", "", "", "", "", "", d.md === "thue" ? "" : mauSoCuaLoaiHinh(d.loai), "", d.duAn, ""]);
       }
     }
     setDangXuat(false);
     if (!dong.length) {
-      setMsg("Mọi dãy của tin đang đăng đã đủ số 24 tháng.");
+      setMsg("Mọi dãy của tin đang đăng đã đủ số 8 quý.");
       return;
     }
     taiCsv(

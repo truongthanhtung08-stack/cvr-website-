@@ -57,7 +57,7 @@
 >   ⛔ **Muốn thêm chú thích / câu giải thích / chỉ dẫn nào: HỎI chủ dự án ghi gì TRƯỚC** — đưa nguyên
 >   văn câu để duyệt, không tự viết.
 > - **Lịch sử giá:** chỉ dãy của đúng khu vực + loại hình + mua bán/cho thuê của tin, đủ so cùng kỳ
->   1 năm mới hiện. Yêu cầu nhập liệu cho Cowork: `YEU-CAU-COWORK-LICH-SU-GIA.md` (làm mới 03/10: cùng phân khúc + cùng vị trí, 4 bậc dự án → đường → phường → cả tỉnh; đủ 13 tháng liền mới hiện; web tự tính, Cowork điền phần thiếu từ nút "Tải danh sách còn thiếu").
+>   1 năm mới hiện. Yêu cầu nhập liệu cho Cowork: `YEU-CAU-COWORK-LICH-SU-GIA.md` (làm mới 03/10: cùng phân khúc + cùng vị trí, 4 bậc dự án → đường → phường → cả tỉnh; theo quý như Batdongsan, đủ 5 quý liền mới hiện, thuê = tổng tiền/tháng; web tự tính, Cowork điền phần thiếu từ nút "Tải danh sách còn thiếu").
 > - Bài học 03/10: Claude tự áp luật, hạ nhầm 49 tin còn hạn — xem memory `gia-chinh-sach-mot-nguon-admin`.
 
 ---

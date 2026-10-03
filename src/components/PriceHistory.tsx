@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import type { ChiSoKhuVuc } from "@/lib/chiSoGia";
-import { vndM2, luiMotNam, coDuLichSuGia, soKyLienMach } from "@/lib/chiSoGia";
+import type { ChiSoKhuVuc, OSanh } from "@/lib/chiSoGia";
+import { vndM2, vndThang, luiMotNam, coDuLichSuGia, soKyLienMach } from "@/lib/chiSoGia";
 
 // ════════════════════════════════════════════════════════════════════════════
 // LỊCH SỬ GIÁ KHU VỰC — bố cục theo Batdongsan (đo 03/10/2026):
@@ -33,8 +33,8 @@ function buocTron(tho: number): number {
   return (([1, 2, 2.5, 5, 10].find((h) => h * mu >= tho) ?? 10) as number) * mu;
 }
 
-function soTruc(v: number, laThue: boolean): string {
-  const n = laThue ? v / 1_000 : v / 1_000_000;
+function soTruc(v: number): string {
+  const n = v / 1_000_000;
   return new Intl.NumberFormat("vi-VN", { maximumFractionDigits: n < 10 ? 1 : 0 }).format(n);
 }
 
@@ -43,21 +43,27 @@ const phanTram = (x: number) => `${Math.abs(x).toFixed(1).replace(".", ",")}%`;
 export default function PriceHistory({
   chiSo,
   laThue = false,
+  lanCan = [],
 }: {
   chiSo: ChiSoKhuVuc | null;
   laThue?: boolean;
+  /** Bảng so sánh phường lân cận (cùng quý với mốc mới nhất). */
+  lanCan?: OSanh[];
 }) {
+  // Như Batdongsan: bán = giá mỗi m², thuê = tổng tiền mỗi tháng.
+  const gia = (v: number) => (laThue ? vndThang(v) : vndM2(v));
   const caDay: Moc[] = (chiSo?.moc ?? []).filter((m) => m.giaM2 > 0);
   const theoThang = caDay.length > 0 && laThang(caDay[caDay.length - 1].quy);
   const moiNam = theoThang ? 12 : 4;
   // Chỉ vẽ phần LIỀN MẠCH tính ngược từ mốc mới nhất — không nối qua kỳ bị hổng.
   const lienMach = soKyLienMach(chiSo);
-  const co2Nam = lienMach >= moiNam * 2 + 1;
-  const [soNam, setSoNam] = useState<1 | 2>(1);
+  // Nút 1 / 2 / 5 năm — năm nào có đủ số liền mạch mới có nút.
+  const cacNam = ([1, 2, 5] as const).filter((n) => lienMach >= moiNam * n + 1);
+  const [soNam, setSoNam] = useState<1 | 2 | 5>(1);
 
   if (!coDuLichSuGia(chiSo)) return null;
 
-  const moc = caDay.slice(-(moiNam * (co2Nam ? soNam : 1) + 1));
+  const moc = caDay.slice(-(moiNam * (cacNam.includes(soNam) ? soNam : 1) + 1));
   const cuoi = moc[moc.length - 1];
   const namTruoc = caDay.find((m) => m.quy === luiMotNam(cuoi.quy))!;
   const doiMotNam = ((cuoi.giaM2 - namTruoc.giaM2) / namTruoc.giaM2) * 100;
@@ -93,11 +99,11 @@ export default function PriceHistory({
       .filter(({ i }, k, a) => !(k === a.length - 2 && moc.length - 1 - i < cach / 2));
     return (
       <svg viewBox={`0 0 ${W} ${H}`} className={`mt-5 h-auto w-full ${className}`} role="img" aria-label="Biểu đồ lịch sử giá">
-        <text x={trai - 6} y={tren - co * 0.6} textAnchor="end" fontSize={co} fill="#86868b">{laThue ? "nghìn/m²" : "tr/m²"}</text>
+        <text x={trai - 6} y={tren - co * 0.6} textAnchor="end" fontSize={co} fill="#86868b">{laThue ? "tr/tháng" : "tr/m²"}</text>
         {vach.map((v) => (
           <g key={v}>
             <line x1={trai} x2={phai} y1={y(v)} y2={y(v)} stroke="#e8e8ed" strokeWidth={1} />
-            <text x={trai - 6} y={y(v) + co * 0.35} textAnchor="end" fontSize={co} fill="#86868b">{soTruc(v, laThue)}</text>
+            <text x={trai - 6} y={y(v) + co * 0.35} textAnchor="end" fontSize={co} fill="#86868b">{soTruc(v)}</text>
           </g>
         ))}
         {coBien && <path d={vung} fill={MAU.phoBien} fillOpacity={0.08} />}
@@ -116,10 +122,10 @@ export default function PriceHistory({
 
   return (
     <div className="rounded-2xl bg-white p-4 ring-1 ring-cvr-line sm:p-6">
-      {co2Nam && (
+      {cacNam.length > 1 && (
         <div className="mb-4 flex justify-end">
           <div className="inline-flex rounded-lg bg-cvr-surface p-0.5 text-[13px]">
-            {([1, 2] as const).map((n) => (
+            {cacNam.map((n) => (
               <button
                 key={n}
                 type="button"
@@ -136,7 +142,7 @@ export default function PriceHistory({
       {/* BA SỐ */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <div className="rounded-xl bg-cvr-surface px-4 py-3">
-          <p className="text-[22px] font-bold leading-tight tracking-tight text-cvr-ink">{vndM2(cuoi.giaM2, laThue)}</p>
+          <p className="text-[22px] font-bold leading-tight tracking-tight text-cvr-ink">{gia(cuoi.giaM2)}</p>
           <p className="mt-1 text-[13px] text-cvr-muted">Giá phổ biến {nhanKy(cuoi.quy)}</p>
         </div>
         <div className="rounded-xl bg-cvr-surface px-4 py-3">
@@ -150,13 +156,13 @@ export default function PriceHistory({
         <div className="rounded-xl bg-cvr-surface px-4 py-3">
           {soVoiDinh >= 0 ? (
             <>
-              <p className="text-[22px] font-bold leading-tight tracking-tight text-cvr-ink">{vndM2(cuoi.giaM2, laThue)}</p>
+              <p className="text-[22px] font-bold leading-tight tracking-tight text-cvr-ink">{gia(cuoi.giaM2)}</p>
               <p className="mt-1 text-[13px] text-cvr-muted">Cao nhất trong {moc.length - 1} {kyTen} qua</p>
             </>
           ) : (
             <>
               <p className="text-[22px] font-bold leading-tight tracking-tight" style={{ color: MAU.thap }}>▼ {phanTram(soVoiDinh)}</p>
-              <p className="mt-1 text-[13px] text-cvr-muted">Thấp hơn đỉnh {vndM2(dinh.giaM2, laThue)} ({nhanKy(dinh.quy)})</p>
+              <p className="mt-1 text-[13px] text-cvr-muted">Thấp hơn đỉnh {gia(dinh.giaM2)} ({nhanKy(dinh.quy)})</p>
             </>
           )}
         </div>
@@ -172,6 +178,29 @@ export default function PriceHistory({
         <Chu mau={MAU.phoBien} ten="Phổ biến" day />
         {coBien && <Chu mau={MAU.thap} ten="Thấp nhất" />}
       </div>
+
+      {/* SO SÁNH KHU VỰC LÂN CẬN — như Batdongsan */}
+      {lanCan.length > 1 && (
+        <div className="mt-6 overflow-hidden rounded-xl ring-1 ring-cvr-line">
+          <div className="flex items-center justify-between gap-3 bg-cvr-surface px-4 py-2.5 text-[13px] font-semibold text-cvr-ink">
+            <span>So sánh giá khu vực lân cận</span>
+            <span className="text-right">{laThue ? "Giá thuê" : "Giá bán"} phổ biến nhất {nhanKy(cuoi.quy)}</span>
+          </div>
+          {lanCan.map((o) => (
+            <div key={o.ten} className="flex items-center justify-between gap-3 border-t border-cvr-line px-4 py-2.5 text-[13.5px]">
+              <span className={o.chinhNo ? "font-semibold text-cvr-ink" : "text-cvr-body"}>{o.ten}</span>
+              <span className="flex items-center gap-4 text-right">
+                <span className="font-medium text-cvr-ink">{gia(o.gia)}</span>
+                {o.soMau != null && (
+                  <span className="w-20 text-cvr-muted">
+                    {o.soMau} tin {laThue ? "thuê" : "bán"}
+                  </span>
+                )}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
