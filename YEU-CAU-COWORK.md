@@ -819,9 +819,9 @@ Mỗi dòng đúng một tin. Lưu dạng **`.csv` (UTF-8)** hoặc **`.xlsx`** 
    Dòng thiếu `khu_vuc` → web báo lỗi, không nhận.
 2. **Đúng LOẠI HÌNH, đúng MẪU SỐ.** Cột `loai_hinh` bắt buộc, `mau_so` phải đúng luật ở
    **C2**. Không lấy số loại hình này điền cho loại hình khác. Sai mẫu số → web không nhận.
-3. **ĐỦ SỐ MỚI HIỆN.** Trang tin chỉ hiện Lịch sử giá khi dãy có **kỳ mới nhất VÀ đúng kỳ
-   đó của năm trước** (VD có `2026-09` thì phải có `2025-09`). Thiếu một trong hai thì
-   dãy đó không hiện — nên **ưu tiên điền trọn 2 năm cho ít dãy, hơn là điền rải rác
+3. **ĐỦ SỐ MỚI HIỆN.** Trang tin chỉ hiện Lịch sử giá khi dãy có **ĐỦ MỌI THÁNG liền
+   nhau từ cùng kỳ năm trước tới kỳ mới nhất** (VD tới `2026-09` thì phải đủ 13 tháng
+   `2025-09` → `2026-09`, hổng một tháng là cả dãy không hiện) — nên **ưu tiên điền trọn 2 năm cho ít dãy, hơn là điền rải rác
    nhiều dãy.**
 4. **KHÔNG BỊA SỐ.** Mỗi con số phải có `nguon` + `nguon_link` tra lại được. Không tìm
    được số → **để trống ô giá**, ghi lý do vào `bao-cao.txt`. Cấm nội suy, cấm lấy trung
