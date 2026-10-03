@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { ChiSoKhuVuc } from "@/lib/chiSoGia";
-import { vndM2, luiMotNam, coDuLichSuGia } from "@/lib/chiSoGia";
+import { vndM2, luiMotNam, coDuLichSuGia, soKyLienMach } from "@/lib/chiSoGia";
 
 // ════════════════════════════════════════════════════════════════════════════
 // LỊCH SỬ GIÁ KHU VỰC — bố cục theo Batdongsan (đo 03/10/2026):
@@ -51,9 +51,11 @@ export default function PriceHistory({
   giaTinM2?: number | null;
 }) {
   const caDay: Moc[] = (chiSo?.moc ?? []).filter((m) => m.giaM2 > 0);
-  const theoThang = caDay.length > 0 && laThang(caDay[0].quy);
+  const theoThang = caDay.length > 0 && laThang(caDay[caDay.length - 1].quy);
   const moiNam = theoThang ? 12 : 4;
-  const co2Nam = caDay.length >= moiNam * 2 + 1;
+  // Chỉ vẽ phần LIỀN MẠCH tính ngược từ mốc mới nhất — không nối qua kỳ bị hổng.
+  const lienMach = soKyLienMach(chiSo);
+  const co2Nam = lienMach >= moiNam * 2 + 1;
   const [soNam, setSoNam] = useState<1 | 2>(1);
 
   if (!coDuLichSuGia(chiSo)) return null;

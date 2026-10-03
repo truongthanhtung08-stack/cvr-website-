@@ -697,9 +697,38 @@ export function luiMotNam(q: string): string {
   return quy ? `${Number(quy[1]) - 1}-Q${quy[2]}` : "";
 }
 
-/** ĐỦ SỐ LIỆU để hiện Lịch sử giá: có mốc mới nhất VÀ mốc cùng kỳ năm trước. */
+/** Kỳ liền trước: "2026-01" → "2025-12" · "2026-Q1" → "2025-Q4". Năm/khác → "". */
+export function kyTruoc(q: string): string {
+  const thang = q.match(/^(\d{4})-(\d{2})$/);
+  if (thang) {
+    const n = +thang[1], t = +thang[2];
+    return t > 1 ? `${n}-${String(t - 1).padStart(2, "0")}` : `${n - 1}-12`;
+  }
+  const quy = q.match(/^(\d{4})-Q([1-4])$/i);
+  if (quy) return +quy[2] > 1 ? `${quy[1]}-Q${+quy[2] - 1}` : `${+quy[1] - 1}-Q4`;
+  return "";
+}
+
+/** Số kỳ LIỀN MẠCH (không hổng kỳ nào) tính ngược từ mốc mới nhất. */
+export function soKyLienMach(chiSo: ChiSoKhuVuc | null): number {
+  const ds = (chiSo?.moc ?? []).filter((m) => m.giaM2 > 0);
+  if (!ds.length) return 0;
+  const co = new Set(ds.map((m) => m.quy));
+  let q = ds[ds.length - 1].quy;
+  let n = 0;
+  while (q && co.has(q)) {
+    n++;
+    q = kyTruoc(q);
+  }
+  return n;
+}
+
+/** ĐỦ SỐ LIỆU để hiện Lịch sử giá: từ cùng kỳ năm trước tới mốc mới nhất phải có
+ *  ĐỦ MỌI KỲ, không hổng kỳ nào (13 tháng hoặc 5 quý). Thiếu một kỳ là không hiện. */
 export function coDuLichSuGia(chiSo: ChiSoKhuVuc | null): boolean {
   const ds = (chiSo?.moc ?? []).filter((m) => m.giaM2 > 0);
   const cuoi = ds[ds.length - 1];
-  return !!cuoi && ds.some((m) => m.quy === luiMotNam(cuoi.quy));
+  if (!cuoi) return false;
+  const moiNam = /^\d{4}-\d{2}$/.test(cuoi.quy) ? 12 : /^\d{4}-Q[1-4]$/i.test(cuoi.quy) ? 4 : 0;
+  return moiNam > 0 && soKyLienMach(chiSo) >= moiNam + 1;
 }
