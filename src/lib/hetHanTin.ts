@@ -107,26 +107,26 @@ export async function quetTinHetHan(
       if (!BAO_KHACH_HET_HAN) continue; // đang tắt báo khách — tin vẫn chuyển Hết hạn đúng giờ
       const chu = nguoi.get(tin.owner_id ?? "");
       if (!tuDang(tin, chu)) continue; // tin admin đăng hộ / nhập hàng loạt — không nhắn
-      await guiThongBao({
-        email: chu?.email,
-        phone: chu?.phone,
-        tieuDe: "Tin của bạn đã hết hạn hiển thị",
-        loiNhan:
-          `Tin của bạn đã hết hạn hiển thị ngày ${new Date(tin.tier_expires_at).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}. ` +
-          `Mời bạn đăng lại tại coastalland.vn/tai-khoan/tin-dang.`,
-        cacDong: [
-          { nhan: "Tin đăng", giaTri: tin.title },
-          { nhan: "Gói vừa hết hạn", giaTri: getTier(tin.tier).name },
-          { nhan: "Hết hạn ngày", giaTri: new Date(tin.tier_expires_at).toLocaleDateString("vi-VN") },
-        ],
-        znsTemplateId: MAU_DA_HET_HAN,
-        znsData: {
-          ten_khach_hang: chu?.full_name || "Quý khách",
-          ngay_het_han: new Date(tin.tier_expires_at).toLocaleDateString("vi-VN"),
-          ma_tin: maTin(tin.id),
-          ten_tin: tin.title,
-        },
-      });
+      await baoDaHetHan(admin, tin, chu);
+    }
+
+    // ── 1b) GỬI BÙ: tin trong tài khoản khách ĐÃ hết hạn mà CHƯA được nhắn ──────
+    // (hạ tay, hoặc hết hạn lúc công tắc nhắn còn tắt). Dấu details.bao_het_han = hạn
+    // của kỳ đã báo → mỗi kỳ hết hạn nhắn đúng MỘT lần, không bao giờ sót (03/10/2026).
+    if (BAO_KHACH_HET_HAN) {
+      const { data: chuaBao } = await admin
+        .from("listings")
+        .select("id,title,owner_id,tier,tier_expires_at,details")
+        .eq("status", "expired")
+        .not("owner_id", "is", null)
+        .limit(500);
+      const dsBu = ((chuaBao ?? []) as Tin[]).filter((t) => t.details?.bao_het_han !== t.tier_expires_at);
+      const nguoiBu = await layNguoi(admin, dsBu.map((t) => t.owner_id));
+      for (const tin of dsBu) {
+        const chu = nguoiBu.get(tin.owner_id ?? "");
+        if (!tuDang(tin, chu)) continue;
+        await baoDaHetHan(admin, tin, chu);
+      }
     }
 
     // ── 2) SẮP HẾT HẠN → nhắc trước 3 ngày (mọi hạng) ─────────────────────
@@ -204,6 +204,34 @@ export async function quetTinHetHan(
 }
 
 /** Lấy email/điện thoại của các chủ tin trong MỘT lần hỏi, không hỏi từng người. */
+// Nhắn khách "tin đã hết hạn" rồi đánh dấu đã nhắn cho ĐÚNG kỳ này (details.bao_het_han).
+async function baoDaHetHan(admin: SupabaseClient, tin: Tin, chu: Nguoi) {
+  await guiThongBao({
+    email: chu.email,
+    phone: chu.phone,
+    tieuDe: "Tin của bạn đã hết hạn hiển thị",
+    loiNhan:
+      `Tin của bạn đã hết hạn hiển thị ngày ${new Date(tin.tier_expires_at).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}. ` +
+      `Mời bạn đăng lại tại coastalland.vn/tai-khoan/tin-dang.`,
+    cacDong: [
+      { nhan: "Tin đăng", giaTri: tin.title },
+      { nhan: "Gói vừa hết hạn", giaTri: getTier(tin.tier).name },
+      { nhan: "Hết hạn ngày", giaTri: new Date(tin.tier_expires_at).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" }) },
+    ],
+    znsTemplateId: MAU_DA_HET_HAN,
+    znsData: {
+      ten_khach_hang: chu.full_name || "Quý khách",
+      ngay_het_han: new Date(tin.tier_expires_at).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" }),
+      ma_tin: maTin(tin.id),
+      ten_tin: tin.title,
+    },
+  });
+  await admin
+    .from("listings")
+    .update({ details: { ...(tin.details ?? {}), bao_het_han: tin.tier_expires_at } })
+    .eq("id", tin.id);
+}
+
 async function layNguoi(admin: SupabaseClient, ids: (string | null)[]): Promise<Map<string, Nguoi>> {
   const co = [...new Set(ids.filter((x): x is string => Boolean(x)))];
   if (co.length === 0) return new Map();
