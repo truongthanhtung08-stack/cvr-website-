@@ -12,10 +12,13 @@
 
 ## 0. TỰ ĐỘNG — Cowork tự lấy, tự nộp (mã nộp do chủ dự án cấp)
 
-1. **Lấy danh sách cần điền:** mở
+1. **Lấy danh sách cần điền** (kể cả lần đầu): mở
    `https://coastalland.vn/api/chi-so-gia/con-thieu?ma=<MÃ NỘP>` → tải về tệp CSV.
-   (Đợt làm mới đầu tiên: dùng file `mau-lich-su-gia.csv` gửi kèm.)
-2. **Điền** theo mục 2 → 5 bên dưới.
+   Tệp này dựng từ CHÍNH TIN ĐANG ĐĂNG trên web — chỉ gồm những dãy tin trên web cần.
+2. **Điền THEO THỨ TỰ TỪ TRÊN XUỐNG.** Cột `so_tin_tren_web` = số tin đang chờ dãy đó;
+   dãy nhiều tin nằm trên cùng. **Làm trọn từng dãy (đủ 5 quý liền) rồi NỘP NGAY**, không
+   đợi làm hết file — nộp sớm dãy nào là tin của dãy đó hiện lịch sử giá ngay.
+   Cách điền: mục 2 → 5 bên dưới. File `mau-lich-su-gia.csv` chỉ để tham khảo khuôn.
 3. **Nộp:** mở `https://coastalland.vn/nop-so-lieu` → nhập mã nộp → chọn tệp → Nộp.
    **Lần nộp ĐẦU TIÊN của đợt làm mới:** mở `https://coastalland.vn/nop-so-lieu?lam-moi=1`
    (bỏ hết số cũ, chỉ giữ tệp này). Các lần sau: không có `?lam-moi=1`.
@@ -27,11 +30,8 @@
 **Web tự tính số từ tin đăng trên coastalland.vn, theo QUÝ** (như Batdongsan). Cowork
 chỉ điền **phần web còn thiếu** — chủ yếu là các quý TRƯỚC khi web có tin.
 
-**Lần đầu (đợt làm mới này):** điền vào file **`mau-lich-su-gia.csv`** gửi kèm — 97 dãy
-theo phường × 8 quý (Q4/2024 → Q3/2026).
-
-**Các lần sau:** chủ dự án vào admin → **Lịch sử giá** → bấm **Tải danh sách còn thiếu
-(gửi Cowork)**. File tải về là **đúng các dòng cần điền**: mỗi dòng = một QUÝ của một dãy mà tin
+Danh sách cần điền lấy ở mục **0** bước 1 (chủ dự án cũng tải được ở admin → **Lịch sử
+giá** → **Tải danh sách còn thiếu**). File là **đúng các dòng cần điền**: mỗi dòng = một QUÝ của một dãy mà tin
 đang đăng trên web cần nhưng chưa có số. Cột `tinh`, `khu_vuc`, `du_an`, `loai_hinh`,
 `muc_dich`, `ky`, `mau_so` **đã điền sẵn — không sửa**. Cowork chỉ điền giá + nguồn.
 
@@ -60,6 +60,7 @@ Web lấy bậc sát nhất có đủ số. **Ít dãy mà đủ 5 quý liền c
 | `so_mau` | Số tin đã dùng để tính (khi tự tính, mục **5** bước 3) |
 | `nguon` · `nguon_link` | Ai công bố + link tra lại. **Bắt buộc.** |
 | `vi_tri` | **Để trống** |
+| `so_tin_tren_web` | Chỉ để xếp thứ tự ưu tiên — không sửa, web bỏ qua khi nộp |
 | `duong` | Chỉ khi làm thêm dãy theo tuyến đường (thêm dòng mới, ghi kèm `khu_vuc`) |
 
 Muốn nộp thêm dãy **cả tỉnh**: thêm dòng, `khu_vuc` để trống, **bắt buộc `nguon_link`**

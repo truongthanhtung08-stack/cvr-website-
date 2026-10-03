@@ -13,6 +13,9 @@ import { mauSoCuaLoaiHinh, veQuy, type ChiSoKhuVuc } from "@/lib/chiSoGia";
 export const COT_MAU = [
   "tinh", "khu_vuc", "loai_hinh", "muc_dich", "ky", "gia_m2_trieu", "gia_thap_trieu", "gia_cao_trieu",
   "nguon", "cap_nhat", "so_mau", "nguon_link", "mau_so", "vi_tri", "du_an", "duong",
+  // Số tin đang đăng trên web cần dãy này — dãy nhiều tin xếp trước, làm trước
+  // thì lịch sử giá hiện sớm cho nhiều tin nhất. Web bỏ qua cột này khi nộp.
+  "so_tin_tren_web",
 ] as const;
 
 export type TinCan = {
@@ -30,17 +33,23 @@ export function dongConThieu(tin: TinCan[], kho: DongKho[], items: ChiSoKhuVuc[]
   const k = (tinh: string, phuong: string, duAn: string, loai: string, md: string) =>
     [chuanTen(tinh), chuanTen(phuong), chuanTen(duAn), chuanTen(loai), md].join("|");
   const can = new Map<string, Day>();
+  const soTin = new Map<string, number>();
+  const dem = (khoa: string) => soTin.set(khoa, (soTin.get(khoa) ?? 0) + 1);
   for (const t of tin) {
     const md = t.purpose === "thue" ? "thue" : t.purpose === "ban" || !t.purpose ? "ban" : null;
     const tinh = (t.province ?? "").trim();
     const loai = (t.type ?? "").trim();
     if (!md || !tinh || !loai) continue;
     const phuong = (t.ward ?? "").trim();
-    if (phuong) can.set(k(tinh, phuong, "", loai, md), { tinh, phuong, duAn: "", duAnSlug: "", loai, md });
+    if (phuong) {
+      can.set(k(tinh, phuong, "", loai, md), { tinh, phuong, duAn: "", duAnSlug: "", loai, md });
+      dem(k(tinh, phuong, "", loai, md));
+    }
     const slug = (t.details?.project ?? "").trim();
     if (slug) {
       const ten = (t.details?.projectName ?? "").trim() || slug;
       can.set(k(tinh, "", ten, loai, md), { tinh, phuong: "", duAn: ten, duAnSlug: slug, loai, md });
+      dem(k(tinh, "", ten, loai, md));
     }
   }
 
@@ -70,11 +79,12 @@ export function dongConThieu(tin: TinCan[], kho: DongKho[], items: ChiSoKhuVuc[]
     thang.push(`${Math.floor(q / 4)}-Q${(q % 4) + 1}`);
   }
   const dong: string[][] = [];
-  for (const [khoa, d] of can) {
+  const theoUuTien = [...can.entries()].sort((a, b) => (soTin.get(b[0]) ?? 0) - (soTin.get(a[0]) ?? 0));
+  for (const [khoa, d] of theoUuTien) {
     const daCo = co.get(khoa) ?? new Set();
     for (const t of thang) {
       if (daCo.has(t)) continue;
-      dong.push([d.tinh, d.phuong, d.loai, d.md, t, "", "", "", "", "", "", "", d.md === "thue" ? "" : mauSoCuaLoaiHinh(d.loai), "", d.duAn, ""]);
+      dong.push([d.tinh, d.phuong, d.loai, d.md, t, "", "", "", "", "", "", "", d.md === "thue" ? "" : mauSoCuaLoaiHinh(d.loai), "", d.duAn, "", String(soTin.get(khoa) ?? 0)]);
     }
   }
   return dong;
