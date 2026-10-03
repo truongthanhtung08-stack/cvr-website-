@@ -25,7 +25,7 @@ Chi tiết ở các mục ghi trong cột cuối; đọc 5 phút là đủ.
 | File | Lấy ở đâu | Đổi gì |
 |---|---|---|
 | `mau-nhap-tin-hang-loat.csv` | admin → **Nhập tin hàng loạt** | 51 → **54 cột** |
-| `mau-lich-su-gia.csv` | admin → **Lịch sử giá** | thêm `mau_so` + `vi_tri` |
+| `mau-lich-su-gia.csv` | admin → **Lịch sử giá** | ⛔ làm mới 03/10 — xem `YEU-CAU-COWORK-LICH-SU-GIA.md` |
 
 **Dùng bản cũ là mất dữ liệu đã gom.**
 
@@ -802,138 +802,10 @@ Mỗi dòng đúng một tin. Lưu dạng **`.csv` (UTF-8)** hoặc **`.xlsx`** 
 ---
 ---
 
-# 🅲 GÓI C — LỊCH SỬ GIÁ THEO KHU VỰC ⭐ CẬP NHẬT 03/10/2026
+# 🅲 GÓI C — LỊCH SỬ GIÁ
 
-> Đây là kho số làm nên biểu đồ **Lịch sử giá** trên từng trang tin — thứ khách xem để biết
-> khu đó đang lên hay xuống. Nộp bằng file mẫu **`mau-lich-su-gia.csv`**
-> (admin → **Lịch sử giá** → *Tải tệp mẫu*). File đã dựng sẵn khung **97 dãy theo phường/xã ·
-> 24 tháng (T10/2024 → T9/2026)**, đã điền sẵn `mau_so` đúng — chỉ việc điền cột giá.
->
-> ⚠️ **03/10: TẢI LẠI FILE MẪU.** Bản cũ còn 1.272 dòng "cả tỉnh" (nay web không nhận) và
-> ghi sai `mau_so` cho Văn phòng, Mặt bằng (`dat` → đúng là `san`).
-
-## C0. ⛔ BỐN LUẬT CỨNG (chủ dự án chốt 03/10/2026) — sai là web từ chối cả dòng
-
-1. **Chỉ số theo PHƯỜNG/XÃ.** Cột `khu_vuc` **bắt buộc**. Cấm điền giá cả tỉnh/thành
-   phố — một con số chung cả Đà Nẵng không nói được gì về một căn ở An Hải hay Hòa Xuân.
-   Dòng thiếu `khu_vuc` → web báo lỗi, không nhận.
-2. **Đúng LOẠI HÌNH, đúng MẪU SỐ.** Cột `loai_hinh` bắt buộc, `mau_so` phải đúng luật ở
-   **C2**. Không lấy số loại hình này điền cho loại hình khác. Sai mẫu số → web không nhận.
-3. **ĐỦ SỐ MỚI HIỆN.** Trang tin chỉ hiện Lịch sử giá khi dãy có **ĐỦ MỌI THÁNG liền
-   nhau từ cùng kỳ năm trước tới kỳ mới nhất** (VD tới `2026-09` thì phải đủ 13 tháng
-   `2025-09` → `2026-09`, hổng một tháng là cả dãy không hiện) — nên **ưu tiên điền trọn 2 năm cho ít dãy, hơn là điền rải rác
-   nhiều dãy.**
-4. **KHÔNG BỊA SỐ.** Mỗi con số phải có `nguon` + `nguon_link` tra lại được. Không tìm
-   được số → **để trống ô giá**, ghi lý do vào `bao-cao.txt`. Cấm nội suy, cấm lấy trung
-   bình hai tháng bên cạnh, cấm suy từ giá cả tỉnh.
-
-## C0b. ⭐ QUY TRÌNH THU THẬP CHUẨN — làm đúng thứ tự, từng dãy một
-
-> **Giá mỗi m² = giá người bán đăng ÷ diện tích ĐÚNG LOẠI HÌNH** (bảng **C2**): đất chia
-> m² đất · nhà chia m² sàn · căn hộ chia m² căn. Mỗi loại hình một dãy riêng, mỗi
-> phường một dãy riêng. **Không đủ số thì để trống — web tự ẩn, không ai bị phạt vì trống.**
-
-**Bước 1 — Chọn dãy.** Trong file mẫu, mỗi dãy = một bộ *tỉnh + phường + loại hình +
-bán/thuê*. Làm xong trọn một dãy (đủ 24 tháng) rồi mới sang dãy khác.
-
-**Bước 2 — Mở đúng trang nguồn.** Trên Batdongsan, mở trang danh sách tin của **đúng phường
-đó + đúng loại hình đó + đúng bán/thuê**, bấm xem **Lịch sử giá**.
-- Trang lịch sử giá ghi **quận/thành phố** thay vì phường → **bỏ dãy**, ghi vào `bao-cao.txt`.
-- Loại hình trên trang khác loại hình của dãy → **bỏ dãy**.
-
-**Bước 3 — Kiểm mẫu số TRƯỚC khi chép.** Số của Batdongsan là giá rao ÷ **diện tích ghi
-trong tin**. Chỉ dùng được khi diện tích đó chính là mẫu số đúng luật:
-
-| `mau_so` của dãy | Loại hình | Chép số Batdongsan? |
-|---|---|---|
-| `dat` | Đất nền · đất nông nghiệp · thuê đất / kho xưởng | ✅ được |
-| `can` | Căn hộ · chung cư · condotel · căn hộ dịch vụ | ✅ được |
-| `san` | Văn phòng · Mặt bằng / Cửa hàng (diện tích tin = m² sàn) | ✅ được |
-| `san` | **Nhà** riêng · mặt phố · biệt thự · shophouse | ⛔ **KHÔNG** — tin nhà ghi m² **đất**, chia ra là giá trên m² đất, sai luật |
-
-Trang Batdongsan ghi cách tính khác điều trên → **dừng dãy đó**, chép nguyên văn cách tính
-vào `bao-cao.txt` để chủ dự án quyết.
-
-**Bước 4 — Chép từng tháng** (chỉ các dãy ✅):
-`gia_m2_trieu` = giá phổ biến · `gia_thap_trieu` = thấp nhất · `gia_cao_trieu` = cao nhất ·
-`nguon` = `Batdongsan` · `nguon_link` = link trang lịch sử giá. Tháng nào trang không có số
-→ để trống tháng đó.
-
-**Bước 5 — Dãy NHÀ (⛔ ở bước 3): tự tính từ tin rao, chỉ tháng hiện tại.**
-1. Trên Batdongsan, lọc tin đang đăng của đúng phường + đúng loại hình nhà.
-2. m² sàn của mỗi tin — giống hệt cách web đang tính (chủ dự án chốt 19/09):
-   - tin ghi **tổng m² sàn** → dùng số đó;
-   - tin ghi m² sàn **nhỏ hơn m² đất** → đó là sàn MỖI TẦNG, nhân số tầng;
-   - tin không ghi m² sàn nhưng có **số tầng** → m² đất × số tầng;
-   - không có cả m² sàn lẫn số tầng → **bỏ tin đó**.
-3. Mỗi tin: tổng giá ÷ m² sàn. **Tuyệt đối không chia tổng giá nhà cho m² đất.**
-4. **Đủ từ 5 tin trở lên** mới điền: `gia_m2_trieu` = số ở giữa (trung vị) ·
-   `gia_thap_trieu` = nhỏ nhất · `gia_cao_trieu` = lớn nhất · `so_mau` = số tin.
-   Danh sách link từng tin ghi vào `bao-cao.txt`. Dưới 5 tin → để trống.
-5. Các tháng quá khứ của dãy nhà → **để trống** (không có tin cũ để tính, cấm suy ngược).
-
-**Bước 6 — Từ đây web tự làm.** Mỗi tháng web tự tính từ chính tin trên coastalland.vn,
-đúng luật trên (theo phường + loại hình + mẫu số). Đủ cùng kỳ năm trước là tự hiện, không
-ai phải nộp thêm.
-
-## C1. Mỗi dãy số định danh bằng NĂM chiều
-
-> **Tỉnh/Thành → KHU VỰC (phường/xã) → VỊ TRÍ (đường) → LOẠI HÌNH → Bán/Thuê**
-
-Xếp từ chiều quyết định nhiều nhất tới ít nhất. **Vị trí đứng trên loại hình**, vì trong
-cùng một phường thì khoảng cách giữa mặt tiền đường lớn và kiệt hẻm còn xa hơn khoảng cách
-giữa hai loại hình.
-
-## C2. ⭐ Cột `mau_so` — giá này tính trên m² GÌ
-
-| Loại hình | `mau_so` | Cách thu |
-|---|---|---|
-| Đất nền · nông nghiệp · công nghiệp | `dat` | tổng giá lô ÷ **m² đất** |
-| **Nhà** riêng · mặt phố · biệt thự · shophouse | **`san`** | tổng giá cả căn ÷ **tổng m² sàn** |
-| Căn hộ · chung cư · condotel · căn hộ dịch vụ | `can` | tổng giá căn ÷ **m² căn** |
-| **Văn phòng · Mặt bằng / Cửa hàng** | **`san`** | giá thuê ÷ **m² sàn** cho thuê |
-| Thuê đất / Nhà xưởng / Kho bãi | `dat` | giá thuê ÷ **m² đất** |
-
-File mẫu **đã điền sẵn đúng cho từng dòng** — cứ theo đó mà thu, đừng sửa.
-
-> ### ⚠️ ĐỔI CÁCH THU CHO NHÀ
-> Số cũ trong hệ thống thu theo **m² đất** (đo 7/7 dãy đều vậy) — thông lệ báo cáo thị
-> trường, không sai, nhưng **không đem so với tin được**.
->
-> Nhà 12 tỷ · 99,5 m² đất · 263,3 m² sàn:
-> chia m² đất ra **121 triệu/m²**, chia m² sàn ra **46 triệu/m²** — lệch 2,6 lần.
->
-> **Nguồn:** tin rao ghi đủ *DT đất + DT sàn + tổng giá* thì tự chia ra; báo cáo nào công bố
-> theo m² sàn thì ghi rõ nguồn. **Không có số theo m² sàn thì để trống dòng đó** — đừng lấy
-> số m² đất điền vào rồi ghi `san`.
-
-## C3. ⭐ Cột `vi_tri` — con đường trước nhà
-
-Giá lệch rất xa **ngay trong cùng một phường**, tuỳ con đường:
-
-| Ghi | Nghĩa |
-|---|---|
-| `lon` | mặt tiền đường lớn — từ **10 m** |
-| `nho` | mặt tiền đường nhỏ — **5 – 10 m** |
-| `kiet` | kiệt / hẻm — **dưới 5 m** |
-| *(để trống)* | mức chung cả khu vực, chưa tách |
-
-Ví dụ thật, cùng phường cùng loại hình: `lon` **95** · *(trống)* **70** · `kiet` **48** triệu/m².
-
-Tách được thì tách — số mới nói đúng về từng căn. Chưa tách thì để trống `vi_tri`.
-
-## C4. Các cột còn lại
-
-| Cột | Ghi gì |
-|---|---|
-| `ky` | `2026-08` (tháng) · `2026-Q2` (quý) · `2025` (năm) |
-| `gia_m2_trieu` | giá phổ biến, đơn vị **TRIỆU đồng/m²** (`78,5`) |
-| `gia_thap_trieu` · `gia_cao_trieu` | mức thấp / cao của kỳ → vẽ hai đường biên |
-| `so_mau` | kỳ này tính từ bao nhiêu tin — **không hiện ra cho khách** |
-| `nguon` · `nguon_link` | ai công bố + link tra lại. **Số nào cũng phải truy được về gốc.** |
-
-⛔ **Ô giá bỏ trống là bình thường** — khung dựng sẵn nhiều dòng, mỗi đợt điền một phần.
-Chỉ đừng điền số mà không có nguồn.
+> **Đã tách thành file riêng: [`YEU-CAU-COWORK-LICH-SU-GIA.md`](YEU-CAU-COWORK-LICH-SU-GIA.md)**
+> (03/10/2026 — làm mới từ đầu, bỏ hết số và file mẫu cũ).
 
 ---
 

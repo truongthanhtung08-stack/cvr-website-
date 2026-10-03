@@ -18,6 +18,7 @@ import {
   coDuLichSuGia,
   xuHuongCuaMinh,
   giaTinSoDuocVoiChiSo,
+  tenPhamVi,
 } from "@/lib/chiSoGia";
 import { getChiSoGia } from "@/lib/siteContent";
 import { nhanDienTich as nhanDienTichTheoLoai } from "@/lib/listingSpec";
@@ -272,7 +273,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
   // lên dãy bảy quý; dài hơn rồi thì tự thay, không ai phải bấm gì.
   const chiSoTin = chonNguonDay(
     l.diaGioi?.ward ? await xuHuongCuaMinh(l.diaGioi?.province ?? "", l.type, l.purpose ?? "ban", l.diaGioi.ward) : null,
-    chiSoChoTin(l, await getChiSoGia()),
+    chiSoChoTin(l, await getChiSoGia(), { duAn: d.projectName, diaChi: d.addressDetail }),
   );
   const samePurpose = all.filter((x) => x.id !== l.id && (x.purpose ?? "ban") === purpose);
   // HỆ SỐ X (tài liệu: "khuếch đại phân phối"): trong khối "Có thể bạn quan tâm",
@@ -611,7 +612,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                      TỈNH. Đề "tại Phường Hòa Xuân" mà số là giá toàn Đà Nẵng thì
                      người xem hiểu sai hẳn, vì giá giữa các phường lệch rất xa. */
                   title={`Lịch sử giá ${purpose === "thue" ? "thuê" : "bán"} ${l.type.toLowerCase()} tại ${
-                    chiSoTin?.khuVuc
+                    chiSoTin ? tenPhamVi(chiSoTin) : ""
                   }`}
                 >
                   <PriceHistory

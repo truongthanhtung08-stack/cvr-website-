@@ -57,7 +57,7 @@
 >   ⛔ **Muốn thêm chú thích / câu giải thích / chỉ dẫn nào: HỎI chủ dự án ghi gì TRƯỚC** — đưa nguyên
 >   văn câu để duyệt, không tự viết.
 > - **Lịch sử giá:** chỉ dãy của đúng khu vực + loại hình + mua bán/cho thuê của tin, đủ so cùng kỳ
->   1 năm mới hiện. Yêu cầu nhập liệu cho Cowork: `docs/YEU-CAU-COWORK-LICH-SU-GIA.md`.
+>   1 năm mới hiện. Yêu cầu nhập liệu cho Cowork: `YEU-CAU-COWORK-LICH-SU-GIA.md` (làm mới 03/10: 4 bậc dự án → đường → phường + vị trí → cả tỉnh; đủ 13 tháng liền mới hiện).
 > - Bài học 03/10: Claude tự áp luật, hạ nhầm 49 tin còn hạn — xem memory `gia-chinh-sach-mot-nguon-admin`.
 
 ---

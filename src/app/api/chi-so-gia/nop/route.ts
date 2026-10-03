@@ -36,7 +36,7 @@ export const maxDuration = 60;
 const TRAN_NHAY = 2.0;
 
 const khoaDay = (x: ChiSoKhuVuc) =>
-  [chuanTen(x.tinh), chuanTen(x.khuVuc ?? ""), chuanTen(x.loaiHinh ?? ""), x.mucDich ?? "ban"].join("|");
+  [chuanTen(x.tinh), chuanTen(x.khuVuc ?? ""), chuanTen(x.loaiHinh ?? ""), x.mucDich ?? "ban", x.viTri ?? "", chuanTen(x.duAn ?? ""), chuanTen(x.duong ?? "")].join("|");
 
 const tenDay = (x: ChiSoKhuVuc) =>
   [x.tinh, x.khuVuc || "cả tỉnh", x.loaiHinh || "mọi loại hình", x.mucDich === "thue" ? "thuê" : "bán"].join(" · ");

@@ -197,6 +197,10 @@ export type ChiSoKhuVuc = {
    *  với người xem rằng đó là mức chung của cả khu, không phải giá của đúng
    *  con đường trước căn nhà họ đang xem (chênh nhau 2–3 lần là chuyện thường). */
   viTri?: ViTriGia;
+  /** Tên DỰ ÁN dãy số này nói tới (bậc ① — sát nhất). */
+  duAn?: string;
+  /** Tên TUYẾN ĐƯỜNG trong phường `khuVuc` (bậc ②). */
+  duong?: string;
   /** Ai công bố: CBRE · Savills · DKRA · khảo sát của Coastal Land… */
   nguon: string;
   /** Ngày chủ dự án cập nhật, dạng 2026-09-11 */
@@ -241,47 +245,85 @@ export function tenNguonHienThi(nguon: string): string {
  * dòng cả tỉnh, khớp đúng loại hình ăn đứt dòng chung. Tỉnh chưa có dòng nào thì
  * trả null: không vẽ, chứ không mượn số tỉnh khác đắp vào.
  */
-export function chiSoChoTin(tin: Listing, data: ChiSoGiaData | null): ChiSoKhuVuc | null {
+/** Loại hình này có xét VỊ TRÍ đường không. Căn hộ/chung cư/condotel nằm trong
+ *  toà nhà — vị trí của chúng là DỰ ÁN, không phải bề rộng đường trước cửa. */
+export function canViTri(loaiHinh: string): boolean {
+  return mauSoCuaLoaiHinh(loaiHinh) !== "can";
+}
+
+/** Phạm vi của một dãy: du-an · duong · phuong · tinh. */
+export function bacCuaDay(x: ChiSoKhuVuc): "du-an" | "duong" | "phuong" | "tinh" {
+  return x.duAn ? "du-an" : x.duong ? "duong" : x.khuVuc ? "phuong" : "tinh";
+}
+
+/** Tên phạm vi để ghi trên tiêu đề khối: "dự án X" · "đường X, phường Y" · phường · tỉnh. */
+export function tenPhamVi(x: ChiSoKhuVuc): string {
+  if (x.duAn) return x.duAn;
+  if (x.duong) return `${x.duong}, ${x.khuVuc}`;
+  return x.khuVuc || x.tinh;
+}
+
+/** Tìm tên đường trong địa chỉ tin theo NGUYÊN TỪ ("Lê Lợi" không khớp "Lê Lợi Mới"
+ *  thì vẫn khớp — chấp nhận; nhưng "Lợi" không khớp "Lê Lợi"). */
+function coDuong(diaChi: string, duong: string): boolean {
+  const d = chuanTen(duong);
+  if (!d) return false;
+  return ` ${chuanTen(diaChi)} `.includes(` ${d} `);
+}
+
+/**
+ * CHỌN DÃY CHO MỘT TIN — BỐN BẬC, chủ dự án chốt 03/10/2026:
+ *   ① cùng DỰ ÁN → ② cùng TUYẾN ĐƯỜNG → ③ cùng PHƯỜNG + cùng VỊ TRÍ (đường lớn /
+ *   đường nhỏ / kiệt) → ④ cả TỈNH khi dãy đó nhập đủ số.
+ * Bậc nào cũng bắt buộc: cùng tỉnh · cùng loại hình · cùng bán/thuê · đúng mẫu số
+ * của loại hình · ĐỦ SỐ (13 tháng liền). Bậc trên không đủ số mới xuống bậc dưới.
+ * Không bậc nào đủ → null, khối Lịch sử giá ẩn hẳn.
+ */
+export function chiSoChoTin(
+  tin: Listing,
+  data: ChiSoGiaData | null,
+  them: { duAn?: string | null; diaChi?: string | null } = {},
+): ChiSoKhuVuc | null {
   if (!data?.items?.length) return null;
   const tinh = chuanTen(tin.diaGioi?.province ?? "");
   const phuong = chuanTen(tin.diaGioi?.ward ?? "");
   const loai = chuanTen(tin.type);
   const mucDich = laTinThue(tin.purpose) ? "thue" : "ban";
-  // GIÁ THEO KHU VỰC THÌ SỐ LIỆU KHU VỰC (chủ dự án 03/10/2026): tin chưa có phường thì
-  // không có dãy nào khớp; dãy chỉ ghi tỉnh không được dùng nói thay cho một khu vực.
-  if (!phuong) return null;
+  const mau = mauSoCuaLoaiHinh(tin.type);
+  const xetViTri = canViTri(tin.type);
+  const duAn = chuanTen(them.duAn ?? "");
+  const diaChi = them.diaChi ?? "";
+  if (!tinh) return null;
 
-  let tot: ChiSoKhuVuc | null = null;
-  let diemTot = -1;
-  for (const x of data.items) {
-    if (chuanTen(x.tinh) !== tinh) continue;
-    if ((x.mucDich ?? "ban") !== mucDich) continue;
-    if (!x.khuVuc || chuanTen(x.khuVuc) !== phuong) continue;
-    // ĐÚNG LOẠI HÌNH của tin — dãy không ghi loại hình hoặc loại hình khác thì không dùng
-    // (chủ dự án 03/10/2026: không lấy loại này cho số loại kia).
-    if (!x.loaiHinh || chuanTen(x.loaiHinh) !== loai) continue;
-    // VỊ TRÍ — dãy có khai vị trí thì chỉ dùng cho tin đúng vị trí đó. Tin chưa
-    // ghi bề rộng đường vào thì không khớp được, đành lùi về dãy gộp cả khu vực.
-    if (x.viTri && x.viTri !== tin.viTri) continue;
-    // MẪU SỐ PHẢI ĐÚNG LUẬT CỦA LOẠI HÌNH — đất tính trên m² đất, NHÀ trên m² sàn,
-    // căn hộ trên m² căn. Dãy nào khai mẫu số khác thì BỎ HẲN, không mượn tạm:
-    // đưa lên trang tin nhà một con số "giá bán nhà riêng · mỗi m² ĐẤT" là tự mâu
-    // thuẫn với chính cách web tính đơn giá cho nhà, dù có ghi rõ nhãn đi nữa.
-    // Không còn dãy nào hợp lệ thì khối Lịch sử giá tự ẩn — đúng nguyên tắc
-    // "không đủ số liệu thì không hiện".
-    // Dãy KHÔNG KHAI mẫu số cũng bỏ: không biết nó chia cho gì (số nhập cũ của nhà
-    // phần lớn chia m² đất) thì không được đưa lên.
-    if (x.mauSo !== mauSoCuaLoaiHinh(tin.type)) continue;
-    if (!x.moc?.some((m) => m.giaM2 > 0)) continue;
-    // Càng sát tin càng thắng. Trong một tỉnh, KHU VỰC quyết định nhiều nhất, kế
-    // đến là VỊ TRÍ (mặt tiền đường lớn khác kiệt 2–3 lần), sau mới tới loại hình.
-    const diem = (x.khuVuc ? 4 : 0) + (x.viTri ? 2 : 0) + (x.loaiHinh ? 1 : 0);
-    if (diem > diemTot) {
-      diemTot = diem;
-      tot = x;
-    }
+  // Điều kiện chung của mọi bậc.
+  const hop = data.items.filter(
+    (x) =>
+      chuanTen(x.tinh) === tinh &&
+      (x.mucDich ?? "ban") === mucDich &&
+      !!x.loaiHinh && chuanTen(x.loaiHinh) === loai &&
+      x.mauSo === mau &&
+      coDuLichSuGia(x),
+  );
+  // Cùng vị trí: loại hình có xét vị trí thì dãy PHẢI khai vị trí và trùng vị trí của tin.
+  const cungViTri = (x: ChiSoKhuVuc) => !xetViTri || (!!x.viTri && x.viTri === tin.viTri);
+
+  const bac: ((x: ChiSoKhuVuc) => boolean)[] = [
+    // ① cùng dự án
+    (x) => !!duAn && !!x.duAn && chuanTen(x.duAn) === duAn,
+    // ② cùng tuyến đường (trong đúng phường) + cùng vị trí
+    (x) => !x.duAn && !!x.duong && !!phuong && chuanTen(x.khuVuc ?? "") === phuong &&
+      coDuong(diaChi, x.duong) && cungViTri(x),
+    // ③ cùng phường + cùng vị trí
+    (x) => !x.duAn && !x.duong && !!phuong && chuanTen(x.khuVuc ?? "") === phuong && cungViTri(x),
+    // ④ cả tỉnh — dãy nhập đủ cho cả tỉnh (không ghi phường/đường/dự án)
+    (x) => !x.duAn && !x.duong && !x.khuVuc && (!x.viTri || cungViTri(x)),
+  ];
+  for (const dung of bac) {
+    const ds = hop.filter(dung);
+    // Cùng bậc mà có dãy khai đúng vị trí thì ưu tiên hơn dãy chung.
+    if (ds.length) return ds.find((x) => x.viTri && x.viTri === tin.viTri) ?? ds[0];
   }
-  return tot;
+  return null;
 }
 
 // ── ĐỌC TỆP CSV CHỈ SỐ GIÁ ─────────────────────────────────────────────────
@@ -305,7 +347,7 @@ const COT_CSV = [
 
 /** Cột tuỳ chọn — có thì tốt, không có vẫn nhập được. Cả hai chỉ phục vụ việc
  *  KIỂM CHỨNG trong admin, không hiện ra cho khách. */
-const COT_THEM = ["gia_thap_trieu", "gia_cao_trieu", "so_mau", "nguon_link", "mau_so", "vi_tri"] as const;
+const COT_THEM = ["gia_thap_trieu", "gia_cao_trieu", "so_mau", "nguon_link", "mau_so", "vi_tri", "du_an", "duong"] as const;
 
 /**
  * Đọc một ô giá về SỐ TRIỆU, chấp nhận cả bốn lối viết đang gặp thật:
@@ -413,13 +455,11 @@ export function docBangChiSo(bang: string[][]): { items: ChiSoKhuVuc[]; loi: Loi
     const mucDich = chuanTen(lay(3)).startsWith("thue") ? "thue" : "ban";
     const khuVuc = lay(1);
     const loaiHinh = lay(2);
-    // GIÁ THEO KHU VỰC + LOẠI HÌNH, ĐÚNG MẪU SỐ (chủ dự án 03/10/2026): dòng nào
-    // thiếu một trong ba thì trang tin không bao giờ dùng tới → chặn ngay khi nhập,
-    // không để nằm trong kho như số liệu hợp lệ.
-    if (!khuVuc.trim()) {
-      loi.push({ dong: i + 1, ly: "Thiếu khu_vuc (phường/xã) — không nhận giá cả tỉnh/thành" });
-      continue;
-    }
+    const duAnO = themLay(6).trim();
+    const duongO = themLay(7).trim();
+    // BỐN BẬC (chủ dự án 03/10/2026): dự án → tuyến đường → phường + vị trí → cả tỉnh.
+    // Dòng nào không đủ điều kiện của bậc mình thì trang tin không bao giờ dùng tới →
+    // chặn ngay khi nhập, không để nằm trong kho như số liệu hợp lệ.
     if (!loaiHinh.trim()) {
       loi.push({ dong: i + 1, ly: "Thiếu loai_hinh" });
       continue;
@@ -429,6 +469,18 @@ export function docBangChiSo(bang: string[][]): { items: ChiSoKhuVuc[]; loi: Loi
       loi.push({ dong: i + 1, ly: `mau_so phải là "${mauDung}" (${TEN_MAU_SO[mauDung]}) cho ${loaiHinh}` });
       continue;
     }
+    if (duongO && !khuVuc.trim()) {
+      loi.push({ dong: i + 1, ly: "Có duong thì phải ghi khu_vuc (phường/xã của tuyến đường đó)" });
+      continue;
+    }
+    if (!duAnO && khuVuc.trim() && canViTri(loaiHinh) && !docViTri(themLay(5))) {
+      loi.push({ dong: i + 1, ly: `Thiếu vi_tri (lon · nho · kiet) — ${loaiHinh} phải tách theo vị trí đường` });
+      continue;
+    }
+    if (!duAnO && !khuVuc.trim() && !themLay(3).trim()) {
+      loi.push({ dong: i + 1, ly: "Số cả tỉnh phải có nguon_link tới nơi công bố số cả tỉnh" });
+      continue;
+    }
     const thap = doiGia(themLay(0));
     const cao = doiGia(themLay(1));
     const soMau = Math.round(Number(themLay(2).split(".").join("")));
@@ -436,7 +488,7 @@ export function docBangChiSo(bang: string[][]): { items: ChiSoKhuVuc[]; loi: Loi
     // đường lớn" và "kiệt hẻm" của cùng một phường bị gom làm một, số của dãy sau
     // đè lên dãy trước — mất hẳn phần phân loại vừa thu thập.
     const vt = docViTri(themLay(5));
-    const khoa = [chuanTen(tinh), chuanTen(khuVuc), chuanTen(loaiHinh), mucDich, vt ?? ""].join("|");
+    const khoa = [chuanTen(tinh), chuanTen(khuVuc), chuanTen(loaiHinh), mucDich, vt ?? "", chuanTen(duAnO), chuanTen(duongO)].join("|");
     let muc = gom.get(khoa);
     if (!muc) {
       muc = {
@@ -449,6 +501,8 @@ export function docBangChiSo(bang: string[][]): { items: ChiSoKhuVuc[]; loi: Loi
         nguonLink: themLay(3) || undefined,
         mauSo: docMauSo(themLay(4), loaiHinh),
         viTri: vt,
+        duAn: duAnO || undefined,
+        duong: duongO || undefined,
         moc: [],
       };
       gom.set(khoa, muc);
@@ -537,6 +591,9 @@ export async function xuHuongCuaMinh(
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !anon || !tinh || !loaiHinh) return null;
+  // Kho tự chụp mới gom theo PHƯỜNG, chưa tách vị trí đường — chỉ dùng được cho
+  // loại hình không xét vị trí (căn hộ). Nhà, đất phải cùng vị trí (bậc ③).
+  if (canViTri(loaiHinh)) return null;
 
   const q =
     `${url}/rest/v1/gia_khu_vuc_thang` +
