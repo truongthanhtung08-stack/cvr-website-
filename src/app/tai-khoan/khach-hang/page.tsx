@@ -39,7 +39,7 @@ type Khach = {
   daHoiSo: boolean;
   lanXem: number;
   luc: string;                       // tương tác gần nhất
-  tin: { id: string; hoiSo: boolean; quaZalo?: boolean; lanXem: number; luc: string }[];
+  tin: { id: string; hoiSo: boolean; quaZalo?: boolean; yeuCau?: boolean; lanXem: number; luc: string }[];
 };
 
 const NGUON: Record<string, string> = {
@@ -187,6 +187,7 @@ export default function KhachHangPage() {
       const t = tinCua(k, l.listing_id);
       k.daHoiSo = true; t.hoiSo = true;
       if (l.nguon === "zalo") t.quaZalo = true; // hỏi số trong Zalo Mini App
+      if (l.nguon === "yeu_cau") t.yeuCau = true; // tin hết hạn: khách gửi yêu cầu liên hệ lại
       if (l.created_at > k.luc) k.luc = l.created_at;
       if (l.created_at > t.luc) t.luc = l.created_at;
     }
@@ -329,7 +330,7 @@ export default function KhachHangPage() {
                             {tenTin.get(t.id) ?? "Tin đã xoá"}
                           </Link>
                           <span className="shrink-0 text-cvr-muted">
-                            {[t.hoiSo ? (t.quaZalo ? "hỏi số qua Zalo" : "hỏi số") : "", t.lanXem ? `xem ${t.lanXem} lần` : ""].filter(Boolean).join(" · ")} · {ngayGio(t.luc)}
+                            {[t.hoiSo ? (t.yeuCau ? "gửi yêu cầu liên hệ" : t.quaZalo ? "hỏi số qua Zalo" : "hỏi số") : "", t.lanXem ? `xem ${t.lanXem} lần` : ""].filter(Boolean).join(" · ")} · {ngayGio(t.luc)}
                           </span>
                         </li>
                       ))}
