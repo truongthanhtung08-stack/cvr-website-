@@ -506,13 +506,14 @@ của tin sai hẳn.
 | Tin gốc ghi | `dien_tich` | `dien_tich_xay_dung` |
 |---|---|---|
 | `DT đất 100m2, DT sàn 263,3m2` | `100` | `263,3` |
-| `Đất 5x20 (100m2), nhà 3 tầng` | `100` | `300` *(100 × 3 tầng)* |
-| `100m2, 3 tầng + lửng` | `100` | `350` *(100 × 3,5)* |
-| `Nhà 4 tầng, mỗi sàn 80m2, đất 90m2` | `90` | `320` |
-| Tin không ghi số tầng, không ghi DT sàn | `100` | **để trống** + `ghi_chu` = `tin không ghi diện tích sàn` |
+| `Nhà 4 tầng, mỗi sàn 80m2, đất 90m2` | `90` | `320` *(80 × 4 — m² mỗi sàn do tin ghi)* |
+| `Đất 5x20 (100m2), nhà 3 tầng` — **không ghi m² sàn** | `100` | **để trống** |
+| Tin không ghi DT sàn | `100` | **để trống** + `ghi_chu` = `tin không ghi diện tích sàn` |
 
-⛔ **KHÔNG tự đoán số tầng.** Tin gốc không nói số tầng và không nói m² sàn thì để
-trống — web hiện giá trên m² đất là xong, còn hơn bịa ra một con số sai.
+⛔ **CẤM lấy m² ĐẤT × SỐ TẦNG** (sửa 03/10/2026). Tổng sàn KHÔNG bằng đất × tầng — mỗi
+sàn thường chỉ 75–80% diện tích đất. Chỉ ghi khi tin gốc nói **tổng m² sàn**, hoặc nói
+**m² mỗi sàn** (thì nhân số tầng). Không có → để trống. Web tự bỏ qua mọi số đúng bằng
+m² đất × số tầng.
 
 ⛔ **Căn hộ · chung cư · condotel · đất nền · kho xưởng · văn phòng: ĐỂ TRỐNG cột này.**
 Căn hộ chỉ có một diện tích, đã ghi ở `dien_tich`. Kho xưởng có ô riêng

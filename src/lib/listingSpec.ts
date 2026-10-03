@@ -434,6 +434,21 @@ export function mauSoCuaLoaiHinh(type: string): MauSo {
 }
 
 /**
+ * M² SÀN THẬT CỦA NHÀ — chỉ nhận số khách/tin gốc ghi, KHÔNG nhận số tự nhân.
+ * Tổng sàn không bằng m² đất × số tầng: mỗi sàn thường chỉ 75–80% diện tích đất
+ * (chủ dự án 03/10/2026). Số đúng bằng m² đất × 1 · 1,5 · 2 · 2,5 · 3… gần như chắc
+ * chắn là phép nhân (do người nhập tự tính) → bỏ, không dùng để tính giá mỗi m².
+ */
+export function dienTichSanThat(san?: number | null, dat?: number | null): number | null {
+  if (!san || san <= 0) return null;
+  if (dat && dat > 0) {
+    const k = (san / dat) * 2;
+    if (san >= dat && Math.abs(k - Math.round(k)) < 1e-9) return null;
+  }
+  return san;
+}
+
+/**
  * Lấy m² sàn từ ô nào: nhà gắn liền đất có Ô RIÊNG "Diện tích xây dựng"; còn văn
  * phòng · mặt bằng · nhà trọ thì CHÍNH ô diện tích đã là sàn rồi, không có ô riêng.
  * Tách hàm này ra vì "m² gì" và "lấy ở ô nào" là hai chuyện khác nhau — gộp lại

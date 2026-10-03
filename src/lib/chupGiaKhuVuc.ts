@@ -24,7 +24,6 @@ type Dong = {
   area_m2: number | null;
   built_area_m2: number | null;
   details: {
-    dtSanUocTinh?: number | null;
     project?: string | null;
   } | null;
 };
@@ -72,7 +71,6 @@ export async function chupGiaKhuVuc(): Promise<{ ghi: number; boQua: number } | 
       priceVnd: r.price_vnd,
       areaM2: r.area_m2,
       builtAreaM2: r.built_area_m2,
-      builtAreaM2Uoc: r.details?.dtSanUocTinh ?? null,
     } as Listing);
     if (m2 == null) continue;
 

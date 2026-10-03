@@ -1,6 +1,6 @@
 import type { Listing } from "@/lib/data";
 import { chuanTen, provinceNamesNew, wardsOfNew } from "@/lib/locations";
-import { mauSoCuaLoaiHinh, dungODienTichXayDung, laTinThue, TEN_MAU_SO, TEN_VI_TRI, docViTri, type MauSo, type ViTriGia } from "@/lib/listingSpec";
+import { mauSoCuaLoaiHinh, dungODienTichXayDung, dienTichSanThat, laTinThue, TEN_MAU_SO, TEN_VI_TRI, docViTri, type MauSo, type ViTriGia } from "@/lib/listingSpec";
 export { mauSoCuaLoaiHinh, TEN_MAU_SO, TEN_VI_TRI };
 export type { MauSo, ViTriGia };
 import { tachBangCsv } from "@/lib/xuatCsv";
@@ -64,8 +64,10 @@ export function giaMoiM2Theo(l: Listing, mau: MauSo): number | null {
   // thiếu một điểm còn hơn đưa vào một con số khác bản chất.
   // "m² sàn" lấy ở ô nào tuỳ loại hình: nhà có ô riêng, văn phòng/mặt bằng thì
   // chính ô diện tích đã là sàn (xem dungODienTichXayDung).
+  // Nhà: CHỈ m² sàn thật (dienTichSanThat) — không dùng số ước tính, không dùng số
+  // đúng bằng m² đất × số tầng (chủ dự án 03/10/2026: mỗi sàn chỉ 75–80% đất).
   const dt = mau === "san" && dungODienTichXayDung(l.type)
-    ? l.builtAreaM2 ?? l.builtAreaM2Uoc ?? null
+    ? dienTichSanThat(l.builtAreaM2, l.areaM2)
     : l.areaM2;
   if (!gia || !dt || dt <= 0) return null;
   const v = gia / dt;

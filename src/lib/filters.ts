@@ -3,7 +3,7 @@
 
 import { tierRank } from "./packages";
 import { tenTinhTuongDuong, chuanTen, chuanTenCap } from "./locations";
-import { mauSoCuaLoaiHinh } from "./listingSpec";
+import { dungODienTichXayDung, dienTichSanThat } from "./listingSpec";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // LOẠI HÌNH (sản phẩm) PHÂN THEO MỤC ĐÍCH — chuẩn Brief + Kế hoạch V3.
@@ -439,8 +439,9 @@ export type SortKey = "moi" | "gia-tang" | "gia-giam" | "dt-giam" | "gia-m2" | "
 function pricePerM2(l: FilterableListing): number | null {
   const gia = l.priceVnd ?? priceToTy(l.price);
   if (gia == null) return null;
-  const canSan = mauSoCuaLoaiHinh(l.type) === "san";
-  const m2 = canSan ? l.builtAreaM2 ?? l.builtAreaM2Uoc ?? null : l.areaM2 ?? areaToM2(l.area);
+  // Nhà: chỉ m² sàn thật — không ước tính, không m² đất × số tầng (dienTichSanThat).
+  // Văn phòng / mặt bằng: ô diện tích chính là sàn.
+  const m2 = dungODienTichXayDung(l.type) ? dienTichSanThat(l.builtAreaM2, l.areaM2) : l.areaM2 ?? areaToM2(l.area);
   return !m2 || m2 <= 0 ? null : gia / m2;
 }
 
