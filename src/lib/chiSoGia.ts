@@ -269,7 +269,9 @@ export function chiSoChoTin(tin: Listing, data: ChiSoGiaData | null): ChiSoKhuVu
     // thuẫn với chính cách web tính đơn giá cho nhà, dù có ghi rõ nhãn đi nữa.
     // Không còn dãy nào hợp lệ thì khối Lịch sử giá tự ẩn — đúng nguyên tắc
     // "không đủ số liệu thì không hiện".
-    if (x.mauSo && x.mauSo !== mauSoCuaLoaiHinh(tin.type)) continue;
+    // Dãy KHÔNG KHAI mẫu số cũng bỏ: không biết nó chia cho gì (số nhập cũ của nhà
+    // phần lớn chia m² đất) thì không được đưa lên.
+    if (x.mauSo !== mauSoCuaLoaiHinh(tin.type)) continue;
     if (!x.moc?.some((m) => m.giaM2 > 0)) continue;
     // Càng sát tin càng thắng. Trong một tỉnh, KHU VỰC quyết định nhiều nhất, kế
     // đến là VỊ TRÍ (mặt tiền đường lớn khác kiệt 2–3 lần), sau mới tới loại hình.
