@@ -1,5 +1,5 @@
 import type { Listing } from "@/lib/data";
-import { chuanTen } from "@/lib/locations";
+import { chuanTen, provinceNamesNew, wardsOfNew } from "@/lib/locations";
 import { mauSoCuaLoaiHinh, dungODienTichXayDung, laTinThue, TEN_MAU_SO, TEN_VI_TRI, docViTri, type MauSo, type ViTriGia } from "@/lib/listingSpec";
 export { mauSoCuaLoaiHinh, TEN_MAU_SO, TEN_VI_TRI };
 export type { MauSo, ViTriGia };
@@ -256,6 +256,23 @@ export function veQuy(x: ChiSoKhuVuc): ChiSoKhuVuc {
   return { ...x, moc };
 }
 
+/** TÊN CHUẨN HỆ MỚI — "An Hải" và "Phường An Hải" là MỘT phường; gom và so phải theo
+ *  một tên, nếu không một phường bị tách thành nhiều dãy, mỗi dãy thiếu số. */
+export function tenTinhChuan(t?: string | null): string {
+  const x = (t ?? "").trim();
+  return provinceNamesNew.find((n) => chuanTen(n) === chuanTen(x)) ?? x;
+}
+export function tenPhuongChuan(tinh?: string | null, p?: string | null): string {
+  const x = (p ?? "").trim();
+  if (!x) return "";
+  return wardsOfNew(tenTinhChuan(tinh)).find((w) => chuanTen(w) === chuanTen(x)) ?? x;
+}
+
+/** "Bất động sản khác" gom đủ thứ — không phải một phân khúc, không làm lịch sử giá. */
+export function coLichSuGia(loaiHinh?: string | null): boolean {
+  return !!loaiHinh && chuanTen(loaiHinh) !== chuanTen("Bất động sản khác");
+}
+
 /** ĐỢT LÀM MỚI LỊCH SỬ GIÁ (chủ dự án 03/10/2026): số nhập trước mốc này chưa được
  *  kiểm theo luật mới → không dùng. Chỉ nhận dãy nộp từ mốc này trở đi. */
 export const MOC_LAM_MOI = "2026-10-03";
@@ -304,7 +321,7 @@ export function chiSoChoTin(
   const mau = mauSoCuaLoaiHinh(tin.type);
   const duAn = chuanTen(them.duAn ?? "");
   const diaChi = them.diaChi ?? "";
-  if (!tinh) return null;
+  if (!tinh || !coLichSuGia(tin.type)) return null;
 
   // Điều kiện chung của mọi bậc (sau khi đưa mọi dãy về theo quý).
   const hop = data.items.map(veQuy).filter(
@@ -610,7 +627,8 @@ export async function khoCuaMinh(
 ): Promise<ChiSoKhuVuc[]> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !anon || !tinh || !loaiHinh) return [];
+  if (!url || !anon || !tinh || !coLichSuGia(loaiHinh)) return [];
+  tinh = tenTinhChuan(tinh);
 
   const q =
     `${url}/rest/v1/gia_khu_vuc_thang` +
@@ -642,12 +660,13 @@ export async function khoCuaMinh(
     const gom = new Map<string, ChiSoKhuVuc>();
     for (const d of ds) {
       const duAn = d.du_an ?? "";
-      const khoa = [d.phuong, duAn].join("|");
+      const tenPhuong = tenPhuongChuan(tinh, d.phuong);
+      const khoa = [chuanTen(tenPhuong), duAn].join("|");
       let x = gom.get(khoa);
       if (!x) {
         x = {
           tinh,
-          khuVuc: duAn ? undefined : d.phuong || undefined,
+          khuVuc: duAn ? undefined : tenPhuong || undefined,
           duAn: duAn || undefined,
           loaiHinh,
           mucDich: mucDich === "thue" ? "thue" : "ban",
@@ -658,6 +677,12 @@ export async function khoCuaMinh(
         };
         gom.set(khoa, x);
       }
+      // Cùng tháng đã có (tên phường ghi lệch ở dòng cũ) → giữ dòng nhiều tin hơn.
+      const trung = x.moc.find((m) => m.quy === d.thang.slice(0, 7));
+      if (trung) {
+        if ((trung.soMau ?? 0) >= d.so_mau) continue;
+        x.moc.splice(x.moc.indexOf(trung), 1);
+      }
       x.moc.push({
         quy: d.thang.slice(0, 7),
         giaM2: Math.round(d.trung_vi),
@@ -666,8 +691,8 @@ export async function khoCuaMinh(
         soMau: d.so_mau,
       });
     }
-    // Đang xếp mới → cũ; đảo lại và giữ tới 25 tháng (đủ xem 2 năm).
-    return [...gom.values()].map((x) => ({ ...x, moc: x.moc.reverse().slice(-25) }));
+    // Xếp cũ → mới, giữ tới 61 tháng (đủ xem 5 năm).
+    return [...gom.values()].map((x) => ({ ...x, moc: x.moc.sort((a, b) => a.quy.localeCompare(b.quy)).slice(-61) }));
   } catch {
     return [];
   }

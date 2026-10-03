@@ -1,5 +1,6 @@
 import { chuanTen } from "@/lib/locations";
-import { mauSoCuaLoaiHinh, veQuy, type ChiSoKhuVuc } from "@/lib/chiSoGia";
+import { dungODienTichXayDung } from "@/lib/listingSpec";
+import { mauSoCuaLoaiHinh, veQuy, tenTinhChuan, tenPhuongChuan, coLichSuGia, type ChiSoKhuVuc } from "@/lib/chiSoGia";
 
 // ════════════════════════════════════════════════════════════════════════════
 // LỊCH SỬ GIÁ CÒN THIẾU — dựng từ CHÍNH TIN ĐANG ĐĂNG trên web.
@@ -37,10 +38,13 @@ export function dongConThieu(tin: TinCan[], kho: DongKho[], items: ChiSoKhuVuc[]
   const dem = (khoa: string) => soTin.set(khoa, (soTin.get(khoa) ?? 0) + 1);
   for (const t of tin) {
     const md = t.purpose === "thue" ? "thue" : t.purpose === "ban" || !t.purpose ? "ban" : null;
-    const tinh = (t.province ?? "").trim();
+    const tinh = tenTinhChuan(t.province);
     const loai = (t.type ?? "").trim();
-    if (!md || !tinh || !loai) continue;
-    const phuong = (t.ward ?? "").trim();
+    if (!md || !tinh || !coLichSuGia(loai)) continue;
+    // BÁN NHÀ: web tính trên m² sàn, nguồn công bố tính trên diện tích tin (m² đất) —
+    // Cowork không có số cùng cách tính, nên không giao. Web tự tính dần từ tin đăng.
+    if (md === "ban" && dungODienTichXayDung(loai)) continue;
+    const phuong = tenPhuongChuan(tinh, t.ward);
     if (phuong) {
       can.set(k(tinh, phuong, "", loai, md), { tinh, phuong, duAn: "", duAnSlug: "", loai, md });
       dem(k(tinh, phuong, "", loai, md));

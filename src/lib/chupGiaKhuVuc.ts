@@ -1,5 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { giaChoLichSu } from "@/lib/chiSoGia";
+import { giaChoLichSu, tenTinhChuan, tenPhuongChuan, coLichSuGia } from "@/lib/chiSoGia";
 import type { Listing } from "@/lib/data";
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -57,9 +57,10 @@ export async function chupGiaKhuVuc(): Promise<{ ghi: number; boQua: number } | 
     else nhom.set(key, [v]);
   };
   for (const r of data as Dong[]) {
-    const tinh = (r.province ?? "").trim();
+    // Tên chuẩn hệ mới — "An Hải" và "Phường An Hải" gom chung một dãy.
+    const tinh = tenTinhChuan(r.province);
     const loai = (r.type ?? "").trim();
-    if (!tinh || !loai) continue;
+    if (!tinh || !coLichSuGia(loai)) continue;
     // Chỉ tin RAO BÁN / CHO THUÊ — tin cần mua, cần thuê là giá mong muốn, không phải giá rao.
     const mucDich = r.purpose === "thue" ? "thue" : r.purpose === "ban" || !r.purpose ? "ban" : "";
     if (!mucDich) continue;
@@ -78,7 +79,7 @@ export async function chupGiaKhuVuc(): Promise<{ ghi: number; boQua: number } | 
     const duAn = (r.details?.project ?? "").trim();
     if (duAn) them([tinh, "", loai, mucDich, duAn].join("|"), m2);
 
-    const phuong = (r.ward ?? "").trim();
+    const phuong = tenPhuongChuan(tinh, r.ward);
     if (!phuong) continue;
     them([tinh, phuong, loai, mucDich, ""].join("|"), m2);
   }
