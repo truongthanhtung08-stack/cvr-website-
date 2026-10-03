@@ -11,11 +11,12 @@ import { baoLoi } from "@/lib/baoLoi";
 // Tin admin đăng hộ / nhập hàng loạt → không nhắn. Đặt false = tắt hẳn.
 const BAO_KHACH_HET_HAN = true;
 
-// KHÁCH TỰ ĐĂNG: tin có chủ là khách (không phải admin) và gửi qua FORM CỦA KHÁCH
-// (web PostListingForm / Mini App — chỉ 2 form này ghi details.plan = gói khách tự chọn;
-// form admin đăng hộ và nhập hàng loạt không ghi). Tự đăng tin thì đã tự đăng ký + đăng nhập.
-function tuDang(tin: Tin, chu: Nguoi | undefined): chu is Nguoi {
-  return !!chu && chu.role !== "admin" && !!tin.details && "plan" in tin.details;
+// KHÁCH TỰ ĐĂNG = tin nằm trong TÀI KHOẢN KHÁCH (chủ tin là thành viên, không phải admin).
+// Tin admin đăng hộ / nhập hàng loạt không gắn tài khoản khách (owner trống) → không nhắn.
+// (03/10/2026: trước còn đòi details.plan → bỏ sót tin khách đăng từ tháng 7, trước khi web
+// lưu gói — sai luật chủ dự án chốt "khách tự đăng ký, đăng nhập, đăng tin là nhắn".)
+function tuDang(_tin: Tin, chu: Nguoi | undefined): chu is Nguoi {
+  return !!chu && chu.role !== "admin";
 }
 
 // ════════════════════════════════════════════════════════════════════════════
