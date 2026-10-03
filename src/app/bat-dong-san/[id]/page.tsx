@@ -8,6 +8,7 @@ import ListingShowcase from "@/components/ListingShowcase";
 import { HomeExpandProvider, HomeCollapsible } from "@/components/HomeExpand";
 import RecordView from "@/components/RecordView";
 import { ContactActions, ContactBarMobile } from "@/components/LienHeReveal";
+import YeuCauLienHeLai, { NutYeuCauLienHe } from "@/components/YeuCauLienHeLai";
 import KhoiDanhGiaTin from "@/components/KhoiDanhGiaTin";
 import ShareButtons from "@/components/ShareButtons";
 import PriceHistory from "@/components/PriceHistory";
@@ -324,11 +325,21 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
         <div className="mx-auto max-w-7xl px-4 pt-0 pb-footer sm:px-6 sm:pt-0 lg:px-8">
 
           <HomeExpandProvider>
-          {/* TIN HẾT HẠN — CẤU TRÚC NHƯ BATDONGSAN (đo trang thật 03/10/2026):
-              thông báo + "Xem nội dung tin" → BĐS dành cho bạn (gợi ý LÊN TRƯỚC) →
-              "Nội dung tin đăng" (giữ nội dung cũ, số trong mô tả đã che, không liên hệ). */}
+          {/* TIN HẾT HẠN — CẤU TRÚC NHƯ BATDONGSAN (đo trang thật 03/10/2026, tin 45242191).
+              Batdongsan làm HAI KIỂU:
+              · MÁY TÍNH: thông báo + "Xem nội dung tin" → BĐS dành cho bạn (gợi ý LÊN TRƯỚC)
+                → "Nội dung tin đăng".
+              · ĐIỆN THOẠI: dải mảnh "Tin đã hết hạn…" → TOÀN BỘ tin như thường → khung
+                "Gửi yêu cầu liên hệ" (thay số) → BĐS dành cho bạn ở CUỐI.
+              Cả hai: số trong mô tả đã che, không hiện số người đăng. */}
           {hetHan && (
-            <>
+            <div className="-mx-4 mb-0 flex items-start gap-2.5 bg-[#f1ecf8] px-4 py-3 text-[13.5px] leading-relaxed text-cvr-ink sm:mx-0 lg:hidden">
+              <svg className="mt-0.5 h-4 w-4 shrink-0 text-[#6b4fa0]" fill="currentColor" viewBox="0 0 24 24" aria-hidden><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" /></svg>
+              <p><b>Tin đã hết hạn.</b> Bạn vẫn có thể gửi yêu cầu để người đăng liên hệ lại.</p>
+            </div>
+          )}
+          {hetHan && (
+            <div className="hidden lg:block">
               <div className="mt-4 rounded-2xl border border-cvr-line bg-cvr-surface px-5 py-5 text-center sm:mt-6">
                 <p className="text-[17px] font-semibold tracking-tight text-cvr-ink">Tin đăng này đã hết hạn trên Coastal Land.</p>
                 <p className="mt-1.5 text-sm leading-relaxed text-cvr-muted">
@@ -347,12 +358,12 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                 relevance
                 emptyNote="Chưa có bất động sản tương tự."
               />
-            </>
+            </div>
           )}
           {/* Toàn bộ nội dung tin — ẩn khi bấm "Xem thêm" ở mục BĐS tương tự */}
           <HomeCollapsible>
           {hetHan && (
-            <h2 id="noi-dung-tin" className="mb-4 mt-8 scroll-mt-28 text-[19px] font-semibold tracking-tight text-cvr-ink sm:text-[22px]">
+            <h2 id="noi-dung-tin" className="mb-4 mt-8 hidden scroll-mt-28 text-[19px] font-semibold tracking-tight text-cvr-ink sm:text-[22px] lg:block">
               Nội dung tin đăng
             </h2>
           )}
@@ -660,7 +671,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                         </div>
                       </div>
                       {hetHan
-                        ? <p className="text-sm text-cvr-muted">Tin đã hết hạn — liên hệ tạm ẩn.</p>
+                        ? <div className="mt-4"><YeuCauLienHeLai listingId={l.id} maTin={l.id.slice(0, 8).toUpperCase()} tieuDe={l.title} /></div>
                         : <ContactActions listingId={l.id} phoneMask={phoneMask} />}
                     </>
                   ) : (
@@ -695,7 +706,20 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
               giữ ĐÚNG thứ tự ưu tiên tương tự; nội dung tin phía trên ẩn đi.
               Tiêu đề do chính khối tự dựng (ẩn khi mở danh sách → không lặp chữ,
               không chừa khoảng trống trên đầu). */}
-          {/* Tin hết hạn đã đưa gợi ý lên đầu trang — không lặp lại ở cuối. */}
+          {/* Tin hết hạn: máy tính đã đưa gợi ý lên đầu trang; ĐIỆN THOẠI để ở cuối như Batdongsan. */}
+          {hetHan && (
+            <div className="lg:hidden">
+              <ListingShowcase
+                items={relatedFill}
+                sectionKey="bds-danh-cho-ban-mb"
+                purpose={purpose === "thue" || purpose === "can-thue" ? "thue" : "ban"}
+                title="Bất động sản dành cho bạn"
+                heading="Bất động sản dành cho bạn"
+                relevance
+                emptyNote="Chưa có bất động sản tương tự."
+              />
+            </div>
+          )}
           {!hetHan && (
           <ListingShowcase
             items={relatedFill}
@@ -712,9 +736,9 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
 
         {/* Thanh liên hệ DÍNH (mobile) — Gọi / Zalo bám đáy màn hình (III.4).
             Tin chưa có liên hệ thì KHÔNG hiện thanh này (không có số để gọi). */}
-        {contact && !hetHan && (
+        {contact && (
         <div className="fixed inset-x-0 bottom-0 z-40 flex gap-2 border-t border-cvr-line bg-white/95 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur-md lg:hidden">
-          <ContactBarMobile listingId={l.id} phoneMask={phoneMask} />
+          {hetHan ? <NutYeuCauLienHe /> : <ContactBarMobile listingId={l.id} phoneMask={phoneMask} />}
         </div>
         )}
       </main>
