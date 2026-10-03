@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { quetTinHetHan } from "@/lib/hetHanTin";
 import { baoLoi } from "@/lib/baoLoi";
@@ -21,7 +22,15 @@ export async function GET(request: Request) {
   if (!admin) return NextResponse.json({ ok: false, loi: "Thiếu khoá máy chủ" }, { status: 500 });
   try {
     const kq = await quetTinHetHan(admin);
-    return NextResponse.json({ ok: true, ...kq });
+    // LÀM MỚI BẢN SAO DANH SÁCH TIN TỪ GỐC (03/10/2026): tin nào vừa đổi — DÙ ĐỔI TỪ ĐÂU
+    // (nút trong web, trigger CSDL, sửa thẳng trong Supabase) — thì xoá bản lưu sẵn ngay.
+    // trg_listings_updated_at luôn ghi updated_at nên đây là mốc tin cậy cho mọi đường đổi.
+    const { count: vuaDoi } = await admin
+      .from("listings")
+      .select("id", { count: "exact", head: true })
+      .gt("updated_at", new Date(Date.now() - 75_000).toISOString());
+    if ((vuaDoi ?? 0) > 0) revalidateTag("listings", "max");
+    return NextResponse.json({ ok: true, ...kq, lamMoi: vuaDoi ?? 0 });
   } catch (e) {
     await baoLoi({
       noi: "het-han-tin",
