@@ -15,8 +15,11 @@
 **Web tự tính số từ tin đăng trên coastalland.vn, theo QUÝ** (như Batdongsan). Cowork
 chỉ điền **phần web còn thiếu** — chủ yếu là các quý TRƯỚC khi web có tin.
 
-Chủ dự án vào admin → **Lịch sử giá** → bấm **Tải danh sách còn thiếu (gửi Cowork)**.
-File tải về là **đúng các dòng cần điền**: mỗi dòng = một QUÝ của một dãy mà tin
+**Lần đầu (đợt làm mới này):** điền vào file **`mau-lich-su-gia.csv`** gửi kèm — 97 dãy
+theo phường × 8 quý (Q4/2024 → Q3/2026).
+
+**Các lần sau:** chủ dự án vào admin → **Lịch sử giá** → bấm **Tải danh sách còn thiếu
+(gửi Cowork)**. File tải về là **đúng các dòng cần điền**: mỗi dòng = một QUÝ của một dãy mà tin
 đang đăng trên web cần nhưng chưa có số. Cột `tinh`, `khu_vuc`, `du_an`, `loai_hinh`,
 `muc_dich`, `ky`, `mau_so` **đã điền sẵn — không sửa**. Cowork chỉ điền giá + nguồn.
 
