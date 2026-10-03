@@ -5,7 +5,6 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ListingBrowser from "@/components/ListingBrowser";
 import KhungChoDanhMuc from "@/components/KhungChoDanhMuc";
-import BangGiaKhuVuc from "@/components/BangGiaKhuVuc";
 import Breadcrumb from "@/components/Breadcrumb";
 import KhuVucLinks from "@/components/KhuVucLinks";
 import { ListingListJsonLd } from "@/components/ListJsonLd";
@@ -121,9 +120,9 @@ export default async function DanhMucMuaBanPage({ params }: { params: Promise<{ 
               initialProvince={kv.name}
             />
           </Suspense>
-          {/* Mặt bằng giá của khu vực — khách vào trang này muốn biết ngay mỗi
-              loại hình bao nhiêu một m², trước cả khi xem tin. */}
-          <BangGiaKhuVuc items={tinTrongTinh} tenKhuVuc={kv.name} mucDich="ban" />
+          {/* Bảng giá theo loại hình của cả tỉnh: ĐÃ GỠ (03/10/2026) — gộp tin nhiều phường ra một
+              giá cho cả thành phố là sai luật "giá khu vực = số liệu đúng khu vực". Có số liệu chuẩn
+              (docs/YEU-CAU-COWORK-LICH-SU-GIA.md) mới làm lại. */}
           <KhuVucLinks base="/mua-ban" demTheoTinh={demTheoTinh} tinhDangXem={kv.name} />
         </main>
         <Footer />
