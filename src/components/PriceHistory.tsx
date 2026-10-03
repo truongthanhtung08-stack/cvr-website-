@@ -47,7 +47,7 @@ export default function PriceHistory({
 }: {
   chiSo: ChiSoKhuVuc | null;
   laThue?: boolean;
-  /** Bảng so sánh phường lân cận (cùng quý với mốc mới nhất). */
+  /** Bảng so sánh các phường/xã trong tỉnh (cùng quý với mốc mới nhất). */
   lanCan?: OSanh[];
 }) {
   // Như Batdongsan: bán = giá mỗi m², thuê = tổng tiền mỗi tháng.
@@ -179,11 +179,11 @@ export default function PriceHistory({
         {coBien && <Chu mau={MAU.thap} ten="Thấp nhất" />}
       </div>
 
-      {/* SO SÁNH KHU VỰC LÂN CẬN — như Batdongsan */}
+      {/* SO SÁNH CÁC PHƯỜNG/XÃ TRONG TỈNH — như Batdongsan, theo hệ mới */}
       {lanCan.length > 1 && (
         <div className="mt-6 overflow-hidden rounded-xl ring-1 ring-cvr-line">
           <div className="flex items-center justify-between gap-3 bg-cvr-surface px-4 py-2.5 text-[13px] font-semibold text-cvr-ink">
-            <span>So sánh giá khu vực lân cận</span>
+            <span>So sánh giá các phường/xã trong {chiSo?.tinh}</span>
             <span className="text-right">{laThue ? "Giá thuê" : "Giá bán"} phổ biến nhất {nhanKy(cuoi.quy)}</span>
           </div>
           {lanCan.map((o) => (

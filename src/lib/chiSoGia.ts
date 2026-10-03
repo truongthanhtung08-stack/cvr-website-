@@ -1,5 +1,5 @@
 import type { Listing } from "@/lib/data";
-import { chuanTen, choCuCua, phuongMoiCuaQuan } from "@/lib/locations";
+import { chuanTen } from "@/lib/locations";
 import { mauSoCuaLoaiHinh, dungODienTichXayDung, laTinThue, TEN_MAU_SO, TEN_VI_TRI, docViTri, type MauSo, type ViTriGia } from "@/lib/listingSpec";
 export { mauSoCuaLoaiHinh, TEN_MAU_SO, TEN_VI_TRI };
 export type { MauSo, ViTriGia };
@@ -549,10 +549,11 @@ export function vndM2(v: number, laThue = false): string {
 }
 
 
-// ── SO SÁNH VỚI KHU VỰC LÂN CẬN (như Batdongsan) ──────────────────────────
-// Các phường/xã MỚI từng chung một quận/huyện CŨ với phường của tin, cùng loại
-// hình + cùng bán/thuê + đúng mẫu số, lấy giá phổ biến của ĐÚNG quý đang hiện.
-// Phường nào không có số quý đó thì không có dòng.
+// ── SO SÁNH VỚI CÁC PHƯỜNG/XÃ TRONG TỈNH (như Batdongsan, theo HỆ MỚI) ─────
+// Hệ mới chỉ còn tỉnh → phường/xã (không còn quận), nên so trong cùng tỉnh/thành:
+// cùng loại hình + cùng bán/thuê + đúng mẫu số, giá phổ biến của ĐÚNG quý đang
+// hiện. Phường nào không có số quý đó thì không có dòng. Tối đa 10 dòng, luôn có
+// phường của tin.
 
 export type OSanh = { ten: string; gia: number; soMau?: number; chinhNo: boolean };
 
@@ -560,11 +561,6 @@ export function soSanhKhuVuc(tin: Listing, items: ChiSoKhuVuc[], ky: string): OS
   const tinhGoc = tin.diaGioi?.province ?? "";
   const phuongGoc = tin.diaGioi?.ward ?? "";
   if (!tinhGoc || !phuongGoc || !ky) return [];
-  const lanCan = new Set<string>([chuanTen(phuongGoc)]);
-  for (const c of choCuCua(tinhGoc, phuongGoc))
-    for (const p of phuongMoiCuaQuan(c.tinh, c.quan)) lanCan.add(chuanTen(p));
-  if (lanCan.size < 2) return [];
-
   const loai = chuanTen(tin.type);
   const mucDich = laTinThue(tin.purpose) ? "thue" : "ban";
   const mau = mauSoCuaLoaiHinh(tin.type);
@@ -574,7 +570,6 @@ export function soSanhKhuVuc(tin: Listing, items: ChiSoKhuVuc[], ky: string): OS
     if (!x.loaiHinh || chuanTen(x.loaiHinh) !== loai || (x.mucDich ?? "ban") !== mucDich) continue;
     if (mucDich === "thue" ? !!x.mauSo : x.mauSo !== mau) continue;
     const ph = chuanTen(x.khuVuc);
-    if (!lanCan.has(ph)) continue;
     const m = x.moc.find((y) => y.quy === ky);
     if (!m) continue;
     const cu = theoPhuong.get(ph);
@@ -582,8 +577,12 @@ export function soSanhKhuVuc(tin: Listing, items: ChiSoKhuVuc[], ky: string): OS
     if (cu && (cu.soMau || !m.soMau)) continue;
     theoPhuong.set(ph, { ten: x.khuVuc, gia: m.giaM2, soMau: m.soMau, chinhNo: ph === chuanTen(phuongGoc) });
   }
-  const ds = [...theoPhuong.values()].sort((a, b) => a.ten.localeCompare(b.ten, "vi"));
-  return ds.length >= 2 ? ds : [];
+  const ds = [...theoPhuong.values()].sort((a, b) => b.gia - a.gia);
+  const goc = ds.find((o) => o.chinhNo);
+  if (!goc || ds.length < 2) return [];
+  const top = ds.slice(0, 10);
+  if (!top.includes(goc)) top[top.length - 1] = goc;
+  return top;
 }
 
 // ── XU HƯỚNG TỪ KHO CỦA CHÍNH MÌNH ─────────────────────────────────────────
