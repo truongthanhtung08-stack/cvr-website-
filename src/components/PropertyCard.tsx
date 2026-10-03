@@ -183,8 +183,8 @@ export default function PropertyCard({
           <div className="mt-auto flex items-center gap-2 border-t border-cvr-line pt-2.5">
             <AgentAvatar name={agentName} src={item.agentAvatar} size={7} />
             <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-cvr-body">{agentName}</span>
-            {showTime && freshText(item.postedAt, item.bumpedAt) && (
-              <span className="shrink-0 text-[12px] text-cvr-faint">{freshText(item.postedAt, item.bumpedAt)}</span>
+            {showTime && (item.hetHan || freshText(item.postedAt, item.bumpedAt)) && (
+              <span className="shrink-0 text-[12px] text-cvr-faint">{item.hetHan ? "Hết hạn" : freshText(item.postedAt, item.bumpedAt)}</span>
             )}
             {/* Nút Yêu thích (tim) ở ĐÁY thẻ — CHỈ mobile (desktop giữ tim trên ảnh) */}
             <SaveButton id={item.id} variant="bare" className="h-8 w-8 shrink-0 sm:hidden" />
@@ -268,8 +268,8 @@ function PropertyRow({ item, showTime = false, terms = [] }: { item: Listing; sh
         <div className="mt-auto flex items-center gap-2 border-t border-cvr-line pt-2">
           <AgentAvatar name={agentName} src={item.agentAvatar} size={7} />
           <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-cvr-body">{agentName}</span>
-          {showTime && freshText(item.postedAt, item.bumpedAt) && (
-              <span className="shrink-0 text-[12px] text-cvr-faint">{freshText(item.postedAt, item.bumpedAt)}</span>
+          {showTime && (item.hetHan || freshText(item.postedAt, item.bumpedAt)) && (
+              <span className="shrink-0 text-[12px] text-cvr-faint">{item.hetHan ? "Hết hạn" : freshText(item.postedAt, item.bumpedAt)}</span>
             )}
         </div>
       </div>
