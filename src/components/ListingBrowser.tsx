@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import PhanTrang from "@/components/PhanTrang";
 import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
@@ -37,7 +37,7 @@ export default function ListingBrowser({
   heading,
   purpose = "ban",
   items = featuredListings,
-  itemsHetHan = [],
+  itemsHetHan: hetHanTuMayChu,
   articles = [],
   relevance = false,
   nested = false,
@@ -51,6 +51,8 @@ export default function ListingBrowser({
   items?: Listing[];
   // Tin ĐÃ HẾT HẠN (getListingsHetHan) — xếp SAU toàn bộ tin còn hạn, thẻ gắn nhãn
   // "Tin hết hạn" (chủ dự án chốt 03/10/2026). Chỉ lấy tin khớp ĐỦ bộ lọc / từ khoá.
+  // Không truyền (danh sách "Xem thêm" ở trang chủ, tin tương tự…) → tự nạp từ
+  // /api/tin-het-han lúc danh sách mở ra — để MỌI danh sách đều có tin hết hạn ở cuối.
   itemsHetHan?: Listing[];
   // Bài viết cho cột phải "Bài viết được quan tâm" (trang Mua bán / Cho thuê).
   // Không truyền → khối này không hiện (vd khi nhúng trong trang chi tiết tin).
@@ -68,6 +70,18 @@ export default function ListingBrowser({
   initialProvince?: string;
 }) {
   const params = useSearchParams();
+
+  const [hetHanNap, setHetHanNap] = useState<Listing[]>([]);
+  useEffect(() => {
+    if (hetHanTuMayChu) return;
+    let huy = false;
+    fetch("/api/tin-het-han")
+      .then((r) => (r.ok ? r.json() : []))
+      .then((ds: Listing[]) => { if (!huy) setHetHanNap(ds); })
+      .catch(() => {});
+    return () => { huy = true; };
+  }, [hetHanTuMayChu]);
+  const itemsHetHan = hetHanTuMayChu ?? hetHanNap;
 
   const [filters, setFiltersState] = useState<Filters>(() => {
     const f = filtersFromParams(params);
