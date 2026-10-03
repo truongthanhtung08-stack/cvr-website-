@@ -434,9 +434,9 @@ export function mauSoCuaLoaiHinh(type: string): MauSo {
 }
 
 /**
- * M² SÀN THẬT CỦA NHÀ — chỉ nhận số khách/tin gốc ghi, KHÔNG nhận số tự nhân.
- * Tổng sàn không bằng m² đất × số tầng: mỗi sàn thường chỉ 75–80% diện tích đất
- * (chủ dự án 03/10/2026). Số đúng bằng m² đất × 1 · 1,5 · 2 · 2,5 · 3… gần như chắc
+ * M² SÀN THẬT CỦA NHÀ — chỉ nhận TỔNG m² sàn khách/tin gốc ghi, KHÔNG nhận số tự
+ * nhân. Tổng sàn không bằng m² đất × số tầng: mỗi sàn thường chỉ 75–80% diện tích
+ * đất, tầng lửng / áp mái / sàn không kín đất (chủ dự án 03/10/2026). Số đúng bằng m² đất × 1 · 1,5 · 2 · 2,5 · 3… gần như chắc
  * chắn là phép nhân (do người nhập tự tính) → bỏ, không dùng để tính giá mỗi m².
  */
 export function dienTichSanThat(san?: number | null, dat?: number | null): number | null {
