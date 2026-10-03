@@ -80,13 +80,18 @@ export default function Gallery({
     if (el) setMCur(Math.round(el.scrollLeft / el.clientWidth));
   };
 
-  // ĐIỆN THOẠI: KHÔNG tự chạy slide — KHÁCH TỰ VUỐT (chủ dự án chốt 11/9/2026).
-  //
-  // Ảnh và video nằm chung một dãy, mà tự chạy thì lúc nào cũng có chỗ sai: đang
-  // đọc kỹ một tấm thì nó trôi mất, tới video thì hoặc cắt ngang người đang xem,
-  // hoặc phải đứng yên khiến khách tưởng máy treo. Bỏ hẳn tự chạy là xong: vuốt
-  // ngang đổi tấm, bấm ô nhỏ nhảy thẳng tới tấm muốn xem — đơn giản, không có gì
-  // để hiểu nhầm.
+  // ĐIỆN THOẠI: slide TỰ CHẠY như máy tính (chủ dự án 03/10/2026: "slide ảnh khi mở
+  // tin" không được đứng). Ảnh 4s, video chưa phát 7s; khách chạm/vuốt thì đếm lại từ
+  // đầu, video đang phát hoặc đang xem toàn màn hình thì dừng hẳn.
+  const [mCham, setMCham] = useState(0);
+  useEffect(() => {
+    if (hold || lb >= 0 || media.length < 2) return;
+    if (!window.matchMedia("(max-width: 639px)").matches) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const t = setTimeout(() => nhayToi((mCur + 1) % media.length), mIsVideo ? 7000 : 4000);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mCur, hold, lb, mIsVideo, media.length, mCham]);
 
   // Slide lớn TỰ CHẠY qua tất cả ảnh (4s/slide, mờ nhẹ) — dừng khi rê chuột,
   // tôn trọng prefers-reduced-motion. Slide video chạy đúng nhịp mặc định như ảnh;
@@ -148,6 +153,7 @@ export default function Gallery({
           <div
             ref={mTrack}
             onScroll={onMScroll}
+            onTouchStart={() => setMCham(Date.now())}
             className="no-scrollbar flex snap-x snap-mandatory overflow-x-auto overscroll-x-contain"
           >
             {media.map((m, i) =>
