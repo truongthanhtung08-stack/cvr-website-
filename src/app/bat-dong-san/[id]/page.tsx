@@ -339,7 +339,6 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
               <svg className="mt-0.5 h-4 w-4 shrink-0 text-[#6b4fa0]" fill="currentColor" viewBox="0 0 24 24" aria-hidden><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" /></svg>
               <p>
                 <b>Tin đã hết hạn hiển thị{l.hetHanLuc ? ` ngày ${new Date(l.hetHanLuc).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}` : ""}.</b>
-                {" "}Nội dung dưới đây chỉ để tham khảo.
               </p>
             </div>
           )}
@@ -676,7 +675,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                         </div>
                       </div>
                       {hetHan
-                        ? <div className="mt-4"><YeuCauLienHeLai listingId={l.id} tenNguoiDang={contact?.name} /></div>
+                        ? <div className="mt-4"><YeuCauLienHeLai listingId={l.id} /></div>
                         : <ContactActions listingId={l.id} phoneMask={phoneMask} />}
                     </>
                   ) : (

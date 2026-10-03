@@ -1524,7 +1524,6 @@ function Card({ id, step, title, children, khoa }: { id?: string; step: string; 
         // TIN ĐANG HIỂN THỊ (chuẩn Batdongsan): không đổi loại tin, địa chỉ, dự án — đổi là
         // thành bất động sản khác, phải đăng tin mới.
         <>
-          <p className="mb-3 rounded-lg bg-cvr-surface px-3 py-2 text-[13px] text-cvr-muted">Tin đang hiển thị không đổi được mục này. Muốn đổi, hãy đăng tin mới.</p>
           <fieldset disabled className="space-y-4 opacity-60">{children}</fieldset>
         </>
       ) : (

@@ -8,7 +8,7 @@ import { useProfile } from "@/lib/useProfile";
 // Tin hết hạn không hiện số; khách để lại tên + SĐT → /api/yeu-cau-lien-he báo THẲNG
 // người đăng (email / Zalo) + ghi lead để người đăng thấy số khách trong tài khoản.
 // ============================================================================
-export default function YeuCauLienHeLai({ listingId, tenNguoiDang }: { listingId: string; tenNguoiDang?: string }) {
+export default function YeuCauLienHeLai({ listingId }: { listingId: string }) {
   const { profile } = useProfile();
   const [mo, setMo] = useState(false);
   const [ten, setTen] = useState("");
@@ -52,9 +52,6 @@ export default function YeuCauLienHeLai({ listingId, tenNguoiDang }: { listingId
 
   return (
     <div id="yeu-cau-lien-he" className="scroll-mt-28">
-      <p className="text-sm leading-relaxed text-cvr-body">
-        Bất động sản có thể vẫn còn giao dịch. Để lại số điện thoại, {tenNguoiDang?.trim() || "người đăng tin"} sẽ gọi lại cho bạn.
-      </p>
       {xong ? (
         <p className="mt-3 rounded-lg bg-cvr-surface px-3 py-2.5 text-sm text-cvr-ink">
           Đã gửi yêu cầu. Người đăng sẽ liên hệ lại với bạn.
