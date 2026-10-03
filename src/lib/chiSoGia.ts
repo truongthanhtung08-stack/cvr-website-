@@ -411,6 +411,22 @@ export function docBangChiSo(bang: string[][]): { items: ChiSoKhuVuc[]; loi: Loi
     const mucDich = chuanTen(lay(3)).startsWith("thue") ? "thue" : "ban";
     const khuVuc = lay(1);
     const loaiHinh = lay(2);
+    // GIÁ THEO KHU VỰC + LOẠI HÌNH, ĐÚNG MẪU SỐ (chủ dự án 03/10/2026): dòng nào
+    // thiếu một trong ba thì trang tin không bao giờ dùng tới → chặn ngay khi nhập,
+    // không để nằm trong kho như số liệu hợp lệ.
+    if (!khuVuc.trim()) {
+      loi.push({ dong: i + 1, ly: "Thiếu khu_vuc (phường/xã) — không nhận giá cả tỉnh/thành" });
+      continue;
+    }
+    if (!loaiHinh.trim()) {
+      loi.push({ dong: i + 1, ly: "Thiếu loai_hinh" });
+      continue;
+    }
+    const mauDung = mauSoCuaLoaiHinh(loaiHinh);
+    if (docMauSo(themLay(4), loaiHinh) !== mauDung) {
+      loi.push({ dong: i + 1, ly: `mau_so phải là "${mauDung}" (${TEN_MAU_SO[mauDung]}) cho ${loaiHinh}` });
+      continue;
+    }
     const thap = doiGia(themLay(0));
     const cao = doiGia(themLay(1));
     const soMau = Math.round(Number(themLay(2).split(".").join("")));
@@ -564,8 +580,10 @@ export async function xuHuongCuaMinh(
 
     return {
       tinh,
+      khuVuc: phuong || undefined,
       loaiHinh,
       mucDich: mucDich === "thue" ? "thue" : "ban",
+      mauSo: mauSoCuaLoaiHinh(loaiHinh),
       nguon: "tin đăng trên Coastal Land",
       capNhat: duMau[duMau.length - 1].thang,
       moc,

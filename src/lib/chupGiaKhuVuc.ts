@@ -1,4 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { giaMoiM2 } from "@/lib/chiSoGia";
+import type { Listing } from "@/lib/data";
 
 // ════════════════════════════════════════════════════════════════════════════
 // CHỤP ẢNH MẶT BẰNG GIÁ MỖI THÁNG — cỗ máy tích luỹ dữ liệu của Coastal Land.
@@ -20,6 +22,8 @@ type Dong = {
   purpose: string | null;
   price_vnd: number | null;
   area_m2: number | null;
+  built_area_m2: number | null;
+  details: { dtSanUocTinh?: number | null } | null;
 };
 
 function trungVi(ds: number[]): number {
@@ -34,37 +38,38 @@ export async function chupGiaKhuVuc(): Promise<{ ghi: number; boQua: number } | 
 
   const { data, error } = await admin
     .from("listings")
-    .select("province, ward, type, purpose, price_vnd, area_m2")
+    .select("province, ward, type, purpose, price_vnd, area_m2, built_area_m2, details")
     .eq("status", "approved")
     .limit(20000);
   if (error || !data) return null;
 
-  // Gom hai mức: theo PHƯỜNG và gộp cả TỈNH. Phường thì chi tiết nhưng mỏng,
-  // tỉnh thì dày nhưng thô — giữ cả hai để về sau muốn vẽ mức nào cũng có.
+  // Chỉ gom theo PHƯỜNG + LOẠI HÌNH (chủ dự án 03/10/2026): không có số "cả tỉnh" —
+  // giá cả thành phố không được dùng nói thay cho một khu vực.
   const nhom = new Map<string, number[]>();
   for (const r of data as Dong[]) {
     const tinh = (r.province ?? "").trim();
     const loai = (r.type ?? "").trim();
     if (!tinh || !loai) continue;
-    const gia = r.price_vnd;
-    const dt = r.area_m2;
-    if (!gia || !dt || dt <= 0) continue;
-    const m2 = gia / dt;
-    // Chặn dữ liệu nhập sai: dưới 1 triệu hoặc trên 1 tỷ mỗi m².
-    if (m2 < 1_000_000 || m2 > 1_000_000_000) continue;
+    // Giá mỗi m² ĐÚNG LUẬT CỦA LOẠI HÌNH (đất → m² đất · nhà → m² sàn · căn hộ →
+    // m² căn) — cùng một hàm với trang tin. Tin nhà chưa có m² sàn thì không góp.
+    const m2 = giaMoiM2({
+      type: loai,
+      purpose: r.purpose,
+      priceVnd: r.price_vnd,
+      areaM2: r.area_m2,
+      builtAreaM2: r.built_area_m2,
+      builtAreaM2Uoc: r.details?.dtSanUocTinh ?? null,
+    } as Listing);
+    if (m2 == null) continue;
     const mucDich = (r.purpose ?? "ban").trim();
     const phuong = (r.ward ?? "").trim();
 
-    // Ghi hai mức: theo phường (chi tiết, mỏng) và gộp cả tỉnh (thô, dày).
-    // Tin không ghi phường thì chỉ vào được mức tỉnh.
-    const khoa = phuong
-      ? [`${tinh}|${phuong}|${loai}|${mucDich}`, `${tinh}||${loai}|${mucDich}`]
-      : [`${tinh}||${loai}|${mucDich}`];
-    for (const key of khoa) {
-      const cu = nhom.get(key);
-      if (cu) cu.push(m2);
-      else nhom.set(key, [m2]);
-    }
+    // Tin không ghi phường thì không góp vào đâu cả.
+    if (!phuong) continue;
+    const key = `${tinh}|${phuong}|${loai}|${mucDich}`;
+    const cu = nhom.get(key);
+    if (cu) cu.push(m2);
+    else nhom.set(key, [m2]);
   }
 
   const thang = new Date();

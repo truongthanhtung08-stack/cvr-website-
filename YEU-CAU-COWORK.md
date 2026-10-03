@@ -802,11 +802,30 @@ Mỗi dòng đúng một tin. Lưu dạng **`.csv` (UTF-8)** hoặc **`.xlsx`** 
 ---
 ---
 
-# 🅲 GÓI C — LỊCH SỬ GIÁ THEO KHU VỰC ⭐ MỚI 19/09/2026
+# 🅲 GÓI C — LỊCH SỬ GIÁ THEO KHU VỰC ⭐ CẬP NHẬT 03/10/2026
 
 > Đây là kho số làm nên biểu đồ **Lịch sử giá** trên từng trang tin — thứ khách xem để biết
 > khu đó đang lên hay xuống. Nộp bằng file mẫu **`mau-lich-su-gia.csv`**
-> (admin → **Lịch sử giá** → *Tải tệp mẫu*). File đã dựng sẵn khung, chỉ việc điền cột giá.
+> (admin → **Lịch sử giá** → *Tải tệp mẫu*). File đã dựng sẵn khung **97 dãy theo phường/xã ·
+> 24 tháng (T10/2024 → T9/2026)**, đã điền sẵn `mau_so` đúng — chỉ việc điền cột giá.
+>
+> ⚠️ **03/10: TẢI LẠI FILE MẪU.** Bản cũ còn 1.272 dòng "cả tỉnh" (nay web không nhận) và
+> ghi sai `mau_so` cho Văn phòng, Mặt bằng (`dat` → đúng là `san`).
+
+## C0. ⛔ BỐN LUẬT CỨNG (chủ dự án chốt 03/10/2026) — sai là web từ chối cả dòng
+
+1. **Chỉ số theo PHƯỜNG/XÃ.** Cột `khu_vuc` **bắt buộc**. Cấm điền giá cả tỉnh/thành
+   phố — một con số chung cả Đà Nẵng không nói được gì về một căn ở An Hải hay Hòa Xuân.
+   Dòng thiếu `khu_vuc` → web báo lỗi, không nhận.
+2. **Đúng LOẠI HÌNH, đúng MẪU SỐ.** Cột `loai_hinh` bắt buộc, `mau_so` phải đúng luật ở
+   **C2**. Không lấy số loại hình này điền cho loại hình khác. Sai mẫu số → web không nhận.
+3. **ĐỦ SỐ MỚI HIỆN.** Trang tin chỉ hiện Lịch sử giá khi dãy có **kỳ mới nhất VÀ đúng kỳ
+   đó của năm trước** (VD có `2026-09` thì phải có `2025-09`). Thiếu một trong hai thì
+   dãy đó không hiện — nên **ưu tiên điền trọn 2 năm cho ít dãy, hơn là điền rải rác
+   nhiều dãy.**
+4. **KHÔNG BỊA SỐ.** Mỗi con số phải có `nguon` + `nguon_link` tra lại được. Không tìm
+   được số → **để trống ô giá**, ghi lý do vào `bao-cao.txt`. Cấm nội suy, cấm lấy trung
+   bình hai tháng bên cạnh, cấm suy từ giá cả tỉnh.
 
 ## C1. Mỗi dãy số định danh bằng NĂM chiều
 
@@ -822,7 +841,9 @@ giữa hai loại hình.
 |---|---|---|
 | Đất nền · nông nghiệp · công nghiệp | `dat` | tổng giá lô ÷ **m² đất** |
 | **Nhà** riêng · mặt phố · biệt thự · shophouse | **`san`** | tổng giá cả căn ÷ **tổng m² sàn** |
-| Căn hộ · chung cư · condotel | `can` | tổng giá căn ÷ **m² căn** |
+| Căn hộ · chung cư · condotel · căn hộ dịch vụ | `can` | tổng giá căn ÷ **m² căn** |
+| **Văn phòng · Mặt bằng / Cửa hàng** | **`san`** | giá thuê ÷ **m² sàn** cho thuê |
+| Thuê đất / Nhà xưởng / Kho bãi | `dat` | giá thuê ÷ **m² đất** |
 
 File mẫu **đã điền sẵn đúng cho từng dòng** — cứ theo đó mà thu, đừng sửa.
 
@@ -850,8 +871,7 @@ Giá lệch rất xa **ngay trong cùng một phường**, tuỳ con đường:
 
 Ví dụ thật, cùng phường cùng loại hình: `lon` **95** · *(trống)* **70** · `kiet` **48** triệu/m².
 
-Tách được thì tách — số mới nói đúng về từng căn. Chưa tách cũng không sao, web tự ghi thêm
-dòng *"Mức chung của cả khu vực — chưa tách theo vị trí"* để người xem không hiểu nhầm.
+Tách được thì tách — số mới nói đúng về từng căn. Chưa tách thì để trống `vi_tri`.
 
 ## C4. Các cột còn lại
 

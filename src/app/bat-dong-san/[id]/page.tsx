@@ -299,7 +299,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
     { id: "dac-diem", label: "Đặc điểm" },
     ...(d.interior.length > 0 ? [{ id: "noi-that", label: "Nội thất" }] : []),
     ...(d.amenityGroups.some((g) => g.items.some((it) => it.active)) ? [{ id: "tien-ich", label: "Tiện ích" }] : []),
-    ...(priceVnd != null ? [{ id: "lich-su-gia", label: "Lịch sử giá" }] : []),
+    ...(priceVnd != null && coDuLichSuGia(chiSoTin) ? [{ id: "lich-su-gia", label: "Lịch sử giá" }] : []),
     { id: "vi-tri", label: "Vị trí" },
   ];
 
