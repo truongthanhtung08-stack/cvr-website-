@@ -1,15 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 import { useProfile } from "@/lib/useProfile";
 
 // ============================================================================
 // TIN HẾT HẠN — "Gửi yêu cầu để người đăng liên hệ lại" (giống Batdongsan, đo 03/10/2026).
-// Tin hết hạn không hiện số; khách để lại tên + SĐT → ghi customer_requests
-// (cùng chỗ form Liên hệ) → admin thấy ở /admin/yeu-cau và nhận email báo việc.
+// Tin hết hạn không hiện số; khách để lại tên + SĐT → /api/yeu-cau-lien-he báo THẲNG
+// người đăng (email / Zalo) + ghi lead để người đăng thấy số khách trong tài khoản.
 // ============================================================================
-export default function YeuCauLienHeLai({ listingId, maTin, tieuDe }: { listingId: string; maTin: string; tieuDe: string }) {
+export default function YeuCauLienHeLai({ listingId }: { listingId: string }) {
   const { profile } = useProfile();
   const [mo, setMo] = useState(false);
   const [ten, setTen] = useState("");
@@ -37,15 +36,13 @@ export default function YeuCauLienHeLai({ listingId, maTin, tieuDe }: { listingI
     if (!sdt.trim()) return setLoi("Chưa nhập số điện thoại.");
     setDangGui(true);
     try {
-      const { error } = await createClient().from("customer_requests").insert({
-        user_id: profile?.id ?? null,
-        loai: "khac",
-        ten: ten.trim(),
-        dien_thoai: sdt.trim(),
-        email: profile?.email ?? null,
-        noi_dung: `Yêu cầu liên hệ lại — tin đã hết hạn "${tieuDe}" (Mã tin ${maTin}) · https://coastalland.vn/bat-dong-san/${listingId}`,
+      const r = await fetch("/api/yeu-cau-lien-he", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ listingId, ten: ten.trim(), sdt: sdt.trim() }),
       });
-      if (error) throw error;
+      const j = (await r.json().catch(() => ({}))) as { ok?: boolean; loi?: string };
+      if (!r.ok || !j.ok) throw new Error(j.loi || "lỗi không rõ");
       setXong(true);
     } catch (e) {
       setLoi(`Gửi yêu cầu thất bại: ${e instanceof Error ? e.message : "lỗi không rõ"}`);

@@ -671,7 +671,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                         </div>
                       </div>
                       {hetHan
-                        ? <div className="mt-4"><YeuCauLienHeLai listingId={l.id} maTin={l.id.slice(0, 8).toUpperCase()} tieuDe={l.title} /></div>
+                        ? <div className="mt-4"><YeuCauLienHeLai listingId={l.id} /></div>
                         : <ContactActions listingId={l.id} phoneMask={phoneMask} />}
                     </>
                   ) : (
