@@ -37,6 +37,7 @@ export default function ListingBrowser({
   heading,
   purpose = "ban",
   items = featuredListings,
+  itemsHetHan = [],
   articles = [],
   relevance = false,
   nested = false,
@@ -48,6 +49,9 @@ export default function ListingBrowser({
   purpose?: "ban" | "thue";
   // Tin từ Supabase (server truyền xuống) — không truyền thì dùng dữ liệu mẫu.
   items?: Listing[];
+  // Tin ĐÃ HẾT HẠN (getListingsHetHan) — xếp SAU toàn bộ tin còn hạn, thẻ gắn nhãn
+  // "Tin hết hạn" (chủ dự án chốt 03/10/2026). Chỉ lấy tin khớp ĐỦ bộ lọc / từ khoá.
+  itemsHetHan?: Listing[];
   // Bài viết cho cột phải "Bài viết được quan tâm" (trang Mua bán / Cho thuê).
   // Không truyền → khối này không hiện (vd khi nhúng trong trang chi tiết tin).
   articles?: Article[];
@@ -119,9 +123,22 @@ export default function ListingBrowser({
   const search = useMemo(() => smartSearch(hits.map((h) => h.item), filters.keyword), [hits, filters.keyword]);
   const coTuKhoa = filters.keyword.trim().length > 0;
 
+  // Tin hết hạn: cùng mục đích + khớp ĐỦ bộ lọc (Tầng 1) và từ khoá — không nới lỏng.
+  const ketQuaHetHan = useMemo(() => {
+    const goc = itemsHetHan.filter((l) => (l.purpose ?? "ban") === purpose);
+    if (goc.length === 0) return [];
+    const khop = smartFilter(goc, { ...filters, keyword: "" }).filter((h) => h.tier === 1).map((h) => h.item);
+    return coTuKhoa
+      ? smartSearch(khop, filters.keyword).hits.filter((h) => h.tier === 1).map((h) => h.item)
+      : sortListings(khop, sort);
+  }, [itemsHetHan, purpose, filters, coTuKhoa, sort]);
+
   const results = useMemo(
-    () => (coTuKhoa ? search.hits.map((h) => h.item) : sortListings(hits.map((h) => h.item), sort)),
-    [coTuKhoa, search, hits, sort],
+    () => [
+      ...(coTuKhoa ? search.hits.map((h) => h.item) : sortListings(hits.map((h) => h.item), sort)),
+      ...ketQuaHetHan,
+    ],
+    [coTuKhoa, search, hits, sort, ketQuaHetHan],
   );
   // Tầng của từng tin + chữ cần bôi đậm
   const tierById = useMemo(() => new Map(hits.map((h) => [h.item.id, h.tier])), [hits]);
@@ -236,7 +253,7 @@ export default function ListingBrowser({
       {mapMode && (
         <div className="mt-4 overflow-hidden rounded-xl border border-cvr-line">
           <div className="h-[62vh] min-h-[380px] w-full">
-            <MapView items={results.filter((l) => !l.banSao)} />
+            <MapView items={results.filter((l) => !l.banSao && !l.hetHan)} />
           </div>
           <p className="border-t border-cvr-line bg-cvr-surface px-3 py-2 text-xs text-cvr-muted">
             Bấm vào viên giá để xem nhanh tin.

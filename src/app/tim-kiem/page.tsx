@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SearchClient from "@/components/SearchClient";
-import { getListings } from "@/lib/listingsDb";
+import { getListings, getListingsHetHan } from "@/lib/listingsDb";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/tim-kiem" },
@@ -21,7 +21,7 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function TimKiemPage() {
-  const listings = await getListings(); // tin THẬT từ Supabase (fallback mẫu khi lỗi)
+  const [listings, hetHan] = await Promise.all([getListings(), getListingsHetHan()]); // tin THẬT từ Supabase (fallback mẫu khi lỗi)
   return (
     <>
       <Header />
@@ -33,7 +33,7 @@ export default async function TimKiemPage() {
             </div>
           }
         >
-          <SearchClient items={listings} />
+          <SearchClient items={listings} itemsHetHan={hetHan} />
         </Suspense>
       </main>
       <Footer />

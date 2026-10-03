@@ -337,6 +337,18 @@ export async function getListings(): Promise<Listing[]> {
   return rows.filter((r) => !isSeedRow(r) && conHan(r)).map(rowToListing);
 }
 
+// TIN ĐÃ HẾT HẠN — chủ dự án chốt 03/10/2026: tin hết hạn VẪN HIỆN trên web, xếp SAU
+// toàn bộ tin còn hạn ở Mua bán / Cho thuê / Tìm kiếm, gắn nhãn "Tin hết hạn" (thẻ mờ).
+// Gồm cả tin cron chưa kịp đổi status (approved nhưng đã quá giờ). Trang chủ, sitemap,
+// gợi ý KHÔNG dùng hàm này — ở đó chỉ có tin còn hạn.
+export async function getListingsHetHan(): Promise<Listing[]> {
+  const rows = await rest(`select=${COLS}&status=in.(approved,expired)&order=tier_expires_at.desc.nullslast&limit=500`);
+  if (!rows) return [];
+  return rows
+    .filter((r) => !isSeedRow(r) && !conHan(r))
+    .map((r) => ({ ...rowToListing(r), hetHan: true }));
+}
+
 // ── BẢN NHẸ CHO TRANG CHỈ HIỆN THẺ TIN (trang chủ) ──────────────────────────
 //
 // VÌ SAO CÓ: mọi thứ hàm trên trả về đều bị Next gói vào HTML gửi xuống máy khách.

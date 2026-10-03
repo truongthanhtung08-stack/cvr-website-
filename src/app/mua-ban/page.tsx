@@ -6,7 +6,7 @@ import { ListingListJsonLd } from "@/components/ListJsonLd";
 import ListingBrowser from "@/components/ListingBrowser";
 import KhungChoDanhMuc from "@/components/KhungChoDanhMuc";
 import KhuVucLinks from "@/components/KhuVucLinks";
-import { getListings } from "@/lib/listingsDb";
+import { getListings, getListingsHetHan } from "@/lib/listingsDb";
 import { getArticles } from "@/lib/contentDb";
 
 export const metadata: Metadata = {
@@ -29,7 +29,7 @@ function demTheoTinh(items: { location: string }[]): [string, number][] {
 
 export default async function MuaBanPage() {
   // B2: tin từ Supabase (fallback dữ liệu mẫu) + bài viết cho cột phải
-  const [listings, articles] = await Promise.all([getListings(), getArticles()]);
+  const [listings, articles, hetHan] = await Promise.all([getListings(), getArticles(), getListingsHetHan()]);
   const tinBan = listings.filter((l) => (l.purpose ?? "ban") === "ban");
   return (
     <>
@@ -49,7 +49,7 @@ export default async function MuaBanPage() {
             />
           }
         >
-          <ListingBrowser purpose="ban" heading="Nhà đất bán" items={listings} articles={articles} />
+          <ListingBrowser purpose="ban" heading="Nhà đất bán" items={listings} itemsHetHan={hetHan} articles={articles} />
         </Suspense>
         {/* ĐƯỜNG BÒ TỚI TRANG KHU VỰC — khối này trang danh mục con đã dùng từ lâu,
             chỉ trang gốc là chưa có. Đo ngày 18/09/2026: /mua-ban/da-nang và

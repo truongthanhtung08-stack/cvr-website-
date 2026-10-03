@@ -9,7 +9,7 @@ import BangGiaKhuVuc from "@/components/BangGiaKhuVuc";
 import Breadcrumb from "@/components/Breadcrumb";
 import KhuVucLinks from "@/components/KhuVucLinks";
 import { ListingListJsonLd } from "@/components/ListJsonLd";
-import { getListings } from "@/lib/listingsDb";
+import { getListings, getListingsHetHan } from "@/lib/listingsDb";
 import { getArticles } from "@/lib/contentDb";
 import { findCategory, saleCategories } from "@/lib/categories";
 import { demTinTheoKhuVuc, khuVucTrongDiem, moTaKhuVuc, slugKhuVuc, tieuDeKhuVuc, timKhuVuc } from "@/lib/khuVuc";
@@ -76,7 +76,7 @@ export default async function DanhMucMuaBanPage({ params }: { params: Promise<{ 
   const kv = c ? null : timKhuVuc(loai);
   if (!c && !kv) notFound();
 
-  const [listings, articles] = await Promise.all([getListings(), getArticles()]);
+  const [listings, articles, hetHan] = await Promise.all([getListings(), getArticles(), getListingsHetHan()]);
   const tinBan = listings.filter((l) => (l.purpose ?? "ban") === "ban");
 
   // Số tin từng tỉnh — cho khối liên kết khu vực cuối trang
@@ -116,6 +116,7 @@ export default async function DanhMucMuaBanPage({ params }: { params: Promise<{ 
               purpose="ban"
               heading={`Nhà đất bán tại ${kv.name}`}
               items={listings}
+              itemsHetHan={hetHan}
               articles={articles}
               initialProvince={kv.name}
             />
@@ -154,6 +155,7 @@ export default async function DanhMucMuaBanPage({ params }: { params: Promise<{ 
             purpose="ban"
             heading={c!.h1}
             items={listings}
+            itemsHetHan={hetHan}
             articles={articles}
             initialTypes={c!.types}
           />

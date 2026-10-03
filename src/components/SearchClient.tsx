@@ -27,7 +27,14 @@ const PER_PAGE = 10; // mỗi trang 10 tin (giống danh sách /mua-ban)
 //   • Hiểu đúng tham số từ Hero: tinh/quan/phuong, loai (nhiều loại), giaMin/giaMax,
 //     dtMin/dtMax, pn, huong, q, mode.
 // items: tin THẬT từ Supabase (server truyền xuống). Không truyền → dữ liệu mẫu.
-export default function SearchClient({ items = featuredListings }: { items?: Listing[] }) {
+export default function SearchClient({
+  items = featuredListings,
+  itemsHetHan = [],
+}: {
+  items?: Listing[];
+  // Tin ĐÃ HẾT HẠN — xếp SAU toàn bộ tin còn hạn, chỉ lấy tin khớp đủ (chốt 03/10/2026).
+  itemsHetHan?: Listing[];
+}) {
   const params = useSearchParams();
   const mode = params.get("mode") ?? "";
   // Tab đã chọn ở Hero → danh mục loại hình + nguồn tin theo mục đích.
@@ -62,9 +69,18 @@ export default function SearchClient({ items = featuredListings }: { items?: Lis
   const filterTierById = useMemo(() => new Map(locHits.map((h) => [h.item.id, h.tier])), [locHits]);
   const coTuKhoa = filters.keyword.trim().length > 0;
 
+  const ketQuaHetHan = useMemo(() => {
+    const goc = itemsHetHan.filter((l) => (l.purpose ?? "ban") === purpose);
+    if (goc.length === 0) return [];
+    const khop = smartFilter(goc, { ...filters, keyword: "" }).filter((h) => h.tier === 1).map((h) => h.item);
+    return coTuKhoa
+      ? smartSearch(khop, filters.keyword).hits.filter((h) => h.tier === 1).map((h) => h.item)
+      : sortListings(khop, sort);
+  }, [itemsHetHan, purpose, filters, coTuKhoa, sort]);
+
   const results = useMemo(
-    () => (coTuKhoa ? search.hits.map((h) => h.item) : sortListings(loc, sort)),
-    [coTuKhoa, search, loc, sort],
+    () => [...(coTuKhoa ? search.hits.map((h) => h.item) : sortListings(loc, sort)), ...ketQuaHetHan],
+    [coTuKhoa, search, loc, sort, ketQuaHetHan],
   );
   // Tra cứu nhanh: tin nào thuộc tầng nào + khớp những chữ gì (để bôi đậm)
   const hitById = useMemo(() => new Map(search.hits.map((h) => [h.item.id, h])), [search]);

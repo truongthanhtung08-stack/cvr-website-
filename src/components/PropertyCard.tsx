@@ -83,7 +83,8 @@ export default function PropertyCard({
       data-tin={item.id}
       // Khung thẻ Apple thuần: viền tóc cvr-line + bóng mềm — KHÔNG viền màu theo cấp.
       // Cấp tin thể hiện qua huy hiệu + màu TIÊU ĐỀ (đúng bảng đặc điểm), không tô khung.
-      className="flex flex-col overflow-hidden rounded-none border-0 bg-white shadow-lux shadow-lux-hover transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1 sm:border sm:border-cvr-line"
+      // Tin HẾT HẠN (chỉ có ở cuối danh sách): thẻ mờ + nhãn "Tin hết hạn" — chốt 03/10/2026.
+      className={`flex flex-col overflow-hidden rounded-none border-0 bg-white shadow-lux shadow-lux-hover transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1 sm:border sm:border-cvr-line ${item.hetHan ? "opacity-70" : ""}`}
     >
       {/* Dải nhấn KIM LOẠI trên đỉnh thẻ — CHỈ Kim Cương (tier.bar) → cảm giác "đen ánh
           vàng kim" cao cấp; cao 3px nên gần như không thay đổi chiều cao thẻ. */}
@@ -108,6 +109,7 @@ export default function PropertyCard({
             {tier.short}
           </span>
         )}
+        {item.hetHan && <NhanHetHan />}
         {/* DESKTOP (đã duyệt): GIỮ NGUYÊN Yêu thích + So sánh trên ảnh.
             MOBILE: chỉ So sánh trên ảnh; Yêu thích (tim) chuyển xuống ĐÁY thẻ. */}
         <div className="absolute right-2 top-2 flex flex-col gap-1.5">
@@ -194,6 +196,15 @@ export default function PropertyCard({
   );
 }
 
+// Nhãn "Tin hết hạn" — góc trên trái ảnh, đúng chỗ huy hiệu hạng (tin hết hạn không còn hạng).
+function NhanHetHan() {
+  return (
+    <span className="absolute left-2 top-2 rounded-full bg-black/65 px-2 py-[3px] text-[11px] font-semibold text-white shadow-[0_2px_10px_rgba(0,0,0,0.28)] backdrop-blur-md">
+      Tin hết hạn
+    </span>
+  );
+}
+
 // ── List row ─────────────────────────────────────────────────────────────────
 function PropertyRow({ item, showTime = false, terms = [] }: { item: Listing; showTime?: boolean; terms?: string[] }) {
   const agentName = agentNameOf(item);
@@ -209,7 +220,7 @@ function PropertyRow({ item, showTime = false, terms = [] }: { item: Listing; sh
       // ĐIỆN THOẠI: ảnh TRÊN – nội dung DƯỚI (xếp dọc).
       // MÁY TÍNH: ảnh TRÁI – nội dung PHẢI, ảnh chiếm ~38% bề ngang thẻ
       // (đã tăng theo file V3 10.08.2026 — ảnh đại diện cũ nhỏ, lệch với nội dung).
-      className="relative flex flex-col gap-3 overflow-hidden rounded-none border border-cvr-line bg-white p-2.5 shadow-lux shadow-lux-hover transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 sm:flex-row sm:gap-4 sm:p-3"
+      className={`relative flex flex-col gap-3 overflow-hidden rounded-none border border-cvr-line bg-white p-2.5 shadow-lux shadow-lux-hover transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 sm:flex-row sm:gap-4 sm:p-3 ${item.hetHan ? "opacity-70" : ""}`}
     >
       {/* Dải nhấn KIM LOẠI đỉnh thẻ — CHỈ Kim Cương (tier.bar), đồng bộ với thẻ lưới/trang chủ */}
       {tier?.bar && <div className="absolute inset-x-0 top-0 z-10 h-px" style={{ backgroundColor: tier.bar }} aria-hidden />}
@@ -221,6 +232,7 @@ function PropertyRow({ item, showTime = false, terms = [] }: { item: Listing; sh
             style={{ backgroundColor: `${tier.accent}e6`, color: tier.badgeText }}
           >{tier.short}</span>
         )}
+        {item.hetHan && <NhanHetHan />}
         <div className="absolute right-2 top-2 flex flex-col gap-1.5">
           <SaveButton id={item.id} className="h-7 w-7" />
           <CompareButton id={item.id} className="h-7 w-7" />

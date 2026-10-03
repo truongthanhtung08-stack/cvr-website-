@@ -89,6 +89,8 @@ export type Listing = {
   hetHanLuc?: string | null;
   /** Hạng tin đã mua: diamond · gold · silver · basic */
   hangTin?: "diamond" | "gold" | "silver" | "basic";
+  /** Tin ĐÃ HẾT HẠN — chỉ hiện ở CUỐI danh sách Mua bán/Cho thuê/Tìm kiếm, nhãn "Tin hết hạn". */
+  hetHan?: boolean;
 };
 
 // Lọc tin theo mục đích (mặc định không có purpose = "ban")

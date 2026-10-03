@@ -6,7 +6,7 @@ import { ListingListJsonLd } from "@/components/ListJsonLd";
 import ListingBrowser from "@/components/ListingBrowser";
 import KhungChoDanhMuc from "@/components/KhungChoDanhMuc";
 import KhuVucLinks from "@/components/KhuVucLinks";
-import { getListings } from "@/lib/listingsDb";
+import { getListings, getListingsHetHan } from "@/lib/listingsDb";
 import { getArticles } from "@/lib/contentDb";
 
 // Đếm tin theo tỉnh — cho khối "Cho thuê theo khu vực" ở cuối trang.
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
 
 export default async function ChoThuePage() {
   // B2: tin từ Supabase (fallback dữ liệu mẫu) + bài viết cho cột phải
-  const [listings, articles] = await Promise.all([getListings(), getArticles()]);
+  const [listings, articles, hetHan] = await Promise.all([getListings(), getArticles(), getListingsHetHan()]);
   const tinThue = listings.filter((l) => (l.purpose ?? "ban") === "thue");
   return (
     <>
@@ -46,7 +46,7 @@ export default async function ChoThuePage() {
             />
           }
         >
-          <ListingBrowser purpose="thue" heading="Nhà đất cho thuê" items={listings} articles={articles} />
+          <ListingBrowser purpose="thue" heading="Nhà đất cho thuê" items={listings} itemsHetHan={hetHan} articles={articles} />
         </Suspense>
         {/* Đường bò tới trang khu vực cho thuê — cùng lý do như ở /mua-ban:
             trang /cho-thue/<tỉnh> chưa có liên kết nội bộ nào trỏ tới. */}
