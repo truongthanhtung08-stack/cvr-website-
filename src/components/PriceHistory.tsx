@@ -13,7 +13,7 @@ import { vndM2, luiMotNam, coDuLichSuGia, soKyLienMach } from "@/lib/chiSoGia";
 // Quy ước màu (19/09/2026): xanh lá = cao/tăng · đỏ = thấp/giảm · vàng = phổ biến.
 // ════════════════════════════════════════════════════════════════════════════
 
-const MAU = { cao: "#0f8a5f", thap: "#dc2626", phoBien: "#c8a250", tinNay: "#1d1d1f" };
+const MAU = { cao: "#0f8a5f", thap: "#dc2626", phoBien: "#c8a250" };
 
 type Moc = { quy: string; giaM2: number; thap?: number; cao?: number };
 
@@ -43,12 +43,9 @@ const phanTram = (x: number) => `${Math.abs(x).toFixed(1).replace(".", ",")}%`;
 export default function PriceHistory({
   chiSo,
   laThue = false,
-  giaTinM2,
 }: {
   chiSo: ChiSoKhuVuc | null;
   laThue?: boolean;
-  /** Giá mỗi m² của tin đang xem — chấm đen trên biểu đồ (cùng đơn vị với dãy). */
-  giaTinM2?: number | null;
 }) {
   const caDay: Moc[] = (chiSo?.moc ?? []).filter((m) => m.giaM2 > 0);
   const theoThang = caDay.length > 0 && laThang(caDay[caDay.length - 1].quy);
@@ -71,7 +68,6 @@ export default function PriceHistory({
   // ── Biểu đồ: HAI KHỔ — máy tính 720×300, điện thoại 360×240 (chữ trục đọc được) ──
   const coBien = moc.every((m) => (m.thap ?? 0) > 0 && (m.cao ?? 0) > 0);
   const tatCa = coBien ? moc.flatMap((m) => [m.thap!, m.giaM2, m.cao!]) : moc.map((m) => m.giaM2);
-  if (giaTinM2 && giaTinM2 > 0) tatCa.push(giaTinM2);
   const minV = Math.min(...tatCa);
   const maxV = Math.max(...tatCa);
   const buoc = buocTron((maxV - minV) / 4 || maxV * 0.1 || 1);
@@ -109,9 +105,6 @@ export default function PriceHistory({
         {coBien && <path d={duong((m) => m.thap!)} fill="none" stroke={MAU.thap} strokeWidth={co * 0.16} strokeLinejoin="round" />}
         <path d={duong((m) => m.giaM2)} fill="none" stroke={MAU.phoBien} strokeWidth={co * 0.27} strokeLinejoin="round" strokeLinecap="round" />
         <circle cx={x(moc.length - 1)} cy={y(cuoi.giaM2)} r={co * 0.38} fill="#fff" stroke={MAU.phoBien} strokeWidth={co * 0.22} />
-        {giaTinM2 != null && giaTinM2 > 0 && (
-          <circle cx={x(moc.length - 1)} cy={y(giaTinM2)} r={co * 0.42} fill={MAU.tinNay} stroke="#fff" strokeWidth={co * 0.15} />
-        )}
         {nhanX.map(({ i, m }) => (
           <text key={m.quy} x={x(i)} y={duoi + co * 1.9} textAnchor={i === 0 ? "start" : i === moc.length - 1 ? "end" : "middle"} fontSize={co} fill="#86868b">
             {nhanKy(m.quy)}
@@ -178,12 +171,6 @@ export default function PriceHistory({
         {coBien && <Chu mau={MAU.cao} ten="Cao nhất" />}
         <Chu mau={MAU.phoBien} ten="Phổ biến" day />
         {coBien && <Chu mau={MAU.thap} ten="Thấp nhất" />}
-        {giaTinM2 != null && giaTinM2 > 0 && (
-          <span className="inline-flex items-center gap-2">
-            <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: MAU.tinNay }} />
-            Tin này: {vndM2(giaTinM2, laThue)}
-          </span>
-        )}
       </div>
     </div>
   );

@@ -16,7 +16,6 @@ import {
   chiSoChoTin,
   coDuLichSuGia,
   khoCuaMinh,
-  giaTinSoDuocVoiChiSo,
   tenPhamVi,
 } from "@/lib/chiSoGia";
 import { getChiSoGia } from "@/lib/siteContent";
@@ -624,9 +623,6 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                   <PriceHistory
                     chiSo={chiSoTin}
                     laThue={purpose === "thue"}
-                    /* Giá mỗi m² của tin CHỈ đưa lên biểu đồ khi cùng mẫu số với dãy chỉ
-                       số: bán NHÀ phải là giá trên m² SÀN, chia m² đất là sai nghiêm trọng. */
-                    giaTinM2={giaTinSoDuocVoiChiSo(l, chiSoTin)}
                   />
                 </Section>
               )}

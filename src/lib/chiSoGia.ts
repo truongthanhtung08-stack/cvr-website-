@@ -37,24 +37,6 @@ export type MatBangGia = {
 };
 
 
-/**
- * Chấm "giá tin đang xem" CHỈ được đặt lên biểu đồ khi hai bên cùng một mẫu số.
- * Dãy chỉ số chưa khai `mau_so` thì đứng lại — đường thị trường vẫn vẽ (nó nhất
- * quán với chính nó), nhưng không đem giá tin ra so, vì so 120 triệu/m² ĐẤT với
- * một chỉ số tính trên m² SÀN là ra kết luận sai hẳn cho người xem.
- */
-export function giaTinSoDuocVoiChiSo(tin: Listing, chiSo: ChiSoKhuVuc | null): number | null {
-  // Hai điều kiện, thiếu một là không đặt chấm lên:
-  //   ① dãy chỉ số phải KHAI mẫu số — chưa khai thì không biết nó chia cho gì;
-  //   ② mẫu số đó phải ĐÚNG luật của loại hình (đất→m² đất · nhà→m² sàn ·
-  //      căn hộ→m² căn). Chỉ số nhà thu theo m² đất là hợp lệ với chính nó,
-  //      nhưng đem so với tin nhà thì sai thang — thà không so.
-  // Đường thị trường vẫn vẽ bình thường, chỉ thiếu cái chấm.
-  if (!chiSo?.mauSo) return null;
-  if (chiSo.mauSo !== mauSoCuaLoaiHinh(tin.type)) return null;
-  return giaMoiM2Theo(tin, chiSo.mauSo);
-}
-
 /** Đọc ô `mau_so` của tệp chỉ số. Bỏ trống thì KHÔNG đoán bừa theo loại hình:
  *  trả undefined để nơi so sánh biết là chưa khai mà đứng lại. */
 function docMauSo(raw: string, loaiHinh: string): MauSo | undefined {
