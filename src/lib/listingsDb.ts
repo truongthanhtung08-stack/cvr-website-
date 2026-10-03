@@ -341,8 +341,11 @@ export async function getListings(): Promise<Listing[]> {
 // toàn bộ tin còn hạn ở Mua bán / Cho thuê / Tìm kiếm, gắn nhãn "Tin hết hạn" (thẻ mờ).
 // Gồm cả tin cron chưa kịp đổi status (approved nhưng đã quá giờ). Trang chủ, sitemap,
 // gợi ý KHÔNG dùng hàm này — ở đó chỉ có tin còn hạn.
+// NHÌN XA: tin hết hạn dồn lên hàng nghìn → chỉ lấy tin hết hạn trong 90 NGÀY gần nhất,
+// tối đa 300 tin, mới hết hạn trước — trang danh sách không phình theo năm tháng.
 export async function getListingsHetHan(): Promise<Listing[]> {
-  const rows = await rest(`select=${COLS}&status=in.(approved,expired)&order=tier_expires_at.desc.nullslast&limit=500`);
+  const tu = new Date(Date.now() - 90 * 86_400_000).toISOString();
+  const rows = await rest(`select=${COLS}&status=in.(approved,expired)&tier_expires_at=gte.${tu}&order=tier_expires_at.desc.nullslast&limit=300`);
   if (!rows) return [];
   return rows
     .filter((r) => !isSeedRow(r) && !conHan(r))

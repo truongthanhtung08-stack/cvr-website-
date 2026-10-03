@@ -122,6 +122,9 @@ export async function quetTinHetHan(
       .select("id,title,owner_id,tier,tier_expires_at,details")
       .eq("status", "expired")
       .not("owner_id", "is", null)
+      // Quét MỖI PHÚT → chỉ xét tin hết hạn trong 30 ngày gần nhất (đủ để gửi bù mọi tin
+      // vừa sót), không đọc lại cả kho tin cũ mỗi phút khi web có hàng nghìn tin.
+      .gte("tier_expires_at", new Date(bayGio.getTime() - 30 * 86_400_000).toISOString())
       .limit(1000);
     await nhanTheoKhach(admin, (daHet ?? []) as Tin[], "bao_het_han", moc24h, (ds, chu) => {
       const t = ds[0];

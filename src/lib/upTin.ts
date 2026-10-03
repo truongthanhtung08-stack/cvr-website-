@@ -75,9 +75,10 @@ export async function thucHienUpTin(
   }
 
   // ── Gửi duyệt: tin rời trạng thái hết hạn, chờ admin như tin mới ───────────
-  const { nhac_het_han: _nhac, bao_da_nhan: _bao, ly_do_tu_choi: _lyDo, ...chiTiet } =
+  // Xoá MỌI dấu của kỳ cũ (nhắc / báo hết hạn, lý do từ chối) — kỳ mới nhắc lại từ đầu.
+  const { nhac_het_han: _nhac, nhac_het_han_luc: _nhacLuc, bao_het_han: _bhh, bao_het_han_luc: _bhhLuc, bao_da_nhan: _bao, ly_do_tu_choi: _lyDo, ...chiTiet } =
     (tin.details as Record<string, unknown> | null) ?? {};
-  void _nhac; void _bao; void _lyDo;
+  void _nhac; void _nhacLuc; void _bhh; void _bhhLuc; void _bao; void _lyDo;
   const { data: daGui, error } = await admin
     .from("listings")
     .update({
