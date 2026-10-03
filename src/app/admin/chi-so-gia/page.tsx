@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import type { ChiSoGiaData, ChiSoKhuVuc, LoiCsv, MauSo, ViTriGia } from "@/lib/chiSoGia";
-import { docBangChiSo, docCsvChiSo, TINH_MIEN_TRUNG, TEN_VI_TRI, mauSoCuaLoaiHinh, MAU_TOI_THIEU } from "@/lib/chiSoGia";
+import type { ChiSoGiaData, ChiSoKhuVuc, LoiCsv, MauSo } from "@/lib/chiSoGia";
+import { docBangChiSo, docCsvChiSo, TINH_MIEN_TRUNG, mauSoCuaLoaiHinh, MAU_TOI_THIEU } from "@/lib/chiSoGia";
 import { docBangXlsx, laXlsx } from "@/lib/docXlsx";
 import { chuanTen, provinceNamesFor } from "@/lib/locations";
 import { taiCsv, homNay } from "@/lib/xuatCsv";
@@ -11,13 +11,9 @@ import { taiCsv, homNay } from "@/lib/xuatCsv";
 // ════════════════════════════════════════════════════════════════════════════
 // LỊCH SỬ GIÁ — NHẬP SỐ VÀO ĐÂY, TRANG TIN HIỆN NGAY.
 //
-// Mỗi dãy số được định danh bằng NĂM chiều, xếp từ chiều quyết định nhiều nhất
-// tới ít nhất — thiếu một chiều là số vô nghĩa:
-//   Tỉnh/Thành → KHU VỰC (phường/xã) → VỊ TRÍ (đường lớn · đường nhỏ · kiệt)
-//   → LOẠI HÌNH → Bán / Cho thuê
-// Vị trí nằm trên loại hình vì trong cùng một phường, mặt tiền đường 10,5 m và
-// nhà trong kiệt 3 m lệch nhau 2–3 lần — xa hơn khoảng cách giữa các loại hình.
-// rồi trong mỗi dãy là giá mỗi m² theo từng KỲ (quý hoặc năm).
+// Mỗi dãy số = cùng PHÂN KHÚC (loại hình + bán/thuê) + cùng VỊ TRÍ, theo bốn bậc
+// (chủ dự án chốt 03/10/2026): DỰ ÁN → TUYẾN ĐƯỜNG → PHƯỜNG/XÃ → cả TỈNH.
+// Trong mỗi dãy là giá mỗi m² theo từng tháng.
 //
 // Hai đường nhập:
 //   · TỆP CSV — nhanh, dùng khi có bảng số sẵn (đây là đường chính).
@@ -414,7 +410,7 @@ export default function ChiSoGiaPage() {
                 {xemTruoc.items.slice(0, 8).map((x, i) => (
                   <li key={i}>
                     {x.tinh}
-                    {x.khuVuc ? ` · ` : ""}{x.viTri ? ` · ` : ""} · {x.loaiHinh || "mọi loại hình"} ·{" "}
+                    {x.duAn ? ` · ${x.duAn}` : ""}{x.duong ? ` · ${x.duong}` : ""}{x.khuVuc ? ` · ${x.khuVuc}` : ""} · {x.loaiHinh || "mọi loại hình"} ·{" "}
                     {x.mucDich === "thue" ? "cho thuê" : "bán"} — {x.moc.length} kỳ
                   </li>
                 ))}
@@ -575,21 +571,21 @@ export default function ChiSoGiaPage() {
                 <option value="can">m² căn hộ</option>
               </select>
             </label>
-            {/* VỊ TRÍ — chiều phân loại thứ hai sau khu vực. Cùng một phường, mặt
-                tiền đường 10,5 m với nhà trong kiệt 3 m lệch 2–3 lần, nên dãy nào
-                tách được theo vị trí thì con số mới nói đúng về từng căn. */}
             <label className="block">
-              <span className="mb-1 block text-[13px] font-medium text-cvr-body">Vị trí</span>
-              <select
-                value={kv.viTri ?? ""}
-                onChange={(e) => sua(i, { viTri: (e.target.value || undefined) as ViTriGia | undefined })}
+              <span className="mb-1 block text-[13px] font-medium text-cvr-body">Dự án</span>
+              <input
+                value={kv.duAn ?? ""}
+                onChange={(e) => sua(i, { duAn: e.target.value || undefined })}
                 className={inputCls}
-              >
-                <option value="">— gộp cả khu vực (chưa tách) —</option>
-                <option value="lon">Mặt tiền đường lớn (từ 10 m)</option>
-                <option value="nho">Mặt tiền đường nhỏ (5 – 10 m)</option>
-                <option value="kiet">Kiệt / hẻm (dưới 5 m)</option>
-              </select>
+              />
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-[13px] font-medium text-cvr-body">Tuyến đường</span>
+              <input
+                value={kv.duong ?? ""}
+                onChange={(e) => sua(i, { duong: e.target.value || undefined })}
+                className={inputCls}
+              />
             </label>
             <label className="block">
               <span className="mb-1 block text-[13px] font-medium text-cvr-body">Nguồn số liệu</span>

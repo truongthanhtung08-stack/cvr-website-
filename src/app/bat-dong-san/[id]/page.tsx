@@ -182,12 +182,17 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   };
 }
 
+/** Ngày hẹn đăng còn ở tương lai (đọc đồng hồ máy chủ lúc dựng trang). */
+function chuaToiNgay(iso: string): boolean {
+  return new Date(iso).getTime() > Date.now();
+}
+
 export default async function ListingDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const [dGoc, hetHan] = await Promise.all([getListingDetail(id), tinDaHetHan(id)]); // DỮ LIỆU THẬT: ảnh, đặc điểm, tiện ích, người đăng
   if (!dGoc) notFound();
   // Tin HẸN NGÀY ĐĂNG chưa tới ngày ("Chờ hiển thị") — chưa công khai.
-  if (dGoc.listing.postedAt && new Date(dGoc.listing.postedAt).getTime() > Date.now()) notFound();
+  if (dGoc.listing.postedAt && chuaToiNgay(dGoc.listing.postedAt)) notFound();
   // TIN HẾT HẠN: liên hệ tạm ẩn — kể cả số người đăng TỰ GHI trong mô tả ("Liên hệ 0905…").
   // Che ngay ở dữ liệu (trước khi gửi xuống trình duyệt) để số không lọt vào mã trang.
   // Đúng dạng SĐT Việt Nam (0/+84 + 3/5/7/8/9 + 8 số, cho phép cách/chấm/gạch) — không chạm giá tiền.
