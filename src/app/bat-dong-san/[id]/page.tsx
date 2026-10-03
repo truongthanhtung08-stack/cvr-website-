@@ -13,14 +13,11 @@ import KhoiDanhGiaTin from "@/components/KhoiDanhGiaTin";
 import ShareButtons from "@/components/ShareButtons";
 import PriceHistory from "@/components/PriceHistory";
 import {
-  matBangGia,
   chiSoChoTin,
   chonNguonDay,
-  coDuDeHienLichSuGia,
-  soSanhKhuVuc,
+  coDuLichSuGia,
   xuHuongCuaMinh,
   giaTinSoDuocVoiChiSo,
-  mauSoCuaLoaiHinh,
 } from "@/lib/chiSoGia";
 import { getChiSoGia } from "@/lib/siteContent";
 import { nhanDienTich as nhanDienTichTheoLoai } from "@/lib/listingSpec";
@@ -270,13 +267,11 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
 
   // Mặt bằng giá: tính từ chính tin đang đăng (cùng loại hình, cùng khu vực).
   // Chỉ số theo quý: chủ dự án nhập trong admin từ báo cáo thị trường.
-  const matBang = matBangGia(l, all);
-  const soSanhKV = soSanhKhuVuc(l, all);
   // Hai nguồn: kho gia_khu_vuc_thang tự chụp mỗi tháng và dãy nhập tay từ báo
   // cáo thị trường. Lấy nguồn DÀY HƠN — kho của mình còn mỏng thì chưa được đè
   // lên dãy bảy quý; dài hơn rồi thì tự thay, không ai phải bấm gì.
   const chiSoTin = chonNguonDay(
-    await xuHuongCuaMinh(l.diaGioi?.province ?? "", l.type, l.purpose ?? "ban"),
+    l.diaGioi?.ward ? await xuHuongCuaMinh(l.diaGioi?.province ?? "", l.type, l.purpose ?? "ban", l.diaGioi.ward) : null,
     chiSoChoTin(l, await getChiSoGia()),
   );
   const samePurpose = all.filter((x) => x.id !== l.id && (x.purpose ?? "ban") === purpose);
@@ -607,7 +602,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
               {/* LỊCH SỬ GIÁ — có số thật thì vẽ, chưa đủ thì ẨN HẲN cả khối (kể
                   cả tiêu đề). Tuyệt đối không chế số cho đủ hình, cũng không để
                   lại một dòng "chưa có dữ liệu" nói hộ điểm yếu của mình. */}
-              {priceVnd != null && coDuDeHienLichSuGia(chiSoTin, matBang, soSanhKV) && (
+              {priceVnd != null && coDuLichSuGia(chiSoTin) && (
                 <Section
                   id="lich-su-gia"
                   /* TÊN KHỐI PHẢI THEO PHẠM VI CỦA CHÍNH CON SỐ LỚN (chỉ số), chứ
@@ -616,18 +611,15 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                      TỈNH. Đề "tại Phường Hòa Xuân" mà số là giá toàn Đà Nẵng thì
                      người xem hiểu sai hẳn, vì giá giữa các phường lệch rất xa. */
                   title={`Lịch sử giá ${purpose === "thue" ? "thuê" : "bán"} ${l.type.toLowerCase()} tại ${
-                    chiSoTin?.khuVuc || chiSoTin?.tinh || matBang?.tenPham || l.diaGioi?.province || "khu vực"
+                    chiSoTin?.khuVuc
                   }`}
                 >
                   <PriceHistory
                     chiSo={chiSoTin}
-                    matBang={matBang}
-                    soSanh={soSanhKV}
                     laThue={purpose === "thue"}
                     /* Giá mỗi m² của tin CHỈ đưa lên biểu đồ khi cùng mẫu số với dãy chỉ
                        số: bán NHÀ phải là giá trên m² SÀN, chia m² đất là sai nghiêm trọng. */
                     giaTinM2={giaTinSoDuocVoiChiSo(l, chiSoTin)}
-                    mauSoTin={mauSoCuaLoaiHinh(l.type)}
                   />
                 </Section>
               )}

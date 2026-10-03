@@ -247,14 +247,19 @@ export function chiSoChoTin(tin: Listing, data: ChiSoGiaData | null): ChiSoKhuVu
   const phuong = chuanTen(tin.diaGioi?.ward ?? "");
   const loai = chuanTen(tin.type);
   const mucDich = laTinThue(tin.purpose) ? "thue" : "ban";
+  // GIÁ THEO KHU VỰC THÌ SỐ LIỆU KHU VỰC (chủ dự án 03/10/2026): tin chưa có phường thì
+  // không có dãy nào khớp; dãy chỉ ghi tỉnh không được dùng nói thay cho một khu vực.
+  if (!phuong) return null;
 
   let tot: ChiSoKhuVuc | null = null;
   let diemTot = -1;
   for (const x of data.items) {
     if (chuanTen(x.tinh) !== tinh) continue;
     if ((x.mucDich ?? "ban") !== mucDich) continue;
-    if (x.khuVuc && chuanTen(x.khuVuc) !== phuong) continue;
-    if (x.loaiHinh && chuanTen(x.loaiHinh) !== loai) continue;
+    if (!x.khuVuc || chuanTen(x.khuVuc) !== phuong) continue;
+    // ĐÚNG LOẠI HÌNH của tin — dãy không ghi loại hình hoặc loại hình khác thì không dùng
+    // (chủ dự án 03/10/2026: không lấy loại này cho số loại kia).
+    if (!x.loaiHinh || chuanTen(x.loaiHinh) !== loai) continue;
     // VỊ TRÍ — dãy có khai vị trí thì chỉ dùng cho tin đúng vị trí đó. Tin chưa
     // ghi bề rộng đường vào thì không khớp được, đành lùi về dãy gộp cả khu vực.
     if (x.viTri && x.viTri !== tin.viTri) continue;
@@ -656,4 +661,19 @@ export function demTinLamMau(tin: Listing, tatCa: Listing[]): number {
       chuanTen(x.diaGioi?.province ?? "") === tinh &&
       giaMoiM2(x) !== null,
   ).length;
+}
+
+/** Cùng kỳ năm trước: "2026-08" → "2025-08" · "2026-Q2" → "2025-Q2" */
+export function luiMotNam(q: string): string {
+  const thang = q.match(/^(\d{4})-(\d{2})$/);
+  if (thang) return `${Number(thang[1]) - 1}-${thang[2]}`;
+  const quy = q.match(/^(\d{4})-Q([1-4])$/i);
+  return quy ? `${Number(quy[1]) - 1}-Q${quy[2]}` : "";
+}
+
+/** ĐỦ SỐ LIỆU để hiện Lịch sử giá: có mốc mới nhất VÀ mốc cùng kỳ năm trước. */
+export function coDuLichSuGia(chiSo: ChiSoKhuVuc | null): boolean {
+  const ds = (chiSo?.moc ?? []).filter((m) => m.giaM2 > 0);
+  const cuoi = ds[ds.length - 1];
+  return !!cuoi && ds.some((m) => m.quy === luiMotNam(cuoi.quy));
 }

@@ -53,7 +53,11 @@
 >   tài khoản tạo hộ (`tao_ho`) = ngày chính chủ vào lần đầu (trigger tự ghi).
 > - **Tự động bằng mã, không ai sửa tay**: cron `/api/tin-dang/het-han` mỗi phút (hạ tin, tự đăng
 >   lại, nhắn khách, làm mới bản sao danh sách khi tin đổi từ bất kỳ đâu) · `kiemTin` 8h soát mọi tin.
-> - **Không ghi chú thích ngớ ngẩn / giọng AI lên web.** Chỉ chú thích chỗ cần, tiếng Việt chuẩn.
+> - **Không ghi chú thích ngớ ngẩn / giọng AI lên web.** Toàn hệ thống phải đúng tiếng Việt chuẩn.
+>   ⛔ **Muốn thêm chú thích / câu giải thích / chỉ dẫn nào: HỎI chủ dự án ghi gì TRƯỚC** — đưa nguyên
+>   văn câu để duyệt, không tự viết.
+> - **Lịch sử giá:** chỉ dãy của đúng khu vực + loại hình + mua bán/cho thuê của tin, đủ so cùng kỳ
+>   1 năm mới hiện. Yêu cầu nhập liệu cho Cowork: `docs/YEU-CAU-COWORK-LICH-SU-GIA.md`.
 > - Bài học 03/10: Claude tự áp luật, hạ nhầm 49 tin còn hạn — xem memory `gia-chinh-sach-mot-nguon-admin`.
 
 ---
