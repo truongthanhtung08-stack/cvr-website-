@@ -827,6 +827,52 @@ Mỗi dòng đúng một tin. Lưu dạng **`.csv` (UTF-8)** hoặc **`.xlsx`** 
    được số → **để trống ô giá**, ghi lý do vào `bao-cao.txt`. Cấm nội suy, cấm lấy trung
    bình hai tháng bên cạnh, cấm suy từ giá cả tỉnh.
 
+## C0b. ⭐ QUY TRÌNH THU THẬP CHUẨN — làm đúng thứ tự, từng dãy một
+
+> **Giá mỗi m² = giá người bán đăng ÷ diện tích ĐÚNG LOẠI HÌNH** (bảng **C2**): đất chia
+> m² đất · nhà chia m² sàn · căn hộ chia m² căn. Mỗi loại hình một dãy riêng, mỗi
+> phường một dãy riêng. **Không đủ số thì để trống — web tự ẩn, không ai bị phạt vì trống.**
+
+**Bước 1 — Chọn dãy.** Trong file mẫu, mỗi dãy = một bộ *tỉnh + phường + loại hình +
+bán/thuê*. Làm xong trọn một dãy (đủ 24 tháng) rồi mới sang dãy khác.
+
+**Bước 2 — Mở đúng trang nguồn.** Trên Batdongsan, mở trang danh sách tin của **đúng phường
+đó + đúng loại hình đó + đúng bán/thuê**, bấm xem **Lịch sử giá**.
+- Trang lịch sử giá ghi **quận/thành phố** thay vì phường → **bỏ dãy**, ghi vào `bao-cao.txt`.
+- Loại hình trên trang khác loại hình của dãy → **bỏ dãy**.
+
+**Bước 3 — Kiểm mẫu số TRƯỚC khi chép.** Số của Batdongsan là giá rao ÷ **diện tích ghi
+trong tin**. Chỉ dùng được khi diện tích đó chính là mẫu số đúng luật:
+
+| `mau_so` của dãy | Loại hình | Chép số Batdongsan? |
+|---|---|---|
+| `dat` | Đất nền · đất nông nghiệp · thuê đất / kho xưởng | ✅ được |
+| `can` | Căn hộ · chung cư · condotel · căn hộ dịch vụ | ✅ được |
+| `san` | Văn phòng · Mặt bằng / Cửa hàng (diện tích tin = m² sàn) | ✅ được |
+| `san` | **Nhà** riêng · mặt phố · biệt thự · shophouse | ⛔ **KHÔNG** — tin nhà ghi m² **đất**, chia ra là giá trên m² đất, sai luật |
+
+Trang Batdongsan ghi cách tính khác điều trên → **dừng dãy đó**, chép nguyên văn cách tính
+vào `bao-cao.txt` để chủ dự án quyết.
+
+**Bước 4 — Chép từng tháng** (chỉ các dãy ✅):
+`gia_m2_trieu` = giá phổ biến · `gia_thap_trieu` = thấp nhất · `gia_cao_trieu` = cao nhất ·
+`nguon` = `Batdongsan` · `nguon_link` = link trang lịch sử giá. Tháng nào trang không có số
+→ để trống tháng đó.
+
+**Bước 5 — Dãy NHÀ (⛔ ở bước 3): tự tính từ tin rao, chỉ tháng hiện tại.**
+1. Trên Batdongsan, lọc tin đang đăng của đúng phường + đúng loại hình nhà.
+2. Chỉ lấy tin **người bán ghi đủ cả tổng giá và diện tích sàn** (tổng m² sàn các tầng).
+   Không ghi diện tích sàn → bỏ tin đó, **không tự nhân số tầng**.
+3. Mỗi tin: tổng giá ÷ m² sàn.
+4. **Đủ từ 5 tin trở lên** mới điền: `gia_m2_trieu` = số ở giữa (trung vị) ·
+   `gia_thap_trieu` = nhỏ nhất · `gia_cao_trieu` = lớn nhất · `so_mau` = số tin.
+   Danh sách link từng tin ghi vào `bao-cao.txt`. Dưới 5 tin → để trống.
+5. Các tháng quá khứ của dãy nhà → **để trống** (không có tin cũ để tính, cấm suy ngược).
+
+**Bước 6 — Từ đây web tự làm.** Mỗi tháng web tự tính từ chính tin trên coastalland.vn,
+đúng luật trên (theo phường + loại hình + mẫu số). Đủ cùng kỳ năm trước là tự hiện, không
+ai phải nộp thêm.
+
 ## C1. Mỗi dãy số định danh bằng NĂM chiều
 
 > **Tỉnh/Thành → KHU VỰC (phường/xã) → VỊ TRÍ (đường) → LOẠI HÌNH → Bán/Thuê**

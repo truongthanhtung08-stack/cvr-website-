@@ -543,7 +543,7 @@ export async function xuHuongCuaMinh(
     `&phuong=eq.${encodeURIComponent(phuong)}` +
     `&loai_hinh=eq.${encodeURIComponent(loaiHinh)}` +
     `&muc_dich=eq.${encodeURIComponent(mucDich)}` +
-    `&order=thang.asc&limit=36`;
+    `&order=thang.desc&limit=36`; // 36 tháng MỚI NHẤT
 
   try {
     const r = await fetch(q, {
@@ -559,6 +559,7 @@ export async function xuHuongCuaMinh(
       so_mau: number;
     }[];
     if (!Array.isArray(ds)) return null;
+    ds.reverse();
 
     // Tháng nào mẫu quá mỏng thì BỎ HẲN mốc đó: một chấm tính từ 3 tin đứng
     // cạnh chấm tính từ 40 tin là vẽ ra một đoạn dốc không có thật.
@@ -570,7 +571,9 @@ export async function xuHuongCuaMinh(
     // ba tháng. Số nhập tay từ báo cáo thì vẫn theo quý, nhưng hai nguồn không
     // bao giờ vẽ chung một biểu đồ (nơi gọi chọn nguồn DÀY HƠN — xem chonNguonDay).
     // Mỗi mốc giữ đủ ba mức: phổ biến (trung vị) · thấp · cao.
-    const moc: MocQuy[] = duMau.slice(-12).map((d) => ({
+    // Giữ tới 25 tháng: so cùng kỳ năm trước cần 13 mốc, xem 2 năm cần 25.
+    // (Bản cũ cắt còn 12 mốc nên dãy của mình KHÔNG BAO GIỜ đủ để hiện.)
+    const moc: MocQuy[] = duMau.slice(-25).map((d) => ({
       quy: d.thang.slice(0, 7),
       giaM2: Math.round(d.trung_vi),
       thap: d.thap > 0 ? Math.round(d.thap) : undefined,
@@ -626,6 +629,9 @@ export function chonNguonDay(
   cuaMinh: ChiSoKhuVuc | null,
   nhapTay: ChiSoKhuVuc | null,
 ): ChiSoKhuVuc | null {
+  // Nguồn nào đủ số để hiện (có cùng kỳ năm trước) thì được ưu tiên trước.
+  const du = (x: ChiSoKhuVuc | null) => coDuLichSuGia(x);
+  if (du(cuaMinh) !== du(nhapTay)) return du(cuaMinh) ? cuaMinh : nhapTay;
   const dem = (x: ChiSoKhuVuc | null) => x?.moc?.filter((m) => m.giaM2 > 0).length ?? 0;
   return dem(cuaMinh) >= dem(nhapTay) ? (cuaMinh ?? nhapTay) : nhapTay;
 }
