@@ -164,7 +164,7 @@ export default function PropertyCard({
 
         {/* Giá — Diện tích (giá trái · diện tích phải, dãn cách giống Homedy) */}
         <div className={`flex items-baseline justify-between gap-2 ${isMini ? "mt-1.5" : "mt-2.5"}`}>
-          <span className={`font-bold ${isFeatured ? "text-[17px]" : "text-[16px]"} ${item.price === "Thỏa thuận" ? "text-cvr-muted" : "text-red-500"}`}>
+          <span className={`font-bold ${isFeatured ? "text-[17px]" : "text-[16px]"} ${item.price === "Thỏa thuận" || item.hetHan ? "text-cvr-muted" : "text-red-500"}`}>
             {item.price}
           </span>
           <span className={`flex items-baseline gap-2 text-cvr-body ${isFeatured ? "text-sm" : "text-[13px]"}`}>
@@ -259,7 +259,7 @@ function PropertyRow({ item, showTime = false, terms = [] }: { item: Listing; sh
           <p className={`mt-1 text-sm leading-relaxed text-cvr-muted ${rowDesc >= 3 ? "line-clamp-3" : rowDesc === 2 ? "line-clamp-2" : "line-clamp-1"}`}>{listingSummary(item)}</p>
         )}
         <div className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-          <span className={`text-[16px] font-bold ${item.price === "Thỏa thuận" ? "text-cvr-muted" : "text-red-500"}`}>{item.price}</span>
+          <span className={`text-[16px] font-bold ${item.price === "Thỏa thuận" || item.hetHan ? "text-cvr-muted" : "text-red-500"}`}>{item.price}</span>
           <span className="text-sm text-cvr-body">{item.area}</span>
           {item.pricePerM2 && <span className="text-[13px] text-cvr-muted">{item.pricePerM2}</span>}
           {item.beds ? <span className="text-[13px] text-cvr-muted">{item.beds} PN</span> : null}
