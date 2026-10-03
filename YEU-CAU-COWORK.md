@@ -861,9 +861,12 @@ vào `bao-cao.txt` để chủ dự án quyết.
 
 **Bước 5 — Dãy NHÀ (⛔ ở bước 3): tự tính từ tin rao, chỉ tháng hiện tại.**
 1. Trên Batdongsan, lọc tin đang đăng của đúng phường + đúng loại hình nhà.
-2. Chỉ lấy tin **người bán ghi đủ cả tổng giá và diện tích sàn** (tổng m² sàn các tầng).
-   Không ghi diện tích sàn → bỏ tin đó, **không tự nhân số tầng**.
-3. Mỗi tin: tổng giá ÷ m² sàn.
+2. m² sàn của mỗi tin — giống hệt cách web đang tính (chủ dự án chốt 19/09):
+   - tin ghi **tổng m² sàn** → dùng số đó;
+   - tin ghi m² sàn **nhỏ hơn m² đất** → đó là sàn MỖI TẦNG, nhân số tầng;
+   - tin không ghi m² sàn nhưng có **số tầng** → m² đất × số tầng;
+   - không có cả m² sàn lẫn số tầng → **bỏ tin đó**.
+3. Mỗi tin: tổng giá ÷ m² sàn. **Tuyệt đối không chia tổng giá nhà cho m² đất.**
 4. **Đủ từ 5 tin trở lên** mới điền: `gia_m2_trieu` = số ở giữa (trung vị) ·
    `gia_thap_trieu` = nhỏ nhất · `gia_cao_trieu` = lớn nhất · `so_mau` = số tin.
    Danh sách link từng tin ghi vào `bao-cao.txt`. Dưới 5 tin → để trống.
