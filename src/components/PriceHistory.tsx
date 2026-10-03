@@ -99,7 +99,7 @@ export default function PriceHistory({
       .filter(({ i }, k, a) => !(k === a.length - 2 && moc.length - 1 - i < cach / 2));
     return (
       <svg viewBox={`0 0 ${W} ${H}`} className={`mt-5 h-auto w-full ${className}`} role="img" aria-label="Biểu đồ lịch sử giá">
-        <text x={trai - 6} y={tren - co * 0.6} textAnchor="end" fontSize={co} fill="#86868b">{laThue ? "tr/tháng" : "tr/m²"}</text>
+        <text x={2} y={tren - co * 0.6} textAnchor="start" fontSize={co} fill="#86868b">{laThue ? "tr/tháng" : "tr/m²"}</text>
         {vach.map((v) => (
           <g key={v}>
             <line x1={trai} x2={phai} y1={y(v)} y2={y(v)} stroke="#e8e8ed" strokeWidth={1} />
@@ -182,17 +182,17 @@ export default function PriceHistory({
       {/* SO SÁNH CÁC PHƯỜNG/XÃ TRONG TỈNH — như Batdongsan, theo hệ mới */}
       {lanCan.length > 1 && (
         <div className="mt-6 overflow-hidden rounded-xl ring-1 ring-cvr-line">
-          <div className="flex items-center justify-between gap-3 bg-cvr-surface px-4 py-2.5 text-[13px] font-semibold text-cvr-ink">
-            <span>So sánh giá các phường/xã trong {chiSo?.tinh}</span>
-            <span className="text-right">{laThue ? "Giá thuê" : "Giá bán"} phổ biến nhất {nhanKy(cuoi.quy)}</span>
+          <div className="bg-cvr-surface px-4 py-2.5">
+            <p className="text-[13.5px] font-semibold text-cvr-ink">So sánh giá các phường/xã trong {chiSo?.tinh}</p>
+            <p className="mt-0.5 text-[12.5px] text-cvr-muted">{laThue ? "Giá thuê" : "Giá bán"} phổ biến nhất {nhanKy(cuoi.quy)}</p>
           </div>
           {lanCan.map((o) => (
             <div key={o.ten} className="flex items-center justify-between gap-3 border-t border-cvr-line px-4 py-2.5 text-[13.5px]">
-              <span className={o.chinhNo ? "font-semibold text-cvr-ink" : "text-cvr-body"}>{o.ten}</span>
-              <span className="flex items-center gap-4 text-right">
-                <span className="font-medium text-cvr-ink">{gia(o.gia)}</span>
+              <span className={`min-w-0 ${o.chinhNo ? "font-semibold text-cvr-ink" : "text-cvr-body"}`}>{o.ten}</span>
+              <span className="shrink-0 text-right">
+                <span className="block whitespace-nowrap font-medium text-cvr-ink">{gia(o.gia)}</span>
                 {o.soMau != null && (
-                  <span className="w-20 text-cvr-muted">
+                  <span className="block whitespace-nowrap text-[12px] text-cvr-muted">
                     {o.soMau} tin {laThue ? "thuê" : "bán"}
                   </span>
                 )}
