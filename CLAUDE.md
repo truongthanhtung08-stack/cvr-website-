@@ -47,6 +47,13 @@
 >   công thức, cấm hardcode ngày hay số ngày, cấm sửa tay hạn tin.**
 > - Admin chưa có quy định cho trường hợp nào → **nói rõ và để chủ dự án quyết trong admin**, không tự lấp.
 > - Đổi dữ liệu nhiều tin → liệt kê từng tin + số đúng theo admin → chủ duyệt → mới sửa.
+> - Áp cho **MỌI thứ**: gói tin (Diamond/Gold/Silver/Basic × số ngày, giá), đẩy tin, gói đẩy nhiều
+>   lượt, gói hội viên, voucher, chương trình thành viên mới và mọi chương trình sau này.
+> - **Thành viên mới** xét theo `profiles.ngay_thanh_vien` (0058): tự đăng ký = ngày tạo tài khoản;
+>   tài khoản tạo hộ (`tao_ho`) = ngày chính chủ vào lần đầu (trigger tự ghi).
+> - **Tự động bằng mã, không ai sửa tay**: cron `/api/tin-dang/het-han` mỗi phút (hạ tin, tự đăng
+>   lại, nhắn khách, làm mới bản sao danh sách khi tin đổi từ bất kỳ đâu) · `kiemTin` 8h soát mọi tin.
+> - **Không ghi chú thích ngớ ngẩn / giọng AI lên web.** Chỉ chú thích chỗ cần, tiếng Việt chuẩn.
 > - Bài học 03/10: Claude tự áp luật, hạ nhầm 49 tin còn hạn — xem memory `gia-chinh-sach-mot-nguon-admin`.
 
 ---
