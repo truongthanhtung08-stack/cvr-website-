@@ -147,7 +147,8 @@ export default function PriceHistory({
 
   const dau = gia[0];
   const cuoi = gia[gia.length - 1];
-  const tang = dau > 0 ? Math.round(((cuoi - dau) / dau) * 100) : 0;
+  // Một chữ số lẻ như hai ô kia — làm tròn 0,8% thành "1%" là lệch với ô "so với đỉnh".
+  const tang = dau > 0 ? ((cuoi - dau) / dau) * 100 : 0;
 
   const maxSanh = coSanh ? Math.max(...soSanh.map((x) => x.trungVi)) : 1;
 
@@ -161,10 +162,12 @@ export default function PriceHistory({
       ? ((mocCuoi.giaM2 - mocNamTruoc.giaM2) / mocNamTruoc.giaM2) * 100
       : null;
   const mocDinh = caDay.reduce((a, b) => (b.giaM2 > a.giaM2 ? b : a), caDay[0]);
-  // Cách đỉnh dưới 1% thì coi như đang ở đỉnh — nói "thấp hơn đỉnh 0,3%" là bắt bẻ.
+  // CHỈ nói "đang ở mức cao nhất" khi mốc mới nhất ĐÚNG LÀ đỉnh. Trước cho lệch dưới 1%
+  // cũng tính là đỉnh → in giá đỉnh tháng trước (77,2) cạnh dòng "giảm 1%" ngay bên trái:
+  // hai ô nói ngược nhau (03/10/2026, chủ dự án chụp màn hình).
   const soVoiDinh =
     mocDinh && mocDinh.giaM2 > 0 ? ((mocCuoi.giaM2 - mocDinh.giaM2) / mocDinh.giaM2) * 100 : 0;
-  const dangODinh = soVoiDinh > -1;
+  const dangODinh = mocCuoi.giaM2 >= mocDinh.giaM2;
 
   return (
     <div className="space-y-5">
@@ -220,7 +223,7 @@ export default function PriceHistory({
                   {doiMotNam === null ? (
                     <>
                       <p className={`text-[19px] font-bold leading-none ${tang >= 0 ? CHU.tang : CHU.giam}`}>
-                        {tang >= 0 ? "▲" : "▼"} {Math.abs(tang)}%
+                        {tang >= 0 ? "▲" : "▼"} {Math.abs(tang).toFixed(1).replace(".", ",")}%
                       </p>
                       <p className="mt-1.5 text-[12.5px] text-cvr-muted">
                         {tang >= 0 ? "Tăng" : "Giảm"} từ {nhanKy(caDay[0].quy)} đến{" "}
