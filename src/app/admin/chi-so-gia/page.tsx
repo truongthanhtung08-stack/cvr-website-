@@ -136,10 +136,13 @@ export default function ChiSoGiaPage() {
     }
   }
 
-  /** Trộn dữ liệu CSV vào danh sách hiện có: trùng khoá thì thay, mới thì thêm. */
-  function nhanCsv() {
+  /** Nạp CSV: "gop" = trùng khoá thì thay, mới thì thêm · "thay" = bỏ hết số liệu cũ, chỉ giữ tệp mới
+   *  (nhập lại toàn bộ theo chuẩn — docs/YEU-CAU-COWORK-LICH-SU-GIA.md, 03/10/2026). */
+  function nhanCsv(cach: "gop" | "thay" = "gop") {
     if (!xemTruoc?.items.length) return;
+    if (cach === "thay" && !window.confirm(`Xoá toàn bộ ${items.length} dãy đang có, thay bằng ${xemTruoc.items.length} dãy trong tệp này?`)) return;
     setItems((cu) => {
+      if (cach === "thay") return [...xemTruoc.items];
       const map = new Map(cu.map((x) => [khoaDay(x), x]));
       for (const x of xemTruoc.items) map.set(khoaDay(x), x);
       return [...map.values()];
@@ -343,13 +346,22 @@ export default function ChiSoGiaPage() {
               </ul>
             )}
             {xemTruoc.items.length > 0 && (
-              <button
-                type="button"
-                onClick={nhanCsv}
-                className="mt-3 rounded-lg bg-cvr-ink px-4 py-2 text-sm font-semibold text-white transition hover:bg-cvr-ink/90"
-              >
-                Nạp vào danh sách
-              </button>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => nhanCsv("gop")}
+                  className="rounded-lg bg-cvr-ink px-4 py-2 text-sm font-semibold text-white transition hover:bg-cvr-ink/90"
+                >
+                  Nạp vào danh sách
+                </button>
+                <button
+                  type="button"
+                  onClick={() => nhanCsv("thay")}
+                  className="rounded-lg border border-red-300 px-4 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-50"
+                >
+                  Thay toàn bộ
+                </button>
+              </div>
             )}
           </div>
         )}
