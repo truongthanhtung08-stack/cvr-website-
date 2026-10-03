@@ -30,7 +30,6 @@ type Tin = {
 type Chu = { id: string; phone: string | null; created_at: string | null; role: string | null; free_quota: number | null };
 export type Muc = { id: string; ma: string; tieuDe: string; loai: string; chiTiet: string };
 
-const NGAY_LUAT = "2026-10-01"; // từ ngày này mọi tin lên sóng theo một luật số ngày duy nhất
 const NGAY_MS = 86_400_000;
 const ngayVn = (iso: string) => new Date(new Date(iso).getTime() + 7 * 3_600_000).toISOString().slice(0, 10);
 
@@ -81,8 +80,9 @@ export async function kiemTin(admin: SupabaseClient): Promise<KetQuaKiemTin> {
     }
     if (!t.bumped_at) loi.push(muc(t, "Tin bị chìm", "Thiếu mốc xếp hạng (bumped_at) → nằm dưới mọi tin cũ."));
 
-    // Số ngày đúng chương trình — chỉ tin lên sóng từ ngày luật một nguồn.
-    if (t.tier_expires_at && t.published_at && ngayVn(t.published_at) >= NGAY_LUAT) {
+    // Số ngày đúng chương trình — MỌI tin đang hiện, không trừ tin cũ (03/10/2026: đợt
+    // gia hạn tay 25/09 lọt qua vì trước chỉ soát tin lên sóng từ 01/10).
+    if (t.tier_expires_at && t.published_at) {
       const soNgay = Math.round((new Date(t.tier_expires_at).getTime() - new Date(t.published_at).getTime()) / NGAY_MS);
       const huong = huongKhuyenMai(bang.free, {
         goi: t.tier,
