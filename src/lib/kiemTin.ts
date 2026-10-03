@@ -50,7 +50,7 @@ export async function kiemTin(admin: SupabaseClient): Promise<KetQuaKiemTin> {
 
   const ids = [...new Set(ds.map((t) => t.owner_id).filter((x): x is string => !!x))];
   const { data: chuRaw } = ids.length
-    ? await admin.from("profiles").select("id,phone,created_at,role,free_quota").in("id", ids)
+    ? await admin.from("profiles").select("id,phone,created_at:ngay_thanh_vien,role,free_quota").in("id", ids)
     : { data: [] };
   const chu = new Map(((chuRaw ?? []) as Chu[]).map((c) => [c.id, c]));
 
@@ -89,6 +89,7 @@ export async function kiemTin(admin: SupabaseClient): Promise<KetQuaKiemTin> {
         homNay: ngayVn(t.published_at),
         coChu: !!t.owner_id,
         soNgayMoTk: c?.created_at ? (new Date(t.published_at).getTime() - new Date(c.created_at).getTime()) / NGAY_MS : Number.POSITIVE_INFINITY,
+        ngayTaoTk: c?.created_at ? new Date(new Date(c?.created_at).getTime() + 7 * 3_600_000).toISOString().slice(0, 10) : undefined,
         role: c?.role,
         freeQuota: c?.free_quota,
       });

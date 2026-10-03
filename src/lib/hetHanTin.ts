@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { getTier, type TierId } from "@/lib/packages";
 import { guiThongBao, maTin, MAU_DA_HET_HAN, MAU_SAP_HET_HAN } from "@/lib/thongBao";
 import { baoLoi } from "@/lib/baoLoi";
+import { thucHienUpTin } from "@/lib/upTin";
 
 // CÔNG TẮC BÁO KHÁCH VỀ HẾT HẠN (email/Zalo "sắp hết hạn" + "đã hết hạn").
 // Chủ dự án chốt 03/10/2026: chỉ đổi khi CHỦ DỰ ÁN YÊU CẦU. Tắt thì tin vẫn chuyển
@@ -56,6 +57,7 @@ type Tin = {
   title: string;
   owner_id: string | null;
   tier: TierId;
+  tier_days?: number | null;
   tier_expires_at: string;
   details: Record<string, unknown> | null;
 };
@@ -75,7 +77,7 @@ export async function quetTinHetHan(
     // ── 1) ĐÃ HẾT HẠN → ngừng hiển thị ('expired'), mọi hạng ──────────────
     const { data: hetHan } = await admin
       .from("listings")
-      .select("id,title,owner_id,tier,tier_expires_at,details")
+      .select("id,title,owner_id,tier,tier_days,tier_expires_at,details")
       .eq("status", "approved")
       .lt("tier_expires_at", bayGio.toISOString())
       .limit(200);
@@ -102,6 +104,20 @@ export async function quetTinHetHan(
         continue;
       }
       daHa++;
+
+      // TỰ ĐĂNG LẠI (khách tự bật, chuẩn Batdongsan): gửi đăng lại ĐÚNG gói đang dùng —
+      // cùng đường với nút Đăng lại (duyệt như tin mới, trừ tiền lúc duyệt). Ví thiếu →
+      // ghi chờ nạp (up_cho): nạp đủ là tự gửi; khách nhận tin "đã hết hạn" như thường.
+      if (tin.owner_id && tin.details?.tu_dang_lai === true) {
+        const plan = tin.details?.plan as { tier?: string; days?: number } | undefined;
+        const soNgay = Number(tin.tier_days ?? (plan?.tier === tin.tier ? plan?.days : 0)) || 0;
+        const kq = await thucHienUpTin(admin, tin.owner_id, tin.id, tin.tier, soNgay);
+        if (!kq.ok && kq.viThieu) {
+          await admin.from("up_cho").update({ trang_thai: "huy", ghi_chu: "Thay bằng yêu cầu mới", xong_luc: new Date().toISOString() })
+            .eq("listing_id", tin.id).eq("trang_thai", "cho");
+          await admin.from("up_cho").insert({ user_id: tin.owner_id, listing_id: tin.id, tier: tin.tier, so_ngay: soNgay });
+        }
+      }
     }
 
     if (!BAO_KHACH_HET_HAN) {

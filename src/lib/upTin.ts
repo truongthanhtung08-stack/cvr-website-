@@ -41,7 +41,10 @@ export async function thucHienUpTin(
   // Tin ĐÃ HẾT HẠN (đăng lại) hoặc TIN NHÁP lưu lại vì ví thiếu tiền (02/10/2026: nạp đủ
   // là tự gửi duyệt). Tin đang hiển thị muốn lên đầu thì dùng Đẩy tin.
   const laNhap = tin.status === "draft";
-  if (tin.status !== "expired" && !laNhap) return { ok: false, loi: "Chỉ đăng lại được tin đã hết hạn. Tin đang hiển thị muốn lên đầu thì dùng Đẩy tin." };
+  // Tin KHÁCH TỰ HẠ ("Đã hạ", chuẩn Batdongsan) cũng đăng lại được như tin hết hạn.
+  // Tin bị ADMIN ẩn thì không — đó là xử lý vi phạm.
+  const khachHa = tin.status === "hidden" && (tin.details as { ha_boi?: string } | null)?.ha_boi === "khach";
+  if (tin.status !== "expired" && !laNhap && !khachHa) return { ok: false, loi: "Chỉ đăng lại được tin đã hết hạn hoặc đã hạ. Tin đang hiển thị muốn lên đầu thì dùng Đẩy tin." };
 
   const { data: sc } = await admin.from("site_content").select("data").eq("key", "billing").limit(1);
   const bang: BillingData = bangTheoMucDich(ghepBillingLuu(sc?.[0]?.data as Partial<BillingData> | undefined), tin.purpose);
@@ -52,7 +55,7 @@ export async function thucHienUpTin(
 
   const { data: hsArr } = await admin
     .from("profiles")
-    .select("created_at,role,free_quota,balance,email,phone,full_name")
+    .select("created_at:ngay_thanh_vien,role,free_quota,balance,email,phone,full_name")
     .eq("id", userId)
     .limit(1);
   const hs = hsArr?.[0];
@@ -64,7 +67,7 @@ export async function thucHienUpTin(
   const soNgayMoTk = hs.created_at ? (Date.now() - new Date(hs.created_at).getTime()) / 86_400_000 : Number.POSITIVE_INFINITY;
   const bao = quotePrice({ data: bang, tierId: goi, days: soNgay, today: homNay, isNewMember: soNgayMoTk <= bang.free.days });
   // Khuyến mãi: CÙNG MỘT điều kiện với form đăng tin + duyệt tin (huongKhuyenMai).
-  const mienPhi = huongKhuyenMai(bang.free, { goi, homNay, coChu: true, soNgayMoTk, role: hs.role, freeQuota: hs.free_quota });
+  const mienPhi = huongKhuyenMai(bang.free, { goi, homNay, coChu: true, soNgayMoTk, role: hs.role, freeQuota: hs.free_quota, ngayTaoTk: hs.created_at ? new Date(new Date(hs.created_at).getTime() + 7 * 3_600_000).toISOString().slice(0, 10) : undefined });
   const giaBao = mienPhi ? 0 : bao.total;
   const phaiTra = tachThue(giaBao).tongTra;
 
@@ -76,9 +79,9 @@ export async function thucHienUpTin(
 
   // ── Gửi duyệt: tin rời trạng thái hết hạn, chờ admin như tin mới ───────────
   // Xoá MỌI dấu của kỳ cũ (nhắc / báo hết hạn, lý do từ chối) — kỳ mới nhắc lại từ đầu.
-  const { nhac_het_han: _nhac, nhac_het_han_luc: _nhacLuc, bao_het_han: _bhh, bao_het_han_luc: _bhhLuc, bao_da_nhan: _bao, ly_do_tu_choi: _lyDo, ...chiTiet } =
+  const { nhac_het_han: _nhac, nhac_het_han_luc: _nhacLuc, bao_het_han: _bhh, bao_het_han_luc: _bhhLuc, bao_da_nhan: _bao, ly_do_tu_choi: _lyDo, ha_boi: _haBoi, ha_luc: _haLuc, ...chiTiet } =
     (tin.details as Record<string, unknown> | null) ?? {};
-  void _nhac; void _nhacLuc; void _bhh; void _bhhLuc; void _bao; void _lyDo;
+  void _nhac; void _nhacLuc; void _bhh; void _bhhLuc; void _bao; void _lyDo; void _haBoi; void _haLuc;
   const { data: daGui, error } = await admin
     .from("listings")
     .update({

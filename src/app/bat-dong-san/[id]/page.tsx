@@ -190,6 +190,8 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
   const { id } = await params;
   const [dGoc, hetHan] = await Promise.all([getListingDetail(id), tinDaHetHan(id)]); // DỮ LIỆU THẬT: ảnh, đặc điểm, tiện ích, người đăng
   if (!dGoc) notFound();
+  // Tin HẸN NGÀY ĐĂNG chưa tới ngày ("Chờ hiển thị") — chưa công khai.
+  if (dGoc.listing.postedAt && new Date(dGoc.listing.postedAt).getTime() > Date.now()) notFound();
   // TIN HẾT HẠN: liên hệ tạm ẩn — kể cả số người đăng TỰ GHI trong mô tả ("Liên hệ 0905…").
   // Che ngay ở dữ liệu (trước khi gửi xuống trình duyệt) để số không lọt vào mã trang.
   // Đúng dạng SĐT Việt Nam (0/+84 + 3/5/7/8/9 + 8 số, cho phép cách/chấm/gạch) — không chạm giá tiền.
@@ -335,7 +337,10 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
           {hetHan && (
             <div className="-mx-4 mb-0 flex items-start gap-2.5 bg-[#f1ecf8] px-4 py-3 text-[13.5px] leading-relaxed text-cvr-ink sm:mx-0 lg:hidden">
               <svg className="mt-0.5 h-4 w-4 shrink-0 text-[#6b4fa0]" fill="currentColor" viewBox="0 0 24 24" aria-hidden><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" /></svg>
-              <p><b>Tin đã hết hạn.</b> Bạn vẫn có thể gửi yêu cầu để người đăng liên hệ lại.</p>
+              <p>
+                <b>Tin đã hết hạn hiển thị{l.hetHanLuc ? ` ngày ${new Date(l.hetHanLuc).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}` : ""}.</b>
+                {" "}Nội dung dưới đây chỉ để tham khảo.
+              </p>
             </div>
           )}
           {hetHan && (
@@ -671,7 +676,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                         </div>
                       </div>
                       {hetHan
-                        ? <div className="mt-4"><YeuCauLienHeLai listingId={l.id} /></div>
+                        ? <div className="mt-4"><YeuCauLienHeLai listingId={l.id} tenNguoiDang={contact?.name} /></div>
                         : <ContactActions listingId={l.id} phoneMask={phoneMask} />}
                     </>
                   ) : (

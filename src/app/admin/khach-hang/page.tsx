@@ -107,10 +107,11 @@ export default function CustomersPage() {
                 <td className="px-4 py-3">
                   <div className="font-medium text-cvr-ink">{r.full_name || "(chưa đặt tên)"}</div>
                   {r.company_name && <div className="text-xs text-cvr-muted">{r.company_name}</div>}
+                  <div className="text-xs text-cvr-faint">{nguonTk(r)}</div>
                 </td>
                 <td className="px-4 py-3 text-cvr-body">
                   <div>{r.phone || "—"}</div>
-                  <div className="text-xs text-cvr-muted">{r.email || "—"}</div>
+                  <div className="text-xs text-cvr-muted">{emailThat(r.email) || "—"}</div>
                 </td>
                 <td className="px-4 py-3 text-cvr-body">{roleLabel(r.role)}</td>
                 <td className="px-4 py-3">{statusBadge(r.status)}</td>
@@ -147,8 +148,8 @@ export default function CustomersPage() {
               <span className="font-medium text-cvr-ink">{r.full_name || "(chưa đặt tên)"}</span>
               {statusBadge(r.status)}
             </div>
-            <div className="mt-1 text-sm text-cvr-body">{r.phone || "—"} · {r.email || "—"}</div>
-            <div className="mt-1 text-xs text-cvr-muted">{roleLabel(r.role)} · {fmtDate(r.created_at)}</div>
+            <div className="mt-1 text-sm text-cvr-body">{r.phone || "—"} · {emailThat(r.email) || "—"}</div>
+            <div className="mt-1 text-xs text-cvr-muted">{roleLabel(r.role)} · {nguonTk(r)} · {fmtDate(r.created_at)}</div>
             <div className="mt-1.5">{nhanHoaDon(r)}</div>
           </Link>
         ))}
@@ -183,4 +184,14 @@ function nhanHoaDon(r: unknown) {
 function fmtDate(iso: string): string {
   const d = new Date(iso);
   return d.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
+}
+
+// Tạo hộ (Admin → Tạo khách hàng, 0058) hay khách tự đăng ký — máy tự biết, không đánh dấu tay.
+function nguonTk(r: Profile): string {
+  return (r as Profile & { tao_ho?: boolean }).tao_ho ? "Tạo hộ" : "Tự đăng ký";
+}
+
+// Email nội bộ (tài khoản Zalo / tạo hộ không có email) thì không hiện.
+function emailThat(e: string | null | undefined): string {
+  return e && !/@users\.coastalland\.vn$/i.test(e) ? e : "";
 }

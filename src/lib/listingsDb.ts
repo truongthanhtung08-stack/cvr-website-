@@ -324,6 +324,9 @@ const isSeedRow = (r: Row) => /^\d+$/.test(r.id);
 // bảo đảm từ đúng giây hết hạn tin đã rời mọi danh sách, không chờ cron.
 // tier_expires_at null = tin không có hạn (admin nâng tay) → vẫn hiện.
 const conHan = (r: Row) => !r.tier_expires_at || new Date(r.tier_expires_at).getTime() > Date.now();
+// ĐÃ TỚI NGÀY HIỂN THỊ — tin hẹn ngày đăng (chuẩn Batdongsan) duyệt xong có published_at ở
+// tương lai: "Chờ hiển thị", chưa lên danh sách cho tới đúng giờ đó.
+const daToiNgay = (r: Row) => !r.published_at || new Date(r.published_at).getTime() <= Date.now();
 // Tin THẬT của khách luôn có id dạng UUID; tin DEMO seed (0002) có id SỐ ('1'..'33').
 // Dùng để chặn cả trang chi tiết /bat-dong-san/<số> mở ra tin demo.
 const isSeedId = (id: string) => /^\d+$/.test(id);
@@ -334,7 +337,7 @@ const isSeedId = (id: string) => /^\d+$/.test(id);
 export async function getListings(): Promise<Listing[]> {
   const rows = await rest(`select=${COLS}&status=eq.approved&order=bumped_at.desc.nullslast,published_at.desc.nullslast,created_at.desc&limit=500`);
   if (!rows) return featuredListings; // lỗi kết nối/chưa cấu hình → fallback mẫu
-  return rows.filter((r) => !isSeedRow(r) && conHan(r)).map(rowToListing);
+  return rows.filter((r) => !isSeedRow(r) && conHan(r) && daToiNgay(r)).map(rowToListing);
 }
 
 // TIN ĐÃ HẾT HẠN — chủ dự án chốt 03/10/2026: tin hết hạn VẪN HIỆN trên web, xếp SAU
@@ -390,7 +393,7 @@ export async function getListingsByIds(ids: string[]): Promise<Listing[]> {
   const inList = wanted.map(encodeURIComponent).join(",");
   const rows = await rest(`select=${COLS}&status=eq.approved&id=in.(${inList})&limit=${wanted.length}`);
   if (!rows) return [];
-  const byId = new Map(rows.filter(conHan).map((r) => [r.id, rowToListing(r)]));
+  const byId = new Map(rows.filter((r) => conHan(r) && daToiNgay(r)).map((r) => [r.id, rowToListing(r)]));
   return wanted.map((id) => byId.get(id)).filter((x): x is Listing => Boolean(x));
 }
 

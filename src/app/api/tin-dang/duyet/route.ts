@@ -46,7 +46,7 @@ type HoSo = {
 export async function POST(request: Request) {
   // Mốc tin LÊN SÓNG — ghi vào cả published_at (ngày đăng thật) lẫn bumped_at
   // (mốc xếp thứ tự). Bỏ trống bumped_at là tin mới chìm xuống dưới tin cũ.
-  const len = new Date().toISOString();
+  let len = new Date().toISOString();
   // ── 1. Chỉ admin ──────────────────────────────────────────────────────────
   const ssr = await createClient();
   const { data: { user } } = await ssr.auth.getUser();
@@ -85,6 +85,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true, duyetLai: true, hetHan: !conHan });
   }
 
+  // HẸN NGÀY ĐĂNG (chuẩn Batdongsan, 03/10/2026): khách chọn ngày bắt đầu → duyệt xong tin
+  // "Chờ hiển thị", tới 0h ngày đó (giờ VN) mới lên. Ngày đăng + hạn tính từ ngày đó; tiền
+  // vẫn trừ lúc duyệt như mọi tin. Danh sách ẩn tin có published_at ở tương lai.
+  {
+    const batDau = (tin.details as { plan?: { batDau?: string } } | null)?.plan?.batDau;
+    if (batDau && /^\d{4}-\d{2}-\d{2}$/.test(batDau)) {
+      const t = new Date(`${batDau}T00:00:00+07:00`);
+      if (t.getTime() > Date.now()) len = t.toISOString();
+    }
+  }
+  const goc = new Date(len).getTime();
+
   // Gói khách chọn nằm ở HAI chỗ tuỳ tin đăng lúc nào:
   //   · details.plan = { tier, days }  ← form đăng tin ghi vào đây từ trước tới nay
   //   · cột tier_yeu_cau / tier_days   ← cột riêng thêm ở migration 0017
@@ -107,13 +119,13 @@ export async function POST(request: Request) {
     // quy định) — tin thường ĐÚNG 30 NGÀY; thành viên cũ — theo số ngày đã chọn (7/15/30).
     const fMp = bangMp.free;
     const { data: hsMp } = tin.owner_id
-      ? await admin.from("profiles").select("created_at,role,free_quota").eq("id", tin.owner_id).maybeSingle()
+      ? await admin.from("profiles").select("created_at:ngay_thanh_vien,role,free_quota").eq("id", tin.owner_id).maybeSingle()
       : { data: null };
     const ngayMoTkMp = hsMp?.created_at ? (Date.now() - new Date(hsMp.created_at).getTime()) / 86_400_000 : Infinity;
     // Khuyến mãi: CÙNG MỘT điều kiện với mọi nơi (huongKhuyenMai) — lấy từ chương trình trong admin.
     let laTvMoi = huongKhuyenMai(fMp, {
       goi: "basic", homNay: new Date().toISOString().slice(0, 10), coChu: Boolean(tin.owner_id),
-      soNgayMoTk: ngayMoTkMp, role: hsMp?.role, freeQuota: hsMp?.free_quota,
+      soNgayMoTk: ngayMoTkMp, role: hsMp?.role, freeQuota: hsMp?.free_quota, ngayTaoTk: hsMp?.created_at ? new Date(new Date(hsMp?.created_at).getTime() + 7 * 3_600_000).toISOString().slice(0, 10) : undefined,
     });
     // Chương trình có giới hạn số tin → hưởng thì trừ một lượt (nguyên tử); hết lượt thì không hưởng.
     if (laTvMoi && tin.owner_id && fMp.quota !== 0) {
@@ -127,7 +139,7 @@ export async function POST(request: Request) {
       // (xếp theo bumped_at desc nulls last). Xem ghi chú ở trang nhập hàng loạt.
       .update({
         status: "approved", published_at: len, bumped_at: len, tier: "basic",
-        tier_expires_at: new Date(Date.now() + soNgayHien * 86_400_000).toISOString(),
+        tier_expires_at: new Date(goc + soNgayHien * 86_400_000).toISOString(),
       })
       .eq("id", id);
     if (error) return loi(error.message, 500);
@@ -166,7 +178,7 @@ export async function POST(request: Request) {
 
   const { data: hsArr } = await admin
     .from("profiles")
-    .select("balance,created_at,total_topup,role,free_quota,email,phone,full_name,member_level,xuat_hoa_don,hd_ten_cong_ty,hd_mst,hd_dia_chi,hd_email")
+    .select("balance,created_at:ngay_thanh_vien,total_topup,role,free_quota,email,phone,full_name,member_level,xuat_hoa_don,hd_ten_cong_ty,hd_mst,hd_dia_chi,hd_email")
     .eq("id", tin.owner_id)
     .limit(1);
   const hs = hsArr?.[0] as HoSo | undefined;
@@ -200,7 +212,7 @@ export async function POST(request: Request) {
   // từ thời còn ưu đãi vẫn được duyệt free mãi về sau. Điều kiện chung: huongKhuyenMai.
   const thuocDienMienPhi = huongKhuyenMai(f, {
     goi, homNay: new Date().toISOString().slice(0, 10), coChu: true,
-    soNgayMoTk, role: hs.role, freeQuota: hs.free_quota,
+    soNgayMoTk, role: hs.role, freeQuota: hs.free_quota, ngayTaoTk: hs.created_at ? new Date(new Date(hs.created_at).getTime() + 7 * 3_600_000).toISOString().slice(0, 10) : undefined,
   });
 
   if (thuocDienMienPhi) {
@@ -233,7 +245,7 @@ export async function POST(request: Request) {
       if (!bang.plans.find((p) => p.tierId === goi)?.terms.some((t) => t.days === soNgay)) {
         return loi(`Gói ${tenGoi(bang, goi)} ${soNgay} ngày không có trong bảng giá hiện hành — nhắc khách chọn lại gói rồi gửi lại.`, 400);
       }
-      const hetHanMp = new Date(Date.now() + soNgayHienThi(bang, goi, soNgay, true) * 86_400_000).toISOString();
+      const hetHanMp = new Date(goc + soNgayHienThi(bang, goi, soNgay, true) * 86_400_000).toISOString();
       const { error } = await admin
         .from("listings")
         .update({
@@ -412,7 +424,7 @@ export async function POST(request: Request) {
   }
 
   // ── 8. Cho tin lên sóng ───────────────────────────────────────────────────
-  const hetHan = new Date(Date.now() + soNgay * 86_400_000).toISOString();
+  const hetHan = new Date(goc + soNgay * 86_400_000).toISOString();
   const { error: loiLen } = await admin
     .from("listings")
     .update({

@@ -37,6 +37,20 @@
 
 ---
 
+## 0.1 ⛔⛔ GIÁ · GÓI · HẠN TIN · CHÍNH SÁCH = MỘT NGUỒN DUY NHẤT LÀ ADMIN (quán triệt 03/10/2026)
+
+> Chủ dự án: *"Tất cả mọi thứ liên quan đến giá, chính sách đều từ 1 nguồn là admin! Hết."*
+> *"Không ai có quyền áp luật."*
+>
+> - Hạn tin = ngày đăng + số ngày của **gói** tin đó theo **Admin → Giá & quy định** (`site_content`
+>   key `billing`). Tính bằng hàm hệ thống (`so_ngay_hien_thi` / `src/lib/billing.ts`) — **cấm tự viết
+>   công thức, cấm hardcode ngày hay số ngày, cấm sửa tay hạn tin.**
+> - Admin chưa có quy định cho trường hợp nào → **nói rõ và để chủ dự án quyết trong admin**, không tự lấp.
+> - Đổi dữ liệu nhiều tin → liệt kê từng tin + số đúng theo admin → chủ duyệt → mới sửa.
+> - Bài học 03/10: Claude tự áp luật, hạ nhầm 49 tin còn hạn — xem memory `gia-chinh-sach-mot-nguon-admin`.
+
+---
+
 ## 0A. ✅ UP ẢNH KHI ĐĂNG TIN — ĐÃ XONG, ĐÃ CHỐT (12/09/2026)
 
 > **VIỆC NÀY ĐÃ KẾT THÚC. ĐỪNG MỞ LẠI, ĐỪNG VIẾT LẠI.**

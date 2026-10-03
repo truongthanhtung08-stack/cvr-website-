@@ -128,6 +128,34 @@ export default function MyListingsPage() {
     }
   }
 
+  // ── HẠ TIN · TỰ ĐĂNG LẠI (chuẩn Batdongsan, 03/10/2026) ─────────────────────
+  // Hạ tin: ngừng hiển thị, giữ dữ liệu, sau này Đăng lại. Tự đăng lại: tới hạn máy tự
+  // gửi đăng lại đúng gói đang dùng (duyệt như tin mới, trừ tiền lúc duyệt).
+  const [dangThaoTac, setDangThaoTac] = useState<string | null>(null);
+  async function thaoTac(r: ListingRow, viec: "ha" | "tu_dang_lai", bat?: boolean) {
+    if (viec === "ha" && !window.confirm(
+      `Hạ tin "${r.title || "(chưa có tiêu đề)"}"?
+
+Tin ngừng hiển thị ngay, dữ liệu giữ nguyên — sau này bấm Đăng lại để hiển thị tiếp. Phí gói đã trả không hoàn lại.`,
+    )) return;
+    setDangThaoTac(r.id);
+    try {
+      const res = await fetch("/api/tin-dang/thao-tac", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: r.id, viec, bat }),
+      });
+      const kq = await res.json().catch(() => ({}));
+      if (!res.ok || !kq.ok) { window.alert(kq.loi || "Chưa thực hiện được."); return; }
+      setRows((ds) => ds.map((x) => (x.id !== r.id ? x
+        : viec === "ha"
+          ? { ...x, status: "hidden", details: { ...(x.details ?? {}), ha_boi: "khach" } }
+          : { ...x, details: { ...(x.details ?? {}), tu_dang_lai: Boolean(bat) } })));
+    } finally {
+      setDangThaoTac(null);
+    }
+  }
+
   // ── MUA GÓI UP NHIỀU LƯỢT ─────────────────────────────────────────────────
   // Mua sỉ rẻ hơn đẩy lẻ 20–50%. Bày thẳng đơn giá mỗi lượt để khách thấy được
   // cái lợi, khỏi phải tự chia.
@@ -300,6 +328,7 @@ export default function MyListingsPage() {
   // Chỉ hiện mục "Bị từ chối" khi thật sự có — không ai cần một mục luôn bằng 0.
   if (count("rejected") > 0) tabs.push({ key: "rejected", label: `Bị từ chối (${count("rejected")})` });
   if (count("expired") > 0) tabs.push({ key: "expired", label: `Hết hạn (${count("expired")})` });
+  if (count("hidden") > 0) tabs.push({ key: "hidden", label: `Đã hạ (${count("hidden")})` });
 
   return (
     <div className="space-y-4">
@@ -351,7 +380,12 @@ export default function MyListingsPage() {
                 nổi tin nào với tin nào. Nay tiêu đề chiếm trọn một dòng riêng và
                 tự xuống dòng; cụm nút tụt xuống dưới. */}
             <div className="flex flex-wrap items-center gap-2">
-              {listingStatusBadge(r.status)}
+              {/* Chờ hiển thị (hẹn ngày đăng) và Đã hạ (khách tự hạ) — nhãn như Batdongsan */}
+              {r.status === "approved" && r.published_at && new Date(r.published_at).getTime() > Date.now()
+                ? <span className="inline-flex items-center rounded-full bg-sky-50 px-2.5 py-0.5 text-xs font-medium text-sky-700 ring-1 ring-inset ring-sky-600/20">Chờ hiển thị · lên {ngayGon(r.published_at)}</span>
+                : r.status === "hidden" && r.details?.ha_boi === "khach"
+                  ? <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/20">Đã hạ</span>
+                  : listingStatusBadge(r.status)}
               {/* HUY HIỆU CẤP — chỉ hiện khi tin thực sự ở cấp VIP. Tin thường
                   không cần huy hiệu, đúng như ngoài trang kết quả. */}
               {goi.cap !== "basic" && tierBadge(goi.cap)}
@@ -438,7 +472,7 @@ export default function MyListingsPage() {
               </Link>
               {/* ĐẨY TIN — chỉ có nghĩa với tin đang đăng. Nhãn nói luôn giá để
                   khách không phải bấm thử mới biết mất bao nhiêu. */}
-              {r.status === "approved" && (
+              {r.status === "approved" && !(r.published_at && Date.parse(r.published_at) > Date.now()) && (
                 <button
                   type="button"
                   disabled={dangDay === r.id}
@@ -456,7 +490,7 @@ export default function MyListingsPage() {
                 </button>
               )}
               {/* MUA GÓI — rẻ hơn đẩy lẻ 20–50%, và hệ thống tự đẩy giúp mỗi sáng. */}
-              {r.status === "approved" && (
+              {r.status === "approved" && !(r.published_at && Date.parse(r.published_at) > Date.now()) && (
                 <button
                   type="button"
                   disabled={dangMua === r.id}
@@ -467,7 +501,32 @@ export default function MyListingsPage() {
                 </button>
               )}
               {/* ĐĂNG LẠI — chỉ tin ĐÃ HẾT HẠN (chuẩn Batdongsan): chọn gói mới, ngày đăng và hạn tính lại từ hôm nay */}
-              {r.status === "expired" && (
+              {/* TỰ ĐĂNG LẠI — khách tự bật/tắt; tới hạn máy tự gửi đăng lại đúng gói đang dùng */}
+              {(r.status === "approved" || r.status === "pending") && (
+                <button
+                  type="button"
+                  disabled={dangThaoTac === r.id}
+                  onClick={() => thaoTac(r, "tu_dang_lai", !(r.details?.tu_dang_lai === true))}
+                  aria-pressed={r.details?.tu_dang_lai === true}
+                  className={`flex h-9 items-center gap-1.5 rounded-full border px-4 text-sm font-medium transition disabled:opacity-50 ${
+                    r.details?.tu_dang_lai === true ? "border-cvr-blue bg-cvr-blue/10 text-cvr-blue-ink" : "border-cvr-line text-cvr-body hover:border-cvr-ink hover:text-cvr-ink"
+                  }`}
+                >
+                  {r.details?.tu_dang_lai === true ? "✓ Tự đăng lại: Bật" : "Tự đăng lại: Tắt"}
+                </button>
+              )}
+              {/* HẠ TIN — tin đang hiển thị: ngừng hiển thị, giữ dữ liệu, sau này Đăng lại */}
+              {r.status === "approved" && (
+                <button
+                  type="button"
+                  disabled={dangThaoTac === r.id}
+                  onClick={() => thaoTac(r, "ha")}
+                  className="flex h-9 items-center rounded-full border border-cvr-line px-4 text-sm font-medium text-cvr-body transition hover:border-red-300 hover:text-red-700 disabled:opacity-50"
+                >
+                  Hạ tin
+                </button>
+              )}
+              {(r.status === "expired" || (r.status === "hidden" && r.details?.ha_boi === "khach")) && (
                 <button
                   type="button"
                   onClick={() => { setUpCho(r); setUpChon(goiLanTruoc(r)); }}

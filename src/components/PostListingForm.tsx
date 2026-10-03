@@ -120,6 +120,9 @@ export default function PostListingForm() {
   // ví bị trừ là khiếu nại.
   const [planTier, setPlanTier] = useState<TierId | "">("");
   const [planDays, setPlanDays] = useState<number>(billing.plans[0]?.terms[0]?.days ?? 7);
+  // HẸN NGÀY ĐĂNG (chuẩn Batdongsan): "" = hiển thị ngay khi duyệt; "YYYY-MM-DD" = duyệt xong
+  // tin ở mục Chờ hiển thị, tới 0h ngày đó (giờ VN) mới lên — hạn tính từ ngày đó.
+  const [batDau, setBatDau] = useState("");
   // Tin ĐANG HIỂN THỊ / ĐÃ HẾT HẠN đang sửa → gói cố định, chỉ hiện thông tin gói (không chọn lại).
   const [goiDangDung, setGoiDangDung] = useState<{ tier: TierId; het: string | null } | null>(null);
   // Thông tin ví/hồ sơ dùng để tính ưu đãi (null = chưa đăng nhập hoặc chưa tải xong)
@@ -201,7 +204,7 @@ export default function PostListingForm() {
     const soNgayMoTk = hoSoVi.created_at ? (Date.now() - new Date(hoSoVi.created_at).getTime()) / 86_400_000 : Infinity;
     return huongKhuyenMai(billing.free, {
       goi: planTier as TierId, homNay: new Date().toISOString().slice(0, 10), coChu: true,
-      soNgayMoTk, role: hoSoVi.role, freeQuota: hoSoVi.free_quota,
+      soNgayMoTk, role: hoSoVi.role, freeQuota: hoSoVi.free_quota, ngayTaoTk: hoSoVi.created_at ? new Date(new Date(hoSoVi.created_at).getTime() + 7 * 3_600_000).toISOString().slice(0, 10) : undefined,
     });
   }, [billing.free, planTier, hoSoVi]);
 
@@ -219,7 +222,7 @@ export default function PostListingForm() {
     const soNgayMoTk = hoSoVi.created_at ? (Date.now() - new Date(hoSoVi.created_at).getTime()) / 86_400_000 : Infinity;
     return huongKhuyenMai(billing.free, {
       goi: tierId, homNay: new Date().toISOString().slice(0, 10), coChu: true,
-      soNgayMoTk, role: hoSoVi.role, freeQuota: hoSoVi.free_quota,
+      soNgayMoTk, role: hoSoVi.role, freeQuota: hoSoVi.free_quota, ngayTaoTk: hoSoVi.created_at ? new Date(new Date(hoSoVi.created_at).getTime() + 7 * 3_600_000).toISOString().slice(0, 10) : undefined,
     });
   };
   // Số ngày tin THẬT SỰ hiển thị (khuyến mãi thành viên mới → số ngày của chương trình).
@@ -345,7 +348,7 @@ export default function PostListingForm() {
         // để tính ĐÚNG số tiền phải trả (ưu đãi thành viên mới, khuyến mãi, cấp).
         const { data: p } = await supabase
           .from("profiles")
-          .select("full_name, phone, email, created_at, free_quota, role, total_topup, balance, phone_verified, sdt_lien_he_xac_minh")
+          .select("full_name, phone, email, created_at:ngay_thanh_vien, free_quota, role, total_topup, balance, phone_verified, sdt_lien_he_xac_minh")
           .eq("id", user.id)
           .single();
         if (p) {
@@ -407,6 +410,7 @@ export default function PostListingForm() {
       setImages(r.images ?? []);
       const d = r.details ?? {};
       chiTietGoc.current = d as Record<string, unknown>;
+      { const bd = (d as { plan?: { batDau?: string } }).plan?.batDau; if (bd && bd > new Date(Date.now() + 7 * 3_600_000).toISOString().slice(0, 10)) setBatDau(bd); }
       setSpecValues(d.specs ?? {});
       setInterior(d.interior ?? []);
       setAmenities(d.amenities ?? []);
@@ -572,7 +576,7 @@ export default function PostListingForm() {
         // cùng thang với quotePrice). Lúc admin duyệt, máy chủ tính lại giá; nếu
         // khuyến mãi đã hết hạn hay bảng giá đã đổi thì giá mới có thể cao hơn —
         // khi đó vẫn chỉ thu đúng con số khách đã nhìn thấy ở đây.
-        plan: { tier: planTier, days: planDays, giaBao: thanhTien },
+        plan: { tier: planTier, days: planDays, giaBao: thanhTien, ...(batDau ? { batDau } : {}) },
         project: slugDuAn() || undefined,
         projectName: projectName.trim() || undefined,
         contact: (contactName.trim() || contactPhone.trim() || contactEmail.trim() || contactAvatar.trim())
@@ -810,7 +814,7 @@ export default function PostListingForm() {
       )}
 
       {/* 1. Loại tin & loại hình */}
-      <Card id="b-loai" step={buoc()} title="Loại tin đăng">
+      <Card id="b-loai" step={buoc()} title="Loại tin đăng" khoa={editStatus === "approved"}>
         <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
           <Pick label="Nhu cầu" value={demand} onChange={setDemand} options={demandTypes} />
           {/* Loại hình theo NHÓM cho dễ tìm — cùng danh mục với bộ lọc của web */}
@@ -833,7 +837,7 @@ export default function PostListingForm() {
       </Card>
 
       {/* 2. Địa chỉ */}
-      <Card id="b-vitri" step={buoc()} title="Địa chỉ bất động sản">
+      <Card id="b-vitri" step={buoc()} title="Địa chỉ bất động sản" khoa={editStatus === "approved"}>
         {/* Chọn hệ đơn vị hành chính: MỚI (sau sáp nhập) hay CŨ */}
         {/* HAI NÚT CHIA ĐÔI HÀNG, CHỮ KHÔNG GÃY DÒNG. Nhãn cũ dài gần 30 ký tự nên
             trên điện thoại 375px hộp bị bóp, chữ rớt xuống hai dòng và nút bên cạnh
@@ -1190,7 +1194,21 @@ export default function PostListingForm() {
                 <Dong nhan="Loại tin" giaTri={getTier(planTier as TierId).name} />
                 {!duocMienPhi && <Dong nhan="Đơn giá / ngày" giaTri={vnd(planDays > 0 ? Math.round(baoGia.base / planDays) : 0)} />}
                 <Dong nhan="Thời gian đăng" giaTri={`${soNgayThat} ngày`} />
-                <Dong nhan="Bắt đầu hiển thị" giaTri="Khi tin được duyệt" />
+                <div className="flex items-center justify-between gap-3 py-1">
+                  <span className="text-cvr-muted">Bắt đầu hiển thị</span>
+                  <select
+                    value={batDau}
+                    onChange={(e) => setBatDau(e.target.value)}
+                    aria-label="Ngày bắt đầu hiển thị"
+                    className="h-9 rounded-lg border border-cvr-line bg-white px-2 text-sm text-cvr-ink outline-none focus:border-cvr-ink"
+                  >
+                    <option value="">Ngay khi được duyệt</option>
+                    {Array.from({ length: 30 }, (_, i) => {
+                      const d = new Date(Date.now() + 7 * 3_600_000 + (i + 1) * 86_400_000).toISOString().slice(0, 10);
+                      return <option key={d} value={d}>{d.split("-").reverse().join("/")}</option>;
+                    })}
+                  </select>
+                </div>
                 <div className="my-3 border-t border-cvr-line" />
                 {duocMienPhi ? (
                   <Dong nhan="Ưu đãi thành viên mới" giaTri="Miễn phí" nhan2 />
@@ -1294,7 +1312,7 @@ export default function PostListingForm() {
       </Card>
 
       {/* 10. Thuộc dự án (không bắt buộc) */}
-      <Card step={buoc()} title="Thuộc dự án">
+      <Card step={buoc()} title="Thuộc dự án" khoa={editStatus === "approved"}>
         <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <Label>Dự án</Label>
@@ -1493,7 +1511,7 @@ function Label({ children }: { children: React.ReactNode }) {
   return <label className="mb-1.5 block text-sm font-medium text-cvr-body">{children}</label>;
 }
 
-function Card({ id, step, title, children }: { id?: string; step: string; title: string; children: React.ReactNode }) {
+function Card({ id, step, title, children, khoa }: { id?: string; step: string; title: string; children: React.ReactNode; khoa?: boolean }) {
   return (
     // scroll-mt: chừa chỗ cho header + thanh quay lại + thanh bước, nếu không thì
     // bấm mốc xong tiêu đề khối bị các thanh dính che mất.
@@ -1502,7 +1520,16 @@ function Card({ id, step, title, children }: { id?: string; step: string; title:
         <span className="flex h-7 w-7 items-center justify-center rounded-full bg-cvr-ink text-sm text-white">{step}</span>
         {title}
       </h2>
-      <div className="space-y-4">{children}</div>
+      {khoa ? (
+        // TIN ĐANG HIỂN THỊ (chuẩn Batdongsan): không đổi loại tin, địa chỉ, dự án — đổi là
+        // thành bất động sản khác, phải đăng tin mới.
+        <>
+          <p className="mb-3 rounded-lg bg-cvr-surface px-3 py-2 text-[13px] text-cvr-muted">Tin đang hiển thị không đổi được mục này. Muốn đổi, hãy đăng tin mới.</p>
+          <fieldset disabled className="space-y-4 opacity-60">{children}</fieldset>
+        </>
+      ) : (
+        <div className="space-y-4">{children}</div>
+      )}
     </section>
   );
 }

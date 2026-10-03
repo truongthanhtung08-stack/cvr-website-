@@ -613,9 +613,21 @@ export function freeDangChay(f: FreePolicy, today: string): boolean {
 // không giới hạn). Tin ADMIN đăng hộ (không có chủ) tính như thành viên mới, không trừ lượt.
 export function huongKhuyenMai(
   f: FreePolicy,
-  k: { goi: TierId; homNay: string; coChu: boolean; soNgayMoTk: number; role?: string | null; freeQuota?: number | null },
+  k: { goi: TierId; homNay: string; coChu: boolean; soNgayMoTk: number; role?: string | null; freeQuota?: number | null; ngayTaoTk?: string },
 ): boolean {
-  if (!freeDangChay(f, k.homNay) || k.goi !== f.tierId) return false;
+  if (k.goi !== f.tierId) return false;
+  // THÀNH VIÊN MỚI (chủ dự án chốt 03/10/2026): ai TẠO TÀI KHOẢN trong thời gian chương
+  // trình (from–to) đều được ưu đãi; tin đăng trong free.days ngày đầu kể từ ngày tạo tài
+  // khoản được hưởng — KỂ CẢ khi đăng sau ngày kết thúc chương trình.
+  if (k.coChu && f.audience === "new") {
+    const ngayTaoTk = k.ngayTaoTk ?? new Date(new Date(`${k.homNay}T12:00:00+07:00`).getTime() - k.soNgayMoTk * 86_400_000)
+      .toISOString().slice(0, 10);
+    const conLuot = f.quota === 0 || Number(k.freeQuota ?? 0) > 0;
+    // Chỉ tin đăng TỪ ngày bắt đầu là thành viên (soNgayMoTk ≥ 0) — tài khoản tạo hộ: tin
+    // đăng trước ngày chính chủ vào không hưởng (0058, ngay_thanh_vien).
+    return freeDangChay(f, ngayTaoTk) && k.soNgayMoTk >= 0 && k.soNgayMoTk <= f.days && conLuot;
+  }
+  if (!freeDangChay(f, k.homNay)) return false;
   if (!k.coChu) return true;
   const hopDoiTuong = f.audience === "all" || (f.audience === "new" && k.soNgayMoTk <= f.days) || f.audience === (k.role ?? "buyer");
   const conLuot = f.quota === 0 || Number(k.freeQuota ?? 0) > 0;
