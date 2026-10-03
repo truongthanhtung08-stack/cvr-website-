@@ -72,6 +72,8 @@ export async function POST(req: Request) {
   // trường nhảy thật. Lúc đó lớp chặn số 3 thành ra cản đường — cho qua, nhưng
   // vẫn ghi rõ dãy nào được cho qua vào màn hình và vào thư báo, để còn truy lại.
   const daKiemNhay = String(form?.get("da_kiem_nhay") ?? "") === "1";
+  // thay_toan_bo=1 → bỏ hết số đã có, chỉ giữ tệp này (đợt làm mới lịch sử giá).
+  const thayToanBo = String(form?.get("thay_toan_bo") ?? "") === "1";
   if (ma !== maDung) return NextResponse.json({ ok: false, loi: "Mã nộp không đúng." }, { status: 401 });
   if (!(tep instanceof File)) return NextResponse.json({ ok: false, loi: "Chưa chọn tệp." }, { status: 400 });
 
@@ -120,7 +122,7 @@ export async function POST(req: Request) {
   const dangCo = ((cu?.[0]?.data as ChiSoGiaData | undefined)?.items ?? []) as ChiSoKhuVuc[];
 
   const gom = new Map<string, ChiSoKhuVuc>();
-  for (const x of dangCo) gom.set(khoaDay(x), x);
+  if (!thayToanBo) for (const x of dangCo) gom.set(khoaDay(x), x);
   for (const x of nhan) gom.set(khoaDay(x), x);
   const tatCa = [...gom.values()];
 

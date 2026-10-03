@@ -4,11 +4,23 @@
 > - **Bỏ toàn bộ** số lịch sử giá đã nộp trước 03/10/2026 và mọi file mẫu cũ — số cũ
 >   tính sai (gộp cả tỉnh, chia giá nhà cho m² đất).
 > - Làm lại **từ đầu** theo file này.
-> - Lần nộp ĐẦU TIÊN ở admin → **Lịch sử giá**: bấm **Thay toàn bộ**. Các lần sau: nộp
->   bình thường (bổ sung).
+> - Lần nộp ĐẦU TIÊN: nộp tại `https://coastalland.vn/nop-so-lieu?lam-moi=1` (thay toàn bộ
+>   số cũ). Các lần sau: `https://coastalland.vn/nop-so-lieu` (bổ sung). Xem mục **0**.
 > - File này **thay thế** mục GÓI C cũ và mọi yêu cầu lịch sử giá trước đây.
 >
 > Ngày: 03/10/2026.
+
+## 0. TỰ ĐỘNG — Cowork tự lấy, tự nộp (mã nộp do chủ dự án cấp)
+
+1. **Lấy danh sách cần điền:** mở
+   `https://coastalland.vn/api/chi-so-gia/con-thieu?ma=<MÃ NỘP>` → tải về tệp CSV.
+   (Đợt làm mới đầu tiên: dùng file `mau-lich-su-gia.csv` gửi kèm.)
+2. **Điền** theo mục 2 → 5 bên dưới.
+3. **Nộp:** mở `https://coastalland.vn/nop-so-lieu` → nhập mã nộp → chọn tệp → Nộp.
+   **Lần nộp ĐẦU TIÊN của đợt làm mới:** mở `https://coastalland.vn/nop-so-lieu?lam-moi=1`
+   (bỏ hết số cũ, chỉ giữ tệp này). Các lần sau: không có `?lam-moi=1`.
+4. Web tự kiểm, số hợp lệ lên web ngay. Dòng bị từ chối → sửa theo bảng lỗi, nộp lại.
+5. **Mỗi quý** làm lại từ bước 1.
 
 ## 1. Cowork nhận gì, làm gì
 

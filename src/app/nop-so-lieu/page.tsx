@@ -43,6 +43,8 @@ export default function NopSoLieu() {
     form.set("ma", ma);
     form.set("tep", tep);
     if (daKiemNhay) form.set("da_kiem_nhay", "1");
+    // Đợt LÀM MỚI lịch sử giá: mở trang bằng ?lam-moi=1 → bỏ hết số cũ, chỉ giữ tệp này.
+    if (new URLSearchParams(window.location.search).get("lam-moi") === "1") form.set("thay_toan_bo", "1");
     try {
       const r = await fetch("/api/chi-so-gia/nop", { method: "POST", body: form });
       setKq(await r.json());
