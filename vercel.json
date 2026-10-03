@@ -18,7 +18,7 @@
     },
     {
       "path": "/api/tin-dang/het-han",
-      "schedule": "0 * * * *"
+      "schedule": "* * * * *"
     },
     {
       "path": "/api/gia-chuan/tu-cong-bo",

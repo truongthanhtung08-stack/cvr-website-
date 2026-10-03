@@ -4,7 +4,7 @@ import { quetTinHetHan } from "@/lib/hetHanTin";
 import { baoLoi } from "@/lib/baoLoi";
 
 // ════════════════════════════════════════════════════════════════════════════
-// QUÉT TIN HẾT HẠN — MỖI GIỜ (vercel.json, chủ dự án chốt 01/10/2026)
+// QUÉT TIN HẾT HẠN — MỖI PHÚT (vercel.json; 03/10/2026 chủ dự án: "đúng giờ đúng ngày là áp dụng")
 // Trước đây chỉ quét kèm cron hoá đơn 2 lần/ngày → tin quá "Ngày hết hạn" vẫn hiện
 // thêm tới ~12 tiếng. Nay mỗi giờ một lần: tin ngừng hiển thị chậm nhất 1 giờ sau mốc.
 // Chạy lặp vô hại: tin đã hạ không khớp lại, tin đã nhắc có dấu trong details.
