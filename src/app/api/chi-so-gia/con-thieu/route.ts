@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import type { ChiSoGiaData } from "@/lib/chiSoGia";
+import { soNhapHopLe, type ChiSoGiaData } from "@/lib/chiSoGia";
 import { dongConThieu, COT_MAU, type TinCan, type DongKho } from "@/lib/lichSuGiaConThieu";
 import { noiDungCsv } from "@/lib/xuatCsv";
 
@@ -37,7 +37,7 @@ export async function GET(req: Request) {
     if (data.length < 1000) break;
   }
   const { data: nd } = await admin.from("site_content").select("data").eq("key", "chi_so_gia").limit(1);
-  const items = (nd?.[0]?.data as ChiSoGiaData | undefined)?.items ?? [];
+  const items = soNhapHopLe((nd?.[0]?.data as ChiSoGiaData | undefined)?.items);
 
   const dong = dongConThieu(tin, kho, items);
   return new NextResponse(noiDungCsv([...COT_MAU], dong), {

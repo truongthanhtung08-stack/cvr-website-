@@ -191,6 +191,9 @@ export type ChiSoKhuVuc = {
   duAn?: string;
   /** Tên TUYẾN ĐƯỜNG trong phường `khuVuc` (bậc ②). */
   duong?: string;
+  /** Lúc dãy được nộp/nhập (ISO). Dãy nhập trước đợt làm mới 03/10/2026 không có
+   *  dấu này → không được dùng (xem soNhapHopLe). */
+  nhapLuc?: string;
   /** Ai công bố: CBRE · Savills · DKRA · khảo sát của Coastal Land… */
   nguon: string;
   /** Ngày chủ dự án cập nhật, dạng 2026-09-11 */
@@ -251,6 +254,13 @@ export function veQuy(x: ChiSoKhuVuc): ChiSoKhuVuc {
     .sort((a, b) => a.quy.localeCompare(b.quy))
     .map(({ _t, ...m }) => (void _t, m));
   return { ...x, moc };
+}
+
+/** ĐỢT LÀM MỚI LỊCH SỬ GIÁ (chủ dự án 03/10/2026): số nhập trước mốc này chưa được
+ *  kiểm theo luật mới → không dùng. Chỉ nhận dãy nộp từ mốc này trở đi. */
+export const MOC_LAM_MOI = "2026-10-03";
+export function soNhapHopLe(items: ChiSoKhuVuc[] | undefined | null): ChiSoKhuVuc[] {
+  return (items ?? []).filter((x) => (x.nhapLuc ?? "") >= MOC_LAM_MOI);
 }
 
 /** Phạm vi của một dãy: du-an · duong · phuong · tinh. */
@@ -508,6 +518,7 @@ export function docBangChiSo(bang: string[][]): { items: ChiSoKhuVuc[]; loi: Loi
         viTri: vt,
         duAn: duAnO || undefined,
         duong: duongO || undefined,
+        nhapLuc: new Date().toISOString(),
         moc: [],
       };
       gom.set(khoa, muc);

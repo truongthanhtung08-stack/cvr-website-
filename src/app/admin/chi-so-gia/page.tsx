@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { ChiSoGiaData, ChiSoKhuVuc, LoiCsv, MauSo } from "@/lib/chiSoGia";
-import { docBangChiSo, docCsvChiSo, TINH_MIEN_TRUNG } from "@/lib/chiSoGia";
+import { docBangChiSo, docCsvChiSo, TINH_MIEN_TRUNG, soNhapHopLe } from "@/lib/chiSoGia";
 import { dongConThieu, COT_MAU, type TinCan, type DongKho } from "@/lib/lichSuGiaConThieu";
 import { docBangXlsx, laXlsx } from "@/lib/docXlsx";
 import { chuanTen, provinceNamesFor } from "@/lib/locations";
@@ -143,7 +143,7 @@ export default function ChiSoGiaPage() {
       if (data.length < 1000) break;
     }
 
-    const dong = dongConThieu(tin, kho, items);
+    const dong = dongConThieu(tin, kho, soNhapHopLe(items));
     setDangXuat(false);
     if (!dong.length) {
       setMsg("Mọi dãy của tin đang đăng đã đủ số 8 quý.");

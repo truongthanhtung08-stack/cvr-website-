@@ -18,6 +18,7 @@ import {
   khoCuaMinh,
   tenPhamVi,
   soSanhKhuVuc,
+  soNhapHopLe,
 } from "@/lib/chiSoGia";
 import { getChiSoGia } from "@/lib/siteContent";
 import { nhanDienTich as nhanDienTichTheoLoai, laTinThue } from "@/lib/listingSpec";
@@ -274,7 +275,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
   const nhapTay = await getChiSoGia();
   const dayGia = [
     ...(await khoCuaMinh(l.diaGioi?.province ?? "", l.type, laTinThue(l.purpose) ? "thue" : "ban")),
-    ...(nhapTay?.items ?? []),
+    ...soNhapHopLe(nhapTay?.items),
   ];
   const chiSoTin = chiSoChoTin(l, { items: dayGia }, { duAn: d.projectName, diaChi: d.addressDetail });
   const lanCan = chiSoTin ? soSanhKhuVuc(l, dayGia, chiSoTin.moc[chiSoTin.moc.length - 1]?.quy ?? "") : [];
