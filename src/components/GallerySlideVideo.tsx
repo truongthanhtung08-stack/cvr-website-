@@ -86,6 +86,7 @@ export default function GallerySlideVideo({
     setXoay(canXoay());
   };
   const thuNho = () => {
+    vaoDoXoay.current = false;
     setLon(false);
     setXoay(false);
   };
@@ -113,6 +114,10 @@ export default function GallerySlideVideo({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lon]);
   // Khách tự xoay máy lúc đang xem lớn → khung theo chiều máy.
+  // ĐANG PHÁT TRONG KHUNG MÀ NGHIÊNG MÁY NGANG (máy bật Tự xoay) → TỰ VÀO XEM FULL, như
+  // YouTube. Không làm vậy thì màn ngang rộng hơn 640px, web chuyển sang bố cục máy tính
+  // và giấu luôn khung điện thoại đang phát → video biến mất (chủ dự án báo 08/10/2026).
+  const vaoDoXoay = useRef(false);
   // THEO NÚT TỰ XOAY / KHOÁ XOAY CỦA ĐIỆN THOẠI (chủ dự án 08/10/2026):
   // · Vào full: video ngang + màn dọc → khung tự nằm ngang (máy khoá xoay vẫn xem ngang được).
   // · Máy đổi hướng thật (đang bật Tự xoay, hoặc khách bấm nút xoay của máy) → từ đó
@@ -126,6 +131,13 @@ export default function GallerySlideVideo({
       const ngangMoi = window.innerWidth > window.innerHeight;
       if (ngangMoi !== ngangCu) theoMay = true;
       ngangCu = ngangMoi;
+      // Vào full do NGHIÊNG MÁY NGANG → dựng máy dọc lại là tự thoát về khung (như YouTube).
+      if (vaoDoXoay.current && !ngangMoi) {
+        vaoDoXoay.current = false;
+        setLon(false);
+        setXoay(false);
+        return;
+      }
       setXoay(theoMay ? false : canXoay());
     };
     window.addEventListener("resize", doiCo);
@@ -162,6 +174,22 @@ export default function GallerySlideVideo({
   const [tong, setTong] = useState(0);
   const [tatTieng, setTatTieng] = useState(false);
   const [hienNut, setHienNut] = useState(true);
+  useEffect(() => {
+    if (lon || !active || !dangChay || xemTruoc) return;
+    if (!window.matchMedia("(pointer: coarse)").matches) return; // chỉ điện thoại / máy tính bảng
+    let ngangCu = window.innerWidth > window.innerHeight;
+    const doiCo = () => {
+      const ngangMoi = window.innerWidth > window.innerHeight;
+      if (ngangMoi && !ngangCu) {
+        vaoDoXoay.current = true;
+        setLon(true);
+        setXoay(false);
+      }
+      ngangCu = ngangMoi;
+    };
+    window.addEventListener("resize", doiCo);
+    return () => window.removeEventListener("resize", doiCo);
+  }, [lon, active, dangChay, xemTruoc]);
   const lenhYt = (func: string, args: unknown[] = []) =>
     khungRef.current?.contentWindow?.postMessage(JSON.stringify({ event: "command", func, args }), "*");
   // YouTube báo trạng thái qua postMessage (sau khi gửi "listening").
