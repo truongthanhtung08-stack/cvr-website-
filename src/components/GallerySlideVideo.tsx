@@ -80,7 +80,7 @@ export default function GallerySlideVideo({
     const v = ref.current;
     return !!v && v.videoWidth > v.videoHeight;
   };
-  const canXoay = () => laNgang() && window.innerHeight > window.innerWidth;
+  const canXoay = () => laNgang() && !manNgang();
   const moLon = () => {
     setLon(true);
     setXoay(canXoay());
@@ -125,10 +125,10 @@ export default function GallerySlideVideo({
   //   màn dọc — không tự xoay khung nữa.
   useEffect(() => {
     if (!lon) return;
-    let ngangCu = window.innerWidth > window.innerHeight;
+    let ngangCu = manNgang();
     let theoMay = false;
     const doiCo = () => {
-      const ngangMoi = window.innerWidth > window.innerHeight;
+      const ngangMoi = manNgang();
       if (ngangMoi !== ngangCu) theoMay = true;
       ngangCu = ngangMoi;
       // Vào full do NGHIÊNG MÁY NGANG → dựng máy dọc lại là tự thoát về khung (như YouTube).
@@ -140,11 +140,11 @@ export default function GallerySlideVideo({
       }
       setXoay(theoMay ? false : canXoay());
     };
-    window.addEventListener("resize", doiCo);
+    const boNghe = ngheXoayMay(doiCo);
     const cuon = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
-      window.removeEventListener("resize", doiCo);
+      boNghe();
       document.body.style.overflow = cuon;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -179,9 +179,9 @@ export default function GallerySlideVideo({
     // báo đó có khi không về, web tưởng chưa chạy nên không vào full (chủ dự án báo 08/10).
     if (lon || !active || !daBam || xemTruoc) return;
     if (!window.matchMedia("(pointer: coarse)").matches) return; // chỉ điện thoại / máy tính bảng
-    let ngangCu = window.innerWidth > window.innerHeight;
+    let ngangCu = manNgang();
     const doiCo = () => {
-      const ngangMoi = window.innerWidth > window.innerHeight;
+      const ngangMoi = manNgang();
       if (ngangMoi && !ngangCu) {
         vaoDoXoay.current = true;
         setLon(true);
@@ -189,8 +189,7 @@ export default function GallerySlideVideo({
       }
       ngangCu = ngangMoi;
     };
-    window.addEventListener("resize", doiCo);
-    return () => window.removeEventListener("resize", doiCo);
+    return ngheXoayMay(doiCo);
   }, [lon, active, daBam, xemTruoc]);
   const lenhYt = (func: string, args: unknown[] = []) =>
     khungRef.current?.contentWindow?.postMessage(JSON.stringify({ event: "command", func, args }), "*");
@@ -518,6 +517,32 @@ export default function GallerySlideVideo({
       )}
     </div>
   );
+}
+
+// HƯỚNG MÀN HÌNH THEO CHUẨN CHUNG (media query "orientation") — đọc kích thước cửa sổ thì
+// có trình duyệt báo chậm hơn sự kiện xoay, tính sai hướng.
+function manNgang(): boolean {
+  return window.matchMedia("(orientation: landscape)").matches;
+}
+// Nghe xoay máy bằng MỌI tín hiệu trình duyệt có (máy nào báo kiểu nào cũng bắt được);
+// gọi lại thêm một nhịp sau khi xoay xong cho chắc. Trả về hàm bỏ nghe.
+function ngheXoayMay(goi: () => void): () => void {
+  const mq = window.matchMedia("(orientation: landscape)");
+  let hen: ReturnType<typeof setTimeout> | undefined;
+  const h = () => {
+    goi();
+    clearTimeout(hen);
+    hen = setTimeout(goi, 350);
+  };
+  mq.addEventListener("change", h);
+  window.addEventListener("resize", h);
+  window.addEventListener("orientationchange", h);
+  return () => {
+    clearTimeout(hen);
+    mq.removeEventListener("change", h);
+    window.removeEventListener("resize", h);
+    window.removeEventListener("orientationchange", h);
+  };
 }
 
 function dongHo(s: number): string {
