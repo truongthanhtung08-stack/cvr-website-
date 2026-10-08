@@ -11,8 +11,8 @@ import { getArticles } from "@/lib/contentDb";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/mua-ban" },
-  title: "Nhà đất bán tại Đà Nẵng, Huế & Miền Trung",
-  description: "Mua bán nhà đất, căn hộ, đất nền, villa, condotel tại Miền Trung — lọc theo Tỉnh/Thành phố, Phường/Xã, loại hình và mức giá.",
+  title: "Mua bán nhà đất, bất động sản",
+  description: "Tin mua bán nhà đất, căn hộ, đất nền, nhà phố, biệt thự, condotel — hình thật, liên hệ trực tiếp người đăng, lọc theo khu vực, loại hình, mức giá.",
 };
 
 // ── ĐẾM TIN THEO TỈNH — cho khối "Nhà đất bán theo khu vực" cuối trang ──────
@@ -33,7 +33,7 @@ export default async function MuaBanPage() {
   const tinBan = listings.filter((l) => (l.purpose ?? "ban") === "ban");
   return (
     <>
-      <ListingListJsonLd items={tinBan} heading="Nhà đất bán tại Đà Nẵng, Huế & Miền Trung" path="/mua-ban" />
+      <ListingListJsonLd items={tinBan} heading="Mua bán nhà đất, bất động sản" path="/mua-ban" />
       <Header />
       <main className="flex-1 bg-white">
         {/* Khung chờ: CHỈ cao bằng thanh lọc thật (không pt-32 như trước — đó chính là
@@ -43,8 +43,8 @@ export default async function MuaBanPage() {
         <Suspense
           fallback={
             <KhungChoDanhMuc
-              heading="Nhà đất bán tại Đà Nẵng, Huế & Miền Trung"
-              moTa="Tin bán nhà riêng, căn hộ chung cư, đất nền, nhà mặt phố và biệt thự tại Đà Nẵng, Huế và các tỉnh Duyên hải Miền Trung. Lọc theo tỉnh, phường/xã, dự án, loại hình, khoảng giá và diện tích."
+              heading="Mua bán nhà đất, bất động sản"
+              moTa="Tin bán nhà riêng, căn hộ chung cư, đất nền, nhà mặt phố và biệt thự. Lọc theo tỉnh, phường/xã, dự án, loại hình, khoảng giá và diện tích."
               items={tinBan}
             />
           }

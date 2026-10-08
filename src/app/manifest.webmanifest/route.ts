@@ -12,10 +12,10 @@
 // vỏ app: biểu tượng ngoài màn hình chính mở thẳng bằng tab trình duyệt.
 // iPhone và Chrome giữ nguyên kiểu app vì đang chạy đúng.
 const HO_SO = {
-  name: "COASTAL LAND — Bất động sản Duyên hải Miền Trung",
+  name: "COASTAL LAND — Cổng thông tin mua bán, cho thuê nhà đất",
   short_name: "COASTAL LAND",
   description:
-    "Sàn giao dịch bất động sản Đà Nẵng, Huế và Duyên hải Miền Trung. Tìm nhà đất, căn hộ, đất nền, villa biển.",
+    "Cổng thông tin mua bán, cho thuê nhà đất. Tìm nhà đất, căn hộ, đất nền, villa biển.",
   lang: "vi",
   dir: "ltr",
   start_url: "/",

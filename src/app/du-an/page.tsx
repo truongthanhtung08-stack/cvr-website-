@@ -22,8 +22,8 @@ function demTheoTinh(items: { location: string }[]): [string, number][] {
 
 export const metadata: Metadata = {
   alternates: { canonical: "/du-an" },
-  title: "Dự án bất động sản Đà Nẵng, Huế & Miền Trung",
-  description: "Danh sách dự án căn hộ, khu đô thị, nghỉ dưỡng tại Miền Trung — tiến độ, giá bán và tiện ích đầy đủ.",
+  title: "Dự án bất động sản mới nhất",
+  description: "Thông tin dự án căn hộ, khu đô thị, nghỉ dưỡng — vị trí, chủ đầu tư, tiến độ, giá bán và tiện ích.",
 };
 
 export default async function DuAnPage() {
@@ -34,7 +34,7 @@ export default async function DuAnPage() {
   ]);
   return (
     <>
-      <ProjectListJsonLd items={projects} heading="Dự án bất động sản Đà Nẵng, Huế & Miền Trung" path="/du-an" />
+      <ProjectListJsonLd items={projects} heading="Dự án bất động sản mới nhất" path="/du-an" />
       <Header />
       <main className="flex-1 bg-white">
         <div className="mx-auto max-w-7xl px-4 pt-0 pb-footer sm:px-6 sm:pt-0 lg:px-8">

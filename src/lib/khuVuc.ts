@@ -52,7 +52,9 @@ export function tieuDeKhuVuc(muc: "ban" | "thue" | "duan", ten: string): string 
 }
 
 export function moTaKhuVuc(muc: "ban" | "thue" | "duan", ten: string, soTin: number): string {
-  const dem = soTin > 0 ? `${soTin} tin đang đăng. ` : "";
+  // KHÔNG in số tin ra Google (không phơi số tin — chủ dự án chốt). Giữ tham số soTin cho nơi gọi.
+  void soTin;
+  const dem = "";
   if (muc === "thue") {
     return `${dem}Cho thuê nhà riêng, căn hộ, mặt bằng kinh doanh, văn phòng, phòng trọ tại ${ten} — lọc theo phường/xã, loại hình và giá thuê theo tháng.`;
   }

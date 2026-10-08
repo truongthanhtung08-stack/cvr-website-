@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   // cuối. Chữ "thực hiện giao dịch" cũng đã bỏ: Coastal Land là CỔNG THÔNG TIN,
   // không đứng ra môi giới hay giao dịch hộ ai.
   description:
-    "Coastal Land (coastalland.vn) — cổng thông tin bất động sản Đà Nẵng, Huế và Duyên hải Miền Trung. Nơi người bán đăng tin và người mua tìm đúng nhà đất.",
+    "Coastal Land (coastalland.vn) — cổng thông tin mua bán, cho thuê nhà đất. Nơi người bán đăng tin và người mua tìm đúng nhà đất.",
 };
 
 /* ════════════════════════════════════════════════════════════════════════════

@@ -22,8 +22,8 @@ function demTheoTinh(items: { location: string }[]): [string, number][] {
 
 export const metadata: Metadata = {
   alternates: { canonical: "/cho-thue" },
-  title: "Nhà đất cho thuê tại Đà Nẵng, Huế & Miền Trung",
-  description: "Cho thuê căn hộ, nhà phố, văn phòng, kho xưởng tại Miền Trung — lọc theo Tỉnh/Thành phố, Phường/Xã, loại hình và mức giá.",
+  title: "Cho thuê nhà đất, căn hộ, văn phòng",
+  description: "Tin cho thuê căn hộ, nhà nguyên căn, văn phòng, mặt bằng kinh doanh, kho xưởng — hình thật, liên hệ trực tiếp người đăng, lọc theo khu vực, loại hình, giá.",
 };
 
 export default async function ChoThuePage() {
@@ -32,7 +32,7 @@ export default async function ChoThuePage() {
   const tinThue = listings.filter((l) => (l.purpose ?? "ban") === "thue");
   return (
     <>
-      <ListingListJsonLd items={tinThue} heading="Nhà đất cho thuê tại Đà Nẵng, Huế & Miền Trung" path="/cho-thue" />
+      <ListingListJsonLd items={tinThue} heading="Cho thuê nhà đất, căn hộ, văn phòng" path="/cho-thue" />
       <Header />
       <main className="flex-1 bg-white">
         {/* Khung chờ: CHỈ cao bằng thanh lọc thật (không pt-32 như trước — đó chính là
@@ -40,8 +40,8 @@ export default async function ChoThuePage() {
         <Suspense
           fallback={
             <KhungChoDanhMuc
-              heading="Nhà đất cho thuê tại Đà Nẵng, Huế & Miền Trung"
-              moTa="Tin cho thuê căn hộ, nhà nguyên căn, phòng trọ, văn phòng, mặt bằng kinh doanh và kho xưởng tại Đà Nẵng, Huế và các tỉnh Duyên hải Miền Trung. Lọc theo tỉnh, phường/xã, loại hình, khoảng giá và diện tích."
+              heading="Cho thuê nhà đất, căn hộ, văn phòng"
+              moTa="Tin cho thuê căn hộ, nhà nguyên căn, phòng trọ, văn phòng, mặt bằng kinh doanh và kho xưởng. Lọc theo tỉnh, phường/xã, loại hình, khoảng giá và diện tích."
               items={tinThue}
             />
           }

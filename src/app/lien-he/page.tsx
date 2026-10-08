@@ -23,7 +23,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/lien-he" },
   title: "Liên hệ",
   description:
-    "Liên hệ Coastal Land — hotline, Zalo, email hỗ trợ đăng tin và giải đáp thắc mắc về cổng thông tin bất động sản Duyên hải Miền Trung.",
+    "Liên hệ Coastal Land — hotline, Zalo, email hỗ trợ đăng tin và giải đáp thắc mắc về cổng thông tin mua bán, cho thuê nhà đất.",
 };
 
 // Thông tin liên hệ chuẩn (trùng với footer + trang Điều khoản).

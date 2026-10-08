@@ -18,9 +18,9 @@ import { getHeroBanners, getHomeAd, getHomeAreas, getFeaturedArticleSlug } from 
 // Tiêu đề trang chủ phải CÓ TỪ KHOÁ — trước đây để trống nên Google chỉ thấy
 // "COASTAL LAND", không hiểu trang này bán gì, ở đâu.
 export const metadata: Metadata = {
-  title: "Bất động sản Đà Nẵng, Huế & Miền Trung | COASTAL LAND",
+  title: "Cổng thông tin mua bán, cho thuê nhà đất | COASTAL LAND",
   description:
-    "Mua bán, cho thuê nhà đất, căn hộ, đất nền và dự án tại Đà Nẵng, Huế và Duyên hải Miền Trung. Tin đăng hình thật, lọc theo khu vực, loại hình và mức giá.",
+    "Cổng thông tin mua bán, cho thuê nhà đất, căn hộ, đất nền và dự án. Tin hình thật, liên hệ trực tiếp người đăng, lọc theo khu vực, loại hình, mức giá.",
   alternates: { canonical: "/" },
 };
 
@@ -42,7 +42,7 @@ export default async function Home() {
             H1 chính là câu trả lời cho "trang này nói về cái gì". Thiếu nó là bỏ không
             một điểm cộng miễn phí, nhất là khi đang chạy Google Ads (bot chấm trang
             đích đọc cấu trúc tiêu đề). Câu chữ trùng đúng câu định vị chuẩn ở layout. */}
-        <h1 className="sr-only">COASTAL LAND — Bất động sản Duyên hải Miền Trung</h1>
+        <h1 className="sr-only">COASTAL LAND — Cổng thông tin mua bán, cho thuê nhà đất</h1>
         {/* Hero: khung GIỮ NGUYÊN — ảnh PHỦ KÍN khung (cover), không hụt 2 bên.
             mobileTwoLine: mobile chỉ 2 dòng text (tiêu đề + phụ đề) canh dưới-trái, không ngắt dòng */}
         <HomeExpandProvider>
