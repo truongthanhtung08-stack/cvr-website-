@@ -198,7 +198,7 @@ export default function Gallery({
                 // phát mà khung giãn cao kín màn là SAI — đã thử và bị bác).
                 <div
                   key={i}
-                  className="relative aspect-video w-full shrink-0 snap-center overflow-hidden border border-cvr-line bg-black"
+                  className="relative aspect-video max-h-[70dvh] w-full shrink-0 snap-center overflow-hidden border border-cvr-line bg-black"
                 >
                   <GallerySlideVideo url={m.src} active={i === mCur} onHold={setHold} onLon={(b) => setLonO(b ? "dt" : null)} />
                 </div>
@@ -208,7 +208,7 @@ export default function Gallery({
                   type="button"
                   onClick={() => open(imgIdx(i))}
                   aria-label={`Ảnh ${imgIdx(i) + 1}`}
-                  className="relative aspect-video w-full shrink-0 snap-center overflow-hidden border border-cvr-line bg-cvr-surface"
+                  className="relative aspect-video max-h-[70dvh] w-full shrink-0 snap-center overflow-hidden border border-cvr-line bg-cvr-surface"
                 >
                   <Image src={m.src} alt={`${alt} ${imgIdx(i) + 1}`} fill priority={i === nVid} quality={90} sizes="100vw" className="bg-black object-contain" />
                 </button>

@@ -86,6 +86,7 @@ export default function GallerySlideVideo({
     setXoay(canXoay());
   };
   const thuNho = () => {
+    if (manNgang()) thoatTay.current = true;
     vaoDoXoay.current = false;
     setLon(false);
     setXoay(false);
@@ -118,6 +119,7 @@ export default function GallerySlideVideo({
   // YouTube. Không làm vậy thì màn ngang rộng hơn 640px, web chuyển sang bố cục máy tính
   // và giấu luôn khung điện thoại đang phát → video biến mất (chủ dự án báo 08/10/2026).
   const vaoDoXoay = useRef(false);
+  const thoatTay = useRef(false); // khách tự bấm ⤡ thoát khi máy đang ngang
   // THEO NÚT TỰ XOAY / KHOÁ XOAY CỦA ĐIỆN THOẠI (chủ dự án 08/10/2026):
   // · Vào full: video ngang + màn dọc → khung tự nằm ngang (máy khoá xoay vẫn xem ngang được).
   // · Máy đổi hướng thật (đang bật Tự xoay, hoặc khách bấm nút xoay của máy) → từ đó
@@ -178,18 +180,26 @@ export default function GallerySlideVideo({
     // Khách ĐÃ BẤM ▶ là đủ (daBam) — không chờ YouTube báo "đang chạy": trên điện thoại
     // báo đó có khi không về, web tưởng chưa chạy nên không vào full (chủ dự án báo 08/10).
     if (lon || !active || !daBam || xemTruoc) return;
-    if (!window.matchMedia("(pointer: coarse)").matches) return; // chỉ điện thoại / máy tính bảng
-    let ngangCu = manNgang();
-    const doiCo = () => {
-      const ngangMoi = manNgang();
-      if (ngangMoi && !ngangCu) {
-        vaoDoXoay.current = true;
-        setLon(true);
-        setXoay(false);
+    // Chỉ ĐIỆN THOẠI (cảm ứng, cạnh ngắn màn < 640px) — máy tính bảng cầm ngang là bình thường.
+    if (!window.matchMedia("(pointer: coarse)").matches || Math.min(screen.width, screen.height) >= 640) return;
+    // Đã bấm ▶ mà máy ĐANG NGANG (xoay trước hay sau khi bấm đều vậy) → đầy màn.
+    // Khách tự bấm ⤡ thoát lúc máy ngang thì tôn trọng, chỉ tự vào lại sau khi dựng dọc.
+    const kiem = () => {
+      if (!manNgang()) {
+        thoatTay.current = false;
+        return;
       }
-      ngangCu = ngangMoi;
+      if (thoatTay.current) return;
+      vaoDoXoay.current = true;
+      setLon(true);
+      setXoay(false);
     };
-    return ngheXoayMay(doiCo);
+    const hen = setTimeout(kiem, 0);
+    const boNghe = ngheXoayMay(kiem);
+    return () => {
+      clearTimeout(hen);
+      boNghe();
+    };
   }, [lon, active, daBam, xemTruoc]);
   const lenhYt = (func: string, args: unknown[] = []) =>
     khungRef.current?.contentWindow?.postMessage(JSON.stringify({ event: "command", func, args }), "*");
@@ -330,7 +340,7 @@ export default function GallerySlideVideo({
         // Lớp này chặn luôn cú rê/chạm vào iframe nên YouTube không bật lớp nút của họ.
         <iframe
           ref={khungRef}
-          src={`${embed}&autoplay=1&controls=0&disablekb=1&fs=0&enablejsapi=1&origin=${typeof window === "undefined" ? "" : encodeURIComponent(window.location.origin)}`}
+          src={`${embed}&autoplay=1&controls=0&disablekb=1&fs=0&cc_load_policy=0&enablejsapi=1&origin=${typeof window === "undefined" ? "" : encodeURIComponent(window.location.origin)}`}
           title="Video"
           allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
           // Báo cho YouTube biết mình nghe trạng thái (giây, tổng, đang chạy, tắt tiếng).
