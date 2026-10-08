@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { revalidateTag } from "next/cache";
 import { ghepBillingLuu, bangUp, type BillingData, type UpRow } from "@/lib/billing";
 import { KHOA_QUY_DINH_GIA } from "@/lib/quyDinhGia";
-import { KHOA_GIA_CHUAN, NHAP_TRONG, DIEU_CHINH_TRONG, laMienPhiTvMoi, kiemNhap, tinhCongBo, tinhHoiVien, tinhDuAn, tinhPr, tinhBanner, type GiaChuanNhap } from "@/lib/giaChuan";
+import { KHOA_GIA_CHUAN, NHAP_TRONG, DIEU_CHINH_TRONG, chonMienPhi, kiemNhap, tinhCongBo, tinhHoiVien, tinhDuAn, tinhPr, tinhBanner, type GiaChuanNhap } from "@/lib/giaChuan";
 
 // ============================================================================
 // CÔNG BỐ GIÁ — MỘT ĐƯỜNG DUY NHẤT (chủ dự án chốt 01/10/2026)
@@ -30,7 +30,11 @@ export async function docNhapGia(admin: SupabaseClient, khoa: string = KHOA_GIA_
 
 async function nhapCongBo(admin: SupabaseClient, tuBanDuyet: boolean): Promise<GiaChuanNhap | null> {
   if (tuBanDuyet) return docNhapGia(admin, KHOA_DA_DUYET);
-  const nhap = (await docNhapGia(admin)) ?? NHAP_TRONG;
+  const goc = (await docNhapGia(admin)) ?? NHAP_TRONG;
+  // Công bố = khoá mọi chương trình đang có (đánh dấu lần công bố đầu tiên).
+  const luc = new Date().toISOString();
+  const nhap: GiaChuanNhap = { ...goc, chuongTrinh: goc.chuongTrinh.map((c) => (c.daCongBo ? c : { ...c, daCongBo: luc })) };
+  await admin.from("bi_mat").upsert({ key: KHOA_GIA_CHUAN, data: nhap, updated_at: luc });
   await admin.from("bi_mat").upsert({ key: KHOA_DA_DUYET, data: nhap, updated_at: new Date().toISOString() });
   return nhap;
 }
@@ -70,7 +74,7 @@ export async function congBoTin(admin: SupabaseClient, tuBanDuyet = false): Prom
     ...(nhap.banners?.length ? { banners: tinhBanner(nhap.banners, dc.banner) } : {}),
   };
   // Chương trình miễn phí thành viên mới (trong danh sách khuyến mãi) → khối "free" web đang dùng.
-  const mp = nhap.chuongTrinh.find(laMienPhiTvMoi);
+  const mp = chonMienPhi(nhap.chuongTrinh, homNayVn());
   if (mp) {
     const cu = bang.free;
     Object.assign(them, {

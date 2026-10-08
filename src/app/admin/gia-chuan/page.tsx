@@ -449,7 +449,8 @@ function DanhSachChuongTrinh({ ds, onChange, homNay }: { ds: ChuongTrinh[]; onCh
     <Panel title="Chương trình khuyến mãi">
       <div className="space-y-3">
         {ds.map((c) => (
-          <div key={c.id} className="grid gap-2 rounded-xl border border-cvr-line p-3 sm:grid-cols-6">
+          <fieldset key={c.id} disabled={!!c.daCongBo}
+            className={`grid gap-2 rounded-xl border p-3 sm:grid-cols-6 ${c.daCongBo ? "border-cvr-line bg-cvr-surface/60" : "border-cvr-line"}`}>
             <label className="text-xs text-cvr-muted sm:col-span-2">Tên chương trình
               <input value={c.ten} onChange={(e) => sua(c.id, { ten: e.target.value })} className={inputCls} />
             </label>
@@ -503,11 +504,35 @@ function DanhSachChuongTrinh({ ds, onChange, homNay }: { ds: ChuongTrinh[]; onCh
                 ))}
               </div>
             </div>
-            <div className="flex justify-end sm:col-span-6">
-              <button type="button" onClick={() => onChange(ds.filter((x) => x.id !== c.id))} className="text-xs text-cvr-muted hover:text-red-600">Xoá</button>
+            <div className="flex items-center justify-end gap-4 sm:col-span-6">
+              {c.daCongBo ? (
+                <>
+                  <span className="mr-auto text-xs text-cvr-muted">Đã công bố {new Date(c.daCongBo).toLocaleString("vi-VN")}</span>
+                </>
+              ) : (
+                <button type="button" onClick={() => onChange(ds.filter((x) => x.id !== c.id))} className="text-xs text-cvr-muted hover:text-red-600">Xoá</button>
+              )}
             </div>
-          </div>
+          </fieldset>
         ))}
+        {/* Nút "Tạo mới" nằm NGOÀI fieldset khoá để bấm được */}
+        {ds.some((c) => c.daCongBo) && (
+          <div className="flex flex-wrap gap-2">
+            {ds.filter((c) => c.daCongBo).map((c) => (
+              <button key={c.id} type="button"
+                onClick={() => {
+                  const { daCongBo: _bo, ...ban } = c;
+                  void _bo;
+                  // Nối tiếp: cùng điều kiện, bắt đầu ngay sau ngày kết thúc của chương trình đang chạy
+                  const tu = c.den ? new Date(Date.parse(c.den) + 86400000).toISOString().slice(0, 10) : homNay;
+                  onChange([...ds, { ...ban, id: `ct-${Date.now()}`, tu, den: "" }]);
+                }}
+                className="rounded-lg border border-cvr-line px-3 py-1.5 text-xs font-semibold text-cvr-ink hover:border-cvr-ink">
+                Nối tiếp “{c.ten}”
+              </button>
+            ))}
+          </div>
+        )}
         <button type="button" onClick={them} className="rounded-lg border border-dashed border-cvr-line px-4 py-2 text-sm font-semibold text-cvr-ink hover:border-cvr-ink">
           + Chương trình
         </button>

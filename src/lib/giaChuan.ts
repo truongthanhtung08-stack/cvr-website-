@@ -47,8 +47,22 @@ export type ChuongTrinh = {
   loai?: "giam" | "mien-phi-tv-moi";
   soNgayTuDangKy?: number;  // miễn phí trong bao nhiêu ngày kể từ khi khách đăng ký
   soTin?: number;           // số tin miễn phí (0 = không giới hạn)
+  // ĐÃ CÔNG BỐ = KHOÁ (chủ dự án 08/10/2026: "khác thì tạo mới"). Chương trình đã lên web
+  // giữ nguyên làm lịch sử, không sửa/xoá; muốn khác đi thì tạo chương trình mới.
+  daCongBo?: string;        // ISO — lần công bố đầu tiên
 };
 export const laMienPhiTvMoi = (c: ChuongTrinh) => c.loai === "mien-phi-tv-moi";
+
+// Nhiều chương trình miễn phí (cũ hết hạn, mới nối tiếp) → chọn chương trình ĐANG TRONG HẠN
+// hôm nay; không có thì chương trình SẮP bắt đầu gần nhất; không có nữa thì cái tạo sau cùng.
+export function chonMienPhi(ds: ChuongTrinh[], homNay: string): ChuongTrinh | undefined {
+  const mp = ds.filter((c) => laMienPhiTvMoi(c) && c.bat);
+  return (
+    mp.find((c) => (!c.tu || c.tu <= homNay) && (!c.den || homNay <= c.den)) ??
+    mp.filter((c) => c.tu && c.tu > homNay).sort((a, b) => a.tu.localeCompare(b.tu))[0] ??
+    [...ds].reverse().find(laMienPhiTvMoi)
+  );
+}
 
 // Gói hội viên — giá chuẩn (từ Batdongsan) theo SỐ THÁNG; voucher & quyền lợi
 // là thứ khách nhận. Admin sửa được mọi con số, kể cả thêm/bớt thời hạn.
@@ -328,7 +342,8 @@ export function kiemNhap(x: unknown): GiaChuanNhap | null {
     ["all", "ban", "thue"].includes(c.mucDich) && ["all", "tin", "day", "hoi-vien"].includes(c.sanPham) &&
     Array.isArray(c.tiers) && c.tiers.every(capHopLe) && typeof c.bat === "boolean" &&
     (c.loai === undefined || c.loai === "giam" || c.loai === "mien-phi-tv-moi") &&
-    (c.soNgayTuDangKy === undefined || soDuong(c.soNgayTuDangKy)) && (c.soTin === undefined || soDuong(c.soTin)));
+    (c.soNgayTuDangKy === undefined || soDuong(c.soNgayTuDangKy)) && (c.soTin === undefined || soDuong(c.soTin)) &&
+    (c.daCongBo === undefined || typeof c.daCongBo === "string"));
   if (!ctHopLe) return null;
   const hv = o.hoiVien ?? [];
   const hvHopLe = Array.isArray(hv) && hv.every((g) =>
