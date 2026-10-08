@@ -74,6 +74,10 @@ export default function Gallery({
   };
 
   const mIsVideo = mCur < nVid;
+  // Video đang XEM FULL ở khối nào ('dt' điện thoại · 'mt' máy tính). Xoay máy làm màn
+  // vượt/dưới 640px thì khối kia bị ẩn — khối đang xem full phải GIỮ hiện, không thì
+  // khung xem full biến mất (đo 08/10/2026).
+  const [lonO, setLonO] = useState<null | "dt" | "mt">(null);
 
   // XOAY MÁY: khung đổi cỡ làm vị trí cuộn lệch, tính lại "đang ở tấm nào" là sai một
   // tấm → video đang chạy bị coi như đã rời slide và DỪNG (chủ dự án báo 08/10/2026).
@@ -166,7 +170,7 @@ export default function Gallery({
       ) : (
         <>
         {/* ── ĐIỆN THOẠI: vuốt ngang đổi tấm, khung ảnh giữ khổ chuẩn 16:9 ── */}
-        <div className="sm:hidden">
+        <div className={lonO === "dt" ? "" : "sm:hidden"}>
           <div className="relative">
           <div
             ref={mTrack}
@@ -187,7 +191,7 @@ export default function Gallery({
                   key={i}
                   className="relative aspect-video w-full shrink-0 snap-center overflow-hidden border border-cvr-line bg-black"
                 >
-                  <GallerySlideVideo url={m.src} active={i === mCur} onHold={setHold} />
+                  <GallerySlideVideo url={m.src} active={i === mCur} onHold={setHold} onLon={(b) => setLonO(b ? "dt" : null)} />
                 </div>
               ) : (
                 <button
@@ -280,7 +284,7 @@ export default function Gallery({
         </div>
 
         {/* ── TABLET / MÁY TÍNH (≥ 640px): GIỮ NGUYÊN bố cục ảnh lớn + lưới 2×2 đã duyệt ── */}
-        <div className="hidden gap-2 sm:grid sm:h-[340px] sm:grid-cols-4 sm:grid-rows-2">
+        <div className={`${lonO === "mt" ? "grid" : "hidden sm:grid"} gap-2 sm:h-[340px] sm:grid-cols-4 sm:grid-rows-2`}>
           {/* Ô lớn — TỰ CHẠY slide qua các ảnh (và video), bấm ảnh để xem lớn */}
           <div
             onMouseEnter={() => setPaused(true)}
@@ -311,7 +315,7 @@ export default function Gallery({
             className="group relative col-span-2 aspect-[16/9] touch-pan-y overflow-hidden rounded-none border border-cvr-line outline-none sm:row-span-2 sm:aspect-auto sm:h-full"
           >
             {bigIsVideo ? (
-              <GallerySlideVideo url={media[bigIdx].src} active onHold={setHold} />
+              <GallerySlideVideo url={media[bigIdx].src} active onHold={setHold} onLon={(b) => setLonO(b ? "mt" : null)} />
             ) : (
               <button type="button" onClick={() => open(imgIdx(bigIdx))} className="absolute inset-0 block h-full w-full">
                 <Image key={bigIdx} src={media[bigIdx].src} alt={alt} fill priority quality={90} sizes="(max-width:1024px) 100vw, 50vw" className="bg-black object-contain animate-fadein" />

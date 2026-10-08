@@ -26,14 +26,14 @@ export default function GallerySlideVideo({
   url,
   active,
   onHold,
-  onTyLe,
+  onLon,
   xemTruoc = false,
 }: {
   url: string;
   active: boolean;                 // đang là slide hiện tại
   onHold?: (giu: boolean) => void; // đang xem / đang toàn màn hình → giữ slide, đừng tự chuyển
-  /** Báo về tỉ lệ thật của video (rộng ÷ cao) để thư viện chỉnh khung cho vừa. */
-  onTyLe?: (tyLe: number) => void;
+  /** Báo đang xem full — thư viện giữ khối chứa video hiện ra kể cả khi xoay máy. */
+  onLon?: (lon: boolean) => void;
   /** Chỉ làm ảnh bìa (ô nhỏ trong dãy chọn): bỏ thanh điều khiển, không bắt chạm. */
   xemTruoc?: boolean;
 }) {
@@ -50,7 +50,6 @@ export default function GallerySlideVideo({
   // bấm mới nạp iframe kèm autoplay nên video chạy thẳng, không kịp hiện lớp đó.
   const [daBam, setDaBam] = useState(false);
   const laYoutube = !!embed && /youtube\.com/.test(embed);
-  const [ytDung, setYtDung] = useState(false); // YouTube đang dừng (khách chạm dừng)
   const gocRef = useRef<HTMLDivElement>(null);
   // ── XEM LỚN = KHUNG PHỦ KÍN MÀN HÌNH CỦA WEB (chủ dự án 08/10/2026) ───────────
   // KHÔNG dùng chế độ toàn màn hình thật của trình duyệt: Android hiện dòng "To exit
@@ -87,29 +86,48 @@ export default function GallerySlideVideo({
     setXoay(canXoay());
   };
   const thuNho = () => {
-    // Đã ghi một bước lịch sử lúc phóng to → lùi lại đúng bước đó (popstate sẽ thu khung).
-    if ((history.state as { xemLon?: boolean } | null)?.xemLon) history.back();
-    else {
-      setLon(false);
-      setXoay(false);
-    }
+    setLon(false);
+    setXoay(false);
   };
-  // LUÔN CÓ LỐI THOÁT: nút Back của điện thoại cũng thu khung về (không rời trang).
+  // Nút Back của điện thoại lúc đang xem full → thoát xem full (không rời trang).
+  // Ghi một bước lịch sử khi vào full; thoát bằng nút thì tự lùi bước đó.
+  const dangCoBuoc = useRef(false);
   useEffect(() => {
-    if (!lon) return;
-    history.pushState({ ...(history.state ?? {}), xemLon: true }, "");
+    onLon?.(lon);
+    if (!lon) {
+      if (dangCoBuoc.current) {
+        dangCoBuoc.current = false;
+        history.back();
+      }
+      return;
+    }
+    history.pushState(history.state, "");
+    dangCoBuoc.current = true;
     const quayLai = () => {
+      dangCoBuoc.current = false;
       setLon(false);
       setXoay(false);
     };
     window.addEventListener("popstate", quayLai);
     return () => window.removeEventListener("popstate", quayLai);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lon]);
-  const doiXoay = () => setXoay((x) => !x);
   // Khách tự xoay máy lúc đang xem lớn → khung theo chiều máy.
+  // THEO NÚT TỰ XOAY / KHOÁ XOAY CỦA ĐIỆN THOẠI (chủ dự án 08/10/2026):
+  // · Vào full: video ngang + màn dọc → khung tự nằm ngang (máy khoá xoay vẫn xem ngang được).
+  // · Máy đổi hướng thật (đang bật Tự xoay, hoặc khách bấm nút xoay của máy) → từ đó
+  //   ĐI THEO MÁY hoàn toàn: máy ngang thì video ngang đầy màn, máy dọc thì video vừa
+  //   màn dọc — không tự xoay khung nữa.
   useEffect(() => {
     if (!lon) return;
-    const doiCo = () => setXoay(canXoay());
+    let ngangCu = window.innerWidth > window.innerHeight;
+    let theoMay = false;
+    const doiCo = () => {
+      const ngangMoi = window.innerWidth > window.innerHeight;
+      if (ngangMoi !== ngangCu) theoMay = true;
+      ngangCu = ngangMoi;
+      setXoay(theoMay ? false : canXoay());
+    };
     window.addEventListener("resize", doiCo);
     const cuon = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -135,6 +153,70 @@ export default function GallerySlideVideo({
   const dungVaoRef = useRef(false);
   const bao = () =>
     holdRef.current?.(playingRef.current || fullRef.current || dungVaoRef.current);
+
+  // ── THANH ĐIỀU KHIỂN CHUẨN (chủ dự án 08/10/2026) — chung cho video tải lên và YouTube:
+  // chạm video → hiện nút; giữa: ▶ / ❚❚; dưới: thời gian · thanh tua · âm lượng ·
+  // ⛶ phóng to (đang to thì ⤡ thu nhỏ). Đang chạy thì 3 giây sau tự ẩn.
+  const [dangChay, setDangChay] = useState(false);
+  const [giay, setGiay] = useState(0);
+  const [tong, setTong] = useState(0);
+  const [tatTieng, setTatTieng] = useState(false);
+  const [hienNut, setHienNut] = useState(true);
+  const lenhYt = (func: string, args: unknown[] = []) =>
+    khungRef.current?.contentWindow?.postMessage(JSON.stringify({ event: "command", func, args }), "*");
+  // YouTube báo trạng thái qua postMessage (sau khi gửi "listening").
+  useEffect(() => {
+    if (!laYoutube || !active || !daBam) return;
+    const nghe = (e: MessageEvent) => {
+      if (e.source !== khungRef.current?.contentWindow || typeof e.data !== "string") return;
+      try {
+        const d = JSON.parse(e.data) as { info?: { currentTime?: number; duration?: number; playerState?: number; muted?: boolean } };
+        const i = d.info;
+        if (!i) return;
+        if (typeof i.currentTime === "number") setGiay(i.currentTime);
+        if (typeof i.duration === "number" && i.duration > 0) setTong(i.duration);
+        if (typeof i.muted === "boolean") setTatTieng(i.muted);
+        if (typeof i.playerState === "number") {
+          const chay = i.playerState === 1 || i.playerState === 3;
+          setDangChay(chay);
+          playingRef.current = chay;
+          bao();
+        }
+      } catch {}
+    };
+    window.addEventListener("message", nghe);
+    return () => window.removeEventListener("message", nghe);
+  }, [laYoutube, active, daBam]);
+  const phatDung = () => {
+    const v = ref.current;
+    if (!embed && v) return void (v.paused ? v.play().catch(() => {}) : v.pause());
+    lenhYt(dangChay ? "pauseVideo" : "playVideo");
+    setDangChay(!dangChay);
+  };
+  const tua = (s: number) => {
+    const v = ref.current;
+    if (!embed && v) v.currentTime = s;
+    else lenhYt("seekTo", [s, true]);
+    setGiay(s);
+  };
+  const doiTieng = () => {
+    const v = ref.current;
+    if (!embed && v) v.muted = !v.muted;
+    else {
+      lenhYt(tatTieng ? "unMute" : "mute");
+      setTatTieng(!tatTieng);
+    }
+  };
+  // Video đã tải xong phần mô tả trước khi trang kịp gắn sự kiện → đọc độ dài ngay.
+  useEffect(() => {
+    const v = ref.current;
+    if (v && v.readyState >= 1 && v.duration) setTong(v.duration);
+  }, []);
+  useEffect(() => {
+    if (!dangChay || !hienNut) return;
+    const t = setTimeout(() => setHienNut(false), 3000);
+    return () => clearTimeout(t);
+  }, [dangChay, hienNut]);
 
   // YouTube/Vimeo không báo cho mình biết khách đã bấm play hay chưa. Mẹo chuẩn:
   // khi khách chạm vào iframe, tiêu điểm nhảy vào chính iframe đó — bắt được là
@@ -162,7 +244,6 @@ export default function GallerySlideVideo({
       playingRef.current = false;
       dungVaoRef.current = false;
       setDaBam(false);
-      setYtDung(false);
       setLon(false);
       setXoay(false);
     }
@@ -216,37 +297,17 @@ export default function GallerySlideVideo({
         // YOUTUBE GỌN (chủ dự án 08/10/2026: khung YouTube "rất rối" — tên video,
         // logo kênh, CC, cài đặt, chia sẻ, chữ YouTube đè kín khung).
         // Tắt hết nút của YouTube (controls=0) và đặt MỘT LỚP CHẠM của web lên trên:
-        // chạm = phát/dừng (gửi lệnh qua enablejsapi), góc trên phải = toàn màn hình.
+        // chạm = hiện nút; ▶/❚❚ · tua · âm lượng · xem full gửi lệnh qua enablejsapi.
         // Lớp này chặn luôn cú rê/chạm vào iframe nên YouTube không bật lớp nút của họ.
-        <>
-          <iframe
-            ref={khungRef}
-            src={`${embed}&autoplay=1&controls=0&disablekb=1&fs=0&enablejsapi=1`}
-            title="Video"
-            allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
-            // KHÔNG kéo iframe cao hơn khung để giấu dải tên video: thử 08/10 thì video
-            // quay dọc bị YouTube phóng to, mất phần trên dưới.
-            className="pointer-events-none h-full w-full bg-black"
-          />
-          <button
-            type="button"
-            onClick={() => {
-              const lenh = ytDung ? "playVideo" : "pauseVideo";
-              khungRef.current?.contentWindow?.postMessage(JSON.stringify({ event: "command", func: lenh, args: [] }), "*");
-              setYtDung(!ytDung);
-            }}
-            aria-label={ytDung ? "Phát video" : "Dừng video"}
-            className="absolute inset-0 z-[5] flex items-center justify-center"
-          >
-            {ytDung && (
-              <span className="flex h-[62px] w-[62px] items-center justify-center rounded-full bg-black/55 backdrop-blur-sm sm:h-[70px] sm:w-[70px]">
-                <svg className="ml-1 h-7 w-7 text-white sm:h-8 sm:w-8" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M8 5v14l11-7z" />
-                </svg>
-              </span>
-            )}
-          </button>
-        </>
+        <iframe
+          ref={khungRef}
+          src={`${embed}&autoplay=1&controls=0&disablekb=1&fs=0&enablejsapi=1&origin=${typeof window === "undefined" ? "" : encodeURIComponent(window.location.origin)}`}
+          title="Video"
+          allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+          // Báo cho YouTube biết mình nghe trạng thái (giây, tổng, đang chạy, tắt tiếng).
+          onLoad={() => khungRef.current?.contentWindow?.postMessage(JSON.stringify({ event: "listening", id: 1 }), "*")}
+          className="pointer-events-none h-full w-full bg-black"
+        />
       ) : (
         <iframe
           ref={khungRef}
@@ -298,25 +359,27 @@ export default function GallerySlideVideo({
       ref={ref}
       src={`${asset(url)}#t=0.1`}
       playsInline
-      controls={!xemTruoc}
-      // Dẹp bớt nút thừa trên thanh điều khiển: bỏ nút tải về và nút đổi tốc độ
-      // phát, bỏ nút thu nhỏ góc màn. Còn lại đúng những nút khách cần — play,
-      // tua, âm lượng, toàn màn hình.
-      controlsList="nodownload noplaybackrate nofullscreen"
+      controls={false}
       disablePictureInPicture
       muted={xemTruoc}
       preload="metadata"
+      onTimeUpdate={(e) => setGiay(e.currentTarget.currentTime)}
+      onLoadedMetadata={(e) => setTong(e.currentTarget.duration || 0)}
+      onVolumeChange={(e) => setTatTieng(e.currentTarget.muted)}
       onPlay={() => {
         playingRef.current = true;
+        setDangChay(true);
         setDaBam(true);
         bao();
       }}
       onPause={() => {
         playingRef.current = false;
+        setDangChay(false);
         bao();
       }}
       onEnded={() => {
         playingRef.current = false;
+        setDangChay(false);
         bao();
       }}
       // Máy này không giải mã nổi (thường là video iPhone quay ở chế độ "Hiệu
@@ -329,12 +392,7 @@ export default function GallerySlideVideo({
     </video>
   );
 
-  // Trong khung: play · tua · âm lượng là thanh gốc của trình phát (video tải lên) hoặc
-  // lớp chạm phát/dừng (YouTube). GÓC TRÊN PHẢI: nút phóng to / thu nhỏ — bấm một chỗ để
-  // mở, bấm lại chính chỗ đó để thoát. Lúc phóng to có thêm nút Xoay ở góc trên trái
-  // (bấm lại thì xoay về). Đổi chế độ xem KHÔNG dừng video.
   const coNut = !xemTruoc && !loiPhat && (!embed || (active && daBam));
-  const nutTron = "flex h-10 w-10 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-sm active:bg-black/80";
   return (
     <div ref={gocRef} className={`${lon ? "fixed inset-0 z-[200] overflow-hidden" : "absolute inset-0"} bg-black ${xemTruoc ? "pointer-events-none" : ""}`}>
       {/* XOAY: quay 90° quanh tâm màn để video ngang phủ kín màn dọc; bấm lại thì về. */}
@@ -347,38 +405,70 @@ export default function GallerySlideVideo({
         }
       >
         {video}
-      </div>
-
-      {coNut && lon && (
-        <button type="button" onClick={doiXoay} aria-label={xoay ? "Xoay về" : "Xoay ngang"} className={`absolute left-2 top-2 z-[6] ${nutTron}`}>
-          <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.9} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M4 9a8 8 0 0113.6-4.6L20 7M20 15a8 8 0 01-13.6 4.6L4 17" />
-            <path strokeLinecap="round" strokeLinejoin="round" d="M20 4v3h-3M4 20v-3h3" />
-          </svg>
-        </button>
-      )}
-      {coNut && (
-        <button
-          type="button"
-          onClick={lon ? thuNho : moLon}
-          aria-label={lon ? "Thoát toàn màn hình" : "Toàn màn hình"}
-          className={
-            lon
-              ? "absolute right-2 top-2 z-[6] flex h-10 items-center gap-1.5 rounded-full bg-black/60 px-4 text-[14px] font-semibold text-white backdrop-blur-sm active:bg-black/80"
-              : `absolute right-2 top-2 z-[6] ${nutTron}`
-          }
-        >
-          <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            {lon ? (
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 6l12 12M18 6L6 18" />
-            ) : (
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />
+        {coNut && (
+          <div
+            className="absolute inset-0 z-[5]"
+            onClick={() => {
+              // Khách đã chạm vào video → thư viện đứng yên ở slide này.
+              dungVaoRef.current = true;
+              bao();
+              setHienNut((h) => !h);
+            }}
+          >
+            {(hienNut || !dangChay) && (
+              <>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    dungVaoRef.current = true;
+                    bao();
+                    phatDung();
+                    setHienNut(true);
+                  }}
+                  aria-label={dangChay ? "Dừng video" : "Phát video"}
+                  className="absolute left-1/2 top-1/2 flex h-[62px] w-[62px] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-sm active:scale-95"
+                >
+                  <svg className={`h-7 w-7 ${dangChay ? "" : "ml-1"}`} fill="currentColor" viewBox="0 0 24 24">
+                    {dangChay ? <path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" /> : <path d="M8 5v14l11-7z" />}
+                  </svg>
+                </button>
+                <div
+                  onClick={(e) => e.stopPropagation()}
+                  className="absolute inset-x-0 bottom-0 flex items-center gap-3 bg-gradient-to-t from-black/70 to-transparent px-3 pb-2 pt-6 text-white"
+                >
+                  <span className="shrink-0 text-[12px] tabular-nums">{dongHo(giay)} / {dongHo(tong)}</span>
+                  <input
+                    type="range"
+                    min={0}
+                    max={tong || 0}
+                    step={0.1}
+                    value={Math.min(giay, tong || 0)}
+                    onChange={(e) => tua(Number(e.target.value))}
+                    aria-label="Tua video"
+                    className="h-1 min-w-0 flex-1 cursor-pointer accent-white"
+                  />
+                  <button type="button" onClick={doiTieng} aria-label={tatTieng ? "Bật tiếng" : "Tắt tiếng"} className="flex h-9 w-9 shrink-0 items-center justify-center">
+                    <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                      <path strokeLinejoin="round" d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor" />
+                      {tatTieng ? <path strokeLinecap="round" d="M16 9l5 6M21 9l-5 6" /> : <path strokeLinecap="round" d="M16 8.5a5 5 0 010 7M18.5 6a8.5 8.5 0 010 12" />}
+                    </svg>
+                  </button>
+                  <button type="button" onClick={lon ? thuNho : moLon} aria-label={lon ? "Thoát xem full" : "Xem full"} className="flex h-9 w-9 shrink-0 items-center justify-center">
+                    <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                      {lon ? (
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" />
+                      ) : (
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />
+                      )}
+                    </svg>
+                  </button>
+                </div>
+              </>
             )}
-          </svg>
-          {lon && "Thoát"}
-        </button>
-      )}
-
+          </div>
+        )}
+      </div>
       {loiPhat && !xemTruoc && (
         <a
           href={asset(url)}
@@ -396,4 +486,9 @@ export default function GallerySlideVideo({
       )}
     </div>
   );
+}
+
+function dongHo(s: number): string {
+  const t = Math.max(0, Math.floor(s || 0));
+  return `${Math.floor(t / 60)}:${String(t % 60).padStart(2, "0")}`;
 }
