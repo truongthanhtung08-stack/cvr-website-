@@ -67,8 +67,29 @@ export default function GallerySlideVideo({
   // YouTube không cho biết video ngang hay dọc → không tự xoay, dùng nút Xoay.
   const khoaHuong = useRef(false);
   const moLon = () => {
-    setLon(true);
     const v = ref.current;
+    // VIDEO TẢI LÊN WEB → TOÀN MÀN HÌNH GỐC CỦA ĐIỆN THOẠI trên chính thẻ <video> đang
+    // chạy (chủ dự án 08/10/2026: tự dựng khung toàn màn hình thì máy xoay ngang mà
+    // khung lệch). Android: video ngang tự xoay ngang; iPhone: trình phát Apple. Video
+    // chạy tiếp, thoát ra vẫn chạy.
+    if (!embed && v) {
+      const vv = v as HTMLVideoElement & { webkitEnterFullscreen?: () => void };
+      const ngangGoc = v.videoWidth > v.videoHeight;
+      if (vv.requestFullscreen) {
+        vv.requestFullscreen()
+          .then(() => {
+            const o = screen.orientation as ScreenOrientation & { lock?: (h: string) => Promise<void> };
+            if (ngangGoc && o?.lock) o.lock("landscape").then(() => (khoaHuong.current = true)).catch(() => {});
+          })
+          .catch(() => vv.webkitEnterFullscreen?.());
+        return;
+      }
+      if (vv.webkitEnterFullscreen) {
+        vv.webkitEnterFullscreen();
+        return;
+      }
+    }
+    setLon(true);
     const ngang = !embed && !!v && v.videoWidth > v.videoHeight;
     // XOAY KHUNG NGAY, KHÔNG CHỜ TRÌNH DUYỆT: đo 08/10 trên Android thì lệnh khoá ngang
     // không chạy (trình duyệt không cho / không trả lời) → video ngang nằm bé giữa màn dọc.
@@ -203,6 +224,10 @@ export default function GallerySlideVideo({
         !!document.fullscreenElement ||
         !!(document as unknown as { webkitFullscreenElement?: Element }).webkitFullscreenElement;
       fullRef.current = co;
+      if (!co && khoaHuong.current) {
+        screen.orientation?.unlock?.();
+        khoaHuong.current = false;
+      }
       bao();
     };
 
