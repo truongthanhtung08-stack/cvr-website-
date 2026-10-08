@@ -175,7 +175,9 @@ export default function GallerySlideVideo({
   const [tatTieng, setTatTieng] = useState(false);
   const [hienNut, setHienNut] = useState(true);
   useEffect(() => {
-    if (lon || !active || !dangChay || xemTruoc) return;
+    // Khách ĐÃ BẤM ▶ là đủ (daBam) — không chờ YouTube báo "đang chạy": trên điện thoại
+    // báo đó có khi không về, web tưởng chưa chạy nên không vào full (chủ dự án báo 08/10).
+    if (lon || !active || !daBam || xemTruoc) return;
     if (!window.matchMedia("(pointer: coarse)").matches) return; // chỉ điện thoại / máy tính bảng
     let ngangCu = window.innerWidth > window.innerHeight;
     const doiCo = () => {
@@ -189,7 +191,7 @@ export default function GallerySlideVideo({
     };
     window.addEventListener("resize", doiCo);
     return () => window.removeEventListener("resize", doiCo);
-  }, [lon, active, dangChay, xemTruoc]);
+  }, [lon, active, daBam, xemTruoc]);
   const lenhYt = (func: string, args: unknown[] = []) =>
     khungRef.current?.contentWindow?.postMessage(JSON.stringify({ event: "command", func, args }), "*");
   // YouTube báo trạng thái qua postMessage (sau khi gửi "listening").
@@ -367,6 +369,8 @@ export default function GallerySlideVideo({
             type="button"
             onClick={() => {
               setDaBam(true);
+              // Bấm là phát (autoplay=1) — coi như đang chạy ngay, YouTube báo về thì chỉnh lại.
+              setDangChay(true);
               dungVaoRef.current = true;
               bao();
             }}

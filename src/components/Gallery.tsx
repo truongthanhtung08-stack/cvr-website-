@@ -78,6 +78,15 @@ export default function Gallery({
   // vượt/dưới 640px thì khối kia bị ẩn — khối đang xem full phải GIỮ hiện, không thì
   // khung xem full biến mất (đo 08/10/2026).
   const [lonO, setLonO] = useState<null | "dt" | "mt">(null);
+  // ĐIỆN THOẠI (cảm ứng, cạnh ngắn màn < 640px) LUÔN dùng khung điện thoại, cầm ngang
+  // hay dọc cũng vậy — một khung video duy nhất, xoay máy không đổi sang bố cục máy tính
+  // làm mất video đang phát (chủ dự án 08/10/2026). Máy tính bảng / máy tính giữ như cũ.
+  const [laDienThoai, setLaDienThoai] = useState(false);
+  useEffect(() => {
+    const dt = window.matchMedia("(pointer: coarse)").matches && Math.min(screen.width, screen.height) < 640;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (dt) setLaDienThoai(true);
+  }, []);
 
   // XOAY MÁY: khung đổi cỡ làm vị trí cuộn lệch, tính lại "đang ở tấm nào" là sai một
   // tấm → video đang chạy bị coi như đã rời slide và DỪNG (chủ dự án báo 08/10/2026).
@@ -108,12 +117,12 @@ export default function Gallery({
   const [mCham, setMCham] = useState(0);
   useEffect(() => {
     if (hold || lb >= 0 || media.length < 2) return;
-    if (!window.matchMedia("(max-width: 639px)").matches) return;
+    if (!laDienThoai && !window.matchMedia("(max-width: 639px)").matches) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const t = setTimeout(() => nhayToi((mCur + 1) % media.length), mIsVideo ? 7000 : 4000);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mCur, hold, lb, mIsVideo, media.length, mCham]);
+  }, [mCur, hold, lb, mIsVideo, media.length, mCham, laDienThoai]);
 
   // Slide lớn TỰ CHẠY qua tất cả ảnh (4s/slide, mờ nhẹ) — dừng khi rê chuột,
   // tôn trọng prefers-reduced-motion. Slide video chạy đúng nhịp mặc định như ảnh;
@@ -170,7 +179,7 @@ export default function Gallery({
       ) : (
         <>
         {/* ── ĐIỆN THOẠI: vuốt ngang đổi tấm, khung ảnh giữ khổ chuẩn 16:9 ── */}
-        <div className={lonO === "dt" ? "" : "sm:hidden"}>
+        <div className={lonO === "dt" || laDienThoai ? "" : "sm:hidden"}>
           <div className="relative">
           <div
             ref={mTrack}
@@ -284,7 +293,7 @@ export default function Gallery({
         </div>
 
         {/* ── TABLET / MÁY TÍNH (≥ 640px): GIỮ NGUYÊN bố cục ảnh lớn + lưới 2×2 đã duyệt ── */}
-        <div className={`${lonO === "mt" ? "grid" : "hidden sm:grid"} gap-2 sm:h-[340px] sm:grid-cols-4 sm:grid-rows-2`}>
+        <div className={`${lonO === "mt" ? "grid" : laDienThoai ? "hidden" : "hidden sm:grid"} gap-2 sm:h-[340px] sm:grid-cols-4 sm:grid-rows-2`}>
           {/* Ô lớn — TỰ CHẠY slide qua các ảnh (và video), bấm ảnh để xem lớn */}
           <div
             onMouseEnter={() => setPaused(true)}
