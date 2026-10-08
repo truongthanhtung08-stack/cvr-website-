@@ -37,7 +37,7 @@ function dongDauCvr(ctx: CanvasRenderingContext2D, w: number, h: number) {
   ctx.restore();
 }
 
-async function nenAnh(file: File, canhToiDa = CANH_TOI_DA, chatLuong = CHAT_LUONG): Promise<File> {
+async function nenAnh(file: File, canhToiDa = CANH_TOI_DA, chatLuong = CHAT_LUONG, dauChim = true): Promise<File> {
   // Môi trường không có canvas (SSR) hoặc ảnh dạng đặc biệt → giữ nguyên
   if (typeof document === "undefined" || !/^image\/(jpeg|png|webp)$/i.test(file.type)) return file;
   try {
@@ -57,7 +57,7 @@ async function nenAnh(file: File, canhToiDa = CANH_TOI_DA, chatLuong = CHAT_LUON
     ctx.fillRect(0, 0, w, h);
     ctx.drawImage(bitmap, 0, 0, w, h);
     bitmap.close?.();
-    dongDauCvr(ctx, w, h);
+    if (dauChim) dongDauCvr(ctx, w, h);
 
     // WebP trước; trình duyệt cũ không xuất được thì lùi về JPEG.
     // toBlob trả về đúng loại đã yêu cầu — kiểm blob.type để biết có lùi hay không.
@@ -117,10 +117,13 @@ async function uploadMedia(file: File, kind: "image" | "video", maxMB: number): 
 
 // Ảnh: NÉN TRƯỚC rồi mới tải lên (xem nenAnh ở trên). Giới hạn 15MB tính trên
 // ảnh GỐC — ảnh máy ảnh cỡ lớn vẫn nhận, nén xong chỉ còn vài trăm KB.
-export const uploadImageFile = async (file: File) => {
+// dauChim: false = KHÔNG đóng dấu "COASTAL LAND" — ảnh hero, banner, giới thiệu công ty
+// (chủ dự án 08/10/2026). Ảnh TIN ĐĂNG vẫn đóng dấu như cũ.
+export const uploadImageFile = async (file: File, { dauChim = true }: { dauChim?: boolean } = {}) => {
   if (file.size > 15 * 1024 * 1024)
     return { error: `Ảnh "${file.name}" quá 15MB — chọn ảnh nhỏ hơn.` };
-  const nen = await nenAnh(file);
+  // Ảnh trang (hero/banner/giới thiệu): KHÔNG đóng dấu, giữ nét tới 2880px.
+  const nen = dauChim ? await nenAnh(file) : await nenAnh(file, 2880, CHAT_LUONG, false);
   const kq = await uploadMedia(nen, "image", 15);
   if (kq.url) void taoBanNho(nen, kq.url);
   return kq;

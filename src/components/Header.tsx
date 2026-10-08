@@ -68,11 +68,11 @@ const danhMucBaoGia: NavChild[] = [
 // MENU TIỆN ÍCH — chỉ công cụ (không còn giá).
 const danhMucTienIch: NavChild[] = utilityTools.map((item) => ({ label: item.label, href: `/tien-ich/${item.slug}` }));
 
-// Thứ tự menu: Dự án · Mua bán · Cho thuê · Tin tức · Chuyên gia · Báo giá · Tiện ích
+// Thứ tự menu (chủ dự án 08/10/2026): Mua bán · Cho thuê · Dự án · Tin tức · Chuyên gia · Báo giá · Tiện ích
 const navItems: NavItem[] = [
-  { label: "Dự án", href: "/du-an", children: loaiHinhDuAn, icon: ICONS.duAn },
   { label: "Mua bán", href: "/mua-ban", children: loaiHinhBan, icon: ICONS.muaBan },
   { label: "Cho thuê", href: "/cho-thue", children: loaiHinhThue, icon: ICONS.choThue },
+  { label: "Dự án", href: "/du-an", children: loaiHinhDuAn, icon: ICONS.duAn },
   { label: "Tin tức", href: "/tin-tuc", icon: ICONS.tinTuc },
   { label: "Chuyên gia", href: "/chuyen-gia", children: danhMucChuyenGia, icon: ICONS.chuyenGia },
   { label: "Báo giá", href: "/bao-gia-dang-tin", children: danhMucBaoGia, icon: ICONS.baoGia },
@@ -133,7 +133,7 @@ function NavLink({ item }: { item: NavItem }) {
     return (
       <Link
         href={item.href}
-        className="nav-link text-sm font-medium text-cvr-line transition-colors hover:text-white"
+        className="nav-link whitespace-nowrap text-sm font-medium text-cvr-line transition-colors hover:text-white"
       >
         {item.label}
       </Link>
@@ -148,7 +148,7 @@ function NavLink({ item }: { item: NavItem }) {
     <div className="group relative">
       <Link
         href={item.href}
-        className="nav-link text-sm font-medium text-cvr-line transition-colors group-hover:text-white"
+        className="nav-link whitespace-nowrap text-sm font-medium text-cvr-line transition-colors group-hover:text-white"
       >
         {item.label}
       </Link>
@@ -203,17 +203,17 @@ function SaveButton() {
     <Link
       href="/tin-luu"
       aria-label={count > 0 ? `Tin đã lưu (${count})` : "Tin đã lưu"}
-      className="relative flex h-11 w-9 items-center justify-center text-cvr-line transition-colors hover:text-white lg:h-auto lg:w-auto lg:gap-1.5"
+      className="relative flex h-11 w-9 items-center justify-center text-cvr-line transition-colors hover:text-white xl:h-auto xl:w-auto xl:gap-1.5"
     >
-      <svg className="h-[22px] w-[22px] lg:h-[18px] lg:w-[18px]" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+      <svg className="h-[22px] w-[22px] xl:h-[18px] xl:w-[18px]" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 10-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 000-7.78z" />
       </svg>
       {count > 0 && (
-        <span className="absolute right-[4px] top-[7px] flex h-[15px] min-w-[15px] items-center justify-center rounded-full bg-[#ff3b30] px-1 text-[9px] font-bold leading-none text-white lg:hidden">
+        <span className="absolute right-[4px] top-[7px] flex h-[15px] min-w-[15px] items-center justify-center rounded-full bg-[#ff3b30] px-1 text-[9px] font-bold leading-none text-white xl:hidden">
           {count > 9 ? "9+" : count}
         </span>
       )}
-      <span className="hidden text-sm font-medium lg:inline">Lưu</span>
+      <span className="hidden text-sm font-medium xl:inline">Lưu</span>
     </Link>
   );
 }
@@ -236,9 +236,6 @@ function AccountMenu({ name, anh, onLogout }: { name: string; anh: string; onLog
         className="flex items-center gap-2 rounded-full py-1 pl-1 pr-1.5 transition-colors"
       >
         <AnhDaiDien url={anh} ten={name} className="h-8 w-8 bg-white/10 text-sm text-white ring-1 ring-white/15" />
-        <span className="hidden max-w-[8rem] truncate text-sm font-medium text-cvr-line group-hover:text-white lg:inline">
-          {name}
-        </span>
         {chevronDown}
       </button>
 
@@ -296,7 +293,7 @@ function MobileMenu({
       // header dính + body khoá cuộn làm mốc neo sai: menu bị đẩy lệch lên và cụt
       // (trông như "ẩn"). Fixed neo thẳng vào màn hình nên cuộn tới đâu cũng đúng.
       // z-[45]: trên thanh tab đáy (z-40), dưới header (z-50) để nút ☰ vẫn bấm đóng được.
-      className={`menu-solid fixed inset-x-0 bottom-0 top-[calc(60px+var(--at))] z-[45] flex flex-col overflow-y-auto overscroll-contain transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] lg:hidden ${
+      className={`menu-solid fixed inset-x-0 bottom-0 top-[calc(60px+var(--at))] z-[45] flex flex-col overflow-y-auto overscroll-contain transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] xl:hidden ${
         open ? "visible translate-y-0 opacity-100" : "invisible -translate-y-2 opacity-0 pointer-events-none"
       }`}
     >
@@ -502,7 +499,7 @@ export default function Header() {
         scrolled ? "shadow-lg shadow-black/25" : ""
       }`}
     >
-      <div className="mx-auto flex h-[60px] max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto flex h-[60px] max-w-7xl items-center justify-between gap-6 px-4 sm:px-6 lg:px-8">
         {/* Logo trắng (nền tối) — bấm là thấy phản hồi NGAY: logo nhún nhẹ rồi bật lại
             (thay cho rung), thanh tiến trình chạy trên đỉnh, trang chủ hiện dần lên. */}
         <Link
@@ -515,7 +512,7 @@ export default function Header() {
         </Link>
 
         {/* Điều hướng */}
-        <nav className="hidden items-center gap-8 lg:flex">
+        <nav className="hidden items-center gap-8 xl:flex">
           {navItems.map((item) => (
             <NavLink key={item.href} item={item} />
           ))}
@@ -528,7 +525,7 @@ export default function Header() {
 
           {/* Tài khoản/Đăng nhập — CHỈ desktop (lg). MOBILE: avatar + tài khoản nằm TRONG
               drawer menu (kiểu Batdongsan) → thanh header mobile chỉ Logo · ♡ · ☰. */}
-          <div className="hidden items-center lg:flex">
+          <div className="hidden items-center xl:flex">
             {user ? (
               <AccountMenu name={displayName(user)} anh={anhDaiDien(user)} onLogout={signOut} />
             ) : (
@@ -544,7 +541,7 @@ export default function Header() {
           {/* Đăng tin — chỉ desktop (< lg đã có trong Menu, tránh chật thanh trên điện thoại) */}
           <Link
             href="/dang-tin"
-            className="btn-dangtin hidden items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold text-white sm:px-5 sm:py-2.5 lg:flex"
+            className="btn-dangtin hidden shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold text-white sm:px-5 sm:py-2.5 xl:flex"
           >
             <svg
               className="h-4 w-4"
@@ -564,7 +561,7 @@ export default function Header() {
             aria-label={menuOpen ? "Đóng menu" : "Mở menu"}
             aria-expanded={menuOpen}
             onClick={() => setMenuOpen((v) => !v)}
-            className="relative -mr-1 flex h-11 w-11 items-center justify-center lg:hidden"
+            className="relative -mr-1 flex h-11 w-11 items-center justify-center xl:hidden"
           >
             <span
               className={`absolute h-[1.5px] w-[18px] rounded-full bg-white transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${

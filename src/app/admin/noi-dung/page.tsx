@@ -145,7 +145,7 @@ export default function AdminSiteContentPage() {
                   <p className="mb-2 mt-0.5 inline-block rounded-md bg-cvr-blue/10 px-2.5 py-1 text-[15px] font-bold tracking-tight text-cvr-blue-ink">
                     2600 × 1000 px · tỷ lệ 2,6 : 1
                   </p>
-                  <ImageField value={s.image} ratio="2,6:1 · 2600×1000" onChange={(url) => setSlide(i, { image: url })} />
+                  <ImageField value={s.image} ratio="7:2 · 2880×823" onChange={(url) => setSlide(i, { image: url })} />
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-cvr-ink">Ảnh ĐIỆN THOẠI</p>
@@ -360,7 +360,7 @@ function ImageField({ value, ratio, onChange }: { value: string; ratio: string; 
     const file = files?.[0];
     if (!file) return;
     setErr(""); setUp(true);
-    const { url, error } = await uploadImageFile(file);
+    const { url, error } = await uploadImageFile(file, { dauChim: false });
     setUp(false);
     if (error) return setErr(error);
     if (url) onChange(url);

@@ -152,13 +152,13 @@ export function AdBannerAll({ data = HOME_AD_DEFAULT }: { data?: HomeAdData }) {
           </div>
 
           {/* DESKTOP */}
-          <div className="relative hidden md:block md:h-[380px] lg:h-[430px]">
+          <div className="relative hidden md:block md:h-[300px] lg:h-[340px]">
             {/* Chữ nằm trong CÙNG dải 1000px canh giữa với điện thoại → 2 phần cân,
                 sát nhau, không hở khoảng trống giữa banner. */}
             <div className="mx-auto flex h-full max-w-[1000px] items-center px-6">
               {/* Hẹp lại ở 1024–1280px để chừa chỗ cho máy thứ 2 */}
               <div className="w-full max-w-[400px] xl:max-w-[460px]">
-              <h2 className="text-[34px] font-semibold leading-[1.02] tracking-[-0.035em] text-cvr-ink lg:text-[44px]">
+              <h2 className="text-[30px] font-semibold leading-[1.02] tracking-[-0.035em] text-cvr-ink lg:text-[38px]">
                 {HEADING}
               </h2>
               <p className="mt-2 text-[15px] leading-snug text-cvr-muted lg:text-[18px]">{TAGLINE}</p>
