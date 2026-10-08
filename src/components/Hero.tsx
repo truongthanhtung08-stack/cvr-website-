@@ -124,7 +124,7 @@ export default function Hero({
               {/* ĐIỆN THOẠI: ảnh riêng 1200×520 (2,3:1). Chưa có ảnh mobile → dùng tạm ảnh PC. */}
               <Image
                 src={asset(b.imageMobile || b.image)}
-                alt={b.title}
+                alt={b.title || "Bất động sản COASTAL LAND"}
                 fill
                 priority={i === 0}
                 quality={100}
@@ -135,7 +135,7 @@ export default function Hero({
               {/* PC: ảnh 2880×823 (7:2) — đúng tỷ lệ khung nên phủ kín, không cắt */}
               <Image
                 src={asset(b.image)}
-                alt={b.title}
+                alt={b.title || "Bất động sản COASTAL LAND"}
                 fill
                 priority={i === 0}
                 quality={100}

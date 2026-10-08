@@ -107,7 +107,7 @@ function AreaTile({ area, big, running, delay }: { area: AreaCard; big: boolean;
         <Image
           key={src}
           src={anhNho(asset(src))}
-          alt={k === 0 ? area.name : ""}
+          alt={area.name}
           fill
           sizes={big ? "(max-width: 1024px) 100vw, 50vw" : "(max-width: 1024px) 50vw, 25vw"}
           className={`object-cover contrast-[1.04] saturate-[1.06] transition-[opacity,transform] duration-[800ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.08] ${

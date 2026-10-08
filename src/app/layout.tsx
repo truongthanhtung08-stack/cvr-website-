@@ -60,7 +60,10 @@ const OG_LOGO_URL = new URL("/logo/logo-horizontal.jpg", SITE_URL).toString();
 async function anhChiaSe(): Promise<string> {
   try {
     const slides = await getHeroBanners();
-    const anh = slides.find((s) => s?.image)?.image;
+    // Ưu tiên ảnh ĐIỆN THOẠI của hero (1200×520 ≈ 2,3:1): gần chuẩn ảnh chia sẻ 1,91:1 của
+    // Facebook/Zalo. Ảnh máy tính 7:2 quá dẹt → khung xem trước khi gửi link bị cắt xấu.
+    const s0 = slides.find((s) => s?.imageMobile || s?.image);
+    const anh = s0?.imageMobile || s0?.image;
     if (!anh) return OG_LOGO_URL;
     // Ảnh trong CMS có thể là đường dẫn tương đối (/anh/...) hoặc URL đầy đủ của
     // Supabase. Zalo/Facebook chỉ nhận URL TUYỆT ĐỐI.

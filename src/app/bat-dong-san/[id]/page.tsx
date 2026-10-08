@@ -148,6 +148,8 @@ function tieuDeSeo(tieuDe: string, location: string, price: string): string {
     const cat = t.slice(0, Math.max(choConLai, 24));
     const khoang = cat.lastIndexOf(" ");
     t = (khoang > 14 ? cat.slice(0, khoang) : cat).replace(/[\s,\-–—:;.]+$/, "");
+    // Cắt trúng giữa cụm giá ("… giá 3.6") thì bỏ hẳn cụm đó — giá đầy đủ đã nằm ở đuôi.
+    t = t.replace(/\s+(giá|gia|chỉ|chi)(\s+[\d.,]+)?$/i, "").replace(/[\s,\-–—:;.]+$/, "");
   }
   return [t, chonDiaDanh].filter(Boolean).join(", ") + duoi;
 }
