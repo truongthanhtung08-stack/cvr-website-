@@ -98,7 +98,7 @@ export default function FilterBar({
   const [recent, setRecent] = useState<Suggestion[]>([]);
   const boxRef = useRef<HTMLDivElement>(null); // vùng ô tìm — để bấm-ra-ngoài thì đóng gợi ý
   const inputRef = useRef<HTMLInputElement>(null); // để nút Chèn/Xoá đưa con trỏ về ô
-  const overlayInputRef = useRef<HTMLInputElement>(null); // ô nhập của trang tìm toàn màn hình (mobile)
+  const overlayInputRef = useRef<HTMLTextAreaElement>(null); // ô nhập của trang tìm toàn màn hình (mobile)
   const [overlay, setOverlay] = useState(false); // MOBILE: chạm ô → mở trang tìm TOÀN MÀN HÌNH kiểu Google
 
   useEffect(() => {
@@ -272,7 +272,7 @@ export default function FilterBar({
   };
 
   // Điều hướng bằng phím trong panel gợi ý.
-  const onKeyNav = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const onKeyNav = (e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     if (e.key === "ArrowDown") {
       e.preventDefault();
       if (!sugOpen) { setSugOpen(true); return; }
@@ -761,17 +761,28 @@ export default function FilterBar({
             <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
           </button>
           <div className="relative flex-1">
-            <input
-              ref={overlayInputRef}
+            {/* Gõ dài thì ô TỰ GIÃN thêm dòng (tối đa 4 dòng) để khách thấy hết mình đang viết gì. */}
+            <textarea
+              ref={(el) => {
+                overlayInputRef.current = el;
+                if (el) { el.style.height = "auto"; el.style.height = `${Math.max(44, el.scrollHeight)}px`; }
+              }}
               autoFocus
-              type="text"
+              rows={1}
               value={f.keyword}
-              onChange={(e) => { set({ keyword: e.target.value }); setActiveIdx(-1); }}
-              onKeyDown={(e) => { if (e.key === "Enter") setOverlay(false); onKeyNav(e); }}
+              onChange={(e) => {
+                set({ keyword: e.target.value.replace(/\n/g, " ") });
+                setActiveIdx(-1);
+                const el = e.currentTarget;
+                el.style.height = "auto";
+                el.style.height = `${Math.max(44, el.scrollHeight)}px`;
+              }}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); setOverlay(false); } onKeyNav(e); }}
               placeholder={goiYChay}
               aria-label="Tìm kiếm"
               autoComplete="off"
-              className="h-11 w-full rounded-full bg-cvr-surface pl-4 pr-10 text-[15px] text-cvr-ink placeholder-cvr-faint outline-none ring-1 ring-black/5 focus:ring-2 focus:ring-cvr-blue/40"
+              enterKeyHint="search"
+              className="block max-h-[112px] min-h-11 w-full resize-none overflow-y-auto rounded-[22px] bg-cvr-surface py-[11px] pl-4 pr-10 text-[15px] leading-[22px] text-cvr-ink placeholder-cvr-faint outline-none ring-1 ring-black/5 focus:ring-2 focus:ring-cvr-blue/40"
             />
             {f.keyword.trim().length > 0 && (
               <button

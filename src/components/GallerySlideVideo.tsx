@@ -162,6 +162,11 @@ export default function GallerySlideVideo({
   const [tong, setTong] = useState(0);
   const [tatTieng, setTatTieng] = useState(false);
   const [hienNut, setHienNut] = useState(true);
+  // TRÌNH DUYỆT TRONG APP (Zalo, Facebook…) không cho YouTube tự phát từ cú bấm vào nút
+  // của web → video đứng im. Bấm phát mà 2,5 giây chưa chạy: nhường cho khách bấm thẳng
+  // nút phát của YouTube; chạy rồi thì bộ nút của web trở lại như cũ.
+  const [nhuongYt, setNhuongYt] = useState(false);
+  const daChayYtRef = useRef(false);
   const lenhYt = (func: string, args: unknown[] = []) =>
     khungRef.current?.contentWindow?.postMessage(JSON.stringify({ event: "command", func, args }), "*");
   // YouTube báo trạng thái qua postMessage (sau khi gửi "listening").
@@ -178,6 +183,10 @@ export default function GallerySlideVideo({
         if (typeof i.muted === "boolean") setTatTieng(i.muted);
         if (typeof i.playerState === "number") {
           const chay = i.playerState === 1 || i.playerState === 3;
+          if (i.playerState === 1) {
+            daChayYtRef.current = true;
+            setNhuongYt(false);
+          }
           setDangChay(chay);
           playingRef.current = chay;
           bao();
@@ -308,8 +317,13 @@ export default function GallerySlideVideo({
           referrerPolicy="strict-origin-when-cross-origin"
           allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
           // Báo cho YouTube biết mình nghe trạng thái (giây, tổng, đang chạy, tắt tiếng).
-          onLoad={() => khungRef.current?.contentWindow?.postMessage(JSON.stringify({ event: "listening", id: 1 }), "*")}
-          className="pointer-events-none h-full w-full bg-black"
+          onLoad={() => {
+            khungRef.current?.contentWindow?.postMessage(JSON.stringify({ event: "listening", id: 1 }), "*");
+            setTimeout(() => {
+              if (!daChayYtRef.current) setNhuongYt(true);
+            }, 2500);
+          }}
+          className={`${nhuongYt ? "" : "pointer-events-none"} h-full w-full bg-black`}
         />
       ) : (
         <iframe
@@ -413,7 +427,7 @@ export default function GallerySlideVideo({
         }
       >
         {video}
-        {coNut && (
+        {coNut && !nhuongYt && (
           <div
             className="absolute inset-0 z-[5]"
             onClick={() => {
