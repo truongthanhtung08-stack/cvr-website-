@@ -303,6 +303,9 @@ export default function GallerySlideVideo({
           ref={khungRef}
           src={`${embed}&autoplay=1&controls=0&disablekb=1&fs=0&cc_load_policy=0&enablejsapi=1&origin=${typeof window === "undefined" ? "" : encodeURIComponent(window.location.origin)}`}
           title="Video"
+          // YouTube bắt buộc có nguồn trang (Referer); webview của Zalo/Facebook có khi không gửi
+          // → YouTube báo lỗi, video không mở. Khai rõ để mọi trình duyệt trong app đều gửi.
+          referrerPolicy="strict-origin-when-cross-origin"
           allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
           // Báo cho YouTube biết mình nghe trạng thái (giây, tổng, đang chạy, tắt tiếng).
           onLoad={() => khungRef.current?.contentWindow?.postMessage(JSON.stringify({ event: "listening", id: 1 }), "*")}
@@ -313,6 +316,9 @@ export default function GallerySlideVideo({
           ref={khungRef}
           src={`${embed}&autoplay=1`}
           title="Video"
+          // YouTube bắt buộc có nguồn trang (Referer); webview của Zalo/Facebook có khi không gửi
+          // → YouTube báo lỗi, video không mở. Khai rõ để mọi trình duyệt trong app đều gửi.
+          referrerPolicy="strict-origin-when-cross-origin"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
           // allowFullScreen: thiếu thuộc tính này thì nút toàn màn hình CỦA YOUTUBE
           // bấm không lên — khách tưởng web hỏng.

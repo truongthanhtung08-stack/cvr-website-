@@ -10,6 +10,7 @@ export default function VideoEmbed({ url, className = "" }: { url: string; class
         <iframe
           src={embed}
           title="Video"
+          referrerPolicy="strict-origin-when-cross-origin"
           loading="lazy"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen

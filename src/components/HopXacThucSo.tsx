@@ -89,11 +89,7 @@ export default function HopXacThucSo({
         <h3 className="text-lg font-semibold tracking-tight text-cvr-ink">
           {buoc === "sdt" ? (chiXacMinh ? "Xác minh số để gửi đánh giá" : "Xem số điện thoại người đăng") : "Nhập mã xác thực"}
         </h3>
-        <p className="mt-1 text-sm text-cvr-muted">
-          {buoc === "sdt"
-            ? "Nhập số điện thoại của bạn để nhận mã — không cần tạo mật khẩu."
-            : `Mã gồm 6 số vừa gửi tới ${sdt}.`}
-        </p>
+        {buoc !== "sdt" && <p className="mt-1 text-sm text-cvr-muted">{`Mã gồm 6 số vừa gửi tới ${sdt}.`}</p>}
 
         {buoc === "sdt" ? (
           <div className="mt-4 space-y-3">

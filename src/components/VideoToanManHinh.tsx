@@ -131,6 +131,7 @@ export default function VideoToanManHinh({
             <iframe
               src={`${embed}${embed.includes("?") ? "&" : "?"}autoplay=1`}
               title="Video"
+              referrerPolicy="strict-origin-when-cross-origin"
               allow="accelerometer; autoplay; encrypted-media; gyroscope; fullscreen"
               allowFullScreen
               className="h-full w-full"

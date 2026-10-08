@@ -153,7 +153,6 @@ export function ContactActions({ listingId, phoneMask }: { listingId: string; ph
               <span>{phoneMask} <span className="font-medium opacity-80">· Bấm để hiện số</span></span>
             )}
           </button>
-          {!daDangNhap && <p className="text-center text-[12px] text-cvr-muted">Xác thực số của bạn để xem số người đăng</p>}
           {error && <p className="text-center text-[12px] text-red-600">{error}</p>}
         </>
       )}

@@ -24,11 +24,11 @@ type HeroProps = {
 
 export default function Hero({
   banners = homeBanners,
-  // MOBILE: thấp lại (170px) để màn hình đầu vẫn thấy phần tin (theo yêu cầu chủ dự án).
   // PC (chủ dự án 08/10/2026): KHUNG TỶ LỆ CỐ ĐỊNH 7:2, rộng hết màn, cao theo bề ngang —
   // ảnh hero làm đúng 2880×823 (7:2) là hiện TRỌN, không bị cắt ở bất kỳ màn nào; màn thường
-  // vẫn thấy "Bất động sản dành cho bạn" + hàng lọc. Mobile giữ nguyên 170px.
-  heightClass = "min-h-[170px] sm:aspect-[7/2]",
+  // vẫn thấy "Bất động sản dành cho bạn" + hàng lọc.
+  // ĐIỆN THOẠI: KHUNG CỐ ĐỊNH 2,3:1 — ảnh điện thoại làm đúng 1200×520 là hiện trọn, không cắt.
+  heightClass = "aspect-[30/13] sm:aspect-[7/2]",
   search = true,
   searchTab,
   fit = "cover",
@@ -121,7 +121,7 @@ export default function Hero({
           } ${i === active ? "opacity-100" : "opacity-0"}`;
           return (
             <div key={b.id}>
-              {/* ĐIỆN THOẠI: ảnh riêng 1200×480 (2.5:1). Chưa có ảnh mobile → dùng tạm ảnh PC. */}
+              {/* ĐIỆN THOẠI: ảnh riêng 1200×520 (2,3:1). Chưa có ảnh mobile → dùng tạm ảnh PC. */}
               <Image
                 src={asset(b.imageMobile || b.image)}
                 alt={b.title}
