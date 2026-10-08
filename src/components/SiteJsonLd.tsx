@@ -23,14 +23,12 @@ const data = {
       taxID: "0402353502",
       url: SITE,
       logo: `${SITE}/logo/logo-horizontal-dark.svg`,
-      image: `${SITE}/anh/listings/1788248553343-22261-Danang_beach_1.webp`,
+      image: `${SITE}/logo/logo-horizontal.jpg`,
       description:
-        "Sàn giao dịch bất động sản trực tuyến tại Đà Nẵng, Huế và Duyên hải Miền Trung — mua bán, cho thuê nhà đất, căn hộ, đất nền và dự án.",
-      slogan: "Bất động sản Duyên hải Miền Trung",
+        "Cổng thông tin mua bán, cho thuê nhà đất, căn hộ, đất nền và dự án.",
+      slogan: "Cổng thông tin mua bán, cho thuê nhà đất",
       areaServed: [
-        { "@type": "City", name: "Đà Nẵng" },
-        { "@type": "City", name: "Huế" },
-        { "@type": "Place", name: "Duyên hải Miền Trung, Việt Nam" },
+        { "@type": "Country", name: "Việt Nam" },
       ],
       // ĐỊA CHỈ + ĐIỆN THOẠI phải TRÙNG TỪNG CHỮ với hồ sơ Google Business.
       // Đây là cách Google nối "website này" với "doanh nghiệp này" thành MỘT thực thể

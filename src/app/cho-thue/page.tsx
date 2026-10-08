@@ -4,6 +4,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { ListingListJsonLd } from "@/components/ListJsonLd";
 import ListingBrowser from "@/components/ListingBrowser";
+import { goiNheTin, goiNheHetHan, goiNheBaiViet } from "@/lib/goiNhe";
 import KhungChoDanhMuc from "@/components/KhungChoDanhMuc";
 import KhuVucLinks from "@/components/KhuVucLinks";
 import { getListings, getListingsHetHan } from "@/lib/listingsDb";
@@ -46,7 +47,7 @@ export default async function ChoThuePage() {
             />
           }
         >
-          <ListingBrowser purpose="thue" heading="Nhà đất cho thuê" items={listings} itemsHetHan={hetHan} articles={articles} />
+          <ListingBrowser purpose="thue" heading="Nhà đất cho thuê" items={goiNheTin(listings)} itemsHetHan={goiNheHetHan(hetHan, "thue")} articles={goiNheBaiViet(articles)} />
         </Suspense>
         {/* Đường bò tới trang khu vực cho thuê — cùng lý do như ở /mua-ban:
             trang /cho-thue/<tỉnh> chưa có liên kết nội bộ nào trỏ tới. */}

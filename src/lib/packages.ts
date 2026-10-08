@@ -181,7 +181,7 @@ export const utilityTools: Pkg[] = [
     slug: "bao-cao-thi-truong-bds",
     label: "Báo cáo thị trường BĐS",
     title: "Báo cáo thị trường BĐS",
-    description: "Cập nhật tình hình thị trường bất động sản Miền Trung theo thời điểm.",
+    description: "Cập nhật tình hình thị trường bất động sản theo thời điểm.",
     icon: "project",
     kind: "tool",
   },

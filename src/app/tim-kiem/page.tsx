@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   robots: { index: false, follow: true },
   title: "Tìm kiếm bất động sản",
   description:
-    "Tìm nhà đất, căn hộ, đất nền, dự án tại Đà Nẵng, Huế và Miền Trung — lọc theo khu vực, loại hình, mức giá.",
+    "Tìm nhà đất, căn hộ, đất nền, dự án — lọc theo khu vực, loại hình, mức giá.",
 };
 
 // Đọc tin thật từ Supabase (no-store) → BẮT BUỘC render động, không static.

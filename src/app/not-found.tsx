@@ -33,7 +33,7 @@ export const metadata: Metadata = {
 const LOI_DI = [
   { href: "/mua-ban", nhan: "Nhà đất bán", ta: "Nhà riêng, căn hộ, đất nền đang rao bán" },
   { href: "/cho-thue", nhan: "Nhà đất cho thuê", ta: "Căn hộ, nhà nguyên căn, mặt bằng, văn phòng" },
-  { href: "/du-an", nhan: "Dự án", ta: "Dự án tại Đà Nẵng, Huế và Miền Trung" },
+  { href: "/du-an", nhan: "Dự án", ta: "Thông tin dự án bất động sản" },
   { href: "/tin-tuc", nhan: "Tin tức", ta: "Thị trường, pháp lý, kinh nghiệm mua bán" },
 ];
 

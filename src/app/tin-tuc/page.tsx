@@ -9,7 +9,7 @@ import ArticleBrowser from "@/components/ArticleBrowser";
 export const metadata: Metadata = {
   alternates: { canonical: "/tin-tuc" },
   title: "Tin tức bất động sản",
-  description: "Phân tích thị trường, cẩm nang pháp lý và kinh nghiệm đầu tư bất động sản tại Đà Nẵng, Huế và miền Trung.",
+  description: "Phân tích thị trường, cẩm nang pháp lý và kinh nghiệm đầu tư bất động sản.",
 };
 
 export default async function TinTucPage() {

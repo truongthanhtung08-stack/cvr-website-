@@ -7,8 +7,8 @@ import { baoLoi } from "@/lib/baoLoi";
 // TỰ CÔNG BỐ LẠI GIÁ LÚC 0H GIỜ VN (vercel.json, chủ dự án chốt 01/10/2026)
 // Chương trình khuyến mãi trong /admin/gia-chuan có ngày bắt đầu / kết thúc. Giá công
 // bố tính % giảm TẠI LÚC công bố → không công bố lại thì hết khuyến mãi khách vẫn hưởng
-// giá giảm (hoặc khuyến mãi tới ngày mà chưa áp). Mỗi ngày 0h tính lại từ bản nháp đã
-// lưu, ĐÚNG hàm của nút Công bố. Chỉ công bố lại phần ĐANG được công bố (gỡ rồi thì thôi).
+// giá giảm (hoặc khuyến mãi tới ngày mà chưa áp). Mỗi ngày 0h tính lại từ BẢN ĐÃ DUYỆT
+// (lần bấm Công bố gần nhất — 08/10/2026), ĐÚNG hàm của nút Công bố; bản nháp không tự lên web. Chỉ công bố lại phần ĐANG được công bố (gỡ rồi thì thôi).
 // ════════════════════════════════════════════════════════════════════════════
 export const dynamic = "force-dynamic";
 
@@ -23,11 +23,11 @@ export async function GET(request: Request) {
   const luu = await docBillingLuu(admin);
   const kq: Record<string, string> = {};
   if (luu.congBo) {
-    const t = await congBoTin(admin);
+    const t = await congBoTin(admin, true); // CHỈ từ bản chủ dự án đã duyệt
     kq.tin = "loi" in t ? t.loi : "ok";
   }
   if (luu.hoiVien?.length) {
-    const h = await congBoHoiVien(admin);
+    const h = await congBoHoiVien(admin, true);
     kq.hoiVien = "loi" in h ? h.loi : "ok";
   }
   const hong = Object.entries(kq).filter(([, v]) => v !== "ok");

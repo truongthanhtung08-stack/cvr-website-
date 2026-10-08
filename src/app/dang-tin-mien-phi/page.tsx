@@ -29,7 +29,7 @@ export const metadata: Metadata = {
   // 59 ký tự kể cả đuôi " | COASTAL LAND" mà layout tự nối — vừa khít khung Google
   // hiển thị (~60). Bản cũ 73 ký tự bị cắt mất chữ "Miền Trung" lẫn tên thương hiệu,
   // mà đây lại đúng là trang đích của quảng cáo nên tiêu đề phải hiện trọn.
-  title: "Đăng tin bất động sản miễn phí ở Đà Nẵng, Huế",
+  title: "Đăng tin bất động sản miễn phí",
   description:
     "Tạo tài khoản Coastal Land và đăng tin bán / cho thuê nhà đất miễn phí cho thành viên mới. Tin được duyệt nhanh, đến đúng người đang tìm tại khu vực của bạn.",
   alternates: { canonical: "/dang-tin-mien-phi" },
@@ -84,7 +84,7 @@ export default async function DangTinMienPhiPage() {
               )}
 
               <h1 className="mt-4 text-3xl font-semibold leading-[1.15] tracking-tight text-cvr-ink sm:text-4xl lg:text-5xl">
-                Đăng tin bất động sản miễn phí tại Đà Nẵng, Huế và Miền Trung
+                Đăng tin bất động sản miễn phí
               </h1>
 
               <p className="mt-4 max-w-xl text-base leading-relaxed text-cvr-body sm:text-lg">

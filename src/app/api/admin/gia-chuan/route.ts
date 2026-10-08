@@ -2,9 +2,10 @@ import { NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { ghepBillingLuu, bangUp, type BillingData } from "@/lib/billing";
+import { ghepBillingLuu, bangUp, goiDuAn, goiPr, ghiChuPr, bangBanner, soLuotTuNhan, ANH_CHUNG_MAC_DINH, VIDEO_CHUNG_MAC_DINH, type BillingData } from "@/lib/billing";
 import { KHOA_GIA_CHUAN, NHAP_TRONG, kiemNhap, type GiaChuanNhap } from "@/lib/giaChuan";
 import { congBoTin, congBoHoiVien } from "@/lib/congBoGia";
+import { ghepQuyDinh, KHOA_QUY_DINH_GIA, type QuyDinhGia } from "@/lib/quyDinhGia";
 
 // ============================================================================
 // GIÁ CHUẨN — API CHỈ DÀNH CHO ADMIN
@@ -44,15 +45,33 @@ async function docBilling(admin: NonNullable<ReturnType<typeof createAdminClient
 export async function GET() {
   const { admin, err } = await chiAdmin();
   if (err) return err;
-  const [nhap, luu] = await Promise.all([docNhap(admin), docBilling(admin)]);
+  const [nhap, luu, qd] = await Promise.all([
+    docNhap(admin), docBilling(admin),
+    admin.from("site_content").select("data").eq("key", KHOA_QUY_DINH_GIA).limit(1),
+  ]);
   const bang: BillingData = ghepBillingLuu(luu);
   return NextResponse.json({
+    quyDinhHienTai: ghepQuyDinh(qd.data?.[0]?.data as Partial<QuyDinhGia> | undefined),
     ok: true,
     nhap,
     congBo: luu.congBo ?? null,
     hoiVienLuc: luu.hoiVienLuc ?? null,
     plansHienTai: bang.plans,
     upHienTai: bangUp(bang),
+    // Bản nháp chưa có dự án / PR / banner → trang admin lấy giá đang chạy làm giá chuẩn.
+    duAnHienTai: goiDuAn(bang),
+    prHienTai: goiPr(bang),
+    prNotesHienTai: ghiChuPr(bang),
+    bannersHienTai: bangBanner(bang),
+    freeHienTai: bang.free,
+    quyDinhTinHienTai: {
+      mediaTheoCap: bang.mediaTheoCap === true,
+      anhChung: bang.anhChung ?? ANH_CHUNG_MAC_DINH,
+      videoChung: bang.videoChung ?? VIDEO_CHUNG_MAC_DINH,
+      anhTheoCap: Object.fromEntries(bang.plans.filter((p) => p.maxImages !== undefined).map((p) => [p.tierId, p.maxImages])),
+      videoTheoCap: Object.fromEntries(bang.plans.filter((p) => p.maxVideos !== undefined).map((p) => [p.tierId, p.maxVideos])),
+      coGoiDay: bangUp(bang).map((r) => soLuotTuNhan(r.label)),
+    },
   });
 }
 

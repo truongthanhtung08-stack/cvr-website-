@@ -105,7 +105,7 @@ export default async function GioiThieuPage() {
             {/* ĐIỆN THOẠI — ảnh riêng 16:10; chưa nhập thì dùng tạm ảnh máy tính */}
             <Image
               src={asset(about.heroImageMobile || about.heroImage)}
-              alt="Không gian làm việc Coastal Land bên bờ biển Duyên hải Miền Trung"
+              alt="Coastal Land"
               fill
               priority
               sizes="100vw"
@@ -114,7 +114,7 @@ export default async function GioiThieuPage() {
             {/* MÁY TÍNH — ảnh 4:1 */}
             <Image
               src={asset(about.heroImage)}
-              alt="Không gian làm việc Coastal Land bên bờ biển Duyên hải Miền Trung"
+              alt="Coastal Land"
               fill
               priority
               sizes="100vw"
@@ -204,7 +204,7 @@ export default async function GioiThieuPage() {
         <section className="bg-cvr-surface">
           <div className={SECTION}>
             <div className={about.market.image ? SPLIT : ""}>
-              <Figure src={about.market.image} alt="Không gian ven biển Duyên hải Miền Trung" className="order-2 lg:order-1" />
+              <Figure src={about.market.image} alt="Coastal Land" className="order-2 lg:order-1" />
               <div className="order-1 lg:order-2">
                 <Eyebrow>{about.market.eyebrow}</Eyebrow>
                 <Title>{about.market.title}</Title>

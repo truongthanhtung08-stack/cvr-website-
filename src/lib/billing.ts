@@ -270,40 +270,28 @@ export const PROJECT_PLANS_DEFAULT: Plan[] = [
   {
     tierId: "diamond",
     name: "CVR-PJ Diamond",
-    terms: [
-      { days: 7, price: 6_800_000 },
-      { days: 14, price: 12_800_000 },
-    ],
+    terms: [],
     note: "Trang chủ + đứng trên CVR-PJ Gold — icon đỏ nổi bật",
     maxImages: 30,
   },
   {
     tierId: "gold",
     name: "CVR-PJ Gold",
-    terms: [
-      { days: 7, price: 3_500_000 },
-      { days: 14, price: 6_600_000 },
-    ],
+    terms: [],
     note: "Đứng trên CVR-PJ Silver — icon vàng nổi bật",
     maxImages: 25,
   },
   {
     tierId: "silver",
     name: "CVR-PJ Silver",
-    terms: [
-      { days: 7, price: 2_000_000 },
-      { days: 14, price: 3_800_000 },
-    ],
+    terms: [],
     note: "Đứng trên CVR-PJ Basic — icon xanh nổi bật",
     maxImages: 20,
   },
   {
     tierId: "basic",
     name: "CVR-PJ Basic",
-    terms: [
-      { days: 7, price: 0 },
-      { days: 14, price: 0 },
-    ],
+    terms: [],
     note: "Giai đoạn đầu: miễn phí — đặt giá trong admin khi bắt đầu thu",
     maxImages: 15,
   },
@@ -313,29 +301,9 @@ export const PROJECT_PLANS_DEFAULT: Plan[] = [
 // ── ĐẨY TIN · PR · BANNER: MỨC CHUẨN ───────────────────────────────────────
 // Bốn cột của bảng Đẩy tin theo đúng thứ tự Diamond · Gold · Silver · Basic.
 export const UP_DEFAULT: UpRow[] = [
-  { label: "Đẩy 1 lượt", values: [{ gia: 90_000 }, { gia: 46_000 }, { gia: 17_000 }, { gia: 5_000 }] },
-  { label: "Đẩy 3 lượt (−20%)", values: [
-    { giaGoc: 270_000, gia: 216_000 }, { giaGoc: 138_000, gia: 110_400 },
-    { giaGoc: 51_000, gia: 40_800 }, { giaGoc: 15_000, gia: 12_000 },
-  ] },
-  { label: "Đẩy 7 lượt (−30%)", values: [
-    { giaGoc: 630_000, gia: 441_000 }, { giaGoc: 322_000, gia: 225_400 },
-    { giaGoc: 119_000, gia: 83_300 }, { giaGoc: 35_000, gia: 24_500 },
-  ] },
-  { label: "Đẩy 13 lượt (−40%)", values: [
-    { giaGoc: 1_170_000, gia: 702_000 }, { giaGoc: 598_000, gia: 358_800 },
-    { giaGoc: 221_000, gia: 132_600 }, { giaGoc: 65_000, gia: 39_000 },
-  ] },
-  { label: "Đẩy 27 lượt (−50%)", values: [
-    { giaGoc: 2_430_000, gia: 1_215_000 }, { giaGoc: 1_242_000, gia: 621_000 },
-    { giaGoc: 459_000, gia: 229_500 }, { giaGoc: 135_000, gia: 67_500 },
-  ] },
 ];
 
 export const PR_DEFAULT: PrPkg[] = [
-  { tierId: "diamond", name: "CVR-PR Diamond", gia: 8_900_000, displays: ["Xuất hiện trên Trang chủ: box Tin tức.", "Xuất hiện trên trang chuyên mục Tin tức.", "Chia sẻ trên Fanpage Facebook của Coastal Land."] },
-  { tierId: "gold", name: "CVR-PR Gold", gia: 5_900_000, displays: ["Xuất hiện trên Trang chủ: box Tin tức.", "Xuất hiện trên trang chuyên mục Tin tức."] },
-  { tierId: "silver", name: "CVR-PR Silver", gia: 2_900_000, displays: ["Xuất hiện trên trang chuyên mục Tin tức."] },
 ];
 
 export const PR_NOTES_DEFAULT: string[] = [
@@ -345,34 +313,6 @@ export const PR_NOTES_DEFAULT: string[] = [
 ];
 
 export const BANNERS_DEFAULT: BannerTable[] = [
-  {
-    title: "Banner Web",
-    sizeLabel: "Kích thước (px)",
-    rows: [
-      { name: "CVR-BANNER Homepage 1", size: "370 × 300", gia: 7_500_000, pos: "Trang chủ", note: "Chia sẻ 3" },
-      { name: "CVR-BANNER Homepage 2", size: "370 × 312", gia: 5_000_000, pos: "Trang chủ", note: "Chia sẻ 3" },
-      { name: "CVR-BANNER Homepage 3", size: "370 × 430", gia: 6_000_000, pos: "Trang chủ", note: "Chia sẻ 3" },
-      { name: "CVR-BANNER Listing 1", size: "370 × 600", gia: 7_000_000, pos: "Trang danh sách Tin đăng / Dự án", note: "Chia sẻ 3" },
-      { name: "CVR-BANNER Listing 2", size: "370 × 320", gia: 3_000_000, pos: "Trang danh sách Tin đăng / Dự án", note: "Chia sẻ 3" },
-      { name: "CVR-BANNER Listing 3", size: "370 × 430", gia: 5_000_000, pos: "Trang danh sách Tin đăng / Dự án", note: "Chia sẻ 3" },
-    ],
-  },
-  {
-    title: "Banner Mobile Web",
-    sizeLabel: "Kích thước (px)",
-    rows: [
-      { name: "CVR-BANNER Mobile Homepage", size: "345 × 200", gia: 5_000_000, pos: "Trang chủ (mobile)", note: "Chia sẻ 3" },
-      { name: "CVR-BANNER Mobile Listing", size: "345 × 150", gia: 3_000_000, pos: "Trang chủ + Tin đăng (mobile)", note: "Bao toàn tỉnh lẻ: 1.500.000đ" },
-    ],
-  },
-  {
-    title: "Banner Web + Mobile Web (Combo)",
-    sizeLabel: "Sản phẩm",
-    rows: [
-      { name: "CVR-BANNER Combo Homepage", size: "Banner Homepage 1 + Mobile Homepage", gia: 10_000_000, pos: "Web + Mobile", note: "Chiết khấu 20%" },
-      { name: "CVR-BANNER Combo Listing", size: "Banner Listing 1 + Mobile Listing", gia: 8_900_000, pos: "Web + Mobile", note: "Chiết khấu 15%" },
-    ],
-  },
 ];
 
 // Admin chưa lưu bảng nào thì dùng mức chuẩn — trang báo giá không bao giờ trống.
@@ -428,77 +368,64 @@ export const goiPr = (d: BillingData): PrPkg[] => (d.pr?.length ? d.pr : PR_DEFA
 export const ghiChuPr = (d: BillingData): string[] => (d.prNotes?.length ? d.prNotes : PR_NOTES_DEFAULT);
 export const bangBanner = (d: BillingData): BannerTable[] => (d.banners?.length ? d.banners : BANNERS_DEFAULT);
 
+// ⛔ MỘT ĐƯỜNG GIÁ (chủ dự án 08/10/2026: "tất cả các loại giá ngoài bảng này bỏ hết"):
+// KHÔNG còn số giá nào trong code. Giá, đẩy tin, dự án, PR, banner, chương trình miễn phí
+// CHỈ đến từ Bảng giá admin đã CÔNG BỐ. Chưa công bố = khách không thấy giá.
 export const BILLING_DEFAULT: BillingData = {
   plans: [
     {
       tierId: "diamond",
       name: "CVR Diamond",
-      terms: [
-        { days: 7, price: 1_050_000 },
-        { days: 15, price: 2_100_000 },
-        { days: 30, price: 3_900_000 },
-      ],
+      terms: [],
       note: "Ưu tiên hiển thị cao nhất — hệ số tiếp cận X30",
       maxImages: 15,
     },
     {
       tierId: "gold",
       name: "CVR Gold",
-      terms: [
-        { days: 7, price: 630_000 },
-        { days: 15, price: 1_260_000 },
-        { days: 30, price: 2_340_000 },
-      ],
+      terms: [],
       note: "Hiển thị nổi bật — hệ số tiếp cận X15",
       maxImages: 12,
     },
     {
       tierId: "silver",
       name: "CVR Silver",
-      terms: [
-        { days: 7, price: 280_000 },
-        { days: 15, price: 560_000 },
-        { days: 30, price: 1_040_000 },
-      ],
+      terms: [],
       note: "Tiết kiệm hiệu quả — hệ số tiếp cận X8",
       maxImages: 10,
     },
     {
       tierId: "basic",
       name: "CVR Basic",
-      terms: [
-        { days: 7, price: 70_000 },
-        { days: 15, price: 140_000 },
-        { days: 30, price: 260_000 },
-      ],
+      terms: [],
       note: "Tin thường — hiển thị theo thời gian đăng",
       maxImages: 7,
     },
   ],
   promos: [],
   free: {
-    active: true,
+    active: false,
     days: 30,
-    quota: 3,
+    quota: 0,
     tierId: "basic",
     audience: "new",
     note: "Thành viên mới được đăng 3 tin miễn phí trong 30 ngày đầu.",
     // Chủ dự án chốt 17/9/2026: chương trình chạy TỪ HÔM NAY ĐẾN HẾT 1 THÁNG SAU.
     // Muốn gia hạn hay đóng sớm thì sửa ở /admin/gia-khuyen-mai → tab Miễn phí,
     // không phải sửa code.
-    from: "2026-09-17",
-    to: "2026-10-17",
+    from: "",
+    to: "",
   },
-  points: { active: true, earnPerVnd: 10_000, redeemRate: 100, minRedeem: 100 },
+  points: { active: false, earnPerVnd: 10_000, redeemRate: 100, minRedeem: 100 }, // điểm thưởng đã bỏ 25/09/2026
   // CẤP HỘI VIÊN — ĐÚNG 4 CẤP, TRÙNG TÊN với 4 hạng tin (Basic · Silver · Gold ·
   // Diamond) để khách không phải nhớ hai hệ tên. Basic là cấp khởi điểm (nạp 0đ),
   // NẠP đủ mốc là tự lên cấp trên. Màu lấy đúng màu hạng tin trong packages.ts.
   // Mốc mặc định — chủ dự án sửa được ở /admin/gia-khuyen-mai → tab Cấp hội viên.
   levels: [
     { id: "basic", name: "Basic", minTopup: 0, discount: 0, color: "#9aa0a6" },
-    { id: "silver", name: "Silver", minTopup: 5_000_000, discount: 3, color: "#0071e3" },
-    { id: "gold", name: "Gold", minTopup: 20_000_000, discount: 5, color: "#c9a24a" },
-    { id: "diamond", name: "Diamond", minTopup: 50_000_000, discount: 10, color: "#d7263d" },
+    { id: "silver", name: "Silver", minTopup: 5_000_000, discount: 0, color: "#0071e3" },
+    { id: "gold", name: "Gold", minTopup: 20_000_000, discount: 0, color: "#c9a24a" },
+    { id: "diamond", name: "Diamond", minTopup: 50_000_000, discount: 0, color: "#d7263d" },
   ],
   topupAmounts: [200_000, 500_000, 1_000_000, 2_000_000, 5_000_000, 10_000_000],
   projectPlans: PROJECT_PLANS_DEFAULT,

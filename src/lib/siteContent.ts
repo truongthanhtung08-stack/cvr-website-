@@ -9,7 +9,6 @@ import type { ChiSoGiaData } from "@/lib/chiSoGia";
 import { asset } from "@/lib/asset";
 import { homeBanners, projectBanners, type Banner } from "@/lib/banners";
 import { landings as LANDINGS_DEFAULT, type Landing } from "@/lib/landings";
-import { PRICING_DEFAULT, type PricingData } from "@/lib/pricingData";
 import { BILLING_DEFAULT, chuanHoaCapHoiVien, type BillingData } from "@/lib/billing";
 
 // Lấy 1 khối nội dung theo key. Lỗi/chưa cấu hình/chưa có → null (dùng mặc định).
@@ -302,11 +301,6 @@ export async function getAbout(): Promise<AboutData> {
 
 // ── BẢNG GIÁ DỊCH VỤ (/bao-gia-dang-tin) ─────────────────────────────────────
 // Lưu key 'pricing' (toàn bộ PricingData). Admin sửa từ mặc định → lưu trọn object.
-export async function getPricing(): Promise<PricingData> {
-  const data = await fetchBlock<Partial<PricingData>>("pricing");
-  if (!data) return PRICING_DEFAULT;
-  return { ...PRICING_DEFAULT, ...data, intro: { ...PRICING_DEFAULT.intro, ...data.intro } };
-}
 
 // ── GÓI ĐĂNG TIN · KHUYẾN MÃI · ĐIỂM · CẤP THÀNH VIÊN ────────────────────────
 // Lưu key 'billing' (toàn bộ BillingData). Admin sửa ở /admin/gia-khuyen-mai.

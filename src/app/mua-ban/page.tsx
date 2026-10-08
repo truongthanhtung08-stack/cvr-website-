@@ -4,6 +4,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { ListingListJsonLd } from "@/components/ListJsonLd";
 import ListingBrowser from "@/components/ListingBrowser";
+import { goiNheTin, goiNheHetHan, goiNheBaiViet } from "@/lib/goiNhe";
 import KhungChoDanhMuc from "@/components/KhungChoDanhMuc";
 import KhuVucLinks from "@/components/KhuVucLinks";
 import { getListings, getListingsHetHan } from "@/lib/listingsDb";
@@ -49,7 +50,7 @@ export default async function MuaBanPage() {
             />
           }
         >
-          <ListingBrowser purpose="ban" heading="Nhà đất bán" items={listings} itemsHetHan={hetHan} articles={articles} />
+          <ListingBrowser purpose="ban" heading="Nhà đất bán" items={goiNheTin(listings)} itemsHetHan={goiNheHetHan(hetHan, "ban")} articles={goiNheBaiViet(articles)} />
         </Suspense>
         {/* ĐƯỜNG BÒ TỚI TRANG KHU VỰC — khối này trang danh mục con đã dùng từ lâu,
             chỉ trang gốc là chưa có. Đo ngày 18/09/2026: /mua-ban/da-nang và

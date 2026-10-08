@@ -1,10 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 import { Panel } from "@/components/Ui";
 import { getTier, type TierId } from "@/lib/packages";
-import { dienMa, ghepQuyDinh, KHOA_QUY_DINH_GIA, type QuyDinhGia } from "@/lib/quyDinhGia";
+import { dienMa, type QuyDinhGia } from "@/lib/quyDinhGia";
 
 // ============================================================================
 // ADMIN — QUY ĐỊNH & QUYỀN LỢI GÓI (một nguồn duy nhất, chủ dự án chốt 25/09/2026)
@@ -26,32 +25,10 @@ function ODong({ nhan, value, onChange, rows = 4 }: { nhan: string; value: strin
   );
 }
 
-export default function QuyDinhGiaEditor() {
-  const [qd, setQd] = useState<QuyDinhGia | null>(null);
-  const [daSua, setDaSua] = useState(false);
-  const [dangLuu, setDangLuu] = useState(false);
-  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
-
-  useEffect(() => {
-    createClient().from("site_content").select("data").eq("key", KHOA_QUY_DINH_GIA).limit(1)
-      .then(({ data }) => setQd(ghepQuyDinh(data?.[0]?.data as Partial<QuyDinhGia> | undefined)));
-  }, []);
-
-  if (!qd) return <p className="text-sm text-cvr-muted">Đang tải quy định…</p>;
-  const sua = (next: QuyDinhGia) => { setQd(next); setDaSua(true); setMsg(null); };
+// MỘT ĐƯỜNG (08/10/2026): chỉ sửa bản nháp của trang Bảng giá — lên web khi bấm Công bố.
+export default function QuyDinhGiaEditor({ value: qd, onChange: sua }: { value: QuyDinhGia; onChange: (q: QuyDinhGia) => void }) {
   const suaHang = (t: TierId, phan: "loiIch" | "hienThi", v: string[]) =>
     sua({ ...qd, quyenLoi: { ...qd.quyenLoi, [t]: { ...qd.quyenLoi[t], [phan]: v } } });
-
-  async function luu() {
-    if (!qd) return;
-    setDangLuu(true);
-    const { error } = await createClient().from("site_content").upsert({ key: KHOA_QUY_DINH_GIA, data: qd });
-    if (!error) await fetch("/api/lam-moi", { method: "POST", body: JSON.stringify({ the: "noi-dung" }) }).catch(() => {});
-    setDangLuu(false);
-    if (error) return setMsg({ ok: false, text: `Lưu thất bại: ${error.message}` });
-    setDaSua(false);
-    setMsg({ ok: true, text: "Đã lưu — trang Bảng giá và Gói hội viên đổi ngay." });
-  }
 
   return (
     <div className="space-y-4">
@@ -81,13 +58,6 @@ export default function QuyDinhGiaEditor() {
         <ODong nhan="" value={qd.dieuKienHoiVien} onChange={(v) => sua({ ...qd, dieuKienHoiVien: v })} rows={4} />
       </Panel>
 
-      {msg && <p className={`rounded-lg px-4 py-2.5 text-sm ${msg.ok ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>{msg.text}</p>}
-      <div className="flex justify-end">
-        <button type="button" onClick={luu} disabled={dangLuu}
-          className="rounded-lg bg-cvr-ink px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-cvr-ink/90 disabled:opacity-60">
-          {dangLuu ? "Đang lưu…" : daSua ? "Lưu quy định *" : "Lưu quy định"}
-        </button>
-      </div>
     </div>
   );
 }

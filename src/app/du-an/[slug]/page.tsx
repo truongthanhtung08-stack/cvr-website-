@@ -124,7 +124,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
           <div className="mx-auto max-w-7xl px-4 pb-footer sm:px-6 lg:px-8">
             <h1 className="mb-1 mt-3 text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">{cat.h1}</h1>
             <p className="mb-4 text-sm text-cvr-muted">{cat.desc}</p>
-            <ProjectsBrowser projects={items} articles={articles} />
+            <ProjectsBrowser projects={items} articles={articles} tieuDePhu />
           </div>
         </main>
         <Footer />
@@ -160,7 +160,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             <p className="mb-4 text-sm text-cvr-muted">
               {moTaKhuVuc("duan", kv.name, items.length)}
             </p>
-            <ProjectsBrowser projects={items} articles={articles} />
+            <ProjectsBrowser projects={items} articles={articles} tieuDePhu />
           </div>
           <KhuVucLinks base="/du-an" demTheoTinh={demTheoTinh} tinhDangXem={kv.name} />
         </main>

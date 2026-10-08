@@ -7,7 +7,7 @@ import { agencies } from "@/lib/experts";
 export const metadata: Metadata = {
   alternates: { canonical: "/chuyen-gia/cong-ty" },
   title: "Sàn giao dịch & công ty bất động sản",
-  description: "Danh sách sàn giao dịch và công ty bất động sản đối tác của Coastal Land tại Đà Nẵng và Huế.",
+  description: "Danh sách sàn giao dịch và công ty bất động sản đối tác của Coastal Land.",
 };
 
 export default function CongTyPage() {
@@ -17,7 +17,7 @@ export default function CongTyPage() {
       <main className="flex-1 bg-white">
         <div className="mx-auto max-w-7xl px-4 pt-6 pb-footer sm:px-6 lg:px-8">
           <h1 className="text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">Sàn giao dịch & công ty BĐS</h1>
-          <p className="mt-1.5 max-w-2xl text-sm text-cvr-muted">Các sàn giao dịch, công ty bất động sản đối tác của Coastal Land tại Đà Nẵng và Huế.</p>
+          <p className="mt-1.5 max-w-2xl text-sm text-cvr-muted">Các sàn giao dịch, công ty bất động sản đối tác của Coastal Land.</p>
 
           {/* Chưa có sàn/công ty đối tác thật nào → nói rõ đang cập nhật. Trước đây
               chỗ này liệt kê 4 công ty bịa kèm số chuyên gia và năm thành lập tự
@@ -26,10 +26,10 @@ export default function CongTyPage() {
           {agencies.length === 0 && (
             <div className="mt-6 rounded-none border border-cvr-line bg-cvr-surface px-6 py-12 text-center">
               <p className="text-[15px] font-semibold text-cvr-ink">
-                Sàn giao dịch, công ty bất động sản tại Đà Nẵng, Huế
+                Sàn giao dịch, công ty bất động sản
               </p>
               <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-cvr-muted">
-                Hợp tác cùng Coastal Land để tiếp cận khách hàng Miền Trung.
+                Hợp tác cùng Coastal Land để tiếp cận khách hàng.
               </p>
               <Link
                 href="/chuyen-gia/dang-ky"

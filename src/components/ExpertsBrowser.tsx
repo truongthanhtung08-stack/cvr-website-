@@ -62,7 +62,7 @@ export default function ExpertsBrowser({
       {list.length === 0 ? (
         <div className="mt-6 rounded-none border border-cvr-line bg-cvr-surface px-6 py-12 text-center">
           <p className="text-[15px] font-semibold text-cvr-ink">
-            Bạn là môi giới{tab !== "Tất cả" ? ` tại ${tab}` : " tại Đà Nẵng, Huế"}?
+            Bạn là môi giới{tab !== "Tất cả" ? ` tại ${tab}` : ""}?
           </p>
           <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-cvr-muted">
             Có mặt trong danh bạ để khách tìm thấy bạn trước.

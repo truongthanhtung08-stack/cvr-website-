@@ -25,7 +25,7 @@ export default function AppDownload() {
               </h2>
               <p className="mt-2 max-w-md text-sm leading-relaxed text-white/70">
                 Tải ứng dụng để theo dõi nhà đất bán – cho thuê, dự án và thị
-                trường bất động sản Miền Trung ngay trên điện thoại.
+                trường bất động sản ngay trên điện thoại.
               </p>
 
               {/* Đánh giá */}

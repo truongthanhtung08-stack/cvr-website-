@@ -66,7 +66,6 @@ export default function LienHePage() {
               <strong className="font-semibold text-cvr-ink">{DIA_CHI}</strong>. Vui lòng gọi trước khi đến để chúng tôi
               bố trí người tiếp.
             </>,
-            <>Khu vực hoạt động: Đà Nẵng · Huế và các tỉnh Duyên hải Miền Trung.</>,
             <>Giờ làm việc: 8:00 – 18:00, Thứ Hai đến Thứ Bảy. Ngoài giờ, vui lòng nhắn Zalo hoặc để lại yêu cầu.</>,
           ]}
         />

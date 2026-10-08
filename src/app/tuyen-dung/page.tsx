@@ -21,14 +21,14 @@ export const metadata: Metadata = {
   alternates: { canonical: "/tuyen-dung" },
   title: "Tuyển dụng",
   description:
-    "Cơ hội cộng tác cùng Coastal Land — cổng thông tin bất động sản Duyên hải Miền Trung. Gửi hồ sơ cộng tác viên nội dung, kinh doanh, kỹ thuật.",
+    "Cơ hội cộng tác cùng Coastal Land — cổng thông tin mua bán, cho thuê nhà đất. Gửi hồ sơ cộng tác viên nội dung, kinh doanh, kỹ thuật.",
 };
 
 export default function TuyenDungPage() {
   return (
     <TrangPhapLy
       title="Tuyển dụng"
-      moDau="Coastal Land vận hành theo mô hình tinh gọn: đội ngũ nhỏ, công nghệ và tự động hoá làm phần nặng. Chúng tôi không tuyển ồ ạt, nhưng luôn mở với người làm được việc và hiểu thị trường Miền Trung."
+      moDau="Coastal Land vận hành theo mô hình tinh gọn: đội ngũ nhỏ, công nghệ và tự động hoá làm phần nặng. Chúng tôi không tuyển ồ ạt, nhưng luôn mở với người làm được việc và hiểu thị trường bất động sản."
     >
       <Muc title="Vị trí đang tuyển">
         <p>
@@ -53,7 +53,7 @@ export default function TuyenDungPage() {
         <DanhSach
           items={[
             "Làm được việc quan trọng hơn bằng cấp — hãy gửi thứ bạn đã làm ra.",
-            "Hiểu thị trường Miền Trung là lợi thế lớn, khó thay thế bằng kinh nghiệm nơi khác.",
+            "Hiểu thị trường bất động sản địa phương là lợi thế lớn, khó thay thế bằng kinh nghiệm nơi khác.",
             "Trung thực với dữ liệu: nền tảng này sống bằng niềm tin của người mua, tin ảo là thứ chúng tôi loại bỏ.",
             "Chủ động và tự chạy được việc, vì đội ngũ mỏng và làm việc từ xa là chính.",
           ]}

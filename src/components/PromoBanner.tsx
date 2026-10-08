@@ -35,7 +35,7 @@ const promos: Promo[] = [
   {
     tag: "Đăng tin",
     title: "Đăng tin bán & cho thuê dễ dàng",
-    desc: "Chỉ vài phút để đưa bất động sản của bạn đến đúng người mua tại Miền Trung.",
+    desc: "Chỉ vài phút để đưa bất động sản của bạn đến đúng người mua.",
     cta: "Đăng tin ngay",
     href: "/dang-tin",
     icon: "post",

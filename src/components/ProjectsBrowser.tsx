@@ -51,9 +51,13 @@ export default function ProjectsBrowser({
   projects,
   articles,
   hero,
+  tieuDePhu = false,
 }: {
   projects: Project[];
   articles: Article[];
+  /** Trang cha đã có <h1> riêng (trang danh mục / khu vực dự án) → tiêu đề ở đây là h2,
+   *  mỗi trang chỉ MỘT thẻ h1 (SEO, rà 08/10/2026). */
+  tieuDePhu?: boolean;
   // Banner Hero — nhận từ trang cha để đặt ĐÚNG thứ tự: mobile nằm DƯỚI thanh lọc,
   // desktop nằm TRÊN (dùng CSS order, không đổi cấu trúc dữ liệu).
   hero?: React.ReactNode;
@@ -487,9 +491,13 @@ export default function ProjectsBrowser({
           banner Hero rất to (áp cho cả PC & Mobile). */}
       <div id="ket-qua" className="order-3 scroll-mt-20 sm:scroll-mt-24">
       {/* Tiêu đề + bộ đếm nhảy theo bộ lọc (kiểu Batdongsan) */}
-      <h1 className="mt-3 text-2xl font-semibold tracking-tight text-cvr-ink sm:mt-6 sm:text-3xl">
-        Dự án nổi bật
-      </h1>
+      {tieuDePhu ? (
+        <h2 className="mt-3 text-2xl font-semibold tracking-tight text-cvr-ink sm:mt-6 sm:text-3xl">Dự án nổi bật</h2>
+      ) : (
+        <h1 className="mt-3 text-2xl font-semibold tracking-tight text-cvr-ink sm:mt-6 sm:text-3xl">
+          Dự án nổi bật
+        </h1>
+      )}
       <p className="mt-1.5 text-sm text-cvr-muted">
         {/* Coastal Land là CỔNG THÔNG TIN — không phân phối, không mua bán dự án.
             Câu này chỉ nói về thông tin đang đăng tải, không được hàm ý môi giới. */}

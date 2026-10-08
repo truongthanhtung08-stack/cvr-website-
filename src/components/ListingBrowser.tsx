@@ -219,7 +219,7 @@ export default function ListingBrowser({
               điểm yếu với khách (chủ dự án chốt 11/9/2026). Câu này chỉ còn nói
               phạm vi hoạt động. Ẩn trên mobile cho gọn như trước. */}
           <p className="mt-1 hidden text-sm text-cvr-muted sm:block">
-            Bất động sản{active ? " phù hợp " : " "}tại Đà Nẵng, Huế &amp; Miền Trung.
+            {active ? "Bất động sản phù hợp." : "Tin mua bán, cho thuê nhà đất mới nhất."}
           </p>
         </div>
         <div className="flex flex-1 flex-wrap items-center justify-end gap-3">

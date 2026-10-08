@@ -15,7 +15,7 @@ const benefits = [
   },
   {
     title: "Kết nối trực tiếp",
-    description: "Người mua, người bán và môi giới chuyên nghiệp tại Miền Trung liên hệ thẳng với nhau.",
+    description: "Người mua, người bán và môi giới chuyên nghiệp liên hệ thẳng với nhau.",
     icon: "A",
   },
   {
@@ -32,13 +32,13 @@ export default function ValueSection() {
         <div className="grid gap-8 lg:grid-cols-[1.2fr_1fr] lg:items-end">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.26em] text-cvr-gold-ink">
-              Coastal Land — Tinh hoa bất động sản Miền Trung
+              Coastal Land — Tinh hoa bất động sản
             </p>
             <h2 className="mt-4 max-w-2xl text-3xl font-semibold leading-tight text-cvr-ink sm:text-4xl">
               Tìm đúng sản phẩm, đối chiếu đúng giá, kết nối đúng người.
             </h2>
             <p className="mt-4 max-w-2xl text-sm leading-7 text-cvr-muted">
-              Coastal Land là cổng thông tin bất động sản — giúp người mua, người bán và môi giới tại Đà Nẵng, Huế và Miền Trung tìm thấy nhau qua tin đăng chất lượng, thông tin pháp lý rõ ràng.
+              Coastal Land là cổng thông tin bất động sản — giúp người mua, người bán và môi giới tìm thấy nhau qua tin đăng chất lượng, thông tin pháp lý rõ ràng.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <Link

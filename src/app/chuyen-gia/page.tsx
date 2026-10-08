@@ -7,8 +7,8 @@ import { getChuyenGia } from "@/lib/chuyenGiaDb";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/chuyen-gia" },
-  title: "Danh bạ chuyên gia bất động sản Đà Nẵng, Huế",
-  description: "Kết nối chuyên gia môi giới bất động sản uy tín, đã xác minh tại Đà Nẵng và Huế — tư vấn khách quan, hỗ trợ pháp lý và giao dịch an toàn.",
+  title: "Danh bạ chuyên gia bất động sản",
+  description: "Kết nối chuyên gia môi giới bất động sản uy tín, đã xác minh — tư vấn khách quan, hỗ trợ pháp lý và giao dịch an toàn.",
 };
 
 export default async function ChuyenGiaPage() {

@@ -54,11 +54,10 @@ export const landings: Landing[] = [
     title: "Dịch vụ hỗ trợ đăng tin mua bán, cho thuê",
     subtitle: "Tin chuẩn · Đúng khu vực · Đúng người mua",
     intro:
-      "Bạn cần bán hoặc cho thuê bất động sản tại miền Trung? Coastal Land là cổng thông tin giúp tin của bạn hiển thị đúng khu vực, đúng loại hình và tiếp cận người mua đang thật sự tìm — qua website, gói tin VIP và banner quảng bá.",
+      "Bạn cần bán hoặc cho thuê bất động sản? Coastal Land là cổng thông tin giúp tin của bạn hiển thị đúng khu vực, đúng loại hình và tiếp cận người mua đang thật sự tìm — qua website, gói tin VIP và banner quảng bá.",
     stats: [
       { value: "Duyệt nhanh", label: "Tin lên trong ít phút" },
       { value: "Đa kênh", label: "Website · Zalo · Facebook" },
-      { value: "Miền Trung", label: "Đà Nẵng · Huế và lân cận" },
       { value: "Kiểm chứng", label: "Tin đăng được xác minh" },
     ],
     blocks: [

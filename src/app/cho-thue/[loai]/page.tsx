@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ListingBrowser from "@/components/ListingBrowser";
+import { goiNheTin, goiNheHetHan, goiNheBaiViet } from "@/lib/goiNhe";
 import KhungChoDanhMuc from "@/components/KhungChoDanhMuc";
 import Breadcrumb from "@/components/Breadcrumb";
 import KhuVucLinks from "@/components/KhuVucLinks";
@@ -26,6 +27,9 @@ import { normalizeVi } from "@/lib/filters";
 // trước đây web hoàn toàn không có cửa vào từ nhóm này.
 // ============================================================================
 
+// Mô tả quá ngắn (< 100 ký tự) → nối cụm câu chuẩn của cổng thông tin (SEO, 08/10/2026).
+const moTaDu = (d: string) => (d.length < 100 ? `${d.replace(/[.\s]+$/, "")} — tin hình thật, liên hệ trực tiếp người đăng, lọc theo khu vực và mức giá.` : d);
+
 export function generateStaticParams() {
   return [
     ...rentCategories.map((c) => ({ loai: c.slug })),
@@ -43,9 +47,9 @@ export async function generateMetadata({ params }: { params: Promise<{ loai: str
   if (c) {
     return {
       title: c.title,
-      description: c.desc,
+      description: moTaDu(c.desc),
       alternates: { canonical: `/cho-thue/${c.slug}` },
-      openGraph: { title: c.title, description: c.desc, url: `/cho-thue/${c.slug}`, type: "website" },
+      openGraph: { title: c.title, description: moTaDu(c.desc), url: `/cho-thue/${c.slug}`, type: "website" },
     };
   }
 
@@ -114,9 +118,9 @@ export default async function DanhMucChoThuePage({ params }: { params: Promise<{
             <ListingBrowser
               purpose="thue"
               heading={`Cho thuê nhà đất tại ${kv.name}`}
-              items={listings}
-              itemsHetHan={hetHan}
-              articles={articles}
+              items={goiNheTin(listings)}
+              itemsHetHan={goiNheHetHan(hetHan, "thue")}
+              articles={goiNheBaiViet(articles)}
               initialProvince={kv.name}
             />
           </Suspense>
@@ -153,9 +157,9 @@ export default async function DanhMucChoThuePage({ params }: { params: Promise<{
           <ListingBrowser
             purpose="thue"
             heading={c!.h1}
-            items={listings}
-            itemsHetHan={hetHan}
-            articles={articles}
+            items={goiNheTin(listings)}
+            itemsHetHan={goiNheHetHan(hetHan, "thue")}
+            articles={goiNheBaiViet(articles)}
             initialTypes={c!.types}
           />
         </Suspense>
