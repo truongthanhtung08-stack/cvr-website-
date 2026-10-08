@@ -134,7 +134,7 @@ export default function AdminSiteContentPage() {
       )}
 
       {/* HERO TRANG CHỦ */}
-      <Panel title="Hero trang chủ (3 slide)" desc="Mỗi slide cần 2 ảnh: MÁY TÍNH 2600×1000 (2,6:1) và ĐIỆN THOẠI 1200×520 (2,3:1)">
+      <Panel title="Hero trang chủ (3 slide)" desc="Mỗi slide cần 2 ảnh: MÁY TÍNH 2880×823 (7:2) và ĐIỆN THOẠI 1200×520 (2,3:1)">
         <div className="space-y-4">
           {heroSlides.map((s, i) => (
             <div key={i} className="rounded-xl border border-cvr-line p-4">
@@ -143,16 +143,16 @@ export default function AdminSiteContentPage() {
                 <div>
                   <p className="text-sm font-semibold text-cvr-ink">Ảnh MÁY TÍNH</p>
                   <p className="mb-2 mt-0.5 inline-block rounded-md bg-cvr-blue/10 px-2.5 py-1 text-[15px] font-bold tracking-tight text-cvr-blue-ink">
-                    2600 × 1000 px · tỷ lệ 2,6 : 1
+                    2880 × 823 px · tỷ lệ 7 : 2
                   </p>
-                  <ImageField value={s.image} ratio="7:2 · 2880×823" onChange={(url) => setSlide(i, { image: url })} />
+                  <ImageField value={s.image} ratio="7:2 · 2880×823" khung="aspect-[7/2]" onChange={(url) => setSlide(i, { image: url })} />
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-cvr-ink">Ảnh ĐIỆN THOẠI</p>
                   <p className="mb-2 mt-0.5 inline-block rounded-md bg-cvr-blue/10 px-2.5 py-1 text-[15px] font-bold tracking-tight text-cvr-blue-ink">
                     1200 × 520 px · tỷ lệ 2,3 : 1
                   </p>
-                  <ImageField value={s.imageMobile ?? ""} ratio="2,3:1 · 1200×520" onChange={(url) => setSlide(i, { imageMobile: url })} />
+                  <ImageField value={s.imageMobile ?? ""} ratio="2,3:1 · 1200×520" khung="aspect-[30/13]" onChange={(url) => setSlide(i, { imageMobile: url })} />
                   <p className="mt-1 text-xs text-cvr-muted">Bỏ trống → điện thoại dùng tạm ảnh máy tính (sẽ bị cắt)</p>
                 </div>
               </div>
@@ -352,7 +352,7 @@ const addBtnCls =
   "rounded-lg border border-dashed border-cvr-line px-4 py-2 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink";
 
 // Ô ảnh: xem trước + nút tải + ghi rõ TỶ LỆ cần dùng.
-function ImageField({ value, ratio, onChange }: { value: string; ratio: string; onChange: (url: string) => void }) {
+function ImageField({ value, ratio, onChange, khung = "aspect-[16/9]" }: { value: string; ratio: string; onChange: (url: string) => void; khung?: string }) {
   const ref = useRef<HTMLInputElement>(null);
   const [up, setUp] = useState(false);
   const [err, setErr] = useState("");
@@ -368,7 +368,7 @@ function ImageField({ value, ratio, onChange }: { value: string; ratio: string; 
   }
   return (
     <div>
-      <div className="relative aspect-[16/9] w-full overflow-hidden rounded-lg border border-cvr-line bg-cvr-surface">
+      <div className={`relative ${khung} w-full overflow-hidden rounded-lg border border-cvr-line bg-cvr-surface`}>
         {value ? (
           /* eslint-disable-next-line @next/next/no-img-element */
           <img src={asset(value)} alt="" className="h-full w-full object-contain" />
