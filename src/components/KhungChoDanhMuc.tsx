@@ -39,10 +39,14 @@ export default function KhungChoDanhMuc({
   heading: string;
   /** Một hai câu tả trang này bán gì, ở đâu. */
   moTa: string;
-  /** Tin của đúng trang này (đã lọc mục đích/khu vực). Chỉ lấy 24 tin đầu. */
+  /** Tin của đúng trang này (đã lọc mục đích/khu vực) — lấy HẾT, không cắt. */
   items: Listing[];
 }) {
-  const tin = items.slice(0, 24);
+  // LẤY HẾT TIN, không cắt 24 (chủ dự án 08/10/2026 — Search Console báo 267 trang tin
+  // "Discovered – currently not indexed"): danh sách thật phân trang bằng mã trình duyệt,
+  // HTML máy chủ chỉ có 24 tin đầu nên Google không có đường dẫn nội bộ tới các tin còn
+  // lại. Đây vẫn là đúng những tin khách thấy khi lật qua các trang.
+  const tin = items;
 
   return (
     // Chiều cao 104px giữ NGUYÊN như khung chờ cũ: đúng bằng thanh lọc thật, để
