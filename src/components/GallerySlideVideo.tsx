@@ -167,6 +167,20 @@ export default function GallerySlideVideo({
   // nút phát của YouTube; chạy rồi thì bộ nút của web trở lại như cũ.
   const [nhuongYt, setNhuongYt] = useState(false);
   const daChayYtRef = useRef(false);
+  // Đang mở trong ZALO (đo 08/10/2026: Zalo không tính cú bấm nút của web, video đứng im):
+  // tới slide video là hiện thẳng khung YouTube có nút đỏ — khách bấm MỘT lần là chạy.
+  // Messenger/Facebook chạy bình thường nên giữ nguyên; app nào khác bị chặn thì lớp
+  // nhường 2,5 giây ở dưới vẫn đỡ.
+  const [trongApp, setTrongApp] = useState(false);
+  useEffect(() => {
+    const ua = navigator.userAgent;
+    setTrongApp(/Zalo/i.test(ua));
+  }, []);
+  useEffect(() => {
+    if (!trongApp || !laYoutube || !active || xemTruoc || daBam) return;
+    setDaBam(true);
+    setNhuongYt(true);
+  }, [trongApp, laYoutube, active, xemTruoc, daBam]);
   const lenhYt = (func: string, args: unknown[] = []) =>
     khungRef.current?.contentWindow?.postMessage(JSON.stringify({ event: "command", func, args }), "*");
   // YouTube báo trạng thái qua postMessage (sau khi gửi "listening").
@@ -252,7 +266,9 @@ export default function GallerySlideVideo({
       }
       playingRef.current = false;
       dungVaoRef.current = false;
+      daChayYtRef.current = false;
       setDaBam(false);
+      setNhuongYt(false);
       setLon(false);
       setXoay(false);
     }
