@@ -468,8 +468,10 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
   // ── GIÁ ───────────────────────────────────────────────────────────────────
   // BÁN nhập theo TỶ · THUÊ nhập theo TRIỆU cho MỘT KỲ (mặc định là tháng).
   // Bỏ trống cả hai cột giá = Thỏa thuận.
+  // Ô giá ghi chữ "Thỏa thuận" / "Liên hệ" = để trống (web hiện Thoả thuận).
+  const coGia = (v: string) => !!v && !/^(tho[aả]|th[oỏ]a)\s*thu[aậ]n$|^li[eê]n\s*h[eệ]$/i.test(v.normalize("NFC").trim());
   let giaVnd: number | null = null;
-  if (lay(COT.gia)) {
+  if (coGia(lay(COT.gia))) {
     const n = soVN(lay(COT.gia));
     if (n == null) loi.push(`gia "${lay(COT.gia)}" không phải số`);
     else giaVnd = Math.round((n * (mucDich === "thue" ? 1e6 : 1e9)) / soThang);
@@ -484,7 +486,7 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
   // giá rẻ hơn) thì ghi ĐÚNG mức áp cho diện tích của chính tin này.
   const laGiaTheoM2 = coDonGiaM2(loaiHinhChuan, mucDich);
   let donGiaThue: number | null = null;
-  if (lay(COT.donGiaThue)) {
+  if (coGia(lay(COT.donGiaThue))) {
     const n = soVN(lay(COT.donGiaThue));
     if (n == null) loi.push(`don_gia_thue "${lay(COT.donGiaThue)}" không phải số`);
     else if (mucDich !== "thue") canhBao.push("don_gia_thue chỉ dùng cho tin CHO THUÊ — đã bỏ qua");

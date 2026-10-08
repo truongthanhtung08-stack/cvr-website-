@@ -61,6 +61,9 @@ function maTuTenTep(f) {
 function maTuTieuDe(ten) {
   const t = String(ten).trim();
   // ① Còn nguyên ngoặc vuông thì lấy trong ngoặc.
+  // Mã có đuôi ngày (dn05-1005) — YouTube hay đổi "-" thành dấu cách → gộp lại "dn05-1005".
+  const coNgay = /(?:^|[\s\-–—|,.\[])([a-z]{2,10}\d{1,3})[\s\-]+(\d{4})\s*\]?\s*$/i.exec(t);
+  if (coNgay) return `${coNgay[1]}-${coNgay[2]}`.toLowerCase();
   const trongNgoac = /\[\s*([a-z]{2,10}\d{1,3})\s*\]/i.exec(t);
   if (trongNgoac) return trongNgoac[1].toLowerCase();
   // ② YouTube hay cắt mất ngoặc → lấy cụm chữ+số Ở CUỐI tiêu đề.

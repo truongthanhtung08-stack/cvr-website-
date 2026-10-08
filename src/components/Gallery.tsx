@@ -75,8 +75,26 @@ export default function Gallery({
 
   const mIsVideo = mCur < nVid;
 
+  // XOAY MÁY: khung đổi cỡ làm vị trí cuộn lệch, tính lại "đang ở tấm nào" là sai một
+  // tấm → video đang chạy bị coi như đã rời slide và DỪNG (chủ dự án báo 08/10/2026).
+  // Nên khi đổi cỡ: giữ nguyên tấm đang xem, bỏ qua sự kiện cuộn trong lúc đó.
+  const xoayToi = useRef(0);
+  const mCurRef = useRef(0);
+  useEffect(() => {
+    mCurRef.current = mCur;
+  }, [mCur]);
+  useEffect(() => {
+    const doiCo = () => {
+      xoayToi.current = Date.now() + 600;
+      const el = mTrack.current;
+      if (el) el.scrollTo({ left: mCurRef.current * el.clientWidth, behavior: "instant" as ScrollBehavior });
+    };
+    window.addEventListener("resize", doiCo);
+    return () => window.removeEventListener("resize", doiCo);
+  }, []);
   const onMScroll = () => {
     const el = mTrack.current;
+    if (Date.now() < xoayToi.current) return;
     if (el) setMCur(Math.round(el.scrollLeft / el.clientWidth));
   };
 
@@ -142,7 +160,7 @@ export default function Gallery({
           </div>
         ) : (
           <button type="button" onClick={() => open(0)} className="group relative block aspect-[2/1] w-full overflow-hidden rounded-none border border-cvr-line">
-            <Image src={media[0].src} alt={alt} fill priority quality={90} sizes="(max-width:1024px) 100vw, 66vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
+            <Image src={media[0].src} alt={alt} fill priority quality={90} sizes="(max-width:1024px) 100vw, 66vw" className="bg-black object-contain" />
           </button>
         )
       ) : (
@@ -177,7 +195,7 @@ export default function Gallery({
                   aria-label={`Ảnh ${imgIdx(i) + 1}`}
                   className="relative aspect-video w-full shrink-0 snap-center overflow-hidden border border-cvr-line bg-cvr-surface"
                 >
-                  <Image src={m.src} alt={`${alt} ${imgIdx(i) + 1}`} fill priority={i === nVid} quality={90} sizes="100vw" className="object-cover" />
+                  <Image src={m.src} alt={`${alt} ${imgIdx(i) + 1}`} fill priority={i === nVid} quality={90} sizes="100vw" className="bg-black object-contain" />
                 </button>
               ),
             )}
@@ -294,7 +312,7 @@ export default function Gallery({
               <GallerySlideVideo url={media[bigIdx].src} active onHold={setHold} />
             ) : (
               <button type="button" onClick={() => open(imgIdx(bigIdx))} className="absolute inset-0 block h-full w-full">
-                <Image key={bigIdx} src={media[bigIdx].src} alt={alt} fill priority quality={90} sizes="(max-width:1024px) 100vw, 50vw" className="object-cover animate-fadein" />
+                <Image key={bigIdx} src={media[bigIdx].src} alt={alt} fill priority quality={90} sizes="(max-width:1024px) 100vw, 50vw" className="bg-black object-contain animate-fadein" />
               </button>
             )}
             {/* ── NÚT CHUYỂN ‹ › ────────────────────────────────────────────

@@ -1,6 +1,7 @@
 // Tải 1 tệp media (ảnh/video) lên Supabase Storage (bucket "listings") → trả URL công khai.
 // Dùng chung cho các ô nhập có chèn ảnh/video (ContentEditor, avatar…).
 import { createClient } from "@/lib/supabase/client";
+import { nenVideo, TRAN_VIDEO_MB } from "@/lib/nenVideo";
 
 export type UploadResult = { url?: string; error?: string };
 
@@ -150,4 +151,14 @@ async function taoBanNho(file: File, url: string) {
 // qua YouTube rồi dán link (chốt 17/09/2026). Mức 50MB cũ chặn cả video quay
 // điện thoại 1–2 phút — đo thật: hai video của đợt 10/09 nặng 54MB và 51MB.
 // Kho: đã lên Supabase Pro (17/09/2026) — 100GB, không còn kẹt 1GB như gói miễn phí.
-export const uploadVideoFile = (file: File) => uploadMedia(file, "video", 200);
+// 08/10/2026: kho chỉ nhận 50MB/tệp → video trên 44MB TỰ NÉN trên máy trước khi tải
+// (src/lib/nenVideo.ts). Nhận tệp gốc tới 200MB, tải lên tối đa 50MB.
+export const uploadVideoFile = async (file: File) => {
+  if (!file.type.startsWith("video/")) return uploadMedia(file, "video", TRAN_VIDEO_MB);
+  if (file.size > 200 * 1024 * 1024)
+    return { error: `Video "${file.name}" quá 200MB — chọn video ngắn hơn.` };
+  const nen = await nenVideo(file);
+  if (nen.size > TRAN_VIDEO_MB * 1024 * 1024)
+    return { error: `Video "${file.name}" quá dài, máy không nén được xuống ${TRAN_VIDEO_MB}MB — chọn video ngắn hơn.` };
+  return uploadMedia(nen, "video", TRAN_VIDEO_MB);
+};

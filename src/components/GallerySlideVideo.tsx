@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import { asset } from "@/lib/asset";
 import { videoEmbedUrl, videoPosterUrl } from "@/lib/media";
-import VideoToanManHinh from "@/components/VideoToanManHinh";
 
 // ════════════════════════════════════════════════════════════════════════════
 // VIDEO TRONG THƯ VIỆN ẢNH — PHÁT TẠI CHỖ, DÙNG NÚT GỐC CỦA TRÌNH PHÁT.
@@ -44,24 +43,52 @@ export default function GallerySlideVideo({
   const khungRef = useRef<HTMLIFrameElement>(null);
   const [posterSrc, setPosterSrc] = useState(poster?.hd ?? "");
   const [loiPhat, setLoiPhat] = useState(false);
-  // Mở lớn = trình xem của web (nút Thoát/Xoay luôn hiện). Mở thì DỪNG video ở
-  // khung nhỏ, không để hai cái cùng chạy.
-  const [xemLon, setXemLon] = useState(false);
   // YOUTUBE: CHƯA BẤM THÌ CHƯA NẠP TRÌNH PHÁT.
   // Nạp iframe sẵn thì YouTube tự đắp lên khung một lớp nút của họ — nút chia sẻ,
   // nút xem sau, dải "Watch on YouTube" — rối mắt và dẫn khách rời trang mình
   // (chủ dự án báo 17/09/2026). Nay chỉ hiện ẢNH BÌA + một nút play duy nhất;
   // bấm mới nạp iframe kèm autoplay nên video chạy thẳng, không kịp hiện lớp đó.
   const [daBam, setDaBam] = useState(false);
-  const [giay, setGiay] = useState(0);
+  const laYoutube = !!embed && /youtube\.com/.test(embed);
+  const [ytDung, setYtDung] = useState(false); // YouTube đang dừng (khách chạm dừng)
+  const gocRef = useRef<HTMLDivElement>(null);
+  // ── XEM LỚN = PHÓNG TO NGAY TRÌNH PHÁT ĐANG CHẠY (chủ dự án 08/10/2026) ──────
+  // Trước đây bấm xem lớn là MỞ TRÌNH PHÁT MỚI rồi tự phát — điện thoại (nhất là
+  // iPhone) chặn tự phát có tiếng nên video ĐỨNG. Nay không tạo trình phát mới:
+  // khung đang phát phủ kín màn hình (máy cho thì vào toàn màn hình thật), video
+  // CHẠY TIẾP; thoát ra cũng vậy. Chỉ dừng khi khách tự bấm dừng.
+  // Video ngang hay dọc tự co vừa màn hình (object-contain / trình phát YouTube).
+  const [lon, setLon] = useState(false);
+  const [xoay, setXoay] = useState(false);
   const moLon = () => {
-    const v = ref.current;
-    if (v) {
-      setGiay(v.currentTime);
-      v.pause();
-    }
-    setXemLon(true);
+    setLon(true);
+    const el = gocRef.current as (HTMLDivElement & { webkitRequestFullscreen?: () => void }) | null;
+    if (el?.requestFullscreen) void el.requestFullscreen().catch(() => {});
+    else el?.webkitRequestFullscreen?.();
   };
+  const thuNho = () => {
+    const doc = document as unknown as { webkitFullscreenElement?: Element; webkitExitFullscreen?: () => void };
+    if (document.fullscreenElement) void document.exitFullscreen().catch(() => {});
+    else if (doc.webkitFullscreenElement) doc.webkitExitFullscreen?.();
+    setLon(false);
+    setXoay(false);
+  };
+  // Thoát bằng phím Esc / nút Back của máy → thu khung về theo, video vẫn chạy.
+  useEffect(() => {
+    const doi = () => {
+      const co = !!document.fullscreenElement || !!(document as unknown as { webkitFullscreenElement?: Element }).webkitFullscreenElement;
+      if (!co) {
+        setLon(false);
+        setXoay(false);
+      }
+    };
+    document.addEventListener("fullscreenchange", doi);
+    document.addEventListener("webkitfullscreenchange", doi);
+    return () => {
+      document.removeEventListener("fullscreenchange", doi);
+      document.removeEventListener("webkitfullscreenchange", doi);
+    };
+  }, []);
   const holdRef = useRef(onHold);
   const playingRef = useRef(false);
   const fullRef = useRef(false);
@@ -105,9 +132,20 @@ export default function GallerySlideVideo({
       playingRef.current = false;
       dungVaoRef.current = false;
       setDaBam(false);
+      setYtDung(false);
+      setLon(false);
+      setXoay(false);
     }
     holdRef.current?.(playingRef.current || fullRef.current || dungVaoRef.current);
   }, [active]);
+
+  // Đang xem lớn thì giữ slide đứng yên (kể cả khi máy không vào toàn màn hình thật).
+  useEffect(() => {
+    if (lon) {
+      fullRef.current = true;
+      holdRef.current?.(true);
+    }
+  }, [lon]);
 
   // TOÀN MÀN HÌNH: chỉ để giữ slide đứng yên trong lúc khách đang xem.
   //
@@ -145,22 +183,54 @@ export default function GallerySlideVideo({
     // nút play, tua, âm lượng gốc. Slide chưa tới lượt thì chỉ hiện khung hình
     // chờ, không nạp iframe cho nhẹ trang.
     //
-    // `!xemLon`: MỞ LỚN THÌ PHẢI GỠ HẲN IFRAME NÀY RA.
-    // Video tự đăng là thẻ <video> nên gọi pause() được, còn YouTube/Vimeo là
-    // iframe — ref.current bằng null, pause() không ăn vào đâu cả. Hậu quả: bấm
-    // xem lớn thì khung nhỏ VẪN CHẠY, thành hai video hai tiếng cùng lúc (chủ dự
-    // án báo 11/9/2026). Gỡ iframe là nó im ngay; đóng lại thì nạp lại.
-    active && !xemLon && daBam ? (
-      <iframe
-        ref={khungRef}
-        src={`${embed}&autoplay=1`}
-        title="Video"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-        // allowFullScreen: thiếu thuộc tính này thì nút toàn màn hình CỦA YOUTUBE
-        // bấm không lên — khách tưởng web hỏng.
-        allowFullScreen
-        className="h-full w-full bg-black"
-      />
+    active && daBam ? (
+      laYoutube ? (
+        // YOUTUBE GỌN (chủ dự án 08/10/2026: khung YouTube "rất rối" — tên video,
+        // logo kênh, CC, cài đặt, chia sẻ, chữ YouTube đè kín khung).
+        // Tắt hết nút của YouTube (controls=0) và đặt MỘT LỚP CHẠM của web lên trên:
+        // chạm = phát/dừng (gửi lệnh qua enablejsapi), góc trên phải = toàn màn hình.
+        // Lớp này chặn luôn cú rê/chạm vào iframe nên YouTube không bật lớp nút của họ.
+        <>
+          <iframe
+            ref={khungRef}
+            src={`${embed}&autoplay=1&controls=0&disablekb=1&fs=0&enablejsapi=1`}
+            title="Video"
+            allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+            // KHÔNG kéo iframe cao hơn khung để giấu dải tên video: thử 08/10 thì video
+            // quay dọc bị YouTube phóng to, mất phần trên dưới.
+            className="pointer-events-none h-full w-full bg-black"
+          />
+          <button
+            type="button"
+            onClick={() => {
+              const lenh = ytDung ? "playVideo" : "pauseVideo";
+              khungRef.current?.contentWindow?.postMessage(JSON.stringify({ event: "command", func: lenh, args: [] }), "*");
+              setYtDung(!ytDung);
+            }}
+            aria-label={ytDung ? "Phát video" : "Dừng video"}
+            className="absolute inset-0 z-[5] flex items-center justify-center"
+          >
+            {ytDung && (
+              <span className="flex h-[62px] w-[62px] items-center justify-center rounded-full bg-black/55 backdrop-blur-sm sm:h-[70px] sm:w-[70px]">
+                <svg className="ml-1 h-7 w-7 text-white sm:h-8 sm:w-8" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+              </span>
+            )}
+          </button>
+        </>
+      ) : (
+        <iframe
+          ref={khungRef}
+          src={`${embed}&autoplay=1`}
+          title="Video"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+          // allowFullScreen: thiếu thuộc tính này thì nút toàn màn hình CỦA YOUTUBE
+          // bấm không lên — khách tưởng web hỏng.
+          allowFullScreen
+          className="h-full w-full bg-black"
+        />
+      )
     ) : (
       <div className="relative flex h-full w-full items-center justify-center bg-black">
         {/* KHUNG HÌNH CHỜ — không để ô đen trơn. Ảnh lấy thẳng từ YouTube nên không
@@ -236,45 +306,49 @@ export default function GallerySlideVideo({
     </video>
   );
 
-  // Trong khung: play · tua · âm lượng là thanh gốc của trình phát, nằm sát đáy.
-  // Nút phóng to đặt ở GÓC TRÊN PHẢI và là nút DUY NHẤT — nút toàn màn hình mặc
-  // định đã tắt, nên không còn cảnh hai nút giống nhau như bản trước.
+  // Trong khung: play · tua · âm lượng là thanh gốc của trình phát (video tải lên) hoặc
+  // lớp chạm phát/dừng (YouTube). GÓC TRÊN PHẢI: nút phóng to / thu nhỏ — bấm một chỗ để
+  // mở, bấm lại chính chỗ đó để thoát. Lúc phóng to có thêm nút Xoay ở góc trên trái
+  // (bấm lại thì xoay về). Đổi chế độ xem KHÔNG dừng video.
+  const coNut = !xemTruoc && !loiPhat && (!embed || (active && daBam));
+  const nutTron = "flex h-10 w-10 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-sm active:bg-black/80";
   return (
-    <div className={`absolute inset-0 bg-black ${xemTruoc ? "pointer-events-none" : ""}`}>
-      {video}
+    <div ref={gocRef} className={`${lon ? "fixed inset-0 z-[200] overflow-hidden" : "absolute inset-0"} bg-black ${xemTruoc ? "pointer-events-none" : ""}`}>
+      {/* XOAY: quay 90° quanh tâm màn để video ngang phủ kín màn dọc; bấm lại thì về. */}
+      <div
+        className="h-full w-full"
+        style={
+          lon && xoay
+            ? { position: "absolute", left: "50%", top: "50%", width: "100vh", height: "100vw", transform: "translate(-50%, -50%) rotate(90deg)" }
+            : undefined
+        }
+      >
+        {video}
+      </div>
 
-      {/* NÚT XEM LỚN — CHỈ CHO VIDEO TỰ ĐĂNG (thẻ <video>).
-          Video YouTube thì KHÔNG vẽ nút này: trình phát của YouTube đã có sẵn nút
-          toàn màn hình ở góc dưới phải, và nó làm tốt hơn hẳn.
-          Chủ dự án chốt 11/9/2026 sau khi thử: nút tự vẽ mở trình xem riêng của
-          web, ở đó khung nhúng bị ép 16:9 nên video QUAY DỌC co lại bé tí ("bấm
-          full sao ra nhỏ vậy"), lại còn chạy lại từ đầu vì iframe nạp mới.
-          Nút của YouTube thì phóng to ngay video ĐANG CHẠY, đúng tỉ lệ thật,
-          xoay máy cũng tự xoay theo. */}
-      {!xemTruoc && !loiPhat && !embed && (
-        <button
-          type="button"
-          onClick={moLon}
-          aria-label="Xem lớn"
-          className="absolute right-2 top-2 z-[6] flex h-10 w-10 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-sm active:bg-black/80"
-        >
-          <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />
+      {coNut && lon && (
+        <button type="button" onClick={() => setXoay((v) => !v)} aria-label={xoay ? "Xoay về" : "Xoay ngang"} className={`absolute left-2 top-2 z-[6] ${nutTron}`}>
+          <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.9} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 9a8 8 0 0113.6-4.6L20 7M20 15a8 8 0 01-13.6 4.6L4 17" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M20 4v3h-3M4 20v-3h3" />
           </svg>
         </button>
       )}
-
-      {xemLon && (
-        <VideoToanManHinh
-          url={url}
-          batDau={giay}
-          onClose={(giayDangXem) => {
-            // Thu về khung nhỏ ĐÚNG CHỖ vừa xem dở, không nhảy về đầu.
-            const v = ref.current;
-            if (v && typeof giayDangXem === "number" && giayDangXem > 0) v.currentTime = giayDangXem;
-            setXemLon(false);
-          }}
-        />
+      {coNut && (
+        <button
+          type="button"
+          onClick={lon ? thuNho : moLon}
+          aria-label={lon ? "Thoát toàn màn hình" : "Toàn màn hình"}
+          className={`absolute right-2 top-2 z-[6] ${nutTron}`}
+        >
+          <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            {lon ? (
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" />
+            ) : (
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />
+            )}
+          </svg>
+        </button>
       )}
 
       {loiPhat && !xemTruoc && (
