@@ -26,38 +26,25 @@ export type Plan = {
   maxVideos?: number; // SỐ VIDEO TỐI ĐA mỗi tin của cấp này
 };
 
-// Số ảnh/video tối đa của một cấp tin. Chưa đặt trong admin → mức mặc định bên dưới.
-const ANH_MAC_DINH: Record<TierId, number> = { diamond: 15, gold: 12, silver: 10, basic: 7 };
-const VIDEO_MAC_DINH: Record<TierId, number> = { diamond: 3, gold: 2, silver: 1, basic: 1 };
-
-// ── MỨC CHUNG (giai đoạn hiện tại) ──────────────────────────────────────────
-// Chưa siết theo cấp tin: MỌI tin đều 15 ảnh + 1 video, kể cả tin Basic. Khi nào
-// bắt đầu thu tiền theo cấp thì bật "Giới hạn ảnh theo cấp tin" ở trang
-// /admin/gia-khuyen-mai → quay lại mức riêng từng cấp (Basic 7 · Silver 10 ·
-// Gold 12 · Diamond 15). Không phải sửa code.
-export const ANH_CHUNG_MAC_DINH = 15;
-export const VIDEO_CHUNG_MAC_DINH = 1;
-
+// Số ảnh/video tối đa của một cấp tin — CHỈ theo Quy định tin đã duyệt trong admin.
+// Chưa duyệt → 0 (09/10/2026: không duyệt = không hiệu lực, code không có số mặc định).
 export function soAnhToiDa(data: BillingData, tierId: TierId): number {
-  if (!data.mediaTheoCap) return data.anhChung ?? ANH_CHUNG_MAC_DINH;
-  return data.plans.find((p) => p.tierId === tierId)?.maxImages ?? ANH_MAC_DINH[tierId];
+  if (!data.mediaTheoCap) return data.anhChung ?? 0;
+  return data.plans.find((p) => p.tierId === tierId)?.maxImages ?? 0;
 }
 
 export function soVideoToiDa(data: BillingData, tierId: TierId): number {
-  if (!data.mediaTheoCap) return data.videoChung ?? VIDEO_CHUNG_MAC_DINH;
-  return data.plans.find((p) => p.tierId === tierId)?.maxVideos ?? VIDEO_MAC_DINH[tierId];
+  if (!data.mediaTheoCap) return data.videoChung ?? 0;
+  return data.plans.find((p) => p.tierId === tierId)?.maxVideos ?? 0;
 }
 
 // ── GÓI DỰ ÁN (CVR-PJ) ──────────────────────────────────────────────────────
-// Dự án có thư viện ảnh, mặt bằng, tiện ích… nên số ảnh nhiều hơn tin thường.
-const ANH_DU_AN_MAC_DINH: Record<TierId, number> = { diamond: 30, gold: 25, silver: 20, basic: 15 };
-
 export function goiDuAn(data: BillingData): Plan[] {
-  return data.projectPlans?.length ? data.projectPlans : PROJECT_PLANS_DEFAULT;
+  return data.projectPlans ?? [];
 }
 
 export function soAnhDuAnToiDa(data: BillingData, tierId: TierId): number {
-  return goiDuAn(data).find((p) => p.tierId === tierId)?.maxImages ?? ANH_DU_AN_MAC_DINH[tierId];
+  return goiDuAn(data).find((p) => p.tierId === tierId)?.maxImages ?? 0;
 }
 
 // Báo giá cho DỰ ÁN — dùng chung công thức với tin đăng (khuyến mãi + cấp hội viên)
@@ -93,6 +80,9 @@ export type FreePolicy = {
   days: number;        // miễn phí trong bao nhiêu ngày kể từ khi đăng ký
   quota: number;       // số tin miễn phí được đăng
   tierId: TierId;      // đăng ở cấp tin nào
+  hienThi?: number;    // mỗi tin miễn phí hiển thị bao nhiêu ngày (từ chương trình đã duyệt)
+  soAnh?: number;      // số ảnh tối đa mỗi tin miễn phí
+  soVideo?: number;    // số video tối đa mỗi tin miễn phí
   audience: PromoAudience;
   note: string;        // dòng hiển thị cho khách
   // THỜI HẠN CỦA CHÍNH CHƯƠNG TRÌNH (khác `days` — `days` là "khách mới trong
@@ -128,7 +118,7 @@ export type MemberLevel = {
 type LegacyMemberLevel = MemberLevel & { minSpend?: number };
 
 export function chuanHoaCapHoiVien(levels: LegacyMemberLevel[] | undefined): MemberLevel[] {
-  if (!levels?.length) return BILLING_DEFAULT.levels;
+  if (!levels?.length) return [];
   return levels.map((l) => ({
     ...l,
     minTopup: l.minTopup ?? l.minSpend ?? 0,
@@ -271,29 +261,21 @@ export const PROJECT_PLANS_DEFAULT: Plan[] = [
     tierId: "diamond",
     name: "CVR-PJ Diamond",
     terms: [],
-    note: "Trang chủ + đứng trên CVR-PJ Gold — icon đỏ nổi bật",
-    maxImages: 30,
   },
   {
     tierId: "gold",
     name: "CVR-PJ Gold",
     terms: [],
-    note: "Đứng trên CVR-PJ Silver — icon vàng nổi bật",
-    maxImages: 25,
   },
   {
     tierId: "silver",
     name: "CVR-PJ Silver",
     terms: [],
-    note: "Đứng trên CVR-PJ Basic — icon xanh nổi bật",
-    maxImages: 20,
   },
   {
     tierId: "basic",
     name: "CVR-PJ Basic",
     terms: [],
-    note: "Giai đoạn đầu: miễn phí — đặt giá trong admin khi bắt đầu thu",
-    maxImages: 15,
   },
 ];
 
@@ -306,11 +288,7 @@ export const UP_DEFAULT: UpRow[] = [
 export const PR_DEFAULT: PrPkg[] = [
 ];
 
-export const PR_NOTES_DEFAULT: string[] = [
-  "Một bài PR không quá 5 ảnh minh hoạ.",
-  "Bài PR gửi trước 2 ngày.",
-  "Bài PR xuất hiện ở Trang chủ trong 1 ngày, xuất hiện trên trang chuyên mục Tin tức vĩnh viễn.",
-];
+export const PR_NOTES_DEFAULT: string[] = [];
 
 export const BANNERS_DEFAULT: BannerTable[] = [
 ];
@@ -377,56 +355,45 @@ export const BILLING_DEFAULT: BillingData = {
       tierId: "diamond",
       name: "CVR Diamond",
       terms: [],
-      note: "Ưu tiên hiển thị cao nhất — hệ số tiếp cận X30",
-      maxImages: 15,
+      note: "",
     },
     {
       tierId: "gold",
       name: "CVR Gold",
       terms: [],
-      note: "Hiển thị nổi bật — hệ số tiếp cận X15",
-      maxImages: 12,
+      note: "",
     },
     {
       tierId: "silver",
       name: "CVR Silver",
       terms: [],
-      note: "Tiết kiệm hiệu quả — hệ số tiếp cận X8",
-      maxImages: 10,
+      note: "",
     },
     {
       tierId: "basic",
       name: "CVR Basic",
       terms: [],
-      note: "Tin thường — hiển thị theo thời gian đăng",
-      maxImages: 7,
+      note: "",
     },
   ],
   promos: [],
   free: {
     active: false,
-    days: 30,
+    days: 0,
     quota: 0,
     tierId: "basic",
     audience: "new",
-    note: "Thành viên mới được đăng 3 tin miễn phí trong 30 ngày đầu.",
-    // Chủ dự án chốt 17/9/2026: chương trình chạy TỪ HÔM NAY ĐẾN HẾT 1 THÁNG SAU.
-    // Muốn gia hạn hay đóng sớm thì sửa ở /admin/gia-khuyen-mai → tab Miễn phí,
-    // không phải sửa code.
+    note: "",
+    // Chương trình miễn phí CHỈ đến từ chương trình đã Duyệt trong admin → Bảng giá.
     from: "",
     to: "",
   },
-  points: { active: false, earnPerVnd: 10_000, redeemRate: 100, minRedeem: 100 }, // điểm thưởng đã bỏ 25/09/2026
+  points: { active: false, earnPerVnd: 0, redeemRate: 0, minRedeem: 0 }, // điểm thưởng đã bỏ 25/09/2026
   // CẤP HỘI VIÊN — ĐÚNG 4 CẤP, TRÙNG TÊN với 4 hạng tin (Basic · Silver · Gold ·
   // Diamond) để khách không phải nhớ hai hệ tên. Basic là cấp khởi điểm (nạp 0đ),
   // NẠP đủ mốc là tự lên cấp trên. Màu lấy đúng màu hạng tin trong packages.ts.
   // Mốc mặc định — chủ dự án sửa được ở /admin/gia-khuyen-mai → tab Cấp hội viên.
-  levels: [
-    { id: "basic", name: "Basic", minTopup: 0, discount: 0, color: "#9aa0a6" },
-    { id: "silver", name: "Silver", minTopup: 5_000_000, discount: 0, color: "#0071e3" },
-    { id: "gold", name: "Gold", minTopup: 20_000_000, discount: 0, color: "#c9a24a" },
-    { id: "diamond", name: "Diamond", minTopup: 50_000_000, discount: 0, color: "#d7263d" },
-  ],
+  levels: [], // hệ cấp theo tổng nạp đã bỏ 25/09/2026
   topupAmounts: [200_000, 500_000, 1_000_000, 2_000_000, 5_000_000, 10_000_000],
   projectPlans: PROJECT_PLANS_DEFAULT,
   up: UP_DEFAULT,
@@ -568,12 +535,12 @@ export function huongKhuyenMai(
 //   · Còn lại → đúng số ngày của gói đã chọn; không chọn → gói NGẮN NHẤT của hạng đó.
 // Hết số ngày là hết hạn, ngừng hiển thị — không trường hợp riêng nào.
 export function soNgayHienThi(bang: BillingData, goi: TierId, soNgayChon: number, huongKhuyenMai: boolean): number {
-  if (huongKhuyenMai && goi === bang.free.tierId) return bang.free.days;
+  if (huongKhuyenMai && goi === bang.free.tierId) return bang.free.hienThi ?? bang.free.days;
   const terms = bang.plans.find((p) => p.tierId === goi)?.terms ?? [];
   // Chỉ nhận số ngày CÓ TRONG BẢNG GIÁ — số ngày tuỳ ý (gửi từ trình duyệt) không được tính.
   if (soNgayChon > 0 && terms.some((t) => t.days === soNgayChon)) return soNgayChon;
   const ngan = terms.map((t) => t.days).sort((a, b) => a - b)[0];
-  return ngan ?? 7;
+  return ngan ?? 0;
 }
 
 // "2026-10-17" → "17/10/2026". Không dùng new Date() để khỏi lệch múi giờ.

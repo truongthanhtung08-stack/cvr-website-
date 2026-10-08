@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import RegisterForm from "@/components/RegisterForm";
@@ -56,9 +57,10 @@ const LY_DO = [
 
 export default async function DangTinMienPhiPage() {
   const billing = await getBilling();
-  const uuDai = freeDangChay(billing.free, new Date().toISOString().slice(0, 10))
-    ? freeNote(billing.free, tenGoiMienPhi(billing))
-    : "";
+  // ⛔ 09/10/2026: không có chương trình miễn phí ĐÃ DUYỆT đang chạy thì trang này không được hứa
+  // miễn phí → chuyển về trang đăng ký.
+  if (!freeDangChay(billing.free, new Date().toISOString().slice(0, 10))) redirect("/dang-ky");
+  const uuDai = freeNote(billing.free, tenGoiMienPhi(billing));
 
   return (
     <>

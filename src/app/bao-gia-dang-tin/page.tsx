@@ -11,7 +11,6 @@ import { getProjects } from "@/lib/contentDb";
 import type { Listing, Project } from "@/lib/data";
 import { getTier, type TierId } from "@/lib/packages";
 import { getBilling, getQuyDinhGia } from "@/lib/siteContent";
-import { dienMa } from "@/lib/quyDinhGia";
 import { bangTheoMucDich, bangUp, goiPr, ghiChuPr, bangBanner, giaTra, priceLinesDuAn, freeDangChay, freeNote, tenGoiMienPhi } from "@/lib/billing";
 import BangGiaGoiTin from "@/components/BangGiaGoiTin";
 import BangGiaDayTin from "@/components/BangGiaDayTin";
@@ -31,9 +30,7 @@ export const metadata: Metadata = {
 
 type PriceLine = { label: string; original?: string; price: string; perDay?: string };
 
-// QUYỀN LỢI 4 CẤP + QUY ĐỊNH CHUNG — chữ nằm ở ADMIN (src/lib/quyDinhGia.ts,
-// /admin/gia-chuan → tab Quy định). Hệ số X, vị trí, nhận diện vẫn lấy THẲNG từ
-// packages.ts qua mã {X} {VI_TRI} {NHAN_DIEN} — đổi cơ chế một chỗ là chữ tự đúng.
+// QUYỀN LỢI · QUY ĐỊNH — chữ CHỈ từ admin đã duyệt (src/lib/quyDinhGia.ts). Chưa duyệt = ẩn.
 
 const pjPkgs = [
   {
@@ -41,41 +38,19 @@ const pjPkgs = [
     name: "CVR-PJ Diamond",
     img: "sun-cosmo-residence.jpg",
     sample: { title: "Sun Cosmo Residence", address: "Hòa Hải, Ngũ Hành Sơn, Đà Nẵng" },
-    displays: ["Xuất hiện trên Trang chủ.", "Xuất hiện trên CVR-PJ Gold.", "Xuất hiện trên CVR Diamond.", "Icon màu đỏ nổi bật."],
   },
   {
     tierId: "gold" as TierId,
     name: "CVR-PJ Gold",
     img: "the-filmore-da-nang.jpg",
     sample: { title: "The Filmore Da Nang", address: "Hải Châu, Đà Nẵng" },
-    displays: ["Xuất hiện trên CVR-PJ Silver.", "Xuất hiện trên CVR Gold.", "Icon màu vàng nổi bật."],
   },
   {
     tierId: "silver" as TierId,
     name: "CVR-PJ Silver",
     img: "khu-do-thi-fpt-city.jpg",
     sample: { title: "Khu đô thị FPT City", address: "Ngũ Hành Sơn, Đà Nẵng" },
-    displays: ["Xuất hiện trên CVR-PJ Basic.", "Xuất hiện trên CVR Silver.", "Icon màu xanh nổi bật."],
   },
-];
-
-const featureRows: { label: string; values: [string, string, string, string] }[] = [
-  { label: "Thứ hạng tin đăng", values: ["1", "2", "3", "4"] },
-  // Hệ số tiếp cận — con số cốt lõi của cơ chế, đọc từ packages.ts.
-  {
-    label: "Hệ số tiếp cận",
-    values: [getTier("diamond").heSoText, getTier("gold").heSoText, getTier("silver").heSoText, getTier("basic").heSoText],
-  },
-  // "Kích thước tin đăng" đã BỎ: thẻ tin trong lưới phải cùng khổ, làm to nhỏ
-  // theo cấp là vỡ layout. Cảm giác "nổi hơn" nằm ở vị trí + số dòng mô tả.
-  { label: "Nội dung trên thẻ tin", values: ["3 dòng mô tả", "2 dòng", "1 dòng", "Không"] },
-  { label: "Hiển thị mô tả tin đăng", values: ["✓", "✓", "✓", "✓"] },
-  { label: "Hiển thị thông tin người bán", values: ["✓", "✓", "✓", "✓"] },
-  { label: "Hiển thị nút gọi điện", values: ["✓", "✓", "✓", "✓"] },
-  { label: "Chèn link mô tả tin đăng", values: ["✓", "—", "—", "—"] },
-  { label: "Ưu tiên hiển thị sớm (*)", values: ["✓", "✓", "✓", "—"] },
-  { label: "Không hiển thị quảng cáo (**)", values: ["✓", "✓", "—", "—"] },
-  { label: "Nhân đôi hiển thị (***)", values: ["✓", "—", "—", "—"] },
 ];
 
 // Quy định chung + quyền lợi từng hạng: sửa ở admin (src/lib/quyDinhGia.ts).
@@ -147,8 +122,8 @@ const VI_DU_MINH_HOA: Record<TierId, Listing> = {
 export default async function BaoGiaPage() {
   const [allProjects, billing, quyDinh] = await Promise.all([getProjects(), getBilling(), getQuyDinhGia()]);
   // Quyền lợi từng hạng + quy định chung: sửa ở admin, không viết trong trang.
-  const loiIch = (t: TierId) => quyDinh.quyenLoi[t].loiIch.map((d) => dienMa(d, t));
-  const hienThi = (t: TierId) => quyDinh.quyenLoi[t].hienThi.map((d) => dienMa(d, t));
+  const loiIch = (t: TierId) => quyDinh.quyenLoi[t].loiIch;
+  const hienThi = (t: TierId) => quyDinh.quyenLoi[t].hienThi;
   // MỌI GIÁ ĐỀU TỪ ADMIN (/admin/gia-khuyen-mai).
   // Trang này trước đây còn một bảng giá viết cứng chạy song song — Diamond 1 tuần
   // ghi 980.000đ trong khi bảng giá đang chạy là 1.050.000đ. Sửa giá trong admin mà
@@ -238,7 +213,7 @@ export default async function BaoGiaPage() {
                   ))}
                 </div>
               {/* LOẠI TIN & ĐẶC ĐIỂM */}
-              <div id="dac-diem" className="mt-10 scroll-mt-24">
+              {quyDinh.bangQuyenLoi.length > 0 && <div id="dac-diem" className="mt-10 scroll-mt-24">
                 <h3 className="text-lg font-semibold tracking-tight text-cvr-ink">So sánh đặc điểm hiển thị</h3>
                 <div className="mt-6 overflow-x-auto rounded-2xl border border-cvr-line bg-white shadow-lux">
                   <table className="w-full min-w-[640px] text-sm">
@@ -256,10 +231,10 @@ export default async function BaoGiaPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {featureRows.map((r) => (
-                        <tr key={r.label} className="border-b border-cvr-line/60 transition-colors last:border-0 hover:bg-cvr-surface/50">
-                          <td className="px-6 py-3.5 text-cvr-body">{r.label}</td>
-                          {[...r.values].reverse().map((v, i) => (
+                      {quyDinh.bangQuyenLoi.map((r) => (
+                        <tr key={r.ten} className="border-b border-cvr-line/60 transition-colors last:border-0 hover:bg-cvr-surface/50">
+                          <td className="px-6 py-3.5 text-cvr-body">{r.ten}</td>
+                          {(["basic", "silver", "gold", "diamond"] as const).map((id) => r.giaTri[id]).map((v, i) => (
                             <td key={i} className={`px-4 py-3.5 text-center ${v === "✓" ? "font-semibold text-cvr-ink" : "text-cvr-muted"}`}>{v}</td>
                           ))}
                         </tr>
@@ -267,7 +242,7 @@ export default async function BaoGiaPage() {
                     </tbody>
                   </table>
                 </div>
-              </div>
+              </div>}
               </section>
 
               {/* 3. GÓI ĐẨY TIN */}
@@ -285,7 +260,7 @@ export default async function BaoGiaPage() {
               {/* 4. GÓI HỘI VIÊN — mua theo tháng, voucher mỗi 30 ngày (cơ chế Batdongsan) */}
               {coHv && (
                 <section id="goi-hoi-vien" className="scroll-mt-24">
-                  <SectionTitle no="03" title="Gói Hội viên" desc="Dành cho môi giới đăng tin thường xuyên — mua theo tháng, nhận voucher giảm giá đăng tin và đẩy tin mỗi 30 ngày." />
+                  <SectionTitle no="03" title="Gói Hội viên" desc="Dành cho môi giới đăng tin thường xuyên." />
                   <div className="mt-6">
                     <GoiHoiVienCards goi={goiHoiVien} />
                     <DieuKienHoiVien dong={quyDinh.dieuKienHoiVien} />
@@ -302,7 +277,7 @@ export default async function BaoGiaPage() {
                       key={p.name}
                       tierId={p.tierId}
                       name={p.name}
-                      displays={p.displays}
+                      displays={quyDinh.quyenLoiDuAn[p.tierId]}
                       media={<ProjectTierSample project={projectOfTier(p.tierId)} />}
                       prices={giaDuAn(p.tierId)}
                       cta={{ label: "Liên hệ tư vấn", href: "#lien-he" }}
@@ -379,10 +354,9 @@ export default async function BaoGiaPage() {
                     </div>
                   </div>
                 ))}
-                <p className="mt-4 text-[13px] leading-relaxed text-cvr-faint">
-                  Chế độ &ldquo;Chia sẻ 3&rdquo; theo traffic · Thời gian quảng cáo dưới 7 ngày tính tròn 1 tuần ·
-                  Gửi banner trước 1 ngày (banner đặc biệt: 3 ngày) · Định dạng GIF/JPG/PNG, dung lượng &lt; 150KB.
-                </p>
+                {quyDinh.quyDinhBanner.length > 0 && (
+                  <p className="mt-4 text-[13px] leading-relaxed text-cvr-faint">{quyDinh.quyDinhBanner.join(" · ")}</p>
+                )}
               </section>
 
               {/* QUY ĐỊNH CHUNG */}

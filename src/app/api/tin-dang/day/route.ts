@@ -4,7 +4,7 @@ import { revalidateTag } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { viKhaDung, cauThieuTien } from "@/lib/viKhaDung";
-import { ghepBillingLuu, bangTheoMucDich, giaDayTin, vnd, type BillingData } from "@/lib/billing";
+import { ghepBillingLuu, bangTheoMucDich, bangUp, COT_UP, giaDayTin, vnd, type BillingData } from "@/lib/billing";
 import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
 import { baoLoi } from "@/lib/baoLoi";
 import { getTier, type TierId } from "@/lib/packages";
@@ -81,6 +81,8 @@ export async function POST(request: Request) {
 
   const { data: sc } = await admin.from("site_content").select("data").eq("key", "billing").limit(1);
   const bang: BillingData = bangTheoMucDich(ghepBillingLuu(sc?.[0]?.data as Partial<BillingData> | undefined), tin.purpose);
+  // ⛔ 09/10/2026: chưa có giá đẩy tin trong bảng giá ĐÃ DUYỆT thì không đẩy (trước đây tính 0đ).
+  if (bangUp(bang)[0]?.values[COT_UP.indexOf(cap)]?.gia === undefined) return loi("Chưa có giá đẩy tin trong bảng giá hiện hành.");
   let tien = tachThue(giaDayTin(bang, cap));
 
   // VOUCHER GÓI HỘI VIÊN "đẩy tin thường" (0040) — chỉ cho lượt đẩy lẻ của tin

@@ -8,6 +8,7 @@ import { chuanHoaSdt } from "@/lib/phone";
 import { getListings } from "@/lib/listingsDb";
 import { filtersFromParams } from "@/lib/filters";
 import { smartFilter, smartSearch } from "@/lib/smartSearch";
+import { getTier } from "@/lib/packages";
 
 // ============================================================================
 // THÔNG BÁO ĐỊNH KỲ — cron 8h sáng giờ VN mỗi ngày (vercel.json: 0 1 * * * UTC)
@@ -118,8 +119,8 @@ export async function GET(request: Request) {
           tieuDe: "Đăng tin miễn phí cho thành viên mới",
           loiNhan: "Coastal Land là cổng đăng tin mua bán, cho thuê nhà đất. Người bán và người mua kết nối trực tiếp với nhau, nhanh chóng và hiệu quả. Coastal Land hỗ trợ thành viên mới đăng tin miễn phí. Đăng tin tại coastalland.vn/dang-tin.",
           cacDong: [
-            { nhan: "Ưu đãi", giaTri: "Tin CVR Basic miễn phí" },
-            { nhan: "Hiển thị", giaTri: "30 ngày từ ngày duyệt tin" },
+            { nhan: "Ưu đãi", giaTri: `Tin ${getTier(free.tierId).name} miễn phí` },
+            { nhan: "Hiển thị", giaTri: `${free.hienThi ?? free.days} ngày từ ngày duyệt tin` },
             { nhan: "Hạn ưu đãi", giaTri: han },
           ],
           znsTemplateId: MAU_UU_DAI_THANH_VIEN_MOI,

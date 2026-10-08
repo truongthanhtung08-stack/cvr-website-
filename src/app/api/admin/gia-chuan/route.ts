@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { ghepBillingLuu, bangUp, goiDuAn, goiPr, ghiChuPr, bangBanner, soLuotTuNhan, ANH_CHUNG_MAC_DINH, VIDEO_CHUNG_MAC_DINH, type BillingData } from "@/lib/billing";
+import { ghepBillingLuu, bangUp, goiDuAn, goiPr, ghiChuPr, bangBanner, soLuotTuNhan, type BillingData } from "@/lib/billing";
 import { KHOA_GIA_CHUAN, NHAP_TRONG, kiemNhap, type GiaChuanNhap } from "@/lib/giaChuan";
 import { congBoTin, congBoHoiVien, duyetChuongTrinh } from "@/lib/congBoGia";
 import { ghepQuyDinh, KHOA_QUY_DINH_GIA, type QuyDinhGia } from "@/lib/quyDinhGia";
@@ -66,8 +66,8 @@ export async function GET() {
     freeHienTai: bang.free,
     quyDinhTinHienTai: {
       mediaTheoCap: bang.mediaTheoCap === true,
-      anhChung: bang.anhChung ?? ANH_CHUNG_MAC_DINH,
-      videoChung: bang.videoChung ?? VIDEO_CHUNG_MAC_DINH,
+      anhChung: bang.anhChung ?? 0,
+      videoChung: bang.videoChung ?? 0,
       anhTheoCap: Object.fromEntries(bang.plans.filter((p) => p.maxImages !== undefined).map((p) => [p.tierId, p.maxImages])),
       videoTheoCap: Object.fromEntries(bang.plans.filter((p) => p.maxVideos !== undefined).map((p) => [p.tierId, p.maxVideos])),
       coGoiDay: bangUp(bang).map((r) => soLuotTuNhan(r.label)),

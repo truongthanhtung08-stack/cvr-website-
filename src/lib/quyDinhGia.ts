@@ -3,97 +3,41 @@
 // ----------------------------------------------------------------------------
 // Giá nằm ở billing (/admin/gia-chuan), chữ quy định + quyền lợi nằm ở đây
 // (site_content key "quy_dinh_gia"). Trang Bảng giá, trang Tiện ích, trang Gói
-// hội viên đều đọc từ đây — không trang nào tự viết chữ quy định riêng.
-//
-// MÃ THAY THẾ trong chữ (máy tự điền theo cơ chế đang chạy ở packages.ts, để đổi
-// hệ số X một chỗ là mọi câu tự đúng theo):
-//   {X}          hệ số tiếp cận của hạng đó   (X30 · X15 · X8 · Cơ sở (1x))
-//   {VI_TRI}     vị trí hiển thị của hạng đó
-//   {NHAN_DIEN}  đặc điểm nhận diện thẻ tin của hạng đó
-//   {SUAT_GHIM}  số suất đảm bảo trên Trang chủ của hạng đó
-// Mặc định dưới đây = đúng chữ trang Bảng giá đang chạy trước khi chuyển về admin.
+// hội viên, bảng giá trong form đăng tin đều đọc từ đây.
+// ⛔ KHÔNG DUYỆT = KHÔNG HIỂN THỊ (chủ dự án 09/10/2026, "cấm tuyệt đối"): code KHÔNG có
+// chữ mặc định nào. Mục chưa được duyệt trong admin → rỗng → khối đó ẩn trên web.
 // ============================================================================
-import { getTier, SUAT_GHIM, type TierId } from "@/lib/packages";
+import type { TierId } from "@/lib/packages";
 
 export type QuyenLoiHang = { loiIch: string[]; hienThi: string[] };
+// Một dòng bảng so sánh quyền lợi 4 hạng tin (trang Bảng giá + trang Tiện ích).
+export type DongQuyenLoi = { ten: string; giaTri: Record<TierId, string> };
 export type QuyDinhGia = {
   quyenLoi: Record<TierId, QuyenLoiHang>;
   quyDinhChung: string[];
   dieuKienHoiVien: string[];
+  bangQuyenLoi: DongQuyenLoi[];
+  quyenLoiDuAn: Record<TierId, string[]>;
+  quyDinhGoiTin: string[];
+  quyDinhDayTin: string[];
+  quyDinhBanner: string[];
 };
 
 export const KHOA_QUY_DINH_GIA = "quy_dinh_gia";
 
-export const QUY_DINH_MAC_DINH: QuyDinhGia = {
-  quyenLoi: {
-    diamond: {
-      loiIch: [
-        "Hệ số tiếp cận {X} so với CVR Basic.",
-        "Được ưu tiên nạp vào “Bất động sản nổi bật” và “Có thể bạn quan tâm”.",
-        "Tiếp cận nhiều khách hàng nhất.",
-      ],
-      hienThi: [
-        "{VI_TRI}.",
-        "Đảm bảo {SUAT_GHIM} suất hàng đầu trên Trang chủ.",
-        "Đứng trên CVR Gold.",
-        "{NHAN_DIEN}.",
-        "Chèn 1 link bất kỳ dưới tin đăng.",
-      ],
-    },
-    gold: {
-      loiIch: [
-        "Hệ số tiếp cận {X} so với CVR Basic.",
-        "Được ưu tiên nạp vào “Bất động sản nổi bật”.",
-        "Tiếp cận nhiều khách hàng.",
-      ],
-      hienThi: ["{VI_TRI}.", "Đứng trên CVR Silver.", "{NHAN_DIEN}."],
-    },
-    silver: {
-      loiIch: ["Hệ số tiếp cận {X} so với CVR Basic.", "Tiếp cận khách hàng tốt."],
-      hienThi: ["{VI_TRI}.", "Đứng trên CVR Basic.", "{NHAN_DIEN}."],
-    },
-    basic: {
-      loiIch: ["Mức hiển thị {X}.", "Chi phí thấp nhất."],
-      hienThi: ["{VI_TRI}.", "{NHAN_DIEN}."],
-    },
-  },
-  quyDinhChung: [
-    "Toàn bộ giá trong bảng đã bao gồm thuế GTGT 8% — đúng bằng số tiền trừ vào ví khi tin được duyệt và lên sóng.",
-    "(*) Ưu tiên hiển thị sớm: các tin CVR Diamond, CVR Gold và CVR Silver được ưu tiên hiển thị và kiểm duyệt trước.",
-    "(**) Không hiển thị quảng cáo: ở trang chi tiết tin đăng, trên cả giao diện desktop và mobile sẽ không xuất hiện banner quảng cáo — người xem tập trung tối đa vào nội dung tin.",
-    "(***) Nhân đôi hiển thị: chức năng đặc biệt của CVR Diamond — khi tạo tin, khách hàng được tặng kèm một tin CVR Basic hiển thị đồng thời ở trang kết quả tìm kiếm; khi Đẩy tin CVR Diamond, tin CVR Basic đi kèm cũng được đẩy miễn phí.",
-    "Việc hiển thị tin đăng trên Sàn dựa trên các tiêu chí gồm nhưng không giới hạn ở: loại gói dịch vụ (CVR Basic, CVR Silver, CVR Gold, CVR Diamond), thời điểm đăng tin và các tiêu chí kỹ thuật khác theo quy định của Sàn tại từng thời điểm.",
-  ],
-  dieuKienHoiVien: [
-    "Voucher cấp lại mỗi 30 ngày trong thời hạn gói, hạn dùng 30 ngày, tự trừ khi tin được duyệt hoặc đẩy tin.",
-    "Mỗi tài khoản dùng một gói tại một thời điểm. Gói đã mua không huỷ được; hạ tin đã dùng voucher không hoàn voucher.",
-    "Giá đã gồm thuế GTGT, thanh toán bằng số dư ví.",
-  ],
-};
+const HANG: TierId[] = ["diamond", "gold", "silver", "basic"];
+const theoHang = <T,>(lay: (t: TierId) => T) => Object.fromEntries(HANG.map((t) => [t, lay(t)])) as Record<TierId, T>;
 
-// Điền mã thay thế theo cơ chế đang chạy.
-export function dienMa(dong: string, tier?: TierId): string {
-  if (!tier) return dong;
-  const t = getTier(tier);
-  const suat = tier === "diamond" || tier === "gold" ? String(SUAT_GHIM[tier]) : "";
-  return dong
-    .replaceAll("{X}", t.heSoText)
-    .replaceAll("{VI_TRI}", t.viTri)
-    .replaceAll("{NHAN_DIEN}", t.nhanDien)
-    .replaceAll("{SUAT_GHIM}", suat);
-}
-
-// Ghép bản admin đã lưu với mặc định — thiếu phần nào thì lấy mặc định phần đó.
+// Bản admin đã duyệt; phần nào chưa có thì RỖNG (không lấy chữ nào từ code).
 export function ghepQuyDinh(luu: Partial<QuyDinhGia> | null | undefined): QuyDinhGia {
-  const m = QUY_DINH_MAC_DINH;
-  if (!luu) return m;
-  const hang = (t: TierId): QuyenLoiHang => ({
-    loiIch: luu.quyenLoi?.[t]?.loiIch ?? m.quyenLoi[t].loiIch,
-    hienThi: luu.quyenLoi?.[t]?.hienThi ?? m.quyenLoi[t].hienThi,
-  });
   return {
-    quyenLoi: { diamond: hang("diamond"), gold: hang("gold"), silver: hang("silver"), basic: hang("basic") },
-    quyDinhChung: luu.quyDinhChung ?? m.quyDinhChung,
-    dieuKienHoiVien: luu.dieuKienHoiVien ?? m.dieuKienHoiVien,
+    quyenLoi: theoHang((t) => ({ loiIch: luu?.quyenLoi?.[t]?.loiIch ?? [], hienThi: luu?.quyenLoi?.[t]?.hienThi ?? [] })),
+    quyDinhChung: luu?.quyDinhChung ?? [],
+    dieuKienHoiVien: luu?.dieuKienHoiVien ?? [],
+    bangQuyenLoi: luu?.bangQuyenLoi ?? [],
+    quyenLoiDuAn: theoHang((t) => luu?.quyenLoiDuAn?.[t] ?? []),
+    quyDinhGoiTin: luu?.quyDinhGoiTin ?? [],
+    quyDinhDayTin: luu?.quyDinhDayTin ?? [],
+    quyDinhBanner: luu?.quyDinhBanner ?? [],
   };
 }

@@ -100,8 +100,7 @@ export default function MyListingsPage() {
       : `Phí: ${vnd(phaiTra)} (đã gồm thuế GTGT) — trừ thẳng vào ví.`;
     if (!window.confirm(
       `Đẩy tin "${r.title || "(chưa có tiêu đề)"}" lên đầu danh sách?\n\n` +
-      `${loiNhac}\n` +
-      `Mỗi tin đẩy được 1 lần mỗi ngày. Ngày đăng của tin KHÔNG bị sửa.`
+      `${loiNhac}`
     )) return;
 
     setDangDay(r.id);

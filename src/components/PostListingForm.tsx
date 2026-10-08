@@ -119,7 +119,7 @@ export default function PostListingForm() {
   // phí. Chọn sẵn thì họ bấm đăng luôn mà không biết mình vừa mua gói gì, đến lúc
   // ví bị trừ là khiếu nại.
   const [planTier, setPlanTier] = useState<TierId | "">("");
-  const [planDays, setPlanDays] = useState<number>(billing.plans[0]?.terms[0]?.days ?? 7);
+  const [planDays, setPlanDays] = useState<number>(billing.plans[0]?.terms[0]?.days ?? 0);
   // HẸN NGÀY ĐĂNG (chuẩn Batdongsan): "" = hiển thị ngay khi duyệt; "YYYY-MM-DD" = duyệt xong
   // tin ở mục Chờ hiển thị, tới 0h ngày đó (giờ VN) mới lên — hạn tính từ ngày đó.
   const [batDau, setBatDau] = useState("");
@@ -1151,8 +1151,8 @@ export default function PostListingForm() {
         <ImagePicker
           value={images}
           onChange={setImages}
-          maxImages={soAnhToiDa(billing, goiXemTruoc)}
-          maxVideos={soVideoToiDa(billing, goiXemTruoc)}
+          maxImages={duocMienPhi && billing.free.soAnh ? billing.free.soAnh : soAnhToiDa(billing, goiXemTruoc)}
+          maxVideos={duocMienPhi && billing.free.soVideo !== undefined ? billing.free.soVideo : soVideoToiDa(billing, goiXemTruoc)}
           tierName={getTier(goiXemTruoc).name}
         />
       </Card>

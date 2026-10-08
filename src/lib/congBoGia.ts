@@ -1,8 +1,8 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { revalidateTag } from "next/cache";
-import { ghepBillingLuu, bangUp, type BillingData, type UpRow } from "@/lib/billing";
+import { BILLING_DEFAULT, type BillingData, type UpRow } from "@/lib/billing";
 import { KHOA_QUY_DINH_GIA } from "@/lib/quyDinhGia";
-import { KHOA_GIA_CHUAN, NHAP_TRONG, DIEU_CHINH_TRONG, chonMienPhi, kiemNhap, tinhCongBo, tinhHoiVien, tinhDuAn, tinhPr, tinhBanner, type GiaChuanNhap } from "@/lib/giaChuan";
+import { KHOA_GIA_CHUAN, NHAP_TRONG, DIEU_CHINH_TRONG, chonMienPhi, thieuThongTin, kiemNhap, tinhCongBo, tinhHoiVien, tinhDuAn, tinhPr, tinhBanner, type GiaChuanNhap } from "@/lib/giaChuan";
 
 // ============================================================================
 // CÔNG BỐ GIÁ — MỘT ĐƯỜNG DUY NHẤT (chủ dự án chốt 01/10/2026)
@@ -39,6 +39,8 @@ export async function duyetChuongTrinh(admin: SupabaseClient, id: string): Promi
   const c = nhap.chuongTrinh.find((x) => x.id === id);
   if (!c) return { loi: "Không tìm thấy chương trình — lưu nháp trước." };
   if (c.daDuyet) return { loi: "Chương trình đã duyệt." };
+  const thieu = thieuThongTin(c);
+  if (thieu.length) return { loi: `Chưa đủ thông tin: ${thieu.join(", ")}.` };
   const luc = new Date().toISOString();
   const moi = { ...c, daDuyet: luc, daCongBo: luc };
   await admin.from("bi_mat").upsert({ key: KHOA_GIA_CHUAN, data: { ...nhap, chuongTrinh: nhap.chuongTrinh.map((x) => (x.id === id ? moi : x)) }, updated_at: luc });
@@ -69,13 +71,13 @@ export async function congBoTin(admin: SupabaseClient, tuBanDuyet = false): Prom
   if (!nhap.ban.plans.length || !nhap.thue.plans.length) {
     return { loi: "Bản nháp chưa có đủ giá chuẩn cho cả Bán và Cho thuê — lưu nháp trước rồi mới công bố." };
   }
-  const bang: BillingData = ghepBillingLuu(luu);
+  // ⛔ CHỈ BẢN ĐÃ DUYỆT (09/10/2026): billing ghi lại TỪ ĐẦU theo bản duyệt — không giữ
+  // mục cũ nào (cấp theo nạp, điểm, ghi chú cũ…) và không lấy số mặc định nào trong code.
   const qt = nhap.quyDinhTin;
   // Cỡ gói đẩy theo bản đã duyệt (chỉ nhãn — giá tính lại ngay dưới).
-  const upNhan: UpRow[] = qt?.coGoiDay.length
-    ? qt.coGoiDay.map((n) => ({ label: `Đẩy ${n} lượt`, values: [] }))
-    : bangUp(bang);
-  const congBo = tinhCongBo(nhap, homNayVn(), bang.plans, upNhan);
+  const upNhan: UpRow[] = (qt?.coGoiDay ?? []).map((n) => ({ label: `Đẩy ${n} lượt`, values: [] }));
+  const plans = BILLING_DEFAULT.plans;
+  const congBo = tinhCongBo(nhap, homNayVn(), plans, upNhan);
   // MỘT BẢNG GIÁ (08/10/2026): dự án · PR · banner cũng đi từ giá chuẩn + % cột.
   const dc = nhap.dieuChinh ?? DIEU_CHINH_TRONG;
   const them: Partial<BillingData> = {
@@ -83,7 +85,7 @@ export async function congBoTin(admin: SupabaseClient, tuBanDuyet = false): Prom
       mediaTheoCap: qt.mediaTheoCap,
       anhChung: qt.anhChung,
       videoChung: qt.videoChung,
-      plans: bang.plans.map((p) => ({ ...p, maxImages: qt.anhTheoCap[p.tierId] ?? p.maxImages, maxVideos: qt.videoTheoCap[p.tierId] ?? p.maxVideos })),
+      plans: plans.map((p) => ({ ...p, maxImages: qt.anhTheoCap[p.tierId], maxVideos: qt.videoTheoCap[p.tierId] })),
       up: congBo.ban.up,
     } : {}),
     ...(nhap.duAn?.length ? { projectPlans: tinhDuAn(nhap.duAn, dc.duAn) } : {}),
@@ -94,21 +96,28 @@ export async function congBoTin(admin: SupabaseClient, tuBanDuyet = false): Prom
   // Chương trình miễn phí thành viên mới (trong danh sách khuyến mãi) → khối "free" web đang dùng.
   const mp = chonMienPhi(nhap.chuongTrinh, homNayVn());
   if (mp) {
-    const cu = bang.free;
     Object.assign(them, {
       free: {
-        ...cu,
+        ...BILLING_DEFAULT.free,
         active: mp.bat,
         from: mp.tu,
         to: mp.den,
-        days: mp.soNgayTuDangKy ?? cu.days,
+        days: mp.soNgayTuDangKy ?? 0,
         quota: mp.soTin ?? 0,
-        tierId: mp.tiers[0] ?? cu.tierId,
+        tierId: mp.tiers[0],
+        hienThi: mp.soNgayHienThi,
+        soAnh: mp.soAnh,
+        soVideo: mp.soVideo,
         audience: "new" as const,
       },
     });
   }
-  const { error } = await admin.from("site_content").upsert({ key: "billing", data: { ...luu, ...them, congBo } });
+  const giu: Partial<BillingData> = {
+    // Gói hội viên công bố riêng (congBoHoiVien) — cũng chỉ từ bản đã duyệt.
+    ...(luu.hoiVien ? { hoiVien: luu.hoiVien, hoiVienLuc: luu.hoiVienLuc } : {}),
+    ...(luu.topupAmounts ? { topupAmounts: luu.topupAmounts } : {}),
+  };
+  const { error } = await admin.from("site_content").upsert({ key: "billing", data: { ...giu, plans, free: BILLING_DEFAULT.free, ...them, congBo } });
   if (error) return { loi: `Lỗi công bố: ${error.message}` };
   if (nhap.quyDinh) await admin.from("site_content").upsert({ key: KHOA_QUY_DINH_GIA, data: nhap.quyDinh });
   if (!tuBanDuyet) {

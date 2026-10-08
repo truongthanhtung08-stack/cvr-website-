@@ -47,12 +47,38 @@ export type ChuongTrinh = {
   loai?: "giam" | "mien-phi-tv-moi";
   soNgayTuDangKy?: number;  // miễn phí trong bao nhiêu ngày kể từ khi khách đăng ký
   soTin?: number;           // số tin miễn phí (0 = không giới hạn)
+  soNgayHienThi?: number;   // mỗi tin miễn phí hiển thị bao nhiêu ngày
+  soAnh?: number;           // số ảnh tối đa mỗi tin miễn phí
+  soVideo?: number;         // số video tối đa mỗi tin miễn phí
   // ĐÃ CÔNG BỐ = KHOÁ (chủ dự án 08/10/2026: "khác thì tạo mới"). Chương trình đã lên web
   // giữ nguyên làm lịch sử, không sửa/xoá; muốn khác đi thì tạo chương trình mới.
   daDuyet?: string;         // ISO — chủ dự án bấm Duyệt; chưa duyệt thì không bao giờ chạy
   daCongBo?: string;        // ISO — lần công bố đầu tiên
 };
 export const laMienPhiTvMoi = (c: ChuongTrinh) => c.loai === "mien-phi-tv-moi";
+
+// CHƯƠNG TRÌNH PHẢI ĐỦ THÔNG SỐ MỚI DUYỆT ĐƯỢC (chủ dự án 09/10/2026: "thiếu là không duyệt được").
+// Trả về danh sách ô còn thiếu — rỗng mới được Duyệt (kiểm cả ở trình duyệt lẫn máy chủ).
+export function thieuThongTin(c: ChuongTrinh): string[] {
+  const thieu: string[] = [];
+  const co = (n: number | undefined) => typeof n === "number" && n > 0;
+  if (!c.ten.trim()) thieu.push("Tên chương trình");
+  if (!c.tu) thieu.push("Từ ngày");
+  if (!c.den) thieu.push("Đến hết ngày");
+  if (c.tu && c.den && c.den < c.tu) thieu.push("Đến hết ngày phải sau Từ ngày");
+  if (laMienPhiTvMoi(c)) {
+    if (c.tiers.length !== 1) thieu.push("Gói tin");
+    if (!co(c.soNgayTuDangKy)) thieu.push("Số ngày ưu đãi từ khi đăng ký");
+    if (c.soTin === undefined) thieu.push("Số tin");
+    if (!co(c.soNgayHienThi)) thieu.push("Số ngày hiển thị mỗi tin");
+    if (!co(c.soAnh)) thieu.push("Số ảnh");
+    if (c.soVideo === undefined) thieu.push("Số video");
+  } else {
+    if (!co(c.phanTram)) thieu.push("% giảm");
+    if (c.sanPham !== "hoi-vien" && !c.tiers.length) thieu.push("Hạng tin");
+  }
+  return thieu;
+}
 
 // Nhiều chương trình miễn phí (cũ hết hạn, mới nối tiếp) → chọn chương trình ĐANG TRONG HẠN
 // hôm nay; không có thì chương trình SẮP bắt đầu gần nhất; không có nữa thì cái tạo sau cùng.
@@ -344,6 +370,7 @@ export function kiemNhap(x: unknown): GiaChuanNhap | null {
     Array.isArray(c.tiers) && c.tiers.every(capHopLe) && typeof c.bat === "boolean" &&
     (c.loai === undefined || c.loai === "giam" || c.loai === "mien-phi-tv-moi") &&
     (c.soNgayTuDangKy === undefined || soDuong(c.soNgayTuDangKy)) && (c.soTin === undefined || soDuong(c.soTin)) &&
+    [c.soNgayHienThi, c.soAnh, c.soVideo].every((n) => n === undefined || soDuong(n)) &&
     (c.daDuyet === undefined || typeof c.daDuyet === "string") &&
     (c.daCongBo === undefined || typeof c.daCongBo === "string"));
   if (!ctHopLe) return null;
@@ -375,7 +402,11 @@ export function kiemNhap(x: unknown): GiaChuanNhap | null {
   if (o.quyDinh !== undefined) {
     const q = o.quyDinh as QuyDinhGia;
     const ok = !!q && typeof q === "object" && dsChu(q.quyDinhChung) && dsChu(q.dieuKienHoiVien) &&
-      THU_TU_CAP.every((t) => dsChu(q.quyenLoi?.[t]?.loiIch) && dsChu(q.quyenLoi?.[t]?.hienThi));
+      THU_TU_CAP.every((t) => dsChu(q.quyenLoi?.[t]?.loiIch) && dsChu(q.quyenLoi?.[t]?.hienThi)) &&
+      [q.quyDinhGoiTin, q.quyDinhDayTin, q.quyDinhBanner].every((x) => x === undefined || dsChu(x)) &&
+      (q.quyenLoiDuAn === undefined || THU_TU_CAP.every((t) => q.quyenLoiDuAn[t] === undefined || dsChu(q.quyenLoiDuAn[t]))) &&
+      (q.bangQuyenLoi === undefined || (Array.isArray(q.bangQuyenLoi) && q.bangQuyenLoi.every((d) =>
+        typeof d?.ten === "string" && THU_TU_CAP.every((t) => typeof d.giaTri?.[t] === "string"))));
     if (!ok) return null;
   }
   if (o.quyDinhTin !== undefined) {

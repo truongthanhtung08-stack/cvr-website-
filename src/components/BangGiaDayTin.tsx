@@ -4,6 +4,7 @@ import { useState } from "react";
 import { COT_UP, soLuotTuNhan, vnd, type UpRow } from "@/lib/billing";
 import { getTier, type TierId } from "@/lib/packages";
 import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
+import { useQuyDinhGia } from "@/lib/useQuyDinhGia";
 
 // ============================================================================
 // BẢNG GIÁ ĐẨY TIN — CÙNG KIỂU với BangGiaGoiTin (chuẩn Batdongsan, 01/10/2026).
@@ -14,14 +15,6 @@ import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
 // ============================================================================
 
 const THU_TU: TierId[] = ["basic", "silver", "gold", "diamond"];
-
-// QUY ĐỊNH ĐI KÈM BẢNG GIÁ — ngắn, đúng cơ chế đang chạy (chốt 01/10/2026).
-const QUY_DINH = [
-  "Chỉ áp dụng cho tin đang hiển thị; ngày đăng và thời hạn giữ nguyên.",
-  "Lượt đầu đẩy ngay khi mua, sau đó mỗi ngày 1 lượt lúc 8h sáng.",
-  "Số lượt tối đa bằng số ngày tin còn hiển thị; tin hết hạn thì lượt còn lại hết theo.",
-  "Mỗi tin dùng một gói một lúc.",
-];
 
 export default function BangGiaDayTin({
   rows,
@@ -37,6 +30,8 @@ export default function BangGiaDayTin({
   toiDaLuot?: number;                    // gói vượt số lượt này thì khoá (quá thời hạn tin)
 }) {
   const [gomVat, setGomVat] = useState(true);
+  // Quy định đi kèm: CHỈ bản admin đã duyệt — chưa duyệt thì không hiện.
+  const QUY_DINH = useQuyDinhGia().quyDinhDayTin;
   const cot = (chiCap ? [chiCap] : THU_TU).filter((t) => COT_UP.includes(t));
   const hienGia = (gia: number) => (gomVat ? tachThue(gia).tongTra : gia);
   if (!rows.length) return null;
@@ -115,9 +110,11 @@ export default function BangGiaDayTin({
         </span>
         Giá bao gồm {(THUE_SUAT_GTGT * 100).toFixed(0)}% VAT
       </label>
-      <ul className="mt-3 space-y-1 text-[13px] leading-relaxed text-cvr-muted">
-        {QUY_DINH.map((d) => <li key={d} className="flex gap-2"><span aria-hidden>·</span><span>{d}</span></li>)}
-      </ul>
+      {QUY_DINH.length > 0 && (
+        <ul className="mt-3 space-y-1 text-[13px] leading-relaxed text-cvr-muted">
+          {QUY_DINH.map((d) => <li key={d} className="flex gap-2"><span aria-hidden>·</span><span>{d}</span></li>)}
+        </ul>
+      )}
     </div>
   );
 }

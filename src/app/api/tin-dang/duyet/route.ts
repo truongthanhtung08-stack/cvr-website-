@@ -111,7 +111,10 @@ export async function POST(request: Request) {
   const { data: scMp } = await admin.from("site_content").select("data").eq("key", "billing").limit(1);
   const bangMp = bangTheoMucDich(ghepBillingLuu(scMp?.[0]?.data as Partial<BillingData> | undefined), tin.purpose);
   const giaGoiChon = bangMp.plans.find((p) => p.tierId === goi)?.terms.find((t) => t.days === soNgay)?.price;
-  const mienPhi = soNgay <= 0 || (goi === "basic" && giaGoiChon === 0);
+  // ⛔ 09/10/2026: gói phải CÓ TRONG BẢNG GIÁ ĐÃ DUYỆT — không có thì không duyệt (trước đây tin
+  // không có số ngày được duyệt miễn phí, hạ về Basic: một đường thứ hai ngoài bảng giá).
+  if (giaGoiChon === undefined) return loi(`Gói ${tenGoi(bangMp, goi)} ${soNgay} ngày không có trong bảng giá hiện hành — nhắc khách chọn lại gói rồi gửi lại.`, 400);
+  const mienPhi = giaGoiChon === 0;
 
   // ── 3. Tin miễn phí: duyệt thẳng, không dính tiền nong ────────────────────
   if (mienPhi) {
@@ -124,7 +127,7 @@ export async function POST(request: Request) {
     const ngayMoTkMp = hsMp?.created_at ? (Date.now() - new Date(hsMp.created_at).getTime()) / 86_400_000 : Infinity;
     // Khuyến mãi: CÙNG MỘT điều kiện với mọi nơi (huongKhuyenMai) — lấy từ chương trình trong admin.
     let laTvMoi = huongKhuyenMai(fMp, {
-      goi: "basic", homNay: new Date().toISOString().slice(0, 10), coChu: Boolean(tin.owner_id),
+      goi, homNay: new Date().toISOString().slice(0, 10), coChu: Boolean(tin.owner_id),
       soNgayMoTk: ngayMoTkMp, role: hsMp?.role, freeQuota: hsMp?.free_quota, ngayTaoTk: hsMp?.created_at ? new Date(new Date(hsMp?.created_at).getTime() + 7 * 3_600_000).toISOString().slice(0, 10) : undefined,
     });
     // Chương trình có giới hạn số tin → hưởng thì trừ một lượt (nguyên tử); hết lượt thì không hưởng.
@@ -132,13 +135,13 @@ export async function POST(request: Request) {
       const { data: luot } = await admin.rpc("dung_luot_mien_phi", { p_user: tin.owner_id });
       laTvMoi = Boolean(luot && (luot as unknown[]).length);
     }
-    const soNgayHien = soNgayHienThi(bangMp, "basic", soNgay, laTvMoi);
+    const soNgayHien = soNgayHienThi(bangMp, goi, soNgay, laTvMoi);
     const { error } = await admin
       .from("listings")
       // bumped_at = ngày đăng — nếu bỏ trống, tin vừa duyệt nằm dưới mọi tin cũ
       // (xếp theo bumped_at desc nulls last). Xem ghi chú ở trang nhập hàng loạt.
       .update({
-        status: "approved", published_at: len, bumped_at: len, tier: "basic",
+        status: "approved", published_at: len, bumped_at: len, tier: goi,
         tier_expires_at: new Date(goc + soNgayHien * 86_400_000).toISOString(),
       })
       .eq("id", id);
@@ -157,7 +160,7 @@ export async function POST(request: Request) {
       tieuDe: "Tin của bạn đã được duyệt",
       cacDong: [
         { nhan: "Tin đăng", giaTri: tin.title },
-        { nhan: "Gói dịch vụ", giaTri: "Tin thường (miễn phí)" },
+        { nhan: "Gói dịch vụ", giaTri: `${tenGoi(bangMp, goi)} · ${soNgayHien} ngày — miễn phí` },
       ],
       znsTemplateId: MAU_DUYET_TIN,
       znsData: {

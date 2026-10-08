@@ -5,8 +5,8 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import LeadForm from "@/components/LeadForm";
 import TraCuuGiaDat from "@/components/TraCuuGiaDat";
-import { packages, utilityTools, getPackage, tiers, benefitRows } from "@/lib/packages";
-import { getBilling } from "@/lib/siteContent";
+import { packages, utilityTools, getPackage, tiers } from "@/lib/packages";
+import { getBilling, getQuyDinhGia } from "@/lib/siteContent";
 import { bangTheoMucDich } from "@/lib/billing";
 import BangGiaGoiTin from "@/components/BangGiaGoiTin";
 
@@ -50,6 +50,7 @@ export default async function PackagePage({ params }: { params: Promise<{ slug: 
   if (!p) notFound();
   // Giá từng cấp: CÙNG NGUỒN với trang Bảng giá (admin) — không viết số ở đây.
   const bangBan = bangTheoMucDich(await getBilling(), "ban");
+  const quyDinh = await getQuyDinhGia();
 
   return (
     <>
@@ -137,10 +138,10 @@ export default async function PackagePage({ params }: { params: Promise<{ slug: 
                     </div>
 
                     <div className="flex-1 divide-y divide-cvr-line/70 px-5">
-                      {benefitRows.map((row) => (
-                        <div key={row.label} className="flex items-center justify-between gap-3 py-3 text-sm">
-                          <span className="text-cvr-muted">{row.label}</span>
-                          <span className="text-right font-medium text-cvr-ink">{row.values[t.id]}</span>
+                      {quyDinh.bangQuyenLoi.map((row) => (
+                        <div key={row.ten} className="flex items-center justify-between gap-3 py-3 text-sm">
+                          <span className="text-cvr-muted">{row.ten}</span>
+                          <span className="text-right font-medium text-cvr-ink">{row.giaTri[t.id]}</span>
                         </div>
                       ))}
                     </div>

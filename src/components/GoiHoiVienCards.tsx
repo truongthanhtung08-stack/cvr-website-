@@ -60,7 +60,7 @@ export default function GoiHoiVienCards({
               ))}
             </ul>
 
-            <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-cvr-muted">Voucher mỗi 30 ngày</p>
+            <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-cvr-muted">Voucher</p>
             <ul className="mt-2 space-y-1.5 text-sm">
               {g.voucher.map((v) => (
                 <li key={v.loai} className="flex items-baseline justify-between gap-3">

@@ -42,8 +42,8 @@ function GoiHoiVienCuaToi() {
   const [thang, setThang] = useState<number | null>(null);
   const [dangMua, setDangMua] = useState(false);
   const [thongBao, setThongBao] = useState<{ ok: boolean; text: string } | null>(null);
-  // Điều kiện gói: chữ lấy từ admin (một nguồn duy nhất), chưa tải xong thì dùng mặc định.
-  const [dieuKien, setDieuKien] = useState<string[]>(ghepQuyDinh(null).dieuKienHoiVien);
+  // Điều kiện gói: CHỈ chữ admin đã duyệt (một nguồn duy nhất).
+  const [dieuKien, setDieuKien] = useState<string[]>([]);
   useEffect(() => {
     createClient().from("site_content").select("data").eq("key", KHOA_QUY_DINH_GIA).limit(1)
       .then(({ data }) => setDieuKien(ghepQuyDinh(data?.[0]?.data as Partial<QuyDinhGia> | undefined).dieuKienHoiVien));

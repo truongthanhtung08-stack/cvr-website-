@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Panel } from "@/components/Ui";
 import QuyDinhGiaEditor from "@/components/admin/QuyDinhGiaEditor";
+import { ghepQuyDinh } from "@/lib/quyDinhGia";
 import { getTier, type TierId } from "@/lib/packages";
 import { tachThue } from "@/lib/thue";
 import {
@@ -32,6 +33,7 @@ import {
   type PhanTramCot,
   type QuyDinhTin as QuyDinhTinT,
   laMienPhiTvMoi,
+  thieuThongTin,
 } from "@/lib/giaChuan";
 
 // ============================================================================
@@ -50,6 +52,15 @@ const tronNghin = (n: number) => Math.round(n / 1000) * 1000;
 const tronTram = (n: number) => Math.round(n / 100) * 100;
 
 // Ô số tiền: gõ chữ số, tự thêm dấu chấm. KHÔNG dùng type="number" (quy tắc admin).
+// Ô số bắt buộc: trống = chưa nhập (undefined), khác với số 0.
+function OSoBatBuoc({ value, onChange }: { value: number | undefined; onChange: (n: number | undefined) => void }) {
+  return (
+    <input inputMode="numeric" value={value === undefined ? "" : value.toLocaleString("vi-VN")}
+      onChange={(e) => { const t = e.target.value.replace(/\D/g, ""); onChange(t ? Number(t) : undefined); }}
+      className={inputCls} />
+  );
+}
+
 function OSo({ value, onChange, className = "" }: { value: number; onChange: (n: number) => void; className?: string }) {
   return (
     <input
@@ -136,7 +147,7 @@ export default function BangGiaPage() {
         pr: n.pr?.length ? n.pr : kq.prHienTai ?? [],
         prNotes: n.prNotes ?? kq.prNotesHienTai ?? [],
         banners: n.banners?.length ? n.banners : kq.bannersHienTai ?? [],
-        quyDinh: n.quyDinh ?? kq.quyDinhHienTai,
+        quyDinh: ghepQuyDinh(n.quyDinh ?? kq.quyDinhHienTai),
         quyDinhTin: n.quyDinhTin ?? kq.quyDinhTinHienTai,
       });
       setCongBo(kq.congBo);
@@ -158,7 +169,7 @@ export default function BangGiaPage() {
   const chuaDieuChinh = useMemo(() => {
     const thieu: string[] = [];
     const xet = (ten: string, cot: string[], pt: Partial<Record<string, number>>) => {
-      const nhanCot = (c: string) => ((THU_TU_CAP as string[]).includes(c) ? tenCap(c as TierId) : /^d+$/.test(c) ? `${c} tháng` : c);
+      const nhanCot = (c: string) => ((THU_TU_CAP as string[]).includes(c) ? tenCap(c as TierId) : /^\d+$/.test(c) ? `${c} tháng` : c);
       for (const c of cot) if (pt[c] === undefined) thieu.push(`${ten} · ${nhanCot(c)}`);
     };
     for (const md of ["ban", "thue"] as const) {
@@ -480,8 +491,8 @@ function DanhSachChuongTrinh({ ds, onChange, onDuyet, homNay }: { ds: ChuongTrin
               <input value={c.ten} onChange={(e) => sua(c.id, { ten: e.target.value })} className={inputCls} />
             </label>
             {laMienPhiTvMoi(c) ? (
-              <label className="text-xs text-cvr-muted">Số ngày từ khi đăng ký
-                <OSo value={c.soNgayTuDangKy ?? 0} onChange={(n) => sua(c.id, { soNgayTuDangKy: n })} />
+              <label className="text-xs text-cvr-muted">Số ngày ưu đãi từ khi đăng ký
+                <OSoBatBuoc value={c.soNgayTuDangKy} onChange={(n) => sua(c.id, { soNgayTuDangKy: n })} />
               </label>
             ) : (
               <label className="text-xs text-cvr-muted">% giảm
@@ -499,10 +510,28 @@ function DanhSachChuongTrinh({ ds, onChange, onDuyet, homNay }: { ds: ChuongTrin
             </label>
             {laMienPhiTvMoi(c) ? (
               <>
-                <label className="text-xs text-cvr-muted sm:col-span-2">Số tin (0 = không giới hạn)
-                  <OSo value={c.soTin ?? 0} onChange={(n) => sua(c.id, { soTin: n })} />
+                <label className="text-xs text-cvr-muted">Gói tin
+                  <select value={c.tiers.length === 1 ? c.tiers[0] : ""} onChange={(e) => sua(c.id, { tiers: e.target.value ? [e.target.value as TierId] : [] })} className={inputCls}>
+                    <option value="">—</option>
+                    {THU_TU_CAP.map((t) => <option key={t} value={t}>{tenCap(t)}</option>)}
+                  </select>
                 </label>
-                <p className="self-end pb-2 text-sm font-medium text-cvr-ink sm:col-span-2">Thành viên mới · đăng tin miễn phí</p>
+                <div className="text-xs text-cvr-muted">Số tin
+                  {c.soTin !== 0 && <OSoBatBuoc value={c.soTin} onChange={(n) => sua(c.id, { soTin: n || undefined })} />}
+                  <label className="mt-1 flex items-center gap-1 text-cvr-ink">
+                    <input type="checkbox" checked={c.soTin === 0} onChange={(e) => sua(c.id, { soTin: e.target.checked ? 0 : undefined })} /> Không giới hạn
+                  </label>
+                </div>
+                <label className="text-xs text-cvr-muted">Số ngày hiển thị mỗi tin
+                  <OSoBatBuoc value={c.soNgayHienThi} onChange={(n) => sua(c.id, { soNgayHienThi: n })} />
+                </label>
+                <label className="text-xs text-cvr-muted">Số ảnh
+                  <OSoBatBuoc value={c.soAnh} onChange={(n) => sua(c.id, { soAnh: n })} />
+                </label>
+                <label className="text-xs text-cvr-muted">Số video
+                  <OSoBatBuoc value={c.soVideo} onChange={(n) => sua(c.id, { soVideo: n })} />
+                </label>
+                <p className="self-end pb-2 text-sm font-medium text-cvr-ink">Thành viên mới</p>
               </>
             ) : (
               <>
@@ -518,7 +547,7 @@ function DanhSachChuongTrinh({ ds, onChange, onDuyet, homNay }: { ds: ChuongTrin
                 </label>
               </>
             )}
-            <div className="text-xs text-cvr-muted sm:col-span-2">Hạng tin
+            {!laMienPhiTvMoi(c) && <div className="text-xs text-cvr-muted sm:col-span-2">Hạng tin
               <div className="mt-1 flex flex-wrap gap-2">
                 {THU_TU_CAP.map((t) => (
                   <label key={t} className="flex items-center gap-1 text-sm text-cvr-ink">
@@ -528,16 +557,17 @@ function DanhSachChuongTrinh({ ds, onChange, onDuyet, homNay }: { ds: ChuongTrin
                   </label>
                 ))}
               </div>
-            </div>
+            </div>}
           </fieldset>
             <div className="flex items-center justify-end gap-4 sm:col-span-6">
               {c.daCongBo ? (
                 <span className="mr-auto text-xs text-cvr-muted">Đã duyệt {new Date(c.daCongBo).toLocaleString("vi-VN")}</span>
               ) : (
                 <>
+                  {thieuThongTin(c).length > 0 && <span className="mr-auto text-xs text-amber-700">Thiếu: {thieuThongTin(c).join(" · ")}</span>}
                   <button type="button" onClick={() => onChange(ds.filter((x) => x.id !== c.id))} className="text-xs text-cvr-muted hover:text-red-600">Xoá</button>
-                  <button type="button" onClick={() => onDuyet(c)}
-                    className="rounded-lg bg-cvr-ink px-4 py-1.5 text-xs font-semibold text-white">Duyệt</button>
+                  <button type="button" onClick={() => onDuyet(c)} disabled={thieuThongTin(c).length > 0}
+                    className="rounded-lg bg-cvr-ink px-4 py-1.5 text-xs font-semibold text-white disabled:opacity-40">Duyệt</button>
                 </>
               )}
             </div>
