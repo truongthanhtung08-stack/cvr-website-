@@ -60,13 +60,45 @@ export default function GallerySlideVideo({
   // Video ngang hay dọc tự co vừa màn hình (object-contain / trình phát YouTube).
   const [lon, setLon] = useState(false);
   const [xoay, setXoay] = useState(false);
+  // VIDEO QUAY NGANG → BẤM TOÀN MÀN HÌNH LÀ TỰ XOAY NGANG (chủ dự án 08/10/2026).
+  // Video dọc giữ dọc. Máy cho khoá hướng (Android) thì khoá ngang; không cho
+  // (iPhone) thì xoay khung 90° — chỉ khi màn đang dọc. Nút Xoay vẫn còn để khách
+  // xoay lại theo ý mình; thoát là trả hướng màn về như cũ.
+  // YouTube không cho biết video ngang hay dọc → không tự xoay, dùng nút Xoay.
+  const khoaHuong = useRef(false);
   const moLon = () => {
     setLon(true);
+    const v = ref.current;
+    const ngang = !embed && !!v && v.videoWidth > v.videoHeight;
+    const xoayBangKhung = () => {
+      if (ngang && window.innerHeight > window.innerWidth) setXoay(true);
+    };
+    const khoaNgang = () => {
+      const o = screen.orientation as ScreenOrientation & { lock?: (h: string) => Promise<void> };
+      if (!ngang || !o?.lock) return xoayBangKhung();
+      o.lock("landscape").then(() => (khoaHuong.current = true)).catch(xoayBangKhung);
+    };
     const el = gocRef.current as (HTMLDivElement & { webkitRequestFullscreen?: () => void }) | null;
-    if (el?.requestFullscreen) void el.requestFullscreen().catch(() => {});
-    else el?.webkitRequestFullscreen?.();
+    if (el?.requestFullscreen) el.requestFullscreen().then(khoaNgang).catch(xoayBangKhung);
+    else {
+      el?.webkitRequestFullscreen?.();
+      xoayBangKhung();
+    }
+  };
+  const doiXoay = () => {
+    // Đang khoá hướng bằng máy → bấm Xoay là nhả khoá cho khách cầm theo ý.
+    if (khoaHuong.current) {
+      screen.orientation?.unlock?.();
+      khoaHuong.current = false;
+      return;
+    }
+    setXoay((x) => !x);
   };
   const thuNho = () => {
+    if (khoaHuong.current) {
+      screen.orientation?.unlock?.();
+      khoaHuong.current = false;
+    }
     const doc = document as unknown as { webkitFullscreenElement?: Element; webkitExitFullscreen?: () => void };
     if (document.fullscreenElement) void document.exitFullscreen().catch(() => {});
     else if (doc.webkitFullscreenElement) doc.webkitExitFullscreen?.();
@@ -327,7 +359,7 @@ export default function GallerySlideVideo({
       </div>
 
       {coNut && lon && (
-        <button type="button" onClick={() => setXoay((v) => !v)} aria-label={xoay ? "Xoay về" : "Xoay ngang"} className={`absolute left-2 top-2 z-[6] ${nutTron}`}>
+        <button type="button" onClick={doiXoay} aria-label={xoay ? "Xoay về" : "Xoay ngang"} className={`absolute left-2 top-2 z-[6] ${nutTron}`}>
           <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.9} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M4 9a8 8 0 0113.6-4.6L20 7M20 15a8 8 0 01-13.6 4.6L4 17" />
             <path strokeLinecap="round" strokeLinejoin="round" d="M20 4v3h-3M4 20v-3h3" />
