@@ -70,21 +70,34 @@ export default function GallerySlideVideo({
     setLon(true);
     const v = ref.current;
     const ngang = !embed && !!v && v.videoWidth > v.videoHeight;
-    const xoayBangKhung = () => {
-      if (ngang && window.innerHeight > window.innerWidth) setXoay(true);
-    };
+    // XOAY KHUNG NGAY, KHÔNG CHỜ TRÌNH DUYỆT: đo 08/10 trên Android thì lệnh khoá ngang
+    // không chạy (trình duyệt không cho / không trả lời) → video ngang nằm bé giữa màn dọc.
+    if (ngang && window.innerHeight > window.innerWidth) setXoay(true);
     const khoaNgang = () => {
       const o = screen.orientation as ScreenOrientation & { lock?: (h: string) => Promise<void> };
-      if (!ngang || !o?.lock) return xoayBangKhung();
-      o.lock("landscape").then(() => (khoaHuong.current = true)).catch(xoayBangKhung);
+      if (!ngang || !o?.lock) return;
+      // Máy cho khoá ngang thật → màn tự ngang, bỏ xoay khung kẻo xoay hai lần.
+      o.lock("landscape")
+        .then(() => {
+          khoaHuong.current = true;
+          setXoay(false);
+        })
+        .catch(() => {});
     };
     const el = gocRef.current as (HTMLDivElement & { webkitRequestFullscreen?: () => void }) | null;
-    if (el?.requestFullscreen) el.requestFullscreen().then(khoaNgang).catch(xoayBangKhung);
-    else {
-      el?.webkitRequestFullscreen?.();
-      xoayBangKhung();
-    }
+    if (el?.requestFullscreen) el.requestFullscreen().then(khoaNgang).catch(() => {});
+    else el?.webkitRequestFullscreen?.();
   };
+  // Đang xem lớn mà màn đã nằm ngang (khoá được hoặc khách tự xoay máy) → bỏ xoay
+  // khung, kẻo video bị xoay thêm 90° thành dọc.
+  useEffect(() => {
+    if (!lon) return;
+    const doiCo = () => {
+      if (window.innerWidth > window.innerHeight) setXoay(false);
+    };
+    window.addEventListener("resize", doiCo);
+    return () => window.removeEventListener("resize", doiCo);
+  }, [lon]);
   const doiXoay = () => {
     // Đang khoá hướng bằng máy → bấm Xoay là nhả khoá cho khách cầm theo ý.
     if (khoaHuong.current) {
