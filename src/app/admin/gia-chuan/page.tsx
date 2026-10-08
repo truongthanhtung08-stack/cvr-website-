@@ -219,7 +219,31 @@ export default function BangGiaPage() {
     setHoiCongBo(false);
     if (loi1 || loi2) return setMsg({ ok: false, text: (loi1 || loi2) as string });
     await tai();
-    setMsg({ ok: true, text: "Đã công bố — khách thấy giá mới ngay." });
+    setMsg({ ok: true, text: "Đã duyệt — có hiệu lực ngay." });
+  }
+
+  // DUYỆT một chương trình = hiệu lực ngay trên web (lưu nháp trước để máy chủ đọc đúng chương trình).
+  async function duyetCT(c: ChuongTrinh) {
+    if (!window.confirm(`Duyệt “${c.ten || "chương trình"}”? Duyệt xong chương trình có hiệu lực và không sửa được nữa.`)) return;
+    setDangLam("duyet");
+    const luu = await fetch("/api/admin/gia-chuan", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nhap }),
+    });
+    const kqLuu = await luu.json().catch(() => ({}));
+    if (!luu.ok || !kqLuu.ok) { setDangLam(""); return setMsg({ ok: false, text: kqLuu.message || "Lưu nháp không thành công." }); }
+    const res = await fetch("/api/admin/gia-chuan", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ hanhDong: "duyet-chuong-trinh", id: c.id }),
+    });
+    const kq = await res.json().catch(() => ({}));
+    setDangLam("");
+    if (!res.ok || !kq.ok) return setMsg({ ok: false, text: kq.message || "Duyệt không thành công." });
+    await tai();
+    setDaSua(false);
+    setMsg({ ok: true, text: `Đã duyệt “${c.ten}”.` });
   }
 
   if (loading) return <p className="text-sm text-cvr-muted">Đang tải bảng giá…</p>;
@@ -231,7 +255,7 @@ export default function BangGiaPage() {
           <h1 className="text-2xl font-semibold tracking-tight text-cvr-ink">Bảng giá</h1>
           <p className="mt-1 text-xs text-cvr-muted">
             Nháp: <b className="text-cvr-ink">{nhap.capNhat ? new Date(nhap.capNhat).toLocaleString("vi-VN") : "—"}</b>
-            {" · "}Công bố: <b className="text-cvr-ink">{congBo ? new Date(congBo.luc).toLocaleString("vi-VN") : "—"}</b>
+            {" · "}Đã duyệt: <b className="text-cvr-ink">{congBo ? new Date(congBo.luc).toLocaleString("vi-VN") : "—"}</b>
           </p>
         </div>
         {(
@@ -243,7 +267,7 @@ export default function BangGiaPage() {
             <button type="button" onClick={() => setHoiCongBo(true)} disabled={!!dangLam || daSua || chuaDieuChinh.length > 0}
               title={daSua ? "Lưu nháp trước" : chuaDieuChinh.length ? "Còn cột chưa điều chỉnh %" : ""}
               className="rounded-lg bg-cvr-ink px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-cvr-ink/90 disabled:opacity-50">
-              Công bố
+              Duyệt
             </button>
           </div>
         )}
@@ -258,12 +282,12 @@ export default function BangGiaPage() {
 
       {hoiCongBo && (
         <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
-          <p className="font-semibold">Công bố bảng giá?</p>
+          <p className="font-semibold">Duyệt bảng giá? Duyệt xong có hiệu lực ngay.</p>
           {canhBaoGia.length > 0 && <p className="mt-1">{canhBaoGia.length} cảnh báo logic giá.</p>}
           <div className="mt-3 flex gap-2">
             <button type="button" onClick={congBoTatCa} disabled={!!dangLam}
               className="rounded-lg bg-cvr-ink px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
-              {dangLam === "cong-bo" ? "Đang công bố…" : "Công bố"}
+              {dangLam === "cong-bo" ? "Đang duyệt…" : "Duyệt"}
             </button>
             <button type="button" onClick={() => setHoiCongBo(false)} className="rounded-lg px-4 py-2 text-sm text-cvr-ink">Huỷ</button>
           </div>
@@ -333,7 +357,7 @@ export default function BangGiaPage() {
 
       {tab === "khuyen-mai" && (
         <>
-          <DanhSachChuongTrinh ds={nhap.chuongTrinh} onChange={(ds) => sua({ ...nhap, chuongTrinh: ds })} homNay={homNay} />
+          <DanhSachChuongTrinh ds={nhap.chuongTrinh} onChange={(ds) => sua({ ...nhap, chuongTrinh: ds })} onDuyet={duyetCT} homNay={homNay} />
         </>
       )}
 
@@ -440,7 +464,7 @@ function BangDayTin({ ten, bang, pt, onChange, onPt }: {
 }
 
 // ── Chương trình khuyến mãi (có thời hạn, áp SAU % điều chỉnh) ──────────────
-function DanhSachChuongTrinh({ ds, onChange, homNay }: { ds: ChuongTrinh[]; onChange: (ds: ChuongTrinh[]) => void; homNay: string }) {
+function DanhSachChuongTrinh({ ds, onChange, onDuyet, homNay }: { ds: ChuongTrinh[]; onChange: (ds: ChuongTrinh[]) => void; onDuyet: (c: ChuongTrinh) => void; homNay: string }) {
   const sua = (id: string, p: Partial<ChuongTrinh>) => onChange(ds.map((c) => (c.id === id ? { ...c, ...p } : c)));
   const them = () => onChange([...ds, {
     id: `ct-${Date.now()}`, ten: "", phanTram: 0, tu: homNay, den: "", mucDich: "all", sanPham: "all", tiers: [], bat: true,
@@ -449,8 +473,9 @@ function DanhSachChuongTrinh({ ds, onChange, homNay }: { ds: ChuongTrinh[]; onCh
     <Panel title="Chương trình khuyến mãi">
       <div className="space-y-3">
         {ds.map((c) => (
-          <fieldset key={c.id} disabled={!!c.daCongBo}
-            className={`grid gap-2 rounded-xl border p-3 sm:grid-cols-6 ${c.daCongBo ? "border-cvr-line bg-cvr-surface/60" : "border-cvr-line"}`}>
+          <div key={c.id}
+            className={`grid gap-2 rounded-xl border p-3 sm:grid-cols-6 ${c.daDuyet ? "border-cvr-line bg-cvr-surface/60" : "border-cvr-line"}`}>
+          <fieldset disabled={!!c.daDuyet} className="contents">
             <label className="text-xs text-cvr-muted sm:col-span-2">Tên chương trình
               <input value={c.ten} onChange={(e) => sua(c.id, { ten: e.target.value })} className={inputCls} />
             </label>
@@ -504,16 +529,19 @@ function DanhSachChuongTrinh({ ds, onChange, homNay }: { ds: ChuongTrinh[]; onCh
                 ))}
               </div>
             </div>
+          </fieldset>
             <div className="flex items-center justify-end gap-4 sm:col-span-6">
               {c.daCongBo ? (
-                <>
-                  <span className="mr-auto text-xs text-cvr-muted">Đã công bố {new Date(c.daCongBo).toLocaleString("vi-VN")}</span>
-                </>
+                <span className="mr-auto text-xs text-cvr-muted">Đã duyệt {new Date(c.daCongBo).toLocaleString("vi-VN")}</span>
               ) : (
-                <button type="button" onClick={() => onChange(ds.filter((x) => x.id !== c.id))} className="text-xs text-cvr-muted hover:text-red-600">Xoá</button>
+                <>
+                  <button type="button" onClick={() => onChange(ds.filter((x) => x.id !== c.id))} className="text-xs text-cvr-muted hover:text-red-600">Xoá</button>
+                  <button type="button" onClick={() => onDuyet(c)}
+                    className="rounded-lg bg-cvr-ink px-4 py-1.5 text-xs font-semibold text-white">Duyệt</button>
+                </>
               )}
             </div>
-          </fieldset>
+          </div>
         ))}
         {/* Nút "Tạo mới" nằm NGOÀI fieldset khoá để bấm được */}
         {ds.some((c) => c.daCongBo) && (
@@ -521,8 +549,8 @@ function DanhSachChuongTrinh({ ds, onChange, homNay }: { ds: ChuongTrinh[]; onCh
             {ds.filter((c) => c.daCongBo).map((c) => (
               <button key={c.id} type="button"
                 onClick={() => {
-                  const { daCongBo: _bo, ...ban } = c;
-                  void _bo;
+                  const { daCongBo: _bo, daDuyet: _dd, ...ban } = c;
+                  void _bo; void _dd;
                   // Nối tiếp: cùng điều kiện, bắt đầu ngay sau ngày kết thúc của chương trình đang chạy
                   const tu = c.den ? new Date(Date.parse(c.den) + 86400000).toISOString().slice(0, 10) : homNay;
                   onChange([...ds, { ...ban, id: `ct-${Date.now()}`, tu, den: "" }]);

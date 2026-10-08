@@ -28,13 +28,31 @@ export async function docNhapGia(admin: SupabaseClient, khoa: string = KHOA_GIA_
   return kiemNhap(data?.[0]?.data);
 }
 
+// Chương trình CHỈ có hiệu lực khi chủ dự án bấm Duyệt chương trình đó — không có đường thứ hai.
+const chiDaDuyet = (n: GiaChuanNhap): GiaChuanNhap => ({ ...n, chuongTrinh: n.chuongTrinh.filter((c) => c.daDuyet) });
+
+// Bấm Duyệt một chương trình = hiệu lực ngay: khoá chương trình, đưa vào bản đã duyệt và
+// tính lại giá trên web TỪ BẢN ĐÃ DUYỆT (giá chuẩn/% đang sửa dở trong nháp không bị kéo theo).
+export async function duyetChuongTrinh(admin: SupabaseClient, id: string): Promise<{ loi: string } | { ok: true }> {
+  const [nhap, daDuyet] = await Promise.all([docNhapGia(admin), docNhapGia(admin, KHOA_DA_DUYET)]);
+  if (!nhap || !daDuyet) return { loi: "Chưa có bảng giá đã công bố." };
+  const c = nhap.chuongTrinh.find((x) => x.id === id);
+  if (!c) return { loi: "Không tìm thấy chương trình — lưu nháp trước." };
+  if (c.daDuyet) return { loi: "Chương trình đã duyệt." };
+  const luc = new Date().toISOString();
+  const moi = { ...c, daDuyet: luc, daCongBo: luc };
+  await admin.from("bi_mat").upsert({ key: KHOA_GIA_CHUAN, data: { ...nhap, chuongTrinh: nhap.chuongTrinh.map((x) => (x.id === id ? moi : x)) }, updated_at: luc });
+  await admin.from("bi_mat").upsert({ key: KHOA_DA_DUYET, data: { ...daDuyet, chuongTrinh: [...daDuyet.chuongTrinh.filter((x) => x.id !== id), moi] }, updated_at: luc });
+  const kq = await congBoTin(admin, true);
+  if ("loi" in kq) return kq;
+  if (daDuyet.hoiVien?.length) await congBoHoiVien(admin, true);
+  return { ok: true };
+}
+
 async function nhapCongBo(admin: SupabaseClient, tuBanDuyet: boolean): Promise<GiaChuanNhap | null> {
   if (tuBanDuyet) return docNhapGia(admin, KHOA_DA_DUYET);
   const goc = (await docNhapGia(admin)) ?? NHAP_TRONG;
-  // Công bố = khoá mọi chương trình đang có (đánh dấu lần công bố đầu tiên).
-  const luc = new Date().toISOString();
-  const nhap: GiaChuanNhap = { ...goc, chuongTrinh: goc.chuongTrinh.map((c) => (c.daCongBo ? c : { ...c, daCongBo: luc })) };
-  await admin.from("bi_mat").upsert({ key: KHOA_GIA_CHUAN, data: nhap, updated_at: luc });
+  const nhap = chiDaDuyet(goc);
   await admin.from("bi_mat").upsert({ key: KHOA_DA_DUYET, data: nhap, updated_at: new Date().toISOString() });
   return nhap;
 }
@@ -103,7 +121,7 @@ export async function congBoTin(admin: SupabaseClient, tuBanDuyet = false): Prom
 
 /** Công bố giá gói hội viên từ bản nháp ĐÃ LƯU. */
 export async function congBoHoiVien(admin: SupabaseClient, tuBanDuyet = false): Promise<{ loi: string } | { hoiVien: BillingData["hoiVien"]; hoiVienLuc: string }> {
-  const [nhap, luu] = await Promise.all([tuBanDuyet ? docNhapGia(admin, KHOA_DA_DUYET) : docNhapGia(admin), docBillingLuu(admin)]);
+  const [nhap, luu] = await Promise.all([tuBanDuyet ? docNhapGia(admin, KHOA_DA_DUYET) : docNhapGia(admin).then((n) => n && chiDaDuyet(n)), docBillingLuu(admin)]);
   if (!nhap) return { loi: "Chưa có bản giá đã duyệt." };
   const hoiVien = tinhHoiVien(nhap.hoiVien ?? [], nhap.chuongTrinh, homNayVn(), nhap.dieuChinh?.hoiVien);
   if (!hoiVien.length) return { loi: "Bản nháp chưa có gói hội viên nào có giá — lưu nháp trước rồi mới công bố." };

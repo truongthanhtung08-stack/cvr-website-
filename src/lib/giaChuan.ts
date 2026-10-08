@@ -49,6 +49,7 @@ export type ChuongTrinh = {
   soTin?: number;           // số tin miễn phí (0 = không giới hạn)
   // ĐÃ CÔNG BỐ = KHOÁ (chủ dự án 08/10/2026: "khác thì tạo mới"). Chương trình đã lên web
   // giữ nguyên làm lịch sử, không sửa/xoá; muốn khác đi thì tạo chương trình mới.
+  daDuyet?: string;         // ISO — chủ dự án bấm Duyệt; chưa duyệt thì không bao giờ chạy
   daCongBo?: string;        // ISO — lần công bố đầu tiên
 };
 export const laMienPhiTvMoi = (c: ChuongTrinh) => c.loai === "mien-phi-tv-moi";
@@ -343,6 +344,7 @@ export function kiemNhap(x: unknown): GiaChuanNhap | null {
     Array.isArray(c.tiers) && c.tiers.every(capHopLe) && typeof c.bat === "boolean" &&
     (c.loai === undefined || c.loai === "giam" || c.loai === "mien-phi-tv-moi") &&
     (c.soNgayTuDangKy === undefined || soDuong(c.soNgayTuDangKy)) && (c.soTin === undefined || soDuong(c.soTin)) &&
+    (c.daDuyet === undefined || typeof c.daDuyet === "string") &&
     (c.daCongBo === undefined || typeof c.daCongBo === "string"));
   if (!ctHopLe) return null;
   const hv = o.hoiVien ?? [];
