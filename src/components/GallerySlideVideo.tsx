@@ -86,8 +86,6 @@ export default function GallerySlideVideo({
     setXoay(canXoay());
   };
   const thuNho = () => {
-    if (manNgang()) thoatTay.current = true;
-    vaoDoXoay.current = false;
     setLon(false);
     setXoay(false);
   };
@@ -115,11 +113,6 @@ export default function GallerySlideVideo({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lon]);
   // Khách tự xoay máy lúc đang xem lớn → khung theo chiều máy.
-  // ĐANG PHÁT TRONG KHUNG MÀ NGHIÊNG MÁY NGANG (máy bật Tự xoay) → TỰ VÀO XEM FULL, như
-  // YouTube. Không làm vậy thì màn ngang rộng hơn 640px, web chuyển sang bố cục máy tính
-  // và giấu luôn khung điện thoại đang phát → video biến mất (chủ dự án báo 08/10/2026).
-  const vaoDoXoay = useRef(false);
-  const thoatTay = useRef(false); // khách tự bấm ⤡ thoát khi máy đang ngang
   // THEO NÚT TỰ XOAY / KHOÁ XOAY CỦA ĐIỆN THOẠI (chủ dự án 08/10/2026):
   // · Vào full: video ngang + màn dọc → khung tự nằm ngang (máy khoá xoay vẫn xem ngang được).
   // · Máy đổi hướng thật (đang bật Tự xoay, hoặc khách bấm nút xoay của máy) → từ đó
@@ -133,13 +126,6 @@ export default function GallerySlideVideo({
       const ngangMoi = manNgang();
       if (ngangMoi !== ngangCu) theoMay = true;
       ngangCu = ngangMoi;
-      // Vào full do NGHIÊNG MÁY NGANG → dựng máy dọc lại là tự thoát về khung (như YouTube).
-      if (vaoDoXoay.current && !ngangMoi) {
-        vaoDoXoay.current = false;
-        setLon(false);
-        setXoay(false);
-        return;
-      }
       setXoay(theoMay ? false : canXoay());
     };
     const boNghe = ngheXoayMay(doiCo);
@@ -176,31 +162,6 @@ export default function GallerySlideVideo({
   const [tong, setTong] = useState(0);
   const [tatTieng, setTatTieng] = useState(false);
   const [hienNut, setHienNut] = useState(true);
-  useEffect(() => {
-    // Khách ĐÃ BẤM ▶ là đủ (daBam) — không chờ YouTube báo "đang chạy": trên điện thoại
-    // báo đó có khi không về, web tưởng chưa chạy nên không vào full (chủ dự án báo 08/10).
-    if (lon || !active || !daBam || xemTruoc) return;
-    // Chỉ ĐIỆN THOẠI (cảm ứng, cạnh ngắn màn < 640px) — máy tính bảng cầm ngang là bình thường.
-    if (!window.matchMedia("(pointer: coarse)").matches || Math.min(screen.width, screen.height) >= 640) return;
-    // Đã bấm ▶ mà máy ĐANG NGANG (xoay trước hay sau khi bấm đều vậy) → đầy màn.
-    // Khách tự bấm ⤡ thoát lúc máy ngang thì tôn trọng, chỉ tự vào lại sau khi dựng dọc.
-    const kiem = () => {
-      if (!manNgang()) {
-        thoatTay.current = false;
-        return;
-      }
-      if (thoatTay.current) return;
-      vaoDoXoay.current = true;
-      setLon(true);
-      setXoay(false);
-    };
-    const hen = setTimeout(kiem, 0);
-    const boNghe = ngheXoayMay(kiem);
-    return () => {
-      clearTimeout(hen);
-      boNghe();
-    };
-  }, [lon, active, daBam, xemTruoc]);
   const lenhYt = (func: string, args: unknown[] = []) =>
     khungRef.current?.contentWindow?.postMessage(JSON.stringify({ event: "command", func, args }), "*");
   // YouTube báo trạng thái qua postMessage (sau khi gửi "listening").
