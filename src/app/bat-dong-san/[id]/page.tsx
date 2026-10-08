@@ -167,10 +167,9 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   })();
   const desc = moTaGon;
   const tieuDe = tieuDeSeo(l.title, l.location, l.price);
-  // Tin hết hạn: link vẫn mở cho người đã lưu, nhưng báo Google bỏ khỏi kết quả.
-  const hetHan = await tinDaHetHan(id);
+  // Tin hết hạn VẪN cho Google lập chỉ mục (chủ dự án 08/10/2026: web còn ít tin, tin hết
+  // hạn vẫn hiện và cộng dồn mọi thứ từ Google). Liên hệ đã ẩn ở thân trang.
   return {
-    ...(hetHan ? { robots: { index: false, follow: true } } : {}),
     title: tieuDe,
     description: desc,
     alternates: { canonical: `/bat-dong-san/${id}` },

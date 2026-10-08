@@ -74,6 +74,7 @@ const VALUE_ICONS = [
 // Khối ảnh (vuông cạnh kiểu Apple mới): điện thoại giữ tỷ lệ 16:10; máy tính KÉO
 // CAO BẰNG cột chữ bên cạnh (tối thiểu 340px) để 2 cột luôn thẳng hàng.
 function Figure({ src, alt, className = "" }: { src: string; alt: string; className?: string }) {
+  if (!src) return null; // không có ảnh thật thì không hiện khung ảnh
   return (
     <div className={`relative aspect-[16/10] w-full overflow-hidden bg-cvr-surface lg:aspect-auto lg:h-full lg:min-h-[340px] ${className}`}>
       <Image src={asset(src)} alt={alt} fill sizes="(max-width:1024px) 100vw, 50vw" className="object-cover" />
@@ -98,6 +99,7 @@ export default async function GioiThieuPage() {
                 ĐIỆN THOẠI 16:10 → 1200×750
              KHÔNG chèn watermark/logo lên hero này — để ảnh sạch, thương hiệu đã có
              ở header ngay phía trên. */}
+        {about.heroImage && (
         <section className="relative isolate pb-7 sm:pb-12">
           <div className="relative aspect-[16/10] w-full overflow-hidden bg-cvr-ink sm:aspect-[4/1] sm:max-h-[330px]">
             {/* ĐIỆN THOẠI — ảnh riêng 16:10; chưa nhập thì dùng tạm ảnh máy tính */}
@@ -120,10 +122,11 @@ export default async function GioiThieuPage() {
             />
           </div>
         </section>
+        )}
 
         {/* ── Câu chuyện ── */}
         <section className={SECTION}>
-          <div className={SPLIT}>
+          <div className={about.story.image ? SPLIT : ""}>
             <div>
               <Eyebrow>{about.story.eyebrow}</Eyebrow>
               <Title as="h1">{about.story.title}</Title>
@@ -200,7 +203,7 @@ export default async function GioiThieuPage() {
         {/* ── Thị trường Miền Trung ── */}
         <section className="bg-cvr-surface">
           <div className={SECTION}>
-            <div className={SPLIT}>
+            <div className={about.market.image ? SPLIT : ""}>
               <Figure src={about.market.image} alt="Không gian ven biển Duyên hải Miền Trung" className="order-2 lg:order-1" />
               <div className="order-1 lg:order-2">
                 <Eyebrow>{about.market.eyebrow}</Eyebrow>

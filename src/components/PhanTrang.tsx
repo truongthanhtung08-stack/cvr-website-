@@ -29,18 +29,34 @@ export default function PhanTrang({
   hienTai,
   tong,
   doiTrang,
+  taoLink,
   ghiChu,
   className = "mt-8",
 }: {
   hienTai: number;
   tong: number;
   doiTrang: (p: number) => void;
+  /** Có truyền thì mỗi nút là ĐƯỜNG DẪN THẬT (?trang=N) để Google lần theo được tới
+   *  tin ở trang 2, 3… Khách bấm vẫn đổi trang tại chỗ, không tải lại. */
+  taoLink?: (p: number) => string;
   /** Dòng phụ dưới hàng số, vd "1.234 tin". Không truyền thì chỉ hiện "Trang x/y". */
   ghiChu?: string;
   className?: string;
 }) {
   if (tong <= 1) return null;
   const so = daySoTrang(hienTai, tong);
+  // Đường dẫn thật cho Google; bấm thường (không giữ Ctrl/Cmd) thì đổi trang tại chỗ.
+  const nhay = (p: number) => (e: React.MouseEvent) => {
+    if (e.metaKey || e.ctrlKey || e.shiftKey) return;
+    e.preventDefault();
+    doiTrang(p);
+  };
+  const oSo = (p: number) =>
+    `h-10 min-w-10 rounded-lg px-3 text-sm font-medium transition ${
+      p === hienTai
+        ? "bg-cvr-ink text-white"
+        : "border border-cvr-line text-cvr-body hover:border-cvr-ink hover:text-cvr-ink"
+    }`;
 
   return (
     <nav aria-label="Phân trang" className={`flex flex-col items-center gap-2 ${className}`}>
@@ -60,17 +76,23 @@ export default function PhanTrang({
         {so.map((p, i) =>
           p === "…" ? (
             <span key={`gap-${i}`} className="px-0.5 text-sm text-cvr-faint">…</span>
+          ) : taoLink ? (
+            <a
+              key={p}
+              href={taoLink(p)}
+              onClick={nhay(p)}
+              aria-current={p === hienTai ? "page" : undefined}
+              className={`${oSo(p)} flex items-center justify-center`}
+            >
+              {p}
+            </a>
           ) : (
             <button
               key={p}
               type="button"
               onClick={() => doiTrang(p)}
               aria-current={p === hienTai ? "page" : undefined}
-              className={`h-10 min-w-10 rounded-lg px-3 text-sm font-medium transition ${
-                p === hienTai
-                  ? "bg-cvr-ink text-white"
-                  : "border border-cvr-line text-cvr-body hover:border-cvr-ink hover:text-cvr-ink"
-              }`}
+              className={oSo(p)}
             >
               {p}
             </button>

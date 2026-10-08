@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { getProjects, getArticles } from "@/lib/contentDb";
-import { getListings } from "@/lib/listingsDb";
+import { getListings, getListingsHetHan } from "@/lib/listingsDb";
 import { getChuyenGia, NGUONG_INDEX_HO_SO } from "@/lib/chuyenGiaDb";
 import { projectCategories, rentCategories, saleCategories } from "@/lib/categories";
 import { packages, utilityTools } from "@/lib/packages";
@@ -60,8 +60,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const dynamic: MetadataRoute.Sitemap = [];
   try {
-    const [projects, articles, listings, chuyenGia] = await Promise.all([
-      getProjects(), getArticles(), getListings(), getChuyenGia(),
+    const [projects, articles, listings, chuyenGia, tinHetHan] = await Promise.all([
+      getProjects(), getArticles(), getListings(), getChuyenGia(), getListingsHetHan(),
     ]);
     // KHAI CẢ ẢNH của từng trang (sitemap ảnh). Bất động sản là ngành khách xem
     // BẰNG MẮT: rất nhiều người tìm qua Google Hình ảnh rồi mới bấm vào web.
@@ -113,9 +113,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         images: anhTuyetDoi(a.image),
       });
     }
+    // Ngày sửa THẬT (đẩy tin / đăng) — khai "vừa sửa" cho mọi trang thì Google thôi tin
+    // ngày này và ít quay lại đọc.
+    const ngayTin = (l: { bumpedAt?: string; postedAt?: string }) => {
+      const d = new Date(l.bumpedAt ?? l.postedAt ?? "");
+      return Number.isNaN(d.getTime()) ? now : d;
+    };
     for (const l of listings) {
       dynamic.push({
-        url: `${SITE}/bat-dong-san/${l.id}`, lastModified: now, changeFrequency: "weekly", priority: 0.7,
+        url: `${SITE}/bat-dong-san/${l.id}`, lastModified: ngayTin(l), changeFrequency: "weekly", priority: 0.7,
+        images: anhTuyetDoi(l.image),
+      });
+    }
+    // TIN HẾT HẠN cũng khai (chủ dự án 08/10/2026): trang vẫn mở, vẫn lập chỉ mục.
+    for (const l of tinHetHan) {
+      dynamic.push({
+        url: `${SITE}/bat-dong-san/${l.id}`, lastModified: ngayTin(l), changeFrequency: "monthly", priority: 0.5,
         images: anhTuyetDoi(l.image),
       });
     }

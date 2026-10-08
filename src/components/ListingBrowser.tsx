@@ -112,6 +112,15 @@ export default function ListingBrowser({
   // đầu danh sách, không phải cuộn tay). Áp dụng cho mọi danh sách phân trang.
   const goPage = (p: number) => { setPage(p); ghiTrangVaoDiaChi(p); window.scrollTo({ top: 0 }); };
 
+  // Đường dẫn ?trang=N cho nút phân trang — Google lần theo để tới tin ở các trang sau.
+  const linkTrang = (p: number) => {
+    const sp = new URLSearchParams(params.toString());
+    if (p > 1) sp.set("trang", String(p));
+    else sp.delete("trang");
+    const q = sp.toString();
+    return q ? `?${q}` : "?";
+  };
+
   // Ghi ?trang=N vào địa chỉ mà KHÔNG tải lại trang (replaceState, không thêm bước
   // lịch sử — để nút Back vẫn quay ra chỗ khách vào danh sách, không phải bấm Back
   // đúng bằng số lần đổi trang).
@@ -310,6 +319,7 @@ export default function ListingBrowser({
                 hienTai={current}
                 tong={totalPages}
                 doiTrang={goPage}
+                taoLink={linkTrang}
                 className="mt-10"
               />
             </>
