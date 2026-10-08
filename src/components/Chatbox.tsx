@@ -96,6 +96,8 @@ export default function Chatbox() {
   // Nút chat KÉO–THẢ được để không che nội dung (yêu cầu 14/7). Vị trí lưu localStorage.
   const [pos, setPos] = useState<ChatPos | null>(null);
   const drag = useRef<{ startX: number; startY: number; base: ChatPos; moved: boolean } | null>(null);
+  // Vừa KÉO xong thì cú nhả tay không được tính là bấm mở Zalo.
+  const vuaKeo = useRef(false);
 
   useEffect(() => {
     try {
@@ -121,21 +123,27 @@ export default function Chatbox() {
     if (!drag.current) return;
     const wasDrag = drag.current.moved;
     drag.current = null;
+    vuaKeo.current = wasDrag;
     if (wasDrag) {
       setPos((p) => {
         if (p) try { localStorage.setItem(POS_KEY, JSON.stringify(p)); } catch { /* bỏ qua */ }
         return p;
       });
-    } else {
-      // BẤM (không kéo) → mở Zalo ở tab mới
-      window.open(ZALO_URL, "_blank", "noopener,noreferrer");
     }
   };
 
   return (
-    /* Nút chat — GIỮ + KÉO để dời chỗ, BẤM để nhắn Zalo */
-    <button
-      type="button"
+    /* Nút chat — GIỮ + KÉO để dời chỗ, BẤM để nhắn Zalo.
+       Là ĐƯỜNG DẪN THẬT (không mở bằng window.open): iPhone và trình duyệt trong app
+       (Zalo, Facebook) chặn cửa sổ mở bằng mã → khách bấm không thấy gì. */
+    <a
+      href={ZALO_URL}
+      target="_blank"
+      rel="noopener noreferrer"
+      draggable={false}
+      onClick={(e) => {
+        if (vuaKeo.current) { e.preventDefault(); vuaKeo.current = false; }
+      }}
       aria-label="Nhắn tin cho Coastal Land qua Zalo (giữ và kéo để di chuyển)"
       onPointerDown={onBtnPointerDown}
       onPointerMove={onBtnPointerMove}
@@ -154,6 +162,6 @@ export default function Chatbox() {
       <svg className="h-[22px] w-[22px]" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
         <path d="M12 2.25c-5.385 0-9.75 3.24-9.75 7.5 0 2.68 1.72 5.03 4.32 6.4-.14.86-.5 1.9-1.2 2.86a.375.375 0 0 0 .35.6c1.7-.2 3.06-.78 4.02-1.35.73.16 1.5.24 2.26.24 5.385 0 9.75-3.24 9.75-7.5S17.385 2.25 12 2.25Z" />
       </svg>
-    </button>
+    </a>
   );
 }
