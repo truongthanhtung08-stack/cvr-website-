@@ -106,17 +106,6 @@ export default function GallerySlideVideo({
     return () => window.removeEventListener("popstate", quayLai);
   }, [lon]);
   const doiXoay = () => setXoay((x) => !x);
-  // BẤM PHÁT TRONG KHUNG ẢNH → KHUNG TỰ GIÃN THEO ĐÚNG HÌNH VIDEO (chủ dự án 08/10/2026):
-  // video dọc thì khung cao lên thành khung dọc, video ngang giữ khung ngang. Rời slide
-  // thì khung về như cũ. Báo tỉ lệ (rộng ÷ cao) cho thư viện; 0 = khung mặc định.
-  useEffect(() => {
-    if (!onTyLe) return;
-    if (!active || !daBam) return onTyLe(0);
-    if (embed) return onTyLe(ytNgang ? 16 / 9 : 9 / 16);
-    const v = ref.current;
-    if (v && v.videoWidth > 0) onTyLe(v.videoWidth / v.videoHeight);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active, daBam, ytNgang]);
   // Khách tự xoay máy lúc đang xem lớn → khung theo chiều máy.
   useEffect(() => {
     if (!lon) return;
