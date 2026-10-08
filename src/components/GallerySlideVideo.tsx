@@ -52,109 +52,84 @@ export default function GallerySlideVideo({
   const laYoutube = !!embed && /youtube\.com/.test(embed);
   const [ytDung, setYtDung] = useState(false); // YouTube đang dừng (khách chạm dừng)
   const gocRef = useRef<HTMLDivElement>(null);
-  // ── XEM LỚN = PHÓNG TO NGAY TRÌNH PHÁT ĐANG CHẠY (chủ dự án 08/10/2026) ──────
-  // Trước đây bấm xem lớn là MỞ TRÌNH PHÁT MỚI rồi tự phát — điện thoại (nhất là
-  // iPhone) chặn tự phát có tiếng nên video ĐỨNG. Nay không tạo trình phát mới:
-  // khung đang phát phủ kín màn hình (máy cho thì vào toàn màn hình thật), video
-  // CHẠY TIẾP; thoát ra cũng vậy. Chỉ dừng khi khách tự bấm dừng.
-  // Video ngang hay dọc tự co vừa màn hình (object-contain / trình phát YouTube).
+  // ── XEM LỚN = KHUNG PHỦ KÍN MÀN HÌNH CỦA WEB (chủ dự án 08/10/2026) ───────────
+  // KHÔNG dùng chế độ toàn màn hình thật của trình duyệt: Android hiện dòng "To exit
+  // full screen, drag from the top…" đè lên video mà web không tắt được (chủ dự án
+  // chụp màn hình báo). Khung web phủ kín màn, cùng một trình phát đang chạy nên
+  // video CHẠY TIẾP khi phóng to / xoay / thoát — chỉ dừng khi khách bấm dừng.
+  // VIDEO NGANG → TỰ XOAY NGANG: màn đang dọc thì khung xoay 90° cho video ngang phủ
+  // kín màn; khách tự xoay máy ngang thì bỏ xoay khung. Video dọc giữ dọc.
+  // Ngang/dọc: video tải lên đọc từ chính tệp; YouTube hỏi /api/video-ngang.
+  // Nút Xoay vẫn còn để khách xoay theo ý.
   const [lon, setLon] = useState(false);
   const [xoay, setXoay] = useState(false);
-  // VIDEO QUAY NGANG → BẤM TOÀN MÀN HÌNH LÀ TỰ XOAY NGANG (chủ dự án 08/10/2026).
-  // Video dọc giữ dọc. Máy cho khoá hướng (Android) thì khoá ngang; không cho
-  // (iPhone) thì xoay khung 90° — chỉ khi màn đang dọc. Nút Xoay vẫn còn để khách
-  // xoay lại theo ý mình; thoát là trả hướng màn về như cũ.
-  // YouTube không cho biết video ngang hay dọc → không tự xoay, dùng nút Xoay.
-  const khoaHuong = useRef(false);
-  const moLon = () => {
-    const v = ref.current;
-    // VIDEO TẢI LÊN WEB → TOÀN MÀN HÌNH GỐC CỦA ĐIỆN THOẠI trên chính thẻ <video> đang
-    // chạy (chủ dự án 08/10/2026: tự dựng khung toàn màn hình thì máy xoay ngang mà
-    // khung lệch). Android: video ngang tự xoay ngang; iPhone: trình phát Apple. Video
-    // chạy tiếp, thoát ra vẫn chạy.
-    if (!embed && v) {
-      const vv = v as HTMLVideoElement & { webkitEnterFullscreen?: () => void };
-      const ngangGoc = v.videoWidth > v.videoHeight;
-      if (vv.requestFullscreen) {
-        vv.requestFullscreen()
-          .then(() => {
-            const o = screen.orientation as ScreenOrientation & { lock?: (h: string) => Promise<void> };
-            if (ngangGoc && o?.lock) o.lock("landscape").then(() => (khoaHuong.current = true)).catch(() => {});
-          })
-          .catch(() => vv.webkitEnterFullscreen?.());
-        return;
-      }
-      if (vv.webkitEnterFullscreen) {
-        vv.webkitEnterFullscreen();
-        return;
-      }
-    }
-    setLon(true);
-    const ngang = !embed && !!v && v.videoWidth > v.videoHeight;
-    // XOAY KHUNG NGAY, KHÔNG CHỜ TRÌNH DUYỆT: đo 08/10 trên Android thì lệnh khoá ngang
-    // không chạy (trình duyệt không cho / không trả lời) → video ngang nằm bé giữa màn dọc.
-    if (ngang && window.innerHeight > window.innerWidth) setXoay(true);
-    const khoaNgang = () => {
-      const o = screen.orientation as ScreenOrientation & { lock?: (h: string) => Promise<void> };
-      if (!ngang || !o?.lock) return;
-      // Máy cho khoá ngang thật → màn tự ngang, bỏ xoay khung kẻo xoay hai lần.
-      o.lock("landscape")
-        .then(() => {
-          khoaHuong.current = true;
-          setXoay(false);
-        })
-        .catch(() => {});
-    };
-    const el = gocRef.current as (HTMLDivElement & { webkitRequestFullscreen?: () => void }) | null;
-    if (el?.requestFullscreen) el.requestFullscreen().then(khoaNgang).catch(() => {});
-    else el?.webkitRequestFullscreen?.();
-  };
-  // Đang xem lớn mà màn đã nằm ngang (khoá được hoặc khách tự xoay máy) → bỏ xoay
-  // khung, kẻo video bị xoay thêm 90° thành dọc.
+  const [ytNgang, setYtNgang] = useState(false);
+  const maYt = laYoutube ? (url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,})/i)?.[1] ?? "") : "";
   useEffect(() => {
-    if (!lon) return;
-    const doiCo = () => {
-      if (window.innerWidth > window.innerHeight) setXoay(false);
+    if (!maYt || !active) return;
+    let huy = false;
+    fetch(`/api/video-ngang?id=${maYt}`)
+      .then((r) => r.json())
+      .then((d: { ngang?: boolean }) => !huy && setYtNgang(!!d.ngang))
+      .catch(() => {});
+    return () => {
+      huy = true;
     };
-    window.addEventListener("resize", doiCo);
-    return () => window.removeEventListener("resize", doiCo);
-  }, [lon]);
-  const doiXoay = () => {
-    // Đang khoá hướng bằng máy → bấm Xoay là nhả khoá cho khách cầm theo ý.
-    if (khoaHuong.current) {
-      screen.orientation?.unlock?.();
-      khoaHuong.current = false;
-      return;
-    }
-    setXoay((x) => !x);
+  }, [maYt, active]);
+  const laNgang = () => {
+    if (embed) return ytNgang;
+    const v = ref.current;
+    return !!v && v.videoWidth > v.videoHeight;
+  };
+  const canXoay = () => laNgang() && window.innerHeight > window.innerWidth;
+  const moLon = () => {
+    setLon(true);
+    setXoay(canXoay());
   };
   const thuNho = () => {
-    if (khoaHuong.current) {
-      screen.orientation?.unlock?.();
-      khoaHuong.current = false;
+    // Đã ghi một bước lịch sử lúc phóng to → lùi lại đúng bước đó (popstate sẽ thu khung).
+    if ((history.state as { xemLon?: boolean } | null)?.xemLon) history.back();
+    else {
+      setLon(false);
+      setXoay(false);
     }
-    const doc = document as unknown as { webkitFullscreenElement?: Element; webkitExitFullscreen?: () => void };
-    if (document.fullscreenElement) void document.exitFullscreen().catch(() => {});
-    else if (doc.webkitFullscreenElement) doc.webkitExitFullscreen?.();
-    setLon(false);
-    setXoay(false);
   };
-  // Thoát bằng phím Esc / nút Back của máy → thu khung về theo, video vẫn chạy.
+  // LUÔN CÓ LỐI THOÁT: nút Back của điện thoại cũng thu khung về (không rời trang).
   useEffect(() => {
-    const doi = () => {
-      const co = !!document.fullscreenElement || !!(document as unknown as { webkitFullscreenElement?: Element }).webkitFullscreenElement;
-      if (!co) {
-        setLon(false);
-        setXoay(false);
-      }
+    if (!lon) return;
+    history.pushState({ ...(history.state ?? {}), xemLon: true }, "");
+    const quayLai = () => {
+      setLon(false);
+      setXoay(false);
     };
-    document.addEventListener("fullscreenchange", doi);
-    document.addEventListener("webkitfullscreenchange", doi);
+    window.addEventListener("popstate", quayLai);
+    return () => window.removeEventListener("popstate", quayLai);
+  }, [lon]);
+  const doiXoay = () => setXoay((x) => !x);
+  // BẤM PHÁT TRONG KHUNG ẢNH → KHUNG TỰ GIÃN THEO ĐÚNG HÌNH VIDEO (chủ dự án 08/10/2026):
+  // video dọc thì khung cao lên thành khung dọc, video ngang giữ khung ngang. Rời slide
+  // thì khung về như cũ. Báo tỉ lệ (rộng ÷ cao) cho thư viện; 0 = khung mặc định.
+  useEffect(() => {
+    if (!onTyLe) return;
+    if (!active || !daBam) return onTyLe(0);
+    if (embed) return onTyLe(ytNgang ? 16 / 9 : 9 / 16);
+    const v = ref.current;
+    if (v && v.videoWidth > 0) onTyLe(v.videoWidth / v.videoHeight);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active, daBam, ytNgang]);
+  // Khách tự xoay máy lúc đang xem lớn → khung theo chiều máy.
+  useEffect(() => {
+    if (!lon) return;
+    const doiCo = () => setXoay(canXoay());
+    window.addEventListener("resize", doiCo);
+    const cuon = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     return () => {
-      document.removeEventListener("fullscreenchange", doi);
-      document.removeEventListener("webkitfullscreenchange", doi);
+      window.removeEventListener("resize", doiCo);
+      document.body.style.overflow = cuon;
     };
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lon]);
   const holdRef = useRef(onHold);
   const playingRef = useRef(false);
   const fullRef = useRef(false);
@@ -207,10 +182,8 @@ export default function GallerySlideVideo({
 
   // Đang xem lớn thì giữ slide đứng yên (kể cả khi máy không vào toàn màn hình thật).
   useEffect(() => {
-    if (lon) {
-      fullRef.current = true;
-      holdRef.current?.(true);
-    }
+    fullRef.current = lon;
+    holdRef.current?.(lon || playingRef.current || dungVaoRef.current);
   }, [lon]);
 
   // TOÀN MÀN HÌNH: chỉ để giữ slide đứng yên trong lúc khách đang xem.
@@ -224,10 +197,6 @@ export default function GallerySlideVideo({
         !!document.fullscreenElement ||
         !!(document as unknown as { webkitFullscreenElement?: Element }).webkitFullscreenElement;
       fullRef.current = co;
-      if (!co && khoaHuong.current) {
-        screen.orientation?.unlock?.();
-        khoaHuong.current = false;
-      }
       bao();
     };
 
@@ -348,14 +317,9 @@ export default function GallerySlideVideo({
       disablePictureInPicture
       muted={xemTruoc}
       preload="metadata"
-      // Biết video quay dọc hay ngang ngay khi tải xong phần mô tả, để thư viện
-      // chỉnh khung cho vừa — khách quay bằng điện thoại là video dọc.
-      onLoadedMetadata={(e) => {
-        const v = e.currentTarget;
-        if (v.videoWidth > 0 && v.videoHeight > 0) onTyLe?.(v.videoWidth / v.videoHeight);
-      }}
       onPlay={() => {
         playingRef.current = true;
+        setDaBam(true);
         bao();
       }}
       onPause={() => {
@@ -389,7 +353,7 @@ export default function GallerySlideVideo({
         className="h-full w-full"
         style={
           lon && xoay
-            ? { position: "absolute", left: "50%", top: "50%", width: "100vh", height: "100vw", transform: "translate(-50%, -50%) rotate(90deg)" }
+            ? { position: "absolute", left: "50%", top: "50%", width: "100dvh", height: "100dvw", transform: "translate(-50%, -50%) rotate(90deg)" }
             : undefined
         }
       >
@@ -409,15 +373,20 @@ export default function GallerySlideVideo({
           type="button"
           onClick={lon ? thuNho : moLon}
           aria-label={lon ? "Thoát toàn màn hình" : "Toàn màn hình"}
-          className={`absolute right-2 top-2 z-[6] ${nutTron}`}
+          className={
+            lon
+              ? "absolute right-2 top-2 z-[6] flex h-10 items-center gap-1.5 rounded-full bg-black/60 px-4 text-[14px] font-semibold text-white backdrop-blur-sm active:bg-black/80"
+              : `absolute right-2 top-2 z-[6] ${nutTron}`
+          }
         >
           <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
             {lon ? (
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 6l12 12M18 6L6 18" />
             ) : (
               <path strokeLinecap="round" strokeLinejoin="round" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />
             )}
           </svg>
+          {lon && "Thoát"}
         </button>
       )}
 

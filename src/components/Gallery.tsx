@@ -74,6 +74,8 @@ export default function Gallery({
   };
 
   const mIsVideo = mCur < nVid;
+  // Tỉ lệ (rộng ÷ cao) của video ĐANG PHÁT theo từng slide; 0/không có = khung mặc định.
+  const [tyLeVideo, setTyLeVideo] = useState<Record<number, number>>({});
 
   // XOAY MÁY: khung đổi cỡ làm vị trí cuộn lệch, tính lại "đang ở tấm nào" là sai một
   // tấm → video đang chạy bị coi như đã rời slide và DỪNG (chủ dự án báo 08/10/2026).
@@ -181,11 +183,18 @@ export default function Gallery({
                 // về đúng khung này và vẫn đang chạy (chủ dự án chốt 11/9/2026).
                 // Trước đây bấm vào là nhảy thẳng sang một trình xem riêng —
                 // không ai xem kiểu đó.
+                // Bấm phát → khung tự giãn theo hình video (dọc cao lên, tối đa 80% màn).
                 <div
                   key={i}
-                  className="relative aspect-video w-full shrink-0 snap-center overflow-hidden border border-cvr-line bg-black"
+                  className={`relative w-full shrink-0 snap-center self-start overflow-hidden border border-cvr-line bg-black ${tyLeVideo[i] ? "" : "aspect-video"}`}
+                  style={tyLeVideo[i] ? { height: `min(${(100 / tyLeVideo[i]).toFixed(2)}vw, 80dvh)` } : undefined}
                 >
-                  <GallerySlideVideo url={m.src} active={i === mCur} onHold={setHold} />
+                  <GallerySlideVideo
+                    url={m.src}
+                    active={i === mCur}
+                    onHold={setHold}
+                    onTyLe={(r) => setTyLeVideo((cu) => (cu[i] === r ? cu : { ...cu, [i]: r }))}
+                  />
                 </div>
               ) : (
                 <button
