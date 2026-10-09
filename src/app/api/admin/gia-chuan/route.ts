@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ghepBillingLuu, bangUp, goiDuAn, goiPr, ghiChuPr, bangBanner, soLuotTuNhan, type BillingData } from "@/lib/billing";
 import { KHOA_GIA_CHUAN, NHAP_TRONG, kiemNhap, type GiaChuanNhap } from "@/lib/giaChuan";
-import { congBoTin, congBoHoiVien, duyetChuongTrinh } from "@/lib/congBoGia";
+import { congBoTin, congBoHoiVien, congBoMuc, duyetChuongTrinh } from "@/lib/congBoGia";
 import { ghepQuyDinh, KHOA_QUY_DINH_GIA, type QuyDinhGia } from "@/lib/quyDinhGia";
 
 // ============================================================================
@@ -96,6 +96,13 @@ export async function POST(request: Request) {
 
   if (hanhDong === "duyet-chuong-trinh") {
     const kq = await duyetChuongTrinh(admin, String(id ?? ""));
+    if ("loi" in kq) return loi(kq.loi, 400);
+    return NextResponse.json({ ok: true });
+  }
+
+  // DUYỆT RIÊNG từng bảng Dự án · PR · Banner (chủ dự án 10/10/2026)
+  if (hanhDong === "duyet-muc") {
+    const kq = await congBoMuc(admin, String(id ?? ""));
     if ("loi" in kq) return loi(kq.loi, 400);
     return NextResponse.json({ ok: true });
   }

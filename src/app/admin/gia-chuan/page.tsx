@@ -224,14 +224,40 @@ export default function BangGiaPage() {
       const kq = await res.json().catch(() => ({}));
       return res.ok && kq.ok ? null : kq.message || "Không thành công.";
     };
+    // Nút Duyệt chính chỉ cho lên giá Đăng tin + Đẩy tin. Hội viên · Dự án · PR · Banner Duyệt riêng từng bảng.
     const loi1 = await goi("cong-bo");
-    const loi2 = loi1 ? null : (nhap.hoiVien?.length ? await goi("cong-bo-hoi-vien") : null);
+    const loi2 = null;
     setDangLam("");
     setHoiCongBo(false);
     if (loi1 || loi2) return setMsg({ ok: false, text: (loi1 || loi2) as string });
     await tai();
     setMsg({ ok: true, text: "Đã duyệt — có hiệu lực ngay." });
   }
+
+  // DUYỆT RIÊNG một bảng (Hội viên · Dự án · PR · Banner) — chủ dự án 10/10/2026
+  async function duyetBang(bang: "hoi-vien" | "du-an" | "pr" | "banner", ten: string) {
+    if (daSua) return setMsg({ ok: false, text: "Lưu nháp trước rồi mới Duyệt." });
+    if (!window.confirm(`Duyệt bảng giá ${ten}? Duyệt xong hiện ngay trên web.`)) return;
+    setDangLam("cong-bo");
+    const res = await fetch("/api/admin/gia-chuan", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(bang === "hoi-vien" ? { hanhDong: "cong-bo-hoi-vien" } : { hanhDong: "duyet-muc", id: bang }),
+    });
+    const kq = await res.json().catch(() => ({}));
+    setDangLam("");
+    if (!res.ok || !kq.ok) return setMsg({ ok: false, text: kq.message || "Duyệt không thành công." });
+    await tai();
+    setMsg({ ok: true, text: `Đã duyệt bảng giá ${ten} — hiện ngay trên web.` });
+  }
+  const nutDuyetBang = (bang: "hoi-vien" | "du-an" | "pr" | "banner", ten: string) => (
+    <div className="flex justify-end">
+      <button type="button" onClick={() => duyetBang(bang, ten)} disabled={!!dangLam}
+        className="rounded-lg bg-cvr-ink px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50">
+        Duyệt bảng {ten}
+      </button>
+    </div>
+  );
 
   // DUYỆT một chương trình = hiệu lực ngay trên web (lưu nháp trước để máy chủ đọc đúng chương trình).
   async function duyetCT(c: ChuongTrinh) {
@@ -350,19 +376,25 @@ export default function BangGiaPage() {
               <BangHoiVien ds={nhap.hoiVien ?? []} pt={dc.hoiVien} onPt={(p) => suaDc({ hoiVien: p })} onChange={(ds) => sua({ ...nhap, hoiVien: ds })} />
               <XemTruocHoiVien congBo={hoiVienXemTruoc} />
               <CanhBao ds={canhBaoHv} />
+              {nutDuyetBang("hoi-vien", "Hội viên")}
             </>
           )}
 
           {muc === "du-an" && (
-            <BangDuAn ds={nhap.duAn ?? []} pt={dc.duAn} onPt={(p) => suaDc({ duAn: p })} onChange={(ds) => sua({ ...nhap, duAn: ds })} />
+            <>
+              <BangDuAn ds={nhap.duAn ?? []} pt={dc.duAn} onPt={(p) => suaDc({ duAn: p })} onChange={(ds) => sua({ ...nhap, duAn: ds })} />
+              {nutDuyetBang("du-an", "Dự án")}
+            </>
           )}
           {muc === "pr" && (
             <BangPr ds={nhap.pr ?? []} notes={nhap.prNotes ?? []} pt={dc.pr} onPt={(p) => suaDc({ pr: p })}
               onChange={(ds) => sua({ ...nhap, pr: ds })} onNotes={(n) => sua({ ...nhap, prNotes: n })} />
           )}
+          {muc === "pr" && nutDuyetBang("pr", "PR")}
           {muc === "banner" && (
             <BangBannerGia ds={nhap.banners ?? []} pt={dc.banner} onPt={(p) => suaDc({ banner: p })} onChange={(ds) => sua({ ...nhap, banners: ds })} />
           )}
+          {muc === "banner" && nutDuyetBang("banner", "Banner")}
         </>
       )}
 

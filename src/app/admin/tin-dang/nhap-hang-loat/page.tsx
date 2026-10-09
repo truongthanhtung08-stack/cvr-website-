@@ -323,6 +323,8 @@ export default function NhapHangLoatPage() {
         capNhat++;
       }
 
+      // Tin đăng hộ: gắn về tài khoản theo SĐT + chọn ảnh đại diện hợp khung (chủ dự án 09/10/2026)
+      await fetch("/api/admin/gom-tin-dang-ho", { method: "POST" }).catch(() => {});
       // Báo web bỏ cache → tin vừa đăng hiện NGAY (trước đây chờ lượt làm mới tự động).
       await lamMoiWeb("listings");
       setKetQua(

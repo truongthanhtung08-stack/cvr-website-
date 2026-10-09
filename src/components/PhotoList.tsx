@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { khoaCuon } from "@/lib/khoaCuon";
 import GallerySlideVideo from "@/components/GallerySlideVideo";
+import { useSaved } from "@/lib/useSaved";
 
 // ============================================================================
 // DANH SÁCH ẢNH KIỂU FACEBOOK — dùng chung cho tin mua bán / cho thuê và dự án
@@ -29,7 +30,13 @@ export default function PhotoList({
   onPick,
   nhanPhim = true,
   banDo,
+  listingId,
+  duongDan,
 }: {
+  /** Có id tin → nút Thích (lưu tin) trên thanh đầu, như mạng xã hội (chủ dự án 10/10/2026) */
+  listingId?: string;
+  /** Đường dẫn tin để Chia sẻ (mặc định: trang đang xem) */
+  duongDan?: string;
   /** Bản đồ Google vị trí BĐS ở cuối danh sách (chủ dự án 09/10/2026) */
   banDo?: { diaChi: string; q: string };
   images: string[];
@@ -42,6 +49,13 @@ export default function PhotoList({
 }) {
   const [keo, setKeo] = useState(0);      // độ lệch đang kéo (px; âm = trượt lên)
   const [moBanDo, setMoBanDo] = useState(false); // điện thoại: cột bản đồ đang mở
+  const { has, toggle } = useSaved();
+  const daLuu = listingId ? has(listingId) : false;
+  const chiaSe = () => {
+    const url = duongDan ? `${window.location.origin}${duongDan}` : window.location.href;
+    if (navigator.share) navigator.share({ title, url }).catch(() => {});
+    else navigator.clipboard?.writeText(url);
+  };
   const [banDoTo, setBanDoTo] = useState(false); // bản đồ phóng to (nút ⤢ như Batdongsan)
   const [thoat, setThoat] = useState(0);  // 0 = đang mở · 1/-1 = đang chạy hiệu ứng thoát
   const [muot, setMuot] = useState(true); // tắt hiệu ứng khi ảnh bám ngón tay
@@ -168,11 +182,19 @@ export default function PhotoList({
             <p className="text-xs text-cvr-muted">{videos.length > 0 ? `${videos.length} video · ` : ""}{images.length} ảnh</p>
           </div>
           {banDo && (
-            <button type="button" onClick={() => setMoBanDo(true)} className="flex h-9 shrink-0 items-center gap-1.5 rounded-full border border-cvr-line px-3 text-[13px] font-semibold text-cvr-ink lg:hidden">
+            <button type="button" onClick={() => setMoBanDo(true)} className="flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-cvr-blue px-3 text-[13px] font-semibold text-white lg:hidden">
               <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24" aria-hidden><path d="M12 21s-7-6.2-7-11.5A7 7 0 0112 2.5a7 7 0 017 7C19 14.8 12 21 12 21z" /><circle cx="12" cy="9.5" r="2.5" /></svg>
               Vị trí
             </button>
           )}
+          {listingId && (
+            <button type="button" aria-label={daLuu ? "Bỏ thích" : "Thích"} aria-pressed={daLuu} onClick={() => toggle(listingId)} className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${daLuu ? "text-red-500" : "text-cvr-ink"}`}>
+              <svg className="h-5 w-5" viewBox="0 0 24 24" fill={daLuu ? "currentColor" : "none"} stroke="currentColor" strokeWidth={1.8} aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" /></svg>
+            </button>
+          )}
+          <button type="button" aria-label="Chia sẻ" onClick={chiaSe} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-cvr-ink">
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24" aria-hidden><circle cx="18" cy="5" r="2.5" /><circle cx="6" cy="12" r="2.5" /><circle cx="18" cy="19" r="2.5" /><path strokeLinecap="round" d="M8.2 10.8l7.6-4.4M8.2 13.2l7.6 4.4" /></svg>
+          </button>
         </div>
 
         <div className="space-y-2">

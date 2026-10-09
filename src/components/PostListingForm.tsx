@@ -1198,6 +1198,7 @@ export default function PostListingForm() {
                 plans={plansChon}
                 chon={{ tier: planTier, days: planDays }}
                 onChon={(t, d) => { setPlanTier(t); setPlanDays(d); }}
+                onBoChon={() => { setPlanTier(""); setPlanDays(0); }}
               />
             </div>
             {/* Nút xem bảng quyền lợi từng loại tin (chủ dự án 09/10/2026) — mở tab mới để không mất tin đang soạn */}

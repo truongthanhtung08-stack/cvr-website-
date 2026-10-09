@@ -103,13 +103,13 @@ export const interiorItems = [
 //    loại chung, vd "Đất công nghiệp" phải khớp Kho xưởng TRƯỚC khi khớp "Đất".
 export type CategorySpec = { label: string; match: string[]; fields: Field[] };
 
-const floorsField: Field = { key: "floors", label: "Số tầng", type: "select", options: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10+"], main: true, batBuoc: true };
+const floorsField: Field = { key: "floors", label: "Số tầng", type: "select", options: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10+"], main: true };
 // Kích thước lô: mặt tiền = CHIỀU NGANG, depth = CHIỀU DÀI (chiều sâu). Đặt cạnh nhau
 // cho mọi loại gắn với thửa đất (nhà, đất) để nhập/hiển thị "ngang × dài" khoa học.
-const frontageField: Field = { key: "frontage", label: "Mặt tiền (chiều ngang)", type: "number", unit: "m", main: true, batBuoc: true };
+const frontageField: Field = { key: "frontage", label: "Mặt tiền (chiều ngang)", type: "number", unit: "m", main: true };
 const depthField: Field = { key: "depth", label: "Chiều dài (chiều sâu)", type: "number", unit: "m", main: true };
 // (giữ nguyên nhãn "Chiều dài (chiều sâu)" — người đăng hay nhầm với chiều cao)
-const roadField: Field = { key: "roadWidth", label: "Đường vào", type: "number", unit: "m", main: true, batBuoc: true };
+const roadField: Field = { key: "roadWidth", label: "Đường vào", type: "number", unit: "m", main: true };
 // Nhà nào cũng cần: vào được bằng gì và xây năm nào — hai câu khách hỏi nhiều nhất
 // sau giá và diện tích. Là ĐẶC ĐIỂM (không chặn) vì tin cũ hay không ghi năm xây.
 const accessField: Field = { key: "access", label: "Vị trí lối vào", type: "select", options: ["Mặt tiền đường", "Kiệt / hẻm ô tô", "Kiệt / hẻm xe máy"] };
@@ -125,12 +125,14 @@ const balconyField: Field = { key: "balcony", label: "Hướng ban công", type:
 
 // Mỗi LOẠI HÌNH có bộ đặc điểm ĐẶC THÙ riêng. Thứ tự = ĐỘ ƯU TIÊN khớp
 // (loại đặc thù đứng trước loại chung: Biệt thự/Shophouse trước "nhà", Kho xưởng trước "đất").
+// KHÔNG mục đặc điểm nào bắt buộc (chủ dự án 09/10/2026, như Batdongsan): chỉ bắt buộc loại hình,
+// tiêu đề, tỉnh/thành, diện tích, liên hệ, gói tin. Thêm `batBuoc: true` lại thì phải hỏi chủ dự án.
 export const categorySpecs: CategorySpec[] = [
   {
     label: "Condotel / Nghỉ dưỡng",
     match: ["condotel", "nghỉ dưỡng"],
     fields: [
-      { key: "roomType", label: "Loại phòng", type: "select", options: ["Studio", "1 phòng ngủ", "2 phòng ngủ", "3 phòng ngủ"], main: true, batBuoc: true },
+      { key: "roomType", label: "Loại phòng", type: "select", options: ["Studio", "1 phòng ngủ", "2 phòng ngủ", "3 phòng ngủ"], main: true },
       { key: "view", label: "Hướng view", type: "select", options: ["Biển", "Thành phố", "Hồ bơi", "Sông / núi"] },
       { key: "profit", label: "Cam kết lợi nhuận", type: "text", placeholder: "VD: 8%/năm" },
       { key: "operator", label: "Đơn vị vận hành", type: "text" },
@@ -169,12 +171,12 @@ export const categorySpecs: CategorySpec[] = [
     label: "Đất công nghiệp / Nhà xưởng / Kho bãi",
     match: ["công nghiệp", "xưởng", "kho bãi", "nhà kho", "kho"],
     fields: [
-      { key: "usableArea", label: "Diện tích xưởng/kho", type: "number", unit: "m²", main: true, batBuoc: true },
+      { key: "usableArea", label: "Diện tích xưởng/kho", type: "number", unit: "m²", main: true },
       { key: "khoLoai", label: "Loại kho / xưởng", type: "select", options: ["Xưởng sản xuất", "Kho hàng khô", "Kho lạnh", "Kho + xưởng", "Bãi / đất trống"], main: true },
       // Chiều cao thông thuỷ quyết định xếp được mấy tầng hàng — người thuê kho
       // hỏi ngay sau diện tích và đơn giá, nên để ở THÔNG TIN CHÍNH.
       { key: "clearHeight", label: "Chiều cao thông thuỷ", type: "number", unit: "m", main: true },
-      { key: "roadWidth", label: "Đường container", type: "number", unit: "m", main: true, batBuoc: true },
+      { key: "roadWidth", label: "Đường container", type: "number", unit: "m", main: true },
       { key: "frontage", label: "Mặt tiền (chiều ngang)", type: "number", unit: "m" },
       { key: "floorLoad", label: "Tải trọng nền", type: "text", placeholder: "VD: 3 tấn/m²" },
       { key: "power", label: "Công suất điện", type: "text", placeholder: "VD: 560 KVA" },
@@ -189,7 +191,7 @@ export const categorySpecs: CategorySpec[] = [
     label: "Văn phòng / Mặt bằng kinh doanh",
     match: ["văn phòng", "mặt bằng", "cửa hàng", "kinh doanh"],
     fields: [
-      { key: "usableArea", label: "Diện tích sử dụng", type: "number", unit: "m²", main: true, batBuoc: true },
+      { key: "usableArea", label: "Diện tích sử dụng", type: "number", unit: "m²", main: true },
       { key: "floor", label: "Tầng số", type: "text", placeholder: "VD: Tầng 3", main: true },
       frontageField,
       roadField,
@@ -248,9 +250,9 @@ export const categorySpecs: CategorySpec[] = [
     label: "Nhà trọ / Phòng trọ",
     match: ["nhà trọ", "phòng trọ", "trọ"],
     fields: [
-      { key: "rooms", label: "Số phòng cho thuê", type: "number", main: true, batBuoc: true },
-      { key: "roomArea", label: "Diện tích mỗi phòng", type: "number", unit: "m²", main: true, batBuoc: true },
-      { key: "wc", label: "Vệ sinh", type: "select", options: ["Khép kín", "Chung"], main: true, batBuoc: true },
+      { key: "rooms", label: "Số phòng cho thuê", type: "number", main: true },
+      { key: "roomArea", label: "Diện tích mỗi phòng", type: "number", unit: "m²", main: true },
+      { key: "wc", label: "Vệ sinh", type: "select", options: ["Khép kín", "Chung"], main: true },
       floorsField,
     ],
   },
@@ -272,7 +274,7 @@ export const categorySpecs: CategorySpec[] = [
     label: "Đất nền / Đất",
     match: ["đất nền", "đất nông nghiệp", "đất"],
     fields: [
-      { key: "landType", label: "Loại đất", type: "select", options: ["Đất thổ cư", "Đất ở đô thị", "Đất nền dự án", "Đất nông nghiệp", "Đất vườn", "Đất khác"], main: true, batBuoc: true },
+      { key: "landType", label: "Loại đất", type: "select", options: ["Đất thổ cư", "Đất ở đô thị", "Đất nền dự án", "Đất nông nghiệp", "Đất vườn", "Đất khác"], main: true },
       frontageField,
       depthField,
       roadField,

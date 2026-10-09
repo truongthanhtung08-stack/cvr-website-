@@ -54,15 +54,14 @@ export default function Gallery({
   const open = (i: number) => setLb(i);
   const close = () => setLb(-1);
 
-  // Danh sách slide = ẢNH ĐẠI DIỆN trước (mở tin luôn thấy ảnh đại diện — chủ dự án 09/10/2026),
-  // rồi VIDEO, rồi các ảnh còn lại. Bộ xem ảnh toàn màn hình chỉ nhận ảnh nên quy đổi chỉ số.
+  // Danh sách slide = VIDEO trước làm khung đại diện (chủ dự án 10/10/2026), rồi tới ảnh.
+  // Bộ xem ảnh toàn màn hình chỉ nhận ảnh nên quy đổi chỉ số.
   const nVid = videos.length;
   const media = [
-    ...images.slice(0, 1).map((src) => ({ kind: "image" as const, src })),
     ...videos.map((src) => ({ kind: "video" as const, src })),
-    ...images.slice(1).map((src) => ({ kind: "image" as const, src })),
+    ...images.map((src) => ({ kind: "image" as const, src })),
   ];
-  const imgIdx = (m: number) => (m === 0 || !images.length ? m : m - nVid);
+  const imgIdx = (m: number) => m - nVid;
   // Slide hiện tại có phải video không — quyết định nhịp tự chạy và lớp phủ.
   const bigIsVideo = media[bigIdx]?.kind === "video";
 
@@ -213,7 +212,7 @@ export default function Gallery({
                   aria-label={`Ảnh ${imgIdx(i) + 1}`}
                   className="relative aspect-[4/3] max-h-[70dvh] w-full shrink-0 snap-center overflow-hidden bg-black"
                 >
-                  <Image src={m.src} alt={`${alt} ${imgIdx(i) + 1}`} fill priority={i === 0} quality={90} sizes="100vw" className="object-cover" />
+                  <Image src={m.src} alt={`${alt} ${imgIdx(i) + 1}`} fill priority={i === nVid} quality={90} sizes="100vw" className="object-cover" />
                 </button>
               ),
             )}
@@ -418,7 +417,7 @@ export default function Gallery({
       {/* DANH SÁCH ẢNH KIỂU FACEBOOK (điện thoại) — mở từ nút "Xem tất cả N ảnh".
           Ảnh xếp dọc full bề ngang, cuộn tiếp ở cuối trang là thoát. */}
       {list && (
-        <PhotoList images={images} videos={videos} title={alt} onPick={open} onClose={() => setList(false)} nhanPhim={lb < 0} banDo={banDo} />
+        <PhotoList images={images} videos={videos} title={alt} onPick={open} onClose={() => setList(false)} nhanPhim={lb < 0} banDo={banDo} listingId={listingId} />
       )}
 
       {/* Xem 1 ảnh toàn màn hình — vuốt trái/phải đổi ảnh, vuốt xuống thoát */}

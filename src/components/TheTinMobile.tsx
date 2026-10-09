@@ -77,12 +77,14 @@ function viTat(ten?: string): string {
 // Ô ảnh: ảnh LẤP ĐẦY khung, không bao giờ có viền (chủ dự án 09/10/2026: "ghét nhất là viền" — như
 // Facebook). dau = ảnh đầu của thẻ → tải ngay, không để khung trắng chờ ảnh.
 // duPhong: ảnh thay khi ảnh chính lỗi (ảnh bìa video YouTube bản HD không phải video nào cũng có).
-function O({ src, alt, className = "", sizes, onMo, children, dau, duPhong }: { src?: string; alt: string; className?: string; sizes: string; onMo: () => void; children?: React.ReactNode; vuaKhung?: boolean; dau?: boolean; duPhong?: string }) {
+// videoTep: video tải lên (mp4…) không có ảnh bìa → hiện khung hình đầu của chính video, không để trắng.
+function O({ src, alt, className = "", sizes, onMo, children, dau, duPhong, videoTep }: { src?: string; alt: string; className?: string; sizes: string; onMo: () => void; children?: React.ReactNode; vuaKhung?: boolean; dau?: boolean; duPhong?: string; videoTep?: string }) {
   const [loi, setLoi] = useState(false);
   const nguon = loi && duPhong ? duPhong : src;
   return (
     <button type="button" onClick={onMo} className={`relative block overflow-hidden bg-cvr-surface ${className}`}>
       {nguon && <Image src={nguon} alt={alt} fill sizes={sizes} loading={dau ? "eager" : "lazy"} unoptimized={nguon.startsWith("https://i.ytimg.com")} className="object-cover" onError={() => setLoi(true)} />}
+      {!nguon && videoTep && <video src={`${videoTep}#t=0.1`} preload="metadata" muted playsInline className="absolute inset-0 h-full w-full object-cover" />}
       {children}
     </button>
   );
@@ -91,7 +93,7 @@ function O({ src, alt, className = "", sizes, onMo, children, dau, duPhong }: { 
 // KHUNG CHÍNH TỰ CHẠY: vuốt qua lại xem ảnh/video ngay trên thẻ; không chạm gì thì tự chuyển
 // 3,5 giây/ảnh khi thẻ đang hiện trên màn hình; vừa chạm thì nghỉ 6 giây rồi chạy lại.
 // Dải ảnh dịch bằng transform theo SỐ THỨ TỰ ảnh → luôn dừng đúng khít một ảnh, không lệch mép.
-type Slide = { anh?: string; video?: boolean; duPhong?: string };
+type Slide = { anh?: string; video?: boolean; duPhong?: string; videoTep?: string };
 function KhungChay({ slides, alt, khung, sizes, onMo, children, tuChay = true }: { slides: Slide[]; alt: string; khung: string; sizes: string; onMo: (k: number) => void; children?: React.ReactNode; tuChay?: boolean }) {
   const goc = useRef<HTMLDivElement>(null);
   const [i, setI] = useState(0);
@@ -139,7 +141,7 @@ function KhungChay({ slides, alt, khung, sizes, onMo, children, tuChay = true }:
         style={{ transform: `translate3d(calc(${-i * 100}% + ${keo}px), 0, 0)`, transition: keo ? "none" : "transform 0.35s cubic-bezier(0.22,1,0.36,1)" }}
       >
         {slides.map((s, k) => (
-          <O key={k} dau={k === 0} src={s.anh} duPhong={s.duPhong} alt={alt} sizes={sizes} className={`h-full w-full shrink-0 ${s.video ? "bg-black" : ""}`} onMo={() => { if (!daKeo.current) onMo(k); }}>
+          <O key={k} dau={k === 0} src={s.anh} duPhong={s.duPhong} videoTep={s.videoTep} alt={alt} sizes={sizes} className={`h-full w-full shrink-0 ${s.video ? "bg-black" : ""}`} onMo={() => { if (!daKeo.current) onMo(k); }}>
             {s.video && (
               <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
                 <span className="flex h-12 w-12 items-center justify-center rounded-full bg-black/55 text-white"><IconPlay /></span>
@@ -181,12 +183,14 @@ export default function TheTinMobile({ item, terms = [], tuChay = false }: { ite
   // Dải khung chính: video đứng đầu (ảnh chờ YouTube), rồi tới ảnh
   // Ảnh bìa video: bản HD 16:9 (không dải đen như bản hq), lỗi thì lùi bản mq — cũng 16:9, không dải đen
   const pv = item.video ? videoPosterUrl(item.video) : null;
-  // ẢNH ĐẠI DIỆN luôn đứng đầu (chủ dự án 09/10/2026), video ngay sau, rồi các ảnh còn lại.
-  // tuChay = false (trang chủ): CHỈ ảnh đại diện — không lộ ảnh khác ra trang chủ.
-  const slideVideo: Slide[] = item.video ? [{ anh: pv?.hd, duPhong: pv?.hd.replace("maxresdefault", "mqdefault"), video: true }] : [];
-  const slides: Slide[] = tuChay
-    ? [...anh.slice(0, 1).map((a) => ({ anh: a })), ...slideVideo, ...anh.slice(1).map((a) => ({ anh: a }))]
-    : anh.slice(0, 1).map((a) => ({ anh: a }));
+  // TIN CÓ VIDEO: video đứng ĐẦU làm khung đại diện (chủ dự án 10/10/2026) — khung neo ảnh bìa YouTube
+  // hoặc khung hình đầu của video tải lên, không bao giờ trắng. Không video: ảnh đại diện.
+  // tuChay = false (trang chủ, danh sách): CHỈ một khung đại diện — không lộ ảnh khác.
+  const slideVideo: Slide[] = item.video
+    ? [pv ? { anh: pv.hd, duPhong: pv.hd.replace("maxresdefault", "mqdefault"), video: true } : { videoTep: item.video, video: true }]
+    : [];
+  const daySlide: Slide[] = [...slideVideo, ...anh.map((a) => ({ anh: a }))];
+  const slides: Slide[] = tuChay ? daySlide : daySlide.slice(0, 1);
   const moSlide = (k: number) => {
     void k;
     setDs(true);
@@ -309,7 +313,7 @@ export default function TheTinMobile({ item, terms = [], tuChay = false }: { ite
           {nutThich}
           {nutChiaSe}
         </div>
-        {ds && <PhotoList images={anh} videos={item.video ? [item.video] : []} title={item.title} onPick={setXem} onClose={() => setDs(false)} nhanPhim={xem < 0} banDo={{ diaChi: item.location, q: item.mapPin || item.location }} />}
+        {ds && <PhotoList images={anh} videos={item.video ? [item.video] : []} title={item.title} onPick={setXem} onClose={() => setDs(false)} nhanPhim={xem < 0} banDo={{ diaChi: item.location, q: item.mapPin || item.location }} listingId={item.id} duongDan={href} />}
         {xem >= 0 && <PhotoViewer images={anh} start={xem} title={item.title} listingId={item.id} onClose={() => setXem(-1)} />}
       </article>
     );
@@ -342,8 +346,8 @@ export default function TheTinMobile({ item, terms = [], tuChay = false }: { ite
               hienSo
               zaloTruoc
               nhan={item.soDau ? `Hiện số ${item.soDau} ***` : "Hiện số"}
-              soCls="flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg bg-cvr-blue px-3 text-[13px] font-semibold text-white transition active:scale-95"
-              oCls="flex h-9 w-12 shrink-0 items-center justify-center rounded-lg border border-cvr-line transition active:scale-95"
+              soCls="flex h-10 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg bg-cvr-blue px-4 text-[14px] font-semibold text-white transition active:scale-95"
+              oCls="flex h-10 w-14 shrink-0 items-center justify-center rounded-lg border border-cvr-line transition active:scale-95"
             />
           )}
           <span className="flex-1" />
@@ -351,7 +355,7 @@ export default function TheTinMobile({ item, terms = [], tuChay = false }: { ite
           {nutChiaSe}
         </div>
       </div>
-      {ds && <PhotoList images={anh} videos={item.video ? [item.video] : []} title={item.title} onPick={setXem} onClose={() => setDs(false)} nhanPhim={xem < 0} banDo={{ diaChi: item.location, q: item.mapPin || item.location }} />}
+      {ds && <PhotoList images={anh} videos={item.video ? [item.video] : []} title={item.title} onPick={setXem} onClose={() => setDs(false)} nhanPhim={xem < 0} banDo={{ diaChi: item.location, q: item.mapPin || item.location }} listingId={item.id} duongDan={href} />}
         {xem >= 0 && <PhotoViewer images={anh} start={xem} title={item.title} listingId={item.id} onClose={() => setXem(-1)} />}
     </article>
   );

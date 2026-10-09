@@ -277,7 +277,8 @@ export default function ListingBrowser({
       {mapMode && (
         <div className="mt-4 overflow-hidden rounded-xl border border-cvr-line">
           <div className="h-[62vh] min-h-[380px] w-full">
-            <MapView items={results.filter((l) => !l.banSao && !l.hetHan)} />
+            {/* Bản đồ hiện CẢ tin hết hạn (chủ dự án 10/10/2026) — tin vẫn hiển thị trên web */}
+            <MapView items={results.filter((l) => !l.banSao)} />
           </div>
           <p className="border-t border-cvr-line bg-cvr-surface px-3 py-2 text-xs text-cvr-muted">
             Bấm vào viên giá để xem nhanh tin.

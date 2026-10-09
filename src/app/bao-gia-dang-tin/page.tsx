@@ -58,7 +58,7 @@ const pjPkgs = [
 // Menu sidebar — CHỈ dịch vụ + giá. Công cụ tiện ích (giá đất Nhà nước, so sánh…)
 // KHÔNG thuộc báo giá — đã gỡ khỏi trang này (01/10/2026), vẫn ở menu Tiện ích.
 // CÙNG 2 NHÓM với menu Báo giá trên đầu trang (Header.tsx) — hai nơi luôn khớp nhau.
-const nhomDichVu = (coHoiVien: boolean): SidebarGroup[] => [
+const nhomDichVu = (coHoiVien: boolean, da: Set<string> = new Set()): SidebarGroup[] => [
   {
     title: "Đăng tin",
     items: [
@@ -69,10 +69,11 @@ const nhomDichVu = (coHoiVien: boolean): SidebarGroup[] => [
   },
   {
     title: "Quảng cáo",
+    // Chỉ bảng ĐÃ DUYỆT riêng mới có mục trong menu (chủ dự án 10/10/2026)
     items: [
-      { label: "Gói dự án", href: "#goi-du-an" },
-      { label: "Bài PR", href: "#goi-pr" },
-      { label: "Banner", href: "#goi-banner" },
+      ...(da.has("du-an") ? [{ label: "Gói dự án", href: "#goi-du-an" }] : []),
+      ...(da.has("pr") ? [{ label: "Bài PR", href: "#goi-pr" }] : []),
+      ...(da.has("banner") ? [{ label: "Banner", href: "#goi-banner" }] : []),
     ],
   },
   {
@@ -144,6 +145,8 @@ export default async function BaoGiaPage() {
   const coThue = !!billing.congBo;
   const bangThue = bangTheoMucDich(billing, "thue");
   const upRowsThue = bangUp(bangThue);
+  // Dự án · PR · Banner: chỉ hiện bảng ĐÃ DUYỆT RIÊNG (chủ dự án 10/10/2026)
+  const daDuyet = new Set(billing.mucDaDuyet ?? []);
   const prPkgs = goiPr(billing);
   const prNotes = ghiChuPr(billing);
   const bannerTables = bangBanner(billing);
@@ -179,7 +182,7 @@ export default async function BaoGiaPage() {
 
         <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8 lg:py-12">
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-[248px_1fr] lg:gap-10">
-            <PricingSidebar groups={nhomDichVu(coHv)} hotline={HOTLINE} />
+            <PricingSidebar groups={nhomDichVu(coHv, daDuyet).filter((g) => g.items.length)} hotline={HOTLINE} />
 
             <div className="min-w-0 space-y-12 sm:space-y-14">
               {/* KHUNG 3 BẢNG GIÁ THEO MỤC ĐÍCH — nút gạt Bán | Cho thuê đổi `data-md`,
@@ -274,6 +277,7 @@ export default async function BaoGiaPage() {
               )}
 
               {/* 4. GÓI DỰ ÁN */}
+{daDuyet.has("du-an") && (
               <section id="goi-du-an" className="scroll-mt-24">
                 <SectionTitle no={so(3)} title="Gói Dự án" desc="Vị trí dự án nổi bật dành cho chủ đầu tư và đại lý phân phối." />
                 <div className="mt-6 space-y-6">
@@ -290,8 +294,10 @@ export default async function BaoGiaPage() {
                   ))}
                 </div>
               </section>
+              )}
 
               {/* 5. GÓI BÀI PR */}
+{daDuyet.has("pr") && (
               <section id="goi-pr" className="scroll-mt-24">
                 <SectionTitle no={so(4)} title="Gói bài PR" desc="Bài viết truyền thông trên chuyên mục Tin tức — tăng độ tin cậy và nhận diện thương hiệu." />
                 <div className="mt-6 grid grid-cols-1 gap-5 md:grid-cols-3">
@@ -326,8 +332,10 @@ export default async function BaoGiaPage() {
                   </ul>
                 </div>
               </section>
+              )}
 
               {/* 6. GÓI BANNER */}
+{daDuyet.has("banner") && (
               <section id="goi-banner" className="scroll-mt-24">
                 <SectionTitle no={so(5)} title="Gói Banner quảng cáo" desc="Vị trí banner nổi bật trên Trang chủ và các trang danh sách — tiếp cận toàn bộ khách truy cập." />
                 {bannerTables.map((tbl) => (
@@ -363,6 +371,7 @@ export default async function BaoGiaPage() {
                   <p className="mt-4 text-[13px] leading-relaxed text-cvr-faint">{quyDinh.quyDinhBanner.join(" · ")}</p>
                 )}
               </section>
+              )}
 
               {/* QUY ĐỊNH CHUNG */}
               <section id="quy-dinh" className="scroll-mt-24">

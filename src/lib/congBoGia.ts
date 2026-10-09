@@ -72,7 +72,10 @@ export async function congBoTin(admin: SupabaseClient, tuBanDuyet = false): Prom
   // mục cũ nào (cấp theo nạp, điểm, ghi chú cũ…) và không lấy số mặc định nào trong code.
   const qt = nhap.quyDinhTin;
   // Cỡ gói đẩy theo bản đã duyệt (chỉ nhãn — giá tính lại ngay dưới).
-  const upNhan: UpRow[] = (qt?.coGoiDay ?? []).map((n) => ({ label: `Đẩy ${n} lượt`, values: [] }));
+  // GÓI ĐẨY = ĐÚNG các bậc "Mua từ … lượt" trong bảng Đẩy tin admin (chủ dự án 10/10/2026: không có gói
+  // 7 · 13 · 27 lượt nào) — không lấy danh sách gói nào khác.
+  const bacDay = [...new Set([...nhap.ban.day, ...nhap.thue.day].flatMap((d) => d.bac.map((b) => b.tu)))].sort((a, b) => a - b);
+  const upNhan: UpRow[] = bacDay.map((n) => ({ label: `Đẩy ${n} lượt`, values: [] }));
   const plans = BILLING_DEFAULT.plans;
   const congBo = tinhCongBo(nhap, homNayVn(), plans, upNhan);
   // MỘT BẢNG GIÁ (08/10/2026): dự án · PR · banner cũng đi từ giá chuẩn + % cột.
@@ -85,11 +88,15 @@ export async function congBoTin(admin: SupabaseClient, tuBanDuyet = false): Prom
       plans: plans.map((p) => ({ ...p, maxImages: qt.anhTheoCap[p.tierId], maxVideos: qt.videoTheoCap[p.tierId] })),
       up: congBo.ban.up,
     } : {}),
-    ...(nhap.duAn?.length ? { projectPlans: tinhDuAn(nhap.duAn, dc.duAn) } : {}),
-    ...(nhap.pr?.length ? { pr: tinhPr(nhap.pr, dc.pr) } : {}),
-    ...(nhap.prNotes ? { prNotes: nhap.prNotes } : {}),
-    ...(nhap.banners?.length ? { banners: tinhBanner(nhap.banners, dc.banner) } : {}),
   };
+  // Dự án · PR · Banner KHÔNG đi theo nút Duyệt chính — mỗi bảng Duyệt riêng (congBoMuc). Bảng đã duyệt
+  // riêng trước đó thì giữ nguyên bản đã duyệt.
+  const daDuyet = (luu.mucDaDuyet ?? []).filter((m) => ["du-an", "pr", "banner"].includes(m));
+  if (daDuyet.includes("du-an") && luu.projectPlans) them.projectPlans = luu.projectPlans;
+  if (daDuyet.includes("pr")) { if (luu.pr) them.pr = luu.pr; if (luu.prNotes) them.prNotes = luu.prNotes; }
+  if (daDuyet.includes("banner") && luu.banners) them.banners = luu.banners;
+  them.mucDaDuyet = daDuyet;
+  void dc; void tinhDuAn; void tinhPr; void tinhBanner;
   // Chương trình miễn phí thành viên mới (trong danh sách khuyến mãi) → khối "free" web đang dùng.
   const mp = chonMienPhi(nhap.chuongTrinh, homNayVn());
   if (mp) {
@@ -136,4 +143,21 @@ export async function congBoHoiVien(admin: SupabaseClient, tuBanDuyet = false): 
   if (error) return { loi: `Lỗi công bố: ${error.message}` };
   revalidateTag("noi-dung", "max");
   return { hoiVien, hoiVienLuc };
+}
+
+/** DUYỆT RIÊNG một bảng: "du-an" · "pr" · "banner" — tính từ bản nháp đã lưu, ghi vào billing. */
+export async function congBoMuc(admin: SupabaseClient, muc: string): Promise<{ loi: string } | { ok: true }> {
+  if (!["du-an", "pr", "banner"].includes(muc)) return { loi: "Bảng không hợp lệ." };
+  const [nhap, luu] = await Promise.all([docNhapGia(admin), docBillingLuu(admin)]);
+  if (!nhap) return { loi: "Chưa có bản nháp." };
+  const dc = nhap.dieuChinh ?? DIEU_CHINH_TRONG;
+  const moi: Partial<BillingData> = { ...luu };
+  if (muc === "du-an") { if (!nhap.duAn?.length) return { loi: "Bảng Dự án chưa có giá." }; moi.projectPlans = tinhDuAn(nhap.duAn, dc.duAn); }
+  if (muc === "pr") { if (!nhap.pr?.length) return { loi: "Bảng PR chưa có giá." }; moi.pr = tinhPr(nhap.pr, dc.pr); if (nhap.prNotes) moi.prNotes = nhap.prNotes; }
+  if (muc === "banner") { if (!nhap.banners?.length) return { loi: "Bảng Banner chưa có giá." }; moi.banners = tinhBanner(nhap.banners, dc.banner); }
+  moi.mucDaDuyet = [...new Set([...(luu.mucDaDuyet ?? []), muc])];
+  const { error } = await admin.from("site_content").upsert({ key: "billing", data: moi });
+  if (error) return { loi: `Lỗi: ${error.message}` };
+  revalidateTag("noi-dung", "max");
+  return { ok: true };
 }

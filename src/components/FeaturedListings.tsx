@@ -41,6 +41,27 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
   const [lanXem, setLanXem] = useState(0); // 0 = 10 tin · 1 = 20 tin (bấm Xem thêm 1 lần)
   // Tin đã hiện ở trang chủ trước khi mở danh sách — trang 1 của danh sách bắt đầu từ các tin TIẾP THEO
   const [daHien, setDaHien] = useState<Set<string>>(new Set());
+  // BACK TỪ TRANG TIN (chủ dự án 10/10/2026): bấm vào tin thì nhớ đang xem bao nhiêu tin + vị trí cuộn;
+  // quay lại (Back) đúng chỗ cũ. Vào trang chủ bằng cách khác (logo, gõ địa chỉ) thì về mặc định.
+  useEffect(() => {
+    try {
+      const nho = JSON.parse(sessionStorage.getItem("cl-tc-quay") ?? "null") as { lan: number; y: number } | null;
+      sessionStorage.removeItem("cl-tc-quay");
+      const laBack = (performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined)?.type === "back_forward"
+        || (window.history.state && nho !== null);
+      if (nho && laBack) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setLanXem(nho.lan);
+        requestAnimationFrame(() => requestAnimationFrame(() => window.scrollTo({ top: nho.y })));
+        window.setTimeout(() => window.scrollTo({ top: nho.y }), 350); // đè lại nếu trình duyệt tự cuộn sau
+      }
+    } catch { /* trình duyệt chặn sessionStorage → về mặc định */ }
+  }, []);
+  const nhoViTri = (e: React.MouseEvent) => {
+    if (!(e.target as HTMLElement).closest("a[href^='/bat-dong-san/']")) return;
+    try { sessionStorage.setItem("cl-tc-quay", JSON.stringify({ lan: lanXem, y: window.scrollY })); } catch { /* bỏ qua */ }
+  };
+
   // Bấm Trang chủ / logo khi đang ở trang chủ → về mặc định 10 tin (không để danh sách dài)
   useEffect(() => {
     const ve = () => { setLanXem(0); setDaHien(new Set()); };
@@ -131,7 +152,7 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
                 khách vuốt để xem hết tin. Thẻ cuối = "Xem tất cả". ── */}
             <div ref={khoiMobRef} className="scroll-mt-24 sm:hidden">
               {/* ĐIỆN THOẠI (chủ dự án 09/10/2026): xếp DỌC thẻ theo cấp, ban đầu 10 tin. */}
-              <div className="-mx-4 mt-4 space-y-2 bg-cvr-surface">
+              <div className="-mx-4 mt-4 space-y-2 bg-cvr-surface" onClickCapture={nhoViTri}>
                 {sorted.slice(0, (lanXem + 1) * MOB_LAN).map((item) => <TheTinMobile key={item.id} item={item} tuChay={false} />)}
               </div>
               {/* MỘT NÚT (chủ dự án 09/10/2026): bấm "Xem thêm" 1 lần → đủ 20 tin; bấm nữa → mở danh sách

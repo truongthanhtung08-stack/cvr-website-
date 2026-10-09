@@ -362,6 +362,8 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
     if (!err) await lamMoiWeb("listings");
     setSaving(false);
     if (err) return setError(`Lưu thất bại: ${err.message}`);
+    // Tin đăng hộ (chưa có chủ): gắn về tài khoản theo SĐT liên hệ (chủ dự án 09/10/2026)
+    if (!initial?.owner_id) await fetch("/api/admin/gom-tin-dang-ho", { method: "POST" }).catch(() => {});
     router.push("/admin/tin-dang");
     router.refresh();
   }

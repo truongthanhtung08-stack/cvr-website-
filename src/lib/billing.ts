@@ -190,6 +190,9 @@ export type BillingData = {
   // (giá tin giữ nguyên trong thời gian miễn phí, chủ dự án chốt 25/09/2026).
   hoiVien?: GoiHoiVien[];
   hoiVienLuc?: string;
+  /** Bảng giá ĐÃ DUYỆT ngoài Đăng tin/Đẩy tin: "du-an" · "pr" · "banner" (mỗi bảng một nút Duyệt riêng).
+   *  Bảng chưa có trong đây thì web KHÔNG hiện (chủ dự án 10/10/2026). */
+  mucDaDuyet?: string[];
 };
 
 // GHÉP BẢNG GIÁ ĐÃ LƯU VỚI MẶC ĐỊNH — MỌI chỗ máy chủ tính tiền PHẢI dùng hàm này.

@@ -22,14 +22,20 @@ export default function BangGiaGoiTin({
   plans,
   chon,
   onChon,
+  onBoChon,
 }: {
   plans: Plan[];
   chon?: { tier: TierId | ""; days: number };
   onChon?: (tier: TierId, days: number) => void;
+  /** Bấm lại ô đang chọn → bỏ chọn gói (chủ dự án 10/10/2026) */
+  onBoChon?: () => void;
 }) {
   const [gomVat, setGomVat] = useState(true);
   // Quy định đi kèm: CHỈ bản admin đã duyệt — chưa duyệt thì không hiện.
-  const QUY_DINH = useQuyDinhGia().quyDinhGoiTin;
+  const qd = useQuyDinhGia();
+  const QUY_DINH = qd.quyDinhGoiTin;
+  // Bấm "Đặc điểm" dưới tên cấp → xem mô tả quyền lợi + hiển thị của cấp đó (chủ dự án 10/10/2026)
+  const [xemDacDiem, setXemDacDiem] = useState<TierId | null>(null);
   const cot = THU_TU.map((id) => plans.find((p) => p.tierId === id)).filter((p): p is Plan => Boolean(p));
   const hang = [...new Set(cot.flatMap((p) => p.terms.map((t) => t.days)))].sort((a, b) => a - b);
   const hienGia = (gia: number) => (gomVat ? tachThue(gia).tongTra : gia);
@@ -61,6 +67,11 @@ export default function BangGiaGoiTin({
                     >
                       {t.name}
                     </span>
+                    {/* Hệ số X dưới tên cấp + nút xem đặc điểm (chủ dự án 10/10/2026) */}
+                    <span className="mt-1 block text-[11px] font-semibold tracking-wide text-cvr-muted">{t.heSoText}</span>
+                    <button type="button" onClick={() => setXemDacDiem(p.tierId)} className="mt-0.5 text-[11px] font-semibold text-cvr-blue-ink underline-offset-2 hover:underline">
+                      Đặc điểm
+                    </button>
                   </th>
                 );
               })}
@@ -87,7 +98,6 @@ export default function BangGiaGoiTin({
                           <span className="rounded-full border border-red-300 px-1.5 py-px text-[11px] font-semibold text-red-700">−{giam}%</span>
                         )}
                       </span>
-                      <span className="text-[11px] font-semibold tracking-wide text-cvr-muted">{getTier(p.tierId).heSoText}</span>
                     </span>
                   );
                   return (
@@ -95,14 +105,14 @@ export default function BangGiaGoiTin({
                       {onChon ? (
                         <button
                           type="button"
-                          onClick={() => onChon(p.tierId, ngay)}
+                          onClick={() => (dangChon && onBoChon ? onBoChon() : onChon(p.tierId, ngay))}
                           aria-pressed={dangChon}
                           className={`w-full rounded-xl border px-2 py-2.5 transition ${dangChon ? "border-cvr-ink bg-cvr-ink/[0.06] ring-2 ring-cvr-ink" : "border-cvr-line hover:border-cvr-ink"}`}
                         >
                           {noiDung}
                           {/* Nút chọn rõ ràng (chủ dự án 09/10/2026) */}
-                          <span className={`mt-1.5 inline-flex h-7 items-center rounded-md px-3 text-[12px] font-semibold ${dangChon ? "bg-cvr-ink text-white" : "bg-cvr-blue text-white"}`}>
-                            {dangChon ? "Đã chọn ✓" : "Chọn"}
+                          <span className={`mt-1.5 inline-flex h-7 items-center rounded-md px-3 text-[12px] font-semibold ${dangChon ? "border border-cvr-ink bg-white text-cvr-ink" : "bg-cvr-blue text-white"}`}>
+                            {dangChon ? "Bỏ chọn" : "Chọn"}
                           </span>
                         </button>
                       ) : (
@@ -116,6 +126,24 @@ export default function BangGiaGoiTin({
           </tbody>
         </table>
       </div>
+      {xemDacDiem && (
+        <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/40 sm:items-center" onClick={() => setXemDacDiem(null)}>
+          <div className="max-h-[80dvh] w-full max-w-md overflow-y-auto rounded-t-2xl bg-white p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-[16px] font-semibold text-cvr-ink">{getTier(xemDacDiem).name} · {getTier(xemDacDiem).heSoText}</p>
+              <button type="button" aria-label="Đóng" onClick={() => setXemDacDiem(null)} className="flex h-8 w-8 items-center justify-center rounded-full text-cvr-ink">✕</button>
+            </div>
+            {[...(qd.quyenLoi[xemDacDiem]?.loiIch ?? []), ...(qd.quyenLoi[xemDacDiem]?.hienThi ?? [])].length > 0 ? (
+              <ul className="mt-3 space-y-2 text-[14px] leading-relaxed text-cvr-body">
+                {[...(qd.quyenLoi[xemDacDiem]?.loiIch ?? []), ...(qd.quyenLoi[xemDacDiem]?.hienThi ?? [])].map((x) => (
+                  <li key={x} className="flex gap-2"><span className="text-cvr-gold-ink">✓</span><span>{x}</span></li>
+                ))}
+              </ul>
+            ) : null}
+            <a href="/bao-gia-dang-tin#dac-diem" target="_blank" rel="noopener" className="mt-4 inline-flex text-[13px] font-semibold text-cvr-blue-ink">Xem bảng quyền lợi đầy đủ →</a>
+          </div>
+        </div>
+      )}
       <label className="mt-3 inline-flex cursor-pointer select-none items-center gap-2.5 text-[13px] text-cvr-muted">
         <input type="checkbox" checked={gomVat} onChange={(e) => setGomVat(e.target.checked)} className="peer sr-only" />
         <span className="relative h-6 w-11 rounded-full bg-cvr-line transition peer-checked:bg-cvr-ink">

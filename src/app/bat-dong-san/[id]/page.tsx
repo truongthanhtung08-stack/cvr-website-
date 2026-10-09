@@ -205,7 +205,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
   // (chủ dự án 09/10/2026). Che ngay ở dữ liệu để số đủ không lọt vào mã trang.
   const anDuoi = (s: string) => s.replace(/(?<![\d.,])((?:\+?84[\s.\-]?|0)[35789](?:[\s.\-]?\d){8})(?!\d)/g, (so) => {
     const c = so.replace(/\D/g, "").replace(/^84/, "0");
-    return `${c.slice(0, 4)} ${c.slice(4, 7)} ***`;
+    return `${c.slice(0, 4)} ${c.slice(4, 7)} ∗∗∗`; // ∗ (U+2217): dấu * thường bị khung mô tả hiểu là chữ đậm nên mất
   });
   const che = hetHan ? cheSo : anDuoi;
   const d = {
