@@ -130,12 +130,12 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
             <div ref={khoiMobRef} className="scroll-mt-24 sm:hidden">
               {/* ĐIỆN THOẠI (chủ dự án 09/10/2026): xếp DỌC thẻ theo cấp, ban đầu 10 tin; "Xem thêm" 2 lần,
                   mỗi lần +10 tin; bấm tiếp → danh sách theo trang (bắt đầu trang 1, như mọi khối "Xem thêm").
-                  Đã mở thêm thì có "Thu gọn" về lại 10 tin đầu. */}
+                  Bấm Xem thêm lần thứ 2 thì hiện "Thu gọn" cùng hàng — về lại 10 tin đầu. */}
               <div className="mt-4 space-y-3">
-                {sorted.slice(0, (lanXem + 1) * MOB_LAN).map((item) => <TheTinMobile key={item.id} item={item} />)}
+                {sorted.slice(0, (lanXem + 1) * MOB_LAN).map((item) => <TheTinMobile key={item.id} item={item} tuChay={false} />)}
               </div>
               <div className="mt-6 flex justify-center gap-3">
-                {lanXem > 0 && (
+                {lanXem >= 2 && (
                   <button type="button" onClick={() => { setLanXem(0); khoiMobRef.current?.scrollIntoView({ behavior: "smooth" }); }} className="btn-xemthem">
                     Thu gọn
                     <svg className="h-4 w-4 rotate-180" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>

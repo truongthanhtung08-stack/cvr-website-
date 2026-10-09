@@ -19,11 +19,12 @@ import { videoPosterUrl } from "@/lib/media";
 //     Silver  : 1 khung 4:3 · 343×257
 //     Gold    : khung 4:3 chia kiểu Batdongsan — chính 245×257 trái + 2 phụ 3:4 96×128 phải
 //     Diamond : chính 4:3 343×257 + 3 phụ 4:3 113×85 dưới (kiểu Batdongsan)
-//     Basic   : như tin thường Batdongsan — tiêu đề trên, ảnh 4:3 136×102 trái, chữ phải
+//     Basic   : 1 khung 16:9 · 343×193 (Google Discover), ảnh trên nội dung dưới
 //   Khung chính TỰ CHẠY ảnh (video đứng đầu), vuốt qua lại xem tại chỗ; bấm ảnh → xem toàn
 //   màn hình kiểu Facebook; bấm video → mở tin. Ảnh lệch khổ thì hiện trọn, 2 bên viền đen.
 //   HÀNG CUỐI: ảnh đại diện (không có → 2 chữ viết tắt) · tên · ngày đăng; Diamond · Gold ·
 //   Silver thêm Zalo + "Hiện số 090 ***" (bấm là gọi); Basic không có số (chỉ ở trang tin).
+//   MỌI CẤP: ảnh trên, nội dung dưới (chủ dự án 09/10/2026 — chuẩn riêng của Coastal Land).
 // ============================================================================
 
 // Số mục thông số theo cấp (như Batdongsan): Diamond giá · m² · giá/m² · PN · WC · các cấp khác giá · m²
@@ -71,8 +72,8 @@ function viTat(ten?: string): string {
   return ((w[0]?.[0] ?? "C") + (w.length > 1 ? w[w.length - 1][0] : "")).toUpperCase();
 }
 
-// Ô ảnh. vuaKhung: ảnh lệch khổ khung quá 15% thì hiện TRỌN ảnh, 2 bên viền đen (chủ dự án
-// 09/10/2026: "ảnh nào không đúng thì 2 viền màu đen 2 bên"); ảnh gần đúng khổ thì lấp đầy khung.
+// Ô ảnh. vuaKhung: ảnh lấp đầy khung; chỉ ảnh lệch khổ NHIỀU (ảnh dọc trong khung ngang — lệch quá 1,5 lần)
+// mới hiện trọn ảnh, 2 bên viền đen (chủ dự án 09/10/2026). Ảnh ngang 16:9, 3:2 lấp đầy, không viền đen.
 function O({ src, alt, className = "", sizes, onMo, children, vuaKhung }: { src?: string; alt: string; className?: string; sizes: string; onMo: () => void; children?: React.ReactNode; vuaKhung?: boolean }) {
   const [lech, setLech] = useState(false);
   return (
@@ -89,7 +90,7 @@ function O({ src, alt, className = "", sizes, onMo, children, vuaKhung }: { src?
             const khung = img.parentElement;
             if (!khung || !img.naturalHeight || !khung.clientHeight) return;
             const tl = (img.naturalWidth / img.naturalHeight) / (khung.clientWidth / khung.clientHeight);
-            setLech(Math.abs(Math.log(tl)) > Math.log(1.15));
+            setLech(Math.abs(Math.log(tl)) > Math.log(1.5));
           } : undefined}
         />
       )}
@@ -100,35 +101,56 @@ function O({ src, alt, className = "", sizes, onMo, children, vuaKhung }: { src?
 
 // KHUNG CHÍNH TỰ CHẠY: vuốt qua lại xem ảnh/video ngay trên thẻ; không chạm gì thì tự chuyển
 // 3,5 giây/ảnh khi thẻ đang hiện trên màn hình; vừa chạm thì nghỉ 6 giây rồi chạy lại.
+// Dải ảnh dịch bằng transform theo SỐ THỨ TỰ ảnh → luôn dừng đúng khít một ảnh, không lệch mép.
 type Slide = { anh?: string; video?: boolean };
-function KhungChay({ slides, alt, khung, sizes, onMo, children }: { slides: Slide[]; alt: string; khung: string; sizes: string; onMo: (k: number) => void; children?: React.ReactNode }) {
-  const ref = useRef<HTMLDivElement>(null);
+function KhungChay({ slides, alt, khung, sizes, onMo, children, tuChay = true }: { slides: Slide[]; alt: string; khung: string; sizes: string; onMo: (k: number) => void; children?: React.ReactNode; tuChay?: boolean }) {
+  const goc = useRef<HTMLDivElement>(null);
+  const [i, setI] = useState(0);
+  const [keo, setKeo] = useState(0); // px đang kéo
   const cham = useRef(0);
+  const batDau = useRef<{ x: number; y: number; ngang: boolean | null } | null>(null);
+  const daKeo = useRef(false);
+  const n = slides.length;
   useEffect(() => {
-    const el = ref.current;
-    if (!el || slides.length < 2) return;
+    const el = goc.current;
+    if (!el || n < 2 || !tuChay) return;
     let thay = false;
     const io = new IntersectionObserver(([e]) => { thay = e.intersectionRatio >= 0.6; }, { threshold: [0, 0.6, 1] });
     io.observe(el);
     const id = window.setInterval(() => {
-      if (!thay || document.hidden || Date.now() - cham.current < 6000) return;
-      const tiep = (Math.round(el.scrollLeft / el.clientWidth) + 1) % slides.length;
-      el.scrollTo({ left: tiep * el.clientWidth, behavior: tiep === 0 ? "auto" : "smooth" });
+      if (!thay || document.hidden || batDau.current || Date.now() - cham.current < 6000) return;
+      setI((x) => (x + 1) % n);
     }, 3500);
     return () => { window.clearInterval(id); io.disconnect(); };
-  }, [slides.length]);
-  const daCham = () => { cham.current = Date.now(); };
+  }, [n, tuChay]);
+  const tStart = (e: React.TouchEvent) => {
+    cham.current = Date.now();
+    daKeo.current = false;
+    batDau.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, ngang: null };
+  };
+  const tMove = (e: React.TouchEvent) => {
+    const b0 = batDau.current;
+    if (!b0) return;
+    const dx = e.touches[0].clientX - b0.x;
+    const dy = e.touches[0].clientY - b0.y;
+    if (b0.ngang === null && (Math.abs(dx) > 6 || Math.abs(dy) > 6)) b0.ngang = Math.abs(dx) > Math.abs(dy);
+    if (b0.ngang) { daKeo.current = true; setKeo(dx); }
+  };
+  const tEnd = () => {
+    const w = goc.current?.clientWidth ?? 1;
+    if (batDau.current?.ngang && Math.abs(keo) > w * 0.18) setI((x) => Math.min(n - 1, Math.max(0, x + (keo < 0 ? 1 : -1))));
+    setKeo(0);
+    batDau.current = null;
+    cham.current = Date.now();
+  };
   return (
-    <div className={`relative overflow-hidden ${khung}`}>
+    <div ref={goc} className={`relative overflow-hidden ${khung}`} onTouchStart={tStart} onTouchMove={tMove} onTouchEnd={tEnd} onTouchCancel={tEnd}>
       <div
-        ref={ref}
-        onTouchStart={daCham}
-        onPointerDown={daCham}
-        onWheel={daCham}
-        className="no-scrollbar flex h-full w-full snap-x snap-mandatory overflow-x-auto"
+        className="flex h-full w-full"
+        style={{ transform: `translate3d(calc(${-i * 100}% + ${keo}px), 0, 0)`, transition: keo ? "none" : "transform 0.35s cubic-bezier(0.22,1,0.36,1)" }}
       >
         {slides.map((s, k) => (
-          <O key={k} vuaKhung={!s.video} src={s.anh} alt={alt} sizes={sizes} className={`h-full w-full shrink-0 snap-center ${s.video ? "bg-black" : ""}`} onMo={() => onMo(k)}>
+          <O key={k} vuaKhung={!s.video} src={s.anh} alt={alt} sizes={sizes} className={`h-full w-full shrink-0 ${s.video ? "bg-black" : ""}`} onMo={() => { if (!daKeo.current) onMo(k); }}>
             {s.video && (
               <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
                 <span className="flex h-12 w-12 items-center justify-center rounded-full bg-black/55 text-white"><IconPlay /></span>
@@ -137,12 +159,18 @@ function KhungChay({ slides, alt, khung, sizes, onMo, children }: { slides: Slid
           </O>
         ))}
       </div>
+      {n > 1 && (
+        <span className="pointer-events-none absolute bottom-2 left-1/2 flex -translate-x-1/2 gap-1">
+          {slides.slice(0, 8).map((_, k) => <span key={k} className={`h-1.5 rounded-full transition-all ${k === i % 8 ? "w-3.5 bg-white" : "w-1.5 bg-white/60"}`} />)}
+        </span>
+      )}
       {children}
     </div>
   );
 }
 
-export default function TheTinMobile({ item, terms = [] }: { item: Listing; terms?: string[] }) {
+// tuChay = false: ảnh trên thẻ không tự chuyển (trang chủ — chủ dự án 09/10/2026), khách vẫn vuốt xem được
+export default function TheTinMobile({ item, terms = [], tuChay = true }: { item: Listing; terms?: string[]; tuChay?: boolean }) {
   const t: TierId = item.badge ? tierFromBadge(item.badge) : "basic";
   const tier = getTier(t);
   const href = `/bat-dong-san/${item.id}`;
@@ -187,8 +215,8 @@ export default function TheTinMobile({ item, terms = [] }: { item: Listing; term
     else navigator.clipboard?.writeText(url);
   };
   const nutChiaSe = (
-    <button type="button" aria-label="Chia sẻ" onClick={chiaSe} className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-black/45 text-white backdrop-blur-sm transition active:scale-95">
-      <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden>
+    <button type="button" aria-label="Chia sẻ" onClick={chiaSe} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-cvr-line text-cvr-ink transition active:scale-95">
+      <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24" aria-hidden>
         <circle cx="18" cy="5" r="2.5" /><circle cx="6" cy="12" r="2.5" /><circle cx="18" cy="19" r="2.5" />
         <path strokeLinecap="round" d="M8.2 10.8l7.6-4.4M8.2 13.2l7.6 4.4" />
       </svg>
@@ -196,7 +224,7 @@ export default function TheTinMobile({ item, terms = [] }: { item: Listing; term
   );
 
   const khungChinh = (khung: string, sizes: string) => (
-    <KhungChay slides={slides} alt={item.title} khung={khung} sizes={sizes} onMo={moSlide}>{dem}</KhungChay>
+    <KhungChay slides={slides} alt={item.title} khung={khung} sizes={sizes} onMo={moSlide} tuChay={tuChay}>{dem}</KhungChay>
   );
   let khungAnh: React.ReactNode = khungChinh("aspect-[4/3] w-full", "100vw");
   if (t === "gold" && anh.length >= 3) {
@@ -263,29 +291,24 @@ export default function TheTinMobile({ item, terms = [] }: { item: Listing; term
     </div>
   );
 
-  // ── BASIC: như tin thường Batdongsan ─────────────────────────────────────
+  // ── BASIC: ảnh trên, nội dung dưới như mọi thẻ Coastal Land — ảnh 16:9 (khung Google Discover),
+  //    hàng cuối: người đăng + Thích, không có số (số chỉ ở trang tin) ──────────────────────
   if (t === "basic") {
     return (
-      <article className="overflow-hidden bg-white px-3.5 pb-3 pt-3 shadow-lux">
-        <Link href={href} className="block">
+      <article className="overflow-hidden bg-white shadow-lux">
+        <div className="relative">
+          {khungChinh("aspect-[16/9] w-full", "100vw")}
+        </div>
+        <Link href={href} className="block px-3.5 pt-3">
           <h3 className="line-clamp-2 text-[16px] font-medium leading-[1.4] text-cvr-ink"><Highlight text={tieuDe} terms={terms} /></h3>
+          {thongSoDong}
+          {diaChi}
         </Link>
-        <div className="mt-2 flex gap-3">
-          {khungChinh("aspect-[4/3] w-[136px] shrink-0 rounded-lg", "136px")}
-          <div className="flex min-w-0 flex-1 flex-col">
-            <Link href={href} className="block">
-              {thongSoDong}
-              {diaChi}
-            </Link>
-            <div className="mt-auto flex items-center gap-1.5 pt-1.5" onClick={(e) => e.preventDefault()}>
-              {item.agentAvatar
-                // eslint-disable-next-line @next/next/no-img-element
-                ? <img src={item.agentAvatar} alt="" className="h-7 w-7 shrink-0 rounded-full object-cover" />
-                : <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-cvr-surface text-[11px] font-semibold text-cvr-body">{viTat(item.agentName)}</span>}
-              {nguoiDang}
-              {nutThich}
-            </div>
-          </div>
+        <div className="mt-3 flex items-center gap-2.5 px-3.5 pb-3" onClick={(e) => e.preventDefault()}>
+          {anhDaiDien}
+          {nguoiDang}
+          {nutThich}
+          {nutChiaSe}
         </div>
         {xem >= 0 && <PhotoViewer images={anh} start={xem} title={item.title} listingId={item.id} onClose={() => setXem(-1)} />}
       </article>
@@ -299,7 +322,6 @@ export default function TheTinMobile({ item, terms = [] }: { item: Listing; term
       <div className="relative">
         {khungAnh}
         {huyHieu}
-        {nutChiaSe}
       </div>
       <Link href={href} className="block px-3.5 pt-3">
         <h3 className={`line-clamp-2 text-[16px] font-bold leading-[1.4] text-cvr-ink ${tier.uppercase ? "uppercase" : ""}`}><Highlight text={tieuDe} terms={terms} /></h3>
@@ -312,6 +334,7 @@ export default function TheTinMobile({ item, terms = [] }: { item: Listing; term
           {anhDaiDien}
           {nguoiDang}
           {nutThich}
+          {nutChiaSe}
         </div>
         {coSo && (
           <div className="mt-2.5 flex gap-2">
