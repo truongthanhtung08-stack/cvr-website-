@@ -21,6 +21,7 @@ import { uploadImageFile } from "@/lib/uploadImage";
 import { soAnhToiDa, soVideoToiDa, bangTheoMucDich, huongKhuyenMai } from "@/lib/billing";
 import { useBilling } from "@/lib/useBilling";
 import { getTier } from "@/lib/packages";
+import { isVideoUrl } from "@/lib/media";
 import { Panel, Field } from "@/components/Ui";
 import {
   type ListingRow,
@@ -272,6 +273,23 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
         return setError(`Hạng ${getTier(tier).name} chưa có bảng giá đã duyệt nên tin sẽ hết hạn ngay. Vào Bảng giá bấm Duyệt trước.`);
     }
 
+    // TIN ĐĂNG HỘ (không có chủ): ảnh đại diện = ảnh hợp khung 4:3 nhất trong 5 ảnh đầu (chủ dự án
+    // 09/10/2026). Tin của khách giữ đúng ảnh khách chọn.
+    const anhBia = initial?.owner_id ? undefined : await (async () => {
+      const ds = images.map((x) => x.trim()).filter((x) => x && !isVideoUrl(x)).slice(0, 5);
+      if (ds.length < 2) return undefined;
+      const tl = await Promise.all(ds.map((u) => new Promise<number | null>((ok) => {
+        const im = new window.Image();
+        im.onload = () => ok(im.naturalHeight ? im.naturalWidth / im.naturalHeight : null);
+        im.onerror = () => ok(null);
+        im.src = u;
+      })));
+      const lech = (x: number | null) => (x ? Math.abs(Math.log(x / (4 / 3))) : 9);
+      let tot = 0;
+      tl.forEach((x, k) => { if (lech(x) < lech(tl[tot])) tot = k; });
+      return tot > 0 && lech(tl[0]) - lech(tl[tot]) >= Math.log(1.1) ? ds[tot] : undefined;
+    })();
+
     // Đăng tin → 'approved' (admin công khai ngay). Lưu nháp → 'draft'.
     const newStatus: ListingStatus = asDraft ? "draft" : "approved";
     setSaving(true);
@@ -311,6 +329,7 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
           return c ? { diaChiCu: { phuong: c.phuong, quan: c.quan, tinh: c.tinh } } : {};
         })(),
         project: projectSlug || undefined,
+        ...(initial?.owner_id ? {} : { anh_bia: anhBia }),
         // NÂNG VIP TỪ TIN BASIC ĐANG CHẠY (chủ dự án 09/10/2026): hết hạn VIP thì tin về lại Basic
         // và chạy tiếp ĐÚNG số ngày Basic còn lại lúc nâng (cron hết hạn đọc khoá này).
         ...((): { sau_vip_con_lai_ms?: number } => {

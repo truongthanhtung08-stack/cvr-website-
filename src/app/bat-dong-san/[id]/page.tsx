@@ -232,7 +232,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
   // Server chỉ phát chuỗi CHE — số 10 chữ số, CHỈ che 3 số cuối (chủ dự án chốt 01/10/2026):
   // "0905 374 •••". Số đủ không nằm trong HTML, mỗi lượt xem số vẫn ghi thành lead cho người bán.
   const phoneDigits = contact ? chuanHoaSdt(contact.phone) : "";
-  const phoneMask = phoneDigits ? `${phoneDigits.slice(0, 4)} ${phoneDigits.slice(4, 7)} •••` : "Xem số";
+  const phoneMask = phoneDigits ? `${phoneDigits.slice(0, 4)} ${phoneDigits.slice(4, 7)} ***` : "Xem số";
 
   // Schema.org RealEstateListing (IV.2) — dữ liệu chuẩn cho Google.
   const priceVnd = parseVnd(l.price);

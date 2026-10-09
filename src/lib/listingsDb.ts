@@ -122,6 +122,14 @@ const ANH_TAM_THEO_LOAI: { khop: RegExp; anh: string }[] = [
   { khop: /nhà riêng|nhà trọ|phòng trọ/i, anh: "/images/segments/nhapho2.jpg" },
 ];
 
+// ẢNH (không video) theo thứ tự hiển thị. Tin admin ĐĂNG HỘ có details.anh_bia = ảnh hợp khung
+// 4:3 nhất trong 5 ảnh đầu (chủ dự án 09/10/2026) → đưa lên đầu. Tin khách tự đăng giữ ảnh khách chọn.
+function anhTheoThuTu(r: Row): string[] {
+  const ds = r.images.filter((s) => !isVideoUrl(s));
+  const bia = (r.details as { anh_bia?: string } | null)?.anh_bia;
+  return bia && ds.includes(bia) ? [bia, ...ds.filter((s) => s !== bia)] : ds;
+}
+
 function anhTam(loaiHinh: string | null): string {
   const t = loaiHinh ?? "";
   return ANH_TAM_THEO_LOAI.find((x) => x.khop.test(t))?.anh ?? PLACEHOLDER_IMAGE;
@@ -255,7 +263,7 @@ function rowToListing(r: Row): Listing {
     diaGioi: { ward: r.ward ?? "", district: r.district ?? "", province: r.province ?? "" },
     type: r.type,
     // Ảnh đại diện = ẢNH đầu tiên (bỏ qua video nếu đứng trước)
-    image: asset(r.images.find((s) => !isVideoUrl(s)) ?? anhTam(r.type)),
+    image: asset(anhTheoThuTu(r)[0] ?? anhTam(r.type)),
     // Số ẢNH thật (không tính video) → badge "📷 n" đúng thay vì cứng "1"
     imageCount: r.images.filter((s) => !isVideoUrl(s)).length,
     // Có ít nhất 1 video → thẻ hiện nhãn "▶ Video"
@@ -263,7 +271,7 @@ function rowToListing(r: Row): Listing {
     // Video đầu tiên — thẻ tin cho video đứng đầu dải ảnh (chủ dự án 09/10/2026)
     ...((): { video?: string } => { const v = r.images.find((s) => isVideoUrl(s)); return v ? { video: asset(v) } : {}; })(),
     // 6 ảnh đầu cho thẻ tin (Diamond: ảnh chính + 5 ảnh phụ — docs/THE-TIN-THEO-CAP.md)
-    images: r.images.filter((s) => !isVideoUrl(s)).slice(0, 6).map((s) => asset(s)), // Diamond cần 6 ảnh trên thẻ (chuẩn thẻ tin 09/10/2026)
+    images: anhTheoThuTu(r).slice(0, 6).map((s) => asset(s)), // Diamond cần 6 ảnh trên thẻ (chuẩn thẻ tin 09/10/2026)
     badge: TIER_BADGE[tierHieuLuc(r)],
     // NGÀY ĐĂNG = lúc tin lên sóng, KHÔNG phải lúc khách bấm tạo. Tin soạn nháp
     // từ tuần trước mà hôm nay mới duyệt thì ngoài trang vẫn phải ghi "Hôm nay":
@@ -447,7 +455,7 @@ function rowToDetail(r: Row): ListingFull {
   // Video tệp tải lên cũng đi qua /anh/… như ảnh (xem src/lib/asset.ts); link
   // YouTube/Vimeo thì asset() giữ nguyên.
   const videos = r.images.filter(isVideoUrl).map(asset);
-  const imageOnly = r.images.filter((s) => !isVideoUrl(s));
+  const imageOnly = anhTheoThuTu(r);
   const imgs = imageOnly.length ? imageOnly : [anhTam(r.type)];
   // Bộ mục theo LOẠI HÌNH, tách sẵn THÔNG TIN CHÍNH và ĐẶC ĐIỂM. Tin cho thuê
   // có thêm phần điện/nước/thời gian vào ở. Mục nào người đăng để trống thì lọc
