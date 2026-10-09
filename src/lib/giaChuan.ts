@@ -81,11 +81,13 @@ export function thieuThongTin(c: ChuongTrinh): string[] {
 }
 
 // Nhiều chương trình miễn phí (cũ hết hạn, mới nối tiếp) → chọn chương trình ĐANG TRONG HẠN
-// hôm nay; không có thì chương trình SẮP bắt đầu gần nhất; không có nữa thì cái tạo sau cùng.
+// hôm nay; nhiều cái cùng trong hạn thì cái BẮT ĐẦU SAU CÙNG thay cái trước (chương trình mới
+// duyệt sớm thì cái cũ coi như kết thúc từ ngày cái mới bắt đầu); không có thì chương trình
+// SẮP bắt đầu gần nhất; không có nữa thì cái tạo sau cùng.
 export function chonMienPhi(ds: ChuongTrinh[], homNay: string): ChuongTrinh | undefined {
   const mp = ds.filter((c) => laMienPhiTvMoi(c) && c.bat);
   return (
-    mp.find((c) => (!c.tu || c.tu <= homNay) && (!c.den || homNay <= c.den)) ??
+    mp.filter((c) => (!c.tu || c.tu <= homNay) && (!c.den || homNay <= c.den)).sort((x, y) => (y.tu || "").localeCompare(x.tu || ""))[0] ??
     mp.filter((c) => c.tu && c.tu > homNay).sort((a, b) => a.tu.localeCompare(b.tu))[0] ??
     [...ds].reverse().find(laMienPhiTvMoi)
   );
