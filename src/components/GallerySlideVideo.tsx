@@ -82,7 +82,9 @@ export default function GallerySlideVideo({
     const v = ref.current;
     return !!v && v.videoWidth > v.videoHeight;
   };
-  const canXoay = () => (laNgang() ? (manNgang() ? 0 : 90) : (manNgang() ? -90 : 0));
+  // Video DỌC: không bao giờ xoay (luôn đứng thẳng). Video NGANG: máy dọc thì xoay khung 90° cho nằm ngang,
+  // máy đã ngang thì để nguyên (chủ dự án 10/10/2026).
+  const canXoay = () => (laNgang() && !manNgang() ? 90 : 0);
   const moLon = () => {
     setLon(true);
     setXoay(canXoay());
