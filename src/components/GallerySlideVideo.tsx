@@ -61,8 +61,8 @@ export default function GallerySlideVideo({
   // Ngang/dọc: video tải lên đọc từ chính tệp; YouTube hỏi /api/video-ngang.
   // Nút Xoay vẫn còn để khách xoay theo ý.
   const [lon, setLon] = useState(false);
-  // Góc xoay khung khi xem lớn: 0 · 90 · -90 (chủ dự án 10/10/2026 — video dạng nào mở dạng ấy:
-  // video NGANG luôn nằm ngang, video DỌC luôn đứng dọc, dù máy cầm dọc hay xoay ngang).
+  // Góc xoay khung khi xem lớn: 0 hoặc 90 (chủ dự án 10/10/2026 — video dạng nào mở dạng ấy:
+  // video DỌC không bao giờ xoay; video NGANG nằm ngang — máy cầm dọc thì xoay khung 90°).
   const [xoay, setXoay] = useState(0);
   const [ytNgang, setYtNgang] = useState(false);
   const maYt = laYoutube ? (url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,})/i)?.[1] ?? "") : "";
