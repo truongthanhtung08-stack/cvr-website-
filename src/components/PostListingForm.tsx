@@ -24,7 +24,7 @@ import OTieuDe from "@/components/OTieuDe";
 // phải sửa đúng dòng import này.
 import MapPicker from "@/components/MapPickerMo";
 import ContentEditor from "@/components/admin/ContentEditor";
-import { bangTheoMucDich, freeDangChay, huongKhuyenMai, soNgayHienThi, freeNote, quotePrice, soAnhToiDa, soVideoToiDa, tenGoiMienPhi, vnd } from "@/lib/billing";
+import { BILLING_DEFAULT, bangTheoMucDich, freeDangChay, huongKhuyenMai, soNgayHienThi, freeNote, quotePrice, soAnhToiDa, soVideoToiDa, tenGoiMienPhi, vnd } from "@/lib/billing";
 import { banChuyenDoi } from "@/lib/gtagChuyenDoi";
 import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
 import { useBilling } from "@/lib/useBilling";
@@ -225,6 +225,19 @@ export default function PostListingForm() {
       soNgayMoTk, role: hoSoVi.role, freeQuota: hoSoVi.free_quota, ngayTaoTk: hoSoVi.created_at ? new Date(new Date(hoSoVi.created_at).getTime() + 7 * 3_600_000).toISOString().slice(0, 10) : undefined,
     });
   };
+  // GÓI CỦA CHƯƠNG TRÌNH MIỄN PHÍ ĐÃ DUYỆT (vd Basic · 30 ngày) — chỉ bày cho khách đang hưởng
+  // chương trình, có mặt cả khi bảng giá chưa được duyệt. Máy chủ xét lại y hệt lúc duyệt tin.
+  const ngayMp = billing.free.hienThi ?? billing.free.days;
+  const goiMp = billing.free.tierId;
+  const plansChon = (() => {
+    if (!ngayMp || !huongKmCua(goiMp)) return bangGia.plans;
+    const co = bangGia.plans.find((p) => p.tierId === goiMp);
+    if (co?.terms.some((t) => t.days === ngayMp)) return bangGia.plans;
+    const term = { days: ngayMp, price: 0 };
+    return co
+      ? bangGia.plans.map((p) => (p.tierId === goiMp ? { ...p, terms: [...p.terms, term].sort((a, b) => a.days - b.days) } : p))
+      : [...bangGia.plans, { ...(BILLING_DEFAULT.plans.find((p) => p.tierId === goiMp) ?? { tierId: goiMp, name: getTier(goiMp).name, note: "" }), terms: [term] }];
+  })();
   // Số ngày tin THẬT SỰ hiển thị (khuyến mãi thành viên mới → số ngày của chương trình).
   const soNgayThat = planTier ? soNgayHienThi(bangGia, planTier as TierId, planDays, duocMienPhi) : planDays;
 
@@ -1175,14 +1188,14 @@ export default function PostListingForm() {
         ) : (
           <>
             {/* BẢNG GIÁ KIỂU BATDONGSAN — bày hết loại tin × số ngày, bấm ô nào chọn gói đó. Giá từ admin. */}
-            {bangGia.plans.some((p) => huongKmCua(p.tierId)) && (
+            {plansChon.some((p) => huongKmCua(p.tierId)) && (
               <p className="mb-3 rounded-xl border border-cvr-blue/25 bg-cvr-blue/[0.06] px-3.5 py-2.5 text-sm text-cvr-blue-ink">
-                Ưu đãi của bạn: <span className="font-semibold">{getTier(billing.free.tierId).name} miễn phí {billing.free.days} ngày</span>
+                Ưu đãi của bạn: <span className="font-semibold">{getTier(billing.free.tierId).name} miễn phí {ngayMp} ngày</span>
               </p>
             )}
             <div className={planTier ? "" : "rounded-2xl ring-1 ring-cvr-blue/40 ring-offset-2"}>
               <BangGiaGoiTin
-                plans={bangGia.plans}
+                plans={plansChon}
                 chon={{ tier: planTier, days: planDays }}
                 onChon={(t, d) => { setPlanTier(t); setPlanDays(d); }}
               />

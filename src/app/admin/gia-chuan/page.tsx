@@ -266,7 +266,7 @@ export default function BangGiaPage() {
           <h1 className="text-2xl font-semibold tracking-tight text-cvr-ink">Bảng giá</h1>
           <p className="mt-1 text-xs text-cvr-muted">
             Nháp: <b className="text-cvr-ink">{nhap.capNhat ? new Date(nhap.capNhat).toLocaleString("vi-VN") : "—"}</b>
-            {" · "}Đã duyệt: <b className="text-cvr-ink">{congBo ? new Date(congBo.luc).toLocaleString("vi-VN") : "—"}</b>
+            {" · "}Đã duyệt: <b className="text-cvr-ink">{nhap.congBoLuc ? new Date(nhap.congBoLuc).toLocaleString("vi-VN") : "—"}</b>
           </p>
         </div>
         {(

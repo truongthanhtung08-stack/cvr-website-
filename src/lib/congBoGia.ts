@@ -68,9 +68,6 @@ export async function docBillingLuu(admin: SupabaseClient): Promise<Partial<Bill
 export async function congBoTin(admin: SupabaseClient, tuBanDuyet = false): Promise<{ loi: string } | { congBo: BillingData["congBo"] }> {
   const [nhap, luu] = await Promise.all([nhapCongBo(admin, tuBanDuyet), docBillingLuu(admin)]);
   if (!nhap) return { loi: "Chưa có bản giá đã duyệt." };
-  if (!nhap.ban.plans.length || !nhap.thue.plans.length) {
-    return { loi: "Bản nháp chưa có đủ giá chuẩn cho cả Bán và Cho thuê — lưu nháp trước rồi mới công bố." };
-  }
   // ⛔ CHỈ BẢN ĐÃ DUYỆT (09/10/2026): billing ghi lại TỪ ĐẦU theo bản duyệt — không giữ
   // mục cũ nào (cấp theo nạp, điểm, ghi chú cũ…) và không lấy số mặc định nào trong code.
   const qt = nhap.quyDinhTin;

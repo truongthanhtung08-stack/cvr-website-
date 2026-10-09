@@ -42,6 +42,8 @@ export default function BangGiaGoiTin({
 
   if (!cot.length) return null;
 
+  // Chưa có bảng giá đã duyệt → không bày bảng rỗng.
+  if (!hang.length) return null;
   return (
     <div>
       <div className="overflow-x-auto rounded-2xl border border-cvr-line bg-white shadow-lux">

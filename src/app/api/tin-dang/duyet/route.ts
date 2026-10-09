@@ -3,7 +3,7 @@ import { revalidateTag } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { viKhaDung, cauThieuTien } from "@/lib/viKhaDung";
-import { ghepBillingLuu, bangTheoMucDich, soNgayHienThi, huongKhuyenMai, loaiVoucherTin, quotePrice, vnd, type BillingData } from "@/lib/billing";
+import { ghepBillingLuu, bangTheoMucDich, freeDangChay, soNgayHienThi, huongKhuyenMai, loaiVoucherTin, quotePrice, vnd, type BillingData } from "@/lib/billing";
 import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
 import { guiThongBao, MAU_DUYET_TIN } from "@/lib/thongBao";
 import { baoLoi } from "@/lib/baoLoi";
@@ -113,8 +113,13 @@ export async function POST(request: Request) {
   const giaGoiChon = bangMp.plans.find((p) => p.tierId === goi)?.terms.find((t) => t.days === soNgay)?.price;
   // ⛔ 09/10/2026: gói phải CÓ TRONG BẢNG GIÁ ĐÃ DUYỆT — không có thì không duyệt (trước đây tin
   // không có số ngày được duyệt miễn phí, hạ về Basic: một đường thứ hai ngoài bảng giá).
-  if (giaGoiChon === undefined) return loi(`Gói ${tenGoi(bangMp, goi)} ${soNgay} ngày không có trong bảng giá hiện hành — nhắc khách chọn lại gói rồi gửi lại.`, 400);
-  const mienPhi = giaGoiChon === 0;
+  // Ngoại lệ DUY NHẤT: gói của chương trình miễn phí đã duyệt (vd Basic · 30 ngày) — xét đúng
+  // khách hưởng chương trình ở nhánh dưới; không hưởng thì từ chối như gói ngoài bảng giá.
+  const laGoiMp = goi === bangMp.free.tierId && soNgay === (bangMp.free.hienThi ?? bangMp.free.days)
+    && freeDangChay(bangMp.free, new Date(Date.now() + 7 * 3_600_000).toISOString().slice(0, 10));
+  const loiNgoaiBang = () => loi(`Gói ${tenGoi(bangMp, goi)} ${soNgay} ngày không có trong bảng giá hiện hành — nhắc khách chọn lại gói rồi gửi lại.`, 400);
+  if (giaGoiChon === undefined && !laGoiMp) return loiNgoaiBang();
+  const mienPhi = giaGoiChon === 0 || giaGoiChon === undefined;
 
   // ── 3. Tin miễn phí: duyệt thẳng, không dính tiền nong ────────────────────
   if (mienPhi) {
@@ -135,6 +140,7 @@ export async function POST(request: Request) {
       const { data: luot } = await admin.rpc("dung_luot_mien_phi", { p_user: tin.owner_id });
       laTvMoi = Boolean(luot && (luot as unknown[]).length);
     }
+    if (giaGoiChon === undefined && !laTvMoi) return loiNgoaiBang();
     const soNgayHien = soNgayHienThi(bangMp, goi, soNgay, laTvMoi);
     const { error } = await admin
       .from("listings")
