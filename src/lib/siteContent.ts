@@ -239,10 +239,10 @@ export type AboutData = {
   cta: { title: string; desc: string; primaryLabel: string; primaryHref: string; secondaryLabel: string; secondaryHref: string };
 };
 
-// ẢNH MẶC ĐỊNH ĐỂ TRỐNG (chủ dự án 08/10/2026: gỡ hết ảnh AI / ảnh không liên quan).
-// Admin chưa nhập ảnh thì trang Giới thiệu KHÔNG hiện khung ảnh — không tự lấy ảnh dựng.
+// ẢNH NỀN TRANG GIỚI THIỆU — ảnh của chủ dự án (09/10/2026: "sao bỏ hết mấy cái hình nền của tao"
+// → trả lại đủ 4 ảnh như trước 08/10). Admin nhập ảnh khác thì ảnh admin đè lên.
 export const ABOUT_DEFAULT: AboutData = {
-  heroImage: "",
+  heroImage: "/images/gioi-thieu/hero-gioi-thieu.jpg",
   story: {
     eyebrow: "Chúng tôi là ai",
     title: "Nền tảng công nghệ và cổng thông tin Bất động sản hàng đầu",
@@ -250,7 +250,7 @@ export const ABOUT_DEFAULT: AboutData = {
       "Coastal Land (coastalland.vn) là một trong những nền tảng công nghệ và cổng thông tin bất động sản trực tuyến hàng đầu tại Việt Nam, Chúng tôi khởi đầu từ Đà Nẵng và mở rộng khắp các khu vực đầy tiềm năng thuộc Duyên hải Miền Trung và Tây Nguyên.",
       "Với nền tảng công nghệ ưu việt cùng chiến lược Marketing hiệu quả, Chúng tôi gắn kết và tạo kết nối giữa những người có nhu cầu mua và bán bất động sản, giữa người dùng và các chuyên gia nhằm giúp mọi người tìm kiếm, chia sẻ và giao dịch nhanh chóng, thuận tiện.",
     ],
-    image: "",
+    image: "/images/gioi-thieu/office.jpg",
   },
   vision: "Trở thành nền tảng PropTech hàng đầu Việt Nam và xây dựng hệ sinh thái bất động sản thân thiện dễ dàng đến người dùng.",
   mission: "Kết nối mọi người mua – bán bất động sản dễ dàng, minh bạch và an toàn; mang công nghệ đến gần người dùng và nâng chuẩn dịch vụ bất động sản.",
@@ -261,14 +261,14 @@ export const ABOUT_DEFAULT: AboutData = {
     { title: "An toàn", desc: "Kết nối trực tiếp người mua, người bán và môi giới; thông tin pháp lý nêu rõ để hai bên tự đối chiếu." },
     { title: "Đồng hành", desc: "Phục vụ người mua, người bán, môi giới và doanh nghiệp — cùng phát triển thị trường bền vững." },
   ],
-  statsImage: "",
+  statsImage: "/images/gioi-thieu/ben-du-thuyen.jpg",
   stats: [
     { value: "2", label: "Thị trường trọng điểm", sub: "Đà Nẵng · Huế" },
     { value: "1.000+", label: "Tin đăng chọn lọc", sub: "cập nhật mỗi ngày" },
     { value: "24/7", label: "Hỗ trợ trực tuyến", sub: "minh bạch · nhanh" },
   ],
   market: {
-    image: "",
+    image: "/images/gioi-thieu/chuyen-sau.jpg",
     eyebrow: "Thị trường chuyên sâu",
     title: "Duyên hải Miền Trung",
     desc: "Chúng tôi thấu hiểu nhu cầu của người dùng cũng như tiềm năng các đô thị ven biển Miền Trung — từ căn hộ, nhà phố, đất nền đến bất động sản nghỉ dưỡng — để mỗi kết quả tìm kiếm đều sát nhu cầu thật.",
@@ -291,8 +291,11 @@ export async function getAbout(): Promise<AboutData> {
   // Gộp với mặc định: field/khối admin bỏ trống → giữ mặc định.
   return {
     ...ABOUT_DEFAULT, ...data,
-    story: { ...ABOUT_DEFAULT.story, ...data.story },
-    market: { ...ABOUT_DEFAULT.market, ...data.market },
+    // Ô ảnh admin để TRỐNG → dùng ảnh nền mặc định của chủ dự án (không để trang trơn không ảnh)
+    heroImage: data.heroImage || ABOUT_DEFAULT.heroImage,
+    statsImage: data.statsImage || ABOUT_DEFAULT.statsImage,
+    story: { ...ABOUT_DEFAULT.story, ...data.story, image: data.story?.image || ABOUT_DEFAULT.story.image },
+    market: { ...ABOUT_DEFAULT.market, ...data.market, image: data.market?.image || ABOUT_DEFAULT.market.image },
     cta: { ...ABOUT_DEFAULT.cta, ...data.cta },
     values: data.values?.length ? data.values : ABOUT_DEFAULT.values,
     stats: data.stats?.length ? data.stats : ABOUT_DEFAULT.stats,

@@ -48,6 +48,7 @@ export default function PhotoViewer({
   const [muot, setMuot] = useState(true);           // bật/tắt hiệu ứng khi bám tay
   const [hienNut, setHienNut] = useState(true);     // chạm nền → ẩn/hiện thanh nút
   const [dangDong, setDangDong] = useState(false);
+  const [banDoTo, setBanDoTo] = useState(false); // cột bản đồ phóng to (nút ⤢ như Batdongsan)
 
   const khung = useRef<HTMLDivElement>(null);
   const anhRef = useRef<HTMLImageElement>(null);
@@ -262,7 +263,7 @@ export default function PhotoViewer({
       {/* ── DẢI ẢNH: cả bộ nằm ngang, dịch theo ngón tay ── */}
       <div
         ref={khung}
-        className={`absolute inset-y-0 left-0 flex touch-none ${banDo ? "right-0 lg:right-[380px]" : "right-0"}`}
+        className={`absolute inset-y-0 left-0 flex touch-none ${banDo ? (banDoTo ? "right-0 lg:right-[70%]" : "right-0 lg:right-[380px]") : "right-0"}`}
         onTouchStart={chamBatDau}
         onTouchMove={chamDiChuyen}
         onTouchEnd={chamKetThuc}
@@ -389,8 +390,13 @@ export default function PhotoViewer({
         </div>
       )}
       {banDo && (
-        <aside className="absolute inset-y-0 right-0 z-[5] hidden w-[380px] flex-col bg-white lg:flex" onClick={(e) => e.stopPropagation()}>
-          <div className="border-b border-cvr-line px-5 py-4">
+        <aside className={`absolute inset-y-0 right-0 z-[5] hidden flex-col bg-white lg:flex ${banDoTo ? "w-[70%]" : "w-[380px]"}`} onClick={(e) => e.stopPropagation()}>
+          <div className="relative border-b border-cvr-line px-5 py-4 pr-14">
+            <button type="button" aria-label={banDoTo ? "Thu nhỏ bản đồ" : "Phóng to bản đồ"} onClick={() => setBanDoTo((v) => !v)} className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full border border-cvr-line text-cvr-ink">
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden>
+                {banDoTo ? <path strokeLinecap="round" strokeLinejoin="round" d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" /> : <path strokeLinecap="round" strokeLinejoin="round" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />}
+              </svg>
+            </button>
             {title && <p className="line-clamp-2 text-[15px] font-semibold leading-snug text-cvr-ink">{title}</p>}
             <p className="mt-1.5 text-[13px] text-cvr-muted">{banDo.diaChi}</p>
           </div>

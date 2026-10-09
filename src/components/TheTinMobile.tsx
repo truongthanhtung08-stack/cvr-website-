@@ -328,26 +328,28 @@ export default function TheTinMobile({ item, terms = [], tuChay = false }: { ite
         {thongSoDong}
         {diaChi}
       </Link>
-      {/* Hàng cuối 2 dòng (một dòng thì tên bị cắt còn "Tr…"): người đăng + ♥ · rồi Zalo + Hiện số */}
+      {/* Hàng cuối 2 dòng, cân đối: dòng 1 người đăng (ảnh · tên · ngày) — dòng 2 các nút CÙNG CỠ:
+          Zalo + "Hiện số 093 ***" bên trái · Thích + Chia sẻ bên phải (chủ dự án 09/10/2026). */}
       <div className="px-3.5 pb-3" onClick={(e) => e.preventDefault()}>
         <div className="mt-3 flex items-center gap-2.5">
           {anhDaiDien}
           {nguoiDang}
-          {nutThich}
-          {nutChiaSe}
         </div>
-        {coSo && (
-          <div className="mt-2.5 flex gap-2">
+        <div className="mt-2.5 flex items-center gap-2">
+          {coSo && (
             <NutLienHeThe
               listingId={item.id}
               hienSo
               zaloTruoc
               nhan={item.soDau ? `Hiện số ${item.soDau} ***` : "Hiện số"}
-              soCls="flex h-10 min-w-0 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-cvr-blue px-3 text-[14px] font-semibold text-white transition active:scale-95"
-              oCls="flex h-10 w-14 shrink-0 items-center justify-center rounded-lg border border-cvr-line transition active:scale-95"
+              soCls="flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg bg-cvr-blue px-3 text-[13px] font-semibold text-white transition active:scale-95"
+              oCls="flex h-9 w-12 shrink-0 items-center justify-center rounded-lg border border-cvr-line transition active:scale-95"
             />
-          </div>
-        )}
+          )}
+          <span className="flex-1" />
+          {nutThich}
+          {nutChiaSe}
+        </div>
       </div>
       {ds && <PhotoList images={anh} videos={item.video ? [item.video] : []} title={item.title} onPick={setXem} onClose={() => setDs(false)} nhanPhim={xem < 0} banDo={{ diaChi: item.location, q: item.mapPin || item.location }} />}
         {xem >= 0 && <PhotoViewer images={anh} start={xem} title={item.title} listingId={item.id} onClose={() => setXem(-1)} />}

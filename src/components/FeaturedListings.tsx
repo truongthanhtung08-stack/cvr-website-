@@ -38,10 +38,12 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
   const { dung: paused, chamVao: chamDai, setDung: setPaused } = useTamDung(6000);
   // ĐIỆN THOẠI (chuẩn 09/10/2026, như Batdongsan): xếp DỌC thẻ theo cấp; bấm "Xem thêm" 2 lần
   // (mỗi lần +1 trang) rồi mới hiện phân trang 1 · 2 · 3…
-  const [lanXem, setLanXem] = useState(0); // số lần đã bấm Xem thêm tại chỗ (tối đa 2)
+  const [lanXem, setLanXem] = useState(0); // 0 = 10 tin · 1 = 20 tin (bấm Xem thêm 1 lần)
+  // Tin đã hiện ở trang chủ trước khi mở danh sách — trang 1 của danh sách bắt đầu từ các tin TIẾP THEO
+  const [daHien, setDaHien] = useState<Set<string>>(new Set());
   // Bấm Trang chủ / logo khi đang ở trang chủ → về mặc định 10 tin (không để danh sách dài)
   useEffect(() => {
-    const ve = () => setLanXem(0);
+    const ve = () => { setLanXem(0); setDaHien(new Set()); };
     window.addEventListener(HOME_RESET_EVENT, ve);
     return () => window.removeEventListener(HOME_RESET_EVENT, ve);
   }, []);
@@ -89,7 +91,7 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
         <ListingBrowser
           heading={expandPurpose === "thue" ? "Bất động sản cho thuê" : "Bất động sản mua bán"}
           purpose={expandPurpose}
-          items={items}
+          items={daHien.size ? items.filter((l) => !daHien.has(l.id)) : items}
         />
       </section>
     );
@@ -132,21 +134,22 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
               <div className="-mx-4 mt-4 space-y-2 bg-cvr-surface">
                 {sorted.slice(0, (lanXem + 1) * MOB_LAN).map((item) => <TheTinMobile key={item.id} item={item} tuChay={false} />)}
               </div>
-              {/* MỘT NÚT (chủ dự án 09/10/2026): "Xem thêm" 2 lần, mỗi lần +10 tin; sau lần thứ 2 nút đổi
-                  thành "Thu gọn" — bấm là về lại trang chủ như ban đầu (10 tin, lên đầu trang). */}
+              {/* MỘT NÚT (chủ dự án 09/10/2026): bấm "Xem thêm" 1 lần → đủ 20 tin; bấm nữa → mở danh sách
+                  theo trang, trang 1 bắt đầu từ các tin TIẾP THEO (không lặp 20 tin đã xem). Logo/Trang chủ về mặc định. */}
               {sorted.length > MOB_LAN && (
                 <div className="mt-6 flex justify-center">
-                  {lanXem < 2 && (lanXem + 1) * MOB_LAN < sorted.length ? (
-                    <button type="button" onClick={() => setLanXem((n) => n + 1)} className="btn-xemthem">
-                      Xem thêm
-                      <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
-                    </button>
-                  ) : (
-                    <button type="button" onClick={() => { setLanXem(0); window.scrollTo({ top: 0 }); }} className="btn-xemthem">
-                      Thu gọn
-                      <svg className="h-4 w-4 rotate-180" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (lanXem === 0 && sorted.length > MOB_LAN) return setLanXem(1);
+                      setDaHien(new Set(sorted.slice(0, 2 * MOB_LAN).map((l) => l.id)));
+                      toggle();
+                    }}
+                    className="btn-xemthem"
+                  >
+                    Xem thêm
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                  </button>
                 </div>
               )}
             </div>

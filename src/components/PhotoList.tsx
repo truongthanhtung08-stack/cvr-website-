@@ -41,6 +41,8 @@ export default function PhotoList({
   nhanPhim?: boolean;   // tắt khi đang mở ảnh lớn đè lên → Esc chỉ đóng ảnh lớn
 }) {
   const [keo, setKeo] = useState(0);      // độ lệch đang kéo (px; âm = trượt lên)
+  const [moBanDo, setMoBanDo] = useState(false); // điện thoại: cột bản đồ đang mở
+  const [banDoTo, setBanDoTo] = useState(false); // bản đồ phóng to (nút ⤢ như Batdongsan)
   const [thoat, setThoat] = useState(0);  // 0 = đang mở · 1/-1 = đang chạy hiệu ứng thoát
   const [muot, setMuot] = useState(true); // tắt hiệu ứng khi ảnh bám ngón tay
   const boc = useRef<HTMLDivElement>(null);
@@ -139,10 +141,10 @@ export default function PhotoList({
   const hieuUng = "transform 0.26s cubic-bezier(0.22,1,0.36,1), opacity 0.24s ease-out";
 
   return (
-    <div className="fixed inset-0 z-[85]">
+    <div className="fixed inset-0 z-[85] flex">
       <div
         ref={boc}
-        className="h-full overflow-y-auto overscroll-contain bg-white"
+        className="h-full min-w-0 flex-1 overflow-y-auto overscroll-contain bg-white"
         style={{
           transform: `translate3d(0, ${thoat ? thoat * 180 : keo}px, 0) scale(${thoat ? 0.96 : 1})`,
           opacity: thoat ? 0 : 1 - doMo,
@@ -165,6 +167,12 @@ export default function PhotoList({
             <p className="truncate text-[15px] font-semibold text-cvr-ink">{title}</p>
             <p className="text-xs text-cvr-muted">{videos.length > 0 ? `${videos.length} video · ` : ""}{images.length} ảnh</p>
           </div>
+          {banDo && (
+            <button type="button" onClick={() => setMoBanDo(true)} className="flex h-9 shrink-0 items-center gap-1.5 rounded-full border border-cvr-line px-3 text-[13px] font-semibold text-cvr-ink lg:hidden">
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24" aria-hidden><path d="M12 21s-7-6.2-7-11.5A7 7 0 0112 2.5a7 7 0 017 7C19 14.8 12 21 12 21z" /><circle cx="12" cy="9.5" r="2.5" /></svg>
+              Vị trí
+            </button>
+          )}
         </div>
 
         <div className="space-y-2">
@@ -200,25 +208,39 @@ export default function PhotoList({
           ))}
         </div>
 
-        {banDo && (
-          <div className="mt-2 bg-white">
-            <p className="px-4 pt-4 text-[15px] font-semibold text-cvr-ink">Vị trí</p>
-            <p className="px-4 pb-3 pt-1 text-[13px] text-cvr-muted">{banDo.diaChi}</p>
-            <iframe
-              title={`Bản đồ ${banDo.diaChi}`}
-              src={`https://www.google.com/maps?q=${encodeURIComponent(banDo.q)}&z=15&output=embed`}
-              className="h-[300px] w-full border-0"
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-            />
-          </div>
-        )}
-
         {/* Hết ảnh — nhắc cử chỉ thoát (cuộn/vuốt thêm một nhịp là ra) */}
         <p className="py-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] text-center text-xs text-cvr-muted">
           Cuộn tiếp để thoát
         </p>
       </div>
+      {/* CỘT BẢN ĐỒ một bên như Batdongsan (chủ dự án 09/10/2026): máy tính luôn hiện bên phải;
+          điện thoại bấm "Vị trí" thì cột trượt ra từ bên phải, bấm nền tối để đóng. */}
+      {banDo && (
+        <>
+          {moBanDo && <button type="button" aria-label="Đóng bản đồ" onClick={() => setMoBanDo(false)} className="fixed inset-0 z-[1] bg-black/40 lg:hidden" />}
+          <aside className={`fixed inset-y-0 right-0 z-[2] flex w-[85%] max-w-[380px] flex-col bg-white shadow-2xl transition-transform duration-300 lg:static lg:translate-x-0 lg:shadow-none ${banDoTo ? "!w-full !max-w-none lg:!w-[70%]" : "lg:w-[380px]"} ${moBanDo ? "translate-x-0" : "translate-x-full"}`}>
+            <div className="flex items-start gap-2 border-b border-cvr-line px-4 py-3 pt-[calc(0.75rem+var(--at,0px))]">
+              <div className="min-w-0 flex-1">
+                <p className="text-[15px] font-semibold text-cvr-ink">Vị trí</p>
+                <p className="mt-0.5 text-[13px] text-cvr-muted">{banDo.diaChi}</p>
+              </div>
+              <button type="button" aria-label={banDoTo ? "Thu nhỏ bản đồ" : "Phóng to bản đồ"} onClick={() => setBanDoTo((v) => !v)} className="flex h-8 w-8 items-center justify-center rounded-full border border-cvr-line text-cvr-ink">
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden>
+                  {banDoTo ? <path strokeLinecap="round" strokeLinejoin="round" d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" /> : <path strokeLinecap="round" strokeLinejoin="round" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />}
+                </svg>
+              </button>
+              <button type="button" aria-label="Đóng" onClick={() => { setMoBanDo(false); setBanDoTo(false); }} className="flex h-8 w-8 items-center justify-center rounded-full text-cvr-ink lg:hidden">✕</button>
+            </div>
+            <iframe
+              title={`Bản đồ ${banDo.diaChi}`}
+              src={`https://www.google.com/maps?q=${encodeURIComponent(banDo.q)}&z=15&output=embed`}
+              className="min-h-0 w-full flex-1 border-0"
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+            />
+          </aside>
+        </>
+      )}
     </div>
   );
 }
