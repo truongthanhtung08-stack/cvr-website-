@@ -381,7 +381,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
 
           {/* Thư viện ảnh THẬT — MOBILE tràn viền sát 2 mép + sát header (không khoảng trống) */}
           <div className="-mx-4 mb-5 sm:mx-0">
-            <Gallery images={d.images} videos={d.videos} alt={l.title} listingId={l.id} />
+            <Gallery images={d.images} videos={d.videos} alt={l.title} listingId={l.id} banDo={{ diaChi: [d.addressDetail, l.location].filter(Boolean).join(", "), q: l.mapPin ?? d.mapQuery }} />
           </div>
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">

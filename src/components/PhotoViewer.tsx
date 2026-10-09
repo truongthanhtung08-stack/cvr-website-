@@ -30,6 +30,7 @@ export default function PhotoViewer({
   captions,
   listingId,
   onClose,
+  banDo,
 }: {
   images: string[];
   start?: number;
@@ -37,6 +38,8 @@ export default function PhotoViewer({
   captions?: string[];
   listingId?: string;   // có id → hiện trái tim lưu tin
   onClose: () => void;
+  /** Màn hình lớn: cột bản đồ vị trí bên phải như Batdongsan (chủ dự án 09/10/2026) */
+  banDo?: { diaChi: string; q: string };
 }) {
   const [idx, setIdx] = useState(start);
   const [scale, setScale] = useState(1);
@@ -259,7 +262,7 @@ export default function PhotoViewer({
       {/* ── DẢI ẢNH: cả bộ nằm ngang, dịch theo ngón tay ── */}
       <div
         ref={khung}
-        className="absolute inset-0 flex touch-none"
+        className={`absolute inset-y-0 left-0 flex touch-none ${banDo ? "right-0 lg:right-[380px]" : "right-0"}`}
         onTouchStart={chamBatDau}
         onTouchMove={chamDiChuyen}
         onTouchEnd={chamKetThuc}
@@ -384,6 +387,21 @@ export default function PhotoViewer({
         >
           <p className="text-center text-sm text-white">{captions[idx]}</p>
         </div>
+      )}
+      {banDo && (
+        <aside className="absolute inset-y-0 right-0 z-[5] hidden w-[380px] flex-col bg-white lg:flex" onClick={(e) => e.stopPropagation()}>
+          <div className="border-b border-cvr-line px-5 py-4">
+            {title && <p className="line-clamp-2 text-[15px] font-semibold leading-snug text-cvr-ink">{title}</p>}
+            <p className="mt-1.5 text-[13px] text-cvr-muted">{banDo.diaChi}</p>
+          </div>
+          <iframe
+            title={`Bản đồ ${banDo.diaChi}`}
+            src={`https://www.google.com/maps?q=${encodeURIComponent(banDo.q)}&z=15&output=embed`}
+            className="min-h-0 w-full flex-1 border-0"
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+          />
+        </aside>
       )}
     </div>
   );

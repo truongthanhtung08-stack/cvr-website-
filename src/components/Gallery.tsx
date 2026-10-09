@@ -21,9 +21,11 @@ export default function Gallery({
   videos = [],
   alt,
   listingId,
+  banDo,
 }: {
   images: string[];
   videos?: string[]; // video của tin — thành slide đầu trong thư viện
+  banDo?: { diaChi: string; q: string }; // cột bản đồ khi xem ảnh toàn màn hình (màn hình lớn)
   alt: string;
   listingId?: string; // truyền vào để bộ xem ảnh có nút trái tim (lưu tin)
 }) {
@@ -116,13 +118,13 @@ export default function Gallery({
   // đầu, video đang phát hoặc đang xem toàn màn hình thì dừng hẳn.
   const [mCham, setMCham] = useState(0);
   useEffect(() => {
-    if (hold || lb >= 0 || media.length < 2) return;
+    if (hold || lb >= 0 || list || media.length < 2) return;
     if (!laDienThoai && !window.matchMedia("(max-width: 639px)").matches) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const t = setTimeout(() => nhayToi((mCur + 1) % media.length), mIsVideo ? 7000 : 4000);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mCur, hold, lb, mIsVideo, media.length, mCham, laDienThoai]);
+  }, [mCur, hold, lb, list, mIsVideo, media.length, mCham, laDienThoai]);
 
   // Slide lớn TỰ CHẠY qua tất cả ảnh (4s/slide, mờ nhẹ) — dừng khi rê chuột,
   // tôn trọng prefers-reduced-motion. Slide video chạy đúng nhịp mặc định như ảnh;
@@ -206,7 +208,7 @@ export default function Gallery({
                 <button
                   key={i}
                   type="button"
-                  onClick={() => open(imgIdx(i))}
+                  onClick={() => setList(true)}
                   aria-label={`Ảnh ${imgIdx(i) + 1}`}
                   className="relative aspect-[4/3] max-h-[70dvh] w-full shrink-0 snap-center overflow-hidden bg-black"
                 >
@@ -415,7 +417,7 @@ export default function Gallery({
       {/* DANH SÁCH ẢNH KIỂU FACEBOOK (điện thoại) — mở từ nút "Xem tất cả N ảnh".
           Ảnh xếp dọc full bề ngang, cuộn tiếp ở cuối trang là thoát. */}
       {list && (
-        <PhotoList images={images} title={alt} onPick={open} onClose={() => setList(false)} nhanPhim={lb < 0} />
+        <PhotoList images={images} videos={videos} title={alt} onPick={open} onClose={() => setList(false)} nhanPhim={lb < 0} />
       )}
 
       {/* Xem 1 ảnh toàn màn hình — vuốt trái/phải đổi ảnh, vuốt xuống thoát */}
@@ -426,6 +428,7 @@ export default function Gallery({
           title={alt}
           listingId={listingId}
           onClose={close}
+          banDo={banDo}
         />
       )}
     </>

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { khoaCuon } from "@/lib/khoaCuon";
+import GallerySlideVideo from "@/components/GallerySlideVideo";
 
 // ============================================================================
 // DANH SÁCH ẢNH KIỂU FACEBOOK — dùng chung cho tin mua bán / cho thuê và dự án
@@ -22,12 +23,15 @@ const THOI_GIAN_THOAT = 240;
 
 export default function PhotoList({
   images,
+  videos = [],
   title,
   onClose,
   onPick,
   nhanPhim = true,
 }: {
   images: string[];
+  /** Video của tin — đứng ĐẦU danh sách, xem ngay tại chỗ (chủ dự án 09/10/2026: bấm vào ra cả ảnh lẫn video kiểu Facebook) */
+  videos?: string[];
   title: string;
   onClose: () => void;
   onPick: (i: number) => void;
@@ -156,11 +160,16 @@ export default function PhotoList({
           </button>
           <div className="min-w-0 flex-1">
             <p className="truncate text-[15px] font-semibold text-cvr-ink">{title}</p>
-            <p className="text-xs text-cvr-muted">{images.length} ảnh</p>
+            <p className="text-xs text-cvr-muted">{videos.length > 0 ? `${videos.length} video · ` : ""}{images.length} ảnh</p>
           </div>
         </div>
 
         <div className="space-y-2">
+          {videos.map((v, i) => (
+            <div key={`v${i}`} className="relative aspect-video w-full bg-black">
+              <GallerySlideVideo url={v} active />
+            </div>
+          ))}
           {images.map((src, i) => (
             <button
               key={i}
