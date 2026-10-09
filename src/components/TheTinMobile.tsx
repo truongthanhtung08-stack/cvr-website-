@@ -27,8 +27,9 @@ import { videoPosterUrl } from "@/lib/media";
 //   MỌI CẤP: ảnh trên, nội dung dưới (chủ dự án 09/10/2026 — chuẩn riêng của Coastal Land).
 // ============================================================================
 
-// Số mục thông số theo cấp (như Batdongsan): Diamond giá · m² · giá/m² · PN · WC · các cấp khác giá · m²
-const SO_THONG_SO: Record<TierId, number> = { diamond: 5, gold: 2, silver: 2, basic: 2 };
+// Số mục thông số THEO CẤP (cấp càng cao càng đủ): Diamond giá · m² · PN · WC · giá/m² · Gold giá · m² · PN · WC
+// · Silver giá · m² · PN · Basic giá · m² (đất không có PN/WC thì giá/m² lên trước).
+const SO_THONG_SO: Record<TierId, number> = { diamond: 5, gold: 4, silver: 3, basic: 2 };
 
 const IconAnh = () => (
   <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden>
@@ -40,7 +41,7 @@ const IconPlay = () => (
 );
 
 // Thông số theo LOẠI HÌNH (chủ dự án 09/10/2026: "tuỳ loại hình BĐS"), rồi cắt theo cấp.
-// Thứ tự như Batdongsan: giá · m² · giá/m² · PN · WC (đất không có PN/WC).
+// Thứ tự: giá · m² · PN · WC · giá/m² (đất không có PN/WC).
 type MucSo = { chu: string; do?: boolean; icon?: "pn" | "wc" };
 function thongSo(l: Listing): MucSo[] {
   const loai = (l.type || "").toLowerCase();
@@ -49,9 +50,9 @@ function thongSo(l: Listing): MucSo[] {
   const nha = !canHo && !dat && /nhà|biệt thự|villa|shophouse|liền kề/.test(loai);
   const ds: MucSo[] = [{ chu: l.price === "Thỏa thuận" ? "Giá thỏa thuận" : l.price, do: true }];
   if (l.area) ds.push({ chu: l.area, do: true });
-  if (l.pricePerM2 && (canHo || dat || nha)) ds.push({ chu: l.pricePerM2 });
   if ((canHo || nha) && l.beds) ds.push({ chu: String(l.beds), icon: "pn" });
   if ((canHo || nha) && l.baths) ds.push({ chu: String(l.baths), icon: "wc" });
+  if (l.pricePerM2 && (canHo || dat || nha)) ds.push({ chu: l.pricePerM2 });
   return ds;
 }
 
@@ -72,28 +73,15 @@ function viTat(ten?: string): string {
   return ((w[0]?.[0] ?? "C") + (w.length > 1 ? w[w.length - 1][0] : "")).toUpperCase();
 }
 
-// Ô ảnh. vuaKhung: ảnh lấp đầy khung; chỉ ảnh lệch khổ NHIỀU (ảnh dọc trong khung ngang — lệch quá 1,5 lần)
-// mới hiện trọn ảnh, 2 bên viền đen (chủ dự án 09/10/2026). Ảnh ngang 16:9, 3:2 lấp đầy, không viền đen.
-function O({ src, alt, className = "", sizes, onMo, children, vuaKhung }: { src?: string; alt: string; className?: string; sizes: string; onMo: () => void; children?: React.ReactNode; vuaKhung?: boolean }) {
-  const [lech, setLech] = useState(false);
+// Ô ảnh: ảnh LẤP ĐẦY khung, không bao giờ có viền (chủ dự án 09/10/2026: "ghét nhất là viền" — như
+// Facebook). dau = ảnh đầu của thẻ → tải ngay, không để khung trắng chờ ảnh.
+// duPhong: ảnh thay khi ảnh chính lỗi (ảnh bìa video YouTube bản HD không phải video nào cũng có).
+function O({ src, alt, className = "", sizes, onMo, children, dau, duPhong }: { src?: string; alt: string; className?: string; sizes: string; onMo: () => void; children?: React.ReactNode; vuaKhung?: boolean; dau?: boolean; duPhong?: string }) {
+  const [loi, setLoi] = useState(false);
+  const nguon = loi && duPhong ? duPhong : src;
   return (
-    <button type="button" onClick={onMo} className={`relative block overflow-hidden ${lech ? "bg-black" : "bg-cvr-surface"} ${className}`}>
-      {src && (
-        <Image
-          src={src}
-          alt={alt}
-          fill
-          sizes={sizes}
-          className={lech ? "object-contain" : "object-cover"}
-          onLoad={vuaKhung ? (e) => {
-            const img = e.currentTarget;
-            const khung = img.parentElement;
-            if (!khung || !img.naturalHeight || !khung.clientHeight) return;
-            const tl = (img.naturalWidth / img.naturalHeight) / (khung.clientWidth / khung.clientHeight);
-            setLech(Math.abs(Math.log(tl)) > Math.log(1.5));
-          } : undefined}
-        />
-      )}
+    <button type="button" onClick={onMo} className={`relative block overflow-hidden bg-cvr-surface ${className}`}>
+      {nguon && <Image src={nguon} alt={alt} fill sizes={sizes} loading={dau ? "eager" : "lazy"} unoptimized={nguon.startsWith("https://i.ytimg.com")} className="object-cover" onError={() => setLoi(true)} />}
       {children}
     </button>
   );
@@ -102,7 +90,7 @@ function O({ src, alt, className = "", sizes, onMo, children, vuaKhung }: { src?
 // KHUNG CHÍNH TỰ CHẠY: vuốt qua lại xem ảnh/video ngay trên thẻ; không chạm gì thì tự chuyển
 // 3,5 giây/ảnh khi thẻ đang hiện trên màn hình; vừa chạm thì nghỉ 6 giây rồi chạy lại.
 // Dải ảnh dịch bằng transform theo SỐ THỨ TỰ ảnh → luôn dừng đúng khít một ảnh, không lệch mép.
-type Slide = { anh?: string; video?: boolean };
+type Slide = { anh?: string; video?: boolean; duPhong?: string };
 function KhungChay({ slides, alt, khung, sizes, onMo, children, tuChay = true }: { slides: Slide[]; alt: string; khung: string; sizes: string; onMo: (k: number) => void; children?: React.ReactNode; tuChay?: boolean }) {
   const goc = useRef<HTMLDivElement>(null);
   const [i, setI] = useState(0);
@@ -150,7 +138,7 @@ function KhungChay({ slides, alt, khung, sizes, onMo, children, tuChay = true }:
         style={{ transform: `translate3d(calc(${-i * 100}% + ${keo}px), 0, 0)`, transition: keo ? "none" : "transform 0.35s cubic-bezier(0.22,1,0.36,1)" }}
       >
         {slides.map((s, k) => (
-          <O key={k} vuaKhung={!s.video} src={s.anh} alt={alt} sizes={sizes} className={`h-full w-full shrink-0 ${s.video ? "bg-black" : ""}`} onMo={() => { if (!daKeo.current) onMo(k); }}>
+          <O key={k} dau={k === 0} src={s.anh} duPhong={s.duPhong} alt={alt} sizes={sizes} className={`h-full w-full shrink-0 ${s.video ? "bg-black" : ""}`} onMo={() => { if (!daKeo.current) onMo(k); }}>
             {s.video && (
               <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
                 <span className="flex h-12 w-12 items-center justify-center rounded-full bg-black/55 text-white"><IconPlay /></span>
@@ -169,8 +157,9 @@ function KhungChay({ slides, alt, khung, sizes, onMo, children, tuChay = true }:
   );
 }
 
-// tuChay = false: ảnh trên thẻ không tự chuyển (trang chủ — chủ dự án 09/10/2026), khách vẫn vuốt xem được
-export default function TheTinMobile({ item, terms = [], tuChay = true }: { item: Listing; terms?: string[]; tuChay?: boolean }) {
+// tuChay mặc định TẮT: trang chủ và trang danh sách chỉ hiện ẢNH ĐẠI DIỆN, không chạy slide — slide chỉ
+// chạy khi mở tin (chủ dự án 09/10/2026).
+export default function TheTinMobile({ item, terms = [], tuChay = false }: { item: Listing; terms?: string[]; tuChay?: boolean }) {
   const t: TierId = item.badge ? tierFromBadge(item.badge) : "basic";
   const tier = getTier(t);
   const href = `/bat-dong-san/${item.id}`;
@@ -187,12 +176,18 @@ export default function TheTinMobile({ item, terms = [], tuChay = true }: { item
   const ngay = !moc || moc.startsWith("Làm mới") ? moc : `Đăng ${moc.charAt(0).toLowerCase()}${moc.slice(1)}`;
 
   // Dải khung chính: video đứng đầu (ảnh chờ YouTube), rồi tới ảnh
-  const poster = item.video ? videoPosterUrl(item.video)?.thuong : undefined;
-  const slides: Slide[] = [...(item.video ? [{ anh: poster, video: true }] : []), ...anh.map((a) => ({ anh: a }))];
-  const coVideo = Boolean(item.video);
+  // Ảnh bìa video: bản HD 16:9 (không dải đen như bản hq), lỗi thì lùi bản mq — cũng 16:9, không dải đen
+  const pv = item.video ? videoPosterUrl(item.video) : null;
+  // ẢNH ĐẠI DIỆN luôn đứng đầu (chủ dự án 09/10/2026), video ngay sau, rồi các ảnh còn lại.
+  // tuChay = false (trang chủ): CHỈ ảnh đại diện — không lộ ảnh khác ra trang chủ.
+  const slideVideo: Slide[] = item.video ? [{ anh: pv?.hd, duPhong: pv?.hd.replace("maxresdefault", "mqdefault"), video: true }] : [];
+  const slides: Slide[] = tuChay
+    ? [...anh.slice(0, 1).map((a) => ({ anh: a })), ...slideVideo, ...anh.slice(1).map((a) => ({ anh: a }))]
+    : anh.slice(0, 1).map((a) => ({ anh: a }));
+  const coVideo = tuChay && Boolean(item.video);
   const moSlide = (k: number) => {
-    if (coVideo && k === 0) { window.location.href = href; return; }
-    setXem(k - (coVideo ? 1 : 0));
+    if (coVideo && k === 1) { window.location.href = href; return; }
+    setXem(coVideo && k > 1 ? k - 1 : k);
   };
 
   const dem = (
@@ -282,12 +277,12 @@ export default function TheTinMobile({ item, terms = [], tuChay = true }: { item
   );
   const anhDaiDien = item.agentAvatar
     // eslint-disable-next-line @next/next/no-img-element
-    ? <img src={item.agentAvatar} alt="" className="h-9 w-9 shrink-0 rounded-full object-cover" />
-    : <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-cvr-surface text-[12px] font-semibold text-cvr-body">{viTat(item.agentName)}</span>;
+    ? <img src={item.agentAvatar} alt="" className="h-10 w-10 shrink-0 rounded-full object-cover ring-1 ring-cvr-line" />
+    : <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-cvr-surface text-[14px] font-semibold text-cvr-body ring-1 ring-cvr-line">{viTat(item.agentName)}</span>;
   const nguoiDang = (
     <div className="min-w-0 flex-1">
-      <p className="truncate text-[14px] font-semibold text-cvr-ink">{item.agentName || "Coastal Land"}</p>
-      <p className="truncate text-[12px] text-cvr-muted">{ngay}</p>
+      <p className="truncate text-[15px] font-semibold leading-tight text-cvr-ink">{item.agentName || "Coastal Land"}</p>
+      <p className="mt-0.5 truncate text-[13px] leading-tight text-cvr-muted">{ngay}</p>
     </div>
   );
 
@@ -295,7 +290,7 @@ export default function TheTinMobile({ item, terms = [], tuChay = true }: { item
   //    hàng cuối: người đăng + Thích, không có số (số chỉ ở trang tin) ──────────────────────
   if (t === "basic") {
     return (
-      <article className="overflow-hidden bg-white shadow-lux">
+      <article className="overflow-hidden bg-white">
         <div className="relative">
           {khungChinh("aspect-[16/9] w-full", "100vw")}
         </div>
@@ -317,7 +312,7 @@ export default function TheTinMobile({ item, terms = [], tuChay = true }: { item
 
   // ── DIAMOND · GOLD · SILVER: ảnh trên, nội dung dưới ──────────────────────
   return (
-    <article className="overflow-hidden bg-white shadow-lux">
+    <article className="overflow-hidden bg-white">
       {tier.bar && <div className="h-px w-full" style={{ backgroundColor: tier.bar }} aria-hidden />}
       <div className="relative">
         {khungAnh}

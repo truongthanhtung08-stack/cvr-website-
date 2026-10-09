@@ -131,7 +131,7 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
               {/* ĐIỆN THOẠI (chủ dự án 09/10/2026): xếp DỌC thẻ theo cấp, ban đầu 10 tin; "Xem thêm" 2 lần,
                   mỗi lần +10 tin; bấm tiếp → danh sách theo trang (bắt đầu trang 1, như mọi khối "Xem thêm").
                   Bấm Xem thêm lần thứ 2 thì hiện "Thu gọn" cùng hàng — về lại 10 tin đầu. */}
-              <div className="mt-4 space-y-3">
+              <div className="-mx-4 mt-4 space-y-2 bg-cvr-surface">
                 {sorted.slice(0, (lanXem + 1) * MOB_LAN).map((item) => <TheTinMobile key={item.id} item={item} tuChay={false} />)}
               </div>
               <div className="mt-6 flex justify-center gap-3">

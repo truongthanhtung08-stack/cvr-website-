@@ -298,7 +298,8 @@ export default function ListingBrowser({
               })()}
               {/* MOBILE (< 640px): LUÔN thẻ dọc — ảnh trên, nội dung dưới (thuần CSS,
                   không phụ thuộc JS → chắc chắn đúng trên mọi máy) */}
-              <div className="reveal is-visible cards-stagger grid grid-cols-1 gap-5 sm:hidden">
+              {/* Tràn sát 2 mép màn hình, khe xám mảnh giữa các thẻ — hạn chế viền trắng (chủ dự án 09/10/2026) */}
+              <div className="reveal is-visible cards-stagger -mx-4 grid grid-cols-1 gap-2 bg-cvr-surface sm:hidden">
                 {pageItems.map((item) => (
                   // Thẻ theo cấp (chuẩn 09/10/2026, docs/THE-TIN-THEO-CAP.md); tin hết hạn giữ thẻ cũ có nhãn "Tin hết hạn"
                   item.hetHan

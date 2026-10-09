@@ -54,16 +54,17 @@ export default function Gallery({
   const open = (i: number) => setLb(i);
   const close = () => setLb(-1);
 
-  // Danh sách slide = VIDEO trước, rồi tới ảnh. Bộ xem ảnh toàn màn hình vẫn chỉ
-  // nhận ảnh nên phải trừ số video khi quy đổi chỉ số.
+  // Danh sách slide = ẢNH ĐẠI DIỆN trước (mở tin luôn thấy ảnh đại diện — chủ dự án 09/10/2026),
+  // rồi VIDEO, rồi các ảnh còn lại. Bộ xem ảnh toàn màn hình chỉ nhận ảnh nên quy đổi chỉ số.
   const nVid = videos.length;
   const media = [
+    ...images.slice(0, 1).map((src) => ({ kind: "image" as const, src })),
     ...videos.map((src) => ({ kind: "video" as const, src })),
-    ...images.map((src) => ({ kind: "image" as const, src })),
+    ...images.slice(1).map((src) => ({ kind: "image" as const, src })),
   ];
-  const imgIdx = (m: number) => m - nVid;
+  const imgIdx = (m: number) => (m === 0 || !images.length ? m : m - nVid);
   // Slide hiện tại có phải video không — quyết định nhịp tự chạy và lớp phủ.
-  const bigIsVideo = bigIdx < nVid;
+  const bigIsVideo = media[bigIdx]?.kind === "video";
 
   // MOBILE: carousel vuốt 1 ảnh (kiểu Homedy) — theo dõi ảnh đang xem để đếm "Ảnh x/y".
   const [mCur, setMCur] = useState(0);
@@ -75,7 +76,7 @@ export default function Gallery({
     el.scrollTo({ left: i * el.clientWidth, behavior: "smooth" });
   };
 
-  const mIsVideo = mCur < nVid;
+  const mIsVideo = media[mCur]?.kind === "video";
   // Video đang XEM FULL ở khối nào ('dt' điện thoại · 'mt' máy tính). Xoay máy làm màn
   // vượt/dưới 640px thì khối kia bị ẩn — khối đang xem full phải GIỮ hiện, không thì
   // khung xem full biến mất (đo 08/10/2026).
@@ -175,7 +176,7 @@ export default function Gallery({
           </div>
         ) : (
           <button type="button" onClick={() => open(0)} className="group relative block aspect-[4/3] w-full sm:aspect-[2/1] overflow-hidden rounded-none border border-cvr-line">
-            <Image src={media[0].src} alt={alt} fill priority quality={90} sizes="(max-width:1024px) 100vw, 66vw" className="bg-black object-contain" />
+            <Image src={media[0].src} alt={alt} fill priority quality={90} sizes="(max-width:1024px) 100vw, 66vw" className="object-cover" />
           </button>
         )
       ) : (
@@ -212,7 +213,7 @@ export default function Gallery({
                   aria-label={`Ảnh ${imgIdx(i) + 1}`}
                   className="relative aspect-[4/3] max-h-[70dvh] w-full shrink-0 snap-center overflow-hidden bg-black"
                 >
-                  <Image src={m.src} alt={`${alt} ${imgIdx(i) + 1}`} fill priority={i === nVid} quality={90} sizes="100vw" className="bg-black object-contain" />
+                  <Image src={m.src} alt={`${alt} ${imgIdx(i) + 1}`} fill priority={i === 0} quality={90} sizes="100vw" className="object-cover" />
                 </button>
               ),
             )}
@@ -329,7 +330,7 @@ export default function Gallery({
               <GallerySlideVideo url={media[bigIdx].src} active onHold={setHold} onLon={(b) => setLonO(b ? "mt" : null)} />
             ) : (
               <button type="button" onClick={() => open(imgIdx(bigIdx))} className="absolute inset-0 block h-full w-full">
-                <Image key={bigIdx} src={media[bigIdx].src} alt={alt} fill priority quality={90} sizes="(max-width:1024px) 100vw, 50vw" className="bg-black object-contain animate-fadein" />
+                <Image key={bigIdx} src={media[bigIdx].src} alt={alt} fill priority quality={90} sizes="(max-width:1024px) 100vw, 50vw" className="object-cover animate-fadein" />
               </button>
             )}
             {/* ── NÚT CHUYỂN ‹ › ────────────────────────────────────────────
