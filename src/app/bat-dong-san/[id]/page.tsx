@@ -30,6 +30,7 @@ import { getListing, getListings, getListingDetail, tinDaHetHan } from "@/lib/li
 import { getProject } from "@/lib/contentDb";
 import { tierFromBadge, getTier } from "@/lib/packages";
 import { chuanHoaSdt } from "@/lib/phone";
+import MoTaThuGon from "@/components/MoTaThuGon";
 import RichContent from "@/components/RichContent";
 
 // TRANG QUAN TRỌNG NHẤT CHO SEO (500 tin). Nay đọc tin qua cache theo thẻ "listings"
@@ -200,13 +201,18 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
   // Che ngay ở dữ liệu (trước khi gửi xuống trình duyệt) để số không lọt vào mã trang.
   // Đúng dạng SĐT Việt Nam (0/+84 + 3/5/7/8/9 + 8 số, cho phép cách/chấm/gạch) — không chạm giá tiền.
   const cheSo = (s: string) => s.replace(/(?<![\d.,])(?:\+?84[\s.\-]?|0)[35789](?:[\s.\-]?\d){8}(?!\d)/g, "••••");
-  const d = hetHan
-    ? {
-        ...dGoc,
-        descriptionParas: dGoc.descriptionParas.map(cheSo),
-        listing: { ...dGoc.listing, ...(dGoc.listing.desc ? { desc: cheSo(dGoc.listing.desc) } : {}) },
-      }
-    : dGoc;
+  // TIN CÒN HẠN: số trong mô tả ẩn đuôi như Batdongsan "0905 042 ***" — đủ số chỉ ở nút Hiện số
+  // (chủ dự án 09/10/2026). Che ngay ở dữ liệu để số đủ không lọt vào mã trang.
+  const anDuoi = (s: string) => s.replace(/(?<![\d.,])((?:\+?84[\s.\-]?|0)[35789](?:[\s.\-]?\d){8})(?!\d)/g, (so) => {
+    const c = so.replace(/\D/g, "").replace(/^84/, "0");
+    return `${c.slice(0, 4)} ${c.slice(4, 7)} ***`;
+  });
+  const che = hetHan ? cheSo : anDuoi;
+  const d = {
+    ...dGoc,
+    descriptionParas: dGoc.descriptionParas.map(che),
+    listing: { ...dGoc.listing, ...(dGoc.listing.desc ? { desc: che(dGoc.listing.desc) } : {}) },
+  };
   const l = d.listing;
   // Hạng CVR của tin (đồng bộ với thẻ tin V.7). Không có huy hiệu → tin thường.
   const tier = l.badge ? getTier(tierFromBadge(l.badge)) : null;
@@ -505,9 +511,11 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
               {/* Mô tả — chỉ hiện khi người đăng có viết (không bịa) */}
               {d.descriptionParas.length > 0 && (
                 <Section id="mo-ta" title="Thông tin mô tả">
-                  <div className="space-y-3 text-[15px] leading-relaxed text-cvr-body">
-                    <RichContent paragraphs={d.descriptionParas} title={l.title} wysiwyg />
-                  </div>
+                  <MoTaThuGon>
+                    <div className="space-y-3 text-[15px] leading-relaxed text-cvr-body">
+                      <RichContent paragraphs={d.descriptionParas} title={l.title} wysiwyg />
+                    </div>
+                  </MoTaThuGon>
                 </Section>
               )}
 
@@ -548,22 +556,6 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                   {d.specs.map((f) => <Row key={f.label} label={f.label} value={f.value} />)}
                   <Row label="Tình trạng pháp lý" value={d.legal ?? "Chưa cập nhật"} />
                 </div>
-                {/* THÔNG TIN TIN ĐĂNG — mọi tin đều có, chuẩn như Batdongsan (chủ dự án chốt
-                    01/10/2026): Ngày đăng · Ngày hết hạn · Loại tin · Mã tin. Ngày hết hạn lấy
-                    đúng hạn hiển thị theo Giá & quy định (tier_expires_at). */}
-                <dl className="mt-5 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-cvr-line bg-cvr-line sm:grid-cols-4">
-                  {[
-                    { nhan: "Ngày đăng", gt: l.postedAt ? new Date(l.postedAt).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" }) : "—" },
-                    { nhan: "Ngày hết hạn", gt: l.hetHanLuc ? new Date(l.hetHanLuc).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" }) : "—" },
-                    { nhan: "Loại tin", gt: tier ? tier.name : getTier("basic").name },
-                    { nhan: "Mã tin", gt: l.id.slice(0, 8).toUpperCase() },
-                  ].map((o) => (
-                    <div key={o.nhan} className="bg-white px-4 py-3">
-                      <dt className="text-[12px] text-cvr-muted">{o.nhan}</dt>
-                      <dd className="mt-0.5 text-[14px] font-semibold text-cvr-ink">{o.gt}</dd>
-                    </div>
-                  ))}
-                </dl>
               </Section>
 
               {/* Nội thất — chỉ khi người đăng tick */}

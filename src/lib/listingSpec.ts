@@ -144,7 +144,7 @@ export const categorySpecs: CategorySpec[] = [
     label: "Chung cư",
     match: ["chung cư"],
     fields: [
-      { key: "floor", label: "Tầng số (căn)", type: "text", placeholder: "VD: Tầng 18", main: true, batBuoc: true },
+      { key: "floor", label: "Tầng số (căn)", type: "text", placeholder: "VD: Tầng 18", main: true },
       { key: "block", label: "Block / Toà / Tháp", type: "text", placeholder: "VD: Block A" },
       { key: "buildingFloors", label: "Tổng số tầng toà", type: "text", placeholder: "VD: 30 tầng" },
       { key: "balcony", label: "Hướng ban công", type: "select", options: directions, main: true },
@@ -157,7 +157,7 @@ export const categorySpecs: CategorySpec[] = [
     match: ["căn hộ", "officetel", "duplex", "penthouse", "studio"],
     fields: [
       { key: "loaiCanho", label: "Loại hình căn hộ", type: "select", options: ["Căn hộ dịch vụ", "Duplex", "Penthouse", "Studio", "Officetel"] },
-      { key: "floor", label: "Tầng số (căn)", type: "text", placeholder: "VD: Tầng 18", main: true, batBuoc: true },
+      { key: "floor", label: "Tầng số (căn)", type: "text", placeholder: "VD: Tầng 18", main: true },
       { key: "block", label: "Block / Toà / Tháp", type: "text", placeholder: "VD: Block A" },
       { key: "buildingFloors", label: "Tổng số tầng toà", type: "text", placeholder: "VD: 30 tầng" },
       { key: "balcony", label: "Hướng ban công", type: "select", options: directions, main: true },

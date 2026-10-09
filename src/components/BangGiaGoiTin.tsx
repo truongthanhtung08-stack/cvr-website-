@@ -78,12 +78,16 @@ export default function BangGiaGoiTin({
                   const goc = donGiaGoc(p);
                   const giam = goc > 0 && term.price > 0 ? Math.round((1 - term.price / term.days / goc) * 100) : 0;
                   const dangChon = chon?.tier === p.tierId && chon.days === ngay;
+                  // Hệ số tiếp cận X luôn hiện dưới mỗi mức giá (chủ dự án 09/10/2026)
                   const noiDung = (
-                    <span className="flex flex-wrap items-center justify-center gap-1.5">
-                      <span className="font-semibold tabular-nums text-cvr-ink">{term.price > 0 ? vnd(hienGia(term.price)) : "0 ₫"}</span>
-                      {giam > 0 && (
-                        <span className="rounded-full border border-red-300 px-1.5 py-px text-[11px] font-semibold text-red-700">−{giam}%</span>
-                      )}
+                    <span className="flex flex-col items-center gap-0.5">
+                      <span className="flex flex-wrap items-center justify-center gap-1.5">
+                        <span className="font-semibold tabular-nums text-cvr-ink">{term.price > 0 ? vnd(hienGia(term.price)) : "0 ₫"}</span>
+                        {giam > 0 && (
+                          <span className="rounded-full border border-red-300 px-1.5 py-px text-[11px] font-semibold text-red-700">−{giam}%</span>
+                        )}
+                      </span>
+                      <span className="text-[11px] font-semibold tracking-wide text-cvr-muted">{getTier(p.tierId).heSoText}</span>
                     </span>
                   );
                   return (
@@ -93,9 +97,13 @@ export default function BangGiaGoiTin({
                           type="button"
                           onClick={() => onChon(p.tierId, ngay)}
                           aria-pressed={dangChon}
-                          className={`w-full rounded-xl px-2 py-2.5 transition ${dangChon ? "bg-cvr-ink/[0.06] ring-2 ring-cvr-ink" : "hover:bg-cvr-surface"}`}
+                          className={`w-full rounded-xl border px-2 py-2.5 transition ${dangChon ? "border-cvr-ink bg-cvr-ink/[0.06] ring-2 ring-cvr-ink" : "border-cvr-line hover:border-cvr-ink"}`}
                         >
                           {noiDung}
+                          {/* Nút chọn rõ ràng (chủ dự án 09/10/2026) */}
+                          <span className={`mt-1.5 inline-flex h-7 items-center rounded-md px-3 text-[12px] font-semibold ${dangChon ? "bg-cvr-ink text-white" : "bg-cvr-blue text-white"}`}>
+                            {dangChon ? "Đã chọn ✓" : "Chọn"}
+                          </span>
                         </button>
                       ) : (
                         <div className="px-2 py-2.5">{noiDung}</div>

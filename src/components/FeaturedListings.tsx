@@ -1,11 +1,11 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import PropertyCard from "@/components/PropertyCard";
 import { featuredListings, type Listing } from "@/lib/data";
 import ListingBrowser from "@/components/ListingBrowser";
-import { useHomeSection } from "@/components/HomeExpand";
+import { useHomeSection, HOME_RESET_EVENT } from "@/components/HomeExpand";
 import { tierRank } from "@/lib/packages";
 import { smoothScrollTo } from "@/lib/scroll";
 import { useAutoSlide, useTamDung } from "@/lib/useAutoSlide";
@@ -39,6 +39,12 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
   // ĐIỆN THOẠI (chuẩn 09/10/2026, như Batdongsan): xếp DỌC thẻ theo cấp; bấm "Xem thêm" 2 lần
   // (mỗi lần +1 trang) rồi mới hiện phân trang 1 · 2 · 3…
   const [lanXem, setLanXem] = useState(0); // số lần đã bấm Xem thêm tại chỗ (tối đa 2)
+  // Bấm Trang chủ / logo khi đang ở trang chủ → về mặc định 10 tin (không để danh sách dài)
+  useEffect(() => {
+    const ve = () => setLanXem(0);
+    window.addEventListener(HOME_RESET_EVENT, ve);
+    return () => window.removeEventListener(HOME_RESET_EVENT, ve);
+  }, []);
   const khoiMobRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   // PC: bấm "Xem thêm" → đổi sang bố cục trang danh sách (list + cột phải),

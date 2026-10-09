@@ -201,7 +201,7 @@ export default function ProjectsBrowser({
   const current = Math.min(page, totalPages);
   const pageItems = visible.slice((current - 1) * PER_PAGE, current * PER_PAGE);
 
-  // Panel chọn 1 giá trị trong dropdown (kèm số dự án mỗi mục)
+  // Panel chọn 1 giá trị trong dropdown (không in số dự án — chủ dự án 09/10/2026)
   const optionList = (
     options: [string, number][],
     value: string,
@@ -209,7 +209,7 @@ export default function ProjectsBrowser({
     close: () => void
   ) => (
     <div className="space-y-0.5">
-      {[[ALL, projects.length] as [string, number], ...options].map(([name, count]) => (
+      {[[ALL, projects.length] as [string, number], ...options].map(([name]) => (
         <button
           key={name}
           type="button"
@@ -219,7 +219,6 @@ export default function ProjectsBrowser({
           }`}
         >
           <span className="truncate">{name}</span>
-          <span className="shrink-0 text-[11px] text-cvr-faint">{count} dự án</span>
         </button>
       ))}
     </div>
@@ -626,7 +625,7 @@ export default function ProjectsBrowser({
             <div className="rounded-none border border-cvr-line bg-white p-5 shadow-lux">
               <h2 className="text-sm font-semibold tracking-tight text-cvr-ink">Lọc theo khu vực</h2>
               <div className="mt-3 flex flex-col">
-                {[[ALL, projects.length] as [string, number], ...provinceCounts].map(([name, count]) => (
+                {[[ALL, projects.length] as [string, number], ...provinceCounts].map(([name]) => (
                   <button
                     key={name}
                     type="button"
@@ -638,7 +637,6 @@ export default function ProjectsBrowser({
                     }`}
                   >
                     <span>{name === ALL ? "Tất cả khu vực" : name}</span>
-                    <span className="text-xs text-cvr-muted">{count} dự án</span>
                   </button>
                 ))}
               </div>

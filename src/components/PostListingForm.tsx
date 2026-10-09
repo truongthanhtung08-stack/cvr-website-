@@ -1200,6 +1200,11 @@ export default function PostListingForm() {
                 onChon={(t, d) => { setPlanTier(t); setPlanDays(d); }}
               />
             </div>
+            {/* Nút xem bảng quyền lợi từng loại tin (chủ dự án 09/10/2026) — mở tab mới để không mất tin đang soạn */}
+            <a href="/bao-gia-dang-tin#dac-diem" target="_blank" rel="noopener" className="mt-3 inline-flex h-10 items-center gap-1.5 rounded-lg border border-cvr-line bg-white px-4 text-sm font-semibold text-cvr-ink transition hover:border-cvr-ink">
+              Xem bảng quyền lợi
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+            </a>
 
             {/* THANH TOÁN — đủ từng khoản như Batdongsan; các dòng cộng lại đúng bằng tổng */}
             {planTier && (

@@ -168,7 +168,7 @@ export default function Gallery({
     <>
       {media.length === 1 ? (
         media[0].kind === "video" ? (
-          <div className="relative aspect-[4/3] w-full sm:aspect-[2/1] overflow-hidden rounded-none border border-cvr-line bg-black">
+          <div className="relative aspect-[4/3] w-full sm:aspect-[2/1] overflow-hidden rounded-none bg-black sm:border sm:border-cvr-line">
             <GallerySlideVideo url={media[0].src} active onHold={setHold} />
           </div>
         ) : (
@@ -198,7 +198,7 @@ export default function Gallery({
                 // phát mà khung giãn cao kín màn là SAI — đã thử và bị bác).
                 <div
                   key={i}
-                  className="relative aspect-[4/3] max-h-[70dvh] w-full shrink-0 snap-center overflow-hidden border border-cvr-line bg-black"
+                  className="relative aspect-[4/3] max-h-[70dvh] w-full shrink-0 snap-center overflow-hidden bg-black"
                 >
                   <GallerySlideVideo url={m.src} active={i === mCur} onHold={setHold} onLon={(b) => setLonO(b ? "dt" : null)} />
                 </div>
@@ -208,7 +208,7 @@ export default function Gallery({
                   type="button"
                   onClick={() => open(imgIdx(i))}
                   aria-label={`Ảnh ${imgIdx(i) + 1}`}
-                  className="relative aspect-[4/3] max-h-[70dvh] w-full shrink-0 snap-center overflow-hidden border border-cvr-line bg-cvr-surface"
+                  className="relative aspect-[4/3] max-h-[70dvh] w-full shrink-0 snap-center overflow-hidden bg-black"
                 >
                   <Image src={m.src} alt={`${alt} ${imgIdx(i) + 1}`} fill priority={i === nVid} quality={90} sizes="100vw" className="bg-black object-contain" />
                 </button>

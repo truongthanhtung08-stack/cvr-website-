@@ -46,12 +46,23 @@ function thongSo(l: Listing): MucSo[] {
   const canHo = /căn hộ|chung cư|condotel|officetel|penthouse/.test(loai);
   const dat = /đất/.test(loai);
   const nha = !canHo && !dat && /nhà|biệt thự|villa|shophouse|liền kề/.test(loai);
-  const ds: MucSo[] = [{ chu: l.price, do: l.price !== "Thỏa thuận" }];
+  const ds: MucSo[] = [{ chu: l.price === "Thỏa thuận" ? "Giá thỏa thuận" : l.price, do: true }];
   if (l.area) ds.push({ chu: l.area, do: true });
   if (l.pricePerM2 && (canHo || dat || nha)) ds.push({ chu: l.pricePerM2 });
   if ((canHo || nha) && l.beds) ds.push({ chu: String(l.beds), icon: "pn" });
   if ((canHo || nha) && l.baths) ds.push({ chu: String(l.baths), icon: "wc" });
   return ds;
+}
+
+// Địa chỉ trên thẻ như Batdongsan: "P. Hải Vân (Q. Liên Chiểu cũ)" — phường mới + quận cũ.
+// Không có địa chỉ hệ cũ thì giữ địa chỉ mới, viết tắt cấp đầu.
+function diaChiThe(l: Listing): string {
+  const vt = (x: string) => x.replace(/^Phường /, "P. ").replace(/^Xã /, "X. ").replace(/^Quận /, "Q. ").replace(/^Huyện /, "H. ").replace(/^Thị xã /, "TX. ").replace(/^Thành phố /, "TP. ");
+  const moi = l.location.split(",").map((x) => x.trim()).filter(Boolean);
+  const cu = (l.locationCu ?? "").split(",").map((x) => x.trim()).filter(Boolean);
+  const quanCu = cu.length >= 3 ? cu[1] : cu.length === 2 ? cu[0] : "";
+  if (moi.length >= 2 && /^(Quận|Huyện|Thị xã|Thành phố) /.test(quanCu)) return `${vt(moi[0])} (${vt(quanCu)} cũ)`;
+  return [vt(moi[0] ?? ""), ...moi.slice(1)].join(", ");
 }
 
 // 2 chữ viết tắt của tên (chữ đầu + chữ cuối): "Trần Mai Chi" → "TC"
@@ -229,7 +240,7 @@ export default function TheTinMobile({ item, terms = [] }: { item: Listing; term
   const diaChi = (
     <p className="mt-1 flex items-center gap-1 text-[14px] text-cvr-body">
       <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth={1.7} viewBox="0 0 24 24" aria-hidden><path d="M12 21s-7-6.2-7-11.5A7 7 0 0112 2.5a7 7 0 017 7C19 14.8 12 21 12 21z" /><circle cx="12" cy="9.5" r="2.5" /></svg>
-      <span className="truncate"><Highlight text={item.location} terms={terms} /></span>
+      <span className="truncate"><Highlight text={diaChiThe(item)} terms={terms} /></span>
     </p>
   );
 

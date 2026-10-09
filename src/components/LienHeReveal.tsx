@@ -168,7 +168,9 @@ export function ContactActions({ listingId, phoneMask }: { listingId: string; ph
 // đi đúng bước xác thực số như Hiện số, xong là mở Zalo luôn.
 const ZaloIcon = () => <span className="text-[12px] font-extrabold tracking-tight text-[#0068ff]" aria-hidden>Zalo</span>;
 function AnhNguoiDang({ avatar, ten }: { avatar?: string | null; ten?: string | null }) {
-  const chu = (ten || "C").trim().charAt(0).toUpperCase();
+  // Không có ảnh → 2 chữ viết tắt (chữ đầu + chữ cuối của tên), chủ dự án 09/10/2026
+  const w = (ten || "Coastal Land").trim().split(/\s+/).filter(Boolean);
+  const chu = ((w[0]?.[0] ?? "C") + (w.length > 1 ? w[w.length - 1][0] : "")).toUpperCase();
   return avatar
     // eslint-disable-next-line @next/next/no-img-element
     ? <img src={avatar} alt={ten ?? ""} className="h-11 w-11 shrink-0 rounded-full object-cover ring-1 ring-cvr-line" />
