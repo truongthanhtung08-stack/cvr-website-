@@ -110,6 +110,8 @@ export default function Gallery({
   const onMScroll = () => {
     const el = mTrack.current;
     if (Date.now() < xoayToi.current) return;
+    // Đang toàn màn hình (xoay máy làm khung đổi cỡ) → giữ nguyên tấm đang xem, không để video rời slide
+    if (document.fullscreenElement || (document as Document & { webkitFullscreenElement?: Element }).webkitFullscreenElement) return;
     if (el) setMCur(Math.round(el.scrollLeft / el.clientWidth));
   };
 
@@ -121,7 +123,13 @@ export default function Gallery({
     if (hold || lb >= 0 || list || media.length < 2) return;
     if (!laDienThoai && !window.matchMedia("(max-width: 639px)").matches) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const t = setTimeout(() => nhayToi((mCur + 1) % media.length), mIsVideo ? 7000 : 4000);
+    // Đang xem video TOÀN MÀN HÌNH (nút toàn màn hình của trình phát) → KHÔNG tự chuyển tấm: chuyển là
+    // video rời slide và tự thoát toàn màn hình — đúng lỗi "xoay máy ngang là tự tắt full" (10/10/2026).
+    const t = setTimeout(() => {
+      const dangFull = document.fullscreenElement || (document as Document & { webkitFullscreenElement?: Element }).webkitFullscreenElement;
+      if (dangFull) return;
+      nhayToi((mCur + 1) % media.length);
+    }, mIsVideo ? 7000 : 4000);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mCur, hold, lb, list, mIsVideo, media.length, mCham, laDienThoai]);
