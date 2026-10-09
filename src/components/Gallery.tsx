@@ -221,6 +221,21 @@ export default function Gallery({
               ảnh; video đứng đầu dãy nên không có nó thì khách xem xong video
               tưởng hết. Ở SLIDE VIDEO THÌ ẨN, xem lý do ở khối nút bên dưới. */}
           {(!mIsVideo || !hold) && demMedia}
+          {/* NÚT MỞ DANH SÁCH ẢNH & VIDEO KIỂU FACEBOOK — góc trên phải, hiện cả ở slide video
+              (chủ dự án 10/10/2026: xem video trong khung thì bấm play; muốn xem cả video lẫn ảnh
+              kiểu Facebook thì bấm nút này). Chỉ tin CÓ video; tin chỉ có ảnh thì vuốt xem trong khung, bấm ảnh ra danh sách. */}
+          {nVid > 0 && (!mIsVideo || !hold) && (
+            <button
+              type="button"
+              onClick={() => setList(true)}
+              className="absolute right-2.5 top-2.5 z-[6] flex h-8 items-center gap-1.5 rounded-full bg-black/55 px-3 text-[12.5px] font-semibold text-white backdrop-blur-sm active:bg-black/70"
+            >
+              <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden>
+                <rect x="3" y="3" width="7" height="7" rx="1.2" /><rect x="14" y="3" width="7" height="7" rx="1.2" /><rect x="3" y="14" width="7" height="7" rx="1.2" /><rect x="14" y="14" width="7" height="7" rx="1.2" />
+              </svg>
+              Ảnh &amp; video
+            </button>
+          )}
 
           {/* ── NÚT CHUYỂN TẤM Ở HAI BÊN ─────────────────────────────────────
               Slide ẢNH: hiện bình thường.
@@ -281,7 +296,7 @@ export default function Gallery({
                   <rect x="3" y="14" width="7" height="7" rx="1.2" />
                   <rect x="14" y="14" width="7" height="7" rx="1.2" />
                 </svg>
-                Tất cả ảnh
+                {nVid > 0 ? "Tất cả ảnh & video" : "Tất cả ảnh"}
               </button>
               {!mIsVideo && (
                 <span className="text-[12.5px] font-medium text-white drop-shadow">

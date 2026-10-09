@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import MapPaneMo from "@/components/MapPaneMo";
 import { useSaved } from "@/lib/useSaved";
 import { anhToiUu, beRongManHinh } from "@/lib/anhToiUu";
 import { khoaCuon } from "@/lib/khoaCuon";
@@ -400,13 +401,8 @@ export default function PhotoViewer({
             {title && <p className="line-clamp-2 text-[15px] font-semibold leading-snug text-cvr-ink">{title}</p>}
             <p className="mt-1.5 text-[13px] text-cvr-muted">{banDo.diaChi}</p>
           </div>
-          <iframe
-            title={`Bản đồ ${banDo.diaChi}`}
-            src={`https://www.google.com/maps?q=${encodeURIComponent(banDo.q)}&z=15&output=embed`}
-            className="min-h-0 w-full flex-1 border-0"
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-          />
+          {/* Bản đồ nền mở (MapLibre) — khung nhúng Google bị chặn ở Việt Nam */}
+          <div className="min-h-0 flex-1"><MapPaneMo query={banDo.q} cao="h-full w-full" /></div>
         </aside>
       )}
     </div>

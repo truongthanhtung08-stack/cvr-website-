@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { khoaCuon } from "@/lib/khoaCuon";
 import GallerySlideVideo from "@/components/GallerySlideVideo";
+import MapPaneMo from "@/components/MapPaneMo";
 import { useSaved } from "@/lib/useSaved";
 
 // ============================================================================
@@ -127,6 +128,8 @@ export default function PhotoList({
     else navigator.clipboard?.writeText(url);
   };
   const [banDoTo, setBanDoTo] = useState(false); // bản đồ phóng to (nút ⤢ như Batdongsan)
+  // Máy tính: cột bản đồ luôn hiện → nạp ngay; điện thoại: chỉ nạp khi bấm "Vị trí"
+  const [mayTinh] = useState(() => typeof window !== "undefined" && window.innerWidth >= 1024);
   const [thoat, setThoat] = useState(0);  // 0 = đang mở · 1/-1 = đang chạy hiệu ứng thoát
   const [muot, setMuot] = useState(true); // tắt hiệu ứng khi ảnh bám ngón tay
   const boc = useRef<HTMLDivElement>(null);
@@ -328,13 +331,8 @@ export default function PhotoList({
               </button>
               <button type="button" aria-label="Đóng" onClick={() => { setMoBanDo(false); setBanDoTo(false); }} className="flex h-8 w-8 items-center justify-center rounded-full text-cvr-ink lg:hidden">✕</button>
             </div>
-            <iframe
-              title={`Bản đồ ${banDo.diaChi}`}
-              src={`https://www.google.com/maps?q=${encodeURIComponent(banDo.q)}&z=15&output=embed`}
-              className="min-h-0 w-full flex-1 border-0"
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-            />
+            {/* Bản đồ nền mở (MapLibre) — khung nhúng Google bị chặn ở Việt Nam (ERR_BLOCKED_BY_RESPONSE) */}
+            <div className="min-h-0 flex-1">{(moBanDo || mayTinh) && <MapPaneMo query={banDo.q} cao="h-full w-full" />}</div>
           </aside>
         </>
       )}
