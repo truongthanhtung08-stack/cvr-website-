@@ -418,7 +418,7 @@ export default function Gallery({
       {/* DANH SÁCH ẢNH KIỂU FACEBOOK (điện thoại) — mở từ nút "Xem tất cả N ảnh".
           Ảnh xếp dọc full bề ngang, cuộn tiếp ở cuối trang là thoát. */}
       {list && (
-        <PhotoList images={images} videos={videos} title={alt} onPick={open} onClose={() => setList(false)} nhanPhim={lb < 0} />
+        <PhotoList images={images} videos={videos} title={alt} onPick={open} onClose={() => setList(false)} nhanPhim={lb < 0} banDo={banDo} />
       )}
 
       {/* Xem 1 ảnh toàn màn hình — vuốt trái/phải đổi ảnh, vuốt xuống thoát */}

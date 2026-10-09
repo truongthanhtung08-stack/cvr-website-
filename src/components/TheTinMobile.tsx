@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import PhotoViewer from "@/components/PhotoViewer";
+import PhotoList from "@/components/PhotoList";
 import Highlight from "@/components/Highlight";
 import { NutLienHeThe } from "@/components/LienHeReveal";
 import { freshText, type Listing } from "@/lib/data";
@@ -165,6 +166,8 @@ export default function TheTinMobile({ item, terms = [], tuChay = false }: { ite
   const href = `/bat-dong-san/${item.id}`;
   const anh = (item.images?.length ? item.images : [item.image]).filter(Boolean);
   const [xem, setXem] = useState(-1);
+  // Bấm ảnh trên thẻ → danh sách kiểu Facebook: video + ảnh + bản đồ (chủ dự án 09/10/2026)
+  const [ds, setDs] = useState(false);
   const { has, toggle } = useSaved();
   const daLuu = has(item.id);
   const coSo = t !== "basic"; // Diamond · Gold · Silver: Zalo + Hiện số trên thẻ
@@ -184,15 +187,16 @@ export default function TheTinMobile({ item, terms = [], tuChay = false }: { ite
   const slides: Slide[] = tuChay
     ? [...anh.slice(0, 1).map((a) => ({ anh: a })), ...slideVideo, ...anh.slice(1).map((a) => ({ anh: a }))]
     : anh.slice(0, 1).map((a) => ({ anh: a }));
-  const coVideo = tuChay && Boolean(item.video);
   const moSlide = (k: number) => {
-    if (coVideo && k === 1) { window.location.href = href; return; }
-    setXem(coVideo && k > 1 ? k - 1 : k);
+    void k;
+    setDs(true);
   };
 
   const dem = (
     <span className="pointer-events-none absolute bottom-1.5 right-1.5 flex items-center gap-1 bg-black/55 px-1.5 py-0.5 text-[12px] font-semibold text-white">
-      <IconAnh />{soAnh}{item.hasVideo && <span className="ml-1"><IconPlay /></span>}
+      {/* Chỉ báo tin có bao nhiêu ảnh, bao nhiêu video (chủ dự án 09/10/2026) */}
+      <IconAnh />{soAnh}
+      {(item.soVideo ?? (item.hasVideo ? 1 : 0)) > 0 && <><span className="ml-1.5"><IconPlay /></span>{item.soVideo ?? 1}</>}
     </span>
   );
   const huyHieu = t !== "basic" && (
@@ -224,19 +228,19 @@ export default function TheTinMobile({ item, terms = [], tuChay = false }: { ite
   let khungAnh: React.ReactNode = khungChinh("aspect-[4/3] w-full", "100vw");
   if (t === "gold" && anh.length >= 3) {
     khungAnh = (
-      <div className="flex aspect-[4/3] w-full gap-[2px]">
+      <div className="flex aspect-[4/3] w-full gap-px">
         {khungChinh("h-full min-w-0 flex-1", "75vw")}
-        <div className="grid w-[calc((100%-2px)*0.2815)] shrink-0 grid-rows-2 gap-[2px]">
-          {anh.slice(1, 3).map((src, k) => <O key={k} vuaKhung src={src} alt={item.title} className="h-full w-full" sizes="33vw" onMo={() => setXem(k + 1)} />)}
+        <div className="grid w-[calc((100%-1px)*0.2815)] shrink-0 grid-rows-2 gap-px">
+          {anh.slice(1, 3).map((src, k) => <O key={k} vuaKhung src={src} alt={item.title} className="h-full w-full" sizes="33vw" onMo={() => setDs(true)} />)}
         </div>
       </div>
     );
   } else if (t === "diamond" && anh.length >= 4) {
     khungAnh = (
-      <div className="grid gap-[2px]">
+      <div className="grid gap-px">
         {khungChinh("aspect-[4/3] w-full", "100vw")}
-        <div className="grid grid-cols-3 gap-[2px]">
-          {anh.slice(1, 4).map((src, k) => <O key={k} vuaKhung src={src} alt={item.title} className="aspect-[4/3]" sizes="33vw" onMo={() => setXem(k + 1)} />)}
+        <div className="grid grid-cols-3 gap-px">
+          {anh.slice(1, 4).map((src, k) => <O key={k} vuaKhung src={src} alt={item.title} className="aspect-[4/3]" sizes="33vw" onMo={() => setDs(true)} />)}
         </div>
       </div>
     );
@@ -305,6 +309,7 @@ export default function TheTinMobile({ item, terms = [], tuChay = false }: { ite
           {nutThich}
           {nutChiaSe}
         </div>
+        {ds && <PhotoList images={anh} videos={item.video ? [item.video] : []} title={item.title} onPick={setXem} onClose={() => setDs(false)} nhanPhim={xem < 0} banDo={{ diaChi: item.location, q: item.mapPin || item.location }} />}
         {xem >= 0 && <PhotoViewer images={anh} start={xem} title={item.title} listingId={item.id} onClose={() => setXem(-1)} />}
       </article>
     );
@@ -344,7 +349,8 @@ export default function TheTinMobile({ item, terms = [], tuChay = false }: { ite
           </div>
         )}
       </div>
-      {xem >= 0 && <PhotoViewer images={anh} start={xem} title={item.title} listingId={item.id} onClose={() => setXem(-1)} />}
+      {ds && <PhotoList images={anh} videos={item.video ? [item.video] : []} title={item.title} onPick={setXem} onClose={() => setDs(false)} nhanPhim={xem < 0} banDo={{ diaChi: item.location, q: item.mapPin || item.location }} />}
+        {xem >= 0 && <PhotoViewer images={anh} start={xem} title={item.title} listingId={item.id} onClose={() => setXem(-1)} />}
     </article>
   );
 }

@@ -51,6 +51,8 @@ export type Listing = {
   imageCount?: number;
   // Tin CÓ video không → thẻ hiện nhãn "▶ Video" cạnh số ảnh (kiểu Batdongsan/Homedy).
   hasVideo?: boolean;
+  /** Số video của tin — nhãn đếm trên thẻ "ảnh · video". */
+  soVideo?: number;
   // Vài ảnh ĐẦU của tin — để THẺ TIN tự chạy ảnh, khách lướt qua đã thấy được nhà
   // đó ra sao thay vì chỉ mỗi ảnh bìa. Chỉ lấy ít tấm, không kéo cả bộ 15 ảnh.
   images?: string[];

@@ -128,26 +128,27 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
             {/* ── ĐIỆN THOẠI (< 640px): lướt ngang TỪNG THẺ lớn, ló mép thẻ sau —
                 khách vuốt để xem hết tin. Thẻ cuối = "Xem tất cả". ── */}
             <div ref={khoiMobRef} className="scroll-mt-24 sm:hidden">
-              {/* ĐIỆN THOẠI (chủ dự án 09/10/2026): xếp DỌC thẻ theo cấp, ban đầu 10 tin; "Xem thêm" 2 lần,
-                  mỗi lần +10 tin; bấm tiếp → danh sách theo trang (bắt đầu trang 1, như mọi khối "Xem thêm").
-                  Bấm Xem thêm lần thứ 2 thì hiện "Thu gọn" cùng hàng — về lại 10 tin đầu. */}
+              {/* ĐIỆN THOẠI (chủ dự án 09/10/2026): xếp DỌC thẻ theo cấp, ban đầu 10 tin. */}
               <div className="-mx-4 mt-4 space-y-2 bg-cvr-surface">
                 {sorted.slice(0, (lanXem + 1) * MOB_LAN).map((item) => <TheTinMobile key={item.id} item={item} tuChay={false} />)}
               </div>
-              <div className="mt-6 flex justify-center gap-3">
-                {lanXem >= 2 && (
-                  <button type="button" onClick={() => { setLanXem(0); khoiMobRef.current?.scrollIntoView({ behavior: "smooth" }); }} className="btn-xemthem">
-                    Thu gọn
-                    <svg className="h-4 w-4 rotate-180" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
-                  </button>
-                )}
-                {sorted.length > MOB_LAN && (
-                  <button type="button" onClick={() => (lanXem < 2 && (lanXem + 1) * MOB_LAN < sorted.length ? setLanXem((n) => n + 1) : toggle())} className="btn-xemthem">
-                    Xem thêm
-                    <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
-                  </button>
-                )}
-              </div>
+              {/* MỘT NÚT (chủ dự án 09/10/2026): "Xem thêm" 2 lần, mỗi lần +10 tin; sau lần thứ 2 nút đổi
+                  thành "Thu gọn" — bấm là về lại trang chủ như ban đầu (10 tin, lên đầu trang). */}
+              {sorted.length > MOB_LAN && (
+                <div className="mt-6 flex justify-center">
+                  {lanXem < 2 && (lanXem + 1) * MOB_LAN < sorted.length ? (
+                    <button type="button" onClick={() => setLanXem((n) => n + 1)} className="btn-xemthem">
+                      Xem thêm
+                      <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                    </button>
+                  ) : (
+                    <button type="button" onClick={() => { setLanXem(0); window.scrollTo({ top: 0 }); }} className="btn-xemthem">
+                      Thu gọn
+                      <svg className="h-4 w-4 rotate-180" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* ── TABLET / MÁY TÍNH (≥ 640px): GIỮ NGUYÊN slider 2 slide đã duyệt ── */}

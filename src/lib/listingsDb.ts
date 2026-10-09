@@ -268,6 +268,7 @@ function rowToListing(r: Row): Listing {
     imageCount: r.images.filter((s) => !isVideoUrl(s)).length,
     // Có ít nhất 1 video → thẻ hiện nhãn "▶ Video"
     hasVideo: r.images.some((s) => isVideoUrl(s)),
+    soVideo: r.images.filter((s) => isVideoUrl(s)).length,
     // Video đầu tiên — thẻ tin cho video đứng đầu dải ảnh (chủ dự án 09/10/2026)
     ...((): { video?: string } => { const v = r.images.find((s) => isVideoUrl(s)); return v ? { video: asset(v) } : {}; })(),
     // 6 ảnh đầu cho thẻ tin (Diamond: ảnh chính + 5 ảnh phụ — docs/THE-TIN-THEO-CAP.md)

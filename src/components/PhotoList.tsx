@@ -28,7 +28,10 @@ export default function PhotoList({
   onClose,
   onPick,
   nhanPhim = true,
+  banDo,
 }: {
+  /** Bản đồ Google vị trí BĐS ở cuối danh sách (chủ dự án 09/10/2026) */
+  banDo?: { diaChi: string; q: string };
   images: string[];
   /** Video của tin — đứng ĐẦU danh sách, xem ngay tại chỗ (chủ dự án 09/10/2026: bấm vào ra cả ảnh lẫn video kiểu Facebook) */
   videos?: string[];
@@ -196,6 +199,20 @@ export default function PhotoList({
             </button>
           ))}
         </div>
+
+        {banDo && (
+          <div className="mt-2 bg-white">
+            <p className="px-4 pt-4 text-[15px] font-semibold text-cvr-ink">Vị trí</p>
+            <p className="px-4 pb-3 pt-1 text-[13px] text-cvr-muted">{banDo.diaChi}</p>
+            <iframe
+              title={`Bản đồ ${banDo.diaChi}`}
+              src={`https://www.google.com/maps?q=${encodeURIComponent(banDo.q)}&z=15&output=embed`}
+              className="h-[300px] w-full border-0"
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+            />
+          </div>
+        )}
 
         {/* Hết ảnh — nhắc cử chỉ thoát (cuộn/vuốt thêm một nhịp là ra) */}
         <p className="py-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] text-center text-xs text-cvr-muted">
