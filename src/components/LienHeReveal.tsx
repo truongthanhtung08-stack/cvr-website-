@@ -259,7 +259,8 @@ export function ContactBarMobile({ listingId, phoneMask, avatar, ten }: { listin
 // "Hiện số" (chỉ Diamond · Gold) và "Nhắn tin" (mọi cấp) đi ĐÚNG luồng xem số của trang chi tiết:
 // đã đăng nhập / đã xác thực số → có số ngay; chưa → hộp xác thực số. Có số rồi: Hiện số thành
 // "Gọi 09…", Nhắn tin mở Zalo người đăng.
-export function NutLienHeThe({ listingId, hienSo, nhanTin = true, soCls, oCls }: { listingId: string; hienSo: boolean; nhanTin?: boolean; soCls: string; oCls: string }) {
+// nhan: chữ trên nút trước khi bấm (thẻ tin: "Hiện số 090 ***" như Batdongsan) · zaloTruoc: nút Zalo đứng trước nút số
+export function NutLienHeThe({ listingId, hienSo, nhanTin = true, soCls, oCls, nhan, zaloTruoc }: { listingId: string; hienSo: boolean; nhanTin?: boolean; soCls: string; oCls: string; nhan?: string; zaloTruoc?: boolean }) {
   const { phone, phones, loading, reveal, hoiSo, setHoiSo, nhanSo } = useReveal(listingId);
   const [muonZalo, setMuonZalo] = useState(false);
   useEffect(() => {
@@ -269,8 +270,18 @@ export function NutLienHeThe({ listingId, hienSo, nhanTin = true, soCls, oCls }:
     window.location.href = `https://zalo.me/${digitsOf(phones[0])}`;
   }, [muonZalo, phones]);
   const chan = (e: React.MouseEvent) => { e.preventDefault(); e.stopPropagation(); };
+  const nutZalo = phone ? (
+    <a href={`https://zalo.me/${digitsOf(phone)}`} onClick={(e) => e.stopPropagation()} aria-label="Zalo" className={oCls}>
+      <ZaloIcon />
+    </a>
+  ) : (
+    <button type="button" disabled={loading} aria-label="Zalo" onClick={(e) => { chan(e); setMuonZalo(true); reveal(); }} className={`${oCls} disabled:opacity-60`}>
+      <ZaloIcon />
+    </button>
+  );
   return (
     <>
+      {nhanTin && zaloTruoc && nutZalo}
       {hienSo && (phone ? (
         <a href={`tel:${telOf(phone)}`} onClick={(e) => e.stopPropagation()} className={soCls}>
           <PhoneIcon />
@@ -279,10 +290,10 @@ export function NutLienHeThe({ listingId, hienSo, nhanTin = true, soCls, oCls }:
       ) : (
         <button type="button" disabled={loading} onClick={(e) => { chan(e); reveal(); }} className={`${soCls} disabled:opacity-60`}>
           <PhoneIcon />
-          {loading ? "Đang mở…" : "Hiện số"}
+          {loading ? "Đang mở…" : nhan ?? "Hiện số"}
         </button>
       ))}
-      {!nhanTin ? null : phone ? (
+      {!nhanTin || zaloTruoc ? null : phone ? (
         <a href={`https://zalo.me/${digitsOf(phone)}`} onClick={(e) => e.stopPropagation()} aria-label="Zalo" className={oCls}>
           <ZaloIcon />
         </a>

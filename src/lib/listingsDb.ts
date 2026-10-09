@@ -260,6 +260,8 @@ function rowToListing(r: Row): Listing {
     imageCount: r.images.filter((s) => !isVideoUrl(s)).length,
     // Có ít nhất 1 video → thẻ hiện nhãn "▶ Video"
     hasVideo: r.images.some((s) => isVideoUrl(s)),
+    // Video đầu tiên — thẻ tin cho video đứng đầu dải ảnh (chủ dự án 09/10/2026)
+    ...((): { video?: string } => { const v = r.images.find((s) => isVideoUrl(s)); return v ? { video: asset(v) } : {}; })(),
     // 6 ảnh đầu cho thẻ tin (Diamond: ảnh chính + 5 ảnh phụ — docs/THE-TIN-THEO-CAP.md)
     images: r.images.filter((s) => !isVideoUrl(s)).slice(0, 6).map((s) => asset(s)), // Diamond cần 6 ảnh trên thẻ (chuẩn thẻ tin 09/10/2026)
     badge: TIER_BADGE[tierHieuLuc(r)],
@@ -272,6 +274,8 @@ function rowToListing(r: Row): Listing {
     purpose: r.purpose,
     // Tên người đăng thật (khách hàng) — thẻ tin hiện đúng tên này, không phải admin
     agentName: r.details?.contact?.name || undefined,
+    // 3 số đầu của số người đăng — nút "Hiện số 090 ***" như Batdongsan (đủ số chỉ hiện khi bấm)
+    ...((): { soDau?: string } => { const d = (r.details?.contact?.phone ?? "").replace(/\D/g, "").replace(/^84/, "0"); return d.length >= 9 ? { soDau: d.slice(0, 3) } : {}; })(),
     ...(r.details?.contact?.avatar ? { agentAvatar: asset(r.details.contact.avatar) } : {}),
     ...(r.details?.project ? { projectSlug: r.details.project } : {}),
     ...(r.details?.mapPin ? { mapPin: r.details.mapPin } : {}),

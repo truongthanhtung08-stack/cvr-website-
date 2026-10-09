@@ -66,6 +66,10 @@ export type Listing = {
   // Ảnh đại diện người đăng (details.contact.avatar) — hiện trên thẻ tin cấp cao.
   // Không có → avatar chữ cái đầu tên.
   agentAvatar?: string;
+  /** 3 số đầu SĐT người đăng — nút "Hiện số 090 ***" trên thẻ tin. */
+  soDau?: string;
+  /** Video đầu tiên của tin (YouTube / tệp) — đứng đầu dải ảnh trên thẻ tin. */
+  video?: string;
   // SLUG dự án tin này thuộc về (details.project) — dùng cho mục
   // "Tin mua bán liên quan tại dự án …". Không thuộc dự án nào → bỏ trống.
   projectSlug?: string;

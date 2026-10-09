@@ -27,7 +27,7 @@ const typeTabs: TypeTab[] = [
 // Phân biệt cấp bằng màu tiêu đề + số dòng mô tả + hiện thành viên (trong PropertyCard).
 const PER_SLIDE = 8; // 2 hàng × 4 tin
 const SLIDE_COUNT = 2; // chạy 2 slides
-const MOB_PER_PAGE = 8; // điện thoại: mỗi trang 8 tin
+const MOB_LAN = 10; // điện thoại: ban đầu 10 tin, mỗi lần "Xem thêm" +10 (chủ dự án 09/10/2026)
 
 // items: tin từ Supabase (server truyền xuống) — không truyền thì dùng dữ liệu mẫu.
 export default function FeaturedListings({ items = featuredListings }: { items?: Listing[] }) {
@@ -38,8 +38,7 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
   const { dung: paused, chamVao: chamDai, setDung: setPaused } = useTamDung(6000);
   // ĐIỆN THOẠI (chuẩn 09/10/2026, như Batdongsan): xếp DỌC thẻ theo cấp; bấm "Xem thêm" 2 lần
   // (mỗi lần +1 trang) rồi mới hiện phân trang 1 · 2 · 3…
-  const [lanXem, setLanXem] = useState(0); // số lần đã bấm Xem thêm (tối đa 2)
-  const [trangMob, setTrangMob] = useState(0); // 0 = đang ở chế độ nối trang; ≥1 = trang đang xem
+  const [lanXem, setLanXem] = useState(0); // số lần đã bấm Xem thêm tại chỗ (tối đa 2)
   const khoiMobRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   // PC: bấm "Xem thêm" → đổi sang bố cục trang danh sách (list + cột phải),
@@ -123,44 +122,26 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
             {/* ── ĐIỆN THOẠI (< 640px): lướt ngang TỪNG THẺ lớn, ló mép thẻ sau —
                 khách vuốt để xem hết tin. Thẻ cuối = "Xem tất cả". ── */}
             <div ref={khoiMobRef} className="scroll-mt-24 sm:hidden">
-              {(() => {
-                const tongTrang = Math.max(1, Math.ceil(sorted.length / MOB_PER_PAGE));
-                const ds = trangMob > 0
-                  ? sorted.slice((trangMob - 1) * MOB_PER_PAGE, trangMob * MOB_PER_PAGE)
-                  : sorted.slice(0, (lanXem + 1) * MOB_PER_PAGE);
-                const hienPhanTrang = lanXem >= 2 && tongTrang > 1;
-                const dangO = trangMob || Math.min(lanXem + 1, tongTrang);
-                return (
-                  <>
-                    <div className="mt-4 space-y-3">
-                      {ds.map((item) => <TheTinMobile key={item.id} item={item} />)}
-                    </div>
-                    {!hienPhanTrang && (lanXem + 1) * MOB_PER_PAGE < sorted.length && (
-                      <div className="flex justify-center">
-                        <button type="button" onClick={() => setLanXem((n) => n + 1)} className="btn-xemthem mt-6">
-                          Xem thêm
-                          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
-                        </button>
-                      </div>
-                    )}
-                    {hienPhanTrang && (
-                      <nav className="mt-6 flex flex-wrap justify-center gap-2" aria-label="Phân trang">
-                        {Array.from({ length: tongTrang }, (_, i) => i + 1).map((n) => (
-                          <button
-                            key={n}
-                            type="button"
-                            onClick={() => { setTrangMob(n); khoiMobRef.current?.scrollIntoView({ behavior: "smooth" }); }}
-                            aria-current={n === dangO ? "page" : undefined}
-                            className={`flex h-9 min-w-9 items-center justify-center rounded-lg border px-2 text-sm font-semibold ${n === dangO ? "border-cvr-ink bg-cvr-ink text-white" : "border-cvr-line bg-white text-cvr-ink"}`}
-                          >
-                            {n}
-                          </button>
-                        ))}
-                      </nav>
-                    )}
-                  </>
-                );
-              })()}
+              {/* ĐIỆN THOẠI (chủ dự án 09/10/2026): xếp DỌC thẻ theo cấp, ban đầu 10 tin; "Xem thêm" 2 lần,
+                  mỗi lần +10 tin; bấm tiếp → danh sách theo trang (bắt đầu trang 1, như mọi khối "Xem thêm").
+                  Đã mở thêm thì có "Thu gọn" về lại 10 tin đầu. */}
+              <div className="mt-4 space-y-3">
+                {sorted.slice(0, (lanXem + 1) * MOB_LAN).map((item) => <TheTinMobile key={item.id} item={item} />)}
+              </div>
+              <div className="mt-6 flex justify-center gap-3">
+                {lanXem > 0 && (
+                  <button type="button" onClick={() => { setLanXem(0); khoiMobRef.current?.scrollIntoView({ behavior: "smooth" }); }} className="btn-xemthem">
+                    Thu gọn
+                    <svg className="h-4 w-4 rotate-180" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                  </button>
+                )}
+                {sorted.length > MOB_LAN && (
+                  <button type="button" onClick={() => (lanXem < 2 && (lanXem + 1) * MOB_LAN < sorted.length ? setLanXem((n) => n + 1) : toggle())} className="btn-xemthem">
+                    Xem thêm
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* ── TABLET / MÁY TÍNH (≥ 640px): GIỮ NGUYÊN slider 2 slide đã duyệt ── */}
