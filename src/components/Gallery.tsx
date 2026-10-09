@@ -231,8 +231,9 @@ export default function Gallery({
           {(!mIsVideo || !hold) && demMedia}
           {/* NÚT MỞ DANH SÁCH ẢNH & VIDEO KIỂU FACEBOOK — góc trên phải, hiện cả ở slide video
               (chủ dự án 10/10/2026: xem video trong khung thì bấm play; muốn xem cả video lẫn ảnh
-              kiểu Facebook thì bấm nút này). Chỉ tin CÓ video; tin chỉ có ảnh thì vuốt xem trong khung, bấm ảnh ra danh sách. */}
-          {nVid > 0 && (!mIsVideo || !hold) && (
+              kiểu Facebook thì bấm nút này). Chỉ tin CÓ video; LUÔN hiện (kể cả đang phát / đã dừng — chủ dự án 10/10/2026),
+              chỉ ẩn khi đang xem full. Tin chỉ có ảnh thì vuốt xem trong khung, bấm ảnh ra danh sách. */}
+          {nVid > 0 && !lonO && (
             <button
               type="button"
               onClick={() => setList(true)}
@@ -241,7 +242,7 @@ export default function Gallery({
               <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden>
                 <rect x="3" y="3" width="7" height="7" rx="1.2" /><rect x="14" y="3" width="7" height="7" rx="1.2" /><rect x="3" y="14" width="7" height="7" rx="1.2" /><rect x="14" y="14" width="7" height="7" rx="1.2" />
               </svg>
-              Ảnh &amp; video
+              Xem ảnh &amp; video
             </button>
           )}
 
