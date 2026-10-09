@@ -22,6 +22,67 @@ const HAM_KEO = 0.5;       // hãm tay: kéo 2 phần thì ảnh chạy 1 phần
 const NGUONG_LAN = 240;    // chuột/touchpad: lăn thêm quá mức này ở mép → thoát
 const THOI_GIAN_THOAT = 240;
 
+// THANH TƯƠNG TÁC DƯỚI TỪNG ẢNH / VIDEO (chủ dự án 10/10/2026): Thích · Bình luận · Chia sẻ như mạng xã hội.
+// Dữ liệu ở bảng tuong_tac_tin (0061) — admin xem ai thích, ai bình luận ở Khách hàng.
+type DuLieuTT = { thich: Record<number, number>; binhLuan: Record<number, { ten: string; noiDung: string; luc: string }[]>; cuaToi: number[] };
+function ThanhTuongTac({ listingId, anhSo, dl, capNhat, chiaSe }: { listingId: string; anhSo: number; dl: DuLieuTT; capNhat: () => void; chiaSe: () => void }) {
+  const [mo, setMo] = useState(false);
+  const [chu, setChu] = useState("");
+  const [dangGui, setDangGui] = useState(false);
+  const daThich = dl.cuaToi.includes(anhSo);
+  const soThich = dl.thich[anhSo] ?? 0;
+  const bl = dl.binhLuan[anhSo] ?? [];
+  const gui = async (than: Record<string, unknown>) => {
+    const res = await fetch("/api/tuong-tac", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ listingId, anhSo, ...than }) });
+    const kq = await res.json().catch(() => ({}));
+    if (kq.canDangNhap) { window.location.href = `/dang-nhap?next=${encodeURIComponent(window.location.pathname + window.location.search)}`; return false; }
+    capNhat();
+    return Boolean(kq.ok);
+  };
+  const nut = "flex flex-1 items-center justify-center gap-1.5 py-2.5 text-[13px] font-semibold text-cvr-body active:bg-cvr-surface";
+  return (
+    <div className="border-b border-cvr-line bg-white">
+      {(soThich > 0 || bl.length > 0) && (
+        <div className="flex items-center justify-between px-4 pt-2 text-[12px] text-cvr-muted">
+          <span>{soThich > 0 ? `♥ ${soThich}` : ""}</span>
+          <button type="button" onClick={() => setMo(true)}>{bl.length > 0 ? `${bl.length} bình luận` : ""}</button>
+        </div>
+      )}
+      <div className="flex divide-x divide-cvr-line/60">
+        <button type="button" onClick={() => gui({ loai: daThich ? "bo_thich" : "thich" })} className={`${nut} ${daThich ? "!text-red-500" : ""}`}>
+          <svg className="h-5 w-5" viewBox="0 0 24 24" fill={daThich ? "currentColor" : "none"} stroke="currentColor" strokeWidth={1.8} aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" /></svg>
+          Thích
+        </button>
+        <button type="button" onClick={() => setMo((v) => !v)} className={nut}>
+          <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M8 10h8M8 14h5M21 12a8 8 0 01-11.6 7.1L3 21l1.9-5.4A8 8 0 1121 12z" /></svg>
+          Bình luận
+        </button>
+        <button type="button" onClick={chiaSe} className={nut}>
+          <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24" aria-hidden><circle cx="18" cy="5" r="2.5" /><circle cx="6" cy="12" r="2.5" /><circle cx="18" cy="19" r="2.5" /><path strokeLinecap="round" d="M8.2 10.8l7.6-4.4M8.2 13.2l7.6 4.4" /></svg>
+          Chia sẻ
+        </button>
+      </div>
+      {mo && (
+        <div className="space-y-2 px-4 pb-3">
+          {bl.map((x, k) => (
+            <div key={k} className="rounded-2xl bg-cvr-surface px-3 py-2">
+              <p className="text-[13px] font-semibold text-cvr-ink">{x.ten}</p>
+              <p className="whitespace-pre-line text-[14px] text-cvr-body">{x.noiDung}</p>
+            </div>
+          ))}
+          <form
+            className="flex gap-2"
+            onSubmit={async (e) => { e.preventDefault(); if (!chu.trim() || dangGui) return; setDangGui(true); if (await gui({ loai: "binh_luan", noiDung: chu })) setChu(""); setDangGui(false); }}
+          >
+            <input value={chu} onChange={(e) => setChu(e.target.value)} placeholder="Viết bình luận…" maxLength={1000} className="h-10 min-w-0 flex-1 rounded-full border border-cvr-line bg-white px-4 text-[14px] outline-none focus:border-cvr-ink" />
+            <button type="submit" disabled={dangGui || !chu.trim()} className="h-10 shrink-0 rounded-full bg-cvr-blue px-4 text-[13px] font-semibold text-white disabled:opacity-50">Gửi</button>
+          </form>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function PhotoList({
   images,
   videos = [],
@@ -51,6 +112,15 @@ export default function PhotoList({
   const [moBanDo, setMoBanDo] = useState(false); // điện thoại: cột bản đồ đang mở
   const { has, toggle } = useSaved();
   const daLuu = listingId ? has(listingId) : false;
+  // Thích · bình luận của từng ảnh/video — nạp một lần khi mở danh sách
+  const [dl, setDl] = useState<DuLieuTT>({ thich: {}, binhLuan: {}, cuaToi: [] });
+  const napTT = () => {
+    if (!listingId) return;
+    fetch(`/api/tuong-tac?listingId=${encodeURIComponent(listingId)}`, { cache: "no-store" })
+      .then((r) => r.json()).then((k) => { if (k?.ok) setDl({ thich: k.thich ?? {}, binhLuan: k.binhLuan ?? {}, cuaToi: k.cuaToi ?? [] }); }).catch(() => {});
+  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(napTT, [listingId]);
   const chiaSe = () => {
     const url = duongDan ? `${window.location.origin}${duongDan}` : window.location.href;
     if (navigator.share) navigator.share({ title, url }).catch(() => {});
@@ -199,13 +269,16 @@ export default function PhotoList({
 
         <div className="space-y-2">
           {videos.map((v, i) => (
-            <div key={`v${i}`} className="relative aspect-video w-full bg-black">
-              <GallerySlideVideo url={v} active />
+            <div key={`v${i}`}>
+              <div className="relative aspect-video w-full bg-black">
+                <GallerySlideVideo url={v} active />
+              </div>
+              {listingId && <ThanhTuongTac listingId={listingId} anhSo={i} dl={dl} capNhat={napTT} chiaSe={chiaSe} />}
             </div>
           ))}
           {images.map((src, i) => (
+            <div key={i}>
             <button
-              key={i}
               type="button"
               onClick={() => onPick(i)}
               aria-label={`Xem ảnh ${i + 1}`}
@@ -227,6 +300,8 @@ export default function PhotoList({
                 {i + 1}/{images.length}
               </span>
             </button>
+            {listingId && <ThanhTuongTac listingId={listingId} anhSo={videos.length + i} dl={dl} capNhat={napTT} chiaSe={chiaSe} />}
+            </div>
           ))}
         </div>
 

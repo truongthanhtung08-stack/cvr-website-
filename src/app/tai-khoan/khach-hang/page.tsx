@@ -409,6 +409,8 @@ export default function KhachHangPage() {
         </section>
       )}
 
+      <ThichBinhLuan />
+
       {/* ── KHÁCH ĐÁNH GIÁ TIN ── giữ như trang Tương tác cũ ─────────────────── */}
       {danhGia.length > 0 && (
         <section className="rounded-2xl border border-cvr-line bg-white p-5 shadow-sm">
@@ -447,6 +449,35 @@ export default function KhachHangPage() {
         </section>
       )}
     </div>
+  );
+}
+
+// THÍCH · BÌNH LUẬN trên tin của tôi (bảng 0061 — chủ dự án 10/10/2026)
+function ThichBinhLuan() {
+  const [ds, setDs] = useState<{ listingId: string; tin: string; anhSo: number; loai: string; noiDung: string | null; luc: string; ten: string }[]>([]);
+  useEffect(() => {
+    fetch("/api/tuong-tac/tin-cua-toi", { cache: "no-store" }).then((r) => r.json()).then((k) => { if (k?.ok) setDs(k.ds ?? []); }).catch(() => {});
+  }, []);
+  if (!ds.length) return null;
+  return (
+    <section className="rounded-2xl border border-cvr-line bg-white p-5 shadow-sm">
+      <h2 className="text-base font-semibold text-cvr-ink">Thích · bình luận trên tin của bạn ({ds.length})</h2>
+      <ul className="mt-3 space-y-2">
+        {ds.slice(0, 30).map((x, k) => (
+          <li key={k} className="rounded-xl bg-cvr-surface px-3 py-2.5">
+            <p className="text-sm text-cvr-ink">
+              <span className="font-semibold">{x.ten}</span>{" "}
+              <span className={x.loai === "thich" ? "text-red-500" : "text-cvr-blue-ink"}>{x.loai === "thich" ? "đã thích" : "đã bình luận"}</span>
+              {" "}ảnh {x.anhSo + 1}
+            </p>
+            {x.noiDung && <p className="mt-0.5 text-sm text-cvr-body">“{x.noiDung}”</p>}
+            <p className="truncate text-xs text-cvr-muted">
+              <Link href={`/bat-dong-san/${x.listingId}`} className="hover:underline">{x.tin}</Link> · {truocDay(x.luc)}
+            </p>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 
