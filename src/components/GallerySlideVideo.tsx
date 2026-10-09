@@ -61,7 +61,9 @@ export default function GallerySlideVideo({
   // Ngang/dọc: video tải lên đọc từ chính tệp; YouTube hỏi /api/video-ngang.
   // Nút Xoay vẫn còn để khách xoay theo ý.
   const [lon, setLon] = useState(false);
-  const [xoay, setXoay] = useState(false);
+  // Góc xoay khung khi xem lớn: 0 · 90 · -90 (chủ dự án 10/10/2026 — video dạng nào mở dạng ấy:
+  // video NGANG luôn nằm ngang, video DỌC luôn đứng dọc, dù máy cầm dọc hay xoay ngang).
+  const [xoay, setXoay] = useState(0);
   const [ytNgang, setYtNgang] = useState(false);
   const maYt = laYoutube ? (url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,})/i)?.[1] ?? "") : "";
   useEffect(() => {
@@ -80,14 +82,14 @@ export default function GallerySlideVideo({
     const v = ref.current;
     return !!v && v.videoWidth > v.videoHeight;
   };
-  const canXoay = () => laNgang() && !manNgang();
+  const canXoay = () => (laNgang() ? (manNgang() ? 0 : 90) : (manNgang() ? -90 : 0));
   const moLon = () => {
     setLon(true);
     setXoay(canXoay());
   };
   const thuNho = () => {
     setLon(false);
-    setXoay(false);
+    setXoay(0);
   };
   // Nút Back của điện thoại lúc đang xem full → thoát xem full (không rời trang).
   // Ghi một bước lịch sử khi vào full; thoát bằng nút thì tự lùi bước đó.
@@ -106,7 +108,7 @@ export default function GallerySlideVideo({
     const quayLai = () => {
       dangCoBuoc.current = false;
       setLon(false);
-      setXoay(false);
+      setXoay(0);
     };
     window.addEventListener("popstate", quayLai);
     return () => window.removeEventListener("popstate", quayLai);
@@ -120,14 +122,8 @@ export default function GallerySlideVideo({
   //   màn dọc — không tự xoay khung nữa.
   useEffect(() => {
     if (!lon) return;
-    let ngangCu = manNgang();
-    let theoMay = false;
-    const doiCo = () => {
-      const ngangMoi = manNgang();
-      if (ngangMoi !== ngangCu) theoMay = true;
-      ngangCu = ngangMoi;
-      setXoay(theoMay ? false : canXoay());
-    };
+    // Máy xoay → tính lại góc để video vẫn giữ đúng dạng của nó (ngang nằm ngang, dọc đứng dọc).
+    const doiCo = () => setXoay(canXoay());
     const boNghe = ngheXoayMay(doiCo);
     const cuon = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -270,7 +266,7 @@ export default function GallerySlideVideo({
       setDaBam(false);
       setNhuongYt(false);
       setLon(false);
-      setXoay(false);
+      setXoay(0);
     }
     holdRef.current?.(playingRef.current || fullRef.current || dungVaoRef.current);
   }, [active]);
@@ -438,7 +434,7 @@ export default function GallerySlideVideo({
         className="h-full w-full"
         style={
           lon && xoay
-            ? { position: "absolute", left: "50%", top: "50%", width: "100dvh", height: "100dvw", transform: "translate(-50%, -50%) rotate(90deg)" }
+            ? { position: "absolute", left: "50%", top: "50%", width: "100dvh", height: "100dvw", transform: `translate(-50%, -50%) rotate(${xoay}deg)` }
             : undefined
         }
       >
