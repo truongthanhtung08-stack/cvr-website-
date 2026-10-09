@@ -533,7 +533,6 @@ function TierSample({ listing }: { listing: Listing }) {
   // VÍ DỤ MINH HOẠ: khung y hệt thẻ tin trên sàn nhưng KHÔNG bấm được (không phải tin thật).
   return (
     <div className="relative mt-5">
-      <span className="absolute left-3 top-3 z-10 rounded-full bg-white/95 px-2.5 py-1 text-[11px] font-semibold text-cvr-body shadow">Ví dụ minh hoạ</span>
       <div className="pointer-events-none select-none" aria-hidden>
         {/* PC/tablet: ảnh trái – nội dung phải · Điện thoại: ảnh trên – nội dung dưới */}
         <div className="hidden sm:block"><PropertyCard item={listing} layout="list" /></div>

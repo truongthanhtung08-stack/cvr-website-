@@ -12,6 +12,7 @@ const MapView = dynamic(() => import("@/components/MapViewMo"), {
   loading: () => <div className="flex h-full items-center justify-center text-sm text-cvr-muted">Đang tải bản đồ…</div>,
 });
 import PropertyCard from "@/components/PropertyCard";
+import TheTinMobile from "@/components/TheTinMobile";
 import FilterBar from "@/components/FilterBar";
 import ActiveFilters from "@/components/ActiveFilters";
 import { featuredListings, type Article, type Listing } from "@/lib/data";
@@ -299,7 +300,10 @@ export default function ListingBrowser({
                   không phụ thuộc JS → chắc chắn đúng trên mọi máy) */}
               <div className="reveal is-visible cards-stagger grid grid-cols-1 gap-5 sm:hidden">
                 {pageItems.map((item) => (
-                  <PropertyCard key={khoaThe(item)} item={item} layout="grid" showTime terms={termsById.get(item.id) ?? []} />
+                  // Thẻ theo cấp (chuẩn 09/10/2026, docs/THE-TIN-THEO-CAP.md); tin hết hạn giữ thẻ cũ có nhãn "Tin hết hạn"
+                  item.hetHan
+                    ? <PropertyCard key={khoaThe(item)} item={item} layout="grid" showTime terms={termsById.get(item.id) ?? []} />
+                    : <TheTinMobile key={khoaThe(item)} item={item} terms={termsById.get(item.id) ?? []} />
                 ))}
               </div>
               {/* DESKTOP (≥ 640px): theo chế độ xem đã chọn (Danh sách = thẻ ngang · Lưới = thẻ dọc) */}

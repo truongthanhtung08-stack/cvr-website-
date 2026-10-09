@@ -742,7 +742,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
             Tin chưa có liên hệ thì KHÔNG hiện thanh này (không có số để gọi). */}
         {contact && (
         <div className="fixed inset-x-0 bottom-0 z-40 flex gap-2 border-t border-cvr-line bg-white/95 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur-md lg:hidden">
-          {hetHan ? <NutYeuCauLienHe /> : <ContactBarMobile listingId={l.id} phoneMask={phoneMask} />}
+          {hetHan ? <NutYeuCauLienHe /> : <ContactBarMobile listingId={l.id} phoneMask={phoneMask} avatar={contact.avatar} ten={contact.name} />}
         </div>
         )}
       </main>

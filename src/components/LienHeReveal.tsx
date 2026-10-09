@@ -163,21 +163,44 @@ export function ContactActions({ listingId, phoneMask }: { listingId: string; ph
 
 // ── Thanh liên hệ DÍNH đáy màn hình (mobile) ────────────────────────────────
 // Trả về các NÚT bên trong (khung fixed do trang chi tiết giữ nguyên bọc ngoài).
-export function ContactBarMobile({ listingId, phoneMask }: { listingId: string; phoneMask: string }) {
+// Bố cục như Batdongsan (chủ dự án 09/10/2026): ẢNH ĐẠI DIỆN người đăng · nút ZALO riêng · HIỆN SỐ / GỌI.
+// Gọi = gọi điện thoại thường; Zalo = mở Zalo để nhắn tin hoặc gọi qua Zalo. Bấm Zalo khi chưa xem số →
+// đi đúng bước xác thực số như Hiện số, xong là mở Zalo luôn.
+const ZaloIcon = () => <span className="text-[12px] font-extrabold tracking-tight text-[#0068ff]" aria-hidden>Zalo</span>;
+function AnhNguoiDang({ avatar, ten }: { avatar?: string | null; ten?: string | null }) {
+  const chu = (ten || "C").trim().charAt(0).toUpperCase();
+  return avatar
+    // eslint-disable-next-line @next/next/no-img-element
+    ? <img src={avatar} alt={ten ?? ""} className="h-11 w-11 shrink-0 rounded-full object-cover ring-1 ring-cvr-line" />
+    : <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-cvr-surface text-sm font-semibold text-cvr-body ring-1 ring-cvr-line">{chu}</span>;
+}
+
+export function ContactBarMobile({ listingId, phoneMask, avatar, ten }: { listingId: string; phoneMask: string; avatar?: string | null; ten?: string | null }) {
   const { phone, phones, loading, reveal, hoiSo, setHoiSo, nhanSo } = useReveal(listingId);
   const [chon, setChon] = useState<"goi" | "zalo" | null>(null);
+  // Bấm Nhắn tin khi chưa có số → nhớ ý định, có số là mở Zalo ngay (1 số) hoặc bảng chọn số (2 số).
+  const [muonZalo, setMuonZalo] = useState(false);
+  useEffect(() => {
+    if (!muonZalo || !phones?.length) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMuonZalo(false);
+    if (phones.length > 1) setChon("zalo");
+    else window.location.href = `https://zalo.me/${digitsOf(phones[0])}`;
+  }, [muonZalo, phones]);
+  const nutNhan = "flex shrink-0 items-center justify-center gap-1.5 rounded-lg border border-cvr-line bg-white px-4 py-3 text-sm font-semibold text-cvr-body transition active:scale-95";
 
   // Người đăng có 2 số → thanh đáy giữ nguyên 2 nút; bấm vào thì mở bảng chọn số nào.
   if (phone && phones && phones.length > 1) {
     const nut = "flex flex-1 items-center justify-center gap-2 rounded-lg py-3 text-sm font-bold transition active:scale-95";
     return (
       <>
+        <AnhNguoiDang avatar={avatar} ten={ten} />
+        <button type="button" onClick={() => setChon("zalo")} className={nutNhan}>
+          <ZaloIcon />
+        </button>
         <button type="button" onClick={() => setChon("goi")} className={`${nut} bg-cvr-ink text-white`}>
           <PhoneIcon />
           Gọi ngay
-        </button>
-        <button type="button" onClick={() => setChon("zalo")} className={`${nut} border border-cvr-line bg-white font-semibold text-cvr-body`}>
-          Nhắn Zalo
         </button>
         {chon && (
           <div className="fixed inset-0 z-[80] flex items-end bg-black/40" onClick={() => setChon(null)}>
@@ -205,12 +228,13 @@ export function ContactBarMobile({ listingId, phoneMask }: { listingId: string; 
   if (phone) {
     return (
       <>
+        <AnhNguoiDang avatar={avatar} ten={ten} />
+        <a href={`https://zalo.me/${digitsOf(phone)}`} className={nutNhan}>
+          <ZaloIcon />
+        </a>
         <a href={`tel:${telOf(phone)}`} className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-cvr-ink py-3 text-sm font-bold text-white transition active:scale-95">
           <PhoneIcon />
           Gọi ngay
-        </a>
-        <a href={`https://zalo.me/${digitsOf(phone)}`} className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-cvr-line bg-white py-3 text-sm font-semibold text-cvr-body transition active:scale-95">
-          Nhắn Zalo
         </a>
       </>
     );
@@ -218,10 +242,55 @@ export function ContactBarMobile({ listingId, phoneMask }: { listingId: string; 
 
   return (
     <>
-      <button type="button" onClick={reveal} disabled={loading} className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-cvr-ink py-3 text-sm font-bold text-white transition active:scale-95 disabled:opacity-60">
-        <PhoneIcon />
-        {loading ? "Đang mở…" : `${phoneMask} · Hiện số để gọi`}
+      <AnhNguoiDang avatar={avatar} ten={ten} />
+      <button type="button" onClick={() => { setMuonZalo(true); reveal(); }} disabled={loading} className={`${nutNhan} disabled:opacity-60`}>
+        <ZaloIcon />
       </button>
+      <button type="button" onClick={reveal} disabled={loading} className="flex min-w-0 flex-1 items-center justify-center gap-2 rounded-lg bg-cvr-ink py-3 text-sm font-bold text-white transition active:scale-95 disabled:opacity-60">
+        <PhoneIcon />
+        <span className="truncate">{loading ? "Đang mở…" : `Hiện số ${phoneMask}`}</span>
+      </button>
+      {hoiSo && <HopXacThucSo listingId={listingId} onXong={nhanSo} onDong={() => setHoiSo(false)} />}
+    </>
+  );
+}
+
+// ── NÚT LIÊN HỆ TRÊN THẺ TIN (thanh tương tác, điện thoại) — chuẩn thẻ tin theo cấp 09/10/2026 ──
+// "Hiện số" (chỉ Diamond · Gold) và "Nhắn tin" (mọi cấp) đi ĐÚNG luồng xem số của trang chi tiết:
+// đã đăng nhập / đã xác thực số → có số ngay; chưa → hộp xác thực số. Có số rồi: Hiện số thành
+// "Gọi 09…", Nhắn tin mở Zalo người đăng.
+export function NutLienHeThe({ listingId, hienSo, nhanTin = true, soCls, oCls }: { listingId: string; hienSo: boolean; nhanTin?: boolean; soCls: string; oCls: string }) {
+  const { phone, phones, loading, reveal, hoiSo, setHoiSo, nhanSo } = useReveal(listingId);
+  const [muonZalo, setMuonZalo] = useState(false);
+  useEffect(() => {
+    if (!muonZalo || !phones?.length) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMuonZalo(false);
+    window.location.href = `https://zalo.me/${digitsOf(phones[0])}`;
+  }, [muonZalo, phones]);
+  const chan = (e: React.MouseEvent) => { e.preventDefault(); e.stopPropagation(); };
+  return (
+    <>
+      {hienSo && (phone ? (
+        <a href={`tel:${telOf(phone)}`} onClick={(e) => e.stopPropagation()} className={soCls}>
+          <PhoneIcon />
+          <span className="truncate">{phone}</span>
+        </a>
+      ) : (
+        <button type="button" disabled={loading} onClick={(e) => { chan(e); reveal(); }} className={`${soCls} disabled:opacity-60`}>
+          <PhoneIcon />
+          {loading ? "Đang mở…" : "Hiện số"}
+        </button>
+      ))}
+      {!nhanTin ? null : phone ? (
+        <a href={`https://zalo.me/${digitsOf(phone)}`} onClick={(e) => e.stopPropagation()} aria-label="Zalo" className={oCls}>
+          <ZaloIcon />
+        </a>
+      ) : (
+        <button type="button" disabled={loading} aria-label="Zalo" onClick={(e) => { chan(e); setMuonZalo(true); reveal(); }} className={`${oCls} disabled:opacity-60`}>
+          <ZaloIcon />
+        </button>
+      )}
       {hoiSo && <HopXacThucSo listingId={listingId} onXong={nhanSo} onDong={() => setHoiSo(false)} />}
     </>
   );

@@ -8,7 +8,8 @@ import ListingBrowser from "@/components/ListingBrowser";
 import { useHomeSection } from "@/components/HomeExpand";
 import { tierRank } from "@/lib/packages";
 import { smoothScrollTo } from "@/lib/scroll";
-import { useAutoSlide, useAutoSlideThe, useTamDung } from "@/lib/useAutoSlide";
+import { useAutoSlide, useTamDung } from "@/lib/useAutoSlide";
+import TheTinMobile from "@/components/TheTinMobile";
 
 // ── Tab nhanh: kết hợp MỤC ĐÍCH (bán/thuê) × LOẠI SẢN PHẨM ────────────────────
 const isBan = (l: Listing) => (l.purpose ?? "ban") === "ban";
@@ -26,6 +27,7 @@ const typeTabs: TypeTab[] = [
 // Phân biệt cấp bằng màu tiêu đề + số dòng mô tả + hiện thành viên (trong PropertyCard).
 const PER_SLIDE = 8; // 2 hàng × 4 tin
 const SLIDE_COUNT = 2; // chạy 2 slides
+const MOB_PER_PAGE = 8; // điện thoại: mỗi trang 8 tin
 
 // items: tin từ Supabase (server truyền xuống) — không truyền thì dùng dữ liệu mẫu.
 export default function FeaturedListings({ items = featuredListings }: { items?: Listing[] }) {
@@ -34,8 +36,11 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
   // Chạm thì dừng rồi TỰ CHẠY LẠI — màn cảm ứng không có động tác rê chuột ra,
   // để setPaused(true) trơ như cũ là chạm một cái slide chết tới khi tải lại trang.
   const { dung: paused, chamVao: chamDai, setDung: setPaused } = useTamDung(6000);
-  const diMobRef = useRef<HTMLDivElement>(null);
-  const { dung: pausedMob, chamVao: chamDaiMob } = useTamDung(6000);
+  // ĐIỆN THOẠI (chuẩn 09/10/2026, như Batdongsan): xếp DỌC thẻ theo cấp; bấm "Xem thêm" 2 lần
+  // (mỗi lần +1 trang) rồi mới hiện phân trang 1 · 2 · 3…
+  const [lanXem, setLanXem] = useState(0); // số lần đã bấm Xem thêm (tối đa 2)
+  const [trangMob, setTrangMob] = useState(0); // 0 = đang ở chế độ nối trang; ≥1 = trang đang xem
+  const khoiMobRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   // PC: bấm "Xem thêm" → đổi sang bố cục trang danh sách (list + cột phải),
   // đồng thời ẩn mọi phần khác của trang chủ (trạng thái dùng chung qua context).
@@ -59,7 +64,6 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
   // Tự chạy: 10s/slide (8 tin/slide cần thời gian đọc) — chỉ khi section hiện
   // trong khung nhìn & không tương tác; đổi tab lọc thì về slide đầu.
   useAutoSlide(trackRef, slides.length, paused, 10000);
-  useAutoSlideThe(diMobRef, Math.min(sorted.length, SLIDE_COUNT * PER_SLIDE), pausedMob, 5000);
   const active = Math.min(slideIdx, slides.length - 1);
 
   // Bấm "Xem thêm" mở danh sách ĐÚNG mục đích của tab đang chọn (tab "Cho thuê"
@@ -118,31 +122,45 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
           <>
             {/* ── ĐIỆN THOẠI (< 640px): lướt ngang TỪNG THẺ lớn, ló mép thẻ sau —
                 khách vuốt để xem hết tin. Thẻ cuối = "Xem tất cả". ── */}
-            <div className="sm:hidden">
-              {/* Dải lướt ngang trên điện thoại: TỰ CHẠY từng thẻ một. Chạm vào là
-                  dừng hẳn, không giành tay khách đang lướt. */}
-              <div
-                ref={diMobRef}
-                onTouchStart={chamDaiMob}
-                className="no-scrollbar -mx-4 mt-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 sm:mt-5"
-              >
-                {sorted.slice(0, SLIDE_COUNT * PER_SLIDE).map((item) => (
-                  <div key={item.id} className="w-[90%] shrink-0 snap-start">
-                    <PropertyCard item={item} variant="tier" />
-                  </div>
-                ))}
-              </div>
-              {/* Nút XEM THÊM (điện thoại) — CÙNG kích thước với mọi khối khác */}
-              <div className="flex justify-center">
-              <button
-                type="button"
-                onClick={toggle}
-                className="btn-xemthem mt-6"
-              >
-                Xem thêm
-                <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
-              </button>
-              </div>
+            <div ref={khoiMobRef} className="scroll-mt-24 sm:hidden">
+              {(() => {
+                const tongTrang = Math.max(1, Math.ceil(sorted.length / MOB_PER_PAGE));
+                const ds = trangMob > 0
+                  ? sorted.slice((trangMob - 1) * MOB_PER_PAGE, trangMob * MOB_PER_PAGE)
+                  : sorted.slice(0, (lanXem + 1) * MOB_PER_PAGE);
+                const hienPhanTrang = lanXem >= 2 && tongTrang > 1;
+                const dangO = trangMob || Math.min(lanXem + 1, tongTrang);
+                return (
+                  <>
+                    <div className="mt-4 space-y-3">
+                      {ds.map((item) => <TheTinMobile key={item.id} item={item} />)}
+                    </div>
+                    {!hienPhanTrang && (lanXem + 1) * MOB_PER_PAGE < sorted.length && (
+                      <div className="flex justify-center">
+                        <button type="button" onClick={() => setLanXem((n) => n + 1)} className="btn-xemthem mt-6">
+                          Xem thêm
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                        </button>
+                      </div>
+                    )}
+                    {hienPhanTrang && (
+                      <nav className="mt-6 flex flex-wrap justify-center gap-2" aria-label="Phân trang">
+                        {Array.from({ length: tongTrang }, (_, i) => i + 1).map((n) => (
+                          <button
+                            key={n}
+                            type="button"
+                            onClick={() => { setTrangMob(n); khoiMobRef.current?.scrollIntoView({ behavior: "smooth" }); }}
+                            aria-current={n === dangO ? "page" : undefined}
+                            className={`flex h-9 min-w-9 items-center justify-center rounded-lg border px-2 text-sm font-semibold ${n === dangO ? "border-cvr-ink bg-cvr-ink text-white" : "border-cvr-line bg-white text-cvr-ink"}`}
+                          >
+                            {n}
+                          </button>
+                        ))}
+                      </nav>
+                    )}
+                  </>
+                );
+              })()}
             </div>
 
             {/* ── TABLET / MÁY TÍNH (≥ 640px): GIỮ NGUYÊN slider 2 slide đã duyệt ── */}

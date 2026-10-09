@@ -260,8 +260,8 @@ function rowToListing(r: Row): Listing {
     imageCount: r.images.filter((s) => !isVideoUrl(s)).length,
     // Có ít nhất 1 video → thẻ hiện nhãn "▶ Video"
     hasVideo: r.images.some((s) => isVideoUrl(s)),
-    // 5 ảnh đầu cho thẻ tin tự chạy (xem components/AnhChay.tsx)
-    images: r.images.filter((s) => !isVideoUrl(s)).slice(0, 5).map((s) => asset(s)),
+    // 6 ảnh đầu cho thẻ tin (Diamond: ảnh chính + 5 ảnh phụ — docs/THE-TIN-THEO-CAP.md)
+    images: r.images.filter((s) => !isVideoUrl(s)).slice(0, 6).map((s) => asset(s)), // Diamond cần 6 ảnh trên thẻ (chuẩn thẻ tin 09/10/2026)
     badge: TIER_BADGE[tierHieuLuc(r)],
     // NGÀY ĐĂNG = lúc tin lên sóng, KHÔNG phải lúc khách bấm tạo. Tin soạn nháp
     // từ tuần trước mà hôm nay mới duyệt thì ngoài trang vẫn phải ghi "Hôm nay":
