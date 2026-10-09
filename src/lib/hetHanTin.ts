@@ -85,6 +85,18 @@ export async function quetTinHetHan(
     const dsHet = (hetHan ?? []) as Tin[];
 
     for (const tin of dsHet) {
+      // Hết hạn VIP của tin nâng từ Basic → về lại Basic, chạy tiếp số ngày Basic còn lại lúc nâng.
+      const conLai = Number(tin.details?.sau_vip_con_lai_ms ?? 0);
+      if (tin.tier !== "basic" && conLai > 0) {
+        const { sau_vip_con_lai_ms: _bo, ...giu } = tin.details ?? {};
+        void _bo;
+        const { error: e2 } = await admin
+          .from("listings")
+          .update({ tier: "basic", tier_days: null, tier_expires_at: new Date(Date.now() + conLai).toISOString(), details: giu })
+          .eq("id", tin.id)
+          .eq("status", "approved");
+        if (!e2) continue;
+      }
       const { error } = await admin
         .from("listings")
         // Lượt Up còn lại hết theo tin (luotUp.ts — lượt gắn với kỳ hiển thị).

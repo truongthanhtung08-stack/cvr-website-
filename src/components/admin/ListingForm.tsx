@@ -263,6 +263,13 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
         return setError("Chưa nhập diện tích — thiếu diện tích thì tin bị loại khỏi bộ lọc và thiếu dữ liệu gửi cho Google.");
       if (!negotiable && (priceVnd == null || Number.isNaN(priceVnd)))
         return setError("Giá không hợp lệ — nhập số, hoặc tick \"Giá thỏa thuận\".");
+      // Hạn tin = số ngày gói theo bảng giá ĐÃ DUYỆT. Hạng chưa có giá đã duyệt thì hạn = 0 ngày
+      // → tin hết hạn ngay khi lưu (vụ 09/10: nâng 5 tin VIP, cả 5 tự hết hạn sau 1 phút).
+      const bang = bangTheoMucDich(billing, purpose);
+      const coGia = (bang.plans.find((p) => p.tierId === tier)?.terms ?? []).length > 0;
+      const mienPhi = huongKhuyenMai(bang.free, { goi: tier, homNay: new Date().toISOString().slice(0, 10), coChu: Boolean(initial?.owner_id), soNgayMoTk: 0 });
+      if (!coGia && !mienPhi)
+        return setError(`Hạng ${getTier(tier).name} chưa có bảng giá đã duyệt nên tin sẽ hết hạn ngay. Vào Bảng giá bấm Duyệt trước.`);
     }
 
     // Đăng tin → 'approved' (admin công khai ngay). Lưu nháp → 'draft'.
@@ -304,6 +311,16 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
           return c ? { diaChiCu: { phuong: c.phuong, quan: c.quan, tinh: c.tinh } } : {};
         })(),
         project: projectSlug || undefined,
+        // NÂNG VIP TỪ TIN BASIC ĐANG CHẠY (chủ dự án 09/10/2026): hết hạn VIP thì tin về lại Basic
+        // và chạy tiếp ĐÚNG số ngày Basic còn lại lúc nâng (cron hết hạn đọc khoá này).
+        ...((): { sau_vip_con_lai_ms?: number } => {
+          const daCo = (initial?.details as { sau_vip_con_lai_ms?: number } | undefined)?.sau_vip_con_lai_ms;
+          if (tier === "basic") return {};
+          if (daCo) return { sau_vip_con_lai_ms: daCo };
+          const conLai = initial?.status === "approved" && initial.tier === "basic" && initial.tier_expires_at
+            ? new Date(initial.tier_expires_at).getTime() - Date.now() : 0;
+          return conLai > 0 ? { sau_vip_con_lai_ms: conLai } : {};
+        })(),
         contact: (cName.trim() || cPhone.trim() || cEmail.trim() || cAvatar.trim())
           ? { name: cName.trim(), phone: chuanHoaSdt(cPhone), email: cEmail.trim(), avatar: cAvatar.trim() || undefined }
           : undefined,
@@ -370,9 +387,12 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
                   return <option value={0}>{bang.free.days} ngày · khuyến mãi thành viên mới</option>;
                 }
                 const ds = [...(bang.plans.find((p) => p.tierId === tier)?.terms ?? [])].sort((a, b) => a.days - b.days);
+                // Giá gói theo bảng giá ĐÃ DUYỆT (chưa VAT) — để admin nâng hạng thấy ngay giá từng gói.
+                const gia = (n: number) => (n > 0 ? `${n.toLocaleString("vi-VN")}đ` : "0đ");
+                if (!ds.length) return <option value={0}>Chưa có bảng giá đã duyệt</option>;
                 return <>
-                  <option value={0}>{ds[0] ? `${ds[0].days} ngày (gói ngắn nhất)` : "Gói ngắn nhất"}</option>
-                  {ds.map((t) => <option key={t.days} value={t.days}>{t.days} ngày</option>)}
+                  <option value={0}>{`${ds[0].days} ngày · ${gia(ds[0].price)} (gói ngắn nhất)`}</option>
+                  {ds.map((t) => <option key={t.days} value={t.days}>{`${t.days} ngày · ${gia(t.price)}`}</option>)}
                 </>;
               })()}
             </select>
