@@ -83,7 +83,7 @@ function O({ src, alt, className = "", sizes, onMo, children, dau, duPhong, vide
   const nguon = loi && duPhong ? duPhong : src;
   return (
     <button type="button" onClick={onMo} className={`relative block overflow-hidden bg-cvr-surface ${className}`}>
-      {nguon && <Image src={nguon} alt={alt} fill sizes={sizes} loading={dau ? "eager" : "lazy"} unoptimized={nguon.startsWith("https://i.ytimg.com")} className="object-cover" onError={() => setLoi(true)} />}
+      {nguon && <Image src={nguon} alt={alt} fill sizes={sizes} loading={dau ? "eager" : "lazy"} unoptimized={nguon.startsWith("https://i.ytimg.com")} className="object-cover" onError={() => setLoi(true)} onLoad={(e) => { if (duPhong && e.currentTarget.naturalWidth <= 120) setLoi(true); }} />}
       {!nguon && videoTep && <video src={`${videoTep}#t=0.1`} preload="metadata" muted playsInline className="absolute inset-0 h-full w-full object-cover" />}
       {children}
     </button>

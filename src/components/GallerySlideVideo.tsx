@@ -362,6 +362,8 @@ export default function GallerySlideVideo({
             src={posterSrc}
             alt=""
             onError={() => setPosterSrc(poster.thuong)}
+            // YouTube không có ảnh HD vẫn trả về ảnh XÁM 120×90 (không báo lỗi) → lùi ảnh thường
+            onLoad={(e) => { if (e.currentTarget.naturalWidth <= 120 && posterSrc !== poster.thuong) setPosterSrc(poster.thuong); }}
             className="absolute inset-0 h-full w-full object-contain"
           />
         )}
