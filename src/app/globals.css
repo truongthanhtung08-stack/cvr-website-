@@ -763,3 +763,40 @@ body[data-nav="in"] main {
   body[data-nav="in"] main { animation: none; }
   .skel::after { animation: none; }
 }
+
+/* KHUNG SOẠN KIỂU WORD (ContentEditor): ảnh / video chèn giữa bài hiện ngay, có nút × để bỏ. */
+.soan-thao .khoi-media {
+  position: relative;
+  margin: 0.5rem 0;
+  user-select: none;
+}
+.soan-thao .khoi-media img {
+  display: block;
+  max-width: 100%;
+  max-height: 320px;
+  border-radius: 0.5rem;
+}
+.soan-thao .khoi-video {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 120px;
+  border-radius: 0.5rem;
+  background: #111;
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+.soan-thao .khoi-media [data-xoa] {
+  position: absolute;
+  top: 0.375rem;
+  right: 0.375rem;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 9999px;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+  text-align: center;
+}
