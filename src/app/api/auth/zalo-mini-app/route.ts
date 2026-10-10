@@ -14,7 +14,7 @@ import { zaloConfig } from "@/lib/zalo";
 //
 // CHỈ CHẠY KHI ĐỦ HAI ĐIỀU KIỆN (chưa đủ thì trả lỗi, Mini App tự lùi về đăng nhập OTP):
 //   1) Zalo đã duyệt Mini App + cấp quyền số điện thoại (scope.userPhonenumber)
-//   2) Có trạm Việt Nam (máy chủ VNPT) — Vercel ở Mỹ gọi thẳng sẽ bị -501
+//   2) Có trạm Việt Nam (hosting PA Vietnam) — Vercel ở Mỹ gọi thẳng sẽ bị -501
 // Khoá bí mật = khoá của Zalo App chứa Mini App (ZALO_APP_SECRET, dùng chung với đăng nhập web).
 // ============================================================================
 export const dynamic = "force-dynamic";

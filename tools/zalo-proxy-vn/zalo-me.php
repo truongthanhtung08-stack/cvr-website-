@@ -1,6 +1,6 @@
 <?php
 /* ============================================================================
- * TRẠM TRUNG CHUYỂN GỌI API ZALO — ĐẶT TRÊN HOSTING VIỆT NAM
+ * TRẠM TRUNG CHUYỂN GỌI API ZALO — ĐẶT TRÊN HOSTING PA VIETNAM
  *
  * VÌ SAO CẦN: Zalo chỉ cho đọc thông tin người dùng từ máy chủ có IP Việt Nam.
  * Web coastalland.vn chạy trên Vercel (máy chủ ở Mỹ) nên bị Zalo từ chối:
