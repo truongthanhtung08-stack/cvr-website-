@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import OGoTuGian from "@/components/OGoTuGian";
 
 // Ô CHỌN CÓ LỐI TỰ GHI (chủ dự án 10/10/2026): ô có danh sách chuẩn thì cho chọn, kèm dòng
 // cuối "Khác — tự ghi" để chắc chắn khách ghi được khi danh sách không có đúng thứ mình cần.
@@ -37,7 +38,7 @@ export default function ChonHoacGhi({
         {options.map((o) => <option key={o} value={o}>{o}</option>)}
         <option value={KHAC}>Khác — tự ghi</option>
       </select>
-      {dangGhi && <input type="text" value={value} onChange={(e) => onChange(e.target.value)} className={className + " mt-2"} />}
+      {dangGhi && <OGoTuGian value={value} onChange={onChange} className={className + " mt-2"} />}
     </>
   );
 }

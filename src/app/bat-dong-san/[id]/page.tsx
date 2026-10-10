@@ -760,7 +760,8 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="flex items-start justify-between gap-4 border-b border-cvr-line py-3 text-[15px]">
       <span className="shrink-0 whitespace-nowrap text-cvr-muted">{label}</span>
-      <span className="min-w-0 text-right font-medium text-cvr-ink">{value}</span>
+      {/* Giữ chỗ xuống dòng khách gõ, ngắt cả từ quá dài — không tràn khung. */}
+      <span className="min-w-0 whitespace-pre-line break-words text-right font-medium text-cvr-ink">{value}</span>
     </div>
   );
 }

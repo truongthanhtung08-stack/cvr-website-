@@ -9,6 +9,7 @@
 // ============================================================================
 
 import type { Listing } from "@/lib/data";
+import { chuanHoaTienIch, chuanHoaNoiThat, chuanHoaPhapLy, chuanHoaMucNoiThat } from "@/lib/chuanHoaThuocTinh";
 import { linkHopLe } from "@/lib/linkChen";
 import { haiDongDiaChi, heCuaTin } from "@/lib/diaChiHaiHe";
 import { mauSoCuaLoaiHinh } from "@/lib/chiSoGia";
@@ -450,6 +451,12 @@ function dongMoTa(text: string | null): string[] {
   return lines;
 }
 
+// HIỂN THỊ ĐÚNG CHUẨN dù khách gõ lộn xộn (chủ dự án 10/10/2026): bỏ khoảng trắng thừa,
+// dòng trống thừa; giữ chỗ xuống dòng có nội dung. Dữ liệu gốc không đổi — chỉ trang tin gọn.
+function gon(v: string | null | undefined): string {
+  return (v ?? "").replace(/\r/g, "").split("\n").map((l) => l.replace(/\s+/g, " ").trim()).filter(Boolean).join("\n");
+}
+
 function rowToDetail(r: Row): ListingFull {
   const d = r.details ?? {};
   // Tách ẢNH và VIDEO: thư viện ảnh chỉ nhận ảnh; video hiện ở mục Video riêng.
@@ -463,16 +470,18 @@ function rowToDetail(r: Row): ListingFull {
   // bỏ luôn — trang tin không bao giờ hiện ô rỗng.
   const doc = (fs: Field[]) =>
     fs
-      .map((f) => ({ label: f.label + (f.unit ? ` (${f.unit})` : ""), value: (d.specs?.[f.key] ?? "").trim() }))
+      .map((f) => ({ label: f.label + (f.unit ? ` (${f.unit})` : ""), value: gon(d.specs?.[f.key]) }))
       .filter((s) => s.value);
   const { chinh, dacDiem } = fieldsSplit(r.type, r.purpose);
   const specsChinh = doc(chinh);
   const specs = doc(dacDiem);
-  const amenSet = new Set(d.amenities ?? []);
+  // Mục khách tự ghi trùng nghĩa mục chuẩn ("Máy lạnh", "hồ bơi ") → đúng tên chuẩn, đúng nhóm.
+  const dsTienIch = chuanHoaTienIch((d.amenities ?? []).map(gon));
+  const amenSet = new Set(dsTienIch);
   // Tiện ích người đăng ghi mà danh mục chuẩn không có ("Kiệt ô tô", "Gần KCN"…).
   // Trước đây những mục này BIẾN MẤT im lặng vì trang tin chỉ duyệt danh mục chuẩn.
   const tenChuan = new Set(amenityGroups.flatMap((g) => g.items));
-  const tienIchKhac = (d.amenities ?? []).filter((a) => a && !tenChuan.has(a));
+  const tienIchKhac = dsTienIch.filter((a) => a && !tenChuan.has(a));
   const c = d.contact;
   return {
     listing: rowToListing(r),
@@ -482,7 +491,7 @@ function rowToDetail(r: Row): ListingFull {
     descriptionParas: dongMoTa(r.description),
     specsChinh,
     specs,
-    interior: d.interior ?? [],
+    interior: chuanHoaNoiThat((d.interior ?? []).map(gon)),
     amenityGroups: [
       ...amenityGroups.map((g) => ({
         group: g.group,
@@ -494,9 +503,9 @@ function rowToDetail(r: Row): ListingFull {
     ],
     projectName: d.projectName ?? null,
     projectSlug: d.project ?? null,
-    legal: d.legal || null,
-    furnish: d.furnish || null,
-    direction: d.direction || null,
+    legal: chuanHoaPhapLy(gon(d.legal), r.type) || null,
+    furnish: chuanHoaMucNoiThat(gon(d.furnish)) || null,
+    direction: gon(d.direction) || null,
     addressDetail: d.addressDetail || null,
     linkChen: linkHopLe(d.linkChen),
     // SỐ ĐIỆN THOẠI ra web luôn đi qua chuanHoaSdt() — dữ liệu cũ nhập lẫn dấu
