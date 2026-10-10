@@ -7,6 +7,7 @@ import { linkHopLe } from "@/lib/linkChen";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import ChonHoacGhi from "@/components/ChonHoacGhi";
+import { isVideoUrl } from "@/lib/media";
 import ThemTuGhi from "@/components/ThemTuGhi";
 import OGoTuGian from "@/components/OGoTuGian";
 import { donViGiaNenDung, goiYDienTich, goiYGia, goiYTieuDe } from "@/lib/goiYNhapTin";
@@ -705,6 +706,13 @@ export default function PostListingForm() {
       // GÓI TIN: bắt buộc chọn, kể cả gói đang được miễn phí. Không mặc định sẵn,
       // không tự đoán hộ — đây là thứ quyết định số tiền phải trả.
       if (!planTier) return setError("Chưa chọn gói tin ở mục “Chọn gói tin — thanh toán”.");
+      // Đổi sang gói thấp hơn sau khi đã up ảnh → số ảnh / video không được vượt mức của gói đã chọn.
+      const toiDaAnh = duocMienPhi && billing.free.soAnh ? billing.free.soAnh : soAnhToiDa(billing, planTier as TierId);
+      const toiDaVideo = duocMienPhi && billing.free.soVideo !== undefined ? billing.free.soVideo : soVideoToiDa(billing, planTier as TierId);
+      const soVideo = images.filter((x) => isVideoUrl(x)).length;
+      const soAnh = images.length - soVideo;
+      if (soAnh > toiDaAnh) return setError(`Tin ${getTier(planTier as TierId).name} chỉ đăng tối đa ${toiDaAnh} ảnh — xoá bớt ảnh cũ hoặc nâng cấp gói tin.`);
+      if (soVideo > toiDaVideo) return setError(`Mỗi tin chỉ đăng tối đa ${toiDaVideo} video — xoá video cũ rồi thêm lại.`);
     }
     // LƯU NHÁP thì không chặn gì thêm — người đăng ghi tới đâu lưu tới đó.
 
@@ -1331,18 +1339,7 @@ export default function PostListingForm() {
         )}
       </Card>
 
-      {/* 8. Hình ảnh — tải từ máy / dán link, ảnh đầu là ảnh đại diện */}
-      <Card id="b-anh" step={buoc()} title="Hình ảnh">
-        <ImagePicker
-          value={images}
-          onChange={setImages}
-          maxImages={duocMienPhi && billing.free.soAnh ? billing.free.soAnh : soAnhToiDa(billing, goiXemTruoc)}
-          maxVideos={duocMienPhi && billing.free.soVideo !== undefined ? billing.free.soVideo : soVideoToiDa(billing, goiXemTruoc)}
-          tierName={getTier(goiXemTruoc).name}
-        />
-      </Card>
 
-      {/* 9. Liên hệ */}
       {/* Chọn gói hiển thị — giá và khuyến mãi do quản trị đặt ở /admin/gia-khuyen-mai */}
       <Card id="b-goi" step={buoc()} title="Chọn gói tin — thanh toán">
         {goiDangDung ? (
@@ -1451,6 +1448,19 @@ export default function PostListingForm() {
         )}
       </Card>
 
+      {/* Hình ảnh — SAU khi chọn gói (chủ dự án 10/10/2026): số ảnh / video tối đa theo gói đã chọn.
+          Tải từ máy / dán link, ảnh đầu là ảnh đại diện. */}
+      <Card id="b-anh" step={buoc()} title="Hình ảnh">
+        <ImagePicker
+          value={images}
+          onChange={setImages}
+          maxImages={duocMienPhi && billing.free.soAnh ? billing.free.soAnh : soAnhToiDa(billing, goiXemTruoc)}
+          maxVideos={duocMienPhi && billing.free.soVideo !== undefined ? billing.free.soVideo : soVideoToiDa(billing, goiXemTruoc)}
+          tierName={getTier(goiXemTruoc).name}
+        />
+      </Card>
+
+      {/* Liên hệ */}
       <Card id="b-lienhe" step={buoc()} title="Thông tin liên hệ">
         {/* ẢNH ĐẠI DIỆN — ô chọn tệp nằm TRONG <label> và ẩn bằng sr-only.
             KHÔNG dùng display:none rồi gọi .click(): điện thoại đời cũ bỏ qua,
@@ -1607,8 +1617,8 @@ const MOC_BUOC = [
   { id: "b-vitri", ten: "Vị trí" },
   { id: "b-thongtin", ten: "Thông tin" },
   { id: "b-mota", ten: "Mô tả" },
-  { id: "b-anh", ten: "Ảnh & video" },
   { id: "b-goi", ten: "Gói tin" },
+  { id: "b-anh", ten: "Ảnh & video" },
   { id: "b-lienhe", ten: "Liên hệ" },
 ];
 
