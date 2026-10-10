@@ -162,6 +162,8 @@ export default function PostListingForm() {
   // tiếp") — mã tin nháp đang dùng + lượt lưu đang chạy (Đăng tin đợi lượt này xong).
   const maNhapTk = useRef<string | null>(null);
   const tuLuuDangChay = useRef<Promise<void> | null>(null);
+  const dangBamLuu = useRef(false); // khách đang bấm Lưu nháp / Đăng tin → tự lưu nhường
+  const ngungTuLuu = useRef(false); // tin nháp đã gửi duyệt / bị xoá ở máy khác → thôi tự lưu
   /* eslint-disable react-hooks/set-state-in-effect -- nạp bản nháp một lần, khi đã biết tài khoản */
   useEffect(() => {
     if (!authReady || daNapNhap) return;
@@ -630,19 +632,23 @@ export default function PostListingForm() {
   // CSDL bắt buộc hai cột này; chưa có thì vẫn lưu trên máy như trên). Sang máy khác: Tin đăng
   // của tôi → Nháp → làm tiếp. Không đổi gói, không trừ tiền, không gửi duyệt.
   const giaTriTuLuu = JSON.stringify(giaTriTin(true));
+  // Mở TIN NHÁP có sẵn (?id=, vd từ máy khác) → tự lưu tiếp vào đúng tin đó, khi đã nạp xong.
+  const suaNhap = Boolean(editId) && editStatus === "draft" && editLoad === "ok";
   useEffect(() => {
-    if (editId || !daNapNhap || !userId || done || thieuTien || saving) return;
+    if ((editId && !suaNhap) || !daNapNhap || !userId || done || thieuTien || saving) return;
     if (!title.trim() || !province) return;
     const hen = setTimeout(() => {
-      if (tuLuuDangChay.current) return;
+      if (tuLuuDangChay.current || dangBamLuu.current || ngungTuLuu.current) return;
       tuLuuDangChay.current = (async () => {
         try {
           const supabase = createClient();
           const v = giaTriTin(true);
-          if (maNhapTk.current) {
-            const { data } = await supabase.from("listings").update(v).eq("id", maNhapTk.current).eq("status", "draft").select("id");
-            if (data && data.length) return;
-            maNhapTk.current = null; // tin nháp đã bị xoá / đã gửi duyệt ở máy khác → tạo nháp mới
+          const ma = editId ?? maNhapTk.current;
+          if (ma) {
+            const { data } = await supabase.from("listings").update(v).eq("id", ma).eq("status", "draft").select("id");
+            // Không còn là tin nháp (đã gửi duyệt / đã xoá ở máy khác) → dừng, không tạo tin trùng.
+            if (!data || !data.length) ngungTuLuu.current = true;
+            return;
           }
           const kq = await supabase
             .from("listings")
@@ -662,11 +668,19 @@ export default function PostListingForm() {
     }, 4000);
     return () => clearTimeout(hen);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [giaTriTuLuu, editId, daNapNhap, userId, done, thieuTien, saving]);
+  }, [giaTriTuLuu, editId, suaNhap, daNapNhap, userId, done, thieuTien, saving]);
 
   async function save(asDraft: boolean, daXacMinhXong = false) {
-    // Đợi lượt tự lưu đang chạy (nếu có) để không tạo hai tin.
-    await tuLuuDangChay.current;
+    // Đợi lượt tự lưu đang chạy (nếu có) và chặn lượt mới để không tạo hai tin.
+    dangBamLuu.current = true;
+    try {
+      await tuLuuDangChay.current;
+      await luuThat(asDraft, daXacMinhXong);
+    } finally {
+      dangBamLuu.current = false;
+    }
+  }
+  async function luuThat(asDraft: boolean, daXacMinhXong: boolean) {
     setError("");
     const uid = uidGop.current ?? userId;
     if (!uid) {
