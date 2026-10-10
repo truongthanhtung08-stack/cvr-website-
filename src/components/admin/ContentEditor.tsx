@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { uploadImageFile, uploadVideoFile } from "@/lib/uploadImage";
 import { isVideoUrl } from "@/lib/media";
 import { imageMarkerUrl, videoMarkerUrl } from "@/components/RichContent";
@@ -122,6 +122,32 @@ export default function ContentEditor({
 }) {
   const khungRef = useRef<HTMLDivElement>(null);
   const daPhat = useRef<string | null>(null); // giá trị khung soạn vừa phát ra (để không vẽ lại khi đang gõ)
+  // Dòng khách đứng LẦN CUỐI trong khung soạn — bấm "Chèn ảnh" / gõ link ở ô khác làm con trỏ rời
+  // khung, vẫn chèn đúng chỗ khách đang soạn chứ không dồn xuống cuối bài.
+  const khoiCuoi = useRef<Element | null>(null);
+  // Vùng chữ khách bôi đen LẦN CUỐI trong khung soạn. Safari trên iPhone bỏ vùng bôi đen khi chạm
+  // vào nút (B, I, canh lề, chèn) — khôi phục lại trước khi định dạng thì nút mới có tác dụng.
+  const vungChon = useRef<Range | null>(null);
+  useEffect(() => {
+    const nho = () => {
+      const el = khungRef.current;
+      const sel = window.getSelection();
+      if (el && sel && sel.rangeCount && el.contains(sel.getRangeAt(0).commonAncestorContainer)) vungChon.current = sel.getRangeAt(0).cloneRange();
+    };
+    document.addEventListener("selectionchange", nho);
+    return () => document.removeEventListener("selectionchange", nho);
+  }, []);
+  const traVung = () => {
+    const el = khungRef.current;
+    const r = vungChon.current;
+    if (!el || !r || !el.contains(r.commonAncestorContainer)) return;
+    const sel = window.getSelection();
+    // Vùng bôi đen còn nguyên thì thôi; chỉ còn con trỏ (Safari vừa bỏ vùng bôi đen) thì khôi phục.
+    const hienTai = sel && sel.rangeCount ? sel.getRangeAt(0) : null;
+    if (hienTai && el.contains(hienTai.commonAncestorContainer) && (!hienTai.collapsed || r.collapsed)) return;
+    sel?.removeAllRanges();
+    sel?.addRange(r);
+  };
   const imgRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLInputElement>(null);
   const [uploadingImg, setUploadingImg] = useState(false);
@@ -150,6 +176,7 @@ export default function ContentEditor({
   // Lệnh định dạng của trình duyệt — giữ vùng chữ đang bôi đen (nút dùng onMouseDown).
   const lenh = (ten: string) => {
     khungRef.current?.focus();
+    traVung();
     document.execCommand("defaultParagraphSeparator", false, "div");
     document.execCommand(ten, false);
     phat();
@@ -164,6 +191,10 @@ export default function ContentEditor({
     while (n && n.parentNode !== el) n = n.parentNode;
     return n as Element | null;
   };
+  const nhoKhoi = () => {
+    const k = khoiDangDung();
+    if (k) khoiCuoi.current = k;
+  };
 
   // Chèn ảnh / video thành một khối riêng ngay sau dòng đang đứng, kèm một dòng trống để gõ tiếp.
   const chenKhoi = (dong: string) => {
@@ -171,9 +202,17 @@ export default function ContentEditor({
     if (!el) return;
     const tam = document.createElement("div");
     tam.innerHTML = dongSangHtml(dong) + "<div><br></div>";
-    const [khoi, dongMoi] = [tam.children[0], tam.children[1]];
-    const sau = khoiDangDung();
-    if (sau) sau.after(khoi, dongMoi);
+    const khoi = tam.children[0];
+    let dongMoi: Element = tam.children[1];
+    const conTrongKhung = khoiCuoi.current && el.contains(khoiCuoi.current) ? khoiCuoi.current : null;
+    const sau = khoiDangDung() ?? conTrongKhung;
+    // Con trỏ đang ở DÒNG TRỐNG → ảnh / video đứng vào chỗ đó, dòng trống giữ lại ngay sau để
+    // gõ tiếp — không đẻ thêm dòng trống thừa (chèn liên tiếp nhiều ảnh / video vẫn liền nhau).
+    const dongTrong = sau && !sau.hasAttribute("data-anh") && !sau.hasAttribute("data-video") && !(sau.textContent ?? "").trim();
+    if (sau && dongTrong) {
+      sau.before(khoi);
+      dongMoi = sau;
+    } else if (sau) sau.after(khoi, dongMoi);
     else el.append(khoi, dongMoi);
     const r = document.createRange();
     r.setStart(dongMoi, 0);
@@ -181,6 +220,7 @@ export default function ContentEditor({
     const sel = window.getSelection();
     sel?.removeAllRanges();
     sel?.addRange(r);
+    khoiCuoi.current = dongMoi;
     phat();
   };
 
@@ -310,8 +350,11 @@ export default function ContentEditor({
           role="textbox"
           aria-multiline="true"
           aria-label={placeholder}
-          onInput={phat}
-          onBlur={phat}
+          onInput={() => { phat(); nhoKhoi(); }}
+          onKeyUp={nhoKhoi}
+          onMouseUp={nhoKhoi}
+          onTouchEnd={nhoKhoi}
+          onBlur={() => { nhoKhoi(); phat(); }}
           onPaste={(e) => {
             // Chỉ lấy CHỮ — bỏ định dạng rác của nơi khác (màu, cỡ chữ, bảng…).
             e.preventDefault();
@@ -325,8 +368,9 @@ export default function ContentEditor({
             nut.closest("[data-anh],[data-video]")?.remove();
             phat();
           }}
+          // Khung tự cao theo nội dung; trên máy tính KÉO GÓC DƯỚI để nới rộng thêm (như ô cũ).
           style={{ minHeight: `${Math.max(rows, 3) * 1.6}rem` }}
-          className="soan-thao w-full overflow-x-hidden whitespace-pre-wrap break-words rounded-lg border border-cvr-line bg-white px-3 py-2.5 text-sm leading-relaxed text-cvr-ink outline-none transition focus:border-cvr-ink"
+          className="soan-thao w-full resize-y overflow-auto whitespace-pre-wrap break-words rounded-lg border border-cvr-line bg-white px-3 py-2.5 text-sm leading-relaxed text-cvr-ink outline-none transition focus:border-cvr-ink"
         />
         {!value.trim() && placeholder && (
           <p className="pointer-events-none absolute left-3 top-2.5 right-3 text-sm leading-relaxed text-cvr-faint">{placeholder}</p>
