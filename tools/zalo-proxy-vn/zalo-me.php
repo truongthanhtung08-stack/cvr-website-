@@ -87,6 +87,9 @@ curl_setopt_array($ch, [
     CURLOPT_TIMEOUT        => 15,
     CURLOPT_CONNECTTIMEOUT => 10,
     CURLOPT_HTTPHEADER     => $dauMuc,
+    // Chỉ đi đường IPv4: hosting VN hay khai IPv6 mà không có đường ra,
+    // curl thử IPv6 trước rồi treo tới hết 10 giây → "Connection timeout".
+    CURLOPT_IPRESOLVE      => CURL_IPRESOLVE_V4,
 ]);
 $ketQua = curl_exec($ch);
 
