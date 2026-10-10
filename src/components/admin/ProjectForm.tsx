@@ -756,7 +756,7 @@ export default function ProjectForm({
               </Field>
             </div>
             <Field label="Giới thiệu chủ đầu tư">
-              <textarea value={devDesc} onChange={(e) => setDevDesc(e.target.value)} rows={3} placeholder="Vài dòng về chủ đầu tư, các dự án tiêu biểu, uy tín…" className={`${inputCls} h-auto py-2.5`} />
+              <ContentEditor value={devDesc} onChange={setDevDesc} rows={3} placeholder="Vài dòng về chủ đầu tư, các dự án tiêu biểu, uy tín…" />
             </Field>
           </div>
         </div>

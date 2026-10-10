@@ -421,7 +421,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                     )}
                   </div>
                 </div>
-                {dev?.desc && <p className="mt-4 whitespace-pre-line text-sm leading-relaxed text-cvr-body">{dev.desc}</p>}
+                {/* Soạn bằng trình soạn kiểu Word — hiện đúng đậm / nghiêng / canh lề / ảnh; chữ trơn cũ vẫn như trước. */}
+                {dev?.desc && <div className="mt-4 text-sm leading-relaxed text-cvr-body"><RichContent paragraphs={dev.desc.split("\n")} wysiwyg title={p.developer} /></div>}
 
                 {/* Đơn vị phát triển — chỉ hiện khi admin đã nhập (nhiều dự án
                     chủ đầu tư và đơn vị phát triển là hai pháp nhân khác nhau) */}
