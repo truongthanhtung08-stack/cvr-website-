@@ -43,8 +43,10 @@ import { uploadImageFile } from "@/lib/uploadImage";
 // Giá trị đánh dấu "dự án chưa có trên web" trong ô chọn dự án — KHÔNG lưu
 // xuống DB, chỉ để biết phải hiện ô gõ tên.
 const DU_AN_KHAC = "__khac";
-// Khoá trình duyệt giữ bản nháp tự lưu của form đăng tin mới.
+// Khoá trình duyệt giữ bản nháp tự lưu của form đăng tin mới — RIÊNG TỪNG TÀI KHOẢN
+// (máy dùng chung thì người sau không thấy bản nháp của người trước).
 const KHOA_NHAP_MAY = "cvr-dang-tin-nhap";
+const khoaNhap = (uid: string) => `${KHOA_NHAP_MAY}:${uid}`;
 
 export default function PostListingForm() {
   const router = useRouter();
@@ -152,16 +154,26 @@ export default function PostListingForm() {
   const [error, setError] = useState("");
 
   // TỰ LƯU NHÁP TRÊN MÁY (chủ dự án 10/10/2026): mọi thứ khách đã nhập được cất vào trình
-  // duyệt sau mỗi lần gõ; mở lại /dang-tin trên cùng máy là hiện lại để làm tiếp. Đăng / lưu
-  // nháp vào tài khoản thành công thì xoá. Không lưu gói tin (khách phải tự chọn lại, giá
-  // theo admin lúc đăng). Chế độ sửa tin (?id=) không dùng bản nháp này.
+  // duyệt sau mỗi lần gõ, theo TỪNG TÀI KHOẢN; đăng nhập lại, mở /dang-tin trên cùng máy là
+  // hiện lại để làm tiếp. Đăng / lưu nháp vào tài khoản thành công thì xoá. Không lưu gói tin
+  // (khách phải tự chọn lại, giá theo admin lúc đăng). Chế độ sửa tin (?id=) không dùng.
   const [daNapNhap, setDaNapNhap] = useState(false);
-  /* eslint-disable react-hooks/set-state-in-effect -- nạp bản nháp một lần lúc mở form */
+  // Tin nháp TỰ LƯU VÀO TÀI KHOẢN (chủ dự án 10/10/2026: "vào bất cứ máy nào cũng thao tác
+  // tiếp") — mã tin nháp đang dùng + lượt lưu đang chạy (Đăng tin đợi lượt này xong).
+  const maNhapTk = useRef<string | null>(null);
+  const tuLuuDangChay = useRef<Promise<void> | null>(null);
+  /* eslint-disable react-hooks/set-state-in-effect -- nạp bản nháp một lần, khi đã biết tài khoản */
   useEffect(() => {
-    if (!editId) {
+    if (!authReady || daNapNhap) return;
+    if (!editId && userId) {
       try {
-        const d = JSON.parse(localStorage.getItem(KHOA_NHAP_MAY) ?? "null") as Record<string, unknown> | null;
+        // Bản nháp cũ chưa gắn tài khoản (trước khi tách theo tài khoản) → nhận về tài khoản này.
+        const cu = localStorage.getItem(KHOA_NHAP_MAY);
+        if (cu && !localStorage.getItem(khoaNhap(userId))) localStorage.setItem(khoaNhap(userId), cu);
+        if (cu) localStorage.removeItem(KHOA_NHAP_MAY);
+        const d = JSON.parse(localStorage.getItem(khoaNhap(userId)) ?? "null") as Record<string, unknown> | null;
         if (d) {
+          if (typeof d.maNhap === "string") maNhapTk.current = d.maNhap;
           const s = (k: string) => (typeof d[k] === "string" ? (d[k] as string) : "");
           const ds = (k: string) => (Array.isArray(d[k]) ? (d[k] as string[]) : []);
           if (s("demand")) setDemand(s("demand"));
@@ -189,9 +201,10 @@ export default function PostListingForm() {
           setAmenities(ds("amenities"));
           setDescription(s("description"));
           setImages(ds("images"));
-          setContactName(s("contactName"));
-          setContactPhone(s("contactPhone"));
-          setContactEmail(s("contactEmail"));
+          // Liên hệ: chỉ ghi đè khi bản nháp có — không xoá phần đã điền sẵn từ hồ sơ.
+          if (s("contactName")) setContactName(s("contactName"));
+          if (s("contactPhone")) setContactPhone(s("contactPhone"));
+          if (s("contactEmail")) setContactEmail(s("contactEmail"));
           setProjectSlug(s("projectSlug"));
           setProjectName(s("projectName"));
         }
@@ -199,18 +212,19 @@ export default function PostListingForm() {
     }
     setDaNapNhap(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [authReady, userId]);
   /* eslint-enable react-hooks/set-state-in-effect */
   useEffect(() => {
-    if (editId || !daNapNhap || done || thieuTien) return;
+    if (editId || !daNapNhap || !userId || done || thieuTien) return;
     try {
-      localStorage.setItem(KHOA_NHAP_MAY, JSON.stringify({
+      localStorage.setItem(khoaNhap(userId), JSON.stringify({
         demand, category, geoMode, province, district, ward, phuongCu, addressDetail, linkChen, mapPin,
         title, priceValue, priceUnit, area, builtArea, beds, baths, specValues, legal, furnish, direction,
         interior, amenities, description, images, contactName, contactPhone, contactEmail, projectSlug, projectName,
+        maNhap: maNhapTk.current,
       }));
     } catch {}
-  }, [editId, daNapNhap, done, thieuTien, demand, category, geoMode, province, district, ward, phuongCu, addressDetail, linkChen, mapPin,
+  }, [editId, daNapNhap, userId, done, thieuTien, demand, category, geoMode, province, district, ward, phuongCu, addressDetail, linkChen, mapPin,
     title, priceValue, priceUnit, area, builtArea, beds, baths, specValues, legal, furnish, direction,
     interior, amenities, description, images, contactName, contactPhone, contactEmail, projectSlug, projectName]);
 
@@ -560,7 +574,99 @@ export default function PostListingForm() {
     return projectOptions.find((o) => normalizeVi(o.name) === ten)?.slug ?? "";
   }
 
+  // Dữ liệu chung cho THÊM MỚI, CẬP NHẬT và TỰ LƯU NHÁP (một chỗ, không lệch nhau).
+  const giaTriTin = (luuNhap: boolean) => ({
+    // Nhu cầu: Cần bán · Cho thuê · Cần mua · Cần thuê
+    purpose: purposeOfDemand(demand),
+    type: loaiHinh,
+    title: title.trim(),
+    description: description.trim() || null,
+    price_vnd: priceToVnd(),
+    area_m2: area.trim() ? parseFloat(area.replace(",", ".")) : null,
+    built_area_m2: builtArea.trim() ? parseFloat(builtArea.replace(",", ".")) : null,
+    beds: beds.trim() ? parseInt(beds, 10) : null,
+    baths: baths.trim() ? parseInt(baths, 10) : null,
+    ward: ward || null,
+    district: district || null,
+    province: province || null,
+    images: images.map((s) => s.trim()).filter(Boolean),
+    // Thuộc tính thật → cột details (trang chi tiết hiện đúng)
+    details: {
+      specs: Object.fromEntries(Object.entries(specValues).filter(([, v]) => v && v.trim())),
+      interior,
+      amenities,
+      legal: legal || undefined,
+      furnish: furnish || undefined,
+      direction: direction || undefined,
+      addressDetail: addressDetail.trim() || undefined,
+      // Chỉ lưu khi tin là CVR Diamond (gói đang chọn hoặc gói đang dùng).
+      linkChen: (goiDangDung?.tier ?? planTier) === "diamond" ? linkHopLe(linkChen) ?? undefined : undefined,
+      mapPin: mapPin.trim() || undefined,
+      // Phường/xã cũ người đăng tự chọn → dòng "Địa chỉ hệ cũ" đủ 3 cấp.
+      ...((): { diaChiCu?: { phuong: string; quan: string; tinh: string } } => {
+        const c = ungVienPhuongCu(geoMode, province, ward).find((x) => x.nhan === phuongCu);
+        return c ? { diaChiCu: { phuong: c.phuong, quan: c.quan, tinh: c.tinh } } : {};
+      })(),
+      // giaBao = SỐ TIỀN WEB ĐÃ BÁO CHO KHÁCH ngay lúc bấm Đăng (chưa gồm GTGT,
+      // cùng thang với quotePrice). Lúc admin duyệt, máy chủ tính lại giá; nếu
+      // khuyến mãi đã hết hạn hay bảng giá đã đổi thì giá mới có thể cao hơn —
+      // khi đó vẫn chỉ thu đúng con số khách đã nhìn thấy ở đây.
+      plan: { tier: planTier, days: planDays, giaBao: thanhTien, ...(batDau ? { batDau } : {}) },
+      project: slugDuAn() || undefined,
+      projectName: projectName.trim() || undefined,
+      contact: (contactName.trim() || contactPhone.trim() || contactEmail.trim() || contactAvatar.trim())
+        ? {
+            name: contactName.trim(),
+            phone: chuanHoaSdt(contactPhone),
+            email: contactEmail.trim(),
+            avatar: contactAvatar.trim() || undefined,
+          }
+        : undefined,
+    },
+    status: luuNhap ? ("draft" as const) : ("pending" as const), // khách đăng → chờ admin duyệt
+  });
+
+  // TỰ LƯU VÀO TÀI KHOẢN: khách ngừng gõ 4 giây là lưu thành tin nháp (cần Tiêu đề + Tỉnh/Thành —
+  // CSDL bắt buộc hai cột này; chưa có thì vẫn lưu trên máy như trên). Sang máy khác: Tin đăng
+  // của tôi → Nháp → làm tiếp. Không đổi gói, không trừ tiền, không gửi duyệt.
+  const giaTriTuLuu = JSON.stringify(giaTriTin(true));
+  useEffect(() => {
+    if (editId || !daNapNhap || !userId || done || thieuTien || saving) return;
+    if (!title.trim() || !province) return;
+    const hen = setTimeout(() => {
+      if (tuLuuDangChay.current) return;
+      tuLuuDangChay.current = (async () => {
+        try {
+          const supabase = createClient();
+          const v = giaTriTin(true);
+          if (maNhapTk.current) {
+            const { data } = await supabase.from("listings").update(v).eq("id", maNhapTk.current).eq("status", "draft").select("id");
+            if (data && data.length) return;
+            maNhapTk.current = null; // tin nháp đã bị xoá / đã gửi duyệt ở máy khác → tạo nháp mới
+          }
+          const kq = await supabase
+            .from("listings")
+            .insert({ ...v, owner_id: userId, tier: (planTier || "basic") as TierId, published_at: null })
+            .select("id")
+            .single();
+          if (!kq.error) maNhapTk.current = (kq.data as { id: string }).id;
+          try {
+            const k = khoaNhap(userId);
+            const d = JSON.parse(localStorage.getItem(k) ?? "null");
+            if (d) localStorage.setItem(k, JSON.stringify({ ...d, maNhap: maNhapTk.current }));
+          } catch {}
+        } finally {
+          tuLuuDangChay.current = null;
+        }
+      })();
+    }, 4000);
+    return () => clearTimeout(hen);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [giaTriTuLuu, editId, daNapNhap, userId, done, thieuTien, saving]);
+
   async function save(asDraft: boolean, daXacMinhXong = false) {
+    // Đợi lượt tự lưu đang chạy (nếu có) để không tạo hai tin.
+    await tuLuuDangChay.current;
     setError("");
     const uid = uidGop.current ?? userId;
     if (!uid) {
@@ -568,6 +674,7 @@ export default function PostListingForm() {
       return;
     }
     if (!title.trim()) return setError(asDraft ? "Nhập tiêu đề để lưu nháp." : "Chưa nhập tiêu đề tin.");
+    if (asDraft && !province) return setError("Chọn Tỉnh/Thành để lưu nháp.");
     if (!asDraft) {
       if (!province) return setError("Chưa chọn Tỉnh/Thành.");
       if (!contactName.trim() || !contactPhone.trim()) return setError("Nhập họ tên và số điện thoại liên hệ.");
@@ -579,10 +686,10 @@ export default function PostListingForm() {
       if (!loaiHinh) return setError("Chưa chọn loại hình bất động sản.");
       const thieu = thieuMucBatBuoc(loaiHinh, purposeOfDemand(demand), specValues);
       if (thieu.length) return setError(`Chưa nhập: ${thieu.join(" · ")}.`);
-    }
       // GÓI TIN: bắt buộc chọn, kể cả gói đang được miễn phí. Không mặc định sẵn,
       // không tự đoán hộ — đây là thứ quyết định số tiền phải trả.
       if (!planTier) return setError("Chưa chọn gói tin ở mục “Chọn gói tin — thanh toán”.");
+    }
     // LƯU NHÁP thì không chặn gì thêm — người đăng ghi tới đâu lưu tới đó.
 
     // SỐ CỦA TÀI KHOẢN (người đăng) — TÁCH HẲN khỏi số liên hệ trong tin (số liên hệ là quyền
@@ -627,57 +734,7 @@ export default function PostListingForm() {
     const luuNhap = asDraft || viThieu;
 
     setSaving(luuNhap ? "draft" : "publish");
-    // Dữ liệu chung cho cả THÊM MỚI và CẬP NHẬT
-    const values = {
-      // Nhu cầu: Cần bán · Cho thuê · Cần mua · Cần thuê
-      purpose: purposeOfDemand(demand),
-      type: loaiHinh,
-      title: title.trim(),
-      description: description.trim() || null,
-      price_vnd: priceToVnd(),
-      area_m2: area.trim() ? parseFloat(area.replace(",", ".")) : null,
-      built_area_m2: builtArea.trim() ? parseFloat(builtArea.replace(",", ".")) : null,
-      beds: beds.trim() ? parseInt(beds, 10) : null,
-      baths: baths.trim() ? parseInt(baths, 10) : null,
-      ward: ward || null,
-      district: district || null,
-      province: province || null,
-      images: images.map((s) => s.trim()).filter(Boolean),
-      // Thuộc tính thật → cột details (trang chi tiết hiện đúng)
-      details: {
-        specs: Object.fromEntries(Object.entries(specValues).filter(([, v]) => v && v.trim())),
-        interior,
-        amenities,
-        legal: legal || undefined,
-        furnish: furnish || undefined,
-        direction: direction || undefined,
-        addressDetail: addressDetail.trim() || undefined,
-        // Chỉ lưu khi tin là CVR Diamond (gói đang chọn hoặc gói đang dùng).
-        linkChen: (goiDangDung?.tier ?? planTier) === "diamond" ? linkHopLe(linkChen) ?? undefined : undefined,
-        mapPin: mapPin.trim() || undefined,
-        // Phường/xã cũ người đăng tự chọn → dòng "Địa chỉ hệ cũ" đủ 3 cấp.
-        ...((): { diaChiCu?: { phuong: string; quan: string; tinh: string } } => {
-          const c = ungVienPhuongCu(geoMode, province, ward).find((x) => x.nhan === phuongCu);
-          return c ? { diaChiCu: { phuong: c.phuong, quan: c.quan, tinh: c.tinh } } : {};
-        })(),
-        // giaBao = SỐ TIỀN WEB ĐÃ BÁO CHO KHÁCH ngay lúc bấm Đăng (chưa gồm GTGT,
-        // cùng thang với quotePrice). Lúc admin duyệt, máy chủ tính lại giá; nếu
-        // khuyến mãi đã hết hạn hay bảng giá đã đổi thì giá mới có thể cao hơn —
-        // khi đó vẫn chỉ thu đúng con số khách đã nhìn thấy ở đây.
-        plan: { tier: planTier, days: planDays, giaBao: thanhTien, ...(batDau ? { batDau } : {}) },
-        project: slugDuAn() || undefined,
-        projectName: projectName.trim() || undefined,
-        contact: (contactName.trim() || contactPhone.trim() || contactEmail.trim() || contactAvatar.trim())
-          ? {
-              name: contactName.trim(),
-              phone: chuanHoaSdt(contactPhone),
-              email: contactEmail.trim(),
-              avatar: contactAvatar.trim() || undefined,
-            }
-          : undefined,
-      },
-      status: luuNhap ? ("draft" as const) : ("pending" as const), // khách đăng → chờ admin duyệt
-    };
+    const values = giaTriTin(luuNhap);
 
     // HẠNG TIN = ĐÚNG GÓI NGƯỜI ĐĂNG ĐÃ CHỌN. Trước đây luôn ghi cứng "basic" nên
     // khách trả tiền gói Gold/Diamond mà tin vẫn nằm hạng thường, gói đã chọn chỉ
@@ -687,9 +744,12 @@ export default function PostListingForm() {
 
     const supabase = createClient();
     let err: { message: string } | null = null;
-    let maTinNhap: string | null = editId ?? null; // tin nháp đang chờ tiền (ví thiếu)
+    // Tin nháp TỰ LƯU vào tài khoản (maNhapTk) tính như đang sửa tin nháp đó — không sinh tin trùng.
+    const maSua = editId ?? maNhapTk.current;
+    const ttSua = editId ? editStatus : maNhapTk.current ? "draft" : "";
+    let maTinNhap: string | null = maSua ?? null; // tin nháp đang chờ tiền (ví thiếu)
 
-    if (!editId) {
+    if (!maSua) {
       // TIN MỚI
       const kq = await supabase
         .from("listings")
@@ -698,13 +758,13 @@ export default function PostListingForm() {
         .single();
       err = kq.error;
       maTinNhap = (kq.data as { id: string } | null)?.id ?? null;
-    } else if (editStatus === "draft" && !luuNhap) {
+    } else if (ttSua === "draft" && !luuNhap) {
       // ĐĂNG TIN NHÁP: tạo tin mới "chờ duyệt" + xoá nháp cũ.
       // (2 thao tác này chủ tin luôn có quyền — không phụ thuộc quyền đổi status trong DB)
       ({ error: err } = await supabase
         .from("listings")
         .insert({ ...values, owner_id: editOwner ?? uid, tier: hangTin, published_at: null }));
-      if (!err) await supabase.from("listings").delete().eq("id", editId);
+      if (!err) await supabase.from("listings").delete().eq("id", maSua);
     } else {
       // SỬA tin (nháp→nháp, chờ duyệt, đã duyệt…)
       const { status: _giu, ...noiDung } = values;
@@ -712,12 +772,12 @@ export default function PostListingForm() {
       const capNhat = daDang
         ? { ...noiDung, details: { ...chiTietGoc.current, ...values.details, plan: chiTietGoc.current.plan } }
         : values;
-      ({ error: err } = await supabase.from("listings").update(capNhat).eq("id", editId));
+      ({ error: err } = await supabase.from("listings").update(capNhat).eq("id", maSua));
       if (err && /đặc quyền|dac quyen|privileged/i.test(err.message)) {
         // DB chưa cho chủ tin đổi trạng thái (chưa chạy migration 0007)
         // → vẫn lưu TOÀN BỘ nội dung, giữ nguyên trạng thái cũ.
         const { status: _ignored, ...noStatus } = values;
-        ({ error: err } = await supabase.from("listings").update(noStatus).eq("id", editId));
+        ({ error: err } = await supabase.from("listings").update(noStatus).eq("id", maSua));
       }
     }
 
@@ -730,6 +790,9 @@ export default function PostListingForm() {
       return setError(m ? `Nạp thêm ${vnd(Number(m[1]))} để đăng tin.` : "Ví không đủ tiền để đăng tin.");
     }
     if (err) return setError(`Lưu thất bại: ${err.message}`);
+    // Lưu xong (gửi duyệt hoặc lưu nháp) → tin này đã nằm trong tài khoản; tin soạn tiếp theo
+    // (vd bấm "Đăng tin khác") là tin nháp MỚI, không ghi đè lên tin vừa lưu.
+    maNhapTk.current = null;
     // Đo chuyển đổi cho Google Ads: chỉ tính TIN MỚI GỬI DUYỆT. Lưu nháp không
     // tính (chưa phải tin), sửa tin cũ cũng không tính (đã đếm lúc đăng lần đầu).
     if (!luuNhap && (!editId || editStatus === "draft")) banChuyenDoi("dang_tin");
@@ -746,12 +809,12 @@ export default function PostListingForm() {
           body: JSON.stringify({ id: maTinNhap, tier: hangTin, soNgay: planDays }),
         }).catch(() => {});
       }
-      try { localStorage.removeItem(KHOA_NHAP_MAY); } catch {}
+      try { if (userId) localStorage.removeItem(khoaNhap(userId)); } catch {}
       setThieuTien({ can: phaiTra, du: khaDung });
       window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
-    try { localStorage.removeItem(KHOA_NHAP_MAY); } catch {}
+    try { if (userId) localStorage.removeItem(khoaNhap(userId)); } catch {}
     setDone(daDang ? "capNhat" : luuNhap ? "draft" : "pending");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
