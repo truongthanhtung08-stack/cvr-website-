@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import ChonHoacGhi from "@/components/ChonHoacGhi";
+import ThemTuGhi from "@/components/ThemTuGhi";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { lamMoiWeb } from "@/lib/lamMoiWeb";
@@ -702,6 +703,7 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
             <Chip key={it} active onClick={() => toggle(interior, setInterior, it)}>{it}</Chip>
           ))}
         </div>
+        <ThemTuGhi onThem={(v) => setInterior((ds) => (ds.includes(v) ? ds : [...ds, v]))} className={inputCls} />
       </Panel>
 
       {/* Tiện ích — tick mục có sẵn, theo nhóm */}
@@ -728,6 +730,7 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
             </div>
           )}
         </div>
+        <ThemTuGhi onThem={(v) => setAmenities((ds) => (ds.includes(v) ? ds : [...ds, v]))} className={inputCls} />
       </Panel>
 
       {/* Ảnh — tải từ máy / dán link · ảnh đầu là ảnh đại diện */}

@@ -7,6 +7,7 @@ import { linkHopLe } from "@/lib/linkChen";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import ChonHoacGhi from "@/components/ChonHoacGhi";
+import ThemTuGhi from "@/components/ThemTuGhi";
 import { donViGiaNenDung, goiYDienTich, goiYGia, goiYTieuDe } from "@/lib/goiYNhapTin";
 import { haiDongDiaChi, doiHeGiuNguyen, chuoiTimBanDo, ungVienPhuongCu, type NhoHaiHe } from "@/lib/diaChiHaiHe";
 import {
@@ -1255,7 +1256,12 @@ export default function PostListingForm() {
             {interiorItems.map((it) => (
               <Chip key={it} active={interior.includes(it)} onClick={() => toggle(interior, setInterior, it)}>{it}</Chip>
             ))}
+            {/* Mục khách tự ghi — bấm để bỏ */}
+            {interior.filter((it) => !interiorItems.includes(it)).map((it) => (
+              <Chip key={it} active onClick={() => toggle(interior, setInterior, it)}>{it}</Chip>
+            ))}
           </div>
+          <ThemTuGhi onThem={(v) => setInterior((ds) => (ds.includes(v) ? ds : [...ds, v]))} className={inputCls} />
         </Card>
       )}
 
@@ -1272,7 +1278,18 @@ export default function PostListingForm() {
               </div>
             </div>
           ))}
+          {/* Tiện ích khách tự ghi — bấm để bỏ */}
+          {(() => {
+            const chuan = new Set(amenityGroups.flatMap((g) => g.items));
+            const khac = amenities.filter((it) => !chuan.has(it));
+            return khac.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {khac.map((it) => <Chip key={it} active onClick={() => toggle(amenities, setAmenities, it)}>{it}</Chip>)}
+              </div>
+            );
+          })()}
         </div>
+        <ThemTuGhi onThem={(v) => setAmenities((ds) => (ds.includes(v) ? ds : [...ds, v]))} className={inputCls} />
       </Card>
 
       {/* 7. Mô tả */}
