@@ -103,7 +103,8 @@ export const interiorItems = [
 //    loại chung, vd "Đất công nghiệp" phải khớp Kho xưởng TRƯỚC khi khớp "Đất".
 export type CategorySpec = { label: string; match: string[]; fields: Field[] };
 
-const floorsField: Field = { key: "floors", label: "Số tầng", type: "select", options: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10+"], main: true };
+// Số tầng là CON SỐ — khách gõ thẳng (chủ dự án 10/10/2026: danh sách 1…"10+" không ghi được nhà 11 tầng trở lên).
+const floorsField: Field = { key: "floors", label: "Số tầng", type: "text", placeholder: "VD: 3", main: true };
 // Kích thước lô: mặt tiền = CHIỀU NGANG, depth = CHIỀU DÀI (chiều sâu). Đặt cạnh nhau
 // cho mọi loại gắn với thửa đất (nhà, đất) để nhập/hiển thị "ngang × dài" khoa học.
 const frontageField: Field = { key: "frontage", label: "Mặt tiền (chiều ngang)", type: "number", unit: "m", main: true };
@@ -132,8 +133,8 @@ export const categorySpecs: CategorySpec[] = [
     label: "Condotel / Nghỉ dưỡng",
     match: ["condotel", "nghỉ dưỡng"],
     fields: [
-      { key: "roomType", label: "Loại phòng", type: "select", options: ["Studio", "1 phòng ngủ", "2 phòng ngủ", "3 phòng ngủ"], main: true },
-      { key: "view", label: "Hướng view", type: "select", options: ["Biển", "Thành phố", "Hồ bơi", "Sông / núi"] },
+      { key: "roomType", label: "Loại phòng", type: "text", placeholder: "VD: 2 phòng ngủ", main: true },
+      { key: "view", label: "Hướng view", type: "text", placeholder: "VD: Biển" },
       { key: "profit", label: "Cam kết lợi nhuận", type: "text", placeholder: "VD: 8%/năm" },
       { key: "operator", label: "Đơn vị vận hành", type: "text" },
     ],
@@ -150,7 +151,7 @@ export const categorySpecs: CategorySpec[] = [
       { key: "block", label: "Block / Toà / Tháp", type: "text", placeholder: "VD: Block A" },
       { key: "buildingFloors", label: "Tổng số tầng toà", type: "text", placeholder: "VD: 30 tầng" },
       { key: "balcony", label: "Hướng ban công", type: "select", options: directions, main: true },
-      { key: "view", label: "Hướng view", type: "select", options: ["Biển", "Thành phố", "Hồ bơi", "Sông / công viên", "Nội khu"] },
+      { key: "view", label: "Hướng view", type: "text", placeholder: "VD: Biển" },
       mgmtFeeField,
     ],
   },
@@ -158,12 +159,12 @@ export const categorySpecs: CategorySpec[] = [
     label: "Căn hộ",
     match: ["căn hộ", "officetel", "duplex", "penthouse", "studio"],
     fields: [
-      { key: "loaiCanho", label: "Loại hình căn hộ", type: "select", options: ["Căn hộ dịch vụ", "Duplex", "Penthouse", "Studio", "Officetel"] },
+      { key: "loaiCanho", label: "Loại hình căn hộ", type: "text", placeholder: "VD: Duplex" },
       { key: "floor", label: "Tầng số (căn)", type: "text", placeholder: "VD: Tầng 18", main: true },
       { key: "block", label: "Block / Toà / Tháp", type: "text", placeholder: "VD: Block A" },
       { key: "buildingFloors", label: "Tổng số tầng toà", type: "text", placeholder: "VD: 30 tầng" },
       { key: "balcony", label: "Hướng ban công", type: "select", options: directions, main: true },
-      { key: "view", label: "Hướng view", type: "select", options: ["Biển", "Thành phố", "Hồ bơi", "Sông / công viên", "Nội khu"] },
+      { key: "view", label: "Hướng view", type: "text", placeholder: "VD: Biển" },
       mgmtFeeField,
     ],
   },
@@ -172,7 +173,7 @@ export const categorySpecs: CategorySpec[] = [
     match: ["công nghiệp", "xưởng", "kho bãi", "nhà kho", "kho"],
     fields: [
       { key: "usableArea", label: "Diện tích xưởng/kho", type: "number", unit: "m²", main: true },
-      { key: "khoLoai", label: "Loại kho / xưởng", type: "select", options: ["Xưởng sản xuất", "Kho hàng khô", "Kho lạnh", "Kho + xưởng", "Bãi / đất trống"], main: true },
+      { key: "khoLoai", label: "Loại kho / xưởng", type: "text", placeholder: "VD: Kho lạnh", main: true },
       // Chiều cao thông thuỷ quyết định xếp được mấy tầng hàng — người thuê kho
       // hỏi ngay sau diện tích và đơn giá, nên để ở THÔNG TIN CHÍNH.
       { key: "clearHeight", label: "Chiều cao thông thuỷ", type: "number", unit: "m", main: true },
@@ -183,7 +184,7 @@ export const categorySpecs: CategorySpec[] = [
       { key: "pccc", label: "Hệ thống PCCC", type: "select", options: ["Đã có", "Chưa có"] },
       { key: "crane", label: "Cẩu trục", type: "text", placeholder: "VD: Cầu trục 5 tấn" },
       { key: "officeArea", label: "Văn phòng trong kho", type: "number", unit: "m²" },
-      { key: "container", label: "Xe container vào được", type: "select", options: ["Container 40 feet", "Container 20 feet", "Xe tải nhỏ"] },
+      { key: "container", label: "Xe container vào được", type: "text", placeholder: "VD: Container 40 feet" },
       { key: "term", label: "Thời hạn sử dụng đất", type: "text", placeholder: "VD: Đến 2068" },
     ],
   },
@@ -195,7 +196,7 @@ export const categorySpecs: CategorySpec[] = [
       { key: "floor", label: "Tầng số", type: "text", placeholder: "VD: Tầng 3", main: true },
       frontageField,
       roadField,
-      { key: "floors", label: "Số tầng", type: "select", options: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10+"] },
+      { key: "floors", label: "Số tầng", type: "text", placeholder: "VD: 3" },
       { key: "pccc", label: "Hệ thống PCCC", type: "select", options: ["Đã có", "Chưa có"] },
       { key: "grade", label: "Hạng toà nhà", type: "select", options: ["Hạng A", "Hạng B", "Hạng C", "Nhà phố"] },
     ],
@@ -213,7 +214,7 @@ export const categorySpecs: CategorySpec[] = [
       balconyField,
       { key: "gardenArea", label: "Diện tích sân vườn", type: "number", unit: "m²" },
       { key: "pool", label: "Hồ bơi riêng", type: "select", options: ["Có", "Không"] },
-      { key: "view", label: "View / cảnh quan", type: "select", options: ["Biển", "Sông / hồ", "Sân golf", "Công viên", "Nội khu"] },
+      { key: "view", label: "View / cảnh quan", type: "text", placeholder: "VD: Biển" },
     ],
   },
   {
@@ -226,8 +227,8 @@ export const categorySpecs: CategorySpec[] = [
       roadField,
       usableAreaField,
       balconyField,
-      { key: "bizFloors", label: "Số tầng kinh doanh", type: "select", options: ["1", "2", "3", "Cả toà"], main: true },
-      { key: "corner", label: "Vị trí", type: "select", options: ["Lô góc 2 mặt tiền", "1 mặt tiền", "Trong khu"] },
+      { key: "bizFloors", label: "Số tầng kinh doanh", type: "text", placeholder: "VD: 2 · Cả toà", main: true },
+      { key: "corner", label: "Vị trí", type: "text", placeholder: "VD: Lô góc 2 mặt tiền" },
       { key: "pccc", label: "Hệ thống PCCC", type: "select", options: ["Đã có", "Chưa có"] },
       builtYearField,
     ],
@@ -242,7 +243,7 @@ export const categorySpecs: CategorySpec[] = [
       roadField,
       usableAreaField,
       balconyField,
-      { key: "corner", label: "Vị trí", type: "select", options: ["Lô góc 2 mặt tiền", "1 mặt tiền"] },
+      { key: "corner", label: "Vị trí", type: "text", placeholder: "VD: Lô góc 2 mặt tiền" },
       builtYearField,
     ],
   },
@@ -280,10 +281,10 @@ export const categorySpecs: CategorySpec[] = [
       roadField,
       { key: "resiArea", label: "Diện tích đất ở (thổ cư)", type: "number", unit: "m²", main: true },
       { key: "landTerm", label: "Thời hạn sử dụng", type: "select", options: ["Lâu dài", "Có thời hạn"] },
-      { key: "corner", label: "Vị trí lô", type: "select", options: ["Lô góc 2 mặt tiền", "1 mặt tiền", "Trong khu / đường nội bộ"] },
+      { key: "corner", label: "Vị trí lô", type: "text", placeholder: "VD: Lô góc 2 mặt tiền" },
       { key: "blocks", label: "Số lô / nền", type: "text", placeholder: "VD: Lô A12" },
       { key: "shape", label: "Hình dạng lô", type: "select", options: ["Vuông vức", "Nở hậu", "Thóp hậu", "Chữ L", "Khác"] },
-      { key: "landState", label: "Hiện trạng đất", type: "select", options: ["Đất trống", "Đã san lấp", "Đã có tường rào", "Có nhà cấp 4 trên đất", "Đang trồng cây"] },
+      { key: "landState", label: "Hiện trạng đất", type: "text", placeholder: "VD: Đất trống" },
       { key: "planning", label: "Quy hoạch / lộ giới", type: "text", placeholder: "VD: Không dính quy hoạch · Lộ giới 5m" },
     ],
   },
