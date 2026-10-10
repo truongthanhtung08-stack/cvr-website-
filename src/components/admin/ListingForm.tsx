@@ -372,7 +372,14 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
   }
 
   return (
-    <form onSubmit={(e) => { e.preventDefault(); save(false); }} className="space-y-4">
+    <form
+      onKeyDown={(e) => {
+        // Enter ở ô MỘT DÒNG không được tự gửi tin (trước đây bấm Enter / "Đi" trên điện thoại là
+        // gửi luôn khi chưa nhập xong). Ô nhiều dòng (textarea) vẫn xuống dòng bình thường.
+        if (e.key === "Enter" && (e.target as HTMLElement).tagName === "INPUT") e.preventDefault();
+      }}
+      onSubmit={(e) => { e.preventDefault(); save(false); }}
+      className="space-y-4">
       {/* Mục đích + Loại hình + Hạng (trạng thái do 2 nút Lưu nháp / Đăng tin quyết định) */}
       <Panel title="Phân loại">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">

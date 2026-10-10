@@ -935,7 +935,14 @@ export default function PostListingForm() {
   }
 
   return (
-    <form onSubmit={(e) => { e.preventDefault(); save(false); }} className="space-y-6">
+    <form
+      onKeyDown={(e) => {
+        // Enter ở ô MỘT DÒNG không được tự gửi tin (trước đây bấm Enter / "Đi" trên điện thoại là
+        // gửi luôn khi chưa nhập xong). Ô nhiều dòng (textarea) vẫn xuống dòng bình thường.
+        if (e.key === "Enter" && (e.target as HTMLElement).tagName === "INPUT") e.preventDefault();
+      }}
+      onSubmit={(e) => { e.preventDefault(); save(false); }}
+      className="space-y-6">
       <ThanhBuoc />
 
       {moXacMinh && (
