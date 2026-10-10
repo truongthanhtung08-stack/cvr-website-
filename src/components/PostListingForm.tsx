@@ -42,6 +42,8 @@ import { uploadImageFile } from "@/lib/uploadImage";
 // Giá trị đánh dấu "dự án chưa có trên web" trong ô chọn dự án — KHÔNG lưu
 // xuống DB, chỉ để biết phải hiện ô gõ tên.
 const DU_AN_KHAC = "__khac";
+// Khoá trình duyệt giữ bản nháp tự lưu của form đăng tin mới.
+const KHOA_NHAP_MAY = "cvr-dang-tin-nhap";
 
 export default function PostListingForm() {
   const router = useRouter();
@@ -147,6 +149,69 @@ export default function PostListingForm() {
   // Tiền đang tạm giữ cho các tin chờ duyệt khác của khách (0056).
   const [tamGiu, setTamGiu] = useState(0);
   const [error, setError] = useState("");
+
+  // TỰ LƯU NHÁP TRÊN MÁY (chủ dự án 10/10/2026): mọi thứ khách đã nhập được cất vào trình
+  // duyệt sau mỗi lần gõ; mở lại /dang-tin trên cùng máy là hiện lại để làm tiếp. Đăng / lưu
+  // nháp vào tài khoản thành công thì xoá. Không lưu gói tin (khách phải tự chọn lại, giá
+  // theo admin lúc đăng). Chế độ sửa tin (?id=) không dùng bản nháp này.
+  const [daNapNhap, setDaNapNhap] = useState(false);
+  /* eslint-disable react-hooks/set-state-in-effect -- nạp bản nháp một lần lúc mở form */
+  useEffect(() => {
+    if (!editId) {
+      try {
+        const d = JSON.parse(localStorage.getItem(KHOA_NHAP_MAY) ?? "null") as Record<string, unknown> | null;
+        if (d) {
+          const s = (k: string) => (typeof d[k] === "string" ? (d[k] as string) : "");
+          const ds = (k: string) => (Array.isArray(d[k]) ? (d[k] as string[]) : []);
+          if (s("demand")) setDemand(s("demand"));
+          setCategory(s("category"));
+          if (s("geoMode") === "cu" || s("geoMode") === "moi") setGeoMode(s("geoMode") as GeoMode);
+          setProvince(s("province"));
+          setDistrict(s("district"));
+          setWard(s("ward"));
+          setPhuongCu(s("phuongCu"));
+          setAddressDetail(s("addressDetail"));
+          setLinkChen(s("linkChen"));
+          setMapPin(s("mapPin"));
+          setTitle(s("title"));
+          setPriceValue(s("priceValue"));
+          if (s("priceUnit")) setPriceUnit(s("priceUnit"));
+          setArea(s("area"));
+          setBuiltArea(s("builtArea"));
+          setBeds(s("beds"));
+          setBaths(s("baths"));
+          if (d.specValues && typeof d.specValues === "object") setSpecValues(d.specValues as Record<string, string>);
+          setLegal(s("legal"));
+          setFurnish(s("furnish"));
+          setDirection(s("direction"));
+          setInterior(ds("interior"));
+          setAmenities(ds("amenities"));
+          setDescription(s("description"));
+          setImages(ds("images"));
+          setContactName(s("contactName"));
+          setContactPhone(s("contactPhone"));
+          setContactEmail(s("contactEmail"));
+          setProjectSlug(s("projectSlug"));
+          setProjectName(s("projectName"));
+        }
+      } catch {}
+    }
+    setDaNapNhap(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    if (editId || !daNapNhap || done || thieuTien) return;
+    try {
+      localStorage.setItem(KHOA_NHAP_MAY, JSON.stringify({
+        demand, category, geoMode, province, district, ward, phuongCu, addressDetail, linkChen, mapPin,
+        title, priceValue, priceUnit, area, builtArea, beds, baths, specValues, legal, furnish, direction,
+        interior, amenities, description, images, contactName, contactPhone, contactEmail, projectSlug, projectName,
+      }));
+    } catch {}
+  }, [editId, daNapNhap, done, thieuTien, demand, category, geoMode, province, district, ward, phuongCu, addressDetail, linkChen, mapPin,
+    title, priceValue, priceUnit, area, builtArea, beds, baths, specValues, legal, furnish, direction,
+    interior, amenities, description, images, contactName, contactPhone, contactEmail, projectSlug, projectName]);
 
   // KHÔNG còn ô "Ngày bắt đầu" tự chọn: tin bắt đầu hiển thị LÚC ĐƯỢC DUYỆT (một luật,
   // 01/10/2026) — cho chọn ngày là hứa một mốc web không làm đúng.
@@ -675,10 +740,12 @@ export default function PostListingForm() {
           body: JSON.stringify({ id: maTinNhap, tier: hangTin, soNgay: planDays }),
         }).catch(() => {});
       }
+      try { localStorage.removeItem(KHOA_NHAP_MAY); } catch {}
       setThieuTien({ can: phaiTra, du: khaDung });
       window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
+    try { localStorage.removeItem(KHOA_NHAP_MAY); } catch {}
     setDone(daDang ? "capNhat" : luuNhap ? "draft" : "pending");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -984,9 +1051,8 @@ export default function PostListingForm() {
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_9rem]">
               {/* KHÔNG dùng type="number": trình duyệt loại bỏ dấu PHẨY nên khách gõ
                   "4,2" (đúng như gợi ý trong ô) thì ô thành rỗng, không lưu được giá.
-                  Dùng text + inputMode="decimal" → điện thoại vẫn hiện bàn phím số,
-                  mà gõ được cả dấu phẩy lẫn dấu chấm. */}
-              <input type="text" inputMode="decimal" value={priceValue} onChange={(e) => setPriceValue(e.target.value)} disabled={donVi === "Thoả thuận"} placeholder={goiYGia(donVi)} className={inputCls + " disabled:opacity-50"} />
+                  Dùng text, không ép bàn phím số: khách gõ được mọi ký tự (chủ dự án 10/10/2026). */}
+              <input type="text" value={priceValue} onChange={(e) => setPriceValue(e.target.value)} disabled={donVi === "Thoả thuận"} placeholder={goiYGia(donVi)} className={inputCls + " disabled:opacity-50"} />
               <select value={donVi} onChange={(e) => setPriceUnit(e.target.value)} className={inputCls}>
                 {donViGia.map((u) => <option key={u} value={u}>{u}</option>)}
               </select>
@@ -1030,7 +1096,7 @@ export default function PostListingForm() {
           </div>
           <div>
             <Label>{nhanDienTich(loaiHinh)} *</Label>
-            <input type="text" inputMode="decimal" value={area} onChange={(e) => setArea(e.target.value)} placeholder={goiYDienTich(loaiHinh)} className={inputCls} />
+            <input type="text" value={area} onChange={(e) => setArea(e.target.value)} placeholder={goiYDienTich(loaiHinh)} className={inputCls} />
           </div>
         </div>
         {/* CHỈ HIỆN MỤC THUỘC LOẠI HÌNH ĐANG CHỌN — đất nền không có phòng ngủ,
@@ -1041,19 +1107,19 @@ export default function PostListingForm() {
             coDienTichXayDung(loaiHinh) && (
               <div key="dtxd">
                 <Label>Diện tích xây dựng (m²)</Label>
-                <input type="text" inputMode="decimal" value={builtArea} onChange={(e) => setBuiltArea(e.target.value)} placeholder="VD: 95" className={inputCls} />
+                <input type="text" value={builtArea} onChange={(e) => setBuiltArea(e.target.value)} placeholder="VD: 95" className={inputCls} />
               </div>
             ),
             coPhongNgu(loaiHinh) && (
               <div key="pn">
                 <Label>Số phòng ngủ</Label>
-                <input type="text" inputMode="numeric" value={beds} onChange={(e) => setBeds(e.target.value)} placeholder="VD: 3" className={inputCls} />
+                <input type="text" value={beds} onChange={(e) => setBeds(e.target.value)} placeholder="VD: 3" className={inputCls} />
               </div>
             ),
             coPhongTam(loaiHinh) && (
               <div key="pt">
                 <Label>Số phòng tắm</Label>
-                <input type="text" inputMode="numeric" value={baths} onChange={(e) => setBaths(e.target.value)} placeholder="VD: 2" className={inputCls} />
+                <input type="text" value={baths} onChange={(e) => setBaths(e.target.value)} placeholder="VD: 2" className={inputCls} />
               </div>
             ),
           ].filter(Boolean);

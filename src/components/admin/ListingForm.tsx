@@ -444,7 +444,7 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
               value={priceUnit}
               onChange={(e) => setPriceUnit(e.target.value)}
               disabled={negotiable}
-              inputMode="decimal"
+             
               placeholder={purpose === "thue" ? "VD: 18 hoặc 4,5" : "VD: 7,2 hoặc 33"}
               className={`${inputCls} sm:max-w-xs disabled:bg-cvr-surface disabled:text-cvr-faint`}
             />
@@ -461,21 +461,21 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
         {(() => {
           const o = [
             <Field key="dt" label={`${nhanDienTich(type)} — bắt buộc`}>
-              <input value={area} onChange={(e) => setArea(e.target.value)} inputMode="decimal" placeholder="VD: 100" className={inputCls} />
+              <input value={area} onChange={(e) => setArea(e.target.value)} placeholder="VD: 100" className={inputCls} />
             </Field>,
             coDienTichXayDung(type) && (
               <Field key="dtxd" label="Diện tích xây dựng (m²)">
-                <input value={builtArea} onChange={(e) => setBuiltArea(e.target.value)} inputMode="decimal" placeholder="VD: 95" className={inputCls} />
+                <input value={builtArea} onChange={(e) => setBuiltArea(e.target.value)} placeholder="VD: 95" className={inputCls} />
               </Field>
             ),
             coPhongNgu(type) && (
               <Field key="pn" label="Phòng ngủ">
-                <input value={beds} onChange={(e) => setBeds(e.target.value)} inputMode="numeric" placeholder="VD: 2" className={inputCls} />
+                <input value={beds} onChange={(e) => setBeds(e.target.value)} placeholder="VD: 2" className={inputCls} />
               </Field>
             ),
             coPhongTam(type) && (
               <Field key="pt" label="Phòng tắm">
-                <input value={baths} onChange={(e) => setBaths(e.target.value)} inputMode="numeric" placeholder="VD: 2" className={inputCls} />
+                <input value={baths} onChange={(e) => setBaths(e.target.value)} placeholder="VD: 2" className={inputCls} />
               </Field>
             ),
           ].filter(Boolean);
