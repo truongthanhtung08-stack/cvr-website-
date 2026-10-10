@@ -215,18 +215,6 @@ export default function PostListingForm() {
 
   // KHÔNG còn ô "Ngày bắt đầu" tự chọn: tin bắt đầu hiển thị LÚC ĐƯỢC DUYỆT (một luật,
   // 01/10/2026) — cho chọn ngày là hứa một mốc web không làm đúng.
-  // Tải xong bảng giá admin → đưa thời hạn về mốc đầu tiên của bảng giá hiện hành
-  useEffect(() => {
-    if (!billingLoading) {
-      const terms = bangGia.plans.find((p) => p.tierId === planTier)?.terms ?? [];
-      // Bảng giá do admin đặt, tải về sau khi trang đã dựng → chỉ lúc này mới biết
-      // gói có những mốc thời hạn nào. Thời hạn đang chọn không còn trong bảng giá
-      // hiện hành thì kéo về mốc đầu, nếu không khách trả tiền theo mốc đã bỏ.
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      if (terms.length && !terms.some((t) => t.days === planDays)) setPlanDays(terms[0].days);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [billingLoading, planTier, bangGia.plans]);
 
   // ── SỐ TIỀN THỰC PHẢI TRẢ ─────────────────────────────────────────────────
   // Giá gói → trừ khuyến mãi đang chạy → trừ ưu đãi theo cấp thành viên.
@@ -290,19 +278,33 @@ export default function PostListingForm() {
       soNgayMoTk, role: hoSoVi.role, freeQuota: hoSoVi.free_quota, ngayTaoTk: hoSoVi.created_at ? new Date(new Date(hoSoVi.created_at).getTime() + 7 * 3_600_000).toISOString().slice(0, 10) : undefined,
     });
   };
-  // GÓI CỦA CHƯƠNG TRÌNH MIỄN PHÍ ĐÃ DUYỆT (vd Basic · 30 ngày) — chỉ bày cho khách đang hưởng
-  // chương trình, có mặt cả khi bảng giá chưa được duyệt. Máy chủ xét lại y hệt lúc duyệt tin.
+  // HAI DẠNG (chủ dự án 10/10/2026): THÀNH VIÊN MỚI — gói của chương trình khuyến mãi là đúng
+  // chương trình đã duyệt (vd Basic · 30 ngày · 0đ): hàng gói đó CHỈ còn một ô khuyến mãi, không
+  // bày các mốc thường (Basic 7/10 ngày) vì chọn mốc nào máy chủ cũng duyệt theo chương trình.
+  // THÀNH VIÊN CŨ — đúng bảng giá thường. Máy chủ xét lại y hệt lúc duyệt tin.
   const ngayMp = billing.free.hienThi ?? billing.free.days;
   const goiMp = billing.free.tierId;
   const plansChon = (() => {
     if (!ngayMp || !huongKmCua(goiMp)) return bangGia.plans;
-    const co = bangGia.plans.find((p) => p.tierId === goiMp);
-    if (co?.terms.some((t) => t.days === ngayMp)) return bangGia.plans;
     const term = { days: ngayMp, price: 0 };
-    return co
-      ? bangGia.plans.map((p) => (p.tierId === goiMp ? { ...p, terms: [...p.terms, term].sort((a, b) => a.days - b.days) } : p))
+    return bangGia.plans.some((p) => p.tierId === goiMp)
+      ? bangGia.plans.map((p) => (p.tierId === goiMp ? { ...p, terms: [term] } : p))
       : [...bangGia.plans, { ...(BILLING_DEFAULT.plans.find((p) => p.tierId === goiMp) ?? { tierId: goiMp, name: getTier(goiMp).name, note: "" }), terms: [term] }];
   })();
+  // Tải xong bảng giá admin → đưa thời hạn về mốc đầu tiên của bảng giá hiện hành
+  useEffect(() => {
+    if (!billingLoading) {
+      // Xét theo bảng KHÁCH ĐANG THẤY (plansChon): thành viên mới bấm ô khuyến mãi (Basic · 30
+      // ngày) không có trong bảng giá thường thì không bị kéo về 7 ngày.
+      const terms = plansChon.find((p) => p.tierId === planTier)?.terms ?? [];
+      // Bảng giá do admin đặt, tải về sau khi trang đã dựng → chỉ lúc này mới biết
+      // gói có những mốc thời hạn nào. Thời hạn đang chọn không còn trong bảng giá
+      // hiện hành thì kéo về mốc đầu, nếu không khách trả tiền theo mốc đã bỏ.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      if (terms.length && !terms.some((t) => t.days === planDays)) setPlanDays(terms[0].days);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [billingLoading, planTier, plansChon]);
   // Số ngày tin THẬT SỰ hiển thị (khuyến mãi thành viên mới → số ngày của chương trình).
   const soNgayThat = planTier ? soNgayHienThi(bangGia, planTier as TierId, planDays, duocMienPhi) : planDays;
 

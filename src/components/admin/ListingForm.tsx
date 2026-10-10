@@ -405,7 +405,7 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
                 const bang = bangTheoMucDich(billing, purpose);
                 // Tin admin đăng hộ tính như thành viên mới: chương trình đang chạy thì đúng số ngày của chương trình.
                 if (huongKhuyenMai(bang.free, { goi: tier, homNay: new Date().toISOString().slice(0, 10), coChu: Boolean(initial?.owner_id), soNgayMoTk: 0 })) {
-                  return <option value={0}>{bang.free.days} ngày · khuyến mãi thành viên mới</option>;
+                  return <option value={0}>{bang.free.hienThi ?? bang.free.days} ngày · khuyến mãi thành viên mới</option>;
                 }
                 const ds = [...(bang.plans.find((p) => p.tierId === tier)?.terms ?? [])].sort((a, b) => a.days - b.days);
                 // Giá gói theo bảng giá ĐÃ DUYỆT (chưa VAT) — để admin nâng hạng thấy ngay giá từng gói.

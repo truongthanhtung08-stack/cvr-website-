@@ -94,7 +94,7 @@ export async function kiemTin(admin: SupabaseClient): Promise<KetQuaKiemTin> {
         freeQuota: c?.free_quota,
       });
       const hopLe = huong
-        ? [bang.free.days]
+        ? [bang.free.hienThi ?? bang.free.days]
         : (bangTheoMucDich(bang, t.purpose).plans.find((p) => p.tierId === t.tier)?.terms ?? []).map((x) => x.days);
       if (hopLe.length && !hopLe.includes(soNgay)) {
         loi.push(

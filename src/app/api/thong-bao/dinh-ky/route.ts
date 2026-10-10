@@ -106,9 +106,11 @@ export async function GET(request: Request) {
       const bayGio = Date.now();
       const { data: moi } = await admin
         .from("profiles")
-        .select("id,email,phone,full_name,role,created_at")
-        .gte("created_at", new Date(bayGio - 86_400_000).toISOString())
-        .lt("created_at", new Date(bayGio).toISOString());
+        // Thành viên mới tính từ NGÀY THÀNH VIÊN (0058): tự đăng ký = ngày tạo tài khoản;
+        // tài khoản tạo hộ = lần đầu chính chủ vào — cùng mốc với huongKhuyenMai / so_ngay_hien_thi.
+        .select("id,email,phone,full_name,role,created_at:ngay_thanh_vien")
+        .gte("ngay_thanh_vien", new Date(bayGio - 86_400_000).toISOString())
+        .lt("ngay_thanh_vien", new Date(bayGio).toISOString());
       for (const n of (moi ?? []) as (Nguoi & { created_at: string })[]) {
         if (n.role === "admin") continue;
         const hetUuDai = new Date(new Date(n.created_at).getTime() + free.days * 86_400_000 + 7 * 3_600_000).toISOString().slice(0, 10);
