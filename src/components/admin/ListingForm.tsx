@@ -793,7 +793,7 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <Field label="Họ và tên"><input value={cName} onChange={(e) => setCName(e.target.value)} placeholder="Nguyễn Văn A" className={inputCls} /></Field>
           <Field label="Số điện thoại"><input type="text" value={cPhone} onChange={(e) => setCPhone(e.target.value)} placeholder="09xx xxx xxx" className={inputCls} /></Field>
-          <Field label="Email"><input type="text" value={cEmail} onChange={(e) => setCEmail(e.target.value)} placeholder="email@vidu.com" className={inputCls} /></Field>
+          <Field label="Email"><input type="text" autoCapitalize="none" autoCorrect="off" spellCheck={false} value={cEmail} onChange={(e) => setCEmail(e.target.value)} placeholder="email@vidu.com" className={inputCls} /></Field>
         </div>
         <p className="mt-2 text-xs text-cvr-faint">
           Số điện thoại này hiện ở khung liên hệ trang tin, và <strong>nút Zalo tự trỏ tới chính số này</strong>. Bỏ trống → dùng hotline Coastal Land.

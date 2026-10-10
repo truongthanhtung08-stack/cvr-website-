@@ -1216,6 +1216,9 @@ export default function PostListingForm() {
             <Label>Link chèn dưới tin (CVR Diamond)</Label>
             <input
               type="text"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
               value={linkChen}
               onChange={(e) => setLinkChen(e.target.value)}
               placeholder="https://… (video, trang dự án, tài liệu…)"
@@ -1395,7 +1398,7 @@ export default function PostListingForm() {
         <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-3">
           <div><Label>Họ và tên *</Label><input value={contactName} onChange={(e) => setContactName(e.target.value)} placeholder="Nguyễn Văn A" className={inputCls} /></div>
           <div><Label>Số điện thoại *</Label><input type="text" value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} placeholder="09xx xxx xxx" className={inputCls} /></div>
-          <div><Label>Email</Label><input type="text" value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} placeholder="email@example.com" className={inputCls} /></div>
+          <div><Label>Email</Label><input type="text" autoCapitalize="none" autoCorrect="off" spellCheck={false} value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} placeholder="email@example.com" className={inputCls} /></div>
         </div>
       </Card>
 
