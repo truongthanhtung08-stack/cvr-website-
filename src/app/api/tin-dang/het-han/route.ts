@@ -28,7 +28,10 @@ export async function GET(request: Request) {
     const { count: vuaDoi } = await admin
       .from("listings")
       .select("id", { count: "exact", head: true })
-      .gt("updated_at", new Date(Date.now() - 75_000).toISOString());
+      .gt("updated_at", new Date(Date.now() - 75_000).toISOString())
+      // Tin nháp (kể cả tự lưu vài giây một lần khi khách đang gõ) không hiện ra ngoài —
+      // không tính, kẻo xoá bản lưu sẵn mỗi phút, tốn đọc Supabase vô ích.
+      .neq("status", "draft");
     if ((vuaDoi ?? 0) > 0) revalidateTag("listings", "max");
     return NextResponse.json({ ok: true, ...kq, lamMoi: vuaDoi ?? 0 });
   } catch (e) {

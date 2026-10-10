@@ -227,6 +227,9 @@ export async function POST(req: Request) {
         canLam: `Kiểm tra hồ sơ khách rồi cộng tay ${vnd(soTien)} vào ví, hoặc chờ PayOS gọi lại.`,
         khoa: `payos:cong-vi:${don.id}`,
       });
+      // Trả đơn về "đang chờ" để PayOS gọi lại thì cộng ví lại được — nếu để "đã thanh toán",
+      // lần gọi lại thấy "đã xử lý" và bỏ qua, ví khách không bao giờ được cộng tự động.
+      await supabase.from("payments").update({ status: "pending", note: "Cộng ví lỗi — chờ PayOS gọi lại." }).eq("id", don.id).eq("status", "paid");
       return NextResponse.json({ ok: false, message: loiVi.message }, { status: 500 });
     }
 
