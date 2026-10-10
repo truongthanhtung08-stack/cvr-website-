@@ -531,6 +531,15 @@ export function huongKhuyenMai(
   return hopDoiTuong && conLuot;
 }
 
+// LÚC KHÁCH GỬI TIN — mốc xét "thành viên mới" (chủ dự án 10/10/2026: chương trình dành cho
+// tin đăng trong 30 ngày đầu; admin duyệt lúc nào cũng không làm khách mất ưu đãi). Tin gửi lại
+// (đăng lại, nạp đủ tiền tự gửi) ghi details.gui_luc; tin mới thì là lúc tạo tin.
+export function lucGuiTin(t: { created_at?: string | null; details?: unknown }): number {
+  const g = (t.details as { gui_luc?: string } | null | undefined)?.gui_luc;
+  const ms = Date.parse(g ?? t.created_at ?? "");
+  return Number.isFinite(ms) ? ms : Date.now();
+}
+
 // SỐ NGÀY HIỂN THỊ CỦA MỘT TIN — MỘT LUẬT DUY NHẤT cho mọi đường lên sóng (duyệt tin,
 // Up tin; CSDL có bản y hệt: so_ngay_hien_mac_dinh, 0053). Chủ dự án chốt 01/10/2026:
 //   · Hưởng chương trình khuyến mãi (Giá & quy định → free) ở đúng hạng của chương trình

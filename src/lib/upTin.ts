@@ -93,8 +93,8 @@ export async function thucHienUpTin(
       tier_expires_at: null,
       da_tru_vi: false,
       details: laNhap
-        ? { ...chiTiet, plan: { tier: goi, days: soNgay, giaBao }, bao_da_nhan: true }
-        : { ...chiTiet, plan: { tier: goi, days: soNgay, giaBao }, dang_lai: true },
+        ? { ...chiTiet, plan: { tier: goi, days: soNgay, giaBao }, bao_da_nhan: true, gui_luc: new Date().toISOString() }
+        : { ...chiTiet, plan: { tier: goi, days: soNgay, giaBao }, dang_lai: true, gui_luc: new Date().toISOString() },
     })
     .eq("id", id)
     .eq("status", tin.status) // bấm hai lần không gửi hai lần

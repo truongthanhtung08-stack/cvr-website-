@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { ghepBillingLuu, bangTheoMucDich, huongKhuyenMai, type BillingData } from "@/lib/billing";
+import { ghepBillingLuu, bangTheoMucDich, huongKhuyenMai, lucGuiTin, type BillingData } from "@/lib/billing";
 import type { TierId } from "@/lib/packages";
 
 // ============================================================================
@@ -39,7 +39,7 @@ export async function kiemTin(admin: SupabaseClient): Promise<KetQuaKiemTin> {
   const [{ data: tinRaw, error }, { data: bl }] = await Promise.all([
     admin
       .from("listings")
-      .select("id,title,status,tier,purpose,owner_id,images,published_at,bumped_at,tier_expires_at,details")
+      .select("id,title,status,tier,purpose,owner_id,images,published_at,bumped_at,tier_expires_at,details,created_at")
       .in("status", ["approved", "pending"])
       .limit(5000),
     admin.from("site_content").select("data").eq("key", "billing").limit(1),
@@ -86,9 +86,9 @@ export async function kiemTin(admin: SupabaseClient): Promise<KetQuaKiemTin> {
       const soNgay = Math.round((new Date(t.tier_expires_at).getTime() - new Date(t.published_at).getTime()) / NGAY_MS);
       const huong = huongKhuyenMai(bang.free, {
         goi: t.tier,
-        homNay: ngayVn(t.published_at),
+        homNay: ngayVn(new Date(lucGuiTin(t)).toISOString()),
         coChu: !!t.owner_id,
-        soNgayMoTk: c?.created_at ? (new Date(t.published_at).getTime() - new Date(c.created_at).getTime()) / NGAY_MS : Number.POSITIVE_INFINITY,
+        soNgayMoTk: c?.created_at ? (lucGuiTin(t) - new Date(c.created_at).getTime()) / NGAY_MS : Number.POSITIVE_INFINITY,
         ngayTaoTk: c?.created_at ? new Date(new Date(c?.created_at).getTime() + 7 * 3_600_000).toISOString().slice(0, 10) : undefined,
         role: c?.role,
         freeQuota: c?.free_quota,

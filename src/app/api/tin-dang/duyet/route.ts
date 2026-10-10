@@ -3,7 +3,7 @@ import { revalidateTag } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { viKhaDung, cauThieuTien } from "@/lib/viKhaDung";
-import { ghepBillingLuu, bangTheoMucDich, freeDangChay, soNgayHienThi, huongKhuyenMai, loaiVoucherTin, quotePrice, vnd, type BillingData } from "@/lib/billing";
+import { ghepBillingLuu, bangTheoMucDich, freeDangChay, soNgayHienThi, huongKhuyenMai, lucGuiTin, loaiVoucherTin, quotePrice, vnd, type BillingData } from "@/lib/billing";
 import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
 import { guiThongBao, MAU_DUYET_TIN } from "@/lib/thongBao";
 import { baoLoi } from "@/lib/baoLoi";
@@ -64,10 +64,13 @@ export async function POST(request: Request) {
   // ── 2. Lấy tin ────────────────────────────────────────────────────────────
   const { data: tin, error: loiTin } = await admin
     .from("listings")
-    .select("id,title,owner_id,status,purpose,tier_yeu_cau,tier_days,da_tru_vi,details,tier_expires_at")
+    .select("id,title,owner_id,status,purpose,tier_yeu_cau,tier_days,da_tru_vi,details,tier_expires_at,created_at")
     .eq("id", id)
     .single();
   if (loiTin || !tin) return loi("Không tìm thấy tin", 404);
+  // Khuyến mãi thành viên mới xét theo LÚC KHÁCH GỬI TIN, không theo lúc admin duyệt.
+  const lucGui = lucGuiTin(tin);
+  const ngayGui = new Date(lucGui + 7 * 3_600_000).toISOString().slice(0, 10);
 
   // ── DUYỆT LẠI TIN ĐÃ SỬA (chuẩn Batdongsan, chốt 01/10/2026) ──────────────
   // Tin từng lên sóng (đã có hạn) mà khách sửa → quay về chờ duyệt. Duyệt lại CHỈ là
@@ -116,7 +119,7 @@ export async function POST(request: Request) {
   // Ngoại lệ DUY NHẤT: gói của chương trình miễn phí đã duyệt (vd Basic · 30 ngày) — xét đúng
   // khách hưởng chương trình ở nhánh dưới; không hưởng thì từ chối như gói ngoài bảng giá.
   const laGoiMp = goi === bangMp.free.tierId && soNgay === (bangMp.free.hienThi ?? bangMp.free.days)
-    && freeDangChay(bangMp.free, new Date(Date.now() + 7 * 3_600_000).toISOString().slice(0, 10));
+    && freeDangChay(bangMp.free, ngayGui);
   const loiNgoaiBang = () => loi(`Gói ${tenGoi(bangMp, goi)} ${soNgay} ngày không có trong bảng giá hiện hành — nhắc khách chọn lại gói rồi gửi lại.`, 400);
   if (giaGoiChon === undefined && !laGoiMp) return loiNgoaiBang();
   const mienPhi = giaGoiChon === 0 || giaGoiChon === undefined;
@@ -129,10 +132,10 @@ export async function POST(request: Request) {
     const { data: hsMp } = tin.owner_id
       ? await admin.from("profiles").select("created_at:ngay_thanh_vien,role,free_quota").eq("id", tin.owner_id).maybeSingle()
       : { data: null };
-    const ngayMoTkMp = hsMp?.created_at ? (Date.now() - new Date(hsMp.created_at).getTime()) / 86_400_000 : Infinity;
+    const ngayMoTkMp = hsMp?.created_at ? (lucGui - new Date(hsMp.created_at).getTime()) / 86_400_000 : Infinity;
     // Khuyến mãi: CÙNG MỘT điều kiện với mọi nơi (huongKhuyenMai) — lấy từ chương trình trong admin.
     let laTvMoi = huongKhuyenMai(fMp, {
-      goi, homNay: new Date().toISOString().slice(0, 10), coChu: Boolean(tin.owner_id),
+      goi, homNay: ngayGui, coChu: Boolean(tin.owner_id),
       soNgayMoTk: ngayMoTkMp, role: hsMp?.role, freeQuota: hsMp?.free_quota, ngayTaoTk: hsMp?.created_at ? new Date(new Date(hsMp?.created_at).getTime() + 7 * 3_600_000).toISOString().slice(0, 10) : undefined,
     });
     // Chương trình có giới hạn số tin → hưởng thì trừ một lượt (nguyên tử); hết lượt thì không hưởng.
@@ -201,7 +204,7 @@ export async function POST(request: Request) {
   //     → chỉ cần sửa ngưỡng cấp trong admin là hai bên ra hai số khác nhau.
   // Nay cả hai lấy CÙNG một nguồn: ngày mở tài khoản + tổng tiền đã nạp.
   const soNgayMoTk = hs.created_at
-    ? (Date.now() - new Date(hs.created_at).getTime()) / 86_400_000
+    ? (lucGui - new Date(hs.created_at).getTime()) / 86_400_000
     : Number.POSITIVE_INFINITY;
 
   const bao = quotePrice({
@@ -220,7 +223,7 @@ export async function POST(request: Request) {
   // Chương trình hết hạn (`to`) thì thu tiền bình thường — nếu không, tin gửi
   // từ thời còn ưu đãi vẫn được duyệt free mãi về sau. Điều kiện chung: huongKhuyenMai.
   const thuocDienMienPhi = huongKhuyenMai(f, {
-    goi, homNay: new Date().toISOString().slice(0, 10), coChu: true,
+    goi, homNay: ngayGui, coChu: true,
     soNgayMoTk, role: hs.role, freeQuota: hs.free_quota, ngayTaoTk: hs.created_at ? new Date(new Date(hs.created_at).getTime() + 7 * 3_600_000).toISOString().slice(0, 10) : undefined,
   });
 
