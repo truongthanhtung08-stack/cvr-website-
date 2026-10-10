@@ -137,6 +137,10 @@ export const categorySpecs: CategorySpec[] = [
       { key: "view", label: "Hướng view", type: "select", options: ["Biển", "Sông", "Hồ", "Núi", "Thành phố", "Hồ bơi", "Sân golf", "Nội khu"] },
       { key: "profit", label: "Cam kết lợi nhuận", type: "text", placeholder: "VD: 8%/năm" },
       { key: "operator", label: "Đơn vị vận hành", type: "text" },
+      { key: "floor", label: "Tầng số", type: "text", placeholder: "VD: Tầng 12" },
+      { key: "block", label: "Block / Toà / Tháp", type: "text", placeholder: "VD: Block A" },
+      mgmtFeeField,
+      { key: "soHuu", label: "Thời hạn sở hữu", type: "select", options: ["Lâu dài", "50 năm"] },
     ],
   },
   // CHUNG CƯ và CĂN HỘ là HAI loại hình RIÊNG BIỆT (yêu cầu 13/8/2026) — trước đây
@@ -153,6 +157,9 @@ export const categorySpecs: CategorySpec[] = [
       { key: "balcony", label: "Hướng ban công", type: "select", options: directions, main: true },
       { key: "view", label: "Hướng view", type: "select", options: ["Biển", "Sông", "Hồ", "Công viên", "Núi", "Thành phố", "Hồ bơi", "Nội khu"] },
       mgmtFeeField,
+      { key: "maCan", label: "Mã căn", type: "text", placeholder: "VD: A-18.05" },
+      { key: "canGoc", label: "Căn góc", type: "select", options: ["Có", "Không"] },
+      { key: "choDauXe", label: "Chỗ đậu xe", type: "select", options: ["Ô tô", "Xe máy", "Không có"] },
     ],
   },
   {
@@ -166,6 +173,9 @@ export const categorySpecs: CategorySpec[] = [
       { key: "balcony", label: "Hướng ban công", type: "select", options: directions, main: true },
       { key: "view", label: "Hướng view", type: "select", options: ["Biển", "Sông", "Hồ", "Công viên", "Núi", "Thành phố", "Hồ bơi", "Nội khu"] },
       mgmtFeeField,
+      { key: "maCan", label: "Mã căn", type: "text", placeholder: "VD: A-18.05" },
+      { key: "canGoc", label: "Căn góc", type: "select", options: ["Có", "Không"] },
+      { key: "choDauXe", label: "Chỗ đậu xe", type: "select", options: ["Ô tô", "Xe máy", "Không có"] },
     ],
   },
   {
@@ -199,6 +209,9 @@ export const categorySpecs: CategorySpec[] = [
       { key: "floors", label: "Số tầng", type: "text", placeholder: "VD: 3" },
       { key: "pccc", label: "Hệ thống PCCC", type: "select", options: ["Đã có", "Chưa có"] },
       { key: "grade", label: "Hạng toà nhà", type: "select", options: ["Hạng A", "Hạng B", "Hạng C", "Nhà phố"] },
+      { key: "thangMay", label: "Thang máy", type: "select", options: ["Có", "Không"] },
+      { key: "choDauXe", label: "Chỗ đậu xe", type: "select", options: ["Ô tô", "Xe máy", "Không có"] },
+      { key: "gioLamViec", label: "Giờ làm việc toà nhà", type: "text", placeholder: "VD: 7h–22h" },
     ],
   },
   {
@@ -215,6 +228,8 @@ export const categorySpecs: CategorySpec[] = [
       { key: "gardenArea", label: "Diện tích sân vườn", type: "number", unit: "m²" },
       { key: "pool", label: "Hồ bơi riêng", type: "select", options: ["Có", "Không"] },
       { key: "view", label: "View / cảnh quan", type: "select", options: ["Biển", "Sông", "Hồ", "Núi / đồi", "Sân golf", "Công viên", "Nội khu"] },
+      { key: "choDauOto", label: "Chỗ đậu ô tô", type: "text", placeholder: "VD: 2 xe" },
+      { key: "gara", label: "Gara", type: "select", options: ["Có", "Không"] },
     ],
   },
   {
@@ -231,6 +246,8 @@ export const categorySpecs: CategorySpec[] = [
       { key: "corner", label: "Vị trí", type: "select", options: ["Lô góc 3 mặt tiền", "Lô góc 2 mặt tiền", "1 mặt tiền", "Trong khu"] },
       { key: "pccc", label: "Hệ thống PCCC", type: "select", options: ["Đã có", "Chưa có"] },
       builtYearField,
+      { key: "thangMay", label: "Thang máy", type: "select", options: ["Có", "Không"] },
+      { key: "viaHe", label: "Vỉa hè", type: "number", unit: "m" },
     ],
   },
   {
@@ -245,6 +262,9 @@ export const categorySpecs: CategorySpec[] = [
       balconyField,
       { key: "corner", label: "Vị trí", type: "select", options: ["Lô góc 3 mặt tiền", "Lô góc 2 mặt tiền", "1 mặt tiền"] },
       builtYearField,
+      { key: "ketCau", label: "Kết cấu", type: "select", options: ["Nhà cấp 4", "Nhà kiên cố", "Nhà gác lửng"] },
+      { key: "thangMay", label: "Thang máy", type: "select", options: ["Có", "Không"] },
+      { key: "viaHe", label: "Vỉa hè", type: "number", unit: "m" },
     ],
   },
   {
@@ -255,6 +275,10 @@ export const categorySpecs: CategorySpec[] = [
       { key: "roomArea", label: "Diện tích mỗi phòng", type: "number", unit: "m²", main: true },
       { key: "wc", label: "Vệ sinh", type: "select", options: ["Khép kín", "Chung"], main: true },
       floorsField,
+      { key: "gacLung", label: "Gác lửng", type: "select", options: ["Có", "Không"] },
+      { key: "choDeXe", label: "Chỗ để xe", type: "select", options: ["Có", "Không"] },
+      { key: "gioGiac", label: "Giờ giấc", type: "select", options: ["Tự do", "Có giờ giấc"] },
+      { key: "soNguoiToiDa", label: "Số người ở tối đa", type: "text", placeholder: "VD: 2" },
     ],
   },
   {
@@ -269,6 +293,8 @@ export const categorySpecs: CategorySpec[] = [
       balconyField,
       accessField,
       builtYearField,
+      { key: "ketCau", label: "Kết cấu", type: "select", options: ["Nhà cấp 4", "Nhà kiên cố", "Nhà gác lửng"] },
+      { key: "otoDoCua", label: "Ô tô đỗ cửa", type: "select", options: ["Có", "Không"] },
     ],
   },
   {
@@ -306,6 +332,7 @@ export const rentFields: Field[] = [
   { key: "deposit", label: "Tiền cọc", type: "text", placeholder: "VD: 3 tháng" },
   { key: "elecPrice", label: "Giá điện", type: "text", placeholder: "VD: 3.500đ/kWh · theo nhà nước" },
   { key: "waterPrice", label: "Giá nước", type: "text", placeholder: "VD: 15.000đ/m³ · theo nhà nước" },
+  { key: "phiDichVu", label: "Phí dịch vụ", type: "text", placeholder: "VD: wifi, rác, gửi xe" },
 ];
 
 // ── LOẠI HÌNH BÁO GIÁ THUÊ THEO M² ─────────────────────────────────────────
