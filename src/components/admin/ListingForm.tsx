@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import ChonHoacGhi from "@/components/ChonHoacGhi";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { lamMoiWeb } from "@/lib/lamMoiWeb";
@@ -662,11 +663,14 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {specFields.map((f) => (
             <Field key={f.key} label={f.label + (f.unit ? ` (${f.unit})` : "")}>
-              {f.type === "select" ? (
+              {f.type === "select" && f.options === directions ? (
+                // Hướng: đủ 8 hướng — chỉ chọn.
                 <select value={specValues[f.key] ?? ""} onChange={(e) => setSpecValues((s) => ({ ...s, [f.key]: e.target.value }))} className={inputCls}>
                   <option value="">Chọn</option>
                   {f.options?.map((o) => <option key={o} value={o}>{o}</option>)}
                 </select>
+              ) : f.type === "select" ? (
+                <ChonHoacGhi value={specValues[f.key] ?? ""} onChange={(v) => setSpecValues((s) => ({ ...s, [f.key]: v }))} options={f.options ?? []} className={inputCls} />
               ) : (
                 <input type="text" value={specValues[f.key] ?? ""} onChange={(e) => setSpecValues((s) => ({ ...s, [f.key]: e.target.value }))} placeholder={f.placeholder ?? ""} className={inputCls} />
               )}
@@ -679,16 +683,10 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
             </select>
           </Field>
           <Field label="Tình trạng pháp lý">
-            <select value={legal} onChange={(e) => setLegal(e.target.value)} className={inputCls}>
-              <option value="">Chọn</option>
-              {chonPhapLy.map((o) => <option key={o} value={o}>{o}</option>)}
-            </select>
+            <ChonHoacGhi value={legal} onChange={setLegal} options={chonPhapLy} className={inputCls} />
           </Field>
           <Field label="Tình trạng nội thất">
-            <select value={furnish} onChange={(e) => setFurnish(e.target.value)} className={inputCls}>
-              <option value="">Chọn</option>
-              {chonNoiThat.map((o) => <option key={o} value={o}>{o}</option>)}
-            </select>
+            <ChonHoacGhi value={furnish} onChange={setFurnish} options={chonNoiThat} className={inputCls} />
           </Field>
         </div>
       </Panel>

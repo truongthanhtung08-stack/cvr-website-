@@ -6,6 +6,7 @@ import BangGiaGoiTin from "@/components/BangGiaGoiTin";
 import { linkHopLe } from "@/lib/linkChen";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import ChonHoacGhi from "@/components/ChonHoacGhi";
 import { donViGiaNenDung, goiYDienTich, goiYGia, goiYTieuDe } from "@/lib/goiYNhapTin";
 import { haiDongDiaChi, doiHeGiuNguyen, chuoiTimBanDo, ungVienPhuongCu, type NhoHaiHe } from "@/lib/diaChiHaiHe";
 import {
@@ -355,11 +356,14 @@ export default function PostListingForm() {
   const oNhapSpec = (f: Field) => (
     <div key={f.key} className="min-w-0">
       <Label>{f.label}{f.unit ? ` (${f.unit})` : ""}{f.batBuoc ? " *" : ""}</Label>
-      {f.type === "select" ? (
+      {f.type === "select" && f.options === directions ? (
+        // Hướng: đủ 8 hướng — chỉ chọn.
         <select value={specValues[f.key] ?? ""} onChange={(e) => setSpecValues((s) => ({ ...s, [f.key]: e.target.value }))} className={inputCls}>
           <option value="">Chọn</option>
           {f.options?.map((o) => <option key={o} value={o}>{o}</option>)}
         </select>
+      ) : f.type === "select" ? (
+        <ChonHoacGhi value={specValues[f.key] ?? ""} onChange={(v) => setSpecValues((s) => ({ ...s, [f.key]: v }))} options={f.options ?? []} className={inputCls} />
       ) : (
         <input type="text" value={specValues[f.key] ?? ""} onChange={(e) => setSpecValues((s) => ({ ...s, [f.key]: e.target.value }))} placeholder={f.placeholder ?? ""} className={inputCls} />
       )}
@@ -1155,22 +1159,14 @@ export default function PostListingForm() {
           {coNoiThat(loaiHinh) && (
             <div>
               <Label>Tình trạng nội thất</Label>
-              <select value={furnish} onChange={(e) => setFurnish(e.target.value)} className={inputCls}>
-                <option value="">Chọn</option>
-                {furnishLevels.map((o) => <option key={o} value={o}>{o}</option>)}
-              </select>
+              <ChonHoacGhi value={furnish} onChange={setFurnish} options={furnishLevels} className={inputCls} />
             </div>
           )}
           <div>
             <Label>Tình trạng pháp lý</Label>
-            <select value={legal} onChange={(e) => setLegal(e.target.value)} className={inputCls}>
-              <option value="">Chọn</option>
-              {/* Danh mục theo ĐÚNG loại hình: đất chỉ sổ đỏ, căn hộ chỉ sổ hồng.
-                  Tin cũ đang giữ giá trị ngoài danh mục thì vẫn để nguyên, không
-                  âm thầm xoá mất thứ người đăng đã chọn. */}
-              {legal && !phapLyCho(loaiHinh).includes(legal) && <option value={legal}>{legal}</option>}
-              {phapLyCho(loaiHinh).map((o) => <option key={o} value={o}>{o}</option>)}
-            </select>
+            {/* Danh mục theo ĐÚNG loại hình: đất chỉ sổ đỏ, căn hộ chỉ sổ hồng. Giá trị ngoài danh
+                mục (tin cũ, khách tự ghi) hiện ở ô gõ, không bị xoá. */}
+            <ChonHoacGhi value={legal} onChange={setLegal} options={phapLyCho(loaiHinh)} className={inputCls} />
           </div>
         </div>
       </Card>

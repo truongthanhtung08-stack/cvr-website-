@@ -283,7 +283,7 @@ export const categorySpecs: CategorySpec[] = [
       { key: "landTerm", label: "Thời hạn sử dụng", type: "select", options: ["Lâu dài", "Có thời hạn"] },
       { key: "corner", label: "Vị trí lô", type: "text", placeholder: "VD: Lô góc 2 mặt tiền" },
       { key: "blocks", label: "Số lô / nền", type: "text", placeholder: "VD: Lô A12" },
-      { key: "shape", label: "Hình dạng lô", type: "select", options: ["Vuông vức", "Nở hậu", "Thóp hậu", "Chữ L", "Khác"] },
+      { key: "shape", label: "Hình dạng lô", type: "select", options: ["Vuông vức", "Nở hậu", "Thóp hậu", "Chữ L"] },
       { key: "landState", label: "Hiện trạng đất", type: "text", placeholder: "VD: Đất trống" },
       { key: "planning", label: "Quy hoạch / lộ giới", type: "text", placeholder: "VD: Không dính quy hoạch · Lộ giới 5m" },
     ],
