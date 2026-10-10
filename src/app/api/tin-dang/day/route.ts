@@ -137,7 +137,8 @@ export async function POST(request: Request) {
   const ho = hs?.[0];
   const canHoaDon = Boolean(ho?.xuat_hoa_don);
 
-  const { error: loiSo } = await admin.from("doanh_thu").insert({
+  // Voucher phủ hết giá (0đ) → không có doanh thu, không ghi sổ (cùng luật với duyệt tin).
+  const { error: loiSo } = tien.tongTra <= 0 ? { error: null } : await admin.from("doanh_thu").insert({
     user_id: user.id,
     listing_id: id,
     loai: "day_tin",

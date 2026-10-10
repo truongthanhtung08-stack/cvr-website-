@@ -24,7 +24,7 @@ import { getTier } from "@/lib/packages";
 //    người mở tài khoản trong 24 giờ trước lúc chạy → mỗi người đúng MỘT tin. Chỉ gửi khi
 //    chương trình "free" trong admin Giá & quy định đang chạy, đúng diện thành viên mới,
 //    gói CVR Basic — tin nhắn không bao giờ hứa điều web không áp dụng. Hạn ưu đãi của
-//    từng người = ngày mở tài khoản + free.days, không quá ngày kết thúc chương trình.
+//    từng người = ngày thành viên + free.days (kể cả sau ngày kết thúc chương trình — luật 03/10).
 //    Cron 8h sáng nằm trong khung 7h–22h Zalo cho phép tag 3 (từ 15/10/2026).
 // Bảo mật: Vercel Cron tự gắn "Authorization: Bearer $CRON_SECRET".
 // ============================================================================
@@ -110,11 +110,15 @@ export async function GET(request: Request) {
         // tài khoản tạo hộ = lần đầu chính chủ vào — cùng mốc với huongKhuyenMai / so_ngay_hien_thi.
         .select("id,email,phone,full_name,role,created_at:ngay_thanh_vien")
         .gte("ngay_thanh_vien", new Date(bayGio - 86_400_000).toISOString())
-        .lt("ngay_thanh_vien", new Date(bayGio).toISOString());
+        .lt("ngay_thanh_vien", new Date(bayGio).toISOString())
+        // Tài khoản TẠO HỘ chưa được chính chủ vào → chưa là thành viên, chưa nhắn (nhắn lúc họ vào lần đầu).
+        .or("tao_ho.eq.false,vao_chinh_thuc_luc.not.is.null");
       for (const n of (moi ?? []) as (Nguoi & { created_at: string })[]) {
         if (n.role === "admin") continue;
         const hetUuDai = new Date(new Date(n.created_at).getTime() + free.days * 86_400_000 + 7 * 3_600_000).toISOString().slice(0, 10);
-        const han = ngayVn(free.to && free.to < hetUuDai ? free.to : hetUuDai);
+        // Hạn = ngày thành viên + free.days — KỂ CẢ sau ngày kết thúc chương trình (luật chốt 03/10/2026,
+        // huongKhuyenMai): vào trong thời gian chương trình là được đủ số ngày.
+        const han = ngayVn(hetUuDai);
         await guiThongBao({
           email: n.email,
           phone: n.phone,
