@@ -668,7 +668,7 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
                   {f.options?.map((o) => <option key={o} value={o}>{o}</option>)}
                 </select>
               ) : (
-                <input type={f.type === "number" ? "number" : "text"} value={specValues[f.key] ?? ""} onChange={(e) => setSpecValues((s) => ({ ...s, [f.key]: e.target.value }))} placeholder={f.placeholder ?? ""} className={inputCls} />
+                <input type="text" value={specValues[f.key] ?? ""} onChange={(e) => setSpecValues((s) => ({ ...s, [f.key]: e.target.value }))} placeholder={f.placeholder ?? ""} className={inputCls} />
               )}
             </Field>
           ))}

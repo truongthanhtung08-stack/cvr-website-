@@ -280,9 +280,13 @@ export default function PostListingForm() {
   let demBuoc = 0;
   const buoc = () => String(++demBuoc);
 
-  // Ô nhập một mục đặc điểm — dùng chung cho cả hai khối để hai bên không lệch nhau
-  const ONhapSpec = ({ f }: { f: Field }) => (
-    <div className="min-w-0">
+  // Ô nhập một mục đặc điểm — dùng chung cho cả hai khối để hai bên không lệch nhau.
+  // ⛔ Gọi như HÀM (`oNhapSpec(f)`), KHÔNG dùng `<ONhapSpec />`: khai báo trong thân
+  // component thì mỗi lần gõ React coi là component mới, gỡ ô cũ → ô mất con trỏ,
+  // khách chỉ gõ được một ký tự (lỗi 10/10/2026).
+  // Ô chữ nhận MỌI ký tự (chữ, số, ký tự đặc biệt) — không ép bàn phím số.
+  const oNhapSpec = (f: Field) => (
+    <div key={f.key} className="min-w-0">
       <Label>{f.label}{f.unit ? ` (${f.unit})` : ""}{f.batBuoc ? " *" : ""}</Label>
       {f.type === "select" ? (
         <select value={specValues[f.key] ?? ""} onChange={(e) => setSpecValues((s) => ({ ...s, [f.key]: e.target.value }))} className={inputCls}>
@@ -290,7 +294,7 @@ export default function PostListingForm() {
           {f.options?.map((o) => <option key={o} value={o}>{o}</option>)}
         </select>
       ) : (
-        <input type="text" inputMode={f.type === "number" ? "decimal" : undefined} value={specValues[f.key] ?? ""} onChange={(e) => setSpecValues((s) => ({ ...s, [f.key]: e.target.value }))} placeholder={f.placeholder ?? ""} className={inputCls} />
+        <input type="text" value={specValues[f.key] ?? ""} onChange={(e) => setSpecValues((s) => ({ ...s, [f.key]: e.target.value }))} placeholder={f.placeholder ?? ""} className={inputCls} />
       )}
     </div>
   );
@@ -1063,7 +1067,7 @@ export default function PostListingForm() {
             Lưới 2/3 cột tự co theo số mục nên không chừa ô trống, không xén chữ. */}
         {specChinh.length > 0 && (
           <div className={`mt-4 grid min-w-0 grid-cols-1 gap-4 ${specChinh.length === 2 ? "sm:grid-cols-2" : specChinh.length >= 3 ? "sm:grid-cols-2 lg:grid-cols-3" : ""}`}>
-            {specChinh.map((f) => <ONhapSpec key={f.key} f={f} />)}
+            {specChinh.map(oNhapSpec)}
           </div>
         )}
       </Card>
@@ -1071,7 +1075,7 @@ export default function PostListingForm() {
       {/* 4. Đặc điểm theo loại hình (động) */}
       <Card step={buoc()} title={`Đặc điểm — ${spec.label}`}>
         <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {specDacDiem.map((f) => <ONhapSpec key={f.key} f={f} />)}
+          {specDacDiem.map(oNhapSpec)}
           {/* Trường DÙNG CHUNG mọi loại hình: Hướng · Nội thất · Pháp lý */}
           <div>
             <Label>Hướng nhà / đất</Label>
