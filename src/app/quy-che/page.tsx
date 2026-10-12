@@ -30,12 +30,12 @@ export default function QuyChePage() {
     <TrangPhapLy
       title="Quy chế hoạt động"
       capNhat="17/08/2026"
-      moDau="Quy chế này mô tả cách cổng thông tin coastalland.vn vận hành: ai được tham gia, tin đăng đi qua những bước nào, mỗi bên có quyền và nghĩa vụ gì. Quy chế áp dụng cho toàn bộ thành viên và khách truy cập."
+      moDau="Quy chế này mô tả cách cổng thông tin coastalland.vn vận hành: Đối tượng được tham gia, tin/ bài đăng thực hiện qua những bước nào, mỗi bên có quyền và nghĩa vụ gì. Quy chế áp dụng cho toàn bộ thành viên và khách truy cập."
     >
       <Muc so={1} title="Nguyên tắc chung">
         <p>
           Coastal Land (coastalland.vn) là <strong className="font-semibold text-cvr-ink">cổng thông tin bất động sản</strong>:
-          nơi người có nhà đất đăng thông tin và người tìm mua, tìm thuê tra cứu, kết nối trực tiếp với nhau.
+          nơi người có nhà đất, chuyên gia, môi giới đăng thông tin và người mua/ người thuê tra cứu, kết nối trực tiếp.
         </p>
         <p>Coastal Land không mua bán, không phân phối, không ký gửi, không môi giới, không định giá và không đứng ra thực hiện giao dịch. Chúng tôi không thu hoa hồng từ giao dịch giữa các bên.</p>
         <p>Cổng thông tin hoạt động theo pháp luật Việt Nam. Nội dung tin đăng do thành viên cung cấp và thuộc trách nhiệm của thành viên đó.</p>
@@ -71,7 +71,7 @@ export default function QuyChePage() {
         </p>
       </Muc>
 
-      <Muc so={4} title="Quyền và nghĩa vụ của thành viên đăng tin">
+      <Muc so={4} title="Quyền và nghĩa vụ của thành viên">
         <p>Quyền:</p>
         <DanhSach
           items={[
@@ -108,7 +108,7 @@ export default function QuyChePage() {
       <Muc so={6} title="Phí dịch vụ và thanh toán">
         <DanhSach
           items={[
-            <>Các dịch vụ đăng tin và quảng bá tin có <Link href="/bao-gia-dang-tin" className="font-semibold text-cvr-blue-ink underline">bảng giá</Link> công bố công khai trên website.</>,
+            <>Các dịch vụ đăng tin và quảng bá tin gồm <Link href="/bao-gia-dang-tin" className="font-semibold text-cvr-blue-ink underline">bảng giá</Link> công bố công khai trên website.</>,
             "Tin đã hiển thị đủ thời hạn của gói thì phí dịch vụ được xem là đã sử dụng.",
             "Bảng giá có thể thay đổi; thay đổi chỉ áp dụng cho giao dịch phát sinh sau thời điểm công bố.",
           ]}
@@ -121,7 +121,7 @@ export default function QuyChePage() {
           <Link href="/bao-mat" className="font-semibold text-cvr-blue-ink underline">
             Chính sách bảo mật
           </Link>
-          . Thông tin liên hệ hiển thị trên tin đăng là do chính thành viên chủ động công bố để người mua liên lạc.
+          . Thông tin liên hệ hiển thị trên tin đăng, bài đăng là do chính thành viên chủ động công bố để người mua liên lạc.
         </p>
       </Muc>
 
@@ -138,7 +138,7 @@ export default function QuyChePage() {
 
       <Muc so={9} title="Sửa đổi quy chế">
         <p>
-          Coastal Land có thể cập nhật quy chế này. Bản mới có hiệu lực kể từ khi đăng trên trang này. Việc tiếp tục sử
+          Coastal Land có thể cập nhật, bổ sung quy chế này. Bản mới có hiệu lực kể từ khi công bố. Việc tiếp tục sử
           dụng website sau thời điểm đó được xem là đã chấp nhận nội dung mới.
         </p>
       </Muc>
