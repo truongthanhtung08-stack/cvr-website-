@@ -20,41 +20,40 @@ export const metadata: Metadata = {
   alternates: { canonical: "/huong-dan" },
   title: "Hướng dẫn đăng tin",
   description:
-    "Hướng dẫn từng bước đăng tin bán, cho thuê nhà đất trên Coastal Land: chuẩn bị thông tin, điền biểu mẫu, chọn gói tin, chờ duyệt và theo dõi hiệu quả tin.",
+    "Hướng dẫn từng bước đăng tin mua bán, cho thuê nhà đất trên Coastal Land: chuẩn bị thông tin, điền biểu mẫu, chọn gói tin, chờ duyệt và theo dõi hiệu quả tin.",
 };
 
 export default function HuongDanPage() {
   return (
     <TrangPhapLy
       title="Hướng dẫn đăng tin"
-      moDau="Đăng một tin trên Coastal Land mất khoảng 10 phút nếu bạn đã chuẩn bị sẵn ảnh và thông tin. Làm theo các bước dưới đây, tin của bạn sẽ được duyệt nhanh và ít bị trả về."
+      moDau="Việc đăng một tin mua bán, cho thuê hoặc các mục đích liên quan (Tin đăng) trên Coastal Land mất khoảng 05 phút nếu bạn đã chuẩn bị sẵn hình ảnh và thông tin. Hãy làm theo các bước dưới đây, tin của bạn sẽ được duyệt nhanh nhất."
     >
-      <Muc so={1} title="Chuẩn bị trước khi ngồi vào máy">
-        <p>Có sẵn những thứ này thì việc điền biểu mẫu diễn ra một mạch, không phải bỏ dở:</p>
+      <Muc so={1} title="Chuẩn bị trước khi đăng tin">
+        <p>Chuẩn bị sẵn những yêu cầu sau:</p>
         <DanhSach
           items={[
             "Ảnh thật của bất động sản — tối thiểu 4–5 tấm: mặt tiền, phòng khách, phòng ngủ, bếp, view. Chụp ngang, đủ sáng.",
             "Địa chỉ theo đơn vị hành chính MỚI (2 cấp): số nhà, tên đường — Phường/Xã — Tỉnh/Thành phố. Không còn cấp Quận/Huyện.",
             "Diện tích đất, diện tích xây dựng, số phòng ngủ, phòng tắm, hướng nhà.",
-            "Giá bán hoặc giá thuê mỗi tháng. Chưa muốn công bố thì chọn “Thoả thuận”.",
+            "Giá bán hoặc giá thuê mỗi tháng. Hoặc “Thoả thuận”.",
             "Tình trạng pháp lý: sổ đỏ / sổ hồng, hợp đồng mua bán, đang chờ sổ…",
-            "Số điện thoại người mua liên hệ trực tiếp.",
+            "Số điện thoại và thông tin liên hệ.",
           ]}
         />
       </Muc>
 
       <Muc so={2} title="Đăng nhập tài khoản">
         <p>
-          Tin đăng gắn với tài khoản của bạn để sau này còn sửa, đăng lại và xem lượt quan tâm. Chưa có tài khoản thì{" "}
+          Tin đăng gắn với tài khoản của bạn, Với tài khoản này bạn có thể quản lý, chỉnh sửa tin đăng, theo dõi và quản lý khách hàng dễ dàng và thuận tiện. Nếu chưa có tài khoản hãy{" "}
           <Link href="/dang-ky" className="font-semibold text-cvr-blue-ink underline">
             đăng ký
           </Link>{" "}
-          bằng email hoặc số điện thoại; có rồi thì{" "}
+          bằng nhiều phương thức nhuw: gmail, số điện thoai, zalo, facebook ...{" "} đã có tài khoản thì chỉ đăng nhập
           <Link href="/dang-nhap" className="font-semibold text-cvr-blue-ink underline">
             đăng nhập
           </Link>
-          .
-        </p>
+          </p>
       </Muc>
 
       <Muc so={3} title="Điền biểu mẫu đăng tin">
@@ -87,7 +86,7 @@ export default function HuongDanPage() {
         </p>
       </Muc>
 
-      <Muc so={4} title="Viết mô tả sao cho hiệu quả">
+      <Muc so={4} title="Viết mô tả thât hiệu quả">
         <DanhSach
           items={[
             "Câu đầu tiên nói ngay điều đáng giá nhất: vị trí, view, hoặc mức giá so với khu vực.",
@@ -122,21 +121,19 @@ export default function HuongDanPage() {
             "Ảnh mờ, ảnh chụp màn hình, ảnh có đóng logo của đơn vị khác.",
             "Giá hoặc diện tích ghi sai đơn vị (VD: nhập 4 tỷ thành 4 triệu).",
             "Địa chỉ chung chung, không xác định được phường/xã.",
-            "Một bất động sản đăng thành nhiều tin để chiếm chỗ.",
             "Mô tả sao chép từ tin khác, hoặc chèn số điện thoại, link ngoài.",
           ]}
         />
       </Muc>
 
-      <Muc so={7} title="Theo dõi và chăm tin">
+      <Muc so={7} title="Theo dõi và Quản lý tin đăng">
         <p>
           Vào{" "}
           <Link href="/tai-khoan/tin-dang" className="font-semibold text-cvr-blue-ink underline">
             Tin đăng của tôi
           </Link>{" "}
-          để sửa nội dung, đăng lại hoặc gỡ tin khi đã bán. Bán xong mà quên gỡ, người mua vẫn gọi và tin của bạn bị đánh
-          giá là tin ảo — nên gỡ ngay giúp chúng tôi.
-        </p>
+          để sửa nội dung, đăng lại hoặc gỡ tin khi đã bán hoặc đã giao dịch. Quản lý, theo dõi khach hàng với tin bạn đã đăng để biết thông tin người quan tâm, lượt đọc tin... và lấy thông tin liên hệ của khách hàng.
+          </p>
         <p>
           Cần hỗ trợ trong lúc đăng, gọi{" "}
           <a href="tel:+84377985036" className="font-semibold text-cvr-blue-ink underline">
