@@ -51,4 +51,4 @@ export const DONG_GIAY_PHEP = PHAP_LY.maSoThue
 // không định giá, không phải một bên trong giao dịch. Bỏ ý này = tự nhận trách nhiệm
 // pháp lý cho tin đăng của người khác.
 export const MIEN_TRU =
-  "Coastal Land là cổng thông tin bất động sản. Thông tin trong tin đăng do người bán, người cho thuê và môi giới cung cấp; chúng tôi kiểm duyệt trước khi hiển thị nhưng không bảo đảm tuyệt đối tính chính xác. Coastal Land không mua bán, không phân phối, không ký gửi, không môi giới, không định giá và không phải một bên trong giao dịch. Trước khi đặt cọc hay thanh toán, quý khách vui lòng tự kiểm tra thực địa và đối chiếu giấy tờ pháp lý.";
+  "Coastal Land là cổng thông tin bất động sản. Chúng tôi kiểm duyệt trước khi hiển thị nhằm đảm bảo mọi thông tin được xác thực. Coastal Land không mua bán, không phân phối, không ký gửi, không môi giới, và không phải một bên trong giao dịch. Trước khi đặt cọc hay thanh toán, quý khách vui lòng tự kiểm tra thực địa và đối chiếu giấy tờ pháp lý.";
