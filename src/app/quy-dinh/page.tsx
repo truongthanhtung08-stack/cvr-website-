@@ -28,36 +28,36 @@ export default function QuyDinhPage() {
     <TrangPhapLy
       title="Quy định đăng tin"
       capNhat="17/08/2026"
-      moDau="Vài quy định để tin đăng trên coastalland.vn giữ được chất lượng — người mua tin tưởng thì tin của bạn mới có giá trị. Áp dụng cho tin bán, cho thuê và dự án."
+      moDau="Những quy định để tin đăng trên coastalland.vn giữ được chất lượng và hiệu quả. Áp dụng cho tin mua bán, cho thuê và dự án."
     >
       <Muc so={1} title="Nguyên tắc chung">
         <p>
-          Mọi tin đăng đều được Coastal Land xem qua trước khi hiển thị công khai. Tin gửi lên sẽ ở trạng thái chờ duyệt
-          cho tới khi kiểm tra xong.
+          Mọi tin đăng đều được Coastal Land kiểm duyệt trước khi hiển thị công khai. Tin gửi lên sẽ ở trạng thái chờ duyệt
+          cho tới khi kiểm duyệt xong.
         </p>
-        <p>Người đăng là chủ sở hữu, người được chủ sở hữu uỷ quyền, hoặc môi giới đang nhận bán / cho thuê bất động sản đó.</p>
+        <p>Người đăng tin/ Thành viên là chủ sở hữu, người được chủ sở hữu uỷ quyền, hoặc đội ngũ chuyên gia, môi giới đang nhận bán / cho thuê bất động sản đó.</p>
       </Muc>
 
-      <Muc so={2} title="Điều kiện để một tin được duyệt">
+      <Muc so={2} title="Điều kiện để một tin đăng được duyệt">
         <DanhSach
           items={[
             "Thông tin đúng sự thật: vị trí, diện tích, giá, số phòng, tình trạng pháp lý.",
             "Giá ghi đúng đơn vị và là mức giá đang chào bán thật.",
             "Địa chỉ xác định được tới cấp Phường/Xã theo đơn vị hành chính mới (2 cấp: Tỉnh/Thành phố → Phường/Xã).",
-            "Ảnh là ảnh thật của chính bất động sản đang rao, còn mới, đủ sáng, thấy rõ hiện trạng.",
+            "Ảnh là ảnh thật của chính bất động sản đang rao bán, cho thuê, còn mới, đủ chất lượng, thấy rõ hiện trạng.",
             "Tiêu đề mô tả đúng bất động sản, không viết hoa toàn bộ, không chèn ký tự trang trí.",
             "Loại hình và nhu cầu (bán / cho thuê) chọn đúng danh mục.",
-            "Số điện thoại liên hệ là số đang dùng và người nghe nắm được thông tin bất động sản.",
+            "Số điện thoại liên hệ là số đang dùng, đã xác thực",
           ]}
         />
       </Muc>
 
-      <Muc so={3} title="Những nội dung chúng tôi không đăng">
+      <Muc so={3} title="Những nội dung chúng tôi từ chối hiển thị trên website">
         <DanhSach
           items={[
             "Tin không có thật, hoặc tin đã bán / đã cho thuê xong mà vẫn để lại.",
             "Cùng một bất động sản chia thành nhiều tin, hoặc đăng lại liên tục để đẩy lên đầu danh sách.",
-            "Nội dung, hình ảnh của người khác khi chưa được họ đồng ý; ảnh còn logo hoặc số điện thoại của đơn vị khác.",
+            "Nội dung, hình ảnh của người khác khi chưa được đồng ý; ảnh còn logo hoặc số điện thoại của đơn vị khác.",
             "Số điện thoại, email, đường dẫn website ngoài đặt trong tiêu đề, mô tả hoặc trên hình ảnh.",
             "Thông tin chưa chính xác về quy hoạch, pháp lý hay tiến độ dự án.",
             "Nội dung trái quy định pháp luật hoặc thuần phong mỹ tục.",
@@ -71,26 +71,26 @@ export default function QuyDinhPage() {
         <DanhSach
           items={[
             "Tối thiểu 1 ảnh; nên có từ 4 ảnh trở lên để tin được người mua bấm vào nhiều hơn.",
-            "Không dùng ảnh chụp màn hình, ảnh phối cảnh thay cho hiện trạng thật mà không ghi rõ.",
+            "Không dùng ảnh chụp màn hình, ảnh phối cảnh thay cho bất động sản mà không ghi chú rõ.",
             "Không chèn chữ quảng cáo, khung viền, số điện thoại lên ảnh.",
             "Ảnh phối cảnh, ảnh minh hoạ dự án phải được ghi chú rõ là phối cảnh.",
-            "Video (tệp tải lên hoặc link YouTube) phải quay chính bất động sản đang rao.",
+            "Video (tệp tải lên hoặc link YouTube) phải là của chính bất động sản đang rao bán/ cho thuê.",
           ]}
         />
       </Muc>
 
       <Muc so={5} title="Thời hạn, đăng lại và đẩy tin">
         <p>
-          Mỗi tin hiển thị theo thời hạn của gói đã chọn (xem{" "}
+          Mỗi tin hiển thị theo thời hạn của gói tin đã chọn (xem{" "}
           <Link href="/bao-gia-dang-tin" className="font-semibold text-cvr-blue-ink underline">
             Báo giá dịch vụ
           </Link>
-          ). Hết hạn, tin tự ẩn khỏi danh sách; bạn có thể đăng lại (chọn gói mới, ngày đăng và thời hạn tính lại từ lúc đăng lại) trong mục{" "}
+          ). Hết hạn, tin tự ẩn khỏi danh sách; bạn có thể chọn để đăng lại (chọn gói mới, ngày đăng và thời hạn tính lại từ lúc đăng lại tin) trong mục{" "}
           <Link href="/tai-khoan/tin-dang" className="font-semibold text-cvr-blue-ink underline">
             Tin đăng của tôi
           </Link>
           . Đẩy tin chỉ áp dụng cho tin đang hiển thị: tin lên đầu danh sách, ngày đăng và thời hạn giữ nguyên; lượt
-          đẩy của gói dùng trong thời hạn hiển thị, tin hết hạn thì lượt còn lại hết theo. Bất động sản đã giao dịch
+          đẩy của gói dùng trong thời hạn hiển thị, tin hết hạn thì lượt đẩy còn lại cũng hết theo. Bất động sản đã giao dịch
           xong, đề nghị gỡ tin ngay.
         </p>
       </Muc>
@@ -110,7 +110,7 @@ export default function QuyDinhPage() {
 
       <Muc so={7} title="Khiếu nại quyết định kiểm duyệt">
         <p>
-          Nếu cho rằng tin bị từ chối chưa đúng, bạn gửi khiếu nại kèm mã tin qua trang{" "}
+          Nếu cho rằng tin bị từ chối không đúng lý do, bạn gửi khiếu nại kèm mã tin qua trang{" "}
           <Link href="/gop-y" className="font-semibold text-cvr-blue-ink underline">
             Góp ý, báo lỗi
           </Link>{" "}
