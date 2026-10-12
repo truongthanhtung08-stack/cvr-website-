@@ -28,7 +28,7 @@ export default function GopYPage() {
   return (
     <TrangPhapLy
       title="Góp ý, báo lỗi"
-      moDau="Website tốt lên nhờ người dùng nói thẳng. Thấy thông tin chưa đúng, ảnh không khớp, hay một nút bấm không chạy — bạn cho chúng tôi biết nhé."
+      moDau="Website phát triển và được hoàn thiện sẽ nhờ người dùng góp ý. Khi phát hiện hoặc thấy thông tin chưa chính xác, hình ảnh không khớp, lỗi hiển thị, hay bất cứ vấn đề gì liên quan đến thao tác đăng tin và hiển thị... rất mong bạn hãy góp ý cho chúng tôi."
     >
       <Muc title="Tin đăng có chỗ chưa ổn">
         <p>Bạn gửi cho chúng tôi khi gặp một trong các trường hợp sau:</p>
@@ -36,14 +36,14 @@ export default function GopYPage() {
           items={[
             "Tin đã bán / đã cho thuê nhưng vẫn còn hiển thị.",
             "Giá, diện tích, vị trí hoặc pháp lý chưa khớp với thực tế.",
-            "Ảnh không phải của bất động sản đó, hoặc là ảnh của người khác.",
+            "Hình ảnh không phải của bất động sản đó, hoặc là ảnh của người khác.",
             "Một bất động sản xuất hiện ở nhiều tin trùng nhau.",
-            "Hoặc bất cứ điều gì khiến bạn thấy chưa yên tâm về tin đăng đó.",
+            "Hoặc bất cứ điều gì khiến bạn thấy chưa yên tâm về tin đăng.",
           ]}
         />
         <p>
-          Bạn gửi kèm <strong className="font-semibold text-cvr-ink">đường dẫn (link) của tin</strong> giúp chúng tôi
-          kiểm tra nhanh hơn. Tin chưa đáp ứng sẽ được tạm ẩn hoặc gỡ theo{" "}
+          Bạn gửi kèm <strong className="font-semibold text-cvr-ink">đường dẫn (link) của tin</strong> để chúng tôi
+          kiểm tra và khắc phục ngay. Tin chưa đáp ứng sẽ được tạm ẩn hoặc gỡ theo{" "}
           <Link href="/quy-dinh" className="font-semibold text-cvr-blue-ink underline">
             Quy định đăng tin
           </Link>
@@ -52,11 +52,11 @@ export default function GopYPage() {
       </Muc>
 
       <Muc title="Báo lỗi kỹ thuật">
-        <p>Để chúng tôi tìm ra lỗi nhanh nhất, mô tả giúp 3 điều:</p>
+        <p>Để chúng tôi tìm ra lỗi nhanh nhất, mô tả giúp 3 điều sau:</p>
         <DanhSach
           items={[
             "Bạn đang ở trang nào (dán link) và bấm vào đâu thì lỗi xảy ra.",
-            "Bạn mong nó chạy thế nào, còn thực tế nó ra sao.",
+            "Bạn mong muốn tin được xử lý theo hướng nào, thực trạng ra sao.",
             "Bạn dùng điện thoại hay máy tính, trình duyệt gì (Chrome, Safari, Zalo…).",
           ]}
         />
@@ -65,8 +65,6 @@ export default function GopYPage() {
 
       <Muc title="Góp ý về nền tảng">
         <p>
-          Bạn muốn có thêm bộ lọc nào, thiếu khu vực nào, hay thấy chỗ nào khó dùng — cứ viết ra. Coastal Land đang trong
-          giai đoạn xây dựng, những góp ý này quyết định thứ tự việc chúng tôi làm tiếp.
         </p>
       </Muc>
 
