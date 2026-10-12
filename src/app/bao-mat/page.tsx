@@ -30,14 +30,14 @@ export default function BaoMatPage() {
     <TrangPhapLy
       title="Chính sách bảo mật"
       capNhat="28/09/2026"
-      moDau="Coastal Land (coastalland.vn) là cổng thông tin bất động sản. Trang này nói rõ chúng tôi thu thập dữ liệu gì của bạn, dùng để làm gì, chia sẻ với ai và bạn có quyền gì đối với dữ liệu đó. Bằng việc sử dụng website, bạn đồng ý với chính sách này."
+      moDau="Coastal Land (coastalland.vn) là cổng thông tin bất động sản. Chúng tôi thu thập dữ liệu gì của bạn, dùng để làm gì, chia sẻ với ai và bạn có quyền gì đối với dữ liệu đó. Bằng việc sử dụng website, bạn đồng ý với chính sách này."
     >
       <Muc so={1} title="Chúng tôi thu thập dữ liệu gì">
         <p><strong className="font-semibold text-cvr-ink">Khi bạn tạo tài khoản hoặc đăng nhập:</strong></p>
         <DanhSach
           items={[
             "Địa chỉ email, họ tên và ảnh đại diện — nếu bạn đăng nhập bằng Google, các thông tin này do Google cung cấp. Chúng tôi không bao giờ nhận được mật khẩu Google của bạn.",
-            "Số điện thoại, tên công ty, khu vực hoạt động — nếu bạn tự điền vào hồ sơ.",
+            "Số điện thoại, tên công ty, khu vực hoạt động — Khi bạn điền vào hồ sơ.",
           ]}
         />
         <p className="pt-2"><strong className="font-semibold text-cvr-ink">Khi bạn đăng tin:</strong></p>
@@ -49,7 +49,7 @@ export default function BaoMatPage() {
               <strong className="font-semibold text-cvr-ink">
                 Những thông tin này hiển thị CÔNG KHAI trên tin đăng
               </strong>{" "}
-              để người mua liên hệ với bạn — đó là mục đích của việc đăng tin. Đừng nhập vào đây thông tin bạn không muốn công khai.
+              để người mua liên hệ — đó là mục đích của việc đăng tin. Tránh nhập những thông tin bạn không muốn công khai.
             </>,
           ]}
         />
@@ -59,7 +59,7 @@ export default function BaoMatPage() {
           items={[
             "Số điện thoại Zalo — chỉ khi bạn bấm “Đăng nhập nhanh bằng Zalo” và đồng ý chia sẻ. Số dùng làm tài khoản đăng nhập chung với coastalland.vn, không hiển thị công khai.",
             "Tên và ảnh đại diện Zalo — để hiện tên tài khoản của bạn trong Mini App.",
-            "Ảnh bạn chọn từ thư viện hoặc chụp bằng camera — chỉ khi bạn bấm “Thêm ảnh” ở trang Đăng tin; ảnh chỉ dùng để hiển thị trong tin đăng của chính bạn.",
+            "Ảnh bạn chọn từ thư viện hoặc chụp bằng camera — chỉ khi bạn bấm “Thêm ảnh” ở trang Đăng tin; ảnh chỉ dùng để hiển thị trong tin đăng.",
             "Bạn có thể rút lại sự đồng ý bất cứ lúc nào trong phần quyền của Zalo. Khi nhận được yêu cầu rút đồng ý và xoá dữ liệu (từ Zalo hoặc gửi tới hotro@coastalland.vn), chúng tôi xoá dữ liệu cá nhân gắn với tài khoản của bạn trong vòng 30 ngày.",
           ]}
         />
@@ -67,7 +67,7 @@ export default function BaoMatPage() {
         <DanhSach
           items={[
             "Tin bạn đã lưu, tin đang so sánh, tin đã xem gần đây, lịch sử từ khoá tìm kiếm, và một vài tuỳ chọn hiển thị.",
-            "Các dữ liệu này nằm trong bộ nhớ trình duyệt (localStorage) trên chính máy bạn, KHÔNG được gửi về máy chủ của chúng tôi. Xoá dữ liệu duyệt web là chúng biến mất.",
+            "Các dữ liệu này nằm trong bộ nhớ trình duyệt (localStorage) trên chính máy bạn, KHÔNG được gửi về máy chủ của chúng tôi. Xoá dữ liệu duyệt web là những dữ liệu này sẽ mất trên máy của bạn.",
           ]}
         />
       </Muc>
@@ -75,10 +75,10 @@ export default function BaoMatPage() {
       <Muc so={2} title="Dùng để làm gì">
         <DanhSach
           items={[
-            "Tạo và quản lý tài khoản của bạn.",
-            "Hiển thị tin đăng của bạn tới người đang tìm mua, tìm thuê.",
+            "Tạo và quản lý tài khoản.",
+            "Hiển thị tin đăng tới người đang tìm mua, tìm thuê.",
             "Kiểm duyệt tin trước khi công bố, nhằm giữ chất lượng thông tin cho cả người mua lẫn người bán.",
-            "Liên hệ lại với bạn khi bạn gửi yêu cầu hỗ trợ, hoặc để hướng dẫn đăng tin.",
+            "Liên hệ lại khi cần gửi yêu cầu hỗ trợ, hoặc để hướng dẫn đăng tin.",
             "Cải thiện chức năng tìm kiếm và trải nghiệm sử dụng.",
           ]}
         />
@@ -115,26 +115,26 @@ export default function BaoMatPage() {
         <DanhSach
           items={[
             "Xem và sửa thông tin cá nhân bất cứ lúc nào trong mục Cài đặt tài khoản.",
-            "Ẩn hoặc xoá tin đăng của bạn.",
+            "Ẩn hoặc xoá tin đăng.",
             "Yêu cầu xoá toàn bộ tài khoản và dữ liệu liên quan.",
             "Rút lại sự đồng ý — bằng cách ngừng sử dụng dịch vụ và yêu cầu xoá tài khoản.",
           ]}
         />
         <p>
-          Để yêu cầu <strong className="font-semibold text-cvr-ink">xoá tài khoản và dữ liệu</strong>, gửi email từ chính địa chỉ bạn đã đăng ký tới{" "}
+          Để yêu cầu <strong className="font-semibold text-cvr-ink">xoá tài khoản và dữ liệu</strong>, gửi email từ chính địa chỉ đã đăng ký tới{" "}
           <a href="mailto:hotro@coastalland.vn" className="font-semibold text-cvr-blue-ink underline">
             hotro@coastalland.vn
           </a>{" "}
-          với tiêu đề &ldquo;Yêu cầu xoá tài khoản&rdquo;. Chúng tôi xử lý trong vòng 30 ngày làm việc và sẽ báo lại cho bạn khi hoàn tất.
+          với tiêu đề &ldquo;Yêu cầu xoá tài khoản&rdquo;. Chúng tôi xử lý trong vòng 30 ngày làm việc và sẽ báo lại khi hoàn tất.
         </p>
       </Muc>
 
       <Muc so={6} title="Lưu trữ và bảo mật">
         <p>
-          Dữ liệu tài khoản được lưu trong suốt thời gian bạn còn sử dụng dịch vụ. Khi bạn yêu cầu xoá tài khoản, chúng tôi xoá dữ liệu cá nhân, trừ phần buộc phải giữ lại theo quy định pháp luật (ví dụ chứng từ giao dịch, nếu có).
+          Dữ liệu tài khoản được lưu trong suốt thời gian sử dụng dịch vụ. Khi yêu cầu xoá tài khoản, chúng tôi xoá dữ liệu cá nhân, trừ phần buộc phải giữ lại theo quy định pháp luật (ví dụ chứng từ giao dịch, nếu có).
         </p>
         <p>
-          Kết nối tới website được mã hoá bằng HTTPS. Mật khẩu không bao giờ được lưu dưới dạng đọc được. Dù vậy, không có hệ thống nào an toàn tuyệt đối — bạn nên đặt mật khẩu mạnh và không chia sẻ tài khoản.
+          Kết nối tới website được mã hoá bằng HTTPS. Mật khẩu không bao giờ được lưu dưới dạng đọc được.
         </p>
       </Muc>
 
@@ -157,7 +157,7 @@ export default function BaoMatPage() {
         <DanhSach
           items={[
             // Bên chịu trách nhiệm xử lý dữ liệu cá nhân — phải nêu rõ pháp nhân.
-            ...(PHAP_LY.tenCongTy ? [<>Đơn vị chủ quản: <strong className="font-semibold text-cvr-ink">{PHAP_LY.tenCongTy}</strong></>] : []),
+            ...(PHAP_LY.tenCongTy ? [<><strong className="font-semibold text-cvr-ink">{PHAP_LY.tenCongTy}</strong></>] : []),
             ...(DONG_GIAY_PHEP ? [<>{DONG_GIAY_PHEP}</>] : []),
             <>Địa chỉ: {PHAP_LY.diaChiDayDu}</>,
             <>Email: <a href="mailto:hotro@coastalland.vn" className="font-semibold text-cvr-blue-ink underline">hotro@coastalland.vn</a></>,
