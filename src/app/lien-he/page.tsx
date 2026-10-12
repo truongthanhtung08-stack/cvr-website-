@@ -44,7 +44,7 @@ export default function LienHePage() {
           items={[
             // Pháp nhân vận hành — lấy từ src/lib/phapLy.ts, ô trống thì dòng tự ẩn.
             ...(PHAP_LY.tenCongTy
-              ? [<>Đơn vị chủ quản: <strong className="font-semibold text-cvr-ink">{PHAP_LY.tenCongTy}</strong>{PHAP_LY.maSoThue ? ` — MSDN ${PHAP_LY.maSoThue}` : ""}</>]
+              ? [<>Công ty: <strong className="font-semibold text-cvr-ink">{PHAP_LY.tenCongTy}</strong>{PHAP_LY.maSoThue ? ` — MSDN ${PHAP_LY.maSoThue}` : ""}</>]
               : []),
             <>
               Hotline:{" "}
@@ -63,8 +63,7 @@ export default function LienHePage() {
             </>,
             <>
               Văn phòng:{" "}
-              <strong className="font-semibold text-cvr-ink">{DIA_CHI}</strong>. Vui lòng gọi trước khi đến để chúng tôi
-              bố trí người tiếp.
+              <strong className="font-semibold text-cvr-ink">{DIA_CHI}</strong>.
             </>,
             <>Giờ làm việc: 8:00 – 18:00, Thứ Hai đến Thứ Bảy. Ngoài giờ, vui lòng nhắn Zalo hoặc để lại yêu cầu.</>,
           ]}
@@ -75,7 +74,7 @@ export default function LienHePage() {
         <DanhSach
           items={[
             <>
-              Muốn đăng tin bán / cho thuê →{" "}
+              Đăng tin bán / cho thuê →{" "}
               <Link href="/dang-tin" className="font-semibold text-cvr-blue-ink underline">
                 Đăng tin
               </Link>{" "}
@@ -122,17 +121,8 @@ export default function LienHePage() {
 
       <Muc title="Đôi điều để bạn nắm">
         <p>
-          Coastal Land là <strong className="font-semibold text-cvr-ink">cổng thông tin bất động sản</strong> — nơi
-          người có nhà đất và người đang tìm gặp nhau. Chúng tôi không mua bán, không phân phối, không ký gửi, không môi
-          giới và không định giá. Việc thoả thuận, đặt cọc và thanh toán là giữa bạn với người đăng tin.
-        </p>
-        <p>
-          Việc đặt cọc, thanh toán bạn làm trực tiếp với người bán hoặc môi giới của họ — Coastal Land không đứng ra thu
-          hộ khoản nào. Có gì chưa rõ, bạn{" "}
-          <Link href="/gop-y" className="font-semibold text-cvr-blue-ink underline">
-            nhắn cho chúng tôi
-          </Link>{" "}
-          nhé.
+          Coastal Land là <strong className="font-semibold text-cvr-ink">cổng thông tin bất động sản</strong> — Chúng tôi không mua bán, không phân phối, không ký gửi, không môi
+          giới và không phải là một bên trong giao dịch. Chúng tôi kiểm duyệt và xác thực thông tin trước khi hiển thị để đảm bảo mọi thông tin được chính xác nhất.
         </p>
       </Muc>
     </TrangPhapLy>
