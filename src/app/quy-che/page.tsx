@@ -146,7 +146,7 @@ export default function QuyChePage() {
       <Muc so={10} title="Đầu mối liên hệ">
         <DanhSach
           items={[
-            ...(PHAP_LY.tenCongTy ? [<>Đơn vị chủ quản: <strong className="font-semibold text-cvr-ink">{PHAP_LY.tenCongTy}</strong></>] : []),
+            ...(PHAP_LY.tenCongTy ? [<><strong className="font-semibold text-cvr-ink">{PHAP_LY.tenCongTy}</strong></>] : []),
             <>Hotline: <a href="tel:+84377985036" className="font-semibold text-cvr-blue-ink underline">0377 985 036</a></>,
             <>Zalo OA: <a href={ZALO_OA_URL} target="_blank" rel="noopener noreferrer" className="font-semibold text-cvr-blue-ink underline">Coastal Land</a></>,
             <>Email: <a href="mailto:hotro@coastalland.vn" className="font-semibold text-cvr-blue-ink underline">hotro@coastalland.vn</a></>,
