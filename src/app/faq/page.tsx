@@ -44,12 +44,12 @@ const NHOM: { ten: string; items: Hoi[] }[] = [
         q: "Tìm nhà trên Coastal Land có mất phí không?",
         a: (
           <p>
-            Không. Bạn xem tin, tìm kiếm, lọc, lưu tin, so sánh và liên hệ người đăng thoải mái. Các dịch vụ đăng tin và
+            Không. Bạn xem tin, tìm kiếm, lọc, lưu tin, so sánh và liên hệ người đăng tin. Các dịch vụ đăng tin và
             quảng bá tin thì có bảng giá riêng, xem tại <L href="/bao-gia-dang-tin">Báo giá dịch vụ</L>.
           </p>
         ),
         aText:
-          "Không. Bạn xem tin, tìm kiếm, lọc, lưu tin, so sánh và liên hệ người đăng thoải mái. Các dịch vụ đăng tin và quảng bá tin thì có bảng giá riêng.",
+          "Không. Bạn xem tin, tìm kiếm, lọc, lưu tin, so sánh và liên hệ người đăng tin. Các dịch vụ đăng tin và quảng bá tin thì có bảng giá riêng.",
       },
       {
         q: "Có cần tài khoản mới xem được tin không?",
