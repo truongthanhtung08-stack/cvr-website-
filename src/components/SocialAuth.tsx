@@ -100,10 +100,9 @@ export default function SocialAuth({ onSoDienThoai, onEmail }: { onSoDienThoai?:
       provider: "google",
       options: {
         redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
-        // LUÔN hiện màn hình CHỌN TÀI KHOẢN Google (không tự vào gmail gần nhất)
-        // — người có nhiều gmail (vd admin + khách) chọn đúng tài khoản mỗi lần.
-        // Chủ dự án xác nhận 28/8: cho chọn tài khoản là bình thường, GIỮ NGUYÊN.
-        queryParams: { prompt: "select_account" },
+        // CHUẨN MẶC ĐỊNH CỦA GOOGLE (chủ dự án 15/10/2026, thay cách 28/8 "luôn hiện bảng chọn"):
+        // máy chỉ có MỘT tài khoản Google → bấm là vào; có NHIỀU tài khoản → Google tự hiện bảng
+        // chọn tài khoản. Khách chưa có tài khoản Coastal Land cũng đi đúng đường này.
       },
     });
     // Thành công thì trình duyệt tự chuyển sang Google — chỉ còn lại trường hợp lỗi.
