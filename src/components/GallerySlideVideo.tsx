@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useId } from "react";
 import { asset } from "@/lib/asset";
 import { videoEmbedUrl, videoPosterUrl } from "@/lib/media";
 
@@ -169,6 +169,24 @@ export default function GallerySlideVideo({
   // tới slide video là hiện thẳng khung YouTube có nút đỏ — khách bấm MỘT lần là chạy.
   // Messenger/Facebook chạy bình thường nên giữ nguyên; app nào khác bị chặn thì lớp
   // nhường 2,5 giây ở dưới vẫn đỡ.
+  // ── MỖI LÚC CHỈ MỘT VIDEO ĐƯỢC PHÁT (chủ dự án 15/10/2026: "mục Video bị play trùng") ──────
+  // Trang tin có 2–3 trình phát cho cùng video (khung điện thoại · khung máy tính đang ẩn ·
+  // danh sách "Xem ảnh & video"). Trình phát nào bắt đầu chạy thì báo; mọi trình phát khác
+  // dừng ngay — YouTube thì gỡ hẳn khung phát (chắc chắn tắt tiếng), video tải lên thì pause.
+  const maPhat = useId();
+  const baoDangPhat = () => window.dispatchEvent(new CustomEvent("cl-video-phat", { detail: maPhat }));
+  useEffect(() => {
+    const nghe = (e: Event) => {
+      if ((e as CustomEvent).detail === maPhat) return;
+      if (!embed) { ref.current?.pause(); return; }
+      setDaBam(false);
+      setDangChay(false);
+      playingRef.current = false;
+    };
+    window.addEventListener("cl-video-phat", nghe);
+    return () => window.removeEventListener("cl-video-phat", nghe);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [embed, maPhat]);
   const [trongApp, setTrongApp] = useState(false);
   useEffect(() => {
     const ua = navigator.userAgent;
@@ -176,6 +194,10 @@ export default function GallerySlideVideo({
   }, []);
   useEffect(() => {
     if (!trongApp || !laYoutube || !active || xemTruoc || daBam) return;
+    // Khung đang bị ẨN (bản máy tính trên điện thoại…) KHÔNG được tự phát — trước đây cả hai
+    // khung cùng tự phát trong app Zalo nên nghe hai tiếng chồng nhau.
+    if (!gocRef.current || gocRef.current.getClientRects().length === 0) return;
+    baoDangPhat();
     setDaBam(true);
     setNhuongYt(true);
   }, [trongApp, laYoutube, active, xemTruoc, daBam]);
@@ -196,6 +218,7 @@ export default function GallerySlideVideo({
         if (typeof i.playerState === "number") {
           const chay = i.playerState === 1 || i.playerState === 3;
           if (i.playerState === 1) {
+            baoDangPhat();
             daChayYtRef.current = true;
             setNhuongYt(false);
           }
@@ -374,6 +397,7 @@ export default function GallerySlideVideo({
           <button
             type="button"
             onClick={() => {
+              baoDangPhat();
               setDaBam(true);
               // Bấm là phát (autoplay=1) — coi như đang chạy ngay, YouTube báo về thì chỉnh lại.
               setDangChay(true);
@@ -405,6 +429,7 @@ export default function GallerySlideVideo({
       onLoadedMetadata={(e) => setTong(e.currentTarget.duration || 0)}
       onVolumeChange={(e) => setTatTieng(e.currentTarget.muted)}
       onPlay={() => {
+        baoDangPhat();
         playingRef.current = true;
         setDangChay(true);
         setDaBam(true);

@@ -11,10 +11,12 @@ export default function OGoTuGian({
   onChange,
   placeholder,
   className,
+  autoFocus,
 }: {
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
+  autoFocus?: boolean;
   className: string;
 }) {
   const ref = useRef<HTMLTextAreaElement>(null);
@@ -32,6 +34,7 @@ export default function OGoTuGian({
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
+      autoFocus={autoFocus}
       // Giữ đúng khung của ô nhập (bỏ chiều cao cố định h-10/h-11 → thành chiều cao tối thiểu, tự cao thêm).
       className={className.replace(/\bh-(10|11)\b/, "min-h-$1") + " block resize-none overflow-hidden py-2.5 leading-6"}
     />

@@ -57,8 +57,6 @@ const KHAC_GIA = "Khác — tự ghi";
 const MucMoCtx = createContext<{ mo: string; moMuc: (step: string) => void } | null>(null);
 
 const DU_AN_KHAC = "__khac";
-const DU_AN_KHAC_NHAN = "Khác — tự ghi";
-const KHONG_DU_AN = "— Không thuộc dự án nào —";
 // Khoá trình duyệt giữ bản nháp tự lưu của form đăng tin mới — RIÊNG TỪNG TÀI KHOẢN
 // (máy dùng chung thì người sau không thấy bản nháp của người trước).
 const KHOA_NHAP_MAY = "cvr-dang-tin-nhap";
@@ -1529,39 +1527,36 @@ export default function PostListingForm() {
       <Card step={buoc()} title="Thuộc dự án" khoa={editStatus === "approved"} cuoi>
         <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <Label>Dự án</Label>
-            {/* Ô chọn có tìm (như ô vị trí — 15/10/2026): danh sách dài thì bấm kính lúp để tìm.
-                LUÔN hiện đúng tên dự án tin đang gắn — kể cả dự án CHƯA có trang trên web (tin nhập
-                hàng loạt): trước đây ô hiện "Không thuộc dự án nào" dù tin vẫn gắn dự án đó.
-                DỰ ÁN CHƯA CÓ TRÊN WEB vẫn ghi được tên qua dòng "Dự án khác — tự ghi tên". */}
+            <Label>Tên dự án</Label>
+            {/* MỘT Ô "TÊN DỰ ÁN" KIỂU BATDONGSAN / HOMEDY (chủ dự án 15/10/2026): bấm vào là gõ ngay,
+                danh sách dự án có sẵn hiện để chọn; dự án không có thì giữ đúng tên khách gõ.
+                · Chọn dự án có sẵn → tin NỐI vào trang dự án (mã dự án — bộ lọc Dự án, trang dự án,
+                  "Tin liên quan tại dự án", liên kết nội bộ cho SEO đều chạy theo mã này).
+                · Gõ tên TRÙNG dự án có sẵn (khác hoa/thường, dấu) → cũng nối luôn.
+                · Tên chưa có trang dự án → lưu nguyên tên (details.projectName); sau này tạo trang dự
+                  án đúng tên đó là tin tự về trang dự án.
+                · LUÔN hiện đúng tên dự án tin đang gắn, kể cả dự án chưa có trang trên web. */}
             <ChonCoTim
-              value={projectSlug === DU_AN_KHAC ? DU_AN_KHAC_NHAN
-                : projectSlug ? projectOptions.find((o) => o.slug === projectSlug)?.name ?? (projectName || projectSlug)
-                : ""}
+              value={projectSlug && projectSlug !== DU_AN_KHAC
+                ? projectOptions.find((o) => o.slug === projectSlug)?.name ?? (projectName || projectSlug)
+                : projectName}
               onChange={(v) => {
-                if (v === KHONG_DU_AN) { setProjectSlug(""); setProjectName(""); return; }
-                // Chọn "dự án khác" → để trống cho khách tự gõ; chọn dự án có sẵn → tên theo dự án đó.
-                if (v === DU_AN_KHAC_NHAN) { setProjectSlug(DU_AN_KHAC); setProjectName(""); return; }
+                if (!v) { setProjectSlug(""); setProjectName(""); return; }
                 const o = projectOptions.find((x) => x.name === v);
                 if (o) { setProjectSlug(o.slug); setProjectName(o.name); }
               }}
-              options={[KHONG_DU_AN, ...projectOptions.map((o) => o.name), DU_AN_KHAC_NHAN]}
-              placeholder={KHONG_DU_AN}
-              timPlaceholder="Tìm dự án"
+              options={projectOptions.map((o) => o.name)}
+              tuGhi={(ten) => {
+                const o = projectOptions.find((x) => normalizeVi(x.name) === normalizeVi(ten));
+                if (o) { setProjectSlug(o.slug); setProjectName(o.name); }
+                else { setProjectSlug(DU_AN_KHAC); setProjectName(ten); }
+              }}
+              timNgay
+              xoaDuoc
+              placeholder="Nhập tên dự án"
+              timPlaceholder="Nhập tên dự án"
               className={inputCls}
             />
-            {/* "Khác — tự ghi" (cùng cấu trúc mọi ô chọn): ô gõ tự giãn hiện NGAY DƯỚI ô chọn.
-                Gõ trúng tên dự án đã có thì tin tự nối vào dự án đó (slugDuAn). */}
-            {projectSlug === DU_AN_KHAC && (
-              <>
-                <OGoTuGian value={projectName} onChange={setProjectName} className={inputCls + " mt-2"} />
-                {slugDuAn() && (
-                  <p className="mt-1.5 text-xs font-medium text-cvr-blue-ink">
-                    Đã nối vào dự án {projectOptions.find((o) => o.slug === slugDuAn())?.name} trên web.
-                  </p>
-                )}
-              </>
-            )}
           </div>
         </div>
       </Card>

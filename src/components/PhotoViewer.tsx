@@ -42,6 +42,8 @@ export default function PhotoViewer({
   /** Màn hình lớn: cột bản đồ vị trí bên phải như Batdongsan (chủ dự án 09/10/2026) */
   banDo?: { diaChi: string; q: string };
 }) {
+  // Mở lên thì video đang chạy ở trang tin DỪNG — không để hai tiếng chồng nhau (15/10/2026).
+  useEffect(() => { window.dispatchEvent(new CustomEvent("cl-video-phat", { detail: "xem-anh" })); }, []);
   const [idx, setIdx] = useState(start);
   const [scale, setScale] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });

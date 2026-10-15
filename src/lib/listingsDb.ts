@@ -291,6 +291,7 @@ function rowToListing(r: Row): Listing {
     ...((): { soDau?: string } => { const d = (r.details?.contact?.phone ?? "").replace(/\D/g, "").replace(/^84/, "0"); return d.length >= 9 ? { soDau: d.slice(0, 3) } : {}; })(),
     ...(r.details?.contact?.avatar ? { agentAvatar: asset(r.details.contact.avatar) } : {}),
     ...(r.details?.project ? { projectSlug: r.details.project } : {}),
+    ...(r.details?.projectName?.trim() ? { projectName: r.details.projectName.trim() } : {}),
     ...(r.details?.mapPin ? { mapPin: r.details.mapPin } : {}),
     ...(r.description ? { desc: r.description } : {}),
     // Mọi trường còn lại → vùng dò của ô tìm kiếm (không hiển thị ra giao diện)

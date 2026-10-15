@@ -75,6 +75,7 @@ export type Listing = {
   // SLUG dự án tin này thuộc về (details.project) — dùng cho mục
   // "Tin mua bán liên quan tại dự án …". Không thuộc dự án nào → bỏ trống.
   projectSlug?: string;
+  projectName?: string; // tên dự án khách tự ghi (chưa có trang dự án) — để nối khi trang dự án được tạo
   // Vị trí admin GHIM tay (toạ độ "16.06,108.22" hoặc link Google Maps).
   // Có thì bản đồ trỏ đúng điểm này; không có thì tự tìm theo địa chỉ.
   mapPin?: string;

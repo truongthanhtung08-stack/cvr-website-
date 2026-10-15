@@ -207,7 +207,10 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
   // Tin của CHÍNH dự án này — gán trong admin qua trường "Thuộc dự án" (details.project).
   // Dự án không có tin nào → để TRỐNG, tuyệt đối KHÔNG độn tin của dự án khác vào.
-  const projectListings = listings.filter((x) => x.projectSlug === p.slug);
+  // Cùng với tin KHÁCH TỰ GHI ĐÚNG TÊN dự án này (chưa có mã vì lúc đăng dự án chưa có trang) —
+  // tạo trang dự án xong là tin tự về đây (chủ dự án 15/10/2026).
+  const projectListings = listings.filter((x) => x.projectSlug === p.slug
+    || (!x.projectSlug && !!x.projectName && normalizeVi(x.projectName) === normalizeVi(p.name)));
   const relBan = projectListings.filter((x) => (x.purpose ?? "ban") === "ban");
   const relThue = projectListings.filter((x) => (x.purpose ?? "ban") === "thue");
   const hasRelated = projectListings.length > 0;

@@ -819,7 +819,7 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
                 ?? ((initial?.details as { projectName?: string } | undefined)?.projectName || projectSlug) : ""}
               onChange={(v) => setProjectSlug(v === "— Không thuộc dự án nào —" ? "" : projectOptions.find((o) => o.name === v)?.slug ?? projectSlug)}
               options={["— Không thuộc dự án nào —", ...projectOptions.map((o) => o.name)]}
-              placeholder="— Không thuộc dự án nào —"
+              placeholder="Chọn dự án"
               timPlaceholder="Tìm dự án"
               className={inputCls}
             />

@@ -459,6 +459,15 @@ export default function ImagePicker({
                 <svg className="h-4 w-4 shrink-0 text-cvr-faint" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
               </button>
             ))}
+            {/* HUỶ (chủ dự án 15/10/2026: "bấm Thêm ảnh, không muốn thêm mà muốn tắt đi thì làm thế
+                nào") — trước đây mở bảng ra là không đóng được. Bốn lối ở trên GIỮ NGUYÊN. */}
+            <button
+              type="button"
+              onClick={() => setMoChon(false)}
+              className="w-full border-t border-cvr-line px-4 py-3.5 text-center text-[15px] font-semibold text-cvr-body transition active:bg-cvr-surface"
+            >
+              Huỷ
+            </button>
           </div>
         )}
 

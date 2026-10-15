@@ -17,6 +17,9 @@ export default function ChonCoTim({
   disabled,
   className,
   bietDanh,
+  tuGhi,
+  timNgay,
+  xoaDuoc,
 }: {
   value: string;
   onChange: (v: string) => void;
@@ -27,6 +30,12 @@ export default function ChonCoTim({
   className: string;
   /** Tên khác của từng mục (tên cũ, tên gọi quen) — gõ tên đó vẫn ra mục này. */
   bietDanh?: Record<string, BietDanh[]>;
+  /** Có lối "Khác — tự ghi": gõ tìm mà không có trong danh sách thì bấm dòng này lấy luôn chữ vừa gõ. */
+  tuGhi?: (ten: string) => void;
+  /** Kiểu Ô "TÊN DỰ ÁN" của Batdongsan/Homedy: bấm vào là GÕ NGAY (mở thẳng ô tìm, sẵn chữ đang có). */
+  timNgay?: boolean;
+  /** Có nút × để bỏ giá trị đang có. */
+  xoaDuoc?: boolean;
 }) {
   const [mo, setMo] = useState(false);
   const [q, setQ] = useState("");
@@ -46,12 +55,36 @@ export default function ChonCoTim({
   const coChon = !!value && options.includes(value);
   const ds = coChon ? tim.filter((x) => x.ten !== value) : tim;
   const chon = (v: string) => { onChange(v); dong(); };
+  // Gõ tên KHÔNG có trong danh sách → dòng "Khác — tự ghi: «tên»": có gợi ý thì đứng CUỐI (như
+  // Batdongsan), không có gợi ý nào thì đứng ĐẦU.
+  const coTuGhi = !!tuGhi && !!q.trim() && !options.some((o) => o.toLowerCase() === q.trim().toLowerCase());
+  const moBang = () => {
+    setMo(true);
+    if (timNgay) { setDangTim(true); setQ(value && !options.includes(value) ? value : ""); }
+  };
+  // Enter / "Tìm" trên bàn phím: trùng tên trong danh sách thì chọn mục đó, không thì lấy chữ vừa gõ.
+  const xongGo = () => {
+    const t = q.trim();
+    if (!tuGhi || !t) return;
+    const trung = options.find((o) => o.toLowerCase() === t.toLowerCase());
+    if (trung) chon(trung);
+    else { tuGhi(t); dong(); }
+  };
   return (
     <>
-      <button type="button" onClick={() => setMo(true)} disabled={disabled} className={className + " flex items-center justify-between gap-2 text-left disabled:cursor-not-allowed disabled:opacity-45"}>
-        <span className={`truncate ${value ? "" : "text-cvr-faint"}`}>{value || placeholder}</span>
-        <svg className="h-4 w-4 shrink-0 text-cvr-muted" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
-      </button>
+      <div className="relative">
+        <button type="button" onClick={moBang} disabled={disabled} className={className + ` flex items-center justify-between gap-2 text-left disabled:cursor-not-allowed disabled:opacity-45 ${xoaDuoc && value ? "pr-10" : ""}`}>
+          <span className={`truncate ${value ? "" : "text-cvr-faint"}`}>{value || placeholder}</span>
+          {!(xoaDuoc && value) && (timNgay
+            ? <svg className="h-4 w-4 shrink-0 text-cvr-muted" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><circle cx="11" cy="11" r="7" /><path strokeLinecap="round" d="M21 21l-4.3-4.3" /></svg>
+            : <svg className="h-4 w-4 shrink-0 text-cvr-muted" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>)}
+        </button>
+        {xoaDuoc && value && !disabled && (
+          <button type="button" aria-label="Bỏ" onClick={() => onChange("")} className="absolute right-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-cvr-muted transition hover:bg-cvr-line/60">
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+        )}
+      </div>
       {mo && (
         // ĐANG GÕ TÌM trên điện thoại → bảng thành TOÀN MÀN HÌNH, ô gõ nằm trên cùng: bàn phím bật lên
         // không che ô gõ, kết quả hiện ngay dưới (trước đây bảng nằm đáy, bàn phím đẩy lệch — rất rối).
@@ -59,14 +92,14 @@ export default function ChonCoTim({
           <div className={`flex w-full flex-col bg-white pb-[env(safe-area-inset-bottom)] shadow-lux sm:h-auto sm:max-h-[80vh] sm:max-w-md sm:rounded-2xl ${dangTim ? "h-[100dvh] pt-[env(safe-area-inset-top)]" : "max-h-[80vh] rounded-t-2xl"}`} onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-2 border-b border-cvr-line p-3">
               {dangTim ? (
-                <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder={timPlaceholder} className={className} enterKeyHint="search" autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} />
+                <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); xongGo(); } }} placeholder={timPlaceholder} className={className} enterKeyHint={tuGhi ? "done" : "search"} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} />
               ) : (
                 <span className="min-w-0 flex-1 truncate px-1 text-[15px] font-semibold text-cvr-ink">{placeholder}</span>
               )}
               <button
                 type="button"
                 aria-label={dangTim ? "Đóng ô tìm" : timPlaceholder}
-                onClick={() => { if (dangTim) setQ(""); setDangTim(!dangTim); }}
+                onClick={() => { if (timNgay) { dong(); return; } if (dangTim) setQ(""); setDangTim(!dangTim); }}
                 className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-cvr-body transition hover:bg-cvr-surface"
               >
                 {dangTim ? (
@@ -83,12 +116,22 @@ export default function ChonCoTim({
               </button>
             )}
             <div className="flex-1 overflow-y-auto overscroll-contain py-1">
+              {ds.length === 0 && coTuGhi && (
+                <button type="button" onClick={() => { tuGhi?.(q.trim()); dong(); }} className="block w-full px-4 py-3 text-left text-[15px] font-medium text-cvr-blue-ink transition hover:bg-cvr-surface">
+                  Khác — tự ghi: «{q.trim()}»
+                </button>
+              )}
               {ds.map(({ ten: o, boiTen }) => (
                 <button key={o} type="button" onClick={() => chon(o)} className="block w-full px-4 py-3 text-left text-[15px] text-cvr-body transition hover:bg-cvr-surface">
                   {o}
                   {boiTen && <span className="mt-0.5 block text-[12px] text-cvr-faint">{boiTen}</span>}
                 </button>
               ))}
+              {ds.length > 0 && coTuGhi && (
+                <button type="button" onClick={() => { tuGhi?.(q.trim()); dong(); }} className="block w-full px-4 py-3 text-left text-[15px] font-medium text-cvr-blue-ink transition hover:bg-cvr-surface">
+                  Khác — tự ghi: «{q.trim()}»
+                </button>
+              )}
             </div>
             <button type="button" onClick={dong} className="border-t border-cvr-line py-3 text-sm font-semibold text-cvr-body">Đóng</button>
           </div>

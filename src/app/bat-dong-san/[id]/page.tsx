@@ -27,7 +27,8 @@ import ProjectNav from "@/components/ProjectNav";
 import { BreadcrumbJsonLd } from "@/components/Breadcrumb";
 import { provinceOf, districtOf, pickRelated } from "@/lib/data";
 import { getListing, getListings, getListingDetail, tinDaHetHan } from "@/lib/listingsDb";
-import { getProject } from "@/lib/contentDb";
+import { getProject, getProjects } from "@/lib/contentDb";
+import { normalizeVi } from "@/lib/filters";
 import { tierFromBadge, getTier } from "@/lib/packages";
 import { chuanHoaSdt } from "@/lib/phone";
 import MoTaThuGon from "@/components/MoTaThuGon";
@@ -227,7 +228,14 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
   // TIN THUỘC DỰ ÁN — hiện TÊN dự án ở khối Đặc điểm. Dự án đã tạo trong admin thì
   // bấm sang được trang dự án; chưa tạo thì vẫn hiện tên (chủ dự án cập nhật sau),
   // không để tên dự án rơi mất như trước.
-  const duAnCoThat = d.projectSlug ? Boolean(await getProject(d.projectSlug)) : false;
+  // Tìm trang dự án: theo MÃ (chọn trong danh sách) hoặc theo TÊN khách tự ghi trùng một dự án đã có.
+  // Tin gắn dự án trong admin chỉ lưu mã → tên lấy từ trang dự án (trước đây mất hẳn dòng "Dự án").
+  const duAn = d.projectSlug
+    ? await getProject(d.projectSlug)
+    : d.projectName ? (await getProjects()).find((p) => normalizeVi(p.name) === normalizeVi(d.projectName ?? "")) ?? null : null;
+  const duAnCoThat = Boolean(duAn);
+  const tenDuAn = d.projectName || duAn?.name || "";
+  const slugDuAnTin = duAn?.slug ?? d.projectSlug ?? "";
   // CỔNG SĐT: full số CHỈ hiện khi khách đăng nhập (bấm → RPC reveal_contact ghi lead).
   // Server chỉ phát chuỗi CHE — số 10 chữ số, CHỈ che 3 số cuối (chủ dự án chốt 01/10/2026):
   // "0905 374 •••". Số đủ không nằm trong HTML, mỗi lượt xem số vẫn ghi thành lead cho người bán.
@@ -539,16 +547,16 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                   {/* Tin thuộc dự án → hiện TÊN dự án. Dự án đã được tạo trong admin
                       thì bấm sang trang dự án; chưa tạo vẫn hiện tên (chủ dự án cập
                       nhật dự án sau), không để tên dự án rơi mất như trước. */}
-                  {d.projectName && (
+                  {tenDuAn && (
                     <Row
                       label="Dự án"
                       value={
                         duAnCoThat ? (
-                          <Link href={`/du-an/${d.projectSlug}`} className="font-medium text-cvr-blue hover:underline">
-                            {d.projectName}
+                          <Link href={`/du-an/${slugDuAnTin}`} className="font-medium text-cvr-blue hover:underline">
+                            {tenDuAn}
                           </Link>
                         ) : (
-                          d.projectName
+                          tenDuAn
                         )
                       }
                     />

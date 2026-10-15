@@ -109,6 +109,8 @@ export default function PhotoList({
   onPick: (i: number) => void;
   nhanPhim?: boolean;   // tắt khi đang mở ảnh lớn đè lên → Esc chỉ đóng ảnh lớn
 }) {
+  // Mở lên thì video đang chạy ở trang tin DỪNG — không để hai tiếng chồng nhau (15/10/2026).
+  useEffect(() => { window.dispatchEvent(new CustomEvent("cl-video-phat", { detail: "danh-sach" })); }, []);
   const [keo, setKeo] = useState(0);      // độ lệch đang kéo (px; âm = trượt lên)
   const [moBanDo, setMoBanDo] = useState(false); // điện thoại: cột bản đồ đang mở
   const { has, toggle } = useSaved();
