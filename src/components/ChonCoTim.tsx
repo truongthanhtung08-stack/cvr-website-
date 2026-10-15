@@ -30,14 +30,20 @@ export default function ChonCoTim({
 }) {
   const [mo, setMo] = useState(false);
   const [q, setQ] = useState("");
+  // Ô tìm ẨN mặc định (chủ dự án 15/10/2026): mở ra là danh sách để KÉO chọn — không bật bàn
+  // phím che màn hình điện thoại. Muốn tìm thì bấm biểu tượng kính lúp mới hiện ô gõ.
+  const [dangTim, setDangTim] = useState(false);
   useEffect(() => {
     if (!mo) return;
-    const h = (e: KeyboardEvent) => { if (e.key === "Escape") setMo(false); };
+    const h = (e: KeyboardEvent) => { if (e.key === "Escape") dong(); };
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
   }, [mo]);
-  const ds = timDiaDanh(q, options, bietDanh);
-  const chon = (v: string) => { onChange(v); setMo(false); setQ(""); };
+  const tim = timDiaDanh(q, options, bietDanh);
+  // Mục ĐANG CHỌN luôn nằm DÒNG ĐẦU khi mở lại (chưa gõ tìm) — khách thấy ngay mình đang chọn gì.
+  const ds = !q.trim() && value && options.includes(value) ? [{ ten: value }, ...tim.filter((x) => x.ten !== value)] : tim;
+  const dong = () => { setMo(false); setQ(""); setDangTim(false); };
+  const chon = (v: string) => { onChange(v); dong(); };
   return (
     <>
       <button type="button" onClick={() => setMo(true)} disabled={disabled} className={className + " flex items-center justify-between gap-2 text-left disabled:cursor-not-allowed disabled:opacity-45"}>
@@ -45,10 +51,26 @@ export default function ChonCoTim({
         <svg className="h-4 w-4 shrink-0 text-cvr-muted" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
       </button>
       {mo && (
-        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/40 sm:items-center" onClick={() => setMo(false)}>
+        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/40 sm:items-center" onClick={dong}>
           <div className="flex max-h-[80vh] w-full flex-col rounded-t-2xl bg-white pb-[env(safe-area-inset-bottom)] shadow-lux sm:max-w-md sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
-            <div className="border-b border-cvr-line p-3">
-              <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder={timPlaceholder} className={className} />
+            <div className="flex items-center gap-2 border-b border-cvr-line p-3">
+              {dangTim ? (
+                <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder={timPlaceholder} className={className} />
+              ) : (
+                <span className="min-w-0 flex-1 truncate px-1 text-[15px] font-semibold text-cvr-ink">{placeholder}</span>
+              )}
+              <button
+                type="button"
+                aria-label={dangTim ? "Đóng ô tìm" : timPlaceholder}
+                onClick={() => { if (dangTim) setQ(""); setDangTim(!dangTim); }}
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-cvr-body transition hover:bg-cvr-surface"
+              >
+                {dangTim ? (
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                ) : (
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><circle cx="11" cy="11" r="7" /><path strokeLinecap="round" d="M21 21l-4.3-4.3" /></svg>
+                )}
+              </button>
             </div>
             <div className="flex-1 overflow-y-auto overscroll-contain py-1">
               {ds.map(({ ten: o, boiTen }) => (
@@ -58,7 +80,7 @@ export default function ChonCoTim({
                 </button>
               ))}
             </div>
-            <button type="button" onClick={() => setMo(false)} className="border-t border-cvr-line py-3 text-sm font-semibold text-cvr-body">Đóng</button>
+            <button type="button" onClick={dong} className="border-t border-cvr-line py-3 text-sm font-semibold text-cvr-body">Đóng</button>
           </div>
         </div>
       )}
