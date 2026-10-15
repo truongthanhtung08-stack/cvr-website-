@@ -32,7 +32,14 @@ export async function GET(request: Request) {
       // Tin nháp (kể cả tự lưu vài giây một lần khi khách đang gõ) không hiện ra ngoài —
       // không tính, kẻo xoá bản lưu sẵn mỗi phút, tốn đọc Supabase vô ích.
       .neq("status", "draft");
-    if ((vuaDoi ?? 0) > 0) revalidateTag("listings", "max");
+    // Tin hẹn ngày đăng vừa tới giờ lên sóng — không có dòng nào đổi trong CSDL nên phải dò riêng.
+    const { count: vuaLen } = await admin
+      .from("listings")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "approved")
+      .gt("published_at", new Date(Date.now() - 75_000).toISOString())
+      .lte("published_at", new Date().toISOString());
+    if ((vuaDoi ?? 0) + (vuaLen ?? 0) > 0) revalidateTag("listings", "max");
     return NextResponse.json({ ok: true, ...kq, lamMoi: vuaDoi ?? 0 });
   } catch (e) {
     await baoLoi({

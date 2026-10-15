@@ -318,9 +318,10 @@ async function rest(query: string): Promise<Row[] | null> {
       //     → xoá cache NGAY → tin lên sóng tức thì (giữ đúng quy tắc "hiện NGAY").
       //   · Giữa hai lần duyệt, Google & khách nhận HTML đã dựng sẵn phục vụ từ edge
       //     (không đọc DB mỗi request như no-store) → Core Web Vitals / thứ hạng tốt hơn.
-      //   · revalidate 60s = lưới an toàn: mọi thay đổi ngoài luồng duyệt (admin ẩn/sửa
-      //     tin ghi thẳng Supabase từ trình duyệt) chậm tối đa 60 giây, không đứng mãi.
-      next: { tags: ["listings"], revalidate: 60 },
+      //   · Thay đổi ngoài luồng duyệt (admin ẩn/sửa tin ghi thẳng Supabase) do cron
+      //     /api/tin-dang/het-han mỗi phút bắt qua updated_at. revalidate 1 giờ chỉ là lưới
+      //     an toàn cuối (15/10/2026: 60s làm trang dựng lại liên tục → tốn ISR Writes).
+      next: { tags: ["listings"], revalidate: 3600 },
     });
     if (!res.ok) return null; // bảng chưa tạo (404) / lỗi khác → fallback
     return (await res.json()) as Row[];

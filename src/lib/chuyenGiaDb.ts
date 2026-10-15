@@ -130,7 +130,7 @@ export async function getChuyenGia(): Promise<ChuyenGia[]> {
       `${url}/rest/v1/listings?select=id,type,province,details&status=eq.approved&order=created_at.desc&limit=1000`,
       {
         headers: { apikey: key, Authorization: `Bearer ${key}` },
-        next: { tags: ["listings"], revalidate: 60 },
+        next: { tags: ["listings"], revalidate: 3600 },
       },
     );
     if (!res.ok) return [];
