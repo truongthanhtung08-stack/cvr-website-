@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { normalizeVi } from "@/lib/filters";
+import { timDiaDanh, type BietDanh } from "@/lib/timDiaDanh";
 
 // Ô CHỌN CÓ Ô TÌM — Tỉnh/Thành · Quận/Huyện · Phường/Xã (chủ dự án 14–15/10/2026: danh sách
 // quá dài, không ai kéo xuống để chọn được). Thẻ select gốc không chèn được ô tìm, nên bấm
@@ -16,6 +16,7 @@ export default function ChonCoTim({
   timPlaceholder,
   disabled,
   className,
+  bietDanh,
 }: {
   value: string;
   onChange: (v: string) => void;
@@ -24,6 +25,8 @@ export default function ChonCoTim({
   timPlaceholder: string;
   disabled?: boolean;
   className: string;
+  /** Tên khác của từng mục (tên cũ, tên gọi quen) — gõ tên đó vẫn ra mục này. */
+  bietDanh?: Record<string, BietDanh[]>;
 }) {
   const [mo, setMo] = useState(false);
   const [q, setQ] = useState("");
@@ -33,8 +36,7 @@ export default function ChonCoTim({
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
   }, [mo]);
-  const k = normalizeVi(q.trim());
-  const ds = k ? options.filter((o) => normalizeVi(o).includes(k)) : options;
+  const ds = timDiaDanh(q, options, bietDanh);
   const chon = (v: string) => { onChange(v); setMo(false); setQ(""); };
   return (
     <>
@@ -49,9 +51,10 @@ export default function ChonCoTim({
               <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder={timPlaceholder} className={className} />
             </div>
             <div className="flex-1 overflow-y-auto overscroll-contain py-1">
-              {ds.map((o) => (
+              {ds.map(({ ten: o, boiTen }) => (
                 <button key={o} type="button" onClick={() => chon(o)} className={`block w-full px-4 py-3 text-left text-[15px] transition hover:bg-cvr-surface ${o === value ? "font-semibold text-cvr-ink" : "text-cvr-body"}`}>
                   {o}
+                  {boiTen && <span className="mt-0.5 block text-[12px] text-cvr-faint">{boiTen}</span>}
                 </button>
               ))}
             </div>

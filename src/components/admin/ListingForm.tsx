@@ -20,6 +20,7 @@ import OTieuDe from "@/components/OTieuDe";
 // phải sửa đúng dòng import này.
 import MapPicker from "@/components/MapPickerMo";
 import ChonCoTim from "@/components/ChonCoTim";
+import { bietDanhTinh, bietDanhPhuongMoi } from "@/lib/timDiaDanh";
 import ContentEditor from "@/components/admin/ContentEditor";
 import { uploadImageFile } from "@/lib/uploadImage";
 import { soAnhToiDa, soVideoToiDa, bangTheoMucDich, huongKhuyenMai } from "@/lib/billing";
@@ -548,6 +549,7 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
               options={provinceOptions}
               placeholder="— Chọn Tỉnh/Thành —"
               timPlaceholder="Tìm Tỉnh / Thành"
+              bietDanh={bietDanhTinh(geoMode, provinceOptions)}
               className={inputCls}
             />
           </Field>
@@ -579,7 +581,7 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
                 disabled={geoMode === "moi" ? !province : !district}
                 options={wardOptions}
                 placeholder={(geoMode === "moi" ? province : district) ? "— Chọn Phường/Xã —" : geoMode === "moi" ? "Chọn tỉnh trước" : "Chọn quận/huyện trước"}
-                timPlaceholder="Tìm Phường / Xã"
+                timPlaceholder="Tìm Phường / Xã" bietDanh={geoMode === "moi" ? bietDanhPhuongMoi(province, wardOptions) : undefined}
                 className={inputCls}
               />
             ) : (

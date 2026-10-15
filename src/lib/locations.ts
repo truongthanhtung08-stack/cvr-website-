@@ -270,6 +270,12 @@ function khoaCuDu(tinh: string, quan: string, phuong: string): string {
   const coDau = (phuong || "").normalize("NFC").trim().toLowerCase().split(/\s+/).join(" ");
   return `${chuanTen(tinh)}|${chuanTenCap(quan)}|${coDau}`; // "TP. Cao Lãnh" ≠ "Huyện Cao Lãnh"
 }
+// Tên cũ hơn theo phường MỚI — cho ô tìm: gõ "An Hải Tây" vẫn ra Phường An Hải.
+const _tenCuHon = new Map<string, string[]>();
+function ghiTenCuHon(tinhMoi: string, phuongMoi: string, ten: string) {
+  const k = `${chuanTen(tinhMoi)}|${chuanTen(phuongMoi)}`;
+  _tenCuHon.set(k, [...(_tenCuHon.get(k) ?? []), ten]);
+}
 // Ghi theo thứ tự: tên chính thức trước, tên cũ hơn sau — cái đã có KHÔNG bị đè.
 function ganCuSangMoi(tinh: string, quan: string, phuong: string, v: { tinh: string; phuong: string }) {
   const du = khoaCuDu(tinh, quan, phuong);
@@ -303,7 +309,7 @@ for (const p of provincesOld) {
     // TÊN CŨ HƠN (xã gộp trước 30/06/2025, vd "An Hải Tây") — chỉ tra chiều cũ → mới.
     for (const [w, j] of d.cu ?? []) {
       const pm = dsPhuongMoi[j];
-      if (pm) ganCuSangMoi(p.name, d.name, w, { tinh: tinhMoi, phuong: pm });
+      if (pm) { ganCuSangMoi(p.name, d.name, w, { tinh: tinhMoi, phuong: pm }); ghiTenCuHon(tinhMoi, pm, `${w}, ${d.name}`); }
     }
     // Xã cũ bị CHIA về nhiều xã mới: phần còn lại cũng phải tra ngược ra được xã cũ
     // (chiều cũ → mới vẫn lấy phần chính ở `moi`, không đoán theo số nhà).
@@ -321,7 +327,7 @@ for (const p of provincesOld) {
   for (const h of p.huyenCuHon ?? []) {
     for (const [w, j] of h.cu) {
       const pm = dsPhuongMoi[j];
-      if (pm) ganCuSangMoi(p.name, h.name, w, { tinh: tinhMoi, phuong: pm });
+      if (pm) { ganCuSangMoi(p.name, h.name, w, { tinh: tinhMoi, phuong: pm }); ghiTenCuHon(tinhMoi, pm, `${w}, ${h.name}`); }
     }
   }
 }
@@ -332,6 +338,11 @@ export function phuongMoiCua(tinhCu: string, quanCu: string, phuongCu: string) {
 }
 
 /** Phường/xã MỚI → những chỗ cũ đã gộp vào nó (một phường mới thường gộp 2–4 phường cũ). */
+/** Tên phường/xã cũ hơn (gộp trước 30/06/2025) nay thuộc phường mới này — chỉ để tìm. */
+export function tenCuHonCua(tinhMoi: string, phuongMoi: string): string[] {
+  return _tenCuHon.get(`${chuanTen(tinhMoi)}|${chuanTen(phuongMoi)}`) ?? [];
+}
+
 export function choCuCua(tinhMoi: string, phuongMoi: string): ChoCu[] {
   return _moiSangCu.get(`${chuanTen(tinhMoi)}|${chuanTen(phuongMoi)}`) ?? [];
 }

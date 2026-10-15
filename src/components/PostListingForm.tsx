@@ -5,6 +5,7 @@ import Link from "next/link";
 import BangGiaGoiTin from "@/components/BangGiaGoiTin";
 import BangQuyenLoiNoi from "@/components/BangQuyenLoiNoi";
 import ChonCoTim from "@/components/ChonCoTim";
+import { bietDanhTinh, bietDanhPhuongMoi, type BietDanh } from "@/lib/timDiaDanh";
 import { linkHopLe } from "@/lib/linkChen";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -39,6 +40,9 @@ import type { ListingRow } from "@/lib/listingAdmin";
 import { chuanHoaSdt, tachNhieuSdt } from "@/lib/phone";
 import XacMinhSdt from "@/components/XacMinhSdt";
 import { uploadImageFile } from "@/lib/uploadImage";
+
+// Đơn vị giá "Khác — tự ghi" (chủ dự án 14/10/2026): khách ghi nguyên văn, lưu details.giaTuGhi.
+const KHAC_GIA = "Khác — tự ghi";
 
 // Form đăng tin cho KHÁCH HÀNG (/dang-tin) — nối Supabase thật.
 // Cùng cấu trúc với form admin: Lưu nháp (làm dở) / Đăng tin (gửi duyệt).
@@ -158,6 +162,7 @@ export default function PostListingForm() {
   const [tamGiu, setTamGiu] = useState(0);
   const [error, setError] = useState("");
   const [xemQuyenLoi, setXemQuyenLoi] = useState(false);
+  const [giaTuGhi, setGiaTuGhi] = useState("");
 
   // TỰ LƯU NHÁP TRÊN MÁY (chủ dự án 10/10/2026): mọi thứ khách đã nhập được cất vào trình
   // duyệt sau mỗi lần gõ, theo TỪNG TÀI KHOẢN; đăng nhập lại, mở /dang-tin trên cùng máy là
@@ -196,6 +201,7 @@ export default function PostListingForm() {
           setMapPin(s("mapPin"));
           setTitle(s("title"));
           setPriceValue(s("priceValue"));
+          setGiaTuGhi(s("giaTuGhi"));
           if (s("priceUnit")) setPriceUnit(s("priceUnit"));
           setArea(s("area"));
           setBuiltArea(s("builtArea"));
@@ -227,13 +233,13 @@ export default function PostListingForm() {
     try {
       localStorage.setItem(khoaNhap(userId), JSON.stringify({
         demand, category, geoMode, province, district, ward, phuongCu, addressDetail, linkChen, mapPin,
-        title, priceValue, priceUnit, area, builtArea, beds, baths, specValues, legal, furnish, direction,
+        title, priceValue, priceUnit, giaTuGhi, area, builtArea, beds, baths, specValues, legal, furnish, direction,
         interior, amenities, description, images, contactName, contactPhone, contactEmail, projectSlug, projectName,
         maNhap: maNhapTk.current,
       }));
     } catch {}
   }, [editId, daNapNhap, userId, done, thieuTien, demand, category, geoMode, province, district, ward, phuongCu, addressDetail, linkChen, mapPin,
-    title, priceValue, priceUnit, area, builtArea, beds, baths, specValues, legal, furnish, direction,
+    title, priceValue, priceUnit, giaTuGhi, area, builtArea, beds, baths, specValues, legal, furnish, direction,
     interior, amenities, description, images, contactName, contactPhone, contactEmail, projectSlug, projectName]);
 
   // KHÔNG còn ô "Ngày bắt đầu" tự chọn: tin bắt đầu hiển thị LÚC ĐƯỢC DUYỆT (một luật,
@@ -351,8 +357,8 @@ export default function PostListingForm() {
   // NGHÌN ĐỒNG / M² / THÁNG (35.000đ/m²). Thiếu đơn vị này thì người đăng phải tự
   // nhân với diện tích — chỗ sai nhiều nhất khi nhập tin kho xưởng.
   const donViGia = laThue
-    ? ["triệu/tháng", "nghìn/m²/tháng", "triệu/6 tháng", "triệu/năm", "Thoả thuận"]
-    : ["tỷ", "triệu", "triệu/m²", "Thoả thuận"];
+    ? ["triệu/tháng", "nghìn/m²/tháng", "triệu/6 tháng", "triệu/năm", "Thoả thuận", KHAC_GIA]
+    : ["tỷ", "triệu", "triệu/m²", "Thoả thuận", KHAC_GIA];
   // Đổi mục đích mà đơn vị cũ không còn hợp lệ → tự về đơn vị đầu của nhóm mới.
   const donVi = donViGia.includes(priceUnit) ? priceUnit : donViGia[0];
 
@@ -378,13 +384,8 @@ export default function PostListingForm() {
   const oNhapSpec = (f: Field) => (
     <div key={f.key} className="min-w-0">
       <Label>{f.label}{f.unit ? ` (${f.unit})` : ""}{f.batBuoc ? " *" : ""}</Label>
-      {f.type === "select" && f.options === directions ? (
-        // Hướng: đủ 8 hướng — chỉ chọn.
-        <select value={specValues[f.key] ?? ""} onChange={(e) => setSpecValues((s) => ({ ...s, [f.key]: e.target.value }))} className={inputCls}>
-          <option value="">Chọn</option>
-          {f.options?.map((o) => <option key={o} value={o}>{o}</option>)}
-        </select>
-      ) : f.type === "select" ? (
+      {f.type === "select" ? (
+        // Mọi ô chọn (kể cả Hướng — 8 hướng) đều có dòng "Khác — tự ghi" (chủ dự án 14/10/2026).
         <ChonHoacGhi value={specValues[f.key] ?? ""} onChange={(v) => setSpecValues((s) => ({ ...s, [f.key]: v }))} options={f.options ?? []} className={inputCls} />
       ) : (
         <OGoTuGian value={specValues[f.key] ?? ""} onChange={(v) => setSpecValues((s) => ({ ...s, [f.key]: v }))} placeholder={f.placeholder ?? ""} className={inputCls} />
@@ -509,7 +510,9 @@ export default function PostListingForm() {
       setTitle(r.title ?? "");
       setDescription(r.description ?? "");
       // Giá VNĐ → ô nhập + đơn vị (ngược với priceToVnd)
-      if (r.price_vnd == null) { setPriceUnit("Thoả thuận"); setPriceValue(""); }
+      const giaGhi = ((r.details ?? {}) as { giaTuGhi?: string }).giaTuGhi?.trim();
+      if (r.price_vnd == null && giaGhi) { setPriceUnit(KHAC_GIA); setGiaTuGhi(giaGhi); setPriceValue(""); }
+      else if (r.price_vnd == null) { setPriceUnit("Thoả thuận"); setPriceValue(""); }
       else if (r.purpose === "thue") { setPriceUnit("triệu/tháng"); setPriceValue(String(Math.round((r.price_vnd / 1e6) * 10) / 10)); }
       else if (r.price_vnd >= 1e9) { setPriceUnit("tỷ"); setPriceValue(String(Math.round((r.price_vnd / 1e9) * 100) / 100)); }
       else { setPriceUnit("triệu"); setPriceValue(String(Math.round(r.price_vnd / 1e6))); }
@@ -555,7 +558,7 @@ export default function PostListingForm() {
 
   // Giá → VNĐ. Tin CHO THUÊ quy về VNĐ MỖI THÁNG (trang tin tự thêm chữ "/tháng").
   function priceToVnd(): number | null {
-    if (donVi === "Thoả thuận" || !priceValue.trim()) return null;
+    if (donVi === "Thoả thuận" || donVi === KHAC_GIA || !priceValue.trim()) return null;
     const n = parseFloat(priceValue.replace(",", "."));
     if (Number.isNaN(n)) return null;
     const a = parseFloat(area.replace(",", "."));
@@ -604,6 +607,7 @@ export default function PostListingForm() {
       interior,
       amenities,
       legal: legal || undefined,
+      giaTuGhi: donVi === KHAC_GIA ? giaTuGhi.trim() || undefined : undefined,
       furnish: furnish || undefined,
       direction: direction || undefined,
       addressDetail: addressDetail.trim() || undefined,
@@ -700,6 +704,8 @@ export default function PostListingForm() {
       if (!contactName.trim() || !contactPhone.trim()) return setError("Nhập họ tên và số điện thoại liên hệ.");
       // Số điện thoại là BẮT BUỘC ở mọi tin (chủ dự án chốt 27/09/2026) — phải là số gọi được, không chỉ "có chữ".
       if (!tachNhieuSdt(contactPhone).length) return setError("Số điện thoại liên hệ chưa đúng (VD: 0905123456).");
+      // GIÁ BẮT BUỘC (chủ dự án 14/10/2026): nhập số, chọn "Thoả thuận", hoặc tự ghi.
+      if (donVi === KHAC_GIA ? !giaTuGhi.trim() : donVi !== "Thoả thuận" && !priceValue.trim()) return setError("Chưa nhập giá.");
       if (!area.trim()) return setError("Chưa nhập diện tích.");
       // THÔNG TIN CHÍNH THEO LOẠI HÌNH — thiếu mục nào báo đúng tên mục đó,
       // không báo chung chung để người đăng khỏi phải dò cả trang.
@@ -1070,11 +1076,11 @@ export default function PostListingForm() {
             và bản đồ ngay bên dưới vẫn nằm chung một màn hình, khỏi kéo lên kéo xuống
             đối chiếu. */}
         <div className={`grid grid-cols-2 gap-3 sm:gap-4 ${coDanhMucQuan ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
-          <PickTim label="Tỉnh / Thành" value={province} onChange={(v) => { setProvince(v); setDistrict(""); setWard(""); }} options={provinceOptions} placeholder="Chọn Tỉnh / Thành" timPlaceholder="Tìm Tỉnh / Thành" />
+          <PickTim label="Tỉnh / Thành" value={province} onChange={(v) => { setProvince(v); setDistrict(""); setWard(""); }} options={provinceOptions} placeholder="Chọn Tỉnh / Thành" timPlaceholder="Tìm Tỉnh / Thành" bietDanh={bietDanhTinh(geoMode, provinceOptions)} />
           {coDanhMucQuan && (
             <PickTim label="Quận / Huyện" value={district} onChange={(v) => { setDistrict(v); setWard(""); }} options={districts} placeholder="Chọn Quận / Huyện" timPlaceholder="Tìm Quận / Huyện" disabled={!province} />
           )}
-          <PickTim label="Phường / Xã" value={ward} onChange={(v) => { setWard(v); setPhuongCu(""); }} options={wards} placeholder="Chọn Phường / Xã" timPlaceholder="Tìm Phường / Xã" disabled={geoMode === "moi" ? !province : coDanhMucQuan ? !district : !province} />
+          <PickTim label="Phường / Xã" value={ward} onChange={(v) => { setWard(v); setPhuongCu(""); }} options={wards} placeholder="Chọn Phường / Xã" timPlaceholder="Tìm Phường / Xã" bietDanh={geoMode === "moi" ? bietDanhPhuongMoi(province, wards) : undefined} disabled={geoMode === "moi" ? !province : coDanhMucQuan ? !district : !province} />
         </div>
         {/* Ô "Phường / Xã trước sáp nhập" ĐÃ BỎ theo yêu cầu chủ dự án 14/10/2026. */}
         {/* ĐỊA CHỈ HAI HỆ — nhập hệ nào cũng thấy ngay cách gọi của hệ kia.
@@ -1137,7 +1143,9 @@ export default function PostListingForm() {
               {/* KHÔNG dùng type="number": trình duyệt loại bỏ dấu PHẨY nên khách gõ
                   "4,2" (đúng như gợi ý trong ô) thì ô thành rỗng, không lưu được giá.
                   Dùng text, không ép bàn phím số: khách gõ được mọi ký tự (chủ dự án 10/10/2026). */}
-              <input type="text" value={priceValue} onChange={(e) => setPriceValue(e.target.value)} disabled={donVi === "Thoả thuận"} placeholder={goiYGia(donVi)} className={inputCls + " disabled:opacity-50"} />
+              {donVi === KHAC_GIA
+                ? <OGoTuGian value={giaTuGhi} onChange={setGiaTuGhi} className={inputCls} />
+                : <input type="text" value={priceValue} onChange={(e) => setPriceValue(e.target.value)} disabled={donVi === "Thoả thuận"} placeholder={goiYGia(donVi)} className={inputCls + " disabled:opacity-50"} />}
               <select value={donVi} onChange={(e) => setPriceUnit(e.target.value)} className={inputCls}>
                 {donViGia.map((u) => <option key={u} value={u}>{u}</option>)}
               </select>
@@ -1230,10 +1238,7 @@ export default function PostListingForm() {
           {/* Trường DÙNG CHUNG mọi loại hình: Hướng · Nội thất · Pháp lý */}
           <div>
             <Label>Hướng nhà / đất</Label>
-            <select value={direction} onChange={(e) => setDirection(e.target.value)} className={inputCls}>
-              <option value="">Chọn</option>
-              {directions.map((o) => <option key={o} value={o}>{o}</option>)}
-            </select>
+            <ChonHoacGhi value={direction} onChange={setDirection} options={directions} className={inputCls} />
           </div>
           {coNoiThat(loaiHinh) && (
             <div>
@@ -1739,7 +1744,7 @@ function Pick({ label, value, onChange, options, placeholder, disabled }: { labe
 }
 
 // Ô chọn có ô tìm (Tỉnh · Quận · Phường) — dùng chung với trang admin.
-function PickTim({ label, ...p }: { label: string; value: string; onChange: (v: string) => void; options: string[]; placeholder: string; timPlaceholder: string; disabled?: boolean }) {
+function PickTim({ label, ...p }: { label: string; value: string; onChange: (v: string) => void; options: string[]; placeholder: string; timPlaceholder: string; disabled?: boolean; bietDanh?: Record<string, BietDanh[]> }) {
   return (
     <div>
       <Label>{label}</Label>

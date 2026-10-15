@@ -30,8 +30,10 @@ const PHAP_LY_SO_DO = "Sổ đỏ chính chủ";
 const PHAP_LY_SO_HONG = "Sổ hồng chính chủ";
 const PHAP_LY_CHUNG = [
   "Hợp đồng mua bán",
+  "Hợp đồng góp vốn",
   "Đang chờ sổ",
   "Sổ chung / vi bằng",
+  "Giấy tờ tay",
   "Đang cập nhật",
 ];
 
@@ -70,6 +72,7 @@ export const legalOptions = phapLyCho();
 
 // Tình trạng nội thất (mức độ)
 export const furnishLevels = [
+  "Không nội thất",
   "Bàn giao thô",
   "Nội thất cơ bản",
   "Nội thất đầy đủ",
@@ -113,7 +116,7 @@ const depthField: Field = { key: "depth", label: "Chiều dài (chiều sâu)", 
 const roadField: Field = { key: "roadWidth", label: "Đường vào", type: "number", unit: "m", main: true };
 // Nhà nào cũng cần: vào được bằng gì và xây năm nào — hai câu khách hỏi nhiều nhất
 // sau giá và diện tích. Là ĐẶC ĐIỂM (không chặn) vì tin cũ hay không ghi năm xây.
-const accessField: Field = { key: "access", label: "Vị trí lối vào", type: "select", options: ["Mặt tiền đường", "Kiệt / hẻm ô tô", "Kiệt / hẻm xe máy"] };
+const accessField: Field = { key: "access", label: "Vị trí lối vào", type: "select", options: ["Mặt tiền đường", "Kiệt / hẻm ô tô", "Kiệt / hẻm ba gác", "Kiệt / hẻm xe máy"] };
 const builtYearField: Field = { key: "builtYear", label: "Năm xây dựng", type: "text", placeholder: "VD: 2021" };
 // Chung cư / căn hộ: phí quản lý là khoản người mua và người thuê nào cũng hỏi.
 const mgmtFeeField: Field = { key: "mgmtFee", label: "Phí quản lý", type: "text", placeholder: "VD: 12.000đ/m²/tháng" };
@@ -159,7 +162,7 @@ export const categorySpecs: CategorySpec[] = [
       mgmtFeeField,
       { key: "maCan", label: "Mã căn", type: "text", placeholder: "VD: A-18.05" },
       { key: "canGoc", label: "Căn góc", type: "select", options: ["Có", "Không"] },
-      { key: "choDauXe", label: "Chỗ đậu xe", type: "select", options: ["Ô tô", "Xe máy", "Không có"] },
+      { key: "choDauXe", label: "Chỗ đậu xe", type: "select", options: ["Ô tô và xe máy", "Ô tô", "Xe máy", "Không có"] },
     ],
   },
   {
@@ -175,7 +178,7 @@ export const categorySpecs: CategorySpec[] = [
       mgmtFeeField,
       { key: "maCan", label: "Mã căn", type: "text", placeholder: "VD: A-18.05" },
       { key: "canGoc", label: "Căn góc", type: "select", options: ["Có", "Không"] },
-      { key: "choDauXe", label: "Chỗ đậu xe", type: "select", options: ["Ô tô", "Xe máy", "Không có"] },
+      { key: "choDauXe", label: "Chỗ đậu xe", type: "select", options: ["Ô tô và xe máy", "Ô tô", "Xe máy", "Không có"] },
     ],
   },
   {
@@ -210,7 +213,7 @@ export const categorySpecs: CategorySpec[] = [
       { key: "pccc", label: "Hệ thống PCCC", type: "select", options: ["Đã có", "Chưa có"] },
       { key: "grade", label: "Hạng toà nhà", type: "select", options: ["Hạng A", "Hạng B", "Hạng C", "Nhà phố"] },
       { key: "thangMay", label: "Thang máy", type: "select", options: ["Có", "Không"] },
-      { key: "choDauXe", label: "Chỗ đậu xe", type: "select", options: ["Ô tô", "Xe máy", "Không có"] },
+      { key: "choDauXe", label: "Chỗ đậu xe", type: "select", options: ["Ô tô và xe máy", "Ô tô", "Xe máy", "Không có"] },
       { key: "gioLamViec", label: "Giờ làm việc toà nhà", type: "text", placeholder: "VD: 7h–22h" },
     ],
   },
@@ -262,7 +265,7 @@ export const categorySpecs: CategorySpec[] = [
       balconyField,
       { key: "corner", label: "Vị trí", type: "select", options: ["Lô góc 3 mặt tiền", "Lô góc 2 mặt tiền", "1 mặt tiền"] },
       builtYearField,
-      { key: "ketCau", label: "Kết cấu", type: "select", options: ["Nhà cấp 4", "Nhà kiên cố", "Nhà gác lửng"] },
+      { key: "ketCau", label: "Kết cấu", type: "select", options: ["Nhà cấp 4", "Nhà cấp 3", "Nhà kiên cố", "Nhà gác lửng", "Nhà tạm"] },
       { key: "thangMay", label: "Thang máy", type: "select", options: ["Có", "Không"] },
       { key: "viaHe", label: "Vỉa hè", type: "number", unit: "m" },
     ],
@@ -293,7 +296,7 @@ export const categorySpecs: CategorySpec[] = [
       balconyField,
       accessField,
       builtYearField,
-      { key: "ketCau", label: "Kết cấu", type: "select", options: ["Nhà cấp 4", "Nhà kiên cố", "Nhà gác lửng"] },
+      { key: "ketCau", label: "Kết cấu", type: "select", options: ["Nhà cấp 4", "Nhà cấp 3", "Nhà kiên cố", "Nhà gác lửng", "Nhà tạm"] },
       { key: "otoDoCua", label: "Ô tô đỗ cửa", type: "select", options: ["Có", "Không"] },
     ],
   },

@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { useProfile } from "@/lib/useProfile";
+import { useAuth, anhDaiDien } from "@/lib/useAuth";
+import AnhDaiDien from "@/components/AnhDaiDien";
 import { freeDangChay, freeNote, tenGoiMienPhi, vnd } from "@/lib/billing";
 import { useBilling } from "@/lib/useBilling";
 import { ngayVN, tuNgayVN } from "@/lib/ngayVN";
@@ -41,6 +43,7 @@ const KHOA_DA_XEM = "cl_khach_hang_da_xem";
 
 export default function AccountOverviewPage() {
   const { profile, loading } = useProfile();
+  const { user } = useAuth();
   const { billing, loading: billingLoading } = useBilling();
   const [so, setSo] = useState<SoLieu | null>(null);
   const [goiHv, setGoiHv] = useState<{ ten_goi: string; het_han: string } | null>(null);
@@ -153,6 +156,17 @@ export default function AccountOverviewPage() {
       {/* Đếm "đăng ký thành công" cho Google Ads — chỉ tính tài khoản vừa tạo */}
       <DoDangKyMoi />
       <PageHeader title="Tổng quan" />
+      {/* ẢNH + TÊN KHÁCH (chủ dự án 15/10/2026): vào là thấy tài khoản của mình. Bấm → hồ sơ cá nhân.
+          Ảnh: hồ sơ → ảnh tài khoản Google/Zalo → chữ viết tắt (giống trang Hồ sơ cá nhân). */}
+      <Link href="/tai-khoan/ca-nhan" className="flex items-center gap-4 rounded-2xl border border-cvr-line bg-white p-4 shadow-sm transition hover:border-cvr-ink/30">
+        <AnhDaiDien url={profile.avatar_url || anhDaiDien(user)} ten={profile.full_name || "T"} className="h-14 w-14 shrink-0 bg-cvr-surface text-xl text-cvr-ink ring-1 ring-cvr-line" />
+        <span className="min-w-0">
+          <span className="block truncate text-[17px] font-semibold tracking-tight text-cvr-ink">{profile.full_name?.trim() || profile.phone || profile.email}</span>
+          {profile.full_name?.trim() && (profile.phone || profile.email) && (
+            <span className="block truncate text-sm text-cvr-muted">{profile.phone || profile.email}</span>
+          )}
+        </span>
+      </Link>
       {/* Môi giới được đăng tin hộ: mời nhận tin mang số điện thoại của mình về */}
       <NhanTinCuaToi />
 

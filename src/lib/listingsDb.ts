@@ -43,6 +43,9 @@ export type ListingDetailsJson = {
   dtSanUocTinh?: number;
   dtSanNguon?: string; // cách suy: "100 m² đất × 3 tầng"
   mapPin?: string; // toạ độ / link Google Maps admin ghim tay
+  // GIÁ KHÁCH TỰ GHI (đơn vị "Khác — tự ghi", 15/10/2026) — không quy ra số được nên price_vnd
+  // để trống (không vào lọc/sắp xếp giá); trang tin hiện NGUYÊN VĂN câu khách ghi.
+  giaTuGhi?: string;
   places?: { category: string; name: string; distance: string }[]; // tiện ích xung quanh
   // phones: MỌI số của người đăng (số đầu = số hiển thị). Giữ đủ để sau này
   // ghép tin đăng hộ về đúng tài khoản khách — khách hay có 2 số.
@@ -167,7 +170,7 @@ function buildSearchText(r: Row): string {
 }
 
 function rowToListing(r: Row): Listing {
-  const price = fmtPrice(r.price_vnd, r.purpose);
+  const price = r.price_vnd == null && r.details?.giaTuGhi?.trim() ? r.details.giaTuGhi.trim().replace(/\s+/g, " ") : fmtPrice(r.price_vnd, r.purpose);
   // ĐƠN GIÁ / M² — MẪU SỐ KHÁC NHAU THEO LOẠI HÌNH, VÀ PHẢI GHI RÕ LÀ M² GÌ.
   //   · CHO THUÊ kho xưởng · kho bãi · văn phòng · mặt bằng → "35.000 đ/m²/tháng"
   //     (thị trường báo giá kiểu này chứ không báo tổng tiền tháng)
