@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import BangGiaGoiTin from "@/components/BangGiaGoiTin";
 import BangQuyenLoiNoi from "@/components/BangQuyenLoiNoi";
@@ -51,8 +51,13 @@ const KHAC_GIA = "Khác — tự ghi";
 // lưu = update. Tin đã duyệt sửa xong sẽ quay về "Chờ duyệt".
 // Giá trị đánh dấu "dự án chưa có trên web" trong ô chọn dự án — KHÔNG lưu
 // xuống DB, chỉ để biết phải hiện ô gõ tên.
+// FORM TỪNG MỤC (chủ dự án 15/10/2026: "trang đăng tin hiện rất nhiều mục — hiện từng mục, bấm
+// xem tiếp"): chỉ MỘT mục mở; cuối mục có nút "Tiếp tục" mở mục sau. Bấm tiêu đề / thanh bước để
+// mở mục bất kỳ. Mục thu gọn chỉ ẨN (vẫn giữ nguyên dữ liệu, ảnh đang tải, bản đồ).
+const MucMoCtx = createContext<{ mo: string; moMuc: (step: string) => void } | null>(null);
+
 const DU_AN_KHAC = "__khac";
-const DU_AN_KHAC_NHAN = "Dự án khác — tự ghi tên";
+const DU_AN_KHAC_NHAN = "Khác — tự ghi";
 const KHONG_DU_AN = "— Không thuộc dự án nào —";
 // Khoá trình duyệt giữ bản nháp tự lưu của form đăng tin mới — RIÊNG TỪNG TÀI KHOẢN
 // (máy dùng chung thì người sau không thấy bản nháp của người trước).
@@ -377,6 +382,16 @@ export default function PostListingForm() {
   // sau tự dồn lên, không bao giờ nhảy số hay trùng số như trước.
   let demBuoc = 0;
   const buoc = () => String(++demBuoc);
+  const [mucMo, setMucMo] = useState("1");
+  // Mở một mục rồi cuộn tới đầu mục đó. Bản đồ (MapLibre) đo lại khung khi trình duyệt báo đổi cỡ —
+  // khối vừa hiện từ trạng thái ẩn phải báo, không thì bản đồ trắng.
+  const moMuc = (step: string) => {
+    setMucMo(step);
+    requestAnimationFrame(() => {
+      window.dispatchEvent(new Event("resize"));
+      document.querySelector(`[data-buoc="${step}"]`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  };
 
   // Ô nhập một mục đặc điểm — dùng chung cho cả hai khối để hai bên không lệch nhau.
   // ⛔ Gọi như HÀM (`oNhapSpec(f)`), KHÔNG dùng `<ONhapSpec />`: khai báo trong thân
@@ -964,6 +979,7 @@ export default function PostListingForm() {
       }}
       onSubmit={(e) => { e.preventDefault(); save(false); }}
       className="space-y-6">
+      <MucMoCtx.Provider value={{ mo: mucMo, moMuc }}>
       <ThanhBuoc />
 
       {moXacMinh && (
@@ -1510,7 +1526,7 @@ export default function PostListingForm() {
       </Card>
 
       {/* 10. Thuộc dự án (không bắt buộc) */}
-      <Card step={buoc()} title="Thuộc dự án" khoa={editStatus === "approved"}>
+      <Card step={buoc()} title="Thuộc dự án" khoa={editStatus === "approved"} cuoi>
         <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <Label>Dự án</Label>
@@ -1534,33 +1550,22 @@ export default function PostListingForm() {
               timPlaceholder="Tìm dự án"
               className={inputCls}
             />
+            {/* "Khác — tự ghi" (cùng cấu trúc mọi ô chọn): ô gõ tự giãn hiện NGAY DƯỚI ô chọn.
+                Gõ trúng tên dự án đã có thì tin tự nối vào dự án đó (slugDuAn). */}
+            {projectSlug === DU_AN_KHAC && (
+              <>
+                <OGoTuGian value={projectName} onChange={setProjectName} className={inputCls + " mt-2"} />
+                {slugDuAn() && (
+                  <p className="mt-1.5 text-xs font-medium text-cvr-blue-ink">
+                    Đã nối vào dự án {projectOptions.find((o) => o.slug === slugDuAn())?.name} trên web.
+                  </p>
+                )}
+              </>
+            )}
           </div>
-
-          {projectSlug === DU_AN_KHAC && (
-            <div>
-              <Label>Tên dự án</Label>
-              {/* Gõ tới đâu gợi ý tên dự án đã có tới đó — gõ trúng tên có sẵn thì
-                  tin tự nối vào dự án đó (bộ lọc Dự án, trang dự án, "Tin liên quan
-                  tại dự án" đều chạy theo slug). */}
-              <input
-                value={projectName}
-                onChange={(e) => setProjectName(e.target.value)}
-                placeholder="Tên dự án"
-                list="ds-du-an"
-                className={inputCls}
-              />
-              <datalist id="ds-du-an">
-                {projectOptions.map((o) => <option key={o.slug} value={o.name} />)}
-              </datalist>
-              {slugDuAn() && (
-                <p className="mt-1.5 text-xs font-medium text-cvr-blue-ink">
-                  Đã nối vào dự án {projectOptions.find((o) => o.slug === slugDuAn())?.name} trên web.
-                </p>
-              )}
-            </div>
-          )}
         </div>
       </Card>
+      </MucMoCtx.Provider>
 
       {error && (
         <p className="rounded-lg bg-red-50 px-4 py-2.5 text-sm font-medium text-red-700 ring-1 ring-inset ring-red-600/20">{error}</p>
@@ -1619,6 +1624,7 @@ const MOC_BUOC = [
 ];
 
 function ThanhBuoc() {
+  const ctxBuoc = useContext(MucMoCtx);
   const [dangO, setDangO] = useState(MOC_BUOC[0].id);
   const bocRef = useRef<HTMLDivElement>(null);
 
@@ -1683,7 +1689,11 @@ function ThanhBuoc() {
               key={m.id}
               type="button"
               data-moc={m.id}
-              onClick={() => document.getElementById(m.id)?.scrollIntoView({ behavior: "smooth", block: "start" })}
+              onClick={() => {
+                const buoc = document.getElementById(m.id)?.dataset.buoc;
+                if (buoc && ctxBuoc) ctxBuoc.moMuc(buoc);
+                else document.getElementById(m.id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}
               className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium transition ${
                 o ? "bg-cvr-ink text-white" : "bg-cvr-surface text-cvr-body active:bg-cvr-line"
               }`}
@@ -1708,24 +1718,47 @@ function Label({ children }: { children: React.ReactNode }) {
   return <label className="mb-1.5 block text-sm font-medium text-cvr-body">{children}</label>;
 }
 
-function Card({ id, step, title, children, khoa }: { id?: string; step: string; title: string; children: React.ReactNode; khoa?: boolean }) {
+function Card({ id, step, title, children, khoa, cuoi }: { id?: string; step: string; title: string; children: React.ReactNode; khoa?: boolean; cuoi?: boolean }) {
+  const ctx = useContext(MucMoCtx);
+  const mo = !ctx || ctx.mo === step;
   return (
     // scroll-mt: chừa chỗ cho header + thanh quay lại + thanh bước, nếu không thì
     // bấm mốc xong tiêu đề khối bị các thanh dính che mất.
-    <section id={id} className="scroll-mt-[168px] rounded-none border border-cvr-line bg-white p-5 shadow-lux sm:p-6 lg:scroll-mt-[120px]">
-      <h2 className="mb-4 flex items-center gap-2.5 text-lg font-semibold tracking-tight text-cvr-ink">
-        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-cvr-ink text-sm text-white">{step}</span>
-        {title}
+    <section id={id} data-buoc={step} className={`scroll-mt-[168px] rounded-none border border-cvr-line bg-white shadow-lux lg:scroll-mt-[120px] ${mo ? "p-5 sm:p-6" : "px-5 py-3.5 sm:px-6"}`}>
+      <h2 className={mo ? "mb-4" : ""}>
+        <button
+          type="button"
+          onClick={() => ctx?.moMuc(step)}
+          aria-expanded={mo}
+          className="flex w-full items-center gap-2.5 text-left text-lg font-semibold tracking-tight text-cvr-ink"
+        >
+          <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm ${mo ? "bg-cvr-ink text-white" : "bg-cvr-surface text-cvr-body"}`}>{step}</span>
+          <span className={`min-w-0 flex-1 ${mo ? "" : "text-[16px] font-medium text-cvr-body"}`}>{title}</span>
+          {!mo && (
+            <svg className="h-5 w-5 shrink-0 text-cvr-muted" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+          )}
+        </button>
       </h2>
-      {khoa ? (
-        // TIN ĐANG HIỂN THỊ (chuẩn Batdongsan): không đổi loại tin, địa chỉ, dự án — đổi là
-        // thành bất động sản khác, phải đăng tin mới.
-        <>
+      {/* Thu gọn = chỉ ẨN, không gỡ — dữ liệu, ảnh đang tải, bản đồ giữ nguyên. */}
+      <div className={mo ? "" : "hidden"}>
+        {khoa ? (
+          // TIN ĐANG HIỂN THỊ (chuẩn Batdongsan): không đổi loại tin, địa chỉ, dự án — đổi là
+          // thành bất động sản khác, phải đăng tin mới.
           <fieldset disabled className="space-y-4 opacity-60">{children}</fieldset>
-        </>
-      ) : (
-        <div className="space-y-4">{children}</div>
-      )}
+        ) : (
+          <div className="space-y-4">{children}</div>
+        )}
+        {ctx && !cuoi && (
+          <button
+            type="button"
+            onClick={() => ctx.moMuc(String(Number(step) + 1))}
+            className="mt-5 flex h-11 w-full items-center justify-center gap-1.5 rounded-lg bg-cvr-ink text-sm font-semibold text-white transition hover:bg-cvr-ink/90 sm:ml-auto sm:w-auto sm:px-6"
+          >
+            Tiếp tục
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+          </button>
+        )}
+      </div>
     </section>
   );
 }

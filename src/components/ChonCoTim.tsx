@@ -33,6 +33,7 @@ export default function ChonCoTim({
   // Ô tìm ẨN mặc định (chủ dự án 15/10/2026): mở ra là danh sách để KÉO chọn — không bật bàn
   // phím che màn hình điện thoại. Muốn tìm thì bấm biểu tượng kính lúp mới hiện ô gõ.
   const [dangTim, setDangTim] = useState(false);
+  const dong = () => { setMo(false); setQ(""); setDangTim(false); };
   useEffect(() => {
     if (!mo) return;
     const h = (e: KeyboardEvent) => { if (e.key === "Escape") dong(); };
@@ -44,7 +45,6 @@ export default function ChonCoTim({
   // "bấm vào search sẽ hiện ra mục đã chọn trước mặt khách, rồi muốn search cái nào thì search").
   const coChon = !!value && options.includes(value);
   const ds = coChon ? tim.filter((x) => x.ten !== value) : tim;
-  const dong = () => { setMo(false); setQ(""); setDangTim(false); };
   const chon = (v: string) => { onChange(v); dong(); };
   return (
     <>

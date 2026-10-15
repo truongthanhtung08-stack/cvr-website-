@@ -56,6 +56,14 @@ export default function FilterDropdown({
   // ĐIỆN THOẠI (< 640px): panel neo theo nút quá chật → đổi sang SHEET trượt từ đáy
   // đúng chuẩn iOS (nền mờ, thanh kéo, bo góc trên, né thanh Home). Desktop giữ nguyên.
   const [sheet, setSheet] = useState(false);
+  // ĐANG GÕ trong bảng (ô tìm tỉnh, dự án, giá…) trên điện thoại → bảng thành TOÀN MÀN HÌNH, ô gõ
+  // lên trên cùng: bàn phím không đè lên bảng (chủ dự án 15/10/2026 — chuẩn chung mọi ô tìm).
+  const [dangGo, setDangGo] = useState(false);
+  // Đóng bảng khi ô gõ còn đang giữ con trỏ thì onBlur không kịp chạy → trả về dạng bảng trượt.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (!open) setDangGo(false);
+  }, [open]);
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 639px)");
     const sync = () => setSheet(mq.matches);
@@ -182,7 +190,9 @@ export default function FilterDropdown({
                 role="dialog"
                 aria-modal="true"
                 aria-label={label}
-                className="cvr-sheet absolute inset-x-0 bottom-0 flex max-h-[86dvh] flex-col rounded-t-2xl bg-white pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_40px_rgba(0,0,0,0.22)]"
+                onFocus={(e) => { if (e.target instanceof HTMLInputElement) setDangGo(true); }}
+                onBlur={(e) => { if (!(e.relatedTarget instanceof HTMLInputElement)) setDangGo(false); }}
+                className={`cvr-sheet absolute inset-x-0 flex flex-col bg-white pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_40px_rgba(0,0,0,0.22)] ${dangGo ? "top-0 h-[100dvh] pt-[env(safe-area-inset-top)]" : "bottom-0 max-h-[86dvh] rounded-t-2xl"}`}
               >
                 {/* Thanh kéo + tiêu đề — đúng cấu trúc sheet của iOS */}
                 <div className="shrink-0 px-4 pb-2 pt-2.5">
