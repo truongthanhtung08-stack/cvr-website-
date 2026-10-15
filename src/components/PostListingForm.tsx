@@ -68,7 +68,10 @@ const khoaNhap = (uid: string) => `${KHOA_NHAP_MAY}:${uid}`;
 
 export default function PostListingForm() {
   const router = useRouter();
-  const editId = useSearchParams().get("id");
+  const thamSo = useSearchParams();
+  const editId = thamSo.get("id");
+  // Đăng nhập xong quay lại ĐÚNG link khách bấm (giữ ?goi=… của chương trình quảng bá).
+  const linkDangNhap = `/dang-nhap?next=${encodeURIComponent(thamSo.toString() ? `/dang-tin?${thamSo.toString()}` : "/dang-tin")}`;
 
   // Ai đang đăng nhập (cần để gắn owner_id + prefill liên hệ)
   const [userId, setUserId] = useState<string | null>(null);
@@ -335,6 +338,27 @@ export default function PostListingForm() {
   // Chương trình giảm giá khác đang chạy (admin duyệt) — tự trừ vào gói đúng đối tượng khi tính tiền.
   const ctKhac = (billing.promos ?? []).filter((p) => isPromoRunning(p, homNayVn));
   const hopCtKhac = (p: (typeof ctKhac)[number]) => p.audience === "all" || (p.audience === "new" && laThanhVienMoi);
+  // LINK CHƯƠNG TRÌNH QUẢNG BÁ CHỌN SẴN ĐÚNG GÓI (chủ dự án 15/10/2026):
+  //   /dang-tin?goi=khuyen-mai          → ô gói khuyến mãi (chỉ khi khách đúng đối tượng)
+  //   /dang-tin?goi=gold&ngay=10        → gói thường đúng hạng + số ngày có trong bảng giá
+  // Áp một lần khi đã có bảng giá + hồ sơ khách; không khớp thì để khách tự chọn.
+  const daApLink = useRef(false);
+  useEffect(() => {
+    const goiLink = thamSo.get("goi");
+    if (daApLink.current || !goiLink || editId || billingLoading || !hoSoVi || planTier) return;
+    daApLink.current = true;
+    if (goiLink === "khuyen-mai") {
+      if (!duocChonKm) return;
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setChonKm(true); setPlanTier(goiMp); setPlanDays(ngayMp);
+      return;
+    }
+    const ngay = Number(thamSo.get("ngay"));
+    const term = plansChon.find((p) => p.tierId === goiLink)?.terms.find((t) => t.days === ngay);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (term) { setChonKm(false); setPlanTier(goiLink as TierId); setPlanDays(term.days); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [billingLoading, hoSoVi]);
   // Tải xong bảng giá admin → đưa thời hạn về mốc đầu tiên của bảng giá hiện hành
   useEffect(() => {
     if (!billingLoading) {
@@ -736,7 +760,7 @@ export default function PostListingForm() {
     setLoiBuoc("");
     const uid = uidGop.current ?? userId;
     if (!uid) {
-      router.push("/dang-nhap?next=/dang-tin");
+      router.push(linkDangNhap);
       return;
     }
     // KIỂM THEO ĐÚNG THỨ TỰ 7 BƯỚC (15/10/2026): thiếu nhiều ô thì báo ô ở bước SỚM NHẤT trước.
@@ -906,7 +930,7 @@ export default function PostListingForm() {
       <div className="rounded-none border border-cvr-line bg-white p-10 text-center shadow-lux">
         <h3 className="text-xl font-semibold tracking-tight text-cvr-ink">Đăng nhập để đăng tin</h3>
         <p className="mt-2 text-sm text-cvr-muted">Tin đăng được gắn với tài khoản để bạn quản lý, chỉnh sửa và theo dõi trạng thái duyệt.</p>
-        <Link href="/dang-nhap?next=/dang-tin" className="mt-5 inline-flex h-11 items-center justify-center rounded-lg bg-cvr-ink px-6 text-sm font-semibold text-white transition hover:bg-cvr-ink/90">
+        <Link href={linkDangNhap} className="mt-5 inline-flex h-11 items-center justify-center rounded-lg bg-cvr-ink px-6 text-sm font-semibold text-white transition hover:bg-cvr-ink/90">
           Đăng nhập / Đăng ký
         </Link>
       </div>
