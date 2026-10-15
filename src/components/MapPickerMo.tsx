@@ -61,6 +61,7 @@ export default function MapPickerMo({
   // Chuỗi địa chỉ MÁY vừa tự điền. Ô đang giữ đúng chuỗi này nghĩa là khách chưa
   // đụng vào → đổi ghim thì máy được viết lại. Khách sửa rồi thì giữ nguyên.
   const mayDienRef = useRef("");
+  const ghiDeRef = useRef(false);
 
   const [sanSang, setSanSang] = useState(false);
   const [chiToiKhuVuc, setChiToiKhuVuc] = useState(false);
@@ -121,7 +122,11 @@ export default function MapPickerMo({
     // Số nhà / tên đường: quyền của khách. Chỉ viết khi ô trống hoặc đang giữ
     // đúng chữ máy điền lần trước.
     const oHienTai = (hintRef.current.split(",")[0] ?? "").trim();
-    if (ten.ngan && (!oHienTai || oHienTai === mayDienRef.current)) {
+    // Khách tự bấm "Tôi đang đứng ở đây" = VỊ TRÍ MỚI → số nhà, tên đường lấy theo GPS, không giữ
+    // địa chỉ cũ (chủ dự án 15/10/2026).
+    const ghiDe = ghiDeRef.current;
+    ghiDeRef.current = false;
+    if (ten.ngan && (ghiDe || !oHienTai || oHienTai === mayDienRef.current)) {
       onDiaChiRef.current?.(ten.ngan);
       mayDienRef.current = ten.ngan;
     }
@@ -185,7 +190,7 @@ export default function MapPickerMo({
         setDangDinhVi(false);
         const p = { lat, lng };
         void veCham(p, !chinhXacHon);
-        if (ghimLuon && !chinhXacHon) void datGhim(p);
+        if (ghimLuon && !chinhXacHon) { ghiDeRef.current = true; void datGhim(p); }
       },
       (ma) => {
         setDangDinhVi(false);
