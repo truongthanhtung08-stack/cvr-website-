@@ -215,6 +215,8 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
     listing: { ...dGoc.listing, ...(dGoc.listing.desc ? { desc: che(dGoc.listing.desc) } : {}) },
   };
   const l = d.listing;
+  // Tiêu đề có thể xuống dòng (15/10/2026): trang tin hiện đúng chỗ xuống dòng; mọi chỗ khác dùng một dòng.
+  const tieuDe1Dong = l.title.replace(/\s+/g, " ").trim();
   // Hạng CVR của tin (đồng bộ với thẻ tin V.7). Không có huy hiệu → tin thường.
   const tier = l.badge ? getTier(tierFromBadge(l.badge)) : null;
 
@@ -251,8 +253,8 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "RealEstateListing",
-    name: l.title,
-    description: `${l.title} tại ${l.location}. Diện tích ${l.area}, giá ${l.price}.`,
+    name: tieuDe1Dong,
+    description: `${tieuDe1Dong} tại ${l.location}. Diện tích ${l.area}, giá ${l.price}.`,
     // URL tuyệt đối + ngày đăng: Google nối đúng schema với trang + có tín hiệu độ tươi.
     url: `https://coastalland.vn/bat-dong-san/${l.id}`,
     image: d.images,
@@ -334,7 +336,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
       <BreadcrumbJsonLd
         items={[
           { name: l.purpose === "thue" ? "Nhà đất cho thuê" : "Nhà đất bán", href: l.purpose === "thue" ? "/cho-thue" : "/mua-ban" },
-          { name: l.title, href: `/bat-dong-san/${l.id}` },
+          { name: tieuDe1Dong, href: `/bat-dong-san/${l.id}` },
         ]}
       />
       <main className="flex-1 bg-white">
@@ -389,7 +391,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
 
           {/* Thư viện ảnh THẬT — MOBILE tràn viền sát 2 mép + sát header (không khoảng trống) */}
           <div className="-mx-4 mb-5 sm:mx-0">
-            <Gallery images={d.images} videos={d.videos} alt={l.title} listingId={l.id} banDo={{ diaChi: [d.addressDetail, l.location].filter(Boolean).join(", "), q: l.mapPin ?? d.mapQuery }} />
+            <Gallery images={d.images} videos={d.videos} alt={tieuDe1Dong} listingId={l.id} banDo={{ diaChi: [d.addressDetail, l.location].filter(Boolean).join(", "), q: l.mapPin ?? d.mapQuery }} />
           </div>
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
@@ -434,14 +436,14 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                   {/* CHIA SẺ — đặt ngay đầu tin, ngang tầm mắt, không chiếm thêm
                       dòng nào. Nút Lưu / So sánh bỏ đi vì đã có sẵn trên từng thẻ
                       tin ngoài trang chủ và trang Mua bán / Cho thuê. */}
-                  <ShareButtons title={l.title} />
+                  <ShareButtons title={tieuDe1Dong} />
                 </div>
 
                 {/* Tiêu đề — 21px trên điện thoại: đọc thoải mái mà vẫn thấy được
                     giá ngay bên dưới trong cùng một màn hình. */}
                 {/* TIN HẾT HẠN (chốt 25/09/2026, theo Batdongsan): link cũ vẫn mở,
                     nói thẳng tin đã hết hạn, ẩn số người đăng, gợi ý tin tương tự bên dưới. */}
-                <h1 className="mt-3 text-[21px] font-semibold leading-[1.3] tracking-tight text-cvr-ink sm:text-[28px]">{l.title}</h1>
+                <h1 className="mt-3 whitespace-pre-line break-words text-[21px] font-semibold leading-[1.3] tracking-tight text-cvr-ink sm:text-[28px]">{l.title}</h1>
 
                 {/* ĐỊA CHỈ HAI DÒNG — người đăng nhập theo hệ nào cũng vậy:
                     · dòng trên: địa chỉ theo hệ MỚI (tên đang dùng hiện nay)
@@ -521,7 +523,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                 <Section id="mo-ta" title="Thông tin mô tả">
                   <MoTaThuGon>
                     <div className="space-y-3 text-[15px] leading-relaxed text-cvr-body">
-                      <RichContent paragraphs={d.descriptionParas} title={l.title} wysiwyg />
+                      <RichContent paragraphs={d.descriptionParas} title={tieuDe1Dong} wysiwyg />
                     </div>
                   </MoTaThuGon>
                 </Section>
@@ -741,7 +743,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
         {/* Thanh liên hệ DÍNH (mobile) — Gọi / Zalo bám đáy màn hình (III.4).
             Tin chưa có liên hệ thì KHÔNG hiện thanh này (không có số để gọi). */}
         {contact && (
-        <div className="fixed inset-x-0 bottom-0 z-40 flex gap-2 border-t border-cvr-line bg-white/95 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur-md lg:hidden">
+        <div className="an-khi-go-phim fixed inset-x-0 bottom-0 z-40 flex gap-2 border-t border-cvr-line bg-white/95 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur-md lg:hidden">
           {hetHan ? <NutYeuCauLienHe /> : <ContactBarMobile listingId={l.id} phoneMask={phoneMask} avatar={contact.avatar} ten={contact.name} />}
         </div>
         )}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { loiEmail, loiSdt } from "@/lib/kiemNhap";
 import { createClient } from "@/lib/supabase/client";
 import { useProfile } from "@/lib/useProfile";
 import { NutXoaHet, NutQuayLai } from "@/components/FormFields";
@@ -59,8 +60,10 @@ export default function LeadForm({
   async function gui() {
     setLoi("");
     if (!ten.trim()) return setLoi("Chưa nhập họ tên.");
-    if (!dienThoai.trim()) return setLoi("Chưa nhập số điện thoại.");
+    // Chuẩn định dạng chung toàn web (src/lib/kiemNhap.ts)
+    if (loiSdt(dienThoai)) return setLoi(loiSdt(dienThoai));
     if (!email.trim()) return setLoi("Chưa nhập email để nhận tài liệu.");
+    if (loiEmail(email)) return setLoi(loiEmail(email));
 
     setDangGui(true);
     try {

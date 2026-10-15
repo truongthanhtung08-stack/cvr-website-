@@ -12,9 +12,8 @@ import { useEffect, useRef } from "react";
 //
 // Nay là <textarea> TỰ GIÃN CHIỀU CAO: gõ dài tới đâu ô cao thêm tới đó, luôn
 // thấy đủ câu. Vẫn hành xử như một ô nhập tiêu đề bình thường:
-//   · Enter KHÔNG xuống dòng (tiêu đề là một dòng dữ liệu, xuống dòng làm hỏng
-//     cả tiêu đề lẫn thẻ <title> khi lên web) — chặn Enter và cắt mọi ký tự
-//     xuống dòng nếu người dùng dán từ Word/Excel vào.
+//   · Enter XUỐNG DÒNG được (chủ dự án 15/10/2026, thay cách cũ chặn Enter). Trang tin
+//     hiện đúng chỗ xuống dòng; thẻ <title>, mô tả Google, thẻ tin gộp thành một dòng.
 //   · Đếm ký tự để người đăng biết tiêu đề đã đủ dài cho SEO chưa.
 // ============================================================================
 
@@ -57,8 +56,9 @@ export default function OTieuDe({
         rows={2}
         value={value}
         placeholder={placeholder}
-        onChange={(e) => onChange(e.target.value.replace(/[\r\n]+/g, " "))}
-        onKeyDown={(e) => { if (e.key === "Enter") e.preventDefault(); }}
+        // Enter XUỐNG DÒNG được, giữ mọi ký tự khách gõ (chủ dự án 15/10/2026). Trang tin hiện đúng
+        // chỗ xuống dòng; chỗ dùng cho Google / thẻ tin thì gộp thành một dòng.
+        onChange={(e) => onChange(e.target.value)}
         className={`${className} resize-none overflow-hidden leading-snug`}
       />
       {demKyTu && (

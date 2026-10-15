@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { loiEmail, loiSdt } from "@/lib/kiemNhap";
 import { createClient } from "@/lib/supabase/client";
 import { useProfile } from "@/lib/useProfile";
 import { ONhap, ONhapDai, NutXoaHet, NutQuayLai, TheGuiXong } from "@/components/FormFields";
@@ -60,7 +61,9 @@ export default function YeuCauForm({
   async function gui() {
     setLoi("");
     if (!ten.trim()) return setLoi("Chưa nhập họ tên.");
-    if (!dienThoai.trim()) return setLoi("Chưa nhập số điện thoại.");
+    // Chuẩn định dạng chung toàn web (src/lib/kiemNhap.ts); email không bắt buộc nhưng đã ghi phải đúng.
+    if (loiSdt(dienThoai)) return setLoi(loiSdt(dienThoai));
+    if (loiEmail(email)) return setLoi(loiEmail(email));
     if (!noiDung.trim()) return setLoi("Chưa nhập nội dung yêu cầu.");
 
     setDangGui(true);

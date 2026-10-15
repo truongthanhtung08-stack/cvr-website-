@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { loiSdt } from "@/lib/kiemNhap";
 import { useProfile } from "@/lib/useProfile";
 
 // ============================================================================
@@ -33,7 +34,7 @@ export default function YeuCauLienHeLai({ listingId }: { listingId: string }) {
   async function gui() {
     setLoi("");
     if (!ten.trim()) return setLoi("Chưa nhập họ tên.");
-    if (!sdt.trim()) return setLoi("Chưa nhập số điện thoại.");
+    if (loiSdt(sdt)) return setLoi(loiSdt(sdt)); // chuẩn định dạng chung toàn web
     setDangGui(true);
     try {
       const r = await fetch("/api/yeu-cau-lien-he", {

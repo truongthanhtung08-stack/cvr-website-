@@ -91,6 +91,11 @@ export default function ChonCoTim({
         <div className={`fixed inset-0 z-[90] flex justify-center bg-black/40 sm:items-center ${dangTim ? "items-stretch" : "items-end"}`} onClick={dong}>
           <div className={`flex w-full flex-col bg-white pb-[env(safe-area-inset-bottom)] shadow-lux sm:h-auto sm:max-h-[80vh] sm:max-w-md sm:rounded-2xl ${dangTim ? "h-[100dvh] pt-[env(safe-area-inset-top)]" : "max-h-[80vh] rounded-t-2xl"}`} onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-2 border-b border-cvr-line p-3">
+              {/* THOÁT KHÔNG ĐỔI GÌ (chủ dự án 15/10/2026: "không chọn, không tự ghi thì thoát thế nào") —
+                  nút quay lại luôn ở góc trên, bàn phím không che được như nút "Đóng" dưới đáy. */}
+              <button type="button" aria-label="Quay lại" onClick={dong} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-cvr-ink transition hover:bg-cvr-surface">
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+              </button>
               {dangTim ? (
                 <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); xongGo(); } }} placeholder={timPlaceholder} className={className} enterKeyHint={tuGhi ? "done" : "search"} autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} />
               ) : (

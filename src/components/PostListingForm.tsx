@@ -41,6 +41,9 @@ import { chuanHoaSdt, tachNhieuSdt } from "@/lib/phone";
 import XacMinhSdt from "@/components/XacMinhSdt";
 import { uploadImageFile } from "@/lib/uploadImage";
 import { goiYDiaChi } from "@/lib/timToaDo";
+import { loiEmail, loiSdt } from "@/lib/kiemNhap";
+import XemTruocTin from "@/components/XemTruocTin";
+import { xemTruocTin } from "@/lib/listingsDb";
 
 // Đơn vị giá "Khác — tự ghi" (chủ dự án 14/10/2026): khách ghi nguyên văn, lưu details.giaTuGhi.
 const KHAC_GIA = "Khác — tự ghi";
@@ -57,6 +60,7 @@ const KHAC_GIA = "Khác — tự ghi";
 const MucMoCtx = createContext<{ moMuc: (step: string) => void; loi?: { buoc: string; msg: string } } | null>(null);
 
 const DU_AN_KHAC = "__khac";
+const DU_AN_TU_GHI = "Khác — tự ghi";
 // Khoá trình duyệt giữ bản nháp tự lưu của form đăng tin mới — RIÊNG TỪNG TÀI KHOẢN
 // (máy dùng chung thì người sau không thấy bản nháp của người trước).
 const KHOA_NHAP_MAY = "cvr-dang-tin-nhap";
@@ -167,7 +171,10 @@ export default function PostListingForm() {
   const [tamGiu, setTamGiu] = useState(0);
   const [error, setError] = useState("");
   const [xemQuyenLoi, setXemQuyenLoi] = useState(false);
+  const [daRoiO, setDaRoiO] = useState<{ sdt?: boolean; email?: boolean }>({});
   const [giaTuGhi, setGiaTuGhi] = useState("");
+  // XEM TRƯỚC TIN — khách thấy tin hiện ra thế nào trước khi bấm đăng (15/10/2026)
+  const [xemTruoc, setXemTruoc] = useState(false);
 
   // TỰ LƯU NHÁP TRÊN MÁY (chủ dự án 10/10/2026): mọi thứ khách đã nhập được cất vào trình
   // duyệt sau mỗi lần gõ, theo TỪNG TÀI KHOẢN; đăng nhập lại, mở /dang-tin trên cùng máy là
@@ -757,7 +764,8 @@ export default function PostListingForm() {
       if (soVideo > toiDaVideo) return baoLoi(`Mỗi tin chỉ đăng tối đa ${toiDaVideo} video — xoá video cũ rồi thêm lại.`, "6");
       // Bước 7 — Liên hệ. Số điện thoại BẮT BUỘC ở mọi tin (27/09/2026) — phải là số gọi được.
       if (!contactName.trim() || !contactPhone.trim()) return baoLoi("Nhập họ tên và số điện thoại liên hệ.", "7");
-      if (!tachNhieuSdt(contactPhone).length) return baoLoi("Số điện thoại liên hệ chưa đúng (VD: 0905123456).", "7");
+      if (loiSdt(contactPhone)) return baoLoi(loiSdt(contactPhone), "7");
+      if (loiEmail(contactEmail)) return baoLoi(loiEmail(contactEmail), "7");
     }
     // LƯU NHÁP thì không chặn gì thêm — người đăng ghi tới đâu lưu tới đó.
 
@@ -999,9 +1007,22 @@ export default function PostListingForm() {
       <MucMoCtx.Provider value={{ moMuc, loi: error && loiBuoc ? { buoc: loiBuoc, msg: error } : undefined }}>
       <ThanhBuoc />
 
+      {xemTruoc && (
+        <XemTruocTin
+          du={xemTruocTin({ ...giaTriTin(true), province: province || "", tier: (planTier || "basic") as TierId } as Parameters<typeof xemTruocTin>[0])}
+          tier={planTier}
+          onDong={() => setXemTruoc(false)}
+          onDang={() => { setXemTruoc(false); save(false); }}
+          dangLuu={saving === "publish"}
+        />
+      )}
       {moXacMinh && (
         <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4" onClick={() => setMoXacMinh(false)}>
-          <div className="w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+          <div className="relative w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+            {/* Thoát không đổi gì — mọi bảng nổi đều có nút thoát (chủ dự án 15/10/2026). */}
+            <button type="button" aria-label="Đóng" onClick={() => setMoXacMinh(false)} className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full text-cvr-muted transition hover:bg-cvr-surface">
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
             {/* Đã có số tài khoản (số đó có tài khoản/tin cũ) → mã tự gửi để gộp.
                 Chưa có số → hỏi "Số điện thoại của bạn": số mới lưu luôn, số cũ mới hỏi mã. */}
             <XacMinhSdt
@@ -1163,35 +1184,33 @@ export default function PostListingForm() {
         <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <Label>Tên dự án</Label>
-            {/* MỘT Ô "TÊN DỰ ÁN" KIỂU BATDONGSAN / HOMEDY (chủ dự án 15/10/2026): bấm vào là gõ ngay,
-                danh sách dự án có sẵn hiện để chọn; dự án không có thì giữ đúng tên khách gõ.
+            {/* CHỌN DỰ ÁN — CÙNG CẤU TRÚC MỌI Ô CHỌN (chủ dự án 15/10/2026): dự án có sẵn thì chọn trong
+                danh sách; không có thì chọn "Khác — tự ghi", ô ghi tên hiện NGAY DƯỚI. Danh sách dài nên
+                "Khác — tự ghi" đứng ĐẦU danh sách (khỏi kéo hết mới thấy); có kính lúp để tìm.
                 · Chọn dự án có sẵn → tin NỐI vào trang dự án (mã dự án — bộ lọc Dự án, trang dự án,
                   "Tin liên quan tại dự án", liên kết nội bộ cho SEO đều chạy theo mã này).
-                · Gõ tên TRÙNG dự án có sẵn (khác hoa/thường, dấu) → cũng nối luôn.
-                · Tên chưa có trang dự án → lưu nguyên tên (details.projectName); sau này tạo trang dự
-                  án đúng tên đó là tin tự về trang dự án.
-                · LUÔN hiện đúng tên dự án tin đang gắn, kể cả dự án chưa có trang trên web. */}
+                · Tự ghi tên TRÙNG dự án có sẵn (khác hoa/thường, dấu) → cũng nối luôn (slugDuAn).
+                · Tên chưa có trang dự án → lưu nguyên tên; sau này tạo trang dự án đúng tên đó là tin
+                  tự về trang dự án. LUÔN hiện đúng tên dự án tin đang gắn. */}
             <ChonCoTim
-              value={projectSlug && projectSlug !== DU_AN_KHAC
-                ? projectOptions.find((o) => o.slug === projectSlug)?.name ?? (projectName || projectSlug)
-                : projectName}
+              value={projectSlug === DU_AN_KHAC ? DU_AN_TU_GHI
+                : projectSlug ? projectOptions.find((o) => o.slug === projectSlug)?.name ?? (projectName || projectSlug)
+                : ""}
               onChange={(v) => {
                 if (!v) { setProjectSlug(""); setProjectName(""); return; }
+                if (v === DU_AN_TU_GHI) { setProjectSlug(DU_AN_KHAC); setProjectName(""); return; }
                 const o = projectOptions.find((x) => x.name === v);
                 if (o) { setProjectSlug(o.slug); setProjectName(o.name); }
               }}
-              options={projectOptions.map((o) => o.name)}
-              tuGhi={(ten) => {
-                const o = projectOptions.find((x) => normalizeVi(x.name) === normalizeVi(ten));
-                if (o) { setProjectSlug(o.slug); setProjectName(o.name); }
-                else { setProjectSlug(DU_AN_KHAC); setProjectName(ten); }
-              }}
-              timNgay
+              options={[DU_AN_TU_GHI, ...projectOptions.map((o) => o.name)]}
               xoaDuoc
-              placeholder="Nhập tên dự án"
-              timPlaceholder="Nhập tên dự án"
+              placeholder="Chọn dự án"
+              timPlaceholder="Tìm dự án"
               className={inputCls}
             />
+            {projectSlug === DU_AN_KHAC && (
+              <OGoTuGian value={projectName} onChange={setProjectName} placeholder="Tên dự án" autoFocus={!projectName} className={inputCls + " mt-2"} />
+            )}
           </div>
         </div>
       </Card>
@@ -1323,8 +1342,7 @@ export default function PostListingForm() {
         </div>
         {/* Nội thất — ĐẤT và KHO XƯỞNG không có nội thất nên ẩn hẳn */}
         {coNoiThat(loaiHinh) && (
-          <>
-        <h3 className="border-t border-cvr-line pt-4 text-[15px] font-semibold tracking-tight text-cvr-ink">  Nội thất</h3>
+          <MucAnHien ten="Nội thất" soChon={interior.length}>
           <div className="flex flex-wrap gap-2">
             {interiorItems.map((it) => (
               <Chip key={it} active={interior.includes(it)} onClick={() => toggle(interior, setInterior, it)}>{it}</Chip>
@@ -1335,9 +1353,9 @@ export default function PostListingForm() {
             ))}
           </div>
           <ThemTuGhi onThem={(v) => setInterior((ds) => (ds.includes(v) ? ds : [...ds, v]))} className={inputCls} />
-          </>
+          </MucAnHien>
         )}
-        <h3 className="border-t border-cvr-line pt-4 text-[15px] font-semibold tracking-tight text-cvr-ink">Tiện ích</h3>
+        <MucAnHien ten="Tiện ích" soChon={amenities.length}>
         <div className="space-y-4">
           {amenityGroups.map((g) => (
             <div key={g.group}>
@@ -1361,6 +1379,7 @@ export default function PostListingForm() {
           })()}
         </div>
         <ThemTuGhi onThem={(v) => setAmenities((ds) => (ds.includes(v) ? ds : [...ds, v]))} className={inputCls} />
+        </MucAnHien>
       </Card>
 
       {/* 4. Tiêu đề & mô tả */}
@@ -1573,8 +1592,17 @@ export default function PostListingForm() {
         </div>
         <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-3">
           <div><Label>Họ và tên *</Label><input value={contactName} onChange={(e) => setContactName(e.target.value)} placeholder="Nguyễn Văn A" className={inputCls} /></div>
-          <div><Label>Số điện thoại *</Label><input type="text" value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} placeholder="09xx xxx xxx" className={inputCls} /></div>
-          <div><Label>Email</Label><input type="text" autoCapitalize="none" autoCorrect="off" spellCheck={false} value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} placeholder="email@example.com" className={inputCls} /></div>
+          {/* Kiểm ĐỊNH DẠNG ngay dưới ô (chuẩn chung src/lib/kiemNhap.ts) — báo khi khách rời ô. */}
+          <div>
+            <Label>Số điện thoại *</Label>
+            <input type="text" inputMode="tel" autoComplete="tel" value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} onBlur={() => setDaRoiO((o) => ({ ...o, sdt: true }))} placeholder="09xx xxx xxx" className={inputCls} />
+            {daRoiO.sdt && loiSdt(contactPhone) && <p className="mt-1 text-xs text-red-600">{loiSdt(contactPhone)}</p>}
+          </div>
+          <div>
+            <Label>Email</Label>
+            <input type="email" inputMode="email" autoComplete="email" autoCapitalize="none" autoCorrect="off" spellCheck={false} value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} onBlur={() => setDaRoiO((o) => ({ ...o, email: true }))} placeholder="email@example.com" className={inputCls} />
+            {daRoiO.email && loiEmail(contactEmail) && <p className="mt-1 text-xs text-red-600">{loiEmail(contactEmail)}</p>}
+          </div>
         </div>
       </Card>
       </MucMoCtx.Provider>
@@ -1606,6 +1634,18 @@ export default function PostListingForm() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M17 21v-8H7v8M7 3v5h8M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
           </svg>
           {saving === "draft" ? "Đang lưu nháp…" : "Lưu nháp"}
+        </button>
+        <button
+          type="button"
+          onClick={() => setXemTruoc(true)}
+          disabled={!!saving}
+          className="flex h-12 w-full sm:w-auto items-center justify-center gap-2 rounded-full bg-white px-7 text-base font-semibold text-cvr-body ring-1 ring-inset ring-cvr-line transition hover:bg-cvr-surface hover:text-cvr-ink active:scale-[0.98] disabled:opacity-50 sm:order-first"
+        >
+          <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M2.5 12S6 5 12 5s9.5 7 9.5 7-3.5 7-9.5 7-9.5-7-9.5-7z" />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+          Xem trước
         </button>
       </div>
       <p className="text-center text-xs text-cvr-muted">
@@ -1791,7 +1831,7 @@ function ODiaChiGoiY({ label, value, onChange, placeholder, khuVuc }: { label: s
   const khoaKv = `${khuVuc.phuong}|${khuVuc.tinh}`;
   useEffect(() => {
     const q = value.trim();
-    if (!dangGo || q.length < 3 || !khuVuc.tinh) { setDs([]); return; }
+    if (!dangGo || q.length < 3 || !khuVuc.tinh) return;
     let huy = false;
     const t = setTimeout(async () => {
       const kq = await goiYDiaChi(q, [khuVuc.phuong, khuVuc.tinh].filter(Boolean).join(", "));
@@ -1819,7 +1859,7 @@ function ODiaChiGoiY({ label, value, onChange, placeholder, khuVuc }: { label: s
         autoComplete="off"
         className={inputCls}
       />
-      {dangGo && ds.length > 0 && (
+      {dangGo && value.trim().length >= 3 && ds.length > 0 && (
         <div className="absolute inset-x-0 top-full z-30 mt-1 overflow-hidden rounded-lg border border-cvr-line bg-white shadow-lux">
           {ds.map((x) => (
             <button
@@ -1835,6 +1875,24 @@ function ODiaChiGoiY({ label, value, onChange, placeholder, khuVuc }: { label: s
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+// MỤC ẨN / HIỆN THEO TUỲ CHỌN (Nội thất, Tiện ích — chủ dự án 15/10/2026): mặc định thu gọn còn một
+// dòng, kèm số mục đã chọn; bấm để mở ra tick, bấm lại để ẩn. Đã chọn gì vẫn giữ nguyên khi ẩn.
+function MucAnHien({ ten, soChon, children }: { ten: string; soChon: number; children: React.ReactNode }) {
+  const [mo, setMo] = useState(false);
+  return (
+    <div className="border-t border-cvr-line pt-4">
+      <button type="button" onClick={() => setMo(!mo)} aria-expanded={mo} className="flex w-full items-center justify-between gap-3 text-left">
+        <span className="text-[15px] font-semibold tracking-tight text-cvr-ink">
+          {ten}
+          {soChon > 0 && <span className="ml-1.5 font-normal text-cvr-muted">({soChon})</span>}
+        </span>
+        <svg className={`h-5 w-5 shrink-0 text-cvr-muted transition ${mo ? "rotate-180" : ""}`} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+      </button>
+      {mo && <div className="mt-3 space-y-4">{children}</div>}
     </div>
   );
 }

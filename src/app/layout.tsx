@@ -6,6 +6,7 @@ import { asset } from "@/lib/asset";
 import Chatbox from "@/components/Chatbox";
 import CompareBar from "@/components/CompareBar";
 import MobileTabBar from "@/components/MobileTabBar";
+import BanPhimAo from "@/components/BanPhimAo";
 import ScrollTopOnRoute from "@/components/ScrollTopOnRoute";
 import RouteMotion from "@/components/RouteMotion";
 import SiteJsonLd from "@/components/SiteJsonLd";
@@ -152,6 +153,9 @@ export const viewport: Viewport = {
   userScalable: true,
   // Bắt buộc để env(safe-area-inset-*) có giá trị thật trên iPhone tai thỏ / thanh Home.
   viewportFit: "cover",
+  // Android: bàn phím ảo bật thì trang co lại vừa phần còn nhìn thấy, ô đang gõ không bị che.
+  // iPhone và trình duyệt trong Zalo/Facebook bỏ qua dòng này — do <BanPhimAo /> lo.
+  interactiveWidget: "resizes-content",
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#161617" },
     { media: "(prefers-color-scheme: dark)", color: "#161617" },
@@ -167,7 +171,7 @@ export default function RootLayout({
     <html lang="vi" className={`${inter.variable} ${playfair.variable} ${montserrat.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col font-sans bg-background text-foreground">
         {/* Mở trong trình duyệt của Zalo → bỏ khoảng chừa đỉnh máy (xem --at trong globals.css). Chạy trước khi vẽ để không giật. */}
-        <script dangerouslySetInnerHTML={{ __html: "if(/Zalo/i.test(navigator.userAgent)){var s=document.createElement('style');s.textContent=':root{--at:0px}';document.head.appendChild(s)}" }} />
+        <script dangerouslySetInnerHTML={{ __html: "if(/Zalo|FBAN|FBAV|FB_IAB|Instagram|TikTok|musical_ly/i.test(navigator.userAgent)){var s=document.createElement('style');s.textContent=':root{--at:0px}';document.head.appendChild(s)}" }} />
         <SiteJsonLd />
         {/* Google Analytics 4 — chỉ chạy khi đã cắm NEXT_PUBLIC_GA_ID */}
         <Analytics />
@@ -183,6 +187,8 @@ export default function RootLayout({
         <CompareBar />
         <Chatbox />
         <MobileTabBar />
+        {/* Bàn phím ảo không được che ô khách đang gõ — mọi trang, mọi trình duyệt */}
+        <BanPhimAo />
       </body>
     </html>
   );

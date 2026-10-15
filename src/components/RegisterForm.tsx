@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { loiEmail } from "@/lib/kiemNhap";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import SocialAuth from "@/components/SocialAuth";
@@ -143,6 +144,7 @@ export default function RegisterForm({ uuDai, capThe = "h1" }: { uuDai?: string;
     if (!hoTen.trim()) return setLoi("Vui lòng nhập họ và tên.");
     if (cach === "sdt" && !laSdtVN(chuanHoaSdt(sdt))) return setLoi("Số điện thoại chưa đúng (10 số, bắt đầu bằng 0).");
     if (cach === "email" && !email.trim()) return setLoi("Vui lòng nhập email.");
+    if (cach === "email" && loiEmail(email)) return setLoi(loiEmail(email));
     if (pw.length < 6) return setLoi("Mật khẩu cần ít nhất 6 ký tự.");
     if (pw !== pw2) return setLoi("Hai lần nhập mật khẩu chưa khớp nhau.");
 

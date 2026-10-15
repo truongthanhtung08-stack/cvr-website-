@@ -621,6 +621,11 @@ body {
   }
 }
 
+/* BÀN PHÍM ẢO ĐANG MỞ (BanPhimAo.tsx) — ẩn thanh dính đáy để không nằm đè ô đang gõ; lớp phủ toàn
+   màn hình đã co lại vừa phần trên bàn phím thì khung bên trong không được cao hơn nó. */
+html.ban-phim-mo .an-khi-go-phim { display: none !important; }
+.vua-ban-phim > * { max-height: 100% !important; }
+
 /* Cuộn ngang mượt kiểu iOS cho các slider/track ảnh */
 .no-scrollbar {
   -webkit-overflow-scrolling: touch;

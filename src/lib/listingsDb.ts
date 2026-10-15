@@ -535,6 +535,12 @@ function rowToDetail(r: Row): ListingFull {
   };
 }
 
+// XEM TRƯỚC TIN (form đăng tin, 15/10/2026): dựng đúng như trang tin bằng CHÍNH hàm của trang tin,
+// từ dữ liệu khách đang nhập (chưa lưu) — xem trước thế nào thì đăng lên thế ấy.
+export function xemTruocTin(r: Omit<Row, "id" | "tier_expires_at" | "created_at" | "published_at" | "bumped_at">): ListingFull {
+  return rowToDetail({ ...r, id: "xem-truoc", tier_expires_at: null, created_at: new Date().toISOString(), published_at: null, bumped_at: null });
+}
+
 // Fallback khi DB chưa sẵn (worktree/CI) — dựng chi tiết tối giản từ dữ liệu mẫu.
 function mockToDetail(m: Listing): ListingFull {
   return {

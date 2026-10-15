@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useProfile } from "@/lib/useProfile";
 import { PageHeader } from "@/components/Ui";
 import SoDienThoaiKhac from "@/components/SoDienThoaiKhac";
+import { loiEmail } from "@/lib/kiemNhap";
 
 // Cài đặt tài khoản: thành viên tự sửa thông tin cơ bản của mình
 // (các cột đặc quyền role/status/plan/quota bị DB chặn — chỉ admin đổi được).
@@ -139,6 +140,7 @@ function KhoiHoaDon({ profile }: { profile: { id: string; email: string | null }
       setNotice("Cần điền Tên công ty và Mã số thuế thì mới xuất hóa đơn công ty được.");
       return;
     }
+    if (loiEmail(email)) return setNotice(loiEmail(email)); // chuẩn định dạng chung toàn web
     setSaving(true);
     setNotice("");
     const supabase = createClient();
