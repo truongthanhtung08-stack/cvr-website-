@@ -232,12 +232,21 @@ export default function AdminListingsPage() {
               : `${filtered.length} / ${rows.length} tin${pendingCount ? ` · ${pendingCount} chờ duyệt` : ""}${draftCount ? ` · ${draftCount} nháp` : ""}${daSuaCount ? ` · ${daSuaCount} đã sửa chờ kiểm` : ""}`}
           </p>
         </div>
-        <Link
-          href="/admin/tin-dang/moi"
-          className="rounded-lg bg-cvr-ink px-4 py-2 text-sm font-semibold text-white transition hover:bg-cvr-ink/90"
-        >
-          + Đăng tin mới
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          {/* Tin Cowork nạp bằng file chờ chủ dự án sửa + duyệt (16/10/2026) */}
+          <Link
+            href="/admin/tin-dang/duyet-nap"
+            className="rounded-lg border border-cvr-line bg-white px-4 py-2 text-sm font-semibold text-cvr-ink transition hover:border-cvr-ink"
+          >
+            Duyệt tin nạp
+          </Link>
+          <Link
+            href="/admin/tin-dang/moi"
+            className="rounded-lg bg-cvr-ink px-4 py-2 text-sm font-semibold text-white transition hover:bg-cvr-ink/90"
+          >
+            + Đăng tin mới
+          </Link>
+        </div>
       </div>
 
       <TuKiemTin />

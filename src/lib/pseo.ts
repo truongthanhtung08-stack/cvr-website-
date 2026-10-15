@@ -269,29 +269,53 @@ export const tinDatChuan = (l: Listing) => (l.imageCount ?? 0) >= 3 && (l.desc?.
 // TRƯỚC → trả về tin gốc. Bản sau trỏ canonical về bản gốc + không vào sitemap (MASTER mục 11);
 // gỡ hẳn bản trùng là việc của admin/Cowork.
 const chuanTrung = (s?: string) => normalizeVi(s ?? "").replace(/[^a-z0-9]+/g, " ").trim();
+// Khoá so trùng của mỗi tin — tính MỘT lần (build dựng hàng trăm trang, mỗi trang so hàng trăm cặp;
+// chuẩn hoá chữ lặp lại từng cặp từng làm trang dựng quá 60 giây — tốn Build CPU Vercel, 16/10/2026).
+type KhoaTrung = { moTa: string; tieuDeGia: string; bds: string; t: number };
+const khoaCache = new WeakMap<Listing, KhoaTrung>();
+function khoaTrung(l: Listing): KhoaTrung {
+  let k = khoaCache.get(l);
+  if (!k) {
+    k = {
+      moTa: chuanTrung(l.desc).slice(0, 400),
+      tieuDeGia: chuanTrung(l.title) + "|" + l.price,
+      bds: l.maNguoi ? [l.maNguoi, l.type, l.priceVnd, l.areaM2, chuanTrung(phuongCuaTin(l))].join("|") : "",
+      t: new Date(l.postedAt ?? 0).getTime(),
+    };
+    khoaCache.set(l, k);
+  }
+  return k;
+}
+
 export function banGocCua(l: Listing, tatCa: Listing[]): Listing | null {
   // Tình trạng hết hạn lấy theo danh sách đầy đủ (getListing một tin không gắn cờ hetHan)
   const hetHanL = (tatCa.find((x) => x.id === l.id) ?? l).hetHan;
-  const moTa = chuanTrung(l.desc).slice(0, 400);
-  const tieuDeGia = chuanTrung(l.title) + "|" + l.price;
-  const t = new Date(l.postedAt ?? 0).getTime();
+  const kl = khoaTrung(l);
   for (const x of tatCa) {
     if (x.id === l.id) continue;
-    const cungBds =
-      !!l.maNguoi && x.maNguoi === l.maNguoi && x.type === l.type && x.priceVnd === l.priceVnd &&
-      x.areaM2 === l.areaM2 && chuanTrung(phuongCuaTin(x)) === chuanTrung(phuongCuaTin(l));
-    const trung = (moTa.length >= 80 && chuanTrung(x.desc).slice(0, 400) === moTa) || chuanTrung(x.title) + "|" + x.price === tieuDeGia || cungBds;
+    const kx = khoaTrung(x);
+    const trung = (kl.moTa.length >= 80 && kx.moTa === kl.moTa) || kx.tieuDeGia === kl.tieuDeGia || (!!kl.bds && kx.bds === kl.bds);
     if (!trung) continue;
     // Bản gốc: tin CÒN HẠN thắng tin hết hạn; cùng tình trạng thì tin đăng trước
     if (!!x.hetHan !== !!hetHanL) { if (!x.hetHan) return x; continue; }
-    const tx = new Date(x.postedAt ?? 0).getTime();
-    if (tx < t || (tx === t && x.id < l.id)) return x;
+    if (kx.t < kl.t || (kx.t === kl.t && x.id < l.id)) return x;
   }
   return null;
 }
 
 // tinConHan: chỉ tin còn hạn (getListings). Trả cả trang tỉnh gốc /mua-ban/<tỉnh> để làm mốc trang cha.
+// Cùng một bộ tin (cùng mã + mốc đẩy) → dùng lại kết quả: một trang gọi hàm này nhiều lần
+// (metadata, liên kết nội bộ, dựng sẵn), build gọi hàng trăm lần.
+let nhoTrang: { khoa: string; kq: Map<string, TrangPseo> } | null = null;
 export function tatCaTrang(tinConHan: Listing[]): Map<string, TrangPseo> {
+  const khoa = tinConHan.map((l) => l.id + (l.bumpedAt ?? "")).join(",");
+  if (nhoTrang?.khoa === khoa) return nhoTrang.kq;
+  const m = tinhTatCaTrang(tinConHan);
+  nhoTrang = { khoa, kq: m };
+  return m;
+}
+
+function tinhTatCaTrang(tinConHan: Listing[]): Map<string, TrangPseo> {
   const m = new Map<string, TrangPseo>();
   for (const l of tinConHan) {
     if (l.banSao || !tinDatChuan(l) || banGocCua(l, tinConHan)) continue;

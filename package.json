@@ -10,7 +10,8 @@
     "start": "next start",
     "lint": "eslint",
     "viec": "node scripts/viec.mjs",
-    "soat": "node scripts/soat-truoc-khi-len-web.mjs"
+    "soat": "node scripts/soat-truoc-khi-len-web.mjs",
+    "kiem-seo": "node scripts/kiem-seo.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",

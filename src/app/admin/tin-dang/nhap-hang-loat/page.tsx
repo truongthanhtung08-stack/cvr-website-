@@ -31,7 +31,7 @@ function tenTepTuUrl(u: string): string {
 // ADMIN — ĐĂNG NHIỀU TIN CÙNG LÚC BẰNG FILE (Excel/CSV)
 //   B1. Tải file mẫu → điền mỗi dòng một tin
 //   B2. Chọn file ở đây → hệ thống kiểm tra từng dòng, báo dòng nào sai
-//   B3. Bấm "Đăng N tin" → tin lên web ngay (≤60 giây)
+//   B3. Bấm "Đăng N tin" → tin vào "Chờ chủ dự án duyệt" (Admin → Tin đăng → Duyệt tin nạp)
 // ============================================================================
 
 export default function NhapHangLoatPage() {
@@ -277,7 +277,17 @@ export default function NhapHangLoatPage() {
           // gán mốc cho toàn bộ tin đời trước). Đo ngày 20/09: 34 tin vừa đăng rơi
           // xuống cuối danh sách. Thẻ tin KHÔNG hiện "Làm mới" vì freshText bỏ qua
           // mốc chênh dưới 2 phút so với ngày đăng.
-          .map((r) => ({ ...r.payload, images: anhCuaTin(r).urls, published_at: now, bumped_at: now }));
+          // CHỜ CHỦ DỰ ÁN DUYỆT (15/10/2026): tin nạp KHÔNG lên web ngay. Vào trạng thái ẩn + cờ
+          // choChuDuyet → lịch "Soạn sẵn tin nạp" viết lại tiêu đề/mô tả chuẩn SEO + chấm ảnh →
+          // chủ dự án sửa và bấm Duyệt ở Admin → Tin đăng → Duyệt tin nạp. Mốc ngày đăng ghi lại lúc duyệt.
+          .map((r) => ({
+            ...r.payload,
+            status: "hidden",
+            details: { ...(r.payload.details as Record<string, unknown>), choChuDuyet: true },
+            images: anhCuaTin(r).urls,
+            published_at: now,
+            bumped_at: now,
+          }));
         const { error } = await supabase.from("listings").insert(lo);
         if (error) {
           setKetQua(`Đã đăng ${xong} tin thì gặp lỗi: ${error.message}`);

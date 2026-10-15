@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import ListingForm from "@/components/admin/ListingForm";
+import BangKiemTinSeo from "@/components/admin/BangKiemTinSeo";
 import { type ListingRow, listingStatusBadge, tierBadge } from "@/lib/listingAdmin";
 
 export default function EditListingPage() {
@@ -74,6 +75,9 @@ export default function EditListingPage() {
             {deleting ? "Đang xoá…" : "Xoá tin"}
           </button>
         </div>
+      </div>
+      <div className="mt-6">
+        <BangKiemTinSeo row={row} />
       </div>
       <div className="mt-6">
         <ListingForm initial={row} />

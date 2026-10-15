@@ -6,6 +6,25 @@ import { ProjectListJsonLd } from "@/components/ListJsonLd";
 import Hero from "@/components/Hero";
 import ProjectsBrowser from "@/components/ProjectsBrowser";
 import KhuVucLinks from "@/components/KhuVucLinks";
+import LienKetPseo from "@/components/LienKetPseo";
+import { NGUONG_INDEX_CDT, nhomChuDauTu } from "@/lib/chuDauTu";
+import type { Project } from "@/lib/data";
+
+// "15/10/2026" → số để xếp mới nhất trước
+const ngaySo = (s?: string) => { const m = s?.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/); return m ? +m[3] * 10000 + +m[2] * 100 + +m[1] : 0; };
+function nhomTraCuu(projects: Project[]) {
+  const cdt = [...nhomChuDauTu(projects).entries()]
+    .filter(([, g]) => g.duAn.length >= NGUONG_INDEX_CDT)
+    .map(([slug, g]) => ({ href: `/chu-dau-tu/${slug}`, nhan: g.ten }));
+  const moi = [...projects]
+    .sort((a, b) => ngaySo(b.capNhat) - ngaySo(a.capNhat))
+    .slice(0, 12)
+    .map((p) => ({ href: `/du-an/${p.slug}`, nhan: p.name }));
+  return [
+    ...(cdt.length ? [{ tieuDe: "Theo chủ đầu tư", links: cdt }] : []),
+    ...(moi.length ? [{ tieuDe: "Dự án mới cập nhật", links: moi }] : []),
+  ];
+}
 import { getProjects, getArticles } from "@/lib/contentDb";
 import { getProjectBanners } from "@/lib/siteContent";
 
@@ -51,6 +70,9 @@ export default async function DuAnPage() {
         </div>
         {/* Đường bò tới trang dự án theo khu vực — cùng lý do như ở /mua-ban. */}
         <KhuVucLinks base="/du-an" demTheoTinh={demTheoTinh(projects)} />
+        {/* TRA CỨU DỰ ÁN kiểu Mã số thuế (15/10/2026): thêm lối theo CHỦ ĐẦU TƯ và dự án MỚI CẬP NHẬT
+            (Cowork nạp hằng tuần). Không làm trang tra cứu riêng — trùng ý định với chính trang này. */}
+        <LienKetPseo nhom={nhomTraCuu(projects)} />
       </main>
       <Footer />
     </>

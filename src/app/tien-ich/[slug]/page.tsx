@@ -5,7 +5,8 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import LeadForm from "@/components/LeadForm";
 import TraCuuGiaDat from "@/components/TraCuuGiaDat";
-import { packages, utilityTools, getPackage, tiers } from "@/lib/packages";
+import TinhLaiVay from "@/components/TinhLaiVay";
+import { packages, utilityTools, getPackage, tiers, trangTienIchDat } from "@/lib/packages";
 import { getBilling, getQuyDinhGia } from "@/lib/siteContent";
 import { bangTheoMucDich } from "@/lib/billing";
 import BangGiaGoiTin from "@/components/BangGiaGoiTin";
@@ -22,6 +23,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     title: p.title,
     description: p.description,
     alternates: { canonical: `/tien-ich/${slug}` },
+    ...(trangTienIchDat(p) ? {} : { robots: { index: false, follow: true } }),
   };
 }
 
@@ -104,6 +106,10 @@ export default async function PackagePage({ params }: { params: Promise<{ slug: 
                 {slug === "gia-nha-dat" ? (
                   <div className="mt-6">
                     <TraCuuGiaDat />
+                  </div>
+                ) : slug === "tinh-lai-suat-vay" ? (
+                  <div className="mt-6">
+                    <TinhLaiVay />
                   </div>
                 ) : (
                   <div className="mt-6 rounded-xl border border-cvr-line bg-white p-5 shadow-[0_1px_10px_rgba(0,0,0,0.05)]">

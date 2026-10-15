@@ -166,13 +166,13 @@ export const rentCategories: Category[] = [
 // ── DỰ ÁN (khớp menu Header) — lọc theo trường `type` của dự án ─────────────
 export const projectCategories: Category[] = [
   { slug: "can-ho-chung-cu", label: "Căn hộ chung cư", h1: "Dự án căn hộ chung cư", title: `Dự án căn hộ chung cư`, desc: `Danh sách dự án căn hộ chung cư — tiến độ, giá bán, mặt bằng và tiện ích.`, types: ["Căn hộ", "Chung cư"] },
-  { slug: "khu-do-thi-moi", label: "Khu đô thị mới", h1: "Dự án khu đô thị mới", title: `Dự án khu đô thị mới`, desc: `Danh sách dự án khu đô thị mới.`, types: ["Khu đô thị"] },
-  { slug: "khu-nghi-duong", label: "Khu nghỉ dưỡng, sinh thái", h1: "Dự án khu nghỉ dưỡng, sinh thái", title: `Dự án nghỉ dưỡng, sinh thái`, desc: `Danh sách dự án nghỉ dưỡng, sinh thái ven biển.`, types: ["Nghỉ dưỡng", "Sinh thái"] },
-  { slug: "nha-o-xa-hoi", label: "Nhà ở xã hội", h1: "Dự án nhà ở xã hội", title: `Dự án nhà ở xã hội`, desc: `Danh sách dự án nhà ở xã hội — điều kiện mua và tiến độ.`, types: ["Nhà ở xã hội"] },
-  { slug: "cao-oc-van-phong", label: "Cao ốc văn phòng", h1: "Dự án cao ốc văn phòng", title: `Dự án cao ốc văn phòng`, desc: `Danh sách dự án cao ốc văn phòng.`, types: ["Văn phòng"] },
-  { slug: "trung-tam-thuong-mai", label: "Trung tâm thương mại", h1: "Dự án trung tâm thương mại", title: `Dự án trung tâm thương mại`, desc: `Danh sách dự án trung tâm thương mại.`, types: ["Thương mại"] },
-  { slug: "biet-thu-lien-ke", label: "Biệt thự, liền kề", h1: "Dự án biệt thự, liền kề", title: `Dự án biệt thự, liền kề`, desc: `Danh sách dự án biệt thự, nhà liền kề.`, types: ["Biệt thự", "Liền kề"] },
-  { slug: "shophouse", label: "Shophouse", h1: "Dự án shophouse", title: `Dự án shophouse`, desc: `Danh sách dự án shophouse, nhà phố thương mại.`, types: ["Shophouse"] },
+  { slug: "khu-do-thi-moi", label: "Khu đô thị mới", h1: "Dự án khu đô thị mới", title: `Dự án khu đô thị mới`, desc: `Tra cứu dự án khu đô thị mới: vị trí, chủ đầu tư, quy mô, tình trạng, hình ảnh và tin mua bán, cho thuê trong dự án.`, types: ["Khu đô thị"] },
+  { slug: "khu-nghi-duong", label: "Khu nghỉ dưỡng, sinh thái", h1: "Dự án khu nghỉ dưỡng, sinh thái", title: `Dự án nghỉ dưỡng, sinh thái`, desc: `Tra cứu dự án khu nghỉ dưỡng, sinh thái: vị trí, chủ đầu tư, quy mô, tình trạng, hình ảnh và tin mua bán, cho thuê trong dự án.`, types: ["Nghỉ dưỡng", "Sinh thái"] },
+  { slug: "nha-o-xa-hoi", label: "Nhà ở xã hội", h1: "Dự án nhà ở xã hội", title: `Dự án nhà ở xã hội`, desc: `Tra cứu dự án nhà ở xã hội: vị trí, chủ đầu tư, quy mô, tình trạng, hình ảnh và tin mua bán, cho thuê trong dự án.`, types: ["Nhà ở xã hội"] },
+  { slug: "cao-oc-van-phong", label: "Cao ốc văn phòng", h1: "Dự án cao ốc văn phòng", title: `Dự án cao ốc văn phòng`, desc: `Tra cứu dự án cao ốc văn phòng: vị trí, chủ đầu tư, quy mô, tình trạng, hình ảnh và tin mua bán, cho thuê trong dự án.`, types: ["Văn phòng"] },
+  { slug: "trung-tam-thuong-mai", label: "Trung tâm thương mại", h1: "Dự án trung tâm thương mại", title: `Dự án trung tâm thương mại`, desc: `Tra cứu dự án trung tâm thương mại: vị trí, chủ đầu tư, quy mô, tình trạng, hình ảnh và tin mua bán, cho thuê trong dự án.`, types: ["Thương mại"] },
+  { slug: "biet-thu-lien-ke", label: "Biệt thự, liền kề", h1: "Dự án biệt thự, liền kề", title: `Dự án biệt thự, liền kề`, desc: `Tra cứu dự án biệt thự, liền kề: vị trí, chủ đầu tư, quy mô, tình trạng, hình ảnh và tin mua bán, cho thuê trong dự án.`, types: ["Biệt thự", "Liền kề"] },
+  { slug: "shophouse", label: "Shophouse", h1: "Dự án shophouse", title: `Dự án shophouse`, desc: `Tra cứu dự án shophouse: vị trí, chủ đầu tư, quy mô, tình trạng, hình ảnh và tin mua bán, cho thuê trong dự án.`, types: ["Shophouse"] },
 ];
 
 export function findCategory(list: Category[], slug: string): Category | undefined {

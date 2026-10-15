@@ -3,7 +3,7 @@ import { getProjects, getArticles } from "@/lib/contentDb";
 import { getListings, getListingsHetHan } from "@/lib/listingsDb";
 import { getChuyenGia, NGUONG_INDEX_HO_SO } from "@/lib/chuyenGiaDb";
 import { projectCategories, rentCategories, saleCategories } from "@/lib/categories";
-import { packages, utilityTools } from "@/lib/packages";
+import { packages, trangTienIchDat, utilityTools } from "@/lib/packages";
 import { khuVucList } from "@/lib/khuVuc";
 import { getBilling } from "@/lib/siteContent";
 import { freeDangChay } from "@/lib/billing";
@@ -57,7 +57,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ].map((p) => ({ url: `${SITE}${p}`, changeFrequency: "daily" as const, priority: 0.9 }));
 
   // Trang gói dịch vụ & công cụ tiện ích
-  const toolRoutes: MetadataRoute.Sitemap = [...packages, ...utilityTools].map((t) => ({
+  const toolRoutes: MetadataRoute.Sitemap = [...packages, ...utilityTools].filter(trangTienIchDat).map((t) => ({
     url: `${SITE}/tien-ich/${t.slug}`,
    
     changeFrequency: "monthly" as const,

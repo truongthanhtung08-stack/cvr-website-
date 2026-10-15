@@ -188,8 +188,8 @@ export const utilityTools: Pkg[] = [
   {
     slug: "tinh-lai-suat-vay",
     label: "Tính lãi suất vay",
-    title: "Tính lãi suất vay",
-    description: "Công cụ tính toán lãi suất vay mua nhà, đầu tư và tài chính.",
+    title: "Tính lãi suất vay mua nhà",
+    description: "Tính tiền trả góp mua nhà mỗi tháng theo số tiền vay, lãi suất và thời hạn — gốc, lãi từng kỳ và tổng chi phí.",
     icon: "pr",
     kind: "tool",
   },
@@ -215,3 +215,9 @@ export function getPackage(slug: string): Pkg | undefined {
   return [...packages, ...utilityTools].find((p) => p.slug === slug);
 }
 
+
+// CÔNG CỤ ĐÃ CÓ NỘI DUNG THẬT (SEO 15/10/2026 — "không đạt thì không index"). Trang công cụ còn
+// khối "Nội dung đang được cập nhật" là trang mỏng: noindex + không vào sitemap cho tới khi công cụ
+// chạy thật / có dữ liệu thật. Làm xong công cụ nào thì thêm slug đó vào đây.
+export const CONG_CU_DA_CO_NOI_DUNG: string[] = ["tinh-lai-suat-vay"];
+export const trangTienIchDat = (p: { slug: string; kind?: string }) => p.kind !== "tool" || CONG_CU_DA_CO_NOI_DUNG.includes(p.slug);

@@ -291,6 +291,11 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                 Cập nhật ngày {p.capNhat}{p.nguon ? ` · Nguồn: ${p.nguon}` : ""}
               </p>
             )}
+            {/* Chủ đầu tư lớn (Vinhomes, Sun…) cảnh báo web mạo danh — nói rõ đây là thông tin tổng hợp
+                (chủ dự án duyệt câu 15/10/2026, docs/YEU-CAU-COWORK-DU-AN-TIN-DANG.md mục E) */}
+            <p className="mt-1 pl-[22px] text-[13px] text-cvr-faint">
+              Thông tin dự án do Coastal Land tổng hợp từ nguồn công khai, không phải trang chính thức của chủ đầu tư.
+            </p>
 
             {/* Dải thông tin nhanh — cân đối, dễ đọc từng tiêu chí */}
             <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4">

@@ -122,7 +122,7 @@ export default function LienHePage() {
       <Muc title="Đôi điều để bạn nắm">
         <p>
           Coastal Land là <strong className="font-semibold text-cvr-ink">cổng thông tin bất động sản</strong> — Chúng tôi không mua bán, không phân phối, không ký gửi, không môi
-          giới và không phải là một bên trong giao dịch. Chúng tôi kiểm duyệt và xác thực thông tin trước khi hiển thị để đảm bảo mọi thông tin được chính xác nhất.
+          giới và không phải là một bên trong giao dịch. Chúng tôi kiểm duyệt tin trước khi hiển thị để lọc tin ảo, tin trùng; người mua cần tự kiểm tra giấy tờ trước khi giao dịch.
         </p>
       </Muc>
     </TrangPhapLy>

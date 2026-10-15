@@ -6,6 +6,8 @@
 // thông tin cơ bản + hình ảnh (chủ dự án chốt 15/10/2026).
 // ============================================================================
 
+import { chuDauTuChuan, loiDiaDanh } from "@/lib/tenChuan";
+
 export const COT_DU_AN = [
   "ten_du_an", "loai_hinh", "trang_thai", "chu_dau_tu", "don_vi_phat_trien", "tinh", "phuong_xa",
   "dia_chi_chi_tiet", "quy_mo", "san_pham", "khoi_cong", "ban_giao", "phap_ly", "tien_ich",
@@ -59,6 +61,7 @@ export function docDuAnTuCsv(text: string): DongDuAn[] {
     const ten = v("ten_du_an");
     if (!ten) loi.push("thiếu tên dự án");
     if (!v("tinh")) loi.push("thiếu tỉnh/thành");
+    else { const l = loiDiaDanh(v("tinh"), v("phuong_xa") || undefined); if (l) loi.push(l); }
     if (!v("nguon")) loi.push("thiếu nguồn thông tin");
     const trangThai = v("trang_thai");
     // Bắt buộc: trang dự án mặc định ghi "Đang mở bán" khi trống — không để máy tự gán trạng thái
@@ -86,7 +89,7 @@ export function docDuAnTuCsv(text: string): DongDuAn[] {
           name: ten,
           type: v("loai_hinh") || null,
           status_text: trangThai,
-          developer: v("chu_dau_tu") || null,
+          developer: v("chu_dau_tu") ? chuDauTuChuan(v("chu_dau_tu")) : null,
           province: v("tinh"),
           ward: v("phuong_xa") || null,
           price_from: giaTu || null,
