@@ -59,6 +59,7 @@ type Tin = {
   tier: TierId;
   tier_days?: number | null;
   tier_expires_at: string;
+  published_at?: string | null;
   details: Record<string, unknown> | null;
 };
 
@@ -77,7 +78,7 @@ export async function quetTinHetHan(
     // ── 1) ĐÃ HẾT HẠN → ngừng hiển thị ('expired'), mọi hạng ──────────────
     const { data: hetHan } = await admin
       .from("listings")
-      .select("id,title,owner_id,tier,tier_days,tier_expires_at,details")
+      .select("id,title,owner_id,tier,tier_days,tier_expires_at,published_at,details")
       .eq("status", "approved")
       .lt("tier_expires_at", bayGio.toISOString())
       .limit(200);
@@ -85,14 +86,20 @@ export async function quetTinHetHan(
     const dsHet = (hetHan ?? []) as Tin[];
 
     for (const tin of dsHet) {
-      // Hết hạn VIP của tin nâng từ Basic → về lại Basic, chạy tiếp số ngày Basic còn lại lúc nâng.
-      const conLai = Number(tin.details?.sau_vip_con_lai_ms ?? 0);
-      if (tin.tier !== "basic" && conLai > 0) {
-        const { sau_vip_con_lai_ms: _bo, ...giu } = tin.details ?? {};
-        void _bo;
+      // Hết hạn VIP của tin nâng từ Basic → về lại Basic TỚI ĐÚNG NGÀY HẾT HẠN BASIC GỐC
+      // (chủ dự án chốt 15/10/2026: VIP chạy song song với kỳ Basic, không cộng nối).
+      // Khoá cũ sau_vip_con_lai_ms (09/10) = ms Basic còn lại lúc nâng → quy về ngày gốc.
+      const hanBasic = typeof tin.details?.han_basic === "string"
+        ? Date.parse(tin.details.han_basic as string)
+        : Number(tin.details?.sau_vip_con_lai_ms ?? 0) > 0 && tin.published_at
+          ? Date.parse(tin.published_at) + Number(tin.details?.sau_vip_con_lai_ms)
+          : NaN;
+      if (tin.tier !== "basic" && Number.isFinite(hanBasic) && hanBasic > bayGio.getTime()) {
+        const { sau_vip_con_lai_ms: _bo1, han_basic: _bo2, ...giu } = tin.details ?? {};
+        void _bo1; void _bo2;
         const { error: e2 } = await admin
           .from("listings")
-          .update({ tier: "basic", tier_days: null, tier_expires_at: new Date(Date.now() + conLai).toISOString(), details: giu })
+          .update({ tier: "basic", tier_days: null, tier_expires_at: new Date(hanBasic).toISOString(), details: giu })
           .eq("id", tin.id)
           .eq("status", "approved");
         if (!e2) continue;

@@ -124,7 +124,9 @@ const mgmtFeeField: Field = { key: "mgmtFee", label: "Phí quản lý", type: "t
 // 14 ô Cowork đã gõ (diện tích sử dụng, hướng ban công của nhà riêng, biệt thự,
 // nhà mặt phố, shophouse) bị web bỏ lặng lẽ vì loại hình không khai mục đó.
 // Để là ĐẶC ĐIỂM (không `batBuoc`) nên form đăng tin của khách không bị ép nhập thêm.
-const usableAreaField: Field = { key: "usableArea", label: "Diện tích sử dụng", type: "number", unit: "m²" };
+// "Diện tích sử dụng" của NHÀ là Ô CHÍNH (cột built_area_m2 — tổng m² sàn), không khai thêm ở
+// Đặc điểm nữa: hai ô cùng nghĩa là trùng (chủ dự án 14/10/2026, ảnh "Đặc điểm — Nhà riêng").
+// Hướng ban công của nhà phố trùng Hướng nhà (đo 15/10: 23/25 tin ghi y hệt) → chỉ giữ ở biệt thự.
 const balconyField: Field = { key: "balcony", label: "Hướng ban công", type: "select", options: directions };
 
 // Mỗi LOẠI HÌNH có bộ đặc điểm ĐẶC THÙ riêng. Thứ tự = ĐỘ ƯU TIÊN khớp
@@ -226,7 +228,6 @@ export const categorySpecs: CategorySpec[] = [
       depthField,
       roadField,
       builtYearField,
-      usableAreaField,
       balconyField,
       { key: "gardenArea", label: "Diện tích sân vườn", type: "number", unit: "m²" },
       { key: "pool", label: "Hồ bơi riêng", type: "select", options: ["Có", "Không"] },
@@ -243,8 +244,6 @@ export const categorySpecs: CategorySpec[] = [
       frontageField,
       depthField,
       roadField,
-      usableAreaField,
-      balconyField,
       { key: "bizFloors", label: "Số tầng kinh doanh", type: "text", placeholder: "VD: 2 · Cả toà", main: true },
       { key: "corner", label: "Vị trí", type: "select", options: ["Lô góc 3 mặt tiền", "Lô góc 2 mặt tiền", "1 mặt tiền", "Trong khu"] },
       { key: "pccc", label: "Hệ thống PCCC", type: "select", options: ["Đã có", "Chưa có"] },
@@ -261,8 +260,6 @@ export const categorySpecs: CategorySpec[] = [
       frontageField,
       depthField,
       roadField,
-      usableAreaField,
-      balconyField,
       { key: "corner", label: "Vị trí", type: "select", options: ["Lô góc 3 mặt tiền", "Lô góc 2 mặt tiền", "1 mặt tiền"] },
       builtYearField,
       { key: "ketCau", label: "Kết cấu", type: "select", options: ["Nhà cấp 4", "Nhà cấp 3", "Nhà kiên cố", "Nhà gác lửng", "Nhà tạm"] },
@@ -292,12 +289,11 @@ export const categorySpecs: CategorySpec[] = [
       frontageField,
       depthField,
       roadField,
-      usableAreaField,
-      balconyField,
+      // Đặc điểm theo thứ tự khách hỏi: vào bằng gì → ô tô tới cửa không → kết cấu → năm xây.
       accessField,
-      builtYearField,
-      { key: "ketCau", label: "Kết cấu", type: "select", options: ["Nhà cấp 4", "Nhà cấp 3", "Nhà kiên cố", "Nhà gác lửng", "Nhà tạm"] },
       { key: "otoDoCua", label: "Ô tô đỗ cửa", type: "select", options: ["Có", "Không"] },
+      { key: "ketCau", label: "Kết cấu", type: "select", options: ["Nhà cấp 4", "Nhà cấp 3", "Nhà kiên cố", "Nhà gác lửng", "Nhà tạm"] },
+      builtYearField,
     ],
   },
   {
@@ -417,7 +413,8 @@ const KHONG_DT_XAY_DUNG = [
 // Nhãn ô diện tích theo loại hình — "Diện tích đất" chỉ đúng với nhà và đất.
 export function nhanDienTich(type: string): string {
   const l = type ? specForType(type).label : "";
-  if (["Chung cư", "Căn hộ", "Condotel / Nghỉ dưỡng"].includes(l)) return "Diện tích (m²)";
+  if (["Chung cư", "Căn hộ"].includes(l)) return "Diện tích căn hộ (m²)";
+  if (l === "Condotel / Nghỉ dưỡng") return "Diện tích căn (m²)";
   if (l === "Văn phòng / Mặt bằng kinh doanh") return "Diện tích sàn (m²)";
   if (l === "Đất công nghiệp / Nhà xưởng / Kho bãi") return "Tổng diện tích khu đất (m²)";
   if (l === "Nhà trọ / Phòng trọ") return "Tổng diện tích (m²)";

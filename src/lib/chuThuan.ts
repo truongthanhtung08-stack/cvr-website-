@@ -1,3 +1,5 @@
+import { boDinhDang } from "@/lib/dinhDangMoTa";
+
 // ── GỠ KÝ HIỆU SOẠN THẢO, TRẢ VỀ CHỮ TRƠN ────────────────────────────────────
 //
 // Nội dung admin nhập được lưu kèm ký hiệu định dạng (xem components/RichContent.tsx):
@@ -16,7 +18,8 @@ export function chuThuan(text: string | null | undefined): string {
     .replace(/::(center|right|justify)::/gi, " ")
     .replace(/!\[[^\]]*\]\([^)]*\)/g, " ")
     .replace(/@\[video\]\([^)]*\)/gi, " ")
-    .replace(/\*{1,3}/g, "")
+    // Bỏ dấu định dạng, GIỮ dấu * khách gõ ("5*20") — cùng bộ đọc với trang tin.
+    .split("\n").map(boDinhDang).join("\n")
     .replace(/\s+/g, " ")
     .trim();
 }

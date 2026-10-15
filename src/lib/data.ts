@@ -218,7 +218,7 @@ export function listingSummary(l: Listing): string {
   const tThat = normalizeVi(that);
   const tTitle = normalizeVi(l.title);
   if (tTitle.length > 10 && tThat.startsWith(tTitle)) {
-    that = that.slice(l.title.length).replace(/^[s.,:;–—-]+/, "").trim();
+    that = that.slice(l.title.length).replace(/^[\s.,:;–—-]+/, "").trim();
   }
 
   if (that.length >= 30) return that;

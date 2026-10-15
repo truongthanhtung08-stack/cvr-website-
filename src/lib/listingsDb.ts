@@ -16,7 +16,7 @@ import { mauSoCuaLoaiHinh } from "@/lib/chiSoGia";
 import { featuredListings, getListingById } from "@/lib/data";
 import { asset } from "@/lib/asset";
 import { isVideoUrl } from "@/lib/media";
-import { fieldsSplit, amenityGroups, coDonGiaM2, viTriTuDuongVao, viTriTuAccess, laTinThue, laTinBan, type Field } from "@/lib/listingSpec";
+import { fieldsSplit, amenityGroups, coDonGiaM2, coDienTichXayDung, viTriTuDuongVao, viTriTuAccess, laTinThue, laTinBan, type Field } from "@/lib/listingSpec";
 import { chuanHoaSdt } from "@/lib/phone";
 
 // Thuộc tính linh hoạt lưu trong cột details (JSONB) — xem 0006_listing_details.sql
@@ -491,7 +491,10 @@ function rowToDetail(r: Row): ListingFull {
     listing: rowToListing(r),
     images: imgs.map(asset),
     videos,
-    builtArea: r.built_area_m2 != null ? `${fmtNum(r.built_area_m2, 0)} m²` : null,
+    // Tin cũ ghi tổng sàn ở ô "Diện tích sử dụng" đã gộp (15/10/2026) → vẫn hiện, chỉ với loại NHÀ
+    // (văn phòng, kho xưởng dùng chính khoá usableArea làm ô chính riêng của chúng).
+    builtArea: r.built_area_m2 != null ? `${fmtNum(r.built_area_m2, 0)} m²`
+      : coDienTichXayDung(r.type) && d.specs?.usableArea ? `${String(d.specs.usableArea).trim()} m²` : null,
     descriptionParas: dongMoTa(r.description),
     specsChinh,
     specs,

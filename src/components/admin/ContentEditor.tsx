@@ -5,6 +5,7 @@ import { uploadImageFile, uploadVideoFile } from "@/lib/uploadImage";
 import { isVideoUrl } from "@/lib/media";
 import { imageMarkerUrl, videoMarkerUrl } from "@/components/RichContent";
 import { asset } from "@/lib/asset";
+import { tachDinhDang, thoatChu } from "@/lib/dinhDangMoTa";
 
 // Ô nhập NỘI DUNG có chèn ẢNH & VIDEO giữa bài (Tin đăng · Dự án · Tin tức).
 // Mỗi đoạn xuống 1 dòng. Chèn ảnh → dòng ![](url) · chèn video → dòng @[video](url)
@@ -35,10 +36,13 @@ function dongSangHtml(dong: string): string {
     canh = ` style="text-align:${m[1]}"`;
     chu = dong.slice(m[0].length);
   }
-  const html = thoatHtml(chu)
-    .replace(/\*\*\*(.+?)\*\*\*/g, "<b><i>$1</i></b>")
-    .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
-    .replace(/\*([^*\n]+?)\*/g, "<i>$1</i>");
+  // Cùng bộ đọc với trang tin (dinhDangMoTa) — dấu * khách gõ hiện đúng là dấu *.
+  const html = tachDinhDang(chu)
+    .map((d) => {
+      const t = thoatHtml(d.t);
+      return d.b && d.i ? `<b><i>${t}</i></b>` : d.b ? `<b>${t}</b>` : d.i ? `<i>${t}</i>` : t;
+    })
+    .join("");
   return `<div${canh}>${html || "<br>"}</div>`;
 }
 const giaTriSangHtml = (v: string) => (v ? v.split("\n").map(dongSangHtml).join("") : "<div><br></div>");
@@ -58,11 +62,12 @@ function htmlSangGiaTri(goc: HTMLElement): string {
     }
     const chu = gop
       .map((r) => {
-        if (!r.t.trim() || (!r.b && !r.i)) return r.t;
+        // Dấu * và \ KHÁCH GÕ → đánh dấu là chữ thật, không bị đọc nhầm thành đậm/nghiêng.
+        if (!r.t.trim() || (!r.b && !r.i)) return thoatChu(r.t);
         // Giữ khoảng trắng đầu / cuối NGOÀI dấu định dạng ("** chữ**" không hiển thị đúng)
         const dau = r.t.match(/^\s*/)![0];
         const cuoiS = r.t.match(/\s*$/)![0];
-        const giua = r.t.trim();
+        const giua = thoatChu(r.t.trim());
         const dauSao = r.b && r.i ? "***" : r.b ? "**" : "*";
         return `${dau}${dauSao}${giua}${dauSao}${cuoiS}`;
       })

@@ -517,7 +517,9 @@ export default function PostListingForm() {
       else if (r.price_vnd >= 1e9) { setPriceUnit("tỷ"); setPriceValue(String(Math.round((r.price_vnd / 1e9) * 100) / 100)); }
       else { setPriceUnit("triệu"); setPriceValue(String(Math.round(r.price_vnd / 1e6))); }
       setArea(r.area_m2 != null ? String(r.area_m2) : "");
-      setBuiltArea(r.built_area_m2 != null ? String(r.built_area_m2) : "");
+      // Ô "Diện tích sử dụng" cũ ở Đặc điểm đã gộp vào ô chính (15/10/2026) — tin cũ chỉ ghi ở đó thì hiện sẵn.
+      const dtSuDungCu = coDienTichXayDung(r.type ?? "") ? ((r.details ?? {}) as { specs?: Record<string, string> }).specs?.usableArea : undefined;
+      setBuiltArea(r.built_area_m2 != null ? String(r.built_area_m2) : dtSuDungCu ? String(dtSuDungCu).replace(",", ".") : "");
       setBeds(r.beds != null ? String(r.beds) : "");
       setBaths(r.baths != null ? String(r.baths) : "");
       setImages(r.images ?? []);
@@ -1199,7 +1201,7 @@ export default function PostListingForm() {
           const oChinh = [
             coDienTichXayDung(loaiHinh) && (
               <div key="dtxd">
-                <Label>Diện tích xây dựng (m²)</Label>
+                <Label>Diện tích sử dụng (m²)</Label>
                 <input type="text" value={builtArea} onChange={(e) => setBuiltArea(e.target.value)} placeholder="VD: 95" className={inputCls} />
               </div>
             ),

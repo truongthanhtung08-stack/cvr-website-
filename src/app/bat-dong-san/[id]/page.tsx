@@ -475,7 +475,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                     </div>
                     {d.builtArea && (
                       <div className="min-w-0">
-                        <p className="text-[12px] text-cvr-muted">Diện tích xây dựng</p>
+                        <p className="text-[12px] text-cvr-muted">Diện tích sử dụng</p>
                         <p className="mt-1 break-words text-[17px] font-semibold leading-tight text-cvr-ink">{d.builtArea}</p>
                       </div>
                     )}

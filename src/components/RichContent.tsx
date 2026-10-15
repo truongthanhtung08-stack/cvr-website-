@@ -1,6 +1,7 @@
 import { asset } from "@/lib/asset";
 import VideoEmbed from "@/components/VideoEmbed";
 import ContentPhoto from "@/components/ContentPhoto";
+import { tachDinhDang } from "@/lib/dinhDangMoTa";
 
 // Nội dung admin nhập được lưu dạng text: MỖI ĐOẠN 1 dòng. Ảnh/video chèn giữa bài là
 // một dòng riêng theo cú pháp markdown:
@@ -18,30 +19,15 @@ const ALIGN_CLASS: Record<string, string> = {
   justify: "text-justify",
 };
 
-// Đậm / nghiêng trong 1 đoạn — cú pháp markdown quen thuộc, không cần thư viện.
-// Hai điểm đã sửa để web hiện ĐÚNG như trong bảng soạn nội dung:
-//   1. Dùng khớp KHÔNG THAM LAM (.+?) → chữ đậm có lẫn dấu * bên trong vẫn đậm.
-//   2. Dấu sao LẺ (do nội dung cũ bôi đậm nhiều dòng cùng lúc) bị BỎ ĐI thay vì
-//      hiện nguyên "**" ra ngoài web như trước.
+// Đậm / nghiêng trong 1 đoạn — đọc bằng bộ dùng chung (src/lib/dinhDangMoTa.ts): dấu * khách
+// gõ ("5*20", "*") hiện đúng là dấu *, chỉ dấu định dạng do bộ soạn tạo mới thành đậm/nghiêng.
 function renderInline(text: string): React.ReactNode[] {
-  const out: React.ReactNode[] = [];
-  // ĐẬM+NGHIÊNG (***) phải đứng TRƯỚC đậm (**), nếu không "***chữ***" sẽ bị
-  // khớp nhầm thành **…** và lòi ra một dấu * ở đầu (lỗi đã thấy trong ô soạn tin).
-  const re = /(\*\*\*.+?\*\*\*|\*\*.+?\*\*|\*[^*\n]+?\*)/g;
-  const donLe = (s: string) => s.replace(/\*{1,2}/g, ""); // dọn dấu sao thừa
-  let last = 0;
-  let m: RegExpExecArray | null;
-  let k = 0;
-  while ((m = re.exec(text)) !== null) {
-    if (m.index > last) out.push(donLe(text.slice(last, m.index)));
-    const t = m[0];
-    if (t.startsWith("***")) out.push(<strong key={k++}><em>{t.slice(3, -3)}</em></strong>);
-    else if (t.startsWith("**")) out.push(<strong key={k++}>{t.slice(2, -2)}</strong>);
-    else out.push(<em key={k++}>{t.slice(1, -1)}</em>);
-    last = m.index + t.length;
-  }
-  if (last < text.length) out.push(donLe(text.slice(last)));
-  return out;
+  return tachDinhDang(text).map((d, k) =>
+    d.b && d.i ? <strong key={k}><em>{d.t}</em></strong>
+    : d.b ? <strong key={k}>{d.t}</strong>
+    : d.i ? <em key={k}>{d.t}</em>
+    : d.t,
+  );
 }
 
 export function imageMarkerUrl(line: string): string | null {

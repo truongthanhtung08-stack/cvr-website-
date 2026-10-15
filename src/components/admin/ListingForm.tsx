@@ -335,15 +335,20 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
         })(),
         project: projectSlug || undefined,
         ...(initial?.owner_id ? {} : { anh_bia: anhBia }),
-        // NÂNG VIP TỪ TIN BASIC ĐANG CHẠY (chủ dự án 09/10/2026): hết hạn VIP thì tin về lại Basic
-        // và chạy tiếp ĐÚNG số ngày Basic còn lại lúc nâng (cron hết hạn đọc khoá này).
-        ...((): { sau_vip_con_lai_ms?: number } => {
-          const daCo = (initial?.details as { sau_vip_con_lai_ms?: number } | undefined)?.sau_vip_con_lai_ms;
+        // NÂNG VIP TỪ TIN BASIC ĐANG CHẠY (chủ dự án chốt 15/10/2026, thay cách 09/10): VIP chạy
+        // SONG SONG với kỳ Basic; hết VIP thì tin về Basic TỚI ĐÚNG NGÀY HẾT HẠN BASIC GỐC
+        // (đăng 01/10 Basic tới 31/10, nâng Gold 7 ngày ngày 10/10 → Gold tới 17/10, Basic tới 31/10).
+        // Ghi lại ngày hết hạn Basic gốc; cron hết hạn (hetHanTin.ts) đọc khoá này.
+        ...((): { han_basic?: string } => {
+          const d0 = initial?.details as { han_basic?: string; sau_vip_con_lai_ms?: number } | undefined;
           if (tier === "basic") return {};
-          if (daCo) return { sau_vip_con_lai_ms: daCo };
-          const conLai = initial?.status === "approved" && initial.tier === "basic" && initial.tier_expires_at
-            ? new Date(initial.tier_expires_at).getTime() - Date.now() : 0;
-          return conLai > 0 ? { sau_vip_con_lai_ms: conLai } : {};
+          if (d0?.han_basic) return { han_basic: d0.han_basic };
+          // Khoá cũ (09/10): số ms Basic còn lại tính từ lúc nâng = published_at của kỳ VIP.
+          if (d0?.sau_vip_con_lai_ms && initial?.published_at)
+            return { han_basic: new Date(new Date(initial.published_at).getTime() + d0.sau_vip_con_lai_ms).toISOString() };
+          const han = initial?.status === "approved" && initial.tier === "basic" && initial.tier_expires_at
+            && new Date(initial.tier_expires_at).getTime() > Date.now() ? initial.tier_expires_at : "";
+          return han ? { han_basic: han } : {};
         })(),
         contact: (cName.trim() || cPhone.trim() || cEmail.trim() || cAvatar.trim())
           ? { name: cName.trim(), phone: chuanHoaSdt(cPhone), email: cEmail.trim(), avatar: cAvatar.trim() || undefined }
@@ -476,7 +481,7 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
               <input value={area} onChange={(e) => setArea(e.target.value)} placeholder="VD: 100" className={inputCls} />
             </Field>,
             coDienTichXayDung(type) && (
-              <Field key="dtxd" label="Diện tích xây dựng (m²)">
+              <Field key="dtxd" label="Diện tích sử dụng (m²)">
                 <input value={builtArea} onChange={(e) => setBuiltArea(e.target.value)} placeholder="VD: 95" className={inputCls} />
               </Field>
             ),
