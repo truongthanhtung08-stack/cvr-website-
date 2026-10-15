@@ -179,6 +179,75 @@ export async function timToaDo(diaChi: string): Promise<ToaDoTim | null> {
   return duPhong;
 }
 
+// ── DÒ THEO TỪNG BƯỚC, CÓ KIỂM KẾT QUẢ (chủ dự án 14/10/2026) ───────────────
+// Tỉnh → Phường/Xã → số nhà, tên đường — tất cả bằng TÊN HỆ MỚI (xem diemTimBanDo).
+// Mỗi kết quả bản đồ trả về đều phải ĐÚNG TỈNH, và nếu nó nói nằm ở phường/xã nào
+// thì phải ĐÚNG phường/xã đã chọn — sai là bỏ, thử bước sau. Đo 15/10 trên 46 địa
+// danh: cách cũ (nhận kết quả đầu tiên) trỏ đúng phường 24/46, sai hẳn tỉnh 4/46.
+const khongDau = (s: string) =>
+  s.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/gi, "d").toLowerCase()
+    .replace(/[’']/g, "'").replace(/\s*-\s*/g, "-").replace(/\s+/g, " ").trim();
+const loi = (s: string) => khongDau(s).replace(/^(thanh pho|tinh|phuong|xa|thi tran|dac khu)\s+/, "");
+// Mảnh "Phường …/Xã …/Đặc khu …" trong địa chỉ bản đồ trả về (không có thì rỗng).
+const phuongTrongKetQua = (ten: string) =>
+  ten.split(",").map((x) => x.trim()).find((x) => /^(phường|xã|đặc khu)\s/i.test(x)) ?? "";
+
+const daTraBuoc = new Map<string, ToaDoTim | null>();
+
+export async function timToaDoTheoBuoc(d: {
+  soNha: string;
+  tinh: string;
+  phuong: string;
+  tenCu: string[];
+}): Promise<ToaDoTim | null> {
+  if (!d.tinh) return null;
+  const khoa = JSON.stringify(d);
+  if (daTraBuoc.has(khoa)) return daTraBuoc.get(khoa) ?? null;
+
+  const dungTinh = (ten: string) => khongDau(ten).includes(loi(d.tinh));
+  const dungPhuong = (ten: string, batBuoc: boolean) => {
+    const p = phuongTrongKetQua(ten);
+    if (!p) return !batBuoc;
+    return !d.phuong || loi(p) === loi(d.phuong);
+  };
+
+  // [chuỗi hỏi, mức độ, có bắt buộc kết quả ghi đúng tên phường không]
+  const buoc: [string, MucDoChinhXac, boolean][] = [];
+  if (d.soNha && d.phuong) buoc.push([`${d.soNha}, ${d.phuong}, ${d.tinh}`, "duong", false]);
+  if (d.phuong) buoc.push([`${d.phuong}, ${d.tinh}`, "khuVuc", true]);
+  if (d.soNha && !d.phuong) buoc.push([`${d.soNha}, ${d.tinh}`, "duong", false]);
+  for (const c of d.tenCu.slice(0, 4)) buoc.push([`${c}, ${d.tinh}`, "khuVuc", false]);
+
+  let kq: ToaDoTim | null = null;
+  try {
+    for (const [q, mucDo, batBuoc] of buoc) {
+      const r = await fetch("/api/dia-chi?viec=tim&q=" + encodeURIComponent(q));
+      const ds = (await r.json()) as { lat: string; lon: string; display_name?: string }[];
+      const hop = ds.find((x) => dungTinh(x.display_name ?? "") && dungPhuong(x.display_name ?? "", batBuoc));
+      if (hop) {
+        kq = { lat: Number(hop.lat), lng: Number(hop.lon), mucDo };
+        break;
+      }
+    }
+    if (!kq) {
+      // Không dò ra phường → về TÂM TỈNH (vẫn đúng tỉnh), không trỏ bừa.
+      const bang = centerOfArea(d.tinh);
+      if (bang) kq = { lat: bang[0], lng: bang[1], mucDo: "khuVuc" };
+      else {
+        const r = await fetch("/api/dia-chi?viec=tim&q=" + encodeURIComponent(d.tinh));
+        const ds = (await r.json()) as { lat: string; lon: string; display_name?: string }[];
+        const hop = ds.find((x) => dungTinh(x.display_name ?? ""));
+        if (hop) kq = { lat: Number(hop.lat), lng: Number(hop.lon), mucDo: "khuVuc" };
+      }
+    }
+  } catch {
+    const bang = centerOfArea(d.tinh);
+    kq = bang ? { lat: bang[0], lng: bang[1], mucDo: "khuVuc" } : null;
+  }
+  daTraBuoc.set(khoa, kq);
+  return kq;
+}
+
 // ── GỢI Ý ĐỊA CHỈ KHI ĐANG GÕ ────────────────────────────────────────────────
 //
 // Khác `timToaDo` ở chỗ: hàm kia tra MỘT chuỗi đã hoàn chỉnh rồi trả đúng một

@@ -367,6 +367,29 @@ export function chuoiTimBanDo(
     .join(", ");
 }
 
+// ─── THÔNG TIN DÒ BẢN ĐỒ THEO TỪNG BƯỚC (yêu cầu chủ dự án 14/10/2026) ───────
+// Bản đồ nền nay đã theo địa giới MỚI: tên tỉnh cũ ("Quảng Nam", "Bình Định") nó
+// không còn biết — gửi chuỗi trộn hai hệ thì bản đồ bay sang tỉnh khác (đo 15/10:
+// xã ở Quảng Nam bay lên Đà Lạt). Nên dò bằng TÊN HỆ MỚI, theo đúng trình tự
+// Tỉnh → Phường/Xã → số nhà, tên đường; tên phường/xã CŨ chỉ dùng làm đường lui
+// (phường cũ nằm TRỌN trong phường mới nên trỏ vào đó vẫn đúng phường mới).
+export type DiemTim = { soNha: string; tinh: string; phuong: string; tenCu: string[] };
+
+export function diemTimBanDo(
+  he: GeoMode,
+  diaChi: { tinh: string; quan?: string; phuong?: string },
+  soNha = "",
+): DiemTim {
+  const h = dongBoHaiHe(he, diaChi);
+  const tinh = h.moi.tinh || diaChi.tinh || "";
+  const phuong = h.moi.phuong || "";
+  // Phường cũ khách chọn đứng đầu, rồi tới các phường cũ khác đã gộp vào phường mới.
+  const tenCu = [h.cu.phuong, ...(tinh && phuong ? choCuCua(tinh, phuong).map((x) => x.phuong) : [])]
+    .map((x) => (x ?? "").trim())
+    .filter((x, i, a) => x && a.findIndex((y) => loiTen(y) === loiTen(x)) === i);
+  return { soNha: soNha.trim(), tinh, phuong, tenCu };
+}
+
 // Tin đã lưu chỉ có ba cột ward/district/province, không ghi nó nhập theo hệ nào.
 // CÓ Quận/Huyện = hệ cũ (hệ mới đã bỏ cấp này) — đó là dấu hiệu duy nhất và đủ chắc.
 export function heCuaTin(district: string | null | undefined): GeoMode {

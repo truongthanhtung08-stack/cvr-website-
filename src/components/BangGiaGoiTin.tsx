@@ -23,12 +23,15 @@ export default function BangGiaGoiTin({
   chon,
   onChon,
   onBoChon,
+  onXemBangQuyenLoi,
 }: {
   plans: Plan[];
   chon?: { tier: TierId | ""; days: number };
   onChon?: (tier: TierId, days: number) => void;
   /** Bấm lại ô đang chọn → bỏ chọn gói (chủ dự án 10/10/2026) */
   onBoChon?: () => void;
+  /** Đang ở trang đăng tin → mở bảng quyền lợi nổi tại chỗ thay vì sang tab mới (14/10/2026) */
+  onXemBangQuyenLoi?: () => void;
 }) {
   const [gomVat, setGomVat] = useState(true);
   // Quy định đi kèm: CHỈ bản admin đã duyệt — chưa duyệt thì không hiện.
@@ -140,7 +143,11 @@ export default function BangGiaGoiTin({
                 ))}
               </ul>
             ) : null}
-            <a href="/bao-gia-dang-tin#dac-diem" target="_blank" rel="noopener" className="mt-4 inline-flex text-[13px] font-semibold text-cvr-blue-ink">Xem bảng quyền lợi đầy đủ →</a>
+            {onXemBangQuyenLoi ? (
+              <button type="button" onClick={() => { setXemDacDiem(null); onXemBangQuyenLoi(); }} className="mt-4 inline-flex text-[13px] font-semibold text-cvr-blue-ink">Xem bảng quyền lợi đầy đủ →</button>
+            ) : (
+              <a href="/bao-gia-dang-tin#dac-diem" target="_blank" rel="noopener" className="mt-4 inline-flex text-[13px] font-semibold text-cvr-blue-ink">Xem bảng quyền lợi đầy đủ →</a>
+            )}
           </div>
         </div>
       )}

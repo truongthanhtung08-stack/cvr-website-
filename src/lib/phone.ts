@@ -37,6 +37,24 @@ function tachPhan(raw: string): string[] {
 
 const hopLe = (s: string) => s.length >= 10 && s.length <= 11;
 
+// Một phần dính nhiều số không có dấu ngăn tách được ("0963453368-0787223223",
+// "0905123456 0918123456") → cắt dãy chữ số thành từng khúc 10 số, mỗi khúc phải
+// bắt đầu bằng 0. Không cắt đều được thì trả rỗng — không đoán.
+function catDinh(phan: string): string[] {
+  const d = phan.replace(/[^0-9]/g, "");
+  if (d.length < 20 || d.length % 10) return [];
+  const ds = d.match(/.{10}/g) ?? [];
+  return ds.every((s) => s.startsWith("0")) ? ds : [];
+}
+
+// Mọi số trong một ô, theo thứ tự người đăng ghi.
+function moiSo(raw: string): string[] {
+  return tachPhan(raw).flatMap((p) => {
+    const s = chiSo(p);
+    return hopLe(s) ? [s] : catDinh(p);
+  });
+}
+
 // Chuẩn hoá một ô → SỐ ĐẦU TIÊN hợp lệ trong ô đó.
 // Ô có hai số ("0707.435.555 / 0918.339.739") thì lấy số đầu, TUYỆT ĐỐI không
 // dán hai số vào nhau thành một chuỗi 20 chữ số.
@@ -45,10 +63,8 @@ const hopLe = (s: string) => s.length >= 10 && s.length <= 11;
 export function chuanHoaSdt(raw: string): string {
   const t = (raw ?? "").trim();
   if (!t) return "";
-  for (const phan of tachPhan(t)) {
-    const s = chiSo(phan);
-    if (hopLe(s)) return s;
-  }
+  const dau = moiSo(t)[0];
+  if (dau) return dau;
   const gop = chiSo(t);
   return hopLe(gop) ? gop : t;
 }
@@ -62,7 +78,7 @@ export function laSdtVN(s: string): boolean {
 // Dùng khi cần giữ ĐỦ số của người đăng (chìa khoá ghép tin về đúng tài khoản
 // khách sau này — khách hay có 2 số).
 export function tachNhieuSdt(o: string): string[] {
-  const ds = [...new Set(tachPhan(o).map(chiSo).filter(hopLe))];
+  const ds = [...new Set(moiSo(o))];
   if (ds.length) return ds;
   // Cắt theo dấu ngăn mà không ra số nào — người nhập dùng dấu phẩy làm dấu phân
   // nhóm ("0905,123,456"). Gộp cả ô lại thử một lần nữa, đừng để mất số.

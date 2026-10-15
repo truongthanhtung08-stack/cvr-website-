@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import BangGiaGoiTin from "@/components/BangGiaGoiTin";
+import BangQuyenLoiNoi from "@/components/BangQuyenLoiNoi";
+import ChonCoTim from "@/components/ChonCoTim";
 import { linkHopLe } from "@/lib/linkChen";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -11,7 +13,7 @@ import { isVideoUrl } from "@/lib/media";
 import ThemTuGhi from "@/components/ThemTuGhi";
 import OGoTuGian from "@/components/OGoTuGian";
 import { donViGiaNenDung, goiYDienTich, goiYGia, goiYTieuDe } from "@/lib/goiYNhapTin";
-import { haiDongDiaChi, doiHeGiuNguyen, chuoiTimBanDo, ungVienPhuongCu, type NhoHaiHe } from "@/lib/diaChiHaiHe";
+import { haiDongDiaChi, doiHeGiuNguyen, chuoiTimBanDo, diemTimBanDo, ungVienPhuongCu, type NhoHaiHe } from "@/lib/diaChiHaiHe";
 import {
   categorySpecs, demandTypes, specForType,
   coPhongNgu, coPhongTam, coDienTichXayDung, coNoiThat, fieldsSplit, thieuMucBatBuoc, nhanDienTich, type Field,
@@ -155,6 +157,7 @@ export default function PostListingForm() {
   // Tiền đang tạm giữ cho các tin chờ duyệt khác của khách (0056).
   const [tamGiu, setTamGiu] = useState(0);
   const [error, setError] = useState("");
+  const [xemQuyenLoi, setXemQuyenLoi] = useState(false);
 
   // TỰ LƯU NHÁP TRÊN MÁY (chủ dự án 10/10/2026): mọi thứ khách đã nhập được cất vào trình
   // duyệt sau mỗi lần gõ, theo TỪNG TÀI KHOẢN; đăng nhập lại, mở /dang-tin trên cùng máy là
@@ -1067,32 +1070,13 @@ export default function PostListingForm() {
             và bản đồ ngay bên dưới vẫn nằm chung một màn hình, khỏi kéo lên kéo xuống
             đối chiếu. */}
         <div className={`grid grid-cols-2 gap-3 sm:gap-4 ${coDanhMucQuan ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
-          <Pick label="Tỉnh / Thành" value={province} onChange={(v) => { setProvince(v); setDistrict(""); setWard(""); }} options={provinceOptions} placeholder="Chọn Tỉnh / Thành" />
+          <PickTim label="Tỉnh / Thành" value={province} onChange={(v) => { setProvince(v); setDistrict(""); setWard(""); }} options={provinceOptions} placeholder="Chọn Tỉnh / Thành" timPlaceholder="Tìm Tỉnh / Thành" />
           {coDanhMucQuan && (
-            <Pick label="Quận / Huyện" value={district} onChange={(v) => { setDistrict(v); setWard(""); }} options={districts} placeholder="Chọn Quận / Huyện" disabled={!province} />
+            <PickTim label="Quận / Huyện" value={district} onChange={(v) => { setDistrict(v); setWard(""); }} options={districts} placeholder="Chọn Quận / Huyện" timPlaceholder="Tìm Quận / Huyện" disabled={!province} />
           )}
-          <Pick label="Phường / Xã" value={ward} onChange={(v) => { setWard(v); setPhuongCu(""); }} options={wards} placeholder="Chọn Phường / Xã" disabled={geoMode === "moi" ? !province : coDanhMucQuan ? !district : !province} />
+          <PickTim label="Phường / Xã" value={ward} onChange={(v) => { setWard(v); setPhuongCu(""); }} options={wards} placeholder="Chọn Phường / Xã" timPlaceholder="Tìm Phường / Xã" disabled={geoMode === "moi" ? !province : coDanhMucQuan ? !district : !province} />
         </div>
-        {/* PHƯỜNG/XÃ CŨ — CHỈ HIỆN KHI MÁY BÍ. Phường mới gộp 2–10 phường cũ thì
-            không có cách nào suy ngược ra, mà người mua quen hệ cũ lại tìm theo
-            đúng tên đó. Danh sách lấy thẳng từ bảng sáp nhập chính thức. */}
-        {(() => {
-          const uv = ungVienPhuongCu(geoMode, province, ward);
-          if (!uv.length) return null;
-          return (
-            <div className="mt-3 sm:max-w-xs">
-              {/* Lựa chọn lạc (đổi tỉnh, ghim lại bản đồ…) coi như chưa chọn — chặn
-                  ở đây một chỗ, khỏi phải nhớ xoá ở từng nơi đổi địa giới. */}
-              <Pick
-                label="Phường / Xã trước sáp nhập"
-                value={uv.some((x) => x.nhan === phuongCu) ? phuongCu : ""}
-                onChange={setPhuongCu}
-                options={uv.map((x) => x.nhan)}
-                placeholder={`Chọn nếu biết — ${ward} gộp ${uv.length} phường/xã cũ`}
-              />
-            </div>
-          );
-        })()}
+        {/* Ô "Phường / Xã trước sáp nhập" ĐÃ BỎ theo yêu cầu chủ dự án 14/10/2026. */}
         {/* ĐỊA CHỈ HAI HỆ — nhập hệ nào cũng thấy ngay cách gọi của hệ kia.
             Cả nước đang dùng song song hai cách gọi: người đăng quen hệ mới,
             nhiều người mua vẫn tìm theo quận/huyện cũ. Hiện cả hai ngay lúc nhập
@@ -1128,6 +1112,7 @@ export default function PostListingForm() {
             onDiaChi={setAddressDetail}
             onDiaGioi={nhanDiaGioiTuBanDo}
             hint={chuoiTimBanDo(geoMode, { tinh: province, quan: district, phuong: ward }, addressDetail)}
+            tim={diemTimBanDo(geoMode, { tinh: province, quan: district, phuong: ward }, addressDetail)}
           />
         </div>
       </Card>
@@ -1368,13 +1353,16 @@ export default function PostListingForm() {
                 chon={{ tier: planTier, days: planDays }}
                 onChon={(t, d) => { setPlanTier(t); setPlanDays(d); }}
                 onBoChon={() => { setPlanTier(""); setPlanDays(0); }}
+                onXemBangQuyenLoi={() => setXemQuyenLoi(true)}
               />
             </div>
-            {/* Nút xem bảng quyền lợi từng loại tin (chủ dự án 09/10/2026) — mở tab mới để không mất tin đang soạn */}
-            <a href="/bao-gia-dang-tin#dac-diem" target="_blank" rel="noopener" className="mt-3 inline-flex h-10 items-center gap-1.5 rounded-lg border border-cvr-line bg-white px-4 text-sm font-semibold text-cvr-ink transition hover:border-cvr-ink">
+            {/* Nút xem bảng quyền lợi từng loại tin (chủ dự án 09/10/2026). 14/10/2026: mở bảng nổi
+                NGAY TRÊN TRANG — mở tab mới thì điện thoại tải lại trang đăng tin, mất phần đang soạn. */}
+            <button type="button" onClick={() => setXemQuyenLoi(true)} className="mt-3 inline-flex h-10 items-center gap-1.5 rounded-lg border border-cvr-line bg-white px-4 text-sm font-semibold text-cvr-ink transition hover:border-cvr-ink">
               Xem bảng quyền lợi
               <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
-            </a>
+            </button>
+            {xemQuyenLoi && <BangQuyenLoiNoi onDong={() => setXemQuyenLoi(false)} />}
 
             {/* THANH TOÁN — đủ từng khoản như Batdongsan; các dòng cộng lại đúng bằng tổng */}
             {planTier && (
@@ -1746,6 +1734,16 @@ function Pick({ label, value, onChange, options, placeholder, disabled }: { labe
         {value && !options.includes(value) && <option value={value}>{value}</option>}
         {options.map((o) => <option key={o} value={o}>{o}</option>)}
       </select>
+    </div>
+  );
+}
+
+// Ô chọn có ô tìm (Tỉnh · Quận · Phường) — dùng chung với trang admin.
+function PickTim({ label, ...p }: { label: string; value: string; onChange: (v: string) => void; options: string[]; placeholder: string; timPlaceholder: string; disabled?: boolean }) {
+  return (
+    <div>
+      <Label>{label}</Label>
+      <ChonCoTim {...p} className={inputCls} />
     </div>
   );
 }

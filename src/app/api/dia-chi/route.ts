@@ -69,7 +69,8 @@ export async function GET(req: Request) {
     duong = `/reverse?format=json&zoom=18&accept-language=vi&lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lng)}`;
   } else if (viec === "tim") {
     if (!q) return NextResponse.json([], { status: 200 });
-    duong = `/search?format=json&limit=1&countrycodes=vn&q=${encodeURIComponent(q)}`;
+    // 5 kết quả: nơi gọi tự chọn kết quả ĐÚNG tỉnh/phường (timToaDoTheoBuoc), không nhận bừa cái đầu.
+    duong = `/search?format=json&limit=5&countrycodes=vn&accept-language=vi&q=${encodeURIComponent(q)}`;
   } else if (viec === "goiy") {
     if (q.length < 3) return NextResponse.json([], { status: 200 });
     duong = `/search?format=json&addressdetails=1&limit=6&countrycodes=vn&accept-language=vi&q=${encodeURIComponent(q)}`;

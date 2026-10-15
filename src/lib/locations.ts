@@ -1,7 +1,9 @@
 // Danh mục đơn vị hành chính — HAI HỆ, ĐỦ TOÀN QUỐC.
-//   • Hệ CŨ (trước sáp nhập 2025): `provincesOld` — 63 tỉnh · 697 quận/huyện · 10.972 phường/xã,
-//     mỗi phường cũ kèm CHỈ SỐ phường mới tương ứng (ánh xạ chính thức, không phải dò tên).
-//   • Hệ MỚI (sau sáp nhập 2025):  `provincesNew` — 34 tỉnh · 3.321 phường/xã (bỏ cấp Quận/Huyện).
+//   • Hệ CŨ (ngày 30/06/2025, trước sáp nhập): `provincesOld` — 63 tỉnh · 696 quận/huyện · 10.035 phường/xã,
+//     mỗi phường cũ kèm CHỈ SỐ phường mới tương ứng (ánh xạ chính thức, không phải dò tên);
+//     471 xã bị chia về nhiều xã mới có thêm `them`.
+//   • Hệ MỚI (sau sáp nhập 2025, cập nhật tới NQ 388/NQ-UBTVQH16): `provincesNew` — 34 tỉnh · 3.321 phường/xã.
+//   Sinh lại bằng scripts/sinh-don-vi-hanh-chinh.mjs.
 // Hai bảng đó là dữ liệu gốc, sinh tự động từ nguồn mở — không sửa tay. File này
 // chỉ nối hai hệ lại với nhau (`provinceMergers`) và cung cấp hàm tra cứu.
 
@@ -232,6 +234,7 @@ function moc(t: string): string {
     .join("")
     .split("đ").join("d")
     .split("Đ").join("d")
+    .replace(/[‘’`]/g, "'") // "Ea H’Leo" = "Ea H'Leo"
     .toLowerCase();
   return khongDau
     .split("-").map((x) => x.trim()).join(" - ")
@@ -259,6 +262,21 @@ export function chuanTenCap(t: string): string {
 
 const _cuSangMoi = new Map<string, { tinh: string; phuong: string }>();
 const _moiSangCu = new Map<string, ChoCu[]>();
+// Tra ĐÚNG TÊN ĐẦY ĐỦ trước: cùng một huyện có thể có "Thị trấn Mường Tè" và "Mường Tè"
+// (xã) — bỏ tiền tố cấp thì hai cái thành một, cái sau đè cái trước, đổi hệ ra nhầm xã.
+const _cuSangMoiDu = new Map<string, { tinh: string; phuong: string }>();
+function khoaCuDu(tinh: string, quan: string, phuong: string): string {
+  // Giữ cả DẤU: cùng huyện có "Hoằng Phú" và "Hoằng Phụ", "Nậm Càn" và "Nậm Cắn".
+  const coDau = (phuong || "").normalize("NFC").trim().toLowerCase().split(/\s+/).join(" ");
+  return `${chuanTen(tinh)}|${chuanTenCap(quan)}|${coDau}`; // "TP. Cao Lãnh" ≠ "Huyện Cao Lãnh"
+}
+// Ghi theo thứ tự: tên chính thức trước, tên cũ hơn sau — cái đã có KHÔNG bị đè.
+function ganCuSangMoi(tinh: string, quan: string, phuong: string, v: { tinh: string; phuong: string }) {
+  const du = khoaCuDu(tinh, quan, phuong);
+  if (!_cuSangMoiDu.has(du)) _cuSangMoiDu.set(du, v);
+  const gon = khoaCu(tinh, quan, phuong);
+  if (!_cuSangMoi.has(gon)) _cuSangMoi.set(gon, v);
+}
 for (const p of provincesOld) {
   const tinhMoi = newProvinceOf(p.name);
   const dsPhuongMoi = provincesNew.find((x) => x.name === tinhMoi)?.wards ?? [];
@@ -266,19 +284,51 @@ for (const p of provincesOld) {
     for (let i = 0; i < d.wards.length; i++) {
       const pm = dsPhuongMoi[d.moi[i]];
       if (!pm) continue;
-      _cuSangMoi.set(khoaCu(p.name, d.name, d.wards[i]), { tinh: tinhMoi, phuong: pm });
+      ganCuSangMoi(p.name, d.name, d.wards[i], { tinh: tinhMoi, phuong: pm });
       const k = `${chuanTen(tinhMoi)}|${chuanTen(pm)}`;
       const ds = _moiSangCu.get(k);
       const cho: ChoCu = { tinh: p.name, quan: d.name, phuong: d.wards[i] };
       if (ds) ds.push(cho);
       else _moiSangCu.set(k, [cho]);
     }
+    // Huyện đảo KHÔNG có xã (Côn Đảo, Lý Sơn, Bạch Long Vĩ…) nay là đặc khu → đặc khu tra
+    // ngược ra được huyện cũ (cấp xã để trống — huyện đó vốn không có xã).
+    if (d.dk != null && dsPhuongMoi[d.dk]) {
+      const k = `${chuanTen(tinhMoi)}|${chuanTen(dsPhuongMoi[d.dk])}`;
+      const cho: ChoCu = { tinh: p.name, quan: d.name, phuong: "" };
+      const ds = _moiSangCu.get(k);
+      if (ds) ds.push(cho);
+      else _moiSangCu.set(k, [cho]);
+    }
+    // TÊN CŨ HƠN (xã gộp trước 30/06/2025, vd "An Hải Tây") — chỉ tra chiều cũ → mới.
+    for (const [w, j] of d.cu ?? []) {
+      const pm = dsPhuongMoi[j];
+      if (pm) ganCuSangMoi(p.name, d.name, w, { tinh: tinhMoi, phuong: pm });
+    }
+    // Xã cũ bị CHIA về nhiều xã mới: phần còn lại cũng phải tra ngược ra được xã cũ
+    // (chiều cũ → mới vẫn lấy phần chính ở `moi`, không đoán theo số nhà).
+    for (const [i, j] of d.them ?? []) {
+      const pm = dsPhuongMoi[j];
+      if (!pm) continue;
+      const k = `${chuanTen(tinhMoi)}|${chuanTen(pm)}`;
+      const cho: ChoCu = { tinh: p.name, quan: d.name, phuong: d.wards[i] };
+      const ds = _moiSangCu.get(k);
+      if (ds) ds.push(cho);
+      else _moiSangCu.set(k, [cho]);
+    }
+  }
+  // HUYỆN ĐÃ GIẢI THỂ trước 30/06/2025 (vd Đạ Tẻh) — chỉ tra chiều cũ → mới.
+  for (const h of p.huyenCuHon ?? []) {
+    for (const [w, j] of h.cu) {
+      const pm = dsPhuongMoi[j];
+      if (pm) ganCuSangMoi(p.name, h.name, w, { tinh: tinhMoi, phuong: pm });
+    }
   }
 }
 
 /** Phường/xã CŨ → tên theo hệ mới. Không có trong bảng → null (không đoán). */
 export function phuongMoiCua(tinhCu: string, quanCu: string, phuongCu: string) {
-  return _cuSangMoi.get(khoaCu(tinhCu, quanCu, phuongCu)) ?? null;
+  return _cuSangMoiDu.get(khoaCuDu(tinhCu, quanCu, phuongCu)) ?? _cuSangMoi.get(khoaCu(tinhCu, quanCu, phuongCu)) ?? null;
 }
 
 /** Phường/xã MỚI → những chỗ cũ đã gộp vào nó (một phường mới thường gộp 2–4 phường cũ). */
@@ -294,5 +344,8 @@ export function phuongMoiCuaQuan(tinhCu: string, quanCu: string): string[] {
   const ds = provincesNew.find((x) => x.name === newProvinceOf(p.name))?.wards ?? [];
   const ra = new Set<string>();
   for (const i of d.moi) { const w = ds[i]; if (w) ra.add(w); }
+  for (const [, j] of d.them ?? []) { const w = ds[j]; if (w) ra.add(w); }
+  // Huyện đảo không có xã (Bạch Long Vĩ, Cồn Cỏ…) → nay là đặc khu.
+  if (d.dk != null && ds[d.dk]) ra.add(ds[d.dk]);
   return [...ra];
 }

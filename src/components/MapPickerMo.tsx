@@ -5,7 +5,8 @@ import type { Map as MlMap, Marker as MlMarker } from "maplibre-gl";
 import { napMapLibre, STYLE_MO, vietHoaNhan } from "@/lib/banDoMo";
 import { formatLatLng, parseLatLng, type LatLng } from "@/lib/googleMaps";
 import { centerOfArea } from "@/lib/geo";
-import { traDiaChi, timToaDo } from "@/lib/timToaDo";
+import { traDiaChi, timToaDo, timToaDoTheoBuoc } from "@/lib/timToaDo";
+import type { DiemTim } from "@/lib/diaChiHaiHe";
 import { docKhoangCach, khoangCachKm, layViTri, loiDinhVi } from "@/lib/dinhVi";
 import NhacBatDinhVi from "@/components/NhacBatDinhVi";
 
@@ -35,12 +36,15 @@ export default function MapPickerMo({
   hint = "",
   onDiaChi,
   onDiaGioi,
+  tim,
 }: {
   value: string;
   onChange: (v: string) => void;
   hint?: string;
   onDiaChi?: (v: string) => void;
   onDiaGioi?: (v: { tinh: string; quan: string; phuong: string }) => void;
+  // Dò theo từng bước Tỉnh → Phường/Xã → số nhà bằng tên hệ mới, có kiểm kết quả (diemTimBanDo).
+  tim?: DiemTim;
 }) {
   const boxRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MlMap | null>(null);
@@ -51,6 +55,8 @@ export default function MapPickerMo({
   const onDiaChiRef = useRef(onDiaChi);
   const onDiaGioiRef = useRef(onDiaGioi);
   const hintRef = useRef(hint);
+  const timRef = useRef(tim);
+  const khoaTim = tim ? JSON.stringify(tim) : "";
   const valueRef = useRef(value);
   // Chuỗi địa chỉ MÁY vừa tự điền. Ô đang giữ đúng chuỗi này nghĩa là khách chưa
   // đụng vào → đổi ghim thì máy được viết lại. Khách sửa rồi thì giữ nguyên.
@@ -78,6 +84,7 @@ export default function MapPickerMo({
     onDiaChiRef.current = onDiaChi;
     onDiaGioiRef.current = onDiaGioi;
     hintRef.current = hint;
+    timRef.current = tim;
     valueRef.current = value;
   });
 
@@ -237,7 +244,7 @@ export default function MapPickerMo({
     if (!map || ghimRef.current || !hint.trim()) return;
     let huy = false;
     const t = setTimeout(async () => {
-      const diem = await timToaDo(hint);
+      const diem = timRef.current ? await timToaDoTheoBuoc(timRef.current) : await timToaDo(hint);
       if (huy || !mapRef.current || ghimRef.current) return;
       const kv = diem ? ([diem.lat, diem.lng] as [number, number]) : centerOfArea(hint);
       if (!kv) return;
@@ -251,7 +258,7 @@ export default function MapPickerMo({
       huy = true;
       clearTimeout(t);
     };
-  }, [hint, sanSang]);
+  }, [hint, khoaTim, sanSang]);
 
   function xoaGhim() {
     onChange("");

@@ -9,7 +9,7 @@ import { createClient } from "@/lib/supabase/client";
 import { lamMoiWeb } from "@/lib/lamMoiWeb";
 import { saleTypeGroups, rentTypeGroups } from "@/lib/filters";
 import { provinceNamesFor, districtsOf, wardsOf, wardsOfNew, wardsOfAny, chuanTen, type GeoMode } from "@/lib/locations";
-import { haiDongDiaChi, doiHeGiuNguyen, chuoiTimBanDo, ungVienPhuongCu, type NhoHaiHe } from "@/lib/diaChiHaiHe";
+import { haiDongDiaChi, doiHeGiuNguyen, chuoiTimBanDo, diemTimBanDo, ungVienPhuongCu, type NhoHaiHe } from "@/lib/diaChiHaiHe";
 import { ganDiaGioi, type DiaGioiBanDo } from "@/lib/diaGioiTuBanDo";
 import { fieldsFor, interiorItems, amenityGroups, phapLyCho, furnishLevels, directions, coPhongNgu, coPhongTam, coDienTichXayDung, nhanDienTich, coDonGiaM2 } from "@/lib/listingSpec";
 import { chuanHoaSdt } from "@/lib/phone";
@@ -19,6 +19,7 @@ import OTieuDe from "@/components/OTieuDe";
 // (components/MapPicker.tsx) GIỮ LẠI để sau này Google thông thì đổi về, chỉ
 // phải sửa đúng dòng import này.
 import MapPicker from "@/components/MapPickerMo";
+import ChonCoTim from "@/components/ChonCoTim";
 import ContentEditor from "@/components/admin/ContentEditor";
 import { uploadImageFile } from "@/lib/uploadImage";
 import { soAnhToiDa, soVideoToiDa, bangTheoMucDich, huongKhuyenMai } from "@/lib/billing";
@@ -541,29 +542,29 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
           </Field>
 
           <Field label="Tỉnh/Thành (bắt buộc)">
-            <select
+            <ChonCoTim
               value={province}
-              onChange={(e) => { setProvince(e.target.value); setDistrict(""); setWard(""); }}
+              onChange={(v) => { setProvince(v); setDistrict(""); setWard(""); }}
+              options={provinceOptions}
+              placeholder="— Chọn Tỉnh/Thành —"
+              timPlaceholder="Tìm Tỉnh / Thành"
               className={inputCls}
-            >
-              <option value="">— Chọn Tỉnh/Thành —</option>
-              {provinceOptions.map((p) => <option key={p} value={p}>{p}</option>)}
-            </select>
+            />
           </Field>
 
           {/* Hệ MỚI bỏ cấp Quận/Huyện → ẩn hẳn ô này (giống form đăng tin của khách) */}
           {geoMode === "cu" && (
           <Field label="Quận/Huyện (bắt buộc)">
             {districtOptions.length > 0 ? (
-              <select
+              <ChonCoTim
                 value={district}
-                onChange={(e) => { setDistrict(e.target.value); setWard(""); }}
+                onChange={(v) => { setDistrict(v); setWard(""); }}
                 disabled={!province}
-                className={`${inputCls} disabled:bg-cvr-surface disabled:text-cvr-faint`}
-              >
-                <option value="">{province ? "— Chọn Quận/Huyện —" : "Chọn tỉnh trước"}</option>
-                {districtOptions.map((d) => <option key={d} value={d}>{d}</option>)}
-              </select>
+                options={districtOptions}
+                placeholder={province ? "— Chọn Quận/Huyện —" : "Chọn tỉnh trước"}
+                timPlaceholder="Tìm Quận / Huyện"
+                className={inputCls}
+              />
             ) : (
               <input value={district} onChange={(e) => setDistrict(e.target.value)} placeholder="Nhập Quận/Huyện" className={inputCls} />
             )}
@@ -572,17 +573,15 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
 
           <Field label={geoMode === "moi" ? "Phường/Xã (bắt buộc)" : "Phường/Xã"}>
             {wardOptions.length > 0 ? (
-              <select
+              <ChonCoTim
                 value={ward}
-                onChange={(e) => setWard(e.target.value)}
+                onChange={setWard}
                 disabled={geoMode === "moi" ? !province : !district}
-                className={`${inputCls} disabled:bg-cvr-surface disabled:text-cvr-faint`}
-              >
-                <option value="">
-                  {(geoMode === "moi" ? province : district) ? "— Chọn Phường/Xã —" : geoMode === "moi" ? "Chọn tỉnh trước" : "Chọn quận/huyện trước"}
-                </option>
-                {wardOptions.map((w) => <option key={w} value={w}>{w}</option>)}
-              </select>
+                options={wardOptions}
+                placeholder={(geoMode === "moi" ? province : district) ? "— Chọn Phường/Xã —" : geoMode === "moi" ? "Chọn tỉnh trước" : "Chọn quận/huyện trước"}
+                timPlaceholder="Tìm Phường / Xã"
+                className={inputCls}
+              />
             ) : (
               <input value={ward} onChange={(e) => setWard(e.target.value)} placeholder="Nhập Phường/Xã" className={inputCls} />
             )}
@@ -658,6 +657,7 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
                 apDungDiaGioi(dc, geoMode, province, district, ward);
               }}
               hint={chuoiTimBanDo(geoMode, { tinh: province, quan: district, phuong: ward }, addressDetail)}
+              tim={diemTimBanDo(geoMode, { tinh: province, quan: district, phuong: ward }, addressDetail)}
             />
           </div>
         </div>
