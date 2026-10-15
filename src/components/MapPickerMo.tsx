@@ -63,6 +63,7 @@ export default function MapPickerMo({
   const mayDienRef = useRef("");
 
   const [sanSang, setSanSang] = useState(false);
+  const [chiToiKhuVuc, setChiToiKhuVuc] = useState(false);
   const [hong, setHong] = useState(false);
   const [dangDinhVi, setDangDinhVi] = useState(false);
   const [dangTra, setDangTra] = useState(false);
@@ -256,6 +257,8 @@ export default function MapPickerMo({
       const diem = timRef.current ? await timToaDoTheoBuoc(timRef.current) : await timToaDo(hint);
       if (huy || !mapRef.current || ghimRef.current) return;
       const kv = diem ? ([diem.lat, diem.lng] as [number, number]) : centerOfArea(hint);
+      // Chỉ trỏ được tới phường/xã (chưa tới tên đường) → gợi ý bật GPS (15/10/2026).
+      setChiToiKhuVuc(!diem || diem.mucDo === "khuVuc");
       if (!kv) return;
       mapRef.current.easeTo({
         center: [kv[1], kv[0]],
@@ -335,6 +338,13 @@ export default function MapPickerMo({
         )}
       </div>
 
+      {/* KHÔNG BẬT GPS VẪN TRỎ THEO ĐỊA CHỈ ĐÃ NHẬP; chỉ trỏ được tới phường/xã thì gợi ý bật GPS
+          (chủ dự án 15/10/2026: "gợi ý khách bật GPS để trỏ địa chỉ chính xác nhất"). */}
+      {sanSang && !daGhim && chiToiKhuVuc && (
+        <p className="rounded-lg bg-cvr-blue/[0.06] px-3 py-2 text-[13px] leading-relaxed text-cvr-blue-ink">
+          Bản đồ mới trỏ tới phường/xã. Bật định vị (GPS) rồi bấm “Tôi đang đứng ở đây”, hoặc chạm lên bản đồ để ghim đúng vị trí.
+        </p>
+      )}
       <div className="flex flex-wrap items-center gap-2">
         <button
           type="button"
