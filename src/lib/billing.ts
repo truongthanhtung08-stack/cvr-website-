@@ -531,6 +531,13 @@ export function huongKhuyenMai(
   return hopDoiTuong && conLuot;
 }
 
+// KHÁCH TỰ CHỌN GÓI KHUYẾN MÃI HAY GÓI THƯỜNG (chủ dự án 15/10/2026: "đúng đối tượng nào thì được
+// quyền chọn gói"). Form ghi details.plan.khuyenMai = true/false. Chọn gói thường (false) thì
+// không áp chương trình, tính đúng giá gói thường. Tin cũ không có cờ → như trước (đúng đối tượng là áp).
+export function chonKhuyenMai(details: unknown): boolean {
+  return (details as { plan?: { khuyenMai?: boolean } } | null | undefined)?.plan?.khuyenMai !== false;
+}
+
 // LÚC KHÁCH GỬI TIN — mốc xét "thành viên mới" (chủ dự án 10/10/2026: chương trình dành cho
 // tin đăng trong 30 ngày đầu; admin duyệt lúc nào cũng không làm khách mất ưu đãi). Tin gửi lại
 // (đăng lại, nạp đủ tiền tự gửi) ghi details.gui_luc; tin mới thì là lúc tạo tin.

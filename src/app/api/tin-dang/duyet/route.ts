@@ -3,7 +3,7 @@ import { revalidateTag } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { viKhaDung, cauThieuTien } from "@/lib/viKhaDung";
-import { ghepBillingLuu, bangTheoMucDich, freeDangChay, soNgayHienThi, huongKhuyenMai, lucGuiTin, loaiVoucherTin, quotePrice, vnd, type BillingData } from "@/lib/billing";
+import { ghepBillingLuu, bangTheoMucDich, freeDangChay, soNgayHienThi, huongKhuyenMai, chonKhuyenMai, lucGuiTin, loaiVoucherTin, quotePrice, vnd, type BillingData } from "@/lib/billing";
 import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
 import { guiThongBao, MAU_DUYET_TIN } from "@/lib/thongBao";
 import { baoLoi } from "@/lib/baoLoi";
@@ -118,7 +118,7 @@ export async function POST(request: Request) {
   // không có số ngày được duyệt miễn phí, hạ về Basic: một đường thứ hai ngoài bảng giá).
   // Ngoại lệ DUY NHẤT: gói của chương trình miễn phí đã duyệt (vd Basic · 30 ngày) — xét đúng
   // khách hưởng chương trình ở nhánh dưới; không hưởng thì từ chối như gói ngoài bảng giá.
-  const laGoiMp = goi === bangMp.free.tierId && soNgay === (bangMp.free.hienThi ?? bangMp.free.days)
+  const laGoiMp = chonKhuyenMai(tin.details) && goi === bangMp.free.tierId && soNgay === (bangMp.free.hienThi ?? bangMp.free.days)
     && freeDangChay(bangMp.free, ngayGui);
   const loiNgoaiBang = () => loi(`Gói ${tenGoi(bangMp, goi)} ${soNgay} ngày không có trong bảng giá hiện hành — nhắc khách chọn lại gói rồi gửi lại.`, 400);
   if (giaGoiChon === undefined && !laGoiMp) return loiNgoaiBang();
@@ -134,7 +134,8 @@ export async function POST(request: Request) {
       : { data: null };
     const ngayMoTkMp = hsMp?.created_at ? (lucGui - new Date(hsMp.created_at).getTime()) / 86_400_000 : Infinity;
     // Khuyến mãi: CÙNG MỘT điều kiện với mọi nơi (huongKhuyenMai) — lấy từ chương trình trong admin.
-    let laTvMoi = huongKhuyenMai(fMp, {
+    // Khách chọn GÓI THƯỜNG (plan.khuyenMai = false) thì không áp chương trình (15/10/2026).
+    let laTvMoi = chonKhuyenMai(tin.details) && huongKhuyenMai(fMp, {
       goi, homNay: ngayGui, coChu: Boolean(tin.owner_id),
       soNgayMoTk: ngayMoTkMp, role: hsMp?.role, freeQuota: hsMp?.free_quota, ngayTaoTk: hsMp?.created_at ? new Date(new Date(hsMp?.created_at).getTime() + 7 * 3_600_000).toISOString().slice(0, 10) : undefined,
     });
@@ -222,7 +223,7 @@ export async function POST(request: Request) {
   const f = bang.free;
   // Chương trình hết hạn (`to`) thì thu tiền bình thường — nếu không, tin gửi
   // từ thời còn ưu đãi vẫn được duyệt free mãi về sau. Điều kiện chung: huongKhuyenMai.
-  const thuocDienMienPhi = huongKhuyenMai(f, {
+  const thuocDienMienPhi = chonKhuyenMai(tin.details) && huongKhuyenMai(f, {
     goi, homNay: ngayGui, coChu: true,
     soNgayMoTk, role: hs.role, freeQuota: hs.free_quota, ngayTaoTk: hs.created_at ? new Date(new Date(hs.created_at).getTime() + 7 * 3_600_000).toISOString().slice(0, 10) : undefined,
   });

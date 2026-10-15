@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { ghepBillingLuu, bangTheoMucDich, huongKhuyenMai, quotePrice, vnd, type BillingData } from "@/lib/billing";
+import { ghepBillingLuu, bangTheoMucDich, huongKhuyenMai, chonKhuyenMai, quotePrice, vnd, type BillingData } from "@/lib/billing";
 import { tachThue } from "@/lib/thue";
 import { baoLoi } from "@/lib/baoLoi";
 import { viKhaDung, cauThieuTien } from "@/lib/viKhaDung";
@@ -67,7 +67,8 @@ export async function thucHienUpTin(
   const soNgayMoTk = hs.created_at ? (Date.now() - new Date(hs.created_at).getTime()) / 86_400_000 : Number.POSITIVE_INFINITY;
   const bao = quotePrice({ data: bang, tierId: goi, days: soNgay, today: homNay, isNewMember: soNgayMoTk <= bang.free.days });
   // Khuyến mãi: CÙNG MỘT điều kiện với form đăng tin + duyệt tin (huongKhuyenMai).
-  const mienPhi = huongKhuyenMai(bang.free, { goi, homNay, coChu: true, soNgayMoTk, role: hs.role, freeQuota: hs.free_quota, ngayTaoTk: hs.created_at ? new Date(new Date(hs.created_at).getTime() + 7 * 3_600_000).toISOString().slice(0, 10) : undefined });
+  // Tin nháp tự gửi sau khi nạp đủ: giữ lựa chọn gói thường / khuyến mãi khách đã chọn ở form.
+  const mienPhi = (!laNhap || chonKhuyenMai(tin.details)) && huongKhuyenMai(bang.free, { goi, homNay, coChu: true, soNgayMoTk, role: hs.role, freeQuota: hs.free_quota, ngayTaoTk: hs.created_at ? new Date(new Date(hs.created_at).getTime() + 7 * 3_600_000).toISOString().slice(0, 10) : undefined });
   const giaBao = mienPhi ? 0 : bao.total;
   const phaiTra = tachThue(giaBao).tongTra;
 
@@ -93,7 +94,7 @@ export async function thucHienUpTin(
       tier_expires_at: null,
       da_tru_vi: false,
       details: laNhap
-        ? { ...chiTiet, plan: { tier: goi, days: soNgay, giaBao }, bao_da_nhan: true, gui_luc: new Date().toISOString() }
+        ? { ...chiTiet, plan: { tier: goi, days: soNgay, giaBao, ...(chonKhuyenMai(tin.details) ? {} : { khuyenMai: false }) }, bao_da_nhan: true, gui_luc: new Date().toISOString() }
         : { ...chiTiet, plan: { tier: goi, days: soNgay, giaBao }, dang_lai: true, gui_luc: new Date().toISOString() },
     })
     .eq("id", id)

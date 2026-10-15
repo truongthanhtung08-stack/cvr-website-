@@ -31,7 +31,7 @@ import OTieuDe from "@/components/OTieuDe";
 // phải sửa đúng dòng import này.
 import MapPicker from "@/components/MapPickerMo";
 import ContentEditor from "@/components/admin/ContentEditor";
-import { BILLING_DEFAULT, bangTheoMucDich, freeDangChay, huongKhuyenMai, soNgayHienThi, freeNote, quotePrice, soAnhToiDa, soVideoToiDa, tenGoiMienPhi, vnd } from "@/lib/billing";
+import { bangTheoMucDich, freeDangChay, huongKhuyenMai, isPromoRunning, ngayVn, soNgayHienThi, freeNote, quotePrice, soAnhToiDa, soVideoToiDa, tenGoiMienPhi, vnd } from "@/lib/billing";
 import { banChuyenDoi } from "@/lib/gtagChuyenDoi";
 import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
 import { useBilling } from "@/lib/useBilling";
@@ -143,6 +143,10 @@ export default function PostListingForm() {
   // ví bị trừ là khiếu nại.
   const [planTier, setPlanTier] = useState<TierId | "">("");
   const [planDays, setPlanDays] = useState<number>(billing.plans[0]?.terms[0]?.days ?? 0);
+  // KHÁCH CHỌN Ô GÓI KHUYẾN MÃI (true) hay gói thường trong bảng giá (false) — chủ dự án 15/10/2026:
+  // hiện đủ gói thường · gói khuyến mãi · chương trình khác; đúng đối tượng mới chọn được ô khuyến mãi,
+  // thành viên mới vẫn chọn được gói thường.
+  const [chonKm, setChonKm] = useState(false);
   // HẸN NGÀY ĐĂNG (chuẩn Batdongsan): "" = hiển thị ngay khi duyệt; "YYYY-MM-DD" = duyệt xong
   // tin ở mục Chờ hiển thị, tới 0h ngày đó (giờ VN) mới lên — hạn tính từ ngày đó.
   const [batDau, setBatDau] = useState("");
@@ -293,14 +297,14 @@ export default function PostListingForm() {
   // form phải tính tiền như bình thường, không được hiện "0 ₫ — Miễn phí" nữa.
   // CÙNG MỘT điều kiện với duyệt tin + đăng lại (huongKhuyenMai) — chương trình trong admin.
   const duocMienPhi = useMemo(() => {
-    if (!hoSoVi || !planTier) return false;
+    if (!hoSoVi || !planTier || !chonKm) return false;
     // eslint-disable-next-line react-hooks/purity
     const soNgayMoTk = hoSoVi.created_at ? (Date.now() - new Date(hoSoVi.created_at).getTime()) / 86_400_000 : Infinity;
     return huongKhuyenMai(billing.free, {
       goi: planTier as TierId, homNay: new Date().toISOString().slice(0, 10), coChu: true,
       soNgayMoTk, role: hoSoVi.role, freeQuota: hoSoVi.free_quota, ngayTaoTk: hoSoVi.created_at ? new Date(new Date(hoSoVi.created_at).getTime() + 7 * 3_600_000).toISOString().slice(0, 10) : undefined,
     });
-  }, [billing.free, planTier, hoSoVi]);
+  }, [billing.free, planTier, hoSoVi, chonKm]);
 
   const thanhTien = duocMienPhi ? 0 : baoGia.total;
 
@@ -319,24 +323,24 @@ export default function PostListingForm() {
       soNgayMoTk, role: hoSoVi.role, freeQuota: hoSoVi.free_quota, ngayTaoTk: hoSoVi.created_at ? new Date(new Date(hoSoVi.created_at).getTime() + 7 * 3_600_000).toISOString().slice(0, 10) : undefined,
     });
   };
-  // HAI DẠNG (chủ dự án 10/10/2026): THÀNH VIÊN MỚI — gói của chương trình khuyến mãi là đúng
-  // chương trình đã duyệt (vd Basic · 30 ngày · 0đ): hàng gói đó CHỈ còn một ô khuyến mãi, không
-  // bày các mốc thường (Basic 7/10 ngày) vì chọn mốc nào máy chủ cũng duyệt theo chương trình.
-  // THÀNH VIÊN CŨ — đúng bảng giá thường. Máy chủ xét lại y hệt lúc duyệt tin.
+  // Ô GÓI KHUYẾN MÃI = đúng chương trình đã duyệt trong admin (vd Basic · 30 ngày · 0đ), tách khỏi bảng
+  // gói thường (chủ dự án 15/10/2026). Bảng gói thường luôn đủ như bảng giá đã công bố.
   const ngayMp = billing.free.hienThi ?? billing.free.days;
   const goiMp = billing.free.tierId;
-  const plansChon = (() => {
-    if (!ngayMp || !huongKmCua(goiMp)) return bangGia.plans;
-    const term = { days: ngayMp, price: 0 };
-    return bangGia.plans.some((p) => p.tierId === goiMp)
-      ? bangGia.plans.map((p) => (p.tierId === goiMp ? { ...p, terms: [term] } : p))
-      : [...bangGia.plans, { ...(BILLING_DEFAULT.plans.find((p) => p.tierId === goiMp) ?? { tierId: goiMp, name: getTier(goiMp).name, note: "" }), terms: [term] }];
-  })();
+  const plansChon = bangGia.plans;
+  // eslint-disable-next-line react-hooks/purity
+  const homNayVn = new Date(Date.now() + 7 * 3_600_000).toISOString().slice(0, 10);
+  const duocChonKm = huongKmCua(goiMp);
+  const coGoiKm = Boolean(ngayMp) && (freeDangChay(billing.free, homNayVn) || duocChonKm);
+  // Chương trình giảm giá khác đang chạy (admin duyệt) — tự trừ vào gói đúng đối tượng khi tính tiền.
+  const ctKhac = (billing.promos ?? []).filter((p) => isPromoRunning(p, homNayVn));
+  const hopCtKhac = (p: (typeof ctKhac)[number]) => p.audience === "all" || (p.audience === "new" && laThanhVienMoi);
   // Tải xong bảng giá admin → đưa thời hạn về mốc đầu tiên của bảng giá hiện hành
   useEffect(() => {
     if (!billingLoading) {
       // Xét theo bảng KHÁCH ĐANG THẤY (plansChon): thành viên mới bấm ô khuyến mãi (Basic · 30
       // ngày) không có trong bảng giá thường thì không bị kéo về 7 ngày.
+      if (chonKm) return; // ô khuyến mãi: số ngày theo chương trình, không theo bảng gói thường
       const terms = plansChon.find((p) => p.tierId === planTier)?.terms ?? [];
       // Bảng giá do admin đặt, tải về sau khi trang đã dựng → chỉ lúc này mới biết
       // gói có những mốc thời hạn nào. Thời hạn đang chọn không còn trong bảng giá
@@ -345,7 +349,7 @@ export default function PostListingForm() {
       if (terms.length && !terms.some((t) => t.days === planDays)) setPlanDays(terms[0].days);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [billingLoading, planTier, plansChon]);
+  }, [billingLoading, planTier, plansChon, chonKm]);
   // Số ngày tin THẬT SỰ hiển thị (khuyến mãi thành viên mới → số ngày của chương trình).
   const soNgayThat = planTier ? soNgayHienThi(bangGia, planTier as TierId, planDays, duocMienPhi) : planDays;
 
@@ -652,7 +656,7 @@ export default function PostListingForm() {
       // cùng thang với quotePrice). Lúc admin duyệt, máy chủ tính lại giá; nếu
       // khuyến mãi đã hết hạn hay bảng giá đã đổi thì giá mới có thể cao hơn —
       // khi đó vẫn chỉ thu đúng con số khách đã nhìn thấy ở đây.
-      plan: { tier: planTier, days: planDays, giaBao: thanhTien, ...(batDau ? { batDau } : {}) },
+      plan: { tier: planTier, days: planDays, giaBao: thanhTien, khuyenMai: duocMienPhi, ...(batDau ? { batDau } : {}) },
       project: slugDuAn() || undefined,
       projectName: projectName.trim() || undefined,
       contact: (contactName.trim() || contactPhone.trim() || contactEmail.trim() || contactAvatar.trim())
@@ -1439,17 +1443,13 @@ export default function PostListingForm() {
         ) : (
           <>
             {/* BẢNG GIÁ KIỂU BATDONGSAN — bày hết loại tin × số ngày, bấm ô nào chọn gói đó. Giá từ admin. */}
-            {plansChon.some((p) => huongKmCua(p.tierId)) && (
-              <p className="mb-3 rounded-xl border border-cvr-blue/25 bg-cvr-blue/[0.06] px-3.5 py-2.5 text-sm text-cvr-blue-ink">
-                Ưu đãi của bạn: <span className="font-semibold">{getTier(billing.free.tierId).name} miễn phí {ngayMp} ngày</span>
-              </p>
-            )}
+            {(coGoiKm || ctKhac.length > 0) && <p className="mb-2 text-sm font-semibold text-cvr-ink">Gói tin</p>}
             <div className={planTier ? "" : "rounded-2xl ring-1 ring-cvr-blue/40 ring-offset-2"}>
               <BangGiaGoiTin
                 plans={plansChon}
-                chon={{ tier: planTier, days: planDays }}
-                onChon={(t, d) => { setPlanTier(t); setPlanDays(d); }}
-                onBoChon={() => { setPlanTier(""); setPlanDays(0); }}
+                chon={{ tier: chonKm ? "" : planTier, days: planDays }}
+                onChon={(t, d) => { setChonKm(false); setPlanTier(t); setPlanDays(d); }}
+                onBoChon={() => { setChonKm(false); setPlanTier(""); setPlanDays(0); }}
                 onXemBangQuyenLoi={() => setXemQuyenLoi(true)}
               />
             </div>
@@ -1460,6 +1460,59 @@ export default function PostListingForm() {
               <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
             </button>
             {xemQuyenLoi && <BangQuyenLoiNoi onDong={() => setXemQuyenLoi(false)} />}
+
+            {/* GÓI KHUYẾN MÃI — chương trình admin đã duyệt. Đúng đối tượng mới bấm chọn được; không đúng vẫn hiện, khoá lại. */}
+            {coGoiKm && (
+              <div className="mt-5">
+                <p className="mb-2 text-sm font-semibold text-cvr-ink">Gói khuyến mãi</p>
+                <button
+                  type="button"
+                  disabled={!duocChonKm}
+                  aria-pressed={chonKm}
+                  onClick={() => {
+                    if (chonKm) { setChonKm(false); setPlanTier(""); setPlanDays(0); return; }
+                    setChonKm(true); setPlanTier(goiMp); setPlanDays(ngayMp);
+                  }}
+                  className={`flex w-full items-center justify-between gap-3 rounded-2xl border px-4 py-3.5 text-left transition ${
+                    chonKm ? "border-cvr-ink bg-cvr-ink/[0.06] ring-2 ring-cvr-ink" : duocChonKm ? "border-cvr-line bg-white hover:border-cvr-ink" : "cursor-not-allowed border-cvr-line bg-cvr-surface opacity-60"
+                  }`}
+                >
+                  <span className="min-w-0">
+                    <span className="block text-[15px] font-semibold text-cvr-ink">{getTier(goiMp).name} · {ngayMp} ngày</span>
+                    <span className="mt-0.5 block text-[13px] leading-snug text-cvr-muted">{freeNote(billing.free, tenGoiMienPhi(billing))}</span>
+                  </span>
+                  <span className="shrink-0 text-right">
+                    <span className="block font-semibold tabular-nums text-cvr-ink">0 ₫</span>
+                    {duocChonKm && (
+                      <span className={`mt-1.5 inline-flex h-7 items-center rounded-md px-3 text-[12px] font-semibold ${chonKm ? "border border-cvr-ink bg-white text-cvr-ink" : "bg-cvr-blue text-white"}`}>
+                        {chonKm ? "Đã chọn" : "Chọn"}
+                      </span>
+                    )}
+                  </span>
+                </button>
+              </div>
+            )}
+
+            {/* CHƯƠNG TRÌNH KHÁC — giảm giá admin đã duyệt, tự trừ vào gói đúng đối tượng khi tính tiền. */}
+            {ctKhac.length > 0 && (
+              <div className="mt-5">
+                <p className="mb-2 text-sm font-semibold text-cvr-ink">Chương trình khác</p>
+                <div className="space-y-2">
+                  {ctKhac.map((p) => (
+                    <div key={p.id} className={`flex items-center justify-between gap-3 rounded-2xl border border-cvr-line px-4 py-3.5 ${hopCtKhac(p) ? "bg-white" : "bg-cvr-surface opacity-60"}`}>
+                      <span className="min-w-0">
+                        <span className="block text-[15px] font-semibold text-cvr-ink">{p.name}</span>
+                        <span className="mt-0.5 block text-[13px] text-cvr-muted">
+                          {p.tiers.length ? p.tiers.map((t) => getTier(t).name).join(" · ") : "Mọi gói tin"}
+                          {p.to ? ` · đến ${ngayVn(p.to)}` : ""}
+                        </span>
+                      </span>
+                      <span className="shrink-0 rounded-full border border-red-300 px-2 py-0.5 text-[13px] font-semibold text-red-700">−{p.percent}%</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* THANH TOÁN — đủ từng khoản như Batdongsan; các dòng cộng lại đúng bằng tổng */}
             {planTier && (
@@ -1524,11 +1577,6 @@ export default function PostListingForm() {
               </div>
             )}
 
-            {freeDangChay(billing.free, new Date().toISOString().slice(0, 10)) && !hoSoVi && (
-              <p className="mt-3 rounded-xl border border-cvr-blue/25 bg-cvr-blue/[0.06] px-3.5 py-2.5 text-xs text-cvr-blue-ink">
-                {freeNote(billing.free, tenGoiMienPhi(billing))} Đăng nhập để hệ thống áp ưu đãi cho bạn.
-              </p>
-            )}
           </>
         )}
       </Card>

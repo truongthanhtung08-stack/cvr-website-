@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { ghepBillingLuu, bangTheoMucDich, huongKhuyenMai, lucGuiTin, type BillingData } from "@/lib/billing";
+import { ghepBillingLuu, bangTheoMucDich, huongKhuyenMai, chonKhuyenMai, lucGuiTin, type BillingData } from "@/lib/billing";
 import type { TierId } from "@/lib/packages";
 
 // ============================================================================
@@ -84,7 +84,7 @@ export async function kiemTin(admin: SupabaseClient): Promise<KetQuaKiemTin> {
     // gia hạn tay 25/09 lọt qua vì trước chỉ soát tin lên sóng từ 01/10).
     if (t.tier_expires_at && t.published_at) {
       const soNgay = Math.round((new Date(t.tier_expires_at).getTime() - new Date(t.published_at).getTime()) / NGAY_MS);
-      const huong = huongKhuyenMai(bang.free, {
+      const huong = chonKhuyenMai(t.details) && huongKhuyenMai(bang.free, {
         goi: t.tier,
         homNay: ngayVn(new Date(lucGuiTin(t)).toISOString()),
         coChu: !!t.owner_id,
