@@ -687,7 +687,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                         Hợp đồng mua bán…); không nhập thì mới ghi "Liên hệ để biết chi tiết".
                         KHÔNG lặp lại "Hướng" ở đây — hướng đã nằm trong bảng đặc điểm
                         phía trên, để hai chỗ dễ lệch nhau và gây hiểu nhầm. */}
-                    <li className="flex gap-2"><span className="text-cvr-gold-ink">✓</span> Pháp lý: {d.legal ?? "Liên hệ để biết chi tiết"}</li>
+                    <li className="flex gap-2"><span className="text-cvr-gold-ink">✓</span> <span className="min-w-0 whitespace-pre-line break-words">Pháp lý: {d.legal ?? "Liên hệ để biết chi tiết"}</span></li>
                     <li className="flex gap-2"><span className="text-cvr-gold-ink">✓</span> Tin đã qua kiểm duyệt; Coastal Land nỗ lực xác thực thông tin trước khi đăng</li>
                     <li className="flex gap-2"><span className="text-cvr-gold-ink">✓</span> Thủ tục công chứng, sang tên do môi giới và hai bên thực hiện</li>
                   </ul>
@@ -772,8 +772,9 @@ function MiniStat({ label, value }: { label: string; value: string }) {
     <div className="min-w-0">
       <p className="text-[12px] leading-tight text-cvr-muted">{label}</p>
       {/* break-words chứ KHÔNG truncate: giá trị dài phải xuống dòng, không được
-          cắt cụt bằng dấu "…" — người xem cần đọc đủ số liệu. */}
-      <p className="mt-1 break-words text-[15px] font-semibold leading-snug text-cvr-ink">{value}</p>
+          cắt cụt bằng dấu "…" — người xem cần đọc đủ số liệu. whitespace-pre-line: giữ đúng
+          chỗ xuống dòng khách tự ghi (ô "Khác — tự ghi", chủ dự án 15/10/2026). */}
+      <p className="mt-1 whitespace-pre-line break-words text-[15px] font-semibold leading-snug text-cvr-ink">{value}</p>
     </div>
   );
 }

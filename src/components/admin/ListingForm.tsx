@@ -674,13 +674,8 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {specFields.map((f) => (
             <Field key={f.key} label={f.label + (f.unit ? ` (${f.unit})` : "")}>
-              {f.type === "select" && f.options === directions ? (
-                // Hướng: đủ 8 hướng — chỉ chọn.
-                <select value={specValues[f.key] ?? ""} onChange={(e) => setSpecValues((s) => ({ ...s, [f.key]: e.target.value }))} className={inputCls}>
-                  <option value="">Chọn</option>
-                  {f.options?.map((o) => <option key={o} value={o}>{o}</option>)}
-                </select>
-              ) : f.type === "select" ? (
+              {f.type === "select" ? (
+                // Mọi ô chọn (kể cả Hướng — 8 hướng) đều có dòng "Khác — tự ghi" (chủ dự án 15/10/2026).
                 <ChonHoacGhi value={specValues[f.key] ?? ""} onChange={(v) => setSpecValues((s) => ({ ...s, [f.key]: v }))} options={f.options ?? []} className={inputCls} />
               ) : (
                 <OGoTuGian value={specValues[f.key] ?? ""} onChange={(v) => setSpecValues((s) => ({ ...s, [f.key]: v }))} placeholder={f.placeholder ?? ""} className={inputCls} />
@@ -688,10 +683,7 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
             </Field>
           ))}
           <Field label="Hướng nhà / đất">
-            <select value={direction} onChange={(e) => setDirection(e.target.value)} className={inputCls}>
-              <option value="">Chọn</option>
-              {directions.map((o) => <option key={o} value={o}>{o}</option>)}
-            </select>
+            <ChonHoacGhi value={direction} onChange={setDirection} options={directions} className={inputCls} />
           </Field>
           <Field label="Tình trạng pháp lý">
             <ChonHoacGhi value={legal} onChange={setLegal} options={chonPhapLy} className={inputCls} />
