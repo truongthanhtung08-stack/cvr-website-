@@ -89,6 +89,15 @@ export default function MapPickerMo({
   });
 
   const daGhim = parseLatLng(value);
+  // Form xoá ghim (khách chọn lại Tỉnh/Phường = địa chỉ mới, 15/10/2026) → bỏ ghim cũ trên bản đồ.
+  useEffect(() => {
+    if (parseLatLng(value) || !ghimRef.current) return;
+    ghimRef.current.remove();
+    ghimRef.current = null;
+    mayDienRef.current = "";
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setKhoangCach(""); setMucDo(null); setDiaChiGhim(""); setSoNhaGhim("");
+  }, [value]);
 
   // ── Ghim xong → tra ngược ra địa chỉ, trả về form ────────────────────────
   async function traVeDiaChi(p: LatLng) {

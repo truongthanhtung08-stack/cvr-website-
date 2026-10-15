@@ -40,6 +40,7 @@ import type { ListingRow } from "@/lib/listingAdmin";
 import { chuanHoaSdt, tachNhieuSdt } from "@/lib/phone";
 import XacMinhSdt from "@/components/XacMinhSdt";
 import { uploadImageFile } from "@/lib/uploadImage";
+import { goiYDiaChi } from "@/lib/timToaDo";
 
 // Đơn vị giá "Khác — tự ghi" (chủ dự án 14/10/2026): khách ghi nguyên văn, lưu details.giaTuGhi.
 const KHAC_GIA = "Khác — tự ghi";
@@ -437,6 +438,17 @@ export default function PostListingForm() {
     setProvince(kq.province);
     setDistrict(kq.district);
     setWard(kq.ward);
+  }
+
+  // KHÁCH TỰ CHỌN LẠI Tỉnh / Quận / Phường = ĐỊA CHỈ MỚI (chủ dự án 15/10/2026): bỏ số nhà – tên
+  // đường cũ, bỏ ghim cũ, bỏ bản nhớ đổi hệ cũ — rồi đồng bộ hai hệ theo địa chỉ mới. (Chỉ ĐỔI HỆ
+  // qua lại thì giữ nguyên mọi thứ — xem doiHeGiuNguyen.) Bản đồ tự điền địa giới không đi qua đây.
+  function diaChiMoi() {
+    setAddressDetail("");
+    setMapPin("");
+    setPhuongCu("");
+    diaGioiTuBanDoRef.current = null;
+    nhoHai.current = null;
   }
 
   function nhanDiaGioiTuBanDo(dc: DiaGioiBanDo) {
@@ -1101,11 +1113,11 @@ export default function PostListingForm() {
             và bản đồ ngay bên dưới vẫn nằm chung một màn hình, khỏi kéo lên kéo xuống
             đối chiếu. */}
         <div className={`grid grid-cols-2 gap-3 sm:gap-4 ${coDanhMucQuan ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
-          <PickTim label="Tỉnh / Thành *" value={province} onChange={(v) => { setProvince(v); setDistrict(""); setWard(""); }} options={provinceOptions} placeholder="Chọn Tỉnh / Thành" timPlaceholder="Tìm Tỉnh / Thành" bietDanh={bietDanhTinh(geoMode, provinceOptions)} />
+          <PickTim label="Tỉnh / Thành *" value={province} onChange={(v) => { if (v !== province) diaChiMoi(); setProvince(v); setDistrict(""); setWard(""); }} options={provinceOptions} placeholder="Chọn Tỉnh / Thành" timPlaceholder="Tìm Tỉnh / Thành" bietDanh={bietDanhTinh(geoMode, provinceOptions)} />
           {coDanhMucQuan && (
-            <PickTim label="Quận / Huyện" value={district} onChange={(v) => { setDistrict(v); setWard(""); }} options={districts} placeholder="Chọn Quận / Huyện" timPlaceholder="Tìm Quận / Huyện" disabled={!province} />
+            <PickTim label="Quận / Huyện" value={district} onChange={(v) => { if (v !== district) diaChiMoi(); setDistrict(v); setWard(""); }} options={districts} placeholder="Chọn Quận / Huyện" timPlaceholder="Tìm Quận / Huyện" disabled={!province} />
           )}
-          <PickTim label="Phường / Xã" value={ward} onChange={(v) => { setWard(v); setPhuongCu(""); }} options={wards} placeholder="Chọn Phường / Xã" timPlaceholder="Tìm Phường / Xã" bietDanh={geoMode === "moi" ? bietDanhPhuongMoi(province, wards) : undefined} disabled={geoMode === "moi" ? !province : coDanhMucQuan ? !district : !province} />
+          <PickTim label="Phường / Xã" value={ward} onChange={(v) => { if (v !== ward) diaChiMoi(); setWard(v); setPhuongCu(""); }} options={wards} placeholder="Chọn Phường / Xã" timPlaceholder="Tìm Phường / Xã" bietDanh={geoMode === "moi" ? bietDanhPhuongMoi(province, wards) : undefined} disabled={geoMode === "moi" ? !province : coDanhMucQuan ? !district : !province} />
         </div>
         {/* Ô "Phường / Xã trước sáp nhập" ĐÃ BỎ theo yêu cầu chủ dự án 14/10/2026. */}
         {/* ĐỊA CHỈ HAI HỆ — nhập hệ nào cũng thấy ngay cách gọi của hệ kia.
@@ -1130,11 +1142,12 @@ export default function PostListingForm() {
         {/* THANH ĐỊA CHỈ LÀ Ô RIÊNG, NẰM NGOÀI BẢN ĐỒ — chủ dự án chốt.
             Gõ tới đâu bản đồ bên dưới tự thu lại và trôi tới đó; ghim trên bản đồ
             thì ô này tự điền ngược lại. ĐỪNG nhét ô này vào trong khung bản đồ. */}
-        <Text
+        <ODiaChiGoiY
           label="Địa chỉ cụ thể (số nhà, tên đường, số lô, block…)"
           value={addressDetail}
           onChange={setAddressDetail}
           placeholder="VD: 123 Võ Nguyên Giáp · Lô A12 khu B · Block 3 · hoặc chỉ tên đường"
+          khuVuc={(() => { const d = diemTimBanDo(geoMode, { tinh: province, quan: district, phuong: ward }); return { tinh: d.tinh, phuong: d.phuong }; })()}
         />
         <div className="mt-3">
           <MapPicker
@@ -1765,6 +1778,63 @@ function PickTim({ label, ...p }: { label: string; value: string; onChange: (v: 
     <div>
       <Label>{label}</Label>
       <ChonCoTim {...p} className={inputCls} />
+    </div>
+  );
+}
+
+// Ô "Địa chỉ cụ thể" CÓ GỢI Ý TÊN ĐƯỜNG (chủ dự án 15/10/2026): gõ từ 3 chữ là gợi ý đường / địa
+// điểm trong ĐÚNG phường – tỉnh đã chọn (kết quả tỉnh khác bị loại). Bấm gợi ý là điền vào ô; khách
+// vẫn gõ tự do được (thêm số nhà, số lô…). Gợi ý chỉ hiện khi khách đang gõ.
+function ODiaChiGoiY({ label, value, onChange, placeholder, khuVuc }: { label: string; value: string; onChange: (v: string) => void; placeholder: string; khuVuc: { tinh: string; phuong: string } }) {
+  const [ds, setDs] = useState<{ ten: string; phu: string }[]>([]);
+  const [dangGo, setDangGo] = useState(false);
+  const khoaKv = `${khuVuc.phuong}|${khuVuc.tinh}`;
+  useEffect(() => {
+    const q = value.trim();
+    if (!dangGo || q.length < 3 || !khuVuc.tinh) { setDs([]); return; }
+    let huy = false;
+    const t = setTimeout(async () => {
+      const kq = await goiYDiaChi(q, [khuVuc.phuong, khuVuc.tinh].filter(Boolean).join(", "));
+      if (huy) return;
+      const tinh = normalizeVi(khuVuc.tinh.replace(/^(Thành phố|Tỉnh)s+/i, ""));
+      const daCo = new Set<string>();
+      setDs(kq.filter((x) => normalizeVi(x.phu).includes(tinh)).filter((x) => {
+        const k = normalizeVi(x.ten);
+        if (!x.ten || daCo.has(k)) return false;
+        daCo.add(k);
+        return true;
+      }).slice(0, 5));
+    }, 450);
+    return () => { huy = true; clearTimeout(t); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value, dangGo, khoaKv]);
+  return (
+    <div className="relative">
+      <Label>{label}</Label>
+      <input
+        value={value}
+        onChange={(e) => { setDangGo(true); onChange(e.target.value); }}
+        onBlur={() => setTimeout(() => setDangGo(false), 200)}
+        placeholder={placeholder}
+        autoComplete="off"
+        className={inputCls}
+      />
+      {dangGo && ds.length > 0 && (
+        <div className="absolute inset-x-0 top-full z-30 mt-1 overflow-hidden rounded-lg border border-cvr-line bg-white shadow-lux">
+          {ds.map((x) => (
+            <button
+              key={x.ten + x.phu}
+              type="button"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => { onChange(x.ten); setDangGo(false); setDs([]); }}
+              className="block w-full border-b border-cvr-line px-3 py-2.5 text-left last:border-0 hover:bg-cvr-surface"
+            >
+              <span className="block text-sm font-medium text-cvr-ink">{x.ten}</span>
+              {x.phu && <span className="block text-xs text-cvr-muted">{x.phu}</span>}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
