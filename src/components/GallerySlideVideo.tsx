@@ -175,9 +175,13 @@ export default function GallerySlideVideo({
   // dừng ngay — YouTube thì gỡ hẳn khung phát (chắc chắn tắt tiếng), video tải lên thì pause.
   const maPhat = useId();
   const baoDangPhat = () => window.dispatchEvent(new CustomEvent("cl-video-phat", { detail: maPhat }));
+  // Đã bị dừng vì video khác phát → KHÔNG tự phát lại (app Zalo có chế độ tự phát riêng ở dưới;
+  // không chặn thì khung trang tin bị dừng xong lại tự chạy → hai tiếng chồng nhau).
+  const biDungRef = useRef(false);
   useEffect(() => {
     const nghe = (e: Event) => {
       if ((e as CustomEvent).detail === maPhat) return;
+      biDungRef.current = true;
       if (!embed) { ref.current?.pause(); return; }
       setDaBam(false);
       setDangChay(false);
@@ -197,6 +201,7 @@ export default function GallerySlideVideo({
     // Khung đang bị ẨN (bản máy tính trên điện thoại…) KHÔNG được tự phát — trước đây cả hai
     // khung cùng tự phát trong app Zalo nên nghe hai tiếng chồng nhau.
     if (!gocRef.current || gocRef.current.getClientRects().length === 0) return;
+    if (biDungRef.current) return;
     baoDangPhat();
     setDaBam(true);
     setNhuongYt(true);
@@ -397,6 +402,7 @@ export default function GallerySlideVideo({
           <button
             type="button"
             onClick={() => {
+              biDungRef.current = false;
               baoDangPhat();
               setDaBam(true);
               // Bấm là phát (autoplay=1) — coi như đang chạy ngay, YouTube báo về thì chỉnh lại.

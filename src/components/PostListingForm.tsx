@@ -54,7 +54,7 @@ const KHAC_GIA = "Khác — tự ghi";
 // FORM TỪNG MỤC (chủ dự án 15/10/2026: "trang đăng tin hiện rất nhiều mục — hiện từng mục, bấm
 // xem tiếp"): chỉ MỘT mục mở; cuối mục có nút "Tiếp tục" mở mục sau. Bấm tiêu đề / thanh bước để
 // mở mục bất kỳ. Mục thu gọn chỉ ẨN (vẫn giữ nguyên dữ liệu, ảnh đang tải, bản đồ).
-const MucMoCtx = createContext<{ mo: string; moMuc: (step: string) => void } | null>(null);
+const MucMoCtx = createContext<{ mo: string; moMuc: (step: string) => void; loi?: { buoc: string; msg: string } } | null>(null);
 
 const DU_AN_KHAC = "__khac";
 // Khoá trình duyệt giữ bản nháp tự lưu của form đăng tin mới — RIÊNG TỪNG TÀI KHOẢN
@@ -707,38 +707,52 @@ export default function PostListingForm() {
       dangBamLuu.current = false;
     }
   }
+  // Báo lỗi + MỞ ĐÚNG BƯỚC có ô còn thiếu (chủ dự án 15/10/2026) — khách không phải tự đi tìm.
+  const [loiBuoc, setLoiBuoc] = useState("");
+  function baoLoi(msg: string, buoc: string) {
+    setError(msg);
+    setLoiBuoc(buoc);
+    moMuc(buoc);
+  }
+
   async function luuThat(asDraft: boolean, daXacMinhXong: boolean) {
     setError("");
+    setLoiBuoc("");
     const uid = uidGop.current ?? userId;
     if (!uid) {
       router.push("/dang-nhap?next=/dang-tin");
       return;
     }
-    if (!title.trim()) return setError(asDraft ? "Nhập tiêu đề để lưu nháp." : "Chưa nhập tiêu đề tin.");
-    if (asDraft && !province) return setError("Chọn Tỉnh/Thành để lưu nháp.");
-    if (!asDraft) {
-      if (!province) return setError("Chưa chọn Tỉnh/Thành.");
-      if (!contactName.trim() || !contactPhone.trim()) return setError("Nhập họ tên và số điện thoại liên hệ.");
-      // Số điện thoại là BẮT BUỘC ở mọi tin (chủ dự án chốt 27/09/2026) — phải là số gọi được, không chỉ "có chữ".
-      if (!tachNhieuSdt(contactPhone).length) return setError("Số điện thoại liên hệ chưa đúng (VD: 0905123456).");
-      // GIÁ BẮT BUỘC (chủ dự án 14/10/2026): nhập số, chọn "Thoả thuận", hoặc tự ghi.
-      if (donVi === KHAC_GIA ? !giaTuGhi.trim() : donVi !== "Thoả thuận" && !priceValue.trim()) return setError("Chưa nhập giá.");
-      if (!area.trim()) return setError("Chưa nhập diện tích.");
-      // THÔNG TIN CHÍNH THEO LOẠI HÌNH — thiếu mục nào báo đúng tên mục đó,
-      // không báo chung chung để người đăng khỏi phải dò cả trang.
-      if (!loaiHinh) return setError("Chưa chọn loại hình bất động sản.");
+    // KIỂM THEO ĐÚNG THỨ TỰ 7 BƯỚC (15/10/2026): thiếu nhiều ô thì báo ô ở bước SỚM NHẤT trước.
+    if (asDraft) {
+      // Lưu nháp: CSDL bắt buộc hai cột Tỉnh/Thành + Tiêu đề — còn lại ghi tới đâu lưu tới đó.
+      if (!province) return baoLoi("Chọn Tỉnh/Thành để lưu nháp.", "1");
+      if (!title.trim()) return baoLoi("Nhập tiêu đề để lưu nháp.", "4");
+    } else {
+      // Bước 1 — Loại tin & vị trí
+      if (!loaiHinh) return baoLoi("Chưa chọn loại hình bất động sản.", "1");
+      if (!province) return baoLoi("Chưa chọn Tỉnh/Thành.", "1");
+      // Bước 2 — Thông tin chính. GIÁ BẮT BUỘC (14/10/2026): nhập số, chọn "Thoả thuận", hoặc tự ghi.
+      if (donVi === KHAC_GIA ? !giaTuGhi.trim() : donVi !== "Thoả thuận" && !priceValue.trim()) return baoLoi("Chưa nhập giá.", "2");
+      if (!area.trim()) return baoLoi("Chưa nhập diện tích.", "2");
+      // Thông tin chính theo loại hình — thiếu mục nào báo đúng tên mục đó.
       const thieu = thieuMucBatBuoc(loaiHinh, purposeOfDemand(demand), specValues);
-      if (thieu.length) return setError(`Chưa nhập: ${thieu.join(" · ")}.`);
-      // GÓI TIN: bắt buộc chọn, kể cả gói đang được miễn phí. Không mặc định sẵn,
+      if (thieu.length) return baoLoi(`Chưa nhập: ${thieu.join(" · ")}.`, "2");
+      // Bước 4 — Tiêu đề
+      if (!title.trim()) return baoLoi("Chưa nhập tiêu đề tin.", "4");
+      // Bước 5 — GÓI TIN: bắt buộc chọn, kể cả gói đang được miễn phí. Không mặc định sẵn,
       // không tự đoán hộ — đây là thứ quyết định số tiền phải trả.
-      if (!planTier) return setError("Chưa chọn gói tin ở mục “Chọn gói tin — thanh toán”.");
-      // Đổi sang gói thấp hơn sau khi đã up ảnh → số ảnh / video không được vượt mức của gói đã chọn.
+      if (!planTier) return baoLoi("Chưa chọn gói tin.", "5");
+      // Bước 6 — đổi sang gói thấp hơn sau khi đã up ảnh → số ảnh / video không được vượt mức của gói.
       const toiDaAnh = duocMienPhi && billing.free.soAnh ? billing.free.soAnh : soAnhToiDa(billing, planTier as TierId);
       const toiDaVideo = duocMienPhi && billing.free.soVideo !== undefined ? billing.free.soVideo : soVideoToiDa(billing, planTier as TierId);
       const soVideo = images.filter((x) => isVideoUrl(x)).length;
       const soAnh = images.length - soVideo;
-      if (soAnh > toiDaAnh) return setError(`Tin ${getTier(planTier as TierId).name} chỉ đăng tối đa ${toiDaAnh} ảnh — xoá bớt ảnh cũ hoặc nâng cấp gói tin.`);
-      if (soVideo > toiDaVideo) return setError(`Mỗi tin chỉ đăng tối đa ${toiDaVideo} video — xoá video cũ rồi thêm lại.`);
+      if (soAnh > toiDaAnh) return baoLoi(`Tin ${getTier(planTier as TierId).name} chỉ đăng tối đa ${toiDaAnh} ảnh — xoá bớt ảnh cũ hoặc nâng cấp gói tin.`, "6");
+      if (soVideo > toiDaVideo) return baoLoi(`Mỗi tin chỉ đăng tối đa ${toiDaVideo} video — xoá video cũ rồi thêm lại.`, "6");
+      // Bước 7 — Liên hệ. Số điện thoại BẮT BUỘC ở mọi tin (27/09/2026) — phải là số gọi được.
+      if (!contactName.trim() || !contactPhone.trim()) return baoLoi("Nhập họ tên và số điện thoại liên hệ.", "7");
+      if (!tachNhieuSdt(contactPhone).length) return baoLoi("Số điện thoại liên hệ chưa đúng (VD: 0905123456).", "7");
     }
     // LƯU NHÁP thì không chặn gì thêm — người đăng ghi tới đâu lưu tới đó.
 
@@ -977,7 +991,7 @@ export default function PostListingForm() {
       }}
       onSubmit={(e) => { e.preventDefault(); save(false); }}
       className="space-y-6">
-      <MucMoCtx.Provider value={{ mo: mucMo, moMuc }}>
+      <MucMoCtx.Provider value={{ mo: mucMo, moMuc, loi: error && loiBuoc ? { buoc: loiBuoc, msg: error } : undefined }}>
       <ThanhBuoc />
 
       {moXacMinh && (
@@ -1024,10 +1038,13 @@ export default function PostListingForm() {
         </div>
       )}
 
-      {/* 1. Loại tin & loại hình */}
-      <Card id="b-loai" step={buoc()} title="Loại tin đăng" khoa={editStatus === "approved"}>
+      {/* ── 7 BƯỚC THEO THỨ TỰ NGƯỜI ĐĂNG TRÊN ĐIỆN THOẠI (chủ dự án 15/10/2026): thanh bước = các mục,
+          số thứ tự khớp nhau. Gói chọn TRƯỚC ảnh (10/10/2026: số ảnh / video tối đa theo gói).
+          Ô bắt buộc có dấu *; thiếu thì báo lỗi và tự mở đúng bước có ô đó (baoLoi). ── */}
+      {/* 1. Loại tin & vị trí */}
+      <Card id="b-loai" step={buoc()} title="Loại tin & vị trí" khoa={editStatus === "approved"}>
         <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
-          <Pick label="Nhu cầu" value={demand} onChange={setDemand} options={demandTypes} />
+          <Pick label="Nhu cầu *" value={demand} onChange={setDemand} options={demandTypes} />
           {/* Loại hình theo NHÓM cho dễ tìm — cùng danh mục với bộ lọc của web */}
           <div>
             <Label>Loại hình bất động sản *</Label>
@@ -1045,10 +1062,7 @@ export default function PostListingForm() {
             </select>
           </div>
         </div>
-      </Card>
-
-      {/* 2. Địa chỉ */}
-      <Card id="b-vitri" step={buoc()} title="Địa chỉ bất động sản" khoa={editStatus === "approved"}>
+        <h3 className="border-t border-cvr-line pt-4 text-[15px] font-semibold tracking-tight text-cvr-ink">Địa chỉ bất động sản</h3>
         {/* Chọn hệ đơn vị hành chính: MỚI (sau sáp nhập) hay CŨ */}
         {/* HAI NÚT CHIA ĐÔI HÀNG, CHỮ KHÔNG GÃY DÒNG. Nhãn cũ dài gần 30 ký tự nên
             trên điện thoại 375px hộp bị bóp, chữ rớt xuống hai dòng và nút bên cạnh
@@ -1094,7 +1108,7 @@ export default function PostListingForm() {
             và bản đồ ngay bên dưới vẫn nằm chung một màn hình, khỏi kéo lên kéo xuống
             đối chiếu. */}
         <div className={`grid grid-cols-2 gap-3 sm:gap-4 ${coDanhMucQuan ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
-          <PickTim label="Tỉnh / Thành" value={province} onChange={(v) => { setProvince(v); setDistrict(""); setWard(""); }} options={provinceOptions} placeholder="Chọn Tỉnh / Thành" timPlaceholder="Tìm Tỉnh / Thành" bietDanh={bietDanhTinh(geoMode, provinceOptions)} />
+          <PickTim label="Tỉnh / Thành *" value={province} onChange={(v) => { setProvince(v); setDistrict(""); setWard(""); }} options={provinceOptions} placeholder="Chọn Tỉnh / Thành" timPlaceholder="Tìm Tỉnh / Thành" bietDanh={bietDanhTinh(geoMode, provinceOptions)} />
           {coDanhMucQuan && (
             <PickTim label="Quận / Huyện" value={district} onChange={(v) => { setDistrict(v); setWard(""); }} options={districts} placeholder="Chọn Quận / Huyện" timPlaceholder="Tìm Quận / Huyện" disabled={!province} />
           )}
@@ -1139,16 +1153,45 @@ export default function PostListingForm() {
             tim={diemTimBanDo(geoMode, { tinh: province, quan: district, phuong: ward }, addressDetail)}
           />
         </div>
+        <h3 className="border-t border-cvr-line pt-4 text-[15px] font-semibold tracking-tight text-cvr-ink">Thuộc dự án</h3>
+        <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <Label>Tên dự án</Label>
+            {/* MỘT Ô "TÊN DỰ ÁN" KIỂU BATDONGSAN / HOMEDY (chủ dự án 15/10/2026): bấm vào là gõ ngay,
+                danh sách dự án có sẵn hiện để chọn; dự án không có thì giữ đúng tên khách gõ.
+                · Chọn dự án có sẵn → tin NỐI vào trang dự án (mã dự án — bộ lọc Dự án, trang dự án,
+                  "Tin liên quan tại dự án", liên kết nội bộ cho SEO đều chạy theo mã này).
+                · Gõ tên TRÙNG dự án có sẵn (khác hoa/thường, dấu) → cũng nối luôn.
+                · Tên chưa có trang dự án → lưu nguyên tên (details.projectName); sau này tạo trang dự
+                  án đúng tên đó là tin tự về trang dự án.
+                · LUÔN hiện đúng tên dự án tin đang gắn, kể cả dự án chưa có trang trên web. */}
+            <ChonCoTim
+              value={projectSlug && projectSlug !== DU_AN_KHAC
+                ? projectOptions.find((o) => o.slug === projectSlug)?.name ?? (projectName || projectSlug)
+                : projectName}
+              onChange={(v) => {
+                if (!v) { setProjectSlug(""); setProjectName(""); return; }
+                const o = projectOptions.find((x) => x.name === v);
+                if (o) { setProjectSlug(o.slug); setProjectName(o.name); }
+              }}
+              options={projectOptions.map((o) => o.name)}
+              tuGhi={(ten) => {
+                const o = projectOptions.find((x) => normalizeVi(x.name) === normalizeVi(ten));
+                if (o) { setProjectSlug(o.slug); setProjectName(o.name); }
+                else { setProjectSlug(DU_AN_KHAC); setProjectName(ten); }
+              }}
+              timNgay
+              xoaDuoc
+              placeholder="Nhập tên dự án"
+              timPlaceholder="Nhập tên dự án"
+              className={inputCls}
+            />
+          </div>
+        </div>
       </Card>
 
-      {/* 3. Thông tin chính */}
+      {/* 2. Thông tin chính */}
       <Card id="b-thongtin" step={buoc()} title="Thông tin chính">
-        {/* TIÊU ĐỀ — ô tự giãn cao để LUÔN THẤY TRỌN CÂU. Ô một dòng làm phần
-            đầu tiêu đề trôi mất khỏi khung, người đăng không soát lại được. */}
-        <div>
-          <Label>Tiêu đề tin đăng *</Label>
-          <OTieuDe value={title} onChange={setTitle} placeholder={goiYTieuDe(loaiHinh, laThue)} className={inputCls} required />
-        </div>
         <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-3">
           <div className="sm:col-span-2">
             <Label>{laThue ? "Giá thuê *" : "Giá bán *"}</Label>
@@ -1249,8 +1292,9 @@ export default function PostListingForm() {
         )}
       </Card>
 
-      {/* 4. Đặc điểm theo loại hình (động) */}
-      <Card step={buoc()} title={`Đặc điểm — ${spec.label}`}>
+      {/* 3. Đặc điểm & tiện ích (không bắt buộc) */}
+      <Card id="b-dacdiem" step={buoc()} title="Đặc điểm & tiện ích">
+        <h3 className="text-[15px] font-semibold tracking-tight text-cvr-ink">{`Đặc điểm — ${spec.label}`}</h3>
         <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {specDacDiem.map(oNhapSpec)}
           {/* Trường DÙNG CHUNG mọi loại hình: Hướng · Nội thất · Pháp lý */}
@@ -1271,11 +1315,10 @@ export default function PostListingForm() {
             <ChonHoacGhi value={legal} onChange={setLegal} options={phapLyCho(loaiHinh)} className={inputCls} />
           </div>
         </div>
-      </Card>
-
-      {/* Nội thất — ĐẤT và KHO XƯỞNG không có nội thất nên ẩn hẳn cả khối */}
-      {coNoiThat(loaiHinh) && (
-        <Card step={buoc()} title="Nội thất (tick mục có sẵn)">
+        {/* Nội thất — ĐẤT và KHO XƯỞNG không có nội thất nên ẩn hẳn */}
+        {coNoiThat(loaiHinh) && (
+          <>
+        <h3 className="border-t border-cvr-line pt-4 text-[15px] font-semibold tracking-tight text-cvr-ink">  Nội thất</h3>
           <div className="flex flex-wrap gap-2">
             {interiorItems.map((it) => (
               <Chip key={it} active={interior.includes(it)} onClick={() => toggle(interior, setInterior, it)}>{it}</Chip>
@@ -1286,11 +1329,9 @@ export default function PostListingForm() {
             ))}
           </div>
           <ThemTuGhi onThem={(v) => setInterior((ds) => (ds.includes(v) ? ds : [...ds, v]))} className={inputCls} />
-        </Card>
-      )}
-
-      {/* 6. Tiện ích */}
-      <Card step={buoc()} title="Tiện ích (tick mục có sẵn)">
+          </>
+        )}
+        <h3 className="border-t border-cvr-line pt-4 text-[15px] font-semibold tracking-tight text-cvr-ink">Tiện ích</h3>
         <div className="space-y-4">
           {amenityGroups.map((g) => (
             <div key={g.group}>
@@ -1316,8 +1357,16 @@ export default function PostListingForm() {
         <ThemTuGhi onThem={(v) => setAmenities((ds) => (ds.includes(v) ? ds : [...ds, v]))} className={inputCls} />
       </Card>
 
-      {/* 7. Mô tả */}
-      <Card id="b-mota" step={buoc()} title="Mô tả chi tiết">
+      {/* 4. Tiêu đề & mô tả */}
+      <Card id="b-mota" step={buoc()} title="Tiêu đề & mô tả">
+        {/* TIÊU ĐỀ — ô tự giãn cao để LUÔN THẤY TRỌN CÂU. Ô một dòng làm phần
+            đầu tiêu đề trôi mất khỏi khung, người đăng không soát lại được. */}
+        <div>
+          <Label>Tiêu đề tin đăng *</Label>
+          <OTieuDe value={title} onChange={setTitle} placeholder={goiYTieuDe(loaiHinh, laThue)} className={inputCls} required />
+        </div>
+        <div>
+          <Label>Mô tả chi tiết</Label>
         {/* Cùng bộ công cụ với trang quản trị: in đậm · in nghiêng · canh
             trái/giữa/phải/đều · chèn ảnh, video giữa bài. */}
         <ContentEditor
@@ -1345,11 +1394,11 @@ export default function PostListingForm() {
             )}
           </div>
         )}
+        </div>
       </Card>
 
-
       {/* Chọn gói hiển thị — giá và khuyến mãi do quản trị đặt ở /admin/gia-khuyen-mai */}
-      <Card id="b-goi" step={buoc()} title="Chọn gói tin — thanh toán">
+      <Card id="b-goi" step={buoc()} title="Gói tin — thanh toán *">
         {goiDangDung ? (
           // TIN ĐÃ ĐĂNG đang sửa: gói cố định (chuẩn Batdongsan) — chỉ hiện gói đang dùng.
           <div className="rounded-2xl border border-cvr-line bg-cvr-surface px-5 py-4 text-sm text-cvr-body">
@@ -1461,7 +1510,7 @@ export default function PostListingForm() {
 
       {/* Hình ảnh — SAU khi chọn gói (chủ dự án 10/10/2026): số ảnh / video tối đa theo gói đã chọn.
           Tải từ máy / dán link, ảnh đầu là ảnh đại diện. */}
-      <Card id="b-anh" step={buoc()} title="Hình ảnh">
+      <Card id="b-anh" step={buoc()} title="Hình ảnh & video">
         <ImagePicker
           value={images}
           onChange={setImages}
@@ -1471,8 +1520,8 @@ export default function PostListingForm() {
         />
       </Card>
 
-      {/* Liên hệ */}
-      <Card id="b-lienhe" step={buoc()} title="Thông tin liên hệ">
+      {/* 7. Liên hệ */}
+      <Card id="b-lienhe" step={buoc()} title="Thông tin liên hệ" cuoi>
         {/* ẢNH ĐẠI DIỆN — ô chọn tệp nằm TRONG <label> và ẩn bằng sr-only.
             KHÔNG dùng display:none rồi gọi .click(): điện thoại đời cũ bỏ qua,
             khách bấm mãi không mở được thư viện ảnh. */}
@@ -1520,44 +1569,6 @@ export default function PostListingForm() {
           <div><Label>Họ và tên *</Label><input value={contactName} onChange={(e) => setContactName(e.target.value)} placeholder="Nguyễn Văn A" className={inputCls} /></div>
           <div><Label>Số điện thoại *</Label><input type="text" value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} placeholder="09xx xxx xxx" className={inputCls} /></div>
           <div><Label>Email</Label><input type="text" autoCapitalize="none" autoCorrect="off" spellCheck={false} value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} placeholder="email@example.com" className={inputCls} /></div>
-        </div>
-      </Card>
-
-      {/* 10. Thuộc dự án (không bắt buộc) */}
-      <Card step={buoc()} title="Thuộc dự án" khoa={editStatus === "approved"} cuoi>
-        <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
-          <div>
-            <Label>Tên dự án</Label>
-            {/* MỘT Ô "TÊN DỰ ÁN" KIỂU BATDONGSAN / HOMEDY (chủ dự án 15/10/2026): bấm vào là gõ ngay,
-                danh sách dự án có sẵn hiện để chọn; dự án không có thì giữ đúng tên khách gõ.
-                · Chọn dự án có sẵn → tin NỐI vào trang dự án (mã dự án — bộ lọc Dự án, trang dự án,
-                  "Tin liên quan tại dự án", liên kết nội bộ cho SEO đều chạy theo mã này).
-                · Gõ tên TRÙNG dự án có sẵn (khác hoa/thường, dấu) → cũng nối luôn.
-                · Tên chưa có trang dự án → lưu nguyên tên (details.projectName); sau này tạo trang dự
-                  án đúng tên đó là tin tự về trang dự án.
-                · LUÔN hiện đúng tên dự án tin đang gắn, kể cả dự án chưa có trang trên web. */}
-            <ChonCoTim
-              value={projectSlug && projectSlug !== DU_AN_KHAC
-                ? projectOptions.find((o) => o.slug === projectSlug)?.name ?? (projectName || projectSlug)
-                : projectName}
-              onChange={(v) => {
-                if (!v) { setProjectSlug(""); setProjectName(""); return; }
-                const o = projectOptions.find((x) => x.name === v);
-                if (o) { setProjectSlug(o.slug); setProjectName(o.name); }
-              }}
-              options={projectOptions.map((o) => o.name)}
-              tuGhi={(ten) => {
-                const o = projectOptions.find((x) => normalizeVi(x.name) === normalizeVi(ten));
-                if (o) { setProjectSlug(o.slug); setProjectName(o.name); }
-                else { setProjectSlug(DU_AN_KHAC); setProjectName(ten); }
-              }}
-              timNgay
-              xoaDuoc
-              placeholder="Nhập tên dự án"
-              timPlaceholder="Nhập tên dự án"
-              className={inputCls}
-            />
-          </div>
         </div>
       </Card>
       </MucMoCtx.Provider>
@@ -1609,10 +1620,10 @@ const inputCls = "h-11 w-full rounded-lg border border-transparent bg-cvr-surfac
 // nhảy thẳng tới phần cần sửa (chủ dự án chốt 11/9/2026).
 // ════════════════════════════════════════════════════════════════════════════
 const MOC_BUOC = [
-  { id: "b-loai", ten: "Loại tin" },
-  { id: "b-vitri", ten: "Vị trí" },
-  { id: "b-thongtin", ten: "Thông tin" },
-  { id: "b-mota", ten: "Mô tả" },
+  { id: "b-loai", ten: "Loại tin & vị trí" },
+  { id: "b-thongtin", ten: "Thông tin chính" },
+  { id: "b-dacdiem", ten: "Đặc điểm" },
+  { id: "b-mota", ten: "Tiêu đề & mô tả" },
   { id: "b-goi", ten: "Gói tin" },
   { id: "b-anh", ten: "Ảnh & video" },
   { id: "b-lienhe", ten: "Liên hệ" },
@@ -1736,6 +1747,10 @@ function Card({ id, step, title, children, khoa, cuoi }: { id?: string; step: st
       </h2>
       {/* Thu gọn = chỉ ẨN, không gỡ — dữ liệu, ảnh đang tải, bản đồ giữ nguyên. */}
       <div className={mo ? "" : "hidden"}>
+        {/* Ô bắt buộc còn thiếu ở bước này → báo NGAY ĐẦU BƯỚC, sát ô cần nhập. */}
+        {ctx?.loi?.buoc === step && (
+          <p className="mb-4 rounded-lg bg-red-50 px-4 py-2.5 text-sm font-medium text-red-700 ring-1 ring-inset ring-red-600/20">{ctx.loi.msg}</p>
+        )}
         {khoa ? (
           // TIN ĐANG HIỂN THỊ (chuẩn Batdongsan): không đổi loại tin, địa chỉ, dự án — đổi là
           // thành bất động sản khác, phải đăng tin mới.
