@@ -43,6 +43,7 @@ export default function ListingBrowser({
   nguon,
   choTai,
   initialFilters,
+  chiId,
   articles = [],
   relevance = false,
   nested = false,
@@ -81,6 +82,9 @@ export default function ListingBrowser({
   // Trang pSEO: bật sẵn bộ lọc theo đường dẫn (giá, phòng ngủ, pháp lý, hướng, phường…).
   // Địa chỉ có tham số lọc riêng thì tham số đó thắng.
   initialFilters?: Partial<Filters>;
+  // Khối "Tin tương tự" (trang tin): dữ liệu nạp từ `nguon`, chỉ giữ ĐÚNG các tin này theo ĐÚNG thứ tự
+  // liên quan máy chủ đã xếp — để HTML trang tin không phải chở dữ liệu đầy đủ của hàng trăm tin.
+  chiId?: string[];
 }) {
   const params = useSearchParams();
 
@@ -94,8 +98,14 @@ export default function ListingBrowser({
       .catch(() => { if (!huy) setNapDuoc({ tin: [], hetHan: [] }); });
     return () => { huy = true; };
   }, [nguon]);
-  const items = nguon ? napDuoc?.tin ?? [] : itemsTuMayChu ?? featuredListings;
-  const hetHanNguon = nguon ? napDuoc?.hetHan ?? [] : hetHanTuMayChu;
+  const items = useMemo(() => {
+    if (!nguon) return itemsTuMayChu ?? featuredListings;
+    const tin = napDuoc?.tin ?? [];
+    if (!chiId) return tin;
+    const theoId = new Map(tin.map((l) => [l.id, l]));
+    return chiId.map((id) => theoId.get(id)).filter((l): l is Listing => Boolean(l));
+  }, [nguon, napDuoc, chiId, itemsTuMayChu]);
+  const hetHanNguon = useMemo(() => (nguon ? napDuoc?.hetHan ?? [] : hetHanTuMayChu), [nguon, napDuoc, hetHanTuMayChu]);
 
   const [hetHanNap, setHetHanNap] = useState<Listing[]>([]);
   useEffect(() => {

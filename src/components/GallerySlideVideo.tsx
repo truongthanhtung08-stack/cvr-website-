@@ -390,7 +390,7 @@ export default function GallerySlideVideo({
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={posterSrc}
-            alt=""
+            alt="Video"
             onError={() => setPosterSrc(poster.thuong)}
             // YouTube không có ảnh HD vẫn trả về ảnh XÁM 120×90 (không báo lỗi) → lùi ảnh thường
             onLoad={(e) => { if (e.currentTarget.naturalWidth <= 120 && posterSrc !== poster.thuong) setPosterSrc(poster.thuong); }}

@@ -26,7 +26,11 @@ import ProjectNearby from "@/components/ProjectNearby";
 import ProjectNav from "@/components/ProjectNav";
 import { BreadcrumbJsonLd } from "@/components/Breadcrumb";
 import { provinceOf, districtOf, pickRelated } from "@/lib/data";
-import { getListing, getListings, getListingDetail, tinDaHetHan } from "@/lib/listingsDb";
+import { getListing, getListings, getListingsHetHan, getListingDetail, tinDaHetHan } from "@/lib/listingsDb";
+import { banGocCua, lienKetCho, tinDatChuan, tinhCuaTin } from "@/lib/pseo";
+import { rentCategories, saleCategories } from "@/lib/categories";
+import { khuVucList } from "@/lib/khuVuc";
+import LienKetPseo from "@/components/LienKetPseo";
 import { getProject, getProjects } from "@/lib/contentDb";
 import { normalizeVi } from "@/lib/filters";
 import { tierFromBadge, getTier } from "@/lib/packages";
@@ -171,12 +175,18 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   })();
   const desc = moTaGon;
   const tieuDe = tieuDeSeo(l.title, l.location, l.price);
+  // Tin đăng trùng một tin đăng trước → canonical về bản gốc (không tự lập chỉ mục bản trùng)
+  const [tinCon, tinHet] = await Promise.all([getListings().catch(() => []), getListingsHetHan().catch(() => [])]);
+  const banGoc = banGocCua(l, [...tinCon, ...tinHet]);
   // Tin hết hạn VẪN cho Google lập chỉ mục (chủ dự án 08/10/2026: web còn ít tin, tin hết
   // hạn vẫn hiện và cộng dồn mọi thứ từ Google). Liên hệ đã ẩn ở thân trang.
   return {
     title: tieuDe,
     description: desc,
-    alternates: { canonical: `/bat-dong-san/${id}` },
+    alternates: { canonical: `/bat-dong-san/${banGoc?.id ?? id}` },
+    // CHƯA ĐẠT CHUẨN THÌ KHÔNG CHO GOOGLE LẬP CHỈ MỤC (chủ dự án 15/10/2026: "không đủ chất lượng
+    // không hiển thị"): dưới 3 ảnh thật hoặc mô tả quá sơ sài. Khách vẫn xem tin bình thường.
+    ...(tinDatChuan(l) ? {} : { robots: { index: false, follow: true } }),
     openGraph: {
       title: tieuDe,
       description: desc,
@@ -314,6 +324,19 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
     samePurpose.length,
   );
 
+  // HTML NHẸ (SEO 15/10/2026): khối "tin tương tự" chỉ chở 8 tin bản nhẹ (bỏ mô tả + vùng tìm kiếm)
+  // cho slide + danh sách mã; "Xem thêm" tự nạp dữ liệu đầy đủ. Trước đây chở đủ hơn 120 tin → trang 526KB.
+  const relatedNhe = relatedFill.slice(0, 8).map(({ desc: _d, searchText: _s, ...the }) => the);
+  const relatedIds = relatedFill.map((x) => x.id);
+
+  const lienKetTin = (() => {
+    const muc = laTinThue(l.purpose) ? "thue" : "ban";
+    const tinh = khuVucList.find((k) => normalizeVi(k.name) === normalizeVi(tinhCuaTin(l)));
+    if (!tinh) return [];
+    const cat = (muc === "thue" ? rentCategories : saleCategories).find((c) => c.types.includes(l.type));
+    return lienKetCho({ muc, tinh, ...(cat ? { cat } : {}) }, all).filter((g) => g.tieuDe === "Tìm kiếm theo từ khoá");
+  })();
+
   // MENU DÍNH theo mục — cuộn tới đâu sáng mục đó (giống trang dự án).
   // Chỉ liệt kê mục THẬT SỰ có nội dung để không bấm vào chỗ trống.
   const nav = [
@@ -371,7 +394,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                 </a>
               </div>
               <ListingShowcase
-                items={relatedFill}
+                items={relatedNhe} idsDayDu={relatedIds}
                 sectionKey="bds-tuong-tu"
                 purpose={purpose === "thue" || purpose === "can-thue" ? "thue" : "ban"}
                 title="Bất động sản dành cho bạn"
@@ -716,7 +739,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
           {hetHan && (
             <div className="lg:hidden">
               <ListingShowcase
-                items={relatedFill}
+                items={relatedNhe} idsDayDu={relatedIds}
                 sectionKey="bds-danh-cho-ban-mb"
                 purpose={purpose === "thue" || purpose === "can-thue" ? "thue" : "ban"}
                 title="Bất động sản dành cho bạn"
@@ -728,7 +751,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
           )}
           {!hetHan && (
           <ListingShowcase
-            items={relatedFill}
+            items={relatedNhe} idsDayDu={relatedIds}
             sectionKey="bds-tuong-tu"
             purpose={purpose === "thue" || purpose === "can-thue" ? "thue" : "ban"}
             title="Bất động sản tương tự"
@@ -747,6 +770,9 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
           {hetHan ? <NutYeuCauLienHe /> : <ContactBarMobile listingId={l.id} phoneMask={phoneMask} avatar={contact.avatar} ten={contact.name} />}
         </div>
         )}
+        {/* LIÊN KẾT VỀ TRANG pSEO (15/10/2026): trang tin dẫn về các trang "loại hình × tỉnh",
+            phường, giá… đã đạt chuẩn — chữ trên link là đúng cụm từ khoá người tìm gõ. */}
+        <LienKetPseo nhom={lienKetTin} />
       </main>
       <Footer />
       {/* Chỗ trống cuối trang để thanh Gọi · Nhắn Zalo (dính đáy) không che dòng

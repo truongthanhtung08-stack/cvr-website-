@@ -19,6 +19,7 @@ export default function ListingShowcase({
   heading,
   title,
   relevance = false,
+  idsDayDu,
 }: {
   items: Listing[];
   emptyNote?: string;
@@ -32,6 +33,9 @@ export default function ListingShowcase({
   title?: string;
   // Nguồn tin đã sắp theo độ liên quan → danh sách xổ ra giữ đúng thứ tự đó.
   relevance?: boolean;
+  // Mã TẤT CẢ tin liên quan theo thứ tự (SEO 15/10/2026): có thì `items` chỉ cần 8 tin bản nhẹ cho
+  // slide; bấm "Xem thêm" danh sách tự nạp dữ liệu đầy đủ (/api/danh-sach) đúng các tin này.
+  idsDayDu?: string[];
 }) {
   const { expanded, hidden, toggle } = useHomeSection(sectionKey);
 
@@ -57,7 +61,7 @@ export default function ListingShowcase({
       <ListingBrowser
         heading={heading ?? (purpose === "thue" ? "Bất động sản cho thuê" : "Bất động sản mua bán")}
         purpose={purpose}
-        items={items}
+        {...(idsDayDu ? { nguon: purpose, chiId: idsDayDu } : { items })}
         relevance={relevance}
         nested
       />

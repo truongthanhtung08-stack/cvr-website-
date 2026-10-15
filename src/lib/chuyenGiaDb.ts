@@ -1,5 +1,5 @@
 import "server-only";
-import { chuanHoaSdt, tachNhieuSdt } from "@/lib/phone";
+import { chuanHoaSdt, tachNhieuSdt, maNguoiTuSdt } from "@/lib/phone";
 import { normalizeVi } from "@/lib/filters";
 import { asset } from "@/lib/asset";
 import type { Listing } from "@/lib/data";
@@ -43,7 +43,15 @@ export type ChuyenGia = {
   loaiHinh: string[];       // loại hình đăng nhiều nhất (tối đa 3)
   sdtChe: string[];         // số đã che — chỉ để hiển thị
   tinDaiDien: string;       // id một tin đã duyệt → dùng cho nút "Hiện số"
+  // Sàn / công ty (tên người đăng là tên doanh nghiệp) — tách khỏi chuyên gia cá nhân (15/10/2026)
+  laCongTy: boolean;
+  maNguoi: string;           // mã người đăng (băm SĐT) — khớp Listing.maNguoi để lấy đúng tin của người này
 };
+
+// Nhận biết tên doanh nghiệp từ tên người đăng. Hồ sơ sàn/công ty chưa có thông tin pháp nhân
+// (MST, địa chỉ, giới thiệu) → KHÔNG cho Google lập chỉ mục ("không đạt thì không index").
+export const laTenCongTy = (ten: string) =>
+  /(công ty|cty|sàn|tnhh|jsc|group|realty|bđs|bất động sản|land)/i.test(ten);
 
 type Row = {
   id: string;
@@ -77,7 +85,7 @@ function nhieuNhat(ds: string[], lay: number): string[] {
 export function gomChuyenGia(rows: Row[]): ChuyenGia[] {
   type Gom = {
     ten: string; anh?: string; tinIds: string[]; sdt: Set<string>;
-    tinh: string[]; loai: string[];
+    tinh: string[]; loai: string[]; cacTen: string[]; soChinh: string;
   };
   const theoNguoi = new Map<string, Gom>();
 
@@ -91,8 +99,13 @@ export function gomChuyenGia(rows: Row[]): ChuyenGia[] {
     if (so.length === 0) continue;
 
     // Khoá gom = TÊN chuẩn hoá. Cùng người dùng 2 số vẫn về một thẻ.
-    const khoa = normalizeVi(ten);
-    const g = theoNguoi.get(khoa) ?? { ten, tinIds: [], sdt: new Set<string>(), tinh: [], loai: [] };
+    // GOM THEO SỐ ĐIỆN THOẠI (15/10/2026): một số = một người. Trước đây gom theo TÊN nên cùng một
+    // người ghi "Lê Duy Tài" / "BĐS Lê Tài" / "Công ty BĐS Lê Tài" thành 3 hồ sơ (14 số như vậy).
+    // Số chính = số đầu của ô liên hệ (số hiển thị, cũng là số định danh tài khoản theo SĐT).
+    const soChinh = chuanHoaSdt(so[0]);
+    const khoa = soChinh || normalizeVi(ten);
+    const g = theoNguoi.get(khoa) ?? { ten, tinIds: [], sdt: new Set<string>(), tinh: [], loai: [], cacTen: [], soChinh };
+    g.cacTen.push(ten);
     g.tinIds.push(r.id);
     for (const s of so) g.sdt.add(chuanHoaSdt(s));
     if (r.province) g.tinh.push(r.province);
@@ -103,16 +116,19 @@ export function gomChuyenGia(rows: Row[]): ChuyenGia[] {
 
   return [...theoNguoi.values()]
     .map((g) => {
-      const soDau = [...g.sdt][0] ?? "";
+      const soDau = g.soChinh || ([...g.sdt][0] ?? "");
+      const ten = nhieuNhat(g.cacTen, 1)[0] ?? g.ten; // tên người này dùng nhiều nhất
       return {
-        slug: slugTu(g.ten, soDau),
-        ten: g.ten,
+        slug: slugTu(ten, soDau),
+        ten,
+        maNguoi: maNguoiTuSdt(soDau),
         ...(g.anh ? { anh: g.anh } : {}),
         soTin: g.tinIds.length,
         khuVuc: nhieuNhat(g.tinh, 3),
         loaiHinh: nhieuNhat(g.loai, 3),
         sdtChe: [...g.sdt].map(cheSdt).filter(Boolean),
         tinDaiDien: g.tinIds[0],
+        laCongTy: laTenCongTy(ten),
       };
     })
     .sort((a, b) => b.soTin - a.soTin || a.ten.localeCompare(b.ten, "vi"));
@@ -142,16 +158,25 @@ export async function getChuyenGia(): Promise<ChuyenGia[]> {
   }
 }
 
+// Tìm theo slug. Đường dẫn cũ (thời gom theo TÊN) → tìm theo 4 số cuối nếu chỉ khớp đúng một người;
+// trang hồ sơ khai canonical về slug mới.
+export function timChuyenGia(ds: ChuyenGia[], slug: string): ChuyenGia | undefined {
+  const dung = ds.find((x) => x.slug === slug);
+  if (dung) return dung;
+  const duoi = slug.match(/-(d{4})$/)?.[1];
+  const khop = duoi ? ds.filter((x) => x.slug.endsWith(`-${duoi}`)) : [];
+  return khop.length === 1 ? khop[0] : undefined;
+}
+
 // Một chuyên gia theo slug + toàn bộ tin của họ (cho trang hồ sơ).
 export async function getChuyenGiaTheoSlug(
   slug: string,
   tatCaTin: Listing[],
 ): Promise<{ cg: ChuyenGia; tin: Listing[] } | null> {
   const ds = await getChuyenGia();
-  const cg = ds.find((x) => x.slug === slug);
+  const cg = timChuyenGia(ds, slug);
   if (!cg) return null;
   // Tin của người này = tin có agentName trùng tên (rowToListing đã đưa tên
   // người đăng ra agentName, không kèm số điện thoại).
-  const ten = normalizeVi(cg.ten);
-  return { cg, tin: tatCaTin.filter((t) => normalizeVi(t.agentName ?? "") === ten) };
+  return { cg, tin: tatCaTin.filter((t) => t.maNguoi === cg.maNguoi) };
 }

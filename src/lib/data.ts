@@ -81,6 +81,8 @@ export type Listing = {
   duong?: string;
   phapLy?: string;
   noiThat?: string;
+  // Mã người đăng = băm một chiều từ SĐT (không lộ số) — để nhận ra MỘT người đăng cùng một BĐS nhiều tin.
+  maNguoi?: string;
   // Vị trí admin GHIM tay (toạ độ "16.06,108.22" hoặc link Google Maps).
   // Có thì bản đồ trỏ đúng điểm này; không có thì tự tìm theo địa chỉ.
   mapPin?: string;

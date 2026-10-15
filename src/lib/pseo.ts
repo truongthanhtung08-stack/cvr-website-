@@ -260,11 +260,41 @@ function cacDieuKienCuaTin(l: Listing): DieuKien[] {
   return ds;
 }
 
+// TIN ĐẠT CHUẨN mới được tính vào cổng index (chủ dự án 15/10/2026: "không đạt thì không index";
+// Google phạt nội dung rác, ảnh kém, trùng lặp): ≥ 3 ảnh thật + mô tả ≥ 100 ký tự. Tin chưa đạt vẫn
+// hiện bình thường trong danh sách cho khách — chỉ không làm căn cứ để mở trang cho Google.
+export const tinDatChuan = (l: Listing) => (l.imageCount ?? 0) >= 3 && (l.desc?.trim().length ?? 0) >= 100;
+
+// TIN TRÙNG (đo 15/10/2026: 6 cặp đăng lặp) — cùng mô tả hoặc cùng tiêu đề + giá với một tin đăng
+// TRƯỚC → trả về tin gốc. Bản sau trỏ canonical về bản gốc + không vào sitemap (MASTER mục 11);
+// gỡ hẳn bản trùng là việc của admin/Cowork.
+const chuanTrung = (s?: string) => normalizeVi(s ?? "").replace(/[^a-z0-9]+/g, " ").trim();
+export function banGocCua(l: Listing, tatCa: Listing[]): Listing | null {
+  // Tình trạng hết hạn lấy theo danh sách đầy đủ (getListing một tin không gắn cờ hetHan)
+  const hetHanL = (tatCa.find((x) => x.id === l.id) ?? l).hetHan;
+  const moTa = chuanTrung(l.desc).slice(0, 400);
+  const tieuDeGia = chuanTrung(l.title) + "|" + l.price;
+  const t = new Date(l.postedAt ?? 0).getTime();
+  for (const x of tatCa) {
+    if (x.id === l.id) continue;
+    const cungBds =
+      !!l.maNguoi && x.maNguoi === l.maNguoi && x.type === l.type && x.priceVnd === l.priceVnd &&
+      x.areaM2 === l.areaM2 && chuanTrung(phuongCuaTin(x)) === chuanTrung(phuongCuaTin(l));
+    const trung = (moTa.length >= 80 && chuanTrung(x.desc).slice(0, 400) === moTa) || chuanTrung(x.title) + "|" + x.price === tieuDeGia || cungBds;
+    if (!trung) continue;
+    // Bản gốc: tin CÒN HẠN thắng tin hết hạn; cùng tình trạng thì tin đăng trước
+    if (!!x.hetHan !== !!hetHanL) { if (!x.hetHan) return x; continue; }
+    const tx = new Date(x.postedAt ?? 0).getTime();
+    if (tx < t || (tx === t && x.id < l.id)) return x;
+  }
+  return null;
+}
+
 // tinConHan: chỉ tin còn hạn (getListings). Trả cả trang tỉnh gốc /mua-ban/<tỉnh> để làm mốc trang cha.
 export function tatCaTrang(tinConHan: Listing[]): Map<string, TrangPseo> {
   const m = new Map<string, TrangPseo>();
   for (const l of tinConHan) {
-    if (l.banSao) continue;
+    if (l.banSao || !tinDatChuan(l) || banGocCua(l, tinConHan)) continue;
     const t = new Date(l.bumpedAt ?? l.postedAt ?? 0).getTime() || 0;
     for (const dk of cacDieuKienCuaTin(l)) {
       const path = duongDan(dk);
@@ -301,6 +331,17 @@ export function tatCaTrang(tinConHan: Listing[]): Map<string, TrangPseo> {
       p.index = true;
       chon.push(p);
     }
+  }
+  // ⑤ TRÙNG GIỮA CÁC NHÁNH: hai danh mục bao nhau (vd "Đất" ⊃ "Đất nền dự án") cho ra cùng
+  // một danh sách ở cùng tỉnh → chỉ giữ một trang (trang có nhiều tin hơn; bằng nhau thì danh
+  // mục rộng hơn — "Bán đất…" là cụm nhiều người tìm hơn).
+  const daIndex = [...m.values()]
+    .filter((p) => p.index)
+    .sort((a, b) => b.n - a.n || (b.dk.cat?.types.length ?? 0) - (a.dk.cat?.types.length ?? 0));
+  const giu: TrangPseo[] = [];
+  for (const p of daIndex) {
+    if (giu.some((q) => q.dk.muc === p.dk.muc && q.dk.tinh.slug === p.dk.tinh.slug && giong(p.ids, q.ids))) p.index = false;
+    else giu.push(p);
   }
   return m;
 }

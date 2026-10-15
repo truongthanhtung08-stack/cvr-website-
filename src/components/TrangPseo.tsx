@@ -12,6 +12,7 @@ import { getListings, getListingsHetHan } from "@/lib/listingsDb";
 import { getArticles } from "@/lib/contentDb";
 import { boLocCua, duongDan, duongDanPhanCap, khop, lienKetCho, moTa, tatCaTrang, thangHienTai, tieuDe, type DieuKien } from "@/lib/pseo";
 import { preload } from "react-dom";
+import { tieuDeGoogle } from "@/lib/thang";
 
 // ============================================================================
 // TEMPLATE 1 — DYNAMIC LISTING (pSEO). Dùng chung cho mọi trục: loại × tỉnh, phường,
@@ -27,7 +28,7 @@ export async function metadataPseo(dk: DieuKien): Promise<Metadata> {
   const description = moTa(dk);
   const path = duongDan(dk);
   return {
-    title,
+    title: tieuDeGoogle(title),
     description,
     alternates: { canonical: path },
     openGraph: { title, description, url: path, type: "website" },

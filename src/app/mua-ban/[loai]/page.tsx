@@ -17,7 +17,7 @@ import { demTinTheoKhuVuc, khuVucTrongDiem, moTaKhuVuc, slugKhuVuc, tieuDeKhuVuc
 import { normalizeVi } from "@/lib/filters";
 import LienKetPseo from "@/components/LienKetPseo";
 import { lienKetCho, lienKetLoaiHinh } from "@/lib/pseo";
-import { thangHienTai } from "@/lib/thang";
+import { thangHienTai, tieuDeGoogle } from "@/lib/thang";
 
 // ============================================================================
 // /mua-ban/<slug> phục vụ HAI loại trang, phân biệt bằng chính slug:
@@ -51,7 +51,7 @@ export async function generateMetadata({ params }: { params: Promise<{ loai: str
   if (c) {
     const title = `${c.title} ${thangHienTai()}`;
     return {
-      title,
+      title: tieuDeGoogle(title),
       description: moTaDu(c.desc),
       alternates: { canonical: `/mua-ban/${c.slug}` },
       openGraph: { title, description: moTaDu(c.desc), url: `/mua-ban/${c.slug}`, type: "website" },

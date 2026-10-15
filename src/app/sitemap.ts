@@ -7,7 +7,7 @@ import { packages, utilityTools } from "@/lib/packages";
 import { khuVucList } from "@/lib/khuVuc";
 import { getBilling } from "@/lib/siteContent";
 import { freeDangChay } from "@/lib/billing";
-import { trangIndex } from "@/lib/pseo";
+import { banGocCua, tinDatChuan, trangIndex } from "@/lib/pseo";
 import { NGUONG_INDEX_CDT, nhomChuDauTu } from "@/lib/chuDauTu";
 
 // TỰ LÀM MỚI MỖI GIỜ. Trước đây để `force-static` (di sản thời GitHub Pages):
@@ -30,7 +30,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // KHÔNG đưa /so-sanh, /tin-luu, /tim-kiem vào sitemap: nội dung sinh theo
     // từng khách hoặc theo bộ lọc → Google coi là trang mỏng/trùng lặp.
     "/gioi-thieu", "/chuyen-gia", "/bao-gia-dang-tin", "/dang-tin",
-    "/chuyen-gia/da-nang", "/chuyen-gia/hue", "/chuyen-gia/cong-ty", "/chuyen-gia/dang-ky",
+    "/chuyen-gia/da-nang", "/chuyen-gia/hue", "/chuyen-gia/dang-ky",
     // Trang đích "đăng tin miễn phí" CHỈ có khi chương trình miễn phí đã duyệt đang chạy.
     ...(freeDangChay((await getBilling()).free, now.toISOString().slice(0, 10)) ? ["/dang-tin-mien-phi"] : []),
   ].map((p) => ({
@@ -141,14 +141,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       const d = new Date(l.bumpedAt ?? l.postedAt ?? "");
       return Number.isNaN(d.getTime()) ? now : d;
     };
-    for (const l of listings) {
+    // Chỉ tin ĐẠT CHUẨN (≥ 3 ảnh thật, mô tả ≥ 100 ký tự) — tin chưa đạt gắn noindex ở trang tin.
+    const tatCaTin = [...listings, ...tinHetHan];
+    for (const l of listings.filter((x) => tinDatChuan(x) && !banGocCua(x, tatCaTin))) {
       dynamic.push({
         url: `${SITE}/bat-dong-san/${l.id}`, lastModified: ngayTin(l), changeFrequency: "weekly", priority: 0.7,
         images: anhTuyetDoi(l.image),
       });
     }
     // TIN HẾT HẠN cũng khai (chủ dự án 08/10/2026): trang vẫn mở, vẫn lập chỉ mục.
-    for (const l of tinHetHan) {
+    for (const l of tinHetHan.filter((x) => tinDatChuan(x) && !banGocCua(x, tatCaTin))) {
       dynamic.push({
         url: `${SITE}/bat-dong-san/${l.id}`, lastModified: ngayTin(l), changeFrequency: "monthly", priority: 0.5,
         images: anhTuyetDoi(l.image),
@@ -162,7 +164,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // mỏng đã tự gắn noindex; khai chúng trong sitemap nữa là vừa mời Google vào
     // một trang mình bảo đừng lập chỉ mục, vừa tự báo cáo là site nhiều trang mỏng.
     for (const cg of chuyenGia) {
-      if (cg.soTin < NGUONG_INDEX_HO_SO) continue;
+      if (cg.soTin < NGUONG_INDEX_HO_SO || cg.laCongTy) continue;
       dynamic.push({
         url: `${SITE}/chuyen-gia/${cg.slug}`, changeFrequency: "weekly", priority: 0.6,
         images: anhTuyetDoi(cg.anh),

@@ -85,3 +85,11 @@ export function tachNhieuSdt(o: string): string[] {
   const gop = chiSo(o);
   return hopLe(gop) ? [gop] : [];
 }
+
+// MÃ NGƯỜI ĐĂNG — băm một chiều (djb2) từ SĐT đã chuẩn hoá. Dùng để nhận ra cùng một người đăng
+// (tin trùng, gom hồ sơ chuyên gia) mà không đưa số điện thoại ra trình duyệt.
+export function maNguoiTuSdt(so: string): string {
+  let h = 5381;
+  for (let i = 0; i < so.length; i++) h = ((h << 5) + h + so.charCodeAt(i)) | 0;
+  return (h >>> 0).toString(36);
+}

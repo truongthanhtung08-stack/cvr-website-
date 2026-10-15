@@ -1,3 +1,4 @@
+import { ZALO_OA_URL } from "@/lib/lienHe";
 // ── DỮ LIỆU CÓ CẤU TRÚC CẤP TOÀN SITE (JSON-LD) ────────────────────────────
 // Đặt ở layout gốc → có mặt trên mọi trang. Ba việc:
 //   1. Organization  → Google dựng "Bảng tri thức" bên phải khi tìm "Coastal Land"
@@ -34,6 +35,9 @@ const data = {
       // Đây là cách Google nối "website này" với "doanh nghiệp này" thành MỘT thực thể
       // → bảng thương hiệu bên phải kết quả tìm kiếm mới hiện đúng và mạnh.
       // Lệch một chữ (viết tắt tên đường, thiếu phường) là Google coi như 2 nơi khác nhau.
+      // Kênh chính thức của Coastal Land — giúp Google gom các kênh về MỘT thực thể (E-E-A-T, 15/10/2026).
+      // Facebook/YouTube chính thức: chủ dự án cung cấp đường dẫn thì thêm vào đây.
+      sameAs: [ZALO_OA_URL],
       telephone: "+84377985036",
       address: {
         "@type": "PostalAddress",

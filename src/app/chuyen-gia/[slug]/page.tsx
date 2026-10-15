@@ -5,7 +5,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import PropertyCard from "@/components/PropertyCard";
 import ChuyenGiaCard from "@/components/ChuyenGiaCard";
-import { getChuyenGia, getChuyenGiaTheoSlug, NGUONG_INDEX_HO_SO } from "@/lib/chuyenGiaDb";
+import { getChuyenGia, getChuyenGiaTheoSlug, NGUONG_INDEX_HO_SO, timChuyenGia } from "@/lib/chuyenGiaDb";
 import { getListings } from "@/lib/listingsDb";
 
 // ============================================================================
@@ -22,11 +22,11 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const ds = await getChuyenGia();
-  const cg = ds.find((x) => x.slug === slug);
+  const cg = timChuyenGia(ds, slug);
   if (!cg) return { title: "Không tìm thấy chuyên gia", robots: { index: false, follow: true } };
   const kv = cg.khuVuc.join(", ");
   return {
-    alternates: { canonical: `/chuyen-gia/${slug}` },
+    alternates: { canonical: `/chuyen-gia/${cg.slug}` },
     title: `${cg.ten} — ${cg.soTin} tin bất động sản${kv ? ` tại ${kv}` : ""}`,
     description: `Xem ${cg.soTin} tin bất động sản đang đăng của ${cg.ten}${kv ? ` tại ${kv}` : ""} trên Coastal Land. Liên hệ trực tiếp người đăng.`,
     // CHỐNG TRANG MỎNG — chủ dự án chốt 18/09/2026, ngưỡng 3 tin.
@@ -36,7 +36,8 @@ export async function generateMetadata({
     // bị chấm điểm thấp (đúng rủi ro mà sitemap.ts đã né cho trang khu vực).
     // Khách vẫn xem bình thường, môi giới vẫn có trang để gửi link. Đăng thêm tin
     // cho đủ ngưỡng là trang TỰ ĐỘNG được index lại, không ai phải bấm gì.
-    ...(cg.soTin < NGUONG_INDEX_HO_SO ? { robots: { index: false, follow: true } } : {}),
+    // Hồ sơ mỏng hoặc sàn/công ty chưa có thông tin pháp nhân → không index
+    ...(cg.soTin < NGUONG_INDEX_HO_SO || cg.laCongTy ? { robots: { index: false, follow: true } } : {}),
   };
 }
 

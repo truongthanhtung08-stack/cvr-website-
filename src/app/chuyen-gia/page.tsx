@@ -13,7 +13,8 @@ export const metadata: Metadata = {
 
 export default async function ChuyenGiaPage() {
   // Danh bạ dựng từ TIN THẬT — xem src/lib/chuyenGiaDb.ts
-  const ds = await getChuyenGia();
+  // Chỉ chuyên gia CÁ NHÂN — sàn/công ty ở /chuyen-gia/cong-ty (15/10/2026)
+  const ds = (await getChuyenGia()).filter((cg) => !cg.laCongTy);
   return (
     <>
       <Header />

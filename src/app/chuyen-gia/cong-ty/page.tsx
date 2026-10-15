@@ -3,14 +3,21 @@ import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { agencies } from "@/lib/experts";
+import ExpertsBrowser from "@/components/ExpertsBrowser";
+import { getChuyenGia } from "@/lib/chuyenGiaDb";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/chuyen-gia/cong-ty" },
   title: "Sàn giao dịch & công ty bất động sản",
   description: "Danh sách sàn giao dịch và công ty bất động sản đối tác của Coastal Land.",
+  // Chưa sàn/công ty nào có thông tin pháp nhân (MST, địa chỉ, giới thiệu) → chưa cho Google lập chỉ mục
+  // (chủ dự án 15/10/2026: "không đạt thì không index"). Có hồ sơ đầy đủ thì gỡ dòng này.
+  robots: { index: false, follow: true },
 };
 
-export default function CongTyPage() {
+export default async function CongTyPage() {
+  // Sàn / công ty lấy từ TIN THẬT (tên người đăng là tên doanh nghiệp) — src/lib/chuyenGiaDb.ts
+  const congTy = (await getChuyenGia()).filter((cg) => cg.laCongTy);
   return (
     <>
       <Header />
@@ -23,7 +30,9 @@ export default function CongTyPage() {
               chỗ này liệt kê 4 công ty bịa kèm số chuyên gia và năm thành lập tự
               nghĩ ra, trong đó có 2 "chi nhánh Coastal Land" không tồn tại.
               Lý do đầy đủ: src/lib/experts.ts */}
-          {agencies.length === 0 && (
+          {congTy.length > 0 && <ExpertsBrowser ds={congTy} />}
+
+          {agencies.length === 0 && congTy.length === 0 && (
             <div className="mt-6 rounded-none border border-cvr-line bg-cvr-surface px-6 py-12 text-center">
               <p className="text-[15px] font-semibold text-cvr-ink">
                 Sàn giao dịch, công ty bất động sản

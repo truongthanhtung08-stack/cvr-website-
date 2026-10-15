@@ -8,3 +8,8 @@ export function thangHienTai(d = new Date()): string {
 
 // Bỏ đuôi tháng khi cần ghép tiêu đề vào câu khác ("… theo khu vực")
 export const boDuoiThang = (s: string) => s.replace(/\s+tháng \d{1,2}\/\d{4}$/, "");
+
+// Tiêu đề Google: nếu cộng đuôi " | COASTAL LAND" (layout) mà vượt 65 ký tự thì bỏ đuôi thương hiệu,
+// giữ trọn cụm từ khoá — Google cắt tiêu đề dài, phần bị cắt là phần từ khoá ở cuối.
+export const tieuDeGoogle = (t: string): string | { absolute: string } =>
+  `${t} | COASTAL LAND`.length > 65 ? { absolute: t } : t;

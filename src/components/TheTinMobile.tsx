@@ -285,7 +285,7 @@ export default function TheTinMobile({ item, terms = [], tuChay = false }: { ite
   );
   const anhDaiDien = item.agentAvatar
     // eslint-disable-next-line @next/next/no-img-element
-    ? <img src={item.agentAvatar} alt="" className="h-10 w-10 shrink-0 rounded-full object-cover ring-1 ring-cvr-line" />
+    ? <img src={item.agentAvatar} alt={item.agentName ?? ""} className="h-10 w-10 shrink-0 rounded-full object-cover ring-1 ring-cvr-line" />
     : <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-cvr-surface text-[14px] font-semibold text-cvr-body ring-1 ring-cvr-line">{viTat(item.agentName)}</span>;
   const nguoiDang = (
     <div className="min-w-0 flex-1">
