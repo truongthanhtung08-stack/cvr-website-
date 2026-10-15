@@ -1,20 +1,25 @@
 import { Suspense } from "react";
+import { preload } from "react-dom";
 import type { Metadata } from "next";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { ListingListJsonLd } from "@/components/ListJsonLd";
 import ListingBrowser from "@/components/ListingBrowser";
-import { goiNheTin, goiNheHetHan, goiNheBaiViet } from "@/lib/goiNhe";
+import { goiNheBaiViet } from "@/lib/goiNhe";
 import KhungChoDanhMuc from "@/components/KhungChoDanhMuc";
 import KhuVucLinks from "@/components/KhuVucLinks";
-import { getListings, getListingsHetHan } from "@/lib/listingsDb";
+import { getListings } from "@/lib/listingsDb";
 import { getArticles } from "@/lib/contentDb";
+import { thangHienTai } from "@/lib/thang";
 
-export const metadata: Metadata = {
+// Tiêu đề kèm tháng (chủ dự án chốt 15/10/2026) → phải tính lúc dựng trang, không để hằng số.
+export async function generateMetadata(): Promise<Metadata> {
+  return {
   alternates: { canonical: "/mua-ban" },
-  title: "Mua bán nhà đất, bất động sản",
+    title: `Mua bán nhà đất ${thangHienTai()}`,
   description: "Tin mua bán nhà đất, căn hộ, đất nền, nhà phố, biệt thự, condotel — hình thật, liên hệ trực tiếp người đăng, lọc theo khu vực, loại hình, mức giá.",
-};
+  };
+}
 
 // ── ĐẾM TIN THEO TỈNH — cho khối "Nhà đất bán theo khu vực" cuối trang ──────
 // Tách ra hàm dùng chung vì cả trang này lẫn trang danh mục con đều cần.
@@ -29,12 +34,14 @@ function demTheoTinh(items: { location: string }[]): [string, number][] {
 }
 
 export default async function MuaBanPage() {
+  // Trình duyệt tải trước dữ liệu danh sách ngay khi đọc HTML (ListingBrowser nạp /api/danh-sach)
+  preload("/api/danh-sach/ban", { as: "fetch", crossOrigin: "anonymous" });
   // B2: tin từ Supabase (fallback dữ liệu mẫu) + bài viết cho cột phải
-  const [listings, articles, hetHan] = await Promise.all([getListings(), getArticles(), getListingsHetHan()]);
+  const [listings, articles] = await Promise.all([getListings(), getArticles()]);
   const tinBan = listings.filter((l) => (l.purpose ?? "ban") === "ban");
   return (
     <>
-      <ListingListJsonLd items={tinBan} heading="Mua bán nhà đất, bất động sản" path="/mua-ban" />
+      <ListingListJsonLd items={tinBan} heading={`Mua bán nhà đất ${thangHienTai()}`} path="/mua-ban" />
       <Header />
       <main className="flex-1 bg-white">
         {/* Khung chờ: CHỈ cao bằng thanh lọc thật (không pt-32 như trước — đó chính là
@@ -44,13 +51,13 @@ export default async function MuaBanPage() {
         <Suspense
           fallback={
             <KhungChoDanhMuc
-              heading="Mua bán nhà đất, bất động sản"
+              heading={`Mua bán nhà đất ${thangHienTai()}`}
               moTa="Tin bán nhà riêng, căn hộ chung cư, đất nền, nhà mặt phố và biệt thự. Lọc theo tỉnh, phường/xã, dự án, loại hình, khoảng giá và diện tích."
               items={tinBan}
             />
           }
         >
-          <ListingBrowser purpose="ban" heading="Nhà đất bán" items={goiNheTin(listings)} itemsHetHan={goiNheHetHan(hetHan, "ban")} articles={goiNheBaiViet(articles)} />
+          <ListingBrowser purpose="ban" heading={`Mua bán nhà đất ${thangHienTai()}`} nguon="ban" choTai={<KhungChoDanhMuc heading={`Mua bán nhà đất ${thangHienTai()}`} moTa="Tin bán nhà riêng, căn hộ chung cư, đất nền, nhà mặt phố và biệt thự. Lọc theo tỉnh, phường/xã, dự án, loại hình, khoảng giá và diện tích." items={tinBan} />} articles={goiNheBaiViet(articles)} />
         </Suspense>
         {/* ĐƯỜNG BÒ TỚI TRANG KHU VỰC — khối này trang danh mục con đã dùng từ lâu,
             chỉ trang gốc là chưa có. Đo ngày 18/09/2026: /mua-ban/da-nang và

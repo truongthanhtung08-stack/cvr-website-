@@ -7,6 +7,8 @@ import { packages, utilityTools } from "@/lib/packages";
 import { khuVucList } from "@/lib/khuVuc";
 import { getBilling } from "@/lib/siteContent";
 import { freeDangChay } from "@/lib/billing";
+import { trangIndex } from "@/lib/pseo";
+import { NGUONG_INDEX_CDT, nhomChuDauTu } from "@/lib/chuDauTu";
 
 // TỰ LÀM MỚI MỖI GIỜ. Trước đây để `force-static` (di sản thời GitHub Pages):
 // sitemap chỉ sinh 1 lần lúc build, nên MỌI tin/dự án/bài viết đăng sau lần
@@ -33,7 +35,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...(freeDangChay((await getBilling()).free, now.toISOString().slice(0, 10)) ? ["/dang-tin-mien-phi"] : []),
   ].map((p) => ({
     url: `${SITE}${p}`,
-    lastModified: now,
+    // Không ghi lastmod cho trang tĩnh/danh mục: MASTER 6.4 chỉ cho ghi ngày nội dung đổi thật.
     changeFrequency: "weekly" as const,
     priority: p === "" ? 1 : 0.8,
   }));
@@ -44,7 +46,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const infoRoutes: MetadataRoute.Sitemap = [
     "/lien-he", "/huong-dan", "/faq", "/quy-dinh", "/quy-che",
     "/dieu-khoan", "/bao-mat", "/tuyen-dung", "/gop-y",
-  ].map((p) => ({ url: `${SITE}${p}`, lastModified: now, changeFrequency: "monthly" as const, priority: 0.4 }));
+  ].map((p) => ({ url: `${SITE}${p}`, changeFrequency: "monthly" as const, priority: 0.4 }));
 
   // Trang DANH MỤC loại hình — nhóm từ khoá quan trọng nhất của sàn
   // ("bán căn hộ chung cư Đà Nẵng", "cho thuê văn phòng Huế"…)
@@ -52,12 +54,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...saleCategories.map((c) => `/mua-ban/${c.slug}`),
     ...rentCategories.map((c) => `/cho-thue/${c.slug}`),
     ...projectCategories.map((c) => `/du-an/${c.slug}`),
-  ].map((p) => ({ url: `${SITE}${p}`, lastModified: now, changeFrequency: "daily" as const, priority: 0.9 }));
+  ].map((p) => ({ url: `${SITE}${p}`, changeFrequency: "daily" as const, priority: 0.9 }));
 
   // Trang gói dịch vụ & công cụ tiện ích
   const toolRoutes: MetadataRoute.Sitemap = [...packages, ...utilityTools].map((t) => ({
     url: `${SITE}/tien-ich/${t.slug}`,
-    lastModified: now,
+   
     changeFrequency: "monthly" as const,
     priority: 0.5,
   }));
@@ -97,7 +99,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         if (!kv) continue;
         dynamic.push({
           url: `${SITE}${duong}/${kv.slug}`,
-          lastModified: now,
+         
           changeFrequency: "daily",
           // Trang khu vực đông tin đáng ưu tiên ngang trang danh mục loại hình
           priority: so >= 10 ? 0.9 : 0.7,
@@ -105,15 +107,31 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       }
     }
 
+    // ── TRANG pSEO (src/lib/pseo.ts) — CHỈ trang qua cổng chất lượng (≥ 3 tin còn hạn,
+    // không trùng trang cha). lastmod = lần đăng/đẩy tin mới nhất của chính trang đó.
+    for (const p of trangIndex(listings)) {
+      dynamic.push({
+        url: `${SITE}${p.path}`,
+        ...(p.moiNhat ? { lastModified: new Date(p.moiNhat) } : {}),
+        changeFrequency: "daily",
+        priority: 0.8,
+      });
+    }
+
+    // TRANG CHỦ ĐẦU TƯ — chỉ chủ đầu tư có ≥ 2 dự án đã đăng (src/lib/chuDauTu.ts)
+    for (const [cdt, g] of nhomChuDauTu(projects)) {
+      if (g.duAn.length >= NGUONG_INDEX_CDT) dynamic.push({ url: `${SITE}/chu-dau-tu/${cdt}`, changeFrequency: "weekly", priority: 0.6 });
+    }
+
     for (const p of projects) {
       dynamic.push({
-        url: `${SITE}/du-an/${p.slug}`, lastModified: now, changeFrequency: "weekly", priority: 0.7,
+        url: `${SITE}/du-an/${p.slug}`, changeFrequency: "weekly", priority: 0.7,
         images: (p.photos?.length ? p.photos.slice(0, 5) : [p.image]).flatMap(anhTuyetDoi),
       });
     }
     for (const a of articles) {
       dynamic.push({
-        url: `${SITE}/tin-tuc/${a.slug}`, lastModified: now, changeFrequency: "monthly", priority: 0.6,
+        url: `${SITE}/tin-tuc/${a.slug}`, changeFrequency: "monthly", priority: 0.6,
         images: anhTuyetDoi(a.image),
       });
     }
@@ -146,7 +164,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     for (const cg of chuyenGia) {
       if (cg.soTin < NGUONG_INDEX_HO_SO) continue;
       dynamic.push({
-        url: `${SITE}/chuyen-gia/${cg.slug}`, lastModified: now, changeFrequency: "weekly", priority: 0.6,
+        url: `${SITE}/chuyen-gia/${cg.slug}`, changeFrequency: "weekly", priority: 0.6,
         images: anhTuyetDoi(cg.anh),
       });
     }

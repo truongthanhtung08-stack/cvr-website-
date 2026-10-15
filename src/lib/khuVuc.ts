@@ -1,5 +1,6 @@
 import { provinceNamesNew, provinceNames } from "@/lib/locations";
 import { normalizeVi } from "@/lib/filters";
+import { thangHienTai } from "@/lib/thang";
 
 // ============================================================================
 // TRANG THEO KHU VỰC — /mua-ban/da-nang · /cho-thue/hue · /du-an/quang-ngai …
@@ -46,9 +47,10 @@ export const khuVucTrongDiem: string[] = [
 // Viết đúng cách người ta gõ vào Google, mỗi trang một câu riêng (trùng lặp
 // tiêu đề giữa các trang là lỗi khiến Google chỉ chọn một trang để hiện).
 export function tieuDeKhuVuc(muc: "ban" | "thue" | "duan", ten: string): string {
-  if (muc === "thue") return `Cho thuê nhà đất tại ${ten} — giá mới nhất`;
+  // Kiểu tiêu đề chủ dự án chốt 15/10/2026: "Nhà đất bán Đà Nẵng tháng 10/2026" (thay đuôi "— giá mới nhất")
+  if (muc === "thue") return `Cho thuê nhà đất ${ten} ${thangHienTai()}`;
   if (muc === "duan") return `Dự án bất động sản tại ${ten}`;
-  return `Nhà đất bán tại ${ten} — giá mới nhất`;
+  return `Nhà đất bán ${ten} ${thangHienTai()}`;
 }
 
 export function moTaKhuVuc(muc: "ban" | "thue" | "duan", ten: string, soTin: number): string {

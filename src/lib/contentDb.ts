@@ -154,6 +154,9 @@ function projectRowToProject(r: ProjectRow): Project {
       ? { developerInfo: { ...dev, ...(dev.logo ? { logo: asset(dev.logo) } : {}) } }
       : {}),
     ...(d.developmentUnit?.trim() ? { developmentUnit: d.developmentUnit.trim() } : {}),
+    // Ngày cập nhật: ngày Cowork ghi khi nạp, không có thì lần sửa cuối trong admin
+    capNhat: d.ngayCapNhat?.trim() || fmtDate(r.updated_at),
+    ...(d.nguon?.trim() ? { nguon: d.nguon.trim() } : {}),
   };
 }
 

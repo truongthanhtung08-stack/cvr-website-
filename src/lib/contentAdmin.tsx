@@ -49,6 +49,9 @@ export type ProjectDetails = {
   // dự án (thiết kế, thi công, vận hành bán hàng). Nhiều dự án lớn ở Miền Trung
   // ghi rõ cả hai, nên tách riêng thay vì nhét chung vào ô Chủ đầu tư.
   developmentUnit?: string;
+  // Mục tra cứu dự án (nạp CSV hằng tuần, 15/10/2026): nguồn thông tin + ngày Cowork cập nhật
+  nguon?: string;
+  ngayCapNhat?: string;
   contact?: ProjectContact;               // Liên hệ dự án (SĐT, email…)
 };
 

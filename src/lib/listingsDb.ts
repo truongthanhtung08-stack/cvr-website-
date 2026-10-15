@@ -18,6 +18,7 @@ import { asset } from "@/lib/asset";
 import { isVideoUrl } from "@/lib/media";
 import { fieldsSplit, amenityGroups, coDonGiaM2, coDienTichXayDung, viTriTuDuongVao, viTriTuAccess, laTinThue, laTinBan, type Field } from "@/lib/listingSpec";
 import { chuanHoaSdt } from "@/lib/phone";
+import { tachTenDuong } from "@/lib/tenDuong";
 
 // Thuộc tính linh hoạt lưu trong cột details (JSONB) — xem 0006_listing_details.sql
 export type ListingDetailsJson = {
@@ -293,6 +294,10 @@ function rowToListing(r: Row): Listing {
     ...(r.details?.project ? { projectSlug: r.details.project } : {}),
     ...(r.details?.projectName?.trim() ? { projectName: r.details.projectName.trim() } : {}),
     ...(r.details?.mapPin ? { mapPin: r.details.mapPin } : {}),
+    ...(r.details?.direction?.trim() ? { huong: r.details.direction.trim() } : {}),
+    ...((): { duong?: string } => { const d = tachTenDuong(r.details?.addressDetail); return d ? { duong: d } : {}; })(),
+    ...(r.details?.legal?.trim() ? { phapLy: r.details.legal.trim() } : {}),
+    ...(r.details?.furnish?.trim() ? { noiThat: r.details.furnish.trim() } : {}),
     ...(r.description ? { desc: r.description } : {}),
     // Mọi trường còn lại → vùng dò của ô tìm kiếm (không hiển thị ra giao diện)
     ...((): { searchText?: string } => {

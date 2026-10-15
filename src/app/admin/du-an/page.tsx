@@ -78,6 +78,12 @@ export default function AdminProjectsPage() {
           </p>
         </div>
         <Link
+          href="/admin/du-an/nhap-hang-loat"
+          className="ml-auto rounded-lg border border-cvr-line bg-white px-4 py-2 text-sm font-semibold text-cvr-ink transition hover:border-cvr-ink"
+        >
+          Nạp CSV
+        </Link>
+        <Link
           href="/admin/du-an/moi"
           className="rounded-lg bg-cvr-ink px-4 py-2 text-sm font-semibold text-white transition hover:bg-cvr-ink/90"
         >

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { laChuDauTuThat, slugChuDauTu } from "@/lib/chuDauTu";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ProjectGallery from "@/components/ProjectGallery";
@@ -284,6 +285,12 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             {p.locationCu && (
               <p className="mt-1 pl-[22px] text-[13px] text-cvr-faint">Địa chỉ hệ cũ: {p.locationCu}</p>
             )}
+            {/* Kiểu Mã số thuế (15/10/2026): ngày cập nhật + nguồn thông tin — MASTER 3.2 */}
+            {p.capNhat && (
+              <p className="mt-1 pl-[22px] text-[13px] text-cvr-faint">
+                Cập nhật ngày {p.capNhat}{p.nguon ? ` · Nguồn: ${p.nguon}` : ""}
+              </p>
+            )}
 
             {/* Dải thông tin nhanh — cân đối, dễ đọc từng tiêu chí */}
             <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -415,7 +422,11 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                     </div>
                   )}
                   <div className="min-w-0 flex-1">
-                    <p className="text-base font-semibold text-cvr-ink">{p.developer}</p>
+                    {laChuDauTuThat(p.developer) ? (
+                      <Link href={`/chu-dau-tu/${slugChuDauTu(p.developer)}`} className="text-base font-semibold text-cvr-ink hover:text-cvr-blue-ink">{p.developer}</Link>
+                    ) : (
+                      <p className="text-base font-semibold text-cvr-ink">{p.developer}</p>
+                    )}
                     {dev?.established && <p className="mt-0.5 text-sm text-cvr-muted">{dev.established}</p>}
                     {dev?.website && (
                       <a href={normalizeUrl(dev.website)} target="_blank" rel="noopener noreferrer" className="mt-0.5 inline-block text-sm font-medium text-cvr-blue-ink hover:text-cvr-blue">

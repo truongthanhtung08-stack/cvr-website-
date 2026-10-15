@@ -51,7 +51,9 @@ export default function KhungChoDanhMuc({
   return (
     // Chiều cao 104px giữ NGUYÊN như khung chờ cũ: đúng bằng thanh lọc thật, để
     // lúc trang đang tải không phình ra một mảng trắng dưới header.
-    <div className="mx-auto h-[104px] max-w-7xl px-4 sm:px-6 lg:px-8">
+    // min-h-[70svh] (SEO/CWV 15/10/2026): giữ chỗ cho danh sách trong lúc trình duyệt nạp dữ liệu
+    // (/api/danh-sach) — không có thì khối liên kết + chân trang hiện sát lên rồi bị đẩy xuống (CLS).
+    <div className="mx-auto h-[104px] min-h-[70svh] max-w-7xl px-4 sm:px-6 lg:px-8">
       <div className="sr-only">
         <h1>{heading}</h1>
         <p>{moTa}</p>

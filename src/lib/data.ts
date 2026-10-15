@@ -76,6 +76,11 @@ export type Listing = {
   // "Tin mua bán liên quan tại dự án …". Không thuộc dự án nào → bỏ trống.
   projectSlug?: string;
   projectName?: string; // tên dự án khách tự ghi (chưa có trang dự án) — để nối khi trang dự án được tạo
+  // Ba trường cho trang pSEO (src/lib/pseo.ts): hướng nhà, tên đường tách từ địa chỉ chi tiết, pháp lý.
+  huong?: string;
+  duong?: string;
+  phapLy?: string;
+  noiThat?: string;
   // Vị trí admin GHIM tay (toạ độ "16.06,108.22" hoặc link Google Maps).
   // Có thì bản đồ trỏ đúng điểm này; không có thì tự tìm theo địa chỉ.
   mapPin?: string;
@@ -419,6 +424,8 @@ export type Project = {
   places?: { category: string; name: string; distance: string }[];
   developerInfo?: { established?: string; website?: string; desc?: string; logo?: string };
   developmentUnit?: string;             // Đơn vị phát triển (khác Chủ đầu tư)
+  capNhat?: string;                     // "15/10/2026" — ngày cập nhật thông tin dự án
+  nguon?: string;                       // nguồn thông tin dự án (MASTER 3.2: dự án phải có nguồn + ngày)
 };
 
 // ⚠️ Số liệu dự án mang tính tham khảo cho mẫu giao diện — cần đối chiếu công bố

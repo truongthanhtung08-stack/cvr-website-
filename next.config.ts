@@ -1,4 +1,6 @@
 import type { NextConfig } from "next";
+import { provincesNew } from "./src/lib/provincesNew";
+import { provincesOld } from "./src/lib/provincesOld";
 
 // Khi build cho GitHub Pages (biến GITHUB_PAGES=true) thì xuất tĩnh.
 // Từ 7/2026 chạy domain riêng coastalland.vn (custom domain) → KHÔNG còn basePath /cvr-website-.
@@ -45,6 +47,35 @@ const nextConfig: NextConfig = isPages
       // đường cũ. Nên phải chặn ngay ở máy chủ: ai hỏi đường cũ thì trả file
       // thật trong public/maplibre/ (do scripts/chep-maplibre-worker.mjs chép ra).
       // beforeFiles = xét TRƯỚC khi tìm file tĩnh, nên áp được cho cả /_next/static.
+      // TÌM KIẾM NỘI BỘ KHÔNG LẬP CHỈ MỤC (MASTER mục 4): mọi đường dẫn có ?q= trả thêm
+      // X-Robots-Tag noindex. Làm bằng quy tắc header tĩnh để trang vẫn phục vụ từ bộ nhớ
+      // đệm — đọc searchParams trong trang sẽ biến trang thành động (tốn chi phí Vercel).
+      async headers() {
+        return [
+          { source: "/:path*", has: [{ type: "query", key: "q" }], headers: [{ key: "X-Robots-Tag", value: "noindex, follow" }] },
+        ];
+      },
+
+      // ĐƯỜNG DẪN CŨ /mua-ban?tinh=<Tỉnh> → 301 về trang tỉnh /mua-ban/<tỉnh> (SEO, 15/10/2026).
+      // Google còn nhớ các địa chỉ này (canonical về /mua-ban nên sức mạnh rơi mất). Chỉ áp cho
+      // đúng TÊN TỈNH/THÀNH (cả hệ cũ lẫn mới); địa danh nhỏ hơn ("Nha Trang", "Quy Nhơn" — thẻ
+      // trang chủ đã duyệt) giữ nguyên vì chúng lọc đúng phạm vi đô thị đó.
+      async redirects() {
+        const slug = (s: string) =>
+          s.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[đĐ]/g, "d").toLowerCase()
+            .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+        const ten = Array.from(new Set([...provincesNew.map((p) => p.name), ...provincesOld.map((p) => p.name)]));
+        const thoat = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        return ["/mua-ban", "/cho-thue"].flatMap((base) =>
+          ten.map((t) => ({
+            source: base,
+            has: [{ type: "query" as const, key: "tinh", value: `^${thoat(t)}$` }],
+            destination: `${base}/${slug(t)}`,
+            permanent: true,
+          })),
+        );
+      },
+
       async rewrites() {
         const toi = (f: string) => `/maplibre/${f}`;
         return {

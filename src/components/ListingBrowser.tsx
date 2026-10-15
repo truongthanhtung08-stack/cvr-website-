@@ -30,6 +30,7 @@ import {
 import { smartFilter, smartSearch, TIER_LABEL } from "@/lib/smartSearch";
 import { nhanDoiHienThi, khoaThe } from "@/lib/nhanDoiHienThi";
 import LuuTimKiem from "./LuuTimKiem";
+import { boDuoiThang } from "@/lib/thang";
 
 // 10 tin/trang (chủ dự án chốt 10/9/2026) — trước là 8.
 const PER_PAGE = 10;
@@ -37,8 +38,11 @@ const PER_PAGE = 10;
 export default function ListingBrowser({
   heading,
   purpose = "ban",
-  items = featuredListings,
+  items: itemsTuMayChu,
   itemsHetHan: hetHanTuMayChu,
+  nguon,
+  choTai,
+  initialFilters,
   articles = [],
   relevance = false,
   nested = false,
@@ -69,20 +73,41 @@ export default function ListingBrowser({
   initialTypes?: string[];
   // Trang KHU VỰC (/mua-ban/da-nang…): mở sẵn đúng tỉnh/thành đang xem.
   initialProvince?: string;
+  // NẠP DỮ LIỆU Ở TRÌNH DUYỆT (SEO 15/10/2026): trang danh sách lớn không nhét dữ liệu tin vào
+  // HTML nữa mà truyền `nguon`; danh sách tự nạp /api/danh-sach/<nguon> (CDN lưu sẵn, mọi trang
+  // dùng chung). `choTai` = khung hiện trong lúc nạp (cùng khung chờ máy chủ đã dựng).
+  nguon?: "ban" | "thue";
+  choTai?: React.ReactNode;
+  // Trang pSEO: bật sẵn bộ lọc theo đường dẫn (giá, phòng ngủ, pháp lý, hướng, phường…).
+  // Địa chỉ có tham số lọc riêng thì tham số đó thắng.
+  initialFilters?: Partial<Filters>;
 }) {
   const params = useSearchParams();
 
+  const [napDuoc, setNapDuoc] = useState<{ tin: Listing[]; hetHan: Listing[] } | null>(null);
+  useEffect(() => {
+    if (!nguon) return;
+    let huy = false;
+    fetch(`/api/danh-sach/${nguon}`)
+      .then((r) => (r.ok ? r.json() : { tin: [], hetHan: [] }))
+      .then((d: { tin: Listing[]; hetHan: Listing[] }) => { if (!huy) setNapDuoc(d); })
+      .catch(() => { if (!huy) setNapDuoc({ tin: [], hetHan: [] }); });
+    return () => { huy = true; };
+  }, [nguon]);
+  const items = nguon ? napDuoc?.tin ?? [] : itemsTuMayChu ?? featuredListings;
+  const hetHanNguon = nguon ? napDuoc?.hetHan ?? [] : hetHanTuMayChu;
+
   const [hetHanNap, setHetHanNap] = useState<Listing[]>([]);
   useEffect(() => {
-    if (hetHanTuMayChu) return;
+    if (hetHanNguon || nguon) return;
     let huy = false;
     fetch("/api/tin-het-han")
       .then((r) => (r.ok ? r.json() : []))
       .then((ds: Listing[]) => { if (!huy) setHetHanNap(ds); })
       .catch(() => {});
     return () => { huy = true; };
-  }, [hetHanTuMayChu]);
-  const itemsHetHan = hetHanTuMayChu ?? hetHanNap;
+  }, [hetHanNguon, nguon]);
+  const itemsHetHan = hetHanNguon ?? hetHanNap;
 
   const [filters, setFiltersState] = useState<Filters>(() => {
     const f = filtersFromParams(params);
@@ -90,6 +115,15 @@ export default function ListingBrowser({
     if (initialTypes?.length && !f.types.length) f.types = [...initialTypes];
     // Trang khu vực: chưa chọn nơi nào → mặc định lọc đúng tỉnh của trang
     if (initialProvince && f.locations.length === 0) f.locations = [{ province: initialProvince }];
+    if (initialFilters) {
+      const g = initialFilters;
+      if (g.locations?.length && f.locations.length === 0) f.locations = g.locations;
+      if (g.types?.length && !f.types.length) f.types = [...g.types];
+      if (g.priceMax != null && f.priceMax == null && f.priceMin == null) f.priceMax = g.priceMax;
+      if (g.beds && !f.beds) f.beds = g.beds;
+      if (g.direction && !f.direction) f.direction = g.direction;
+      if (g.legal && !f.legal) f.legal = g.legal;
+    }
     return f;
   });
   const [sort, setSort] = useState<SortKey>(relevance ? "lien-quan" : "moi");
@@ -183,6 +217,9 @@ export default function ListingBrowser({
   const current = Math.min(page, totalPages);
   const pageItems = results.slice((current - 1) * PER_PAGE, current * PER_PAGE);
   const active = hasActiveFilters(filters);
+
+  // Đang nạp dữ liệu → giữ nguyên khung chờ máy chủ đã dựng (không nhấp nháy giao diện)
+  if (nguon && !napDuoc) return <>{choTai ?? null}</>;
 
   return (
     // PC: thanh lọc nằm SÁT header, không chừa khoảng trống (file V3 10.08.2026).
@@ -378,7 +415,7 @@ export default function ListingBrowser({
             </SidebarFilter>
 
             {/* Bất động sản theo khu vực */}
-            <SidebarFilter title={`${heading} theo khu vực`}>
+            <SidebarFilter title={`${boDuoiThang(heading)} theo khu vực`}>
               {provinces.map(([prov, count]) => {
                 const on = filters.locations.some((l) => l.province === prov && !l.district && !l.ward);
                 return (

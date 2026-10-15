@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
+import { baoIndexNow } from "@/lib/indexNow";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { quetTinHetHan } from "@/lib/hetHanTin";
 import { baoLoi } from "@/lib/baoLoi";
@@ -25,9 +26,9 @@ export async function GET(request: Request) {
     // LÀM MỚI BẢN SAO DANH SÁCH TIN TỪ GỐC (03/10/2026): tin nào vừa đổi — DÙ ĐỔI TỪ ĐÂU
     // (nút trong web, trigger CSDL, sửa thẳng trong Supabase) — thì xoá bản lưu sẵn ngay.
     // trg_listings_updated_at luôn ghi updated_at nên đây là mốc tin cậy cho mọi đường đổi.
-    const { count: vuaDoi } = await admin
+    const { data: dsDoi, count: vuaDoi } = await admin
       .from("listings")
-      .select("id", { count: "exact", head: true })
+      .select("id", { count: "exact" })
       .gt("updated_at", new Date(Date.now() - 75_000).toISOString())
       // Tin nháp (kể cả tự lưu vài giây một lần khi khách đang gõ) không hiện ra ngoài —
       // không tính, kẻo xoá bản lưu sẵn mỗi phút, tốn đọc Supabase vô ích.
@@ -40,6 +41,8 @@ export async function GET(request: Request) {
       .gt("published_at", new Date(Date.now() - 75_000).toISOString())
       .lte("published_at", new Date().toISOString());
     if ((vuaDoi ?? 0) + (vuaLen ?? 0) > 0) revalidateTag("listings", "max");
+    // Báo Bing các trang tin vừa đổi (IndexNow) — chỉ khi có đổi thật, không thêm lệnh nào lúc yên.
+    if (dsDoi?.length) await baoIndexNow(dsDoi.map((r: { id: string }) => `/bat-dong-san/${r.id}`));
     return NextResponse.json({ ok: true, ...kq, lamMoi: vuaDoi ?? 0 });
   } catch (e) {
     await baoLoi({

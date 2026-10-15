@@ -1,19 +1,23 @@
 import { Suspense } from "react";
+import { preload } from "react-dom";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ListingBrowser from "@/components/ListingBrowser";
-import { goiNheTin, goiNheHetHan, goiNheBaiViet } from "@/lib/goiNhe";
+import { goiNheBaiViet } from "@/lib/goiNhe";
 import KhungChoDanhMuc from "@/components/KhungChoDanhMuc";
 import Breadcrumb from "@/components/Breadcrumb";
 import KhuVucLinks from "@/components/KhuVucLinks";
 import { ListingListJsonLd } from "@/components/ListJsonLd";
-import { getListings, getListingsHetHan } from "@/lib/listingsDb";
+import { getListings } from "@/lib/listingsDb";
 import { getArticles } from "@/lib/contentDb";
 import { findCategory, rentCategories } from "@/lib/categories";
 import { demTinTheoKhuVuc, khuVucTrongDiem, moTaKhuVuc, slugKhuVuc, tieuDeKhuVuc, timKhuVuc } from "@/lib/khuVuc";
 import { normalizeVi } from "@/lib/filters";
+import LienKetPseo from "@/components/LienKetPseo";
+import { lienKetCho, lienKetLoaiHinh } from "@/lib/pseo";
+import { thangHienTai } from "@/lib/thang";
 
 // ============================================================================
 // /cho-thue/<slug> phục vụ HAI loại trang, phân biệt bằng chính slug:
@@ -45,11 +49,12 @@ export async function generateMetadata({ params }: { params: Promise<{ loai: str
 
   const c = findCategory(rentCategories, loai);
   if (c) {
+    const title = `${c.title} ${thangHienTai()}`;
     return {
-      title: c.title,
+      title,
       description: moTaDu(c.desc),
       alternates: { canonical: `/cho-thue/${c.slug}` },
-      openGraph: { title: c.title, description: moTaDu(c.desc), url: `/cho-thue/${c.slug}`, type: "website" },
+      openGraph: { title, description: moTaDu(c.desc), url: `/cho-thue/${c.slug}`, type: "website" },
     };
   }
 
@@ -74,12 +79,14 @@ export async function generateMetadata({ params }: { params: Promise<{ loai: str
 }
 
 export default async function DanhMucChoThuePage({ params }: { params: Promise<{ loai: string }> }) {
+  // Trình duyệt tải trước dữ liệu danh sách ngay khi đọc HTML (ListingBrowser nạp /api/danh-sach)
+  preload("/api/danh-sach/thue", { as: "fetch", crossOrigin: "anonymous" });
   const { loai } = await params;
   const c = findCategory(rentCategories, loai);
   const kv = c ? null : timKhuVuc(loai);
   if (!c && !kv) notFound();
 
-  const [listings, articles, hetHan] = await Promise.all([getListings(), getArticles(), getListingsHetHan()]);
+  const [listings, articles] = await Promise.all([getListings(), getArticles()]);
   const tinThue = listings.filter((l) => (l.purpose ?? "ban") === "thue");
 
   // Số tin từng tỉnh — cho khối liên kết khu vực cuối trang
@@ -117,9 +124,8 @@ export default async function DanhMucChoThuePage({ params }: { params: Promise<{
           >
             <ListingBrowser
               purpose="thue"
-              heading={`Cho thuê nhà đất tại ${kv.name}`}
-              items={goiNheTin(listings)}
-              itemsHetHan={goiNheHetHan(hetHan, "thue")}
+              heading={tieuDeKhuVuc("thue", kv.name)}
+              nguon="thue" choTai={<KhungChoDanhMuc heading={tieuDeKhuVuc("thue", kv.name)} moTa={moTaKhuVuc("thue", kv.name, tinTrongTinh.length)} items={tinTrongTinh} />}
               articles={goiNheBaiViet(articles)}
               initialProvince={kv.name}
             />
@@ -127,6 +133,7 @@ export default async function DanhMucChoThuePage({ params }: { params: Promise<{
           {/* Bảng giá theo loại hình của cả tỉnh: ĐÃ GỠ (03/10/2026) — gộp tin nhiều phường ra một
               giá cho cả thành phố là sai luật "giá khu vực = số liệu đúng khu vực". Có số liệu chuẩn
               (docs/YEU-CAU-COWORK-LICH-SU-GIA.md) mới làm lại. */}
+          <LienKetPseo nhom={lienKetCho({ muc: "thue", tinh: kv }, listings)} />
           <KhuVucLinks base="/cho-thue" demTheoTinh={demTheoTinh} tinhDangXem={kv.name} />
         </main>
         <Footer />
@@ -148,7 +155,7 @@ export default async function DanhMucChoThuePage({ params }: { params: Promise<{
         <Suspense
           fallback={
             <KhungChoDanhMuc
-              heading={c!.title}
+              heading={`${c!.h1} ${thangHienTai()}`}
               moTa={c!.desc}
               items={tinThue.filter((l) => c!.types.includes(l.type))}
             />
@@ -156,13 +163,13 @@ export default async function DanhMucChoThuePage({ params }: { params: Promise<{
         >
           <ListingBrowser
             purpose="thue"
-            heading={c!.h1}
-            items={goiNheTin(listings)}
-            itemsHetHan={goiNheHetHan(hetHan, "thue")}
+            heading={`${c!.h1} ${thangHienTai()}`}
+            nguon="thue" choTai={<KhungChoDanhMuc heading={`${c!.h1} ${thangHienTai()}`} moTa={c!.desc} items={tinThue.filter((l) => c!.types.includes(l.type))} />}
             articles={goiNheBaiViet(articles)}
             initialTypes={c!.types}
           />
         </Suspense>
+        <LienKetPseo nhom={lienKetLoaiHinh("thue", c!, listings)} />
         <KhuVucLinks base="/cho-thue" demTheoTinh={demTheoTinh} />
       </main>
       <Footer />

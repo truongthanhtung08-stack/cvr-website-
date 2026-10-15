@@ -160,6 +160,19 @@ export function listingLegal(id: string): string {
 }
 
 export const furnishingOptions = ["Đầy đủ nội thất", "Nội thất cơ bản", "Nội thất trống"];
+// Gom cách ghi thật của người đăng về đúng mục bộ lọc
+const NHOM_PHAP_LY: Record<string, RegExp> = {
+  "Sổ đỏ / Sổ hồng": /sổs*(đỏ|hồng)/i,
+  "Hợp đồng mua bán": /hợp đồng mua bán/i,
+  "Đang chờ sổ": /chờ sổ/i,
+};
+const NHOM_NOI_THAT: Record<string, RegExp> = {
+  "Đầy đủ nội thất": /đầy đủ|cao cấp/i,
+  "Nội thất cơ bản": /cơ bản/i,
+  "Nội thất trống": /thô|trống/i,
+};
+const khopNhom = (giaTri: string | undefined, re: RegExp | undefined) => !!giaTri && !!re && re.test(giaTri);
+
 export function listingFurnishing(id: string): string {
   const idx = parseInt(id, 10) || 1;
   return furnishingOptions[(idx + 1) % furnishingOptions.length];
@@ -340,6 +353,9 @@ function tachDiaChiCap(s: string): string[] {
 
 type FilterableListing = {
   id: string; title: string; price: string; area: string;
+  // Hướng · pháp lý · nội thất THẬT người đăng nhập (sửa 15/10/2026 — trước đây bộ lọc so với
+  // giá trị suy từ mã tin của dữ liệu mẫu, lọc ra tin ngẫu nhiên).
+  huong?: string; phapLy?: string; noiThat?: string;
   beds?: number; location: string; type: string; badge?: string;
   // Số thô để sắp xếp theo GIÁ MỖI M² — chuỗi price/area đã định dạng để đọc,
   // tính lại từ chuỗi là chỗ đẻ ra lỗi dấu chấm/dấu phẩy.
@@ -409,9 +425,9 @@ export function applyFilters<T extends FilterableListing>(items: T[], f: Filters
       const b = item.beds ?? 0;
       if (f.beds >= 5 ? b < 5 : b !== f.beds) return false;
     }
-    if (f.direction && listingDirection(item.id) !== f.direction) return false;
-    if (f.legal && listingLegal(item.id) !== f.legal) return false;
-    if (f.furnishing && listingFurnishing(item.id) !== f.furnishing) return false;
+    if (f.direction && normalizeVi(item.huong ?? "") !== normalizeVi(f.direction)) return false;
+    if (f.legal && !khopNhom(item.phapLy, NHOM_PHAP_LY[f.legal])) return false;
+    if (f.furnishing && !khopNhom(item.noiThat, NHOM_NOI_THAT[f.furnishing])) return false;
     // TỪ KHOÁ dò MỌI TRƯỜNG CÓ THÔNG TIN của tin (tiêu đề · địa chỉ · loại hình ·
     // giá · diện tích · người đăng · mô tả · pháp lý/hướng/nội thất/tiện ích…).
     // Địa danh dân gian (Mỹ Khê, cầu Rồng…) không có trong danh mục hành chính
