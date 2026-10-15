@@ -184,6 +184,41 @@ Buộc phải đụng vào vì lý do kỹ thuật → **DỪNG, HỎI TRƯỚC.
 
 ---
 
+## 0C1. 💵 VERCEL PHẢI NẰM TRONG GÓI PRO $20/THÁNG (chốt 15/10/2026)
+
+> Kỳ 14/9–14/10 trả **$46,37** (vượt $26,37): ISR Writes $17,99 · Fast Origin Transfer $13,41 ·
+> Build CPU $8,09. Gốc: đếm lượt xem đổi `listings.updated_at` → cron `het-han` mỗi phút xoá cache
+> mọi trang → dựng lại liên tục (sửa bằng migration 0063).
+> Đã cài: **Spend Management $15, Pause TẮT** (email ở 50/75/100%) — cấm đổi khi chủ chưa duyệt.
+>
+> **Mọi phiên, trước khi push, tự kiểm:**
+> - `revalidateTag` chỉ khi có thay đổi THẬT; đếm/thống kê không được đổi `updated_at` hay xoá cache.
+> - Không thêm cron dày (< 1 giờ) hay xoá cache trong cron khi chưa tính chi phí + hỏi chủ.
+> - Trang công khai không thêm `force-dynamic` / `revalidate` ngắn.
+> - Ảnh/video không thêm đường đi qua hàm máy chủ.
+> - Gom việc, push một lần (mỗi build tốn Build CPU).
+> - Đổi cache/cron/route xong → đo lại trang Usage sau 1–2 ngày (Claude in Chrome).
+>
+> **Vì sao phát sinh (quán triệt):** mỗi khoản tiền = một thói quen làm việc sai.
+> | Khoản | Gốc ở cách làm |
+> |---|---|
+> | ISR Writes $17,99 | Thêm cron mỗi phút + xoá cache theo `updated_at` mà không kiểm cái gì làm đổi `updated_at` (lượt xem) |
+> | Fast Origin Transfer $13,41 | Trang bị dựng lại liên tục + ảnh đi qua hàm `/anh/` |
+> | Build CPU $8,09 | 247 commit/tháng (03/10: 46), push từng sửa nhỏ, mỗi lần push là một lần build |
+>
+> ⛔ **LUẬT CHỐT — TRÁNH LÝ DO VÔ LÝ "KHÁCH XEM TIN LÀM PHÁT SINH TIỀN":**
+> Lượt xem / hiển thị / bấm / thống kê **không bao giờ được làm trang dựng lại.** Số liệu thống kê
+> ghi vào **bảng riêng** (`listing_view_daily`, `listing_impression_daily`…), không thêm cột đếm mới
+> vào `listings`. Cột `view_count` có sẵn chỉ được cộng qua `increment_listing_view` (có cờ
+> `app.dem_luot_xem`, 0063 giữ nguyên `updated_at`). Bộ nhớ đệm chỉ được xoá khi **nội dung tin đổi
+> thật** (duyệt, sửa, đẩy, hết hạn). Đã rà 15/10: chỉ `increment_listing_view` từng ghi vào `listings`.
+>
+> **Cách làm việc tối ưu:** sửa → kiểm ở máy (`npx next build`) → gom MỘT lần push mỗi đợt việc
+> (không push từng sửa nhỏ, không commit "Trigger deployment"); trước khi thêm cron / xoá cache /
+> route máy chủ phải trả lời "mỗi tháng chạy bao nhiêu lần, mỗi lần tốn gì" rồi mới làm.
+
+---
+
 ## 0D. 📈 GOOGLE ADS + SEO — topic riêng, theo dõi lâu dài
 
 > **Bảng theo dõi đầy đủ: [`docs/KE-HOACH-GOOGLE-ADS-SEO.md`](docs/KE-HOACH-GOOGLE-ADS-SEO.md).**
