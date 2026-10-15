@@ -54,6 +54,8 @@ export async function GET(_req: Request, ctx: { params: Promise<{ duong: string[
       "Content-Type": res.headers.get("content-type") ?? "image/webp",
       // Tên tệp có mã thời gian nên nội dung không bao giờ đổi → giữ thật lâu.
       "Cache-Control": "public, max-age=31536000, immutable",
+      // Bắt CDN Vercel giữ ảnh 1 năm (15/10/2026: thiếu dòng này ảnh bị đọc lại từ R2 → Fast Origin Transfer 50 GB).
+      "CDN-Cache-Control": "public, s-maxage=31536000, immutable",
     },
   });
 }
