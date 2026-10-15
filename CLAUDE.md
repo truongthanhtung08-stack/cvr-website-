@@ -186,6 +186,15 @@ Buộc phải đụng vào vì lý do kỹ thuật → **DỪNG, HỎI TRƯỚC.
 
 ## 0C1. 💵 VERCEL PHẢI NẰM TRONG GÓI PRO $20/THÁNG (chốt 15/10/2026)
 
+> 🎯 **Mục tiêu chủ dự án:** mỗi tháng chỉ trả đúng **$20** gói Pro — mọi mức dùng phải nằm gọn trong
+> **$20 tín dụng có sẵn** của gói. **Không phát sinh khoản vô lý nào.** Khách xem tin vẫn đếm lượt
+> như bình thường và **không được ảnh hưởng gì đến chi phí Vercel.**
+>
+> ✅ **Đã sửa 15/10 (đừng làm hỏng lại):** 0063 lượt xem không đổi `updated_at` · ảnh `/anh/` có
+> `CDN-Cache-Control` 1 năm · cache tin 60s → 1 giờ (cron mỗi phút bắt thay đổi + tin hẹn giờ) ·
+> `vercel.json` `ignoreCommand` bỏ build khi chỉ đổi `.md`/`docs`/`supabase` · tắt On-Demand
+> Concurrent Builds · ngân sách cảnh báo $15 (Pause tắt).
+
 > Kỳ 14/9–14/10 trả **$46,37** (vượt $26,37): ISR Writes $17,99 · Fast Origin Transfer $13,41 ·
 > Build CPU $8,09. Gốc: đếm lượt xem đổi `listings.updated_at` → cron `het-han` mỗi phút xoá cache
 > mọi trang → dựng lại liên tục (sửa bằng migration 0063).
