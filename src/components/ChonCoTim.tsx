@@ -40,8 +40,10 @@ export default function ChonCoTim({
     return () => window.removeEventListener("keydown", h);
   }, [mo]);
   const tim = timDiaDanh(q, options, bietDanh);
-  // Mục ĐANG CHỌN luôn nằm DÒNG ĐẦU khi mở lại (chưa gõ tìm) — khách thấy ngay mình đang chọn gì.
-  const ds = !q.trim() && value && options.includes(value) ? [{ ten: value }, ...tim.filter((x) => x.ten !== value)] : tim;
+  // MỤC ĐANG CHỌN luôn GHIM DÒNG ĐẦU, trước mặt khách — cả lúc đang gõ tìm (chủ dự án 15/10/2026:
+  // "bấm vào search sẽ hiện ra mục đã chọn trước mặt khách, rồi muốn search cái nào thì search").
+  const coChon = !!value && options.includes(value);
+  const ds = coChon ? tim.filter((x) => x.ten !== value) : tim;
   const dong = () => { setMo(false); setQ(""); setDangTim(false); };
   const chon = (v: string) => { onChange(v); dong(); };
   return (
@@ -51,11 +53,13 @@ export default function ChonCoTim({
         <svg className="h-4 w-4 shrink-0 text-cvr-muted" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
       </button>
       {mo && (
-        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/40 sm:items-center" onClick={dong}>
-          <div className="flex max-h-[80vh] w-full flex-col rounded-t-2xl bg-white pb-[env(safe-area-inset-bottom)] shadow-lux sm:max-w-md sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
+        // ĐANG GÕ TÌM trên điện thoại → bảng thành TOÀN MÀN HÌNH, ô gõ nằm trên cùng: bàn phím bật lên
+        // không che ô gõ, kết quả hiện ngay dưới (trước đây bảng nằm đáy, bàn phím đẩy lệch — rất rối).
+        <div className={`fixed inset-0 z-[90] flex justify-center bg-black/40 sm:items-center ${dangTim ? "items-stretch" : "items-end"}`} onClick={dong}>
+          <div className={`flex w-full flex-col bg-white pb-[env(safe-area-inset-bottom)] shadow-lux sm:h-auto sm:max-h-[80vh] sm:max-w-md sm:rounded-2xl ${dangTim ? "h-[100dvh] pt-[env(safe-area-inset-top)]" : "max-h-[80vh] rounded-t-2xl"}`} onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center gap-2 border-b border-cvr-line p-3">
               {dangTim ? (
-                <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder={timPlaceholder} className={className} />
+                <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder={timPlaceholder} className={className} enterKeyHint="search" autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} />
               ) : (
                 <span className="min-w-0 flex-1 truncate px-1 text-[15px] font-semibold text-cvr-ink">{placeholder}</span>
               )}
@@ -72,9 +76,15 @@ export default function ChonCoTim({
                 )}
               </button>
             </div>
+            {coChon && (
+              <button type="button" onClick={() => chon(value)} className="flex w-full items-center justify-between gap-3 border-b border-cvr-line bg-cvr-surface px-4 py-3 text-left text-[15px] font-semibold text-cvr-ink">
+                <span className="min-w-0 truncate">{value}</span>
+                <svg className="h-5 w-5 shrink-0 text-cvr-blue-ink" fill="none" stroke="currentColor" strokeWidth={2.4} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+              </button>
+            )}
             <div className="flex-1 overflow-y-auto overscroll-contain py-1">
               {ds.map(({ ten: o, boiTen }) => (
-                <button key={o} type="button" onClick={() => chon(o)} className={`block w-full px-4 py-3 text-left text-[15px] transition hover:bg-cvr-surface ${o === value ? "font-semibold text-cvr-ink" : "text-cvr-body"}`}>
+                <button key={o} type="button" onClick={() => chon(o)} className="block w-full px-4 py-3 text-left text-[15px] text-cvr-body transition hover:bg-cvr-surface">
                   {o}
                   {boiTen && <span className="mt-0.5 block text-[12px] text-cvr-faint">{boiTen}</span>}
                 </button>

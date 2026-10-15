@@ -812,12 +812,17 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
       <Panel title="Thuộc dự án">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Dự án">
-            <select value={projectSlug} onChange={(e) => setProjectSlug(e.target.value)} className={inputCls}>
-              <option value="">— Không thuộc dự án nào —</option>
-              {projectOptions.map((o) => (
-                <option key={o.slug} value={o.slug}>{o.name}</option>
-              ))}
-            </select>
+            {/* Ô chọn có tìm (15/10/2026). Tin gắn dự án CHƯA có trang trên web vẫn hiện đúng tên/slug
+                đang gắn — trước đây ô hiện trống, bấm lưu là tưởng mất dự án. */}
+            <ChonCoTim
+              value={projectSlug ? projectOptions.find((o) => o.slug === projectSlug)?.name
+                ?? ((initial?.details as { projectName?: string } | undefined)?.projectName || projectSlug) : ""}
+              onChange={(v) => setProjectSlug(v === "— Không thuộc dự án nào —" ? "" : projectOptions.find((o) => o.name === v)?.slug ?? projectSlug)}
+              options={["— Không thuộc dự án nào —", ...projectOptions.map((o) => o.name)]}
+              placeholder="— Không thuộc dự án nào —"
+              timPlaceholder="Tìm dự án"
+              className={inputCls}
+            />
           </Field>
         </div>
         <p className="mt-2 text-xs text-cvr-faint">

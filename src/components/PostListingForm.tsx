@@ -52,6 +52,8 @@ const KHAC_GIA = "Khác — tự ghi";
 // Giá trị đánh dấu "dự án chưa có trên web" trong ô chọn dự án — KHÔNG lưu
 // xuống DB, chỉ để biết phải hiện ô gõ tên.
 const DU_AN_KHAC = "__khac";
+const DU_AN_KHAC_NHAN = "Dự án khác — tự ghi tên";
+const KHONG_DU_AN = "— Không thuộc dự án nào —";
 // Khoá trình duyệt giữ bản nháp tự lưu của form đăng tin mới — RIÊNG TỪNG TÀI KHOẢN
 // (máy dùng chung thì người sau không thấy bản nháp của người trước).
 const KHOA_NHAP_MAY = "cvr-dang-tin-nhap";
@@ -1512,27 +1514,26 @@ export default function PostListingForm() {
         <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <Label>Dự án</Label>
-            <select
-              value={projectSlug}
-              onChange={(e) => {
-                const v = e.target.value;
-                setProjectSlug(v);
-                // Chọn dự án có sẵn → tên lấy luôn theo dự án đó.
-                // Chọn "dự án khác" → để trống cho khách tự gõ.
-                setProjectName(v === DU_AN_KHAC ? "" : (projectOptions.find((o) => o.slug === v)?.name ?? ""));
+            {/* Ô chọn có tìm (như ô vị trí — 15/10/2026): danh sách dài thì bấm kính lúp để tìm.
+                LUÔN hiện đúng tên dự án tin đang gắn — kể cả dự án CHƯA có trang trên web (tin nhập
+                hàng loạt): trước đây ô hiện "Không thuộc dự án nào" dù tin vẫn gắn dự án đó.
+                DỰ ÁN CHƯA CÓ TRÊN WEB vẫn ghi được tên qua dòng "Dự án khác — tự ghi tên". */}
+            <ChonCoTim
+              value={projectSlug === DU_AN_KHAC ? DU_AN_KHAC_NHAN
+                : projectSlug ? projectOptions.find((o) => o.slug === projectSlug)?.name ?? (projectName || projectSlug)
+                : ""}
+              onChange={(v) => {
+                if (v === KHONG_DU_AN) { setProjectSlug(""); setProjectName(""); return; }
+                // Chọn "dự án khác" → để trống cho khách tự gõ; chọn dự án có sẵn → tên theo dự án đó.
+                if (v === DU_AN_KHAC_NHAN) { setProjectSlug(DU_AN_KHAC); setProjectName(""); return; }
+                const o = projectOptions.find((x) => x.name === v);
+                if (o) { setProjectSlug(o.slug); setProjectName(o.name); }
               }}
+              options={[KHONG_DU_AN, ...projectOptions.map((o) => o.name), DU_AN_KHAC_NHAN]}
+              placeholder={KHONG_DU_AN}
+              timPlaceholder="Tìm dự án"
               className={inputCls}
-            >
-              <option value="">— Không thuộc dự án nào —</option>
-              {projectOptions.map((o) => (
-                <option key={o.slug} value={o.slug}>{o.name}</option>
-              ))}
-              {/* DỰ ÁN CHƯA CÓ TRÊN WEB vẫn phải ghi được tên: trước đây chỉ có
-                  danh sách dự án đã tạo nên tên dự án của khách rơi mất. Trang tin
-                  đã biết hiện details.projectName — chưa có trang dự án thì hiện
-                  chữ trơn, tạo dự án sau là tự thành liên kết. */}
-              <option value={DU_AN_KHAC}>Dự án khác — tự ghi tên</option>
-            </select>
+            />
           </div>
 
           {projectSlug === DU_AN_KHAC && (
