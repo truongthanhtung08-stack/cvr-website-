@@ -158,7 +158,8 @@ export function matBangGia(
 export type MocQuy = {
   /** Kỳ: "2025-Q1" (quý) hoặc "2025" (cả năm) */
   quy: string;
-  /** Giá PHỔ BIẾN mỗi m² (đồng) — trung vị. Tin thuê là giá thuê mỗi tháng. */
+  /** Giá PHỔ BIẾN mỗi m² (đồng) — trung vị. Tin thuê là giá thuê mỗi tháng.
+   *  Nguồn chỉ có khoảng thấp–cao → số giữa khoảng (chủ dự án 16/10/2026). */
   giaM2: number;
   /** Mức thấp và mức cao của kỳ, để vẽ thêm hai đường biên quanh đường phổ biến.
    *  Thiếu thì biểu đồ chỉ vẽ một đường — không suy ra, không bịa. */
@@ -303,9 +304,8 @@ function coDuong(diaChi: string, duong: string): boolean {
 }
 
 /**
- * CHỌN DÃY CHO MỘT TIN — BỐN BẬC, chủ dự án chốt 03/10/2026 (cùng phân khúc,
- * cùng vị trí): ① cùng DỰ ÁN → ② cùng TUYẾN ĐƯỜNG → ③ cùng PHƯỜNG → ④ cả TỈNH
- * khi dãy đó nhập đủ số.
+ * CHỌN DÃY CHO MỘT TIN — BA BẬC (cùng phân khúc, cùng vị trí; chủ dự án 03/10,
+ * bỏ bậc cả tỉnh 16/10/2026): ① cùng DỰ ÁN → ② cùng TUYẾN ĐƯỜNG → ③ cùng PHƯỜNG.
  * Bậc nào cũng bắt buộc: cùng tỉnh · cùng loại hình · cùng bán/thuê · đúng mẫu số
  * của loại hình · ĐỦ SỐ (13 tháng liền). Bậc trên không đủ số mới xuống bậc dưới.
  * Không bậc nào đủ → null, khối Lịch sử giá ẩn hẳn.
@@ -344,8 +344,8 @@ export function chiSoChoTin(
     (x) => !x.duAn && !!x.duong && !!phuong && chuanTen(x.khuVuc ?? "") === phuong && coDuong(diaChi, x.duong),
     // ③ cùng phường
     (x) => !x.duAn && !x.duong && !!phuong && chuanTen(x.khuVuc ?? "") === phuong,
-    // ④ cả tỉnh — dãy nhập đủ cho cả tỉnh (không ghi phường/đường/dự án)
-    (x) => !x.duAn && !x.duong && !x.khuVuc,
+    // ⛔ KHÔNG có bậc cả tỉnh (chủ dự án 16/10/2026: số một phường / một loại hình
+    // đem áp cho cả tỉnh là sai — lịch sử giá chỉ của cùng dự án, đường hoặc vị trí tương đương).
   ];
   for (const dung of bac) {
     // Cùng bậc: ưu tiên dãy dài hơn (nhiều tháng liền hơn).
@@ -476,8 +476,14 @@ export function docBangChiSo(bang: string[][]): { items: ChiSoKhuVuc[]; loi: Loi
     // dòng cho nhiều đợt, mỗi lần chỉ điền một phần. Báo chúng thành lỗi thì
     // mỗi lần nộp lại hiện hàng nghìn dòng đỏ, người nộp hết dám tin cái nào là
     // lỗi thật. Chỉ báo khi ô CÓ CHỮ mà đọc không ra số.
-    if (!lay(5).trim()) continue;
-    if (!Number.isFinite(gia) || gia <= 0) {
+    // NGUỒN CHỈ CÓ KHOẢNG (chủ dự án 16/10/2026: "45–50 tr/m²"): bỏ trống giá phổ biến,
+    // điền thấp + cao → giá phổ biến = số giữa khoảng (chủ dự án chọn), biểu đồ vẫn có đường phổ biến.
+    const chiKhoang = !lay(5).trim();
+    if (chiKhoang) {
+      const t = doiGia(themLay(0));
+      const c = doiGia(themLay(1));
+      if (!(Number.isFinite(t) && Number.isFinite(c) && t > 0 && c >= t)) continue;
+    } else if (!Number.isFinite(gia) || gia <= 0) {
       loi.push({ dong: i + 1, ly: `Giá "${lay(5)}" không hợp lệ — đơn vị triệu đồng, VD 78,5` });
       continue;
     }
@@ -486,7 +492,7 @@ export function docBangChiSo(bang: string[][]): { items: ChiSoKhuVuc[]; loi: Loi
     const loaiHinh = lay(2);
     const duAnO = themLay(6).trim();
     const duongO = themLay(7).trim();
-    // BỐN BẬC (chủ dự án 03/10/2026): dự án → tuyến đường → phường → cả tỉnh.
+    // BA BẬC (chủ dự án 16/10/2026): dự án → tuyến đường → phường. Không có cả tỉnh.
     // Dòng nào không đủ điều kiện của bậc mình thì trang tin không bao giờ dùng tới →
     // chặn ngay khi nhập, không để nằm trong kho như số liệu hợp lệ.
     if (!loaiHinh.trim()) {
@@ -511,8 +517,8 @@ export function docBangChiSo(bang: string[][]): { items: ChiSoKhuVuc[]; loi: Loi
       loi.push({ dong: i + 1, ly: "Bỏ trống vi_tri — lịch sử giá chỉ tách theo dự án / tuyến đường / phường" });
       continue;
     }
-    if (!duAnO && !khuVuc.trim() && !themLay(3).trim()) {
-      loi.push({ dong: i + 1, ly: "Số cả tỉnh phải có nguon_link tới nơi công bố số cả tỉnh" });
+    if (!duAnO && !khuVuc.trim()) {
+      loi.push({ dong: i + 1, ly: "Thiếu khu_vuc hoặc du_an — lịch sử giá không nhận số cả tỉnh" });
       continue;
     }
     const thap = doiGia(themLay(0));
@@ -543,14 +549,14 @@ export function docBangChiSo(bang: string[][]): { items: ChiSoKhuVuc[]; loi: Loi
       gom.set(khoa, muc);
     }
     const cu = muc.moc.find((m) => m.quy === ky);
-    const giaDong = Math.round(gia * 1_000_000);
+    const giaDong = Math.round((chiKhoang ? (thap + cao) / 2 : gia) * 1_000_000);
     // Thấp/cao chỉ nhận khi đúng phía so với giá phổ biến — điền ngược là sai số
     // liệu, thà bỏ còn hơn vẽ ra một biểu đồ có đường thấp nằm trên đường cao.
     const mocMoi: MocQuy = {
       quy: ky,
       giaM2: giaDong,
-      thap: Number.isFinite(thap) && thap > 0 && thap <= gia ? Math.round(thap * 1_000_000) : undefined,
-      cao: Number.isFinite(cao) && cao >= gia ? Math.round(cao * 1_000_000) : undefined,
+      thap: Number.isFinite(thap) && thap > 0 && (chiKhoang || thap <= gia) ? Math.round(thap * 1_000_000) : undefined,
+      cao: Number.isFinite(cao) && (chiKhoang ? cao >= thap : cao >= gia) ? Math.round(cao * 1_000_000) : undefined,
       soMau: Number.isFinite(soMau) && soMau > 0 ? soMau : undefined,
     };
     if (cu) Object.assign(cu, mocMoi);

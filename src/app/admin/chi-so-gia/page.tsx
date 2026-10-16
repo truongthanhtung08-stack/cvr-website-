@@ -278,7 +278,7 @@ export default function ChiSoGiaPage() {
             <tbody className="text-cvr-body">
               <tr>
                 <td className="py-1.5 pr-3">Đà Nẵng</td>
-                <td className="py-1.5 pr-3 text-cvr-faint">(trống = cả tỉnh)</td>
+                <td className="py-1.5 pr-3">Phường Hải Châu</td>
                 <td className="py-1.5 pr-3">Nhà riêng</td>
                 <td className="py-1.5 pr-3">ban</td>
                 <td className="py-1.5 pr-3">2025-Q1</td>
@@ -471,7 +471,7 @@ export default function ChiSoGiaPage() {
             </label>
             <label className="block">
               <span className="mb-1 block text-[13px] font-medium text-cvr-body">
-                Khu vực <span className="text-cvr-faint">(trống = cả tỉnh)</span>
+                Khu vực
               </span>
               <input
                 value={kv.khuVuc ?? ""}

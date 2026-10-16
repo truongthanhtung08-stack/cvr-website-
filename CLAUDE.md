@@ -60,7 +60,7 @@
 >   mỗi sàn × tầng — sàn chỉ 75–80% đất, có lửng/áp mái); không có số chính xác thì không lấy — web bỏ qua mọi số đúng bằng đất × 1 · 1,5 · 2… (`dienTichSanThat`).
 >   Việc chia giá là của web; Cowork chỉ chép số, không tự chia.
 > - **Lịch sử giá:** chỉ dãy của đúng khu vực + loại hình + mua bán/cho thuê của tin, đủ so cùng kỳ
->   1 năm mới hiện. Yêu cầu nhập liệu cho Cowork: `D:\Coastal Land\SEO\YEU-CAU-COWORK-LICH-SU-GIA.md` (mọi tệp cho Cowork — yêu cầu, dữ liệu vào, dữ liệu ra — chỉ nằm ở `D:\Coastal Land\SEO\`, xem `CONG-VIEC-3-BEN.md` mục 0) (làm mới 03/10: cùng phân khúc + cùng vị trí, 4 bậc dự án → đường → phường → cả tỉnh; theo quý như Batdongsan, đủ 5 quý liền mới hiện, thuê = tổng tiền/tháng; web tự tính, Cowork điền phần thiếu từ nút "Tải danh sách còn thiếu").
+>   1 năm mới hiện. Yêu cầu nhập liệu cho Cowork: `D:\Coastal Land\SEO\YEU-CAU-COWORK-LICH-SU-GIA.md` (mọi tệp cho Cowork — yêu cầu, dữ liệu vào, dữ liệu ra — chỉ nằm ở `D:\Coastal Land\SEO\`, xem `CONG-VIEC-3-BEN.md` mục 0) (làm mới 03/10: cùng phân khúc + cùng vị trí, 3 bậc dự án → đường → phường — ⛔ **bỏ hẳn cả tỉnh 16/10** (số một phường/loại hình không áp cho nơi khác); đơn vị theo loại hình: đất ÷ m² đất · căn hộ ÷ m² căn · nhà, văn phòng ÷ m² sàn; theo quý như Batdongsan, đủ 5 quý liền mới hiện, thuê = tổng tiền/tháng; web tự tính, Cowork điền phần thiếu từ nút "Tải danh sách còn thiếu").
 > - Bài học 03/10: Claude tự áp luật, hạ nhầm 49 tin còn hạn — xem memory `gia-chinh-sach-mot-nguon-admin`.
 
 ---

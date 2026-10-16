@@ -196,7 +196,7 @@ const docKeHoach = (tep, dau1 = "") => {
   const dau = kh.findIndex((l) => /^## .*VIỆC THEO THỨ TỰ/.test(l));
   if (dau < 0) return [];
   const ds = [];
-  for (const l of kh.slice(dau + 1)) { if (/^## /.test(l)) break; if (/^\| \d+ \|/.test(l)) ds.push(l.split("|").map((c) => c.trim())); }
+  for (const l of kh.slice(dau + 1)) { if (/^## /.test(l)) break; if (/^\| \d+[a-z]? \|/.test(l)) ds.push(l.split("|").map((c) => c.trim())); }
   return ds.filter((c) => !/✅/.test(c[4] ?? "")).map((c) => ({ viec: dau1 + c[2].replace(/\*\*/g, ""), ai: c[3], tt: c[4] }));
 };
 const keHoach = [...docKeHoach(KE_HOACH), ...docKeHoach("D:/Coastal Land/SEO/Plan MXH/KE-HOACH-MXH.md", "Mạng xã hội: ")];
