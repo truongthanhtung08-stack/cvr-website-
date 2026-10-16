@@ -129,7 +129,9 @@ function lamSachTieuDe(raw: string): string {
 // khoá khách gõ), phần chữ người bán tự viết chịu cắt trước.
 const NGAN_SACH_TITLE = 50;
 
-function tieuDeSeo(tieuDe: string, location: string, price: string): string {
+// Diện tích vào tiêu đề Google (16/10/2026): hai lô cùng tiêu đề khác diện tích (123 m² / 150 m²) từng bị
+// Google coi là trùng tiêu đề — kèm diện tích thì mỗi tin một tiêu đề riêng, người tìm thấy ngay quy mô.
+function tieuDeSeo(tieuDe: string, location: string, price: string, area = ""): string {
   const kd = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/gi, "d").toLowerCase();
   let t = lamSachTieuDe(tieuDe);
 
@@ -141,7 +143,7 @@ function tieuDeSeo(tieuDe: string, location: string, price: string): string {
     .map((s) => s.trim())
     .filter((p) => p && !kd(t).includes(kd(p.replace(/^(Phường|Xã|Thị trấn|Đặc khu)\s+/i, ""))));
 
-  const duoi = ` — ${price}`;
+  const duoi = ` — ${price}${area ? ` · ${area}` : ""}`;
   const chonDiaDanh = (() => {
     if (conThieu.length === 0) return "";
     const dayDu = conThieu.join(", ");
@@ -175,7 +177,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     return (dau + moi).length <= 158 ? dau + moi : dau.slice(0, 158);
   })();
   const desc = moTaGon;
-  const tieuDe = tieuDeSeo(l.title, l.location, l.price);
+  const tieuDe = tieuDeSeo(l.title, l.location, l.price, l.area !== "—" ? l.area : "");
   // Tin đăng trùng một tin đăng trước → canonical về bản gốc (không tự lập chỉ mục bản trùng)
   const [tinCon, tinHet] = await Promise.all([getListings().catch(() => []), getListingsHetHan().catch(() => [])]);
   const banGoc = banGocCua(l, [...tinCon, ...tinHet]);

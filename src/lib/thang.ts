@@ -11,8 +11,13 @@ export const boDuoiThang = (s: string) => s.replace(/\s+tháng \d{1,2}\/\d{4}$/,
 
 // Tiêu đề Google: nếu cộng đuôi " | COASTAL LAND" (layout) mà vượt 65 ký tự thì bỏ đuôi thương hiệu,
 // giữ trọn cụm từ khoá — Google cắt tiêu đề dài, phần bị cắt là phần từ khoá ở cuối.
-export const tieuDeGoogle = (t: string): string | { absolute: string } =>
-  `${t} | COASTAL LAND`.length > 65 ? { absolute: t } : t;
+// Bản thân tiêu đề vẫn dài hơn 65 ký tự (bài viết dài) → cắt tại ranh giới từ cho thẻ <title>; H1 trên trang giữ nguyên.
+export const tieuDeGoogle = (t: string): string | { absolute: string } => {
+  if (`${t} | COASTAL LAND`.length <= 65) return t;
+  if (t.length <= 65) return { absolute: t };
+  const cat = t.slice(0, 65);
+  return { absolute: cat.slice(0, cat.lastIndexOf(" ")).replace(/[\s,.;:—–-]+$/, "") };
+};
 
 // Mô tả Google dài quá 155 ký tự → cắt tại ranh giới từ (không viết câu mới, chỉ cắt bớt).
 export const catMoTa = (s: string, toiDa = 155): string => {

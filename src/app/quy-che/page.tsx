@@ -13,6 +13,7 @@
 //    Hướng dẫn đầy đủ: HUONG-DAN-SUA-NOI-DUNG-VA-ANH.md (mục 4.4)
 // ════════════════════════════════════════════════════════════════════════════
 import type { Metadata } from "next";
+import { catMoTa } from "@/lib/thang";
 import Link from "next/link";
 import TrangPhapLy, { Muc, DanhSach } from "@/components/TrangPhapLy";
 import { PHAP_LY, DONG_GIAY_PHEP } from "@/lib/phapLy";
@@ -22,7 +23,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/quy-che" },
   title: "Quy chế hoạt động",
   description:
-    "Quy chế hoạt động của cổng thông tin bất động sản Coastal Land — nguyên tắc chung, quy trình đăng và kiểm duyệt tin, quyền và nghĩa vụ các bên, giải quyết tranh chấp.",
+    catMoTa("Quy chế hoạt động của cổng thông tin bất động sản Coastal Land — nguyên tắc chung, quy trình đăng và kiểm duyệt tin, quyền và nghĩa vụ các bên, giải quyết tranh chấp."),
 };
 
 export default function QuyChePage() {

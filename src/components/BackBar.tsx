@@ -23,8 +23,8 @@ import { useRouter, usePathname } from "next/navigation";
 //   ten     – tên hiển thị trên thanh
 //   cha     – về đâu khi đang ở TRANG GỐC của mục (vd /mua-ban → trang chủ)
 //   chaCon  – về đâu khi đang ở TRANG CON (vd /bat-dong-san/abc → /mua-ban)
-// PHẢI khai chaCon bằng đường dẫn THẬT CÓ TRANG: /bat-dong-san, /tien-ich và
-// /landing KHÔNG có trang gốc → lùi về đó là lỗi 404.
+// PHẢI khai chaCon bằng đường dẫn THẬT CÓ TRANG: /bat-dong-san, /tien-ich KHÔNG có trang gốc
+// → lùi về đó là lỗi 404.
 const MUC: Record<string, { ten: string; cha: string; chaCon?: string }> = {
   "mua-ban": { ten: "Mua bán", cha: "/" },
   "cho-thue": { ten: "Cho thuê", cha: "/" },
@@ -40,7 +40,6 @@ const MUC: Record<string, { ten: string; cha: string; chaCon?: string }> = {
   "bao-gia-dang-tin": { ten: "Bảng giá dịch vụ", cha: "/" },
   "gioi-thieu": { ten: "Giới thiệu", cha: "/" },
   "tai-khoan": { ten: "Tài khoản", cha: "/", chaCon: "/tai-khoan" },
-  landing: { ten: "Trang giới thiệu", cha: "/", chaCon: "/" }, // không có trang gốc
 
   // ── Trang thông tin · hỗ trợ · pháp lý · tài khoản ────────────────────────
   // TRƯỚC ĐÂY THIẾU HẲN → trên điện thoại các trang này KHÔNG có nút quay lại,

@@ -8,7 +8,6 @@ import { ghepQuyDinh, KHOA_QUY_DINH_GIA, type QuyDinhGia } from "@/lib/quyDinhGi
 import type { ChiSoGiaData } from "@/lib/chiSoGia";
 import { asset } from "@/lib/asset";
 import { homeBanners, projectBanners, type Banner } from "@/lib/banners";
-import { landings as LANDINGS_DEFAULT, type Landing } from "@/lib/landings";
 import { BILLING_DEFAULT, chuanHoaCapHoiVien, type BillingData } from "@/lib/billing";
 
 // Lấy 1 khối nội dung theo key. Lỗi/chưa cấu hình/chưa có → null (dùng mặc định).
@@ -170,19 +169,6 @@ export async function getProjectBanners(): Promise<Banner[]> {
   const data = await fetchBlock<{ slides: Banner[] }>("banner_projects");
   const slides = data?.slides?.filter((s) => s && s.image);
   return slides?.length ? slides : projectBanners;
-}
-
-// ── LANDING PAGES (/landing/[slug]) ──────────────────────────────────────────
-// Lưu key 'landings' dạng { items: Landing[] }. Chưa nhập → landing mặc định trong code.
-export async function getLandings(): Promise<Landing[]> {
-  const data = await fetchBlock<{ items: Landing[] }>("landings");
-  const items = data?.items?.filter((l) => l && l.slug);
-  return items?.length ? items : LANDINGS_DEFAULT;
-}
-
-export async function getLandingBySlug(slug: string): Promise<Landing | undefined> {
-  const all = await getLandings();
-  return all.find((l) => l.slug === slug);
 }
 
 // ── BẤT ĐỘNG SẢN THEO KHU VỰC (trang chủ) ────────────────────────────────────

@@ -10,6 +10,7 @@ import NewsSection from "@/components/NewsSection";
 // import AppDownload from "@/components/AppDownload";   // thay bằng AdBannerApp (mẫu Apple) — khôi phục nếu cần
 import { AdBannerAll } from "@/components/HomeAdBanners";
 import Footer from "@/components/Footer";
+import TimKiemPhoBien from "@/components/TimKiemPhoBien";
 import { HomeExpandProvider, HomeCollapsible } from "@/components/HomeExpand";
 import { getListingsThe } from "@/lib/listingsDb";
 import { chonTinTrangChu } from "@/lib/tinNoiBat";
@@ -69,6 +70,8 @@ export default async function Home() {
             <AdBannerAll data={homeAd} />
           </HomeCollapsible>
         </HomeExpandProvider>
+        {/* Kế hoạch Airbnb GĐ A — docs/KE-HOACH-AIRBNB.md */}
+        <TimKiemPhoBien />
       </main>
       <Footer />
     </>

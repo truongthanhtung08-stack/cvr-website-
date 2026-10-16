@@ -5,7 +5,6 @@ import { createClient } from "@/lib/supabase/client";
 import { uploadImageFile } from "@/lib/uploadImage";
 import { asset } from "@/lib/asset";
 import { homeBanners, projectBanners, type Banner } from "@/lib/banners";
-import { landings as LANDINGS_DEFAULT, type Landing } from "@/lib/landings";
 import { FOOTER_DEFAULT, HOME_AD_DEFAULT, HOME_AREAS_DEFAULT, ABOUT_DEFAULT, type FooterData, type HomeAdData, type AreaCard, type AboutData } from "@/lib/siteContent";
 import { PHAP_LY } from "@/lib/phapLy";
 import { Panel, Field } from "@/components/Ui";
@@ -17,7 +16,6 @@ export default function AdminSiteContentPage() {
   const [footer, setFooter] = useState<FooterData>(FOOTER_DEFAULT);
   const [homeAd, setHomeAd] = useState<HomeAdData>(HOME_AD_DEFAULT);
   const [projBanners, setProjBanners] = useState<Banner[]>(projectBanners);
-  const [landings, setLandings] = useState<Landing[]>(LANDINGS_DEFAULT);
   const [homeAreas, setHomeAreas] = useState<AreaCard[]>(HOME_AREAS_DEFAULT);
   const [about, setAbout] = useState<AboutData>(ABOUT_DEFAULT);
   const [loading, setLoading] = useState(true);
@@ -25,7 +23,6 @@ export default function AdminSiteContentPage() {
   const [savingFooter, setSavingFooter] = useState(false);
   const [savingAd, setSavingAd] = useState(false);
   const [savingProj, setSavingProj] = useState(false);
-  const [savingLanding, setSavingLanding] = useState(false);
   const [savingAreas, setSavingAreas] = useState(false);
   const [savingAbout, setSavingAbout] = useState(false);
   const [msg, setMsg] = useState("");
@@ -34,7 +31,7 @@ export default function AdminSiteContentPage() {
     (async () => {
       const supabase = createClient();
       const { data } = await supabase.from("site_content").select("key,data")
-        .in("key", ["hero_home", "footer", "home_ad", "banner_projects", "landings", "home_areas", "about"]);
+        .in("key", ["hero_home", "footer", "home_ad", "banner_projects", "home_areas", "about"]);
       const rows = (data ?? []) as { key: string; data: Record<string, unknown> }[];
       const pick = (k: string) => rows.find((r) => r.key === k)?.data;
 
@@ -57,8 +54,6 @@ export default function AdminSiteContentPage() {
       const pb = pick("banner_projects") as { slides?: Banner[] } | undefined;
       if (pb?.slides?.length) setProjBanners(pb.slides);
 
-      const ld = pick("landings") as { items?: Landing[] } | undefined;
-      if (ld?.items?.length) setLandings(ld.items);
 
       const ar = pick("home_areas") as { items?: AreaCard[] } | undefined;
       if (ar?.items?.length) setHomeAreas(ar.items);
@@ -103,11 +98,6 @@ export default function AdminSiteContentPage() {
   const addProj = () =>
     setProjBanners((s) => [...s, { id: `slide-${s.length + 1}`, image: "", title: "" }]);
   const delProj = (i: number) => setProjBanners((s) => s.filter((_, j) => j !== i));
-  const setLd = (i: number, patch: Partial<Landing>) =>
-    setLandings((s) => s.map((x, j) => (j === i ? { ...x, ...patch } : x)));
-  const addLd = () =>
-    setLandings((s) => [...s, { slug: "", image: "", eyebrow: "", title: "", subtitle: "", intro: "", stats: [], blocks: [], gallery: [], ctaLabel: "", ctaHref: "" }]);
-  const delLd = (i: number) => setLandings((s) => s.filter((_, j) => j !== i));
   const setArea = (i: number, patch: Partial<AreaCard>) =>
     setHomeAreas((s) => s.map((x, j) => (j === i ? { ...x, ...patch } : x)));
   const addArea = () =>
@@ -161,7 +151,7 @@ export default function AdminSiteContentPage() {
                 <Field label="Tiêu đề (dòng 2)"><input value={s.title ?? ""} onChange={(e) => setSlide(i, { title: e.target.value })} className={inputCls} /></Field>
                 <Field label="Mô tả (dòng 3)"><input value={s.subtitle ?? ""} onChange={(e) => setSlide(i, { subtitle: e.target.value })} className={inputCls} /></Field>
                 <Field label="Nút CTA (bỏ trống = ẩn nút)"><input value={s.cta ?? ""} onChange={(e) => setSlide(i, { cta: e.target.value })} className={inputCls} /></Field>
-                <Field label="Link khi bấm (href)"><input value={s.href ?? ""} onChange={(e) => setSlide(i, { href: e.target.value })} placeholder="/du-an/... hoặc /landing/..." className={inputCls} /></Field>
+                <Field label="Link khi bấm (href)"><input value={s.href ?? ""} onChange={(e) => setSlide(i, { href: e.target.value })} placeholder="/du-an/... hoặc /mua-ban/..." className={inputCls} /></Field>
               </div>
             </div>
           ))}
@@ -321,17 +311,6 @@ export default function AdminSiteContentPage() {
         <SaveButton saving={savingProj} onClick={() => saveBlock("banner_projects", { slides: projBanners }, setSavingProj)} />
       </Panel>
 
-      {/* LANDING PAGES */}
-      <Panel title="Landing pages (/landing/…)" desc="Trang đích chạy từ banner Hero. Slug = đoạn cuối đường dẫn, vd 've-coastal-land' → /landing/ve-coastal-land">
-        <div className="space-y-4">
-          {landings.map((l, i) => (
-            <LandingEditor key={i} value={l} index={i} onChange={(patch) => setLd(i, patch)} onDelete={() => delLd(i)} />
-          ))}
-          <button type="button" onClick={addLd} className={addBtnCls}>+ Thêm landing</button>
-        </div>
-        <SaveButton saving={savingLanding} onClick={() => saveBlock("landings", { items: landings }, setSavingLanding)} />
-      </Panel>
-
       {/* TRANG GIỚI THIỆU CÔNG TY */}
       <Panel title="Trang Giới thiệu công ty (/gioi-thieu)" desc="Toàn bộ nội dung trang: câu chuyện · tầm nhìn/sứ mệnh · giá trị cốt lõi · số liệu · thị trường · CTA">
         <AboutEditor value={about} onChange={(patch) => setAbout((a) => ({ ...a, ...patch }))} />
@@ -399,74 +378,7 @@ function SaveButton({ saving, onClick }: { saving: boolean; onClick: () => void 
 // Card + Field đã gom về @/components/Ui. `note=` cũ → `desc=` của Panel
 // (chữ to hơn một bậc, dễ đọc hơn, và giống mọi trang admin khác).
 
-// ── Trình sửa 1 Landing page (info + số liệu + khối + thư viện ảnh) ──
-function LandingEditor({ value: l, index, onChange, onDelete }: {
-  value: Landing; index: number; onChange: (patch: Partial<Landing>) => void; onDelete: () => void;
-}) {
-  const setStat = (i: number, patch: Partial<Landing["stats"][number]>) =>
-    onChange({ stats: l.stats.map((x, j) => (j === i ? { ...x, ...patch } : x)) });
-  const setBlock = (i: number, patch: Partial<Landing["blocks"][number]>) =>
-    onChange({ blocks: l.blocks.map((x, j) => (j === i ? { ...x, ...patch } : x)) });
-  const setGallery = (i: number, src: string) =>
-    onChange({ gallery: l.gallery.map((x, j) => (j === i ? src : x)) });
-
-  return (
-    <div className="rounded-xl border border-cvr-line p-4">
-      <div className="mb-3 flex items-center justify-between">
-        <p className="text-sm font-semibold text-cvr-ink">Landing {index + 1}{l.title ? ` — ${l.title}` : ""}</p>
-        <button type="button" onClick={onDelete} className="text-xs font-medium text-red-600 hover:underline">Xoá landing</button>
-      </div>
-
-      <ImageField value={l.image} ratio="Ngang 2:1 · 2000×1000" onChange={(url) => onChange({ image: url })} />
-
-      <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <Field label="Slug (đường dẫn)"><input value={l.slug} onChange={(e) => onChange({ slug: e.target.value })} placeholder="ve-coastal-land" className={inputCls} /></Field>
-        <Field label="Eyebrow (nhãn nhỏ)"><input value={l.eyebrow} onChange={(e) => onChange({ eyebrow: e.target.value })} className={inputCls} /></Field>
-        <Field label="Tiêu đề"><input value={l.title} onChange={(e) => onChange({ title: e.target.value })} className={inputCls} /></Field>
-        <Field label="Phụ đề"><input value={l.subtitle} onChange={(e) => onChange({ subtitle: e.target.value })} className={inputCls} /></Field>
-        <Field label="Nhãn nút CTA"><input value={l.ctaLabel} onChange={(e) => onChange({ ctaLabel: e.target.value })} className={inputCls} /></Field>
-        <Field label="Link nút CTA (href)"><input value={l.ctaHref} onChange={(e) => onChange({ ctaHref: e.target.value })} placeholder="/mua-ban" className={inputCls} /></Field>
-      </div>
-      <div className="mt-3"><Field label="Giới thiệu"><textarea value={l.intro} onChange={(e) => onChange({ intro: e.target.value })} rows={3} className={`${inputCls} h-auto py-2.5`} /></Field></div>
-
-      {/* Số liệu */}
-      <SubList title="Số liệu" onAdd={() => onChange({ stats: [...l.stats, { value: "", label: "" }] })} addLabel="+ Thêm số liệu">
-        {l.stats.map((s, i) => (
-          <div key={i} className="flex gap-2">
-            <input value={s.value} onChange={(e) => setStat(i, { value: e.target.value })} placeholder="2.500+" className={`${inputCls} flex-1`} />
-            <input value={s.label} onChange={(e) => setStat(i, { label: e.target.value })} placeholder="Tin đã kiểm duyệt" className={`${inputCls} flex-[2]`} />
-            <RemoveBtn onClick={() => onChange({ stats: l.stats.filter((_, j) => j !== i) })} />
-          </div>
-        ))}
-      </SubList>
-
-      {/* Khối nội dung */}
-      <SubList title="Khối nội dung" onAdd={() => onChange({ blocks: [...l.blocks, { title: "", desc: "" }] })} addLabel="+ Thêm khối">
-        {l.blocks.map((b, i) => (
-          <div key={i} className="flex gap-2">
-            <input value={b.title} onChange={(e) => setBlock(i, { title: e.target.value })} placeholder="Tiêu đề" className={`${inputCls} flex-1`} />
-            <input value={b.desc} onChange={(e) => setBlock(i, { desc: e.target.value })} placeholder="Mô tả" className={`${inputCls} flex-[2]`} />
-            <RemoveBtn onClick={() => onChange({ blocks: l.blocks.filter((_, j) => j !== i) })} />
-          </div>
-        ))}
-      </SubList>
-
-      {/* Thư viện ảnh */}
-      <SubList title="Thư viện ảnh (4:3)" onAdd={() => onChange({ gallery: [...l.gallery, ""] })} addLabel="+ Thêm ảnh">
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {l.gallery.map((src, i) => (
-            <div key={i}>
-              <ImageField value={src} ratio="4:3 · 1200×900" onChange={(url) => setGallery(i, url)} />
-              <button type="button" onClick={() => onChange({ gallery: l.gallery.filter((_, j) => j !== i) })} className="mt-1 text-xs font-medium text-red-600 hover:underline">Xoá ảnh</button>
-            </div>
-          ))}
-        </div>
-      </SubList>
-    </div>
-  );
-}
-
-// Khối con có tiêu đề + nút thêm dòng (dùng trong LandingEditor).
+// Khối con có tiêu đề + nút thêm dòng.
 function SubList({ title, addLabel, onAdd, children }: { title: string; addLabel: string; onAdd: () => void; children: React.ReactNode }) {
   return (
     <div className="mt-4">

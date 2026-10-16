@@ -21,6 +21,7 @@
 
 import { spawnSync } from "node:child_process";
 import path from "node:path";
+import fs from "node:fs";
 
 const GOC = path.resolve(import.meta.dirname, "..");
 
@@ -45,7 +46,7 @@ function tepVuaSua() {
   return (r.stdout || "")
     .split("\n")
     .map((d) => d.slice(3).trim().replace(/^"|"$/g, ""))
-    .filter((d) => /\.(ts|tsx)$/.test(d) && !d.startsWith("scripts/"));
+    .filter((d) => /\.(ts|tsx)$/.test(d) && !d.startsWith("scripts/") && fs.existsSync(path.join(GOC, d)));
 }
 
 const BUOC = [

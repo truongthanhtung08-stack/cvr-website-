@@ -3,6 +3,7 @@ import { preload } from "react-dom";
 import type { Metadata } from "next";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import TimKiemPhoBien from "@/components/TimKiemPhoBien";
 import { ListingListJsonLd } from "@/components/ListJsonLd";
 import ListingBrowser from "@/components/ListingBrowser";
 import { goiNheBaiViet } from "@/lib/goiNhe";
@@ -59,6 +60,7 @@ export default async function ChoThuePage() {
         {/* Đường bò tới trang khu vực cho thuê — cùng lý do như ở /mua-ban:
             trang /cho-thue/<tỉnh> chưa có liên kết nội bộ nào trỏ tới. */}
         <KhuVucLinks base="/cho-thue" demTheoTinh={demTheoTinh(tinThue)} />
+        <TimKiemPhoBien muc="thue" />
       </main>
       <Footer />
     </>

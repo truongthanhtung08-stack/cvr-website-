@@ -3,6 +3,7 @@ import { preload } from "react-dom";
 import type { Metadata } from "next";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import TimKiemPhoBien from "@/components/TimKiemPhoBien";
 import { ListingListJsonLd } from "@/components/ListJsonLd";
 import ListingBrowser from "@/components/ListingBrowser";
 import { goiNheBaiViet } from "@/lib/goiNhe";
@@ -65,6 +66,7 @@ export default async function MuaBanPage() {
             đến, dù nằm trong sitemap. Thiếu liên kết nội bộ là trang coi như
             không tồn tại. Đặt ở đây để Google (và khách) có lối sang. */}
         <KhuVucLinks base="/mua-ban" demTheoTinh={demTheoTinh(tinBan)} />
+        <TimKiemPhoBien muc="ban" />
       </main>
       <Footer />
     </>

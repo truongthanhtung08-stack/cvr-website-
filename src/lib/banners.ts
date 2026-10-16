@@ -33,7 +33,7 @@ export const homeBanners: Banner[] = [
     // cta: "Tìm hiểu thêm", // CTA TẮT cho banner công ty — bỏ // để bật
     showText: true,
     // ⏸️ TẠM ẨN LANDING PAGE (28.07): chưa có landing hoàn chỉnh → banner về trang giới thiệu.
-    //    Khi có landing hoàn chỉnh, đổi lại href: "/landing/ve-coastal-land"
+    //    (trang /landing đã bỏ 16/10/2026)
     href: "/gioi-thieu",
   },
   {
@@ -45,7 +45,7 @@ export const homeBanners: Banner[] = [
     // cta: "Xem dịch vụ", // CTA TẮT cho banner công ty — bỏ // để bật
     showText: true,
     // ⏸️ TẠM ẨN LANDING PAGE (28.07): chưa có landing hoàn chỉnh → banner về trang giới thiệu.
-    //    Khi có landing hoàn chỉnh, đổi lại href: "/landing/dich-vu"
+    //    (trang /landing đã bỏ 16/10/2026)
     href: "/gioi-thieu",
   },
   // ===== 1 BANNER DỰ ÁN (dòng 1 = TÊN dự án, dòng 2 = ĐỊA ĐIỂM) =====
