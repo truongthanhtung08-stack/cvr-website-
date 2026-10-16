@@ -11,16 +11,8 @@ import { smoothScrollTo } from "@/lib/scroll";
 import { useAutoSlide, useTamDung } from "@/lib/useAutoSlide";
 import TheTinMobile from "@/components/TheTinMobile";
 
-// ── Tab nhanh: kết hợp MỤC ĐÍCH (bán/thuê) × LOẠI SẢN PHẨM ────────────────────
-const isBan = (l: Listing) => (l.purpose ?? "ban") === "ban";
-type TypeTab = { label: string; match: (l: Listing) => boolean };
-const typeTabs: TypeTab[] = [
-  { label: "Tất cả",        match: () => true },
-  { label: "Bán đất",       match: (l) => isBan(l) && l.type.includes("Đất") },
-  { label: "Bán nhà riêng", match: (l) => isBan(l) && (l.type.includes("Nhà") || l.type.includes("Villa") || l.type.includes("Biệt thự") || l.type.includes("Shophouse")) },
-  { label: "Bán căn hộ",    match: (l) => isBan(l) && (l.type.includes("Căn hộ") || l.type.includes("Condotel")) },
-  { label: "Cho thuê",      match: (l) => (l.purpose ?? "ban") === "thue" },
-];
+// ── Tab nhanh: kết hợp MỤC ĐÍCH (bán/thuê) × LOẠI SẢN PHẨM — src/lib/tinNoiBat.ts ──
+import { typeTabs } from "@/lib/tinNoiBat";
 
 // ── Cấu trúc MỖI SLIDE: 2 hàng × 4 tin, thẻ CÙNG KÍCH THƯỚC (variant "tier") ──
 // Xếp theo cấp tin: Diamond → Gold → Silver → Basic (tierRank), cấp cao đứng trước.
@@ -112,7 +104,9 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
         <ListingBrowser
           heading={expandPurpose === "thue" ? "Bất động sản cho thuê" : "Bất động sản mua bán"}
           purpose={expandPurpose}
-          items={daHien.size ? items.filter((l) => !daHien.has(l.id)) : items}
+          // Danh sách đầy đủ nạp từ /api/danh-sach (trang chủ chỉ chở 20 tin mỗi tab — 16/10/2026)
+          nguon={expandPurpose}
+          boQuaId={daHien.size ? [...daHien] : undefined}
         />
       </section>
     );

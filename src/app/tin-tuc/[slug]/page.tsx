@@ -9,6 +9,7 @@ import { articleContent, pickRelated } from "@/lib/data";
 import { getArticle, getArticles } from "@/lib/contentDb";
 import RichContent from "@/components/RichContent";
 import { BreadcrumbJsonLd } from "@/components/Breadcrumb";
+import { tieuDeGoogle } from "@/lib/thang";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
@@ -16,7 +17,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!a) return { title: "Không tìm thấy", robots: { index: false, follow: true } };
   const desc = a.excerpt.slice(0, 160);
   return {
-    title: a.title,
+    title: tieuDeGoogle(a.title),
     description: desc,
     alternates: { canonical: `/tin-tuc/${slug}` },
     // Bài viết → Google hiểu là bài báo, đủ điều kiện hiện trong Google Discover

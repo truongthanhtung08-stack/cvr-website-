@@ -1,5 +1,5 @@
 import type { Listing } from "@/lib/data";
-import { findCategory, rentCategories, saleCategories, type Category } from "@/lib/categories";
+import { findCategory, rentCategories, rentNhaPseo, saleCategories, saleNhaPseo, type Category } from "@/lib/categories";
 import { khuVucList, slugKhuVuc, timKhuVuc, type KhuVuc } from "@/lib/khuVuc";
 import { normalizeVi, type Filters } from "@/lib/filters";
 
@@ -67,7 +67,7 @@ const GIA_DUOI: Record<Muc, GiaDuoi[]> = {
 };
 
 // Trục số phòng ngủ chỉ có nghĩa với căn hộ và nhà riêng
-const CO_PHONG_NGU = ["can-ho-chung-cu", "nha-rieng"];
+const CO_PHONG_NGU = ["can-ho-chung-cu", "nha-rieng", "nha"];
 // 1–4 phòng ngủ, khớp ĐÚNG số (cùng luật với bộ lọc phòng ngủ của web)
 const phongNguSlug = (n: number) => `${n}-phong-ngu`;
 const phongNguNhan = (n: number) => `${n} phòng ngủ`;
@@ -87,7 +87,9 @@ export type DieuKien = {
   giaDuoi?: GiaDuoi;
 };
 
-const danhMuc = (muc: Muc) => (muc === "thue" ? rentCategories : saleCategories);
+// Danh mục menu + nhóm "Nhà" chỉ dùng cho trang pSEO
+const danhMuc = (muc: Muc) => (muc === "thue" ? [...rentCategories, rentNhaPseo] : [...saleCategories, saleNhaPseo]);
+const tuKhoa = (c: Category) => c.tuKhoa ?? c.h1;
 const goc = (muc: Muc) => (muc === "thue" ? "/cho-thue" : "/mua-ban");
 
 export function khop(l: Listing, dk: DieuKien): boolean {
@@ -122,10 +124,10 @@ export function duongDan(dk: DieuKien): string {
 export function tieuDe(dk: DieuKien): string {
   const noi = dk.phuong ? `${dk.phuong}, ${dk.tinh.name}` : dk.tinh.name;
   if (dk.duong) return `Bán nhà đất đường ${dk.duong}, ${dk.tinh.name}`;
-  if (dk.huong) return dk.cat ? `${dk.cat.h1} hướng ${dk.huong} ${noi}` : `Nhà đất bán hướng ${dk.huong} ${noi}`;
+  if (dk.huong) return dk.cat ? `${tuKhoa(dk.cat)} hướng ${dk.huong} ${noi}` : `Bán nhà đất hướng ${dk.huong} ${noi}`;
   if (dk.cat) {
     return [
-      dk.cat.h1,
+      tuKhoa(dk.cat),
       dk.phongNgu ? phongNguNhan(dk.phongNgu) : "",
       noi,
       dk.giaDuoi ? dk.giaDuoi.nhan : "",
@@ -133,7 +135,7 @@ export function tieuDe(dk: DieuKien): string {
     ].filter(Boolean).join(" ");
   }
   if (dk.kiet) return `Bán nhà kiệt, hẻm ${noi}`;
-  return dk.muc === "thue" ? `Cho thuê nhà đất ${noi}` : `Nhà đất bán ${noi}`;
+  return dk.muc === "thue" ? `Cho thuê nhà đất ${noi}` : `Bán nhà đất ${noi}`;
 }
 
 export function moTa(dk: DieuKien): string {
@@ -223,7 +225,7 @@ export function giaiMaHuong(huongSlug: string, rest: string[]): DieuKien | null 
     return tinh ? { muc: "ban", tinh, huong } : null;
   }
   if (rest.length === 2) {
-    const cat = findCategory(saleCategories, rest[0]);
+    const cat = findCategory(danhMuc("ban"), rest[0]);
     const tinh = timKhuVuc(rest[1]);
     return cat && tinh ? { muc: "ban", tinh, cat, huong } : null;
   }
@@ -245,7 +247,7 @@ function cacDieuKienCuaTin(l: Listing): DieuKien[] {
     if (l.duong) ds.push({ muc, tinh, duong: l.duong });
     const huong = l.huong && HUONG.find((h) => cungTen(h, l.huong!));
     if (huong) ds.push({ muc, tinh, huong });
-    for (const cat of saleCategories.filter((c) => c.types.includes(l.type))) {
+    for (const cat of danhMuc("ban").filter((c) => c.types.includes(l.type))) {
       if (huong) ds.push({ muc, tinh, cat, huong });
       const pl = l.phapLy && PHAP_LY.find((p) => p.khop(l.phapLy!));
       if (pl) ds.push({ muc, tinh, cat, phapLy: pl });
@@ -397,7 +399,7 @@ export function lienKetCho(dk: DieuKien, tinConHan: Listing[]): NhomLienKet[] {
     ds.filter((p) => cungTinh(p) && (!dk.cat || p.dk.cat?.slug === dk.cat.slug) && (p.dk.cat || p.dk.phuong || p.dk.duong || p.dk.kiet)),
     (p) => tieuDe(p.dk),
   );
-  them("Theo loại hình", ds.filter((p) => cungTinh(p) && p.dk.cat && !p.dk.phuong && !p.dk.giaDuoi && !p.dk.phapLy && !p.dk.phongNgu && !p.dk.huong), (p) => p.dk.cat!.label);
+  them("Theo loại hình", ds.filter((p) => cungTinh(p) && p.dk.cat && !p.dk.phuong && !p.dk.giaDuoi && !p.dk.phapLy && !p.dk.phongNgu && !p.dk.huong), (p) => tieuDe(p.dk));
   them("Theo phường, xã", ds.filter((p) => cungTinh(p) && laLoai(p, dk.cat) && chiCo(p, "phuong")), (p) => p.dk.phuong!);
   if (dk.cat) {
     them("Theo mức giá", ds.filter((p) => cungTinh(p) && laLoai(p, dk.cat) && chiCo(p, "giaDuoi")), (p) => viHoa(p.dk.giaDuoi!.nhan));
@@ -418,4 +420,29 @@ export function lienKetLoaiHinh(muc: Muc, cat: Category, tinConHan: Listing[]): 
   const ds = trangIndex(tinConHan).filter((p) => p.dk.muc === muc && p.dk.cat?.slug === cat.slug && !p.dk.phuong && !p.dk.giaDuoi && !p.dk.phapLy && !p.dk.phongNgu && !p.dk.huong);
   const links = ds.sort((a, b) => b.n - a.n).map((p) => ({ href: p.path, nhan: tieuDe(p.dk) }));
   return links.length ? [{ tieuDe: "Theo tỉnh, thành", links }] : [];
+}
+
+// ── KHỐI SỐ LIỆU DƯỚI H1 (template 1 "Quick stats"; chủ dự án duyệt nguyên văn 16/10/2026) ──
+// "Giá rao: 2,1 – 6,5 tỷ · Diện tích: 60 – 120 m² · Cập nhật 16/10/2026" — tính từ chính các tin
+// đang hiện trên trang nên mỗi trang một số liệu riêng (khung chung, nội dung khác nhau).
+// KHÔNG in số tin (chốt 11/09). Thiếu số liệu thì bỏ phần đó; không có gì thì trả "".
+const soVi = (n: number) => (Math.round(n * 10) / 10).toLocaleString("vi-VN", { maximumFractionDigits: 1 });
+const giaNgan = (vnd: number) => (vnd >= 1e9 ? `${soVi(vnd / 1e9)} tỷ` : `${soVi(vnd / 1e6)} triệu`);
+function khoang(min: number, max: number, dinhDang: (n: number) => string): string {
+  const a = dinhDang(min), b = dinhDang(max);
+  if (a === b) return a;
+  // "2,1 – 6,5 tỷ": cùng đơn vị thì chỉ ghi đơn vị một lần
+  const da = a.split(" "), db = b.split(" ");
+  return da.length === 2 && db.length === 2 && da[1] === db[1] ? `${da[0]} – ${b}` : `${a} – ${b}`;
+}
+export function soLieuTrang(tin: Listing[], muc: Muc): string {
+  const thue = muc === "thue";
+  const gia = tin.map((l) => l.priceVnd ?? 0).filter((v) => v > 0);
+  const dt = tin.map((l) => l.areaM2 ?? 0).filter((v) => v > 0);
+  const moiNhat = Math.max(0, ...tin.map((l) => new Date(l.bumpedAt ?? l.postedAt ?? 0).getTime() || 0));
+  const phan: string[] = [];
+  if (gia.length) phan.push(`${thue ? "Giá thuê" : "Giá rao"}: ${khoang(Math.min(...gia), Math.max(...gia), giaNgan)}${thue ? "/tháng" : ""}`);
+  if (dt.length) phan.push(`Diện tích: ${khoang(Math.min(...dt), Math.max(...dt), (n) => `${soVi(n)} m²`)}`);
+  if (moiNhat) phan.push(`Cập nhật ${new Date(moiNhat).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", day: "2-digit", month: "2-digit", year: "numeric" })}`);
+  return phan.join(" · ");
 }

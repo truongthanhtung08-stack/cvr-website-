@@ -26,7 +26,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
 
   const staticRoutes: MetadataRoute.Sitemap = [
-    "", "/mua-ban", "/cho-thue", "/du-an", "/tin-tuc",
+    "", "/mua-ban", "/cho-thue", "/du-an", "/du-an/tra-cuu", "/tin-tuc",
     // KHÔNG đưa /so-sanh, /tin-luu, /tim-kiem vào sitemap: nội dung sinh theo
     // từng khách hoặc theo bộ lọc → Google coi là trang mỏng/trùng lặp.
     "/gioi-thieu", "/chuyen-gia", "/bao-gia-dang-tin", "/dang-tin",

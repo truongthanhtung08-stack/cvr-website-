@@ -26,6 +26,7 @@ import { getListings } from "@/lib/listingsDb";
 import { findCategory, projectCategories, type Category } from "@/lib/categories";
 import { normalizeVi } from "@/lib/filters";
 import { demTinTheoKhuVuc, moTaKhuVuc, tieuDeKhuVuc, timKhuVuc } from "@/lib/khuVuc";
+import { catMoTa, tieuDeGoogle } from "@/lib/thang";
 
 // Đường dẫn /du-an/<slug> phục vụ HAI loại trang:
 //   · slug là DANH MỤC loại hình (can-ho-chung-cu, khu-do-thi-moi…) → trang danh sách
@@ -75,8 +76,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!p) return { title: "Không tìm thấy dự án", robots: { index: false, follow: true } };
   const desc = `Dự án ${p.name} tại ${p.location}. ${p.type}, ${p.status}. Giá từ ${p.priceFrom} — tiến độ, mặt bằng, tiện ích đầy đủ tại Coastal Land.`;
   return {
-    title: `${p.name} — ${p.priceFrom}`,
-    description: desc,
+    title: tieuDeGoogle(`${p.name} — ${p.priceFrom}`),
+    description: catMoTa(desc),
     alternates: { canonical: `/du-an/${p.slug}` },
     openGraph: {
       title: `${p.name} — ${p.priceFrom}`,
@@ -121,7 +122,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
       <>
         <Header />
         <main className="flex-1 bg-white">
-          <Breadcrumb items={[{ name: "Dự án", href: "/du-an" }, { name: cat.label, href: `/du-an/${cat.slug}` }]} />
+          <Breadcrumb items={[{ name: "Tra cứu dự án", href: "/du-an/tra-cuu" }, { name: cat.label, href: `/du-an/${cat.slug}` }]} />
           <div className="mx-auto max-w-7xl px-4 pb-footer sm:px-6 lg:px-8">
             <h1 className="mb-1 mt-3 text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">{cat.h1}</h1>
             <p className="mb-4 text-sm text-cvr-muted">{cat.desc}</p>
@@ -153,7 +154,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
         <ProjectListJsonLd items={items} heading={tieuDeKhuVuc("duan", kv.name)} path={`/du-an/${kv.slug}`} />
         <Header />
         <main className="flex-1 bg-white">
-          <Breadcrumb items={[{ name: "Dự án", href: "/du-an" }, { name: kv.name, href: `/du-an/${kv.slug}` }]} />
+          <Breadcrumb items={[{ name: "Tra cứu dự án", href: "/du-an/tra-cuu" }, { name: kv.name, href: `/du-an/${kv.slug}` }]} />
           <div className="mx-auto max-w-7xl px-4 pb-footer sm:px-6 lg:px-8">
             <h1 className="mb-1 mt-3 text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">
               Dự án bất động sản tại {kv.name}

@@ -47,10 +47,10 @@ export const khuVucTrongDiem: string[] = [
 // Viết đúng cách người ta gõ vào Google, mỗi trang một câu riêng (trùng lặp
 // tiêu đề giữa các trang là lỗi khiến Google chỉ chọn một trang để hiện).
 export function tieuDeKhuVuc(muc: "ban" | "thue" | "duan", ten: string): string {
-  // Kiểu tiêu đề chủ dự án chốt 15/10/2026: "Nhà đất bán Đà Nẵng tháng 10/2026" (thay đuôi "— giá mới nhất")
+  // Tiêu đề theo chữ người gõ (chủ dự án chốt 16/10/2026): "Bán nhà đất Đà Nẵng tháng 10/2026"
   if (muc === "thue") return `Cho thuê nhà đất ${ten} ${thangHienTai()}`;
   if (muc === "duan") return `Dự án bất động sản tại ${ten}`;
-  return `Nhà đất bán ${ten} ${thangHienTai()}`;
+  return `Bán nhà đất ${ten} ${thangHienTai()}`;
 }
 
 export function moTaKhuVuc(muc: "ban" | "thue" | "duan", ten: string, soTin: number): string {

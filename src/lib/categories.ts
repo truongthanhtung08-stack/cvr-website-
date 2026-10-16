@@ -20,6 +20,7 @@ export type Category = {
   slug: string;
   label: string;      // nhãn trong menu
   h1: string;         // tiêu đề H1 trên trang danh mục
+  tuKhoa?: string;    // chữ người tìm gõ (bộ từ khoá 16/10/2026) — dùng cho tiêu đề trang pSEO; trống = h1
   title: string;      // thẻ <title> cho Google
   desc: string;       // thẻ description
   types: string[];    // các loại hình trong filters.ts thuộc danh mục này
@@ -30,7 +31,7 @@ export type Category = {
 export const saleCategories: Category[] = [
   {
     slug: "can-ho-chung-cu", label: "Căn hộ chung cư",
-    h1: "Bán căn hộ chung cư", title: `Bán căn hộ chung cư`,
+    h1: "Bán căn hộ chung cư", tuKhoa: "Bán căn hộ", title: `Bán căn hộ chung cư`,
     desc: `Mua bán căn hộ chung cư — giá thật, hình thật, lọc theo khu vực, diện tích và mức giá.`,
     types: ["Căn hộ", "Chung cư"],
   },
@@ -42,7 +43,7 @@ export const saleCategories: Category[] = [
   },
   {
     slug: "biet-thu-lien-ke", label: "Nhà biệt thự, liền kề",
-    h1: "Bán biệt thự, nhà liền kề", title: `Bán biệt thự, nhà liền kề`,
+    h1: "Bán biệt thự, nhà liền kề", tuKhoa: "Bán biệt thự", title: `Bán biệt thự, nhà liền kề`,
     desc: `Mua bán biệt thự, nhà liền kề — dự án và nhà lẻ, đầy đủ pháp lý.`,
     types: ["Nhà biệt thự / Liền kề"],
   },
@@ -60,7 +61,7 @@ export const saleCategories: Category[] = [
   },
   {
     slug: "dat-nen-du-an", label: "Đất nền dự án",
-    h1: "Bán đất nền dự án", title: `Bán đất nền dự án`,
+    h1: "Bán đất nền dự án", tuKhoa: "Bán đất nền", title: `Bán đất nền dự án`,
     desc: `Mua bán đất nền dự án — pháp lý rõ ràng, giá theo từng phân khu.`,
     types: ["Đất nền / Đất nền dự án"],
   },
@@ -87,7 +88,7 @@ export const saleCategories: Category[] = [
   },
   {
     slug: "kho-nha-xuong", label: "Kho, nhà xưởng",
-    h1: "Bán kho, nhà xưởng", title: `Bán kho, nhà xưởng, đất công nghiệp`,
+    h1: "Bán kho, nhà xưởng", tuKhoa: "Bán kho xưởng", title: `Bán kho, nhà xưởng, đất công nghiệp`,
     desc: `Mua bán kho bãi, nhà xưởng và đất công nghiệp.`,
     types: ["Kho / Nhà xưởng", "Đất công nghiệp"],
   },
@@ -103,7 +104,7 @@ export const saleCategories: Category[] = [
 export const rentCategories: Category[] = [
   {
     slug: "can-ho-chung-cu", label: "Căn hộ chung cư",
-    h1: "Cho thuê căn hộ chung cư", title: `Cho thuê căn hộ chung cư`,
+    h1: "Cho thuê căn hộ chung cư", tuKhoa: "Cho thuê căn hộ", title: `Cho thuê căn hộ chung cư`,
     desc: `Cho thuê căn hộ chung cư — giá thuê theo tháng, đầy đủ nội thất, lọc theo khu vực.`,
     types: ["Căn hộ", "Chung cư", "Căn hộ dịch vụ"],
   },
@@ -115,7 +116,7 @@ export const rentCategories: Category[] = [
   },
   {
     slug: "biet-thu-lien-ke", label: "Nhà biệt thự, liền kề",
-    h1: "Cho thuê biệt thự, nhà liền kề", title: `Cho thuê biệt thự, nhà liền kề`,
+    h1: "Cho thuê biệt thự, nhà liền kề", tuKhoa: "Cho thuê biệt thự", title: `Cho thuê biệt thự, nhà liền kề`,
     desc: `Cho thuê biệt thự, nhà liền kề — ở dài hạn và lưu trú.`,
     types: ["Biệt thự / Liền kề"],
   },
@@ -133,7 +134,7 @@ export const rentCategories: Category[] = [
   },
   {
     slug: "phong-tro", label: "Nhà trọ, phòng trọ",
-    h1: "Cho thuê nhà trọ, phòng trọ", title: `Cho thuê phòng trọ, nhà trọ`,
+    h1: "Cho thuê nhà trọ, phòng trọ", tuKhoa: "Cho thuê phòng trọ", title: `Cho thuê phòng trọ, nhà trọ`,
     desc: `Cho thuê phòng trọ, nhà trọ giá rẻ — gần trường học, khu công nghiệp.`,
     types: ["Nhà trọ / Phòng trọ"],
   },
@@ -145,13 +146,13 @@ export const rentCategories: Category[] = [
   },
   {
     slug: "cua-hang-ki-ot", label: "Cửa hàng, ki ốt",
-    h1: "Cho thuê cửa hàng, ki ốt", title: `Cho thuê mặt bằng, cửa hàng, ki ốt`,
+    h1: "Cho thuê cửa hàng, ki ốt", tuKhoa: "Cho thuê mặt bằng", title: `Cho thuê mặt bằng, cửa hàng, ki ốt`,
     desc: `Cho thuê mặt bằng bán lẻ, cửa hàng, ki ốt.`,
     types: ["Mặt bằng / Cửa hàng bán lẻ"],
   },
   {
     slug: "kho-nha-xuong", label: "Kho, nhà xưởng, đất",
-    h1: "Cho thuê kho, nhà xưởng, đất", title: `Cho thuê kho bãi, nhà xưởng`,
+    h1: "Cho thuê kho, nhà xưởng, đất", tuKhoa: "Cho thuê kho xưởng", title: `Cho thuê kho bãi, nhà xưởng`,
     desc: `Cho thuê kho bãi, nhà xưởng và đất.`,
     types: ["Thuê đất / Nhà xưởng / Kho bãi"],
   },
@@ -162,6 +163,18 @@ export const rentCategories: Category[] = [
     types: ["Bất động sản khác"],
   },
 ];
+
+// ── NHÓM "NHÀ" CHỈ DÙNG CHO TRANG pSEO (không vào menu) ─────────────────────
+// "bán nhà <nơi>" / "cho thuê nhà <nơi>" là nhóm từ khoá đông người gõ nhất (docs/BO-TU-KHOA-PSEO.md),
+// gồm mọi loại nhà. Trang /mua-ban/nha/<tỉnh>…; cổng chống trùng tự giữ một trong "nhà" / "nhà riêng".
+export const saleNhaPseo: Category = {
+  slug: "nha", label: "Nhà", h1: "Bán nhà", title: "Bán nhà", desc: "Mua bán nhà",
+  types: ["Nhà riêng", "Nhà mặt phố", "Nhà biệt thự / Liền kề", "Shophouse / Nhà phố thương mại"],
+};
+export const rentNhaPseo: Category = {
+  slug: "nha", label: "Nhà", h1: "Cho thuê nhà", title: "Cho thuê nhà", desc: "Cho thuê nhà",
+  types: ["Nhà riêng", "Nhà mặt phố", "Nhà phố thương mại", "Biệt thự / Liền kề"],
+};
 
 // ── DỰ ÁN (khớp menu Header) — lọc theo trường `type` của dự án ─────────────
 export const projectCategories: Category[] = [

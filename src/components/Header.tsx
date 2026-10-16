@@ -5,7 +5,7 @@ import Link from "next/link";
 import BrandLogo from "@/components/BrandLogo";
 import BackBar from "@/components/BackBar";
 import { resetHomeIfOnHome } from "@/components/HomeExpand";
-import { utilityTools } from "@/lib/packages";
+import { trangTienIchDat, utilityTools } from "@/lib/packages";
 import { projectCategories, rentCategories, saleCategories } from "@/lib/categories";
 import { useSaved } from "@/lib/useSaved";
 import { useAuth, displayName, anhDaiDien, signOut } from "@/lib/useAuth";
@@ -33,7 +33,12 @@ const ICONS = {
 // không bao giờ trỏ vào đường dẫn không có trang (trước đây 29 link trả 404).
 const loaiHinhBan: NavChild[] = saleCategories.map((c) => ({ label: c.label, href: `/mua-ban/${c.slug}` }));
 const loaiHinhThue: NavChild[] = rentCategories.map((c) => ({ label: c.label, href: `/cho-thue/${c.slug}` }));
-const loaiHinhDuAn: NavChild[] = projectCategories.map((c) => ({ label: c.label, href: `/du-an/${c.slug}` }));
+// MENU DỰ ÁN (chủ dự án 16/10/2026): Dự án nổi bật (có gói) tách khỏi Tra cứu dự án toàn quốc.
+const loaiHinhDuAn: NavChild[] = [
+  { label: "Dự án nổi bật", href: "/du-an" },
+  { label: "Tra cứu dự án", href: "/du-an/tra-cuu" },
+  { label: "Theo loại hình", children: projectCategories.map((c) => ({ label: c.label, href: `/du-an/${c.slug}` })) },
+];
 
 const danhMucChuyenGia: NavChild[] = [
   { label: "Danh bạ chuyên gia", href: "/chuyen-gia" },
@@ -65,8 +70,16 @@ const danhMucBaoGia: NavChild[] = [
     ],
   },
 ];
-// MENU TIỆN ÍCH — chỉ công cụ (không còn giá).
-const danhMucTienIch: NavChild[] = utilityTools.map((item) => ({ label: item.label, href: `/tien-ich/${item.slug}` }));
+// MENU TIỆN ÍCH — xếp theo chức năng (chủ dự án 16/10/2026). Công cụ chưa có nội dung không hiện
+// (trangTienIchDat) — có dữ liệu thì tự hiện lại; nhóm không còn mục nào thì ẩn cả nhóm.
+const congCu = (slug: string): NavChild[] =>
+  utilityTools.filter((t) => t.slug === slug && trangTienIchDat(t)).map((t) => ({ label: t.label, href: `/tien-ich/${t.slug}` }));
+const danhMucTienIch: NavChild[] = [
+  { label: "Công cụ tính", children: [...congCu("tinh-lai-suat-vay"), ...congCu("so-sanh-nha-dat")] },
+  { label: "Tra cứu", children: [{ label: "Tra cứu dự án", href: "/du-an/tra-cuu" }, ...congCu("gia-nha-dat"), ...congCu("thu-vien-phap-luat")] },
+  { label: "Thị trường", children: congCu("bao-cao-thi-truong-bds") },
+  { label: "Phong thủy", children: congCu("xem-phong-thuy") },
+].filter((g) => g.children.length > 0);
 
 // Thứ tự menu (chủ dự án 08/10/2026): Mua bán · Cho thuê · Dự án · Tin tức · Chuyên gia · Báo giá · Tiện ích
 const navItems: NavItem[] = [
@@ -76,7 +89,7 @@ const navItems: NavItem[] = [
   { label: "Tin tức", href: "/tin-tuc", icon: ICONS.tinTuc },
   { label: "Chuyên gia", href: "/chuyen-gia", children: danhMucChuyenGia, icon: ICONS.chuyenGia },
   { label: "Báo giá", href: "/bao-gia-dang-tin", children: danhMucBaoGia, icon: ICONS.baoGia },
-  { label: "Tiện ích", href: `/tien-ich/${utilityTools[0].slug}`, children: danhMucTienIch, icon: ICONS.tienIch },
+  { label: "Tiện ích", href: "/tien-ich/tinh-lai-suat-vay", children: danhMucTienIch, icon: ICONS.tienIch },
 ];
 
 const chevronDown = (
@@ -283,6 +296,7 @@ function MobileMenu({
 
   // Đóng menu thì gập luôn accordion để lần mở sau sạch sẽ
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!open) setExpanded(null);
   }, [open]);
 

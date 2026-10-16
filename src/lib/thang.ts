@@ -13,3 +13,11 @@ export const boDuoiThang = (s: string) => s.replace(/\s+tháng \d{1,2}\/\d{4}$/,
 // giữ trọn cụm từ khoá — Google cắt tiêu đề dài, phần bị cắt là phần từ khoá ở cuối.
 export const tieuDeGoogle = (t: string): string | { absolute: string } =>
   `${t} | COASTAL LAND`.length > 65 ? { absolute: t } : t;
+
+// Mô tả Google dài quá 155 ký tự → cắt tại ranh giới từ (không viết câu mới, chỉ cắt bớt).
+export const catMoTa = (s: string, toiDa = 155): string => {
+  const t = s.replace(/\s+/g, " ").trim();
+  if (t.length <= toiDa) return t;
+  const cat = t.slice(0, toiDa - 1);
+  return `${cat.slice(0, cat.lastIndexOf(" ")).replace(/[\s,.;:—-]+$/, "")}…`;
+};

@@ -52,12 +52,15 @@ export default function ProjectsBrowser({
   articles,
   hero,
   tieuDePhu = false,
+  tieuDe = "Dự án nổi bật",
 }: {
   projects: Project[];
   articles: Article[];
   /** Trang cha đã có <h1> riêng (trang danh mục / khu vực dự án) → tiêu đề ở đây là h2,
    *  mỗi trang chỉ MỘT thẻ h1 (SEO, rà 08/10/2026). */
   tieuDePhu?: boolean;
+  /** Tiêu đề khối danh sách — /du-an "Dự án nổi bật", /du-an/tra-cuu "Tra cứu dự án…" */
+  tieuDe?: string;
   // Banner Hero — nhận từ trang cha để đặt ĐÚNG thứ tự: mobile nằm DƯỚI thanh lọc,
   // desktop nằm TRÊN (dùng CSS order, không đổi cấu trúc dữ liệu).
   hero?: React.ReactNode;
@@ -74,6 +77,7 @@ export default function ProjectsBrowser({
     const tinh = sp.get("tinh") ?? "";
     const loai = sp.get("loai") ?? "";     // loại hình chọn ở trang chủ
     const tt = sp.get("trangthai") ?? "";  // tình trạng dự án
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (tuKhoa) setQ(tuKhoa);
     if (tinh) setProvince(tinh);
     // Loại hình ở trang chủ là danh mục của TIN (Căn hộ, Đất nền, Biệt thự…) —
@@ -104,6 +108,7 @@ export default function ProjectsBrowser({
   // Hệ đơn vị hành chính Cũ/Mới — bật/tắt như bên Mua bán (nhớ chung qua localStorage).
   const [geoMode, setGeoMode] = useState<GeoMode>("moi");
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     try { const m = localStorage.getItem(GEO_MODE_KEY); if (m === "moi" || m === "cu") setGeoMode(m); } catch { /* noop */ }
   }, []);
 
@@ -196,6 +201,7 @@ export default function ProjectsBrowser({
   const [page, setPage] = useState(1);
   // CHẾ ĐỘ BẢN ĐỒ cho tab Dự án — giống Mua bán / Cho thuê, marker là TÊN DỰ ÁN.
   const [mapMode, setMapMode] = useState(false);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setPage(1); }, [q, status, province, type]); // đổi lọc → về trang 1
   const totalPages = Math.max(1, Math.ceil(visible.length / PER_PAGE));
   const current = Math.min(page, totalPages);
@@ -491,10 +497,10 @@ export default function ProjectsBrowser({
       <div id="ket-qua" className="order-3 scroll-mt-20 sm:scroll-mt-24">
       {/* Tiêu đề + bộ đếm nhảy theo bộ lọc (kiểu Batdongsan) */}
       {tieuDePhu ? (
-        <h2 className="mt-3 text-2xl font-semibold tracking-tight text-cvr-ink sm:mt-6 sm:text-3xl">Dự án nổi bật</h2>
+        <h2 className="mt-3 text-2xl font-semibold tracking-tight text-cvr-ink sm:mt-6 sm:text-3xl">{tieuDe}</h2>
       ) : (
         <h1 className="mt-3 text-2xl font-semibold tracking-tight text-cvr-ink sm:mt-6 sm:text-3xl">
-          Dự án nổi bật
+          {tieuDe}
         </h1>
       )}
       <p className="mt-1.5 text-sm text-cvr-muted">

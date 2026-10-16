@@ -44,6 +44,8 @@ export default function ListingBrowser({
   choTai,
   initialFilters,
   chiId,
+  boQuaId,
+  soLieu,
   articles = [],
   relevance = false,
   nested = false,
@@ -85,6 +87,10 @@ export default function ListingBrowser({
   // Khối "Tin tương tự" (trang tin): dữ liệu nạp từ `nguon`, chỉ giữ ĐÚNG các tin này theo ĐÚNG thứ tự
   // liên quan máy chủ đã xếp — để HTML trang tin không phải chở dữ liệu đầy đủ của hàng trăm tin.
   chiId?: string[];
+  // Trang chủ "Xem thêm": bỏ các tin đã hiện ở khối trên (danh sách bắt đầu từ tin tiếp theo)
+  boQuaId?: string[];
+  // Trang pSEO: dòng số liệu riêng của trang dưới H1 (giá rao · diện tích · cập nhật) — thay câu chung
+  soLieu?: string;
 }) {
   const params = useSearchParams();
 
@@ -100,11 +106,12 @@ export default function ListingBrowser({
   }, [nguon]);
   const items = useMemo(() => {
     if (!nguon) return itemsTuMayChu ?? featuredListings;
-    const tin = napDuoc?.tin ?? [];
+    const bo = new Set(boQuaId ?? []);
+    const tin = (napDuoc?.tin ?? []).filter((l) => !bo.has(l.id));
     if (!chiId) return tin;
     const theoId = new Map(tin.map((l) => [l.id, l]));
     return chiId.map((id) => theoId.get(id)).filter((l): l is Listing => Boolean(l));
-  }, [nguon, napDuoc, chiId, itemsTuMayChu]);
+  }, [nguon, napDuoc, chiId, boQuaId, itemsTuMayChu]);
   const hetHanNguon = useMemo(() => (nguon ? napDuoc?.hetHan ?? [] : hetHanTuMayChu), [nguon, napDuoc, hetHanTuMayChu]);
 
   const [hetHanNap, setHetHanNap] = useState<Listing[]>([]);
@@ -266,9 +273,13 @@ export default function ListingBrowser({
           {/* KHÔNG in số lượng tin ra đây — web đang ít tin, nói ra là tự phơi
               điểm yếu với khách (chủ dự án chốt 11/9/2026). Câu này chỉ còn nói
               phạm vi hoạt động. Ẩn trên mobile cho gọn như trước. */}
-          <p className="mt-1 hidden text-sm text-cvr-muted sm:block">
-            {active ? "Bất động sản phù hợp." : "Tin mua bán, cho thuê nhà đất mới nhất."}
-          </p>
+          {soLieu ? (
+            <p className="mt-1 text-sm text-cvr-muted">{soLieu}</p>
+          ) : (
+            <p className="mt-1 hidden text-sm text-cvr-muted sm:block">
+              {active ? "Bất động sản phù hợp." : "Tin mua bán, cho thuê nhà đất mới nhất."}
+            </p>
+          )}
         </div>
         <div className="flex flex-1 flex-wrap items-center justify-end gap-3">
               {/* XEM BẢN ĐỒ — LỐI VÀO DUY NHẤT, hiện trên mọi màn hình. Nút cũ

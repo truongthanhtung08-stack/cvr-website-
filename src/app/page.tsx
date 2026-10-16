@@ -12,6 +12,7 @@ import { AdBannerAll } from "@/components/HomeAdBanners";
 import Footer from "@/components/Footer";
 import { HomeExpandProvider, HomeCollapsible } from "@/components/HomeExpand";
 import { getListingsThe } from "@/lib/listingsDb";
+import { chonTinTrangChu } from "@/lib/tinNoiBat";
 import { getArticles, getProjects } from "@/lib/contentDb";
 import { getHeroBanners, getHomeAd, getHomeAreas, getFeaturedArticleSlug } from "@/lib/siteContent";
 
@@ -55,7 +56,8 @@ export default async function Home() {
 
           {/* 4 khối có nút "Xem thêm" — mỗi khối tự ẩn khi khối khác đang mở.
               Không bọc Reveal: Reveal ẩn/hiện theo cuộn sẽ đá nhau với cơ chế mở rộng. */}
-          <FeaturedListings items={listings} />
+          {/* Chỉ chở đúng số tin khối này hiện (20 tin mỗi tab) — 16/10/2026, trang chủ 632KB */}
+          <FeaturedListings items={chonTinTrangChu(listings)} />
           <ProjectsSection projects={projects} articles={articles} />
           {/* "Dành riêng cho bạn" TẠM ẨN theo yêu cầu — mở lại: bỏ comment import ForYou + khối này.
           <ForYou /> */}

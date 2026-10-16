@@ -36,7 +36,7 @@ const conHan = (x) => x.status === "approved" && (!x.tier_expires_at || new Date
 const soAnh = (x) => (x.images || []).filter((s) => !/youtu|\.mp4|\.mov|\.webm/i.test(s)).length;
 const link = (x) => `https://coastalland.vn/bat-dong-san/${x.id}`;
 const md = [];
-md.push(`# VIỆC DỮ LIỆU TUẦN — ${ngay}`, "", "Chuẩn: docs/CHUAN-TIN-DANG-SEO.md · Quy trình: docs/QUY-TRINH-NHAP-LIEU-SEO.md", "");
+md.push(`# VIỆC DỮ LIỆU TUẦN — ${ngay}`, "", "Đọc trước: docs/COWORK-YEU-CAU-TONG-HOP.md (mọi yêu cầu lọc, sửa, nạp dữ liệu)", "");
 
 // 1) Tin còn hạn chưa đạt chuẩn
 const chuaDat = tin.filter(conHan).map((x) => {
@@ -88,8 +88,36 @@ const q = (s) => `"${String(s).replace(/"/g, '""')}"`;
 fs.writeFileSync(path.join(GOC, `docs/du-an-can-nap-${ngay}.csv`), "﻿" + [COT, ...dsNap.map((d) => [q(d.ten), "", "", "", "", q(d.tinh), q(d.phuong), "", "", "", "", "", "", "", "", "", "", "", ""].join(","))].join("\n") + "\n");
 
 // 6) Lịch sử giá
-md.push("", "## 6. Lịch sử giá", "", "Admin → Chỉ số giá → **Tải danh sách còn thiếu** → nhập theo docs/YEU-CAU-COWORK-LICH-SU-GIA.md (đủ 5 quý liền mới hiện).");
+md.push("", "## 6. Lịch sử giá", "", "Admin → Chỉ số giá → **Tải danh sách còn thiếu** → nhập theo YEU-CAU-COWORK-LICH-SU-GIA.md ở thư mục gốc (theo quý, đủ 5 quý liền mới hiện).");
+
+// 7) NHÓM SẮP MỞ TRANG GOOGLE (16/10/2026): trang pSEO chỉ được index khi có ≥ 3 tin ĐẠT CHUẨN còn hạn
+// (≥ 3 ảnh, mô tả ≥ 100 ký tự — src/lib/pseo.ts). Liệt kê nhóm đang có 1–2 tin đạt chuẩn → Cowork biết
+// đúng cần nạp thêm tin gì, ở đâu. Danh mục đọc thẳng từ src/lib/categories.ts (một nguồn với web).
+const nguonDm = fs.readFileSync(path.join(GOC, "src/lib/categories.ts"), "utf8");
+const docDm = (ten) => {
+  const doan = nguonDm.split(`export const ${ten}`)[1]?.split("];")[0] ?? "";
+  return [...doan.matchAll(/h1: "([^"]+)"(?:, tuKhoa: "([^"]+)")?[\s\S]*?types: \[([^\]]*)\]/g)]
+    .map((m) => ({ ten: m[2] || m[1], types: [...m[3].matchAll(/"([^"]+)"/g)].map((t) => t[1]) }));
+};
+const DM = { ban: docDm("saleCategories"), thue: docDm("rentCategories") };
+DM.ban.push({ ten: "Bán nhà", types: ["Nhà riêng", "Nhà mặt phố", "Nhà biệt thự / Liền kề", "Shophouse / Nhà phố thương mại"] });
+DM.thue.push({ ten: "Cho thuê nhà", types: ["Nhà riêng", "Nhà mặt phố", "Nhà phố thương mại", "Biệt thự / Liền kề"] });
+const datChuan = (x) => conHan(x) && soAnh(x) >= 3 && (x.description || "").trim().length >= 100;
+const demNhom = {};
+for (const x of tin.filter(datChuan)) {
+  const muc = x.purpose === "thue" ? "thue" : "ban";
+  for (const c of DM[muc].filter((c) => c.types.includes(x.type))) {
+    const tinhK = `${c.ten} ${x.province}`;
+    (demNhom[tinhK] ??= { ten: tinhK, n: 0 }).n++;
+    if (x.ward) { const k = `${c.ten} ${x.ward}, ${x.province}`; (demNhom[k] ??= { ten: k, n: 0 }).n++; }
+  }
+}
+const sapMo = Object.values(demNhom).filter((g) => g.n > 0 && g.n < 3).sort((a, b) => b.n - a.n || a.ten.localeCompare(b.ten, "vi"));
+md.push("", `## 7. Nhóm sắp có trang trên Google — còn thiếu tin đạt chuẩn (${sapMo.length} nhóm)`, "",
+  "Mỗi nhóm cần **≥ 3 tin đạt chuẩn còn hạn** (≥ 3 ảnh thật, mô tả ≥ 100 ký tự) mới có trang riêng trên Google. Ưu tiên nhóm thiếu 1 tin.", "",
+  "| Trang sẽ mở | Đang có | Cần thêm |", "|---|---|---|");
+for (const g of sapMo) md.push(`| ${g.ten} | ${g.n} | ${3 - g.n} tin |`);
 
 fs.writeFileSync(path.join(GOC, `docs/viec-du-lieu-${ngay}.md`), md.join("\n") + "\n");
 console.log(`→ docs/viec-du-lieu-${ngay}.md · docs/du-an-can-nap-${ngay}.csv`);
-console.log(`tin cần bổ sung ${chuaDat.length} · nhóm trùng ${trung.length} · số nhiều tên ${nhieuTen.length} · tin lệch tài khoản ${lech.length} · dự án cần nạp ${dsNap.length}`);
+console.log(`tin cần bổ sung ${chuaDat.length} · nhóm trùng ${trung.length} · số nhiều tên ${nhieuTen.length} · tin lệch tài khoản ${lech.length} · dự án cần nạp ${dsNap.length} · nhóm sắp mở trang ${sapMo.length}`);

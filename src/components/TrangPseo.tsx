@@ -10,7 +10,7 @@ import { ListingListJsonLd } from "@/components/ListJsonLd";
 import { goiNheTin, goiNheBaiViet } from "@/lib/goiNhe";
 import { getListings, getListingsHetHan } from "@/lib/listingsDb";
 import { getArticles } from "@/lib/contentDb";
-import { boLocCua, duongDan, duongDanPhanCap, khop, lienKetCho, moTa, tatCaTrang, thangHienTai, tieuDe, type DieuKien } from "@/lib/pseo";
+import { boLocCua, duongDan, duongDanPhanCap, khop, lienKetCho, moTa, soLieuTrang, tatCaTrang, thangHienTai, tieuDe, type DieuKien } from "@/lib/pseo";
 import { preload } from "react-dom";
 import { tieuDeGoogle } from "@/lib/thang";
 
@@ -47,7 +47,8 @@ export default async function TrangPseo({ dk }: { dk: DieuKien }) {
   // lọc được như trang thường. Trục đường / kiệt: không có ô lọc → nhận đúng danh sách tin khớp.
   const boLoc = boLocCua(dk);
   if (boLoc) preload(`/api/danh-sach/${dk.muc}`, { as: "fetch", crossOrigin: "anonymous" });
-  const khung = <KhungChoDanhMuc heading={heading} moTa={moTa(dk)} items={[...items, ...itemsHetHan]} />;
+  const soLieu = soLieuTrang(items, dk.muc);
+  const khung = <KhungChoDanhMuc heading={heading} moTa={[soLieu, moTa(dk)].filter(Boolean).join(" — ")} items={[...items, ...itemsHetHan]} />;
   return (
     <>
       <ListingListJsonLd items={items} heading={heading} path={path} />
@@ -56,11 +57,12 @@ export default async function TrangPseo({ dk }: { dk: DieuKien }) {
         <Breadcrumb items={duongDanPhanCap(dk)} />
         <Suspense fallback={khung}>
           {boLoc ? (
-            <ListingBrowser purpose={dk.muc} heading={heading} nguon={dk.muc} choTai={khung} initialFilters={boLoc} articles={goiNheBaiViet(articles)} />
+            <ListingBrowser purpose={dk.muc} heading={heading} soLieu={soLieu} nguon={dk.muc} choTai={khung} initialFilters={boLoc} articles={goiNheBaiViet(articles)} />
           ) : (
             <ListingBrowser
               purpose={dk.muc}
               heading={heading}
+              soLieu={soLieu}
               items={goiNheTin(items)}
               itemsHetHan={goiNheTin(itemsHetHan)}
               articles={goiNheBaiViet(articles)}

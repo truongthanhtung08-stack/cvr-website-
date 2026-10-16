@@ -37,6 +37,7 @@ import { tierFromBadge, getTier } from "@/lib/packages";
 import { chuanHoaSdt } from "@/lib/phone";
 import MoTaThuGon from "@/components/MoTaThuGon";
 import RichContent from "@/components/RichContent";
+import { tieuDeGoogle } from "@/lib/thang";
 
 // TRANG QUAN TRỌNG NHẤT CHO SEO (500 tin). Nay đọc tin qua cache theo thẻ "listings"
 // (xem listingsDb.ts) nên KHÔNG còn cần force-dynamic: trang được dựng sẵn theo yêu
@@ -181,7 +182,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   // Tin hết hạn VẪN cho Google lập chỉ mục (chủ dự án 08/10/2026: web còn ít tin, tin hết
   // hạn vẫn hiện và cộng dồn mọi thứ từ Google). Liên hệ đã ẩn ở thân trang.
   return {
-    title: tieuDe,
+    title: tieuDeGoogle(tieuDe),
     description: desc,
     alternates: { canonical: `/bat-dong-san/${banGoc?.id ?? id}` },
     // CHƯA ĐẠT CHUẨN THÌ KHÔNG CHO GOOGLE LẬP CHỈ MỤC (chủ dự án 15/10/2026: "không đủ chất lượng
