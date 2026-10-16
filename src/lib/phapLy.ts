@@ -15,7 +15,7 @@ export const PHAP_LY = {
   // ── ĐÃ CÓ GIẤY ĐKKD (cấp 17/08/2026) ──────────────────────────────────────
   // TÊN PHÁP LÝ ĐẦY ĐỦ — chủ dự án chốt 16/10/2026: Meta (Facebook) chỉ xác minh doanh
   // nghiệp khi web hiện đúng tên trên giấy ĐKKD. Đừng đổi lại tên viết tắt "COASTAL LAND".
-  tenCongTy: "CÔNG TY TNHH BẤT ĐỘNG SẢN COASTAL LAND",
+  tenCongTy: "Công ty TNHH Bất động sản Coastal Land",
   // Mã số doanh nghiệp — cũng chính là mã số thuế. CHỈ GHI MỘT LẦN trên web.
   maSoThue: "0402353502",
   ngayCap: "17/08/2026",
