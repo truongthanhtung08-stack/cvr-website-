@@ -114,6 +114,13 @@ export default function ChonCoTim({
                 )}
               </button>
             </div>
+            {/* MỤC KHÔNG BẮT BUỘC (16/10/2026): đã chọn mà muốn bỏ → dòng "Bỏ chọn" ngay đầu bảng */}
+            {xoaDuoc && value && (
+              <button type="button" onClick={() => chon("")} className="flex w-full items-center gap-2 border-b border-cvr-line px-4 py-3 text-left text-[15px] font-medium text-cvr-body transition hover:bg-cvr-surface">
+                <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                Bỏ chọn
+              </button>
+            )}
             {coChon && (
               <button type="button" onClick={() => chon(value)} className="flex w-full items-center justify-between gap-3 border-b border-cvr-line bg-cvr-surface px-4 py-3 text-left text-[15px] font-semibold text-cvr-ink">
                 <span className="min-w-0 truncate">{value}</span>

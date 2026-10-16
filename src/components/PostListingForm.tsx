@@ -430,7 +430,7 @@ export default function PostListingForm() {
       <Label>{f.label}{f.unit ? ` (${f.unit})` : ""}{f.batBuoc ? " *" : ""}</Label>
       {f.type === "select" ? (
         // Mọi ô chọn (kể cả Hướng — 8 hướng) đều có dòng "Khác — tự ghi" (chủ dự án 14/10/2026).
-        <ChonHoacGhi value={specValues[f.key] ?? ""} onChange={(v) => setSpecValues((s) => ({ ...s, [f.key]: v }))} options={f.options ?? []} className={inputCls} />
+        <ChonHoacGhi value={specValues[f.key] ?? ""} onChange={(v) => setSpecValues((s) => ({ ...s, [f.key]: v }))} options={f.options ?? []} batBuoc={f.batBuoc} className={inputCls} />
       ) : (
         <OGoTuGian value={specValues[f.key] ?? ""} onChange={(v) => setSpecValues((s) => ({ ...s, [f.key]: v }))} placeholder={f.placeholder ?? ""} className={inputCls} />
       )}
@@ -1554,6 +1554,7 @@ export default function PostListingForm() {
                   >
                     <option value="">Ngay khi được duyệt</option>
                     {Array.from({ length: 30 }, (_, i) => {
+                      // eslint-disable-next-line react-hooks/purity
                       const d = new Date(Date.now() + 7 * 3_600_000 + (i + 1) * 86_400_000).toISOString().slice(0, 10);
                       return <option key={d} value={d}>{d.split("-").reverse().join("/")}</option>;
                     })}

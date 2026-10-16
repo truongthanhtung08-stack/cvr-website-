@@ -60,7 +60,7 @@
 >   mỗi sàn × tầng — sàn chỉ 75–80% đất, có lửng/áp mái); không có số chính xác thì không lấy — web bỏ qua mọi số đúng bằng đất × 1 · 1,5 · 2… (`dienTichSanThat`).
 >   Việc chia giá là của web; Cowork chỉ chép số, không tự chia.
 > - **Lịch sử giá:** chỉ dãy của đúng khu vực + loại hình + mua bán/cho thuê của tin, đủ so cùng kỳ
->   1 năm mới hiện. Yêu cầu nhập liệu cho Cowork: `YEU-CAU-COWORK-LICH-SU-GIA.md` (làm mới 03/10: cùng phân khúc + cùng vị trí, 4 bậc dự án → đường → phường → cả tỉnh; theo quý như Batdongsan, đủ 5 quý liền mới hiện, thuê = tổng tiền/tháng; web tự tính, Cowork điền phần thiếu từ nút "Tải danh sách còn thiếu").
+>   1 năm mới hiện. Yêu cầu nhập liệu cho Cowork: `D:\Coastal Land\SEO\YEU-CAU-COWORK-LICH-SU-GIA.md` (mọi tệp cho Cowork — yêu cầu, dữ liệu vào, dữ liệu ra — chỉ nằm ở `D:\Coastal Land\SEO\`, xem `CONG-VIEC-3-BEN.md` mục 0) (làm mới 03/10: cùng phân khúc + cùng vị trí, 4 bậc dự án → đường → phường → cả tỉnh; theo quý như Batdongsan, đủ 5 quý liền mới hiện, thuê = tổng tiền/tháng; web tự tính, Cowork điền phần thiếu từ nút "Tải danh sách còn thiếu").
 > - Bài học 03/10: Claude tự áp luật, hạ nhầm 49 tin còn hạn — xem memory `gia-chinh-sach-mot-nguon-admin`.
 
 ---
@@ -132,6 +132,9 @@ Phù hợp và tương thích cho mọi trình duyệt trên điện thoại c�
 ## 0B. QUY TRÌNH BẮT BUỘC — đọc `QUY-TRINH-LAM-VIEC.md`
 
 > 📌 **File chi tiết: [`QUY-TRINH-LAM-VIEC.md`](QUY-TRINH-LAM-VIEC.md) — PHẢI đọc và tuân thủ.**
+
+**QUY TRÌNH DỮ LIỆU 3 BÊN (Cowork · chủ dự án · Claude) — MỘT TỆP DUY NHẤT:** `D:\Coastal Land\SEO\CONG-VIEC-3-BEN.md` (chốt 16/10/2026).
+Hai quy trình: ① tin đăng hằng ngày · ② dữ liệu khác hằng tuần. Mọi tệp Cowork (yêu cầu, mẫu, dữ liệu vào `VAO`, dữ liệu ra `RA`) chỉ ở `D:\Coastal Land\SEO\`; tin giao ở `D:\Coastal Land\Đăng tin\TIN HANG NGAY chuẩn\<ngày>`. Muốn đổi quy trình → sửa thẳng tệp đó, không tạo tệp quy trình mới.
 
 **Nguyên tắc 1 — ĐÃ DUYỆT LÀ KHÔNG ĐỘNG VÀO.**
 Phần nào chủ dự án đã xem và duyệt thì GIỮ NGUYÊN 100%. Không tự ý chỉnh kích thước, màu,

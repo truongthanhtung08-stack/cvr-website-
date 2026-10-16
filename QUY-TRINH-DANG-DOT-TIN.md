@@ -1,5 +1,9 @@
 # QUY TRÌNH ĐĂNG MỘT ĐỢT TIN — chốt sau buổi hỏng việc 5/9/2026
 
+> ⛔ **QUY TRÌNH CHUNG CỦA 3 BÊN (Cowork · chủ dự án · Claude) CHỈ CÓ MỘT: `D:\Coastal Land\SEO\CONG-VIEC-3-BEN.md`** (16/10/2026).
+> Tệp này chỉ còn là ghi chú kỹ thuật / lịch sử. Chỗ nào khác với tệp chung → **theo tệp chung**.
+
+
 > Đọc file này trước mỗi lần đăng đợt tin mới. Mọi mục ở đây đều sinh ra từ một lỗi có thật.
 
 ---
@@ -79,5 +83,5 @@ quyết R2 hay Supabase Pro.
    qua chính `coastalland.vn/anh/…`, không dùng bộ tối ưu, không phụ thuộc supabase.co.
 3. **Sửa tin bằng form làm mất mã ảnh** → lần nhập file sau đăng trùng tin. Nay giữ nguyên.
 
-Yêu cầu dành cho cowork nằm ở [`YEU-CAU-COWORK.md`](YEU-CAU-COWORK.md) — tài liệu **duy nhất**,
-bản gửi Cowork đặt ở `ProjectsTIN-HANG-NGAY_MAU`.
+Yêu cầu dành cho cowork nằm ở `D:\Coastal Land\SEO\` (đầu mối `CONG-VIEC-3-BEN.md`, tin: `YEU-CAU-COWORK-DANG-TIN-HANG-LOAT.md`) — nơi lưu **duy nhất**,
+không còn bản nào ở `Projects\TIN-HANG-NGAY\_MAU` hay trong mã nguồn.

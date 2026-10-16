@@ -681,7 +681,7 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
             <Field key={f.key} label={f.label + (f.unit ? ` (${f.unit})` : "")}>
               {f.type === "select" ? (
                 // Mọi ô chọn (kể cả Hướng — 8 hướng) đều có dòng "Khác — tự ghi" (chủ dự án 15/10/2026).
-                <ChonHoacGhi value={specValues[f.key] ?? ""} onChange={(v) => setSpecValues((s) => ({ ...s, [f.key]: v }))} options={f.options ?? []} className={inputCls} />
+                <ChonHoacGhi value={specValues[f.key] ?? ""} onChange={(v) => setSpecValues((s) => ({ ...s, [f.key]: v }))} options={f.options ?? []} batBuoc={f.batBuoc} className={inputCls} />
               ) : (
                 <OGoTuGian value={specValues[f.key] ?? ""} onChange={(v) => setSpecValues((s) => ({ ...s, [f.key]: v }))} placeholder={f.placeholder ?? ""} className={inputCls} />
               )}

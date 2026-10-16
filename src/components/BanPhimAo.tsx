@@ -25,8 +25,14 @@ function laOGo(el: Element | null): el is HTMLElement {
 
 export default function BanPhimAo() {
   useEffect(() => {
+    // ZALO (16/10/2026 chủ dự án: "trên Zalo hiện tại bị che"): trình duyệt trong Zalo nhiều máy KHÔNG
+    // báo bàn phím (không co cửa sổ, visualViewport giữ nguyên hoặc không có) → cách đo cũ tưởng không
+    // có bàn phím, không cuộn. Dự phòng: máy cảm ứng + đang đứng trong ô gõ = coi như bàn phím ĐANG MỞ,
+    // phần còn nhìn thấy giả định là nửa trên màn hình (bàn phím điện thoại chiếm ~40–50%).
     const vv = window.visualViewport;
-    if (!vv) return;
+    const cham = window.matchMedia("(pointer: coarse)").matches;
+    const vvTop = () => vv?.offsetTop ?? 0;
+    const vvCao = () => vv?.height ?? window.innerHeight;
     const html = document.documentElement;
     let caoNhat = window.innerHeight; // chiều cao khi chưa có bàn phím
     let rongTruoc = window.innerWidth;
@@ -39,6 +45,7 @@ export default function BanPhimAo() {
       lopPhu.style.removeProperty("top");
       lopPhu.style.removeProperty("bottom");
       lopPhu.style.removeProperty("height");
+      lopPhu.style.removeProperty("align-items");
       lopPhu.classList.remove("vua-ban-phim");
       lopPhu = null;
     };
@@ -53,11 +60,11 @@ export default function BanPhimAo() {
       return null;
     };
 
-    const dangNhin = (el: HTMLElement) => {
+    const dangNhin = (el: HTMLElement, giaDinh: boolean) => {
       const r = el.getBoundingClientRect();
-      const tren = vv.offsetTop + 8;
-      const duoi = vv.offsetTop + vv.height - 8;
-      if (r.height > vv.height * 0.6) return r.top < duoi - 40 && r.bottom > tren + 40; // ô cao (mô tả): thấy một phần là đủ
+      const tren = vvTop() + 8;
+      const duoi = giaDinh ? window.innerHeight * 0.5 : vvTop() + vvCao() - 8;
+      if (r.height > vvCao() * 0.6) return r.top < duoi - 40 && r.bottom > tren + 40; // ô cao (mô tả): thấy một phần là đủ
       return r.top >= tren && r.bottom <= duoi;
     };
 
@@ -70,8 +77,10 @@ export default function BanPhimAo() {
       const el = document.activeElement;
       const go = laOGo(el);
       if (!go) caoNhat = Math.max(caoNhat, window.innerHeight);
-      const phim = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
-      const mo = go && (phim > 80 || window.innerHeight < caoNhat - 150);
+      const phim = Math.max(0, window.innerHeight - vvCao() - vvTop());
+      const baoPhim = phim > 80 || window.innerHeight < caoNhat - 150; // trình duyệt CÓ báo bàn phím
+      const giaDinh = go && cham && !baoPhim; // không báo nhưng máy cảm ứng đang gõ → bàn phím đang che nửa dưới
+      const mo = go && (baoPhim || giaDinh);
       html.classList.toggle("ban-phim-mo", mo);
       if (!mo || !go) return traLopPhu();
 
@@ -80,14 +89,19 @@ export default function BanPhimAo() {
       if (phu && phim > 0) {
         lopPhu = phu;
         phu.classList.add("vua-ban-phim");
-        phu.style.top = `${vv.offsetTop}px`;
+        phu.style.top = `${vvTop()}px`;
         phu.style.bottom = `${phim}px`;
         phu.style.height = "auto";
+      } else if (phu && giaDinh) {
+        // Không đo được bàn phím: kéo hộp (bảng trượt từ đáy, hộp xác minh…) lên sát mép trên
+        lopPhu = phu;
+        phu.style.alignItems = "flex-start";
       } else if (phu) traLopPhu();
 
-      if (canCuon && !dangNhin(el)) {
-        const cao = el.getBoundingClientRect().height > vv.height * 0.6;
-        el.scrollIntoView({ block: cao ? "start" : "center", behavior: "smooth" });
+      if (canCuon && !dangNhin(el, giaDinh)) {
+        const r = el.getBoundingClientRect();
+        if (giaDinh && !phu) window.scrollBy({ top: r.top - window.innerHeight * 0.18, behavior: "smooth" }); // ô lên phần trên màn hình
+        else el.scrollIntoView({ block: giaDinh || r.height > vvCao() * 0.6 ? "start" : "center", behavior: "smooth" });
       }
       canCuon = false;
     };
@@ -113,15 +127,15 @@ export default function BanPhimAo() {
     document.addEventListener("focusin", vaoO);
     document.addEventListener("focusout", roiO);
     document.addEventListener("input", dangGo);
-    vv.addEventListener("resize", henCapNhat);
-    vv.addEventListener("scroll", henCapNhat);
+    vv?.addEventListener("resize", henCapNhat);
+    vv?.addEventListener("scroll", henCapNhat);
     window.addEventListener("resize", henCapNhat); // WebView Android (Zalo, Facebook) co cửa sổ khi bật bàn phím
     return () => {
       document.removeEventListener("focusin", vaoO);
       document.removeEventListener("focusout", roiO);
       document.removeEventListener("input", dangGo);
-      vv.removeEventListener("resize", henCapNhat);
-      vv.removeEventListener("scroll", henCapNhat);
+      vv?.removeEventListener("resize", henCapNhat);
+      vv?.removeEventListener("scroll", henCapNhat);
       window.removeEventListener("resize", henCapNhat);
       if (raf) cancelAnimationFrame(raf);
       traLopPhu();
