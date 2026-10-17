@@ -130,10 +130,11 @@ const dauQuy = [1, 4, 7, 10].includes(now.getUTCMonth() + 1) && now.getUTCDate()
 const KE_HOACH = "D:/Coastal Land/SEO/Plan SEO - pSEO/KE-HOACH-SEO.md";
 const MUC = [
   ["Tìm tin cho nhóm sắp có trang Google", NOI_TIN, sapMo.length, sapMo.length
-    ? ["Ưu tiên trước: nhóm ở mục 7 của kế hoạch SEO (đã có lượt hiển thị, gần trang 2 Google — condotel, khu nghỉ dưỡng / trang trại Đà Nẵng, căn hộ chung cư Huế).",
+    ? ["Ưu tiên trước: nhóm ở mục 3 #2 của kế hoạch SEO (đã có lượt hiển thị, gần trang 2 Google — condotel, khu nghỉ dưỡng / trang trại Đà Nẵng, căn hộ chung cư Huế).",
       "Sau đó các nhóm còn thiếu tin (đủ 3 tin đạt chuẩn là có trang Google):", ...sapMo.slice(0, 40).map((g) => `- ${g.ten} — cần thêm ${3 - g.n} tin`)]
     : ["Không có việc."]],
   ["Tin mới", NOI_TIN, null, [
+    "**Khu vực: toàn quốc — có cả Hà Nội (mã `hn`) và TP. Hồ Chí Minh (mã `hcm`)** (chủ dự án 17/10/2026). Tỉnh, phường ghi hệ mới theo `D:\\Coastal Land\\SEO\\DANH-SACH-PHUONG-XA-TOAN-QUOC.txt`.",
     `Lọc + biên tập theo \`${p(SEO, "YEU-CAU-COWORK-DANG-TIN-HANG-LOAT.md")}\`:`,
     "- **Tiêu đề** 45–70 ký tự: Bán/Cho thuê + loại hình + điểm nổi bật + tên đường + phường, tỉnh.",
     "- **Mô tả** ≥ 300 ký tự, đủ 5 phần: tổng quan · vị trí · thông số · pháp lý · điều kiện giao dịch.",

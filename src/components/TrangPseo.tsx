@@ -11,7 +11,6 @@ import { goiNheTin, goiNheBaiViet } from "@/lib/goiNhe";
 import { getListings, getListingsHetHan } from "@/lib/listingsDb";
 import { getArticles } from "@/lib/contentDb";
 import { boLocCua, duongDan, duongDanPhanCap, khop, lienKetCho, moTa, soLieuTrang, tatCaTrang, thangHienTai, tieuDe, type DieuKien } from "@/lib/pseo";
-import { preload } from "react-dom";
 import { tieuDeGoogle } from "@/lib/thang";
 
 // ============================================================================
@@ -46,7 +45,6 @@ export default async function TrangPseo({ dk }: { dk: DieuKien }) {
   // dùng chung dữ liệu /api/danh-sach + MỞ SẴN bộ lọc (file pSEO: "Preset filter bar"), khách nới
   // lọc được như trang thường. Trục đường / kiệt: không có ô lọc → nhận đúng danh sách tin khớp.
   const boLoc = boLocCua(dk);
-  if (boLoc) preload(`/api/danh-sach/${dk.muc}`, { as: "fetch", crossOrigin: "anonymous" });
   const soLieu = soLieuTrang(items, dk.muc);
   const khung = <KhungChoDanhMuc heading={heading} moTa={[soLieu, moTa(dk)].filter(Boolean).join(" — ")} items={[...items, ...itemsHetHan]} />;
   return (

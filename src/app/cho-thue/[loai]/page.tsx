@@ -1,5 +1,4 @@
 import { Suspense } from "react";
-import { preload } from "react-dom";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Header from "@/components/Header";
@@ -79,8 +78,6 @@ export async function generateMetadata({ params }: { params: Promise<{ loai: str
 }
 
 export default async function DanhMucChoThuePage({ params }: { params: Promise<{ loai: string }> }) {
-  // Trình duyệt tải trước dữ liệu danh sách ngay khi đọc HTML (ListingBrowser nạp /api/danh-sach)
-  preload("/api/danh-sach/thue", { as: "fetch", crossOrigin: "anonymous" });
   const { loai } = await params;
   const c = findCategory(rentCategories, loai);
   const kv = c ? null : timKhuVuc(loai);

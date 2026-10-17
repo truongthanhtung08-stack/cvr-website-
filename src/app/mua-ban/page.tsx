@@ -1,5 +1,4 @@
 import { Suspense } from "react";
-import { preload } from "react-dom";
 import type { Metadata } from "next";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -35,8 +34,6 @@ function demTheoTinh(items: { location: string }[]): [string, number][] {
 }
 
 export default async function MuaBanPage() {
-  // Trình duyệt tải trước dữ liệu danh sách ngay khi đọc HTML (ListingBrowser nạp /api/danh-sach)
-  preload("/api/danh-sach/ban", { as: "fetch", crossOrigin: "anonymous" });
   // B2: tin từ Supabase (fallback dữ liệu mẫu) + bài viết cho cột phải
   const [listings, articles] = await Promise.all([getListings(), getArticles()]);
   const tinBan = listings.filter((l) => (l.purpose ?? "ban") === "ban");

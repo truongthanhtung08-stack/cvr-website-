@@ -22,7 +22,7 @@ const dem = (ds) => Object.entries(ds.reduce((a, u) => ((a[nhom(u)] = (a[nhom(u)
 const L = [
   `# THEO DÕI INDEX — trang nào đã index, chưa index, cần xin index (cập nhật ${new Date(Date.now() + 7 * 3600e3).toISOString().slice(0, 10)})`, "",
   "> Nguồn: Search Console (dữ liệu Google tới 12/10) đối chiếu sitemap thật của coastalland.vn hôm nay.",
-  "> Chuẩn: chỉ trang trong sitemap (đã qua cổng chất lượng) mới được xin index. Xin index vẫn TẠM DỪNG tới khi chủ dự án báo \"đạt\".", "",
+  "> Chuẩn: chỉ trang trong sitemap (đã qua cổng chất lượng) mới được xin index. Xin index: theo `KE-HOACH-SEO.md` mục 8 (chủ dự án báo đạt 16/10 — lịch 9:11 xin 10 trang/ngày từ mục 1).", "",
   "| | Số trang | Gồm |", "|---|---|---|",
   `| Web muốn index (sitemap) | ${muon.length} | ${dem(muon)} |`,
   `| Google đã index | ${daIndex.length} | ${dem(daIndex)} |`,

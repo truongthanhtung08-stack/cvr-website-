@@ -1,5 +1,4 @@
 import { Suspense } from "react";
-import { preload } from "react-dom";
 import type { Metadata } from "next";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -34,8 +33,6 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function ChoThuePage() {
-  // Trình duyệt tải trước dữ liệu danh sách ngay khi đọc HTML (ListingBrowser nạp /api/danh-sach)
-  preload("/api/danh-sach/thue", { as: "fetch", crossOrigin: "anonymous" });
   // B2: tin từ Supabase (fallback dữ liệu mẫu) + bài viết cho cột phải
   const [listings, articles] = await Promise.all([getListings(), getArticles()]);
   const tinThue = listings.filter((l) => (l.purpose ?? "ban") === "thue");

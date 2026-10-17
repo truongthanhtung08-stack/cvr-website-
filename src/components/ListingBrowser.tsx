@@ -17,7 +17,6 @@ import FilterBar from "@/components/FilterBar";
 import ActiveFilters from "@/components/ActiveFilters";
 import { featuredListings, type Article, type Listing } from "@/lib/data";
 import {
-  sortListings,
   filtersFromParams,
   filtersToParams,
   emptyFilters,
@@ -27,13 +26,13 @@ import {
   type Filters,
   type SortKey,
 } from "@/lib/filters";
-import { smartFilter, smartSearch, TIER_LABEL } from "@/lib/smartSearch";
-import { nhanDoiHienThi, khoaThe } from "@/lib/nhanDoiHienThi";
+import { TIER_LABEL } from "@/lib/smartSearch";
+import { khoaThe } from "@/lib/nhanDoiHienThi";
+import { locDanhSach, type KetQuaLoc } from "@/lib/locDanhSach";
+import type { DiemBanDo } from "@/components/MapViewGoogle";
+import type { TinGoiY } from "@/lib/searchHints";
 import LuuTimKiem from "./LuuTimKiem";
 import { boDuoiThang } from "@/lib/thang";
-
-// 10 tin/trang (chủ dự án chốt 10/9/2026) — trước là 8.
-const PER_PAGE = 10;
 
 export default function ListingBrowser({
   heading,
@@ -94,37 +93,19 @@ export default function ListingBrowser({
 }) {
   const params = useSearchParams();
 
-  const [napDuoc, setNapDuoc] = useState<{ tin: Listing[]; hetHan: Listing[] } | null>(null);
-  useEffect(() => {
-    if (!nguon) return;
-    let huy = false;
-    fetch(`/api/danh-sach/${nguon}`)
-      .then((r) => (r.ok ? r.json() : { tin: [], hetHan: [] }))
-      .then((d: { tin: Listing[]; hetHan: Listing[] }) => { if (!huy) setNapDuoc(d); })
-      .catch(() => { if (!huy) setNapDuoc({ tin: [], hetHan: [] }); });
-    return () => { huy = true; };
-  }, [nguon]);
-  const items = useMemo(() => {
-    if (!nguon) return itemsTuMayChu ?? featuredListings;
-    const bo = new Set(boQuaId ?? []);
-    const tin = (napDuoc?.tin ?? []).filter((l) => !bo.has(l.id));
-    if (!chiId) return tin;
-    const theoId = new Map(tin.map((l) => [l.id, l]));
-    return chiId.map((id) => theoId.get(id)).filter((l): l is Listing => Boolean(l));
-  }, [nguon, napDuoc, chiId, boQuaId, itemsTuMayChu]);
-  const hetHanNguon = useMemo(() => (nguon ? napDuoc?.hetHan ?? [] : hetHanTuMayChu), [nguon, napDuoc, hetHanTuMayChu]);
-
+  // Trang không nạp từ máy chủ (tin tương tự truyền thẳng…): lọc ngay ở trình duyệt.
+  const items = useMemo(() => itemsTuMayChu ?? featuredListings, [itemsTuMayChu]);
   const [hetHanNap, setHetHanNap] = useState<Listing[]>([]);
   useEffect(() => {
-    if (hetHanNguon || nguon) return;
+    if (hetHanTuMayChu || nguon) return;
     let huy = false;
     fetch("/api/tin-het-han")
       .then((r) => (r.ok ? r.json() : []))
       .then((ds: Listing[]) => { if (!huy) setHetHanNap(ds); })
       .catch(() => {});
     return () => { huy = true; };
-  }, [hetHanNguon, nguon]);
-  const itemsHetHan = hetHanNguon ?? hetHanNap;
+  }, [hetHanTuMayChu, nguon]);
+  const itemsHetHan = hetHanTuMayChu ?? hetHanNap;
 
   const [filters, setFiltersState] = useState<Filters>(() => {
     const f = filtersFromParams(params);
@@ -184,59 +165,44 @@ export default function ListingBrowser({
     window.history.replaceState(window.history.state, "", u);
   }
 
-  // Nguồn tin theo đúng MỤC ĐÍCH của trang (bán / thuê)
-  // + NHÂN ĐÔI HIỂN THỊ của CVR Diamond (bản kèm dạng CVR Basic — nhanDoiHienThi.ts)
-  const base = useMemo(
-    () => nhanDoiHienThi(items.filter((l) => (l.purpose ?? "ban") === purpose)),
-    [items, purpose],
+  // LỌC Ở MÁY CHỦ (#1b kế hoạch SEO, 17/10/2026): trang có `nguon` gửi bộ lọc + trang đang xem
+  // tới /api/danh-sach/<nguon>/loc, chỉ nhận 10 tin của trang đó — không tải cả kho tin.
+  const [mayChu, setMayChu] = useState<(KetQuaLoc & { diem?: DiemBanDo[] }) | null>(null);
+  const [goiY, setGoiY] = useState<TinGoiY[]>([]);
+  const yeuCau = JSON.stringify({ boLoc: filters, sapXep: sort, trang: page, chiId, boQuaId, banDo: mapMode });
+  useEffect(() => {
+    if (!nguon) return;
+    let huy = false;
+    const lanDau = mayChu == null;
+    fetch(`/api/danh-sach/${nguon}/loc`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: lanDau ? JSON.stringify({ ...JSON.parse(yeuCau), goiY: true }) : yeuCau,
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (huy || !d) return;
+        setMayChu(d);
+        if (d.goiY) setGoiY(d.goiY);
+      })
+      .catch(() => {});
+    return () => { huy = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- chỉ gọi lại khi yêu cầu đổi
+  }, [nguon, yeuCau]);
+  const taiCho = useMemo(
+    () => (nguon ? null : locDanhSach(items, itemsHetHan, purpose, filters, sort, page)),
+    [nguon, items, itemsHetHan, purpose, filters, sort, page],
   );
-
-  // NỚI LỎNG THÔNG MINH: chọn lọc quá chặt cũng không ra màn hình trống —
-  // tin khớp đủ lên đầu (Tầng 1), thiếu tiêu chí phụ xuống Tầng 2/3 kèm nhãn.
-  const hits = useMemo(() => smartFilter(base, { ...filters, keyword: "" }), [base, filters]);
-  // Từ khoá gõ tay xử lý bằng lõi tìm kiếm thông minh (bóc tách câu dài)
-  const search = useMemo(() => smartSearch(hits.map((h) => h.item), filters.keyword), [hits, filters.keyword]);
+  const kq = nguon ? mayChu : taiCho;
+  const pageItems = kq?.trang ?? [];
+  const totalPages = kq?.soTrang ?? 1;
+  const current = kq?.trangHienTai ?? 1;
+  const provinces = kq?.khuVuc ?? [];
   const coTuKhoa = filters.keyword.trim().length > 0;
-
-  // Tin hết hạn: cùng mục đích + khớp ĐỦ bộ lọc (Tầng 1) và từ khoá — không nới lỏng.
-  const ketQuaHetHan = useMemo(() => {
-    const goc = itemsHetHan.filter((l) => (l.purpose ?? "ban") === purpose);
-    if (goc.length === 0) return [];
-    const khop = smartFilter(goc, { ...filters, keyword: "" }).filter((h) => h.tier === 1).map((h) => h.item);
-    return coTuKhoa
-      ? smartSearch(khop, filters.keyword).hits.filter((h) => h.tier === 1).map((h) => h.item)
-      : sortListings(khop, sort);
-  }, [itemsHetHan, purpose, filters, coTuKhoa, sort]);
-
-  const results = useMemo(
-    () => [
-      ...(coTuKhoa ? search.hits.map((h) => h.item) : sortListings(hits.map((h) => h.item), sort)),
-      ...ketQuaHetHan,
-    ],
-    [coTuKhoa, search, hits, sort, ketQuaHetHan],
-  );
-  // Tầng của từng tin + chữ cần bôi đậm
-  const tierById = useMemo(() => new Map(hits.map((h) => [h.item.id, h.tier])), [hits]);
-  const termsById = useMemo(() => new Map(search.hits.map((h) => [h.item.id, h.matched])), [search]);
-
-  // Số tin theo tỉnh/thành (cho sidebar "theo khu vực" — giống Homedy)
-  const provinces = useMemo(() => {
-    const m = new Map<string, number>();
-    for (const l of base) {
-      if (l.banSao) continue; // bản kèm không phải tin riêng — không đếm
-      const p = l.location.split(",").pop()?.trim() ?? "";
-      if (p) m.set(p, (m.get(p) ?? 0) + 1);
-    }
-    return [...m.entries()].sort((a, b) => b[1] - a[1]);
-  }, [base]);
-
-  const totalPages = Math.max(1, Math.ceil(results.length / PER_PAGE));
-  const current = Math.min(page, totalPages);
-  const pageItems = results.slice((current - 1) * PER_PAGE, current * PER_PAGE);
   const active = hasActiveFilters(filters);
 
   // Đang nạp dữ liệu → giữ nguyên khung chờ máy chủ đã dựng (không nhấp nháy giao diện)
-  if (nguon && !napDuoc) return <>{choTai ?? null}</>;
+  if (nguon && !mayChu) return <>{choTai ?? null}</>;
 
   return (
     // PC: thanh lọc nằm SÁT header, không chừa khoảng trống (file V3 10.08.2026).
@@ -251,7 +217,7 @@ export default function ListingBrowser({
           onMap={() => setMapMode((v) => !v)}
           mapActive={mapMode}
           // Câu gợi ý chạy trong ô tìm bám theo TIN MỚI + TIN HOT của chính trang này
-          hintItems={items}
+          hintItems={nguon ? goiY : items}
         />
       </div>
 
@@ -336,7 +302,9 @@ export default function ListingBrowser({
         <div className="mt-4 overflow-hidden rounded-xl border border-cvr-line">
           <div className="h-[62vh] min-h-[380px] w-full">
             {/* Bản đồ hiện CẢ tin hết hạn (chủ dự án 10/10/2026) — tin vẫn hiển thị trên web */}
-            <MapView items={results.filter((l) => !l.banSao)} />
+            {nguon
+              ? <MapView diem={mayChu?.diem ?? []} />
+              : <MapView items={(taiCho?.ketQua ?? []).filter((l) => !l.banSao)} />}
           </div>
           <p className="border-t border-cvr-line bg-cvr-surface px-3 py-2 text-xs text-cvr-muted">
             Bấm vào viên giá để xem nhanh tin.
@@ -352,7 +320,7 @@ export default function ListingBrowser({
             <>
               {/* Nhãn TẦNG kết quả — cho biết nhóm tin đang xem khớp tới đâu */}
               {(active || coTuKhoa) && (() => {
-                const t = tierById.get(pageItems[0].id) ?? 1;
+                const t = kq?.tangDau ?? 1;
                 return t === 1 ? null : <p className="mb-3 text-sm font-medium text-cvr-body">{TIER_LABEL[t]}</p>;
               })()}
               {/* MOBILE (< 640px): LUÔN thẻ dọc — ảnh trên, nội dung dưới (thuần CSS,
@@ -362,8 +330,8 @@ export default function ListingBrowser({
                 {pageItems.map((item) => (
                   // Thẻ theo cấp (chuẩn 09/10/2026, docs/THE-TIN-THEO-CAP.md); tin hết hạn giữ thẻ cũ có nhãn "Tin hết hạn"
                   item.hetHan
-                    ? <PropertyCard key={khoaThe(item)} item={item} layout="grid" showTime terms={termsById.get(item.id) ?? []} />
-                    : <TheTinMobile key={khoaThe(item)} item={item} terms={termsById.get(item.id) ?? []} />
+                    ? <PropertyCard key={khoaThe(item)} item={item} layout="grid" showTime terms={kq?.boiDam[item.id] ?? []} />
+                    : <TheTinMobile key={khoaThe(item)} item={item} terms={kq?.boiDam[item.id] ?? []} />
                 ))}
               </div>
               {/* DESKTOP (≥ 640px): theo chế độ xem đã chọn (Danh sách = thẻ ngang · Lưới = thẻ dọc) */}
@@ -375,7 +343,7 @@ export default function ListingBrowser({
                 }`}
               >
                 {pageItems.map((item) => (
-                  <PropertyCard key={khoaThe(item)} item={item} layout={view} showTime terms={termsById.get(item.id) ?? []} />
+                  <PropertyCard key={khoaThe(item)} item={item} layout={view} showTime terms={kq?.boiDam[item.id] ?? []} />
                 ))}
               </div>
 
