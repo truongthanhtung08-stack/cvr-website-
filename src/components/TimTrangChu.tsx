@@ -314,7 +314,9 @@ export default function TimTrangChu({ goiYTin, tinDem }: { goiYTin?: CauGoiY[]; 
   const nhanTim = soTin != null ? (soTin ? `Xem ${soTin} tin` : "Tìm kiếm") : "Tìm kiếm";
   const hangLoc = (gon: boolean, chi?: string[]) => <TruongLocTrangChu muc={muc} value={boLoc} onChange={setLoc} gon={gon} chi={chi} />;
   // Điện thoại: hai trường chính là THẺ gọn dưới thẻ tìm; các trường còn lại nằm trong thẻ tìm
-  const DOAN = muc === "duan" ? ["kv", "da"] : ["lh", "gia"]; // đúng 2 thẻ như Airbnb (Khi nào · Mấy người); Diện tích, Lọc thêm có ở thanh lọc trang kết quả
+  // ĐỦ 5 TRƯỜNG (chủ dự án 17/10/2026: gõ từ khoá không bảo đảm chính xác 100%) trên MỘT HÀNG MENU CHẠY NGANG
+  // ngay dưới ô gõ ("1 cái menu chạy phía dưới") — không xếp thẻ chồng bên dưới
+  const PHU = muc === "duan" ? ["kv", "da"] : ["kv", "lh", "gia", "dt", "them"];
 
   const dong = (s: Suggestion, icon: PhIcon, onClick: () => void, key: string, xoa?: () => void) => (
     <div key={key} className="flex items-center rounded-xl transition hover:bg-black/[0.04]">
@@ -443,9 +445,9 @@ export default function TimTrangChu({ goiYTin, tinDem }: { goiYTin?: CauGoiY[]; 
           {/* KHUNG CUỘN RIÊNG: BanPhimAo ép mọi con trực tiếp của lớp phủ "max-height: 100%" khi bàn phím bật → để mỗi
               khung này chịu giới hạn, thẻ tìm bên trong giữ đủ cao và cuộn được (không bị cắt cụt). */}
           <div className="flex h-full min-h-0 w-full flex-1 flex-col self-stretch overflow-y-auto overscroll-contain">
-          <div className="mb-tab-mo relative shrink-0 self-stretch px-14 pb-1 pt-3 [&_[role=tab]]:text-[14px] [&_[role=tab]]:font-medium [&_[role=tab]_svg]:h-9 [&_[role=tab]_svg]:w-9 [&_[role=tablist]]:gap-0 [&_[role=tablist]]:justify-around">
-            {tabsOf(false, true)}
-            <button type="button" aria-label="Đóng tìm kiếm" onClick={dongMo} className="absolute right-3 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white text-cvr-ink shadow-[0_2px_10px_rgba(0,0,0,0.12)] transition active:scale-90">
+          <div className="mb-tab-mo flex shrink-0 items-start gap-2 self-stretch pb-1 pl-4 pr-3 pt-3 [&_[role=tab]]:text-[14px] [&_[role=tab]]:font-medium [&_[role=tab]_svg]:h-9 [&_[role=tab]_svg]:w-9 [&_[role=tablist]]:gap-4 [&_[role=tablist]]:justify-evenly">
+            <div className="min-w-0 flex-1">{tabsOf(false, true)}</div>
+            <button type="button" aria-label="Đóng tìm kiếm" onClick={dongMo} className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-cvr-ink shadow-[0_2px_10px_rgba(0,0,0,0.12)] transition active:scale-90">
               <Icon i={X} dam className="h-[18px] w-[18px]" />
             </button>
           </div>
@@ -460,12 +462,11 @@ export default function TimTrangChu({ goiYTin, tinDem }: { goiYTin?: CauGoiY[]; 
                 </button>
               )}
             </div>
+            <div className="-mx-2 mt-3 shrink-0">{hangLoc(true, PHU)}</div>
             <div className="-mx-2 mt-1 min-h-0 flex-1 overflow-y-auto overscroll-contain">{dsGoiY}</div>
           </div>
           {/* Hai trường chính thành THẺ gọn dưới thẻ tìm (như "Thời gian · Khách" của Airbnb) */}
-          <div className={`mb-the-sau mx-3 mb-3 mt-3 shrink-0 self-stretch ${phimMo ? "hidden" : ""}`}>
-            <TruongLocTrangChu muc={muc} value={boLoc} onChange={setLoc} the chi={DOAN} />
-          </div>
+          <div className="mb-3 shrink-0" />
           <div className="mb-day-mo sticky bottom-0 flex shrink-0 items-center justify-between gap-4 self-stretch bg-white/80 px-6 backdrop-blur-md pb-[max(16px,env(safe-area-inset-bottom))] pt-4">
             <button type="button" onClick={xoaHet} disabled={!tuKhoa && !coLoc} className="shrink-0 whitespace-nowrap px-2 text-[16px] font-medium text-cvr-ink disabled:text-cvr-faint">
               Xoá tất cả

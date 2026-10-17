@@ -100,7 +100,8 @@ export default function TruongLocTrangChu({
   }
 
   // số mục đang bật trong "Lọc thêm" (cùng cách đếm của FilterBar)
-  const soThem = (f.beds ? 1 : 0) + (mb === "ban" ? (f.direction ? 1 : 0) + (f.legal ? 1 : 0) : (f.furnishing ? 1 : 0)) + (f.verified ? 1 : 0) + (f.broker ? 1 : 0);
+  // màn tìm điện thoại (the): Diện tích nằm TRONG "Lọc thêm" (chỉ 3 thẻ dưới thẻ tìm) → đếm luôn
+  const soThem = (the && !hien("dt") && (f.areaMin != null || f.areaMax != null) ? 1 : 0) + (f.beds ? 1 : 0) + (mb === "ban" ? (f.direction ? 1 : 0) + (f.legal ? 1 : 0) : (f.furnishing ? 1 : 0)) + (f.verified ? 1 : 0) + (f.broker ? 1 : 0);
   const tenLoai = nhom.find((g) => g.items.length === f.types.length && g.items.every((t) => f.types.includes(t)))?.label;
   return (
     <FilterDropdownGroup>
@@ -152,6 +153,17 @@ export default function TruongLocTrangChu({
         {hien("them") && <FilterDropdown pill={!seg && !the} seg={seg} the={the} id="them" label="Lọc thêm" summary={soThem ? `Lọc thêm (${soThem})` : ""} active={soThem > 0} panelClassName="w-80" className={cls}>
           {({ close }) => (
             <div className="space-y-4">
+              {the && !hien("dt") && (
+                <div>
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-cvr-muted">Diện tích</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {areaRangesFor(mb).map((r) => {
+                      const on = f.areaMin === r.min && f.areaMax === r.max;
+                      return <Chip key={r.label} active={on} onClick={() => set(on ? { areaMin: null, areaMax: null } : { areaMin: r.min, areaMax: r.max })}>{r.label}</Chip>;
+                    })}
+                  </div>
+                </div>
+              )}
               <div>
                 <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-cvr-muted">Số phòng ngủ</p>
                 <div className="flex flex-wrap gap-1.5">
@@ -183,7 +195,7 @@ export default function TruongLocTrangChu({
                   <SwitchRow label="Môi giới chuyên nghiệp" checked={f.broker} onChange={(v) => set({ broker: v })} />
                 </div>
               </div>
-              <PanelActions onReset={() => set({ beds: 0, direction: "", legal: "", furnishing: "", verified: false, broker: false })} onApply={() => xong(close)} />
+              <PanelActions onReset={() => set({ beds: 0, direction: "", legal: "", furnishing: "", verified: false, broker: false, ...(the && !hien("dt") ? { areaMin: null, areaMax: null } : {}) })} onApply={() => xong(close)} />
             </div>
           )}
         </FilterDropdown>}
