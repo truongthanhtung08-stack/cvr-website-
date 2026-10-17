@@ -124,7 +124,11 @@ export default function ListingBrowser({
     }
     return f;
   });
-  const [sort, setSort] = useState<SortKey>(relevance ? "lien-quan" : "moi");
+  // ?sapxep=gia-tang (ô tìm thông minh: câu có "giá rẻ" → giá thấp trước)
+  const [sort, setSort] = useState<SortKey>(() => {
+    const sx = params.get("sapxep");
+    return sx === "gia-tang" || sx === "gia-giam" || sx === "dt-giam" || sx === "gia-m2" ? sx : relevance ? "lien-quan" : "moi";
+  });
   const [view, setView] = useState<"list" | "grid">("list");
   // Chế độ BẢN ĐỒ (kiểu Batdongsan): bật là cả trang chuyển sang xem bản đồ,
   // marker chạy theo đúng bộ lọc đang áp dụng.
@@ -199,6 +203,26 @@ export default function ListingBrowser({
   const current = kq?.trangHienTai ?? 1;
   const provinces = kq?.khuVuc ?? [];
   const coTuKhoa = filters.keyword.trim().length > 0;
+  // DÒNG PHÂN CÁCH TẦNG (17/10/2026): ít tin khớp đủ thì web thêm tin gần đúng ngay sau — phải có dòng báo
+  // trước tin gần đúng đầu tiên, nếu không khách tưởng tìm sai (vd tìm Quảng Trị lại thấy Đà Nẵng).
+  const dongTang = (item: Listing, i: number) => {
+    // Chủ dự án 17/10/2026: "1 tin thì ra 1 tin! Muốn gợi ý thì có câu gợi ý ở những địa phương khác".
+    // Nhóm: 0 = khớp đủ · 1 = gợi ý cùng tỉnh đang chọn · 2 = gợi ý ở địa phương khác. Đổi nhóm → một dòng tiêu đề.
+    const tinhChon = filters.locations.map((x) => x.province);
+    const nhom = (l: Listing) => {
+      if ((kq?.tangTheoId?.[l.id] ?? 1) === 1) return 0;
+      const tinh = l.location.split(",").pop()?.trim() ?? "";
+      return tinhChon.length > 0 && !tinhChon.includes(tinh) ? 2 : 1;
+    };
+    const n = nhom(item);
+    if (i === 0 || n === 0 || n === nhom(pageItems[i - 1])) return null;
+    const tieuDe = n === 2 || tinhChon.length !== 1 ? "Gợi ý ở địa phương khác" : `Gợi ý khác tại ${tinhChon[0]}`;
+    return (
+      <p key={`tang-${item.id}`} className="col-span-full mt-3 border-t border-cvr-line px-4 pb-1 pt-5 text-[15px] font-semibold text-cvr-ink sm:px-0">
+        {tieuDe}
+      </p>
+    );
+  };
   const active = hasActiveFilters(filters);
 
   // Đang nạp dữ liệu → giữ nguyên khung chờ máy chủ đã dựng (không nhấp nháy giao diện)
@@ -327,12 +351,12 @@ export default function ListingBrowser({
                   không phụ thuộc JS → chắc chắn đúng trên mọi máy) */}
               {/* Tràn sát 2 mép màn hình, khe xám mảnh giữa các thẻ — hạn chế viền trắng (chủ dự án 09/10/2026) */}
               <div className="reveal is-visible cards-stagger -mx-4 grid grid-cols-1 gap-2 bg-cvr-surface sm:hidden">
-                {pageItems.map((item) => (
+                {pageItems.flatMap((item, i) => [dongTang(item, i), (
                   // Thẻ theo cấp (chuẩn 09/10/2026, docs/THE-TIN-THEO-CAP.md); tin hết hạn giữ thẻ cũ có nhãn "Tin hết hạn"
                   item.hetHan
                     ? <PropertyCard key={khoaThe(item)} item={item} layout="grid" showTime terms={kq?.boiDam[item.id] ?? []} />
                     : <TheTinMobile key={khoaThe(item)} item={item} terms={kq?.boiDam[item.id] ?? []} />
-                ))}
+                )])}
               </div>
               {/* DESKTOP (≥ 640px): theo chế độ xem đã chọn (Danh sách = thẻ ngang · Lưới = thẻ dọc) */}
               <div
@@ -342,9 +366,9 @@ export default function ListingBrowser({
                     : "sm:grid sm:grid-cols-2 sm:gap-5"
                 }`}
               >
-                {pageItems.map((item) => (
+                {pageItems.flatMap((item, i) => [dongTang(item, i), (
                   <PropertyCard key={khoaThe(item)} item={item} layout={view} showTime terms={kq?.boiDam[item.id] ?? []} />
-                ))}
+                )])}
               </div>
 
               <PhanTrang

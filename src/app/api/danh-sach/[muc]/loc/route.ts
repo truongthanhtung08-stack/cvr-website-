@@ -55,6 +55,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ muc: st
     trangHienTai: kq.trangHienTai,
     tangDau: kq.tangDau,
     boiDam: kq.boiDam,
+    tangTheoId: kq.tangTheoId,
     khuVuc: kq.khuVuc,
     ...(yc.banDo ? { diem: kq.ketQua.filter((l) => !l.banSao).map(diemTuTin) } : {}),
     ...(yc.goiY

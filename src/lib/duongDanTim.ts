@@ -111,10 +111,12 @@ export function duongDanTuCau(mucTab: "ban" | "thue", raw: string): string | nul
     gia = muc === "thue" ? `gia-duoi-${tri}-trieu` : `gia-duoi-${tri}-ty`;
   }
 
+  // "giá rẻ" không làm trang riêng (không đo được) → xếp giá thấp trước trên trang kết quả
+  const reTruoc = / gia re /.test(nq) ? "?sapxep=gia-tang" : "";
   const phan = [goc];
   if (loai) phan.push(loai);
   if (tinh) phan.push(tinh.slug);
   if (tp) phan.push(tp.slug);
   else if (gia) phan.push(gia);
-  return phan.join("/");
+  return phan.join("/") + reTruoc;
 }

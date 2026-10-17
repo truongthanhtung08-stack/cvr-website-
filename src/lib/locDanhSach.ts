@@ -15,7 +15,8 @@ import type { DiemBanDo } from "@/components/MapViewGoogle";
 // chính hàm này — hai nơi một cách xếp, không lệch nhau.
 // ============================================================================
 
-export const PER_PAGE = 10; // 10 tin/trang (chủ dự án chốt 10/9/2026)
+export const PER_PAGE = 10;
+const TOI_DA_GOI_Y = 12; // số tin gợi ý tối đa khi ít tin khớp đủ // 10 tin/trang (chủ dự án chốt 10/9/2026)
 
 export type KetQuaLoc = {
   trang: Listing[];
@@ -24,6 +25,8 @@ export type KetQuaLoc = {
   trangHienTai: number;
   /** Tầng khớp của tin đầu trang (1 = khớp đủ) — để hiện nhãn tầng */
   tangDau: 1 | 2 | 3;
+  /** Tầng khớp của từng tin trong trang — để chèn dòng phân cách trước tin "gần đúng" */
+  tangTheoId: Record<string, 1 | 2 | 3>;
   /** Chữ cần bôi đậm theo id tin (chỉ tin trong trang) */
   boiDam: Record<string, string[]>;
   /** Số tin theo tỉnh/thành (cột phải "theo khu vực") */
@@ -57,8 +60,31 @@ export function locDanhSach(
 
   // Sắp xếp RIÊNG từng tầng: tin khớp đủ luôn đứng trước tin gần đúng (17/10/2026 — trước đây sắp
   // chung nên tin VIP ở tỉnh khác nhảy lên trên tin khớp đúng của trang "Căn hộ Nha Trang").
+  // GỢI Ý THÔNG MINH (chủ dự án 17/10/2026: "gợi ý phải dựa trên nhu cầu người search, chính xác"):
+  // khớp đủ đứng trước, đủ bao nhiêu hiện bấy nhiêu. Gợi ý xếp theo NHU CẦU CHÍNH là loại hình:
+  // ① đúng loại hình + đúng tỉnh (chỉ nới giá/chi tiết) → ② đúng loại hình, địa phương khác →
+  // ③ loại hình khác, đúng tỉnh → ④ còn lại. Tối đa TOI_DA_GOI_Y tin gợi ý.
+  const khopDu = sortListings(hits.filter((h) => h.tier === 1).map((h) => h.item), sort);
+  const tinhChon = new Set(filters.locations.map((x) => x.province));
+  const diemGoiY = (l: Listing) => {
+    const dungLoai = filters.types.length === 0 || filters.types.includes(l.type);
+    const dungTinh = tinhChon.size === 0 || tinhChon.has(l.location.split(",").pop()?.trim() ?? "");
+    return (dungLoai ? 2 : 0) + (dungTinh ? 1 : 0);
+  };
+  const tam = tinhChon.size === 1 ? coordOf([...tinhChon][0], "") : null;
+  const khoangCach = (l: Listing) => {
+    if (!tam) return 0;
+    const [a, b] = coordOf(l.location.split(",").pop()?.trim() ?? "", "");
+    return (a - tam[0]) ** 2 + (b - tam[1]) ** 2;
+  };
+  const goiY = sortListings(hits.filter((h) => h.tier > 1).map((h) => h.item), sort)
+    .map((l, i) => ({ l, i, d: diemGoiY(l), xa: khoangCach(l) }))
+    // cùng mức khớp: nơi GẦN tỉnh khách chọn đứng trước (Quảng Trị → Huế, Đà Nẵng trước Khánh Hòa)
+    .sort((a, b) => b.d - a.d || a.xa - b.xa || a.i - b.i)
+    .slice(0, TOI_DA_GOI_Y)
+    .map((x) => x.l);
   const ketQua = [
-    ...(coTuKhoa ? search.hits.map((h) => h.item) : ([1, 2, 3] as const).flatMap((t) => sortListings(hits.filter((h) => h.tier === t).map((h) => h.item), sort))),
+    ...(coTuKhoa ? search.hits.map((h) => h.item) : [...khopDu, ...goiY]),
     ...ketQuaHetHan,
   ];
   const tierById = new Map(hits.map((h) => [h.item.id, h.tier]));
@@ -74,6 +100,8 @@ export function locDanhSach(
   const soTrang = Math.max(1, Math.ceil(ketQua.length / PER_PAGE));
   const trangHienTai = Math.min(Math.max(1, page), soTrang);
   const trang = ketQua.slice((trangHienTai - 1) * PER_PAGE, trangHienTai * PER_PAGE);
+  const tangTheoId: Record<string, 1 | 2 | 3> = {};
+  for (const l of trang) tangTheoId[l.id] = tierById.get(l.id) ?? 1;
   const boiDam: Record<string, string[]> = {};
   for (const l of trang) { const t = termsById.get(l.id); if (t?.length) boiDam[l.id] = t; }
   return {
@@ -84,6 +112,7 @@ export function locDanhSach(
     trangHienTai,
     tangDau: trang[0] ? tierById.get(trang[0].id) ?? 1 : 1,
     boiDam,
+    tangTheoId,
     khuVuc: [...m.entries()].sort((a, b) => b[1] - a[1]),
   };
 }
