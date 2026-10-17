@@ -60,7 +60,8 @@ export default function Analytics() {
             var a = e.target && e.target.closest ? e.target.closest('a[href]') : null;
             if (!a) return;
             var h = a.getAttribute('href') || '';
-            if (/zalo\\.me\\//.test(h)) gtag('event', 'lien_he_zalo', { link_url: h, trang: location.pathname });
+            // KHÔNG gửi link (zalo.me/<số điện thoại>) — số người đăng là dữ liệu cá nhân (MASTER 13.1, 17/10/2026)
+            if (/zalo\\.me\\//.test(h)) gtag('event', 'lien_he_zalo', { loai: /zalo\\.me\\/0\\d{8,10}/.test(h) ? 'nguoi_dang' : 'oa', trang: location.pathname });
             else if (/^tel:/.test(h)) gtag('event', 'bam_goi', { trang: location.pathname });
           }, true);
         `}
