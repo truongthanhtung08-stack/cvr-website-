@@ -62,14 +62,21 @@ function locCauGoiY(ds: CauGoiY[], go: string, muc: "ban" | "thue", toiDa: numbe
   const tu = tuCua(go).filter((t) => !BO_QUA.has(t));
   if (!tu.length && go.trim()) return [];
   if (!tu.length) {
-    // Chưa gõ: cụm cụ thể (có loại hình), nhiều tin trước, tối đa 2 cụm mỗi tỉnh cho đủ nơi
-    const dem = new Map<string, number>();
-    return ds.filter((c) => {
-      if (c.muc !== muc || !c.loai) return false;
-      const tinh = c.href.split("/")[3];
-      dem.set(tinh, (dem.get(tinh) ?? 0) + 1);
-      return dem.get(tinh)! <= 2;
-    }).slice(0, toiDa);
+    // Khách mới, chưa gõ: CỤM DÀI cụ thể (loại nhà + nơi, có giá/phường càng tốt — đúng kiểu từ khoá dài trang pSEO),
+    // mỗi tỉnh + loại nhà một cụm cho đủ nhu cầu; không đưa cụm trần "Bán nhà Đà Nẵng".
+    const da = new Set<string>();
+    const cuThe = (c: CauGoiY) => { const n = normalizeVi(c.nhan); return (n.includes(" duoi ") ? 2 : 0) + (/ (phuong|xa|quan|huyen) /.test(` ${n} `) ? 1 : 0); };
+    return ds.filter((c) => c.muc === muc && c.loai)
+      .map((c, i) => ({ c, i, d: cuThe(c) }))
+      .sort((a, b) => b.d - a.d || a.i - b.i)
+      .filter(({ c }) => {
+        const khoa = c.href.split("/").slice(2, 4).join("/") + "|" + normalizeVi(c.nhan).split(" ").slice(1, 3).join(" ");
+        if (da.has(khoa)) return false;
+        da.add(khoa);
+        return true;
+      })
+      .map((x) => x.c)
+      .slice(0, toiDa);
   }
   // Gõ CÓ DẤU thì so đúng dấu ("đà" không khớp "đất"); gõ không dấu thì so không dấu
   const coDau = (s: string) => s.toLowerCase().normalize("NFC").split(/[^\p{L}\p{N}]+/u).filter(Boolean);
@@ -95,12 +102,15 @@ function locCauGoiY(ds: CauGoiY[], go: string, muc: "ban" | "thue", toiDa: numbe
     const diem = ds.map((c) => {
       const n = normalizeVi(c.nhan);
       const w = ` ${n} `;
+      // "nhà đất" là cả nhóm chung, KHÔNG phải loại "đất" — bỏ cụm này ra trước khi so loại nhà
+      // (lỗi 17/10/2026: gõ "đất hòa xuân" ra "Bán nhà đất Phường Cẩm Lệ" đứng trên "Bán đất nền Đà Nẵng")
+      const wLoai = w.replace(" nha dat ", " ");
       if (nTinh && !n.includes(nTinh)) return { c, d: -1 };                 // khác tỉnh → loại
-      if (loaiY && !w.includes(" " + loaiY + " ") && !w.includes(" nha dat ")) return { c, d: -1 }; // khác loại nhà → loại
+      if (loaiY && !wLoai.includes(" " + loaiY + " ") && !w.includes(" nha dat ")) return { c, d: -1 }; // khác loại nhà → loại
       let d = c.muc === muc ? 256 : 0;                                        // đúng Mua bán / Cho thuê trước
-      if (loaiY && w.includes(" " + loaiY + " ")) d += 64;                   // đúng loại nhà
+      if (loaiY && wLoai.includes(" " + loaiY + " ")) d += 64;               // đúng loại nhà
       if (nSau.some((x) => n.includes(x))) d += 32;                          // đúng phường / quận
-      else if (n.includes("phuong ") || n.includes("xa ")) d -= 8;           // phường KHÁC → xuống dưới cụm cấp tỉnh
+      else if (/ (phuong|xa) /.test(w)) { if (nSau.length) return { c, d: -1 }; d -= 8; } // phường KHÁC: khách đã nói rõ nơi → loại hẳn
       if (p.priceMaxTy != null && n.includes("duoi " + p.priceMaxTy + " ty")) d += 8;
       else if (p.priceMaxTy != null && n.includes("duoi ")) d += 4;
       d += tu.filter((t) => w.includes(" " + t)).length;
@@ -282,10 +292,17 @@ export default function TimTrangChu({ goiYTin, tinDem }: { goiYTin?: CauGoiY[]; 
   // ── GỢI Ý THEO QUY TẮC GOOGLE (chủ dự án 17/10/2026): chưa gõ → chỉ những lần khách đã tìm; đang gõ →
   // MỘT danh sách cụm từ khoá khớp chữ gõ (kể cả tên dự án), không tiêu đề nhóm, mỗi cụm một dòng.
   const kw = tuKhoa.trim();
-  // chạm vào ô chưa gõ → gợi ý phổ biến của đúng mục (dựng từ trang có tin thật); đang gõ → cụm khớp chữ gõ
-  const cauNhuCau = muc !== "duan" ? locCauGoiY(goiYTin ?? [], kw, mb, kw ? 6 : 5) : [];
   // Chỉ hiện lịch sử ĐÚNG mục đang chọn; câu cũ chưa gắn mục thì đoán theo chữ (có "thuê" → Cho thuê, còn lại → Mua bán)
   const mucCua = (x: Suggestion): Muc => (x as Suggestion & { muc?: Muc }).muc ?? (/ thue /.test(` ${normalizeVi(x.label)} `) ? "thue" : "ban");
+  // CHẠM VÀO Ô CHƯA GÕ (như Airbnb: bấm là có gợi ý ngay) — nhưng gợi ý phải CÓ NGHĨA với khách (chủ dự án 17/10/2026:
+  // "Bán nhà Đà Nẵng, Bán nhà Huế… phổ biến cái gì"): khách đã từng tìm → cụm từ khoá dài bám theo lần tìm gần nhất
+  // (cùng nơi, cùng loại nhà); khách mới → cụm dài, cụ thể (loại nhà + nơi + giá), mỗi tỉnh một loại nhà.
+  const lanTruoc = ganDay.find((x) => mucCua(x) === muc)?.label ?? "";
+  const cauNhuCau = muc === "duan" ? [] : kw
+    ? locCauGoiY(goiYTin ?? [], kw, mb, 6)
+    : lanTruoc
+      ? locCauGoiY(goiYTin ?? [], lanTruoc, mb, 6).filter((c) => normalizeVi(c.nhan) !== normalizeVi(lanTruoc)).slice(0, 5)
+      : locCauGoiY(goiYTin ?? [], "", mb, 5);
   const ganDayHien = kw ? [] : ganDay.filter((x) => mucCua(x) === muc).slice(0, 3);
   // Tên dự án gợi ý ở MỌI mục (khách hay gõ tên dự án mà không chuyển sang mục Dự án)
   const goiYDuAn = kw ? suggest(kw, 12).filter((s) => s.kind === "Dự án").slice(0, muc === "duan" ? 6 : 2) : [];
@@ -426,9 +443,9 @@ export default function TimTrangChu({ goiYTin, tinDem }: { goiYTin?: CauGoiY[]; 
           {/* KHUNG CUỘN RIÊNG: BanPhimAo ép mọi con trực tiếp của lớp phủ "max-height: 100%" khi bàn phím bật → để mỗi
               khung này chịu giới hạn, thẻ tìm bên trong giữ đủ cao và cuộn được (không bị cắt cụt). */}
           <div className="flex h-full min-h-0 w-full flex-1 flex-col self-stretch overflow-y-auto overscroll-contain">
-          <div className="mb-tab-mo flex shrink-0 items-start gap-2 self-stretch pb-1 pl-14 pr-3 pt-4 [&_[role=tab]]:text-[14px] [&_[role=tab]]:font-medium [&_[role=tab]_svg]:h-8 [&_[role=tab]_svg]:w-8 [&_[role=tablist]]:gap-0 [&_[role=tablist]]:justify-around">
-            <div className="min-w-0 flex-1">{tabsOf(false, true)}</div>
-            <button type="button" aria-label="Đóng tìm kiếm" onClick={dongMo} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-cvr-ink shadow-[0_2px_10px_rgba(0,0,0,0.12)] transition active:scale-90">
+          <div className="mb-tab-mo relative shrink-0 self-stretch px-14 pb-1 pt-3 [&_[role=tab]]:text-[14px] [&_[role=tab]]:font-medium [&_[role=tab]_svg]:h-9 [&_[role=tab]_svg]:w-9 [&_[role=tablist]]:gap-0 [&_[role=tablist]]:justify-around">
+            {tabsOf(false, true)}
+            <button type="button" aria-label="Đóng tìm kiếm" onClick={dongMo} className="absolute right-3 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white text-cvr-ink shadow-[0_2px_10px_rgba(0,0,0,0.12)] transition active:scale-90">
               <Icon i={X} dam className="h-[18px] w-[18px]" />
             </button>
           </div>
