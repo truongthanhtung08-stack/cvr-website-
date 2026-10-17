@@ -681,8 +681,10 @@ html.ban-phim-mo .an-khi-go-phim { display: none !important; }
   animation: cvr-scrim-in 300ms ease-out;
 }
 
-/* Viền focus rõ ràng khi điều hướng bằng bàn phím/trợ năng (không hiện khi chạm) */
-:focus-visible {
+/* Viền focus rõ ràng khi điều hướng bằng bàn phím/trợ năng (không hiện khi chạm).
+   KHÔNG áp cho ô gõ chữ (chủ dự án 17/10/2026: "hiện cái khung rất thô"): ô gõ luôn "focus-visible" khi bấm
+   vào, mà quy tắc này nằm ngoài lớp Tailwind nên đè mất viền bo tròn riêng của ô → khung vuông xanh đậm. */
+:focus-visible:not(input):not(textarea):not(select) {
   outline: 2px solid var(--color-cvr-blue);
   outline-offset: 2px;
 }
@@ -808,10 +810,20 @@ body[data-nav="in"] main {
 
 /* ── BỘ LỌC THÔNG MINH: chuyển động mượt kiểu Apple (17/10/2026) — chỉ transform/opacity ── */
 @keyframes truotLen { from { opacity: 0; transform: translate3d(0, 24px, 0); } to { opacity: 1; transform: none; } }
-@keyframes xoXuong { from { opacity: 0; transform: translate3d(0, -6px, 0) scale(0.98); } to { opacity: 1; transform: none; } }
+@keyframes xoXuong { from { opacity: 0; transform: translate3d(0, -10px, 0) scale(0.97); } to { opacity: 1; transform: none; } }
+@keyframes dongXuong { from { opacity: 1; transform: none; } to { opacity: 0; transform: translate3d(0, -8px, 0) scale(0.98); } }
 .anim-truot-len { animation: truotLen 0.32s cubic-bezier(0.16, 1, 0.3, 1) both; will-change: transform, opacity; }
-.anim-xo-xuong { animation: xoXuong 0.22s cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: top center; }
-@media (prefers-reduced-motion: reduce) { .anim-truot-len, .anim-xo-xuong { animation: none; } }
+.anim-xo-xuong { animation: xoXuong 0.32s cubic-bezier(0.2, 0.9, 0.3, 1) both; transform-origin: top center; }
+.anim-dong-xuong { animation: dongXuong 0.16s cubic-bezier(0.4, 0, 1, 1) both; transform-origin: top center; }
+@keyframes moRa { from { opacity: 0; transform: translate3d(0, 24px, 0); } to { opacity: 1; transform: none; } }
+@keyframes dongLai { from { opacity: 1; transform: none; } to { opacity: 0; transform: translate3d(0, 24px, 0); } }
+@keyframes hienChu { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ketQua { from { opacity: 0; transform: translate3d(0, 14px, 0); } to { opacity: 1; transform: none; } }
+.anim-ket-qua { animation: ketQua 0.45s cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+.anim-mo-ra { animation: moRa 0.38s cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+.anim-dong-lai { animation: dongLai 0.2s cubic-bezier(0.4, 0, 1, 1) both; }
+.anim-hien-chu { animation: hienChu 0.25s ease 0.08s both; }
+@media (prefers-reduced-motion: reduce) { .anim-truot-len, .anim-xo-xuong, .anim-mo-ra, .anim-hien-chu, .anim-dong-xuong, .anim-dong-lai, .anim-ket-qua { animation: none; } }
 
 /* ── PHẢN HỒI KHI BẤM — toàn web, chuẩn Airbnb/Apple (chủ dự án 17/10/2026: "khách nhận biết được khi
    thao tác, không cứng đơ"). Chỉ transform → mượt, không xô lệch bố cục; tôn trọng giảm chuyển động. ── */
@@ -823,3 +835,21 @@ body[data-nav="in"] main {
 @media (prefers-reduced-motion: reduce) {
   :where(button:not(:disabled), [role="button"], a:has(img)):active { transform: none; }
 }
+
+/* MÀN TÌM ĐIỆN THOẠI MỞ RA KIỂU AIRBNB (chủ dự án 17/10/2026: "giống Airbnb cả giao diện lẫn animation"):
+   nền mờ dần → menu trượt xuống → thẻ tìm phóng từ chỗ ô tìm ra → các thẻ sau trồi lên lần lượt → thanh đáy trượt lên */
+@keyframes mbNen { from { opacity: 0; } to { opacity: 1; } }
+@keyframes mbTab { from { opacity: 0; transform: translate3d(0, -10px, 0); } to { opacity: 1; transform: none; } }
+/* thẻ tìm bắt đầu ĐÚNG khung thanh tìm vừa bấm (biến --tu-* do TimTrangChu đo) rồi phình ra — cắt khung bằng clip-path nên chữ không méo */
+@keyframes mbThe {
+  from { transform: translate3d(var(--tu-x, 0px), var(--tu-y, -18px), 0); clip-path: inset(0 var(--tu-phai, 0px) var(--tu-day, 0px) 0 round 26px); opacity: 0.7; }
+  to { transform: none; clip-path: inset(0 0 0 0 round 28px); opacity: 1; }
+}
+@keyframes mbSau { from { opacity: 0; transform: translate3d(0, 16px, 0); } to { opacity: 1; transform: none; } }
+@keyframes mbDay { from { transform: translate3d(0, 100%, 0); } to { transform: none; } }
+.mb-nen-mo { animation: mbNen 0.2s ease-out both; }
+.mb-tab-mo { animation: mbTab 0.3s cubic-bezier(0.2, 0.9, 0.3, 1) 0.03s both; }
+.mb-the-mo { animation: mbThe 0.42s cubic-bezier(0.2, 0.9, 0.3, 1) backwards; will-change: transform, clip-path; }
+.mb-the-sau { animation: mbSau 0.3s cubic-bezier(0.2, 0.9, 0.3, 1) 0.1s both; }
+.mb-day-mo { animation: mbDay 0.3s cubic-bezier(0.2, 0.9, 0.3, 1) 0.08s both; }
+@media (prefers-reduced-motion: reduce) { .mb-nen-mo, .mb-tab-mo, .mb-the-mo, .mb-the-sau, .mb-day-mo { animation: none; } }

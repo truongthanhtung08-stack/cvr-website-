@@ -24,6 +24,9 @@ export default function FilterDropdown({
   align = "left",
   compact = false,
   field = false,
+  pill = false,
+  seg = false,
+  the = false,
   children,
 }: {
   label: string;
@@ -36,6 +39,12 @@ export default function FilterDropdown({
   compact?: boolean;
   // field = nút LỚN đứng cùng hàng ô tìm kiếm (dòng 1 kiểu Batdongsan): h-10, bo xl.
   field?: boolean;
+  // pill = viên thuốc trắng cùng kiểu ô tìm trang chủ (chỉ bộ lọc trang chủ dùng)
+  pill?: boolean;
+  // seg = một ĐOẠN trong thanh tìm chia ô kiểu Airbnb (nhãn trên, giá trị dưới) — chỉ trang chủ dùng
+  seg?: boolean;
+  // the = THẺ gọn trong màn tìm điện thoại kiểu Airbnb (nhãn trái, giá trị phải) — chỉ trang chủ dùng
+  the?: boolean;
   children: (api: { close: () => void }) => React.ReactNode;
 }) {
   const groupId = id ?? label;
@@ -136,12 +145,39 @@ export default function FilterDropdown({
 
   return (
     <div className={`relative ${className}`}>
+      {the ? (
+        <button
+          ref={btnRef}
+          type="button"
+          onClick={() => setOpen(!open)}
+          className="flex min-h-14 w-full items-center justify-between gap-3 rounded-2xl bg-white px-6 py-3 text-left shadow-[0_4px_16px_rgba(0,0,0,0.08)] outline-none transition active:scale-[0.99]"
+        >
+          <span className="shrink-0 text-[14px] font-medium text-cvr-muted">{label}</span>
+          <span className="min-w-0 truncate text-[14px] font-medium text-cvr-ink">{active && summary ? summary : "Tất cả"}</span>
+        </button>
+      ) : seg ? (
+        <button
+          ref={btnRef}
+          type="button"
+          onClick={() => setOpen(!open)}
+          className={`flex h-full w-full flex-col items-start justify-center rounded-full px-6 text-left outline-none transition ${open ? "bg-white shadow-[0_6px_20px_rgba(0,0,0,0.12)]" : "hover:bg-black/[0.04]"}`}
+        >
+          <span className="text-[13px] font-semibold text-cvr-ink">{label}</span>
+          <span className={`max-w-full truncate text-[15px] ${active ? "text-cvr-ink" : "text-cvr-muted"}`}>{active && summary ? summary : "Tất cả"}</span>
+        </button>
+      ) : (
       <button
         ref={btnRef}
         type="button"
         onClick={() => setOpen(!open)}
         className={`flex items-center justify-between gap-2 border text-sm outline-none transition ${
-          compact
+          pill
+            ? `h-10 w-auto shrink-0 whitespace-nowrap rounded-full px-4 ${
+                active
+                  ? "border-cvr-ink bg-cvr-ink/[0.04] font-medium text-cvr-ink"
+                  : "border-cvr-line bg-white text-cvr-body hover:border-cvr-ink/40 hover:text-cvr-ink"
+              }`
+            : compact
             ? `h-8 w-auto whitespace-nowrap rounded-full px-2.5 ${
                 active
                   ? "border-white/40 bg-white/20 text-white"
@@ -164,7 +200,7 @@ export default function FilterDropdown({
       >
         <span className="truncate">{active && summary ? summary : label}</span>
         <svg
-          className={`h-4 w-4 shrink-0 transition-transform ${compact ? "text-white/60" : active ? "text-cvr-blue" : "text-cvr-faint"} ${open ? "rotate-180" : ""}`}
+          className={`h-4 w-4 shrink-0 transition-transform ${compact ? "text-white/60" : pill ? (active ? "text-cvr-ink" : "text-cvr-faint") : active ? "text-cvr-blue" : "text-cvr-faint"} ${open ? "rotate-180" : ""}`}
           fill="none"
           stroke="currentColor"
           strokeWidth={2}
@@ -173,11 +209,12 @@ export default function FilterDropdown({
           <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
         </svg>
       </button>
+      )}
 
       {open && sheet
         ? /* ── ĐIỆN THOẠI: sheet trượt từ đáy (chuẩn iOS) ── */
           createPortal(
-            <div className="fixed inset-0 z-[100] sm:hidden">
+            <div className="fixed inset-0 z-[250] sm:hidden">
               {/* Nền mờ — chạm để đóng */}
               <button
                 type="button"

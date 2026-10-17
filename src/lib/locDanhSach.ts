@@ -1,6 +1,6 @@
 import type { Listing } from "@/lib/data";
-import { sortListings, type Filters, type SortKey } from "@/lib/filters";
-import { smartFilter, smartSearch } from "@/lib/smartSearch";
+import { sortListings, applyFilters, emptyFilters, normalizeVi, typeGroupsFor, type Filters, type SortKey } from "@/lib/filters";
+import { smartFilter, smartSearch, goiYNoiLong } from "@/lib/smartSearch";
 import { nhanDoiHienThi } from "@/lib/nhanDoiHienThi";
 import { parseLatLng } from "@/lib/googleMaps";
 import { coordOf } from "@/lib/geo";
@@ -31,7 +31,40 @@ export type KetQuaLoc = {
   boiDam: Record<string, string[]>;
   /** Số tin theo tỉnh/thành (cột phải "theo khu vực") */
   khuVuc: [string, number][];
+  /** Tỉnh máy hiểu được (từ bộ lọc hoặc từ câu khách gõ) — để đặt dòng "Gợi ý khác tại …" */
+  tinhHieu: string[];
 };
+
+// CÂU GÕ MÁY HIỂU ĐƯỢC → BỘ LỌC (chủ dự án 17/10/2026: "đất giá rẻ dưới 3 tỷ tại Hòa Xuân" phải ra đất Hòa Xuân
+// trước, rồi giá, rồi khu vực Đà Nẵng — không phải xếp theo số chữ trùng). Bóc được nơi / loại nhà / giá thì lọc
+// đúng như khách chọn trường lọc; "đất" trần = cả nhóm Đất (đất nền, đất thổ cư…).
+export function cauThanhBoLoc(f: Filters, purpose: "ban" | "thue"): Filters | null {
+  const kw = f.keyword.trim();
+  if (!kw) return null;
+  const pt = goiYNoiLong(kw)[0]?.patch;
+  if (!pt || (!pt.locations?.length && !pt.types?.length && pt.priceMax == null && pt.priceMin == null)) return null;
+  let types = f.types;
+  if (pt.types?.length) {
+    // Nhãn của bộ tách câu ("Đất nền") khác chữ loại nhà trên tin ("Đất nền / Đất nền dự án") → so theo NHÓM
+    const nhan = normalizeVi(pt.types[0]);
+    const nq = normalizeVi(kw);
+    const nhom = typeGroupsFor(purpose).filter((g) => g.label !== "Khác");
+    const g = nhom.find((x) => normalizeVi(x.label) === nhan || x.items.some((t) => normalizeVi(t).includes(nhan)))
+      ?? nhom.find((x) => nhan.startsWith(normalizeVi(x.label)));
+    const chiTiet = g?.items.filter((t) => normalizeVi(t).includes(nhan)) ?? [];
+    // Gõ đúng chữ chi tiết ("đất nền") → đúng loại đó; gõ trần ("đất") → cả nhóm
+    types = g ? (nq.includes(nhan) && chiTiet.length ? chiTiet : g.items) : pt.types;
+  }
+  return {
+    ...f,
+    types: f.types.length ? f.types : types,
+    locations: f.locations.length ? f.locations : pt.locations?.length ? pt.locations : f.locations,
+    priceMin: f.priceMin != null || f.priceMax != null ? f.priceMin : pt.priceMin ?? null,
+    priceMax: f.priceMin != null || f.priceMax != null ? f.priceMax : pt.priceMax ?? null,
+    beds: f.beds || pt.beds || 0,
+    keyword: "",
+  };
+}
 
 export function locDanhSach(
   items: Listing[],
@@ -41,6 +74,9 @@ export function locDanhSach(
   sort: SortKey,
   page: number,
 ): KetQuaLoc & { ketQua: Listing[] } {
+  // Câu có "giá rẻ" → trong cùng nhóm, tin rẻ đứng trước (cùng quy ước với trang sạch ?sapxep=gia-tang)
+  if (sort === "moi" && / gia re /.test(` ${normalizeVi(filters.keyword)} `)) sort = "gia-tang";
+  filters = cauThanhBoLoc(filters, purpose) ?? filters;
   // Nguồn theo đúng MỤC ĐÍCH + NHÂN ĐÔI HIỂN THỊ của CVR Diamond (nhanDoiHienThi.ts)
   const base = nhanDoiHienThi(items.filter((l) => (l.purpose ?? "ban") === purpose));
   // NỚI LỎNG THÔNG MINH: tin khớp đủ lên đầu (Tầng 1), thiếu tiêu chí phụ xuống Tầng 2/3
@@ -66,10 +102,16 @@ export function locDanhSach(
   // ③ loại hình khác, đúng tỉnh → ④ còn lại. Tối đa TOI_DA_GOI_Y tin gợi ý.
   const khopDu = sortListings(hits.filter((h) => h.tier === 1).map((h) => h.item), sort);
   const tinhChon = new Set(filters.locations.map((x) => x.province));
+  // THỨ TỰ ƯU TIÊN (chủ dự án 17/10/2026): đúng LOẠI NHÀ là nền → đúng PHƯỜNG/QUẬN → đúng GIÁ → đúng TỈNH
+  // → tỉnh khác. VD đất Hòa Xuân > đất Đà Nẵng dưới 3 tỷ > đất Đà Nẵng khác > đất tỉnh khác > nhà Hòa Xuân.
+  const sauChon = filters.locations.filter((x) => x.district || x.ward);
+  const coGia = filters.priceMin != null || filters.priceMax != null;
   const diemGoiY = (l: Listing) => {
     const dungLoai = filters.types.length === 0 || filters.types.includes(l.type);
     const dungTinh = tinhChon.size === 0 || tinhChon.has(l.location.split(",").pop()?.trim() ?? "");
-    return (dungLoai ? 2 : 0) + (dungTinh ? 1 : 0);
+    const dungSau = sauChon.length > 0 && applyFilters([l], { ...emptyFilters(), locations: sauChon }).length > 0;
+    const dungGia = !coGia || applyFilters([l], { ...emptyFilters(), priceMin: filters.priceMin, priceMax: filters.priceMax }).length > 0;
+    return (dungLoai ? 128 : 0) + (dungSau ? 64 : 0) + (dungTinh ? 48 : 0) + (dungGia ? 32 : 0);
   };
   const tam = tinhChon.size === 1 ? coordOf([...tinhChon][0], "") : null;
   const khoangCach = (l: Listing) => {
@@ -114,6 +156,7 @@ export function locDanhSach(
     boiDam,
     tangTheoId,
     khuVuc: [...m.entries()].sort((a, b) => b[1] - a[1]),
+    tinhHieu: [...tinhChon],
   };
 }
 

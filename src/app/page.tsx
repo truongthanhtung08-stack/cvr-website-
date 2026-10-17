@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Header from "@/components/Header";
 import TimTrangChu from "@/components/TimTrangChu";
+import { goiYTrangChu, tinDem } from "@/lib/goiYTrangChu";
 import FeaturedListings from "@/components/FeaturedListings";
 import ProjectsSection from "@/components/ProjectsSection";
 // import ForYou from "@/components/ForYou"; // TẠM ẨN — chờ chốt vị trí đặt lại (component vẫn còn)
@@ -11,7 +12,7 @@ import NewsSection from "@/components/NewsSection";
 import Footer from "@/components/Footer";
 import TimKiemPhoBien from "@/components/TimKiemPhoBien";
 import { HomeExpandProvider, HomeCollapsible } from "@/components/HomeExpand";
-import { getListingsThe } from "@/lib/listingsDb";
+import { getListings, getListingsThe } from "@/lib/listingsDb";
 import { chonTinTrangChu } from "@/lib/tinNoiBat";
 import { getArticles, getProjects } from "@/lib/contentDb";
 import { getHomeAreas, getFeaturedArticleSlug } from "@/lib/siteContent";
@@ -29,8 +30,9 @@ export default async function Home() {
   // B2: tin từ Supabase (bảng listings) — chưa có bảng/lỗi → tự dùng dữ liệu mẫu
   // Dự án + Tin tức: nội dung admin tự tạo (contentDb) — chưa có → mẫu
   // Khu vực (Hero ảnh và banner cuối đã bỏ 17/10/2026 — không giúp SEO, không giúp tìm tin): ảnh/chữ admin sửa được (siteContent) — chưa nhập → mặc định
-  const [listings, projects, articles, homeAreas, featuredSlug] = await Promise.all([
-    getListingsThe(), getProjects(), getArticles(), getHomeAreas(),
+  // tinDu: bản đầy đủ (cùng lần đọc có cache) — chỉ dùng ở máy chủ để dựng cụm gợi ý, không gửi xuống máy khách
+  const [listings, tinDu, projects, articles, homeAreas, featuredSlug] = await Promise.all([
+    getListingsThe(), getListings(), getProjects(), getArticles(), getHomeAreas(),
     getFeaturedArticleSlug(),
   ]);
 
@@ -43,12 +45,12 @@ export default async function Home() {
           {/* BỘ LỌC LÀ HERO (chủ dự án 17/10/2026: bỏ Hero ảnh, "bộ lọc giờ là Hero" — trọng tâm, dễ dùng,
               trực quan). Bộ tìm 3 bước kiểu Airbnb — TimTrangChu. Ẩn khi một khối "Xem thêm" đang mở. */}
           <HomeCollapsible>
-            <section className="border-b border-cvr-line bg-cvr-surface pb-5 pt-3 sm:pb-7 sm:pt-5">
+            <section className="border-b border-cvr-line bg-white pt-4 sm:bg-[linear-gradient(#ffffff,#f7f7f7)] sm:pt-10">
               {/* BỘ LỌC THAY HERO (17/10/2026): gọn, nền xám nhạt đúng màu các khối khác của trang — menu mục đích, một ô tìm, nhóm loại hình */}
               <h1 className="sr-only">
                 Cổng thông tin mua bán, cho thuê nhà đất
               </h1>
-              <TimTrangChu />
+              <TimTrangChu goiYTin={goiYTrangChu(tinDu)} tinDem={tinDem(tinDu)} />
             </section>
           </HomeCollapsible>
 

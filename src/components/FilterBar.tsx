@@ -183,14 +183,16 @@ export default function FilterBar({
     if (luu) luuTuKhoaDaGo();
     setDangTim(true);
     window.setTimeout(() => setDangTim(false), 700);
+    // Báo khối kết quả chạy chuyển động (kể cả khi bộ lọc không đổi) — khách thấy trang vừa tìm
+    window.dispatchEvent(new Event("cvr-tim"));
     if (onSearch) onSearch(next);
     else cuonToiKetQua();
   };
 
   const typed = f.keyword.trim().length > 0;
-  // Gợi ý khi chưa gõ: KHU VỰC PHỔ BIẾN của đúng tab (mua bán / cho thuê); tab Dự án giữ gợi ý chung.
+  // Panel: đang gõ → cụm khớp chữ gõ; CHẠM VÀO Ô CHƯA GÕ → lịch sử tìm + gợi ý phổ biến của đúng mục
+  // (chủ dự án 17/10/2026: "Airbnb chỉ cần bấm vào là nó hiện thông minh về gợi ý").
   const phoBien = mode === "duan" ? popularSuggestions : goiYPhoBien(purpose);
-  // Panel: đang gõ → tối đa 6 kết quả khớp; chưa gõ → ≤3 lịch sử + phổ biến.
   const recentShown = recent.slice(0, 5); // hiện 5 mục gần nhất (trước chỉ 3)
 
   // ── LOẠI DẦN GỢI Ý LẠC ĐỀ ────────────────────────────────────────────────
@@ -221,22 +223,7 @@ export default function FilterBar({
   const bacThang: Suggestion[] = typed
     ? goiYNoiLong(f.keyword).map((g) => ({ label: g.label, kind: "Gợi ý" as const, sub: g.sub, patch: g.patch }))
     : [];
-  // ── LUÔN TÌM ĐƯỢC BẰNG CHÍNH CHỮ NGƯỜI GÕ ────────────────────────────────
-  // Địa danh dân gian (Mỹ Khê, cầu Rồng, chợ Hàn…), tên đường, tên toà nhà…
-  // KHÔNG có trong danh mục hành chính, nhưng CÓ trong chữ của tin. Dòng này
-  // đứng ĐẦU panel để mọi từ khoá đều tìm thẳng vào tiêu đề · mô tả · địa chỉ
-  // của tin — ô tìm kiếm không bao giờ là ngõ cụt.
-  const timTheoChu: Suggestion[] = typed
-    ? [{
-        label: `Tìm “${f.keyword.trim()}”`,
-        kind: "Gợi ý" as const,
-        sub: "Dò trong tiêu đề, mô tả và địa chỉ của tin",
-        keyword: f.keyword.trim(),
-      }]
-    : [];
-  const panelItems: Suggestion[] = typed
-    ? [...timTheoChu, ...bacThang, ...(noHits ? phoBien.filter(dungY) : typedHits)]
-    : [...recentShown, ...phoBien];
+  const panelItems: Suggestion[] = typed ? [...bacThang, ...typedHits] : [...recentShown, ...phoBien.filter(dungY).slice(0, 5)];
   // Câu dài hiếm khi khớp NGUYÊN VĂN một mục nào — nhưng nếu bóc được tiêu chí
   // (loại hình · phường/quận · giá…) thì KHÔNG được báo "không có kết quả",
   // phải nói đã hiểu gì và gợi ý theo đúng tiêu chí đó.
@@ -554,14 +541,14 @@ export default function FilterBar({
       : "";
     return (
       <div key={`${s.label}-${i}`}>
-        {header === "recent" && (
-          <div className="flex items-center justify-between px-2.5 pb-1 pt-1 text-[11px] font-semibold uppercase tracking-wide text-cvr-faint">
-            <span>Tìm kiếm gần đây</span>
-            <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={clearRecent} className="font-medium normal-case text-cvr-muted transition hover:text-cvr-ink">Xoá tất cả</button>
-          </div>
-        )}
         {header === "popular" && (
-          <div className="px-2.5 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wide text-cvr-faint">Gợi ý phổ biến</div>
+          <div className="px-2.5 pb-1 pt-2 text-[12px] font-semibold text-cvr-muted">Gợi ý phổ biến</div>
+        )}
+        {header === "recent" && (
+          <div className="flex items-center justify-between px-2.5 pb-1 pt-1 text-[12px] font-semibold text-cvr-muted">
+            <span>Tìm kiếm gần đây</span>
+            <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={clearRecent} className="text-cvr-muted transition hover:text-cvr-ink hover:underline">Xoá tất cả</button>
+          </div>
         )}
         <div className={`group flex items-center rounded-lg pr-1 transition ${i === activeIdx ? "bg-black/[0.06]" : "hover:bg-black/5"}`}>
           <button
@@ -569,17 +556,14 @@ export default function FilterBar({
             onMouseDown={(e) => e.preventDefault()}
             onMouseEnter={() => setActiveIdx(i)}
             onClick={() => applySuggestion(s)}
-            className="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg px-2.5 py-2.5 text-left text-sm"
+            className="flex min-w-0 flex-1 items-center gap-3 rounded-lg px-2.5 py-2 text-left text-[15px]"
           >
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-cvr-surface text-cvr-body">
-              <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.7} viewBox="0 0 24 24" aria-hidden>
+            <span className="flex w-5 shrink-0 justify-center text-cvr-muted">
+              <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={1.7} viewBox="0 0 24 24" aria-hidden>
                 <path strokeLinecap="round" strokeLinejoin="round" d={!typed && i < recentShown.length ? ICON_CLOCK : ICON_THEO_LOAI[s.kind] ?? ICON_SEARCH} />
               </svg>
             </span>
-            <span className="flex min-w-0 flex-1 flex-col">
-              <span className="truncate"><HighlightLabel label={s.label} q={typed ? f.keyword : ""} /></span>
-              {s.sub && <span className="truncate text-[11px] font-normal text-cvr-faint">{s.sub}</span>}
-            </span>
+            <span className="min-w-0 flex-1 truncate"><HighlightLabel label={s.label} q={typed ? f.keyword : ""} /></span>
           </button>
           {/* ↖ Chèn gợi ý vào ô tìm để sửa tiếp (không tìm ngay) — kiểu Google */}
           <button
@@ -736,10 +720,9 @@ export default function FilterBar({
           </>
         )}
         {sugOpen && panelItems.length > 0 && (
-          <div className="anim-xo-xuong absolute left-0 right-0 top-full z-[120] mt-1.5 max-h-64 overflow-y-auto rounded-none border border-cvr-line bg-white p-1.5 shadow-2xl shadow-black/20 ring-1 ring-inset ring-black/5 sm:max-h-80">
+          <div className="anim-xo-xuong absolute left-0 right-0 top-full z-[120] mt-1.5 max-h-64 overflow-y-auto rounded-2xl bg-white p-1.5 shadow-xl shadow-black/15 ring-1 ring-black/5 sm:max-h-80">
             {/* Nút THOÁT tìm kiếm — chạm là tắt panel gợi ý + đóng bàn phím. Hiện cả PC & Mobile. */}
-            <div className="sticky top-0 z-10 -mx-1.5 -mt-1.5 mb-1 flex items-center justify-between border-b border-cvr-line bg-white px-2.5 py-1.5">
-              <span className="text-[11px] font-semibold uppercase tracking-wide text-cvr-faint">Gợi ý tìm kiếm</span>
+            <div className="pointer-events-none sticky top-0 z-10 flex h-7 justify-end">
               <button
                 type="button"
                 aria-label="Thoát tìm kiếm"
@@ -749,16 +732,13 @@ export default function FilterBar({
                   setActiveIdx(-1);
                   (document.activeElement as HTMLElement | null)?.blur?.();
                 }}
-                className="-mr-1 flex h-9 w-9 items-center justify-center rounded-full text-cvr-muted active:bg-cvr-surface"
+                className="pointer-events-auto -mt-0.5 flex h-8 w-8 items-center justify-center rounded-full bg-white text-cvr-muted hover:bg-cvr-surface active:bg-cvr-surface"
               >
                 <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
-            {noHits && (
-              <p className="px-2.5 pb-1 pt-1 text-[12px] text-cvr-muted">{dongDanDat}</p>
-            )}
             {suggestionRows}
           </div>
         )}
@@ -913,7 +893,7 @@ export default function FilterBar({
 
 // Bộ chọn khu vực ĐA TẦNG + ĐA CHỌN (kiểu Batdongsan): duyệt Tỉnh→Quận→Phường,
 // thêm cả tỉnh/quận hoặc chọn tới phường; mỗi khu vực là 1 chip (tối đa MAX_LOCATIONS).
-function LocationPanel({
+export function LocationPanel({
   locations, onChange, onClose,
 }: {
   locations: LocationSel[];
@@ -1085,7 +1065,7 @@ function LocationPanel({
 
 // Danh sách dự án — LỌC ĐỘNG theo khu vực đã chọn (kiểu Batdongsan): chọn Đà Nẵng
 // → chỉ hiện dự án Đà Nẵng. Chưa chọn khu vực → hiện tất cả.
-function ProjectPanel({
+export function ProjectPanel({
   locations, project, onPick,
 }: {
   locations: LocationSel[];
@@ -1141,7 +1121,7 @@ function ProjectPanel({
 
 // Toggle bật/tắt kiểu Batdongsan (Tin xác thực · Môi giới chuyên nghiệp) — công tắc iOS/Apple.
 // Hàng công tắc trong drawer "Lọc thêm" (nhãn trái · switch phải) — kiểu Apple.
-function SwitchRow({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
+export function SwitchRow({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
   return (
     <button
       type="button"
@@ -1186,7 +1166,7 @@ function HighlightLabel({ label, q }: { label: string; q: string }) {
   );
 }
 
-function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+export function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
     <button
       type="button"
@@ -1200,7 +1180,7 @@ function Chip({ active, onClick, children }: { active: boolean; onClick: () => v
   );
 }
 
-function RangePanel({
+export function RangePanel({
   unit, step, sliderMax, min, max, presets, onPick, onReset, onApply,
 }: {
   unit: string;

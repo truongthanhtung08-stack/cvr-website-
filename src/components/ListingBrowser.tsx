@@ -15,6 +15,7 @@ import PropertyCard from "@/components/PropertyCard";
 import TheTinMobile from "@/components/TheTinMobile";
 import FilterBar from "@/components/FilterBar";
 import ActiveFilters from "@/components/ActiveFilters";
+import { cauThanhBoLoc } from "@/lib/locDanhSach";
 import { featuredListings, type Article, type Listing } from "@/lib/data";
 import {
   filtersFromParams,
@@ -133,6 +134,14 @@ export default function ListingBrowser({
   // Chế độ BẢN ĐỒ (kiểu Batdongsan): bật là cả trang chuyển sang xem bản đồ,
   // marker chạy theo đúng bộ lọc đang áp dụng.
   const [mapMode, setMapMode] = useState(false);
+  // BẤM TÌM PHẢI THẤY KẾT QUẢ ĐỔI (chủ dự án 17/10/2026: "không thể đứng yên như vậy, hãy học Google"): mỗi lần
+  // tìm, khối kết quả được vẽ lại với chuyển động mờ → rõ, trồi lên nhẹ.
+  const [lanTim, setLanTim] = useState(0);
+  useEffect(() => {
+    const tang = () => setLanTim((n) => n + 1);
+    window.addEventListener("cvr-tim", tang);
+    return () => window.removeEventListener("cvr-tim", tang);
+  }, []);
   // SỐ TRANG NẰM TRONG ĐỊA CHỈ (?trang=3) — bắt buộc, đừng bỏ.
   // Trước đây số trang chỉ nằm trong bộ nhớ: khách đang ở trang 3, bấm vào một tin
   // rồi bấm Back là văng về trang 1, phải bấm lại 3 lần. Ghi vào địa chỉ thì bấm
@@ -208,7 +217,7 @@ export default function ListingBrowser({
   const dongTang = (item: Listing, i: number) => {
     // Chủ dự án 17/10/2026: "1 tin thì ra 1 tin! Muốn gợi ý thì có câu gợi ý ở những địa phương khác".
     // Nhóm: 0 = khớp đủ · 1 = gợi ý cùng tỉnh đang chọn · 2 = gợi ý ở địa phương khác. Đổi nhóm → một dòng tiêu đề.
-    const tinhChon = filters.locations.map((x) => x.province);
+    const tinhChon = kq?.tinhHieu ?? filters.locations.map((x) => x.province);
     const nhom = (l: Listing) => {
       if ((kq?.tangTheoId?.[l.id] ?? 1) === 1) return 0;
       const tinh = l.location.split(",").pop()?.trim() ?? "";
@@ -224,18 +233,21 @@ export default function ListingBrowser({
     );
   };
   const active = hasActiveFilters(filters);
+  // TỪ KHOÁ CHUẨN (chủ dự án 17/10/2026: gõ câu thì phải hiện Huế · Căn hộ · Dưới 2 tỷ, không phải câu thô):
+  // ô tìm giữ nguyên câu khách gõ; trường lọc + thẻ bên dưới hiện đúng tiêu chí máy đã hiểu.
+  const hieu = useMemo(() => cauThanhBoLoc(filters, purpose), [filters, purpose]);
 
   // Đang nạp dữ liệu → giữ nguyên khung chờ máy chủ đã dựng (không nhấp nháy giao diện)
   if (nguon && !mayChu) return <>{choTai ?? null}</>;
 
   return (
     // PC: thanh lọc nằm SÁT header, không chừa khoảng trống (file V3 10.08.2026).
-    <div className={nested ? "pt-1 sm:pt-6" : "mx-auto max-w-7xl px-4 pt-0 pb-footer sm:px-6 sm:pt-0 lg:px-8"}>
+    <div className={nested ? "pt-1 sm:pt-6" : "mx-auto max-w-7xl px-4 pt-0 pb-footer sm:px-6 sm:pt-4 lg:px-8"}>
       {/* ── Phần trên kiểu Homedy (gọn): thanh lọc → tiêu đề + bộ đếm.
            Trang cấp 1 KHÔNG dùng breadcrumb (menu đã chỉ vị trí — chuẩn Apple). ── */}
       <div>
         <FilterBar
-          value={filters}
+          value={hieu ? { ...hieu, keyword: filters.keyword } : filters}
           onChange={setFilters}
           purpose={purpose}
           onMap={() => setMapMode((v) => !v)}
@@ -248,7 +260,7 @@ export default function ListingBrowser({
       {/* Chip bộ lọc đang áp dụng */}
       {active && (
         <div className="mt-3">
-          <ActiveFilters value={filters} onChange={setFilters} />
+          <ActiveFilters value={hieu ?? filters} onChange={(v) => setFilters(hieu ? { ...v, keyword: "" } : v)} />
         </div>
       )}
 
@@ -339,7 +351,7 @@ export default function ListingBrowser({
       <div className={`mt-3 grid grid-cols-1 gap-6 lg:grid-cols-3 ${mapMode ? "hidden" : ""}`}>
 
         {/* CỘT TRÁI: danh sách tin */}
-        <div className="lg:col-span-2">
+        <div key={`${lanTim}-${JSON.stringify(filters)}`} className="anim-ket-qua lg:col-span-2">
           {pageItems.length > 0 ? (
             <>
               {/* Nhãn TẦNG kết quả — cho biết nhóm tin đang xem khớp tới đâu */}

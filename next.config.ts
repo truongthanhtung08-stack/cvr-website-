@@ -17,7 +17,9 @@ const nextConfig: NextConfig = isPages
       // CHỈ máy chủ thử ở máy (npm run dev): cho điện thoại trong cùng Wi-Fi mở http://<IP máy>:3000 và BẤM ĐƯỢC.
       // Next 16 mặc định chặn mã trình duyệt khi mở từ máy khác → trang hiện hình mà không thao tác được.
       // Không ảnh hưởng web thật trên Vercel.
-      allowedDevOrigins: ["10.41.101.234", "*.local"],
+      allowedDevOrigins: ["10.*.*.*", "192.168.*.*", "*.local"],
+      // nút tròn "N" của bản chạy thử che nội dung khi chủ dự án xem trên điện thoại — chỉ có ở npm run dev
+      devIndicators: false,
       // ⚠️ 5/9/2026 — TẮT tối ưu ảnh của Vercel.
       // Gói Vercel miễn phí có hạn mức ảnh tối ưu; đăng đi đăng lại vài đợt tin là
       // hết hạn mức → mọi ảnh trả về "402 Payment required"

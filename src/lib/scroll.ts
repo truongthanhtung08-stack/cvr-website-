@@ -5,6 +5,15 @@ export function cuonToiKetQua() {
   const el = document.getElementById("ket-qua");
   if (!el) return;
   const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  // KHÔNG ĐỂ THANH ĐẦU TRANG CHE Ô TÌM (chủ dự án 17/10/2026: "khách phải thấy mình đang gõ cái gì"):
+  // cuộn sao cho ô tìm vừa bấm nằm dưới thanh đầu trang, chừa khoảng thở (khung bộ lọc không dính sát menu).
+  const o = Array.from(document.querySelectorAll<HTMLInputElement>('input[role="combobox"]')).find((x) => x.offsetParent);
+  if (o) {
+    const dau = document.querySelector("header")?.getBoundingClientRect().height ?? 64;
+    const top = o.getBoundingClientRect().top + window.scrollY - dau - 32;
+    window.scrollTo({ top: Math.max(0, top), behavior: reduce ? "auto" : "smooth" });
+    return;
+  }
   el.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
 }
 

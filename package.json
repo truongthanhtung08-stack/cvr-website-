@@ -14,6 +14,7 @@
     "kiem-seo": "node scripts/kiem-seo.mjs"
   },
   "dependencies": {
+    "@phosphor-icons/react": "^2.1.7",
     "@supabase/ssr": "^0.12.0",
     "@supabase/supabase-js": "^2.108.2",
     "lucide-react": "^0.468.0",
