@@ -189,6 +189,12 @@ Buộc phải đụng vào vì lý do kỹ thuật → **DỪNG, HỎI TRƯỚC.
 
 ## 0C1. 💵 VERCEL PHẢI NẰM TRONG GÓI PRO $20/THÁNG (chốt 15/10/2026)
 
+> ⛔ **MỌI GÓI DỊCH VỤ — không phát sinh ngoài phí tháng (chủ dự án quán triệt 17/10/2026):**
+> Vercel Pro · Supabase Pro · Resend · Cloudflare R2 · Zalo ZBS · Google… chỉ trả đúng phí gói. Trước mỗi
+> thay đổi đụng tới máy chủ, cơ sở dữ liệu, ảnh/video, cron, email, tin nhắn: tính "mỗi tháng chạy bao
+> nhiêu lần, tốn gì, có vượt hạn mức gói không" → ghi vào chú thích mã. Cài đặt và cách làm phải tối ưu
+> sẵn để tránh phát sinh (bộ nhớ đệm, gom việc, một lần push mỗi đợt). Không chắc → hỏi trước khi làm.
+
 > 🎯 **Mục tiêu chủ dự án:** mỗi tháng chỉ trả đúng **$20** gói Pro — mọi mức dùng phải nằm gọn trong
 > **$20 tín dụng có sẵn** của gói. **Không phát sinh khoản vô lý nào.** Khách xem tin vẫn đếm lượt
 > như bình thường và **không được ảnh hưởng gì đến chi phí Vercel.**

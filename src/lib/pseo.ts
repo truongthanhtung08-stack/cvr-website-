@@ -2,6 +2,7 @@ import type { Listing } from "@/lib/data";
 import { findCategory, rentCategories, rentNhaPseo, saleCategories, saleNhaPseo, type Category } from "@/lib/categories";
 import { khuVucList, slugKhuVuc, timKhuVuc, type KhuVuc } from "@/lib/khuVuc";
 import { normalizeVi, type Filters } from "@/lib/filters";
+import { newProvinceOf, phuongMoiCuaQuan } from "@/lib/locations";
 
 // ============================================================================
 // PROGRAMMATIC SEO — Template 1 "Dynamic Listing" (docs/PHAN-TICH-PSEO-2-FILE.md)
@@ -51,7 +52,9 @@ export const PHAP_LY: PhapLy[] = [
 export function boLocCua(dk: DieuKien): Partial<Filters> | null {
   if (dk.duong || dk.kiet) return null;
   return {
-    locations: [dk.phuong ? { province: dk.tinh.name, ward: dk.phuong } : { province: dk.tinh.name }],
+    locations: dk.thanhPho
+      ? dk.thanhPho.phuong.map((ward) => ({ province: dk.tinh.name, ward }))
+      : [dk.phuong ? { province: dk.tinh.name, ward: dk.phuong } : { province: dk.tinh.name }],
     ...(dk.cat ? { types: dk.cat.types } : {}),
     ...(dk.giaDuoi ? { priceMax: dk.giaDuoi.max / 1e9 } : {}),
     ...(dk.phongNgu ? { beds: dk.phongNgu } : {}),
@@ -74,6 +77,46 @@ const phongNguNhan = (n: number) => `${n} phòng ngủ`;
 
 export const KIET_SLUG = "nha-kiet-hem";
 
+// TRỤC THÀNH PHỐ (#5 kế hoạch SEO, 17/10/2026): người tìm gõ tên THÀNH PHỐ LỚN ("bán nhà Nha Trang"
+// 185 cụm, "đất Đà Lạt" 167, "căn hộ Quy Nhơn" 147), tên này gần như không đổi dù địa giới đổi
+// (chủ dự án 17/10/2026: "lấy tên thành phố lớn làm từ khoá chính, bấm vào thì ra theo đơn vị hành
+// chính mới/cũ"). Thành phố = thành phố thuộc tỉnh CŨ; tin khớp = mọi phường MỚI đã nhận đất của
+// thành phố đó, theo BẢNG SÁP NHẬP CHÍNH THỨC (phuongMoiCuaQuan) — không dò theo tên, không đoán.
+// Thêm thành phố: thêm một dòng { name, tinhCu }. Tên thành phố trùng tên tỉnh (Quảng Ngãi, Kon Tum…)
+// không thêm — trang tỉnh đã mang đúng tên đó.
+export type ThanhPho = { slug: string; name: string; tinh: string; phuong: string[] };
+export const THANH_PHO: ThanhPho[] = [
+  { name: "Nha Trang", tinhCu: "Khánh Hòa" },
+  { name: "Cam Ranh", tinhCu: "Khánh Hòa" },
+  { name: "Phan Rang - Tháp Chàm", tinhCu: "Ninh Thuận" },
+  { name: "Đà Lạt", tinhCu: "Lâm Đồng" },
+  { name: "Bảo Lộc", tinhCu: "Lâm Đồng" },
+  { name: "Phan Thiết", tinhCu: "Bình Thuận" },
+  { name: "Gia Nghĩa", tinhCu: "Đắk Nông" },
+  { name: "Quy Nhơn", tinhCu: "Bình Định" },
+  { name: "Pleiku", tinhCu: "Gia Lai" },
+  { name: "Buôn Ma Thuột", tinhCu: "Đắk Lắk" },
+  { name: "Tuy Hòa", tinhCu: "Phú Yên" },
+  { name: "Hội An", tinhCu: "Quảng Nam" },
+  { name: "Tam Kỳ", tinhCu: "Quảng Nam" },
+  { name: "Đông Hà", tinhCu: "Quảng Trị" },
+  { name: "Đồng Hới", tinhCu: "Quảng Bình" },
+  { name: "Vinh", tinhCu: "Nghệ An" },
+  { name: "Vũng Tàu", tinhCu: "Bà Rịa - Vũng Tàu" },
+  { name: "Thủ Dầu Một", tinhCu: "Bình Dương" },
+  { name: "Dĩ An", tinhCu: "Bình Dương" },
+  { name: "Thuận An", tinhCu: "Bình Dương" },
+  { name: "Biên Hòa", tinhCu: "Đồng Nai" },
+  { name: "Thủ Đức", tinhCu: "Hồ Chí Minh" },
+  { name: "Hạ Long", tinhCu: "Quảng Ninh" },
+  { name: "Phú Quốc", tinhCu: "Kiên Giang" },
+]
+  .map(({ name, tinhCu }) => ({ name, slug: slugKhuVuc(name), tinh: newProvinceOf(tinhCu), phuong: phuongMoiCuaQuan(tinhCu, name) }))
+  .filter((t) => t.phuong.length > 0);
+const thanhPhoCuaPhuong = (tinh: string, phuong: string) =>
+  THANH_PHO.find((t) => cungTen(t.tinh, tinh) && t.phuong.some((p) => cungTen(p, phuong)));
+const timThanhPho = (tinh: KhuVuc, slug: string) => THANH_PHO.find((t) => t.slug === slug && cungTen(t.tinh, tinh.name));
+
 export type DieuKien = {
   muc: Muc;
   tinh: KhuVuc;
@@ -85,6 +128,7 @@ export type DieuKien = {
   kiet?: boolean;
   phongNgu?: number;
   giaDuoi?: GiaDuoi;
+  thanhPho?: ThanhPho;
 };
 
 // Danh mục menu + nhóm "Nhà" chỉ dùng cho trang pSEO
@@ -97,6 +141,7 @@ export function khop(l: Listing, dk: DieuKien): boolean {
   if (!cungTen(tinhCuaTin(l), dk.tinh.name)) return false;
   if (dk.cat && !dk.cat.types.includes(l.type)) return false;
   if (dk.phuong && !cungTen(phuongCuaTin(l), dk.phuong)) return false;
+  if (dk.thanhPho && !dk.thanhPho.phuong.some((p) => cungTen(p, phuongCuaTin(l)))) return false;
   if (dk.duong && !(l.duong && cungTen(l.duong, dk.duong))) return false;
   if (dk.huong && !(l.huong && cungTen(l.huong, dk.huong))) return false;
   if (dk.phapLy && !(l.phapLy && dk.phapLy.khop(l.phapLy))) return false;
@@ -111,18 +156,20 @@ export function duongDan(dk: DieuKien): string {
   if (dk.huong) return `/phong-thuy/huong-${slugKhuVuc(dk.huong)}/${dk.cat ? `${dk.cat.slug}/` : ""}${dk.tinh.slug}`;
   const g = goc(dk.muc);
   if (dk.cat) {
+    if (dk.thanhPho) return `${g}/${dk.cat.slug}/${dk.tinh.slug}/${dk.thanhPho.slug}`;
     const duoi = dk.phuong
       ? slugKhuVuc(dk.phuong)
       : dk.giaDuoi?.slug ?? dk.phapLy?.slug ?? (dk.phongNgu ? phongNguSlug(dk.phongNgu) : "");
     return `${g}/${dk.cat.slug}/${dk.tinh.slug}${duoi ? `/${duoi}` : ""}`;
   }
   if (dk.kiet) return `${g}/${dk.tinh.slug}/${KIET_SLUG}`;
+  if (dk.thanhPho) return `${g}/${dk.tinh.slug}/${dk.thanhPho.slug}`;
   return `${g}/${dk.tinh.slug}${dk.phuong ? `/${slugKhuVuc(dk.phuong)}` : ""}`;
 }
 
 // Tiêu đề (không kèm tháng) — dùng làm H1 + <title> (nối thêm thangHienTai()).
 export function tieuDe(dk: DieuKien): string {
-  const noi = dk.phuong ? `${dk.phuong}, ${dk.tinh.name}` : dk.tinh.name;
+  const noi = dk.thanhPho ? `${dk.thanhPho.name}, ${dk.tinh.name}` : dk.phuong ? `${dk.phuong}, ${dk.tinh.name}` : dk.tinh.name;
   if (dk.duong) return `Bán nhà đất đường ${dk.duong}, ${dk.tinh.name}`;
   if (dk.huong) return dk.cat ? `${tuKhoa(dk.cat)} hướng ${dk.huong} ${noi}` : `Bán nhà đất hướng ${dk.huong} ${noi}`;
   if (dk.cat) {
@@ -150,7 +197,7 @@ export function duongDanPhanCap(dk: DieuKien): Crumb[] {
     { name: dk.tinh.name, href: `${g}/${dk.tinh.slug}` },
   ];
   if (dk.cat) c.push({ name: dk.cat.label, href: duongDan({ muc: dk.muc, tinh: dk.tinh, cat: dk.cat }) });
-  const cuoi = dk.phuong ?? (dk.duong ? `Đường ${dk.duong}` : dk.huong ? `Hướng ${dk.huong}` : dk.giaDuoi ? viHoa(dk.giaDuoi.nhan)
+  const cuoi = dk.thanhPho?.name ?? dk.phuong ?? (dk.duong ? `Đường ${dk.duong}` : dk.huong ? `Hướng ${dk.huong}` : dk.giaDuoi ? viHoa(dk.giaDuoi.nhan)
     : dk.phapLy ? viHoa(dk.phapLy.nhan) : dk.phongNgu ? viHoa(phongNguNhan(dk.phongNgu)) : dk.kiet ? "Nhà kiệt, hẻm" : "");
   if (cuoi) c.push({ name: cuoi, href: duongDan(dk) });
   return c;
@@ -162,8 +209,8 @@ export function cha(dk: DieuKien): DieuKien | null {
   const { muc, tinh, cat } = dk;
   if (dk.duong || dk.kiet) return { muc, tinh };
   if (dk.huong) return cat ? { muc, tinh, cat } : { muc, tinh };
-  if (cat && (dk.phuong || dk.giaDuoi || dk.phapLy || dk.phongNgu)) return { muc, tinh, cat };
-  if (dk.phuong || cat) return { muc, tinh };
+  if (cat && (dk.phuong || dk.thanhPho || dk.giaDuoi || dk.phapLy || dk.phongNgu)) return { muc, tinh, cat };
+  if (dk.phuong || dk.thanhPho || cat) return { muc, tinh };
   return null;
 }
 
@@ -193,12 +240,16 @@ export function giaiMaDanhSach(muc: Muc, loai: string, rest: string[], tin: List
     if (CO_PHONG_NGU.includes(cat.slug)) {
       for (const n of [1, 2, 3, 4]) if (phongNguSlug(n) === s) return { muc, tinh, cat, phongNgu: n };
     }
+    const tp = timThanhPho(tinh, s);
+    if (tp) return { muc, tinh, cat, thanhPho: tp };
     const phuong = timPhuong(tin, tinh, s);
     return phuong ? { muc, tinh, cat, phuong } : null;
   }
   const tinh = timKhuVuc(loai);
   if (!tinh || rest.length !== 1) return null;
   if (muc === "ban" && rest[0] === KIET_SLUG) return { muc, tinh, kiet: true };
+  const tp = timThanhPho(tinh, rest[0]);
+  if (tp) return { muc, tinh, thanhPho: tp };
   const phuong = timPhuong(tin, tinh, rest[0]);
   return phuong ? { muc, tinh, phuong } : null;
 }
@@ -242,6 +293,8 @@ function cacDieuKienCuaTin(l: Listing): DieuKien[] {
   const phuong = phuongCuaTin(l) || undefined;
   const ds: DieuKien[] = [{ muc, tinh }];
   if (phuong) ds.push({ muc, tinh, phuong });
+  const thanhPho = phuong ? thanhPhoCuaPhuong(tinh.name, phuong) : undefined;
+  if (thanhPho) ds.push({ muc, tinh, thanhPho });
   if (muc === "ban") {
     if (l.viTri === "kiet") ds.push({ muc, tinh, kiet: true });
     if (l.duong) ds.push({ muc, tinh, duong: l.duong });
@@ -256,6 +309,7 @@ function cacDieuKienCuaTin(l: Listing): DieuKien[] {
   for (const cat of danhMuc(muc).filter((c) => c.types.includes(l.type))) {
     ds.push({ muc, tinh, cat });
     if (phuong) ds.push({ muc, tinh, cat, phuong });
+    if (thanhPho) ds.push({ muc, tinh, cat, thanhPho });
     for (const g of GIA_DUOI[muc]) if (l.priceVnd != null && l.priceVnd > 0 && l.priceVnd <= g.max) ds.push({ muc, tinh, cat, giaDuoi: g });
     if (CO_PHONG_NGU.includes(cat.slug) && l.beds && l.beds <= 4) ds.push({ muc, tinh, cat, phongNgu: l.beds });
   }
@@ -341,7 +395,8 @@ function tinhTatCaTrang(tinConHan: Listing[]): Map<string, TrangPseo> {
     if (!c || p.dk.huong || p.n < NGUONG_INDEX) continue;
     const pathCha = duongDan(c);
     const nCha = m.get(pathCha)?.n ?? 0;
-    if (p.n > 0.8 * nCha) continue;
+    // Trang thành phố: người tìm gõ tên thành phố, không gõ tên tỉnh → giữ dù gần trùng trang tỉnh
+    if (p.n > 0.8 * nCha && !p.dk.thanhPho) continue;
     (theoCha.get(pathCha) ?? theoCha.set(pathCha, []).get(pathCha)!).push(p);
   }
   const giong = (a: Set<string>, b: Set<string>) => {
@@ -363,7 +418,7 @@ function tinhTatCaTrang(tinConHan: Listing[]): Map<string, TrangPseo> {
   // mục rộng hơn — "Bán đất…" là cụm nhiều người tìm hơn).
   const daIndex = [...m.values()]
     .filter((p) => p.index)
-    .sort((a, b) => b.n - a.n || (b.dk.cat?.types.length ?? 0) - (a.dk.cat?.types.length ?? 0));
+    .sort((a, b) => b.n - a.n || Number(!!b.dk.thanhPho) - Number(!!a.dk.thanhPho) || (b.dk.cat?.types.length ?? 0) - (a.dk.cat?.types.length ?? 0));
   const giu: TrangPseo[] = [];
   for (const p of daIndex) {
     if (giu.some((q) => q.dk.muc === p.dk.muc && q.dk.tinh.slug === p.dk.tinh.slug && giong(p.ids, q.ids))) p.index = false;
@@ -386,7 +441,7 @@ export function lienKetCho(dk: DieuKien, tinConHan: Listing[]): NhomLienKet[] {
   const cungTinh = (p: TrangPseo) => p.dk.tinh.slug === dk.tinh.slug && p.path !== hien;
   const laLoai = (p: TrangPseo, cat?: Category) => (cat ? p.dk.cat?.slug === cat.slug : !p.dk.cat);
   const chiCo = (p: TrangPseo, k: keyof DieuKien) =>
-    (["phuong", "duong", "huong", "phapLy", "kiet", "phongNgu", "giaDuoi"] as (keyof DieuKien)[]).every((x) => (x === k ? p.dk[x] != null : p.dk[x] == null));
+    (["phuong", "duong", "huong", "phapLy", "kiet", "phongNgu", "giaDuoi", "thanhPho"] as (keyof DieuKien)[]).every((x) => (x === k ? p.dk[x] != null : p.dk[x] == null));
   const nhom: NhomLienKet[] = [];
   const them = (tenNhom: string, ps: TrangPseo[], nhan: (p: TrangPseo) => string) => {
     const links = ps.sort((a, b) => b.n - a.n).slice(0, tenNhom === "Tìm kiếm theo từ khoá" ? 12 : 24).map((p) => ({ href: p.path, nhan: nhan(p) }));
@@ -396,10 +451,11 @@ export function lienKetCho(dk: DieuKien, tinConHan: Listing[]): NhomLienKet[] {
   // người tìm gõ — "Bán nhà riêng Đà Nẵng dưới 5 tỷ". Ưu tiên trang cùng loại hình với trang đang xem.
   them(
     "Tìm kiếm theo từ khoá",
-    ds.filter((p) => cungTinh(p) && (!dk.cat || p.dk.cat?.slug === dk.cat.slug) && (p.dk.cat || p.dk.phuong || p.dk.duong || p.dk.kiet)),
+    ds.filter((p) => cungTinh(p) && (!dk.cat || p.dk.cat?.slug === dk.cat.slug) && (p.dk.cat || p.dk.phuong || p.dk.duong || p.dk.kiet || p.dk.thanhPho)),
     (p) => tieuDe(p.dk),
   );
-  them("Theo loại hình", ds.filter((p) => cungTinh(p) && p.dk.cat && !p.dk.phuong && !p.dk.giaDuoi && !p.dk.phapLy && !p.dk.phongNgu && !p.dk.huong), (p) => tieuDe(p.dk));
+  them("Theo loại hình", ds.filter((p) => cungTinh(p) && p.dk.cat && !p.dk.phuong && !p.dk.thanhPho && !p.dk.giaDuoi && !p.dk.phapLy && !p.dk.phongNgu && !p.dk.huong), (p) => tieuDe(p.dk));
+  them("Theo thành phố", ds.filter((p) => cungTinh(p) && laLoai(p, dk.cat) && chiCo(p, "thanhPho")), (p) => tieuDe(p.dk));
   them("Theo phường, xã", ds.filter((p) => cungTinh(p) && laLoai(p, dk.cat) && chiCo(p, "phuong")), (p) => p.dk.phuong!);
   if (dk.cat) {
     them("Theo mức giá", ds.filter((p) => cungTinh(p) && laLoai(p, dk.cat) && chiCo(p, "giaDuoi")), (p) => viHoa(p.dk.giaDuoi!.nhan));
@@ -410,14 +466,14 @@ export function lienKetCho(dk: DieuKien, tinConHan: Listing[]): NhomLienKet[] {
   them("Theo hướng nhà", ds.filter((p) => cungTinh(p) && laLoai(p, dk.cat) && chiCo(p, "huong")), (p) => `Hướng ${p.dk.huong}`);
   them("Nhà kiệt, hẻm", ds.filter((p) => cungTinh(p) && chiCo(p, "kiet")), () => `Nhà kiệt, hẻm ${dk.tinh.name}`);
   if (dk.cat) {
-    them("Tỉnh, thành khác", ds.filter((p) => p.dk.tinh.slug !== dk.tinh.slug && laLoai(p, dk.cat) && !p.dk.phuong && !p.dk.giaDuoi && !p.dk.phapLy && !p.dk.phongNgu && !p.dk.huong), (p) => p.dk.tinh.name);
+    them("Tỉnh, thành khác", ds.filter((p) => p.dk.tinh.slug !== dk.tinh.slug && laLoai(p, dk.cat) && !p.dk.phuong && !p.dk.thanhPho && !p.dk.giaDuoi && !p.dk.phapLy && !p.dk.phongNgu && !p.dk.huong), (p) => p.dk.tinh.name);
   }
   return nhom;
 }
 
 // Liên kết từ trang LOẠI HÌNH gốc (/mua-ban/nha-rieng) xuống các tỉnh
 export function lienKetLoaiHinh(muc: Muc, cat: Category, tinConHan: Listing[]): NhomLienKet[] {
-  const ds = trangIndex(tinConHan).filter((p) => p.dk.muc === muc && p.dk.cat?.slug === cat.slug && !p.dk.phuong && !p.dk.giaDuoi && !p.dk.phapLy && !p.dk.phongNgu && !p.dk.huong);
+  const ds = trangIndex(tinConHan).filter((p) => p.dk.muc === muc && p.dk.cat?.slug === cat.slug && !p.dk.phuong && !p.dk.thanhPho && !p.dk.giaDuoi && !p.dk.phapLy && !p.dk.phongNgu && !p.dk.huong);
   const links = ds.sort((a, b) => b.n - a.n).map((p) => ({ href: p.path, nhan: tieuDe(p.dk) }));
   return links.length ? [{ tieuDe: "Theo tỉnh, thành", links }] : [];
 }

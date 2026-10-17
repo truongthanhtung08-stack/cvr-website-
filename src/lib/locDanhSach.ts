@@ -55,8 +55,10 @@ export function locDanhSach(
       : sortListings(khop, sort);
   }
 
+  // Sắp xếp RIÊNG từng tầng: tin khớp đủ luôn đứng trước tin gần đúng (17/10/2026 — trước đây sắp
+  // chung nên tin VIP ở tỉnh khác nhảy lên trên tin khớp đúng của trang "Căn hộ Nha Trang").
   const ketQua = [
-    ...(coTuKhoa ? search.hits.map((h) => h.item) : sortListings(hits.map((h) => h.item), sort)),
+    ...(coTuKhoa ? search.hits.map((h) => h.item) : ([1, 2, 3] as const).flatMap((t) => sortListings(hits.filter((h) => h.tier === t).map((h) => h.item), sort))),
     ...ketQuaHetHan,
   ];
   const tierById = new Map(hits.map((h) => [h.item.id, h.tier]));
