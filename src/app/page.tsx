@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Header from "@/components/Header";
-import HomeSearch from "@/components/HomeSearch";
+import TimTrangChu from "@/components/TimTrangChu";
 import FeaturedListings from "@/components/FeaturedListings";
 import ProjectsSection from "@/components/ProjectsSection";
 // import ForYou from "@/components/ForYou"; // TẠM ẨN — chờ chốt vị trí đặt lại (component vẫn còn)
@@ -46,10 +46,10 @@ export default async function Home() {
         <h1 className="sr-only">COASTAL LAND — Cổng thông tin mua bán, cho thuê nhà đất</h1>
         <HomeExpandProvider>
           {/* BỘ LỌC LÀ HERO (chủ dự án 17/10/2026: bỏ Hero ảnh, "bộ lọc giờ là Hero" — trọng tâm, dễ dùng,
-              trực quan). Câu gợi ý trong ô tìm bám 60 tin mới nhất. Ẩn khi một khối "Xem thêm" đang mở. */}
+              trực quan). Bộ tìm 3 bước kiểu Airbnb — TimTrangChu. Ẩn khi một khối "Xem thêm" đang mở. */}
           <HomeCollapsible>
             <section className="border-b border-cvr-line bg-cvr-surface px-4 py-6 sm:px-6 sm:py-10 lg:px-8">
-              <HomeSearch dauTrang items={listings.slice(0, 60).map((l) => ({ purpose: l.purpose, type: l.type, location: l.location, badge: l.badge, price: l.price }))} />
+              <TimTrangChu />
             </section>
           </HomeCollapsible>
 

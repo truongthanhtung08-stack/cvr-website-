@@ -13,7 +13,7 @@ import { THANH_PHO } from "@/lib/pseo";
 // Chỉ ghép những dạng trang LUÔN mở được (không phụ thuộc có tin hay không) — không dẫn khách vào 404.
 // ============================================================================
 
-const GIA_DUOI: Record<"ban" | "thue", number[]> = { ban: [1, 2, 3, 5, 10], thue: [3, 5, 10, 20] };
+export const GIA_DUOI: Record<"ban" | "thue", number[]> = { ban: [1, 2, 3, 5, 10], thue: [3, 5, 10, 20] };
 
 export function duongDanSach(muc: "ban" | "thue", f: Filters): string | null {
   const conLai =
@@ -119,4 +119,14 @@ export function duongDanTuCau(mucTab: "ban" | "thue", raw: string): string | nul
   if (tp) phan.push(tp.slug);
   else if (gia) phan.push(gia);
   return phan.join("/") + reTruoc;
+}
+
+// BỘ TÌM 3 BƯỚC TRANG CHỦ (kiểu Airbnb, 17/10/2026): Ở đâu · Loại hình · Mức giá → trang sạch.
+// duongNoi = "<tỉnh>" hoặc "<tỉnh>/<thành phố>" · nhom = slug trang nhóm loại hình · giaDuoi = số tỷ (bán) / triệu (thuê).
+// Mức giá chỉ ghép được khi có đủ nhóm + tỉnh và không có thành phố (đúng dạng trang pSEO đang có) — còn lại null.
+export function duongDanBuoc(muc: "ban" | "thue", duongNoi: string | null, nhom: string | null, giaDuoi: number | null): string | null {
+  const [tinh, tp] = (duongNoi ?? "").split("/").filter(Boolean);
+  if (giaDuoi != null && (!nhom || !tinh || tp || !GIA_DUOI[muc].includes(giaDuoi))) return null;
+  const gia = giaDuoi == null ? null : muc === "thue" ? `gia-duoi-${giaDuoi}-trieu` : `gia-duoi-${giaDuoi}-ty`;
+  return [muc === "thue" ? "/cho-thue" : "/mua-ban", nhom, tinh, tp, gia].filter(Boolean).join("/");
 }

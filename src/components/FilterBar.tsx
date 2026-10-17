@@ -37,6 +37,16 @@ const GEO_MODE_KEY = "cl-geo-mode"; // hệ đơn vị hành chính đã chọn:
 const ICON_CLOCK = "M12 8v4l2.5 2.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z";
 const ICON_SEARCH = "M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z";
 const ICON_INSERT = "M18 18L6 6M6 6h8M6 6v8"; // ↖ chèn gợi ý vào ô tìm
+// Biểu tượng RIÊNG theo loại gợi ý (17/10/2026, kiểu Airbnb): không dùng kính lúp cho mọi dòng.
+const ICON_THEO_LOAI: Record<string, string> = {
+  "Khu vực": "M12 21s-7-6.2-7-11.5A7 7 0 0119 9.5C19 14.8 12 21 12 21zM12 12a2.5 2.5 0 100-5 2.5 2.5 0 000 5z",
+  "Loại hình": "M3 11l9-7 9 7M5 9.5V20h14V9.5M10 20v-5h4v5",
+  "Dự án": "M4 21V5a1 1 0 011-1h9a1 1 0 011 1v16M15 9h4a1 1 0 011 1v11M8 8h3M8 12h3M8 16h3M3 21h18",
+  "Sản phẩm": "M20 12l-8 8-9-9V4h7l10 8zM7.5 7.5h.01",
+  "Tin tức": "M5 4h11v16H5a1 1 0 01-1-1V5a1 1 0 011-1zM16 8h3a1 1 0 011 1v9a2 2 0 01-2 2h-2M8 8h5M8 12h5M8 16h3",
+  "Mục đích": "M4 12h16M14 6l6 6-6 6",
+  "Gợi ý": ICON_SEARCH,
+};
 
 // Thanh lọc kiểu Homedy — fully controlled qua props value/onChange.
 export default function FilterBar({
@@ -561,9 +571,11 @@ export default function FilterBar({
             onClick={() => applySuggestion(s)}
             className="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg px-2.5 py-2.5 text-left text-sm"
           >
-            <svg className="h-[18px] w-[18px] shrink-0 text-cvr-faint" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d={!typed && i < recentShown.length ? ICON_CLOCK : ICON_SEARCH} />
-            </svg>
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-cvr-surface text-cvr-body">
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.7} viewBox="0 0 24 24" aria-hidden>
+                <path strokeLinecap="round" strokeLinejoin="round" d={!typed && i < recentShown.length ? ICON_CLOCK : ICON_THEO_LOAI[s.kind] ?? ICON_SEARCH} />
+              </svg>
+            </span>
             <span className="flex min-w-0 flex-1 flex-col">
               <span className="truncate"><HighlightLabel label={s.label} q={typed ? f.keyword : ""} /></span>
               {s.sub && <span className="truncate text-[11px] font-normal text-cvr-faint">{s.sub}</span>}
@@ -760,15 +772,19 @@ export default function FilterBar({
     {/* ===== MOBILE: TRANG TÌM TOÀN MÀN HÌNH kiểu Google — chạm ô tìm là mở ===== */}
     {overlay && (
       <div className="anim-truot-len fixed inset-0 z-[200] flex flex-col bg-white sm:hidden">
-        <div className="flex items-center gap-1.5 border-b border-cvr-line px-2 py-2">
+        {/* KIỂU AIRBNB (chủ dự án 17/10/2026): MENU trên cùng + nút X đóng ở góc phải; ô tìm nằm DƯỚI menu */}
+        <div className="flex items-center justify-between gap-3 px-4 pb-1 pt-3">
+          <div className="min-w-0 flex-1">{overlayLeading ?? leading}</div>
           <button
             type="button"
             aria-label="Đóng tìm kiếm"
             onClick={() => { setOverlay(false); setActiveIdx(-1); }}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-cvr-ink active:bg-cvr-surface"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-cvr-line bg-white text-cvr-ink shadow-sm active:bg-cvr-surface"
           >
-            <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
+        </div>
+        <div className="flex items-center gap-1.5 border-b border-cvr-line px-3 pb-3 pt-2">
           <div className="relative flex-1">
             {/* Gõ dài thì ô TỰ GIÃN thêm dòng (tối đa 4 dòng) để khách thấy hết mình đang viết gì. */}
             <textarea
@@ -818,11 +834,6 @@ export default function FilterBar({
         {/* CHỌN MỤC ĐÍCH (Dự án · Mua bán · Cho thuê) — đặt TRONG trang tìm của
             điện thoại, ngay dưới ô nhập. Ngoài Hero mobile chỉ để đúng ô tìm cho
             gọn; vào đây mới có đủ chỗ chọn, và chọn xong bấm Tìm là ra ĐÚNG mục. */}
-        {(overlayLeading ?? leading) && (
-          <div className="border-b border-cvr-line px-3 pb-2 pt-1">
-            {overlayLeading ?? leading}
-          </div>
-        )}
         <div className="flex-1 overflow-y-auto p-1.5">
           {noHits && (
             <p className="px-2.5 pb-1.5 pt-2 text-[13px] text-cvr-muted">
