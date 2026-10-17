@@ -373,7 +373,10 @@ export async function getListings(): Promise<Listing[]> {
 // NHÌN XA: tin hết hạn dồn lên hàng nghìn → chỉ lấy tin hết hạn trong 90 NGÀY gần nhất,
 // tối đa 300 tin, mới hết hạn trước — trang danh sách không phình theo năm tháng.
 export async function getListingsHetHan(): Promise<Listing[]> {
-  const tu = new Date(Date.now() - 90 * 86_400_000).toISOString();
+  // LÀM TRÒN THEO NGÀY (17/10/2026): mốc tính tới từng mili giây làm mỗi lần gọi là một địa chỉ MỚI → bộ nhớ đệm không
+  // bao giờ trúng, trang kết quả dựng lần đầu phải chờ Supabase 1,5–2,5 giây (và tốn thêm lượt gọi). Tròn ngày → cả ngày
+  // dùng chung một bản đệm; lệch tối đa 1 ngày ở mép 90 ngày là không đáng kể.
+  const tu = new Date(Math.floor((Date.now() - 90 * 86_400_000) / 86_400_000) * 86_400_000).toISOString();
   const rows = await rest(`select=${COLS}&status=in.(approved,expired)&tier_expires_at=gte.${tu}&order=tier_expires_at.desc.nullslast&limit=300`);
   if (!rows) return [];
   return rows

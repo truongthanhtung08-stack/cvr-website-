@@ -51,6 +51,9 @@ html {
      mở từ Zalo/Facebook) → tiêu đề mục không bị header đè lên. */
   scroll-padding-top: calc(60px + var(--at));
 }
+/* Trang có thanh "← Quay lại" dính dưới header (điện thoại): chừa thêm chiều cao thanh đó → ô đang gõ, mục cuộn tới
+   không bị thanh đè (chủ dự án 17/10/2026). Trình duyệt cũ không hiểu :has thì giữ như trên. */
+html:has(.thanh-quay-lai) { scroll-padding-top: calc(60px + var(--backbar-h) + var(--at)); }
 
 /* ── CẮT CHỮ ĐÚNG THEO DÒNG (2 dòng / 1 dòng) ──────────────────────────────
    Trước đây tiêu đề thẻ tin đặt CHIỀU CAO CỨNG h-[3em] + overflow-hidden.
@@ -836,20 +839,34 @@ body[data-nav="in"] main {
   :where(button:not(:disabled), [role="button"], a:has(img)):active { transform: none; }
 }
 
-/* MÀN TÌM ĐIỆN THOẠI MỞ RA KIỂU AIRBNB (chủ dự án 17/10/2026: "giống Airbnb cả giao diện lẫn animation"):
-   nền mờ dần → menu trượt xuống → thẻ tìm phóng từ chỗ ô tìm ra → các thẻ sau trồi lên lần lượt → thanh đáy trượt lên */
+/* MÀN TÌM ĐIỆN THOẠI MỞ RA ĐÚNG SỐ ĐO AIRBNB (đo trên airbnb.com 17/10/2026, khung 375px):
+   nền mờ dần 450ms · biểu tượng menu phóng 0.4→1 có nảy nhẹ · thẻ tìm từ trên trượt xuống 100px + hiện dần 500ms ·
+   thanh đáy từ dưới trượt lên 100px 500ms. Đường cong cubic-bezier(0.2,0,0,1) đúng của Airbnb.
+   KHÔNG dùng backdrop-filter (làm nhoè trang phía sau) cho lớp nền/thanh đáy: máy Android phải tính lại nhoè mỗi
+   khung hình → giật, lag (chủ dự án thử máy thật 17/10/2026). Nền xám đặc #f0f0f0 nhìn gần như y hệt. */
 @keyframes mbNen { from { opacity: 0; } to { opacity: 1; } }
-@keyframes mbTab { from { opacity: 0; transform: translate3d(0, -10px, 0); } to { opacity: 1; transform: none; } }
-/* thẻ tìm bắt đầu ĐÚNG khung thanh tìm vừa bấm (biến --tu-* do TimTrangChu đo) rồi phình ra — cắt khung bằng clip-path nên chữ không méo */
-@keyframes mbThe {
-  from { transform: translate3d(var(--tu-x, 0px), var(--tu-y, -18px), 0); clip-path: inset(0 var(--tu-phai, 0px) var(--tu-day, 0px) 0 round 26px); opacity: 0.7; }
-  to { transform: none; clip-path: inset(0 0 0 0 round 28px); opacity: 1; }
-}
+@keyframes mbTab { from { opacity: 0; } to { opacity: 1; } }
+@keyframes mbIcon { from { transform: scale(0.4); } to { transform: none; } }
+@keyframes mbThe { from { opacity: 0; transform: translate3d(0, -100px, 0); } to { opacity: 1; transform: none; } }
 @keyframes mbSau { from { opacity: 0; transform: translate3d(0, 16px, 0); } to { opacity: 1; transform: none; } }
-@keyframes mbDay { from { transform: translate3d(0, 100%, 0); } to { transform: none; } }
-.mb-nen-mo { animation: mbNen 0.2s ease-out both; }
-.mb-tab-mo { animation: mbTab 0.3s cubic-bezier(0.2, 0.9, 0.3, 1) 0.03s both; }
-.mb-the-mo { animation: mbThe 0.42s cubic-bezier(0.2, 0.9, 0.3, 1) backwards; will-change: transform, clip-path; }
+@keyframes mbDay { from { opacity: 0; transform: translate3d(0, 100px, 0); } to { opacity: 1; transform: none; } }
+.mb-nen-mo { animation: mbNen 0.45s cubic-bezier(0.2, 0, 0, 1) both; }
+.mb-tab-mo { animation: mbTab 0.25s linear both; }
+.mb-tab-mo [role="tab"] svg { animation: mbIcon 0.57s cubic-bezier(0.34, 1.4, 0.64, 1) both; }
+.mb-the-mo { animation: mbThe 0.5s cubic-bezier(0.2, 0, 0, 1) backwards; will-change: transform, opacity; }
 .mb-the-sau { animation: mbSau 0.3s cubic-bezier(0.2, 0.9, 0.3, 1) 0.1s both; }
-.mb-day-mo { animation: mbDay 0.3s cubic-bezier(0.2, 0.9, 0.3, 1) 0.08s both; }
-@media (prefers-reduced-motion: reduce) { .mb-nen-mo, .mb-tab-mo, .mb-the-mo, .mb-the-sau, .mb-day-mo { animation: none; } }
+.mb-day-mo { animation: mbDay 0.5s cubic-bezier(0.2, 0, 0, 1) both; }
+/* thanh chạy "đang tìm" ở mép trên thẻ tìm — chỉ transform, chạy lặp tới khi sang trang */
+@keyframes thanhDangTim { from { transform: translateX(-100%) scaleX(0.4); } to { transform: translateX(100%) scaleX(0.4); } }
+.thanh-dang-tim { animation: thanhDangTim 0.9s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+/* Màn tìm điện thoại đã che kín → ngưng vẽ trang phía sau (giữ nguyên cỡ đã đo nên không nhảy vị trí cuộn) */
+html.dang-tim-mo body > header, html.dang-tim-mo body > main, html.dang-tim-mo body > footer { content-visibility: hidden; contain-intrinsic-size: auto 800px; }
+/* Bảng gợi ý tạm: hiện ngay khi bấm ô tìm lúc trang chưa chạy xong mã (TimTrangChu) */
+[data-cho-mo] [data-bang-tam] { display: block; }
+[data-cho-mo] [data-o-tim-pc] { box-shadow: 0 8px 28px rgba(0,0,0,0.14); }
+/* đóng: ngược lại lúc mở — nền mờ dần, thẻ lùi lên trên (200ms, khớp hẹn giờ dongNoi) */
+@keyframes mbDong { to { opacity: 0; } }
+@keyframes mbTheDong { to { opacity: 0; transform: translate3d(0, -40px, 0); } }
+.mb-dong { animation: mbDong 0.2s cubic-bezier(0.4, 0, 1, 1) both; }
+.mb-the-dong { animation: mbTheDong 0.2s cubic-bezier(0.4, 0, 1, 1) both; }
+@media (prefers-reduced-motion: reduce) { .mb-nen-mo, .mb-tab-mo, .mb-tab-mo [role="tab"] svg, .mb-the-mo, .mb-the-sau, .mb-day-mo, .mb-dong, .mb-the-dong { animation: none; } }

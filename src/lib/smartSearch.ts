@@ -33,7 +33,7 @@ export const LOAI_HINH: [string, string[]][] = [
 ];
 
 const TINH: [string, string[]][] = [
-  ["Đà Nẵng", ["da nang", "danang", "dn"]],
+  ["Đà Nẵng", ["da nang", "danang", "dn", "my khe"]], // biển Mỹ Khê → Đà Nẵng
   ["Huế", ["hue", "thua thien hue", "thua thien"]],
   ["Quảng Nam", ["quang nam", "hoi an", "tam ky", "dien ban"]],
   ["Quảng Ngãi", ["quang ngai"]],
@@ -52,19 +52,36 @@ const TINH: [string, string[]][] = [
 // Xếp CHUỖI DÀI TRƯỚC để "ngu hanh son" thắng "hoa son", "hoa quy" thắng "hoa".
 export type PlaceHit = { province: string; district?: string; ward?: string; label: string };
 
-const DIA_GIOI: { norm: string; place: PlaceHit }[] = (() => {
-  const ds: { norm: string; place: PlaceHit }[] = [];
+// Dựng LÚC CẦN (lần gõ đầu), không dựng lúc tải trang — dựng sẵn từng tốn ~200ms làm ô tìm chậm bấm được (đo 17/10/2026)
+type NoiDG = { norm: string; ten: string[]; place: PlaceHit };
+let _diaGioi: NoiDG[] | null = null;
+let _theoChuDau: Map<string, NoiDG[]> | null = null;
+function diaGioi(): NoiDG[] {
+  if (_diaGioi) return _diaGioi;
+  _diaGioi = (() => {
+  const ds: { norm: string; ten: string[]; place: PlaceHit }[] = [];
   for (const p of provinces) {
     for (const d of p.districts) {
       for (const w of d.wards) {
         const ten = w.replace(/\s*\(.*\)\s*$/, "").trim(); // "Sịa (TT)" → "Sịa"
-        ds.push({ norm: normalizeVi(ten), place: { province: p.name, district: d.name, ward: ten, label: `${ten}, ${d.name}, ${p.name}` } });
+        ds.push({ norm: normalizeVi(ten), ten: [], place: { province: p.name, district: d.name, ward: ten, label: `${ten}, ${d.name}, ${p.name}` } });
       }
-      ds.push({ norm: normalizeVi(d.name), place: { province: p.name, district: d.name, label: `${d.name}, ${p.name}` } });
+      ds.push({ norm: normalizeVi(d.name), ten: [], place: { province: p.name, district: d.name, label: `${d.name}, ${p.name}` } });
     }
   }
+  for (const x of ds) x.ten = x.norm.split(" ");
   return ds.sort((a, b) => b.norm.length - a.norm.length);
-})();
+  })();
+  return _diaGioi;
+}
+// TRA THEO CHỮ ĐẦU của tên nơi: mỗi phím gõ chỉ soi các nơi bắt đầu bằng một chữ có trong câu, thay vì quét cả nghìn
+// phường xã (điện thoại chậm từng mất cả giây mỗi phím — chủ dự án 17/10/2026)
+function theoChuDau(): Map<string, NoiDG[]> {
+  if (_theoChuDau) return _theoChuDau;
+  const m = new Map<string, NoiDG[]>();
+  for (const x of diaGioi()) { const k = x.ten[0]; const ds = m.get(k); if (ds) ds.push(x); else m.set(k, [x]); }
+  return (_theoChuDau = m);
+}
 
 // Câu có nhắc tên phường/quận nào không? Ưu tiên: đúng tỉnh người dùng nói →
 // cấp SÂU nhất (phường trước quận) → tên dài nhất.
@@ -73,12 +90,16 @@ function timDiaGioi(nq: string, tinh: string[]): PlaceHit | null {
   // "hoa" khớp vào "hoà xuân", "an" khớp vào "hoà an".
   const co = (t: string) =>
     nq.includes(t) && new RegExp(`(^|[^a-z0-9])${t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}([^a-z0-9]|$)`).test(nq);
-  const tho = DIA_GIOI.filter((x) => x.norm.length >= 4 && co(x.norm));
+  const chu = [...new Set(nq.split(/[^a-z0-9]+/).filter(Boolean))];
+  const tho = chu.flatMap((c) => theoChuDau().get(c) ?? []).filter((x) => x.norm.length >= 4 && co(x.norm)).sort((a, b) => b.norm.length - a.norm.length);
   // Tên nằm TRỌN trong một tên dài hơn cũng khớp thì bỏ: "ngu hanh son" (quận) không được
   // đẻ ra phường "Hạnh Sơn" (Lào Cai) chỉ vì "hanh son" là đuôi của nó.
   const ung = tho.filter((x) => !tho.some((y) => y.norm.length > x.norm.length && ` ${y.norm} `.includes(` ${x.norm} `)));
   if (!ung.length) return timGanDung(nq, tinh);
   const hop = tinh.length ? ung.filter((x) => tinh.includes(x.place.province)) : ung.filter((x) => TINH_WEB.has(x.place.province));
+  // Khách KHÔNG nêu tỉnh mà tên chỉ khớp phường ở tỉnh web chưa có tin (vd "nhà mặt phố Nguyễn Văn Linh" khớp phường Nguyễn
+  // Văn Linh, Hưng Yên) → đó là tên ĐƯỜNG, không đoán sang tỉnh khác (rà 18/10/2026)
+  if (!tinh.length && !hop.length) return null;
   const chon = hop.length ? hop : ung;
   // Trùng tên giữa quận và phường (Hải Châu, Sơn Trà…) → lấy cấp LỚN: khách nói "Hải Châu" là quận Hải Châu
   // Đà Nẵng, không phải phường Hải Châu ở Ninh Bình
@@ -91,7 +112,7 @@ function timDiaGioi(nq: string, tinh: string[]): PlaceHit | null {
 // "2 phòng ngủ đà nẵng" không được đoán thành "Đăk Năng". "zz" không nằm trong tên nơi nào nên cắt đứt mọi ghép.
 // Các tỉnh web đang phục vụ (danh sách TINH) — tên phường trùng ở tỉnh khác xếp sau
 const TINH_WEB = new Set(TINH.map(([t]) => t));
-const CUM_CHUNG = /\b(can ho|chung cu|nha dat|nha rieng|dat nen|phong ngu|mat pho|du an|gia re|view bien|gan bien|cho thue|bat dong san|biet thu|lien ke)\b/g;
+const CUM_CHUNG = /\b(can ho|chung cu|nha dat|nha rieng|dat nen|ban dat|mua dat|ban nha|mua nha|thue nha|thue dat|phong ngu|phong tro|nha tro|van phong|mat bang|mat pho|du an|gia re|view bien|gan bien|cho thue|bat dong san|biet thu|lien ke)\b/g;
 function cheChuChung(nq: string): string {
   let s = nq.replace(CUM_CHUNG, " zz ");
   // chỉ che TÊN TỈNH (khoá đầu) — tên thành phố như "hoi an", "nha trang" vẫn dò được tới phường/quận
@@ -102,7 +123,7 @@ function cheChuChung(nq: string): string {
 // GÕ SAI CHÍNH TẢ NHẸ (chủ dự án 17/10/2026): chỉ chạy khi KHÔNG tên nào khớp đúng. Tên ≥ 2 chữ, cả tên được
 // sai đúng MỘT chữ cái ("ngu hang son" → Ngũ Hành Sơn). Chữ chung của câu tìm (bán, nhà, đất, căn hộ…) không
 // bao giờ được đoán thành tên nơi — tránh "căn hộ" thành phường An Hải.
-const TU_CHUNG = new Set(["ban", "mua", "nha", "dat", "can", "ho", "cho", "thue", "phong", "ngu", "pn", "duoi", "tren", "ty", "trieu", "gia", "re", "tai", "o", "gan", "bien", "view", "du", "an", "chung", "cu", "mat", "pho", "tim", "va", "co"]);
+const TU_CHUNG = new Set(["ban", "mua", "nha", "dat", "can", "ho", "cho", "thue", "phong", "tro", "ngu", "pn", "duoi", "tren", "ty", "trieu", "gia", "re", "tai", "o", "gan", "bien", "view", "du", "an", "chung", "cu", "mat", "pho", "tim", "va", "co"]);
 function lechMot(a: string, b: string): number {
   if (a === b) return 0;
   if (Math.abs(a.length - b.length) > 1) return 2;
@@ -112,6 +133,25 @@ function lechMot(a: string, b: string): number {
   // thay một chữ · thêm một chữ · bớt một chữ
   return conA.slice(1) === conB.slice(1) || conA.slice(1) === conB || conA === conB.slice(1) ? 1 : 2;
 }
+// Tên tỉnh/thành gõ sai đúng MỘT chữ cái ("da nag" → Đà Nẵng, "nha trag" → Nha Trang). Chỉ tên ≥ 2 chữ, chữ chung
+// của câu tìm không bao giờ bị đoán thành tên nơi.
+function tinhGanDung(nq: string): string[] {
+  const tu = nq.split(/[^a-z0-9]+/).filter(Boolean);
+  for (const [nhan, keys] of TINH) {
+    for (const k of keys) {
+      const ten = k.split(" ");
+      if (ten.length < 2) continue;
+      for (let i = 0; i + ten.length <= tu.length; i++) {
+        const cua = tu.slice(i, i + ten.length);
+        if (cua.every((w) => TU_CHUNG.has(w))) continue;
+        let lech = 0;
+        for (let j = 0; j < ten.length && lech <= 1; j++) lech += ten[j] === cua[j] ? 0 : ten[j].length < 3 || TU_CHUNG.has(cua[j]) ? 2 : lechMot(ten[j], cua[j]);
+        if (lech === 1) return [nhan];
+      }
+    }
+  }
+  return [];
+}
 function timGanDung(nq: string, tinh: string[]): PlaceHit | null {
   const tu = nq.split(/[^a-z0-9]+/).filter(Boolean);
   if (tu.length < 2) return null;
@@ -119,9 +159,9 @@ function timGanDung(nq: string, tinh: string[]): PlaceHit | null {
   // ("hang son" không được thắng "ngu hang son")
   const hop: PlaceHit[] = [];
   let daiNhat = 0;
-  for (const x of DIA_GIOI) {
+  for (const x of diaGioi()) {
     if (x.norm.length < daiNhat) break;
-    const ten = x.norm.split(" ");
+    const ten = x.ten;
     if (ten.length < 2 || x.norm.length < 6) continue;
     for (let i = 0; i + ten.length <= tu.length; i++) {
       const cua = tu.slice(i, i + ten.length);
@@ -132,15 +172,99 @@ function timGanDung(nq: string, tinh: string[]): PlaceHit | null {
     }
   }
   if (!hop.length) return null;
-  const dungTinh = tinh.length ? hop.filter((p) => tinh.includes(p.province)) : hop.filter((p) => TINH_WEB.has(p.province));
+  // Khách ĐÃ NÓI tên tỉnh ("… tại Huế") → chỉ đoán trong tỉnh đó; đoán ra nơi tỉnh khác là sai ý khách
+  // (chủ dự án 17/10/2026: "Phòng trọ cho thuê tại Huế" từng bị đoán thành Phong Thổ, Lai Châu).
+  if (tinh.length) {
+    const trongTinh = hop.filter((p) => tinh.includes(p.province));
+    return trongTinh.find((p) => !p.ward) ?? trongTinh[0] ?? null;
+  }
+  // Gõ sai cả hai nơi đều gần đúng ("sơn tà" → Sơn Trà hay Sơn Tây) → nơi thuộc tỉnh web phục vụ, theo thứ tự danh sách
+  // TINH (Đà Nẵng, Huế… trước) — thị trường chính của web.
+  const thuTu = (x: PlaceHit) => { const i = TINH.findIndex(([t]) => t === x.province); return i < 0 ? 999 : i; };
+  const dungTinh = hop.filter((p) => TINH_WEB.has(p.province)).sort((a, b) => thuTu(a) - thuTu(b));
   const chon = dungTinh.length ? dungTinh : hop;
   // gõ sai thì ưu tiên cấp LỚN (quận) — chắc ý hơn một phường trùng tên ở nơi khác
   return chon.find((p) => !p.ward) ?? chon[0];
 }
 
+// SỬA CHÍNH TẢ KIỂU GOOGLE (chủ dự án 17/10/2026, ảnh "Đang hiển thị kết quả cho can hộ 2 phong ngu…"): chữ gõ sai đúng
+// MỘT chữ cái so với một chữ có trong từ điển nhà đất (loại nhà · tỉnh · phường xã · đặc điểm · chữ chung) → thay bằng chữ
+// đúng; giữ nguyên các chữ còn lại như khách gõ. Không sai chữ nào → null.
+let TU_DIEN: Set<string> | null = null;
+// Chữ có DẤU của từng chữ trong từ điển — câu đã sửa hiện ra đủ dấu như Google ("can ho" → "căn hộ")
+let CO_DAU: Map<string, string> | null = null;
+function tuDien(): Set<string> {
+  if (TU_DIEN) return TU_DIEN;
+  const s = new Set<string>();
+  const dau = new Map<string, string>();
+  const them = (x: string) => x.split(/[^a-z0-9]+/).forEach((w) => { if (w.length >= 2) s.add(w); });
+  const ghiDau = (x: string) => x.toLowerCase().split(/[\s,()/]+/).forEach((w) => { const n = normalizeVi(w).replace(/[^a-z0-9]/g, ""); if (n.length >= 2 && !dau.has(n)) dau.set(n, w); });
+  ghiDau("bán mua thuê cho căn nhà đất phòng ngủ trọ dưới trên tỷ triệu gần biển sông view tại ở hướng giá rẻ mới xây hẻm phố mặt tiền chung cư dự án nguyên ghép trường học bệnh viện chợ trung tâm thành quận huyện phường xã đường kiệt hộ nền riêng biệt thự liền kề bằng văn sổ hồng đỏ nội thất kho xưởng");
+  for (const [ten, keys] of LOAI_HINH) { keys.forEach(them); ghiDau(ten); }
+  for (const [ten, keys] of TINH) { keys.forEach(them); ghiDau(ten); }
+  for (const [ten, keys] of DAC_DIEM) { keys.forEach(them); ghiDau(ten); }
+  for (const x of diaGioi()) { them(x.norm); ghiDau(x.place.ward ?? x.place.district ?? ""); }
+  them("ban mua thue cho can nha dat phong ngu tro duoi tren ty trieu gan bien song view tai o huong gia re moi xay hem pho mat tien chung cu du an nguyen ghep truong hoc benh vien cho trung tam thanh quan huyen phuong xa duong kiet");
+  TU_DIEN = s;
+  CO_DAU = dau;
+  return s;
+}
+const coDau = (n: string) => CO_DAU?.get(n) ?? n;
+export function suaChinhTa(raw: string): string | null {
+  const td = tuDien();
+  let doi = false;
+  const kq = raw.split(/(\s+)/).map((tok) => {
+    const n = normalizeVi(tok).replace(/[^a-z0-9]/g, "");
+    if (n.length < 4 || /\d/.test(n) || td.has(n)) return tok; // chữ ngắn (sun, an…) dễ đoán nhầm — "sun cosmo" thành "sung"
+    // HAI CHỮ DÍNH LIỀN (quên dấu cách): "tạiphan" → "tại phan", "canho" → "căn hộ"
+    for (let k = 2; k <= n.length - 2; k++) {
+      if (td.has(n.slice(0, k)) && td.has(n.slice(k))) { doi = true; return `${coDau(n.slice(0, k))} ${coDau(n.slice(k))}`; }
+    }
+    // chữ gần đúng: lệch đúng một chữ cái, cùng chữ đầu; ưu tiên chữ DÀI hơn (khách hay gõ thiếu chữ: "phog" → "phòng")
+    let tot = "";
+    for (const w of td) {
+      if (w[0] !== n[0] || Math.abs(w.length - n.length) > 1 || lechMot(w, n) !== 1) continue;
+      if (w.length > tot.length) tot = w;
+    }
+    if (!tot) return tok;
+    doi = true;
+    return coDau(tot);
+  });
+  // CỤM HAI CHỮ QUEN (căn hộ, phòng ngủ, view biển…): chữ gõ sai trùng một chữ có thật ("họi" là chữ của "Hội An") vẫn sửa được
+  // khi chữ đứng cạnh khớp cụm; cụm đúng chữ mà SAI/THIẾU DẤU cũng đặt lại dấu — "căn họi" → "căn hộ", "view biên" → "view biển"
+  const tu = kq.join("").split(/\s+/).filter(Boolean);
+  const nt = tu.map((t) => normalizeVi(t).replace(/[^a-z0-9]/g, ""));
+  for (let i = 0; i + 1 < nt.length; i++) {
+    let khop = CUM_QUEN.has(`${nt[i]} ${nt[i + 1]}`) ? `${nt[i]} ${nt[i + 1]}` : "";
+    if (!khop) {
+      for (const c of CUM_QUEN.keys()) {
+        const [a, b] = c.split(" ");
+        // chữ gõ là CHỮ CÓ NGHĨA (mặt, văn…) thì chỉ sửa khi gõ thừa/thiếu một chữ cái ("họi" → "hộ"), không đổi sang chữ
+        // khác cùng độ dài — "nhà mặt phố" không thành "nhà đất phố", "nguyễn văn linh" không thành "nguyên căn" (rà 18/10/2026)
+        const duocDoi = (goc: string, dung: string) => goc.length >= 2 && lechMot(dung, goc) === 1 && (!td.has(goc) || goc.length !== dung.length);
+        if ((nt[i] === a && duocDoi(nt[i + 1], b)) || (nt[i + 1] === b && duocDoi(nt[i], a))) { khop = c; break; }
+      }
+    }
+    if (!khop) continue;
+    const [da, db] = CUM_QUEN.get(khop)!.split(" ");
+    if (tu[i].toLowerCase() !== da || tu[i + 1].toLowerCase() !== db) { tu[i] = da; tu[i + 1] = db; doi = true; }
+    [nt[i], nt[i + 1]] = khop.split(" ");
+    i++;
+  }
+  return doi ? tu.join(" ") : null;
+}
+const CUM_QUEN = new Map([
+  ["can ho", "căn hộ"], ["chung cu", "chung cư"], ["phong ngu", "phòng ngủ"], ["dat nen", "đất nền"], ["nha rieng", "nhà riêng"],
+  ["nha pho", "nhà phố"], ["biet thu", "biệt thự"], ["lien ke", "liền kề"], ["mat bang", "mặt bằng"], ["van phong", "văn phòng"],
+  ["phong tro", "phòng trọ"], ["nha tro", "nhà trọ"], ["view bien", "view biển"], ["ven bien", "ven biển"], ["view song", "view sông"], ["gan bien", "gần biển"],
+  ["mat tien", "mặt tiền"], ["so hong", "sổ hồng"], ["so do", "sổ đỏ"], ["noi that", "nội thất"], ["du an", "dự án"],
+  ["cho thue", "cho thuê"], ["ban nha", "bán nhà"], ["ban dat", "bán đất"], ["mua nha", "mua nhà"], ["mua dat", "mua đất"],
+  ["thue nha", "thuê nhà"], ["nguyen can", "nguyên căn"], ["o ghep", "ở ghép"], ["kho xuong", "kho xưởng"], ["nha dat", "nhà đất"],
+]);
+
 // Đặc điểm mô tả — khớp vào tiêu đề/mô tả tin
 const DAC_DIEM: [string, string[]][] = [
-  ["view biển", ["view bien", "huong bien", "gan bien", "sat bien", "mat bien"]],
+  ["view biển", ["view bien", "huong bien", "gan bien", "sat bien", "mat bien", "ven bien"]],
   ["view sông", ["view song", "ven song", "mat song"]],
   ["mới xây", ["moi xay", "moi 100", "xay moi", "moi hoan thien", "nha moi"]],
   ["full nội thất", ["full noi that", "day du noi that", "noi that cao cap", "co noi that"]],
@@ -191,22 +315,34 @@ function bocPhongNgu(nq: string): number | null {
 // "dưới 3 tỷ" · "từ 2 đến 5 tỷ" · "500 triệu" → khoảng giá (đơn vị TỶ)
 function bocGia(nq: string): { min: number | null; max: number | null } {
   const soTy = (s: string, dv: string) => (dv.startsWith("tr") ? Number(s.replace(",", ".")) / 1000 : Number(s.replace(",", ".")));
-  const khoang = nq.match(/(?:tu\s*)?(\d+[.,]?\d*)\s*(?:-|den|toi)\s*(\d+[.,]?\d*)\s*(ty|trieu|tr)/);
+  const khoang = nq.match(/(?:tu\s*)?(\d+[.,]?\d*)\s*(?:-|den|toi)\s*(\d+[.,]?\d*)\s*(ty|ti|trieu|tr)\b/);
   if (khoang) return { min: soTy(khoang[1], khoang[3]), max: soTy(khoang[2], khoang[3]) };
-  const duoi = nq.match(/(?:duoi|nho hon|<)\s*(\d+[.,]?\d*)\s*(ty|trieu|tr)/);
+  const duoi = nq.match(/(?:duoi|nho hon|<)\s*(\d+[.,]?\d*)\s*(ty|ti|trieu|tr)\b/);
   if (duoi) return { min: null, max: soTy(duoi[1], duoi[2]) };
-  const tren = nq.match(/(?:tren|lon hon|>)\s*(\d+[.,]?\d*)\s*(ty|trieu|tr)/);
+  const tren = nq.match(/(?:tren|lon hon|>)\s*(\d+[.,]?\d*)\s*(ty|ti|trieu|tr)\b/);
   if (tren) return { min: soTy(tren[1], tren[2]), max: null };
   return { min: null, max: null };
 }
 
+// NHỚ KẾT QUẢ (chủ dự án 17/10/2026: điện thoại gõ mỗi phím 0,4–3 giây): một câu bị phân tích 5–6 lần mỗi phím
+// (menu, trường lọc, gợi ý, đường dẫn…) và mỗi lần dò cả nghìn phường xã → câu đã phân tích thì trả lại ngay.
+const daPhanTich = new Map<string, ParsedQuery>();
 export function parseQuery(raw: string): ParsedQuery {
+  const co = daPhanTich.get(raw);
+  if (co) return co;
+  const kq = phanTichCau(raw);
+  if (daPhanTich.size > 300) daPhanTich.clear();
+  daPhanTich.set(raw, kq);
+  return kq;
+}
+function phanTichCau(raw: string): ParsedQuery {
   const nq = normalizeVi(raw);
   const gia = bocGia(nq);
   // "nhà đất" / "bất động sản" là cách nói CHUNG, không phải loại hình — phải bỏ
   // trước khi dò, nếu không chữ "đất" trong "nhà đất" bị hiểu thành "Đất nền".
   const types = timTuDien(nq.replace(/nha dat|bat dong san|bds/g, " "), LOAI_HINH);
   const places = timTuDien(nq, TINH);
+  if (!places.length) places.push(...tinhGanDung(nq));
   const features = timTuDien(nq, DAC_DIEM);
   // Phường/quận trong câu ("Hoà Quý", "Ngũ Hành Sơn") — suy ra luôn TỈNH nếu
   // người dùng không gõ tên tỉnh ("nhà đất Hoà Quý" → Đà Nẵng).

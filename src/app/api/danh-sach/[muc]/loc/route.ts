@@ -57,6 +57,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ muc: st
     boiDam: kq.boiDam,
     tangTheoId: kq.tangTheoId,
     khuVuc: kq.khuVuc,
+    // tỉnh máy hiểu từ câu gõ — trang cần để ghi đúng dòng "Gợi ý khác tại …" (thiếu thì tin đúng nơi khách tìm
+    // bị ghi nhầm "Gợi ý ở địa phương khác" — lỗi 17/10/2026)
+    tinhHieu: kq.tinhHieu,
     ...(yc.banDo ? { diem: kq.ketQua.filter((l) => !l.banSao).map(diemTuTin) } : {}),
     ...(yc.goiY
       ? { goiY: tin.slice(0, TOI_DA_GOI_Y).map((l) => ({ purpose: l.purpose, type: l.type, location: l.location, badge: l.badge, price: l.price })) }

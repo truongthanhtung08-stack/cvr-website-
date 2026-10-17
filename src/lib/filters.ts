@@ -168,7 +168,7 @@ export function listingLegal(id: string): string {
 export const furnishingOptions = ["Đầy đủ nội thất", "Nội thất cơ bản", "Nội thất trống"];
 // Gom cách ghi thật của người đăng về đúng mục bộ lọc
 const NHOM_PHAP_LY: Record<string, RegExp> = {
-  "Sổ đỏ / Sổ hồng": /sổs*(đỏ|hồng)/i,
+  "Sổ đỏ / Sổ hồng": /sổ\s*(đỏ|hồng)/i, // (18/10/2026: trước đây mất dấu "\" thành "sổs*" — không tin nào khớp)
   "Hợp đồng mua bán": /hợp đồng mua bán/i,
   "Đang chờ sổ": /chờ sổ/i,
 };

@@ -135,6 +135,21 @@ export default function FilterDropdown({
     };
   }, [open, sheet, reposition, setOpen]);
 
+  // ĐƯỜNG THOÁT ĐỦ (chủ dự án 17/10/2026: "có đường chọn cũng có đường thoát, kể cả chọn nhiều trường"): bảng chọn trên
+  // điện thoại đóng bằng × · Xong · chạm nền mờ · Esc · và NÚT QUAY LẠI của điện thoại — quay lại chỉ đóng bảng chọn, khách
+  // vẫn ở màn tìm (mở bảng là thêm một bước lịch sử; đóng bằng cách khác thì tự lùi lại bước đó).
+  useEffect(() => {
+    if (!open || !sheet) return;
+    let daLui = false;
+    try { history.pushState({ ...history.state, cvrLoc: 1 }, ""); } catch { /* bỏ qua */ }
+    const onPop = () => { daLui = true; setOpen(false); };
+    window.addEventListener("popstate", onPop);
+    return () => {
+      window.removeEventListener("popstate", onPop);
+      if (!daLui && history.state?.cvrLoc) history.back();
+    };
+  }, [open, sheet, setOpen]);
+
   // Sheet: đóng bằng phím Esc (bấm ra ngoài đã có lớp nền mờ xử lý)
   useEffect(() => {
     if (!open || !sheet) return;
@@ -172,7 +187,8 @@ export default function FilterDropdown({
         onClick={() => setOpen(!open)}
         className={`flex items-center justify-between gap-2 border text-sm outline-none transition ${
           pill
-            ? `h-10 w-auto shrink-0 whitespace-nowrap rounded-full px-4 ${
+            ? // điện thoại gọn hơn (chủ dự án 17/10/2026: "menu phía dưới nhỏ lại") · máy tính giữ nguyên
+              `h-8 w-auto shrink-0 whitespace-nowrap rounded-full px-3 text-[13px] sm:h-10 sm:px-4 sm:text-sm ${
                 active
                   ? "border-cvr-ink bg-cvr-ink/[0.04] font-medium text-cvr-ink"
                   : "border-cvr-line bg-white text-cvr-body hover:border-cvr-ink/40 hover:text-cvr-ink"

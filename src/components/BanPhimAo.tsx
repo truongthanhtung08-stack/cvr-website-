@@ -60,9 +60,12 @@ export default function BanPhimAo() {
       return null;
     };
 
+    // THANH DÍNH TRÊN ĐẦU (header + thanh "← Quay lại"): ô nằm dưới chúng là BỊ CHE, không phải "đang nhìn thấy"
+    // (chủ dự án 17/10/2026: ô tìm trang kết quả bị thanh "← Cho thuê" đè). Lấy đúng scroll-padding-top của trang.
+    const cheTren = (el: HTMLElement) => timLopPhu(el) ? 0 : parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
     const dangNhin = (el: HTMLElement, giaDinh: boolean) => {
       const r = el.getBoundingClientRect();
-      const tren = vvTop() + 8;
+      const tren = vvTop() + cheTren(el) + 8;
       const duoi = giaDinh ? window.innerHeight * 0.5 : vvTop() + vvCao() - 8;
       if (r.height > vvCao() * 0.6) return r.top < duoi - 40 && r.bottom > tren + 40; // ô cao (mô tả): thấy một phần là đủ
       return r.top >= tren && r.bottom <= duoi;
@@ -95,12 +98,15 @@ export default function BanPhimAo() {
       } else if (phu && giaDinh) {
         // Không đo được bàn phím: kéo hộp (bảng trượt từ đáy, hộp xác minh…) lên sát mép trên
         lopPhu = phu;
-        phu.style.alignItems = "flex-start";
+        // Chỉ lớp phủ xếp NGANG (hộp nằm đáy nhờ items-end) mới kéo lên được bằng align-items. Lớp phủ xếp DỌC
+        // (màn tìm toàn màn hình) mà ép flex-start thì mọi con co theo chữ → câu dài tràn mép phải, nút X lệch
+        // (chủ dự án chụp 17/10/2026) — bỏ qua.
+        if (!getComputedStyle(phu).flexDirection.startsWith("column")) phu.style.alignItems = "flex-start";
       } else if (phu) traLopPhu();
 
       if (canCuon && !dangNhin(el, giaDinh)) {
         const r = el.getBoundingClientRect();
-        if (giaDinh && !phu) window.scrollBy({ top: r.top - window.innerHeight * 0.18, behavior: "smooth" }); // ô lên phần trên màn hình
+        if (giaDinh && !phu) window.scrollBy({ top: r.top - Math.max(window.innerHeight * 0.18, cheTren(el) + 8), behavior: "smooth" }); // ô lên phần trên màn hình
         else el.scrollIntoView({ block: giaDinh || r.height > vvCao() * 0.6 ? "start" : "center", behavior: "smooth" });
       }
       canCuon = false;

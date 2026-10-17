@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import Header from "@/components/Header";
 import TimTrangChu from "@/components/TimTrangChu";
 import { goiYTrangChu, tinDem } from "@/lib/goiYTrangChu";
@@ -50,7 +51,11 @@ export default async function Home() {
               <h1 className="sr-only">
                 Cổng thông tin mua bán, cho thuê nhà đất
               </h1>
-              <TimTrangChu goiYTin={goiYTrangChu(tinDu)} tinDem={tinDem(tinDu)} />
+              {/* Suspense: khách chạm ô tìm khi trang CHƯA nạp xong mã (4G chậm) → React nạp ô tìm TRƯỚC và chạy lại đúng cú
+                  chạm đó — không mất cú chạm đầu (chủ dự án 17/10/2026: "bấm vào rất lâu không chạy"). */}
+              <Suspense>
+                <TimTrangChu goiYTin={goiYTrangChu(tinDu)} tinDem={tinDem(tinDu)} />
+              </Suspense>
             </section>
           </HomeCollapsible>
 

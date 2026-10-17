@@ -4,7 +4,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ListingBrowser from "@/components/ListingBrowser";
 import KhungChoDanhMuc from "@/components/KhungChoDanhMuc";
-import Breadcrumb from "@/components/Breadcrumb";
+import { BreadcrumbJsonLd } from "@/components/Breadcrumb";
 import LienKetPseo from "@/components/LienKetPseo";
 import { ListingListJsonLd } from "@/components/ListJsonLd";
 import { goiNheTin, goiNheBaiViet } from "@/lib/goiNhe";
@@ -52,7 +52,9 @@ export default async function TrangPseo({ dk }: { dk: DieuKien }) {
       <ListingListJsonLd items={items} heading={heading} path={path} />
       <Header />
       <main className="flex-1 bg-white">
-        <Breadcrumb items={duongDanPhanCap(dk)} />
+        {/* Đường dẫn phân cấp: CHỈ cho Google (JSON-LD) — không hiện trên màn hình (chủ dự án 17/10/2026: dòng này nằm
+            trên ô tìm làm rối; điện thoại đã có thanh "← Quay lại"). SEO không mất: Google đọc từ dữ liệu cấu trúc. */}
+        <BreadcrumbJsonLd items={duongDanPhanCap(dk)} />
         <Suspense fallback={khung}>
           {boLoc ? (
             <ListingBrowser purpose={dk.muc} heading={heading} soLieu={soLieu} nguon={dk.muc} choTai={khung} initialFilters={boLoc} articles={goiNheBaiViet(articles)} />
@@ -67,7 +69,7 @@ export default async function TrangPseo({ dk }: { dk: DieuKien }) {
             />
           )}
         </Suspense>
-        <LienKetPseo nhom={lienKetCho(dk, listings)} />
+        <LienKetPseo nhom={lienKetCho(dk, listings)} cau={tieuDe(dk)} kieuGoogle />
       </main>
       <Footer />
     </>

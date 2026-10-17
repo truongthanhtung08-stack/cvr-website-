@@ -283,6 +283,12 @@ function ganCuSangMoi(tinh: string, quan: string, phuong: string, v: { tinh: str
   const gon = khoaCu(tinh, quan, phuong);
   if (!_cuSangMoi.has(gon)) _cuSangMoi.set(gon, v);
 }
+// Dựng LÚC CẦN TRA lần đầu, không dựng lúc tải trang: hơn mười nghìn phường xã cũ, dựng sẵn tốn ~300ms làm trang chủ chậm
+// bấm được (đo 17/10/2026)
+let _daDung = false;
+function dungBang() {
+if (_daDung) return;
+_daDung = true;
 for (const p of provincesOld) {
   const tinhMoi = newProvinceOf(p.name);
   const dsPhuongMoi = provincesNew.find((x) => x.name === tinhMoi)?.wards ?? [];
@@ -331,19 +337,23 @@ for (const p of provincesOld) {
     }
   }
 }
+}
 
 /** Phường/xã CŨ → tên theo hệ mới. Không có trong bảng → null (không đoán). */
 export function phuongMoiCua(tinhCu: string, quanCu: string, phuongCu: string) {
+  dungBang();
   return _cuSangMoiDu.get(khoaCuDu(tinhCu, quanCu, phuongCu)) ?? _cuSangMoi.get(khoaCu(tinhCu, quanCu, phuongCu)) ?? null;
 }
 
 /** Phường/xã MỚI → những chỗ cũ đã gộp vào nó (một phường mới thường gộp 2–4 phường cũ). */
 /** Tên phường/xã cũ hơn (gộp trước 30/06/2025) nay thuộc phường mới này — chỉ để tìm. */
 export function tenCuHonCua(tinhMoi: string, phuongMoi: string): string[] {
+  dungBang();
   return _tenCuHon.get(`${chuanTen(tinhMoi)}|${chuanTen(phuongMoi)}`) ?? [];
 }
 
 export function choCuCua(tinhMoi: string, phuongMoi: string): ChoCu[] {
+  dungBang();
   return _moiSangCu.get(`${chuanTen(tinhMoi)}|${chuanTen(phuongMoi)}`) ?? [];
 }
 

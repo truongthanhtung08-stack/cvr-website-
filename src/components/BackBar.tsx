@@ -229,7 +229,7 @@ export default function BackBar() {
   }
 
   return (
-    <div className="sticky top-[calc(60px+var(--at))] z-30 border-b border-cvr-line bg-white/95 backdrop-blur lg:hidden">
+    <div className="thanh-quay-lai sticky top-[calc(60px+var(--at))] z-30 border-b border-cvr-line bg-white/95 backdrop-blur lg:hidden">
       <div className="flex items-center gap-2 px-3 py-2">
         <button
           type="button"

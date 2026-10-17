@@ -64,7 +64,7 @@ export function duongDanTuCau(mucTab: "ban" | "thue", raw: string): string | nul
   // (tên phường, đặc điểm…) → null: về trang kết quả tìm đầy đủ, không đoán.
   const coTu = (ten: string) => nq.includes(` ${normalizeVi(ten).replace(/[^a-z0-9]+/g, " ")} `);
   const places = p.places.filter(coTu);
-  let con = nq.replace(/(duoi|tren|tu|den|nho hon|lon hon)?\s*\d+[.,]?\d*\s*(ty|trieu|tr)\b/g, " ");
+  let con = nq.replace(/(duoi|tren|tu|den|nho hon|lon hon)?\s*\d+[.,]?\d*\s*(ty|ti|trieu|tr)\b/g, " ");
   const bo = [
     ...LOAI_HINH.flatMap(([, keys]) => keys),
     ...places.map((t) => normalizeVi(t)),
@@ -119,6 +119,32 @@ export function duongDanTuCau(mucTab: "ban" | "thue", raw: string): string | nul
   if (tp) phan.push(tp.slug);
   else if (gia) phan.push(gia);
   return phan.join("/") + reTruoc;
+}
+
+// TRANG pSEO GẦN NHẤT (chủ dự án 17/10/2026: tìm "căn hộ chung cư Khánh Hòa dưới 3 tỷ view biển" ra trang chung chung, trong
+// khi trang pSEO "Bán căn hộ chung cư Khánh Hòa dưới 3 tỷ" có sẵn ngay cuối trang). Câu có thêm chi tiết web không làm trang
+// riêng → về trang pSEO đúng LOẠI · NƠI · GIÁ, giữ nguyên câu trong ?q để ô tìm hiện lại và tin khớp chi tiết xếp lên đầu.
+// Trang pSEO vẫn tự trỏ canonical về chính nó (không sinh trang trùng cho Google).
+export function duongDanGanNhat(muc: "ban" | "thue", raw: string): string | null {
+  const thang = duongDanTuCau(muc, raw);
+  if (thang) return thang;
+  const p = parseQuery(raw);
+  const nq = ` ${normalizeVi(raw).replace(/[^a-z0-9]+/g, " ")} `;
+  const loai = p.types.join(" ") || (/ nha /.test(nq) && !/ nha dat /.test(nq) ? "nhà" : "");
+  const gia = p.priceMaxTy != null ? `dưới ${p.priceMaxTy} tỷ` : "";
+  const dongTu = p.purpose === "thue" ? "thuê" : p.purpose === "ban" ? "bán" : "";
+  // thử nơi cụ thể trước (thành phố như Nha Trang), không được thì về tỉnh
+  const noiThu = [p.place?.district, p.place?.province ?? p.places[0]].filter(Boolean) as string[];
+  for (const noi of noiThu) {
+    const u = duongDanTuCau(muc, [dongTu, loai, noi, gia].filter(Boolean).join(" "));
+    if (u && u.split("?")[0].split("/").length > 2) {
+      const [duong, cu] = u.split("?");
+      const q = new URLSearchParams(cu);
+      q.set("q", raw.trim());
+      return `${duong}?${q.toString()}`;
+    }
+  }
+  return null;
 }
 
 // BỘ TÌM 3 BƯỚC TRANG CHỦ (kiểu Airbnb, 17/10/2026): Ở đâu · Loại hình · Mức giá → trang sạch.

@@ -20,12 +20,15 @@ import {
   legalOptions,
   furnishingOptions,
   emptyFilters,
+  filtersToParams,
   hasActiveFilters,
   type Filters,
   type LocationSel,
 } from "@/lib/filters";
-import { suggest, popularSuggestions, goiYPhoBien, type Suggestion } from "@/lib/suggest";
-import { goiYNoiLong, parseQuery } from "@/lib/smartSearch";
+import { suggest, type Suggestion } from "@/lib/suggest";
+import { goiYNoiLong, parseQuery, suaChinhTa } from "@/lib/smartSearch";
+import { duongDanGanNhat } from "@/lib/duongDanTim";
+import { locTuCau } from "@/lib/locTuCau";
 import { hintsFor, listingHints, type HintMode, type TinGoiY } from "@/lib/searchHints";
 import { useTypingPlaceholder } from "@/lib/useTypingPlaceholder";
 import { cuonToiKetQua } from "@/lib/scroll";
@@ -37,17 +40,6 @@ const GEO_MODE_KEY = "cl-geo-mode"; // hệ đơn vị hành chính đã chọn:
 const ICON_CLOCK = "M12 8v4l2.5 2.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z";
 const ICON_SEARCH = "M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z";
 const ICON_INSERT = "M18 18L6 6M6 6h8M6 6v8"; // ↖ chèn gợi ý vào ô tìm
-// Biểu tượng RIÊNG theo loại gợi ý (17/10/2026, kiểu Airbnb): không dùng kính lúp cho mọi dòng.
-const ICON_THEO_LOAI: Record<string, string> = {
-  "Khu vực": "M12 21s-7-6.2-7-11.5A7 7 0 0119 9.5C19 14.8 12 21 12 21zM12 12a2.5 2.5 0 100-5 2.5 2.5 0 000 5z",
-  "Loại hình": "M3 11l9-7 9 7M5 9.5V20h14V9.5M10 20v-5h4v5",
-  "Dự án": "M4 21V5a1 1 0 011-1h9a1 1 0 011 1v16M15 9h4a1 1 0 011 1v11M8 8h3M8 12h3M8 16h3M3 21h18",
-  "Sản phẩm": "M20 12l-8 8-9-9V4h7l10 8zM7.5 7.5h.01",
-  "Tin tức": "M5 4h11v16H5a1 1 0 01-1-1V5a1 1 0 011-1zM16 8h3a1 1 0 011 1v9a2 2 0 01-2 2h-2M8 8h5M8 12h5M8 16h3",
-  "Mục đích": "M4 12h16M14 6l6 6-6 6",
-  "Gợi ý": ICON_SEARCH,
-};
-
 // Thanh lọc kiểu Homedy — fully controlled qua props value/onChange.
 export default function FilterBar({
   value,
@@ -98,13 +90,17 @@ export default function FilterBar({
   // và bám TIN MỚI + TIN HOT trong kho (có kho tin thì dựng động, không thì theo cơ cấu).
   // Người dùng đã gõ chữ → dừng chạy để không giật dưới tay họ.
   const mode = hintMode ?? purpose;
+  // Trang ĐÃ CÓ LỌC (VD căn hộ Khánh Hòa) → không chạy câu mẫu nơi khác ("Nhà riêng Đà Nẵng…" lạc trang —
+  // chủ dự án 17/10/2026), đứng yên đúng câu của ô tìm trang chủ.
+  const coLocSan = hasActiveFilters(f);
   const hintPhrases = useMemo(
-    () => (hintItems && hintItems.length > 0 && mode !== "duan"
+    () => (coLocSan ? ["Tìm nhà đất theo khu vực, dự án…"]
+      : hintItems && hintItems.length > 0 && mode !== "duan"
       ? listingHints(hintItems, mode)
       : hintsFor(mode)),
-    [hintItems, mode],
+    [hintItems, mode, coLocSan],
   );
-  const goiYChay = useTypingPlaceholder(hintPhrases, f.keyword.trim().length > 0);
+  const goiYChay = useTypingPlaceholder(hintPhrases, f.keyword.trim().length > 0 || coLocSan);
 
   // Autocomplete đa tầng: Khu vực · Loại hình · Sản phẩm · Dự án · Tin tức.
   // Khi chạm vào ô (chưa gõ) → hiện Lịch sử + Gợi ý phổ biến (mô hình Homedy).
@@ -185,21 +181,51 @@ export default function FilterBar({
     window.setTimeout(() => setDangTim(false), 700);
     // Báo khối kết quả chạy chuyển động (kể cả khi bộ lọc không đổi) — khách thấy trang vừa tìm
     window.dispatchEvent(new Event("cvr-tim"));
-    if (onSearch) onSearch(next);
-    else cuonToiKetQua();
+    if (onSearch) return onSearch(next);
+    // TRANG KẾT QUẢ: khách gõ CÂU MỚI rồi bấm Tìm → câu mới thắng bộ lọc cũ (chủ dự án 17/10/2026: đang ở
+    // "nhà Đà Nẵng" gõ "Phòng trọ cho thuê tại Huế" mà vẫn ra Đà Nẵng). Câu máy hiểu trọn → sang đúng trang sạch
+    // như ô tìm trang chủ; câu còn chi tiết riêng → lọc lại từ đầu theo câu (khu vực · loại hình · giá tách từ câu).
+    const kw = f.keyword.trim();
+    if (!next && kw && mode !== "duan" && kw !== daTim) {
+      setDaTim(kw);
+      const u = duongDanGanNhat(purpose, kw);
+      if (u && u !== window.location.pathname) return router.push(u);
+      // Địa chỉ trang đi theo câu mới (tải lại / gửi link vẫn đúng câu khách tìm). Đang ở trang con cố định nơi
+      // (VD /cho-thue/nha/da-nang) → về trang mục đích gốc, không để lọc cố định của trang con đè câu mới.
+      const goc = purpose === "thue" ? "/cho-thue" : "/mua-ban";
+      const q = filtersToParams({ ...emptyFilters(), keyword: kw });
+      q.set("mode", purpose === "thue" ? "Cho thuê" : "Mua bán");
+      if (window.location.pathname !== goc) return router.push(`${goc}?${q.toString()}`);
+      onChange({ ...locTuCau(kw, purpose), keyword: kw });
+      window.history.replaceState(window.history.state, "", `${goc}?${q.toString()}`);
+    }
+    cuonToiKetQua();
   };
+  // câu đã tìm gần nhất — bấm Tìm lại cùng câu thì giữ nguyên các trường khách tự chỉnh sau đó
+  const [daTim, setDaTim] = useState(f.keyword.trim());
+  // Câu khách vừa gõ ở trang chủ rồi được đưa tới trang sạch (pSEO) — hiện lại trong ô để SỬA TIẾP như Google
+  // (chủ dự án 17/10/2026). Chỉ để hiện; khách sửa là thành từ khoá thật. Đọc sau khi dựng trang (máy chủ không có sessionStorage).
+  const [cauCu, setCauCu] = useState("");
+  useEffect(() => {
+    try {
+      const s = sessionStorage.getItem("cvr-cau:" + window.location.pathname);
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- đọc một lần khi mở trang
+      if (s) setCauCu(s);
+    } catch { /* bỏ qua */ }
+  }, []);
 
   const typed = f.keyword.trim().length > 0;
   // Panel: đang gõ → cụm khớp chữ gõ; CHẠM VÀO Ô CHƯA GÕ → lịch sử tìm + gợi ý phổ biến của đúng mục
   // (chủ dự án 17/10/2026: "Airbnb chỉ cần bấm vào là nó hiện thông minh về gợi ý").
-  const phoBien = mode === "duan" ? popularSuggestions : goiYPhoBien(purpose);
   const recentShown = recent.slice(0, 5); // hiện 5 mục gần nhất (trước chỉ 3)
 
   // ── LOẠI DẦN GỢI Ý LẠC ĐỀ ────────────────────────────────────────────────
   // Câu đã nêu RÕ mục đích (mua bán / cho thuê / dự án) hoặc loại hình → bỏ các
   // gợi ý thuộc mục đích & loại hình KHÁC cho chính xác. Từ khoá CHUNG CHUNG
   // (không nêu gì) → giữ nguyên, cứ hiển thị đủ để người dùng tự chọn.
-  const yDinh = parseQuery(f.keyword);
+  // Gõ sai chính tả / dính chữ ("Căn họi … tạiphan thiết") → hiểu theo câu đã sửa, như Google
+  const kwHieu = typed ? suaChinhTa(f.keyword) ?? f.keyword : f.keyword;
+  const yDinh = parseQuery(kwHieu);
   const mucDich = yDinh.purpose ?? purpose;
   const roNghia = yDinh.purpose != null || yDinh.types.length > 0;
   const HREF_MUC_DICH: Record<string, string> = { "/mua-ban": "ban", "/cho-thue": "thue", "/du-an": "duan" };
@@ -214,16 +240,17 @@ export default function FilterBar({
     }
     return true;
   };
-  const typedHits = typed ? suggest(f.keyword, 12).filter(dungY).slice(0, 6) : [];
+  const typedHits = typed ? suggest(kwHieu, 12).filter(dungY).slice(0, 6) : [];
   // LUÔN có gợi ý (kiểu Google): gõ mà không khớp gì → hiện GỢI Ý PHỔ BIẾN thay vì để trống.
   const noHits = typed && typedHits.length === 0;
   // GỢI Ý BẬC THANG — dựng từ chính câu đang gõ, xếp từ khớp đầy đủ → nới dần.
   // VD "Đất nền tại Đà Nẵng giá dưới 3 tỷ" → [Đất nền · Đà Nẵng · dưới 3 tỷ] →
   // [Đất nền · Đà Nẵng] → [Tất cả đất nền] → [BĐS tại Đà Nẵng] → [BĐS dưới 3 tỷ].
   const bacThang: Suggestion[] = typed
-    ? goiYNoiLong(f.keyword).map((g) => ({ label: g.label, kind: "Gợi ý" as const, sub: g.sub, patch: g.patch }))
+    ? goiYNoiLong(kwHieu).map((g) => ({ label: g.label, kind: "Gợi ý" as const, sub: g.sub, patch: g.patch }))
     : [];
-  const panelItems: Suggestion[] = typed ? [...bacThang, ...typedHits] : [...recentShown, ...phoBien.filter(dungY).slice(0, 5)];
+  // CHƯA GÕ → CHỈ những lần khách đã tìm, như Google (chủ dự án 17/10/2026: bỏ "gợi ý phổ biến" toàn tên tỉnh trơn — vô dụng)
+  const panelItems: Suggestion[] = typed ? [...bacThang, ...typedHits] : recentShown;
   // Câu dài hiếm khi khớp NGUYÊN VĂN một mục nào — nhưng nếu bóc được tiêu chí
   // (loại hình · phường/quận · giá…) thì KHÔNG được báo "không có kết quả",
   // phải nói đã hiểu gì và gợi ý theo đúng tiêu chí đó.
@@ -560,10 +587,10 @@ export default function FilterBar({
           >
             <span className="flex w-5 shrink-0 justify-center text-cvr-muted">
               <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={1.7} viewBox="0 0 24 24" aria-hidden>
-                <path strokeLinecap="round" strokeLinejoin="round" d={!typed && i < recentShown.length ? ICON_CLOCK : ICON_THEO_LOAI[s.kind] ?? ICON_SEARCH} />
+                <path strokeLinecap="round" strokeLinejoin="round" d={!typed && i < recentShown.length ? ICON_CLOCK : ICON_SEARCH} />
               </svg>
             </span>
-            <span className="min-w-0 flex-1 truncate"><HighlightLabel label={s.label} q={typed ? f.keyword : ""} /></span>
+            <span className="min-w-0 flex-1 break-words"><HighlightLabel label={s.label} q={typed ? f.keyword : ""} /></span>
           </button>
           {/* ↖ Chèn gợi ý vào ô tìm để sửa tiếp (không tìm ngay) — kiểu Google */}
           <button
@@ -611,8 +638,8 @@ export default function FilterBar({
         <input
           ref={inputRef}
           type="text"
-          value={f.keyword}
-          onChange={(e) => { set({ keyword: e.target.value }); setSugOpen(true); setActiveIdx(-1); }}
+          value={f.keyword || cauCu}
+          onChange={(e) => { setCauCu(""); set({ keyword: e.target.value }); setSugOpen(true); setActiveIdx(-1); }}
           // Kiểu Google: MOBILE → chạm ô mở TRANG TÌM TOÀN MÀN HÌNH · DESKTOP → xổ dropdown gợi ý.
           onFocus={(e) => {
             if (window.matchMedia("(max-width: 639px)").matches) { e.currentTarget.blur(); setOverlay(true); }
@@ -638,12 +665,12 @@ export default function FilterBar({
           }
         />
         {/* Nút XOÁ (×) trong ô — kiểu Google, hiện khi đã gõ (chỉ ô tìm lớn/Hero) */}
-        {compact && f.keyword.trim().length > 0 && (
+        {compact && (f.keyword || cauCu).trim().length > 0 && (
           <button
             type="button"
             aria-label="Xoá từ khoá"
             onMouseDown={(e) => e.preventDefault()}
-            onClick={() => { set({ keyword: "" }); setSugOpen(true); inputRef.current?.focus(); }}
+            onClick={() => { setCauCu(""); set({ keyword: "" }); setSugOpen(true); inputRef.current?.focus(); }}
             className="absolute right-[3.25rem] top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-cvr-faint transition hover:bg-black/5 hover:text-cvr-ink active:scale-95 sm:right-3"
           >
             <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
@@ -678,12 +705,12 @@ export default function FilterBar({
           </button>
         )}
         {/* Nút XOÁ nhanh (×) cho ô tìm TRANG DANH SÁCH — hiện khi đã gõ, đồng bộ với Hero. */}
-        {!compact && f.keyword.trim().length > 0 && (
+        {!compact && (f.keyword || cauCu).trim().length > 0 && (
           <button
             type="button"
             aria-label="Xoá từ khoá"
             onMouseDown={(e) => e.preventDefault()}
-            onClick={() => { set({ keyword: "" }); setSugOpen(true); inputRef.current?.focus(); }}
+            onClick={() => { setCauCu(""); set({ keyword: "" }); setSugOpen(true); inputRef.current?.focus(); }}
             className="mr-1 hidden h-8 w-8 shrink-0 items-center justify-center rounded-full text-cvr-faint transition hover:bg-black/5 hover:text-cvr-ink active:scale-95 sm:flex"
           >
             <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
@@ -720,7 +747,7 @@ export default function FilterBar({
           </>
         )}
         {sugOpen && panelItems.length > 0 && (
-          <div className="anim-xo-xuong absolute left-0 right-0 top-full z-[120] mt-1.5 max-h-64 overflow-y-auto rounded-2xl bg-white p-1.5 shadow-xl shadow-black/15 ring-1 ring-black/5 sm:max-h-80">
+          <div className="anim-xo-xuong absolute left-0 right-0 top-full z-[120] mt-1.5 rounded-2xl bg-white p-1.5 shadow-xl shadow-black/15 ring-1 ring-black/5">
             {/* Nút THOÁT tìm kiếm — chạm là tắt panel gợi ý + đóng bàn phím. Hiện cả PC & Mobile. */}
             <div className="pointer-events-none sticky top-0 z-10 flex h-7 justify-end">
               <button
@@ -774,8 +801,9 @@ export default function FilterBar({
               }}
               autoFocus
               rows={1}
-              value={f.keyword}
+              value={f.keyword || cauCu}
               onChange={(e) => {
+                setCauCu("");
                 set({ keyword: e.target.value.replace(/\n/g, " ") });
                 setActiveIdx(-1);
                 const el = e.currentTarget;
@@ -789,32 +817,24 @@ export default function FilterBar({
               enterKeyHint="search"
               className="block max-h-[112px] min-h-11 w-full resize-none overflow-y-auto rounded-[22px] bg-cvr-surface py-[11px] pl-4 pr-10 text-[15px] leading-[22px] text-cvr-ink placeholder-cvr-faint outline-none ring-1 ring-black/5 focus:ring-2 focus:ring-cvr-blue/40"
             />
-            {f.keyword.trim().length > 0 && (
+            {(f.keyword || cauCu).trim().length > 0 && (
               <button
                 type="button"
                 aria-label="Xoá từ khoá"
-                onClick={() => { set({ keyword: "" }); overlayInputRef.current?.focus(); }}
+                onClick={() => { setCauCu(""); set({ keyword: "" }); overlayInputRef.current?.focus(); }}
                 className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-cvr-faint active:bg-black/5"
               >
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             )}
           </div>
-          <button
-            type="button"
-            aria-label="Tìm kiếm"
-            onClick={() => chayTim()}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-cvr-blue text-white active:scale-95"
-          >
-            {dangTim ? <Spinner size={18} /> : (
-            <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={2.4} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" /></svg>
-            )}
-          </button>
+          {/* MỘT Ô GÕ (chủ dự án 17/10/2026): bỏ nút kính lúp tròn — tìm bằng phím "Tìm" của bàn phím như Google */}
         </div>
         {/* CHỌN MỤC ĐÍCH (Dự án · Mua bán · Cho thuê) — đặt TRONG trang tìm của
             điện thoại, ngay dưới ô nhập. Ngoài Hero mobile chỉ để đúng ô tìm cho
             gọn; vào đây mới có đủ chỗ chọn, và chọn xong bấm Tìm là ra ĐÚNG mục. */}
-        <div className="flex-1 overflow-y-auto p-1.5">
+        {/* Kéo danh sách gợi ý → hạ bàn phím (kiểu Google) */}
+        <div onTouchMove={() => overlayInputRef.current?.blur()} className="flex-1 overflow-y-auto p-1.5">
           {noHits && (
             <p className="px-2.5 pb-1.5 pt-2 text-[13px] text-cvr-muted">
               {dongDanDat}
@@ -848,7 +868,6 @@ export default function FilterBar({
   // Mặc định (trang danh sách/tìm kiếm): bố cục Batdongsan, da Apple —
   // DÒNG 1: Loại nhà đất (dẫn đầu) + ô tìm kiếm + Bản đồ ·
   // DÒNG 2: Khu vực · Dự án · Mức giá · Diện tích · Lọc thêm · Đặt lại (phải).
-  const hasActive = hasActiveFilters(f);
   return (
     <FilterDropdownGroup>
       {/* MOBILE: KHÔNG khung (viền/bóng), KHÔNG padding ngang → thanh tìm rộng hết bề ngang trang.
@@ -870,18 +889,7 @@ export default function FilterBar({
             {priceDropdown}
             {areaDropdown}
             {moreDropdown}
-            {hasActive && (
-              <button
-                type="button"
-                onClick={() => onChange(emptyFilters())}
-                className="flex h-9 items-center justify-center gap-1.5 px-3 text-sm font-medium text-cvr-muted transition hover:text-cvr-blue-ink lg:ml-auto"
-              >
-                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h5M20 20v-5h-5M4 9a8 8 0 0114.13-3.36M20 15A8 8 0 015.87 18.36" />
-                </svg>
-                Đặt lại
-              </button>
-            )}
+            {/* Bỏ nút "Đặt lại" (chủ dự án 17/10/2026): trùng việc với nút "Xoá lọc" cạnh tiêu đề kết quả */}
           </div>
         </div>
       </div>
@@ -1140,29 +1148,18 @@ export function SwitchRow({ label, checked, onChange }: { label: string; checked
   );
 }
 
-// Tô kiểu Google: phần ĐÃ GÕ để nhạt/thường · phần GỢI Ý còn lại IN ĐẬM.
-// Khớp không phân biệt dấu; nếu độ dài lệch (chuỗi lạ) → hiện đậm nguyên nhãn cho an toàn.
+// Tô KIỂU GOOGLE (chủ dự án 17/10/2026, đồng bộ ô tìm trang chủ): chữ khách ĐÃ GÕ để thường, phần máy GỢI Ý THÊM in đậm.
+// So theo từng chữ, không phân biệt dấu; chữ cuối có thể đang gõ dở ("Đà N" → "Đà Nẵng" để thường).
 function HighlightLabel({ label, q }: { label: string; q: string }) {
-  const strip = (s: string) =>
-    s.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/g, "d").replace(/Đ/g, "d").toLowerCase();
-  const nq = strip(q.trim());
-  const nl = strip(label);
-  if (!nq || nl.length !== label.length) return <span className="font-medium text-cvr-ink">{label}</span>;
-  const idx = nl.indexOf(nq);
-  if (idx < 0) return <span className="font-medium text-cvr-ink">{label}</span>;
-  // BÔI ĐẬM nguyên cụm TỪ KHÓA khớp (vd gõ "căn hộ" → đậm cả "căn hộ"), phần còn lại
-  // để thường. MỞ RỘNG tới ranh giới TỪ (khoảng trắng) để KHÔNG cắt giữa từ ghép
-  // tiếng Việt — gõ dính 1 phần của từ vẫn bôi đậm trọn từ đó ("hộ" nghĩa khác "căn hộ").
-  let start = idx;
-  let end = idx + nq.length;
-  while (start > 0 && label[start - 1] !== " ") start--;
-  while (end < label.length && label[end] !== " ") end++;
+  const daGo = normalizeVi(q).split(/[^a-z0-9]+/).filter(Boolean);
+  if (!daGo.length) return <span className="text-cvr-ink">{label}</span>;
   return (
-    <>
-      {start > 0 && <span className="font-normal text-cvr-body">{label.slice(0, start)}</span>}
-      <span className="font-bold text-cvr-ink">{label.slice(start, end)}</span>
-      {end < label.length && <span className="font-normal text-cvr-body">{label.slice(end)}</span>}
-    </>
+    <span className="text-cvr-ink">
+      {label.split(/(\s+)/).map((w, i) => {
+        const n = normalizeVi(w).replace(/[^a-z0-9]/g, "");
+        return !n || daGo.includes(n) || n.startsWith(daGo[daGo.length - 1]) ? w : <b key={i} className="font-semibold">{w}</b>;
+      })}
+    </span>
   );
 }
 

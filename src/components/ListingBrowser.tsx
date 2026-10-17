@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import PhanTrang from "@/components/PhanTrang";
 import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
-import Link from "next/link";
 
 // Bản đồ chỉ chạy phía trình duyệt (Leaflet đụng tới window) → nạp động, tắt SSR.
 const MapView = dynamic(() => import("@/components/MapViewMo"), {
@@ -14,7 +13,6 @@ const MapView = dynamic(() => import("@/components/MapViewMo"), {
 import PropertyCard from "@/components/PropertyCard";
 import TheTinMobile from "@/components/TheTinMobile";
 import FilterBar from "@/components/FilterBar";
-import ActiveFilters from "@/components/ActiveFilters";
 import { cauThanhBoLoc } from "@/lib/locDanhSach";
 import { featuredListings, type Article, type Listing } from "@/lib/data";
 import {
@@ -27,7 +25,7 @@ import {
   type Filters,
   type SortKey,
 } from "@/lib/filters";
-import { TIER_LABEL } from "@/lib/smartSearch";
+import { TIER_LABEL, suaChinhTa } from "@/lib/smartSearch";
 import { khoaThe } from "@/lib/nhanDoiHienThi";
 import { locDanhSach, type KetQuaLoc } from "@/lib/locDanhSach";
 import type { DiemBanDo } from "@/components/MapViewGoogle";
@@ -46,7 +44,6 @@ export default function ListingBrowser({
   chiId,
   boQuaId,
   soLieu,
-  articles = [],
   relevance = false,
   nested = false,
   initialTypes,
@@ -182,7 +179,13 @@ export default function ListingBrowser({
   // tới /api/danh-sach/<nguon>/loc, chỉ nhận 10 tin của trang đó — không tải cả kho tin.
   const [mayChu, setMayChu] = useState<(KetQuaLoc & { diem?: DiemBanDo[] }) | null>(null);
   const [goiY, setGoiY] = useState<TinGoiY[]>([]);
-  const yeuCau = JSON.stringify({ boLoc: filters, sapXep: sort, trang: page, chiId, boQuaId, banDo: mapMode });
+  // SỬA CHÍNH TẢ KIỂU GOOGLE: gõ sai một chữ cái ("phog") → tìm theo câu đã sửa và báo "Đang hiển thị kết quả cho …";
+  // khách bấm "Tìm kiếm thay thế cho …" (?nguyenvan=1) thì tìm đúng nguyên chữ đã gõ.
+  const nguyenVan = params.get("nguyenvan") === "1";
+  const cauSua = useMemo(() => (!nguyenVan && filters.keyword.trim() ? suaChinhTa(filters.keyword) : null), [nguyenVan, filters.keyword]);
+  const locThat = cauSua ? { ...filters, keyword: cauSua } : filters;
+  const linkNguyenVan = (() => { const sp = new URLSearchParams(params.toString()); sp.set("q", filters.keyword); sp.set("nguyenvan", "1"); return `?${sp.toString()}`; })();
+  const yeuCau = JSON.stringify({ boLoc: locThat, sapXep: sort, trang: page, chiId, boQuaId, banDo: mapMode });
   useEffect(() => {
     if (!nguon) return;
     let huy = false;
@@ -203,8 +206,9 @@ export default function ListingBrowser({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- chỉ gọi lại khi yêu cầu đổi
   }, [nguon, yeuCau]);
   const taiCho = useMemo(
-    () => (nguon ? null : locDanhSach(items, itemsHetHan, purpose, filters, sort, page)),
-    [nguon, items, itemsHetHan, purpose, filters, sort, page],
+    () => (nguon ? null : locDanhSach(items, itemsHetHan, purpose, locThat, sort, page)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- locThat suy ra từ filters + cauSua
+    [nguon, items, itemsHetHan, purpose, filters, cauSua, sort, page],
   );
   const kq = nguon ? mayChu : taiCho;
   const pageItems = kq?.trang ?? [];
@@ -257,18 +261,30 @@ export default function ListingBrowser({
         />
       </div>
 
-      {/* Chip bộ lọc đang áp dụng */}
-      {active && (
-        <div className="mt-3">
-          <ActiveFilters value={hieu ?? filters} onChange={(v) => setFilters(hieu ? { ...v, keyword: "" } : v)} />
-        </div>
-      )}
+      {/* (Bỏ hàng chip bộ lọc đang áp dụng 18/10/2026 — chủ dự án: trùng với các trường lọc phía trên, không có tác dụng SEO
+          vì chỉ vẽ ở máy khách. Gỡ lọc bằng chính trường lọc hoặc nút "Xoá lọc".) */}
 
       {/* TIÊU ĐỀ và HÀNG ĐIỀU KHIỂN nằm CÙNG MỘT HÀNG (tiêu đề trái · chế độ xem +
           sắp xếp phải) — trước đây điều khiển chiếm riêng một hàng, chừa một dải
           trống ngang giữa tiêu đề và danh sách tin. */}
       {/* id="ket-qua": mốc để bấm Tìm / Enter / chọn gợi ý là CUỘN THẲNG xuống đây,
           khách thấy trang chạy ngay cả khi kết quả không đổi. scroll-mt bù header. */}
+      {cauSua && (
+        <div className="mt-4 text-[15px] leading-relaxed">
+          <p className="text-cvr-ink">
+            Đang hiển thị kết quả cho{" "}
+            <span className="text-cvr-blue-ink">
+              {cauSua.split(/(\s+)/).map((w, i) => {
+                const goc = filters.keyword.split(/(\s+)/)[i];
+                return goc !== undefined && goc === w ? w : <b key={i}><i>{w}</i></b>;
+              })}
+            </span>
+          </p>
+          <p className="text-[13px] text-cvr-muted">
+            Tìm kiếm thay thế cho <a href={linkNguyenVan} className="text-cvr-blue-ink hover:underline">{filters.keyword}</a>
+          </p>
+        </div>
+      )}
       <div id="ket-qua" className="mt-4 flex scroll-mt-20 flex-wrap items-end justify-between gap-x-4 gap-y-2 sm:scroll-mt-24">
         <div className="min-w-0">
           <h1 className="text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">{heading}</h1>
@@ -292,7 +308,7 @@ export default function ListingBrowser({
                 aria-pressed={mapMode}
                 // NỀN XANH cho dễ thấy — thống nhất với nút bản đồ ở tab Dự án.
                 // Đang mở bản đồ thì đậm hơn một nấc để biết mình đang ở chế độ nào.
-                className={`mr-auto inline-flex min-h-[38px] items-center gap-2 rounded-lg px-3.5 text-sm font-semibold text-white transition ${
+                className={`mr-auto inline-flex min-h-[32px] items-center gap-1.5 rounded-lg px-3 text-xs font-semibold text-white transition ${
                   mapMode ? "bg-cvr-blue-ink" : "bg-cvr-blue hover:bg-cvr-blue-ink"
                 }`}
               >
@@ -458,22 +474,7 @@ export default function ListingBrowser({
               })}
             </SidebarFilter>
 
-            {/* Bài viết được quan tâm — CÙNG kiểu với cột phải trang Tin tức */}
-            {articles.length > 0 && (
-              <div className="rounded-none border border-cvr-line bg-white p-4 shadow-lux">
-                <p className="mb-1 text-sm font-semibold text-cvr-ink">Bài viết được quan tâm</p>
-                <div className="flex flex-col divide-y divide-cvr-line/70">
-                  {articles.slice(0, 5).map((a, i) => (
-                    <Link key={a.slug} href={`/tin-tuc/${a.slug}`} className="group flex gap-3 py-2.5 last:pb-0">
-                      <span className="w-5 shrink-0 text-lg font-semibold leading-snug text-cvr-faint">{i + 1}</span>
-                      <span className="line-clamp-2 text-[13px] font-medium leading-snug text-cvr-ink transition-colors group-hover:text-cvr-blue-ink">
-                        {a.title}
-                      </span>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
+            {/* (Bỏ khối "Bài viết được quan tâm" 18/10/2026 — chủ dự án: bài lạc đề với trang tìm, trên điện thoại bị cắt cụt) */}
           </div>
         </aside>
 

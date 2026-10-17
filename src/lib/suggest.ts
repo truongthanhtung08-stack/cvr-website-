@@ -36,6 +36,10 @@ type Entry = Suggestion & { norm: string; primary: string };
 const toNorm = (s: string) => normalizeVi(s).replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
 
 // Dựng chỉ mục một lần. `norm` = cả nội dung (cho khớp chuỗi); `primary` = tên chính (cho fuzzy).
+// Bảng gợi ý (hàng nghìn phường xã) dựng LÚC KHÁCH GÕ LẦN ĐẦU, không dựng lúc tải trang — dựng sẵn làm ô tìm chậm bấm được (đo 17/10/2026)
+let _entries: Entry[] | null = null;
+function entries(): Entry[] {
+if (_entries) return _entries;
 const ENTRIES: Entry[] = [];
 
 // 1) Khu vực / Địa chỉ — tỉnh / quận-huyện / phường-xã
@@ -130,6 +134,8 @@ for (const a of articles) {
     norm: toNorm(`${a.title} ${a.category}`), primary: toNorm(a.title),
   });
 }
+return (_entries = ENTRIES);
+}
 
 // Gợi ý phổ biến — hiện ngay khi người dùng chạm vào ô tìm kiếm (chưa gõ), kiểu Homedy.
 // Chỉ VÀI gợi ý ĐIỂN HÌNH phủ đủ chức năng (Mục đích · Khu vực · Loại hình) — không liệt kê dài.
@@ -208,7 +214,32 @@ const KIND_ORDER: Record<SuggestKind, number> = {
 
 // Trả về tối đa `limit` gợi ý.
 // Hạng: 0 = khớp đầu chuỗi · 1 = chứa chuỗi · 2 = khớp gần đúng (sửa lỗi gõ).
+// CHỈ DỰ ÁN, so nhanh (mọi chữ gõ là đầu một chữ trong tên/vị trí/chủ đầu tư) — ô tìm trang chủ cần mỗi phần này,
+// không phải chạy cả bộ gợi ý so gần đúng trên mọi khu vực (nặng trên điện thoại).
+export function goiYDuAn(query: string, limit = 2): Suggestion[] {
+  // bỏ chữ chung "dự án" khách hay gõ kèm ("dự án sun ponte") — chỉ so tên
+  const q = toNorm(query).replace(/(^| )du an( |$)/g, " ").split(" ").filter((t) => t.length >= 2);
+  if (!q.length) return [];
+  const kq: Suggestion[] = [];
+  for (const e of entries()) {
+    if (e.kind !== "Dự án") continue;
+    const tu = e.norm.split(" ");
+    if (q.every((t) => tu.some((w) => w.startsWith(t)))) { kq.push(e); if (kq.length >= limit) break; }
+  }
+  return kq;
+}
+// Nhớ kết quả theo chữ gõ — cùng một chữ được hỏi nhiều lần trong một lần vẽ (xem parseQuery)
+const daGoiY = new Map<string, Suggestion[]>();
 export function suggest(query: string, limit = 8): Suggestion[] {
+  const khoa = query + "|" + limit;
+  const co = daGoiY.get(khoa);
+  if (co) return co;
+  const kq = goiYCho(query, limit);
+  if (daGoiY.size > 300) daGoiY.clear();
+  daGoiY.set(khoa, kq);
+  return kq;
+}
+function goiYCho(query: string, limit: number): Suggestion[] {
   const q = toNorm(query);
   if (!q) return [];
   const qTokens = q.split(" ").filter(Boolean);
@@ -218,7 +249,7 @@ export function suggest(query: string, limit = 8): Suggestion[] {
   // nguyên thứ tự cũ, không đụng gì tới hành vi đang chạy tốt.
   const sau = (e: Entry) => (e.ward ? 2 : e.district ? 1 : 0);
   const scored: { e: Entry; rank: number; w: number }[] = [];
-  for (const e of ENTRIES) {
+  for (const e of entries()) {
     let rank: number;
     if (e.norm.startsWith(q)) rank = 0;
     else if (e.norm.includes(q)) rank = 1;
@@ -239,7 +270,7 @@ export function suggest(query: string, limit = 8): Suggestion[] {
     const daCo = new Set<string>();
     for (const c of cums) {
       if (scored.length >= 60) break;
-      for (const e of ENTRIES) {
+      for (const e of entries()) {
         if (daCo.has(e.label)) continue;
         // Khớp vào CHÍNH TÊN mục (phường "hoà quý", loại hình "đất nền") mới đáng
         // tin — hạng 3. Chỉ dính đâu đó trong phần phụ (vd mọi phường của Đà Nẵng

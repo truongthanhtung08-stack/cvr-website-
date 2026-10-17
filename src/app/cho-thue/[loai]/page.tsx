@@ -132,7 +132,7 @@ export default async function DanhMucChoThuePage({ params }: { params: Promise<{
           {/* Bảng giá theo loại hình của cả tỉnh: ĐÃ GỠ (03/10/2026) — gộp tin nhiều phường ra một
               giá cho cả thành phố là sai luật "giá khu vực = số liệu đúng khu vực". Có số liệu chuẩn
               (docs/YEU-CAU-COWORK-LICH-SU-GIA.md) mới làm lại. */}
-          <LienKetPseo nhom={lienKetCho({ muc: "thue", tinh: kv }, listings)} />
+          <LienKetPseo nhom={lienKetCho({ muc: "thue", tinh: kv }, listings)} kieuGoogle />
           <KhuVucLinks base="/cho-thue" demTheoTinh={demTheoTinh} tinhDangXem={kv.name} />
         </main>
         <Footer />
@@ -168,7 +168,7 @@ export default async function DanhMucChoThuePage({ params }: { params: Promise<{
             initialTypes={c!.types}
           />
         </Suspense>
-        <LienKetPseo nhom={lienKetLoaiHinh("thue", c!, listings)} />
+        <LienKetPseo nhom={lienKetLoaiHinh("thue", c!, listings)} kieuGoogle />
         <KhuVucLinks base="/cho-thue" demTheoTinh={demTheoTinh} />
       </main>
       <Footer />

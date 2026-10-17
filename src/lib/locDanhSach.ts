@@ -1,6 +1,6 @@
 import type { Listing } from "@/lib/data";
 import { sortListings, applyFilters, emptyFilters, normalizeVi, typeGroupsFor, type Filters, type SortKey } from "@/lib/filters";
-import { smartFilter, smartSearch, goiYNoiLong } from "@/lib/smartSearch";
+import { smartFilter, smartSearch, goiYNoiLong, parseQuery } from "@/lib/smartSearch";
 import { nhanDoiHienThi } from "@/lib/nhanDoiHienThi";
 import { parseLatLng } from "@/lib/googleMaps";
 import { coordOf } from "@/lib/geo";
@@ -52,8 +52,11 @@ export function cauThanhBoLoc(f: Filters, purpose: "ban" | "thue"): Filters | nu
     const g = nhom.find((x) => normalizeVi(x.label) === nhan || x.items.some((t) => normalizeVi(t).includes(nhan)))
       ?? nhom.find((x) => nhan.startsWith(normalizeVi(x.label)));
     const chiTiet = g?.items.filter((t) => normalizeVi(t).includes(nhan)) ?? [];
-    // Gõ đúng chữ chi tiết ("đất nền") → đúng loại đó; gõ trần ("đất") → cả nhóm
-    types = g ? (nq.includes(nhan) && chiTiet.length ? chiTiet : g.items) : pt.types;
+    // Gõ đúng chữ chi tiết ("đất nền") → đúng loại đó; gõ trần ("đất") → cả nhóm.
+    // "căn hộ" / "chung cư" / "căn hộ chung cư" là MỘT nhu cầu → cả nhóm Căn hộ (lỗi 17/10/2026: chỉ lấy "Chung cư", bỏ sót
+    // tin ghi "Căn hộ" → báo không có tin khớp trong khi trang pSEO cùng ý vẫn đầy tin)
+    const motNhuCau = nhan === "chung cu" || nhan === "can ho";
+    types = g ? (!motNhuCau && nq.includes(nhan) && chiTiet.length ? chiTiet : g.items) : pt.types;
   }
   return {
     ...f,
@@ -62,7 +65,8 @@ export function cauThanhBoLoc(f: Filters, purpose: "ban" | "thue"): Filters | nu
     priceMin: f.priceMin != null || f.priceMax != null ? f.priceMin : pt.priceMin ?? null,
     priceMax: f.priceMin != null || f.priceMax != null ? f.priceMax : pt.priceMax ?? null,
     beds: f.beds || pt.beds || 0,
-    keyword: "",
+    // Chi tiết máy không làm trường lọc ("view biển", "gần trường"…) giữ lại làm từ khoá để XẾP tin khớp lên đầu
+    keyword: parseQuery(kw).features.join(" "),
   };
 }
 
@@ -125,8 +129,18 @@ export function locDanhSach(
     .sort((a, b) => b.d - a.d || a.xa - b.xa || a.i - b.i)
     .slice(0, TOI_DA_GOI_Y)
     .map((x) => x.l);
+  // LUÔN CÓ KẾT QUẢ, XẾP TẦNG (chủ dự án 17/10/2026: "100% chính xác → chính xác → tương đối → đúng vài trường → gợi ý
+  // tương tự"): có từ khoá chi tiết thì tin khớp từ khoá lên đầu, rồi tới tin khớp đủ bộ lọc, rồi gợi ý — không vứt tin nào.
+  // Tin khớp từ khoá NHƯNG nằm ngoài bộ lọc (tỉnh khác, loại khác) KHÔNG được đứng trên tin đúng nơi đúng loại — rà 18/10/2026:
+  // "nhà kiệt ô tô Thanh Khê" ra nhà hẻm Quy Nhơn đầu trang. Thứ tự: khớp chữ + đúng bộ lọc → đúng bộ lọc → khớp chữ ngoài
+  // bộ lọc → gợi ý tương tự.
+  const dungLoc = new Set(khopDu.map((l) => l.id));
+  const khopChu = search.hits.map((h) => h.item);
+  const chuTrong = khopChu.filter((l) => dungLoc.has(l.id));
+  const chuNgoai = khopChu.filter((l) => !dungLoc.has(l.id));
+  const daCo = new Set(khopChu.map((l) => l.id));
   const ketQua = [
-    ...(coTuKhoa ? search.hits.map((h) => h.item) : [...khopDu, ...goiY]),
+    ...(coTuKhoa ? [...chuTrong, ...khopDu.filter((l) => !daCo.has(l.id)), ...chuNgoai, ...goiY.filter((l) => !daCo.has(l.id))] : [...khopDu, ...goiY]),
     ...ketQuaHetHan,
   ];
   const tierById = new Map(hits.map((h) => [h.item.id, h.tier]));

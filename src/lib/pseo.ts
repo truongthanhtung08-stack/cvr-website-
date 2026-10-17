@@ -433,7 +433,7 @@ export function trangIndex(tinConHan: Listing[]): TrangPseo[] {
 }
 
 // ── KHỐI LIÊN KẾT NỘI BỘ ─────────────────────────────────────────────────────
-export type NhomLienKet = { tieuDe: string; links: { href: string; nhan: string }[] };
+export type NhomLienKet = { tieuDe: string; links: { href: string; nhan: string; day?: string }[] }; // day: tên ĐẦY ĐỦ trang đích (khối kiểu Google)
 
 export function lienKetCho(dk: DieuKien, tinConHan: Listing[]): NhomLienKet[] {
   const ds = trangIndex(tinConHan).filter((p) => p.dk.muc === dk.muc);
@@ -444,7 +444,7 @@ export function lienKetCho(dk: DieuKien, tinConHan: Listing[]): NhomLienKet[] {
     (["phuong", "duong", "huong", "phapLy", "kiet", "phongNgu", "giaDuoi", "thanhPho"] as (keyof DieuKien)[]).every((x) => (x === k ? p.dk[x] != null : p.dk[x] == null));
   const nhom: NhomLienKet[] = [];
   const them = (tenNhom: string, ps: TrangPseo[], nhan: (p: TrangPseo) => string) => {
-    const links = ps.sort((a, b) => b.n - a.n).slice(0, tenNhom === "Tìm kiếm theo từ khoá" ? 12 : 24).map((p) => ({ href: p.path, nhan: nhan(p) }));
+    const links = ps.sort((a, b) => b.n - a.n).slice(0, tenNhom === "Tìm kiếm theo từ khoá" ? 12 : 24).map((p) => ({ href: p.path, nhan: nhan(p), day: tieuDe(p.dk) }));
     if (links.length) nhom.push({ tieuDe: tenNhom, links });
   };
   // KHỐI "TÌM KIẾM THEO TỪ KHOÁ" (học Batdongsan, 15/10/2026): chữ trên link chính là từ khoá dài
@@ -479,7 +479,7 @@ export function lienKetLoaiHinh(muc: Muc, cat: Category, tinConHan: Listing[]): 
 }
 
 // ── KHỐI SỐ LIỆU DƯỚI H1 (template 1 "Quick stats"; chủ dự án duyệt nguyên văn 16/10/2026) ──
-// "Giá rao: 2,1 – 6,5 tỷ · Diện tích: 60 – 120 m² · Cập nhật 16/10/2026" — tính từ chính các tin
+// "Giá rao: 2,1 – 6,5 tỷ · Diện tích: 60 – 120 m² · Cập nhật 10/2026" — tính từ chính các tin
 // đang hiện trên trang nên mỗi trang một số liệu riêng (khung chung, nội dung khác nhau).
 // KHÔNG in số tin (chốt 11/09). Thiếu số liệu thì bỏ phần đó; không có gì thì trả "".
 const soVi = (n: number) => (Math.round(n * 10) / 10).toLocaleString("vi-VN", { maximumFractionDigits: 1 });
@@ -499,6 +499,10 @@ export function soLieuTrang(tin: Listing[], muc: Muc): string {
   const phan: string[] = [];
   if (gia.length) phan.push(`${thue ? "Giá thuê" : "Giá rao"}: ${khoang(Math.min(...gia), Math.max(...gia), giaNgan)}${thue ? "/tháng" : ""}`);
   if (dt.length) phan.push(`Diện tích: ${khoang(Math.min(...dt), Math.max(...dt), (n) => `${soVi(n)} m²`)}`);
-  if (moiNhat) phan.push(`Cập nhật ${new Date(moiNhat).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", day: "2-digit", month: "2-digit", year: "numeric" })}`);
+  // Chỉ tháng/năm (chủ dự án 17/10/2026: "bỏ ngày, chỉ ghi tháng và năm")
+  if (moiNhat) {
+    const [, thang, nam] = new Date(moiNhat).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", day: "2-digit", month: "2-digit", year: "numeric" }).split("/");
+    phan.push(`Cập nhật ${thang}/${nam}`);
+  }
   return phan.join(" · ");
 }
