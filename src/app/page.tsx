@@ -33,22 +33,21 @@ export default async function Home() {
     getListingsThe(), getProjects(), getArticles(), getHomeAreas(),
     getFeaturedArticleSlug(),
   ]);
+
   return (
     <>
       <Header />
       <main className="flex-1">
-        {/* H1 CỦA TRANG CHỦ — chỉ dành cho Google và trình đọc màn hình, KHÔNG hiện
-            trên màn hình (sr-only) nên bố cục đã duyệt giữ nguyên tuyệt đối.
-            Vì sao cần: trang chủ trước đây không có thẻ <h1> nào, chỉ có h2/h3 — mà
-            H1 chính là câu trả lời cho "trang này nói về cái gì". Thiếu nó là bỏ không
-            một điểm cộng miễn phí, nhất là khi đang chạy Google Ads (bot chấm trang
-            đích đọc cấu trúc tiêu đề). Câu chữ trùng đúng câu định vị chuẩn ở layout. */}
-        <h1 className="sr-only">COASTAL LAND — Cổng thông tin mua bán, cho thuê nhà đất</h1>
+        {/* H1 CỦA TRANG CHỦ — chỉ cho Google và trình đọc màn hình (sr-only); chủ dự án 17/10/2026 bỏ dòng tiêu đề hiển thị. */}
         <HomeExpandProvider>
           {/* BỘ LỌC LÀ HERO (chủ dự án 17/10/2026: bỏ Hero ảnh, "bộ lọc giờ là Hero" — trọng tâm, dễ dùng,
               trực quan). Bộ tìm 3 bước kiểu Airbnb — TimTrangChu. Ẩn khi một khối "Xem thêm" đang mở. */}
           <HomeCollapsible>
-            <section className="border-b border-cvr-line bg-cvr-surface px-4 py-6 sm:px-6 sm:py-10 lg:px-8">
+            <section className="border-b border-cvr-line bg-cvr-surface pb-5 pt-3 sm:pb-7 sm:pt-5">
+              {/* BỘ LỌC THAY HERO (17/10/2026): gọn, nền xám nhạt đúng màu các khối khác của trang — menu mục đích, một ô tìm, nhóm loại hình */}
+              <h1 className="sr-only">
+                Cổng thông tin mua bán, cho thuê nhà đất
+              </h1>
               <TimTrangChu />
             </section>
           </HomeCollapsible>
