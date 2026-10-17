@@ -34,20 +34,21 @@ export function BreadcrumbJsonLd({ items }: { items: Crumb[] }) {
   );
 }
 
-export default function Breadcrumb({ items }: { items: Crumb[] }) {
+// motDong: một dòng, cuộn ngang trên điện thoại, mục cuối (tên tin dài) cắt bằng dấu "…" — trang tin.
+export default function Breadcrumb({ items, motDong = false }: { items: Crumb[]; motDong?: boolean }) {
   const all: Crumb[] = [{ name: "Trang chủ", href: "/" }, ...items];
 
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(buildJsonLd(all)) }} />
       <nav aria-label="Đường dẫn" className="mx-auto max-w-7xl px-4 pt-3 sm:px-6 lg:px-8">
-        <ol className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[13px] text-cvr-muted">
+        <ol className={`flex items-center gap-x-1.5 gap-y-1 text-[13px] text-cvr-muted ${motDong ? "no-scrollbar flex-nowrap overflow-x-auto whitespace-nowrap" : "flex-wrap"}`}>
           {all.map((c, i) => {
             const last = i === all.length - 1;
             return (
-              <li key={c.href} className="flex items-center gap-1.5">
+              <li key={c.href} className={`flex items-center gap-1.5 ${motDong && last ? "min-w-0" : "shrink-0"}`}>
                 {last ? (
-                  <span className="font-medium text-cvr-body" aria-current="page">{c.name}</span>
+                  <span className={`font-medium text-cvr-body ${motDong ? "block max-w-[48ch] truncate" : ""}`} aria-current="page">{c.name}</span>
                 ) : (
                   <>
                     <Link href={c.href} className="transition-colors hover:text-cvr-ink">{c.name}</Link>

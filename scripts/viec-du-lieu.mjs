@@ -213,6 +213,27 @@ const v = [`# VIỆC HÔM NAY — 3 BÊN · ${TEN_THU}, ${dd.slice(0, 2)}/${dd.s
   "## 1. COWORK — làm từ mục 1 xuống, hết giờ thì dừng",
   "**Mọi mục: không chỉ lọc.** Đọc hiểu nguồn → lấy ĐỦ thông tin vào đúng cột → **biên tập chuẩn SEO** (nội dung, ảnh, video) → **tự kiểm** → mới giao. Không bịa: nguồn không có thì để trống. Giao xong ghi `bao-cao.txt`.",
   "Nhắn **\"Làm việc hôm nay\"** = làm từ mục 1 xuống · **\"Làm mục 2, 6\"** = chỉ các mục đó.", "",
+  // BẢNG TỰ KIỂM (chủ dự án 17/10/2026: "tôi phải sửa lại nhiều — nhắc Cowork về SEO, nội dung, ngôn ngữ")
+  "### ⛔ TỰ KIỂM TỪNG TIN TRƯỚC KHI GIAO — chủ dự án đang phải sửa lại nhiều",
+  "Tin nào chưa qua đủ 12 dòng dưới đây thì **chưa được giao**. Chuẩn đầy đủ: `YEU-CAU-COWORK-DANG-TIN-HANG-LOAT.md` mục 4–9 · ngôn ngữ: `CONG-VIEC-3-BEN.md` mục 7.",
+  "",
+  "| # | SEO | Đạt khi |",
+  "|---|---|---|",
+  "| 1 | Tiêu đề | 45–70 ký tự · mở đầu **Bán / Cho thuê** + loại hình + điểm nổi bật + tên đường/dự án + **phường, tỉnh** · không trùng tin khác |",
+  "| 2 | Thành phố lớn | Tin ở Nha Trang, Đà Lạt, Quy Nhơn, Buôn Ma Thuột, Vũng Tàu… → tên thành phố có trong tiêu đề hoặc câu đầu mô tả |",
+  "| 3 | Mô tả | ≥ 300 ký tự · 5 đoạn: tổng quan · vị trí · thông số (gạch đầu dòng) · pháp lý · điều kiện giao dịch · dòng trống giữa các đoạn |",
+  "| 4 | Cột dữ liệu | Giá, diện tích, phòng, hướng, pháp lý, **tên đường**, **tên dự án** chép đúng cột, đúng đơn vị (bán = tỷ, thuê = triệu) |",
+  "| 5 | Ảnh | ≥ 3 ảnh thật, ảnh `-1` đẹp nhất · không số điện thoại / logo sàn khác / chữ đè |",
+  "| # | NỘI DUNG | Đạt khi |",
+  "| 6 | Không bịa | Mọi con số, tiện ích, khoảng cách, pháp lý đều có trong tin gốc · thiếu thì bỏ, không viết cho đủ |",
+  "| 7 | Khớp số | Số trong tiêu đề = số trong mô tả = số trong cột = tin gốc |",
+  "| 8 | Dự án | Tin thuộc dự án → `ten_du_an` đúng tên trên web; dự án chưa có → lập hồ sơ dự án cùng ngày |",
+  "| # | NGÔN NGỮ | Đạt khi |",
+  "| 9 | Tiếng Việt chuẩn | Có dấu, đúng chính tả, viết hoa đúng tên riêng · **không VIẾT HOA cả câu** |",
+  "| 10 | Giọng người làm nghề | Câu ngắn, đi thẳng ý · không \"siêu phẩm, sập sàn, giá sốc, cực hot, cơ hội vàng\" · không \"Hãy cùng…\", \"Tóm lại…\" · không biểu tượng cảm xúc |",
+  "| 11 | Cổng thông tin | Không \"chúng tôi bán\", \"liên hệ chúng tôi\", \"nhận đặt chỗ\" — Coastal Land không môi giới |",
+  "| 12 | Sạch | Không số điện thoại, link, tên sàn khác trong tiêu đề / mô tả |",
+  "",
   "| Mục | Việc | Còn | Giao vào |", "|---|---|---|---|",
   ...MUC.map(([ten, noi, con], i) => `| ${i + 1} | ${ten} | ${con ?? "—"} | ${noi} |`), "",
   "## 2. CHỦ DỰ ÁN",
@@ -227,6 +248,14 @@ const raWeb = fs.readdirSync(path.join(GOC, "docs")).filter((f) => /^seo-kiem-tr
 if (raWeb) {
   const r = JSON.parse(fs.readFileSync(path.join(GOC, "docs", raWeb), "utf8"));
   v.push(`- Rà web ${r.ngay}: ${r.tong} trang trong sitemap · ${r.coLoi} trang có lỗi${r.coLoi ? " (" + Object.entries(r.nhom).map(([k, n]) => `${k.replace(/ N(KB)?$/, "")} ${n}`).join(", ") + ")" : ""} · trang trung bình ${r.kbTB} KB.`);
+}
+// Search Console (lịch 9:11 ghi mỗi sáng) — việc hôm nay dựa trên tình trạng index thật (chủ dự án 17/10/2026)
+const TD = "D:/Coastal Land/SEO/Plan SEO - pSEO/THEO-DOI-INDEX.md";
+if (fs.existsSync(TD)) {
+  const td = fs.readFileSync(TD, "utf8");
+  const so = (nhan) => (td.match(new RegExp(`\\| ${nhan} \\| (\\d+) \\|`)) || [])[1] ?? "?";
+  const ngay = (td.match(/cập nhật (\d{4}-\d{2}-\d{2})/) || [])[1] ?? "";
+  v.push(`- Search Console ${ngay}: Google đã index ${so("Google đã index")} · đạt chuẩn mà chưa index ${so("Muốn index nhưng CHƯA index")} → xin index 10 trang/ngày theo \`THEO-DOI-INDEX.md\` mục 1; nhóm trang nào chạy thử thì đo theo kế hoạch mục 4 (cổng chạy hàng loạt).`);
 }
 v.push("", `Quy trình: \`${CV}\` · Kế hoạch SEO: \`${KE_HOACH.replace(/\//g, BS)}\``, "", "---", "# CHI TIẾT VIỆC COWORK", "");
 MUC.forEach(([ten, noi, , dong], i) => v.push(`## Mục ${i + 1}. ${ten}`, `Giao vào: ${noi}`, "", ...dong, ""));

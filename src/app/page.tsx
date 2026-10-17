@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Header from "@/components/Header";
-import Hero from "@/components/Hero";
+import HomeSearch from "@/components/HomeSearch";
 import FeaturedListings from "@/components/FeaturedListings";
 import ProjectsSection from "@/components/ProjectsSection";
 // import ForYou from "@/components/ForYou"; // TẠM ẨN — chờ chốt vị trí đặt lại (component vẫn còn)
@@ -8,14 +8,13 @@ import LocationGrid from "@/components/LocationGrid";
 import NewsSection from "@/components/NewsSection";
 // import PromoBanner from "@/components/PromoBanner";   // thay bằng AdBannerSeller (mẫu Apple) — khôi phục nếu cần
 // import AppDownload from "@/components/AppDownload";   // thay bằng AdBannerApp (mẫu Apple) — khôi phục nếu cần
-import { AdBannerAll } from "@/components/HomeAdBanners";
 import Footer from "@/components/Footer";
 import TimKiemPhoBien from "@/components/TimKiemPhoBien";
 import { HomeExpandProvider, HomeCollapsible } from "@/components/HomeExpand";
 import { getListingsThe } from "@/lib/listingsDb";
 import { chonTinTrangChu } from "@/lib/tinNoiBat";
 import { getArticles, getProjects } from "@/lib/contentDb";
-import { getHeroBanners, getHomeAd, getHomeAreas, getFeaturedArticleSlug } from "@/lib/siteContent";
+import { getHomeAreas, getFeaturedArticleSlug } from "@/lib/siteContent";
 
 // Tiêu đề trang chủ phải CÓ TỪ KHOÁ — trước đây để trống nên Google chỉ thấy
 // "COASTAL LAND", không hiểu trang này bán gì, ở đâu.
@@ -29,9 +28,9 @@ export const metadata: Metadata = {
 export default async function Home() {
   // B2: tin từ Supabase (bảng listings) — chưa có bảng/lỗi → tự dùng dữ liệu mẫu
   // Dự án + Tin tức: nội dung admin tự tạo (contentDb) — chưa có → mẫu
-  // Hero + 2 banner cuối + khu vực: ảnh/chữ admin sửa được (siteContent) — chưa nhập → mặc định
-  const [listings, projects, articles, heroBanners, homeAd, homeAreas, featuredSlug] = await Promise.all([
-    getListingsThe(), getProjects(), getArticles(), getHeroBanners(), getHomeAd(), getHomeAreas(),
+  // Khu vực (Hero ảnh và banner cuối đã bỏ 17/10/2026 — không giúp SEO, không giúp tìm tin): ảnh/chữ admin sửa được (siteContent) — chưa nhập → mặc định
+  const [listings, projects, articles, homeAreas, featuredSlug] = await Promise.all([
+    getListingsThe(), getProjects(), getArticles(), getHomeAreas(),
     getFeaturedArticleSlug(),
   ]);
   return (
@@ -45,14 +44,13 @@ export default async function Home() {
             một điểm cộng miễn phí, nhất là khi đang chạy Google Ads (bot chấm trang
             đích đọc cấu trúc tiêu đề). Câu chữ trùng đúng câu định vị chuẩn ở layout. */}
         <h1 className="sr-only">COASTAL LAND — Cổng thông tin mua bán, cho thuê nhà đất</h1>
-        {/* Hero: khung GIỮ NGUYÊN — ảnh PHỦ KÍN khung (cover), không hụt 2 bên.
-            mobileTwoLine: mobile chỉ 2 dòng text (tiêu đề + phụ đề) canh dưới-trái, không ngắt dòng */}
         <HomeExpandProvider>
-          {/* Hero + 2 banner: không có nút "Xem thêm" → ẩn khi bất kỳ khối nào đang mở */}
+          {/* BỘ LỌC LÀ HERO (chủ dự án 17/10/2026: bỏ Hero ảnh, "bộ lọc giờ là Hero" — trọng tâm, dễ dùng,
+              trực quan). Câu gợi ý trong ô tìm bám 60 tin mới nhất. Ẩn khi một khối "Xem thêm" đang mở. */}
           <HomeCollapsible>
-            {/* searchItems: câu gợi ý chạy trong ô tìm bám TIN MỚI + TIN HOT.
-                Chỉ đưa 60 tin mới nhất — đủ để tính, khỏi phình trang. */}
-            <Hero banners={heroBanners} mobileTwoLine searchItems={listings.slice(0, 60).map((l) => ({ purpose: l.purpose, type: l.type, location: l.location, badge: l.badge, price: l.price }))} />
+            <section className="border-b border-cvr-line bg-cvr-surface px-4 py-6 sm:px-6 sm:py-10 lg:px-8">
+              <HomeSearch dauTrang items={listings.slice(0, 60).map((l) => ({ purpose: l.purpose, type: l.type, location: l.location, badge: l.badge, price: l.price }))} />
+            </section>
           </HomeCollapsible>
 
           {/* 4 khối có nút "Xem thêm" — mỗi khối tự ẩn khi khối khác đang mở.
@@ -65,10 +63,6 @@ export default async function Home() {
           <LocationGrid areas={homeAreas} />
           <NewsSection articles={articles} featuredSlug={featuredSlug} />
 
-          {/* 2 banner cuối ĐÃ GỘP thành 1 (mẫu Demo 2 — file 10.08.2026) */}
-          <HomeCollapsible>
-            <AdBannerAll data={homeAd} />
-          </HomeCollapsible>
         </HomeExpandProvider>
         {/* Kế hoạch Airbnb GĐ A — docs/KE-HOACH-AIRBNB.md */}
         <TimKiemPhoBien />

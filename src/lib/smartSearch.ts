@@ -18,7 +18,7 @@ import { provinces } from "@/lib/locations";
 
 // ── Từ điển nhận diện ───────────────────────────────────────────────────────
 // Mỗi mục: [nhãn chuẩn, các cách viết người dùng hay gõ]
-const LOAI_HINH: [string, string[]][] = [
+export const LOAI_HINH: [string, string[]][] = [
   ["Chung cư", ["chung cu"]],
   ["Căn hộ", ["can ho", "canho", "apartment", "officetel", "duplex", "penthouse", "studio"]],
   ["Nhà riêng", ["nha rieng", "nha o", "nha cap 4", "nha nguyen can"]],

@@ -24,7 +24,7 @@ import {
   type Filters,
   type LocationSel,
 } from "@/lib/filters";
-import { suggest, popularSuggestions, type Suggestion } from "@/lib/suggest";
+import { suggest, popularSuggestions, goiYPhoBien, type Suggestion } from "@/lib/suggest";
 import { goiYNoiLong, parseQuery } from "@/lib/smartSearch";
 import { hintsFor, listingHints, type HintMode, type TinGoiY } from "@/lib/searchHints";
 import { useTypingPlaceholder } from "@/lib/useTypingPlaceholder";
@@ -47,6 +47,8 @@ export default function FilterBar({
   mapActive = false,
   compact = false,
   leading,
+  overlayLeading,
+  nenSang = false,
   purpose = "ban",
   hintMode,
   hintItems,
@@ -62,6 +64,10 @@ export default function FilterBar({
   compact?: boolean;
   // Nội dung đứng đầu dòng 1 (vd: tab Mua bán/Cho thuê/Dự án) — chỉ dùng ở chế độ compact.
   leading?: React.ReactNode;
+  /** Nội dung đầu màn tìm toàn màn hình (điện thoại) — vd tab Mua bán/Cho thuê/Dự án. Trống = dùng leading. */
+  overlayLeading?: React.ReactNode;
+  /** Ô tìm lớn nằm trên NỀN SÁNG (trang chủ bỏ Hero ảnh, 17/10/2026) — PC chữ đen, không kiểu kính trên ảnh tối. */
+  nenSang?: boolean;
   // Mục đích trang → danh mục loại hình tương ứng (mua bán vs cho thuê).
   purpose?: "ban" | "thue";
   // Bộ câu gợi ý chạy trong ô tìm. Mặc định theo purpose; trang chủ truyền thêm
@@ -104,6 +110,7 @@ export default function FilterBar({
   useEffect(() => {
     try {
       const r = JSON.parse(localStorage.getItem(RECENT_KEY) || "[]");
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- đọc localStorage một lần khi mở (có từ trước)
       if (Array.isArray(r)) setRecent(r);
     } catch { /* bỏ qua localStorage lỗi */ }
   }, []);
@@ -171,6 +178,8 @@ export default function FilterBar({
   };
 
   const typed = f.keyword.trim().length > 0;
+  // Gợi ý khi chưa gõ: KHU VỰC PHỔ BIẾN của đúng tab (mua bán / cho thuê); tab Dự án giữ gợi ý chung.
+  const phoBien = mode === "duan" ? popularSuggestions : goiYPhoBien(purpose);
   // Panel: đang gõ → tối đa 6 kết quả khớp; chưa gõ → ≤3 lịch sử + phổ biến.
   const recentShown = recent.slice(0, 5); // hiện 5 mục gần nhất (trước chỉ 3)
 
@@ -216,8 +225,8 @@ export default function FilterBar({
       }]
     : [];
   const panelItems: Suggestion[] = typed
-    ? [...timTheoChu, ...bacThang, ...(noHits ? popularSuggestions.filter(dungY) : typedHits)]
-    : [...recentShown, ...popularSuggestions];
+    ? [...timTheoChu, ...bacThang, ...(noHits ? phoBien.filter(dungY) : typedHits)]
+    : [...recentShown, ...phoBien];
   // Câu dài hiếm khi khớp NGUYÊN VĂN một mục nào — nhưng nếu bóc được tiêu chí
   // (loại hình · phường/quận · giá…) thì KHÔNG được báo "không có kết quả",
   // phải nói đã hiểu gì và gợi ý theo đúng tiêu chí đó.
@@ -628,7 +637,7 @@ export default function FilterBar({
               // DESKTOP: ô nằm TRONG khối trắng của Hero → nền xám nhạt, không đổ
               // bóng (nếu để trắng + bóng sẽ thành "khối lồng khối").
               // DESKTOP: chừa chỗ cho nút "Tìm kiếm" NẰM TRONG ô (không tách rời).
-              ? `h-11 w-full rounded-xl border border-transparent bg-cvr-surface pl-4 ${typed ? "pr-[5.5rem]" : "pr-14"} text-[15px] text-cvr-ink placeholder-cvr-faint ring-1 ring-black/5 outline-none transition focus:ring-2 focus:ring-cvr-blue/50 sm:h-12 sm:bg-white/[0.08] sm:pl-11 ${typed ? "sm:pr-[11.5rem]" : "sm:pr-[8.5rem]"} sm:text-white sm:placeholder-white/70 sm:ring-white/30 sm:focus:ring-white/60`
+              ? `h-11 w-full rounded-xl border border-transparent bg-cvr-surface pl-4 ${typed ? "pr-[5.5rem]" : "pr-14"} text-[15px] text-cvr-ink placeholder-cvr-faint ring-1 ring-black/5 outline-none transition focus:ring-2 focus:ring-cvr-blue/50 sm:h-12 sm:pl-11 ${typed ? "sm:pr-[11.5rem]" : "sm:pr-[8.5rem]"} ${nenSang ? "sm:bg-white sm:text-cvr-ink sm:placeholder-cvr-faint sm:ring-cvr-line sm:focus:ring-cvr-blue/50" : "sm:bg-white/[0.08] sm:text-white sm:placeholder-white/70 sm:ring-white/30 sm:focus:ring-white/60"}`
               : "h-full w-full min-w-0 flex-1 border-none bg-transparent pl-4 pr-14 text-[15px] text-cvr-ink placeholder-cvr-faint outline-none sm:pl-11 sm:pr-3"
           }
         />
@@ -715,7 +724,7 @@ export default function FilterBar({
           </>
         )}
         {sugOpen && panelItems.length > 0 && (
-          <div className="absolute left-0 right-0 top-full z-[120] mt-1.5 max-h-64 overflow-y-auto rounded-none border border-cvr-line bg-white p-1.5 shadow-2xl shadow-black/20 ring-1 ring-inset ring-black/5 sm:max-h-80">
+          <div className="anim-xo-xuong absolute left-0 right-0 top-full z-[120] mt-1.5 max-h-64 overflow-y-auto rounded-none border border-cvr-line bg-white p-1.5 shadow-2xl shadow-black/20 ring-1 ring-inset ring-black/5 sm:max-h-80">
             {/* Nút THOÁT tìm kiếm — chạm là tắt panel gợi ý + đóng bàn phím. Hiện cả PC & Mobile. */}
             <div className="sticky top-0 z-10 -mx-1.5 -mt-1.5 mb-1 flex items-center justify-between border-b border-cvr-line bg-white px-2.5 py-1.5">
               <span className="text-[11px] font-semibold uppercase tracking-wide text-cvr-faint">Gợi ý tìm kiếm</span>
@@ -750,7 +759,7 @@ export default function FilterBar({
 
     {/* ===== MOBILE: TRANG TÌM TOÀN MÀN HÌNH kiểu Google — chạm ô tìm là mở ===== */}
     {overlay && (
-      <div className="fixed inset-0 z-[200] flex flex-col bg-white sm:hidden">
+      <div className="anim-truot-len fixed inset-0 z-[200] flex flex-col bg-white sm:hidden">
         <div className="flex items-center gap-1.5 border-b border-cvr-line px-2 py-2">
           <button
             type="button"
@@ -809,9 +818,9 @@ export default function FilterBar({
         {/* CHỌN MỤC ĐÍCH (Dự án · Mua bán · Cho thuê) — đặt TRONG trang tìm của
             điện thoại, ngay dưới ô nhập. Ngoài Hero mobile chỉ để đúng ô tìm cho
             gọn; vào đây mới có đủ chỗ chọn, và chọn xong bấm Tìm là ra ĐÚNG mục. */}
-        {leading && (
+        {(overlayLeading ?? leading) && (
           <div className="border-b border-cvr-line px-3 pb-2 pt-1">
-            {leading}
+            {overlayLeading ?? leading}
           </div>
         )}
         <div className="flex-1 overflow-y-auto p-1.5">
@@ -909,6 +918,7 @@ function LocationPanel({
   // Nhớ lựa chọn để áp đồng bộ cho Dự án · Mua bán · Cho thuê (cả PC & Mobile).
   const [mode, setMode] = useState<GeoMode>("moi");
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- đọc localStorage một lần khi mở (có từ trước)
     try { const m = localStorage.getItem(GEO_MODE_KEY); if (m === "moi" || m === "cu") setMode(m); } catch { /* noop */ }
   }, []);
   const switchMode = (m: GeoMode) => {
@@ -989,7 +999,9 @@ function LocationPanel({
 
       {/* Breadcrumb tầng đang duyệt */}
       <div className="mb-2 flex flex-wrap items-center gap-0.5 text-xs">
+        {/* eslint-disable-next-line react-hooks/static-components -- Crumb có từ trước */}
         <Crumb active={!prov} onClick={() => { setProv(""); setDist(""); setQ(""); }}>Toàn quốc</Crumb>
+        {/* eslint-disable-next-line react-hooks/static-components -- Crumb có từ trước */}
         {prov && <><span className="text-cvr-faint">›</span><Crumb active={!dist} onClick={() => { setDist(""); setQ(""); }}>{prov}</Crumb></>}
         {dist && <><span className="text-cvr-faint">›</span><span className="max-w-[8rem] truncate px-1.5 py-0.5 font-semibold text-cvr-ink">{dist}</span></>}
       </div>

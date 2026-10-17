@@ -24,10 +24,10 @@ import { getChiSoGia } from "@/lib/siteContent";
 import { nhanDienTich as nhanDienTichTheoLoai, laTinThue } from "@/lib/listingSpec";
 import ProjectNearby from "@/components/ProjectNearby";
 import ProjectNav from "@/components/ProjectNav";
-import { BreadcrumbJsonLd } from "@/components/Breadcrumb";
+import Breadcrumb from "@/components/Breadcrumb";
 import { provinceOf, districtOf, pickRelated } from "@/lib/data";
 import { getListing, getListings, getListingsHetHan, getListingDetail, tinDaHetHan } from "@/lib/listingsDb";
-import { banGocCua, lienKetCho, tinDatChuan, tinhCuaTin } from "@/lib/pseo";
+import { banGocCua, lienKetCho, tinDatChuan, tinhCuaTin, phuongCuaTin, duongDanPhanCap, THANH_PHO } from "@/lib/pseo";
 import { rentCategories, saleCategories } from "@/lib/categories";
 import { khuVucList } from "@/lib/khuVuc";
 import LienKetPseo from "@/components/LienKetPseo";
@@ -340,6 +340,19 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
     return lienKetCho({ muc, tinh, ...(cat ? { cat } : {}) }, all).filter((g) => g.tieuDe === "Tìm kiếm theo từ khoá");
   })();
 
+  // ĐƯỜNG DẪN CẤP (chuẩn thống nhất 17/10/2026, KE-HOACH-AIRBNB mục 2a bước 6): Nhà đất bán › tỉnh ›
+  // loại hình › thành phố lớn hoặc phường › tin. HIỆN trên trang và KHỚP dữ liệu Google (MASTER mục 9) —
+  // trước đây chỉ khai cho Google 2 cấp, trên trang không hiện. Dùng chung hàm dựng cấp của trang pSEO.
+  const duongDanCap = (() => {
+    const muc = laTinThue(l.purpose) ? "thue" : "ban";
+    const tinh = khuVucList.find((k) => normalizeVi(k.name) === normalizeVi(tinhCuaTin(l)));
+    if (!tinh) return [{ name: muc === "thue" ? "Nhà đất cho thuê" : "Nhà đất bán", href: muc === "thue" ? "/cho-thue" : "/mua-ban" }];
+    const cat = (muc === "thue" ? rentCategories : saleCategories).find((c) => c.types.includes(l.type));
+    const phuong = phuongCuaTin(l);
+    const thanhPho = phuong ? THANH_PHO.find((t) => normalizeVi(t.tinh) === normalizeVi(tinh.name) && t.phuong.some((p) => normalizeVi(p) === normalizeVi(phuong))) : undefined;
+    return duongDanPhanCap({ muc, tinh, ...(cat ? { cat } : {}), ...(thanhPho ? { thanhPho } : phuong ? { phuong } : {}) });
+  })();
+
   // MENU DÍNH theo mục — cuộn tới đâu sáng mục đó (giống trang dự án).
   // Chỉ liệt kê mục THẬT SỰ có nội dung để không bấm vào chỗ trống.
   const nav = [
@@ -358,13 +371,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
       {!hetHan && <RecordView id={l.id} />}
       {/* Schema.org RealEstateListing — dữ liệu chuẩn cho Google (IV.2) */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      {/* Cây phân cấp cho Google (không hiện trên màn hình — giữ nguyên bố cục đã duyệt) */}
-      <BreadcrumbJsonLd
-        items={[
-          { name: l.purpose === "thue" ? "Nhà đất cho thuê" : "Nhà đất bán", href: l.purpose === "thue" ? "/cho-thue" : "/mua-ban" },
-          { name: tieuDe1Dong, href: `/bat-dong-san/${l.id}` },
-        ]}
-      />
+      <Breadcrumb motDong items={[...duongDanCap, { name: tieuDe1Dong, href: `/bat-dong-san/${l.id}` }]} />
       <main className="flex-1 bg-white">
         {/* MOBILE: pt-0 → ảnh tin nằm SÁT mép dưới header (không chừa khoảng trắng) */}
         <div className="mx-auto max-w-7xl px-4 pt-0 pb-footer sm:px-6 sm:pt-0 lg:px-8">

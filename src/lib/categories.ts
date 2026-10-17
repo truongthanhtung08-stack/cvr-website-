@@ -175,6 +175,20 @@ export const rentNhaPseo: Category = {
   slug: "nha", label: "Nhà", h1: "Cho thuê nhà", title: "Cho thuê nhà", desc: "Cho thuê nhà",
   types: ["Nhà riêng", "Nhà mặt phố", "Nhà phố thương mại", "Biệt thự / Liền kề"],
 };
+// Trang NHÓM (chuẩn thống nhất 17/10/2026): gộp loại hình cùng nhóm — bấm nhóm ra mọi tin trong nhóm.
+export const saleNghiDuongPseo: Category = {
+  slug: "nghi-duong", label: "BĐS nghỉ dưỡng", h1: "Bán bất động sản nghỉ dưỡng", tuKhoa: "Bán bất động sản nghỉ dưỡng",
+  title: "Bán bất động sản nghỉ dưỡng", desc: "Mua bán bất động sản nghỉ dưỡng: condotel, villa biển, trang trại, khu nghỉ dưỡng",
+  types: ["Villa / Biệt thự biển", "Condotel"],
+};
+export const rentVanPhongMatBangPseo: Category = {
+  slug: "van-phong-mat-bang", label: "Văn phòng, mặt bằng", h1: "Cho thuê văn phòng, mặt bằng", tuKhoa: "Cho thuê văn phòng, mặt bằng",
+  title: "Cho thuê văn phòng, mặt bằng", desc: "Cho thuê văn phòng, mặt bằng kinh doanh, cửa hàng, ki ốt",
+  types: ["Văn phòng", "Mặt bằng / Cửa hàng bán lẻ"],
+};
+/** Trang nhóm theo mục đích — thêm nhóm mới: thêm một dòng. */
+export const nhomPseo = (muc: "ban" | "thue"): Category[] =>
+  muc === "thue" ? [rentNhaPseo, rentVanPhongMatBangPseo] : [saleNhaPseo, saleNghiDuongPseo];
 
 // ── DỰ ÁN (khớp menu Header) — lọc theo trường `type` của dự án ─────────────
 export const projectCategories: Category[] = [

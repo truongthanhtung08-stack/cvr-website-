@@ -133,6 +133,22 @@ for (const a of articles) {
 
 // Gợi ý phổ biến — hiện ngay khi người dùng chạm vào ô tìm kiếm (chưa gõ), kiểu Homedy.
 // Chỉ VÀI gợi ý ĐIỂN HÌNH phủ đủ chức năng (Mục đích · Khu vực · Loại hình) — không liệt kê dài.
+// GỢI Ý KHU VỰC PHỔ BIẾN THEO MỤC ĐÍCH (bộ lọc thông minh, 17/10/2026 — kiểu "Where?" của Airbnb):
+// thành phố lớn là từ khoá chính; bấm là tới THẲNG trang sạch của đúng mục đích (mua bán / cho thuê).
+const KHU_VUC_PHO_BIEN: { label: string; sub?: string; duong: string }[] = [
+  { label: "Đà Nẵng", duong: "da-nang" },
+  { label: "Hà Nội", duong: "ha-noi" },
+  { label: "TP. Hồ Chí Minh", duong: "ho-chi-minh" },
+  { label: "Huế", duong: "hue" },
+  { label: "Nha Trang", sub: "Khánh Hòa", duong: "khanh-hoa/nha-trang" },
+  { label: "Đà Lạt", sub: "Lâm Đồng", duong: "lam-dong/da-lat" },
+  { label: "Quy Nhơn", sub: "Gia Lai", duong: "gia-lai/quy-nhon" },
+];
+export function goiYPhoBien(muc: "ban" | "thue"): Suggestion[] {
+  const goc = muc === "thue" ? "/cho-thue" : "/mua-ban";
+  return KHU_VUC_PHO_BIEN.map((k) => ({ label: k.label, kind: "Khu vực" as SuggestKind, sub: k.sub, href: `${goc}/${k.duong}` }));
+}
+
 export const popularSuggestions: Suggestion[] = [
   { label: "Nhà đất bán", kind: "Mục đích", sub: "Tin rao bán — toàn quốc", href: "/mua-ban" },
   { label: "Nhà đất cho thuê", kind: "Mục đích", sub: "Tin cho thuê — toàn quốc", href: "/cho-thue" },

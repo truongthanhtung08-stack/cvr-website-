@@ -805,3 +805,21 @@ body[data-nav="in"] main {
   line-height: 1.75rem;
   text-align: center;
 }
+
+/* ── BỘ LỌC THÔNG MINH: chuyển động mượt kiểu Apple (17/10/2026) — chỉ transform/opacity ── */
+@keyframes truotLen { from { opacity: 0; transform: translate3d(0, 24px, 0); } to { opacity: 1; transform: none; } }
+@keyframes xoXuong { from { opacity: 0; transform: translate3d(0, -6px, 0) scale(0.98); } to { opacity: 1; transform: none; } }
+.anim-truot-len { animation: truotLen 0.32s cubic-bezier(0.16, 1, 0.3, 1) both; will-change: transform, opacity; }
+.anim-xo-xuong { animation: xoXuong 0.22s cubic-bezier(0.16, 1, 0.3, 1) both; transform-origin: top center; }
+@media (prefers-reduced-motion: reduce) { .anim-truot-len, .anim-xo-xuong { animation: none; } }
+
+/* ── PHẢN HỒI KHI BẤM — toàn web, chuẩn Airbnb/Apple (chủ dự án 17/10/2026: "khách nhận biết được khi
+   thao tác, không cứng đơ"). Chỉ transform → mượt, không xô lệch bố cục; tôn trọng giảm chuyển động. ── */
+:where(a, button, [role="button"]) { -webkit-tap-highlight-color: transparent; }
+/* :where → độ ưu tiên 0: nút nào đã có hiệu ứng / transition riêng (Tailwind, .btn-*) thì giữ nguyên của nó */
+:where(button:not(:disabled), [role="button"], a:has(img)) { transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1); }
+:where(button:not(:disabled), [role="button"]):active { transform: scale(0.97); }
+:where(a:has(img)):active { transform: scale(0.99); }
+@media (prefers-reduced-motion: reduce) {
+  :where(button:not(:disabled), [role="button"], a:has(img)):active { transform: none; }
+}

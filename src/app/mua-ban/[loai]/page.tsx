@@ -11,7 +11,9 @@ import KhuVucLinks from "@/components/KhuVucLinks";
 import { ListingListJsonLd } from "@/components/ListJsonLd";
 import { getListings } from "@/lib/listingsDb";
 import { getArticles } from "@/lib/contentDb";
-import { findCategory, saleCategories } from "@/lib/categories";
+import { findCategory, saleCategories, nhomPseo } from "@/lib/categories";
+// Trang NHÓM (Nhà, BĐS nghỉ dưỡng…) có trang gốc riêng — chuẩn thống nhất 17/10/2026, gộp loại hình cho dễ chọn
+const DANH_MUC = [...saleCategories, ...nhomPseo("ban")];
 import { demTinTheoKhuVuc, khuVucTrongDiem, moTaKhuVuc, slugKhuVuc, tieuDeKhuVuc, timKhuVuc } from "@/lib/khuVuc";
 import { normalizeVi } from "@/lib/filters";
 import LienKetPseo from "@/components/LienKetPseo";
@@ -35,7 +37,7 @@ const moTaDu = (d: string) => (d.length < 100 ? `${d.replace(/[.\s]+$/, "")} —
 
 export function generateStaticParams() {
   return [
-    ...saleCategories.map((c) => ({ loai: c.slug })),
+    ...DANH_MUC.map((c) => ({ loai: c.slug })),
     // Chỉ dựng sẵn khu vực TRỌNG ĐIỂM; tỉnh khác vẫn vào được (dựng khi có khách).
     ...khuVucTrongDiem.map((t) => ({ loai: slugKhuVuc(t) })),
   ];
@@ -46,7 +48,7 @@ const tinhCua = (location: string) => location.split(",").pop()?.trim() ?? "";
 export async function generateMetadata({ params }: { params: Promise<{ loai: string }> }): Promise<Metadata> {
   const { loai } = await params;
 
-  const c = findCategory(saleCategories, loai);
+  const c = findCategory(DANH_MUC, loai);
   if (c) {
     const title = `${c.title} ${thangHienTai()}`;
     return {
@@ -79,7 +81,7 @@ export async function generateMetadata({ params }: { params: Promise<{ loai: str
 
 export default async function DanhMucMuaBanPage({ params }: { params: Promise<{ loai: string }> }) {
   const { loai } = await params;
-  const c = findCategory(saleCategories, loai);
+  const c = findCategory(DANH_MUC, loai);
   const kv = c ? null : timKhuVuc(loai);
   if (!c && !kv) notFound();
 

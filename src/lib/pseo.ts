@@ -1,5 +1,5 @@
 import type { Listing } from "@/lib/data";
-import { findCategory, rentCategories, rentNhaPseo, saleCategories, saleNhaPseo, type Category } from "@/lib/categories";
+import { findCategory, nhomPseo, rentCategories, saleCategories, type Category } from "@/lib/categories";
 import { khuVucList, slugKhuVuc, timKhuVuc, type KhuVuc } from "@/lib/khuVuc";
 import { normalizeVi, type Filters } from "@/lib/filters";
 import { newProvinceOf, phuongMoiCuaQuan } from "@/lib/locations";
@@ -132,7 +132,7 @@ export type DieuKien = {
 };
 
 // Danh mục menu + nhóm "Nhà" chỉ dùng cho trang pSEO
-const danhMuc = (muc: Muc) => (muc === "thue" ? [...rentCategories, rentNhaPseo] : [...saleCategories, saleNhaPseo]);
+const danhMuc = (muc: Muc) => [...(muc === "thue" ? rentCategories : saleCategories), ...nhomPseo(muc)];
 const tuKhoa = (c: Category) => c.tuKhoa ?? c.h1;
 const goc = (muc: Muc) => (muc === "thue" ? "/cho-thue" : "/mua-ban");
 

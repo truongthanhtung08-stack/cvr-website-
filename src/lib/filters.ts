@@ -14,20 +14,26 @@ import { dungODienTichXayDung, dienTichSanThat } from "./listingSpec";
 // ═══════════════════════════════════════════════════════════════════════════
 type TypeGroup = { label: string; items: string[] };
 
+// ⛔ MỘT NGUỒN CẤU TRÚC (chuẩn thống nhất 17/10/2026, KE-HOACH-AIRBNB mục 2a): 5 nhóm chuẩn mỗi mục đích.
+// Form đăng tin (khách + admin), bộ lọc, hàng nhóm trang chủ, trang cấp, tệp mẫu Cowork cùng đọc đây.
+// Tên loại hình bên trong (items) KHÔNG đổi — tin cũ và tệp nhập CSV vẫn khớp.
 // MUA BÁN
 export const saleTypeGroups: TypeGroup[] = [
-  { label: "Nhà ở", items: ["Căn hộ", "Chung cư", "Nhà riêng", "Nhà mặt phố", "Nhà biệt thự / Liền kề", "Shophouse / Nhà phố thương mại"] },
+  { label: "Căn hộ", items: ["Căn hộ", "Chung cư"] },
+  { label: "Nhà", items: ["Nhà riêng", "Nhà mặt phố", "Nhà biệt thự / Liền kề", "Shophouse / Nhà phố thương mại"] },
   { label: "Đất", items: ["Đất nền / Đất nền dự án", "Đất nông nghiệp"] },
-  { label: "Du lịch / Nghỉ dưỡng", items: ["Villa / Biệt thự biển", "Condotel"] },
-  { label: "Công nghiệp", items: ["Đất công nghiệp", "Kho / Nhà xưởng"] },
+  { label: "BĐS nghỉ dưỡng", items: ["Villa / Biệt thự biển", "Condotel"] },
+  { label: "BĐS công nghiệp", items: ["Đất công nghiệp", "Kho / Nhà xưởng"] },
   { label: "Khác", items: ["Bất động sản khác"] },
 ];
 
-// CHO THUÊ (11 danh mục — Kế hoạch V3)
+// CHO THUÊ
 export const rentTypeGroups: TypeGroup[] = [
-  { label: "Nhà ở", items: ["Căn hộ", "Chung cư", "Căn hộ dịch vụ", "Nhà riêng", "Nhà mặt phố", "Nhà phố thương mại", "Biệt thự / Liền kề", "Nhà trọ / Phòng trọ"] },
-  { label: "Thương mại & văn phòng", items: ["Văn phòng", "Mặt bằng / Cửa hàng bán lẻ"] },
-  { label: "Đất & công nghiệp", items: ["Thuê đất / Nhà xưởng / Kho bãi"] },
+  { label: "Căn hộ", items: ["Căn hộ", "Chung cư", "Căn hộ dịch vụ"] },
+  { label: "Nhà", items: ["Nhà riêng", "Nhà mặt phố", "Nhà phố thương mại", "Biệt thự / Liền kề"] },
+  { label: "Phòng trọ", items: ["Nhà trọ / Phòng trọ"] },
+  { label: "Văn phòng, mặt bằng", items: ["Văn phòng", "Mặt bằng / Cửa hàng bán lẻ"] },
+  { label: "BĐS công nghiệp", items: ["Thuê đất / Nhà xưởng / Kho bãi"] },
   { label: "Khác", items: ["Bất động sản khác"] },
 ];
 
