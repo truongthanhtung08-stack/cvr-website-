@@ -318,11 +318,11 @@ export default function TimTrangChu({ goiYTin, tinDem }: { goiYTin?: CauGoiY[]; 
 
   const dong = (s: Suggestion, icon: PhIcon, onClick: () => void, key: string, xoa?: () => void) => (
     <div key={key} className="flex items-center rounded-xl transition hover:bg-black/[0.04]">
-      <button type="button" onClick={onClick} className="flex min-w-0 flex-1 items-center gap-4 rounded-xl px-2 py-1.5 text-left active:bg-black/[0.06]">
-        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#f2f2f2] text-cvr-ink"><Icon i={icon} className="h-5 w-5" /></span>
+      <button type="button" onClick={onClick} className="flex min-w-0 flex-1 items-center gap-3 rounded-xl px-2 py-2.5 text-left active:bg-black/[0.06]">
+        {icon !== MagnifyingGlass && <span className="flex w-5 shrink-0 justify-center text-cvr-muted"><Icon i={icon} className="h-[18px] w-[18px]" /></span>}
         <span className="flex min-w-0 flex-col">
           {/* Gợi ý kiểu Google: MỘT dòng chữ, không dòng phụ (chủ dự án 17/10/2026) */}
-          <span className="truncate text-[14px] font-medium leading-5 text-cvr-ink">{s.label}</span>
+          <span className="truncate text-[15px] leading-6 text-cvr-ink">{s.label}</span>
         </span>
       </button>
       {xoa && (
