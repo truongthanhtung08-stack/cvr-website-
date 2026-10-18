@@ -128,7 +128,6 @@ export default function ListingBrowser({
     const sx = params.get("sapxep");
     return sx === "gia-tang" || sx === "gia-giam" || sx === "dt-giam" || sx === "gia-m2" ? sx : relevance ? "lien-quan" : "moi";
   });
-  const [view, setView] = useState<"list" | "grid">("list");
   // Chế độ BẢN ĐỒ (kiểu Batdongsan): bật là cả trang chuyển sang xem bản đồ,
   // marker chạy theo đúng bộ lọc đang áp dụng.
   const [mapMode, setMapMode] = useState(false);
@@ -254,7 +253,8 @@ export default function ListingBrowser({
     <div className={nested ? "pt-1 sm:pt-6" : "mx-auto max-w-7xl px-4 pt-0 pb-footer sm:px-6 sm:pt-4 lg:px-8"}>
       {/* ── Phần trên kiểu Homedy (gọn): thanh lọc → tiêu đề + bộ đếm.
            Trang cấp 1 KHÔNG dùng breadcrumb (menu đã chỉ vị trí — chuẩn Apple). ── */}
-      <div>
+      {/* Máy tính: thanh tìm gọn trong CỘT TIN bên trái (= lg:col-span-3 của lưới 4 cột, khe 24px), như Batdongsan — chủ dự án 18/10/2026 */}
+      <div className="lg:w-[calc(75%-6px)]">
         <FilterBar
           value={hieu ? { ...hieu, keyword: filters.keyword } : filters}
           onChange={setFilters}
@@ -306,15 +306,15 @@ export default function ListingBrowser({
           )}
         </div>
         <div className="flex flex-1 flex-wrap items-center justify-end gap-3">
-              {/* XEM BẢN ĐỒ — LỐI VÀO DUY NHẤT, hiện trên mọi màn hình. Nút cũ
-                  của thanh lọc (cạnh ô tìm kiếm) đã bỏ vì trùng chức năng. */}
+              {/* XEM BẢN ĐỒ — chỉ ĐIỆN THOẠI. Máy tính: nút nằm sát ô tìm trong thanh lọc như Batdongsan
+                  (FilterBar, 18/10/2026) — mỗi màn hình một lối vào bản đồ. */}
               <button
                 type="button"
                 onClick={() => setMapMode((v) => !v)}
                 aria-pressed={mapMode}
                 // NỀN XANH cho dễ thấy — thống nhất với nút bản đồ ở tab Dự án.
                 // Đang mở bản đồ thì đậm hơn một nấc để biết mình đang ở chế độ nào.
-                className={`mr-auto inline-flex min-h-8 items-center gap-1.5 rounded-lg px-3 text-[13px] font-semibold text-white transition sm:min-h-[38px] sm:gap-2 sm:px-3.5 sm:text-sm ${
+                className={`mr-auto inline-flex min-h-8 items-center gap-1.5 rounded-lg px-3 text-[13px] font-semibold text-white transition sm:hidden ${
                   mapMode ? "bg-cvr-blue-ink" : "bg-cvr-blue hover:bg-cvr-blue-ink"
                 }`}
               >
@@ -336,9 +336,6 @@ export default function ListingBrowser({
                   Xoá lọc
                 </button>
               )}
-              <div className="hidden sm:block">
-                <ViewToggle view={view} setView={setView} />
-              </div>
               <select
                 aria-label="Sắp xếp"
                 value={sort}
@@ -371,10 +368,11 @@ export default function ListingBrowser({
         </div>
       )}
 
-      <div className={`mt-3 grid grid-cols-1 gap-6 lg:grid-cols-3 ${mapMode ? "hidden" : ""}`}>
+      {/* Máy tính: cột tin 3/4 · cột lọc 1/4 (chủ dự án 18/10/2026: cho phần nội dung bên trái to ra) */}
+      <div className={`mt-3 grid grid-cols-1 gap-6 lg:grid-cols-4 ${mapMode ? "hidden" : ""}`}>
 
         {/* CỘT TRÁI: danh sách tin */}
-        <div key={`${lanTim}-${JSON.stringify(filters)}`} className="anim-ket-qua lg:col-span-2">
+        <div key={`${lanTim}-${JSON.stringify(filters)}`} className="anim-ket-qua lg:col-span-3">
           {pageItems.length > 0 ? (
             <>
               {/* Nhãn TẦNG kết quả — cho biết nhóm tin đang xem khớp tới đâu */}
@@ -393,16 +391,13 @@ export default function ListingBrowser({
                     : <TheTinMobile key={khoaThe(item)} item={item} terms={chuDam(item.id)} />
                 )])}
               </div>
-              {/* DESKTOP (≥ 640px): theo chế độ xem đã chọn (Danh sách = thẻ ngang · Lưới = thẻ dọc) */}
-              <div
-                className={`reveal is-visible cards-stagger hidden ${
-                  view === "list"
-                    ? "sm:flex sm:flex-col sm:gap-4"
-                    : "sm:grid sm:grid-cols-2 sm:gap-5"
-                }`}
-              >
+              {/* DESKTOP (≥ 640px): MỖI TIN MỘT HÀNG, nội dung đúng thẻ điện thoại theo cấp, khung ảnh theo cấp (TheTinMobile pc, chủ dự án
+                  18/10/2026) — trang nào cũng đủ hàng, không ô trống. Tin hết hạn giữ hàng cũ có nhãn "Tin hết hạn". */}
+              <div className="reveal is-visible cards-stagger hidden sm:flex sm:flex-col sm:gap-4">
                 {pageItems.flatMap((item, i) => [dongTang(item, i), (
-                  <PropertyCard key={khoaThe(item)} item={item} layout={view} showTime terms={chuDam(item.id)} />
+                  item.hetHan
+                    ? <PropertyCard key={khoaThe(item)} item={item} layout="list" showTime terms={chuDam(item.id)} />
+                    : <div key={khoaThe(item)} className="overflow-hidden rounded-xl border border-cvr-line"><TheTinMobile item={item} terms={chuDam(item.id)} pc /></div>
                 )])}
               </div>
 
@@ -518,37 +513,5 @@ function SidebarLink({ active, onClick, count, children }: { active: boolean; on
         )}
       </button>
     </li>
-  );
-}
-
-// Nút chuyển chế độ xem Danh sách / Lưới
-export function ViewToggle({
-  view,
-  setView,
-}: {
-  view: "list" | "grid";
-  setView: (v: "list" | "grid") => void;
-}) {
-  return (
-    <div className="flex items-center rounded-lg border border-cvr-line bg-white p-0.5">
-      <button
-        type="button"
-        aria-label="Xem dạng danh sách"
-        aria-pressed={view === "list"}
-        onClick={() => setView("list")}
-        className={`flex h-8 w-8 items-center justify-center rounded-md transition ${view === "list" ? "bg-cvr-ink text-white" : "text-cvr-muted hover:text-cvr-ink"}`}
-      >
-        <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" /></svg>
-      </button>
-      <button
-        type="button"
-        aria-label="Xem dạng lưới"
-        aria-pressed={view === "grid"}
-        onClick={() => setView("grid")}
-        className={`flex h-8 w-8 items-center justify-center rounded-md transition ${view === "grid" ? "bg-cvr-ink text-white" : "text-cvr-muted hover:text-cvr-ink"}`}
-      >
-        <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 5h6v6H4V5zm10 0h6v6h-6V5zM4 15h6v4H4v-4zm10 0h6v4h-6v-4z" /></svg>
-      </button>
-    </div>
   );
 }

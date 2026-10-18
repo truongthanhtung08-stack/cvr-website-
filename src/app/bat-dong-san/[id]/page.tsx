@@ -24,7 +24,7 @@ import { getChiSoGia } from "@/lib/siteContent";
 import { nhanDienTich as nhanDienTichTheoLoai, laTinThue } from "@/lib/listingSpec";
 import ProjectNearby from "@/components/ProjectNearby";
 import ProjectNav from "@/components/ProjectNav";
-import Breadcrumb from "@/components/Breadcrumb";
+import { BreadcrumbJsonLd } from "@/components/Breadcrumb";
 import { provinceOf, districtOf, pickRelated } from "@/lib/data";
 import { getListing, getListings, getListingsHetHan, getListingDetail, tinDaHetHan } from "@/lib/listingsDb";
 import { banGocCua, lienKetCho, tinDatChuan, tinhCuaTin, phuongCuaTin, duongDanPhanCap, THANH_PHO } from "@/lib/pseo";
@@ -371,7 +371,8 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
       {!hetHan && <RecordView id={l.id} />}
       {/* Schema.org RealEstateListing — dữ liệu chuẩn cho Google (IV.2) */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <Breadcrumb motDong items={[...duongDanCap, { name: tieuDe1Dong, href: `/bat-dong-san/${l.id}` }]} />
+      {/* Đường dẫn cấp: CHỈ dữ liệu cho Google (JSON-LD), không hiện dòng chữ trên trang — chủ dự án 18/10/2026 */}
+      <BreadcrumbJsonLd items={[...duongDanCap, { name: tieuDe1Dong, href: `/bat-dong-san/${l.id}` }]} />
       <main className="flex-1 bg-white">
         {/* MOBILE: pt-0 → ảnh tin nằm SÁT mép dưới header (không chừa khoảng trắng) */}
         <div className="mx-auto max-w-7xl px-4 pt-0 pb-footer sm:px-6 sm:pt-0 lg:px-8">

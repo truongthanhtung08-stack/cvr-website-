@@ -630,7 +630,7 @@ export default function FilterBar({
     {/* Trang danh sách: ô tìm co giãn hết khung, nút "Xem bản đồ" nằm SÁT MÉP PHẢI
         → không còn mảng trống hụt bên phải như khi giới hạn bề ngang. */}
     <div ref={boxRef} className={compact ? "flex w-full gap-2.5" : "flex w-full gap-2.5"}>
-      <div className={compact ? "relative flex-1" : "relative flex h-10 min-w-0 flex-1 items-center rounded-xl bg-cvr-surface ring-1 ring-black/5 transition focus-within:ring-2 focus-within:ring-cvr-blue/40 sm:h-10 sm:rounded-xl sm:ring-1"}>
+      <div className={compact ? "relative flex-1" : "relative flex h-10 min-w-0 flex-1 items-center rounded-xl bg-cvr-surface ring-1 ring-black/5 transition focus-within:ring-2 focus-within:ring-cvr-blue/40 sm:h-12 sm:rounded-xl sm:ring-1"}>
         {/* Kính lúp trái — MOBILE ẩn (đã có nút search xanh bên phải, giống thanh tìm trang chủ) */}
         <svg className="pointer-events-none absolute left-4 top-1/2 hidden h-[18px] w-[18px] -translate-y-1/2 text-cvr-faint sm:block" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
@@ -725,8 +725,8 @@ export default function FilterBar({
               type="button"
               aria-label="Tìm kiếm"
               onClick={() => chayTim()}
-              // m-1 + h-8 = vừa khít khung h-10 (40px), bằng chiều cao các trường lọc bên cạnh
-              className="m-1 hidden h-8 shrink-0 items-center justify-center gap-2 rounded-lg bg-cvr-blue px-5 text-sm font-semibold text-white transition hover:bg-cvr-blue-ink active:scale-95 sm:flex"
+              // máy tính: m-1.5 + h-9 = vừa khít ô tìm h-12 (48px) như Batdongsan
+              className="m-1.5 hidden h-9 shrink-0 items-center justify-center gap-2 rounded-lg bg-cvr-blue px-5 text-sm font-semibold text-white transition hover:bg-cvr-blue-ink active:scale-95 sm:flex"
             >
               {dangTim && <Spinner />}
               {dangTim ? "Đang tìm…" : "Tìm kiếm"}
@@ -758,9 +758,21 @@ export default function FilterBar({
         )}
       </div>
       {/* (Hero) Nút tìm đã nằm TRONG ô tìm ở trên — không còn nút rời bên ngoài. */}
-      {/* ĐÃ BỎ nút "Xem bản đồ" của thanh lọc. Trang /mua-ban và /cho-thue chỉ
-          còn MỘT lối vào bản đồ: nút ở hàng menu ngay trên danh sách tin
-          (ListingBrowser dựng). Trước đây có hai nút cùng chức năng. */}
+      {/* MÁY TÍNH: "Xem bản đồ" đứng SÁT ô tìm, cùng chiều cao — bố trí như Batdongsan (chủ dự án 18/10/2026).
+          Điện thoại vẫn dùng nút cạnh tiêu đề (ListingBrowser) — mỗi màn hình chỉ MỘT lối vào bản đồ. */}
+      {!compact && onMap && (
+        <button
+          type="button"
+          onClick={onMap}
+          aria-pressed={mapActive}
+          className={`hidden h-12 shrink-0 items-center gap-2 rounded-xl px-5 text-[15px] font-semibold text-white transition sm:inline-flex ${mapActive ? "bg-cvr-blue-ink" : "bg-cvr-blue hover:bg-cvr-blue-ink"}`}
+        >
+          <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.9} viewBox="0 0 24 24" aria-hidden>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 4.5l6 2.4 5-2.4v14.4l-5 2.4-6-2.4-5 2.4V4.9l5-2.4v16.8" />
+          </svg>
+          {mapActive ? "Xem danh sách" : "Xem bản đồ"}
+        </button>
+      )}
     </div>
 
     {/* BẤM TÌM → VẠCH CHẠY MÉP TRÊN MÀN HÌNH (chủ dự án 18/10/2026: hiệu ứng để khách biết web đang tìm) */}
@@ -870,13 +882,14 @@ export default function FilterBar({
       {/* MOBILE: KHÔNG khung (viền/bóng), KHÔNG padding ngang → thanh tìm rộng hết bề ngang trang.
           DESKTOP: giữ thẻ như cũ. */}
       {/* SÁT HEADER: khung lọc không chừa lề trên (mt-0), chỉ có đệm trong 8px */}
-      <div className="rounded-none bg-white pb-2 pt-2 sm:mt-0 sm:rounded-xl sm:border sm:border-cvr-line sm:p-2 sm:shadow-lux">
-        {/* MÁY TÍNH LỚN: ô tìm + các trường lọc CHUNG MỘT HÀNG như trang Dự án (chủ dự án 18/10/2026: đồng bộ giao diện 3 tab) */}
-        <div className="flex flex-col gap-2 sm:gap-2.5 lg:flex-row lg:items-center">
-          <div className="min-w-0 lg:flex-1">{searchBox}</div>
+      {/* MÁY TÍNH bố trí như Batdongsan (chủ dự án 18/10/2026): KHÔNG khung bao — hàng 1 ô tìm cao 48px + "Xem bản đồ",
+          hàng 2 các trường lọc, dưới cùng một đường kẻ. Hai hàng ở mọi bề rộng → không bao giờ tràn mép phải. */}
+      <div className="rounded-none bg-white pb-2 pt-2 sm:mt-0 sm:border-b sm:border-cvr-line sm:pb-4 sm:pt-3">
+        <div className="flex flex-col gap-2 sm:gap-3">
+          <div className="min-w-0">{searchBox}</div>
           {/* Hàng chip lọc — CUỘN NGANG trên mobile (kiểu Batdongsan), tự xuống hàng trên desktop.
               -mx-2.5/px-2.5 để dải chip tràn sát mép thẻ, cuộn mượt hết bề rộng. */}
-          <div className="no-scrollbar flex items-center gap-2 overflow-x-auto pb-0.5 sm:flex-wrap sm:overflow-visible lg:shrink-0 lg:flex-nowrap lg:pb-0">
+          <div className="no-scrollbar flex items-center gap-2 overflow-x-auto pb-0.5 sm:flex-wrap sm:overflow-visible sm:pb-0">
             {/* ĐÃ BỎ chip "Bản đồ" ở hàng ngay dưới thanh tìm kiếm — bị trùng với
                 nút "Xem bản đồ" nằm cạnh ô tìm phía trên. */}
             {/* Thứ tự chuẩn (mockup Mục I phần 2): Khu vực · Dự án · Loại BĐS · Mức giá · Diện tích · Lọc thêm.

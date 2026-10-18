@@ -162,7 +162,8 @@ function KhungChay({ slides, alt, khung, sizes, onMo, children, tuChay = true }:
 
 // tuChay mặc định TẮT: trang chủ và trang danh sách chỉ hiện ẢNH ĐẠI DIỆN, không chạy slide — slide chỉ
 // chạy khi mở tin (chủ dự án 09/10/2026).
-export default function TheTinMobile({ item, terms = [], tuChay = false }: { item: Listing; terms?: string[]; tuChay?: boolean }) {
+// pc: HÀNG DANH SÁCH máy tính (trang Mua bán / Cho thuê) — cùng nội dung thẻ điện thoại, chỉ khác khung (nhánh ở dưới).
+export default function TheTinMobile({ item, terms = [], tuChay = false, pc = false }: { item: Listing; terms?: string[]; tuChay?: boolean; pc?: boolean }) {
   const t: TierId = item.badge ? tierFromBadge(item.badge) : "basic";
   const tier = getTier(t);
   const href = `/bat-dong-san/${item.id}`;
@@ -293,6 +294,77 @@ export default function TheTinMobile({ item, terms = [], tuChay = false }: { ite
       <p className="mt-0.5 truncate text-[13px] leading-tight text-cvr-muted">{ngay}</p>
     </div>
   );
+
+  // ── MÁY TÍNH (pc) — trang Mua bán / Cho thuê, MỖI TIN MỘT HÀNG (trang không có ô trống), chủ dự án 18/10/2026.
+  //    NỘI DUNG = đúng thẻ điện thoại theo cấp (tiêu đề, thông số, địa chỉ, người đăng, Zalo + Hiện số, Thích, Chia sẻ).
+  //    KHUNG: mỗi ảnh đúng tỷ lệ chuẩn, ảnh chính to rõ hơn ảnh phụ, cân với phần chữ, nhỏ dần theo cấp (cột ~869):
+  //      Diamond: ảnh TRÊN, dải rộng hết hàng (3:1) — chính 2:1 579×290 + phụ 2:1 290×145 + 2 phụ 1:1 145×145 · chữ dưới
+  //      Gold:    ảnh TRÊN, dải 760 (3:1) — chính 2:1 507×253 + 2 phụ 2:1 253×126 xếp dọc · chữ dưới
+  //      Silver:  ảnh TRÁI 4:3 340×255 · Basic: ảnh TRÁI 16:9 280×158 (Silver to hẳn hơn Basic) · chữ phải, dàn đều theo cao ảnh
+  if (pc) {
+    const tren = t === "diamond" || t === "gold";
+    const phu = t === "diamond" && anh.length >= 4 ? anh.slice(1, 4) : t === "gold" && anh.length >= 3 ? anh.slice(1, 3) : [];
+    const rongDai = t === "gold" ? "w-[760px] max-w-full" : "w-full";
+    let anhPC: React.ReactNode;
+    if (tren && phu.length) {
+      anhPC = (
+        <div className={`grid aspect-[3/1] grid-cols-[2fr_1fr] gap-px overflow-hidden rounded-xl ${rongDai}`}>
+          {khungChinh("h-full w-full", "580px")}
+          <div className="grid grid-rows-2 gap-px">
+            {t === "diamond" ? (
+              <>
+                <O src={phu[0]} alt={item.title} className="h-full w-full" sizes="290px" onMo={() => setDs(true)} />
+                <div className="grid grid-cols-2 gap-px">
+                  {phu.slice(1).map((src, k) => <O key={k} src={src} alt={item.title} className="h-full w-full" sizes="145px" onMo={() => setDs(true)} />)}
+                </div>
+              </>
+            ) : phu.map((src, k) => <O key={k} src={src} alt={item.title} className="h-full w-full" sizes="253px" onMo={() => setDs(true)} />)}
+          </div>
+        </div>
+      );
+    } else if (tren) {
+      anhPC = <div className={`overflow-hidden rounded-xl ${rongDai}`}>{khungChinh("aspect-[3/1] w-full", "870px")}</div>;
+    } else {
+      anhPC = <div className={`shrink-0 overflow-hidden rounded-xl ${t === "basic" ? "w-[280px]" : "w-[340px]"}`}>{khungChinh(t === "basic" ? "aspect-[16/9] w-full" : "aspect-[4/3] w-full", "340px")}</div>;
+    }
+    // Tiêu đề luôn giữ chỗ 2 dòng để mọi thẻ cùng cấp cao như nhau. Silver · Basic (ảnh trái): 3 nhóm — tiêu đề / giá + địa chỉ /
+    // hàng cuối — DÀN ĐỀU theo chiều cao ảnh (justify-between), không dồn khoảng trống một chỗ.
+    const tieuDePC = <Link href={href} className="block"><h3 className={`line-clamp-2 min-h-[2.8em] text-[16px] leading-[1.4] text-cvr-ink ${t === "basic" ? "font-medium" : "font-bold"} ${tier.uppercase ? "uppercase" : ""}`}><Highlight text={tieuDe} terms={terms} /></h3></Link>;
+    const soPC = <Link href={href} className="block [&>p:first-child]:mt-0">{thongSoDong}{diaChi}</Link>;
+    // Hàng cuối MỘT DÒNG (PC rộng, chủ dự án 18/10/2026): người đăng trái · Zalo + Hiện số (Diamond · Gold · Silver) · Thích · Chia sẻ phải.
+    const cuoi = (
+      <div className="flex items-center gap-2.5" onClick={(e) => e.preventDefault()}>
+        {anhDaiDien}
+        {nguoiDang}
+        {coSo && (
+          <NutLienHeThe
+            listingId={item.id}
+            hienSo
+            zaloTruoc
+            nhan={item.soDau ? `Hiện số ${item.soDau} ***` : "Hiện số"}
+            soCls="flex h-10 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg bg-cvr-blue px-4 text-[14px] font-semibold text-white transition active:scale-95"
+            oCls="flex h-10 w-14 shrink-0 items-center justify-center rounded-lg border border-cvr-line transition active:scale-95"
+          />
+        )}
+        {nutThich}
+        {nutChiaSe}
+      </div>
+    );
+    return (
+      <article className={`relative flex gap-4 overflow-hidden bg-white p-3 ${tren ? "flex-col" : ""}`}>
+        {tier.bar && <div className="absolute inset-x-0 top-0 z-10 h-px" style={{ backgroundColor: tier.bar }} aria-hidden />}
+        <div className="relative self-start">
+          {anhPC}
+          {huyHieu}
+        </div>
+        {tren
+          ? <div className="flex min-w-0 flex-col gap-2">{tieuDePC}{soPC}<div className="pt-1">{cuoi}</div></div>
+          : <div className="flex min-w-0 flex-1 flex-col justify-between">{tieuDePC}{soPC}{cuoi}</div>}
+        {ds && <PhotoList images={anh} videos={item.video ? [item.video] : []} title={item.title} onPick={setXem} onClose={() => setDs(false)} nhanPhim={xem < 0} banDo={{ diaChi: item.location, q: item.mapPin || item.location }} listingId={item.id} duongDan={href} />}
+        {xem >= 0 && <PhotoViewer images={anh} start={xem} title={item.title} listingId={item.id} onClose={() => setXem(-1)} />}
+      </article>
+    );
+  }
 
   // ── BASIC: ảnh trên, nội dung dưới như mọi thẻ Coastal Land — ảnh 16:9 (khung Google Discover),
   //    hàng cuối: người đăng + Thích, không có số (số chỉ ở trang tin) ──────────────────────

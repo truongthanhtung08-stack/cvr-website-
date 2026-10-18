@@ -822,7 +822,8 @@ body[data-nav="in"] main {
 @keyframes dongLai { from { opacity: 1; transform: none; } to { opacity: 0; transform: translate3d(0, 24px, 0); } }
 @keyframes hienChu { from { opacity: 0; } to { opacity: 1; } }
 @keyframes ketQua { from { opacity: 0; transform: translate3d(0, 14px, 0); } to { opacity: 1; transform: none; } }
-.anim-ket-qua { animation: ketQua 0.45s cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+/* backwards, KHÔNG both: giữ transform sau hiệu ứng sẽ nhốt khung xem ảnh (position: fixed) trong cột tin (18/10/2026) */
+.anim-ket-qua { animation: ketQua 0.45s cubic-bezier(0.2, 0.9, 0.3, 1) backwards; }
 .anim-mo-ra { animation: moRa 0.38s cubic-bezier(0.2, 0.9, 0.3, 1) both; }
 .anim-dong-lai { animation: dongLai 0.2s cubic-bezier(0.4, 0, 1, 1) both; }
 .anim-hien-chu { animation: hienChu 0.25s ease 0.08s both; }

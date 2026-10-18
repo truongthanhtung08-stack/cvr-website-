@@ -276,7 +276,8 @@ export default function ProjectsBrowser({
       )}
 
       {/* ── Thanh tìm + lọc dự án (MOBILE: lên trên cùng, KHÔNG khung viền/bóng, rộng hết bề ngang) ── */}
-      <div className="order-1 mt-2 rounded-none bg-white pb-2.5 pt-0 sm:order-2 sm:mt-2.5 sm:border sm:border-cvr-line sm:p-2.5 sm:shadow-lux">
+      {/* Máy tính: thanh tìm gọn trong CỘT DỰ ÁN bên trái (= lg:col-span-2 của lưới 3 cột, khe 32px) — chủ dự án 18/10/2026 */}
+      <div className="order-1 mt-2 rounded-none bg-white pb-2.5 pt-0 sm:order-2 sm:mt-2.5 sm:border sm:border-cvr-line sm:p-2.5 sm:shadow-lux lg:w-[calc(66.667%-10.667px)]">
         <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
           {/* Ô tìm nhanh dự án — nút search XANH nằm SÁT mép phải trong khung (mobile), đồng bộ Mua bán/Cho thuê.
               MOBILE: chừa lề trái đúng chỗ NÚT BACK TRÒN nổi (8px + 36px) để nút đứng

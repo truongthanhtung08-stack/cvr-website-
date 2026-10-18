@@ -112,7 +112,8 @@ export default function PhotoList({
   // Mở lên thì video đang chạy ở trang tin DỪNG — không để hai tiếng chồng nhau (15/10/2026).
   useEffect(() => { window.dispatchEvent(new CustomEvent("cl-video-phat", { detail: "danh-sach" })); }, []);
   const [keo, setKeo] = useState(0);      // độ lệch đang kéo (px; âm = trượt lên)
-  const [moBanDo, setMoBanDo] = useState(false); // điện thoại: cột bản đồ đang mở
+  // Cột bản đồ đang mở — máy tính mở sẵn, điện thoại đóng sẵn; cả hai bật/tắt bằng nút "Vị trí" (chủ dự án 18/10/2026)
+  const [moBanDo, setMoBanDo] = useState(() => typeof window !== "undefined" && window.innerWidth >= 1024);
   const { has, toggle } = useSaved();
   const daLuu = listingId ? has(listingId) : false;
   // Thích · bình luận của từng ảnh/video — nạp một lần khi mở danh sách
@@ -130,8 +131,6 @@ export default function PhotoList({
     else navigator.clipboard?.writeText(url);
   };
   const [banDoTo, setBanDoTo] = useState(false); // bản đồ phóng to (nút ⤢ như Batdongsan)
-  // Máy tính: cột bản đồ luôn hiện → nạp ngay; điện thoại: chỉ nạp khi bấm "Vị trí"
-  const [mayTinh] = useState(() => typeof window !== "undefined" && window.innerWidth >= 1024);
   const [thoat, setThoat] = useState(0);  // 0 = đang mở · 1/-1 = đang chạy hiệu ứng thoát
   const [muot, setMuot] = useState(true); // tắt hiệu ứng khi ảnh bám ngón tay
   const boc = useRef<HTMLDivElement>(null);
@@ -257,7 +256,7 @@ export default function PhotoList({
             <p className="text-xs text-cvr-muted">{videos.length > 0 ? `${videos.length} video · ` : ""}{images.length} ảnh</p>
           </div>
           {banDo && (
-            <button type="button" onClick={() => setMoBanDo(true)} className="flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-cvr-blue px-3 text-[13px] font-semibold text-white lg:hidden">
+            <button type="button" aria-pressed={moBanDo} onClick={() => setMoBanDo((v) => !v)} className="flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-cvr-blue px-3 text-[13px] font-semibold text-white">
               <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24" aria-hidden><path d="M12 21s-7-6.2-7-11.5A7 7 0 0112 2.5a7 7 0 017 7C19 14.8 12 21 12 21z" /><circle cx="12" cy="9.5" r="2.5" /></svg>
               Vị trí
             </button>
@@ -272,7 +271,8 @@ export default function PhotoList({
           </button>
         </div>
 
-        <div className="space-y-2">
+        {/* Máy tính: cột ảnh giữ cùng bề rộng dù bản đồ bật hay tắt — tắt bản đồ không làm ảnh phình to */}
+        <div className="space-y-2 lg:mx-auto lg:max-w-[1020px]">
           {videos.map((v, i) => (
             <div key={`v${i}`}>
               <div className="relative aspect-video w-full bg-black">
@@ -320,7 +320,7 @@ export default function PhotoList({
       {banDo && (
         <>
           {moBanDo && <button type="button" aria-label="Đóng bản đồ" onClick={() => setMoBanDo(false)} className="fixed inset-0 z-[1] bg-black/40 lg:hidden" />}
-          <aside className={`fixed inset-y-0 right-0 z-[2] flex w-[85%] max-w-[380px] flex-col bg-white shadow-2xl transition-transform duration-300 lg:static lg:translate-x-0 lg:shadow-none ${banDoTo ? "!w-full !max-w-none lg:!w-[70%]" : "lg:w-[380px]"} ${moBanDo ? "translate-x-0" : "translate-x-full"}`}>
+          <aside className={`fixed inset-y-0 right-0 z-[2] flex w-[85%] max-w-[380px] flex-col bg-white shadow-2xl transition-transform duration-300 lg:static lg:translate-x-0 lg:shadow-none ${moBanDo ? "" : "lg:hidden"} ${banDoTo ? "!w-full !max-w-none lg:!w-[70%]" : "lg:w-[380px]"} ${moBanDo ? "translate-x-0" : "translate-x-full"}`}>
             <div className="flex items-start gap-2 border-b border-cvr-line px-4 py-3 pt-[calc(0.75rem+var(--at,0px))]">
               <div className="min-w-0 flex-1">
                 <p className="text-[15px] font-semibold text-cvr-ink">Vị trí</p>
@@ -331,10 +331,10 @@ export default function PhotoList({
                   {banDoTo ? <path strokeLinecap="round" strokeLinejoin="round" d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" /> : <path strokeLinecap="round" strokeLinejoin="round" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />}
                 </svg>
               </button>
-              <button type="button" aria-label="Đóng" onClick={() => { setMoBanDo(false); setBanDoTo(false); }} className="flex h-8 w-8 items-center justify-center rounded-full text-cvr-ink lg:hidden">✕</button>
+              <button type="button" aria-label="Đóng" onClick={() => { setMoBanDo(false); setBanDoTo(false); }} className="flex h-8 w-8 items-center justify-center rounded-full text-cvr-ink">✕</button>
             </div>
             {/* Bản đồ nền mở (MapLibre) — khung nhúng Google bị chặn ở Việt Nam (ERR_BLOCKED_BY_RESPONSE) */}
-            <div className="min-h-0 flex-1">{(moBanDo || mayTinh) && <MapPaneMo query={banDo.q} cao="h-full w-full" />}</div>
+            <div className="min-h-0 flex-1">{moBanDo && <MapPaneMo query={banDo.q} cao="h-full w-full" />}</div>
           </aside>
         </>
       )}
