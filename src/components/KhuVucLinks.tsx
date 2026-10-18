@@ -16,11 +16,14 @@ export default function KhuVucLinks({
   base,
   demTheoTinh,
   tinhDangXem,
+  sat = false,
 }: {
   base: "/mua-ban" | "/cho-thue" | "/du-an";
   // [tên tỉnh, số tin] — lấy từ chính dữ liệu của trang
   demTheoTinh: [string, number][];
   tinhDangXem?: string;
+  // Trang Mua bán / Cho thuê: khối "Tìm kiếm phổ biến" ngay dưới — thu đệm đáy
+  sat?: boolean;
 }) {
   const dem = new Map(demTheoTinh);
   const ten = Array.from(
@@ -33,7 +36,8 @@ export default function KhuVucLinks({
     base === "/cho-thue" ? "Cho thuê theo khu vực" : base === "/du-an" ? "Dự án theo khu vực" : "Nhà đất bán theo khu vực";
 
   return (
-    <section className="mx-auto max-w-7xl px-4 pb-14 sm:px-6 lg:px-8">
+    // sat: trang Mua bán / Cho thuê — khối "Tìm kiếm phổ biến" ngay dưới đã có đệm trên, cộng dồn từng hở ~150px (18/10/2026)
+    <section className={`mx-auto max-w-7xl px-4 ${sat ? "pb-4" : "pb-14"} sm:px-6 lg:px-8`}>
       <div className="rounded-2xl border border-cvr-line bg-white p-5 shadow-lux">
         <h2 className="text-base font-semibold tracking-tight text-cvr-ink sm:text-lg">{nhan}</h2>
         <div className="mt-3 flex flex-wrap gap-2">

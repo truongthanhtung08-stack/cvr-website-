@@ -331,9 +331,9 @@ export default function TheTinMobile({ item, terms = [], tuChay = false, pc = fa
     } else {
       anhPC = <div className={`shrink-0 overflow-hidden rounded-xl ${t === "basic" ? "w-[280px]" : "w-[340px]"}`}>{khungChinh(t === "basic" ? "aspect-[16/9] w-full" : "aspect-[4/3] w-full", "340px")}</div>;
     }
-    // Tiêu đề luôn giữ chỗ 2 dòng để mọi thẻ cùng cấp cao như nhau. Silver · Basic (ảnh trái): 3 nhóm — tiêu đề / giá + địa chỉ /
+    // Silver · Basic: tiêu đề giữ chỗ 2 dòng để thẻ cùng cấp cao như nhau (Diamond · Gold chữ dưới ảnh — không giữ, khỏi dòng trống). Silver · Basic (ảnh trái): 3 nhóm — tiêu đề / giá + địa chỉ /
     // hàng cuối — DÀN ĐỀU theo chiều cao ảnh (justify-between), không dồn khoảng trống một chỗ.
-    const tieuDePC = <Link href={href} className="block"><h3 className={`line-clamp-2 min-h-[2.8em] text-[16px] leading-[1.4] text-cvr-ink ${t === "basic" ? "font-medium" : "font-bold"} ${tier.uppercase ? "uppercase" : ""}`}><Highlight text={tieuDe} terms={terms} /></h3></Link>;
+    const tieuDePC = <Link href={href} className="block"><h3 className={`line-clamp-2 ${tren ? "" : "min-h-[2.8em]"} text-[16px] leading-[1.4] text-cvr-ink ${t === "basic" ? "font-medium" : "font-bold"} ${tier.uppercase ? "uppercase" : ""}`}><Highlight text={tieuDe} terms={terms} /></h3></Link>;
     const soPC = <Link href={href} className="block [&>p:first-child]:mt-0">{thongSoDong}{diaChi}</Link>;
     // Hàng cuối MỘT DÒNG (PC rộng, chủ dự án 18/10/2026): người đăng trái · Zalo + Hiện số (Diamond · Gold · Silver) · Thích · Chia sẻ phải.
     const cuoi = (

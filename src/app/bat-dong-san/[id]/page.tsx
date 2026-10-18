@@ -790,7 +790,9 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
         {/* LIÊN KẾT VỀ TRANG pSEO (15/10/2026): trang tin dẫn về các trang "loại hình × tỉnh",
             phường, giá… đã đạt chuẩn — chữ trên link là đúng cụm từ khoá người tìm gõ. */}
         {/* Kiểu Google "Mọi người cũng tìm kiếm" như các trang pSEO (chủ dự án 18/10/2026) — in đậm phần khác loại hình + tỉnh của tin */}
+        <div className="-mt-6 lg:-mt-10">{/* kéo lên bù phần đệm cuối khung trên (pb-footer) — khỏi hở trắng trước khối này */}
         <LienKetPseo nhom={lienKetTin} cau={`${laTinThue(l.purpose) ? "Cho thuê" : "Bán"} ${l.type} ${tinhCuaTin(l)}`} kieuGoogle />
+        </div>
       </main>
       <Footer />
       {/* Chỗ trống cuối trang để thanh Gọi · Nhắn Zalo (dính đáy) không che dòng

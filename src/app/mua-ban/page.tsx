@@ -62,7 +62,7 @@ export default async function MuaBanPage() {
             /mua-ban/hue bị Google báo "URL is unknown to Google" — chưa từng biết
             đến, dù nằm trong sitemap. Thiếu liên kết nội bộ là trang coi như
             không tồn tại. Đặt ở đây để Google (và khách) có lối sang. */}
-        <KhuVucLinks base="/mua-ban" demTheoTinh={demTheoTinh(tinBan)} />
+        <KhuVucLinks base="/mua-ban" demTheoTinh={demTheoTinh(tinBan)} sat />
         <TimKiemPhoBien muc="ban" />
       </main>
       <Footer />

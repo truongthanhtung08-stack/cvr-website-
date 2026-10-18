@@ -56,7 +56,7 @@ export default async function ChoThuePage() {
         </Suspense>
         {/* Đường bò tới trang khu vực cho thuê — cùng lý do như ở /mua-ban:
             trang /cho-thue/<tỉnh> chưa có liên kết nội bộ nào trỏ tới. */}
-        <KhuVucLinks base="/cho-thue" demTheoTinh={demTheoTinh(tinThue)} />
+        <KhuVucLinks base="/cho-thue" demTheoTinh={demTheoTinh(tinThue)} sat />
         <TimKiemPhoBien muc="thue" />
       </main>
       <Footer />

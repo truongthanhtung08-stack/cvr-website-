@@ -28,7 +28,8 @@ export default function ListingSlider({ items }: { items: Listing[] }) {
         {items.map((item) => (
           <div
             key={item.id}
-            className="w-[80%] shrink-0 snap-start sm:w-[calc((100%-20px)/2)] lg:w-[calc((100%-60px)/4)]"
+            // [&>*]:h-full: thẻ giãn bằng thẻ cao nhất trong dải — trước đây khung trắng không giãn, dưới thẻ thấp hở khoảng lớn (18/10/2026)
+            className="w-[80%] shrink-0 snap-start sm:w-[calc((100%-20px)/2)] lg:w-[calc((100%-60px)/4)] [&>*]:h-full"
           >
             <PropertyCard item={item} />
           </div>
