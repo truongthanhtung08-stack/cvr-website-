@@ -207,7 +207,8 @@ export default function FilterDropdown({
                 }`
               : // MOBILE: pill bo tròn mềm, nền xám nhạt (giống ô tìm) — hết ô vuông viền cứng.
                 // DESKTOP (sm): giữ nguyên kiểu cũ (vuông, viền, nền trắng).
-                `h-10 w-auto shrink-0 whitespace-nowrap rounded-full px-4 sm:rounded-none sm:px-3.5 ${
+                // ĐIỆN THOẠI GỌN LẠI (chủ dự án 18/10/2026: "chỉnh menu phía dưới thanh search nhỏ lại cho phù hợp") — h-8, chữ 13px
+                `h-8 w-auto shrink-0 gap-1 whitespace-nowrap rounded-full px-3 text-[13px] sm:h-10 sm:gap-2 sm:rounded-none sm:px-3.5 sm:text-sm ${
                   active
                     ? "border-cvr-blue bg-cvr-blue/10 font-medium text-cvr-blue-ink sm:border-cvr-blue/60 sm:bg-white"
                     : "border-black/10 bg-cvr-surface text-cvr-ink/80 hover:border-cvr-ink/35 hover:text-cvr-ink sm:border-cvr-line sm:bg-white sm:text-cvr-body"

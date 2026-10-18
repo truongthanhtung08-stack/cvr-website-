@@ -22,6 +22,7 @@ import {
   hasActiveFilters,
   priceRangesFor,
   areaRangesFor,
+  normalizeVi,
   type Filters,
   type SortKey,
 } from "@/lib/filters";
@@ -40,10 +41,10 @@ export default function ListingBrowser({
   itemsHetHan: hetHanTuMayChu,
   nguon,
   choTai,
+  soLieu,
   initialFilters,
   chiId,
   boQuaId,
-  soLieu,
   relevance = false,
   nested = false,
   initialTypes,
@@ -212,6 +213,10 @@ export default function ListingBrowser({
   );
   const kq = nguon ? mayChu : taiCho;
   const pageItems = kq?.trang ?? [];
+  // BÔI ĐẬM KIỂU GOOGLE (chủ dự án 18/10/2026): chữ khách gõ (bỏ chữ nối) in đậm trong tên tin kết quả
+  const BO_NOI = new Set(["ban", "mua", "thue", "cho", "can", "tai", "o", "va", "co", "gia", "nha", "dat", "nhu", "cua", "duoi", "tren", "tu", "den"]);
+  const tuGo = filters.keyword.split(/\s+/).filter((w) => { const n = normalizeVi(w).replace(/[^a-z0-9]/g, ""); return n.length >= 2 && !BO_NOI.has(n); });
+  const chuDam = (id: string) => (kq?.boiDam[id]?.length ? kq.boiDam[id] : tuGo);
   const totalPages = kq?.soTrang ?? 1;
   const current = kq?.trangHienTai ?? 1;
   const provinces = kq?.khuVuc ?? [];
@@ -291,8 +296,9 @@ export default function ListingBrowser({
           {/* KHÔNG in số lượng tin ra đây — web đang ít tin, nói ra là tự phơi
               điểm yếu với khách (chủ dự án chốt 11/9/2026). Câu này chỉ còn nói
               phạm vi hoạt động. Ẩn trên mobile cho gọn như trước. */}
-          {soLieu ? (
-            <p className="mt-1 text-sm text-cvr-muted">{soLieu}</p>
+          {/* khách tìm "giá rẻ" → khoảng giá của riêng phân khúc rẻ (kq.khoangRe), không phải cả trang */}
+          {kq?.khoangRe || soLieu ? (
+            <p className="mt-1 text-sm text-cvr-muted">{kq?.khoangRe || soLieu}</p>
           ) : (
             <p className="mt-1 hidden text-sm text-cvr-muted sm:block">
               {active ? "Bất động sản phù hợp." : "Tin mua bán, cho thuê nhà đất mới nhất."}
@@ -308,7 +314,7 @@ export default function ListingBrowser({
                 aria-pressed={mapMode}
                 // NỀN XANH cho dễ thấy — thống nhất với nút bản đồ ở tab Dự án.
                 // Đang mở bản đồ thì đậm hơn một nấc để biết mình đang ở chế độ nào.
-                className={`mr-auto inline-flex min-h-[32px] items-center gap-1.5 rounded-lg px-3 text-xs font-semibold text-white transition ${
+                className={`mr-auto inline-flex min-h-8 items-center gap-1.5 rounded-lg px-3 text-[13px] font-semibold text-white transition sm:min-h-[38px] sm:gap-2 sm:px-3.5 sm:text-sm ${
                   mapMode ? "bg-cvr-blue-ink" : "bg-cvr-blue hover:bg-cvr-blue-ink"
                 }`}
               >
@@ -323,7 +329,8 @@ export default function ListingBrowser({
                 <button
                   type="button"
                   onClick={() => setFilters(emptyFilters())}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-cvr-line px-3 py-1.5 text-xs font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink"
+                  // điện thoại: nút này nằm ở cuối hàng trường lọc (FilterBar) — ở đây chỉ máy tính
+                  className="hidden items-center gap-1.5 rounded-lg border border-cvr-line px-3 py-1.5 text-xs font-medium sm:inline-flex text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink"
                 >
                   <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                   Xoá lọc
@@ -382,8 +389,8 @@ export default function ListingBrowser({
                 {pageItems.flatMap((item, i) => [dongTang(item, i), (
                   // Thẻ theo cấp (chuẩn 09/10/2026, docs/THE-TIN-THEO-CAP.md); tin hết hạn giữ thẻ cũ có nhãn "Tin hết hạn"
                   item.hetHan
-                    ? <PropertyCard key={khoaThe(item)} item={item} layout="grid" showTime terms={kq?.boiDam[item.id] ?? []} />
-                    : <TheTinMobile key={khoaThe(item)} item={item} terms={kq?.boiDam[item.id] ?? []} />
+                    ? <PropertyCard key={khoaThe(item)} item={item} layout="grid" showTime terms={chuDam(item.id)} />
+                    : <TheTinMobile key={khoaThe(item)} item={item} terms={chuDam(item.id)} />
                 )])}
               </div>
               {/* DESKTOP (≥ 640px): theo chế độ xem đã chọn (Danh sách = thẻ ngang · Lưới = thẻ dọc) */}
@@ -395,7 +402,7 @@ export default function ListingBrowser({
                 }`}
               >
                 {pageItems.flatMap((item, i) => [dongTang(item, i), (
-                  <PropertyCard key={khoaThe(item)} item={item} layout={view} showTime terms={kq?.boiDam[item.id] ?? []} />
+                  <PropertyCard key={khoaThe(item)} item={item} layout={view} showTime terms={chuDam(item.id)} />
                 )])}
               </div>
 

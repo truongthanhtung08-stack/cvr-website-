@@ -479,7 +479,7 @@ export function lienKetLoaiHinh(muc: Muc, cat: Category, tinConHan: Listing[]): 
 }
 
 // ── KHỐI SỐ LIỆU DƯỚI H1 (template 1 "Quick stats"; chủ dự án duyệt nguyên văn 16/10/2026) ──
-// "Giá rao: 2,1 – 6,5 tỷ · Diện tích: 60 – 120 m² · Cập nhật 10/2026" — tính từ chính các tin
+// "Giá: 2,1 – 6,5 tỷ · Diện tích: 60 – 120 m² · Cập nhật 10/2026" — tính từ chính các tin
 // đang hiện trên trang nên mỗi trang một số liệu riêng (khung chung, nội dung khác nhau).
 // KHÔNG in số tin (chốt 11/09). Thiếu số liệu thì bỏ phần đó; không có gì thì trả "".
 const soVi = (n: number) => (Math.round(n * 10) / 10).toLocaleString("vi-VN", { maximumFractionDigits: 1 });
@@ -497,7 +497,7 @@ export function soLieuTrang(tin: Listing[], muc: Muc): string {
   const dt = tin.map((l) => l.areaM2 ?? 0).filter((v) => v > 0);
   const moiNhat = Math.max(0, ...tin.map((l) => new Date(l.bumpedAt ?? l.postedAt ?? 0).getTime() || 0));
   const phan: string[] = [];
-  if (gia.length) phan.push(`${thue ? "Giá thuê" : "Giá rao"}: ${khoang(Math.min(...gia), Math.max(...gia), giaNgan)}${thue ? "/tháng" : ""}`);
+  if (gia.length) phan.push(`${thue ? "Giá thuê" : "Giá"}: ${khoang(Math.min(...gia), Math.max(...gia), giaNgan)}${thue ? "/tháng" : ""}`);
   if (dt.length) phan.push(`Diện tích: ${khoang(Math.min(...dt), Math.max(...dt), (n) => `${soVi(n)} m²`)}`);
   // Chỉ tháng/năm (chủ dự án 17/10/2026: "bỏ ngày, chỉ ghi tháng và năm")
   if (moiNhat) {

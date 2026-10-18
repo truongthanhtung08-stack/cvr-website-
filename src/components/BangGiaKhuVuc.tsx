@@ -60,7 +60,7 @@ export default function BangGiaKhuVuc({
         </div>
 
         <p className="mt-4 text-[11.5px] text-cvr-faint">
-          Giá rao trên thị trường, không phải giá đã giao dịch.
+          Giá trên thị trường, không phải giá đã giao dịch.
         </p>
       </div>
     </section>

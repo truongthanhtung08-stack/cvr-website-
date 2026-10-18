@@ -29,6 +29,8 @@ export type KetQuaLoc = {
   tangTheoId: Record<string, 1 | 2 | 3>;
   /** Chữ cần bôi đậm theo id tin (chỉ tin trong trang) */
   boiDam: Record<string, string[]>;
+  /** Khách tìm "giá rẻ": dòng giá · diện tích của RIÊNG phân khúc rẻ (thay dòng số liệu cả trang) */
+  khoangRe?: string;
   /** Số tin theo tỉnh/thành (cột phải "theo khu vực") */
   khuVuc: [string, number][];
   /** Tỉnh máy hiểu được (từ bộ lọc hoặc từ câu khách gõ) — để đặt dòng "Gợi ý khác tại …" */
@@ -79,7 +81,8 @@ export function locDanhSach(
   page: number,
 ): KetQuaLoc & { ketQua: Listing[] } {
   // Câu có "giá rẻ" → trong cùng nhóm, tin rẻ đứng trước (cùng quy ước với trang sạch ?sapxep=gia-tang)
-  if (sort === "moi" && / gia re /.test(` ${normalizeVi(filters.keyword)} `)) sort = "gia-tang";
+  const timRe = / gia re /.test(` ${normalizeVi(filters.keyword)} `);
+  if (sort === "moi" && timRe) sort = "gia-tang";
   filters = cauThanhBoLoc(filters, purpose) ?? filters;
   // Nguồn theo đúng MỤC ĐÍCH + NHÂN ĐÔI HIỂN THỊ của CVR Diamond (nhanDoiHienThi.ts)
   const base = nhanDoiHienThi(items.filter((l) => (l.purpose ?? "ban") === purpose));
@@ -139,12 +142,35 @@ export function locDanhSach(
   const chuTrong = khopChu.filter((l) => dungLoc.has(l.id));
   const chuNgoai = khopChu.filter((l) => !dungLoc.has(l.id));
   const daCo = new Set(khopChu.map((l) => l.id));
-  const ketQua = [
+  let ketQua = [
     ...(coTuKhoa ? [...chuTrong, ...khopDu.filter((l) => !daCo.has(l.id)), ...chuNgoai, ...goiY.filter((l) => !daCo.has(l.id))] : [...khopDu, ...goiY]),
     ...ketQuaHetHan,
   ];
   const tierById = new Map(hits.map((h) => [h.item.id, h.tier]));
   const termsById = new Map(search.hits.map((h) => [h.item.id, h.matched]));
+
+  // PHÂN KHÚC GIÁ RẺ (chủ dự án 18/10/2026: "giá rẻ thì phải biết phân khúc giá nào trong 1,4 – 33 tỷ là rẻ mới đưa lên"):
+  // "rẻ" = 1/3 số tin GIÁ THẤP NHẤT trong các tin khớp đúng loại nhà + khu vực khách tìm. Tin rẻ lên đầu; tin đắt hơn xuống
+  // dưới, xếp vào nhóm gợi ý. Dòng số liệu đổi thành khoảng giá/diện tích của riêng nhóm rẻ.
+  let khoangRe: string | undefined;
+  if (timRe) {
+    const gia = khopDu.map((l) => l.priceVnd ?? 0).filter((v) => v > 0).sort((a, b) => a - b);
+    if (gia.length >= 3) {
+      const nguong = gia[Math.ceil(gia.length / 3) - 1];
+      const la = (l: Listing) => dungLoc.has(l.id) && (l.priceVnd ?? 0) > 0 && (l.priceVnd ?? 0) <= nguong;
+      ketQua = [...ketQua.filter(la), ...ketQua.filter((l) => !la(l))];
+      for (const l of khopDu) if (!la(l)) tierById.set(l.id, 2);
+      const giaRe = gia.filter((v) => v <= nguong);
+      const dt = khopDu.filter(la).map((l) => l.areaM2 ?? 0).filter((v) => v > 0);
+      const so = (x: number) => (Math.round(x * 10) / 10).toLocaleString("vi-VN", { maximumFractionDigits: 1 });
+      const g = (v: number) => (v >= 1e9 ? `${so(v / 1e9)} tỷ` : `${so(v / 1e6)} triệu`);
+      const [a, b] = [g(giaRe[0]), g(giaRe[giaRe.length - 1])];
+      // cùng đơn vị thì ghi đơn vị một lần, đúng mẫu đã duyệt: "1,4 – 3,5 tỷ"
+      const khoangGia = a === b ? a : a.split(" ")[1] === b.split(" ")[1] ? `${a.split(" ")[0]} – ${b}` : `${a} – ${b}`;
+      khoangRe = `${purpose === "thue" ? "Giá thuê" : "Giá"}: ${khoangGia}${purpose === "thue" ? "/tháng" : ""}`
+        + (dt.length ? ` · Diện tích: ${so(Math.min(...dt))} – ${so(Math.max(...dt))} m²` : "");
+    }
+  }
 
   const m = new Map<string, number>();
   for (const l of base) {
@@ -171,6 +197,7 @@ export function locDanhSach(
     tangTheoId,
     khuVuc: [...m.entries()].sort((a, b) => b[1] - a[1]),
     tinhHieu: [...tinhChon],
+    khoangRe,
   };
 }
 

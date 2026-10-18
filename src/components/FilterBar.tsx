@@ -178,7 +178,7 @@ export default function FilterBar({
     setActiveIdx(-1);
     if (luu) luuTuKhoaDaGo();
     setDangTim(true);
-    window.setTimeout(() => setDangTim(false), 700);
+    window.setTimeout(() => setDangTim(false), 1200);
     // Báo khối kết quả chạy chuyển động (kể cả khi bộ lọc không đổi) — khách thấy trang vừa tìm
     window.dispatchEvent(new Event("cvr-tim"));
     if (onSearch) return onSearch(next);
@@ -630,7 +630,7 @@ export default function FilterBar({
     {/* Trang danh sách: ô tìm co giãn hết khung, nút "Xem bản đồ" nằm SÁT MÉP PHẢI
         → không còn mảng trống hụt bên phải như khi giới hạn bề ngang. */}
     <div ref={boxRef} className={compact ? "flex w-full gap-2.5" : "flex w-full gap-2.5"}>
-      <div className={compact ? "relative flex-1" : "relative flex h-11 min-w-0 flex-1 items-center rounded-xl bg-cvr-surface ring-1 ring-black/5 transition focus-within:ring-2 focus-within:ring-cvr-blue/40 sm:h-11 sm:rounded-xl sm:ring-1"}>
+      <div className={compact ? "relative flex-1" : "relative flex h-10 min-w-0 flex-1 items-center rounded-xl bg-cvr-surface ring-1 ring-black/5 transition focus-within:ring-2 focus-within:ring-cvr-blue/40 sm:h-10 sm:rounded-xl sm:ring-1"}>
         {/* Kính lúp trái — MOBILE ẩn (đã có nút search xanh bên phải, giống thanh tìm trang chủ) */}
         <svg className="pointer-events-none absolute left-4 top-1/2 hidden h-[18px] w-[18px] -translate-y-1/2 text-cvr-faint sm:block" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
@@ -647,7 +647,7 @@ export default function FilterBar({
           }}
           onKeyDown={onKeyNav}
           // Gợi ý CHẠY CHỮ theo đúng mục (mua bán / cho thuê / dự án)
-          placeholder={goiYChay}
+          placeholder={sugOpen ? "Tìm nhà đất theo khu vực, dự án…" : goiYChay} // đang mở gợi ý (đã chạm ô) → chữ chạy dừng, chỉ còn dòng mờ cố định
           aria-label="Tìm theo từ khoá, khu vực, loại hình, dự án, tin"
           autoComplete="off"
           role="combobox"
@@ -660,8 +660,8 @@ export default function FilterBar({
               // DESKTOP: ô nằm TRONG khối trắng của Hero → nền xám nhạt, không đổ
               // bóng (nếu để trắng + bóng sẽ thành "khối lồng khối").
               // DESKTOP: chừa chỗ cho nút "Tìm kiếm" NẰM TRONG ô (không tách rời).
-              ? `h-11 w-full rounded-xl border border-transparent bg-cvr-surface pl-4 ${typed ? "pr-[5.5rem]" : "pr-14"} text-[15px] text-cvr-ink placeholder-cvr-faint ring-1 ring-black/5 outline-none transition focus:ring-2 focus:ring-cvr-blue/50 sm:h-12 sm:pl-11 ${typed ? "sm:pr-[11.5rem]" : "sm:pr-[8.5rem]"} ${nenSang ? "sm:bg-white sm:text-cvr-ink sm:placeholder-cvr-faint sm:ring-cvr-line sm:focus:ring-cvr-blue/50" : "sm:bg-white/[0.08] sm:text-white sm:placeholder-white/70 sm:ring-white/30 sm:focus:ring-white/60"}`
-              : "h-full w-full min-w-0 flex-1 border-none bg-transparent pl-4 pr-14 text-[15px] text-cvr-ink placeholder-cvr-faint outline-none sm:pl-11 sm:pr-3"
+              ? `h-11 w-full rounded-xl border border-transparent bg-cvr-surface pl-4 ${typed ? "pr-[5.5rem]" : "pr-14"} text-[15px] text-cvr-ink placeholder-cvr-faint ring-1 ring-black/5 outline-none transition focus:ring-2 focus:ring-cvr-blue/50 focus:placeholder:text-transparent sm:h-12 sm:pl-11 ${typed ? "sm:pr-[11.5rem]" : "sm:pr-[8.5rem]"} ${nenSang ? "sm:bg-white sm:text-cvr-ink sm:placeholder-cvr-faint sm:ring-cvr-line sm:focus:ring-cvr-blue/50" : "sm:bg-white/[0.08] sm:text-white sm:placeholder-white/70 sm:ring-white/30 sm:focus:ring-white/60"}`
+              : "h-full w-full min-w-0 flex-1 border-none bg-transparent pl-4 pr-4 text-[15px] text-cvr-ink placeholder-cvr-faint outline-none focus:placeholder:text-transparent sm:pl-11 sm:pr-3"
           }
         />
         {/* Nút XOÁ (×) trong ô — kiểu Google, hiện khi đã gõ (chỉ ô tìm lớn/Hero) */}
@@ -720,26 +720,13 @@ export default function FilterBar({
             MOBILE: BIỂU TƯỢNG Search cao BẰNG khung · DESKTOP: giữ NGUYÊN nút chữ. */}
         {!compact && (
           <>
-            <button
-              type="button"
-              aria-label="Tìm kiếm"
-              // Đã gõ từ khoá / đã chọn lọc → BẤM LÀ CHẠY (cuộn xuống kết quả).
-              // Còn trống trơn → mở trang tìm toàn màn hình để gõ.
-              onClick={() => (typed || hasActiveFilters(f) ? chayTim() : (setSugOpen(false), setOverlay(true)))}
-              className="absolute right-1 top-1 bottom-1 flex w-11 items-center justify-center rounded-lg bg-cvr-blue text-white transition hover:bg-cvr-blue-ink active:scale-95 sm:hidden"
-            >
-              {dangTim ? <Spinner size={18} /> : (
-              <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
-              </svg>
-              )}
-            </button>
+            {/* (Bỏ nút kính lúp xanh trên điện thoại 18/10/2026 — chủ dự án: bàn phím đã có phím Tìm khi chạm ô) */}
             <button
               type="button"
               aria-label="Tìm kiếm"
               onClick={() => chayTim()}
-              // m-1 + h-9 = vừa khít khung h-11 (44px), không lòi ra ngoài
-              className="m-1 hidden h-9 shrink-0 items-center justify-center gap-2 rounded-lg bg-cvr-blue px-5 text-sm font-semibold text-white transition hover:bg-cvr-blue-ink active:scale-95 sm:flex"
+              // m-1 + h-8 = vừa khít khung h-10 (40px), bằng chiều cao các trường lọc bên cạnh
+              className="m-1 hidden h-8 shrink-0 items-center justify-center gap-2 rounded-lg bg-cvr-blue px-5 text-sm font-semibold text-white transition hover:bg-cvr-blue-ink active:scale-95 sm:flex"
             >
               {dangTim && <Spinner />}
               {dangTim ? "Đang tìm…" : "Tìm kiếm"}
@@ -776,22 +763,22 @@ export default function FilterBar({
           (ListingBrowser dựng). Trước đây có hai nút cùng chức năng. */}
     </div>
 
+    {/* BẤM TÌM → VẠCH CHẠY MÉP TRÊN MÀN HÌNH (chủ dự án 18/10/2026: hiệu ứng để khách biết web đang tìm) */}
+    {dangTim && <span aria-hidden className="fixed inset-x-0 top-0 z-[300] h-[3px] overflow-hidden"><span className="thanh-dang-tim block h-full bg-cvr-blue" /></span>}
     {/* ===== MOBILE: TRANG TÌM TOÀN MÀN HÌNH kiểu Google — chạm ô tìm là mở ===== */}
     {overlay && (
-      <div className="anim-truot-len fixed inset-0 z-[200] flex flex-col bg-white sm:hidden">
-        {/* KIỂU AIRBNB (chủ dự án 17/10/2026): MENU trên cùng + nút X đóng ở góc phải; ô tìm nằm DƯỚI menu */}
-        <div className="flex items-center justify-between gap-3 px-4 pb-1 pt-3">
-          <div className="min-w-0 flex-1">{overlayLeading ?? leading}</div>
+      <div className="anim-truot-len fixed inset-0 z-[80] flex flex-col bg-white sm:hidden">
+        {/* MẪU MÀN TÌM TRANG DỰ ÁN (chủ dự án 18/10/2026: "lấy mẫu thanh search Dự án, làm giống nhau cho cả 3"): một hàng
+            ← · ô gõ có × · nút tìm tròn xanh; ngay dưới là hàng trường lọc. z-[80]: dưới bảng chọn của trường lọc (z-100). */}
+        <div className="flex items-center gap-1.5 border-b border-cvr-line px-2 py-2">
           <button
             type="button"
             aria-label="Đóng tìm kiếm"
             onClick={() => { setOverlay(false); setActiveIdx(-1); }}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-cvr-line bg-white text-cvr-ink shadow-sm active:bg-cvr-surface"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-cvr-ink active:bg-cvr-surface"
           >
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+            <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
           </button>
-        </div>
-        <div className="flex items-center gap-1.5 border-b border-cvr-line px-3 pb-3 pt-2">
           <div className="relative flex-1">
             {/* Gõ dài thì ô TỰ GIÃN thêm dòng (tối đa 4 dòng) để khách thấy hết mình đang viết gì. */}
             <textarea
@@ -810,12 +797,12 @@ export default function FilterBar({
                 el.style.height = "auto";
                 el.style.height = `${Math.max(44, el.scrollHeight)}px`;
               }}
-              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); setOverlay(false); } onKeyNav(e); }}
-              placeholder={goiYChay}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); chayTim(); } onKeyNav(e); }} // phím Tìm: chạy tìm thật (có vạch chạy báo đang tìm)
+              placeholder="Tìm nhà đất theo khu vực, dự án…" // màn tìm đã mở: chữ gợi ý KHÔNG chạy (chủ dự án 18/10/2026)
               aria-label="Tìm kiếm"
               autoComplete="off"
               enterKeyHint="search"
-              className="block max-h-[112px] min-h-11 w-full resize-none overflow-y-auto rounded-[22px] bg-cvr-surface py-[11px] pl-4 pr-10 text-[15px] leading-[22px] text-cvr-ink placeholder-cvr-faint outline-none ring-1 ring-black/5 focus:ring-2 focus:ring-cvr-blue/40"
+              className="block max-h-[112px] min-h-11 w-full resize-none overflow-y-auto rounded-[22px] bg-cvr-surface py-[11px] pl-4 pr-10 text-[15px] leading-[22px] text-cvr-ink placeholder-cvr-faint outline-none ring-1 ring-black/5 focus:ring-2 focus:ring-cvr-blue/40 focus:placeholder:text-transparent"
             />
             {(f.keyword || cauCu).trim().length > 0 && (
               <button
@@ -828,8 +815,18 @@ export default function FilterBar({
               </button>
             )}
           </div>
-          {/* MỘT Ô GÕ (chủ dự án 17/10/2026): bỏ nút kính lúp tròn — tìm bằng phím "Tìm" của bàn phím như Google */}
+          {/* (Bỏ nút kính lúp tròn 18/10/2026 — chủ dự án; tìm bằng phím Tìm của bàn phím) */}
         </div>
+        {!compact && (
+          <div className="no-scrollbar flex items-center gap-2 overflow-x-auto border-b border-cvr-line px-3 py-2">
+            {locationDropdown}
+            {projectDropdown}
+            {typeDropdown}
+            {priceDropdown}
+            {areaDropdown}
+            {moreDropdown}
+          </div>
+        )}
         {/* CHỌN MỤC ĐÍCH (Dự án · Mua bán · Cho thuê) — đặt TRONG trang tìm của
             điện thoại, ngay dưới ô nhập. Ngoài Hero mobile chỉ để đúng ô tìm cho
             gọn; vào đây mới có đủ chỗ chọn, và chọn xong bấm Tìm là ra ĐÚNG mục. */}
@@ -873,16 +870,24 @@ export default function FilterBar({
       {/* MOBILE: KHÔNG khung (viền/bóng), KHÔNG padding ngang → thanh tìm rộng hết bề ngang trang.
           DESKTOP: giữ thẻ như cũ. */}
       {/* SÁT HEADER: khung lọc không chừa lề trên (mt-0), chỉ có đệm trong 8px */}
-      <div className="rounded-none bg-white pb-2 pt-1 sm:mt-0 sm:rounded-xl sm:border sm:border-cvr-line sm:p-2 sm:shadow-lux">
-        <div className="flex flex-col gap-2.5">
-          {searchBox}
+      <div className="rounded-none bg-white pb-2 pt-2 sm:mt-0 sm:rounded-xl sm:border sm:border-cvr-line sm:p-2 sm:shadow-lux">
+        {/* MÁY TÍNH LỚN: ô tìm + các trường lọc CHUNG MỘT HÀNG như trang Dự án (chủ dự án 18/10/2026: đồng bộ giao diện 3 tab) */}
+        <div className="flex flex-col gap-2 sm:gap-2.5 lg:flex-row lg:items-center">
+          <div className="min-w-0 lg:flex-1">{searchBox}</div>
           {/* Hàng chip lọc — CUỘN NGANG trên mobile (kiểu Batdongsan), tự xuống hàng trên desktop.
               -mx-2.5/px-2.5 để dải chip tràn sát mép thẻ, cuộn mượt hết bề rộng. */}
-          <div className="no-scrollbar flex items-center gap-2 overflow-x-auto pb-0.5 sm:flex-wrap sm:overflow-visible">
+          <div className="no-scrollbar flex items-center gap-2 overflow-x-auto pb-0.5 sm:flex-wrap sm:overflow-visible lg:shrink-0 lg:flex-nowrap lg:pb-0">
             {/* ĐÃ BỎ chip "Bản đồ" ở hàng ngay dưới thanh tìm kiếm — bị trùng với
                 nút "Xem bản đồ" nằm cạnh ô tìm phía trên. */}
             {/* Thứ tự chuẩn (mockup Mục I phần 2): Khu vực · Dự án · Loại BĐS · Mức giá · Diện tích · Lọc thêm.
                 2 công tắc Tin xác thực / Môi giới chuyên nghiệp đã chuyển vào "Lọc thêm". */}
+            {/* Nút "Làm mới" (xoá hết lọc) Ở ĐẦU HÀNG TRƯỜNG LỌC trên điện thoại — ngay cạnh các trường vừa chọn (chủ dự án 18/10/2026) */}
+            {hasActiveFilters(f) && (
+              <button type="button" onClick={() => { setCauCu(""); onChange(emptyFilters()); }} className="flex h-8 shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-2.5 text-[13px] font-medium text-cvr-blue-ink active:bg-cvr-surface sm:hidden">
+                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h5M20 20v-5h-5M5.6 15A7 7 0 0018 17.4M18.4 9A7 7 0 006 6.6" /></svg>
+                Làm mới
+              </button>
+            )}
             {locationDropdown}
             {projectDropdown}
             {typeDropdown}

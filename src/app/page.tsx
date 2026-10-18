@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
 import Header from "@/components/Header";
+import { Suspense } from "react";
 import TimTrangChu from "@/components/TimTrangChu";
 import { goiYTrangChu, tinDem } from "@/lib/goiYTrangChu";
+import Hero from "@/components/Hero";
 import FeaturedListings from "@/components/FeaturedListings";
 import ProjectsSection from "@/components/ProjectsSection";
 // import ForYou from "@/components/ForYou"; // TẠM ẨN — chờ chốt vị trí đặt lại (component vẫn còn)
@@ -16,7 +17,7 @@ import { HomeExpandProvider, HomeCollapsible } from "@/components/HomeExpand";
 import { getListings, getListingsThe } from "@/lib/listingsDb";
 import { chonTinTrangChu } from "@/lib/tinNoiBat";
 import { getArticles, getProjects } from "@/lib/contentDb";
-import { getHomeAreas, getFeaturedArticleSlug } from "@/lib/siteContent";
+import { getHeroBanners, getHomeAreas, getFeaturedArticleSlug } from "@/lib/siteContent";
 
 // Tiêu đề trang chủ phải CÓ TỪ KHOÁ — trước đây để trống nên Google chỉ thấy
 // "COASTAL LAND", không hiểu trang này bán gì, ở đâu.
@@ -30,11 +31,11 @@ export const metadata: Metadata = {
 export default async function Home() {
   // B2: tin từ Supabase (bảng listings) — chưa có bảng/lỗi → tự dùng dữ liệu mẫu
   // Dự án + Tin tức: nội dung admin tự tạo (contentDb) — chưa có → mẫu
-  // Khu vực (Hero ảnh và banner cuối đã bỏ 17/10/2026 — không giúp SEO, không giúp tìm tin): ảnh/chữ admin sửa được (siteContent) — chưa nhập → mặc định
+  // Hero ảnh + khu vực: ảnh/chữ admin sửa được (siteContent) — chưa nhập → mặc định
   // tinDu: bản đầy đủ (cùng lần đọc có cache) — chỉ dùng ở máy chủ để dựng cụm gợi ý, không gửi xuống máy khách
-  const [listings, tinDu, projects, articles, homeAreas, featuredSlug] = await Promise.all([
+  const [listings, tinDu, projects, articles, homeAreas, featuredSlug, heroBanners] = await Promise.all([
     getListingsThe(), getListings(), getProjects(), getArticles(), getHomeAreas(),
-    getFeaturedArticleSlug(),
+    getFeaturedArticleSlug(), getHeroBanners(),
   ]);
 
   return (
@@ -43,20 +44,21 @@ export default async function Home() {
       <main className="flex-1">
         {/* H1 CỦA TRANG CHỦ — chỉ cho Google và trình đọc màn hình (sr-only); chủ dự án 17/10/2026 bỏ dòng tiêu đề hiển thị. */}
         <HomeExpandProvider>
-          {/* BỘ LỌC LÀ HERO (chủ dự án 17/10/2026: bỏ Hero ảnh, "bộ lọc giờ là Hero" — trọng tâm, dễ dùng,
-              trực quan). Bộ tìm 3 bước kiểu Airbnb — TimTrangChu. Ẩn khi một khối "Xem thêm" đang mở. */}
+          {/* HERO ẢNH + BỘ TÌM MỚI (chủ dự án 18/10/2026: khôi phục Hero theo khung ảnh mới nhất, GIỮ NGUYÊN chức năng bộ tìm
+              kiểu Google — chỉ lấy lại giao diện cũ). Khung đã duyệt 08/10: máy tính 7:2 (ảnh 2880×823), điện thoại 2,3:1
+              (ảnh 1200×520), ảnh ở /admin/noi-dung. Điện thoại: thanh tìm NGAY TRÊN ảnh (ảnh sạch) · máy tính: bộ tìm ĐÈ LÊN mép
+              trên ảnh như Hero cũ. Hero tắt ô tìm riêng (search={false}) — chỉ một bộ tìm. Ẩn khi một khối "Xem thêm" đang mở. */}
           <HomeCollapsible>
-            <section className="border-b border-cvr-line bg-white pt-4 sm:bg-[linear-gradient(#ffffff,#f7f7f7)] sm:pt-10">
-              {/* BỘ LỌC THAY HERO (17/10/2026): gọn, nền xám nhạt đúng màu các khối khác của trang — menu mục đích, một ô tìm, nhóm loại hình */}
-              <h1 className="sr-only">
-                Cổng thông tin mua bán, cho thuê nhà đất
-              </h1>
-              {/* Suspense: khách chạm ô tìm khi trang CHƯA nạp xong mã (4G chậm) → React nạp ô tìm TRƯỚC và chạy lại đúng cú
-                  chạm đó — không mất cú chạm đầu (chủ dự án 17/10/2026: "bấm vào rất lâu không chạy"). */}
-              <Suspense>
-                <TimTrangChu goiYTin={goiYTrangChu(tinDu)} tinDem={tinDem(tinDu)} />
-              </Suspense>
-            </section>
+            <h1 className="sr-only">Cổng thông tin mua bán, cho thuê nhà đất</h1>
+            <div className="relative">
+              <div className="bg-white pt-3 sm:absolute sm:inset-x-0 sm:top-0 sm:z-20 sm:bg-transparent sm:pt-8">
+                {/* Suspense: chạm ô tìm khi trang chưa nạp xong mã → React nạp ô tìm trước, không mất cú chạm đầu */}
+                <Suspense>
+                  <TimTrangChu goiYTin={goiYTrangChu(tinDu)} tinDem={tinDem(tinDu)} trenAnh />
+                </Suspense>
+              </div>
+              <Hero banners={heroBanners} mobileTwoLine search={false} />
+            </div>
           </HomeCollapsible>
 
           {/* 4 khối có nút "Xem thêm" — mỗi khối tự ẩn khi khối khác đang mở.

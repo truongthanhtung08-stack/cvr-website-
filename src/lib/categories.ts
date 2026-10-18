@@ -95,7 +95,7 @@ export const saleCategories: Category[] = [
   {
     slug: "bds-khac", label: "Bất động sản khác",
     h1: "Bán bất động sản khác", title: `Bán bất động sản khác`,
-    desc: `Các loại bất động sản khác đang rao bán.`,
+    desc: `Các loại bất động sản khác đang bán.`,
     types: ["Bất động sản khác"],
   },
 ];

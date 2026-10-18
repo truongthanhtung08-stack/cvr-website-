@@ -91,7 +91,7 @@ for (const p of provincesNew) {
 
 // 1.5) Mục đích / Nhu cầu — Bán · Cho thuê · Dự án (áp dụng TOÀN QUỐC, không giới hạn khu vực)
 const PURPOSE_SUGGESTIONS = [
-  { label: "Nhà đất bán", sub: "Tin rao bán — toàn quốc", href: "/mua-ban", alias: "mua ban nha dat can ban" },
+  { label: "Nhà đất bán", sub: "Tin bán — toàn quốc", href: "/mua-ban", alias: "mua ban nha dat can ban" },
   { label: "Nhà đất cho thuê", sub: "Tin cho thuê — toàn quốc", href: "/cho-thue", alias: "cho thue nha dat can ho thue" },
   { label: "Dự án bất động sản", sub: "Tất cả dự án", href: "/du-an", alias: "du an bat dong san chu dau tu" },
 ];
@@ -156,7 +156,7 @@ export function goiYPhoBien(muc: "ban" | "thue"): Suggestion[] {
 }
 
 export const popularSuggestions: Suggestion[] = [
-  { label: "Nhà đất bán", kind: "Mục đích", sub: "Tin rao bán — toàn quốc", href: "/mua-ban" },
+  { label: "Nhà đất bán", kind: "Mục đích", sub: "Tin bán — toàn quốc", href: "/mua-ban" },
   { label: "Nhà đất cho thuê", kind: "Mục đích", sub: "Tin cho thuê — toàn quốc", href: "/cho-thue" },
   { label: "Đà Nẵng", kind: "Khu vực", province: "Đà Nẵng" },
   { label: "Huế", kind: "Khu vực", province: "Huế" },

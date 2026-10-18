@@ -10,7 +10,7 @@ import TruongLocTrangChu, { locTuCau } from "@/components/TruongLocTrangChu";
 import { timKhuVuc, slugKhuVuc } from "@/lib/khuVuc";
 import { duongDanBuoc, duongDanSach, duongDanTuCau, duongDanGanNhat } from "@/lib/duongDanTim";
 import { hintsFor, listingHints } from "@/lib/searchHints";
-import { MagnifyingGlass, ClockCounterClockwise, X, CircleNotch, ArrowUpLeft, ArrowLeft, ArrowRight, type Icon as PhIcon } from "@phosphor-icons/react";
+import { MagnifyingGlass, ClockCounterClockwise, X, CircleNotch, ArrowUpLeft, type Icon as PhIcon } from "@phosphor-icons/react";
 import { TabIcon, type TenIcon } from "@/components/MobileTabBar";
 
 // ============================================================================
@@ -157,7 +157,8 @@ function locCauGoiY(ds: CauGoiY[], go: string, muc: "ban" | "thue", toiDa: numbe
 }
 
 /** goiYTin: cụm từ khoá dài dựng từ tin thật ở máy chủ (goiYTrangChu) */
-export default function TimTrangChu({ goiYTin, tinDem }: { goiYTin?: CauGoiY[]; tinDem?: TinDem[] }) {
+/** trenAnh: bộ tìm nằm ĐÈ LÊN ảnh Hero (máy tính) → menu chữ trắng cho đọc được trên ảnh */
+export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiYTin?: CauGoiY[]; tinDem?: TinDem[]; trenAnh?: boolean }) {
   const [mucDangChon, setMuc] = useState<Muc>("ban");
   const muc = mucDangChon;
   const [tuKhoa, setTuKhoa] = useState("");
@@ -562,8 +563,9 @@ export default function TimTrangChu({ goiYTin, tinDem }: { goiYTin?: CauGoiY[]; 
   };
   const dong = (s: Suggestion, icon: PhIcon, onClick: () => void, key: string, idx: number, xoa?: () => void) => (
     <div key={key} onMouseEnter={() => setChon(idx)} className={`flex items-center rounded-xl transition ${chon === idx ? "bg-black/[0.05]" : "hover:bg-black/[0.04]"}`}>
-      <button type="button" onClick={onClick} className="flex min-w-0 flex-1 items-center gap-3 rounded-xl px-2 py-2.5 text-left active:bg-black/[0.06] sm:px-3 sm:py-3">
-        {<span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f1f3f4] text-cvr-ink"><Icon i={icon} className="h-[20px] w-[20px]" /></span>}
+      <button type="button" onClick={onClick} className="flex min-w-0 flex-1 items-center gap-3 rounded-xl px-2 py-2 text-left active:bg-black/[0.06] sm:px-3 sm:py-2.5">
+        {/* gọn như màn tìm cũ đã chuẩn (chủ dự án 18/10/2026): kính lúp / đồng hồ nhỏ, không vòng tròn */}
+        <span className="flex w-5 shrink-0 justify-center text-cvr-muted"><Icon i={icon} className="h-[18px] w-[18px]" /></span>
         <span className="flex min-w-0 flex-col">
           {/* Gợi ý kiểu Google: MỘT dòng chữ, không dòng phụ (chủ dự án 17/10/2026) */}
           <span className="break-words text-[15px] leading-6 text-cvr-ink sm:text-[16px]">{boiDam(s.label)}</span>
@@ -626,7 +628,7 @@ export default function TimTrangChu({ goiYTin, tinDem }: { goiYTin?: CauGoiY[]; 
             aria-selected={on}
             onClick={() => { setMuc(t.muc); setLoc(t.muc === "duan" ? emptyFilters() : locTuCau(tuKhoa, t.muc)); }}
             className={`group relative flex items-center whitespace-nowrap px-1 font-semibold transition-colors duration-300 ${dinh ? "gap-1.5 pb-2 text-[13px] sm:text-[14px]" : ngang ? "gap-3 pb-3.5 text-[16px]" : "flex-col gap-1 pb-2.5 text-[13px] sm:gap-1.5 sm:pb-3 sm:text-[15px]"} ${
-              toi ? (on ? "text-white" : "text-[#a1a1a6] hover:text-white") : on ? "text-cvr-blue" : "text-cvr-muted hover:text-cvr-ink"
+              toi ? (on ? "text-white [text-shadow:0_1px_8px_rgba(0,0,0,0.55)]" : "text-white/85 [text-shadow:0_1px_8px_rgba(0,0,0,0.55)] hover:text-white") : on ? "text-cvr-blue" : "text-cvr-muted hover:text-cvr-ink"
             }`}
           >
             <TabIcon name={t.icon} active={on} className={`${dinh ? "h-5 w-5" : ngang ? "h-8 w-8" : gon ? "h-6 w-6" : "h-[26px] w-[26px] sm:h-8 sm:w-8"} transition-transform duration-300 group-active:scale-90`} />
@@ -702,12 +704,26 @@ export default function TimTrangChu({ goiYTin, tinDem }: { goiYTin?: CauGoiY[]; 
       {/* ═══ ĐIỆN THOẠI: menu mục đích · ô tìm viên thuốc một dòng (chạm mở màn tìm) · nhóm loại hình ═══ */}
       {/* ĐIỆN THOẠI ĐÚNG KIỂU AIRBNB (chủ dự án 17/10/2026): ô tìm viên thuốc ở trên, menu mục đích (biểu tượng
           trên chữ, căn giữa) ở dưới */}
-      <div className="pb-2 sm:hidden">
+      <div className={`${trenAnh ? "pb-1.5" : "pb-2"} sm:hidden`}>
         {/* GHI NHẬN CÚ CHẠM SỚM (đo bằng chạm thật 17/10/2026: chạm khi trang chưa chạy xong mã thì mất cú chạm đầu tiên):
             đoạn mã nhỏ này chạy NGAY khi trang hiện ra, nhớ lại khách đã chạm thanh tìm; mã chính chạy xong là mở màn tìm. */}
         <script dangerouslySetInnerHTML={{ __html: "document.addEventListener('click',function(e){var t=e.target;if(t&&t.closest&&t.closest('[data-mo-tim]'))window.__cvrMoTim=1},true);document.addEventListener('pointerdown',function(e){var t=e.target;var o=!!(t&&t.closest&&t.closest('[data-o-tim-pc],[data-bang-goi-y],[data-menu-pc] [role=tab]'));window.__cvrBamTrongPc=o;if(!window.__cvrDaChay){var p=document.querySelector('[data-pc-tim]');if(p){if(o&&t.closest('[data-o-tim-pc]'))p.setAttribute('data-cho-mo','');else p.removeAttribute('data-cho-mo')}}},true);document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!window.__cvrDaChay){var p=document.querySelector('[data-pc-tim]');if(p)p.removeAttribute('data-cho-mo')}},true)" }} />
-        {/* Menu Mua bán · Cho thuê · Dự án Ở TRÊN thanh tìm như máy tính (chủ dự án 18/10/2026) */}
-        <div className="mb-3">{tabsOf(false, true)}</div>
+        {/* GIAO DIỆN Ô LỌC CŨ trên nền Hero (chủ dự án 18/10/2026: "chỉ giao diện bộ lọc cũ" — chức năng giữ nguyên bộ tìm
+            mới): một thanh xám bo góc, nút xanh vuông có kính lúp nằm trong ô bên phải, không hàng menu (như HomeSearch cũ) */}
+        {!trenAnh && <div className="mb-3">{tabsOf(false, true)}</div>}
+        {trenAnh ? (
+          <button
+            type="button"
+            data-mo-tim
+            onClick={moMo}
+            className="relative flex h-11 w-full items-center rounded-xl bg-cvr-surface pl-4 pr-14 text-left ring-1 ring-black/5 transition active:scale-[0.99]"
+          >
+            <span className={`min-w-0 truncate text-[15px] ${kw ? "text-cvr-ink" : "text-cvr-faint"}`}>{kw || <span ref={chuChayDt}>Tìm nhà đất theo khu vực, dự án…</span>}</span>
+            <span aria-hidden className="absolute bottom-1 right-1 top-1 flex w-11 items-center justify-center rounded-lg bg-cvr-blue text-white">
+              <svg className="h-[22px] w-[22px]" fill="none" stroke="currentColor" strokeWidth={2.4} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" /></svg>
+            </span>
+          </button>
+        ) : (
         <button
           type="button"
           data-mo-tim
@@ -717,6 +733,7 @@ export default function TimTrangChu({ goiYTin, tinDem }: { goiYTin?: CauGoiY[]; 
           <Icon i={MagnifyingGlass} dam className="h-[18px] w-[18px] shrink-0 text-cvr-ink" />
           <span className={`min-w-0 text-left text-[15px] leading-snug ${kw ? "break-words font-semibold text-cvr-ink" : "truncate text-cvr-muted"}`}>{kw || <span ref={chuChayDt}>Tìm nhà đất theo khu vực, dự án…</span>}</span>
         </button>
+        )}
       </div>
 
       {/* MÀN TÌM ĐIỆN THOẠI CHÉP ĐÚNG AIRBNB (ảnh chủ dự án gửi 17/10/2026): nền là trang phía sau làm MỜ NHOÈ ·
@@ -747,30 +764,38 @@ export default function TimTrangChu({ goiYTin, tinDem }: { goiYTin?: CauGoiY[]; 
             {/* Bàn phím bật → ẩn tiêu đề (ẩn ngay: co dần thì phải tính lại bố cục mỗi khung hình → giật) */}
             {!phimMo && !dangGo && <h2 className="mb-4 text-[22px] font-bold leading-[26px] tracking-tight text-cvr-ink">Tìm kiếm</h2>}
             {/* Ô GÕ ĐỨNG YÊN Ở MÉP TRÊN khi đang gõ (như Google): gợi ý dài vuốt xuống thì chỉ danh sách trôi, ô gõ luôn thấy */}
-            <div className={dangGo ? "sticky top-0 z-10 -mx-5 -mt-3 shrink-0 border-b border-[#e0e0e0] bg-white px-5 pb-1 pt-3" : "shrink-0"}>
-            <div className="relative">
+            <div className={dangGo ? "sticky top-0 z-10 -mx-5 -mt-3 shrink-0 border-b border-[#e0e0e0] bg-white px-3 pb-1 pt-3" : "shrink-0"}>
+            {/* MÀN GÕ (chủ dự án 18/10/2026): 3 menu ở trên · hàng dưới ← · ô gõ bo tròn, giống màn tìm Mua bán / Cho thuê / Dự án; bỏ nút × */}
+            {dangGo && (
+              <div className="flex items-center pb-2.5">
+                <div role="tablist" className="flex items-center gap-6 pl-1">
+                  {TABS.map((t) => (
+                    <button key={t.muc} type="button" role="tab" aria-selected={muc === t.muc} onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => { setMuc(t.muc); setLoc(t.muc === "duan" ? emptyFilters() : locTuCau(tuKhoa, t.muc)); }}
+                      className={`relative pb-1.5 text-[15px] font-semibold transition-colors ${muc === t.muc ? "text-cvr-ink" : "text-cvr-muted"}`}>
+                      {t.nhan}
+                      {muc === t.muc && <span className="absolute inset-x-0 -bottom-px h-[2.5px] rounded-full bg-cvr-blue" />}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            {/* ĐANG GÕ: nút ← quay lại đứng CẠNH ô gõ, giống màn tìm Mua bán / Cho thuê / Dự án (chủ dự án 18/10/2026: bỏ nút ×) */}
+            <div className={dangGo ? "flex items-center gap-1" : ""}>
+            {dangGo && <button type="button" aria-label="Quay lại" onMouseDown={(e) => e.preventDefault()} onClick={dongMo} className="-ml-1 flex h-11 w-10 shrink-0 items-center justify-center rounded-full text-cvr-ink active:bg-cvr-surface"><svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg></button>}
+            <div className="relative min-w-0 flex-1">
               {/* kính lúp trong ô — đúng ô "Where?" của Airbnb */}
-              {dangGo ? (
-                <button type="button" aria-label="Quay lại" onMouseDown={(e) => e.preventDefault()} onClick={dongMo} className="absolute left-1.5 top-7 z-[1] flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full text-cvr-ink active:bg-black/5"><Icon i={ArrowLeft} dam className="h-5 w-5" /></button>
-              ) : (
-                <span className="pointer-events-none absolute left-4 top-7 -translate-y-1/2 text-cvr-ink"><Icon i={MagnifyingGlass} dam className="h-5 w-5" /></span>
-              )}
-              {oNhap(dangGo ? "max-h-[152px] min-h-[54px] w-full border-0 bg-white py-[15px] pl-12 pr-10 text-[17px] leading-6 text-cvr-ink placeholder-cvr-muted outline-none" : "max-h-[152px] min-h-[54px] w-full rounded-xl border border-[#b0b0b0] bg-white py-[15px] pl-12 pr-10 text-[16px] leading-6 text-cvr-ink placeholder-cvr-muted outline-none transition focus:border-cvr-ink", "Tìm nhà đất")}
+              {!dangGo && <span className="pointer-events-none absolute left-4 top-7 -translate-y-1/2 text-cvr-ink"><Icon i={MagnifyingGlass} dam className="h-5 w-5" /></span>}
+              {oNhap(dangGo ? "max-h-[152px] min-h-[46px] w-full rounded-[23px] border border-transparent bg-cvr-surface py-[11px] pl-4 pr-10 text-[16px] leading-6 text-cvr-ink placeholder-cvr-faint outline-none ring-2 ring-cvr-blue/40 focus:placeholder:text-transparent" : "max-h-[152px] min-h-[54px] w-full rounded-xl border border-[#b0b0b0] bg-white py-[15px] pl-12 pr-10 text-[16px] leading-6 text-cvr-ink placeholder-cvr-muted outline-none transition focus:border-cvr-ink", "Tìm nhà đất")}
               {tuKhoa && (
-                <button type="button" aria-label="Xoá từ khoá" onClick={xoaHet} className="absolute right-2 top-7 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-cvr-muted active:bg-black/5">
+                <button type="button" aria-label="Xoá từ khoá" onClick={xoaHet} className={`absolute right-2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-cvr-muted active:bg-black/5 ${dangGo ? "top-[23px]" : "top-7"}`}>
                   <Icon i={X} className="h-4 w-4" />
                 </button>
               )}
             </div>
+            </div>
             {/* NÚT TÌM TRÒN XANH "→" dưới ô gõ, đúng màn gõ của Google (chủ dự án 18/10/2026, ảnh khoanh đỏ): bấm là tìm; đang
                 tìm thì xoay vòng + vạch chạy mép trên màn hình — khách biết web đang chạy */}
-            {dangGo && (
-              <div className="flex items-center justify-end pb-1 pt-2">
-                {<button type="button" aria-label="Tìm" onMouseDown={(e) => e.preventDefault()} onClick={() => tim(tuKhoa)} className="anim-hien-chu flex h-12 w-12 items-center justify-center rounded-full bg-cvr-blue text-white shadow-[0_2px_8px_rgba(0,113,227,0.35)] transition active:scale-90">
-                  <Icon i={dangTim ? CircleNotch : ArrowRight} dam className={`h-[22px] w-[22px] ${dangTim ? "animate-spin" : ""}`} />
-                </button>}
-              </div>
-            )}
             </div>
             {dangGo && dangTim && <span aria-hidden className="fixed inset-x-0 top-0 z-[230] h-[3px] overflow-hidden"><span className="thanh-dang-tim block h-full bg-cvr-blue" /></span>}
             {/* MÀN GÕ GỌN NHƯ GOOGLE (chủ dự án 18/10/2026, ảnh Google: "rườm rà, thô kệch"): chỉ ô gõ không viền + đường kẻ, bên dưới là
@@ -798,15 +823,37 @@ export default function TimTrangChu({ goiYTin, tinDem }: { goiYTin?: CauGoiY[]; 
 
       {/* ═══ MÁY TÍNH KIỂU AIRBNB (chủ dự án 17/10/2026: "trên PC để 3 menu ở trên"): menu mục đích (biểu tượng
           trên chữ, căn giữa) ở TRÊN ô tìm lớn · bấm vào ô mới xổ trường lọc + gợi ý ═══ */}
-      <div ref={pcRef} data-pc-tim className="relative mx-auto hidden max-w-[880px] pb-6 sm:block">
-        <div data-menu-pc className="mb-6 select-none">{tabsOf(false)}</div>
+      {/* trenAnh = GIAO DIỆN Ô LỌC CŨ trên ảnh Hero (chủ dự án 18/10/2026): khối kính mờ, 3 nút viên (mục chọn nền trắng),
+          ô tìm trong suốt chữ trắng, nút "Tìm kiếm" nằm trong ô — chức năng vẫn là bộ tìm mới */}
+      <div ref={pcRef} data-pc-tim className={`relative mx-auto hidden pb-6 sm:block ${trenAnh ? "max-w-2xl" : "max-w-[880px]"}`}>
+        <div className={trenAnh ? "rounded-[22px] bg-black/15 p-2.5 shadow-2xl shadow-black/25 ring-1 ring-inset ring-white/25 backdrop-blur-xl backdrop-saturate-150" : ""}>
+        {trenAnh ? (
+          <div data-menu-pc className="mb-2 flex select-none justify-center">
+            <div role="tablist" className="inline-flex items-center gap-1">
+              {TABS.map((t) => (
+                <button key={t.muc} type="button" role="tab" aria-selected={muc === t.muc}
+                  onClick={() => { setMuc(t.muc); setLoc(t.muc === "duan" ? emptyFilters() : locTuCau(tuKhoa, t.muc)); }}
+                  className={`rounded-full px-4 py-1.5 text-[13.5px] font-semibold tracking-[-0.01em] transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${muc === t.muc ? "bg-white text-cvr-ink shadow-[0_1px_6px_rgba(0,0,0,0.2)]" : "text-white/85 hover:bg-white/15 hover:text-white"}`}>
+                  {t.nhan}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div data-menu-pc className="mb-6 select-none">{tabsOf(false)}</div>
+        )}
         <div className="relative z-[1]">
-          <div data-o-tim-pc className={`flex items-start rounded-[32px] border border-cvr-line bg-white transition-shadow duration-300 ${moPc ? "shadow-[0_8px_28px_rgba(0,0,0,0.14)]" : "shadow-[0_3px_12px_rgba(0,0,0,0.08)] hover:shadow-[0_5px_18px_rgba(0,0,0,0.12)]"}`}>
-            <label className="flex flex-1 cursor-text items-start gap-3 py-[18px] pl-7 pr-3">
-              {oNhap("max-h-[40vh] w-full bg-transparent text-[16px] leading-[26px] text-cvr-ink placeholder-cvr-muted !outline-none !ring-0 !shadow-none", "Tìm nhà đất theo khu vực, dự án hoặc gõ cả câu")}
+          <div data-o-tim-pc className={trenAnh
+            ? "relative flex items-start rounded-xl bg-white/[0.08] ring-1 ring-white/30 transition focus-within:ring-white/60"
+            : `flex items-start rounded-[32px] border border-cvr-line bg-white transition-shadow duration-300 ${moPc ? "shadow-[0_8px_28px_rgba(0,0,0,0.14)]" : "shadow-[0_3px_12px_rgba(0,0,0,0.08)] hover:shadow-[0_5px_18px_rgba(0,0,0,0.12)]"}`}>
+            {trenAnh && <span aria-hidden className="pointer-events-none absolute left-4 top-[14px] text-white/70"><Icon i={MagnifyingGlass} dam className="h-5 w-5" /></span>}
+            <label className={`flex flex-1 cursor-text items-start gap-3 ${trenAnh ? "py-3 pl-11 pr-2" : "py-[18px] pl-7 pr-3"}`}>
+              {oNhap(trenAnh
+                ? "max-h-[40vh] w-full bg-transparent text-[15px] leading-6 text-white placeholder-white/70 !outline-none !ring-0 !shadow-none focus:placeholder:text-transparent"
+                : "max-h-[40vh] w-full bg-transparent text-[16px] leading-[26px] text-cvr-ink placeholder-cvr-muted !outline-none !ring-0 !shadow-none focus:placeholder:text-transparent", "Tìm nhà đất theo khu vực, dự án hoặc gõ cả câu")}
             </label>
             {tuKhoa && (
-              <button type="button" aria-label="Xoá chữ đã gõ" onMouseDown={(e) => e.preventDefault()} onClick={() => setTuKhoa("")} className="anim-hien-chu mt-[18px] flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-cvr-surface text-cvr-muted transition hover:bg-black/[0.08] hover:text-cvr-ink">
+              <button type="button" aria-label="Xoá chữ đã gõ" onMouseDown={(e) => e.preventDefault()} onClick={() => setTuKhoa("")} className={`anim-hien-chu flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition ${trenAnh ? "mt-[10px] text-white/70 hover:bg-white/15 hover:text-white" : "mt-[18px] bg-cvr-surface text-cvr-muted hover:bg-black/[0.08] hover:text-cvr-ink"}`}>
                 <Icon i={X} dam className="h-3.5 w-3.5" />
               </button>
             )}
@@ -814,7 +861,9 @@ export default function TimTrangChu({ goiYTin, tinDem }: { goiYTin?: CauGoiY[]; 
               type="button"
               onClick={() => tim(tuKhoa)}
               aria-label="Tìm kiếm"
-              className={`m-2 flex h-12 shrink-0 items-center justify-center gap-2 overflow-hidden rounded-full bg-cvr-blue text-[15px] font-semibold text-white transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:bg-cvr-blue-ink active:scale-95 px-6`}
+              className={trenAnh
+                ? "m-1.5 flex h-9 shrink-0 items-center justify-center gap-2 rounded-lg bg-cvr-blue px-6 text-[14px] font-semibold text-white transition hover:bg-cvr-blue-ink active:scale-95"
+                : `m-2 flex h-12 shrink-0 items-center justify-center gap-2 overflow-hidden rounded-full bg-cvr-blue text-[15px] font-semibold text-white transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:bg-cvr-blue-ink active:scale-95 px-6`}
             >
               <Icon i={dangTim ? CircleNotch : MagnifyingGlass} dam className={`h-5 w-5 shrink-0 ${dangTim ? "animate-spin" : ""}`} />
               <span className="whitespace-nowrap">{nhanTim}</span>
@@ -842,6 +891,7 @@ export default function TimTrangChu({ goiYTin, tinDem }: { goiYTin?: CauGoiY[]; 
               </div>
             </div>
           )}
+        </div>
         </div>
       </div>
     </div>

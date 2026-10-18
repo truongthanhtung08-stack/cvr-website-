@@ -216,6 +216,8 @@ export function suaChinhTa(raw: string): string | null {
   const kq = raw.split(/(\s+)/).map((tok) => {
     const n = normalizeVi(tok).replace(/[^a-z0-9]/g, "");
     if (n.length < 4 || /\d/.test(n) || td.has(n)) return tok; // chữ ngắn (sun, an…) dễ đoán nhầm — "sun cosmo" thành "sung"
+    // CHỮ ĐANG GÕ DỞ (là phần đầu của một chữ có thật: "thiế" → "thiết") thì không sửa — "phan thiế" từng thành "phan thiện"
+    for (const w of td) if (w.length > n.length && w.startsWith(n)) return tok;
     // HAI CHỮ DÍNH LIỀN (quên dấu cách): "tạiphan" → "tại phan", "canho" → "căn hộ"
     for (let k = 2; k <= n.length - 2; k++) {
       if (td.has(n.slice(0, k)) && td.has(n.slice(k))) { doi = true; return `${coDau(n.slice(0, k))} ${coDau(n.slice(k))}`; }

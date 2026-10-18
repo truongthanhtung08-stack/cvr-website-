@@ -202,42 +202,19 @@ export default function BackBar() {
     router.push(cha);
   }
 
-  // ── RIÊNG TRANG DỰ ÁN (/du-an): NÚT TRÒN NỔI, không phải thanh ngang ───────
-  // Trang này đầu màn hình đã có ô tìm + BANNER rất to, thêm một thanh Back cao
-  // ~53px nữa là mất trọn một dòng. Ở đây nút back thành nút tròn `fixed` đè lên
-  // nội dung → cả trang kéo lên 53px mà vẫn luôn có lối quay lại.
-  // Nền trắng mờ + bóng để nổi rõ trên cả nền trắng lẫn ảnh banner tối.
-  // z-40: dưới header (z-50) và drawer menu (z-[45]), trên nội dung trang.
-  // CÁC TRANG KHÁC GIỮ NGUYÊN thanh Back cũ (trang chi tiết dự án còn có
-  // ProjectNav dính theo mốc 113px = header + thanh back — bỏ thanh là lệch).
-  if (pathname === "/du-an") {
-    return (
-      <button
-        type="button"
-        onClick={quayLai}
-        aria-label={`Quay lại — ${ten}`}
-        title={`Quay lại — ${ten}`}
-        // top = header 60px + lề trên thanh tìm 6px + 4px → nút THẲNG HÀNG với ô tìm
-      // (ô tìm cao 44px, tâm ở 88px; nút cao 36px, tâm cũng 88px).
-      className="fixed left-2 top-[calc(60px+var(--at)+10px)] z-40 flex h-9 w-9 items-center justify-center rounded-full border border-black/5 bg-white/90 text-cvr-ink shadow-[0_2px_10px_rgba(0,0,0,0.18)] backdrop-blur-md transition active:scale-95 active:bg-white lg:hidden"
-      >
-        <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-        </svg>
-      </button>
-    );
-  }
-
+  // (18/10/2026 — chủ dự án: thanh tìm + nút điều hướng 3 trang Mua bán · Cho thuê · Dự án PHẢI GIỐNG NHAU → bỏ nút tròn nổi
+  // riêng của /du-an, dùng chung thanh "← Dự án" như các trang khác.)
   return (
     <div className="thanh-quay-lai sticky top-[calc(60px+var(--at))] z-30 border-b border-cvr-line bg-white/95 backdrop-blur lg:hidden">
-      <div className="flex items-center gap-2 px-3 py-2">
+      {/* nút ← nhỏ lại (chủ dự án 18/10/2026) — giữ ĐÚNG chiều cao thanh 53px (trang khác bám mốc này) */}
+      <div className="flex items-center gap-2 px-4 py-[10px]">
         <button
           type="button"
           onClick={quayLai}
           aria-label="Quay lại"
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-cvr-line bg-white text-cvr-ink transition active:bg-cvr-surface"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-cvr-line bg-white text-cvr-ink transition active:bg-cvr-surface"
         >
-          <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
           </svg>
         </button>

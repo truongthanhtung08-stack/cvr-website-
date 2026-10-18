@@ -281,7 +281,7 @@ export default function ProjectsBrowser({
           {/* Ô tìm nhanh dự án — nút search XANH nằm SÁT mép phải trong khung (mobile), đồng bộ Mua bán/Cho thuê.
               MOBILE: chừa lề trái đúng chỗ NÚT BACK TRÒN nổi (8px + 36px) để nút đứng
               CẠNH ô tìm thành một hàng, không đè lên chữ gợi ý đang chạy. */}
-          <div className="ml-11 flex flex-1 items-center gap-2 sm:ml-0">
+          <div className="flex flex-1 items-center gap-2">
           <div ref={sugBoxRef} className="relative flex-1">
             <svg className="pointer-events-none absolute left-3 top-1/2 hidden h-4 w-4 -translate-y-1/2 text-cvr-faint sm:block" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
@@ -297,9 +297,10 @@ export default function ProjectsBrowser({
               }}
               onKeyDown={(e) => { if (e.key === "Enter") chayTim(); }}
               // Gợi ý CHẠY CHỮ của mục Dự án
-              placeholder={goiYChay}
+              placeholder={sugOpen ? "Tìm dự án…" : goiYChay} // đã chạm ô → chữ chạy dừng
               aria-label="Tìm nhanh dự án"
-              className="h-11 w-full rounded-xl bg-cvr-surface pl-4 pr-14 text-[15px] text-cvr-ink placeholder-cvr-faint ring-1 ring-black/5 outline-none transition focus:ring-2 focus:ring-cvr-blue/50 sm:h-10 sm:border sm:border-transparent sm:pl-9 sm:pr-24 sm:ring-0 sm:focus:border-cvr-line sm:focus:bg-white"
+              enterKeyHint="search"
+              className="h-10 w-full rounded-xl bg-cvr-surface pl-4 pr-10 text-[15px] text-cvr-ink placeholder-cvr-faint ring-1 ring-black/5 outline-none transition focus:ring-2 focus:ring-cvr-blue/50 focus:placeholder:text-transparent sm:h-10 sm:border sm:border-transparent sm:pl-9 sm:pr-[8.5rem] sm:ring-0 sm:focus:border-cvr-line sm:focus:bg-white"
             />
             {/* Nút xoá nhanh (×) — đồng bộ với ô tìm Mua bán/Cho thuê */}
             {q.trim().length > 0 && (
@@ -307,7 +308,7 @@ export default function ProjectsBrowser({
                 type="button"
                 aria-label="Xoá tìm kiếm"
                 onClick={() => setQ("")}
-                className="absolute right-14 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-cvr-faint transition hover:bg-black/5 hover:text-cvr-ink active:scale-95 sm:right-[5.5rem]"
+                className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-cvr-faint transition hover:bg-black/5 hover:text-cvr-ink active:scale-95 sm:right-[8.25rem]"
               >
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
@@ -356,48 +357,30 @@ export default function ProjectsBrowser({
               type="button"
               aria-label="Tìm kiếm dự án"
               onClick={chayTim}
-              className="absolute right-1 top-1 bottom-1 hidden items-center gap-1.5 rounded-lg bg-cvr-blue px-3 text-[13px] font-semibold text-white transition hover:bg-cvr-blue-ink active:scale-95 sm:flex"
+              className="absolute bottom-1.5 right-1.5 top-1.5 hidden items-center justify-center gap-2 rounded-lg bg-cvr-blue px-6 text-[14px] font-semibold text-white transition hover:bg-cvr-blue-ink active:scale-95 sm:flex"
             >
-              {dangTim ? <SpinnerDuAn size={16} /> : (
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.4} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
-              </svg>
-              )}
-              {dangTim ? "Đang tìm…" : "Tìm"}
+              {dangTim && <SpinnerDuAn size={16} />}
+              {dangTim ? "Đang tìm…" : "Tìm kiếm"}
             </button>
 
-            {/* Nút search XANH — bo tròn mềm, snug mép phải (giống trang chủ).
-                Đã gõ từ khoá / đã chọn lọc → BẤM LÀ CHẠY (cuộn xuống kết quả);
-                còn trống trơn → mở trang tìm toàn màn hình để gõ và chọn. */}
-            <button
-              type="button"
-              aria-label="Tìm kiếm"
-              onClick={() => (hasActive ? chayTim() : setOverlay(true))}
-              className="absolute right-1 top-1 bottom-1 flex w-11 items-center justify-center rounded-lg bg-cvr-blue text-white transition hover:bg-cvr-blue-ink active:scale-95 sm:hidden"
-            >
-              {dangTim ? <SpinnerDuAn size={18} /> : (
-              <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" /></svg>
-              )}
-            </button>
+            {/* (Bỏ nút kính lúp xanh trên điện thoại 18/10/2026 — chủ dự án: bàn phím đã có phím Tìm khi chạm ô) */}
           </div>
           </div>
 
           {/* Chip lọc: Khu vực · Loại hình · Trạng thái.
               MOBILE: ẨN ở đây — chuyển vào TRANG TÌM toàn màn hình (bấm nút tìm kiếm),
               đúng kiểu bộ lọc trang chủ mobile. DESKTOP: giữ nguyên tại chỗ. */}
-          <div className="no-scrollbar hidden items-center gap-2 overflow-x-auto pb-0.5 sm:flex lg:overflow-visible">
+          <div className="no-scrollbar flex items-center gap-2 overflow-x-auto pb-0.5 lg:overflow-visible">
+            {/* Nút "Làm mới" (xoá hết lọc) Ở ĐẦU HÀNG TRƯỜNG LỌC trên điện thoại — ngay cạnh các trường vừa chọn (chủ dự án 18/10/2026) */}
+            {hasActive && (
+              <button type="button" onClick={reset} className="flex h-8 shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-2.5 text-[13px] font-medium text-cvr-blue-ink active:bg-cvr-surface sm:hidden">
+                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h5M20 20v-5h-5M5.6 15A7 7 0 0018 17.4M18.4 9A7 7 0 006 6.6" /></svg>
+                Làm mới
+              </button>
+            )}
             {chipLoc}
           </div>
 
-          {hasActive && (
-            <button
-              type="button"
-              onClick={reset}
-              className="hidden h-10 shrink-0 rounded-lg px-3 text-sm font-medium text-cvr-muted transition hover:text-cvr-blue-ink sm:block"
-            >
-              Đặt lại
-            </button>
-          )}
         </div>
       </div>
 
@@ -423,9 +406,10 @@ export default function ProjectsBrowser({
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter") chayTim(); }}
-                placeholder={goiYChay}
+                placeholder="Tìm dự án…" // màn tìm đã mở: chữ gợi ý KHÔNG chạy (chủ dự án 18/10/2026)
                 aria-label="Tìm dự án"
-                className="h-11 w-full rounded-full bg-cvr-surface pl-4 pr-10 text-[15px] text-cvr-ink placeholder-cvr-faint outline-none ring-1 ring-black/5 focus:ring-2 focus:ring-cvr-blue/40"
+                enterKeyHint="search"
+                className="h-11 w-full rounded-full bg-cvr-surface pl-4 pr-10 text-[15px] text-cvr-ink placeholder-cvr-faint outline-none ring-1 ring-black/5 focus:ring-2 focus:ring-cvr-blue/40 focus:placeholder:text-transparent"
               />
               {q.trim().length > 0 && (
                 <button
@@ -438,16 +422,7 @@ export default function ProjectsBrowser({
                 </button>
               )}
             </div>
-            <button
-              type="button"
-              aria-label="Tìm kiếm"
-              onClick={chayTim}
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-cvr-blue text-white active:scale-95"
-            >
-              {dangTim ? <SpinnerDuAn size={18} /> : (
-              <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={2.4} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" /></svg>
-              )}
-            </button>
+            {/* (Bỏ nút kính lúp tròn 18/10/2026 — chủ dự án; tìm bằng phím Tìm của bàn phím) */}
           </div>
           {/* BỘ LỌC dự án — MOBILE nằm TRONG trang tìm này (giống trang chủ đưa
               tab Mua bán/Cho thuê/Dự án vào trang tìm). Chức năng giữ nguyên. */}
@@ -495,36 +470,45 @@ export default function ProjectsBrowser({
           id="ket-qua" + scroll-mt: bấm search từ trang chủ → tự cuộn tới đây, bỏ qua
           banner Hero rất to (áp cho cả PC & Mobile). */}
       <div id="ket-qua" className="order-3 scroll-mt-20 sm:scroll-mt-24">
-      {/* Tiêu đề + bộ đếm nhảy theo bộ lọc (kiểu Batdongsan) */}
-      {tieuDePhu ? (
-        <h2 className="mt-3 text-2xl font-semibold tracking-tight text-cvr-ink sm:mt-6 sm:text-3xl">{tieuDe}</h2>
-      ) : (
-        <h1 className="mt-3 text-2xl font-semibold tracking-tight text-cvr-ink sm:mt-6 sm:text-3xl">
-          {tieuDe}
-        </h1>
-      )}
-      <p className="mt-1.5 text-sm text-cvr-muted">
-        {/* Coastal Land là CỔNG THÔNG TIN — không phân phối, không mua bán dự án.
-            Câu này chỉ nói về thông tin đang đăng tải, không được hàm ý môi giới. */}
-        Dự án căn hộ, khu đô thị và nghỉ dưỡng đang được cập nhật trên Coastal Land.
-      </p>
-
-      {/* NÚT XEM BẢN ĐỒ — cùng vị trí với trang Mua bán / Cho thuê để khách quen tay */}
-      <div className="mt-4 flex flex-wrap items-center gap-3">
-        <button
-          type="button"
-          onClick={() => setMapMode((v) => !v)}
-          aria-pressed={mapMode}
-          // NỀN XANH cho dễ thấy — thống nhất với nút bản đồ ở Mua bán / Cho thuê
-          className={`inline-flex min-h-[40px] items-center gap-2 rounded-lg px-3.5 text-sm font-semibold text-white transition ${
-            mapMode ? "bg-cvr-blue-ink" : "bg-cvr-blue hover:bg-cvr-blue-ink"
-          }`}
-        >
-          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.9} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 4.5l6 2.4 5-2.4v14.4l-5 2.4-6-2.4-5 2.4V4.9l5-2.4v16.8" />
-          </svg>
-          {mapMode ? "Xem danh sách" : "Xem bản đồ"}
-        </button>
+      {/* TIÊU ĐỀ + HÀNG NÚT cùng bố cục, cùng cỡ với trang Mua bán / Cho thuê (chủ dự án 18/10/2026: đồng bộ 3 tab):
+          tiêu đề trái · Xem bản đồ + Xoá lọc phải (máy tính); điện thoại xuống dòng dưới tiêu đề */}
+      <div className="mt-3 flex flex-wrap items-end justify-between gap-x-4 gap-y-2 sm:mt-6">
+        <div className="min-w-0">
+          {tieuDePhu ? (
+            <h2 className="text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">{tieuDe}</h2>
+          ) : (
+            <h1 className="text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">{tieuDe}</h1>
+          )}
+          <p className="mt-1 text-sm text-cvr-muted">
+            {/* Coastal Land là CỔNG THÔNG TIN — không phân phối, không mua bán dự án. */}
+            Dự án căn hộ, khu đô thị và nghỉ dưỡng đang được cập nhật trên Coastal Land.
+          </p>
+        </div>
+        <div className="flex flex-1 flex-wrap items-center justify-end gap-3">
+          <button
+            type="button"
+            onClick={() => setMapMode((v) => !v)}
+            aria-pressed={mapMode}
+            className={`mr-auto inline-flex min-h-8 items-center gap-1.5 rounded-lg px-3 text-[13px] font-semibold text-white transition sm:min-h-[38px] sm:gap-2 sm:px-3.5 sm:text-sm ${
+              mapMode ? "bg-cvr-blue-ink" : "bg-cvr-blue hover:bg-cvr-blue-ink"
+            }`}
+          >
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.9} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 4.5l6 2.4 5-2.4v14.4l-5 2.4-6-2.4-5 2.4V4.9l5-2.4v16.8" />
+            </svg>
+            {mapMode ? "Xem danh sách" : "Xem bản đồ"}
+          </button>
+          {hasActive && (
+            <button
+              type="button"
+              onClick={reset}
+              className="hidden items-center gap-1.5 rounded-lg border border-cvr-line px-3 py-1.5 text-xs font-medium sm:inline-flex text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink"
+            >
+              <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+              Xoá lọc
+            </button>
+          )}
+        </div>
       </div>
 
       {/* ═══ CHẾ ĐỘ BẢN ĐỒ ═══ marker là TÊN DỰ ÁN, bấm ra thẻ mini dẫn tới trang
@@ -612,7 +596,7 @@ export default function ProjectsBrowser({
 
             {visible.length === 0 && (
               <p className="rounded-none border border-cvr-line bg-cvr-surface p-10 text-center text-sm text-cvr-muted">
-                Chưa có dự án phù hợp bộ lọc. Hãy đổi từ khoá hoặc bấm &ldquo;Đặt lại&rdquo;.
+                Chưa có dự án phù hợp bộ lọc. Hãy đổi từ khoá hoặc bấm &ldquo;Xoá lọc&rdquo;.
               </p>
             )}
           </div>

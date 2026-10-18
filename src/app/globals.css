@@ -870,3 +870,7 @@ html.dang-tim-mo body > header, html.dang-tim-mo body > main, html.dang-tim-mo b
 .mb-dong { animation: mbDong 0.2s cubic-bezier(0.4, 0, 1, 1) both; }
 .mb-the-dong { animation: mbTheDong 0.2s cubic-bezier(0.4, 0, 1, 1) both; }
 @media (prefers-reduced-motion: reduce) { .mb-nen-mo, .mb-tab-mo, .mb-tab-mo [role="tab"] svg, .mb-the-mo, .mb-the-sau, .mb-day-mo, .mb-dong, .mb-the-dong { animation: none; } }
+
+/* Ẩn nút "Issue" nổi của bản chạy thử (npm run dev) — nó che màn hình khi chủ dự án xem trên điện thoại (18/10/2026).
+   Phần tử này CHỈ có ở chế độ dev, web thật không có nên quy tắc này không ảnh hưởng gì. */
+nextjs-portal { display: none !important; }
