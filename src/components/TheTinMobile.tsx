@@ -299,31 +299,35 @@ export default function TheTinMobile({ item, terms = [], tuChay = false, pc = fa
   //    NỘI DUNG = đúng thẻ điện thoại theo cấp (tiêu đề, thông số, địa chỉ, người đăng, Zalo + Hiện số, Thích, Chia sẻ).
   //    KHUNG: mỗi ảnh đúng tỷ lệ chuẩn, ảnh chính to rõ hơn ảnh phụ, cân với phần chữ, nhỏ dần theo cấp (cột ~869):
   //      Diamond: ảnh TRÊN, dải rộng hết hàng (3:1) — chính 2:1 579×290 + phụ 2:1 290×145 + 2 phụ 1:1 145×145 · chữ dưới
-  //      Gold:    ảnh TRÊN, dải 760 (3:1) — chính 2:1 507×253 + 2 phụ 2:1 253×126 xếp dọc · chữ dưới
+  //      Gold:    ảnh TRÊN, dải rộng hết thẻ (4:1, thấp hơn Diamond) — chính 2:1 + 2 phụ vuông 1:1 · chữ dưới
+  //               (bỏ bề rộng cố định 760: màn rộng để trống bên phải — chủ dự án 18/10/2026)
   //      Silver:  ảnh TRÁI 4:3 340×255 · Basic: ảnh TRÁI 16:9 280×158 (Silver to hẳn hơn Basic) · chữ phải, dàn đều theo cao ảnh
   if (pc) {
     const tren = t === "diamond" || t === "gold";
     const phu = t === "diamond" && anh.length >= 4 ? anh.slice(1, 4) : t === "gold" && anh.length >= 3 ? anh.slice(1, 3) : [];
-    const rongDai = t === "gold" ? "w-[760px] max-w-full" : "w-full";
+    const rongDai = "w-full";
     let anhPC: React.ReactNode;
     if (tren && phu.length) {
       anhPC = (
-        <div className={`grid aspect-[3/1] grid-cols-[2fr_1fr] gap-px overflow-hidden rounded-xl ${rongDai}`}>
-          {khungChinh("h-full w-full", "580px")}
-          <div className="grid grid-rows-2 gap-px">
-            {t === "diamond" ? (
-              <>
-                <O src={phu[0]} alt={item.title} className="h-full w-full" sizes="290px" onMo={() => setDs(true)} />
-                <div className="grid grid-cols-2 gap-px">
-                  {phu.slice(1).map((src, k) => <O key={k} src={src} alt={item.title} className="h-full w-full" sizes="145px" onMo={() => setDs(true)} />)}
-                </div>
-              </>
-            ) : phu.map((src, k) => <O key={k} src={src} alt={item.title} className="h-full w-full" sizes="253px" onMo={() => setDs(true)} />)}
+        t === "diamond" ? (
+          <div className={`grid aspect-[3/1] grid-cols-[2fr_1fr] gap-px overflow-hidden rounded-xl ${rongDai}`}>
+            {khungChinh("h-full w-full", "580px")}
+            <div className="grid grid-rows-2 gap-px">
+              <O src={phu[0]} alt={item.title} className="h-full w-full" sizes="290px" onMo={() => setDs(true)} />
+              <div className="grid grid-cols-2 gap-px">
+                {phu.slice(1).map((src, k) => <O key={k} src={src} alt={item.title} className="h-full w-full" sizes="145px" onMo={() => setDs(true)} />)}
+              </div>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className={`grid aspect-[4/1] grid-cols-[2fr_1fr_1fr] gap-px overflow-hidden rounded-xl ${rongDai}`}>
+            {khungChinh("h-full w-full", "580px")}
+            {phu.map((src, k) => <O key={k} src={src} alt={item.title} className="h-full w-full" sizes="300px" onMo={() => setDs(true)} />)}
+          </div>
+        )
       );
     } else if (tren) {
-      anhPC = <div className={`overflow-hidden rounded-xl ${rongDai}`}>{khungChinh("aspect-[3/1] w-full", "870px")}</div>;
+      anhPC = <div className={`overflow-hidden rounded-xl ${rongDai}`}>{khungChinh(`${t === "gold" ? "aspect-[4/1]" : "aspect-[3/1]"} w-full`, "870px")}</div>;
     } else {
       anhPC = <div className={`shrink-0 overflow-hidden rounded-xl ${t === "basic" ? "w-[280px]" : "w-[340px]"}`}>{khungChinh(t === "basic" ? "aspect-[16/9] w-full" : "aspect-[4/3] w-full", "340px")}</div>;
     }

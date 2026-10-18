@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Gallery from "@/components/Gallery";
+import KhungAnhPC from "@/components/KhungAnhPC";
 import ListingShowcase from "@/components/ListingShowcase";
 import { HomeExpandProvider, HomeCollapsible } from "@/components/HomeExpand";
 import RecordView from "@/components/RecordView";
@@ -424,13 +425,18 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
           )}
 
           {/* Thư viện ảnh THẬT — MOBILE tràn viền sát 2 mép + sát header (không khoảng trống) */}
-          <div className="-mx-4 mb-5 sm:mx-0">
+          {/* Điện thoại: Gallery đã chốt. Máy tính: khung slide kiểu Batdongsan nằm trong cột trái (KhungAnhPC, 18/10/2026) */}
+          <div className="-mx-4 mb-5 sm:hidden">
             <Gallery images={d.images} videos={d.videos} alt={tieuDe1Dong} listingId={l.id} banDo={{ diaChi: [d.addressDetail, l.location].filter(Boolean).join(", "), q: l.mapPin ?? d.mapQuery }} />
           </div>
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
             {/* Cột chính */}
             <div className="reveal is-visible cards-stagger lg:col-span-2 [&>section:first-of-type]:mt-5">
+              {/* !animate-none: hiệu ứng trượt của cột giữ transform → video "Xem full" / bộ xem lớn (fixed) bị nhốt trong cột */}
+              <div className="hidden !animate-none sm:block">
+                <KhungAnhPC images={d.images} videos={d.videos} alt={tieuDe1Dong} banDo={{ diaChi: [d.addressDetail, l.location].filter(Boolean).join(", "), q: l.mapPin ?? d.mapQuery }} />
+              </div>
               {/* ═══ TỔNG QUAN TIN ═══ mở tin ra là thấy ngay, theo đúng thứ tự mắt
                   người đọc: tin có đáng tin không → là cái gì → ở đâu → bao nhiêu
                   tiền → rộng bao nhiêu → thông số → thao tác. */}
@@ -783,7 +789,8 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
         )}
         {/* LIÊN KẾT VỀ TRANG pSEO (15/10/2026): trang tin dẫn về các trang "loại hình × tỉnh",
             phường, giá… đã đạt chuẩn — chữ trên link là đúng cụm từ khoá người tìm gõ. */}
-        <LienKetPseo nhom={lienKetTin} />
+        {/* Kiểu Google "Mọi người cũng tìm kiếm" như các trang pSEO (chủ dự án 18/10/2026) — in đậm phần khác loại hình + tỉnh của tin */}
+        <LienKetPseo nhom={lienKetTin} cau={`${laTinThue(l.purpose) ? "Cho thuê" : "Bán"} ${l.type} ${tinhCuaTin(l)}`} kieuGoogle />
       </main>
       <Footer />
       {/* Chỗ trống cuối trang để thanh Gọi · Nhắn Zalo (dính đáy) không che dòng
