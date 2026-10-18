@@ -353,7 +353,8 @@ export default function TheTinMobile({ item, terms = [], tuChay = false, pc = fa
     return (
       <article className={`relative flex gap-4 overflow-hidden bg-white p-3 ${tren ? "flex-col" : ""}`}>
         {tier.bar && <div className="absolute inset-x-0 top-0 z-10 h-px" style={{ backgroundColor: tier.bar }} aria-hidden />}
-        <div className="relative self-start">
+        {/* Diamond · Gold (ảnh trên) khung phải rộng theo thẻ — self-start làm khung co về 0 khi ảnh rộng "w-full" */}
+        <div className={`relative ${tren ? "w-full" : "self-start"}`}>
           {anhPC}
           {huyHieu}
         </div>
