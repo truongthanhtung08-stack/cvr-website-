@@ -320,10 +320,17 @@ export default function NhapHangLoatPage() {
         // Gộp ảnh mới vào sau ảnh cũ, bỏ trùng, rồi cắt RIÊNG ảnh và video theo
         // giới hạn hiện hành. So trùng bằng TÊN TỆP GỐC nằm ở cuối URL, không so
         // bằng URL — tải lại cùng một tấm ảnh vẫn ra đúng một bản.
-        const tron = [
-          ...cu.images,
-          ...urls.filter((u) => !cu.images.some((c) => c === u || cungTenTep(tenTepTuUrl(c), tenTepTuUrl(u)))),
-        ];
+        // TIN CŨ NẠP LẠI Ở ĐỢT KHÁC (chủ dự án 19/10/2026): ảnh cũ mang mã đợt trước (nt01-1001…),
+        // bộ ảnh mới của đợt này là chính căn đó đã sửa, lọc, chọn ảnh đại diện → THAY hẳn bộ ảnh
+        // (17/10 nối thêm làm 6 tin hiện ảnh trùng đôi). Tải lại CÙNG đợt (ảnh cũ đã mang mã này)
+        // thì vẫn chỉ bổ sung ảnh còn thiếu như trước.
+        const cungDot = cu.images.some((c) => !isVideoUrl(c) && tenTepTuUrl(c).toLowerCase().includes(`${r.maAnh.toLowerCase()}-`));
+        const tron = !cungDot && urls.some((u) => !isVideoUrl(u))
+          ? [...urls, ...(urls.some(isVideoUrl) ? [] : cu.images.filter(isVideoUrl))]
+          : [
+              ...cu.images,
+              ...urls.filter((u) => !cu.images.some((c) => c === u || cungTenTep(tenTepTuUrl(c), tenTepTuUrl(u)))),
+            ];
         const gop = [
           ...tron.filter((u) => !isVideoUrl(u)).slice(0, toiDa),
           ...tron.filter(isVideoUrl).slice(0, toiDaVideo),
