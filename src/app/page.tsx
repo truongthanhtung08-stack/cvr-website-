@@ -18,6 +18,8 @@ import { getListings, getListingsThe } from "@/lib/listingsDb";
 import { chonTinTrangChu } from "@/lib/tinNoiBat";
 import { getArticles, getProjects } from "@/lib/contentDb";
 import { getHeroBanners, getHomeAreas, getFeaturedArticleSlug } from "@/lib/siteContent";
+import { THANH_PHO } from "@/lib/pseo";
+import { slugKhuVuc } from "@/lib/khuVuc";
 
 // Tiêu đề trang chủ phải CÓ TỪ KHOÁ — trước đây để trống nên Google chỉ thấy
 // "COASTAL LAND", không hiểu trang này bán gì, ở đâu.
@@ -68,7 +70,13 @@ export default async function Home() {
           <ProjectsSection projects={projects} articles={articles} />
           {/* "Dành riêng cho bạn" TẠM ẨN theo yêu cầu — mở lại: bỏ comment import ForYou + khối này.
           <ForYou /> */}
-          <LocationGrid areas={homeAreas} />
+          {/* Ô thành phố (Nha Trang, Quy Nhơn…) trỏ thẳng trang thành phố thay cho /mua-ban?tinh= — Search Console 20/10/2026:
+              /mua-ban?tinh=Nha Trang có lượt hiện nhưng canonical về /mua-ban nên phí. Tính ở máy chủ, không thêm mã cho máy khách. */}
+          <LocationGrid areas={homeAreas.map((a) => {
+            const ten = decodeURIComponent(a.href.match(/[?&]tinh=([^&]+)/)?.[1] ?? "");
+            const tp = ten ? THANH_PHO.find((t) => t.name === ten) : undefined;
+            return tp ? { ...a, href: `/mua-ban/${slugKhuVuc(tp.tinh)}/${tp.slug}` } : a;
+          })} />
           <NewsSection articles={articles} featuredSlug={featuredSlug} />
 
         </HomeExpandProvider>

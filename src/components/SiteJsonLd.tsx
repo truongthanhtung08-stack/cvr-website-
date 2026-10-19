@@ -36,8 +36,8 @@ const data = {
       // → bảng thương hiệu bên phải kết quả tìm kiếm mới hiện đúng và mạnh.
       // Lệch một chữ (viết tắt tên đường, thiếu phường) là Google coi như 2 nơi khác nhau.
       // Kênh chính thức của Coastal Land — giúp Google gom các kênh về MỘT thực thể (E-E-A-T, 15/10/2026).
-      // Facebook/YouTube chính thức: chủ dự án cung cấp đường dẫn thì thêm vào đây.
-      sameAs: [ZALO_OA_URL],
+      // 20/10/2026: thêm Fanpage (tạo 16/10, KE-HOACH-MXH.md) + kênh YouTube. Hồ sơ Google Doanh nghiệp: có link thì thêm.
+      sameAs: [ZALO_OA_URL, "https://www.facebook.com/profile.php?id=61595622503937", "https://www.youtube.com/@CoastalLandvn"],
       telephone: "+84377985036",
       address: {
         "@type": "PostalAddress",

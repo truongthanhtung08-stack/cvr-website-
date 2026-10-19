@@ -6,6 +6,7 @@ import ListingBrowser from "@/components/ListingBrowser";
 import KhungChoDanhMuc from "@/components/KhungChoDanhMuc";
 import { BreadcrumbJsonLd } from "@/components/Breadcrumb";
 import LienKetPseo from "@/components/LienKetPseo";
+import HoiDapPseo, { hoiDapPseo } from "@/components/HoiDapPseo";
 import { ListingListJsonLd } from "@/components/ListJsonLd";
 import { goiNheTin, goiNheBaiViet } from "@/lib/goiNhe";
 import { getListings, getListingsHetHan } from "@/lib/listingsDb";
@@ -69,6 +70,7 @@ export default async function TrangPseo({ dk }: { dk: DieuKien }) {
             />
           )}
         </Suspense>
+        <HoiDapPseo hoiDap={hoiDapPseo(dk, items)} />
         <LienKetPseo nhom={lienKetCho(dk, listings)} cau={tieuDe(dk)} kieuGoogle />
       </main>
       <Footer />

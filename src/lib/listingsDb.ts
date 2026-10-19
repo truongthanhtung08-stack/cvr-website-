@@ -19,6 +19,7 @@ import { isVideoUrl } from "@/lib/media";
 import { fieldsSplit, amenityGroups, coDonGiaM2, coDienTichXayDung, viTriTuDuongVao, viTriTuAccess, laTinThue, laTinBan, type Field } from "@/lib/listingSpec";
 import { chuanHoaSdt, maNguoiTuSdt, tachNhieuSdt } from "@/lib/phone";
 import { tachTenDuong } from "@/lib/tenDuong";
+import { moTaThe } from "@/lib/trichMoTa";
 
 
 // Thuộc tính linh hoạt lưu trong cột details (JSONB) — xem 0006_listing_details.sql
@@ -400,7 +401,9 @@ export async function getListingsThe(): Promise<Listing[]> {
   const ds = await getListings();
   return ds.map((l) => {
     const { desc: _desc, searchText: _searchText, ...the } = l;
-    return the;
+    // 20/10/2026: thẻ hiện 2 câu đầu mô tả (src/lib/trichMoTa.ts) → chỉ gửi đúng 2 câu đó (~150–250 ký tự), không gửi cả mô tả
+    const ngan = moTaThe(l);
+    return ngan ? { ...the, desc: ngan } : the;
   });
 }
 

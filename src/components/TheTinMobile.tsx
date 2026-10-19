@@ -12,6 +12,7 @@ import { getTier, tierFromBadge, type TierId } from "@/lib/packages";
 import { useSaved } from "@/lib/useSaved";
 import { chuThuong, tenDiaDanh } from "@/lib/chuThuong";
 import { videoPosterUrl } from "@/lib/media";
+import { moTaThe, soDongMoTa } from "@/lib/trichMoTa";
 
 // ============================================================================
 // THẺ TIN THEO CẤP — BẢN ĐIỆN THOẠI (docs/THE-TIN-THEO-CAP.md, chủ dự án 09/10/2026).
@@ -163,7 +164,8 @@ function KhungChay({ slides, alt, khung, sizes, onMo, children, tuChay = true }:
 // tuChay mặc định TẮT: trang chủ và trang danh sách chỉ hiện ẢNH ĐẠI DIỆN, không chạy slide — slide chỉ
 // chạy khi mở tin (chủ dự án 09/10/2026).
 // pc: HÀNG DANH SÁCH máy tính (trang Mua bán / Cho thuê) — cùng nội dung thẻ điện thoại, chỉ khác khung (nhánh ở dưới).
-export default function TheTinMobile({ item, terms = [], tuChay = false, pc = false }: { item: Listing; terms?: string[]; tuChay?: boolean; pc?: boolean }) {
+// moTa: dòng mô tả dưới địa chỉ theo cấp (Basic 2 · Silver 2 · Gold 3 · Diamond 3 — src/lib/trichMoTa.ts) — MỌI NƠI (trang chủ, danh sách, mẫu thẻ admin), nâng cấp là tự đúng (chủ dự án 20/10/2026).
+export default function TheTinMobile({ item, terms = [], tuChay = false, pc = false, moTa = true }: { item: Listing; terms?: string[]; tuChay?: boolean; pc?: boolean; moTa?: boolean }) {
   const t: TierId = item.badge ? tierFromBadge(item.badge) : "basic";
   const tier = getTier(t);
   const href = `/bat-dong-san/${item.id}`;
@@ -269,12 +271,20 @@ export default function TheTinMobile({ item, terms = [], tuChay = false, pc = fa
       ))}
     </p>
   );
-  const diaChi = (
+  const diaChiDong = (
     <p className="mt-1 flex items-center gap-1 text-[14px] text-cvr-body">
       <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth={1.7} viewBox="0 0 24 24" aria-hidden><path d="M12 21s-7-6.2-7-11.5A7 7 0 0112 2.5a7 7 0 017 7C19 14.8 12 21 12 21z" /><circle cx="12" cy="9.5" r="2.5" /></svg>
       <span className="truncate"><Highlight text={diaChiThe(item)} terms={terms} /></span>
     </p>
   );
+  const trich = moTa ? moTaThe(item) : "";
+  const soDong = soDongMoTa(item);
+  const diaChi = trich ? (
+    <>
+      {diaChiDong}
+      <p className={`mt-1.5 ${["", "line-clamp-1", "line-clamp-2", "line-clamp-3"][soDong]} text-[14px] leading-[1.45] text-cvr-muted`}><Highlight text={trich} terms={terms} /></p>
+    </>
+  ) : diaChiDong;
 
   const oCls = "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-cvr-line text-cvr-ink transition active:scale-95";
   const nutThich = (

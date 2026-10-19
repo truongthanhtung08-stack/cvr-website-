@@ -4,7 +4,8 @@ import AnhChay from "@/components/AnhChay";
 import SaveButton from "@/components/SaveButton";
 import CompareButton from "@/components/CompareButton";
 import Highlight from "@/components/Highlight";
-import { listingSummary, freshText, type Listing } from "@/lib/data";
+import { freshText, type Listing } from "@/lib/data";
+import { moTaThe, soDongMoTa } from "@/lib/trichMoTa";
 import { tierFromBadge, getTier } from "@/lib/packages";
 
 // Tên NGƯỜI ĐĂNG hiển thị trên thẻ: lấy từ tin thật (details.contact.name —
@@ -70,8 +71,10 @@ export default function PropertyCard({
   // THANG NỘI DUNG THEO CẤP (chốt 4/9): Kim Cương 3 · Vàng 2 · Bạc 1 · Thường 0.
   // Áp dụng ĐỒNG NHẤT cho CẢ trang chủ (variant "tier") LẪN Mua bán/Cho thuê (variant
   // "grid") và thẻ rất lớn ("featured"). Chỉ "mini" mới ép 0 dòng.
-  const tierDesc = tierId === "diamond" ? 3 : tierId === "gold" ? 2 : tierId === "silver" ? 1 : 0;
-  const descLines = isMini ? 0 : tierDesc;
+  // 20/10/2026 (chủ dự án): mô tả dưới tiêu đề MỌI NƠI cùng một luật — 2 câu đầu mô tả, không lặp tiêu đề,
+  // Basic 2 · Silver 2 · Gold 3 · Diamond 3 dòng (src/lib/trichMoTa.ts). Thay thang cũ 3 · 2 · 1 · 0 ở trên.
+  const moTa = isMini ? "" : moTaThe(item);
+  const descLines = moTa ? soDongMoTa(item) : 0;
   // Thẻ trang chủ (tier): MỌI cấp đều hiện thông tin thành viên ở đáy (kể cả Silver/Basic)
   // để thẻ không bị trống — đồng bộ với tin VIP (yêu cầu T19 mobile).
   const showAgent = isTier ? true : !isMini;
@@ -158,7 +161,7 @@ export default function PropertyCard({
           <p className={`mt-1 text-sm leading-relaxed text-cvr-muted ${
             descLines >= 3 ? "line-clamp-3" : descLines === 2 ? "line-clamp-2" : "line-clamp-1"
           }`}>
-            {listingSummary(item)}
+            {moTa}
           </p>
         )}
 
@@ -211,7 +214,8 @@ function PropertyRow({ item, showTime = false, terms = [] }: { item: Listing; sh
   const tier = item.badge ? getTier(tierFromBadge(item.badge)) : null;
   const tierId = tier?.id ?? "basic";
   // Nội dung theo cấp trên hàng ngang (PC): Kim Cương 3 · Vàng 2 · Bạc 1 · Thường 0.
-  const rowDesc = tierId === "diamond" ? 3 : tierId === "gold" ? 2 : tierId === "silver" ? 1 : 0;
+  const moTaHang = moTaThe(item); // cùng luật thẻ đứng (src/lib/trichMoTa.ts)
+  const rowDesc = moTaHang ? soDongMoTa(item) : 0;
   return (
     <Link
       href={`/bat-dong-san/${item.id}`}
@@ -256,7 +260,7 @@ function PropertyRow({ item, showTime = false, terms = [] }: { item: Listing; sh
           <Highlight text={item.title} terms={terms} />
         </h3>
         {rowDesc > 0 && (
-          <p className={`mt-1 text-sm leading-relaxed text-cvr-muted ${rowDesc >= 3 ? "line-clamp-3" : rowDesc === 2 ? "line-clamp-2" : "line-clamp-1"}`}>{listingSummary(item)}</p>
+          <p className={`mt-1 text-sm leading-relaxed text-cvr-muted ${rowDesc >= 3 ? "line-clamp-3" : rowDesc === 2 ? "line-clamp-2" : "line-clamp-1"}`}>{moTaHang}</p>
         )}
         <div className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <span className={`text-[16px] font-bold ${item.price === "Thỏa thuận" || item.hetHan ? "text-cvr-muted" : "text-red-500"}`}>{item.price}</span>

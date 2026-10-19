@@ -65,21 +65,32 @@ const nextConfig: NextConfig = isPages
       // ĐƯỜNG DẪN CŨ /mua-ban?tinh=<Tỉnh> → 301 về trang tỉnh /mua-ban/<tỉnh> (SEO, 15/10/2026).
       // Google còn nhớ các địa chỉ này (canonical về /mua-ban nên sức mạnh rơi mất). Chỉ áp cho
       // đúng TÊN TỈNH/THÀNH (cả hệ cũ lẫn mới); địa danh nhỏ hơn ("Nha Trang", "Quy Nhơn" — thẻ
-      // trang chủ đã duyệt) giữ nguyên vì chúng lọc đúng phạm vi đô thị đó.
+      // trang chủ đã duyệt) giữ nguyên vì chúng lọc đúng phạm vi đô thị đó — trừ Nha Trang, Quy Nhơn (xem thanhPho dưới).
       async redirects() {
         const slug = (s: string) =>
           s.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[đĐ]/g, "d").toLowerCase()
             .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
         const ten = Array.from(new Set([...provincesNew.map((p) => p.name), ...provincesOld.map((p) => p.name)]));
         const thoat = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-        return ["/mua-ban", "/cho-thue"].flatMap((base) =>
+        // 20/10/2026: trang thành phố đã mở (trục THANH_PHO, src/lib/pseo.ts) → hai thẻ trang chủ Google còn nhớ
+        // (/mua-ban?tinh=Nha Trang: 5 bấm / 57 hiển thị 90 ngày, canonical về /mua-ban) chuyển về đúng trang thành phố.
+        const thanhPho = [
+          { ten: "Nha Trang", den: "/mua-ban/khanh-hoa/nha-trang" },
+          { ten: "Quy Nhơn", den: "/mua-ban/gia-lai/quy-nhon" },
+        ].map(({ ten: t, den }) => ({
+          source: "/mua-ban",
+          has: [{ type: "query" as const, key: "tinh", value: `^${thoat(t)}$` }],
+          destination: den,
+          permanent: true,
+        }));
+        return [...thanhPho, ...["/mua-ban", "/cho-thue"].flatMap((base) =>
           ten.map((t) => ({
             source: base,
             has: [{ type: "query" as const, key: "tinh", value: `^${thoat(t)}$` }],
             destination: `${base}/${slug(t)}`,
             permanent: true,
           })),
-        );
+        )];
       },
 
       async rewrites() {

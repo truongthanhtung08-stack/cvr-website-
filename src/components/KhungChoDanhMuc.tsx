@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Listing } from "@/lib/data";
+import { moTaThe } from "@/lib/trichMoTa";
 
 // ============================================================================
 // KHUNG CHỜ CỦA TRANG DANH MỤC — kiêm luôn NỘI DUNG CHO GOOGLE ĐỌC
@@ -64,6 +65,8 @@ export default function KhungChoDanhMuc({
                 <Link href={`/bat-dong-san/${l.id}`}>
                   {l.title} — {l.price} · {l.area} · {l.location}
                 </Link>
+                {/* Trùng dòng mô tả khách thấy trên thẻ — chỉ cấp có quyền lợi mô tả (TheTinMobile moTa, 20/10/2026) */}
+                {moTaThe(l) && <p>{moTaThe(l)}</p>}
               </li>
             ))}
           </ul>

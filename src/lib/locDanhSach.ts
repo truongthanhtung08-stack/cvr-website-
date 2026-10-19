@@ -172,8 +172,10 @@ export function locDanhSach(
     }
   }
 
+  // Đếm theo tỉnh: cùng bộ lọc đang chọn (loại hình, giá…), chỉ bỏ khu vực — lỗi 20/10/2026: "Bán condotel Đà Nẵng
+  // theo khu vực" ghi Đà Nẵng (45) = mọi tin bán của tỉnh, trong khi trang chỉ có 3 tin condotel.
   const m = new Map<string, number>();
-  for (const l of base) {
+  for (const { item: l } of smartFilter(base, { ...filters, keyword: "", locations: [] }).filter((h) => h.tier === 1)) {
     if (l.banSao) continue; // bản kèm không phải tin riêng — không đếm
     const p = l.location.split(",").pop()?.trim() ?? "";
     if (p) m.set(p, (m.get(p) ?? 0) + 1);
