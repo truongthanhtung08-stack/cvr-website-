@@ -34,7 +34,8 @@ const [tin, duAn, ho] = await Promise.all([
   doc("profiles?select=id,phone&limit=10000"),
 ]);
 
-const sdt = (s) => (s || "").split(/[,;/|]| - /)[0].replace(/\D/g, "").replace(/^84/, "0").slice(0, 10);
+// 9 chữ số = Excel nuốt số 0 đầu (17/10: 8 tin đăng hộ báo lệch tài khoản chỉ vì vậy) → thêm lại số 0 khi so.
+const sdt = (s) => { const x = (s || "").split(/[,;/|]| - /)[0].replace(/\D/g, "").replace(/^84/, "0").slice(0, 10); return x.length === 9 ? "0" + x : x; };
 const che = (s) => (s ? `${s.slice(0, 4)}***` : "—");
 const conHan = (x) => x.status === "approved" && (!x.tier_expires_at || new Date(x.tier_expires_at) > new Date());
 const soAnh = (x) => (x.images || []).filter((s) => !/youtu|\.mp4|\.mov|\.webm/i.test(s)).length;
@@ -47,7 +48,17 @@ const chuaDat = tin.filter(conHan).map((x) => {
   if (!/đường|kiệt|hẻm|ngõ/i.test(x.details?.addressDetail || "")) thieu.push("thiếu tên đường");
   if (!x.details?.direction) thieu.push("thiếu hướng");
   if (!x.details?.legal && x.purpose !== "thue") thieu.push("thiếu pháp lý");
-  return { x, thieu, chan: soAnh(x) < 3 || (x.description || "").trim().length < 100 };
+  // CHẤT LƯỢNG CHỮ (18/10/2026, đo 83/126 tin đang hiện lỗi): sửa được từ chính chữ người đăng → giao cả tin không có nguồn.
+  const t = x.title || "", d = (x.description || "").trim(), chu = t.replace(/[^A-Za-zÀ-ỹ]/g, "");
+  const cl = [];
+  if (chu.length > 10 && chu === chu.toUpperCase()) cl.push("tiêu đề VIẾT HOA cả câu");
+  if (t.length > 75) cl.push(`tiêu đề dài ${t.length} ký tự`);
+  if (!/^\s*(bán|cho thuê|chuyển nhượng|sang nhượng)/i.test(t)) cl.push("tiêu đề không mở đầu Bán/Cho thuê");
+  if (/siêu phẩm|sập sàn|giá sốc|cực hot|gấp gấp|hiếm|cơ hội vàng|!!/i.test(t)) cl.push("tiêu đề có từ câu khách");
+  if (d.length >= 100 && d.length < 300) cl.push("mô tả < 300 ký tự");
+  if (d.length >= 100 && !d.includes("\n")) cl.push("mô tả một cục, chưa chia 5 đoạn");
+  thieu.push(...cl);
+  return { x, thieu, chuChu: cl.length > 0, chan: soAnh(x) < 3 || d.length < 100 || cl.length > 0 };
 }).filter((r) => r.thieu.length);
 
 // 2) Cùng một BĐS đăng nhiều tin
@@ -77,6 +88,15 @@ const COT = "ten_du_an,loai_hinh,trang_thai,chu_dau_tu,don_vi_phat_trien,tinh,ph
 const q = (s) => `"${String(s).replace(/"/g, '""')}"`;
 fs.writeFileSync(path.join(RA, "du-an-can-nap.csv"), "﻿" + [COT, ...dsNap.map((d) => [q(d.ten), "", "", "", "", q(d.tinh), q(d.phuong), "", "", "", "", "", "", "", "", "", "", "", ""].join(","))].join("\n") + "\n");
 
+
+// 6b) LỊCH SỬ GIÁ CÒN THIẾU (18/10/2026): tải sẵn danh sách dãy còn thiếu cho Cowork — Cowork không giữ mã nộp.
+// Chỉ ĐỌC. Chi phí: 1 lần gọi hàm Vercel mỗi sáng (~26 lần/tháng), nằm gọn trong gói Pro.
+try {
+  if (env.MA_NOP_SO_LIEU) {
+    const r = await fetch(`https://coastalland.vn/api/chi-so-gia/con-thieu?ma=${encodeURIComponent(env.MA_NOP_SO_LIEU)}`);
+    if (r.ok) fs.writeFileSync(path.join(RA, "lich-su-gia-con-thieu.csv"), Buffer.from(await r.arrayBuffer()));
+  }
+} catch { /* mạng lỗi → hôm nay không có tệp, Cowork ghi báo cáo */ }
 
 // 7) NHÓM SẮP MỞ TRANG GOOGLE (16/10/2026): trang pSEO chỉ được index khi có ≥ 3 tin ĐẠT CHUẨN còn hạn
 // (≥ 3 ảnh, mô tả ≥ 100 ký tự — src/lib/pseo.ts). Liệt kê nhóm đang có 1–2 tin đạt chuẩn → Cowork biết
@@ -116,9 +136,13 @@ const dd = ngay.slice(8, 10) + ngay.slice(5, 7) + ngay.slice(0, 4);
 const TEN_THU = ["Chủ nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"][thu];
 const SEO = p("D:", "Coastal Land", "SEO");
 const CV = p(SEO, "CONG-VIEC-3-BEN.md");
-const NOI_TIN = "`" + p("D:", "Coastal Land", "Đăng tin", "COWORK", dd) + BS + "`"; // bước 2 — chủ dự án duyệt xong chuyển sang TIN HANG NGAY chuẩn
+// 18/10/2026 (chủ dự án: "dồn hết một folder SEO"): tin cũng giao vào SEO\VAO\<ngày> cùng mọi dữ liệu khác;
+// Claude kiểm xong CHUYỂN cả thư mục ngày sang SEO\DA-DUYET\<ngày>. Không còn dùng Đăng tin\COWORK, TIN HANG NGAY chuẩn.
+const NOI_TIN = "`" + p(SEO, "VAO", dd) + BS + "` (tệp `Bang-" + ngay + ".xlsx` + `anh" + BS + "` + `Video" + BS + "`)";
 const NOI_KHAC = "`" + p(SEO, "VAO", dd) + BS + "`";
-const sua = (ds, cot) => ds.map((r) => `- [${r.x.title.slice(0, 60)}](${link(r.x)}) — ${cot(r)}`);
+// Kèm link tin gốc (quy trình 17/10): Cowork không tự tìm được nguồn; tin khách tự đăng không có nguồn → không giao.
+// Lỗi chất lượng chữ (chuChu) sửa được từ chính tin trên web → giao cả khi không có nguồn.
+const sua = (ds, cot) => ds.filter((r) => r.x.details?.nguonTin || r.chuChu).map((r) => `- [${r.x.title.slice(0, 60)}](${link(r.x)}) — ${cot(r)} · nguồn: ${r.x.details?.nguonTin || "không có — viết lại từ chính chữ trên tin, không thêm ý mới"}`);
 const GOP = "biên tập lại tiêu đề/mô tả chuẩn SEO như mục 1, đưa vào file tin, giữ đúng link `nguon` để web gộp vào tin cũ";
 const dauQuy = [1, 4, 7, 10].includes(now.getUTCMonth() + 1) && now.getUTCDate() <= 7;
 
@@ -130,24 +154,24 @@ const dauQuy = [1, 4, 7, 10].includes(now.getUTCMonth() + 1) && now.getUTCDate()
 const KE_HOACH = "D:/Coastal Land/SEO/Plan SEO - pSEO/KE-HOACH-SEO.md";
 const MUC = [
   ["Tìm tin cho nhóm sắp có trang Google", NOI_TIN, sapMo.length, sapMo.length
-    ? ["Ưu tiên trước: nhóm ở mục 3 #2 của kế hoạch SEO (đã có lượt hiển thị, gần trang 2 Google — condotel, khu nghỉ dưỡng / trang trại Đà Nẵng, căn hộ chung cư Huế).",
-      "Sau đó các nhóm còn thiếu tin (đủ 3 tin đạt chuẩn là có trang Google):", ...sapMo.slice(0, 40).map((g) => `- ${g.ten} — cần thêm ${3 - g.n} tin`)]
+    ? ["Ưu tiên trước: nhóm ở mục 3 #2 của kế hoạch SEO (đã có lượt hiển thị, gần trang 2 Google — condotel Đà Nẵng, căn hộ chung cư Huế).",
+      "Sau đó các nhóm còn thiếu tin (đủ 3 tin đạt chuẩn là có trang Google):", ...sapMo.slice(0, 80).map((g) => `- ${g.ten} — cần thêm ${3 - g.n} tin`)]
     : ["Không có việc."]],
   ["Tin mới", NOI_TIN, null, [
     "**Khu vực: toàn quốc — có cả Hà Nội (mã `hn`) và TP. Hồ Chí Minh (mã `hcm`)** (chủ dự án 17/10/2026). Tỉnh, phường ghi hệ mới theo `D:\\Coastal Land\\SEO\\DANH-SACH-PHUONG-XA-TOAN-QUOC.txt`.",
     `Lọc + biên tập theo \`${p(SEO, "YEU-CAU-COWORK-DANG-TIN-HANG-LOAT.md")}\`:`,
-    "- **Tiêu đề** 45–70 ký tự: Bán/Cho thuê + loại hình + điểm nổi bật + tên đường + phường, tỉnh.",
+    "- **Tiêu đề = câu SEO chính**, 30–60 ký tự, chỉ giữ thông tin chính: Bán/Cho thuê + loại hình + đặc điểm khách hay tìm + tên đường/dự án — phường, tỉnh **tùy tin** — tin đã có tên đường / dự án thì không cần; tin thiếu tên đường, dự án hoặc ở thành phố lớn thì nên ghi; không ghi giá, diện tích (web tự thêm).",
     "- **Mô tả** ≥ 300 ký tự, đủ 5 phần: tổng quan · vị trí · thông số · pháp lý · điều kiện giao dịch.",
     "- Mọi thông tin trong tin gốc (giá, diện tích, mặt tiền, đường vào, hướng, pháp lý, phòng ngủ, tên dự án…) điền vào **đúng cột**.",
     "- ≥ 3 ảnh thật, ảnh đầu đẹp nhất. Tự kiểm mục 9 của tệp yêu cầu trước khi giao.",
   ]],
   ["Sửa tin đang không lên Google (thiếu ảnh / mô tả ngắn)", NOI_TIN, chuaDat.filter((r) => r.chan).length, (() => {
     const ds = chuaDat.filter((r) => r.chan);
-    return ds.length ? [`Tìm lại tin gốc, lấy đủ ảnh + mô tả, ${GOP}:`, ...sua(ds, (r) => r.thieu.filter((t) => /ảnh|mô tả/.test(t)).join(", "))] : ["Không có việc."];
+    return ds.length ? [`Tìm lại tin gốc, lấy đủ ảnh + mô tả, ${GOP}:`, ...sua(ds, (r) => r.thieu.filter((t) => /ảnh|mô tả|tiêu đề/.test(t)).join(", "))] : ["Không có việc."];
   })()],
   // Mạng xã hội — chung quy trình 4 bước: máy chọn tin → Cowork soạn bài → chủ dự án duyệt nguyên văn → chủ dự án tự đăng.
   ["Bài mạng xã hội (Fanpage · OA · nhóm)", `${NOI_KHAC.slice(0, -1)}mxh${BS}\` (tệp \`bai-mxh-${dd}.docx\` + \`anh${BS}\`)`, tinMxh.length, tinMxh.length
-    ? [`Soạn bài theo mục 4–5 của \`${p(SEO, "Plan MXH", "KE-HOACH-MXH.md")}\`: mỗi bài ghi rõ kênh, chữ, ảnh (lấy từ tin), link đúng như dưới.`,
+    ? [`**2–3 bài mỗi ngày** (chủ dự án 18/10). Soạn bài theo mục 4–5 của \`${p(SEO, "Plan MXH", "KE-HOACH-MXH.md")}\`: mỗi bài ghi rõ kênh, chữ, ảnh (lấy từ tin), link đúng như dưới.`,
       ...tinMxh.map((x) => `- ${x.title.slice(0, 60)} — Fanpage: ${link(x)}?utm_source=facebook&utm_medium=fanpage · OA: ${link(x)}?utm_source=zalo&utm_medium=oa · nhóm: ${link(x)}?utm_source=zalo&utm_medium=nhom`)]
     : ["Không có tin mới đạt chuẩn trong 2 ngày qua — soạn 1 bài gom tin nổi bật theo khu vực."]],
   ["Hồ sơ dự án", `${NOI_KHAC} (tệp \`du-an-${dd}.csv\`)`, dsNap.length, dsNap.length
@@ -158,17 +182,20 @@ const MUC = [
     return ds.length ? [`Lấy lại từ tin gốc, ${GOP}. Làm 20 tin mỗi lần:`, ...sua(ds.slice(0, 20), (r) => r.thieu.join(", "))] : ["Không có việc."];
   })()],
   ["Bảng giá đất Nhà nước", `${NOI_KHAC} (tệp \`gia-dat-<tỉnh>.csv\`)`, null, ["Theo mục 5 của `CONG-VIEC-3-BEN.md`, từ văn bản gốc quyết định UBND tỉnh. Thứ tự: Đà Nẵng → Huế → Khánh Hòa → Gia Lai → Lâm Đồng."]],
-  ["Tin trùng · một số nhiều tên · tin đăng hộ", "`bao-cao.txt` (chủ dự án sửa trong admin)", trung.length + nhieuTen.length + lech.length, [
+  // Quy trình 17/10: Cowork chỉ thấy 4 số đầu nên không làm được mục này — máy so số đầy đủ, Claude ghi mục 2 chờ chủ dự án OK.
+  ["Tin trùng · một số nhiều tên · tin đăng hộ", "Cowork KHÔNG làm — Claude xử lý, chủ dự án OK ở mục 2", trung.length + nhieuTen.length + lech.length, [
     ...(trung.length ? ["Cùng một BĐS đăng nhiều tin — ghi tin nào giữ, tin nào gỡ:", ...trung.map((g) => `- ${g.map((x) => `[${x.title.slice(0, 40)}](${link(x)})`).join(" · ")}`)] : []),
     ...(nhieuTen.length ? ["Một số điện thoại ghi nhiều tên — ghi tên đúng:", ...nhieuTen.map(([so, t]) => `- ${che(so)}: ${[...t].join(" / ")}`)] : []),
     ...(lech.length ? ["Tin đăng hộ — ghi tin nào thuộc số nào:", ...lech.map((x) => `- [${x.title.slice(0, 50)}](${link(x)}) · số liên hệ ${che(sdt(x.details?.contact?.phone))}`)] : []),
     ...(!trung.length && !nhieuTen.length && !lech.length ? ["Không có việc."] : []),
   ]],
-  ["Lịch sử giá" + (dauQuy ? " — ĐẦU QUÝ, làm ngay" : " (tuần đầu mỗi quý)"), "nộp ở coastalland.vn/nop-so-lieu", null, [`Theo \`${p(SEO, "YEU-CAU-COWORK-LICH-SU-GIA.md")}\` (theo quý, đủ 5 quý liền).`]],
+  // Chủ dự án 18/10: "hoàn thiện lịch sử giá để chạy trên web" → hằng ngày tới khi đủ (trước chỉ tuần đầu mỗi quý).
+  // 18/10: Cowork KHÔNG nộp (mã nộp là của chủ dự án) — giao tệp vào VAO, Claude kiểm rồi nộp.
+  ["Lịch sử giá" + (dauQuy ? " — ĐẦU QUÝ, làm ngay" : " (đầu mỗi quý)"), `${NOI_KHAC} (tệp \`lich-su-gia-${dd}.csv\`)`, null, [dauQuy ? `Thêm quý mới cho các dãy đang có trên web từ đúng nguồn đã dùng (Nhà Tốt — Ngũ Hành Sơn) theo \`${p(SEO, "YEU-CAU-COWORK-LICH-SU-GIA.md")}\`. Chỉ nguồn công khai, không đăng nhập, không Batdongsan. **Cowork không nộp** — giao tệp, Claude nộp.` : "Không làm hằng ngày (18/10: đã kiểm hết nguồn công khai — Nhà Tốt chỉ quận cũ, Homedy dừng 2019). Chỉ làm đầu quý hoặc khi Claude báo có nguồn mới. Dãy khác web tự tính từ tin đăng → đăng thêm tin cho phường đang thiếu."]],
   ["Tiện ích lân cận (trường, bệnh viện, khu công nghiệp, chợ, biển, sân bay)", `${NOI_KHAC} (tệp \`tien-ich-<tỉnh>.csv\`)`, null, [`Theo mục 8 của \`CONG-VIEC-3-BEN.md\`, mẫu \`${p("SEO", "MAU", "mau-tien-ich-lan-can.csv")}\` — một tỉnh mỗi lần: Đà Nẵng → Huế → Khánh Hòa.`]],
-  ["Thư viện pháp luật", `${NOI_KHAC} (tệp \`thu-vien-phap-luat-${dd}.csv\`)`, null, ["Theo mục 6 của `CONG-VIEC-3-BEN.md` — văn bản thật, link nguồn chính thức, 20 văn bản mỗi lần."]],
-  ["Hồ sơ công ty", `${NOI_KHAC} (tệp \`ho-so-cong-ty-${dd}.csv\`)`, null, ["Theo mục 6 của `CONG-VIEC-3-BEN.md` — các công ty, sàn đang đăng tin trên coastalland.vn trước."]],
-  ["Bài viết", `${NOI_KHAC} (tệp \`bai-viet-${dd}.docx\`)`, null, ["Theo mục 6 và 7 của `CONG-VIEC-3-BEN.md` — chỉ khi chủ dự án giao đề tài."]],
+  ["Thư viện pháp luật", `${NOI_KHAC} (tệp \`thu-vien-phap-luat-${dd}.csv\`)`, null, ["Hằng ngày, theo mục 6 của `CONG-VIEC-3-BEN.md` — văn bản thật, link nguồn chính thức, tình trạng hiệu lực đúng luật, 20 văn bản mỗi lần. **Không chờ chủ dự án duyệt**: Claude kiểm nguồn + hiệu lực rồi nạp thẳng (chốt 18/10)."]],
+  ["Hồ sơ công ty", `${NOI_KHAC} (tệp \`ho-so-cong-ty-${dd}.csv\`)`, null, ["**Không làm riêng mục này** (chốt 18/10): khi lọc tin, người đăng là công ty / sàn thì ghi đúng tên công ty vào `lien_he_ten` — hồ sơ công ty sẽ lấy từ tin."]],
+  ["Bài viết", `${NOI_KHAC} (tệp \`bai-viet-${dd}.docx\`)`, null, ["**Hằng ngày 3 bài có ích cho mục Tin tức** (chốt 18/10) — Cowork tự chọn đề tài theo tình trạng SEO: từ khoá người tìm có lượt hiện mà chưa có lượt bấm (số Search Console trong tệp này / kế hoạch SEO mục 3). Viết theo mục 6 và 7 của `CONG-VIEC-3-BEN.md`: chuẩn SEO, giọng người làm nghề, số liệu có nguồn + ngày, 2–4 link về trang coastalland.vn."]],
 ];
 
 // CHỦ DỰ ÁN TỰ ĐỔI THỨ TỰ (16/10/2026: "tôi có thể thay đổi công việc hằng ngày nếu thấy thứ tự không hợp lý"):
@@ -204,26 +231,28 @@ const keHoach = [...docKeHoach(KE_HOACH), ...docKeHoach("D:/Coastal Land/SEO/Pla
 // Thư mục Cowork đã giao mà chủ dự án chưa chuyển sang "đã duyệt"
 const thuMuc = (d) => (fs.existsSync(d) ? fs.readdirSync(d).filter((x) => /^\d{8}$/.test(x)) : []);
 const choDuyet = [
-  ...thuMuc("D:/Coastal Land/Đăng tin/COWORK").filter((x) => !thuMuc("D:/Coastal Land/Đăng tin/TIN HANG NGAY chuẩn").includes(x)).map((x) => `Tin \`${p("Đăng tin", "COWORK", x)}\``),
-  ...thuMuc("D:/Coastal Land/SEO/VAO").filter((x) => !thuMuc("D:/Coastal Land/SEO/DA-DUYET").includes(x)).map((x) => `Dữ liệu \`${p("SEO", "VAO", x)}\``),
+  // Một thư mục SEO (18/10): VAO\<ngày> còn nằm đó = Cowork đã giao, Claude chưa kiểm / chưa chuyển sang DA-DUYET.
+  ...thuMuc("D:/Coastal Land/SEO/VAO").map((x) => `Đợt \`${p("SEO", "VAO", x)}\` (Claude chưa kiểm — nhắn "Cowork xong")`),
 ];
 
 const v = [`# VIỆC HÔM NAY — 3 BÊN · ${TEN_THU}, ${dd.slice(0, 2)}/${dd.slice(2, 4)}/${dd.slice(4)}`, "",
-  thu === 0 ? "Chủ nhật nghỉ." : "Mục đích chính: **SEO** — qua đó cập nhật thông tin, dữ liệu hằng ngày. Mỗi bên làm từ trên xuống.", "",
-  "## 1. COWORK — làm từ mục 1 xuống, hết giờ thì dừng",
+  "**COWORK ĐỌC TRƯỚC:** nhận lệnh \"Làm việc hôm nay\" → làm **MỤC 0 ngay bên dưới trước tiên** (việc Claude giao riêng hôm nay + trả lời câu hỏi hôm trước), rồi mới làm từ mục 1 xuống. Không hỏi lại chủ dự án.", "",
+  thu === 0 ? "Chủ nhật: chỉ làm mục 0 (nếu có)." : "Mục đích chính: **SEO** — qua đó cập nhật thông tin, dữ liệu hằng ngày. Mỗi bên làm từ trên xuống.", "",
+  "## 1. COWORK — làm mục 0 (nếu có) trước, rồi từ mục 1 xuống, hết giờ thì dừng",
+  "**⛔ KHÔNG HỎI LẠI CHỦ DỰ ÁN.** Vướng gì (thiếu nguồn, chưa rõ loại hình, cần số đầy đủ…) → bỏ qua dòng đó, ghi một dòng vào `bao-cao.txt` mục \"CẦN CLAUDE TRẢ LỜI\", làm tiếp việc khác. Claude trả lời trong ngày ở mục 0 của tệp này. Hết việc thì ghi `bao-cao.txt` và dừng.",
   "**Mọi mục: không chỉ lọc.** Đọc hiểu nguồn → lấy ĐỦ thông tin vào đúng cột → **biên tập chuẩn SEO** (nội dung, ảnh, video) → **tự kiểm** → mới giao. Không bịa: nguồn không có thì để trống. Giao xong ghi `bao-cao.txt`.",
-  "Nhắn **\"Làm việc hôm nay\"** = làm từ mục 1 xuống · **\"Làm mục 2, 6\"** = chỉ các mục đó.", "",
+  "Nhắn **\"Làm việc hôm nay\"** = làm mục 0 trước (câu hỏi hôm trước đã có trả lời ở đó — không hỏi lại), rồi từ mục 1 xuống · **\"Làm mục 2, 6\"** = chỉ các mục đó.", "",
   // BẢNG TỰ KIỂM (chủ dự án 17/10/2026: "tôi phải sửa lại nhiều — nhắc Cowork về SEO, nội dung, ngôn ngữ")
   "### ⛔ TỰ KIỂM TỪNG TIN TRƯỚC KHI GIAO — chủ dự án đang phải sửa lại nhiều",
-  "Tin nào chưa qua đủ 12 dòng dưới đây thì **chưa được giao**. Chuẩn đầy đủ: `YEU-CAU-COWORK-DANG-TIN-HANG-LOAT.md` mục 4–9 · ngôn ngữ: `CONG-VIEC-3-BEN.md` mục 7.",
+  "Tin nào chưa qua đủ 13 dòng dưới đây thì **chưa được giao**. Chuẩn đầy đủ: `YEU-CAU-COWORK-DANG-TIN-HANG-LOAT.md` mục 4–9 · ngôn ngữ: `CONG-VIEC-3-BEN.md` mục 7.",
   "",
   "| # | SEO | Đạt khi |",
   "|---|---|---|",
-  "| 1 | Tiêu đề | 45–70 ký tự · mở đầu **Bán / Cho thuê** + loại hình + điểm nổi bật + tên đường/dự án + **phường, tỉnh** · không trùng tin khác |",
-  "| 2 | Thành phố lớn | Tin ở Nha Trang, Đà Lạt, Quy Nhơn, Buôn Ma Thuột, Vũng Tàu… → tên thành phố có trong tiêu đề hoặc câu đầu mô tả |",
+  "| 1 | Tiêu đề | 30–60 ký tự · mở đầu **Bán / Cho thuê** + loại hình + đặc điểm khách hay tìm + tên đường/dự án · phường, tỉnh **tùy tin** — tin đã có tên đường / dự án thì không cần; tin thiếu tên đường, dự án hoặc ở thành phố lớn thì nên ghi; không ghi giá, diện tích (web tự thêm) · không trùng tin khác |",
+  "| 2 | Thành phố lớn | Tin ở Nha Trang, Đà Lạt, Quy Nhơn, Buôn Ma Thuột, Vũng Tàu… mà tên phường không có tên thành phố → ghi tên thành phố vào tiêu đề |",
   "| 3 | Mô tả | ≥ 300 ký tự · 5 đoạn: tổng quan · vị trí · thông số (gạch đầu dòng) · pháp lý · điều kiện giao dịch · dòng trống giữa các đoạn |",
   "| 4 | Cột dữ liệu | Giá, diện tích, phòng, hướng, pháp lý, **tên đường**, **tên dự án** chép đúng cột, đúng đơn vị (bán = tỷ, thuê = triệu) |",
-  "| 5 | Ảnh | ≥ 3 ảnh thật, ảnh `-1` đẹp nhất · không số điện thoại / logo sàn khác / chữ đè |",
+  "| 5 | Ảnh | **Chất lượng trước**: thật, rõ nét, cạnh dài ≥ 800 px · 5–12 ảnh/tin, **tự bỏ ảnh trùng, ảnh thừa** · ảnh `-1` đẹp nhất · không SĐT / logo sàn khác / chữ đè · dưới 3 ảnh đạt → bỏ tin |",
   "| # | NỘI DUNG | Đạt khi |",
   "| 6 | Không bịa | Mọi con số, tiện ích, khoảng cách, pháp lý đều có trong tin gốc · thiếu thì bỏ, không viết cho đủ |",
   "| 7 | Khớp số | Số trong tiêu đề = số trong mô tả = số trong cột = tin gốc |",
@@ -233,12 +262,19 @@ const v = [`# VIỆC HÔM NAY — 3 BÊN · ${TEN_THU}, ${dd.slice(0, 2)}/${dd.s
   "| 10 | Giọng người làm nghề | Câu ngắn, đi thẳng ý · không \"siêu phẩm, sập sàn, giá sốc, cực hot, cơ hội vàng\" · không \"Hãy cùng…\", \"Tóm lại…\" · không biểu tượng cảm xúc |",
   "| 11 | Cổng thông tin | Không \"chúng tôi bán\", \"liên hệ chúng tôi\", \"nhận đặt chỗ\" — Coastal Land không môi giới |",
   "| 12 | Sạch | Không số điện thoại, link, tên sàn khác trong tiêu đề / mô tả |",
+  "| 13 | Xếp dòng | Bảng xếp theo tỉnh → phường/xã → mã tin (Đà Nẵng · Huế · Khánh Hòa · Gia Lai · Lâm Đồng · Quảng Ngãi · Quảng Trị · Hà Nội · TP. Hồ Chí Minh) — chủ dự án sửa ảnh hàng loạt theo tỉnh |",
   "",
+  // Việc kế hoạch SEO giao Cowork (KE-HOACH-SEO.md mục 3, cột Ai có "Cowork") — kèm số Search Console ghi ở cột trạng thái.
+  // Quy trình 17/10: giao theo kế hoạch + số thật, không chỉ theo danh sách đếm tin.
+  ...(keHoach.some((k) => /cowork/i.test(k.ai))
+    ? ["### ƯU TIÊN THEO KẾ HOẠCH SEO + SEARCH CONSOLE — làm trước mục 1 (giao chung thư mục của mục 1 / mục 5)",
+       ...keHoach.filter((k) => /cowork/i.test(k.ai)).map((k) => `- ${k.viec} — ${k.tt}`), ""]
+    : []),
   "| Mục | Việc | Còn | Giao vào |", "|---|---|---|---|",
   ...MUC.map(([ten, noi, con], i) => `| ${i + 1} | ${ten} | ${con ?? "—"} | ${noi} |`), "",
   "## 2. CHỦ DỰ ÁN",
   ...(choDuyet.length
-    ? ["**Duyệt bản Cowork đã giao** → sửa xong chuyển sang thư mục đã duyệt (tin: `TIN HANG NGAY chuẩn`, dữ liệu: `SEO\\DA-DUYET`) → nhắn Claude \"Đăng <ngày>\":", ...choDuyet.map((x) => `- ${x}`)]
+    ? ["**Cowork đã giao, chờ Claude kiểm** → nhắn Claude \"Cowork xong\" → Claude kiểm, chuyển cả ngày sang `SEO\\DA-DUYET\\<ngày>` → anh sửa nội dung, ảnh ở đó → nhắn \"Đăng <ngày>\":", ...choDuyet.map((x) => `- ${x}`)]
     : ["- Chưa có bản Cowork nào chờ duyệt."]),
   ...keHoach.filter((k) => /chủ dự án/i.test(k.ai)).map((k) => `- ${k.viec} — ${k.tt}`), "",
   "## 3. CLAUDE",
@@ -259,6 +295,17 @@ if (fs.existsSync(TD)) {
 }
 v.push("", `Quy trình: \`${CV}\` · Kế hoạch SEO: \`${KE_HOACH.replace(/\//g, BS)}\``, "", "---", "# CHI TIẾT VIỆC COWORK", "");
 MUC.forEach(([ten, noi, , dong], i) => v.push(`## Mục ${i + 1}. ${ten}`, `Giao vào: ${noi}`, "", ...dong, ""));
-fs.writeFileSync(path.join(RA, "VIEC.md"), v.join("\n"));
+// GIỮ MỤC 0 (18/10/2026): mục 0 là Claude trả lời Cowork / giao việc riêng trong ngày — lượt 6:30 ghi đè cả tệp
+// nên từng xoá mất. Giữ nguyên khi tiêu đề mục 0 có ngày hôm nay (dd/mm); mục 0 của ngày cũ thì bỏ.
+const tepViec = path.join(RA, "VIEC.md");
+if (fs.existsSync(tepViec)) {
+  const cu = fs.readFileSync(tepViec, "utf8");
+  const a = cu.indexOf("## 0. "), b = cu.indexOf("## 1. COWORK");
+  const muc0 = a >= 0 && b > a ? cu.slice(a, b).trimEnd() : "";
+  if (muc0 && muc0.split("\n")[0].includes(`${dd.slice(0, 2)}/${dd.slice(2, 4)}`)) v.splice(v.indexOf(v.find((l) => l.startsWith("## 1. COWORK"))), 0, muc0, "");
+}
+// Nhắc hằng ngày (chủ dự án 18/10: "đảm bảo chuẩn thì mới chạy, không chuẩn không chạy, luôn nhắc việc này hằng ngày").
+v.splice(4, 0, "**⛔ CHUẨN TRƯỚC, CHẠY SAU — cả 3 bên, mọi việc:** tin, bài, dữ liệu, trang chưa đạt chuẩn thì **không đăng, không xin index, không giao**. Đạt chuẩn mới chạy.", "");
+fs.writeFileSync(tepViec, v.join("\n"));
 console.log(`→ ${RA}/VIEC.md (${TEN_THU}) · du-an-can-nap.csv`);
 console.log(`tin cần bổ sung ${chuaDat.length} · nhóm trùng ${trung.length} · số nhiều tên ${nhieuTen.length} · tin lệch tài khoản ${lech.length} · dự án cần nạp ${dsNap.length} · nhóm sắp mở trang ${sapMo.length}`);

@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { ghepBillingLuu, bangTheoMucDich, huongKhuyenMai, chonKhuyenMai, lucGuiTin, type BillingData } from "@/lib/billing";
+import { ghepBillingLuu, bangTheoMucDich, huongKhuyenMai, chonKhuyenMai, laChuThat, lucGuiTin, type BillingData } from "@/lib/billing";
 import type { TierId } from "@/lib/packages";
 
 // ============================================================================
@@ -27,7 +27,7 @@ type Tin = {
   tier_expires_at: string | null;
   details: { contact?: { phone?: string } } | null;
 };
-type Chu = { id: string; phone: string | null; created_at: string | null; role: string | null; free_quota: number | null };
+type Chu = { id: string; phone: string | null; created_at: string | null; role: string | null; free_quota: number | null; tao_ho?: boolean | null; vao_chinh_thuc_luc?: string | null };
 export type Muc = { id: string; ma: string; tieuDe: string; loai: string; chiTiet: string };
 
 const NGAY_MS = 86_400_000;
@@ -50,7 +50,7 @@ export async function kiemTin(admin: SupabaseClient): Promise<KetQuaKiemTin> {
 
   const ids = [...new Set(ds.map((t) => t.owner_id).filter((x): x is string => !!x))];
   const { data: chuRaw } = ids.length
-    ? await admin.from("profiles").select("id,phone,created_at:ngay_thanh_vien,role,free_quota").in("id", ids)
+    ? await admin.from("profiles").select("id,phone,created_at:ngay_thanh_vien,role,free_quota,tao_ho,vao_chinh_thuc_luc").in("id", ids)
     : { data: [] };
   const chu = new Map(((chuRaw ?? []) as Chu[]).map((c) => [c.id, c]));
 
@@ -87,7 +87,7 @@ export async function kiemTin(admin: SupabaseClient): Promise<KetQuaKiemTin> {
       const huong = chonKhuyenMai(t.details) && huongKhuyenMai(bang.free, {
         goi: t.tier,
         homNay: ngayVn(new Date(lucGuiTin(t)).toISOString()),
-        coChu: !!t.owner_id,
+        coChu: !!t.owner_id && laChuThat(c),
         soNgayMoTk: c?.created_at ? (lucGuiTin(t) - new Date(c.created_at).getTime()) / NGAY_MS : Number.POSITIVE_INFINITY,
         ngayTaoTk: c?.created_at ? new Date(new Date(c?.created_at).getTime() + 7 * 3_600_000).toISOString().slice(0, 10) : undefined,
         role: c?.role,

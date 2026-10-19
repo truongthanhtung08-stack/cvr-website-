@@ -73,7 +73,7 @@ export default function NhapHangLoatPage() {
   //      (ghi thiếu đuôi .jpg cũng khớp). Ghi sẵn link/đường dẫn thì dùng thẳng.
   //   2) Cột "ma_anh" → tự gom mọi ảnh tải lên có tên bắt đầu bằng mã đó,
   //      xếp theo SỐ cuối tên tệp nên ảnh …-1 làm ẢNH ĐẠI DIỆN.
-  const anhCuaTin = (r: ParsedRow): { urls: string[]; thieu: string[]; boBot: number; toiDa: number; toiDaVideo: number; linkGoc: boolean } => {
+  const anhCuaTin = (r: ParsedRow): { urls: string[]; bia?: string; thieu: string[]; boBot: number; toiDa: number; toiDaVideo: number; linkGoc: boolean } => {
     const urls: string[] = [];
     const thieu: string[] = [];
 
@@ -108,14 +108,29 @@ export default function NhapHangLoatPage() {
     const dungLinkGoc = anhCat.length === 0 && linkGocRaw.some(laLinkAnh);
     if (dungLinkGoc) anhCat = linkGocRaw.filter(laLinkAnh).slice(0, toiDa);
 
+    // ẢNH ĐẠI DIỆN do Claude chọn lúc kiểm đợt (cột anh_dai_dien = số cuối tên ảnh) — đưa lên
+    // đầu + ghi details.anh_bia để lượt "gom tin đăng hộ" không tự chọn lại (chủ dự án 19/10/2026).
+    const soBia = (r.payload.details as { anhDaiDienSo?: number } | undefined)?.anhDaiDienSo;
+    const tenBia = soBia ? anhDaTaiLoc.find((a) => anhThuocMa(a.ten, r.maAnh) && soCuoiTen(a.ten) === soBia) : undefined;
+    const bia = tenBia && anhCat.includes(tenBia.url) ? tenBia.url : undefined;
+    if (bia) anhCat = [bia, ...anhCat.filter((u) => u !== bia)];
+
     return {
       urls: [...anhCat, ...videoCat],
+      bia,
       thieu,
       boBot: dungLinkGoc ? 0 : tatCa.length - anhCat.length - videoCat.length,
       toiDa,
       toiDaVideo,
       linkGoc: dungLinkGoc,
     };
+  };
+
+  // details của tin: số ảnh đại diện → đường dẫn ảnh (anh_bia)
+  const chiTietCoBia = (r: ParsedRow): Record<string, unknown> => {
+    const { anhDaiDienSo: _so, ...d } = (r.payload.details as Record<string, unknown>) ?? {};
+    const bia = anhCuaTin(r).bia;
+    return bia ? { ...d, anh_bia: bia } : d;
   };
 
   // ĐÚNG LUẬT nhưng CHƯA có ảnh thật (mới ghi ma_anh, chưa tải ảnh ở Bước 4)
@@ -283,7 +298,7 @@ export default function NhapHangLoatPage() {
           .map((r) => ({
             ...r.payload,
             status: "hidden",
-            details: { ...(r.payload.details as Record<string, unknown>), choChuDuyet: true },
+            details: { ...chiTietCoBia(r), choChuDuyet: true },
             images: anhCuaTin(r).urls,
             published_at: now,
             bumped_at: now,
@@ -316,7 +331,7 @@ export default function NhapHangLoatPage() {
         // UP LẠI LẦN 2, 3, 4 = BỔ SUNG, KHÔNG ĐẺ TIN MỚI (chốt 17/09/2026).
         // Lấy luôn NỘI DUNG mới nhất trong file: tiêu đề, mô tả, giá, diện tích,
         // địa chỉ (kể cả hệ cũ), pháp lý, liên hệ… — file là bản chuẩn.
-        const { images: _bo, ...noiDung } = r.payload as Record<string, unknown>;
+        const { images: _bo, ...noiDung } = { ...r.payload, details: chiTietCoBia(r) } as Record<string, unknown>;
         // TIN TRÙNG THÌ ĐẨY, KHÔNG ĐẺ TIN MỚI: ngày đăng giữ nguyên của tin gốc
         // (không giả ngày đăng), nhưng bumped_at = hôm nay để tin lên đầu danh
         // sách — không đẩy thì tin vừa bổ sung ảnh vẫn nằm im chỗ cũ, coi như

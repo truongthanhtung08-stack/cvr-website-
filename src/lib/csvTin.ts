@@ -114,6 +114,9 @@ export const COT = {
   hangTin: "hang_tin",
   anh: "anh",
   maAnh: "ma_anh",
+  // ẢNH ĐẠI DIỆN (chủ dự án 19/10/2026): SỐ của ảnh làm đại diện (ảnh dn01-1710-4.jpg → ghi 4).
+  // Claude chọn lúc kiểm đợt: vừa khung 4:3, đẹp, hợp loại tin. Bỏ trống = web tự chọn ảnh hợp khung.
+  anhDaiDien: "anh_dai_dien",
   diaChi: "dia_chi",
   phapLy: "phap_ly",
   huong: "huong",
@@ -363,12 +366,18 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
   // 26 tiêu đề không có tên phường/xã hoặc tỉnh — mất từ khoá địa phương, đúng
   // thứ Coastal Land mạnh nhất. Thẻ <title> đã được web tự chuẩn hoá, nhưng sửa
   // từ gốc vẫn hơn: tiêu đề là dòng khách đọc trên thẻ tin.
-  if (tieuDe && tieuDe.length > 75) canhBao.push(`Tiêu đề dài ${tieuDe.length} ký tự — nên 45–70, Google cắt phần sau`);
+  // CHUẨN TRƯỚC, CHẠY SAU (chủ dự án 18/10/2026: "không chuẩn không chạy", "chất lượng nội dung phải sửa từ khâu lọc").
+  // Đo 18/10: 83/126 tin đang hiện lỗi chất lượng (9 tiêu đề VIẾT HOA cả câu, 17 dài quá, 22 mô tả < 300 ký tự…)
+  // vì các lỗi này trước chỉ báo vàng. Nay CHẶN (đỏ) khi nạp hàng loạt — sửa xong mới đăng.
+  const chuTieuDe = tieuDe.replace(/[^A-Za-zÀ-ỹ]/g, "");
+  if (chuTieuDe.length > 10 && chuTieuDe === chuTieuDe.toUpperCase())
+    loi.push("Tiêu đề VIẾT HOA cả câu — viết thường, chỉ hoa chữ đầu và tên riêng");
+  if (tieuDe && tieuDe.length > 75) loi.push(`Tiêu đề dài ${tieuDe.length} ký tự — tối đa 75, nên 30–60`);
   if (tieuDe && /siêu phẩm|sập sàn|giá sốc|cực hot|gấp gấp|[\u{1F300}-\u{1FAFF}☀-➿]/iu.test(tieuDe))
-    canhBao.push("Tiêu đề có từ câu khách / biểu tượng cảm xúc — bỏ đi, Google coi là tin rác");
-  if (tieuDe && /\b0\d{8,10}\b/.test(tieuDe)) canhBao.push("Tiêu đề có số điện thoại — bỏ khỏi tiêu đề");
+    loi.push("Tiêu đề có từ câu khách / biểu tượng cảm xúc — bỏ đi, Google coi là tin rác");
+  if (tieuDe && /\b0\d{8,10}\b/.test(tieuDe)) loi.push("Tiêu đề có số điện thoại — bỏ khỏi tiêu đề");
   if (moTa.trim().length >= 50 && moTa.trim().length < 300)
-    canhBao.push(`Mô tả ${moTa.trim().length} ký tự — dưới 300 Google coi là nội dung mỏng`);
+    loi.push(`Mô tả ${moTa.trim().length} ký tự — tối thiểu 300: viết đủ 5 phần từ thông tin người đăng (không bịa)`);
   // XUỐNG DÒNG PHẢI KHỚP TIN GỐC. Người đăng viết mỗi ý một dòng; dán qua công cụ
   // trung gian là dồn hết thành một cục chữ, lên web khách bỏ đi. Không chặn đăng
   // (có tin gốc vốn viết liền) nhưng phải báo vàng để chủ dự án mở tin gốc đối chiếu.
@@ -419,15 +428,10 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
       );
   }
 
-  // SEO ĐỊA PHƯƠNG — tiêu đề nên có tên phường/xã và tỉnh (bỏ tiền tố cấp khi so).
-  const trongTieuDe = (s: string) =>
-    !!s && chuanHoa(tieuDe).includes(chuanHoa(s.replace(/^(Phường|Xã|Thị trấn|Đặc khu)\s+/i, "")));
-  const thieuDiaDanh = [
-    phuongXa && !trongTieuDe(phuongXa) ? "phường/xã" : "",
-    tinhThanh && !trongTieuDe(tinhThanh) ? "tỉnh/thành" : "",
-  ].filter(Boolean);
-  if (tieuDe && thieuDiaDanh.length)
-    canhBao.push(`Tiêu đề thiếu ${thieuDiaDanh.join(" và ")} — thêm vào để tin ra trong tìm kiếm theo khu vực`);
+  // SEO ĐỊA PHƯƠNG (18/10/2026, chủ dự án: "tiêu đề chính là câu SEO — lọc thông tin chính, ngắn gọn"):
+  // KHÔNG còn bắt ghi phường/xã, tỉnh vào tiêu đề — trang tin tự ghép địa danh còn thiếu + giá + diện tích
+  // vào thẻ <title> (tieuDeSeo ở src/app/bat-dong-san/[id]/page.tsx), thẻ tin đã hiện địa điểm. Ghi lại
+  // là lặp chữ, Google cắt mất phần đặc điểm. Chỗ trong tiêu đề dành cho đặc điểm + tên đường/dự án.
   // MỤC ĐÍCH PHẢI ĐỌC ĐƯỢC NGAY Ở TIÊU ĐỀ. Khách lướt danh sách chỉ đọc dòng tiêu
   // đề; "Studio The Camellia 30m2 tầng 5" không cho biết bán hay cho thuê, mà đó
   // cũng là cụm từ khoá người tìm gõ vào Google ("bán căn hộ…", "cho thuê nhà…").
@@ -436,9 +440,9 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
     const noiBan = /(^|_)ban(_|$)|chuyen_nhuong|sang_nhuong|can_ban|cat_lo/.test(t);
     const noiThue = /cho_thue|(^|_)thue(_|$)|cho_muon/.test(t);
     if (tieuDe && mucDich === "ban" && !noiBan)
-      canhBao.push('Tiêu đề không cho biết là tin BÁN — mở đầu bằng "Bán …" (hoặc "Chuyển nhượng …")');
+      loi.push('Tiêu đề không cho biết là tin BÁN — mở đầu bằng "Bán …" (hoặc "Chuyển nhượng …")');
     if (tieuDe && mucDich === "thue" && !noiThue)
-      canhBao.push('Tiêu đề không cho biết là tin CHO THUÊ — mở đầu bằng "Cho thuê …"');
+      loi.push('Tiêu đề không cho biết là tin CHO THUÊ — mở đầu bằng "Cho thuê …"');
     if (tieuDe && mucDich === "ban" && noiThue && !noiBan)
       canhBao.push("muc_dich ghi BÁN nhưng tiêu đề nói CHO THUÊ — kiểm tra lại cả dòng");
     if (tieuDe && mucDich === "thue" && noiBan && !noiThue)
@@ -664,6 +668,8 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
       // MÃ ẢNH lưu luôn vào tin — để lần tải file sau nhận ra tin này ĐÃ ĐĂNG,
       // chỉ bổ sung ảnh còn thiếu thay vì đăng trùng một tin nữa.
       maAnh: (laDanhSachTenAnh(maAnhRaw) ? "" : maAnhRaw) || undefined,
+      // Số ảnh đại diện — trang nạp tin đổi thành details.anh_bia (đường dẫn ảnh) rồi bỏ khoá này.
+      anhDaiDienSo: /^\d+$/.test(lay(COT.anhDaiDien).trim()) ? Number(lay(COT.anhDaiDien).trim()) : undefined,
       addressDetail: lay(COT.diaChi) || undefined,
       // ĐỊA CHỈ HỆ CŨ NGUYÊN VĂN — trang tin ưu tiên dòng này thay vì suy ngược.
       ...(lay(COT.phuongXaCu) || lay(COT.quanHuyenCu) || lay(COT.tinhCu)

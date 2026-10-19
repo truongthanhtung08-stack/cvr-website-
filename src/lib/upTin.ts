@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { ghepBillingLuu, bangTheoMucDich, huongKhuyenMai, chonKhuyenMai, quotePrice, vnd, type BillingData } from "@/lib/billing";
+import { ghepBillingLuu, bangTheoMucDich, huongKhuyenMai, chonKhuyenMai, laChuThat, quotePrice, vnd, type BillingData } from "@/lib/billing";
 import { tachThue } from "@/lib/thue";
 import { baoLoi } from "@/lib/baoLoi";
 import { viKhaDung, cauThieuTien } from "@/lib/viKhaDung";
@@ -55,7 +55,7 @@ export async function thucHienUpTin(
 
   const { data: hsArr } = await admin
     .from("profiles")
-    .select("created_at:ngay_thanh_vien,role,free_quota,balance,email,phone,full_name")
+    .select("created_at:ngay_thanh_vien,role,free_quota,balance,email,phone,full_name,tao_ho,vao_chinh_thuc_luc")
     .eq("id", userId)
     .limit(1);
   const hs = hsArr?.[0];
@@ -68,7 +68,7 @@ export async function thucHienUpTin(
   const bao = quotePrice({ data: bang, tierId: goi, days: soNgay, today: homNay, isNewMember: soNgayMoTk <= bang.free.days });
   // Khuyến mãi: CÙNG MỘT điều kiện với form đăng tin + duyệt tin (huongKhuyenMai).
   // Tin nháp tự gửi sau khi nạp đủ: giữ lựa chọn gói thường / khuyến mãi khách đã chọn ở form.
-  const mienPhi = (!laNhap || chonKhuyenMai(tin.details)) && huongKhuyenMai(bang.free, { goi, homNay, coChu: true, soNgayMoTk, role: hs.role, freeQuota: hs.free_quota, ngayTaoTk: hs.created_at ? new Date(new Date(hs.created_at).getTime() + 7 * 3_600_000).toISOString().slice(0, 10) : undefined });
+  const mienPhi = (!laNhap || chonKhuyenMai(tin.details)) && huongKhuyenMai(bang.free, { goi, homNay, coChu: laChuThat(hs), soNgayMoTk, role: hs.role, freeQuota: hs.free_quota, ngayTaoTk: hs.created_at ? new Date(new Date(hs.created_at).getTime() + 7 * 3_600_000).toISOString().slice(0, 10) : undefined });
   const giaBao = mienPhi ? 0 : bao.total;
   const phaiTra = tachThue(giaBao).tongTra;
 

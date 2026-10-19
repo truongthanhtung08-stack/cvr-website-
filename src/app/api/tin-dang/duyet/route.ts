@@ -4,7 +4,7 @@ import { baoIndexNow } from "@/lib/indexNow";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { viKhaDung, cauThieuTien } from "@/lib/viKhaDung";
-import { ghepBillingLuu, bangTheoMucDich, freeDangChay, soNgayHienThi, huongKhuyenMai, chonKhuyenMai, lucGuiTin, loaiVoucherTin, quotePrice, vnd, type BillingData } from "@/lib/billing";
+import { ghepBillingLuu, bangTheoMucDich, freeDangChay, soNgayHienThi, huongKhuyenMai, chonKhuyenMai, laChuThat, lucGuiTin, loaiVoucherTin, quotePrice, vnd, type BillingData } from "@/lib/billing";
 import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
 import { guiThongBao, MAU_DUYET_TIN } from "@/lib/thongBao";
 import { baoLoi } from "@/lib/baoLoi";
@@ -30,6 +30,8 @@ export const dynamic = "force-dynamic";
 type HoSo = {
   balance: number | null;
   created_at: string | null;
+  tao_ho?: boolean | null;
+  vao_chinh_thuc_luc?: string | null;
   total_topup: number | null;
   role: string | null;
   free_quota: number | null;
@@ -131,13 +133,13 @@ export async function POST(request: Request) {
     // quy định) — tin thường ĐÚNG 30 NGÀY; thành viên cũ — theo số ngày đã chọn (7/15/30).
     const fMp = bangMp.free;
     const { data: hsMp } = tin.owner_id
-      ? await admin.from("profiles").select("created_at:ngay_thanh_vien,role,free_quota").eq("id", tin.owner_id).maybeSingle()
+      ? await admin.from("profiles").select("created_at:ngay_thanh_vien,role,free_quota,tao_ho,vao_chinh_thuc_luc").eq("id", tin.owner_id).maybeSingle()
       : { data: null };
     const ngayMoTkMp = hsMp?.created_at ? (lucGui - new Date(hsMp.created_at).getTime()) / 86_400_000 : Infinity;
     // Khuyến mãi: CÙNG MỘT điều kiện với mọi nơi (huongKhuyenMai) — lấy từ chương trình trong admin.
     // Khách chọn GÓI THƯỜNG (plan.khuyenMai = false) thì không áp chương trình (15/10/2026).
     let laTvMoi = chonKhuyenMai(tin.details) && huongKhuyenMai(fMp, {
-      goi, homNay: ngayGui, coChu: Boolean(tin.owner_id),
+      goi, homNay: ngayGui, coChu: Boolean(tin.owner_id) && laChuThat(hsMp),
       soNgayMoTk: ngayMoTkMp, role: hsMp?.role, freeQuota: hsMp?.free_quota, ngayTaoTk: hsMp?.created_at ? new Date(new Date(hsMp?.created_at).getTime() + 7 * 3_600_000).toISOString().slice(0, 10) : undefined,
     });
     // Chương trình có giới hạn số tin → hưởng thì trừ một lượt (nguyên tử); hết lượt thì không hưởng.
@@ -193,7 +195,7 @@ export async function POST(request: Request) {
 
   const { data: hsArr } = await admin
     .from("profiles")
-    .select("balance,created_at:ngay_thanh_vien,total_topup,role,free_quota,email,phone,full_name,member_level,xuat_hoa_don,hd_ten_cong_ty,hd_mst,hd_dia_chi,hd_email")
+    .select("balance,created_at:ngay_thanh_vien,tao_ho,vao_chinh_thuc_luc,total_topup,role,free_quota,email,phone,full_name,member_level,xuat_hoa_don,hd_ten_cong_ty,hd_mst,hd_dia_chi,hd_email")
     .eq("id", tin.owner_id)
     .limit(1);
   const hs = hsArr?.[0] as HoSo | undefined;
@@ -226,7 +228,7 @@ export async function POST(request: Request) {
   // Chương trình hết hạn (`to`) thì thu tiền bình thường — nếu không, tin gửi
   // từ thời còn ưu đãi vẫn được duyệt free mãi về sau. Điều kiện chung: huongKhuyenMai.
   const thuocDienMienPhi = chonKhuyenMai(tin.details) && huongKhuyenMai(f, {
-    goi, homNay: ngayGui, coChu: true,
+    goi, homNay: ngayGui, coChu: laChuThat(hs),
     soNgayMoTk, role: hs.role, freeQuota: hs.free_quota, ngayTaoTk: hs.created_at ? new Date(new Date(hs.created_at).getTime() + 7 * 3_600_000).toISOString().slice(0, 10) : undefined,
   });
 

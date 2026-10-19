@@ -534,6 +534,14 @@ export function huongKhuyenMai(
 // KHÁCH TỰ CHỌN GÓI KHUYẾN MÃI HAY GÓI THƯỜNG (chủ dự án 15/10/2026: "đúng đối tượng nào thì được
 // quyền chọn gói"). Form ghi details.plan.khuyenMai = true/false. Chọn gói thường (false) thì
 // không áp chương trình, tính đúng giá gói thường. Tin cũ không có cờ → như trước (đúng đối tượng là áp).
+// TÀI KHOẢN TẠO HỘ CHƯA VÀO (chủ dự án 19/10/2026, CSDL 0064): chính chủ chưa tự đăng nhập lần
+// nào → tin của tài khoản đó tính NHƯ TIN ADMIN ĐĂNG HỘ (coChu = false): hưởng chương trình khi
+// lúc gửi tin nằm trong thời gian chương trình — kể cả đăng lại tin đã hết hạn. Chính chủ vào lần
+// đầu → vao_chinh_thuc_luc ghi lại → từ đó xét theo ngày thành viên như khách tự tạo.
+export function laChuThat(p?: { tao_ho?: boolean | null; vao_chinh_thuc_luc?: string | null } | null): boolean {
+  return !(p?.tao_ho && !p?.vao_chinh_thuc_luc);
+}
+
 export function chonKhuyenMai(details: unknown): boolean {
   return (details as { plan?: { khuyenMai?: boolean } } | null | undefined)?.plan?.khuyenMai !== false;
 }
