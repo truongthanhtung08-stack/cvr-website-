@@ -52,7 +52,14 @@ const chuaDat = tin.filter(conHan).map((x) => {
   const t = x.title || "", d = (x.description || "").trim(), chu = t.replace(/[^A-Za-zÀ-ỹ]/g, "");
   const cl = [];
   if (chu.length > 10 && chu === chu.toUpperCase()) cl.push("tiêu đề VIẾT HOA cả câu");
-  if (t.length > 75) cl.push(`tiêu đề dài ${t.length} ký tự`);
+  // Chuẩn tiêu đề (bảng tự kiểm dòng 1, chủ dự án 20/10/2026): 30–60 ký tự · không ghi giá, diện tích (web tự hiện)
+  if (t.trim().length > 60) cl.push(`tiêu đề dài ${t.trim().length} ký tự (chuẩn 30–60)`);
+  if (t.trim().length < 30) cl.push(`tiêu đề ngắn ${t.trim().length} ký tự (chuẩn 30–60)`);
+  if (/\d+([.,]\d+)?\s*(m2|m²|tỷ|ty\b|triệu|tr\b)/i.test(t)) cl.push("tiêu đề ghi giá/diện tích");
+  // 2 câu đầu mô tả hiện ngay dưới tiêu đề trên thẻ tin (20/10/2026) → mô tả mở đầu bằng chính tiêu đề là phí chỗ
+  const dongDau = d.split(/\n|(?<=[.!?])\s/)[0]?.toLowerCase().replace(/[^\p{L}\d ]/gu, "").trim() ?? "";
+  const tdThuong = t.toLowerCase().replace(/[^\p{L}\d ]/gu, "").trim();
+  if (dongDau.length > 10 && (tdThuong.includes(dongDau) || dongDau.includes(tdThuong))) cl.push("mô tả mở đầu bằng chính tiêu đề — viết 2 câu tóm tắt (loại nhà, diện tích, số phòng, điểm nổi bật)");
   if (!/^\s*(bán|cho thuê|chuyển nhượng|sang nhượng)/i.test(t)) cl.push("tiêu đề không mở đầu Bán/Cho thuê");
   if (/siêu phẩm|sập sàn|giá sốc|cực hot|gấp gấp|hiếm|cơ hội vàng|!!/i.test(t)) cl.push("tiêu đề có từ câu khách");
   if (d.length >= 100 && d.length < 300) cl.push("mô tả < 300 ký tự");

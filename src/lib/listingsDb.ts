@@ -400,7 +400,13 @@ export async function getListingsHetHan(): Promise<Listing[]> {
 export async function getListingsThe(): Promise<Listing[]> {
   const ds = await getListings();
   return ds.map((l) => {
-    const { desc: _desc, searchText: _searchText, ...the } = l;
+    // 20/10/2026 (trang chủ 603 KB > ngưỡng 450): bỏ thêm các trường thẻ KHÔNG dùng (đã rà TheTinMobile, PropertyCard,
+    // FeaturedListings, tinNoiBat) — vùng dò tìm, địa giới, mã người, số thô, hạn tin.
+    const {
+      desc: _desc, searchText: _searchText, diaChiTim: _dct, diaGioi: _dg, maNguoi: _mn, hetHanLuc: _hh,
+      builtAreaM2Uoc: _bu, hangTin: _ht, duong: _du, noiThat: _nt, priceVnd: _pv, areaM2: _am, builtAreaM2: _ba,
+      ...the
+    } = l;
     // 20/10/2026: thẻ hiện 2 câu đầu mô tả (src/lib/trichMoTa.ts) → chỉ gửi đúng 2 câu đó (~150–250 ký tự), không gửi cả mô tả
     const ngan = moTaThe(l);
     return ngan ? { ...the, desc: ngan } : the;

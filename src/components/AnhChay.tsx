@@ -120,7 +120,7 @@ export default function AnhChay({
           <Image
             key={src}
             src={anhNho(src)}
-            alt={k === 0 ? alt : ""}
+            alt={k === 0 ? alt : `${alt} - ảnh ${k + 1}`} // mọi ảnh đều có alt (Google Hình ảnh; rà web 20/10/2026: 283 trang tin thiếu alt)
             fill
             sizes={sizes}
             className={`${className} transition-opacity duration-700 ease-out ${k === i ? "opacity-100" : "opacity-0"}`}

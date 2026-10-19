@@ -110,7 +110,7 @@ export default function KhungAnhPC({ images, videos = [], alt, banDo }: { images
             return (
               <button key={k} type="button" onClick={() => setI(k)} aria-label={x.kind === "video" ? "Video" : `Ảnh ${k - nVid + 1}`}
                 className={`relative h-[62px] w-[100px] shrink-0 overflow-hidden rounded-md bg-black transition ${k === i ? "ring-2 ring-cvr-blue ring-offset-1" : "opacity-70 hover:opacity-100"}`}>
-                {bia && <Image src={bia} alt="" fill sizes="100px" unoptimized={bia.startsWith("https://i.ytimg.com")} className="object-cover" />}
+                {bia && <Image src={bia} alt={x.kind === "video" ? `${alt} - video` : `${alt} ${k - nVid + 1}`} fill sizes="100px" unoptimized={bia.startsWith("https://i.ytimg.com")} className="object-cover" />}
                 {x.kind === "video" && (
                   <span className="absolute inset-0 flex items-center justify-center">
                     <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/90"><svg className="ml-0.5 h-3.5 w-3.5 text-black" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg></span>

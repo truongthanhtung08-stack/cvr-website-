@@ -29,8 +29,10 @@ export type TinDem = {
 };
 
 export function tinDem(tin: Listing[]): TinDem[] {
+  // diaChiTim lặp "mới · cũ · mới" → bỏ phần trùng (20/10/2026, trang chủ nặng); đủ chữ để lọc như cũ
+  const gon = (s?: string) => (s ? [...new Set(s.split(" · ").map((x) => x.trim()))].join(" · ") : undefined);
   return tin.map((l) => ({
-    id: l.id, title: "", price: l.price, area: l.area, beds: l.beds, location: l.location, diaChiTim: l.diaChiTim,
+    id: l.id, title: "", price: l.price, area: l.area, beds: l.beds, location: l.location, diaChiTim: gon(l.diaChiTim),
     type: l.type, purpose: l.purpose === "thue" ? "thue" : "ban", huong: l.huong, phapLy: l.phapLy, noiThat: l.noiThat,
   }));
 }

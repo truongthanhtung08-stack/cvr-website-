@@ -49,6 +49,12 @@ async function kiem(u) {
     if (/noindex/i.test(r.robots)) r.loi.push("noindex (nằm trong sitemap)");
     if (r.anhThieuAlt) r.loi.push(`${r.anhThieuAlt} ảnh thiếu alt`);
     if (r.kb > NANG_KB) r.loi.push(`nặng ${r.kb}KB`);
+    // CỔNG 3 TIN (chủ dự án 20/10/2026: "không đủ tiêu chí thì không index") — trang danh sách mua bán / cho thuê
+    // nằm trong sitemap (tức đang mở cho Google) mà dưới 3 tin là LỆCH CỔNG → báo lỗi để sửa ngay.
+    if (/^\/(mua-ban|cho-thue)\//.test(r.url)) {
+      const soTin = new Set((h.match(/href="\/bat-dong-san\/[^"?#]+/g) || [])).size;
+      if (soTin < 3) r.loi.push(`dưới 3 tin (${soTin}) mà mở index`);
+    }
     const vanBan = (r.title + " " + r.desc);
     for (const re of CHU_CAM) if (re.test(vanBan)) r.loi.push(`chữ cấm: ${re.source}`);
   } catch (e) {

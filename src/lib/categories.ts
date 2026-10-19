@@ -205,3 +205,11 @@ export const projectCategories: Category[] = [
 export function findCategory(list: Category[], slug: string): Category | undefined {
   return list.find((c) => c.slug === slug);
 }
+
+// CỔNG INDEX CHO TRANG DANH MỤC GỐC (chủ dự án 20/10/2026: "cái gì không đủ tiêu chí thì không index") — cùng ngưỡng
+// với trang pSEO (NGUONG_INDEX = 3, src/lib/pseo.ts). Đếm tin còn hạn đúng mục đích + đúng loại hình của danh mục, bỏ bản kèm.
+// Dùng ở metadata trang /mua-ban/<loại>, /cho-thue/<loại> và ở sitemap — hai nơi luôn khớp nhau.
+export const NGUONG_INDEX_DANH_MUC = 3;
+export function soTinDanhMuc(ds: { type: string; purpose?: string; banSao?: unknown }[], c: Category, muc: "ban" | "thue"): number {
+  return ds.filter((l) => !l.banSao && ((l.purpose ?? "ban") === "thue" ? "thue" : "ban") === muc && c.types.includes(l.type)).length;
+}

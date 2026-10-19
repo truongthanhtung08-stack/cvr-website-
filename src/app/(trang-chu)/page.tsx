@@ -40,6 +40,11 @@ export default async function Home() {
     getFeaturedArticleSlug(), getHeroBanners(),
   ]);
 
+  // 20/10/2026 (trang chủ 603 KB > ngưỡng 450): thẻ chỉ cần phần đầu — bỏ toàn văn bài viết và phần giới thiệu, bảng giá,
+  // mặt bằng… của dự án khỏi dữ liệu gửi kèm (ProjectsSection dùng name/slug/type/status/priceFrom/location/image/photos/map).
+  const baiThe = articles.map(({ content: _c, ...a }) => a);
+  const duAnThe = projects.map(({ scale: _s, amenities: _a, overview: _o, priceTable: _pt, floorPlans: _fp, places: _pl, developerInfo: _di, videos: _v, ...p }) => ({ ...p, scale: [], amenities: [], overview: [] }));
+
   return (
     <>
       <Header />
@@ -67,7 +72,7 @@ export default async function Home() {
               Không bọc Reveal: Reveal ẩn/hiện theo cuộn sẽ đá nhau với cơ chế mở rộng. */}
           {/* Chỉ chở đúng số tin khối này hiện (20 tin mỗi tab) — 16/10/2026, trang chủ 632KB */}
           <FeaturedListings items={chonTinTrangChu(listings)} />
-          <ProjectsSection projects={projects} articles={articles} />
+          <ProjectsSection projects={duAnThe} articles={baiThe} />
           {/* "Dành riêng cho bạn" TẠM ẨN theo yêu cầu — mở lại: bỏ comment import ForYou + khối này.
           <ForYou /> */}
           {/* Ô thành phố (Nha Trang, Quy Nhơn…) trỏ thẳng trang thành phố thay cho /mua-ban?tinh= — Search Console 20/10/2026:
@@ -77,7 +82,7 @@ export default async function Home() {
             const tp = ten ? THANH_PHO.find((t) => t.name === ten) : undefined;
             return tp ? { ...a, href: `/mua-ban/${slugKhuVuc(tp.tinh)}/${tp.slug}` } : a;
           })} />
-          <NewsSection articles={articles} featuredSlug={featuredSlug} />
+          <NewsSection articles={baiThe} featuredSlug={featuredSlug} />
 
         </HomeExpandProvider>
         {/* Kế hoạch Airbnb GĐ A — docs/KE-HOACH-AIRBNB.md */}

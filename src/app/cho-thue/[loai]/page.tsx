@@ -11,7 +11,7 @@ import KhuVucLinks from "@/components/KhuVucLinks";
 import { ListingListJsonLd } from "@/components/ListJsonLd";
 import { getListings } from "@/lib/listingsDb";
 import { getArticles } from "@/lib/contentDb";
-import { findCategory, rentCategories, nhomPseo } from "@/lib/categories";
+import { findCategory, rentCategories, nhomPseo, NGUONG_INDEX_DANH_MUC, soTinDanhMuc } from "@/lib/categories";
 // Trang NHÓM (Nhà, Văn phòng mặt bằng…) có trang gốc riêng — chuẩn thống nhất 17/10/2026, gộp loại hình cho dễ chọn
 const DANH_MUC = [...rentCategories, ...nhomPseo("thue")];
 import { demTinTheoKhuVuc, khuVucTrongDiem, moTaKhuVuc, slugKhuVuc, tieuDeKhuVuc, timKhuVuc } from "@/lib/khuVuc";
@@ -50,12 +50,15 @@ export async function generateMetadata({ params }: { params: Promise<{ loai: str
 
   const c = findCategory(DANH_MUC, loai);
   if (c) {
+    // Cổng index (20/10/2026): danh mục chưa đủ 3 tin còn hạn → xem được nhưng KHÔNG cho Google lập chỉ mục (sitemap cũng bỏ).
+    const dmTin = soTinDanhMuc(await getListings().catch(() => []), c, "thue");
     const title = `${c.title} ${thangHienTai()}`;
     return {
       title: tieuDeGoogle(title),
       description: moTaDu(c.desc),
       alternates: { canonical: `/cho-thue/${c.slug}` },
       openGraph: { title, description: moTaDu(c.desc), url: `/cho-thue/${c.slug}`, type: "website" },
+      ...(dmTin < NGUONG_INDEX_DANH_MUC ? { robots: { index: false, follow: true } } : {}),
     };
   }
 
@@ -75,7 +78,7 @@ export async function generateMetadata({ params }: { params: Promise<{ loai: str
     description,
     alternates: { canonical: `/cho-thue/${kv.slug}` },
     openGraph: { title, description, url: `/cho-thue/${kv.slug}`, type: "website" },
-    ...(soTin === 0 ? { robots: { index: false, follow: true } } : {}),
+    ...(soTin < NGUONG_INDEX_DANH_MUC ? { robots: { index: false, follow: true } } : {}), // cổng 3 tin (20/10/2026)
   };
 }
 
