@@ -462,14 +462,15 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                         có ngày — khách xem nhà đất luôn hỏi "tin này đăng lâu chưa". */}
                     {l.postedAt && (
                       <span className="text-[12px] font-medium tracking-wide text-cvr-faint">
-                        · Đăng {new Date(l.postedAt).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}
+                        {/* dấu · chỉ hiện trên máy tính — điện thoại xuống dòng thì dấu đứng đầu dòng (20/10/2026) */}
+                        <span className="hidden sm:inline">· </span>Đăng {new Date(l.postedAt).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}
                       </span>
                     )}
                     {/* NGÀY KẾT THÚC hiển thị (chủ dự án chốt 01/10/2026: mỗi tin ghi rõ ngày đăng,
                         ngày kết thúc — như Batdongsan). */}
                     {l.hetHanLuc && (
                       <span className="text-[12px] font-medium tracking-wide text-cvr-faint">
-                        · Hết hạn {new Date(l.hetHanLuc).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}
+                        <span className="hidden sm:inline">· </span>Hết hạn {new Date(l.hetHanLuc).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}
                       </span>
                     )}
                   </div>
@@ -604,7 +605,8 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                     />
                   )}
                   {d.specs.map((f) => <Row key={f.label} label={f.label} value={f.value} />)}
-                  <Row label="Tình trạng pháp lý" value={d.legal ?? "Chưa cập nhật"} />
+                  {/* Trống thì ẩn — không phơi "Chưa cập nhật" lên trang công khai (20/10/2026); thiếu thì VIỆC Cowork bổ sung */}
+                  {d.legal && <Row label="Tình trạng pháp lý" value={d.legal} />}
                 </div>
               </Section>
 

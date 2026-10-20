@@ -504,7 +504,11 @@ function rowToDetail(r: Row): ListingFull {
   // bỏ luôn — trang tin không bao giờ hiện ô rỗng.
   const doc = (fs: Field[]) =>
     fs
-      .map((f) => ({ label: f.label + (f.unit ? ` (${f.unit})` : ""), value: gon(d.specs?.[f.key]) }))
+      // Nhãn gọn, đơn vị ghép vào số ("Mặt tiền (chiều ngang): 4,16 m") — trước ghi kiểu ô nhập liệu "Mặt tiền (chiều ngang) (m): 4,16" (20/10/2026)
+      .map((f) => {
+        const v = gon(d.specs?.[f.key]);
+        return { label: f.label, value: v && f.unit && /^[\d.,\s]+$/.test(v) ? `${v} ${f.unit}` : v };
+      })
       .filter((s) => s.value);
   const { chinh, dacDiem } = fieldsSplit(r.type, r.purpose);
   const specsChinh = doc(chinh);
