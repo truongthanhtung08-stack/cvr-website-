@@ -10,6 +10,7 @@ import ChonCoTim from "@/components/ChonCoTim";
 // ⛔ Khai báo ở MỨC TỆP, không đặt trong thân component khác — khai báo bên trong thì mỗi lần
 // gõ React dựng lại ô, khách chỉ gõ được một ký tự (lỗi 10/10/2026).
 const KHAC = "__tu_ghi"; // chỉ để form biết đang ở chế độ tự ghi — không lưu xuống DB
+const KHAC_NHAN = "Khác — tự ghi"; // dòng cuối bảng chọn của web (mục không bắt buộc)
 
 export default function ChonHoacGhi({
   value,
@@ -27,10 +28,26 @@ export default function ChonHoacGhi({
   const [tuGhi, setTuGhi] = useState(false);
   // MỤC KHÔNG BẮT BUỘC → bảng chọn của web (chủ dự án 16/10/2026: trong Zalo bảng chọn gốc của
   // điện thoại không có nút tắt, khách không chọn thì kẹt). Bảng có nút quay lại, "Đóng", "Bỏ chọn".
-  if (!batBuoc) {
-    return <ChonCoTim value={value} onChange={onChange} options={options} placeholder="Chọn" timPlaceholder="Tìm hoặc tự ghi" className={className} tuGhi={onChange} xoaDuoc />;
-  }
   const dangGhi = tuGhi || (!!value && !options.includes(value));
+  // ⛔ "Khác — tự ghi" LÀ DÒNG CUỐI CỦA BẢNG, chọn xong bảng đóng và Ô GHI HIỆN NGAY DƯỚI ô chọn trong form — cấu trúc đã
+  // duyệt nhiều lần (chủ dự án 21/10/2026: "không phải hiện lên kiểu khung search", bàn phím che, khách không thấy chỗ ghi).
+  // 16/10/2026 đổi sang bảng của web mà dòng này chỉ hiện khi gõ tìm → khách tưởng mất. ĐỪNG đổi lại kiểu gõ trong bảng.
+  if (!batBuoc) {
+    return (
+      <>
+        <ChonCoTim
+          value={dangGhi ? KHAC_NHAN : value}
+          onChange={(v) => { setTuGhi(v === KHAC_NHAN); onChange(v === KHAC_NHAN ? "" : v); }}
+          options={[...options, KHAC_NHAN]}
+          placeholder="Chọn"
+          timPlaceholder="Tìm"
+          className={className}
+          xoaDuoc
+        />
+        {dangGhi && <OGoTuGian value={value} onChange={onChange} autoFocus={!value} className={className + " mt-2"} />}
+      </>
+    );
+  }
   return (
     <>
       <div className="relative">

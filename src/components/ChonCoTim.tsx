@@ -145,16 +145,7 @@ export default function ChonCoTim({
                 <button type="button" onClick={() => { tuGhi?.(q.trim()); dong(); }} className="block w-full px-4 py-3 text-left text-[15px] font-medium text-cvr-blue-ink transition hover:bg-cvr-surface">
                   Khác — tự ghi: «{q.trim()}»
                 </button>
-              )}
-              {/* ⛔ DÒNG "Khác — tự ghi" LUÔN HIỆN CUỐI BẢNG khi ô cho tự ghi (chủ dự án 10/10 + 14/10/2026, đã duyệt — ĐỪNG GỠ).
-                  16/10/2026 đổi ô không bắt buộc sang bảng này mà dòng chỉ hiện sau khi bấm kính lúp và gõ → chủ dự án tưởng
-                  mất hết (21/10/2026). Bấm dòng này là mở ô gõ, sẵn chữ khách đã tự ghi trước đó. */}
-              {tuGhi && !dangTim && (
-                <button type="button" onClick={() => { setQ(value && !options.includes(value) ? value : ""); setDangTim(true); }} className="block w-full border-t border-cvr-line px-4 py-3 text-left text-[15px] font-medium text-cvr-blue-ink transition hover:bg-cvr-surface">
-                  Khác — tự ghi
-                </button>
-              )}
-            </div>
+              )}            </div>
             <button type="button" onClick={dong} className="border-t border-cvr-line py-3 text-sm font-semibold text-cvr-body">Đóng</button>
           </div>
         </div>
