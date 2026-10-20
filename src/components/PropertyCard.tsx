@@ -180,7 +180,8 @@ export default function PropertyCard({
         <p className="mt-1.5 flex items-center gap-1 text-[13px] text-cvr-muted">
           <PinIcon /><span className="line-clamp-1"><Highlight text={diaChiHaiDong(item).moi} terms={terms} /></span>
         </p>
-        {diaChiHaiDong(item).cu && <p className="mt-0.5 truncate pl-[18px] text-[12px] text-cvr-faint">Địa chỉ hệ cũ: {diaChiHaiDong(item).cu}</p>}
+        {/* Trang chủ (variant "tier") chỉ hiện địa chỉ mới, một dòng — chủ dự án 20/10/2026 */}
+        {!isTier && diaChiHaiDong(item).cu && <p className="mt-0.5 truncate pl-[18px] text-[12px] text-cvr-faint">Địa chỉ hệ cũ: {diaChiHaiDong(item).cu}</p>}
 
         {/* Đáy: thành viên đăng tin — chỉ cấp cao (variant "tier": Diamond/Gold) */}
         {showAgent && (

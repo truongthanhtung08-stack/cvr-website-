@@ -430,7 +430,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
             <Gallery images={d.images} videos={d.videos} alt={tieuDe1Dong} listingId={l.id} banDo={{ diaChi: [d.addressDetail, l.location].filter(Boolean).join(", "), q: l.mapPin ?? d.mapQuery }} />
           </div>
 
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-3 lg:gap-8">
             {/* Cột chính */}
             <div className="reveal is-visible cards-stagger lg:col-span-2 [&>section:first-of-type]:mt-5">
               {/* !animate-none: hiệu ứng trượt của cột giữ transform → video "Xem full" / bộ xem lớn (fixed) bị nhốt trong cột */}
@@ -512,28 +512,32 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                 {/* KHỐI THÔNG TIN CHÍNH — mọi ô cùng bề ngang nên nội dung dài ngắn
                     khác nhau vẫn cân, không ô nào đẩy lệch ô nào. */}
                 <div className="mt-5 rounded-2xl border border-cvr-line bg-white p-4">
+                  {/* ĐIỆN THOẠI (chủ dự án 20/10/2026): mọi ô (giá, diện tích, PN, đường vào…) chảy chung MỘT
+                      lưới 2 cột, khoảng cách đều, không còn ô trống lẻ; giá trị dài tự xuống dòng theo từ,
+                      không ngắt giữa chữ. Máy tính giữ nguyên hai lưới 4 cột như cũ (sm:). */}
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-4 sm:block">
                   {/* Bốn ô CÙNG BỀ NGANG — giá dài mấy cũng chỉ xuống dòng trong ô của
-                      nó, không đẩy lệch các ô còn lại. Giá vẫn nổi nhờ cỡ chữ + màu,
-                      không cần phóng to quá khổ. */}
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-4">
+                      nó, không đẩy lệch các ô còn lại. Giá cùng màu, cùng cỡ các ô khác —
+                      tin đã mở thì không bôi đỏ (chủ dự án 20/10/2026). */}
+                  <div className="contents sm:grid sm:grid-cols-4 sm:gap-x-4 sm:gap-y-3">
                     <div className="min-w-0">
-                      <p className="text-[12px] text-cvr-muted">{nhanGia}</p>
-                      <p className="mt-1 break-words text-[20px] font-bold leading-tight text-red-500 sm:text-[22px]">{l.price}</p>
+                      <p className="text-[12px] leading-[18px] text-cvr-muted">{nhanGia}</p>
+                      <p className="mt-1 break-words text-[16px] font-semibold leading-[22px] text-cvr-ink">{l.price}</p>
                     </div>
                     <div className="min-w-0">
-                      <p className="text-[12px] text-cvr-muted">{nhanDienTich}</p>
-                      <p className="mt-1 break-words text-[17px] font-semibold leading-tight text-cvr-ink">{l.area}</p>
+                      <p className="text-[12px] leading-[18px] text-cvr-muted">{nhanDienTich}</p>
+                      <p className="mt-1 break-words text-[16px] font-semibold leading-[22px] text-cvr-ink">{l.area}</p>
                     </div>
                     {d.builtArea && (
                       <div className="min-w-0">
-                        <p className="text-[12px] text-cvr-muted">Diện tích sử dụng</p>
-                        <p className="mt-1 break-words text-[17px] font-semibold leading-tight text-cvr-ink">{d.builtArea}</p>
+                        <p className="text-[12px] leading-[18px] text-cvr-muted">Diện tích sử dụng</p>
+                        <p className="mt-1 break-words text-[16px] font-semibold leading-[22px] text-cvr-ink">{d.builtArea}</p>
                       </div>
                     )}
                     {l.pricePerM2 && (
                       <div className="min-w-0">
-                        <p className="text-[12px] text-cvr-muted">Giá / m²</p>
-                        <p className="mt-1 break-words text-[17px] font-semibold leading-tight text-cvr-ink">{l.pricePerM2}</p>
+                        <p className="text-[12px] leading-[18px] text-cvr-muted">Giá / m²</p>
+                        <p className="mt-1 break-words text-[16px] font-semibold leading-[22px] text-cvr-ink">{l.pricePerM2}</p>
                       </div>
                     )}
                   </div>
@@ -543,7 +547,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                       chiều dài · đường vào · loại đất; căn hộ thì tầng số… Chỉ hiện
                       mục ĐÃ CÓ dữ liệu, lưới tự xuống hàng nên không xén, không chồng. */}
                   {(l.beds || l.baths || d.direction || d.furnish || d.specsChinh.length > 0) && (
-                    <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-cvr-line pt-4 sm:grid-cols-4">
+                    <div className="contents sm:mt-4 sm:grid sm:grid-cols-4 sm:gap-x-4 sm:gap-y-3 sm:border-t sm:border-cvr-line sm:pt-4">
                       {l.beds ? <MiniStat label="Phòng ngủ" value={l.beds + " PN"} /> : null}
                       {l.baths ? <MiniStat label="Phòng tắm" value={l.baths + " WC"} /> : null}
                       {d.specsChinh.map((f) => <MiniStat key={f.label} label={f.label} value={f.value} />)}
@@ -551,6 +555,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                       {d.furnish && <MiniStat label="Nội thất" value={d.furnish} />}
                     </div>
                   )}
+                  </div>
                 </div>
 
 
@@ -687,7 +692,8 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
 
               {/* ĐÁNH GIÁ TIN — ai đọc tin cũng đánh giá được, không cần xem số người đăng;
                   bấm gửi mới xác minh (đã đăng nhập / đã xác minh số thì gửi luôn). */}
-              <KhoiDanhGiaTin listingId={l.id} />
+              {/* Điện thoại: cách khối Vị trí đúng bằng khoảng giữa các khối khác (20/10/2026) */}
+              <div className="mt-5 lg:mt-0"><KhoiDanhGiaTin listingId={l.id} /></div>
             </div>
 
             {/* Cột phụ — môi giới (dính khi cuộn) */}
@@ -695,7 +701,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
               {/* Khung liên hệ DÍNH CỐ ĐỊNH khi cuộn — nếu nội dung cao hơn màn hình
                   thì tự cuộn BÊN TRONG khung, không bao giờ trôi khỏi tầm nhìn. */}
               <div className="no-scrollbar sticky top-20 max-h-[calc(100vh-6rem)] space-y-4 overflow-y-auto">
-                <div className="rounded-none border border-cvr-line bg-white p-5 shadow-sm">
+                <div className="rounded-2xl border border-cvr-line bg-white p-5 shadow-sm lg:rounded-none">
                   {/* Luôn là "người đăng" — chữ "tư vấn" khiến khách hiểu Coastal Land
                       tư vấn/môi giới bất động sản này. */}
                   <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-cvr-faint">Liên hệ người đăng</p>
@@ -729,7 +735,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                   )}
                 </div>
 
-                <div className="rounded-none border border-cvr-line bg-white p-5 text-[15px] shadow-sm">
+                <div className="rounded-2xl border border-cvr-line bg-white p-5 text-[15px] shadow-sm lg:rounded-none">
                   {/* ⚠️ Thủ tục công chứng / sang tên là việc của MÔI GIỚI và hai
                       bên giao dịch — KHÔNG phải của Coastal Land. Ô này chỉ nêu
                       thông tin pháp lý + mức độ xác thực, không "cam kết". */}
@@ -828,11 +834,11 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
 function MiniStat({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0">
-      <p className="text-[12px] leading-tight text-cvr-muted">{label}</p>
+      <p className="text-[12px] leading-[18px] text-cvr-muted">{label}</p>
       {/* break-words chứ KHÔNG truncate: giá trị dài phải xuống dòng, không được
           cắt cụt bằng dấu "…" — người xem cần đọc đủ số liệu. whitespace-pre-line: giữ đúng
           chỗ xuống dòng khách tự ghi (ô "Khác — tự ghi", chủ dự án 15/10/2026). */}
-      <p className="mt-1 whitespace-pre-line break-words text-[15px] font-semibold leading-snug text-cvr-ink">{value}</p>
+      <p className="mt-1 whitespace-pre-line break-words text-[16px] font-semibold leading-[22px] text-cvr-ink">{value}</p>
     </div>
   );
 }

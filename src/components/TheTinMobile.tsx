@@ -29,9 +29,11 @@ import { diaChiHaiDong, moTaThe, soDongMoTa } from "@/lib/trichMoTa";
 //   MỌI CẤP: ảnh trên, nội dung dưới (chủ dự án 09/10/2026 — chuẩn riêng của Coastal Land).
 // ============================================================================
 
-// Số mục thông số THEO CẤP (cấp càng cao càng đủ): Diamond giá · m² · PN · WC · giá/m² · Gold giá · m² · PN · WC
-// · Silver giá · m² · PN · Basic giá · m² (đất không có PN/WC thì giá/m² lên trước).
-const SO_THONG_SO: Record<TierId, number> = { diamond: 5, gold: 4, silver: 3, basic: 2 };
+// Số mục thông số THEO CẤP — đúng quy định admin "Thông số trên thẻ tin" (site_content quy_dinh_gia, 20/10/2026):
+// Diamond giá · diện tích · giá/m² · phòng ngủ · WC · Gold, Silver, Basic giá · diện tích.
+const SO_THONG_SO: Record<TierId, number> = { diamond: 5, gold: 2, silver: 2, basic: 2 };
+// Máy tính giữ bản đã chốt 18/10 (Diamond 5 · Gold 4 · Silver 3 · Basic 2) — chưa có yêu cầu đổi.
+const SO_THONG_SO_PC: Record<TierId, number> = { diamond: 5, gold: 4, silver: 3, basic: 2 };
 
 const IconAnh = () => (
   <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden>
@@ -155,7 +157,7 @@ function KhungChay({ slides, alt, khung, sizes, onMo, children, tuChay = true }:
 // chạy khi mở tin (chủ dự án 09/10/2026).
 // pc: HÀNG DANH SÁCH máy tính (trang Mua bán / Cho thuê) — cùng nội dung thẻ điện thoại, chỉ khác khung (nhánh ở dưới).
 // moTa: dòng mô tả dưới địa chỉ theo cấp (Basic 2 · Silver 2 · Gold 3 · Diamond 3 — src/lib/trichMoTa.ts) — MỌI NƠI (trang chủ, danh sách, mẫu thẻ admin), nâng cấp là tự đúng (chủ dự án 20/10/2026).
-export default function TheTinMobile({ item, terms = [], tuChay = false, pc = false, moTa = true }: { item: Listing; terms?: string[]; tuChay?: boolean; pc?: boolean; moTa?: boolean }) {
+export default function TheTinMobile({ item, terms = [], tuChay = false, pc = false, moTa = true, dcCu = true }: { item: Listing; terms?: string[]; tuChay?: boolean; pc?: boolean; moTa?: boolean; dcCu?: boolean }) {
   const t: TierId = item.badge ? tierFromBadge(item.badge) : "basic";
   const tier = getTier(t);
   const href = `/bat-dong-san/${item.id}`;
@@ -168,7 +170,7 @@ export default function TheTinMobile({ item, terms = [], tuChay = false, pc = fa
   const coSo = t !== "basic"; // Diamond · Gold · Silver: Zalo + Hiện số trên thẻ
   const ten = tenDiaDanh(item);
   const tieuDe = tier.uppercase ? item.title : chuThuong(item.title, ten);
-  const so = thongSo(item).slice(0, SO_THONG_SO[t]);
+  const so = thongSo(item).slice(0, (pc ? SO_THONG_SO_PC : SO_THONG_SO)[t]);
   const soAnh = item.imageCount || anh.length;
   const moc = freshText(item.postedAt, item.bumpedAt);
   const ngay = !moc || moc.startsWith("Làm mới") ? moc : `Đăng ${moc.charAt(0).toLowerCase()}${moc.slice(1)}`;
@@ -222,22 +224,15 @@ export default function TheTinMobile({ item, terms = [], tuChay = false, pc = fa
   const khungChinh = (khung: string, sizes: string) => (
     <KhungChay slides={slides} alt={item.title} khung={khung} sizes={sizes} onMo={moSlide} tuChay={tuChay}>{dem}</KhungChay>
   );
-  let khungAnh: React.ReactNode = khungChinh("aspect-[4/3] w-full", "100vw");
-  if (t === "gold" && anh.length >= 3) {
-    khungAnh = (
-      <div className="flex aspect-[4/3] w-full gap-px">
-        {khungChinh("h-full min-w-0 flex-1", "75vw")}
-        <div className="grid w-[calc((100%-1px)*0.2815)] shrink-0 grid-rows-2 gap-px">
-          {anh.slice(1, 3).map((src, k) => <O key={k} vuaKhung src={src} alt={item.title} className="h-full w-full" sizes="33vw" onMo={() => setDs(true)} />)}
-        </div>
-      </div>
-    );
-  } else if (t === "diamond" && anh.length >= 4) {
+  // KHUNG ẢNH THEO CẤP lấy TỶ LỆ VÀNG (1,618) làm chuẩn (chủ dự án 20/10/2026), màn 375: Basic 16:9 = 211 (nhỏ nhất) · Silver tỷ lệ vàng = 232 ·
+  // Gold chính tỷ lệ vàng (= Silver) + 3 phụ 16:9 · Diamond chính 3:2 = 250 (to hơn Gold) + 3 phụ 3:2 — Gold, Diamond cùng số ảnh, cùng cách xếp.
+  let khungAnh: React.ReactNode = khungChinh("aspect-[1.618] w-full", "100vw");
+  if ((t === "gold" || t === "diamond") && anh.length >= 4) {
     khungAnh = (
       <div className="grid gap-px">
-        {khungChinh("aspect-[4/3] w-full", "100vw")}
+        {khungChinh(t === "diamond" ? "aspect-[3/2] w-full" : "aspect-[1.618] w-full", "100vw")}
         <div className="grid grid-cols-3 gap-px">
-          {anh.slice(1, 4).map((src, k) => <O key={k} vuaKhung src={src} alt={item.title} className="aspect-[4/3]" sizes="33vw" onMo={() => setDs(true)} />)}
+          {anh.slice(1, 4).map((src, k) => <O key={k} vuaKhung src={src} alt={item.title} className={t === "diamond" ? "aspect-[3/2]" : "aspect-[16/9]"} sizes="33vw" onMo={() => setDs(true)} />)}
         </div>
       </div>
     );
@@ -250,32 +245,34 @@ export default function TheTinMobile({ item, terms = [], tuChay = false, pc = fa
     <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.7} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M4 12h16v2a5 5 0 01-5 5H9a5 5 0 01-5-5v-2zM6 12V6a2 2 0 014 0M8 19l-1 2m10-2l1 2" /></svg>
   );
   const thongSoDong = (
-    <p className="mt-1.5 flex flex-wrap items-center gap-x-1.5 text-[15px] text-cvr-body">
+    <p className={`${pc ? "mt-1.5" : "mt-2"} flex flex-wrap items-center gap-x-1.5 text-[15px] text-cvr-body`}>
       {so.map((x, i) => (
         <span key={i} className={`flex items-center gap-1 ${x.do ? "font-bold text-red-500" : ""}`}>
-          {i > 0 && <span className="mr-0.5 text-cvr-muted">·</span>}
           {x.chu}
           {x.icon === "pn" && <IconPN />}
           {x.icon === "wc" && <IconWC />}
+          {/* Dấu · đứng SAU mục (không đứng trước mục sau): chữ to trong Zalo/Facebook làm dòng xuống hàng
+              thì dấu nằm cuối dòng trên, không lơ lửng đầu dòng dưới (20/10/2026) */}
+          {i < so.length - 1 && <span className="ml-0.5 text-cvr-muted">·</span>}
         </span>
       ))}
     </p>
   );
-  // Hai dòng địa chỉ đồng bộ: hệ mới trên · hệ cũ dưới (diaChiHaiDong, 20/10/2026)
+  // PC: hai dòng địa chỉ (hệ mới trên · hệ cũ dưới). Điện thoại: MỘT dòng "Phường, Tỉnh/Thành phố" (chủ dự án 20/10/2026)
   const dc = diaChiHaiDong(item);
   const diaChiDong = (
     <>
-      <p className="mt-1 flex items-center gap-1 text-[14px] text-cvr-body">
-        <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth={1.7} viewBox="0 0 24 24" aria-hidden><path d="M12 21s-7-6.2-7-11.5A7 7 0 0112 2.5a7 7 0 017 7C19 14.8 12 21 12 21z" /><circle cx="12" cy="9.5" r="2.5" /></svg>
-        <span className="truncate"><Highlight text={dc.moi} terms={terms} /></span>
+      <p className={pc ? "mt-1 flex items-center gap-1 text-[14px] text-cvr-body" : "mt-1.5 flex items-start gap-1 text-[14px] text-cvr-body"}>
+        <svg className={`${pc ? "" : "mt-px "}h-4 w-4 shrink-0`} fill="none" stroke="currentColor" strokeWidth={1.7} viewBox="0 0 24 24" aria-hidden><path d="M12 21s-7-6.2-7-11.5A7 7 0 0112 2.5a7 7 0 017 7C19 14.8 12 21 12 21z" /><circle cx="12" cy="9.5" r="2.5" /></svg>
+        <span className={pc ? "truncate" : "line-clamp-2"}><Highlight text={pc ? dc.moi : item.location} terms={terms} /></span>
       </p>
-      {dc.cu && <p className="mt-0.5 truncate pl-5 text-[13px] text-cvr-faint">Địa chỉ hệ cũ: <Highlight text={dc.cu} terms={terms} /></p>}
+      {pc && dcCu && dc.cu && <p className="mt-0.5 truncate pl-5 text-[13px] text-cvr-faint">Địa chỉ hệ cũ: <Highlight text={dc.cu} terms={terms} /></p>}
     </>
   );
   const trich = moTa ? moTaThe(item) : "";
   const soDong = soDongMoTa(item);
-  // MÔ TẢ NGAY DƯỚI TIÊU ĐỀ (chủ dự án 20/10/2026: "mô tả dưới tiêu đề" — thứ tự: tiêu đề → mô tả → giá · m² → địa chỉ)
-  const moTaDong = trich ? <p className={`mt-1 ${["", "line-clamp-1", "line-clamp-2", "line-clamp-3"][soDong]} text-[14px] leading-[1.45] text-cvr-muted`}><Highlight text={trich} terms={terms} /></p> : null;
+  // Điện thoại: tiêu đề → giá · m² → địa chỉ → mô tả (chủ dự án 20/10/2026: giá · diện tích ngay dưới tiêu đề)
+  const moTaDong = trich ? <p className={`${pc ? "mt-1" : "mt-2"} ${["", "line-clamp-1", "line-clamp-2", "line-clamp-3"][soDong]} text-[14px] leading-[1.45] text-cvr-muted`}><Highlight text={trich} terms={terms} /></p> : null;
   const diaChi = diaChiDong;
 
   const oCls = "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-cvr-line text-cvr-ink transition active:scale-95";
@@ -383,9 +380,9 @@ export default function TheTinMobile({ item, terms = [], tuChay = false, pc = fa
         </div>
         <Link href={href} className="block px-3.5 pt-3">
           <h3 className="line-clamp-2 text-[16px] font-medium leading-[1.4] text-cvr-ink"><Highlight text={tieuDe} terms={terms} /></h3>
-          {moTaDong}
           {thongSoDong}
           {diaChi}
+          {moTaDong}
         </Link>
         <div className="mt-3 flex items-center gap-2.5 px-3.5 pb-3" onClick={(e) => e.preventDefault()}>
           {anhDaiDien}
@@ -408,33 +405,32 @@ export default function TheTinMobile({ item, terms = [], tuChay = false, pc = fa
         {huyHieu}
       </div>
       <Link href={href} className="block px-3.5 pt-3">
-        <h3 className={`line-clamp-2 text-[16px] font-bold leading-[1.4] text-cvr-ink ${tier.uppercase ? "uppercase" : ""}`}><Highlight text={tieuDe} terms={terms} /></h3>
-        {moTaDong}
+        <h3 className={`${t === "gold" || t === "diamond" ? "line-clamp-3" : "line-clamp-2"} text-[16px] font-bold leading-[1.4] text-cvr-ink ${tier.uppercase ? "uppercase" : ""}`}><Highlight text={tieuDe} terms={terms} /></h3>
         {thongSoDong}
         {diaChi}
+        {moTaDong}
       </Link>
-      {/* Hàng cuối 2 dòng, cân đối: dòng 1 người đăng (ảnh · tên · ngày) — dòng 2 các nút CÙNG CỠ:
-          Zalo + "Hiện số 093 ***" bên trái · Thích + Chia sẻ bên phải (chủ dự án 09/10/2026). */}
+      {/* Hàng cuối cân đối với cả thẻ (chủ dự án 20/10/2026): dòng 1 GIỐNG HỆT thẻ Basic — người đăng (ảnh · tên · ngày)
+          + Thích + Chia sẻ sát phải; dòng 2 Zalo + "Hiện số 093 ***" trải hết bề ngang thẻ. */}
       <div className="px-3.5 pb-3" onClick={(e) => e.preventDefault()}>
         <div className="mt-3 flex items-center gap-2.5">
           {anhDaiDien}
           {nguoiDang}
+          {nutThich}
+          {nutChiaSe}
         </div>
-        <div className="mt-2.5 flex items-center gap-2">
-          {coSo && (
+        {coSo && (
+          <div className="mt-2.5 flex items-center gap-2">
             <NutLienHeThe
               listingId={item.id}
               hienSo
               zaloTruoc
               nhan={item.soDau ? `Hiện số ${item.soDau} ***` : "Hiện số"}
-              soCls="flex h-10 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg bg-cvr-blue px-4 text-[14px] font-semibold text-white transition active:scale-95"
-              oCls="flex h-10 w-14 shrink-0 items-center justify-center rounded-lg border border-cvr-line transition active:scale-95"
+              soCls="flex h-9 min-w-0 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-cvr-blue px-3 text-[13px] font-semibold text-white transition active:scale-95"
+              oCls="flex h-9 w-12 shrink-0 items-center justify-center rounded-lg border border-cvr-line transition active:scale-95"
             />
-          )}
-          <span className="flex-1" />
-          {nutThich}
-          {nutChiaSe}
-        </div>
+          </div>
+        )}
       </div>
       {ds && <PhotoList images={anh} videos={item.video ? [item.video] : []} title={item.title} onPick={setXem} onClose={() => setDs(false)} nhanPhim={xem < 0} banDo={{ diaChi: item.location, q: item.mapPin || item.location }} listingId={item.id} duongDan={href} />}
         {xem >= 0 && <PhotoViewer images={anh} start={xem} title={item.title} listingId={item.id} onClose={() => setXem(-1)} />}

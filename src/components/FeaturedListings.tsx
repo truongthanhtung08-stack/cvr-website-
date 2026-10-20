@@ -147,7 +147,7 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
             <div ref={khoiMobRef} className="scroll-mt-24 sm:hidden">
               {/* ĐIỆN THOẠI (chủ dự án 09/10/2026): xếp DỌC thẻ theo cấp, ban đầu 10 tin. */}
               <div className="-mx-4 mt-4 space-y-2 bg-cvr-surface" onClickCapture={nhoViTri}>
-                {sorted.slice(0, (lanXem + 1) * MOB_LAN).map((item) => <TheTinMobile key={item.id} item={item} tuChay={false} />)}
+                {sorted.slice(0, (lanXem + 1) * MOB_LAN).map((item) => <TheTinMobile key={item.id} item={item} tuChay={false} dcCu={false} />)}
               </div>
               {/* MỘT NÚT (chủ dự án 09/10/2026): bấm "Xem thêm" 1 lần → đủ 20 tin; bấm nữa → mở danh sách
                   theo trang, trang 1 bắt đầu từ các tin TIẾP THEO (không lặp 20 tin đã xem). Logo/Trang chủ về mặc định. */}
