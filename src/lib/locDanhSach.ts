@@ -37,6 +37,8 @@ export type KetQuaLoc = {
   khuVuc: [string, number][];
   /** Tỉnh máy hiểu được (từ bộ lọc hoặc từ câu khách gõ) — để đặt dòng "Gợi ý khác tại …" */
   tinhHieu: string[];
+  /** Không có tin đúng nhu cầu: câu nói rõ ("Chưa có tin cho thuê kho xưởng.") — thay nhãn tầng */
+  thongBao?: string;
 };
 
 // CÂU GÕ MÁY HIỂU ĐƯỢC → BỘ LỌC (chủ dự án 17/10/2026: "đất giá rẻ dưới 3 tỷ tại Hòa Xuân" phải ra đất Hòa Xuân
@@ -71,8 +73,35 @@ export function cauThanhBoLoc(f: Filters, purpose: "ban" | "thue"): Filters | nu
     beds: f.beds || pt.beds || 0,
     // Chi tiết máy không làm trường lọc ("view biển", "gần trường"…) và TỪ chưa hiểu ("sân vườn", "nở hậu" — chủ dự án
     // 21/10/2026) giữ lại làm từ khoá dò nội dung tin, XẾP tin khớp lên đầu
-    keyword: [...parseQuery(kw).features, chuChuaHieu(kw).replace(/,/g, "")].filter(Boolean).join(" "),
+    // "trung tâm" + nơi chốn là VỊ TRÍ: locDanhSach xếp tin tự ghi ở trung tâm lên trước (khớp trọn cụm) — không để bộ dò chữ
+    // khớp lẻ "tâm"/"trung" đẩy tin không liên quan lên đầu
+    keyword: [...parseQuery(kw).features.filter((x) => x !== "trung tâm" || !pt.locations?.length), chuChuaHieu(kw).replace(/,/g, "")].filter(Boolean).join(" "),
   };
+}
+
+// LOẠI GẦN NGHĨA (dùng được cho cùng việc) — chỉ dùng khi cả web chưa có tin đúng loại khách tìm (chủ dự án 21/10/2026).
+// Khoá và giá trị là chữ bỏ dấu nằm trong tên loại của tin.
+const LOAI_GAN_NGHIA: [string, string[]][] = [
+  ["kho", ["mat bang", "cua hang", "dat"]],
+  ["van phong", ["mat bang", "cua hang", "shophouse"]],
+  ["cua hang", ["mat bang", "shophouse", "nha mat pho"]],
+  ["mat bang", ["cua hang", "shophouse", "nha mat pho"]],
+  ["shophouse", ["nha mat pho", "cua hang"]],
+  ["nha mat pho", ["shophouse", "nha rieng"]],
+  ["nha rieng", ["nha mat pho", "biet thu", "lien ke"]],
+  ["biet thu", ["nha rieng", "nha mat pho"]],
+  ["condotel", ["can ho"]],
+  ["can ho", ["condotel"]],
+  ["chung cu", ["condotel"]],
+  ["dat nen", ["dat"]],
+  ["dat", ["dat nen"]],
+  ["tro", ["can ho"]],
+  ["trang trai", ["dat"]],
+];
+function loaiGanNghia(types: string[]): string[] {
+  const n = types.map((t) => normalizeVi(t));
+  return [...new Set(LOAI_GAN_NGHIA.filter(([k]) => n.some((t) => t.includes(k))).flatMap(([, v]) => v))]
+    .filter((g) => !n.some((t) => t.includes(g)));
 }
 
 export function locDanhSach(
@@ -86,6 +115,9 @@ export function locDanhSach(
   // Câu có "giá rẻ" → trong cùng nhóm, tin rẻ đứng trước (cùng quy ước với trang sạch ?sapxep=gia-tang)
   const timRe = / gia re /.test(` ${normalizeVi(filters.keyword)} `);
   if (sort === "moi" && timRe) sort = "gia-tang";
+  // Câu có "trung tâm" (nhà đất bán trung tâm Đà Nẵng) → tin GẦN TÂM nơi khách nói đứng trước (chủ dự án 21/10/2026)
+  const kwGoc = filters.keyword;
+  const timTrungTam = !!kwGoc.trim() && parseQuery(kwGoc).features.includes("trung tâm");
   filters = cauThanhBoLoc(filters, purpose) ?? filters;
   // Nguồn theo đúng MỤC ĐÍCH + NHÂN ĐÔI HIỂN THỊ của CVR Diamond (nhanDoiHienThi.ts)
   const base = nhanDoiHienThi(items.filter((l) => (l.purpose ?? "ban") === purpose));
@@ -110,7 +142,7 @@ export function locDanhSach(
   // khớp đủ đứng trước, đủ bao nhiêu hiện bấy nhiêu. Gợi ý xếp theo NHU CẦU CHÍNH là loại hình:
   // ① đúng loại hình + đúng tỉnh (chỉ nới giá/chi tiết) → ② đúng loại hình, địa phương khác →
   // ③ loại hình khác, đúng tỉnh → ④ còn lại. Tối đa TOI_DA_GOI_Y tin gợi ý.
-  const khopDu = sortListings(hits.filter((h) => h.tier === 1).map((h) => h.item), sort);
+  const khopDu0 = sortListings(hits.filter((h) => h.tier === 1).map((h) => h.item), sort);
   const tinhChon = new Set(filters.locations.map((x) => x.province));
   // THỨ TỰ ƯU TIÊN (chủ dự án 17/10/2026): đúng LOẠI NHÀ là nền → đúng PHƯỜNG/QUẬN → đúng GIÁ → đúng TỈNH
   // → tỉnh khác. VD đất Hòa Xuân > đất Đà Nẵng dưới 3 tỷ > đất Đà Nẵng khác > đất tỉnh khác > nhà Hòa Xuân.
@@ -141,6 +173,19 @@ export function locDanhSach(
     const [a, b] = tamNoi(l.location) ?? coordOf(l.location.split(",").pop()?.trim() ?? "", "");
     return (a - tam[0]) ** 2 + (b - tam[1]) ** 2;
   };
+  // "TRUNG TÂM" THEO NGHĨA CỦA TỪ (chủ dự án 21/10/2026: không tự gán quận nào là trung tâm): trong các tin khớp đủ, tin TỰ GHI
+  // là ở vị trí trung tâm ("trung tâm thành phố", "ngay trung tâm", "quận trung tâm"…) đứng trước. Khớp trọn cụm "trung tâm",
+  // không khớp lẻ chữ "tâm"/"trung"; "trung tâm thương mại" là toà nhà, không phải vị trí → không tính.
+  // "cách / gần / về / ra trung tâm" là Ở NGOÀI trung tâm → xếp sau tin ở ngay trung tâm, trước tin không nhắc tới.
+  const mucTrungTam = (l: Listing) => {
+    const nd = ` ${normalizeVi([l.title, l.desc, l.searchText].filter(Boolean).join(" ")).replace(/[^a-z0-9]+/g, " ")} `;
+    const cum = [...nd.matchAll(/ (\w+) trung tam (?!thuong mai|hoi nghi|tiec cuoi|y te)/g)].map((m) => m[1]);
+    if (!cum.length) return 0;
+    return cum.some((t) => !["cach", "gan", "ve", "ra", "toi", "den", "vao", "sat"].includes(t)) ? 2 : 1;
+  };
+  const khopDu = timTrungTam
+    ? khopDu0.map((l, i) => ({ l, i, m: mucTrungTam(l) })).sort((a, b) => b.m - a.m || a.i - b.i).map((x) => x.l)
+    : khopDu0;
   // KHÁCH ĐÃ NÓI LOẠI HÌNH → gợi ý CHỈ cùng loại hình, nới khu vực chứ không nới loại (chủ dự án 21/10/2026: "Villa biển gần
   // Hội An" không có tin thì gợi ý villa Đà Nẵng gần biển — không đưa condotel, nhà phố). Hết tin cùng loại thì nói là không có.
   // KHÁCH ĐÃ NÓI NƠI → gợi ý CHỈ trong tỉnh đó (chủ dự án 21/10/2026: "Villa biển gần Hội An" mà ra Huế, Lâm Đồng là vô nghĩa)
@@ -179,8 +224,61 @@ export function locDanhSach(
     ...ketQuaHetHan,
     ...goiYHetHan,
   ];
+  // KHÔNG BAO GIỜ 0 KẾT QUẢ (chủ dự án 21/10/2026): mọi tầng trên đều trống thì nới dần, dừng ở bậc đầu có tin, vẫn bám nhu cầu:
+  // ① khách nói loại hình → cùng loại ở MỌI nơi, nơi gần chỗ khách nói trước · ② khách nói nơi → mọi loại trong tỉnh đó ·
+  // ③ còn lại (câu không hiểu, không chữ nào khớp) → tin mới nhất của mục, theo cấp rồi ngày đăng. Nhãn "Gợi ý tương tự" như cũ.
+  // GỢI Ý VÔ LÝ LÀ TỆ NHẤT (chủ dự án 21/10/2026, chốt hai luật):
+  //   · Không có tin cùng loại ở đâu cả → nói rõ "Chưa có tin …" rồi CHỈ gợi ý loại GẦN NGHĨA (LOAI_GAN_NGHIA), gần nơi khách nói trước;
+  //     không có loại gần nghĩa thì chỉ còn câu nói rõ.
+  //   · Câu không hiểu chữ nào ("abc xyz": không trường nào, không tin nào khớp chặt) → nói rõ không tìm thấy, rồi tin mới nhất
+  //     theo cấp, ghi đúng là tin mới nhất — không gắn nhãn khớp.
+  let duPhong: Listing[] = [];
+  let thongBao: string | undefined;
+  const conHan = base.filter((l) => !l.banSao);
+  const theoCap = (ds: Listing[]) => [...ds].sort((a, b) => tierRank(a.badge) - tierRank(b.badge) || ngayDang(b) - ngayDang(a));
+  const khongHieu = coTuKhoa && !filters.types.length && !filters.locations.length && filters.priceMin == null && filters.priceMax == null
+    && !search.hits.some((h) => h.tier <= 2);
+  // CÂU GHI (chủ dự án 21/10/2026 duyệt mẫu): "Bất động sản bạn tìm chưa có sẵn. Gợi ý …:" — phần sau ghi đúng nhóm tin đang hiện
+  const CHUA_CO = "Bất động sản bạn tìm chưa có sẵn.";
+  const noiNoi = noiChon ? (noiChon.ward ?? noiChon.district ?? noiChon.province).replace(/^(Phường|Xã|Thị trấn|Đặc khu|Quận|Huyện|Thành phố|Thị xã)\s+/i, "") : tinhChon.size === 1 ? [...tinhChon][0] : "";
+  const tenLoai = (l: Listing) => l.type.split(/\s*[/,]\s*/)[0].toLowerCase().replace(/^(cho thuê|thuê|bán)\s+/, "");
+  if (khongHieu) {
+    duPhong = theoCap(conHan).slice(0, TOI_DA_GOI_Y);
+    thongBao = `${CHUA_CO} Gợi ý tin mới đăng:`;
+    ketQua = duPhong;
+  } else if (!ketQua.length) {
+    const ganTruoc = (ds: Listing[]) => sortListings(ds, sort).map((l, i) => ({ l, i, xa: khoangCach(l) })).sort((a, b) => a.xa - b.xa || a.i - b.i).map((x) => x.l);
+    const gan = noiNoi ? ` gần ${noiNoi} nhất` : "";
+    if (filters.types.length) {
+      const cungLoai = conHan.filter(dungLoai);
+      if (cungLoai.length) {
+        duPhong = ganTruoc(cungLoai).slice(0, TOI_DA_GOI_Y); // cùng loại ở nơi khác
+        thongBao = `${CHUA_CO} Gợi ý ${(parseQuery(kwGoc).types[0] ?? filters.types[0].split(/\s*[/,]\s*/)[0]).toLowerCase()}${gan}:`;
+      } else {
+        const gn = loaiGanNghia(filters.types);
+        duPhong = (gn.length ? ganTruoc(conHan.filter((l) => gn.some((g) => normalizeVi(l.type).includes(g)))) : []).slice(0, TOI_DA_GOI_Y);
+        const cacLoai = [...new Set(duPhong.map(tenLoai))].slice(0, 3).join(", ");
+        thongBao = duPhong.length ? `${CHUA_CO} Gợi ý ${cacLoai}${gan}:` : CHUA_CO;
+      }
+    } else {
+      duPhong = ganTruoc(conHan).slice(0, TOI_DA_GOI_Y); // chỉ nói nơi chốn mà nơi đó chưa có tin → nơi gần nhất
+      thongBao = `${CHUA_CO} Gợi ý bất động sản${gan}:`;
+    }
+    ketQua = duPhong;
+  } else if (!khopDu.length && !chuTrong.length && (filters.types.length || filters.locations.length)) {
+    // Không tin nào khớp đúng, chỉ có gợi ý (cùng loại, nơi gần) → cùng câu ghi
+    const loai = filters.types.length ? (parseQuery(kwGoc).types[0] ?? filters.types[0].split(/\s*[/,]\s*/)[0]).toLowerCase() : "bất động sản";
+    thongBao = `${CHUA_CO} Gợi ý ${loai}${noiNoi ? ` gần ${noiNoi} nhất` : ""}:`;
+  }
   const tierById = new Map(hits.map((h) => [h.item.id, h.tier]));
   for (const l of goiYHetHan) tierById.set(l.id, 3);
+  for (const l of duPhong) tierById.set(l.id, 3);
+  // Có TỪ KHOÁ: tầng hiển thị = tầng THẤP HƠN giữa khớp bộ lọc và khớp từ khoá (cùng cách trang /tim-kiem) — câu không hiểu
+  // ("abc xyz") hay tin không có từ khách gõ không được gắn nhãn "khớp hoàn hảo"
+  if (coTuKhoa) {
+    const tangChu = new Map(search.hits.map((h) => [h.item.id, h.tier]));
+    for (const l of ketQua) tierById.set(l.id, Math.max(tierById.get(l.id) ?? 1, tangChu.get(l.id) ?? 3) as 1 | 2 | 3);
+  }
   const termsById = new Map(search.hits.map((h) => [h.item.id, h.matched]));
 
   // PHÂN KHÚC GIÁ RẺ (chủ dự án 18/10/2026: "giá rẻ thì phải biết phân khúc giá nào trong 1,4 – 33 tỷ là rẻ mới đưa lên"):
@@ -234,6 +332,7 @@ export function locDanhSach(
     khuVuc: [...m.entries()].sort((a, b) => b[1] - a[1]),
     tinhHieu: [...tinhChon],
     khoangRe,
+    thongBao,
   };
 }
 

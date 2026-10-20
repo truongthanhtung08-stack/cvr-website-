@@ -408,6 +408,7 @@ export default function ListingBrowser({
               {/* Nhãn TẦNG kết quả — cho biết nhóm tin đang xem khớp tới đâu */}
               {(active || coTuKhoa) && (() => {
                 const t = kq?.tangDau ?? 1;
+                if (kq?.thongBao) return <p className="mb-3 text-sm font-medium text-cvr-body">{kq.thongBao}</p>;
                 return t === 1 ? null : <p className="mb-3 text-sm font-medium text-cvr-body">{TIER_LABEL[t]}</p>;
               })()}
               {/* MOBILE (< 640px): LUÔN thẻ dọc — ảnh trên, nội dung dưới (thuần CSS,
@@ -441,7 +442,7 @@ export default function ListingBrowser({
             </>
           ) : (
             <div className="flex flex-col items-center justify-center rounded-none border border-dashed border-cvr-line py-20 text-center">
-              <p className="text-cvr-body">Không tìm thấy bất động sản phù hợp.</p>
+              <p className="text-cvr-body">{kq?.thongBao ?? "Không tìm thấy bất động sản phù hợp."}</p>
               <button type="button" onClick={() => setFilters(emptyFilters())} className="mt-5 rounded-lg bg-cvr-ink px-5 py-2 text-sm font-semibold text-white transition hover:bg-cvr-body">Xoá bộ lọc</button>
             </div>
           )}

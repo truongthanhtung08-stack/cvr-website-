@@ -19,6 +19,7 @@ import {
 } from "@/lib/filters";
 import { smartFilter, smartSearch, TIER_LABEL } from "@/lib/smartSearch";
 import { nhanDoiHienThi, khoaThe } from "@/lib/nhanDoiHienThi";
+import { locDanhSach } from "@/lib/locDanhSach";
 
 const PER_PAGE = 10; // mỗi trang 10 tin (giống danh sách /mua-ban)
 
@@ -84,9 +85,16 @@ export default function SearchClient({
       : sortListings(khop, sort);
   }, [itemsHetHan, purpose, filters, coTuKhoa, sort, coDiaDanh]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Không có tin khớp chặt (câu lạ, hoặc trống) → dùng chung luật nới dần + câu nói rõ của trang Mua bán / Cho thuê
+  // (chủ dự án 21/10/2026: không bao giờ 0 kết quả, nhưng gợi ý vô lý là tệ nhất)
+  const chung = useMemo(() => {
+    if (choDiaDanh) return null;
+    const khongKhop = coTuKhoa ? !search.hits.some((h) => h.tier <= 2) : loc.length === 0;
+    return khongKhop ? locDanhSach(items, itemsHetHan, purpose, filters, sort, 1) : null;
+  }, [choDiaDanh, coTuKhoa, search, loc, items, itemsHetHan, purpose, filters, sort]);
   const results = useMemo(
-    () => (choDiaDanh ? [] : [...(coTuKhoa ? search.hits.map((h) => h.item) : sortListings(loc, sort)), ...ketQuaHetHan]),
-    [choDiaDanh, coTuKhoa, search, loc, sort, ketQuaHetHan],
+    () => (choDiaDanh ? [] : chung ? chung.ketQua : [...(coTuKhoa ? search.hits.map((h) => h.item) : sortListings(loc, sort)), ...ketQuaHetHan]),
+    [choDiaDanh, chung, coTuKhoa, search, loc, sort, ketQuaHetHan],
   );
   // Tra cứu nhanh: tin nào thuộc tầng nào + khớp những chữ gì (để bôi đậm)
   // Kết quả đã hiện → tắt vạch xanh "đang tìm" chung (lọc tại chỗ nên có ngay)
@@ -157,7 +165,8 @@ export default function SearchClient({
         <>
           {/* Nhãn TẦNG KẾT QUẢ — hiện đúng chất lượng khớp của nhóm tin đang xem
               (khớp 100% · gần đúng · liên quan). Không gõ từ khoá thì không hiện. */}
-          {(coTuKhoa || active) && pageItems.length > 0 && (() => {
+          {chung?.thongBao && <p className="mb-3 text-sm font-medium text-cvr-body">{chung.thongBao}</p>}
+          {!chung?.thongBao && (coTuKhoa || active) && pageItems.length > 0 && (() => {
             // Tầng hiển thị = tầng THẤP HƠN giữa (khớp từ khoá) và (khớp bộ lọc)
             const a = coTuKhoa ? hitById.get(pageItems[0].id)?.tier ?? 3 : 1;
             const b = filterTierById.get(pageItems[0].id) ?? 1;
@@ -178,7 +187,7 @@ export default function SearchClient({
           <svg className="mb-4 h-12 w-12 text-cvr-faint" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
           </svg>
-          <p className="text-cvr-body">Không tìm thấy bất động sản phù hợp.</p>
+          <p className="text-cvr-body">{chung?.thongBao ?? "Không tìm thấy bất động sản phù hợp."}</p>
           <p className="mt-1 text-sm text-cvr-muted">Thử nới rộng bộ lọc hoặc xoá bớt từ khoá.</p>
           <button
             type="button"
