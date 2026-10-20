@@ -35,12 +35,25 @@ export type NhomNcc =
 /** Bản chất khoản chi — quyết định cặp tỷ lệ % phải áp. */
 export type LoaiDichVu = "dich_vu" | "ban_quyen";
 
-export const TY_LE: Record<LoaiDichVu, { gtgt: number; tndn: number; nhan: string }> = {
+// `nganh` = mã/tên ngành nghề cột (1b) tờ khai 01/NTNN, NCCNN — danh mục HTKK
+// InterfaceIni/DM_NNKD_NTNN.xml. ⚠️ Tỷ lệ % và ngành nghề CHƯA CHỐT: chờ Thuế cơ sở 4
+// trả lời (phiếu hỏi 10/2026). Có quy định thì sửa đúng ở đây — bản in và XML cùng đọc.
+export const TY_LE: Record<LoaiDichVu, { gtgt: number; tndn: number; nhan: string; nganh: { ma: string; ten: string } }> = {
   // Hosting, API, lưu trữ, quảng cáo, SaaS dùng theo lượng — dịch vụ thông thường.
-  dich_vu: { gtgt: 0.05, tndn: 0.05, nhan: "Dịch vụ (GTGT 5% · TNDN 5%)" },
+  dich_vu: {
+    gtgt: 0.05,
+    tndn: 0.05,
+    nhan: "Dịch vụ (GTGT 5% · TNDN 5%)",
+    nganh: { ma: "01", ten: "Dịch vụ, cho thuê máy móc thiết bị, bảo hiểm" },
+  },
   // Mua quyền sử dụng phần mềm/bản quyền: chuyển giao phần mềm KHÔNG chịu GTGT,
   // nhưng TNDN là 10%. Chỉ chọn khi hợp đồng ghi rõ là license/bản quyền.
-  ban_quyen: { gtgt: 0, tndn: 0.1, nhan: "Bản quyền, license phần mềm (GTGT 0% · TNDN 10%)" },
+  ban_quyen: {
+    gtgt: 0,
+    tndn: 0.1,
+    nhan: "Bản quyền, license phần mềm (GTGT 0% · TNDN 10%)",
+    nganh: { ma: "16", ten: "Thu nhập bản quyền" },
+  },
 };
 
 /**
