@@ -1,5 +1,6 @@
 "use client";
 
+import { useDiaDanh } from "@/lib/useDiaDanh";
 import { useEffect, useState } from "react";
 import { timDiaDanh, type BietDanh } from "@/lib/timDiaDanh";
 
@@ -37,6 +38,7 @@ export default function ChonCoTim({
   /** Có nút × để bỏ giá trị đang có. */
   xoaDuoc?: boolean;
 }) {
+  useDiaDanh(); // địa danh nạp sau khi trang hiện — về tới thì vẽ lại (20/10/2026)
   const [mo, setMo] = useState(false);
   const [q, setQ] = useState("");
   // Ô tìm ẨN mặc định (chủ dự án 15/10/2026): mở ra là danh sách để KÉO chọn — không bật bàn

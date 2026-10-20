@@ -1,5 +1,6 @@
 "use client";
 
+import { useDiaDanh } from "@/lib/useDiaDanh";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { TINH_MIEN_TRUNG, vndM2 } from "@/lib/chiSoGia";
@@ -30,6 +31,7 @@ const inputCls =
   "h-12 w-full rounded-xl border border-cvr-line bg-white px-4 text-[15px] text-cvr-ink placeholder-cvr-faint outline-none transition focus:border-cvr-ink";
 
 export default function TraCuuGiaDat() {
+  useDiaDanh(); // địa danh nạp sau khi trang hiện — về tới thì vẽ lại (20/10/2026)
   const [tinh, setTinh] = useState("");
   const [tuKhoa, setTuKhoa] = useState("");
   const [ds, setDs] = useState<Dong[] | null>(null);

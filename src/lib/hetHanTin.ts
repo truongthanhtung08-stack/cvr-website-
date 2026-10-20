@@ -4,6 +4,7 @@ import { getTier, type TierId } from "@/lib/packages";
 import { guiThongBao, maTin, MAU_DA_HET_HAN, MAU_SAP_HET_HAN } from "@/lib/thongBao";
 import { baoLoi } from "@/lib/baoLoi";
 import { thucHienUpTin } from "@/lib/upTin";
+import { ghepBillingLuu, bangTheoMucDich, huongKhuyenMai, chonKhuyenMai, laChuThat, lucGuiTin, soNgayHienThi, type BillingData } from "@/lib/billing";
 
 // CÔNG TẮC BÁO KHÁCH VỀ HẾT HẠN (email/Zalo "sắp hết hạn" + "đã hết hạn").
 // Chủ dự án chốt 03/10/2026: chỉ đổi khi CHỦ DỰ ÁN YÊU CẦU. Tắt thì tin vẫn chuyển
@@ -60,10 +61,37 @@ type Tin = {
   tier_days?: number | null;
   tier_expires_at: string;
   published_at?: string | null;
+  created_at?: string | null;
+  purpose?: string | null;
   details: Record<string, unknown> | null;
 };
 
 type Nguoi = { id: string; email: string | null; phone: string | null; full_name: string | null; role: string | null };
+
+// TIN ADMIN ĐĂNG HỘ, HẾT VIP MÀ THUỘC CHƯƠNG TRÌNH → VỀ BASIC TỚI HẾT KỲ CHƯƠNG TRÌNH (chủ dự án 21/10/2026: "KM 1 tháng tin Basic; tin nâng lên
+// VIP, hạ xuống vẫn còn hiệu lực ngày còn lại — ngày nâng vẫn hiệu lực như bình thường"). Tin admin ĐĂNG THẲNG VIP (không qua
+// kỳ Basic) không có details.han_basic → trước đây hết VIP là ngừng hiển thị luôn (lỗi 16–19/10, 4 tin).
+// Xét bằng ĐÚNG điều kiện chương trình mọi nơi đang dùng (huongKhuyenMai, mốc = lúc gửi tin như đường duyệt) và số ngày từ admin
+// (soNgayHienThi) — không ghi cứng 30 ngày. Không trừ lượt miễn phí (lượt chỉ trừ lúc duyệt).
+async function hanChuongTrinh(admin: SupabaseClient, tin: Tin, bill: BillingData): Promise<number> {
+  const bang = bangTheoMucDich(bill, tin.purpose);
+  const f = bang.free;
+  if (!chonKhuyenMai(tin.details) || !tin.published_at) return NaN;
+  const lucGui = lucGuiTin(tin);
+  const ngayGui = new Date(lucGui + 7 * 3_600_000).toISOString().slice(0, 10);
+  const { data: hs } = tin.owner_id
+    ? await admin.from("profiles").select("created_at:ngay_thanh_vien,role,free_quota,tao_ho,vao_chinh_thuc_luc").eq("id", tin.owner_id).maybeSingle()
+    : { data: null };
+  // CHỈ TIN ADMIN ĐĂNG HỘ / NÂNG (không chủ, hoặc tài khoản tạo hộ chính chủ chưa vào) — chủ dự án 21/10/2026: "chỉ những tin tôi
+  // đăng hộ và nâng. Tin khách tự đăng thì không tính" → tin khách hết VIP là hết hạn như quy định chung.
+  if (tin.owner_id && laChuThat(hs)) return NaN;
+  const huong = huongKhuyenMai(f, {
+    goi: f.tierId, homNay: ngayGui, coChu: false,
+    soNgayMoTk: 0,
+  });
+  if (!huong) return NaN;
+  return Date.parse(tin.published_at) + soNgayHienThi(bang, f.tierId, 0, true) * 86_400_000;
+}
 
 export async function quetTinHetHan(
   admin: SupabaseClient,
@@ -78,22 +106,32 @@ export async function quetTinHetHan(
     // ── 1) ĐÃ HẾT HẠN → ngừng hiển thị ('expired'), mọi hạng ──────────────
     const { data: hetHan } = await admin
       .from("listings")
-      .select("id,title,owner_id,tier,tier_days,tier_expires_at,published_at,details")
+      .select("id,title,owner_id,tier,tier_days,tier_expires_at,published_at,created_at,purpose,details")
       .eq("status", "approved")
       .lt("tier_expires_at", bayGio.toISOString())
       .limit(200);
 
     const dsHet = (hetHan ?? []) as Tin[];
+    // Bảng giá đọc MỘT lần cho cả lượt quét — chỉ khi có tin VIP hết hạn mà thiếu hạn Basic gốc
+    let bill: BillingData | null = null;
 
     for (const tin of dsHet) {
       // Hết hạn VIP của tin nâng từ Basic → về lại Basic TỚI ĐÚNG NGÀY HẾT HẠN BASIC GỐC
       // (chủ dự án chốt 15/10/2026: VIP chạy song song với kỳ Basic, không cộng nối).
       // Khoá cũ sau_vip_con_lai_ms (09/10) = ms Basic còn lại lúc nâng → quy về ngày gốc.
-      const hanBasic = typeof tin.details?.han_basic === "string"
+      let hanBasic = typeof tin.details?.han_basic === "string"
         ? Date.parse(tin.details.han_basic as string)
         : Number(tin.details?.sau_vip_con_lai_ms ?? 0) > 0 && tin.published_at
           ? Date.parse(tin.published_at) + Number(tin.details?.sau_vip_con_lai_ms)
           : NaN;
+      // Đăng thẳng VIP, không có kỳ Basic ghi sẵn → xét chương trình (hanChuongTrinh)
+      if (tin.tier !== "basic" && !Number.isFinite(hanBasic)) {
+        if (!bill) {
+          const { data: sc } = await admin.from("site_content").select("data").eq("key", "billing").limit(1);
+          bill = ghepBillingLuu(sc?.[0]?.data as Partial<BillingData> | undefined);
+        }
+        hanBasic = await hanChuongTrinh(admin, tin, bill);
+      }
       if (tin.tier !== "basic" && Number.isFinite(hanBasic) && hanBasic > bayGio.getTime()) {
         const { sau_vip_con_lai_ms: _bo1, han_basic: _bo2, ...giu } = tin.details ?? {};
         void _bo1; void _bo2;

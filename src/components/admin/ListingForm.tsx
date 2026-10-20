@@ -1,5 +1,6 @@
 "use client";
 
+import { useDiaDanh } from "@/lib/useDiaDanh";
 import { useEffect, useRef, useState } from "react";
 import ChonHoacGhi from "@/components/ChonHoacGhi";
 import ThemTuGhi from "@/components/ThemTuGhi";
@@ -39,6 +40,7 @@ import {
 //   Mua bán → TỶ đồng (7.2 = 7,2 tỷ) · Cho thuê → TRIỆU/tháng (18 = 18 triệu/tháng)
 // Ảnh: mỗi dòng 1 đường dẫn (vd /images/tin/1.jpg) — upload Storage làm ở bước sau.
 export default function ListingForm({ initial }: { initial?: ListingRow }) {
+  useDiaDanh(); // địa danh nạp sau khi trang hiện — về tới thì vẽ lại (20/10/2026)
   const router = useRouter();
   const editing = Boolean(initial);
 

@@ -1,6 +1,8 @@
 "use client";
 
-import { useDeferredValue, useEffect, useMemo, useState } from "react";
+import { useDiaDanh } from "@/lib/useDiaDanh";
+import { xongTim } from "@/components/VachTim";
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import PhanTrang from "@/components/PhanTrang";
 import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
@@ -90,6 +92,8 @@ export default function ListingBrowser({
   // Trang pSEO: dòng số liệu riêng của trang dưới H1 (giá rao · diện tích · cập nhật) — thay câu chung
   soLieu?: string;
 }) {
+  // coDiaDanh trong điều kiện tính lại của các useMemo dùng địa danh: dữ liệu về sau lần tính đầu thì phải tính lại
+  const coDiaDanh = useDiaDanh(); // địa danh nạp sau khi trang hiện — về tới thì vẽ lại (20/10/2026)
   const params = useSearchParams();
 
   // Trang không nạp từ máy chủ (tin tương tự truyền thẳng…): lọc ngay ở trình duyệt.
@@ -138,7 +142,8 @@ export default function ListingBrowser({
   // tìm, khối kết quả được vẽ lại với chuyển động mờ → rõ, trồi lên nhẹ.
   const [lanTim, setLanTim] = useState(0);
   useEffect(() => {
-    const tang = () => setLanTim((n) => n + 1);
+    // Bấm tìm mà bộ lọc không đổi (không nạp gì) → báo xong luôn cho vạch xanh chung tắt
+    const tang = () => { setLanTim((n) => n + 1); window.setTimeout(() => { if (!dangNap.current) xongTim(); }, 150); };
     window.addEventListener("cvr-tim", tang);
     return () => window.removeEventListener("cvr-tim", tang);
   }, []);
@@ -185,13 +190,19 @@ export default function ListingBrowser({
   // SỬA CHÍNH TẢ KIỂU GOOGLE: gõ sai một chữ cái ("phog") → tìm theo câu đã sửa và báo "Đang hiển thị kết quả cho …";
   // khách bấm "Tìm kiếm thay thế cho …" (?nguyenvan=1) thì tìm đúng nguyên chữ đã gõ.
   const nguyenVan = params.get("nguyenvan") === "1";
-  const cauSua = useMemo(() => (!nguyenVan && filters.keyword.trim() ? suaChinhTa(filters.keyword) : null), [nguyenVan, filters.keyword]);
+  const cauSua = useMemo(() => (!nguyenVan && filters.keyword.trim() ? suaChinhTa(filters.keyword) : null), [nguyenVan, filters.keyword, coDiaDanh]);
   const locThat = cauSua ? { ...filters, keyword: cauSua } : filters;
   const linkNguyenVan = (() => { const sp = new URLSearchParams(params.toString()); sp.set("q", filters.keyword); sp.set("nguyenvan", "1"); return `?${sp.toString()}`; })();
   const yeuCau = JSON.stringify({ boLoc: locThat, sapXep: sort, trang: page, chiId, boQuaId, banDo: mapMode });
+  const choDiaDanh = filters.keyword.trim() !== "" && !coDiaDanh;
+  const dangNap = useRef(false); // không từ khoá thì luôn false → không gọi thêm lần nào
   useEffect(() => {
     if (!nguon) return;
+    // Có từ khoá → chờ địa danh về (sửa chính tả cần nó) rồi mới hỏi MỘT lần — hỏi ngay thì phải hỏi lại khi câu sửa xong (tốn lượt gọi hàm)
+    if (choDiaDanh) return;
     let huy = false;
+    dangNap.current = true;
+    window.dispatchEvent(new Event("cvr-tim-nap")); // vạch xanh chung chạy tới khi danh sách hiện
     const lanDau = mayChu == null;
     fetch(`/api/danh-sach/${nguon}/loc`, {
       method: "POST",
@@ -200,18 +211,21 @@ export default function ListingBrowser({
     })
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
-        if (huy || !d) return;
+        if (huy) return;
+        dangNap.current = false;
+        xongTim();
+        if (!d) return;
         setMayChu(d);
         if (d.goiY) setGoiY(d.goiY);
       })
-      .catch(() => {});
+      .catch(() => { if (!huy) { dangNap.current = false; xongTim(); } });
     return () => { huy = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- chỉ gọi lại khi yêu cầu đổi
-  }, [nguon, yeuCau]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- chỉ gọi lại khi yêu cầu đổi (hoặc địa danh vừa về)
+  }, [nguon, yeuCau, choDiaDanh]);
   const taiCho = useMemo(
     () => (nguon ? null : locDanhSach(items, itemsHetHan, purpose, locThat, sort, page)),
     // eslint-disable-next-line react-hooks/exhaustive-deps -- locThat suy ra từ filters + cauSua
-    [nguon, items, itemsHetHan, purpose, filters, cauSua, sort, page],
+    [nguon, items, itemsHetHan, purpose, filters, cauSua, sort, page, coDiaDanh],
   );
   const kq = nguon ? mayChu : taiCho;
   const pageItems = kq?.trang ?? [];
@@ -246,7 +260,7 @@ export default function ListingBrowser({
   const active = hasActiveFilters(filters);
   // TỪ KHOÁ CHUẨN (chủ dự án 17/10/2026: gõ câu thì phải hiện Huế · Căn hộ · Dưới 2 tỷ, không phải câu thô):
   // ô tìm giữ nguyên câu khách gõ; trường lọc + thẻ bên dưới hiện đúng tiêu chí máy đã hiểu.
-  const hieu = useMemo(() => cauThanhBoLoc(filtersSong, purpose), [filtersSong, purpose]);
+  const hieu = useMemo(() => cauThanhBoLoc(filtersSong, purpose), [filtersSong, purpose, coDiaDanh]); // eslint-disable-line react-hooks/exhaustive-deps -- coDiaDanh: tính lại khi địa danh về
 
   // Đang nạp dữ liệu → giữ nguyên khung chờ máy chủ đã dựng (không nhấp nháy giao diện)
   if (nguon && !mayChu) return <>{choTai ?? null}</>;
@@ -391,7 +405,7 @@ export default function ListingBrowser({
                   // Thẻ theo cấp (chuẩn 09/10/2026, docs/THE-TIN-THEO-CAP.md); tin hết hạn giữ thẻ cũ có nhãn "Tin hết hạn"
                   item.hetHan
                     ? <PropertyCard key={khoaThe(item)} item={item} layout="grid" showTime terms={chuDam(item.id)} />
-                    : <TheTinMobile key={khoaThe(item)} item={item} terms={chuDam(item.id)} />
+                    : <TheTinMobile key={khoaThe(item)} item={item} terms={chuDam(item.id)} uuTien={i === 0} />
                 )])}
               </div>
               {/* DESKTOP (≥ 640px): MỖI TIN MỘT HÀNG, nội dung đúng thẻ điện thoại theo cấp, khung ảnh theo cấp (TheTinMobile pc, chủ dự án
@@ -400,7 +414,7 @@ export default function ListingBrowser({
                 {pageItems.flatMap((item, i) => [dongTang(item, i), (
                   item.hetHan
                     ? <PropertyCard key={khoaThe(item)} item={item} layout="list" showTime terms={chuDam(item.id)} />
-                    : <div key={khoaThe(item)} className="overflow-hidden rounded-xl border border-cvr-line"><TheTinMobile item={item} terms={chuDam(item.id)} pc /></div>
+                    : <div key={khoaThe(item)} className="overflow-hidden rounded-xl border border-cvr-line"><TheTinMobile item={item} terms={chuDam(item.id)} pc uuTien={i === 0} /></div>
                 )])}
               </div>
 

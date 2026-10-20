@@ -1,5 +1,6 @@
 "use client";
 
+import { useDiaDanh } from "@/lib/useDiaDanh";
 import { useEffect, useRef, useState } from "react";
 import type { Map as MlMap, Marker as MlMarker } from "maplibre-gl";
 import { napMapLibre, STYLE_MO, vietHoaNhan } from "@/lib/banDoMo";
@@ -46,6 +47,7 @@ export default function MapPickerMo({
   // Dò theo từng bước Tỉnh → Phường/Xã → số nhà bằng tên hệ mới, có kiểm kết quả (diemTimBanDo).
   tim?: DiemTim;
 }) {
+  useDiaDanh(); // địa danh nạp sau khi trang hiện — về tới thì vẽ lại (20/10/2026)
   const boxRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MlMap | null>(null);
   const ghimRef = useRef<MlMarker | null>(null);

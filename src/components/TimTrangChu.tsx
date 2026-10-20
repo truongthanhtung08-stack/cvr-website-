@@ -1,4 +1,7 @@
 "use client";
+import { useDiaDanh } from "@/lib/useDiaDanh";
+import { goiYTheoY } from "@/lib/goiYTheoY";
+import { batDauTim } from "@/components/VachTim";
 import { useDeferredValue, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal, flushSync } from "react-dom";
 import { useRouter } from "next/navigation";
@@ -68,12 +71,19 @@ function mucDichCau(v: string, muc: Muc): Muc | null {
   const pq = parseQuery(v);
   const w = ` ${normalizeVi(v).replace(/[^a-z0-9]+/g, " ")} `;
   if (pq.purpose) return pq.purpose;
-  if (/ thang | nguyen can | o ghep /.test(w) || (pq.types.length > 0 && pq.types.every((t) => t === "Phòng trọ"))) return "thue";
-  if ((pq.priceMaxTy ?? 0) >= 1 || (pq.priceMinTy ?? 0) >= 1 || / so do | so hong /.test(w)) return "ban";
+  // Loại CHỈ có cho thuê (phòng trọ, văn phòng, mặt bằng) → Cho thuê (rà 21/10/2026: "mặt bằng kinh doanh" từng vào Mua bán)
+  if (/ thang | nguyen can | o ghep /.test(w) || (pq.types.length > 0 && pq.types.every((t) => ["Phòng trọ", "Văn phòng", "Mặt bằng"].includes(t)))) return "thue";
+  // Giá TỶ (kể cả "3 tỷ" trần, không có "dưới/trên") → giá bán
+  if ((pq.priceMaxTy ?? 0) >= 1 || (pq.priceMinTy ?? 0) >= 1 || / \d+[.,]?\d* ?(ty|ti) /.test(w) || / so do | so hong /.test(w)) return "ban";
+  // Giá tính bằng TRIỆU (dưới 1 tỷ) cho căn hộ / nhà / phòng → giá thuê tháng (rà 21/10/2026: "căn hộ 10 triệu" từng vào Mua bán)
+  const giaTrieu = (pq.priceMaxTy != null || pq.priceMinTy != null) || (/ \d+[.,]?\d* ?(trieu|tr) /.test(w) && !/ \d+[.,]?\d* ?(ty|ti) /.test(w));
+  if (giaTrieu && !(pq.types.length > 0 && pq.types.every((t) => /^đất/i.test(t)))) return "thue";
   // ĐẤT, ĐẤT NỀN chỉ có mua bán — không để "đất nền Hoà Xuân" rơi vào Cho thuê thành kho xưởng (rà 18/10/2026)
   if (pq.types.length > 0 && pq.types.every((t) => /^đất/i.test(t))) return "ban";
   if (/ du an /.test(w)) return pq.types.length ? "ban" : "duan";
-  if (pq.types.length > 0 && muc === "duan") return "ban";
+  // Đang ở mục Dự án (kể cả mục nhớ từ lần trước) mà câu đã rõ loại nhà ("nhà Đà Nẵng", "căn hộ…") → Mua bán, không vào Dự án
+  // (rà 21/10/2026: "nhà Đà Nẵng" vào trang Dự án vì web nhớ mục lần tìm trước)
+  if ((pq.types.length > 0 || / nha /.test(w)) && muc === "duan") return "ban";
   return null;
 }
 
@@ -159,6 +169,7 @@ function locCauGoiY(ds: CauGoiY[], go: string, muc: "ban" | "thue", toiDa: numbe
 /** goiYTin: cụm từ khoá dài dựng từ tin thật ở máy chủ (goiYTrangChu) */
 /** trenAnh: bộ tìm nằm ĐÈ LÊN ảnh Hero (máy tính) → menu chữ trắng cho đọc được trên ảnh */
 export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiYTin?: CauGoiY[]; tinDem?: TinDem[]; trenAnh?: boolean }) {
+  useDiaDanh(); // địa danh nạp sau khi trang hiện — về tới thì vẽ lại (20/10/2026)
   const [mucDangChon, setMuc] = useState<Muc>("ban");
   const muc = mucDangChon;
   const [tuKhoa, setTuKhoa] = useState("");
@@ -368,7 +379,7 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
   // ghi tạm vào sessionStorage theo đường dẫn — ô tìm trang kết quả hiện lại đúng câu đó (chỉ trên máy khách, không gọi máy chủ)
   const di = (url: string, cau = "") => {
     try { if (cau) { sessionStorage.setItem("cvr-cau:" + url.split("?")[0], cau); sessionStorage.setItem("cvr-tim-cuoi", cau); } } catch { /* bỏ qua */ }
-    setDangTim(true); router.push(url);
+    setDangTim(true); batDauTim(); router.push(url); // vạch xanh chung chạy tới khi trang kết quả hiện
   };
   // QUAY LẠI TRANG CHỦ như Google (chủ dự án 18/10/2026): ô tìm vẫn giữ câu vừa tìm để sửa tiếp; bấm × xoá là thoát tìm kiếm
   useEffect(() => {
@@ -455,80 +466,14 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
   const mucCua = (x: Suggestion): Muc => (x as Suggestion & { muc?: Muc }).muc ?? (/ thue /.test(` ${normalizeVi(x.label)} `) ? "thue" : "ban");
   // CHƯA GÕ → CHỈ những lần khách đã tìm, như Google (chủ dự án 17/10/2026: bỏ "Gợi ý phổ biến" khi chưa gõ)
   // CHƯA GÕ: dưới lịch sử là các TÌM KIẾM PHỔ BIẾN lấy từ trang có tin thật (chủ dự án 18/10/2026: màn tìm trống trơn — cần gợi ý)
-  const cauNhuCau = muc === "duan" ? [] : !kw ? (dangGo ? (goiYTin ?? []).filter((c) => c.muc === mb && c.loai).slice(0, 6) : []) : locCauGoiY(goiYTin ?? [], kwHieu, mb, 12);
-  // GỢI Ý ĐÚNG Ý CÂU GÕ LUÔN ĐỨNG ĐẦU (chủ dự án 17/10/2026: câu dài "căn hộ 3 phòng ngủ tại Phan Thiết view biển" ít nhất
-  // phải gợi ý "Căn hộ 3PN tại Phan Thiết"): dựng từ phần máy hiểu (mục · loại · số phòng ngủ · nơi · giá), bấm là tìm đúng câu đó.
-  const yCau = kw && muc !== "duan" ? parseQuery(kwHieu) : null;
-  const noiY = yCau ? yCau.place?.ward ?? yCau.place?.district ?? yCau.place?.province ?? yCau.places[0] : undefined;
-  // "nhà" trần (không phải "nhà đất") cũng là một loại khách muốn: "bán nhà Hải Châu" → "Bán nhà tại Hải Châu"
-  const loaiCau = yCau ? yCau.types[0]?.toLowerCase() ?? (/ nha /.test(` ${normalizeVi(kwHieu)} `) && !/ nha dat /.test(` ${normalizeVi(kwHieu)} `) ? "nhà" : "") : "";
-  if (yCau && noiY && loaiCau) {
-    // LỜI CỦA NGƯỜI TÌM (chủ dự án 17/10/2026): người vào tìm là người MUA / người THUÊ — gõ "mua…" thì gợi ý "Mua…",
-    // "cần thuê…" thì "Thuê…"; khách tự gõ "bán"/"cho thuê" thì giữ đúng chữ đó.
-    const nq = ` ${normalizeVi(kwHieu)} `;
-    const dongTu = / cho thue /.test(nq) ? "Cho thuê" : / ban /.test(nq) ? "Bán" : mb === "thue" ? "Thuê" : "Mua";
-    const nhan = [dongTu, loaiCau, yCau.beds ? `${yCau.beds} phòng ngủ` : "", "tại " + noiY,
-      yCau.priceMaxTy != null ? `dưới ${yCau.priceMaxTy >= 1 ? yCau.priceMaxTy + " tỷ" : Math.round(yCau.priceMaxTy * 1000) + " triệu"}` : ""].filter(Boolean).join(" ");
-    // THEO CẤU TRÚC MỤC CỦA TRANG (chủ dự án 18/10/2026): câu ghép chỉ từ những gì trang có mục — loại hình, khu vực, số
-    // phòng ngủ, giá; chưa có tin vẫn gợi ý (trang kết quả tự hiện tin gần đúng)
-    if (!cauNhuCau.some((c) => normalizeVi(c.nhan) === normalizeVi(nhan))) {
-      const q = filtersToParams({ ...emptyFilters(), keyword: nhan });
-      q.set("mode", mb === "thue" ? "Cho thuê" : "Mua bán");
-      cauNhuCau.unshift({ nhan, sub: "", muc: mb, loai: true, href: duongDanTuCau(mb, nhan) ?? `${mb === "thue" ? "/cho-thue" : "/mua-ban"}?${q.toString()}` });
-      cauNhuCau.splice(12);
-    }
-  }
-  // GỢI Ý Y NHƯ GOOGLE (chủ dự án 18/10/2026: "giống y Google search khi gõ một từ khoá, kể cả từ khoá dài"): mọi dòng BẮT
-  // ĐẦU bằng đúng câu khách gõ (đã sửa chính tả nếu gõ sai), phần gợi ý thêm nối phía sau và in đậm. Dòng đầu là chính câu
-  // đó. Bỏ chữ mua/bán/thuê ở phần nối — mục đích đã nằm ở menu. Chỉ đổi CHỮ hiển thị; bấm vẫn đi đúng trang của gợi ý.
-  if (kw && cauNhuCau.length) {
-    const dau = kwHieu.replace(/\s+/g, " ").trim();
-    const daCo = new Set(normalizeVi(dau).split(/[^a-z0-9]+/).filter(Boolean));
-    const BO = new Set(["mua", "ban", "thue", "cho", "tai", "o"]);
-    // khách đã nêu loại nhà → không nối thêm "nhà đất" chung chung; "căn hộ" đã là "căn hộ chung cư"
-    if (yCau?.types.length) { BO.add("nha"); BO.add("dat"); }
-    if (daCo.has("can") && daCo.has("ho")) { BO.add("chung"); BO.add("cu"); }
-    const daThay = new Set<string>();
-    const moi: typeof cauNhuCau = [];
-    const sau: typeof cauNhuCau = []; // gợi ý không chứa đủ chữ khách gõ → xếp SAU các gợi ý khớp đủ
-    // khách gõ "nhà" (không phải "nhà đất") → bỏ gợi ý "nhà đất" chung chung (chủ dự án 18/10/2026: "nhà thì liên quan gì đến đất")
-    const goNha = / nha /.test(` ${normalizeVi(dau)} `) && !/ nha dat /.test(` ${normalizeVi(dau)} `);
-    for (const c of cauNhuCau) {
-      if (goNha && / nha dat /.test(` ${normalizeVi(c.nhan)} `)) continue;
-      // khách đã nói rõ LOẠI NHÀ (căn hộ, đất nền…) → chỉ gợi ý cùng loại; bỏ "Bán nhà đất…" chung chung và loại khác
-      if (yCau?.types.length && !parseQuery(c.nhan).types.some((t) => yCau.types.includes(t))) continue;
-      // tên riêng (cụm chữ viết hoa liền nhau: "Nha Trang Khánh Hòa", "Sao Đỏ") khách đã gõ MỘT PHẦN → bỏ cả cụm, không để
-      // sót nửa tên vô nghĩa ("… Trang Khánh Hòa", "… Sao")
-      const chu = c.nhan.replace(/[,.;]+/g, " ").split(/\s+/).filter(Boolean);
-      const bo = new Set<number>();
-      for (let i = 0; i < chu.length; ) {
-        let j = i;
-        while (j < chu.length && chu[j][0] !== chu[j][0].toLowerCase()) j++;
-        if (j > i) {
-          const nhom = chu.slice(i, j).map((w) => normalizeVi(w).replace(/[^a-z0-9]/g, ""));
-          const coMot = nhom.filter((x) => daCo.has(x)).length;
-          if (coMot > 0 && coMot < nhom.length) for (let k = i; k < j; k++) bo.add(k);
-          i = j;
-        } else i++;
-      }
-      const them = chu.filter((_, k) => !bo.has(k)).filter((w) => { const n = normalizeVi(w).replace(/[^a-z0-9]/g, ""); return n && !daCo.has(n) && !BO.has(n); });
-      // Gợi ý KHÔNG chứa đủ các chữ khách gõ (vd gõ "nhà 3 tầng ven biển Mỹ Khê", gợi ý là "Bán nhà 3 phòng ngủ Đà Nẵng")
-      // → hiện NGUYÊN câu của gợi ý, không ghép đuôi vào câu khách gõ (ghép làm khách tưởng là "3 tầng … phòng ngủ" — sai nghĩa)
-      const goiTu = new Set(normalizeVi(c.nhan).split(/[^a-z0-9]+/).filter(Boolean));
-      const duChu = [...daCo].filter((w) => !BO.has(w)).every((w) => goiTu.has(w));
-      const nhan = !duChu ? c.nhan : them.length ? `${dau} ${them.join(" ")}` : dau;
-      const k = normalizeVi(nhan);
-      if (daThay.has(k)) continue;
-      daThay.add(k);
-      (duChu ? moi : sau).push({ ...c, nhan });
-    }
-    moi.push(...sau);
-    // dòng đầu = ĐÚNG câu khách gõ → tìm đúng câu đó (trang pSEO gần nhất, giữ câu), không mượn trang của gợi ý khác
+  const cauNhuCau: CauGoiY[] = muc === "duan" || kw ? [] : dangGo ? (goiYTin ?? []).filter((c) => c.muc === mb && c.loai).slice(0, 6) : [];
+  // ĐANG GÕ → GỢI Ý THEO Ý CÂU, dùng chung mọi ô tìm (lib/goiYTheoY — chủ dự án 21/10/2026: bỏ gợi ý khớp ký tự kiểu Google):
+  // dòng đầu là đúng câu khách gõ; sau đó mục đích + loại hình + khu vực + đặc điểm, không nói mua/thuê thì có cả hai.
+  if (kw && muc !== "duan") {
+    const dau = kwHieu.replace(/s+/g, " ").trim();
     const hrefDau = duongDanGanNhat(mb, dau) ?? `${mb === "thue" ? "/cho-thue" : "/mua-ban"}?q=${encodeURIComponent(dau)}`;
-    const dongDau = moi.findIndex((x) => normalizeVi(x.nhan) === normalizeVi(dau));
-    if (dongDau >= 0) moi.splice(dongDau, 1);
-    moi.unshift({ nhan: dau, sub: "", muc: mb, loai: true, href: hrefDau });
-    cauNhuCau.splice(0, cauNhuCau.length, ...moi.slice(0, 10));
+    cauNhuCau.push({ nhan: dau, sub: "", muc: mb, loai: true, href: hrefDau });
+    for (const d of goiYTheoY(dau, mb)) if (normalizeVi(d.nhan) !== normalizeVi(dau)) cauNhuCau.push({ nhan: d.nhan, sub: "", muc: d.muc, loai: true, href: d.href });
   }
   const ganDayHien = kw ? [] : ganDay.filter((x) => mucCua(x) === muc).slice(0, 3);
   // Tên dự án gợi ý ở MỌI mục (khách hay gõ tên dự án mà không chuyển sang mục Dự án)
@@ -548,14 +493,8 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
   // ngay dưới ô gõ ("1 cái menu chạy phía dưới") — không xếp thẻ chồng bên dưới
   const PHU = muc === "duan" ? ["kv", "da"] : ["kv", "lh", "gia", "dt", "them"];
 
-  // BÔI ĐẬM KIỂU GOOGLE (chủ dự án 17/10/2026): đang gõ → chữ khách đã gõ để thường, phần máy gợi ý thêm in đậm.
-  // Chưa gõ (lịch sử, gợi ý phổ biến) → để nguyên.
-  const daGo = kw ? normalizeVi(kw).split(/[^a-z0-9]+/).filter(Boolean) : [];
-  const boiDam = (nhan: string) => !daGo.length ? nhan : nhan.split(/(\s+)/).map((w, i) => {
-    const n = normalizeVi(w).replace(/[^a-z0-9]/g, "");
-    const cuaKhach = !n || daGo.includes(n) || n.startsWith(daGo[daGo.length - 1]); // chữ cuối có thể đang gõ dở
-    return cuaKhach ? w : <b key={i} className="font-semibold">{w}</b>;
-  });
+  // Gợi ý KHÔNG in đậm (chủ dự án 21/10/2026: in đậm phần web tự thêm kiểu Google làm khách thấy chữ vô nghĩa)
+  const boiDam = (nhan: string) => nhan;
   // KIỂU GOOGLE: dòng đang chọn bằng phím ↑ ↓ được tô nền; mỗi gợi ý có mũi tên ↖ chép câu vào ô để gõ tiếp
   const chenVaoO = (label: string) => {
     setTuKhoa(label);
@@ -810,7 +749,6 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
             {/* NÚT TÌM TRÒN XANH "→" dưới ô gõ, đúng màn gõ của Google (chủ dự án 18/10/2026, ảnh khoanh đỏ): bấm là tìm; đang
                 tìm thì xoay vòng + vạch chạy mép trên màn hình — khách biết web đang chạy */}
             </div>
-            {dangGo && dangTim && <span aria-hidden className="fixed inset-x-0 top-0 z-[230] h-[3px] overflow-hidden"><span className="thanh-dang-tim block h-full bg-cvr-blue" /></span>}
             {/* MÀN GÕ GỌN NHƯ GOOGLE (chủ dự án 18/10/2026, ảnh Google: "rườm rà, thô kệch"): chỉ ô gõ không viền + đường kẻ, bên dưới là
                 các lần tìm gần đây / gợi ý — không chen menu hay trường lọc. Lọc chi tiết nằm ở trang kết quả. */}
             {/* Đang gõ: chỉ ô gõ + gợi ý (kiểu Google); bấm ← về lại màn có đủ 5 trường để tìm chi tiết (chủ dự án 17/10/2026) */}

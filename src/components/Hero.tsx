@@ -120,30 +120,23 @@ export default function Hero({
             contain ? "object-contain" : "object-cover"
           } ${i === active ? "opacity-100" : "opacity-0"}`;
           return (
-            <div key={b.id}>
+            // MỘT thẻ <picture>: máy nào TẢI ĐÚNG ảnh của máy đó. Trước đây hai ảnh (điện thoại + PC) cùng "ưu tiên", điện
+            // thoại tải cả ảnh PC 7:2 không bao giờ hiện, tranh mạng với ảnh đầu trang (đo 20/10/2026).
+            <picture key={b.id}>
               {/* ĐIỆN THOẠI: ảnh riêng 1200×520 (2,3:1). Chưa có ảnh mobile → dùng tạm ảnh PC. */}
-              <Image
-                src={asset(b.imageMobile || b.image)}
-                alt={b.title || "Bất động sản COASTAL LAND"}
-                fill
-                priority={i === 0}
-                quality={100}
-                draggable={false}
-                sizes="100vw"
-                className={`${cls} sm:hidden`}
-              />
+              <source media="(max-width: 639.98px)" srcSet={asset(b.imageMobile || b.image)} />
               {/* PC: ảnh 2880×823 (7:2) — đúng tỷ lệ khung nên phủ kín, không cắt */}
-              <Image
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
                 src={asset(b.image)}
                 alt={b.title || "Bất động sản COASTAL LAND"}
-                fill
-                priority={i === 0}
-                quality={100}
+                loading={i === 0 ? "eager" : "lazy"}
+                fetchPriority={i === 0 ? "high" : "auto"}
+                decoding="async"
                 draggable={false}
-                sizes="100vw"
-                className={`${cls} hidden sm:block`}
+                className={`absolute inset-0 h-full w-full ${cls}`}
               />
-            </div>
+            </picture>
           );
         })}
         {/* Overlay TỐI THIỂU kiểu Apple: 2 dải mờ ở mép trên (bộ lọc/tab) + mép dưới (chữ)

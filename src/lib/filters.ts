@@ -341,9 +341,13 @@ export function normalizeVi(s: string): string {
 }
 
 // Khớp loại hình (lỏng — nhãn menu khác chuỗi loại trong dữ liệu)
-function matchType(itemType: string, option: string): boolean {
-  const head = option.split(/[ /]/)[0].toLowerCase();
-  return itemType.toLowerCase().includes(head);
+// SO CẢ CỤM TÊN CHÍNH (phần trước dấu "/"), không chỉ chữ đầu (lỗi 21/10/2026: chọn "Nhà biệt thự / Liền kề" chỉ so chữ "nhà" nên ra
+// mọi loại "Nhà…" — nhà riêng, nhà mặt phố…; "Đất nền" ra cả đất nông nghiệp). Tên cũ dài hơn vẫn khớp: "Căn hộ" ↔ "Căn hộ chung cư",
+// "Đất nền / Đất nền dự án" ↔ "Đất nền / Đất", "Biệt thự / Liền kề" ↔ "Biệt thự / Villa"; nhãn nhóm ("Nhà") vẫn khớp cả nhóm.
+export function matchType(itemType: string, option: string): boolean {
+  const cum = (x: string) => x.split("/")[0].trim().toLowerCase().replace(/\s+/g, " ");
+  const a = cum(itemType), b = cum(option);
+  return !!b && (a === b || a.startsWith(b + " "));
 }
 
 // Chuỗi địa chỉ ("Phường Hội An, Đà Nẵng · Minh An, Hội An, Quảng Nam") → mảng tên

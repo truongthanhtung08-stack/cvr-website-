@@ -20,6 +20,14 @@ const nextConfig: NextConfig = isPages
       allowedDevOrigins: ["10.*.*.*", "192.168.*.*", "*.local"],
       // nút tròn "N" của bản chạy thử che nội dung khi chủ dự án xem trên điện thoại — chỉ có ở npm run dev
       devIndicators: false,
+      // TRÌNH DUYỆT dùng bản địa danh NẠP SAU (~300 KB không nằm trong mã tải lúc mở trang — đo 20/10/2026); máy chủ
+      // (dựng trang, API, sitemap) vẫn dùng bản nạp sẵn. Xem src/lib/diaDanhNguon.ts.
+      turbopack: {
+        resolveAlias: {
+          "@/lib/diaDanhNguon": { browser: "./src/lib/diaDanhNguon.trinhDuyet.ts", default: "./src/lib/diaDanhNguon.ts" },
+          "./diaDanhNguon": { browser: "./src/lib/diaDanhNguon.trinhDuyet.ts", default: "./src/lib/diaDanhNguon.ts" },
+        },
+      },
       // ⚠️ 5/9/2026 — TẮT tối ưu ảnh của Vercel.
       // Gói Vercel miễn phí có hạn mức ảnh tối ưu; đăng đi đăng lại vài đợt tin là
       // hết hạn mức → mọi ảnh trả về "402 Payment required"

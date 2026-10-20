@@ -1,5 +1,7 @@
 "use client";
 
+import { useDiaDanh } from "@/lib/useDiaDanh";
+import { goiYTheoY } from "@/lib/goiYTheoY";
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import FilterDropdown, { PanelActions, FilterDropdownGroup } from "@/components/FilterDropdown";
@@ -41,6 +43,18 @@ const ICON_CLOCK = "M12 8v4l2.5 2.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z";
 const ICON_SEARCH = "M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z";
 const ICON_INSERT = "M18 18L6 6M6 6h8M6 6v8"; // ↖ chèn gợi ý vào ô tìm
 // Thanh lọc kiểu Homedy — fully controlled qua props value/onChange.
+
+// Ô gõ màn tìm TỰ GIÃN theo chữ — ĐÚNG cách ô trang chủ (TimTrangChu): ô trống để cao tự nhiên một dòng, KHÔNG đo (đo lúc
+// màn tìm vừa mở thì chữ gợi ý còn xuống dòng, ô ra cao sai tỷ lệ tới khi gõ — chủ dự án 20/10/2026); ô đang ẩn đo ra 0 thì đo lại sau.
+function gianO(el: HTMLTextAreaElement | null) {
+  if (!el || el.dataset.daDo === el.value) return;
+  el.dataset.daDo = el.value;
+  if (!el.value) { el.style.height = ""; return; }
+  el.style.height = "auto";
+  if (!el.scrollHeight) { el.style.height = ""; delete el.dataset.daDo; return; }
+  el.style.height = `${Math.max(36, el.scrollHeight)}px`;
+}
+
 export default function FilterBar({
   value,
   onChange,
@@ -79,6 +93,8 @@ export default function FilterBar({
   // Không truyền → dùng bộ câu theo cơ cấu.
   hintItems?: TinGoiY[];
 }) {
+  // coDiaDanh trong điều kiện tính lại của các useMemo dùng địa danh: dữ liệu về sau lần tính đầu thì phải tính lại
+  const coDiaDanh = useDiaDanh(); // địa danh nạp sau khi trang hiện — về tới thì vẽ lại (20/10/2026)
   const f = value;
   // Danh mục loại hình theo đúng mục đích trang
   const typeGroups = typeGroupsFor(purpose);
@@ -227,7 +243,7 @@ export default function FilterBar({
   // GÕ MƯỢT (chủ dự án 20/10/2026): chữ trong ô hiện ngay; sửa chính tả + dò gợi ý (nặng: cả bộ địa danh) chạy trên bản HOÃN
   // của từ khoá — React làm lúc rảnh, không chặn phím gõ. Gợi ý theo kịp ngay khi khách ngừng tay.
   const kwHoan = useDeferredValue(f.keyword);
-  const kwHieu = useMemo(() => (kwHoan.trim() ? suaChinhTa(kwHoan) ?? kwHoan : kwHoan), [kwHoan]);
+  const kwHieu = useMemo(() => (kwHoan.trim() ? suaChinhTa(kwHoan) ?? kwHoan : kwHoan), [kwHoan, coDiaDanh]); // eslint-disable-line react-hooks/exhaustive-deps
   const yDinh = parseQuery(kwHieu);
   const mucDich = yDinh.purpose ?? purpose;
   const roNghia = yDinh.purpose != null || yDinh.types.length > 0;
@@ -244,17 +260,20 @@ export default function FilterBar({
     return true;
   };
   // eslint-disable-next-line react-hooks/exhaustive-deps -- dungY suy ra từ kwHieu + typeOptions
-  const typedHits = useMemo(() => (typed ? suggest(kwHieu, 12).filter(dungY).slice(0, 6) : []), [typed, kwHieu, typeOptions, purpose]);
+  const typedHits = useMemo(() => (typed ? suggest(kwHieu, 12).filter(dungY).slice(0, 6) : []), [typed, kwHieu, typeOptions, purpose, coDiaDanh]);
   // LUÔN có gợi ý (kiểu Google): gõ mà không khớp gì → hiện GỢI Ý PHỔ BIẾN thay vì để trống.
   const noHits = typed && typedHits.length === 0;
   // GỢI Ý BẬC THANG — dựng từ chính câu đang gõ, xếp từ khớp đầy đủ → nới dần.
   // VD "Đất nền tại Đà Nẵng giá dưới 3 tỷ" → [Đất nền · Đà Nẵng · dưới 3 tỷ] →
   // [Đất nền · Đà Nẵng] → [Tất cả đất nền] → [BĐS tại Đà Nẵng] → [BĐS dưới 3 tỷ].
   const bacThang: Suggestion[] = useMemo(() => (typed
-    ? goiYNoiLong(kwHieu).map((g) => ({ label: g.label, kind: "Gợi ý" as const, sub: g.sub, patch: g.patch }))
-    : []), [typed, kwHieu]);
+    // GỢI Ý THEO Ý CÂU dùng chung mọi ô tìm (lib/goiYTheoY, chủ dự án 21/10/2026): mục đích + loại hình + khu vực + đặc điểm;
+    // không nói mua/thuê → có cả hai (mục của trang trước). Bấm là sang đúng trang kết quả của dòng đó.
+    ? goiYTheoY(kwHieu, purpose === "thue" ? "thue" : "ban").map((g) => ({ label: g.nhan, kind: "Gợi ý" as const, href: g.href }))
+    : []), [typed, kwHieu, purpose, coDiaDanh]); // eslint-disable-line react-hooks/exhaustive-deps
   // CHƯA GÕ → CHỈ những lần khách đã tìm, như Google (chủ dự án 17/10/2026: bỏ "gợi ý phổ biến" toàn tên tỉnh trơn — vô dụng)
-  const panelItems: Suggestion[] = typed ? [...bacThang, ...typedHits] : recentShown;
+  // Bỏ gợi ý khớp ký tự kiểu Google (địa danh trùng tên tỉnh khác, "Tất cả biệt thự"…) — chủ dự án 21/10/2026: chỉ gợi ý theo ý câu
+  const panelItems: Suggestion[] = typed ? bacThang : recentShown;
   // Câu dài hiếm khi khớp NGUYÊN VĂN một mục nào — nhưng nếu bóc được tiêu chí
   // (loại hình · phường/quận · giá…) thì KHÔNG được báo "không có kết quả",
   // phải nói đã hiểu gì và gợi ý theo đúng tiêu chí đó.
@@ -776,8 +795,7 @@ export default function FilterBar({
       )}
     </div>
 
-    {/* BẤM TÌM → VẠCH CHẠY MÉP TRÊN MÀN HÌNH (chủ dự án 18/10/2026: hiệu ứng để khách biết web đang tìm) */}
-    {dangTim && <span aria-hidden className="fixed inset-x-0 top-0 z-[300] h-[3px] overflow-hidden"><span className="thanh-dang-tim block h-full bg-cvr-blue" /></span>}
+    {/* BẤM TÌM → VẠCH CHẠY MÉP TRÊN MÀN HÌNH: dùng vạch chung VachTim (sự kiện "cvr-tim" trong chayTim), chạy tới khi kết quả hiện (21/10/2026) */}
     {/* ===== MOBILE: TRANG TÌM TOÀN MÀN HÌNH kiểu Google — chạm ô tìm là mở ===== */}
     {overlay && (
       <div className="fixed inset-0 z-[80] flex flex-col bg-white sm:hidden">{/* hiện NGAY như Google, không trượt (chủ dự án 20/10/2026: giật) */}
@@ -799,7 +817,7 @@ export default function FilterBar({
               ref={(el) => {
                 overlayInputRef.current = el;
                 // CHỈ ĐO KHI CHỮ ĐỔI — đo ở mọi lần vẽ bắt cả trang tính lại bố cục, gõ bị khựng (đo 20/10/2026)
-                if (el && el.dataset.daDo !== el.value) { el.dataset.daDo = el.value; el.style.height = "auto"; el.style.height = `${Math.max(36, el.scrollHeight)}px`; }
+                gianO(el); // như ô gõ trang chủ: ô trống cao tự nhiên một dòng, chỉ đo khi có chữ
               }}
               autoFocus
               rows={1}
@@ -808,9 +826,7 @@ export default function FilterBar({
                 setCauCu("");
                 set({ keyword: e.target.value.replace(/\n/g, " ") });
                 setActiveIdx(-1);
-                const el = e.currentTarget;
-                el.style.height = "auto";
-                el.style.height = `${Math.max(36, el.scrollHeight)}px`;
+                gianO(e.currentTarget);
               }}
               onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); chayTim(); } onKeyNav(e); }} // phím Tìm: chạy tìm thật (có vạch chạy báo đang tìm)
               placeholder="Tìm nhà đất theo khu vực, dự án…" // màn tìm đã mở: chữ gợi ý KHÔNG chạy (chủ dự án 18/10/2026)
@@ -818,7 +834,7 @@ export default function FilterBar({
               autoComplete="off"
               enterKeyHint="search"
               onFocus={(e) => { const o = e.currentTarget; o.setSelectionRange(o.value.length, o.value.length); }} // con trỏ cuối từ khoá
-              className="block max-h-[112px] min-h-[36px] w-full resize-none overflow-y-auto rounded-[18px] border border-transparent bg-cvr-surface py-[5px] pl-4 pr-10 text-[16px] leading-6 text-cvr-ink placeholder-cvr-faint outline-none ring-2 ring-cvr-blue/40 focus:placeholder:text-transparent"
+              className="no-scrollbar block max-h-[112px] min-h-[36px] w-full resize-none overflow-y-auto rounded-[18px] border border-transparent bg-cvr-surface py-[5px] pl-4 pr-10 text-[16px] leading-6 text-cvr-ink placeholder-cvr-faint outline-none ring-2 ring-cvr-blue/40 focus:placeholder:text-transparent"
             />
             {(f.keyword || cauCu).trim().length > 0 && (
               <button
@@ -933,6 +949,7 @@ export function LocationPanel({
   // bấm ra ngoài, người dùng không biết đã chọn xong hay chưa.
   onClose?: () => void;
 }) {
+  useDiaDanh(); // địa danh nạp sau khi trang hiện — về tới thì vẽ lại (20/10/2026)
   const [q, setQ] = useState("");
   const [prov, setProv] = useState(""); // đường dẫn đang duyệt (chưa cam kết)
   const [dist, setDist] = useState("");

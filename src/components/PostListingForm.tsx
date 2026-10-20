@@ -1,5 +1,6 @@
 "use client";
 
+import { useDiaDanh } from "@/lib/useDiaDanh";
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import BangGiaGoiTin from "@/components/BangGiaGoiTin";
@@ -67,6 +68,7 @@ const KHOA_NHAP_MAY = "cvr-dang-tin-nhap";
 const khoaNhap = (uid: string) => `${KHOA_NHAP_MAY}:${uid}`;
 
 export default function PostListingForm() {
+  useDiaDanh(); // địa danh nạp sau khi trang hiện — về tới thì vẽ lại (20/10/2026)
   const router = useRouter();
   const thamSo = useSearchParams();
   const editId = thamSo.get("id");

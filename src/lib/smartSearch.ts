@@ -15,6 +15,7 @@
 
 import { applyFilters, emptyFilters, normalizeVi, type Filters } from "@/lib/filters";
 import { provinces } from "@/lib/locations";
+import { daCoDiaDanh } from "@/lib/diaDanhNguon";
 
 // ── Từ điển nhận diện ───────────────────────────────────────────────────────
 // Mỗi mục: [nhãn chuẩn, các cách viết người dùng hay gõ]
@@ -28,7 +29,9 @@ export const LOAI_HINH: [string, string[]][] = [
   ["Đất nền", ["dat nen", "dat du an", "lo dat", "dat tho cu", "dat"]],
   ["Condotel", ["condotel", "nghi duong", "resort"]],
   ["Kho xưởng", ["kho xuong", "nha xuong", "kho bai", "nha kho"]],
-  ["Văn phòng", ["van phong", "mat bang kinh doanh", "mat bang"]],
+  ["Văn phòng", ["van phong"]],
+  // MẶT BẰNG là loại riêng ("Mặt bằng / Cửa hàng bán lẻ"), không phải văn phòng (rà 21/10/2026: "mặt bằng kinh doanh" ra trang văn phòng)
+  ["Mặt bằng", ["mat bang", "mat bang kinh doanh", "cua hang", "ki ot", "kiot"]],
   ["Phòng trọ", ["phong tro", "nha tro", "tro"]],
 ];
 
@@ -58,6 +61,8 @@ let _diaGioi: NoiDG[] | null = null;
 let _theoChuDau: Map<string, NoiDG[]> | null = null;
 function diaGioi(): NoiDG[] {
   if (_diaGioi) return _diaGioi;
+  // trình duyệt chưa nạp địa danh → rỗng, chưa giữ (xem useDiaDanh)
+  if (!daCoDiaDanh()) return [];
   _diaGioi = (() => {
   const ds: { norm: string; ten: string[]; place: PlaceHit }[] = [];
   for (const p of provinces) {
@@ -78,6 +83,7 @@ function diaGioi(): NoiDG[] {
 // phường xã (điện thoại chậm từng mất cả giây mỗi phím — chủ dự án 17/10/2026)
 function theoChuDau(): Map<string, NoiDG[]> {
   if (_theoChuDau) return _theoChuDau;
+  if (!daCoDiaDanh()) return new Map();
   const m = new Map<string, NoiDG[]>();
   for (const x of diaGioi()) { const k = x.ten[0]; const ds = m.get(k); if (ds) ds.push(x); else m.set(k, [x]); }
   return (_theoChuDau = m);
@@ -211,6 +217,8 @@ function tuDien(): Set<string> {
 }
 const coDau = (n: string) => CO_DAU?.get(n) ?? n;
 export function suaChinhTa(raw: string): string | null {
+  // Chưa có địa danh thì từ điển thiếu tên phường xã → "sửa" nhầm tên nơi khách gõ đúng. Tạm không sửa (vài trăm ms đầu).
+  if (!daCoDiaDanh()) return null;
   const td = tuDien();
   let doi = false;
   const kq = raw.split(/(\s+)/).map((tok) => {
@@ -333,6 +341,7 @@ export function parseQuery(raw: string): ParsedQuery {
   const co = daPhanTich.get(raw);
   if (co) return co;
   const kq = phanTichCau(raw);
+  if (!daCoDiaDanh()) return kq; // chưa có địa danh → kết quả thiếu phường/quận, không ghi nhớ
   if (daPhanTich.size > 300) daPhanTich.clear();
   daPhanTich.set(raw, kq);
   return kq;
@@ -346,16 +355,21 @@ function phanTichCau(raw: string): ParsedQuery {
   const places = timTuDien(nq, TINH);
   if (!places.length) places.push(...tinhGanDung(nq));
   const features = timTuDien(nq, DAC_DIEM);
+  // "Villa biển gần Hội An", "nhà biển": chữ BIỂN đứng riêng cũng là đặc điểm gần biển (chủ dự án 21/10/2026). Chỉ nhận khi gõ
+  // có dấu "biển" — bỏ dấu thành "bien" thì trùng "Biên Hòa", "biên giới".
+  if (!features.includes("view biển") && /(^|[^\p{L}])biển([^\p{L}]|$)/iu.test(raw.normalize("NFC"))) features.push("view biển");
   // Phường/quận trong câu ("Hoà Quý", "Ngũ Hành Sơn") — suy ra luôn TỈNH nếu
   // người dùng không gõ tên tỉnh ("nhà đất Hoà Quý" → Đà Nẵng).
   const place = timDiaGioi(cheChuChung(nq), places);
   if (place && !places.includes(place.province)) places.push(place.province);
 
-  const purpose: "ban" | "thue" | null = /\b(thue|cho thue)\b/.test(nq)
-    ? "thue"
-    : /\b(mua|ban|can mua)\b/.test(nq)
-      ? "ban"
-      : null;
+  // MỤC ĐÍCH (rà 21/10/2026): "ban công" không phải "bán", "thuế" không phải "thuê" (bỏ dấu thì trùng chữ); câu nói CẢ mua/bán
+  // lẫn thuê ("mua hoặc thuê") → chưa rõ mục đích, để gợi ý cả hai.
+  const nqMd = nq.replace(/\bban cong\b/g, " ");
+  const thueThat = !(/thuế/i.test(raw.normalize("NFC")) && !/thuê/i.test(raw.normalize("NFC")));
+  const coThue = thueThat && /\b(thue|cho thue)\b/.test(nqMd);
+  const coBan = /\b(mua|ban|can mua)\b/.test(nqMd);
+  const purpose: "ban" | "thue" | null = coThue && coBan ? null : coThue ? "thue" : coBan ? "ban" : null;
 
   // Từ khoá còn lại: bỏ số, bỏ từ nối, giữ từ ≥ 2 ký tự
   const terms = Array.from(

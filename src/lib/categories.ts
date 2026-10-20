@@ -45,7 +45,8 @@ export const saleCategories: Category[] = [
     slug: "biet-thu-lien-ke", label: "Nhà biệt thự, liền kề",
     h1: "Bán biệt thự, nhà liền kề", tuKhoa: "Bán biệt thự", title: `Bán biệt thự, nhà liền kề`,
     desc: `Mua bán biệt thự, nhà liền kề — dự án và nhà lẻ, đầy đủ pháp lý.`,
-    types: ["Nhà biệt thự / Liền kề"],
+    // Villa = biệt thự (chủ dự án 21/10/2026: "Villa biển gần Hội An" phải ra cả tin loại "Villa / Biệt thự biển")
+    types: ["Nhà biệt thự / Liền kề", "Villa / Biệt thự biển"],
   },
   {
     slug: "nha-mat-pho", label: "Nhà mặt phố",

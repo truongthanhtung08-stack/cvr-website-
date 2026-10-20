@@ -1,5 +1,6 @@
 "use client";
 
+import { useDiaDanh } from "@/lib/useDiaDanh";
 import FilterDropdown, { FilterDropdownGroup, PanelActions } from "@/components/FilterDropdown";
 import { LocationPanel, ProjectPanel, RangePanel, Chip, SwitchRow } from "@/components/FilterBar";
 import {
@@ -35,6 +36,7 @@ export default function TruongLocTrangChu({
   /** Chỉ hiện các trường này (kv · da · lh · gia · dt · pn); bỏ trống = hiện hết */
   chi?: string[];
 }) {
+  useDiaDanh(); // địa danh nạp sau khi trang hiện — về tới thì vẽ lại (20/10/2026)
   const mb: "ban" | "thue" = muc === "thue" ? "thue" : "ban";
   const set = (patch: Partial<Filters>) => onChange({ ...f, ...patch });
   const xong = (close: () => void) => { close(); onXong?.(); };

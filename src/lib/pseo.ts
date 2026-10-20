@@ -3,6 +3,7 @@ import { findCategory, nhomPseo, rentCategories, saleCategories, type Category }
 import { khuVucList, slugKhuVuc, timKhuVuc, type KhuVuc } from "@/lib/khuVuc";
 import { normalizeVi, type Filters } from "@/lib/filters";
 import { newProvinceOf, phuongMoiCuaQuan } from "@/lib/locations";
+import { daCoDiaDanh, khiCoDiaDanh } from "@/lib/diaDanhNguon";
 
 // ============================================================================
 // PROGRAMMATIC SEO — Template 1 "Dynamic Listing" (docs/PHAN-TICH-PSEO-2-FILE.md)
@@ -85,7 +86,10 @@ export const KIET_SLUG = "nha-kiet-hem";
 // Thêm thành phố: thêm một dòng { name, tinhCu }. Tên thành phố trùng tên tỉnh (Quảng Ngãi, Kon Tum…)
 // không thêm — trang tỉnh đã mang đúng tên đó.
 export type ThanhPho = { slug: string; name: string; tinh: string; phuong: string[] };
-export const THANH_PHO: ThanhPho[] = [
+// Trình duyệt: dựng khi địa danh nạp xong (cùng một mảng, nơi dùng thấy ngay) — dựng lúc nạp mã thì phuongMoiCuaQuan
+// chưa có dữ liệu, bảng rỗng mãi (20/10/2026). Máy chủ: dựng ngay như cũ.
+export const THANH_PHO: ThanhPho[] = [];
+const NGUON_THANH_PHO = [
   { name: "Nha Trang", tinhCu: "Khánh Hòa" },
   { name: "Cam Ranh", tinhCu: "Khánh Hòa" },
   { name: "Phan Rang - Tháp Chàm", tinhCu: "Ninh Thuận" },
@@ -97,7 +101,7 @@ export const THANH_PHO: ThanhPho[] = [
   { name: "Pleiku", tinhCu: "Gia Lai" },
   { name: "Buôn Ma Thuột", tinhCu: "Đắk Lắk" },
   { name: "Tuy Hòa", tinhCu: "Phú Yên" },
-  { name: "Hội An", tinhCu: "Quảng Nam" },
+  { name: "Hội An", tinhCu: "Quảng Nam" }, // gồm cả xã Tân Hiệp (Cù Lao Chàm) — chủ dự án 21/10/2026: đúng, giữ theo bảng sáp nhập
   { name: "Tam Kỳ", tinhCu: "Quảng Nam" },
   { name: "Đông Hà", tinhCu: "Quảng Trị" },
   { name: "Đồng Hới", tinhCu: "Quảng Bình" },
@@ -110,9 +114,15 @@ export const THANH_PHO: ThanhPho[] = [
   { name: "Thủ Đức", tinhCu: "Hồ Chí Minh" },
   { name: "Hạ Long", tinhCu: "Quảng Ninh" },
   { name: "Phú Quốc", tinhCu: "Kiên Giang" },
-]
-  .map(({ name, tinhCu }) => ({ name, slug: slugKhuVuc(name), tinh: newProvinceOf(tinhCu), phuong: phuongMoiCuaQuan(tinhCu, name) }))
-  .filter((t) => t.phuong.length > 0);
+];
+function dungThanhPho() {
+  if (THANH_PHO.length || !daCoDiaDanh()) return;
+  THANH_PHO.push(...NGUON_THANH_PHO
+    .map(({ name, tinhCu }) => ({ name, slug: slugKhuVuc(name), tinh: newProvinceOf(tinhCu), phuong: phuongMoiCuaQuan(tinhCu, name) }))
+    .filter((t) => t.phuong.length > 0));
+}
+dungThanhPho();
+khiCoDiaDanh(dungThanhPho);
 const thanhPhoCuaPhuong = (tinh: string, phuong: string) =>
   THANH_PHO.find((t) => cungTen(t.tinh, tinh) && t.phuong.some((p) => cungTen(p, phuong)));
 const timThanhPho = (tinh: KhuVuc, slug: string) => THANH_PHO.find((t) => t.slug === slug && cungTen(t.tinh, tinh.name));
@@ -462,9 +472,12 @@ export function lienKetCho(dk: DieuKien, tinConHan: Listing[]): NhomLienKet[] {
     them("Theo số phòng ngủ", ds.filter((p) => cungTinh(p) && laLoai(p, dk.cat) && chiCo(p, "phongNgu")), (p) => viHoa(phongNguNhan(p.dk.phongNgu!)));
     them("Theo pháp lý", ds.filter((p) => cungTinh(p) && laLoai(p, dk.cat) && chiCo(p, "phapLy")), (p) => viHoa(p.dk.phapLy!.nhan));
   }
-  them("Theo đường", ds.filter((p) => cungTinh(p) && chiCo(p, "duong")), (p) => `Đường ${p.dk.duong}`);
+  // Đường, nhà kiệt: CÙNG LOẠI HÌNH với trang đang xem như mọi nhóm khác (chủ dự án 21/10/2026: trang "Bán biệt thự Hội An" dẫn sang
+  // "Bán nhà kiệt, hẻm Đà Nẵng" là sai lệch). Trang chưa có loại hình (trang tỉnh) thì giữ như cũ.
+  const cungLoai = (p: TrangPseo) => !dk.cat || p.dk.cat?.slug === dk.cat.slug;
+  them("Theo đường", ds.filter((p) => cungTinh(p) && cungLoai(p) && chiCo(p, "duong")), (p) => `Đường ${p.dk.duong}`);
   them("Theo hướng nhà", ds.filter((p) => cungTinh(p) && laLoai(p, dk.cat) && chiCo(p, "huong")), (p) => `Hướng ${p.dk.huong}`);
-  them("Nhà kiệt, hẻm", ds.filter((p) => cungTinh(p) && chiCo(p, "kiet")), () => `Nhà kiệt, hẻm ${dk.tinh.name}`);
+  them("Nhà kiệt, hẻm", ds.filter((p) => cungTinh(p) && cungLoai(p) && chiCo(p, "kiet")), () => `Nhà kiệt, hẻm ${dk.tinh.name}`);
   if (dk.cat) {
     them("Tỉnh, thành khác", ds.filter((p) => p.dk.tinh.slug !== dk.tinh.slug && laLoai(p, dk.cat) && !p.dk.phuong && !p.dk.thanhPho && !p.dk.giaDuoi && !p.dk.phapLy && !p.dk.phongNgu && !p.dk.huong), (p) => p.dk.tinh.name);
   }

@@ -1,5 +1,6 @@
 "use client";
 
+import { useDiaDanh } from "@/lib/useDiaDanh";
 import { useState } from "react";
 import FilterBar from "@/components/FilterBar";
 import { emptyFilters, filtersToParams, type Filters } from "@/lib/filters";
@@ -14,6 +15,7 @@ const tabs = ["Mua bán", "Cho thuê", "Dự án"];
 // Chỉ phần NHÌN của hàng tab trên máy tính được làm lại theo UI mẫu:
 // viên thuốc nền tối mờ, mục đang chọn nền trắng chữ đen.
 export default function HomeSearch({ defaultTab, items }: { defaultTab?: string; items?: TinGoiY[] }) {
+  useDiaDanh(); // địa danh nạp sau khi trang hiện — về tới thì vẽ lại (20/10/2026)
   const [tab, setTab] = useState(defaultTab && tabs.includes(defaultTab) ? defaultTab : tabs[0]);
   const [filters, setFilters] = useState<Filters>(emptyFilters());
 

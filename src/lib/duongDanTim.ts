@@ -73,7 +73,7 @@ export function duongDanTuCau(mucTab: "ban" | "thue", raw: string): string | nul
   ].sort((x, y) => y.length - x.length);
   for (const k of bo) con = con.replace(new RegExp(`(^| )${k.replace(/[^a-z0-9 ]/g, "")}(?= |$)`, "g"), " ");
   if (con.trim()) return null;
-  const typeOnlyThue = p.types.length > 0 && p.types.every((t) => ["Văn phòng", "Phòng trọ"].includes(t));
+  const typeOnlyThue = p.types.length > 0 && p.types.every((t) => ["Văn phòng", "Mặt bằng", "Phòng trọ"].includes(t));
   const muc = p.purpose ?? (typeOnlyThue ? "thue" : mucTab);
   const goc = muc === "thue" ? "/cho-thue" : "/mua-ban";
 
@@ -89,6 +89,7 @@ export function duongDanTuCau(mucTab: "ban" | "thue", raw: string): string | nul
     "Condotel": { ban: "condotel" },
     "Kho xưởng": { ban: "kho-nha-xuong", thue: "kho-nha-xuong" },
     "Văn phòng": { thue: "van-phong" },
+    "Mặt bằng": { thue: "cua-hang-ki-ot" },
     "Phòng trọ": { thue: "phong-tro" },
   };
   let loai = "";

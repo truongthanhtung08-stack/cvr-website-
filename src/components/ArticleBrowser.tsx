@@ -1,5 +1,6 @@
 "use client";
 
+import { useDiaDanh } from "@/lib/useDiaDanh";
 import { useState } from "react";
 import Link from "next/link";
 import PagedArticleList from "@/components/PagedArticleList";
@@ -12,6 +13,7 @@ import type { Article } from "@/lib/data";
 // Dùng ở trang /tin-tuc và ở khối Tin tức trang chủ khi bấm "Xem thêm" —
 // hai chỗ dùng CHUNG component nên không bao giờ lệch cấu trúc.
 export default function ArticleBrowser({ articles }: { articles: Article[] }) {
+  useDiaDanh(); // địa danh nạp sau khi trang hiện — về tới thì vẽ lại (20/10/2026)
   // Ô TÌM cho mục Tin tức — dùng CHUNG lõi tìm kiếm với Mua bán / Cho thuê / Dự án:
   // bóc tách câu, khớp mờ (gõ thiếu dấu/sai chính tả vẫn ra), xếp 3 tầng và
   // KHÔNG BAO GIỜ trả về màn hình trống. Hiện trên cả PC và điện thoại.

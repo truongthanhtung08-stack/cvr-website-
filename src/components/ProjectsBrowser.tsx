@@ -1,5 +1,7 @@
 "use client";
 
+import { useDiaDanh } from "@/lib/useDiaDanh";
+import { batDauTim, xongTim } from "@/components/VachTim";
 import { useEffect, useMemo, useRef, useState } from "react";
 import PhanTrang from "@/components/PhanTrang";
 import Image from "next/image";
@@ -47,6 +49,18 @@ function countBy(projects: Project[], key: (p: Project) => string): [string, num
   return [...m];
 }
 
+
+// Ô gõ màn tìm TỰ GIÃN theo chữ — ĐÚNG cách ô trang chủ (TimTrangChu): ô trống để cao tự nhiên một dòng, KHÔNG đo (đo lúc
+// màn tìm vừa mở thì chữ gợi ý còn xuống dòng, ô ra cao sai tỷ lệ tới khi gõ — chủ dự án 20/10/2026); ô đang ẩn đo ra 0 thì đo lại sau.
+function gianO(el: HTMLTextAreaElement | null) {
+  if (!el || el.dataset.daDo === el.value) return;
+  el.dataset.daDo = el.value;
+  if (!el.value) { el.style.height = ""; return; }
+  el.style.height = "auto";
+  if (!el.scrollHeight) { el.style.height = ""; delete el.dataset.daDo; return; }
+  el.style.height = `${Math.max(36, el.scrollHeight)}px`;
+}
+
 export default function ProjectsBrowser({
   projects,
   articles,
@@ -65,6 +79,7 @@ export default function ProjectsBrowser({
   // desktop nằm TRÊN (dùng CSS order, không đổi cấu trúc dữ liệu).
   hero?: React.ReactNode;
 }) {
+  useDiaDanh(); // địa danh nạp sau khi trang hiện — về tới thì vẽ lại (20/10/2026)
   const [q, setQ] = useState("");
   const [status, setStatus] = useState(ALL);
   const [province, setProvince] = useState(ALL);
@@ -191,6 +206,7 @@ export default function ProjectsBrowser({
     setSugOpen(false);
     setOverlay(false);
     setDangTim(true);
+    batDauTim(); xongTim(); // lọc tại chỗ: kết quả có ngay — vạch chung hiện tối thiểu 0,6 giây
     window.setTimeout(() => setDangTim(false), 700);
     // đợi overlay đóng xong mới cuộn, nếu không phần tử còn bị che
     window.setTimeout(cuonToiKetQua, 60);
@@ -219,7 +235,7 @@ export default function ProjectsBrowser({
         <button
           key={name}
           type="button"
-          onClick={() => { onPick(name); close(); }}
+          onClick={() => { onPick(name); close(); batDauTim(); xongTim(); }}
           className={`flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 text-left text-sm transition ${
             value === name ? "bg-cvr-blue/10 font-medium text-cvr-blue-ink" : "text-cvr-ink/80 hover:bg-black/5"
           }`}
@@ -403,7 +419,7 @@ export default function ProjectsBrowser({
               <textarea
                 ref={(el) => {
                   overlayInputRef.current = el;
-                  if (el && el.dataset.daDo !== el.value) { el.dataset.daDo = el.value; el.style.height = "auto"; el.style.height = `${Math.max(36, el.scrollHeight)}px`; }
+                  gianO(el); // như ô gõ trang chủ: ô trống cao tự nhiên một dòng, chỉ đo khi có chữ
                 }}
                 autoFocus
                 rows={1}
@@ -414,7 +430,7 @@ export default function ProjectsBrowser({
                 placeholder="Tìm dự án…" // màn tìm đã mở: chữ gợi ý KHÔNG chạy (chủ dự án 18/10/2026)
                 aria-label="Tìm dự án"
                 enterKeyHint="search"
-                className="block max-h-[112px] min-h-[36px] w-full resize-none overflow-y-auto rounded-[18px] border border-transparent bg-cvr-surface py-[5px] pl-4 pr-10 text-[16px] leading-6 text-cvr-ink placeholder-cvr-faint outline-none ring-2 ring-cvr-blue/40 focus:placeholder:text-transparent"
+                className="no-scrollbar block max-h-[112px] min-h-[36px] w-full resize-none overflow-y-auto rounded-[18px] border border-transparent bg-cvr-surface py-[5px] pl-4 pr-10 text-[16px] leading-6 text-cvr-ink placeholder-cvr-faint outline-none ring-2 ring-cvr-blue/40 focus:placeholder:text-transparent"
               />
               {q.trim().length > 0 && (
                 <button

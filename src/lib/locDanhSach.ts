@@ -1,9 +1,11 @@
 import type { Listing } from "@/lib/data";
-import { sortListings, applyFilters, emptyFilters, normalizeVi, typeGroupsFor, type Filters, type SortKey } from "@/lib/filters";
+import { sortListings, applyFilters, emptyFilters, normalizeVi, typeGroupsFor, matchType, type Filters, type SortKey } from "@/lib/filters";
 import { smartFilter, smartSearch, goiYNoiLong, parseQuery } from "@/lib/smartSearch";
 import { nhanDoiHienThi } from "@/lib/nhanDoiHienThi";
+import { tierRank } from "@/lib/packages";
 import { parseLatLng } from "@/lib/googleMaps";
-import { coordOf } from "@/lib/geo";
+import { coordOf, centerOfArea } from "@/lib/geo";
+import { choCuCua } from "@/lib/locations";
 import type { DiemBanDo } from "@/components/MapViewGoogle";
 
 // ============================================================================
@@ -113,25 +115,53 @@ export function locDanhSach(
   // → tỉnh khác. VD đất Hòa Xuân > đất Đà Nẵng dưới 3 tỷ > đất Đà Nẵng khác > đất tỉnh khác > nhà Hòa Xuân.
   const sauChon = filters.locations.filter((x) => x.district || x.ward);
   const coGia = filters.priceMin != null || filters.priceMax != null;
+  // Tin có ĐẶC ĐIỂM khách gõ (biển, sông…) — từ khoá còn lại sau khi đã tách câu thành bộ lọc
+  const coDacDiem = new Set(coTuKhoa ? search.hits.filter((h) => h.tier <= 2).map((h) => h.item.id) : []); // khớp chặt, không tính khớp lỏng 1 chữ
+  const dungLoai = (l: Listing) => filters.types.length === 0 || filters.types.some((t) => matchType(l.type, t));
   const diemGoiY = (l: Listing) => {
-    const dungLoai = filters.types.length === 0 || filters.types.includes(l.type);
     const dungTinh = tinhChon.size === 0 || tinhChon.has(l.location.split(",").pop()?.trim() ?? "");
     const dungSau = sauChon.length > 0 && applyFilters([l], { ...emptyFilters(), locations: sauChon }).length > 0;
     const dungGia = !coGia || applyFilters([l], { ...emptyFilters(), priceMin: filters.priceMin, priceMax: filters.priceMax }).length > 0;
-    return (dungLoai ? 128 : 0) + (dungSau ? 64 : 0) + (dungTinh ? 48 : 0) + (dungGia ? 32 : 0);
+    return (dungLoai(l) ? 128 : 0) + (dungSau ? 64 : 0) + (dungTinh ? 48 : 0) + (coDacDiem.has(l.id) ? 40 : 0) + (dungGia ? 32 : 0);
   };
-  const tam = tinhChon.size === 1 ? coordOf([...tinhChon][0], "") : null;
+  // KHU VỰC LÂN CẬN (chủ dự án 21/10/2026: "Villa biển gần Hội An" → gợi ý nơi gần Hội An trước): tâm = nơi khách nói (phường/quận),
+  // không có thì tâm tỉnh. Tin ghi phường MỚI → quy về quận/huyện CŨ (bảng sáp nhập) để lấy toạ độ, không khớp thì tâm tỉnh.
+  const tamNoi = (loc: string): [number, number] | null => {
+    const hit = centerOfArea(loc.split(",").slice(0, -1).join(",")) ;
+    if (hit) return hit;
+    const [phuong, tinh] = [loc.split(",")[0]?.trim() ?? "", loc.split(",").pop()?.trim() ?? ""];
+    const quan = choCuCua(tinh, phuong)[0]?.quan;
+    return (quan ? centerOfArea(quan) : null) ?? centerOfArea(tinh);
+  };
+  const noiChon = sauChon[0];
+  const tam = noiChon ? tamNoi(`${noiChon.ward ?? noiChon.district ?? ""}, ${noiChon.province}`) : tinhChon.size === 1 ? coordOf([...tinhChon][0], "") : null;
   const khoangCach = (l: Listing) => {
     if (!tam) return 0;
-    const [a, b] = coordOf(l.location.split(",").pop()?.trim() ?? "", "");
+    const [a, b] = tamNoi(l.location) ?? coordOf(l.location.split(",").pop()?.trim() ?? "", "");
     return (a - tam[0]) ** 2 + (b - tam[1]) ** 2;
   };
-  const goiY = sortListings(hits.filter((h) => h.tier > 1).map((h) => h.item), sort)
+  // KHÁCH ĐÃ NÓI LOẠI HÌNH → gợi ý CHỈ cùng loại hình, nới khu vực chứ không nới loại (chủ dự án 21/10/2026: "Villa biển gần
+  // Hội An" không có tin thì gợi ý villa Đà Nẵng gần biển — không đưa condotel, nhà phố). Hết tin cùng loại thì nói là không có.
+  // KHÁCH ĐÃ NÓI NƠI → gợi ý CHỈ trong tỉnh đó (chủ dự án 21/10/2026: "Villa biển gần Hội An" mà ra Huế, Lâm Đồng là vô nghĩa)
+  const dungTinhChon = (l: Listing) => tinhChon.size === 0 || tinhChon.has(l.location.split(",").pop()?.trim() ?? "");
+  const goiY = sortListings(hits.filter((h) => h.tier > 1 && dungLoai(h.item) && dungTinhChon(h.item)).map((h) => h.item), sort)
     .map((l, i) => ({ l, i, d: diemGoiY(l), xa: khoangCach(l) }))
     // cùng mức khớp: nơi GẦN tỉnh khách chọn đứng trước (Quảng Trị → Huế, Đà Nẵng trước Khánh Hòa)
     .sort((a, b) => b.d - a.d || a.xa - b.xa || a.i - b.i)
     .slice(0, TOI_DA_GOI_Y)
     .map((x) => x.l);
+  // TIN HẾT HẠN CŨNG GỢI Ý THEO CÙNG LUẬT (chủ dự án 21/10/2026: kho còn ít tin, "Villa biển gần Hội An" bỏ sót biệt thự Đà Nẵng
+  // đã hết hạn): cùng loại hình, cùng tỉnh, có đặc điểm + gần nơi khách nói trước — đứng SAU mọi tin còn hạn, nhãn "Tin hết hạn".
+  const daCoHetHan = new Set(ketQuaHetHan.map((l) => l.id));
+  const ungHetHan = gocHetHan.length
+    ? smartFilter(gocHetHan, { ...filters, keyword: "" }).filter((h) => h.tier > 1 && dungLoai(h.item) && dungTinhChon(h.item) && !daCoHetHan.has(h.item.id)).map((h) => h.item)
+    : [];
+  if (coTuKhoa && ungHetHan.length) for (const h of smartSearch(ungHetHan, filters.keyword).hits) if (h.tier <= 2) coDacDiem.add(h.item.id);
+  // Xếp CUỐI, theo CẤP rồi NGÀY ĐĂNG mới trước (chủ dự án 21/10/2026) — không xếp theo độ gần như tin còn hạn
+  const ngayDang = (l: Listing) => Date.parse(l.bumpedAt ?? l.postedAt ?? "") || 0;
+  const goiYHetHan = [...ungHetHan]
+    .sort((a, b) => tierRank(a.badge) - tierRank(b.badge) || ngayDang(b) - ngayDang(a))
+    .slice(0, TOI_DA_GOI_Y);
   // LUÔN CÓ KẾT QUẢ, XẾP TẦNG (chủ dự án 17/10/2026: "100% chính xác → chính xác → tương đối → đúng vài trường → gợi ý
   // tương tự"): có từ khoá chi tiết thì tin khớp từ khoá lên đầu, rồi tới tin khớp đủ bộ lọc, rồi gợi ý — không vứt tin nào.
   // Tin khớp từ khoá NHƯNG nằm ngoài bộ lọc (tỉnh khác, loại khác) KHÔNG được đứng trên tin đúng nơi đúng loại — rà 18/10/2026:
@@ -140,13 +170,16 @@ export function locDanhSach(
   const dungLoc = new Set(khopDu.map((l) => l.id));
   const khopChu = search.hits.map((h) => h.item);
   const chuTrong = khopChu.filter((l) => dungLoc.has(l.id));
-  const chuNgoai = khopChu.filter((l) => !dungLoc.has(l.id));
+  const chuNgoai = khopChu.filter((l) => !dungLoc.has(l.id) && dungLoai(l) && dungTinhChon(l)); // khớp chữ mà khác loại khách nói → không đưa vào
   const daCo = new Set(khopChu.map((l) => l.id));
   let ketQua = [
-    ...(coTuKhoa ? [...chuTrong, ...khopDu.filter((l) => !daCo.has(l.id)), ...chuNgoai, ...goiY.filter((l) => !daCo.has(l.id))] : [...khopDu, ...goiY]),
+    // Khách đã nói loại hình: tin khớp chữ ngoài bộ lọc đã nằm trong bảng gợi ý (xếp theo tỉnh + đặc điểm) — không chen trước
+    ...(coTuKhoa ? [...chuTrong, ...khopDu.filter((l) => !daCo.has(l.id)), ...(filters.types.length ? [] : chuNgoai), ...goiY.filter((l) => !daCo.has(l.id) || (filters.types.length > 0 && !dungLoc.has(l.id)))] : [...khopDu, ...goiY]),
     ...ketQuaHetHan,
+    ...goiYHetHan,
   ];
   const tierById = new Map(hits.map((h) => [h.item.id, h.tier]));
+  for (const l of goiYHetHan) tierById.set(l.id, 3);
   const termsById = new Map(search.hits.map((h) => [h.item.id, h.matched]));
 
   // PHÂN KHÚC GIÁ RẺ (chủ dự án 18/10/2026: "giá rẻ thì phải biết phân khúc giá nào trong 1,4 – 33 tỷ là rẻ mới đưa lên"):

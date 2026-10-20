@@ -9,6 +9,7 @@ import MobileTabBar from "@/components/MobileTabBar";
 import BanPhimAo from "@/components/BanPhimAo";
 import ScrollTopOnRoute from "@/components/ScrollTopOnRoute";
 import RouteMotion from "@/components/RouteMotion";
+import VachTim from "@/components/VachTim";
 import SiteJsonLd from "@/components/SiteJsonLd";
 import Analytics from "@/components/Analytics";
 import PwaRegister from "@/components/PwaRegister";
@@ -183,6 +184,8 @@ export default function RootLayout({
         <DemHienThi />
         {/* Thanh tiến trình + hiệu ứng vào trang khi chuyển trang (thay cho rung) */}
         <RouteMotion />
+        {/* Vạch xanh "đang tìm" chung cả web: bấm tìm → chạy tới khi kết quả hiện */}
+        <VachTim />
         {children}
         <CompareBar />
         <Chatbox />

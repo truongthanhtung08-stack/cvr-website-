@@ -12,13 +12,17 @@ export default function Highlight({ text, terms }: { text: string; terms: string
   // normalizeVi giữ nguyên SỐ ký tự (chỉ bỏ dấu, hạ chữ thường) nên vị trí khớp
   // trên chuỗi không dấu dùng thẳng được cho chuỗi gốc.
   const mark = new Array(text.length).fill(false);
+  // CHỈ KHỚP TRỌN TỪ (chủ dự án 21/10/2026: gõ "hội an" mà bôi vụn "an" trong "Tr-an-g", "Qu-an-g" — rối, không liên quan)
+  const chu = (c: string | undefined) => !!c && /[a-z0-9]/.test(c);
   for (const t of list) {
     let from = 0;
     for (;;) {
       const i = norm.indexOf(t, from);
       if (i < 0) break;
-      for (let k = i; k < i + t.length && k < mark.length; k++) mark[k] = true;
-      from = i + t.length;
+      if (!chu(norm[i - 1]) && !chu(norm[i + t.length])) {
+        for (let k = i; k < i + t.length && k < mark.length; k++) mark[k] = true;
+      }
+      from = i + 1;
     }
   }
 

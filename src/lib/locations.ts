@@ -7,8 +7,8 @@
 // Hai bảng đó là dữ liệu gốc, sinh tự động từ nguồn mở — không sửa tay. File này
 // chỉ nối hai hệ lại với nhau (`provinceMergers`) và cung cấp hàm tra cứu.
 
-import { provincesNew } from "./provincesNew";
-import { provincesOld } from "./provincesOld";
+// Dữ liệu qua diaDanhNguon: máy chủ có sẵn; trình duyệt nạp sau khi trang hiện (mảng rỗng tới lúc đó — xem useDiaDanh).
+import { provincesNew, provincesOld, daCoDiaDanh, khiCoDiaDanh } from "./diaDanhNguon";
 
 export type Ward = string;
 
@@ -69,7 +69,9 @@ export function wardsOf(provinceName: string, districtName: string): string[] {
 export type GeoMode = "cu" | "moi";
 
 // Tên tỉnh/thành hệ MỚI — dùng cho select cấp 1 khi mode = "moi"
-export const provinceNamesNew: string[] = provincesNew.map((p) => p.name);
+// GHI SẴN 34 tên (đúng thứ tự provincesNew) để bộ lọc, trang khu vực có ngay mà không phải chờ nạp địa danh ở trình
+// duyệt. Danh mục 34 tỉnh do Nghị quyết 2025 định — sinh lại provincesNew có đổi tỉnh thì sửa cả dòng này.
+export const provinceNamesNew: string[] = ["Hà Nội", "Cao Bằng", "Tuyên Quang", "Điện Biên", "Lai Châu", "Sơn La", "Lào Cai", "Thái Nguyên", "Lạng Sơn", "Quảng Ninh", "Bắc Ninh", "Phú Thọ", "Hải Phòng", "Hưng Yên", "Ninh Bình", "Thanh Hóa", "Nghệ An", "Hà Tĩnh", "Quảng Trị", "Huế", "Đà Nẵng", "Quảng Ngãi", "Gia Lai", "Khánh Hòa", "Đắk Lắk", "Lâm Đồng", "Đồng Nai", "Hồ Chí Minh", "Tây Ninh", "Đồng Tháp", "Vĩnh Long", "An Giang", "Cần Thơ", "Cà Mau"];
 
 // Danh sách tỉnh/thành theo hệ đã chọn.
 // Hệ CŨ = tên tỉnh TRƯỚC sáp nhập (63 tỉnh). Trước đây chỗ này trả về danh sách
@@ -187,19 +189,26 @@ export function tenTinhTuongDuong(ten: string): string[] {
 // KHÔNG còn gõ tay. Trước đây bảng này nhập tay và chỉ có 8 tỉnh lõi Miền Trung,
 // nên 43/63 tỉnh cũ không chọn được Quận/Huyện, và dữ liệu dễ lệch với danh mục
 // gốc. Mỗi quận/huyện mang sẵn `tinhCu` để tra ngược ra tỉnh trước sáp nhập.
-export const provinces: Province[] = provinceNamesNew.map((tenMoi) => ({
-  name: tenMoi,
-  districts: (provinceMergers[tenMoi] ?? [tenMoi]).flatMap((tinhCu) =>
-    (provincesOld.find((x) => x.name === tinhCu)?.districts ?? []).map((d) => ({
-      name: d.name,
-      wards: d.wards,
-      tinhCu,
-    })),
-  ),
-}));
+// Trình duyệt: mảng rỗng tới khi địa danh nạp xong rồi tự đổ vào (cùng một mảng, nơi dùng thấy ngay).
+export const provinces: Province[] = [];
+function dungProvinces() {
+  if (provinces.length || !daCoDiaDanh()) return;
+  provinces.push(...provinceNamesNew.map((tenMoi) => ({
+    name: tenMoi,
+    districts: (provinceMergers[tenMoi] ?? [tenMoi]).flatMap((tinhCu) =>
+      (provincesOld.find((x) => x.name === tinhCu)?.districts ?? []).map((d) => ({
+        name: d.name,
+        wards: d.wards,
+        tinhCu,
+      })),
+    ),
+  })));
+}
+dungProvinces();
+khiCoDiaDanh(dungProvinces);
 
 // Tên các tỉnh/thành — dùng cho select cấp 1
-export const provinceNames: string[] = provinces.map((p) => p.name);
+export const provinceNames: string[] = provinceNamesNew;
 
 // ── ÁNH XẠ CHÍNH THỨC CŨ ↔ MỚI (Nghị quyết 202/2025/QH15) ───────────────────
 // provincesOld ghi sẵn: phường cũ thứ i thuộc quận d nằm ở phường mới `d.moi[i]`
@@ -287,7 +296,7 @@ function ganCuSangMoi(tinh: string, quan: string, phuong: string, v: { tinh: str
 // bấm được (đo 17/10/2026)
 let _daDung = false;
 function dungBang() {
-if (_daDung) return;
+if (_daDung || !daCoDiaDanh()) return; // trình duyệt chưa nạp địa danh → chưa dựng (dựng lúc rỗng là hỏng tới khi tải lại trang)
 _daDung = true;
 for (const p of provincesOld) {
   const tinhMoi = newProvinceOf(p.name);

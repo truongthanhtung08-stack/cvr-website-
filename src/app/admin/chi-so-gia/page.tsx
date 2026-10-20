@@ -1,5 +1,6 @@
 "use client";
 
+import { useDiaDanh } from "@/lib/useDiaDanh";
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { ChiSoGiaData, ChiSoKhuVuc, LoiCsv, MauSo } from "@/lib/chiSoGia";
@@ -70,6 +71,7 @@ function khoaDay(x: ChiSoKhuVuc): string {
 }
 
 export default function ChiSoGiaPage() {
+  useDiaDanh(); // địa danh nạp sau khi trang hiện — về tới thì vẽ lại (20/10/2026)
   const [items, setItems] = useState<ChiSoKhuVuc[]>([]);
   const [dangTai, setDangTai] = useState(true);
   const [msg, setMsg] = useState("");

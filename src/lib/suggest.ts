@@ -4,7 +4,7 @@
 // Chọn Khu vực/Loại hình → đổ vào bộ lọc; chọn Sản phẩm/Dự án/Tin tức → mở trang chi tiết.
 
 import { provinces, oldProvinces } from "@/lib/locations";
-import { provincesNew } from "@/lib/provincesNew";
+import { provincesNew, daCoDiaDanh } from "@/lib/diaDanhNguon";
 import { propertyTypeOptions, normalizeVi } from "@/lib/filters";
 import { featuredListings, projects, articles } from "@/lib/data";
 
@@ -40,6 +40,8 @@ const toNorm = (s: string) => normalizeVi(s).replace(/[^a-z0-9\s]/g, " ").replac
 let _entries: Entry[] | null = null;
 function entries(): Entry[] {
 if (_entries) return _entries;
+// Trình duyệt chưa nạp xong địa danh → dựng tạm, KHÔNG giữ lại (giữ bảng thiếu phường xã là gợi ý hụt tới khi tải lại trang)
+const giu = daCoDiaDanh();
 const ENTRIES: Entry[] = [];
 
 // 1) Khu vực / Địa chỉ — tỉnh / quận-huyện / phường-xã
@@ -134,7 +136,8 @@ for (const a of articles) {
     norm: toNorm(`${a.title} ${a.category}`), primary: toNorm(a.title),
   });
 }
-return (_entries = ENTRIES);
+if (giu) _entries = ENTRIES;
+return ENTRIES;
 }
 
 // Gợi ý phổ biến — hiện ngay khi người dùng chạm vào ô tìm kiếm (chưa gõ), kiểu Homedy.
@@ -235,6 +238,7 @@ export function suggest(query: string, limit = 8): Suggestion[] {
   const co = daGoiY.get(khoa);
   if (co) return co;
   const kq = goiYCho(query, limit);
+  if (!daCoDiaDanh()) return kq; // chưa có địa danh → gợi ý thiếu phường xã, không ghi nhớ
   if (daGoiY.size > 300) daGoiY.clear();
   daGoiY.set(khoa, kq);
   return kq;

@@ -1,5 +1,6 @@
 "use client";
 
+import { useDiaDanh } from "@/lib/useDiaDanh";
 import { useState } from "react";
 import type { ChiSoKhuVuc, OSanh } from "@/lib/chiSoGia";
 import { vndM2, vndThang, luiMotNam, coDuLichSuGia, soKyLienMach } from "@/lib/chiSoGia";
@@ -50,6 +51,7 @@ export default function PriceHistory({
   /** Bảng so sánh các phường/xã trong tỉnh (cùng quý với mốc mới nhất). */
   lanCan?: OSanh[];
 }) {
+  useDiaDanh(); // địa danh nạp sau khi trang hiện — về tới thì vẽ lại (20/10/2026)
   // Như Batdongsan: bán = giá mỗi m², thuê = tổng tiền mỗi tháng.
   const gia = (v: number) => (laThue ? vndThang(v) : vndM2(v));
   const caDay: Moc[] = (chiSo?.moc ?? []).filter((m) => m.giaM2 > 0);

@@ -24,20 +24,25 @@ import Script from "next/script";
 // Xem số liệu: analytics.google.com → tài sản coastalland.vn → Báo cáo →
 // Thời gian thực (mở web trên điện thoại là thấy có người đang online).
 //
-// Script đặt afterInteractive: chờ trang hiện xong mới tải → không làm chậm
-// lần hiển thị đầu tiên (điểm tốc độ Google chấm vẫn giữ nguyên).
+// Đoạn khai báo (dataLayer, config) chạy afterInteractive; thư viện gtag.js nạp lazyOnload (xem dưới).
 // ============================================================================
 const GA_MAC_DINH = "G-2RE29WXQCC";
 const ADS_MAC_DINH = "AW-18365884419";
 
 export default function Analytics() {
   const id = process.env.NEXT_PUBLIC_GA_ID || GA_MAC_DINH;
-  const adsId = process.env.NEXT_PUBLIC_ADS_ID || ADS_MAC_DINH;
+  // TẮT thẻ Google Ads khi chưa chạy quảng cáo (chủ dự án 20/10/2026: chưa chạy, chưa dự kiến chạy). Thẻ này bắt tải thêm
+  // thư viện ~155 KB nén, nặng hơn cả mã của web. Chạy Ads lại → đổi BAT_ADS thành true (GA4 không bị ảnh hưởng).
+  const BAT_ADS = false;
+  const adsId = BAT_ADS ? process.env.NEXT_PUBLIC_ADS_ID || ADS_MAC_DINH : "";
   if (!id) return null;
 
   return (
     <>
-      <Script src={`https://www.googletagmanager.com/gtag/js?id=${id}`} strategy="afterInteractive" />
+      {/* Thư viện gtag nạp SAU KHI trang tải xong, lúc máy rảnh (lazyOnload): nạp ngay thì nó chiếm ~2,4 giây CPU
+          điện thoại chậm đúng lúc trang đang dựng (đo 20/10/2026). Không mất số liệu: lệnh config/sự kiện bên dưới
+          vẫn chạy ngay và nằm chờ trong dataLayer, thư viện nạp xong gửi đi hết. */}
+      <Script src={`https://www.googletagmanager.com/gtag/js?id=${id}`} strategy="lazyOnload" />
       <Script id="ga4-init" strategy="afterInteractive">
         {`
           window.dataLayer = window.dataLayer || [];

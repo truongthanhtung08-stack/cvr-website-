@@ -1,6 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useDiaDanh } from "@/lib/useDiaDanh";
+import { xongTim } from "@/components/VachTim";
+import { useEffect, useMemo, useState } from "react";
 import PhanTrang from "@/components/PhanTrang";
 import { useSearchParams } from "next/navigation";
 import PropertyCard from "@/components/PropertyCard";
@@ -35,6 +37,8 @@ export default function SearchClient({
   // Tin ĐÃ HẾT HẠN — xếp SAU toàn bộ tin còn hạn, chỉ lấy tin khớp đủ (chốt 03/10/2026).
   itemsHetHan?: Listing[];
 }) {
+  // coDiaDanh trong điều kiện tính lại của các useMemo dùng địa danh: dữ liệu về sau lần tính đầu thì phải tính lại
+  const coDiaDanh = useDiaDanh(); // địa danh nạp sau khi trang hiện — về tới thì vẽ lại (20/10/2026)
   const params = useSearchParams();
   const mode = params.get("mode") ?? "";
   // Tab đã chọn ở Hero → danh mục loại hình + nguồn tin theo mục đích.
@@ -63,11 +67,13 @@ export default function SearchClient({
   // LUÔN có kết quả. Không gõ từ khoá → giữ nguyên cách sắp xếp cũ.
   // Các trường lọc chọn tay (khu vực · loại hình · giá · diện tích · đặc điểm…)
   // cũng chạy theo cùng logic 3 tầng — chọn quá chặt vẫn không ra màn hình trống.
-  const locHits = useMemo(() => smartFilter(base, { ...filters, keyword: "" }), [base, filters]);
+  const locHits = useMemo(() => smartFilter(base, { ...filters, keyword: "" }), [base, filters, coDiaDanh]); // eslint-disable-line react-hooks/exhaustive-deps
   const loc = useMemo(() => locHits.map((h) => h.item), [locHits]);
-  const search = useMemo(() => smartSearch(loc, filters.keyword), [loc, filters.keyword]);
+  const search = useMemo(() => smartSearch(loc, filters.keyword), [loc, filters.keyword, coDiaDanh]); // eslint-disable-line react-hooks/exhaustive-deps
   const filterTierById = useMemo(() => new Map(locHits.map((h) => [h.item.id, h.tier])), [locHits]);
   const coTuKhoa = filters.keyword.trim().length > 0;
+  // Có từ khoá mà địa danh chưa về → chưa hiện kết quả (tìm thiếu phường xã ra sai rồi nhảy; máy chủ dựng cũng vậy để khớp)
+  const choDiaDanh = coTuKhoa && !coDiaDanh;
 
   const ketQuaHetHan = useMemo(() => {
     const goc = itemsHetHan.filter((l) => (l.purpose ?? "ban") === purpose);
@@ -76,13 +82,15 @@ export default function SearchClient({
     return coTuKhoa
       ? smartSearch(khop, filters.keyword).hits.filter((h) => h.tier === 1).map((h) => h.item)
       : sortListings(khop, sort);
-  }, [itemsHetHan, purpose, filters, coTuKhoa, sort]);
+  }, [itemsHetHan, purpose, filters, coTuKhoa, sort, coDiaDanh]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const results = useMemo(
-    () => [...(coTuKhoa ? search.hits.map((h) => h.item) : sortListings(loc, sort)), ...ketQuaHetHan],
-    [coTuKhoa, search, loc, sort, ketQuaHetHan],
+    () => (choDiaDanh ? [] : [...(coTuKhoa ? search.hits.map((h) => h.item) : sortListings(loc, sort)), ...ketQuaHetHan]),
+    [choDiaDanh, coTuKhoa, search, loc, sort, ketQuaHetHan],
   );
   // Tra cứu nhanh: tin nào thuộc tầng nào + khớp những chữ gì (để bôi đậm)
+  // Kết quả đã hiện → tắt vạch xanh "đang tìm" chung (lọc tại chỗ nên có ngay)
+  useEffect(() => { if (!choDiaDanh) xongTim(); }, [results, choDiaDanh]);
   const hitById = useMemo(() => new Map(search.hits.map((h) => [h.item.id, h])), [search]);
   const active = hasActiveFilters(filters);
 
@@ -116,7 +124,7 @@ export default function SearchClient({
           id="ket-qua": bấm Tìm / Enter / chọn gợi ý là cuộn thẳng xuống đây. */}
       <div id="ket-qua" className="mb-5 mt-5 flex scroll-mt-20 flex-wrap items-center justify-between gap-3 sm:scroll-mt-24">
         <p className="text-sm text-cvr-body">
-          {active ? <><span className="font-bold text-cvr-ink">{results.filter((l) => !l.banSao).length}</span> bất động sản phù hợp</> : "Tin mua bán, cho thuê nhà đất mới nhất"}
+          {choDiaDanh ? null : active ? <><span className="font-bold text-cvr-ink">{results.filter((l) => !l.banSao).length}</span> bất động sản phù hợp</> : "Tin mua bán, cho thuê nhà đất mới nhất"}
         </p>
         <div className="flex items-center gap-3">
           {active && (
@@ -145,7 +153,7 @@ export default function SearchClient({
       </div>
 
       {/* Kết quả — 8 tin/trang, có phân trang 1,2,3… */}
-      {results.length > 0 ? (
+      {choDiaDanh ? null : results.length > 0 ? (
         <>
           {/* Nhãn TẦNG KẾT QUẢ — hiện đúng chất lượng khớp của nhóm tin đang xem
               (khớp 100% · gần đúng · liên quan). Không gõ từ khoá thì không hiện. */}

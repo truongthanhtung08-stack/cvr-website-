@@ -71,7 +71,7 @@ function O({ src, alt, className = "", sizes, onMo, children, dau, duPhong, vide
 // 3,5 giây/ảnh khi thẻ đang hiện trên màn hình; vừa chạm thì nghỉ 6 giây rồi chạy lại.
 // Dải ảnh dịch bằng transform theo SỐ THỨ TỰ ảnh → luôn dừng đúng khít một ảnh, không lệch mép.
 type Slide = { anh?: string; video?: boolean; duPhong?: string; videoTep?: string };
-function KhungChay({ slides, alt, khung, sizes, onMo, children, tuChay = true }: { slides: Slide[]; alt: string; khung: string; sizes: string; onMo: (k: number) => void; children?: React.ReactNode; tuChay?: boolean }) {
+function KhungChay({ slides, alt, khung, sizes, onMo, children, tuChay = true, uuTien = false }: { slides: Slide[]; alt: string; khung: string; sizes: string; onMo: (k: number) => void; children?: React.ReactNode; tuChay?: boolean; uuTien?: boolean }) {
   const goc = useRef<HTMLDivElement>(null);
   const [i, setI] = useState(0);
   const [keo, setKeo] = useState(0); // px đang kéo
@@ -118,7 +118,7 @@ function KhungChay({ slides, alt, khung, sizes, onMo, children, tuChay = true }:
         style={{ transform: `translate3d(calc(${-i * 100}% + ${keo}px), 0, 0)`, transition: keo ? "none" : "transform 0.35s cubic-bezier(0.22,1,0.36,1)" }}
       >
         {slides.map((s, k) => (
-          <O key={k} dau={k === 0} src={s.anh} duPhong={s.duPhong} videoTep={s.videoTep} alt={alt} sizes={sizes} className={`h-full w-full shrink-0 ${s.video ? "bg-black" : ""}`} onMo={() => { if (!daKeo.current) onMo(k); }}>
+          <O key={k} dau={uuTien && k === 0} src={s.anh} duPhong={s.duPhong} videoTep={s.videoTep} alt={alt} sizes={sizes} className={`h-full w-full shrink-0 ${s.video ? "bg-black" : ""}`} onMo={() => { if (!daKeo.current) onMo(k); }}>
             {s.video && (
               <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
                 <span className="flex h-12 w-12 items-center justify-center rounded-full bg-black/55 text-white"><IconPlay /></span>
@@ -141,7 +141,9 @@ function KhungChay({ slides, alt, khung, sizes, onMo, children, tuChay = true }:
 // chạy khi mở tin (chủ dự án 09/10/2026).
 // pc: HÀNG DANH SÁCH máy tính (trang Mua bán / Cho thuê) — cùng nội dung thẻ điện thoại, chỉ khác khung (nhánh ở dưới).
 // moTa: dòng mô tả dưới địa chỉ theo cấp (Basic 2 · Silver 2 · Gold 3 · Diamond 3 — src/lib/trichMoTa.ts) — MỌI NƠI (trang chủ, danh sách, mẫu thẻ admin), nâng cấp là tự đúng (chủ dự án 20/10/2026).
-export default function TheTinMobile({ item, terms = [], tuChay = false, pc = false, moTa = true, dcCu = true }: { item: Listing; terms?: string[]; tuChay?: boolean; pc?: boolean; moTa?: boolean; dcCu?: boolean }) {
+// uuTien = thẻ ĐẦU danh sách: ảnh đầu tải ngay. Thẻ khác tải khi khách cuộn gần tới — trước đây thẻ nào cũng tải ngay, trang chủ bắt
+// điện thoại tải trước 10+ ảnh cùng lúc, ảnh đầu trang phải xếp hàng (đo 20/10/2026: 8,8 giây mới hiện).
+export default function TheTinMobile({ item, terms = [], tuChay = false, pc = false, moTa = true, dcCu = true, uuTien = false }: { item: Listing; terms?: string[]; tuChay?: boolean; pc?: boolean; moTa?: boolean; dcCu?: boolean; uuTien?: boolean }) {
   const t: TierId = item.badge ? tierFromBadge(item.badge) : "basic";
   const tier = getTier(t);
   const href = `/bat-dong-san/${item.id}`;
@@ -211,7 +213,7 @@ export default function TheTinMobile({ item, terms = [], tuChay = false, pc = fa
   );
 
   const khungChinh = (khung: string, sizes: string) => (
-    <KhungChay slides={slides} alt={item.title} khung={khung} sizes={sizes} onMo={moSlide} tuChay={tuChay}>{dem}</KhungChay>
+    <KhungChay slides={slides} alt={item.title} khung={khung} sizes={sizes} onMo={moSlide} tuChay={tuChay} uuTien={uuTien}>{dem}</KhungChay>
   );
   // KHUNG ẢNH THEO CẤP lấy TỶ LỆ VÀNG (1,618) làm chuẩn (chủ dự án 20/10/2026), màn 375: Basic 16:9 = 211 (nhỏ nhất) · Silver tỷ lệ vàng = 232 ·
   // Gold chính tỷ lệ vàng (= Silver) + 3 phụ 16:9 · Diamond chính 3:2 = 250 (to hơn Gold) + 3 phụ 3:2 — Gold, Diamond cùng số ảnh, cùng cách xếp.

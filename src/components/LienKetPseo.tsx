@@ -1,6 +1,5 @@
 import Link from "next/link";
 import type { NhomLienKet } from "@/lib/pseo";
-import { normalizeVi } from "@/lib/filters";
 
 // Khối liên kết nội bộ của hệ pSEO (Template 1 — "Contextual internal linking hub").
 // Chỉ liệt kê trang ĐÃ QUA CỔNG CHẤT LƯỢNG (src/lib/pseo.ts) — không dẫn khách vào trang thưa tin.
@@ -17,12 +16,9 @@ export default function LienKetPseo({ nhom, cau = "", kieuGoogle = false }: { nh
     const hep = nhom.filter((g) => g.tieuDe !== "Tỉnh, thành khác" && g.tieuDe !== "Theo loại hình");
     const nguon = hep.some((g) => g.links.length) ? hep : nhom.filter((g) => g.tieuDe !== "Tỉnh, thành khác");
     const links = nguon.flatMap((g) => g.links).filter((l, i, ds) => ds.findIndex((x) => x.href === l.href) === i);
-    const daCo = new Set(normalizeVi(cau).split(/[^a-z0-9]+/).filter(Boolean));
-    const boiDam = (nhan: string) =>
-      nhan.split(/(\s+)/).map((w, i) => {
-        const n = normalizeVi(w).replace(/[^a-z0-9]/g, "");
-        return !n || daCo.has(n) ? w : <b key={i} className="font-semibold">{w}</b>;
-      });
+    // Không in đậm (chủ dự án 21/10/2026: in đậm kiểu Google phần khác câu đang xem → chữ bôi đậm vô nghĩa)
+    void cau;
+    const boiDam = (nhan: string) => nhan;
     return (
       // CHUẨN SEO: khối điều hướng có tên (nav + h2), danh sách liên kết thật (ul/li, thẻ a do máy chủ vẽ sẵn — Google đọc
       // được ngay), chữ liên kết là chính tên trang đích ("Bán căn hộ chung cư Đà Nẵng dưới 3 tỷ"), không chữ chung chung.
