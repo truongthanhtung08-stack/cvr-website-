@@ -8,7 +8,7 @@ import { getChuyenGia } from "@/lib/chuyenGiaDb";
 export const metadata: Metadata = {
   alternates: { canonical: "/chuyen-gia" },
   title: "Danh bạ chuyên gia bất động sản",
-  description: "Danh bạ người đăng tin mua bán, cho thuê nhà đất trên Coastal Land — xem tin đang đăng và liên hệ trực tiếp.",
+  description: "Danh bạ người bán, cho thuê nhà đất trên Coastal Land.",
 };
 
 export default async function ChuyenGiaPage() {
@@ -23,7 +23,7 @@ export default async function ChuyenGiaPage() {
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <h1 className="text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">Danh bạ chuyên gia</h1>
-              <p className="mt-1.5 max-w-2xl text-sm text-cvr-muted">Danh bạ người đăng tin mua bán, cho thuê nhà đất trên Coastal Land — xem tin đang đăng và liên hệ trực tiếp.</p>
+              <p className="mt-1.5 max-w-2xl text-sm text-cvr-muted">Danh bạ người bán, cho thuê nhà đất trên Coastal Land.</p>
             </div>
             <div className="flex gap-2.5">
               <Link href="/chuyen-gia/cong-ty" className="rounded-lg border border-cvr-line bg-white px-4 py-2.5 text-sm font-semibold text-cvr-ink transition hover:bg-black/5">Sàn & công ty</Link>

@@ -33,7 +33,7 @@ import { thangHienTai, tieuDeGoogle } from "@/lib/thang";
 // ============================================================================
 
 // Mô tả quá ngắn (< 100 ký tự) → nối cụm câu chuẩn của cổng thông tin (SEO, 08/10/2026).
-const moTaDu = (d: string) => (d.length < 100 ? `${d.replace(/[.\s]+$/, "")} — tin hình thật, liên hệ trực tiếp người đăng, lọc theo khu vực và mức giá.` : d);
+const moTaDu = (d: string) => (d.length < 100 ? `${d.replace(/[.\s]+$/, "")} — tin hình thật, liên hệ trực tiếp người cho thuê, lọc theo khu vực và mức giá.` : d);
 
 export function generateStaticParams() {
   return [

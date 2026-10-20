@@ -68,7 +68,7 @@ export default function ChuyenGiaCard({ cg }: { cg: ChuyenGia }) {
         <div className="min-w-0 flex-1">
           <h3 className="break-words font-semibold text-cvr-ink">{cg.ten}</h3>
           <p className="mt-0.5 text-sm text-cvr-muted">
-            <strong className="font-semibold text-cvr-ink">{cg.soTin}</strong> tin đang đăng
+            <strong className="font-semibold text-cvr-ink">{cg.soTin}</strong> tin
           </p>
           {cg.khuVuc.length > 0 && (
             <p className="mt-0.5 truncate text-xs text-cvr-faint">{cg.khuVuc.join(" · ")}</p>

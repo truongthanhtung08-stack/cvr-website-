@@ -46,7 +46,7 @@ const SITE_TITLE = "COASTAL LAND";
 // Google đối chiếu các nguồn này với nhau: gọi mỗi nơi một kiểu thì thương hiệu bị loãng.
 const SITE_TAGLINE = "COASTAL LAND — Cổng thông tin mua bán, cho thuê nhà đất";
 const SITE_DESC =
-  "Cổng thông tin mua bán, cho thuê nhà đất, căn hộ, đất nền và dự án. Tin hình thật, liên hệ trực tiếp người đăng.";
+  "Cổng thông tin mua bán, cho thuê nhà đất, căn hộ, đất nền và dự án. Tin hình thật, liên hệ trực tiếp người bán, người cho thuê.";
 // ── ẢNH XEM TRƯỚC KHI CHIA SẺ LINK (Zalo · Facebook · Messenger) ────────────
 // LẤY ĐÚNG ẢNH HERO CỦA TRANG CHỦ mà chủ dự án đặt trong /admin/noi-dung.
 //

@@ -87,10 +87,10 @@ export default function HopXacThucSo({
         onClick={(e) => e.stopPropagation()}
       >
         <h3 className="text-lg font-semibold tracking-tight text-cvr-ink">
-          {buoc === "sdt" ? (chiXacMinh ? "Xác minh số để gửi đánh giá" : "Xem số điện thoại người đăng") : "Nhập mã xác thực"}
+          {buoc === "sdt" ? (chiXacMinh ? "Xác minh số để gửi đánh giá" : "Xem số điện thoại") : "Nhập mã xác thực"}
         </h3>
         <p className="mt-1 text-sm text-cvr-muted">
-          {buoc === "sdt" ? "Nhập số của bạn để xem số người đăng" : `Mã gồm 6 số vừa gửi tới ${sdt}.`}
+          {buoc === "sdt" ? "Nhập số của bạn để xem số điện thoại" : `Mã gồm 6 số vừa gửi tới ${sdt}.`}
         </p>
 
         {buoc === "sdt" ? (

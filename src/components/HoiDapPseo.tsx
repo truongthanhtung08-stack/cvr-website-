@@ -1,11 +1,11 @@
 import type { Listing } from "@/lib/data";
 import { giaMoiM2 } from "@/lib/chiSoGia";
 import { mauSoCuaLoaiHinh } from "@/lib/listingSpec";
-import { phuongCuaTin, tieuDe, type DieuKien } from "@/lib/pseo";
+import { tieuDe, type DieuKien } from "@/lib/pseo";
 
 // ============================================================================
 // CÂU HỎI THƯỜNG GẶP CỦA TRANG pSEO (kế hoạch SEO mục 3 #17, 20/10/2026) — nội dung RIÊNG mỗi trang, tính từ
-// chính các tin đang khớp trang: khoảng giá · giá mỗi m² ở mức giữa · phường nhiều tin. Không in số tin (chốt 11/09).
+// chính các tin đang khớp trang: khoảng giá · giá mỗi m² ở mức giữa. Không in số tin (chốt 11/09).
 // Máy chủ vẽ sẵn (Google đọc được) + FAQPage JSON-LD trùng NGUYÊN VĂN chữ trên trang (Google bắt buộc).
 // Câu chữ: chủ dự án duyệt nguyên văn. Dưới 3 tin thì không hiện (trang cũng không mở cho Google).
 // Chi phí: tính trong lúc dựng trang đã có bộ nhớ đệm — không thêm truy vấn, không thêm hàm máy chủ.
@@ -22,14 +22,19 @@ const giua = (ds: number[]) => {
 export function hoiDapPseo(dk: DieuKien, tin: Listing[]): { q: string; a: string }[] {
   if (tin.length < 3) return [];
   const thue = dk.muc === "thue";
-  const cau = tieuDe(dk);
+  // CÂU HỎI THEO LỜI NGƯỜI MUA (chủ dự án 21/10/2026: bỏ kiểu ghép máy móc "Bán condotel Đà Nẵng ở khu vực nào nhiều tin?";
+  // bỏ hẳn câu "khu vực nào nhiều tin" — nhiều hay ít tin không có ý nghĩa gì với người mua). Tách tiêu đề thành
+  // MÓN (condotel, căn hộ 2 phòng ngủ…) + NƠI (Đà Nẵng; Sơn Trà, Đà Nẵng; đường …) để đặt câu tự nhiên.
+  const noi = dk.duong ? `đường ${dk.duong}, ${dk.tinh.name}` : dk.thanhPho ? `${dk.thanhPho.name}, ${dk.tinh.name}` : dk.phuong ? `${dk.phuong}, ${dk.tinh.name}` : dk.tinh.name;
+  const mon = tieuDe(dk).replace(noi, " ").replace(/^(Bán|Cho thuê|Mua bán)\s+/i, "").replace(/\s+/g, " ").trim() || "nhà đất";
+  const Mon = mon[0].toUpperCase() + mon.slice(1);
   const ds: { q: string; a: string }[] = [];
 
   const g = tin.map((l) => l.priceVnd ?? 0).filter((v) => v > 0);
   if (g.length) {
     const [a, b] = [gia(Math.min(...g)), gia(Math.max(...g))];
     const khoang = a === b ? a : `từ ${a} đến ${b}`;
-    ds.push({ q: `${cau} giá bao nhiêu?`, a: `Theo các tin đang đăng trên Coastal Land, ${thue ? "giá thuê" : "giá"} ${khoang}${thue ? "/tháng" : ""}.` });
+    ds.push({ q: `Giá ${thue ? "thuê" : "bán"} ${mon} ở ${noi} khoảng bao nhiêu?`, a: `Theo thông tin ${thue ? "cho thuê" : "mua bán"} trên thị trường, ${thue ? "giá thuê" : "giá"} ${khoang}${thue ? "/tháng" : ""}.` }); // chủ dự án 21/10/2026: không dùng từ nội bộ "tin đăng"
   }
 
   // Giá mỗi m² chỉ cho tin BÁN, theo đúng luật loại hình (đất → m² đất · nhà → m² sàn thật · căn hộ → m² căn) — giaMoiM2.
@@ -37,18 +42,8 @@ export function hoiDapPseo(dk: DieuKien, tin: Listing[]): { q: string; a: string
     const m2 = tin.map(giaMoiM2).filter((v): v is number => v != null && v > 0);
     if (m2.length >= 3) {
       const san = tin.some((l) => mauSoCuaLoaiHinh(l.type) === "san");
-      ds.push({ q: `${cau} giá bao nhiêu một m²?`, a: `Giá mỗi m²${san ? " sàn" : ""} ở mức giữa khoảng ${gia(giua(m2))}.` });
+      ds.push({ q: `${Mon} ở ${noi} giá bao nhiêu một m²?`, a: `Theo thông tin mua bán trên thị trường, khoảng ${gia(giua(m2))} mỗi m²${san ? " sàn" : ""}.` }); // mức giữa (trung vị) các tin của trang
     }
-  }
-
-  // Phường nhiều tin — chỉ khi trang chưa khoanh sẵn một phường.
-  if (!dk.phuong) {
-    const dem = new Map<string, number>();
-    for (const l of tin) { const p = phuongCuaTin(l); if (p) dem.set(p, (dem.get(p) ?? 0) + 1); }
-    const top = [...dem.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([p]) => p);
-    // "Phường Sơn Trà, phường An Hải." — chỉ viết hoa chữ đầu câu
-    const ke = top.map((p, i) => (i ? p.replace(/^(Phường|Xã|Đặc khu)(?=\s)/, (w) => w.toLowerCase()) : p)).join(", ");
-    if (top.length) ds.push({ q: `${cau} ở khu vực nào nhiều tin?`, a: `${ke}.` });
   }
   return ds;
 }

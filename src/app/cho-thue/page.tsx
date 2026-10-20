@@ -28,7 +28,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
   alternates: { canonical: "/cho-thue" },
     title: `Cho thuê nhà đất ${thangHienTai()}`,
-  description: "Tin cho thuê căn hộ, nhà nguyên căn, văn phòng, mặt bằng kinh doanh, kho xưởng — hình thật, liên hệ trực tiếp người đăng, lọc theo khu vực, loại hình, giá.",
+  description: "Tin cho thuê căn hộ, nhà nguyên căn, văn phòng, mặt bằng kinh doanh, kho xưởng — hình thật, liên hệ trực tiếp người cho thuê, lọc theo khu vực, loại hình, giá.",
   };
 }
 

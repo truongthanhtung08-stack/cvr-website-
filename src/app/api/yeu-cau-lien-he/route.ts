@@ -32,7 +32,7 @@ export async function POST(req: Request) {
     .from("listings").select("id,title,owner_id,status,tier_expires_at").eq("id", listingId).maybeSingle();
   if (!tin) return loi("Không tìm thấy tin.", 404);
   const daHetHan = tin.status === "expired" || (tin.tier_expires_at && new Date(tin.tier_expires_at).getTime() <= Date.now());
-  if (!daHetHan) return loi("Tin còn hạn — vui lòng liên hệ trực tiếp người đăng.", 400);
+  if (!daHetHan) return loi("Tin còn hạn — vui lòng gọi số điện thoại trên tin.", 400);
 
   const homQua = new Date(Date.now() - 86_400_000).toISOString();
   const { data: daCo } = await admin

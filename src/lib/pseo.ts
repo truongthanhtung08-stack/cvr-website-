@@ -196,7 +196,7 @@ export function tieuDe(dk: DieuKien): string {
 }
 
 export function moTa(dk: DieuKien): string {
-  return `${tieuDe(dk)} — tin mới ${thangHienTai()}: giá, diện tích, vị trí, ảnh thật, liên hệ trực tiếp người đăng.`;
+  return `${tieuDe(dk)} — tin mới ${thangHienTai()}: giá, diện tích, vị trí, ảnh thật, liên hệ trực tiếp ${dk.muc === "thue" ? "người cho thuê" : "người bán"}.`;
 }
 
 export type Crumb = { name: string; href: string };

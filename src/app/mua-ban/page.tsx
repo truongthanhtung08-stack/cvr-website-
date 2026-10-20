@@ -17,7 +17,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
   alternates: { canonical: "/mua-ban" },
     title: `Mua bán nhà đất ${thangHienTai()}`,
-  description: "Tin mua bán nhà đất, căn hộ, đất nền, nhà phố, biệt thự, condotel — hình thật, liên hệ trực tiếp người đăng, lọc theo khu vực, loại hình, mức giá.",
+  description: "Tin mua bán nhà đất, căn hộ, đất nền, nhà phố, biệt thự, condotel — hình thật, liên hệ trực tiếp người bán, lọc theo khu vực, loại hình, mức giá.",
   };
 }
 

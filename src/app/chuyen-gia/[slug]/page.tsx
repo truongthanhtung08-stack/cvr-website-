@@ -28,7 +28,7 @@ export async function generateMetadata({
   return {
     alternates: { canonical: `/chuyen-gia/${cg.slug}` },
     title: `${cg.ten} — ${cg.soTin} tin bất động sản${kv ? ` tại ${kv}` : ""}`,
-    description: `Xem ${cg.soTin} tin bất động sản đang đăng của ${cg.ten}${kv ? ` tại ${kv}` : ""} trên Coastal Land. Liên hệ trực tiếp người đăng.`,
+    description: `Xem ${cg.soTin} tin bất động sản đang bán, cho thuê của ${cg.ten}${kv ? ` tại ${kv}` : ""} trên Coastal Land. Liên hệ trực tiếp.`,
     // CHỐNG TRANG MỎNG — chủ dự án chốt 18/09/2026, ngưỡng 3 tin.
     // Đo thật hôm đó: 29/40 hồ sơ chỉ có ĐÚNG MỘT tin, tức khoảng 80 trong 110 hồ sơ.
     // Một trang chỉ chứa lại một tin đã có trang riêng thì với Google là trang mỏng

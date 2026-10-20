@@ -55,7 +55,7 @@ export default function YeuCauLienHeLai({ listingId }: { listingId: string }) {
     <div id="yeu-cau-lien-he" className="scroll-mt-28">
       {xong ? (
         <p className="mt-3 rounded-lg bg-cvr-surface px-3 py-2.5 text-sm text-cvr-ink">
-          Đã gửi yêu cầu. Người đăng sẽ liên hệ lại với bạn.
+          Đã gửi yêu cầu.
         </p>
       ) : !mo ? (
         <button

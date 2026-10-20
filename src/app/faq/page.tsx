@@ -44,12 +44,12 @@ const NHOM: { ten: string; items: Hoi[] }[] = [
         q: "Tìm nhà trên Coastal Land có mất phí không?",
         a: (
           <p>
-            Không. Bạn xem tin, tìm kiếm, lọc, lưu tin, so sánh và liên hệ người đăng tin. Các dịch vụ đăng tin và
+            Không. Bạn xem tin, tìm kiếm, lọc, lưu tin, so sánh và liên hệ người bán, người cho thuê. Các dịch vụ đăng tin và
             quảng bá tin thì có bảng giá riêng, xem tại <L href="/bao-gia-dang-tin">Báo giá dịch vụ</L>.
           </p>
         ),
         aText:
-          "Không. Bạn xem tin, tìm kiếm, lọc, lưu tin, so sánh và liên hệ người đăng tin. Các dịch vụ đăng tin và quảng bá tin thì có bảng giá riêng.",
+          "Không. Bạn xem tin, tìm kiếm, lọc, lưu tin, so sánh và liên hệ người bán, người cho thuê. Các dịch vụ đăng tin và quảng bá tin thì có bảng giá riêng.",
       },
       {
         q: "Có cần tài khoản mới xem được tin không?",
@@ -93,16 +93,16 @@ const NHOM: { ten: string; items: Hoi[] }[] = [
         a: (
           <p>
             Không. Coastal Land là cổng thông tin: chúng tôi không mua bán, không phân phối, không ký gửi, không môi giới và
-            không định giá. Bạn liên hệ trực tiếp người đăng tin qua số điện thoại hiển thị trên tin.
+            không định giá. Bạn liên hệ trực tiếp người bán, người cho thuê qua số điện thoại trên tin.
           </p>
         ),
         aText:
-          "Không. Coastal Land là cổng thông tin: chúng tôi không mua bán, không phân phối, không ký gửi, không môi giới và không định giá. Bạn liên hệ trực tiếp người đăng tin qua số điện thoại hiển thị trên tin.",
+          "Không. Coastal Land là cổng thông tin: chúng tôi không mua bán, không phân phối, không ký gửi, không môi giới và không định giá. Bạn liên hệ trực tiếp người bán, người cho thuê qua số điện thoại trên tin.",
       },
     ],
   },
   {
-    ten: "Dành cho người đăng tin",
+    ten: "Dành cho người bán, cho thuê",
     items: [
       {
         q: "Làm sao để đăng một tin?",

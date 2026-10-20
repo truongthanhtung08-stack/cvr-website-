@@ -174,7 +174,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   // (loại hình, giá, diện tích, địa danh) lên đầu rồi mới tới câu mời.
   const moTaGon = (() => {
     const dau = `${l.type} tại ${l.location}. Giá ${l.price}${l.area ? `, ${l.area}` : ""}${l.beds ? `, ${l.beds} phòng ngủ` : ""}.`;
-    const moi = " Hình thật, liên hệ trực tiếp người đăng trên Coastal Land.";
+    const moi = ` Hình thật, liên hệ trực tiếp ${l.purpose === "thue" ? "người cho thuê" : "người bán"} trên Coastal Land.`;
     return (dau + moi).length <= 158 ? dau + moi : dau.slice(0, 158);
   })();
   const desc = moTaGon;
@@ -704,7 +704,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                 <div className="rounded-2xl border border-cvr-line bg-white p-5 shadow-sm lg:rounded-none">
                   {/* Luôn là "người đăng" — chữ "tư vấn" khiến khách hiểu Coastal Land
                       tư vấn/môi giới bất động sản này. */}
-                  <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-cvr-faint">Liên hệ người đăng</p>
+                  <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-cvr-faint">Liên hệ</p>
                   {contact ? (
                     <>
                       <div className="flex items-center gap-3">
@@ -721,7 +721,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                           {/* ⚠️ ĐỊNH VỊ: Coastal Land là CỔNG THÔNG TIN, KHÔNG môi giới.
                               Tin thuộc về THÀNH VIÊN → LUÔN chỉ ghi "Người đăng tin",
                               KHÔNG gắn "Coastal Land" / "Chuyên viên" (nghe như môi giới). */}
-                          <p className="text-xs text-cvr-muted">Người đăng tin</p>
+                          <p className="text-xs text-cvr-muted">{l.purpose === "thue" ? "Người cho thuê" : "Người bán"}</p>
                         </div>
                       </div>
                       {hetHan
