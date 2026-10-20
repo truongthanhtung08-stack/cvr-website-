@@ -818,7 +818,7 @@ export default function FilterBar({
               autoComplete="off"
               enterKeyHint="search"
               onFocus={(e) => { const o = e.currentTarget; o.setSelectionRange(o.value.length, o.value.length); }} // con trỏ cuối từ khoá
-              className="block max-h-[112px] min-h-9 w-full resize-none overflow-y-auto rounded-[18px] bg-cvr-surface py-[7px] pl-4 pr-10 text-[15px] leading-[22px] text-cvr-ink placeholder-cvr-faint outline-none ring-1 ring-black/5 focus:ring-2 focus:ring-cvr-blue/40 focus:placeholder:text-transparent"
+              className="block max-h-[112px] min-h-[36px] w-full resize-none overflow-y-auto rounded-[18px] border border-transparent bg-cvr-surface py-[5px] pl-4 pr-10 text-[16px] leading-6 text-cvr-ink placeholder-cvr-faint outline-none ring-2 ring-cvr-blue/40 focus:placeholder:text-transparent"
             />
             {(f.keyword || cauCu).trim().length > 0 && (
               <button
@@ -835,6 +835,10 @@ export default function FilterBar({
         </div>
         {!compact && (
           <div className="no-scrollbar flex items-center gap-2 overflow-x-auto border-b border-cvr-line px-3 py-2">
+            {/* Nút "Làm mới" cả trong MÀN TÌM — giống hàng trường lọc ngoài trang (chủ dự án 20/10/2026) */}
+            {hasActiveFilters(f) && (
+              <button type="button" aria-label="Làm mới" title="Làm mới" onClick={() => { setCauCu(""); onChange(emptyFilters()); }} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-cvr-line bg-white text-cvr-blue-ink transition active:scale-90 active:bg-cvr-surface">{/* Làm mới = BIỂU TƯỢNG đậm ở đầu hàng lọc (chủ dự án 20/10/2026) */}<svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={2.4} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h5M20 20v-5h-5M5.6 15A7 7 0 0018 17.4M18.4 9A7 7 0 006 6.6" /></svg></button>
+            )}
             {locationDropdown}
             {projectDropdown}
             {typeDropdown}
@@ -900,10 +904,7 @@ export default function FilterBar({
                 2 công tắc Tin xác thực / Môi giới chuyên nghiệp đã chuyển vào "Lọc thêm". */}
             {/* Nút "Làm mới" (xoá hết lọc) Ở ĐẦU HÀNG TRƯỜNG LỌC trên điện thoại — ngay cạnh các trường vừa chọn (chủ dự án 18/10/2026) */}
             {hasActiveFilters(f) && (
-              <button type="button" onClick={() => { setCauCu(""); onChange(emptyFilters()); }} className="flex h-8 shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-2.5 text-[13px] font-medium text-cvr-blue-ink active:bg-cvr-surface sm:hidden">
-                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h5M20 20v-5h-5M5.6 15A7 7 0 0018 17.4M18.4 9A7 7 0 006 6.6" /></svg>
-                Làm mới
-              </button>
+              <button type="button" aria-label="Làm mới" title="Làm mới" onClick={() => { setCauCu(""); onChange(emptyFilters()); }} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-cvr-line bg-white text-cvr-blue-ink transition active:scale-90 active:bg-cvr-surface sm:hidden">{/* Làm mới = BIỂU TƯỢNG đậm ở đầu hàng lọc (chủ dự án 20/10/2026) */}<svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={2.4} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h5M20 20v-5h-5M5.6 15A7 7 0 0018 17.4M18.4 9A7 7 0 006 6.6" /></svg></button>
             )}
             {locationDropdown}
             {projectDropdown}

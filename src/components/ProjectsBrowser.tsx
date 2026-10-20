@@ -92,7 +92,7 @@ export default function ProjectsBrowser({
   }, []);
   // MOBILE: chạm ô tìm → mở trang tìm TOÀN MÀN HÌNH (back + × + nút search) — như Mua bán.
   const [overlay, setOverlay] = useState(false);
-  const overlayInputRef = useRef<HTMLInputElement>(null);
+  const overlayInputRef = useRef<HTMLTextAreaElement | null>(null);
   // Panel gợi ý (PC): mở khi gõ, TẮT khi bấm ra ngoài hoặc nhấn Esc
   const [sugOpen, setSugOpen] = useState(false);
   const sugBoxRef = useRef<HTMLDivElement>(null);
@@ -375,10 +375,7 @@ export default function ProjectsBrowser({
           <div className="no-scrollbar flex items-center gap-2 overflow-x-auto pb-0.5 lg:overflow-visible">
             {/* Nút "Làm mới" (xoá hết lọc) Ở ĐẦU HÀNG TRƯỜNG LỌC trên điện thoại — ngay cạnh các trường vừa chọn (chủ dự án 18/10/2026) */}
             {hasActive && (
-              <button type="button" onClick={reset} className="flex h-8 shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-2.5 text-[13px] font-medium text-cvr-blue-ink active:bg-cvr-surface sm:hidden">
-                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h5M20 20v-5h-5M5.6 15A7 7 0 0018 17.4M18.4 9A7 7 0 006 6.6" /></svg>
-                Làm mới
-              </button>
+              <button type="button" aria-label="Làm mới" title="Làm mới" onClick={reset} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-cvr-line bg-white text-cvr-blue-ink transition active:scale-90 active:bg-cvr-surface sm:hidden">{/* Làm mới = BIỂU TƯỢNG đậm ở đầu hàng lọc (chủ dự án 20/10/2026) */}<svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={2.4} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h5M20 20v-5h-5M5.6 15A7 7 0 0018 17.4M18.4 9A7 7 0 006 6.6" /></svg></button>
             )}
             {chipLoc}
           </div>
@@ -402,17 +399,22 @@ export default function ProjectsBrowser({
               <svg className="h-[22px] w-[22px]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
             </button>
             <div className="relative flex-1">
-              <input
-                ref={overlayInputRef}
+              {/* ĐÚNG CHUẨN ô gõ màn tìm trang chủ: chữ 16, bo 18, viền xanh; từ khoá DÀI thì ô TỰ GIÃN thêm dòng (chủ dự án 20/10/2026) */}
+              <textarea
+                ref={(el) => {
+                  overlayInputRef.current = el;
+                  if (el && el.dataset.daDo !== el.value) { el.dataset.daDo = el.value; el.style.height = "auto"; el.style.height = `${Math.max(36, el.scrollHeight)}px`; }
+                }}
                 autoFocus
-                type="text"
+                rows={1}
                 value={q}
-                onChange={(e) => setQ(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") chayTim(); }}
+                onChange={(e) => setQ(e.target.value.split("\n").join(" "))}
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); chayTim(); } }}
+                onFocus={(e) => { const o = e.currentTarget; o.setSelectionRange(o.value.length, o.value.length); }}
                 placeholder="Tìm dự án…" // màn tìm đã mở: chữ gợi ý KHÔNG chạy (chủ dự án 18/10/2026)
                 aria-label="Tìm dự án"
                 enterKeyHint="search"
-                className="h-9 w-full rounded-full bg-cvr-surface pl-4 pr-10 text-[15px] text-cvr-ink placeholder-cvr-faint outline-none ring-1 ring-black/5 focus:ring-2 focus:ring-cvr-blue/40 focus:placeholder:text-transparent"
+                className="block max-h-[112px] min-h-[36px] w-full resize-none overflow-y-auto rounded-[18px] border border-transparent bg-cvr-surface py-[5px] pl-4 pr-10 text-[16px] leading-6 text-cvr-ink placeholder-cvr-faint outline-none ring-2 ring-cvr-blue/40 focus:placeholder:text-transparent"
               />
               {q.trim().length > 0 && (
                 <button

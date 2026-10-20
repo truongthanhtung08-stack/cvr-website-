@@ -325,19 +325,20 @@ export function PanelActions({
   onApply: () => void;
 }) {
   return (
-    <div className="mt-3 flex items-center justify-between gap-2 border-t border-cvr-line pt-3">
-      {/* MỘT KIỂU cho mọi bảng lọc (khu vực, loại hình, giá, diện tích, lọc thêm) — chủ dự án 20/10/2026 */}
+    <div className="mt-3 grid grid-cols-2 gap-3 border-t border-cvr-line pt-3">
+      {/* MỘT KIỂU cho mọi bảng lọc (khu vực, loại hình, giá, diện tích, lọc thêm): HAI NÚT BẰNG NHAU chia đôi hàng —
+          Đặt lại (viền) · Áp dụng (xanh), cao 44 dễ bấm trên điện thoại (chủ dự án 20/10/2026) */}
       <button
         type="button"
         onClick={onReset}
-        className="h-9 rounded-lg px-3 text-[13px] font-medium text-cvr-body transition hover:bg-black/5 hover:text-cvr-ink"
+        className="h-11 rounded-xl border border-cvr-line bg-white text-[14px] font-semibold text-cvr-ink transition hover:bg-black/[0.03] active:scale-[0.98] sm:h-9 sm:text-[13px]"
       >
         Đặt lại
       </button>
       <button
         type="button"
         onClick={onApply}
-        className="h-9 rounded-lg bg-cvr-blue px-5 text-[13px] font-semibold text-white transition hover:bg-cvr-blue-ink active:scale-95"
+        className="h-11 rounded-xl bg-cvr-blue text-[14px] font-semibold text-white transition hover:bg-cvr-blue-ink active:scale-[0.98] sm:h-9 sm:text-[13px]"
       >
         Áp dụng
       </button>

@@ -541,7 +541,8 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
   const nhanTim = soTin != null ? (soTin ? `Xem ${soTin} tin` : "Tìm kiếm") : "Tìm kiếm";
   // KHÔNG tải sẵn trang đích khi mở màn tìm (chủ dự án 17/10/2026: Vercel phải nằm trong gói $20) — trang không có sẵn
   // trong bộ nhớ đệm thì mỗi lần tải sẵn là một lần chạy máy chủ. Bấm tìm đã có thanh chạy báo đang tìm.
-  const hangLoc = (gon: boolean, chi?: string[]) => <TruongLocTrangChu muc={muc} value={boLoc} onChange={setLoc} gon={gon} chi={chi} />;
+  // CÁCH A (chủ dự án 20/10/2026): mỗi trường chọn xong bấm "Áp dụng" là TÌM LUÔN — đồng bộ Mua bán / Cho thuê / Dự án
+  const hangLoc = (gon: boolean, chi?: string[]) => <TruongLocTrangChu muc={muc} value={boLoc} onChange={setLoc} onXong={() => tim(tuKhoa)} gon={gon} chi={chi} />;
   // Điện thoại: hai trường chính là THẺ gọn dưới thẻ tìm; các trường còn lại nằm trong thẻ tìm
   // ĐỦ 5 TRƯỜNG (chủ dự án 17/10/2026: gõ từ khoá không bảo đảm chính xác 100%) trên MỘT HÀNG MENU CHẠY NGANG
   // ngay dưới ô gõ ("1 cái menu chạy phía dưới") — không xếp thẻ chồng bên dưới
@@ -728,12 +729,11 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
             type="button"
             data-mo-tim
             onClick={moMo}
-            className="relative flex h-11 w-full items-center rounded-xl bg-cvr-surface pl-4 pr-14 text-left ring-1 ring-black/5 transition active:scale-[0.99]"
+            // CÙNG CỠ ô tìm trang Mua bán / Cho thuê / Dự án: cao 36, bo tròn, kính lúp trái (chủ dự án 20/10/2026)
+            className="relative flex h-9 w-full items-center rounded-full bg-cvr-surface pl-10 pr-4 text-left ring-1 ring-black/5 transition active:scale-[0.99]"
           >
+            <svg aria-hidden className="pointer-events-none absolute left-3.5 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-cvr-muted" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" /></svg>
             <span className={`min-w-0 truncate text-[15px] ${kw ? "text-cvr-ink" : "text-cvr-faint"}`}>{kw || <span ref={chuChayDt}>Tìm nhà đất theo khu vực, dự án…</span>}</span>
-            <span aria-hidden className="absolute bottom-1 right-1 top-1 flex w-11 items-center justify-center rounded-lg bg-cvr-blue text-white">
-              <svg className="h-[22px] w-[22px]" fill="none" stroke="currentColor" strokeWidth={2.4} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" /></svg>
-            </span>
           </button>
         ) : (
         <button
