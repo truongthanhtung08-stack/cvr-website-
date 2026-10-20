@@ -4,8 +4,10 @@ import AnhChay from "@/components/AnhChay";
 import SaveButton from "@/components/SaveButton";
 import CompareButton from "@/components/CompareButton";
 import Highlight from "@/components/Highlight";
+import { NutLienHeThe } from "@/components/LienHeReveal";
 import { freshText, type Listing } from "@/lib/data";
 import { diaChiHaiDong, moTaThe, soDongMoTa } from "@/lib/trichMoTa";
+import { SO_THONG_SO, thongSo } from "@/lib/thongSoThe";
 import { tierFromBadge, getTier } from "@/lib/packages";
 
 // Tên NGƯỜI ĐĂNG hiển thị trên thẻ: lấy từ tin thật (details.contact.name —
@@ -79,7 +81,13 @@ export default function PropertyCard({
   // để thẻ không bị trống — đồng bộ với tin VIP (yêu cầu T19 mobile).
   const showAgent = isTier ? true : !isMini;
 
-  return (
+  // Khung thẻ Apple thuần: viền tóc cvr-line + bóng mềm — KHÔNG viền màu theo cấp.
+  const khungThe = `flex flex-col overflow-hidden rounded-none border-0 bg-white shadow-lux shadow-lux-hover transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1 sm:border sm:border-cvr-line ${item.hetHan ? "opacity-70" : ""}`;
+  // Nút Zalo + Hiện số trên thẻ — Diamond · Gold · Silver, Basic không (quy định admin "Nút Hiện số / Nút Zalo
+  // trên thẻ tin"); trang chủ máy tính cùng luật bản điện thoại (chủ dự án 20/10/2026: "2 bản phải đồng nhất").
+  // Nút nằm NGOÀI thẻ link (không lồng nút trong link).
+  const coSo = isTier && tierId !== "basic" && !item.hetHan;
+  const the = (
     <Link
       href={`/bat-dong-san/${item.id}`}
       // Dấu cho bộ đếm lượt hiển thị nhận ra đây là thẻ tin (src/lib/hienThi.ts).
@@ -87,7 +95,7 @@ export default function PropertyCard({
       // Khung thẻ Apple thuần: viền tóc cvr-line + bóng mềm — KHÔNG viền màu theo cấp.
       // Cấp tin thể hiện qua huy hiệu + màu TIÊU ĐỀ (đúng bảng đặc điểm), không tô khung.
       // Tin HẾT HẠN (chỉ có ở cuối danh sách): thẻ mờ + nhãn "Tin hết hạn" — chốt 03/10/2026.
-      className={`flex flex-col overflow-hidden rounded-none border-0 bg-white shadow-lux shadow-lux-hover transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1 sm:border sm:border-cvr-line ${item.hetHan ? "opacity-70" : ""}`}
+      className={coSo ? "flex flex-1 flex-col" : khungThe}
     >
       {/* Dải nhấn KIM LOẠI trên đỉnh thẻ — CHỈ Kim Cương (tier.bar) → cảm giác "đen ánh
           vàng kim" cao cấp; cao 3px nên gần như không thay đổi chiều cao thẻ. */}
@@ -145,7 +153,7 @@ export default function PropertyCard({
             KHÔNG đặt chiều cao CỐ ĐỊNH: trình duyệt trong Zalo/Facebook chỉnh cỡ
             chữ khác làm dòng cuối bị xén ngang thân chữ. */}
         <h3
-          className={`clamp-3 min-h-[3em] ${tierId === "basic" ? "font-medium" : "font-bold"} leading-[1.5] text-cvr-ink ${tier?.uppercase ? "uppercase" : ""} ${
+          className={`${isTier && tierId !== "gold" && tierId !== "diamond" ? "clamp-2" : "clamp-3"} min-h-[3em] ${tierId === "basic" ? "font-medium" : "font-bold"} leading-[1.5] text-cvr-ink ${tier?.uppercase ? "uppercase" : ""} ${
             isFeatured ? "text-lg" : isMini ? "text-sm" : "text-[15px]"
           }`}
           style={tier?.titleColor ? { color: tier.titleColor } : undefined}
@@ -157,6 +165,39 @@ export default function PropertyCard({
             CẢ mobile & PC (chốt 4/9). CLAMP CỨNG đúng số dòng — TUYỆT ĐỐI KHÔNG thêm
             "sm:block" đè lên line-clamp (đó là bug 02/09 làm tin Diamond xổ full, vỡ hàng
             trên PC). Đáy thẻ vẫn thẳng hàng nhờ hàng "người đăng" mt-auto + grid tự giãn. */}
+        {/* TRANG CHỦ MÁY TÍNH (variant "tier") — CÙNG CẤU TRÚC thẻ điện thoại (chủ dự án 20/10/2026), cỡ chữ
+            giữ của máy tính: tiêu đề (2 · 2 · 3 · 3 dòng) → giá · diện tích (+ PN · WC · giá/m² theo quy định
+            admin, src/lib/thongSoThe.ts) → địa chỉ một dòng → mô tả → người đăng (tên, ngày đăng dòng dưới). */}
+        {isTier ? (
+          <>
+            <p className="mt-2 flex flex-wrap items-baseline gap-x-1.5 text-[13px] text-cvr-body">
+              {thongSo(item).slice(0, SO_THONG_SO[tierId]).map((x, i, ds) => (
+                <span key={i} className={`flex items-baseline gap-1 ${x.do ? `text-[16px] font-bold ${item.price === "Thỏa thuận" || item.hetHan ? "text-cvr-muted" : "text-red-500"}` : ""}`}>
+                  {x.chu}{x.icon === "pn" ? " PN" : x.icon === "wc" ? " WC" : ""}
+                  {i < ds.length - 1 && <span className="ml-0.5 text-[13px] font-normal text-cvr-muted">·</span>}
+                </span>
+              ))}
+            </p>
+            <p className="mt-1.5 flex items-center gap-1 text-[13px] text-cvr-muted">
+              <PinIcon /><span className="line-clamp-1"><Highlight text={item.location} terms={terms} /></span>
+            </p>
+            {descLines > 0 && (
+              <p className={`mt-1.5 text-sm leading-relaxed text-cvr-muted ${descLines >= 3 ? "line-clamp-3" : "line-clamp-2"}`}>
+                {moTa}
+              </p>
+            )}
+            <div className="mt-auto pt-3"><div className="flex items-center gap-2 border-t border-cvr-line pt-2.5">
+              <AgentAvatar name={agentName} src={item.agentAvatar} size={7} />
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[13px] font-medium text-cvr-body">{agentName}</span>
+                {(item.hetHan || freshText(item.postedAt, item.bumpedAt)) && (
+                  <span className="block truncate text-[12px] text-cvr-faint">{item.hetHan ? "Hết hạn" : ((m) => (m.startsWith("Làm mới") ? m : `Đăng ${m.charAt(0).toLowerCase()}${m.slice(1)}`))(freshText(item.postedAt, item.bumpedAt))}</span>
+                )}
+              </span>
+              <SaveButton id={item.id} variant="bare" className="h-8 w-8 shrink-0 sm:hidden" />
+            </div></div>
+          </>
+        ) : (<>
         {descLines > 0 && (
           <p className={`mt-1 text-sm leading-relaxed text-cvr-muted ${
             descLines >= 3 ? "line-clamp-3" : descLines === 2 ? "line-clamp-2" : "line-clamp-1"
@@ -195,9 +236,26 @@ export default function PropertyCard({
             <SaveButton id={item.id} variant="bare" className="h-8 w-8 shrink-0 sm:hidden" />
           </div>
         )}
+        </>)}
 
       </div>
     </Link>
+  );
+  if (!coSo) return the;
+  return (
+    <div className={khungThe}>
+      {the}
+      <div className="flex items-center gap-2 px-3 pb-3">
+        <NutLienHeThe
+          listingId={item.id}
+          hienSo
+          zaloTruoc
+          nhan={item.soDau ? `Hiện số ${item.soDau} ***` : "Hiện số"}
+          soCls="flex h-9 min-w-0 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-cvr-blue px-3 text-[13px] font-semibold text-white transition active:scale-95"
+          oCls="flex h-9 w-12 shrink-0 items-center justify-center rounded-lg border border-cvr-line transition active:scale-95"
+        />
+      </div>
+    </div>
   );
 }
 

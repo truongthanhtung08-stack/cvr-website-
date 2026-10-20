@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import PhotoViewer from "@/components/PhotoViewer";
 import PhotoList from "@/components/PhotoList";
 import Highlight from "@/components/Highlight";
@@ -12,7 +13,8 @@ import { getTier, tierFromBadge, type TierId } from "@/lib/packages";
 import { useSaved } from "@/lib/useSaved";
 import { chuThuong, tenDiaDanh } from "@/lib/chuThuong";
 import { videoPosterUrl } from "@/lib/media";
-import { diaChiHaiDong, moTaThe, soDongMoTa } from "@/lib/trichMoTa";
+import { moTaThe, soDongMoTa } from "@/lib/trichMoTa";
+import { SO_THONG_SO, thongSo } from "@/lib/thongSoThe";
 
 // ============================================================================
 // THẺ TIN THEO CẤP — BẢN ĐIỆN THOẠI (docs/THE-TIN-THEO-CAP.md, chủ dự án 09/10/2026).
@@ -29,11 +31,8 @@ import { diaChiHaiDong, moTaThe, soDongMoTa } from "@/lib/trichMoTa";
 //   MỌI CẤP: ảnh trên, nội dung dưới (chủ dự án 09/10/2026 — chuẩn riêng của Coastal Land).
 // ============================================================================
 
-// Số mục thông số THEO CẤP — đúng quy định admin "Thông số trên thẻ tin" (site_content quy_dinh_gia, 20/10/2026):
-// Diamond giá · diện tích · giá/m² · phòng ngủ · WC · Gold, Silver, Basic giá · diện tích.
-const SO_THONG_SO: Record<TierId, number> = { diamond: 5, gold: 2, silver: 2, basic: 2 };
-// Máy tính giữ bản đã chốt 18/10 (Diamond 5 · Gold 4 · Silver 3 · Basic 2) — chưa có yêu cầu đổi.
-const SO_THONG_SO_PC: Record<TierId, number> = { diamond: 5, gold: 4, silver: 3, basic: 2 };
+// Số mục thông số theo cấp + thông số theo loại hình: src/lib/thongSoThe.ts (dùng chung với thẻ trang chủ máy tính).
+// Máy tính cùng một luật (chủ dự án 20/10/2026: "quy định tin theo cấp thì bản nào cũng như vậy").
 
 const IconAnh = () => (
   <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden>
@@ -44,21 +43,6 @@ const IconPlay = () => (
   <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden><path d="M8 5v14l11-7z" /></svg>
 );
 
-// Thông số theo LOẠI HÌNH (chủ dự án 09/10/2026: "tuỳ loại hình BĐS"), rồi cắt theo cấp.
-// Thứ tự: giá · m² · PN · WC · giá/m² (đất không có PN/WC).
-type MucSo = { chu: string; do?: boolean; icon?: "pn" | "wc" };
-function thongSo(l: Listing): MucSo[] {
-  const loai = (l.type || "").toLowerCase();
-  const canHo = /căn hộ|chung cư|condotel|officetel|penthouse/.test(loai);
-  const dat = /đất/.test(loai);
-  const nha = !canHo && !dat && /nhà|biệt thự|villa|shophouse|liền kề/.test(loai);
-  const ds: MucSo[] = [{ chu: l.price === "Thỏa thuận" ? "Giá thỏa thuận" : l.price, do: true }];
-  if (l.area) ds.push({ chu: l.area, do: true });
-  if ((canHo || nha) && l.beds) ds.push({ chu: String(l.beds), icon: "pn" });
-  if ((canHo || nha) && l.baths) ds.push({ chu: String(l.baths), icon: "wc" });
-  if (l.pricePerM2 && (canHo || dat || nha)) ds.push({ chu: l.pricePerM2 });
-  return ds;
-}
 
 
 // 2 chữ viết tắt của tên (chữ đầu + chữ cuối): "Trần Mai Chi" → "TC"
@@ -170,7 +154,7 @@ export default function TheTinMobile({ item, terms = [], tuChay = false, pc = fa
   const coSo = t !== "basic"; // Diamond · Gold · Silver: Zalo + Hiện số trên thẻ
   const ten = tenDiaDanh(item);
   const tieuDe = tier.uppercase ? item.title : chuThuong(item.title, ten);
-  const so = thongSo(item).slice(0, (pc ? SO_THONG_SO_PC : SO_THONG_SO)[t]);
+  const so = thongSo(item).slice(0, SO_THONG_SO[t]);
   const soAnh = item.imageCount || anh.length;
   const moc = freshText(item.postedAt, item.bumpedAt);
   const ngay = !moc || moc.startsWith("Làm mới") ? moc : `Đăng ${moc.charAt(0).toLowerCase()}${moc.slice(1)}`;
@@ -186,8 +170,13 @@ export default function TheTinMobile({ item, terms = [], tuChay = false, pc = fa
     : [];
   const daySlide: Slide[] = [...slideVideo, ...anh.map((a) => ({ anh: a }))];
   const slides: Slide[] = tuChay ? daySlide : daySlide.slice(0, 1);
+  // MÁY TÍNH (pc): bấm ảnh trên thẻ = MỞ TRANG TIN (cách mở chuẩn máy tính; xem ảnh/video bằng khung slide của trang tin)
+  // — KHÔNG mở danh sách ảnh/video kiểu điện thoại (chủ dự án 20/10/2026).
+  const router = useRouter();
+  const moTin = () => router.push(href);
   const moSlide = (k: number) => {
     void k;
+    if (pc) return moTin();
     setDs(true);
   };
 
@@ -258,15 +247,14 @@ export default function TheTinMobile({ item, terms = [], tuChay = false, pc = fa
       ))}
     </p>
   );
-  // PC: hai dòng địa chỉ (hệ mới trên · hệ cũ dưới). Điện thoại: MỘT dòng "Phường, Tỉnh/Thành phố" (chủ dự án 20/10/2026)
-  const dc = diaChiHaiDong(item);
+  // Địa chỉ MỘT dòng "Phường, Tỉnh/Thành phố" — điện thoại và máy tính cùng quy định (chủ dự án 20/10/2026)
+
   const diaChiDong = (
     <>
       <p className={pc ? "mt-1 flex items-center gap-1 text-[14px] text-cvr-body" : "mt-1.5 flex items-start gap-1 text-[14px] text-cvr-body"}>
         <svg className={`${pc ? "" : "mt-px "}h-4 w-4 shrink-0`} fill="none" stroke="currentColor" strokeWidth={1.7} viewBox="0 0 24 24" aria-hidden><path d="M12 21s-7-6.2-7-11.5A7 7 0 0112 2.5a7 7 0 017 7C19 14.8 12 21 12 21z" /><circle cx="12" cy="9.5" r="2.5" /></svg>
-        <span className={pc ? "truncate" : "line-clamp-2"}><Highlight text={pc ? dc.moi : item.location} terms={terms} /></span>
+        <span className={pc ? "truncate" : "line-clamp-2"}><Highlight text={item.location} terms={terms} /></span>
       </p>
-      {pc && dcCu && dc.cu && <p className="mt-0.5 truncate pl-5 text-[13px] text-cvr-faint">Địa chỉ hệ cũ: <Highlight text={dc.cu} terms={terms} /></p>}
     </>
   );
   const trich = moTa ? moTaThe(item) : "";
@@ -303,36 +291,40 @@ export default function TheTinMobile({ item, terms = [], tuChay = false, pc = fa
   //      Silver:  ảnh TRÁI 4:3 340×255 · Basic: ảnh TRÁI 16:9 280×158 (Silver to hẳn hơn Basic) · chữ phải, dàn đều theo cao ảnh
   if (pc) {
     const tren = t === "diamond" || t === "gold";
-    const phu = t === "diamond" && anh.length >= 4 ? anh.slice(1, 4) : t === "gold" && anh.length >= 3 ? anh.slice(1, 3) : [];
-    const rongDai = "w-full";
+    // Diamond · Gold (QUY TẮC chủ dự án 20/10/2026): DẢI ẢNH TRẢI HẾT BỀ NGANG thẻ (869) — 1 ảnh chính + 3 ảnh phụ
+    // (1 phụ trên, 2 phụ dưới) bên phải; ảnh chính TỶ LỆ VÀNG 1,618. Gold cùng cách xếp, cả dải THẤP hơn Diamond.
+    //   Diamond (cao 322): chính 521×322 · phụ trên 347×215 · 2 phụ dưới 173×107 (mọi khung tỷ lệ vàng)
+    //   (chủ dự án 20/10/2026: cả dải ảnh Diamond · Gold thu nhỏ còn 90% — rộng 782, cao 290: chính 469×290 ·
+    //    phụ trên 312×193 · 2 phụ dưới 156×96, vẫn toàn tỷ lệ vàng)
+    //   Gold    = CÙNG KHUNG Diamond (chủ dự án 20/10/2026: ưu tiên 1 cả trang cân đối, ưu tiên 2 tỷ lệ vàng — hết bề ngang
+    //           + toàn tỷ lệ vàng chỉ có một cỡ 322); Gold khác Diamond ở nhãn, dải màu, số thông số.
+    // Chữ dưới dải ảnh: tiêu đề → giá · diện tích → địa chỉ → mô tả; hàng người đăng + nút ở đáy.
+    const phu = (t === "diamond" || t === "gold") && anh.length >= 4 ? anh.slice(1, 4) : [];
     let anhPC: React.ReactNode;
     if (tren && phu.length) {
+      // CHỐT 20/10 (chủ dự án): Diamond dải 869×322 toàn tỷ lệ vàng (chính 521×322) · Gold dải 869×290 THẤP hơn
+      // (chính tỷ lệ vàng 469×290, phụ 2:1) — cả hai hết bề ngang, Diamond to hơn Gold.
+      const o = (src: string, k: number, sz: string) => <O key={k} src={src} alt={item.title} className="h-full w-full" sizes={sz} onMo={moTin} />;
       anhPC = (
-        t === "diamond" ? (
-          <div className={`grid aspect-[3/1] grid-cols-[2fr_1fr] gap-px overflow-hidden rounded-xl ${rongDai}`}>
-            {khungChinh("h-full w-full", "580px")}
-            <div className="grid grid-rows-2 gap-px">
-              <O src={phu[0]} alt={item.title} className="h-full w-full" sizes="290px" onMo={() => setDs(true)} />
-              <div className="grid grid-cols-2 gap-px">
-                {phu.slice(1).map((src, k) => <O key={k} src={src} alt={item.title} className="h-full w-full" sizes="145px" onMo={() => setDs(true)} />)}
-              </div>
-            </div>
+        <div className={`grid w-full ${t === "diamond" ? "grid-cols-[521fr_347fr]" : "grid-cols-[469fr_399fr]"} gap-px overflow-hidden rounded-xl`}>
+          {khungChinh("aspect-[1.618] w-full", "530px")}
+          <div className="grid grid-rows-[2fr_1fr] gap-px">
+            {o(phu[0], 0, "450px")}
+            <div className="grid grid-cols-2 gap-px">{phu.slice(1).map((x, k) => o(x, k + 1, "225px"))}</div>
           </div>
-        ) : (
-          <div className={`grid aspect-[4/1] grid-cols-[2fr_1fr_1fr] gap-px overflow-hidden rounded-xl ${rongDai}`}>
-            {khungChinh("h-full w-full", "580px")}
-            {phu.map((src, k) => <O key={k} src={src} alt={item.title} className="h-full w-full" sizes="300px" onMo={() => setDs(true)} />)}
-          </div>
-        )
+        </div>
       );
     } else if (tren) {
-      anhPC = <div className={`overflow-hidden rounded-xl ${rongDai}`}>{khungChinh(`${t === "gold" ? "aspect-[4/1]" : "aspect-[3/1]"} w-full`, "870px")}</div>;
+      anhPC = <div className="w-full overflow-hidden rounded-xl">{khungChinh(`${t === "diamond" ? "aspect-[2.7]" : "aspect-[3.34]"} w-full`, "870px")}</div>;
     } else {
-      anhPC = <div className={`shrink-0 overflow-hidden rounded-xl ${t === "basic" ? "w-[280px]" : "w-[340px]"}`}>{khungChinh(t === "basic" ? "aspect-[16/9] w-full" : "aspect-[4/3] w-full", "340px")}</div>;
+      // Silver · Basic: MỘT khung chính, ảnh trái, TỶ LỆ VÀNG, chữ một bên; cao ảnh KHỚP cao phần chữ (chủ dự án 20/10/2026):
+      // Silver 400×247 · Basic 360×222 (kéo dài ngang theo chủ dự án 20/10/2026, vẫn tỷ lệ vàng). Bậc: 290 · 290 · 247 · 222.
+      anhPC = <div className={`shrink-0 overflow-hidden rounded-xl ${t === "basic" ? "w-[360px]" : "w-[400px]"}`}>{khungChinh("aspect-[1.618] w-full", "340px")}</div>;
     }
-    // Silver · Basic: tiêu đề giữ chỗ 2 dòng để thẻ cùng cấp cao như nhau (Diamond · Gold chữ dưới ảnh — không giữ, khỏi dòng trống). Silver · Basic (ảnh trái): 3 nhóm — tiêu đề / giá + địa chỉ /
+    // CÙNG CẤU TRÚC thẻ điện thoại (chủ dự án 20/10/2026): tiêu đề (Basic 2 · Silver 2 · Gold 3 · Diamond 3 dòng) → giá · diện tích
+    // → địa chỉ → mô tả → hàng cuối. Silver · Basic: tiêu đề giữ chỗ 2 dòng để thẻ cùng cấp cao như nhau. Chữ chia 3 nhóm — tiêu đề / giá + địa chỉ + mô tả /
     // hàng cuối — DÀN ĐỀU theo chiều cao ảnh (justify-between), không dồn khoảng trống một chỗ.
-    const tieuDePC = <Link href={href} className="block"><h3 className={`line-clamp-2 ${tren ? "" : "min-h-[2.8em]"} text-[16px] leading-[1.4] text-cvr-ink ${t === "basic" ? "font-medium" : "font-bold"} ${tier.uppercase ? "uppercase" : ""}`}><Highlight text={tieuDe} terms={terms} /></h3></Link>;
+    const tieuDePC = <Link href={href} className="block"><h3 className={`${t === "gold" || t === "diamond" ? "line-clamp-3" : "line-clamp-2 min-h-[2.8em]"} text-[16px] leading-[1.4] text-cvr-ink ${t === "basic" ? "font-medium" : "font-bold"} ${tier.uppercase ? "uppercase" : ""}`}><Highlight text={tieuDe} terms={terms} /></h3></Link>;
     const soPC = <Link href={href} className="block [&>p:first-child]:mt-0">{thongSoDong}{diaChi}</Link>;
     // Hàng cuối MỘT DÒNG (PC rộng, chủ dự án 18/10/2026): người đăng trái · Zalo + Hiện số (Diamond · Gold · Silver) · Thích · Chia sẻ phải.
     const cuoi = (
@@ -353,17 +345,44 @@ export default function TheTinMobile({ item, terms = [], tuChay = false, pc = fa
         {nutChiaSe}
       </div>
     );
+    // Dải màu cấp nằm SÁT mép trên khung ảnh, bo theo góc ảnh (chủ dự án 20/10/2026).
+    const khoiAnh = (
+      <div className="relative shrink-0 self-start overflow-hidden rounded-xl">
+        {anhPC}
+        {tier.bar && <div className="absolute inset-x-0 top-0 z-10 h-px" style={{ backgroundColor: tier.bar }} aria-hidden />}
+        {huyHieu}
+      </div>
+    );
     return (
       <article className={`relative flex gap-4 overflow-hidden bg-white p-3 ${tren ? "flex-col" : ""}`}>
-        {tier.bar && <div className="absolute inset-x-0 top-0 z-10 h-px" style={{ backgroundColor: tier.bar }} aria-hidden />}
-        {/* Diamond · Gold (ảnh trên) khung phải rộng theo thẻ — self-start làm khung co về 0 khi ảnh rộng "w-full" */}
-        <div className={`relative ${tren ? "w-full" : "self-start"}`}>
-          {anhPC}
-          {huyHieu}
-        </div>
-        {tren
-          ? <div className="flex min-w-0 flex-col gap-2">{tieuDePC}{moTaDong}{soPC}<div className="pt-1">{cuoi}</div></div>
-          : <div className="flex min-w-0 flex-1 flex-col justify-between">{tieuDePC}{moTaDong}{soPC}{cuoi}</div>}
+        {tren ? (
+          // Diamond · Gold: dải ảnh trên hết bề ngang → chữ dưới → hàng cuối (người đăng trái, nút phải).
+          <>
+            <div className="relative w-full overflow-hidden rounded-xl">
+              {anhPC}
+              {tier.bar && <div className="absolute inset-x-0 top-0 z-10 h-px" style={{ backgroundColor: tier.bar }} aria-hidden />}
+              {huyHieu}
+            </div>
+            {/* Chữ gọn cho thẻ VIP thấp lại (cả trang cân đối): thông số và địa chỉ (hệ mới) CHUNG một hàng */}
+            <div className="-mt-1 flex min-w-0 flex-col gap-1.5">
+              {tieuDePC}
+              <Link href={href} className="flex min-w-0 flex-wrap items-center gap-x-5 gap-y-1 [&>p]:mt-0">
+                {thongSoDong}
+                <p className="flex min-w-0 items-center gap-1 text-[14px] text-cvr-body">
+                  <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth={1.7} viewBox="0 0 24 24" aria-hidden><path d="M12 21s-7-6.2-7-11.5A7 7 0 0112 2.5a7 7 0 017 7C19 14.8 12 21 12 21z" /><circle cx="12" cy="9.5" r="2.5" /></svg>
+                  <span className="truncate"><Highlight text={item.location} terms={terms} /></span>
+                </p>
+              </Link>
+              {moTaDong}
+            </div>
+            <div className="border-t border-cvr-line pt-3">{cuoi}</div>
+          </>
+        ) : (
+          <>
+            {khoiAnh}
+            <div className="flex min-w-0 flex-1 flex-col">{tieuDePC}<div className="mt-2">{soPC}{moTaDong}</div><div className="mt-auto pt-3">{cuoi}</div></div>
+          </>
+        )}
         {ds && <PhotoList images={anh} videos={item.video ? [item.video] : []} title={item.title} onPick={setXem} onClose={() => setDs(false)} nhanPhim={xem < 0} banDo={{ diaChi: item.location, q: item.mapPin || item.location }} listingId={item.id} duongDan={href} />}
         {xem >= 0 && <PhotoViewer images={anh} start={xem} title={item.title} listingId={item.id} onClose={() => setXem(-1)} />}
       </article>

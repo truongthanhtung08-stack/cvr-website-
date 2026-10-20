@@ -113,7 +113,25 @@ export default function GallerySlideVideo({
       setXoay(0);
     };
     window.addEventListener("popstate", quayLai);
-    return () => window.removeEventListener("popstate", quayLai);
+    // MÁY TÍNH: Esc = thoát xem full (chủ dự án 20/10/2026), như nút thoát. Bắt ở pha đầu và chặn lại để Esc chỉ
+    // thoát video, không đóng luôn bộ xem ảnh bên ngoài.
+    const esc = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      e.stopPropagation();
+      setLon(false);
+      setXoay(0);
+    };
+    window.addEventListener("keydown", esc, true);
+    // Bấm vào khung YouTube thì phím rơi vào trong khung, trang không nghe được Esc → trả phím về trang ngay.
+    const veTrang = () => setTimeout(() => {
+      if (document.activeElement?.tagName === "IFRAME") { (document.activeElement as HTMLElement).blur(); window.focus(); }
+    }, 0);
+    window.addEventListener("blur", veTrang);
+    return () => {
+      window.removeEventListener("popstate", quayLai);
+      window.removeEventListener("keydown", esc, true);
+      window.removeEventListener("blur", veTrang);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lon]);
   // Khách tự xoay máy lúc đang xem lớn → khung theo chiều máy.

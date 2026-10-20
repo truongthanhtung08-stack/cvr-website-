@@ -19,6 +19,14 @@ import { videoPosterUrl } from "@/lib/media";
 
 type Slide = { kind: "video" | "image"; src: string };
 
+// Toàn màn hình: chuẩn + tiền tố webkit (Safari cũ)
+type DocWebkit = Document & { webkitFullscreenElement?: Element | null; webkitExitFullscreen?: () => void };
+const dangToan = () => !!(document.fullscreenElement || (document as DocWebkit).webkitFullscreenElement);
+const thoatToan = () => {
+  if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+  else if ((document as DocWebkit).webkitFullscreenElement) (document as DocWebkit).webkitExitFullscreen?.();
+};
+
 export default function XemAnhPC({ slides, start = 0, title, onClose, banDo }: { slides: Slide[]; start?: number; title?: string; onClose: () => void; banDo?: { diaChi: string; q: string } }) {
   const [idx, setIdx] = useState(start);
   const [moBanDo, setMoBanDo] = useState(true); // máy tính mở sẵn bản đồ như Batdongsan
@@ -27,6 +35,41 @@ export default function XemAnhPC({ slides, start = 0, title, onClose, banDo }: {
   const doi = useCallback((b: number) => setIdx((i) => (i + b + n) % n), [n]);
   const dai = useRef<HTMLDivElement>(null);
   const khoa = useRef(0);
+  // TOÀN MÀN HÌNH THẬT (chuẩn trình xem máy tính, chủ dự án 20/10/2026): mở là bật toàn màn hình của trình duyệt;
+  // thoát = bấm lại nút ⤡ ở góc dưới phải, hoặc Esc (trình duyệt tự thoát → đóng bộ xem luôn).
+  const goc0 = useRef<HTMLDivElement>(null);
+  const dong = useRef(onClose);
+  dong.current = onClose;
+  useEffect(() => {
+    const el = goc0.current as (HTMLDivElement & { webkitRequestFullscreen?: () => void }) | null;
+    if (el?.requestFullscreen) el.requestFullscreen().catch(() => {});
+    else el?.webkitRequestFullscreen?.(); // Safari cũ
+    const doiTrangThai = () => { if (!dangToan()) dong.current(); };
+    document.addEventListener("fullscreenchange", doiTrangThai);
+    document.addEventListener("webkitfullscreenchange", doiTrangThai);
+    // BẤM VÀO VIDEO (khung YouTube) làm phím Esc rơi vào trong video, trang không nhận được → Esc không thoát
+    // (chủ dự án 20/10/2026). Video vẫn chạy; trả phím về trang ngay sau cú bấm để Esc / ← → luôn dùng được.
+    const veTrang = () => setTimeout(() => {
+      if (document.activeElement?.tagName === "IFRAME") { (document.activeElement as HTMLElement).blur(); window.focus(); }
+    }, 0);
+    window.addEventListener("blur", veTrang);
+    return () => {
+      document.removeEventListener("fullscreenchange", doiTrangThai);
+      document.removeEventListener("webkitfullscreenchange", doiTrangThai);
+      window.removeEventListener("blur", veTrang);
+      thoatToan();
+    };
+  }, []);
+  const thoat = () => { if (dangToan()) thoatToan(); else onClose(); };
+  // PHÓNG TO ẢNH (chủ dự án 20/10/2026): bấm ảnh = phóng to 2,5 lần tại chỗ bấm, rê chuột để xem quanh, bấm lần nữa = thu về;
+  // chụm 2 ngón trên touchpad (Ctrl + lăn) cũng phóng to / thu nhỏ. Đổi ảnh thì về cỡ thường.
+  const [phong, setPhong] = useState(1);
+  const [goc, setGoc] = useState({ x: 50, y: 50 });
+  useEffect(() => { setPhong(1); }, [idx]);
+  const viTri = (e: React.MouseEvent<HTMLImageElement>) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    return { x: ((e.clientX - r.left) / r.width) * 100, y: ((e.clientY - r.top) / r.height) * 100 };
+  };
 
   useEffect(khoaCuon, []);
   // Mở lên thì video đang chạy ở trang tin DỪNG — không để hai tiếng chồng nhau.
@@ -34,7 +77,7 @@ export default function XemAnhPC({ slides, start = 0, title, onClose, banDo }: {
 
   useEffect(() => {
     const phim = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") thoat();
       else if (e.key === "ArrowLeft") doi(-1);
       else if (e.key === "ArrowRight") doi(1);
     };
@@ -49,6 +92,11 @@ export default function XemAnhPC({ slides, start = 0, title, onClose, banDo }: {
 
   // Vuốt 2 ngón NGANG trên touchpad = đổi ảnh; một cú vuốt bắn nhiều sự kiện nên khoá 350ms
   const vuot = (e: React.WheelEvent) => {
+    if (e.ctrlKey && slides[idx]?.kind === "image") {
+      setPhong((p) => Math.min(4, Math.max(1, p - e.deltaY * 0.01)));
+      return;
+    }
+    if (phong > 1) return;
     if (Math.abs(e.deltaX) <= Math.abs(e.deltaY) || Math.abs(e.deltaX) < 12) return;
     const gio = Date.now();
     if (gio - khoa.current < 350) return;
@@ -61,7 +109,7 @@ export default function XemAnhPC({ slides, start = 0, title, onClose, banDo }: {
   const nut = "absolute top-1/2 z-10 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full bg-white/15 text-white backdrop-blur transition hover:bg-white/30";
 
   return (
-    <div className="fixed inset-0 z-[90] flex bg-black/95" onClick={onClose}>
+    <div ref={goc0} className="fixed inset-0 z-[90] flex bg-black/95" onClick={thoat}>
      <div className="flex min-w-0 flex-1 flex-col">
       {/* Thanh trên: tiêu đề · số thứ tự · đóng */}
       <div className="flex items-center gap-4 px-6 py-3 text-white" onClick={(e) => e.stopPropagation()}>
@@ -75,11 +123,11 @@ export default function XemAnhPC({ slides, start = 0, title, onClose, banDo }: {
             Vị trí
           </button>
         )}
-        <button type="button" aria-label="Đóng" onClick={onClose} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-2xl hover:bg-white/15">✕</button>
+        <button type="button" aria-label="Đóng" onClick={thoat} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-2xl hover:bg-white/15">✕</button>
       </div>
 
       {/* Khung lớn */}
-      <div className="relative min-h-0 flex-1" onWheel={vuot}>
+      <div className="relative min-h-0 flex-1 overflow-hidden" onWheel={vuot}>
         <div className="absolute inset-0 flex items-center justify-center px-20 py-2">
           {s.kind === "video" ? (
             // Cỡ theo CHIỀU CAO khung (không theo chiều ngang) — màn thấp thì thanh điều khiển video (nút Xem full) không chui
@@ -89,7 +137,11 @@ export default function XemAnhPC({ slides, start = 0, title, onClose, banDo }: {
             </div>
           ) : (
             // eslint-disable-next-line @next/next/no-img-element
-            <img key={idx} src={anhToiUu(s.src, 1920, 90)} alt={`${title ?? "Ảnh"} ${idx - nVid + 1}`} onClick={(e) => e.stopPropagation()} className="max-h-full max-w-full animate-fadein object-contain" />
+            <img key={idx} src={anhToiUu(s.src, 1920, 90)} alt={`${title ?? "Ảnh"} ${idx - nVid + 1}`}
+              onClick={(e) => { e.stopPropagation(); setGoc(viTri(e)); setPhong((p) => (p > 1 ? 1 : 2.5)); }}
+              onMouseMove={(e) => { if (phong > 1) setGoc(viTri(e)); }}
+              style={{ transform: `scale(${phong})`, transformOrigin: `${goc.x}% ${goc.y}%` }}
+              className={`max-h-full max-w-full animate-fadein object-contain transition-transform duration-200 ${phong > 1 ? "cursor-zoom-out" : "cursor-zoom-in"}`} />
           )}
         </div>
         {n > 1 && (
@@ -102,6 +154,11 @@ export default function XemAnhPC({ slides, start = 0, title, onClose, banDo }: {
             </button>
           </>
         )}
+        {/* Nút thoát toàn màn hình — CÙNG CHỖ nút mở ở trang tin (góc dưới phải) */}
+        <button type="button" aria-label="Thoát toàn màn hình" title="Thoát toàn màn hình" onClick={(e) => { e.stopPropagation(); thoat(); }}
+          className="absolute bottom-3 right-5 z-10 flex h-10 w-10 items-center justify-center rounded-md bg-white/15 text-white backdrop-blur transition hover:bg-white/30">
+          <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" /></svg>
+        </button>
       </div>
 
       {/* Dải ảnh nhỏ — bấm để chọn */}

@@ -40,11 +40,11 @@ export default function KhungAnhPC({ images, videos = [], alt, banDo }: { images
     return () => clearTimeout(t);
   }, [i, dung, giu, xem, n, laVideo]);
 
-  // Ô nhỏ đang chọn luôn trong tầm nhìn — chỉ cuộn NGANG trong dải, không kéo cả trang
+  // Ô nhỏ đang chọn luôn trong tầm nhìn — chỉ cuộn DỌC trong cột ảnh nhỏ, không kéo cả trang
   useEffect(() => {
     const el = dai.current?.children[i] as HTMLElement | undefined;
     const box = dai.current;
-    if (el && box) box.scrollTo({ left: el.offsetLeft - box.clientWidth / 2 + el.clientWidth / 2, behavior: "smooth" });
+    if (el && box) box.scrollTo({ top: el.offsetTop - box.clientHeight / 2 + el.clientHeight / 2, behavior: "smooth" });
   }, [i]);
 
   if (n === 0) return null;
@@ -59,9 +59,11 @@ export default function KhungAnhPC({ images, videos = [], alt, banDo }: { images
   const nut = "absolute top-1/2 z-[3] flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/45 text-white backdrop-blur-sm transition hover:bg-black/70";
 
   return (
-    <div className="mb-5">
+    <div className="mb-5 flex gap-2">
+      {/* Khung TỶ LỆ VÀNG 1,618, ảnh LẤP ĐẦY khung, không dải đen hai bên; ảnh nhỏ thành CỘT DỌC bên phải → khung
+          chính gọn lại (cột ~790: chính ~682×421 + cột ảnh nhỏ 100) — chủ dự án 20/10/2026 */}
       <div
-        className="relative aspect-[2.2/1] w-full overflow-hidden rounded-xl bg-black outline-none"
+        className="relative aspect-[1.618] min-w-0 flex-1 overflow-hidden rounded-xl bg-black outline-none"
         onMouseEnter={() => setDung(true)}
         onMouseLeave={() => setDung(false)}
         onWheel={vuot}
@@ -77,8 +79,8 @@ export default function KhungAnhPC({ images, videos = [], alt, banDo }: { images
             </div>
           </div>
         ) : (
-          <button type="button" onClick={() => setXem(i)} className="absolute inset-0 block h-full w-full" aria-label="Xem ảnh lớn">
-            <Image key={i} src={m.src} alt={`${alt} ${i - nVid + 1}`} fill priority={i === nVid} quality={90} sizes="800px" className="animate-fadein object-contain" />
+          <button type="button" onClick={() => setXem(nVid > 0 ? 0 : i)} className="absolute inset-0 block h-full w-full" aria-label="Xem ảnh lớn">
+            <Image key={i} src={m.src} alt={`${alt} ${i - nVid + 1}`} fill priority={i === nVid} quality={90} sizes="800px" className="animate-fadein object-cover" />
           </button>
         )}
         {n > 1 && (
@@ -91,6 +93,12 @@ export default function KhungAnhPC({ images, videos = [], alt, banDo }: { images
             </button>
           </>
         )}
+        {/* Nút TOÀN MÀN HÌNH (biểu tượng ⤢, chuẩn trình xem máy tính): bấm = mở toàn màn hình thật; trong đó bấm lại
+            đúng nút này (⤡) hoặc Esc = thoát. Bấm ảnh cũng mở. */}
+        <button type="button" onClick={() => setXem(nVid > 0 ? 0 : i)} aria-label="Xem toàn màn hình" title="Toàn màn hình"
+          className="absolute bottom-3 right-3 z-[3] flex h-9 w-9 items-center justify-center rounded-md bg-black/60 text-white backdrop-blur-sm transition hover:bg-black/80">
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" /></svg>
+        </button>
         {/* Ghi rõ số video, số ảnh của tin */}
         <span className="pointer-events-none absolute left-3 top-3 z-[3] rounded-md bg-black/65 px-2.5 py-1 text-[12px] font-semibold text-white">
           {nVid > 0 ? `${nVid} video · ` : ""}{images.length} ảnh
@@ -102,9 +110,10 @@ export default function KhungAnhPC({ images, videos = [], alt, banDo }: { images
         )}
       </div>
 
-      {/* Dải ảnh nhỏ — video đầu, bấm để chọn */}
+      {/* Cột ảnh nhỏ bên phải, cao đúng bằng khung chính — video đầu, bấm để chọn */}
       {n > 1 && (
-        <div ref={dai} className="no-scrollbar mt-2 flex gap-2 overflow-x-auto">
+        <div className="relative w-[100px] shrink-0">
+        <div ref={dai} className="no-scrollbar absolute inset-0 flex flex-col gap-2 overflow-y-auto">
           {media.map((x, k) => {
             const bia = x.kind === "video" ? videoPosterUrl(x.src)?.thuong : x.src;
             return (
@@ -120,8 +129,10 @@ export default function KhungAnhPC({ images, videos = [], alt, banDo }: { images
             );
           })}
         </div>
+        </div>
       )}
 
+      {/* Bộ xem toàn màn hình: tin có video thì VIDEO HIỆN ĐẦU TIÊN (chủ dự án 20/10/2026), rồi tới ảnh */}
       {/* Mở thẳng trên body — không bị khung cha có transform nhốt lại */}
       {xem >= 0 && createPortal(<XemAnhPC slides={media} start={xem} title={alt} banDo={banDo} onClose={() => setXem(-1)} />, document.body)}
     </div>
