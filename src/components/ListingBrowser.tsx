@@ -129,7 +129,15 @@ export default function ListingBrowser({
   });
   // GÕ MƯỢT (chủ dự án 20/10/2026: màn tìm điện thoại "rất giật và lag"): ô tìm dùng bộ lọc SỐNG (filtersSong) nên chữ hiện
   // ngay; danh sách, đếm kết quả, sửa chính tả dùng bản HOÃN — React dựng lại danh sách lúc rảnh, không chặn từng phím gõ.
-  const filters = useDeferredValue(filtersSong);
+  const filtersHoan = useDeferredValue(filtersSong);
+  // TỪ KHOÁ CHỈ TÍNH KHI KHÁCH BẤM TÌM (chủ dự án 21/10/2026: "hiểu từ khoá không vội như vậy" — gõ dở "hải" mà thanh lọc đã nhảy
+  // Hải Tân). Đang gõ: chỉ hiện gợi ý, KHÔNG lọc lại, KHÔNG gọi máy chủ mỗi phím (trước đây mỗi chữ cái một lượt /loc — tốn hàm
+  // Vercel). Bấm Tìm / Enter / chọn gợi ý (sự kiện "cvr-tim") hoặc xoá hết chữ → mới áp từ khoá. Từ khoá trên địa chỉ = đã tìm.
+  const tuKhoaSong = useRef(filtersSong.keyword);
+  tuKhoaSong.current = filtersSong.keyword;
+  const [tuKhoaDaTim, setTuKhoaDaTim] = useState(() => filtersSong.keyword);
+  useEffect(() => { if (!filtersSong.keyword.trim()) setTuKhoaDaTim(""); }, [filtersSong.keyword]);
+  const filters = useMemo(() => ({ ...filtersHoan, keyword: tuKhoaDaTim }), [filtersHoan, tuKhoaDaTim]);
   // ?sapxep=gia-tang (ô tìm thông minh: câu có "giá rẻ" → giá thấp trước)
   const [sort, setSort] = useState<SortKey>(() => {
     const sx = params.get("sapxep");
@@ -143,7 +151,11 @@ export default function ListingBrowser({
   const [lanTim, setLanTim] = useState(0);
   useEffect(() => {
     // Bấm tìm mà bộ lọc không đổi (không nạp gì) → báo xong luôn cho vạch xanh chung tắt
-    const tang = () => { setLanTim((n) => n + 1); window.setTimeout(() => { if (!dangNap.current) xongTim(); }, 150); };
+    const tang = () => {
+      setLanTim((n) => n + 1);
+      window.setTimeout(() => setTuKhoaDaTim(tuKhoaSong.current), 0); // chờ ô tìm ghi chữ xong rồi mới chốt từ khoá
+      window.setTimeout(() => { if (!dangNap.current) xongTim(); }, 150);
+    };
     window.addEventListener("cvr-tim", tang);
     return () => window.removeEventListener("cvr-tim", tang);
   }, []);
@@ -260,7 +272,8 @@ export default function ListingBrowser({
   const active = hasActiveFilters(filters);
   // TỪ KHOÁ CHUẨN (chủ dự án 17/10/2026: gõ câu thì phải hiện Huế · Căn hộ · Dưới 2 tỷ, không phải câu thô):
   // ô tìm giữ nguyên câu khách gõ; trường lọc + thẻ bên dưới hiện đúng tiêu chí máy đã hiểu.
-  const hieu = useMemo(() => cauThanhBoLoc(filtersSong, purpose), [filtersSong, purpose, coDiaDanh]); // eslint-disable-line react-hooks/exhaustive-deps -- coDiaDanh: tính lại khi địa danh về
+  // Thẻ lọc hiểu từ câu: chỉ theo từ khoá ĐÃ TÌM — đang gõ dở thì thanh lọc giữ nguyên
+  const hieu = useMemo(() => (filtersSong.keyword === tuKhoaDaTim ? cauThanhBoLoc(filtersSong, purpose) : null), [filtersSong, tuKhoaDaTim, purpose, coDiaDanh]); // eslint-disable-line react-hooks/exhaustive-deps -- coDiaDanh: tính lại khi địa danh về
 
   // Đang nạp dữ liệu → giữ nguyên khung chờ máy chủ đã dựng (không nhấp nháy giao diện)
   if (nguon && !mayChu) return <>{choTai ?? null}</>;

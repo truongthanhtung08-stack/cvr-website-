@@ -1,6 +1,6 @@
 import type { Listing } from "@/lib/data";
 import { sortListings, applyFilters, emptyFilters, normalizeVi, typeGroupsFor, matchType, type Filters, type SortKey } from "@/lib/filters";
-import { smartFilter, smartSearch, goiYNoiLong, parseQuery } from "@/lib/smartSearch";
+import { smartFilter, smartSearch, goiYNoiLong, parseQuery, coKhopTieuChi, chuChuaHieu } from "@/lib/smartSearch";
 import { nhanDoiHienThi } from "@/lib/nhanDoiHienThi";
 import { tierRank } from "@/lib/packages";
 import { parseLatLng } from "@/lib/googleMaps";
@@ -69,8 +69,9 @@ export function cauThanhBoLoc(f: Filters, purpose: "ban" | "thue"): Filters | nu
     priceMin: f.priceMin != null || f.priceMax != null ? f.priceMin : pt.priceMin ?? null,
     priceMax: f.priceMin != null || f.priceMax != null ? f.priceMax : pt.priceMax ?? null,
     beds: f.beds || pt.beds || 0,
-    // Chi tiết máy không làm trường lọc ("view biển", "gần trường"…) giữ lại làm từ khoá để XẾP tin khớp lên đầu
-    keyword: parseQuery(kw).features.join(" "),
+    // Chi tiết máy không làm trường lọc ("view biển", "gần trường"…) và TỪ chưa hiểu ("sân vườn", "nở hậu" — chủ dự án
+    // 21/10/2026) giữ lại làm từ khoá dò nội dung tin, XẾP tin khớp lên đầu
+    keyword: [...parseQuery(kw).features, chuChuaHieu(kw).replace(/,/g, "")].filter(Boolean).join(" "),
   };
 }
 
@@ -144,7 +145,7 @@ export function locDanhSach(
   // Hội An" không có tin thì gợi ý villa Đà Nẵng gần biển — không đưa condotel, nhà phố). Hết tin cùng loại thì nói là không có.
   // KHÁCH ĐÃ NÓI NƠI → gợi ý CHỈ trong tỉnh đó (chủ dự án 21/10/2026: "Villa biển gần Hội An" mà ra Huế, Lâm Đồng là vô nghĩa)
   const dungTinhChon = (l: Listing) => tinhChon.size === 0 || tinhChon.has(l.location.split(",").pop()?.trim() ?? "");
-  const goiY = sortListings(hits.filter((h) => h.tier > 1 && dungLoai(h.item) && dungTinhChon(h.item)).map((h) => h.item), sort)
+  const goiY = sortListings(hits.filter((h) => h.tier > 1 && coKhopTieuChi(h, filters) && dungLoai(h.item) && dungTinhChon(h.item)).map((h) => h.item), sort)
     .map((l, i) => ({ l, i, d: diemGoiY(l), xa: khoangCach(l) }))
     // cùng mức khớp: nơi GẦN tỉnh khách chọn đứng trước (Quảng Trị → Huế, Đà Nẵng trước Khánh Hòa)
     .sort((a, b) => b.d - a.d || a.xa - b.xa || a.i - b.i)
@@ -154,7 +155,7 @@ export function locDanhSach(
   // đã hết hạn): cùng loại hình, cùng tỉnh, có đặc điểm + gần nơi khách nói trước — đứng SAU mọi tin còn hạn, nhãn "Tin hết hạn".
   const daCoHetHan = new Set(ketQuaHetHan.map((l) => l.id));
   const ungHetHan = gocHetHan.length
-    ? smartFilter(gocHetHan, { ...filters, keyword: "" }).filter((h) => h.tier > 1 && dungLoai(h.item) && dungTinhChon(h.item) && !daCoHetHan.has(h.item.id)).map((h) => h.item)
+    ? smartFilter(gocHetHan, { ...filters, keyword: "" }).filter((h) => h.tier > 1 && coKhopTieuChi(h, filters) && dungLoai(h.item) && dungTinhChon(h.item) && !daCoHetHan.has(h.item.id)).map((h) => h.item)
     : [];
   if (coTuKhoa && ungHetHan.length) for (const h of smartSearch(ungHetHan, filters.keyword).hits) if (h.tier <= 2) coDacDiem.add(h.item.id);
   // Xếp CUỐI, theo CẤP rồi NGÀY ĐĂNG mới trước (chủ dự án 21/10/2026) — không xếp theo độ gần như tin còn hạn

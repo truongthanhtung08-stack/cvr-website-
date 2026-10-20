@@ -363,6 +363,7 @@ function tachDiaChiCap(s: string): string[] {
 
 type FilterableListing = {
   id: string; title: string; price: string; area: string;
+  projectSlug?: string; projectName?: string; // trường "Dự án" của tin (tin thuộc dự án nào)
   // Hướng · pháp lý · nội thất THẬT người đăng nhập (sửa 15/10/2026 — trước đây bộ lọc so với
   // giá trị suy từ mã tin của dữ liệu mẫu, lọc ra tin ngẫu nhiên).
   huong?: string; phapLy?: string; noiThat?: string;
@@ -420,7 +421,15 @@ export function applyFilters<T extends FilterableListing>(items: T[], f: Filters
       });
       if (!inArea) return false;
     }
-    if (proj && !normalizeVi(`${item.title} ${item.diaChiTim ?? item.location}`).includes(proj)) return false;
+    // DỰ ÁN: khớp TRƯỜNG "Dự án" của tin (mã hoặc tên, bỏ dấu + bỏ khoảng trắng — "goldenbay" = "golden bay"), hoặc tên dự án
+    // có trong tiêu đề / địa chỉ (tin cũ chưa ghi trường Dự án). Trước 21/10/2026 chỉ dò tiêu đề, bỏ sót tin ghi dự án đúng trường.
+    if (proj) {
+      const gon = (x: string) => normalizeVi(x).replace(/[^a-z0-9]/g, "");
+      const p = gon(f.project);
+      const dung = (item.projectSlug && gon(item.projectSlug) === p) || (item.projectName && gon(item.projectName).includes(p))
+        || normalizeVi(`${item.title} ${item.diaChiTim ?? item.location}`).includes(proj);
+      if (!dung) return false;
+    }
     if (f.types.length && !f.types.some((t) => matchType(item.type, t))) return false;
 
     const ty = priceToTy(item.price);

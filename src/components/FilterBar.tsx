@@ -2,6 +2,8 @@
 
 import { useDiaDanh } from "@/lib/useDiaDanh";
 import { goiYTheoY } from "@/lib/goiYTheoY";
+import { useGoiYThat } from "@/lib/useGoiYThat";
+import { timDuAn, napDsDuAn, dsDuAnDaNap, type DuAnTen } from "@/lib/duAnTen";
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import FilterDropdown, { PanelActions, FilterDropdownGroup } from "@/components/FilterDropdown";
@@ -204,6 +206,12 @@ export default function FilterBar({
     const kw = f.keyword.trim();
     if (!next && kw && mode !== "duan" && kw !== daTim) {
       setDaTim(kw);
+      // GÕ ĐÚNG TÊN DỰ ÁN (21/10/2026): như ô tìm trang chủ — nói rõ mua/thuê hoặc đang ở trang Mua bán/Cho thuê → tin thuộc dự án
+      const da = timDuAn(kw, dsDuAn);
+      if (da) {
+        const m = parseQuery(kw).purpose ?? purpose;
+        return router.push(`${m === "thue" ? "/cho-thue" : "/mua-ban"}?duan=${encodeURIComponent(da.duAn.ten)}`);
+      }
       const u = duongDanGanNhat(purpose, kw);
       if (u && u !== window.location.pathname) return router.push(u);
       // Địa chỉ trang đi theo câu mới (tải lại / gửi link vẫn đúng câu khách tìm). Đang ở trang con cố định nơi
@@ -243,6 +251,9 @@ export default function FilterBar({
   // GÕ MƯỢT (chủ dự án 20/10/2026): chữ trong ô hiện ngay; sửa chính tả + dò gợi ý (nặng: cả bộ địa danh) chạy trên bản HOÃN
   // của từ khoá — React làm lúc rảnh, không chặn phím gõ. Gợi ý theo kịp ngay khi khách ngừng tay.
   const kwHoan = useDeferredValue(f.keyword);
+  // Tên dự án THẬT — nạp một lần khi khách bắt đầu gõ (lib/duAnTen), dùng chung với ô tìm trang chủ
+  const [dsDuAn, setDsDuAn] = useState<DuAnTen[]>(() => dsDuAnDaNap() ?? []);
+  useEffect(() => { if (kwHoan.trim() && !dsDuAn.length) void napDsDuAn().then(setDsDuAn); }, [kwHoan, dsDuAn.length]);
   const kwHieu = useMemo(() => (kwHoan.trim() ? suaChinhTa(kwHoan) ?? kwHoan : kwHoan), [kwHoan, coDiaDanh]); // eslint-disable-line react-hooks/exhaustive-deps
   const yDinh = parseQuery(kwHieu);
   const mucDich = yDinh.purpose ?? purpose;
@@ -266,11 +277,12 @@ export default function FilterBar({
   // GỢI Ý BẬC THANG — dựng từ chính câu đang gõ, xếp từ khớp đầy đủ → nới dần.
   // VD "Đất nền tại Đà Nẵng giá dưới 3 tỷ" → [Đất nền · Đà Nẵng · dưới 3 tỷ] →
   // [Đất nền · Đà Nẵng] → [Tất cả đất nền] → [BĐS tại Đà Nẵng] → [BĐS dưới 3 tỷ].
+  // GỢI Ý THEO DỮ LIỆU THẬT dùng chung mọi ô tìm (máy chủ đếm tin — lib/goiYThat, chủ dự án 21/10/2026): mục đích + loại hình +
+  // khu vực + đặc điểm, chỉ câu có tin, giá và nơi thực tế. Máy chủ lỗi → gợi ý theo ý câu ở máy khách (goiYTheoY) làm dự phòng.
+  const goiYThatDs = useGoiYThat(typed ? kwHieu : "", purpose === "thue" ? "thue" : "ban");
   const bacThang: Suggestion[] = useMemo(() => (typed
-    // GỢI Ý THEO Ý CÂU dùng chung mọi ô tìm (lib/goiYTheoY, chủ dự án 21/10/2026): mục đích + loại hình + khu vực + đặc điểm;
-    // không nói mua/thuê → có cả hai (mục của trang trước). Bấm là sang đúng trang kết quả của dòng đó.
-    ? goiYTheoY(kwHieu, purpose === "thue" ? "thue" : "ban").map((g) => ({ label: g.nhan, kind: "Gợi ý" as const, href: g.href }))
-    : []), [typed, kwHieu, purpose, coDiaDanh]); // eslint-disable-line react-hooks/exhaustive-deps
+    ? (goiYThatDs ?? goiYTheoY(kwHieu, purpose === "thue" ? "thue" : "ban", dsDuAn)).map((g) => ({ label: g.nhan, kind: "Gợi ý" as const, href: g.href }))
+    : []), [typed, kwHieu, purpose, coDiaDanh, dsDuAn, goiYThatDs]); // eslint-disable-line react-hooks/exhaustive-deps
   // CHƯA GÕ → CHỈ những lần khách đã tìm, như Google (chủ dự án 17/10/2026: bỏ "gợi ý phổ biến" toàn tên tỉnh trơn — vô dụng)
   // Bỏ gợi ý khớp ký tự kiểu Google (địa danh trùng tên tỉnh khác, "Tất cả biệt thự"…) — chủ dự án 21/10/2026: chỉ gợi ý theo ý câu
   const panelItems: Suggestion[] = typed ? bacThang : recentShown;

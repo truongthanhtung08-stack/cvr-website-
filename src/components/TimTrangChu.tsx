@@ -1,6 +1,8 @@
 "use client";
 import { useDiaDanh } from "@/lib/useDiaDanh";
 import { goiYTheoY } from "@/lib/goiYTheoY";
+import { useGoiYThat } from "@/lib/useGoiYThat";
+import { timDuAn, napDsDuAn, dsDuAnDaNap, type DuAnTen } from "@/lib/duAnTen";
 import { batDauTim } from "@/components/VachTim";
 import { useDeferredValue, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal, flushSync } from "react-dom";
@@ -173,6 +175,9 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
   const [mucDangChon, setMuc] = useState<Muc>("ban");
   const muc = mucDangChon;
   const [tuKhoa, setTuKhoa] = useState("");
+  // Tên dự án THẬT (bảng Dự án + trường Dự án của tin) — nạp một lần khi khách bắt đầu gõ (lib/duAnTen)
+  const [dsDuAn, setDsDuAn] = useState<DuAnTen[]>(() => dsDuAnDaNap() ?? []);
+  useEffect(() => { if (tuKhoa.trim() && !dsDuAn.length) void napDsDuAn().then(setDsDuAn); }, [tuKhoa, dsDuAn.length]);
   const [mo, setMo] = useState(false); // điện thoại: màn tìm
   // DỰNG SẴN MÀN TÌM như Airbnb (chủ dự án 17/10/2026: "giật, lag"): dựng ẩn sau khi trang rảnh, chạm vào chỉ việc hiện ra
   // (đo trên máy chậm: dựng lúc chạm làm khựng 0,3–1,4 giây). Ẩn bằng display:none nên hiệu ứng mở vẫn chạy lại mỗi lần hiện.
@@ -403,6 +408,16 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
     const mb: "ban" | "thue" = muc === "thue" ? "thue" : "ban";
     const kw = cau.trim();
     if (kw && !n) luu({ label: kw, kind: "Gợi ý", sub: "Từ khoá đã tìm", keyword: kw });
+    // GÕ ĐÚNG TÊN DỰ ÁN (21/10/2026): nói rõ mua/thuê → tin thuộc dự án đó; không nói → trang thông tin dự án (nếu có), không có
+    // trang thì tin thuộc dự án ở phía có tin
+    const da = kw && !n ? timDuAn(kw, dsDuAn) : null;
+    if (da) {
+      const pq = parseQuery(kw);
+      const d = da.duAn;
+      if (!pq.purpose && d.coTrang) return den(`/du-an/${d.slug}`);
+      const m = pq.purpose ?? (d.ban > 0 || d.thue === 0 ? "ban" : "thue");
+      return den(`${m === "thue" ? "/cho-thue" : "/mua-ban"}?duan=${encodeURIComponent(d.ten)}`);
+    }
     // KHÁCH PHẢI THẤY CÂU MÌNH ĐÃ GÕ (chủ dự án 17/10/2026): trường lọc chỉ là phần máy tự tách từ câu → đi
     // đường câu gõ (trang kết quả hiện nguyên câu trong ô tìm). Khách tự chỉnh trường → tìm theo trường, kèm câu.
     const tuDong = !!kw && JSON.stringify(boLoc) === JSON.stringify(muc === "duan" ? emptyFilters() : locTuCau(kw, mb));
@@ -462,6 +477,8 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
   const kw = useDeferredValue(tuKhoa).trim();
   // Gõ sai chính tả / dính chữ ("Căn họi … tạiphan thiết") → gợi ý theo câu đã sửa, như Google
   const kwHieu = kw ? suaChinhTa(kw) ?? kw : "";
+  // GỢI Ý THEO DỮ LIỆU THẬT (máy chủ đếm tin — lib/goiYThat): chỉ câu có tin, giá và nơi thực tế (chủ dự án 21/10/2026)
+  const goiYThatDs = useGoiYThat(muc === "duan" ? "" : kwHieu, mb);
   // Chỉ hiện lịch sử ĐÚNG mục đang chọn; câu cũ chưa gắn mục thì đoán theo chữ (có "thuê" → Cho thuê, còn lại → Mua bán)
   const mucCua = (x: Suggestion): Muc => (x as Suggestion & { muc?: Muc }).muc ?? (/ thue /.test(` ${normalizeVi(x.label)} `) ? "thue" : "ban");
   // CHƯA GÕ → CHỈ những lần khách đã tìm, như Google (chủ dự án 17/10/2026: bỏ "Gợi ý phổ biến" khi chưa gõ)
@@ -469,11 +486,12 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
   const cauNhuCau: CauGoiY[] = muc === "duan" || kw ? [] : dangGo ? (goiYTin ?? []).filter((c) => c.muc === mb && c.loai).slice(0, 6) : [];
   // ĐANG GÕ → GỢI Ý THEO Ý CÂU, dùng chung mọi ô tìm (lib/goiYTheoY — chủ dự án 21/10/2026: bỏ gợi ý khớp ký tự kiểu Google):
   // dòng đầu là đúng câu khách gõ; sau đó mục đích + loại hình + khu vực + đặc điểm, không nói mua/thuê thì có cả hai.
+  // Không lặp lại nguyên câu khách gõ thành một dòng gợi ý (chủ dự án 21/10/2026: "gợi ý thừa") — Enter là tìm đúng câu đó.
+  // Máy chủ chưa trả (mạng chậm, lỗi) → gợi ý theo ý câu ở máy khách làm dự phòng.
   if (kw && muc !== "duan") {
-    const dau = kwHieu.replace(/s+/g, " ").trim();
-    const hrefDau = duongDanGanNhat(mb, dau) ?? `${mb === "thue" ? "/cho-thue" : "/mua-ban"}?q=${encodeURIComponent(dau)}`;
-    cauNhuCau.push({ nhan: dau, sub: "", muc: mb, loai: true, href: hrefDau });
-    for (const d of goiYTheoY(dau, mb)) if (normalizeVi(d.nhan) !== normalizeVi(dau)) cauNhuCau.push({ nhan: d.nhan, sub: "", muc: d.muc, loai: true, href: d.href });
+    const dau = kwHieu.replace(/\s+/g, " ").trim();
+    const nguon = goiYThatDs ?? goiYTheoY(dau, mb, dsDuAn);
+    for (const d of nguon) if (normalizeVi(d.nhan) !== normalizeVi(dau)) cauNhuCau.push({ nhan: d.nhan, sub: "", muc: d.muc, loai: true, href: d.href });
   }
   const ganDayHien = kw ? [] : ganDay.filter((x) => mucCua(x) === muc).slice(0, 3);
   // Tên dự án gợi ý ở MỌI mục (khách hay gõ tên dự án mà không chuyển sang mục Dự án)
