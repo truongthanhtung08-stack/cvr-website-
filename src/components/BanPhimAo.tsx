@@ -62,7 +62,20 @@ export default function BanPhimAo() {
 
     // THANH DÍNH TRÊN ĐẦU (header + thanh "← Quay lại"): ô nằm dưới chúng là BỊ CHE, không phải "đang nhìn thấy"
     // (chủ dự án 17/10/2026: ô tìm trang kết quả bị thanh "← Cho thuê" đè). Lấy đúng scroll-padding-top của trang.
-    const cheTren = (el: HTMLElement) => timLopPhu(el) ? 0 : parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
+    // ĐO THẬT MỌI THANH DÍNH TRÊN ĐẦU đang đè lên màn hình (chủ dự án 21/10/2026: "che bởi dòng khác đè lên" — thanh
+    // bước "1 Loại tin · 2 Thông tin chính…" của trang đăng tin dính dưới thanh Quay lại mà scroll-padding không tính,
+    // ô đang gõ bị cuộn lên nằm ngay dưới thanh đó). Lấy đáy thấp nhất của các thanh dính/cố định nối nhau từ mép trên.
+    const cheTren = (el: HTMLElement) => {
+      if (timLopPhu(el)) return 0;
+      let day = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
+      const ds = Array.from(document.querySelectorAll<HTMLElement>("header, .sticky, .fixed"))
+        .filter((n) => !n.contains(el) && /^(sticky|fixed)$/.test(getComputedStyle(n).position))
+        .map((n) => n.getBoundingClientRect())
+        .filter((r) => r.height > 0 && r.width >= window.innerWidth * 0.5 && r.height <= window.innerHeight * 0.4)
+        .sort((a, b) => a.top - b.top);
+      for (const r of ds) if (r.top - vvTop() <= day + 4) day = Math.max(day, r.bottom - vvTop());
+      return day;
+    };
     const dangNhin = (el: HTMLElement, giaDinh: boolean) => {
       const r = el.getBoundingClientRect();
       const tren = vvTop() + cheTren(el) + 8;
@@ -106,8 +119,21 @@ export default function BanPhimAo() {
 
       if (canCuon && !dangNhin(el, giaDinh)) {
         const r = el.getBoundingClientRect();
-        if (giaDinh && !phu) window.scrollBy({ top: r.top - Math.max(window.innerHeight * 0.18, cheTren(el) + 8), behavior: "smooth" }); // ô lên phần trên màn hình
-        else el.scrollIntoView({ block: giaDinh || r.height > vvCao() * 0.6 ? "start" : "center", behavior: "smooth" });
+        // ô nằm trong khung cuộn riêng (không phải cả trang) → để trình duyệt cuộn khung đó
+        let khung = false;
+        for (let p = el.parentElement; p && p !== document.body; p = p.parentElement) {
+          const o = getComputedStyle(p).overflowY;
+          if ((o === "auto" || o === "scroll") && p.scrollHeight > p.clientHeight) { khung = true; break; }
+        }
+        if (phu || khung) el.scrollIntoView({ block: giaDinh || r.height > vvCao() * 0.6 ? "start" : "center", behavior: "smooth" });
+        else {
+          // Cuộn TỰ TÍNH theo phần thật sự nhìn thấy (dưới mọi thanh dính, trên bàn phím) — scrollIntoView của trình
+          // duyệt chỉ biết scroll-padding nên đặt ô xuống dưới thanh bước
+          const tren = vvTop() + cheTren(el) + 8;
+          const duoi = giaDinh ? window.innerHeight * 0.5 : vvTop() + vvCao() - 8;
+          const dich = giaDinh || r.height > duoi - tren ? r.top - tren : r.top - (tren + (duoi - tren - r.height) / 2);
+          window.scrollBy({ top: dich, behavior: "smooth" });
+        }
       }
       canCuon = false;
     };
