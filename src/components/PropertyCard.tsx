@@ -5,7 +5,7 @@ import SaveButton from "@/components/SaveButton";
 import CompareButton from "@/components/CompareButton";
 import Highlight from "@/components/Highlight";
 import { freshText, type Listing } from "@/lib/data";
-import { moTaThe, soDongMoTa } from "@/lib/trichMoTa";
+import { diaChiHaiDong, moTaThe, soDongMoTa } from "@/lib/trichMoTa";
 import { tierFromBadge, getTier } from "@/lib/packages";
 
 // Tên NGƯỜI ĐĂNG hiển thị trên thẻ: lấy từ tin thật (details.contact.name —
@@ -178,8 +178,9 @@ export default function PropertyCard({
 
         {/* Địa chỉ */}
         <p className="mt-1.5 flex items-center gap-1 text-[13px] text-cvr-muted">
-          <PinIcon /><span className="line-clamp-1"><Highlight text={item.location} terms={terms} /></span>
+          <PinIcon /><span className="line-clamp-1"><Highlight text={diaChiHaiDong(item).moi} terms={terms} /></span>
         </p>
+        {diaChiHaiDong(item).cu && <p className="mt-0.5 truncate pl-[18px] text-[12px] text-cvr-faint">Địa chỉ hệ cũ: {diaChiHaiDong(item).cu}</p>}
 
         {/* Đáy: thành viên đăng tin — chỉ cấp cao (variant "tier": Diamond/Gold) */}
         {showAgent && (
@@ -268,7 +269,8 @@ function PropertyRow({ item, showTime = false, terms = [] }: { item: Listing; sh
           {item.pricePerM2 && <span className="text-[13px] text-cvr-muted">{item.pricePerM2}</span>}
           {item.beds ? <span className="text-[13px] text-cvr-muted">{item.beds} PN</span> : null}
         </div>
-        <p className="mt-1.5 flex items-center gap-1 text-[13px] text-cvr-muted"><PinIcon /><span className="truncate"><Highlight text={item.location} terms={terms} /></span></p>
+        <p className="mt-1.5 flex items-center gap-1 text-[13px] text-cvr-muted"><PinIcon /><span className="truncate"><Highlight text={diaChiHaiDong(item).moi} terms={terms} /></span></p>
+        {diaChiHaiDong(item).cu && <p className="mt-0.5 truncate pl-[18px] text-[12px] text-cvr-faint">Địa chỉ hệ cũ: {diaChiHaiDong(item).cu}</p>}
         <div className="mt-auto flex items-center gap-2 border-t border-cvr-line pt-2">
           <AgentAvatar name={agentName} src={item.agentAvatar} size={7} />
           <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-cvr-body">{agentName}</span>

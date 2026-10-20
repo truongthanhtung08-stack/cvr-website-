@@ -24,7 +24,8 @@ import { slugKhuVuc } from "@/lib/khuVuc";
 // Tiêu đề trang chủ phải CÓ TỪ KHOÁ — trước đây để trống nên Google chỉ thấy
 // "COASTAL LAND", không hiểu trang này bán gì, ở đâu.
 export const metadata: Metadata = {
-  title: "Cổng thông tin mua bán, cho thuê nhà đất | COASTAL LAND",
+  // absolute: trang chủ nằm trong nhóm (trang-chu) nên mẫu "%s | COASTAL LAND" của layout áp thêm → lặp tên (20/10/2026)
+  title: { absolute: "Cổng thông tin mua bán, cho thuê nhà đất | COASTAL LAND" },
   description:
     "Cổng thông tin mua bán, cho thuê nhà đất, căn hộ, đất nền và dự án. Tin hình thật, liên hệ trực tiếp người đăng, lọc theo khu vực, loại hình, mức giá.",
   alternates: { canonical: "/" },

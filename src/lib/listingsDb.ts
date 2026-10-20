@@ -11,7 +11,7 @@
 import type { Listing } from "@/lib/data";
 import { chuanHoaTienIch, chuanHoaNoiThat, chuanHoaPhapLy, chuanHoaMucNoiThat } from "@/lib/chuanHoaThuocTinh";
 import { linkHopLe } from "@/lib/linkChen";
-import { haiDongDiaChi, heCuaTin } from "@/lib/diaChiHaiHe";
+import { chuanHoaDiaChiCu, dongBoHaiHe, haiDongDiaChi, heCuaTin } from "@/lib/diaChiHaiHe";
 import { mauSoCuaLoaiHinh } from "@/lib/chiSoGia";
 import { featuredListings, getListingById } from "@/lib/data";
 import { asset } from "@/lib/asset";
@@ -61,6 +61,7 @@ export type ListingDetailsJson = {
   // Đơn giá thuê theo NGÀN đồng / m² / tháng — nhà xưởng · kho bãi · văn phòng ·
   // mặt bằng. price_vnd vẫn là TỔNG tiền mỗi tháng để bộ lọc giá chạy đúng.
   donGiaThue?: number;
+  donGiaThueNhap?: boolean; // true = khách tự ghi đơn giá thuê (không phải web chia từ giá)
   // ĐƠN GIÁ MỖI M² DO CHÍNH NGƯỜI BÁN NIÊM YẾT (đồng/m² sàn với nhà). Người bán
   // nhà thường chỉ báo TỔNG GIÁ nên web không tự chia ra rồi in lên tin; nhưng
   // tin nào người bán CÓ ghi thì đương nhiên phải hiện — đó là con số của họ,
@@ -186,8 +187,10 @@ function rowToListing(r: Row): Listing {
   //     tạm m² đất cho có.
   const perM2 = ((): string | undefined => {
     if (r.price_vnd == null) return undefined;
+    // CHO THUÊ (chủ dự án 20/10/2026: "cho thuê, BĐS khác … để nguyên, chỉ chia để biết số liệu"): KHÔNG hiện đơn giá web
+    // tự chia. Chỉ hiện khi KHÁCH tự ghi đơn giá thuê (cờ donGiaThueNhap — nạp hàng loạt có cột don_gia_thue).
     if (coDonGiaM2(r.type, r.purpose))
-      return r.area_m2 ? `${fmtNum(r.price_vnd / r.area_m2, 0)} đ/m²/tháng` : undefined;
+      return r.details?.donGiaThueNhap && r.details?.donGiaThue ? `${fmtNum(r.details.donGiaThue * 1000, 0)} đ/m²/tháng` : undefined;
     if (!laTinBan(r.purpose)) return undefined;
     const mau = mauSoCuaLoaiHinh(r.type);
     // ⛔ NHÀ GẮN LIỀN ĐẤT: KHÔNG HIỆN ĐƠN GIÁ MỖI M² TRÊN TIN — chủ dự án chốt
@@ -202,6 +205,8 @@ function rowToListing(r: Row): Listing {
       // …TRỪ KHI chính người bán niêm yết đơn giá. Lúc đó đây là con số của họ,
       // không phải mình suy ra — đương nhiên phải hiện.
       const khai = r.details?.donGiaBan;
+      // 20/10/2026 chủ dự án nhắc lại: "loại nào nghi ngờ thì lấy nguyên giá và diện tích khách nhập, chỉ chia để lấy số liệu"
+      // → nhà KHÔNG hiện giá/m² sàn tự chia (giữ luật 19/09); số chia chỉ dùng cho Lịch sử giá.
       return khai ? `${fmtNum(khai / 1e6, 0)} tr/m² sàn` : undefined;
     }
     const dt = r.area_m2;
@@ -232,7 +237,7 @@ function rowToListing(r: Row): Listing {
     // Người đăng nhập theo hệ nào cũng được, người xem luôn thấy tên đang dùng hiện
     // nay; cách gọi cũ nằm ở dòng "Địa chỉ hệ cũ" ngay dưới. Suy không ra tới cấp
     // phường thì giữ nguyên chuỗi khách đã nhập, không hiện địa chỉ nửa vời.
-    ...((): { location: string; locationCu?: string; diaChiTim?: string } => {
+    ...((): { location: string; locationCu?: string; diaChiTim?: string; diaChiSo?: string } => {
       const goc = [r.ward, r.district, r.province].filter(Boolean).join(", ");
       if (!r.province) return { location: goc };
       const hai = haiDongDiaChi(heCuaTin(r.district), {
@@ -255,14 +260,19 @@ function rowToListing(r: Row): Listing {
       };
       // Lấy trọn một bộ, không trộn hai nguồn: quận của người nhập ghép với phường
       // máy suy ra rất dễ thành cặp không thuộc về nhau.
+      // Nhập tay → đưa về TÊN CHUẨN 3 cấp của hệ thống (chuanHoaDiaChiCu, 20/10/2026): Cowork chép từ tin gốc nên lệch
+      // ("Thành phố Huế" / "Huế" / thiếu chữ cấp). Dò không ra mới giữ nguyên chữ người nhập.
+      const hm = dongBoHaiHe(heCuaTin(r.district), { tinh: r.province, quan: r.district ?? "", phuong: r.ward ?? "" }).moi;
       const cuTho =
         tay.phuong || tay.quan
-          ? [tay.phuong, tay.quan, tay.tinh || hai.cuTinh].filter(Boolean).join(", ")
+          ? chuanHoaDiaChiCu(hm.tinh, hm.phuong, tay) || [tay.phuong, tay.quan, tay.tinh || hai.cuTinh].filter(Boolean).join(", ")
           : hai.cu;
       const cu = cuTho && cuTho !== moi ? cuTho : "";
       return {
         location: moi,
         ...(cu ? { locationCu: cu } : {}),
+        // Số nhà + tên đường KHÁCH CHO HIỆN (ô "Địa chỉ chi tiết") — dòng địa chỉ trên thẻ ghép trước hệ mới (20/10/2026)
+        ...(r.details?.addressDetail?.trim() ? { diaChiSo: r.details.addressDetail.trim() } : {}),
         // Lọc/tìm khu vực dò trên chuỗi này để tin không mất hút khi đổi cách gọi.
         diaChiTim: [moi, cu, goc].filter(Boolean).join(" · "),
       };

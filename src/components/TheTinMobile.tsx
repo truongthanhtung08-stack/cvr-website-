@@ -12,7 +12,7 @@ import { getTier, tierFromBadge, type TierId } from "@/lib/packages";
 import { useSaved } from "@/lib/useSaved";
 import { chuThuong, tenDiaDanh } from "@/lib/chuThuong";
 import { videoPosterUrl } from "@/lib/media";
-import { moTaThe, soDongMoTa } from "@/lib/trichMoTa";
+import { diaChiHaiDong, moTaThe, soDongMoTa } from "@/lib/trichMoTa";
 
 // ============================================================================
 // THẺ TIN THEO CẤP — BẢN ĐIỆN THOẠI (docs/THE-TIN-THEO-CAP.md, chủ dự án 09/10/2026).
@@ -58,16 +58,6 @@ function thongSo(l: Listing): MucSo[] {
   return ds;
 }
 
-// Địa chỉ trên thẻ như Batdongsan: "P. Hải Vân (Q. Liên Chiểu cũ)" — phường mới + quận cũ.
-// Không có địa chỉ hệ cũ thì giữ địa chỉ mới, viết tắt cấp đầu.
-function diaChiThe(l: Listing): string {
-  const vt = (x: string) => x.replace(/^Phường /, "P. ").replace(/^Xã /, "X. ").replace(/^Quận /, "Q. ").replace(/^Huyện /, "H. ").replace(/^Thị xã /, "TX. ").replace(/^Thành phố /, "TP. ");
-  const moi = l.location.split(",").map((x) => x.trim()).filter(Boolean);
-  const cu = (l.locationCu ?? "").split(",").map((x) => x.trim()).filter(Boolean);
-  const quanCu = cu.length >= 3 ? cu[1] : cu.length === 2 ? cu[0] : "";
-  if (moi.length >= 2 && /^(Quận|Huyện|Thị xã|Thành phố) /.test(quanCu)) return `${vt(moi[0])} (${vt(quanCu)} cũ)`;
-  return [vt(moi[0] ?? ""), ...moi.slice(1)].join(", ");
-}
 
 // 2 chữ viết tắt của tên (chữ đầu + chữ cuối): "Trần Mai Chi" → "TC"
 function viTat(ten?: string): string {
@@ -271,11 +261,16 @@ export default function TheTinMobile({ item, terms = [], tuChay = false, pc = fa
       ))}
     </p>
   );
+  // Hai dòng địa chỉ đồng bộ: hệ mới trên · hệ cũ dưới (diaChiHaiDong, 20/10/2026)
+  const dc = diaChiHaiDong(item);
   const diaChiDong = (
-    <p className="mt-1 flex items-center gap-1 text-[14px] text-cvr-body">
-      <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth={1.7} viewBox="0 0 24 24" aria-hidden><path d="M12 21s-7-6.2-7-11.5A7 7 0 0112 2.5a7 7 0 017 7C19 14.8 12 21 12 21z" /><circle cx="12" cy="9.5" r="2.5" /></svg>
-      <span className="truncate"><Highlight text={diaChiThe(item)} terms={terms} /></span>
-    </p>
+    <>
+      <p className="mt-1 flex items-center gap-1 text-[14px] text-cvr-body">
+        <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth={1.7} viewBox="0 0 24 24" aria-hidden><path d="M12 21s-7-6.2-7-11.5A7 7 0 0112 2.5a7 7 0 017 7C19 14.8 12 21 12 21z" /><circle cx="12" cy="9.5" r="2.5" /></svg>
+        <span className="truncate"><Highlight text={dc.moi} terms={terms} /></span>
+      </p>
+      {dc.cu && <p className="mt-0.5 truncate pl-5 text-[13px] text-cvr-faint">Địa chỉ hệ cũ: <Highlight text={dc.cu} terms={terms} /></p>}
+    </>
   );
   const trich = moTa ? moTaThe(item) : "";
   const soDong = soDongMoTa(item);

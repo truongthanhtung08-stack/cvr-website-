@@ -12,9 +12,11 @@
 // ════════════════════════════════════════════════════════════════════════════
 
 import fs from "node:fs";
+import { createJiti } from "jiti";
 import path from "node:path";
 
 const GOC = path.resolve(import.meta.dirname, "..");
+const { choCuCua } = await createJiti(import.meta.url, { alias: { "@": path.join(GOC, "src") } }).import(path.join(GOC, "src/lib/locations.ts"));
 // NƠI LƯU DUY NHẤT cho mọi việc của Cowork (chủ dự án 16/10/2026): D:/Coastal Land/SEO — RA = máy xuất cho Cowork.
 // Máy không có ổ D (máy khác) → ghi tạm vào docs/.
 const RA = fs.existsSync("D:/Coastal Land/SEO") ? "D:/Coastal Land/SEO/RA" : path.join(GOC, "docs");
@@ -29,7 +31,7 @@ const doc = async (q) => (await fetch(`${U}/rest/v1/${q}`, { headers: { apikey: 
 
 const ngay = new Date(Date.now() + 7 * 3600e3).toISOString().slice(0, 10);
 const [tin, duAn, ho] = await Promise.all([
-  doc("listings?select=id,title,description,images,type,purpose,price_vnd,area_m2,ward,province,owner_id,status,tier_expires_at,details,published_at&status=in.(approved,expired)&limit=2000"),
+  doc("listings?select=id,title,description,images,type,purpose,price_vnd,area_m2,built_area_m2,beds,baths,ward,province,owner_id,status,tier_expires_at,details,published_at&status=in.(approved,expired)&limit=2000"),
   doc("projects?select=slug,name&limit=2000"),
   doc("profiles?select=id,phone&limit=10000"),
 ]);
@@ -48,6 +50,16 @@ const chuaDat = tin.filter(conHan).map((x) => {
   if (!/đường|kiệt|hẻm|ngõ/i.test(x.details?.addressDetail || "")) thieu.push("thiếu tên đường");
   if (!x.details?.direction) thieu.push("thiếu hướng");
   if (!x.details?.legal && x.purpose !== "thue") thieu.push("thiếu pháp lý");
+  // TRƯỜNG THẺ THEO CẤP (chủ dự án 20/10/2026: "trường nào thiếu báo Cowork lọc cho đủ hiển thị") — thẻ tin hiện PN · WC · giá/m²
+  const lh = (x.type || "").toLowerCase();
+  const canHo = /căn hộ|chung cư|condotel|officetel/.test(lh), laDat = /đất/.test(lh), nha = !canHo && !laDat && /nhà|biệt thự|villa|shophouse|liền kề/.test(lh);
+  if ((canHo || nha) && !x.beds) thieu.push("thiếu số phòng ngủ");
+  if ((canHo || nha) && !x.baths) thieu.push("thiếu số WC");
+  if (nha && x.purpose !== "thue" && !x.built_area_m2) thieu.push("thiếu m² sàn (dien_tich_xay_dung — CHỈ chép tổng sàn tin gốc ghi thẳng, không tự nhân; dùng để web tính số liệu giá, không hiện trên tin)");
+  if (soAnh(x) >= 3 && soAnh(x) < 4) thieu.push("chỉ 3 ảnh (chuẩn ≥ 4)");
+  // ĐỊA CHỈ HỆ CŨ 3 CẤP (thẻ tin hiện "Địa chỉ hệ cũ" dưới hệ mới — 20/10/2026): phường mới gộp từ nhiều phường cũ thì máy
+  // không suy ra được phường cũ → phải chép từ tin gốc vào phuong_xa_cu (không đoán).
+  if (x.ward && x.province && !(x.details?.diaChiCu?.phuong) && choCuCua(x.province, x.ward).length > 1) thieu.push("thiếu phường/xã cũ (phuong_xa_cu — chép từ tin gốc)");
   // CHẤT LƯỢNG CHỮ (18/10/2026, đo 83/126 tin đang hiện lỗi): sửa được từ chính chữ người đăng → giao cả tin không có nguồn.
   const t = x.title || "", d = (x.description || "").trim(), chu = t.replace(/[^A-Za-zÀ-ỹ]/g, "");
   const cl = [];
@@ -189,7 +201,7 @@ const MUC = [
   ["Hồ sơ dự án", `${NOI_KHAC} (tệp \`du-an-${dd}.csv\`)`, dsNap.length, dsNap.length
     ? [`Điền \`${p(SEO, "RA", "du-an-can-nap.csv")}\` theo mục 4 của \`${CV}\`: đủ cột bắt buộc, **tổng quan tự viết lại 3–6 câu chuẩn SEO** (tên dự án · vị trí · chủ đầu tư · loại sản phẩm), có nguồn + ngày. Ưu tiên dự án đã có người tìm (Alacarte, Altara, Fusion Suites, Harmony). Làm 10 dự án mỗi lần:`, ...dsNap.slice(0, 10).map((d) => `- ${d.ten} · ${d.phuong ? d.phuong + ", " : ""}${d.tinh}`)]
     : ["Nạp dự án mới toàn quốc theo mục 4 của `CONG-VIEC-3-BEN.md`."]],
-  ["Bổ sung trường còn thiếu (tên đường / hướng / pháp lý)", NOI_TIN, chuaDat.filter((r) => !r.chan).length, (() => {
+  ["Bổ sung trường còn thiếu (tên đường / hướng / pháp lý / phòng ngủ, WC, m² sàn — để thẻ hiện đủ theo cấp)", NOI_TIN, chuaDat.filter((r) => !r.chan).length, (() => {
     const ds = chuaDat.filter((r) => !r.chan);
     return ds.length ? [`Lấy lại từ tin gốc, ${GOP}. Làm 20 tin mỗi lần:`, ...sua(ds.slice(0, 20), (r) => r.thieu.join(", "))] : ["Không có việc."];
   })()],
@@ -331,7 +343,7 @@ const YEU_CAU = [
   "7. **Tin tức: mỗi ngày 2–3 bài chất lượng, có ảnh, hợp SEO.** **Mạng xã hội: mỗi ngày 2 bài có ảnh — 1 Zalo, 1 Facebook.**",
   `8. **Tên ảnh số 2 chữ số:** \`dn01-${dd.slice(0, 4)}-01.jpg\`, \`-02\`…`,
   "9. **LỌC NHIỀU TIN HƠN MỖI NGÀY (chủ dự án 20/10/2026)** — trang khu vực trên Google mỏng vì THIẾU TIN, không phải vì tin ngắn (đo 20/10: condotel Đà Nẵng 3 tin → 118 chữ riêng; nhà Đà Nẵng 49 tin → 1.366 chữ riêng). Ưu tiên nhóm (loại hình × tỉnh/phường) đang ít tin, nhất là nhóm đã có lượt hiển thị trên Google (mục 1 bên dưới). Mỗi tin chỉ cần đủ chuẩn 13 dòng, không cần viết dài.",
-  "10. **TIÊU ĐỀ đúng chuẩn SEO + quy định** (bảng tự kiểm dòng 1). Phải CỐ viết cho đủ, đúng chuẩn (việc này không khó) — tin cũ tiêu đề ngắn mà đúng nội dung tạm chấp nhận, nhưng khi lọc, viết tin thì viết đủ 30–60 ký tự. **Mô tả mở đầu bằng 2 câu tóm tắt** (loại nhà, diện tích, số phòng, điểm nổi bật), không lặp lại tiêu đề — 2 câu này hiện ngay dưới tiêu đề trên thẻ tin (chủ dự án 20/10/2026).",
+  "10. **TIÊU ĐỀ = Mục đích (Bán / Cho thuê) + loại hình + điểm nổi bật** (+ tên đường / dự án, nơi chốn) — viết cho ĐỦ độ dài chuẩn 30–60 ký tự, không ghi giá, diện tích (chủ dự án 20/10/2026; bảng tự kiểm dòng 1). Phải CỐ viết cho đủ, đúng chuẩn (việc này không khó) — tin cũ tiêu đề ngắn mà đúng nội dung tạm chấp nhận, nhưng khi lọc, viết tin thì viết đủ 30–60 ký tự. **Mô tả mở đầu bằng 2 câu tóm tắt** (loại nhà, diện tích, số phòng, điểm nổi bật), không lặp lại tiêu đề — 2 câu này hiện ngay dưới tiêu đề trên thẻ tin (chủ dự án 20/10/2026).",
   "",
 ];
 v.splice(6, 0, ...YEU_CAU);

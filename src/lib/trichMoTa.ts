@@ -29,3 +29,13 @@ export function moTaThe(l: Listing): string {
   const laTieuDe = (c: string) => { const n = goc(c); return n.length > 10 && (tieuDe.includes(n) || n.includes(tieuDe)); };
   return cau.filter((c) => !laTieuDe(c)).slice(0, 2).join(" ");
 }
+
+// ĐỊA CHỈ TRÊN THẺ — HAI DÒNG ĐỒNG BỘ, MỌI THẺ, MỌI NƠI (chủ dự án 20/10/2026: "hệ mới và cũ đồng bộ, mới trên, cũ dưới"):
+//   · trên: số nhà + tên đường (khách cho hiện) + hệ MỚI 2 cấp — "12 Nguyễn Biểu, Phường Bắc Nha Trang, Khánh Hòa"
+//   · dưới: hệ CŨ 3 cấp, tên chuẩn của hệ thống (listingsDb chuẩn hoá) — "Vĩnh Hải, Nha Trang, Khánh Hòa"
+// Cùng nội dung, cùng chữ "Địa chỉ hệ cũ" như trang tin.
+export function diaChiHaiDong(l: Pick<Listing, "location" | "locationCu" | "diaChiSo">): { moi: string; cu: string } {
+  const moi = [l.diaChiSo, l.location].filter(Boolean).join(", ");
+  const cu = l.locationCu && l.locationCu !== l.location ? l.locationCu : "";
+  return { moi, cu };
+}

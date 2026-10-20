@@ -9,7 +9,7 @@
 import { saleTypeGroups, rentTypeGroups } from "@/lib/filters";
 // Máy KHÔNG suy ngược được phường cũ khi một phường mới gộp nhiều phường cũ —
 // dùng để báo vàng khi file thiếu ba cột địa chỉ hệ cũ.
-import { ungVienPhuongCu } from "@/lib/diaChiHaiHe";
+import { chuanHoaDiaChiCu, ungVienPhuongCu } from "@/lib/diaChiHaiHe";
 // Dùng CHUNG hàm tạo slug với form dự án trong admin → tên dự án trong file Excel
 // và slug dự án thật luôn khớp nhau, không bao giờ lệch quy tắc.
 import { slugify } from "@/lib/contentAdmin";
@@ -674,11 +674,14 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
       // ĐỊA CHỈ HỆ CŨ NGUYÊN VĂN — trang tin ưu tiên dòng này thay vì suy ngược.
       ...(lay(COT.phuongXaCu) || lay(COT.quanHuyenCu) || lay(COT.tinhCu)
         ? {
-            diaChiCu: {
-              phuong: lay(COT.phuongXaCu) || undefined,
-              quan: lay(COT.quanHuyenCu) || undefined,
-              tinh: lay(COT.tinhCu) || undefined,
-            },
+            // Tự đưa về TÊN CHUẨN 3 cấp của hệ thống (bảng sáp nhập chính thức) — chủ dự án 20/10/2026: "chỉnh cả trên file
+            // tin hàng loạt của Cowork, tự động điều chỉnh theo đúng thông tin hành chính mới và cũ". Dò không ra → giữ chữ đã ghi.
+            diaChiCu: ((): { phuong?: string; quan?: string; tinh?: string } => {
+              const tay = { phuong: lay(COT.phuongXaCu), quan: lay(COT.quanHuyenCu), tinh: lay(COT.tinhCu) };
+              const chuan = chuanHoaDiaChiCu(tinhThanh, phuongXa, tay).split(", ");
+              if (chuan.length === 3) return { phuong: chuan[0], quan: chuan[1], tinh: chuan[2] };
+              return { phuong: tay.phuong || undefined, quan: tay.quan || undefined, tinh: tay.tinh || undefined };
+            })(),
           }
         : {}),
       legal: phapLy || undefined,
@@ -697,6 +700,8 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
       projectName: lay(COT.tenDuAn) || undefined,
       // ĐƠN GIÁ THUÊ theo NGÀN đồng/m²/tháng — trang tin hiện "35.000 đ/m²/tháng"
       donGiaThue: donGiaThue ?? undefined,
+      // Khách / tin gốc tự ghi đơn giá → được hiện trên tin; web tự chia từ giá thì chỉ để làm số liệu (20/10/2026)
+      donGiaThueNhap: coGia(lay(COT.donGiaThue)) || undefined,
       ...((): { donGiaBan?: number } => {
         // Chỉ nhận khi tin gốc CÓ ghi — không suy từ tổng giá.
         const n = soVN(lay(COT.donGiaBan));

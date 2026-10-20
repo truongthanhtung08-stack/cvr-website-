@@ -665,6 +665,10 @@ export default function PostListingForm() {
       amenities,
       legal: legal || undefined,
       giaTuGhi: donVi === KHAC_GIA ? giaTuGhi.trim() || undefined : undefined,
+      // Khách TỰ ghi đơn giá thuê (nghìn/m²/tháng) → được hiện trên tin; tự chia từ tổng giá thì không (20/10/2026)
+      ...(donVi === "nghìn/m²/tháng" && Number(priceValue.replace(",", ".")) > 0
+        ? { donGiaThue: Number(priceValue.replace(",", ".")), donGiaThueNhap: true }
+        : {}),
       furnish: furnish || undefined,
       direction: direction || undefined,
       addressDetail: addressDetail.trim() || undefined,

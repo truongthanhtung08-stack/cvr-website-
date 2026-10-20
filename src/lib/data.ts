@@ -41,6 +41,8 @@ export type Listing = {
   viTri?: "lon" | "nho" | "kiet";
   /** Cùng chỗ đó gọi theo hệ CŨ — hiện ở dòng dưới, nhãn "Địa chỉ hệ cũ". */
   locationCu?: string;
+  // Số nhà + tên đường người đăng cho hiện (details.addressDetail) — dòng địa chỉ hệ mới trên thẻ (20/10/2026)
+  diaChiSo?: string;
   /** Gộp cả hai cách gọi — dùng để LỌC/TÌM khu vực, không hiển thị. Thiếu nó thì
    *  tin nhập theo hệ cũ ("Sơn Trà") mất hút khi location đã đổi sang tên mới. */
   diaChiTim?: string;

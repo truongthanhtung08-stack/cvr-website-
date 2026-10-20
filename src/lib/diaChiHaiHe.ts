@@ -484,3 +484,29 @@ export function dongDiaChiConLai(he: GeoMode, h: HaiHe): string {
   if (!con) return "";
   return he === "moi" ? `Tên cũ: ${con}` : `Tên mới: ${con}`;
 }
+
+// ─── CHUẨN HOÁ ĐỊA CHỈ CŨ NHẬP TAY (chủ dự án 20/10/2026: "nhất quán lại, tự động điều chỉnh theo đúng thông tin hành
+// chính mới và cũ … hệ cũ 3 cấp như dữ liệu đã chuẩn hóa trên hệ thống") ───────────────────────────────────────
+// Cowork / người đăng chép địa chỉ cũ từ tin gốc nên tên lệch nhau: "Thành phố Huế" (tên trước 2025) / "Huế" / thiếu
+// chữ cấp… Dò trong ĐÚNG danh sách phường cũ đã gộp vào phường MỚI của tin (bảng ánh xạ chính thức, choCuCua) →
+// trả tên chuẩn 3 cấp của hệ thống, vd "Vỹ Dạ, Thuận Hóa, Thừa Thiên Huế". Không dò ra thì trả "" (nơi gọi giữ nguyên).
+export function chuanHoaDiaChiCu(
+  tinhMoi: string,
+  phuongMoi: string,
+  tay: { phuong?: string; quan?: string; tinh?: string },
+): string {
+  if (!tinhMoi || !phuongMoi) return "";
+  const ds = choCuCua(tinhMoi, phuongMoi);
+  if (!ds.length) return "";
+  const theoPhuong = tay.phuong ? ds.filter((c) => trung(c.phuong, tay.phuong!)) : [];
+  // Phường cũ trùng tên ở hai quận cũ: lấy quận người nhập ghi để chọn
+  const chon = theoPhuong.length > 1 && tay.quan ? theoPhuong.filter((c) => trung(c.quan, tay.quan!)) : theoPhuong;
+  if (chon.length === 1) return [chon[0].phuong, chon[0].quan, chon[0].tinh].join(", ");
+  // Không có / không khớp phường cũ: mọi phường cũ của phường mới cùng MỘT quận → đủ quận + tỉnh chuẩn
+  const quan = [...new Set(ds.map((c) => `${c.quan}|${c.tinh}`))];
+  if (quan.length === 1) {
+    const [q, t] = quan[0].split("|");
+    return [tay.phuong ? boTienToCap(tay.phuong) : "", q, t].filter(Boolean).join(", ");
+  }
+  return "";
+}
