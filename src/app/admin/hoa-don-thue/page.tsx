@@ -30,7 +30,7 @@ import {
   napChiTra,
   xoaChiTra,
   tinhKhauTru,
-  tongHop05,
+  tongHopKk05,
   type DongChiTra,
   type LoaiChiTra,
 } from "@/lib/thueTncn";
@@ -532,7 +532,7 @@ function KhoiTncn({ tu, den, nhan }: { tu: Date; den: Date; nhan: string }) {
     bao_hiem: Number(f.bao_hiem) || 0,
     so_npt: Number(f.so_npt) || 0,
   });
-  const th = useMemo(() => tongHop05(rows ?? []), [rows]);
+  const th = useMemo(() => tongHopKk05(rows ?? []), [rows]);
 
   async function luu(e: React.FormEvent) {
     e.preventDefault();
@@ -571,17 +571,17 @@ function KhoiTncn({ tu, den, nhan }: { tu: Date; den: Date; nhan: string }) {
       <h2 className="text-base font-semibold text-cvr-ink">Thuế TNCN khấu trừ — tờ khai 05/KK-TNCN · {nhan}</h2>
       <p className="mt-1 text-sm text-cvr-muted">
         Nhập mỗi lần công ty trả tiền cho cá nhân (lương tháng, hoa hồng, thù lao). Web tự tính thuế phải
-        khấu trừ theo Luật Thuế TNCN 109/2025/QH15. Quý không khấu trừ đồng nào thì không phải nộp tờ khai quý,
-        nhưng cuối năm vẫn phải quyết toán 05/QTT-TNCN nếu có trả thu nhập.
+        khấu trừ theo Luật Thuế TNCN 109/2025/QH15. Quý có trả lương, tiền công là phải nộp tờ khai quý,
+        kể cả khi không khấu trừ đồng nào (Thông tư 89/2026/TT-BTC); cuối năm quyết toán 05/QTT-TNCN.
       </p>
 
       {loi && <div className="mt-3 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2.5 text-sm text-amber-900">{loi}</div>}
 
       <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <ONho nhan="Số người nhận" giaTri={String(th.c21)} />
-        <ONho nhan="Tổng thu nhập [26]" giaTri={vnd(th.c26)} />
-        <ONho nhan="Số người bị khấu trừ [23]" giaTri={String(th.c23)} />
-        <ONho nhan="Thuế đã khấu trừ [34]" giaTri={vnd(th.c34)} />
+        <ONho nhan="Số người nhận [15]" giaTri={String(th.c15)} />
+        <ONho nhan="Tổng thu nhập [20]" giaTri={vnd(th.c20)} />
+        <ONho nhan="Số người bị khấu trừ [17]" giaTri={String(th.c17)} />
+        <ONho nhan="Thuế đã khấu trừ [42]" giaTri={vnd(th.c42)} />
       </div>
 
       <div className="mt-5">
@@ -1869,6 +1869,9 @@ function KhoiThueNhaThau({ onSaved }: { onSaved: () => void }) {
             >
               Tải CSV tờ khai 01/NTNN
             </button>
+            <a href={`/admin/hoa-don-thue/in?nam=${nam}&thang=${thang}`} target="_blank" rel="noopener" className={btnPhu}>
+              In tờ khai 01/NTNN tháng {thang}/{nam}
+            </a>
           </div>
 
           <KhoiDanhDauNop rows={rows} onSaved={() => { void nap(); onSaved(); }} />

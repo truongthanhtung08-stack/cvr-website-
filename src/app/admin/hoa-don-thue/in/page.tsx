@@ -14,7 +14,10 @@ import {
   type DongNgoai,
   type DongVao,
 } from "@/lib/soLieuThue";
-import { bangKe051, bangKe052, napChiTra, tongHop05, type DongChiTra } from "@/lib/thueTncn";
+import { bangKe051, bangKe052, napChiTra, tongHop05, tongHopKk05, type DongChiTra } from "@/lib/thueTncn";
+import { TY_LE, khoangThang } from "@/lib/thueNhaThau";
+import { taiXml01Gtgt } from "@/lib/xml01Gtgt";
+import { laKyNtnnTt89, taiXml01Ntnn } from "@/lib/xml01Ntnn";
 
 // ============================================================================
 // IN BÁO CÁO THUẾ — mở từ nút "In báo cáo" ở /admin/hoa-don-thue
@@ -43,7 +46,61 @@ function BoHoSo() {
   const sp = useSearchParams();
   const nam = Number(sp.get("nam")) || new Date().getFullYear();
   const quy = Number(sp.get("quy")) || 0; // 0 = cả năm
+  const thang = Number(sp.get("thang")) || 0; // có tháng → chỉ in tờ khai 01/NTNN của tháng đó
+  if (thang) return <HoSoNtnn nam={nam} thang={thang} />;
+  return <BoHoSoKy nam={nam} quy={quy} />;
+}
 
+/** Tờ khai 01/NTNN của MỘT tháng — mở từ nút "In tờ khai 01/NTNN" ở mục thuế nhà thầu. */
+function HoSoNtnn({ nam, thang }: { nam: number; thang: number }) {
+  const [rows, setRows] = useState<DongNgoai[] | null>(null);
+  const [loi, setLoi] = useState("");
+  const [phan, setPhan] = useState<1 | 2>(1);
+  useEffect(() => {
+    void (async () => {
+      const { tu, den } = khoangThang(nam, thang);
+      const { r3 } = await napSoLieu(createClient(), tu, den);
+      if (r3.error) setLoi(r3.error.message);
+      setRows(((r3.data ?? []) as unknown as DongNgoai[]).filter((d) => d.nhom === "phai_khai_thay"));
+    })();
+  }, [nam, thang]);
+  if (!rows) return <p className="text-sm text-cvr-muted">Đang gom số liệu…</p>;
+  return (
+    <div>
+      <style>{IN_CSS}</style>
+      <div className="khong-in mb-5 flex flex-wrap items-center gap-3 rounded-2xl border border-cvr-line bg-white p-4">
+        <button onClick={() => window.print()} className="rounded-lg bg-cvr-ink px-5 py-2.5 text-sm font-semibold text-white">
+          In / Lưu PDF
+        </button>
+        {laKyNtnnTt89(nam, thang) && (
+          <button
+            onClick={() => taiXml01Ntnn(nam, thang, rows, phan)}
+            className="rounded-lg border border-cvr-ink px-5 py-2.5 text-sm font-semibold text-cvr-ink"
+          >
+            Xuất XML 01/NTNN
+          </button>
+        )}
+        <label className="text-sm text-cvr-body">
+          Khai ở{" "}
+          <select value={phan} onChange={(e) => setPhan(Number(e.target.value) as 1 | 2)} className="rounded-lg border border-cvr-line px-2 py-1.5">
+            <option value={1}>Phần I — nhà thầu nước ngoài</option>
+            <option value={2}>Phần II — nhà cung cấp nước ngoài trên nền tảng số</option>
+          </select>
+        </label>
+        <p className="w-full text-sm text-cvr-muted">
+          Mẫu 01/NTNN, NCCNN theo Thông tư 89/2026/TT-BTC. Hạn nộp ngày 20 tháng sau. Khi khai trên cổng, chép SỐ theo
+          TÊN cột.
+        </p>
+        {loi && <p className="w-full text-sm text-red-700">Lỗi đọc số liệu: {loi}</p>}
+      </div>
+      <div className="vung-in">
+        <ToKhaiNtnn nam={nam} thang={thang} rows={rows} phan={phan} />
+      </div>
+    </div>
+  );
+}
+
+function BoHoSoKy({ nam, quy }: { nam: number; quy: number }) {
   const [quyData, setQuyData] = useState<(Ky | null)[] | null>(null);
   const [tncn, setTncn] = useState<DongChiTra[]>([]);
   const [loi, setLoi] = useState("");
@@ -92,15 +149,30 @@ function BoHoSo() {
         <button onClick={() => window.print()} className="rounded-lg bg-cvr-ink px-5 py-2.5 text-sm font-semibold text-white">
           In / Lưu PDF
         </button>
+        {quy && !laMauTt89(nam, quy) && quyData[0] && (
+          <button
+            onClick={() => {
+              const k = quyData[0]!;
+              const t = congSo(k.ra, k.vao, k.ngoai);
+              taiXml01Gtgt(nam, quy, { ct22: ct22(quy), hangVao: t.hangVao, thueVao: t.thueVao, dtChuaThue: t.dtChuaThue, thueRa: t.thueRa });
+            }}
+            className="rounded-lg border border-cvr-ink px-5 py-2.5 text-sm font-semibold text-cvr-ink"
+          >
+            Xuất XML 01/GTGT
+          </button>
+        )}
         <p className="text-sm text-cvr-muted">
           Hộp thoại in: chọn khổ A4, bỏ tích &ldquo;Đầu trang và chân trang&rdquo;. Muốn lưu file thì chọn
           máy in &ldquo;Lưu dưới dạng PDF&rdquo;. Bản in dùng để <strong>chép vào cổng thuế điện tử và lưu hồ sơ</strong> —
           nộp chính thức vẫn là ký số trên cổng.
         </p>
-        <p className="w-full rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-800">
-          ⚠️ Bố cục đang theo mẫu Thông tư 80/2021. Từ kỳ tháng 7/2026 tờ khai dùng mẫu mới Thông tư 89/2026
-          (01/GTGT thêm chỉ tiêu [32b], [34a], đổi công thức [27]; 05/KK-TNCN thêm chỉ tiêu miễn thuế) — đang cập
-          nhật. Khi khai trên cổng, chép SỐ theo TÊN chỉ tiêu, không theo mã số.
+        <p className="w-full rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          {quy && laMauTt89(nam, quy)
+            ? "01/GTGT và 05/KK-TNCN theo mẫu Thông tư 89/2026/TT-BTC."
+            : quy
+              ? "Tờ khai theo mẫu Thông tư 80/2021/TT-BTC (mẫu đang có trên cổng thuế cho kỳ này)."
+              : "05/QTT-TNCN đang theo mẫu Thông tư 80/2021/TT-BTC — mẫu Thông tư 89/2026 cập nhật trước hạn quyết toán 31/3."}{" "}
+          Khi khai trên cổng, chép SỐ theo TÊN chỉ tiêu.
         </p>
         {loi && <p className="w-full text-sm text-red-700">Lỗi đọc số liệu: {loi}</p>}
       </div>
@@ -122,12 +194,14 @@ function HoSoQuy({ nam, quy, ky, ct22, tncn }: { nam: number; quy: number; ky: K
   const t = useMemo(() => congSo(ky?.ra ?? [], ky?.vao ?? [], ky?.ngoai ?? []), [ky]);
   const kyThue = `Quý ${quy} năm ${nam}`;
   const th = useMemo(() => tongHop05(tncn), [tncn]);
+  const th89 = useMemo(() => tongHopKk05(tncn), [tncn]);
+  const moi = laMauTt89(nam, quy);
   return (
     <>
-      <ToKhaiGtgt kyThue={kyThue} t={t} ct22={ct22} />
+      {moi ? <ToKhaiGtgt89 kyThue={kyThue} t={t} ct22={ct22} /> : <ToKhaiGtgt kyThue={kyThue} t={t} ct22={ct22} />}
       <PhuLucGiamThue kyThue={kyThue} t={t} />
       <TamNopTndn kyThue={kyThue} t={t} />
-      <ToKhai05 kyThue={kyThue} th={th} mau="05/KK-TNCN" />
+      {moi ? <ToKhaiKk05 kyThue={kyThue} th={th89} /> : <ToKhai05 kyThue={kyThue} th={th} mau="05/KK-TNCN" />}
       <BangKeRaVao kyThue={kyThue} ky={ky} />
     </>
   );
@@ -313,6 +387,146 @@ function HoSoNam({ nam, dsKy, ct22, tncn }: { nam: number; dsKy: (Ky | null)[]; 
 
 type T = ReturnType<typeof congSo>;
 
+/**
+ * Thông tư 89/2026/TT-BTC có hiệu lực 01/7/2026, nhưng phần mềm ngành thuế chưa có mẫu
+ * 01/GTGT, 05/KK-TNCN theo TT89 (HTKK 5.8.1 ngày 16/10/2026; cổng thuế liệt kê 01/GTGT TT80).
+ * Chủ dự án chốt 20/10/2026: quý 3/2026 khai mẫu TT80 → bản in quý 3 theo TT80; từ quý 4 dùng TT89.
+ */
+function laMauTt89(nam: number, quy: number): boolean {
+  return nam > 2026 || (nam === 2026 && quy >= 4);
+}
+
+/**
+ * Mẫu 01/GTGT theo Thông tư 89/2026/TT-BTC — chép từ mẫu gốc (trang 241–243 của
+ * datafiles.chinhphu.vn/cpp/files/vbpq/2026/7/89-btc.signed.pdf), đối chiếu 19/10/2026.
+ * Khác mẫu cũ: [23a][24a] chỉ còn hàng hóa nhập khẩu; thêm [32b] (không tính vào giá
+ * tính thuế), [34a] (không thuộc phạm vi điều chỉnh của pháp luật thuế GTGT);
+ * [27] = [29]+[30]+[32]+[32a]−[32b]; [34] = [26]+[27]+[34a]; [39a] là thuế nhận bàn giao.
+ */
+function ToKhaiGtgt89({ kyThue, t, ct22 }: { kyThue: string; t: T; ct22: number }) {
+  const ketQua = t.phaiNop - ct22; // [36] − [22] (+[37] −[38] −[39a] = 0)
+  const khongPhatSinh = t.dtChuaThue === 0 && t.hangVao === 0;
+  return (
+    <Trang>
+      <TieuDe ten="TỜ KHAI THUẾ GIÁ TRỊ GIA TĂNG" phu="(Áp dụng đối với người nộp thuế tính thuế theo phương pháp khấu trừ có hoạt động sản xuất kinh doanh) — Mẫu số 01/GTGT, Thông tư 89/2026/TT-BTC" />
+      <ThongTinNnt kyThue={kyThue} gtgt89 />
+      <table className="bang">
+        <thead>
+          <tr>
+            <th>STT</th>
+            <th>Chỉ tiêu</th>
+            <th>Giá trị hàng hóa, dịch vụ (chưa có thuế GTGT)</th>
+            <th>Thuế giá trị gia tăng</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>A</td><td>Không phát sinh hoạt động mua, bán trong kỳ (đánh dấu &ldquo;X&rdquo;) <b>[21]</b></td><td colSpan={2} className="giua">{khongPhatSinh ? "X" : ""}</td></tr>
+          <tr><td>B</td><td>Thuế giá trị gia tăng còn được khấu trừ kỳ trước chuyển sang <b>[22]</b></td><td></td><td className="so">{coSo(ct22)}</td></tr>
+          <tr className="nhom"><td>C</td><td colSpan={3}>Kê khai thuế giá trị gia tăng phải nộp ngân sách nhà nước</td></tr>
+          <tr className="nhom"><td>I</td><td colSpan={3}>Hàng hoá, dịch vụ mua vào trong kỳ</td></tr>
+          <tr><td>1</td><td>Giá trị và thuế giá trị gia tăng của hàng hóa, dịch vụ mua vào <b>[23] [24]</b></td><td className="so">{coSo(t.hangVao)}</td><td className="so">{coSo(t.thueVao)}</td></tr>
+          <tr><td></td><td>Trong đó: hàng hóa nhập khẩu <b>[23a] [24a]</b></td><td className="so">Chưa có</td><td className="so">Chưa có</td></tr>
+          <tr><td>2</td><td>Thuế giá trị gia tăng của hàng hóa, dịch vụ mua vào được khấu trừ kỳ này <b>[25]</b></td><td></td><td className="so">{coSo(t.thueVao)}</td></tr>
+          <tr className="nhom"><td>II</td><td colSpan={3}>Hàng hoá, dịch vụ bán ra trong kỳ</td></tr>
+          <tr><td>1</td><td>Hàng hóa, dịch vụ bán ra không chịu thuế giá trị gia tăng <b>[26]</b></td><td className="so">Chưa có</td><td></td></tr>
+          <tr><td>2</td><td>Hàng hóa, dịch vụ bán ra chịu thuế giá trị gia tăng <b>[27]</b>=[29]+[30]+[32]+[32a]−[32b]; <b>[28]</b>=[31]+[33]</td><td className="so">{coSo(t.dtChuaThue)}</td><td className="so">{coSo(t.thueRa)}</td></tr>
+          <tr><td>a</td><td>Hàng hoá, dịch vụ bán ra chịu thuế suất 0% <b>[29]</b></td><td className="so">Chưa có</td><td></td></tr>
+          <tr><td>b</td><td>Hàng hoá, dịch vụ bán ra chịu thuế suất 5% <b>[30] [31]</b></td><td className="so">Chưa có</td><td className="so">Chưa có</td></tr>
+          <tr><td>c</td><td>Hàng hoá, dịch vụ bán ra chịu thuế suất 10% <b>[32] [33]</b> (áp dụng giảm còn {(THUE_SUAT_GTGT * 100).toFixed(0)}% — xem phụ lục)</td><td className="so">{coSo(t.dtChuaThue)}</td><td className="so">{coSo(t.thueRa)}</td></tr>
+          <tr><td>d</td><td>Hàng hoá, dịch vụ bán ra không kê khai tính nộp thuế <b>[32a]</b></td><td className="so">Chưa có</td><td></td></tr>
+          <tr><td>e</td><td>Hàng hoá, dịch vụ bán ra không tính vào giá tính thuế giá trị gia tăng <b>[32b]</b></td><td className="so">Chưa có</td><td></td></tr>
+          <tr><td>3</td><td>Hàng hoá, dịch vụ bán ra không thuộc phạm vi điều chỉnh của pháp luật thuế giá trị gia tăng <b>[34a]</b></td><td className="so">Chưa có</td><td></td></tr>
+          <tr><td>4</td><td>Tổng doanh thu và thuế giá trị gia tăng của hàng hóa, dịch vụ bán ra <b>[34]</b>=[26]+[27]+[34a]; <b>[35]</b>=[28]</td><td className="so">{coSo(t.dtChuaThue)}</td><td className="so">{coSo(t.thueRa)}</td></tr>
+          <tr><td>III</td><td>Thuế giá trị gia tăng phát sinh trong kỳ <b>[36]</b>=[35]−[25]</td><td></td><td className="so">{so(t.phaiNop)}</td></tr>
+          <tr className="nhom"><td>IV</td><td colSpan={3}>Điều chỉnh tăng, giảm thuế giá trị gia tăng còn được khấu trừ của các kỳ trước</td></tr>
+          <tr><td>1</td><td>Điều chỉnh giảm <b>[37]</b></td><td></td><td className="so">Chưa có</td></tr>
+          <tr><td>2</td><td>Điều chỉnh tăng <b>[38]</b></td><td></td><td className="so">Chưa có</td></tr>
+          <tr><td>V</td><td>Thuế giá trị gia tăng nhận bàn giao được khấu trừ trong kỳ <b>[39a]</b></td><td></td><td className="so">Chưa có</td></tr>
+          <tr className="nhom"><td>VI</td><td colSpan={3}>Xác định nghĩa vụ thuế giá trị gia tăng phải nộp trong kỳ</td></tr>
+          <tr><td>1</td><td>Thuế giá trị gia tăng phải nộp của hoạt động sản xuất kinh doanh trong kỳ <b>[40a]</b>=([36]−[22]+[37]−[38]−[39a]) ≥ 0</td><td></td><td className="so">{so(Math.max(0, ketQua))}</td></tr>
+          <tr><td>2</td><td>Thuế giá trị gia tăng mua vào của dự án đầu tư được bù trừ với thuế GTGT còn phải nộp của hoạt động sản xuất kinh doanh cùng kỳ tính thuế <b>[40b]</b> ≤ [40a]</td><td></td><td className="so">Chưa có</td></tr>
+          <tr className="dam"><td>3</td><td>Thuế giá trị gia tăng còn phải nộp trong kỳ <b>[40]</b>=[40a]−[40b]</td><td></td><td className="so">{so(Math.max(0, ketQua))}</td></tr>
+          <tr><td>4</td><td>Thuế giá trị gia tăng chưa khấu trừ hết kỳ này <b>[41]</b>=([36]−[22]+[37]−[38]−[39a]) ≤ 0</td><td></td><td className="so">{so(Math.max(0, -ketQua))}</td></tr>
+          <tr><td>4.1</td><td>Thuế giá trị gia tăng đề nghị hoàn <b>[42]</b> ≤ [41]</td><td></td><td className="so">Chưa có</td></tr>
+          <tr className="dam"><td>4.2</td><td>Thuế giá trị gia tăng còn được khấu trừ chuyển kỳ sau <b>[43]</b>=[41]−[42]</td><td></td><td className="so">{so(Math.max(0, -ketQua))}</td></tr>
+        </tbody>
+      </table>
+      <GhiChu>
+        {t.thueVaoNgoai > 0 && <>Trong [23] [24] đã gồm {so(t.thueVaoNgoai)} đ thuế GTGT nộp thay nhà thầu nước ngoài (đã nộp Kho bạc — Nghị định
+        181/2025/NĐ-CP). </>}{t.dtChuaThue > 0 ? <>Thuế suất {(THUE_SUAT_GTGT * 100).toFixed(0)}% theo Nghị quyết 204/2025/QH15 (đến {HAN_THUE_SUAT}),
+        nộp kèm Phụ lục giảm thuế ở trang sau. Khi khai trên cổng, nhập phụ lục trước rồi đối chiếu lại [33] cổng tự tính.</> : <>Kỳ này chưa có doanh thu bán ra, không kèm Phụ lục giảm thuế.</>}
+      </GhiChu>
+      <ChuKy />
+    </Trang>
+  );
+}
+
+/**
+ * Mẫu 05/KK-TNCN theo Thông tư 89/2026/TT-BTC — chép từ mẫu gốc (trang 307–309 của
+ * datafiles.chinhphu.vn/cpp/files/vbpq/2026/7/89-btc.signed.pdf), đối chiếu 19/10/2026.
+ * Ghi chú của mẫu: quý có trả tiền lương, tiền công là phải khai, không phân biệt có
+ * khấu trừ thuế hay không.
+ */
+function ToKhaiKk05({ kyThue, th }: { kyThue: string; th: ReturnType<typeof tongHopKk05> }) {
+  return (
+    <Trang>
+      <TieuDe ten="TỜ KHAI THUẾ THU NHẬP CÁ NHÂN" phu="(Áp dụng đối với tổ chức, cá nhân trả các khoản thu nhập từ tiền lương, tiền công) — Mẫu số 05/KK-TNCN, Thông tư 89/2026/TT-BTC" />
+      <ThongTinNnt kyThue={kyThue} />
+      {th.c15 === 0 && (
+        <p className="mb-2 text-sm"><b>Kỳ này không trả thu nhập cho cá nhân nào → không phải nộp tờ khai 05/KK-TNCN quý này.</b></p>
+      )}
+      <table className="bang">
+        <thead>
+          <tr>
+            <th>STT</th>
+            <th>Chỉ tiêu</th>
+            <th>Mã chỉ tiêu</th>
+            <th>Đơn vị tính</th>
+            <th>Số người / Số tiền</th>
+          </tr>
+        </thead>
+        <tbody>
+          <Dong05 stt="1" ten="Tổng số người lao động" ma="15" dv="Người" gt={th.c15} />
+          <Dong05 stt="" ten="Trong đó: Cá nhân cư trú có hợp đồng lao động" ma="16" dv="Người" gt={th.c16} />
+          <Dong05 stt="2" ten="Tổng số cá nhân đã khấu trừ thuế [17]=[18]+[19]" ma="17" dv="Người" gt={th.c17} />
+          <Dong05 stt="2.1" ten="Cá nhân cư trú" ma="18" dv="Người" gt={th.c18} />
+          <Dong05 stt="2.2" ten="Cá nhân không cư trú" ma="19" dv="Người" gt={th.c19} />
+          <Dong05 stt="3" ten="Tổng thu nhập chịu thuế trả cho cá nhân [20]=[21]+[22]" ma="20" dv="VNĐ" gt={th.c20} tien />
+          <Dong05 stt="3.1" ten="Cá nhân cư trú" ma="21" dv="VNĐ" gt={th.c21} tien />
+          <Dong05 stt="3.2" ten="Cá nhân không cư trú" ma="22" dv="VNĐ" gt={th.c22} tien />
+          <Dong05 stt="3.3" ten="Trong đó: Tổng thu nhập chịu thuế từ tiền phí mua bảo hiểm nhân thọ, bảo hiểm không bắt buộc khác của doanh nghiệp bảo hiểm không thành lập tại Việt Nam cho người lao động" ma="23" dv="VNĐ" gt={th.c23} tien />
+          <Dong05 stt="4" ten="Tổng thu nhập được miễn trong kỳ [24]=[25]+[26]+[27]+[28]" ma="24" dv="VNĐ" gt={th.c24} tien />
+          <Dong05 stt="4.1" ten="Theo quy định của Hợp đồng dầu khí" ma="25" dv="VNĐ" gt={0} tien />
+          <Dong05 stt="4.2" ten="Từ thực hiện nhiệm vụ khoa học, công nghệ và đổi mới sáng tạo" ma="26" dv="VNĐ" gt={0} tien />
+          <Dong05 stt="4.3" ten="Thu nhập của chuyên gia hỗ trợ khởi nghiệp sáng tạo theo quy định" ma="27" dv="VNĐ" gt={0} tien />
+          <Dong05 stt="4.4" ten="Thu nhập được miễn khác" ma="28" dv="VNĐ" gt={0} tien />
+          <Dong05 stt="5" ten="Tổng thu nhập chịu thuế trả cho cá nhân thuộc diện phải khấu trừ thuế [29]=[30]+[31]" ma="29" dv="VNĐ" gt={th.c29} tien />
+          <Dong05 stt="5.1" ten="Cá nhân cư trú" ma="30" dv="VNĐ" gt={th.c30} tien />
+          <Dong05 stt="5.2" ten="Cá nhân không cư trú" ma="31" dv="VNĐ" gt={th.c31} tien />
+          <Dong05 stt="6" ten="Thu nhập tính thuế [32]=[33]+[34]" ma="32" dv="VNĐ" gt={th.c32} tien />
+          <Dong05 stt="6.1" ten="Cá nhân cư trú" ma="33" dv="VNĐ" gt={th.c33} tien />
+          <Dong05 stt="6.2" ten="Cá nhân không cư trú" ma="34" dv="VNĐ" gt={th.c34} tien />
+          <Dong05 stt="7" ten="Số thuế thu nhập cá nhân phải khấu trừ trong kỳ" ma="35" dv="VNĐ" gt={th.c35} tien />
+          <Dong05 stt="8" ten="Số thuế được miễn trong kỳ" ma="36" dv="VNĐ" gt={th.c36} tien />
+          <Dong05 stt="8.1" ten="Tổng thu nhập của cá nhân là nhân lực công nghiệp công nghệ số chất lượng cao thuộc trường hợp được miễn thuế" ma="37" dv="VNĐ" gt={0} tien />
+          <Dong05 stt="8.2" ten="Số thuế được miễn của cá nhân là nhân lực công nghiệp công nghệ số chất lượng cao" ma="38" dv="VNĐ" gt={0} tien />
+          <Dong05 stt="8.3" ten="Tổng thu nhập của cá nhân là nhân lực công nghệ cao thuộc trường hợp được miễn thuế" ma="39" dv="VNĐ" gt={0} tien />
+          <Dong05 stt="8.4" ten="Số thuế được miễn của cá nhân là nhân lực công nghệ cao thực hiện hoạt động nghiên cứu và phát triển công nghệ cao hoặc công nghệ chiến lược" ma="40" dv="VNĐ" gt={0} tien />
+          <Dong05 stt="8.5" ten="Số thuế được miễn khác theo quy định" ma="41" dv="VNĐ" gt={0} tien />
+          <Dong05 stt="9" ten="Tổng số thuế thu nhập cá nhân đã khấu trừ [42]=[43]+[44]" ma="42" dv="VNĐ" gt={th.c42} tien dam />
+          <Dong05 stt="9.1" ten="Cá nhân cư trú" ma="43" dv="VNĐ" gt={th.c43} tien />
+          <Dong05 stt="9.2" ten="Cá nhân không cư trú" ma="44" dv="VNĐ" gt={th.c44} tien />
+          <Dong05 stt="9.3" ten="Trong đó: Tổng số thuế thu nhập cá nhân đã khấu trừ trên tiền phí mua bảo hiểm nhân thọ, bảo hiểm không bắt buộc khác của doanh nghiệp bảo hiểm không thành lập tại Việt Nam cho người lao động" ma="45" dv="VNĐ" gt={th.c45} tien />
+        </tbody>
+      </table>
+      <GhiChu>
+        Quý có trả tiền lương, tiền công cho cá nhân là phải nộp tờ khai này, kể cả khi không khấu trừ đồng thuế nào.
+      </GhiChu>
+      <ChuKy />
+    </Trang>
+  );
+}
+
 function ToKhaiGtgt({ kyThue, t, ct22 }: { kyThue: string; t: T; ct22: number }) {
   const ketQua = t.phaiNop - ct22; // [36] − [22] (+[37] −[38] −[39a] = 0)
   const khongPhatSinh = t.dtChuaThue === 0 && t.hangVao === 0;
@@ -331,38 +545,38 @@ function ToKhaiGtgt({ kyThue, t, ct22 }: { kyThue: string; t: T; ct22: number })
         </thead>
         <tbody>
           <tr><td>A</td><td>Không phát sinh hoạt động mua, bán trong kỳ (đánh dấu &ldquo;X&rdquo;) <b>[21]</b></td><td colSpan={2} className="giua">{khongPhatSinh ? "X" : ""}</td></tr>
-          <tr><td>B</td><td>Thuế GTGT còn được khấu trừ kỳ trước chuyển sang <b>[22]</b></td><td></td><td className="so">{so(ct22)}</td></tr>
+          <tr><td>B</td><td>Thuế GTGT còn được khấu trừ kỳ trước chuyển sang <b>[22]</b></td><td></td><td className="so">{coSo(ct22)}</td></tr>
           <tr className="nhom"><td>C</td><td colSpan={3}>Kê khai thuế GTGT phải nộp Ngân sách nhà nước</td></tr>
           <tr className="nhom"><td>I</td><td colSpan={3}>Hàng hoá, dịch vụ mua vào trong kỳ</td></tr>
-          <tr><td>1</td><td>Giá trị và thuế GTGT của hàng hoá, dịch vụ mua vào <b>[23] [24]</b></td><td className="so">{so(t.hangVao)}</td><td className="so">{so(t.thueVao)}</td></tr>
-          <tr><td></td><td>Trong đó: hàng hoá, dịch vụ nhập khẩu <b>[23a] [24a]</b></td><td className="so">0</td><td className="so">0</td></tr>
-          <tr><td>2</td><td>Thuế GTGT của hàng hoá, dịch vụ mua vào được khấu trừ kỳ này <b>[25]</b></td><td></td><td className="so">{so(t.thueVao)}</td></tr>
+          <tr><td>1</td><td>Giá trị và thuế GTGT của hàng hoá, dịch vụ mua vào <b>[23] [24]</b></td><td className="so">{coSo(t.hangVao)}</td><td className="so">{coSo(t.thueVao)}</td></tr>
+          <tr><td></td><td>Trong đó: hàng hoá, dịch vụ nhập khẩu <b>[23a] [24a]</b></td><td className="so">Chưa có</td><td className="so">Chưa có</td></tr>
+          <tr><td>2</td><td>Thuế GTGT của hàng hoá, dịch vụ mua vào được khấu trừ kỳ này <b>[25]</b></td><td></td><td className="so">{coSo(t.thueVao)}</td></tr>
           <tr className="nhom"><td>II</td><td colSpan={3}>Hàng hoá, dịch vụ bán ra trong kỳ</td></tr>
-          <tr><td>1</td><td>Hàng hóa, dịch vụ bán ra không chịu thuế GTGT <b>[26]</b></td><td className="so">0</td><td></td></tr>
-          <tr><td>2</td><td>Hàng hóa, dịch vụ bán ra chịu thuế GTGT <b>[27]</b>=[29]+[30]+[32]+[32a]; <b>[28]</b>=[31]+[33]</td><td className="so">{so(t.dtChuaThue)}</td><td className="so">{so(t.thueRa)}</td></tr>
-          <tr><td>a</td><td>Hàng hoá, dịch vụ bán ra chịu thuế suất 0% <b>[29]</b></td><td className="so">0</td><td></td></tr>
-          <tr><td>b</td><td>Hàng hoá, dịch vụ bán ra chịu thuế suất 5% <b>[30] [31]</b></td><td className="so">0</td><td className="so">0</td></tr>
-          <tr><td>c</td><td>Hàng hoá, dịch vụ bán ra chịu thuế suất 10% <b>[32] [33]</b> (áp dụng giảm còn {(THUE_SUAT_GTGT * 100).toFixed(0)}% — xem phụ lục)</td><td className="so">{so(t.dtChuaThue)}</td><td className="so">{so(t.thueRa)}</td></tr>
-          <tr><td>d</td><td>Hàng hoá, dịch vụ bán ra không phải kê khai, tính nộp thuế GTGT <b>[32a]</b></td><td className="so">0</td><td></td></tr>
-          <tr><td>3</td><td>Tổng doanh thu và thuế GTGT của HHDV bán ra <b>[34]</b>=[26]+[27]; <b>[35]</b>=[28]</td><td className="so">{so(t.dtChuaThue)}</td><td className="so">{so(t.thueRa)}</td></tr>
+          <tr><td>1</td><td>Hàng hóa, dịch vụ bán ra không chịu thuế GTGT <b>[26]</b></td><td className="so">Chưa có</td><td></td></tr>
+          <tr><td>2</td><td>Hàng hóa, dịch vụ bán ra chịu thuế GTGT <b>[27]</b>=[29]+[30]+[32]+[32a]; <b>[28]</b>=[31]+[33]</td><td className="so">{coSo(t.dtChuaThue)}</td><td className="so">{coSo(t.thueRa)}</td></tr>
+          <tr><td>a</td><td>Hàng hoá, dịch vụ bán ra chịu thuế suất 0% <b>[29]</b></td><td className="so">Chưa có</td><td></td></tr>
+          <tr><td>b</td><td>Hàng hoá, dịch vụ bán ra chịu thuế suất 5% <b>[30] [31]</b></td><td className="so">Chưa có</td><td className="so">Chưa có</td></tr>
+          <tr><td>c</td><td>Hàng hoá, dịch vụ bán ra chịu thuế suất 10% <b>[32] [33]</b> (áp dụng giảm còn {(THUE_SUAT_GTGT * 100).toFixed(0)}% — xem phụ lục)</td><td className="so">{coSo(t.dtChuaThue)}</td><td className="so">{coSo(t.thueRa)}</td></tr>
+          <tr><td>d</td><td>Hàng hoá, dịch vụ bán ra không phải kê khai, tính nộp thuế GTGT <b>[32a]</b></td><td className="so">Chưa có</td><td></td></tr>
+          <tr><td>3</td><td>Tổng doanh thu và thuế GTGT của HHDV bán ra <b>[34]</b>=[26]+[27]; <b>[35]</b>=[28]</td><td className="so">{coSo(t.dtChuaThue)}</td><td className="so">{coSo(t.thueRa)}</td></tr>
           <tr><td>III</td><td>Thuế GTGT phát sinh trong kỳ <b>[36]</b>=[35]−[25]</td><td></td><td className="so">{so(t.phaiNop)}</td></tr>
           <tr className="nhom"><td>IV</td><td colSpan={3}>Điều chỉnh tăng, giảm thuế GTGT còn được khấu trừ của các kỳ trước</td></tr>
-          <tr><td>1</td><td>Điều chỉnh giảm <b>[37]</b></td><td></td><td className="so">0</td></tr>
-          <tr><td>2</td><td>Điều chỉnh tăng <b>[38]</b></td><td></td><td className="so">0</td></tr>
-          <tr><td>V</td><td>Thuế GTGT đã nộp ở địa phương khác của hoạt động kinh doanh xây dựng, lắp đặt, bán hàng, bất động sản ngoại tỉnh <b>[39a]</b></td><td></td><td className="so">0</td></tr>
+          <tr><td>1</td><td>Điều chỉnh giảm <b>[37]</b></td><td></td><td className="so">Chưa có</td></tr>
+          <tr><td>2</td><td>Điều chỉnh tăng <b>[38]</b></td><td></td><td className="so">Chưa có</td></tr>
+          <tr><td>V</td><td>Thuế GTGT đã nộp ở địa phương khác của hoạt động kinh doanh xây dựng, lắp đặt, bán hàng, bất động sản ngoại tỉnh <b>[39a]</b></td><td></td><td className="so">Chưa có</td></tr>
           <tr className="nhom"><td>VI</td><td colSpan={3}>Xác định nghĩa vụ thuế GTGT phải nộp trong kỳ</td></tr>
           <tr><td>1</td><td>Thuế GTGT phải nộp của hoạt động sản xuất kinh doanh trong kỳ <b>[40a]</b>=([36]−[22]+[37]−[38]−[39a]) ≥ 0</td><td></td><td className="so">{so(Math.max(0, ketQua))}</td></tr>
-          <tr><td>2</td><td>Thuế GTGT mua vào của dự án đầu tư được bù trừ <b>[40b]</b></td><td></td><td className="so">0</td></tr>
+          <tr><td>2</td><td>Thuế GTGT mua vào của dự án đầu tư được bù trừ <b>[40b]</b></td><td></td><td className="so">Chưa có</td></tr>
           <tr className="dam"><td>3</td><td>Thuế GTGT còn phải nộp trong kỳ <b>[40]</b>=[40a]−[40b]</td><td></td><td className="so">{so(Math.max(0, ketQua))}</td></tr>
           <tr><td>4</td><td>Thuế GTGT chưa khấu trừ hết kỳ này <b>[41]</b>=([36]−[22]+[37]−[38]−[39a]) &lt; 0</td><td></td><td className="so">{so(Math.max(0, -ketQua))}</td></tr>
-          <tr><td>4.1</td><td>Thuế GTGT đề nghị hoàn <b>[42]</b></td><td></td><td className="so">0</td></tr>
+          <tr><td>4.1</td><td>Thuế GTGT đề nghị hoàn <b>[42]</b></td><td></td><td className="so">Chưa có</td></tr>
           <tr className="dam"><td>4.2</td><td>Thuế GTGT còn được khấu trừ chuyển kỳ sau <b>[43]</b>=[41]−[42]</td><td></td><td className="so">{so(Math.max(0, -ketQua))}</td></tr>
         </tbody>
       </table>
       <GhiChu>
-        Trong [23] [24] đã gồm {so(t.thueVaoNgoai)} đ thuế GTGT nộp thay nhà thầu nước ngoài (đã nộp Kho bạc — Nghị định
-        181/2025/NĐ-CP). Thuế suất {(THUE_SUAT_GTGT * 100).toFixed(0)}% theo Nghị quyết 204/2025/QH15 (đến {HAN_THUE_SUAT}),
-        nộp kèm Phụ lục giảm thuế ở trang sau. Khi khai trên cổng, nhập phụ lục trước rồi đối chiếu lại [33] cổng tự tính.
+        {t.thueVaoNgoai > 0 && <>Trong [23] [24] đã gồm {so(t.thueVaoNgoai)} đ thuế GTGT nộp thay nhà thầu nước ngoài (đã nộp Kho bạc — Nghị định
+        181/2025/NĐ-CP). </>}{t.dtChuaThue > 0 ? <>Thuế suất {(THUE_SUAT_GTGT * 100).toFixed(0)}% theo Nghị quyết 204/2025/QH15 (đến {HAN_THUE_SUAT}),
+        nộp kèm Phụ lục giảm thuế ở trang sau. Khi khai trên cổng, nhập phụ lục trước rồi đối chiếu lại [33] cổng tự tính.</> : <>Kỳ này chưa có doanh thu bán ra, không kèm Phụ lục giảm thuế.</>}
       </GhiChu>
       <ChuKy />
     </Trang>
@@ -377,6 +591,8 @@ function PhuLucGiamThue({ kyThue, t }: { kyThue: string; t: T }) {
     { ten: "Dịch vụ đăng tin quảng cáo bất động sản trực tuyến", gt: t.dtTinDang },
     { ten: "Dịch vụ quảng cáo cho doanh nghiệp", gt: t.dtDoanhNghiep },
   ].filter((d) => d.gt > 0);
+  // Kỳ chưa có doanh thu bán ra thì không kèm phụ lục.
+  if (dong.length === 0) return null;
   const tong = dong.reduce((s, d) => s + d.gt, 0);
   const giam = (gt: number) => Math.round(gt * (goc - THUE_SUAT_GTGT));
   return (
@@ -395,9 +611,6 @@ function PhuLucGiamThue({ kyThue, t }: { kyThue: string; t: T }) {
           </tr>
         </thead>
         <tbody>
-          {dong.length === 0 && (
-            <tr><td colSpan={6} className="giua">Kỳ này không phát sinh doanh thu chịu thuế suất giảm.</td></tr>
-          )}
           {dong.map((d, i) => (
             <tr key={i}>
               <td>{i + 1}</td>
@@ -503,6 +716,110 @@ function ToKhai05({ kyThue, th, mau }: { kyThue: string; th: ReturnType<typeof t
   );
 }
 
+/**
+ * Mẫu 01/NTNN, NCCNN theo Thông tư 89/2026/TT-BTC — chép từ mẫu gốc (trang 475–477 của
+ * datafiles.chinhphu.vn/cpp/files/vbpq/2026/7/89-btc.signed.pdf), đối chiếu 20/10/2026.
+ * Hai phần cùng một bộ cột (1)…(14): Phần I bên Việt Nam nộp thay nhà thầu nước ngoài;
+ * Phần II tổ chức theo phương pháp khấu trừ nộp thay nhà cung cấp nước ngoài trên nền
+ * tảng thương mại điện tử, nền tảng số. Chọn phần nào là việc kế toán chốt.
+ */
+function ToKhaiNtnn({ nam, thang, rows, phan }: { nam: number; thang: number; rows: DongNgoai[]; phan: 1 | 2 }) {
+  const tong = (k: "tien_vnd" | "dt_gtgt" | "thue_gtgt" | "dt_tndn" | "thue_tndn") =>
+    rows.reduce((s, d) => s + Number(d[k] || 0), 0);
+  const phanTram = (x: number) => `${(x * 100).toLocaleString("vi-VN")}%`;
+  const bang = (
+    <table className="bang nho">
+      <thead>
+        <tr>
+          <th rowSpan={2}>STT</th>
+          <th rowSpan={2}>Nội dung</th>
+          <th rowSpan={2}>Mã số thuế của {phan === 1 ? "NTNN tại Việt Nam" : "NCCNN"} (nếu có)</th>
+          <th colSpan={2}>Hợp đồng</th>
+          <th rowSpan={2}>Số tiền thanh toán</th>
+          <th rowSpan={2}>Ngày thanh toán</th>
+          <th colSpan={3}>Thuế giá trị gia tăng (GTGT)</th>
+          <th colSpan={4}>Thuế thu nhập doanh nghiệp (TNDN)</th>
+          <th rowSpan={2}>Tổng số thuế phải nộp vào Ngân sách Nhà nước</th>
+        </tr>
+        <tr>
+          <th>Số</th><th>Ngày/tháng/năm</th>
+          <th>Doanh thu tính thuế</th><th>Tỷ lệ % để tính thuế GTGT</th><th>Thuế GTGT phải nộp</th>
+          <th>Doanh thu tính thuế</th><th>Tỷ lệ (%) thuế TNDN</th><th>Số thuế được miễn giảm theo Hiệp định</th><th>Thuế TNDN phải nộp</th>
+        </tr>
+        <tr>
+          <th></th><th>(1)</th><th>(2)</th><th>(3)</th><th>(4)</th><th>(5)</th><th>(6)</th><th>(7)</th><th>(8)</th><th>(9=7x8)</th>
+          <th>(10)</th><th>(11)</th><th>(12)</th><th>(13)=(10x11)−(12)</th><th>(14)=(9)+(13)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {phan === 2 && <tr className="nhom"><td>I</td><td colSpan={14}>Nhà cung cấp nước ngoài</td></tr>}
+        {rows.length === 0 && <tr><td colSpan={15}>Tháng này không có khoản phải khai thay.</td></tr>}
+        {rows.map((d, i) => (
+          <tr key={d.id}>
+            <td>{i + 1}</td>
+            <td>{d.nha_cung_cap}{d.dien_giai ? ` — ${d.dien_giai}` : ""}</td>
+            <td></td>
+            <td>{d.so_hoa_don ?? ""}</td>
+            <td>{ngay(d.ngay_hoa_don)}</td>
+            <td className="so">{so(d.tien_vnd)}</td>
+            <td>{ngay(d.ngay_hoa_don)}</td>
+            <td className="so">{so(d.dt_gtgt)}</td>
+            <td className="giua">{phanTram(TY_LE[d.loai].gtgt)}</td>
+            <td className="so">{so(d.thue_gtgt)}</td>
+            <td className="so">{so(d.dt_tndn)}</td>
+            <td className="giua">{phanTram(TY_LE[d.loai].tndn)}</td>
+            <td className="so">0</td>
+            <td className="so">{so(d.thue_tndn)}</td>
+            <td className="so">{so(Number(d.thue_gtgt || 0) + Number(d.thue_tndn || 0))}</td>
+          </tr>
+        ))}
+        <tr className="dam">
+          <td></td><td>Tổng</td><td></td><td></td><td></td>
+          <td className="so">{so(tong("tien_vnd"))}</td><td></td>
+          <td className="so">{so(tong("dt_gtgt"))}</td><td></td>
+          <td className="so">{so(tong("thue_gtgt"))}</td>
+          <td className="so">{so(tong("dt_tndn"))}</td><td></td><td className="so">0</td>
+          <td className="so">{so(tong("thue_tndn"))}</td>
+          <td className="so">{so(tong("thue_gtgt") + tong("thue_tndn"))}</td>
+        </tr>
+      </tbody>
+    </table>
+  );
+  return (
+    <Trang>
+      <TieuDe
+        ten="TỜ KHAI THUẾ NHÀ THẦU NƯỚC NGOÀI; NHÀ CUNG CẤP NƯỚC NGOÀI, CÁ NHÂN KHÔNG CƯ TRÚ CÓ HOẠT ĐỘNG KINH DOANH TRÊN NỀN TẢNG THƯƠNG MẠI ĐIỆN TỬ, NỀN TẢNG SỐ KHÁC"
+        phu="Mẫu số 01/NTNN, NCCNN — Thông tư 89/2026/TT-BTC"
+      />
+      <div className="nnt">
+        <p>Áp dụng đối với:</p>
+        <p>{phan === 1 ? "[X]" : "[  ]"} Bên Việt Nam khấu trừ và nộp thuế thay cho nhà thầu nước ngoài</p>
+        <p>
+          {phan === 2 ? "[X]" : "[  ]"} Tổ chức kinh doanh tại Việt Nam áp dụng phương pháp tính thuế GTGT là phương pháp khấu trừ
+          thuế khấu trừ và nộp thuế thay cho nhà cung cấp nước ngoài, cá nhân không cư trú có hoạt động kinh doanh trên nền tảng
+          thương mại điện tử, nền tảng số khác
+        </p>
+        <p><b>[01]</b> Kỳ tính thuế: <b>[01b] Tháng {thang} năm {nam}</b></p>
+        <p><b>[02]</b> Lần đầu: [X] &nbsp;&nbsp; <b>[03]</b> Bổ sung lần thứ: [&nbsp;&nbsp;]</p>
+        <p><b>[04]</b> Bên Việt Nam khấu trừ và nộp thuế thay: <b>{NGUOI_NOP_THUE.ten}</b></p>
+        <p><b>[05]</b> Mã số thuế: <b>{NGUOI_NOP_THUE.mst}</b></p>
+        <p className="dv">Đơn vị tiền: Đồng Việt Nam</p>
+      </div>
+      <p className="muc">
+        {phan === 1
+          ? "I. PHẦN DÀNH CHO BÊN VIỆT NAM KHẤU TRỪ VÀ NỘP THAY THUẾ CHO NHÀ THẦU NƯỚC NGOÀI"
+          : "II. PHẦN DÀNH CHO TỔ CHỨC KINH DOANH TẠI VIỆT NAM ÁP DỤNG PHƯƠNG PHÁP TÍNH THUẾ GTGT LÀ PHƯƠNG PHÁP KHẤU TRỪ THUẾ KHẤU TRỪ VÀ NỘP THAY THUẾ CHO NHÀ CUNG CẤP NƯỚC NGOÀI, CÁ NHÂN KHÔNG CƯ TRÚ CÓ HOẠT ĐỘNG KINH DOANH TRÊN NỀN TẢNG THƯƠNG MẠI ĐIỆN TỬ, NỀN TẢNG SỐ KHÁC"}
+      </p>
+      {bang}
+      <GhiChu>
+        Số tiền thanh toán quy đổi theo tỷ giá đã lưu ở từng dòng; hợp đồng NET đã quy đổi ngược doanh thu tính thuế.
+        Thuế GTGT nộp thay, sau khi nộp, được khấu trừ vào chỉ tiêu [23] [24] của tờ khai 01/GTGT quý.
+      </GhiChu>
+      <ChuKy />
+    </Trang>
+  );
+}
+
 function BangKeRaVao({ kyThue, ky }: { kyThue: string; ky: Ky | null }) {
   const ra = ky?.ra ?? [];
   const vao = ky?.vao ?? [];
@@ -592,10 +909,17 @@ function TieuDe({ ten, phu }: { ten: string; phu: string }) {
   );
 }
 
-function ThongTinNnt({ kyThue }: { kyThue: string }) {
+function ThongTinNnt({ kyThue, gtgt89 }: { kyThue: string; gtgt89?: boolean }) {
   return (
     <div className="nnt">
-      <p><b>[01]</b> Kỳ tính thuế: <b>{kyThue}</b></p>
+      {gtgt89 ? (
+        <>
+          <p><b>[01a]</b> Tên hoạt động sản xuất kinh doanh: <b>Hoạt động sản xuất kinh doanh thông thường</b></p>
+          <p><b>[01b]</b> Kỳ tính thuế: <b>{kyThue}</b></p>
+        </>
+      ) : (
+        <p><b>[01]</b> Kỳ tính thuế: <b>{kyThue}</b></p>
+      )}
       <p><b>[02]</b> Lần đầu: [X] &nbsp;&nbsp; <b>[03]</b> Bổ sung lần thứ: [&nbsp;&nbsp;]</p>
       <p><b>[04]</b> Tên người nộp thuế: <b>{NGUOI_NOP_THUE.ten}</b></p>
       <p><b>[05]</b> Mã số thuế: <b>{NGUOI_NOP_THUE.mst}</b> &nbsp;·&nbsp; Cơ quan thuế quản lý: {NGUOI_NOP_THUE.coQuanThue}</p>
@@ -632,18 +956,22 @@ function Dong({ ma, ten, tien, chu, dam }: { ma: string; ten: string; tien?: num
   );
 }
 
-function Dong05({ stt, ten, ma, dv, gt, tien, dam }: { stt: string; ten: string; ma: string; dv: string; gt: number; tien?: boolean; dam?: boolean }) {
+function Dong05({ stt, ten, ma, dv, gt, dam }: { stt: string; ten: string; ma: string; dv: string; gt: number; tien?: boolean; dam?: boolean }) {
   return (
     <tr className={dam ? "dam" : ""}>
       <td>{stt}</td>
       <td>{ten}</td>
       <td className="giua">[{ma}]</td>
       <td className="giua">{dv}</td>
-      <td className="so">{tien ? so(gt) : gt}</td>
+      <td className="so">{coSo(gt)}</td>
     </tr>
   );
 }
 
+/** Ô tờ khai chưa phát sinh số liệu ghi "Chưa có"; có số liệu thì tự hiện số. */
+function coSo(n: number): string {
+  return Math.round(Number(n) || 0) === 0 ? "Chưa có" : so(n);
+}
 function so(n: number): string {
   return Math.round(Number(n) || 0).toLocaleString("vi-VN");
 }

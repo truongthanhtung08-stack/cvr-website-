@@ -62,11 +62,14 @@ export const GIA_DA_GOM_VAT = false;
  *   C   có mã của cơ quan thuế
  *   26  năm phát hành 2026
  *   T   hóa đơn điện tử thông thường
- *   CL  hai ký tự tự chọn — Coastal Land
+ *   CV  hai ký tự tự chọn
+ *
+ * Đối chiếu 20/10/2026 trên VNPT Invoice → Quản lý dải ký hiệu: ký hiệu C26TCV,
+ * mẫu "HD GTGT", tạo 04/09/2026, đang sử dụng (tờ khai 01/ĐKTĐ-HĐĐT được chấp nhận 04/09/2026).
  *
  * 👉 Sang 2027 phải đổi "26" thành "27" và đăng ký dải ký hiệu mới bên VNPT.
  */
-export const KY_HIEU_HOA_DON = "1C26TCL";
+export const KY_HIEU_HOA_DON = "1C26TCV";
 
 /** Đơn vị tính mặc định khi xuất hóa đơn — phải có sẵn trong danh mục VNPT. */
 export const DVT_GOI_TIN = "Gói";

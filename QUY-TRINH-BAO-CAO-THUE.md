@@ -41,14 +41,14 @@
 | A3 | **Phụ lục giảm thuế GTGT 8%** (mẫu 01 Phụ lục III Nghị định 174/2025) | Kỳ xuất hóa đơn 8% phải nộp kèm | ✅ 02/10 — có trong bản in quý |
 | A4 | Mục **TNCN** (khai quý 05/KK + quyết toán 05/QTT) | Web chưa có gì về TNCN | ✅ 02/10 — dùng ngay trên trình duyệt, KHÔNG cần chạy SQL (lưu trong bảng `bi_mat` có sẵn, chỉ admin đọc được) |
 | A5 | **Trang IN BÁO CÁO** `/admin/hoa-don-thue/in` — bố cục theo mẫu tờ khai, in A4 / lưu PDF | Mục tiêu chủ dự án: **nhập liệu xong là in báo cáo** | ✅ 02/10 — quý: 01/GTGT · phụ lục giảm thuế · bảng tính tạm nộp TNDN · 05/KK-TNCN · bảng kê hóa đơn. Năm: tổng hợp GTGT 4 quý · số liệu quyết toán TNDN · 05/QTT-TNCN + bảng kê 05-1, 05-2 |
-| A7 | **Cập nhật bản in theo mẫu Thông tư 89/2026** (áp dụng từ kỳ tháng 7/2026: 01/GTGT thêm [32b] [34a], đổi công thức [27], bỏ [11b]; 05/KK-TNCN thêm chỉ tiêu miễn thuế) | Tờ khai quý 3/2026 trở đi PHẢI theo mẫu mới | ⏳ đang làm — cần mở mạng tới trang luật để lấy mẫu gốc |
+| A7 | **Cập nhật bản in theo mẫu Thông tư 89/2026** — 01/GTGT và 05/KK-TNCN | Tờ khai quý 3/2026 trở đi PHẢI theo mẫu mới (Điều 100 khoản 1 TT 89) | ✅ 19/10 sửa trên máy, đã đối chiếu mẫu gốc, **chờ chủ dự án duyệt + "Push"**. Kỳ trước 01/7/2026 vẫn in mẫu cũ. 05/QTT-TNCN (năm) chưa đổi — xem mục 0.1 bước 9 |
 | A6 | Xuất file **XML** nộp thẳng lên cổng thuế | Đỡ gõ tay | ⛔ chưa làm — chưa có đặc tả XML chính thức (XSD) của ngành thuế; đoán sai cấu trúc thì cổng từ chối. Hiện: chép số từ bản in vào "khai trực tuyến" trên cổng (01/GTGT chỉ ~10 ô có số) |
 
 ### Giai đoạn B — Chủ dự án cung cấp (xem mục 7)
 | # | Việc | Trạng thái |
 |---|---|---|
-| B1 | Chữ ký số: loại + ngày hết hạn | ⏳ |
-| B2 | Tài khoản thuế điện tử + email nhận thông báo + ngân hàng liên kết | ⏳ |
+| B1 | Chữ ký số: loại + ngày hết hạn | ✅ có chữ ký số VNPT (chủ dự án báo 19/10) · ⏳ ngày hết hạn |
+| B2 | Tài khoản thuế điện tử + email nhận thông báo + ngân hàng liên kết | ✅ 20/10 chủ dự án báo: đã có tài khoản thuế điện tử, đã đăng ký USB VNPT-CA trên cổng thuế |
 | B3 | Đã nộp tờ khai GTGT Q1, Q2/2026 chưa · số [43] của tờ khai gần nhất | ⏳ |
 | B4 | Có trả lương/hoa hồng cho cá nhân không | ⏳ |
 | B5 | Hóa đơn mua vào quý 3 chưa có trên web | ⏳ trước 25/10 |
@@ -75,6 +75,92 @@
 ### Giai đoạn D — Nộp quý 3/2026 (hạn **31/10/2026**)
 D1 làm xong A2 + B1–B3 + B5 → D2 khối "Việc thuế cần làm" xanh hết → D3 Claude soạn tờ khai điền sẵn
 từng ô → D4 chủ dự án ký số, nộp trên cổng (mục 6.3) → D5 nộp tiền GTGT + tạm nộp TNDN → D6 lưu hồ sơ.
+
+### 0.1 KẾ HOẠCH NỘP QUÝ 3/2026 — cập nhật 19/10/2026 (giờ Việt Nam)
+
+> **Hạn:** 31/10/2026 là **thứ Bảy** → lùi sang **thứ Hai 02/11/2026** (mục 2). Nên nộp xong trước 30/10.
+> **Số trên web lúc 19/10:** Quý 3/2026 doanh thu 0 · mua vào 0 · nước ngoài 0 · TNCN 0.
+> **20/10 — SỬA:** thư mục `D:\Coastal Land\Kế toán\Hóa đơn đầu vào` có **5 hóa đơn GTGT trong nước quý 3**
+> (Google 07/9 · VNPT-CA 28/8 · Sắc Màu 25/9 · Zalo 26/9 · P.A Việt Nam 29/9) = tiền hàng **7.021.988** · thuế
+> **600.660** → chưa nhập web. Nhập xong: [23] 7.021.988 · [24] [25] 600.660 · doanh thu 0 → [40] = 0,
+> [43] = 600.660 chuyển sang quý 4. Không phải tờ khai trắng. Chỉ đúng nếu phương pháp đã là khấu trừ (bước 2).
+
+| # | Việc | Căn cứ (đã đọc văn bản gốc) | Ai làm · ở đâu | Trạng thái |
+|---|---|---|---|---|
+| 1 | Bản in 01/GTGT + 05/KK-TNCN theo mẫu mới | **TT 89/2026/TT-BTC** (ban hành 30/6/2026, hiệu lực 01/7/2026; đính chính QĐ 2551/QĐ-BTC 15/9/2026 — không đụng 2 mẫu này). Mẫu 01/GTGT trang 241–243, 05/KK-TNCN trang 307–309 của bản PDF gốc. Điều 100 khoản 1: kỳ trước 01/7/2026 mới dùng mẫu cũ | Claude · `in/page.tsx`, `thueTncn.ts` | ✅ trên máy, chờ duyệt + Push |
+| 2 | **Xác nhận phương pháp GTGT trên cổng thuế** (Kê khai → Đăng ký tờ khai: thấy **01/GTGT** = khấu trừ; thấy **04/GTGT** = vẫn trực tiếp) | Lỗi 1025 tháng 8 — xem memory `gtgt-phuong-phap-khau-tru` | **Chủ dự án** | ⏳ GẤP — nếu vẫn 04/GTGT thì phải khai mẫu 04/GTGT, bản in 01/GTGT không dùng được |
+| 3 | Hóa đơn nước ngoài **tháng 9/2026** (Vercel Pro từ 14/9, Supabase Pro từ 17/9): trả bằng thẻ công ty → khai **01/NTNN, hạn 20/10/2026**; thẻ cá nhân → không khai, không khấu trừ | Quy trình đã có ở mục cuối `/admin/hoa-don-thue` | **Chủ dự án** chọn PDF · Claude soát số | ⏳ GẤP — hạn ngày mai |
+| 4 | Ô **[22]** = chỉ tiêu [43] của tờ khai Quý 2/2026 (chưa nộp Q1, Q2 thì nói để xử lý trước) | — | **Chủ dự án** nhập trên `/admin/hoa-don-thue` (chọn Quý 3) | ⏳ |
+| 5 | Hóa đơn mua vào trong nước Quý 3 (XML) — nếu có | — | **Chủ dự án** tải XML | ⏳ trước 25/10 · 20/10: chủ dự án báo hóa đơn đầu vào phát sinh từ **tháng 10** → thuộc Quý 4 (khai trước 31/01/2027), chủ bổ sung dần |
+| 6 | Có trả lương / tiền công Quý 3 không. **Có trả là phải nộp 05/KK-TNCN, kể cả không khấu trừ đồng nào** (ghi chú mẫu gốc TT 89) | TT 89 mẫu 05/KK-TNCN | **Chủ dự án** nhập "Ghi một lần chi trả" | ⏳ |
+| 7 | Bấm **In báo cáo Quý 3/2026** → khai trực tuyến trên cổng, chép SỐ theo TÊN chỉ tiêu → ký bằng **chữ ký số VNPT** → nộp | Mục 6.3 | **Chủ dự án** | ⏳ sau bước 2–6 |
+| 8 | Chờ Thông báo chấp nhận → lưu hồ sơ `Thuế/2026/Q3/` | Mục 3.3 | **Chủ dự án** | ⏳ |
+| 8a | Bản in **01/NTNN, NCCNN** theo TT 89 (trang 475–477 bản gốc) — nút "In tờ khai 01/NTNN tháng …" ở mục thuế nhà thầu; có chọn Phần I (nhà thầu) / Phần II (nhà cung cấp trên nền tảng số) — **kế toán chốt Vercel/Supabase thuộc phần nào** | TT 89 | Claude | ✅ 20/10 trên máy, chờ duyệt + Push |
+| 8b | **Chuẩn hóa hóa đơn đầu ra theo đăng ký VNPT**: ký hiệu thật (`KY_HIEU_HOA_DON`, đang để tạm `1C26TCL`), mẫu số, chứng thư số | Thông báo chấp nhận 01/ĐKTĐ-HĐĐT | **Chủ dự án** gửi ảnh "Quản lý dải ký hiệu" trên hst.vnpt-invoice.com.vn + thông báo chấp nhận · Claude sửa | ⏳ |
+| 9 | Sau 31/10, trước 31/3/2027: mẫu **05/QTT-TNCN** theo TT 89 (trang 313–315 bản gốc) · nút "Tải XML" (A6) | TT 89 | Claude | ⏳ chưa làm |
+
+### 0.2 CRM THUẾ — LUỒNG CHUẨN (chốt 20/10/2026): nhập số → tải file → ký số → nộp online
+
+| Bước | Ai | Làm gì |
+|---|---|---|
+| 1. Nhập | Web tự / chủ dự án | Hóa đơn RA web tự ghi khi duyệt tin · hóa đơn VÀO trong nước: XML (hoặc nhập tay từ PDF) · hóa đơn NƯỚC NGOÀI: PDF → web tính thuế khai thay · TNCN: mỗi lần trả lương |
+| 2. Kiểm | Web | Khối "Việc thuế cần làm" xanh hết · đối chiếu với hoadondientu.gdt.gov.vn |
+| 3. Xuất | Web | Mỗi tờ khai một bản in (đã có: 01/GTGT, phụ lục 8%, 05/KK-TNCN, 01/NTNN, tạm nộp TNDN) **+ file XML để nộp thẳng** (A6 — chưa có, xem dưới) |
+| 4. Ký + nộp | Chủ dự án | Cổng thuế → Nộp tờ khai XML → chọn file → **cắm USB VNPT-CA → Ký → nhập PIN** → Nộp. Chưa có XML thì "Khai trực tuyến", chép số theo TÊN chỉ tiêu |
+| 5. Nộp tiền | Chủ dự án | Lập giấy nộp tiền trên cổng, ký USB |
+
+**✅ 20/10/2026 — XML 01/GTGT (TT80) ĐÃ CÓ:** trang in quý → nút **"Xuất XML 01/GTGT"** (`src/lib/xml01Gtgt.ts`). Cấu trúc theo XSD chuẩn `01_GTGT_TT80_283` (đã kiểm hợp lệ bằng lược đồ trong HTKK), mã tờ khai 842, CQT 50115, ngành nghề "00". Đã thử đưa lên cổng (dichvucong.gdt.gov.vn → Thủ tục 1.007014 → 01/GTGT TT80 → **Nộp XML** → View Form Xml): cổng đọc đúng CQT, Quý 3/2026, tờ khai chính thức. Ký số: chứng thư VNPT-CA SHA2 MST 0402353502 còn hạn đến 28/08/2028, USB đang cắm, VNPT-CA Plugin chạy. **Mỗi quý: Xuất XML → Chọn tệp → View Form Xml (soát số) → Ký hồ sơ (PIN) → Nộp tờ khai.** Tệp quý 3: `D:\Coastal Land\Kế toán\To khai XML\`.
+
+**✅ ĐÃ NỘP 20/10/2026 ~14:28 — 01/GTGT Q3/2026 bằng XML của CRM, ký VNPT. Mã hồ sơ G12.18-261020-00178534.** Bài học: XML phải khớp tuyệt đối tệp mẫu cổng tạo (bước kê khai trực tuyến → "Tải về"): không `id` trên HSoKhaiThue, có `<CKyDTu/>` rỗng, ngày lập dd/mm/yyyy, tháng từ/đến mm/yyyy, ct21 true/false, NNT theo tài khoản thuế. Lệch là cổng báo "Có lỗi hệ thống". Tệp mẫu cổng: `Downloads\842-1.007014-20261020142350.xml`.
+
+**⚠️ Ký số (20/10/2026, đã xử lý — đã đổi sang VNPT, thư 03/TB-TĐT lúc 13:59):** cổng ký qua **CTSigningHub** (`localhost:32001`, cài lại 20/10 tại `C:\Program Files (x86)\CT\CTSigningHub`; báo "chưa bật Plugin" thì mở CTSigningHub trong Start). Tài khoản **Khai thuế điện tử** còn đăng ký chứng thư **Viettel-CA** (5404FFFE…, 24/08/2026) trong khi USB là **VNPT-CA** sê-ri **54010101F4015F4362DEF50FD9A2E558** (28/08/2026–28/08/2028) → báo "Không tìm thấy chữ ký số với serial đã chọn". Phải đổi CKS (Quản lý thông tin → Thay đổi thông tin dịch vụ → Thay đổi CKS — cần eSigner bản chính thức ở Trợ giúp cổng; hoặc tổng đài 024.730.55999 nhánh 1). Đổi xong mới ký + nộp tờ 01/GTGT Q3 (hạn 02/11/2026).
+
+**Mẫu nào đang có trên phần mềm ngành thuế (đọc "Nội dung nâng cấp HTKK" trên gdt.gov.vn, 20/10):**
+- HTKK **5.7.9 (07/10/2026)** đã có **01/NTNN, NCCNN** theo TT 89.
+- **01/GTGT và 05/KK-TNCN: các bản 5.7.4 → 5.8.1 (16/10/2026) KHÔNG ghi là đã nâng cấp theo TT 89** (bản 5.7.5 vẫn ghi phụ lục giảm thuế "đính kèm 01/GTGT (TT80/2021)"). → Lúc khai quý 3, cổng hiện mẫu nào thì khai mẫu đó. Với Coastal Land số liệu hai mẫu như nhau ([32b], [34a] = 0); 05/KK chỉ khác mã chỉ tiêu → chép theo TÊN.
+
+**VNPT Invoice (đọc 20/10):** tờ khai 01/ĐKTĐ-HĐĐT chấp nhận 04/09/2026 · hóa đơn GTGT có mã CQT · chứng thư VNPT-CA đến 28/08/2028 · dải ký hiệu **C26TCV** (mẫu "HD GTGT", 1/001), chưa phát hành tờ nào → web đã sửa `KY_HIEU_HOA_DON = "1C26TCV"`.
+
+**CẦN CHỦ DỰ ÁN BỔ SUNG:**
+1. **File XML mẫu** cho A6 (không đoán cấu trúc): cài HTKK 5.8.1 (gdt.gov.vn → Hỗ trợ kê khai), lập thử 01/GTGT quý 3, 05/KK-TNCN quý 3, 01/NTNN tháng 9 → "Kết xuất XML" → để vào `D:\Coastal Land\Kế toán\XML mẫu\`.
+2. **File "Tải mẫu upload"** của VNPT (Upload lô hóa đơn) — để file xuất hóa đơn của web đúng cột, có dấu.
+3. **Ảnh xem trước mẫu hóa đơn HD GTGT** (trình sửa mẫu VNPT khóa trong khung, Claude không đọc được) — để soát tên, MST, địa chỉ, số tài khoản ngân hàng, logo.
+4. Vercel 14/9 + Supabase 16/9 trả bằng **thẻ công ty?** → có thì khai 01/NTNN tháng 9, **hạn 20/10/2026**.
+5. Duyệt cho Claude nhập 5 hóa đơn vào quý 3 (mục 0.1) — hoặc tự nhập.
+6. Kế toán chốt: Vercel/Supabase khai Phần I hay Phần II của 01/NTNN, NCCNN.
+
+**20/10 đã nhập CRM:** 5 hóa đơn vào Q3 (đối chiếu bản in: 5 chứng từ, [23] 7.021.988 · [24][25] 600.660 · [43] 600.660) · 01/NTNN tháng 9: Vercel KBVO2ERL-0002 $20 × 25.607 (NHNN 14/09) + Supabase ZKLSJK-00004 $25 × 25.626 (NHNN 16/09) → GTGT nộp thay 63.866 · TNDN 60.673 · **tổng nộp 124.539** (khấu trừ GTGT vào quý nộp tiền = Q4). Hóa đơn định kỳ hằng tháng: Vercel (ngày 14) + Supabase (ngày 16) → 01/NTNN mỗi tháng, hạn ngày 20 tháng sau.
+**⚠️ 20/10 chiều — số 01/NTNN tháng 9 ở trên CHƯA ĐƯỢC NỘP, CHƯA CHỐT.** Đối chiếu văn bản gốc: NĐ 252/2026 Điều 43–45
+(tổ chức khấu trừ mua dịch vụ nhà cung cấp nước ngoài trên nền tảng số phải khấu trừ, nộp thay GTGT + TNDN; doanh thu =
+"số tiền tổ chức Việt Nam chi trả"; khai từng lần, nhiều lần/tháng thì theo tháng) · NĐ 320/2025 Điều 12.3: TNDN dịch vụ 5% ·
+TT 20/2026 Điều 7: hợp đồng NET → quy đổi ngược · TT 69/2025 Điều 9.6.a: bảng tỷ lệ GTGT nhà thầu **trừ** dịch vụ qua nền tảng
+số · TT 69 Điều 6: khấu trừ cần chứng từ nộp thay. → Tỷ lệ GTGT (5%/10%) + có quy đổi ngược không: **chờ Thuế cơ sở 4 trả lời**.
+HTKK 5.8.1 (đã cài, `C:\Program Files (x86)\HTKK`): mẫu 01/NTNN, NCCNN TT89 áp dụng **từ kỳ 01/10/2026**; kỳ 9/2026 dùng
+01/NTNN TT80 (MaToKhai 838, XML 2.5.1, khung `InterfaceTemplates\xml\01_NTNN_TT80_xml_251.xml`, XSD `Validate\01_NTNN_TT80_251.xsd`).
+Cổng dichvucong chỉ cho **Nộp XML** với mẫu này. HTKK đòi quyền quản trị → Claude không điều khiển được; Claude dựng XML từ XSD.
+Mã CQT Thuế cơ sở 4 ĐN = **50115**. .NET 3.5 đã cài (Windows 11 26H1 phải dùng bộ cài riêng của Microsoft).
+
+**20/10 tối — XML 01/NTNN, NCCNN (TT89) ĐÃ CÓ, CHƯA NỘP THỬ:** trang in tháng (`?thang=`) → nút **"Xuất XML 01/NTNN"**
+(`src/lib/xml01Ntnn.ts`), chỉ hiện từ kỳ 10/2026. MaToKhai 2012 · XML 3.0.9 · kieuKy M · phần chung `TKhaiThue_DBHC.xsd`
+(NNT ghi `tenXaNNT` + `maXaNNT` 50115012, không có `phuongXa`). Phần I/II theo ô chọn ở trang in; phần không khai để một dòng
+toàn `xsi:nil`; dòng Phần II bắt buộc thuộc tính `id`. Ngành nghề cột (1b) theo `TY_LE[loai].nganh` (01 dịch vụ · 16 bản quyền —
+**chưa chốt**). Kiểm XSD `01_NTNN_NCCNN_TT89_309`: 0 lỗi cả Phần I, Phần II, tháng trống (phải bỏ `<CKyDTu/>` trước khi kiểm vì
+DBHC.xsd không có thẻ này). **Không lấy được tệp mẫu từ cổng:** với 01/NTNN, NCCNN (TT89) cổng KHÓA "Kê khai trực tuyến", chỉ cho
+"Nộp XML" → không có nút "Tải về". Tệp đối chiếu duy nhất là **HTKK 5.8.1 → lập thử 01/NTNN, NCCNN tháng 10/2026 → Kết xuất XML**
+(HTKK đòi quyền quản trị — chủ dự án chạy, để tệp vào `D:\Coastal Land\Kế toán\To khai XML\`). Chưa đối chiếu thì CHƯA nộp.
+Còn hở: có giữ `<CKyDTu/>` không, cách ghi `id`/`ID` dòng, `ct8`/`ct11` ghi 5 hay 0.05.
+Chủ dự án không đăng nhập được HTKK (20/10) → đã so thứ tự thẻ với khung HTKK `InterfaceTemplates\xml\01_NTNN_NCCNN_TT89_xml_309.xml`:
+khớp, chỉ khác phần tùy chọn (GiaHan, DLyThue — tờ 01/GTGT đã nộp cũng bỏ) và cuối tệp (khung HTKK có `<PLuc/>`, không có `CKyDTu`).
+Lần nộp đầu: nếu cổng báo "Có lỗi hệ thống" thì thử bỏ `<CKyDTu/>` trước.
+
+**Việc mã còn lại:** CRM tự lấy tỷ giá NHNN theo NGÀY HÓA ĐƠN (chủ dự án yêu cầu 20/10; hiện nút chỉ lấy tỷ giá hôm nay) · thông báo "Đã lưu ✓" cũ không xóa khi nhập tiếp (làm lẫn lần lưu hỏng).
+
+**Đã xử lý, không cần làm:** Anthropic (MST VN 9000020034, tự thu 10%) và Google (Google Việt Nam, hóa đơn GTGT trong nước) — không khai thay. Adobe Photoshop 07/9 xuất cho "TRUONG TUNG", không tên công ty → không tính chi phí công ty; muốn tính thì đổi thông tin thanh toán Adobe sang tên công ty + MST.
+
+**Chưa kiểm được bằng văn bản gốc (không đưa vào mã):**
+- Phụ lục giảm thuế 8%: bản in vẫn theo Mẫu 01 Phụ lục III Nghị định 174/2025/NĐ-CP — chưa đối chiếu xem TT 89 có thay mẫu này không.
+- Cổng thuế / HTKK đã nâng cấp đủ mẫu TT 89 chưa — bài tư vấn nói chưa xong; lúc khai phải nhìn mẫu trên cổng.
+- Nghị định 254/2026/NĐ-CP (hóa đơn, thay NĐ 123/2020) — "Bảng thông tin chi tiết giao dịch" thay hóa đơn khách lẻ: mới đọc tóm tắt, chưa đọc văn bản gốc → hỏi kế toán cùng C2.
 
 ### Giai đoạn E — Cuối năm
 E1 trước 15/12: hỏi kế toán thuế suất 2027 (8% hết 31/12/2026) → sửa `src/lib/thue.ts`, đổi ký hiệu
@@ -198,7 +284,7 @@ từ 5 triệu trở lên 🔎 (ngưỡng có thể đã đổi theo luật mớ
   (ngưỡng 2 triệu theo quy định cũ — kiểm lại). Người cam kết thu nhập thấp nộp mẫu 08/CK-TNCN.
 
 ### 5.2 Khai theo quý — tờ khai **05/KK-TNCN**
-- Cùng kỳ và cùng hạn với GTGT (quý). **Quý nào không khấu trừ đồng nào thì không phải khai.**
+- Cùng kỳ và cùng hạn với GTGT (quý). **Từ quý 3/2026 (mẫu TT 89/2026): quý nào có trả tiền lương, tiền công là phải khai, kể cả không khấu trừ đồng nào.** Quý không trả thu nhập thì không khai.
 - Mẫu điền: số người nhận thu nhập · tổng thu nhập chịu thuế · số người bị khấu trừ ·
   tổng thuế đã khấu trừ (tách nhóm cư trú có HĐLĐ ≥ 3 tháng / không HĐ hoặc < 3 tháng / không cư trú).
 
@@ -285,3 +371,4 @@ từ 5 triệu trở lên 🔎 (ngưỡng có thể đã đổi theo luật mớ
 - Luật Quản lý thuế 108/2025/QH15: xaydungchinhsach.chinhphu.vn/toan-van-luat-quan-ly-thue-co-hieu-luc-tu-1-7-2026-119260626174633402.htm
 - Hạn nộp các loại thuế 2026: amis.misa.vn/50915
 - Nộp thuế điện tử 2026: aztax.com.vn/nop-thue-dien-tu/
+- **Văn bản gốc TT 89/2026/TT-BTC** (đọc 19/10/2026): vanban.chinhphu.vn (docid=218974) → datafiles.chinhphu.vn/cpp/files/vbpq/2026/7/89-btc.signed.pdf · đính chính QĐ 2551/QĐ-BTC: congbao.chinhphu.vn/van-ban/quyet-dinh-so-2551-qd-btc-470485.htm

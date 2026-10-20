@@ -142,8 +142,64 @@ function khoaNguoi(d: { ma_so: string | null; ho_ten: string }): string {
 }
 
 /**
- * Chỉ tiêu tờ khai khấu trừ thuế TNCN mẫu 05/KK-TNCN (cũng là phần tổng hợp
- * của 05/QTT-TNCN khi truyền cả năm). Thứ tự chỉ tiêu theo mẫu Thông tư 80/2021.
+ * Chỉ tiêu tờ khai 05/KK-TNCN theo mẫu MỚI của Thông tư 89/2026/TT-BTC (áp dụng
+ * từ kỳ quý 3/2026 — Điều 100 khoản 1). Đối chiếu mẫu gốc 19/10/2026:
+ * datafiles.chinhphu.vn/cpp/files/vbpq/2026/7/89-btc.signed.pdf (trang 307–309).
+ * Mẫu chỉ còn 2 nhóm cư trú / không cư trú. Thu nhập được miễn [24]–[28] và thuế
+ * được miễn [36]–[41] web chưa có loại nào → 0.
+ */
+export function tongHopKk05(ds: DongChiTra[]) {
+  const nguoi = (loc: (d: DongChiTra) => boolean) => new Set(ds.filter(loc).map(khoaNguoi)).size;
+  const tong = (loc: (d: DongChiTra) => boolean, k: "thu_nhap" | "thue_khau_tru") =>
+    ds.filter(loc).reduce((s, d) => s + Number(d[k] || 0), 0);
+  const cuTru = (d: DongChiTra) => d.loai !== "khong_cu_tru";
+  const khongCuTru = (d: DongChiTra) => d.loai === "khong_cu_tru";
+  const daKhauTru = (d: DongChiTra) => d.thue_khau_tru > 0;
+  const thuocDien = (d: DongChiTra) => (d.loai === "hdld" ? d.thue_khau_tru > 0 : tinhKhauTru(d).phaiKhauTru);
+  const tinhThue = (loc: (d: DongChiTra) => boolean) =>
+    ds.filter((d) => loc(d) && thuocDien(d)).reduce((s, d) => s + tinhKhauTru(d).thuNhapTinhThue, 0);
+
+  const c18 = nguoi((d) => cuTru(d) && daKhauTru(d));
+  const c19 = nguoi((d) => khongCuTru(d) && daKhauTru(d));
+  const c21 = tong(cuTru, "thu_nhap");
+  const c22 = tong(khongCuTru, "thu_nhap");
+  const c30 = tong((d) => cuTru(d) && thuocDien(d), "thu_nhap");
+  const c31 = tong((d) => khongCuTru(d) && thuocDien(d), "thu_nhap");
+  const c33 = tinhThue(cuTru);
+  const c34 = tinhThue(khongCuTru);
+  const c43 = tong(cuTru, "thue_khau_tru");
+  const c44 = tong(khongCuTru, "thue_khau_tru");
+  return {
+    c15: nguoi(() => true),
+    c16: nguoi((d) => d.loai === "hdld"),
+    c17: c18 + c19,
+    c18,
+    c19,
+    c20: c21 + c22,
+    c21,
+    c22,
+    c23: 0,
+    c24: 0,
+    c29: c30 + c31,
+    c30,
+    c31,
+    c32: c33 + c34,
+    c33,
+    c34,
+    // [35] thuế phải khấu trừ trong kỳ; [36] được miễn = 0 → [35] = [42]
+    c35: c43 + c44,
+    c36: 0,
+    c42: c43 + c44,
+    c43,
+    c44,
+    c45: 0,
+  };
+}
+
+/**
+ * Chỉ tiêu phần tổng hợp của 05/QTT-TNCN (quyết toán năm). Thứ tự chỉ tiêu
+ * vẫn theo mẫu Thông tư 80/2021 — mẫu 05/QTT-TNCN của Thông tư 89/2026 chưa đưa
+ * vào (hạn quyết toán năm 2026 là 31/3/2027).
  */
 export function tongHop05(ds: DongChiTra[]) {
   const nguoi = new Set(ds.map(khoaNguoi));
