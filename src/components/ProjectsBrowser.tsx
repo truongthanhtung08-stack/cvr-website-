@@ -284,7 +284,8 @@ export default function ProjectsBrowser({
               CẠNH ô tìm thành một hàng, không đè lên chữ gợi ý đang chạy. */}
           <div className="flex flex-1 items-center gap-2">
           <div ref={sugBoxRef} className="relative flex-1">
-            <svg className="pointer-events-none absolute left-3 top-1/2 hidden h-4 w-4 -translate-y-1/2 text-cvr-faint sm:block" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            {/* Kính lúp hiện cả điện thoại — đồng bộ ô tìm Mua bán / Cho thuê (chủ dự án 20/10/2026) */}
+            <svg className="pointer-events-none absolute left-3.5 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-cvr-muted sm:left-3 sm:h-4 sm:w-4 sm:text-cvr-faint" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
             </svg>
             <input
@@ -301,7 +302,7 @@ export default function ProjectsBrowser({
               placeholder={sugOpen ? "Tìm dự án…" : goiYChay} // đã chạm ô → chữ chạy dừng
               aria-label="Tìm nhanh dự án"
               enterKeyHint="search"
-              className="h-10 w-full rounded-xl bg-cvr-surface pl-4 pr-10 text-[15px] text-cvr-ink placeholder-cvr-faint ring-1 ring-black/5 outline-none transition focus:ring-2 focus:ring-cvr-blue/50 focus:placeholder:text-transparent sm:h-10 sm:border sm:border-transparent sm:pl-9 sm:pr-[8.5rem] sm:ring-0 sm:focus:border-cvr-line sm:focus:bg-white"
+              className="h-9 w-full rounded-full bg-cvr-surface pl-10 pr-10 text-[15px] text-cvr-ink placeholder-cvr-faint ring-1 ring-black/5 outline-none transition focus:ring-2 focus:ring-cvr-blue/50 focus:placeholder:text-transparent sm:h-10 sm:rounded-xl sm:border sm:border-transparent sm:pl-9 sm:pr-[8.5rem] sm:ring-0 sm:focus:border-cvr-line sm:focus:bg-white"
             />
             {/* Nút xoá nhanh (×) — đồng bộ với ô tìm Mua bán/Cho thuê */}
             {q.trim().length > 0 && (
@@ -390,14 +391,15 @@ export default function ProjectsBrowser({
         // z-[80]: phủ header (z-50) + thanh tab đáy (z-40) nhưng THẤP hơn sheet
         // của nút lọc (z-100) để bảng chọn Khu vực/Loại hình/Trạng thái mở đè lên được.
         <div className="fixed inset-0 z-[80] flex flex-col bg-white sm:hidden">
-          <div className="flex items-center gap-1.5 border-b border-cvr-line px-2 py-2">
+          <div className="flex items-center gap-1 border-b border-cvr-line px-2 py-1.5">
+            {/* Nút ← và ô gõ cùng cỡ màn tìm Mua bán / Cho thuê (chủ dự án 20/10/2026) */}
             <button
               type="button"
               aria-label="Đóng tìm kiếm"
               onClick={() => setOverlay(false)}
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-cvr-ink active:bg-cvr-surface"
+              className="flex h-10 w-9 shrink-0 items-center justify-center rounded-full text-cvr-ink active:bg-cvr-surface"
             >
-              <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+              <svg className="h-[22px] w-[22px]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
             </button>
             <div className="relative flex-1">
               <input
@@ -410,7 +412,7 @@ export default function ProjectsBrowser({
                 placeholder="Tìm dự án…" // màn tìm đã mở: chữ gợi ý KHÔNG chạy (chủ dự án 18/10/2026)
                 aria-label="Tìm dự án"
                 enterKeyHint="search"
-                className="h-11 w-full rounded-full bg-cvr-surface pl-4 pr-10 text-[15px] text-cvr-ink placeholder-cvr-faint outline-none ring-1 ring-black/5 focus:ring-2 focus:ring-cvr-blue/40 focus:placeholder:text-transparent"
+                className="h-9 w-full rounded-full bg-cvr-surface pl-4 pr-10 text-[15px] text-cvr-ink placeholder-cvr-faint outline-none ring-1 ring-black/5 focus:ring-2 focus:ring-cvr-blue/40 focus:placeholder:text-transparent"
               />
               {q.trim().length > 0 && (
                 <button

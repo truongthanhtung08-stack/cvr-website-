@@ -51,12 +51,15 @@ export default function FilterDropdown({
   const group = useContext(DropdownGroupContext);
   const [localOpen, setLocalOpen] = useState(false);
   const open = group ? group.openId === groupId : localOpen;
+  // Phụ thuộc HÀM setOpenId (ổn định), không phụ thuộc cả object nhóm (đổi mỗi lần vẽ): setOpen đổi theo mỗi lần vẽ thì
+  // bước lịch sử của bảng chọn bị dọn → tự "quay lại" → bảng vừa mở đã đóng (trang Dự án, chủ dự án 20/10/2026).
+  const setOpenId = group?.setOpenId;
   const setOpen = useCallback(
     (v: boolean) => {
-      if (group) group.setOpenId(v ? groupId : null);
+      if (setOpenId) setOpenId(v ? groupId : null);
       else setLocalOpen(v);
     },
-    [group, groupId],
+    [setOpenId, groupId],
   );
   const btnRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -80,6 +83,27 @@ export default function FilterDropdown({
     mq.addEventListener("change", sync);
     return () => mq.removeEventListener("change", sync);
   }, []);
+
+  // BẢNG KHÔNG NHẢY khi chọn (chủ dự án 20/10/2026): bảng neo ĐÁY nên nội dung đổi (vd. bấm tỉnh → danh sách phường) làm
+  // mép trên nhảy lên xuống. Mở ra đo chiều cao một lần rồi GIỮ NGUYÊN — nội dung dài hơn thì cuộn bên trong bảng.
+  useEffect(() => {
+    if (!open || !sheet) return;
+    const el = panelRef.current;
+    if (!el) return;
+    el.style.height = "";
+    if (dangGo) return; // đang gõ: bảng toàn màn hình theo lớp h-[100dvh], không giữ cỡ
+    // Đo sau khi nội dung vẽ xong (2 khung hình). Danh sách DÀI (tỉnh, phường…) → giữ CAO HẾT MỨC (86% màn) để bấm vào
+    // một tỉnh chuyển sang danh sách phường không làm mép bảng nhảy; danh sách NGẮN (giá, diện tích) → giữ đúng cỡ đo được.
+    let id2 = 0;
+    const id = requestAnimationFrame(() => {
+      id2 = requestAnimationFrame(() => {
+        const toiDa = window.innerHeight * 0.86;
+        const tuNhien = Math.min(toiDa, el.scrollHeight);
+        el.style.height = tuNhien > window.innerHeight * 0.6 ? `${Math.round(toiDa)}px` : `${el.offsetHeight}px`;
+      });
+    });
+    return () => { cancelAnimationFrame(id); cancelAnimationFrame(id2); };
+  }, [open, sheet, dangGo]);
 
   // Khoá cuộn nền khi sheet đang mở (nếu không, cuộn trong sheet sẽ kéo cả trang)
   useEffect(() => {
@@ -244,7 +268,11 @@ export default function FilterDropdown({
                 role="dialog"
                 aria-modal="true"
                 aria-label={label}
-                onFocus={(e) => { if (e.target instanceof HTMLInputElement) setDangGo(true); }}
+                onFocus={(e) => {
+                  // CHỈ ô GÕ CHỮ mới đẩy bảng lên toàn màn hình — bấm ô tick (loại hình…) mà bung bảng là màn NHẢY (chủ dự án 20/10/2026)
+                  const o = e.target;
+                  if (o instanceof HTMLInputElement && /^(text|search|number|tel|email|url)?$/.test(o.type)) setDangGo(true);
+                }}
                 onBlur={(e) => { if (!(e.relatedTarget instanceof HTMLInputElement)) setDangGo(false); }}
                 className={`cvr-sheet absolute inset-x-0 flex flex-col bg-white pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_40px_rgba(0,0,0,0.22)] ${dangGo ? "top-0 h-[100dvh] pt-[env(safe-area-inset-top)]" : "bottom-0 max-h-[86dvh] rounded-t-2xl"}`}
               >
@@ -298,17 +326,18 @@ export function PanelActions({
 }) {
   return (
     <div className="mt-3 flex items-center justify-between gap-2 border-t border-cvr-line pt-3">
+      {/* MỘT KIỂU cho mọi bảng lọc (khu vực, loại hình, giá, diện tích, lọc thêm) — chủ dự án 20/10/2026 */}
       <button
         type="button"
         onClick={onReset}
-        className="text-xs font-medium text-cvr-muted transition hover:text-cvr-ink"
+        className="h-9 rounded-lg px-3 text-[13px] font-medium text-cvr-body transition hover:bg-black/5 hover:text-cvr-ink"
       >
         Đặt lại
       </button>
       <button
         type="button"
         onClick={onApply}
-        className="rounded-lg bg-cvr-blue px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-cvr-blue-ink"
+        className="h-9 rounded-lg bg-cvr-blue px-5 text-[13px] font-semibold text-white transition hover:bg-cvr-blue-ink active:scale-95"
       >
         Áp dụng
       </button>

@@ -559,7 +559,14 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
   const chenVaoO = (label: string) => {
     setTuKhoa(label);
     setChon(-1);
-    document.querySelector<HTMLTextAreaElement>(mo ? "[role='dialog'] textarea" : "textarea[aria-label='Tìm nhà đất']")?.focus();
+    // Con trỏ đứng CUỐI câu vừa chép vào (chủ dự án 20/10/2026) — chờ ô nhận chữ mới rồi mới đặt
+    requestAnimationFrame(() => {
+      const o = document.querySelector<HTMLTextAreaElement>(mo ? "[role='dialog'] textarea" : "textarea[aria-label='Tìm nhà đất']");
+      if (!o) return;
+      o.focus();
+      o.setSelectionRange(o.value.length, o.value.length);
+      o.scrollTop = o.scrollHeight;
+    });
   };
   const dong = (s: Suggestion, icon: PhIcon, onClick: () => void, key: string, idx: number, xoa?: () => void) => (
     <div key={key} onMouseEnter={() => setChon(idx)} className={`flex items-center rounded-xl transition ${chon === idx ? "bg-black/[0.05]" : "hover:bg-black/[0.04]"}`}>
@@ -677,7 +684,12 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
         setLoc(m2 === "duan" ? emptyFilters() : locTuCau(v, m2));
         gianO(e.currentTarget);
       }}
-      onFocus={() => { setMoPc(true); if (mo && !dangGo) doiGo(true); }}
+      onFocus={(e) => {
+        // Vào ô (mở màn tìm, quay lại ô) → con trỏ ở CUỐI từ khoá; chạm giữa chữ để sửa thì trình duyệt tự đặt lại đúng chỗ chạm
+        const o = e.currentTarget;
+        o.setSelectionRange(o.value.length, o.value.length);
+        setMoPc(true); if (mo && !dangGo) doiGo(true);
+      }}
       // bấm vào ô LÚC NÀO cũng mở bảng gợi ý — kể cả khi con trỏ vẫn đang ở trong ô sau khi đóng bằng Esc / × (lỗi "lúc được lúc không")
       onClick={() => setMoPc(true)}
       onKeyDown={(e) => {
@@ -764,11 +776,12 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
             {/* Bàn phím bật → ẩn tiêu đề (ẩn ngay: co dần thì phải tính lại bố cục mỗi khung hình → giật) */}
             {!phimMo && !dangGo && <h2 className="mb-4 text-[22px] font-bold leading-[26px] tracking-tight text-cvr-ink">Tìm kiếm</h2>}
             {/* Ô GÕ ĐỨNG YÊN Ở MÉP TRÊN khi đang gõ (như Google): gợi ý dài vuốt xuống thì chỉ danh sách trôi, ô gõ luôn thấy */}
-            <div className={dangGo ? "sticky top-0 z-10 -mx-5 -mt-3 shrink-0 border-b border-[#e0e0e0] bg-white px-3 pb-1 pt-3" : "shrink-0"}>
+            <div className={dangGo ? "sticky top-0 z-10 -mx-5 -mt-3 shrink-0 border-b border-[#e0e0e0] bg-white px-2 pb-1 pt-3" : "shrink-0"}>
             {/* MÀN GÕ (chủ dự án 18/10/2026): 3 menu ở trên · hàng dưới ← · ô gõ bo tròn, giống màn tìm Mua bán / Cho thuê / Dự án; bỏ nút × */}
             {dangGo && (
-              <div className="flex items-center pb-2.5">
-                <div role="tablist" className="flex items-center gap-6 pl-1">
+              <div className="flex items-center justify-center pb-2.5">
+                {/* 3 MENU CHÍNH GIỮA, ba ô rộng bằng nhau (chủ dự án 20/10/2026) */}
+                <div role="tablist" className="grid w-full max-w-[360px] grid-cols-3 justify-items-center">
                   {TABS.map((t) => (
                     <button key={t.muc} type="button" role="tab" aria-selected={muc === t.muc} onMouseDown={(e) => e.preventDefault()}
                       onClick={() => { setMuc(t.muc); setLoc(t.muc === "duan" ? emptyFilters() : locTuCau(tuKhoa, t.muc)); }}
@@ -782,13 +795,13 @@ export default function TimTrangChu({ goiYTin, tinDem, trenAnh = false }: { goiY
             )}
             {/* ĐANG GÕ: nút ← quay lại đứng CẠNH ô gõ, giống màn tìm Mua bán / Cho thuê / Dự án (chủ dự án 18/10/2026: bỏ nút ×) */}
             <div className={dangGo ? "flex items-center gap-1" : ""}>
-            {dangGo && <button type="button" aria-label="Quay lại" onMouseDown={(e) => e.preventDefault()} onClick={dongMo} className="-ml-1 flex h-11 w-10 shrink-0 items-center justify-center rounded-full text-cvr-ink active:bg-cvr-surface"><svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg></button>}
+            {dangGo && <button type="button" aria-label="Quay lại" onMouseDown={(e) => e.preventDefault()} onClick={dongMo} className="flex h-10 w-9 shrink-0 items-center justify-center rounded-full text-cvr-ink active:bg-cvr-surface"><svg className="h-[22px] w-[22px]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg></button>}
             <div className="relative min-w-0 flex-1">
               {/* kính lúp trong ô — đúng ô "Where?" của Airbnb */}
               {!dangGo && <span className="pointer-events-none absolute left-4 top-7 -translate-y-1/2 text-cvr-ink"><Icon i={MagnifyingGlass} dam className="h-5 w-5" /></span>}
-              {oNhap(dangGo ? "max-h-[152px] min-h-[46px] w-full rounded-[23px] border border-transparent bg-cvr-surface py-[11px] pl-4 pr-10 text-[16px] leading-6 text-cvr-ink placeholder-cvr-faint outline-none ring-2 ring-cvr-blue/40 focus:placeholder:text-transparent" : "max-h-[152px] min-h-[54px] w-full rounded-xl border border-[#b0b0b0] bg-white py-[15px] pl-12 pr-10 text-[16px] leading-6 text-cvr-ink placeholder-cvr-muted outline-none transition focus:border-cvr-ink", "Tìm nhà đất")}
+              {oNhap(dangGo ? "max-h-[152px] min-h-[36px] w-full rounded-[18px] border border-transparent bg-cvr-surface py-[5px] pl-4 pr-10 text-[16px] leading-6 text-cvr-ink placeholder-cvr-faint outline-none ring-2 ring-cvr-blue/40 focus:placeholder:text-transparent" : "max-h-[152px] min-h-[54px] w-full rounded-xl border border-[#b0b0b0] bg-white py-[15px] pl-12 pr-10 text-[16px] leading-6 text-cvr-ink placeholder-cvr-muted outline-none transition focus:border-cvr-ink", "Tìm nhà đất")}
               {tuKhoa && (
-                <button type="button" aria-label="Xoá từ khoá" onClick={xoaHet} className={`absolute right-2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-cvr-muted active:bg-black/5 ${dangGo ? "top-[23px]" : "top-7"}`}>
+                <button type="button" aria-label="Xoá từ khoá" onClick={xoaHet} className={`absolute right-2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-cvr-muted active:bg-black/5 ${dangGo ? "top-[18px]" : "top-7"}`}>
                   <Icon i={X} className="h-4 w-4" />
                 </button>
               )}

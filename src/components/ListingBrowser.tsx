@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import PhanTrang from "@/components/PhanTrang";
 import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
@@ -106,7 +106,7 @@ export default function ListingBrowser({
   }, [hetHanTuMayChu, nguon]);
   const itemsHetHan = hetHanTuMayChu ?? hetHanNap;
 
-  const [filters, setFiltersState] = useState<Filters>(() => {
+  const [filtersSong, setFiltersState] = useState<Filters>(() => {
     const f = filtersFromParams(params);
     // Địa chỉ chưa chỉ định loại hình → lấy loại hình của danh mục đang xem
     if (initialTypes?.length && !f.types.length) f.types = [...initialTypes];
@@ -123,6 +123,9 @@ export default function ListingBrowser({
     }
     return f;
   });
+  // GÕ MƯỢT (chủ dự án 20/10/2026: màn tìm điện thoại "rất giật và lag"): ô tìm dùng bộ lọc SỐNG (filtersSong) nên chữ hiện
+  // ngay; danh sách, đếm kết quả, sửa chính tả dùng bản HOÃN — React dựng lại danh sách lúc rảnh, không chặn từng phím gõ.
+  const filters = useDeferredValue(filtersSong);
   // ?sapxep=gia-tang (ô tìm thông minh: câu có "giá rẻ" → giá thấp trước)
   const [sort, setSort] = useState<SortKey>(() => {
     const sx = params.get("sapxep");
@@ -243,7 +246,7 @@ export default function ListingBrowser({
   const active = hasActiveFilters(filters);
   // TỪ KHOÁ CHUẨN (chủ dự án 17/10/2026: gõ câu thì phải hiện Huế · Căn hộ · Dưới 2 tỷ, không phải câu thô):
   // ô tìm giữ nguyên câu khách gõ; trường lọc + thẻ bên dưới hiện đúng tiêu chí máy đã hiểu.
-  const hieu = useMemo(() => cauThanhBoLoc(filters, purpose), [filters, purpose]);
+  const hieu = useMemo(() => cauThanhBoLoc(filtersSong, purpose), [filtersSong, purpose]);
 
   // Đang nạp dữ liệu → giữ nguyên khung chờ máy chủ đã dựng (không nhấp nháy giao diện)
   if (nguon && !mayChu) return <>{choTai ?? null}</>;
@@ -256,7 +259,7 @@ export default function ListingBrowser({
       {/* Máy tính: thanh tìm gọn trong CỘT TIN bên trái (= lg:col-span-3 của lưới 4 cột, khe 24px), như Batdongsan — chủ dự án 18/10/2026 */}
       <div className="lg:w-[calc(75%-6px)]">
         <FilterBar
-          value={hieu ? { ...hieu, keyword: filters.keyword } : filters}
+          value={hieu ? { ...hieu, keyword: filtersSong.keyword } : filtersSong}
           onChange={setFilters}
           purpose={purpose}
           onMap={() => setMapMode((v) => !v)}

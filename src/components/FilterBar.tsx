@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import FilterDropdown, { PanelActions, FilterDropdownGroup } from "@/components/FilterDropdown";
 import { districtsOf, wardsOf, wardsOfNew, provinceNamesFor, type GeoMode } from "@/lib/locations";
@@ -224,7 +224,10 @@ export default function FilterBar({
   // gợi ý thuộc mục đích & loại hình KHÁC cho chính xác. Từ khoá CHUNG CHUNG
   // (không nêu gì) → giữ nguyên, cứ hiển thị đủ để người dùng tự chọn.
   // Gõ sai chính tả / dính chữ ("Căn họi … tạiphan thiết") → hiểu theo câu đã sửa, như Google
-  const kwHieu = typed ? suaChinhTa(f.keyword) ?? f.keyword : f.keyword;
+  // GÕ MƯỢT (chủ dự án 20/10/2026): chữ trong ô hiện ngay; sửa chính tả + dò gợi ý (nặng: cả bộ địa danh) chạy trên bản HOÃN
+  // của từ khoá — React làm lúc rảnh, không chặn phím gõ. Gợi ý theo kịp ngay khi khách ngừng tay.
+  const kwHoan = useDeferredValue(f.keyword);
+  const kwHieu = useMemo(() => (kwHoan.trim() ? suaChinhTa(kwHoan) ?? kwHoan : kwHoan), [kwHoan]);
   const yDinh = parseQuery(kwHieu);
   const mucDich = yDinh.purpose ?? purpose;
   const roNghia = yDinh.purpose != null || yDinh.types.length > 0;
@@ -240,15 +243,16 @@ export default function FilterBar({
     }
     return true;
   };
-  const typedHits = typed ? suggest(kwHieu, 12).filter(dungY).slice(0, 6) : [];
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- dungY suy ra từ kwHieu + typeOptions
+  const typedHits = useMemo(() => (typed ? suggest(kwHieu, 12).filter(dungY).slice(0, 6) : []), [typed, kwHieu, typeOptions, purpose]);
   // LUÔN có gợi ý (kiểu Google): gõ mà không khớp gì → hiện GỢI Ý PHỔ BIẾN thay vì để trống.
   const noHits = typed && typedHits.length === 0;
   // GỢI Ý BẬC THANG — dựng từ chính câu đang gõ, xếp từ khớp đầy đủ → nới dần.
   // VD "Đất nền tại Đà Nẵng giá dưới 3 tỷ" → [Đất nền · Đà Nẵng · dưới 3 tỷ] →
   // [Đất nền · Đà Nẵng] → [Tất cả đất nền] → [BĐS tại Đà Nẵng] → [BĐS dưới 3 tỷ].
-  const bacThang: Suggestion[] = typed
+  const bacThang: Suggestion[] = useMemo(() => (typed
     ? goiYNoiLong(kwHieu).map((g) => ({ label: g.label, kind: "Gợi ý" as const, sub: g.sub, patch: g.patch }))
-    : [];
+    : []), [typed, kwHieu]);
   // CHƯA GÕ → CHỈ những lần khách đã tìm, như Google (chủ dự án 17/10/2026: bỏ "gợi ý phổ biến" toàn tên tỉnh trơn — vô dụng)
   const panelItems: Suggestion[] = typed ? [...bacThang, ...typedHits] : recentShown;
   // Câu dài hiếm khi khớp NGUYÊN VĂN một mục nào — nhưng nếu bóc được tiêu chí
@@ -301,7 +305,14 @@ export default function FilterBar({
     set({ keyword: s.keyword || s.label });
     setSugOpen(true);
     setActiveIdx(-1);
-    (overlay ? overlayInputRef : inputRef).current?.focus();
+    // Con trỏ đứng CUỐI câu vừa chép vào (chủ dự án 20/10/2026) — chờ ô nhận chữ mới rồi mới đặt
+    requestAnimationFrame(() => {
+      const o = (overlay ? overlayInputRef : inputRef).current;
+      if (!o) return;
+      o.focus();
+      o.setSelectionRange(o.value.length, o.value.length);
+      o.scrollTop = o.scrollHeight;
+    });
   };
 
   // Điều hướng bằng phím trong panel gợi ý.
@@ -350,7 +361,13 @@ export default function FilterBar({
   const typeDropdown = (
     <FilterDropdown label="Loại BĐS" summary={typeLabel} active={f.types.length > 0} panelClassName="w-72" compact={compact} className={ddClass}>
       {({ close }) => {
-        const allChecked = typeOptions.every((t) => f.types.includes(t));
+        // LOGIC CHỌN LOẠI HÌNH (chủ dự án 20/10/2026): chưa chọn loại nào = TẤT CẢ (không lọc). Bấm "Tất cả" = bỏ lọc;
+        // đang "Tất cả" mà bấm một loại = chỉ loại đó; chọn đủ mọi loại = quay về "Tất cả" (không hiện "13 loại hình").
+        const allChecked = f.types.length === 0 || typeOptions.every((t) => f.types.includes(t));
+        const doiLoai = (t: string, checked: boolean) => {
+          const next = checked ? f.types.filter((x) => x !== t) : [...f.types, t];
+          set({ types: typeOptions.every((x) => next.includes(x)) ? [] : next });
+        };
         return (
           <div>
             {/* Chọn tất cả */}
@@ -358,7 +375,7 @@ export default function FilterBar({
               <input
                 type="checkbox"
                 checked={allChecked}
-                onChange={() => set({ types: allChecked ? [] : [...typeOptions] })}
+                onChange={() => set({ types: [] })}
                 className="h-4 w-4 shrink-0 accent-cvr-blue"
               />
               <span>Tất cả loại nhà đất</span>
@@ -378,9 +395,7 @@ export default function FilterBar({
                         <input
                           type="checkbox"
                           checked={checked}
-                          onChange={() =>
-                            set({ types: checked ? f.types.filter((x) => x !== t) : [...f.types, t] })
-                          }
+                          onChange={() => doiLoai(t, checked)}
                           className="h-4 w-4 shrink-0 accent-cvr-blue"
                         />
                         <span className="truncate">{t}</span>
@@ -393,23 +408,8 @@ export default function FilterBar({
 
             {/* HÀNG KẾT THÚC CHỌN — bỏ chọn hết · "Xong" đóng bảng và RA KẾT QUẢ NGAY.
                 Trước đây chỉ có nút bỏ chọn, chọn xong không biết bấm đâu để tìm. */}
-            <div className="mt-2 flex items-center justify-between gap-2 border-t border-cvr-line pt-2">
-              <button
-                type="button"
-                onClick={() => set({ types: [] })}
-                disabled={f.types.length === 0}
-                className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-cvr-body transition hover:bg-black/5 hover:text-cvr-ink disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                Bỏ chọn tất cả
-              </button>
-              <button
-                type="button"
-                onClick={() => { close(); chayTim(); }}
-                className="rounded-lg bg-cvr-blue px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-cvr-blue-ink"
-              >
-                Xong{f.types.length > 0 ? ` (${f.types.length})` : ""}
-              </button>
-            </div>
+            {/* Hàng nút ĐỒNG BỘ mọi bảng lọc: Đặt lại · Áp dụng (chủ dự án 20/10/2026) */}
+            <PanelActions onReset={() => set({ types: [] })} onApply={() => { close(); chayTim(); }} />
           </div>
         );
       }}
@@ -630,9 +630,10 @@ export default function FilterBar({
     {/* Trang danh sách: ô tìm co giãn hết khung, nút "Xem bản đồ" nằm SÁT MÉP PHẢI
         → không còn mảng trống hụt bên phải như khi giới hạn bề ngang. */}
     <div ref={boxRef} className={compact ? "flex w-full gap-2.5" : "flex w-full gap-2.5"}>
-      <div className={compact ? "relative flex-1" : "relative flex h-10 min-w-0 flex-1 items-center rounded-xl bg-cvr-surface ring-1 ring-black/5 transition focus-within:ring-2 focus-within:ring-cvr-blue/40 sm:h-12 sm:rounded-xl sm:ring-1"}>
-        {/* Kính lúp trái — MOBILE ẩn (đã có nút search xanh bên phải, giống thanh tìm trang chủ) */}
-        <svg className="pointer-events-none absolute left-4 top-1/2 hidden h-[18px] w-[18px] -translate-y-1/2 text-cvr-faint sm:block" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+      <div className={compact ? "relative flex-1" : "relative flex h-9 min-w-0 flex-1 items-center rounded-full bg-cvr-surface ring-1 ring-black/5 transition focus-within:ring-2 focus-within:ring-cvr-blue/40 sm:h-12 sm:rounded-xl sm:ring-1"}>
+        {/* Kính lúp trái — trang Mua bán / Cho thuê: HIỆN cả trên điện thoại cho khách nhận ra ngay là ô tìm (chủ dự án
+            20/10/2026); ô tìm lớn ở Hero điện thoại vẫn ẩn (đã có nút tìm xanh) */}
+        <svg className={`pointer-events-none absolute top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-cvr-muted ${compact ? "left-4 hidden sm:block" : "left-3.5 sm:left-4"}`} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z" />
         </svg>
         <input
@@ -661,7 +662,7 @@ export default function FilterBar({
               // bóng (nếu để trắng + bóng sẽ thành "khối lồng khối").
               // DESKTOP: chừa chỗ cho nút "Tìm kiếm" NẰM TRONG ô (không tách rời).
               ? `h-11 w-full rounded-xl border border-transparent bg-cvr-surface pl-4 ${typed ? "pr-[5.5rem]" : "pr-14"} text-[15px] text-cvr-ink placeholder-cvr-faint ring-1 ring-black/5 outline-none transition focus:ring-2 focus:ring-cvr-blue/50 focus:placeholder:text-transparent sm:h-12 sm:pl-11 ${typed ? "sm:pr-[11.5rem]" : "sm:pr-[8.5rem]"} ${nenSang ? "sm:bg-white sm:text-cvr-ink sm:placeholder-cvr-faint sm:ring-cvr-line sm:focus:ring-cvr-blue/50" : "sm:bg-white/[0.08] sm:text-white sm:placeholder-white/70 sm:ring-white/30 sm:focus:ring-white/60"}`
-              : "h-full w-full min-w-0 flex-1 border-none bg-transparent pl-4 pr-4 text-[15px] text-cvr-ink placeholder-cvr-faint outline-none focus:placeholder:text-transparent sm:pl-11 sm:pr-3"
+              : "h-full w-full min-w-0 flex-1 border-none bg-transparent pl-10 pr-4 text-[15px] text-cvr-ink placeholder-cvr-faint outline-none focus:placeholder:text-transparent sm:pl-11 sm:pr-3"
           }
         />
         {/* Nút XOÁ (×) trong ô — kiểu Google, hiện khi đã gõ (chỉ ô tìm lớn/Hero) */}
@@ -779,24 +780,26 @@ export default function FilterBar({
     {dangTim && <span aria-hidden className="fixed inset-x-0 top-0 z-[300] h-[3px] overflow-hidden"><span className="thanh-dang-tim block h-full bg-cvr-blue" /></span>}
     {/* ===== MOBILE: TRANG TÌM TOÀN MÀN HÌNH kiểu Google — chạm ô tìm là mở ===== */}
     {overlay && (
-      <div className="anim-truot-len fixed inset-0 z-[80] flex flex-col bg-white sm:hidden">
+      <div className="fixed inset-0 z-[80] flex flex-col bg-white sm:hidden">{/* hiện NGAY như Google, không trượt (chủ dự án 20/10/2026: giật) */}
         {/* MẪU MÀN TÌM TRANG DỰ ÁN (chủ dự án 18/10/2026: "lấy mẫu thanh search Dự án, làm giống nhau cho cả 3"): một hàng
             ← · ô gõ có × · nút tìm tròn xanh; ngay dưới là hàng trường lọc. z-[80]: dưới bảng chọn của trường lọc (z-100). */}
-        <div className="flex items-center gap-1.5 border-b border-cvr-line px-2 py-2">
+        <div className="flex items-center gap-1 border-b border-cvr-line px-2 py-1.5">
+          {/* Nút ← và ô gõ gọn lại, vừa sát (chủ dự án 20/10/2026) */}
           <button
             type="button"
             aria-label="Đóng tìm kiếm"
             onClick={() => { setOverlay(false); setActiveIdx(-1); }}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-cvr-ink active:bg-cvr-surface"
+            className="flex h-10 w-9 shrink-0 items-center justify-center rounded-full text-cvr-ink active:bg-cvr-surface"
           >
-            <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+            <svg className="h-[22px] w-[22px]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
           </button>
           <div className="relative flex-1">
             {/* Gõ dài thì ô TỰ GIÃN thêm dòng (tối đa 4 dòng) để khách thấy hết mình đang viết gì. */}
             <textarea
               ref={(el) => {
                 overlayInputRef.current = el;
-                if (el) { el.style.height = "auto"; el.style.height = `${Math.max(44, el.scrollHeight)}px`; }
+                // CHỈ ĐO KHI CHỮ ĐỔI — đo ở mọi lần vẽ bắt cả trang tính lại bố cục, gõ bị khựng (đo 20/10/2026)
+                if (el && el.dataset.daDo !== el.value) { el.dataset.daDo = el.value; el.style.height = "auto"; el.style.height = `${Math.max(36, el.scrollHeight)}px`; }
               }}
               autoFocus
               rows={1}
@@ -807,14 +810,15 @@ export default function FilterBar({
                 setActiveIdx(-1);
                 const el = e.currentTarget;
                 el.style.height = "auto";
-                el.style.height = `${Math.max(44, el.scrollHeight)}px`;
+                el.style.height = `${Math.max(36, el.scrollHeight)}px`;
               }}
               onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); chayTim(); } onKeyNav(e); }} // phím Tìm: chạy tìm thật (có vạch chạy báo đang tìm)
               placeholder="Tìm nhà đất theo khu vực, dự án…" // màn tìm đã mở: chữ gợi ý KHÔNG chạy (chủ dự án 18/10/2026)
               aria-label="Tìm kiếm"
               autoComplete="off"
               enterKeyHint="search"
-              className="block max-h-[112px] min-h-11 w-full resize-none overflow-y-auto rounded-[22px] bg-cvr-surface py-[11px] pl-4 pr-10 text-[15px] leading-[22px] text-cvr-ink placeholder-cvr-faint outline-none ring-1 ring-black/5 focus:ring-2 focus:ring-cvr-blue/40 focus:placeholder:text-transparent"
+              onFocus={(e) => { const o = e.currentTarget; o.setSelectionRange(o.value.length, o.value.length); }} // con trỏ cuối từ khoá
+              className="block max-h-[112px] min-h-9 w-full resize-none overflow-y-auto rounded-[18px] bg-cvr-surface py-[7px] pl-4 pr-10 text-[15px] leading-[22px] text-cvr-ink placeholder-cvr-faint outline-none ring-1 ring-black/5 focus:ring-2 focus:ring-cvr-blue/40 focus:placeholder:text-transparent"
             />
             {(f.keyword || cauCu).trim().length > 0 && (
               <button
@@ -1068,23 +1072,8 @@ export function LocationPanel({
       {/* ── HÀNG THAO TÁC — luôn nhìn thấy ở đáy panel ──────────────────────────
           Trước đây chọn xong không có nút nào để đóng, phải bấm ra ngoài mới thoát;
           cũng không có cách bỏ hết khu vực đã chọn ngoài việc gỡ từng chip. */}
-      <div className="mt-2 flex items-center justify-between gap-2 border-t border-cvr-line pt-2">
-        <button
-          type="button"
-          onClick={() => { onChange([]); setProv(""); setDist(""); setQ(""); }}
-          disabled={locations.length === 0}
-          className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-cvr-body transition hover:bg-black/5 hover:text-cvr-ink disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          Bỏ chọn tất cả
-        </button>
-        <button
-          type="button"
-          onClick={() => onClose?.()}
-          className="rounded-lg bg-cvr-blue px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-cvr-blue-ink"
-        >
-          Xong{locations.length > 0 ? ` (${locations.length})` : ""}
-        </button>
-      </div>
+      {/* Hàng nút ĐỒNG BỘ mọi bảng lọc: Đặt lại · Áp dụng (chủ dự án 20/10/2026) */}
+      <PanelActions onReset={() => { onChange([]); setProv(""); setDist(""); setQ(""); }} onApply={() => onClose?.()} />
     </div>
   );
 }
