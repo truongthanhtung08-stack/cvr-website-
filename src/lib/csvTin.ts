@@ -293,9 +293,9 @@ export type KetQuaDoc = { rows: ParsedRow[]; loiChung: string | null; canhBaoChu
 // bản mẫu CŨ — cả cột đó sẽ trống trên web mà không ai biết. Đợt 10/09 hỏng một
 // phần vì chuyện này: bản mẫu 48 cột không có 3 cột địa chỉ hệ cũ.
 const COT_BAN_MOI: { cot: string; ten: string }[] = [
-  { cot: COT.phuongXaCu, ten: "địa chỉ hệ cũ" },
-  { cot: COT.quanHuyenCu, ten: "địa chỉ hệ cũ" },
-  { cot: COT.tinhCu, ten: "địa chỉ hệ cũ" },
+  { cot: COT.phuongXaCu, ten: "địa chỉ cũ" },
+  { cot: COT.quanHuyenCu, ten: "địa chỉ cũ" },
+  { cot: COT.tinhCu, ten: "địa chỉ cũ" },
   { cot: COT.donGiaThue, ten: "đơn giá thuê theo m²" },
   { cot: COT.nguon, ten: "link tin gốc" },
   { cot: COT.linkAnh, ten: "link ảnh gốc" },

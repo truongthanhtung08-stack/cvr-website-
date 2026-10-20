@@ -284,7 +284,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             </p>
             {/* Cách gọi theo hệ 3 cấp cũ — số nhà/đường không đổi nên không nhắc lại. */}
             {p.locationCu && (
-              <p className="mt-1 pl-[22px] text-[13px] text-cvr-faint">Địa chỉ hệ cũ: {p.locationCu}</p>
+              <p className="mt-1 pl-[22px] text-[13px] text-cvr-faint">Địa chỉ cũ: {p.locationCu}</p>
             )}
             {/* Kiểu Mã số thuế (15/10/2026): ngày cập nhật + nguồn thông tin — MASTER 3.2 */}
             {p.capNhat && (

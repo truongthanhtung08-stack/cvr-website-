@@ -677,7 +677,7 @@ export default function PostListingForm() {
       // Chỉ lưu khi tin là CVR Diamond (gói đang chọn hoặc gói đang dùng).
       linkChen: (goiDangDung?.tier ?? planTier) === "diamond" ? linkHopLe(linkChen) ?? undefined : undefined,
       mapPin: mapPin.trim() || undefined,
-      // Phường/xã cũ người đăng tự chọn → dòng "Địa chỉ hệ cũ" đủ 3 cấp.
+      // Phường/xã cũ người đăng tự chọn → dòng "Địa chỉ cũ" đủ 3 cấp.
       ...((): { diaChiCu?: { phuong: string; quan: string; tinh: string } } => {
         const c = ungVienPhuongCu(geoMode, province, ward).find((x) => x.nhan === phuongCu);
         return c ? { diaChiCu: { phuong: c.phuong, quan: c.quan, tinh: c.tinh } } : {};
@@ -1189,7 +1189,7 @@ export default function PostListingForm() {
           return (
             <p className="mt-2 rounded-lg bg-cvr-surface px-3 py-2 text-xs leading-relaxed text-cvr-muted">
               Tin sẽ hiện: <strong className="font-semibold text-cvr-ink">{hai.moi}</strong>
-              {cuHien ? <> · <span className="text-cvr-faint">Địa chỉ hệ cũ: {cuHien}</span></> : null}
+              {cuHien ? <> · <span className="text-cvr-faint">Địa chỉ cũ: {cuHien}</span></> : null}
             </p>
           );
         })()}

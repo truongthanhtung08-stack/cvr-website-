@@ -329,7 +329,7 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
         direction: direction || undefined,
         addressDetail: addressDetail.trim() || undefined,
         mapPin: mapPin.trim() || undefined,
-        // Phường/xã cũ vừa chọn → dòng "Địa chỉ hệ cũ" trên trang tin đủ 3 cấp.
+        // Phường/xã cũ vừa chọn → dòng "Địa chỉ cũ" trên trang tin đủ 3 cấp.
         // KHÔNG chọn thì giữ nguyên cái đã có (file nhập tin có thể đã ghi sẵn).
         ...((): { diaChiCu?: { phuong: string; quan: string; tinh: string } } => {
           const c = ungVienPhuongCu(geoMode, province, ward).find((x) => x.nhan === phuongCu);
@@ -629,7 +629,7 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
           return (
             <p className="mt-3 rounded-lg bg-cvr-surface px-3 py-2 text-xs leading-relaxed text-cvr-muted">
               Tin sẽ hiện: <strong className="font-semibold text-cvr-ink">{hai.moi}</strong>
-              {cuHien ? <> · <span className="text-cvr-faint">Địa chỉ hệ cũ: {cuHien}</span></> : null}
+              {cuHien ? <> · <span className="text-cvr-faint">Địa chỉ cũ: {cuHien}</span></> : null}
             </p>
           );
         })()}

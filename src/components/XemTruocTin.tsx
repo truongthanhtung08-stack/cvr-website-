@@ -82,7 +82,7 @@ export default function XemTruocTin({
             <svg className="mt-[2px] h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
             <span className="min-w-0">{d.addressDetail ? d.addressDetail + ", " : ""}{l.location}</span>
           </p>
-          {duoi && <p className="mt-1 pl-[22px] text-[13px] text-cvr-faint">Địa chỉ hệ cũ: {duoi}</p>}
+          {duoi && <p className="mt-1 pl-[22px] text-[13px] text-cvr-faint">Địa chỉ cũ: {duoi}</p>}
 
           <div className="mt-5 rounded-2xl border border-cvr-line bg-white p-4">
             <div className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-4">

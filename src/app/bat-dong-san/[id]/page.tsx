@@ -488,7 +488,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
 
                 {/* ĐỊA CHỈ HAI DÒNG — người đăng nhập theo hệ nào cũng vậy:
                     · dòng trên: địa chỉ theo hệ MỚI (tên đang dùng hiện nay)
-                    · dòng dưới: "Địa chỉ hệ cũ: …"
+                    · dòng dưới: "Địa chỉ cũ: …"
                     Suy không ra tới cấp phường thì giữ nguyên chuỗi khách đã nhập —
                     thà giữ đúng cái họ ghi còn hơn hiện một địa chỉ nửa vời. */}
                 {(() => {
@@ -503,7 +503,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                         <span className="min-w-0">{d.addressDetail ? d.addressDetail + ", " : ""}{tren}</span>
                       </p>
                       {duoi && (
-                        <p className="mt-1 pl-[22px] text-[13px] text-cvr-faint">Địa chỉ hệ cũ: {duoi}</p>
+                        <p className="mt-1 pl-[22px] text-[13px] text-cvr-faint">Địa chỉ cũ: {duoi}</p>
                       )}
                     </>
                   );

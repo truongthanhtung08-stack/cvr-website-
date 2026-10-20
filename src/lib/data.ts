@@ -39,7 +39,7 @@ export type Listing = {
   /** Nhóm vị trí suy từ bề rộng đường vào: "lon" | "nho" | "kiet" — để so giá với
    *  đúng hạng đường, vì trong cùng một phường mặt tiền và kiệt lệch 2–3 lần. */
   viTri?: "lon" | "nho" | "kiet";
-  /** Cùng chỗ đó gọi theo hệ CŨ — hiện ở dòng dưới, nhãn "Địa chỉ hệ cũ". */
+  /** Cùng chỗ đó gọi theo hệ CŨ — hiện ở dòng dưới, nhãn "Địa chỉ cũ". */
   locationCu?: string;
   // Số nhà + tên đường người đăng cho hiện (details.addressDetail) — dòng địa chỉ hệ mới trên thẻ (20/10/2026)
   diaChiSo?: string;
@@ -405,7 +405,7 @@ export type Project = {
   name: string;
   /** Địa chỉ HIỂN THỊ — theo hệ MỚI khi suy ra được, giống bên tin đăng. */
   location: string;
-  /** Cùng chỗ đó gọi theo hệ CŨ — dòng dưới, nhãn "Địa chỉ hệ cũ". */
+  /** Cùng chỗ đó gọi theo hệ CŨ — dòng dưới, nhãn "Địa chỉ cũ". */
   locationCu?: string;
   priceFrom: string;
   type: string;
