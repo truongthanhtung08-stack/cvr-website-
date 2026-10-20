@@ -3,8 +3,7 @@
 
 import { asset } from "@/lib/asset";
 import { chuThuan } from "@/lib/chuThuan";
-import { specForType, amenityGroups, interiorItems, furnishLevels } from "@/lib/listingSpec";
-import { directionOptions, normalizeVi } from "@/lib/filters";
+import { normalizeVi } from "@/lib/filters";
 import { ZALO_OA_ID } from "@/lib/lienHe";
 
 // Ảnh dùng chung theo phân khúc (placeholder)
@@ -281,123 +280,6 @@ export function freshText(postedAt?: string, bumpedAt?: string): string {
   // Chênh dưới 2 phút = mốc đẩy do migration gán bằng ngày đăng, chưa đẩy thật.
   if (b - p < 120_000) return postedText(postedAt);
   return `Làm mới ${postedText(bumpedAt).replace(/^Vừa xong$/, "vừa xong")}`;
-}
-
-export type ListingDetail = {
-  code: string;
-  postedDate: string;
-  gallery: string[];
-  description: string[];
-  features: { label: string; value: string }[];
-  specs: { label: string; value: string }[];
-  furnish: string;
-  interior: string[];
-  amenityGroups: { group: string; items: { name: string; active: boolean }[] }[];
-  legal: string;
-  direction: string;
-  agent: { name: string; role: string; phone: string; zalo: string };
-  mapQuery: string;
-};
-
-const directions = directionOptions;
-
-// Dựng nội dung chi tiết đầy đủ từ một tin (đủ "dung lượng" mô tả, thư viện ảnh, tiện ích, môi giới)
-export function buildListingDetail(l: Listing): ListingDetail {
-  const idx = parseInt(l.id, 10) || 1;
-  // Thư viện 6 ảnh THẬT: ảnh chính + các BĐS cùng loại hình (đồng bộ, chuyên nghiệp)
-  const sameType = featuredListings.filter((x) => x.type === l.type && x.id !== l.id).map((x) => x.image);
-  const others = featuredListings.filter((x) => x.type !== l.type).map((x) => x.image);
-  const gallery = Array.from(new Set([l.image, ...sameType, ...others])).slice(0, 6);
-
-  const dir = directions[idx % directions.length];
-  const floors = l.type.includes("Đất") ? "—" : `${2 + (idx % 4)} tầng`;
-
-  const description = [
-    `${l.title} toạ lạc tại ${l.location} — một trong những vị trí được săn đón bậc nhất khu vực nhờ kết nối giao thông thuận tiện, gần trục đường chính, trường học, bệnh viện và trung tâm thương mại. Bất động sản phù hợp cho cả nhu cầu ở thực lẫn đầu tư dài hạn.`,
-    `Diện tích ${l.area}${l.beds ? `, thiết kế ${l.beds} phòng ngủ và ${l.baths ?? l.beds} phòng vệ sinh` : ""}, bố cục thông minh, tối ưu công năng và đón sáng tự nhiên. Hướng nhà ${dir} thoáng đãng, hợp phong thuỷ với đa số gia chủ. ${floors !== "—" ? `Công trình ${floors}, kết cấu vững chắc, vật liệu hoàn thiện cao cấp.` : "Đất vuông vức, mặt tiền rộng, sẵn sàng xây dựng hoặc tách thửa."}`,
-    // ⚠️ Thủ tục công chứng / sang tên là TRÁCH NHIỆM CỦA MÔI GIỚI và hai bên
-    // giao dịch — KHÔNG phải của Coastal Land. Vai trò của Coastal Land chỉ là
-    // NỖ LỰC XÁC THỰC thông tin (không "cam kết", không đứng ra làm thủ tục).
-    `Pháp lý minh bạch, sổ đỏ/sổ hồng chính chủ. Thủ tục công chứng, sang tên do bên môi giới cùng người mua và người bán thực hiện; Coastal Land nỗ lực xác thực thông tin trước khi đăng tin. Mức giá ${l.price}${l.pricePerM2 ? ` (~${l.pricePerM2})` : ""} còn thương lượng cho khách thiện chí.`,
-    // ⚠️ Coastal Land là CỔNG THÔNG TIN: không môi giới, không đứng ra giao dịch.
-    // Câu kết phải hướng người xem liên hệ NGƯỜI ĐĂNG TIN — không được hàm ý
-    // Coastal Land "đồng hành đến khi hoàn tất giao dịch".
-    `Liên hệ người đăng tin để được tư vấn chi tiết, xem nhà thực tế và nhận thêm hình ảnh, video, hồ sơ pháp lý đầy đủ. Coastal Land là cổng thông tin bất động sản — mọi trao đổi và giao dịch do bạn thực hiện trực tiếp với người đăng tin.`,
-  ];
-
-  const features = [
-    { label: "Mức giá", value: l.price },
-    { label: "Diện tích", value: l.area },
-    ...(l.pricePerM2 ? [{ label: "Giá / m²", value: l.pricePerM2 }] : []),
-    ...(l.beds ? [{ label: "Phòng ngủ", value: `${l.beds} PN` }] : []),
-    ...(l.baths ? [{ label: "Phòng tắm", value: `${l.baths} WC` }] : []),
-    { label: "Hướng nhà", value: dir },
-    { label: "Số tầng", value: floors },
-    { label: "Loại hình", value: l.type },
-  ];
-
-  const furnish = furnishLevels[idx % furnishLevels.length];
-
-  // Thuộc tính theo loại hình — để sẵn đủ trường, suy giá trị hợp lý (chưa có thì "Đang cập nhật")
-  const specs = specForType(l.type).fields.map((f) => {
-    let value = "Đang cập nhật";
-    switch (f.key) {
-      case "beds": value = l.beds ? `${l.beds}` : value; break;
-      case "baths": value = l.baths ? `${l.baths}` : value; break;
-      case "floors": value = floors !== "—" ? floors.replace(" tầng", "") : value; break;
-      case "direction": case "balcony": value = dir; break;
-      case "furnish": value = furnish; break;
-      case "frontage": value = `${4 + (idx % 6)} m`; break;
-      case "roadWidth": value = `${5 + (idx % 8)} m`; break;
-      case "floor": value = `Tầng ${5 + (idx % 25)}`; break;
-      case "block": value = `Block ${["A", "B", "C", "D"][idx % 4]}`; break;
-      case "loaiCanho": value = ["Chung cư", "Duplex", "Penthouse", "Studio"][idx % 4]; break;
-      case "landType": value = "Đất ở đô thị"; break;
-      case "view": value = ["Biển", "Thành phố", "Hồ bơi", "Sông / núi"][idx % 4]; break;
-      case "profit": value = "8%/năm"; break;
-      case "operator": value = "Đơn vị quốc tế"; break;
-      case "pccc": value = "Đã có"; break;
-      case "power": value = "560 KVA"; break;
-      case "term": value = "Lâu dài"; break;
-      case "blocks": value = `Lô ${["A", "B", "C"][idx % 3]}${10 + (idx % 30)}`; break;
-    }
-    return { label: f.label + (f.unit ? ` (${f.unit})` : ""), value };
-  });
-
-  // Nội thất: chọn một tập con theo mức nội thất (mức cao → nhiều món hơn)
-  const furnishCount = furnish === "Bàn giao thô" ? 0 : furnish === "Nội thất cơ bản" ? 6 : furnish === "Nội thất đầy đủ" ? 11 : interiorItems.length;
-  const interior = interiorItems.slice(0, furnishCount);
-
-  // Tiện ích: đánh dấu mục "có" (active) trên toàn bộ danh mục để hiển thị chuyên nghiệp
-  const activeSet = new Set<string>();
-  amenityGroups.forEach((g) => g.items.forEach((it, i) => { if ((idx + i) % 3 !== 0) activeSet.add(it); }));
-  const grouped = amenityGroups.map((g) => ({
-    group: g.group,
-    items: g.items.map((name) => ({ name, active: activeSet.has(name) })),
-  }));
-
-  // LIÊN HỆ CHUNG — chỉ tên và số CÔNG TY. Tuyệt đối không đưa tên riêng hay số
-  // điện thoại cá nhân vào mã nguồn (kho mã này công khai trên GitHub).
-  const agents = [
-    { name: "Coastal Land", role: "Hỗ trợ khách hàng", phone: "0377 985 036", zalo: ZALO_OA_ID },
-  ];
-
-  return {
-    code: `CVR-${l.id.padStart(5, "0")}`,
-    postedDate: "12/06/2026",
-    gallery,
-    description,
-    features,
-    specs,
-    furnish,
-    interior,
-    amenityGroups: grouped,
-    legal: "Sổ đỏ / Sổ hồng chính chủ",
-    direction: dir,
-    agent: agents[idx % agents.length],
-    // Ưu tiên điểm admin đã ghim (chính xác tuyệt đối), không có mới đoán theo địa chỉ
-    mapQuery: l.mapPin?.trim() ? l.mapPin.trim() : `${l.location}, Việt Nam`,
-  };
 }
 
 export type Project = {

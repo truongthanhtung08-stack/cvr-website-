@@ -147,11 +147,10 @@ export function areaToM2(area: string): number | null {
 // ===== Phòng ngủ & Hướng nhà =====
 export const bedroomOptions = [1, 2, 3, 4, 5]; // 5 = "5+"
 
-// Thứ tự PHẢI khớp mảng trong buildListingDetail (data.ts) để hướng ở trang chi tiết
-// và bộ lọc luôn nhất quán.
+// 8 hướng — dùng chung cho bộ lọc và trang chi tiết.
 export const directionOptions = ["Đông", "Đông Nam", "Nam", "Tây Nam", "Tây", "Tây Bắc", "Bắc", "Đông Bắc"];
 
-// Hướng suy ra ổn định từ id (cùng công thức với buildListingDetail)
+// Hướng suy ra ổn định từ id
 export function listingDirection(id: string): string {
   const idx = parseInt(id, 10) || 1;
   return directionOptions[idx % directionOptions.length];
