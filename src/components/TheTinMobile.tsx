@@ -274,12 +274,9 @@ export default function TheTinMobile({ item, terms = [], tuChay = false, pc = fa
   );
   const trich = moTa ? moTaThe(item) : "";
   const soDong = soDongMoTa(item);
-  const diaChi = trich ? (
-    <>
-      {diaChiDong}
-      <p className={`mt-1.5 ${["", "line-clamp-1", "line-clamp-2", "line-clamp-3"][soDong]} text-[14px] leading-[1.45] text-cvr-muted`}><Highlight text={trich} terms={terms} /></p>
-    </>
-  ) : diaChiDong;
+  // MÔ TẢ NGAY DƯỚI TIÊU ĐỀ (chủ dự án 20/10/2026: "mô tả dưới tiêu đề" — thứ tự: tiêu đề → mô tả → giá · m² → địa chỉ)
+  const moTaDong = trich ? <p className={`mt-1 ${["", "line-clamp-1", "line-clamp-2", "line-clamp-3"][soDong]} text-[14px] leading-[1.45] text-cvr-muted`}><Highlight text={trich} terms={terms} /></p> : null;
+  const diaChi = diaChiDong;
 
   const oCls = "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-cvr-line text-cvr-ink transition active:scale-95";
   const nutThich = (
@@ -368,8 +365,8 @@ export default function TheTinMobile({ item, terms = [], tuChay = false, pc = fa
           {huyHieu}
         </div>
         {tren
-          ? <div className="flex min-w-0 flex-col gap-2">{tieuDePC}{soPC}<div className="pt-1">{cuoi}</div></div>
-          : <div className="flex min-w-0 flex-1 flex-col justify-between">{tieuDePC}{soPC}{cuoi}</div>}
+          ? <div className="flex min-w-0 flex-col gap-2">{tieuDePC}{moTaDong}{soPC}<div className="pt-1">{cuoi}</div></div>
+          : <div className="flex min-w-0 flex-1 flex-col justify-between">{tieuDePC}{moTaDong}{soPC}{cuoi}</div>}
         {ds && <PhotoList images={anh} videos={item.video ? [item.video] : []} title={item.title} onPick={setXem} onClose={() => setDs(false)} nhanPhim={xem < 0} banDo={{ diaChi: item.location, q: item.mapPin || item.location }} listingId={item.id} duongDan={href} />}
         {xem >= 0 && <PhotoViewer images={anh} start={xem} title={item.title} listingId={item.id} onClose={() => setXem(-1)} />}
       </article>
@@ -386,6 +383,7 @@ export default function TheTinMobile({ item, terms = [], tuChay = false, pc = fa
         </div>
         <Link href={href} className="block px-3.5 pt-3">
           <h3 className="line-clamp-2 text-[16px] font-medium leading-[1.4] text-cvr-ink"><Highlight text={tieuDe} terms={terms} /></h3>
+          {moTaDong}
           {thongSoDong}
           {diaChi}
         </Link>
@@ -411,6 +409,7 @@ export default function TheTinMobile({ item, terms = [], tuChay = false, pc = fa
       </div>
       <Link href={href} className="block px-3.5 pt-3">
         <h3 className={`line-clamp-2 text-[16px] font-bold leading-[1.4] text-cvr-ink ${tier.uppercase ? "uppercase" : ""}`}><Highlight text={tieuDe} terms={terms} /></h3>
+        {moTaDong}
         {thongSoDong}
         {diaChi}
       </Link>
