@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { napSupabase, coPhienDangNhap } from "@/lib/supabase/nap";
 
 export type Role = "buyer" | "agent" | "company" | "admin";
 export type Status = "active" | "pending" | "suspended";
@@ -37,8 +37,9 @@ export function useProfile() {
       setLoading(false);
       return;
     }
-    const supabase = createClient();
+    if (!coPhienDangNhap()) { setProfile(null); setLoading(false); return; } // chưa đăng nhập → khỏi tải thư viện
     (async () => {
+      const supabase = await napSupabase();
       const {
         data: { user },
       } = await supabase.auth.getUser();

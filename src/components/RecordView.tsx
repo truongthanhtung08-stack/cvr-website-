@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { recordView } from "@/lib/useRecentlyViewed";
-import { createClient } from "@/lib/supabase/client";
+import { napSupabase } from "@/lib/supabase/nap";
 import { laMayTuDong } from "@/lib/hienThi";
 
 // Ghi lại tin vừa xem (đặt trong trang chi tiết BĐS).
@@ -33,7 +33,7 @@ export default function RecordView({ id }: { id: string }) {
         // (0036). Không gửi gì định danh người xem — ẩn danh vẫn là ẩn danh.
         // Supabase chưa chạy 0036 thì hàm chưa nhận 3 tham số → lỗi PGRST202;
         // khi đó gửi lại kiểu cũ để KHÔNG MẤT lượt xem nào trong lúc chuyển.
-        const sb = createClient();
+        void napSupabase().then((sb) => {
         sb.rpc("increment_listing_view", { p_listing_id: id, p_thiet_bi: thietBi(), p_nguon: nguonDen() })
           .then(({ error }) => { if (error) sb.rpc("increment_listing_view", { p_listing_id: id }); });
 
@@ -47,6 +47,7 @@ export default function RecordView({ id }: { id: string }) {
         // PHẢI có .then(): thư viện Supabase chỉ GỬI yêu cầu khi được chờ. Thiếu nó,
         // lệnh này chưa từng chạy từ 0031 tới 25/09/2026 (bảng người xem 0 dòng).
         sb.rpc("ghi_nguoi_xem", { p_listing_id: id }).then(() => {});
+        }, () => {});
       }
     } catch {
       /* thiếu env / RPC chưa có → không sao, chỉ là đếm xem */

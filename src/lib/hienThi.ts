@@ -1,6 +1,6 @@
 "use client";
 
-import { createClient } from "@/lib/supabase/client";
+import { napSupabase } from "@/lib/supabase/nap";
 
 // ════════════════════════════════════════════════════════════════════════════
 // ĐẾM LƯỢT HIỂN THỊ TIN
@@ -59,7 +59,7 @@ async function day() {
   if (!hangDoi.length) return;
   const ids = hangDoi.splice(0, hangDoi.length);
   try {
-    await createClient().rpc("ghi_hien_thi", { p_ids: ids });
+    await (await napSupabase()).rpc("ghi_hien_thi", { p_ids: ids });
   } catch {
     /* Chưa chạy migration 0030, mất mạng, tiện ích chặn quảng cáo… → bỏ qua.
        Đếm hiển thị hỏng TUYỆT ĐỐI không được làm hỏng việc xem tin của khách. */

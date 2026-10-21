@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import BrandLogo from "@/components/BrandLogo";
-import { createClient } from "@/lib/supabase/client";
+import { napSupabase } from "@/lib/supabase/nap";
 import { FOOTER_DEFAULT, type FooterData } from "@/lib/siteContent";
 import { PHAP_LY, MIEN_TRU, DONG_GIAY_PHEP } from "@/lib/phapLy";
 import { ZALO_OA_URL } from "@/lib/lienHe";
@@ -130,7 +130,7 @@ export default function Footer() {
   const [f, setF] = useState<FooterData>(FOOTER_DEFAULT);
   useEffect(() => {
     (async () => {
-      const supabase = createClient();
+      const supabase = await napSupabase();
       const { data } = await supabase.from("site_content").select("data").eq("key", "footer").maybeSingle();
       const d = (data?.data ?? null) as Partial<FooterData> | null;
       if (d) setF({

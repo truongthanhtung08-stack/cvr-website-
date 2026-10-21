@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Playfair_Display, Montserrat } from "next/font/google";
+import { Playfair_Display, Montserrat } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { getHeroBanners } from "@/lib/siteContent";
 import { asset } from "@/lib/asset";
@@ -18,12 +19,31 @@ import DoThanhDay from "@/components/DoThanhDay";
 
 // Font chính toàn site: Inter — hiện đại, chuyên nghiệp, "SF Pro của web" (kiểu Apple),
 // hỗ trợ tiếng Việt đầy đủ.
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin", "vietnamese"],
-  weight: ["400", "500", "600", "700", "800"],
+//
+// TỰ CHỨA HAI TỆP INTER (latin + tiếng Việt) thay cho next/font/google (tốc độ điện thoại, đo 21/10/2026): bản Google kèm thêm
+// bộ "latin-ext" 85 KB khai SAU bộ tiếng Việt, mà các chữ đ ă ơ ư… nằm trong cả hai bộ → trình duyệt dùng bộ khai sau, tải
+// thêm 85 KB ở mọi trang. Hai tệp dưới đây CHÍNH LÀ hai tệp Google cấp trước đây (cùng phông, cùng nét, 400–800), chỉ bỏ bộ thừa.
+// Hai họ phông đứng nối nhau trong --font-inter: chữ nào không thuộc bộ latin thì trình duyệt lấy ở bộ tiếng Việt.
+const interLatin = localFont({
+  src: "./fonts/inter-latin.woff2",
+  weight: "400 800",
+  style: "normal",
   display: "swap",
+  variable: "--font-inter-latin",
+  declarations: [{ prop: "unicode-range", value: "U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD" }],
 });
+const interViet = localFont({
+  src: "./fonts/inter-vietnamese.woff2",
+  weight: "400 800",
+  style: "normal",
+  display: "swap",
+  variable: "--font-inter-vi",
+  adjustFontFallback: false,
+  declarations: [{ prop: "unicode-range", value: "U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB" }],
+});
+// fontFamily dạng "'tên', 'tên Fallback'" → ghép: Inter latin, Inter tiếng Việt, rồi phông dự phòng đã đo cỡ của bản latin
+const [tenLatin, duPhongLatin] = interLatin.style.fontFamily.split(", ");
+const FONT_INTER = `${tenLatin}, ${interViet.style.fontFamily}, ${duPhongLatin}`;
 
 const playfair = Playfair_Display({
   variable: "--font-playfair",
@@ -176,7 +196,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="vi" className={`${inter.variable} ${playfair.variable} ${montserrat.variable} h-full antialiased`}>
+    <html lang="vi" style={{ ["--font-inter" as string]: FONT_INTER }} className={`${interLatin.variable} ${interViet.variable} ${playfair.variable} ${montserrat.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col font-sans bg-background text-foreground">
         {/* Mở trong trình duyệt của Zalo → bỏ khoảng chừa đỉnh máy (xem --at trong globals.css). Chạy trước khi vẽ để không giật. */}
         <script dangerouslySetInnerHTML={{ __html: "if(/Zalo|FBAN|FBAV|FB_IAB|Instagram|TikTok|musical_ly/i.test(navigator.userAgent)){var s=document.createElement('style');s.textContent=':root{--at:0px}';document.head.appendChild(s)}" }} />

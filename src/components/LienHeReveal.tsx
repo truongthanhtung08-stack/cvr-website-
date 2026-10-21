@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useCallback, useEffect, useRef, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { napSupabase, coPhienDangNhap } from "@/lib/supabase/nap";
 import { tachNhieuSdt } from "@/lib/phone";
 import HopXacThucSo, { veDaLuu } from "@/components/HopXacThucSo";
 
@@ -33,7 +33,8 @@ function useReveal(listingId: string) {
   // Đã đăng nhập → bấm là hiện số, không cần dòng nhắc "xác thực số".
   const [daDangNhap, setDaDangNhap] = useState(false);
   useEffect(() => {
-    createClient().auth.getSession().then(({ data }) => setDaDangNhap(!!data.session), () => {});
+    if (!coPhienDangNhap()) return; // chưa đăng nhập → khỏi tải thư viện
+    napSupabase().then((sb) => sb.auth.getSession()).then(({ data }) => setDaDangNhap(!!data.session), () => {});
   }, []);
 
   // Đồng bộ giữa các nút cùng tin trên một trang (bên phải ↔ thanh mobile).
@@ -51,7 +52,7 @@ function useReveal(listingId: string) {
     setLoading(true);
     setError(null);
     try {
-      const supabase = createClient();
+      const supabase = await napSupabase();
       const { data: { user } } = await supabase.auth.getUser();
       // ĐÃ ĐĂNG NHẬP (Zalo/Google/Email/Số) → hiện số NGAY, không bắt nhập mã (chủ dự án chốt
       // 01/10/2026). Thành viên chưa có số trong hồ sơ thì khách quan tâm ghi theo tên tài khoản.

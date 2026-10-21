@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { napSupabase } from "@/lib/supabase/nap";
 import { filtersToParams, locationLabel, priceRangeText, type Filters } from "@/lib/filters";
 
 // NÚT "NHẬN TIN MỚI" (Smart Search mục 7 — Tìm kiếm đã lưu, 02/10/2026).
@@ -13,7 +13,7 @@ export default function LuuTimKiem({ purpose, filters }: { purpose: "ban" | "thu
 
   async function luu() {
     setTrangThai("dang");
-    const supabase = createClient();
+    const supabase = await napSupabase();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       window.location.href = `/dang-nhap?next=${encodeURIComponent(window.location.pathname + window.location.search)}`;

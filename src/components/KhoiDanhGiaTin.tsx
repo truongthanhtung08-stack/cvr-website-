@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { napSupabase } from "@/lib/supabase/nap";
 import HopXacThucSo, { veDaLuu } from "@/components/HopXacThucSo";
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -34,7 +34,7 @@ export default function KhoiDanhGiaTin({ listingId }: { listingId: string }) {
     setDangGui(true);
     setLoi("");
     try {
-      const { data: { session } } = await createClient().auth.getSession();
+      const { data: { session } } = await (await napSupabase()).auth.getSession();
       const ve = session ? null : veDaLuu();
       if (!session && !ve) {
         setCho(soSao); // chưa đăng nhập, chưa có vé → xác minh số trước

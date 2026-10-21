@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
-import { createClient } from "@/lib/supabase/client";
+import { napSupabase, coPhienDangNhap } from "@/lib/supabase/nap";
 
 // Hook đọc trạng thái đăng nhập thật từ Supabase Auth (thay demo localStorage "cvr-member").
 // Có guard: thiếu env Supabase (vd chạy dev chưa có .env.local) → coi như chưa đăng nhập,
@@ -39,16 +39,29 @@ export function useAuth() {
       return;
     }
 
-    const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user ?? null);
+    // CHƯA ĐĂNG NHẬP THÌ KHÔNG TẢI THƯ VIỆN (tốc độ điện thoại, đo 21/10/2026): phiên đăng nhập nằm trong cookie
+    // "sb-…-auth-token" (@supabase/ssr). Không có cookie đó = chưa đăng nhập → trả ngay, khỏi tải ~58 KB ở mọi trang.
+    // Đăng nhập xong khách được chuyển trang → thanh trên dựng lại, thấy cookie, tải thư viện như cũ.
+    if (!coPhienDangNhap()) {
       setLoading(false);
-    });
+      return;
+    }
 
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
+    let huy = false;
+    let boTheoDoi = () => {};
+    void napSupabase().then((supabase) => {
+      if (huy) return;
+      supabase.auth.getUser().then(({ data }) => {
+        if (huy) return;
+        setUser(data.user ?? null);
+        setLoading(false);
+      });
+      const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+        setUser(session?.user ?? null);
+      });
+      boTheoDoi = () => sub.subscription.unsubscribe();
     });
-    return () => sub.subscription.unsubscribe();
+    return () => { huy = true; boTheoDoi(); };
   }, []);
 
   return { user, loading };
@@ -76,7 +89,7 @@ export function displayName(user: User | null): string {
 // Đăng xuất + về trang chủ (đảm bảo Header/middleware nhận trạng thái mới).
 export async function signOut() {
   try {
-    await createClient().auth.signOut();
+    await (await napSupabase()).auth.signOut();
   } finally {
     // THAY trang: đăng xuất rồi bấm back không quay lại khu quản lý nữa.
     window.location.replace("/");
