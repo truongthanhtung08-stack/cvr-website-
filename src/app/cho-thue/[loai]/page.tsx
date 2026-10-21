@@ -1,11 +1,10 @@
-import { Suspense } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ListingBrowser from "@/components/ListingBrowser";
 import { goiNheBaiViet } from "@/lib/goiNhe";
-import KhungChoDanhMuc from "@/components/KhungChoDanhMuc";
+import { ketQuaTrangDau } from "@/lib/ketQuaDau";
 import Breadcrumb from "@/components/Breadcrumb";
 import KhuVucLinks from "@/components/KhuVucLinks";
 import { ListingListJsonLd } from "@/components/ListJsonLd";
@@ -103,6 +102,7 @@ export default async function DanhMucChoThuePage({ params }: { params: Promise<{
 
   // ── TRANG KHU VỰC ─────────────────────────────────────────────────────────
   if (kv) {
+    const ketQuaDau = await ketQuaTrangDau("thue", { initialProvince: kv.name });
     const tinTrongTinh = tinThue.filter((l) => normalizeVi(tinhCua(l.location)) === normalizeVi(kv.name));
     return (
       <>
@@ -115,23 +115,13 @@ export default async function DanhMucChoThuePage({ params }: { params: Promise<{
               { name: kv.name, href: `/cho-thue/${kv.slug}` },
             ]}
           />
-          <Suspense
-            fallback={
-              <KhungChoDanhMuc
-                heading={tieuDeKhuVuc("thue", kv.name)}
-                moTa={moTaKhuVuc("thue", kv.name, tinTrongTinh.length)}
-                items={tinTrongTinh}
-              />
-            }
-          >
-            <ListingBrowser
-              purpose="thue"
-              heading={tieuDeKhuVuc("thue", kv.name)}
-              nguon="thue" choTai={<KhungChoDanhMuc heading={tieuDeKhuVuc("thue", kv.name)} moTa={moTaKhuVuc("thue", kv.name, tinTrongTinh.length)} items={tinTrongTinh} />}
-              articles={goiNheBaiViet(articles)}
-              initialProvince={kv.name}
-            />
-          </Suspense>
+          <ListingBrowser
+            purpose="thue"
+            heading={tieuDeKhuVuc("thue", kv.name)}
+            nguon="thue" ketQuaDau={ketQuaDau}
+            articles={goiNheBaiViet(articles)}
+            initialProvince={kv.name}
+          />
           {/* Bảng giá theo loại hình của cả tỉnh: ĐÃ GỠ (03/10/2026) — gộp tin nhiều phường ra một
               giá cho cả thành phố là sai luật "giá khu vực = số liệu đúng khu vực". Có số liệu chuẩn
               (docs/YEU-CAU-COWORK-LICH-SU-GIA.md) mới làm lại. */}
@@ -144,6 +134,7 @@ export default async function DanhMucChoThuePage({ params }: { params: Promise<{
   }
 
   // ── TRANG DANH MỤC LOẠI HÌNH (giữ nguyên như cũ, thêm khối khu vực cuối) ───
+  const ketQuaDau = await ketQuaTrangDau("thue", { initialTypes: c!.types });
   return (
     <>
       <Header />
@@ -154,23 +145,13 @@ export default async function DanhMucChoThuePage({ params }: { params: Promise<{
             { name: c!.label, href: `/cho-thue/${c!.slug}` },
           ]}
         />
-        <Suspense
-          fallback={
-            <KhungChoDanhMuc
-              heading={`${c!.h1} ${thangHienTai()}`}
-              moTa={c!.desc}
-              items={tinThue.filter((l) => c!.types.includes(l.type))}
-            />
-          }
-        >
-          <ListingBrowser
-            purpose="thue"
-            heading={`${c!.h1} ${thangHienTai()}`}
-            nguon="thue" choTai={<KhungChoDanhMuc heading={`${c!.h1} ${thangHienTai()}`} moTa={c!.desc} items={tinThue.filter((l) => c!.types.includes(l.type))} />}
-            articles={goiNheBaiViet(articles)}
-            initialTypes={c!.types}
-          />
-        </Suspense>
+        <ListingBrowser
+          purpose="thue"
+          heading={`${c!.h1} ${thangHienTai()}`}
+          nguon="thue" ketQuaDau={ketQuaDau}
+          articles={goiNheBaiViet(articles)}
+          initialTypes={c!.types}
+        />
         <LienKetPseo nhom={lienKetLoaiHinh("thue", c!, listings)} kieuGoogle />
         <KhuVucLinks base="/cho-thue" demTheoTinh={demTheoTinh} />
       </main>

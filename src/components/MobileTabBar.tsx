@@ -245,6 +245,7 @@ function ThanhTab({ tabs, count, nutDangTinNoi = false }: { tabs: { href: string
 
       <nav
         aria-label="Điều hướng nhanh"
+        data-do-cao="tabbar-h"
         className="an-khi-go-phim tabbar-glass fixed inset-x-0 bottom-0 z-40 pb-[env(safe-area-inset-bottom)] lg:hidden"
       >
         <ul className="flex items-stretch">

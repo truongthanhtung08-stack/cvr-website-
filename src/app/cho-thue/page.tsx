@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import type { Metadata } from "next";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -6,7 +5,7 @@ import TimKiemPhoBien from "@/components/TimKiemPhoBien";
 import { ListingListJsonLd } from "@/components/ListJsonLd";
 import ListingBrowser from "@/components/ListingBrowser";
 import { goiNheBaiViet } from "@/lib/goiNhe";
-import KhungChoDanhMuc from "@/components/KhungChoDanhMuc";
+import { ketQuaTrangDau } from "@/lib/ketQuaDau";
 import KhuVucLinks from "@/components/KhuVucLinks";
 import { getListings } from "@/lib/listingsDb";
 import { getArticles } from "@/lib/contentDb";
@@ -34,26 +33,15 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function ChoThuePage() {
   // B2: tin từ Supabase (fallback dữ liệu mẫu) + bài viết cho cột phải
-  const [listings, articles] = await Promise.all([getListings(), getArticles()]);
+  const [listings, articles, ketQuaDau] = await Promise.all([getListings(), getArticles(), ketQuaTrangDau("thue")]);
   const tinThue = listings.filter((l) => (l.purpose ?? "ban") === "thue");
   return (
     <>
       <ListingListJsonLd items={tinThue} heading={`Cho thuê nhà đất ${thangHienTai()}`} path="/cho-thue" />
       <Header />
       <main className="flex-1 bg-white">
-        {/* Khung chờ: CHỈ cao bằng thanh lọc thật (không pt-32 như trước — đó chính là
-            mảng trắng 128px nằm ngay dưới header lúc trang đang tải). */}
-        <Suspense
-          fallback={
-            <KhungChoDanhMuc
-              heading={`Cho thuê nhà đất ${thangHienTai()}`}
-              moTa="Tin cho thuê căn hộ, nhà nguyên căn, phòng trọ, văn phòng, mặt bằng kinh doanh và kho xưởng. Lọc theo tỉnh, phường/xã, loại hình, khoảng giá và diện tích."
-              items={tinThue}
-            />
-          }
-        >
-          <ListingBrowser purpose="thue" heading={`Cho thuê nhà đất ${thangHienTai()}`} nguon="thue" choTai={<KhungChoDanhMuc heading={`Cho thuê nhà đất ${thangHienTai()}`} moTa="Tin cho thuê căn hộ, nhà nguyên căn, phòng trọ, văn phòng, mặt bằng kinh doanh và kho xưởng. Lọc theo tỉnh, phường/xã, loại hình, khoảng giá và diện tích." items={tinThue} />} articles={goiNheBaiViet(articles)} />
-        </Suspense>
+        {/* Trang 1 máy chủ dựng sẵn (lib/ketQuaDau, 21/10/2026) — HTML có tin thật khách nhìn thấy */}
+        <ListingBrowser purpose="thue" heading={`Cho thuê nhà đất ${thangHienTai()}`} nguon="thue" ketQuaDau={ketQuaDau} articles={goiNheBaiViet(articles)} />
         {/* Đường bò tới trang khu vực cho thuê — cùng lý do như ở /mua-ban:
             trang /cho-thue/<tỉnh> chưa có liên kết nội bộ nào trỏ tới. */}
         <KhuVucLinks base="/cho-thue" demTheoTinh={demTheoTinh(tinThue)} sat />

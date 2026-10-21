@@ -17,7 +17,9 @@ export default function MoTaThuGon({ children, cao = 240 }: { children: React.Re
   useEffect(() => {
     const el = ref.current;
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (el) setDai(el.scrollHeight > cao + 40);
+    // Chỉ thu gọn khi mô tả THẬT SỰ dài (chủ dự án 21/10/2026: "không phải tin nào cũng để") —
+    // dài hơn khoảng 1,75 lần khung (~17 dòng); ngắn hơn thì hiện trọn, không có nút.
+    if (el) setDai(el.scrollHeight > cao * 1.75);
   }, [cao]);
 
   useEffect(() => {

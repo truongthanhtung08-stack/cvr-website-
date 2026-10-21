@@ -90,6 +90,12 @@ export default function XemTruocTin({
                 <p className="text-[12px] text-cvr-muted">{nhanGia}</p>
                 <p className="mt-1 break-words text-[20px] font-bold leading-tight text-red-500 sm:text-[22px]">{l.price}</p>
               </div>
+              {d.tienDau.map((f) => (
+                <div key={f.label} className="min-w-0">
+                  <p className="text-[12px] text-cvr-muted">{f.label}</p>
+                  <p className="mt-1 break-words text-[17px] font-semibold leading-tight text-cvr-ink">{f.value}</p>
+                </div>
+              ))}
               <div className="min-w-0">
                 <p className="text-[12px] text-cvr-muted">{nhanDienTich}</p>
                 <p className="mt-1 break-words text-[17px] font-semibold leading-tight text-cvr-ink">{l.area}</p>
@@ -106,6 +112,12 @@ export default function XemTruocTin({
                   <p className="mt-1 break-words text-[17px] font-semibold leading-tight text-cvr-ink">{l.pricePerM2}</p>
                 </div>
               )}
+              {d.tienSau.map((f) => (
+                <div key={f.label} className="min-w-0">
+                  <p className="text-[12px] text-cvr-muted">{f.label}</p>
+                  <p className="mt-1 break-words text-[17px] font-semibold leading-tight text-cvr-ink">{f.value}</p>
+                </div>
+              ))}
             </div>
             {(l.beds || l.baths || d.direction || d.furnish || d.specsChinh.length > 0) && (
               <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-cvr-line pt-4 sm:grid-cols-4">

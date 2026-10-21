@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import type { Metadata } from "next";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -6,7 +5,7 @@ import TimKiemPhoBien from "@/components/TimKiemPhoBien";
 import { ListingListJsonLd } from "@/components/ListJsonLd";
 import ListingBrowser from "@/components/ListingBrowser";
 import { goiNheBaiViet } from "@/lib/goiNhe";
-import KhungChoDanhMuc from "@/components/KhungChoDanhMuc";
+import { ketQuaTrangDau } from "@/lib/ketQuaDau";
 import KhuVucLinks from "@/components/KhuVucLinks";
 import { getListings } from "@/lib/listingsDb";
 import { getArticles } from "@/lib/contentDb";
@@ -35,28 +34,16 @@ function demTheoTinh(items: { location: string }[]): [string, number][] {
 
 export default async function MuaBanPage() {
   // B2: tin từ Supabase (fallback dữ liệu mẫu) + bài viết cho cột phải
-  const [listings, articles] = await Promise.all([getListings(), getArticles()]);
+  const [listings, articles, ketQuaDau] = await Promise.all([getListings(), getArticles(), ketQuaTrangDau("ban")]);
   const tinBan = listings.filter((l) => (l.purpose ?? "ban") === "ban");
   return (
     <>
       <ListingListJsonLd items={tinBan} heading={`Mua bán nhà đất ${thangHienTai()}`} path="/mua-ban" />
       <Header />
       <main className="flex-1 bg-white">
-        {/* Khung chờ: CHỈ cao bằng thanh lọc thật (không pt-32 như trước — đó chính là
-            mảng trắng 128px nằm ngay dưới header lúc trang đang tải).
-            Khung chờ này kiêm luôn phần nội dung MÁY CHỦ dựng sẵn cho Google đọc —
-            xem lý do đầy đủ trong KhungChoDanhMuc.tsx. */}
-        <Suspense
-          fallback={
-            <KhungChoDanhMuc
-              heading={`Mua bán nhà đất ${thangHienTai()}`}
-              moTa="Tin bán nhà riêng, căn hộ chung cư, đất nền, nhà mặt phố và biệt thự. Lọc theo tỉnh, phường/xã, dự án, loại hình, khoảng giá và diện tích."
-              items={tinBan}
-            />
-          }
-        >
-          <ListingBrowser purpose="ban" heading={`Mua bán nhà đất ${thangHienTai()}`} nguon="ban" choTai={<KhungChoDanhMuc heading={`Mua bán nhà đất ${thangHienTai()}`} moTa="Tin bán nhà riêng, căn hộ chung cư, đất nền, nhà mặt phố và biệt thự. Lọc theo tỉnh, phường/xã, dự án, loại hình, khoảng giá và diện tích." items={tinBan} />} articles={goiNheBaiViet(articles)} />
-        </Suspense>
+        {/* Trang 1 máy chủ dựng sẵn (lib/ketQuaDau, 21/10/2026): HTML có tin thật khách nhìn thấy — thay khung chờ + danh
+            sách ẩn chỉ cho Google cũ (KhungChoDanhMuc). */}
+        <ListingBrowser purpose="ban" heading={`Mua bán nhà đất ${thangHienTai()}`} nguon="ban" ketQuaDau={ketQuaDau} articles={goiNheBaiViet(articles)} />
         {/* ĐƯỜNG BÒ TỚI TRANG KHU VỰC — khối này trang danh mục con đã dùng từ lâu,
             chỉ trang gốc là chưa có. Đo ngày 18/09/2026: /mua-ban/da-nang và
             /mua-ban/hue bị Google báo "URL is unknown to Google" — chưa từng biết

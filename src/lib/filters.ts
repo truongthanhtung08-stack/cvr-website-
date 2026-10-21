@@ -131,12 +131,23 @@ export const areaRangesThue: AreaRange[] = [
 
 // Bộ mức diện tích theo mục đích tin — dùng chung cho FilterBar và ListingBrowser
 // để hai chỗ không bao giờ lệch nhau.
-export function areaRangesFor(purpose?: string): AreaRange[] {
+// ĐẤT (chủ dự án 21/10/2026): lô đất tính từ 100 m² trở lên — dưới 100 · 100–200 · 200–300 · 300–500 · trên 500.
+// Áp khi loại hình đang chọn TOÀN là đất (Đất nền, Đất nông nghiệp, Đất công nghiệp, nhóm "Đất").
+export const areaRangesDat: AreaRange[] = [
+  { label: "Dưới 100 m²", min: 0, max: 100 },
+  { label: "100 - 200 m²", min: 100, max: 200 },
+  { label: "200 - 300 m²", min: 200, max: 300 },
+  { label: "300 - 500 m²", min: 300, max: 500 },
+  { label: "Trên 500 m²", min: 500, max: null },
+];
+
+export function areaRangesFor(purpose?: string, types: string[] = []): AreaRange[] {
+  if (purpose !== "thue" && types.length > 0 && types.every((t) => t.startsWith("Đất"))) return areaRangesDat;
   return purpose === "thue" ? areaRangesThue : areaRanges;
 }
 
 // Gộp cả hai bộ — để đọc lại tham số ?dientich= trên URL không trượt mức.
-const MOI_MUC_DIEN_TICH: AreaRange[] = [...areaRangesThue, ...areaRanges];
+const MOI_MUC_DIEN_TICH: AreaRange[] = [...areaRangesThue, ...areaRanges, ...areaRangesDat];
 
 // Đổi chuỗi diện tích "1.500 m²" → số m² (dấu "." là phân tách hàng nghìn)
 export function areaToM2(area: string): number | null {
@@ -337,6 +348,17 @@ export function normalizeVi(s: string): string {
     .toLowerCase()
     .replace(/\s+/g, " ")
     .trim();
+}
+
+// CÙNG MỘT DỰ ÁN? (chủ dự án 21/10/2026: dự án đã có trang trên web thì link tin phải về ĐÚNG trang đó).
+// Mã/tên dự án khách ghi hay lệch chút ít: "golden-bay" ↔ "goldenbay", "s-light-tower" ↔ "s-light-tower-da-nang".
+// Bỏ dấu + bỏ mọi ký tự ngoài chữ số → trùng hẳn, hoặc cái này là đầu của cái kia (ít nhất 5 ký tự).
+export function cungDuAn(a?: string | null, b?: string | null): boolean {
+  const gon = (x: string) => normalizeVi(x).replace(/[^a-z0-9]/g, "");
+  const x = gon(a ?? ""), y = gon(b ?? "");
+  if (!x || !y) return false;
+  if (x === y) return true;
+  return Math.min(x.length, y.length) >= 5 && (x.startsWith(y) || y.startsWith(x));
 }
 
 // Khớp loại hình (lỏng — nhãn menu khác chuỗi loại trong dữ liệu)

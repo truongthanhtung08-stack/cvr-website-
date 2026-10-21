@@ -511,7 +511,7 @@ export default function FilterBar({
             sliderMax={purpose === "thue" ? 5000 : 500}
             min={f.areaMin}
             max={f.areaMax}
-            presets={areaRangesFor(purpose)}
+            presets={areaRangesFor(purpose, f.types)}
             onPick={(min, max) => set({ areaMin: min, areaMax: max })}
             onReset={() => set({ areaMin: null, areaMax: null })}
             onApply={() => { close(); chayTim(); }}

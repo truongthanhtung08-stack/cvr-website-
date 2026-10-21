@@ -15,14 +15,13 @@ import ShareButtons from "@/components/ShareButtons";
 import PriceHistory from "@/components/PriceHistory";
 import {
   chiSoChoTin,
-  coDuLichSuGia,
+  giaChoLichSu,
   khoCuaMinh,
   tenPhamVi,
-  soSanhKhuVuc,
   soNhapHopLe,
 } from "@/lib/chiSoGia";
 import { getChiSoGia } from "@/lib/siteContent";
-import { nhanDienTich as nhanDienTichTheoLoai, laTinThue } from "@/lib/listingSpec";
+import { nhanDienTich as nhanDienTichTheoLoai, laTinThue, mauSoCuaLoaiHinh } from "@/lib/listingSpec";
 import ProjectNearby from "@/components/ProjectNearby";
 import ProjectNav from "@/components/ProjectNav";
 import { BreadcrumbJsonLd } from "@/components/Breadcrumb";
@@ -33,7 +32,7 @@ import { rentCategories, saleCategories } from "@/lib/categories";
 import { khuVucList } from "@/lib/khuVuc";
 import LienKetPseo from "@/components/LienKetPseo";
 import { getProject, getProjects } from "@/lib/contentDb";
-import { normalizeVi } from "@/lib/filters";
+import { normalizeVi, cungDuAn } from "@/lib/filters";
 import { tierFromBadge, getTier } from "@/lib/packages";
 import { chuanHoaSdt } from "@/lib/phone";
 import MoTaThuGon from "@/components/MoTaThuGon";
@@ -246,10 +245,11 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
   // không để tên dự án rơi mất như trước.
   // Tìm trang dự án: theo MÃ (chọn trong danh sách) hoặc theo TÊN khách tự ghi trùng một dự án đã có.
   // Tin gắn dự án trong admin chỉ lưu mã → tên lấy từ trang dự án (trước đây mất hẳn dòng "Dự án").
-  const duAn = d.projectSlug
-    ? await getProject(d.projectSlug)
-    : d.projectName ? (await getProjects()).find((p) => normalizeVi(p.name) === normalizeVi(d.projectName ?? "")) ?? null : null;
-  const duAnCoThat = Boolean(duAn);
+  // Mã lệch chút ít với dự án đã có ("golden-bay" ↔ "goldenbay") vẫn về đúng trang dự án thật (cungDuAn, 21/10/2026).
+  const duAn = (d.projectSlug ? await getProject(d.projectSlug) : null)
+    ?? (d.projectSlug || d.projectName
+      ? (await getProjects()).find((p) => cungDuAn(p.slug, d.projectSlug) || cungDuAn(p.name, d.projectName) || cungDuAn(p.name, d.projectSlug)) ?? null
+      : null);
   const tenDuAn = d.projectName || duAn?.name || "";
   const slugDuAnTin = duAn?.slug ?? d.projectSlug ?? "";
   // CỔNG SĐT: full số CHỈ hiện khi khách đăng nhập (bấm → RPC reveal_contact ghi lead).
@@ -304,12 +304,26 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
 
   // Hai nguồn đưa chung vào bộ chọn 4 bậc: kho tự tính từ tin trên web + số Cowork nhập.
   const nhapTay = await getChiSoGia();
-  const dayGia = [
-    ...(await khoCuaMinh(l.diaGioi?.province ?? "", l.type, laTinThue(l.purpose) ? "thue" : "ban")),
-    ...soNhapHopLe(nhapTay?.items),
-  ];
-  const chiSoTin = chiSoChoTin(l, { items: dayGia }, { duAn: d.projectName, diaChi: d.addressDetail });
-  const lanCan = chiSoTin ? soSanhKhuVuc(l, dayGia, chiSoTin.moc[chiSoTin.moc.length - 1]?.quy ?? "") : [];
+  // LỊCH SỬ GIÁ CẢ HAI MỤC ĐÍCH (chủ dự án 21/10/2026, như Batdongsan): cùng khu vực + loại hình, nút Mua bán · Cho thuê.
+  // Mỗi mục đích một dãy riêng theo đúng bộ chọn 4 bậc của tin (chiSoChoTin) — không trộn số bán với số thuê.
+  const mucTin: "ban" | "thue" = laTinThue(l.purpose) ? "thue" : "ban";
+  const noiCua = (cs: ReturnType<typeof chiSoChoTin>) =>
+    cs?.duAn && cs.duAn === l.projectSlug && d.projectName ? d.projectName : cs ? tenPhamVi(cs) : "";
+  // Loại hình ghép ("Đất nền / Đất nền dự án") → lấy tên chung đứng đầu cho tiêu đề gọn: "đất nền"
+  const tenLoai = l.type.split(" / ")[0].toLowerCase();
+  const dayTheoMuc = async (muc: "ban" | "thue") => {
+    const items = [...(await khoCuaMinh(l.diaGioi?.province ?? "", l.type, muc)), ...soNhapHopLe(nhapTay?.items)];
+    const tinMuc = { ...l, purpose: muc };
+    const chiSo = chiSoChoTin(tinMuc, { items }, { duAn: d.projectName, diaChi: d.addressDetail });
+    return {
+      chiSo,
+      // Bảng so sánh khu vực / dự án lân cận: TẠM KHÔNG LÀM (chủ dự án 21/10/2026: chưa đủ cơ sở số liệu)
+      lanCan: [],
+      // Chưa có số: tên nơi theo dự án của tin, không có dự án thì theo phường, tỉnh của tin
+      tieuDe: `Lịch sử giá ${muc === "thue" ? "thuê" : "bán"} ${tenLoai} tại ${noiCua(chiSo) || d.projectName || l.location}`,
+    };
+  };
+  const [giaBan, giaThue] = await Promise.all([dayTheoMuc("ban"), dayTheoMuc("thue")]);
   const samePurpose = all.filter((x) => x.id !== l.id && (x.purpose ?? "ban") === purpose);
   // HỆ SỐ X (tài liệu: "khuếch đại phân phối"): trong khối "Có thể bạn quan tâm",
   // VIP được ưu tiên NỔI hơn — Diamond > Gold > Silver. Cộng < 1 nên CHỈ sắp VIP
@@ -361,7 +375,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
     { id: "dac-diem", label: "Đặc điểm" },
     ...(d.interior.length > 0 ? [{ id: "noi-that", label: "Nội thất" }] : []),
     ...(d.amenityGroups.some((g) => g.items.some((it) => it.active)) ? [{ id: "tien-ich", label: "Tiện ích" }] : []),
-    ...(priceVnd != null && coDuLichSuGia(chiSoTin) ? [{ id: "lich-su-gia", label: "Lịch sử giá" }] : []),
+    ...(priceVnd != null ? [{ id: "lich-su-gia", label: "Lịch sử giá" }] : []),
     { id: "vi-tri", label: "Vị trí" },
   ];
 
@@ -444,41 +458,46 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                 {/* Hàng nhận diện: hạng tin + mã tin — cho khách cảm giác tin có hồ
                     sơ, có mã tra cứu. Trước đây mã tin nằm tít dưới cột phải, trên
                     điện thoại gần như không ai nhìn thấy. */}
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex min-w-0 flex-wrap items-center gap-2">
+                {/* GỌN (chủ dự án 21/10/2026): dòng 1 hạng tin + Chia sẻ · dòng 2 mã tin · ngày đăng · hết hạn
+                    trên MỘT dòng (trước điện thoại xếp 3 dòng riêng) */}
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex min-w-0 items-center gap-2">
                     {tier ? (
-                      <span className="inline-block rounded px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-white" style={{ backgroundColor: tier.accent }}>
+                      <span className="inline-block shrink-0 whitespace-nowrap rounded px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-white" style={{ backgroundColor: tier.accent }}>
                         {tier.name}
                       </span>
                     ) : (
-                      <span className="inline-block rounded bg-cvr-surface px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-cvr-muted ring-1 ring-cvr-line">
+                      <span className="inline-block shrink-0 whitespace-nowrap rounded bg-cvr-surface px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-cvr-muted ring-1 ring-cvr-line">
                         {getTier("basic").name}
                       </span>
                     )}
-                    <span className="text-[12px] font-medium tracking-wide text-cvr-faint">
-                      Mã tin: {l.id.slice(0, 8).toUpperCase()}
-                    </span>
-                    {/* NGÀY ĐĂNG THẬT (mốc tin lên sóng). Tin có hồ sơ thì phải
-                        có ngày — khách xem nhà đất luôn hỏi "tin này đăng lâu chưa". */}
-                    {l.postedAt && (
-                      <span className="text-[12px] font-medium tracking-wide text-cvr-faint">
-                        {/* dấu · chỉ hiện trên máy tính — điện thoại xuống dòng thì dấu đứng đầu dòng (20/10/2026) */}
-                        <span className="hidden sm:inline">· </span>Đăng {new Date(l.postedAt).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}
-                      </span>
-                    )}
-                    {/* NGÀY KẾT THÚC hiển thị (chủ dự án chốt 01/10/2026: mỗi tin ghi rõ ngày đăng,
-                        ngày kết thúc — như Batdongsan). */}
-                    {l.hetHanLuc && (
-                      <span className="text-[12px] font-medium tracking-wide text-cvr-faint">
-                        <span className="hidden sm:inline">· </span>Hết hạn {new Date(l.hetHanLuc).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}
-                      </span>
-                    )}
+                    <span className="whitespace-nowrap text-[12px] font-medium text-cvr-faint">Mã tin: {l.id.slice(0, 8).toUpperCase()}</span>
                   </div>
                   {/* CHIA SẺ — đặt ngay đầu tin, ngang tầm mắt, không chiếm thêm
                       dòng nào. Nút Lưu / So sánh bỏ đi vì đã có sẵn trên từng thẻ
                       tin ngoài trang chủ và trang Mua bán / Cho thuê. */}
                   <ShareButtons title={tieuDe1Dong} />
                 </div>
+                {/* Mã tin · NGÀY ĐĂNG THẬT · NGÀY KẾT THÚC (chủ dự án chốt 01/10/2026, như Batdongsan) — mỗi mục không
+                    ngắt giữa chừng; màn hẹp chỉ xuống dòng giữa các mục */}
+                {/* dấu · nằm CUỐI mục trước → màn hẹp có xuống dòng thì dấu không đứng đầu dòng */}
+                <p className="mt-2 flex flex-wrap gap-x-1 text-[12px] font-medium leading-relaxed text-cvr-faint">
+                  {/* "Mã tin" cạnh hạng tin (dòng trên); "Hiệu lực · Hết hạn" chung MỘT dòng (chủ dự án 21/10/2026:
+                      "Hiệu lực" = ngày tin lên web) */}
+                  {(() => {
+                    // Điện thoại năm 2 số (21/10/26) để chữ to trong Zalo / Facebook vẫn nằm MỘT dòng; máy tính năm đủ
+                    const ngay = (s: string) => {
+                      const d4 = new Date(s).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", day: "2-digit", month: "2-digit", year: "numeric" });
+                      return <><span className="sm:hidden">{d4.slice(0, 6) + d4.slice(8)}</span><span className="hidden sm:inline">{d4}</span></>;
+                    };
+                    return [
+                      l.postedAt && <>Hiệu lực: {ngay(l.postedAt)}</>,
+                      l.hetHanLuc && <>Hết hạn: {ngay(l.hetHanLuc)}</>,
+                    ];
+                  })().filter(Boolean).map((m, i, a) => (
+                    <span key={i} className="whitespace-nowrap">{m}{i < a.length - 1 ? " ·" : ""}</span>
+                  ))}
+                </p>
 
                 {/* Tiêu đề — 21px trên điện thoại: đọc thoải mái mà vẫn thấy được
                     giá ngay bên dưới trong cùng một màn hình. */}
@@ -524,6 +543,13 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                       <p className="text-[12px] leading-[18px] text-cvr-muted">{nhanGia}</p>
                       <p className="mt-1 break-words text-[16px] font-semibold leading-[22px] text-cvr-ink">{l.price}</p>
                     </div>
+                    {/* Tin thuê: tiền đặt cọc, kỳ thanh toán ngay sau giá thuê — cùng nhóm tiền (21/10/2026) */}
+                    {d.tienDau.map((f) => (
+                      <div key={f.label} className="min-w-0">
+                        <p className="text-[12px] leading-[18px] text-cvr-muted">{f.label}</p>
+                        <p className="mt-1 break-words text-[16px] font-semibold leading-[22px] text-cvr-ink">{f.value}</p>
+                      </div>
+                    ))}
                     <div className="min-w-0">
                       <p className="text-[12px] leading-[18px] text-cvr-muted">{nhanDienTich}</p>
                       <p className="mt-1 break-words text-[16px] font-semibold leading-[22px] text-cvr-ink">{l.area}</p>
@@ -540,6 +566,13 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                         <p className="mt-1 break-words text-[16px] font-semibold leading-[22px] text-cvr-ink">{l.pricePerM2}</p>
                       </div>
                     )}
+                    {/* Tin thuê: giá điện, giá nước, phí dịch vụ cuối hàng tiền */}
+                    {d.tienSau.map((f) => (
+                      <div key={f.label} className="min-w-0">
+                        <p className="text-[12px] leading-[18px] text-cvr-muted">{f.label}</p>
+                        <p className="mt-1 break-words text-[16px] font-semibold leading-[22px] text-cvr-ink">{f.value}</p>
+                      </div>
+                    ))}
                   </div>
 
                   {/* THÔNG TIN CHÍNH — phòng ngủ/phòng tắm (nếu loại hình có) cộng
@@ -599,7 +632,8 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                     <Row
                       label="Dự án"
                       value={
-                        duAnCoThat ? (
+                        // Có mã dự án là bấm được (21/10/2026): chưa có hồ sơ thì trang dự án bậc 1 dựng từ tin
+                        slugDuAnTin ? (
                           <Link href={`/du-an/${slugDuAnTin}`} className="font-medium text-cvr-blue hover:underline">
                             {tenDuAn}
                           </Link>
@@ -654,30 +688,14 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                 </Section>
               )}
 
-              {/* LỊCH SỬ GIÁ — có số thật thì vẽ, chưa đủ thì ẨN HẲN cả khối (kể
+              {/* LỊCH SỬ GIÁ — có số thật thì vẽ; chưa đủ thì hiện "Dữ liệu sẽ được cập nhật" (chủ dự án 21/10/2026, thay quy định ẩn hẳn khối cũ). (cũ: ẨN HẲN cả khối (kể
                   cả tiêu đề). Tuyệt đối không chế số cho đủ hình, cũng không để
                   lại một dòng "chưa có dữ liệu" nói hộ điểm yếu của mình. */}
-              {priceVnd != null && coDuLichSuGia(chiSoTin) && (
-                <Section
-                  id="lich-su-gia"
-                  /* TÊN KHỐI PHẢI THEO PHẠM VI CỦA CHÍNH CON SỐ LỚN (chỉ số), chứ
-                     không lấy phạm vi của mặt bằng giá: hai nguồn có thể khác cấp
-                     — mặt bằng tính được tới PHƯỜNG trong khi chỉ số mới có cả
-                     TỈNH. Đề "tại Phường Hòa Xuân" mà số là giá toàn Đà Nẵng thì
-                     người xem hiểu sai hẳn, vì giá giữa các phường lệch rất xa. */
-                  title={`Lịch sử giá ${laTinThue(l.purpose) ? "thuê" : "bán"} ${l.type.toLowerCase()} tại ${
-                    chiSoTin?.duAn && chiSoTin.duAn === l.projectSlug && d.projectName
-                      ? d.projectName
-                      : chiSoTin
-                        ? tenPhamVi(chiSoTin)
-                        : ""
-                  }`}
-                >
-                  <PriceHistory
-                    chiSo={chiSoTin}
-                    laThue={laTinThue(l.purpose)}
-                    lanCan={lanCan}
-                  />
+              {/* TÊN KHỐI THEO PHẠM VI CỦA CHÍNH CON SỐ LỚN (chỉ số) — dựng ở dayTheoMuc, đổi theo nút Mua bán / Cho thuê.
+                  Đề "tại Phường Hòa Xuân" mà số là giá toàn Đà Nẵng thì người xem hiểu sai hẳn. */}
+              {priceVnd != null && (
+                <Section id="lich-su-gia">
+                  <PriceHistory ban={giaBan} thue={giaThue} macDinh={mucTin} loaiHinh={tenLoai} giaTin={giaChoLichSu(l)} mauSo={mauSoCuaLoaiHinh(l.type)} />
                 </Section>
               )}
 
@@ -701,28 +719,23 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
               {/* Khung liên hệ DÍNH CỐ ĐỊNH khi cuộn — nếu nội dung cao hơn màn hình
                   thì tự cuộn BÊN TRONG khung, không bao giờ trôi khỏi tầm nhìn. */}
               <div className="no-scrollbar sticky top-20 max-h-[calc(100vh-6rem)] space-y-4 overflow-y-auto">
-                <div className="rounded-2xl border border-cvr-line bg-white p-5 shadow-sm lg:rounded-none">
-                  {/* Luôn là "người đăng" — chữ "tư vấn" khiến khách hiểu Coastal Land
-                      tư vấn/môi giới bất động sản này. */}
-                  <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-cvr-faint">Liên hệ</p>
+                {/* Điện thoại: ẨN — thanh liên hệ dính đáy màn đã có tên viết tắt, Zalo, Hiện số (chủ dự án 21/10/2026:
+                    khối này trùng, thừa). Máy tính không có thanh đáy → giữ khối này ở cột phải. */}
+                <div className="hidden rounded-2xl border border-cvr-line bg-white p-5 shadow-sm lg:block lg:rounded-none">
+                  {/* Khối liên hệ (chủ dự án 21/10/2026): ẢNH ĐẠI DIỆN · TÊN NGƯỜI ĐĂNG · SỐ ĐIỆN THOẠI · ZALO — không nhãn,
+                      không chữ nào dưới tên. ⚠️ Coastal Land là CỔNG THÔNG TIN, KHÔNG môi giới — tin thuộc về thành viên. */}
                   {contact ? (
                     <>
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-3.5">
                         {contact.avatar ? (
                           /* eslint-disable-next-line @next/next/no-img-element */
-                          <img src={contact.avatar} alt={contact.name} className="h-12 w-12 shrink-0 rounded-full object-cover ring-1 ring-cvr-line" />
+                          <img src={contact.avatar} alt={contact.name} className="h-14 w-14 shrink-0 rounded-full object-cover ring-1 ring-cvr-line" />
                         ) : (
-                          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-cvr-surface text-lg font-bold text-cvr-ink ring-1 ring-cvr-line">
-                            {contact.name.trim().charAt(0).toUpperCase() || "N"}
+                          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-cvr-surface text-[17px] font-semibold text-cvr-ink ring-1 ring-cvr-line">
+                            {(() => { const w = contact.name.trim().split(/\s+/).filter(Boolean); return ((w[0]?.[0] ?? "N") + (w.length > 1 ? w[w.length - 1][0] : "")).toUpperCase(); })()}
                           </div>
                         )}
-                        <div>
-                          <p className="font-semibold text-cvr-ink">{contact.name}</p>
-                          {/* ⚠️ ĐỊNH VỊ: Coastal Land là CỔNG THÔNG TIN, KHÔNG môi giới.
-                              Tin thuộc về THÀNH VIÊN → LUÔN chỉ ghi "Người đăng tin",
-                              KHÔNG gắn "Coastal Land" / "Chuyên viên" (nghe như môi giới). */}
-                          <p className="text-xs text-cvr-muted">{l.purpose === "thue" ? "Người cho thuê" : "Người bán"}</p>
-                        </div>
+                        <p className="min-w-0 break-words text-[17px] font-semibold leading-snug text-cvr-ink">{contact.name}</p>
                       </div>
                       {hetHan
                         ? <div className="mt-4"><YeuCauLienHeLai listingId={l.id} /></div>
@@ -735,19 +748,20 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                   )}
                 </div>
 
-                <div className="rounded-2xl border border-cvr-line bg-white p-5 text-[15px] shadow-sm lg:rounded-none">
+                <div className="rounded-2xl border border-cvr-line bg-white p-5 text-[14px] shadow-sm lg:rounded-none">
                   {/* ⚠️ Thủ tục công chứng / sang tên là việc của MÔI GIỚI và hai
                       bên giao dịch — KHÔNG phải của Coastal Land. Ô này chỉ nêu
                       thông tin pháp lý + mức độ xác thực, không "cam kết". */}
-                  <p className="font-semibold text-cvr-ink">Pháp lý & xác thực</p>
-                  <ul className="mt-3 space-y-2.5 leading-relaxed text-cvr-body">
-                    {/* Pháp lý ghi ĐÚNG những gì người đăng nhập (Sổ đỏ / Sổ hồng /
-                        Hợp đồng mua bán…); không nhập thì mới ghi "Liên hệ để biết chi tiết".
-                        KHÔNG lặp lại "Hướng" ở đây — hướng đã nằm trong bảng đặc điểm
-                        phía trên, để hai chỗ dễ lệch nhau và gây hiểu nhầm. */}
-                    <li className="flex gap-2"><span className="text-cvr-gold-ink">✓</span> <span className="min-w-0 whitespace-pre-line break-words">Pháp lý: {d.legal ?? "Liên hệ để biết chi tiết"}</span></li>
-                    <li className="flex gap-2"><span className="text-cvr-gold-ink">✓</span> Tin đã qua kiểm duyệt; Coastal Land nỗ lực xác thực thông tin trước khi đăng</li>
-                    <li className="flex gap-2"><span className="text-cvr-gold-ink">✓</span> Thủ tục công chứng, sang tên do môi giới và hai bên thực hiện</li>
+                  {/* Câu chữ chủ dự án duyệt nguyên văn 21/10/2026 — không tự sửa. */}
+                  <p className="font-semibold text-cvr-ink">Xác thực thông tin</p>
+                  <ul className="mt-2.5 space-y-2 leading-relaxed text-cvr-body">
+                    {/* Pháp lý ghi ĐÚNG giấy tờ khách ghi trên tin (Hợp đồng mua bán / Sổ đỏ / Sổ hồng…).
+                        Không ghi, hoặc ghi "Thoả thuận" → bỏ hẳn dòng này (chủ dự án 21/10/2026). */}
+                    {d.legal && !/th(ỏa|oả)\s*thuận/i.test(d.legal.normalize("NFC")) && (
+                      <li className="flex gap-2"><span className="text-cvr-gold-ink">✓</span> <span className="min-w-0 whitespace-pre-line break-words">Pháp lý: {d.legal}</span></li>
+                    )}
+                    <li className="flex gap-2"><span className="text-cvr-gold-ink">✓</span> Đúng đặc điểm, địa chỉ, hình ảnh</li>
+                    <li className="flex gap-2"><span className="text-cvr-gold-ink">✓</span> Trong khoảng giá thị trường</li>
                   </ul>
                 </div>
               </div>
@@ -791,7 +805,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
         {/* Thanh liên hệ DÍNH (mobile) — Gọi / Zalo bám đáy màn hình (III.4).
             Tin chưa có liên hệ thì KHÔNG hiện thanh này (không có số để gọi). */}
         {contact && (
-        <div className="an-khi-go-phim fixed inset-x-0 bottom-0 z-40 flex gap-2 border-t border-cvr-line bg-white/95 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur-md lg:hidden">
+        <div data-do-cao="lienhe-h" className="an-khi-go-phim fixed inset-x-0 bottom-0 z-40 flex gap-2 border-t border-cvr-line bg-white/95 p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur-md lg:hidden">
           {hetHan ? <NutYeuCauLienHe /> : <ContactBarMobile listingId={l.id} phoneMask={phoneMask} avatar={contact.avatar} ten={contact.name} />}
         </div>
         )}
@@ -810,11 +824,12 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
   );
 }
 
-function Section({ id, title, children }: { id?: string; title: string; children: React.ReactNode }) {
+function Section({ id, title, children }: { id?: string; title?: string; children: React.ReactNode }) {
   return (
     // scroll-mt-28: bấm menu cuộn tới thì tiêu đề không bị header + menu dính che
     <section id={id} className="mt-5 scroll-mt-28 rounded-2xl bg-cvr-surface p-4 sm:p-5">
-      <h2 className="mb-4 text-[19px] font-semibold tracking-tight text-cvr-ink sm:text-[22px]">{title}</h2>
+      {/* Không truyền title: khối tự dựng tiêu đề (Lịch sử giá đổi theo Mua bán / Cho thuê) */}
+      {title && <h2 className="mb-4 text-[19px] font-semibold tracking-tight text-cvr-ink sm:text-[22px]">{title}</h2>}
       {children}
     </section>
   );

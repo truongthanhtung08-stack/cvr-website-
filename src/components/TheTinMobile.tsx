@@ -158,6 +158,10 @@ export default function TheTinMobile({ item, terms = [], tuChay = false, pc = fa
   const tieuDe = tier.uppercase ? item.title : chuThuong(item.title, ten);
   const so = thongSo(item).slice(0, SO_THONG_SO[t]);
   const soAnh = item.imageCount || anh.length;
+  // "3 giờ trước" tính theo giờ hiện tại: trang máy chủ dựng sẵn (đệm tới 1 giờ) ghi giờ lúc dựng → vẽ lại một lần sau khi
+  // mở để chữ đúng giờ máy khách (kèm suppressHydrationWarning ở dòng chữ, không để React báo lệch và dựng lại cả trang)
+  const [, setDaMo] = useState(false);
+  useEffect(() => setDaMo(true), []);
   const moc = freshText(item.postedAt, item.bumpedAt);
   const ngay = !moc || moc.startsWith("Làm mới") ? moc : `Đăng ${moc.charAt(0).toLowerCase()}${moc.slice(1)}`;
 
@@ -280,7 +284,7 @@ export default function TheTinMobile({ item, terms = [], tuChay = false, pc = fa
   const nguoiDang = (
     <div className="min-w-0 flex-1">
       <p className="truncate text-[15px] font-semibold leading-tight text-cvr-ink">{item.agentName || "Coastal Land"}</p>
-      <p className="mt-0.5 truncate text-[13px] leading-tight text-cvr-muted">{ngay}</p>
+      <p suppressHydrationWarning className="mt-0.5 truncate text-[13px] leading-tight text-cvr-muted">{ngay}</p>
     </div>
   );
 
@@ -339,8 +343,8 @@ export default function TheTinMobile({ item, terms = [], tuChay = false, pc = fa
             hienSo
             zaloTruoc
             nhan={item.soDau ? `Hiện số ${item.soDau} ***` : "Hiện số"}
-            soCls="flex h-10 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg bg-cvr-blue px-4 text-[14px] font-semibold text-white transition active:scale-95"
-            oCls="flex h-10 w-14 shrink-0 items-center justify-center rounded-lg border border-cvr-line transition active:scale-95"
+            soCls="flex min-h-10 shrink-0 py-1.5 items-center gap-1.5 whitespace-nowrap rounded-lg bg-cvr-blue px-4 text-[14px] font-semibold text-white transition active:scale-95"
+            oCls="flex min-h-10 w-14 shrink-0 self-stretch items-center justify-center rounded-lg border border-cvr-line transition active:scale-95"
           />
         )}
         {nutThich}
@@ -447,8 +451,8 @@ export default function TheTinMobile({ item, terms = [], tuChay = false, pc = fa
               hienSo
               zaloTruoc
               nhan={item.soDau ? `Hiện số ${item.soDau} ***` : "Hiện số"}
-              soCls="flex h-9 min-w-0 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-cvr-blue px-3 text-[13px] font-semibold text-white transition active:scale-95"
-              oCls="flex h-9 w-12 shrink-0 items-center justify-center rounded-lg border border-cvr-line transition active:scale-95"
+              soCls="flex min-h-9 min-w-0 py-1.5 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-cvr-blue px-3 text-[13px] font-semibold text-white transition active:scale-95"
+              oCls="flex min-h-9 w-12 shrink-0 self-stretch items-center justify-center rounded-lg border border-cvr-line transition active:scale-95"
             />
           </div>
         )}

@@ -559,7 +559,8 @@ select option {
 }
 @media (max-width: 1023px) {
   .footer-safe {
-    height: calc(68px + env(safe-area-inset-bottom, 0px));
+    /* Chiều cao THẬT của thanh Liên hệ (DoThanhDay đo) — chữ phóng to trong Zalo/Facebook vẫn không bị che */
+    height: var(--lienhe-h, calc(68px + env(safe-area-inset-bottom, 0px)));
   }
 }
 

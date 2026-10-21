@@ -64,7 +64,7 @@ export async function chupGiaKhuVuc(): Promise<{ ghi: number; boQua: number } | 
     const mucDich = r.purpose === "thue" ? "thue" : r.purpose === "ban" || !r.purpose ? "ban" : "";
     if (!mucDich) continue;
     // BÁN: giá mỗi m² đúng luật loại hình (đất → m² đất · nhà → m² sàn · căn hộ →
-    // m² căn). THUÊ: tổng tiền/tháng. Cùng một hàm với trang tin.
+    // m² căn). THUÊ: tiền mỗi tháng ÷ m² (21/10/2026). Cùng một hàm với trang tin.
     const m2 = giaChoLichSu({
       type: loai,
       purpose: mucDich,

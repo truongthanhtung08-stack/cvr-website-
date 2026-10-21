@@ -215,7 +215,15 @@ const MUC = [
   ]],
   // Chủ dự án 18/10: "hoàn thiện lịch sử giá để chạy trên web" → hằng ngày tới khi đủ (trước chỉ tuần đầu mỗi quý).
   // 18/10: Cowork KHÔNG nộp (mã nộp là của chủ dự án) — giao tệp vào VAO, Claude kiểm rồi nộp.
-  ["Lịch sử giá" + (dauQuy ? " — ĐẦU QUÝ, làm ngay" : " (đầu mỗi quý)"), `${NOI_KHAC} (tệp \`lich-su-gia-${dd}.csv\`)`, null, [dauQuy ? `Thêm quý mới cho các dãy đang có trên web từ đúng nguồn đã dùng (Nhà Tốt — Ngũ Hành Sơn) theo \`${p(SEO, "YEU-CAU-COWORK-LICH-SU-GIA.md")}\`. Chỉ nguồn công khai, không đăng nhập, không Batdongsan. **Cowork không nộp** — giao tệp, Claude nộp.` : "Không làm hằng ngày (18/10: đã kiểm hết nguồn công khai — Nhà Tốt chỉ quận cũ, Homedy dừng 2019). Chỉ làm đầu quý hoặc khi Claude báo có nguồn mới. Dãy khác web tự tính từ tin đăng → đăng thêm tin cho phường đang thiếu."]],
+  // Chủ dự án 21/10/2026: "ghi vào công việc để có đủ số liệu hiển thị theo lộ trình nhanh nhất" → MỖI NGÀY tới khi đủ.
+  // Cowork CHỈ LỌC GIÁ: giá mỗi m² theo loại hình, cả bán lẫn thuê, mỗi quý đủ phổ biến + thấp nhất + cao nhất.
+  ["Lịch sử giá — LỌC GIÁ, mỗi ngày tới khi đủ" + (dauQuy ? " (ĐẦU QUÝ: thêm quý mới cho các dãy đang có)" : ""), `${NOI_KHAC} (tệp \`lich-su-gia-${dd}.csv\`)`, null, [
+    `Theo \`${p(SEO, "YEU-CAU-COWORK-LICH-SU-GIA.md")}\` (khối CHỐT 21/10 ở đầu tệp). Lộ trình nhanh nhất, làm từ trên xuống:`,
+    "1. Bổ sung giá thấp nhất + cao nhất cho 4 quý Q3/25 → Q2/26 của 2 dãy Phường Ngũ Hành Sơn (đất nền, căn hộ) — có là biểu đồ hiện dải khoảng giá ngay.",
+    `2. Dãy theo DỰ ÁN đang có tin trên web (một dãy phủ mọi tin trong dự án) — danh sách \`${p(SEO, "RA", "lich-su-gia-con-thieu.csv")}\`.`,
+    "3. Dãy theo PHƯỜNG/XÃ nhiều tin nhất, đúng loại hình (mỗi loại nhà một dãy: nhà riêng, nhà phố, villa…), cả MUA BÁN lẫn CHO THUÊ.",
+    "Mỗi quý đủ 3 số (phổ biến · thấp nhất · cao nhất), giá mỗi m² theo loại hình, càng dài càng tốt (1 → 5 năm). Chỉ nguồn công khai, không bịa, không dùng số cả tỉnh. **Cowork không nộp** — giao tệp, Claude kiểm rồi nộp.",
+  ]],
   ["Tiện ích lân cận (trường, bệnh viện, khu công nghiệp, chợ, biển, sân bay)", `${NOI_KHAC} (tệp \`tien-ich-<tỉnh>.csv\`)`, null, [`Theo mục 8 của \`CONG-VIEC-3-BEN.md\`, mẫu \`${p("SEO", "MAU", "mau-tien-ich-lan-can.csv")}\` — một tỉnh mỗi lần: Đà Nẵng → Huế → Khánh Hòa.`]],
   ["Thư viện pháp luật", `${NOI_KHAC} (tệp \`thu-vien-phap-luat-${dd}.csv\`)`, null, ["Hằng ngày, theo mục 6 của `CONG-VIEC-3-BEN.md` — văn bản thật, link nguồn chính thức, tình trạng hiệu lực đúng luật, 20 văn bản mỗi lần. **Không chờ chủ dự án duyệt**: Claude kiểm nguồn + hiệu lực rồi nạp thẳng (chốt 18/10)."]],
   ["Hồ sơ công ty", `${NOI_KHAC} (tệp \`ho-so-cong-ty-${dd}.csv\`)`, null, ["**Không làm riêng mục này** (chốt 18/10): khi lọc tin, người đăng là công ty / sàn thì ghi đúng tên công ty vào `lien_he_ten` — hồ sơ công ty sẽ lấy từ tin."]],

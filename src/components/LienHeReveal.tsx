@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useCallback, useEffect, useState } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { tachNhieuSdt } from "@/lib/phone";
 import HopXacThucSo, { veDaLuu } from "@/components/HopXacThucSo";
@@ -127,31 +127,53 @@ const PhoneIcon = () => (
 );
 
 // ── Khối liên hệ bên phải (desktop + mobile trong luồng trang) ──────────────
+// Bố cục chủ dự án chốt 21/10/2026: ảnh đại diện · tên · gạch ngăn · "<số che> · Hiện số" (nền đậm) · "Chat qua Zalo" (viền).
+// Bấm Zalo khi chưa xem số → đi đúng bước xác thực số như Hiện số, có số là mở Zalo luôn (giống thanh đáy điện thoại).
+// Logo Zalo là ẢNH (public/logo/zalo.svg), không phải chữ: trình duyệt trong Zalo/Facebook phóng chữ theo cỡ chữ điện thoại
+// làm chữ "Zalo" tràn khỏi nút — ảnh thì giữ đúng cỡ (21/10/2026).
+// eslint-disable-next-line @next/next/no-img-element
+const ZaloMark = ({ className = "h-5 w-5" }: { className?: string }) => <img src="/logo/zalo.svg" alt="" aria-hidden className={`${className} shrink-0`} />;
+
 export function ContactActions({ listingId, phoneMask }: { listingId: string; phoneMask: string }) {
   const { phone, phones, loading, error, reveal, hoiSo, setHoiSo, nhanSo, daDangNhap } = useReveal(listingId);
+  const [muonZalo, setMuonZalo] = useState(false);
+  useEffect(() => {
+    if (!muonZalo || !phones?.length) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMuonZalo(false);
+    // Hai số → để khách tự chọn nút Zalo của số nào ngay bên dưới.
+    if (phones.length === 1) window.location.href = `https://zalo.me/${digitsOf(phones[0])}`;
+  }, [muonZalo, phones]);
+  const nutZalo = "flex w-full items-center justify-center gap-2 rounded-lg border border-cvr-line bg-white px-4 py-3 text-[14px] font-semibold text-cvr-ink transition hover:border-cvr-ink disabled:opacity-60";
+  const nutSo = "flex w-full items-center justify-center gap-2 rounded-lg bg-cvr-ink px-4 py-3 text-[14px] font-semibold text-white transition hover:bg-cvr-body disabled:opacity-60";
 
   return (
-    <div className="mt-4 space-y-2.5">
+    <div className="mt-4 space-y-2.5 border-t border-cvr-line pt-4">
       {phone && phones ? (
-        // Mỗi số một cặp nút Gọi + Zalo riêng. Một số thì y như cũ; hai số thì nút Zalo ghi rõ số nào.
+        // Mỗi số một cặp nút Gọi + Zalo riêng. Hai số thì nút Zalo ghi rõ số nào.
         phones.map((p) => (
           <Fragment key={p}>
-            <a href={`tel:${telOf(p)}`} className="flex items-center justify-center gap-2 rounded-lg bg-cvr-ink px-4 py-3 text-sm font-bold text-white transition hover:bg-cvr-body">
+            <a href={`tel:${telOf(p)}`} className={nutSo}>
               <PhoneIcon />
               {p}
             </a>
-            <a href={`https://zalo.me/${digitsOf(p)}`} className="flex items-center justify-center gap-2 rounded-lg border border-cvr-line px-4 py-3 text-sm font-semibold text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink">
-              {phones.length > 1 ? `Nhắn Zalo ${p}` : "Nhắn Zalo"}
+            <a href={`https://zalo.me/${digitsOf(p)}`} target="_blank" rel="noopener" className={nutZalo}>
+              <ZaloMark />
+              {phones.length > 1 ? `Chat qua Zalo ${p}` : "Chat qua Zalo"}
             </a>
           </Fragment>
         ))
       ) : (
         <>
-          <button type="button" onClick={reveal} disabled={loading} className="flex w-full items-center justify-center gap-2 rounded-lg bg-cvr-ink px-4 py-3 text-sm font-bold text-white transition hover:bg-cvr-body disabled:opacity-60">
+          <button type="button" onClick={reveal} disabled={loading} className={nutSo}>
             <PhoneIcon />
             {loading ? "Đang mở…" : (
-              <span>{phoneMask} <span className="font-medium opacity-80">· Bấm để hiện số</span></span>
+              <span>{phoneMask} <span className="font-normal opacity-75">· Hiện số</span></span>
             )}
+          </button>
+          <button type="button" onClick={() => { setMuonZalo(true); reveal(); }} disabled={loading} className={nutZalo}>
+            <ZaloMark />
+            Chat qua Zalo
           </button>
           {error && <p className="text-center text-[12px] text-red-600">{error}</p>}
         </>
@@ -166,7 +188,6 @@ export function ContactActions({ listingId, phoneMask }: { listingId: string; ph
 // Bố cục như Batdongsan (chủ dự án 09/10/2026): ẢNH ĐẠI DIỆN người đăng · nút ZALO riêng · HIỆN SỐ / GỌI.
 // Gọi = gọi điện thoại thường; Zalo = mở Zalo để nhắn tin hoặc gọi qua Zalo. Bấm Zalo khi chưa xem số →
 // đi đúng bước xác thực số như Hiện số, xong là mở Zalo luôn.
-const ZaloIcon = () => <span className="text-[12px] font-extrabold tracking-tight text-[#0068ff]" aria-hidden>Zalo</span>;
 function AnhNguoiDang({ avatar, ten }: { avatar?: string | null; ten?: string | null }) {
   // Không có ảnh → 2 chữ viết tắt (chữ đầu + chữ cuối của tên), chủ dự án 09/10/2026
   const w = (ten || "Coastal Land").trim().split(/\s+/).filter(Boolean);
@@ -189,16 +210,33 @@ export function ContactBarMobile({ listingId, phoneMask, avatar, ten }: { listin
     if (phones.length > 1) setChon("zalo");
     else window.location.href = `https://zalo.me/${digitsOf(phones[0])}`;
   }, [muonZalo, phones]);
-  const nutNhan = "flex shrink-0 items-center justify-center gap-1.5 rounded-lg border border-cvr-line bg-white px-4 py-3 text-sm font-semibold text-cvr-body transition active:scale-95";
+  const nutNhan = "flex shrink-0 items-center justify-center gap-1.5 rounded-lg border border-cvr-line bg-white px-3 py-2.5 text-sm font-semibold text-cvr-body transition active:scale-95";
+  // CHỮ PHÓNG TO (Zalo / Facebook tự phóng chữ theo cỡ chữ điện thoại — chủ dự án 21/10/2026): nút số mà xuống 2 dòng
+  // thì thanh đáy cao gấp đôi, che nửa màn hình → bậc 1 bỏ chữ "Hiện số" (số che *** đã đủ hiểu), bậc 2 ẩn thêm ảnh đại diện.
+  // Chỉ thu gọn một chiều, không nở lại → không nhấp nháy. Cỡ chữ bình thường không đổi gì.
+  const chuSo = useRef<HTMLSpanElement>(null);
+  const [gon, setGon] = useState(0);
+  useEffect(() => {
+    const el = chuSo.current;
+    if (!el) return;
+    const kiem = () => {
+      const dong = parseFloat(getComputedStyle(el).lineHeight) || parseFloat(getComputedStyle(el).fontSize) * 1.25;
+      if (el.getBoundingClientRect().height > dong * 1.4) setGon((g) => Math.min(2, g + 1));
+    };
+    kiem();
+    const ro = new ResizeObserver(kiem);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [gon]);
 
   // Người đăng có 2 số → thanh đáy giữ nguyên 2 nút; bấm vào thì mở bảng chọn số nào.
   if (phone && phones && phones.length > 1) {
-    const nut = "flex flex-1 items-center justify-center gap-2 rounded-lg py-3 text-sm font-bold transition active:scale-95";
+    const nut = "flex flex-1 items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-bold transition active:scale-95";
     return (
       <>
         <AnhNguoiDang avatar={avatar} ten={ten} />
         <button type="button" onClick={() => setChon("zalo")} className={nutNhan}>
-          <ZaloIcon />
+          <ZaloMark className="h-7 w-7" />
         </button>
         <button type="button" onClick={() => setChon("goi")} className={`${nut} bg-cvr-ink text-white`}>
           <PhoneIcon />
@@ -213,7 +251,7 @@ export function ContactBarMobile({ listingId, phoneMask, avatar, ten }: { listin
                   key={p}
                   href={chon === "goi" ? `tel:${telOf(p)}` : `https://zalo.me/${digitsOf(p)}`}
                   onClick={() => setChon(null)}
-                  className="flex items-center justify-center gap-2 rounded-lg bg-cvr-ink py-3 text-sm font-bold text-white"
+                  className="flex items-center justify-center gap-2 rounded-lg bg-cvr-ink py-2.5 text-sm font-bold text-white"
                 >
                   {chon === "goi" && <PhoneIcon />}
                   {p}
@@ -232,9 +270,9 @@ export function ContactBarMobile({ listingId, phoneMask, avatar, ten }: { listin
       <>
         <AnhNguoiDang avatar={avatar} ten={ten} />
         <a href={`https://zalo.me/${digitsOf(phone)}`} className={nutNhan}>
-          <ZaloIcon />
+          <ZaloMark className="h-7 w-7" />
         </a>
-        <a href={`tel:${telOf(phone)}`} className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-cvr-ink py-3 text-sm font-bold text-white transition active:scale-95">
+        <a href={`tel:${telOf(phone)}`} className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-cvr-ink py-2.5 text-sm font-bold text-white transition active:scale-95">
           <PhoneIcon />
           Gọi ngay
         </a>
@@ -244,13 +282,13 @@ export function ContactBarMobile({ listingId, phoneMask, avatar, ten }: { listin
 
   return (
     <>
-      <AnhNguoiDang avatar={avatar} ten={ten} />
+      {gon < 2 && <AnhNguoiDang avatar={avatar} ten={ten} />}
       <button type="button" onClick={() => { setMuonZalo(true); reveal(); }} disabled={loading} className={`${nutNhan} disabled:opacity-60`}>
-        <ZaloIcon />
+        <ZaloMark className="h-7 w-7" />
       </button>
-      <button type="button" onClick={reveal} disabled={loading} className="flex min-w-0 flex-1 items-center justify-center gap-2 rounded-lg bg-cvr-ink py-3 text-sm font-bold text-white transition active:scale-95 disabled:opacity-60">
+      <button type="button" onClick={reveal} disabled={loading} className="flex min-w-0 flex-1 items-center justify-center gap-2 rounded-lg bg-cvr-ink py-2.5 text-sm font-bold text-white transition active:scale-95 disabled:opacity-60">
         <PhoneIcon />
-        <span className="truncate">{loading ? "Đang mở…" : `Hiện số ${phoneMask}`}</span>
+        <span ref={chuSo} className="min-w-0 text-center leading-tight">{loading ? "Đang mở…" : <>{gon === 0 && "Hiện số "}<span className="whitespace-nowrap">{phoneMask}</span></>}</span>
       </button>
       {hoiSo && <HopXacThucSo listingId={listingId} onXong={nhanSo} onDong={() => setHoiSo(false)} />}
     </>
@@ -274,11 +312,11 @@ export function NutLienHeThe({ listingId, hienSo, nhanTin = true, soCls, oCls, n
   const chan = (e: React.MouseEvent) => { e.preventDefault(); e.stopPropagation(); };
   const nutZalo = phone ? (
     <a href={`https://zalo.me/${digitsOf(phone)}`} onClick={(e) => e.stopPropagation()} aria-label="Zalo" className={oCls}>
-      <ZaloIcon />
+      <ZaloMark className="h-6 w-6" />
     </a>
   ) : (
     <button type="button" disabled={loading} aria-label="Zalo" onClick={(e) => { chan(e); setMuonZalo(true); reveal(); }} className={`${oCls} disabled:opacity-60`}>
-      <ZaloIcon />
+      <ZaloMark className="h-6 w-6" />
     </button>
   );
   return (
@@ -297,11 +335,11 @@ export function NutLienHeThe({ listingId, hienSo, nhanTin = true, soCls, oCls, n
       ))}
       {!nhanTin || zaloTruoc ? null : phone ? (
         <a href={`https://zalo.me/${digitsOf(phone)}`} onClick={(e) => e.stopPropagation()} aria-label="Zalo" className={oCls}>
-          <ZaloIcon />
+          <ZaloMark className="h-6 w-6" />
         </a>
       ) : (
         <button type="button" disabled={loading} aria-label="Zalo" onClick={(e) => { chan(e); setMuonZalo(true); reveal(); }} className={`${oCls} disabled:opacity-60`}>
-          <ZaloIcon />
+          <ZaloMark className="h-6 w-6" />
         </button>
       )}
       {hoiSo && <HopXacThucSo listingId={listingId} onXong={nhanSo} onDong={() => setHoiSo(false)} />}

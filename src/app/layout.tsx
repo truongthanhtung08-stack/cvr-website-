@@ -14,6 +14,7 @@ import SiteJsonLd from "@/components/SiteJsonLd";
 import Analytics from "@/components/Analytics";
 import PwaRegister from "@/components/PwaRegister";
 import DemHienThi from "@/components/DemHienThi";
+import DoThanhDay from "@/components/DoThanhDay";
 
 // Font chính toàn site: Inter — hiện đại, chuyên nghiệp, "SF Pro của web" (kiểu Apple),
 // hỗ trợ tiếng Việt đầy đủ.
@@ -190,6 +191,7 @@ export default function RootLayout({
         <CompareBar />
         <Chatbox />
         <MobileTabBar />
+        <DoThanhDay />
         {/* Bàn phím ảo không được che ô khách đang gõ — mọi trang, mọi trình duyệt */}
         <BanPhimAo />
       </body>

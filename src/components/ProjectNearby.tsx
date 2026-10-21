@@ -109,7 +109,7 @@ export default function ProjectNearby({
         <button
           type="button"
           onClick={() => xemTrenBanDo(mapQuery)}
-          className="inline-flex h-8 flex-1 items-center justify-center gap-1.5 rounded-lg border border-cvr-line bg-white px-2.5 text-[12px] font-semibold text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink sm:flex-none"
+          className="inline-flex min-h-8 flex-1 items-center py-1 leading-tight text-center justify-center gap-1.5 rounded-lg border border-cvr-line bg-white px-2.5 text-[12px] font-semibold text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink sm:flex-none"
         >
           <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M14 4h6v6M20 4l-8.5 8.5M18 14v5a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1h5" />
@@ -120,7 +120,7 @@ export default function ProjectNearby({
           type="button"
           onClick={directionsFromMe}
           disabled={locating}
-          className="inline-flex h-8 flex-1 items-center justify-center gap-1.5 rounded-lg bg-cvr-blue px-2.5 text-[12px] font-semibold text-white transition hover:bg-cvr-blue-ink disabled:opacity-60 sm:flex-none"
+          className="inline-flex min-h-8 flex-1 items-center py-1 leading-tight text-center justify-center gap-1.5 rounded-lg bg-cvr-blue px-2.5 text-[12px] font-semibold text-white transition hover:bg-cvr-blue-ink disabled:opacity-60 sm:flex-none"
         >
           <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 11a2 2 0 100-4 2 2 0 000 4z" /><path strokeLinecap="round" strokeLinejoin="round" d="M12 22s7-6.5 7-12a7 7 0 10-14 0c0 5.5 7 12 7 12z" /></svg>
           {locating ? "Đang định vị…" : "Chỉ đường"}

@@ -114,7 +114,7 @@ export default function TruongLocTrangChu({
         </FilterDropdown>}
         {hien("dt") && <FilterDropdown pill={!seg && !the} seg={seg} the={the} id="dt" label="Diện tích" summary={areaRangeText(f.areaMin, f.areaMax)} active={f.areaMin != null || f.areaMax != null} panelClassName="w-80" className={cls}>
           {({ close }) => (
-            <RangePanel unit="m²" step={10} sliderMax={mb === "thue" ? 5000 : 500} min={f.areaMin} max={f.areaMax} presets={areaRangesFor(mb)}
+            <RangePanel unit="m²" step={10} sliderMax={mb === "thue" ? 5000 : 500} min={f.areaMin} max={f.areaMax} presets={areaRangesFor(mb, f.types)}
               onPick={(min, max) => set({ areaMin: min, areaMax: max })} onReset={() => set({ areaMin: null, areaMax: null })} onApply={() => xong(close)} />
           )}
         </FilterDropdown>}
@@ -127,7 +127,7 @@ export default function TruongLocTrangChu({
                 <div>
                   <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-cvr-muted">Diện tích</p>
                   <div className="flex flex-wrap gap-1.5">
-                    {areaRangesFor(mb).map((r) => {
+                    {areaRangesFor(mb, f.types).map((r) => {
                       const on = f.areaMin === r.min && f.areaMax === r.max;
                       return <Chip key={r.label} active={on} onClick={() => set(on ? { areaMin: null, areaMax: null } : { areaMin: r.min, areaMax: r.max })}>{r.label}</Chip>;
                     })}

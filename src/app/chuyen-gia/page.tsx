@@ -8,7 +8,8 @@ import { getChuyenGia } from "@/lib/chuyenGiaDb";
 export const metadata: Metadata = {
   alternates: { canonical: "/chuyen-gia" },
   title: "Danh bạ chuyên gia bất động sản",
-  description: "Danh bạ người bán, cho thuê nhà đất trên Coastal Land.",
+  // Câu chủ dự án duyệt 21/10/2026 (rà web: mô tả cũ 54 ký tự, chuẩn 120–160)
+  description: "Danh bạ chuyên gia: hồ sơ, khu vực hoạt động và các bất động sản đang bán, cho thuê theo hồ sơ trên trang Coastal Land.",
 };
 
 export default async function ChuyenGiaPage() {

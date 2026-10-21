@@ -12,6 +12,7 @@ import { HomeExpandProvider, HomeCollapsible } from "@/components/HomeExpand";
 import FloorPlans from "@/components/FloorPlans";
 import PropertyCard from "@/components/PropertyCard";
 import RelatedListingsTabs from "@/components/RelatedListingsTabs";
+import ListingShowcase from "@/components/ListingShowcase";
 import LeadForm from "@/components/LeadForm";
 import RichContent from "@/components/RichContent";
 import { chuThuan } from "@/lib/chuThuan";
@@ -20,11 +21,11 @@ import Breadcrumb from "@/components/Breadcrumb";
 import KhuVucLinks from "@/components/KhuVucLinks";
 import { ProjectListJsonLd } from "@/components/ListJsonLd";
 import ProjectsBrowser from "@/components/ProjectsBrowser";
-import { provinceOf, districtOf, segmentOf, pickRelated, type Project } from "@/lib/data";
+import { provinceOf, districtOf, segmentOf, pickRelated, type Project, type Listing } from "@/lib/data";
 import { getProject, getProjects, getArticles } from "@/lib/contentDb";
 import { getListings } from "@/lib/listingsDb";
 import { findCategory, projectCategories, type Category } from "@/lib/categories";
-import { normalizeVi } from "@/lib/filters";
+import { normalizeVi, cungDuAn } from "@/lib/filters";
 import { demTinTheoKhuVuc, moTaKhuVuc, tieuDeKhuVuc, timKhuVuc } from "@/lib/khuVuc";
 import { catMoTa, tieuDeGoogle } from "@/lib/thang";
 
@@ -33,6 +34,32 @@ import { catMoTa, tieuDeGoogle } from "@/lib/thang";
 //   · còn lại → trang chi tiết một dự án
 // Trước đây các slug danh mục rơi vào nhánh chi tiết và trả 200 kèm chữ
 // "Không tìm thấy dự án" — Google gọi đây là soft 404, hại hơn cả 404 thật.
+// ── DỰ ÁN BẬC 1 — CHỈ CÓ TÊN TỪ TIN (chủ dự án 21/10/2026) ─────────────────
+// Tin ghi "Thuộc dự án" mà danh mục dự án chưa có hồ sơ → trang dự án dựng từ chính các tin đó: tên, vị trí, tin đang
+// bán / cho thuê. Không ghi gì vào cơ sở dữ liệu (không tốn thêm truy vấn, dùng chung bản đệm getListings). Cowork bổ sung
+// hồ sơ (chủ đầu tư, quy mô, tổng quan…) cùng đợt tin → dự án có hồ sơ thật → trang đầy đủ, mở cho Google.
+function duAnTuTin(listings: Listing[], slug: string): { ten: string; viTri: string; tin: Listing[] } | null {
+  const tin = listings.filter((x) => cungDuAn(x.projectSlug, slug));
+  if (tin.length === 0) return null;
+  const ten = tin.find((x) => x.projectName)?.projectName ?? slug;
+  return { ten, viTri: tin[0].location, tin };
+}
+
+// BẤT ĐỘNG SẢN TƯƠNG TỰ ngay sau tin của dự án (chủ dự án 21/10/2026): tin NGOÀI dự án, cùng tỉnh trở lên
+// (cùng quận/phường cũ, cùng loại hình được xếp trước). Khác tỉnh thì không gợi ý — gợi ý vô lý là tệ nhất.
+function tuongTuDuAn(listings: Listing[], tinDuAn: Listing[], viTri: string): { nhe: Listing[]; ids: string[] } {
+  const trong = new Set(tinDuAn.map((x) => x.id));
+  const tinh = provinceOf(viTri), quan = districtOf(viTri);
+  const loai = new Set(tinDuAn.map((x) => x.type));
+  const ds = pickRelated(
+    listings.filter((x) => !trong.has(x.id) && provinceOf(x.location) === tinh),
+    (x) => (quan && districtOf(x.location) === quan ? 4 : 0) + (loai.has(x.type) ? 2 : 0),
+    listings.length,
+  );
+  // HTML nhẹ như trang tin: 8 tin bản nhẹ cho slide, "Xem thêm" tự nạp đủ theo danh sách mã
+  return { nhe: ds.slice(0, 8).map(({ desc: _d, searchText: _s, ...the }) => the as Listing), ids: ds.map((x) => x.id) };
+}
+
 function projectsInCategory(projects: Project[], c: Category): Project[] {
   const keys = c.types.map(normalizeVi);
   return projects.filter((p) => {
@@ -73,7 +100,17 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   }
 
   const p = await getProject(slug);
-  if (!p) return { title: "Không tìm thấy dự án", robots: { index: false, follow: true } };
+  if (!p) {
+    // Bậc 1 (21/10/2026): dự án mới chỉ có tên từ tin — khách xem được, Google CHƯA lập chỉ mục (trang mỏng) tới khi có hồ sơ
+    const coban = duAnTuTin(await getListings().catch(() => []), slug);
+    if (!coban) return { title: "Không tìm thấy dự án", robots: { index: false, follow: true } };
+    return {
+      title: tieuDeGoogle(coban.ten),
+      description: catMoTa(`Dự án ${coban.ten} tại ${coban.viTri}.`),
+      alternates: { canonical: `/du-an/${slug}` },
+      robots: { index: false, follow: true },
+    };
+  }
   const desc = `Dự án ${p.name} tại ${p.location}. ${p.type}, ${p.status}. Giá từ ${p.priceFrom} — tiến độ, mặt bằng, tiện ích đầy đủ tại Coastal Land.`;
   return {
     title: tieuDeGoogle(`${p.name} — ${p.priceFrom}`),
@@ -173,7 +210,35 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
   // ── Nhánh 2: trang chi tiết một dự án ──
   const [p, projects, listings, articles] = await Promise.all([getProject(slug), getProjects(), getListings(), getArticles()]);
-  if (!p) notFound();
+  if (!p) {
+    const coban = duAnTuTin(listings, slug);
+    if (!coban) notFound();
+    return (
+      <>
+        <Header />
+        <main className="flex-1 bg-white">
+          <Breadcrumb items={[{ name: "Tra cứu dự án", href: "/du-an/tra-cuu" }, { name: coban.ten, href: `/du-an/${slug}` }]} />
+          <div className="mx-auto max-w-7xl px-4 pb-footer sm:px-6 lg:px-8">
+            <h1 className="mt-3 text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">{coban.ten}</h1>
+            <p className="mt-1 text-sm text-cvr-muted">{coban.viTri}</p>
+            <section id="tin-dang" className="scroll-mt-28">
+              <RelatedListingsTabs
+                ban={coban.tin.filter((x) => (x.purpose ?? "ban") === "ban")}
+                thue={coban.tin.filter((x) => (x.purpose ?? "ban") === "thue")}
+                title={`Tin mua bán liên quan tại dự án ${coban.ten}`}
+              />
+            </section>
+            <HomeExpandProvider>
+              {(() => { const tt = tuongTuDuAn(listings, coban.tin, coban.viTri); return (
+                <ListingShowcase items={tt.nhe} idsDayDu={tt.ids} sectionKey="bds-tuong-tu" title="Bất động sản tương tự" heading="Bất động sản tương tự" relevance emptyNote="Chưa có bất động sản tương tự." />
+              ); })()}
+            </HomeExpandProvider>
+          </div>
+        </main>
+        <Footer />
+      </>
+    );
+  }
 
   // Thư viện ảnh: CHỈ ảnh của CHÍNH dự án này.
   // (Trước đây độn thêm ảnh của các dự án khác cho đủ 8 tấm → ảnh các dự án lẫn lộn nhau.)
@@ -211,7 +276,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   // Dự án không có tin nào → để TRỐNG, tuyệt đối KHÔNG độn tin của dự án khác vào.
   // Cùng với tin KHÁCH TỰ GHI ĐÚNG TÊN dự án này (chưa có mã vì lúc đăng dự án chưa có trang) —
   // tạo trang dự án xong là tin tự về đây (chủ dự án 15/10/2026).
-  const projectListings = listings.filter((x) => x.projectSlug === p.slug
+  const projectListings = listings.filter((x) => x.projectSlug === p.slug || cungDuAn(x.projectSlug, p.slug)
     || (!x.projectSlug && !!x.projectName && normalizeVi(x.projectName) === normalizeVi(p.name)));
   const relBan = projectListings.filter((x) => (x.purpose ?? "ban") === "ban");
   const relThue = projectListings.filter((x) => (x.purpose ?? "ban") === "thue");
@@ -532,6 +597,10 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               </HomeCollapsible>
             )}
           </section>
+
+          {(() => { const tt = tuongTuDuAn(listings, projectListings, p.location); return (
+            <ListingShowcase items={tt.nhe} idsDayDu={tt.ids} sectionKey="bds-tuong-tu" title="Bất động sản tương tự" heading="Bất động sản tương tự" relevance emptyNote="Chưa có bất động sản tương tự." />
+          ); })()}
 
           <ProjectSlider
             projects={others}

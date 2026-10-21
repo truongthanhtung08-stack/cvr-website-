@@ -457,6 +457,10 @@ export type ListingFull = {
   builtArea: string | null;    // diện tích xây dựng
   descriptionParas: string[];  // mô tả (tách theo dòng)
   specsChinh: ListingSpecRow[]; // THÔNG TIN CHÍNH của loại hình (bỏ mục trống)
+  // TIỀN VÀ THANH TOÁN của tin thuê (chủ dự án 21/10/2026: tiền cọc nằm ở "Đặc điểm" là sai) → hàng giá, đầu trang:
+  // tienDau ngay sau giá thuê (đặt cọc, kỳ thanh toán) · tienSau cuối hàng (điện, nước, phí dịch vụ)
+  tienDau: ListingSpecRow[];
+  tienSau: ListingSpecRow[];
   specs: ListingSpecRow[];     // đặc điểm còn lại đã nhập (bỏ mục trống)
   interior: string[];          // nội thất có sẵn
   amenityGroups: { group: string; items: { name: string; active: boolean }[] }[];
@@ -507,12 +511,28 @@ function rowToDetail(r: Row): ListingFull {
       // Nhãn gọn, đơn vị ghép vào số ("Mặt tiền (chiều ngang): 4,16 m") — trước ghi kiểu ô nhập liệu "Mặt tiền (chiều ngang) (m): 4,16" (20/10/2026)
       .map((f) => {
         const v = gon(d.specs?.[f.key]);
-        return { label: f.label, value: v && f.unit && /^[\d.,\s]+$/.test(v) ? `${v} ${f.unit}` : v };
+        // Trang tin ghi nhãn gọn "Mặt tiền", "Chiều dài" (chủ dự án 21/10/2026); form đăng tin giữ chú thích trong ngoặc
+        return { label: f.label.replace(/\s*\((chiều ngang|chiều sâu)\)$/, ""), value: v && f.unit && /^[\d.,\s]+$/.test(v) ? `${v} ${f.unit}` : v };
       })
       .filter((s) => s.value);
   const { chinh, dacDiem } = fieldsSplit(r.type, r.purpose);
-  const specsChinh = doc(chinh);
-  const specs = doc(dacDiem);
+  // Tin thuê: mục TIỀN lên hàng giá, mục điều kiện thuê (vào ở, thời hạn) lên thông tin chính — "Đặc điểm" chỉ còn
+  // đặc điểm của bất động sản. Chỉ đổi chỗ hiện trên trang tin; form đăng tin giữ nguyên (fieldsSplit dùng chung).
+  const TIEN_DAU = ["deposit", "billingCycle"], TIEN_SAU = ["elecPrice", "waterPrice", "phiDichVu"], DIEU_KIEN = ["moveIn", "minTerm"];
+  const tatCa = [...chinh, ...dacDiem];
+  const theoKhoa = (ks: string[]) => ks.map((k) => tatCa.find((f) => f.key === k)).filter((f): f is Field => Boolean(f));
+  const tienDau = doc(theoKhoa(TIEN_DAU))
+    // Theo tháng là mặc định của giá thuê — chỉ nói khi tin báo theo quý / năm
+    .filter((s) => s.value !== "Theo tháng")
+    .map((s) => ({
+      label: s.label === "Tiền cọc" ? "Tiền đặt cọc" : s.label === "Kỳ báo giá" ? "Kỳ thanh toán" : s.label,
+      // Tiền đặt cọc ghi số trơn ("7") = triệu đồng, cùng đơn vị giá thuê
+      value: s.label === "Tiền cọc" && /^\d+(,\d+)?$/.test(s.value) ? `${s.value} triệu` : s.value,
+    }));
+  const tienSau = doc(theoKhoa(TIEN_SAU));
+  const boRa = new Set([...TIEN_DAU, ...TIEN_SAU, ...DIEU_KIEN]);
+  const specsChinh = doc([...chinh.filter((f) => !boRa.has(f.key)), ...theoKhoa(DIEU_KIEN)]);
+  const specs = doc(dacDiem.filter((f) => !boRa.has(f.key)));
   // Mục khách tự ghi trùng nghĩa mục chuẩn ("Máy lạnh", "hồ bơi ") → đúng tên chuẩn, đúng nhóm.
   const dsTienIch = chuanHoaTienIch((d.amenities ?? []).map(gon));
   const amenSet = new Set(dsTienIch);
@@ -531,6 +551,8 @@ function rowToDetail(r: Row): ListingFull {
       : coDienTichXayDung(r.type) && d.specs?.usableArea ? `${String(d.specs.usableArea).trim()} m²` : null,
     descriptionParas: dongMoTa(r.description),
     specsChinh,
+    tienDau,
+    tienSau,
     specs,
     interior: chuanHoaNoiThat((d.interior ?? []).map(gon)),
     amenityGroups: [
@@ -583,6 +605,8 @@ function mockToDetail(m: Listing): ListingFull {
     builtArea: null,
     descriptionParas: [],
     specsChinh: [],
+    tienDau: [],
+    tienSau: [],
     specs: [],
     interior: [],
     amenityGroups: amenityGroups.map((g) => ({ group: g.group, items: g.items.map((name) => ({ name, active: false })) })),

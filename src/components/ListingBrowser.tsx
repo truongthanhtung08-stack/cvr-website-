@@ -5,7 +5,6 @@ import { xongTim } from "@/components/VachTim";
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import PhanTrang from "@/components/PhanTrang";
 import dynamic from "next/dynamic";
-import { useSearchParams } from "next/navigation";
 
 // Bản đồ chỉ chạy phía trình duyệt (Leaflet đụng tới window) → nạp động, tắt SSR.
 const MapView = dynamic(() => import("@/components/MapViewMo"), {
@@ -15,7 +14,7 @@ const MapView = dynamic(() => import("@/components/MapViewMo"), {
 import PropertyCard from "@/components/PropertyCard";
 import TheTinMobile from "@/components/TheTinMobile";
 import FilterBar from "@/components/FilterBar";
-import { cauThanhBoLoc } from "@/lib/locDanhSach";
+import { cauThanhBoLoc, boLocKhoiDau } from "@/lib/locDanhSach";
 import { featuredListings, type Article, type Listing } from "@/lib/data";
 import {
   filtersFromParams,
@@ -42,7 +41,7 @@ export default function ListingBrowser({
   items: itemsTuMayChu,
   itemsHetHan: hetHanTuMayChu,
   nguon,
-  choTai,
+  ketQuaDau,
   soLieu,
   initialFilters,
   chiId,
@@ -78,9 +77,11 @@ export default function ListingBrowser({
   initialProvince?: string;
   // NẠP DỮ LIỆU Ở TRÌNH DUYỆT (SEO 15/10/2026): trang danh sách lớn không nhét dữ liệu tin vào
   // HTML nữa mà truyền `nguon`; danh sách tự nạp /api/danh-sach/<nguon> (CDN lưu sẵn, mọi trang
-  // dùng chung). `choTai` = khung hiện trong lúc nạp (cùng khung chờ máy chủ đã dựng).
+  // dùng chung).
   nguon?: "ban" | "thue";
-  choTai?: React.ReactNode;
+  // TRANG 1 MÁY CHỦ DỰNG SẴN (SEO 21/10/2026, lib/ketQuaDau): kết quả lọc mặc định của trang → HTML có sẵn tin thật khách
+  // nhìn thấy, không còn chờ /api/danh-sach mới hiện danh sách.
+  ketQuaDau?: KetQuaLoc;
   // Trang pSEO: bật sẵn bộ lọc theo đường dẫn (giá, phòng ngủ, pháp lý, hướng, phường…).
   // Địa chỉ có tham số lọc riêng thì tham số đó thắng.
   initialFilters?: Partial<Filters>;
@@ -94,7 +95,10 @@ export default function ListingBrowser({
 }) {
   // coDiaDanh trong điều kiện tính lại của các useMemo dùng địa danh: dữ liệu về sau lần tính đầu thì phải tính lại
   const coDiaDanh = useDiaDanh(); // địa danh nạp sau khi trang hiện — về tới thì vẽ lại (20/10/2026)
-  const params = useSearchParams();
+  // ĐỌC ĐỊA CHỈ SAU KHI TRANG MỞ (SEO 21/10/2026): không dùng useSearchParams — hook đó bắt Next bỏ dựng danh sách ở máy
+  // chủ (HTML chỉ còn khung chờ). Máy chủ dựng theo bộ lọc mặc định của trang; trình duyệt đọc ?q, ?trang… rồi áp ngay sau.
+  const [params, setParams] = useState(() => new URLSearchParams());
+  const [daDocDiaChi, setDaDocDiaChi] = useState(false);
 
   // Trang không nạp từ máy chủ (tin tương tự truyền thẳng…): lọc ngay ở trình duyệt.
   const items = useMemo(() => itemsTuMayChu ?? featuredListings, [itemsTuMayChu]);
@@ -110,23 +114,17 @@ export default function ListingBrowser({
   }, [hetHanTuMayChu, nguon]);
   const itemsHetHan = hetHanTuMayChu ?? hetHanNap;
 
-  const [filtersSong, setFiltersState] = useState<Filters>(() => {
-    const f = filtersFromParams(params);
-    // Địa chỉ chưa chỉ định loại hình → lấy loại hình của danh mục đang xem
-    if (initialTypes?.length && !f.types.length) f.types = [...initialTypes];
-    // Trang khu vực: chưa chọn nơi nào → mặc định lọc đúng tỉnh của trang
-    if (initialProvince && f.locations.length === 0) f.locations = [{ province: initialProvince }];
-    if (initialFilters) {
-      const g = initialFilters;
-      if (g.locations?.length && f.locations.length === 0) f.locations = g.locations;
-      if (g.types?.length && !f.types.length) f.types = [...g.types];
-      if (g.priceMax != null && f.priceMax == null && f.priceMin == null) f.priceMax = g.priceMax;
-      if (g.beds && !f.beds) f.beds = g.beds;
-      if (g.direction && !f.direction) f.direction = g.direction;
-      if (g.legal && !f.legal) f.legal = g.legal;
-    }
-    return f;
-  });
+  const boLocTu = (params: URLSearchParams): Filters =>
+    boLocKhoiDau(filtersFromParams(params), { initialTypes, initialProvince, initialFilters });
+  const sapXepTu = (params: URLSearchParams): SortKey => {
+    const sx = params.get("sapxep");
+    return sx === "gia-tang" || sx === "gia-giam" || sx === "dt-giam" || sx === "gia-m2" ? sx : relevance ? "lien-quan" : "moi";
+  };
+  const trangTu = (params: URLSearchParams) => {
+    const n = parseInt(params.get("trang") ?? "1", 10);
+    return Number.isFinite(n) && n > 0 ? n : 1;
+  };
+  const [filtersSong, setFiltersState] = useState<Filters>(() => boLocTu(params));
   // GÕ MƯỢT (chủ dự án 20/10/2026: màn tìm điện thoại "rất giật và lag"): ô tìm dùng bộ lọc SỐNG (filtersSong) nên chữ hiện
   // ngay; danh sách, đếm kết quả, sửa chính tả dùng bản HOÃN — React dựng lại danh sách lúc rảnh, không chặn từng phím gõ.
   const filtersHoan = useDeferredValue(filtersSong);
@@ -139,10 +137,7 @@ export default function ListingBrowser({
   useEffect(() => { if (!filtersSong.keyword.trim()) setTuKhoaDaTim(""); }, [filtersSong.keyword]);
   const filters = useMemo(() => ({ ...filtersHoan, keyword: tuKhoaDaTim }), [filtersHoan, tuKhoaDaTim]);
   // ?sapxep=gia-tang (ô tìm thông minh: câu có "giá rẻ" → giá thấp trước)
-  const [sort, setSort] = useState<SortKey>(() => {
-    const sx = params.get("sapxep");
-    return sx === "gia-tang" || sx === "gia-giam" || sx === "dt-giam" || sx === "gia-m2" ? sx : relevance ? "lien-quan" : "moi";
-  });
+  const [sort, setSort] = useState<SortKey>(() => sapXepTu(params));
   // Chế độ BẢN ĐỒ (kiểu Batdongsan): bật là cả trang chuyển sang xem bản đồ,
   // marker chạy theo đúng bộ lọc đang áp dụng.
   const [mapMode, setMapMode] = useState(false);
@@ -163,10 +158,21 @@ export default function ListingBrowser({
   // Trước đây số trang chỉ nằm trong bộ nhớ: khách đang ở trang 3, bấm vào một tin
   // rồi bấm Back là văng về trang 1, phải bấm lại 3 lần. Ghi vào địa chỉ thì bấm
   // Back trình duyệt trả đúng ?trang=3, mà gửi link cho nhau cũng ra đúng trang.
-  const [page, setPage] = useState(() => {
-    const n = parseInt(params.get("trang") ?? "1", 10);
-    return Number.isFinite(n) && n > 0 ? n : 1;
-  });
+  const [page, setPage] = useState(() => trangTu(params));
+  // Địa chỉ có ?q, ?trang, ?sapxep… → áp ngay khi trang mở (máy chủ đã dựng sẵn bản không tham số)
+  useEffect(() => {
+    const sp = new URLSearchParams(window.location.search);
+    if (sp.toString()) {
+      const f = boLocTu(sp);
+      setParams(sp);
+      setFiltersState(f);
+      setTuKhoaDaTim(f.keyword);
+      setSort(sapXepTu(sp));
+      setPage(trangTu(sp));
+    }
+    setDaDocDiaChi(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- chỉ đọc địa chỉ một lần lúc mở trang
+  }, []);
 
   // Đổi bộ lọc → luôn quay về trang 1
   const setFilters = (f: Filters) => { setFiltersState(f); setPage(1); ghiTrangVaoDiaChi(1); };
@@ -197,7 +203,8 @@ export default function ListingBrowser({
 
   // LỌC Ở MÁY CHỦ (#1b kế hoạch SEO, 17/10/2026): trang có `nguon` gửi bộ lọc + trang đang xem
   // tới /api/danh-sach/<nguon>/loc, chỉ nhận 10 tin của trang đó — không tải cả kho tin.
-  const [mayChu, setMayChu] = useState<(KetQuaLoc & { diem?: DiemBanDo[] }) | null>(null);
+  const [mayChu, setMayChu] = useState<(KetQuaLoc & { diem?: DiemBanDo[] }) | null>(ketQuaDau ?? null);
+  const daCoGoiY = useRef(false);
   const [goiY, setGoiY] = useState<TinGoiY[]>([]);
   // SỬA CHÍNH TẢ KIỂU GOOGLE: gõ sai một chữ cái ("phog") → tìm theo câu đã sửa và báo "Đang hiển thị kết quả cho …";
   // khách bấm "Tìm kiếm thay thế cho …" (?nguyenvan=1) thì tìm đúng nguyên chữ đã gõ.
@@ -209,13 +216,13 @@ export default function ListingBrowser({
   const choDiaDanh = filters.keyword.trim() !== "" && !coDiaDanh;
   const dangNap = useRef(false); // không từ khoá thì luôn false → không gọi thêm lần nào
   useEffect(() => {
-    if (!nguon) return;
+    if (!nguon || !daDocDiaChi) return;
     // Có từ khoá → chờ địa danh về (sửa chính tả cần nó) rồi mới hỏi MỘT lần — hỏi ngay thì phải hỏi lại khi câu sửa xong (tốn lượt gọi hàm)
     if (choDiaDanh) return;
     let huy = false;
     dangNap.current = true;
     window.dispatchEvent(new Event("cvr-tim-nap")); // vạch xanh chung chạy tới khi danh sách hiện
-    const lanDau = mayChu == null;
+    const lanDau = !daCoGoiY.current; // lần nạp đầu kèm dữ liệu câu gợi ý trong ô tìm
     fetch(`/api/danh-sach/${nguon}/loc`, {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -228,12 +235,12 @@ export default function ListingBrowser({
         xongTim();
         if (!d) return;
         setMayChu(d);
-        if (d.goiY) setGoiY(d.goiY);
+        if (d.goiY) { setGoiY(d.goiY); daCoGoiY.current = true; }
       })
       .catch(() => { if (!huy) { dangNap.current = false; xongTim(); } });
     return () => { huy = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- chỉ gọi lại khi yêu cầu đổi (hoặc địa danh vừa về)
-  }, [nguon, yeuCau, choDiaDanh]);
+  }, [nguon, yeuCau, choDiaDanh, daDocDiaChi]);
   const taiCho = useMemo(
     () => (nguon ? null : locDanhSach(items, itemsHetHan, purpose, locThat, sort, page)),
     // eslint-disable-next-line react-hooks/exhaustive-deps -- locThat suy ra từ filters + cauSua
@@ -275,8 +282,8 @@ export default function ListingBrowser({
   // Thẻ lọc hiểu từ câu: chỉ theo từ khoá ĐÃ TÌM — đang gõ dở thì thanh lọc giữ nguyên
   const hieu = useMemo(() => (filtersSong.keyword === tuKhoaDaTim ? cauThanhBoLoc(filtersSong, purpose) : null), [filtersSong, tuKhoaDaTim, purpose, coDiaDanh]); // eslint-disable-line react-hooks/exhaustive-deps -- coDiaDanh: tính lại khi địa danh về
 
-  // Đang nạp dữ liệu → giữ nguyên khung chờ máy chủ đã dựng (không nhấp nháy giao diện)
-  if (nguon && !mayChu) return <>{choTai ?? null}</>;
+  // Đang nạp dữ liệu (danh sách không có trang 1 dựng sẵn, vd "Xem thêm" trang chủ) → chưa vẽ gì
+  if (nguon && !mayChu) return null;
 
   return (
     // PC: thanh lọc nằm SÁT header, không chừa khoảng trống (file V3 10.08.2026).
@@ -451,7 +458,7 @@ export default function ListingBrowser({
         {/* CỘT PHẢI: sidebar lọc nhanh */}
         <aside className="lg:col-span-1">
           {/* Cột phải DÍNH CỐ ĐỊNH khi cuộn, cao hơn màn hình thì cuộn trong khung */}
-          <div className="no-scrollbar sticky top-20 max-h-[calc(100vh-6rem)] space-y-5 overflow-y-auto">
+          <div className="no-scrollbar sticky top-20 flex max-h-[calc(100vh-6rem)] flex-col gap-5 overflow-y-auto">
             {/* Lọc theo khoảng giá — mua bán = tỷ · cho thuê = triệu/tháng */}
             <SidebarFilter title={purpose === "thue" ? "Lọc theo giá thuê (tháng)" : "Lọc theo khoảng giá"}>
               {priceRangesFor(purpose).map((r) => {
@@ -472,7 +479,7 @@ export default function ListingBrowser({
 
             {/* Lọc theo diện tích */}
             <SidebarFilter title="Lọc theo diện tích">
-              {areaRangesFor(purpose).map((r) => {
+              {areaRangesFor(purpose, filters.types).map((r) => {
                 const on = filters.areaMin === r.min && filters.areaMax === r.max;
                 return (
                   <SidebarLink
@@ -488,8 +495,8 @@ export default function ListingBrowser({
               })}
             </SidebarFilter>
 
-            {/* Bất động sản theo khu vực */}
-            <SidebarFilter title={`${boDuoiThang(heading)} theo khu vực`}>
+            {/* Bất động sản theo khu vực — ĐIỆN THOẠI ẨN (chủ dự án 21/10/2026: trùng khối liên kết khu vực ngay bên dưới) */}
+            <SidebarFilter title={`${boDuoiThang(heading)} theo khu vực`} className="hidden lg:block">
               {provinces.map(([prov, count]) => {
                 const on = filters.locations.some((l) => l.province === prov && !l.district && !l.ward);
                 return (
@@ -517,22 +524,24 @@ export default function ListingBrowser({
 }
 
 // ── Sidebar lọc nhanh (giống .product-right của Homedy) ──────────────────────
-function SidebarFilter({ title, children }: { title: string; children: React.ReactNode }) {
+// Điện thoại (chủ dự án 21/10/2026): mỗi khối là MỘT HÀNG nút vuốt ngang — trước là lưới 2 cột dài gần 3 màn hình.
+// Máy tính giữ nguyên lưới 2 cột.
+function SidebarFilter({ title, children, className = "" }: { title: string; children: React.ReactNode; className?: string }) {
   return (
-    <div className="rounded-none border border-cvr-line bg-white p-4 shadow-lux">
-      <p className="mb-2.5 text-sm font-semibold text-cvr-ink">{title}</p>
-      <ul className="grid grid-cols-2 gap-1.5">{children}</ul>
+    <div className={`rounded-none border border-cvr-line bg-white p-3 shadow-lux lg:p-4 ${className}`}>
+      <p className="mb-2 text-sm font-semibold text-cvr-ink lg:mb-2.5">{title}</p>
+      <ul className="no-scrollbar -mx-3 flex gap-1.5 overflow-x-auto px-3 lg:mx-0 lg:grid lg:grid-cols-2 lg:overflow-visible lg:px-0">{children}</ul>
     </div>
   );
 }
 
 function SidebarLink({ active, onClick, count, children }: { active: boolean; onClick: () => void; count?: number; children: React.ReactNode }) {
   return (
-    <li>
+    <li className="shrink-0 lg:shrink">
       <button
         type="button"
         onClick={onClick}
-        className={`flex w-full items-center justify-center gap-1 rounded-md border px-2 py-1.5 text-center text-[12px] transition ${
+        className={`flex w-full items-center justify-center gap-1 whitespace-nowrap rounded-md border px-3 py-1.5 text-center text-[12px] transition lg:whitespace-normal lg:px-2 ${
           active
             ? "border-cvr-ink bg-cvr-ink font-semibold text-white"
             : "border-cvr-line bg-cvr-surface text-cvr-body hover:border-cvr-ink hover:text-cvr-ink"

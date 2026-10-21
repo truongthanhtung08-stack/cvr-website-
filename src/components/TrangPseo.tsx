@@ -1,9 +1,8 @@
-import { Suspense } from "react";
 import type { Metadata } from "next";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ListingBrowser from "@/components/ListingBrowser";
-import KhungChoDanhMuc from "@/components/KhungChoDanhMuc";
+import { ketQuaTrangDau } from "@/lib/ketQuaDau";
 import { BreadcrumbJsonLd } from "@/components/Breadcrumb";
 import LienKetPseo from "@/components/LienKetPseo";
 import HoiDapPseo, { hoiDapPseo } from "@/components/HoiDapPseo";
@@ -47,7 +46,8 @@ export default async function TrangPseo({ dk }: { dk: DieuKien }) {
   // lọc được như trang thường. Trục đường / kiệt: không có ô lọc → nhận đúng danh sách tin khớp.
   const boLoc = boLocCua(dk);
   const soLieu = soLieuTrang(items, dk.muc);
-  const khung = <KhungChoDanhMuc heading={heading} moTa={[soLieu, moTa(dk)].filter(Boolean).join(" — ")} items={[...items, ...itemsHetHan]} />;
+  // Trang 1 máy chủ dựng sẵn (lib/ketQuaDau, 21/10/2026): HTML có tin thật khách nhìn thấy — thay khung chờ + danh sách ẩn cũ
+  const ketQuaDau = boLoc ? await ketQuaTrangDau(dk.muc, { initialFilters: boLoc }) : undefined;
   return (
     <>
       <ListingListJsonLd items={items} heading={heading} path={path} />
@@ -56,20 +56,18 @@ export default async function TrangPseo({ dk }: { dk: DieuKien }) {
         {/* Đường dẫn phân cấp: CHỈ cho Google (JSON-LD) — không hiện trên màn hình (chủ dự án 17/10/2026: dòng này nằm
             trên ô tìm làm rối; điện thoại đã có thanh "← Quay lại"). SEO không mất: Google đọc từ dữ liệu cấu trúc. */}
         <BreadcrumbJsonLd items={duongDanPhanCap(dk)} />
-        <Suspense fallback={khung}>
-          {boLoc ? (
-            <ListingBrowser purpose={dk.muc} heading={heading} soLieu={soLieu} nguon={dk.muc} choTai={khung} initialFilters={boLoc} articles={goiNheBaiViet(articles)} />
-          ) : (
-            <ListingBrowser
-              purpose={dk.muc}
-              heading={heading}
-              soLieu={soLieu}
-              items={goiNheTin(items)}
-              itemsHetHan={goiNheTin(itemsHetHan)}
-              articles={goiNheBaiViet(articles)}
-            />
-          )}
-        </Suspense>
+        {boLoc ? (
+          <ListingBrowser purpose={dk.muc} heading={heading} soLieu={soLieu} nguon={dk.muc} ketQuaDau={ketQuaDau} initialFilters={boLoc} articles={goiNheBaiViet(articles)} />
+        ) : (
+          <ListingBrowser
+            purpose={dk.muc}
+            heading={heading}
+            soLieu={soLieu}
+            items={goiNheTin(items)}
+            itemsHetHan={goiNheTin(itemsHetHan)}
+            articles={goiNheBaiViet(articles)}
+          />
+        )}
         <HoiDapPseo hoiDap={hoiDapPseo(dk, items)} />
         <LienKetPseo nhom={lienKetCho(dk, listings)} cau={tieuDe(dk)} kieuGoogle />
       </main>

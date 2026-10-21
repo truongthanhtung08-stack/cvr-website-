@@ -336,6 +336,28 @@ export function locDanhSach(
   };
 }
 
+/** Bộ lọc khởi đầu của trang danh sách: lọc theo địa chỉ + mặc định của trang (loại hình danh mục, tỉnh, bộ lọc pSEO).
+ *  Dùng chung: ListingBrowser (trình duyệt) và trang 1 máy chủ dựng sẵn (lib/ketQuaDau) — hai nơi một cách tính. */
+export function boLocKhoiDau(
+  f: Filters,
+  { initialTypes, initialProvince, initialFilters }: { initialTypes?: string[]; initialProvince?: string; initialFilters?: Partial<Filters> },
+): Filters {
+  // Địa chỉ chưa chỉ định loại hình → lấy loại hình của danh mục đang xem
+  if (initialTypes?.length && !f.types.length) f.types = [...initialTypes];
+  // Trang khu vực: chưa chọn nơi nào → mặc định lọc đúng tỉnh của trang
+  if (initialProvince && f.locations.length === 0) f.locations = [{ province: initialProvince }];
+  if (initialFilters) {
+    const g = initialFilters;
+    if (g.locations?.length && f.locations.length === 0) f.locations = g.locations;
+    if (g.types?.length && !f.types.length) f.types = [...g.types];
+    if (g.priceMax != null && f.priceMax == null && f.priceMin == null) f.priceMax = g.priceMax;
+    if (g.beds && !f.beds) f.beds = g.beds;
+    if (g.direction && !f.direction) f.direction = g.direction;
+    if (g.legal && !f.legal) f.legal = g.legal;
+  }
+  return f;
+}
+
 /** Điểm bản đồ của một tin — dùng chung cho bản đồ danh sách (MapViewMo) và máy chủ. */
 export function diemTuTin(it: Listing): DiemBanDo {
   const ghim = it.mapPin ? parseLatLng(it.mapPin) : null;

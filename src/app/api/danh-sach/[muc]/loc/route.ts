@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getListings, getListingsHetHan } from "@/lib/listingsDb";
-import { goiNheTin } from "@/lib/goiNhe";
+import { goiKetQua } from "@/lib/ketQuaDau";
 import { emptyFilters, type Filters, type SortKey } from "@/lib/filters";
 import { locDanhSach, diemTuTin } from "@/lib/locDanhSach";
 
@@ -49,19 +49,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ muc: st
   const kq = locDanhSach(tin, hetHan, muc, boLoc, yc.sapXep ?? "moi", yc.trang ?? 1);
 
   return NextResponse.json({
-    trang: goiNheTin(kq.trang),
-    tong: kq.tong,
-    soTrang: kq.soTrang,
-    trangHienTai: kq.trangHienTai,
-    tangDau: kq.tangDau,
-    boiDam: kq.boiDam,
-    tangTheoId: kq.tangTheoId,
-    khuVuc: kq.khuVuc,
-    // tỉnh máy hiểu từ câu gõ — trang cần để ghi đúng dòng "Gợi ý khác tại …" (thiếu thì tin đúng nơi khách tìm
-    // bị ghi nhầm "Gợi ý ở địa phương khác" — lỗi 17/10/2026)
-    tinhHieu: kq.tinhHieu,
-    khoangRe: kq.khoangRe, // khách tìm "giá rẻ": khoảng giá của riêng phân khúc rẻ
-    thongBao: kq.thongBao, // không có tin đúng nhu cầu: câu nói rõ
+    // Cùng một cách gói với trang 1 máy chủ dựng sẵn (lib/ketQuaDau): tinhHieu — tỉnh máy hiểu từ câu gõ, để ghi đúng dòng
+    // "Gợi ý khác tại …" (lỗi 17/10/2026) · khoangRe — khách tìm "giá rẻ" · thongBao — không có tin đúng nhu cầu: câu nói rõ
+    ...goiKetQua(kq),
     ...(yc.banDo ? { diem: kq.ketQua.filter((l) => !l.banSao).map(diemTuTin) } : {}),
     ...(yc.goiY
       ? { goiY: tin.slice(0, TOI_DA_GOI_Y).map((l) => ({ purpose: l.purpose, type: l.type, location: l.location, badge: l.badge, price: l.price })) }

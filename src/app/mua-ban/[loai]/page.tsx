@@ -1,11 +1,10 @@
-import { Suspense } from "react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ListingBrowser from "@/components/ListingBrowser";
 import { goiNheBaiViet } from "@/lib/goiNhe";
-import KhungChoDanhMuc from "@/components/KhungChoDanhMuc";
+import { ketQuaTrangDau } from "@/lib/ketQuaDau";
 import Breadcrumb from "@/components/Breadcrumb";
 import KhuVucLinks from "@/components/KhuVucLinks";
 import { ListingListJsonLd } from "@/components/ListJsonLd";
@@ -103,6 +102,7 @@ export default async function DanhMucMuaBanPage({ params }: { params: Promise<{ 
 
   // ── TRANG KHU VỰC ─────────────────────────────────────────────────────────
   if (kv) {
+    const ketQuaDau = await ketQuaTrangDau("ban", { initialProvince: kv.name });
     const tinTrongTinh = tinBan.filter((l) => normalizeVi(tinhCua(l.location)) === normalizeVi(kv.name));
     return (
       <>
@@ -115,23 +115,13 @@ export default async function DanhMucMuaBanPage({ params }: { params: Promise<{ 
               { name: kv.name, href: `/mua-ban/${kv.slug}` },
             ]}
           />
-          <Suspense
-            fallback={
-              <KhungChoDanhMuc
-                heading={tieuDeKhuVuc("ban", kv.name)}
-                moTa={moTaKhuVuc("ban", kv.name, tinTrongTinh.length)}
-                items={tinTrongTinh}
-              />
-            }
-          >
-            <ListingBrowser
-              purpose="ban"
-              heading={tieuDeKhuVuc("ban", kv.name)}
-              nguon="ban" choTai={<KhungChoDanhMuc heading={tieuDeKhuVuc("ban", kv.name)} moTa={moTaKhuVuc("ban", kv.name, tinTrongTinh.length)} items={tinTrongTinh} />}
-              articles={goiNheBaiViet(articles)}
-              initialProvince={kv.name}
-            />
-          </Suspense>
+          <ListingBrowser
+            purpose="ban"
+            heading={tieuDeKhuVuc("ban", kv.name)}
+            nguon="ban" ketQuaDau={ketQuaDau}
+            articles={goiNheBaiViet(articles)}
+            initialProvince={kv.name}
+          />
           {/* Bảng giá theo loại hình của cả tỉnh: ĐÃ GỠ (03/10/2026) — gộp tin nhiều phường ra một
               giá cho cả thành phố là sai luật "giá khu vực = số liệu đúng khu vực". Có số liệu chuẩn
               (docs/YEU-CAU-COWORK-LICH-SU-GIA.md) mới làm lại. */}
@@ -144,6 +134,7 @@ export default async function DanhMucMuaBanPage({ params }: { params: Promise<{ 
   }
 
   // ── TRANG DANH MỤC LOẠI HÌNH (giữ nguyên như cũ, thêm khối khu vực cuối) ───
+  const ketQuaDau = await ketQuaTrangDau("ban", { initialTypes: c!.types });
   return (
     <>
       <Header />
@@ -154,23 +145,13 @@ export default async function DanhMucMuaBanPage({ params }: { params: Promise<{ 
             { name: c!.label, href: `/mua-ban/${c!.slug}` },
           ]}
         />
-        <Suspense
-          fallback={
-            <KhungChoDanhMuc
-              heading={`${c!.h1} ${thangHienTai()}`}
-              moTa={c!.desc}
-              items={tinBan.filter((l) => c!.types.includes(l.type))}
-            />
-          }
-        >
-          <ListingBrowser
-            purpose="ban"
-            heading={`${c!.h1} ${thangHienTai()}`}
-            nguon="ban" choTai={<KhungChoDanhMuc heading={`${c!.h1} ${thangHienTai()}`} moTa={c!.desc} items={tinBan.filter((l) => c!.types.includes(l.type))} />}
-            articles={goiNheBaiViet(articles)}
-            initialTypes={c!.types}
-          />
-        </Suspense>
+        <ListingBrowser
+          purpose="ban"
+          heading={`${c!.h1} ${thangHienTai()}`}
+          nguon="ban" ketQuaDau={ketQuaDau}
+          articles={goiNheBaiViet(articles)}
+          initialTypes={c!.types}
+        />
         <LienKetPseo nhom={lienKetLoaiHinh("ban", c!, listings)} kieuGoogle />
         <KhuVucLinks base="/mua-ban" demTheoTinh={demTheoTinh} />
       </main>

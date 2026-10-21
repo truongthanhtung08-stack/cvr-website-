@@ -5,8 +5,8 @@ import { ZALO_OA_URL } from "@/lib/lienHe";
 //                      (logo, tên chính thức, hotline, mạng xã hội).
 //   2. WebSite + SearchAction → có thể hiện Ô TÌM KIẾM NGAY trong kết quả Google
 //                      (sitelinks searchbox) — khách gõ thẳng vào Google là ra tin.
-//   3. RealEstateAgent → khai đúng ngành nghề + khu vực phục vụ, giúp xếp hạng
-//                      các truy vấn có yếu tố địa phương (Đà Nẵng, Huế…).
+//   (21/10/2026: bỏ kiểu RealEstateAgent — đó là "môi giới", sai vai trò: Coastal Land là cổng thông tin, không môi giới.
+//    Chỉ khai Organization; địa chỉ, điện thoại, khu vực phục vụ vẫn giữ.)
 
 const SITE = "https://coastalland.vn";
 
@@ -14,7 +14,7 @@ const data = {
   "@context": "https://schema.org",
   "@graph": [
     {
-      "@type": ["Organization", "RealEstateAgent"],
+      "@type": "Organization",
       "@id": `${SITE}/#to-chuc`,
       name: "COASTAL LAND",
       alternateName: "Central Coast Vietnam Real Estate",

@@ -60,13 +60,15 @@ export default function KhoiDanhGiaTin({ listingId }: { listingId: string }) {
   }
 
   return (
-    <section className="rounded-2xl border border-cvr-line bg-cvr-surface p-5">
+    // GỌN (chủ dự án 21/10/2026): câu hỏi + 5 sao trên MỘT hàng, các lựa chọn một hàng nhỏ bên dưới
+    <section className="rounded-2xl border border-cvr-line bg-cvr-surface px-4 py-2.5">
       {xong ? (
         <p className="text-center text-sm font-medium text-cvr-ink">Cảm ơn bạn đã đánh giá tin này.</p>
       ) : (
         <>
-          <p className="text-center text-[15px] font-semibold text-cvr-ink">Tin này có đúng như mô tả không?</p>
-          <div className="mt-2.5 flex justify-center gap-1.5" onMouseLeave={() => setSao(0)}>
+          <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+          <p className="text-[14px] font-semibold text-cvr-ink">Tin này có đúng như mô tả không?</p>
+          <div className="flex gap-0.5" onMouseLeave={() => setSao(0)}>
             {[1, 2, 3, 4, 5].map((n) => (
               <button
                 key={n}
@@ -76,13 +78,14 @@ export default function KhoiDanhGiaTin({ listingId }: { listingId: string }) {
                 onFocus={() => setSao(n)}
                 onClick={() => gui(n)}
                 aria-label={`${n} sao`}
-                className="p-1 text-3xl leading-none transition active:scale-90"
+                className="p-0.5 text-[20px] leading-none transition active:scale-90"
               >
                 <span className={n <= sao ? "text-[#f5a623]" : "text-cvr-line"}>★</span>
               </button>
             ))}
           </div>
-          <div className="mt-2.5 flex flex-wrap justify-center gap-1.5">
+          </div>
+          <div className="mt-1.5 flex flex-wrap gap-1.5">
             <Tick bat={sai} doi={() => setSai((v) => !v)}>Sai thông tin</Tick>
             <Tick bat={khongGap} doi={() => setKhongGap((v) => !v)}>Không liên lạc được</Tick>
             <Tick bat={daBan} doi={() => setDaBan((v) => !v)}>Đã bán</Tick>
@@ -111,7 +114,7 @@ function Tick({ bat, doi, children }: { bat: boolean; doi: () => void; children:
     <button
       type="button"
       onClick={doi}
-      className={`rounded-full px-2.5 py-1 text-[12px] font-medium transition ${bat ? "bg-cvr-ink text-white" : "bg-white text-cvr-body"}`}
+      className={`rounded-full px-2.5 py-0.5 text-[12px] font-medium transition ${bat ? "bg-cvr-ink text-white" : "bg-white text-cvr-body"}`}
     >
       {children}
     </button>
