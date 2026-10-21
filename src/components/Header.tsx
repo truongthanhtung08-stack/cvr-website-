@@ -286,6 +286,12 @@ function MobileMenu({
   onLogout: () => void;
 }) {
   const [expanded, setExpanded] = useState<string | null>(null);
+  // CHỈ DỰNG NỘI DUNG MENU KHI KHÁCH MỞ LẦN ĐẦU (tốc độ, đo 21/10/2026): menu đóng chỉ ẩn bằng độ mờ nên Next coi mọi link
+  // trong đó là "đang thấy" → mỗi lần mở bất kỳ trang nào trên điện thoại là tải trước ~13 trang khác (~40 lượt gọi + ~15
+  // tệp mã), giành máy với trang đang mở. Mở một lần rồi thì giữ nguyên như cũ (đóng mở mượt, link tải trước bình thường).
+  const [daMo, setDaMo] = useState(false);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { if (open) setDaMo(true); }, [open]);
 
   // KHÔNG khoá cuộn bằng overflow:hidden nữa.
   // Đó chính là thủ phạm của lỗi "cuộn xuống rồi bấm menu thì menu bị ẩn":
@@ -311,7 +317,7 @@ function MobileMenu({
         open ? "visible translate-y-0 opacity-100" : "invisible -translate-y-2 opacity-0 pointer-events-none"
       }`}
     >
-      <nav className="flex-1 px-6 pb-[calc(2.5rem+env(safe-area-inset-bottom))] pt-5">
+      {(open || daMo) && <nav className="flex-1 px-6 pb-[calc(2.5rem+env(safe-area-inset-bottom))] pt-5">
         {/* ── ĐĂNG TIN + (chưa đăng nhập → Đăng nhập/Đăng ký) — đầu menu.
             Kiểu Batdongsan: KHI ĐÃ ĐĂNG NHẬP, tài khoản & avatar nằm ở THANH TRÊN
             (avatar + ♡ + 🔔), KHÔNG lặp lại khối tài khoản trong menu drawer. ── */}
@@ -489,7 +495,7 @@ function MobileMenu({
             </button>
           )}
         </div>
-      </nav>
+      </nav>}
     </div>
   );
 }

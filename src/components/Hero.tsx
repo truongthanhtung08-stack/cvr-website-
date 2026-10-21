@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { preload } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
 import { asset } from "@/lib/asset";
@@ -40,6 +41,13 @@ export default function Hero({
   const [playing, setPlaying] = useState(true);
   const [tick, setTick] = useState(0);
   const cur = banners[active];
+  // ẢNH ĐẦU TRANG CHỦ TẢI TRƯỚC, ƯU TIÊN CAO (tốc độ điện thoại, đo 21/10/2026): ảnh nằm trong <picture> nên trình duyệt chỉ thấy
+  // khi đọc tới nó, và các ảnh khác được tải trước giành đường truyền. Khai sẵn trong <head> đúng ảnh của từng máy.
+  const b0 = banners[0];
+  if (b0) {
+    preload(asset(b0.imageMobile || b0.image), { as: "image", fetchPriority: "high", media: "(max-width: 639.98px)" });
+    preload(asset(b0.image), { as: "image", fetchPriority: "high", media: "(min-width: 640px)" });
+  }
 
   useEffect(() => {
     if (banners.length <= 1 || !playing) return;

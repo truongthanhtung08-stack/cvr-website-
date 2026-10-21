@@ -247,6 +247,8 @@ export default function ListingBrowser({
     [nguon, items, itemsHetHan, purpose, filters, cauSua, sort, page, coDiaDanh],
   );
   const kq = nguon ? mayChu : taiCho;
+  const khoaKetQua = `${lanTim}-${JSON.stringify(filters)}`;
+  const khoaKetQuaDau = useRef(khoaKetQua);
   const pageItems = kq?.trang ?? [];
   // BÔI ĐẬM KIỂU GOOGLE (chủ dự án 18/10/2026): chữ khách gõ (bỏ chữ nối) in đậm trong tên tin kết quả
   const BO_NOI = new Set(["ban", "mua", "thue", "cho", "can", "tai", "o", "va", "co", "gia", "nha", "dat", "nhu", "cua", "duoi", "tren", "tu", "den"]);
@@ -409,7 +411,9 @@ export default function ListingBrowser({
       <div className={`mt-3 grid grid-cols-1 gap-6 lg:grid-cols-4 ${mapMode ? "hidden" : ""}`}>
 
         {/* CỘT TRÁI: danh sách tin */}
-        <div key={`${lanTim}-${JSON.stringify(filters)}`} className="anim-ket-qua lg:col-span-3">
+        {/* Hiệu ứng hiện kết quả chỉ chạy khi khách tìm / đổi lọc — KHÔNG chạy lúc mở trang: đo 21/10/2026 trên điện thoại chậm,
+            hiệu ứng mờ dần lúc mở trang làm ảnh tin đầu hiện trễ ~2,5 giây dù ảnh đã tải xong. */}
+        <div key={khoaKetQua} className={`${khoaKetQua !== khoaKetQuaDau.current ? "anim-ket-qua " : ""}lg:col-span-3`}>
           {pageItems.length > 0 ? (
             <>
               {/* Nhãn TẦNG kết quả — cho biết nhóm tin đang xem khớp tới đâu */}

@@ -40,7 +40,10 @@ export default function MapPaneMo({
 
   useEffect(() => {
     let huy = false;
-    (async () => {
+    // CHỈ VẼ KHI KHÁCH CUỘN GẦN TỚI (tốc độ điện thoại, đo 21/10/2026): thư viện bản đồ ~440 KB — nạp ngay lúc mở trang tin là
+    // giành máy với phần đầu trang dù khách chưa xem bản đồ. Khung giữ nguyên cỡ; trong bộ xem ảnh khung đã hiện nên vẽ ngay.
+    let io: IntersectionObserver | null = null;
+    const ve = () => (async () => {
       const el = boxRef.current;
       if (!el) return;
 
@@ -87,9 +90,17 @@ export default function MapPaneMo({
     })().catch(() => {
       /* nạp bản đồ hỏng → để trống khối, không làm vỡ trang tin */
     });
+    const box = boxRef.current;
+    if (box && typeof IntersectionObserver !== "undefined") {
+      io = new IntersectionObserver((ds) => {
+        if (ds.some((d) => d.isIntersecting)) { io?.disconnect(); io = null; void ve(); }
+      }, { rootMargin: "400px 0px" });
+      io.observe(box);
+    } else void ve();
 
     return () => {
       huy = true;
+      io?.disconnect();
       ghimRef.current?.remove();
       ghimRef.current = null;
       mapRef.current?.remove();

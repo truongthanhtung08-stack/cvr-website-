@@ -28,6 +28,9 @@ const inter = Inter({
 const playfair = Playfair_Display({
   variable: "--font-playfair",
   subsets: ["latin", "vietnamese"],
+  // Không tải trước (đo 21/10/2026): phông này chỉ dùng ở vài chỗ (banner, chữ Hero) — tải trước ở mọi trang là giành đường
+  // truyền với ảnh đầu trang trên điện thoại. Chỗ nào dùng thì trình duyệt vẫn tự tải.
+  preload: false,
   weight: ["500", "600", "700", "800"],
   display: "swap",
 });
@@ -36,6 +39,9 @@ const playfair = Playfair_Display({
 const montserrat = Montserrat({
   variable: "--font-montserrat",
   subsets: ["latin", "vietnamese"],
+  // Không tải trước (đo 21/10/2026): phông này chỉ dùng ở vài chỗ (banner, chữ Hero) — tải trước ở mọi trang là giành đường
+  // truyền với ảnh đầu trang trên điện thoại. Chỗ nào dùng thì trình duyệt vẫn tự tải.
+  preload: false,
   weight: ["500", "600", "700", "800"],
   display: "swap",
 });

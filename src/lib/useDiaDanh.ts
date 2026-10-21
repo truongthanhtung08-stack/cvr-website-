@@ -11,8 +11,24 @@ export function useDiaDanh(): boolean {
   useEffect(() => {
     if (daCoDiaDanh()) { setCo(true); return; }
     const bo = khiCoDiaDanh(() => setCo(true));
-    void napDiaDanh();
+    napKhiRanh();
     return bo;
   }, []);
   return co;
+}
+
+// NẠP LÚC MÁY RẢNH (tốc độ điện thoại, đo 21/10/2026): gói địa danh ~90 KB nén — nạp ngay lúc mở trang là giành đường truyền và
+// máy với ảnh, chữ đầu trang. Nay chờ trang tải xong rồi nạp khi máy rảnh (chậm nhất 3 giây sau). Khách chạm / gõ trước đó, hoặc
+// địa chỉ có từ khoá tìm (?q=, cần địa danh để hiểu câu) → nạp ngay.
+let daHen = false;
+function napKhiRanh() {
+  if (daHen) return;
+  daHen = true;
+  if (/[?&]q=/.test(window.location.search)) { void napDiaDanh(); return; }
+  const nap = () => { void napDiaDanh(); };
+  window.addEventListener("pointerdown", nap, { once: true, capture: true });
+  window.addEventListener("keydown", nap, { once: true, capture: true });
+  const ranh = () => (window.requestIdleCallback ? window.requestIdleCallback(nap, { timeout: 3000 }) : window.setTimeout(nap, 1000));
+  if (document.readyState === "complete") ranh();
+  else window.addEventListener("load", ranh, { once: true });
 }
