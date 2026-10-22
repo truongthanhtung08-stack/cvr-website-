@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useProfile } from "@/lib/useProfile";
 import { useAuth, anhDaiDien } from "@/lib/useAuth";
 import AnhDaiDien from "@/components/AnhDaiDien";
-import { freeDangChay, freeNote, tenGoiMienPhi, vnd } from "@/lib/billing";
+import { chuongTrinhTvMoi, freeDangChay, vnd } from "@/lib/billing";
 import { useBilling } from "@/lib/useBilling";
 import { ngayVN, tuNgayVN } from "@/lib/ngayVN";
 import { khoaKhach } from "@/lib/khachHang";
@@ -197,7 +197,11 @@ export default function AccountOverviewPage() {
         </p>
         {freeConChay && (
           <p className="mt-2 text-sm text-cvr-blue-ink">
-            {freeNote(billing.free, tenGoiMienPhi(billing))}
+            {/* Chương trình = Tên (đúng admin) + Nội dung — hàm chung chuongTrinhTvMoi (22/10/2026) */}
+            {(() => { const ct = chuongTrinhTvMoi(billing); return (<>
+              {ct.ten && <strong className="block font-semibold">{ct.ten}</strong>}
+              {ct.noiDung.map((d) => <span key={d} className="block">{d}</span>)}
+            </>); })()}
             {billing.free.quota > 0 && <> Bạn còn <strong className="font-semibold">{profile.free_quota ?? 0} tin</strong> miễn phí.</>}
           </p>
         )}

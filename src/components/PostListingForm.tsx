@@ -17,7 +17,7 @@ import { isVideoUrl } from "@/lib/media";
 import ThemTuGhi from "@/components/ThemTuGhi";
 import OGoTuGian from "@/components/OGoTuGian";
 import { donViGiaNenDung, goiYDienTich, goiYGia, goiYTieuDe } from "@/lib/goiYNhapTin";
-import { haiDongDiaChi, doiHeGiuNguyen, chuoiTimBanDo, diemTimBanDo, ungVienPhuongCu, type NhoHaiHe } from "@/lib/diaChiHaiHe";
+import { doiHeGiuNguyen, chuoiTimBanDo, diemTimBanDo, ungVienPhuongCu, type NhoHaiHe } from "@/lib/diaChiHaiHe";
 import {
   categorySpecs, demandTypes, specForType,
   coPhongNgu, coPhongTam, coDienTichXayDung, coNoiThat, fieldsSplit, thieuMucBatBuoc, nhanDienTich, type Field,
@@ -34,7 +34,7 @@ import OTieuDe from "@/components/OTieuDe";
 // phải sửa đúng dòng import này.
 import MapPicker from "@/components/MapPickerMo";
 import ContentEditor from "@/components/admin/ContentEditor";
-import { bangTheoMucDich, freeDangChay, huongKhuyenMai, thanhVienMoi, isPromoRunning, ngayVn, soNgayHienThi, freeNote, quotePrice, soAnhToiDa, soVideoToiDa, tenGoiMienPhi, vnd } from "@/lib/billing";
+import { bangTheoMucDich, chuongTrinhTvMoi, freeDangChay, huongKhuyenMai, thanhVienMoi, isPromoRunning, ngayVn, soNgayHienThi, quotePrice, soAnhToiDa, soVideoToiDa, vnd } from "@/lib/billing";
 import { banChuyenDoi } from "@/lib/gtagChuyenDoi";
 import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
 import { useBilling } from "@/lib/useBilling";
@@ -174,7 +174,7 @@ export default function PostListingForm() {
   // trang tin hiện tên đó (chưa có trang dự án thì hiện chữ trơn, tạo dự án sau
   // là tự thành liên kết). Không bắt buộc, bỏ trống cũng được.
   const [projectName, setProjectName] = useState("");
-  const [projectOptions, setProjectOptions] = useState<{ slug: string; name: string }[]>([]);
+  const [projectOptions, setProjectOptions] = useState<{ slug: string; name: string; province: string | null }[]>([]);
 
   // Đang lưu nút nào — để 2 nút hiện trạng thái riêng, không lẫn nhau
   const [saving, setSaving] = useState<"" | "draft" | "publish">("");
@@ -533,6 +533,16 @@ export default function PostListingForm() {
     nhoHai.current = null;
   }
 
+  // DỰ ÁN THUỘC VỊ TRÍ (chủ dự án 22/10/2026): ô "Thuộc dự án" nằm trong nhóm địa chỉ, chỉ liệt kê dự án của tỉnh đã
+  // chọn (so cả tên tỉnh đang chọn lẫn tỉnh hệ mới, bỏ chữ "Thành phố / Tỉnh"). Chưa chọn tỉnh thì hiện hết.
+  const gonTinh = (s: string) => normalizeVi(s.replace(/^(Thành phố|Tỉnh)\s+/i, ""));
+  const tinhCuaDuAn = (tinh: string) => (tinh ? [tinh, diemTimBanDo(geoMode, { tinh }).tinh].map(gonTinh) : []);
+  const duAnHopTinh = (o: { province: string | null }, tinh: string) => {
+    const ds = tinhCuaDuAn(tinh);
+    return !ds.length || ds.includes(gonTinh(o.province ?? ""));
+  };
+  const duAnTrongTinh = projectOptions.filter((o) => duAnHopTinh(o, province));
+
   function nhanDiaGioiTuBanDo(dc: DiaGioiBanDo) {
     diaGioiTuBanDoRef.current = dc;
     apDungDiaGioi(dc, geoMode, province, district, ward);
@@ -543,10 +553,10 @@ export default function PostListingForm() {
     (async () => {
       const { data } = await createClient()
         .from("projects")
-        .select("slug, name")
+        .select("slug, name, province")
         .eq("status", "published")
         .order("name");
-      if (data) setProjectOptions(data as { slug: string; name: string }[]);
+      if (data) setProjectOptions(data as { slug: string; name: string; province: string | null }[]);
     })();
   }, []);
 
@@ -1181,7 +1191,8 @@ export default function PostListingForm() {
       {/* 1. Loại tin & vị trí */}
       <Card id="b-loai" step={buoc()} title="Loại hình & địa chỉ" khoa={editStatus === "approved"}>
         <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
-          <Pick label="Nhu cầu *" value={demand} onChange={setDemand} options={demandTypes} />
+          {/* Tin cũ có nhu cầu đã tạm ẩn (Cần mua / Cần thuê) vẫn hiện đúng giá trị của nó khi sửa */}
+          <Pick label="Nhu cầu *" value={demand} onChange={setDemand} options={demandTypes.includes(demand) ? demandTypes : [...demandTypes, demand]} />
           {/* Loại hình theo NHÓM cho dễ tìm — cùng danh mục với bộ lọc của web */}
           <div>
             <Label>Loại hình bất động sản *</Label>
@@ -1199,7 +1210,7 @@ export default function PostListingForm() {
             />
           </div>
         </div>
-        <h3 className="border-t border-cvr-line pt-4 text-[15px] font-semibold tracking-tight text-cvr-ink">Địa chỉ bất động sản</h3>
+        <TieuDeCon>Địa chỉ bất động sản</TieuDeCon>
         {/* Chọn hệ đơn vị hành chính: MỚI (sau sáp nhập) hay CŨ */}
         {/* HAI NÚT CHIA ĐÔI HÀNG, CHỮ KHÔNG GÃY DÒNG. Nhãn cũ dài gần 30 ký tự nên
             trên điện thoại 375px hộp bị bóp, chữ rớt xuống hai dòng và nút bên cạnh
@@ -1245,31 +1256,53 @@ export default function PostListingForm() {
             và bản đồ ngay bên dưới vẫn nằm chung một màn hình, khỏi kéo lên kéo xuống
             đối chiếu. */}
         <div className={`grid grid-cols-2 gap-3 sm:gap-4 ${coDanhMucQuan ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
-          <PickTim label="Tỉnh / Thành *" value={province} onChange={(v) => { if (v !== province) diaChiMoi(); setProvince(v); setDistrict(""); setWard(""); }} options={provinceOptions} placeholder="Chọn Tỉnh / Thành" timPlaceholder="Tìm Tỉnh / Thành" bietDanh={bietDanhTinh(geoMode, provinceOptions)} />
+          <PickTim label="Tỉnh / Thành *" value={province} onChange={(v) => {
+            if (v !== province) diaChiMoi();
+            setProvince(v); setDistrict(""); setWard("");
+            // Đổi tỉnh → dự án đang chọn không thuộc tỉnh mới thì bỏ (tự ghi tên thì giữ)
+            const o = projectOptions.find((x) => x.slug === projectSlug);
+            if (o && !duAnHopTinh(o, v)) { setProjectSlug(""); setProjectName(""); }
+          }} options={provinceOptions} placeholder="Chọn Tỉnh / Thành" timPlaceholder="Tìm Tỉnh / Thành" bietDanh={bietDanhTinh(geoMode, provinceOptions)} />
           {coDanhMucQuan && (
             <PickTim label="Quận / Huyện" value={district} onChange={(v) => { if (v !== district) diaChiMoi(); setDistrict(v); setWard(""); }} options={districts} placeholder="Chọn Quận / Huyện" timPlaceholder="Tìm Quận / Huyện" disabled={!province} />
           )}
           <PickTim label="Phường / Xã" value={ward} onChange={(v) => { if (v !== ward) diaChiMoi(); setWard(v); setPhuongCu(""); }} options={wards} placeholder="Chọn Phường / Xã" timPlaceholder="Tìm Phường / Xã" bietDanh={geoMode === "moi" ? bietDanhPhuongMoi(province, wards) : undefined} disabled={geoMode === "moi" ? !province : coDanhMucQuan ? !district : !province} />
+          {/* THUỘC DỰ ÁN NẰM TRONG NHÓM ĐỊA CHỈ (chủ dự án 22/10/2026: để dưới bản đồ, tiêu đề riêng thì khách không hiểu,
+              dễ bỏ qua) — một hàng ngay sau Tỉnh / Phường, nhãn như các ô địa chỉ; chỉ liệt kê dự án của tỉnh đã chọn. */}
+          <div className="col-span-full min-w-0">
+            <Label>Thuộc dự án</Label>
+            {/* CHỌN DỰ ÁN — CÙNG CẤU TRÚC MỌI Ô CHỌN (chủ dự án 15/10/2026): dự án có sẵn thì chọn trong
+                danh sách; không có thì chọn "Khác — tự ghi", ô ghi tên hiện NGAY DƯỚI. Danh sách dài nên
+                "Khác — tự ghi" đứng ĐẦU danh sách (khỏi kéo hết mới thấy); có kính lúp để tìm.
+                · Chọn dự án có sẵn → tin NỐI vào trang dự án (mã dự án — bộ lọc Dự án, trang dự án,
+                  "Tin liên quan tại dự án", liên kết nội bộ cho SEO đều chạy theo mã này).
+                · Tự ghi tên TRÙNG dự án có sẵn (khác hoa/thường, dấu) → cũng nối luôn (slugDuAn).
+                · Tên chưa có trang dự án → lưu nguyên tên; sau này tạo trang dự án đúng tên đó là tin
+                  tự về trang dự án. LUÔN hiện đúng tên dự án tin đang gắn. */}
+            <ChonCoTim
+              value={projectSlug === DU_AN_KHAC ? DU_AN_TU_GHI
+                : projectSlug ? projectOptions.find((o) => o.slug === projectSlug)?.name ?? (projectName || projectSlug)
+                : ""}
+              onChange={(v) => {
+                if (!v) { setProjectSlug(""); setProjectName(""); return; }
+                if (v === DU_AN_TU_GHI) { setProjectSlug(DU_AN_KHAC); setProjectName(""); return; }
+                const o = projectOptions.find((x) => x.name === v);
+                if (o) { setProjectSlug(o.slug); setProjectName(o.name); }
+              }}
+              options={[DU_AN_TU_GHI, ...duAnTrongTinh.map((o) => o.name)]}
+              xoaDuoc
+              placeholder="Chọn dự án"
+              timPlaceholder="Tìm dự án"
+              className={inputCls}
+            />
+            {projectSlug === DU_AN_KHAC && (
+              <OGoTuGian value={projectName} onChange={setProjectName} placeholder="Tên dự án" autoFocus={!projectName} className={inputCls + " mt-2"} />
+            )}
+          </div>
         </div>
         {/* Ô "Phường / Xã trước sáp nhập" ĐÃ BỎ theo yêu cầu chủ dự án 14/10/2026. */}
-        {/* ĐỊA CHỈ HAI HỆ — nhập hệ nào cũng thấy ngay cách gọi của hệ kia.
-            Cả nước đang dùng song song hai cách gọi: người đăng quen hệ mới,
-            nhiều người mua vẫn tìm theo quận/huyện cũ. Hiện cả hai ngay lúc nhập
-            thì người đăng tự thấy tin của mình sẽ hiện ra sao cho cả hai nhóm.
-            CHỈ HIỆN khi suy ra được chắc chắn — không đoán bừa địa chỉ. */}
-        {province && (() => {
-          const hai = haiDongDiaChi(geoMode, { tinh: province, quan: district, phuong: ward });
-          if (!hai.moi) return null;
-          // Người đăng vừa chọn phường/xã cũ thì dòng dưới phải đổi theo NGAY.
-          const chon = ungVienPhuongCu(geoMode, province, ward).find((x) => x.nhan === phuongCu);
-          const cuHien = chon ? [chon.phuong, chon.quan, chon.tinh].filter(Boolean).join(", ") : hai.cu;
-          return (
-            <p className="mt-2 rounded-lg bg-cvr-surface px-3 py-2 text-xs leading-relaxed text-cvr-muted">
-              Tin sẽ hiện: <strong className="font-semibold text-cvr-ink">{hai.moi}</strong>
-              {cuHien ? <> · <span className="text-cvr-faint">Địa chỉ cũ: {cuHien}</span></> : null}
-            </p>
-          );
-        })()}
+        {/* Dòng "Tin sẽ hiện: … · Địa chỉ cũ: …" dưới địa chỉ ĐÃ BỎ (chủ dự án 22/10/2026: khách đã thấy địa chỉ mình
+            chọn, không cần nhắc lại). Trang tin vẫn hiện địa chỉ hai hệ như cũ. */}
 
         {/* THANH ĐỊA CHỈ LÀ Ô RIÊNG, NẰM NGOÀI BẢN ĐỒ — chủ dự án chốt.
             Gõ tới đâu bản đồ bên dưới tự thu lại và trôi tới đó; ghim trên bản đồ
@@ -1292,38 +1325,6 @@ export default function PostListingForm() {
             hint={chuoiTimBanDo(geoMode, { tinh: province, quan: district, phuong: ward }, addressDetail)}
             tim={diemTimBanDo(geoMode, { tinh: province, quan: district, phuong: ward }, addressDetail)}
           />
-        </div>
-        <h3 className="border-t border-cvr-line pt-4 text-[15px] font-semibold tracking-tight text-cvr-ink">Thuộc dự án</h3>
-        <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
-          <div>
-            {/* CHỌN DỰ ÁN — CÙNG CẤU TRÚC MỌI Ô CHỌN (chủ dự án 15/10/2026): dự án có sẵn thì chọn trong
-                danh sách; không có thì chọn "Khác — tự ghi", ô ghi tên hiện NGAY DƯỚI. Danh sách dài nên
-                "Khác — tự ghi" đứng ĐẦU danh sách (khỏi kéo hết mới thấy); có kính lúp để tìm.
-                · Chọn dự án có sẵn → tin NỐI vào trang dự án (mã dự án — bộ lọc Dự án, trang dự án,
-                  "Tin liên quan tại dự án", liên kết nội bộ cho SEO đều chạy theo mã này).
-                · Tự ghi tên TRÙNG dự án có sẵn (khác hoa/thường, dấu) → cũng nối luôn (slugDuAn).
-                · Tên chưa có trang dự án → lưu nguyên tên; sau này tạo trang dự án đúng tên đó là tin
-                  tự về trang dự án. LUÔN hiện đúng tên dự án tin đang gắn. */}
-            <ChonCoTim
-              value={projectSlug === DU_AN_KHAC ? DU_AN_TU_GHI
-                : projectSlug ? projectOptions.find((o) => o.slug === projectSlug)?.name ?? (projectName || projectSlug)
-                : ""}
-              onChange={(v) => {
-                if (!v) { setProjectSlug(""); setProjectName(""); return; }
-                if (v === DU_AN_TU_GHI) { setProjectSlug(DU_AN_KHAC); setProjectName(""); return; }
-                const o = projectOptions.find((x) => x.name === v);
-                if (o) { setProjectSlug(o.slug); setProjectName(o.name); }
-              }}
-              options={[DU_AN_TU_GHI, ...projectOptions.map((o) => o.name)]}
-              xoaDuoc
-              placeholder="Chọn dự án"
-              timPlaceholder="Tìm dự án"
-              className={inputCls}
-            />
-            {projectSlug === DU_AN_KHAC && (
-              <OGoTuGian value={projectName} onChange={setProjectName} placeholder="Tên dự án" autoFocus={!projectName} className={inputCls + " mt-2"} />
-            )}
-          </div>
         </div>
       </Card>
 
@@ -1574,10 +1575,15 @@ export default function PostListingForm() {
                   chonKm ? "border-cvr-blue bg-cvr-blue/[0.08] ring-1 ring-cvr-blue" : duocChonKm ? "border-cvr-blue/40 bg-cvr-blue/[0.04]" : "cursor-not-allowed border-cvr-line bg-cvr-surface opacity-60"
                 }`}
               >
+                {/* LÀ CHƯƠNG TRÌNH, KHÔNG PHẢI MỘT GÓI (chủ dự án 22/10/2026): Tên đúng như admin đặt + Nội dung — một hàm
+                    chuongTrinhTvMoi dùng chung toàn web. */}
+                {(() => { const ct = chuongTrinhTvMoi(billing); return (
                 <span className="min-w-0">
-                  <span className="block text-[15px] font-semibold text-cvr-ink">{getTier(goiMp).name} · {ngayMp} ngày</span>
-                  <span className="mt-0.5 block text-[12.5px] leading-snug text-cvr-muted">{freeNote(billing.free, tenGoiMienPhi(billing))}</span>
+                  {ct.ten && <span className="block text-[15px] font-semibold text-cvr-ink">{ct.ten}</span>}
+                  <span className="mt-0.5 block text-[13px] text-cvr-body">{ct.noiDung[0]}</span>
+                  {ct.noiDung.slice(1).map((d) => <span key={d} className="mt-0.5 block text-[12.5px] leading-snug text-cvr-muted">{d}</span>)}
                 </span>
+                ); })()}
                 <span className="shrink-0 font-semibold tabular-nums text-cvr-ink">0 ₫</span>
               </button>
             )}
@@ -1595,7 +1601,7 @@ export default function PostListingForm() {
             {/* CHƯƠNG TRÌNH KHÁC — giảm giá admin đã duyệt, tự trừ vào gói đúng đối tượng khi tính tiền. */}
             {ctKhac.length > 0 && (
               <div className="mt-5">
-                <p className="mb-2 text-sm font-semibold text-cvr-ink">Chương trình khác</p>
+                <p className="mb-2 text-base font-semibold tracking-tight text-cvr-ink">Chương trình khác</p>
                 <div className="space-y-2">
                   {ctKhac.map((p) => (
                     <div key={p.id} className={`flex items-center justify-between gap-3 rounded-2xl border border-cvr-line px-4 py-3.5 ${hopCtKhac(p) ? "bg-white" : "bg-cvr-surface opacity-60"}`}>
@@ -1652,7 +1658,7 @@ export default function PostListingForm() {
                 </div>
                 <div className="my-3 border-t border-cvr-line" />
                 {duocMienPhi ? (
-                  <Dong nhan="Ưu đãi thành viên mới" giaTri="Miễn phí" nhan2 />
+                  <Dong nhan={chuongTrinhTvMoi(billing).ten || "Ưu đãi thành viên mới"} giaTri="Miễn phí" nhan2 />
                 ) : (
                   <>
                     <Dong nhan="Phí đăng tin" giaTri={vnd(baoGia.base)} />
@@ -1934,12 +1940,12 @@ function ThanhBuoc() {
                 if (buoc && ctxBuoc) ctxBuoc.moMuc(buoc);
                 else document.getElementById(m.id)?.scrollIntoView({ behavior: "smooth", block: "start" });
               }}
-              className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium transition ${
+              className={`flex shrink-0 items-center gap-2 rounded-full px-3.5 py-2 text-[14px] font-semibold transition ${
                 o ? "bg-cvr-ink text-white" : "bg-cvr-surface text-cvr-body active:bg-cvr-line"
               }`}
             >
               <span
-                className={`flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-bold ${
+                className={`flex h-6 w-6 items-center justify-center rounded-full text-[12px] font-bold ${
                   o ? "bg-white/20 text-white" : "bg-white text-cvr-ink"
                 }`}
               >
@@ -1954,18 +1960,26 @@ function ThanhBuoc() {
   );
 }
 
+// BA CẤP RÕ RÀNG (chủ dự án 22/10/2026: "7 mục, mỗi mục có mục con, trong mục con có chỗ chọn, điền — cân đối cách thể
+// hiện để khách dễ nhìn, dễ biết"): MỤC = 19px đậm + số thứ tự (Card) · MỤC CON = 16px đậm + kẻ trên (TieuDeCon, MucAnHien)
+// · NHÃN Ô chọn/ghi = 13px xám (Label). Không thêm màu — chỉ cỡ chữ, độ đậm, khoảng cách.
 function Label({ children }: { children: React.ReactNode }) {
-  return <label className="mb-1.5 block text-sm font-medium text-cvr-body">{children}</label>;
+  return <label className="mb-1.5 block text-[13px] font-medium text-cvr-muted">{children}</label>;
+}
+
+function TieuDeCon({ children }: { children: React.ReactNode }) {
+  return <h3 className="border-t border-cvr-line pt-5 text-base font-semibold tracking-tight text-cvr-ink">{children}</h3>;
 }
 
 function Card({ id, step, title, children, khoa }: { id?: string; step: string; title: string; children: React.ReactNode; khoa?: boolean }) {
   // Mọi mục LUÔN MỞ (chủ dự án 15/10/2026 bỏ kiểu thu gọn + nút "Tiếp tục": "rất rối").
   const ctx = useContext(MucMoCtx);
   return (
-    // scroll-mt: chừa chỗ cho header + thanh quay lại + thanh bước, nếu không thì
-    // bấm mốc xong tiêu đề khối bị các thanh dính che mất.
-    <section id={id} data-buoc={step} className="scroll-mt-[168px] rounded-none border border-cvr-line bg-white p-5 shadow-lux sm:p-6 lg:scroll-mt-[120px]">
-      <h2 className="mb-4 flex items-center gap-2.5 text-lg font-semibold tracking-tight text-cvr-ink">
+    // scroll-mt: CHỈ chừa thanh các bước (61px) + 9px — header + thanh quay lại đã do <html> scroll-padding-top lo
+    // (globals.css). Trước đây chừa cả header lần nữa (168px) → bấm mốc xong tiêu đề nằm cách thanh ~120px, đầu màn
+    // hình trống (chủ dự án 22/10/2026: "bấm chọn không hiện nội dung ngay đầu trang").
+    <section id={id} data-buoc={step} className="scroll-mt-[70px] rounded-none border border-cvr-line bg-white p-5 shadow-lux sm:p-6">
+      <h2 className="mb-5 flex items-center gap-2.5 text-[19px] font-semibold tracking-tight text-cvr-ink">
         <span className="flex h-7 w-7 items-center justify-center rounded-full bg-cvr-ink text-sm text-white">{step}</span>
         {title}
       </h2>
@@ -2024,7 +2038,7 @@ function ODiaChiGoiY({ label, value, onChange, placeholder, khuVuc }: { label: s
     const t = setTimeout(async () => {
       const kq = await goiYDiaChi(q, [khuVuc.phuong, khuVuc.tinh].filter(Boolean).join(", "));
       if (huy) return;
-      const tinh = normalizeVi(khuVuc.tinh.replace(/^(Thành phố|Tỉnh)s+/i, ""));
+      const tinh = normalizeVi(khuVuc.tinh.replace(/^(Thành phố|Tỉnh)\s+/i, ""));
       const daCo = new Set<string>();
       setDs(kq.filter((x) => normalizeVi(x.phu).includes(tinh)).filter((x) => {
         const k = normalizeVi(x.ten);

@@ -85,6 +85,7 @@ export type FreePolicy = {
   soVideo?: number;    // số video tối đa mỗi tin miễn phí
   audience: PromoAudience;
   note: string;        // dòng hiển thị cho khách
+  ten?: string;        // tên chương trình admin đặt (bắt buộc khi Duyệt) — web hiện đúng tên này
   // THỜI HẠN CỦA CHÍNH CHƯƠNG TRÌNH (khác `days` — `days` là "khách mới trong
   // bao nhiêu ngày kể từ lúc họ đăng ký"). Hai mốc này đóng/mở cả chương trình:
   // hết `to` là không ai còn được đăng miễn phí nữa, kể cả người vừa đăng ký.
@@ -478,20 +479,29 @@ export function vnd(n: number): string {
   return n.toLocaleString("vi-VN") + " ₫";
 }
 
-// ── DÒNG THÔNG BÁO MIỄN PHÍ CHO THÀNH VIÊN MỚI ──────────────────────────────
-// LUÔN SINH TỪ CÀI ĐẶT THẬT — không lấy chữ tự do nữa. Trước đây admin gõ tay
-// câu này nên đổi số tin/số ngày mà quên sửa câu là web nói SAI ưu đãi
-// (vd cài "không giới hạn" nhưng vẫn hiện "được đăng 3 tin").
-// quota = 0 → KHÔNG GIỚI HẠN số tin.
-export function freeNote(f: FreePolicy, tenGoi?: string): string {
-  const soTin = f.quota > 0 ? `${f.quota} tin` : "KHÔNG GIỚI HẠN số tin";
-  const thoiHan =
-    f.days % 30 === 0 && f.days >= 30 ? `${f.days / 30} tháng đầu` : `${f.days} ngày đầu`;
-  const goi = tenGoi ? ` (gói ${tenGoi})` : "";
-  // Chương trình có hạn chót thì PHẢI nói ra — khách cần biết ưu đãi còn mấy ngày,
-  // và web không được tiếp tục hứa miễn phí sau khi chương trình đã đóng.
-  const hanChot = f.to ? ` Chương trình áp dụng đến hết ngày ${ngayVn(f.to)}.` : "";
-  return `Thành viên mới: đăng miễn phí ${soTin} trong ${thoiHan}${goi}.${hanChot}`;
+// ── CHƯƠNG TRÌNH THÀNH VIÊN MỚI — MỘT CÁCH HIỆN CHO TOÀN WEB ─────────────────
+// Chủ dự án 22/10/2026: "đây là một chương trình, chương trình thì có Tên, Nội dung — áp dụng chung toàn web cho
+// thống nhất; lần sau có chương trình đều hiện đúng tên trong admin". TÊN = đúng tên admin đặt (Giá chuẩn → Chương
+// trình khuyến mãi; thiếu tên không Duyệt được — thieuThongTin), Công bố ghi vào free.ten. NỘI DUNG sinh từ chính các
+// số của chương trình (không viết tay ở đâu khác): cấp tin · số ngày hiển thị · ảnh/video · số tin · số ngày đầu ·
+// thời gian chương trình. Dùng ở: form đăng tin, Báo giá, Đăng tin miễn phí, Tài khoản, Đăng ký.
+// quota = 0 → không giới hạn số tin.
+export function chuongTrinhTvMoi(data: BillingData): { ten: string; noiDung: string[] } {
+  const f = data.free;
+  const anh = f.soAnh ?? soAnhToiDa(data, f.tierId);
+  const video = f.soVideo ?? soVideoToiDa(data, f.tierId);
+  const thoiGian =
+    f.from && f.to ? `Áp dụng cho tài khoản đăng ký từ ${ngayVn(f.from)} đến ${ngayVn(f.to)}.`
+    : f.to ? `Áp dụng cho tài khoản đăng ký đến hết ${ngayVn(f.to)}.`
+    : "";
+  return {
+    ten: f.ten?.trim() ?? "",
+    noiDung: [
+      `Tin ${getTier(f.tierId).name} · hiển thị ${f.hienThi ?? f.days} ngày · ${anh} ảnh${video > 0 ? `, ${video} video` : ""}`,
+      `Miễn phí ${f.quota > 0 ? `${f.quota} tin` : "không giới hạn số tin"} trong ${f.days} ngày đầu kể từ ngày đăng ký.`,
+      ...(thoiGian ? [thoiGian] : []),
+    ],
+  };
 }
 
 // Chương trình miễn phí có đang chạy vào ngày `today` ("YYYY-MM-DD") không?
@@ -589,12 +599,6 @@ export function soNgayHienThi(bang: BillingData, goi: TierId, soNgayChon: number
 export function ngayVn(iso: string): string {
   const [y, m, d] = iso.split("-");
   return d && m && y ? `${d}/${m}/${y}` : iso;
-}
-
-// Tên gói của chính sách miễn phí — để câu thông báo nói rõ miễn phí ở gói nào.
-// TÊN CẤP TIN luôn lấy từ packages.ts (một nguồn duy nhất) để mọi nơi gọi giống nhau.
-export function tenGoiMienPhi(data: BillingData): string {
-  return getTier(data.free.tierId).name;
 }
 
 // ── DÒNG GIÁ CHO TRANG BÁO GIÁ (/bao-gia-dang-tin) ──────────────────────────

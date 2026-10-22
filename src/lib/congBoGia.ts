@@ -103,6 +103,7 @@ export async function congBoTin(admin: SupabaseClient, tuBanDuyet = false): Prom
     Object.assign(them, {
       free: {
         ...BILLING_DEFAULT.free,
+        ten: mp.ten, // đúng tên admin đặt — web hiện tên này (22/10/2026)
         active: mp.bat,
         from: mp.tu,
         to: mp.den,

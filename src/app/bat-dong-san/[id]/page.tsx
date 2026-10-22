@@ -434,7 +434,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
           {/* Toàn bộ nội dung tin — ẩn khi bấm "Xem thêm" ở mục BĐS tương tự */}
           <HomeCollapsible>
           {hetHan && (
-            <h2 id="noi-dung-tin" className="mb-4 mt-8 hidden scroll-mt-28 text-[19px] font-semibold tracking-tight text-cvr-ink sm:text-[22px] lg:block">
+            <h2 id="noi-dung-tin" className="mb-4 mt-8 hidden scroll-mt-14 text-[19px] font-semibold tracking-tight text-cvr-ink sm:text-[22px] lg:block">
               Nội dung tin đăng
             </h2>
           )}
@@ -592,32 +592,8 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                   </div>
                 </div>
 
-                {/* TIN → DỰ ÁN (chủ dự án 22/10/2026): tin thuộc dự án có nút sang trang dự án ngay dưới khối giá.
-                    Trang dự án hiện thông tin dự án, tin của chính dự án, rồi Bất động sản tương tự.
-                    Câu chữ CHỜ CHỦ DỰ ÁN DUYỆT NGUYÊN VĂN. */}
-                {slugDuAnTin && tenDuAn && (
-                  <Link
-                    href={`/du-an/${slugDuAnTin}`}
-                    className="mt-3 flex items-center justify-between gap-3 rounded-2xl border border-cvr-line bg-white px-4 py-3 text-[15px] transition hover:border-cvr-ink"
-                  >
-                    {/* Như khối "Thông tin dự án" của Batdongsan: tên · tình trạng · giá từ · chủ đầu tư —
-                        chỉ dòng nào dự án đã có hồ sơ (bậc 1 chỉ có tên). */}
-                    <span className="min-w-0">
-                      <span className="block text-[12px] text-cvr-muted">Thuộc dự án</span>
-                      <span className="block font-semibold text-cvr-ink">{tenDuAn}</span>
-                      {duAn && (duAn.status || (duAn.priceMode !== "hidden" && duAn.priceFrom)) && (
-                        <span className="block text-[13px] text-cvr-body">
-                          {[duAn.status, duAn.priceMode !== "hidden" ? duAn.priceFrom : ""].filter(Boolean).join(" · ")}
-                        </span>
-                      )}
-                      {duAn?.developer && <span className="block text-[13px] text-cvr-muted">{duAn.developer}</span>}
-                    </span>
-                    <span className="flex shrink-0 items-center gap-1 text-[14px] font-semibold text-cvr-blue-ink">
-                      Xem dự án
-                      <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
-                    </span>
-                  </Link>
-                )}
+                {/* Khối "Thuộc dự án" dưới giá ĐÃ BỎ (chủ dự án 22/10/2026: trùng dòng "Dự án" trong Đặc điểm bất động sản).
+                    Tin → trang dự án đi qua dòng "Dự án" đó (bấm được khi có mã dự án). */}
 
 
               </div>
@@ -854,8 +830,10 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
 
 function Section({ id, title, children }: { id?: string; title?: string; children: React.ReactNode }) {
   return (
-    // scroll-mt-28: bấm menu cuộn tới thì tiêu đề không bị header + menu dính che
-    <section id={id} className="mt-5 scroll-mt-28 rounded-2xl bg-cvr-surface p-4 sm:p-5">
+    // scroll-mt-14 (56px) = CHỈ chừa thanh menu mục (~45px) + 11px — header + thanh quay lại đã do <html>
+    // scroll-padding-top lo (globals.css). Trước đây scroll-mt-28 tính header hai lần → bấm menu xong tiêu đề
+    // nằm cách thanh ~80px (chủ dự án 22/10/2026: "bấm chọn không hiện nội dung ngay đầu trang").
+    <section id={id} className="mt-5 scroll-mt-14 rounded-2xl bg-cvr-surface p-4 sm:p-5">
       {/* Không truyền title: khối tự dựng tiêu đề (Lịch sử giá đổi theo Mua bán / Cho thuê) */}
       {title && <h2 className="mb-4 text-[19px] font-semibold tracking-tight text-cvr-ink sm:text-[22px]">{title}</h2>}
       {children}

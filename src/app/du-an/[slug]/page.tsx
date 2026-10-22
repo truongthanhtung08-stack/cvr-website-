@@ -237,7 +237,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             <p className="mt-1 text-sm text-cvr-muted">{coban.viTri}</p>
             {/* Dự án bậc 1 (chỉ có tên từ tin) — câu chữ CHỜ CHỦ DỰ ÁN DUYỆT NGUYÊN VĂN (22/10/2026) */}
             <p className="mt-3 rounded-xl bg-cvr-surface px-4 py-2.5 text-sm text-cvr-body">Thông tin dự án đang được cập nhật.</p>
-            <section id="tin-dang" className="scroll-mt-28">
+            <section id="tin-dang" className="scroll-mt-14">
               <RelatedListingsTabs
                 ban={coban.tin.filter((x) => (x.purpose ?? "ban") === "ban")}
                 thue={coban.tin.filter((x) => (x.purpose ?? "ban") === "thue")}
@@ -578,7 +578,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                   <p className="mt-3 text-center text-[11px] text-cvr-faint">{p.developer} · Bàn giao {handover}</p>
                 </div>
 
-                <div id="tai-tai-lieu" className="scroll-mt-28">
+                <div id="tai-tai-lieu" className="scroll-mt-14">
                   <h3 className="mb-1 text-center text-lg font-semibold tracking-tight text-cvr-ink">Tải tài liệu & báo giá</h3>
                   <p className="mb-3 text-center text-xs text-cvr-muted">Nhận brochure, mặt bằng, bảng giá & chính sách mới nhất</p>
                   <LeadForm cta="Đăng ký nhận tài liệu" topics={["Nhận brochure & mặt bằng", "Nhận bảng giá & chính sách", "Đặt lịch tham quan dự án", "Tư vấn vay ngân hàng"]} />
@@ -593,12 +593,12 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               Bất động sản tương tự. Mỗi khối: slide, "Xem thêm" ra danh sách theo trang, phần còn lại ẩn. */}
           {/* Chưa có tin thuộc dự án → ẩn hẳn khối (không phơi "chưa có tin" trước khách — 22/10/2026) */}
           {hasRelated && (
-          <section id="tin-du-an" className="scroll-mt-28">
+          <section id="tin-du-an" className="scroll-mt-14">
             <RelatedListingsTabs ban={relBan} thue={relThue} tenDuAn={p.name} title={`Tin mua bán liên quan tại dự án ${p.name}`} />
           </section>
           )}
 
-          <section id="du-an-tuong-tu" className="scroll-mt-28">
+          <section id="du-an-tuong-tu" className="scroll-mt-14">
           <ProjectSlider
             projects={others}
             relevance
@@ -625,7 +625,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 // Section chuẩn — có id để menu cuộn tới, tiêu đề nhất quán
 function Section({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
   return (
-    <section id={id} className="mt-5 scroll-mt-28 rounded-2xl bg-cvr-surface p-4 sm:p-5">
+    <section id={id} className="mt-5 scroll-mt-14 rounded-2xl bg-cvr-surface p-4 sm:p-5">
       <h2 className="mb-4 text-[19px] font-semibold tracking-tight text-cvr-ink sm:text-[22px]">{title}</h2>
       {children}
     </section>

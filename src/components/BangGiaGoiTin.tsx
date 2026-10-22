@@ -62,68 +62,67 @@ export default function BangGiaGoiTin({
   return (
     <div>
       {/* ĐIỆN THOẠI + ĐANG CHỌN GÓI (chủ dự án 22/10/2026: "thứ nhất chọn theo gói; muốn so sánh có nút khác; chọn thì xem
-          lại nhanh, đơn giản để cân nhắc" — trang Báo giá đã có đủ thông tin). Bước 1: 4 ô cấp tin (tên · hệ số · giá TỪ …).
-          Bước 2: chạm một cấp → hiện các mốc số ngày của cấp đó + giá đủ (vuốt được); chạm mốc là chọn, chạm lại là bỏ.
+          lại nhanh, đơn giản để cân nhắc" — trang Báo giá đã có đủ thông tin). Bước 1: mỗi cấp tin một hàng (tên · hệ số · giá TỪ …).
+          Bước 2: chạm một cấp → các mốc số ngày + giá đủ mở ngay dưới hàng đó; chạm mốc là chọn, chạm lại là bỏ.
           So sánh quyền lợi: nút "So sánh các gói" ở đầu khối. Mọi số từ admin. Máy tính và trang báo giá giữ bảng. */}
-      {onChon && (() => {
-        const xem = cot.find((x) => x.tierId === capXem);
-        return (
-          <div className="sm:hidden">
-            <div className="grid grid-cols-2 gap-2">
-              {cot.map((p) => {
-                const t = getTier(p.tierId);
-                const coPhi = p.terms.map((x) => x.price);
-                const thapNhat = coPhi.length ? Math.min(...coPhi) : 0;
-                const dang = capXem === p.tierId;
-                const daChon = chon?.tier === p.tierId;
-                return (
+      {onChon && (
+          <div className="space-y-2 sm:hidden">
+            {/* MỖI CẤP MỘT HÀNG, MỐC NGÀY MỞ NGAY DƯỚI HÀNG ĐÓ (chủ dự án 22/10/2026: 4 ô ở trên mà các mốc chạy xuống dưới cùng
+                thì dễ hiểu nhầm của cấp nào). Các mốc xếp lưới, thấy hết, không phải vuốt. */}
+            {cot.map((p) => {
+              const t = getTier(p.tierId);
+              const coPhi = p.terms.map((x) => x.price);
+              const thapNhat = coPhi.length ? Math.min(...coPhi) : 0;
+              const dang = capXem === p.tierId;
+              const daChon = chon?.tier === p.tierId;
+              const terms = [...p.terms].sort((a, b) => a.days - b.days);
+              const goc = donGiaGoc(p);
+              return (
+                <div key={p.tierId} className={`rounded-2xl border bg-white transition ${daChon ? "border-cvr-blue ring-1 ring-cvr-blue" : dang ? "border-cvr-ink/30" : "border-cvr-line"}`}>
                   <button
-                    key={p.tierId}
                     type="button"
-                    aria-pressed={dang}
+                    aria-expanded={dang}
                     onClick={() => setCapXem(dang ? "" : p.tierId)}
-                    className={`rounded-2xl border p-3 text-left transition ${dang ? "border-cvr-blue bg-cvr-blue/[0.06] ring-1 ring-cvr-blue" : "border-cvr-line bg-white"}`}
+                    className="flex w-full items-center justify-between gap-3 px-3.5 py-3 text-left"
                   >
-                    <span className="flex items-center justify-between gap-1">
+                    <span className="flex min-w-0 items-center gap-2">
                       <span className="inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-semibold tracking-tight" style={{ backgroundColor: t.accent, color: t.badgeText }}>{t.name}</span>
-                      {daChon && <span className="text-[13px] font-bold text-cvr-blue-ink" aria-label="Đang chọn">✓</span>}
+                      <span className="whitespace-nowrap text-[12px] font-semibold text-cvr-muted">{t.heSoText}</span>
                     </span>
-                    <span className="mt-1.5 block text-[12px] font-semibold text-cvr-muted">{t.heSoText}</span>
-                    <span className="mt-0.5 block whitespace-nowrap text-[13px] font-semibold tabular-nums text-cvr-ink">
-                      {thapNhat > 0 ? `từ ${vnd(hienGia(thapNhat))}` : "0 ₫"}
+                    <span className="flex shrink-0 items-center gap-2">
+                      {daChon && <span className="text-[13px] font-bold text-cvr-blue-ink" aria-label="Đang chọn">✓</span>}
+                      <span className="whitespace-nowrap text-[13px] font-semibold tabular-nums text-cvr-ink">
+                        {thapNhat > 0 ? `từ ${vnd(hienGia(thapNhat))}` : "0 ₫"}
+                      </span>
+                      <svg className={`h-4 w-4 text-cvr-muted transition ${dang ? "rotate-180" : ""}`} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
                     </span>
                   </button>
-                );
-              })}
-            </div>
-            {xem && (() => {
-              const terms = [...xem.terms].sort((a, b) => a.days - b.days);
-              const goc = donGiaGoc(xem);
-              return (
-                <div className="-mx-1 mt-2.5 flex snap-x gap-1.5 overflow-x-auto overscroll-x-contain px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                  {terms.map((term) => {
-                    const dangChon = chon?.tier === xem.tierId && chon.days === term.days;
-                    const giam = goc > 0 && term.price > 0 ? Math.round((1 - term.price / term.days / goc) * 100) : 0;
-                    return (
-                      <button
-                        key={term.days}
-                        type="button"
-                        aria-pressed={dangChon}
-                        onClick={() => (dangChon && onBoChon ? onBoChon() : onChon(xem.tierId, term.days))}
-                        className={`w-[104px] shrink-0 snap-start rounded-xl border px-1.5 py-2 text-center transition ${dangChon ? "border-cvr-blue bg-cvr-blue/[0.08] ring-1 ring-cvr-blue" : "border-cvr-line bg-white"}`}
-                      >
-                        <span className="block text-[12px] text-cvr-body">{term.days} ngày</span>
-                        <span className="mt-0.5 block whitespace-nowrap text-[12.5px] font-semibold tabular-nums text-cvr-ink">{term.price > 0 ? vnd(hienGia(term.price)) : "0 ₫"}</span>
-                        {giam > 0 && <span className="mt-0.5 inline-block rounded-full border border-red-300 px-1.5 text-[10.5px] font-semibold text-red-700">−{giam}%</span>}
-                      </button>
-                    );
-                  })}
+                  {dang && (
+                    <div className="grid grid-cols-3 gap-1.5 px-2.5 pb-2.5">
+                      {terms.map((term) => {
+                        const dangChon = chon?.tier === p.tierId && chon.days === term.days;
+                        const giam = goc > 0 && term.price > 0 ? Math.round((1 - term.price / term.days / goc) * 100) : 0;
+                        return (
+                          <button
+                            key={term.days}
+                            type="button"
+                            aria-pressed={dangChon}
+                            onClick={() => (dangChon && onBoChon ? onBoChon() : onChon(p.tierId, term.days))}
+                            className={`min-w-0 rounded-xl border px-1 py-2 text-center transition ${dangChon ? "border-cvr-blue bg-cvr-blue/[0.08] ring-1 ring-cvr-blue" : "border-cvr-line bg-white"}`}
+                          >
+                            <span className="block text-[12px] text-cvr-body">{term.days} ngày</span>
+                            <span className="mt-0.5 block whitespace-nowrap text-[12.5px] font-semibold tabular-nums text-cvr-ink">{term.price > 0 ? vnd(hienGia(term.price)) : "0 ₫"}</span>
+                            {giam > 0 && <span className="mt-0.5 inline-block rounded-full border border-red-300 px-1.5 text-[10.5px] font-semibold text-red-700">−{giam}%</span>}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               );
-            })()}
+            })}
           </div>
-        );
-      })()}
+      )}
       <div className={`${onChon ? "hidden sm:block " : ""}overflow-x-auto rounded-2xl border border-cvr-line bg-white shadow-lux`}>
         <table className="w-full min-w-[520px] border-collapse text-sm">
           <thead>

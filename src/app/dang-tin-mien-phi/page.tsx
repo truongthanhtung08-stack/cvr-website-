@@ -5,7 +5,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import RegisterForm from "@/components/RegisterForm";
 import { getBilling } from "@/lib/siteContent";
-import { freeDangChay, freeNote, tenGoiMienPhi } from "@/lib/billing";
+import { chuongTrinhTvMoi, freeDangChay } from "@/lib/billing";
 
 // ============================================================================
 // TRANG ĐÍCH CHO QUẢNG CÁO GOOGLE — nơi thả khách bấm từ mẫu quảng cáo tìm kiếm.
@@ -60,7 +60,8 @@ export default async function DangTinMienPhiPage() {
   // ⛔ 09/10/2026: không có chương trình miễn phí ĐÃ DUYỆT đang chạy thì trang này không được hứa
   // miễn phí → chuyển về trang đăng ký.
   if (!freeDangChay(billing.free, new Date().toISOString().slice(0, 10))) redirect("/dang-ky");
-  const uuDai = freeNote(billing.free, tenGoiMienPhi(billing));
+  // Chương trình = Tên (đúng admin) + Nội dung — hàm chung chuongTrinhTvMoi (22/10/2026). Nhãn trên đầu trang hiện TÊN.
+  const uuDai = chuongTrinhTvMoi(billing);
 
   return (
     <>
@@ -78,10 +79,10 @@ export default async function DangTinMienPhiPage() {
           <div className="grid items-start gap-8 lg:grid-cols-2 lg:gap-14">
             {/* Tiêu đề + lời hứa */}
             <div className="lg:col-start-1 lg:row-start-1 lg:pt-6">
-              {uuDai && (
+              {uuDai.ten && (
                 <p className="inline-flex items-center gap-2 rounded-full border border-cvr-gold/40 bg-cvr-gold/[0.08] px-3.5 py-1.5 text-xs font-semibold text-cvr-gold-ink">
                   <span className="h-1.5 w-1.5 rounded-full bg-cvr-gold" />
-                  {uuDai}
+                  {uuDai.ten}
                 </p>
               )}
 
@@ -101,7 +102,8 @@ export default async function DangTinMienPhiPage() {
                 sửa một chỗ là cả hai trang đổi theo. */}
             <div className="flex justify-center lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:justify-end">
               {/* capThe="h2": trang này đã có H1 "Đăng tin bất động sản miễn phí…" ở trên */}
-              <RegisterForm uuDai={uuDai} capThe="h2" />
+              {/* Tên chương trình đã ở nhãn đầu trang → khung đăng ký chỉ hiện Nội dung, không lặp tên */}
+              <RegisterForm uuDai={{ ...uuDai, ten: "" }} capThe="h2" />
             </div>
 
             {/* Lý do chọn Coastal Land */}

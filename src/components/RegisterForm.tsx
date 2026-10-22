@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { dichSauDangNhap, thamSoNext } from "@/lib/dieuHuong";
 import SocialAuth from "@/components/SocialAuth";
 import { useBilling } from "@/lib/useBilling";
-import { freeDangChay, freeNote, tenGoiMienPhi } from "@/lib/billing";
+import { chuongTrinhTvMoi, freeDangChay } from "@/lib/billing";
 import { chuanHoaSdt, laSdtVN } from "@/lib/phone";
 
 // ============================================================================
@@ -42,7 +42,7 @@ type Cach = "chon" | "email" | "sdt";
 // khung này nên nó chính là tiêu đề trang). Trang đích quảng cáo /dang-tin-mien-phi
 // đã có H1 riêng ở trên, nên truyền "h2" — một trang chỉ nên có MỘT H1, hai H1 làm
 // Google phân vân trang nói về cái gì. Chữ và kích cỡ giữ nguyên, chỉ đổi tên thẻ.
-export default function RegisterForm({ uuDai, capThe = "h1" }: { uuDai?: string; capThe?: "h1" | "h2" }) {
+export default function RegisterForm({ uuDai, capThe = "h1" }: { uuDai?: { ten: string; noiDung: string[] }; capThe?: "h1" | "h2" }) {
   const TheTieuDe = capThe;
   const [cach, setCach] = useState<Cach>("chon");
   // /dang-ky?cach=sdt (từ trang đăng nhập bằng số) → mở thẳng form, khỏi chọn lại cách.
@@ -134,8 +134,8 @@ export default function RegisterForm({ uuDai, capThe = "h1" }: { uuDai?: string;
   const dongUuDai =
     uuDai ??
     (billingLoading || !freeDangChay(billing.free, new Date().toISOString().slice(0, 10))
-      ? ""
-      : freeNote(billing.free, tenGoiMienPhi(billing)));
+      ? null
+      : chuongTrinhTvMoi(billing));
 
   // ── BƯỚC 1 → 2: kiểm tại chỗ rồi xin mã ───────────────────────────────────
   async function xinMa(e: React.FormEvent) {
@@ -251,9 +251,15 @@ export default function RegisterForm({ uuDai, capThe = "h1" }: { uuDai?: string;
     return (
       <div className="w-full max-w-md rounded-2xl border border-cvr-line bg-white p-6 shadow-lux sm:p-8">
         <TheTieuDe className="text-2xl font-semibold tracking-tight text-cvr-ink">Tạo tài khoản</TheTieuDe>
-        <p className="mt-1.5 text-sm leading-relaxed text-cvr-muted">
-          {dongUuDai || "Đăng tin, quản lý tin và lưu bất động sản bạn quan tâm."}
-        </p>
+        {/* Chương trình đang chạy = Tên (đúng admin) + Nội dung — hàm chung chuongTrinhTvMoi (22/10/2026) */}
+        {dongUuDai ? (
+          <div className="mt-1.5 text-sm leading-relaxed text-cvr-muted">
+            {dongUuDai.ten && <p className="font-semibold text-cvr-ink">{dongUuDai.ten}</p>}
+            {dongUuDai.noiDung.map((d) => <p key={d}>{d}</p>)}
+          </div>
+        ) : (
+          <p className="mt-1.5 text-sm leading-relaxed text-cvr-muted">Đăng tin, quản lý tin và lưu bất động sản bạn quan tâm.</p>
+        )}
 
         {/* 4 cửa theo thứ tự chủ dự án chốt 27/09/2026: Gmail · Số điện thoại · Zalo · Email
             (email là cột riêng cho khách doanh nghiệp). Số điện thoại & email mở form ngay tại đây. */}

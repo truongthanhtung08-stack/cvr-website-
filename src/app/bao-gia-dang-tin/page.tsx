@@ -11,7 +11,7 @@ import { getProjects } from "@/lib/contentDb";
 import type { Listing, Project } from "@/lib/data";
 import { getTier, type TierId } from "@/lib/packages";
 import { getBilling, getQuyDinhGia } from "@/lib/siteContent";
-import { bangTheoMucDich, bangUp, goiPr, ghiChuPr, bangBanner, giaTra, priceLinesDuAn, freeDangChay, freeNote, tenGoiMienPhi } from "@/lib/billing";
+import { bangTheoMucDich, bangUp, goiPr, ghiChuPr, bangBanner, giaTra, priceLinesDuAn, freeDangChay, chuongTrinhTvMoi } from "@/lib/billing";
 import BangGiaGoiTin from "@/components/BangGiaGoiTin";
 import BangGiaDayTin from "@/components/BangGiaDayTin";
 import NutMucDichGia from "@/components/NutMucDichGia";
@@ -204,7 +204,11 @@ export default async function BaoGiaPage() {
                 {kmDangChay && (
                   <div className="mt-4 rounded-2xl border border-cvr-blue/25 bg-cvr-blue/[0.06] px-5 py-4">
                     <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-cvr-blue-ink">Khuyến mãi đang áp dụng</p>
-                    <p className="mt-1.5 text-[15px] leading-relaxed text-cvr-ink">{freeNote(billing.free, tenGoiMienPhi(billing))}</p>
+                    {/* Chương trình = Tên (đúng admin) + Nội dung — hàm chung chuongTrinhTvMoi (22/10/2026) */}
+                    {(() => { const ct = chuongTrinhTvMoi(billing); return (<>
+                      {ct.ten && <p className="mt-1.5 text-[15px] font-semibold text-cvr-ink">{ct.ten}</p>}
+                      {ct.noiDung.map((d) => <p key={d} className="mt-0.5 text-[14px] leading-relaxed text-cvr-body">{d}</p>)}
+                    </>); })()}
                   </div>
                 )}
 
