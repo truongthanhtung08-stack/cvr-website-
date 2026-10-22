@@ -2,8 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import PhotoViewer from "@/components/PhotoViewer";
-import PhotoList from "@/components/PhotoList";
+import dynamic from "next/dynamic";
+// Bộ xem ảnh chỉ tải khi khách bấm mở (tốc độ điện thoại, đo 22/10/2026): trước đây nằm sẵn trong mã mọi trang có thẻ tin.
+const PhotoViewer = dynamic(() => import("@/components/PhotoViewer"), { ssr: false });
+const PhotoList = dynamic(() => import("@/components/PhotoList"), { ssr: false });
 import GallerySlideVideo from "@/components/GallerySlideVideo";
 
 // Thư viện ảnh trang chi tiết BĐS — bố cục kiểu Homedy:

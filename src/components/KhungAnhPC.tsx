@@ -4,7 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import GallerySlideVideo from "@/components/GallerySlideVideo";
-import XemAnhPC from "@/components/XemAnhPC";
+import dynamic from "next/dynamic";
+// Bộ xem ảnh chỉ tải khi khách bấm mở (tốc độ điện thoại, đo 22/10/2026): trước đây nằm sẵn trong mã mọi trang có thẻ tin.
+const XemAnhPC = dynamic(() => import("@/components/XemAnhPC"), { ssr: false });
 import { videoPosterUrl } from "@/lib/media";
 
 // ============================================================================
