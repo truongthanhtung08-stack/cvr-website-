@@ -53,7 +53,9 @@ export default function LoginForm() {
   // trang quản lý của khách (chủ dự án 22/10/2026: "bấm vào đăng nhập thì ra màn hình admin khách hàng").
   useEffect(() => {
     createClient().auth.getUser().then(({ data }) => {
-      if (data.user) window.location.replace(dichSauDangNhap("/tai-khoan"));
+      // Chỉ trang /dang-nhap riêng mới tự chuyển. Khung nằm NGAY TRONG trang khác (vd /dang-tin) thì trang đó tự lo —
+      // tự chuyển ở đây sẽ tải lại chính trang đó, có thể lặp vô hạn nếu hai bên đọc phiên lệch nhau.
+      if (data.user && window.location.pathname.startsWith("/dang-nhap")) window.location.replace(dichSauDangNhap("/tai-khoan"));
     }).catch(() => { /* chưa cấu hình → cứ hiện form */ });
   }, []);
 
