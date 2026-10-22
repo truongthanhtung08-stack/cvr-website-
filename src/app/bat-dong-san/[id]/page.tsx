@@ -710,7 +710,8 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                   Vị trí lấy theo điểm admin GHIM (details.mapPin); chưa ghim thì
                   tự tìm theo địa chỉ tin. */}
               <Section id="vi-tri" title="Vị trí trên bản đồ">
-                <ProjectNearby mapQuery={d.mapQuery} address={l.location} places={[]} zoom={d.mapZoom} />
+                {/* Địa chỉ dưới bản đồ ghi ĐỦ như đầu trang: số nhà, tên đường + phường, tỉnh (trước chỉ phường, tỉnh — 22/10/2026) */}
+                <ProjectNearby mapQuery={d.mapQuery} address={[d.addressDetail, l.location].filter(Boolean).join(", ")} places={[]} zoom={d.mapZoom} />
               </Section>
 
               {/* ĐÁNH GIÁ TIN — ai đọc tin cũng đánh giá được, không cần xem số người đăng;

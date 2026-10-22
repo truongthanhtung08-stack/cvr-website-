@@ -5,15 +5,13 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import LeadForm from "@/components/LeadForm";
 import PricingSidebar, { type SidebarGroup } from "@/components/PricingSidebar";
-import PropertyCard from "@/components/PropertyCard";
 import { ProjectCard, ProjectRow } from "@/components/ProjectSlider";
 import { getProjects } from "@/lib/contentDb";
-import type { Listing, Project } from "@/lib/data";
+import type { Project } from "@/lib/data";
 import { getTier, type TierId } from "@/lib/packages";
 import { getBilling, getQuyDinhGia } from "@/lib/siteContent";
-import { bangTheoMucDich, bangUp, goiPr, ghiChuPr, bangBanner, giaTra, priceLinesDuAn, freeDangChay, chuongTrinhTvMoi } from "@/lib/billing";
+import { bangTheoMucDich, bangUp, goiPr, ghiChuPr, bangBanner, giaTra, priceLinesDuAn } from "@/lib/billing";
 import BangGiaGoiTin from "@/components/BangGiaGoiTin";
-import NoiDungChuongTrinh from "@/components/NoiDungChuongTrinh";
 import BangGiaDayTin from "@/components/BangGiaDayTin";
 import NutMucDichGia from "@/components/NutMucDichGia";
 import GoiHoiVienCards, { DieuKienHoiVien } from "@/components/GoiHoiVienCards";
@@ -58,74 +56,31 @@ const pjPkgs = [
 
 // Menu sidebar — CHỈ dịch vụ + giá. Công cụ tiện ích (giá đất Nhà nước, so sánh…)
 // KHÔNG thuộc báo giá — đã gỡ khỏi trang này (01/10/2026), vẫn ở menu Tiện ích.
-// CÙNG 2 NHÓM với menu Báo giá trên đầu trang (Header.tsx) — hai nơi luôn khớp nhau.
+// Cùng các mục với menu Báo giá trên đầu trang (Header.tsx) — hai nơi luôn khớp nhau.
 const nhomDichVu = (coHoiVien: boolean, da: Set<string> = new Set()): SidebarGroup[] => [
   {
-    title: "Đăng tin",
+    // MỘT KHỐI, CÙNG THỨ TỰ + TÊN với menu Báo giá trên đầu web (Header.tsx) — chủ dự án 22/10/2026 tối. Bảng nào admin
+    // duyệt thêm (hội viên, dự án, PR, banner) thì tự có mục.
+    title: "",
     items: [
       { label: "Gói tin đăng CVR", href: "#bang-gia-tin" },
       { label: "Gói đẩy tin", href: "#goi-day-tin" },
       ...(coHoiVien ? [{ label: "Gói hội viên", href: "#goi-hoi-vien" }] : []),
-    ],
-  },
-  {
-    title: "Quảng cáo",
-    // Chỉ bảng ĐÃ DUYỆT riêng mới có mục trong menu (chủ dự án 10/10/2026)
-    items: [
       ...(da.has("du-an") ? [{ label: "Gói dự án", href: "#goi-du-an" }] : []),
       ...(da.has("pr") ? [{ label: "Bài PR", href: "#goi-pr" }] : []),
       ...(da.has("banner") ? [{ label: "Banner", href: "#goi-banner" }] : []),
-    ],
-  },
-  {
-    title: "Thông tin",
-    items: [
       { label: "Quy định chung", href: "#quy-dinh" },
       { label: "Nhận báo giá", href: "#lien-he" },
     ],
   },
 ];
 
-const HOTLINE = "0377 985 036";
-
-// ═══════════════ VÍ DỤ MINH HOẠ TỪNG LOẠI TIN ═══════════════
-// Chủ dự án chốt 01/10/2026: CHỈ LẤY ẢNH THẬT (ảnh chuẩn nhất của tin thật đang ở đúng
-// hạng), KHÔNG dùng tiêu đề / thông tin của tin thật — tiêu đề là VÍ DỤ chuẩn SEO
-// (loại giao dịch · loại nhà · đặc điểm · đường/khu · phường · tỉnh). Ảnh lưu CỐ ĐỊNH ở đây
-// nên tin VIP hết hạn thì minh hoạ vẫn còn (ảnh trong kho không bị xoá khi tin hết hạn).
-// Ảnh chọn bằng mắt 01/10: bỏ ảnh bìa là băng rôn khuyến mãi / ảnh cận đồ trang trí.
-const KHO = "https://miyugmacyerqvzhgmbyd.supabase.co/storage/v1/object/public/listings/";
-// Mô tả ví dụ ĐỦ DÀI để thẻ hiện đúng số dòng của từng hạng (Kim cương 3 · Vàng 2 · Bạc 1 ·
-// Thường 0) — tiêu đề viết hoa, dải nhấn, huy hiệu do PropertyCard tự áp theo hạng.
-const viDu = (id: string, title: string, image: string, location: string, desc: string): Listing =>
-  ({ id, title, image, location, desc, price: "Thoả thuận", area: "" }) as Listing;
-// Tiêu đề + mô tả ĐỦ DÀI và DÀI NGANG NHAU ở cả 4 hạng — để khách thấy rõ khác biệt hiển thị
-// (tiêu đề VIẾT HOA hay không · mô tả 3/2/1/0 dòng), không phải do nội dung ngắn dài khác nhau.
-const MO_TA_CHUNG =
-  " Pháp lý sổ hồng chính chủ, sẵn sàng giao dịch. Khu dân cư hiện hữu, gần trường học, chợ, bệnh viện và các trục đường chính, thuận tiện di chuyển vào trung tâm.";
-const VI_DU_MINH_HOA: Record<TierId, Listing> = {
-  diamond: { ...viDu("vi-du-diamond", "Bán nhà 3 tầng 2 mặt tiền đường 10,5m, nội thất gỗ cao cấp, sổ hồng chính chủ, phường Hòa Xuân, Đà Nẵng",
-    KHO + "1788255659524-763311-IMG_1787991692267_1787991698851.webp", "Phường Hòa Xuân, Đà Nẵng",
-    "Nhà xây kiên cố, phòng khách rộng thoáng, 4 phòng ngủ, 4 phòng tắm, bếp liên thông phòng ăn, sân thượng rộng." + MO_TA_CHUNG), badge: "VIP" },
-  gold: { ...viDu("vi-du-gold", "Bán nhà phố liền kề 4 tầng khu đô thị mới, đường nội khu 13,5m, sổ hồng riêng, phường Thuận Hóa, Huế",
-    KHO + "1788251683728-709049-hue07-5.webp", "Phường Thuận Hóa, Huế",
-    "Thiết kế hiện đại đồng bộ cả dãy, 4 phòng ngủ, mặt tiền rộng phù hợp vừa ở vừa kinh doanh, an ninh 24/7." + MO_TA_CHUNG), badge: "Nổi bật" },
-  silver: { ...viDu("vi-du-silver", "Bán villa 2 mặt tiền thiết kế hiện đại, đầy đủ nội thất cao cấp, trung tâm phường Hải Châu, Đà Nẵng",
-    KHO + "1788251609839-665955-dn15-5.webp", "Phường Hải Châu, Đà Nẵng",
-    "Phòng khách thông tầng, 5 phòng ngủ, sân vườn và chỗ đậu ô tô trong nhà, hoàn thiện cao cấp dọn vào ở ngay." + MO_TA_CHUNG), badge: "Mới" },
-  basic: viDu("vi-du-basic", "Bán nhà 3 tầng mới xây, đường trước nhà 7,5m, kết cấu chắc chắn, sổ hồng chính chủ, phường Hòa Xuân, Đà Nẵng",
-    KHO + "fbded30f4d07e2de6aeb383a-1784362006949-284895-1.webp", "Phường Hòa Xuân, Đà Nẵng",
-    "Nhà 3 phòng ngủ, 3 phòng tắm, hoàn thiện mới, khu dân cư đông đúc." + MO_TA_CHUNG),
-};
 
 // ═══════════════ TRANG ═══════════════
 // Thẻ tin minh hoạ từng cấp = TIN THẬT mới nhất của cấp đó trong Supabase
 // (không còn tin/ảnh mẫu cứng). Đăng hoặc sửa tin trong admin → trang này tự đổi theo.
 export default async function BaoGiaPage() {
   const [allProjects, billing, quyDinh] = await Promise.all([getProjects(), getBilling(), getQuyDinhGia()]);
-  // Quyền lợi từng hạng + quy định chung: sửa ở admin, không viết trong trang.
-  const loiIch = (t: TierId) => quyDinh.quyenLoi[t].loiIch;
-  const hienThi = (t: TierId) => quyDinh.quyenLoi[t].hienThi;
   // MỌI GIÁ ĐỀU TỪ ADMIN (/admin/gia-khuyen-mai).
   // Trang này trước đây còn một bảng giá viết cứng chạy song song — Diamond 1 tuần
   // ghi 980.000đ trong khi bảng giá đang chạy là 1.050.000đ. Sửa giá trong admin mà
@@ -136,8 +91,6 @@ export default async function BaoGiaPage() {
   // MỘT NGUỒN (01/10/2026): KHÔNG lùi về giá viết sẵn trong code khi admin thiếu một gói —
   // giá chỉ đến từ admin; gói admin chưa đặt giá thì không có dòng giá.
   const giaDuAn = (id: TierId): PriceLine[] => priceLinesDuAn(billing, id) ?? [];
-  // CHƯƠNG TRÌNH KHUYẾN MÃI đang chạy (admin → Giá & quy định → Miễn phí) — báo cho khách.
-  const kmDangChay = freeDangChay(billing.free, new Date().toISOString().slice(0, 10));
   // ĐẨY TIN · PR · BANNER: lấy đúng bản chủ dự án đặt ở /admin/gia-khuyen-mai.
   // Chưa lưu gì thì hàm tự trả mức chuẩn — trang không bao giờ trống.
   const upRows = bangUp(bangBan);
@@ -155,122 +108,60 @@ export default async function BaoGiaPage() {
   const goiHoiVien = billing.hoiVien ?? [];
   const coHv = goiHoiVien.length > 0;
   const so = (n: number) => String(n + (coHv ? 1 : 0)).padStart(2, "0"); // mục sau Gói hội viên dồn số
-  const tinMau = (id: TierId): Listing => VI_DU_MINH_HOA[id];
   // Dự án mẫu từng cấp CVR-PJ — dự án thật của cấp đó
   const projectOfTier = (id: TierId): Project | null =>
     allProjects.find((x) => (x.tier ?? "basic") === id) ?? null;
 
 
+  // Chú thích (*) (**) (***) của bảng đặc điểm → ngay dưới bảng (trước nằm cuối trang, xa bảng — chủ dự án 22/10/2026)
+  const laChuThich = (s: string) => /^\(\*+\)/.test(s.trim());
+  const chuThich = quyDinh.quyDinhChung.filter(laChuThich);
+  const quyDinhKhac = quyDinh.quyDinhChung.filter((s) => !laChuThich(s));
+
   return (
     <>
       <Header />
       <main className="flex-1 bg-white">
-        {/* Mở đầu — Apple: nền sáng, headline lớn căn giữa, khoảng trắng rộng */}
-        <section className="border-b border-cvr-line bg-cvr-surface">
-          {/* GỌN (chủ dự án 22/10/2026 "báo giá xấu, không hiểu"): bớt khoảng trống trên điện thoại; chữ giữ nguyên (Google đọc). */}
-          <div className="mx-auto max-w-7xl px-4 pb-7 pt-8 text-center sm:px-6 sm:pb-12 sm:pt-14 lg:px-8">
-            <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-cvr-gold-ink">
-              Coastal Land — Bảng giá 2026
-            </p>
-            <h1 className="mx-auto mt-2.5 max-w-3xl text-[26px] font-semibold leading-[1.15] tracking-tight text-cvr-ink sm:text-[40px]">
-              Báo giá dịch vụ và truyền thông
-            </h1>
-            <p className="mx-auto mt-3 max-w-xl text-[15px] leading-relaxed text-cvr-muted">
-              Giải pháp đăng tin và quảng cáo giúp người bán, môi giới, chủ đầu tư
-              tiếp cận đúng khách hàng tiềm năng.
-            </p>
-          </div>
-        </section>
-
-        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8 lg:py-12">
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[248px_1fr] lg:gap-10">
-            <PricingSidebar groups={nhomDichVu(coHv, daDuyet).filter((g) => g.items.length)} hotline={HOTLINE} />
+        {/* CẤU TRÚC THEO MENU BÁO GIÁ (chủ dự án 22/10/2026 tối: "từ cái menu tổng gồm những gì, web có những báo giá nào thì làm
+            cái đấy — nội dung mọi thứ đã có, cấu trúc lại giao diện"): Gói tin đăng CVR · Gói đẩy tin · Quy định chung · Nhận
+            báo giá — cùng thứ tự, cùng tên với menu trên đầu web và cột menu bên trái. Mỗi phần MỘT bảng, mở sẵn, không phải bấm. */}
+        <div className="mx-auto max-w-7xl px-4 pb-12 pt-5 sm:px-6 lg:px-8 lg:pb-16 lg:pt-10">
+          {/* Điện thoại: thanh tiêu đề trên cùng đã ghi "Báo giá dịch vụ" → tiêu đề này chỉ để Google đọc (không hiện lặp); máy tính hiện */}
+          <h1 className="sr-only lg:not-sr-only lg:text-[34px] lg:font-semibold lg:leading-tight lg:tracking-tight lg:text-cvr-ink">Báo giá dịch vụ</h1>
+          <div className="grid grid-cols-1 gap-6 lg:mt-8 lg:grid-cols-[220px_1fr] lg:gap-12">
+            <PricingSidebar groups={nhomDichVu(coHv, daDuyet)} />
 
             <div className="min-w-0 space-y-12 sm:space-y-14">
-              {/* KHUNG 3 BẢNG GIÁ THEO MỤC ĐÍCH — nút gạt Bán | Cho thuê đổi `data-md`,
-                  mọi con số bên trong đổi theo (xem NutMucDichGia). */}
-              <div id="vung-bang-gia" data-md="ban" className="group/gia space-y-12 sm:space-y-14">
-              {coThue && (
-                <div className="flex flex-wrap items-center gap-3">
-                  <span className="text-sm text-cvr-muted">Xem giá cho</span>
-                  <NutMucDichGia />
-                </div>
-              )}
-              {/* BẢNG GIÁ TIN ĐĂNG KIỂU BATDONGSAN — số ngày × loại tin, giá từ admin, gạt VAT */}
-              <section id="bang-gia-tin" className="scroll-mt-24">
-                <SectionTitle no="01" title="Gói tin đăng CVR" desc="Giá theo loại tin và số ngày hiển thị." />
-                <div className="mt-6">
-                  <div className={coThue ? "group-data-[md=thue]/gia:hidden" : ""}><BangGiaGoiTin plans={bangBan.plans} /></div>
-                  {coThue && <div className="hidden group-data-[md=thue]/gia:block"><BangGiaGoiTin plans={bangThue.plans} /></div>}
-                </div>
-                {kmDangChay && (
-                  <div className="mt-4 rounded-2xl border border-cvr-blue/25 bg-cvr-blue/[0.06] px-5 py-4">
-                    <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-cvr-blue-ink">Khuyến mãi đang áp dụng</p>
-                    {/* Chương trình = Tên (đúng admin) + Nội dung — hàm chung chuongTrinhTvMoi (22/10/2026) */}
-                    <div className="mt-1.5"><NoiDungChuongTrinh ct={chuongTrinhTvMoi(billing)} /></div>
+              {/* Nút gạt Tin bán | Tin cho thuê đổi `data-md` của khung này → mọi con số trong hai bảng đổi theo (NutMucDichGia) */}
+              <div id="vung-bang-gia" data-md="ban" className="group/gia">
+                {coThue && <NutMucDichGia />}
+
+                <section id="bang-gia-tin" className={`scroll-mt-24 ${coThue ? "mt-6" : ""}`}>
+                  <SectionTitle title="Gói tin đăng CVR" desc="" />
+                  {/* MỘT BẢNG: giá theo số ngày ở trên, đặc điểm hiển thị (bảng quyền lợi admin, đủ mọi dòng) ở dưới — cùng cột loại tin */}
+                  <div id="dac-diem" className="mt-5 scroll-mt-24">
+                    <div className={coThue ? "group-data-[md=thue]/gia:hidden" : ""}><BangGiaGoiTin plans={bangBan.plans} trangBaoGia dacDiem={quyDinh.bangQuyenLoi} /></div>
+                    {coThue && <div className="hidden group-data-[md=thue]/gia:block"><BangGiaGoiTin plans={bangThue.plans} trangBaoGia dacDiem={quyDinh.bangQuyenLoi} /></div>}
                   </div>
-                )}
+                  {chuThich.length > 0 && <DanhSach ds={chuThich} nho className="mt-2" />}
+                  <a href="/dang-tin" className={`mt-5 ${NUT_CHINH}`}>
+                    Đăng tin
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+                  </a>
+                </section>
 
-                {/* QUYỀN LỢI TỪNG LOẠI TIN — nội dung từ admin (Giá chuẩn → Quy định), không ảnh, không lặp giá */}
-                {/* QUYỀN LỢI: mỗi cấp MỘT HÀNG bấm mở (trước bày cả 4 thẻ + tin mẫu ~5.000px trên điện thoại — 22/10/2026) */}
-                <h3 className="mt-8 text-lg font-semibold tracking-tight text-cvr-ink">Quyền lợi từng loại tin</h3>
-                <div className="mt-3 space-y-2">
-                  {(["basic", "silver", "gold", "diamond"] as const).map((id) => (
-                    <QuyenLoiCap key={id} tierId={id} benefits={loiIch(id)} displays={hienThi(id)} mau={<TierSample listing={tinMau(id)} />} />
-                  ))}
-                </div>
-              {/* LOẠI TIN & ĐẶC ĐIỂM */}
-              {quyDinh.bangQuyenLoi.length > 0 && <details id="dac-diem" className="group mt-8 scroll-mt-24 rounded-2xl border border-cvr-line bg-white">
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3.5 [&::-webkit-details-marker]:hidden">
-                  <span className="text-[16px] font-semibold tracking-tight text-cvr-ink">So sánh đặc điểm hiển thị</span>
-                  <svg className="h-4 w-4 shrink-0 text-cvr-muted transition group-open:rotate-180" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
-                </summary>
-                <div className="overflow-x-auto border-t border-cvr-line">
-                  <table className="w-full min-w-[640px] text-sm">
-                    <thead>
-                      <tr className="border-b border-cvr-line text-left">
-                        {/* Cột tên đặc điểm đủ rộng trên máy tính — trước đây chia đều 5 cột, tên bị ép còn 126px, xuống 4–5 dòng (bộ dò lỗi giao diện 22/10/2026) */}
-                        <th className="px-6 py-4 font-semibold text-cvr-ink sm:w-[38%] sm:min-w-[180px]">Đặc điểm</th>
-                        {(["basic", "silver", "gold", "diamond"] as const).map((id) => {
-                          const t = getTier(id);
-                          return (
-                            <th key={id} className="px-4 py-4 text-center font-semibold tracking-tight" style={{ color: t.accent }}>
-                              {t.name}
-                            </th>
-                          );
-                        })}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {quyDinh.bangQuyenLoi.map((r) => (
-                        <tr key={r.ten} className="border-b border-cvr-line/60 transition-colors last:border-0 hover:bg-cvr-surface/50">
-                          <td className="px-6 py-3.5 text-cvr-body">{r.ten}</td>
-                          {(["basic", "silver", "gold", "diamond"] as const).map((id) => r.giaTri[id]).map((v, i) => (
-                            <td key={i} className={`px-4 py-3.5 text-center ${v === "✓" ? "font-semibold text-cvr-ink" : "text-cvr-muted"}`}>{v}</td>
-                          ))}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </details>}
-              </section>
-
-              {/* 3. GÓI ĐẨY TIN */}
-              <section id="goi-day-tin" className="scroll-mt-24">
-                <SectionTitle no="02" title="Gói Đẩy tin" desc="Đưa tin đang hiển thị lên đầu trong cùng loại tin." />
-                {coThue && <div className="mt-4"><NutMucDichGia /></div>}
-                {/* CÙNG KIỂU bảng giá tin đăng (Batdongsan) — chung với hộp Mua gói đẩy của khách */}
-                <div className="mt-6">
-                  <div className={coThue ? "group-data-[md=thue]/gia:hidden" : ""}><BangGiaDayTin rows={upRows} /></div>
-                  {coThue && <div className="hidden group-data-[md=thue]/gia:block"><BangGiaDayTin rows={upRowsThue} /></div>}
-                </div>
-                {/* Khách muốn đẩy tin vào đâu (chủ dự án 09/10/2026): Tin đăng của tôi → nút Đẩy tin ở từng tin */}
-                <a href="/tai-khoan/tin-dang" className="mt-5 inline-flex h-11 items-center gap-2 rounded-lg bg-cvr-ink px-5 text-sm font-semibold text-white transition hover:bg-cvr-body">
-                  Đẩy tin của tôi
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
-                </a>
-              </section>
+                <section id="goi-day-tin" className="mt-12 scroll-mt-24 sm:mt-14">
+                  <SectionTitle title="Gói đẩy tin" desc="Đưa tin đang hiển thị lên đầu trong cùng loại tin." />
+                  <div className="mt-5">
+                    <div className={coThue ? "group-data-[md=thue]/gia:hidden" : ""}><BangGiaDayTin rows={upRows} trangBaoGia /></div>
+                    {coThue && <div className="hidden group-data-[md=thue]/gia:block"><BangGiaDayTin rows={upRowsThue} trangBaoGia /></div>}
+                  </div>
+                  {/* Khách muốn đẩy tin vào đâu (chủ dự án 09/10/2026): Tin đăng của tôi → nút Đẩy tin ở từng tin */}
+                  <a href="/tai-khoan/tin-dang" className={`mt-5 ${NUT_CHINH}`}>
+                    Đẩy tin của tôi
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+                  </a>
+                </section>
               </div>
 
               {/* 4. GÓI HỘI VIÊN — mua theo tháng, voucher mỗi 30 ngày (cơ chế Batdongsan) */}
@@ -324,7 +215,7 @@ export default async function BaoGiaPage() {
                           <p className="mt-1 text-[26px] font-semibold tracking-tight text-cvr-ink">{giaTra(p.gia)}</p>
                           <a
                             href="#lien-he"
-                            className="mt-4 block rounded-full bg-cvr-ink py-2.5 text-center text-sm font-semibold text-white transition hover:bg-cvr-ink/90 active:scale-[0.99]"
+                            className={`mt-4 flex w-full ${NUT_CHINH}`}
                           >
                             Liên hệ tư vấn
                           </a>
@@ -381,26 +272,27 @@ export default async function BaoGiaPage() {
               </section>
               )}
 
-              {/* QUY ĐỊNH CHUNG */}
+              {/* QUY ĐỊNH CHUNG — một chỗ, mở sẵn (trước là khối gập phải bấm). Quy định chung trước, rồi từng gói. */}
               <section id="quy-dinh" className="scroll-mt-24">
-                {/* Bấm mở như các khối quyền lợi (gọn, 22/10/2026) */}
-                <details className="group rounded-2xl bg-cvr-surface">
-                  <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 [&::-webkit-details-marker]:hidden">
-                    <h2 className="text-[20px] font-semibold tracking-tight text-cvr-ink sm:text-[24px]">Quy định chung</h2>
-                    <svg className="h-4 w-4 shrink-0 text-cvr-muted transition group-open:rotate-180" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
-                  </summary>
-                  <div className="space-y-3 px-5 pb-5">
-                    {quyDinh.quyDinhChung.map((r) => (
-                      <p key={r} className="text-sm leading-relaxed text-cvr-body">{r}</p>
-                    ))}
-                  </div>
-                </details>
+                <SectionTitle title="Quy định chung" desc="" />
+                <div className="mt-5 space-y-6">
+                  {quyDinhKhac.length > 0 && <DanhSach ds={quyDinhKhac} />}
+                  {[
+                    { ten: "Gói tin đăng CVR", ds: quyDinh.quyDinhGoiTin },
+                    { ten: "Gói đẩy tin", ds: quyDinh.quyDinhDayTin },
+                  ].filter((n) => n.ds.length).map((n) => (
+                    <div key={n.ten}>
+                      <TieuDeKhoi>{n.ten}</TieuDeKhoi>
+                      <DanhSach ds={n.ds} className="mt-2.5" />
+                    </div>
+                  ))}
+                </div>
               </section>
 
-              {/* LIÊN HỆ */}
+              {/* NHẬN BÁO GIÁ */}
               <section id="lien-he" className="scroll-mt-24">
                 <SectionTitle title="Nhận báo giá và tư vấn" desc="Để lại thông tin, chuyên viên Coastal Land liên hệ trong 5 phút." />
-                <div className="mt-6 max-w-2xl">
+                <div className="mt-5 max-w-2xl">
                   <LeadForm
                     cta="Nhận báo giá ngay"
                     topics={["Gói tin đăng CVR", "Gói Đẩy tin", "Gói Dự án", "Gói bài PR", "Gói Banner", "Khác"]}
@@ -418,20 +310,31 @@ export default async function BaoGiaPage() {
 
 // ═══════════════ THÀNH PHẦN ═══════════════
 
-// Tiêu đề section — kicker vàng + headline tracking âm (Apple)
-function SectionTitle({ no, title, desc }: { no?: string; title: string; desc: string }) {
+// MỘT KIỂU CHO CẢ TRANG (chủ dự án 22/10/2026): tiêu đề mục (h2) · tiêu đề khối con (h3) · nút hành động chính.
+// Bỏ dòng "Dịch vụ 01/02" trên tiêu đề mục (đánh số không giúp khách hiểu, lại lệch khi bảng nào chưa duyệt).
+function SectionTitle({ title, desc }: { no?: string; title: string; desc: string }) {
   return (
     <header>
-      {no && (
-        <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-cvr-gold-ink">
-          Dịch vụ {no}
-        </p>
-      )}
-      <h2 className="mt-1.5 text-[22px] font-semibold leading-tight tracking-tight text-cvr-ink sm:text-[26px]">{title}</h2>
+      <h2 className="text-[22px] font-semibold leading-tight tracking-tight text-cvr-ink sm:text-[26px]">{title}</h2>
       {desc && <p className="mt-2 max-w-2xl text-sm leading-relaxed text-cvr-muted">{desc}</p>}
     </header>
   );
 }
+
+// Danh sách quy định / chú thích — một kiểu cho cả trang
+function DanhSach({ ds, nho, className = "" }: { ds: string[]; nho?: boolean; className?: string }) {
+  return (
+    <ul className={`space-y-1.5 leading-relaxed ${nho ? "text-[12.5px] text-cvr-muted" : "text-sm text-cvr-body"} ${className}`}>
+      {ds.map((r) => <li key={r} className="flex gap-2"><span className="text-cvr-muted" aria-hidden>·</span><span>{r}</span></li>)}
+    </ul>
+  );
+}
+
+function TieuDeKhoi({ children }: { children: React.ReactNode }) {
+  return <h3 className="text-[17px] font-semibold tracking-tight text-cvr-ink">{children}</h3>;
+}
+
+const NUT_CHINH = "btn-dangtin inline-flex h-11 items-center justify-center gap-2 rounded-lg px-5 text-sm font-bold text-white transition active:scale-[0.99]";
 
 // Thẻ gói dịch vụ 2 cột: nội dung + bảng giá (khung Homedy, chất liệu Apple)
 function PkgCard({
@@ -502,7 +405,7 @@ function PkgCard({
             )}
             <Link
               href={cta.href}
-              className="mt-5 block rounded-full bg-cvr-ink py-3 text-center text-sm font-semibold text-white transition hover:bg-cvr-ink/90 active:scale-[0.99]"
+              className={`mt-5 flex w-full ${NUT_CHINH}`}
             >
               {cta.label}
             </Link>
@@ -530,52 +433,6 @@ function DongGia({ prices }: { prices: PriceLine[] }) {
         </div>
       ))}
     </>
-  );
-}
-
-// Thẻ QUYỀN LỢI một loại tin — chỉ chữ (không ảnh, không giá; giá ở bảng phía trên).
-// Mỗi cấp MỘT HÀNG bấm mở (thẻ cấp + hệ số, giống khối chọn gói ở form đăng tin) → quyền lợi + tin mẫu (22/10/2026).
-function QuyenLoiCap({ tierId, benefits, displays, mau }: { tierId: TierId; benefits: string[]; displays: string[]; mau: React.ReactNode }) {
-  const t = getTier(tierId);
-  return (
-    <details className="group rounded-2xl border border-cvr-line bg-white">
-      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3.5 [&::-webkit-details-marker]:hidden">
-        <span className="flex min-w-0 items-center gap-2">
-          <span className="inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-semibold tracking-tight" style={{ backgroundColor: t.accent, color: t.badgeText }}>{t.name}</span>
-          <span className="whitespace-nowrap text-[12px] font-semibold text-cvr-muted">{t.heSoText}</span>
-        </span>
-        <svg className="h-4 w-4 shrink-0 text-cvr-muted transition group-open:rotate-180" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
-      </summary>
-      <div className="px-4 pb-4">
-        <ul className="space-y-2 text-sm leading-relaxed text-cvr-body">
-          {[...benefits, ...displays].map((d) => (
-            <li key={d} className="flex gap-2"><CheckIcon /> <span>{d}</span></li>
-          ))}
-        </ul>
-        {/* Tin mẫu: tin thật của hạng này, hiển thị đúng như trên sàn */}
-        {mau}
-      </div>
-    </details>
-  );
-}
-
-// ── THẺ TIN MINH HOẠ TỪNG CẤP ────────────────────────────────────────────────
-// Tin có HAI kiểu bố trí, thẻ mẫu tự đổi theo thiết bị đang xem — mỗi lúc MỘT thẻ,
-// KHÔNG hiện 2 thẻ cùng lúc (sẽ lặp lại đúng một tấm ảnh):
-//   · Từ sm trở lên (PC/tablet) → ảnh BÊN TRÁI, nội dung BÊN PHẢI (layout="list")
-//   · Dưới sm (điện thoại)      → ảnh Ở TRÊN,   nội dung Ở DƯỚI   (variant="tier")
-// Cả hai đều là component thật đang chạy trên sàn, dữ liệu là TIN THẬT mới nhất
-// của cấp đó → đăng/sửa tin trong admin là thẻ này tự thay theo.
-function TierSample({ listing }: { listing: Listing }) {
-  // VÍ DỤ MINH HOẠ: khung y hệt thẻ tin trên sàn nhưng KHÔNG bấm được (không phải tin thật).
-  return (
-    <div className="relative mt-5">
-      <div className="pointer-events-none select-none" aria-hidden>
-        {/* PC/tablet: ảnh trái – nội dung phải · Điện thoại: ảnh trên – nội dung dưới */}
-        <div className="hidden sm:block"><PropertyCard item={listing} layout="list" /></div>
-        <div className="max-w-[320px] sm:hidden"><PropertyCard item={listing} variant="tier" /></div>
-      </div>
-    </div>
   );
 }
 

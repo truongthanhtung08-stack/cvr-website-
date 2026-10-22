@@ -9,10 +9,8 @@ export type SidebarGroup = { title: string; items: { label: string; href: string
 // Tự tô sáng mục đang xem khi cuộn (IntersectionObserver — chỉ đổi màu, không reflow).
 export default function PricingSidebar({
   groups,
-  hotline,
 }: {
   groups: SidebarGroup[];
-  hotline: string;
 }) {
   const [active, setActive] = useState(groups[0]?.items[0]?.href ?? "");
 
@@ -39,54 +37,22 @@ export default function PricingSidebar({
     return () => io.disconnect();
   }, [groups]);
 
-  // Mục neo trong trang — dùng cho thanh chip trên điện thoại.
-  const anchorItems = groups.flatMap((g) => g.items).filter((m) => m.href.startsWith("#"));
-
   return (
     <>
-      {/* ── ĐIỆN THOẠI: thanh chip cuộn ngang, DÍNH dưới header ────────────────
-          Trước đây đổ nguyên 16 dòng menu dọc lên đầu trang, khách phải cuộn
-          rất lâu mới tới nội dung. Giờ gọn 1 dòng, luôn thấy mình đang ở mục nào.
-          Nhóm "Công cụ tiện ích" không đưa vào đây — đã có nguyên một mục thẻ
-          ở cuối trang, đưa lên nav nữa là thừa. */}
-      <nav className="no-scrollbar sticky top-[calc(60px+var(--backbar-h)+var(--at))] z-20 -mx-4 flex gap-2.5 overflow-x-auto border-b border-cvr-line bg-white/95 px-4 py-3 backdrop-blur-xl sm:-mx-6 sm:px-6 lg:hidden">
-        {anchorItems.map((m) => {
-          const isActive = active === m.href;
-          return (
-            <a
-              key={m.href}
-              href={m.href}
-              className={`shrink-0 whitespace-nowrap rounded-full px-4 py-2 text-[13px] font-medium transition-colors ${
-                isActive
-                  ? "bg-cvr-ink text-white"
-                  : "border border-cvr-line text-cvr-body active:bg-cvr-surface"
-              }`}
-            >
-              {m.label}
-            </a>
-          );
-        })}
-        <a
-          href={`tel:${hotline.replace(/\s/g, "")}`}
-          className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-cvr-gold px-4 py-2 text-[13px] font-bold text-white"
-        >
-          <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h2.5a1 1 0 01.97.757l.9 3.6a1 1 0 01-.29.98l-1.5 1.4a14 14 0 006.68 6.68l1.4-1.5a1 1 0 01.98-.29l3.6.9a1 1 0 01.76.97V19a2 2 0 01-2 2A16 16 0 013 5z" />
-          </svg>
-          Gọi tư vấn
-        </a>
-      </nav>
-
+      {/* ĐIỆN THOẠI: KHÔNG còn dải nút mục (chủ dự án 22/10/2026 tối: "thanh menu này, khoảng cách, màu nút lộn xộn") — menu Báo giá
+          trên đầu web đã có đủ các mục; trang đã gọn, cuộn là thấy. Máy tính giữ cột menu dọc. */}
       {/* ── MÁY TÍNH: giữ nguyên 2 khối menu dọc đã duyệt ── */}
       <aside className="hidden lg:sticky lg:top-20 lg:block lg:self-start">
       {/* 2 phần xếp dọc: Danh sách dịch vụ → Công cụ tiện ích.
           Kiểu Apple: khối bo 2xl, không đường kẻ giữa các mục, nền sáng khi rê chuột. */}
       <div className="space-y-3">
         {groups.map((g) => (
-          <nav key={g.title} className="rounded-2xl border border-cvr-line bg-white p-2.5 shadow-lux">
-            <p className="px-3.5 pb-2 pt-2 text-[10px] font-bold uppercase tracking-[0.2em] text-cvr-faint">
-              {g.title}
-            </p>
+          <nav key={g.title || "muc"} className="rounded-2xl border border-cvr-line bg-white p-2.5 shadow-lux">
+            {g.title && (
+              <p className="px-3.5 pb-2 pt-2 text-[10px] font-bold uppercase tracking-[0.2em] text-cvr-faint">
+                {g.title}
+              </p>
+            )}
             {g.items.map((m) => {
               const isActive = active === m.href;
               return (

@@ -37,7 +37,7 @@ const MUC: Record<string, { ten: string; cha: string; chaCon?: string }> = {
   "so-sanh": { ten: "So sánh", cha: "/" },
   "tin-luu": { ten: "Tin đã lưu", cha: "/" },
   "dang-tin": { ten: "Đăng tin", cha: "/tai-khoan", chaCon: "/tai-khoan" },
-  "bao-gia-dang-tin": { ten: "Bảng giá dịch vụ", cha: "/" },
+  "bao-gia-dang-tin": { ten: "Báo giá dịch vụ", cha: "/" },
   "gioi-thieu": { ten: "Giới thiệu", cha: "/" },
   "tai-khoan": { ten: "Tài khoản", cha: "/", chaCon: "/tai-khoan" },
 

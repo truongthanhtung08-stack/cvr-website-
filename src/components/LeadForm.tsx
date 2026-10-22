@@ -109,47 +109,42 @@ export default function LeadForm({
   }
 
   return (
-    <div className="space-y-2.5 rounded-none border border-cvr-line bg-white p-4 shadow-lux sm:p-5">
-      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+    // BẢN GỌN (chủ dự án 22/10/2026 tối: "khung nhận tư vấn, để lại thông tin ở cuối — làm gọn lại tất cả trên web"): ô xếp
+    // hai cột theo bề rộng KHUNG chứa (@container — cột hẹp cạnh trang dự án vẫn vừa), ghi chú một dòng. Chữ ô 16px trên điện
+    // thoại để iPhone không tự phóng to khi gõ.
+    <div className="@container rounded-none border border-cvr-line bg-white p-3.5 shadow-lux sm:p-4">
+      <div className="grid grid-cols-2 gap-2">
         <O value={ten} onChange={setTen} placeholder="Họ và tên *" />
         <O value={dienThoai} onChange={setDienThoai} placeholder="Số điện thoại *" type="tel" />
-      </div>
-      {/* Email — BẮT BUỘC ở mọi form nhận báo giá / tài liệu (gửi bảng giá, brochure) */}
-      <O value={email} onChange={setEmail} placeholder="Email *" type="email" />
-
-      <select
-        value={nhuCau}
-        onChange={(e) => setNhuCau(e.target.value)}
-        aria-label="Nhu cầu"
-        className="h-11 w-full rounded-lg border border-transparent bg-cvr-surface px-3 text-sm text-cvr-ink outline-none transition focus:border-cvr-line focus:bg-white"
-      >
-        {topics.map((t) => <option key={t} value={t}>{t}</option>)}
-      </select>
-
-      <div className="relative">
-        <textarea
-          value={ghiChu}
-          onChange={(e) => setGhiChu(e.target.value)}
-          rows={2}
-          aria-label="Nội dung"
-          placeholder="Ghi chú thêm (không bắt buộc)"
-          className={`w-full rounded-lg border border-transparent bg-cvr-surface px-3 py-2.5 text-sm text-cvr-ink placeholder-cvr-faint outline-none transition focus:border-cvr-line focus:bg-white ${ghiChu ? "pr-10" : ""}`}
-        />
-        {ghiChu && <XoaO tren onClick={() => setGhiChu("")} />}
+        {/* Email — BẮT BUỘC ở mọi form nhận báo giá / tài liệu (gửi bảng giá, brochure) */}
+        <div className="col-span-2 @md:col-span-1">
+          <O value={email} onChange={setEmail} placeholder="Email *" type="email" />
+        </div>
+        <select
+          value={nhuCau}
+          onChange={(e) => setNhuCau(e.target.value)}
+          aria-label="Nhu cầu"
+          className="col-span-2 h-11 w-full min-w-0 rounded-lg border border-transparent bg-cvr-surface px-3 text-base text-cvr-ink outline-none transition focus:border-cvr-line focus:bg-white @md:col-span-1 sm:text-sm"
+        >
+          {topics.map((t) => <option key={t} value={t}>{t}</option>)}
+        </select>
+        <div className="col-span-2">
+          <O value={ghiChu} onChange={setGhiChu} placeholder="Ghi chú thêm (không bắt buộc)" />
+        </div>
       </div>
 
-      {loi && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{loi}</p>}
+      {loi && <p className="mt-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{loi}</p>}
 
       <button
         type="button"
         onClick={gui}
         disabled={dangGui}
-        className="btn-dangtin flex w-full items-center justify-center gap-2 rounded-lg px-6 py-3 text-sm font-bold text-white disabled:opacity-50"
+        className="btn-dangtin mt-2.5 flex h-11 w-full items-center justify-center gap-2 rounded-lg px-6 text-sm font-bold text-white disabled:opacity-50"
       >
         {dangGui ? "Đang gửi…" : cta}
       </button>
 
-      <p className="text-center text-[11px] text-cvr-faint">Thông tin của bạn được bảo mật theo chính sách của Coastal Land.</p>
+      <p className="mt-2 text-center text-[11px] text-cvr-faint">Thông tin của bạn được bảo mật theo chính sách của Coastal Land.</p>
     </div>
   );
 }
@@ -174,22 +169,20 @@ function O({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         aria-label={placeholder.replace(" *", "")}
-        className={`h-11 w-full rounded-lg border border-transparent bg-cvr-surface px-3 text-sm text-cvr-ink placeholder-cvr-faint outline-none transition focus:border-cvr-line focus:bg-white ${value ? "pr-10" : ""}`}
+        className={`h-11 w-full min-w-0 rounded-lg border border-transparent bg-cvr-surface px-3 text-base text-cvr-ink sm:text-sm placeholder-cvr-faint outline-none transition focus:border-cvr-line focus:bg-white ${value ? "pr-10" : ""}`}
       />
       {value && <XoaO onClick={() => onChange("")} />}
     </div>
   );
 }
 
-function XoaO({ onClick, tren }: { onClick: () => void; tren?: boolean }) {
+function XoaO({ onClick }: { onClick: () => void }) {
   return (
     <button
       type="button"
       onClick={onClick}
       aria-label="Xoá nội dung ô này"
-      className={`absolute right-2 flex h-6 w-6 items-center justify-center rounded-full bg-black/[0.06] text-cvr-muted transition hover:bg-black/10 hover:text-cvr-ink ${
-        tren ? "top-2.5" : "top-1/2 -translate-y-1/2"
-      }`}
+      className="absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-black/[0.06] text-cvr-muted transition hover:bg-black/10 hover:text-cvr-ink"
     >
       <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2.4} viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />

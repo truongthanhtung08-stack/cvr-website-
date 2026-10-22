@@ -25,6 +25,8 @@ export default function BangGiaGoiTin({
   onChon,
   onBoChon,
   onXemBangQuyenLoi,
+  trangBaoGia,
+  dacDiem,
 }: {
   plans: Plan[];
   chon?: { tier: TierId | ""; days: number };
@@ -33,8 +35,13 @@ export default function BangGiaGoiTin({
   onBoChon?: () => void;
   /** Đang ở trang đăng tin → mở bảng quyền lợi nổi tại chỗ thay vì sang tab mới (14/10/2026) */
   onXemBangQuyenLoi?: () => void;
+  /** Trang Báo giá: bảng so sánh + quyền lợi nằm ngay dưới, quy định gom ở mục Quy định chung → không nút "Đặc điểm"
+   *  từng cột, không lặp danh sách quy định dưới bảng (chủ dự án 22/10/2026: "nhiều câu trùng, sắp xếp không logic"). */
+  trangBaoGia?: boolean;
+  /** Trang Báo giá: đặc điểm từng loại tin (bảng quyền lợi admin) nằm NGAY TRONG bảng giá, dưới các dòng giá — một bảng
+   *  xem giá và so sánh, không lặp hàng tên loại tin (chủ dự án 22/10/2026 tối: "nội dung đã có, cấu trúc lại giao diện"). */
+  dacDiem?: { ten: string; giaTri: Partial<Record<TierId, string>> }[];
 }) {
-  const [gomVat, setGomVat] = useState(true);
   const [moQuyDinh, setMoQuyDinh] = useState(false);
   // Cấp tin đang mở xem mốc ngày (điện thoại). Mặc định = cấp đang có gói chọn.
   const [capXemChon, setCapXem] = useState<TierId | "" | null>(null);
@@ -46,13 +53,10 @@ export default function BangGiaGoiTin({
   useKhoaCuon(!!xemDacDiem, () => setXemDacDiem(null));
   const cot = THU_TU.map((id) => plans.find((p) => p.tierId === id)).filter((p): p is Plan => Boolean(p));
   const hang = [...new Set(cot.flatMap((p) => p.terms.map((t) => t.days)))].sort((a, b) => a - b);
-  const hienGia = (gia: number) => (gomVat ? tachThue(gia).tongTra : gia);
+  // GIÁ LUÔN LÀ SỐ KHÁCH TRẢ (đã gồm VAT) — bỏ nút gạt VAT và số −% dưới giá ở mọi nơi (chủ dự án 22/10/2026 tối: "con số
+  // dưới −% có tác dụng gì"; báo giá rối) → một dòng "Giá đã gồm 8% VAT" dưới bảng.
+  const hienGia = (gia: number) => tachThue(gia).tongTra;
 
-  // Đơn giá/ngày của mốc NGẮN NHẤT có phí — mốc chuẩn để tính % giảm.
-  const donGiaGoc = (p: Plan): number => {
-    const t = [...p.terms].filter((x) => x.price > 0).sort((a, b) => a.days - b.days)[0];
-    return t ? t.price / t.days : 0;
-  };
 
   const capXem: TierId | "" = capXemChon ?? (chon?.tier || "");
   if (!cot.length) return null;
@@ -65,9 +69,9 @@ export default function BangGiaGoiTin({
           lại nhanh, đơn giản để cân nhắc" — trang Báo giá đã có đủ thông tin). Bước 1: mỗi cấp tin một hàng (tên · hệ số · giá TỪ …).
           Bước 2: chạm một cấp → các mốc số ngày + giá đủ mở ngay dưới hàng đó; chạm mốc là chọn, chạm lại là bỏ.
           So sánh quyền lợi: nút "So sánh các gói" ở đầu khối. Mọi số từ admin. Máy tính giữ bảng.
-          TRANG BÁO GIÁ / chỉ xem (không onChon — 22/10/2026 "báo giá gọn, rõ"): điện thoại cũng dùng kiểu mỗi cấp một hàng thay
-          bảng ngang phải vuốt; mốc ngày chỉ để xem, không bấm chọn. */}
-      {(
+          TRANG BÁO GIÁ / chỉ xem (không onChon): KIỂU MA TRẬN cả điện thoại lẫn máy tính, cùng kiểu bảng đẩy tin (chủ dự án 22/10/2026
+          tối: "phần báo giá, kiểu ma trận là kiểu đẹp nhất" — bỏ kiểu mỗi cấp một hàng ở trang Báo giá). */}
+      {onChon && (
           <div className="space-y-2 sm:hidden">
             {/* MỖI CẤP MỘT HÀNG, MỐC NGÀY MỞ NGAY DƯỚI HÀNG ĐÓ (chủ dự án 22/10/2026: 4 ô ở trên mà các mốc chạy xuống dưới cùng
                 thì dễ hiểu nhầm của cấp nào). Các mốc xếp lưới, thấy hết, không phải vuốt. */}
@@ -78,7 +82,6 @@ export default function BangGiaGoiTin({
               const dang = capXem === p.tierId;
               const daChon = chon?.tier === p.tierId;
               const terms = [...p.terms].sort((a, b) => a.days - b.days);
-              const goc = donGiaGoc(p);
               return (
                 <div key={p.tierId} className={`rounded-2xl border bg-white transition ${daChon ? "border-cvr-blue ring-1 ring-cvr-blue" : dang ? "border-cvr-ink/30" : "border-cvr-line"}`}>
                   <button
@@ -103,7 +106,6 @@ export default function BangGiaGoiTin({
                     <div className="grid grid-cols-3 gap-1.5 px-2.5 pb-2.5">
                       {terms.map((term) => {
                         const dangChon = chon?.tier === p.tierId && chon.days === term.days;
-                        const giam = goc > 0 && term.price > 0 ? Math.round((1 - term.price / term.days / goc) * 100) : 0;
                         return (
                           <button
                             key={term.days}
@@ -115,7 +117,6 @@ export default function BangGiaGoiTin({
                           >
                             <span className="block text-[12px] text-cvr-body">{term.days} ngày</span>
                             <span className="mt-0.5 block whitespace-nowrap text-[12.5px] font-semibold tabular-nums text-cvr-ink">{term.price > 0 ? vnd(hienGia(term.price)) : "0 ₫"}</span>
-                            {giam > 0 && <span className="mt-0.5 inline-block rounded-full border border-red-300 px-1.5 text-[10.5px] font-semibold text-red-700">−{giam}%</span>}
                           </button>
                         );
                       })}
@@ -126,15 +127,15 @@ export default function BangGiaGoiTin({
             })}
           </div>
       )}
-      <div className="hidden overflow-x-auto rounded-2xl border border-cvr-line bg-white shadow-lux sm:block">
-        <table className="w-full min-w-[520px] border-collapse text-sm">
+      <div className={`${onChon ? "hidden sm:block" : ""} overflow-x-auto rounded-2xl border border-cvr-line bg-white shadow-lux`}>
+        <table className={`w-full border-collapse text-sm ${dacDiem?.length ? "min-w-[776px] sm:min-w-[640px]" : "min-w-[520px]"}`}>
           <thead>
             <tr className="bg-cvr-surface">
-              <th className="sticky left-0 z-10 w-[84px] whitespace-nowrap border-b border-cvr-line bg-cvr-surface px-3 py-3.5 text-left font-semibold text-cvr-ink sm:w-[96px] sm:px-4">Thời gian</th>
+              <th className={`sticky left-0 z-10 border-b border-cvr-line bg-cvr-surface px-3 py-3.5 text-left font-semibold text-cvr-ink sm:px-4 ${dacDiem?.length ? "w-[136px] sm:w-[24%]" : "w-[84px] whitespace-nowrap sm:w-[96px]"}`}>Thời gian</th>
               {cot.map((p) => {
                 const t = getTier(p.tierId);
                 return (
-                  <th key={p.tierId} className="border-b border-l border-cvr-line px-2 py-3.5 text-center sm:px-3">
+                  <th key={p.tierId} className={`border-b border-l border-cvr-line px-2 py-3.5 text-center sm:px-3 ${dacDiem?.length ? "min-w-[160px] sm:w-[19%] sm:min-w-0" : ""}`}>
                     <span
                       className="inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-semibold tracking-tight sm:px-3 sm:text-xs"
                       style={{ backgroundColor: t.accent, color: t.badgeText }}
@@ -142,8 +143,9 @@ export default function BangGiaGoiTin({
                       {t.name}
                     </span>
                     {/* Hệ số X dưới tên cấp + nút xem đặc điểm (chủ dự án 10/10/2026) */}
-                    <span className="mt-1 block text-[11px] font-semibold tracking-wide text-cvr-muted">{t.heSoText}</span>
-                    {!onChon && (
+                    {/* Có dòng "Hệ số tiếp cận" trong bảng thì không lặp hệ số dưới tên */}
+                    {!dacDiem?.length && <span className="mt-1 block text-[11px] font-semibold tracking-wide text-cvr-muted">{t.heSoText}</span>}
+                    {!onChon && !trangBaoGia && (
                     <button type="button" onClick={() => setXemDacDiem(p.tierId)} className="mt-0.5 text-[11px] font-semibold text-cvr-blue-ink underline-offset-2 hover:underline">
                       Đặc điểm
                     </button>
@@ -162,18 +164,11 @@ export default function BangGiaGoiTin({
                   if (!term) {
                     return <td key={p.tierId} className="border-l border-cvr-line/70 px-3 py-3 text-center text-cvr-faint">–</td>;
                   }
-                  const goc = donGiaGoc(p);
-                  const giam = goc > 0 && term.price > 0 ? Math.round((1 - term.price / term.days / goc) * 100) : 0;
                   const dangChon = chon?.tier === p.tierId && chon.days === ngay;
                   // Hệ số tiếp cận X luôn hiện dưới mỗi mức giá (chủ dự án 09/10/2026)
                   const noiDung = (
                     <span className="flex flex-col items-center gap-0.5">
-                      <span className="flex flex-wrap items-center justify-center gap-1.5">
-                        <span className="font-semibold tabular-nums text-cvr-ink">{term.price > 0 ? vnd(hienGia(term.price)) : "0 ₫"}</span>
-                        {giam > 0 && (
-                          <span className="rounded-full border border-red-300 px-1.5 py-px text-[11px] font-semibold text-red-700">−{giam}%</span>
-                        )}
-                      </span>
+                      <span className="font-semibold tabular-nums text-cvr-ink">{term.price > 0 ? vnd(hienGia(term.price)) : "0 ₫"}</span>
                     </span>
                   );
                   return (
@@ -199,6 +194,26 @@ export default function BangGiaGoiTin({
                 })}
               </tr>
             ))}
+            {!!dacDiem?.length && (
+              <>
+                <tr className="border-y border-cvr-line bg-cvr-surface">
+                  <td colSpan={cot.length + 1} className="px-3 py-2.5 sm:px-4">
+                    <span className="sticky left-3 text-[13px] font-semibold text-cvr-ink">Đặc điểm hiển thị</span>
+                  </td>
+                </tr>
+                {dacDiem.map((r) => (
+                  <tr key={r.ten} className="border-b border-cvr-line/70 last:border-0">
+                    <td className="sticky left-0 z-10 bg-white px-3 py-3 text-[13px] font-medium leading-snug text-cvr-body sm:px-4 sm:text-sm">{r.ten}</td>
+                    {cot.map((p) => {
+                      const v = r.giaTri[p.tierId] ?? "";
+                      return (
+                        <td key={p.tierId} className={`border-l border-cvr-line/70 px-2 py-3 text-center text-[13px] leading-snug sm:px-3 ${v === "✓" ? "font-semibold text-cvr-ink" : "text-cvr-muted"}`}>{v}</td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </>
+            )}
           </tbody>
         </table>
       </div>
@@ -244,40 +259,21 @@ export default function BangGiaGoiTin({
       {/* ĐANG CHỌN GÓI (đăng tin, đăng lại — chủ dự án duyệt mẫu 22/10/2026): giá luôn là số khách trả (đã gồm VAT), không
           nút gạt; một dòng "Giá đã gồm 8% VAT · Quy định gói tin", bấm mới hiện quy định. Trang báo giá (chỉ xem) giữ nút gạt
           + quy định đủ như cũ. */}
-      {onChon ? (
-        <>
-          <p className="mt-3 text-[12.5px] text-cvr-muted">
-            Giá đã gồm {(THUE_SUAT_GTGT * 100).toFixed(0)}% VAT
-            {QUY_DINH.length > 0 && (
-              <>
-                {" · "}
-                <button type="button" onClick={() => setMoQuyDinh(!moQuyDinh)} aria-expanded={moQuyDinh} className="font-semibold text-cvr-blue-ink">
-                  Quy định gói tin
-                </button>
-              </>
-            )}
-          </p>
-          {moQuyDinh && (
-            <ul className="mt-2 space-y-1 text-[13px] leading-relaxed text-cvr-muted">
-              {QUY_DINH.map((d) => <li key={d} className="flex gap-2"><span aria-hidden>·</span><span>{d}</span></li>)}
-            </ul>
-          )}
-        </>
-      ) : (
-        <>
-          <label className="mt-3 inline-flex cursor-pointer select-none items-center gap-2.5 text-[13px] text-cvr-muted">
-            <input type="checkbox" checked={gomVat} onChange={(e) => setGomVat(e.target.checked)} className="peer sr-only" />
-            <span className="relative h-6 w-11 rounded-full bg-cvr-line transition peer-checked:bg-cvr-ink">
-              <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition ${gomVat ? "left-[22px]" : "left-0.5"}`} />
-            </span>
-            Giá bao gồm {(THUE_SUAT_GTGT * 100).toFixed(0)}% VAT
-          </label>
-          {QUY_DINH.length > 0 && (
-            <ul className="mt-3 space-y-1 text-[13px] leading-relaxed text-cvr-muted">
-              {QUY_DINH.map((d) => <li key={d} className="flex gap-2"><span aria-hidden>·</span><span>{d}</span></li>)}
-            </ul>
-          )}
-        </>
+      <p className="mt-3 text-[12.5px] text-cvr-muted">
+        Giá đã gồm {(THUE_SUAT_GTGT * 100).toFixed(0)}% VAT
+        {QUY_DINH.length > 0 && !trangBaoGia && (
+          <>
+            {" · "}
+            <button type="button" onClick={() => setMoQuyDinh(!moQuyDinh)} aria-expanded={moQuyDinh} className="font-semibold text-cvr-blue-ink">
+              Quy định gói tin
+            </button>
+          </>
+        )}
+      </p>
+      {moQuyDinh && (
+        <ul className="mt-2 space-y-1 text-[13px] leading-relaxed text-cvr-muted">
+          {QUY_DINH.map((d) => <li key={d} className="flex gap-2"><span aria-hidden>·</span><span>{d}</span></li>)}
+        </ul>
       )}
     </div>
   );

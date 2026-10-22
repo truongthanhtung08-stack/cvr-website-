@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { COT_UP, soLuotTuNhan, vnd, type UpRow } from "@/lib/billing";
 import { getTier, type TierId } from "@/lib/packages";
 import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
@@ -22,18 +21,20 @@ export default function BangGiaDayTin({
   chonLuot,
   onChon,
   toiDaLuot,
+  trangBaoGia,
 }: {
   rows: UpRow[];
   chiCap?: TierId;                       // chỉ hiện cột của một loại tin
   chonLuot?: number;
   onChon?: (soLuot: number) => void;
   toiDaLuot?: number;                    // gói vượt số lượt này thì khoá (quá thời hạn tin)
+  trangBaoGia?: boolean;                 // trang Báo giá: quy định gom ở mục Quy định chung, không lặp dưới bảng (22/10/2026)
 }) {
-  const [gomVat, setGomVat] = useState(true);
   // Quy định đi kèm: CHỈ bản admin đã duyệt — chưa duyệt thì không hiện.
   const QUY_DINH = useQuyDinhGia().quyDinhDayTin;
   const cot = (chiCap ? [chiCap] : THU_TU).filter((t) => COT_UP.includes(t));
-  const hienGia = (gia: number) => (gomVat ? tachThue(gia).tongTra : gia);
+  // Giá luôn là số khách trả (đã gồm VAT) — bỏ nút gạt VAT, số −% và giá mỗi lượt dưới giá (chủ dự án 22/10/2026 tối), như bảng gói tin
+  const hienGia = (gia: number) => tachThue(gia).tongTra;
   if (!rows.length) return null;
 
   return (
@@ -66,18 +67,9 @@ export default function BangGiaDayTin({
                     if (!v || v.gia <= 0) {
                       return <td key={id} className="border-l border-cvr-line/70 px-3 py-3 text-center text-cvr-faint">–</td>;
                     }
-                    const giam = v.giaGoc && v.giaGoc > v.gia ? Math.round((1 - v.gia / v.giaGoc) * 100) : 0;
                     const khoa = toiDaLuot != null && soLuot > toiDaLuot;
                     const dangChon = chonLuot === soLuot;
-                    const noiDung = (
-                      <span className="flex flex-col items-center gap-0.5">
-                        <span className="flex flex-wrap items-center justify-center gap-1.5">
-                          <span className="font-semibold tabular-nums text-cvr-ink">{vnd(hienGia(v.gia))}</span>
-                          {giam > 0 && <span className="rounded-full border border-red-300 px-1.5 py-px text-[11px] font-semibold text-red-700">−{giam}%</span>}
-                        </span>
-                        {soLuot > 1 && <span className="text-[11px] tabular-nums text-cvr-muted">{vnd(Math.round(hienGia(v.gia) / soLuot))}/lượt</span>}
-                      </span>
-                    );
+                    const noiDung = <span className="font-semibold tabular-nums text-cvr-ink">{vnd(hienGia(v.gia))}</span>;
                     return (
                       <td key={id} className="border-l border-cvr-line/70 p-1.5 text-center">
                         {onChon ? (
@@ -103,14 +95,8 @@ export default function BangGiaDayTin({
           </tbody>
         </table>
       </div>
-      <label className="mt-3 inline-flex cursor-pointer select-none items-center gap-2.5 text-[13px] text-cvr-muted">
-        <input type="checkbox" checked={gomVat} onChange={(e) => setGomVat(e.target.checked)} className="peer sr-only" />
-        <span className="relative h-6 w-11 rounded-full bg-cvr-line transition peer-checked:bg-cvr-ink">
-          <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition ${gomVat ? "left-[22px]" : "left-0.5"}`} />
-        </span>
-        Giá bao gồm {(THUE_SUAT_GTGT * 100).toFixed(0)}% VAT
-      </label>
-      {QUY_DINH.length > 0 && (
+      <p className="mt-3 text-[12.5px] text-cvr-muted">Giá đã gồm {(THUE_SUAT_GTGT * 100).toFixed(0)}% VAT</p>
+      {QUY_DINH.length > 0 && !trangBaoGia && (
         <ul className="mt-3 space-y-1 text-[13px] leading-relaxed text-cvr-muted">
           {QUY_DINH.map((d) => <li key={d} className="flex gap-2"><span aria-hidden>·</span><span>{d}</span></li>)}
         </ul>

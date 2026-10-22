@@ -228,7 +228,9 @@ export function ContactBarMobile({ listingId, phoneMask, avatar, ten }: { listin
     if (phones.length > 1) setChon("zalo");
     else window.location.href = `https://zalo.me/${digitsOf(phones[0])}`;
   }, [muonZalo, phones]);
-  const nutNhan = "flex min-w-0 flex-[2] items-center justify-center gap-1.5 rounded-lg border border-cvr-line bg-white px-3 py-2.5 text-sm font-semibold text-cvr-body transition active:scale-95";
+  // Ô Zalo chỉ có LOGO → gọn đúng cỡ logo, nhường chỗ cho ô số (chủ dự án 22/10/2026 tối, ảnh chụp: ô Zalo to mà trống, ô số
+  // chật, biểu tượng mắt lòi ra mép khi máy để chữ to).
+  const nutNhan = "flex w-14 shrink-0 items-center justify-center rounded-lg border border-cvr-line bg-white py-2.5 transition active:scale-95";
   // CHỮ PHÓNG TO (Zalo / Facebook tự phóng chữ theo cỡ chữ điện thoại — chủ dự án 21/10/2026): nút số mà xuống 2 dòng
   // thì thanh đáy cao gấp đôi, che nửa màn hình. Số che *** + mắt KHÔNG xuống dòng (22/10) nên đo cả chữ TRÀN NGANG khỏi nút
   // (đo kiểu chữ 160% 22/10: tràn 190>168) → bậc 1 bỏ biểu tượng điện thoại trong nút, bậc 2 ẩn thêm ảnh đại diện.
