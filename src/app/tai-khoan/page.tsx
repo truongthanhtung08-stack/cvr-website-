@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useProfile } from "@/lib/useProfile";
 import { useAuth, anhDaiDien } from "@/lib/useAuth";
 import AnhDaiDien from "@/components/AnhDaiDien";
+import NoiDungChuongTrinh from "@/components/NoiDungChuongTrinh";
 import { chuongTrinhTvMoi, freeDangChay, vnd } from "@/lib/billing";
 import { useBilling } from "@/lib/useBilling";
 import { ngayVN, tuNgayVN } from "@/lib/ngayVN";
@@ -15,11 +16,10 @@ import DoDangKyMoi from "@/components/DoDangKyMoi";
 import NhanTinCuaToi from "@/components/NhanTinCuaToi";
 
 // ============================================================================
-// TỔNG QUAN — GỌN CÒN 3 KHỐI (chủ dự án chốt 24/09/2026)
-//   1. Ví: số dư · điểm · cấp hội viên
-//   2. Việc cần làm: chỉ những dòng ĐANG có việc (khách mới, tin chờ duyệt,
-//      tin bị từ chối, tin VIP sắp hết hạn)
-//   3. 7 ngày qua: lượt xem (so tuần trước) · người hỏi số · tin đang đăng
+// TỔNG QUAN — GỌN CÒN 2 KHỐI (chủ dự án chốt 24/09/2026; 22/10/2026 bỏ khối "Việc cần làm" — "rất vớ vẩn, chỉ cho
+// admin là tôi thôi": trang của khách không có danh sách việc)
+//   1. Ví: số dư · điểm · cấp hội viên · chương trình đang chạy
+//   2. 7 ngày qua: lượt xem (so tuần trước) · người hỏi số · tin đang đăng
 // Bỏ các nút đăng tin to và lối tắt trùng menu — khách vào tới đây là đã biết
 // việc; đăng tin nằm sẵn ở thanh dưới (điện thoại) và menu trái (máy tính).
 // ============================================================================
@@ -27,19 +27,12 @@ import NhanTinCuaToi from "@/components/NhanTinCuaToi";
 type SoLieu = {
   coTin: boolean;
   dangDang: number;
-  choDuyet: number;
-  biTuChoi: number;
-  sapHetHan: number;     // tin VIP còn ≤ 3 ngày
   tongXem: number;
   xem7: number;
   xem7Truoc: number;
   hoiSo7: number;
-  khachMoi: number;      // tương tác sau lần cuối mở trang Khách hàng
   tinTot: { id: string; title: string; luot: number } | null;
 };
-
-// Cùng khoá với trang Khách hàng — mốc lần cuối người bán xem danh sách khách.
-const KHOA_DA_XEM = "cl_khach_hang_da_xem";
 
 export default function AccountOverviewPage() {
   const { profile, loading } = useProfile();
@@ -68,30 +61,23 @@ export default function AccountOverviewPage() {
       if (!user) return;
       const { data } = await supabase
         .from("listings")
-        .select("id,title,status,view_count,tier,tier_expires_at")
+        .select("id,title,status,view_count")
         .eq("owner_id", user.id);
       const list = (data ?? []) as {
-        id: string; title: string; status: string; view_count: number | null; tier: string | null; tier_expires_at: string | null;
+        id: string; title: string; status: string; view_count: number | null;
       }[];
-      const rong: SoLieu = { coTin: false, dangDang: 0, choDuyet: 0, biTuChoi: 0, sapHetHan: 0, tongXem: 0, xem7: 0, xem7Truoc: 0, hoiSo7: 0, khachMoi: 0, tinTot: null };
+      const rong: SoLieu = { coTin: false, dangDang: 0, tongXem: 0, xem7: 0, xem7Truoc: 0, hoiSo7: 0, tinTot: null };
       if (!list.length) return setSo(rong);
 
       const ids = list.map((l) => l.id);
       // Ngày theo giờ VN, đúng 7 ngày (kể cả hôm nay) so với 7 ngày liền trước.
       const moc7 = tuNgayVN(7);
       const moc14 = tuNgayVN(14);
-      let mocKhach = "";
-      try { mocKhach = localStorage.getItem(KHOA_DA_XEM) ?? ""; } catch { /* bị chặn → không đếm khách mới */ }
 
-      const [{ data: xem }, { data: leads }, { data: viewers }] = await Promise.all([
+      const [{ data: xem }, { data: leads }] = await Promise.all([
         supabase.from("listing_view_daily").select("listing_id,ngay,luot").in("listing_id", ids).gte("ngay", moc14),
-        // Lấy từ mốc SỚM HƠN trong hai mốc (14 ngày trước / lần cuối xem Khách hàng)
-        // để đếm "khách mới" khớp tuyệt đối với trang Khách hàng.
         supabase.from("listing_leads").select("id,created_at,viewer_id,viewer_phone").in("listing_id", ids)
-          .gte("created_at", mocKhach && mocKhach < `${moc14}T00:00:00+07:00` ? mocKhach : `${moc14}T00:00:00+07:00`),
-        mocKhach
-          ? supabase.from("listing_viewer").select("viewer_id,viewer_phone").in("listing_id", ids).gt("lan_cuoi", mocKhach)
-          : Promise.resolve({ data: [] as { viewer_id: string }[] }),
+          .gte("created_at", `${moc14}T00:00:00+07:00`),
       ]);
 
       let xem7 = 0;
@@ -110,29 +96,14 @@ export default function AccountOverviewPage() {
       }
 
       const dsLead = (leads ?? []) as { id: string; created_at: string; viewer_id: string | null; viewer_phone: string | null }[];
-      // KHÁCH MỚI đếm theo NGƯỜI, cùng cách gom với trang Khách hàng: viewer_id,
-      // lead cũ không có viewer_id thì gom theo số điện thoại.
-      const nguoiMoi = new Set<string>();
-      if (mocKhach) {
-        for (const l of dsLead) {
-          if (l.created_at > mocKhach) nguoiMoi.add(khoaKhach(l.viewer_id, l.viewer_phone, l.id));
-        }
-        for (const v of (viewers ?? []) as { viewer_id: string; viewer_phone: string | null }[]) nguoiMoi.add(khoaKhach(v.viewer_id, v.viewer_phone, v.viewer_id));
-      }
-      const baNgayNua = Date.now() + 3 * 86_400_000;
       setSo({
         coTin: true,
         dangDang: list.filter((l) => l.status === "approved").length,
-        choDuyet: list.filter((l) => l.status === "pending").length,
-        biTuChoi: list.filter((l) => l.status === "rejected").length,
-        sapHetHan: list.filter((l) => l.status === "approved" && l.tier && l.tier !== "basic" && l.tier_expires_at
-          && new Date(l.tier_expires_at).getTime() > Date.now() && new Date(l.tier_expires_at).getTime() <= baNgayNua).length,
         tongXem: list.reduce((s, l) => s + (l.view_count ?? 0), 0),
         xem7,
         xem7Truoc,
         // Đếm NGƯỜI hỏi số (một người hỏi 2 tin vẫn là 1) — khớp trang Khách hàng.
         hoiSo7: new Set(dsLead.filter((l) => ngayVN(l.created_at) >= moc7).map((l) => khoaKhach(l.viewer_id, l.viewer_phone, l.id))).size,
-        khachMoi: nguoiMoi.size,
         tinTot,
       });
     })();
@@ -143,13 +114,6 @@ export default function AccountOverviewPage() {
 
   const p = profile as unknown as { balance?: number };
   const freeConChay = freeDangChay(billing.free, new Date().toISOString().slice(0, 10));
-
-  const viec = so ? [
-    so.khachMoi > 0 && { href: "/tai-khoan/khach-hang", text: `${so.khachMoi} khách mới quan tâm tin của bạn`, noiBat: true },
-    so.biTuChoi > 0 && { href: "/tai-khoan/tin-dang", text: `${so.biTuChoi} tin chưa được duyệt — xem lý do và sửa lại` },
-    so.sapHetHan > 0 && { href: "/tai-khoan/tin-dang", text: `${so.sapHetHan} tin VIP sắp hết hạn trong 3 ngày` },
-    so.choDuyet > 0 && { href: "/tai-khoan/tin-dang", text: `${so.choDuyet} tin đang chờ duyệt` },
-  ].filter(Boolean) as { href: string; text: string; noiBat?: boolean }[] : [];
 
   return (
     <div className="space-y-5">
@@ -196,49 +160,15 @@ export default function AccountOverviewPage() {
           )}
         </p>
         {freeConChay && (
-          <p className="mt-2 text-sm text-cvr-blue-ink">
-            {/* Chương trình = Tên (đúng admin) + Nội dung — hàm chung chuongTrinhTvMoi (22/10/2026) */}
-            {(() => { const ct = chuongTrinhTvMoi(billing); return (<>
-              {ct.ten && <strong className="block font-semibold">{ct.ten}</strong>}
-              {ct.noiDung.map((d) => <span key={d} className="block">{d}</span>)}
-            </>); })()}
-            {billing.free.quota > 0 && <> Bạn còn <strong className="font-semibold">{profile.free_quota ?? 0} tin</strong> miễn phí.</>}
-          </p>
+          // Chương trình = Tên (đúng admin) + Nội dung — khối chung NoiDungChuongTrinh, ô nền xanh nhạt như form đăng tin (22/10/2026)
+          <div className="mt-3 rounded-xl border border-cvr-blue/25 bg-cvr-blue/[0.05] px-4 py-3">
+            <NoiDungChuongTrinh ct={chuongTrinhTvMoi(billing)} />
+            {billing.free.quota > 0 && <p className="mt-1 text-[13px] text-cvr-body">Bạn còn <strong className="font-semibold">{profile.free_quota ?? 0} tin</strong> miễn phí.</p>}
+          </div>
         )}
       </section>
 
-      {/* 2. VIỆC CẦN LÀM — chỉ dòng đang có việc */}
-      {so && (
-        <section className="rounded-2xl border border-cvr-line bg-white p-5 shadow-sm">
-          <h2 className="text-base font-semibold text-cvr-ink">Việc cần làm</h2>
-          {!so.coTin ? (
-            <p className="mt-2 text-sm text-cvr-muted">
-              Bạn chưa có tin nào.{" "}
-              <Link href="/dang-tin" className="font-semibold text-cvr-blue-ink hover:underline">Đăng tin</Link>
-            </p>
-          ) : viec.length === 0 ? (
-            <p className="mt-2 text-sm text-cvr-muted">Không có việc cần xử lý.</p>
-          ) : (
-            <ul className="mt-2 divide-y divide-cvr-line/70">
-              {viec.map((v) => (
-                <li key={v.text}>
-                  <Link href={v.href} className="flex items-center justify-between gap-3 py-2.5 text-sm transition hover:text-cvr-ink">
-                    <span className={`flex items-center gap-2 ${v.noiBat ? "font-semibold text-cvr-blue-ink" : "text-cvr-body"}`}>
-                      {v.noiBat && <span className="h-2 w-2 shrink-0 rounded-full bg-cvr-blue" aria-hidden />}
-                      {v.text}
-                    </span>
-                    <svg className="h-4 w-4 shrink-0 text-cvr-faint" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                    </svg>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-      )}
-
-      {/* 3. 7 NGÀY QUA */}
+      {/* 2. 7 NGÀY QUA */}
       {so?.coTin && (
         <section className="rounded-2xl border border-cvr-line bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between gap-2">

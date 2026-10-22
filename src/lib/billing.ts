@@ -486,21 +486,20 @@ export function vnd(n: number): string {
 // số của chương trình (không viết tay ở đâu khác): cấp tin · số ngày hiển thị · ảnh/video · số tin · số ngày đầu ·
 // thời gian chương trình. Dùng ở: form đăng tin, Báo giá, Đăng tin miễn phí, Tài khoản, Đăng ký.
 // quota = 0 → không giới hạn số tin.
-export function chuongTrinhTvMoi(data: BillingData): { ten: string; noiDung: string[] } {
+// BA PHẦN (chủ dự án 22/10/2026): Tiêu đề (ten) · Nội dung khuyến mãi (noiDung + the = nhãn điểm chính) · Áp dụng (apDung).
+export function chuongTrinhTvMoi(data: BillingData): { ten: string; the: string[]; noiDung: string[]; apDung: string } {
   const f = data.free;
   const anh = f.soAnh ?? soAnhToiDa(data, f.tierId);
   const video = f.soVideo ?? soVideoToiDa(data, f.tierId);
-  const thoiGian =
-    f.from && f.to ? `Áp dụng cho tài khoản đăng ký từ ${ngayVn(f.from)} đến ${ngayVn(f.to)}.`
-    : f.to ? `Áp dụng cho tài khoản đăng ký đến hết ${ngayVn(f.to)}.`
+  const apDung =
+    f.from && f.to ? `tài khoản đăng ký từ ${ngayVn(f.from)} đến ${ngayVn(f.to)}`
+    : f.to ? `tài khoản đăng ký đến hết ${ngayVn(f.to)}`
     : "";
   return {
     ten: f.ten?.trim() ?? "",
-    noiDung: [
-      `Tin ${getTier(f.tierId).name} · hiển thị ${f.hienThi ?? f.days} ngày · ${anh} ảnh${video > 0 ? `, ${video} video` : ""}`,
-      `Miễn phí ${f.quota > 0 ? `${f.quota} tin` : "không giới hạn số tin"} trong ${f.days} ngày đầu kể từ ngày đăng ký.`,
-      ...(thoiGian ? [thoiGian] : []),
-    ],
+    the: [`Tin ${getTier(f.tierId).name}`, `Hiển thị ${f.hienThi ?? f.days} ngày`, `${anh} ảnh`, ...(video > 0 ? [`${video} video`] : [])],
+    noiDung: [`Miễn phí ${f.quota > 0 ? `${f.quota} tin` : "không giới hạn số tin"} trong ${f.days} ngày đầu kể từ ngày đăng ký.`],
+    apDung,
   };
 }
 

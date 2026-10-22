@@ -91,7 +91,10 @@ const nextConfig: NextConfig = isPages
           destination: den,
           permanent: true,
         }));
-        return [...thanhPho, ...["/mua-ban", "/cho-thue"].flatMap((base) =>
+        // 22/10/2026 chủ dự án bỏ trang đích riêng /dang-tin-mien-phi ("có cần cái trang ghi vớ vẩn như vậy không"): chương
+        // trình thành viên mới trỏ thẳng về trang chính Đăng ký / Đăng nhập — địa chỉ cũ (quảng cáo, Google) chuyển hẳn về đó.
+        const boTrang = [{ source: "/dang-tin-mien-phi", destination: "/dang-ky", permanent: true }];
+        return [...boTrang, ...thanhPho, ...["/mua-ban", "/cho-thue"].flatMap((base) =>
           ten.map((t) => ({
             source: base,
             has: [{ type: "query" as const, key: "tinh", value: `^${thoat(t)}$` }],

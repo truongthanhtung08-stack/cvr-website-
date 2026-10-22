@@ -262,7 +262,9 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   const gallery = Array.from(new Set(p.photos?.length ? p.photos : [p.image]));
 
   const province = provinceOf(p.location);
-  const handover = p.scale.find((s) => s.label.includes("Bàn giao"))?.value ?? p.status;
+  // Chưa có mốc bàn giao trong hồ sơ → ĐỂ TRỐNG, không lấy tạm tình trạng (22/10/2026: từng hiện "Bàn giao: Đang mở bán",
+  // "Dự kiến bàn giao: Đang mở bán" — sai nghĩa, lặp nhãn tình trạng).
+  const handover = p.scale.find((s) => s.label.includes("Bàn giao"))?.value ?? "";
   const mapQuery = `${p.location}, Việt Nam`;
   const step = currentStep(p.status);
 
@@ -386,12 +388,12 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             </p>
 
             {/* Dải thông tin nhanh — cân đối, dễ đọc từng tiêu chí */}
-            <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <div className={`mt-5 grid grid-cols-2 gap-2 ${handover ? "sm:grid-cols-4" : "sm:grid-cols-3 [&>*:last-child]:col-span-2 sm:[&>*:last-child]:col-span-1"}`}>
               {/* Thứ tự (chủ dự án 22/10/2026): chủ đầu tư · loại hình · giá · bàn giao */}
               <Fact label="Chủ đầu tư" value={p.developer} />
               <Fact label="Loại hình" value={p.type} />
               <Fact label="Giá từ" value={sidePrice} accent />
-              <Fact label="Bàn giao" value={handover} />
+              {handover && <Fact label="Bàn giao" value={handover} />}
             </div>
           </div>
 
@@ -474,7 +476,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                     </div>
                   ))}
                 </div>
-                <p className="mt-4 text-sm text-cvr-muted">Trạng thái hiện tại: <span className="font-semibold text-cvr-ink">{p.status}</span> · Dự kiến bàn giao: {handover}</p>
+                <p className="mt-4 text-sm text-cvr-muted">Trạng thái hiện tại: <span className="font-semibold text-cvr-ink">{p.status}</span>{handover ? ` · Dự kiến bàn giao: ${handover}` : ""}</p>
               </Section>
 
               {/* 6) Bảng giá — cấu trúc Loại căn – Diện tích – Hướng – Giá (ẩn/hiện giá) */}
@@ -543,7 +545,9 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             {/* Cột phụ — giá & liên hệ (dính khi cuộn) */}
             <aside className="lg:col-span-1">
               <div className="sticky top-24 space-y-4">
-                <div className="rounded-2xl border border-cvr-line bg-white p-5 shadow-lux">
+                {/* Điện thoại: hộp giá nằm cuối trang, lặp lại "Giá từ · Loại hình" ở đầu trang → chỉ hiện khi có liên hệ dự án;
+                    máy tính giữ (cột phải dính theo khi cuộn) — 22/10/2026 */}
+                <div className={`rounded-2xl border border-cvr-line bg-white p-5 shadow-lux ${contact ? "" : "hidden lg:block"}`}>
                   <p className="text-xs text-cvr-muted">{showPrice ? "Giá bán từ" : "Giá bán"}</p>
                   <p className="text-2xl font-bold tracking-tight text-cvr-ink">{sidePrice}</p>
                   <p className="mt-1 text-xs text-cvr-muted">{p.type}</p>
@@ -575,7 +579,6 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                     </div>
                   )}
 
-                  <p className="mt-3 text-center text-[11px] text-cvr-faint">{p.developer} · Bàn giao {handover}</p>
                 </div>
 
                 <div id="tai-tai-lieu" className="scroll-mt-14">

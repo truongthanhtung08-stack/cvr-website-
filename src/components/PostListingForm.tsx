@@ -5,6 +5,7 @@ import { createContext, useContext, useEffect, useMemo, useRef, useState } from 
 import Link from "next/link";
 import LoginForm from "@/components/LoginForm";
 import BangGiaGoiTin from "@/components/BangGiaGoiTin";
+import NoiDungChuongTrinh from "@/components/NoiDungChuongTrinh";
 import MucAnHien, { goiYDanhSach } from "@/components/MucAnHien";
 import BangQuyenLoiNoi from "@/components/BangQuyenLoiNoi";
 import ChonCoTim from "@/components/ChonCoTim";
@@ -1571,20 +1572,14 @@ export default function PostListingForm() {
                   if (chonKm) { setChonKm(false); setPlanTier(""); setPlanDays(0); return; }
                   setChonKm(true); setPlanTier(goiMp); setPlanDays(ngayMp);
                 }}
-                className={`mb-2.5 flex w-full items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-left transition ${
+                className={`mb-2.5 flex w-full items-start justify-between gap-3 rounded-2xl border px-4 py-3.5 text-left transition ${
                   chonKm ? "border-cvr-blue bg-cvr-blue/[0.08] ring-1 ring-cvr-blue" : duocChonKm ? "border-cvr-blue/40 bg-cvr-blue/[0.04]" : "cursor-not-allowed border-cvr-line bg-cvr-surface opacity-60"
                 }`}
               >
                 {/* LÀ CHƯƠNG TRÌNH, KHÔNG PHẢI MỘT GÓI (chủ dự án 22/10/2026): Tên đúng như admin đặt + Nội dung — một hàm
                     chuongTrinhTvMoi dùng chung toàn web. */}
-                {(() => { const ct = chuongTrinhTvMoi(billing); return (
-                <span className="min-w-0">
-                  {ct.ten && <span className="block text-[15px] font-semibold text-cvr-ink">{ct.ten}</span>}
-                  <span className="mt-0.5 block text-[13px] text-cvr-body">{ct.noiDung[0]}</span>
-                  {ct.noiDung.slice(1).map((d) => <span key={d} className="mt-0.5 block text-[12.5px] leading-snug text-cvr-muted">{d}</span>)}
-                </span>
-                ); })()}
-                <span className="shrink-0 font-semibold tabular-nums text-cvr-ink">0 ₫</span>
+                <NoiDungChuongTrinh ct={chuongTrinhTvMoi(billing)} />
+                <span className="mt-1 shrink-0 text-[16px] font-semibold tabular-nums text-cvr-blue-ink">0 ₫</span>
               </button>
             )}
 

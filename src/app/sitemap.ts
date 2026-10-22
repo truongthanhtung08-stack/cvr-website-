@@ -5,8 +5,6 @@ import { getChuyenGia, NGUONG_INDEX_HO_SO } from "@/lib/chuyenGiaDb";
 import { duAnThuocNhom, NGUONG_INDEX_DANH_MUC, projectCategories, rentCategories, saleCategories, soTinDanhMuc } from "@/lib/categories";
 import { packages, trangTienIchDat, utilityTools } from "@/lib/packages";
 import { khuVucList } from "@/lib/khuVuc";
-import { getBilling } from "@/lib/siteContent";
-import { freeDangChay } from "@/lib/billing";
 import { banGocCua, tinDatChuan, trangIndex } from "@/lib/pseo";
 import { NGUONG_INDEX_CDT, nhomChuDauTu } from "@/lib/chuDauTu";
 
@@ -31,8 +29,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // từng khách hoặc theo bộ lọc → Google coi là trang mỏng/trùng lặp.
     "/gioi-thieu", "/chuyen-gia", "/bao-gia-dang-tin", "/dang-tin",
     "/chuyen-gia/da-nang", "/chuyen-gia/hue", "/chuyen-gia/dang-ky",
-    // Trang đích "đăng tin miễn phí" CHỈ có khi chương trình miễn phí đã duyệt đang chạy.
-    ...(freeDangChay((await getBilling()).free, now.toISOString().slice(0, 10)) ? ["/dang-tin-mien-phi"] : []),
   ].map((p) => ({
     url: `${SITE}${p}`,
     // Không ghi lastmod cho trang tĩnh/danh mục: MASTER 6.4 chỉ cho ghi ngày nội dung đổi thật.

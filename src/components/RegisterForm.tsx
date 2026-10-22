@@ -6,6 +6,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { dichSauDangNhap, thamSoNext } from "@/lib/dieuHuong";
 import SocialAuth from "@/components/SocialAuth";
+import NoiDungChuongTrinh from "@/components/NoiDungChuongTrinh";
 import { useBilling } from "@/lib/useBilling";
 import { chuongTrinhTvMoi, freeDangChay } from "@/lib/billing";
 import { chuanHoaSdt, laSdtVN } from "@/lib/phone";
@@ -38,12 +39,8 @@ import { chuanHoaSdt, laSdtVN } from "@/lib/phone";
 
 type Cach = "chon" | "email" | "sdt";
 
-// capThe: thẻ tiêu đề của khung đăng ký. Mặc định "h1" (trang /dang-ky chỉ có mỗi
-// khung này nên nó chính là tiêu đề trang). Trang đích quảng cáo /dang-tin-mien-phi
-// đã có H1 riêng ở trên, nên truyền "h2" — một trang chỉ nên có MỘT H1, hai H1 làm
-// Google phân vân trang nói về cái gì. Chữ và kích cỡ giữ nguyên, chỉ đổi tên thẻ.
-export default function RegisterForm({ uuDai, capThe = "h1" }: { uuDai?: { ten: string; noiDung: string[] }; capThe?: "h1" | "h2" }) {
-  const TheTieuDe = capThe;
+// Tiêu đề khung là H1 của trang /dang-ky (trang đích riêng /dang-tin-mien-phi đã bỏ 22/10/2026 — chuyển hẳn về đây).
+export default function RegisterForm() {
   const [cach, setCach] = useState<Cach>("chon");
   // /dang-ky?cach=sdt (từ trang đăng nhập bằng số) → mở thẳng form, khỏi chọn lại cách.
   useEffect(() => {
@@ -132,7 +129,6 @@ export default function RegisterForm({ uuDai, capThe = "h1" }: { uuDai?: { ten: 
 
   const { billing, loading: billingLoading } = useBilling();
   const dongUuDai =
-    uuDai ??
     (billingLoading || !freeDangChay(billing.free, new Date().toISOString().slice(0, 10))
       ? null
       : chuongTrinhTvMoi(billing));
@@ -250,12 +246,11 @@ export default function RegisterForm({ uuDai, capThe = "h1" }: { uuDai?: { ten: 
   if (cach === "chon") {
     return (
       <div className="w-full max-w-md rounded-2xl border border-cvr-line bg-white p-6 shadow-lux sm:p-8">
-        <TheTieuDe className="text-2xl font-semibold tracking-tight text-cvr-ink">Tạo tài khoản</TheTieuDe>
+        <h1 className="text-2xl font-semibold tracking-tight text-cvr-ink">Tạo tài khoản</h1>
         {/* Chương trình đang chạy = Tên (đúng admin) + Nội dung — hàm chung chuongTrinhTvMoi (22/10/2026) */}
         {dongUuDai ? (
-          <div className="mt-1.5 text-sm leading-relaxed text-cvr-muted">
-            {dongUuDai.ten && <p className="font-semibold text-cvr-ink">{dongUuDai.ten}</p>}
-            {dongUuDai.noiDung.map((d) => <p key={d}>{d}</p>)}
+          <div className="mt-3 rounded-xl border border-cvr-blue/25 bg-cvr-blue/[0.05] px-4 py-3">
+            <NoiDungChuongTrinh ct={dongUuDai} />
           </div>
         ) : (
           <p className="mt-1.5 text-sm leading-relaxed text-cvr-muted">Đăng tin, quản lý tin và lưu bất động sản bạn quan tâm.</p>
@@ -279,7 +274,7 @@ export default function RegisterForm({ uuDai, capThe = "h1" }: { uuDai?: { ten: 
   if (choMa) {
     return (
       <div className="w-full max-w-md rounded-2xl border border-cvr-line bg-white p-6 shadow-lux sm:p-8">
-        <TheTieuDe className="text-2xl font-semibold tracking-tight text-cvr-ink">Nhập mã xác thực</TheTieuDe>
+        <h1 className="text-2xl font-semibold tracking-tight text-cvr-ink">Nhập mã xác thực</h1>
         <p className="mt-1.5 text-sm leading-relaxed text-cvr-muted">
           Mã 6 số vừa gửi tới{" "}
           <strong className="font-semibold text-cvr-ink">
@@ -333,9 +328,9 @@ export default function RegisterForm({ uuDai, capThe = "h1" }: { uuDai?: { ten: 
       <button type="button" onClick={() => { setCach("chon"); setLoi(""); }} className="text-sm text-cvr-muted transition hover:text-cvr-ink">
         ← Chọn cách khác
       </button>
-      <TheTieuDe className="mt-3 text-2xl font-semibold tracking-tight text-cvr-ink">
+      <h1 className="mt-3 text-2xl font-semibold tracking-tight text-cvr-ink">
         {laSdt ? "Đăng ký bằng số điện thoại" : "Đăng ký bằng email"}
-      </TheTieuDe>
+      </h1>
 
       <form onSubmit={xinMa} className="mt-5 space-y-4">
         <div>

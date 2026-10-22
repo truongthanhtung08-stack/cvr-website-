@@ -13,6 +13,7 @@ import { getTier, type TierId } from "@/lib/packages";
 import { getBilling, getQuyDinhGia } from "@/lib/siteContent";
 import { bangTheoMucDich, bangUp, goiPr, ghiChuPr, bangBanner, giaTra, priceLinesDuAn, freeDangChay, chuongTrinhTvMoi } from "@/lib/billing";
 import BangGiaGoiTin from "@/components/BangGiaGoiTin";
+import NoiDungChuongTrinh from "@/components/NoiDungChuongTrinh";
 import BangGiaDayTin from "@/components/BangGiaDayTin";
 import NutMucDichGia from "@/components/NutMucDichGia";
 import GoiHoiVienCards, { DieuKienHoiVien } from "@/components/GoiHoiVienCards";
@@ -205,10 +206,7 @@ export default async function BaoGiaPage() {
                   <div className="mt-4 rounded-2xl border border-cvr-blue/25 bg-cvr-blue/[0.06] px-5 py-4">
                     <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-cvr-blue-ink">Khuyến mãi đang áp dụng</p>
                     {/* Chương trình = Tên (đúng admin) + Nội dung — hàm chung chuongTrinhTvMoi (22/10/2026) */}
-                    {(() => { const ct = chuongTrinhTvMoi(billing); return (<>
-                      {ct.ten && <p className="mt-1.5 text-[15px] font-semibold text-cvr-ink">{ct.ten}</p>}
-                      {ct.noiDung.map((d) => <p key={d} className="mt-0.5 text-[14px] leading-relaxed text-cvr-body">{d}</p>)}
-                    </>); })()}
+                    <div className="mt-1.5"><NoiDungChuongTrinh ct={chuongTrinhTvMoi(billing)} /></div>
                   </div>
                 )}
 

@@ -39,29 +39,44 @@ function laAndroid(): boolean {
 // hành chặn, mọi trang web đều vậy, không phải mình thiếu code. Thứ duy nhất web
 // gọi được là hộp thoại xin quyền của trình duyệt, mà hộp đó chỉ hiện khi khách
 // CHƯA từng bấm "Chặn". Đã bấm Chặn rồi thì chỉ còn cách chỉ họ tự bật.
-export function huongDanBatDinhVi(): string[] {
-  if (laIOS())
-    return [
-      "Cài đặt → Quyền riêng tư & Bảo mật → Dịch vụ định vị: BẬT",
-      "Quay lại trang, bấm chữ ẢA bên trái thanh địa chỉ → Cài đặt trang web → Vị trí → Cho phép",
-    ];
-  if (laAndroid())
-    return [
-      "Vuốt từ trên xuống, bấm biểu tượng Vị trí cho sáng lên (hoặc Cài đặt → Vị trí: BẬT)",
-      "Quay lại trang, bấm ổ khoá 🔒 trên thanh địa chỉ → Quyền → Vị trí → Cho phép",
-    ];
-  return [
-    "Bấm ổ khoá 🔒 trên thanh địa chỉ → Vị trí → Cho phép",
-    "Windows: Cài đặt → Quyền riêng tư và bảo mật → Vị trí: BẬT",
-  ];
+// Web mở dạng ỨNG DỤNG đã cài lên màn hình chính (PWA) — KHÔNG có thanh địa chỉ, nên không có ổ khoá để bấm.
+function laUngDung(): boolean {
+  if (typeof window === "undefined") return false;
+  return window.matchMedia?.("(display-mode: standalone)").matches || (navigator as { standalone?: boolean }).standalone === true;
 }
 
-// Câu ngắn nói VÌ SAO hỏng — đi kèm các bước ở trên.
+// Web mở TRONG Zalo / Facebook / Messenger / Instagram / TikTok — trình duyệt trong app thường không cho trang dùng vị trí.
+function laTrongApp(): boolean {
+  return typeof navigator !== "undefined" && /Zalo|FBAN|FBAV|FB_IAB|Messenger|Instagram|TikTok/i.test(navigator.userAgent);
+}
+
+// CÁCH BẬT THEO ĐÚNG CHỖ KHÁCH ĐANG MỞ WEB (chủ dự án 22/10/2026: "tôi bật định vị, bấm vào không ăn" — mở web dạng
+// ứng dụng / trong Zalo thì không có thanh địa chỉ, hướng dẫn cũ "bấm ổ khoá trên thanh địa chỉ" làm theo không được).
+//   ma 1 = máy đã nhớ "không cho phép" Coastal Land dùng vị trí · ma 2 = Vị trí của máy đang tắt.
+export function huongDanBatDinhVi(ma = 1): string[] {
+  if (ma === 2) {
+    if (laIOS()) return ["Cài đặt → Quyền riêng tư & Bảo mật → Dịch vụ định vị: BẬT", "Quay lại, bấm nút định vị lần nữa"];
+    if (laAndroid()) return ["Vuốt từ trên xuống, bấm biểu tượng Vị trí cho sáng lên", "Quay lại, bấm nút định vị lần nữa"];
+    return ["Windows: Cài đặt → Quyền riêng tư và bảo mật → Vị trí: BẬT", "Quay lại, bấm nút định vị lần nữa"];
+  }
+  if (laTrongApp()) return ["Bấm ⋯ ở góc trên → Mở bằng trình duyệt", "Trên trình duyệt, bấm nút định vị → Cho phép"];
+  if (laUngDung() && laAndroid()) return ["Giữ biểu tượng Coastal Land trên màn hình chính → Thông tin ứng dụng", "Quyền → Vị trí → Cho phép"];
+  if (laIOS()) return ["Cài đặt → Quyền riêng tư & Bảo mật → Dịch vụ định vị → Trang web Safari → Khi dùng ứng dụng", "Quay lại, bấm nút định vị lần nữa"];
+  if (laAndroid()) return ["Bấm ổ khoá 🔒 (hoặc ⓘ) cạnh địa chỉ web → Quyền → Vị trí → Cho phép", "Quay lại, bấm nút định vị lần nữa"];
+  return ["Bấm ổ khoá 🔒 cạnh địa chỉ web → Vị trí → Cho phép", "Bấm nút định vị lần nữa"];
+}
+
+// MỘT DÒNG NÓI VIỆC CẦN LÀM (không nói "bị chặn trên trình duyệt" — chủ dự án 22/10/2026: "câu nói rất vớ vẩn").
+// Cách làm cụ thể nằm sau "Xem cách bật" (NhacBatDinhVi), đúng theo chỗ khách đang mở web.
 export function loiDinhVi(ma: number): string {
-  // MỘT DÒNG NGẮN như Google Maps (chủ dự án 22/10/2026: bỏ câu dài). Cách bật nằm sau "Xem cách bật" (NhacBatDinhVi).
-  if (ma === 1) return "Định vị đang bị chặn trên trình duyệt.";
-  if (ma === 2) return "Máy chưa bật định vị.";
+  if (ma === 1) return "Cho phép Coastal Land dùng vị trí của máy";
+  if (ma === 2) return "Bật Vị trí của máy";
   return "Chưa lấy được vị trí, thử lại.";
+}
+
+// Ngược lại: từ câu báo → mã (NhacBatDinhVi chọn đúng bộ bước, khỏi sửa mọi bản đồ đang gọi).
+export function maCuaLoi(loi: string): number {
+  return loi === loiDinhVi(1) ? 1 : loi === loiDinhVi(2) ? 2 : 3;
 }
 
 // ĐỊNH VỊ HAI CHẶNG CHO NHANH:
@@ -83,6 +98,35 @@ export function layViTri(
     bao(2);
     return;
   }
+  if (epGPS) {
+    // KHÁCH TỰ BẤM NÚT: CHẠY SONG SONG HAI ĐƯỜNG (chủ dự án 22/10/2026: "bấm vào location không có cử động gì" — trước đây
+    // chỉ chờ GPS chính xác cao, trong nhà 5–15 giây mới có, khách tưởng nút chết).
+    //   · Đường nhanh: theo wifi/trạm phát, nhận vị trí cũ trong 10 phút → thường dưới 1 giây, bản đồ bay tới ngay.
+    //   · Đường chính xác: enableHighAccuracy — ⚠️ ĐỪNG BỎ. Đây là chỗ làm Android + Chrome tự bung hộp hệ thống "Để tiếp
+    //     tục, hãy bật dịch vụ vị trí của thiết bị — [Không] [OK]" khi máy đang tắt GPS (Google Play Services); xin chính
+    //     xác thấp thì Chrome lặng lẽ báo hỏng, không bung hộp. Hộp chỉ hiện khi khách CHƯA bấm "Chặn" coastalland.vn.
+    //     Có kết quả thì gọi nhan(..., true) để dời cho sát.
+    // Chỉ báo lỗi khi CẢ HAI đều hỏng; có mã 1 (chưa cho phép) thì báo mã 1.
+    let daCo = false;
+    let hong = 0;
+    let maLoi = 0;
+    const loi = (e: GeolocationPositionError) => {
+      hong++;
+      if (e.code === 1 || !maLoi) maLoi = e.code;
+      if (hong === 2 && !daCo) bao(maLoi);
+    };
+    navigator.geolocation.getCurrentPosition(
+      (pos) => { if (!daCo) { daCo = true; nhan(pos.coords.latitude, pos.coords.longitude, false); } },
+      loi,
+      { enableHighAccuracy: false, timeout: 8000, maximumAge: 600000 },
+    );
+    navigator.geolocation.getCurrentPosition(
+      (pos) => { const truoc = daCo; daCo = true; nhan(pos.coords.latitude, pos.coords.longitude, truoc); },
+      loi,
+      { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 },
+    );
+    return;
+  }
   navigator.geolocation.getCurrentPosition(
     (pos) => {
       nhan(pos.coords.latitude, pos.coords.longitude, false);
@@ -93,16 +137,8 @@ export function layViTri(
       );
     },
     (e) => bao(e.code),
-    // ⚠️ KHÁCH TỰ BẤM NÚT (epGPS) THÌ PHẢI enableHighAccuracy: true — ĐỪNG ĐỔI.
-    // Đây chính là chỗ làm ĐIỆN THOẠI TỰ NỔI HỘP BẬT GPS. Trên Android + Chrome,
-    // khi trang xin vị trí CHÍNH XÁC CAO mà máy đang tắt Vị trí, Google Play
-    // Services tự bung hộp thoại hệ thống "Để tiếp tục, hãy bật dịch vụ vị trí
-    // của thiết bị — [Không] [OK]", bấm OK là GPS bật ngay, không phải vào Cài đặt.
-    // Xin chính xác THẤP (như trước đây) thì Chrome lặng lẽ đo theo wifi/trạm phát
-    // rồi báo hỏng, KHÔNG bung hộp đó — nên khách tưởng web không làm gì.
-    // Hộp này chỉ hiện khi khách CHƯA bấm "Chặn" cho coastalland.vn; đã Chặn thì
-    // trình duyệt cắt từ đầu, lúc đó mới cần khối hướng dẫn hai bước.
-    { enableHighAccuracy: epGPS, timeout: epGPS ? 15000 : 8000, maximumAge: epGPS ? 0 : 600000 },
+    // Không phải khách bấm nút (tự định vị lúc mở bản đồ): chỉ xin nhẹ, KHÔNG bung hộp bật GPS; GPS chính xác chạy ngầm sau.
+    { enableHighAccuracy: false, timeout: 8000, maximumAge: 600000 },
   );
 }
 

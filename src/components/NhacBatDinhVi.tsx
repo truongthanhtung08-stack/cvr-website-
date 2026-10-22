@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { huongDanBatDinhVi } from "@/lib/dinhVi";
+import { huongDanBatDinhVi, maCuaLoi } from "@/lib/dinhVi";
 
 // Khối chỉ khách bật lại định vị. Dùng chung cho cả ba bản đồ (3 tab · trang tin ·
 // ghim khi đăng tin) để lời hướng dẫn ở đâu cũng như nhau.
@@ -20,7 +20,9 @@ export default function NhacBatDinhVi({
   dangDinhVi: boolean;
   onDong?: () => void;
 }) {
-  const buoc = huongDanBatDinhVi();
+  // Bước theo đúng lỗi (chưa cho phép / máy tắt Vị trí) và đúng chỗ khách mở web (trình duyệt, ứng dụng, Zalo…).
+  const ma = maCuaLoi(loi);
+  const buoc = ma === 3 ? [] : huongDanBatDinhVi(ma);
   // MẶC ĐỊNH CHỈ MỘT DÒNG. Chủ dự án chốt: đừng bày bảng hướng dẫn ra màn hình.
   // Web KHÔNG có quyền tự bật GPS của máy — đó là chặn của hệ điều hành, không
   // phải thiếu code — nên vẫn phải nói được một câu, kèm chỗ mở ra xem cách bật
@@ -44,7 +46,7 @@ export default function NhacBatDinhVi({
         )}
       </div>
 
-      {!moRong && (
+      {!moRong && buoc.length > 0 && (
         <button
           type="button"
           onClick={() => setMoRong(true)}

@@ -10,6 +10,7 @@ import { traDiaChi, timToaDo, timToaDoTheoBuoc } from "@/lib/timToaDo";
 import type { DiemTim } from "@/lib/diaChiHaiHe";
 import { layViTri, loiDinhVi } from "@/lib/dinhVi";
 import NhacBatDinhVi from "@/components/NhacBatDinhVi";
+import { useKhoaCuon } from "@/lib/khoaCuon";
 
 // ════════════════════════════════════════════════════════════════════════════
 // GHIM VỊ TRÍ — NỀN MỞ (MapLibre + OpenFreeMap). Dùng ở form đăng tin của khách
@@ -63,8 +64,14 @@ export default function MapPickerMo({
   // đụng vào → đổi ghim thì máy được viết lại. Khách sửa rồi thì giữ nguyên.
   const mayDienRef = useRef("");
   const ghiDeRef = useRef(false);
+  // Ghim máy vừa tự đặt theo đường định vị nhanh — GPS chính xác về sau thì dời ghim tới đó, NẾU khách chưa tự dời.
+  const ghimTuDongRef = useRef("");
 
   const [sanSang, setSanSang] = useState(false);
+  // BẢN ĐỒ LỚN (chủ dự án 22/10/2026: "kéo bằng hai ngón rất mệt — dung hoà cả hai"): trong form một ngón là cuộn trang
+  // (không vướng); bấm ⛶ thì bản đồ phủ kín màn hình, kéo bằng MỘT ngón, chạm để ghim, "Xong" là thu về.
+  const [toan, setToan] = useState(false);
+  useKhoaCuon(toan);
   const [hong, setHong] = useState(false);
   const [dangDinhVi, setDangDinhVi] = useState(false);
   const [dangTra, setDangTra] = useState(false);
@@ -170,6 +177,30 @@ export default function MapPickerMo({
     }
   }
 
+  // MỞ BẰNG GOOGLE MAPS (chủ dự án 22/10/2026: web không gắn được bộ Google Maps nên dùng bản đồ này — "phải có nút mở
+  // bằng Google Maps"). Đã ghim → mở đúng điểm ghim; chưa ghim → mở đúng vùng đang xem. Điện thoại tự mở ứng dụng Google
+  // Maps; khách tìm chính xác bên đó, Chia sẻ → chép link → dán vào ô "dán link Google Maps" dưới bản đồ.
+  function moGoogleMaps() {
+    const p = parseLatLng(valueRef.current);
+    const map = mapRef.current;
+    const c = map?.getCenter();
+    const url = p
+      ? `https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lng}`
+      : c
+        ? `https://www.google.com/maps/@?api=1&map_action=map&center=${c.lat},${c.lng}&zoom=${Math.max(5, Math.round(map?.getZoom() ?? 12))}`
+        : "https://www.google.com/maps";
+    // LỐI VỀ: Android mở thẳng ứng dụng bản đồ bằng geo: — bấm Quay lại của máy là về đúng form đang soạn (mở tab mới
+    // thì quay lại dễ rơi vào tab trống). iPhone / máy tính: tab mới — iPhone có "◀ Safari" và nút lùi đóng tab về form.
+    if (/Android/.test(navigator.userAgent)) {
+      const q = p ?? (c ? { lat: c.lat, lng: c.lng } : null);
+      if (q) {
+        location.href = p ? `geo:${q.lat},${q.lng}?q=${q.lat},${q.lng}` : `geo:${q.lat},${q.lng}?z=${Math.round(map?.getZoom() ?? 12)}`;
+        return;
+      }
+    }
+    window.open(url, "_blank", "noopener");
+  }
+
   function dinhVi(ghimLuon: boolean) {
     setLoi("");
     setDangDinhVi(true);
@@ -178,7 +209,15 @@ export default function MapPickerMo({
         setDangDinhVi(false);
         const p = { lat, lng };
         void veCham(p, !chinhXacHon);
-        if (ghimLuon && !chinhXacHon) { ghiDeRef.current = true; void datGhim(p); }
+        if (ghimLuon && !chinhXacHon) { ghimTuDongRef.current = formatLatLng(p); ghiDeRef.current = true; void datGhim(p); }
+        else if (ghimLuon && chinhXacHon && ghimRef.current) {
+          const q = ghimRef.current.getLngLat();
+          if (formatLatLng({ lat: q.lat, lng: q.lng }) === ghimTuDongRef.current) {
+            ghimTuDongRef.current = formatLatLng(p);
+            ghiDeRef.current = true;
+            void datGhim(p);
+          }
+        }
       },
       (ma) => {
         setDangDinhVi(false);
@@ -187,6 +226,39 @@ export default function MapPickerMo({
       true,
     );
   }
+
+  // Bản đồ lớn: tắt chế độ "một ngón là cuộn trang" để kéo bằng một ngón; thu về thì bật lại.
+  // LỐI THOÁT (chủ dự án 22/10/2026: "mở ra thì phải tính cách thoát lại"): nút Xong · nút thu nhỏ · Esc (máy tính) ·
+  // NÚT QUAY LẠI CỦA ĐIỆN THOẠI = thu bản đồ, KHÔNG rời trang đăng tin (cùng cách bộ xem ảnh GallerySlideVideo).
+  const coBuocRef = useRef(false);
+  useEffect(() => {
+    const map = mapRef.current;
+    if (map) {
+      if (toan) map.cooperativeGestures.disable();
+      else map.cooperativeGestures.enable();
+      requestAnimationFrame(() => map.resize());
+    }
+    if (!toan) {
+      if (coBuocRef.current) {
+        coBuocRef.current = false;
+        history.back();
+      }
+      return;
+    }
+    history.pushState(history.state, "");
+    coBuocRef.current = true;
+    const quayLai = () => {
+      coBuocRef.current = false;
+      setToan(false);
+    };
+    const esc = (e: KeyboardEvent) => { if (e.key === "Escape") setToan(false); };
+    window.addEventListener("popstate", quayLai);
+    window.addEventListener("keydown", esc);
+    return () => {
+      window.removeEventListener("popstate", quayLai);
+      window.removeEventListener("keydown", esc);
+    };
+  }, [toan]);
 
   // ── Dựng bản đồ một lần ──────────────────────────────────────────────────
   useEffect(() => {
@@ -205,13 +277,22 @@ export default function MapPickerMo({
           style: STYLE_MO,
           center: [tam.lng, tam.lat],
           zoom: saved ? 17 : kv ? 12 : 5,
-          // Kéo bản đồ bằng MỘT ngón như cũ (chủ dự án 22/10/2026 bác kiểu hai ngón); bản đồ điện thoại thấp lại để
-          // còn chỗ vuốt trang.
+          // HAI NGÓN MỚI KÉO BẢN ĐỒ, MỘT NGÓN LÀ CUỘN TRANG — như Google Maps (chủ dự án 22/10/2026 tối, sau khi thử kiểu một
+          // ngón: "vuốt xuống các phần bị vướng" — bản đồ ăn cú vuốt, trang đăng tin không cuộn được). Chạm một lần vẫn
+          // ghim; máy tính: Ctrl/⌘ + lăn chuột mới phóng to, lăn thường là cuộn trang. Câu nhắc theo đúng chữ của Google.
+          cooperativeGestures: true,
+          locale: {
+            "CooperativeGesturesHandler.WindowsHelpText": "Sử dụng Ctrl + cuộn để thu phóng bản đồ",
+            "CooperativeGesturesHandler.MacHelpText": "Sử dụng ⌘ + cuộn để thu phóng bản đồ",
+            "CooperativeGesturesHandler.MobileHelpText": "Bấm ⛶ để mở bản đồ lớn, kéo bằng một ngón",
+          },
           // Dòng ghi nguồn bản đồ thu thành nút (i) — mở rộng sẵn thì che cả đáy bản đồ trên điện thoại.
           attributionControl: { compact: true },
         });
         mapRef.current = map;
-        map.addControl(new ml.NavigationControl({ showCompass: false }), "top-right");
+        // Điện thoại KHÔNG có +/− (chủ dự án 22/10/2026: "trên mobile chỉ cần nút full, off full, nút Location — hết";
+        // phóng to bằng chụm hai ngón hoặc mở bản đồ lớn). Máy tính giữ +/− (không chụm được).
+        if (window.matchMedia("(min-width: 640px)").matches) map.addControl(new ml.NavigationControl({ showCompass: false }), "top-right");
 
         // Bấm vào đâu là ghim vào đó — thao tác chính, ai cũng đoán được.
         map.on("click", (e) => void datGhim({ lat: e.lngLat.lat, lng: e.lngLat.lng }));
@@ -259,7 +340,9 @@ export default function MapPickerMo({
       if (!kv) return;
       mapRef.current.easeTo({
         center: [kv[1], kv[0]],
-        zoom: diem?.mucDo === "ghim" ? 17 : diem?.mucDo === "duong" ? 16 : hint.split(",").filter((s) => s.trim()).length >= 2 ? 14 : 12,
+        // Mỗi cấp một tầm nhìn (chủ dự án 22/10/2026: "trỏ vào tỉnh thành — bản đồ trỏ đến từng cấp bậc"):
+        // số nhà 17 · đường 16 · phường/xã 14 · tỉnh/thành 10 (thấy trọn tỉnh, trước là 12 — chỉ thấy một góc).
+        zoom: diem?.mucDo === "ghim" ? 17 : diem?.mucDo === "duong" ? 16 : hint.split(",").filter((s) => s.trim()).length >= 2 ? 14 : 10,
         duration: 600,
       });
     }, 500);
@@ -312,8 +395,8 @@ export default function MapPickerMo({
 
   return (
     <div className="space-y-3">
-      <div className="relative overflow-hidden rounded-xl border border-cvr-line">
-        <div ref={boxRef} aria-label="Bản đồ ghim vị trí" className="h-[240px] w-full bg-cvr-surface sm:h-[360px]" />
+      <div className={toan ? "fixed inset-0 z-[80] bg-white" : "relative overflow-hidden rounded-xl border border-cvr-line"}>
+        <div ref={boxRef} aria-label="Bản đồ ghim vị trí" className={`w-full bg-cvr-surface ${toan ? "h-full" : "h-[240px] sm:h-[360px]"}`} />
         {!sanSang && !hong && (
           <span className="pointer-events-none absolute inset-0 flex items-center justify-center text-[13px] font-medium text-cvr-muted">
             Đang mở bản đồ…
@@ -329,7 +412,7 @@ export default function MapPickerMo({
             Đang tìm địa chỉ…
           </span>
         )}
-        {/* CẤU TRÚC THAY CHÚ THÍCH (chủ dự án 22/10/2026): nút định vị nằm NGAY TRÊN bản đồ, dưới nút +/− (kiểu Google
+        {/* CẤU TRÚC THAY CHÚ THÍCH (chủ dự án 22/10/2026): nút định vị + nút phóng to nằm NGAY TRÊN bản đồ góc phải (máy tính: dưới nút +/−; kiểu Google
             Maps — ai cũng hiểu); kết quả ghim là nhãn nhỏ góc trên trái bản đồ, dấu × để xoá ghim. */}
         <button
           type="button"
@@ -337,7 +420,7 @@ export default function MapPickerMo({
           title="Tôi đang đứng ở đây"
           onClick={() => dinhVi(true)}
           disabled={dangDinhVi}
-          className="absolute right-[10px] top-[78px] z-10 flex h-[29px] w-[29px] items-center justify-center rounded-[4px] bg-white text-cvr-blue shadow-[0_0_0_2px_rgba(0,0,0,0.1)] disabled:opacity-60"
+          className="absolute right-[10px] top-[10px] z-10 flex h-[29px] w-[29px] sm:top-[78px] items-center justify-center rounded-[4px] bg-white text-cvr-blue shadow-[0_0_0_2px_rgba(0,0,0,0.1)] disabled:opacity-60"
         >
           {dangDinhVi ? (
             <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-cvr-blue border-t-transparent" />
@@ -347,6 +430,38 @@ export default function MapPickerMo({
             </svg>
           )}
         </button>
+        <button
+          type="button"
+          aria-label={toan ? "Thu nhỏ bản đồ" : "Phóng to bản đồ"}
+          title={toan ? "Thu nhỏ bản đồ" : "Phóng to bản đồ"}
+          onClick={() => setToan(!toan)}
+          className="absolute right-[10px] top-[47px] z-10 flex h-[29px] w-[29px] sm:top-[115px] items-center justify-center rounded-[4px] bg-white text-cvr-ink shadow-[0_0_0_2px_rgba(0,0,0,0.1)]"
+        >
+          <svg className="h-[17px] w-[17px]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden>
+            {toan
+              ? <path strokeLinecap="round" strokeLinejoin="round" d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" />
+              : <path strokeLinecap="round" strokeLinejoin="round" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />}
+          </svg>
+        </button>
+        <button
+          type="button"
+          onClick={moGoogleMaps}
+          className="absolute bottom-2 left-2 z-10 flex items-center gap-1.5 rounded-full bg-white py-1.5 pl-2 pr-3 text-[12.5px] font-semibold text-cvr-ink shadow-[0_0_0_2px_rgba(0,0,0,0.1)]"
+        >
+          <svg className="h-4 w-4 text-[#ea4335]" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+            <path d="M12 2C8.1 2 5 5.1 5 9c0 5.2 7 13 7 13s7-7.8 7-13c0-3.9-3.1-7-7-7zm0 9.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z" />
+          </svg>
+          Google Maps
+        </button>
+        {toan && (
+          <button
+            type="button"
+            onClick={() => setToan(false)}
+            className="absolute bottom-[calc(24px+env(safe-area-inset-bottom))] left-1/2 z-10 -translate-x-1/2 rounded-full bg-cvr-ink px-8 py-3 text-[15px] font-semibold text-white shadow-lg"
+          >
+            Xong
+          </button>
+        )}
         {daGhim && (
           <span className="absolute left-2 top-2 z-10 flex items-center gap-1.5 rounded-full bg-white/95 py-1 pl-3 pr-1 text-[12px] shadow">
             <span className="font-semibold text-green-700">Đã ghim</span>
