@@ -1,6 +1,6 @@
 "use client";
 
-import { napSupabase } from "@/lib/supabase/nap";
+import { napSupabase, coPhienDangNhap, rpcRest } from "@/lib/supabase/nap";
 
 // ════════════════════════════════════════════════════════════════════════════
 // ĐẾM LƯỢT HIỂN THỊ TIN
@@ -59,7 +59,9 @@ async function day() {
   if (!hangDoi.length) return;
   const ids = hangDoi.splice(0, hangDoi.length);
   try {
-    await (await napSupabase()).rpc("ghi_hien_thi", { p_ids: ids });
+    // Chưa đăng nhập → gọi thẳng REST, khỏi tải thư viện; đã đăng nhập → thư viện như cũ (gửi kèm phiên)
+    if (coPhienDangNhap()) await (await napSupabase()).rpc("ghi_hien_thi", { p_ids: ids });
+    else await rpcRest("ghi_hien_thi", { p_ids: ids });
   } catch {
     /* Chưa chạy migration 0030, mất mạng, tiện ích chặn quảng cáo… → bỏ qua.
        Đếm hiển thị hỏng TUYỆT ĐỐI không được làm hỏng việc xem tin của khách. */

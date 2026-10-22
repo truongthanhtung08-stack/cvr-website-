@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import BrandLogo from "@/components/BrandLogo";
-import { napSupabase } from "@/lib/supabase/nap";
+import { docRest } from "@/lib/supabase/nap";
 import { FOOTER_DEFAULT, type FooterData } from "@/lib/siteContent";
 import { PHAP_LY, MIEN_TRU, DONG_GIAY_PHEP } from "@/lib/phapLy";
 import { ZALO_OA_URL } from "@/lib/lienHe";
@@ -130,9 +130,9 @@ export default function Footer() {
   const [f, setF] = useState<FooterData>(FOOTER_DEFAULT);
   useEffect(() => {
     (async () => {
-      const supabase = await napSupabase();
-      const { data } = await supabase.from("site_content").select("data").eq("key", "footer").maybeSingle();
-      const d = (data?.data ?? null) as Partial<FooterData> | null;
+      // Đọc thẳng qua REST (không cần thư viện Supabase ~58 KB ở mọi trang) — cùng truy vấn như trước
+      const rows = await docRest<{ data: Partial<FooterData> | null }[]>("site_content?select=data&key=eq.footer&limit=1").catch(() => null);
+      const d = rows?.[0]?.data ?? null;
       if (d) setF({
         ...FOOTER_DEFAULT, ...d,
         // ZALO luôn có mặt: admin lưu danh sách thiếu Zalo thì tự chèn lên đầu.

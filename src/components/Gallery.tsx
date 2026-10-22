@@ -222,7 +222,7 @@ export default function Gallery({
                   aria-label={`Ảnh ${imgIdx(i) + 1}`}
                   className="relative aspect-[4/3] max-h-[70dvh] w-full shrink-0 snap-center overflow-hidden bg-black"
                 >
-                  <Image src={m.src} alt={`${alt} ${imgIdx(i) + 1}`} fill priority={i === nVid} quality={90} sizes="100vw" className="object-cover" />
+                  <Image src={m.src} alt={`${alt} ${imgIdx(i) + 1}`} fill priority={i === nVid} fetchPriority={i === nVid ? "high" : undefined} quality={90} sizes="100vw" className="object-cover" />
                 </button>
               ),
             )}

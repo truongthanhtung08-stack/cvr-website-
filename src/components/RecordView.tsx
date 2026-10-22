@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { recordView } from "@/lib/useRecentlyViewed";
-import { napSupabase } from "@/lib/supabase/nap";
+import { napSupabase, coPhienDangNhap, rpcRest } from "@/lib/supabase/nap";
 import { laMayTuDong } from "@/lib/hienThi";
 
 // Ghi lại tin vừa xem (đặt trong trang chi tiết BĐS).
@@ -33,6 +33,12 @@ export default function RecordView({ id }: { id: string }) {
         // (0036). Không gửi gì định danh người xem — ẩn danh vẫn là ẩn danh.
         // Supabase chưa chạy 0036 thì hàm chưa nhận 3 tham số → lỗi PGRST202;
         // khi đó gửi lại kiểu cũ để KHÔNG MẤT lượt xem nào trong lúc chuyển.
+        // Chưa đăng nhập → gọi thẳng REST (khỏi tải thư viện ~58 KB); ghi_nguoi_xem chỉ có ý nghĩa khi đã đăng nhập nên bỏ qua.
+        if (!coPhienDangNhap()) {
+          void rpcRest("increment_listing_view", { p_listing_id: id, p_thiet_bi: thietBi(), p_nguon: nguonDen() })
+            .then((ok) => { if (!ok) void rpcRest("increment_listing_view", { p_listing_id: id }); }, () => {});
+          return;
+        }
         void napSupabase().then((sb) => {
         sb.rpc("increment_listing_view", { p_listing_id: id, p_thiet_bi: thietBi(), p_nguon: nguonDen() })
           .then(({ error }) => { if (error) sb.rpc("increment_listing_view", { p_listing_id: id }); });
