@@ -152,8 +152,14 @@ function KhoiGia({
   // ── Biểu đồ (kiểu Batdongsan, màu Coastal Land — chủ dự án 21/10/2026): dải khoảng giá thấp nhất – cao nhất,
   // đường giá phổ biến có chấm từng kỳ; KÉO / CHẠM qua lại trên biểu đồ → vạch dọc + bảng số của kỳ đó.
   // Hai khổ: máy tính 720×300, điện thoại 360×240 (chữ trục đọc được).
-  const coBien = moc.every((m) => (m.thap ?? 0) > 0 && (m.cao ?? 0) > 0);
-  const tatCa = [...(coBien ? moc.flatMap((m) => [m.thap!, m.giaM2, m.cao!]) : moc.map((m) => m.giaM2)), ...(giaTin ? [giaTin] : [])];
+  // DẢI KHOẢNG GIÁ TỪ QUÝ CÓ SỐ TRỞ ĐI (chủ dự án duyệt 22/10/2026 — LICH-SU-GIA-22102026 mục 4): nguồn công khai chỉ có
+  // thấp/cao cho kỳ mới nhất, kỳ cũ chỉ có giá phổ biến → không đòi đủ mọi kỳ; dải vẽ từ kỳ đầu tiên có đủ thấp + cao
+  // liền tới kỳ mới nhất (ít nhất 2 kỳ). Kỳ nào có thấp/cao thì ô số của kỳ đó vẫn ghi "Khoảng giá".
+  const coKhoang = (m: Moc) => (m.thap ?? 0) > 0 && (m.cao ?? 0) > 0;
+  let dauBien = moc.length;
+  while (dauBien > 0 && coKhoang(moc[dauBien - 1])) dauBien--;
+  const coBien = moc.length - dauBien >= 2;
+  const tatCa = [...moc.flatMap((m) => (coKhoang(m) ? [m.thap!, m.giaM2, m.cao!] : [m.giaM2])), ...(giaTin ? [giaTin] : [])];
   const minV = Math.min(...tatCa);
   const maxV = Math.max(...tatCa);
   const buoc = buocTron((maxV - minV) / 4 || maxV * 0.1 || 1);
@@ -171,9 +177,9 @@ function KhoiGia({
     const duoi = H - co * 2.6;
     const x = (i: number) => trai + (i * (phai - trai)) / Math.max(1, moc.length - 1);
     const y = (v: number) => duoi - ((v - day) / (tran - day)) * (duoi - tren);
-    const duong = (lay: (m: Moc) => number) => moc.map((m, i) => `${i ? "L" : "M"}${x(i).toFixed(1)} ${y(lay(m)).toFixed(1)}`).join(" ");
+    const duong = (lay: (m: Moc) => number, tu = 0) => moc.slice(tu).map((m, k) => `${k ? "L" : "M"}${x(tu + k).toFixed(1)} ${y(lay(m)).toFixed(1)}`).join(" ");
     const vung = coBien
-      ? `${duong((m) => m.cao!)} ${[...moc].reverse().map((m, i) => `L${x(moc.length - 1 - i).toFixed(1)} ${y(m.thap!).toFixed(1)}`).join(" ")} Z`
+      ? `${duong((m) => m.cao!, dauBien)} ${moc.slice(dauBien).map((m, k) => [dauBien + k, m] as const).reverse().map(([i, m]) => `L${x(i).toFixed(1)} ${y(m.thap!).toFixed(1)}`).join(" ")} Z`
       : "";
     const cach = Math.max(1, Math.ceil((moc.length - 1) / (soNhan - 1)));
     const nhanX = moc.map((m, i) => ({ i, m })).filter(({ i }) => i % cach === 0 || i === moc.length - 1)
@@ -202,8 +208,8 @@ function KhoiGia({
           </g>
         ))}
         {coBien && <path d={vung} fill={MAU.dai} fillOpacity={0.12} />}
-        {coBien && <path d={duong((m) => m.cao!)} fill="none" stroke={MAU.vienDai} strokeWidth={co * 0.1} strokeLinejoin="round" />}
-        {coBien && <path d={duong((m) => m.thap!)} fill="none" stroke={MAU.vienDai} strokeWidth={co * 0.1} strokeLinejoin="round" />}
+        {coBien && <path d={duong((m) => m.cao!, dauBien)} fill="none" stroke={MAU.vienDai} strokeWidth={co * 0.1} strokeLinejoin="round" />}
+        {coBien && <path d={duong((m) => m.thap!, dauBien)} fill="none" stroke={MAU.vienDai} strokeWidth={co * 0.1} strokeLinejoin="round" />}
         <path d={duong((m) => m.giaM2)} fill="none" stroke={MAU.duong} strokeWidth={co * 0.24} strokeLinejoin="round" strokeLinecap="round" />
         {moc.map((m, i) => (
           <circle key={m.quy} cx={x(i)} cy={y(m.giaM2)} r={co * (i === kyChon ? 0.42 : 0.26)} fill={i === kyChon ? "#fff" : MAU.duong} stroke={MAU.duong} strokeWidth={co * 0.18} />
@@ -275,7 +281,7 @@ function KhoiGia({
       {/* SỐ CỦA KỲ ĐANG CHỌN — kéo / chạm qua lại trên biểu đồ để đổi kỳ */}
       <div className="mt-4 border-l-2 border-[#1565c0] pl-3 text-[13px] leading-relaxed">
         <p className="font-semibold text-cvr-ink">Giá {nhanKy(kc.quy)}: {gia(kc.giaM2)}</p>
-        {coBien && <p className="text-cvr-muted">Khoảng giá: {soTruc(kc.thap!, chiaTruc)} – {gia(kc.cao!)}</p>}
+        {coKhoang(kc) && <p className="text-cvr-muted">Khoảng giá: {soTruc(kc.thap!, chiaTruc)} – {gia(kc.cao!)}</p>}
         {giaTin && <p className="text-cvr-muted">Giá theo tin hiện tại: {gia(giaTin)}</p>}
       </div>
       {bieuDo(760, 220, 12, 6, "hidden sm:block")}

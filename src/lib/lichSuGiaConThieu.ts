@@ -11,9 +11,11 @@ import { mauSoCuaLoaiHinh, veQuy, tenTinhChuan, tenPhuongChuan, coLichSuGia, typ
 // Dùng chung cho nút admin và đường tự động /api/chi-so-gia/con-thieu.
 // ════════════════════════════════════════════════════════════════════════════
 
+// KHUÔN ĐÚNG TỆP NỘP (chủ dự án duyệt 22/10/2026 — LICH-SU-GIA-22102026 mục 6): mỗi dòng một QUÝ của một dãy; tinh · khu_vuc ·
+// du_an · loai_hinh · muc_dich · ky · mau_so điền sẵn (thuê cũng có mau_so — giá thuê mỗi m², chốt 21/10); Cowork điền giá + nguồn.
 export const COT_MAU = [
-  "tinh", "khu_vuc", "loai_hinh", "muc_dich", "ky", "gia_m2_trieu", "gia_thap_trieu", "gia_cao_trieu",
-  "nguon", "cap_nhat", "so_mau", "nguon_link", "mau_so", "vi_tri", "du_an", "duong",
+  "tinh", "khu_vuc", "du_an", "loai_hinh", "muc_dich", "ky", "mau_so",
+  "gia_m2_trieu", "gia_thap_trieu", "gia_cao_trieu", "so_mau", "nguon", "nguon_link",
   // Số tin đang đăng trên web cần dãy này — dãy nhiều tin xếp trước, làm trước
   // thì lịch sử giá hiện sớm cho nhiều tin nhất. Web bỏ qua cột này khi nộp.
   "so_tin_tren_web",
@@ -71,7 +73,7 @@ export function dongConThieu(tin: TinCan[], kho: DongKho[], items: ChiSoKhuVuc[]
   }
   for (const x of items.map(veQuy)) {
     if (!x.loaiHinh || x.viTri) continue;
-    if (x.mucDich === "thue" ? !!x.mauSo : x.mauSo !== mauSoCuaLoaiHinh(x.loaiHinh)) continue;
+    if (x.mauSo !== mauSoCuaLoaiHinh(x.loaiHinh)) continue; // cả bán lẫn thuê: giá mỗi m² đúng mẫu số (21/10/2026)
     for (const m of x.moc) if (m.giaM2 > 0) danh(k(x.tinh, x.duAn ? "" : x.khuVuc ?? "", x.duAn ?? "", x.loaiHinh, x.mucDich ?? "ban"), m.quy);
   }
 
@@ -88,7 +90,7 @@ export function dongConThieu(tin: TinCan[], kho: DongKho[], items: ChiSoKhuVuc[]
     const daCo = co.get(khoa) ?? new Set();
     for (const t of thang) {
       if (daCo.has(t)) continue;
-      dong.push([d.tinh, d.phuong, d.loai, d.md, t, "", "", "", "", "", "", "", d.md === "thue" ? "" : mauSoCuaLoaiHinh(d.loai), "", d.duAn, "", String(soTin.get(khoa) ?? 0)]);
+      dong.push([d.tinh, d.phuong, d.duAn, d.loai, d.md, t, mauSoCuaLoaiHinh(d.loai), "", "", "", "", "", "", String(soTin.get(khoa) ?? 0)]);
     }
   }
   return dong;

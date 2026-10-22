@@ -446,14 +446,15 @@ export function docBangChiSo(bang: string[][]): { items: ChiSoKhuVuc[]; loi: Loi
   const dau = bang[0].map((c) => chuanTen(c).split(" ").join("_"));
   const viTri = COT_CSV.map((c) => dau.indexOf(c));
   const viTriThem = COT_THEM.map((c) => dau.indexOf(c));
-  const thieu = COT_CSV.filter((_, i) => viTri[i] < 0);
+  // cap_nhat không bắt buộc (khuôn danh sách còn thiếu 22/10/2026 không có cột này) — trống thì lấy ngày nộp
+  const thieu = COT_CSV.filter((c, i) => viTri[i] < 0 && c !== "cap_nhat");
   if (thieu.length)
     return { items: [], loi: [{ dong: 1, ly: `Thiếu cột: ${thieu.join(", ")}` }] };
 
   const gom = new Map<string, ChiSoKhuVuc>();
   for (let i = 1; i < bang.length; i++) {
     const o = bang[i];
-    const lay = (k: number) => (viTri[k] < o.length ? o[viTri[k]] : "");
+    const lay = (k: number) => (viTri[k] >= 0 && viTri[k] < o.length ? o[viTri[k]] : "");
     const themLay = (k: number) =>
       viTriThem[k] >= 0 && viTriThem[k] < o.length ? o[viTriThem[k]] : "";
     const tinh = lay(0);

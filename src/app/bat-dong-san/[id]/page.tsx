@@ -513,11 +513,12 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                   const noi = (
                     <>
                       <svg className="h-4 w-4 shrink-0 text-cvr-muted" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M4 21V5a1 1 0 011-1h9a1 1 0 011 1v16M15 9h4a1 1 0 011 1v11M3 21h18M8 8h3M8 12h3M8 16h3" /></svg>
-                      <span className="min-w-0 truncate">{ten}</span>
+                      {/* Tên dài → nhãn GIÃN xuống dòng, thấy trọn tên (chủ dự án 22/10/2026: trang chi tiết không cắt, không che gì) */}
+                      <span className="min-w-0 break-words leading-snug">{ten}</span>
                       {slugDuAnTin && <svg className="h-3.5 w-3.5 shrink-0 text-cvr-muted" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>}
                     </>
                   );
-                  const cls = "mt-2.5 inline-flex max-w-full items-center gap-1.5 rounded-full border border-cvr-line bg-cvr-surface px-3 py-1.5 text-[13.5px] font-medium text-cvr-ink";
+                  const cls = "mt-2.5 inline-flex max-w-full items-center gap-1.5 rounded-2xl border border-cvr-line bg-cvr-surface px-3 py-1.5 text-[13.5px] font-medium text-cvr-ink";
                   return slugDuAnTin
                     ? <Link href={`/du-an/${slugDuAnTin}`} className={`${cls} transition hover:border-cvr-ink`}>{noi}</Link>
                     : <span className={cls}>{noi}</span>;

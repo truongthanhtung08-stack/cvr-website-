@@ -214,23 +214,22 @@ const MUC = [
     ...(!trung.length && !nhieuTen.length && !lech.length ? ["Không có việc."] : []),
   ]],
   // Chủ dự án 18/10: "hoàn thiện lịch sử giá để chạy trên web" → hằng ngày tới khi đủ (trước chỉ tuần đầu mỗi quý).
-  // 18/10: Cowork KHÔNG nộp (mã nộp là của chủ dự án) — giao tệp vào VAO, Claude kiểm rồi nộp.
   // Chủ dự án 21/10/2026: "ghi vào công việc để có đủ số liệu hiển thị theo lộ trình nhanh nhất" → MỖI NGÀY tới khi đủ.
-  // Cowork CHỈ LỌC GIÁ: giá mỗi m² theo loại hình, cả bán lẫn thuê, mỗi quý đủ phổ biến + thấp nhất + cao nhất.
-  ["Lịch sử giá — LỌC GIÁ, mỗi ngày tới khi đủ" + (dauQuy ? " (ĐẦU QUÝ: thêm quý mới cho các dãy đang có)" : ""), `${NOI_KHAC} (tệp \`lich-su-gia-${dd}.csv\`)`, null, [
-    `Theo \`${p(SEO, "YEU-CAU-COWORK-LICH-SU-GIA.md")}\` (khối CHỐT 21/10 ở đầu tệp). Lộ trình nhanh nhất, làm từ trên xuống:`,
-    "1. Bổ sung giá thấp nhất + cao nhất cho 4 quý Q3/25 → Q2/26 của 2 dãy Phường Ngũ Hành Sơn (đất nền, căn hộ) — có là biểu đồ hiện dải khoảng giá ngay.",
-    `2. Dãy theo DỰ ÁN đang có tin trên web (một dãy phủ mọi tin trong dự án) — danh sách \`${p(SEO, "RA", "lich-su-gia-con-thieu.csv")}\`.`,
-    "3. Dãy theo PHƯỜNG/XÃ nhiều tin nhất, đúng loại hình (mỗi loại nhà một dãy: nhà riêng, nhà phố, villa…), cả MUA BÁN lẫn CHO THUÊ.",
-    "**Quy tắc bắt buộc (chủ dự án chốt 21/10/2026):**",
+  // CHỈNH 22/10/2026 (D:/Coastal Land/SEO/GUI-CLAUDE-CODE/LICH-SU-GIA-22102026.md, chủ dự án duyệt): giao vào DA-DUYET (không VAO) ·
+  // bỏ việc "thấp/cao 4 quý Ngũ Hành Sơn" (nguồn không có) · bỏ ghi chú căn góc · nguồn Nhà Tốt (tháng cuối quý) · thấp/cao quý
+  // nào chép được thì có quý đó · địa giới MỚI · MÁY TỰ NỘP (scripts/nop-lich-su-gia.mjs), không ai gõ mã.
+  ["Lịch sử giá — LỌC GIÁ, mỗi ngày tới khi đủ" + (dauQuy ? " (ĐẦU QUÝ: thêm quý mới cho các dãy đang có)" : ""), "`" + p(SEO, "DA-DUYET", dd) + BS + "` (tệp `lich-su-gia-" + dd + ".csv`)", null, [
+    `Theo \`${p(SEO, "YEU-CAU-COWORK-LICH-SU-GIA.md")}\` (khối CHỐT ở đầu tệp). Làm từ trên xuống theo danh sách \`${p(SEO, "RA", "lich-su-gia-con-thieu.csv")}\` (máy xuất lại mỗi sáng, đúng khuôn tệp nộp, mỗi dòng một quý):`,
+    "1. Dãy theo DỰ ÁN đang có tin trên web (một dãy phủ mọi tin trong dự án) — Nhà Tốt Tham khảo giá có ô \"Nhập tên dự án\".",
+    "2. Dãy theo PHƯỜNG/XÃ nhiều tin nhất, đúng loại hình (mỗi loại nhà một dãy: nhà riêng, nhà phố, villa…), cả MUA BÁN lẫn CHO THUÊ.",
+    "**Quy tắc bắt buộc:**",
     "- **Chỉ LỌC GIÁ.** Không làm việc khác trong mục này.",
-    "- **Đơn vị = GIÁ MỖI M² theo loại hình, CẢ BÁN LẪN THUÊ** — lấy đơn vị tổng là sai: đất ÷ m² đất · căn hộ ÷ m² căn · nhà riêng, nhà phố, villa, shophouse… ÷ m² sàn (MỖI LOẠI NHÀ MỘT DÃY RIÊNG) · văn phòng ÷ m² sàn · cho thuê = tiền thuê mỗi tháng ÷ m². Cột `mau_so` ghi đúng loại m² (đất / căn / sàn) cho cả bán lẫn thuê.",
-    "- **Đúng chỗ, đúng phân khúc**: bậc dự án → cùng tuyến đường → phường/xã (cùng vị trí tương đương). Không dùng số cả tỉnh, không lấy số phường này áp cho phường khác.",
-    "- **Theo quý** (như Batdongsan), **mỗi quý đủ 3 số: giá phổ biến · thấp nhất · cao nhất** (cột `thap`, `cao`). Thiếu thấp/cao ở quý nào thì biểu đồ không vẽ được dải khoảng giá. Càng dài càng tốt: 5 quý liền là hiện, đủ 1 · 2 · 3 · 5 năm thì mở đủ các mốc.",
-    "- **Giá bất thường có nguyên do**: cùng loại hình, cùng vị trí mà cao (hay thấp) hơn hẳn thường do căn góc, lô 2 mặt tiền, view… Giá PHỔ BIẾN lấy theo căn/lô BÌNH THƯỜNG; tin có yếu tố cộng thêm thì ghi yếu tố đó vào cột `ghi_chu`, không trộn vào giá phổ biến. Mức chênh của từng yếu tố (chủ dự án chốt 21/10) = giá/m² lô có yếu tố đó ÷ giá/m² bình quân căn/lô bình thường (cùng loại hình, cùng vị trí, cùng quý) → ghi tỷ lệ vào `ghi_chu`, ví dụ: căn góc 1,12 (cao hơn 12%).",
-    "- **Số theo lời tin gốc**, không theo ô thông số trang nguồn khi hai chỗ lệch; nhà không có m² sàn chính xác thì bỏ, không tự nhân đất × số tầng.",
-    "- Chỉ nguồn công khai, ghi nguồn + ngày; không bịa. Web tự lấy thêm giá từ tin đang đăng — số Cowork là phần bổ sung định kỳ cho chỗ web chưa có.",
-    "- **Cowork không nộp** — giao tệp, Claude kiểm rồi nộp.",
+    "- **Đơn vị = GIÁ MỖI M² theo loại hình, CẢ BÁN LẪN THUÊ**: đất ÷ m² đất · căn hộ ÷ m² căn · nhà riêng, nhà phố, villa, shophouse… ÷ m² sàn (MỖI LOẠI NHÀ MỘT DÃY RIÊNG) · văn phòng ÷ m² sàn · cho thuê = tiền thuê mỗi tháng ÷ m². Cột `mau_so` đã điền sẵn — không sửa.",
+    "- **Địa giới MỚI** (tỉnh + phường/xã mới, trùng tin trên web). Số nguồn theo địa giới cũ chỉ dùng khi vùng cũ ĐÚNG TRỌN phường mới (VD Quận Ngũ Hành Sơn cũ = Phường Ngũ Hành Sơn mới); rộng hơn hay hẹp hơn → không dùng, không gộp, không chia. Bậc: dự án → tuyến đường → phường/xã; không dùng số cả tỉnh.",
+    "- **Nguồn công khai, không đăng nhập** — Nhà Tốt (Tham khảo giá): chép số THÁNG CUỐI QUÝ (T3 · T6 · T9 · T12). ⛔ Không dùng Batdongsan.",
+    "- **Theo quý**: giá phổ biến mỗi quý; **giá thấp / cao chép được quý nào thì điền quý đó** (Nhà Tốt chỉ công bố khoảng giá cho tháng mới nhất) — web vẽ dải khoảng giá từ quý có số trở đi. 5 quý liền là hiện; đủ 1 · 2 · 3 · 5 năm thì mở đủ các mốc.",
+    "- Chỉ chép số đã công bố, không tự chia giá, không nội suy, không bịa. Dãy không có nguồn → để trống (web tự tính dần từ tin đăng).",
+    `- **Giao tệp là xong — MÁY TỰ NỘP**: lưu \`${p(SEO, "DA-DUYET", dd)}${BS}lich-su-gia-${dd}.csv\`, máy tự gửi lên web, web tự kiểm; kết quả (số dòng nhận · dòng bị từ chối + lý do) ghi vào mục 0 tệp này và \`ket-qua-nop.txt\` cùng thư mục. Dòng bị từ chối → sửa, lưu đè tệp, máy nộp lại.`,
   ]],
   ["Tiện ích lân cận (trường, bệnh viện, khu công nghiệp, chợ, biển, sân bay)", `${NOI_KHAC} (tệp \`tien-ich-<tỉnh>.csv\`)`, null, [`Theo mục 8 của \`CONG-VIEC-3-BEN.md\`, mẫu \`${p("SEO", "MAU", "mau-tien-ich-lan-can.csv")}\` — một tỉnh mỗi lần: Đà Nẵng → Huế → Khánh Hòa.`]],
   ["Thư viện pháp luật", `${NOI_KHAC} (tệp \`thu-vien-phap-luat-${dd}.csv\`)`, null, ["Hằng ngày, theo mục 6 của `CONG-VIEC-3-BEN.md` — văn bản thật, link nguồn chính thức, tình trạng hiệu lực đúng luật, 20 văn bản mỗi lần. **Không chờ chủ dự án duyệt**: Claude kiểm nguồn + hiệu lực rồi nạp thẳng (chốt 18/10)."]],

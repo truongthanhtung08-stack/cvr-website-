@@ -219,7 +219,24 @@ export default function BangGiaGoiTin({
             {onXemBangQuyenLoi ? (
               <button type="button" onClick={() => { setXemDacDiem(null); onXemBangQuyenLoi(); }} className="mt-4 inline-flex text-[13px] font-semibold text-cvr-blue-ink">Xem bảng quyền lợi đầy đủ →</button>
             ) : (
-              <a href="/bao-gia-dang-tin#dac-diem" target="_blank" rel="noopener" className="mt-4 inline-flex text-[13px] font-semibold text-cvr-blue-ink">Xem bảng quyền lợi đầy đủ →</a>
+              // Đang ở trang Báo giá → ở lại trang, mở bảng ngay bên dưới (trước đây mở thêm tab mới của chính trang này, tới nơi
+              // bảng còn gập — chủ dự án 22/10/2026). Trang khác → mở trang Báo giá ở tab mới, bảng tự mở (MoMucTheoNeo).
+              <a
+                href="/bao-gia-dang-tin#dac-diem"
+                target="_blank"
+                rel="noopener"
+                onClick={(e) => {
+                  const bang = document.getElementById("dac-diem") as HTMLDetailsElement | null;
+                  if (!bang) return;
+                  e.preventDefault();
+                  setXemDacDiem(null);
+                  bang.open = true;
+                  requestAnimationFrame(() => bang.scrollIntoView({ behavior: "smooth", block: "start" }));
+                }}
+                className="mt-4 inline-flex text-[13px] font-semibold text-cvr-blue-ink"
+              >
+                Xem bảng quyền lợi đầy đủ →
+              </a>
             )}
           </div>
         </div>

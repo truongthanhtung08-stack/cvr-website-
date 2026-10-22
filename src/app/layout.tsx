@@ -9,6 +9,7 @@ import CompareBar from "@/components/CompareBar";
 import MobileTabBar from "@/components/MobileTabBar";
 import BanPhimAo from "@/components/BanPhimAo";
 import ScrollTopOnRoute from "@/components/ScrollTopOnRoute";
+import MoMucTheoNeo from "@/components/MoMucTheoNeo";
 import RouteMotion from "@/components/RouteMotion";
 import VachTim from "@/components/VachTim";
 import SiteJsonLd from "@/components/SiteJsonLd";
@@ -206,6 +207,8 @@ export default function RootLayout({
         {/* Cài web lên màn hình chính chạy như app (chỉ hoạt động ở bản thật) */}
         <PwaRegister />
         <ScrollTopOnRoute />
+        {/* Link tới mục đang gập (<details>) → mục tự mở, cả web */}
+        <MoMucTheoNeo />
         {/* Đếm lượt HIỂN THỊ tin — đặt ở layout gốc nên chạy cho mọi trang có thẻ
             tin, không phải đi gắn từng nơi. */}
         <DemHienThi />
