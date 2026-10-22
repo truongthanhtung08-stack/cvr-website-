@@ -321,7 +321,7 @@ export function ContactBarMobile({ listingId, phoneMask, avatar, ten }: { listin
 // đã đăng nhập / đã xác thực số → có số ngay; chưa → hộp xác thực số. Có số rồi: Hiện số thành
 // "Gọi 09…", Nhắn tin mở Zalo người đăng.
 // nhan: chữ trên nút trước khi bấm (thẻ tin: "Hiện số 090 ***" như Batdongsan) · zaloTruoc: nút Zalo đứng trước nút số
-// chuZalo: chữ cạnh logo trên nút Zalo — thẻ tin điện thoại dùng 2 nút BẰNG NHAU "Nhắn Zalo" · "Hiện số …" (22/10/2026)
+// chuZalo: chữ cạnh logo trên nút Zalo — thẻ tin điện thoại: Zalo NGẮN (2 phần) · nút số DÀI (3 phần) trên một hàng (chủ dự án 22/10/2026 tối: số cần chỗ hơn)
 export function NutLienHeThe({ listingId, hienSo, nhanTin = true, soCls, oCls, nhan, zaloTruoc, chuZalo }: { listingId: string; hienSo: boolean; nhanTin?: boolean; soCls: string; oCls: string; nhan?: string; zaloTruoc?: boolean; chuZalo?: string }) {
   const { phone, phones, loading, reveal, hoiSo, setHoiSo, nhanSo } = useReveal(listingId);
   const [muonZalo, setMuonZalo] = useState(false);

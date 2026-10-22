@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { loiEmail, loiSdt } from "@/lib/kiemNhap";
 import { createClient } from "@/lib/supabase/client";
 import { useProfile } from "@/lib/useProfile";
-import { ONhap, ONhapDai, NutXoaHet, NutQuayLai, TheGuiXong } from "@/components/FormFields";
+import { ONhap, ONhapDai, TheGuiXong } from "@/components/FormFields";
 
 // ============================================================================
 // Ô GỬI YÊU CẦU — DÙNG CHUNG CHO MỌI LOẠI YÊU CẦU
@@ -48,7 +48,6 @@ export default function YeuCauForm({
     setEmail((v) => v || profile.email || "");
   }, [profile]);
 
-  const coChu = Boolean(ten || dienThoai || email || noiDung);
 
   function xoaHet() {
     setTen("");
@@ -89,7 +88,7 @@ export default function YeuCauForm({
     setDangGui(false);
   }
 
-  // Gửi xong: báo rõ + vẫn còn lối đi tiếp (gửi yêu cầu khác / quay lại)
+  // Gửi xong: báo rõ + nút gửi yêu cầu khác
   if (xong) {
     return (
       <TheGuiXong
@@ -115,7 +114,8 @@ export default function YeuCauForm({
 
       {loi && <p className="rounded-lg bg-red-50 px-4 py-2.5 text-sm text-red-700">{loi}</p>}
 
-      {/* Hàng nút: GỬI · Xoá hết (khi đã gõ) · Quay lại — luôn có lối thoát */}
+      {/* Chỉ nút GỬI — không "Xoá hết", "Quay lại" (chủ dự án 22/10/2026: form nằm trong trang, mỗi ô có ✕, lùi trang bằng
+          nút của máy / trình duyệt) */}
       <div className="flex flex-wrap items-center gap-2.5">
         <button
           type="button"
@@ -125,10 +125,6 @@ export default function YeuCauForm({
         >
           {dangGui ? "Đang gửi…" : nhanNut}
         </button>
-        {coChu && <NutXoaHet onClick={xoaHet} />}
-        <span className="ml-auto">
-          <NutQuayLai />
-        </span>
       </div>
     </div>
   );

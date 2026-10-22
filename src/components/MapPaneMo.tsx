@@ -34,7 +34,8 @@ export default function MapPaneMo({
   query: string;
   zoom?: number;
   cao?: string;
-  /** Bản đồ nằm GIỮA trang (trang tin, trang dự án): một ngón là cuộn trang, hai ngón mới kéo bản đồ — không vướng. */
+  /** Bản đồ nằm GIỮA trang (trang tin, trang dự án): điện thoại kéo một ngón, phóng hai ngón ngay; máy tính kéo chuột,
+   *  nút +/−, Ctrl + lăn chuột mới phóng (lăn thường là cuộn trang). Không câu nhắc nào phủ lên bản đồ. */
   trongTrang?: boolean;
 }) {
   const boxRef = useRef<HTMLDivElement>(null);
@@ -75,12 +76,14 @@ export default function MapPaneMo({
         // Dòng ghi nguồn thu thành nút (i), KHÔNG chèn chữ "MapLibre" (chủ dự án 22/10/2026). "© OpenStreetMap" vẫn nằm
         // trong (i) — giấy phép dữ liệu bản đồ bắt buộc ghi nguồn.
         attributionControl: { compact: true },
+        // ĐIỆN THOẠI: kéo MỘT ngón, phóng HAI ngón ngay, không phải chạm mở trước (chủ dự án 22/10/2026 tối: "bản đồ này thao
+        // tác 1 ngón tay được mà"; "vì sao phải có câu Chạm để xem bản đồ"). MÁY TÍNH: kéo chuột như thường; Ctrl/⌘ + lăn mới
+        // phóng, lăn thường là cuộn trang; câu nhắc của thư viện bị ẩn (globals.css).
         ...(trongTrang ? {
-          cooperativeGestures: true,
+          cooperativeGestures: !matchMedia("(pointer: coarse)").matches,
           locale: {
             "CooperativeGesturesHandler.WindowsHelpText": "Sử dụng Ctrl + cuộn để thu phóng bản đồ",
             "CooperativeGesturesHandler.MacHelpText": "Sử dụng ⌘ + cuộn để thu phóng bản đồ",
-            "CooperativeGesturesHandler.MobileHelpText": "Dùng hai ngón tay để di chuyển bản đồ",
           },
         } : {}),
       });

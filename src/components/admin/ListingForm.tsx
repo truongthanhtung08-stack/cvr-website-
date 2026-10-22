@@ -20,6 +20,8 @@ import OTieuDe from "@/components/OTieuDe";
 // (components/MapPicker.tsx) GIỮ LẠI để sau này Google thông thì đổi về, chỉ
 // phải sửa đúng dòng import này.
 import MapPicker from "@/components/MapPickerMo";
+import ODiaChiGoiY from "@/components/ODiaChiGoiY";
+import { ganNhanPhimEnter, enterSangOTiep } from "@/lib/oTiepTheo";
 import ChonCoTim from "@/components/ChonCoTim";
 import { bietDanhTinh, bietDanhPhuongMoi } from "@/lib/timDiaDanh";
 import ContentEditor from "@/components/admin/ContentEditor";
@@ -71,6 +73,8 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
 
   // Thuộc tính chi tiết (lưu vào cột details JSONB) — nhập gì web hiện nấy
   const [addressDetail, setAddressDetail] = useState(initial?.details?.addressDetail ?? "");
+  // Toạ độ gợi ý địa chỉ vừa chọn — bản đồ tới đó và ghim (chọn gợi ý = chọn vị trí, 22/10/2026)
+  const [diemGoiY, setDiemGoiY] = useState<{ lat: number; lng: number; n: number } | null>(null);
   // GHIM VỊ TRÍ: khi địa chỉ không đủ chính xác, admin dán toạ độ (hoặc link
   // Google Maps) — bản đồ trang tin sẽ trỏ ĐÚNG điểm đã ghim thay vì đoán theo tên.
   const [mapPin, setMapPin] = useState(initial?.details?.mapPin ?? "");
@@ -400,11 +404,10 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
 
   return (
     <form
-      onKeyDown={(e) => {
-        // Enter ở ô MỘT DÒNG không được tự gửi tin (trước đây bấm Enter / "Đi" trên điện thoại là
-        // gửi luôn khi chưa nhập xong). Ô nhiều dòng (textarea) vẫn xuống dòng bình thường.
-        if (e.key === "Enter" && (e.target as HTMLElement).tagName === "INPUT") e.preventDefault();
-      }}
+      // Enter ở ô MỘT DÒNG không được tự gửi tin — là nút "Tiếp" sang ô kế tiếp, ô cuối "Xong" (lib/oTiepTheo, chung với form
+      // khách đăng). Ô nhiều dòng (textarea) vẫn xuống dòng bình thường.
+      onFocus={ganNhanPhimEnter}
+      onKeyDown={enterSangOTiep}
       onSubmit={(e) => { e.preventDefault(); save(false); }}
       className="space-y-4">
       {/* Mục đích + Loại hình + Hạng (trạng thái do 2 nút Lưu nháp / Đăng tin quyết định) */}
@@ -653,13 +656,18 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
         })()}
         <div className="mt-4">
           <Field label="Địa chỉ cụ thể (số nhà, tên đường, số lô, block…)">
-            <input
+            {/* Có gợi ý như form khách đăng; chọn gợi ý = chọn vị trí trên bản đồ (22/10/2026) */}
+            <ODiaChiGoiY
               value={addressDetail}
-              onChange={(e) => setAddressDetail(e.target.value)}
+              onChange={setAddressDetail}
+              onChonDiem={(p) => setDiemGoiY({ ...p, n: Date.now() })}
               placeholder="VD: 123 Võ Nguyên Giáp · Lô A12 khu B · Block 3 · hoặc chỉ tên đường"
+              khuVuc={(() => { const d = diemTimBanDo(geoMode, { tinh: province, quan: district, phuong: ward }); return { tinh: d.tinh, phuong: d.phuong }; })()}
               className={inputCls}
             />
           </Field>
+          {/* Dòng điểm ghim của bản đồ bên dưới hiện NGAY DƯỚI thanh địa chỉ (giống form khách đăng, chủ dự án 22/10/2026) */}
+          <div id="dong-ghim-admin" className="mt-2 empty:hidden" />
         </div>
         <div className="mt-4">
           <Field label="Ghim vị trí trên bản đồ (toạ độ hoặc link Google Maps)">
@@ -676,6 +684,8 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
           </p>
           <div className="mt-3">
             <MapPicker
+              dongGhimO="dong-ghim-admin"
+              diemChon={diemGoiY}
               value={mapPin}
               onChange={setMapPin}
               onDiaChi={setAddressDetail}

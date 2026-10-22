@@ -79,7 +79,7 @@ export default function MapViewMo({ items, diem }: { items?: Listing[]; diem?: D
         vietHoaNhan(map);
         setSanSang(true);
       });
-    })().catch(() => setLoi("Chưa mở được bản đồ. Anh/chị bấm “Xem danh sách” để xem tin bình thường."));
+    })().catch(() => setLoi("Chưa mở được bản đồ."));
 
     return () => {
       huy = true;

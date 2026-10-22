@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 
 // ════════════════════════════════════════════════════════════════════════════
 // MẢNH GHÉP DÙNG CHUNG CHO MỌI Ô KHÁCH NHẬP
@@ -96,44 +95,7 @@ export function ONhapDai({
   );
 }
 
-// Nút QUAY LẠI dùng trong form — còn lịch sử thì lùi thật, không thì về trang chủ
-// (khách mở thẳng link từ Zalo/Facebook sẽ không có gì để lùi).
-export function NutQuayLai({ nhan = "Quay lại" }: { nhan?: string }) {
-  const router = useRouter();
-  return (
-    <button
-      type="button"
-      onClick={() => {
-        if (typeof window !== "undefined" && window.history.length > 1) router.back();
-        else router.push("/");
-      }}
-      className="inline-flex items-center gap-1.5 rounded-lg border border-cvr-line px-4 py-2.5 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink"
-    >
-      <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-      </svg>
-      {nhan}
-    </button>
-  );
-}
-
-// Nút XOÁ HẾT — chỉ hiện khi form đã có chữ.
-export function NutXoaHet({ onClick }: { onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2.5 text-sm font-medium text-cvr-muted transition hover:text-red-600"
-    >
-      <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-      </svg>
-      Xoá hết
-    </button>
-  );
-}
-
-// Thẻ báo GỬI XONG — kèm lối đi tiếp, không để khách đứng im không biết làm gì.
+// Thẻ báo GỬI XONG — kèm nút gửi yêu cầu khác.
 export function TheGuiXong({
   loiNhan,
   onGuiTiep,
@@ -157,7 +119,6 @@ export function TheGuiXong({
         >
           Gửi yêu cầu khác
         </button>
-        <NutQuayLai />
       </div>
     </div>
   );

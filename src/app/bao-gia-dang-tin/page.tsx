@@ -229,7 +229,8 @@ export default async function BaoGiaPage() {
                   <table className="w-full min-w-[640px] text-sm">
                     <thead>
                       <tr className="border-b border-cvr-line text-left">
-                        <th className="px-6 py-4 font-semibold text-cvr-ink">Đặc điểm</th>
+                        {/* Cột tên đặc điểm đủ rộng trên máy tính — trước đây chia đều 5 cột, tên bị ép còn 126px, xuống 4–5 dòng (bộ dò lỗi giao diện 22/10/2026) */}
+                        <th className="px-6 py-4 font-semibold text-cvr-ink sm:w-[38%] sm:min-w-[180px]">Đặc điểm</th>
                         {(["basic", "silver", "gold", "diamond"] as const).map((id) => {
                           const t = getTier(id);
                           return (

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import GallerySlideVideo from "@/components/GallerySlideVideo";
+import DemAnhVideo from "@/components/DemAnhVideo";
 import dynamic from "next/dynamic";
 // Bộ xem ảnh chỉ tải khi khách bấm mở (tốc độ điện thoại, đo 22/10/2026): trước đây nằm sẵn trong mã mọi trang có thẻ tin.
 const XemAnhPC = dynamic(() => import("@/components/XemAnhPC"), { ssr: false });
@@ -14,7 +15,7 @@ import { videoPosterUrl } from "@/lib/media";
 // Nằm trong cột nội dung bên trái (khung liên hệ ở cột phải bên cạnh):
 //   · MỘT khung slide lớn (nền tối, ảnh hiện TRỌN không cắt) — tự chạy 4s/ảnh, video 7s, rê chuột thì dừng
 //   · VIDEO là slide đầu như ảnh · nút ‹ › luôn hiện · vuốt ngang touchpad · phím ← →
-//   · nhãn "x video · y ảnh" + số thứ tự · dải ảnh nhỏ bên dưới, bấm để chọn
+//   · đếm ảnh · video (DemAnhVideo, chung với thẻ tin) + số thứ tự · dải ảnh nhỏ bên dưới, bấm để chọn
 //   · bấm ảnh lớn → bộ xem lớn PC (XemAnhPC)
 // Điện thoại vẫn dùng Gallery (đã chốt).
 // ============================================================================
@@ -64,8 +65,11 @@ export default function KhungAnhPC({ images, videos = [], alt, banDo }: { images
     <div className="mb-5 flex gap-2">
       {/* Khung TỶ LỆ VÀNG 1,618, ảnh LẤP ĐẦY khung, không dải đen hai bên; ảnh nhỏ thành CỘT DỌC bên phải → khung
           chính gọn lại (cột ~790: chính ~682×421 + cột ảnh nhỏ 100) — chủ dự án 20/10/2026 */}
+      {/* MÀN THẤP TỰ CO (chủ dự án 22/10/2026: "khung ảnh to quá — tối ưu hiển thị, tương thích cả trang tin"): cao tối đa
+          100dvh − 380px (thanh đầu 61 + tiêu đề, dự án, địa chỉ, hàng giá đầu ~319) → laptop màn thấp mở tin là thấy tới hàng giá;
+          không thấp hơn 340px (~2:1). Màn cao (từ ~800px) giữ nguyên 1,618. */}
       <div
-        className="relative aspect-[1.618] min-w-0 flex-1 overflow-hidden rounded-xl bg-black outline-none"
+        className="relative aspect-[1.618] max-h-[max(340px,calc(100dvh-380px))] min-w-0 flex-1 overflow-hidden rounded-xl bg-black outline-none"
         onMouseEnter={() => setDung(true)}
         onMouseLeave={() => setDung(false)}
         onWheel={vuot}
@@ -101,10 +105,8 @@ export default function KhungAnhPC({ images, videos = [], alt, banDo }: { images
           className="absolute bottom-3 right-3 z-[3] flex h-9 w-9 items-center justify-center rounded-md bg-black/60 text-white backdrop-blur-sm transition hover:bg-black/80">
           <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" /></svg>
         </button>
-        {/* Ghi rõ số video, số ảnh của tin */}
-        <span className="pointer-events-none absolute left-3 top-3 z-[3] rounded-md bg-black/65 px-2.5 py-1 text-[12px] font-semibold text-white">
-          {nVid > 0 ? `${nVid} video · ` : ""}{images.length} ảnh
-        </span>
+        {/* Số ảnh, số video của tin — cùng biểu tượng, thứ tự, nền với thẻ tin ngoài trang chủ (DemAnhVideo, chủ dự án 22/10/2026) */}
+        <DemAnhVideo soAnh={images.length} soVideo={nVid} className="absolute left-3 top-3 z-[3]" />
         {m.kind === "image" && (
           <span className="pointer-events-none absolute bottom-3 left-3 z-[3] rounded-md bg-black/60 px-2.5 py-1 text-xs text-white">
             {i - nVid + 1}/{images.length}

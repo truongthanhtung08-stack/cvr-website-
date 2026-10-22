@@ -1,5 +1,6 @@
 "use client";
 
+import { useSoMoiTrang } from "@/lib/useSoMoiTrang";
 import { useEffect, useMemo, useState, useRef } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
@@ -31,7 +32,6 @@ type Lead = { id: string; listing_id: string; viewer_name: string | null; viewer
 
 // Số tin mỗi trang. Khách đăng vài trăm tin thì đổ hết ra một trang là máy yếu
 // đứng hình và không tài nào tìm lại được tin cũ.
-const MOI_TRANG = 10;
 
 export default function MyListingsPage() {
   // Giá đẩy tin lấy từ bảng admin đang lưu — chủ dự án đổi giá là nút đổi theo.
@@ -47,6 +47,7 @@ export default function MyListingsPage() {
   }, [tab]);
   const [tuKhoa, setTuKhoa] = useState("");
   const [trang, setTrang] = useState(1);
+  const MOI_TRANG = useSoMoiTrang(); // PC 15 · điện thoại 10 — quy định chung mọi danh sách (22/10/2026; trước 10)
 
   useEffect(() => {
     const supabase = createClient();

@@ -17,6 +17,7 @@ import { chuThuong, tenDiaDanh } from "@/lib/chuThuong";
 import { videoPosterUrl } from "@/lib/media";
 import { moTaThe, soDongMoTa } from "@/lib/trichMoTa";
 import { SO_THONG_SO, thongSo } from "@/lib/thongSoThe";
+import DemAnhVideo, { IconPlay } from "@/components/DemAnhVideo";
 
 // ============================================================================
 // THẺ TIN THEO CẤP — BẢN ĐIỆN THOẠI (docs/THE-TIN-THEO-CAP.md, chủ dự án 09/10/2026).
@@ -36,14 +37,6 @@ import { SO_THONG_SO, thongSo } from "@/lib/thongSoThe";
 // Số mục thông số theo cấp + thông số theo loại hình: src/lib/thongSoThe.ts (dùng chung với thẻ trang chủ máy tính).
 // Máy tính cùng một luật (chủ dự án 20/10/2026: "quy định tin theo cấp thì bản nào cũng như vậy").
 
-const IconAnh = () => (
-  <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden>
-    <rect x="3" y="5" width="18" height="14" rx="2" /><circle cx="9" cy="10" r="1.6" /><path d="M21 16l-5-5-9 8" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
-const IconPlay = () => (
-  <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden><path d="M8 5v14l11-7z" /></svg>
-);
 
 
 
@@ -188,13 +181,8 @@ export default function TheTinMobile({ item, terms = [], tuChay = false, pc = fa
     setDs(true);
   };
 
-  const dem = (
-    <span className="pointer-events-none absolute bottom-1.5 right-1.5 flex items-center gap-1 bg-black/55 px-1.5 py-0.5 text-[12px] font-semibold text-white">
-      {/* Chỉ báo tin có bao nhiêu ảnh, bao nhiêu video (chủ dự án 09/10/2026) */}
-      <IconAnh />{soAnh}
-      {(item.soVideo ?? (item.hasVideo ? 1 : 0)) > 0 && <><span className="ml-1.5"><IconPlay /></span>{item.soVideo ?? 1}</>}
-    </span>
-  );
+  // Chỉ báo tin có bao nhiêu ảnh, bao nhiêu video (chủ dự án 09/10/2026) — cùng kiểu với khung ảnh trang tin (DemAnhVideo)
+  const dem = <DemAnhVideo soAnh={soAnh} soVideo={item.soVideo ?? (item.hasVideo ? 1 : 0)} className="absolute bottom-1.5 right-1.5" />;
   const huyHieu = t !== "basic" && (
     <span
       className={`pointer-events-none absolute left-2.5 top-2.5 rounded-full px-2 py-[3px] text-[11px] font-semibold uppercase tracking-[0.06em] shadow-[0_2px_10px_rgba(0,0,0,0.28)] ring-1 backdrop-blur-md ${t === "diamond" ? "ring-[#d9b64e]/70" : "ring-white/25"}`}
@@ -453,8 +441,8 @@ export default function TheTinMobile({ item, terms = [], tuChay = false, pc = fa
               hienSo
               zaloTruoc
               nhan={item.soDau ? `${item.soDau} ***` : "Hiện số"}
-              soCls="flex min-h-9 min-w-0 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-cvr-blue px-2 py-1.5 text-[13px] font-semibold text-white transition active:scale-95"
-              oCls="flex min-h-9 min-w-0 flex-1 self-stretch items-center justify-center gap-1.5 rounded-lg border border-cvr-line px-2 transition active:scale-95"
+              soCls="flex min-h-9 min-w-0 flex-[3] items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-cvr-blue px-2 py-1.5 text-[13px] font-semibold text-white transition active:scale-95"
+              oCls="flex min-h-9 min-w-0 flex-[2] self-stretch items-center justify-center gap-1.5 rounded-lg border border-cvr-line px-2 transition active:scale-95"
               chuZalo="Zalo"
             />
           </div>

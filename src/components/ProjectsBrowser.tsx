@@ -4,6 +4,7 @@ import { useDiaDanh } from "@/lib/useDiaDanh";
 import { batDauTim, xongTim } from "@/components/VachTim";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNutQuayLai } from "@/lib/khoaCuon";
+import { useSoMoiTrang } from "@/lib/useSoMoiTrang";
 import PhanTrang from "@/components/PhanTrang";
 import Image from "next/image";
 import { chuThuan } from "@/lib/chuThuan";
@@ -216,7 +217,7 @@ export default function ProjectsBrowser({
   };
 
   // Phân trang danh sách dự án: 9 dự án/trang (khớp yêu cầu "8–10/trang").
-  const PER_PAGE = 9;
+  const PER_PAGE = useSoMoiTrang(); // PC 15 · điện thoại 10 — quy định chung mọi danh sách (22/10/2026; trước 9)
   const [page, setPage] = useState(1);
   // CHẾ ĐỘ BẢN ĐỒ cho tab Dự án — giống Mua bán / Cho thuê, marker là TÊN DỰ ÁN.
   const [mapMode, setMapMode] = useState(false);

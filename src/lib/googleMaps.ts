@@ -75,7 +75,9 @@ export function parseLatLng(q: string): LatLng | null {
   const m =
     q.match(/^\s*(-?\d{1,3}(?:\.\d+)?)\s*,\s*(-?\d{1,3}(?:\.\d+)?)\s*$/) ||
     q.match(/@(-?\d{1,3}(?:\.\d+)?),(-?\d{1,3}(?:\.\d+)?)/) ||
-    q.match(/[?&]q=(-?\d{1,3}(?:\.\d+)?),(-?\d{1,3}(?:\.\d+)?)/);
+    // link máy tính kiểu …/data=!3d16.04!4d108.24 · link api=1 (query=) · ll=
+    q.match(/!3d(-?\d{1,3}(?:\.\d+)?)!4d(-?\d{1,3}(?:\.\d+)?)/) ||
+    q.match(/[?&](?:q|query|ll)=(-?\d{1,3}(?:\.\d+)?)(?:,|%2C)(-?\d{1,3}(?:\.\d+)?)/i);
   if (!m) return null;
   const lat = Number(m[1]);
   const lng = Number(m[2]);

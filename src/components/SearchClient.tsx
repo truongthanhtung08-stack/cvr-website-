@@ -20,8 +20,8 @@ import {
 import { smartFilter, smartSearch, TIER_LABEL } from "@/lib/smartSearch";
 import { nhanDoiHienThi, khoaThe } from "@/lib/nhanDoiHienThi";
 import { locDanhSach } from "@/lib/locDanhSach";
+import { useSoMoiTrang } from "@/lib/useSoMoiTrang";
 
-const PER_PAGE = 10; // mỗi trang 10 tin (giống danh sách /mua-ban)
 
 // Trang kết quả tìm kiếm chung (đích của ô tìm kiếm ở Hero + nút "Xem thêm" trang chủ).
 // Dùng HỆ LỌC THÔNG MINH chung với /mua-ban, /cho-thue:
@@ -48,6 +48,7 @@ export default function SearchClient({
   const [filters, setFilters] = useState<Filters>(() => filtersFromParams(params));
   const [sort, setSort] = useState<SortKey>("moi");
   const [page, setPage] = useState(1);
+  const moiTrang = useSoMoiTrang(); // PC 15 · điện thoại 10 — quy định chung mọi danh sách (22/10/2026)
   // Đổi bộ lọc / sắp xếp → luôn quay về trang 1
   const changeFilters = (f: Filters) => { setFilters(f); setPage(1); };
   const changeSort = (s: SortKey) => { setSort(s); setPage(1); };
@@ -102,10 +103,10 @@ export default function SearchClient({
   const hitById = useMemo(() => new Map(search.hits.map((h) => [h.item.id, h])), [search]);
   const active = hasActiveFilters(filters);
 
-  // Phân trang: 8 tin/trang, kẹp trang hiện tại trong [1, totalPages]
-  const totalPages = Math.max(1, Math.ceil(results.length / PER_PAGE));
+  // Phân trang: PC 15 · điện thoại 10 tin/trang, kẹp trang hiện tại trong [1, totalPages]
+  const totalPages = Math.max(1, Math.ceil(results.length / moiTrang));
   const current = Math.min(page, totalPages);
-  const pageItems = results.slice((current - 1) * PER_PAGE, current * PER_PAGE);
+  const pageItems = results.slice((current - 1) * moiTrang, current * moiTrang);
 
   return (
     <div className="mx-auto max-w-7xl px-4 pt-0 pb-footer sm:px-6 sm:pt-0 lg:px-8">

@@ -46,7 +46,8 @@ import type { ListingRow } from "@/lib/listingAdmin";
 import { chuanHoaSdt, tachNhieuSdt } from "@/lib/phone";
 import XacMinhSdt from "@/components/XacMinhSdt";
 import { uploadImageFile } from "@/lib/uploadImage";
-import { goiYDiaChi } from "@/lib/timToaDo";
+import ODiaChiGoiY from "@/components/ODiaChiGoiY";
+import { ganNhanPhimEnter, enterSangOTiep } from "@/lib/oTiepTheo";
 import { loiEmail, loiSdt } from "@/lib/kiemNhap";
 import XemTruocTin from "@/components/XemTruocTin";
 import { xemTruocTin } from "@/lib/listingsDb";
@@ -115,6 +116,8 @@ export default function PostListingForm() {
   // phường cũ, lúc đó máy không có cách nào suy ra (xem ungVienPhuongCu).
   const [phuongCu, setPhuongCu] = useState("");
   const [addressDetail, setAddressDetail] = useState("");
+  // Toạ độ gợi ý địa chỉ khách vừa chọn — bản đồ tới đó và ghim (chọn gợi ý = chọn vị trí, 22/10/2026)
+  const [diemGoiY, setDiemGoiY] = useState<{ lat: number; lng: number; n: number } | null>(null);
   // LINK CHÈN DƯỚI TIN — quyền lợi CVR Diamond (quy định gói); hạng khác không có ô này.
   const [linkChen, setLinkChen] = useState("");
   // GHIM VỊ TRÍ: rất nhiều bất động sản chưa có địa chỉ chính xác (đất nền, lô
@@ -1104,11 +1107,11 @@ export default function PostListingForm() {
       // KIỂM Ô THIẾU THEO ĐÚNG THỨ TỰ TRANG (22/10/2026): tắt bóng chữ kiểm của trình duyệt — trước đây nó nhảy
       // thẳng tới ô Tiêu đề (mục 4) dù mục 1 còn thiếu. Hàm gửi tự kiểm từ mục 1 → 7, báo tiếng Việt đúng mục.
       noValidate
-      onKeyDown={(e) => {
-        // Enter ở ô MỘT DÒNG không được tự gửi tin (trước đây bấm Enter / "Đi" trên điện thoại là
-        // gửi luôn khi chưa nhập xong). Ô nhiều dòng (textarea) vẫn xuống dòng bình thường.
-        if (e.key === "Enter" && (e.target as HTMLElement).tagName === "INPUT") e.preventDefault();
-      }}
+      // Enter ở ô MỘT DÒNG không được tự gửi tin (trước đây bấm Enter / "Đi" trên điện thoại là gửi luôn khi chưa nhập
+      // xong) — nay là nút "Tiếp" sang ô kế tiếp, ô cuối "Xong" đóng bàn phím (lib/oTiepTheo, chuẩn enterkeyhint).
+      // Ô nhiều dòng (textarea) vẫn xuống dòng bình thường.
+      onFocus={ganNhanPhimEnter}
+      onKeyDown={enterSangOTiep}
       onSubmit={(e) => { e.preventDefault(); save(false); }}
       className="space-y-6">
       <MucMoCtx.Provider value={{ moMuc, loi: error && loiBuoc ? { buoc: loiBuoc, msg: error } : undefined }}>
@@ -1315,19 +1318,29 @@ export default function PostListingForm() {
         {/* THANH ĐỊA CHỈ LÀ Ô RIÊNG, NẰM NGOÀI BẢN ĐỒ — chủ dự án chốt.
             Gõ tới đâu bản đồ bên dưới tự thu lại và trôi tới đó; ghim trên bản đồ
             thì ô này tự điền ngược lại. ĐỪNG nhét ô này vào trong khung bản đồ. */}
-        <ODiaChiGoiY
-          label="Địa chỉ cụ thể (số nhà, tên đường, số lô, block…)"
-          value={addressDetail}
-          onChange={setAddressDetail}
-          placeholder="VD: 123 Võ Nguyên Giáp · Lô A12 khu B · Block 3 · hoặc chỉ tên đường"
-          khuVuc={(() => { const d = diemTimBanDo(geoMode, { tinh: province, quan: district, phuong: ward }); return { tinh: d.tinh, phuong: d.phuong }; })()}
-        />
+        {/* Ô ĐỊA CHỈ NỔI RÕ (chủ dự án 22/10/2026 tối: "nhìn không ra chỗ này — làm gì để khách biết đây là phần gõ địa chỉ"):
+            nhãn to đậm như mục con, ô cao hơn chữ 16px, ghim đỏ đầu ô cùng màu ghim bản đồ ngay dưới. Ô khác giữ kiểu thường. */}
+        <div className="mt-1">
+          <label className="mb-2 block text-[16px] font-semibold text-cvr-ink">
+            Địa chỉ cụ thể <span className="text-[13px] font-normal text-cvr-muted">(số nhà, tên đường, số lô, block…)</span>
+          </label>
+          <ODiaChiGoiY
+            ghim
+            value={addressDetail}
+            onChange={setAddressDetail}
+            onChonDiem={(p) => setDiemGoiY({ ...p, n: Date.now() })}
+            placeholder="VD: 123 Võ Nguyên Giáp · Lô A12 khu B · Block 3 · hoặc chỉ tên đường"
+            khuVuc={(() => { const d = diemTimBanDo(geoMode, { tinh: province, quan: district, phuong: ward }); return { tinh: d.tinh, phuong: d.phuong }; })()}
+            className="h-12 w-full rounded-lg border-[1.5px] border-cvr-ink/35 bg-white pl-10 pr-3 text-[16px] text-cvr-ink placeholder-cvr-faint caret-cvr-blue outline-none transition focus:border-cvr-blue focus:ring-1 focus:ring-cvr-blue"
+          />
+        </div>
         {/* Bản đồ LUÔN hiện (chủ dự án 22/10/2026 bác cách ẩn tới khi chọn tỉnh) — bản gọn: thấp hơn trên điện thoại,
             vuốt một ngón là cuộn trang (MapPickerMo). */}
         <div className="mt-3">
           <MapPicker
             value={mapPin}
             onChange={setMapPin}
+            diemChon={diemGoiY}
             onDiaChi={setAddressDetail}
             onDiaGioi={nhanDiaGioiTuBanDo}
             hint={chuoiTimBanDo(geoMode, { tinh: province, quan: district, phuong: ward }, addressDetail)}
@@ -2022,63 +2035,6 @@ function PickTim({ label, ...p }: { label: string; value: string; onChange: (v: 
     <div>
       <Label>{label}</Label>
       <ChonCoTim {...p} className={inputCls} />
-    </div>
-  );
-}
-
-// Ô "Địa chỉ cụ thể" CÓ GỢI Ý TÊN ĐƯỜNG (chủ dự án 15/10/2026): gõ từ 3 chữ là gợi ý đường / địa
-// điểm trong ĐÚNG phường – tỉnh đã chọn (kết quả tỉnh khác bị loại). Bấm gợi ý là điền vào ô; khách
-// vẫn gõ tự do được (thêm số nhà, số lô…). Gợi ý chỉ hiện khi khách đang gõ.
-function ODiaChiGoiY({ label, value, onChange, placeholder, khuVuc }: { label: string; value: string; onChange: (v: string) => void; placeholder: string; khuVuc: { tinh: string; phuong: string } }) {
-  const [ds, setDs] = useState<{ ten: string; phu: string }[]>([]);
-  const [dangGo, setDangGo] = useState(false);
-  const khoaKv = `${khuVuc.phuong}|${khuVuc.tinh}`;
-  useEffect(() => {
-    const q = value.trim();
-    if (!dangGo || q.length < 3 || !khuVuc.tinh) return;
-    let huy = false;
-    const t = setTimeout(async () => {
-      const kq = await goiYDiaChi(q, [khuVuc.phuong, khuVuc.tinh].filter(Boolean).join(", "));
-      if (huy) return;
-      const tinh = normalizeVi(khuVuc.tinh.replace(/^(Thành phố|Tỉnh)\s+/i, ""));
-      const daCo = new Set<string>();
-      setDs(kq.filter((x) => normalizeVi(x.phu).includes(tinh)).filter((x) => {
-        const k = normalizeVi(x.ten);
-        if (!x.ten || daCo.has(k)) return false;
-        daCo.add(k);
-        return true;
-      }).slice(0, 5));
-    }, 450);
-    return () => { huy = true; clearTimeout(t); };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [value, dangGo, khoaKv]);
-  return (
-    <div className="relative">
-      <Label>{label}</Label>
-      <input
-        value={value}
-        onChange={(e) => { setDangGo(true); onChange(e.target.value); }}
-        onBlur={() => setTimeout(() => setDangGo(false), 200)}
-        placeholder={placeholder}
-        autoComplete="off"
-        className={inputCls}
-      />
-      {dangGo && value.trim().length >= 3 && ds.length > 0 && (
-        <div className="absolute inset-x-0 top-full z-30 mt-1 overflow-hidden rounded-lg border border-cvr-line bg-white shadow-lux">
-          {ds.map((x) => (
-            <button
-              key={x.ten + x.phu}
-              type="button"
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => { onChange(x.ten); setDangGo(false); setDs([]); }}
-              className="block w-full border-b border-cvr-line px-3 py-2.5 text-left last:border-0 hover:bg-cvr-surface"
-            >
-              <span className="block text-sm font-medium text-cvr-ink">{x.ten}</span>
-              {x.phu && <span className="block text-xs text-cvr-muted">{x.phu}</span>}
-            </button>
-          ))}
-        </div>
-      )}
     </div>
   );
 }

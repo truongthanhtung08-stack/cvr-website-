@@ -881,3 +881,8 @@ nextjs-portal { display: none !important; }
    đậm, con trỏ xanh (chủ dự án 22/10/2026). Chỉ trong [data-vung-nhap], không đụng ô khác của web. */
 [data-vung-nhap] [contenteditable="true"] { caret-color: var(--color-cvr-blue); }
 [data-vung-nhap] [contenteditable="true"]:focus { outline: none; border-color: var(--color-cvr-blue) !important; box-shadow: 0 0 0 1px var(--color-cvr-blue); background-color: #fff; }
+
+/* KHÔNG CÂU NHẮC TRÊN BẢN ĐỒ (chủ dự án 22/10/2026 tối: "hướng dẫn rườm rà, dư thừa"): máy tính lăn chuột qua bản đồ là
+   cuộn trang (đúng ý khách), phóng bằng nút +/− hoặc Ctrl + lăn — không phủ câu "Sử dụng Ctrl + cuộn…" lên bản đồ. Điện
+   thoại không bật chế độ này nên không có câu nào. Áp mọi bản đồ của web. */
+.maplibregl-map .maplibregl-cooperative-gesture-screen { display: none; }

@@ -7,6 +7,7 @@ import dynamic from "next/dynamic";
 const PhotoViewer = dynamic(() => import("@/components/PhotoViewer"), { ssr: false });
 const PhotoList = dynamic(() => import("@/components/PhotoList"), { ssr: false });
 import GallerySlideVideo from "@/components/GallerySlideVideo";
+import DemAnhVideo from "@/components/DemAnhVideo";
 
 // Thư viện ảnh trang chi tiết BĐS — bố cục kiểu Homedy:
 // 1 ảnh lớn bên trái + lưới 2×2 ảnh nhỏ bên phải.
@@ -155,42 +156,28 @@ export default function Gallery({
   // Huy hiệu đếm ở góc trên trái: tin có bao nhiêu VIDEO và bao nhiêu ẢNH.
   // Xếp video trước vì video đứng đầu dãy — đọc huy hiệu là hình dung đúng thứ
   // tự sẽ gặp khi vuốt.
-  const demMedia = (
-    <span className="pointer-events-none absolute left-3 top-3 z-[5] flex items-center gap-2.5 rounded-md bg-black/65 px-2.5 py-1 text-[12px] font-semibold text-white backdrop-blur-sm">
-      {nVid > 0 && (
-        <span className="flex items-center gap-1">
-          <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-            <rect x="3" y="6" width="12" height="12" rx="2" />
-            <path strokeLinecap="round" strokeLinejoin="round" d="m15 10.5 6-3v9l-6-3v-3Z" />
-          </svg>
-          {nVid}
-        </span>
-      )}
-      <span className="flex items-center gap-1">
-        <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M3 7.5h3l1.5-2h9L18 7.5h3v11H3v-11Z" />
-          <circle cx="12" cy="12.5" r="3.2" />
-        </svg>
-        {images.length}
-      </span>
-    </span>
-  );
+  // Đếm ảnh · video: cùng biểu tượng, thứ tự, nền với thẻ tin ngoài trang chủ (DemAnhVideo — chủ dự án 22/10/2026)
+  const demMedia = <DemAnhVideo soAnh={images.length} soVideo={nVid} className="absolute left-3 top-3 z-[5]" />;
 
   return (
     <>
       {media.length === 1 ? (
         media[0].kind === "video" ? (
-          <div className="relative aspect-[4/3] w-full sm:aspect-[2/1] overflow-hidden rounded-none bg-black sm:border sm:border-cvr-line">
+          <div className="relative aspect-[4/3] w-full max-sm:h-[clamp(50vw,calc(100svh-465px),75vw)] sm:aspect-[2/1] overflow-hidden rounded-none bg-black sm:border sm:border-cvr-line">
             <GallerySlideVideo url={media[0].src} active onHold={setHold} />
           </div>
         ) : (
-          <button type="button" onClick={() => open(0)} className="group relative block aspect-[4/3] w-full sm:aspect-[2/1] overflow-hidden rounded-none border border-cvr-line">
+          <button type="button" onClick={() => open(0)} className="group relative block aspect-[4/3] w-full max-sm:h-[clamp(50vw,calc(100svh-465px),75vw)] sm:aspect-[2/1] overflow-hidden rounded-none border border-cvr-line">
             <Image src={media[0].src} alt={alt} fill priority quality={90} sizes="(max-width:1024px) 100vw, 66vw" className="object-cover" />
           </button>
         )
       ) : (
         <>
         {/* ── ĐIỆN THOẠI: vuốt ngang đổi tấm, khung ảnh tỷ lệ vàng 4:3 = khổ ảnh điện thoại (chủ dự án 09/10/2026) ── */}
+        {/* KHUNG TỰ CO THEO CHIỀU CAO MÀN HÌNH (chủ dự án 22/10/2026: "bấm vào tin chi tiết không bị che khuất, ngắn thì tự co giãn"):
+            cao = 100svh − 465px (thanh đầu 113 + từ đáy khung tới hết địa chỉ cũ ~278 + thanh liên hệ 74) → mở tin là thấy trọn ảnh
+            + tiêu đề + dự án + địa chỉ, không bị thanh liên hệ che (đo 375×664 = iPhone Safari); kẹp giữa 2:1 (máy thấp) và 4:3
+            (máy cao, như cũ). Trình duyệt cũ không hiểu svh thì giữ 4:3. */}
         <div className={lonO === "dt" || laDienThoai ? "" : "sm:hidden"}>
           <div className="relative">
           <div
@@ -210,7 +197,7 @@ export default function Gallery({
                 // phát mà khung giãn cao kín màn là SAI — đã thử và bị bác).
                 <div
                   key={i}
-                  className="relative aspect-[4/3] max-h-[70dvh] w-full shrink-0 snap-center overflow-hidden bg-black"
+                  className="relative aspect-[4/3] max-h-[70dvh] max-sm:h-[clamp(50vw,calc(100svh-465px),75vw)] w-full shrink-0 snap-center overflow-hidden bg-black"
                 >
                   <GallerySlideVideo url={m.src} active={i === mCur} onHold={setHold} onLon={(b) => setLonO(b ? "dt" : null)} />
                 </div>
@@ -220,7 +207,7 @@ export default function Gallery({
                   type="button"
                   onClick={() => setList(true)}
                   aria-label={`Ảnh ${imgIdx(i) + 1}`}
-                  className="relative aspect-[4/3] max-h-[70dvh] w-full shrink-0 snap-center overflow-hidden bg-black"
+                  className="relative aspect-[4/3] max-h-[70dvh] max-sm:h-[clamp(50vw,calc(100svh-465px),75vw)] w-full shrink-0 snap-center overflow-hidden bg-black"
                 >
                   <Image src={m.src} alt={`${alt} ${imgIdx(i) + 1}`} fill priority={i === nVid} fetchPriority={i === nVid ? "high" : undefined} quality={90} sizes="100vw" className="object-cover" />
                 </button>
@@ -294,8 +281,11 @@ export default function Gallery({
           >
             {/* Một hàng duy nhất, chữ tối giản kiểu Batdongsan: bên trái là lối
                 mở toàn bộ ảnh, bên phải là vị trí đang xem. Không khung, không
-                nền — chữ trắng trên dải mờ là đủ đọc. */}
+                nền — chữ trắng trên dải mờ là đủ đọc.
+                TIN CÓ VIDEO: không có nút này — nút "Xem ảnh & video" góc trên phải đã làm đúng việc đó (chủ dự án 22/10/2026:
+                "sao phải để trùng 2 câu như vậy trên 1 cái khung hình"). */}
             <div className="mb-1 flex items-center justify-between px-2.5">
+              {nVid === 0 && (
               <button
                 type="button"
                 onClick={() => setList(true)}
@@ -307,10 +297,11 @@ export default function Gallery({
                   <rect x="3" y="14" width="7" height="7" rx="1.2" />
                   <rect x="14" y="14" width="7" height="7" rx="1.2" />
                 </svg>
-                {nVid > 0 ? "Tất cả ảnh & video" : "Tất cả ảnh"}
+                Tất cả ảnh
               </button>
+              )}
               {!mIsVideo && (
-                <span className="text-[12.5px] font-medium text-white drop-shadow">
+                <span className="ml-auto text-[12.5px] font-medium text-white drop-shadow">
                   {imgIdx(mCur) + 1}/{images.length}
                 </span>
               )}

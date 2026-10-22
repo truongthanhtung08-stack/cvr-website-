@@ -17,7 +17,10 @@ import type { DiemBanDo } from "@/components/MapViewGoogle";
 // chính hàm này — hai nơi một cách xếp, không lệch nhau.
 // ============================================================================
 
-export const PER_PAGE = 10;
+// Số tin mỗi trang: PC 15 · điện thoại 10 — MỘT quy định chung ở lib/soMoiTrang (PC gửi moiTrang 15 trong chính lần gọi lọc
+// lúc mở trang; máy chủ chỉ nhận 10 hoặc 15).
+import { PER_PAGE, MOI_TRANG_PC, soTinMoiTrang } from "@/lib/soMoiTrang";
+export { PER_PAGE, MOI_TRANG_PC, soTinMoiTrang };
 const TOI_DA_GOI_Y = 12; // số tin gợi ý tối đa khi ít tin khớp đủ // 10 tin/trang (chủ dự án chốt 10/9/2026)
 
 export type KetQuaLoc = {
@@ -111,6 +114,7 @@ export function locDanhSach(
   filters: Filters,
   sort: SortKey,
   page: number,
+  moiTrang = PER_PAGE,
 ): KetQuaLoc & { ketQua: Listing[] } {
   // Câu có "giá rẻ" → trong cùng nhóm, tin rẻ đứng trước (cùng quy ước với trang sạch ?sapxep=gia-tang)
   const timRe = / gia re /.test(` ${normalizeVi(filters.keyword)} `);
@@ -313,9 +317,9 @@ export function locDanhSach(
     if (p) m.set(p, (m.get(p) ?? 0) + 1);
   }
 
-  const soTrang = Math.max(1, Math.ceil(ketQua.length / PER_PAGE));
+  const soTrang = Math.max(1, Math.ceil(ketQua.length / moiTrang));
   const trangHienTai = Math.min(Math.max(1, page), soTrang);
-  const trang = ketQua.slice((trangHienTai - 1) * PER_PAGE, trangHienTai * PER_PAGE);
+  const trang = ketQua.slice((trangHienTai - 1) * moiTrang, trangHienTai * moiTrang);
   const tangTheoId: Record<string, 1 | 2 | 3> = {};
   for (const l of trang) tangTheoId[l.id] = tierById.get(l.id) ?? 1;
   const boiDam: Record<string, string[]> = {};

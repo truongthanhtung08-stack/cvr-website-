@@ -505,6 +505,23 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                 {/* TIN HẾT HẠN (chốt 25/09/2026, theo Batdongsan): link cũ vẫn mở,
                     nói thẳng tin đã hết hạn, ẩn số người đăng, gợi ý tin tương tự bên dưới. */}
                 <h1 className="mt-3 whitespace-pre-line break-words text-[21px] font-semibold leading-[1.3] tracking-tight text-cvr-ink sm:text-[28px]">{l.title}</h1>
+                {/* DỰ ÁN = VỊ TRÍ, NHÃN GỌN NGAY DƯỚI TIÊU ĐỀ (chủ dự án 22/10/2026: "để chỗ này đã hợp lý chưa — xem lại bố cục,
+                    giao diện"): đọc từ lớn tới nhỏ — dự án → đường, phường → địa chỉ cũ; nhãn có viền nhìn là biết bấm được (sang
+                    trang dự án), không còn dòng chữ xanh dài lẫn với địa chỉ. Khối Đặc điểm không có dòng "Dự án". */}
+                {tenDuAn && (() => {
+                  const ten = /^dự án\s/i.test(tenDuAn) ? tenDuAn : `Dự án ${tenDuAn}`;
+                  const noi = (
+                    <>
+                      <svg className="h-4 w-4 shrink-0 text-cvr-muted" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M4 21V5a1 1 0 011-1h9a1 1 0 011 1v16M15 9h4a1 1 0 011 1v11M3 21h18M8 8h3M8 12h3M8 16h3" /></svg>
+                      <span className="min-w-0 truncate">{ten}</span>
+                      {slugDuAnTin && <svg className="h-3.5 w-3.5 shrink-0 text-cvr-muted" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>}
+                    </>
+                  );
+                  const cls = "mt-2.5 inline-flex max-w-full items-center gap-1.5 rounded-full border border-cvr-line bg-cvr-surface px-3 py-1.5 text-[13.5px] font-medium text-cvr-ink";
+                  return slugDuAnTin
+                    ? <Link href={`/du-an/${slugDuAnTin}`} className={`${cls} transition hover:border-cvr-ink`}>{noi}</Link>
+                    : <span className={cls}>{noi}</span>;
+                })()}
 
                 {/* ĐỊA CHỈ HAI DÒNG — người đăng nhập theo hệ nào cũng vậy:
                     · dòng trên: địa chỉ theo hệ MỚI (tên đang dùng hiện nay)
@@ -524,21 +541,6 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                       </p>
                       {duoi && (
                         <p className="mt-1 pl-[22px] text-[13px] text-cvr-faint">Địa chỉ cũ: {duoi}</p>
-                      )}
-                      {/* DỰ ÁN = VỊ TRÍ (chủ dự án 22/10/2026: dự án là bất động sản NẰM Ở ĐÂU, không phải đặc điểm của căn/lô)
-                          — một dòng ngay dưới địa chỉ, bấm sang trang dự án (thông tin dự án → tin thuộc dự án → dự án tương tự).
-                          Khớp form đăng tin: "Thuộc dự án" nằm trong nhóm địa chỉ. Khối Đặc điểm không còn dòng "Dự án". */}
-                      {tenDuAn && (
-                        <p className="mt-1.5 flex items-start gap-1.5 text-[14px] leading-relaxed sm:text-[15px]">
-                          <svg className="mt-[3px] h-4 w-4 shrink-0 text-cvr-muted" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M4 21V5a1 1 0 011-1h9a1 1 0 011 1v16M15 9h4a1 1 0 011 1v11M3 21h18M8 8h3M8 12h3M8 16h3" /></svg>
-                          {slugDuAnTin ? (
-                            <Link href={`/du-an/${slugDuAnTin}`} className="min-w-0 font-medium text-cvr-blue-ink hover:underline">
-                              {/^dự áns/i.test(tenDuAn) ? tenDuAn : `Dự án ${tenDuAn}`} ›
-                            </Link>
-                          ) : (
-                            <span className="min-w-0 text-cvr-body">{/^dự áns/i.test(tenDuAn) ? tenDuAn : `Dự án ${tenDuAn}`}</span>
-                          )}
-                        </p>
                       )}
                     </>
                   );

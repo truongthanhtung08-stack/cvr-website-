@@ -39,14 +39,6 @@ export default function ProjectNearby({
   zoom?: number;
 }) {
   const [locating, setLocating] = useState(false);
-  // KHOÁ CỬ CHỈ BẢN ĐỒ (mặc định) — khách lướt trang bằng MỘT ngón, ngón tay đi
-  // ngang qua bản đồ không bị bản đồ "nuốt" mất. Chạm một cái vào bản đồ là mở
-  // khoá, từ đó kéo / phóng to bằng MỘT ngón thoải mái; bấm "Khoá bản đồ" để
-  // cuộn trang tiếp. Đây là cách Batdongsan / Zillow đang làm.
-  const [mapOn, setMapOn] = useState(false);
-  // Bản đồ nhúng chưa chạy → ô bản đồ tự thành nút mở Google Maps, nên bỏ lớp phủ
-  // "Chạm để xem bản đồ" đi cho khỏi che.
-  const [mapHong, setMapHong] = useState(false);
 
   // CHỈ ĐƯỜNG TỪ VỊ TRÍ KHÁCH — mở thẳng APP bản đồ trên máy (Google Maps, iPhone
   // chưa cài thì Bản đồ Apple), không mở tab trình duyệt.
@@ -78,24 +70,10 @@ export default function ProjectNearby({
           không nhảy đi đâu. Chỉ khi bấm nút "Mở Google Maps" mới mở app/web
           Google Maps ở TAB MỚI — xong bấm quay lại là về đúng tin đang xem. */}
       <div className="relative overflow-hidden rounded-xl border border-cvr-line">
-        <MapPane query={mapQuery} zoom={zoom} locked={!mapOn} onHong={() => setMapHong(true)} />
+        {/* KHÔNG có lớp "Chạm để xem bản đồ" (chủ dự án 22/10/2026 tối: "vì sao phải có câu đó, lại bắt khách chạm"): bản đồ
+            dùng được ngay — điện thoại kéo một ngón, phóng hai ngón; máy tính kéo chuột, nút +/−. */}
+        <MapPane query={mapQuery} zoom={zoom} locked={false} />
 
-        {/* Lớp phủ khi bản đồ đang KHOÁ — chạm là mở, không cần hai ngón */}
-        {!mapOn && !mapHong && (
-          <button
-            type="button"
-            onClick={() => setMapOn(true)}
-            aria-label="Chạm để xem và kéo bản đồ"
-            className="absolute inset-0 flex items-end justify-center bg-transparent pb-4 transition active:bg-black/5"
-          >
-            <span className="pointer-events-none inline-flex items-center gap-2 rounded-full bg-white/92 px-4 py-2 text-[13px] font-semibold text-cvr-ink shadow-[0_2px_12px_rgba(0,0,0,0.18)] ring-1 ring-black/5 backdrop-blur-md">
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.9} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 4.5l6 2.4 5-2.4v14.4l-5 2.4-6-2.4-5 2.4V4.9l5-2.4v16.8" />
-              </svg>
-              Chạm để xem bản đồ
-            </span>
-          </button>
-        )}
 
         {/* ⚠️ CỐ Ý KHÔNG có nút nổi nào khác đè lên khung bản đồ (trước đây có chip
             "Khoá bản đồ" ở góc phải). Chủ dự án chốt: mặt bản đồ để trống cho dễ
@@ -137,11 +115,22 @@ export default function ProjectNearby({
           {places.map((p, i) => (
             <div key={i} className="flex items-center gap-3 rounded-xl border border-cvr-line bg-cvr-surface px-3.5 py-3">
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-lg shadow-sm">{ICON[p.category] ?? "📍"}</span>
+              {/* Tên chiếm TRỌN bề ngang; loại · thời gian xuống dòng dưới (chủ dự án 22/10/2026: ô thời gian dài "Trong vòng
+                  10 phút" nằm bên phải ép tên thành cột chữ hẹp, gãy từng chữ). Loại "Khác" không nói gì thêm → không ghi. */}
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium leading-snug text-cvr-ink">{p.name}</p>
-                <p className="text-xs text-cvr-muted">{p.category}</p>
+                {(() => {
+                  const loai = p.category && p.category !== "Khác" ? p.category : "";
+                  if (!loai && !p.distance) return null;
+                  return (
+                    <p className="mt-0.5 text-xs text-cvr-muted">
+                      {loai}
+                      {loai && p.distance ? " · " : ""}
+                      {p.distance && <span className="font-semibold text-cvr-body">{p.distance}</span>}
+                    </p>
+                  );
+                })()}
               </div>
-              {p.distance && <span className="shrink-0 rounded-md bg-white px-2 py-1 text-xs font-semibold text-cvr-body shadow-sm">{p.distance}</span>}
             </div>
           ))}
         </div>

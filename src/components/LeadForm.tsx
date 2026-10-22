@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { loiEmail, loiSdt } from "@/lib/kiemNhap";
 import { createClient } from "@/lib/supabase/client";
 import { useProfile } from "@/lib/useProfile";
-import { NutXoaHet, NutQuayLai } from "@/components/FormFields";
 import type { LoaiYeuCau } from "@/components/YeuCauForm";
 
 // ============================================================================
@@ -15,7 +14,8 @@ import type { LoaiYeuCau } from "@/components/YeuCauForm";
 // bảng customer_requests, cùng chỗ với form Liên hệ → xem tại /admin/yeu-cau.
 //
 // Bản GỌN: bỏ nhãn riêng từng ô (đưa vào placeholder) để vừa khung cột phải.
-// Vẫn có nút ✕ xoá từng ô · "Xoá hết" · "Quay lại" như mọi form khác.
+// Mỗi ô có ✕ xoá nhanh. KHÔNG có "Xoá hết", "Quay lại" (chủ dự án 22/10/2026: form nằm trong trang thì hai nút đó để làm
+// gì — mỗi ô đã có ✕, lùi trang thì dùng nút Quay lại của máy / trình duyệt).
 // ============================================================================
 
 export default function LeadForm({
@@ -45,8 +45,6 @@ export default function LeadForm({
     setDienThoai((v) => v || profile.phone || "");
     setEmail((v) => v || profile.email || "");
   }, [profile]);
-
-  const coChu = Boolean(ten || dienThoai || email || ghiChu);
 
   function xoaHet() {
     setTen("");
@@ -105,7 +103,6 @@ export default function LeadForm({
           >
             Gửi yêu cầu khác
           </button>
-          <NutQuayLai />
         </div>
       </div>
     );
@@ -151,11 +148,6 @@ export default function LeadForm({
       >
         {dangGui ? "Đang gửi…" : cta}
       </button>
-
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        {coChu ? <NutXoaHet onClick={xoaHet} /> : <span />}
-        <NutQuayLai />
-      </div>
 
       <p className="text-center text-[11px] text-cvr-faint">Thông tin của bạn được bảo mật theo chính sách của Coastal Land.</p>
     </div>

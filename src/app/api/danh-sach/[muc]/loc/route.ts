@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getListings, getListingsHetHan } from "@/lib/listingsDb";
 import { goiKetQua } from "@/lib/ketQuaDau";
 import { emptyFilters, type Filters, type SortKey } from "@/lib/filters";
-import { locDanhSach, diemTuTin } from "@/lib/locDanhSach";
+import { locDanhSach, diemTuTin, MOI_TRANG_PC, PER_PAGE } from "@/lib/locDanhSach";
 
 // ============================================================================
 // LỌC DANH SÁCH Ở MÁY CHỦ — chỉ gửi trang đang xem (#1b kế hoạch SEO, 17/10/2026)
@@ -17,6 +17,8 @@ type YeuCau = {
   boLoc?: Partial<Filters>;
   sapXep?: SortKey;
   trang?: number;
+  /** Số tin mỗi trang: PC 15 · điện thoại 10 (chỉ nhận hai số này) */
+  moiTrang?: number;
   /** Khối "Tin tương tự": chỉ giữ đúng các tin này, đúng thứ tự máy chủ trang tin đã xếp */
   chiId?: string[];
   /** Trang chủ "Xem thêm": bỏ các tin đã hiện ở khối trên */
@@ -46,7 +48,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ muc: st
   }
 
   const boLoc: Filters = { ...emptyFilters(), ...(yc.boLoc ?? {}) };
-  const kq = locDanhSach(tin, hetHan, muc, boLoc, yc.sapXep ?? "moi", yc.trang ?? 1);
+  const kq = locDanhSach(tin, hetHan, muc, boLoc, yc.sapXep ?? "moi", yc.trang ?? 1, yc.moiTrang === MOI_TRANG_PC ? MOI_TRANG_PC : PER_PAGE);
 
   return NextResponse.json({
     // Cùng một cách gói với trang 1 máy chủ dựng sẵn (lib/ketQuaDau): tinhHieu — tỉnh máy hiểu từ câu gõ, để ghi đúng dòng

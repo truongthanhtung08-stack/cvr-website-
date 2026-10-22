@@ -5,6 +5,7 @@ import Image from "next/image";
 import AnhChay from "@/components/AnhChay";
 import { chuThuan } from "@/lib/chuThuan";
 import Link from "next/link";
+import { useSoMoiTrang } from "@/lib/useSoMoiTrang";
 import type { Project, Article } from "@/lib/data";
 import ProjectsBrowser from "@/components/ProjectsBrowser";
 import Pager from "@/components/Pager";
@@ -17,7 +18,6 @@ import { useHomeSection } from "@/components/HomeExpand";
 //     phân trang 8 dự án/trang (không rời khỏi trang đang xem).
 //   · Bấm "Thu gọn" để quay lại slide.
 
-const PER_PAGE = 8;
 const TIER_RANK: Record<string, number> = { diamond: 0, gold: 1, silver: 2, basic: 3 };
 const TIER_ACCENT: Record<string, string> = {
   diamond: "#d7263d",
@@ -115,9 +115,10 @@ export function ProjectRow({ p }: { p: Project }) {
   );
 }
 
-// ── DANH SÁCH DỰ ÁN DẠNG LIST, PHÂN TRANG 8/TRANG ────────────────────────────
+// ── DANH SÁCH DỰ ÁN DẠNG LIST, PHÂN TRANG PC 15 · ĐIỆN THOẠI 10 (quy định chung, 22/10/2026; trước 8) ──
 // Dùng chung cho nút "Xem thêm" ở trang chủ và ở "Dự án liên quan".
 export function ProjectListPaged({ projects }: { projects: Project[] }) {
+  const PER_PAGE = useSoMoiTrang();
   const [page, setPage] = useState(1);
   const totalPages = Math.max(1, Math.ceil(projects.length / PER_PAGE));
   const current = Math.min(page, totalPages);

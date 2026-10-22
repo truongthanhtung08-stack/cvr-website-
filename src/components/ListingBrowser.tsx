@@ -29,7 +29,7 @@ import {
 } from "@/lib/filters";
 import { TIER_LABEL, suaChinhTa } from "@/lib/smartSearch";
 import { khoaThe } from "@/lib/nhanDoiHienThi";
-import { locDanhSach, type KetQuaLoc } from "@/lib/locDanhSach";
+import { locDanhSach, soTinMoiTrang, PER_PAGE, type KetQuaLoc } from "@/lib/locDanhSach";
 import type { DiemBanDo } from "@/components/MapViewGoogle";
 import type { TinGoiY } from "@/lib/searchHints";
 import LuuTimKiem from "./LuuTimKiem";
@@ -159,6 +159,8 @@ export default function ListingBrowser({
   // rồi bấm Back là văng về trang 1, phải bấm lại 3 lần. Ghi vào địa chỉ thì bấm
   // Back trình duyệt trả đúng ?trang=3, mà gửi link cho nhau cũng ra đúng trang.
   const [page, setPage] = useState(() => trangTu(params));
+  // PC 15 tin · điện thoại 10 tin mỗi trang (22/10/2026) — đọc lúc mở trang, cùng lúc đọc địa chỉ (lần gọi lọc đầu đã mang số này)
+  const [moiTrang, setMoiTrang] = useState(PER_PAGE);
   // Địa chỉ có ?q, ?trang, ?sapxep… → áp ngay khi trang mở (máy chủ đã dựng sẵn bản không tham số)
   useEffect(() => {
     const sp = new URLSearchParams(window.location.search);
@@ -170,6 +172,7 @@ export default function ListingBrowser({
       setSort(sapXepTu(sp));
       setPage(trangTu(sp));
     }
+    setMoiTrang(soTinMoiTrang());
     setDaDocDiaChi(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- chỉ đọc địa chỉ một lần lúc mở trang
   }, []);
@@ -212,7 +215,7 @@ export default function ListingBrowser({
   const cauSua = useMemo(() => (!nguyenVan && filters.keyword.trim() ? suaChinhTa(filters.keyword) : null), [nguyenVan, filters.keyword, coDiaDanh]);
   const locThat = cauSua ? { ...filters, keyword: cauSua } : filters;
   const linkNguyenVan = (() => { const sp = new URLSearchParams(params.toString()); sp.set("q", filters.keyword); sp.set("nguyenvan", "1"); return `?${sp.toString()}`; })();
-  const yeuCau = JSON.stringify({ boLoc: locThat, sapXep: sort, trang: page, chiId, boQuaId, banDo: mapMode });
+  const yeuCau = JSON.stringify({ boLoc: locThat, sapXep: sort, trang: page, moiTrang, chiId, boQuaId, banDo: mapMode });
   const choDiaDanh = filters.keyword.trim() !== "" && !coDiaDanh;
   const dangNap = useRef(false); // không từ khoá thì luôn false → không gọi thêm lần nào
   useEffect(() => {
@@ -242,9 +245,9 @@ export default function ListingBrowser({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- chỉ gọi lại khi yêu cầu đổi (hoặc địa danh vừa về)
   }, [nguon, yeuCau, choDiaDanh, daDocDiaChi]);
   const taiCho = useMemo(
-    () => (nguon ? null : locDanhSach(items, itemsHetHan, purpose, locThat, sort, page)),
+    () => (nguon ? null : locDanhSach(items, itemsHetHan, purpose, locThat, sort, page, moiTrang)),
     // eslint-disable-next-line react-hooks/exhaustive-deps -- locThat suy ra từ filters + cauSua
-    [nguon, items, itemsHetHan, purpose, filters, cauSua, sort, page, coDiaDanh],
+    [nguon, items, itemsHetHan, purpose, filters, cauSua, sort, page, coDiaDanh, moiTrang],
   );
   const kq = nguon ? mayChu : taiCho;
   const khoaKetQua = `${lanTim}-${JSON.stringify(filters)}`;

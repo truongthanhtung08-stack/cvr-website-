@@ -4,13 +4,14 @@ import { useState } from "react";
 import PhanTrang from "@/components/PhanTrang";
 import Image from "next/image";
 import Link from "next/link";
+import { useSoMoiTrang } from "@/lib/useSoMoiTrang";
 import type { Article } from "@/lib/data";
 
-const PER_PAGE = 10; // 10 bài/trang (yêu cầu "Xem thêm → tin tức dạng trang")
 
 // Danh sách bài viết PHÂN TRANG cho trang /tin-tuc — mỗi bài: ảnh trái · nội dung phải.
 // Dùng chung markup với khối tin tức để đồng bộ giao diện.
 export default function PagedArticleList({ articles }: { articles: Article[] }) {
+  const PER_PAGE = useSoMoiTrang(); // PC 15 · điện thoại 10 — quy định chung mọi danh sách (22/10/2026; trước 10)
   const [page, setPage] = useState(1);
   const totalPages = Math.max(1, Math.ceil(articles.length / PER_PAGE));
   const current = Math.min(page, totalPages);

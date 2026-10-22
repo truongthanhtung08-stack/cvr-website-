@@ -28,7 +28,8 @@ export default function BangQuyenLoiNoi({ onDong }: { onDong: () => void }) {
           <table className="w-full min-w-[560px] text-sm">
             <thead>
               <tr className="border-b border-cvr-line text-left">
-                <th className="px-4 py-3 font-semibold text-cvr-ink">Đặc điểm</th>
+                {/* Cột tên đặc điểm đủ rộng trên máy tính — trước đây chia đều 5 cột, tên bị ép còn 126px, xuống 4–5 dòng (bộ dò lỗi giao diện 22/10/2026) */}
+                <th className="px-4 py-3 font-semibold text-cvr-ink sm:w-[38%] sm:min-w-[180px]">Đặc điểm</th>
                 {CAP.map((id) => {
                   const t = getTier(id);
                   return <th key={id} className="px-3 py-3 text-center font-semibold tracking-tight" style={{ color: t.accent }}>{t.name}</th>;
