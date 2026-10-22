@@ -56,8 +56,11 @@ export default function ProjectForm({
   initial,
   khachHang = false,
   ownerId,
+  dienSan,
 }: {
   initial?: ProjectRow;
+  /** Tạo hồ sơ cho dự án khách đã ghi trong tin: tên + MÃ của tin (giữ nguyên mã để các tin tự về trang dự án). */
+  dienSan?: { ten: string; ma: string; tinh: string };
   khachHang?: boolean;
   ownerId?: string | null;
 }) {
@@ -65,16 +68,16 @@ export default function ProjectForm({
   const router = useRouter();
   const editing = Boolean(initial);
 
-  const [name, setName] = useState(initial?.name ?? "");
-  const [slug, setSlug] = useState(initial?.slug ?? "");
-  const [slugTouched, setSlugTouched] = useState(editing);
+  const [name, setName] = useState(initial?.name ?? dienSan?.ten ?? "");
+  const [slug, setSlug] = useState(initial?.slug ?? dienSan?.ma ?? "");
+  const [slugTouched, setSlugTouched] = useState(editing || !!dienSan?.ma);
   const [type, setType] = useState(initial?.type ?? "");
   const [statusText, setStatusText] = useState(initial?.status_text ?? "Đang mở bán");
   const [priceFrom, setPriceFrom] = useState(initial?.price_from ?? "");
   const [developer, setDeveloper] = useState(initial?.developer ?? "");
   // Đơn vị phát triển — lưu trong cột details (JSON), KHÔNG cần thêm cột CSDL
   const [developmentUnit, setDevelopmentUnit] = useState(initial?.details?.developmentUnit ?? "");
-  const [province, setProvince] = useState(initial?.province ?? "");
+  const [province, setProvince] = useState(initial?.province ?? dienSan?.tinh ?? "");
   const [district, setDistrict] = useState(initial?.district ?? "");
   const [ward, setWard] = useState(initial?.ward ?? "");
   const [overview, setOverview] = useState(initial?.overview ?? "");

@@ -28,11 +28,14 @@ export default function MapPaneMo({
   query,
   zoom = 16,
   cao = "h-[260px] w-full sm:h-[320px]",
+  trongTrang = false,
 }: {
   /** Toạ độ "16.02,108.22" (ưu tiên) hoặc chuỗi địa chỉ. */
   query: string;
   zoom?: number;
   cao?: string;
+  /** Bản đồ nằm GIỮA trang (trang tin, trang dự án): một ngón là cuộn trang, hai ngón mới kéo bản đồ — không vướng. */
+  trongTrang?: boolean;
 }) {
   const boxRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MlMap | null>(null);
@@ -69,10 +72,25 @@ export default function MapPaneMo({
         style: STYLE_MO,
         center: [tam.lng, tam.lat],
         zoom: ghim ? zoom : Math.min(zoom, 13),
+        // Dòng ghi nguồn thu thành nút (i), KHÔNG chèn chữ "MapLibre" (chủ dự án 22/10/2026). "© OpenStreetMap" vẫn nằm
+        // trong (i) — giấy phép dữ liệu bản đồ bắt buộc ghi nguồn.
+        attributionControl: { compact: true },
+        ...(trongTrang ? {
+          cooperativeGestures: true,
+          locale: {
+            "CooperativeGesturesHandler.WindowsHelpText": "Sử dụng Ctrl + cuộn để thu phóng bản đồ",
+            "CooperativeGesturesHandler.MacHelpText": "Sử dụng ⌘ + cuộn để thu phóng bản đồ",
+            "CooperativeGesturesHandler.MobileHelpText": "Dùng hai ngón tay để di chuyển bản đồ",
+          },
+        } : {}),
       });
       mapRef.current = map;
-      map.addControl(new ml.NavigationControl({ showCompass: false }), "top-right");
-      map.on("load", () => vietHoaNhan(map));
+      // Điện thoại KHÔNG có +/− (chụm hai ngón để phóng to — chủ dự án 22/10/2026); máy tính giữ +/− (không chụm được).
+      if (window.matchMedia("(min-width: 640px)").matches) map.addControl(new ml.NavigationControl({ showCompass: false }), "top-right");
+      map.on("load", () => {
+        el.querySelector(".maplibregl-ctrl-attrib")?.classList.remove("maplibregl-compact-show");
+        vietHoaNhan(map);
+      });
 
       if (ghim) {
         ghimRef.current = new ml.Marker({ color: "#e11d48" }).setLngLat([ghim.lng, ghim.lat]).addTo(map);

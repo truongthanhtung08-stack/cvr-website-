@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { khoaCuon } from "@/lib/khoaCuon";
+import { khoaCuon, useNutQuayLai } from "@/lib/khoaCuon";
 import GallerySlideVideo from "@/components/GallerySlideVideo";
 import MapPaneMo from "@/components/MapPaneMo";
 import { useSaved } from "@/lib/useSaved";
@@ -139,6 +139,7 @@ export default function PhotoList({
 
   // Khoá cuộn trang nền (bộ đếm dùng chung với PhotoViewer — xem khoaCuon.ts)
   useEffect(khoaCuon, []);
+  useNutQuayLai(true, onClose); // nút Quay lại điện thoại đóng lớp này, không rời trang (hàm chung, 22/10/2026)
 
   useEffect(() => {
     if (!nhanPhim) return;

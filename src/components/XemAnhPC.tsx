@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import GallerySlideVideo from "@/components/GallerySlideVideo";
 import MapPaneMo from "@/components/MapPaneMo";
 import { anhToiUu } from "@/lib/anhToiUu";
-import { khoaCuon } from "@/lib/khoaCuon";
+import { khoaCuon, useNutQuayLai } from "@/lib/khoaCuon";
 import { videoPosterUrl } from "@/lib/media";
 
 // ============================================================================
@@ -72,6 +72,7 @@ export default function XemAnhPC({ slides, start = 0, title, onClose, banDo }: {
   };
 
   useEffect(khoaCuon, []);
+  useNutQuayLai(true, onClose); // nút Quay lại điện thoại đóng lớp này, không rời trang (hàm chung, 22/10/2026)
   // Mở lên thì video đang chạy ở trang tin DỪNG — không để hai tiếng chồng nhau.
   useEffect(() => { window.dispatchEvent(new CustomEvent("cl-video-phat", { detail: "xem-anh" })); }, []);
 

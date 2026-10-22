@@ -13,6 +13,13 @@ export default function AdminProjectsPage() {
   const [dbMissing, setDbMissing] = useState(false);
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<"all" | ContentStatus>("all");
+  // DỰ ÁN KHÁCH GHI TRONG TIN, CHƯA CÓ HỒ SƠ (22/10/2026): tin "Thuộc dự án" khách tự ghi → web tự tạo mã + trang rút gọn;
+  // admin tạo hồ sơ cùng mã là trang dự án tự đầy đủ, tin tự về. Cùng nguồn với ô tìm (/api/du-an/ten, gộp tên trùng).
+  const [chuaHoSo, setChuaHoSo] = useState<{ ten: string; slug: string; tinh: string; ban: number; thue: number }[]>([]);
+  useEffect(() => {
+    void fetch("/api/du-an/ten").then((r) => r.json()).then((ds: { ten: string; slug: string; tinh: string; coTrang: boolean; ban: number; thue: number }[]) =>
+      setChuaHoSo(ds.filter((d) => !d.coTrang).sort((a, b) => b.ban + b.thue - (a.ban + a.thue)))).catch(() => {});
+  }, []);
 
   useEffect(() => {
     const supabase = createClient();
@@ -156,6 +163,25 @@ export default function AdminProjectsPage() {
           </p>
         )}
       </div>
+      {chuaHoSo.length > 0 && (
+        <section className="mt-8">
+          <h2 className="text-lg font-semibold tracking-tight text-cvr-ink">Dự án khách ghi trong tin, chưa có hồ sơ ({chuaHoSo.length})</h2>
+          <div className="mt-3 divide-y divide-cvr-line overflow-hidden rounded-2xl border border-cvr-line bg-white">
+            {chuaHoSo.map((d) => (
+              <div key={d.slug} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-cvr-ink">{d.ten}</p>
+                  <p className="text-xs text-cvr-muted">{[d.tinh, d.ban ? `${d.ban} tin bán` : "", d.thue ? `${d.thue} tin thuê` : ""].filter(Boolean).join(" · ")} · mã {d.slug}</p>
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                  <a href={`/du-an/${d.slug}`} target="_blank" rel="noopener" className="rounded-lg border border-cvr-line px-3 py-1.5 text-xs font-medium text-cvr-body hover:border-cvr-ink">Xem trang</a>
+                  <Link href={`/admin/du-an/moi?ten=${encodeURIComponent(d.ten)}&ma=${encodeURIComponent(d.slug)}&tinh=${encodeURIComponent(d.tinh)}`} className="rounded-lg bg-cvr-ink px-3 py-1.5 text-xs font-semibold text-white hover:bg-cvr-ink/90">Tạo hồ sơ</Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
       <p className="mt-3 text-xs text-cvr-faint">
         Khi chưa có dự án thật nào <strong>Đã đăng</strong>, web tạm hiện các dự án mẫu. Đăng dự án thật đầu tiên → chỉ hiện dự án thật.
       </p>

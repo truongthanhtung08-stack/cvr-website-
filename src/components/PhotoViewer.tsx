@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import MapPaneMo from "@/components/MapPaneMo";
 import { useSaved } from "@/lib/useSaved";
 import { anhToiUu, beRongManHinh } from "@/lib/anhToiUu";
-import { khoaCuon } from "@/lib/khoaCuon";
+import { khoaCuon, useNutQuayLai } from "@/lib/khoaCuon";
 
 // ============================================================================
 // BỘ XEM ẢNH KIỂU FACEBOOK — dùng chung cho MỌI mục có ảnh
@@ -155,6 +155,7 @@ export default function PhotoViewer({
   // Khoá cuộn trang nền. Bộ đếm dùng chung (khoaCuon.ts): mở từ DANH SÁCH ẢNH
   // thì đóng bộ xem ảnh KHÔNG nhả trang nền, danh sách vẫn giữ đúng chỗ đang xem.
   useEffect(khoaCuon, []);
+  useNutQuayLai(true, onClose); // nút Quay lại điện thoại đóng lớp này, không rời trang (hàm chung, 22/10/2026)
 
   const dong = useCallback(() => {
     setDangDong(true);

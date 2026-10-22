@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useNutQuayLai } from "@/lib/khoaCuon";
 
 // ============================================================================
 // NÚT "CÀI ỨNG DỤNG" — thay cho 2 nút App Store / Google Play khi chưa có app
@@ -100,6 +101,7 @@ export default function InstallAppButton({ compact = false }: { compact?: boolea
 
 // ── Bảng hướng dẫn cài — trượt lên từ đáy trên điện thoại, hộp giữa trên máy tính
 function HowToSheet({ isIOS, onClose }: { isIOS: boolean; onClose: () => void }) {
+  useNutQuayLai(true, onClose); // nút Quay lại điện thoại đóng lớp này, không rời trang (hàm chung, 22/10/2026)
   const steps = isIOS
     ? [
         <>

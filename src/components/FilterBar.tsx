@@ -5,6 +5,7 @@ import { goiYTheoY } from "@/lib/goiYTheoY";
 import { useGoiYThat } from "@/lib/useGoiYThat";
 import { timDuAn, napDsDuAn, dsDuAnDaNap, type DuAnTen } from "@/lib/duAnTen";
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
+import { useNutQuayLai } from "@/lib/khoaCuon";
 import { useRouter } from "next/navigation";
 import FilterDropdown, { PanelActions, FilterDropdownGroup } from "@/components/FilterDropdown";
 import { districtsOf, wardsOf, wardsOfNew, provinceNamesFor, type GeoMode } from "@/lib/locations";
@@ -130,6 +131,9 @@ export default function FilterBar({
   const inputRef = useRef<HTMLInputElement>(null); // để nút Chèn/Xoá đưa con trỏ về ô
   const overlayInputRef = useRef<HTMLTextAreaElement>(null); // ô nhập của trang tìm toàn màn hình (mobile)
   const [overlay, setOverlay] = useState(false); // MOBILE: chạm ô → mở trang tìm TOÀN MÀN HÌNH kiểu Google
+  // Nút Quay lại điện thoại đóng màn tìm, không rời trang (hàm chung, 22/10/2026). Mọi lối đóng để CHUYỂN TRANG gọi
+  // boQuaLui() trước (tự lùi lúc trang mới đang vào có thể đá khách về trang cũ).
+  const boQuaLui = useNutQuayLai(overlay, () => setOverlay(false));
 
   useEffect(() => {
     try {
@@ -199,7 +203,7 @@ export default function FilterBar({
     window.setTimeout(() => setDangTim(false), 1200);
     // Báo khối kết quả chạy chuyển động (kể cả khi bộ lọc không đổi) — khách thấy trang vừa tìm
     window.dispatchEvent(new Event("cvr-tim"));
-    if (onSearch) return onSearch(next);
+    if (onSearch) { boQuaLui(); return onSearch(next); }
     // TRANG KẾT QUẢ: khách gõ CÂU MỚI rồi bấm Tìm → câu mới thắng bộ lọc cũ (chủ dự án 17/10/2026: đang ở
     // "nhà Đà Nẵng" gõ "Phòng trọ cho thuê tại Huế" mà vẫn ra Đà Nẵng). Câu máy hiểu trọn → sang đúng trang sạch
     // như ô tìm trang chủ; câu còn chi tiết riêng → lọc lại từ đầu theo câu (khu vực · loại hình · giá tách từ câu).
@@ -210,16 +214,17 @@ export default function FilterBar({
       const da = timDuAn(kw, dsDuAn);
       if (da) {
         const m = parseQuery(kw).purpose ?? purpose;
+        boQuaLui();
         return router.push(`${m === "thue" ? "/cho-thue" : "/mua-ban"}?duan=${encodeURIComponent(da.duAn.ten)}`);
       }
       const u = duongDanGanNhat(purpose, kw);
-      if (u && u !== window.location.pathname) return router.push(u);
+      if (u && u !== window.location.pathname) { boQuaLui(); return router.push(u); }
       // Địa chỉ trang đi theo câu mới (tải lại / gửi link vẫn đúng câu khách tìm). Đang ở trang con cố định nơi
       // (VD /cho-thue/nha/da-nang) → về trang mục đích gốc, không để lọc cố định của trang con đè câu mới.
       const goc = purpose === "thue" ? "/cho-thue" : "/mua-ban";
       const q = filtersToParams({ ...emptyFilters(), keyword: kw });
       q.set("mode", purpose === "thue" ? "Cho thuê" : "Mua bán");
-      if (window.location.pathname !== goc) return router.push(`${goc}?${q.toString()}`);
+      if (window.location.pathname !== goc) { boQuaLui(); return router.push(`${goc}?${q.toString()}`); }
       onChange({ ...locTuCau(kw, purpose), keyword: kw });
       window.history.replaceState(window.history.state, "", `${goc}?${q.toString()}`);
     }
@@ -303,6 +308,7 @@ export default function FilterBar({
     setActiveIdx(-1);
     // Sản phẩm / Dự án / Tin tức → mở thẳng trang chi tiết (đã là "kết quả").
     if (s.href) {
+      boQuaLui();
       router.push(s.href);
       return;
     }

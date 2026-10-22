@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { huongDanBatDinhVi, maCuaLoi } from "@/lib/dinhVi";
+import { useEffect, useState } from "react";
+import { huongDanBatDinhVi, maCuaLoi, quyenDinhVi } from "@/lib/dinhVi";
 
 // Khối chỉ khách bật lại định vị. Dùng chung cho cả ba bản đồ (3 tab · trang tin ·
 // ghim khi đăng tin) để lời hướng dẫn ở đâu cũng như nhau.
@@ -22,7 +22,14 @@ export default function NhacBatDinhVi({
 }) {
   // Bước theo đúng lỗi (chưa cho phép / máy tắt Vị trí) và đúng chỗ khách mở web (trình duyệt, ứng dụng, Zalo…).
   const ma = maCuaLoi(loi);
-  const buoc = ma === 3 ? [] : huongDanBatDinhVi(ma);
+  // Bị từ chối: hỏi trình duyệt quyền của TRANG — "denied" = trang bị chặn; còn lại = chính ứng dụng (Chrome, Safari…)
+  // chưa được điện thoại cho dùng vị trí. Mỗi tầng một đường gỡ (22/10/2026).
+  const [tang, setTang] = useState<"trang" | "ungDung" | "">("");
+  useEffect(() => {
+    if (ma !== 1) return;
+    void quyenDinhVi().then((q) => setTang(q === "denied" ? "trang" : q === "granted" || q === "prompt" ? "ungDung" : ""));
+  }, [ma]);
+  const buoc = ma === 3 ? [] : huongDanBatDinhVi(ma, tang);
   // MẶC ĐỊNH CHỈ MỘT DÒNG. Chủ dự án chốt: đừng bày bảng hướng dẫn ra màn hình.
   // Web KHÔNG có quyền tự bật GPS của máy — đó là chặn của hệ điều hành, không
   // phải thiếu code — nên vẫn phải nói được một câu, kèm chỗ mở ra xem cách bật
@@ -46,16 +53,6 @@ export default function NhacBatDinhVi({
         )}
       </div>
 
-      {!moRong && buoc.length > 0 && (
-        <button
-          type="button"
-          onClick={() => setMoRong(true)}
-          className="mt-1.5 text-[12.5px] font-semibold text-amber-900 underline underline-offset-2"
-        >
-          Xem cách bật
-        </button>
-      )}
-
       <ol className={`mt-2 space-y-1.5 ${moRong ? "" : "hidden"}`}>
         {buoc.map((b, i) => (
           <li key={i} className="flex gap-2 text-[13px] leading-snug text-amber-900">
@@ -67,14 +64,26 @@ export default function NhacBatDinhVi({
         ))}
       </ol>
 
-      <button
-        type="button"
-        onClick={onThuLai}
-        disabled={dangDinhVi}
-        className="mt-2.5 inline-flex min-h-[36px] items-center rounded-lg border border-amber-400 bg-white px-3 text-[13px] font-semibold text-amber-900 transition hover:bg-amber-100 disabled:opacity-60"
-      >
-        {dangDinhVi ? "Đang định vị…" : "Bật xong rồi, thử lại"}
-      </button>
+      {/* Hai nút CÙNG MỘT HÀNG, có khoảng cách (22/10/2026: "Xem cách bật" từng bị nút "thử lại" đè lên). */}
+      <div className="mt-2.5 flex flex-wrap items-center gap-x-4 gap-y-2">
+        {!moRong && buoc.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setMoRong(true)}
+            className="text-[12.5px] font-semibold text-amber-900 underline underline-offset-2"
+          >
+            Xem cách bật
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={onThuLai}
+          disabled={dangDinhVi}
+          className="inline-flex min-h-[36px] items-center rounded-lg border border-amber-400 bg-white px-3 text-[13px] font-semibold text-amber-900 transition hover:bg-amber-100 disabled:opacity-60"
+        >
+          {dangDinhVi ? "Đang định vị…" : "Bật xong rồi, thử lại"}
+        </button>
+      </div>
     </div>
   );
 }

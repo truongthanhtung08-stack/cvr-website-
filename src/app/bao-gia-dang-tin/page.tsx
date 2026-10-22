@@ -167,11 +167,12 @@ export default async function BaoGiaPage() {
       <main className="flex-1 bg-white">
         {/* Mở đầu — Apple: nền sáng, headline lớn căn giữa, khoảng trắng rộng */}
         <section className="border-b border-cvr-line bg-cvr-surface">
-          <div className="mx-auto max-w-7xl px-4 pb-10 pt-12 text-center sm:px-6 sm:pb-12 sm:pt-14 lg:px-8">
+          {/* GỌN (chủ dự án 22/10/2026 "báo giá xấu, không hiểu"): bớt khoảng trống trên điện thoại; chữ giữ nguyên (Google đọc). */}
+          <div className="mx-auto max-w-7xl px-4 pb-7 pt-8 text-center sm:px-6 sm:pb-12 sm:pt-14 lg:px-8">
             <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-cvr-gold-ink">
               Coastal Land — Bảng giá 2026
             </p>
-            <h1 className="mx-auto mt-2.5 max-w-3xl text-[30px] font-semibold leading-[1.1] tracking-tight text-cvr-ink sm:text-[40px]">
+            <h1 className="mx-auto mt-2.5 max-w-3xl text-[26px] font-semibold leading-[1.15] tracking-tight text-cvr-ink sm:text-[40px]">
               Báo giá dịch vụ và truyền thông
             </h1>
             <p className="mx-auto mt-3 max-w-xl text-[15px] leading-relaxed text-cvr-muted">
@@ -211,16 +212,20 @@ export default async function BaoGiaPage() {
                 )}
 
                 {/* QUYỀN LỢI TỪNG LOẠI TIN — nội dung từ admin (Giá chuẩn → Quy định), không ảnh, không lặp giá */}
-                <h3 className="mt-10 text-lg font-semibold tracking-tight text-cvr-ink">Quyền lợi từng loại tin</h3>
-                <div className="mt-4 space-y-4">
+                {/* QUYỀN LỢI: mỗi cấp MỘT HÀNG bấm mở (trước bày cả 4 thẻ + tin mẫu ~5.000px trên điện thoại — 22/10/2026) */}
+                <h3 className="mt-8 text-lg font-semibold tracking-tight text-cvr-ink">Quyền lợi từng loại tin</h3>
+                <div className="mt-3 space-y-2">
                   {(["basic", "silver", "gold", "diamond"] as const).map((id) => (
                     <QuyenLoiCap key={id} tierId={id} benefits={loiIch(id)} displays={hienThi(id)} mau={<TierSample listing={tinMau(id)} />} />
                   ))}
                 </div>
               {/* LOẠI TIN & ĐẶC ĐIỂM */}
-              {quyDinh.bangQuyenLoi.length > 0 && <div id="dac-diem" className="mt-10 scroll-mt-24">
-                <h3 className="text-lg font-semibold tracking-tight text-cvr-ink">So sánh đặc điểm hiển thị</h3>
-                <div className="mt-6 overflow-x-auto rounded-2xl border border-cvr-line bg-white shadow-lux">
+              {quyDinh.bangQuyenLoi.length > 0 && <details id="dac-diem" className="group mt-8 scroll-mt-24 rounded-2xl border border-cvr-line bg-white">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3.5 [&::-webkit-details-marker]:hidden">
+                  <span className="text-[16px] font-semibold tracking-tight text-cvr-ink">So sánh đặc điểm hiển thị</span>
+                  <svg className="h-4 w-4 shrink-0 text-cvr-muted transition group-open:rotate-180" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                </summary>
+                <div className="overflow-x-auto border-t border-cvr-line">
                   <table className="w-full min-w-[640px] text-sm">
                     <thead>
                       <tr className="border-b border-cvr-line text-left">
@@ -247,7 +252,7 @@ export default async function BaoGiaPage() {
                     </tbody>
                   </table>
                 </div>
-              </div>}
+              </details>}
               </section>
 
               {/* 3. GÓI ĐẨY TIN */}
@@ -377,12 +382,18 @@ export default async function BaoGiaPage() {
 
               {/* QUY ĐỊNH CHUNG */}
               <section id="quy-dinh" className="scroll-mt-24">
-                <SectionTitle title="Quy định chung" desc="" />
-                <div className="mt-6 space-y-3 rounded-2xl bg-cvr-surface p-6">
-                  {quyDinh.quyDinhChung.map((r) => (
-                    <p key={r} className="text-sm leading-relaxed text-cvr-body">{r}</p>
-                  ))}
-                </div>
+                {/* Bấm mở như các khối quyền lợi (gọn, 22/10/2026) */}
+                <details className="group rounded-2xl bg-cvr-surface">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-5 py-4 [&::-webkit-details-marker]:hidden">
+                    <h2 className="text-[20px] font-semibold tracking-tight text-cvr-ink sm:text-[24px]">Quy định chung</h2>
+                    <svg className="h-4 w-4 shrink-0 text-cvr-muted transition group-open:rotate-180" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                  </summary>
+                  <div className="space-y-3 px-5 pb-5">
+                    {quyDinh.quyDinhChung.map((r) => (
+                      <p key={r} className="text-sm leading-relaxed text-cvr-body">{r}</p>
+                    ))}
+                  </div>
+                </details>
               </section>
 
               {/* LIÊN HỆ */}
@@ -522,19 +533,28 @@ function DongGia({ prices }: { prices: PriceLine[] }) {
 }
 
 // Thẻ QUYỀN LỢI một loại tin — chỉ chữ (không ảnh, không giá; giá ở bảng phía trên).
+// Mỗi cấp MỘT HÀNG bấm mở (thẻ cấp + hệ số, giống khối chọn gói ở form đăng tin) → quyền lợi + tin mẫu (22/10/2026).
 function QuyenLoiCap({ tierId, benefits, displays, mau }: { tierId: TierId; benefits: string[]; displays: string[]; mau: React.ReactNode }) {
   const t = getTier(tierId);
   return (
-    <article className="rounded-2xl border border-cvr-line bg-white p-5 shadow-lux sm:p-6" style={{ borderTop: `3px solid ${t.accent}` }}>
-      <h4 className="text-[17px] font-semibold tracking-tight" style={{ color: tierId === "basic" ? "#1d1d1f" : t.accent }}>{t.name}</h4>
-      <ul className="mt-3 space-y-2 text-sm leading-relaxed text-cvr-body">
-        {[...benefits, ...displays].map((d) => (
-          <li key={d} className="flex gap-2"><CheckIcon /> <span>{d}</span></li>
-        ))}
-      </ul>
-      {/* Tin mẫu: tin thật của hạng này, hiển thị đúng như trên sàn */}
-      {mau}
-    </article>
+    <details className="group rounded-2xl border border-cvr-line bg-white">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3.5 [&::-webkit-details-marker]:hidden">
+        <span className="flex min-w-0 items-center gap-2">
+          <span className="inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-semibold tracking-tight" style={{ backgroundColor: t.accent, color: t.badgeText }}>{t.name}</span>
+          <span className="whitespace-nowrap text-[12px] font-semibold text-cvr-muted">{t.heSoText}</span>
+        </span>
+        <svg className="h-4 w-4 shrink-0 text-cvr-muted transition group-open:rotate-180" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+      </summary>
+      <div className="px-4 pb-4">
+        <ul className="space-y-2 text-sm leading-relaxed text-cvr-body">
+          {[...benefits, ...displays].map((d) => (
+            <li key={d} className="flex gap-2"><CheckIcon /> <span>{d}</span></li>
+          ))}
+        </ul>
+        {/* Tin mẫu: tin thật của hạng này, hiển thị đúng như trên sàn */}
+        {mau}
+      </div>
+    </details>
   );
 }
 

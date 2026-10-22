@@ -26,6 +26,8 @@ import {
   purposeOfDemand, demandOfPurpose,
 } from "@/lib/listingSpec";
 import { typeGroupsFor, normalizeVi } from "@/lib/filters";
+import { khoaDuAn } from "@/lib/duAnTen";
+import { slugify } from "@/lib/contentAdmin";
 import { provinceNamesFor, districtsOf, wardsOf, wardsOfNew, wardsOfAny, chuanTen, type GeoMode } from "@/lib/locations";
 import { ganDiaGioi, type DiaGioiBanDo } from "@/lib/diaGioiTuBanDo";
 import ImagePicker from "@/components/admin/ImagePicker";
@@ -91,7 +93,7 @@ export default function PostListingForm() {
   // null = chưa biết; admin không phải qua bước này.
   const [soDaXacMinh, setSoDaXacMinh] = useState<boolean | null>(null);
   const [moXacMinh, setMoXacMinh] = useState(false); // hộp "Số điện thoại của bạn" bật lên khi bấm Đăng tin
-  useKhoaCuon(moXacMinh);
+  useKhoaCuon(moXacMinh, () => setMoXacMinh(false));
   const [soTaiKhoan, setSoTaiKhoan] = useState(""); // số của TÀI KHOẢN (khác số liên hệ trong tin)
 
   const [done, setDone] = useState<"" | "draft" | "pending" | "capNhat">("");
@@ -549,15 +551,15 @@ export default function PostListingForm() {
     apDungDiaGioi(dc, geoMode, province, district, ward);
   }
 
-  // Nạp danh sách dự án đã đăng — cho ô "Thuộc dự án"
+  // DANH SÁCH "THUỘC DỰ ÁN" = MỌI DỰ ÁN ĐÃ BIẾT (chủ dự án 22/10/2026: "cái nào có sẵn chọn, chưa có sẵn khách tự ghi — cấu
+  // trúc thế nào cho đúng"): dự án có hồ sơ + dự án khách khác đã ghi trong tin, gộp tên trùng theo tên lõi — cùng một nguồn
+  // với ô tìm (/api/du-an/ten, lưu đệm 1 giờ). Trước chỉ lấy bảng dự án → dự án khách ghi trước không có trong danh sách,
+  // khách sau ghi lại mỗi người một kiểu.
   useEffect(() => {
     (async () => {
-      const { data } = await createClient()
-        .from("projects")
-        .select("slug, name, province")
-        .eq("status", "published")
-        .order("name");
-      if (data) setProjectOptions(data as { slug: string; name: string; province: string | null }[]);
+      const r = await fetch("/api/du-an/ten").catch(() => null);
+      const ds = (await r?.json().catch(() => null)) as { ten: string; slug: string; tinh: string }[] | null;
+      if (ds) setProjectOptions(ds.map((d) => ({ slug: d.slug, name: d.ten, province: d.tinh })).sort((a, b) => a.name.localeCompare(b.name, "vi")));
     })();
   }, []);
 
@@ -693,11 +695,16 @@ export default function PostListingForm() {
   // Khách gõ tay tên dự án mà tên đó TRÙNG một dự án đã có trên web thì phải nối
   // thẳng vào dự án đó — slug là thứ bộ lọc "Dự án", trang dự án và mục "Tin liên
   // quan tại dự án" chạy theo; bỏ trống slug là tin nằm ngoài mọi liên kết đó.
+  // KHÁCH TỰ GHI TÊN (22/10/2026): trùng TÊN LÕI với dự án đã biết trong tỉnh (khác hoa thường, dấu, viết liền, có/không
+  // "Dự án", "Khu đô thị", tên thành phố) → nối vào dự án đó; tên mới → TỰ TẠO MÃ từ tên. Tin luôn có mã dự án → có trang dự
+  // án ngay (bậc 1, chưa cho Google lập chỉ mục), khách sau thấy trong danh sách để chọn; admin tạo hồ sơ cùng mã là trang
+  // dự án tự đầy đủ, tin tự về đúng trang.
   function slugDuAn(): string {
     if (projectSlug && projectSlug !== DU_AN_KHAC) return projectSlug;
-    const ten = normalizeVi(projectName.trim());
+    const ten = projectName.trim();
     if (!ten) return "";
-    return projectOptions.find((o) => normalizeVi(o.name) === ten)?.slug ?? "";
+    const k = khoaDuAn(ten);
+    return (duAnTrongTinh.find((o) => khoaDuAn(o.name) === k) ?? projectOptions.find((o) => khoaDuAn(o.name) === k))?.slug ?? slugify(ten);
   }
 
   // Dữ liệu chung cho THÊM MỚI, CẬP NHẬT và TỰ LƯU NHÁP (một chỗ, không lệch nhau).

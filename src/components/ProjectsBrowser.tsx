@@ -3,6 +3,7 @@
 import { useDiaDanh } from "@/lib/useDiaDanh";
 import { batDauTim, xongTim } from "@/components/VachTim";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useNutQuayLai } from "@/lib/khoaCuon";
 import PhanTrang from "@/components/PhanTrang";
 import Image from "next/image";
 import { chuThuan } from "@/lib/chuThuan";
@@ -107,6 +108,8 @@ export default function ProjectsBrowser({
   }, []);
   // MOBILE: chạm ô tìm → mở trang tìm TOÀN MÀN HÌNH (back + × + nút search) — như Mua bán.
   const [overlay, setOverlay] = useState(false);
+  // Nút Quay lại điện thoại đóng màn tìm, không rời trang (hàm chung, 22/10/2026); bấm dự án để sang trang → boQuaLui.
+  const boQuaLui = useNutQuayLai(overlay, () => setOverlay(false));
   const overlayInputRef = useRef<HTMLTextAreaElement | null>(null);
   // Panel gợi ý (PC): mở khi gõ, TẮT khi bấm ra ngoài hoặc nhấn Esc
   const [sugOpen, setSugOpen] = useState(false);
@@ -475,7 +478,7 @@ export default function ProjectsBrowser({
                 <Link
                   key={p.slug}
                   href={`/du-an/${p.slug}`}
-                  onClick={() => setOverlay(false)}
+                  onClick={() => { boQuaLui(); setOverlay(false); }}
                   className="flex flex-col rounded-lg px-2.5 py-2.5 active:bg-cvr-surface"
                 >
                   <span className="text-sm font-medium text-cvr-ink">{p.name}</span>

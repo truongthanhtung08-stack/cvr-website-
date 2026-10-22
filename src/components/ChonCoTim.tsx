@@ -48,7 +48,7 @@ export default function ChonCoTim({
 }) {
   useDiaDanh(); // địa danh nạp sau khi trang hiện — về tới thì vẽ lại (20/10/2026)
   const [mo, setMo] = useState(false);
-  useKhoaCuon(mo);
+  useKhoaCuon(mo, () => dong());
   const [q, setQ] = useState("");
   // Ô tìm ẨN mặc định (chủ dự án 15/10/2026): mở ra là danh sách để KÉO chọn — không bật bàn
   // phím che màn hình điện thoại. Muốn tìm thì bấm biểu tượng kính lúp mới hiện ô gõ.

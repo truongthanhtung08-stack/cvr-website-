@@ -42,7 +42,7 @@ export default function HopXacThucSo({
   /** Chỉ xác minh số của khách (vd để gửi đánh giá) — KHÔNG lấy số người đăng, không ghi lead. */
   chiXacMinh?: boolean;
 }) {
-  useKhoaCuon(true); // trang phía sau đứng yên khi hộp đang mở (22/10/2026)
+  useKhoaCuon(true, onDong); // trang phía sau đứng yên khi hộp đang mở; nút Quay lại điện thoại đóng hộp (22/10/2026)
   const [buoc, setBuoc] = useState<"sdt" | "ma">("sdt");
   const [sdt, setSdt] = useState("");
   const [ten, setTen] = useState("");

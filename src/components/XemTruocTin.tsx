@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { useNutQuayLai } from "@/lib/khoaCuon";
 import Gallery from "@/components/Gallery";
 import RichContent from "@/components/RichContent";
 import { getTier, type TierId } from "@/lib/packages";
@@ -28,6 +29,7 @@ export default function XemTruocTin({
   onDang: () => void;
   dangLuu: boolean;
 }) {
+  useNutQuayLai(true, onDong); // nút Quay lại điện thoại đóng lớp này, không rời trang (hàm chung, 22/10/2026)
   const l = du.listing;
   const d = du;
   const hang = getTier((tier || "basic") as TierId);

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useNutQuayLai } from "@/lib/khoaCuon";
 import { asset } from "@/lib/asset";
 import { videoEmbedUrl } from "@/lib/media";
 
@@ -37,6 +38,7 @@ export default function VideoToanManHinh({
   // Đóng lại thì báo về đang xem tới giây nào — khung nhỏ tua đúng chỗ đó, khách
   // không phải dò lại từ đầu.
   const dong = () => onClose(vRef.current?.currentTime);
+  useNutQuayLai(true, dong); // nút Quay lại điện thoại đóng lớp này, không rời trang (hàm chung, 22/10/2026)
 
   // VIDEO NGẮN: hai nút nằm nguyên đó. VIDEO DÀI (hơn 1 phút): xem được vài giây
   // thì nút lùi đi cho khỏi che hình, CHẠM một cái là hiện lại ngay.

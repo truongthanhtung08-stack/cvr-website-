@@ -34,6 +34,8 @@ export function HomeExpandProvider({ children }: { children: React.ReactNode }) 
   const [openKey, setOpenKey] = useState<string | null>(null);
   // Số bước lịch sử đã thêm — để bấm logo là nhả đúng bấy nhiêu bước.
   const depthRef = useRef(0);
+  const keyRef = useRef<string | null>(null);
+  useEffect(() => { keyRef.current = openKey; }, [openKey]);
 
   // TẢI LẠI TRANG (F5): địa chỉ có ?muc=<khoá> → mở lại đúng khối đó,
   // không văng về trang đầu như trước.
@@ -49,6 +51,9 @@ export function HomeExpandProvider({ children }: { children: React.ReactNode }) 
   useEffect(() => {
     const onPop = (e: PopStateEvent) => {
       const s = (e.state ?? {}) as SectionHistoryState;
+      // Lùi trang KHÔNG đổi khối (vd đóng bảng nổi bằng nút Quay lại của điện thoại — useNutQuayLai) → đứng yên,
+      // không kéo về đầu trang (22/10/2026).
+      if ((s.clSection ?? null) === keyRef.current && (s.clDepth ?? 0) === depthRef.current) return;
       setOpenKey(s.clSection ?? null);
       depthRef.current = s.clDepth ?? 0;
       window.scrollTo({ top: 0 });

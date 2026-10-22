@@ -13,7 +13,7 @@ const DONG_CHINH = 6; // thứ hạng · hệ số tiếp cận · vị trí · 
 
 export default function BangQuyenLoiNoi({ onDong }: { onDong: () => void }) {
   const qd = useQuyDinhGia();
-  useKhoaCuon(true);
+  useKhoaCuon(true, onDong);
   // Quyền lợi rất nhiều dòng (chủ dự án 22/10/2026): hiện các dòng CHÍNH trước (thứ tự admin), bấm "Xem thêm" mới hiện tiếp.
   const [xemHet, setXemHet] = useState(false);
   const dong = xemHet ? qd.bangQuyenLoi : qd.bangQuyenLoi.slice(0, DONG_CHINH);

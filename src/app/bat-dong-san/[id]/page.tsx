@@ -525,6 +525,21 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                       {duoi && (
                         <p className="mt-1 pl-[22px] text-[13px] text-cvr-faint">Địa chỉ cũ: {duoi}</p>
                       )}
+                      {/* DỰ ÁN = VỊ TRÍ (chủ dự án 22/10/2026: dự án là bất động sản NẰM Ở ĐÂU, không phải đặc điểm của căn/lô)
+                          — một dòng ngay dưới địa chỉ, bấm sang trang dự án (thông tin dự án → tin thuộc dự án → dự án tương tự).
+                          Khớp form đăng tin: "Thuộc dự án" nằm trong nhóm địa chỉ. Khối Đặc điểm không còn dòng "Dự án". */}
+                      {tenDuAn && (
+                        <p className="mt-1.5 flex items-start gap-1.5 text-[14px] leading-relaxed sm:text-[15px]">
+                          <svg className="mt-[3px] h-4 w-4 shrink-0 text-cvr-muted" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M4 21V5a1 1 0 011-1h9a1 1 0 011 1v16M15 9h4a1 1 0 011 1v11M3 21h18M8 8h3M8 12h3M8 16h3" /></svg>
+                          {slugDuAnTin ? (
+                            <Link href={`/du-an/${slugDuAnTin}`} className="min-w-0 font-medium text-cvr-blue-ink hover:underline">
+                              {/^dự áns/i.test(tenDuAn) ? tenDuAn : `Dự án ${tenDuAn}`} ›
+                            </Link>
+                          ) : (
+                            <span className="min-w-0 text-cvr-body">{/^dự áns/i.test(tenDuAn) ? tenDuAn : `Dự án ${tenDuAn}`}</span>
+                          )}
+                        </p>
+                      )}
                     </>
                   );
                 })()}
@@ -629,24 +644,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                     bộ mục chính của loại hình). Ở đây chỉ còn phần đặc điểm. */}
                 <div className="grid grid-cols-1 gap-x-8 sm:grid-cols-2">
                   <Row label="Loại hình" value={l.type} />
-                  {/* Tin thuộc dự án → hiện TÊN dự án. Dự án đã được tạo trong admin
-                      thì bấm sang trang dự án; chưa tạo vẫn hiện tên (chủ dự án cập
-                      nhật dự án sau), không để tên dự án rơi mất như trước. */}
-                  {tenDuAn && (
-                    <Row
-                      label="Dự án"
-                      value={
-                        // Có mã dự án là bấm được (21/10/2026): chưa có hồ sơ thì trang dự án bậc 1 dựng từ tin
-                        slugDuAnTin ? (
-                          <Link href={`/du-an/${slugDuAnTin}`} className="font-medium text-cvr-blue hover:underline">
-                            {tenDuAn}
-                          </Link>
-                        ) : (
-                          tenDuAn
-                        )
-                      }
-                    />
-                  )}
+                  {/* Dòng "Dự án" đã chuyển lên ngay dưới địa chỉ đầu tin (22/10/2026 — dự án là vị trí, không phải đặc điểm). */}
                   {d.specs.map((f) => <Row key={f.label} label={f.label} value={f.value} />)}
                   {/* Trống thì ẩn — không phơi "Chưa cập nhật" lên trang công khai (20/10/2026); thiếu thì VIỆC Cowork bổ sung */}
                   {d.legal && <Row label="Tình trạng pháp lý" value={d.legal} />}
@@ -833,7 +831,8 @@ function Section({ id, title, children }: { id?: string; title?: string; childre
     // scroll-mt-14 (56px) = CHỈ chừa thanh menu mục (~45px) + 11px — header + thanh quay lại đã do <html>
     // scroll-padding-top lo (globals.css). Trước đây scroll-mt-28 tính header hai lần → bấm menu xong tiêu đề
     // nằm cách thanh ~80px (chủ dự án 22/10/2026: "bấm chọn không hiện nội dung ngay đầu trang").
-    <section id={id} className="mt-5 scroll-mt-14 rounded-2xl bg-cvr-surface p-4 sm:p-5">
+    // empty:hidden — khối bên trong không có gì để hiện (vd Lịch sử giá chưa đủ số) thì KHÔNG vẽ khung xám trống (22/10/2026).
+    <section id={id} className="mt-5 scroll-mt-14 rounded-2xl bg-cvr-surface p-4 empty:hidden sm:p-5">
       {/* Không truyền title: khối tự dựng tiêu đề (Lịch sử giá đổi theo Mua bán / Cho thuê) */}
       {title && <h2 className="mb-4 text-[19px] font-semibold tracking-tight text-cvr-ink sm:text-[22px]">{title}</h2>}
       {children}

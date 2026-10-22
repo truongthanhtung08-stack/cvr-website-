@@ -43,7 +43,7 @@ export default function BangGiaGoiTin({
   const QUY_DINH = qd.quyDinhGoiTin;
   // Bấm "Đặc điểm" dưới tên cấp → xem mô tả quyền lợi + hiển thị của cấp đó (chủ dự án 10/10/2026)
   const [xemDacDiem, setXemDacDiem] = useState<TierId | null>(null);
-  useKhoaCuon(!!xemDacDiem);
+  useKhoaCuon(!!xemDacDiem, () => setXemDacDiem(null));
   const cot = THU_TU.map((id) => plans.find((p) => p.tierId === id)).filter((p): p is Plan => Boolean(p));
   const hang = [...new Set(cot.flatMap((p) => p.terms.map((t) => t.days)))].sort((a, b) => a - b);
   const hienGia = (gia: number) => (gomVat ? tachThue(gia).tongTra : gia);
@@ -64,8 +64,10 @@ export default function BangGiaGoiTin({
       {/* ĐIỆN THOẠI + ĐANG CHỌN GÓI (chủ dự án 22/10/2026: "thứ nhất chọn theo gói; muốn so sánh có nút khác; chọn thì xem
           lại nhanh, đơn giản để cân nhắc" — trang Báo giá đã có đủ thông tin). Bước 1: mỗi cấp tin một hàng (tên · hệ số · giá TỪ …).
           Bước 2: chạm một cấp → các mốc số ngày + giá đủ mở ngay dưới hàng đó; chạm mốc là chọn, chạm lại là bỏ.
-          So sánh quyền lợi: nút "So sánh các gói" ở đầu khối. Mọi số từ admin. Máy tính và trang báo giá giữ bảng. */}
-      {onChon && (
+          So sánh quyền lợi: nút "So sánh các gói" ở đầu khối. Mọi số từ admin. Máy tính giữ bảng.
+          TRANG BÁO GIÁ / chỉ xem (không onChon — 22/10/2026 "báo giá gọn, rõ"): điện thoại cũng dùng kiểu mỗi cấp một hàng thay
+          bảng ngang phải vuốt; mốc ngày chỉ để xem, không bấm chọn. */}
+      {(
           <div className="space-y-2 sm:hidden">
             {/* MỖI CẤP MỘT HÀNG, MỐC NGÀY MỞ NGAY DƯỚI HÀNG ĐÓ (chủ dự án 22/10/2026: 4 ô ở trên mà các mốc chạy xuống dưới cùng
                 thì dễ hiểu nhầm của cấp nào). Các mốc xếp lưới, thấy hết, không phải vuốt. */}
@@ -106,9 +108,10 @@ export default function BangGiaGoiTin({
                           <button
                             key={term.days}
                             type="button"
+                            disabled={!onChon}
                             aria-pressed={dangChon}
-                            onClick={() => (dangChon && onBoChon ? onBoChon() : onChon(p.tierId, term.days))}
-                            className={`min-w-0 rounded-xl border px-1 py-2 text-center transition ${dangChon ? "border-cvr-blue bg-cvr-blue/[0.08] ring-1 ring-cvr-blue" : "border-cvr-line bg-white"}`}
+                            onClick={() => onChon && (dangChon && onBoChon ? onBoChon() : onChon(p.tierId, term.days))}
+                            className={`min-w-0 rounded-xl border px-1 py-2 text-center transition disabled:cursor-default ${dangChon ? "border-cvr-blue bg-cvr-blue/[0.08] ring-1 ring-cvr-blue" : "border-cvr-line bg-white"}`}
                           >
                             <span className="block text-[12px] text-cvr-body">{term.days} ngày</span>
                             <span className="mt-0.5 block whitespace-nowrap text-[12.5px] font-semibold tabular-nums text-cvr-ink">{term.price > 0 ? vnd(hienGia(term.price)) : "0 ₫"}</span>
@@ -123,7 +126,7 @@ export default function BangGiaGoiTin({
             })}
           </div>
       )}
-      <div className={`${onChon ? "hidden sm:block " : ""}overflow-x-auto rounded-2xl border border-cvr-line bg-white shadow-lux`}>
+      <div className="hidden overflow-x-auto rounded-2xl border border-cvr-line bg-white shadow-lux sm:block">
         <table className="w-full min-w-[520px] border-collapse text-sm">
           <thead>
             <tr className="bg-cvr-surface">

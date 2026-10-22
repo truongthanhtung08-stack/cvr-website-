@@ -9,6 +9,7 @@ import ProjectNav from "@/components/ProjectNav";
 import ProjectNearby from "@/components/ProjectNearby";
 import ProjectSlider from "@/components/ProjectSlider";
 import { HomeExpandProvider, HomeCollapsible } from "@/components/HomeExpand";
+import DanhSachThuGon from "@/components/DanhSachThuGon";
 import FloorPlans from "@/components/FloorPlans";
 import PropertyCard from "@/components/PropertyCard";
 import RelatedListingsTabs from "@/components/RelatedListingsTabs";
@@ -233,19 +234,24 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
         <main className="flex-1 bg-white">
           <Breadcrumb items={[{ name: "Dự án", href: "/du-an" }, { name: coban.ten, href: `/du-an/${slug}` }]} />
           <div className="mx-auto max-w-7xl px-4 pb-footer sm:px-6 lg:px-8">
-            <h1 className="mt-3 text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">{coban.ten}</h1>
-            <p className="mt-1 text-sm text-cvr-muted">{coban.viTri}</p>
-            {/* Dự án bậc 1 (chỉ có tên từ tin) — câu chữ CHỜ CHỦ DỰ ÁN DUYỆT NGUYÊN VĂN (22/10/2026) */}
-            <p className="mt-3 rounded-xl bg-cvr-surface px-4 py-2.5 text-sm text-cvr-body">Thông tin dự án đang được cập nhật.</p>
-            <section id="tin-dang" className="scroll-mt-14">
-              <RelatedListingsTabs
-                ban={coban.tin.filter((x) => (x.purpose ?? "ban") === "ban")}
-                thue={coban.tin.filter((x) => (x.purpose ?? "ban") === "thue")}
-                tenDuAn={coban.ten}
-                title={`Tin mua bán liên quan tại dự án ${coban.ten}`}
-              />
-            </section>
+            {/* CẢ TRANG nằm trong HomeExpandProvider (22/10/2026: chủ dự án báo "nút bấm cứng đơ, không bấm được" — khối tin
+                dự án nằm NGOÀI bộ điều khiển "Xem thêm" nên bấm không có tác dụng). Mở danh sách → phần đầu tự ẩn như trang
+                dự án đầy đủ. */}
             <HomeExpandProvider>
+              <HomeCollapsible>
+                <h1 className="mt-3 text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">{coban.ten}</h1>
+                <p className="mt-1 text-sm text-cvr-muted">{coban.viTri}</p>
+                {/* Dự án bậc 1 (chỉ có tên từ tin) — câu chữ CHỜ CHỦ DỰ ÁN DUYỆT NGUYÊN VĂN (22/10/2026) */}
+                <p className="mt-3 rounded-xl bg-cvr-surface px-4 py-2.5 text-sm text-cvr-body">Thông tin dự án đang được cập nhật.</p>
+              </HomeCollapsible>
+              <section id="tin-dang" className="scroll-mt-14">
+                <RelatedListingsTabs
+                  ban={coban.tin.filter((x) => (x.purpose ?? "ban") === "ban")}
+                  thue={coban.tin.filter((x) => (x.purpose ?? "ban") === "thue")}
+                  tenDuAn={coban.ten}
+                  title={`Tin mua bán liên quan tại dự án ${coban.ten}`}
+                />
+              </section>
               {(() => { const tt = tuongTuDuAn(listings, coban.tin, coban.viTri); return (
                 <ListingShowcase items={tt.nhe} idsDayDu={tt.ids} sectionKey="bds-tuong-tu" title="Bất động sản tương tự" heading="Bất động sản tương tự" relevance emptyNote="Chưa có bất động sản tương tự." />
               ); })()}
@@ -451,14 +457,15 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               {/* 4) Tiện ích dự án */}
               {p.amenities.length > 0 && (
                 <Section id="tien-ich" title="Tiện ích dự án">
-                  <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+                  {/* Danh sách dài → 6 mục đầu + "Xem thêm" (gọn, 22/10/2026) */}
+                  <DanhSachThuGon className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
                     {p.amenities.map((a) => (
                       <span key={a} className="flex items-start gap-2.5 rounded-xl border border-cvr-line bg-white px-4 py-3 text-[15px] leading-snug text-cvr-body">
                         <svg className="mt-0.5 h-4 w-4 shrink-0 text-cvr-blue" fill="none" stroke="currentColor" strokeWidth={2.4} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                         <span className="min-w-0">{a}</span>
                       </span>
                     ))}
-                  </div>
+                  </DanhSachThuGon>
                 </Section>
               )}
 
@@ -476,7 +483,9 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                     </div>
                   ))}
                 </div>
-                <p className="mt-4 text-sm text-cvr-muted">Trạng thái hiện tại: <span className="font-semibold text-cvr-ink">{p.status}</span>{handover ? ` · Dự kiến bàn giao: ${handover}` : ""}</p>
+                {/* GỌN (chủ dự án 22/10/2026): bỏ dòng "Trạng thái hiện tại" — thanh tiến độ đã tô bước hiện tại, nhãn tình trạng
+                    có ở đầu trang. Chỉ ghi mốc bàn giao khi hồ sơ có. */}
+                {handover && <p className="mt-4 text-sm text-cvr-muted">Dự kiến bàn giao: <span className="font-semibold text-cvr-ink">{handover}</span></p>}
               </Section>
 
               {/* 6) Bảng giá — cấu trúc Loại căn – Diện tích – Hướng – Giá (ẩn/hiện giá) */}
@@ -504,14 +513,11 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
               {/* 7) Chủ đầu tư */}
               <Section id="chu-dau-tu" title="Chủ đầu tư">
-                <div className="flex items-start gap-4">
-                  {dev?.logo ? (
+                {/* GỌN (22/10/2026): có logo thì hiện logo nhỏ; KHÔNG có thì chỉ tên — bỏ ô chữ cái to thay logo. */}
+                <div className="flex items-center gap-3">
+                  {dev?.logo && (
                     /* eslint-disable-next-line @next/next/no-img-element */
-                    <img src={dev.logo} alt={p.developer} className="h-16 w-16 shrink-0 rounded-lg object-contain ring-1 ring-cvr-line" />
-                  ) : (
-                    <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg bg-cvr-surface text-xl font-bold text-cvr-ink ring-1 ring-cvr-line">
-                      {p.developer.trim()[0] ?? "C"}
-                    </div>
+                    <img src={dev.logo} alt={p.developer} className="h-12 w-12 shrink-0 rounded-lg bg-white object-contain ring-1 ring-cvr-line" />
                   )}
                   <div className="min-w-0 flex-1">
                     {laChuDauTuThat(p.developer) ? (
@@ -547,14 +553,17 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               <div className="sticky top-24 space-y-4">
                 {/* Điện thoại: hộp giá nằm cuối trang, lặp lại "Giá từ · Loại hình" ở đầu trang → chỉ hiện khi có liên hệ dự án;
                     máy tính giữ (cột phải dính theo khi cuộn) — 22/10/2026 */}
-                <div className={`rounded-2xl border border-cvr-line bg-white p-5 shadow-lux ${contact ? "" : "hidden lg:block"}`}>
-                  <p className="text-xs text-cvr-muted">{showPrice ? "Giá bán từ" : "Giá bán"}</p>
-                  <p className="text-2xl font-bold tracking-tight text-cvr-ink">{sidePrice}</p>
-                  <p className="mt-1 text-xs text-cvr-muted">{p.type}</p>
+                <div className={`rounded-2xl border border-cvr-line bg-white p-4 shadow-lux lg:p-5 ${contact ? "" : "hidden lg:block"}`}>
+                  {/* Điện thoại: giá + loại hình đã ở đầu trang → hộp chỉ còn người liên hệ + nút gọi (gọn, 22/10/2026). */}
+                  <div className="hidden lg:block">
+                    <p className="text-xs text-cvr-muted">{showPrice ? "Giá bán từ" : "Giá bán"}</p>
+                    <p className="text-2xl font-bold tracking-tight text-cvr-ink">{sidePrice}</p>
+                    <p className="mt-1 text-xs text-cvr-muted">{p.type}</p>
+                  </div>
 
                   {/* Liên hệ dự án — CHỈ hiện khi admin đã nhập (không bịa số tổng đài) */}
                   {contact && (
-                    <div className="mt-4 space-y-2.5">
+                    <div className="space-y-2.5 lg:mt-4">
                       {contact.name && (
                         <p className="text-sm font-semibold text-cvr-ink">{contact.name}</p>
                       )}

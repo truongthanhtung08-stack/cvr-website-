@@ -39,31 +39,48 @@ function laAndroid(): boolean {
 // hành chặn, mọi trang web đều vậy, không phải mình thiếu code. Thứ duy nhất web
 // gọi được là hộp thoại xin quyền của trình duyệt, mà hộp đó chỉ hiện khi khách
 // CHƯA từng bấm "Chặn". Đã bấm Chặn rồi thì chỉ còn cách chỉ họ tự bật.
-// Web mở dạng ỨNG DỤNG đã cài lên màn hình chính (PWA) — KHÔNG có thanh địa chỉ, nên không có ổ khoá để bấm.
-function laUngDung(): boolean {
-  if (typeof window === "undefined") return false;
-  return window.matchMedia?.("(display-mode: standalone)").matches || (navigator as { standalone?: boolean }).standalone === true;
-}
-
 // Web mở TRONG Zalo / Facebook / Messenger / Instagram / TikTok — trình duyệt trong app thường không cho trang dùng vị trí.
 function laTrongApp(): boolean {
   return typeof navigator !== "undefined" && /Zalo|FBAN|FBAV|FB_IAB|Messenger|Instagram|TikTok/i.test(navigator.userAgent);
 }
 
-// CÁCH BẬT THEO ĐÚNG CHỖ KHÁCH ĐANG MỞ WEB (chủ dự án 22/10/2026: "tôi bật định vị, bấm vào không ăn" — mở web dạng
-// ứng dụng / trong Zalo thì không có thanh địa chỉ, hướng dẫn cũ "bấm ổ khoá trên thanh địa chỉ" làm theo không được).
-//   ma 1 = máy đã nhớ "không cho phép" Coastal Land dùng vị trí · ma 2 = Vị trí của máy đang tắt.
-export function huongDanBatDinhVi(ma = 1): string[] {
+// Trình duyệt khách đang dùng — để chỉ đúng tên menu, đúng tên ứng dụng.
+function trinhDuyet(): "trongApp" | "samsung" | "chrome" | "khac" {
+  if (typeof navigator === "undefined") return "khac";
+  const ua = navigator.userAgent;
+  if (laTrongApp()) return "trongApp";
+  if (/SamsungBrowser/i.test(ua)) return "samsung";
+  if (/Chrome|CriOS|coc_coc/i.test(ua)) return "chrome";
+  return "khac";
+}
+
+// CÁCH BẬT THEO ĐÚNG TẦNG BỊ CHẶN + ĐÚNG TRÌNH DUYỆT (chủ dự án 22/10/2026: "nếu chặn thì hướng dẫn phải đúng — tôi là khách
+// đây mà xem hướng dẫn của bạn tôi làm theo không được"). Bị chặn có HAI TẦNG:
+//   · tang "trang"   — trình duyệt nhớ "không cho phép" coastalland.vn (quyền trang = denied) → gỡ trong cài đặt trang web;
+//   · tang "ungDung" — trang chưa bị chặn mà vẫn bị từ chối → chính ứng dụng (Chrome, Samsung Internet, Safari…) chưa được
+//                      điện thoại cho dùng vị trí → gỡ trong Cài đặt điện thoại → Ứng dụng.
+// Mở web bằng biểu tượng cài trên màn hình chính (Android) dùng chung quyền trang của Chrome → đi đường Chrome.
+//   ma 1 = bị từ chối · ma 2 = Vị trí của máy đang tắt.
+export function huongDanBatDinhVi(ma = 1, tang: "trang" | "ungDung" | "" = ""): string[] {
   if (ma === 2) {
     if (laIOS()) return ["Cài đặt → Quyền riêng tư & Bảo mật → Dịch vụ định vị: BẬT", "Quay lại, bấm nút định vị lần nữa"];
     if (laAndroid()) return ["Vuốt từ trên xuống, bấm biểu tượng Vị trí cho sáng lên", "Quay lại, bấm nút định vị lần nữa"];
     return ["Windows: Cài đặt → Quyền riêng tư và bảo mật → Vị trí: BẬT", "Quay lại, bấm nút định vị lần nữa"];
   }
-  if (laTrongApp()) return ["Bấm ⋯ ở góc trên → Mở bằng trình duyệt", "Trên trình duyệt, bấm nút định vị → Cho phép"];
-  if (laUngDung() && laAndroid()) return ["Giữ biểu tượng Coastal Land trên màn hình chính → Thông tin ứng dụng", "Quyền → Vị trí → Cho phép"];
-  if (laIOS()) return ["Cài đặt → Quyền riêng tư & Bảo mật → Dịch vụ định vị → Trang web Safari → Khi dùng ứng dụng", "Quay lại, bấm nút định vị lần nữa"];
-  if (laAndroid()) return ["Bấm ổ khoá 🔒 (hoặc ⓘ) cạnh địa chỉ web → Quyền → Vị trí → Cho phép", "Quay lại, bấm nút định vị lần nữa"];
-  return ["Bấm ổ khoá 🔒 cạnh địa chỉ web → Vị trí → Cho phép", "Bấm nút định vị lần nữa"];
+  const td = trinhDuyet();
+  if (td === "trongApp") return ["Bấm ⋯ ở góc trên → Mở bằng trình duyệt", "Trên trình duyệt, bấm nút định vị → Cho phép"];
+  if (laIOS()) {
+    if (tang === "ungDung") return ["Cài đặt → Quyền riêng tư & Bảo mật → Dịch vụ định vị → Trang web Safari → Khi dùng ứng dụng", "Quay lại, bấm nút định vị lần nữa"];
+    return ["Cài đặt → Ứng dụng → Safari → Vị trí → Cho phép", "Quay lại, bấm nút định vị lần nữa"];
+  }
+  if (laAndroid()) {
+    const ten = td === "samsung" ? "Samsung Internet" : "Chrome";
+    if (tang === "ungDung") return [`Cài đặt điện thoại → Ứng dụng → ${ten} → Quyền → Vị trí → Chỉ cho phép khi dùng ứng dụng`, "Quay lại, bấm nút định vị lần nữa"];
+    if (td === "samsung") return ["Bấm ≡ ở góc dưới → Cài đặt → Trang web và tải xuống → Quyền trang web → Vị trí", "Chọn coastalland.vn → Cho phép, rồi bấm nút định vị lần nữa"];
+    return ["Mở Chrome → ⋮ → Cài đặt → Cài đặt trang web → Vị trí", "Chọn coastalland.vn (mục Bị chặn) → Cho phép, rồi bấm nút định vị lần nữa"];
+  }
+  if (tang === "ungDung") return ["Windows: Cài đặt → Quyền riêng tư và bảo mật → Vị trí: BẬT (cả mục cho ứng dụng máy tính)", "Tải lại trang, bấm nút định vị lần nữa"];
+  return ["Bấm biểu tượng 🔒 hoặc ⓘ cạnh địa chỉ web → Vị trí → Cho phép", "Tải lại trang, bấm nút định vị lần nữa"];
 }
 
 // MỘT DÒNG NÓI VIỆC CẦN LÀM (không nói "bị chặn trên trình duyệt" — chủ dự án 22/10/2026: "câu nói rất vớ vẩn").

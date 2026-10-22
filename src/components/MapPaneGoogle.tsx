@@ -207,7 +207,7 @@ export default function MapPaneGoogle({
   // Nay khối XEM vị trí chạy nền mở (MapLibre + OpenFreeMap): miễn phí, không
   // khoá, kéo MỘT ngón trên điện thoại. Nút "Chỉ đường" vẫn mở app Google Maps.
   if (dungNhung) {
-    return <MapPaneMo query={query} zoom={zoom} cao={cao} />;
+    return <MapPaneMo query={query} zoom={zoom} cao={cao} trongTrang />;
   }
 
   return (

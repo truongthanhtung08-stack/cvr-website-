@@ -212,7 +212,7 @@ Tin ngừng hiển thị ngay, dữ liệu giữ nguyên — sau này bấm Đă
   // ngày đăng và hạn tính lại TỪ HÔM NAY, ngày còn dư của gói cũ bỏ.
   const [upCho, setUpCho] = useState<ListingRow | null>(null);
   const [upChon, setUpChon] = useState<{ tier: string; soNgay: number } | null>(null);
-  useKhoaCuon(!!muaCho || !!upCho);
+  useKhoaCuon(!!muaCho || !!upCho, () => { setMuaCho(null); setUpCho(null); });
   const [dangUp, setDangUp] = useState(false);
   // Tin đang có yêu cầu "Up khi nạp đủ tiền" (bảng up_cho, 0044)
   const [choUp, setChoUp] = useState<Set<string>>(new Set());

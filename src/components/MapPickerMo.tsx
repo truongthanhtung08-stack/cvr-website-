@@ -71,7 +71,7 @@ export default function MapPickerMo({
   // BẢN ĐỒ LỚN (chủ dự án 22/10/2026: "kéo bằng hai ngón rất mệt — dung hoà cả hai"): trong form một ngón là cuộn trang
   // (không vướng); bấm ⛶ thì bản đồ phủ kín màn hình, kéo bằng MỘT ngón, chạm để ghim, "Xong" là thu về.
   const [toan, setToan] = useState(false);
-  useKhoaCuon(toan);
+  useKhoaCuon(toan, () => setToan(false)); // khoá cuộn + nút Quay lại điện thoại thu bản đồ (hàm chung)
   const [hong, setHong] = useState(false);
   const [dangDinhVi, setDangDinhVi] = useState(false);
   const [dangTra, setDangTra] = useState(false);
@@ -229,8 +229,7 @@ export default function MapPickerMo({
 
   // Bản đồ lớn: tắt chế độ "một ngón là cuộn trang" để kéo bằng một ngón; thu về thì bật lại.
   // LỐI THOÁT (chủ dự án 22/10/2026: "mở ra thì phải tính cách thoát lại"): nút Xong · nút thu nhỏ · Esc (máy tính) ·
-  // NÚT QUAY LẠI CỦA ĐIỆN THOẠI = thu bản đồ, KHÔNG rời trang đăng tin (cùng cách bộ xem ảnh GallerySlideVideo).
-  const coBuocRef = useRef(false);
+  // NÚT QUAY LẠI CỦA ĐIỆN THOẠI = thu bản đồ, KHÔNG rời trang đăng tin (useKhoaCuon ở trên — hàm chung mọi bảng nổi).
   useEffect(() => {
     const map = mapRef.current;
     if (map) {
@@ -238,26 +237,10 @@ export default function MapPickerMo({
       else map.cooperativeGestures.enable();
       requestAnimationFrame(() => map.resize());
     }
-    if (!toan) {
-      if (coBuocRef.current) {
-        coBuocRef.current = false;
-        history.back();
-      }
-      return;
-    }
-    history.pushState(history.state, "");
-    coBuocRef.current = true;
-    const quayLai = () => {
-      coBuocRef.current = false;
-      setToan(false);
-    };
+    if (!toan) return;
     const esc = (e: KeyboardEvent) => { if (e.key === "Escape") setToan(false); };
-    window.addEventListener("popstate", quayLai);
     window.addEventListener("keydown", esc);
-    return () => {
-      window.removeEventListener("popstate", quayLai);
-      window.removeEventListener("keydown", esc);
-    };
+    return () => window.removeEventListener("keydown", esc);
   }, [toan]);
 
   // ── Dựng bản đồ một lần ──────────────────────────────────────────────────

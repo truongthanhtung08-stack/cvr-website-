@@ -67,11 +67,15 @@ export default function MapViewMo({ items, diem }: { items?: Listing[]; diem?: D
         style: STYLE_MO,
         center: [108.2022, 16.0544],
         zoom: 11,
+        // Dòng ghi nguồn thu thành nút (i), không chèn chữ "MapLibre" (22/10/2026); "© OpenStreetMap" giữ trong (i).
+        attributionControl: { compact: true },
       });
       mapRef.current = map;
-      map.addControl(new ml.NavigationControl({ showCompass: false }), "top-right");
+      // Điện thoại KHÔNG có +/− (chụm hai ngón để phóng to — chủ dự án 22/10/2026); máy tính giữ +/− (không chụm được).
+      if (window.matchMedia("(min-width: 640px)").matches) map.addControl(new ml.NavigationControl({ showCompass: false }), "top-right");
       map.on("load", () => {
         if (huy) return;
+        boxRef.current?.querySelector(".maplibregl-ctrl-attrib")?.classList.remove("maplibregl-compact-show");
         vietHoaNhan(map);
         setSanSang(true);
       });
