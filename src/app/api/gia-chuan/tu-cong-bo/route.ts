@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { congBoTin, congBoHoiVien, docBillingLuu } from "@/lib/congBoGia";
 import { baoLoi } from "@/lib/baoLoi";
+import { homNayVn } from "@/lib/gioVn";
 
 // ════════════════════════════════════════════════════════════════════════════
 // TỰ CÔNG BỐ LẠI GIÁ LÚC 0H GIỜ VN (vercel.json, chủ dự án chốt 01/10/2026)
@@ -39,7 +40,7 @@ export async function GET(request: Request) {
       chiTiet: hong.map(([k, v]) => `${k}: ${v}`).join(" · "),
       hauQua: "Khuyến mãi có ngày bắt đầu / kết thúc có thể chưa áp đúng ngày.",
       canLam: "Vào /admin/gia-chuan bấm Công bố lại.",
-      khoa: `tu-cong-bo-gia:${new Date().toISOString().slice(0, 10)}`,
+      khoa: `tu-cong-bo-gia:${homNayVn()}`,
     });
   }
   return NextResponse.json({ ok: hong.length === 0, ...kq });

@@ -159,7 +159,7 @@ function O({ nhan, giaTri }: { nhan: string; giaTri: string }) {
 }
 
 function ngayVn(iso: string): string {
-  return new Date(iso).toLocaleDateString("vi-VN");
+  return new Date(iso).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" });
 }
 
 // CSV có BOM để Excel không vỡ dấu tiếng Việt.

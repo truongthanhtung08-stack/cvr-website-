@@ -5,6 +5,10 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import LeadForm from "@/components/LeadForm";
 import PricingSidebar, { type SidebarGroup } from "@/components/PricingSidebar";
+import TinHienThiMau from "@/components/TinHienThiMau";
+import NhanGoi from "@/components/NhanGoi";
+import BangDacDiem from "@/components/BangDacDiem";
+import KhungCuonNgang from "@/components/KhungCuonNgang";
 import { ProjectCard, ProjectRow } from "@/components/ProjectSlider";
 import { getProjects } from "@/lib/contentDb";
 import type { Project } from "@/lib/data";
@@ -14,6 +18,7 @@ import { bangTheoMucDich, bangUp, goiPr, ghiChuPr, bangBanner, giaTra, priceLine
 import BangGiaGoiTin from "@/components/BangGiaGoiTin";
 import BangGiaDayTin from "@/components/BangGiaDayTin";
 import NutMucDichGia from "@/components/NutMucDichGia";
+import TheGoiBaoGia, { DAT_THE_TRUOC } from "@/components/TheGoiBaoGia";
 import GoiHoiVienCards, { DieuKienHoiVien } from "@/components/GoiHoiVienCards";
 
 export const metadata: Metadata = {
@@ -56,26 +61,41 @@ const pjPkgs = [
 
 // Menu sidebar — CHỈ dịch vụ + giá. Công cụ tiện ích (giá đất Nhà nước, so sánh…)
 // KHÔNG thuộc báo giá — đã gỡ khỏi trang này (01/10/2026), vẫn ở menu Tiện ích.
-// Cùng các mục với menu Báo giá trên đầu trang (Header.tsx) — hai nơi luôn khớp nhau.
+// CÂY MỤC GIỐNG HỆT menu Báo giá trên đầu web (Header.tsx) — chủ dự án 22/10/2026 tối: "menu tổng Báo giá, trong có các mục
+// con — bấm vào đâu ra phần ấy, bấm vào tổng ra tổng". Mỗi gói: tên gói (bấm ra cả gói) → Bảng giá · Đặc điểm · Quy định.
+// Bảng nào admin duyệt thêm (hội viên, dự án, PR, banner) thì tự có mục.
 const nhomDichVu = (coHoiVien: boolean, da: Set<string> = new Set()): SidebarGroup[] => [
   {
-    // MỘT KHỐI, CÙNG THỨ TỰ + TÊN với menu Báo giá trên đầu web (Header.tsx) — chủ dự án 22/10/2026 tối. Bảng nào admin
-    // duyệt thêm (hội viên, dự án, PR, banner) thì tự có mục.
-    title: "",
+    title: "Gói đăng tin",
+    href: "#bang-gia-tin",
     items: [
-      { label: "Gói tin đăng CVR", href: "#bang-gia-tin" },
-      { label: "Gói đẩy tin", href: "#goi-day-tin" },
-      ...(coHoiVien ? [{ label: "Gói hội viên", href: "#goi-hoi-vien" }] : []),
-      ...(da.has("du-an") ? [{ label: "Gói dự án", href: "#goi-du-an" }] : []),
-      ...(da.has("pr") ? [{ label: "Bài PR", href: "#goi-pr" }] : []),
-      ...(da.has("banner") ? [{ label: "Banner", href: "#goi-banner" }] : []),
-      { label: "Quy định chung", href: "#quy-dinh" },
-      { label: "Nhận báo giá", href: "#lien-he" },
+      { label: "Bảng giá", href: "#gia-goi-tin" },
+      { label: "Mẫu tin hiển thị", href: "#minh-hoa" },
+      { label: "Đặc điểm chi tiết", href: "#dac-diem" },
+      { label: "Quy định", href: "/quy-dinh#quy-dinh-goi-tin" },
     ],
   },
+  {
+    title: "Gói đẩy tin",
+    href: "#goi-day-tin",
+    items: [
+      { label: "Bảng giá", href: "#gia-day-tin" },
+      { label: "Quy định", href: "/quy-dinh#quy-dinh-day-tin" },
+    ],
+  },
+  ...(coHoiVien ? [{ title: "Gói hội viên", href: "#goi-hoi-vien", items: [] }] : []),
+  ...(da.has("du-an") ? [{ title: "Gói dự án", href: "#goi-du-an", items: [] }] : []),
+  ...(da.has("pr") ? [{ title: "Bài PR", href: "#goi-pr", items: [] }] : []),
+  ...(da.has("banner") ? [{ title: "Banner", href: "#goi-banner", items: [] }] : []),
 ];
 
 
+// ═══════════════ VÍ DỤ MINH HOẠ TỪNG LOẠI TIN ═══════════════
+// Chủ dự án chốt 01/10/2026: CHỈ LẤY ẢNH THẬT (ảnh chuẩn nhất của tin thật đang ở đúng
+// hạng), KHÔNG dùng tiêu đề / thông tin của tin thật — tiêu đề là VÍ DỤ chuẩn SEO
+// (loại giao dịch · loại nhà · đặc điểm · đường/khu · phường · tỉnh). Ảnh lưu CỐ ĐỊNH ở đây
+// nên tin VIP hết hạn thì minh hoạ vẫn còn (ảnh trong kho không bị xoá khi tin hết hạn).
+// Ảnh chọn bằng mắt 01/10: bỏ ảnh bìa là băng rôn khuyến mãi / ảnh cận đồ trang trí.
 // ═══════════════ TRANG ═══════════════
 // Thẻ tin minh hoạ từng cấp = TIN THẬT mới nhất của cấp đó trong Supabase
 // (không còn tin/ảnh mẫu cứng). Đăng hoặc sửa tin trong admin → trang này tự đổi theo.
@@ -113,51 +133,87 @@ export default async function BaoGiaPage() {
     allProjects.find((x) => (x.tier ?? "basic") === id) ?? null;
 
 
-  // Chú thích (*) (**) (***) của bảng đặc điểm → ngay dưới bảng (trước nằm cuối trang, xa bảng — chủ dự án 22/10/2026)
-  const laChuThich = (s: string) => /^\(\*+\)/.test(s.trim());
-  const chuThich = quyDinh.quyDinhChung.filter(laChuThich);
-  const quyDinhKhac = quyDinh.quyDinhChung.filter((s) => !laChuThich(s));
+  // QUY ĐỊNH MỘT CHỖ = trang Quy định đăng tin (/quy-dinh — đọc admin). Ở đây chỉ chú thích (*) (**) (***) giải nghĩa dòng
+  // trong bảng đặc điểm → ngay dưới bảng.
+  const chuThich = quyDinh.quyDinhChung.filter((s) => /^\(\*+\)/.test(s.trim()));
 
   return (
     <>
       <Header />
       <main className="flex-1 bg-white">
-        {/* CẤU TRÚC THEO MENU BÁO GIÁ (chủ dự án 22/10/2026 tối: "từ cái menu tổng gồm những gì, web có những báo giá nào thì làm
-            cái đấy — nội dung mọi thứ đã có, cấu trúc lại giao diện"): Gói tin đăng CVR · Gói đẩy tin · Quy định chung · Nhận
-            báo giá — cùng thứ tự, cùng tên với menu trên đầu web và cột menu bên trái. Mỗi phần MỘT bảng, mở sẵn, không phải bấm. */}
+        {/* CẤU TRÚC = CÂY MENU BÁO GIÁ (chủ dự án 22/10/2026 tối): Báo giá → Gói tin đăng CVR (Bảng giá · Đặc điểm · Quy định) →
+            Gói đẩy tin (Bảng giá · Quy định). Bấm mục nào trên menu đầu web / cột menu trái là tới đúng phần đó; bấm "Báo giá"
+            ra đầu trang. Cuối trang: Nhận báo giá. */}
         <div className="mx-auto max-w-7xl px-4 pb-12 pt-5 sm:px-6 lg:px-8 lg:pb-16 lg:pt-10">
           {/* Điện thoại: thanh tiêu đề trên cùng đã ghi "Báo giá dịch vụ" → tiêu đề này chỉ để Google đọc (không hiện lặp); máy tính hiện */}
           <h1 className="sr-only lg:not-sr-only lg:text-[34px] lg:font-semibold lg:leading-tight lg:tracking-tight lg:text-cvr-ink">Báo giá dịch vụ</h1>
           <div className="grid grid-cols-1 gap-6 lg:mt-8 lg:grid-cols-[220px_1fr] lg:gap-12">
             <PricingSidebar groups={nhomDichVu(coHv, daDuyet)} />
 
-            <div className="min-w-0 space-y-12 sm:space-y-14">
-              {/* Nút gạt Tin bán | Tin cho thuê đổi `data-md` của khung này → mọi con số trong hai bảng đổi theo (NutMucDichGia) */}
-              <div id="vung-bang-gia" data-md="ban" className="group/gia">
-                {coThue && <NutMucDichGia />}
+            <div className="min-w-0 space-y-14 sm:space-y-16">
+              {/* Nút gạt Tin bán | Tin cho thuê (ngay cạnh chữ "Bảng giá" của từng gói) đổi `data-md` của khung này → mọi con số
+                  trong hai bảng giá đổi theo, hai nút luôn khớp nhau (NutMucDichGia) */}
+              {/* data-goi: thẻ gói đang chọn (TheGoiBaoGia) · data-md: Tin bán | Tin cho thuê (NutMucDichGia) */}
+              <div id="vung-bang-gia" data-md="ban" data-goi="tin" className="group/gia group/goi" suppressHydrationWarning>
+                <script dangerouslySetInnerHTML={{ __html: DAT_THE_TRUOC }} />
+                <TheGoiBaoGia />
 
-                <section id="bang-gia-tin" className={`scroll-mt-24 ${coThue ? "mt-6" : ""}`}>
-                  <SectionTitle title="Gói tin đăng CVR" desc="" />
-                  {/* MỘT BẢNG: giá theo số ngày ở trên, đặc điểm hiển thị (bảng quyền lợi admin, đủ mọi dòng) ở dưới — cùng cột loại tin */}
-                  <div id="dac-diem" className="mt-5 scroll-mt-24">
-                    <div className={coThue ? "group-data-[md=thue]/gia:hidden" : ""}><BangGiaGoiTin plans={bangBan.plans} trangBaoGia dacDiem={quyDinh.bangQuyenLoi} /></div>
-                    {coThue && <div className="hidden group-data-[md=thue]/gia:block"><BangGiaGoiTin plans={bangThue.plans} trangBaoGia dacDiem={quyDinh.bangQuyenLoi} /></div>}
-                  </div>
-                  {chuThich.length > 0 && <DanhSach ds={chuThich} nho className="mt-2" />}
-                  <a href="/dang-tin" className={`mt-5 ${NUT_CHINH}`}>
+                {/* ═══ GÓI TIN ĐĂNG CVR ═══ */}
+                {/* ═══ THẺ "GÓI ĐĂNG TIN" — tên gói đã ở thẻ chọn phía trên nên tiêu đề chỉ để Google đọc ═══ */}
+                <section id="bang-gia-tin" className="mt-2 scroll-mt-4 group-data-[goi=day]/goi:hidden">
+                  <h2 className="sr-only">Gói đăng tin</h2>
+
+                  <PhanCon id="gia-goi-tin" tieuDe="Bảng giá" dau phai={coThue && <NutMucDichGia />}>
+                    <div className={coThue ? "group-data-[md=thue]/gia:hidden" : ""}><BangGiaGoiTin plans={bangBan.plans} kieuBaoGia /></div>
+                    {coThue && <div className="hidden group-data-[md=thue]/gia:block"><BangGiaGoiTin plans={bangThue.plans} kieuBaoGia /></div>}
+                  </PhanCon>
+
+                  {quyDinh.bangQuyenLoi.length > 0 && (
+                    <PhanCon id="minh-hoa" tieuDe="Mẫu tin hiển thị">
+                      {/* THẺ MẪU TỪNG CẤP ngay dưới bảng giá — tiêu đề "Tin hiển thị" (chủ dự án 22/10/2026 tối: "câu hình minh hoạ = Tin
+                          hiển thị"), KHÔNG tên gói phía trên thẻ ("tên gói và dấu VIP như thế là trùng lặp" — huy hiệu cấp nằm sẵn trên
+                          ảnh thẻ). Thẻ tin thật của web, vuốt qua lại; nút ‹ › nằm trên dải. */}
+                      <TinHienThiMau />
+                    </PhanCon>
+                  )}
+
+                  {/* Khối 2: ĐẶC ĐIỂM CHI TIẾT = bảng so sánh (dùng chung với hộp so sánh ở bước chọn gói khi đăng tin) + chú thích (*).
+                      Chữ quyền lợi từng gói (trước nằm dưới hình) trùng bảng này nên bỏ — câu nào bảng chưa có thì thêm dòng trong admin. */}
+                  {quyDinh.bangQuyenLoi.length > 0 && (
+                    <PhanCon id="dac-diem" tieuDe="Đặc điểm chi tiết">
+                      <KhungCuonNgang>
+                        <BangDacDiem dong={quyDinh.bangQuyenLoi} />
+                      </KhungCuonNgang>
+                      {chuThich.length > 0 && <DanhSach ds={chuThich} nho className="mt-3" />}
+                    </PhanCon>
+                  )}
+
+                  {/* Quy định: chỉ tên, bấm vào tới phần của gói này trong trang Quy định đăng tin — quy định một chỗ */}
+                  <LinkQuyDinh href="/quy-dinh#quy-dinh-goi-tin" />
+
+                  <a href="/dang-tin" className={`mt-8 ${NUT_CHINH}`}>
                     Đăng tin
                     <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
                   </a>
                 </section>
 
-                <section id="goi-day-tin" className="mt-12 scroll-mt-24 sm:mt-14">
-                  <SectionTitle title="Gói đẩy tin" desc="Đưa tin đang hiển thị lên đầu trong cùng loại tin." />
-                  <div className="mt-5">
+                {/* ═══ GÓI ĐẨY TIN — cùng bố cục ═══ */}
+                {/* ═══ THẺ "GÓI ĐẨY TIN" — cùng bố cục ═══ */}
+                <section id="goi-day-tin" className="mt-2 hidden scroll-mt-4 group-data-[goi=day]/goi:block">
+                  <h2 className="sr-only">Gói đẩy tin</h2>
+                  {/* Câu nói đúng chức năng đẩy tin (chủ dự án 22/10/2026 tối: "sửa cả nội dung cho đúng chức năng") — cơ chế: tin đang hiển thị
+                      lên đầu danh sách cùng loại tin, thẻ ghi "Làm mới …" theo giờ đẩy, ngày đăng + thời hạn giữ nguyên (docs/BAN-GIAO-CO-CHE-UP-DAY-TIN.md) */}
+                  <p className="mx-auto mt-4 max-w-xl text-center text-sm leading-relaxed text-cvr-muted">Đưa tin lên đầu danh sách cùng loại tin, giữ nguyên ngày đăng và thời hạn.</p>
+
+                  <PhanCon id="gia-day-tin" tieuDe="Bảng giá" dau phai={coThue && <NutMucDichGia />}>
                     <div className={coThue ? "group-data-[md=thue]/gia:hidden" : ""}><BangGiaDayTin rows={upRows} trangBaoGia /></div>
                     {coThue && <div className="hidden group-data-[md=thue]/gia:block"><BangGiaDayTin rows={upRowsThue} trangBaoGia /></div>}
-                  </div>
+                  </PhanCon>
+
+                  <LinkQuyDinh href="/quy-dinh#quy-dinh-day-tin" />
+
                   {/* Khách muốn đẩy tin vào đâu (chủ dự án 09/10/2026): Tin đăng của tôi → nút Đẩy tin ở từng tin */}
-                  <a href="/tai-khoan/tin-dang" className={`mt-5 ${NUT_CHINH}`}>
+                  <a href="/tai-khoan/tin-dang" className={`mt-8 ${NUT_CHINH}`}>
                     Đẩy tin của tôi
                     <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
                   </a>
@@ -166,7 +222,7 @@ export default async function BaoGiaPage() {
 
               {/* 4. GÓI HỘI VIÊN — mua theo tháng, voucher mỗi 30 ngày (cơ chế Batdongsan) */}
               {coHv && (
-                <section id="goi-hoi-vien" className="scroll-mt-24">
+                <section id="goi-hoi-vien" className="scroll-mt-4">
                   <SectionTitle no="03" title="Gói Hội viên" desc="Dành cho môi giới đăng tin thường xuyên." />
                   <div className="mt-6">
                     <GoiHoiVienCards goi={goiHoiVien} />
@@ -177,7 +233,7 @@ export default async function BaoGiaPage() {
 
               {/* 4. GÓI DỰ ÁN */}
 {daDuyet.has("du-an") && (
-              <section id="goi-du-an" className="scroll-mt-24">
+              <section id="goi-du-an" className="scroll-mt-4">
                 <SectionTitle no={so(3)} title="Gói Dự án" desc="Vị trí dự án nổi bật dành cho chủ đầu tư và đại lý phân phối." />
                 <div className="mt-6 space-y-6">
                   {pjPkgs.map((p) => (
@@ -197,7 +253,7 @@ export default async function BaoGiaPage() {
 
               {/* 5. GÓI BÀI PR */}
 {daDuyet.has("pr") && (
-              <section id="goi-pr" className="scroll-mt-24">
+              <section id="goi-pr" className="scroll-mt-4">
                 <SectionTitle no={so(4)} title="Gói bài PR" desc="Bài viết truyền thông trên chuyên mục Tin tức — tăng độ tin cậy và nhận diện thương hiệu." />
                 <div className="mt-6 grid grid-cols-1 gap-5 md:grid-cols-3">
                   {prPkgs.map((p) => {
@@ -235,7 +291,7 @@ export default async function BaoGiaPage() {
 
               {/* 6. GÓI BANNER */}
 {daDuyet.has("banner") && (
-              <section id="goi-banner" className="scroll-mt-24">
+              <section id="goi-banner" className="scroll-mt-4">
                 <SectionTitle no={so(5)} title="Gói Banner quảng cáo" desc="Vị trí banner nổi bật trên Trang chủ và các trang danh sách — tiếp cận toàn bộ khách truy cập." />
                 {bannerTables.map((tbl) => (
                   <div key={tbl.title} className="mt-7">
@@ -272,30 +328,13 @@ export default async function BaoGiaPage() {
               </section>
               )}
 
-              {/* QUY ĐỊNH CHUNG — một chỗ, mở sẵn (trước là khối gập phải bấm). Quy định chung trước, rồi từng gói. */}
-              <section id="quy-dinh" className="scroll-mt-24">
-                <SectionTitle title="Quy định chung" desc="" />
-                <div className="mt-5 space-y-6">
-                  {quyDinhKhac.length > 0 && <DanhSach ds={quyDinhKhac} />}
-                  {[
-                    { ten: "Gói tin đăng CVR", ds: quyDinh.quyDinhGoiTin },
-                    { ten: "Gói đẩy tin", ds: quyDinh.quyDinhDayTin },
-                  ].filter((n) => n.ds.length).map((n) => (
-                    <div key={n.ten}>
-                      <TieuDeKhoi>{n.ten}</TieuDeKhoi>
-                      <DanhSach ds={n.ds} className="mt-2.5" />
-                    </div>
-                  ))}
-                </div>
-              </section>
-
               {/* NHẬN BÁO GIÁ */}
-              <section id="lien-he" className="scroll-mt-24">
+              <section id="lien-he" className="scroll-mt-4">
                 <SectionTitle title="Nhận báo giá và tư vấn" desc="Để lại thông tin, chuyên viên Coastal Land liên hệ trong 5 phút." />
                 <div className="mt-5 max-w-2xl">
                   <LeadForm
                     cta="Nhận báo giá ngay"
-                    topics={["Gói tin đăng CVR", "Gói Đẩy tin", "Gói Dự án", "Gói bài PR", "Gói Banner", "Khác"]}
+                    topics={["Gói đăng tin", "Gói đẩy tin", "Gói Dự án", "Gói bài PR", "Gói Banner", "Khác"]}
                   />
                 </div>
               </section>
@@ -330,11 +369,41 @@ function DanhSach({ ds, nho, className = "" }: { ds: string[]; nho?: boolean; cl
   );
 }
 
-function TieuDeKhoi({ children }: { children: React.ReactNode }) {
-  return <h3 className="text-[17px] font-semibold tracking-tight text-cvr-ink">{children}</h3>;
+// MỘT PHẦN CON trong gói (Bảng giá · Đặc điểm · Quy định) — đúng mục con của menu Báo giá: tiêu đề nhỏ (+ nút bên phải nếu có)
+// + nội dung, cách đều nhau. `id` = neo để menu bấm tới.
+function PhanCon({ tieuDe, id, dau, phai, children }: { tieuDe: string; id?: string; dau?: boolean; phai?: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <div id={id} className={`${dau ? "mt-6" : "mt-10"} ${id ? "scroll-mt-4" : ""}`}>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <TieuDeKhoi>{tieuDe}</TieuDeKhoi>
+        {phai}
+      </div>
+      <div className="mt-3">{children}</div>
+    </div>
+  );
 }
 
-const NUT_CHINH = "btn-dangtin inline-flex h-11 items-center justify-center gap-2 rounded-lg px-5 text-sm font-bold text-white transition active:scale-[0.99]";
+// "Quy định" trong mỗi gói — CHỈ TÊN, bấm vào tới phần quy định của gói đó trong trang Quy định đăng tin (footer). Quy định
+// thống nhất MỘT chỗ (chủ dự án 22/10/2026 tối: "chỉ đưa vào tên, bấm vào ra menu này — thống nhất một cái"). Cùng cỡ chữ với
+// tiêu đề Bảng giá · Đặc điểm để ba mục con của gói ngang hàng nhau.
+function LinkQuyDinh({ href }: { href: string }) {
+  return (
+    <Link href={href} className={`mt-10 w-fit hover:underline ${KIEU_MUC_CHINH}`}>
+      Quy định
+      <svg className="h-4 w-4 text-cvr-muted" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+    </Link>
+  );
+}
+
+// Mục chính trong gói (Bảng giá · Tin hiển thị · Đặc điểm chi tiết · Quy định): chữ to đậm + vạch vàng thương hiệu bên trái — nổi
+// khác hẳn chữ thường (chủ dự án 22/10/2026 tối: "các mục chính … cho khác").
+const KIEU_MUC_CHINH = "flex items-center gap-2.5 text-[18px] font-bold tracking-tight text-cvr-ink before:h-[18px] before:w-[3px] before:rounded-full before:bg-cvr-gold before:content-['']";
+function TieuDeKhoi({ children }: { children: React.ReactNode }) {
+  return <h3 className={KIEU_MUC_CHINH}>{children}</h3>;
+}
+
+// Nút đen gọn hơn (chủ dự án 23/10/2026: "các nút CTA màu đen hơi to — Đẩy tin, Đăng tin, Nhận báo giá")
+const NUT_CHINH = "btn-dangtin inline-flex h-10 items-center justify-center gap-1.5 rounded-lg px-4 text-[13.5px] font-semibold text-white transition active:scale-[0.99]";
 
 // Thẻ gói dịch vụ 2 cột: nội dung + bảng giá (khung Homedy, chất liệu Apple)
 function PkgCard({

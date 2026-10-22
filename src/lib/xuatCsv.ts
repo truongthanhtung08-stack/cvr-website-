@@ -1,3 +1,4 @@
+import { homNayVn } from "@/lib/gioVn";
 // Xuất / đọc tệp CSV mở được bằng Excel — để chủ dự án tự làm báo cáo thống kê
 // và nhập số hàng loạt mà không phải vào Supabase gõ lệnh.
 //
@@ -87,5 +88,5 @@ export function tachBangCsv(text: string): string[][] {
 
 /** Ngày hôm nay dạng 2026-09-11 — gắn vào tên tệp cho khỏi lẫn các lần tải. */
 export function homNay(): string {
-  return new Date().toISOString().slice(0, 10);
+  return homNayVn();
 }

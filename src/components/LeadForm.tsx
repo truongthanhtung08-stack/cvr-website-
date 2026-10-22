@@ -139,7 +139,7 @@ export default function LeadForm({
         type="button"
         onClick={gui}
         disabled={dangGui}
-        className="btn-dangtin mt-2.5 flex h-11 w-full items-center justify-center gap-2 rounded-lg px-6 text-sm font-bold text-white disabled:opacity-50"
+        className="btn-dangtin mt-2.5 flex h-10 w-full items-center justify-center gap-1.5 rounded-lg px-6 text-[13.5px] font-semibold text-white disabled:opacity-50 @md:w-auto @md:px-8"
       >
         {dangGui ? "Đang gửi…" : cta}
       </button>

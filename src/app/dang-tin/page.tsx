@@ -15,7 +15,7 @@ export default function DangTinPage() {
     <>
       <Header />
       <main className="flex-1 bg-white">
-        <div className="mx-auto w-full max-w-4xl overflow-x-clip px-4 pt-5 pb-footer sm:px-6 sm:pt-8 lg:px-8">
+        <div className="mx-auto w-full max-w-4xl overflow-x-clip px-4 pt-5 pb-footer sm:px-6 sm:pt-8 lg:max-w-6xl lg:px-8">
           {/* Tiêu đề gọn (chủ dự án 22/10/2026: "Tạo tin đăng", bớt khoảng trắng trên dưới) */}
           <h1 className="text-center text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">Tạo tin đăng</h1>
 

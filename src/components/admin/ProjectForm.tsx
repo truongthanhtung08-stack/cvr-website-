@@ -28,6 +28,7 @@ import {
 } from "@/lib/contentAdmin";
 import { directions } from "@/lib/listingSpec";
 import { Panel, Field } from "@/components/Ui";
+import { homNayVn } from "@/lib/gioVn";
 
 // Nhãn gợi ý cho bảng "Quy mô dự án" (sửa tự do được)
 const DEFAULT_SCALE: ProjectScaleItem[] = [
@@ -107,7 +108,7 @@ export default function ProjectForm({
         data: billing,
         tierId: tier,
         days: soNgay,
-        today: new Date().toISOString().slice(0, 10),
+        today: homNayVn(),
       }),
     [billing, tier, soNgay],
   );

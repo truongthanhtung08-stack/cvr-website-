@@ -4,9 +4,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { Map as MlMap, Marker as MlMarker } from "maplibre-gl";
 import type { Listing } from "@/lib/data";
 import { napMapLibre, STYLE_MO, vietHoaNhan } from "@/lib/banDoMo";
-import { parseLatLng } from "@/lib/googleMaps";
 import { coordOf } from "@/lib/geo";
 import type { DiemBanDo } from "@/components/MapViewGoogle";
+import { diemTuTin } from "@/lib/diemBanDo";
+import { vanTayDiaChi, KHOA_TOA_DO, type ToaDoLuu } from "@/lib/diaChiBanDo";
+import { docRest } from "@/lib/supabase/nap";
 
 // ════════════════════════════════════════════════════════════════════════════
 // BẢN ĐỒ BA TAB (Mua bán · Cho thuê · Dự án) — NỀN MỞ.
@@ -29,26 +31,26 @@ export default function MapViewMo({ items, diem }: { items?: Listing[]; diem?: D
   const [sanSang, setSanSang] = useState(false);
   const [loi, setLoi] = useState("");
 
+  // TOẠ ĐỘ ĐÃ TRA SẴN (src/lib/diaChiBanDo.ts): tin chưa ghim tay → dấu đặt đúng như bản đồ trang tin (số nhà → đúng nhà ·
+  // tên đường → trên đường · phường/tỉnh → giữa khu vực) thay cho vị trí phỏng theo quận/tỉnh. Đọc một lần khi mở bản đồ.
+  const [daTra, setDaTra] = useState<ToaDoLuu["ds"] | null>(null);
+  useEffect(() => {
+    void docRest<{ data: ToaDoLuu }[]>(`site_content?key=eq.${KHOA_TOA_DO}&select=data`)
+      .then((r) => setDaTra(r?.[0]?.data?.ds ?? {}))
+      .catch(() => setDaTra({}));
+  }, []);
+
+  const goc: DiemBanDo[] = useMemo(() => diem ?? (items ?? []).map(diemTuTin), [diem, items]);
   const ds: DiemBanDo[] = useMemo(
     () =>
-      diem ??
-      (items ?? []).map((it) => {
-        const ghim = it.mapPin ? parseLatLng(it.mapPin) : null;
-        const [lat, lng] = ghim ? [ghim.lat, ghim.lng] : coordOf(it.location, it.id);
-        return {
-          id: it.id,
-          lat,
-          lng,
-          chinhXac: !!ghim,
-          nhan: it.price,
-          title: it.title,
-          phu: `${it.price} · ${it.area}`,
-          loc: it.location,
-          image: it.image,
-          href: `/bat-dong-san/${it.id}`,
-        };
+      goc.map((d) => {
+        const t = d.ma && d.q ? daTra?.[d.ma] : undefined;
+        if (!t || t[3] !== vanTayDiaChi(d.q!)) return d;
+        // Nhiều tin cùng một điểm (giữa phường, giữa đoạn đường) → lệch nhẹ cố định theo mã tin để cụm còn tách được khi phóng.
+        const [dLat, dLng] = t[2] === "ghim" ? [0, 0] : coordOf("", d.id).map((x, i) => (x - (i ? 108.202 : 16.054)) * (t[2] === "khuVuc" ? 0.25 : 0.05));
+        return { ...d, lat: t[0] + dLat, lng: t[1] + dLng };
       }),
-    [diem, items],
+    [goc, daTra],
   );
   const dsRef = useRef(ds);
   useEffect(() => {

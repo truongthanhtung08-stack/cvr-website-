@@ -258,7 +258,7 @@ export function postedText(iso?: string): string {
   const ngay = Math.floor(giay / 86400);
   if (ngay === 1) return "Hôm qua";
   if (ngay < 30) return `${ngay} ngày trước`;
-  return new Date(iso).toLocaleDateString("vi-VN");
+  return new Date(iso).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" });
 }
 
 // DÒNG THỜI GIAN TRÊN THẺ TIN — nói thật cả hai phía.

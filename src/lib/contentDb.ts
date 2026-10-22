@@ -49,7 +49,7 @@ async function rest<T>(table: string, query: string): Promise<T[] | null> {
 
 // "2026-07-22T…" → "22/07/2026"
 function fmtDate(iso: string | null): string {
-  return new Date(iso ?? Date.now()).toLocaleDateString("vi-VN", {
+  return new Date(iso ?? Date.now()).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh",
     day: "2-digit",
     month: "2-digit",
     year: "numeric",

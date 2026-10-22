@@ -14,7 +14,7 @@ import {
   type LatLng,
 } from "@/lib/googleMaps";
 import { centerOfArea } from "@/lib/geo";
-import { timToaDo } from "@/lib/timToaDo";
+import { timToaDo, zoomTheoMucDo } from "@/lib/timToaDo";
 import { layViTri, loiDinhVi, quyenDinhVi } from "@/lib/dinhVi";
 import NhacBatDinhVi from "@/components/NhacBatDinhVi";
 import MapPaneMo from "@/components/MapPaneMo";
@@ -26,13 +26,9 @@ import { xemTrenBanDo } from "@/lib/moGoogleMaps";
 // Khác hẳn bản đồ GHIM ở form đăng tin: đây là bản đồ cho NGƯỜI MUA, chỉ để xem.
 // Không ghim, không sửa gì — chỉ trả lời đúng một câu hỏi "cái nhà này nằm ở đâu".
 //
-// THỨ TỰ TÌM ĐIỂM ĐẶT GHIM ĐỎ, chắc chắn nhất trước:
-//   1. Toạ độ người đăng GHIM TAY  → ghim đỏ, đúng tuyệt đối
-//   2. Tra được tới tên đường       → ghim đỏ
-//   3. Chỉ biết khu vực             → mở rộng cả khu vực, KHÔNG cắm ghim
-//      (cắm ghim giữa phường là chỉ sai nhà người ta)
-// Bảng tâm khu vực nằm sẵn trong src/lib/geo.ts nên bước 3 không cần mạng —
-// bản đồ luôn hiện đúng vùng ngay lập tức, rồi mới chỉnh lại cho sát.
+// CHỖ ĐẶT GHIM ĐỎ: CÙNG MỘT HÀM với bản đồ nền mở (timToaDo + zoomTheoMucDo — chủ dự án 23/10/2026: "sau này có Google
+// Maps thì cũng như vậy, chỉ thay cái bản đồ vào"): ghim tay → đúng tuyệt đối · số nhà + đường → đúng nhà / trên đường ·
+// toà nhà, dự án → đúng chỗ đó · chỉ phường, tỉnh → dấu giữa khu vực, lùi tầm nhìn.
 // ════════════════════════════════════════════════════════════════════════════
 
 export default function MapPaneGoogle({
@@ -65,7 +61,7 @@ export default function MapPaneGoogle({
   const [hong, setHong] = useState(false);
   const [dangDinhVi, setDangDinhVi] = useState(false);
   const [loi, setLoi] = useState("");
-  const [tuongDoi, setTuongDoi] = useState(false);
+
 
   useEffect(() => {
     lockedRef.current = locked;
@@ -111,14 +107,8 @@ export default function MapPaneGoogle({
         // khách không phải nhìn ô trắng trong lúc chờ.
         const kq = await timToaDo(query);
         if (huy || !kq || !mapRef.current) return;
-        if (kq.mucDo === "khuVuc") {
-          // Chỉ tới được khu vực: dời khung cho đúng vùng, KHÔNG cắm ghim.
-          mapRef.current.setCenter({ lat: kq.lat, lng: kq.lng });
-          setTuongDoi(true);
-          return;
-        }
         mapRef.current.setCenter({ lat: kq.lat, lng: kq.lng });
-        mapRef.current.setOptions({ zoom });
+        mapRef.current.setOptions({ zoom: zoomTheoMucDo(kq.mucDo, zoom) });
         ghimRef.current = new g.maps.Marker({ position: { lat: kq.lat, lng: kq.lng }, map: mapRef.current });
       } catch {
         if (!huy) setHong(true);
@@ -180,7 +170,10 @@ export default function MapPaneGoogle({
   useEffect(() => {
     let huy = false;
     void (async () => {
-      if (huy || (await quyenDinhVi()) === "denied") return;
+      // CHỈ khi máy ĐÃ cho phép từ trước (chủ dự án 23/10/2026: máy chủ nhà bị Chrome chặn coastalland.vn): trước đây mọi trang
+      // tin mở ra là tự xin vị trí → Chrome bật ô hỏi khi khách chỉ xem nhà, đóng vài lần là Chrome chặn hẳn trang. Chưa cho
+      // phép thì KHÔNG hỏi gì — khách tự bấm nút định vị mới hỏi.
+      if (huy || (await quyenDinhVi()) !== "granted") return;
       if (!huy && sanSang) dinhVi(false);
     })();
     return () => {
@@ -235,13 +228,6 @@ export default function MapPaneGoogle({
           </span>
           <span className="text-[13.5px] font-semibold text-cvr-ink">Xem vị trí trên Google Maps</span>
         </button>
-      )}
-
-      {/* Chỉ tra được tới khu vực thì NÓI THẲNG, đừng để khách tưởng ghim đúng nhà */}
-      {tuongDoi && sanSang && (
-        <span className="pointer-events-none absolute bottom-2 left-2 right-2 rounded-md bg-white/92 px-2.5 py-1.5 text-[11.5px] font-medium text-cvr-body shadow-sm backdrop-blur-sm">
-          Vị trí tương đối theo khu vực — tin này chưa ghim điểm chính xác.
-        </span>
       )}
 
       {sanSang && !locked && (

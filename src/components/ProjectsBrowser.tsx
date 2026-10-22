@@ -548,6 +548,9 @@ export default function ProjectsBrowser({
                   id: p.slug,
                   lat,
                   lng,
+                  // Toạ độ đã tra sẵn theo đúng địa chỉ dự án (như bản đồ trang dự án) — MapViewMo thay vào khi có.
+                  ma: `du-an:${p.slug}`,
+                  q: p.location,
                   nhan: p.name,
                   title: p.name,
                   phu: `${p.priceFrom} · ${p.status}`,

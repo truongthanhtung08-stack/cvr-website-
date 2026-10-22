@@ -1,5 +1,6 @@
 import { baoLoi } from "@/lib/baoLoi";
 import type { Viec } from "./soViec";
+import { homNayVn } from "@/lib/gioVn";
 
 // ════════════════════════════════════════════════════════════════════════════
 // CANH SÁU BẢN GHI TÊN MIỀN — MẤT MỘT CÁI LÀ HỎNG NGAY, MÀ KHÔNG AI THẤY
@@ -83,7 +84,7 @@ export const viecCanhDns: Viec = {
           "Mở docs/DNS-SAO-LUU-17-09-2026.md đối chiếu rồi khai lại đúng bản ghi bên nhà cung cấp DNS " +
           "(PA Vietnam access.pavietnam.vn, hoặc Cloudflare nếu đã chuyển).",
         // Mỗi ngày một cảnh báo riêng — ngày nào còn sai là ngày đó còn thấy.
-        khoa: `canh-dns:${new Date().toISOString().slice(0, 10)}`,
+        khoa: `canh-dns:${homNayVn()}`,
       });
     }
 

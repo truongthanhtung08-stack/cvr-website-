@@ -14,6 +14,7 @@ import { khoaKhach } from "@/lib/khachHang";
 import { PageHeader } from "@/components/Ui";
 import DoDangKyMoi from "@/components/DoDangKyMoi";
 import NhanTinCuaToi from "@/components/NhanTinCuaToi";
+import { homNayVn } from "@/lib/gioVn";
 
 // ============================================================================
 // TỔNG QUAN — GỌN CÒN 2 KHỐI (chủ dự án chốt 24/09/2026; 22/10/2026 bỏ khối "Việc cần làm" — "rất vớ vẩn, chỉ cho
@@ -113,7 +114,7 @@ export default function AccountOverviewPage() {
   if (!profile) return <p className="text-sm text-cvr-muted">Không tải được hồ sơ. Vui lòng đăng nhập lại.</p>;
 
   const p = profile as unknown as { balance?: number };
-  const freeConChay = freeDangChay(billing.free, new Date().toISOString().slice(0, 10));
+  const freeConChay = freeDangChay(billing.free, homNayVn());
 
   return (
     <div className="space-y-5">

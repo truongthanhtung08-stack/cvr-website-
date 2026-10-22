@@ -123,7 +123,7 @@ export default function AdminListingsPage() {
       const daTraTien = tin?.status === "approved" && conNgay > 0;
       const hoi = daTraTien
         ? `Ẩn tin "${tin?.title}"?\n\n` +
-          `Khách đã trả tiền cho gói này, còn ${conNgay} ngày hiển thị (đến ${hetHan?.toLocaleDateString("vi-VN")}).\n` +
+          `Khách đã trả tiền cho gói này, còn ${conNgay} ngày hiển thị (đến ${hetHan?.toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}).\n` +
           `Ẩn là khách mất số ngày đó — cân nhắc hoàn tiền hoặc bù thêm ngày cho họ.`
         : `Ẩn tin "${tin?.title ?? id}"?`;
       if (!window.confirm(hoi)) return;
@@ -361,7 +361,7 @@ export default function AdminListingsPage() {
                   <div className="text-xs text-cvr-muted">{r.area_m2 != null ? `${r.area_m2} m²` : "—"}</div>
                 </td>
                 <td className="px-4 py-3">{tierBadge(r.tier)}</td>
-                <td className="px-4 py-3">{listingStatusBadge(r.status)}</td>
+                <td className="px-4 py-3">{listingStatusBadge(r.status)}{henHienThi(r)}</td>
                 <td className="whitespace-nowrap px-4 py-3 text-cvr-muted">{fmtDate(r.created_at)}</td>
                 <td className="whitespace-nowrap px-4 py-3 text-right">
                   <RowActions row={r} onStatus={setRowStatus} onTuChoi={tuChoi} onXoa={xoaTin} />
@@ -387,7 +387,7 @@ export default function AdminListingsPage() {
             <Link href={`/admin/tin-dang/${r.id}`} className="block">
               <div className="flex items-start justify-between gap-2">
                 <span className="font-medium leading-snug text-cvr-ink">{r.title}</span>
-                {listingStatusBadge(r.status)}
+                <span className="shrink-0 text-right">{listingStatusBadge(r.status)}{henHienThi(r)}</span>
               </div>
               <div className="mt-1 text-sm text-cvr-body">
                 {adminPriceText(r.price_vnd, r.purpose)} · {r.area_m2 != null ? `${r.area_m2} m²` : "—"}
@@ -472,6 +472,19 @@ function RowActions({
 const selCls =
   "h-10 rounded-lg border border-cvr-line bg-white px-3 text-sm text-cvr-body outline-none focus:border-cvr-ink";
 
+// NGÀY HẸN BẮT ĐẦU HIỂN THỊ (chủ dự án 23/10/2026: "cấu trúc cho admin cho khớp — không thì không hiển thị thì tội"): khách
+// chọn "Chọn ngày" ở bước gói tin → chờ duyệt: admin thấy ngày khách hẹn; đã duyệt mà chưa tới ngày: "Chờ hiển thị · lên …" (cùng
+// chữ trang Tin đăng của khách) — để admin không tưởng tin duyệt rồi mà lỗi không hiện. Tới 0h ngày đó (giờ VN) tin tự lên.
+function henHienThi(r: ListingRow) {
+  const lop = "mt-1 block whitespace-nowrap text-xs font-medium text-sky-700";
+  if (r.status === "approved" && r.published_at && new Date(r.published_at).getTime() > Date.now())
+    return <span className={lop}>Chờ hiển thị · lên {fmtDate(r.published_at)}</span>;
+  const bd = r.details?.plan?.batDau;
+  if (r.status === "pending" && bd && /^\d{4}-\d{2}-\d{2}$/.test(bd) && new Date(`${bd}T00:00:00+07:00`).getTime() > Date.now())
+    return <span className={lop}>Bắt đầu hiển thị {bd.split("-").reverse().join("/")}</span>;
+  return null;
+}
+
 function fmtDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
+  return new Date(iso).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", day: "2-digit", month: "2-digit", year: "numeric" });
 }

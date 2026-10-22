@@ -7,6 +7,8 @@ import { getTier, type TierId } from "@/lib/packages";
 import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
 import { useQuyDinhGia } from "@/lib/useQuyDinhGia";
 import { useKhoaCuon } from "@/lib/khoaCuon";
+import NhanGoi from "@/components/NhanGoi";
+import KhungCuonNgang from "@/components/KhungCuonNgang";
 
 // ============================================================================
 // BẢNG GIÁ GÓI TIN KIỂU BATDONGSAN (chốt 01/10/2026) — MỘT bảng dùng chung:
@@ -25,8 +27,8 @@ export default function BangGiaGoiTin({
   onChon,
   onBoChon,
   onXemBangQuyenLoi,
-  trangBaoGia,
-  dacDiem,
+  kieuBaoGia,
+  canhVat,
 }: {
   plans: Plan[];
   chon?: { tier: TierId | ""; days: number };
@@ -35,12 +37,12 @@ export default function BangGiaGoiTin({
   onBoChon?: () => void;
   /** Đang ở trang đăng tin → mở bảng quyền lợi nổi tại chỗ thay vì sang tab mới (14/10/2026) */
   onXemBangQuyenLoi?: () => void;
-  /** Trang Báo giá: bảng so sánh + quyền lợi nằm ngay dưới, quy định gom ở mục Quy định chung → không nút "Đặc điểm"
-   *  từng cột, không lặp danh sách quy định dưới bảng (chủ dự án 22/10/2026: "nhiều câu trùng, sắp xếp không logic"). */
-  trangBaoGia?: boolean;
-  /** Trang Báo giá: đặc điểm từng loại tin (bảng quyền lợi admin) nằm NGAY TRONG bảng giá, dưới các dòng giá — một bảng
-   *  xem giá và so sánh, không lặp hàng tên loại tin (chủ dự án 22/10/2026 tối: "nội dung đã có, cấu trúc lại giao diện"). */
-  dacDiem?: { ten: string; giaTri: Partial<Record<TierId, string>> }[];
+  /** Hiện KIỂU BÁO GIÁ: bảng ma trận cả điện thoại lẫn máy tính, không nút "Đặc điểm" từng cột, không lặp quy định dưới bảng
+   *  (chủ dự án 22/10/2026: "nhiều câu trùng, sắp xếp không logic"). Trang Báo giá và bước chọn gói khi đăng tin (23/10/2026:
+   *  "lấy cách hiển thị như báo giá — chỉ lấy phần giá, chọn"; tin hiển thị, đặc điểm, quy định là nút bấm riêng bên dưới). */
+  kieuBaoGia?: boolean;
+  /** Cùng hàng, bên phải dòng "Giá đã gồm VAT" (bước chọn gói khi đăng tin: chữ bấm "Tin hiển thị"). */
+  canhVat?: React.ReactNode;
 }) {
   const [moQuyDinh, setMoQuyDinh] = useState(false);
   // Cấp tin đang mở xem mốc ngày (điện thoại). Mặc định = cấp đang có gói chọn.
@@ -56,6 +58,14 @@ export default function BangGiaGoiTin({
   // GIÁ LUÔN LÀ SỐ KHÁCH TRẢ (đã gồm VAT) — bỏ nút gạt VAT và số −% dưới giá ở mọi nơi (chủ dự án 22/10/2026 tối: "con số
   // dưới −% có tác dụng gì"; báo giá rối) → một dòng "Giá đã gồm 8% VAT" dưới bảng.
   const hienGia = (gia: number) => tachThue(gia).tongTra;
+  // MỨC GIẢM % THEO SỐ NGÀY (chủ dự án 22/10/2026 tối: "bảng giá theo ngày có mức giảm % phải để vào"): so đơn giá/ngày của mốc
+  // với đơn giá/ngày của mốc NGẮN NHẤT có phí cùng loại tin. Không giảm (hoặc mốc ngắn nhất) thì không hiện.
+  const giamPhanTram = (p: Plan, days: number, price: number): number => {
+    const goc = [...p.terms].filter((x) => x.price > 0).sort((a, b) => a.days - b.days)[0];
+    if (!goc || price <= 0 || days <= goc.days) return 0;
+    return Math.max(0, Math.round((1 - price / days / (goc.price / goc.days)) * 100));
+  };
+  const nhanGiam = (n: number) => n > 0 ? <span className="inline-block rounded-full border border-red-300 px-1.5 py-px text-[11px] font-semibold leading-tight text-red-700">−{n}%</span> : null;
 
 
   const capXem: TierId | "" = capXemChon ?? (chon?.tier || "");
@@ -71,7 +81,7 @@ export default function BangGiaGoiTin({
           So sánh quyền lợi: nút "So sánh các gói" ở đầu khối. Mọi số từ admin. Máy tính giữ bảng.
           TRANG BÁO GIÁ / chỉ xem (không onChon): KIỂU MA TRẬN cả điện thoại lẫn máy tính, cùng kiểu bảng đẩy tin (chủ dự án 22/10/2026
           tối: "phần báo giá, kiểu ma trận là kiểu đẹp nhất" — bỏ kiểu mỗi cấp một hàng ở trang Báo giá). */}
-      {onChon && (
+      {onChon && !kieuBaoGia && (
           <div className="space-y-2 sm:hidden">
             {/* MỖI CẤP MỘT HÀNG, MỐC NGÀY MỞ NGAY DƯỚI HÀNG ĐÓ (chủ dự án 22/10/2026: 4 ô ở trên mà các mốc chạy xuống dưới cùng
                 thì dễ hiểu nhầm của cấp nào). Các mốc xếp lưới, thấy hết, không phải vuốt. */}
@@ -91,7 +101,7 @@ export default function BangGiaGoiTin({
                     className="flex w-full items-center justify-between gap-3 px-3.5 py-3 text-left"
                   >
                     <span className="flex min-w-0 items-center gap-2">
-                      <span className="inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-semibold tracking-tight" style={{ backgroundColor: t.accent, color: t.badgeText }}>{t.name}</span>
+                      <NhanGoi id={p.tierId} heSo={false} />
                       <span className="whitespace-nowrap text-[12px] font-semibold text-cvr-muted">{t.heSoText}</span>
                     </span>
                     <span className="flex shrink-0 items-center gap-2">
@@ -117,6 +127,7 @@ export default function BangGiaGoiTin({
                           >
                             <span className="block text-[12px] text-cvr-body">{term.days} ngày</span>
                             <span className="mt-0.5 block whitespace-nowrap text-[12.5px] font-semibold tabular-nums text-cvr-ink">{term.price > 0 ? vnd(hienGia(term.price)) : "0 ₫"}</span>
+                            {giamPhanTram(p, term.days, term.price) > 0 && <span className="mt-0.5 block">{nhanGiam(giamPhanTram(p, term.days, term.price))}</span>}
                           </button>
                         );
                       })}
@@ -127,25 +138,17 @@ export default function BangGiaGoiTin({
             })}
           </div>
       )}
-      <div className={`${onChon ? "hidden sm:block" : ""} overflow-x-auto rounded-2xl border border-cvr-line bg-white shadow-lux`}>
-        <table className={`w-full border-collapse text-sm ${dacDiem?.length ? "min-w-[776px] sm:min-w-[640px]" : "min-w-[520px]"}`}>
+      <KhungCuonNgang className={onChon && !kieuBaoGia ? "hidden sm:block" : ""} khung="rounded-2xl border border-cvr-line bg-white shadow-lux">
+        <table className="w-full min-w-[520px] border-collapse text-sm">
           <thead>
             <tr className="bg-cvr-surface">
-              <th className={`sticky left-0 z-10 border-b border-cvr-line bg-cvr-surface px-3 py-3.5 text-left font-semibold text-cvr-ink sm:px-4 ${dacDiem?.length ? "w-[136px] sm:w-[24%]" : "w-[84px] whitespace-nowrap sm:w-[96px]"}`}>Thời gian</th>
+              <th className="sticky left-0 z-10 w-[84px] whitespace-nowrap border-b border-cvr-line bg-cvr-surface px-3 py-3.5 text-left font-semibold text-cvr-ink sm:w-[96px] sm:px-4">Thời gian</th>
               {cot.map((p) => {
-                const t = getTier(p.tierId);
                 return (
-                  <th key={p.tierId} className={`border-b border-l border-cvr-line px-2 py-3.5 text-center sm:px-3 ${dacDiem?.length ? "min-w-[160px] sm:w-[19%] sm:min-w-0" : ""}`}>
-                    <span
-                      className="inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-semibold tracking-tight sm:px-3 sm:text-xs"
-                      style={{ backgroundColor: t.accent, color: t.badgeText }}
-                    >
-                      {t.name}
-                    </span>
-                    {/* Hệ số X dưới tên cấp + nút xem đặc điểm (chủ dự án 10/10/2026) */}
-                    {/* Có dòng "Hệ số tiếp cận" trong bảng thì không lặp hệ số dưới tên */}
-                    {!dacDiem?.length && <span className="mt-1 block text-[11px] font-semibold tracking-wide text-cvr-muted">{t.heSoText}</span>}
-                    {!onChon && !trangBaoGia && (
+                  <th key={p.tierId} className="border-b border-l border-cvr-line px-2 py-3.5 text-center sm:px-3">
+                    {/* Tên gói + hệ số X dưới tên (chủ dự án 10/10 + 22/10/2026) — một kiểu cho cả web (NhanGoi) */}
+                    <NhanGoi id={p.tierId} />
+                    {!onChon && !kieuBaoGia && (
                     <button type="button" onClick={() => setXemDacDiem(p.tierId)} className="mt-0.5 text-[11px] font-semibold text-cvr-blue-ink underline-offset-2 hover:underline">
                       Đặc điểm
                     </button>
@@ -169,6 +172,7 @@ export default function BangGiaGoiTin({
                   const noiDung = (
                     <span className="flex flex-col items-center gap-0.5">
                       <span className="font-semibold tabular-nums text-cvr-ink">{term.price > 0 ? vnd(hienGia(term.price)) : "0 ₫"}</span>
+                      {nhanGiam(giamPhanTram(p, ngay, term.price))}
                     </span>
                   );
                   return (
@@ -178,7 +182,8 @@ export default function BangGiaGoiTin({
                           type="button"
                           onClick={() => (dangChon && onBoChon ? onBoChon() : onChon(p.tierId, ngay))}
                           aria-pressed={dangChon}
-                          className={`w-full rounded-xl border px-2 py-2.5 transition ${dangChon ? "border-cvr-ink bg-cvr-ink/[0.06] ring-2 ring-cvr-ink" : "border-cvr-line hover:border-cvr-ink"}`}
+                          // MỘT LỚP KHUNG (chủ dự án 23/10/2026: "phần giá có 2 cái khung"): ô giá không viền riêng — chỉ ô đang chọn có viền đậm.
+                          className={`w-full rounded-xl px-2 py-2.5 transition ${dangChon ? "bg-cvr-ink/[0.06] ring-2 ring-cvr-ink" : "hover:bg-cvr-surface"}`}
                         >
                           {noiDung}
                           {/* Nút chọn rõ ràng (chủ dự án 09/10/2026) */}
@@ -194,29 +199,9 @@ export default function BangGiaGoiTin({
                 })}
               </tr>
             ))}
-            {!!dacDiem?.length && (
-              <>
-                <tr className="border-y border-cvr-line bg-cvr-surface">
-                  <td colSpan={cot.length + 1} className="px-3 py-2.5 sm:px-4">
-                    <span className="sticky left-3 text-[13px] font-semibold text-cvr-ink">Đặc điểm hiển thị</span>
-                  </td>
-                </tr>
-                {dacDiem.map((r) => (
-                  <tr key={r.ten} className="border-b border-cvr-line/70 last:border-0">
-                    <td className="sticky left-0 z-10 bg-white px-3 py-3 text-[13px] font-medium leading-snug text-cvr-body sm:px-4 sm:text-sm">{r.ten}</td>
-                    {cot.map((p) => {
-                      const v = r.giaTri[p.tierId] ?? "";
-                      return (
-                        <td key={p.tierId} className={`border-l border-cvr-line/70 px-2 py-3 text-center text-[13px] leading-snug sm:px-3 ${v === "✓" ? "font-semibold text-cvr-ink" : "text-cvr-muted"}`}>{v}</td>
-                      );
-                    })}
-                  </tr>
-                ))}
-              </>
-            )}
           </tbody>
         </table>
-      </div>
+      </KhungCuonNgang>
       {xemDacDiem && (
         <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/40 sm:items-center" onClick={() => setXemDacDiem(null)}>
           <div className="max-h-[80dvh] w-full max-w-md overflow-y-auto rounded-t-2xl bg-white p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
@@ -259,9 +244,10 @@ export default function BangGiaGoiTin({
       {/* ĐANG CHỌN GÓI (đăng tin, đăng lại — chủ dự án duyệt mẫu 22/10/2026): giá luôn là số khách trả (đã gồm VAT), không
           nút gạt; một dòng "Giá đã gồm 8% VAT · Quy định gói tin", bấm mới hiện quy định. Trang báo giá (chỉ xem) giữ nút gạt
           + quy định đủ như cũ. */}
-      <p className="mt-3 text-[12.5px] text-cvr-muted">
+      <div className="mt-3 flex items-center justify-between gap-3">
+      <p className="text-[12.5px] text-cvr-muted">
         Giá đã gồm {(THUE_SUAT_GTGT * 100).toFixed(0)}% VAT
-        {QUY_DINH.length > 0 && !trangBaoGia && (
+        {QUY_DINH.length > 0 && !kieuBaoGia && (
           <>
             {" · "}
             <button type="button" onClick={() => setMoQuyDinh(!moQuyDinh)} aria-expanded={moQuyDinh} className="font-semibold text-cvr-blue-ink">
@@ -270,6 +256,8 @@ export default function BangGiaGoiTin({
           </>
         )}
       </p>
+      {canhVat}
+      </div>
       {moQuyDinh && (
         <ul className="mt-2 space-y-1 text-[13px] leading-relaxed text-cvr-muted">
           {QUY_DINH.map((d) => <li key={d} className="flex gap-2"><span aria-hidden>·</span><span>{d}</span></li>)}

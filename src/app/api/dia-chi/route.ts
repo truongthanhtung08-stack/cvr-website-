@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+// Gọi Nominatim (khai danh tính, nhớ kết quả) — dùng chung với việc máy tự tra toạ độ mỗi tin.
+import { hoiNominatim } from "@/lib/nominatim";
 
 // ============================================================================
 // TRA ĐỊA CHỈ — GỌI QUA MÁY CHỦ CỦA MÌNH, KHÔNG GỌI THẲNG TỪ TRÌNH DUYỆT
@@ -21,24 +23,6 @@ import { NextResponse } from "next/server";
 // (Khác với nội dung admin — chỗ đó vẫn no-store để "sửa là hiện ngay".)
 // ============================================================================
 
-const NOMINATIM = "https://nominatim.openstreetmap.org";
-// Nominatim yêu cầu khai báo ứng dụng + cách liên hệ. Khai đúng thì họ không chặn.
-const UA = "CoastalLand/1.0 (+https://coastalland.vn; hotro@coastalland.vn)";
-
-// Nhớ trong bộ nhớ máy chủ. Đủ cho nhu cầu hiện tại; hết đời tiến trình thì thôi.
-const nho = new Map<string, unknown>();
-const MOC_NHO = 500;
-
-async function hoiNominatim(duong: string): Promise<unknown> {
-  if (nho.has(duong)) return nho.get(duong);
-  const r = await fetch(NOMINATIM + duong, { headers: { "User-Agent": UA, "Accept-Language": "vi" } });
-  if (!r.ok) throw new Error(`Nominatim ${r.status}`);
-  const kq = await r.json();
-  // Quá đầy thì bỏ bớt cái cũ nhất, khỏi phình bộ nhớ.
-  if (nho.size >= MOC_NHO) nho.delete(nho.keys().next().value as string);
-  nho.set(duong, kq);
-  return kq;
-}
 
 export async function GET(req: Request) {
   const u = new URL(req.url);
@@ -85,6 +69,14 @@ export async function GET(req: Request) {
       headers: { "Cache-Control": "public, max-age=86400, s-maxage=86400" },
     });
   } catch {
+    // CHỈ KHI CHẠY THỬ TRÊN MÁY (next dev): máy chạy thử không kết nối được Nominatim (đo 23/10/2026) → hỏi qua chính
+    // coastalland.vn để chủ dự án thử ghim ↔ địa chỉ đúng như web thật. Bản trên Vercel không bao giờ đi đường này.
+    if (process.env.NODE_ENV === "development") {
+      try {
+        const r = await fetch("https://coastalland.vn" + u.pathname + u.search);
+        if (r.ok) return NextResponse.json(await r.json());
+      } catch { /* không có mạng thì trả rỗng như dưới */ }
+    }
     // Hỏng thì trả rỗng ĐÚNG KIỂU dữ liệu nơi gọi đang chờ, để phía web tự lùi về
     // bảng khu vực có sẵn thay vì vỡ.
     return NextResponse.json(viec === "nguoc" ? {} : [], { status: 200 });

@@ -19,6 +19,7 @@ import { isVideoUrl } from "@/lib/media";
 import { fieldsSplit, amenityGroups, coDonGiaM2, coDienTichXayDung, viTriTuDuongVao, viTriTuAccess, laTinThue, laTinBan, type Field } from "@/lib/listingSpec";
 import { chuanHoaSdt, maNguoiTuSdt, tachNhieuSdt } from "@/lib/phone";
 import { tachTenDuong } from "@/lib/tenDuong";
+import { chuoiDiaChiBanDo } from "@/lib/diaChiBanDo";
 import { moTaThe } from "@/lib/trichMoTa";
 
 
@@ -582,9 +583,7 @@ function rowToDetail(r: Row): ListingFull {
     // Trước đây bỏ sót bước 2: tin ghi rõ "123 Nguyễn Văn Linh" vẫn chỉ ghim giữa
     // phường, khách không biết bất động sản nằm ở đoạn đường nào.
     places: d.places ?? [],
-    mapQuery:
-      d.mapPin?.trim() ||
-      [d.addressDetail?.trim(), r.ward, r.district, r.province].filter(Boolean).join(", "),
+    mapQuery: d.mapPin?.trim() || chuoiDiaChiBanDo(d.addressDetail, r.ward, r.district, r.province),
     // Có toạ độ ghim / có tên đường → phóng gần (17) thấy rõ vị trí;
     // chỉ có phường/xã → giữ 15 nhìn bao quát khu vực.
     mapZoom: d.mapPin?.trim() || d.addressDetail?.trim() ? 17 : 15,

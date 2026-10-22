@@ -8,6 +8,7 @@ import { ghepBillingLuu, bangTheoMucDich, bangUp, COT_UP, giaDayTin, vnd, type B
 import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
 import { baoLoi } from "@/lib/baoLoi";
 import { getTier, type TierId } from "@/lib/packages";
+import { homNayVn } from "@/lib/gioVn";
 
 // ============================================================================
 // ĐẨY TIN (UP) — TRỪ VÍ + GHI SỔ + ĐƯA TIN LÊN ĐẦU
@@ -162,7 +163,7 @@ export async function POST(request: Request) {
       chiTiet: `Tin ${id} — ${loiSo.message}`,
       hauQua: "Tờ khai thuế thiếu một khoản thu, khách cũng không được xuất hóa đơn khoản này.",
       canLam: `Vào /admin/hoa-don-thue → ghi tay khoản ${vnd(tien.tongTra)} (đẩy tin "${tin.title}").`,
-      khoa: `day-tin:doanh-thu:${id}:${new Date().toISOString().slice(0, 10)}`,
+      khoa: `day-tin:doanh-thu:${id}:${homNayVn()}`,
     });
   }
 

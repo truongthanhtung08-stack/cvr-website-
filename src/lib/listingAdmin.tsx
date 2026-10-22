@@ -37,7 +37,7 @@ export type ListingDetails = {
   tu_dang_lai?: boolean;            // khách bật Tự đăng lại khi hết hạn
   da_sua_luc?: string;              // khách sửa tin đang hiển thị → admin kiểm sau (0054)
   tu_choi_luc?: string;             // thời điểm từ chối (ISO)
-  plan?: { tier?: string; days?: number; giaBao?: number }; // gói khách CHỌN lúc đăng (chờ duyệt mới dùng tới)
+  plan?: { tier?: string; days?: number; giaBao?: number; batDau?: string }; // gói khách CHỌN lúc đăng (chờ duyệt mới dùng tới); batDau = ngày hẹn bắt đầu hiển thị
 };
 
 export type ListingRow = {
@@ -135,7 +135,7 @@ export function thongTinGoi(r: ListingRow): ThongTinGoi {
 export function ngayGon(iso?: string | null): string {
   if (!iso) return "";
   const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? "" : d.toLocaleDateString("vi-VN");
+  return Number.isNaN(d.getTime()) ? "" : d.toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" });
 }
 
 export function listingStatusLabel(s: ListingStatus): string {

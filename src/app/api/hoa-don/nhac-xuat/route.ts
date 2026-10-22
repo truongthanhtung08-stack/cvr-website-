@@ -80,7 +80,7 @@ export async function GET(request: Request) {
   // Mỗi ngày: khách có MST → mỗi giao dịch một tờ riêng; còn lại gộp một tờ tổng.
   const theoNgay = new Map<string, { rieng: number; tong: number }>();
   for (const d of ds) {
-    const ngay = new Date(d.ngay_ghi_nhan).toLocaleDateString("vi-VN");
+    const ngay = new Date(d.ngay_ghi_nhan).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" });
     const o = theoNgay.get(ngay) ?? { rieng: 0, tong: 0 };
     if (d.hoa_don_loai === "rieng") o.rieng++;
     else o.tong++;
@@ -91,7 +91,7 @@ export async function GET(request: Request) {
   const tongTien = ds.reduce((s, d) => s + Number(d.tong_tra || 0), 0);
 
   // Có giao dịch của ngày trước còn sót → sắp bị VNPT khoá, phải báo gấp.
-  const homNay = new Date().toLocaleDateString("vi-VN");
+  const homNay = new Date().toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" });
   const coNgayCu = [...theoNgay.keys()].some((n) => n !== homNay);
 
   const cacDong = [

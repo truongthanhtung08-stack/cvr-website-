@@ -9,6 +9,7 @@ import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
 import { guiThongBao, MAU_DUYET_TIN } from "@/lib/thongBao";
 import { baoLoi } from "@/lib/baoLoi";
 import type { TierId } from "@/lib/packages";
+import { homNayVn } from "@/lib/gioVn";
 
 // ============================================================================
 // DUYỆT TIN — TRỪ VÍ + GHI DOANH THU + BÁO KHÁCH
@@ -216,7 +217,7 @@ export async function POST(request: Request) {
     data: bang,
     tierId: goi,
     days: soNgay,
-    today: new Date().toISOString().slice(0, 10),
+    today: homNayVn(),
     // Thành viên mới: MỘT định nghĩa (thanhVienMoi) — cùng luật tạo hộ chưa vào như chương trình miễn phí.
     isNewMember: thanhVienMoi(bang.free, { coChu: laChuThat(hs), homNay: ngayGui, soNgayMoTk, ngayTaoTk: hs.created_at ? new Date(new Date(hs.created_at).getTime() + 7 * 3_600_000).toISOString().slice(0, 10) : undefined }),
   });
@@ -285,7 +286,7 @@ export async function POST(request: Request) {
         cacDong: [
           { nhan: "Tin đăng", giaTri: tin.title },
           { nhan: "Gói dịch vụ", giaTri: `${tenGoi(bang, goi)} · ${soNgayHienThi(bang, goi, soNgay, true)} ngày — miễn phí` },
-          { nhan: "Hiển thị đến", giaTri: new Date(hetHanMp).toLocaleDateString("vi-VN") },
+          { nhan: "Hiển thị đến", giaTri: new Date(hetHanMp).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" }) },
         ],
         znsTemplateId: MAU_DUYET_TIN,
         znsData: {
@@ -473,7 +474,7 @@ export async function POST(request: Request) {
       { nhan: `Thuế GTGT ${(THUE_SUAT_GTGT * 100).toFixed(0)}%`, giaTri: vnd(tien.tienThue) },
       { nhan: "Đã trừ ví", giaTri: vnd(tien.tongTra) },
       { nhan: "Số dư còn lại", giaTri: vnd(soDuConLai) },
-      { nhan: "Hiển thị đến", giaTri: new Date(hetHan).toLocaleDateString("vi-VN") },
+      { nhan: "Hiển thị đến", giaTri: new Date(hetHan).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" }) },
     ],
     znsTemplateId: MAU_DUYET_TIN,
     znsData: {

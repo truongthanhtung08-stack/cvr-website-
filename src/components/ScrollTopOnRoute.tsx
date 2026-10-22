@@ -92,8 +92,14 @@ export default function ScrollTopOnRoute() {
     const nenKhoiPhuc = !laTrangNhap && ((dauTien && taiLaiTrang) || quayLai.current);
     quayLai.current = false;
 
-    // Địa chỉ có NEO (#ket-qua…) → để trang cuộn tới neo, không ép về đầu.
-    if (!nenKhoiPhuc && window.location.hash) return;
+    // Địa chỉ có NEO (#ket-qua, #goi-day-tin…) → đích là ĐẦU MỤC ĐÓ, không phải đầu trang. Trước đây chỉ "để trình duyệt tự cuộn"
+    // — nhưng mở từ TRANG KHÁC trong web (menu Báo giá → Gói đẩy tin, trang Quy định → Gói tin đăng) thì Next giữ nguyên chỗ
+    // cuộn của trang cũ → rơi vào chỗ bất kỳ (chủ dự án 22/10/2026 tối: "bấm vào đường liên kết ra trang có nó"). Nay tự cuộn
+    // tới mục, bám theo khung hình như dưới cho tới khi trang đứng yên.
+    let neo = "";
+    if (!nenKhoiPhuc && window.location.hash) {
+      try { neo = decodeURIComponent(window.location.hash.slice(1)); } catch { neo = ""; }
+    }
 
     {
       // Khôi phục thì về đúng chỗ đã đọc; mở trang mới thì về ĐẦU TRANG.
@@ -113,7 +119,16 @@ export default function ScrollTopOnRoute() {
       // lại liên tục — đo thật 17/09/2026: mở một tin từ giữa danh sách thì trang
       // kẹt ở y = 53 hơn hai giây rồi mới bò về đầu. Ép `behavior: instant` cho
       // riêng thao tác này; neo trong trang vẫn trượt êm như cũ.
-      const ve = () => { if (con) window.scrollTo({ top: y, left: 0, behavior: "instant" }); };
+      // Đích cuộn: đầu mục #neo (trừ phần thanh dính trên đầu — scroll-padding-top của trang + scroll-margin của mục), hoặc y.
+      // Mục chưa dựng xong → null, chờ nhịp sau.
+      const dich = (): number | null => {
+        if (!neo) return y;
+        const el = document.getElementById(neo);
+        if (!el) return null;
+        const chua = (parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0) + (parseFloat(getComputedStyle(el).scrollMarginTop) || 0);
+        return Math.max(0, Math.round(el.getBoundingClientRect().top + window.scrollY - chua));
+      };
+      const ve = () => { const d = con ? dich() : null; if (d != null) window.scrollTo({ top: d, left: 0, behavior: "instant" }); };
       // Người dùng tự cuộn/chạm trong lúc đang khôi phục → DỪNG NGAY, không
       // được giật họ về chỗ cũ (đây là lỗi kinh điển của cách làm nhiều nhịp).
       const dung = () => { con = false; };
@@ -138,7 +153,8 @@ export default function ScrollTopOnRoute() {
       let idFrame = 0;
       const bam = () => {
         if (!con) return;
-        if (Math.abs(window.scrollY - y) > 2) window.scrollTo({ top: y, left: 0, behavior: "instant" });
+        const d = dich();
+        if (d != null && Math.abs(window.scrollY - d) > 2) window.scrollTo({ top: d, left: 0, behavior: "instant" });
         if (performance.now() - batDau < HAN) idFrame = requestAnimationFrame(bam);
       };
 

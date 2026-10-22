@@ -11,7 +11,7 @@ import { lamMoiWeb } from "@/lib/lamMoiWeb";
 import { saleTypeGroups, rentTypeGroups } from "@/lib/filters";
 import { provinceNamesFor, districtsOf, wardsOf, wardsOfNew, wardsOfAny, chuanTen, type GeoMode } from "@/lib/locations";
 import { haiDongDiaChi, doiHeGiuNguyen, chuoiTimBanDo, diemTimBanDo, ungVienPhuongCu, type NhoHaiHe } from "@/lib/diaChiHaiHe";
-import { ganDiaGioi, type DiaGioiBanDo } from "@/lib/diaGioiTuBanDo";
+import { ganDiaGioi, phuongCuTheoGhim, type DiaGioiBanDo } from "@/lib/diaGioiTuBanDo";
 import { fieldsFor, interiorItems, amenityGroups, coNoiThat, tienIchCho, phapLyCho, legalOptions, furnishLevels, directions, coPhongNgu, coPhongTam, coDienTichXayDung, nhanDienTich, coDonGiaM2 } from "@/lib/listingSpec";
 import { chuanHoaSdt } from "@/lib/phone";
 import ImagePicker from "@/components/admin/ImagePicker";
@@ -37,6 +37,7 @@ import {
   type ListingTier,
   type ListingStatus,
 } from "@/lib/listingAdmin";
+import { homNayVn } from "@/lib/gioVn";
 
 // Form Thêm/Sửa tin đăng (admin). Giá nhập theo đơn vị tự nhiên:
 //   Mua bán → TỶ đồng (7.2 = 7,2 tỷ) · Cho thuê → TRIỆU/tháng (18 = 18 triệu/tháng)
@@ -297,7 +298,7 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
       // → tin hết hạn ngay khi lưu (vụ 09/10: nâng 5 tin VIP, cả 5 tự hết hạn sau 1 phút).
       const bang = bangTheoMucDich(billing, purpose);
       const coGia = (bang.plans.find((p) => p.tierId === tier)?.terms ?? []).length > 0;
-      const mienPhi = huongKhuyenMai(bang.free, { goi: tier, homNay: new Date().toISOString().slice(0, 10), coChu: Boolean(initial?.owner_id), soNgayMoTk: 0 });
+      const mienPhi = huongKhuyenMai(bang.free, { goi: tier, homNay: homNayVn(), coChu: Boolean(initial?.owner_id), soNgayMoTk: 0 });
       if (!coGia && !mienPhi)
         return setError(`Hạng ${getTier(tier).name} chưa có bảng giá đã duyệt nên tin sẽ hết hạn ngay. Vào Bảng giá bấm Duyệt trước.`);
     }
@@ -355,7 +356,11 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
         // KHÔNG chọn thì giữ nguyên cái đã có (file nhập tin có thể đã ghi sẵn).
         ...((): { diaChiCu?: { phuong: string; quan: string; tinh: string } } => {
           const c = ungVienPhuongCu(geoMode, province, ward).find((x) => x.nhan === phuongCu);
-          return c ? { diaChiCu: { phuong: c.phuong, quan: c.quan, tinh: c.tinh } } : {};
+          if (c) return { diaChiCu: { phuong: c.phuong, quan: c.quan, tinh: c.tinh } };
+          // Không có ô chọn phường cũ mà ghim chỉ ra phường cũ đúng chỗ đó → lưu theo ghim (như form khách).
+          const dc = diaGioiTuBanDoRef.current;
+          const g = geoMode === "moi" && mapPin.trim() && dc ? phuongCuTheoGhim(dc, province, ward) : null;
+          return g ? { diaChiCu: g } : {};
         })(),
         project: projectSlug || undefined,
         ...(initial?.owner_id ? {} : { anh_bia: anhBia }),
@@ -444,7 +449,7 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
               {(() => {
                 const bang = bangTheoMucDich(billing, purpose);
                 // Tin admin đăng hộ tính như thành viên mới: chương trình đang chạy thì đúng số ngày của chương trình.
-                if (huongKhuyenMai(bang.free, { goi: tier, homNay: new Date().toISOString().slice(0, 10), coChu: Boolean(initial?.owner_id), soNgayMoTk: 0 })) {
+                if (huongKhuyenMai(bang.free, { goi: tier, homNay: homNayVn(), coChu: Boolean(initial?.owner_id), soNgayMoTk: 0 })) {
                   return <option value={0}>{bang.free.hienThi ?? bang.free.days} ngày · khuyến mãi thành viên mới</option>;
                 }
                 const ds = [...(bang.plans.find((p) => p.tierId === tier)?.terms ?? [])].sort((a, b) => a.days - b.days);
@@ -666,8 +671,6 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
               className={inputCls}
             />
           </Field>
-          {/* Dòng điểm ghim của bản đồ bên dưới hiện NGAY DƯỚI thanh địa chỉ (giống form khách đăng, chủ dự án 22/10/2026) */}
-          <div id="dong-ghim-admin" className="mt-2 empty:hidden" />
         </div>
         <div className="mt-4">
           <Field label="Ghim vị trí trên bản đồ (toạ độ hoặc link Google Maps)">
@@ -684,14 +687,22 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
           </p>
           <div className="mt-3">
             <MapPicker
-              dongGhimO="dong-ghim-admin"
               diemChon={diemGoiY}
               value={mapPin}
               onChange={setMapPin}
               onDiaChi={setAddressDetail}
               onDiaGioi={(dc) => {
                 diaGioiTuBanDoRef.current = dc;
-                apDungDiaGioi(dc, geoMode, province, district, ward);
+                const kq = ganDiaGioi(dc, geoMode, { province, district, ward });
+                setProvince(kq.province);
+                setDistrict(kq.district);
+                setWard(kq.ward);
+                // Đồng bộ hai hệ theo ghim — như form khách (PostListingForm.nhanDiaGioiTuBanDo).
+                if (geoMode !== "moi") return;
+                const cu = phuongCuTheoGhim(dc, kq.province, kq.ward);
+                nhoHai.current = cu ? { moi: { tinh: kq.province, quan: kq.district, phuong: kq.ward }, cu } : null;
+                const uv = cu ? ungVienPhuongCu("moi", kq.province, kq.ward).find((x) => x.phuong === cu.phuong && x.quan === cu.quan) : undefined;
+                if (uv) setPhuongCu(uv.nhan);
               }}
               hint={chuoiTimBanDo(geoMode, { tinh: province, quan: district, phuong: ward }, addressDetail)}
               tim={diemTimBanDo(geoMode, { tinh: province, quan: district, phuong: ward }, addressDetail)}

@@ -53,7 +53,7 @@ export default function MapPickerGoogle({
   onChange: (v: string) => void;
   hint?: string;
   onDiaChi?: (v: string) => void;
-  onDiaGioi?: (v: { tinh: string; quan: string; phuong: string }) => void;
+  onDiaGioi?: (v: { tinh: string; quan: string; phuong: string; chuoi?: string }) => void;
 }) {
   const boxRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<GMap | null>(null);
@@ -106,7 +106,7 @@ export default function MapPickerGoogle({
 
     // Ba khối địa giới: luôn cập nhật, đó là sự thật suy từ toạ độ.
     if (ten.tinh || ten.quan || ten.phuong)
-      onDiaGioiRef.current?.({ tinh: ten.tinh, quan: ten.quan, phuong: ten.phuong });
+      onDiaGioiRef.current?.({ tinh: ten.tinh, quan: ten.quan, phuong: ten.phuong, chuoi: ten.chuoi });
 
     // Số nhà / tên đường: quyền của khách. Chỉ viết khi ô trống hoặc đang giữ
     // đúng chữ máy điền lần trước.

@@ -16,7 +16,9 @@ import { KHOA_GIA_CHUAN, NHAP_TRONG, DIEU_CHINH_TRONG, chonMienPhi, thieuThongTi
 // Tiện ích, duyệt tin trừ tiền, đẩy tin, hội viên, CSDL so_ngay_hien_thi) đổi theo.
 // ============================================================================
 
-export const homNayVn = () => new Date(Date.now() + 7 * 3600_000).toISOString().slice(0, 10);
+// Hôm nay giờ VN — một hàm chung cho cả hệ thống (src/lib/gioVn.ts).
+import { homNayVn } from "@/lib/gioVn";
+export { homNayVn };
 
 // BẢN ĐÃ DUYỆT (chủ dự án 08/10/2026: "chỉ công bố khi tôi duyệt"). Bấm Công bố = duyệt:
 // chụp lại đúng bản nháp lúc đó. Lịch 0h CHỈ tính lại từ bản đã duyệt (để chương trình đã

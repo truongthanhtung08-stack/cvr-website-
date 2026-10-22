@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useNutQuayLai } from "@/lib/khoaCuon";
 import Gallery from "@/components/Gallery";
+import { ANH_MAC_DINH } from "@/lib/anhMau";
 import RichContent from "@/components/RichContent";
 import { getTier, type TierId } from "@/lib/packages";
 import { nhanDienTich as nhanDienTichTheoLoai, laTinThue } from "@/lib/listingSpec";
@@ -22,12 +23,15 @@ export default function XemTruocTin({
   onDong,
   onDang,
   dangLuu,
+  chuaCoAnh,
 }: {
   du: ListingFull;
   tier: TierId | "";
   onDong: () => void;
   onDang: () => void;
   dangLuu: boolean;
+  /** Khách chưa up ảnh nào → hiện ảnh mẫu đẹp nhất hợp loại hình, ghi "Ảnh mẫu" (chủ dự án 23/10/2026). */
+  chuaCoAnh?: boolean;
 }) {
   useNutQuayLai(true, onDong); // nút Quay lại điện thoại đóng lớp này, không rời trang (hàm chung, 22/10/2026)
   const l = du.listing;
@@ -63,7 +67,14 @@ export default function XemTruocTin({
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
         <div className="mx-auto max-w-4xl px-4 pb-8 sm:px-6">
           <div className="-mx-4 mb-5 sm:mx-0 sm:mt-4">
-            <Gallery images={d.images} videos={d.videos} alt={tieuDe1Dong} />
+            {/* Khách chưa up ảnh → ảnh mặc định Coastal Land, ghi rõ "Ảnh mẫu" (chủ dự án 23/10/2026: "ghi (ảnh mẫu)" · "chưa có ảnh
+                là lấy ảnh Coastal Land mặc định") — chỉ để xem trước, không lưu vào tin (src/lib/anhMau.ts). */}
+            <div className="relative">
+              <Gallery images={chuaCoAnh ? [ANH_MAC_DINH] : d.images} videos={d.videos} alt={tieuDe1Dong} />
+              {chuaCoAnh && (
+                <span className="pointer-events-none absolute left-3 top-3 z-10 rounded-full bg-black/60 px-2.5 py-1 text-[12px] font-semibold text-white">Ảnh mẫu</span>
+              )}
+            </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">

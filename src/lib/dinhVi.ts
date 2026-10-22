@@ -40,8 +40,13 @@ function laAndroid(): boolean {
 // gọi được là hộp thoại xin quyền của trình duyệt, mà hộp đó chỉ hiện khi khách
 // CHƯA từng bấm "Chặn". Đã bấm Chặn rồi thì chỉ còn cách chỉ họ tự bật.
 // Web mở TRONG Zalo / Facebook / Messenger / Instagram / TikTok — trình duyệt trong app thường không cho trang dùng vị trí.
-function laTrongApp(): boolean {
+export function laTrongApp(): boolean {
   return typeof navigator !== "undefined" && /Zalo|FBAN|FBAV|FB_IAB|Messenger|Instagram|TikTok/i.test(navigator.userAgent);
+}
+
+// Web mở bằng biểu tượng cài trên màn hình chính (ứng dụng web, không có thanh địa chỉ).
+function laMoBangBieuTuong(): boolean {
+  return typeof window !== "undefined" && window.matchMedia?.("(display-mode: standalone)").matches;
 }
 
 // Trình duyệt khách đang dùng — để chỉ đúng tên menu, đúng tên ứng dụng.
@@ -77,6 +82,13 @@ export function huongDanBatDinhVi(ma = 1, tang: "trang" | "ungDung" | "" = ""): 
     const ten = td === "samsung" ? "Samsung Internet" : "Chrome";
     if (tang === "ungDung") return [`Cài đặt điện thoại → Ứng dụng → ${ten} → Quyền → Vị trí → Chỉ cho phép khi dùng ứng dụng`, "Quay lại, bấm nút định vị lần nữa"];
     if (td === "samsung") return ["Bấm ≡ ở góc dưới → Cài đặt → Trang web và tải xuống → Quyền trang web → Vị trí", "Chọn coastalland.vn → Cho phép, rồi bấm nút định vị lần nữa"];
+    // ĐƯỜNG NGẮN NHẤT, ĐÚNG MÁY (chủ dự án 23/10/2026: "chặn thì hướng dẫn cách mở cho đúng"): mở web trong Chrome có thanh
+    // địa chỉ → biểu tượng bên trái địa chỉ → Quyền → Vị trí (Chrome Android hiện công tắc quyền của đúng trang đang mở).
+    // Mở bằng biểu tượng cài trên màn hình chính (không có thanh địa chỉ) → đường Cài đặt của Chrome.
+    // Mở từ ứng dụng khác (thẻ Chrome gọn có ✕ ˅ — không có biểu tượng cạnh địa chỉ, chủ dự án chụp 23/10/2026) → mở ra Chrome
+    // đầy đủ trước.
+    // ĐÚNG CÁC BƯỚC CHỦ DỰ ÁN ĐÃ LÀM ĐƯỢC TRÊN MÁY THẬT (23/10/2026), kèm chữ tiếng Anh vì nhiều máy để Chrome tiếng Anh.
+    if (!laMoBangBieuTuong()) return ["Bấm biểu tượng bên trái địa chỉ web → Quyền (Permissions) → bật Vị trí (Location). Mở từ ứng dụng Google thì bấm ⋮ → Mở trong Chrome trước", "Tải lại trang, bấm nút định vị lần nữa"];
     return ["Mở Chrome → ⋮ → Cài đặt → Cài đặt trang web → Vị trí", "Chọn coastalland.vn (mục Bị chặn) → Cho phép, rồi bấm nút định vị lần nữa"];
   }
   if (tang === "ungDung") return ["Windows: Cài đặt → Quyền riêng tư và bảo mật → Vị trí: BẬT (cả mục cho ứng dụng máy tính)", "Tải lại trang, bấm nút định vị lần nữa"];
@@ -88,6 +100,7 @@ export function huongDanBatDinhVi(ma = 1, tang: "trang" | "ungDung" | "" = ""): 
 export function loiDinhVi(ma: number): string {
   if (ma === 1) return "Cho phép Coastal Land dùng vị trí của máy";
   if (ma === 2) return "Bật Vị trí của máy";
+  if (ma === 4) return "Link thử không phải https nên trình duyệt không cho dùng vị trí — thử nút này trên coastalland.vn";
   return "Chưa lấy được vị trí, thử lại.";
 }
 
@@ -111,6 +124,13 @@ export function layViTri(
   bao: (ma: number) => void,
   epGPS = false,
 ) {
+  // LINK THỬ KHÔNG HTTPS (http://192.168…:3000 mở trên điện thoại): trình duyệt chặn vị trí với mọi trang không https, không
+  // hỏi quyền → báo đúng như vậy, không bày hướng dẫn gỡ chặn coastalland.vn (chủ dự án thử máy 23/10/2026 làm theo không
+  // được). Khách thật luôn vào bằng https nên không bao giờ gặp.
+  if (typeof window !== "undefined" && !window.isSecureContext) {
+    bao(4);
+    return;
+  }
   if (typeof navigator === "undefined" || !navigator.geolocation) {
     bao(2);
     return;

@@ -99,7 +99,7 @@ export default function YeuCauNhanTin() {
                 <p className="mt-0.5 text-xs text-cvr-faint">
                   {yc.nguoi?.email || "chưa có email"}
                   {yc.nguoi?.phone ? ` · SĐT hồ sơ: ${yc.nguoi.phone}` : ""}
-                  {" · gửi "}{new Date(yc.created_at).toLocaleDateString("vi-VN")}
+                  {" · gửi "}{new Date(yc.created_at).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}
                   {yc.so_tin > 0 ? ` · khoảng ${yc.so_tin} tin` : ""}
                 </p>
               </div>

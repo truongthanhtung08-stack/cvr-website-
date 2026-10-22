@@ -430,7 +430,7 @@ export default function ImagePicker({
             type="button"
             onClick={() => setMoChon(true)}
             disabled={uploadingImg}
-            className={`flex w-full items-center justify-center gap-2 rounded-lg bg-cvr-ink px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-cvr-ink/90 ${uploadingImg ? "pointer-events-none opacity-60" : ""}`}
+            className={`flex w-full items-center justify-center gap-2 rounded-lg bg-cvr-ink px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-cvr-ink/90 sm:w-auto sm:px-8 ${uploadingImg ? "pointer-events-none opacity-60" : ""}`}
           >
             <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 16V4m0 0L8 8m4-4l4 4M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" /></svg>
             {uploadingImg ? "Đang tải ảnh…" : "Thêm ảnh"}

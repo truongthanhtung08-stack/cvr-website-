@@ -3,11 +3,12 @@
 import { useDiaDanh } from "@/lib/useDiaDanh";
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
+import LichChonNgay from "@/components/LichChonNgay";
 import LoginForm from "@/components/LoginForm";
 import BangGiaGoiTin from "@/components/BangGiaGoiTin";
 import NoiDungChuongTrinh from "@/components/NoiDungChuongTrinh";
 import MucAnHien, { goiYDanhSach } from "@/components/MucAnHien";
-import BangQuyenLoiNoi from "@/components/BangQuyenLoiNoi";
 import ChonCoTim from "@/components/ChonCoTim";
 import { bietDanhTinh, bietDanhPhuongMoi, type BietDanh } from "@/lib/timDiaDanh";
 import { linkHopLe } from "@/lib/linkChen";
@@ -20,7 +21,7 @@ import OGoTuGian from "@/components/OGoTuGian";
 import { donViGiaNenDung, goiYDienTich, goiYGia, goiYTieuDe } from "@/lib/goiYNhapTin";
 import { doiHeGiuNguyen, chuoiTimBanDo, diemTimBanDo, ungVienPhuongCu, type NhoHaiHe } from "@/lib/diaChiHaiHe";
 import {
-  categorySpecs, demandTypes, specForType,
+  demandTypes,
   coPhongNgu, coPhongTam, coDienTichXayDung, coNoiThat, fieldsSplit, thieuMucBatBuoc, nhanDienTich, type Field,
   phapLyCho, legalOptions, fieldsFor, furnishLevels, amenityGroups, tienIchCho, interiorItems, directions,
   purposeOfDemand, demandOfPurpose,
@@ -29,7 +30,7 @@ import { typeGroupsFor, normalizeVi } from "@/lib/filters";
 import { khoaDuAn } from "@/lib/duAnTen";
 import { slugify } from "@/lib/contentAdmin";
 import { provinceNamesFor, districtsOf, wardsOf, wardsOfNew, wardsOfAny, chuanTen, type GeoMode } from "@/lib/locations";
-import { ganDiaGioi, type DiaGioiBanDo } from "@/lib/diaGioiTuBanDo";
+import { ganDiaGioi, phuongCuTheoGhim, type DiaGioiBanDo } from "@/lib/diaGioiTuBanDo";
 import ImagePicker from "@/components/admin/ImagePicker";
 import OTieuDe from "@/components/OTieuDe";
 // BẢN ĐỒ GHIM — dùng bản Leaflet/OpenStreetMap. Bản chạy nền Google
@@ -37,7 +38,7 @@ import OTieuDe from "@/components/OTieuDe";
 // phải sửa đúng dòng import này.
 import MapPicker from "@/components/MapPickerMo";
 import ContentEditor from "@/components/admin/ContentEditor";
-import { bangTheoMucDich, chuongTrinhTvMoi, freeDangChay, huongKhuyenMai, thanhVienMoi, isPromoRunning, ngayVn, soNgayHienThi, quotePrice, soAnhToiDa, soVideoToiDa, vnd } from "@/lib/billing";
+import { bangTheoMucDich, chuongTrinhTvMoi, freeDangChay, huongKhuyenMai, thanhVienMoi, isPromoRunning, ngayVn, soNgayHienThi, quotePrice, soAnhToiDa, soVideoToiDa, vnd, loaiVoucherTin } from "@/lib/billing";
 import { banChuyenDoi } from "@/lib/gtagChuyenDoi";
 import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
 import { useBilling } from "@/lib/useBilling";
@@ -52,6 +53,9 @@ import { loiEmail, loiSdt } from "@/lib/kiemNhap";
 import XemTruocTin from "@/components/XemTruocTin";
 import { xemTruocTin } from "@/lib/listingsDb";
 import { useKhoaCuon } from "@/lib/khoaCuon";
+import { homNayVn } from "@/lib/gioVn";
+// Thẻ tin mẫu (nút "Tin hiển thị" ở mục gói tin) — chỉ tải khi khách bấm, không nặng lúc mở trang đăng tin.
+const TinHienThiMau = dynamic(() => import("@/components/TinHienThiMau"));
 
 // Đơn vị giá "Khác — tự ghi" (chủ dự án 14/10/2026): khách ghi nguyên văn, lưu details.giaTuGhi.
 const KHAC_GIA = "Khác — tự ghi";
@@ -165,6 +169,7 @@ export default function PostListingForm() {
   // HẸN NGÀY ĐĂNG (chuẩn Batdongsan): "" = hiển thị ngay khi duyệt; "YYYY-MM-DD" = duyệt xong
   // tin ở mục Chờ hiển thị, tới 0h ngày đó (giờ VN) mới lên — hạn tính từ ngày đó.
   const [batDau, setBatDau] = useState("");
+  const [moLich, setMoLich] = useState(false); // bảng lịch chọn ngày (máy tính)
   // Tin ĐANG HIỂN THỊ / ĐÃ HẾT HẠN đang sửa → gói cố định, chỉ hiện thông tin gói (không chọn lại).
   const [goiDangDung, setGoiDangDung] = useState<{ tier: TierId; het: string | null } | null>(null);
   // Thông tin ví/hồ sơ dùng để tính ưu đãi (null = chưa đăng nhập hoặc chưa tải xong)
@@ -189,7 +194,12 @@ export default function PostListingForm() {
   // Tiền đang tạm giữ cho các tin chờ duyệt khác của khách (0056).
   const [tamGiu, setTamGiu] = useState(0);
   const [error, setError] = useState("");
-  const [xemQuyenLoi, setXemQuyenLoi] = useState(false);
+  // MỤC GÓI TIN (chủ dự án 23/10/2026): hai phần "Chương trình" · "Chọn giá"; dưới bảng giá chỉ "Mẫu tin hiển thị" (chủ dự án 23/10/2026: "Tin hiển thị = Mẫu tin hiển thị"), bấm mới hiện.
+  const [phanGoi, setPhanGoi] = useState<"ct" | "gia" | null>(null);
+  const [xemTinMau, setXemTinMau] = useState(false);
+  // Voucher gói hội viên còn lượt của khách (0040) — Tổng tiền trừ y như máy chủ trừ lúc duyệt.
+  const [vouchers, setVouchers] = useState<{ loai: string; giam: number; con_lai: number; tu: string; den: string }[]>([]);
+  useKhoaCuon(xemTinMau, () => setXemTinMau(false)); // bảng Tin hiển thị: khoá cuộn nền, nút Quay lại điện thoại = đóng bảng
   const [xemChiTietTien, setXemChiTietTien] = useState(false); // khối Tổng tiền: bấm "Chi tiết" mới hiện từng khoản
   const [daRoiO, setDaRoiO] = useState<{ sdt?: boolean; email?: boolean }>({});
   const [giaTuGhi, setGiaTuGhi] = useState("");
@@ -299,7 +309,7 @@ export default function PostListingForm() {
     const soNgay = (Date.now() - new Date(hoSoVi.created_at).getTime()) / 86_400_000;
     // MỘT định nghĩa thành viên mới (thanhVienMoi) — y như duyệt tin, đăng lại (22/10/2026).
     return thanhVienMoi(billing.free, {
-      coChu: true, homNay: new Date().toISOString().slice(0, 10), soNgayMoTk: soNgay,
+      coChu: true, homNay: homNayVn(), soNgayMoTk: soNgay,
       ngayTaoTk: new Date(new Date(hoSoVi.created_at).getTime() + 7 * 3_600_000).toISOString().slice(0, 10),
     });
   }, [hoSoVi, billing.free]);
@@ -315,7 +325,7 @@ export default function PostListingForm() {
         data: bangGia,
         tierId: goiXemTruoc,
         days: planDays,
-        today: new Date().toISOString().slice(0, 10),
+        today: homNayVn(),
         isNewMember: laThanhVienMoi,
       }),
     [bangGia, goiXemTruoc, planDays, laThanhVienMoi],
@@ -330,16 +340,29 @@ export default function PostListingForm() {
     // eslint-disable-next-line react-hooks/purity
     const soNgayMoTk = hoSoVi.created_at ? (Date.now() - new Date(hoSoVi.created_at).getTime()) / 86_400_000 : Infinity;
     return huongKhuyenMai(billing.free, {
-      goi: planTier as TierId, homNay: new Date().toISOString().slice(0, 10), coChu: true,
+      goi: planTier as TierId, homNay: homNayVn(), coChu: true,
       soNgayMoTk, role: hoSoVi.role, freeQuota: hoSoVi.free_quota, ngayTaoTk: hoSoVi.created_at ? new Date(new Date(hoSoVi.created_at).getTime() + 7 * 3_600_000).toISOString().slice(0, 10) : undefined,
     });
   }, [billing.free, planTier, hoSoVi, chonKm]);
 
   const thanhTien = duocMienPhi ? 0 : baoGia.total;
 
-  // Giá niêm yết CHƯA gồm VAT → khách trả thêm 8%. Phải hiện rõ ngay tại đây,
-  // nếu không khách thấy giá 1.050.000đ mà ví bị trừ 1.134.000đ là khiếu nại.
-  const tienThue = tachThue(thanhTien);
+  // TÍNH TIỀN Y NHƯ MÁY CHỦ TRỪ LÚC DUYỆT (api/tin-dang/duyet — chủ dự án 23/10/2026: "xem lại phần tính giá … hội viên, chiết
+  // khấu · quy trình này phải chuẩn"): giá gói (chưa VAT, bảng admin) − khuyến mãi % (chương trình đang chạy) − voucher gói hội
+  // viên (đúng loại tin thường / tin VIP, còn lượt, trong kỳ; hết hạn sớm nhất trước, giảm nhiều hơn trước — như dung_voucher;
+  // không trừ quá số tiền) = TẠM TÍNH; + VAT 8% = TỔNG khách trả. Trước 23/10 form bỏ sót voucher → báo cao hơn số bị trừ.
+  const voucherDung = useMemo(() => {
+    if (!planTier || thanhTien <= 0) return null;
+    const loai = loaiVoucherTin(planTier);
+    // eslint-disable-next-line react-hooks/purity
+    const bay = Date.now();
+    return vouchers
+      .filter((v) => v.loai === loai && v.con_lai > 0 && new Date(v.tu).getTime() <= bay && new Date(v.den).getTime() > bay)
+      .sort((a, b) => new Date(a.den).getTime() - new Date(b.den).getTime() || b.giam - a.giam)[0] ?? null;
+  }, [vouchers, planTier, thanhTien]);
+  const truocVoucher = tachThue(thanhTien);
+  const giamVoucher = voucherDung ? Math.min(voucherDung.giam, truocVoucher.tienHang) : 0;
+  const tienThue = giamVoucher > 0 ? tachThue(truocVoucher.tienHang - giamVoucher) : truocVoucher;
 
   // BẢNG GÓI KIỂU BATDONGSAN — bày SẴN mọi loại tin kèm giá, không bắt chọn mới thấy.
   // Khuyến mãi xét bằng CÙNG một hàm với máy chủ (huongKhuyenMai) cho TỪNG loại tin.
@@ -348,7 +371,7 @@ export default function PostListingForm() {
     // eslint-disable-next-line react-hooks/purity
     const soNgayMoTk = hoSoVi.created_at ? (Date.now() - new Date(hoSoVi.created_at).getTime()) / 86_400_000 : Infinity;
     return huongKhuyenMai(billing.free, {
-      goi: tierId, homNay: new Date().toISOString().slice(0, 10), coChu: true,
+      goi: tierId, homNay: homNayVn(), coChu: true,
       soNgayMoTk, role: hoSoVi.role, freeQuota: hoSoVi.free_quota, ngayTaoTk: hoSoVi.created_at ? new Date(new Date(hoSoVi.created_at).getTime() + 7 * 3_600_000).toISOString().slice(0, 10) : undefined,
     });
   };
@@ -358,12 +381,15 @@ export default function PostListingForm() {
   const goiMp = billing.free.tierId;
   const plansChon = bangGia.plans;
   // eslint-disable-next-line react-hooks/purity
-  const homNayVn = new Date(Date.now() + 7 * 3_600_000).toISOString().slice(0, 10);
+  const ngayHomNay = homNayVn();
   const duocChonKm = huongKmCua(goiMp);
-  const coGoiKm = Boolean(ngayMp) && (freeDangChay(billing.free, homNayVn) || duocChonKm);
+  const coGoiKm = Boolean(ngayMp) && (freeDangChay(billing.free, ngayHomNay) || duocChonKm);
   // Chương trình giảm giá khác đang chạy (admin duyệt) — tự trừ vào gói đúng đối tượng khi tính tiền.
-  const ctKhac = (billing.promos ?? []).filter((p) => isPromoRunning(p, homNayVn));
+  const ctKhac = (billing.promos ?? []).filter((p) => isPromoRunning(p, ngayHomNay));
   const hopCtKhac = (p: (typeof ctKhac)[number]) => p.audience === "all" || (p.audience === "new" && laThanhVienMoi);
+  // Mục gói tin: phần đang mở (xem ghi chú ở khối "MỤC GÓI TIN — HAI PHẦN").
+  const coChuongTrinh = coGoiKm || ctKhac.length > 0;
+  const phanDang = coChuongTrinh ? (phanGoi ?? (duocChonKm ? "ct" : "gia")) : "gia";
   // LINK CHƯƠNG TRÌNH QUẢNG BÁ CHỌN SẴN ĐÚNG GÓI (chủ dự án 15/10/2026):
   //   /dang-tin?goi=khuyen-mai          → ô gói khuyến mãi (chỉ khi khách đúng đối tượng)
   //   /dang-tin?goi=gold&ngay=10        → gói thường đúng hạng + số ngày có trong bảng giá
@@ -412,8 +438,6 @@ export default function PostListingForm() {
   // hình đang chọn không còn trong danh mục mới thì coi như CHƯA chọn — không để
   // lưu tin mang loại hình không tồn tại ở mục đích đó.
   const loaiHinh = nhomLoaiHinh.some((g) => g.items.includes(category)) ? category : "";
-
-  const spec = useMemo(() => (loaiHinh ? specForType(loaiHinh) : categorySpecs[0]), [loaiHinh]);
 
   // ĐỔI LOẠI HÌNH HOẶC MỤC ĐÍCH (Bán ↔ Cho thuê) → MỌI MỤC ĐI THEO (chủ dự án 22/10/2026: "chọn bán đất mà còn nội
   // thất là SAI — đổi loại hình, đổi mục đích thì mọi thứ thay đổi theo, cả trong một tin"). Bỏ những gì loại mới không
@@ -551,7 +575,17 @@ export default function PostListingForm() {
 
   function nhanDiaGioiTuBanDo(dc: DiaGioiBanDo) {
     diaGioiTuBanDoRef.current = dc;
-    apDungDiaGioi(dc, geoMode, province, district, ward);
+    const kq = ganDiaGioi(dc, geoMode, { province, district, ward });
+    setProvince(kq.province);
+    setDistrict(kq.district);
+    setWard(kq.ward);
+    // ĐỒNG BỘ HAI HỆ THEO GHIM (chủ dự án 23/10/2026): phường mới gộp nhiều phường cũ → lấy phường cũ đúng chỗ ghim, chụp
+    // sẵn cả hai hệ → bấm "Địa chỉ cũ" ra đúng phường đó, bấm lại "Địa chỉ mới" về nguyên — không suy lại theo tên.
+    if (geoMode !== "moi") return;
+    const cu = phuongCuTheoGhim(dc, kq.province, kq.ward);
+    nhoHai.current = cu ? { moi: { tinh: kq.province, quan: kq.district, phuong: kq.ward }, cu } : null;
+    const uv = cu ? ungVienPhuongCu("moi", kq.province, kq.ward).find((x) => x.phuong === cu.phuong && x.quan === cu.quan) : undefined;
+    if (uv) setPhuongCu(uv.nhan);
   }
 
   // DANH SÁCH "THUỘC DỰ ÁN" = MỌI DỰ ÁN ĐÃ BIẾT (chủ dự án 22/10/2026: "cái nào có sẵn chọn, chưa có sẵn khách tự ghi — cấu
@@ -605,6 +639,10 @@ export default function PostListingForm() {
             setHoSoVi((h) => (h ? { ...h, balance: Number(v.kha_dung) } : h));
             setTamGiu(Number(v.tam_giu));
           }
+          // VOUCHER GÓI HỘI VIÊN (0040): cấp kỳ 30 ngày hiện tại (lười — như trang Tài khoản → Hội viên) rồi đọc voucher còn lượt.
+          await supabase.rpc("cap_voucher_hoi_vien", { p_user: user.id });
+          const { data: vc } = await supabase.from("hoi_vien_voucher").select("loai,giam,con_lai,tu,den").gt("con_lai", 0);
+          setVouchers(((vc ?? []) as { loai: string; giam: number; con_lai: number; tu: string; den: string }[]).map((x) => ({ ...x, giam: Number(x.giam) })));
         }
       }
       setAuthReady(true);
@@ -746,7 +784,11 @@ export default function PostListingForm() {
       // Phường/xã cũ người đăng tự chọn → dòng "Địa chỉ cũ" đủ 3 cấp.
       ...((): { diaChiCu?: { phuong: string; quan: string; tinh: string } } => {
         const c = ungVienPhuongCu(geoMode, province, ward).find((x) => x.nhan === phuongCu);
-        return c ? { diaChiCu: { phuong: c.phuong, quan: c.quan, tinh: c.tinh } } : {};
+        if (c) return { diaChiCu: { phuong: c.phuong, quan: c.quan, tinh: c.tinh } };
+        // Không có ô chọn phường cũ (bảng ánh xạ đã lấy phường cũ trùng tên) mà ghim chỉ ra phường cũ khác → lưu theo ghim.
+        const dc = diaGioiTuBanDoRef.current;
+        const g = geoMode === "moi" && mapPin.trim() && dc ? phuongCuTheoGhim(dc, province, ward) : null;
+        return g ? { diaChiCu: g } : {};
       })(),
       // giaBao = SỐ TIỀN WEB ĐÃ BÁO CHO KHÁCH ngay lúc bấm Đăng (chưa gồm GTGT,
       // cùng thang với quotePrice). Lúc admin duyệt, máy chủ tính lại giá; nếu
@@ -897,7 +939,9 @@ export default function PostListingForm() {
     // SỐ PHẢI SO VỚI VÍ LÀ SỐ KHÁCH THỰC TRẢ = tổng đã gồm GTGT (tienThue.tongTra),
     // KHÔNG phải giá gói. Giá web niêm yết chưa gồm VAT (thue.ts: GIA_DA_GOM_VAT =
     // false) nên lấy nhầm giá gói là ví thiếu 8% mà web vẫn cho đăng.
-    const phaiTra = tienThue.tongTra;
+    // VOUCHER HỘI VIÊN: lúc gửi, CSDL TẠM GIỮ đủ giá gói TRƯỚC voucher (0056 phi_tin_cho_duyet = giaBao + VAT); voucher chỉ trừ lúc
+    // duyệt → kiểm ví theo số tạm giữ, không theo Tổng sau voucher (kiểm thấp hơn là khách bấm đăng bị CSDL báo thiếu ví).
+    const phaiTra = truocVoucher.tongTra;
     // TIN ĐÃ ĐĂNG (đang hiển thị / đã hết hạn) — SỬA THÔNG TIN, KHÔNG phải đăng mới (chuẩn
     // Batdongsan, chốt 01/10/2026): gói, ngày đăng, hạn giữ nguyên, không tính tiền, không
     // đổi trạng thái. Đang hiển thị → bản sửa hiện NGAY, admin kiểm sau (CSDL tự đánh dấu
@@ -1007,7 +1051,10 @@ export default function PostListingForm() {
   // CHƯA ĐĂNG NHẬP → HIỆN NGAY KHUNG ĐĂNG NHẬP tại trang (chủ dự án 22/10/2026: link Đăng tin nào — Google, Zalo,
   // menu — chưa đăng nhập là ra màn hình đăng nhập, đăng nhập xong vào đúng trang). KHÔNG chuyển hướng máy chủ:
   // /dang-tin vẫn trả trang thật cho Google (có trong sitemap). Đích sau đăng nhập: dichSauDangNhap (một logic).
-  if (authReady && !userId) {
+  // CHỈ MÁY THỬ (next dev): ?xem-thu=1 xem form không cần đăng nhập — chủ dự án duyệt giao diện trên điện thoại thật qua link
+  // mạng nội bộ, nơi đăng nhập Zalo/Google không chạy. Bản thật (production) không bao giờ đi đường này.
+  const xemThu = process.env.NODE_ENV !== "production" && thamSo.get("xem-thu") === "1";
+  if (authReady && !userId && !xemThu) {
     return (
       <div className="flex justify-center py-4">
         <LoginForm />
@@ -1113,9 +1160,12 @@ export default function PostListingForm() {
       onFocus={ganNhanPhimEnter}
       onKeyDown={enterSangOTiep}
       onSubmit={(e) => { e.preventDefault(); save(false); }}
-      className="space-y-6">
+      // MÁY TÍNH HAI CỘT (chủ dự án 23/10/2026: "PC mà làm giống y mobile — PC thiếu gì không gian để tối ưu"): cột trái menu 7
+      // mục dọc (đi theo chỗ đang xem, như cột menu trang Báo giá) · cột phải các mục. Điện thoại/máy tính bảng: thanh mục vuốt ngang.
+      className="lg:grid lg:grid-cols-[13.5rem_minmax(0,1fr)] lg:items-start lg:gap-8">
       <MucMoCtx.Provider value={{ moMuc, loi: error && loiBuoc ? { buoc: loiBuoc, msg: error } : undefined }}>
       <ThanhBuoc />
+      <div className="mt-6 min-w-0 space-y-6 lg:mt-0">
       {nhapCho && (() => {
         const chu = (k: string) => (typeof nhapCho[k] === "string" ? (nhapCho[k] as string).trim() : "");
         const ten = chu("title") || [chu("category"), chu("province")].filter(Boolean).join(" · ");
@@ -1146,6 +1196,7 @@ export default function PostListingForm() {
           onDong={() => setXemTruoc(false)}
           onDang={() => { setXemTruoc(false); save(false); }}
           dangLuu={saving === "publish"}
+          chuaCoAnh={!images.some((x) => !isVideoUrl(x))}
         />
       )}
       {moXacMinh && (
@@ -1226,7 +1277,7 @@ export default function PostListingForm() {
         {/* HAI NÚT CHIA ĐÔI HÀNG, CHỮ KHÔNG GÃY DÒNG. Nhãn cũ dài gần 30 ký tự nên
             trên điện thoại 375px hộp bị bóp, chữ rớt xuống hai dòng và nút bên cạnh
             cũng vỡ theo ("Địa chỉ / cũ") — chủ dự án chụp lại đúng chỗ này. */}
-        <div className="mb-3 grid w-full grid-cols-2 gap-1 rounded-lg border border-cvr-line bg-white p-1">
+        <div className="mb-3 grid w-full grid-cols-2 gap-1 rounded-lg border border-cvr-line bg-white p-1 sm:max-w-md">
           {([
             { id: "moi" as GeoMode, label: "Địa chỉ mới" },
             { id: "cu" as GeoMode, label: "Địa chỉ cũ" },
@@ -1253,7 +1304,8 @@ export default function PostListingForm() {
                   // thuộc về nó nữa, phải bỏ chứ không được để lại giá trị lạc.
                   setPhuongCu("");
                   const dc = diaGioiTuBanDoRef.current;
-                  if (dc && !d.ward) setTimeout(() => nhanDiaGioiTuBanDo(dc), 0);
+                  // Theo HỆ VỪA CHỌN (m.id) — gọi nhanDiaGioiTuBanDo ở đây là dùng hệ cũ của lượt vẽ trước, điền sai hệ.
+                  if (dc && !d.ward) setTimeout(() => apDungDiaGioi(dc, m.id, d.province, d.district, ""), 0);
                 }}
               className={`whitespace-nowrap rounded-md px-2 py-2 text-center text-[13px] font-medium transition ${
                 geoMode === m.id ? "bg-cvr-ink text-white" : "text-cvr-body hover:text-cvr-ink"
@@ -1452,8 +1504,11 @@ export default function PostListingForm() {
         )}
       </Card>
 
-      {/* 3. Đặc điểm & tiện ích (không bắt buộc) */}
-      <Card id="b-dacdiem" step={buoc()} title="Đặc điểm & tiện ích">
+      {/* 3. Đặc điểm & tiện ích (không bắt buộc) — Ô CHỈ BÀY KHI ĐÃ CHỌN LOẠI HÌNH (chủ dự án 23/10/2026: "vào đăng tin, chưa bấm
+          gì đã hiện Đặc điểm — Condotel / Nghỉ dưỡng"): mọi ô ở đây theo đúng loại hình. Chưa chọn thì mục chỉ có tiêu đề, mờ —
+          vẫn giữ chỗ để SỐ MỤC KHÔNG NHẢY (chủ dự án 23/10/2026: "menu vì sao mobile 7 mục mà PC 6 mục" — Gói tin luôn là mục 5). */}
+      <Card id="b-dacdiem" step={buoc()} title="Đặc điểm & tiện ích" chiTieuDe={!loaiHinh}>
+      {loaiHinh && (<>
         {/* Chủ dự án 22/10/2026: mục BẮT BUỘC luôn hiện; mục không bắt buộc thu gọn trong khối ẩn/hiện, theo đúng
             loại hình khách chọn (danh sách ô lấy từ listingSpec — đất không có nội thất…). */}
         {specDacDiem.some((f) => f.batBuoc) && (
@@ -1463,7 +1518,7 @@ export default function PostListingForm() {
         )}
         <div className="space-y-3">
         <MucAnHien
-          ten={`Đặc điểm — ${loaiHinh || spec.label}`}
+          ten={`Đặc điểm — ${loaiHinh}`}
           goiY={goiYDanhSach([...specDacDiem.filter((f) => !f.batBuoc).map((f) => f.label), "Hướng nhà / đất", "Tình trạng pháp lý"])}
           soChon={specDacDiem.filter((f) => !f.batBuoc && String(specValues[f.key] ?? "").trim()).length + [direction, legal].filter((x) => String(x ?? "").trim()).length}
         >
@@ -1531,6 +1586,7 @@ export default function PostListingForm() {
         </div>
         </MucAnHien>
         </div>
+      </>)}
       </Card>
 
       {/* 4. Tiêu đề & mô tả */}
@@ -1570,18 +1626,29 @@ export default function PostListingForm() {
           </div>
         ) : (
           <>
-            {/* KHỐI GÓI TIN GỌN (chủ dự án duyệt mẫu 22/10/2026 — để XEM, SO SÁNH, CÂN NHẮC, CHỌN): "So sánh các gói" là link
-                góc phải (mở bảng quyền lợi) · gói khuyến mãi là dòng đầu danh sách · các cấp tin (điện thoại: mỗi cấp một hàng
-                ô số ngày vuốt được, số tiền hiện đủ) · một dòng Tổng tiền, bấm "Chi tiết" mới hiện từng khoản. Mọi số lấy từ
-                admin — admin đổi gói / số ngày / giá thì khối tự đổi theo. */}
-            <div className="mb-3 flex justify-end">
-              <button type="button" onClick={() => setXemQuyenLoi(true)} className="inline-flex items-center gap-1 text-[13px] font-semibold text-cvr-blue-ink">
-                So sánh các gói
-                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
-              </button>
-            </div>
-            {xemQuyenLoi && <BangQuyenLoiNoi onDong={() => setXemQuyenLoi(false)} />}
+            {/* MỤC GÓI TIN — HAI PHẦN (chủ dự án 23/10/2026: "có 2 loại là Chương trình và Chọn giá; bố trí gọn menu và bố cục để
+                logic"): "Chương trình" = chương trình admin đang chạy, hiện đúng thông tin đã đặt · "Chọn giá" = phần chính, giá gói
+                tin theo cấp, hiển thị như trang Báo giá. Không có chương trình nào đang chạy → không menu, chỉ phần Chọn giá. Mở sẵn:
+                khách hưởng được chương trình → Chương trình; còn lại → Chọn giá. Tổng tiền chung bên dưới. Mọi số lấy từ admin. */}
+            {coChuongTrinh && (
+              <div className="mb-4 grid grid-cols-2 border-b border-cvr-line" role="tablist" aria-label="Gói tin">
+                {([["ct", "Chương trình"], ["gia", "Chọn giá"]] as const).map(([id, ten]) => (
+                  <button
+                    key={id}
+                    type="button"
+                    role="tab"
+                    aria-selected={phanDang === id}
+                    onClick={() => setPhanGoi(id)}
+                    className={`relative -mb-px flex h-11 items-center justify-center px-3 text-[15px] transition after:absolute after:inset-x-0 after:bottom-0 after:h-[3px] after:rounded-t hover:text-cvr-ink ${phanDang === id ? "font-bold text-cvr-ink after:bg-cvr-gold" : "font-semibold text-cvr-muted after:bg-transparent"}`}
+                  >
+                    {ten}
+                  </button>
+                ))}
+              </div>
+            )}
 
+            {phanDang === "ct" ? (
+            <div className="space-y-2.5">
             {/* GÓI KHUYẾN MÃI — chương trình admin đã duyệt. Đúng đối tượng mới bấm chọn được; không đúng vẫn hiện, mờ, khoá. */}
             {coGoiKm && (
               <button
@@ -1592,7 +1659,7 @@ export default function PostListingForm() {
                   if (chonKm) { setChonKm(false); setPlanTier(""); setPlanDays(0); return; }
                   setChonKm(true); setPlanTier(goiMp); setPlanDays(ngayMp);
                 }}
-                className={`mb-2.5 flex w-full items-start justify-between gap-3 rounded-2xl border px-4 py-3.5 text-left transition ${
+                className={`flex w-full items-start justify-between gap-3 rounded-2xl border px-4 py-3.5 text-left transition ${
                   chonKm ? "border-cvr-blue bg-cvr-blue/[0.08] ring-1 ring-cvr-blue" : duocChonKm ? "border-cvr-blue/40 bg-cvr-blue/[0.04]" : "cursor-not-allowed border-cvr-line bg-cvr-surface opacity-60"
                 }`}
               >
@@ -1602,40 +1669,115 @@ export default function PostListingForm() {
                 <span className="mt-1 shrink-0 text-[16px] font-semibold tabular-nums text-cvr-blue-ink">0 ₫</span>
               </button>
             )}
-
-            {/* BẢNG GIÁ KIỂU BATDONGSAN — bày hết loại tin × số ngày, bấm ô nào chọn gói đó. Giá từ admin. */}
-            <div className={planTier ? "" : "rounded-2xl ring-1 ring-cvr-blue/40 ring-offset-2"}>
-              <BangGiaGoiTin
-                plans={plansChon}
-                chon={{ tier: chonKm ? "" : planTier, days: planDays }}
-                onChon={(t, d) => { setChonKm(false); setPlanTier(t); setPlanDays(d); }}
-                onBoChon={() => { setChonKm(false); setPlanTier(""); setPlanDays(0); }}
-                onXemBangQuyenLoi={() => setXemQuyenLoi(true)}
-              />
+            {/* CHƯƠNG TRÌNH GIẢM GIÁ — admin đã duyệt, tự trừ vào gói đúng đối tượng khi tính tiền. */}
+            {ctKhac.map((p) => (
+              <div key={p.id} className={`flex items-center justify-between gap-3 rounded-2xl border border-cvr-line px-4 py-3.5 ${hopCtKhac(p) ? "bg-white" : "bg-cvr-surface opacity-60"}`}>
+                <span className="min-w-0">
+                  <span className="block text-[15px] font-semibold text-cvr-ink">{p.name}</span>
+                  <span className="mt-0.5 block text-[13px] text-cvr-muted">
+                    {p.tiers.length ? p.tiers.map((t) => getTier(t).name).join(" · ") : "Mọi gói tin"}
+                    {p.to ? ` · đến ${ngayVn(p.to)}` : ""}
+                  </span>
+                </span>
+                <span className="shrink-0 rounded-full border border-red-300 px-2 py-0.5 text-[13px] font-semibold text-red-700">−{p.percent}%</span>
+              </div>
+            ))}
             </div>
-            {/* CHƯƠNG TRÌNH KHÁC — giảm giá admin đã duyệt, tự trừ vào gói đúng đối tượng khi tính tiền. */}
-            {ctKhac.length > 0 && (
-              <div className="mt-5">
-                <p className="mb-2 text-base font-semibold tracking-tight text-cvr-ink">Chương trình khác</p>
-                <div className="space-y-2">
-                  {ctKhac.map((p) => (
-                    <div key={p.id} className={`flex items-center justify-between gap-3 rounded-2xl border border-cvr-line px-4 py-3.5 ${hopCtKhac(p) ? "bg-white" : "bg-cvr-surface opacity-60"}`}>
-                      <span className="min-w-0">
-                        <span className="block text-[15px] font-semibold text-cvr-ink">{p.name}</span>
-                        <span className="mt-0.5 block text-[13px] text-cvr-muted">
-                          {p.tiers.length ? p.tiers.map((t) => getTier(t).name).join(" · ") : "Mọi gói tin"}
-                          {p.to ? ` · đến ${ngayVn(p.to)}` : ""}
-                        </span>
-                      </span>
-                      <span className="shrink-0 rounded-full border border-red-300 px-2 py-0.5 text-[13px] font-semibold text-red-700">−{p.percent}%</span>
-                    </div>
-                  ))}
+            ) : (
+            <>
+            {/* CHỌN GIÁ — bảng giá như trang Báo giá (ma trận cả điện thoại lẫn máy tính), bấm ô nào chọn gói đó. Giá từ admin.
+                Không khung viền xanh bật/tắt theo lúc chưa chọn / đã chọn (chủ dự án 23/10/2026: dòng VAT nằm trong khung, khung lúc
+                có lúc không) — dòng "Giá đã gồm VAT" nằm ngay dưới bảng như trang Báo giá. */}
+            <BangGiaGoiTin
+              plans={plansChon}
+              chon={{ tier: chonKm ? "" : planTier, days: planDays }}
+              onChon={(t, d) => { setChonKm(false); setPlanTier(t); setPlanDays(d); }}
+              onBoChon={() => { setChonKm(false); setPlanTier(""); setPlanDays(0); }}
+              kieuBaoGia
+              canhVat={
+                <button type="button" aria-haspopup="dialog" onClick={() => setXemTinMau(true)} className="inline-flex shrink-0 items-center gap-0.5 text-[13.5px] font-semibold text-cvr-blue-ink hover:underline">
+                  Mẫu tin hiển thị
+                  <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+                </button>
+              }
+            />
+            {/* TIN HIỂN THỊ (chủ dự án 23/10/2026: "phần dưới báo giá chỉ đưa mục Tin hiển thị vào thôi"; "làm cái bảng xem — bấm vào xem,
+                bấm X tắt"; "để nút này ở đâu cho hợp lý"): chữ bấm cùng hàng dòng VAT, ngay dưới bảng giá (canhVat), bấm mở BẢNG NỔI thẻ tin mẫu (tới đúng gói đang chọn). Đóng: X · chạm ra ngoài · nút
+                Quay lại điện thoại (useKhoaCuon ở trên). */}
+            {xemTinMau && (
+              // BẢNG RIÊNG, KHÔNG GIỐNG MỘT TRANG (chủ dự án 23/10/2026): khung gọn giữa màn hình, nền tối bao quanh bốn phía, bo góc,
+              // đổ bóng — điện thoại vừa một thẻ (thấy mép thẻ sau), máy tính hai thẻ rưỡi.
+              <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/55 p-4" onClick={() => setXemTinMau(false)}>
+                <div
+                  role="dialog"
+                  aria-label="Mẫu tin hiển thị"
+                  className="max-h-[85dvh] w-full max-w-[21.5rem] overflow-y-auto rounded-2xl bg-white p-4 shadow-2xl ring-1 ring-black/10 sm:max-w-2xl sm:p-5"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="mb-2 flex items-center justify-between gap-3">
+                    <p className="text-[16px] font-semibold text-cvr-ink">Mẫu tin hiển thị</p>
+                    <button type="button" aria-label="Đóng" onClick={() => setXemTinMau(false)} className="flex h-9 w-9 items-center justify-center rounded-full text-cvr-ink transition hover:bg-cvr-surface">
+                      <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                  </div>
+                  <TinHienThiMau chon={planTier} gon />
                 </div>
               </div>
+            )}
+            </>
             )}
 
             {/* THANH TOÁN — đủ từng khoản như Batdongsan; các dòng cộng lại đúng bằng tổng */}
             {planTier && (
+              <>
+              {/* BẮT ĐẦU HIỂN THỊ (chủ dự án 23/10/2026: "có 2 lựa chọn — Ngay khi được duyệt và Chọn ngày; chọn ngày thì lên cái lịch và
+                  chọn ngày"): nút đôi cùng kiểu Địa chỉ mới / cũ; Chọn ngày → ô lịch của máy (mặc định ngày mai, tối đa 30 ngày tới, giờ
+                  VN). Duyệt xong tin "Chờ hiển thị", 0h ngày đó mới lên; ngày đăng + hạn tính từ ngày đó (api/tin-dang/duyet). */}
+              <div className="mt-5">
+                <p className="text-[15px] font-semibold text-cvr-ink">Bắt đầu hiển thị</p>
+                <div className="mt-2 grid w-full grid-cols-2 gap-1 rounded-lg border border-cvr-line bg-white p-1 sm:max-w-md">
+                  {([["", "Ngay khi được duyệt"], ["chon", "Chọn ngày"]] as const).map(([id, ten]) => {
+                    const dang = id === "chon" ? !!batDau : !batDau;
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        aria-pressed={dang}
+                        onClick={() => setBatDau(id === "chon" ? batDau || ngayVnSau(1) : "")}
+                        className={`whitespace-nowrap rounded-md px-2 py-2 text-center text-[13px] font-medium transition ${dang ? "bg-cvr-ink text-white" : "text-cvr-body hover:text-cvr-ink"}`}
+                      >
+                        {ten}
+                      </button>
+                    );
+                  })}
+                </div>
+                {batDau && (
+                  <div className="relative mt-2 sm:max-w-xs">
+                  {/* ĐIỆN THOẠI: lịch của máy (to, quen tay). Luôn hiện ngày kiểu Việt (24/10/2026) — ô lịch nằm phủ trong suốt bên trên,
+                      chạm là mở lịch (trình duyệt tiếng Anh tự hiện kiểu Mỹ 10/24/2026 nếu để lộ ô gốc). */}
+                  <label className={`${inputCls} relative flex cursor-pointer items-center justify-between sm:hidden`}>
+                    <span className="tabular-nums">{batDau.split("-").reverse().join("/")}</span>
+                    <svg className="h-5 w-5 text-cvr-muted" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24" aria-hidden><rect x="3" y="5" width="18" height="16" rx="2" /><path strokeLinecap="round" d="M3 10h18M8 3v4M16 3v4" /></svg>
+                    <input
+                      type="date"
+                      value={batDau}
+                      min={ngayVnSau(1)}
+                      max={ngayVnSau(30)}
+                      onChange={(e) => setBatDau(e.target.value)}
+                      onClick={(e) => { try { e.currentTarget.showPicker(); } catch { /* máy không có showPicker: chạm vẫn mở lịch */ } }}
+                      aria-label="Ngày bắt đầu hiển thị"
+                      className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                    />
+                  </label>
+                  {/* MÁY TÍNH: bảng lịch riêng, to, rõ (chủ dự án 23/10/2026: "bấm lịch lên nhìn nhỏ xíu") — LichChonNgay */}
+                  <button type="button" aria-haspopup="dialog" onClick={() => setMoLich(true)} className={`${inputCls} hidden items-center justify-between text-left sm:flex`}>
+                    <span className="tabular-nums">{batDau.split("-").reverse().join("/")}</span>
+                    <svg className="h-5 w-5 text-cvr-muted" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24" aria-hidden><rect x="3" y="5" width="18" height="16" rx="2" /><path strokeLinecap="round" d="M3 10h18M8 3v4M16 3v4" /></svg>
+                  </button>
+                  {moLich && <LichChonNgay value={batDau} min={ngayVnSau(1)} max={ngayVnSau(30)} onChon={setBatDau} onDong={() => setMoLich(false)} />}
+                  </div>
+                )}
+              </div>
               <div className="mt-5 rounded-2xl border border-cvr-line bg-cvr-surface px-4 py-3.5 text-sm text-cvr-body">
                 <div className="flex items-start justify-between gap-3">
                   <span className="min-w-0">
@@ -1655,23 +1797,6 @@ export default function PostListingForm() {
                 {xemChiTietTien && (
                 <div className="mt-3 border-t border-cvr-line pt-2">
                 {!duocMienPhi && <Dong nhan="Đơn giá / ngày" giaTri={vnd(planDays > 0 ? Math.round(baoGia.base / planDays) : 0)} />}
-                <div className="flex items-center justify-between gap-3 py-1">
-                  <span className="text-cvr-muted">Bắt đầu hiển thị</span>
-                  <select
-                    value={batDau}
-                    onChange={(e) => setBatDau(e.target.value)}
-                    aria-label="Ngày bắt đầu hiển thị"
-                    className="h-9 rounded-lg border border-cvr-line bg-white px-2 text-sm text-cvr-ink outline-none focus:border-cvr-ink"
-                  >
-                    <option value="">Ngay khi được duyệt</option>
-                    {Array.from({ length: 30 }, (_, i) => {
-                      // eslint-disable-next-line react-hooks/purity
-                      const d = new Date(Date.now() + 7 * 3_600_000 + (i + 1) * 86_400_000).toISOString().slice(0, 10);
-                      return <option key={d} value={d}>{d.split("-").reverse().join("/")}</option>;
-                    })}
-                  </select>
-                </div>
-                <div className="my-3 border-t border-cvr-line" />
                 {duocMienPhi ? (
                   <Dong nhan={chuongTrinhTvMoi(billing).ten || "Ưu đãi thành viên mới"} giaTri="Miễn phí" nhan2 />
                 ) : (
@@ -1681,9 +1806,12 @@ export default function PostListingForm() {
                       <Dong nhan={`Khuyến mãi: ${baoGia.promo.name} (−${baoGia.promo.percent}%)`} giaTri={`− ${vnd(baoGia.promoOff)}`} nhan2 />
                     )}
                     {baoGia.levelOff > 0 && <Dong nhan="Ưu đãi hạng thành viên" giaTri={`− ${vnd(baoGia.levelOff)}`} nhan2 />}
+                    {giamVoucher > 0 && <Dong nhan="Voucher hội viên" giaTri={`− ${vnd(giamVoucher)}`} nhan2 />}
                     {thanhTien > 0 && (
                       <>
-                        <Dong nhan="Tạm tính" giaTri={vnd(tienThue.tienHang)} />
+                        {/* Tạm tính chỉ hiện khi CÓ giảm (khuyến mãi / ưu đãi / voucher) — không giảm thì nó lặp y số Phí đăng tin (chủ dự án
+                            23/10/2026: "xem lại cách tính tiền"). Phép cộng luôn đúng: Phí − giảm = Tạm tính; Tạm tính + VAT = Tổng tiền. */}
+                        {tienThue.tienHang !== baoGia.base && <Dong nhan="Tạm tính" giaTri={vnd(tienThue.tienHang)} />}
                         <Dong nhan={`VAT ${(THUE_SUAT_GTGT * 100).toFixed(0)}%`} giaTri={vnd(tienThue.tienThue)} />
                       </>
                     )}
@@ -1699,16 +1827,18 @@ export default function PostListingForm() {
                       {tamGiu > 0 && <span className="block text-xs text-cvr-faint">Đang tạm giữ {vnd(tamGiu)} cho tin chờ duyệt</span>}
                     </span>
                     <span className="flex items-center gap-2.5">
-                      <span className={hoSoVi.balance < tienThue.tongTra ? "font-semibold tabular-nums text-red-600" : "font-semibold tabular-nums text-cvr-ink"}>{vnd(hoSoVi.balance)}</span>
-                      {hoSoVi.balance < tienThue.tongTra && (
-                        <Link href={`/tai-khoan/nap-tien?can=${tienThue.tongTra - hoSoVi.balance}`} className="rounded-full bg-cvr-ink px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-cvr-ink/90">
-                          Nạp thêm {vnd(tienThue.tongTra - hoSoVi.balance)}
+                      {/* Ví phải đủ SỐ TẠM GIỮ lúc gửi (giá gói trước voucher — 0056), như phần kiểm khi bấm Đăng */}
+                      <span className={hoSoVi.balance < truocVoucher.tongTra ? "font-semibold tabular-nums text-red-600" : "font-semibold tabular-nums text-cvr-ink"}>{vnd(hoSoVi.balance)}</span>
+                      {hoSoVi.balance < truocVoucher.tongTra && (
+                        <Link href={`/tai-khoan/nap-tien?can=${truocVoucher.tongTra - hoSoVi.balance}`} className="rounded-full bg-cvr-ink px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-cvr-ink/90">
+                          Nạp thêm {vnd(truocVoucher.tongTra - hoSoVi.balance)}
                         </Link>
                       )}
                     </span>
                   </div>
                 )}
               </div>
+              </>
             )}
 
           </>
@@ -1811,19 +1941,18 @@ export default function PostListingForm() {
         </div>
       </Card>
 
-      </MucMoCtx.Provider>
-
       {error && (
         <p className="rounded-lg bg-red-50 px-4 py-2.5 text-sm font-medium text-red-700 ring-1 ring-inset ring-red-600/20">{error}</p>
       )}
 
       {/* 2 nút TÁCH BIỆT RÕ (pill Apple): ĐĂNG TIN = đen đặc nổi bật (gửi duyệt) ·
           LƯU NHÁP = xám nhạt kín đáo (cất tạm, làm tiếp sau) */}
-      <div className="flex flex-col gap-3 border-t border-cvr-line pt-5 sm:flex-row sm:items-center sm:justify-end">
+      {/* Máy tính: nút cỡ vừa, nằm GIỮA (chủ dự án 23/10/2026: "vừa to, vừa lệch phải") — điện thoại: mỗi nút một hàng, rộng hết */}
+      <div className="flex flex-col gap-3 border-t border-cvr-line pt-5 sm:flex-row sm:items-center sm:justify-center">
         <button
           type="submit"
           disabled={!!saving}
-          className="btn-dangtin flex h-12 w-full sm:w-auto items-center justify-center gap-2 rounded-full px-8 text-base font-bold text-white disabled:opacity-50 "
+          className="btn-dangtin flex h-12 w-full items-center justify-center gap-2 rounded-full px-8 text-base font-bold text-white disabled:opacity-50 sm:h-10 sm:w-auto sm:px-6 sm:text-[14px]"
         >
           <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 19V5m0 0l-6 6m6-6l6 6" />
@@ -1834,7 +1963,7 @@ export default function PostListingForm() {
           type="button"
           onClick={() => save(true)}
           disabled={!!saving}
-          className="flex h-12 w-full sm:w-auto items-center justify-center gap-2 rounded-full bg-cvr-surface px-7 text-base font-semibold text-cvr-body ring-1 ring-inset ring-cvr-line transition hover:bg-cvr-line/40 hover:text-cvr-ink active:scale-[0.98] disabled:opacity-50 "
+          className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-cvr-surface px-7 text-base font-semibold text-cvr-body ring-1 ring-inset ring-cvr-line transition hover:bg-cvr-line/40 hover:text-cvr-ink active:scale-[0.98] disabled:opacity-50 sm:h-10 sm:w-auto sm:px-5 sm:text-[14px]"
         >
           <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M17 21v-8H7v8M7 3v5h8M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
@@ -1845,7 +1974,7 @@ export default function PostListingForm() {
           type="button"
           onClick={() => setXemTruoc(true)}
           disabled={!!saving}
-          className="flex h-12 w-full sm:w-auto items-center justify-center gap-2 rounded-full bg-white px-7 text-base font-semibold text-cvr-body ring-1 ring-inset ring-cvr-line transition hover:bg-cvr-surface hover:text-cvr-ink active:scale-[0.98] disabled:opacity-50 sm:order-first"
+          className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-white px-7 text-base font-semibold text-cvr-body ring-1 ring-inset ring-cvr-line transition hover:bg-cvr-surface hover:text-cvr-ink active:scale-[0.98] disabled:opacity-50 sm:order-first sm:h-10 sm:w-auto sm:px-5 sm:text-[14px]"
         >
           <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M2.5 12S6 5 12 5s9.5 7 9.5 7-3.5 7-9.5 7-9.5-7-9.5-7z" />
@@ -1855,6 +1984,8 @@ export default function PostListingForm() {
         </button>
       </div>
       {/* 22/10/2026 bỏ dòng giải thích dưới nút (chủ dự án: bớt chú thích, cấu trúc tự nói). */}
+      </div>
+      </MucMoCtx.Provider>
     </form>
   );
 }
@@ -1883,6 +2014,13 @@ const MOC_BUOC = [
   { id: "b-anh", ten: "Hình ảnh & video" },
   { id: "b-lienhe", ten: "Thông tin liên hệ" },
 ];
+
+// `an`: bước chưa có trên trang (vd Đặc điểm & tiện ích khi chưa chọn loại hình) → không hiện, số bước dồn lên đúng như số
+// trên tiêu đề từng mục.
+// Ngày theo giờ Việt Nam, sau hôm nay `n` ngày — "YYYY-MM-DD" (ô lịch Bắt đầu hiển thị).
+function ngayVnSau(n: number): string {
+  return new Date(Date.now() + 7 * 3_600_000 + n * 86_400_000).toISOString().slice(0, 10);
+}
 
 function ThanhBuoc() {
   const ctxBuoc = useContext(MucMoCtx);
@@ -1940,9 +2078,44 @@ function ThanhBuoc() {
     boc.scrollTo({ left: nut.offsetLeft - boc.clientWidth / 2 + nut.offsetWidth / 2, behavior: "smooth" });
   }, [dangO]);
 
+  const toi = (id: string) => {
+    const buoc = document.getElementById(id)?.dataset.buoc;
+    if (buoc && ctxBuoc) ctxBuoc.moMuc(buoc);
+    else document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   return (
-    <div className="sticky top-[calc(113px+var(--at))] z-20 -mx-4 border-b border-cvr-line bg-white/95 px-4 backdrop-blur sm:-mx-6 sm:px-6 lg:top-[60px] lg:-mx-8 lg:px-8">
-      <div ref={bocRef} className="flex gap-1.5 overflow-x-auto py-2.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <>
+    {/* MÁY TÍNH: cột menu dọc bên trái, cùng kiểu cột menu trang Báo giá (khối bo, vạch vàng mục đang xem). */}
+    <aside className="hidden lg:sticky lg:top-[76px] lg:block lg:self-start">
+      <nav aria-label="Các mục đăng tin" className="rounded-2xl border border-cvr-line bg-white p-2.5 shadow-lux">
+        {MOC_BUOC.map((m, i) => {
+          const o = dangO === m.id;
+          return (
+            <button
+              key={m.id}
+              type="button"
+              onClick={() => toi(m.id)}
+              className={`relative flex w-full items-center gap-2.5 rounded-xl py-2 pl-3.5 pr-3 text-left text-[13.5px] leading-snug transition-colors ${
+                o ? "bg-cvr-surface font-semibold text-cvr-ink" : "font-medium text-cvr-body hover:bg-cvr-surface hover:text-cvr-ink"
+              }`}
+            >
+              <span className={`absolute bottom-2 left-0 top-2 w-[3px] rounded-r bg-cvr-gold transition-opacity ${o ? "opacity-100" : "opacity-0"}`} />
+              <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[12px] font-bold ${o ? "bg-cvr-ink text-white" : "bg-cvr-surface text-cvr-ink"}`}>
+                {i + 1}
+              </span>
+              {m.ten}
+            </button>
+          );
+        })}
+      </nav>
+    </aside>
+    {/* ĐIỆN THOẠI / MÁY TÍNH BẢNG: thanh mục dính trên đầu, vuốt ngang */}
+    <div className="sticky top-[calc(113px+var(--at))] z-20 -mx-4 border-b border-cvr-line bg-white/95 px-4 backdrop-blur sm:-mx-6 sm:px-6 lg:hidden">
+      {/* MÁY TÍNH HIỆN ĐỦ MỌI MỤC (chủ dự án 23/10/2026: "trên PC phải làm cho logic như bản mobile — vào đăng tin bấm mục 6 thì
+          như thế nào"): điện thoại vuốt ngang được, máy tính dùng chuột thì không → trước đây mục 5–7 khuất ngoài khung, không
+          bấm tới được. Máy tính chia đều bề ngang cho các mục, tên dài xuống hai dòng; điện thoại giữ thanh vuốt như cũ. */}
+      <div ref={bocRef} className="flex gap-1.5 overflow-x-auto py-2.5 [scrollbar-width:none] sm:grid sm:auto-cols-fr sm:grid-flow-col sm:gap-1 sm:overflow-visible [&::-webkit-scrollbar]:hidden">
         {MOC_BUOC.map((m, i) => {
           const o = dangO === m.id;
           return (
@@ -1950,28 +2123,25 @@ function ThanhBuoc() {
               key={m.id}
               type="button"
               data-moc={m.id}
-              onClick={() => {
-                const buoc = document.getElementById(m.id)?.dataset.buoc;
-                if (buoc && ctxBuoc) ctxBuoc.moMuc(buoc);
-                else document.getElementById(m.id)?.scrollIntoView({ behavior: "smooth", block: "start" });
-              }}
-              className={`flex shrink-0 items-center gap-2 rounded-full px-3.5 py-2 text-[14px] font-semibold transition ${
-                o ? "bg-cvr-ink text-white" : "bg-cvr-surface text-cvr-body active:bg-cvr-line"
+              onClick={() => toi(m.id)}
+              className={`flex shrink-0 items-center gap-2 rounded-full px-3.5 py-2 text-[14px] font-semibold transition sm:min-w-0 sm:gap-1.5 sm:rounded-xl sm:px-2 sm:text-left sm:text-[12.5px] sm:leading-tight ${
+                o ? "bg-cvr-ink text-white" : "bg-cvr-surface text-cvr-body active:bg-cvr-line sm:hover:bg-cvr-line"
               }`}
             >
               <span
-                className={`flex h-6 w-6 items-center justify-center rounded-full text-[12px] font-bold ${
+                className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[12px] font-bold ${
                   o ? "bg-white/20 text-white" : "bg-white text-cvr-ink"
                 }`}
               >
                 {i + 1}
               </span>
-              {m.ten}
+              <span className="sm:text-balance">{m.ten}</span>
             </button>
           );
         })}
       </div>
     </div>
+    </>
   );
 }
 
@@ -1986,15 +2156,16 @@ function TieuDeCon({ children }: { children: React.ReactNode }) {
   return <h3 className="border-t border-cvr-line pt-5 text-base font-semibold tracking-tight text-cvr-ink">{children}</h3>;
 }
 
-function Card({ id, step, title, children, khoa }: { id?: string; step: string; title: string; children: React.ReactNode; khoa?: boolean }) {
+function Card({ id, step, title, children, khoa, chiTieuDe }: { id?: string; step: string; title: string; children: React.ReactNode; khoa?: boolean; chiTieuDe?: boolean }) {
   // Mọi mục LUÔN MỞ (chủ dự án 15/10/2026 bỏ kiểu thu gọn + nút "Tiếp tục": "rất rối").
   const ctx = useContext(MucMoCtx);
   return (
     // scroll-mt: CHỈ chừa thanh các bước (61px) + 9px — header + thanh quay lại đã do <html> scroll-padding-top lo
     // (globals.css). Trước đây chừa cả header lần nữa (168px) → bấm mốc xong tiêu đề nằm cách thanh ~120px, đầu màn
     // hình trống (chủ dự án 22/10/2026: "bấm chọn không hiện nội dung ngay đầu trang").
-    <section id={id} data-buoc={step} className="scroll-mt-[70px] rounded-none border border-cvr-line bg-white p-5 shadow-lux sm:p-6">
-      <h2 className="mb-5 flex items-center gap-2.5 text-[19px] font-semibold tracking-tight text-cvr-ink">
+    <section id={id} data-buoc={step} className={`scroll-mt-[70px] rounded-none border border-cvr-line bg-white p-5 shadow-lux sm:p-6 ${chiTieuDe ? "opacity-50" : ""}`}>
+      {/* chiTieuDe: mục chưa tới lượt (VD Đặc điểm khi chưa chọn loại hình) — chỉ tiêu đề, mờ, giữ đúng số thứ tự mục */}
+      <h2 className={`${chiTieuDe ? "" : "mb-5"} flex items-center gap-2.5 text-[19px] font-semibold tracking-tight text-cvr-ink`}>
         <span className="flex h-7 w-7 items-center justify-center rounded-full bg-cvr-ink text-sm text-white">{step}</span>
         {title}
       </h2>
@@ -2034,7 +2205,8 @@ function PickTim({ label, ...p }: { label: string; value: string; onChange: (v: 
   return (
     <div>
       <Label>{label}</Label>
-      <ChonCoTim {...p} className={inputCls} />
+      {/* Ô địa chỉ: tên dài (Phường Ngũ Hành Sơn…) xuống tối đa 2 dòng thay vì cắt "…" — ô tự cao theo chữ (23/10/2026) */}
+      <ChonCoTim {...p} haiDong className={inputCls.replace("h-11", "min-h-11")} />
     </div>
   );
 }

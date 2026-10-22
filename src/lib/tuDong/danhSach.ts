@@ -4,6 +4,7 @@ import { baoLoi } from "@/lib/baoLoi";
 import { hanThueSuat, HAN_THUE_SUAT, THUE_SUAT_GTGT } from "@/lib/thue";
 import { viecCanhDns } from "./canhDns";
 import type { Viec } from "./soViec";
+import { homNayVn } from "@/lib/gioVn";
 
 // ════════════════════════════════════════════════════════════════════════════
 // DANH SÁCH VIỆC MÁY TỰ LÀM MỖI NGÀY
@@ -71,7 +72,7 @@ const viecHanThueSuat: Viec = {
       canLam:
         "Hỏi kế toán xem Quốc hội có gia hạn không. Còn 8% thì sửa HAN_THUE_SUAT sang mốc mới; quay lại 10% thì sửa THUE_SUAT_GTGT trong src/lib/thue.ts và đăng ký lại bên VNPT nếu cần.",
       // Mỗi ngày một cảnh báo riêng — không nuốt mất, ngày nào cũng thấy.
-      khoa: `thue:han-thue-suat:${new Date().toISOString().slice(0, 10)}`,
+      khoa: `thue:han-thue-suat:${homNayVn()}`,
     });
 
     return {

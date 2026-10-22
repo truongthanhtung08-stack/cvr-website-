@@ -16,7 +16,7 @@ import { useSaved } from "@/lib/useSaved";
 import { chuThuong, tenDiaDanh } from "@/lib/chuThuong";
 import { videoPosterUrl } from "@/lib/media";
 import { moTaThe, soDongMoTa } from "@/lib/trichMoTa";
-import { SO_THONG_SO, thongSo } from "@/lib/thongSoThe";
+import { thongSoTheoCap } from "@/lib/thongSoThe";
 import DemAnhVideo, { IconPlay } from "@/components/DemAnhVideo";
 
 // ============================================================================
@@ -41,8 +41,10 @@ import DemAnhVideo, { IconPlay } from "@/components/DemAnhVideo";
 
 
 // 2 chữ viết tắt của tên (chữ đầu + chữ cuối): "Trần Mai Chi" → "TC"
+// Tin của chính Coastal Land: ký hiệu thương hiệu "CVR", không viết tắt "CL" (chủ dự án 22/10/2026 tối)
 function viTat(ten?: string): string {
-  const w = (ten || "Coastal Land").trim().split(/\s+/).filter(Boolean);
+  if (!ten || /^coastal\s*land$/i.test(ten.trim())) return "CVR";
+  const w = ten.trim().split(/\s+/).filter(Boolean);
   return ((w[0]?.[0] ?? "C") + (w.length > 1 ? w[w.length - 1][0] : "")).toUpperCase();
 }
 
@@ -151,7 +153,7 @@ export default function TheTinMobile({ item, terms = [], tuChay = false, pc = fa
   const coSo = t !== "basic"; // Diamond · Gold · Silver: Zalo + Hiện số trên thẻ
   const ten = tenDiaDanh(item);
   const tieuDe = tier.uppercase ? item.title : chuThuong(item.title, ten);
-  const so = thongSo(item).slice(0, SO_THONG_SO[t]);
+  const so = thongSoTheoCap(item, t);
   const soAnh = item.imageCount || anh.length;
   // "3 giờ trước" tính theo giờ hiện tại: trang máy chủ dựng sẵn (đệm tới 1 giờ) ghi giờ lúc dựng → vẽ lại một lần sau khi
   // mở để chữ đúng giờ máy khách (kèm suppressHydrationWarning ở dòng chữ, không để React báo lệch và dựng lại cả trang)

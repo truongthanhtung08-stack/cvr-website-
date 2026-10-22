@@ -15,6 +15,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import TrangPhapLy, { Muc, DanhSach } from "@/components/TrangPhapLy";
+import { getQuyDinhGia } from "@/lib/siteContent";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/quy-dinh" },
@@ -23,7 +24,13 @@ export const metadata: Metadata = {
     "Quy định đăng tin bất động sản trên Coastal Land: điều kiện để tin được duyệt, yêu cầu về nội dung và hình ảnh, thời hạn hiển thị và cách gửi khiếu nại.",
 };
 
-export default function QuyDinhPage() {
+export default async function QuyDinhPage() {
+  // QUY ĐỊNH GÓI TIN + ĐẨY TIN THỐNG NHẤT MỘT CHỖ = trang này (chủ dự án 22/10/2026 tối: "quy định đăng tin đã có riêng ở
+  // footer — chỉ đưa vào tên, bấm vào ra đây, thống nhất một cái"). Phần này đọc từ admin (Giá chuẩn → Quy định), cùng nguồn
+  // với hộp "Quy định gói tin" ở bước chọn gói khi đăng tin. Trang Báo giá chỉ để chữ "Quy định" trỏ tới #quy-dinh-goi-tin,
+  // #quy-dinh-day-tin. Chú thích (*) của bảng đặc điểm ở lại dưới bảng trong Báo giá.
+  const qd = await getQuyDinhGia();
+  const quyDinhGoiTin = [...qd.quyDinhGoiTin, ...qd.quyDinhChung.filter((x) => !/^\(\*+\)/.test(x.trim()))];
   return (
     <TrangPhapLy
       title="Quy định đăng tin"
@@ -80,19 +87,19 @@ export default function QuyDinhPage() {
       </Muc>
 
       <Muc so={5} title="Thời hạn, đăng lại và đẩy tin">
-        <p>
-          Mỗi tin hiển thị theo thời hạn của gói tin đã chọn (xem{" "}
-          <Link href="/bao-gia-dang-tin" className="font-semibold text-cvr-blue-ink underline">
-            Báo giá dịch vụ
-          </Link>
-          ). Hết hạn, tin tự ẩn khỏi danh sách; bạn có thể chọn để đăng lại (chọn gói mới, ngày đăng và thời hạn tính lại từ lúc đăng lại tin) trong mục{" "}
-          <Link href="/tai-khoan/tin-dang" className="font-semibold text-cvr-blue-ink underline">
-            Tin đăng của tôi
-          </Link>
-          . Đẩy tin chỉ áp dụng cho tin đang hiển thị: tin lên đầu danh sách, ngày đăng và thời hạn giữ nguyên; lượt
-          đẩy của gói dùng trong thời hạn hiển thị, tin hết hạn thì lượt đẩy còn lại cũng hết theo. Bất động sản đã giao dịch
-          xong, đề nghị gỡ tin ngay.
-        </p>
+        {quyDinhGoiTin.length > 0 && (
+          <div id="quy-dinh-goi-tin" className="scroll-mt-4">
+            <h3 className="font-semibold text-cvr-ink">Gói đăng tin</h3>
+            <div className="mt-1"><DanhSach items={quyDinhGoiTin} /></div>
+          </div>
+        )}
+        {qd.quyDinhDayTin.length > 0 && (
+          <div id="quy-dinh-day-tin" className="scroll-mt-4">
+            <h3 className="font-semibold text-cvr-ink">Gói đẩy tin</h3>
+            <div className="mt-1"><DanhSach items={qd.quyDinhDayTin} /></div>
+          </div>
+        )}
+        <p>Bất động sản đã giao dịch xong, đề nghị gỡ tin ngay.</p>
       </Muc>
 
       <Muc so={6} title="Khi tin chưa đáp ứng quy định">
@@ -132,6 +139,21 @@ export default function QuyDinhPage() {
           .
         </p>
       </Muc>
+
+      {/* Đọc hết quy định → về đúng gói trong trang Báo giá (chủ dự án 22/10/2026 tối: "phía dưới có Gói đăng tin, bấm vào ra
+          mục menu Báo giá đăng tin — tất cả phần này phải có một liên kết theo logic"). Phần Quy định của mỗi gói trong Báo giá
+          có liên kết ngược về trang này. */}
+      <div className="flex flex-wrap gap-2.5 border-t border-cvr-line pt-6">
+        {[
+          { ten: "Gói đăng tin", href: "/bao-gia-dang-tin#bang-gia-tin" },
+          { ten: "Gói đẩy tin", href: "/bao-gia-dang-tin#goi-day-tin" },
+        ].map((g) => (
+          <Link key={g.href} href={g.href} className="inline-flex h-10 items-center gap-1.5 rounded-lg border border-cvr-line bg-white px-4 text-sm font-semibold text-cvr-ink no-underline transition hover:border-cvr-ink">
+            {g.ten}
+            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+          </Link>
+        ))}
+      </div>
     </TrangPhapLy>
   );
 }

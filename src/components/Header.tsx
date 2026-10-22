@@ -59,13 +59,29 @@ const danhMucChuyenGia: NavChild[] = [
 // MENU BÁO GIÁ (chủ dự án chốt 01/10/2026): MỌI THỨ VỀ GIÁ vào MỘT menu, trỏ về MỘT trang
 // Báo giá (từng mục là một phần của trang). Công cụ tiện ích tách sang menu Tiện ích.
 // CHỈ MỤC CÓ THẬT TRÊN TRANG (chủ dự án 22/10/2026 tối: "bấm vào menu báo giá thấy như bãi rác") — trước có Gói hội viên,
-// Gói dự án, Bài PR, Banner trỏ tới phần chưa duyệt (không có trên trang → bấm không ra gì), lại thiếu Quy định chung,
-// Nhận báo giá. Bảng nào admin duyệt thêm thì cột menu trong trang Báo giá (PricingSidebar) tự có mục đó.
+// Gói dự án, Bài PR, Banner trỏ tới phần chưa duyệt (không có trên trang → bấm không ra gì).
+// CÂY MỤC (chủ dự án 22/10/2026 tối: "menu tổng Báo giá, trong có các mục con — bấm vào đâu ra phần ấy, bấm vào tổng ra
+// tổng"): Báo giá → từng gói (bấm ra cả gói) → Bảng giá · Đặc điểm · Quy định của gói đó. Cột menu trái trong trang Báo giá
+// (nhomDichVu) cùng cây này; bảng nào admin duyệt thêm thì cột đó tự có mục.
 const danhMucBaoGia: NavChild[] = [
-  { label: "Gói tin đăng CVR", href: "/bao-gia-dang-tin#bang-gia-tin" },
-  { label: "Gói đẩy tin", href: "/bao-gia-dang-tin#goi-day-tin" },
-  { label: "Quy định chung", href: "/bao-gia-dang-tin#quy-dinh" },
-  { label: "Nhận báo giá", href: "/bao-gia-dang-tin#lien-he" },
+  {
+    label: "Gói đăng tin",
+    href: "/bao-gia-dang-tin#bang-gia-tin",
+    children: [
+      { label: "Bảng giá", href: "/bao-gia-dang-tin#gia-goi-tin" },
+      { label: "Mẫu tin hiển thị", href: "/bao-gia-dang-tin#minh-hoa" },
+      { label: "Đặc điểm chi tiết", href: "/bao-gia-dang-tin#dac-diem" },
+      { label: "Quy định", href: "/quy-dinh#quy-dinh-goi-tin" },
+    ],
+  },
+  {
+    label: "Gói đẩy tin",
+    href: "/bao-gia-dang-tin#goi-day-tin",
+    children: [
+      { label: "Bảng giá", href: "/bao-gia-dang-tin#gia-day-tin" },
+      { label: "Quy định", href: "/quy-dinh#quy-dinh-day-tin" },
+    ],
+  },
 ];
 // MENU TIỆN ÍCH — xếp theo chức năng (chủ dự án 16/10/2026). Công cụ chưa có nội dung không hiện
 // (trangTienIchDat) — có dữ liệu thì tự hiện lại; nhóm không còn mục nào thì ẩn cả nhóm.
@@ -182,9 +198,16 @@ function NavLink({ item }: { item: NavItem }) {
           <div className="grid grid-cols-2 gap-x-4">
             {groups.map((g) => (
               <div key={g.label}>
-                <p className="px-3.5 pb-1 pt-3 text-[11px] font-bold uppercase tracking-[0.16em] text-cvr-faint">
-                  {g.label}
-                </p>
+                {g.href ? (
+                  // Tên nhóm bấm được (menu Báo giá: tên gói → cả gói, 22/10/2026)
+                  <Link href={g.href} className="block rounded-lg px-3.5 pb-1.5 pt-3 text-[14px] font-semibold text-cvr-ink transition-colors hover:text-cvr-gold-ink">
+                    {g.label}
+                  </Link>
+                ) : (
+                  <p className="px-3.5 pb-1 pt-3 text-[11px] font-bold uppercase tracking-[0.16em] text-cvr-faint">
+                    {g.label}
+                  </p>
+                )}
                 {g.children?.map((c) => (
                   <DropdownItem key={c.label} href={c.href ?? "#"} label={c.label} />
                 ))}

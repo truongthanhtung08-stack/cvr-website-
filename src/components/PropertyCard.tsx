@@ -7,7 +7,7 @@ import Highlight from "@/components/Highlight";
 import { NutLienHeThe } from "@/components/LienHeReveal";
 import { freshText, type Listing } from "@/lib/data";
 import { diaChiHaiDong, moTaThe, soDongMoTa } from "@/lib/trichMoTa";
-import { SO_THONG_SO, thongSo } from "@/lib/thongSoThe";
+import { thongSoTheoCap } from "@/lib/thongSoThe";
 import { tierFromBadge, getTier } from "@/lib/packages";
 
 // Tên NGƯỜI ĐĂNG hiển thị trên thẻ: lấy từ tin thật (details.contact.name —
@@ -171,7 +171,7 @@ export default function PropertyCard({
         {isTier ? (
           <>
             <p className="mt-2 flex flex-wrap items-baseline gap-x-1.5 text-[13px] text-cvr-body">
-              {thongSo(item).slice(0, SO_THONG_SO[tierId]).map((x, i, ds) => (
+              {thongSoTheoCap(item, tierId).map((x, i, ds) => (
                 <span key={i} className={`flex items-baseline gap-1 ${x.do ? `text-[16px] font-bold ${item.price === "Thỏa thuận" || item.hetHan ? "text-cvr-muted" : "text-red-500"}` : ""}`}>
                   {x.chu}{x.icon === "pn" ? " PN" : x.icon === "wc" ? " WC" : ""}
                   {i < ds.length - 1 && <span className="ml-0.5 text-[13px] font-normal text-cvr-muted">·</span>}

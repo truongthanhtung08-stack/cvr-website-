@@ -976,7 +976,7 @@ function so(n: number): string {
   return Math.round(Number(n) || 0).toLocaleString("vi-VN");
 }
 function ngay(iso: string): string {
-  return new Date(iso).toLocaleDateString("vi-VN");
+  return new Date(iso).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" });
 }
 
 // Mẫu in: nền trắng chữ đen bất kể giao diện, khổ A4, mỗi mẫu một trang mới.

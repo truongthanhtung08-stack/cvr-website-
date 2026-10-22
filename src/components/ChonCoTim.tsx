@@ -1,9 +1,10 @@
 "use client";
 
 import { useDiaDanh } from "@/lib/useDiaDanh";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { timDiaDanh, type BietDanh } from "@/lib/timDiaDanh";
 import { useKhoaCuon } from "@/lib/khoaCuon";
+import { diTiepSauOChon } from "@/lib/oTiepTheo";
 
 // Ô CHỌN CÓ Ô TÌM — Tỉnh/Thành · Quận/Huyện · Phường/Xã (chủ dự án 14–15/10/2026: danh sách
 // quá dài, không ai kéo xuống để chọn được). Thẻ select gốc không chèn được ô tìm, nên bấm
@@ -23,6 +24,7 @@ export default function ChonCoTim({
   timNgay,
   xoaDuoc,
   khongTim,
+  haiDong,
   nhom,
 }: {
   value: string;
@@ -42,6 +44,8 @@ export default function ChonCoTim({
   xoaDuoc?: boolean;
   /** Danh sách ngắn (Nhu cầu, Loại hình) → không có kính lúp (chủ dự án 22/10/2026: "có mấy loại thì tìm làm gì"). */
   khongTim?: boolean;
+  /** Tên đã chọn dài (Tỉnh / Phường) → hiện tối đa 2 dòng thay vì cắt "…" (chủ dự án 23/10/2026: "chọn mà hiện hết tên lên"). */
+  haiDong?: boolean;
   /** Danh sách theo NHÓM (Loại hình: Căn hộ · Nhà · Đất…, đúng bộ phân loại đã chốt ở lib/filters) → tên nhóm làm
    *  dòng tiêu đề, mục con nằm dưới; mục đang chọn có dấu ✓ ngay tại chỗ (22/10/2026). */
   nhom?: { label: string; items: string[] }[];
@@ -53,19 +57,30 @@ export default function ChonCoTim({
   // Ô tìm ẨN mặc định (chủ dự án 15/10/2026): mở ra là danh sách để KÉO chọn — không bật bàn
   // phím che màn hình điện thoại. Muốn tìm thì bấm biểu tượng kính lúp mới hiện ô gõ.
   const [dangTim, setDangTim] = useState(false);
-  const dong = () => { setMo(false); setQ(""); setDangTim(false); };
+  const nutRef = useRef<HTMLButtonElement>(null);
+  // Đóng bảng (chọn xong hoặc Quay lại) → bỏ dấu "mở bằng Tiếp"
+  const dong = () => { setMo(false); setQ(""); setDangTim(false); if (nutRef.current) delete nutRef.current.dataset.tuTiep; };
   useEffect(() => {
     if (!mo) return;
     const h = (e: KeyboardEvent) => { if (e.key === "Escape") dong(); };
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
   }, [mo]);
+  // DANH SÁCH NGẮN (≤ 12 mục — Tình trạng nội thất, Hướng, Pháp lý…) tự KHÔNG có kính lúp, kéo chọn là đủ (chủ dự án 23/10/2026:
+  // "nội thất có 3 mục, bố trí nút kính lúp vào làm gì"). Ô cần gõ để tự ghi (tuGhi) hoặc gõ ngay (timNgay) vẫn giữ ô tìm.
+  const anTim = khongTim || (!tuGhi && !timNgay && options.length <= 12);
   const tim = timDiaDanh(q, options, bietDanh);
   // MỤC ĐANG CHỌN luôn GHIM DÒNG ĐẦU, trước mặt khách — cả lúc đang gõ tìm (chủ dự án 15/10/2026:
   // "bấm vào search sẽ hiện ra mục đã chọn trước mặt khách, rồi muốn search cái nào thì search").
   const coChon = !!value && options.includes(value);
   const ds = coChon ? tim.filter((x) => x.ten !== value) : tim;
-  const chon = (v: string) => { onChange(v); dong(); };
+  // Bảng mở bằng phím Tiếp (lib/oTiepTheo) → chọn xong đi tiếp tới ô sau, đúng trình tự (chủ dự án 23/10/2026)
+  const chon = (v: string) => {
+    const tuTiep = !!nutRef.current?.dataset.tuTiep;
+    onChange(v);
+    dong();
+    if (tuTiep) requestAnimationFrame(() => { if (nutRef.current) diTiepSauOChon(nutRef.current); });
+  };
   // Gõ tên KHÔNG có trong danh sách → dòng "Khác — tự ghi: «tên»": có gợi ý thì đứng CUỐI (như
   // Batdongsan), không có gợi ý nào thì đứng ĐẦU.
   const coTuGhi = !!tuGhi && !!q.trim() && !options.some((o) => o.toLowerCase() === q.trim().toLowerCase());
@@ -84,8 +99,8 @@ export default function ChonCoTim({
   return (
     <>
       <div className="relative">
-        <button type="button" onClick={moBang} disabled={disabled} className={className + ` flex items-center justify-between gap-2 text-left disabled:cursor-not-allowed disabled:opacity-45 ${xoaDuoc && value ? "pr-10" : ""}`}>
-          <span className={`truncate ${value ? "" : "text-cvr-faint"}`}>{value || placeholder}</span>
+        <button ref={nutRef} data-o-chon="" type="button" onClick={moBang} disabled={disabled} className={className + ` flex items-center justify-between gap-2 text-left disabled:cursor-not-allowed disabled:opacity-45 ${xoaDuoc && value ? "pr-10" : ""}`}>
+          <span className={`${haiDong ? "line-clamp-2 break-words py-1 leading-snug" : "truncate"} ${value ? "" : "text-cvr-faint"}`}>{value || placeholder}</span>
           {!(xoaDuoc && value) && (timNgay
             ? <svg className="h-4 w-4 shrink-0 text-cvr-muted" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><circle cx="11" cy="11" r="7" /><path strokeLinecap="round" d="M21 21l-4.3-4.3" /></svg>
             : <svg className="h-4 w-4 shrink-0 text-cvr-muted" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>)}
@@ -112,7 +127,7 @@ export default function ChonCoTim({
               ) : (
                 <span className="min-w-0 flex-1 truncate px-1 text-[15px] font-semibold text-cvr-ink">{placeholder}</span>
               )}
-              {!khongTim && <button
+              {!anTim && <button
                 type="button"
                 aria-label={dangTim ? "Đóng ô tìm" : timPlaceholder}
                 onClick={() => { if (timNgay) { dong(); return; } if (dangTim) setQ(""); setDangTim(!dangTim); }}

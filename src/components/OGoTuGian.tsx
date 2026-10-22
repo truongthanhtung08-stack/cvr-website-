@@ -35,6 +35,8 @@ export default function OGoTuGian({
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
       autoFocus={autoFocus}
+      // Ô MỘT Ý (chỉ tự giãn khi chữ dài): phím Enter của bàn phím là "Tiếp" sang ô kế, không xuống dòng (lib/oTiepTheo)
+      data-mot-dong=""
       // Giữ đúng khung của ô nhập (bỏ chiều cao cố định h-10/h-11 → thành chiều cao tối thiểu, tự cao thêm).
       className={className.replace(/\bh-(10|11)\b/, "min-h-$1") + " block resize-none overflow-hidden py-2.5 leading-6"}
     />

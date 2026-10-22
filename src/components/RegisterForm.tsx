@@ -10,6 +10,7 @@ import NoiDungChuongTrinh from "@/components/NoiDungChuongTrinh";
 import { useBilling } from "@/lib/useBilling";
 import { chuongTrinhTvMoi, freeDangChay } from "@/lib/billing";
 import { chuanHoaSdt, laSdtVN } from "@/lib/phone";
+import { homNayVn } from "@/lib/gioVn";
 
 // ============================================================================
 // ĐĂNG KÝ TÀI KHOẢN — QUY TRÌNH CHUẨN, CHỦ DỰ ÁN CHỐT 11/09/2026
@@ -129,7 +130,7 @@ export default function RegisterForm() {
 
   const { billing, loading: billingLoading } = useBilling();
   const dongUuDai =
-    (billingLoading || !freeDangChay(billing.free, new Date().toISOString().slice(0, 10))
+    (billingLoading || !freeDangChay(billing.free, homNayVn())
       ? null
       : chuongTrinhTvMoi(billing));
 

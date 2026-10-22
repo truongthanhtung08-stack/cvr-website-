@@ -182,7 +182,7 @@ function nhanHoaDon(r: unknown) {
 
 function fmtDate(iso: string): string {
   const d = new Date(iso);
-  return d.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
+  return d.toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", day: "2-digit", month: "2-digit", year: "numeric" });
 }
 
 // Email nội bộ (tài khoản Zalo / tạo hộ không có email) thì không hiện.

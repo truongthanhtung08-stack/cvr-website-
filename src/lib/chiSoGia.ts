@@ -4,6 +4,7 @@ import { mauSoCuaLoaiHinh, dungODienTichXayDung, dienTichSanThat, laTinThue, TEN
 export { mauSoCuaLoaiHinh, TEN_MAU_SO, TEN_VI_TRI };
 export type { MauSo, ViTriGia };
 import { tachBangCsv } from "@/lib/xuatCsv";
+import { homNayVn } from "@/lib/gioVn";
 
 // ════════════════════════════════════════════════════════════════════════════
 // MẶT BẰNG GIÁ KHU VỰC — HAI NGUỒN, GHI RÕ NGUỒN NÀO RA SỐ NÀO.
@@ -532,7 +533,7 @@ export function docBangChiSo(bang: string[][]): { items: ChiSoKhuVuc[]; loi: Loi
         loaiHinh: loaiHinh || undefined,
         mucDich,
         nguon: lay(6) || "Khảo sát của Coastal Land",
-        capNhat: lay(7) || new Date().toISOString().slice(0, 10),
+        capNhat: lay(7) || homNayVn(),
         nguonLink: themLay(3) || undefined,
         mauSo: docMauSo(themLay(4), loaiHinh),
         viTri: vt,

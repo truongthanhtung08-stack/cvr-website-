@@ -227,7 +227,7 @@ export default function AdminThuePage() {
           </select>
         </label>
         <p className="pb-2 text-sm text-cvr-muted">
-          {tu.toLocaleDateString("vi-VN")} – {den.toLocaleDateString("vi-VN")}
+          {tu.toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })} – {den.toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}
         </p>
         <div className="ml-auto flex flex-wrap gap-2">
           <a href={`/admin/hoa-don-thue/in?nam=${nam}&quy=${quy}`} target="_blank" rel="noopener" className="rounded-lg bg-cvr-ink px-4 py-2 text-sm font-semibold text-white transition hover:bg-cvr-ink/90">
@@ -766,7 +766,7 @@ function KhoiViecCanLam({ lamMoi }: { lamMoi: number }) {
       } else {
         const theoNgay = new Map<string, number>();
         for (const r of rowsKy) {
-          const n = new Date(r.ngay_ghi_nhan).toLocaleDateString("vi-VN");
+          const n = new Date(r.ngay_ghi_nhan).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" });
           theoNgay.set(n, (theoNgay.get(n) ?? 0) + 1);
         }
         for (const [ngay, so] of theoNgay) {
@@ -871,7 +871,7 @@ function KhoiViecCanLam({ lamMoi }: { lamMoi: number }) {
               <span className="text-sm text-cvr-muted">{v.chiTiet}</span>
               {conNgay !== null && !v.xong && (
                 <span className={`text-xs font-medium ${gapGap ? "text-amber-700" : "text-cvr-muted"}`}>
-                  hạn {v.han!.toLocaleDateString("vi-VN")}
+                  hạn {v.han!.toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}
                   {conNgay < 0 ? " — ĐÃ QUÁ HẠN" : ` — còn ${conNgay} ngày`}
                 </span>
               )}
@@ -1785,7 +1785,7 @@ function KhoiThueNhaThau({ onSaved }: { onSaved: () => void }) {
           {dangLayTyGia ? "Đang lấy…" : "Lấy tỷ giá NHNN"}
         </button>
         <p className={`pb-2 text-sm ${treHan ? "font-semibold text-amber-700" : "text-cvr-muted"}`}>
-          Hạn nộp {han.toLocaleDateString("vi-VN")}
+          Hạn nộp {han.toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}
           {treHan ? " — ĐÃ QUÁ HẠN" : ""}
         </p>
       </div>
@@ -2469,7 +2469,7 @@ function ChiTieu({ ma, ten, tien, dam }: { ma: string; ten: string; tien: number
 }
 
 function ngayVn(iso: string): string {
-  return new Date(iso).toLocaleDateString("vi-VN");
+  return new Date(iso).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" });
 }
 
 // CSV có BOM để Excel tiếng Việt không bị vỡ dấu.

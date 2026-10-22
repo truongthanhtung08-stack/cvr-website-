@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 
-export type SidebarGroup = { title: string; items: { label: string; href: string }[] };
+// `href` có = tên nhóm bấm được (vd tên gói → cả gói), các mục con thụt vào dưới (22/10/2026)
+export type SidebarGroup = { title: string; href?: string; items: { label: string; href: string }[] };
 
 // Sidebar trang Báo giá — 2 PHẦN: "Danh sách dịch vụ" (neo trong trang) và
 // "Công cụ tiện ích" (link sang trang tiện ích) nằm phía sau.
@@ -45,21 +46,27 @@ export default function PricingSidebar({
       <aside className="hidden lg:sticky lg:top-20 lg:block lg:self-start">
       {/* 2 phần xếp dọc: Danh sách dịch vụ → Công cụ tiện ích.
           Kiểu Apple: khối bo 2xl, không đường kẻ giữa các mục, nền sáng khi rê chuột. */}
-      <div className="space-y-3">
-        {groups.map((g) => (
-          <nav key={g.title || "muc"} className="rounded-2xl border border-cvr-line bg-white p-2.5 shadow-lux">
-            {g.title && (
+      {/* CÂY MỤC GIỐNG menu Báo giá trên đầu web (22/10/2026): tên gói (bấm ra cả gói) → mục con thụt vào. Nhóm không có href
+          (trang khác dùng) giữ kiểu nhãn chữ nhỏ như cũ. */}
+      <nav className="rounded-2xl border border-cvr-line bg-white p-2.5 shadow-lux">
+        {groups.map((g, gi) => (
+          <div key={g.title || "muc"} className={gi > 0 ? "mt-1.5 border-t border-cvr-line/70 pt-1.5" : ""}>
+            {g.title && (g.href ? (
+              <a href={g.href} className="block rounded-xl px-3.5 py-2 text-[14px] font-semibold leading-snug text-cvr-ink transition-colors hover:bg-cvr-surface">
+                {g.title}
+              </a>
+            ) : (
               <p className="px-3.5 pb-2 pt-2 text-[10px] font-bold uppercase tracking-[0.2em] text-cvr-faint">
                 {g.title}
               </p>
-            )}
+            ))}
             {g.items.map((m) => {
               const isActive = active === m.href;
               return (
                 <a
                   key={m.href}
                   href={m.href}
-                  className={`relative block rounded-xl px-3.5 py-2 text-[13.5px] leading-snug transition-colors ${
+                  className={`relative block rounded-xl py-2 pr-3.5 text-[13.5px] leading-snug transition-colors ${g.href ? "pl-7" : "pl-3.5"} ${
                     isActive
                       ? "bg-cvr-surface font-semibold text-cvr-ink"
                       : "font-medium text-cvr-body hover:bg-cvr-surface hover:text-cvr-ink"
@@ -75,9 +82,9 @@ export default function PricingSidebar({
                 </a>
               );
             })}
-          </nav>
+          </div>
         ))}
-      </div>
+      </nav>
 
       </aside>
     </>

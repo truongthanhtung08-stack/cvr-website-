@@ -8,7 +8,7 @@ export const SO_THONG_SO: Record<TierId, number> = { diamond: 5, gold: 2, silver
 
 // Thông số theo LOẠI HÌNH (chủ dự án 09/10/2026: "tuỳ loại hình BĐS"), rồi cắt theo cấp.
 // Thứ tự: giá · m² · PN · WC · giá/m² (đất không có PN/WC).
-export type MucSo = { chu: string; do?: boolean; icon?: "pn" | "wc" };
+export type MucSo = { chu: string; do?: boolean; icon?: "pn" | "wc"; giaM2?: boolean };
 export function thongSo(l: Listing): MucSo[] {
   const loai = (l.type || "").toLowerCase();
   const canHo = /căn hộ|chung cư|condotel|officetel|penthouse/.test(loai);
@@ -18,6 +18,15 @@ export function thongSo(l: Listing): MucSo[] {
   if (l.area) ds.push({ chu: l.area, do: true });
   if ((canHo || nha) && l.beds) ds.push({ chu: String(l.beds), icon: "pn" });
   if ((canHo || nha) && l.baths) ds.push({ chu: String(l.baths), icon: "wc" });
-  if (l.pricePerM2 && (canHo || dat || nha)) ds.push({ chu: l.pricePerM2 });
+  if (l.pricePerM2 && (canHo || dat || nha)) ds.push({ chu: l.pricePerM2, giaM2: true });
+  return ds;
+}
+
+// Thông số THEO CẤP để hiện trên thẻ: cắt đúng số mục của cấp (SO_THONG_SO, giữ luật Gold · Silver · Basic = giá · diện tích),
+// rồi đặt giá/m² NGAY SAU giá (chủ dự án 22/10/2026 tối: "phải đúng chuẩn — giá/m² phải ở gần chỗ giá, tin Diamond").
+export function thongSoTheoCap(l: Listing, t: TierId): MucSo[] {
+  const ds = thongSo(l).slice(0, SO_THONG_SO[t]);
+  const i = ds.findIndex((x) => x.giaM2);
+  if (i > 1) ds.splice(1, 0, ...ds.splice(i, 1));
   return ds;
 }

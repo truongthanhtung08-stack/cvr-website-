@@ -28,6 +28,10 @@
     {
       "path": "/api/admin/bao-viec",
       "schedule": "2 * * * *"
+    },
+    {
+      "path": "/api/tin-dang/toa-do",
+      "schedule": "20 * * * *"
     }
   ]
 }

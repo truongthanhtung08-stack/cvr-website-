@@ -2,14 +2,13 @@
 
 import { useDiaDanh } from "@/lib/useDiaDanh";
 import { useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 import type { Map as MlMap, Marker as MlMarker } from "maplibre-gl";
 import { napMapLibre, STYLE_MO, vietHoaNhan } from "@/lib/banDoMo";
 import { formatLatLng, parseLatLng, type LatLng } from "@/lib/googleMaps";
 import { centerOfArea } from "@/lib/geo";
-import { traDiaChi, timToaDo, timToaDoTheoBuoc } from "@/lib/timToaDo";
+import { traDiaChi, timToaDo, timToaDoTheoBuoc, cungTenDuong } from "@/lib/timToaDo";
 import type { DiemTim } from "@/lib/diaChiHaiHe";
-import { layViTri, loiDinhVi } from "@/lib/dinhVi";
+import { layViTri, loiDinhVi, laTrongApp } from "@/lib/dinhVi";
 import NhacBatDinhVi from "@/components/NhacBatDinhVi";
 import { useKhoaCuon } from "@/lib/khoaCuon";
 
@@ -52,19 +51,15 @@ export default function MapPickerMo({
   onDiaChi,
   onDiaGioi,
   tim,
-  dongGhimO,
   diemChon,
 }: {
   value: string;
   onChange: (v: string) => void;
   hint?: string;
   onDiaChi?: (v: string) => void;
-  onDiaGioi?: (v: { tinh: string; quan: string; phuong: string }) => void;
+  onDiaGioi?: (v: { tinh: string; quan: string; phuong: string; chuoi?: string }) => void;
   // Dò theo từng bước Tỉnh → Phường/Xã → số nhà bằng tên hệ mới, có kiểm kết quả (diemTimBanDo).
   tim?: DiemTim;
-  // id khung NGAY DƯỚI THANH ĐỊA CHỈ của form — dòng điểm ghim hiện ở đó. Không truyền: hiện ngay trên bản đồ (form
-  // khách đăng: bản đồ nằm liền dưới thanh địa chỉ nên vẫn là ngay dưới thanh địa chỉ).
-  dongGhimO?: string;
   // Toạ độ gợi ý địa chỉ khách vừa CHỌN dưới thanh địa chỉ (ODiaChiGoiY); n đổi mỗi lần chọn.
   diemChon?: { lat: number; lng: number; n: number } | null;
 }) {
@@ -83,7 +78,11 @@ export default function MapPickerMo({
   // Chuỗi địa chỉ MÁY vừa tự điền. Ô đang giữ đúng chuỗi này nghĩa là khách chưa
   // đụng vào → đổi ghim thì máy được viết lại. Khách sửa rồi thì giữ nguyên.
   const mayDienRef = useRef("");
-  const ghiDeRef = useRef(false);
+  // Tên đường bản đồ đọc được TẠI CHỖ GHIM (rỗng = bản đồ không có đường ở đó) — để biết khách sửa địa chỉ là ghi thêm số
+  // nhà trên cùng con đường (giữ ghim) hay ghi sang đường khác (dời ghim).
+  const duongGhimRef = useRef("");
+  // Chữ bản đồ vừa điền vào thanh địa chỉ (khác chữ khách tự gõ).
+  const chuMayDienRef = useRef("");
   // Ghim máy vừa tự đặt theo đường định vị nhanh — GPS chính xác về sau thì dời ghim tới đó, NẾU khách chưa tự dời.
   const ghimTuDongRef = useRef("");
 
@@ -98,21 +97,8 @@ export default function MapPickerMo({
   const [dangGiai, setDangGiai] = useState(false);
   const [loi, setLoi] = useState("");
   const [loiDan, setLoiDan] = useState("");
-  const [mucDo, setMucDo] = useState<"soNha" | "duong" | "khuVuc" | null>(null);
-  // Địa chỉ đọc được NGAY TẠI ĐIỂM GHIM — luôn hiện cho người đăng thấy, kể cả
-  // khi web không tự điền vào ô (vì ô đang có chữ của họ). Thấy rồi thì tự so:
-  // trùng là yên tâm, lệch thì bấm một nút là lấy, hoặc kéo ghim cho khớp.
-  const [diaChiGhim, setDiaChiGhim] = useState("");
-  // Phần số nhà / tên đường của điểm ghim — đúng thứ sẽ đặt vào ô "Địa chỉ cụ thể"
-  // nếu người đăng bấm nút sửa. Tách riêng để không nhét cả tên phường, tỉnh vào ô đó.
-  const [soNhaGhim, setSoNhaGhim] = useState("");
   // Bỏ ghim → bản đồ trỏ lại theo địa chỉ đang gõ (bảng trường hợp chủ dự án duyệt 22/10/2026)
   const [lanBoGhim, setLanBoGhim] = useState(0);
-  const [oDongGhim, setODongGhim] = useState<HTMLElement | null>(null);
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setODongGhim(dongGhimO ? document.getElementById(dongGhimO) : null);
-  }, [dongGhimO]);
 
   useEffect(() => {
     onChangeRef.current = onChange;
@@ -130,45 +116,55 @@ export default function MapPickerMo({
     ghimRef.current.remove();
     ghimRef.current = null;
     mayDienRef.current = "";
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setMucDo(null); setDiaChiGhim(""); setSoNhaGhim("");
   }, [value]);
+  // Ghim đến SAU KHI bản đồ đã dựng (bấm "Soạn tiếp" bản nháp, form nạp tin chậm) → vẽ lại đúng chỗ, KHÔNG đè địa chỉ khách
+  // đã ghi (đo 23/10/2026: nút bỏ ghim hiện mà dấu ghim không có trên bản đồ).
+  useEffect(() => {
+    const p = parseLatLng(value);
+    const map = mapRef.current;
+    if (!sanSang || !map || !p || ghimRef.current) return;
+    void datGhim(p, false);
+    map.jumpTo({ center: [p.lng, p.lat], zoom: Math.max(map.getZoom(), 16) });
+    void traDiaChi(p.lat, p.lng).then((t) => { if (t && t.mucDo !== "khuVuc") duongGhimRef.current = t.ngan; });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value, sanSang]);
 
   // ── Ghim xong → tra ngược ra địa chỉ, trả về form ────────────────────────
+  // GHIM CHỖ NÀO, THANH ĐỊA CHỈ HIỆN ĐÚNG CHỖ ĐÓ (chủ dự án 23/10/2026 — đổi bảng 22/10): số nhà, tên đường đọc tại điểm ghim
+  // vào thanh "Địa chỉ cụ thể"; khách sửa chữ trong thanh thì ghim dời theo (hiệu ứng "KHÁCH SỬA ĐỊA CHỈ" bên dưới).
   async function traVeDiaChi(p: LatLng) {
     setDangTra(true);
     const ten = await traDiaChi(p.lat, p.lng);
     setDangTra(false);
-    setMucDo(ten?.mucDo ?? null);
-    if (!ten) {
-      setDiaChiGhim("");
-      setSoNhaGhim("");
-      return;
-    }
-    setDiaChiGhim([ten.ngan, ten.phuong, ten.quan, ten.tinh].filter(Boolean).join(", "));
-    setSoNhaGhim(ten.ngan ?? "");
-
+    if (!ten) return;
     // Ba khối địa giới: luôn cập nhật, đó là sự thật suy từ toạ độ.
     if (ten.tinh || ten.quan || ten.phuong)
-      onDiaGioiRef.current?.({ tinh: ten.tinh, quan: ten.quan, phuong: ten.phuong });
-
-    // Số nhà / tên đường: quyền của khách. Chỉ viết khi ô trống hoặc đang giữ
-    // đúng chữ máy điền lần trước.
-    const oHienTai = (hintRef.current.split(",")[0] ?? "").trim();
-    // Khách tự bấm "Tôi đang đứng ở đây" = VỊ TRÍ MỚI → số nhà, tên đường lấy theo GPS, không giữ
-    // địa chỉ cũ (chủ dự án 15/10/2026).
-    const ghiDe = ghiDeRef.current;
-    ghiDeRef.current = false;
-    if (ten.ngan && (ghiDe || !oHienTai || oHienTai === mayDienRef.current)) {
-      onDiaChiRef.current?.(ten.ngan);
-      mayDienRef.current = ten.ngan;
+      onDiaGioiRef.current?.({ tinh: ten.tinh, quan: ten.quan, phuong: ten.phuong, chuoi: ten.chuoi });
+    duongGhimRef.current = ten.mucDo === "khuVuc" ? "" : ten.ngan;
+    // BẢN ĐỒ THIẾU DỮ LIỆU TẠI CHỖ GHIM (chủ dự án 23/10/2026: "ghim chính xác 100% mà dữ liệu bản đồ không có thì sao"):
+    // ghim vẫn đứng đúng chỗ khách ghim, thanh địa chỉ điền chỗ gần đúng nhất bản đồ biết (số nhà → tên đường → công trình →
+    // thôn/khu phố). Khách ĐÃ GHI địa chỉ thì không để bản đồ đè bằng thứ kém hơn: bản đồ chỉ biết tới thôn/khu → giữ chữ
+    // khách; bản đồ biết đường mà chưa có số nhà, khách đã ghi số trên CÙNG con đường đó → giữ số nhà của khách.
+    // Chữ đang có mà do chính bản đồ điền ở lần ghim trước thì không phải chữ khách — ghim chỗ khác là thay (hoặc xoá nếu chỗ
+    // mới bản đồ không biết gì), không giữ địa chỉ của chỗ cũ.
+    const dangGhi = (hintRef.current.split(",")[0] ?? "").trim();
+    const cuaKhach = !!dangGhi && dangGhi !== chuMayDienRef.current;
+    const giuChuKhach = cuaKhach && (ten.mucDo === "khuVuc" || (ten.mucDo === "duong" && cungTenDuong(dangGhi, ten.ngan)));
+    const chuMoi = giuChuKhach ? dangGhi : ten.ngan;
+    if (chuMoi !== dangGhi) {
+      mayDienRef.current = chuMoi; // ghi TRƯỚC khi đổi chữ → hiệu ứng dời ghim biết đây là máy điền, không dò ngược lại
+      chuMayDienRef.current = chuMoi;
+      onDiaChiRef.current?.(chuMoi);
     }
   }
 
   // ── Đặt ghim — CHỈ gọi từ thao tác tay của khách ─────────────────────────
-  async function datGhim(p: LatLng) {
+  // dien = false: hiện lại ghim đã lưu (sửa tin) — KHÔNG đè địa chỉ khách đã ghi.
+  async function datGhim(p: LatLng, dien = true) {
     const map = mapRef.current;
     if (!map) return;
+    // Lúc ghim, chữ đang có trong thanh địa chỉ coi như đã khớp — không để hiệu ứng "khách sửa địa chỉ" kéo ghim về chữ cũ.
+    mayDienRef.current = (hintRef.current.split(",")[0] ?? "").trim();
 
     if (ghimRef.current) ghimRef.current.setLngLat([p.lng, p.lat]);
     else {
@@ -176,6 +172,7 @@ export default function MapPickerMo({
       if (!mapRef.current) return;
       const m = new ml.Marker({ draggable: true, color: "#e11d48" }).setLngLat([p.lng, p.lat]).addTo(map);
       m.on("dragend", () => {
+        mayDienRef.current = (hintRef.current.split(",")[0] ?? "").trim();
         const q = m.getLngLat();
         const moi = { lat: q.lat, lng: q.lng };
         onChangeRef.current(formatLatLng(moi));
@@ -184,7 +181,7 @@ export default function MapPickerMo({
       ghimRef.current = m;
     }
     onChangeRef.current(formatLatLng(p));
-    void traVeDiaChi(p);
+    if (dien) void traVeDiaChi(p);
   }
 
   // ── Chấm xanh "vị trí của bạn" — chỉ tham chiếu, KHÔNG phải ghim ─────────
@@ -218,6 +215,12 @@ export default function MapPickerMo({
         : "https://www.google.com/maps";
     // LỐI VỀ: Android mở thẳng ứng dụng bản đồ bằng geo: — bấm Quay lại của máy là về đúng form đang soạn (mở tab mới
     // thì quay lại dễ rơi vào tab trống). iPhone / máy tính: tab mới — iPhone có "◀ Safari" và nút lùi đóng tab về form.
+    // TRONG ZALO / FACEBOOK…: trình duyệt trong app KHÔNG mở được đường dẫn "geo:" (chủ dự án 23/10/2026: bấm Google Maps báo
+    // không xem được) và thường chặn tab mới → mở link Google Maps ngay tại chỗ; bấm Quay lại của máy là về form.
+    if (laTrongApp()) {
+      location.href = url;
+      return;
+    }
     if (/Android/.test(navigator.userAgent)) {
       const q = p ?? (c ? { lat: c.lat, lng: c.lng } : null);
       if (q) {
@@ -236,12 +239,11 @@ export default function MapPickerMo({
         setDangDinhVi(false);
         const p = { lat, lng };
         void veCham(p, !chinhXacHon);
-        if (ghimLuon && !chinhXacHon) { ghimTuDongRef.current = formatLatLng(p); ghiDeRef.current = true; void datGhim(p); }
+        if (ghimLuon && !chinhXacHon) { ghimTuDongRef.current = formatLatLng(p); void datGhim(p); }
         else if (ghimLuon && chinhXacHon && ghimRef.current) {
           const q = ghimRef.current.getLngLat();
           if (formatLatLng({ lat: q.lat, lng: q.lng }) === ghimTuDongRef.current) {
             ghimTuDongRef.current = formatLatLng(p);
-            ghiDeRef.current = true;
             void datGhim(p);
           }
         }
@@ -305,7 +307,11 @@ export default function MapPickerMo({
         if (window.matchMedia("(min-width: 640px)").matches) map.addControl(new ml.NavigationControl({ showCompass: false }), "top-right");
 
         // Bấm vào đâu là ghim vào đó — thao tác chính, ai cũng đoán được.
-        map.on("click", (e) => void datGhim({ lat: e.lngLat.lat, lng: e.lngLat.lng }));
+        // Chạm ghim lúc đang nhìn xa (cả nước, cả tỉnh) → phóng sát vào ghim để khách thấy rõ, kéo ghim cho đúng nhà (23/10/2026).
+        map.on("click", (e) => {
+          void datGhim({ lat: e.lngLat.lat, lng: e.lngLat.lng });
+          if (map.getZoom() < 15) map.easeTo({ center: e.lngLat, zoom: 16, duration: 500 });
+        });
 
         map.on("load", () => {
           if (huy) return;
@@ -313,7 +319,7 @@ export default function MapPickerMo({
           boxRef.current?.querySelector(".maplibregl-ctrl-attrib")?.classList.remove("maplibregl-compact-show");
           vietHoaNhan(map);
           setSanSang(true);
-          if (saved) void datGhim(saved);
+          // Ghim đã lưu (sửa tin) → hiệu ứng "ghim đến sau khi bản đồ đã dựng" ở trên vẽ lại, không đè địa chỉ.
         });
       } catch {
         if (!huy) setHong(true);
@@ -362,6 +368,38 @@ export default function MapPickerMo({
     };
   }, [hint, khoaTim, sanSang, lanBoGhim]);
 
+  // ── KHÁCH SỬA ĐỊA CHỈ KHI ĐÃ GHIM → GHIM DỜI TỚI ĐÚNG CHỖ KHÁCH GHI (chủ dự án 23/10/2026: "khách có quyền sửa — sửa thì
+  //    ghim chuyển đúng chỗ khách ghi, chính xác nhất"). Ngừng gõ ~1 giây thì dò; ra tới tên đường / số nhà mới dời, chỉ ra
+  //    phường thì GIỮ ghim (ghim giữa phường là sai chỗ). Không đổi chữ của khách.
+  useEffect(() => {
+    if (!sanSang || !ghimRef.current) return;
+    const soNha = (hint.split(",")[0] ?? "").trim();
+    if (!soNha || soNha === mayDienRef.current) return;
+    let huy = false;
+    const t = setTimeout(async () => {
+      const diem = timRef.current ? await timToaDoTheoBuoc(timRef.current) : await timToaDo(hint);
+      if (huy || !mapRef.current || !ghimRef.current) return;
+      mayDienRef.current = soNha;
+      if (!diem || diem.mucDo === "khuVuc") return;
+      // Bản đồ chỉ biết tới con đường (chưa có số nhà) mà ghim khách đang nằm trên chính con đường đó → GIỮ ghim: chỗ khách
+      // ghim đúng hơn điểm giữa đoạn đường. Bản đồ không có đường nào tại chỗ ghim mà đường khách ghi ở cùng khu (< 1 km)
+      // → cũng giữ. Chỉ dời khi bản đồ có đúng số nhà, hoặc khách ghi sang đường khác.
+      if (diem.mucDo === "duong") {
+        const cu = ghimRef.current.getLngLat();
+        const xa = Math.hypot((diem.lat - cu.lat) * 111_000, (diem.lng - cu.lng) * 111_000 * Math.cos((cu.lat * Math.PI) / 180));
+        if (cungTenDuong(soNha, duongGhimRef.current) || (!duongGhimRef.current && xa < 1000)) return;
+      }
+      ghimRef.current.setLngLat([diem.lng, diem.lat]);
+      duongGhimRef.current = soNha; // ghim giờ nằm trên đường khách vừa ghi
+      onChangeRef.current(formatLatLng({ lat: diem.lat, lng: diem.lng }));
+      mapRef.current.easeTo({ center: [diem.lng, diem.lat], zoom: 17, duration: 500 });
+    }, 1000);
+    return () => {
+      huy = true;
+      clearTimeout(t);
+    };
+  }, [hint, khoaTim, sanSang]);
+
   // CHỌN GỢI Ý ĐỊA CHỈ = CHỌN VỊ TRÍ (chủ dự án 22/10/2026 tối: "theo chức năng bản đồ, theo logic chọn vị trí — làm gợi ý
   // khi khách gõ địa chỉ"): khách tự tay chọn một gợi ý → bản đồ tới đúng điểm đó và ghim, như dán link Google Maps. Gõ chữ
   // thôi thì vẫn chỉ bay, không ghim. Chưa đúng nhà thì khách kéo ghim / chạm chỗ khác.
@@ -379,9 +417,6 @@ export default function MapPickerMo({
     ghimRef.current?.remove();
     ghimRef.current = null;
     mayDienRef.current = "";
-    setMucDo(null);
-    setDiaChiGhim("");
-    setSoNhaGhim("");
     setLanBoGhim((n) => n + 1);
   }
 
@@ -392,7 +427,8 @@ export default function MapPickerMo({
     const t = txt.trim();
     if (!t) return false;
     const ngay = parseLatLng(t);
-    if (ngay) {
+    // Chỉ nhận điểm trong Việt Nam (gồm Hoàng Sa, Trường Sa) — ngoài khung đó là gõ nhầm / chép nhầm.
+    if (ngay && ngay.lat >= 6 && ngay.lat <= 24 && ngay.lng >= 102 && ngay.lng <= 118) {
       await datGhim(ngay);
       mapRef.current?.easeTo({ center: [ngay.lng, ngay.lat], zoom: 17, duration: 500 });
       return true;
@@ -428,46 +464,9 @@ export default function MapPickerMo({
     return false;
   }
 
-  // DÒNG ĐIỂM GHIM — NGAY DƯỚI THANH ĐỊA CHỈ (bảng trường hợp chủ dự án duyệt 22/10/2026): địa chỉ đọc tại điểm ghim để
-  // đối chiếu; "Dùng địa chỉ này" chép phần số nhà, tên đường vào thanh địa chỉ (chỉ hiện khi khác); "Bỏ ghim". Thanh địa
-  // chỉ là của khách — ghim không ghi đè chữ khách đã gõ (trống thì máy điền sẵn, xem traVeDiaChi).
-  const dongGhim = daGhim ? (
-    <div className="rounded-xl bg-cvr-surface px-3 py-2.5 text-[13px] leading-relaxed text-cvr-body">
-      {diaChiGhim && (
-        <p className="flex items-start gap-1.5">
-          <svg className="mt-[3px] h-3.5 w-3.5 shrink-0 text-[#e11d48]" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-            <path d="M12 2C8.1 2 5 5.1 5 9c0 5.2 7 13 7 13s7-7.8 7-13c0-3.9-3.1-7-7-7zm0 9.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z" />
-          </svg>
-          <span>Địa chỉ tại điểm ghim: <strong className="font-semibold text-cvr-ink">{diaChiGhim}</strong></span>
-        </p>
-      )}
-      <div className={`flex flex-wrap gap-2 ${diaChiGhim ? "mt-2" : ""}`}>
-        {soNhaGhim && soNhaGhim !== (hint.split(",")[0] ?? "").trim() && (
-          <button
-            type="button"
-            onClick={() => {
-              onDiaChiRef.current?.(soNhaGhim);
-              mayDienRef.current = soNhaGhim;
-            }}
-            className="flex min-h-[36px] items-center rounded-lg border border-cvr-line bg-white px-3 text-[13px] font-semibold text-cvr-ink transition hover:border-cvr-ink"
-          >
-            Dùng địa chỉ này
-          </button>
-        )}
-        <button
-          type="button"
-          onClick={xoaGhim}
-          className="flex min-h-[36px] items-center rounded-lg border border-cvr-line bg-white px-3 text-[13px] font-semibold text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink"
-        >
-          Bỏ ghim
-        </button>
-      </div>
-    </div>
-  ) : null;
 
   return (
     <div className="space-y-3">
-      {dongGhim && (oDongGhim ? createPortal(dongGhim, oDongGhim) : dongGhim)}
       <div className={toan ? "fixed inset-0 z-[80] bg-white" : "relative overflow-hidden rounded-xl border border-cvr-line"}>
         <div ref={boxRef} aria-label="Bản đồ ghim vị trí" className={`w-full bg-cvr-surface ${toan ? "h-full" : "h-[240px] sm:h-[360px]"}`} />
         {!sanSang && !hong && (
@@ -538,13 +537,20 @@ export default function MapPickerMo({
             </svg>
             Google Maps
           </button>
-          {toan && dongGhim && <div className="w-full overflow-hidden rounded-xl shadow-[0_4px_16px_rgba(0,0,0,0.2)] [&>div]:bg-white">{dongGhim}</div>}
         </div>
+        {/* BỎ GHIM = MỘT BIỂU TƯỢNG (chủ dự án 23/10/2026: "không cần câu dài dòng, chỉ bằng một biểu tượng hoặc dấu X"):
+            📍✕ ở góc trên bên trái bản đồ, chỉ hiện khi đã ghim. */}
         {daGhim && (
-          <span className="pointer-events-none absolute left-2 top-2 z-10 flex items-center gap-1.5 rounded-full bg-white/95 px-3 py-1 text-[12px] shadow">
-            <span className="font-semibold text-green-700">Đã ghim</span>
-            {mucDo && <span className="text-cvr-body">· {mucDo === "soNha" ? "đúng số nhà" : mucDo === "duong" ? "đúng tên đường" : "mới tới phường/xã"}</span>}
-          </span>
+          <button
+            type="button"
+            aria-label="Bỏ ghim"
+            title="Bỏ ghim"
+            onClick={xoaGhim}
+            className="absolute left-2 top-2 z-10 flex h-9 items-center gap-0.5 rounded-full bg-white/95 pl-2 pr-2.5 text-cvr-ink shadow transition active:scale-95"
+          >
+            <svg className="h-4 w-4 text-[#e11d48]" viewBox="0 0 24 24" fill="currentColor" aria-hidden><path d="M12 2C8.1 2 5 5.1 5 9c0 5.2 7 13 7 13s7-7.8 7-13c0-3.9-3.1-7-7-7zm0 9.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z" /></svg>
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.4} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
         )}
       </div>
 
@@ -561,10 +567,21 @@ export default function MapPickerMo({
           onChange={async (e) => {
             const o = e.target;
             setLoiDan("");
+            // Gõ tay toạ độ: chờ đủ số (≥ 4 số lẻ mỗi vế) hoặc bấm Enter — trước đây gõ tới "16.0612, 1" là ghim luôn sang
+            // kinh độ 1 (đo 23/10/2026). Dán link / dán toạ độ đủ thì nhận ngay như cũ.
+            if (!/https?:\/\/|\d\.\d{4,}\s*,\s*-?\d+\.\d{4,}/.test(o.value)) return;
             const xong = await nhanChuoiDan(o.value);
             if (xong) o.value = "";
             else if (o.value.trim() && document.activeElement !== o)
               setLoiDan("Chưa đọc được vị trí từ link này.");
+          }}
+          onKeyDown={async (e) => {
+            if (e.key !== "Enter") return;
+            e.preventDefault();
+            const o = e.currentTarget;
+            const xong = await nhanChuoiDan(o.value);
+            if (xong) o.value = "";
+            else if (o.value.trim()) setLoiDan("Chưa đọc được vị trí từ link này.");
           }}
           onBlur={(e) => {
             if (e.target.value.trim() && !dangGiai)

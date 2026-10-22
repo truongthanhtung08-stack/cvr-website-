@@ -247,12 +247,12 @@ function O({ nhan, giaTri, accent }: { nhan: string; giaTri: string; accent?: bo
 }
 
 function ngayVN(iso: string): string {
-  return new Date(iso).toLocaleDateString("vi-VN");
+  return new Date(iso).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" });
 }
 function ngayNgan(ymd: string): string {
   const [, m, d] = ymd.split("-");
   return `${d}/${m}`;
 }
 function gioNgayVN(iso: string): string {
-  return new Date(iso).toLocaleString("vi-VN", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric" });
+  return new Date(iso).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric" });
 }

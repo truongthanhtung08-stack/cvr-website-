@@ -5,6 +5,7 @@ import { baoLoi } from "@/lib/baoLoi";
 import { viKhaDung, cauThieuTien } from "@/lib/viKhaDung";
 import { guiThongBao, MAU_DA_NHAN_TIN, maTin } from "@/lib/thongBao";
 import type { TierId } from "@/lib/packages";
+import { homNayVn } from "@/lib/gioVn";
 
 // ============================================================================
 // ĐĂNG LẠI TIN ĐÃ HẾT HẠN = GỬI DUYỆT NHƯ TIN MỚI (chuẩn Batdongsan, chốt 01/10/2026)
@@ -63,7 +64,7 @@ export async function thucHienUpTin(
 
   // ── Giá BÁO cho khách: y như form đăng tin mới (giá gói; miễn phí thì 0) ──
   // Tiền THẬT chỉ trừ lúc admin duyệt (duyet/route.ts) — không bao giờ cao hơn số báo.
-  const homNay = new Date().toISOString().slice(0, 10);
+  const homNay = homNayVn();
   const soNgayMoTk = hs.created_at ? (Date.now() - new Date(hs.created_at).getTime()) / 86_400_000 : Number.POSITIVE_INFINITY;
   const bao = quotePrice({ data: bang, tierId: goi, days: soNgay, today: homNay, isNewMember: thanhVienMoi(bang.free, { coChu: laChuThat(hs), homNay, soNgayMoTk, ngayTaoTk: hs.created_at ? new Date(new Date(hs.created_at).getTime() + 7 * 3_600_000).toISOString().slice(0, 10) : undefined }) });
   // Khuyến mãi: CÙNG MỘT điều kiện với form đăng tin + duyệt tin (huongKhuyenMai).

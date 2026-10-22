@@ -8,6 +8,7 @@ import {
   newProvinceOf,
   oldNamesOf,
   boTienToCap,
+  choCuCua,
   type GeoMode,
 } from "@/lib/locations";
 import { normalizeVi } from "@/lib/filters";
@@ -23,7 +24,8 @@ import { suyRaHeCu, suyRaHeMoi } from "@/lib/diaChiHaiHe";
 //   "Thành phố Đà Nẵng" ≠ "Đà Nẵng"   ·   "Phường Hòa Cường" ≠ "Hòa Cường Bắc"
 // nên phải so KHÔNG DẤU, bỏ tiền tố cấp hành chính, và cho khớp lồng nhau.
 
-export type DiaGioiBanDo = { tinh: string; quan: string; phuong: string };
+// chuoi = nguyên câu địa chỉ bản đồ đọc tại chỗ ghim — để tìm phường CŨ còn ghi trong tên tổ dân phố (phuongCuTheoGhim).
+export type DiaGioiBanDo = { tinh: string; quan: string; phuong: string; chuoi?: string };
 
 // Bỏ tiền tố cấp hành chính rồi bỏ dấu — để "Phường Hòa Khánh" và "Hòa Khánh Bắc"
 // còn so được với nhau.
@@ -61,6 +63,28 @@ export function khopDanhMuc(ten: string, dsach: string[]): string {
     }) ??
     ""
   );
+}
+
+/** PHƯỜNG CŨ ĐÚNG CHỖ GHIM (chủ dự án 23/10/2026: "tự đồng bộ địa chỉ mới/cũ"). Một phường mới gộp 2–5 phường cũ, bảng
+ *  ánh xạ không biết căn nhà nằm ở phần nào — nhưng bản đồ còn giữ tên cũ trong tổ dân phố / khu phố tại chỗ ghim
+ *  ("Tổ dân phố 39 Phước Ninh, Phường Hải Châu" → phường cũ Phước Ninh, đo 23/10). Chỉ đọc các mảnh ĐỨNG TRƯỚC phường/xã
+ *  (bỏ số nhà, tên đường) và chỉ nhận khi ra đúng MỘT phường cũ thuộc phường mới đó; không chắc thì trả null. */
+export function phuongCuTheoGhim(dc: DiaGioiBanDo, tinhMoi: string, phuongMoi: string): { tinh: string; quan: string; phuong: string } | null {
+  if (!dc.chuoi || !tinhMoi || !phuongMoi) return null;
+  const ungVien = choCuCua(tinhMoi, phuongMoi).filter((x) => x.phuong);
+  if (ungVien.length < 2) return null;
+  const manh: string[] = [];
+  for (const p of dc.chuoi.split(",").map((s) => s.trim())) {
+    if (/^(phường|xã|thị trấn|đặc khu)\s/i.test(p)) break;
+    if (!p || /^\d/.test(p) || /^(đường|phố|kiệt|hẻm|ngõ|ngách|quốc lộ|tỉnh lộ|đại lộ)\s/i.test(p)) continue;
+    manh.push(normalizeVi(p));
+  }
+  const trung = ungVien.filter((x) => manh.some((m) => chuaTronTu(m, loiTen(x.phuong))));
+  if (!trung.length) return null;
+  // "Hòa Cường Bắc" khớp thì "Hòa Cường" cũng khớp → lấy tên dài nhất, còn hoà thì không đoán.
+  const dai = Math.max(...trung.map((x) => loiTen(x.phuong).length));
+  const ra = trung.filter((x) => loiTen(x.phuong).length === dai);
+  return ra.length === 1 ? ra[0] : null;
 }
 
 // Trả về đúng ba giá trị nên đặt vào ba ô. Chuỗi rỗng = KHÔNG tìm ra mục có thật
@@ -240,6 +264,10 @@ export function ganDiaGioi(
   const phuongThoTuBanDo =
     phuongTheoDanhMucMoi || dc.phuong || (doiTinhCu ? "" : giuPhuong);
   if (!quanDung) return { province: tinhCu, district: "", ward: phuongThoTuBanDo };
+  // Bản đồ đọc ra phường MỚI gộp nhiều phường cũ → phường cũ đúng chỗ ghim (tên còn trong tổ dân phố), trước khi khớp tên.
+  const tinhMoi = newProvinceOf(tinhCu);
+  const cuGhim = phuongCuTheoGhim(dc, tinhMoi, khopDanhMuc(dc.phuong, wardsOfNew(tinhMoi)));
+  if (cuGhim) return { province: cuGhim.tinh, district: cuGhim.quan, ward: cuGhim.phuong };
   const phuongKhop = khopDanhMuc(dc.phuong, wardsOf(tinhCu, quanDung));
   return { province: tinhCu, district: quanDung, ward: phuongKhop || phuongThoTuBanDo };
 }

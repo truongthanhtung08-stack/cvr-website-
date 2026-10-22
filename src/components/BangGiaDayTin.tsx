@@ -1,7 +1,9 @@
 "use client";
 
 import { COT_UP, soLuotTuNhan, vnd, type UpRow } from "@/lib/billing";
-import { getTier, type TierId } from "@/lib/packages";
+import { type TierId } from "@/lib/packages";
+import NhanGoi from "@/components/NhanGoi";
+import KhungCuonNgang from "@/components/KhungCuonNgang";
 import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
 import { useQuyDinhGia } from "@/lib/useQuyDinhGia";
 
@@ -39,18 +41,16 @@ export default function BangGiaDayTin({
 
   return (
     <div>
-      <div className="overflow-x-auto rounded-2xl border border-cvr-line bg-white shadow-lux">
+      <KhungCuonNgang khung="rounded-2xl border border-cvr-line bg-white shadow-lux">
         <table className={`w-full border-collapse text-sm ${chiCap ? "" : "min-w-[520px]"}`}>
           <thead>
             <tr className="bg-cvr-surface">
               <th className="sticky left-0 z-10 whitespace-nowrap border-b border-cvr-line bg-cvr-surface px-3 py-3.5 text-left font-semibold text-cvr-ink sm:px-4">Gói đẩy</th>
               {cot.map((id) => {
-                const t = getTier(id);
                 return (
                   <th key={id} className="border-b border-l border-cvr-line px-2 py-3.5 text-center sm:px-3">
-                    <span className="inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-semibold tracking-tight sm:px-3 sm:text-xs" style={{ backgroundColor: t.accent, color: t.badgeText }}>
-                      {t.name}
-                    </span>
+                    {/* Tên gói + hệ số X — cùng kiểu bảng giá gói tin (NhanGoi) */}
+                    <NhanGoi id={id} />
                   </th>
                 );
               })}
@@ -94,7 +94,7 @@ export default function BangGiaDayTin({
             })}
           </tbody>
         </table>
-      </div>
+      </KhungCuonNgang>
       <p className="mt-3 text-[12.5px] text-cvr-muted">Giá đã gồm {(THUE_SUAT_GTGT * 100).toFixed(0)}% VAT</p>
       {QUY_DINH.length > 0 && !trangBaoGia && (
         <ul className="mt-3 space-y-1 text-[13px] leading-relaxed text-cvr-muted">

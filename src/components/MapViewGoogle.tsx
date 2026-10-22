@@ -24,6 +24,9 @@ export type DiemBanDo = {
   lng: number;
   // false = vị trí suy theo khu vực, không phải điểm người đăng ghim
   chinhXac?: boolean;
+  // Chưa ghim tay: khoá toạ độ đã tra sẵn ("tin:<id>" / "du-an:<slug>") + chuỗi địa chỉ đã đưa bản đồ (src/lib/diaChiBanDo.ts)
+  ma?: string;
+  q?: string;
   nhan: string;
   title: string;
   phu: string;
@@ -283,7 +286,8 @@ export default function MapViewGoogle({ items, diem }: { items?: Listing[]; diem
   useEffect(() => {
     let huy = false;
     void (async () => {
-      if (huy || !sanSang || (await quyenDinhVi()) === "denied") return;
+      // CHỈ khi máy ĐÃ cho phép từ trước — không tự bật ô hỏi vị trí khi khách chưa bấm gì (23/10/2026, như MapPaneGoogle).
+      if (huy || !sanSang || (await quyenDinhVi()) !== "granted") return;
       if (!huy) dinhVi(false);
     })();
     return () => {

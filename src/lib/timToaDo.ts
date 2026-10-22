@@ -10,8 +10,8 @@ import { parseLatLng } from "@/lib/googleMaps";
 // VÌ SAO CẦN: tin nào cũng phải có GHIM ĐỎ trên bản đồ. Chỉ khoảng một phần nhỏ
 // tin được người đăng ghim tay; số còn lại chỉ có chuỗi địa chỉ. Có tên đường thì
 // tra ra đúng đoạn đường, đó đã là ghim dùng được. Không tra ra mới lùi về tâm
-// phường/xã — và khi đó phải NÓI RÕ là vị trí tương đối, không được để khách
-// tưởng ghim đúng căn nhà.
+// phường/xã — dấu đỏ giữa khu vực, bản đồ lùi ra cho thấy cả khu vực, kiểu Google
+// Maps (chủ dự án 23/10/2026).
 
 export type MucDoChinhXac = "ghim" | "duong" | "khuVuc";
 
@@ -25,10 +25,23 @@ export type ToaDoTim = {
 // và Nominatim có giới hạn 1 lượt/giây nên càng gọi ít càng tốt.
 const daTra = new Map<string, ToaDoTim | null>();
 
-export function coTenDuong(diaChi: string): boolean {
-  const dau = diaChi.split(",")[0]?.trim() ?? "";
-  return dau.length >= 3;
+// Nhận dạng từng mảnh địa chỉ khách ghi (timToaDo).
+const LA_DIA_GIOI = /^(phường|xã|thị trấn|đặc khu|thành phố|tỉnh|quận|huyện|thị xã)\s/i;
+const LA_DUONG = /^(đường|phố|kiệt|hẻm|ngõ|ngách|quốc lộ|tỉnh lộ|đại lộ)\s/i;
+const SO_DAU = /^(?:số\s*)?\d+[a-z]?(?:\/\d+[a-z]?)*\s+/i; // "123 " / "số 12/3 " đứng trước tên đường
+const LA_SO_NHA = /^(?:số\s*)?\d+[a-z]?(?:\/\d+[a-z]?)*$/i; // mảnh chỉ có số nhà
+
+/** Mức phóng theo độ chính xác — MỌI bản đồ xem vị trí dùng chung (nền mở hôm nay, Google sau này chỉ thay khung vẽ).
+ *  Đúng nhà / trên đường → mức nơi gọi đưa (thấy rõ đường); chỉ tới khu vực → lùi ra 14 cho thấy cả khu vực. */
+export const zoomTheoMucDo = (mucDo: MucDoChinhXac, zoom: number) => (mucDo === "khuVuc" ? Math.min(zoom, 14) : zoom);
+
+/** Hai cách ghi có cùng MỘT tên đường không ("50 Đường Bạch Đằng" ~ "Bạch Đằng") — bỏ số nhà, chữ Đường/Phố, dấu. */
+export function cungTenDuong(a: string, b: string): boolean {
+  const tenDuong = (s: string) => khongDau(boLoaiDuong(s.trim().replace(SO_DAU, "")));
+  const x = tenDuong(a);
+  return x.length >= 3 && x === tenDuong(b);
 }
+
 
 // ── CHIỀU NGƯỢC LẠI: TỪ TOẠ ĐỘ RA ĐỊA CHỈ ────────────────────────────────────
 // Người đăng bấm ghim lên bản đồ thì phải thấy mình vừa ghim vào ĐÂU. Chỉ hiện
@@ -48,6 +61,8 @@ export type DiaChiTra = {
   phuong: string;
   // Ghim tới mức nào — để nói cho người đăng biết địa chỉ đã đủ chính xác chưa.
   mucDo: "soNha" | "duong" | "khuVuc";
+  // Nguyên câu bản đồ đọc được (có tổ dân phố, khu phố) — để suy phường CŨ đúng chỗ ghim (phuongCuTheoGhim).
+  chuoi: string;
 };
 
 const daTraNguoc = new Map<string, DiaChiTra | null>();
@@ -71,12 +86,15 @@ export async function traDiaChi(lat: number, lng: number): Promise<DiaChiTra | n
       };
     };
     const a = kq.address ?? {};
-    const duong = a.road || a.neighbourhood || "";
+    // Tên đường OSM nhiều chỗ ghi trơn ("Hà Nội", "Bạch Đằng") → ô địa chỉ hiện "Hà Nội" trông như tên thành phố (đo 23/10/2026,
+    // ghim ở Huế). Thiếu chữ loại đường thì thêm "Đường"; Kiệt, Hẻm, Ngõ, Quốc lộ… đã có thì giữ nguyên.
+    const coLoaiDuong = (s: string) => /^(đường|phố|kiệt|hẻm|ngõ|ngách|quốc lộ|tỉnh lộ|đại lộ|xa lộ|cao tốc|hương lộ|liên xã|QL|ĐT|DT|tổ|thôn|ấp|khu|lô)(\s|$)/i.test(s);
+    const road = a.road ? (coLoaiDuong(a.road) ? a.road : `Đường ${a.road}`) : "";
+    const duong = road || a.neighbourhood || "";
     // Ghim vào chỗ CHƯA CÓ TÊN ĐƯỜNG — đất nền, lô trong dự án, đường mới mở —
     // thì lấy tên địa điểm/khu dân cư gần nhất, chứ để ô địa chỉ trống trơn là
     // người đăng tưởng ghim hỏng.
     const moc = a.amenity || a.building || a.shop || a.residential || "";
-    const ngan = [a.house_number, duong || moc].filter(Boolean).join(" ").trim();
     // OpenStreetMap xếp phường/xã và quận/huyện vào nhiều khoá khác nhau tuỳ nơi,
     // phải dò lần lượt. Tách RIÊNG quận/huyện với phường/xã: hệ địa chỉ CŨ cần cả
     // hai, hệ MỚI (sau sáp nhập) chỉ dùng phường/xã.
@@ -110,13 +128,18 @@ export async function traDiaChi(lat: number, lng: number): Promise<DiaChiTra | n
       // Áp cuối là phường/xã nghĩa là không còn cấp trung gian nào để lấy.
       (apCuoi && !laPhuongXa(apCuoi) ? apCuoi : "");
     const tinh = tinhTuTen || a.state || a.province || a.city || "";
+    // KHÁCH CHỈ GHIM, BẢN ĐỒ KHÔNG CÓ TÊN ĐƯỜNG / CÔNG TRÌNH Ở ĐÓ (chủ dự án 23/10/2026: "điền địa chỉ gần chính xác nhất")
+    // → tên thôn / xóm / khu phố / tổ dân phố chứa điểm ghim (đo 23/10: đường đất chưa đặt tên ở Quảng Trị → "Trâm Lý",
+    // Gia Lai → "An Nông"). Bỏ tên trùng cấp phường/xã. Không có nữa thì để trống — phường, tỉnh vẫn điền theo ghim.
+    const khuNho = [a.hamlet, a.quarter, a.village].find((x) => x && x !== phuong && !laPhuongXa(x) && !/^đặc khu\s/i.test(x)) ?? "";
+    const ngan = [a.house_number, duong || moc || khuNho].filter(Boolean).join(" ").trim();
     // display_name có cả "Việt Nam" và mã bưu chính ở cuối — cắt bớt cho gọn.
     const day = kq.display_name
       ? kq.display_name.split(",").map((s) => s.trim()).slice(0, 4).join(", ")
       : "";
     const mucDo: DiaChiTra["mucDo"] = a.house_number ? "soNha" : duong ? "duong" : "khuVuc";
     const ten: DiaChiTra | null =
-      ngan || day ? { ngan, day: day || ngan, tinh, quan, phuong, mucDo } : null;
+      ngan || day ? { ngan, day: day || ngan, tinh, quan, phuong, mucDo, chuoi: kq.display_name ?? "" } : null;
     daTraNguoc.set(khoa, ten);
     return ten;
   } catch {
@@ -146,33 +169,60 @@ export async function timToaDo(diaChi: string): Promise<ToaDoTim | null> {
   // Nominatim tra tên phường/xã Việt Nam khá tốt, cứ hỏi rồi lấy bảng làm dự phòng.
   // LÙI DẦN TỪNG CẤP CHO TỚI KHI BẢN ĐỒ NHẬN RA.
   // Bản đồ nền (OpenStreetMap) chưa cập nhật hết tên phường/xã sau sáp nhập 2025, và
-  // nhiều đường mới mở cũng chưa có. Hỏi nguyên chuỗi mà không ra thì bỏ dần phần
-  // CHI TIẾT NHẤT ở đầu (số nhà → tên đường → phường) rồi hỏi lại, nên luôn trỏ tới
-  // chỗ chính xác NHẤT CÓ THỂ thay vì đứng im giữa bản đồ.
-  //
-  // Mức độ hạ theo: còn tên đường thì "duong" (tự ghim được), lùi tới cấp phường trở
-  // lên chỉ là "khuVuc" — đưa bản đồ tới cho nhìn chứ KHÔNG tự ghim, vì ghim giữa
-  // phường là ghim sai chỗ.
+  // nhiều đường mới mở cũng chưa có — nên luôn trỏ tới chỗ chính xác NHẤT CÓ THỂ.
+  // TÁCH ĐỊA CHỈ: CHI TIẾT (số nhà, tên đường, tên toà nhà / dự án) · ĐỊA GIỚI (phường/xã, quận/huyện) · TỈNH.
+  // Bỏ "Việt Nam" cuối chuỗi (trang dự án ghép thêm cho Google Maps) — để lại thì nó bị coi là tỉnh, đường trùng tên ở
+  // tỉnh khác lọt qua.
   const phan = chuoi.split(",").map((x) => x.trim()).filter(Boolean);
-  for (let bo = 0; bo < Math.min(phan.length, 4); bo++) {
-    const thu = phan.slice(bo).join(", ");
-    if (!thu) break;
-    try {
-      const r = await fetch("/api/dia-chi?viec=tim&q=" + encodeURIComponent(thu));
-      const ds = (await r.json()) as { lat: string; lon: string }[];
-      if (ds[0]) {
-        const kq: ToaDoTim = {
-          lat: Number(ds[0].lat),
-          lng: Number(ds[0].lon),
-          // Chỉ giữ mức "duong" khi chuỗi hỏi được VẪN còn tên đường — lùi quá tên
-          // đường rồi thì đó chỉ còn là khu vực.
-          mucDo: coTenDuong(thu) ? "duong" : "khuVuc",
-        };
-        daTra.set(chuoi, kq);
-        return kq;
-      }
-    } catch {
-      break; // mất mạng thì thôi, dùng bảng toạ độ sẵn có bên dưới
+  if (phan.length > 1 && /^vi[eệ]t\s*nam$/i.test(phan[phan.length - 1])) phan.pop();
+  const tinh = phan[phan.length - 1];
+  const iDiaGioi = phan.findIndex((x, i) => i === phan.length - 1 || LA_DIA_GIOI.test(x));
+  const chiTiet = phan.slice(0, iDiaGioi);
+  const diaGioi = phan.slice(iDiaGioi, -1);
+  // Số nhà ghi riêng một mảnh ("76, Altara Residences, Đường Trần Hưng Đạo") thì ghép lại với tên đường.
+  const soRieng = chiTiet.find((x) => LA_SO_NHA.test(x))?.replace(/^số\s*/i, "") ?? "";
+  const ten = chiTiet.filter((x) => !LA_SO_NHA.test(x));
+  // Mảnh tên đường: mảnh có chữ Đường/Phố/Kiệt…; không ghi loại đường thì mảnh sát phường nhất ("Ngô Quyền", "123 Lê Lợi").
+  const duong = ten.find((x) => LA_DUONG.test(x.replace(SO_DAU, ""))) ?? ten[ten.length - 1] ?? "";
+  const hoiDuong = soRieng && duong && !SO_DAU.test(duong) ? `${soRieng} ${duong}` : duong;
+
+  // LÙI DẦN TỚI CHỖ GẦN ĐÚNG NHẤT, KHÔNG BAO GIỜ NHẬN KẾT QUẢ NGOÀI TỈNH CỦA TIN (chủ dự án 23/10/2026: "khách gõ số, tên
+  // đường chính xác mà bản đồ không có thì xử lý về địa chỉ gần chính xác nhất"):
+  //   1. số nhà + tên đường có trên bản đồ                 → đúng nhà ("ghim")
+  //   2. tên đường có, số nhà chưa có                      → trên đúng đoạn đường trong phường ("duong")
+  //   3. tên toà nhà / dự án / địa danh khách ghi          → đúng chỗ đó ("duong")
+  //   4. phường/xã → quận/huyện khách ghi (tên cũ cũng thử) → giữa khu vực đó ("khuVuc")
+  //   5. tỉnh                                              → bảng toạ độ sẵn có, không cần mạng
+  // Trước 23/10 hỏi nguyên chuỗi rồi nhận kết quả đầu tiên mà vẫn gọi là "duong" → dấu rơi giữa phường hoặc sang đường khác
+  // trùng chữ (Tố Hữu → "Cửa Hữu"), "76, Altara…" thì đọc "76" là tên đường.
+  if (hoiDuong) {
+    const kq = await timDuong(hoiDuong, diaGioi, tinh);
+    if (kq) {
+      daTra.set(chuoi, kq);
+      return kq;
+    }
+  }
+  const trongTinh = (x: KqTim) => !!tinh && khongDau(x.display_name ?? "").includes(loi(tinh));
+  // Tên toà nhà / dự án phải TRÙNG tên bản đồ ghi (tên dài từ 3 chữ thì chứa là đủ) — "Ngô Quyền" không được khớp sang
+  // "Trường THCS Ngô Quyền".
+  const dungTen = (tenCho: string) => (x: KqTim) => {
+    const dau = khongDau((x.display_name ?? "").split(",")[0] ?? "");
+    const t = khongDau(tenCho);
+    return dau === t || (t.split(" ").length >= 3 && dau.includes(t));
+  };
+  const thu: [string, MucDoChinhXac, (x: KqTim) => boolean][] = [
+    ...ten.filter((x) => !LA_DUONG.test(x.replace(SO_DAU, ""))).map((x): [string, MucDoChinhXac, (x: KqTim) => boolean] =>
+      [`${x}, ${tinh}`, "duong", dungTen(x)]),
+    ...diaGioi.map((x): [string, MucDoChinhXac, (x: KqTim) => boolean] => [`${x}, ${tinh}`, "khuVuc", () => true]),
+  ];
+  for (const [q, mucDo, dung] of thu) {
+    const ds = (await hoiTim(q)).filter((x) => trongTinh(x) && dung(x));
+    // Hỏi tên phường mà bản đồ trả cả đường / quán trùng tên → lấy RANH GIỚI hành chính trước.
+    const hop = ds.find((x) => x.class === "boundary" || x.class === "place") ?? ds[0];
+    if (hop) {
+      const kq: ToaDoTim = { lat: Number(hop.lat), lng: Number(hop.lon), mucDo };
+      daTra.set(chuoi, kq);
+      return kq;
     }
   }
   daTra.set(chuoi, duPhong);
@@ -191,6 +241,75 @@ const loi = (s: string) => khongDau(s).replace(/^(thanh pho|tinh|phuong|xa|thi t
 // Mảnh "Phường …/Xã …/Đặc khu …" trong địa chỉ bản đồ trả về (không có thì rỗng).
 const phuongTrongKetQua = (ten: string) =>
   ten.split(",").map((x) => x.trim()).find((x) => /^(phường|xã|đặc khu)\s/i.test(x)) ?? "";
+
+// ── TÌM ĐÚNG CON ĐƯỜNG KHÁCH GHI — CHUẨN GOOGLE MAPS (chủ dự án 23/10/2026: "có số và tên đường thì ghim chính xác; có tên
+// đường không có số thì ghim kiểu Google Maps") ───────────────────────────────────────────────────────────────────────
+// Đo 23/10: "Đường Tố Hữu, Phường An Cựu, Huế" → bản đồ nền không ra gì (tên phường mới chưa có) nên dấu rơi giữa phường;
+// "Đường Tố Hữu, Huế" → khớp NHẦM "Cửa Hữu"; "Tố Hữu, Thành phố Huế" → đúng. Đà Nẵng sau sáp nhập có 3 đường Bạch Đằng
+// (Hải Châu, Hội An, Tam Kỳ) — hỏi "Bạch Đằng, Đà Nẵng" ra Hội An trước. Nên:
+//   · hỏi bằng tên đường KHÔNG kèm chữ "Đường/Phố" (bản đồ nền ghi trơn) + tỉnh;
+//   · kết quả PHẢI đúng tên đường (so không dấu) và đúng tỉnh — khớp nhầm thì bỏ;
+//   · nhiều đoạn / nhiều đường trùng tên → đoạn ghi đúng phường khách chọn (tên mới hoặc tên cũ đã gộp), không có thì đoạn
+//     gần tâm phường nhất;
+//   · có số nhà mà bản đồ có đúng số đó → "ghim" (đúng nhà); còn lại → "duong" (dấu nằm trên đường, kiểu Google Maps).
+type KqTim = { lat: string; lon: string; display_name?: string; class?: string };
+async function hoiTim(q: string): Promise<KqTim[]> {
+  try {
+    // Trên MÁY CHỦ (cron toạ độ /api/tin-dang/toa-do) hỏi thẳng Nominatim, giãn 1 lượt/giây; trình duyệt đi qua /api/dia-chi.
+    const ds = typeof window === "undefined"
+      ? await (await import("@/lib/nominatim")).timNominatim(q)
+      : await (await fetch("/api/dia-chi?viec=tim&q=" + encodeURIComponent(q))).json();
+    return Array.isArray(ds) ? (ds as KqTim[]) : [];
+  } catch {
+    return [];
+  }
+}
+const boLoaiDuong = (s: string) => s.trim().replace(/^(đường|phố)\s+/i, "").trim();
+
+export async function timDuong(dau: string, phuongs: string[], tinh: string): Promise<ToaDoTim | null> {
+  const m = dau.trim().match(/^(?:số\s*)?(\d+[a-z]?(?:\/\d+[a-z]?)*)\s+(.+)$/i);
+  const soNha = m ? m[1] : "";
+  const ten = boLoaiDuong(m ? m[2] : dau);
+  if (ten.length < 3 || !tinh) return null;
+  const tenLoi = khongDau(ten);
+  const manh = (x: KqTim) => (x.display_name ?? "").split(",").map((s) => s.trim());
+  const dungDuong = (x: KqTim) => manh(x).slice(0, 3).some((p) => khongDau(boLoaiDuong(p)) === tenLoi);
+  const trongTinh = (x: KqTim) => khongDau(x.display_name ?? "").includes(loi(tinh));
+  const ra = (x: KqTim, mucDo: MucDoChinhXac): ToaDoTim => ({ lat: Number(x.lat), lng: Number(x.lon), mucDo });
+
+  // 1. Có số nhà → hỏi đúng số; bản đồ có số đó (mảnh "50" đứng ngay trước tên đường) thì ghim đúng nhà
+  if (soNha) {
+    const dung = (await hoiTim(`${soNha} ${ten}, ${tinh}`)).find((x) => {
+      const p = manh(x);
+      const i = p.findIndex((s) => khongDau(boLoaiDuong(s)) === tenLoi);
+      return i > 0 && p[i - 1] === soNha && trongTinh(x);
+    });
+    if (dung) return ra(dung, "ghim");
+  }
+  // 2. Tên đường → các đoạn ĐÚNG tên, ĐÚNG tỉnh. Hỏi kèm phường trước: bản đồ chỉ trả 5 kết quả, tỉnh có nhiều đường trùng
+  //    tên thì hỏi "tên, tỉnh" có thể không có đoạn của phường khách (đo 23/10: "999 Bạch Đằng, Phường Hải Châu" ra Bạch Đằng
+  //    Hội An; "119 Hai Bà Trưng, Phường Quy Nhơn" ra Pleiku).
+  const phuongLoi = phuongs.map(loi).filter(Boolean);
+  const laTrongPhuong = (x: KqTim) => phuongLoi.some((p) => khongDau(x.display_name ?? "").includes(p));
+  const doan: KqTim[] = [];
+  for (const q of [...(phuongs[0] ? [`${ten}, ${phuongs[0]}, ${tinh}`] : []), `${ten}, ${tinh}`]) {
+    for (const x of await hoiTim(q)) if (dungDuong(x) && trongTinh(x) && !doan.some((y) => y.lat === x.lat && y.lon === x.lon)) doan.push(x);
+    const trongPhuong = doan.find(laTrongPhuong);
+    if (trongPhuong) return ra(trongPhuong, "duong");
+  }
+  if (!doan.length) return null;
+  // Không đoạn nào ghi đúng phường (tên phường mới chưa có trên bản đồ) → đoạn gần tâm phường nhất — nhưng xa quá 8 km là
+  // đường trùng tên ở nơi khác: bỏ, để lùi về giữa phường (gần đúng hơn là dấu nằm ở thành phố khác).
+  if (phuongs[0]) {
+    const tam = (await hoiTim(`${phuongs[0]}, ${tinh}`)).find(trongTinh);
+    if (tam) {
+      const km = (x: KqTim) => Math.hypot(Number(x.lat) - Number(tam.lat), (Number(x.lon) - Number(tam.lon)) * Math.cos((Number(tam.lat) * Math.PI) / 180)) * 111;
+      const gan = [...doan].sort((a, b) => km(a) - km(b))[0];
+      return km(gan) <= 8 ? ra(gan, "duong") : null;
+    }
+  }
+  return ra(doan[0], "duong");
+}
 
 const daTraBuoc = new Map<string, ToaDoTim | null>();
 
@@ -220,7 +339,9 @@ export async function timToaDoTheoBuoc(d: {
 
   let kq: ToaDoTim | null = null;
   try {
-    for (const [q, mucDo, batBuoc] of buoc) {
+    // Có số nhà / tên đường → tìm ĐÚNG con đường trước (timDuong, chuẩn Google Maps), không ra mới lùi về phường như cũ.
+    if (d.soNha) kq = await timDuong(d.soNha, [d.phuong, ...d.tenCu], d.tinh);
+    if (!kq) for (const [q, mucDo, batBuoc] of buoc) {
       const r = await fetch("/api/dia-chi?viec=tim&q=" + encodeURIComponent(q));
       const ds = (await r.json()) as { lat: string; lon: string; display_name?: string }[];
       const hop = ds.find((x) => dungTinh(x.display_name ?? "") && dungPhuong(x.display_name ?? "", batBuoc));

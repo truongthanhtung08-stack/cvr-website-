@@ -3,10 +3,8 @@ import { sortListings, applyFilters, emptyFilters, normalizeVi, typeGroupsFor, m
 import { smartFilter, smartSearch, goiYNoiLong, parseQuery, coKhopTieuChi, chuChuaHieu } from "@/lib/smartSearch";
 import { nhanDoiHienThi } from "@/lib/nhanDoiHienThi";
 import { tierRank } from "@/lib/packages";
-import { parseLatLng } from "@/lib/googleMaps";
 import { coordOf, centerOfArea } from "@/lib/geo";
 import { choCuCua } from "@/lib/locations";
-import type { DiemBanDo } from "@/components/MapViewGoogle";
 
 // ============================================================================
 // LỌC DANH SÁCH TIN — MỘT hàm cho cả máy chủ lẫn trình duyệt (#1b kế hoạch SEO, 17/10/2026)
@@ -362,20 +360,5 @@ export function boLocKhoiDau(
   return f;
 }
 
-/** Điểm bản đồ của một tin — dùng chung cho bản đồ danh sách (MapViewMo) và máy chủ. */
-export function diemTuTin(it: Listing): DiemBanDo {
-  const ghim = it.mapPin ? parseLatLng(it.mapPin) : null;
-  const [lat, lng] = ghim ? [ghim.lat, ghim.lng] : coordOf(it.location, it.id);
-  return {
-    id: it.id,
-    lat,
-    lng,
-    chinhXac: !!ghim,
-    nhan: it.price,
-    title: it.title,
-    phu: `${it.price} · ${it.area}`,
-    loc: it.location,
-    image: it.image,
-    href: `/bat-dong-san/${it.id}`,
-  };
-}
+// Điểm bản đồ của một tin — chuyển sang src/lib/diemBanDo.ts (bản đồ nhiều tin dùng thẳng, không kéo cả tệp lọc này).
+export { diemTuTin } from "@/lib/diemBanDo";

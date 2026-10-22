@@ -75,9 +75,8 @@ export default function ProjectNearby({
         <MapPane query={mapQuery} zoom={zoom} locked={false} />
 
 
-        {/* ⚠️ CỐ Ý KHÔNG có nút nổi nào khác đè lên khung bản đồ (trước đây có chip
-            "Khoá bản đồ" ở góc phải). Chủ dự án chốt: mặt bản đồ để trống cho dễ
-            nhìn — đừng thêm nút nổi lên đây nữa. */}
+        {/* Trên mặt bản đồ CHỈ có nút ⛶ xem toàn màn hình (chủ dự án 23/10/2026) — nằm trong MapPaneMo. Không thêm nút
+            nổi nào khác (trước đây có chip "Khoá bản đồ" — đã bỏ, mặt bản đồ để trống cho dễ nhìn). */}
       </div>
       {/* HAI NÚT SÁT NGAY DƯỚI KHUNG BẢN ĐỒ, cỡ nhỏ — chủ dự án chốt bố cục này.
           Cả hai nút đều mở THẲNG APP BẢN ĐỒ trên máy khách: Google Maps nếu có cài
@@ -89,10 +88,11 @@ export default function ProjectNearby({
           onClick={() => xemTrenBanDo(mapQuery)}
           className="inline-flex min-h-8 flex-1 items-center py-1 leading-tight text-center justify-center gap-1.5 rounded-lg border border-cvr-line bg-white px-2.5 text-[12px] font-semibold text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink sm:flex-none"
         >
-          <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M14 4h6v6M20 4l-8.5 8.5M18 14v5a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1h5" />
+          {/* Cùng tên, cùng biểu tượng với nút trên bản đồ đăng tin (23/10/2026) */}
+          <svg className="h-3.5 w-3.5 text-[#ea4335]" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+            <path d="M12 2C8.1 2 5 5.1 5 9c0 5.2 7 13 7 13s7-7.8 7-13c0-3.9-3.1-7-7-7zm0 9.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z" />
           </svg>
-          Mở bản đồ
+          Google Maps
         </button>
         <button
           type="button"
