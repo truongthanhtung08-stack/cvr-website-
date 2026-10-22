@@ -34,7 +34,9 @@ export function khoaCuon(): () => void {
     if (dangMo > 0) return;
     const b = document.body.style;
     b.position = ""; b.top = ""; b.left = ""; b.right = "";
-    window.scrollTo(0, viTri);
+    // TỨC THÌ, không trượt (html đang scroll-behavior: smooth): trượt thì trang chạy lướt về chỗ cũ, và nếu ngay sau đó
+    // mở bảng khác (Đặc điểm → Bảng quyền lợi) bảng mới ghi nhầm vị trí giữa chừng → đóng xong trang bay đi (22/10/2026).
+    window.scrollTo({ top: viTri, left: 0, behavior: "instant" });
   };
 }
 

@@ -240,9 +240,12 @@ export default function Hero({
                   {cur.status}
                 </span>
               )}
+              {/* Banner không có chữ thì không sinh thẻ tiêu đề rỗng (Google đọc thấy một h2 trống trước h1 — 22/10/2026) */}
+              {cur.title && (
               <h2 className={`text-balance font-[family-name:var(--font-montserrat)] text-lg font-semibold leading-[1.2] tracking-tight text-white [text-shadow:0_2px_16px_rgba(0,0,0,0.6)] sm:text-2xl ${mobileTwoLine ? "whitespace-nowrap sm:whitespace-normal" : ""}`}>
                 {cur.title}
               </h2>
+              )}
               {cur.subtitle && (
                 <p className={`mt-1 text-balance text-sm font-medium text-white/90 [text-shadow:0_1px_8px_rgba(0,0,0,0.55)] sm:text-base ${mobileTwoLine ? "whitespace-nowrap sm:whitespace-normal" : ""}`}>
                   {cur.subtitle}

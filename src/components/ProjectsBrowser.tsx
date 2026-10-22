@@ -631,7 +631,8 @@ export default function ProjectsBrowser({
         </div>
 
         {/* ── Sidebar: lọc theo khu vực + tin tức (kiểu Batdongsan) ── */}
-        <aside className="lg:col-span-1">
+        {/* Điện thoại: thanh lọc trên đầu đã có "Khu vực" → khối lọc khu vực này chỉ ở máy tính (cột bên) — 22/10/2026 */}
+        <aside className="hidden lg:col-span-1 lg:block">
           <div className="sticky top-24 space-y-5">
             <div className="rounded-none border border-cvr-line bg-white p-5 shadow-lux">
               <h2 className="text-sm font-semibold tracking-tight text-cvr-ink">Lọc theo khu vực</h2>

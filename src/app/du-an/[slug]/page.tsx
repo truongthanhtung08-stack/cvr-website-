@@ -48,13 +48,28 @@ function duAnTuTin(listings: Listing[], slug: string): { ten: string; viTri: str
 
 // BẤT ĐỘNG SẢN TƯƠNG TỰ ngay sau tin của dự án (chủ dự án 21/10/2026): tin NGOÀI dự án, cùng tỉnh trở lên
 // (cùng quận/phường cũ, cùng loại hình được xếp trước). Khác tỉnh thì không gợi ý — gợi ý vô lý là tệ nhất.
-function tuongTuDuAn(listings: Listing[], tinDuAn: Listing[], viTri: string): { nhe: Listing[]; ids: string[] } {
+// LOẠI HÌNH DỰ ÁN → LOẠI TIN TƯƠNG ỨNG (chủ dự án 22/10/2026: dự án căn hộ mà "BĐS tương tự" ra đất nền, mặt bằng cho
+// thuê là gợi ý vô lý). Một dự án có thể nhiều loại ("Căn hộ, Shophouse") → nhận mọi nhóm khớp.
+const NHOM_LOAI: [RegExp, RegExp][] = [
+  [/căn hộ|chung cư|apartment/i, /căn hộ|chung cư/i],
+  [/đất/i, /đất/i],
+  [/shophouse|nhà phố|thương mại/i, /shophouse|nhà phố|mặt phố/i],
+  [/biệt thự|villa|liền kề/i, /biệt thự|villa|liền kề/i],
+  [/condotel|nghỉ dưỡng|khách sạn/i, /condotel/i],
+];
+
+function tuongTuDuAn(listings: Listing[], tinDuAn: Listing[], viTri: string, loaiDuAn = ""): { nhe: Listing[]; ids: string[] } {
   const trong = new Set(tinDuAn.map((x) => x.id));
   const tinh = provinceOf(viTri), quan = districtOf(viTri);
   const loai = new Set(tinDuAn.map((x) => x.type));
+  // Loại tin hợp với dự án: theo loại hình của CHÍNH dự án, thêm loại của các tin thuộc dự án. Không xác định được thì
+  // giữ cách cũ (mọi loại cùng tỉnh, chấm điểm).
+  const khop = NHOM_LOAI.filter(([duAn]) => duAn.test(loaiDuAn) || [...loai].some((t) => duAn.test(t))).map(([, tin]) => tin);
+  const hopLoai = (x: Listing) => !khop.length || khop.some((r) => r.test(x.type));
   const ds = pickRelated(
-    listings.filter((x) => !trong.has(x.id) && provinceOf(x.location) === tinh),
-    (x) => (quan && districtOf(x.location) === quan ? 4 : 0) + (loai.has(x.type) ? 2 : 0),
+    listings.filter((x) => !trong.has(x.id) && provinceOf(x.location) === tinh && hopLoai(x)),
+    // cùng quận trước · cùng loại tin của dự án · tin BÁN trước tin thuê (không trộn lẫn lộn)
+    (x) => (quan && districtOf(x.location) === quan ? 4 : 0) + (loai.has(x.type) ? 2 : 0) + (x.purpose === "ban" ? 3 : 0),
     listings.length,
   );
   // HTML nhẹ như trang tin: 8 tin bản nhẹ cho slide, "Xem thêm" tự nạp đủ theo danh sách mã
@@ -298,7 +313,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
     ...(coBangGia ? [{ id: "bang-gia", label: "Bảng giá" }] : []),
     { id: "chu-dau-tu", label: "Chủ đầu tư" },
     // Menu mục của trang (22/10/2026): thông tin dự án → tin thuộc dự án → dự án tương tự
-    { id: "tin-du-an", label: "Tin bán / cho thuê" },
+    ...(hasRelated ? [{ id: "tin-du-an", label: "Tin bán / cho thuê" }] : []),
     { id: "du-an-tuong-tu", label: "Dự án tương tự" },
   ];
 
@@ -576,22 +591,12 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
           {/* ── SAU THÔNG TIN DỰ ÁN (chủ dự án 22/10/2026): xem hết dự án → TIN THUỘC DỰ ÁN → DỰ ÁN TƯƠNG TỰ →
               Bất động sản tương tự. Mỗi khối: slide, "Xem thêm" ra danh sách theo trang, phần còn lại ẩn. */}
+          {/* Chưa có tin thuộc dự án → ẩn hẳn khối (không phơi "chưa có tin" trước khách — 22/10/2026) */}
+          {hasRelated && (
           <section id="tin-du-an" className="scroll-mt-28">
-            {hasRelated ? (
-              <RelatedListingsTabs ban={relBan} thue={relThue} tenDuAn={p.name} title={`Tin mua bán liên quan tại dự án ${p.name}`} />
-            ) : (
-              <HomeCollapsible>
-                <div className="mt-10">
-                  <h2 className="mb-5 text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">
-                    Tin mua bán liên quan tại dự án {p.name}
-                  </h2>
-                  <p className="rounded-xl border border-dashed border-cvr-line bg-white px-4 py-8 text-center text-[15px] text-cvr-muted">
-                    Dự án chưa có tin mua bán / cho thuê nào.
-                  </p>
-                </div>
-              </HomeCollapsible>
-            )}
+            <RelatedListingsTabs ban={relBan} thue={relThue} tenDuAn={p.name} title={`Tin mua bán liên quan tại dự án ${p.name}`} />
           </section>
+          )}
 
           <section id="du-an-tuong-tu" className="scroll-mt-28">
           <ProjectSlider
@@ -605,7 +610,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
           </section>
 
 
-          {(() => { const tt = tuongTuDuAn(listings, projectListings, p.location); return (
+          {(() => { const tt = tuongTuDuAn(listings, projectListings, p.location, p.type); return (
             <ListingShowcase items={tt.nhe} idsDayDu={tt.ids} sectionKey="bds-tuong-tu" title="Bất động sản tương tự" heading="Bất động sản tương tự" relevance emptyNote="Chưa có bất động sản tương tự." />
           ); })()}
 
