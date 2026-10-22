@@ -6,7 +6,6 @@ import { vnd } from "@/lib/billing";
 import { getTier, type TierId } from "@/lib/packages";
 import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
 import { useQuyDinhGia } from "@/lib/useQuyDinhGia";
-import MucAnHien from "@/components/MucAnHien";
 import { useKhoaCuon } from "@/lib/khoaCuon";
 
 // ============================================================================
@@ -36,6 +35,9 @@ export default function BangGiaGoiTin({
   onXemBangQuyenLoi?: () => void;
 }) {
   const [gomVat, setGomVat] = useState(true);
+  const [moQuyDinh, setMoQuyDinh] = useState(false);
+  // Cấp tin đang mở xem mốc ngày (điện thoại). Mặc định = cấp đang có gói chọn.
+  const [capXemChon, setCapXem] = useState<TierId | "" | null>(null);
   // Quy định đi kèm: CHỈ bản admin đã duyệt — chưa duyệt thì không hiện.
   const qd = useQuyDinhGia();
   const QUY_DINH = qd.quyDinhGoiTin;
@@ -52,54 +54,76 @@ export default function BangGiaGoiTin({
     return t ? t.price / t.days : 0;
   };
 
+  const capXem: TierId | "" = capXemChon ?? (chon?.tier || "");
   if (!cot.length) return null;
 
   // Chưa có bảng giá đã duyệt → không bày bảng rỗng.
   if (!hang.length) return null;
   return (
     <div>
-      {/* ĐIỆN THOẠI + ĐANG CHỌN GÓI (chủ dự án duyệt 22/10/2026): mỗi cấp tin một khối, chạm ô số ngày là chọn — hết bảng
-          ngang phải vuốt sang. Hệ số tiếp cận ghi cạnh tên cấp để so sánh ngay; "Đặc điểm" mở chi tiết cấp đó. Giá, số
-          ngày, % giảm lấy y như bảng (admin). Máy tính và trang báo giá (chỉ xem) giữ bảng. */}
-      {onChon && (
-        <div className="space-y-2.5 sm:hidden">
-          {cot.map((p) => {
-            const t = getTier(p.tierId);
-            const terms = [...p.terms].sort((a, b) => a.days - b.days);
-            const goc = donGiaGoc(p);
-            return (
-              <div key={p.tierId} className="rounded-2xl border border-cvr-line bg-white p-3">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="flex min-w-0 items-center gap-2">
-                    <span className="inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-semibold tracking-tight" style={{ backgroundColor: t.accent, color: t.badgeText }}>{t.name}</span>
-                    <span className="text-[12px] font-semibold text-cvr-muted">{t.heSoText}</span>
-                  </span>
-                  <button type="button" onClick={() => setXemDacDiem(p.tierId)} className="shrink-0 text-[12px] font-semibold text-cvr-blue-ink">Đặc điểm</button>
-                </div>
-                <div className="mt-2.5 grid gap-1.5" style={{ gridTemplateColumns: `repeat(${Math.max(terms.length, 3)}, minmax(0, 1fr))` }}>
+      {/* ĐIỆN THOẠI + ĐANG CHỌN GÓI (chủ dự án 22/10/2026: "thứ nhất chọn theo gói; muốn so sánh có nút khác; chọn thì xem
+          lại nhanh, đơn giản để cân nhắc" — trang Báo giá đã có đủ thông tin). Bước 1: 4 ô cấp tin (tên · hệ số · giá TỪ …).
+          Bước 2: chạm một cấp → hiện các mốc số ngày của cấp đó + giá đủ (vuốt được); chạm mốc là chọn, chạm lại là bỏ.
+          So sánh quyền lợi: nút "So sánh các gói" ở đầu khối. Mọi số từ admin. Máy tính và trang báo giá giữ bảng. */}
+      {onChon && (() => {
+        const xem = cot.find((x) => x.tierId === capXem);
+        return (
+          <div className="sm:hidden">
+            <div className="grid grid-cols-2 gap-2">
+              {cot.map((p) => {
+                const t = getTier(p.tierId);
+                const coPhi = p.terms.map((x) => x.price);
+                const thapNhat = coPhi.length ? Math.min(...coPhi) : 0;
+                const dang = capXem === p.tierId;
+                const daChon = chon?.tier === p.tierId;
+                return (
+                  <button
+                    key={p.tierId}
+                    type="button"
+                    aria-pressed={dang}
+                    onClick={() => setCapXem(dang ? "" : p.tierId)}
+                    className={`rounded-2xl border p-3 text-left transition ${dang ? "border-cvr-blue bg-cvr-blue/[0.06] ring-1 ring-cvr-blue" : "border-cvr-line bg-white"}`}
+                  >
+                    <span className="flex items-center justify-between gap-1">
+                      <span className="inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-semibold tracking-tight" style={{ backgroundColor: t.accent, color: t.badgeText }}>{t.name}</span>
+                      {daChon && <span className="text-[13px] font-bold text-cvr-blue-ink" aria-label="Đang chọn">✓</span>}
+                    </span>
+                    <span className="mt-1.5 block text-[12px] font-semibold text-cvr-muted">{t.heSoText}</span>
+                    <span className="mt-0.5 block whitespace-nowrap text-[13px] font-semibold tabular-nums text-cvr-ink">
+                      {thapNhat > 0 ? `từ ${vnd(hienGia(thapNhat))}` : "0 ₫"}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            {xem && (() => {
+              const terms = [...xem.terms].sort((a, b) => a.days - b.days);
+              const goc = donGiaGoc(xem);
+              return (
+                <div className="-mx-1 mt-2.5 flex snap-x gap-1.5 overflow-x-auto overscroll-x-contain px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                   {terms.map((term) => {
-                    const dangChon = chon?.tier === p.tierId && chon.days === term.days;
+                    const dangChon = chon?.tier === xem.tierId && chon.days === term.days;
                     const giam = goc > 0 && term.price > 0 ? Math.round((1 - term.price / term.days / goc) * 100) : 0;
                     return (
                       <button
                         key={term.days}
                         type="button"
                         aria-pressed={dangChon}
-                        onClick={() => (dangChon && onBoChon ? onBoChon() : onChon(p.tierId, term.days))}
-                        className={`min-w-0 rounded-xl border px-1 py-2 text-center transition ${dangChon ? "border-cvr-blue bg-cvr-blue/[0.08] ring-1 ring-cvr-blue" : "border-cvr-line"}`}
+                        onClick={() => (dangChon && onBoChon ? onBoChon() : onChon(xem.tierId, term.days))}
+                        className={`w-[104px] shrink-0 snap-start rounded-xl border px-1.5 py-2 text-center transition ${dangChon ? "border-cvr-blue bg-cvr-blue/[0.08] ring-1 ring-cvr-blue" : "border-cvr-line bg-white"}`}
                       >
                         <span className="block text-[12px] text-cvr-body">{term.days} ngày</span>
-                        <span className="mt-0.5 block truncate text-[12px] font-semibold tabular-nums text-cvr-ink">{term.price > 0 ? vnd(hienGia(term.price)) : "0 ₫"}</span>
+                        <span className="mt-0.5 block whitespace-nowrap text-[12.5px] font-semibold tabular-nums text-cvr-ink">{term.price > 0 ? vnd(hienGia(term.price)) : "0 ₫"}</span>
                         {giam > 0 && <span className="mt-0.5 inline-block rounded-full border border-red-300 px-1.5 text-[10.5px] font-semibold text-red-700">−{giam}%</span>}
                       </button>
                     );
                   })}
                 </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+              );
+            })()}
+          </div>
+        );
+      })()}
       <div className={`${onChon ? "hidden sm:block " : ""}overflow-x-auto rounded-2xl border border-cvr-line bg-white shadow-lux`}>
         <table className="w-full min-w-[520px] border-collapse text-sm">
           <thead>
@@ -117,9 +141,11 @@ export default function BangGiaGoiTin({
                     </span>
                     {/* Hệ số X dưới tên cấp + nút xem đặc điểm (chủ dự án 10/10/2026) */}
                     <span className="mt-1 block text-[11px] font-semibold tracking-wide text-cvr-muted">{t.heSoText}</span>
+                    {!onChon && (
                     <button type="button" onClick={() => setXemDacDiem(p.tierId)} className="mt-0.5 text-[11px] font-semibold text-cvr-blue-ink underline-offset-2 hover:underline">
                       Đặc điểm
                     </button>
+                    )}
                   </th>
                 );
               })}
@@ -196,23 +222,44 @@ export default function BangGiaGoiTin({
           </div>
         </div>
       )}
-      <label className="mt-3 inline-flex cursor-pointer select-none items-center gap-2.5 text-[13px] text-cvr-muted">
-        <input type="checkbox" checked={gomVat} onChange={(e) => setGomVat(e.target.checked)} className="peer sr-only" />
-        <span className="relative h-6 w-11 rounded-full bg-cvr-line transition peer-checked:bg-cvr-ink">
-          <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition ${gomVat ? "left-[22px]" : "left-0.5"}`} />
-        </span>
-        Giá bao gồm {(THUE_SUAT_GTGT * 100).toFixed(0)}% VAT
-      </label>
-      {/* Đang chọn gói (trang đăng tin, đăng lại): quy định thu gọn trong khối ẩn/hiện chung (MucAnHien) — trang đăng
-          tin đã dài (chủ dự án 22/10/2026). Tên mục = tên trong Admin → Giá & quy định. Trang báo giá (chỉ xem) hiện đủ. */}
-      {QUY_DINH.length > 0 && (() => {
-        const ds = (
-          <ul className={`${onChon ? "" : "mt-3 "}space-y-1 text-[13px] leading-relaxed text-cvr-muted`}>
-            {QUY_DINH.map((d) => <li key={d} className="flex gap-2"><span aria-hidden>·</span><span>{d}</span></li>)}
-          </ul>
-        );
-        return onChon ? <div className="mt-4"><MucAnHien ten="Quy định gói tin" goiY={QUY_DINH[0]}>{ds}</MucAnHien></div> : ds;
-      })()}
+      {/* ĐANG CHỌN GÓI (đăng tin, đăng lại — chủ dự án duyệt mẫu 22/10/2026): giá luôn là số khách trả (đã gồm VAT), không
+          nút gạt; một dòng "Giá đã gồm 8% VAT · Quy định gói tin", bấm mới hiện quy định. Trang báo giá (chỉ xem) giữ nút gạt
+          + quy định đủ như cũ. */}
+      {onChon ? (
+        <>
+          <p className="mt-3 text-[12.5px] text-cvr-muted">
+            Giá đã gồm {(THUE_SUAT_GTGT * 100).toFixed(0)}% VAT
+            {QUY_DINH.length > 0 && (
+              <>
+                {" · "}
+                <button type="button" onClick={() => setMoQuyDinh(!moQuyDinh)} aria-expanded={moQuyDinh} className="font-semibold text-cvr-blue-ink">
+                  Quy định gói tin
+                </button>
+              </>
+            )}
+          </p>
+          {moQuyDinh && (
+            <ul className="mt-2 space-y-1 text-[13px] leading-relaxed text-cvr-muted">
+              {QUY_DINH.map((d) => <li key={d} className="flex gap-2"><span aria-hidden>·</span><span>{d}</span></li>)}
+            </ul>
+          )}
+        </>
+      ) : (
+        <>
+          <label className="mt-3 inline-flex cursor-pointer select-none items-center gap-2.5 text-[13px] text-cvr-muted">
+            <input type="checkbox" checked={gomVat} onChange={(e) => setGomVat(e.target.checked)} className="peer sr-only" />
+            <span className="relative h-6 w-11 rounded-full bg-cvr-line transition peer-checked:bg-cvr-ink">
+              <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition ${gomVat ? "left-[22px]" : "left-0.5"}`} />
+            </span>
+            Giá bao gồm {(THUE_SUAT_GTGT * 100).toFixed(0)}% VAT
+          </label>
+          {QUY_DINH.length > 0 && (
+            <ul className="mt-3 space-y-1 text-[13px] leading-relaxed text-cvr-muted">
+              {QUY_DINH.map((d) => <li key={d} className="flex gap-2"><span aria-hidden>·</span><span>{d}</span></li>)}
+            </ul>
+          )}
+        </>
+      )}
     </div>
   );
 }
