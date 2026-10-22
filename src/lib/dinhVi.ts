@@ -58,9 +58,10 @@ export function huongDanBatDinhVi(): string[] {
 
 // Câu ngắn nói VÌ SAO hỏng — đi kèm các bước ở trên.
 export function loiDinhVi(ma: number): string {
-  if (ma === 1) return "Trình duyệt đang CHẶN định vị trên coastalland.vn. Bật lại theo 2 bước dưới đây:";
-  if (ma === 2) return "Máy chưa bật Dịch vụ định vị (GPS). Bật theo các bước dưới đây:";
-  return "Định vị lâu quá chưa có kết quả. Thử theo các bước dưới đây, hoặc ra chỗ thoáng rồi bấm lại:";
+  // MỘT DÒNG NGẮN như Google Maps (chủ dự án 22/10/2026: bỏ câu dài). Cách bật nằm sau "Xem cách bật" (NhacBatDinhVi).
+  if (ma === 1) return "Định vị đang bị chặn trên trình duyệt.";
+  if (ma === 2) return "Máy chưa bật định vị.";
+  return "Chưa lấy được vị trí, thử lại.";
 }
 
 // ĐỊNH VỊ HAI CHẶNG CHO NHANH:

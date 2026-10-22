@@ -400,6 +400,14 @@ export function coNoiThat(type: string): boolean {
   return !!type && !KHONG_NOI_THAT.includes(specForType(type).label);
 }
 
+// TIỆN ÍCH THEO LOẠI HÌNH (chủ dự án 22/10/2026: "tiện ích, nội thất, đặc điểm phải đi theo loại hình"). Đất và kho xưởng
+// không có tiện ích NỘI KHU (hồ bơi, gym, thang máy…) — chỉ nhóm "Tiện ích xung quanh". Loại khác đủ hai nhóm.
+export function tienIchCho(type: string): { group: string; items: string[] }[] {
+  return type && KHONG_NOI_THAT.includes(specForType(type).label)
+    ? amenityGroups.filter((g) => g.group !== "Tiện ích nội khu")
+    : amenityGroups;
+}
+
 const KHONG_DT_XAY_DUNG = [
   "Đất nền / Đất",
   "Chung cư",

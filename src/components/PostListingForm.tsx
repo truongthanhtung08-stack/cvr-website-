@@ -21,7 +21,7 @@ import { haiDongDiaChi, doiHeGiuNguyen, chuoiTimBanDo, diemTimBanDo, ungVienPhuo
 import {
   categorySpecs, demandTypes, specForType,
   coPhongNgu, coPhongTam, coDienTichXayDung, coNoiThat, fieldsSplit, thieuMucBatBuoc, nhanDienTich, type Field,
-  phapLyCho, furnishLevels, amenityGroups, interiorItems, directions,
+  phapLyCho, legalOptions, fieldsFor, furnishLevels, amenityGroups, tienIchCho, interiorItems, directions,
   purposeOfDemand, demandOfPurpose,
 } from "@/lib/listingSpec";
 import { typeGroupsFor, normalizeVi } from "@/lib/filters";
@@ -407,6 +407,33 @@ export default function PostListingForm() {
   const loaiHinh = nhomLoaiHinh.some((g) => g.items.includes(category)) ? category : "";
 
   const spec = useMemo(() => (loaiHinh ? specForType(loaiHinh) : categorySpecs[0]), [loaiHinh]);
+
+  // ĐỔI LOẠI HÌNH HOẶC MỤC ĐÍCH (Bán ↔ Cho thuê) → MỌI MỤC ĐI THEO (chủ dự án 22/10/2026: "chọn bán đất mà còn nội
+  // thất là SAI — đổi loại hình, đổi mục đích thì mọi thứ thay đổi theo, cả trong một tin"). Bỏ những gì loại mới không
+  // có: đặc điểm không thuộc loại mới, nội thất + tình trạng nội thất (đất / kho xưởng), tiện ích nội khu (đất / kho
+  // xưởng), pháp lý của loại khác (sổ hồng ↔ sổ đỏ). Chữ khách tự ghi ngoài danh mục thì giữ. Chạy cả khi nạp bản nháp.
+  const khoaLoai = `${loaiHinh}|${purposeOfDemand(demand)}`;
+  const khoaLoaiTruoc = useRef(khoaLoai);
+  /* eslint-disable react-hooks/set-state-in-effect -- lọc lại dữ liệu đã nhập khi khách đổi loại hình */
+  useEffect(() => {
+    if (khoaLoaiTruoc.current === khoaLoai) return;
+    const [loaiTruoc, mdTruoc] = khoaLoaiTruoc.current.split("|");
+    // Lần nạp đầu (bản nháp / tin đang sửa: loại hình từ rỗng → có) KHÔNG tính là khách đổi — không xoá gói vừa nạp.
+    const doiMucDich = !!loaiTruoc && mdTruoc !== khoaLoai.split("|")[1];
+    khoaLoaiTruoc.current = khoaLoai;
+    // GÓI TIN: bảng giá Bán và Cho thuê là hai bảng riêng trong admin → đổi mục đích thì bỏ gói đang chọn, khách chọn
+    // lại theo đúng bảng giá mới (không để giá / số ngày của bảng cũ đi theo).
+    if (doiMucDich && !goiDangDung) { setPlanTier(""); setPlanDays(0); setChonKm(false); }
+    if (!loaiHinh) return;
+    const coO = new Set(fieldsFor(loaiHinh, purposeOfDemand(demand)).map((f) => f.key));
+    setSpecValues((v) => Object.fromEntries(Object.entries(v).filter(([k]) => coO.has(k))));
+    if (!coNoiThat(loaiHinh)) { setInterior([]); setFurnish(""); }
+    const tienIchDuoc = new Set(tienIchCho(loaiHinh).flatMap((g) => g.items));
+    const tienIchChuan = new Set(amenityGroups.flatMap((g) => g.items));
+    setAmenities((ds) => ds.filter((x) => tienIchDuoc.has(x) || !tienIchChuan.has(x)));
+    setLegal((l) => (l && legalOptions.includes(l) && !phapLyCho(loaiHinh).includes(l) ? "" : l));
+  }, [khoaLoai, loaiHinh, demand]);
+  /* eslint-enable react-hooks/set-state-in-effect */
   // ── ĐƠN VỊ GIÁ THEO MỤC ĐÍCH ─────────────────────────────────────────────
   // BÁN tính trọn giá trị bất động sản; CHO THUÊ luôn tính THEO THÁNG. Trước đây
   // dùng chung một bộ đơn vị nên tin cho thuê vẫn hiện "tỷ" — sai hoàn toàn.
@@ -1253,9 +1280,8 @@ export default function PostListingForm() {
           placeholder="VD: 123 Võ Nguyên Giáp · Lô A12 khu B · Block 3 · hoặc chỉ tên đường"
           khuVuc={(() => { const d = diemTimBanDo(geoMode, { tinh: province, quan: district, phuong: ward }); return { tinh: d.tinh, phuong: d.phuong }; })()}
         />
-        {/* Bản đồ chỉ hiện khi đã chọn Tỉnh / Thành (hoặc tin đã có ghim) — chưa có địa chỉ thì bản đồ cả nước chỉ
-            chiếm chỗ (chủ dự án 22/10/2026: trang đăng tin phải gọn). */}
-        {(province || mapPin) && (
+        {/* Bản đồ LUÔN hiện (chủ dự án 22/10/2026 bác cách ẩn tới khi chọn tỉnh) — bản gọn: thấp hơn trên điện thoại,
+            vuốt một ngón là cuộn trang (MapPickerMo). */}
         <div className="mt-3">
           <MapPicker
             value={mapPin}
@@ -1266,7 +1292,6 @@ export default function PostListingForm() {
             tim={diemTimBanDo(geoMode, { tinh: province, quan: district, phuong: ward }, addressDetail)}
           />
         </div>
-        )}
         <h3 className="border-t border-cvr-line pt-4 text-[15px] font-semibold tracking-tight text-cvr-ink">Thuộc dự án</h3>
         <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
@@ -1457,9 +1482,9 @@ export default function PostListingForm() {
           )}
           </MucAnHien>
         )}
-        <MucAnHien ten="Tiện ích" goiY={goiYDanhSach(amenityGroups.flatMap((g) => g.items))} soChon={amenities.length}>
+        <MucAnHien ten="Tiện ích" goiY={goiYDanhSach(tienIchCho(loaiHinh).flatMap((g) => g.items))} soChon={amenities.length}>
         <div className="space-y-4">
-          {amenityGroups.map((g) => (
+          {tienIchCho(loaiHinh).map((g) => (
             <div key={g.group}>
               <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-cvr-faint">{g.group}</p>
               <div className="flex flex-wrap gap-2">
@@ -1522,28 +1547,11 @@ export default function PostListingForm() {
           </div>
         ) : (
           <>
-            {/* BẢNG GIÁ KIỂU BATDONGSAN — bày hết loại tin × số ngày, bấm ô nào chọn gói đó. Giá từ admin. */}
-            {(coGoiKm || ctKhac.length > 0) && <p className="mb-2 text-sm font-semibold text-cvr-ink">Gói tin</p>}
-            <div className={planTier ? "" : "rounded-2xl ring-1 ring-cvr-blue/40 ring-offset-2"}>
-              <BangGiaGoiTin
-                plans={plansChon}
-                chon={{ tier: chonKm ? "" : planTier, days: planDays }}
-                onChon={(t, d) => { setChonKm(false); setPlanTier(t); setPlanDays(d); }}
-                onBoChon={() => { setChonKm(false); setPlanTier(""); setPlanDays(0); }}
-                onXemBangQuyenLoi={() => setXemQuyenLoi(true)}
-              />
-            </div>
-            {/* Nút xem bảng quyền lợi từng loại tin (chủ dự án 09/10/2026). 14/10/2026: mở bảng nổi
-                NGAY TRÊN TRANG — mở tab mới thì điện thoại tải lại trang đăng tin, mất phần đang soạn. */}
-            <button type="button" onClick={() => setXemQuyenLoi(true)} className="mt-3 inline-flex h-10 items-center gap-1.5 rounded-lg border border-cvr-line bg-white px-4 text-sm font-semibold text-cvr-ink transition hover:border-cvr-ink">
-              Xem bảng quyền lợi
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
-            </button>
-            {xemQuyenLoi && <BangQuyenLoiNoi onDong={() => setXemQuyenLoi(false)} />}
-
+            {/* THỨ TỰ (chủ dự án 22/10/2026): Gói khuyến mãi lên ĐẦU → nút Xem bảng quyền lợi (so sánh đủ các cấp) → các
+                gói thường (điện thoại: mỗi cấp một khối, chạm số ngày là chọn — trong BangGiaGoiTin). */}
             {/* GÓI KHUYẾN MÃI — chương trình admin đã duyệt. Đúng đối tượng mới bấm chọn được; không đúng vẫn hiện, khoá lại. */}
             {coGoiKm && (
-              <div className="mt-5">
+              <div className="mb-5">
                 <p className="mb-2 text-sm font-semibold text-cvr-ink">Gói khuyến mãi</p>
                 <button
                   type="button"
@@ -1573,6 +1581,25 @@ export default function PostListingForm() {
               </div>
             )}
 
+            {/* Nút xem bảng quyền lợi từng loại tin (chủ dự án 09/10/2026). 14/10/2026: mở bảng nổi
+                NGAY TRÊN TRANG — mở tab mới thì điện thoại tải lại trang đăng tin, mất phần đang soạn. */}
+            <button type="button" onClick={() => setXemQuyenLoi(true)} className="mb-3 inline-flex h-10 items-center gap-1.5 rounded-lg border border-cvr-line bg-white px-4 text-sm font-semibold text-cvr-ink transition hover:border-cvr-ink">
+              Xem bảng quyền lợi
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+            </button>
+            {xemQuyenLoi && <BangQuyenLoiNoi onDong={() => setXemQuyenLoi(false)} />}
+
+            {/* BẢNG GIÁ KIỂU BATDONGSAN — bày hết loại tin × số ngày, bấm ô nào chọn gói đó. Giá từ admin. */}
+            {(coGoiKm || ctKhac.length > 0) && <p className="mb-2 text-sm font-semibold text-cvr-ink">Gói tin</p>}
+            <div className={planTier ? "" : "rounded-2xl ring-1 ring-cvr-blue/40 ring-offset-2"}>
+              <BangGiaGoiTin
+                plans={plansChon}
+                chon={{ tier: chonKm ? "" : planTier, days: planDays }}
+                onChon={(t, d) => { setChonKm(false); setPlanTier(t); setPlanDays(d); }}
+                onBoChon={() => { setChonKm(false); setPlanTier(""); setPlanDays(0); }}
+                onXemBangQuyenLoi={() => setXemQuyenLoi(true)}
+              />
+            </div>
             {/* CHƯƠNG TRÌNH KHÁC — giảm giá admin đã duyệt, tự trừ vào gói đúng đối tượng khi tính tiền. */}
             {ctKhac.length > 0 && (
               <div className="mt-5">

@@ -58,7 +58,49 @@ export default function BangGiaGoiTin({
   if (!hang.length) return null;
   return (
     <div>
-      <div className="overflow-x-auto rounded-2xl border border-cvr-line bg-white shadow-lux">
+      {/* ĐIỆN THOẠI + ĐANG CHỌN GÓI (chủ dự án duyệt 22/10/2026): mỗi cấp tin một khối, chạm ô số ngày là chọn — hết bảng
+          ngang phải vuốt sang. Hệ số tiếp cận ghi cạnh tên cấp để so sánh ngay; "Đặc điểm" mở chi tiết cấp đó. Giá, số
+          ngày, % giảm lấy y như bảng (admin). Máy tính và trang báo giá (chỉ xem) giữ bảng. */}
+      {onChon && (
+        <div className="space-y-2.5 sm:hidden">
+          {cot.map((p) => {
+            const t = getTier(p.tierId);
+            const terms = [...p.terms].sort((a, b) => a.days - b.days);
+            const goc = donGiaGoc(p);
+            return (
+              <div key={p.tierId} className="rounded-2xl border border-cvr-line bg-white p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="flex min-w-0 items-center gap-2">
+                    <span className="inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-semibold tracking-tight" style={{ backgroundColor: t.accent, color: t.badgeText }}>{t.name}</span>
+                    <span className="text-[12px] font-semibold text-cvr-muted">{t.heSoText}</span>
+                  </span>
+                  <button type="button" onClick={() => setXemDacDiem(p.tierId)} className="shrink-0 text-[12px] font-semibold text-cvr-blue-ink">Đặc điểm</button>
+                </div>
+                <div className="mt-2.5 grid gap-1.5" style={{ gridTemplateColumns: `repeat(${Math.max(terms.length, 3)}, minmax(0, 1fr))` }}>
+                  {terms.map((term) => {
+                    const dangChon = chon?.tier === p.tierId && chon.days === term.days;
+                    const giam = goc > 0 && term.price > 0 ? Math.round((1 - term.price / term.days / goc) * 100) : 0;
+                    return (
+                      <button
+                        key={term.days}
+                        type="button"
+                        aria-pressed={dangChon}
+                        onClick={() => (dangChon && onBoChon ? onBoChon() : onChon(p.tierId, term.days))}
+                        className={`min-w-0 rounded-xl border px-1 py-2 text-center transition ${dangChon ? "border-cvr-blue bg-cvr-blue/[0.08] ring-1 ring-cvr-blue" : "border-cvr-line"}`}
+                      >
+                        <span className="block text-[12px] text-cvr-body">{term.days} ngày</span>
+                        <span className="mt-0.5 block truncate text-[12px] font-semibold tabular-nums text-cvr-ink">{term.price > 0 ? vnd(hienGia(term.price)) : "0 ₫"}</span>
+                        {giam > 0 && <span className="mt-0.5 inline-block rounded-full border border-red-300 px-1.5 text-[10.5px] font-semibold text-red-700">−{giam}%</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+      <div className={`${onChon ? "hidden sm:block " : ""}overflow-x-auto rounded-2xl border border-cvr-line bg-white shadow-lux`}>
         <table className="w-full min-w-[520px] border-collapse text-sm">
           <thead>
             <tr className="bg-cvr-surface">

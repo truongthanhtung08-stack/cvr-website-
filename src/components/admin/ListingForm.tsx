@@ -12,7 +12,7 @@ import { saleTypeGroups, rentTypeGroups } from "@/lib/filters";
 import { provinceNamesFor, districtsOf, wardsOf, wardsOfNew, wardsOfAny, chuanTen, type GeoMode } from "@/lib/locations";
 import { haiDongDiaChi, doiHeGiuNguyen, chuoiTimBanDo, diemTimBanDo, ungVienPhuongCu, type NhoHaiHe } from "@/lib/diaChiHaiHe";
 import { ganDiaGioi, type DiaGioiBanDo } from "@/lib/diaGioiTuBanDo";
-import { fieldsFor, interiorItems, amenityGroups, phapLyCho, furnishLevels, directions, coPhongNgu, coPhongTam, coDienTichXayDung, nhanDienTich, coDonGiaM2 } from "@/lib/listingSpec";
+import { fieldsFor, interiorItems, amenityGroups, coNoiThat, tienIchCho, phapLyCho, legalOptions, furnishLevels, directions, coPhongNgu, coPhongTam, coDienTichXayDung, nhanDienTich, coDonGiaM2 } from "@/lib/listingSpec";
 import { chuanHoaSdt } from "@/lib/phone";
 import ImagePicker from "@/components/admin/ImagePicker";
 import OTieuDe from "@/components/OTieuDe";
@@ -169,6 +169,24 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
   const typeGroups = purpose === "thue" ? rentTypeGroups : saleTypeGroups;
   // Tin CHO THUÊ có thêm 3 mục: thời gian vào ở · giá điện · giá nước
   const specFields = type ? fieldsFor(type, purpose) : [];
+
+  // ĐỔI LOẠI HÌNH / MỤC ĐÍCH → MỌI MỤC ĐI THEO — cùng luật form đăng tin của khách (chủ dự án 22/10/2026).
+  const khoaLoai = `${type}|${purpose}`;
+  const khoaLoaiTruoc = useRef(khoaLoai);
+  /* eslint-disable react-hooks/set-state-in-effect -- lọc lại dữ liệu khi admin đổi loại hình */
+  useEffect(() => {
+    if (khoaLoaiTruoc.current === khoaLoai) return;
+    khoaLoaiTruoc.current = khoaLoai;
+    if (!type) return;
+    const coO = new Set(fieldsFor(type, purpose).map((f) => f.key));
+    setSpecValues((v) => Object.fromEntries(Object.entries(v).filter(([k]) => coO.has(k))));
+    if (!coNoiThat(type)) { setInterior([]); setFurnish(""); }
+    const tienIchDuoc = new Set(tienIchCho(type).flatMap((g) => g.items));
+    const tienIchChuan = new Set(amenityGroups.flatMap((g) => g.items));
+    setAmenities((ds) => ds.filter((x) => tienIchDuoc.has(x) || !tienIchChuan.has(x)));
+    setLegal((l: string) => (l && legalOptions.includes(l) && !phapLyCho(type).includes(l) ? "" : l));
+  }, [khoaLoai, type, purpose]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   // Danh sách quận/huyện & phường/xã liên động theo lựa chọn cấp trên
   // Hệ đơn vị hành chính: MỚI (sau sáp nhập) bỏ cấp Quận/Huyện
@@ -701,7 +719,8 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
         </div>
       </Panel>
 
-      {/* Nội thất — tick mục có sẵn */}
+      {/* Nội thất — tick mục có sẵn. Đất / kho xưởng không có nội thất (cùng luật form khách, 22/10/2026) */}
+      {coNoiThat(type) && (
       <Panel title="Nội thất bàn giao (tick mục có)">
         <div className="flex flex-wrap gap-2">
           {interiorItems.map((it) => (
@@ -714,11 +733,12 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
         </div>
         <ThemTuGhi onThem={(v) => setInterior((ds) => (ds.includes(v) ? ds : [...ds, v]))} className={inputCls} />
       </Panel>
+      )}
 
       {/* Tiện ích — tick mục có sẵn, theo nhóm */}
       <Panel title="Tiện ích (tick mục có)">
         <div className="space-y-4">
-          {amenityGroups.map((g) => (
+          {tienIchCho(type).map((g) => (
             <div key={g.group}>
               <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-cvr-faint">{g.group}</p>
               <div className="flex flex-wrap gap-2">
