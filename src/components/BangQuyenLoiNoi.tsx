@@ -1,15 +1,22 @@
 "use client";
 
+import { useState } from "react";
 import { getTier } from "@/lib/packages";
 import { useQuyDinhGia } from "@/lib/useQuyDinhGia";
+import { useKhoaCuon } from "@/lib/khoaCuon";
 
 // BẢNG "SO SÁNH ĐẶC ĐIỂM HIỂN THỊ" mở NGAY TRÊN TRANG ĐĂNG TIN (chủ dự án 14/10/2026).
 // Trước đây mở tab mới /bao-gia-dang-tin#dac-diem → trên điện thoại quay lại thì trang đăng
 // tin bị tải lại, mất phần đang soạn. Cùng dữ liệu admin (Giá chuẩn → Quy định) như trang báo giá.
 const CAP = ["basic", "silver", "gold", "diamond"] as const;
+const DONG_CHINH = 6; // thứ hạng · hệ số tiếp cận · vị trí · nhận diện thẻ · số ảnh · thông số trên thẻ
 
 export default function BangQuyenLoiNoi({ onDong }: { onDong: () => void }) {
   const qd = useQuyDinhGia();
+  useKhoaCuon(true);
+  // Quyền lợi rất nhiều dòng (chủ dự án 22/10/2026): hiện các dòng CHÍNH trước (thứ tự admin), bấm "Xem thêm" mới hiện tiếp.
+  const [xemHet, setXemHet] = useState(false);
+  const dong = xemHet ? qd.bangQuyenLoi : qd.bangQuyenLoi.slice(0, DONG_CHINH);
   return (
     <div className="fixed inset-0 z-[85] flex items-end justify-center bg-black/40 sm:items-center" onClick={onDong}>
       <div className="flex max-h-[85dvh] w-full flex-col rounded-t-2xl bg-white pb-[env(safe-area-inset-bottom)] sm:max-w-3xl sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
@@ -29,7 +36,7 @@ export default function BangQuyenLoiNoi({ onDong }: { onDong: () => void }) {
               </tr>
             </thead>
             <tbody>
-              {qd.bangQuyenLoi.map((r) => (
+              {dong.map((r) => (
                 <tr key={r.ten} className="border-b border-cvr-line/60 last:border-0">
                   <td className="px-4 py-3 text-cvr-body">{r.ten}</td>
                   {CAP.map((id) => r.giaTri[id]).map((v, i) => (
@@ -39,6 +46,11 @@ export default function BangQuyenLoiNoi({ onDong }: { onDong: () => void }) {
               ))}
             </tbody>
           </table>
+          {!xemHet && qd.bangQuyenLoi.length > DONG_CHINH && (
+            <button type="button" onClick={() => setXemHet(true)} className="mx-4 my-3 inline-flex h-10 items-center rounded-lg border border-cvr-line bg-white px-4 text-sm font-semibold text-cvr-ink transition hover:border-cvr-ink">
+              Xem thêm
+            </button>
+          )}
         </div>
       </div>
     </div>

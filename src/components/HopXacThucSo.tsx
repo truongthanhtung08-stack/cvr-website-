@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useKhoaCuon } from "@/lib/khoaCuon";
 
 // ════════════════════════════════════════════════════════════════════════════
 // HỘP XÁC THỰC SỐ ĐỂ XEM SỐ NGƯỜI BÁN
@@ -41,6 +42,7 @@ export default function HopXacThucSo({
   /** Chỉ xác minh số của khách (vd để gửi đánh giá) — KHÔNG lấy số người đăng, không ghi lead. */
   chiXacMinh?: boolean;
 }) {
+  useKhoaCuon(true); // trang phía sau đứng yên khi hộp đang mở (22/10/2026)
   const [buoc, setBuoc] = useState<"sdt" | "ma">("sdt");
   const [sdt, setSdt] = useState("");
   const [ten, setTen] = useState("");

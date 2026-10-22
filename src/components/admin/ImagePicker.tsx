@@ -167,12 +167,15 @@ export default function ImagePicker({
   maxImages,
   maxVideos,
   tierName,
+  chuaChonGoi,
 }: {
   value: string[];
   onChange: (imgs: string[]) => void;
   maxImages?: number;   // giới hạn ẢNH — mức chung 15, hoặc theo cấp tin khi admin bật
   maxVideos?: number;   // giới hạn VIDEO — mức chung 1, hoặc theo cấp tin khi admin bật
   tierName?: string;
+  /** Form đăng tin, khách CHƯA chọn gói (chủ dự án 22/10/2026): giới hạn tạm, lời nhắc là "chọn gói tin để đăng thêm". */
+  chuaChonGoi?: boolean;
 }) {
   // Mỗi lối chọn ảnh giữ riêng ô chọn tệp của mình, để nút bấm gọi đúng ô đó.
   const oRef = useRef<Record<string, HTMLInputElement | null>>({});
@@ -228,7 +231,9 @@ export default function ImagePicker({
     if (ds.length > conNhan) {
       ds = ds.slice(0, conNhan);
       setError(
-        conNhan === 0
+        chuaChonGoi
+          ? "Chọn gói tin để đăng thêm ảnh."
+          : conNhan === 0
           ? `Tin ${tierName ?? ""} chỉ đăng tối đa ${maxImages} ảnh — xoá bớt ảnh cũ hoặc nâng cấp gói tin.`
           : `Chỉ nhận thêm ${conNhan} ảnh (tối đa ${maxImages} ảnh cho tin ${tierName ?? ""}). Các ảnh chọn dư đã bỏ qua.`,
       );
@@ -271,7 +276,7 @@ export default function ImagePicker({
     if (!file) return;
     setError("");
     if (conNhanVideo <= 0) {
-      setError(`Mỗi tin chỉ đăng tối đa ${maxVideos} video — xoá video cũ rồi thêm lại.`);
+      setError(chuaChonGoi ? "Chọn gói tin để đăng video." : `Mỗi tin chỉ đăng tối đa ${maxVideos} video — xoá video cũ rồi thêm lại.`);
       if (videoRef.current) videoRef.current.value = "";
       return;
     }
@@ -292,7 +297,7 @@ export default function ImagePicker({
       return;
     }
     if (isVideoUrl(url) && conNhanVideo <= 0) {
-      setError(`Mỗi tin chỉ đăng tối đa ${maxVideos} video.`);
+      setError(chuaChonGoi ? "Chọn gói tin để đăng video." : `Mỗi tin chỉ đăng tối đa ${maxVideos} video.`);
       return;
     }
     onChange([...value, url]);
@@ -372,7 +377,7 @@ export default function ImagePicker({
       )}
 
       {/* Bộ đếm ảnh theo cấp tin — nhìn là biết còn được thêm bao nhiêu */}
-      {maxVideos != null && (
+      {maxVideos != null && !chuaChonGoi && (
         <p className="text-xs text-cvr-muted">
           Video: <span className={soVideo >= maxVideos ? "text-red-600" : "text-cvr-ink"}>{soVideo}/{maxVideos}</span>
         </p>
@@ -380,8 +385,8 @@ export default function ImagePicker({
       {maxImages != null && (
         <p className="text-sm font-medium text-cvr-body">
           Ảnh: <span className={soAnh >= maxImages ? "text-red-600" : "text-cvr-ink"}>{soAnh}/{maxImages}</span>
-          {tierName ? <span className="text-cvr-muted"> · tin {tierName}</span> : null}
-          {soAnh >= maxImages && <span className="text-red-600"> — đã đủ, nâng cấp gói để đăng thêm ảnh</span>}
+          {tierName && !chuaChonGoi ? <span className="text-cvr-muted"> · tin {tierName}</span> : null}
+          {soAnh >= maxImages && <span className="text-red-600">{chuaChonGoi ? " — chọn gói tin để đăng thêm ảnh" : " — đã đủ, nâng cấp gói để đăng thêm ảnh"}</span>}
         </p>
       )}
 
@@ -446,6 +451,8 @@ export default function ImagePicker({
                 type="button"
                 disabled={uploadingImg}
                 onClick={() => {
+                  // Chưa chọn gói → video chưa nhận: báo ngay, không mở bộ chọn tệp rồi mới báo (22/10/2026)
+                  if (lo.ma === "video" && chuaChonGoi) { setError("Chọn gói tin để đăng video."); setMoChon(false); return; }
                   const o = oRef.current[lo.ma];
                   if (o) o.click();
                   setMoChon(false);

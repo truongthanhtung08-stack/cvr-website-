@@ -47,6 +47,7 @@ import { goiYDiaChi } from "@/lib/timToaDo";
 import { loiEmail, loiSdt } from "@/lib/kiemNhap";
 import XemTruocTin from "@/components/XemTruocTin";
 import { xemTruocTin } from "@/lib/listingsDb";
+import { useKhoaCuon } from "@/lib/khoaCuon";
 
 // Đơn vị giá "Khác — tự ghi" (chủ dự án 14/10/2026): khách ghi nguyên văn, lưu details.giaTuGhi.
 const KHAC_GIA = "Khác — tự ghi";
@@ -89,6 +90,7 @@ export default function PostListingForm() {
   // null = chưa biết; admin không phải qua bước này.
   const [soDaXacMinh, setSoDaXacMinh] = useState<boolean | null>(null);
   const [moXacMinh, setMoXacMinh] = useState(false); // hộp "Số điện thoại của bạn" bật lên khi bấm Đăng tin
+  useKhoaCuon(moXacMinh);
   const [soTaiKhoan, setSoTaiKhoan] = useState(""); // số của TÀI KHOẢN (khác số liên hệ trong tin)
 
   const [done, setDone] = useState<"" | "draft" | "pending" | "capNhat">("");
@@ -1686,9 +1688,12 @@ export default function PostListingForm() {
         <ImagePicker
           value={images}
           onChange={setImages}
-          maxImages={duocMienPhi && billing.free.soAnh ? billing.free.soAnh : soAnhToiDa(billing, goiXemTruoc)}
-          maxVideos={duocMienPhi && billing.free.soVideo !== undefined ? billing.free.soVideo : soVideoToiDa(billing, goiXemTruoc)}
-          tierName={getTier(goiXemTruoc).name}
+          // CHƯA CHỌN GÓI (chủ dự án chốt 22/10/2026): tối đa ANH_CHUA_CHON_GOI ảnh, chưa nhận video; nhắc chọn gói để
+          // up tiếp theo quy định của gói (số từ admin). Trước đây lấy gói đầu bảng giá (Diamond) làm mặc định — sai.
+          maxImages={!planTier ? ANH_CHUA_CHON_GOI : duocMienPhi && billing.free.soAnh ? billing.free.soAnh : soAnhToiDa(billing, planTier as TierId)}
+          maxVideos={!planTier ? 0 : duocMienPhi && billing.free.soVideo !== undefined ? billing.free.soVideo : soVideoToiDa(billing, planTier as TierId)}
+          tierName={planTier ? getTier(planTier as TierId).name : undefined}
+          chuaChonGoi={!planTier}
         />
       </Card>
 
@@ -1803,6 +1808,9 @@ export default function PostListingForm() {
 
 // Ô NHẬP PHẢI THẤY RÕ (chủ dự án 22/10/2026: "rất khó nhìn, nhất là con trỏ chỗ đang soạn — kể cả cái nền"): nền trắng,
 // viền rõ; ô đang gõ / đang chọn viền xanh đậm, con trỏ xanh — đơn giản, không màu mè. Một chỗ — mọi ô của form đăng tin dùng chung.
+// Số ảnh được up khi khách CHƯA chọn gói (chủ dự án chốt 22/10/2026). Chọn gói rồi thì theo số của gói trong admin.
+const ANH_CHUA_CHON_GOI = 3;
+
 const inputCls = "h-11 w-full rounded-lg border border-cvr-line bg-white px-3 text-sm text-cvr-ink placeholder-cvr-faint caret-cvr-blue outline-none transition focus:border-cvr-blue focus:ring-1 focus:ring-cvr-blue";
 
 // ════════════════════════════════════════════════════════════════════════════

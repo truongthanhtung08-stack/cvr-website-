@@ -65,7 +65,6 @@ export default function MapPickerMo({
   const ghiDeRef = useRef(false);
 
   const [sanSang, setSanSang] = useState(false);
-  const [chiToiKhuVuc, setChiToiKhuVuc] = useState(false);
   const [hong, setHong] = useState(false);
   const [dangDinhVi, setDangDinhVi] = useState(false);
   const [dangTra, setDangTra] = useState(false);
@@ -261,8 +260,6 @@ export default function MapPickerMo({
       const diem = timRef.current ? await timToaDoTheoBuoc(timRef.current) : await timToaDo(hint);
       if (huy || !mapRef.current || ghimRef.current) return;
       const kv = diem ? ([diem.lat, diem.lng] as [number, number]) : centerOfArea(hint);
-      // Chỉ trỏ được tới phường/xã (chưa tới tên đường) → gợi ý bật GPS (15/10/2026).
-      setChiToiKhuVuc(!diem || diem.mucDo === "khuVuc");
       if (!kv) return;
       mapRef.current.easeTo({
         center: [kv[1], kv[0]],
@@ -341,13 +338,10 @@ export default function MapPickerMo({
         )}
       </div>
 
-      {/* KHÔNG BẬT GPS VẪN TRỎ THEO ĐỊA CHỈ ĐÃ NHẬP; chỉ trỏ được tới phường/xã thì gợi ý bật GPS
-          (chủ dự án 15/10/2026: "gợi ý khách bật GPS để trỏ địa chỉ chính xác nhất"). */}
-      {sanSang && !daGhim && chiToiKhuVuc && (
-        <p className="rounded-lg bg-cvr-blue/[0.06] px-3 py-2 text-[13px] leading-relaxed text-cvr-blue-ink">
-          Bản đồ mới trỏ tới phường/xã. Bật định vị (GPS) rồi bấm “Tôi đang đứng ở đây”, hoặc chạm lên bản đồ để ghim đúng vị trí.
-        </p>
-      )}
+      {/* DƯỚI BẢN ĐỒ GỌN (chủ dự án 22/10/2026: "phần chỉ dẫn dưới bản đồ có cần không, không thì bỏ — cấu trúc để
+          khách hiểu, không ghi chú dài dòng"). Bỏ câu gợi ý bật GPS; còn: một hàng nút (định vị · xoá ghim), ô dán link
+          Google Maps (giữ đường cũ cho người ở xa), và MỘT dòng kết quả ghim: Đã ghim · mức độ · địa chỉ tại điểm ghim.
+          Địa chỉ tại điểm ghim vẫn hiện thẳng ra, người đăng tự quyết có lấy hay không (số nhà là quyền của khách). */}
       <div className="flex flex-wrap items-center gap-2">
         <button
           type="button"
@@ -368,9 +362,7 @@ export default function MapPickerMo({
         )}
       </div>
 
-      {/* Ở xa bất động sản thì vẫn dán được link Google Maps như cũ — giữ y
-          đường cũ, không bỏ. */}
-      <div className="rounded-xl bg-cvr-surface px-3 py-3">
+      <div>
         <input
           type="text"
           inputMode="text"
@@ -391,45 +383,29 @@ export default function MapPickerMo({
             const xong = await nhanChuoiDan(txt);
             setLoiDan(xong ? "" : "Chưa đọc được vị trí từ link này — thử dán toạ độ dạng 16.0678, 108.2208.");
           }}
-          className="h-11 w-full rounded-lg border border-transparent bg-white px-3 text-sm text-cvr-ink placeholder-cvr-faint outline-none transition focus:border-cvr-line"
+          className="h-11 w-full rounded-lg border border-cvr-line bg-white px-3 text-sm text-cvr-ink placeholder-cvr-faint caret-cvr-blue outline-none transition focus:border-cvr-blue focus:ring-1 focus:ring-cvr-blue"
         />
         {dangGiai && <p className="mt-2 text-[12px] font-medium text-cvr-blue-ink">Đang đọc vị trí từ link…</p>}
         {loiDan && <p className="mt-2 text-[12px] font-medium text-red-600">{loiDan}</p>}
       </div>
 
-      {/* Chú thích chỉ giữ cái cần (chủ dự án 22/10/2026: bớt câu hướng dẫn — cấu trúc tự nói). */}
       {daGhim && (
-      <p className="text-[13px] leading-relaxed text-cvr-body">
-        {daGhim ? (
-          <>
-            <span className="font-semibold text-green-700">Đã ghim</span>
-            {mucDo && (
-              <span className="ml-1.5 rounded-md bg-cvr-surface px-1.5 py-0.5 text-[11.5px] font-semibold text-cvr-body">
-                {mucDo === "soNha" ? "đúng số nhà" : mucDo === "duong" ? "đúng tên đường" : "mới tới phường/xã"}
-              </span>
-            )}
-          </>
-        ) : null}
-      </p>
-      )}
-
-      {/* ĐỊA CHỈ TẠI ĐIỂM GHIM — hiện thẳng ra, và người đăng tự quyết có lấy hay
-          không. Web KHÔNG tự đè lên chữ họ đã gõ (số nhà là quyền của khách,
-          bản đồ luôn đi sau thực tế), nhưng giấu luôn thứ mình đọc được thì họ
-          không có cách nào biết ghim đang nằm đúng hay lệch. */}
-      {daGhim && diaChiGhim && (
-        <div className="rounded-xl bg-cvr-surface px-3 py-2.5">
-          <p className="text-[13px] leading-relaxed text-cvr-body">
-            Địa chỉ tại điểm ghim: <strong className="font-semibold text-cvr-ink">{diaChiGhim}</strong>
-          </p>
-          {soNhaGhim && soNhaGhim !== (hint.split(",")[0] ?? "").trim() && (
+        <div className="rounded-xl bg-cvr-surface px-3 py-2.5 text-[13px] leading-relaxed text-cvr-body">
+          <span className="font-semibold text-green-700">Đã ghim</span>
+          {mucDo && (
+            <span className="ml-1.5 rounded-md bg-white px-1.5 py-0.5 text-[11.5px] font-semibold text-cvr-body">
+              {mucDo === "soNha" ? "đúng số nhà" : mucDo === "duong" ? "đúng tên đường" : "mới tới phường/xã"}
+            </span>
+          )}
+          {diaChiGhim && <> · <strong className="font-semibold text-cvr-ink">{diaChiGhim}</strong></>}
+          {diaChiGhim && soNhaGhim && soNhaGhim !== (hint.split(",")[0] ?? "").trim() && (
             <button
               type="button"
               onClick={() => {
                 onDiaChiRef.current?.(soNhaGhim);
                 mayDienRef.current = soNhaGhim;
               }}
-              className="mt-2 inline-flex min-h-[36px] items-center rounded-lg border border-cvr-line bg-white px-3 text-[13px] font-semibold text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink"
+              className="mt-2 flex min-h-[36px] items-center rounded-lg border border-cvr-line bg-white px-3 text-[13px] font-semibold text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink"
             >
               Sửa địa chỉ theo điểm ghim
             </button>

@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+
 // ============================================================================
 // KHOÁ CUỘN TRANG NỀN — dùng chung cho mọi lớp phủ toàn màn hình
 // ----------------------------------------------------------------------------
@@ -34,4 +36,10 @@ export function khoaCuon(): () => void {
     b.position = ""; b.top = ""; b.left = ""; b.right = "";
     window.scrollTo(0, viTri);
   };
+}
+
+// BẢNG NỔI CÓ NỀN MỜ (bảng chọn, bảng quyền lợi, đặc điểm gói, xác thực số…) — đang mở thì trang phía sau đứng yên
+// (chủ dự án 22/10/2026: "hiện bảng nhưng vuốt thì phần khác của trang cứ chạy"). Một dòng: useKhoaCuon(dangMo).
+export function useKhoaCuon(mo: boolean) {
+  useEffect(() => (mo ? khoaCuon() : undefined), [mo]);
 }

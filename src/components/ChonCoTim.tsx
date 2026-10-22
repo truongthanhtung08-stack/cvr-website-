@@ -3,6 +3,7 @@
 import { useDiaDanh } from "@/lib/useDiaDanh";
 import { useEffect, useState } from "react";
 import { timDiaDanh, type BietDanh } from "@/lib/timDiaDanh";
+import { useKhoaCuon } from "@/lib/khoaCuon";
 
 // Ô CHỌN CÓ Ô TÌM — Tỉnh/Thành · Quận/Huyện · Phường/Xã (chủ dự án 14–15/10/2026: danh sách
 // quá dài, không ai kéo xuống để chọn được). Thẻ select gốc không chèn được ô tìm, nên bấm
@@ -47,6 +48,7 @@ export default function ChonCoTim({
 }) {
   useDiaDanh(); // địa danh nạp sau khi trang hiện — về tới thì vẽ lại (20/10/2026)
   const [mo, setMo] = useState(false);
+  useKhoaCuon(mo);
   const [q, setQ] = useState("");
   // Ô tìm ẨN mặc định (chủ dự án 15/10/2026): mở ra là danh sách để KÉO chọn — không bật bàn
   // phím che màn hình điện thoại. Muốn tìm thì bấm biểu tượng kính lúp mới hiện ô gõ.

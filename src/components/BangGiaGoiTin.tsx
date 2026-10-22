@@ -7,6 +7,7 @@ import { getTier, type TierId } from "@/lib/packages";
 import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
 import { useQuyDinhGia } from "@/lib/useQuyDinhGia";
 import MucAnHien from "@/components/MucAnHien";
+import { useKhoaCuon } from "@/lib/khoaCuon";
 
 // ============================================================================
 // BẢNG GIÁ GÓI TIN KIỂU BATDONGSAN (chốt 01/10/2026) — MỘT bảng dùng chung:
@@ -40,6 +41,7 @@ export default function BangGiaGoiTin({
   const QUY_DINH = qd.quyDinhGoiTin;
   // Bấm "Đặc điểm" dưới tên cấp → xem mô tả quyền lợi + hiển thị của cấp đó (chủ dự án 10/10/2026)
   const [xemDacDiem, setXemDacDiem] = useState<TierId | null>(null);
+  useKhoaCuon(!!xemDacDiem);
   const cot = THU_TU.map((id) => plans.find((p) => p.tierId === id)).filter((p): p is Plan => Boolean(p));
   const hang = [...new Set(cot.flatMap((p) => p.terms.map((t) => t.days)))].sort((a, b) => a - b);
   const hienGia = (gia: number) => (gomVat ? tachThue(gia).tongTra : gia);

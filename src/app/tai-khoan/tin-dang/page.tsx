@@ -22,6 +22,7 @@ import BangGiaGoiTin from "@/components/BangGiaGoiTin";
 import type { TierId } from "@/lib/packages";
 import { useBilling } from "@/lib/useBilling";
 import { tachThue } from "@/lib/thue";
+import { useKhoaCuon } from "@/lib/khoaCuon";
 
 // Tin đăng của THÀNH VIÊN — tin của chính mình (mọi trạng thái, kể cả nháp).
 // RLS đảm bảo chỉ thấy tin owner_id = mình.
@@ -211,6 +212,7 @@ Tin ngừng hiển thị ngay, dữ liệu giữ nguyên — sau này bấm Đă
   // ngày đăng và hạn tính lại TỪ HÔM NAY, ngày còn dư của gói cũ bỏ.
   const [upCho, setUpCho] = useState<ListingRow | null>(null);
   const [upChon, setUpChon] = useState<{ tier: string; soNgay: number } | null>(null);
+  useKhoaCuon(!!muaCho || !!upCho);
   const [dangUp, setDangUp] = useState(false);
   // Tin đang có yêu cầu "Up khi nạp đủ tiền" (bảng up_cho, 0044)
   const [choUp, setChoUp] = useState<Set<string>>(new Set());

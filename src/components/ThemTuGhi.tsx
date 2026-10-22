@@ -21,7 +21,9 @@ export default function ThemTuGhi({ onThem, className, boc = "mt-3" }: { onThem:
   if (!mo)
     return (
       <div className={boc}>
-        <button type="button" onClick={() => setMo(true)} className="rounded-lg border border-cvr-line px-3 py-2 text-xs font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink">
+        {/* Nút THÊM khác hẳn các mục để chọn (chủ dự án 22/10/2026): viền + chữ xanh, có dấu + */}
+        <button type="button" onClick={() => setMo(true)} className="inline-flex items-center gap-1 rounded-lg border border-cvr-blue/50 px-3 py-2 text-xs font-semibold text-cvr-blue-ink transition hover:border-cvr-blue hover:bg-cvr-blue/[0.06]">
+          <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2.4} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" d="M12 5v14M5 12h14" /></svg>
           Khác — tự ghi
         </button>
       </div>

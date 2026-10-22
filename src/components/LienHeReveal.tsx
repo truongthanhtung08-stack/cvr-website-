@@ -4,6 +4,7 @@ import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { napSupabase, coPhienDangNhap } from "@/lib/supabase/nap";
 import { tachNhieuSdt } from "@/lib/phone";
 import HopXacThucSo, { veDaLuu } from "@/components/HopXacThucSo";
+import { useKhoaCuon } from "@/lib/khoaCuon";
 
 // ============================================================================
 // CỔNG SỐ ĐIỆN THOẠI — full SĐT người đăng chỉ hiện sau khi khách tự định danh.
@@ -217,6 +218,7 @@ function AnhNguoiDang({ avatar, ten }: { avatar?: string | null; ten?: string | 
 export function ContactBarMobile({ listingId, phoneMask, avatar, ten }: { listingId: string; phoneMask: string; avatar?: string | null; ten?: string | null }) {
   const { phone, phones, loading, reveal, hoiSo, setHoiSo, nhanSo } = useReveal(listingId);
   const [chon, setChon] = useState<"goi" | "zalo" | null>(null);
+  useKhoaCuon(!!chon);
   // Bấm Nhắn tin khi chưa có số → nhớ ý định, có số là mở Zalo ngay (1 số) hoặc bảng chọn số (2 số).
   const [muonZalo, setMuonZalo] = useState(false);
   useEffect(() => {
