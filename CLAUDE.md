@@ -258,6 +258,34 @@ Buộc phải đụng vào vì lý do kỹ thuật → **DỪNG, HỎI TRƯỚC.
 
 ---
 
+## 0C2. ⚡ TỐC ĐỘ WEB TRÊN ĐIỆN THOẠI — CHUẨN BẮT BUỘC (quán triệt 22/10/2026)
+
+> Chủ dự án: *"Web load đạt chuẩn mà không ảnh hưởng gì đến Google, SEO."* Chuẩn = **LCP ≤ 2,5 s** trên điện thoại.
+> Đo phần DO WEB (máy chậm 4×, mạng thật) — không viện lý do đường truyền hay Vercel. Lịch sử + số đo: memory `toc-do-web-lam-tiep`.
+>
+> **Đã sửa 21–22/10 (6e5d622 · 12c72cc · 76263d7 · 0cfd95e) — CẤM làm hỏng lại:**
+> | Lỗi đã gặp (làm chậm) | Thói quen gây ra | Luật |
+> |---|---|---|
+> | `loading.tsx` ở trang công khai che nội dung thật tới khi đọc hết HTML (LCP /mua-ban 8 s) | Thêm khung chờ cho "mượt" | ⛔ Không thêm `loading.tsx` cho trang công khai đã dựng sẵn |
+> | Hiệu ứng mờ dần lúc mở trang (`anim-ket-qua`) làm ảnh đầu trễ ~2,5 s | Thêm hiệu ứng không đo | ⛔ Không hiệu ứng ẩn/mờ nội dung lúc MỞ trang; chỉ chạy khi khách thao tác |
+> | Menu điện thoại đóng (`invisible opacity-0`) làm Next tải trước ~13 trang | Ẩn bằng độ mờ thay vì không dựng | Phần ẩn chứa nhiều link → chỉ dựng khi mở |
+> | Supabase 58 KB, bản đồ 440 KB, địa danh 90 KB, bộ xem ảnh tải ngay lúc mở trang | Nhập thẳng thư viện vào thành phần có ở mọi trang | Thứ chỉ dùng khi bấm → `dynamic()` / tải lúc bấm; đọc/ghi đơn giản → `docRest`/`rpcRest` (`src/lib/supabase/nap.ts`) |
+> | 6 bộ phông tải trước, tệp latin-ext 85 KB thừa | Thêm phông cho một chỗ | Inter tự chứa `src/app/fonts`; phông phụ `preload: false` |
+> | Ảnh đầu trang không ưu tiên | Quên `fetchPriority` | Ảnh đầu (LCP) luôn `fetchPriority="high"` |
+>
+> **Đã thử và BỎ:** nhúng CSS vào HTML (`experimental.inlineCss`) — đo A/B 22/10 bằng Lighthouse: CHẬM HƠN (HTML nặng). Đừng bật lại.
+>
+> **Quy trình bắt buộc mỗi đợt sửa đụng giao diện (bước 2 KIỂM TRA, trước khi push):**
+> 1. Đo TRƯỚC và SAU 5 trang mẫu: trang chủ · /mua-ban · /cho-thue · /mua-ban/condotel/da-nang · một trang /bat-dong-san/<id>.
+>    Công cụ: `node --experimental-websocket scripts/do-toc-do.mjs <url> 2` và Lighthouse (`npx lighthouse <url> --only-categories=performance`).
+>    LCP vượt 2,5 s hoặc điểm tụt so với trước → KHÔNG push, sửa tiếp.
+> 2. Thêm thành phần mới, tự hỏi 3 câu: (a) có cần ngay lúc mở trang không — không thì tải lúc bấm; (b) kéo theo thư viện gì, bao
+>    nhiêu KB; (c) có hiệu ứng nào làm nội dung chậm hiện lúc mở trang không.
+> 3. Ghi một dòng số đo 5 trang vào memory `toc-do-web-lam-tiep` sau mỗi lần push.
+> 4. Không đổi giao diện đã duyệt, không đổi nội dung cho Google (tiêu đề, H1, canonical, số tin, JSON-LD) — so trước/sau mỗi đợt.
+
+---
+
 ## 0E. 🧾 THUẾ CÔNG TY (GTGT · TNDN · TNCN) — topic riêng, theo dõi lâu dài
 
 > 📌 **Bàn giao mới nhất: [`BAN-GIAO-THUE-02-10.md`](BAN-GIAO-THUE-02-10.md) — đọc TRƯỚC.** Việc gấp: A7 (mẫu TT89 cho tờ khai Q3, hạn 31/10).
