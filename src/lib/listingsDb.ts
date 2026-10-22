@@ -301,7 +301,8 @@ function rowToListing(r: Row): Listing {
     // Tên người đăng thật (khách hàng) — thẻ tin hiện đúng tên này, không phải admin
     agentName: r.details?.contact?.name || undefined,
     // 3 số đầu của số người đăng — nút "Hiện số 090 ***" như Batdongsan (đủ số chỉ hiện khi bấm)
-    ...((): { soDau?: string } => { const d = (r.details?.contact?.phone ?? "").replace(/\D/g, "").replace(/^84/, "0"); return d.length >= 9 ? { soDau: d.slice(0, 3) } : {}; })(),
+    ...((): { soDau?: string } => { const d = (r.details?.contact?.phone ?? "").replace(/\D/g, "").replace(/^84/, "0"); // Số che 3 SỐ CUỐI như trang tin (chủ dự án 22/10/2026): "0905 318" → thẻ hiện "0905 318 ***"
+      return d.length >= 9 ? { soDau: `${d.slice(0, 4)} ${d.slice(4, d.length - 3)}` } : {}; })(),
     ...(r.details?.contact?.avatar ? { agentAvatar: asset(r.details.contact.avatar) } : {}),
     ...(r.details?.project ? { projectSlug: r.details.project } : {}),
     ...(r.details?.projectName?.trim() ? { projectName: r.details.projectName.trim() } : {}),

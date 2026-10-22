@@ -34,9 +34,17 @@ const ICONS = {
 const loaiHinhBan: NavChild[] = saleCategories.map((c) => ({ label: c.label, href: `/mua-ban/${c.slug}` }));
 const loaiHinhThue: NavChild[] = rentCategories.map((c) => ({ label: c.label, href: `/cho-thue/${c.slug}` }));
 // MENU DỰ ÁN (chủ dự án 16/10/2026): Dự án nổi bật (có gói) tách khỏi Tra cứu dự án toàn quốc.
+// Gọn (chủ dự án 22/10/2026): một trang Dự án duy nhất (dự án có gói đứng đầu) · Theo khu vực · Theo loại hình.
+// Khu vực chỉ định (chủ dự án 22/10/2026: mở hết, đợt này lọc cho đủ thông tin để không trang nào trống).
+// Mở rộng tỉnh mới thì thêm vào đây cùng lần đăng dự án tỉnh đó. Ghi tay slug để menu không kéo cả bộ địa danh
+// vào mã mọi trang (tốc độ).
+const khuVucDuAn = [
+  ["Đà Nẵng", "da-nang"], ["Huế", "hue"], ["Khánh Hòa", "khanh-hoa"], ["Gia Lai", "gia-lai"],
+  ["Lâm Đồng", "lam-dong"], ["Quảng Ngãi", "quang-ngai"], ["Quảng Trị", "quang-tri"],
+];
 const loaiHinhDuAn: NavChild[] = [
-  { label: "Dự án nổi bật", href: "/du-an" },
-  { label: "Tra cứu dự án", href: "/du-an/tra-cuu" },
+  { label: "Tất cả dự án", href: "/du-an" },
+  { label: "Theo khu vực", children: khuVucDuAn.map(([ten, slug]) => ({ label: ten, href: `/du-an/${slug}` })) },
   { label: "Theo loại hình", children: projectCategories.map((c) => ({ label: c.label, href: `/du-an/${c.slug}` })) },
 ];
 
@@ -76,20 +84,22 @@ const congCu = (slug: string): NavChild[] =>
   utilityTools.filter((t) => t.slug === slug && trangTienIchDat(t)).map((t) => ({ label: t.label, href: `/tien-ich/${t.slug}` }));
 const danhMucTienIch: NavChild[] = [
   { label: "Công cụ tính", children: [...congCu("tinh-lai-suat-vay"), ...congCu("so-sanh-nha-dat")] },
-  { label: "Tra cứu", children: [{ label: "Tra cứu dự án", href: "/du-an/tra-cuu" }, ...congCu("gia-nha-dat"), ...congCu("thu-vien-phap-luat")] },
+  // Bỏ "Tra cứu dự án" ở đây (22/10/2026): trùng mục Dự án trên menu chính
+  { label: "Tra cứu", children: [...congCu("gia-nha-dat"), ...congCu("thu-vien-phap-luat")] },
   { label: "Thị trường", children: congCu("bao-cao-thi-truong-bds") },
   { label: "Phong thủy", children: congCu("xem-phong-thuy") },
 ].filter((g) => g.children.length > 0);
 
-// Thứ tự menu (chủ dự án 08/10/2026): Mua bán · Cho thuê · Dự án · Tin tức · Chuyên gia · Báo giá · Tiện ích
+// Thứ tự menu (chủ dự án duyệt 22/10/2026 — PC trái → phải, điện thoại trên → dưới): người tìm nhà dùng nhiều nhất
+// trước, phần cho người bán cuối (sát nút Đăng tin): Mua bán · Cho thuê · Dự án · Tin tức · Tiện ích · Chuyên gia · Báo giá
 const navItems: NavItem[] = [
   { label: "Mua bán", href: "/mua-ban", children: loaiHinhBan, icon: ICONS.muaBan },
   { label: "Cho thuê", href: "/cho-thue", children: loaiHinhThue, icon: ICONS.choThue },
   { label: "Dự án", href: "/du-an", children: loaiHinhDuAn, icon: ICONS.duAn },
   { label: "Tin tức", href: "/tin-tuc", icon: ICONS.tinTuc },
+  { label: "Tiện ích", href: "/tien-ich/tinh-lai-suat-vay", children: danhMucTienIch, icon: ICONS.tienIch },
   { label: "Chuyên gia", href: "/chuyen-gia", children: danhMucChuyenGia, icon: ICONS.chuyenGia },
   { label: "Báo giá", href: "/bao-gia-dang-tin", children: danhMucBaoGia, icon: ICONS.baoGia },
-  { label: "Tiện ích", href: "/tien-ich/tinh-lai-suat-vay", children: danhMucTienIch, icon: ICONS.tienIch },
 ];
 
 const chevronDown = (

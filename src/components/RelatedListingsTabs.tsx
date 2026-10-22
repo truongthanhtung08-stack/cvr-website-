@@ -12,7 +12,9 @@ const SECTION_KEY = "tin-du-an";
 // theo cấp VIP: huy hiệu cấp · tiêu đề đổi màu/VIẾT HOA · mô tả ·
 // giá – diện tích – đơn giá · địa chỉ · người đăng.
 // (Trước đây dùng ListingList: ảnh chỉ 160px và mất hết phân cấp VIP.)
-export default function RelatedListingsTabs({ ban, thue, title }: { ban: Listing[]; thue: Listing[]; title?: string }) {
+// the: đặt GIỮA trang dự án (sau Tổng quan — 22/10/2026) → khung xám, tiêu đề cùng cỡ các mục khác của trang.
+// tenDuAn: tiêu đề danh sách khi bấm "Xem thêm" mang TÊN dự án (chủ dự án 22/10/2026 — không để "Tin … tại dự án" trơn).
+export default function RelatedListingsTabs({ ban, thue, title, the = false, tenDuAn }: { ban: Listing[]; thue: Listing[]; title?: string; the?: boolean; tenDuAn?: string }) {
   const hasBan = ban.length > 0;
   const hasThue = thue.length > 0;
   const [tab, setTab] = useState<"ban" | "thue">(hasBan ? "ban" : "thue");
@@ -26,11 +28,13 @@ export default function RelatedListingsTabs({ ban, thue, title }: { ban: Listing
   if (hidden) return null;
 
   return (
-    <div className={expanded ? undefined : "mt-10"}>
+    <div className={expanded ? undefined : the ? "mt-5 rounded-2xl bg-cvr-surface p-4 sm:p-5" : "mt-10"}>
       {!expanded && title && (
-        <h2 className="mb-5 text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">{title}</h2>
+        <h2 className={the ? "mb-4 text-[19px] font-semibold tracking-tight text-cvr-ink sm:text-[22px]" : "mb-5 text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl"}>{title}</h2>
       )}
-      <div className={`mb-4 inline-flex rounded-lg border border-cvr-line bg-white p-1 ${expanded ? "hidden" : ""}`}>
+      {/* Đang mở danh sách → ẩn hẳn hàng tab (trước để chung "inline-flex hidden" nên inline-flex thắng, tab vẫn lơ lửng
+          trên đầu danh sách — sửa 22/10/2026) */}
+      <div className={expanded ? "hidden" : "mb-4 inline-flex rounded-lg border border-cvr-line bg-white p-1"}>
         {hasBan && (
           <button
             type="button"
@@ -57,7 +61,7 @@ export default function RelatedListingsTabs({ ban, thue, title }: { ban: Listing
           sectionKey={SECTION_KEY}
           purpose={tab}
           relevance
-          heading={tab === "thue" ? "Tin cho thuê tại dự án" : "Tin mua bán tại dự án"}
+          heading={tenDuAn ? `${tab === "thue" ? "Cho thuê" : "Mua bán"} tại ${tenDuAn}` : tab === "thue" ? "Tin cho thuê tại dự án" : "Tin mua bán tại dự án"}
         />
       ) : (
         <p className="rounded-xl border border-cvr-line bg-cvr-surface px-4 py-6 text-center text-sm text-cvr-muted">

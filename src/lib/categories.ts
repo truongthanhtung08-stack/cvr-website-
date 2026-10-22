@@ -199,7 +199,11 @@ export const projectCategories: Category[] = [
   { slug: "nha-o-xa-hoi", label: "Nhà ở xã hội", h1: "Dự án nhà ở xã hội", title: `Dự án nhà ở xã hội`, desc: `Tra cứu dự án nhà ở xã hội: vị trí, chủ đầu tư, quy mô, tình trạng, hình ảnh và tin mua bán, cho thuê trong dự án.`, types: ["Nhà ở xã hội"] },
   { slug: "cao-oc-van-phong", label: "Cao ốc văn phòng", h1: "Dự án cao ốc văn phòng", title: `Dự án cao ốc văn phòng`, desc: `Tra cứu dự án cao ốc văn phòng: vị trí, chủ đầu tư, quy mô, tình trạng, hình ảnh và tin mua bán, cho thuê trong dự án.`, types: ["Văn phòng"] },
   { slug: "trung-tam-thuong-mai", label: "Trung tâm thương mại", h1: "Dự án trung tâm thương mại", title: `Dự án trung tâm thương mại`, desc: `Tra cứu dự án trung tâm thương mại: vị trí, chủ đầu tư, quy mô, tình trạng, hình ảnh và tin mua bán, cho thuê trong dự án.`, types: ["Thương mại"] },
-  { slug: "biet-thu-lien-ke", label: "Biệt thự, liền kề", h1: "Dự án biệt thự, liền kề", title: `Dự án biệt thự, liền kề`, desc: `Tra cứu dự án biệt thự, liền kề: vị trí, chủ đầu tư, quy mô, tình trạng, hình ảnh và tin mua bán, cho thuê trong dự án.`, types: ["Biệt thự", "Liền kề"] },
+  { slug: "biet-thu-lien-ke", label: "Biệt thự, liền kề", h1: "Dự án biệt thự, liền kề", title: `Dự án biệt thự, liền kề`, desc: `Tra cứu dự án biệt thự, liền kề: vị trí, chủ đầu tư, quy mô, tình trạng, hình ảnh và tin mua bán, cho thuê trong dự án.`, types: ["Biệt thự", "Liền kề", "Villa"] },
+  // Một dự án có thể có NHIỀU loại hình (chủ dự án 22/10/2026): đất nền, nhà phố, biệt thự/villa, shophouse…
+  // → dự án hiện ở mọi nhóm nó có (so "chứa" trên trường type).
+  { slug: "dat-nen", label: "Đất nền", h1: "Dự án đất nền", title: `Dự án đất nền`, desc: `Tra cứu dự án đất nền: vị trí, chủ đầu tư, quy mô, tình trạng, hình ảnh và tin mua bán trong dự án.`, types: ["Đất nền", "Đất"] },
+  { slug: "nha-pho", label: "Nhà phố", h1: "Dự án nhà phố", title: `Dự án nhà phố`, desc: `Tra cứu dự án nhà phố: vị trí, chủ đầu tư, quy mô, tình trạng, hình ảnh và tin mua bán, cho thuê trong dự án.`, types: ["Nhà phố"] },
   { slug: "shophouse", label: "Shophouse", h1: "Dự án shophouse", title: `Dự án shophouse`, desc: `Tra cứu dự án shophouse: vị trí, chủ đầu tư, quy mô, tình trạng, hình ảnh và tin mua bán, cho thuê trong dự án.`, types: ["Shophouse"] },
 ];
 
@@ -213,4 +217,12 @@ export function findCategory(list: Category[], slug: string): Category | undefin
 export const NGUONG_INDEX_DANH_MUC = 3;
 export function soTinDanhMuc(ds: { type: string; purpose?: string; banSao?: unknown }[], c: Category, muc: "ban" | "thue"): number {
   return ds.filter((l) => !l.banSao && ((l.purpose ?? "ban") === "thue" ? "thue" : "ban") === muc && c.types.includes(l.type)).length;
+}
+
+// Dự án thuộc nhóm loại hình — một dự án có nhiều loại hình thì thuộc nhiều nhóm (22/10/2026).
+// Dùng chung cho trang /du-an/<nhóm> và sitemap (nhóm chưa có dự án nào: không index, không khai sitemap).
+export function duAnThuocNhom<T extends { type?: string | null }>(projects: T[], c: Category): T[] {
+  const bo = (x: string) => x.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/gi, "d").toLowerCase();
+  const keys = c.types.map(bo);
+  return projects.filter((p) => { const t = bo(p.type ?? ""); return keys.some((k) => t.includes(k)); });
 }

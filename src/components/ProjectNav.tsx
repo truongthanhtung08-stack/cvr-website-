@@ -1,12 +1,16 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useHomeSection } from "@/components/HomeExpand";
 
 // Menu điều hướng DÍNH của trang dự án — tự sáng mục đang xem khi cuộn (scroll-spy),
 // bấm để cuộn mượt tới đúng mục. Nhận danh sách {id, label} khớp id các <section>.
-export default function ProjectNav({ items }: { items: { id: string; label: string }[] }) {
+// anKhiMo: menu nằm NGOÀI phần nội dung (dính suốt trang, kể cả khối tin + dự án tương tự cuối trang — 22/10/2026)
+// → khi một khối "Xem thêm" đang mở danh sách thì menu tự ẩn như phần nội dung.
+export default function ProjectNav({ items, anKhiMo = false }: { items: { id: string; label: string }[]; anKhiMo?: boolean }) {
   const [active, setActive] = useState(items[0]?.id ?? "");
   const thanh = useRef<HTMLDivElement>(null);
+  const { hidden } = useHomeSection("__menu-muc");
 
   useEffect(() => {
     // Mục đang xem = mục CUỐI CÙNG đã cuộn qua mép dưới thanh menu dính. Trước dùng
@@ -42,6 +46,8 @@ export default function ProjectNav({ items }: { items: { id: string; label: stri
   function scrollTo(id: string) {
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
+
+  if (anKhiMo && hidden) return null;
 
   return (
     // MOBILE: dính NGAY DƯỚI thanh "Quay lại" (header 60px + thanh back 53px = 113px)

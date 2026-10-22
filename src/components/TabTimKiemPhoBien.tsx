@@ -62,8 +62,9 @@ export default function TabTimKiemPhoBien({ tabs }: { tabs: TabLienKet[] }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tinHieu, tabs]);
 
+  // Khối trước luôn có đệm đáy riêng (danh sách tin pb-footer, khu vực…) → đệm trên nhỏ, không cộng dồn thành khoảng trống to (22/10/2026)
   return (
-    <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
+    <section className="mx-auto max-w-7xl px-4 pb-10 pt-2 sm:px-6 sm:pb-14 sm:pt-6 lg:px-8">
       <h2 className="text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">Tìm kiếm phổ biến</h2>
       <div role="tablist" className="no-scrollbar mt-5 flex gap-6 overflow-x-auto border-b border-cvr-line">
         {tabs.map((t, i) => (

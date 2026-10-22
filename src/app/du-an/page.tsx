@@ -4,41 +4,41 @@ import Footer from "@/components/Footer";
 import { ProjectListJsonLd } from "@/components/ListJsonLd";
 import Hero from "@/components/Hero";
 import ProjectsBrowser from "@/components/ProjectsBrowser";
+import KhuVucLinks from "@/components/KhuVucLinks";
+import LienKetPseo from "@/components/LienKetPseo";
 import { getProjects, getArticles } from "@/lib/contentDb";
 import { getProjectBanners } from "@/lib/siteContent";
+import { demDuAnTheoTinh, nhomTraCuu } from "@/lib/traCuuDuAn";
 
-// DỰ ÁN NỔI BẬT (chủ dự án 16/10/2026): chỉ dự án có gói (Diamond / Gold / Silver).
-// Tra cứu mọi dự án toàn quốc nằm ở /du-an/tra-cuu (docs/CAU-TRUC-MENU-DU-AN-TIEN-ICH.md).
+// MỘT TRANG DỰ ÁN DUY NHẤT (chủ dự án 22/10/2026: hai trang "Dự án nổi bật" + "Tra cứu dự án" trùng nhau, bấm rắc rối,
+// "không ai làm như vậy"). Nút Dự án ở menu trên và thanh dưới cùng đều về đây: MỌI dự án, dự án có gói
+// (Diamond → Gold → Silver) đứng đầu, rồi các dự án khác. /du-an/tra-cuu tự chuyển về đây.
+const HANG: Record<string, number> = { diamond: 0, gold: 1, silver: 2 };
 
 export const metadata: Metadata = {
   alternates: { canonical: "/du-an" },
-  title: "Dự án bất động sản nổi bật",
-  description: "Dự án căn hộ, khu đô thị, nghỉ dưỡng nổi bật — vị trí, chủ đầu tư, tiến độ, giá bán và tiện ích.",
+  title: "Dự án bất động sản",
+  description: "Tra cứu dự án bất động sản: tên dự án, chủ đầu tư, vị trí, loại hình, tình trạng, hình ảnh — cập nhật hằng tuần.",
 };
 
 export default async function DuAnPage() {
-  // Banner trang dự án: admin sửa được (siteContent) — chưa nhập → mặc định
-  const [projects, articles, projBanners] = await Promise.all([
-    getProjects(), getArticles(), getProjectBanners(),
-  ]);
-  const noiBat = projects.filter((p) => p.tier && p.tier !== "basic");
+  const [projects, articles, projBanners] = await Promise.all([getProjects(), getArticles(), getProjectBanners()]);
+  const xep = [...projects].sort((a, b) => (HANG[a.tier ?? ""] ?? 9) - (HANG[b.tier ?? ""] ?? 9));
   return (
     <>
-      <ProjectListJsonLd items={noiBat} heading="Dự án bất động sản nổi bật" path="/du-an" />
+      <ProjectListJsonLd items={xep} heading="Dự án bất động sản" path="/du-an" />
       <Header />
       <main className="flex-1 bg-white">
         <div className="mx-auto max-w-7xl px-4 pt-0 pb-footer sm:px-6 sm:pt-0 lg:px-8">
-          {/* MOBILE: ô tìm lên TRÊN, banner nằm dưới (mẫu Batdongsan); nút lọc nằm
-              trong trang tìm toàn màn hình. Banner KHOÁ THEO TỶ LỆ 2:1 (chữ nhật)
-              thay cho chiều cao cứng → nhỏ gọn lại và tự cân theo mọi khổ máy
-              (375px → 187px, máy to hơn thì cao theo, không bao giờ chiếm quá nửa màn).
-              DESKTOP: banner trên, thanh lọc dưới — giữ nguyên 400px như cũ. */}
           <ProjectsBrowser
-            projects={noiBat}
+            projects={xep}
             articles={articles}
+            tieuDe="Dự án bất động sản"
             hero={<Hero banners={projBanners} heightClass="aspect-[2/1] sm:aspect-auto sm:h-[400px]" search={false} />}
           />
         </div>
+        <KhuVucLinks base="/du-an" demTheoTinh={demDuAnTheoTinh(projects)} />
+        <LienKetPseo nhom={nhomTraCuu(projects)} />
       </main>
       <Footer />
     </>

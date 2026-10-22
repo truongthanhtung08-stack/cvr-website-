@@ -3,7 +3,9 @@
 import { useDiaDanh } from "@/lib/useDiaDanh";
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import LoginForm from "@/components/LoginForm";
 import BangGiaGoiTin from "@/components/BangGiaGoiTin";
+import MucAnHien, { goiYDanhSach } from "@/components/MucAnHien";
 import BangQuyenLoiNoi from "@/components/BangQuyenLoiNoi";
 import ChonCoTim from "@/components/ChonCoTim";
 import { bietDanhTinh, bietDanhPhuongMoi, type BietDanh } from "@/lib/timDiaDanh";
@@ -32,7 +34,7 @@ import OTieuDe from "@/components/OTieuDe";
 // phải sửa đúng dòng import này.
 import MapPicker from "@/components/MapPickerMo";
 import ContentEditor from "@/components/admin/ContentEditor";
-import { bangTheoMucDich, freeDangChay, huongKhuyenMai, isPromoRunning, ngayVn, soNgayHienThi, freeNote, quotePrice, soAnhToiDa, soVideoToiDa, tenGoiMienPhi, vnd } from "@/lib/billing";
+import { bangTheoMucDich, freeDangChay, huongKhuyenMai, thanhVienMoi, isPromoRunning, ngayVn, soNgayHienThi, freeNote, quotePrice, soAnhToiDa, soVideoToiDa, tenGoiMienPhi, vnd } from "@/lib/billing";
 import { banChuyenDoi } from "@/lib/gtagChuyenDoi";
 import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
 import { useBilling } from "@/lib/useBilling";
@@ -190,12 +192,53 @@ export default function PostListingForm() {
   // hiện lại để làm tiếp. Đăng / lưu nháp vào tài khoản thành công thì xoá. Không lưu gói tin
   // (khách phải tự chọn lại, giá theo admin lúc đăng). Chế độ sửa tin (?id=) không dùng.
   const [daNapNhap, setDaNapNhap] = useState(false);
+  // TIN ĐANG SOẠN DỞ (chủ dự án duyệt 22/10/2026): vào lại mà còn bản soạn dở → KHÔNG tự đổ vào form; hỏi khách
+  // "Soạn tiếp" hay "Đăng tin mới" ở đầu trang. Chờ khách chọn thì không tự lưu (khỏi ghi đè bản cũ bằng form trống).
+  const [nhapCho, setNhapCho] = useState<Record<string, unknown> | null>(null);
   // Tin nháp TỰ LƯU VÀO TÀI KHOẢN (chủ dự án 10/10/2026: "vào bất cứ máy nào cũng thao tác
   // tiếp") — mã tin nháp đang dùng + lượt lưu đang chạy (Đăng tin đợi lượt này xong).
   const maNhapTk = useRef<string | null>(null);
   const tuLuuDangChay = useRef<Promise<void> | null>(null);
   const dangBamLuu = useRef(false); // khách đang bấm Lưu nháp / Đăng tin → tự lưu nhường
   const ngungTuLuu = useRef(false); // tin nháp đã gửi duyệt / bị xoá ở máy khác → thôi tự lưu
+  // Đổ bản soạn dở vào form (khách bấm "Soạn tiếp", hoặc bản nháp chưa có gì đáng hỏi).
+  function apDungNhap(d: Record<string, unknown>) {
+    if (typeof d.maNhap === "string") maNhapTk.current = d.maNhap;
+    const s = (k: string) => (typeof d[k] === "string" ? (d[k] as string) : "");
+    const ds = (k: string) => (Array.isArray(d[k]) ? (d[k] as string[]) : []);
+    if (s("demand")) setDemand(s("demand"));
+    setCategory(s("category"));
+    if (s("geoMode") === "cu" || s("geoMode") === "moi") setGeoMode(s("geoMode") as GeoMode);
+    setProvince(s("province"));
+    setDistrict(s("district"));
+    setWard(s("ward"));
+    setPhuongCu(s("phuongCu"));
+    setAddressDetail(s("addressDetail"));
+    setLinkChen(s("linkChen"));
+    setMapPin(s("mapPin"));
+    setTitle(s("title"));
+    setPriceValue(s("priceValue"));
+    setGiaTuGhi(s("giaTuGhi"));
+    if (s("priceUnit")) setPriceUnit(s("priceUnit"));
+    setArea(s("area"));
+    setBuiltArea(s("builtArea"));
+    setBeds(s("beds"));
+    setBaths(s("baths"));
+    if (d.specValues && typeof d.specValues === "object") setSpecValues(d.specValues as Record<string, string>);
+    setLegal(s("legal"));
+    setFurnish(s("furnish"));
+    setDirection(s("direction"));
+    setInterior(ds("interior"));
+    setAmenities(ds("amenities"));
+    setDescription(s("description"));
+    setImages(ds("images"));
+    // Liên hệ: chỉ ghi đè khi bản nháp có — không xoá phần đã điền sẵn từ hồ sơ.
+    if (s("contactName")) setContactName(s("contactName"));
+    if (s("contactPhone")) setContactPhone(s("contactPhone"));
+    if (s("contactEmail")) setContactEmail(s("contactEmail"));
+    setProjectSlug(s("projectSlug"));
+    setProjectName(s("projectName"));
+  }
   /* eslint-disable react-hooks/set-state-in-effect -- nạp bản nháp một lần, khi đã biết tài khoản */
   useEffect(() => {
     if (!authReady || daNapNhap) return;
@@ -207,41 +250,9 @@ export default function PostListingForm() {
         if (cu) localStorage.removeItem(KHOA_NHAP_MAY);
         const d = JSON.parse(localStorage.getItem(khoaNhap(userId)) ?? "null") as Record<string, unknown> | null;
         if (d) {
-          if (typeof d.maNhap === "string") maNhapTk.current = d.maNhap;
-          const s = (k: string) => (typeof d[k] === "string" ? (d[k] as string) : "");
-          const ds = (k: string) => (Array.isArray(d[k]) ? (d[k] as string[]) : []);
-          if (s("demand")) setDemand(s("demand"));
-          setCategory(s("category"));
-          if (s("geoMode") === "cu" || s("geoMode") === "moi") setGeoMode(s("geoMode") as GeoMode);
-          setProvince(s("province"));
-          setDistrict(s("district"));
-          setWard(s("ward"));
-          setPhuongCu(s("phuongCu"));
-          setAddressDetail(s("addressDetail"));
-          setLinkChen(s("linkChen"));
-          setMapPin(s("mapPin"));
-          setTitle(s("title"));
-          setPriceValue(s("priceValue"));
-          setGiaTuGhi(s("giaTuGhi"));
-          if (s("priceUnit")) setPriceUnit(s("priceUnit"));
-          setArea(s("area"));
-          setBuiltArea(s("builtArea"));
-          setBeds(s("beds"));
-          setBaths(s("baths"));
-          if (d.specValues && typeof d.specValues === "object") setSpecValues(d.specValues as Record<string, string>);
-          setLegal(s("legal"));
-          setFurnish(s("furnish"));
-          setDirection(s("direction"));
-          setInterior(ds("interior"));
-          setAmenities(ds("amenities"));
-          setDescription(s("description"));
-          setImages(ds("images"));
-          // Liên hệ: chỉ ghi đè khi bản nháp có — không xoá phần đã điền sẵn từ hồ sơ.
-          if (s("contactName")) setContactName(s("contactName"));
-          if (s("contactPhone")) setContactPhone(s("contactPhone"));
-          if (s("contactEmail")) setContactEmail(s("contactEmail"));
-          setProjectSlug(s("projectSlug"));
-          setProjectName(s("projectName"));
+          const coNoiDung = ["title", "category", "province"].some((k) => typeof d[k] === "string" && (d[k] as string).trim());
+          if (coNoiDung) setNhapCho(d);
+          else apDungNhap(d);
         }
       } catch {}
     }
@@ -250,7 +261,7 @@ export default function PostListingForm() {
   }, [authReady, userId]);
   /* eslint-enable react-hooks/set-state-in-effect */
   useEffect(() => {
-    if (editId || !daNapNhap || !userId || done || thieuTien) return;
+    if (editId || !daNapNhap || nhapCho || !userId || done || thieuTien) return;
     try {
       localStorage.setItem(khoaNhap(userId), JSON.stringify({
         demand, category, geoMode, province, district, ward, phuongCu, addressDetail, linkChen, mapPin,
@@ -259,7 +270,7 @@ export default function PostListingForm() {
         maNhap: maNhapTk.current,
       }));
     } catch {}
-  }, [editId, daNapNhap, userId, done, thieuTien, demand, category, geoMode, province, district, ward, phuongCu, addressDetail, linkChen, mapPin,
+  }, [editId, daNapNhap, nhapCho, userId, done, thieuTien, demand, category, geoMode, province, district, ward, phuongCu, addressDetail, linkChen, mapPin,
     title, priceValue, priceUnit, giaTuGhi, area, builtArea, beds, baths, specValues, legal, furnish, direction,
     interior, amenities, description, images, contactName, contactPhone, contactEmail, projectSlug, projectName]);
 
@@ -277,8 +288,12 @@ export default function PostListingForm() {
     // hồ sơ hoặc chính sách miễn phí đổi, không phụ thuộc lần vẽ lại nào.
     // eslint-disable-next-line react-hooks/purity
     const soNgay = (Date.now() - new Date(hoSoVi.created_at).getTime()) / 86_400_000;
-    return soNgay <= billing.free.days;
-  }, [hoSoVi, billing.free.days]);
+    // MỘT định nghĩa thành viên mới (thanhVienMoi) — y như duyệt tin, đăng lại (22/10/2026).
+    return thanhVienMoi(billing.free, {
+      coChu: true, homNay: new Date().toISOString().slice(0, 10), soNgayMoTk: soNgay,
+      ngayTaoTk: new Date(new Date(hoSoVi.created_at).getTime() + 7 * 3_600_000).toISOString().slice(0, 10),
+    });
+  }, [hoSoVi, billing.free]);
 
 
   // Gói dùng để XEM TRƯỚC khi chưa chọn (số ảnh tối đa, giá tạm tính) — lấy gói
@@ -708,7 +723,7 @@ export default function PostListingForm() {
   // Mở TIN NHÁP có sẵn (?id=, vd từ máy khác) → tự lưu tiếp vào đúng tin đó, khi đã nạp xong.
   const suaNhap = Boolean(editId) && editStatus === "draft" && editLoad === "ok";
   useEffect(() => {
-    if ((editId && !suaNhap) || !daNapNhap || !userId || done || thieuTien || saving) return;
+    if ((editId && !suaNhap) || !daNapNhap || nhapCho || !userId || done || thieuTien || saving) return;
     if (!title.trim() || !province) return;
     const hen = setTimeout(() => {
       if (tuLuuDangChay.current || dangBamLuu.current || ngungTuLuu.current) return;
@@ -930,15 +945,21 @@ export default function PostListingForm() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
+  // CHƯA BIẾT ĐĂNG NHẬP / CHƯA NẠP XONG BẢN NHÁP → giữ đúng dòng "Đang tải…" như lúc chờ trang (chủ dự án 22/10/2026:
+  // mở trang đăng tin giật, nhảy lung tung). Trước đây form bung ra ngay rồi mới đổi sang khung đăng nhập, hoặc
+  // bung form trống rồi các ô, bản đồ mới hiện theo bản nháp → trang dài ra từng nhịp.
+  if (!authReady || (userId && !daNapNhap)) {
+    return <p className="py-16 text-center text-sm text-cvr-muted">Đang tải…</p>;
+  }
+
   // Chưa đăng nhập → mời đăng nhập (tin gắn với tài khoản để quản lý sau)
+  // CHƯA ĐĂNG NHẬP → HIỆN NGAY KHUNG ĐĂNG NHẬP tại trang (chủ dự án 22/10/2026: link Đăng tin nào — Google, Zalo,
+  // menu — chưa đăng nhập là ra màn hình đăng nhập, đăng nhập xong vào đúng trang). KHÔNG chuyển hướng máy chủ:
+  // /dang-tin vẫn trả trang thật cho Google (có trong sitemap). Đích sau đăng nhập: dichSauDangNhap (một logic).
   if (authReady && !userId) {
     return (
-      <div className="rounded-none border border-cvr-line bg-white p-10 text-center shadow-lux">
-        <h3 className="text-xl font-semibold tracking-tight text-cvr-ink">Đăng nhập để đăng tin</h3>
-        <p className="mt-2 text-sm text-cvr-muted">Tin đăng được gắn với tài khoản để bạn quản lý, chỉnh sửa và theo dõi trạng thái duyệt.</p>
-        <Link href={linkDangNhap} className="mt-5 inline-flex h-11 items-center justify-center rounded-lg bg-cvr-ink px-6 text-sm font-semibold text-white transition hover:bg-cvr-ink/90">
-          Đăng nhập / Đăng ký
-        </Link>
+      <div className="flex justify-center py-4">
+        <LoginForm />
       </div>
     );
   }
@@ -1031,6 +1052,10 @@ export default function PostListingForm() {
 
   return (
     <form
+      data-vung-nhap
+      // KIỂM Ô THIẾU THEO ĐÚNG THỨ TỰ TRANG (22/10/2026): tắt bóng chữ kiểm của trình duyệt — trước đây nó nhảy
+      // thẳng tới ô Tiêu đề (mục 4) dù mục 1 còn thiếu. Hàm gửi tự kiểm từ mục 1 → 7, báo tiếng Việt đúng mục.
+      noValidate
       onKeyDown={(e) => {
         // Enter ở ô MỘT DÒNG không được tự gửi tin (trước đây bấm Enter / "Đi" trên điện thoại là
         // gửi luôn khi chưa nhập xong). Ô nhiều dòng (textarea) vẫn xuống dòng bình thường.
@@ -1040,6 +1065,28 @@ export default function PostListingForm() {
       className="space-y-6">
       <MucMoCtx.Provider value={{ moMuc, loi: error && loiBuoc ? { buoc: loiBuoc, msg: error } : undefined }}>
       <ThanhBuoc />
+      {nhapCho && (() => {
+        const chu = (k: string) => (typeof nhapCho[k] === "string" ? (nhapCho[k] as string).trim() : "");
+        const ten = chu("title") || [chu("category"), chu("province")].filter(Boolean).join(" · ");
+        return (
+          <div className="rounded-2xl border border-cvr-blue/30 bg-cvr-blue/[0.06] p-4">
+            <p className="text-[15px] leading-snug text-cvr-ink">
+              <span className="font-semibold">Bạn có tin đang soạn dở:</span> {ten}
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {/* eslint-disable-next-line react-hooks/refs -- apDungNhap chỉ chạy khi khách bấm, không chạy lúc vẽ */}
+              <button type="button" onClick={() => { apDungNhap(nhapCho); setNhapCho(null); }}
+                className="inline-flex h-10 items-center rounded-lg bg-cvr-ink px-4 text-sm font-semibold text-white transition hover:bg-cvr-ink/90">
+                Soạn tiếp
+              </button>
+              <button type="button" onClick={() => { try { if (userId) localStorage.removeItem(khoaNhap(userId)); } catch {} setNhapCho(null); }}
+                className="inline-flex h-10 items-center rounded-lg border border-cvr-line bg-white px-4 text-sm font-semibold text-cvr-ink transition hover:border-cvr-ink">
+                Đăng tin mới
+              </button>
+            </div>
+          </div>
+        );
+      })()}
 
       {xemTruoc && (
         <XemTruocTin
@@ -1102,24 +1149,24 @@ export default function PostListingForm() {
           số thứ tự khớp nhau. Gói chọn TRƯỚC ảnh (10/10/2026: số ảnh / video tối đa theo gói).
           Ô bắt buộc có dấu *; thiếu thì báo lỗi và tự mở đúng bước có ô đó (baoLoi). ── */}
       {/* 1. Loại tin & vị trí */}
-      <Card id="b-loai" step={buoc()} title="Loại tin & vị trí" khoa={editStatus === "approved"}>
+      <Card id="b-loai" step={buoc()} title="Loại hình & địa chỉ" khoa={editStatus === "approved"}>
         <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
           <Pick label="Nhu cầu *" value={demand} onChange={setDemand} options={demandTypes} />
           {/* Loại hình theo NHÓM cho dễ tìm — cùng danh mục với bộ lọc của web */}
           <div>
             <Label>Loại hình bất động sản *</Label>
-            <select
+            {/* CÙNG MỘT KIỂU BẢNG CHỌN với Tỉnh / Phường (chủ dự án 22/10/2026: ô chọn gốc của điện thoại hiện to,
+                khó nhìn, không rõ cách chọn / thoát) — bảng riêng, nút quay lại, kính lúp để tìm. Thứ tự theo nhóm. */}
+            <ChonCoTim
               value={loaiHinh}
-              onChange={(e) => { setCategory(e.target.value); setSpecValues({}); }}
+              onChange={(v) => { setCategory(v); setSpecValues({}); }}
+              options={nhomLoaiHinh.flatMap((g) => g.items)}
+              nhom={nhomLoaiHinh}
+              placeholder="Chọn loại hình"
+              timPlaceholder=""
+              khongTim
               className={inputCls}
-            >
-              <option value="">Chọn loại hình</option>
-              {nhomLoaiHinh.map((g) => (
-                <optgroup key={g.label} label={g.label}>
-                  {g.items.map((o) => <option key={o} value={o}>{o}</option>)}
-                </optgroup>
-              ))}
-            </select>
+            />
           </div>
         </div>
         <h3 className="border-t border-cvr-line pt-4 text-[15px] font-semibold tracking-tight text-cvr-ink">Địa chỉ bất động sản</h3>
@@ -1204,6 +1251,9 @@ export default function PostListingForm() {
           placeholder="VD: 123 Võ Nguyên Giáp · Lô A12 khu B · Block 3 · hoặc chỉ tên đường"
           khuVuc={(() => { const d = diemTimBanDo(geoMode, { tinh: province, quan: district, phuong: ward }); return { tinh: d.tinh, phuong: d.phuong }; })()}
         />
+        {/* Bản đồ chỉ hiện khi đã chọn Tỉnh / Thành (hoặc tin đã có ghim) — chưa có địa chỉ thì bản đồ cả nước chỉ
+            chiếm chỗ (chủ dự án 22/10/2026: trang đăng tin phải gọn). */}
+        {(province || mapPin) && (
         <div className="mt-3">
           <MapPicker
             value={mapPin}
@@ -1214,10 +1264,10 @@ export default function PostListingForm() {
             tim={diemTimBanDo(geoMode, { tinh: province, quan: district, phuong: ward }, addressDetail)}
           />
         </div>
+        )}
         <h3 className="border-t border-cvr-line pt-4 text-[15px] font-semibold tracking-tight text-cvr-ink">Thuộc dự án</h3>
         <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <Label>Tên dự án</Label>
             {/* CHỌN DỰ ÁN — CÙNG CẤU TRÚC MỌI Ô CHỌN (chủ dự án 15/10/2026): dự án có sẵn thì chọn trong
                 danh sách; không có thì chọn "Khác — tự ghi", ô ghi tên hiện NGAY DƯỚI. Danh sách dài nên
                 "Khác — tự ghi" đứng ĐẦU danh sách (khỏi kéo hết mới thấy); có kính lúp để tìm.
@@ -1338,14 +1388,15 @@ export default function PostListingForm() {
           ].filter(Boolean);
           if (!oChinh.length) return null;
           const cot = oChinh.length === 1 ? "" : oChinh.length === 2 ? " sm:grid-cols-2" : " sm:grid-cols-3";
-          return <div className={`grid min-w-0 grid-cols-1 gap-4${cot}`}>{oChinh}</div>;
+          // Điện thoại: ô số ngắn (diện tích, phòng ngủ, phòng tắm…) xếp 2 cột cho gọn (chủ dự án 22/10/2026).
+          return <div className={`grid min-w-0 ${oChinh.length === 1 ? "grid-cols-1" : "grid-cols-2"} items-end gap-3 sm:gap-4${cot}`}>{oChinh}</div>;
         })()}
 
         {/* THÔNG TIN CHÍNH RIÊNG CỦA LOẠI HÌNH — đất thì chiều ngang · chiều dài ·
             đường vào · loại đất; căn hộ thì tầng số; nhà thì số tầng · mặt tiền…
             Lưới 2/3 cột tự co theo số mục nên không chừa ô trống, không xén chữ. */}
         {specChinh.length > 0 && (
-          <div className={`mt-4 grid min-w-0 grid-cols-1 gap-4 ${specChinh.length === 2 ? "sm:grid-cols-2" : specChinh.length >= 3 ? "sm:grid-cols-2 lg:grid-cols-3" : ""}`}>
+          <div className={`mt-4 grid min-w-0 grid-cols-2 items-end gap-3 sm:gap-4 ${specChinh.length === 2 ? "sm:grid-cols-2" : specChinh.length >= 3 ? "sm:grid-cols-2 lg:grid-cols-3" : ""}`}>
             {specChinh.map(oNhapSpec)}
           </div>
         )}
@@ -1353,20 +1404,26 @@ export default function PostListingForm() {
 
       {/* 3. Đặc điểm & tiện ích (không bắt buộc) */}
       <Card id="b-dacdiem" step={buoc()} title="Đặc điểm & tiện ích">
-        <h3 className="text-[15px] font-semibold tracking-tight text-cvr-ink">{`Đặc điểm — ${spec.label}`}</h3>
+        {/* Chủ dự án 22/10/2026: mục BẮT BUỘC luôn hiện; mục không bắt buộc thu gọn trong khối ẩn/hiện, theo đúng
+            loại hình khách chọn (danh sách ô lấy từ listingSpec — đất không có nội thất…). */}
+        {specDacDiem.some((f) => f.batBuoc) && (
+          <div className="mb-3 grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {specDacDiem.filter((f) => f.batBuoc).map(oNhapSpec)}
+          </div>
+        )}
+        <div className="space-y-3">
+        <MucAnHien
+          ten={`Đặc điểm — ${loaiHinh || spec.label}`}
+          goiY={goiYDanhSach([...specDacDiem.filter((f) => !f.batBuoc).map((f) => f.label), "Hướng nhà / đất", "Tình trạng pháp lý"])}
+          soChon={specDacDiem.filter((f) => !f.batBuoc && String(specValues[f.key] ?? "").trim()).length + [direction, legal].filter((x) => String(x ?? "").trim()).length}
+        >
         <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {specDacDiem.map(oNhapSpec)}
-          {/* Trường DÙNG CHUNG mọi loại hình: Hướng · Nội thất · Pháp lý */}
+          {specDacDiem.filter((f) => !f.batBuoc).map(oNhapSpec)}
+          {/* Trường DÙNG CHUNG mọi loại hình: Hướng · Pháp lý (Tình trạng nội thất chuyển vào khối Nội thất) */}
           <div>
             <Label>Hướng nhà / đất</Label>
             <ChonHoacGhi value={direction} onChange={setDirection} options={directions} className={inputCls} />
           </div>
-          {coNoiThat(loaiHinh) && (
-            <div>
-              <Label>Tình trạng nội thất</Label>
-              <ChonHoacGhi value={furnish} onChange={setFurnish} options={furnishLevels} className={inputCls} />
-            </div>
-          )}
           <div>
             <Label>Tình trạng pháp lý</Label>
             {/* Danh mục theo ĐÚNG loại hình: đất chỉ sổ đỏ, căn hộ chỉ sổ hồng. Giá trị ngoài danh
@@ -1374,9 +1431,17 @@ export default function PostListingForm() {
             <ChonHoacGhi value={legal} onChange={setLegal} options={phapLyCho(loaiHinh)} className={inputCls} />
           </div>
         </div>
-        {/* Nội thất — ĐẤT và KHO XƯỞNG không có nội thất nên ẩn hẳn */}
+        </MucAnHien>
+        {/* Nội thất — ĐẤT và KHO XƯỞNG không có nội thất nên ẩn hẳn.
+            NỘI THẤT MỘT CHỖ (chủ dự án 22/10/2026: "Tình trạng nội thất" và danh sách nội thất từng tách xa nhau).
+            Chọn tình trạng trước; có nội thất (cơ bản / đầy đủ / cao cấp) — hoặc tin đã tick sẵn — mới hiện danh sách. */}
         {coNoiThat(loaiHinh) && (
-          <MucAnHien ten="Nội thất" soChon={interior.length}>
+          <MucAnHien ten="Nội thất" goiY={furnish || goiYDanhSach(interiorItems)} soChon={interior.length + (furnish ? 1 : 0)}>
+          <div>
+            <Label>Tình trạng nội thất</Label>
+            <ChonHoacGhi value={furnish} onChange={setFurnish} options={furnishLevels} className={inputCls} />
+          </div>
+          {(/^Nội thất/.test(furnish) || interior.length > 0) && (
           <div className="flex flex-wrap gap-2">
             {interiorItems.map((it) => (
               <Chip key={it} active={interior.includes(it)} onClick={() => toggle(interior, setInterior, it)}>{it}</Chip>
@@ -1385,11 +1450,12 @@ export default function PostListingForm() {
             {interior.filter((it) => !interiorItems.includes(it)).map((it) => (
               <Chip key={it} active onClick={() => toggle(interior, setInterior, it)}>{it}</Chip>
             ))}
+            <ThemTuGhi boc="" onThem={(v) => setInterior((ds) => (ds.includes(v) ? ds : [...ds, v]))} className={inputCls} />
           </div>
-          <ThemTuGhi onThem={(v) => setInterior((ds) => (ds.includes(v) ? ds : [...ds, v]))} className={inputCls} />
+          )}
           </MucAnHien>
         )}
-        <MucAnHien ten="Tiện ích" soChon={amenities.length}>
+        <MucAnHien ten="Tiện ích" goiY={goiYDanhSach(amenityGroups.flatMap((g) => g.items))} soChon={amenities.length}>
         <div className="space-y-4">
           {amenityGroups.map((g) => (
             <div key={g.group}>
@@ -1405,15 +1471,16 @@ export default function PostListingForm() {
           {(() => {
             const chuan = new Set(amenityGroups.flatMap((g) => g.items));
             const khac = amenities.filter((it) => !chuan.has(it));
-            return khac.length > 0 && (
+            return (
               <div className="flex flex-wrap gap-2">
                 {khac.map((it) => <Chip key={it} active onClick={() => toggle(amenities, setAmenities, it)}>{it}</Chip>)}
+                <ThemTuGhi boc="" onThem={(v) => setAmenities((ds) => (ds.includes(v) ? ds : [...ds, v]))} className={inputCls} />
               </div>
             );
           })()}
         </div>
-        <ThemTuGhi onThem={(v) => setAmenities((ds) => (ds.includes(v) ? ds : [...ds, v]))} className={inputCls} />
         </MucAnHien>
+        </div>
       </Card>
 
       {/* 4. Tiêu đề & mô tả */}
@@ -1434,25 +1501,6 @@ export default function PostListingForm() {
           rows={5}
           placeholder="Mô tả vị trí, kết cấu, tiện ích, pháp lý, lý do bán… (nội dung càng đầy đủ càng dễ chốt)"
         />
-        {/* Quyền lợi CVR Diamond: chèn 1 link bất kỳ dưới tin đăng */}
-        {(goiDangDung?.tier ?? planTier) === "diamond" && (
-          <div className="mt-4">
-            <Label>Link chèn dưới tin (CVR Diamond)</Label>
-            <input
-              type="text"
-              autoCapitalize="none"
-              autoCorrect="off"
-              spellCheck={false}
-              value={linkChen}
-              onChange={(e) => setLinkChen(e.target.value)}
-              placeholder="https://… (video, trang dự án, tài liệu…)"
-              className={inputCls}
-            />
-            {linkChen.trim() && !linkHopLe(linkChen) && (
-              <p className="mt-1 text-xs text-red-600">Link phải bắt đầu bằng http:// hoặc https://</p>
-            )}
-          </div>
-        )}
         </div>
       </Card>
 
@@ -1610,9 +1658,29 @@ export default function PostListingForm() {
 
           </>
         )}
+        {/* Quyền lợi CVR Diamond: chèn 1 link bất kỳ dưới tin đăng */}
+        {(goiDangDung?.tier ?? planTier) === "diamond" && (
+          <div className="mt-4">
+            <Label>Link chèn dưới tin (CVR Diamond)</Label>
+            <input
+              type="text"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              value={linkChen}
+              onChange={(e) => setLinkChen(e.target.value)}
+              placeholder="https://… (video, trang dự án, tài liệu…)"
+              className={inputCls}
+            />
+            {linkChen.trim() && !linkHopLe(linkChen) && (
+              <p className="mt-1 text-xs text-red-600">Link phải bắt đầu bằng http:// hoặc https://</p>
+            )}
+          </div>
+        )}
       </Card>
 
-      {/* Hình ảnh — SAU khi chọn gói (chủ dự án 10/10/2026): số ảnh / video tối đa theo gói đã chọn.
+      {/* Hình ảnh — SAU khi chọn gói (chủ dự án 10/10/2026, nhắc lại 22/10/2026: "không đưa gói tin lên trước thì
+          không thể biết giới hạn ảnh"): số ảnh / video tối đa theo gói đã chọn, số từ admin.
           Tải từ máy / dán link, ảnh đầu là ảnh đại diện. */}
       <Card id="b-anh" step={buoc()} title="Hình ảnh & video">
         <ImagePicker
@@ -1684,6 +1752,7 @@ export default function PostListingForm() {
           </div>
         </div>
       </Card>
+
       </MucMoCtx.Provider>
 
       {error && (
@@ -1727,15 +1796,14 @@ export default function PostListingForm() {
           Xem trước
         </button>
       </div>
-      <p className="text-center text-xs text-cvr-muted">
-        <strong className="text-cvr-ink">Đăng tin</strong>: gửi Coastal Land kiểm duyệt, duyệt xong tin hiển thị công khai. ·{" "}
-        <strong className="text-cvr-ink">Lưu nháp</strong>: cất tạm trong tài khoản, chưa ai thấy, vào làm tiếp bất cứ lúc nào.
-      </p>
+      {/* 22/10/2026 bỏ dòng giải thích dưới nút (chủ dự án: bớt chú thích, cấu trúc tự nói). */}
     </form>
   );
 }
 
-const inputCls = "h-11 w-full rounded-lg border border-transparent bg-cvr-surface px-3 text-sm text-cvr-ink placeholder-cvr-faint outline-none transition focus:border-cvr-line focus:bg-white";
+// Ô NHẬP PHẢI THẤY RÕ (chủ dự án 22/10/2026: "rất khó nhìn, nhất là con trỏ chỗ đang soạn — kể cả cái nền"): nền trắng,
+// viền rõ; ô đang gõ / đang chọn viền xanh đậm, con trỏ xanh — đơn giản, không màu mè. Một chỗ — mọi ô của form đăng tin dùng chung.
+const inputCls = "h-11 w-full rounded-lg border border-cvr-line bg-white px-3 text-sm text-cvr-ink placeholder-cvr-faint caret-cvr-blue outline-none transition focus:border-cvr-blue focus:ring-1 focus:ring-cvr-blue";
 
 // ════════════════════════════════════════════════════════════════════════════
 // THANH BƯỚC — dính trên đầu, bấm là tới thẳng phần đó.
@@ -1745,7 +1813,7 @@ const inputCls = "h-11 w-full rounded-lg border border-transparent bg-cvr-surfac
 // nhảy thẳng tới phần cần sửa (chủ dự án chốt 11/9/2026).
 // ════════════════════════════════════════════════════════════════════════════
 const MOC_BUOC = [
-  { id: "b-loai", ten: "Loại tin & vị trí" },
+  { id: "b-loai", ten: "Loại hình & địa chỉ" },
   { id: "b-thongtin", ten: "Thông tin chính" },
   { id: "b-dacdiem", ten: "Đặc điểm" },
   { id: "b-mota", ten: "Tiêu đề & mô tả" },
@@ -1954,24 +2022,6 @@ function ODiaChiGoiY({ label, value, onChange, placeholder, khuVuc }: { label: s
           ))}
         </div>
       )}
-    </div>
-  );
-}
-
-// MỤC ẨN / HIỆN THEO TUỲ CHỌN (Nội thất, Tiện ích — chủ dự án 15/10/2026): mặc định thu gọn còn một
-// dòng, kèm số mục đã chọn; bấm để mở ra tick, bấm lại để ẩn. Đã chọn gì vẫn giữ nguyên khi ẩn.
-function MucAnHien({ ten, soChon, children }: { ten: string; soChon: number; children: React.ReactNode }) {
-  const [mo, setMo] = useState(false);
-  return (
-    <div className="border-t border-cvr-line pt-4">
-      <button type="button" onClick={() => setMo(!mo)} aria-expanded={mo} className="flex w-full items-center justify-between gap-3 text-left">
-        <span className="text-[15px] font-semibold tracking-tight text-cvr-ink">
-          {ten}
-          {soChon > 0 && <span className="ml-1.5 font-normal text-cvr-muted">({soChon})</span>}
-        </span>
-        <svg className={`h-5 w-5 shrink-0 text-cvr-muted transition ${mo ? "rotate-180" : ""}`} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
-      </button>
-      {mo && <div className="mt-3 space-y-4">{children}</div>}
     </div>
   );
 }

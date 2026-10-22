@@ -8,10 +8,12 @@
 
 import { chuDauTuChuan, loiDiaDanh } from "@/lib/tenChuan";
 
+// Thứ tự cột = thứ tự thông tin lọc được (chủ dự án 22/10/2026): tên dự án · chủ đầu tư · vị trí, địa chỉ ·
+// giới thiệu (loại hình, tổng quan) · giá · rồi các thông tin khác nếu có. Đọc theo TÊN cột nên tệp cũ vẫn nạp được.
 export const COT_DU_AN = [
-  "ten_du_an", "loai_hinh", "trang_thai", "chu_dau_tu", "don_vi_phat_trien", "tinh", "phuong_xa",
-  "dia_chi_chi_tiet", "quy_mo", "san_pham", "khoi_cong", "ban_giao", "phap_ly", "tien_ich",
-  "tong_quan", "gia_tu", "anh", "nguon", "ngay_cap_nhat",
+  "ten_du_an", "chu_dau_tu", "don_vi_phat_trien", "tinh", "phuong_xa", "dia_chi_chi_tiet",
+  "loai_hinh", "tong_quan", "gia_tu", "trang_thai", "quy_mo", "san_pham", "phap_ly",
+  "khoi_cong", "ban_giao", "tien_ich", "anh", "nguon", "ngay_cap_nhat",
 ] as const;
 type Cot = (typeof COT_DU_AN)[number];
 
@@ -51,7 +53,11 @@ const slug = (s: string) =>
 export type DongDuAn = { dong: number; loi: string[]; payload: Record<string, unknown> | null; ten: string; slug: string };
 
 export function docDuAnTuCsv(text: string): DongDuAn[] {
-  const rows = docCsv(text);
+  return docDuAnTuBang(docCsv(text));
+}
+
+// Cùng bộ kiểm cho bảng đã đọc sẵn (sheet "Dự án" trong tệp Excel tin hàng loạt — 22/10/2026)
+export function docDuAnTuBang(rows: string[][]): DongDuAn[] {
   if (rows.length < 2) return [];
   const head = rows[0].map((h) => h.trim().toLowerCase());
   const idx = (c: Cot) => head.indexOf(c);
@@ -87,7 +93,10 @@ export function docDuAnTuCsv(text: string): DongDuAn[] {
       : {
           slug: slug(ten),
           name: ten,
-          type: v("loai_hinh") || null,
+          // MỘT DỰ ÁN NHIỀU LOẠI HÌNH (chủ dự án 22/10/2026): đất nền, nhà phố, biệt thự/villa, shophouse…
+          // ghi cách nhau bằng dấu chấm phẩy → lưu "Đất nền, Nhà phố, Shophouse"; trang lọc theo loại hình
+          // khớp từng loại (projectsInCategory so "chứa"), nên dự án hiện ở mọi loại hình nó có.
+          type: v("loai_hinh").split(/[;|]/).map((x) => x.trim()).filter(Boolean).join(", ") || null,
           status_text: trangThai,
           developer: v("chu_dau_tu") ? chuDauTuChuan(v("chu_dau_tu")) : null,
           province: v("tinh"),

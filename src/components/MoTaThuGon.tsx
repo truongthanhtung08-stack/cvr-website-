@@ -10,24 +10,27 @@ import { useEffect, useRef, useState } from "react";
 // có số rồi thì số trong mô tả hiện đủ.
 const CO_SO_AN = /\d{4} \d{3} ∗∗∗/;
 
-export default function MoTaThuGon({ children, cao = 240 }: { children: React.ReactNode; cao?: number }) {
+// CẮT THEO SỐ DÒNG, không theo điểm ảnh (chủ dự án 22/10/2026: chuẩn trên mọi nền tảng, kể cả trình duyệt trong
+// Zalo/Facebook phóng chữ): khung = dong × 1,625em (dòng chữ 15px, giãn dòng 1,625) — chữ to lên thì khung to theo,
+// luôn đúng bấy nhiêu dòng. Chuẩn: mô tả tin 10 dòng · tổng quan dự án 6 dòng. Chỉ thu gọn khi nội dung dài hơn
+// 1,6 lần khung (bị ẩn ít nhất ~6 dòng); ngắn hơn thì hiện trọn, không có nút.
+const GIAN_DONG = 1.625;
+export default function MoTaThuGon({ children, dong = 10 }: { children: React.ReactNode; dong?: number }) {
   const ref = useRef<HTMLDivElement>(null);
   const [dai, setDai] = useState(false);
   const [mo, setMo] = useState(false);
   useEffect(() => {
     const el = ref.current;
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    // Chỉ thu gọn khi mô tả THẬT SỰ dài (chủ dự án 21/10/2026: "không phải tin nào cũng để") —
-    // dài hơn khoảng 1,75 lần khung (~17 dòng); ngắn hơn thì hiện trọn, không có nút.
-    if (el) setDai(el.scrollHeight > cao * 1.75);
-  }, [cao]);
+    if (el) setDai(el.scrollHeight > dong * GIAN_DONG * parseFloat(getComputedStyle(el).fontSize) * 1.6);
+  }, [dong]);
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
     // Bấm "Hiện số" trong mô tả = bấm nút Hiện số của trang; có số (link tel:) thì điền đủ vào mô tả
     const hienSo = () => {
-      const nutTrang = [...document.querySelectorAll("button")].find((x) => /^Hiện số/.test(x.textContent?.trim() ?? "") && !el.contains(x));
+      const nutTrang = [...document.querySelectorAll<HTMLButtonElement>("button[data-hien-so]")].find((x) => !el.contains(x) && x.offsetParent !== null) ?? document.querySelector<HTMLButtonElement>("button[data-hien-so]");
       nutTrang?.click();
       let lan = 0;
       const doi = window.setInterval(() => {
@@ -71,7 +74,7 @@ export default function MoTaThuGon({ children, cao = 240 }: { children: React.Re
 
   return (
     <div>
-      <div ref={ref} className="relative overflow-hidden" style={dai && !mo ? { maxHeight: cao } : undefined}>
+      <div ref={ref} className="relative overflow-hidden text-[15px]" style={dai && !mo ? { maxHeight: `${dong * GIAN_DONG}em` } : undefined}>
         {children}
         {dai && !mo && <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-cvr-surface to-transparent" aria-hidden />}
       </div>

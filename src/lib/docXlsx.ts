@@ -29,6 +29,32 @@ export async function docXlsx(buf: ArrayBuffer): Promise<string[][]> {
   return docSheet(await docNoiDung(bytes, sheetEntry), khoChuoi);
 }
 
+// Đọc MỘT sheet theo TÊN (vd sheet "Dự án" trong tệp tin hàng loạt — chủ dự án 22/10/2026: dự án kèm tin
+// nằm chung một tệp để nạp một lần). Không có sheet tên khớp → null.
+export async function docXlsxTheoTen(buf: ArrayBuffer, ten: RegExp): Promise<string[][] | null> {
+  const dv = new DataView(buf);
+  const bytes = new Uint8Array(buf);
+  const muc = docDanhMucZip(dv, bytes);
+  const tim = (t: string) => muc.find((e) => e.ten === t);
+  const wb = tim("xl/workbook.xml");
+  const rels = tim("xl/_rels/workbook.xml.rels");
+  if (!wb || !rels) return null;
+  const wbXml = await docNoiDung(bytes, wb);
+  const sheet = [...wbXml.matchAll(/<sheet\b[^>]*>/g)]
+    .map((m) => ({ ten: goEntity(/name="([^"]*)"/.exec(m[0])?.[1] ?? ""), id: /r:id="([^"]*)"/.exec(m[0])?.[1] ?? "" }))
+    .find((s) => ten.test(s.ten.normalize("NFC").trim()));
+  if (!sheet) return null;
+  const relXml = await docNoiDung(bytes, rels);
+  const rel = [...relXml.matchAll(/<Relationship\b[^>]*>/g)].map((m) => m[0]).find((r) => r.includes(`Id="${sheet.id}"`));
+  const dich = rel && /Target="([^"]*)"/.exec(rel)?.[1];
+  if (!dich) return null;
+  const entry = tim(dich.startsWith("/") ? dich.slice(1) : `xl/${dich}`);
+  if (!entry) return null;
+  const sharedEntry = tim("xl/sharedStrings.xml");
+  const khoChuoi = sharedEntry ? docSharedStrings(await docNoiDung(bytes, sharedEntry)) : [];
+  return docSheet(await docNoiDung(bytes, entry), khoChuoi);
+}
+
 // ── ZIP ─────────────────────────────────────────────────────────────────────
 function docDanhMucZip(dv: DataView, bytes: Uint8Array): ZipEntry[] {
   // Tìm End Of Central Directory (chữ ký 0x06054b50), quét ngược từ cuối file

@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { ghepBillingLuu, bangTheoMucDich, huongKhuyenMai, chonKhuyenMai, laChuThat, quotePrice, vnd, type BillingData } from "@/lib/billing";
+import { ghepBillingLuu, bangTheoMucDich, huongKhuyenMai, thanhVienMoi, chonKhuyenMai, laChuThat, quotePrice, vnd, type BillingData } from "@/lib/billing";
 import { tachThue } from "@/lib/thue";
 import { baoLoi } from "@/lib/baoLoi";
 import { viKhaDung, cauThieuTien } from "@/lib/viKhaDung";
@@ -65,7 +65,7 @@ export async function thucHienUpTin(
   // Tiền THẬT chỉ trừ lúc admin duyệt (duyet/route.ts) — không bao giờ cao hơn số báo.
   const homNay = new Date().toISOString().slice(0, 10);
   const soNgayMoTk = hs.created_at ? (Date.now() - new Date(hs.created_at).getTime()) / 86_400_000 : Number.POSITIVE_INFINITY;
-  const bao = quotePrice({ data: bang, tierId: goi, days: soNgay, today: homNay, isNewMember: soNgayMoTk <= bang.free.days });
+  const bao = quotePrice({ data: bang, tierId: goi, days: soNgay, today: homNay, isNewMember: thanhVienMoi(bang.free, { coChu: laChuThat(hs), homNay, soNgayMoTk, ngayTaoTk: hs.created_at ? new Date(new Date(hs.created_at).getTime() + 7 * 3_600_000).toISOString().slice(0, 10) : undefined }) });
   // Khuyến mãi: CÙNG MỘT điều kiện với form đăng tin + duyệt tin (huongKhuyenMai).
   // Tin nháp tự gửi sau khi nạp đủ: giữ lựa chọn gói thường / khuyến mãi khách đã chọn ở form.
   const mienPhi = (!laNhap || chonKhuyenMai(tin.details)) && huongKhuyenMai(bang.free, { goi, homNay, coChu: laChuThat(hs), soNgayMoTk, role: hs.role, freeQuota: hs.free_quota, ngayTaoTk: hs.created_at ? new Date(new Date(hs.created_at).getTime() + 7 * 3_600_000).toISOString().slice(0, 10) : undefined });

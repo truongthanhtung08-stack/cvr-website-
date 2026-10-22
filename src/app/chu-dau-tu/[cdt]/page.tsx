@@ -48,7 +48,7 @@ export default async function ChuDauTuPage({ params }: { params: Promise<{ cdt: 
       <ProjectListJsonLd items={g.duAn} heading={heading} path={`/chu-dau-tu/${cdt}`} />
       <Header />
       <main className="flex-1 bg-white">
-        <Breadcrumb items={[{ name: "Tra cứu dự án", href: "/du-an/tra-cuu" }, { name: g.ten, href: `/chu-dau-tu/${cdt}` }]} />
+        <Breadcrumb items={[{ name: "Dự án", href: "/du-an" }, { name: g.ten, href: `/chu-dau-tu/${cdt}` }]} />
         <div className="mx-auto max-w-7xl px-4 pb-footer sm:px-6 lg:px-8">
           <h1 className="mb-4 mt-3 text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">{heading}</h1>
           <ProjectsBrowser projects={g.duAn} articles={articles} tieuDePhu />

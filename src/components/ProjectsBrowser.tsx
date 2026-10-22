@@ -653,25 +653,8 @@ export default function ProjectsBrowser({
               </div>
             </div>
 
-            {/* Tin tức bất động sản — 5 bài mới nhất */}
-            <div className="rounded-none border border-cvr-line bg-white p-5 shadow-lux">
-              <div className="flex items-baseline justify-between gap-2">
-                <h2 className="text-sm font-semibold tracking-tight text-cvr-ink">Tin tức bất động sản</h2>
-                <Link href="/tin-tuc" className="shrink-0 text-xs font-medium text-cvr-muted transition-colors hover:text-cvr-ink">
-                  Xem thêm →
-                </Link>
-              </div>
-              <div className="mt-2 flex flex-col divide-y divide-cvr-line/70">
-                {articles.slice(0, 5).map((a) => (
-                  <Link key={a.slug} href={`/tin-tuc/${a.slug}`} className="group py-3 first:pt-2 last:pb-0">
-                    <p className="line-clamp-2 text-sm font-medium leading-snug text-cvr-ink transition-colors group-hover:text-cvr-blue-ink">
-                      {a.title}
-                    </p>
-                    <p className="mt-1 text-xs text-cvr-muted">{a.category} · {a.date}</p>
-                  </Link>
-                ))}
-              </div>
-            </div>
+            {/* Bỏ khối "Tin tức bất động sản" (chủ dự án 22/10/2026): web đã có mục Tin tức riêng — trang dự án
+                chỉ lo dự án, không độn bài viết không liên quan. */}
           </div>
         </aside>
       </div>

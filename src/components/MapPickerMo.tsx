@@ -8,7 +8,7 @@ import { formatLatLng, parseLatLng, type LatLng } from "@/lib/googleMaps";
 import { centerOfArea } from "@/lib/geo";
 import { traDiaChi, timToaDo, timToaDoTheoBuoc } from "@/lib/timToaDo";
 import type { DiemTim } from "@/lib/diaChiHaiHe";
-import { docKhoangCach, khoangCachKm, layViTri, loiDinhVi } from "@/lib/dinhVi";
+import { layViTri, loiDinhVi } from "@/lib/dinhVi";
 import NhacBatDinhVi from "@/components/NhacBatDinhVi";
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -52,7 +52,6 @@ export default function MapPickerMo({
   const mapRef = useRef<MlMap | null>(null);
   const ghimRef = useRef<MlMarker | null>(null);
   const chamRef = useRef<MlMarker | null>(null);
-  const toiRef = useRef<LatLng | null>(null);
   const onChangeRef = useRef(onChange);
   const onDiaChiRef = useRef(onDiaChi);
   const onDiaGioiRef = useRef(onDiaGioi);
@@ -73,7 +72,6 @@ export default function MapPickerMo({
   const [dangGiai, setDangGiai] = useState(false);
   const [loi, setLoi] = useState("");
   const [loiDan, setLoiDan] = useState("");
-  const [khoangCach, setKhoangCach] = useState("");
   const [mucDo, setMucDo] = useState<"soNha" | "duong" | "khuVuc" | null>(null);
   // Địa chỉ đọc được NGAY TẠI ĐIỂM GHIM — luôn hiện cho người đăng thấy, kể cả
   // khi web không tự điền vào ô (vì ô đang có chữ của họ). Thấy rồi thì tự so:
@@ -100,7 +98,7 @@ export default function MapPickerMo({
     ghimRef.current = null;
     mayDienRef.current = "";
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setKhoangCach(""); setMucDo(null); setDiaChiGhim(""); setSoNhaGhim("");
+    setMucDo(null); setDiaChiGhim(""); setSoNhaGhim("");
   }, [value]);
 
   // ── Ghim xong → tra ngược ra địa chỉ, trả về form ────────────────────────
@@ -134,12 +132,6 @@ export default function MapPickerMo({
     }
   }
 
-  function doKhoangCach(ghim: LatLng) {
-    const toi = toiRef.current;
-    if (!toi) return;
-    setKhoangCach(docKhoangCach(khoangCachKm([toi.lat, toi.lng], [ghim.lat, ghim.lng])));
-  }
-
   // ── Đặt ghim — CHỈ gọi từ thao tác tay của khách ─────────────────────────
   async function datGhim(p: LatLng) {
     const map = mapRef.current;
@@ -155,20 +147,17 @@ export default function MapPickerMo({
         const moi = { lat: q.lat, lng: q.lng };
         onChangeRef.current(formatLatLng(moi));
         void traVeDiaChi(moi);
-        doKhoangCach(moi);
       });
       ghimRef.current = m;
     }
     onChangeRef.current(formatLatLng(p));
     void traVeDiaChi(p);
-    doKhoangCach(p);
   }
 
   // ── Chấm xanh "vị trí của bạn" — chỉ tham chiếu, KHÔNG phải ghim ─────────
   async function veCham(p: LatLng, bayToi: boolean) {
     const map = mapRef.current;
     if (!map) return;
-    toiRef.current = p;
     if (bayToi) map.easeTo({ center: [p.lng, p.lat], zoom: 17, duration: 500 });
 
     if (chamRef.current) chamRef.current.setLngLat([p.lng, p.lat]);
@@ -180,8 +169,6 @@ export default function MapPickerMo({
       el.className = "h-3.5 w-3.5 rounded-full bg-cvr-blue shadow ring-[3px] ring-white";
       chamRef.current = new ml.Marker({ element: el }).setLngLat([p.lng, p.lat]).addTo(map);
     }
-    const g = ghimRef.current?.getLngLat();
-    if (g) doKhoangCach({ lat: g.lat, lng: g.lng });
   }
 
   function dinhVi(ghimLuon: boolean) {
@@ -219,6 +206,16 @@ export default function MapPickerMo({
           style: STYLE_MO,
           center: [tam.lng, tam.lat],
           zoom: saved ? 17 : kv ? 12 : 5,
+          // VUỐT TRANG KHÔNG BỊ BẢN ĐỒ GIỮ LẠI (chủ dự án 22/10/2026): điện thoại một ngón = cuộn trang, hai ngón
+          // = kéo bản đồ; máy tính cuộn chuột = cuộn trang, giữ Ctrl/⌘ mới phóng to. Chạm để ghim vẫn như cũ.
+          cooperativeGestures: true,
+          // Dòng ghi nguồn bản đồ thu thành nút (i) — mở rộng sẵn thì che cả đáy bản đồ trên điện thoại.
+          attributionControl: { compact: true },
+          locale: {
+            "CooperativeGesturesHandler.MobileHelpText": "Dùng hai ngón tay để di chuyển bản đồ",
+            "CooperativeGesturesHandler.WindowsHelpText": "Giữ Ctrl và cuộn chuột để phóng to bản đồ",
+            "CooperativeGesturesHandler.MacHelpText": "Giữ ⌘ và cuộn chuột để phóng to bản đồ",
+          },
         });
         mapRef.current = map;
         map.addControl(new ml.NavigationControl({ showCompass: false }), "top-right");
@@ -284,7 +281,6 @@ export default function MapPickerMo({
     ghimRef.current?.remove();
     ghimRef.current = null;
     mayDienRef.current = "";
-    setKhoangCach("");
     setMucDo(null);
     setDiaChiGhim("");
     setSoNhaGhim("");
@@ -327,7 +323,7 @@ export default function MapPickerMo({
   return (
     <div className="space-y-3">
       <div className="relative overflow-hidden rounded-xl border border-cvr-line">
-        <div ref={boxRef} aria-label="Bản đồ ghim vị trí" className="h-[300px] w-full bg-cvr-surface sm:h-[360px]" />
+        <div ref={boxRef} aria-label="Bản đồ ghim vị trí" className="h-[240px] w-full bg-cvr-surface sm:h-[360px]" />
         {!sanSang && !hong && (
           <span className="pointer-events-none absolute inset-0 flex items-center justify-center text-[13px] font-medium text-cvr-muted">
             Đang mở bản đồ…
@@ -401,22 +397,21 @@ export default function MapPickerMo({
         {loiDan && <p className="mt-2 text-[12px] font-medium text-red-600">{loiDan}</p>}
       </div>
 
+      {/* Chú thích chỉ giữ cái cần (chủ dự án 22/10/2026: bớt câu hướng dẫn — cấu trúc tự nói). */}
+      {daGhim && (
       <p className="text-[13px] leading-relaxed text-cvr-body">
         {daGhim ? (
           <>
             <span className="font-semibold text-green-700">Đã ghim</span>
-            {khoangCach && <span className="text-cvr-muted"> · cách chỗ anh/chị {khoangCach}</span>}
             {mucDo && (
               <span className="ml-1.5 rounded-md bg-cvr-surface px-1.5 py-0.5 text-[11.5px] font-semibold text-cvr-body">
                 {mucDo === "soNha" ? "đúng số nhà" : mucDo === "duong" ? "đúng tên đường" : "mới tới phường/xã"}
               </span>
             )}
-            <span className="text-cvr-muted"> — kéo ghim hoặc bấm chỗ khác để chỉnh.</span>
           </>
-        ) : (
-          <span className="text-cvr-muted">Bấm lên bản đồ để ghim vị trí.</span>
-        )}
+        ) : null}
       </p>
+      )}
 
       {/* ĐỊA CHỈ TẠI ĐIỂM GHIM — hiện thẳng ra, và người đăng tự quyết có lấy hay
           không. Web KHÔNG tự đè lên chữ họ đã gõ (số nhà là quyền của khách,

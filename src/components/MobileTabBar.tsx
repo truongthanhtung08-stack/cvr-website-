@@ -252,15 +252,15 @@ function ThanhTab({ tabs, count, nutDangTinNoi = false }: { tabs: { href: string
           {tabs.map((t) => (
             <li key={t.href} className="flex-1">
               {nutDangTinNoi && t.href === "/dang-tin" ? (
-                // ĐĂNG TIN = NÚT CHÍNH của khu quản lý (chủ dự án yêu cầu 25/09):
-                // tròn, to, nhô lên khỏi thanh — như nút giữa của app Batdongsan.
-                <Link href={t.href} aria-label="Đăng tin" className="press flex h-[49px] flex-col items-center justify-end pb-[5px]">
-                  <span className="-mt-5 flex h-12 w-12 items-center justify-center rounded-full bg-cvr-blue text-white shadow-[0_4px_14px_rgba(0,113,227,0.45)] ring-4 ring-white">
-                    <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth={2.6} viewBox="0 0 24 24" aria-hidden>
+                // ĐĂNG TIN = NÚT CHÍNH của khu quản lý (25/09): vòng tròn xanh. 22/10/2026 chủ dự án: "cân đối, không phải
+                // cứ to là nổi bật mà cản trở giao diện" → bỏ nhô lên, cùng cỡ + cùng hàng với các tab khác, không che nội dung.
+                <Link href={t.href} aria-label="Đăng tin" className="press flex h-[49px] flex-col items-center justify-center gap-[2px]">
+                  <span className="flex h-[25px] w-[25px] items-center justify-center rounded-full bg-cvr-blue text-white">
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.6} viewBox="0 0 24 24" aria-hidden>
                       <path strokeLinecap="round" d="M12 5v14M5 12h14" />
                     </svg>
                   </span>
-                  <span className="mt-[3px] text-[10px] font-semibold leading-none text-cvr-blue">{t.label}</span>
+                  <span className="text-[10px] font-semibold leading-none tracking-[-0.01em] text-cvr-blue">{t.label}</span>
                 </Link>
               ) : (
               <Link

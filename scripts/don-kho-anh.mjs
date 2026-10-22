@@ -84,7 +84,9 @@ async function liet_ke_dang_dung() {
   const nhat = (s) => {
     if (typeof s !== "string") return;
     // Tên tệp kiểu CŨ (<giờ>-<số>-tên) lẫn kiểu MỚI (<mã băm>-tên) đều bắt được.
-    for (const m of s.matchAll(/([0-9a-f]{10,}-[^"'\\\s,\]}]+|[0-9]{10,}-[0-9]+-[^"'\\\s,\]}]+)/g))
+    // ⛔ 22/10/2026: ảnh chèn trong NỘI DUNG (markdown "![..](url)", HTML "<img src=..>") — trước không chặn ")"/"<"/">"
+    // nên tên bắt được dính thêm ")" → tưởng ảnh không dùng → đã xoá nhầm 11 ảnh của 6 dự án (đã khôi phục từ ảnh gốc).
+    for (const m of s.matchAll(/([0-9a-f]{10,}-[^"'\\\s,\]})(<>]+|[0-9]{10,}-[0-9]+-[^"'\\\s,\]})(<>]+)/g))
       dung.add(decodeURIComponent(m[1].replace(/^.*\//, "")));
   };
   const quet = (v) => {

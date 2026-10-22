@@ -86,7 +86,10 @@ export default function ScrollTopOnRoute() {
     const dauTien = lanDau.current;
     lanDau.current = false;
 
-    const nenKhoiPhuc = (dauTien && taiLaiTrang) || quayLai.current;
+    // TRANG ĐĂNG TIN KHÔNG khôi phục chỗ cũ (chủ dự án 22/10/2026: "web lưu lại vị trí khách đang thao tác" → mở lại
+    // là giật, nhảy lung tung vì form còn đang nạp bản nháp, trang dài ra từng nhịp). Luôn mở ở đầu trang, mục 1.
+    const laTrangNhap = pathname.startsWith("/dang-tin");
+    const nenKhoiPhuc = !laTrangNhap && ((dauTien && taiLaiTrang) || quayLai.current);
     quayLai.current = false;
 
     // Địa chỉ có NEO (#ket-qua…) → để trang cuộn tới neo, không ép về đầu.

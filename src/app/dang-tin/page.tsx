@@ -15,12 +15,11 @@ export default function DangTinPage() {
     <>
       <Header />
       <main className="flex-1 bg-white">
-        <div className="mx-auto w-full max-w-4xl overflow-x-clip px-4 pt-10 pb-footer sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h1 className="text-3xl font-semibold tracking-tight text-cvr-ink sm:text-4xl">Đăng tin bất động sản</h1>
-          </div>
+        <div className="mx-auto w-full max-w-4xl overflow-x-clip px-4 pt-5 pb-footer sm:px-6 sm:pt-8 lg:px-8">
+          {/* Tiêu đề gọn (chủ dự án 22/10/2026: "Tạo tin đăng", bớt khoảng trắng trên dưới) */}
+          <h1 className="text-center text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">Tạo tin đăng</h1>
 
-          <div className="mt-8">
+          <div className="mt-4">
             {/* Suspense: form đọc ?id= (chế độ sửa tin) bằng useSearchParams */}
             <Suspense fallback={<p className="py-16 text-center text-sm text-cvr-muted">Đang tải…</p>}>
               <PostListingForm />

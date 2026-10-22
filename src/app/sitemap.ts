@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 import { getProjects, getArticles } from "@/lib/contentDb";
 import { getListings, getListingsHetHan } from "@/lib/listingsDb";
 import { getChuyenGia, NGUONG_INDEX_HO_SO } from "@/lib/chuyenGiaDb";
-import { NGUONG_INDEX_DANH_MUC, projectCategories, rentCategories, saleCategories, soTinDanhMuc } from "@/lib/categories";
+import { duAnThuocNhom, NGUONG_INDEX_DANH_MUC, projectCategories, rentCategories, saleCategories, soTinDanhMuc } from "@/lib/categories";
 import { packages, trangTienIchDat, utilityTools } from "@/lib/packages";
 import { khuVucList } from "@/lib/khuVuc";
 import { getBilling } from "@/lib/siteContent";
@@ -26,7 +26,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
 
   const staticRoutes: MetadataRoute.Sitemap = [
-    "", "/mua-ban", "/cho-thue", "/du-an", "/du-an/tra-cuu", "/tin-tuc",
+    "", "/mua-ban", "/cho-thue", "/du-an", "/tin-tuc",
     // KHÔNG đưa /so-sanh, /tin-luu, /tim-kiem vào sitemap: nội dung sinh theo
     // từng khách hoặc theo bộ lọc → Google coi là trang mỏng/trùng lặp.
     "/gioi-thieu", "/chuyen-gia", "/bao-gia-dang-tin", "/dang-tin",
@@ -52,10 +52,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // ("bán căn hộ chung cư Đà Nẵng", "cho thuê văn phòng Huế"…)
   // Cổng 3 tin (20/10/2026): danh mục mua bán / cho thuê chưa đủ 3 tin còn hạn đã noindex ở trang → không khai ở đây.
   const tinDm = await getListings().catch(() => []);
+  const duAnDm = await getProjects().catch(() => []); // nhóm dự án chưa có dự án nào: không khai (22/10/2026)
   const categoryRoutes: MetadataRoute.Sitemap = [
     ...saleCategories.filter((c) => soTinDanhMuc(tinDm, c, "ban") >= NGUONG_INDEX_DANH_MUC).map((c) => `/mua-ban/${c.slug}`),
     ...rentCategories.filter((c) => soTinDanhMuc(tinDm, c, "thue") >= NGUONG_INDEX_DANH_MUC).map((c) => `/cho-thue/${c.slug}`),
-    ...projectCategories.map((c) => `/du-an/${c.slug}`),
+    ...projectCategories.filter((c) => duAnThuocNhom(duAnDm, c).length > 0).map((c) => `/du-an/${c.slug}`),
   ].map((p) => ({ url: `${SITE}${p}`, changeFrequency: "daily" as const, priority: 0.9 }));
 
   // Trang gói dịch vụ & công cụ tiện ích

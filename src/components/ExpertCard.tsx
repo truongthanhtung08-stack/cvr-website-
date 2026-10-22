@@ -44,12 +44,15 @@ export default function ExpertCard({ e }: { e: Expert }) {
 
       {/* Liên hệ */}
       <div className="mt-5 flex gap-2.5 pt-0.5">
-        <a href={`tel:${e.phone.replace(/\s/g, "")}`} className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-cvr-ink px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-cvr-body">
+        <a href={`tel:${e.phone.replace(/\s/g, "")}`} className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-cvr-blue px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-cvr-blue-ink">
           <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.95.68l1.5 4.5a1 1 0 01-.5 1.2l-2.26 1.13a11 11 0 005.52 5.52l1.13-2.26a1 1 0 011.2-.5l4.5 1.5a1 1 0 01.68.95V19a2 2 0 01-2 2h-1C9.7 21 3 14.3 3 6V5z" /></svg>
           Gọi
         </a>
-        <a href={`https://zalo.me/${e.zalo}`} className="flex flex-1 items-center justify-center rounded-lg border border-cvr-line px-4 py-2.5 text-sm font-semibold text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink">
-          Nhắn Zalo
+        <a href={`https://zalo.me/${e.zalo}`} className="flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-cvr-line bg-white px-4 py-2.5 text-sm font-semibold text-cvr-ink transition hover:border-cvr-ink">
+          {/* Nút liên hệ đồng bộ toàn web (22/10/2026): số = nền xanh · Zalo = trắng viền, logo + "Zalo" (mở trang Zalo cá nhân) */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo/zalo.svg" alt="" aria-hidden className="h-5 w-5 shrink-0" />
+          Zalo
         </a>
       </div>
     </div>

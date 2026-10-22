@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { loiEmail } from "@/lib/kiemNhap";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { dichSauDangNhap, thamSoNext } from "@/lib/dieuHuong";
 import SocialAuth from "@/components/SocialAuth";
 import { useBilling } from "@/lib/useBilling";
 import { freeDangChay, freeNote, tenGoiMienPhi } from "@/lib/billing";
@@ -226,7 +227,8 @@ export default function RegisterForm({ uuDai, capThe = "h1" }: { uuDai?: string;
       // (chưa xác minh thì hàm tự từ chối, khối "tin của bạn" ở trang tài khoản lo tiếp).
       if (!error && kenhMa === "zalo") await supabase.rpc("tu_nhan_tin_theo_sdt").then(() => {}, () => {});
 
-      window.location.replace(error ? "/dang-nhap" : "/tai-khoan");
+      // Một logic đích sau đăng nhập (dichSauDangNhap): có ?next (vd từ Đăng tin) thì về đó, không thì trang quản lý.
+      window.location.replace(error ? `/dang-nhap${thamSoNext()}` : dichSauDangNhap("/tai-khoan"));
     } catch {
       setDangChay(false);
       setLoi("Không kết nối được máy chủ. Vui lòng thử lại.");

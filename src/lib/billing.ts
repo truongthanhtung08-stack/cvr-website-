@@ -503,6 +503,23 @@ export function freeDangChay(f: FreePolicy, today: string): boolean {
   return true;
 }
 
+// THÀNH VIÊN MỚI — MỘT ĐỊNH NGHĨA DUY NHẤT cho mọi chương trình (chủ dự án duyệt 22/10/2026; trước đây
+// chương trình giảm giá "thành viên mới" chỉ đếm free.days ngày, không xét thời gian chương trình và tạo hộ).
+// Dùng ở: huongKhuyenMai (miễn phí), quotePrice isNewMember (giảm giá) — form đăng tin, duyệt tin, đăng lại, Tự kiểm tin.
+//   · Tự đăng ký / tạo hộ đã tự vào (coChu): ngày thành viên nằm trong thời gian admin đặt (from–to)
+//     và tin gửi trong free.days ngày đầu kể từ ngày đó (tin trước ngày thành viên không tính).
+//   · Tạo hộ chưa tự vào (coChu = false, laChuThat): tính như admin đăng hộ — lúc gửi tin nằm trong from–to.
+export function thanhVienMoi(
+  f: FreePolicy,
+  k: { coChu: boolean; homNay: string; soNgayMoTk: number; ngayTaoTk?: string },
+): boolean {
+  const trongKy = (ngay: string) => (!f.from || ngay >= f.from) && (!f.to || ngay <= f.to);
+  if (!k.coChu) return trongKy(k.homNay);
+  const ngayTaoTk = k.ngayTaoTk ?? new Date(new Date(`${k.homNay}T12:00:00+07:00`).getTime() - k.soNgayMoTk * 86_400_000)
+    .toISOString().slice(0, 10);
+  return trongKy(ngayTaoTk) && k.soNgayMoTk >= 0 && k.soNgayMoTk <= f.days;
+}
+
 // CÓ HƯỞNG CHƯƠNG TRÌNH KHUYẾN MÃI (Giá & quy định → free) KHÔNG — MỘT ĐIỀU KIỆN DUY NHẤT
 // cho form đăng tin, duyệt tin, đăng lại, form admin (CSDL: so_ngay_hien_thi, 0054).
 // Chương trình đang chạy (bật + trong from/to) · đúng hạng của chương trình · đúng đối
@@ -517,12 +534,10 @@ export function huongKhuyenMai(
   // trình (from–to) đều được ưu đãi; tin đăng trong free.days ngày đầu kể từ ngày tạo tài
   // khoản được hưởng — KỂ CẢ khi đăng sau ngày kết thúc chương trình.
   if (k.coChu && f.audience === "new") {
-    const ngayTaoTk = k.ngayTaoTk ?? new Date(new Date(`${k.homNay}T12:00:00+07:00`).getTime() - k.soNgayMoTk * 86_400_000)
-      .toISOString().slice(0, 10);
     const conLuot = f.quota === 0 || Number(k.freeQuota ?? 0) > 0;
     // Chỉ tin đăng TỪ ngày bắt đầu là thành viên (soNgayMoTk ≥ 0) — tài khoản tạo hộ: tin
     // đăng trước ngày chính chủ vào không hưởng (0058, ngay_thanh_vien).
-    return freeDangChay(f, ngayTaoTk) && k.soNgayMoTk >= 0 && k.soNgayMoTk <= f.days && conLuot;
+    return f.active && thanhVienMoi(f, k) && conLuot;
   }
   if (!freeDangChay(f, k.homNay)) return false;
   if (!k.coChu) return true;

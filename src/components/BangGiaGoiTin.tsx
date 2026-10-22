@@ -6,6 +6,7 @@ import { vnd } from "@/lib/billing";
 import { getTier, type TierId } from "@/lib/packages";
 import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
 import { useQuyDinhGia } from "@/lib/useQuyDinhGia";
+import MucAnHien from "@/components/MucAnHien";
 
 // ============================================================================
 // BẢNG GIÁ GÓI TIN KIỂU BATDONGSAN (chốt 01/10/2026) — MỘT bảng dùng chung:
@@ -158,11 +159,16 @@ export default function BangGiaGoiTin({
         </span>
         Giá bao gồm {(THUE_SUAT_GTGT * 100).toFixed(0)}% VAT
       </label>
-      {QUY_DINH.length > 0 && (
-        <ul className="mt-3 space-y-1 text-[13px] leading-relaxed text-cvr-muted">
-          {QUY_DINH.map((d) => <li key={d} className="flex gap-2"><span aria-hidden>·</span><span>{d}</span></li>)}
-        </ul>
-      )}
+      {/* Đang chọn gói (trang đăng tin, đăng lại): quy định thu gọn trong khối ẩn/hiện chung (MucAnHien) — trang đăng
+          tin đã dài (chủ dự án 22/10/2026). Tên mục = tên trong Admin → Giá & quy định. Trang báo giá (chỉ xem) hiện đủ. */}
+      {QUY_DINH.length > 0 && (() => {
+        const ds = (
+          <ul className={`${onChon ? "" : "mt-3 "}space-y-1 text-[13px] leading-relaxed text-cvr-muted`}>
+            {QUY_DINH.map((d) => <li key={d} className="flex gap-2"><span aria-hidden>·</span><span>{d}</span></li>)}
+          </ul>
+        );
+        return onChon ? <div className="mt-4"><MucAnHien ten="Quy định gói tin" goiY={QUY_DINH[0]}>{ds}</MucAnHien></div> : ds;
+      })()}
     </div>
   );
 }

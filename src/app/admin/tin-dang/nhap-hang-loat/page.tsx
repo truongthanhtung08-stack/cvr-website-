@@ -13,7 +13,8 @@ import {
   LOAI_HINH_HOP_LE,
   type ParsedRow,
 } from "@/lib/csvTin";
-import { docXlsx } from "@/lib/docXlsx";
+import { docXlsx, docXlsxTheoTen } from "@/lib/docXlsx";
+import { docDuAnTuBang, type DongDuAn } from "@/lib/csvDuAn";
 import { uploadImageFile, uploadVideoFile } from "@/lib/uploadImage";
 import { soAnhToiDa, soVideoToiDa } from "@/lib/billing";
 import { isVideoUrl } from "@/lib/media";
@@ -43,6 +44,9 @@ export default function NhapHangLoatPage() {
   const [canhBaoFile, setCanhBaoFile] = useState("");
   const [dangGui, setDangGui] = useState(false);
   const [ketQua, setKetQua] = useState("");
+  // SHEET "DỰ ÁN" trong cùng tệp Excel (chủ dự án 22/10/2026): tin thuộc dự án → Cowork ghi luôn thông tin dự án vào
+  // sheet thứ hai, nạp tin là nạp luôn dự án (cùng bộ kiểm với Admin → Dự án → Nạp CSV).
+  const [duAn, setDuAn] = useState<DongDuAn[]>([]);
 
   // Ảnh tải hàng loạt: tên tệp → link đã tải lên kho ảnh
   const [anhDaTai, setAnhDaTai] = useState<{ ten: string; url: string }[]>([]);
@@ -170,6 +174,7 @@ export default function NhapHangLoatPage() {
     setLoiChung("");
     setCanhBaoFile("");
     setRows([]);
+    setDuAn([]);
     setTenFile(file.name);
     try {
       const laExcel = /\.xlsx$/i.test(file.name);
@@ -177,6 +182,7 @@ export default function NhapHangLoatPage() {
         ? docTinTuBang(await docXlsx(await file.arrayBuffer()))
         : docTinTuCsv(await file.text());
       if (err) setLoiChung(err);
+      if (laExcel) setDuAn(docDuAnTuBang((await docXlsxTheoTen(await file.arrayBuffer(), /^d[ựu]s*[áa]n$/i)) ?? []));
       setCanhBaoFile(canhBaoChung ?? "");
       setRows(r);
       doMaTrungDotCu(r);
@@ -355,6 +361,20 @@ export default function NhapHangLoatPage() {
         capNhat++;
       }
 
+      // Dự án kèm tin (sheet "Dự án"): dự án mới vào "Chờ duyệt" như Nạp CSV dự án; trùng tên đã có thì bỏ qua
+      let soDuAn = 0, duAnTrung = 0, loiDuAn = "";
+      const duAnHopLe = duAn.filter((d) => d.payload);
+      if (duAnHopLe.length) {
+        const { data: daCo } = await supabase.from("projects").select("slug").in("slug", duAnHopLe.map((d) => d.slug));
+        const trung = new Set((daCo ?? []).map((x: { slug: string }) => x.slug));
+        const moi = duAnHopLe.filter((d) => !trung.has(d.slug));
+        duAnTrung = trung.size;
+        if (moi.length) {
+          const { error } = await supabase.from("projects").insert(moi.map((d) => d.payload!));
+          if (error) loiDuAn = error.message; else soDuAn = moi.length;
+        }
+      }
+
       // Tin đăng hộ: gắn về tài khoản theo SĐT + chọn ảnh đại diện hợp khung (chủ dự án 09/10/2026)
       await fetch("/api/admin/gom-tin-dang-ho", { method: "POST" }).catch(() => {});
       // Báo web bỏ cache → tin vừa đăng hiện NGAY (trước đây chờ lượt làm mới tự động).
@@ -362,8 +382,10 @@ export default function NhapHangLoatPage() {
       setKetQua(
         `Đã đăng ${xong} tin mới` +
           (capNhat ? ` · bổ sung ảnh/video và cập nhật nội dung cho ${capNhat} tin đã đăng` : "") +
-          ". Tin đã hiện trên web.",
+          ". Tin đã hiện trên web." +
+          (loiDuAn ? ` Dự án: lỗi ${loiDuAn}.` : soDuAn || duAnTrung ? ` Dự án: nạp ${soDuAn} vào "Chờ duyệt" (Admin → Dự án)${duAnTrung ? `, bỏ qua ${duAnTrung} đã có` : ""}.` : ""),
       );
+      setDuAn([]);
       setRows([]);
       setTenFile("");
       setAnhDaTai([]);
@@ -494,6 +516,15 @@ export default function NhapHangLoatPage() {
         <p className={`rounded-lg px-4 py-2.5 text-sm ${ketQua.startsWith("Đã đăng") && !ketQua.includes("lỗi") ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}`}>
           {ketQua}
         </p>
+      )}
+
+      {duAn.length > 0 && (
+        <div className="rounded-lg border border-cvr-line bg-white px-4 py-3 text-sm text-cvr-body">
+          <p className="font-semibold text-cvr-ink">Sheet "Dự án": {duAn.filter((d) => d.payload).length}/{duAn.length} dự án hợp lệ — nạp cùng lúc khi bấm Đăng</p>
+          {duAn.filter((d) => !d.payload).map((d) => (
+            <p key={d.dong} className="mt-1 text-red-700">Dòng {d.dong} · {d.ten || "(không tên)"}: {d.loi.join(", ")}</p>
+          ))}
+        </div>
       )}
 
       {/* KẾT QUẢ ĐỌC FILE */}

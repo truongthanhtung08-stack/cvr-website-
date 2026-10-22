@@ -334,7 +334,8 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
   const relatedFill = pickRelated(
     samePurpose,
     (x) =>
-      (l.projectSlug && x.projectSlug === l.projectSlug ? 8 : 0) +
+      // Tin cùng dự án LÊN ĐẦU "Bất động sản tương tự" (chủ dự án 22/10/2026), kể cả mã dự án ghi lệch chút ít; tin khác dự án sau
+      (l.projectSlug && cungDuAn(x.projectSlug, l.projectSlug) ? 8 : 0) +
       (curDistrict && districtOf(x.location) === curDistrict ? 4 : 0) +
       (provinceOf(x.location) === curProvince ? 2 : 0) +
       (x.type === l.type ? 1 : 0) +
@@ -590,6 +591,33 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                   )}
                   </div>
                 </div>
+
+                {/* TIN → DỰ ÁN (chủ dự án 22/10/2026): tin thuộc dự án có nút sang trang dự án ngay dưới khối giá.
+                    Trang dự án hiện thông tin dự án, tin của chính dự án, rồi Bất động sản tương tự.
+                    Câu chữ CHỜ CHỦ DỰ ÁN DUYỆT NGUYÊN VĂN. */}
+                {slugDuAnTin && tenDuAn && (
+                  <Link
+                    href={`/du-an/${slugDuAnTin}`}
+                    className="mt-3 flex items-center justify-between gap-3 rounded-2xl border border-cvr-line bg-white px-4 py-3 text-[15px] transition hover:border-cvr-ink"
+                  >
+                    {/* Như khối "Thông tin dự án" của Batdongsan: tên · tình trạng · giá từ · chủ đầu tư —
+                        chỉ dòng nào dự án đã có hồ sơ (bậc 1 chỉ có tên). */}
+                    <span className="min-w-0">
+                      <span className="block text-[12px] text-cvr-muted">Thuộc dự án</span>
+                      <span className="block font-semibold text-cvr-ink">{tenDuAn}</span>
+                      {duAn && (duAn.status || (duAn.priceMode !== "hidden" && duAn.priceFrom)) && (
+                        <span className="block text-[13px] text-cvr-body">
+                          {[duAn.status, duAn.priceMode !== "hidden" ? duAn.priceFrom : ""].filter(Boolean).join(" · ")}
+                        </span>
+                      )}
+                      {duAn?.developer && <span className="block text-[13px] text-cvr-muted">{duAn.developer}</span>}
+                    </span>
+                    <span className="flex shrink-0 items-center gap-1 text-[14px] font-semibold text-cvr-blue-ink">
+                      Xem dự án
+                      <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+                    </span>
+                  </Link>
+                )}
 
 
               </div>

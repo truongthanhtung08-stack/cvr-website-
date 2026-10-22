@@ -12,6 +12,11 @@ import type { TierId } from "@/lib/packages";
 //             · tin không có số điện thoại liên hệ
 //   CHÚ Ý     · tin đã qua giờ hết hạn, chờ cron mỗi giờ tắt (web đã tự ẩn rồi)
 // Chỉ ĐỌC, không sửa gì. Số ngày dùng đúng huongKhuyenMai + bảng giá công bố như lúc duyệt.
+// MỌI ĐƯỜNG ĐẶT HẠN TIN (rà 22/10/2026 — thêm đường mới phải thêm vào đây, không thì Tự kiểm báo nhầm mỗi sáng):
+//   1. Duyệt tin (api/tin-dang/duyet): published_at = lúc duyệt, hạn = published_at + số ngày gói / chương trình.
+//   2. Admin sửa / nâng hạng (trigger tin_luon_co_han): published_at = now(), hạn = published_at + so_ngay_hien_thi.
+//   3. Hết VIP về Basic (hetHanTin): hạn = hạn kỳ Basic gốc, published_at GIỮ ngày nâng VIP → ghi details.ha_vip_luc, ở đây bỏ đếm.
+//   4. Đăng lại / Up tin (upTin): xoá hạn, về chờ duyệt → lại đi đường 1.
 // ============================================================================
 
 type Tin = {
@@ -25,7 +30,7 @@ type Tin = {
   published_at: string | null;
   bumped_at: string | null;
   tier_expires_at: string | null;
-  details: { contact?: { phone?: string } } | null;
+  details: { contact?: { phone?: string }; ha_vip_luc?: string } | null;
 };
 type Chu = { id: string; phone: string | null; created_at: string | null; role: string | null; free_quota: number | null; tao_ho?: boolean | null; vao_chinh_thuc_luc?: string | null };
 export type Muc = { id: string; ma: string; tieuDe: string; loai: string; chiTiet: string };
@@ -82,7 +87,10 @@ export async function kiemTin(admin: SupabaseClient): Promise<KetQuaKiemTin> {
 
     // Số ngày đúng chương trình — MỌI tin đang hiện, không trừ tin cũ (03/10/2026: đợt
     // gia hạn tay 25/09 lọt qua vì trước chỉ soát tin lên sóng từ 01/10).
-    if (t.tier_expires_at && t.published_at) {
+    // Tin hết VIP về Basic (hetHanTin ghi ha_vip_luc): hạn là hạn kỳ Basic gốc, published_at là ngày nâng VIP → không đếm
+    // từ published_at (báo nhầm tin 356ED2FA mỗi sáng, chủ dự án 22/10/2026). Kỳ mới sau mốc đó (đăng lại, nâng lại) vẫn soát.
+    const haVip = t.details?.ha_vip_luc && t.published_at && Date.parse(t.details.ha_vip_luc) >= Date.parse(t.published_at);
+    if (t.tier_expires_at && t.published_at && !haVip) {
       const soNgay = Math.round((new Date(t.tier_expires_at).getTime() - new Date(t.published_at).getTime()) / NGAY_MS);
       const huong = chonKhuyenMai(t.details) && huongKhuyenMai(bang.free, {
         goi: t.tier,

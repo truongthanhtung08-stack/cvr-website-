@@ -135,9 +135,11 @@ export async function quetTinHetHan(
       if (tin.tier !== "basic" && Number.isFinite(hanBasic) && hanBasic > bayGio.getTime()) {
         const { sau_vip_con_lai_ms: _bo1, han_basic: _bo2, ...giu } = tin.details ?? {};
         void _bo1; void _bo2;
+        // ha_vip_luc: mốc hạ từ VIP về Basic — hạn lúc này là hạn kỳ Basic gốc, không tính từ published_at (ngày nâng VIP).
+        // Tự kiểm tin (kiemTin.ts) đọc mốc này để không báo nhầm "Sai số ngày hiển thị" (chủ dự án 22/10/2026).
         const { error: e2 } = await admin
           .from("listings")
-          .update({ tier: "basic", tier_days: null, tier_expires_at: new Date(hanBasic).toISOString(), details: giu })
+          .update({ tier: "basic", tier_days: null, tier_expires_at: new Date(hanBasic).toISOString(), details: { ...giu, ha_vip_luc: bayGio.toISOString() } })
           .eq("id", tin.id)
           .eq("status", "approved");
         if (!e2) continue;

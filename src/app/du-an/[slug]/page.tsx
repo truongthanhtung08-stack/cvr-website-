@@ -15,6 +15,7 @@ import RelatedListingsTabs from "@/components/RelatedListingsTabs";
 import ListingShowcase from "@/components/ListingShowcase";
 import LeadForm from "@/components/LeadForm";
 import RichContent from "@/components/RichContent";
+import MoTaThuGon from "@/components/MoTaThuGon";
 import { chuThuan } from "@/lib/chuThuan";
 import VideoEmbed from "@/components/VideoEmbed";
 import Breadcrumb from "@/components/Breadcrumb";
@@ -24,7 +25,7 @@ import ProjectsBrowser from "@/components/ProjectsBrowser";
 import { provinceOf, districtOf, segmentOf, pickRelated, type Project, type Listing } from "@/lib/data";
 import { getProject, getProjects, getArticles } from "@/lib/contentDb";
 import { getListings } from "@/lib/listingsDb";
-import { findCategory, projectCategories, type Category } from "@/lib/categories";
+import { duAnThuocNhom, findCategory, projectCategories, type Category } from "@/lib/categories";
 import { normalizeVi, cungDuAn } from "@/lib/filters";
 import { demTinTheoKhuVuc, moTaKhuVuc, tieuDeKhuVuc, timKhuVuc } from "@/lib/khuVuc";
 import { catMoTa, tieuDeGoogle } from "@/lib/thang";
@@ -61,11 +62,7 @@ function tuongTuDuAn(listings: Listing[], tinDuAn: Listing[], viTri: string): { 
 }
 
 function projectsInCategory(projects: Project[], c: Category): Project[] {
-  const keys = c.types.map(normalizeVi);
-  return projects.filter((p) => {
-    const t = normalizeVi(p.type);
-    return keys.some((k) => t.includes(k));
-  });
+  return duAnThuocNhom(projects, c);
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -78,6 +75,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       description: c.desc,
       alternates: { canonical: `/du-an/${c.slug}` },
       openGraph: { title: c.title, description: c.desc, url: `/du-an/${c.slug}`, type: "website" },
+      // Nhóm chưa có dự án nào → xem được nhưng không cho lập chỉ mục (tránh trang trống — 22/10/2026)
+      ...(projectsInCategory(await getProjects().catch(() => []), c).length === 0 ? { robots: { index: false, follow: true } } : {}),
     };
   }
 
@@ -159,7 +158,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
       <>
         <Header />
         <main className="flex-1 bg-white">
-          <Breadcrumb items={[{ name: "Tra cứu dự án", href: "/du-an/tra-cuu" }, { name: cat.label, href: `/du-an/${cat.slug}` }]} />
+          <Breadcrumb items={[{ name: "Dự án", href: "/du-an" }, { name: cat.label, href: `/du-an/${cat.slug}` }]} />
           <div className="mx-auto max-w-7xl px-4 pb-footer sm:px-6 lg:px-8">
             <h1 className="mb-1 mt-3 text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">{cat.h1}</h1>
             <p className="mb-4 text-sm text-cvr-muted">{cat.desc}</p>
@@ -191,7 +190,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
         <ProjectListJsonLd items={items} heading={tieuDeKhuVuc("duan", kv.name)} path={`/du-an/${kv.slug}`} />
         <Header />
         <main className="flex-1 bg-white">
-          <Breadcrumb items={[{ name: "Tra cứu dự án", href: "/du-an/tra-cuu" }, { name: kv.name, href: `/du-an/${kv.slug}` }]} />
+          <Breadcrumb items={[{ name: "Dự án", href: "/du-an" }, { name: kv.name, href: `/du-an/${kv.slug}` }]} />
           <div className="mx-auto max-w-7xl px-4 pb-footer sm:px-6 lg:px-8">
             <h1 className="mb-1 mt-3 text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">
               Dự án bất động sản tại {kv.name}
@@ -217,14 +216,17 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
       <>
         <Header />
         <main className="flex-1 bg-white">
-          <Breadcrumb items={[{ name: "Tra cứu dự án", href: "/du-an/tra-cuu" }, { name: coban.ten, href: `/du-an/${slug}` }]} />
+          <Breadcrumb items={[{ name: "Dự án", href: "/du-an" }, { name: coban.ten, href: `/du-an/${slug}` }]} />
           <div className="mx-auto max-w-7xl px-4 pb-footer sm:px-6 lg:px-8">
             <h1 className="mt-3 text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">{coban.ten}</h1>
             <p className="mt-1 text-sm text-cvr-muted">{coban.viTri}</p>
+            {/* Dự án bậc 1 (chỉ có tên từ tin) — câu chữ CHỜ CHỦ DỰ ÁN DUYỆT NGUYÊN VĂN (22/10/2026) */}
+            <p className="mt-3 rounded-xl bg-cvr-surface px-4 py-2.5 text-sm text-cvr-body">Thông tin dự án đang được cập nhật.</p>
             <section id="tin-dang" className="scroll-mt-28">
               <RelatedListingsTabs
                 ban={coban.tin.filter((x) => (x.purpose ?? "ban") === "ban")}
                 thue={coban.tin.filter((x) => (x.purpose ?? "ban") === "thue")}
+                tenDuAn={coban.ten}
                 title={`Tin mua bán liên quan tại dự án ${coban.ten}`}
               />
             </section>
@@ -283,6 +285,9 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   const hasRelated = projectListings.length > 0;
 
   // Menu — chỉ mục có nội dung (khớp id các <section>)
+  // GỌN (chủ dự án 22/10/2026: "rõ ràng, gọn, tránh lan man"): mục Bảng giá chỉ hiện khi có bảng giá thật để hiện;
+  // giá ẩn hoặc chưa có bảng → bỏ hẳn mục (cột phải đã có "Liên hệ" + ô nhận bảng giá), không lặp hộp "Liên hệ".
+  const coBangGia = showPrice && priceTable.length > 0;
   const nav = [
     { id: "tong-quan", label: "Tổng quan" },
     ...(p.videos?.length ? [{ id: "video", label: "Video" }] : []),
@@ -290,9 +295,11 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
     ...(floorPlans.length ? [{ id: "mat-bang", label: "Mặt bằng" }] : []),
     { id: "tien-ich", label: "Tiện ích" },
     { id: "tien-do", label: "Tiến độ" },
-    { id: "bang-gia", label: "Bảng giá" },
+    ...(coBangGia ? [{ id: "bang-gia", label: "Bảng giá" }] : []),
     { id: "chu-dau-tu", label: "Chủ đầu tư" },
-    ...(hasRelated ? [{ id: "tin-dang", label: "Tin bán / cho thuê" }] : []),
+    // Menu mục của trang (22/10/2026): thông tin dự án → tin thuộc dự án → dự án tương tự
+    { id: "tin-du-an", label: "Tin bán / cho thuê" },
+    { id: "du-an-tuong-tu", label: "Dự án tương tự" },
   ];
 
   // ── DỮ LIỆU CÓ CẤU TRÚC CHO GOOGLE (JSON-LD) ──────────────────────────────
@@ -365,23 +372,32 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
             {/* Dải thông tin nhanh — cân đối, dễ đọc từng tiêu chí */}
             <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4">
-              <Fact label="Giá từ" value={sidePrice} accent />
-              <Fact label="Loại hình" value={p.type} />
+              {/* Thứ tự (chủ dự án 22/10/2026): chủ đầu tư · loại hình · giá · bàn giao */}
               <Fact label="Chủ đầu tư" value={p.developer} />
+              <Fact label="Loại hình" value={p.type} />
+              <Fact label="Giá từ" value={sidePrice} accent />
               <Fact label="Bàn giao" value={handover} />
             </div>
           </div>
 
-          <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
+          </HomeCollapsible>
+
+          {/* MENU MỤC DÍNH SUỐT TRANG (22/10/2026): nằm ngoài lưới nội dung nên cuộn tới khối tin thuộc dự án,
+              dự án tương tự cuối trang vẫn dính và sáng đúng mục đang xem. */}
+          <ProjectNav items={nav} anKhiMo />
+
+          <HomeCollapsible>
+          <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
             <div className="reveal is-visible cards-stagger lg:col-span-2 [&>section:first-of-type]:mt-5">
-              {/* Menu dính — sáng theo mục đang xem, bấm để cuộn mượt */}
-              <ProjectNav items={nav} />
 
               {/* 1) Tổng quan */}
               <Section id="tong-quan" title="Tổng quan dự án">
-                <div className="space-y-3 text-[15px] leading-relaxed text-cvr-body">
-                  <RichContent paragraphs={p.overview} title={p.name} />
-                </div>
+                {/* Tổng quan dài → thu gọn + "Xem thêm" như mô tả tin (22/10/2026), để tin của dự án không bị đẩy quá xa */}
+                <MoTaThuGon dong={6}>
+                  <div className="space-y-3 text-[15px] leading-relaxed text-cvr-body">
+                    <RichContent paragraphs={p.overview} title={p.name} />
+                  </div>
+                </MoTaThuGon>
                 {p.scale.length > 0 && (
                   <div className="mt-6 grid grid-cols-1 gap-x-8 sm:grid-cols-2">
                     {p.scale.map((s) => (
@@ -447,16 +463,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               </Section>
 
               {/* 6) Bảng giá — cấu trúc Loại căn – Diện tích – Hướng – Giá (ẩn/hiện giá) */}
+              {coBangGia && (
               <Section id="bang-gia" title="Bảng giá & loại hình">
-                {!showPrice ? (
-                  /* ẨN GIÁ → không hiện loại căn / diện tích / hướng / giá, chỉ mời liên hệ */
-                  <div className="rounded-xl border border-dashed border-cvr-line bg-white px-4 py-7 text-center">
-                    <p className="text-lg font-semibold tracking-tight text-cvr-ink">Liên hệ</p>
-                    <p className="mt-1.5 text-sm text-cvr-body">
-                      Bảng giá &amp; chính sách bán hàng của dự án được cung cấp trực tiếp.
-                    </p>
-                  </div>
-                ) : priceTable.length > 0 ? (
                   <div className="overflow-hidden rounded-xl border border-cvr-line">
                     <div className="grid grid-cols-[1.4fr_1fr_0.8fr_1fr] bg-white px-4 py-2.5 text-[12px] font-semibold uppercase tracking-wide text-cvr-muted">
                       <span>Loại căn</span><span>Diện tích</span><span>Hướng</span><span className="text-right">Giá</span>
@@ -470,16 +478,12 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                       </div>
                     ))}
                   </div>
-                ) : (
-                  <div className="rounded-xl border border-dashed border-cvr-line bg-white px-4 py-6 text-center">
-                    <p className="text-sm text-cvr-body">Bảng giá &amp; loại căn đang được cập nhật.</p>
-                  </div>
-                )}
                 <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
                   <p className="text-xs text-cvr-faint">* Liên hệ để nhận bảng giá &amp; chính sách bán hàng mới nhất.</p>
                   <a href="#tai-tai-lieu" className="rounded-lg bg-cvr-blue px-4 py-2 text-xs font-semibold text-white transition hover:bg-cvr-blue-ink">Nhận bảng giá chi tiết →</a>
                 </div>
               </Section>
+              )}
 
               {/* 7) Chủ đầu tư */}
               <Section id="chu-dau-tu" title="Chủ đầu tư">
@@ -570,21 +574,12 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
           </HomeCollapsible>
 
-          {/* ── DƯỚI THÔNG TIN DỰ ÁN: 2 khối, cùng một kiểu ──────────────────
-              1) Tin mua bán / cho thuê CỦA CHÍNH dự án này
-              2) Dự án liên quan
-              Cả hai: slide mặc định → bấm "Xem thêm" ra danh sách trang 1,2,3…
-              và ẩn nội dung dự án phía trên (không đổ dài xuống dưới). */}
-          <section id="tin-dang" className="scroll-mt-28">
+          {/* ── SAU THÔNG TIN DỰ ÁN (chủ dự án 22/10/2026): xem hết dự án → TIN THUỘC DỰ ÁN → DỰ ÁN TƯƠNG TỰ →
+              Bất động sản tương tự. Mỗi khối: slide, "Xem thêm" ra danh sách theo trang, phần còn lại ẩn. */}
+          <section id="tin-du-an" className="scroll-mt-28">
             {hasRelated ? (
-              <RelatedListingsTabs
-                ban={relBan}
-                thue={relThue}
-                title={`Tin mua bán liên quan tại dự án ${p.name}`}
-              />
+              <RelatedListingsTabs ban={relBan} thue={relThue} tenDuAn={p.name} title={`Tin mua bán liên quan tại dự án ${p.name}`} />
             ) : (
-              /* Chưa có tin → khối trống, không có nút "Xem thêm" nên ẩn đi khi
-                 khối "Dự án liên quan" đang mở danh sách */
               <HomeCollapsible>
                 <div className="mt-10">
                   <h2 className="mb-5 text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">
@@ -598,10 +593,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             )}
           </section>
 
-          {(() => { const tt = tuongTuDuAn(listings, projectListings, p.location); return (
-            <ListingShowcase items={tt.nhe} idsDayDu={tt.ids} sectionKey="bds-tuong-tu" title="Bất động sản tương tự" heading="Bất động sản tương tự" relevance emptyNote="Chưa có bất động sản tương tự." />
-          ); })()}
-
+          <section id="du-an-tuong-tu" className="scroll-mt-28">
           <ProjectSlider
             projects={others}
             relevance
@@ -610,6 +602,13 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             articles={articles}
             emptyNote="Chưa có dự án liên quan."
           />
+          </section>
+
+
+          {(() => { const tt = tuongTuDuAn(listings, projectListings, p.location); return (
+            <ListingShowcase items={tt.nhe} idsDayDu={tt.ids} sectionKey="bds-tuong-tu" title="Bất động sản tương tự" heading="Bất động sản tương tự" relevance emptyNote="Chưa có bất động sản tương tự." />
+          ); })()}
+
           </HomeExpandProvider>
         </div>
       </main>

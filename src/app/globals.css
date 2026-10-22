@@ -876,3 +876,8 @@ html.dang-tim-mo body > header, html.dang-tim-mo body > main, html.dang-tim-mo b
 /* Ẩn nút "Issue" nổi của bản chạy thử (npm run dev) — nó che màn hình khi chủ dự án xem trên điện thoại (18/10/2026).
    Phần tử này CHỈ có ở chế độ dev, web thật không có nên quy tắc này không ảnh hưởng gì. */
 nextjs-portal { display: none !important; }
+
+/* Ô SOẠN NỘI DUNG (mô tả tin, contenteditable) trong form đăng tin — cùng kiểu ô đang gõ với mọi ô khác: viền xanh
+   đậm, con trỏ xanh (chủ dự án 22/10/2026). Chỉ trong [data-vung-nhap], không đụng ô khác của web. */
+[data-vung-nhap] [contenteditable="true"] { caret-color: var(--color-cvr-blue); }
+[data-vung-nhap] [contenteditable="true"]:focus { outline: none; border-color: var(--color-cvr-blue) !important; box-shadow: 0 0 0 1px var(--color-cvr-blue); background-color: #fff; }

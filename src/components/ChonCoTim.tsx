@@ -21,6 +21,8 @@ export default function ChonCoTim({
   tuGhi,
   timNgay,
   xoaDuoc,
+  khongTim,
+  nhom,
 }: {
   value: string;
   onChange: (v: string) => void;
@@ -37,6 +39,11 @@ export default function ChonCoTim({
   timNgay?: boolean;
   /** Có nút × để bỏ giá trị đang có. */
   xoaDuoc?: boolean;
+  /** Danh sách ngắn (Nhu cầu, Loại hình) → không có kính lúp (chủ dự án 22/10/2026: "có mấy loại thì tìm làm gì"). */
+  khongTim?: boolean;
+  /** Danh sách theo NHÓM (Loại hình: Căn hộ · Nhà · Đất…, đúng bộ phân loại đã chốt ở lib/filters) → tên nhóm làm
+   *  dòng tiêu đề, mục con nằm dưới; mục đang chọn có dấu ✓ ngay tại chỗ (22/10/2026). */
+  nhom?: { label: string; items: string[] }[];
 }) {
   useDiaDanh(); // địa danh nạp sau khi trang hiện — về tới thì vẽ lại (20/10/2026)
   const [mo, setMo] = useState(false);
@@ -103,7 +110,7 @@ export default function ChonCoTim({
               ) : (
                 <span className="min-w-0 flex-1 truncate px-1 text-[15px] font-semibold text-cvr-ink">{placeholder}</span>
               )}
-              <button
+              {!khongTim && <button
                 type="button"
                 aria-label={dangTim ? "Đóng ô tìm" : timPlaceholder}
                 onClick={() => { if (timNgay) { dong(); return; } if (dangTim) setQ(""); setDangTim(!dangTim); }}
@@ -114,7 +121,7 @@ export default function ChonCoTim({
                 ) : (
                   <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><circle cx="11" cy="11" r="7" /><path strokeLinecap="round" d="M21 21l-4.3-4.3" /></svg>
                 )}
-              </button>
+              </button>}
             </div>
             {/* MỤC KHÔNG BẮT BUỘC (16/10/2026): đã chọn mà muốn bỏ → dòng "Bỏ chọn" ngay đầu bảng */}
             {xoaDuoc && value && (
@@ -123,7 +130,7 @@ export default function ChonCoTim({
                 Bỏ chọn
               </button>
             )}
-            {coChon && (
+            {coChon && !nhom && (
               <button type="button" onClick={() => chon(value)} className="flex w-full items-center justify-between gap-3 border-b border-cvr-line bg-cvr-surface px-4 py-3 text-left text-[15px] font-semibold text-cvr-ink">
                 <span className="min-w-0 truncate">{value}</span>
                 <svg className="h-5 w-5 shrink-0 text-cvr-blue-ink" fill="none" stroke="currentColor" strokeWidth={2.4} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
@@ -135,7 +142,17 @@ export default function ChonCoTim({
                   Khác — tự ghi: «{q.trim()}»
                 </button>
               )}
-              {ds.map(({ ten: o, boiTen }) => (
+              {nhom && !q.trim() ? nhom.map((g) => (
+                <div key={g.label} className="pb-1">
+                  <p className="px-4 pb-1 pt-3 text-[13px] font-semibold text-cvr-faint">{g.label}</p>
+                  {g.items.map((o) => (
+                    <button key={o} type="button" onClick={() => chon(o)} className={`flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-[15px] transition hover:bg-cvr-surface ${o === value ? "font-semibold text-cvr-ink" : "text-cvr-body"}`}>
+                      <span className="min-w-0 truncate">{o}</span>
+                      {o === value && <svg className="h-5 w-5 shrink-0 text-cvr-blue-ink" fill="none" stroke="currentColor" strokeWidth={2.4} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
+                    </button>
+                  ))}
+                </div>
+              )) : ds.map(({ ten: o, boiTen }) => (
                 <button key={o} type="button" onClick={() => chon(o)} className="block w-full px-4 py-3 text-left text-[15px] text-cvr-body transition hover:bg-cvr-surface">
                   {o}
                   {boiTen && <span className="mt-0.5 block text-[12px] text-cvr-faint">{boiTen}</span>}

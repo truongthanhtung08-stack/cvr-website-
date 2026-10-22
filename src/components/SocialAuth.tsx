@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { dichSauDangNhap, thamSoNext } from "@/lib/dieuHuong";
 
 // Đăng nhập/đăng ký bằng mạng xã hội — dùng chung cho /dang-nhap và /dang-ky.
 // Google + Facebook: chạy thật qua Supabase OAuth (đã bật provider trong Supabase).
@@ -66,8 +67,8 @@ export default function SocialAuth({ onSoDienThoai, onEmail }: { onSoDienThoai?:
   // mất, khách bấm Đăng tin → đăng nhập bằng số → bị đưa về Tổng quan thay vì Đăng tin.
   const [nextSdt, setNextSdt] = useState("");
   useEffect(() => {
-    const n = new URLSearchParams(window.location.search).get("next");
-    if (n) setNextSdt(`?next=${encodeURIComponent(n)}`);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- đọc địa chỉ trình duyệt một lần sau khi mở trang
+    setNextSdt(thamSoNext());
   }, []);
   // Nút NÀO đang chờ thì CHỈ nút đó báo "Đang chuyển tới…". Trước đây dùng một cờ
   // chung nên bấm Zalo lại thấy nút Google đổi chữ → tưởng web đá sang Google.
@@ -82,7 +83,7 @@ export default function SocialAuth({ onSoDienThoai, onEmail }: { onSoDienThoai?:
   const [zaloUrl, setZaloUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    const next = new URLSearchParams(window.location.search).get("next") || "/tai-khoan";
+    const next = dichSauDangNhap("/tai-khoan");
     let huy = false;
     fetch(`/api/auth/zalo/link?next=${encodeURIComponent(next)}`)
       .then((r) => r.json())
@@ -94,7 +95,7 @@ export default function SocialAuth({ onSoDienThoai, onEmail }: { onSoDienThoai?:
   async function withGoogle() {
     setLoading("google");
     setNotice("");
-    const next = new URLSearchParams(window.location.search).get("next") || "/tai-khoan";
+    const next = dichSauDangNhap("/tai-khoan");
     const supabase = createClient();
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -121,7 +122,7 @@ export default function SocialAuth({ onSoDienThoai, onEmail }: { onSoDienThoai?:
   async function withProvider(provider: "facebook") {
     setLoading(provider);
     setNotice("");
-    const next = new URLSearchParams(window.location.search).get("next") || "/tai-khoan";
+    const next = dichSauDangNhap("/tai-khoan");
     const supabase = createClient();
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
@@ -148,7 +149,7 @@ export default function SocialAuth({ onSoDienThoai, onEmail }: { onSoDienThoai?:
   // Chưa cắm khoá trong Vercel thì route tự đá về đây kèm ?error=zalo_chua_cau_hinh.
   function withZalo() {
     setLoading("zalo");
-    const next = new URLSearchParams(window.location.search).get("next") || "/tai-khoan";
+    const next = dichSauDangNhap("/tai-khoan");
     window.location.href = `/api/auth/zalo?next=${encodeURIComponent(next)}`;
   }
 

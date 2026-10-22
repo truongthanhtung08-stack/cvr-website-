@@ -4,7 +4,7 @@ import { baoIndexNow } from "@/lib/indexNow";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { viKhaDung, cauThieuTien } from "@/lib/viKhaDung";
-import { ghepBillingLuu, bangTheoMucDich, freeDangChay, soNgayHienThi, huongKhuyenMai, chonKhuyenMai, laChuThat, lucGuiTin, loaiVoucherTin, quotePrice, vnd, type BillingData } from "@/lib/billing";
+import { ghepBillingLuu, bangTheoMucDich, freeDangChay, soNgayHienThi, huongKhuyenMai, thanhVienMoi, chonKhuyenMai, laChuThat, lucGuiTin, loaiVoucherTin, quotePrice, vnd, type BillingData } from "@/lib/billing";
 import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
 import { guiThongBao, MAU_DUYET_TIN } from "@/lib/thongBao";
 import { baoLoi } from "@/lib/baoLoi";
@@ -217,7 +217,8 @@ export async function POST(request: Request) {
     tierId: goi,
     days: soNgay,
     today: new Date().toISOString().slice(0, 10),
-    isNewMember: soNgayMoTk <= bang.free.days,
+    // Thành viên mới: MỘT định nghĩa (thanhVienMoi) — cùng luật tạo hộ chưa vào như chương trình miễn phí.
+    isNewMember: thanhVienMoi(bang.free, { coChu: laChuThat(hs), homNay: ngayGui, soNgayMoTk, ngayTaoTk: hs.created_at ? new Date(new Date(hs.created_at).getTime() + 7 * 3_600_000).toISOString().slice(0, 10) : undefined }),
   });
 
   // ── CHÍNH SÁCH MIỄN PHÍ THÀNH VIÊN MỚI ────────────────────────────────────

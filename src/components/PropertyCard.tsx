@@ -250,9 +250,10 @@ export default function PropertyCard({
           listingId={item.id}
           hienSo
           zaloTruoc
-          nhan={item.soDau ? `Hiện số ${item.soDau} ***` : "Hiện số"}
-          soCls="flex min-h-9 min-w-0 py-1.5 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-cvr-blue px-3 text-[13px] font-semibold text-white transition active:scale-95"
-          oCls="flex min-h-9 w-12 shrink-0 self-stretch items-center justify-center rounded-lg border border-cvr-line transition active:scale-95"
+          nhan={item.soDau ? `${item.soDau} ***` : "Hiện số"}
+          soCls="flex min-h-9 min-w-0 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-cvr-blue px-2 py-1.5 text-[13px] font-semibold text-white transition active:scale-95"
+          oCls="flex min-h-9 min-w-0 flex-1 self-stretch items-center justify-center gap-1.5 rounded-lg border border-cvr-line px-2 transition active:scale-95"
+              chuZalo="Zalo"
         />
       </div>
     </div>

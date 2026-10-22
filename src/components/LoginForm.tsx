@@ -6,7 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { chuanHoaSdt, laSdtVN } from "@/lib/phone";
 import SocialAuth from "@/components/SocialAuth";
-import { dichSauDangNhap, trangWebTruocDo } from "@/lib/dieuHuong";
+import { dichSauDangNhap, thamSoNext } from "@/lib/dieuHuong";
 
 // Dịch vài lỗi Supabase thường gặp sang tiếng Việt.
 function viError(msg: string): string {
@@ -44,12 +44,16 @@ export default function LoginForm() {
   // gõ mật khẩu. Phiên đăng nhập thì Supabase vốn giữ tới khi bấm Đăng xuất,
   // không phụ thuộc ô này. Trước đây ô này là hộp trống không nối vào đâu.
   const [ghiNho, setGhiNho] = useState(true);
+  // Link "Đăng ký" mang theo trang đích (vd đang ở Đăng tin) — một logic với dichSauDangNhap.
+  const [nextDk, setNextDk] = useState("");
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- đọc địa chỉ trình duyệt một lần sau khi mở trang
+  useEffect(() => { setNextDk(thamSoNext()); }, []);
 
-  // ĐÃ ĐĂNG NHẬP MÀ VẪN RƠI VÀO ĐÂY — thường do bấm back cứng từ khu quản lý.
-  // Không hiện lại form đăng nhập: đưa thẳng về trang web đang xem trước đó.
+  // ĐÃ ĐĂNG NHẬP MÀ VẪN RƠI VÀO ĐÂY → không hiện lại form: có ?next thì về đúng trang đó, không thì vào
+  // trang quản lý của khách (chủ dự án 22/10/2026: "bấm vào đăng nhập thì ra màn hình admin khách hàng").
   useEffect(() => {
     createClient().auth.getUser().then(({ data }) => {
-      if (data.user) window.location.replace(trangWebTruocDo());
+      if (data.user) window.location.replace(dichSauDangNhap("/tai-khoan"));
     }).catch(() => { /* chưa cấu hình → cứ hiện form */ });
   }, []);
 
@@ -237,7 +241,7 @@ export default function LoginForm() {
           dòng "Đã có tài khoản? Đăng nhập" bên trang Đăng ký. */}
       <p className="mt-6 text-center text-sm text-cvr-muted">
         Chưa có tài khoản?{" "}
-        <Link href="/dang-ky" className="font-semibold text-cvr-ink hover:underline">Đăng ký</Link>
+        <Link href={`/dang-ky${nextDk}`} className="font-semibold text-cvr-ink hover:underline">Đăng ký</Link>
       </p>
     </div>
   );

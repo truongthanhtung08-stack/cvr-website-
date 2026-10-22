@@ -111,7 +111,14 @@ export function useHomeSection(key: string) {
 }
 
 // Bọc các phần KHÔNG có nút "Xem thêm" (Hero, banner) — ẩn khi có khối nào đang mở.
-export function HomeCollapsible({ children }: { children: React.ReactNode }) {
+export function HomeCollapsible({ children, className }: { children: React.ReactNode; className?: string }) {
   const { openKey } = useContext(HomeExpandCtx);
-  return <div className={openKey ? "hidden" : undefined}>{children}</div>;
+  return <div className={openKey ? "hidden" : className}>{children}</div>;
+}
+
+// Cột chứa một khối "Xem thêm" nằm GIỮA trang (vd tin của dự án ngay sau Tổng quan — 22/10/2026):
+// khi danh sách mở, cột giãn hết bề ngang (cột phụ bên cạnh đã ẩn) thay vì chừa khoảng trống.
+export function CotKhiMo({ children, className, classKhiMo }: { children: React.ReactNode; className: string; classKhiMo: string }) {
+  const { openKey } = useContext(HomeExpandCtx);
+  return <div className={`${className} ${openKey ? classKhiMo : ""}`}>{children}</div>;
 }
