@@ -886,3 +886,8 @@ nextjs-portal { display: none !important; }
    cuộn trang (đúng ý khách), phóng bằng nút +/− hoặc Ctrl + lăn — không phủ câu "Sử dụng Ctrl + cuộn…" lên bản đồ. Điện
    thoại không bật chế độ này nên không có câu nào. Áp mọi bản đồ của web. */
 .maplibregl-map .maplibregl-cooperative-gesture-screen { display: none; }
+
+/* BẢN ĐỒ LỚN (ghim vị trí, khách + admin — chủ dự án 23/10/2026: "khi bấm full cho nó to / nhỏ cho hợp lý"): mọi nút cùng
+   cỡ 40px, xếp một cột góc phải: ✕ trên cùng · +/− · định vị. Khung nhỏ trong form giữ nguyên cỡ 29px. */
+.ban-do-toan .maplibregl-ctrl-top-right { top: 50px; }
+.ban-do-toan .maplibregl-ctrl-group button { width: 40px; height: 40px; }

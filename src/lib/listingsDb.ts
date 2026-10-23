@@ -16,7 +16,7 @@ import { mauSoCuaLoaiHinh } from "@/lib/chiSoGia";
 import { featuredListings, getListingById } from "@/lib/data";
 import { asset } from "@/lib/asset";
 import { isVideoUrl } from "@/lib/media";
-import { fieldsSplit, amenityGroups, coDonGiaM2, coDienTichXayDung, viTriTuDuongVao, viTriTuAccess, laTinThue, laTinBan, type Field } from "@/lib/listingSpec";
+import { fieldsSplit, amenityGroups, coDonGiaM2, coDienTichXayDung, viTriTuDuongVao, viTriTuAccess, laTinThue, laTinBan, dienTichSanThat, type Field } from "@/lib/listingSpec";
 import { chuanHoaSdt, maNguoiTuSdt, tachNhieuSdt } from "@/lib/phone";
 import { tachTenDuong } from "@/lib/tenDuong";
 import { chuoiDiaChiBanDo } from "@/lib/diaChiBanDo";
@@ -25,6 +25,9 @@ import { moTaThe } from "@/lib/trichMoTa";
 
 // Thuộc tính linh hoạt lưu trong cột details (JSONB) — xem 0006_listing_details.sql
 export type ListingDetailsJson = {
+  // Hạn tin khi nâng VIP (CLAUDE.md 0.1 ④⑤): hạn kỳ Basic gốc · lúc hạ VIP về Basic
+  han_basic?: string;
+  ha_vip_luc?: string;
   specs?: Record<string, string>;
   interior?: string[];
   amenities?: string[];
@@ -190,9 +193,15 @@ function rowToListing(r: Row): Listing {
     if (r.price_vnd == null) return undefined;
     // CHO THUÊ (chủ dự án 20/10/2026: "cho thuê, BĐS khác … để nguyên, chỉ chia để biết số liệu"): KHÔNG hiện đơn giá web
     // tự chia. Chỉ hiện khi KHÁCH tự ghi đơn giá thuê (cờ donGiaThueNhap — nạp hàng loạt có cột don_gia_thue).
-    if (coDonGiaM2(r.type, r.purpose))
-      return r.details?.donGiaThueNhap && r.details?.donGiaThue ? `${fmtNum(r.details.donGiaThue * 1000, 0)} đ/m²/tháng` : undefined;
-    if (!laTinBan(r.purpose)) return undefined;
+    // 23/10/2026 chủ dự án: đơn giá/m² MẶC ĐỊNH mọi cấp — khách ghi thì lấy của khách; không ghi thì web chia khi số CHẮC CHẮN:
+    // thuê căn hộ (÷ m² căn) · văn phòng, mặt bằng, kho xưởng (÷ m² thuê). Thuê nhà nguyên căn: m² không chắc → không ghi.
+    if (!laTinBan(r.purpose)) {
+      if (r.details?.donGiaThueNhap && r.details?.donGiaThue) return `${fmtNum(r.details.donGiaThue * 1000, 0)} đ/m²/tháng`;
+      const dt = r.area_m2;
+      if (dt && (coDonGiaM2(r.type, r.purpose) || mauSoCuaLoaiHinh(r.type) === "can"))
+        return `${fmtNum(Math.round(r.price_vnd / dt / 1000) * 1000, 0)} đ/m²/tháng`;
+      return undefined;
+    }
     const mau = mauSoCuaLoaiHinh(r.type);
     // ⛔ NHÀ GẮN LIỀN ĐẤT: KHÔNG HIỆN ĐƠN GIÁ MỖI M² TRÊN TIN — chủ dự án chốt
     // 19/09. Người bán nhà báo TỔNG GIÁ của cả căn (đất + nhà), không ai niêm yết
@@ -208,7 +217,11 @@ function rowToListing(r: Row): Listing {
       const khai = r.details?.donGiaBan;
       // 20/10/2026 chủ dự án nhắc lại: "loại nào nghi ngờ thì lấy nguyên giá và diện tích khách nhập, chỉ chia để lấy số liệu"
       // → nhà KHÔNG hiện giá/m² sàn tự chia (giữ luật 19/09); số chia chỉ dùng cho Lịch sử giá.
-      return khai ? `${fmtNum(khai / 1e6, 0)} tr/m² sàn` : undefined;
+      if (khai) return `${fmtNum(khai / 1e6, 0)} tr/m² sàn`;
+      // Khách GHI THẲNG tổng m² sàn (ô Diện tích xây dựng, không phải số web suy / đất × số tầng — dienTichSanThat) → giá ÷ m² sàn
+      // đúng luật CLAUDE.md 0.1 (chủ dự án 23/10/2026: "cái này đã fix"). m² sàn không chắc → không ghi.
+      const san = dienTichSanThat(r.built_area_m2, r.area_m2);
+      return san ? `${fmtNum(r.price_vnd / san / 1e6, 0)} tr/m² sàn` : undefined;
     }
     const dt = r.area_m2;
     if (!dt) return undefined;
@@ -221,7 +234,13 @@ function rowToListing(r: Row): Listing {
     ...(perM2 ? { pricePerM2: perM2 } : {}),
     area: r.area_m2 != null ? `${fmtNum(r.area_m2, 0)} m²` : "—",
     priceVnd: r.price_vnd ?? null,
-    hetHanLuc: r.tier_expires_at ?? null,
+    // HIỆU LỰC · HẾT HẠN CỦA TIN (chủ dự án 23/10/2026: "ngày tháng hiệu lực, hết hạn sai bét"). Gốc lỗi: nâng VIP đặt lại
+    // published_at = ngày nâng và tier_expires_at = hết VIP, trong khi tin vẫn chạy kỳ Basic tới details.han_basic
+    // (luật 15/10: VIP song song kỳ Basic). Trang tin đọc hai mốc này → hiện "Hiệu lực = ngày nâng · Hết hạn = hết VIP".
+    // Ở đây trả đúng hạn CỦA TIN (CLAUDE.md 0.1 ③④⑤): hết hạn = muộn hơn giữa hạn VIP và hạn Basic; hiệu lực = postedAt
+    // bên dưới (ngày lên web gốc). Không đổi dữ liệu, không đổi luật.
+    hetHanLuc: ((a?: string | null, b?: string | null) => (a && b ? (Date.parse(b) > Date.parse(a) ? b : a) : (a ?? b ?? null)))(
+      r.tier_expires_at, typeof r.details?.han_basic === "string" ? r.details.han_basic : null),
     hangTin: tierHieuLuc(r),
     areaM2: r.area_m2 ?? null,
     builtAreaM2: r.built_area_m2 ?? null,
@@ -296,7 +315,11 @@ function rowToListing(r: Row): Listing {
     // từ tuần trước mà hôm nay mới duyệt thì ngoài trang vẫn phải ghi "Hôm nay":
     // trước đây lấy created_at nên tin vừa lên sóng đã hiện "8 ngày trước" và bị
     // xếp tụt sau tin khác. Tin cũ không có mốc lên sóng thì lùi về created_at.
-    postedAt: r.published_at ?? r.created_at,
+    // Ngày tin LÊN WEB gốc — cả web dùng (Hiệu lực, "Đăng … trước", xếp mới nhất, sitemap). Tin đã nâng VIP (có han_basic,
+    // hoặc ha_vip_luc khi đã hạ về Basic): published_at bị đặt lại = ngày nâng → lấy ngày đăng tin (created_at).
+    postedAt: typeof r.details?.han_basic === "string" || typeof r.details?.ha_vip_luc === "string"
+      ? r.created_at
+      : (r.published_at ?? r.created_at),
     ...(r.bumped_at ? { bumpedAt: r.bumped_at } : {}),
     purpose: r.purpose,
     // Tên người đăng thật (khách hàng) — thẻ tin hiện đúng tên này, không phải admin
@@ -312,6 +335,7 @@ function rowToListing(r: Row): Listing {
     ...((): { duong?: string } => { const d = tachTenDuong(r.details?.addressDetail); return d ? { duong: d } : {}; })(),
     ...(r.details?.legal?.trim() ? { phapLy: r.details.legal.trim() } : {}),
     ...(r.details?.furnish?.trim() ? { noiThat: r.details.furnish.trim() } : {}),
+
     ...((): { maNguoi?: string } => { const so = chuanHoaSdt(tachNhieuSdt(r.details?.contact?.phone ?? "")[0] ?? ""); return so ? { maNguoi: maNguoiTuSdt(so) } : {}; })(),
     ...(r.description ? { desc: r.description } : {}),
     // Mọi trường còn lại → vùng dò của ô tìm kiếm (không hiển thị ra giao diện)
@@ -416,7 +440,7 @@ export async function getListingsThe(): Promise<Listing[]> {
     // FeaturedListings, tinNoiBat) — vùng dò tìm, địa giới, mã người, số thô, hạn tin.
     const {
       desc: _desc, searchText: _searchText, diaChiTim: _dct, diaGioi: _dg, maNguoi: _mn, hetHanLuc: _hh,
-      builtAreaM2Uoc: _bu, hangTin: _ht, duong: _du, noiThat: _nt, priceVnd: _pv, areaM2: _am, builtAreaM2: _ba,
+      builtAreaM2Uoc: _bu, hangTin: _ht, duong: _du,  priceVnd: _pv, areaM2: _am, builtAreaM2: _ba,
       ...the
     } = l;
     // 20/10/2026: thẻ hiện 2 câu đầu mô tả (src/lib/trichMoTa.ts) → chỉ gửi đúng 2 câu đó (~150–250 ký tự), không gửi cả mô tả

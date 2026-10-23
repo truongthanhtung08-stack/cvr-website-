@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import ShareButtons from "@/components/ShareButtons";
+import BieuTuongThe from "@/components/BieuTuongThe";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -13,7 +15,7 @@ import { NutLienHeThe } from "@/components/LienHeReveal";
 import { freshText, type Listing } from "@/lib/data";
 import { getTier, tierFromBadge, type TierId } from "@/lib/packages";
 import { useSaved } from "@/lib/useSaved";
-import { chuThuong, tenDiaDanh } from "@/lib/chuThuong";
+import { chuThuong, tenDiaDanh, giuCum } from "@/lib/chuThuong";
 import { videoPosterUrl } from "@/lib/media";
 import { moTaThe, soDongMoTa } from "@/lib/trichMoTa";
 import { thongSoTheoCap } from "@/lib/thongSoThe";
@@ -152,7 +154,8 @@ export default function TheTinMobile({ item, terms = [], tuChay = false, pc = fa
   const daLuu = has(item.id);
   const coSo = t !== "basic"; // Diamond · Gold · Silver: Zalo + Hiện số trên thẻ
   const ten = tenDiaDanh(item);
-  const tieuDe = tier.uppercase ? item.title : chuThuong(item.title, ten);
+  // Xuống dòng không cắt cụm địa danh / dự án / số + đơn vị (giuCum, chủ dự án 23/10/2026)
+  const tieuDe = giuCum(tier.uppercase ? item.title : chuThuong(item.title, ten), [...ten, item.projectName ?? ""]);
   const so = thongSoTheoCap(item, t);
   const soAnh = item.imageCount || anh.length;
   // "3 giờ trước" tính theo giờ hiện tại: trang máy chủ dựng sẵn (đệm tới 1 giờ) ghi giờ lúc dựng → vẽ lại một lần sau khi
@@ -193,19 +196,11 @@ export default function TheTinMobile({ item, terms = [], tuChay = false, pc = fa
       {tier.short}
     </span>
   );
-  const chiaSe = (e: React.MouseEvent) => {
-    e.preventDefault(); e.stopPropagation();
-    const url = `${window.location.origin}${href}`;
-    if (navigator.share) navigator.share({ title: item.title, url }).catch(() => {});
-    else navigator.clipboard?.writeText(url);
-  };
+  // CHIA SẺ — MỘT tính năng chung cả web (chủ dự án 23/10/2026: "nút like, chia sẻ không phải để cho có — đây là tính năng chung
+  // cả web"): thẻ tin dùng ĐÚNG bảng chia sẻ của trang tin (ShareButtons) cho link tin này — điện thoại bật khay chia sẻ của máy
+  // (Zalo, Messenger, Facebook…), máy tính mở bảng Zalo · Facebook · Sao chép link. Trước đây thẻ máy tính bấm chỉ lặng lẽ chép link.
   const nutChiaSe = (
-    <button type="button" aria-label="Chia sẻ" onClick={chiaSe} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-cvr-line text-cvr-ink transition active:scale-95">
-      <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24" aria-hidden>
-        <circle cx="18" cy="5" r="2.5" /><circle cx="6" cy="12" r="2.5" /><circle cx="18" cy="19" r="2.5" />
-        <path strokeLinecap="round" d="M8.2 10.8l7.6-4.4M8.2 13.2l7.6 4.4" />
-      </svg>
-    </button>
+    <ShareButtons title={item.title} duongDan={href} moLen nutCls={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-cvr-ink transition active:scale-95 ${pc ? "border border-cvr-line hover:border-cvr-ink" : "-mr-1.5"}`} />
   );
 
   const khungChinh = (khung: string, sizes: string) => (
@@ -225,19 +220,19 @@ export default function TheTinMobile({ item, terms = [], tuChay = false, pc = fa
     );
   }
 
-  const IconPN = () => (
-    <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.7} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M3 18V7m0 7h18v4M21 14v-2a3 3 0 00-3-3h-7v5M7 11.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" /></svg>
-  );
-  const IconWC = () => (
-    <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.7} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M4 12h16v2a5 5 0 01-5 5H9a5 5 0 01-5-5v-2zM6 12V6a2 2 0 014 0M8 19l-1 2m10-2l1 2" /></svg>
-  );
+  // DIAMOND: cả dòng ĐÚNG MỘT DÒNG (chủ dự án 23/10/2026) — không xuống dòng; màn hẹp thì chữ dòng này co theo bề ngang
+  // (tối đa 15px, màn 320 ≈ 12,8px), khoảng cách dấu · thu lại. Cấp khác xuống dòng tự nhiên khi không đủ chỗ.
+  const motDong = t === "diamond" && !pc;
+  // CÂN ĐỐI TỰ GIÃN (chủ dự án 23/10/2026): điện thoại, dòng ĐỦ trường (≥ 5 mục) thì dàn đều hết bề ngang thẻ; thiếu trường
+  // thì giữ khoảng cách tự nhiên từ trái — không giãn thưa vài mục ra hai mép.
+  const dan = !pc && so.length >= 5 ? "justify-between" : "";
   const thongSoDong = (
-    <p className={`${pc ? "mt-1.5" : "mt-2"} flex flex-wrap items-center gap-x-1.5 text-[15px] text-cvr-body`}>
+    <p className={`${pc ? "mt-1.5" : "mt-2"} flex items-center text-cvr-body ${dan} ${motDong ? "flex-nowrap gap-x-1 overflow-hidden whitespace-nowrap text-[min(15px,3.7vw)]" : "flex-wrap gap-x-1.5 text-[15px]"}`}>
       {so.map((x, i) => (
-        <span key={i} className={`flex items-center gap-1 ${x.do ? "font-bold text-red-500" : ""}`}>
+        <span key={i} className={`flex shrink-0 items-center gap-1 ${x.do ? "font-bold text-red-500" : ""}`}>
+          {x.icon === "sofa" && <BieuTuongThe loai="sofa" />}
           {x.chu}
-          {x.icon === "pn" && <IconPN />}
-          {x.icon === "wc" && <IconWC />}
+          {(x.icon === "pn" || x.icon === "wc") && <BieuTuongThe loai={x.icon} />}
           {/* Dấu · đứng SAU mục (không đứng trước mục sau): chữ to trong Zalo/Facebook làm dòng xuống hàng
               thì dấu nằm cuối dòng trên, không lơ lửng đầu dòng dưới (20/10/2026) */}
           {i < so.length - 1 && <span className="ml-0.5 text-cvr-muted">·</span>}
@@ -251,7 +246,9 @@ export default function TheTinMobile({ item, terms = [], tuChay = false, pc = fa
     <>
       <p className={pc ? "mt-1 flex items-center gap-1 text-[14px] text-cvr-body" : "mt-1.5 flex items-start gap-1 text-[14px] text-cvr-body"}>
         <svg className={`${pc ? "" : "mt-px "}h-4 w-4 shrink-0`} fill="none" stroke="currentColor" strokeWidth={1.7} viewBox="0 0 24 24" aria-hidden><path d="M12 21s-7-6.2-7-11.5A7 7 0 0112 2.5a7 7 0 017 7C19 14.8 12 21 12 21z" /><circle cx="12" cy="9.5" r="2.5" /></svg>
-        <span className={pc ? "truncate" : "line-clamp-2"}><Highlight text={item.location} terms={terms} /></span>
+        {/* Điện thoại: địa chỉ ĐÚNG MỘT DÒNG, không bị che (chủ dự án 23/10/2026) — dài nhất hiện có "Phường Bắc Nha Trang, Khánh
+            Hòa" vừa màn 320; màn hẹp chữ co theo bề ngang (tối đa 14px) thay vì xuống dòng hay cắt "…" */}
+        <span className={pc ? "truncate" : "whitespace-nowrap text-[min(14px,3.9vw)]"}><Highlight text={item.location} terms={terms} /></span>
       </p>
     </>
   );
@@ -261,7 +258,9 @@ export default function TheTinMobile({ item, terms = [], tuChay = false, pc = fa
   const moTaDong = trich ? <p className={`${pc ? "mt-1" : "mt-2"} ${["", "line-clamp-1", "line-clamp-2", "line-clamp-3"][soDong]} text-[14px] leading-[1.45] text-cvr-muted`}><Highlight text={trich} terms={terms} /></p> : null;
   const diaChi = diaChiDong;
 
-  const oCls = "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-cvr-line text-cvr-ink transition active:scale-95";
+  // Hàng người đăng ĐIỆN THOẠI gọn, cân với chữ phía trên (chủ dự án 23/10/2026): ảnh 32px · tên 14px · ngày 12px · Thích, Chia sẻ
+  // chỉ biểu tượng (không khung viền), vùng bấm vẫn 36px. Máy tính giữ cỡ cũ + khung viền (hàng nút 40px).
+  const oCls = `flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-cvr-ink transition active:scale-95 ${pc ? "border border-cvr-line" : ""}`;
   const nutThich = (
     <button type="button" aria-label={daLuu ? "Bỏ yêu thích" : "Yêu thích"} aria-pressed={daLuu} onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggle(item.id); }} className={`${oCls} ${daLuu ? "text-red-500" : ""}`}>
       <svg className="h-5 w-5" viewBox="0 0 24 24" fill={daLuu ? "currentColor" : "none"} stroke="currentColor" strokeWidth={1.8} aria-hidden>
@@ -271,12 +270,12 @@ export default function TheTinMobile({ item, terms = [], tuChay = false, pc = fa
   );
   const anhDaiDien = item.agentAvatar
     // eslint-disable-next-line @next/next/no-img-element
-    ? <img src={item.agentAvatar} alt={item.agentName ?? ""} className="h-10 w-10 shrink-0 rounded-full object-cover ring-1 ring-cvr-line" />
-    : <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-cvr-surface text-[14px] font-semibold text-cvr-body ring-1 ring-cvr-line">{viTat(item.agentName)}</span>;
+    ? <img src={item.agentAvatar} alt={item.agentName ?? ""} className={`${pc ? "h-10 w-10" : "h-8 w-8"} shrink-0 rounded-full object-cover ring-1 ring-cvr-line`} />
+    : <span className={`flex ${pc ? "h-10 w-10 text-[14px]" : "h-8 w-8 text-[12px]"} shrink-0 items-center justify-center rounded-full bg-cvr-surface font-semibold text-cvr-body ring-1 ring-cvr-line`}>{viTat(item.agentName)}</span>;
   const nguoiDang = (
     <div className="min-w-0 flex-1">
-      <p className="truncate text-[15px] font-semibold leading-tight text-cvr-ink">{item.agentName || "Coastal Land"}</p>
-      <p suppressHydrationWarning className="mt-0.5 truncate text-[13px] leading-tight text-cvr-muted">{ngay}</p>
+      <p className={`truncate ${pc ? "text-[15px]" : "text-[14px]"} font-semibold leading-tight text-cvr-ink`}>{item.agentName || "Coastal Land"}</p>
+      <p suppressHydrationWarning className={`mt-0.5 truncate ${pc ? "text-[13px]" : "text-[12px]"} leading-tight text-cvr-muted`}>{ngay}</p>
     </div>
   );
 
@@ -324,8 +323,8 @@ export default function TheTinMobile({ item, terms = [], tuChay = false, pc = fa
     // hàng cuối — DÀN ĐỀU theo chiều cao ảnh (justify-between), không dồn khoảng trống một chỗ.
     const tieuDePC = <Link href={href} className="block"><h3 className={`${t === "gold" || t === "diamond" ? "line-clamp-3" : "line-clamp-2 min-h-[2.8em]"} text-[16px] leading-[1.4] text-cvr-ink ${t === "basic" ? "font-medium" : "font-bold"} ${tier.uppercase ? "uppercase" : ""}`}><Highlight text={tieuDe} terms={terms} /></h3></Link>;
     const soPC = <Link href={href} className="block [&>p:first-child]:mt-0">{thongSoDong}{diaChi}</Link>;
-    // Hàng cuối MỘT DÒNG (PC rộng, chủ dự án 18/10/2026): người đăng trái · Zalo + Hiện số (Diamond · Gold · Silver) · Thích · Chia sẻ phải.
-    const cuoi = (
+    // Hàng cuối MỘT DÒNG, 4 cấp như nhau — GIỮ ĐÚNG bản đang chạy trên web (chủ dự án 23/10/2026: "trên web có vậy đâu!").
+    const cuoiCu = (
       <div className="flex items-center gap-2.5" onClick={(e) => e.preventDefault()}>
         {anhDaiDien}
         {nguoiDang}
@@ -364,21 +363,18 @@ export default function TheTinMobile({ item, terms = [], tuChay = false, pc = fa
             {/* Chữ gọn cho thẻ VIP thấp lại (cả trang cân đối): thông số và địa chỉ (hệ mới) CHUNG một hàng */}
             <div className="-mt-1 flex min-w-0 flex-col gap-1.5">
               {tieuDePC}
-              <Link href={href} className="flex min-w-0 flex-wrap items-center gap-x-5 gap-y-1 [&>p]:mt-0">
-                {thongSoDong}
-                <p className="flex min-w-0 items-center gap-1 text-[14px] text-cvr-body">
-                  <svg className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth={1.7} viewBox="0 0 24 24" aria-hidden><path d="M12 21s-7-6.2-7-11.5A7 7 0 0112 2.5a7 7 0 017 7C19 14.8 12 21 12 21z" /><circle cx="12" cy="9.5" r="2.5" /></svg>
-                  <span className="truncate"><Highlight text={item.location} terms={terms} /></span>
-                </p>
-              </Link>
+              {/* Thông số và địa chỉ HAI DÒNG RIÊNG như điện thoại (chủ dự án 23/10/2026: "vì sao lại đưa dòng địa chỉ lên đó") */}
+              {soPC}
               {moTaDong}
             </div>
-            <div className="border-t border-cvr-line pt-3">{cuoi}</div>
+            <div className="border-t border-cvr-line pt-3">{cuoiCu}</div>
           </>
         ) : (
           <>
+            {/* Silver · Basic: BỐ CỤC ĐÃ DUYỆT (đang chạy trên web) — giữ nguyên, chủ dự án 23/10/2026: "cấu trúc đã fix từ lâu, chỉ
+                sửa cái tôi yêu cầu" */}
             {khoiAnh}
-            <div className="flex min-w-0 flex-1 flex-col">{tieuDePC}<div className="mt-2">{soPC}{moTaDong}</div><div className="mt-auto pt-3">{cuoi}</div></div>
+            <div className="flex min-w-0 flex-1 flex-col">{tieuDePC}<div className="mt-2">{soPC}{moTaDong}</div><div className="mt-auto pt-3">{cuoiCu}</div></div>
           </>
         )}
         {ds && <PhotoList images={anh} videos={item.video ? [item.video] : []} title={item.title} onPick={setXem} onClose={() => setDs(false)} nhanPhim={xem < 0} banDo={{ diaChi: item.location, q: item.mapPin || item.location }} listingId={item.id} duongDan={href} />}

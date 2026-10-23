@@ -44,12 +44,49 @@ function ghiMuc0(dong) {
   fs.writeFileSync(TEP_VIEC, v);
 }
 
+// Danh sách còn thiếu cho Cowork: lượt sáng 6:30 xuất; máy bật muộn (lượt sáng chưa chạy) thì lượt nộp đầu tiên trong ngày
+// xuất bù — mỗi ngày tối đa 1 lần gọi web.
+const TEP_THIEU = path.join(SEO, "RA", "lich-su-gia-con-thieu.csv");
+const ngayVn = (ms) => new Date(ms + 7 * 3600e3).toISOString().slice(0, 10);
+if (!fs.existsSync(TEP_THIEU) || ngayVn(fs.statSync(TEP_THIEU).mtimeMs) !== ngayVn(Date.now())) {
+  try {
+    const r = await fetch(`https://coastalland.vn/api/chi-so-gia/con-thieu?ma=${encodeURIComponent(MA)}`);
+    if (r.ok) {
+      fs.writeFileSync(TEP_THIEU, Buffer.from(await r.arrayBuffer()));
+      ghiMuc0(`- **Lịch sử giá — danh sách còn thiếu đã làm mới** (${gio()}): \`SEO\\RA\\lich-su-gia-con-thieu.csv\`.`);
+      console.log(`${gio()} — đã làm mới danh sách còn thiếu.`);
+    }
+  } catch { /* mạng lỗi → giờ sau thử lại */ }
+}
+
+// MÁY TỰ NHẬN TỆP (chủ dự án 23/10/2026: "cái này thì bạn phải làm chứ") — Cowork lưu ở đâu trong SEO\VAO hay SEO\DA-DUYET
+// (gốc hoặc thư mục ngày), tên gì, .csv hay .xlsx đều được. Nhận ra bằng NỘI DUNG: .csv có cột gia_m2_trieu + ky (đúng khuôn
+// tệp nộp); .xlsx (không đọc được đầu cột ở đây) thì tên có "lịch sử giá" — web vẫn tự kiểm từng dòng.
+const boDau = (s) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/gi, "d").toLowerCase();
+function laTepLichSuGia(tep, ten) {
+  if (ten.startsWith(".") || /^ket-qua/i.test(ten)) return false;
+  if (/\.xlsx$/i.test(ten)) return /lich.?su.?gia/.test(boDau(ten));
+  if (!/\.csv$/i.test(ten)) return false;
+  const dau = fs.readFileSync(tep, "utf8").slice(0, 2000).toLowerCase();
+  return dau.includes("gia_m2_trieu") && /(^|[;,\n])ky([;,\r\n]|$)/.test(dau);
+}
+function timTep() {
+  const ra = [];
+  for (const goc of [DA_DUYET, path.join(SEO, "VAO")]) {
+    if (!fs.existsSync(goc)) continue;
+    for (const thuMuc of [goc, ...fs.readdirSync(goc).map((x) => path.join(goc, x)).filter((x) => fs.statSync(x).isDirectory())]) {
+      for (const ten of fs.readdirSync(thuMuc)) {
+        const tep = path.join(thuMuc, ten);
+        if (fs.statSync(tep).isFile() && laTepLichSuGia(tep, ten)) ra.push({ thuMuc, ten });
+      }
+    }
+  }
+  return ra;
+}
+
 let soTep = 0;
-for (const ngay of fs.readdirSync(DA_DUYET)) {
-  const thuMuc = path.join(DA_DUYET, ngay);
-  if (!fs.statSync(thuMuc).isDirectory()) continue;
-  for (const ten of fs.readdirSync(thuMuc)) {
-    if (!/^lich-su-gia-.*\.csv$/i.test(ten)) continue;
+{
+  for (const { thuMuc, ten } of timTep()) {
     const tep = path.join(thuMuc, ten);
     const dau = `${fs.statSync(tep).mtimeMs}|${fs.statSync(tep).size}`;
     const tepDau = path.join(thuMuc, `.da-nop-${ten}.txt`);
@@ -60,7 +97,7 @@ for (const ngay of fs.readdirSync(DA_DUYET)) {
     try {
       const form = new FormData();
       form.set("ma", MA);
-      form.set("tep", new Blob([fs.readFileSync(tep)], { type: "text/csv" }), ten);
+      form.set("tep", new Blob([fs.readFileSync(tep)], { type: /\.xlsx$/i.test(ten) ? "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" : "text/csv" }), ten);
       const r = await fetch(WEB, { method: "POST", body: form });
       ketQua = { ...(await r.json().catch(() => ({ ok: false, loi: `Web trả mã ${r.status}` }))), traLoi: true };
     } catch (e) {
@@ -78,7 +115,7 @@ for (const ngay of fs.readdirSync(DA_DUYET)) {
       "",
     ].join("\n");
     fs.appendFileSync(path.join(thuMuc, "ket-qua-nop.txt"), bao + "\n");
-    ghiMuc0(`- **Lịch sử giá — máy đã nộp** \`${ten}\` (${gio()}): ${ketQua.ok ? `nhận ${ketQua.nhan} dãy, ${ketQua.moc} mốc` : "KHÔNG nhận"}${dongLoi.length ? ` · ${dongLoi.length} dòng bị từ chối` : ""}${chan.length ? ` · ${chan.length} dãy bị chặn` : ""} — chi tiết \`${path.join("SEO", "DA-DUYET", ngay, "ket-qua-nop.txt").replace(/\//g, "\\")}\`.`);
+    ghiMuc0(`- **Lịch sử giá — máy đã nộp** \`${ten}\` (${gio()}): ${ketQua.ok ? `nhận ${ketQua.nhan} dãy, ${ketQua.moc} mốc` : "KHÔNG nhận"}${dongLoi.length ? ` · ${dongLoi.length} dòng bị từ chối` : ""}${chan.length ? ` · ${chan.length} dãy bị chặn` : ""} — chi tiết \`${path.join("SEO", path.relative(SEO, thuMuc), "ket-qua-nop.txt").replace(/\//g, "\\")}\`.`);
     // Đánh dấu "đã nộp" khi web đã trả lời (nhận hay từ chối đều có lý do — sửa tệp thì máy nộp lại); lỗi mạng thì giờ sau thử lại.
     if (ketQua.traLoi) fs.writeFileSync(tepDau, dau);
     console.log(bao);

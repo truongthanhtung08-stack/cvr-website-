@@ -467,7 +467,7 @@ export default function MapPickerMo({
 
   return (
     <div className="space-y-3">
-      <div className={toan ? "fixed inset-0 z-[80] bg-white" : "relative overflow-hidden rounded-xl border border-cvr-line"}>
+      <div className={toan ? "ban-do-toan fixed inset-0 z-[80] bg-white" : "relative overflow-hidden rounded-xl border border-cvr-line"}>
         <div ref={boxRef} aria-label="Bản đồ ghim vị trí" className={`w-full bg-cvr-surface ${toan ? "h-full" : "h-[240px] sm:h-[360px]"}`} />
         {!sanSang && !hong && (
           <span className="pointer-events-none absolute inset-0 flex items-center justify-center text-[13px] font-medium text-cvr-muted">
@@ -493,7 +493,7 @@ export default function MapPickerMo({
           title="Tôi đang đứng ở đây"
           onClick={() => dinhVi(true)}
           disabled={dangDinhVi}
-          className={`absolute right-[10px] ${toan ? "top-[calc(60px+env(safe-area-inset-top))]" : "top-[10px]"} z-10 flex h-[29px] w-[29px] sm:top-[78px] items-center justify-center rounded-[4px] bg-white text-cvr-blue shadow-[0_0_0_2px_rgba(0,0,0,0.1)] disabled:opacity-60`}
+          className={`absolute right-[10px] ${toan ? "top-[calc(60px+env(safe-area-inset-top))] h-10 w-10 sm:top-[150px]" : "top-[10px] h-[29px] w-[29px] sm:top-[78px]"} z-10 flex items-center justify-center rounded-[4px] bg-white text-cvr-blue shadow-[0_0_0_2px_rgba(0,0,0,0.1)] disabled:opacity-60`}
         >
           {dangDinhVi ? (
             <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-cvr-blue border-t-transparent" />
@@ -512,7 +512,7 @@ export default function MapPickerMo({
           title={toan ? "Đóng bản đồ lớn" : "Phóng to bản đồ"}
           onClick={() => setToan(!toan)}
           className={toan
-            ? "absolute right-[10px] top-[calc(10px+env(safe-area-inset-top))] z-10 flex h-10 w-10 sm:top-[115px] items-center justify-center rounded-full bg-white text-cvr-ink shadow-[0_2px_10px_rgba(0,0,0,0.25)]"
+            ? "absolute right-[10px] top-[calc(10px+env(safe-area-inset-top))] z-10 flex h-10 w-10 sm:top-[10px] items-center justify-center rounded-[4px] bg-white text-cvr-ink shadow-[0_0_0_2px_rgba(0,0,0,0.1)]"
             : "absolute right-[10px] top-[47px] z-10 flex h-[29px] w-[29px] sm:top-[115px] items-center justify-center rounded-[4px] bg-white text-cvr-ink shadow-[0_0_0_2px_rgba(0,0,0,0.1)]"}
         >
           {toan ? (

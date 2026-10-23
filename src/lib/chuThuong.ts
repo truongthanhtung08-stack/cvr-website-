@@ -31,6 +31,29 @@ export function chuThuong(s: string, giuTen: string[] = []): string {
   return t;
 }
 
+// ============================================================================
+// GIỮ CỤM TỪ KHÔNG BỊ NGẮT DÒNG (chủ dự án 23/10/2026: "1 dòng không đủ thì xuống dòng khác theo chuẩn quy định tiêu đề theo
+// cấp, xuống dòng thì không cắt cụm từ, ví dụ Nha Trang"). Dấu cách trong tên địa danh / dự án / số + đơn vị đổi thành dấu
+// cách không ngắt (U+00A0) → trình duyệt đưa cả cụm xuống dòng cùng nhau. Chỉ đổi cách HIỂN THỊ, không đổi chữ.
+// Tên lấy theo chính tin (địa chỉ, dự án) + các địa danh hay gặp — không nạp bảng địa danh lớn (giữ trang nhẹ).
+// ============================================================================
+const DIA_DANH_CHUNG = [
+  "Đà Nẵng", "Nha Trang", "Quy Nhơn", "Hồ Chí Minh", "Hà Nội", "Phan Thiết", "Hội An", "Sơn Trà", "Ngũ Hành Sơn", "Hải Châu",
+  "Thanh Khê", "Liên Chiểu", "Cẩm Lệ", "Hòa Vang", "Thừa Thiên Huế", "Khánh Hòa", "Bình Định", "Quảng Nam", "Quảng Ngãi",
+  "Quảng Trị", "Quảng Bình", "Lâm Đồng", "Đà Lạt", "Vũng Tàu", "Cam Ranh", "Phú Quốc", "Hải Vân", "Mỹ Khê", "Non Nước",
+];
+export function giuCum(s: string, ten: string[] = []): string {
+  if (!s) return s;
+  const NB = " ";
+  let t = s.replace(/(\d[\d.,]*)\s+(m²|m2|PN|WC|tầng|tỷ|triệu|tr|ha)(?!\p{L})/giu, `$1${NB}$2`);
+  const ds = [...new Set([...ten, ...DIA_DANH_CHUNG].map((x) => x.trim()).filter((x) => x.includes(" ")))].sort((a, b) => b.length - a.length);
+  for (const x of ds) {
+    const re = new RegExp(`(?<!\\p{L})${x.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, "\\s+")}(?!\\p{L})`, "giu");
+    t = t.replace(re, (m) => m.replace(/\s+/g, NB));
+  }
+  return t;
+}
+
 // Tên địa danh của tin (cả hệ cũ) — để giữ chữ hoa khi đổi chữ thường
 export function tenDiaDanh(l: Listing): string[] {
   return [l.location, l.locationCu ?? ""]

@@ -5,7 +5,9 @@ import { useEffect, useRef, useState } from "react";
 // Nút CHIA SẺ tin — Zalo · Facebook · khay chia sẻ của máy · sao chép link.
 // Ưu tiên MOBILE: bấm là hiện bảng chọn đủ lớn để chạm bằng ngón tay (44px),
 // không dùng hover. Link chia sẻ lấy đúng địa chỉ trang đang xem.
-export default function ShareButtons({ title }: { title: string }) {
+// duongDan · nutCls · moLen: dùng lại trên THẺ TIN máy tính (chủ dự án 23/10/2026: "nút like, chia sẻ không phải để cho có") —
+// chia sẻ đúng link tin đó (không phải trang đang xem), nút theo khuôn thẻ, bảng chọn mở LÊN (thẻ cắt phần tràn dưới).
+export default function ShareButtons({ title, duongDan, nutCls, moLen }: { title: string; duongDan?: string; nutCls?: string; moLen?: boolean }) {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [chepZalo, setChepZalo] = useState(false);
@@ -13,7 +15,7 @@ export default function ShareButtons({ title }: { title: string }) {
   const boxRef = useRef<HTMLDivElement>(null);
 
   // Địa chỉ trang chỉ có ở trình duyệt (không có khi render phía máy chủ)
-  useEffect(() => setUrl(window.location.href), []);
+  useEffect(() => setUrl(duongDan ? window.location.origin + duongDan : window.location.href), [duongDan]);
 
   // Chạm ra ngoài / bấm Esc → đóng bảng chọn
   useEffect(() => {
@@ -93,7 +95,8 @@ export default function ShareButtons({ title }: { title: string }) {
     <div ref={boxRef} className="relative shrink-0">
       <button
         type="button"
-        onClick={() => {
+        onClick={(e) => {
+          e.preventDefault(); e.stopPropagation();
           // ĐIỆN THOẠI: bật thẳng khay chia sẻ của máy — trong đó có sẵn Zalo,
           // Messenger, Facebook, tin nhắn… và bấm vào là VÀO ĐÚNG APP kèm link.
           // Web không có quyền mở thẳng một app cụ thể kèm nội dung, nên đi qua
@@ -104,17 +107,17 @@ export default function ShareButtons({ title }: { title: string }) {
         }}
         aria-expanded={open}
         aria-label="Chia sẻ tin này"
-        className="inline-flex min-h-[36px] min-w-[36px] shrink-0 items-center justify-center gap-1.5 rounded-full border border-cvr-line bg-white px-2.5 text-[13px] font-semibold text-cvr-body transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 hover:border-cvr-ink hover:text-cvr-ink sm:px-3.5"
+        className={nutCls ?? "inline-flex min-h-[36px] min-w-[36px] shrink-0 items-center justify-center gap-1.5 rounded-full border border-cvr-line bg-white px-2.5 text-[13px] font-semibold text-cvr-body transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 hover:border-cvr-ink hover:text-cvr-ink sm:px-3.5"}
       >
         <svg className="h-[17px] w-[17px]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" d="M8.7 10.7a3 3 0 100 2.6m0-2.6l6.6-3.4m-6.6 6l6.6 3.4M18 8a3 3 0 100-6 3 3 0 000 6zm0 14a3 3 0 100-6 3 3 0 000 6z" />
         </svg>
         {/* Điện thoại chỉ biểu tượng (21/10/2026): hàng hạng tin · mã tin · Chia sẻ không vỡ dòng khi máy để chữ to (Zalo, Facebook) */}
-        <span className="hidden sm:inline">Chia sẻ</span>
+        {!nutCls && <span className="hidden sm:inline">Chia sẻ</span>}
       </button>
 
       {open && (
-        <div className="absolute right-0 top-[calc(100%+8px)] z-30 w-60 overflow-hidden rounded-2xl border border-cvr-line bg-white py-1.5 shadow-[0_12px_36px_rgba(0,0,0,0.16)]">
+        <div onClick={(e) => e.stopPropagation()} className={`absolute right-0 ${moLen ? "bottom-[calc(100%+8px)]" : "top-[calc(100%+8px)]"} z-30 w-60 overflow-hidden rounded-2xl border border-cvr-line bg-white py-1.5 shadow-[0_12px_36px_rgba(0,0,0,0.16)]`}>
           <button type="button" onClick={quaZalo} className={muc}>
             <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#0068ff] text-[11px] font-bold text-white">Za</span>
             {chepZalo ? "Đã chép link — dán vào Zalo" : "Chia sẻ qua Zalo"}

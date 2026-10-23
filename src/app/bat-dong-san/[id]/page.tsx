@@ -26,6 +26,7 @@ import ProjectNearby from "@/components/ProjectNearby";
 import ProjectNav from "@/components/ProjectNav";
 import { BreadcrumbJsonLd } from "@/components/Breadcrumb";
 import { provinceOf, districtOf, pickRelated } from "@/lib/data";
+import { giuCum, tenDiaDanh } from "@/lib/chuThuong";
 import { getListing, getListings, getListingsHetHan, getListingDetail, tinDaHetHan } from "@/lib/listingsDb";
 import { banGocCua, lienKetCho, tinDatChuan, tinhCuaTin, phuongCuaTin, duongDanPhanCap, THANH_PHO } from "@/lib/pseo";
 import { rentCategories, saleCategories } from "@/lib/categories";
@@ -250,7 +251,8 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
     ?? (d.projectSlug || d.projectName
       ? (await getProjects()).find((p) => cungDuAn(p.slug, d.projectSlug) || cungDuAn(p.name, d.projectName) || cungDuAn(p.name, d.projectSlug)) ?? null
       : null);
-  const tenDuAn = d.projectName || duAn?.name || "";
+  // Có hồ sơ dự án thì dùng TÊN TRONG HỒ SƠ (một tên chuẩn cho mọi tin — tin khách ghi lệch "Đá Nẵng Golden Bay" vẫn hiện đúng tên)
+  const tenDuAn = duAn?.name || d.projectName || "";
   const slugDuAnTin = duAn?.slug ?? d.projectSlug ?? "";
   // CỔNG SĐT: full số CHỈ hiện khi khách đăng nhập (bấm → RPC reveal_contact ghi lead).
   // Server chỉ phát chuỗi CHE — số 10 chữ số, CHỈ che 3 số cuối (chủ dự án chốt 01/10/2026):
@@ -504,24 +506,27 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                     giá ngay bên dưới trong cùng một màn hình. */}
                 {/* TIN HẾT HẠN (chốt 25/09/2026, theo Batdongsan): link cũ vẫn mở,
                     nói thẳng tin đã hết hạn, ẩn số người đăng, gợi ý tin tương tự bên dưới. */}
-                <h1 className="mt-3 whitespace-pre-line break-words text-[21px] font-semibold leading-[1.3] tracking-tight text-cvr-ink sm:text-[28px]">{l.title}</h1>
+                <h1 className="mt-3 whitespace-pre-line break-words text-[21px] font-semibold leading-[1.3] tracking-tight text-cvr-ink sm:text-[28px]">{giuCum(l.title, [...tenDiaDanh(l), tenDuAn])}</h1>
                 {/* DỰ ÁN = VỊ TRÍ, NHÃN GỌN NGAY DƯỚI TIÊU ĐỀ (chủ dự án 22/10/2026: "để chỗ này đã hợp lý chưa — xem lại bố cục,
                     giao diện"): đọc từ lớn tới nhỏ — dự án → đường, phường → địa chỉ cũ; nhãn có viền nhìn là biết bấm được (sang
                     trang dự án), không còn dòng chữ xanh dài lẫn với địa chỉ. Khối Đặc điểm không có dòng "Dự án". */}
+                {/* 23/10/2026 (chủ dự án: "phần ghi tên dự án và liên kết dưới tiêu đề — giao diện và liên kết cho chuyên nghiệp"):
+                    một dòng gọn: biểu tượng toà nhà · TÊN dự án đậm (tên trong hồ sơ) · mũi tên; bỏ khung viền nền xám; thẳng hàng
+                    với dòng địa chỉ ngay dưới ("2 cái dự án và vị trí lệch rất khó chịu"). Bấm sang trang dự án. Tên dài xuống dòng. */}
                 {tenDuAn && (() => {
-                  const ten = /^dự án\s/i.test(tenDuAn) ? tenDuAn : `Dự án ${tenDuAn}`;
+                  const ten = tenDuAn.replace(/^dự án\s+/i, "");
+                  // CÙNG KHUÔN dòng địa chỉ bên dưới (biểu tượng 16px · cách 6px · chữ 14/15px) → hai dòng thẳng hàng biểu tượng lẫn chữ
                   const noi = (
                     <>
-                      <svg className="h-4 w-4 shrink-0 text-cvr-muted" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M4 21V5a1 1 0 011-1h9a1 1 0 011 1v16M15 9h4a1 1 0 011 1v11M3 21h18M8 8h3M8 12h3M8 16h3" /></svg>
-                      {/* Tên dài → nhãn GIÃN xuống dòng, thấy trọn tên (chủ dự án 22/10/2026: trang chi tiết không cắt, không che gì) */}
-                      <span className="min-w-0 break-words leading-snug">{ten}</span>
-                      {slugDuAnTin && <svg className="h-3.5 w-3.5 shrink-0 text-cvr-muted" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>}
+                      <svg className="mt-[2px] h-4 w-4 shrink-0 text-cvr-muted" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M4 21V5a1 1 0 011-1h9a1 1 0 011 1v16M15 9h4a1 1 0 011 1v11M3 21h18M8 8h3M8 12h3M8 16h3" /></svg>
+                      <span className="min-w-0 break-words font-semibold text-cvr-ink group-hover:underline">{ten}</span>
+                      {slugDuAnTin && <svg className="mt-[5px] h-3.5 w-3.5 shrink-0 text-cvr-muted" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>}
                     </>
                   );
-                  const cls = "mt-2.5 inline-flex max-w-full items-center gap-1.5 rounded-2xl border border-cvr-line bg-cvr-surface px-3 py-1.5 text-[13.5px] font-medium text-cvr-ink";
+                  const cls = "group mt-2 flex max-w-full items-start gap-1.5 text-[14px] leading-relaxed sm:text-[15px]";
                   return slugDuAnTin
-                    ? <Link href={`/du-an/${slugDuAnTin}`} className={`${cls} transition hover:border-cvr-ink`}>{noi}</Link>
-                    : <span className={cls}>{noi}</span>;
+                    ? <Link href={`/du-an/${slugDuAnTin}`} className={cls}>{noi}</Link>
+                    : <p className={cls}>{noi}</p>;
                 })()}
 
                 {/* ĐỊA CHỈ HAI DÒNG — người đăng nhập theo hệ nào cũng vậy:

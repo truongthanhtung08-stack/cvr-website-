@@ -1,5 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
+import BieuTuongThe from "@/components/BieuTuongThe";
+import { giuCum, tenDiaDanh } from "@/lib/chuThuong";
 import AnhChay from "@/components/AnhChay";
 import SaveButton from "@/components/SaveButton";
 import CompareButton from "@/components/CompareButton";
@@ -158,7 +160,7 @@ export default function PropertyCard({
           }`}
           style={tier?.titleColor ? { color: tier.titleColor } : undefined}
         >
-          <Highlight text={item.title} terms={terms} />
+          <Highlight text={giuCum(item.title, [...tenDiaDanh(item), item.projectName ?? ""])} terms={terms} />
         </h3>
 
         {/* Mô tả — số dòng theo cấp (Kim Cương 3 · Vàng 2 · Bạc 1 · Thường 0), hiện ở
@@ -173,7 +175,7 @@ export default function PropertyCard({
             <p className="mt-2 flex flex-wrap items-baseline gap-x-1.5 text-[13px] text-cvr-body">
               {thongSoTheoCap(item, tierId).map((x, i, ds) => (
                 <span key={i} className={`flex items-baseline gap-1 ${x.do ? `text-[16px] font-bold ${item.price === "Thỏa thuận" || item.hetHan ? "text-cvr-muted" : "text-red-500"}` : ""}`}>
-                  {x.chu}{x.icon === "pn" ? " PN" : x.icon === "wc" ? " WC" : ""}
+                  {x.icon === "sofa" && <BieuTuongThe loai="sofa" className="h-[15px] w-[15px] self-center" />}{x.chu}{(x.icon === "pn" || x.icon === "wc") && <BieuTuongThe loai={x.icon} className="h-[15px] w-[15px] self-center" />}
                   {i < ds.length - 1 && <span className="ml-0.5 text-[13px] font-normal text-cvr-muted">·</span>}
                 </span>
               ))}
@@ -318,7 +320,7 @@ function PropertyRow({ item, showTime = false, terms = [] }: { item: Listing; sh
           className={`clamp-2 min-h-[3em] text-sm ${tierId === "basic" ? "font-medium" : "font-bold"} leading-[1.5] text-cvr-ink sm:text-base ${tier?.uppercase ? "uppercase" : ""}`}
           style={tier?.titleColor ? { color: tier.titleColor } : undefined}
         >
-          <Highlight text={item.title} terms={terms} />
+          <Highlight text={giuCum(item.title, [...tenDiaDanh(item), item.projectName ?? ""])} terms={terms} />
         </h3>
         {rowDesc > 0 && (
           <p className={`mt-1 text-sm leading-relaxed text-cvr-muted ${rowDesc >= 3 ? "line-clamp-3" : rowDesc === 2 ? "line-clamp-2" : "line-clamp-1"}`}>{moTaHang}</p>

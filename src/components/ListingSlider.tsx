@@ -2,6 +2,7 @@
 
 import { useRef } from "react";
 import PropertyCard from "@/components/PropertyCard";
+import TheTinMobile from "@/components/TheTinMobile";
 import type { Listing } from "@/lib/data";
 import { smoothScrollTo } from "@/lib/scroll";
 
@@ -31,7 +32,11 @@ export default function ListingSlider({ items }: { items: Listing[] }) {
             // [&>*]:h-full: thẻ giãn bằng thẻ cao nhất trong dải — trước đây khung trắng không giãn, dưới thẻ thấp hở khoảng lớn (18/10/2026)
             className="w-[80%] shrink-0 snap-start sm:w-[calc((100%-20px)/2)] lg:w-[calc((100%-60px)/4)] [&>*]:h-full"
           >
-            <PropertyCard item={item} />
+            {/* Thẻ THEO CẤP, đúng như "Bất động sản nổi bật" trang chủ (chủ dự án 23/10/2026: "Tin mua bán tại dự án, tin tương
+                tự cấu trúc cho đúng theo cấp thẻ tin"): điện thoại = thẻ điện thoại theo cấp (TheTinMobile — Diamond 3 ảnh phụ,
+                PN · WC, Zalo + Hiện số…); máy tính = thẻ trang chủ máy tính theo cấp. Vẫn là slide + "Xem thêm". */}
+            <div className="overflow-hidden rounded-xl border border-cvr-line sm:hidden"><TheTinMobile item={item} tuChay={false} dcCu={false} /></div>
+            <div className="hidden sm:block"><PropertyCard item={item} variant="tier" /></div>
           </div>
         ))}
       </div>
