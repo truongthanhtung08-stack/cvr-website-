@@ -15,6 +15,8 @@ import ShareButtons from "@/components/ShareButtons";
 import PriceHistory from "@/components/PriceHistory";
 import {
   chiSoChoTin,
+  coDuLichSuGia,
+  giaHienTai,
   giaChoLichSu,
   khoCuaMinh,
   tenPhamVi,
@@ -317,12 +319,16 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
     const items = [...(await khoCuaMinh(l.diaGioi?.province ?? "", l.type, muc)), ...soNhapHopLe(nhapTay?.items)];
     const tinMuc = { ...l, purpose: muc };
     const chiSo = chiSoChoTin(tinMuc, { items }, { duAn: d.projectName, diaChi: d.addressDetail });
+    // Chưa đủ 2 kỳ để vẽ → giá khu vực hiện tại từ BĐS đang rao trên web (23/10/2026)
+    const hienTai = coDuLichSuGia(chiSo) ? null : giaHienTai(l, all, muc);
     return {
       chiSo,
+      hienTai,
+      capNhat: new Date().toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", day: "2-digit", month: "2-digit", year: "numeric" }),
       // Bảng so sánh khu vực / dự án lân cận: TẠM KHÔNG LÀM (chủ dự án 21/10/2026: chưa đủ cơ sở số liệu)
       lanCan: [],
       // Chưa có số: tên nơi theo dự án của tin, không có dự án thì theo phường, tỉnh của tin
-      tieuDe: `Lịch sử giá ${muc === "thue" ? "thuê" : "bán"} ${tenLoai} tại ${noiCua(chiSo) || d.projectName || l.location}`,
+      tieuDe: `Lịch sử giá ${muc === "thue" ? "thuê" : "bán"} ${tenLoai} tại ${(hienTai?.phamVi) || noiCua(chiSo) || d.projectName || l.location}`,
     };
   };
   const [giaBan, giaThue] = await Promise.all([dayTheoMuc("ban"), dayTheoMuc("thue")]);

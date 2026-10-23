@@ -2,7 +2,7 @@
 
 import { useDiaDanh } from "@/lib/useDiaDanh";
 import { useState } from "react";
-import type { ChiSoKhuVuc, OSanh } from "@/lib/chiSoGia";
+import type { ChiSoKhuVuc, OSanh, GiaHienTai } from "@/lib/chiSoGia";
 import { vndM2, luiMotNam, coDuLichSuGia, soKyLienMach } from "@/lib/chiSoGia";
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -43,7 +43,19 @@ function soTruc(v: number, chia = 1_000_000): string {
 const phanTram = (x: number) => `${Math.abs(x).toFixed(1).replace(".", ",")}%`;
 
 /** Dãy giá của MỘT mục đích (mua bán hoặc cho thuê) cho khối lịch sử giá. */
-export type DayGiaTin = { chiSo: ChiSoKhuVuc | null; lanCan: OSanh[]; tieuDe: string };
+export type DayGiaTin = { chiSo: ChiSoKhuVuc | null; lanCan: OSanh[]; tieuDe: string; hienTai?: GiaHienTai | null; capNhat?: string };
+
+/** Nguồn ghi dưới tiêu đề (23/10/2026): mốc chép từ Nhà Tốt → "Nhà Tốt (số Quận … cũ)"; web tự tính → "Coastal Land — N tin". */
+function nguonCua(day: DayGiaTin, coBieuDo: boolean): string {
+  if (!coBieuDo) return day.hienTai ? `Coastal Land — ${day.hienTai.soMau} tin` : "Coastal Land";
+  const n = day.chiSo?.nguon ?? "";
+  if (/nh[aà] t[oố]t/i.test(n)) {
+    const q = n.match(/(Quận|Huyện|Thị xã|Thành phố) [^()—]+? cũ/);
+    return q ? `Nhà Tốt (số ${q[0]})` : "Nhà Tốt";
+  }
+  const cuoi = day.chiSo?.moc[day.chiSo.moc.length - 1];
+  return cuoi?.soMau ? `Coastal Land — ${cuoi.soMau} tin` : "Coastal Land";
+}
 
 // KHỐI LỊCH SỬ GIÁ (chủ dự án 21/10/2026): tiêu đề "Lịch sử giá bán/thuê <loại hình> tại <khu vực, dự án>" →
 // "Nguồn: Coastal Land" → nút Mua bán · Cho thuê (cùng khu vực + loại hình) và mốc 1 · 2 · 3 · 5 năm.
@@ -67,7 +79,8 @@ export default function PriceHistory({
   loaiHinh?: string;
 }) {
   const co = { ban: !!ban && coDuLichSuGia(ban.chiSo), thue: !!thue && coDuLichSuGia(thue.chiSo) };
-  const [muc, setMuc] = useState<"ban" | "thue">(co[macDinh] ? macDinh : macDinh === "ban" ? "thue" : "ban");
+  // Mở sẵn đúng mục đích của tin (23/10/2026: tin bán không được tự nhảy sang Cho thuê)
+  const [muc, setMuc] = useState<"ban" | "thue">(macDinh);
   const day = muc === "ban" ? ban : thue;
   if (!day) return null;
   // BỐ CỤC (chủ dự án 21/10/2026 — chuẩn, gọn): tiêu đề · nguồn → MỘT khung trắng: thẻ Mua bán | Cho thuê (gạch chân) →
@@ -92,11 +105,13 @@ export default function PriceHistory({
   return (
     <>
       <h2 className="text-[19px] font-semibold leading-snug tracking-tight text-cvr-ink sm:text-[22px]">{day.tieuDe}</h2>
-      <p className="mb-4 mt-1 text-[12.5px] text-cvr-muted">Nguồn: Coastal Land</p>
+      <p className="mb-4 mt-1 text-[12.5px] text-cvr-muted">Nguồn: {nguonCua(day, co[muc])}</p>
       <div className="rounded-2xl bg-white p-4 ring-1 ring-cvr-line sm:p-6">
         {theMuc}
         {co[muc] ? (
-          <KhoiGia key={muc} chiSo={day.chiSo} laThue={muc === "thue"} lanCan={day.lanCan} loaiHinh={loaiHinh} giaTin={muc === macDinh ? giaTin : null} san={mauSo !== "dat"} />
+          <KhoiGia key={muc} chiSo={day.chiSo} laThue={muc === "thue"} lanCan={day.lanCan} loaiHinh={loaiHinh} giaTin={muc === macDinh ? giaTin : null} san={mauSo === "san"} />
+        ) : day.hienTai ? (
+          <KhoiHienTai h={day.hienTai} laThue={muc === "thue"} san={mauSo === "san"} capNhat={day.capNhat ?? ""} giaTin={muc === macDinh ? giaTin : null} />
         ) : (
           // QUY ĐỊNH (chủ dự án 21/10/2026): đủ số liệu chính xác mới vẽ; chưa đủ thì vẫn hiện khối và ghi "sẽ cập nhật"
           <p className="rounded-xl bg-cvr-surface px-4 py-8 text-center text-[14px] text-cvr-muted">Dữ liệu sẽ được cập nhật.</p>
@@ -143,7 +158,9 @@ function KhoiGia({
 
   const moc = caDay.slice(-(moiNam * (duSo(soNam) ? soNam : 1) + 1));
   const cuoi = moc[moc.length - 1];
-  const namTruoc = caDay.find((m) => m.quy === luiMotNam(cuoi.quy))!;
+  // Chưa đủ một năm (≥ 2 kỳ là vẽ — 23/10/2026) → so với kỳ đầu tiên có số
+  const coNamTruoc = caDay.some((m) => m.quy === luiMotNam(cuoi.quy));
+  const namTruoc = caDay.find((m) => m.quy === luiMotNam(cuoi.quy)) ?? moc[0];
   const doiMotNam = ((cuoi.giaM2 - namTruoc.giaM2) / namTruoc.giaM2) * 100;
   const dinh = moc.reduce((a, b) => (b.giaM2 > a.giaM2 ? b : a), moc[0]);
   const soVoiDinh = ((cuoi.giaM2 - dinh.giaM2) / dinh.giaM2) * 100;
@@ -260,7 +277,7 @@ function KhoiGia({
         <div className="mt-3 grid grid-cols-2 gap-4 border-t border-cvr-line pt-3">
           <div>
             <p className="flex items-center gap-1.5 text-[17px] font-bold leading-tight text-cvr-ink"><MuiTen tang={doiMotNam >= 0} />{phanTram(doiMotNam)}</p>
-            <p className="mt-1 text-[12.5px] leading-snug text-cvr-muted">So với 1 năm trước<br />({nhanKy(namTruoc.quy)} – {nhanKy(cuoi.quy)})</p>
+            <p className="mt-1 text-[12.5px] leading-snug text-cvr-muted">{coNamTruoc ? "So với 1 năm trước" : `So với ${nhanKy(namTruoc.quy)}`}<br />({nhanKy(namTruoc.quy)} – {nhanKy(cuoi.quy)})</p>
           </div>
           <div>
             {soVoiDinh >= 0 ? (
@@ -321,6 +338,23 @@ function KhoiGia({
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+// GIÁ KHU VỰC HIỆN TẠI (23/10/2026): chưa đủ 2 kỳ để vẽ biểu đồ → giá phổ biến + khoảng giá của BĐS đang rao trên web
+function KhoiHienTai({ h, laThue, san, capNhat, giaTin }: { h: GiaHienTai; laThue: boolean; san: boolean; capNhat: string; giaTin?: number | null }) {
+  const gia = (v: number) => vndM2(v).replace("/m²", san ? "/m² sàn" : "/m²") + (laThue ? "/tháng" : "");
+  const chia = laThue ? 1000 : 1e6;
+  return (
+    <div className="tabular-nums rounded-xl border border-cvr-line px-4 py-3.5">
+      <p className="text-[13px] text-cvr-muted">{laThue ? "Giá thuê phổ biến hiện tại" : "Giá bán phổ biến hiện tại"}</p>
+      <p className="mt-1 text-[22px] font-bold leading-tight tracking-tight text-cvr-ink sm:text-[24px]">{gia(h.trungVi)}</p>
+      {h.soMau > 1 && h.cao > h.thap && <p className="mt-2 text-[13px] text-cvr-body">Khoảng giá: {soTruc(h.thap, chia)} – {gia(h.cao)}</p>}
+      {giaTin ? <p className="mt-1 text-[13px] text-cvr-body">Giá theo tin hiện tại: {gia(giaTin)}</p> : null}
+      <p className="mt-3 border-t border-cvr-line pt-2.5 text-[12.5px] text-cvr-muted">
+        Theo {h.soMau} bất động sản đang {laThue ? "cho thuê" : "bán"} {h.laTinh ? "toàn" : "tại"} {h.phamVi} trên Coastal Land{capNhat ? `, cập nhật ${capNhat}` : ""}
+      </p>
     </div>
   );
 }

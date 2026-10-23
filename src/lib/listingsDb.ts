@@ -318,7 +318,7 @@ function rowToListing(r: Row): Listing {
     // Ngày tin LÊN WEB gốc — cả web dùng (Hiệu lực, "Đăng … trước", xếp mới nhất, sitemap). Tin đã nâng VIP (có han_basic,
     // hoặc ha_vip_luc khi đã hạ về Basic): published_at bị đặt lại = ngày nâng → lấy ngày đăng tin (created_at).
     postedAt: typeof r.details?.han_basic === "string" || typeof r.details?.ha_vip_luc === "string"
-      ? r.created_at
+      ? ngayLenWebTinNang(r)
       : (r.published_at ?? r.created_at),
     ...(r.bumped_at ? { bumpedAt: r.bumped_at } : {}),
     purpose: r.purpose,
@@ -354,7 +354,32 @@ const COLS_DETAIL = COLS;
 
 // Gọi PostgREST trực tiếp bằng fetch để dùng cache Next (revalidate) —
 // KHÔNG dùng client cookies ở đây vì tin đã duyệt là dữ liệu công khai.
+// NGÀY LÊN WEB của tin đã nâng VIP — MỘT chỗ cho cả web (chủ dự án 23/10/2026: "sửa cả hệ thống" · "giá, tiền, hạn: 1 nguồn duy
+// nhất"): published_at bị đặt lại = ngày nâng, ngày tạo tin có thể sớm hơn ngày duyệt → Hiệu lực = HẾT HẠN của tin (muộn hơn giữa
+// hạn VIP và hạn Basic) − SỐ NGÀY HIỂN THỊ của chương trình trong ADMIN (billing free.hienThi). Chưa đọc được admin → ngày tạo tin.
+let SO_NGAY_CT: number | undefined;
+async function napSoNgayCt(): Promise<void> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) return;
+  try {
+    const res = await fetch(`${url}/rest/v1/site_content?select=data&key=eq.billing&limit=1`, {
+      headers: { apikey: key, Authorization: `Bearer ${key}` },
+      next: { tags: ["noi-dung"], revalidate: 3600 },
+    });
+    const ds = res.ok ? ((await res.json()) as { data?: { free?: { hienThi?: number } } }[]) : [];
+    const n = ds[0]?.data?.free?.hienThi;
+    if (typeof n === "number" && n > 0) SO_NGAY_CT = n;
+  } catch { /* giữ số cũ */ }
+}
+function ngayLenWebTinNang(r: Row): string {
+  const het = [r.tier_expires_at, typeof r.details?.han_basic === "string" ? r.details.han_basic : null]
+    .filter((x): x is string => !!x).sort((a, b) => Date.parse(a) - Date.parse(b)).pop();
+  return het && SO_NGAY_CT ? new Date(Date.parse(het) - SO_NGAY_CT * 86_400_000).toISOString() : r.created_at;
+}
+
 async function rest(query: string): Promise<Row[] | null> {
+  if (SO_NGAY_CT === undefined) await napSoNgayCt();
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) return null; // chưa cấu hình env (worktree/CI) → fallback
