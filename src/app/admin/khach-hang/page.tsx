@@ -5,6 +5,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import type { Profile, Role, Status } from "@/lib/useProfile";
 import { roleLabel, statusBadge } from "@/lib/adminLabels";
+import { thieuHoSoDn } from "@/lib/hoSoDoanhNghiep";
 
 export default function CustomersPage() {
   const [rows, setRows] = useState<Profile[]>([]);
@@ -12,6 +13,8 @@ export default function CustomersPage() {
   const [q, setQ] = useState("");
   const [role, setRole] = useState<"all" | Role>("all");
   const [status, setStatus] = useState<"all" | Status>("all");
+  // Cá nhân / Doanh nghiệp (chủ dự án 23/10/2026): doanh nghiệp = vai trò "Công ty / Sàn", hồ sơ điền ở trang chi tiết.
+  const [loai, setLoai] = useState<"all" | "ca_nhan" | "doanh_nghiep">("all");
 
   useEffect(() => {
     const supabase = createClient();
@@ -30,12 +33,14 @@ export default function CustomersPage() {
     return rows.filter((r) => {
       if (role !== "all" && r.role !== role) return false;
       if (status !== "all" && r.status !== status) return false;
+      if (loai === "doanh_nghiep" && r.role !== "company") return false;
+      if (loai === "ca_nhan" && r.role === "company") return false;
       if (!kw) return true;
       return [r.full_name, r.phone, r.email, r.company_name]
         .filter(Boolean)
         .some((v) => (v as string).toLowerCase().includes(kw));
     });
-  }, [rows, q, role, status]);
+  }, [rows, q, role, status, loai]);
 
   return (
     <div className="max-w-6xl">
@@ -62,6 +67,15 @@ export default function CustomersPage() {
           placeholder="Tìm theo tên, SĐT, email, công ty…"
           className="h-10 min-w-[240px] flex-1 rounded-lg border border-cvr-line bg-white px-3 text-sm text-cvr-ink placeholder-cvr-faint outline-none focus:border-cvr-ink"
         />
+        <select
+          value={loai}
+          onChange={(e) => setLoai(e.target.value as "all" | "ca_nhan" | "doanh_nghiep")}
+          className="h-10 rounded-lg border border-cvr-line bg-white px-3 text-sm text-cvr-body outline-none focus:border-cvr-ink"
+        >
+          <option value="all">Cá nhân + Doanh nghiệp</option>
+          <option value="ca_nhan">Cá nhân</option>
+          <option value="doanh_nghiep">Doanh nghiệp</option>
+        </select>
         <select
           value={role}
           onChange={(e) => setRole(e.target.value as "all" | Role)}
@@ -107,6 +121,7 @@ export default function CustomersPage() {
                 <td className="px-4 py-3">
                   <div className="font-medium text-cvr-ink">{r.full_name || "(chưa đặt tên)"}</div>
                   {r.company_name && <div className="text-xs text-cvr-muted">{r.company_name}</div>}
+                  {r.role === "company" && nhanHoSoDn(r)}
                 </td>
                 <td className="px-4 py-3 text-cvr-body">
                   <div>{r.phone || "—"}</div>
@@ -150,6 +165,7 @@ export default function CustomersPage() {
             <div className="mt-1 text-sm text-cvr-body">{r.phone || "—"} · {emailThat(r.email) || "—"}</div>
             <div className="mt-1 text-xs text-cvr-muted">{roleLabel(r.role)} · {fmtDate(r.created_at)}</div>
             <div className="mt-1.5">{nhanHoaDon(r)}</div>
+            {r.role === "company" && nhanHoSoDn(r)}
           </Link>
         ))}
         {!loading && filtered.length === 0 && (
@@ -177,6 +193,16 @@ function nhanHoaDon(r: unknown) {
         </span>
       )}
     </span>
+  );
+}
+
+// Hồ sơ doanh nghiệp đủ chưa — đủ + đồng ý cho đăng thì hiện ở /chuyen-gia/cong-ty.
+function nhanHoSoDn(r: unknown) {
+  const thieu = thieuHoSoDn(r as Record<string, unknown>);
+  return thieu.length ? (
+    <div className="mt-0.5 text-xs text-amber-700">Hồ sơ doanh nghiệp thiếu: {thieu.join(", ")}</div>
+  ) : (
+    <div className="mt-0.5 text-xs text-green-700">Hồ sơ doanh nghiệp đủ · đang hiện trên web</div>
   );
 }
 

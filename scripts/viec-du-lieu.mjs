@@ -28,6 +28,9 @@ const env = Object.fromEntries(
 const U = env.NEXT_PUBLIC_SUPABASE_URL;
 const K = env.SUPABASE_SERVICE_ROLE_KEY || env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const doc = async (q) => (await fetch(`${U}/rest/v1/${q}`, { headers: { apikey: K, Authorization: `Bearer ${K}` } })).json();
+// Đo chép nguyên văn (23/10): % cụm 8 chữ của mô tả trùng trang nguồn, theo 8 ký tự đầu mã tin. Trang nguồn chặn đọc → không có trong tệp.
+let CHEP = {};
+try { CHEP = Object.fromEntries(JSON.parse(fs.readFileSync("D:/Coastal Land/SEO/RA/tin-chep-nguyen-van.json", "utf8")).map((o) => [o.id, o.pct])); } catch {}
 
 const ngay = new Date(Date.now() + 7 * 3600e3).toISOString().slice(0, 10);
 const [tin, duAn, ho] = await Promise.all([
@@ -64,10 +67,9 @@ const chuaDat = tin.filter(conHan).map((x) => {
   const t = x.title || "", d = (x.description || "").trim(), chu = t.replace(/[^A-Za-zÀ-ỹ]/g, "");
   const cl = [];
   if (chu.length > 10 && chu === chu.toUpperCase()) cl.push("tiêu đề VIẾT HOA cả câu");
-  // Chuẩn tiêu đề (bảng tự kiểm dòng 1, chủ dự án 20/10/2026): 30–60 ký tự · không ghi giá, diện tích (web tự hiện)
+  // Chuẩn tiêu đề (bảng tự kiểm dòng 1, chủ dự án 20/10/2026): 30–60 ký tự · giá, diện tích nổi bật được ghi (chủ dự án 23/10)
   if (t.trim().length > 60) cl.push(`tiêu đề dài ${t.trim().length} ký tự (chuẩn 30–60)`);
   if (t.trim().length < 30) cl.push(`tiêu đề ngắn ${t.trim().length} ký tự (chuẩn 30–60)`);
-  if (/\d+([.,]\d+)?\s*(m2|m²|tỷ|ty\b|triệu|tr\b)/i.test(t)) cl.push("tiêu đề ghi giá/diện tích");
   // 2 câu đầu mô tả hiện ngay dưới tiêu đề trên thẻ tin (20/10/2026) → mô tả mở đầu bằng chính tiêu đề là phí chỗ
   const dongDau = d.split(/\n|(?<=[.!?])\s/)[0]?.toLowerCase().replace(/[^\p{L}\d ]/gu, "").trim() ?? "";
   const tdThuong = t.toLowerCase().replace(/[^\p{L}\d ]/gu, "").trim();
@@ -76,7 +78,12 @@ const chuaDat = tin.filter(conHan).map((x) => {
   if (/siêu phẩm|sập sàn|giá sốc|cực hot|gấp gấp|hiếm|cơ hội vàng|!!/i.test(t)) cl.push("tiêu đề có từ câu khách");
   if (d.length >= 100 && d.length < 300) cl.push("mô tả < 300 ký tự");
   if (d.length >= 100 && !d.includes("\n")) cl.push("mô tả một cục, chưa chia 5 đoạn");
-  thieu.push(...cl);
+  // Chuẩn chữ áp cho tin từ ngày làm việc 23/10/2026 trở đi — chủ dự án 23/10: "từ ngày làm việc, chưa nói làm hết lại".
+  // Tin cũ hơn: chỉ sửa cái PHẠM QUY TẮC GOOGLE — nội dung sao chép (chính sách spam "scraped content"; Search Console 20/10:
+  // tin chép nguyên văn trang nguồn gần như 0 lượt hiển thị). Có link gốc mới so được.
+  if ((x.published_at || "") >= "2026-10-23") thieu.push(...cl);
+  else if (CHEP[x.id.slice(0, 8)] >= 30) thieu.push(`mô tả chép nguyên văn tin gốc ${CHEP[x.id.slice(0, 8)]}% — viết lại bằng lời mình, giữ đúng số liệu (Google coi là nội dung sao chép)`);
+  else if (x.details?.nguonTin && d.length >= 100 && !(x.id.slice(0, 8) in CHEP)) thieu.push("so mô tả với tin gốc: câu nào trùng nguyên văn quá 8 chữ liền thì viết lại (Google coi là nội dung sao chép)");
   return { x, thieu, chuChu: cl.length > 0, chan: soAnh(x) < 3 || d.length < 100 || cl.length > 0 };
 }).filter((r) => r.thieu.length);
 
@@ -161,10 +168,10 @@ const dd = ngay.slice(8, 10) + ngay.slice(5, 7) + ngay.slice(0, 4);
 const TEN_THU = ["Chủ nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"][thu];
 const SEO = p("D:", "Coastal Land", "SEO");
 const CV = p(SEO, "CONG-VIEC-3-BEN.md");
-// 18/10/2026 (chủ dự án: "dồn hết một folder SEO"): tin cũng giao vào SEO\VAO\<ngày> cùng mọi dữ liệu khác;
-// Claude kiểm xong CHUYỂN cả thư mục ngày sang SEO\DA-DUYET\<ngày>. Không còn dùng Đăng tin\COWORK, TIN HANG NGAY chuẩn.
-const NOI_TIN = "`" + p(SEO, "VAO", dd) + BS + "` (tệp `Bang-" + ngay + ".xlsx` + `anh" + BS + "` + `Video" + BS + "`)";
-const NOI_KHAC = "`" + p(SEO, "VAO", dd) + BS + "`";
+// 20/10/2026 (chủ dự án, CONG-VIEC-3-BEN.md mục 0): Cowork giao THẲNG mọi tệp vào SEO/DA-DUYET/<ngày> — không dùng SEO/VAO nữa;
+// Claude kiểm, sửa tại chỗ (không chuyển thư mục).
+const NOI_TIN = "`" + p(SEO, "DA-DUYET", dd) + BS + "` (tệp `Bang-" + ngay + ".xlsx` + `anh" + BS + "` + `Video" + BS + "`)";
+const NOI_KHAC = "`" + p(SEO, "DA-DUYET", dd) + BS + "`";
 // Kèm link tin gốc (quy trình 17/10): Cowork không tự tìm được nguồn; tin khách tự đăng không có nguồn → không giao.
 // Lỗi chất lượng chữ (chuChu) sửa được từ chính tin trên web → giao cả khi không có nguồn.
 const sua = (ds, cot) => ds.filter((r) => r.x.details?.nguonTin || r.chuChu).map((r) => `- [${r.x.title.slice(0, 60)}](${link(r.x)}) — ${cot(r)} · nguồn: ${r.x.details?.nguonTin || "không có — viết lại từ chính chữ trên tin, không thêm ý mới"}`);
@@ -184,7 +191,7 @@ const MUC = [
   ["Tin mới", NOI_TIN, null, [
     "**Khu vực theo thứ tự:** Đà Nẵng → Huế → Khánh Hòa → Gia Lai → Lâm Đồng → Quảng Ngãi → Quảng Trị (chủ dự án 20/10/2026; Hà Nội, TP. Hồ Chí Minh chưa làm — triển khai khi quy trình ổn định). Tỉnh, phường ghi hệ mới theo `D:\\Coastal Land\\SEO\\DANH-SACH-PHUONG-XA-TOAN-QUOC.txt`.",
     `Lọc + biên tập theo \`${p(SEO, "YEU-CAU-COWORK-DANG-TIN-HANG-LOAT.md")}\`:`,
-    "- **Tiêu đề = câu SEO chính**, 30–60 ký tự, chỉ giữ thông tin chính: Bán/Cho thuê + loại hình + đặc điểm khách hay tìm + tên đường/dự án — phường, tỉnh **tùy tin** — tin đã có tên đường / dự án thì không cần; tin thiếu tên đường, dự án hoặc ở thành phố lớn thì nên ghi; không ghi giá, diện tích (web tự thêm).",
+    "- **Tiêu đề = câu SEO chính**, 30–60 ký tự, chỉ giữ thông tin chính: Bán/Cho thuê + loại hình + đặc điểm khách hay tìm + tên đường/dự án — phường, tỉnh **tùy tin** — tin đã có tên đường / dự án thì không cần; tin thiếu tên đường, dự án hoặc ở thành phố lớn thì nên ghi; giá, diện tích là điểm nổi bật thì ghi vào, chiếu theo tin gốc (chủ dự án 23/10/2026).",
     "- **Mô tả** ≥ 300 ký tự, đủ 5 phần: tổng quan · vị trí · thông số · pháp lý · điều kiện giao dịch.",
     "- Mọi thông tin trong tin gốc (giá, diện tích, mặt tiền, đường vào, hướng, pháp lý, phòng ngủ, tên dự án…) điền vào **đúng cột**.",
     "- 4–15 ảnh thật (ít nhất 4–5), ảnh đầu đẹp nhất; tin nhà phải có ảnh mặt tiền; ảnh có watermark vẫn lấy. Tự kiểm mục 9 của tệp yêu cầu trước khi giao.",
@@ -195,7 +202,7 @@ const MUC = [
   })()],
   // Mạng xã hội — chung quy trình 4 bước: máy chọn tin → Cowork soạn bài → chủ dự án duyệt nguyên văn → chủ dự án tự đăng.
   ["Bài mạng xã hội (Fanpage · OA · nhóm)", `${NOI_KHAC.slice(0, -1)}mxh${BS}\` (tệp \`bai-mxh-${dd}.docx\` + \`anh${BS}\`)`, tinMxh.length, tinMxh.length
-    ? [`**2 bài mỗi ngày, có ảnh: 1 bài Zalo, 1 bài Facebook** (chủ dự án 20/10). Soạn bài theo mục 4–5 của \`${p(SEO, "Plan MXH", "KE-HOACH-MXH.md")}\`: mỗi bài ghi rõ kênh, chữ, ảnh (lấy từ tin), link đúng như dưới.`,
+    ? [`**⛔ BẮT BUỘC HẰNG NGÀY: 1 bài Zalo + 1 bài Facebook, chất lượng, có ảnh** (chủ dự án chốt 23/10). Soạn bài theo mục 4–5 của \`${p(SEO, "Plan MXH", "KE-HOACH-MXH.md")}\`: mỗi bài ghi rõ kênh, chữ, ảnh (lấy từ tin), link đúng như dưới.`,
       ...tinMxh.map((x) => `- ${x.title.slice(0, 60)} — Fanpage: ${link(x)}?utm_source=facebook&utm_medium=fanpage · OA: ${link(x)}?utm_source=zalo&utm_medium=oa · nhóm: ${link(x)}?utm_source=zalo&utm_medium=nhom`)]
     : ["Không có tin mới đạt chuẩn trong 2 ngày qua — soạn 1 bài gom tin nổi bật theo khu vực."]],
   ["Hồ sơ dự án", `${NOI_KHAC} (tệp \`du-an-${dd}.csv\`)`, dsNap.length, dsNap.length
@@ -219,22 +226,18 @@ const MUC = [
   // bỏ việc "thấp/cao 4 quý Ngũ Hành Sơn" (nguồn không có) · bỏ ghi chú căn góc · nguồn Nhà Tốt (tháng cuối quý) · thấp/cao quý
   // nào chép được thì có quý đó · địa giới MỚI · MÁY TỰ NỘP (scripts/nop-lich-su-gia.mjs), không ai gõ mã.
   ["Lịch sử giá — LỌC GIÁ, mỗi ngày tới khi đủ" + (dauQuy ? " (ĐẦU QUÝ: thêm quý mới cho các dãy đang có)" : ""), "`" + p(SEO, "DA-DUYET", dd) + BS + "` (tệp `lich-su-gia-" + dd + ".csv`)", null, [
-    `Theo \`${p(SEO, "YEU-CAU-COWORK-LICH-SU-GIA.md")}\` (khối CHỐT ở đầu tệp). Làm từ trên xuống theo danh sách \`${p(SEO, "RA", "lich-su-gia-con-thieu.csv")}\` (máy xuất lại mỗi sáng, đúng khuôn tệp nộp, mỗi dòng một quý):`,
-    "1. Dãy theo DỰ ÁN đang có tin trên web (một dãy phủ mọi tin trong dự án) — Nhà Tốt Tham khảo giá có ô \"Nhập tên dự án\".",
+    `Theo \`${p(SEO, "YEU-CAU-COWORK-LICH-SU-GIA.md")}\` (bản duy nhất). Làm từ trên xuống theo danh sách \`${p(SEO, "RA", "lich-su-gia-con-thieu.csv")}\` (máy xuất lại mỗi sáng, đúng khuôn tệp nộp, mỗi dòng một quý):`,
+    "1. Dãy theo DỰ ÁN đang có tin trên web (một dãy phủ mọi tin trong dự án).",
     "2. Dãy theo PHƯỜNG/XÃ nhiều tin nhất, đúng loại hình (mỗi loại nhà một dãy: nhà riêng, nhà phố, villa…), cả MUA BÁN lẫn CHO THUÊ.",
-    "**Quy tắc bắt buộc:**",
-    "- **Chỉ LỌC GIÁ.** Không làm việc khác trong mục này.",
-    "- **Đơn vị = GIÁ MỖI M² theo loại hình, CẢ BÁN LẪN THUÊ**: đất ÷ m² đất · căn hộ ÷ m² căn · nhà riêng, nhà phố, villa, shophouse… ÷ m² sàn (MỖI LOẠI NHÀ MỘT DÃY RIÊNG) · văn phòng ÷ m² sàn · cho thuê = tiền thuê mỗi tháng ÷ m². Cột `mau_so` đã điền sẵn — không sửa.",
-    "- **Địa giới MỚI** (tỉnh + phường/xã mới, trùng tin trên web). Số nguồn theo địa giới cũ chỉ dùng khi vùng cũ ĐÚNG TRỌN phường mới (VD Quận Ngũ Hành Sơn cũ = Phường Ngũ Hành Sơn mới); rộng hơn hay hẹp hơn → không dùng, không gộp, không chia. Bậc: dự án → tuyến đường → phường/xã; không dùng số cả tỉnh.",
-    "- **Nguồn công khai, không đăng nhập** — Nhà Tốt (Tham khảo giá): chép số THÁNG CUỐI QUÝ (T3 · T6 · T9 · T12). ⛔ Không dùng Batdongsan.",
-    "- **Theo quý**: giá phổ biến mỗi quý; **giá thấp / cao chép được quý nào thì điền quý đó** (Nhà Tốt chỉ công bố khoảng giá cho tháng mới nhất) — web vẽ dải khoảng giá từ quý có số trở đi. 5 quý liền là hiện; đủ 1 · 2 · 3 · 5 năm thì mở đủ các mốc.",
-    "- Chỉ chép số đã công bố, không tự chia giá, không nội suy, không bịa. Dãy không có nguồn → để trống (web tự tính dần từ tin đăng).",
+    "**Mọi quy tắc (đơn vị, nguồn, lọc thống kê ≥ 5 tin, hệ số, mỗi quý đủ 3 số, mốc 1 → 2 → 3 năm, làm trước đất · nhà · căn hộ – chung cư, cần số nhanh, tự lập lộ trình) nằm DUY NHẤT trong tệp YEU-CAU ở trên — làm đúng tệp đó, không hỏi lại** (chủ dự án 23/10/2026 tối: giao việc một chỗ, không chồng lớp mâu thuẫn).",
     `- **Giao tệp là xong — MÁY TỰ NỘP**: lưu \`${p(SEO, "DA-DUYET", dd)}${BS}lich-su-gia-${dd}.csv\`, máy tự gửi lên web, web tự kiểm; kết quả (số dòng nhận · dòng bị từ chối + lý do) ghi vào mục 0 tệp này và \`ket-qua-nop.txt\` cùng thư mục. Dòng bị từ chối → sửa, lưu đè tệp, máy nộp lại.`,
+    // Lịch chốt 23/10/2026 (chủ dự án: "tôi chỉ nhắn Cowork làm, các thứ khác ghi vào .md") — Cowork tự đặt lịch theo dòng này.
+    `- **Lịch (Cowork tự đặt, không chờ nhắn)**: làm mỗi ngày tới khi hết danh sách · sau đó **ngày 5 hằng tháng** (dãy mới + số tháng mới) · **ngày 5 tháng 1, 4, 7, 10** (đủ trung bình · thấp · cao của quý vừa xong — lỡ ngày này là mất thấp/cao). Nguồn đổi cách công bố → ghi \`bao-cao.txt\`, Claude chỉnh lịch.`,
   ]],
   ["Tiện ích lân cận (trường, bệnh viện, khu công nghiệp, chợ, biển, sân bay)", `${NOI_KHAC} (tệp \`tien-ich-<tỉnh>.csv\`)`, null, [`Theo mục 8 của \`CONG-VIEC-3-BEN.md\`, mẫu \`${p("SEO", "MAU", "mau-tien-ich-lan-can.csv")}\` — một tỉnh mỗi lần: Đà Nẵng → Huế → Khánh Hòa.`]],
   ["Thư viện pháp luật", `${NOI_KHAC} (tệp \`thu-vien-phap-luat-${dd}.csv\`)`, null, ["Hằng ngày, theo mục 6 của `CONG-VIEC-3-BEN.md` — văn bản thật, link nguồn chính thức, tình trạng hiệu lực đúng luật, 20 văn bản mỗi lần. **Không chờ chủ dự án duyệt**: Claude kiểm nguồn + hiệu lực rồi nạp thẳng (chốt 18/10)."]],
   ["Hồ sơ công ty", `${NOI_KHAC} (tệp \`ho-so-cong-ty-${dd}.csv\`)`, null, ["**Không làm riêng mục này** (chốt 18/10): khi lọc tin, người đăng là công ty / sàn thì ghi đúng tên công ty vào `lien_he_ten` — hồ sơ công ty sẽ lấy từ tin."]],
-  ["Bài viết", `${NOI_KHAC} (tệp \`bai-viet-${dd}.docx\`)`, null, ["**Hằng ngày 2–3 bài chất lượng, có ảnh, cho mục Tin tức** (chốt 20/10) — Cowork tự chọn đề tài theo tình trạng SEO: từ khoá người tìm có lượt hiện mà chưa có lượt bấm (số Search Console trong tệp này / kế hoạch SEO mục 3). Viết theo mục 6 và 7 của `CONG-VIEC-3-BEN.md`: chuẩn SEO, giọng người làm nghề, số liệu có nguồn + ngày, 2–4 link về trang coastalland.vn."]],
+  ["Bài viết", `${NOI_KHAC} (tệp \`bai-viet-${dd}.docx\`)`, null, ["**⛔ BẮT BUỘC HẰNG NGÀY: 2 bài chất lượng, có ảnh, cho mục Tin tức** (chủ dự án chốt 23/10) — Cowork tự chọn đề tài theo tình trạng SEO: từ khoá người tìm có lượt hiện mà chưa có lượt bấm (số Search Console trong tệp này / kế hoạch SEO mục 3). Viết theo mục 6 và 7 của `CONG-VIEC-3-BEN.md`: chuẩn SEO, giọng người làm nghề, số liệu có nguồn + ngày, 2–4 link về trang coastalland.vn."]],
 ];
 
 // CHỦ DỰ ÁN TỰ ĐỔI THỨ TỰ (16/10/2026: "tôi có thể thay đổi công việc hằng ngày nếu thấy thứ tự không hợp lý"):
@@ -287,7 +290,7 @@ const v = [`# VIỆC HÔM NAY — 3 BÊN · ${TEN_THU}, ${dd.slice(0, 2)}/${dd.s
   "",
   "| # | SEO | Đạt khi |",
   "|---|---|---|",
-  "| 1 | Tiêu đề | 30–60 ký tự · mở đầu **Bán / Cho thuê** + loại hình + đặc điểm khách hay tìm + tên đường/dự án · phường, tỉnh **tùy tin** — tin đã có tên đường / dự án thì không cần; tin thiếu tên đường, dự án hoặc ở thành phố lớn thì nên ghi; không ghi giá, diện tích (web tự thêm) · không trùng tin khác |",
+  "| 1 | Tiêu đề | 30–60 ký tự · mở đầu **Bán / Cho thuê** + loại hình + đặc điểm khách hay tìm + tên đường/dự án · phường, tỉnh **tùy tin** — tin đã có tên đường / dự án thì không cần; tin thiếu tên đường, dự án hoặc ở thành phố lớn thì nên ghi; giá, diện tích là điểm nổi bật thì ghi vào, chiếu theo tin gốc (chủ dự án 23/10/2026) · không trùng tin khác |",
   "| 2 | Thành phố lớn | Tin ở Nha Trang, Đà Lạt, Quy Nhơn, Buôn Ma Thuột, Vũng Tàu… mà tên phường không có tên thành phố → ghi tên thành phố vào tiêu đề |",
   "| 3 | Mô tả | ≥ 300 ký tự · 5 đoạn: tổng quan · vị trí · thông số (gạch đầu dòng) · pháp lý · điều kiện giao dịch · dòng trống giữa các đoạn |",
   "| 4 | Cột dữ liệu | Giá, diện tích, phòng, hướng, pháp lý, **tên đường**, **tên dự án** chép đúng cột, đúng đơn vị (bán = tỷ, thuê = triệu) |",
@@ -355,10 +358,11 @@ const YEU_CAU = [
   "4. **Tin mới nhất trước, không đặt số ngày cố định — tùy khu vực** (khu ít tin được lấy tin cũ hơn). **Tin gốc phải còn hạn** — hết hạn, đã gỡ → không lấy (kể cả sửa tin cũ). Mở lại link gốc ngay trước khi giao; ghi ngày đăng tin gốc vào `ghi_chu`.",
   "5. **Ảnh: ít nhất 4–5 ảnh/tin, tối đa 15.** Bỏ ảnh kém (mờ, tối, trùng góc, bừa bộn). **Ảnh có watermark, logo sàn khác, chữ, số điện thoại đè VẪN LẤY — chủ dự án xoá hết.** Dưới 4 ảnh đạt → bỏ tin.",
   "6. **Tin nhà (bán, cho thuê): phải có ít nhất 1 ảnh mặt tiền hoặc toàn cảnh ngôi nhà** — không có ảnh đẹp thì vẫn lấy ảnh kém hơn; tin gốc không có tấm nào → bỏ tin.",
-  "7. **Tin tức: mỗi ngày 2–3 bài chất lượng, có ảnh, hợp SEO.** **Mạng xã hội: mỗi ngày 2 bài có ảnh — 1 Zalo, 1 Facebook.**",
+  "7. **⛔ BẮT BUỘC HẰNG NGÀY (chốt 23/10): Tin tức 2 bài chất lượng, có ảnh, hợp SEO · Mạng xã hội 1 bài Zalo + 1 bài Facebook, chất lượng, có ảnh.**",
   `8. **Tên ảnh số 2 chữ số:** \`dn01-${dd.slice(0, 4)}-01.jpg\`, \`-02\`…`,
-  "9. **LỌC NHIỀU TIN HƠN MỖI NGÀY (chủ dự án 20/10/2026)** — trang khu vực trên Google mỏng vì THIẾU TIN, không phải vì tin ngắn (đo 20/10: condotel Đà Nẵng 3 tin → 118 chữ riêng; nhà Đà Nẵng 49 tin → 1.366 chữ riêng). Ưu tiên nhóm (loại hình × tỉnh/phường) đang ít tin, nhất là nhóm đã có lượt hiển thị trên Google (mục 1 bên dưới). Mỗi tin chỉ cần đủ chuẩn 13 dòng, không cần viết dài.",
-  "10. **TIÊU ĐỀ = Mục đích (Bán / Cho thuê) + loại hình + điểm nổi bật** (+ tên đường / dự án, nơi chốn) — viết cho ĐỦ độ dài chuẩn 30–60 ký tự, không ghi giá, diện tích (chủ dự án 20/10/2026; bảng tự kiểm dòng 1). Phải CỐ viết cho đủ, đúng chuẩn (việc này không khó) — tin cũ tiêu đề ngắn mà đúng nội dung tạm chấp nhận, nhưng khi lọc, viết tin thì viết đủ 30–60 ký tự. **Mô tả mở đầu bằng 2 câu tóm tắt** (loại nhà, diện tích, số phòng, điểm nổi bật), không lặp lại tiêu đề — 2 câu này hiện ngay dưới tiêu đề trên thẻ tin (chủ dự án 20/10/2026).",
+  "9. **⛔ LỌC ĐỦ — KHÔNG THỪA, KHÔNG THIẾU, BÁM THỰC TRẠNG (chủ dự án 23/10/2026, thay chốt lọc nhiều hơn 20/10)**: số tin lọc = số tin các nhóm cần − tin đã lọc mà chưa lên web; ngày chưa up thì ngày sau giảm. **Mỗi tin phải chất lượng cả nội dung, ảnh, video** — đạt chuẩn SEO trọn vẹn khi giao, chủ dự án chỉ sửa ảnh. Lý do cần tin: trang khu vực trên Google mỏng vì THIẾU TIN, không phải vì tin ngắn (đo 20/10: condotel Đà Nẵng 3 tin → 118 chữ riêng; nhà Đà Nẵng 49 tin → 1.366 chữ riêng). Ưu tiên nhóm (loại hình × tỉnh/phường) đang ít tin, nhất là nhóm đã có lượt hiển thị trên Google (mục 1 bên dưới). Mỗi tin chỉ cần đủ chuẩn 13 dòng, không cần viết dài.",
+  "10. **TIÊU ĐỀ = Mục đích (Bán / Cho thuê) + loại hình + điểm nổi bật** (+ tên đường / dự án, nơi chốn) — viết cho ĐỦ độ dài chuẩn 30–60 ký tự, giá, diện tích là điểm nổi bật thì ghi vào, chiếu theo tin gốc (chủ dự án 23/10/2026). Phải CỐ viết cho đủ, đúng chuẩn (việc này không khó) — tin cũ tiêu đề ngắn mà đúng nội dung tạm chấp nhận, nhưng khi lọc, viết tin thì viết đủ 30–60 ký tự. **Mô tả mở đầu bằng 2 câu tóm tắt** (loại nhà, diện tích, số phòng, điểm nổi bật), không lặp lại tiêu đề — 2 câu này hiện ngay dưới tiêu đề trên thẻ tin (chủ dự án 20/10/2026).",
+  "11. **Người đăng là DOANH NGHIỆP (sàn, công ty) → sheet \"Doanh nghiệp\" trong chính tệp Excel đợt tin** (chốt 23/10/2026, như sheet \"Dự án\"): tra thông tin công khai (đăng ký kinh doanh, mã số thuế, web / fanpage của doanh nghiệp), mỗi doanh nghiệp một dòng; `so_dien_thoai` trùng số `lien_he_sdt` của tin. Nạp tin là hồ sơ tự vào Admin → Khách hàng → Doanh nghiệp. Cột + cách ghi: `YEU-CAU-COWORK-DANG-TIN-HANG-LOAT.md` mục 6.5b. Không tra được tên pháp nhân + mã số → không ghi, báo trong `bao-cao.txt`.",
   "",
 ];
 v.splice(6, 0, ...YEU_CAU);

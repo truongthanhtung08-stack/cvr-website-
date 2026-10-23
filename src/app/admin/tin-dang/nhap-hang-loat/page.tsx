@@ -15,6 +15,8 @@ import {
 } from "@/lib/csvTin";
 import { docXlsx, docXlsxTheoTen } from "@/lib/docXlsx";
 import { docDuAnTuBang, type DongDuAn } from "@/lib/csvDuAn";
+import { docDoanhNghiepTuBang, type DongDoanhNghiep } from "@/lib/hoSoDoanhNghiep";
+import { chuanHoaSdt } from "@/lib/phone";
 import { uploadImageFile, uploadVideoFile } from "@/lib/uploadImage";
 import { soAnhToiDa, soVideoToiDa } from "@/lib/billing";
 import { isVideoUrl } from "@/lib/media";
@@ -47,6 +49,8 @@ export default function NhapHangLoatPage() {
   // SHEET "DỰ ÁN" trong cùng tệp Excel (chủ dự án 22/10/2026): tin thuộc dự án → Cowork ghi luôn thông tin dự án vào
   // sheet thứ hai, nạp tin là nạp luôn dự án (cùng bộ kiểm với Admin → Dự án → Nạp CSV).
   const [duAn, setDuAn] = useState<DongDuAn[]>([]);
+  // SHEET "DOANH NGHIỆP" (23/10/2026) — như sheet "Dự án": người đăng là doanh nghiệp → hồ sơ vào Admin → Khách hàng → Doanh nghiệp.
+  const [doanhNghiep, setDoanhNghiep] = useState<DongDoanhNghiep[]>([]);
 
   // Ảnh tải hàng loạt: tên tệp → link đã tải lên kho ảnh
   const [anhDaTai, setAnhDaTai] = useState<{ ten: string; url: string }[]>([]);
@@ -175,6 +179,7 @@ export default function NhapHangLoatPage() {
     setCanhBaoFile("");
     setRows([]);
     setDuAn([]);
+    setDoanhNghiep([]);
     setTenFile(file.name);
     try {
       const laExcel = /\.xlsx$/i.test(file.name);
@@ -182,7 +187,8 @@ export default function NhapHangLoatPage() {
         ? docTinTuBang(await docXlsx(await file.arrayBuffer()))
         : docTinTuCsv(await file.text());
       if (err) setLoiChung(err);
-      if (laExcel) setDuAn(docDuAnTuBang((await docXlsxTheoTen(await file.arrayBuffer(), /^d[ựu]s*[áa]n$/i)) ?? []));
+      if (laExcel) setDuAn(docDuAnTuBang((await docXlsxTheoTen(await file.arrayBuffer(), /^d[ựu]\s*[áa]n$/i)) ?? []));
+      if (laExcel) setDoanhNghiep(docDoanhNghiepTuBang((await docXlsxTheoTen(await file.arrayBuffer(), /^doanh\s*nghi[ệe]p$/i)) ?? [], chuanHoaSdt));
       setCanhBaoFile(canhBaoChung ?? "");
       setRows(r);
       doMaTrungDotCu(r);
@@ -377,15 +383,26 @@ export default function NhapHangLoatPage() {
 
       // Tin đăng hộ: gắn về tài khoản theo SĐT + chọn ảnh đại diện hợp khung (chủ dự án 09/10/2026)
       await fetch("/api/admin/gom-tin-dang-ho", { method: "POST" }).catch(() => {});
+      // Hồ sơ doanh nghiệp (sheet "Doanh nghiệp") — sau khi tài khoản theo SĐT đã có
+      let soDn = 0, dnKhongKhop: string[] = [];
+      if (doanhNghiep.some((d) => !d.loi.length)) {
+        const kq = await fetch("/api/admin/nap-doanh-nghiep", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ds: doanhNghiep }) })
+          .then((r) => r.json()).catch(() => null);
+        soDn = kq?.capNhat ?? 0;
+        dnKhongKhop = kq?.khongKhop ?? [];
+      }
       // Báo web bỏ cache → tin vừa đăng hiện NGAY (trước đây chờ lượt làm mới tự động).
       await lamMoiWeb("listings");
       setKetQua(
         `Đã đăng ${xong} tin mới` +
           (capNhat ? ` · bổ sung ảnh/video và cập nhật nội dung cho ${capNhat} tin đã đăng` : "") +
           ". Tin đã hiện trên web." +
-          (loiDuAn ? ` Dự án: lỗi ${loiDuAn}.` : soDuAn || duAnTrung ? ` Dự án: nạp ${soDuAn} vào "Chờ duyệt" (Admin → Dự án)${duAnTrung ? `, bỏ qua ${duAnTrung} đã có` : ""}.` : ""),
+          (loiDuAn ? ` Dự án: lỗi ${loiDuAn}.` : soDuAn || duAnTrung ? ` Dự án: nạp ${soDuAn} vào "Chờ duyệt" (Admin → Dự án)${duAnTrung ? `, bỏ qua ${duAnTrung} đã có` : ""}.` : "") +
+          (soDn ? ` Doanh nghiệp: ${soDn} hồ sơ vào Admin → Khách hàng → Doanh nghiệp.` : "") +
+          (dnKhongKhop.length ? ` Không khớp số điện thoại tài khoản nào: ${dnKhongKhop.join(", ")}.` : ""),
       );
       setDuAn([]);
+      setDoanhNghiep([]);
       setRows([]);
       setTenFile("");
       setAnhDaTai([]);
@@ -522,6 +539,15 @@ export default function NhapHangLoatPage() {
         <div className="rounded-lg border border-cvr-line bg-white px-4 py-3 text-sm text-cvr-body">
           <p className="font-semibold text-cvr-ink">Sheet "Dự án": {duAn.filter((d) => d.payload).length}/{duAn.length} dự án hợp lệ — nạp cùng lúc khi bấm Đăng</p>
           {duAn.filter((d) => !d.payload).map((d) => (
+            <p key={d.dong} className="mt-1 text-red-700">Dòng {d.dong} · {d.ten || "(không tên)"}: {d.loi.join(", ")}</p>
+          ))}
+        </div>
+      )}
+
+      {doanhNghiep.length > 0 && (
+        <div className="rounded-lg border border-cvr-line bg-white px-4 py-3 text-sm text-cvr-body">
+          <p className="font-semibold text-cvr-ink">Sheet "Doanh nghiệp": {doanhNghiep.filter((d) => !d.loi.length).length}/{doanhNghiep.length} doanh nghiệp hợp lệ — nạp cùng lúc khi bấm Đăng</p>
+          {doanhNghiep.filter((d) => d.loi.length).map((d) => (
             <p key={d.dong} className="mt-1 text-red-700">Dòng {d.dong} · {d.ten || "(không tên)"}: {d.loi.join(", ")}</p>
           ))}
         </div>

@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
-import { randomBytes } from "crypto";
 import sharp from "sharp";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { chuanHoaSdt, laSdtVN } from "@/lib/phone";
+import { gomChuTin } from "@/lib/gomChuTin";
 import { isVideoUrl } from "@/lib/media";
 
 // ============================================================================
@@ -45,36 +44,8 @@ export async function POST() {
   const db = createAdminClient();
   if (!db) return NextResponse.json({ ok: false, loi: "Máy chủ chưa cấu hình đủ." }, { status: 500 });
 
-  // 1) Gắn chủ theo SĐT
-  const { data: khongChu } = await db.from("listings").select("id, details").is("owner_id", null).limit(1000);
-  const nhom = new Map<string, { ten: string; ids: string[] }>();
-  for (const r of khongChu ?? []) {
-    const s = chuanHoaSdt(r.details?.contact?.phone ?? "");
-    if (!laSdtVN(s)) continue;
-    const g = nhom.get(s) ?? { ten: (r.details?.contact?.name ?? "").trim(), ids: [] as string[] };
-    g.ids.push(String(r.id));
-    nhom.set(s, g);
-  }
-  let taoTk = 0, ganTin = 0;
-  for (const [s, g] of nhom) {
-    const so84 = `84${s.slice(1)}`;
-    const { data: co } = await db.from("profiles").select("id").or(`phone.eq.${s},phone.eq.${so84},phone.eq.+${so84}`).limit(1);
-    let id = co?.[0]?.id as string | undefined;
-    if (!id) {
-      const { data, error } = await db.auth.admin.createUser({
-        email: `${s}@users.coastalland.vn`,
-        email_confirm: true,
-        password: randomBytes(18).toString("base64url"),
-        user_metadata: { full_name: g.ten || "Thành viên", phone: s },
-      });
-      if (error || !data.user) continue;
-      id = data.user.id;
-      await db.from("profiles").update({ full_name: g.ten || "Thành viên", phone: s, tao_ho: true }).eq("id", id);
-      taoTk++;
-    }
-    const { error } = await db.from("listings").update({ owner_id: id }).in("id", g.ids).is("owner_id", null);
-    if (!error) ganTin += g.ids.length;
-  }
+  // 1) Gắn chủ theo SĐT — src/lib/gomChuTin.ts (dùng chung với scripts/dang-dot-tin.mjs — gắn chủ + sheet Doanh nghiệp)
+  const { taoTk, ganTin } = await gomChuTin(db);
 
   // 2) Ảnh đại diện cho tin đăng hộ chưa chọn
   const { data: hoHo } = await db.from("profiles").select("id").eq("tao_ho", true).limit(10000);

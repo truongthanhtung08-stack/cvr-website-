@@ -4,20 +4,48 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { agencies } from "@/lib/experts";
 import ExpertsBrowser from "@/components/ExpertsBrowser";
-import { getChuyenGia } from "@/lib/chuyenGiaDb";
+import { getChuyenGia, getCongTy, type CongTy } from "@/lib/chuyenGiaDb";
 
-export const metadata: Metadata = {
-  alternates: { canonical: "/chuyen-gia/cong-ty" },
-  title: "Sàn giao dịch & công ty bất động sản",
-  description: "Danh sách sàn giao dịch và công ty bất động sản đối tác của Coastal Land.",
-  // Chưa sàn/công ty nào có thông tin pháp nhân (MST, địa chỉ, giới thiệu) → chưa cho Google lập chỉ mục
-  // (chủ dự án 15/10/2026: "không đạt thì không index"). Có hồ sơ đầy đủ thì gỡ dòng này.
-  robots: { index: false, follow: true },
-};
+// Google chỉ lập chỉ mục khi có ít nhất một doanh nghiệp đủ hồ sơ pháp nhân (MST, địa chỉ, giới thiệu) và đồng ý
+// cho đăng — chủ dự án 15/10/2026: "không đạt thì không index"; hồ sơ điền ở Admin → Khách hàng → Doanh nghiệp (23/10).
+export async function generateMetadata(): Promise<Metadata> {
+  const coHoSo = (await getCongTy()).length > 0;
+  return {
+    alternates: { canonical: "/chuyen-gia/cong-ty" },
+    title: "Sàn giao dịch & công ty bất động sản",
+    description: "Danh sách sàn giao dịch và công ty bất động sản đối tác của Coastal Land.",
+    robots: { index: coHoSo, follow: true },
+  };
+}
+
+// Dữ liệu Organization cho Google — chỉ trường có thật trong hồ sơ, không SĐT (cổng lead, xem chuyenGiaDb.ts).
+function jsonLd(ds: CongTy[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    itemListElement: ds.map((c, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      item: {
+        "@type": "Organization",
+        name: c.ten,
+        legalName: c.tenPhapNhan,
+        taxID: c.mst,
+        address: { "@type": "PostalAddress", streetAddress: c.diaChi, addressCountry: "VN" },
+        description: c.gioiThieu,
+        ...(c.email ? { email: c.email } : {}),
+        ...(c.website ? { url: c.website } : {}),
+        ...(c.logo ? { logo: c.logo } : {}),
+        ...(c.mangXaHoi.length ? { sameAs: c.mangXaHoi } : {}),
+      },
+    })),
+  };
+}
 
 export default async function CongTyPage() {
   // Sàn / công ty lấy từ TIN THẬT (tên người đăng là tên doanh nghiệp) — src/lib/chuyenGiaDb.ts
   const congTy = (await getChuyenGia()).filter((cg) => cg.laCongTy);
+  const coHoSo = await getCongTy();
   return (
     <>
       <Header />
@@ -30,6 +58,32 @@ export default async function CongTyPage() {
               chỗ này liệt kê 4 công ty bịa kèm số chuyên gia và năm thành lập tự
               nghĩ ra, trong đó có 2 "chi nhánh Coastal Land" không tồn tại.
               Lý do đầy đủ: src/lib/experts.ts */}
+          {coHoSo.length > 0 && (
+            <>
+              <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd(coHoSo)) }} />
+              <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2">
+                {coHoSo.map((c) => (
+                  <div key={c.mst} className="flex gap-4 rounded-none border border-cvr-line bg-white p-5">
+                    {c.logo && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={c.logo} alt={c.ten} loading="lazy" className="h-14 w-14 shrink-0 object-contain" />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <h2 className="font-semibold text-cvr-ink">{c.ten}</h2>
+                      <p className="mt-0.5 text-xs text-cvr-muted">{c.tenPhapNhan} · Mã số doanh nghiệp {c.mst}</p>
+                      <p className="mt-0.5 text-xs text-cvr-muted">{c.diaChi}</p>
+                      <p className="mt-2 text-sm leading-relaxed text-cvr-body">{c.gioiThieu}</p>
+                      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">
+                        {c.hoSo && <Link href={`/chuyen-gia/${c.hoSo.slug}`} className="font-medium text-cvr-blue-ink">Xem {c.hoSo.soTin} bất động sản</Link>}
+                        {c.website && <a href={c.website} target="_blank" rel="noopener nofollow" className="text-cvr-blue-ink">Website</a>}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
           {congTy.length > 0 && <ExpertsBrowser ds={congTy} />}
 
           {agencies.length === 0 && congTy.length === 0 && (

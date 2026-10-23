@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { Profile, Role, Status } from "@/lib/useProfile";
 import { Panel, Field } from "@/components/Ui";
+import { thieuHoSoDn } from "@/lib/hoSoDoanhNghiep";
 
 // THÍCH · BÌNH LUẬN (bảng tuong_tac_tin, 0061 — chủ dự án 10/10/2026): khách này đã tương tác tin nào,
 // và ai đã thích / bình luận tin của khách này (bấm tên để sang hồ sơ người đó).
@@ -51,6 +52,68 @@ function TuongTacKhach({ id }: { id: string }) {
       {vaoTinKhach.length ? <ul className="mt-1">{vaoTinKhach.map((x, k) => dong(x, k, true))}</ul> : <p className="mt-1 text-sm text-cvr-muted">Chưa có.</p>}
       <p className="mt-4 text-sm font-semibold text-cvr-ink">Khách đã thích / bình luận ({cuaKhach.length})</p>
       {cuaKhach.length ? <ul className="mt-1">{cuaKhach.map((x, k) => dong(x, k, false))}</ul> : <p className="mt-1 text-sm text-cvr-muted">Chưa có.</p>}
+    </Panel>
+  );
+}
+
+// HỒ SƠ DOANH NGHIỆP (chủ dự án 23/10/2026) — chỉ hiện khi vai trò "Công ty / Sàn". Đủ ô bắt buộc + tích
+// đồng ý → hiện ở /chuyen-gia/cong-ty kèm dữ liệu cho Google (src/lib/hoSoDoanhNghiep.ts). Lưu riêng nút
+// của mình để lỗi ở đây không chặn lưu thông tin cơ bản.
+const O_DN: [string, string, boolean?][] = [
+  ["hd_ten_cong_ty", "Tên pháp nhân (theo đăng ký kinh doanh)"],
+  ["hd_mst", "Mã số doanh nghiệp"],
+  ["hd_dia_chi", "Địa chỉ trụ sở"],
+  ["hd_email", "Email"],
+  ["dn_website", "Website"],
+  ["dn_logo", "Link logo"],
+  ["dn_gioi_thieu", "Giới thiệu (2–3 câu)", true],
+  ["dn_mang_xa_hoi", "Facebook / Zalo OA / YouTube (mỗi dòng một link)", true],
+];
+function HoSoDoanhNghiep({ profile }: { profile: Profile }) {
+  const goc = profile as unknown as Record<string, unknown>;
+  const [v, setV] = useState<Record<string, string>>(() => Object.fromEntries(O_DN.map(([k]) => [k, String(goc[k] ?? "")])));
+  const [dongY, setDongY] = useState(Boolean(goc.dn_dong_y_dang));
+  const [bao, setBao] = useState("");
+  const [dangLuu, setDangLuu] = useState(false);
+  async function luu() {
+    setDangLuu(true);
+    setBao("");
+    const payload: Record<string, unknown> = Object.fromEntries(O_DN.map(([k]) => [k, v[k].trim() || null]));
+    payload.dn_dong_y_dang = dongY;
+    const { error } = await createClient().from("profiles").update(payload).eq("id", profile.id);
+    setDangLuu(false);
+    setBao(error ? "Lưu thất bại: " + error.message : "Đã lưu hồ sơ doanh nghiệp ✓");
+  }
+  const thieu = thieuHoSoDn({ ...goc, ...v, company_name: goc.company_name, dn_dong_y_dang: dongY });
+  return (
+    <Panel title="Hồ sơ doanh nghiệp">
+      <p className={"text-sm " + (thieu.length ? "text-amber-700" : "text-green-700")}>
+        {thieu.length ? `Chưa hiện trên trang Sàn / công ty — thiếu: ${thieu.join(", ")}` : "Đủ — đang hiện trên trang Sàn / công ty"}
+      </p>
+      <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        {O_DN.map(([k, nhan, dai]) => (
+          <div key={k} className={dai ? "sm:col-span-2" : ""}>
+            <Field label={nhan}>
+              {dai ? (
+                <textarea value={v[k]} onChange={(e) => setV({ ...v, [k]: e.target.value })} rows={3} className={inp + " h-auto py-2"} />
+              ) : (
+                <input value={v[k]} onChange={(e) => setV({ ...v, [k]: e.target.value })} className={inp} />
+              )}
+            </Field>
+          </div>
+        ))}
+      </div>
+      <label className="mt-4 flex items-center gap-2 text-sm text-cvr-ink">
+        <input type="checkbox" checked={dongY} onChange={(e) => setDongY(e.target.checked)} className="h-4 w-4" />
+        Doanh nghiệp đồng ý cho đăng hồ sơ
+      </label>
+      <div className="mt-4 flex flex-wrap items-center gap-3">
+        <button onClick={luu} disabled={dangLuu}
+          className="rounded-lg bg-cvr-ink px-5 py-2 text-sm font-semibold text-white transition hover:bg-cvr-ink/90 disabled:opacity-60">
+          {dangLuu ? "Đang lưu…" : "Lưu hồ sơ doanh nghiệp"}
+        </button>
+        {bao && <span className="text-sm text-cvr-body">{bao}</span>}
+      </div>
     </Panel>
   );
 }
@@ -162,6 +225,8 @@ export default function CustomerDetailPage() {
             <Field label="Công ty / Sàn"><input value={companyName} onChange={(e) => setCompanyName(e.target.value)} className={inp} /></Field>
           </Grid>
         </Panel>
+
+        {profile.role === "company" && <HoSoDoanhNghiep profile={profile} />}
 
         <TuongTacKhach id={id} />
 

@@ -52,7 +52,7 @@ export default async function QuyDinhPage() {
             "Giá ghi đúng đơn vị và là mức giá đang chào bán thật.",
             "Địa chỉ xác định được tới cấp Phường/Xã theo đơn vị hành chính mới (2 cấp: Tỉnh/Thành phố → Phường/Xã).",
             "Ảnh là ảnh thật của chính bất động sản đang rao bán, cho thuê, còn mới, đủ chất lượng, thấy rõ hiện trạng.",
-            "Tiêu đề mô tả đúng bất động sản, không viết hoa toàn bộ, không chèn ký tự trang trí.",
+            "Tiêu đề mở đầu bằng “Bán” hoặc “Cho thuê”, tiếp theo là loại hình và đặc điểm nổi bật của bất động sản (vị trí, giá, diện tích, số tầng…). Không viết hoa toàn bộ, không chèn ký tự trang trí. Ví dụ: Bán nhà 3 tầng hẻm ô tô Nguyễn Biểu, phường Bắc Nha Trang.",
             "Loại hình và nhu cầu (bán / cho thuê) chọn đúng danh mục.",
             "Số điện thoại liên hệ là số đang dùng, đã xác thực",
           ]}

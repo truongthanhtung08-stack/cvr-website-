@@ -2,10 +2,11 @@
 // Không số = kiểu Zalo/Facebook (không báo bàn phím); 470 = kiểu Android co màn hình. Mọi ô phải "OK", dòng cuối "BI CHE: 0". Trang cần đăng nhập (/dang-tin) thì đo ở máy với tài khoản thử.
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
+import { thuMucTam, TAM } from './_thuMucTam.mjs';
 const [url, caoPhim] = process.argv.slice(2);
 const edge = 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe';
 const port = 9550 + Math.floor(Math.random() * 100);
-const p = spawn(edge, ['--headless=new', '--remote-debugging-port=' + port, '--user-data-dir=' + process.env.TEMP + '/edge-dc' + port, 'about:blank']);
+const p = spawn(edge, ['--headless=new', '--remote-debugging-port=' + port, '--user-data-dir=' + thuMucTam('edge-dc' + port), 'about:blank']);
 await new Promise(r => setTimeout(r, 4000));
 const t = (await (await fetch('http://127.0.0.1:' + port + '/json')).json()).find(x => x.type === 'page');
 const ws = new WebSocket(t.webSocketDebuggerUrl); let id = 0; const pend = {};
@@ -43,5 +44,5 @@ for (let i = 0; i < oGo.length; i++) {
 }
 console.log('BI CHE:', loi, '/', oGo.length);
 const anh = await send('Page.captureScreenshot', { format: 'jpeg', quality: 70 });
-fs.writeFileSync(process.env.TEMP + '/doche.jpg', Buffer.from(anh.data, 'base64'));
+fs.writeFileSync(TAM + '/doche.jpg', Buffer.from(anh.data, 'base64'));
 ws.close(); p.kill(); process.exit(0);

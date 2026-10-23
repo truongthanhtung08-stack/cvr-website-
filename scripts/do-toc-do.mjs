@@ -1,10 +1,11 @@
 // ĐO TỐC ĐỘ kiểu điện thoại tầm trung (CPU chậm 4x, 4G yếu): node --experimental-websocket scripts/do-toc-do.mjs <url> [so_lan] — xem memory toc-do-web-lam-tiep
 import { spawn } from 'node:child_process';
+import { thuMucTam } from './_thuMucTam.mjs';
 const [url, lanArg] = process.argv.slice(2);
 const lan = Number(lanArg || 3);
 const edge = 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe';
 const port = 9300 + Math.floor(Math.random() * 300);
-const p = spawn(edge, ['--headless=new', '--remote-debugging-port=' + port, '--user-data-dir=' + process.env.TEMP + '/edge-hn' + port, 'about:blank']);
+const p = spawn(edge, ['--headless=new', '--remote-debugging-port=' + port, '--user-data-dir=' + thuMucTam('edge-hn' + port), 'about:blank']);
 await new Promise(r => setTimeout(r, 4000));
 const t = (await (await fetch('http://127.0.0.1:' + port + '/json')).json()).find(x => x.type === 'page');
 const ws = new WebSocket(t.webSocketDebuggerUrl); let id = 0; const pend = {};

@@ -9,6 +9,7 @@
 // Chạy: node --experimental-websocket scripts/do-loi-giao-dien.mjs [http://localhost:3000] [trang1 trang2 …]  (vd: bao-gia-dang-tin faq)
 // Không ghi trang thì dò danh sách trang chính bên dưới. Dòng cuối "TONG LOI: 0" mới được push.
 import { spawn } from 'node:child_process';
+import { thuMucTam } from './_thuMucTam.mjs';
 
 const goc = (process.argv[2] && process.argv[2].startsWith('http')) ? process.argv[2] : 'http://localhost:3000';
 // Git Bash đổi "/trang" thành đường dẫn ổ đĩa → nhận cả "trang" không gạch đầu, tự thêm "/"
@@ -20,7 +21,7 @@ const TRANG = trangGhi.length ? trangGhi : [
 
 const edge = 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe';
 const port = 9650 + Math.floor(Math.random() * 100);
-const p = spawn(edge, ['--headless=new', '--remote-debugging-port=' + port, '--user-data-dir=' + process.env.TEMP + '/edge-dl' + port, 'about:blank']);
+const p = spawn(edge, ['--headless=new', '--remote-debugging-port=' + port, '--user-data-dir=' + thuMucTam('edge-dl' + port), 'about:blank']);
 await new Promise((r) => setTimeout(r, 4000));
 const t = (await (await fetch('http://127.0.0.1:' + port + '/json')).json()).find((x) => x.type === 'page');
 const ws = new WebSocket(t.webSocketDebuggerUrl); let id = 0; const pend = {};

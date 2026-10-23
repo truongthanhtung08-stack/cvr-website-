@@ -54,7 +54,7 @@ const H = { apikey: KEY, Authorization: `Bearer ${KEY}`, "Content-Type": "applic
 // ── Đọc file bằng chính bộ kiểm tra của web ─────────────────────────────────
 const jiti = createJiti(import.meta.url, { alias: { "@": ROOT + "/src" }, jsx: { runtime: "automatic" } });
 const { docTinTuCsv, docTinTuBang, anhThuocMa } = await jiti.import(ROOT + "/src/lib/csvTin.ts");
-const { docXlsx } = await jiti.import(ROOT + "/src/lib/docXlsx.ts");
+const { docXlsx, docXlsxTheoTen } = await jiti.import(ROOT + "/src/lib/docXlsx.ts");
 const { isVideoUrl } = await jiti.import(ROOT + "/src/lib/media.ts");
 
 // Nhận cả Excel (.xlsx) như trang admin — khỏi phải "Save as CSV"
@@ -206,3 +206,23 @@ for (const { id, images, va } of capNhat) {
   sua++;
 }
 console.log(`\n✅ Đã đăng ${xong} tin mới · cập nhật ảnh cho ${sua} tin. Web hiện trong vòng 60 giây.`);
+
+// ── Gắn chủ tin theo SĐT + sheet "Doanh nghiệp" (23/10/2026) — cùng đường với trang Admin → Nhập hàng loạt ──
+{
+  const { createClient } = await import("@supabase/supabase-js");
+  const db = createClient(URL_SB, KEY, { auth: { persistSession: false, autoRefreshToken: false } });
+  const { gomChuTin, napDoanhNghiep } = await jiti.import(ROOT + "/src/lib/gomChuTin.ts");
+  const { taoTk, ganTin } = await gomChuTin(db);
+  console.log(`Gắn chủ tin: ${ganTin} tin · tạo ${taoTk} tài khoản đăng hộ.`);
+  if (/\.xlsx$/i.test(duongDan)) {
+    const { docDoanhNghiepTuBang } = await jiti.import(ROOT + "/src/lib/hoSoDoanhNghiep.ts");
+    const { chuanHoaSdt } = await jiti.import(ROOT + "/src/lib/phone.ts");
+    const bang = await docXlsxTheoTen(new Uint8Array(readFileSync(duongDan)).buffer, /^doanh\s*nghi[ệe]p$/i);
+    const ds = docDoanhNghiepTuBang(bang ?? [], chuanHoaSdt);
+    for (const d of ds.filter((x) => x.loi.length)) console.log(`⚠️ Sheet Doanh nghiệp dòng ${d.dong} · ${d.ten || "(không tên)"}: ${d.loi.join(", ")}`);
+    if (ds.length) {
+      const { capNhat, khongKhop } = await napDoanhNghiep(db, ds);
+      console.log(`Doanh nghiệp: ${capNhat} hồ sơ vào Admin → Khách hàng → Doanh nghiệp.` + (khongKhop.length ? ` Không khớp SĐT: ${khongKhop.join(", ")}` : ""));
+    }
+  }
+}

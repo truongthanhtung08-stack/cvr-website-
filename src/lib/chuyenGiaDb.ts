@@ -180,3 +180,53 @@ export async function getChuyenGiaTheoSlug(
   // người đăng ra agentName, không kèm số điện thoại).
   return { cg, tin: tatCaTin.filter((t) => t.maNguoi === cg.maNguoi) };
 }
+
+// ── SÀN / CÔNG TY CÓ HỒ SƠ DOANH NGHIỆP (chủ dự án 23/10/2026) ───────────────────────────────
+// Chỉ doanh nghiệp (profiles.role "company") đã điền đủ hồ sơ + đồng ý cho đăng (src/lib/hoSoDoanhNghiep.ts).
+// Nối với danh bạ theo SĐT để biết số tin + trang hồ sơ. SĐT không ra HTML (cổng lead ở đầu tệp).
+// Đọc bằng khoá máy chủ (profiles không mở công khai); bộ nhớ đệm 1 giờ như trang tin — không thêm chi phí.
+export type CongTy = {
+  ten: string;
+  tenPhapNhan: string;
+  mst: string;
+  diaChi: string;
+  gioiThieu: string;
+  email?: string;
+  website?: string;
+  logo?: string;
+  mangXaHoi: string[];
+  hoSo?: ChuyenGia; // hồ sơ trong danh bạ (theo SĐT) nếu có tin
+};
+
+export async function getCongTy(): Promise<CongTy[]> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) return [];
+  try {
+    const res = await fetch(`${url}/rest/v1/profiles?select=*&role=eq.company&dn_dong_y_dang=eq.true&limit=500`, {
+      headers: { apikey: key, Authorization: `Bearer ${key}` },
+      next: { tags: ["noi-dung"], revalidate: 3600 },
+    });
+    if (!res.ok) return []; // chưa chạy migration 0065 → chưa có cột → trang hiện như chưa có công ty
+    const { thieuHoSoDn } = await import("@/lib/hoSoDoanhNghiep");
+    const rows = ((await res.json()) as Record<string, string | null>[]).filter((p) => thieuHoSoDn(p).length === 0);
+    const danhBa = rows.length ? await getChuyenGia() : [];
+    return rows.map((p) => {
+      const so = chuanHoaSdt(p.phone ?? "");
+      return {
+        ten: p.company_name!.trim(),
+        tenPhapNhan: p.hd_ten_cong_ty!.trim(),
+        mst: p.hd_mst!.trim(),
+        diaChi: p.hd_dia_chi!.trim(),
+        gioiThieu: p.dn_gioi_thieu!.trim(),
+        email: p.hd_email?.trim() || undefined,
+        website: p.dn_website?.trim() || undefined,
+        logo: p.dn_logo?.trim() || undefined,
+        mangXaHoi: (p.dn_mang_xa_hoi ?? "").split(/\s*\n\s*/).filter((x) => /^https?:\/\//.test(x)),
+        hoSo: so ? danhBa.find((cg) => cg.maNguoi === maNguoiTuSdt(so)) : undefined,
+      };
+    });
+  } catch {
+    return [];
+  }
+}

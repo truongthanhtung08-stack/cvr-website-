@@ -4,6 +4,7 @@
 // rồi bắt: trang tràn ngang · nút / liên kết mà chữ tràn khỏi khung (bị lẹm, bị cắt). Dòng cuối "TRAN: 0" là đạt.
 // Chỉ đọc trang, không sửa gì. Chạy trước mỗi lần báo chủ dự án xem, sau khi đụng giao diện.
 import { spawn } from "node:child_process";
+import { thuMucTam } from "./_thuMucTam.mjs";
 
 const [goc = "http://localhost:3002", ...dsTrang] = process.argv.slice(2);
 const TRANG = dsTrang.length ? dsTrang : ["/", "/mua-ban", "/cho-thue", "/du-an", "/tin-tuc", "/mua-ban/da-nang"];
@@ -11,7 +12,7 @@ const MUC = [1.3, 1.6];
 
 const edge = "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe";
 const port = 9650 + Math.floor(Math.random() * 100);
-const p = spawn(edge, ["--headless=new", `--remote-debugging-port=${port}`, `--user-data-dir=${process.env.TEMP}/edge-mxh${port}`, "about:blank"]);
+const p = spawn(edge, ["--headless=new", `--remote-debugging-port=${port}`, `--user-data-dir=${thuMucTam(`edge-mxh${port}`)}`, "about:blank"]);
 await new Promise((r) => setTimeout(r, 4000));
 const t = (await (await fetch(`http://127.0.0.1:${port}/json`)).json()).find((x) => x.type === "page");
 const ws = new WebSocket(t.webSocketDebuggerUrl);
