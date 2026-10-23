@@ -1,6 +1,6 @@
 import type { Listing } from "@/lib/data";
 import { chuanTen, provinceNamesNew, wardsOfNew } from "@/lib/locations";
-import { mauSoCuaLoaiHinh, dungODienTichXayDung, dienTichSanThat, laTinThue, TEN_MAU_SO, TEN_VI_TRI, docViTri, type MauSo, type ViTriGia } from "@/lib/listingSpec";
+import { mauSoCuaLoaiHinh, thueTheoM2, dungODienTichXayDung, dienTichSanThat, laTinThue, TEN_MAU_SO, TEN_VI_TRI, docViTri, type MauSo, type ViTriGia } from "@/lib/listingSpec";
 export { mauSoCuaLoaiHinh, TEN_MAU_SO, TEN_VI_TRI };
 export type { MauSo, ViTriGia };
 import { tachBangCsv } from "@/lib/xuatCsv";
@@ -81,9 +81,20 @@ export function giaMoiM2Theo(l: Listing, mau: MauSo): number | null {
   return v >= thap && v <= cao ? v : null;
 }
 
-/** SỐ ĐƯA VÀO LỊCH SỬ GIÁ — THỐNG NHẤT GIÁ MỖI M² theo loại hình, cả bán lẫn thuê (chủ dự án 21/10/2026: "lấy đơn vị
- *  tổng là sai"): đất ÷ m² đất · căn hộ ÷ m² căn (sàn) · nhà ÷ m² sàn; thuê = tiền mỗi tháng ÷ m² (giá/m²/tháng). */
+/** SỐ ĐƯA VÀO LỊCH SỬ GIÁ — giá mỗi m² theo loại hình (đất ÷ m² đất · căn hộ ÷ m² căn · nhà ÷ m² sàn).
+ *  CHO THUÊ (chủ dự án 23/10/2026): văn phòng · kho, nhà xưởng, đất → giá/m²/tháng; loại hình còn lại → TỔNG tiền/tháng. */
+export function laThueTong(type: string, mucDich: string | undefined): boolean {
+  return laTinThue(mucDich) && !thueTheoM2(type);
+}
+/** Mẫu số của dãy lịch sử giá: thuê tính tổng tiền → không có mẫu số (undefined). */
+export function mauSoLichSu(type: string, mucDich: string | undefined): MauSo | undefined {
+  return laThueTong(type, mucDich) ? undefined : mauSoCuaLoaiHinh(type);
+}
 export function giaChoLichSu(l: Listing): number | null {
+  if (laThueTong(l.type, l.purpose)) {
+    const g = l.priceVnd;
+    return g && g >= 100_000 && g <= 10_000_000_000 ? g : null;
+  }
   return giaMoiM2(l);
 }
 
@@ -319,7 +330,7 @@ export function chiSoChoTin(
   const phuong = chuanTen(tin.diaGioi?.ward ?? "");
   const loai = chuanTen(tin.type);
   const mucDich = laTinThue(tin.purpose) ? "thue" : "ban";
-  const mau = mauSoCuaLoaiHinh(tin.type);
+  const mau = mauSoLichSu(tin.type, mucDich);
   const duAn = chuanTen(them.duAn ?? "");
   const diaChi = them.diaChi ?? "";
   if (!tinh || !coLichSuGia(tin.type)) return null;
@@ -330,8 +341,8 @@ export function chiSoChoTin(
       chuanTen(x.tinh) === tinh &&
       (x.mucDich ?? "ban") === mucDich &&
       !!x.loaiHinh && chuanTen(x.loaiHinh) === loai &&
-      // Đúng mẫu số của loại hình — cả bán lẫn thuê đều là giá mỗi m² (21/10/2026).
-      x.mauSo === mau && // giá mỗi m² đúng mẫu số, cả bán lẫn thuê (21/10/2026)
+      // Đúng mẫu số của loại hình; thuê tính tổng tiền/tháng thì dãy không có mẫu số (23/10/2026)
+      x.mauSo === mau &&
       !x.viTri && // cùng phân khúc + cùng vị trí; không chia nhỏ theo bề rộng đường
       coDuLichSuGia(x),
   );
@@ -499,10 +510,11 @@ export function docBangChiSo(bang: string[][]): { items: ChiSoKhuVuc[]; loi: Loi
       loi.push({ dong: i + 1, ly: "Thiếu loai_hinh" });
       continue;
     }
-    const mauDung = mauSoCuaLoaiHinh(loaiHinh);
-    // Cả bán lẫn thuê: giá MỖI M² đúng mẫu số của loại hình (21/10/2026 — bỏ giá thuê tổng tiền/tháng)
+    // Bán: giá MỖI M² đúng mẫu số của loại hình. Thuê văn phòng, kho/xưởng/đất: giá/m²/tháng. Thuê loại hình khác:
+    // TỔNG tiền/tháng, bỏ trống mau_so (chủ dự án 23/10/2026).
+    const mauDung = mauSoLichSu(loaiHinh, mucDich);
     if (docMauSo(themLay(4), loaiHinh) !== mauDung) {
-      loi.push({ dong: i + 1, ly: `mau_so phải là "${mauDung}" (${TEN_MAU_SO[mauDung]}) cho ${loaiHinh}` });
+      loi.push({ dong: i + 1, ly: mauDung ? `mau_so phải là "${mauDung}" (${TEN_MAU_SO[mauDung]}) cho ${loaiHinh}` : `Thuê ${loaiHinh} ghi TỔNG tiền/tháng — bỏ trống mau_so` });
       continue;
     }
     if (duongO && !khuVuc.trim()) {
@@ -599,7 +611,7 @@ export function soSanhKhuVuc(tin: Listing, items: ChiSoKhuVuc[], ky: string, tuT
   if (!tinhGoc || !phuongGoc || !ky) return [];
   const loai = chuanTen(tin.type);
   const mucDich = laTinThue(tin.purpose) ? "thue" : "ban";
-  const mau = mauSoCuaLoaiHinh(tin.type);
+  const mau = mauSoLichSu(tin.type, mucDich);
   const theoPhuong = new Map<string, OSanh>();
   for (const x of items.map(veQuy)) {
     if (chuanTen(x.tinh) !== chuanTen(tinhGoc) || !x.khuVuc || x.duAn || x.duong || x.viTri) continue;
@@ -679,7 +691,7 @@ export async function khoCuaMinh(
           duAn: duAn || undefined,
           loaiHinh,
           mucDich: mucDich === "thue" ? "thue" : "ban",
-          mauSo: mauSoCuaLoaiHinh(loaiHinh),
+          mauSo: mauSoLichSu(loaiHinh, mucDich),
           nguon: "tin đăng trên Coastal Land",
           capNhat: d.thang,
           moc: [],

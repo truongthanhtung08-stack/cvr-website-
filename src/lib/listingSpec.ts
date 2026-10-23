@@ -460,6 +460,14 @@ const MAU_SO_DAT = ["Đất nền / Đất", "Đất công nghiệp / Nhà xư�
 // đằng số tính một nẻo.
 const MAU_SO_SAN = ["Văn phòng / Mặt bằng kinh doanh", "Nhà trọ / Phòng trọ"];
 
+/** CHO THUÊ tính GIÁ MỖI M²/THÁNG — chỉ loại hình thị trường quen tính theo m² (chủ dự án 23/10/2026: "không phải cái nào
+ *  cũng chia đều ra như vậy"): văn phòng · kho, nhà xưởng, đất. Còn lại (căn hộ, nhà, biệt thự, shophouse, phòng trọ, cửa
+ *  hàng – ki ốt, BĐS khác) → TỔNG TIỀN THUÊ MỖI THÁNG, không ai khai giá thuê/m² cho các loại này. */
+const THUE_THEO_M2 = ["Văn phòng", "Thuê đất / Nhà xưởng / Kho bãi"];
+export function thueTheoM2(type: string): boolean {
+  return THUE_THEO_M2.includes((type ?? "").trim());
+}
+
 /** Giá mỗi m² của loại hình này phải chia cho cái gì. */
 export function mauSoCuaLoaiHinh(type: string): MauSo {
   const l = type ? specForType(type).label : "";
