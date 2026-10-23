@@ -155,8 +155,8 @@ export default function TheTinMobile({ item, terms = [], tuChay = false, pc = fa
   const coSo = t !== "basic"; // Diamond · Gold · Silver: Zalo + Hiện số trên thẻ
   // Xuống dòng không cắt số + đơn vị (giuCum, chủ dự án 23/10/2026)
   const tieuDe = tieuDeThe(item, !!tier.uppercase);
-  // Điện thoại: bỏ nội thất (chủ dự án 23/10/2026) — Diamond · Gold MỘT dòng: giá · diện tích · giá/m² (nếu có) · PN · WC
-  const so = thongSoTheoCap(item, t).filter((x) => pc || x.icon !== "sofa");
+  // Bỏ nội thất ĐỀU cả máy tính lẫn điện thoại (chủ dự án 23/10/2026: "bỏ là bỏ đều") — Diamond · Gold MỘT dòng: giá · diện tích · giá/m² (nếu có) · PN · WC
+  const so = thongSoTheoCap(item, t).filter((x) => x.icon !== "sofa");
   const soAnh = item.imageCount || anh.length;
   // "3 giờ trước" tính theo giờ hiện tại: trang máy chủ dựng sẵn (đệm tới 1 giờ) ghi giờ lúc dựng → vẽ lại một lần sau khi
   // mở để chữ đúng giờ máy khách (kèm suppressHydrationWarning ở dòng chữ, không để React báo lệch và dựng lại cả trang)

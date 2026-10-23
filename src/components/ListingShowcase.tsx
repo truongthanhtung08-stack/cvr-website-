@@ -62,13 +62,15 @@ export default function ListingShowcase({
   // Đã bấm "Xem thêm" → danh sách theo trang + cột phải (KHÔNG chừa khoảng trống
   // phía trên: nội dung phía trên đã ẩn, danh sách nằm sát header).
   if (expanded) {
+    // "Bất động sản đã xem" (chủ dự án 23/10/2026): "Xem thêm" ra danh sách BĐS theo trang CHUNG — giống "Xem thêm" khối
+    // Bất động sản nổi bật (tên "Mua bán, cho thuê nhà đất", từ tin số 1), không phải danh sách riêng các tin đã xem.
+    if (daXem) return <ListingBrowser heading="Mua bán, cho thuê nhà đất" purpose="ban" nguon="ban" nested />;
     return (
       <ListingBrowser
         heading={heading ?? (purpose === "thue" ? "Bất động sản cho thuê" : "Bất động sản mua bán")}
         purpose={purpose}
         {...(idsDayDu ? { nguon: purpose, chiId: idsDayDu } : { items })}
         relevance={relevance}
-        daXem={daXem}
         nested
       />
     );

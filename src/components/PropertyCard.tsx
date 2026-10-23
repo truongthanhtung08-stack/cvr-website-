@@ -177,23 +177,23 @@ export default function PropertyCard({
             admin, src/lib/thongSoThe.ts) → địa chỉ một dòng → mô tả → người đăng (tên, ngày đăng dòng dưới). */}
         {isTier ? (
           <>
-            {/* Dòng 2 trang chủ máy tính (chủ dự án 23/10/2026): giá · diện tích; Diamond · Gold thêm phòng ngủ · phòng tắm; Diamond thêm nội thất. Một dòng. */}
+            {/* Dòng 2 trang chủ máy tính (chủ dự án 23/10/2026): giá · diện tích; Diamond · Gold thêm phòng ngủ · phòng tắm. Một dòng. */}
             {/* Hai nhóm: giá · DT (· giá/m²) | PN · WC (· nội thất). Máy tính một dòng; ô hẹp (dải trượt điện thoại) nhóm 2 tự xuống
                 dòng NGUYÊN NHÓM — không cắt chữ, không để một mục đứng lẻ (23/10/2026). */}
             {(() => {
-              const ds = thongSoTheoCap(item, tierId).filter((x) => (!x.giaM2 || item.purpose !== "ban") && (x.icon !== "sofa" || tierId === "diamond") && (!x.icon || tierId === "diamond" || tierId === "gold"));
-              // Điện thoại (dải trượt BĐS tương tự / đã xem): bỏ nội thất — Diamond còn giá · DT · PN · WC một dòng (chủ dự án 23/10/2026)
-              const muc = (x: (typeof ds)[number], cuoi: boolean, k: number, cuoiDt = cuoi) => (
-                <span key={k} className={`flex items-baseline gap-1 ${x.icon === "sofa" ? "max-sm:hidden" : ""} ${x.do ? `text-[16px] font-bold ${item.price === "Thỏa thuận" || item.hetHan ? "text-cvr-muted" : "text-red-500"}` : ""}`}>
+              const ds = thongSoTheoCap(item, tierId).filter((x) => (!x.giaM2 || item.purpose !== "ban") && x.icon !== "sofa" && (!x.icon || tierId === "diamond" || tierId === "gold"));
+              // Bỏ nội thất ĐỀU cả máy tính lẫn điện thoại (chủ dự án 23/10/2026: "bỏ là bỏ đều")
+              const muc = (x: (typeof ds)[number], cuoi: boolean, k: number) => (
+                <span key={k} className={`flex items-baseline gap-1 ${x.do ? `text-[16px] font-bold ${item.price === "Thỏa thuận" || item.hetHan ? "text-cvr-muted" : "text-red-500"}` : ""}`}>
                   {x.icon === "sofa" && <BieuTuongThe loai="sofa" className="h-[15px] w-[15px] self-center" />}{x.chu}{(x.icon === "pn" || x.icon === "wc") && <BieuTuongThe loai={x.icon} className="h-[15px] w-[15px] self-center" />}
-                  {!cuoi && <span className={`ml-0.5 text-[13px] font-normal text-cvr-muted ${cuoiDt ? "max-sm:hidden" : ""}`}>·</span>}
+                  {!cuoi && <span className="ml-0.5 text-[13px] font-normal text-cvr-muted">·</span>}
                 </span>
               );
               const n1 = ds.filter((x) => !x.icon), n2 = ds.filter((x) => x.icon);
               return (
                 <p className="mt-2 flex flex-wrap items-baseline gap-x-1 gap-y-1 text-[13px] text-cvr-body sm:flex-nowrap sm:overflow-hidden sm:whitespace-nowrap">
                   <span className="flex items-baseline gap-x-1 whitespace-nowrap">{n1.map((x, k) => muc(x, k === n1.length - 1 && !n2.length, k))}</span>
-                  {n2.length > 0 && <span className="flex items-baseline gap-x-1 whitespace-nowrap">{n2.map((x, k) => muc(x, k === n2.length - 1, k, k === n2.length - 1 || n2[k + 1]?.icon === "sofa"))}</span>}
+                  {n2.length > 0 && <span className="flex items-baseline gap-x-1 whitespace-nowrap">{n2.map((x, k) => muc(x, k === n2.length - 1, k))}</span>}
                 </p>
               );
             })()}

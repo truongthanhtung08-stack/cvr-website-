@@ -113,8 +113,6 @@ export function locDanhSach(
   sort: SortKey,
   page: number,
   moiTrang = PER_PAGE,
-  // "Bất động sản đã xem" (23/10/2026): giữ MỌI tin khách đã xem — cả bán lẫn thuê, cả tin hết hạn (đã có cờ hetHan), không nhân đôi
-  tatCa = false,
 ): KetQuaLoc & { ketQua: Listing[] } {
   // Câu có "giá rẻ" → trong cùng nhóm, tin rẻ đứng trước (cùng quy ước với trang sạch ?sapxep=gia-tang)
   const timRe = / gia re /.test(` ${normalizeVi(filters.keyword)} `);
@@ -124,7 +122,7 @@ export function locDanhSach(
   const timTrungTam = !!kwGoc.trim() && parseQuery(kwGoc).features.includes("trung tâm");
   filters = cauThanhBoLoc(filters, purpose) ?? filters;
   // Nguồn theo đúng MỤC ĐÍCH + NHÂN ĐÔI HIỂN THỊ của CVR Diamond (nhanDoiHienThi.ts)
-  const base = tatCa ? items : nhanDoiHienThi(items.filter((l) => (l.purpose ?? "ban") === purpose));
+  const base = nhanDoiHienThi(items.filter((l) => (l.purpose ?? "ban") === purpose));
   // NỚI LỎNG THÔNG MINH: tin khớp đủ lên đầu (Tầng 1), thiếu tiêu chí phụ xuống Tầng 2/3
   const hits = smartFilter(base, { ...filters, keyword: "" });
   const coTuKhoa = filters.keyword.trim().length > 0;

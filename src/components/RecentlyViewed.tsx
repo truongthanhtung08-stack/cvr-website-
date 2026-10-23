@@ -5,6 +5,7 @@ import ListingShowcase from "@/components/ListingShowcase";
 import type { Listing } from "@/lib/data";
 import { useRecentlyViewed } from "@/lib/useRecentlyViewed";
 import { useHomeSection } from "@/components/HomeExpand";
+import ListingBrowser from "@/components/ListingBrowser";
 
 // "BẤT ĐỘNG SẢN ĐÃ XEM" (chủ dự án 23/10/2026) — CÙNG CẤU TRÚC khối "Bất động sản tương tự": dải trượt 8 tin + "Xem thêm" → danh sách
 // theo trang (ListingShowcase dùng chung). Trang tin: ngay dưới BĐS tương tự · trang chủ: dưới BĐS nổi bật. Chỉ hiện khi khách có lịch sử xem.
@@ -15,7 +16,7 @@ export default function RecentlyViewed({ boQua, trangChu = false }: { boQua?: st
   const khoa = ids.join(",");
   const [items, setItems] = useState<Listing[]>([]);
   // Khối khác trên trang chủ đang mở "Xem thêm" → bỏ cả khung, không chừa khoảng trống (23/10/2026)
-  const { hidden } = useHomeSection("bds-da-xem");
+  const { hidden, expanded } = useHomeSection("bds-da-xem");
 
   useEffect(() => {
     if (!khoa) return;
@@ -31,6 +32,8 @@ export default function RecentlyViewed({ boQua, trangChu = false }: { boQua?: st
   }, [khoa]);
 
   if (!khoa || items.length === 0 || (trangChu && hidden)) return null;
+  // Trang chủ, đã bấm "Xem thêm": ĐÚNG danh sách của "Xem thêm" khối Bất động sản nổi bật (cùng khung, cùng khoảng cách)
+  if (trangChu && expanded) return <section className="section-edge bg-white"><ListingBrowser heading="Mua bán, cho thuê nhà đất" trangChu purpose="ban" nguon="ban" /></section>;
   const khoi = (
     <ListingShowcase
       items={items}

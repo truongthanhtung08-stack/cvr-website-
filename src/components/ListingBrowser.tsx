@@ -47,7 +47,6 @@ export default function ListingBrowser({
   chiId,
   boQuaId,
   relevance = false,
-  daXem = false,
   nested = false,
   trangChu = false,
   initialTypes,
@@ -69,8 +68,6 @@ export default function ListingBrowser({
   // Danh sách "tin tương tự": nguồn đã sắp theo độ liên quan → mặc định giữ đúng
   // thứ tự đó (thay vì Mới nhất) và thêm lựa chọn sắp xếp "Liên quan nhất".
   relevance?: boolean;
-  // Danh sách "Bất động sản đã xem": giữ mọi tin đã xem (bán + thuê + hết hạn), đúng thứ tự xem
-  daXem?: boolean;
   // Đặt bên trong một trang đã có khung max-w-7xl + lề ngang (trang chi tiết tin,
   // chi tiết dự án…) → BỎ khung riêng, nếu không lề bị cộng dồn gấp đôi.
   nested?: boolean;
@@ -251,9 +248,9 @@ export default function ListingBrowser({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- chỉ gọi lại khi yêu cầu đổi (hoặc địa danh vừa về)
   }, [nguon, yeuCau, choDiaDanh, daDocDiaChi]);
   const taiCho = useMemo(
-    () => (nguon ? null : locDanhSach(items, itemsHetHan, purpose, locThat, sort, page, moiTrang, daXem)),
+    () => (nguon ? null : locDanhSach(items, itemsHetHan, purpose, locThat, sort, page, moiTrang)),
     // eslint-disable-next-line react-hooks/exhaustive-deps -- locThat suy ra từ filters + cauSua
-    [nguon, items, itemsHetHan, purpose, filters, cauSua, sort, page, coDiaDanh, moiTrang, daXem],
+    [nguon, items, itemsHetHan, purpose, filters, cauSua, sort, page, coDiaDanh, moiTrang],
   );
   const kq = nguon ? mayChu : taiCho;
   const khoaKetQua = `${lanTim}-${JSON.stringify(filters)}`;
