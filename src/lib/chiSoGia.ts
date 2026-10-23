@@ -822,43 +822,13 @@ export function soKyLienMach(chiSo: ChiSoKhuVuc | null): number {
   return n;
 }
 
-/** ĐỦ SỐ LIỆU để vẽ BIỂU ĐỒ lịch sử giá: ≥ 2 KỲ LIỀN (không hổng) tính ngược từ mốc mới nhất (chủ dự án duyệt 23/10/2026 —
- *  GUI-CLAUDE-CODE/LICH-SU-GIA-23102026-MOI-TIN-DEU-CO-SO.md mục 1①, thay ngưỡng 5 quý / 13 tháng). Nút 1 · 2 · 3 · 5 năm
- *  chỉ bật khi đủ mốc của năm đó (PriceHistory). Chưa đủ 2 kỳ → khối "giá khu vực hiện tại" (giaHienTai). */
-export const KY_TOI_THIEU = 2;
+/** ĐỦ SỐ LIỆU để hiện Lịch sử giá: từ cùng kỳ năm trước tới mốc mới nhất phải có
+ *  ĐỦ MỌI KỲ, không hổng kỳ nào (13 tháng hoặc 5 quý). Thiếu một kỳ là không hiện — ghi "Dữ liệu sẽ được cập nhật".
+ *  (23/10/2026 chủ dự án: bỏ biểu đồ 2 kỳ + bỏ số tự tính từ 1–2 tin / cả tỉnh, trở về đúng chốt.) */
 export function coDuLichSuGia(chiSo: ChiSoKhuVuc | null): boolean {
   const ds = (chiSo?.moc ?? []).filter((m) => m.giaM2 > 0);
   const cuoi = ds[ds.length - 1];
   if (!cuoi) return false;
-  const coKy = /^\d{4}-\d{2}$/.test(cuoi.quy) || /^\d{4}-Q[1-4]$/i.test(cuoi.quy);
-  return coKy && soKyLienMach(chiSo) >= KY_TOI_THIEU;
-}
-
-/** GIÁ KHU VỰC HIỆN TẠI (mục 1② ③ tệp trên): khi chưa đủ 2 kỳ để vẽ biểu đồ — giá/m² phổ biến (trung vị) + thấp–cao của các
- *  BĐS đang rao trên coastalland.vn cùng DỰ ÁN (nếu tin thuộc dự án) hoặc cùng PHƯỜNG + loại hình + mua/thuê, cần ≥ 3 căn;
- *  không đủ → nới ra cả TỈNH (ghi rõ phạm vi). Không có căn nào mới trả null ("Dữ liệu sẽ được cập nhật").
- *  Số chia theo đúng loại hình (giaMoiM2: căn hộ ÷ m² căn · đất ÷ m² đất · nhà ÷ m² sàn khách ghi · thuê ÷ m²/tháng). */
-export type GiaHienTai = { trungVi: number; thap: number; cao: number; soMau: number; phamVi: string; laTinh: boolean };
-export const MAU_HIEN_TAI = 3;
-export function giaHienTai(tin: Listing, tatCa: Listing[], mucDich: "ban" | "thue"): GiaHienTai | null {
-  const loai = chuanTen(tin.type);
-  const tinh = chuanTen(tin.diaGioi?.province ?? "");
-  const phuong = chuanTen(tin.diaGioi?.ward ?? "");
-  if (!tinh || !coLichSuGia(tin.type)) return null;
-  const cung = tatCa.filter((x) => chuanTen(x.type) === loai && (laTinThue(x.purpose) ? "thue" : "ban") === mucDich
-    && chuanTen(x.diaGioi?.province ?? "") === tinh);
-  const gia = (ds: Listing[]) => ds.map(giaMoiM2).filter((v): v is number => v !== null);
-  const ket = (ds: number[], phamVi: string, laTinh: boolean): GiaHienTai => ({
-    trungVi: trungVi(ds), thap: Math.min(...ds), cao: Math.max(...ds), soMau: ds.length, phamVi, laTinh,
-  });
-  if (tin.projectSlug) {
-    const ds = gia(cung.filter((x) => x.projectSlug === tin.projectSlug));
-    if (ds.length >= MAU_HIEN_TAI) return ket(ds, tin.projectName || "", false);
-  }
-  if (phuong) {
-    const ds = gia(cung.filter((x) => chuanTen(x.diaGioi?.ward ?? "") === phuong));
-    if (ds.length >= MAU_HIEN_TAI) return ket(ds, tin.diaGioi?.ward ?? "", false);
-  }
-  const dsTinh = gia(cung);
-  return dsTinh.length ? ket(dsTinh, tin.diaGioi?.province ?? "", true) : null;
+  const moiNam = /^\d{4}-\d{2}$/.test(cuoi.quy) ? 12 : /^\d{4}-Q[1-4]$/i.test(cuoi.quy) ? 4 : 0;
+  return moiNam > 0 && soKyLienMach(chiSo) >= moiNam + 1;
 }
