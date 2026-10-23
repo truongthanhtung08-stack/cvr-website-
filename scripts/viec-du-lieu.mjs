@@ -204,7 +204,7 @@ const MUC = [
   ["Bài mạng xã hội (Fanpage · OA · nhóm)", `${NOI_KHAC.slice(0, -1)}mxh${BS}\` (tệp \`bai-mxh-${dd}.docx\` + \`anh${BS}\`)`, tinMxh.length, tinMxh.length
     ? [`**⛔ BẮT BUỘC HẰNG NGÀY: 1 bài Zalo + 1 bài Facebook, chất lượng, có ảnh** (chủ dự án chốt 23/10). Soạn bài theo mục 4–5 của \`${p(SEO, "Plan MXH", "KE-HOACH-MXH.md")}\`: mỗi bài ghi rõ kênh, chữ, ảnh (lấy từ tin), link đúng như dưới.`,
       ...tinMxh.map((x) => `- ${x.title.slice(0, 60)} — Fanpage: ${link(x)}?utm_source=facebook&utm_medium=fanpage · OA: ${link(x)}?utm_source=zalo&utm_medium=oa · nhóm: ${link(x)}?utm_source=zalo&utm_medium=nhom`)]
-    : ["Không có tin mới đạt chuẩn trong 2 ngày qua — soạn 1 bài gom tin nổi bật theo khu vực."]],
+    : [`**⛔ BẮT BUỘC HẰNG NGÀY: 1 bài Zalo + 1 bài Facebook, chất lượng, có ảnh** (chủ dự án chốt 23/10). Chưa có tin mới đạt chuẩn trong 2 ngày qua → mỗi bài gom tin nổi bật theo khu vực, soạn theo mục 4–5 của \`${p(SEO, "Plan MXH", "KE-HOACH-MXH.md")}\`, link về trang mua bán / cho thuê đúng khu vực.`]],
   ["Hồ sơ dự án", `${NOI_KHAC} (tệp \`du-an-${dd}.csv\`)`, dsNap.length, dsNap.length
     ? [`Điền \`${p(SEO, "RA", "du-an-can-nap.csv")}\` theo mục 4 của \`${CV}\`: đủ cột bắt buộc, **tổng quan tự viết lại 3–6 câu chuẩn SEO** (tên dự án · vị trí · chủ đầu tư · loại sản phẩm), có nguồn + ngày. Ưu tiên dự án đã có người tìm (Alacarte, Altara, Fusion Suites, Harmony). Làm 10 dự án mỗi lần:`, ...dsNap.slice(0, 10).map((d) => `- ${d.ten} · ${d.phuong ? d.phuong + ", " : ""}${d.tinh}`)]
     : ["Nạp dự án mới toàn quốc theo mục 4 của `CONG-VIEC-3-BEN.md`."]],
@@ -290,13 +290,13 @@ const v = [`# VIỆC HÔM NAY — 3 BÊN · ${TEN_THU}, ${dd.slice(0, 2)}/${dd.s
   "",
   "| # | SEO | Đạt khi |",
   "|---|---|---|",
-  "| 1 | Tiêu đề | 30–60 ký tự · mở đầu **Bán / Cho thuê** + loại hình + đặc điểm khách hay tìm + tên đường/dự án · phường, tỉnh **tùy tin** — tin đã có tên đường / dự án thì không cần; tin thiếu tên đường, dự án hoặc ở thành phố lớn thì nên ghi; giá, diện tích là điểm nổi bật thì ghi vào, chiếu theo tin gốc (chủ dự án 23/10/2026) · không trùng tin khác |",
+  "| 1 | Tiêu đề | 30–60 ký tự · mở đầu **Bán / Cho thuê** + loại hình + đặc điểm khách hay tìm + tên đường/dự án · **có đúng cụm khách gõ trên Google** (nhóm ở mục 0) · phường, tỉnh **tùy tin** — tin đã có tên đường / dự án thì không cần; tin thiếu tên đường, dự án hoặc ở thành phố lớn thì nên ghi; giá, diện tích là điểm nổi bật thì ghi vào, chiếu theo tin gốc (chủ dự án 23/10/2026) · không trùng tin khác |",
   "| 2 | Thành phố lớn | Tin ở Nha Trang, Đà Lạt, Quy Nhơn, Buôn Ma Thuột, Vũng Tàu… mà tên phường không có tên thành phố → ghi tên thành phố vào tiêu đề |",
-  "| 3 | Mô tả | ≥ 300 ký tự · 5 đoạn: tổng quan · vị trí · thông số (gạch đầu dòng) · pháp lý · điều kiện giao dịch · dòng trống giữa các đoạn |",
+  "| 3 | Mô tả | ≥ 300 ký tự · 5 đoạn: tổng quan · vị trí · thông số (gạch đầu dòng) · pháp lý · điều kiện giao dịch · dòng trống giữa các đoạn · **viết bằng lời mình, không câu nào trùng nguyên văn tin gốc quá 8 chữ liền** (Google coi là sao chép, tin không lên) |",
   "| 4 | Cột dữ liệu | Giá, diện tích, phòng, hướng, pháp lý, **tên đường**, **tên dự án** chép đúng cột, đúng đơn vị (bán = tỷ, thuê = triệu) |",
   "| 5 | Ảnh | **Chất lượng trước**: thật, rõ nét, cạnh dài ≥ 800 px · 4–15 ảnh/tin (ít nhất 4–5), **tự bỏ ảnh trùng, ảnh thừa** · ảnh `-01` đẹp nhất · tin nhà phải có ảnh mặt tiền (xấu vẫn lấy) · ảnh có watermark / logo / chữ / SĐT đè vẫn lấy — chủ dự án xoá · dưới 4 ảnh đạt → bỏ tin |",
   "| # | NỘI DUNG | Đạt khi |",
-  "| 6 | Không bịa | Mọi con số, tiện ích, khoảng cách, pháp lý đều có trong tin gốc · thiếu thì bỏ, không viết cho đủ |",
+  "| 6 | Không bịa | Tin gốc còn hạn (mở lại link ngay trước khi giao) · mọi con số, tiện ích, khoảng cách, pháp lý đều có trong tin gốc · thiếu thì bỏ, không viết cho đủ |",
   "| 7 | Khớp số | Số trong tiêu đề = số trong mô tả = số trong cột = tin gốc |",
   "| 8 | Dự án | Tin thuộc dự án → `ten_du_an` đúng tên trên web; dự án chưa có → lập hồ sơ dự án cùng ngày |",
   "| # | NGÔN NGỮ | Đạt khi |",
@@ -309,7 +309,7 @@ const v = [`# VIỆC HÔM NAY — 3 BÊN · ${TEN_THU}, ${dd.slice(0, 2)}/${dd.s
   // Việc kế hoạch SEO giao Cowork (KE-HOACH-SEO.md mục 3, cột Ai có "Cowork") — kèm số Search Console ghi ở cột trạng thái.
   // Quy trình 17/10: giao theo kế hoạch + số thật, không chỉ theo danh sách đếm tin.
   ...(keHoach.some((k) => /cowork/i.test(k.ai))
-    ? ["### ƯU TIÊN THEO KẾ HOẠCH SEO + SEARCH CONSOLE — làm trước mục 1 (giao chung thư mục của mục 1 / mục 5)",
+    ? ["### KẾ HOẠCH SEO (tham khảo — việc hôm nay làm theo mục 0 `VIEC.md`, không theo danh sách này)",
        ...keHoach.filter((k) => /cowork/i.test(k.ai)).map((k) => `- ${k.viec} — ${k.tt}`), ""]
     : []),
   "| Mục | Việc | Còn | Giao vào |", "|---|---|---|---|",
@@ -424,10 +424,10 @@ const gon = [
   "| Giao | Cowork làm | Lên web | Trúng nhóm khách tìm |", "|---|---|---|---|",
   `| ${giaoQua} | ${coworkLam} | ${lenHomQua.length} | ${lenHomQua.length ? `${trungNhom(lenHomQua)} (${pt(trungNhom(lenHomQua), lenHomQua.length)}) — cần ≥ 80%` : "— (không có tin lên)"} |`,
   `7 ngày qua: lên web ${len7.length} tin, trúng nhóm ${trungNhom(len7)} (${pt(trungNhom(len7), len7.length)}).`, "",
-  "| Nhóm khách đang tìm | Đang có | Mục tiêu |", "|---|---|---|",
-  ...cauHinh.nhom.map((n) => `| ${n.ma}. ${n.ten}${n.muc_dich === "thue" ? "" : ""} | ${dangCo(n)} | ${n.muc_tieu} |`), "",
   muc0Nay || `## 0. VIỆC HÔM NAY ${dd.slice(0, 2)}/${dd.slice(2, 4)} — Claude chưa giao (chưa đo xong). Cowork chờ, không tự làm.`, "",
 ];
 fs.writeFileSync(tepViec, gon.join("\n"));
+// Bảng nhóm chỉ in ra cho Claude viết mục 0 — không ghi vào VIEC.md (một bảng nhóm duy nhất là bảng ở mục 0)
+console.log(cauHinh.nhom.map((n) => `nhóm ${n.ma}. ${n.ten}: đang có ${dangCo(n)} / mục tiêu ${n.muc_tieu}`).join("\n"));
 console.log(`→ ${RA}/VIEC.md (${TEN_THU}) · du-an-can-nap.csv`);
 console.log(`tin cần bổ sung ${chuaDat.length} · nhóm trùng ${trung.length} · số nhiều tên ${nhieuTen.length} · tin lệch tài khoản ${lech.length} · dự án cần nạp ${dsNap.length} · nhóm sắp mở trang ${sapMo.length}`);
