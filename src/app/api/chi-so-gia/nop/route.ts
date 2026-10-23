@@ -148,54 +148,7 @@ export async function POST(req: Request) {
     day: nhan.map(tenDay),
   };
 
-  // Báo cho chủ dự án, nhưng KHÔNG để lỗi email làm hỏng lần nộp đã ghi xong.
-  void baoChoChu(tomTat, tep.name).catch(() => {});
 
   return NextResponse.json(tomTat);
 }
 
-async function baoChoChu(
-  t: {
-    nhan: number;
-    moc: number;
-    tongDay: number;
-    chan: { day: string; ly: string }[];
-    choQua: { day: string; ly: string }[];
-  },
-  tenTep: string,
-) {
-  const key = process.env.RESEND_API_KEY;
-  const nhan = (process.env.ADMIN_EMAIL ?? "").split(",").map((s) => s.trim()).filter(Boolean);
-  if (!key || !nhan.length) return;
-
-  const canhBao = t.chan.length
-    ? `<p style="margin:16px 0 0;color:#b45309;font-size:14px">Chặn ${t.chan.length} dãy vì giá nhảy bất thường:<br>${t.chan
-        .map((c) => `${c.day} — ${c.ly}`)
-        .join("<br>")}</p>`
-    : "";
-
-  // Dãy được cho qua phải báo RÕ HƠN cả dãy bị chặn: đây là chỗ duy nhất lưới
-  // an toàn bị tắt, nên nếu người nộp xác nhận sai thì đây là dấu vết để truy.
-  const daCoQua = t.choQua.length
-    ? `<p style="margin:16px 0 0;color:#0f6b3f;font-size:14px">Cho qua ${t.choQua.length} dãy do người nộp xác nhận đã kiểm lại nguồn:<br>${t.choQua
-        .map((c) => `${c.day} — ${c.ly}`)
-        .join("<br>")}</p>`
-    : "";
-
-  await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      from: process.env.RESEND_FROM || "COASTAL LAND <onboarding@resend.dev>",
-      to: nhan,
-      subject: `Đã nhận số liệu giá: ${t.nhan} dãy`,
-      html: `<div style="font-family:system-ui,-apple-system,'Segoe UI',sans-serif;color:#1d1d1f">
-        <p style="margin:0;font-size:15px">Tệp <b>${tenTep}</b> đã được nạp lên website.</p>
-        <p style="margin:12px 0 0;font-size:15px">Nhận <b>${t.nhan}</b> dãy, <b>${t.moc}</b> mốc giá. Kho hiện có <b>${t.tongDay}</b> dãy.</p>
-        ${canhBao}
-        ${daCoQua}
-        <p style="margin:20px 0 0;color:#6e6e73;font-size:13px">Xem và sửa tại /admin/chi-so-gia</p>
-      </div>`,
-    }),
-  });
-}
