@@ -442,9 +442,24 @@ export function chuanKy(s: string): string {
   if (m) return thang(m[1], m[2]);
   m = t.match(/^T?(\d{1,2})[-/](\d{4})$/);
   if (m) return thang(m[2], m[1]);
+  // Báo cáo 6 tháng: 2026-H1 · H1/2026 · 6T1/2026 (6 tháng đầu năm) · 6T2/2026 (6 tháng cuối năm)
+  m = t.match(/^(\d{4})-?H([12])$/);
+  if (m) return `${m[1]}-H${m[2]}`;
+  m = t.match(/^(?:H|6T)([12])[/-](\d{4})$/);
+  if (m) return `${m[2]}-H${m[1]}`;
   m = t.match(/^(\d{4})$/);
   if (m) return m[1];
   return "";
+}
+
+/** BÁO CÁO 6 THÁNG / NĂM → TỪNG QUÝ (chủ dự án 23/10/2026: "có quý / 6 tháng / năm thì suy ra chỗ cần ghi"). Cowork ghi đúng
+ *  kỳ của báo cáo, web tự suy: 6 tháng → 2 quý của kỳ, năm → 4 quý, cùng số. Kỳ quý / tháng giữ nguyên. */
+export function kyRaQuy(ky: string): { quy: string[]; suyRa: boolean } {
+  const h = ky.match(/^(\d{4})-H([12])$/);
+  if (h) return { quy: h[2] === "1" ? [`${h[1]}-Q1`, `${h[1]}-Q2`] : [`${h[1]}-Q3`, `${h[1]}-Q4`], suyRa: true };
+  const n = ky.match(/^(\d{4})$/);
+  if (n) return { quy: [1, 2, 3, 4].map((q) => `${n[1]}-Q${q}`), suyRa: true };
+  return { quy: [ky], suyRa: false };
 }
 
 export function docCsvChiSo(text: string): { items: ChiSoKhuVuc[]; loi: LoiCsv[] } {
@@ -465,6 +480,7 @@ export function docBangChiSo(bang: string[][]): { items: ChiSoKhuVuc[]; loi: Loi
     return { items: [], loi: [{ dong: 1, ly: `Thiếu cột: ${thieu.join(", ")}` }] };
 
   const gom = new Map<string, ChiSoKhuVuc>();
+  const quyRieng = new Set<string>(); // quý có dòng số riêng (không phải suy từ báo cáo 6 tháng / năm)
   for (let i = 1; i < bang.length; i++) {
     const o = bang[i];
     const lay = (k: number) => (viTri[k] >= 0 && viTri[k] < o.length ? o[viTri[k]] : "");
@@ -480,7 +496,7 @@ export function docBangChiSo(bang: string[][]): { items: ChiSoKhuVuc[]; loi: Loi
     if (!ky) {
       loi.push({
         dong: i + 1,
-        ly: `Kỳ "${lay(4)}" không đọc được — viết 2026-08 (tháng), 2026-Q2 (quý) hoặc 2025 (năm)`,
+        ly: `Kỳ "${lay(4)}" không đọc được — viết 2026-Q2 (quý), 2026-H1 (6 tháng đầu năm), 2025 (năm) hoặc 2026-08 (tháng)`,
       });
       continue;
     }
@@ -557,19 +573,25 @@ export function docBangChiSo(bang: string[][]): { items: ChiSoKhuVuc[]; loi: Loi
       };
       gom.set(khoa, muc);
     }
-    const cu = muc.moc.find((m) => m.quy === ky);
     const giaDong = Math.round((chiKhoang ? (thap + cao) / 2 : gia) * 1_000_000);
     // Thấp/cao chỉ nhận khi đúng phía so với giá phổ biến — điền ngược là sai số
     // liệu, thà bỏ còn hơn vẽ ra một biểu đồ có đường thấp nằm trên đường cao.
-    const mocMoi: MocQuy = {
-      quy: ky,
+    const mocMoi: Omit<MocQuy, "quy"> = {
       giaM2: giaDong,
       thap: Number.isFinite(thap) && thap > 0 && (chiKhoang || thap <= gia) ? Math.round(thap * 1_000_000) : undefined,
       cao: Number.isFinite(cao) && (chiKhoang ? cao >= thap : cao >= gia) ? Math.round(cao * 1_000_000) : undefined,
       soMau: Number.isFinite(soMau) && soMau > 0 ? soMau : undefined,
     };
-    if (cu) Object.assign(cu, mocMoi);
-    else muc.moc.push(mocMoi);
+    // Kỳ 6 tháng / năm suy ra từng quý; quý có dòng số riêng luôn thắng số suy ra
+    const { quy: dsQuy, suyRa } = kyRaQuy(ky);
+    for (const q of dsQuy) {
+      const kq = khoa + "|" + q;
+      if (suyRa && quyRieng.has(kq)) continue;
+      if (!suyRa) quyRieng.add(kq);
+      const cu = muc.moc.find((m) => m.quy === q);
+      if (cu) Object.assign(cu, mocMoi);
+      else muc.moc.push({ quy: q, ...mocMoi });
+    }
   }
 
   const items = [...gom.values()].map((x) => ({

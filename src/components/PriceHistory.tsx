@@ -15,7 +15,8 @@ import { vndM2, luiMotNam, coDuLichSuGia, soKyLienMach } from "@/lib/chiSoGia";
 // ════════════════════════════════════════════════════════════════════════════
 
 // duong / dai / vienDai: xanh dương Coastal Land (Batdongsan dùng đỏ — mình khác màu, rõ trên nền trắng)
-const MAU = { cao: "#0f8a5f", thap: "#dc2626", phoBien: "#c8a250", duong: "#1565c0", dai: "#1565c0", vienDai: "#7aa7e0" };
+// Màu nhã cùng tông (chủ dự án 23/10/2026: "màu sắc biểu đồ lòe loẹt quá"): trung bình xanh thương hiệu đậm, cao / thấp xám mảnh
+const MAU = { tang: "#0f8a5f", giam: "#dc2626", cao: "#8fa7c4", thap: "#8fa7c4", phoBien: "#c8a250", duong: "#1565c0", dai: "#1565c0", vienDai: "#7aa7e0" };
 
 type Moc = { quy: string; giaM2: number; thap?: number; cao?: number };
 
@@ -167,8 +168,10 @@ function KhoiGia({
   const tatCa = [...moc.flatMap((m) => (coKhoang(m) ? [m.thap!, m.giaM2, m.cao!] : [m.giaM2])), ...(giaTin ? [giaTin] : [])];
   const minV = Math.min(...tatCa);
   const maxV = Math.max(...tatCa);
-  const buoc = buocTron((maxV - minV) / 4 || maxV * 0.1 || 1);
-  const day = Math.max(0, Math.floor(minV / buoc) * buoc);
+  // Trục giá bắt đầu từ 0 như Batdongsan (chủ dự án 23/10/2026: "không được thì tham khảo BĐS mà làm")
+  const buoc = buocTron(maxV / 4 || 1);
+  const day = 0;
+  void minV;
   let tran = Math.ceil(maxV / buoc) * buoc;
   if (tran <= day) tran = day + buoc;
   const vach: number[] = [];
@@ -196,10 +199,22 @@ function KhoiGia({
       const i = Math.round(((vx - trai) / (phai - trai)) * (moc.length - 1));
       setChon(Math.min(moc.length - 1, Math.max(0, i)));
     };
+    // Ô SỐ NỔI TRÊN BIỂU ĐỒ (kiểu Batdongsan, 23/10/2026): nền tối, chạy theo vạch dọc của kỳ đang chọn
+    const phanTramX = (x(kyChon) / W) * 100;
+    const benTrai = phanTramX > 55;
     return (
+      <div className={`relative mt-3 ${className}`}>
+      <div
+        className="pointer-events-none absolute top-[52%] z-10 rounded-lg bg-[#1d1d1f]/90 px-3 py-2 text-[12.5px] leading-relaxed text-white shadow-lg"
+        style={benTrai ? { right: `${100 - phanTramX + 2}%` } : { left: `${phanTramX + 2}%` }}
+      >
+        <p className="whitespace-nowrap font-semibold">Giá {nhanKy(kc.quy)}: {gia(kc.giaM2)}</p>
+        {coKhoang(kc) && <p className="whitespace-nowrap">Khoảng giá: {soTruc(kc.thap!, chiaTruc)} – {gia(kc.cao!)}</p>}
+        {giaTin && kyChon === moc.length - 1 && <p className="whitespace-nowrap">Giá theo tin: {gia(giaTin)}</p>}
+      </div>
       <svg
         viewBox={`0 0 ${W} ${H}`}
-        className={`mt-3 h-auto w-full cursor-crosshair touch-pan-y select-none ${className}`}
+        className="h-auto w-full cursor-crosshair touch-pan-y select-none"
         role="img"
         aria-label="Biểu đồ lịch sử giá"
         onPointerDown={chonTheo}
@@ -212,28 +227,35 @@ function KhoiGia({
             <text x={trai - 6} y={y(v) + co * 0.35} textAnchor="end" fontSize={co} fill="#86868b">{soTruc(v, chiaTruc)}</text>
           </g>
         ))}
-        {coBien && <path d={vung} fill={MAU.dai} fillOpacity={0.12} />}
-        {coBien && <path d={duong((m) => m.cao!, dauBien)} fill="none" stroke={MAU.vienDai} strokeWidth={co * 0.1} strokeLinejoin="round" />}
-        {coBien && <path d={duong((m) => m.thap!, dauBien)} fill="none" stroke={MAU.vienDai} strokeWidth={co * 0.1} strokeLinejoin="round" />}
+        {coBien && <path d={vung} fill="#8fa7c4" fillOpacity={0.18} />}
+        {/* DẢI KHOẢNG GIÁ KIỂU BATDONGSAN: nền xám nhạt, hai mép cao nhất / thấp nhất là đường xám liền thấy rõ (23/10/2026) */}
+        {coBien && <path d={duong((m) => m.cao!, dauBien)} fill="none" stroke={MAU.cao} strokeWidth={co * 0.12} strokeLinejoin="round" strokeLinecap="round" />}
+        {coBien && <path d={duong((m) => m.thap!, dauBien)} fill="none" stroke={MAU.thap} strokeWidth={co * 0.12} strokeLinejoin="round" strokeLinecap="round" />}
         <path d={duong((m) => m.giaM2)} fill="none" stroke={MAU.duong} strokeWidth={co * 0.24} strokeLinejoin="round" strokeLinecap="round" />
         {moc.map((m, i) => (
           <circle key={m.quy} cx={x(i)} cy={y(m.giaM2)} r={co * (i === kyChon ? 0.42 : 0.26)} fill={i === kyChon ? "#fff" : MAU.duong} stroke={MAU.duong} strokeWidth={co * 0.18} />
         ))}
         {/* Vạch dọc của kỳ đang chọn — số của kỳ hiện ở ô ngay trên biểu đồ (không đè lên đường giá) */}
         <line x1={x(kyChon)} x2={x(kyChon)} y1={tren} y2={duoi} stroke="#1d1d1f" strokeWidth={1.2} strokeDasharray="4 3" />
-        {/* Giá tin hiện tại — chấm đen ở kỳ mới nhất (như Batdongsan "Giá tin đang xem") */}
-        {giaTin && <circle cx={x(moc.length - 1)} cy={y(giaTin)} r={co * 0.5} fill="#1d1d1f" stroke="#fff" strokeWidth={co * 0.15} />}
+        {/* Giá tin hiện tại — biểu tượng ngôi nhà ở kỳ mới nhất (như Batdongsan) */}
+        {giaTin && (
+          <g transform={`translate(${x(moc.length - 1)} ${y(giaTin)})`}>
+            <circle r={co * 0.95} fill="#1d1d1f" stroke="#fff" strokeWidth={co * 0.15} />
+            <path d={`M${-co * 0.45} ${co * 0.05} L0 ${-co * 0.42} L${co * 0.45} ${co * 0.05} V${co * 0.45} H${-co * 0.45} Z`} fill="#fff" />
+          </g>
+        )}
         {nhanX.map(({ i, m }) => (
           <text key={m.quy} x={x(i)} y={duoi + co * 1.9} textAnchor={i === 0 ? "start" : i === moc.length - 1 ? "end" : "middle"} fontSize={co} fill="#86868b">
             {nhanKy(m.quy)}
           </text>
         ))}
       </svg>
+      </div>
     );
   };
 
   const MuiTen = ({ tang }: { tang: boolean }) => (
-    <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[12px] font-bold leading-none text-white" style={{ backgroundColor: tang ? MAU.cao : MAU.thap }}>
+    <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[12px] font-bold leading-none text-white" style={{ backgroundColor: tang ? MAU.tang : MAU.giam }}>
       {tang ? "↑" : "↓"}
     </span>
   );
@@ -283,22 +305,21 @@ function KhoiGia({
         </div>
       </div>
 
-      {/* SỐ CỦA KỲ ĐANG CHỌN — kéo / chạm qua lại trên biểu đồ để đổi kỳ */}
-      <div className="mt-4 border-l-2 border-[#1565c0] pl-3 text-[13px] leading-relaxed">
-        <p className="font-semibold text-cvr-ink">Giá {nhanKy(kc.quy)}: {gia(kc.giaM2)}</p>
-        {coKhoang(kc) && <p className="text-cvr-muted">Khoảng giá: {soTruc(kc.thap!, chiaTruc)} – {gia(kc.cao!)}</p>}
-        {giaTin && <p className="text-cvr-muted">Giá theo tin hiện tại: {gia(giaTin)}</p>}
-      </div>
       {bieuDo(760, 220, 12, 6, "hidden sm:block")}
       {bieuDo(360, 240, 12, 4, "sm:hidden")}
 
       {/* CHÚ THÍCH */}
       <div className="mt-3 flex flex-wrap justify-center gap-x-4 gap-y-1.5 text-[12.5px] text-cvr-body">
-        <Chu mau={MAU.duong} ten="Giá phổ biến" day />
-        {coBien && <Chu mau={MAU.vienDai} ten="Khoảng giá (tối thiểu – tối đa)" />}
+        <Chu mau={MAU.duong} ten={laThue ? "Giá thuê phổ biến" : "Giá bán phổ biến"} day />
+        {coBien && (
+          <span className="inline-flex items-center gap-2">
+            <span className="inline-block h-3 w-5 rounded-[3px] border border-[#8fa7c4] bg-[#8fa7c4]/20" />
+            Khoảng giá (thấp nhất – cao nhất)
+          </span>
+        )}
         {giaTin && (
           <span className="inline-flex items-center gap-1.5">
-            <span className="inline-block h-2.5 w-2.5 rounded-full bg-cvr-ink" />
+            <svg viewBox="-12 -12 24 24" className="h-4 w-4" aria-hidden><circle r="11" fill="#1d1d1f" /><path d="M-5.4 0.6 L0 -5 L5.4 0.6 V5.4 H-5.4 Z" fill="#fff" /></svg>
             Giá theo tin hiện tại
           </span>
         )}
@@ -330,10 +351,12 @@ function KhoiGia({
   );
 }
 
-function Chu({ mau, ten, day }: { mau: string; ten: string; day?: boolean }) {
+function Chu({ mau, ten, day, gach }: { mau: string; ten: string; day?: boolean; gach?: boolean }) {
   return (
     <span className="inline-flex items-center gap-2">
-      <span className={`inline-block w-5 rounded-full ${day ? "h-[3px]" : "h-[2px]"}`} style={{ backgroundColor: mau }} />
+      {gach
+        ? <span className="inline-block w-5 border-t-2 border-dashed" style={{ borderColor: mau }} />
+        : <span className={`inline-block w-5 rounded-full ${day ? "h-[3px]" : "h-[2px]"}`} style={{ backgroundColor: mau }} />}
       {ten}
     </span>
   );
