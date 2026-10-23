@@ -1,6 +1,6 @@
 import { chuanTen } from "@/lib/locations";
 import { dungODienTichXayDung } from "@/lib/listingSpec";
-import { mauSoLichSu, veQuy, tenTinhChuan, tenPhuongChuan, coLichSuGia, type ChiSoKhuVuc } from "@/lib/chiSoGia";
+import { mauSoCuaLoaiHinh, veQuy, tenTinhChuan, tenPhuongChuan, coLichSuGia, type ChiSoKhuVuc } from "@/lib/chiSoGia";
 
 // ════════════════════════════════════════════════════════════════════════════
 // LỊCH SỬ GIÁ CÒN THIẾU — dựng từ CHÍNH TIN ĐANG ĐĂNG trên web.
@@ -12,7 +12,7 @@ import { mauSoLichSu, veQuy, tenTinhChuan, tenPhuongChuan, coLichSuGia, type Chi
 // ════════════════════════════════════════════════════════════════════════════
 
 // KHUÔN ĐÚNG TỆP NỘP (chủ dự án duyệt 22/10/2026 — LICH-SU-GIA-22102026 mục 6): mỗi dòng một QUÝ của một dãy; tinh · khu_vuc ·
-// du_an · loai_hinh · muc_dich · ky · mau_so điền sẵn (thuê văn phòng, kho/xưởng/đất: giá/m²/tháng có mau_so; thuê loại hình khác: TỔNG tiền/tháng, mau_so trống — 23/10/2026); Cowork điền giá + nguồn.
+// du_an · loai_hinh · muc_dich · ky · mau_so điền sẵn (thuê cũng có mau_so — giá thuê mỗi m², chốt 21/10); Cowork điền giá + nguồn.
 export const COT_MAU = [
   "tinh", "khu_vuc", "du_an", "loai_hinh", "muc_dich", "ky", "mau_so",
   "gia_m2_trieu", "gia_thap_trieu", "gia_cao_trieu", "so_mau", "nguon", "nguon_link",
@@ -73,7 +73,7 @@ export function dongConThieu(tin: TinCan[], kho: DongKho[], items: ChiSoKhuVuc[]
   }
   for (const x of items.map(veQuy)) {
     if (!x.loaiHinh || x.viTri) continue;
-    if (x.mauSo !== mauSoLichSu(x.loaiHinh, x.mucDich ?? "ban")) continue; // đúng mẫu số; thuê tổng tiền thì không có mẫu số (23/10/2026)
+    if (x.mauSo !== mauSoCuaLoaiHinh(x.loaiHinh)) continue; // cả bán lẫn thuê: giá mỗi m² đúng mẫu số (21/10/2026)
     for (const m of x.moc) if (m.giaM2 > 0) danh(k(x.tinh, x.duAn ? "" : x.khuVuc ?? "", x.duAn ?? "", x.loaiHinh, x.mucDich ?? "ban"), m.quy);
   }
 
@@ -90,7 +90,7 @@ export function dongConThieu(tin: TinCan[], kho: DongKho[], items: ChiSoKhuVuc[]
     const daCo = co.get(khoa) ?? new Set();
     for (const t of thang) {
       if (daCo.has(t)) continue;
-      dong.push([d.tinh, d.phuong, d.duAn, d.loai, d.md, t, mauSoLichSu(d.loai, d.md) ?? "", "", "", "", "", "", "", String(soTin.get(khoa) ?? 0)]);
+      dong.push([d.tinh, d.phuong, d.duAn, d.loai, d.md, t, mauSoCuaLoaiHinh(d.loai), "", "", "", "", "", "", String(soTin.get(khoa) ?? 0)]);
     }
   }
   return dong;

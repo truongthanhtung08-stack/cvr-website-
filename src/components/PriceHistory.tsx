@@ -127,13 +127,9 @@ function KhoiGia({
   useDiaDanh(); // địa danh nạp sau khi trang hiện — về tới thì vẽ lại (20/10/2026)
   // Thống nhất giá mỗi m² theo loại hình, cả bán lẫn thuê (chủ dự án 21/10/2026).
   // Giá mỗi m² theo loại hình (21/10/2026): "50,4 triệu/m²" · căn hộ, nhà "… /m² sàn" · thuê thêm "/tháng"
-  // Thuê căn hộ, nhà, phòng trọ, cửa hàng… (dãy không có mẫu số) → TỔNG tiền/tháng, không chia m² (chủ dự án 23/10/2026)
-  const tong = laThue && !chiSo?.mauSo;
-  const gia = (v: number) => tong
-    ? `${v >= 1e6 ? `${(v / 1e6).toFixed(1).replace(".0", "").replace(".", ",")} triệu` : `${Math.round(v / 1000).toLocaleString("vi-VN")} nghìn`}/tháng`
-    : vndM2(v).replace("/m²", san ? "/m² sàn" : "/m²") + (laThue ? "/tháng" : "");
-  // Trục dọc: bán tính triệu, thuê theo m² (vài chục nghìn/m²) tính nghìn, thuê tổng tiền tính triệu
-  const chiaTruc = laThue && !tong ? 1000 : 1e6;
+  const gia = (v: number) => vndM2(v).replace("/m²", san ? "/m² sàn" : "/m²") + (laThue ? "/tháng" : "");
+  // Trục dọc: bán tính triệu, thuê (vài chục nghìn/m²) tính nghìn
+  const chiaTruc = laThue ? 1000 : 1e6;
   const caDay: Moc[] = (chiSo?.moc ?? []).filter((m) => m.giaM2 > 0);
   const theoThang = caDay.length > 0 && laThang(caDay[caDay.length - 1].quy);
   const moiNam = theoThang ? 12 : 4;
@@ -205,7 +201,7 @@ function KhoiGia({
         onPointerDown={chonTheo}
         onPointerMove={(e) => { if (e.pointerType === "mouse" || e.buttons) chonTheo(e); }}
       >
-        <text x={2} y={tren - co * 0.6} textAnchor="start" fontSize={co} fill="#86868b">{tong ? "triệu/tháng" : (laThue ? "nghìn" : "tr") + (san ? "/m² sàn" : "/m²") + (laThue ? "/tháng" : "")}</text>
+        <text x={2} y={tren - co * 0.6} textAnchor="start" fontSize={co} fill="#86868b">{(laThue ? "nghìn" : "tr") + (san ? "/m² sàn" : "/m²") + (laThue ? "/tháng" : "")}</text>
         {vach.map((v) => (
           <g key={v}>
             <line x1={trai} x2={phai} y1={y(v)} y2={y(v)} stroke="#e8e8ed" strokeWidth={1} strokeDasharray="4 4" />
