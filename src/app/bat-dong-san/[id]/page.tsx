@@ -29,7 +29,7 @@ import ProjectNearby from "@/components/ProjectNearby";
 import ProjectNav from "@/components/ProjectNav";
 import { BreadcrumbJsonLd } from "@/components/Breadcrumb";
 import { provinceOf, districtOf, pickRelated } from "@/lib/data";
-import { giuCum, tenDiaDanh } from "@/lib/chuThuong";
+import { giuCum } from "@/lib/chuThuong";
 import { getListing, getListings, getListingsHetHan, getListingDetail, tinDaHetHan } from "@/lib/listingsDb";
 import { banGocCua, lienKetCho, tinDatChuan, tinhCuaTin, phuongCuaTin, duongDanPhanCap, THANH_PHO } from "@/lib/pseo";
 import { rentCategories, saleCategories } from "@/lib/categories";
@@ -513,7 +513,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                     giá ngay bên dưới trong cùng một màn hình. */}
                 {/* TIN HẾT HẠN (chốt 25/09/2026, theo Batdongsan): link cũ vẫn mở,
                     nói thẳng tin đã hết hạn, ẩn số người đăng, gợi ý tin tương tự bên dưới. */}
-                <h1 className="mt-3 whitespace-pre-line break-words text-[21px] font-semibold leading-[1.3] tracking-tight text-cvr-ink sm:text-[28px]">{giuCum(l.title, [...tenDiaDanh(l), tenDuAn])}</h1>
+                <h1 className="mt-3 whitespace-pre-line break-words text-[21px] font-semibold leading-[1.3] tracking-tight text-cvr-ink sm:text-[28px]">{giuCum(l.title)}</h1>
                 {/* DỰ ÁN = VỊ TRÍ, NHÃN GỌN NGAY DƯỚI TIÊU ĐỀ (chủ dự án 22/10/2026: "để chỗ này đã hợp lý chưa — xem lại bố cục,
                     giao diện"): đọc từ lớn tới nhỏ — dự án → đường, phường → địa chỉ cũ; nhãn có viền nhìn là biết bấm được (sang
                     trang dự án), không còn dòng chữ xanh dài lẫn với địa chỉ. Khối Đặc điểm không có dòng "Dự án". */}

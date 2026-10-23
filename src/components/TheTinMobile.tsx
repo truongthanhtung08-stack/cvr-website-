@@ -153,9 +153,10 @@ export default function TheTinMobile({ item, terms = [], tuChay = false, pc = fa
   const { has, toggle } = useSaved();
   const daLuu = has(item.id);
   const coSo = t !== "basic"; // Diamond · Gold · Silver: Zalo + Hiện số trên thẻ
-  // Xuống dòng không cắt cụm địa danh / dự án / số + đơn vị (giuCum, chủ dự án 23/10/2026)
+  // Xuống dòng không cắt số + đơn vị (giuCum, chủ dự án 23/10/2026)
   const tieuDe = tieuDeThe(item, !!tier.uppercase);
-  const so = thongSoTheoCap(item, t);
+  // Điện thoại: bỏ nội thất (chủ dự án 23/10/2026) — Diamond · Gold MỘT dòng: giá · diện tích · giá/m² (nếu có) · PN · WC
+  const so = thongSoTheoCap(item, t).filter((x) => pc || x.icon !== "sofa");
   const soAnh = item.imageCount || anh.length;
   // "3 giờ trước" tính theo giờ hiện tại: trang máy chủ dựng sẵn (đệm tới 1 giờ) ghi giờ lúc dựng → vẽ lại một lần sau khi
   // mở để chữ đúng giờ máy khách (kèm suppressHydrationWarning ở dòng chữ, không để React báo lệch và dựng lại cả trang)
@@ -235,20 +236,8 @@ export default function TheTinMobile({ item, terms = [], tuChay = false, pc = fa
       {i < ds.length - 1 && <span className="ml-0.5 text-cvr-muted">·</span>}
     </span>
   ));
-  // ĐIỆN THOẠI · Diamond, Gold (chủ dự án 23/10/2026): thông số HAI dòng, chữ 15px như mọi cấp — không thu nhỏ chữ.
-  // Dòng 1: giá · diện tích · giá/m² · dòng 2: phòng ngủ · phòng tắm (· nội thất Diamond). Tin không có PN/WC/nội thất
-  // (đất, mặt bằng…) → chỉ dòng 1. Máy tính giữ một dòng như đã chốt.
-  // Không để một mục đứng lẻ một dòng: chỉ tách 2 dòng khi có từ 5 mục (dòng 1 tối đa 3 mục → dòng 2 luôn ≥ 2 mục);
-  // 4 mục trở xuống vừa một dòng 15px → giữ một dòng.
-  const haiDong = !pc && (t === "diamond" || t === "gold") && so.length >= 5;
-  const dong1 = so.filter((x) => !x.icon);
-  const dong2 = so.filter((x) => x.icon);
-  const thongSoDong = haiDong ? (
-    <div className="mt-2 text-[15px] text-cvr-body">
-      <p className="flex flex-wrap items-center gap-x-1.5">{mucSo(dong1)}</p>
-      {dong2.length > 0 && <p className="mt-1 flex flex-wrap items-center gap-x-1.5">{mucSo(dong2)}</p>}
-    </div>
-  ) : (
+  // Thông số MỘT dòng mọi cấp, chữ 15px — không tách dòng, không đổi cỡ chữ (chủ dự án 23/10/2026)
+  const thongSoDong = (
     <p className={`${pc ? "mt-1.5" : "mt-2"} flex items-center text-cvr-body ${dan} ${motDong && !(t === "diamond" || t === "gold") ? "flex-nowrap gap-x-1 overflow-hidden whitespace-nowrap text-[min(15px,3.7vw)]" : "flex-wrap gap-x-1.5 text-[15px]"}`}>
       {mucSo(so)}
     </p>

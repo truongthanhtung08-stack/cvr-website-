@@ -2,7 +2,6 @@
 
 import { useRef } from "react";
 import PropertyCard from "@/components/PropertyCard";
-import TheTinMobile from "@/components/TheTinMobile";
 import type { Listing } from "@/lib/data";
 import { smoothScrollTo } from "@/lib/scroll";
 
@@ -33,10 +32,8 @@ export default function ListingSlider({ items }: { items: Listing[] }) {
             // nằm ngay dưới mô tả, không dư khoảng trắng khi dải có thẻ nhiều cấp (23/10/2026)
             className="w-[80%] shrink-0 snap-start sm:w-[calc((100%-20px)/2)] lg:w-[calc((100%-60px)/4)]"
           >
-            {/* THẺ ĐÃ DUYỆT cho từng bản (chủ dự án 23/10/2026): điện thoại = thẻ điện thoại theo cấp (TheTinMobile),
-                máy tính = thẻ trang chủ máy tính theo cấp (PropertyCard "tier"). */}
-            <div className="overflow-hidden rounded-xl border border-cvr-line sm:hidden"><TheTinMobile item={item} tuChay={false} dcCu={false} /></div>
-            <div className="hidden sm:block"><PropertyCard item={item} variant="tier" /></div>
+            {/* THẺ ĐÃ CHỐT TRÊN PC (PropertyCard "tier") dùng cho CẢ điện thoại (chủ dự án 23/10/2026: "tôi chốt cái thẻ thế nào trên PC") */}
+            <PropertyCard item={item} variant="tier" />
           </div>
         ))}
       </div>
