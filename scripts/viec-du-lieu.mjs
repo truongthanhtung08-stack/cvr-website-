@@ -342,7 +342,8 @@ MUC.forEach(([ten, noi, , dong], i) => v.push(`## Mục ${i + 1}. ${ten}`, `Giao
 const tepViec = path.join(RA, "VIEC.md");
 if (fs.existsSync(tepViec)) {
   const cu = fs.readFileSync(tepViec, "utf8");
-  const a = cu.indexOf("## 0. "), b = cu.indexOf("## 1. COWORK");
+  // Từ 24/10 VIEC.md gọn: mục 0 là phần cuối tệp (không còn "## 1. COWORK" phía sau) → lấy tới hết tệp.
+  const a = cu.indexOf("## 0. "), b0 = cu.indexOf("## 1. COWORK"), b = b0 > a ? b0 : cu.length;
   const muc0 = a >= 0 && b > a ? cu.slice(a, b).trimEnd() : "";
   if (muc0 && muc0.split("\n")[0].includes(`${dd.slice(0, 2)}/${dd.slice(2, 4)}`)) v.splice(v.indexOf(v.find((l) => l.startsWith("## 1. COWORK"))), 0, muc0, "");
 }
@@ -352,20 +353,81 @@ v.splice(4, 0, "**⛔ CHUẨN TRƯỚC, CHẠY SAU — cả 3 bên, mọi việc
 // mục 0 sửa tay nên sáng hôm sau bị lượt 6:30 ghi đè mất). Đổi yêu cầu = sửa đúng mảng này, không sửa tay VIEC.md.
 const YEU_CAU = [
   "## ⛔ YÊU CẦU CHỦ DỰ ÁN — áp cho mọi việc, đè lên mọi dòng khác (chốt 19–20/10/2026)",
-  "1. **Khu vực, ưu tiên theo thứ tự:** Đà Nẵng → Huế → Khánh Hòa (Nha Trang) → Gia Lai (Quy Nhơn) → Lâm Đồng (Phan Thiết) → Quảng Ngãi → Quảng Trị. Tỉnh/thành **theo địa giới mới**: thành phố, phường, xã nào thuộc tỉnh đó đều được lọc.",
+  "1. **Khu vực, ưu tiên theo thứ tự:** Đà Nẵng → Huế → Khánh Hòa (Nha Trang) → Gia Lai (Quy Nhơn) → Lâm Đồng (Phan Thiết) → Quảng Ngãi → Quảng Trị. Tỉnh/thành **theo địa giới mới**: thành phố, phường, xã nào thuộc tỉnh đó đều được lọc. **Chọn nhóm tin theo bảng \"VIỆC SỐ 1 — TIN THEO TỪ KHOÁ\" ở mục 0 trước (nhóm khách đang tìm, Claude đo Search Console mỗi sáng — chủ dự án 24/10/2026); thứ tự tỉnh chỉ dùng khi các nhóm trong bảng đã đủ mục tiêu hoặc hết tin thật.**",
   "2. **Hà Nội, TP. Hồ Chí Minh: CHƯA làm — vẫn nằm trong định hướng SEO/pSEO (thị trường lớn); triển khai khi quy trình ở các khu vực đang làm chạy ổn định** — hiện chưa lọc tin hai thị trường này.",
-  "3. **Mua bán / cho thuê 70/30.**",
+  "3. **Mua bán / cho thuê 70/30** — phần mua bán dồn vào các nhóm ở mục 0; phần cho thuê lấy cùng loại hình, cùng khu vực khách đang tìm (24/10/2026).",
   "4. **Tin mới nhất trước, không đặt số ngày cố định — tùy khu vực** (khu ít tin được lấy tin cũ hơn). **Tin gốc phải còn hạn** — hết hạn, đã gỡ → không lấy (kể cả sửa tin cũ). Mở lại link gốc ngay trước khi giao; ghi ngày đăng tin gốc vào `ghi_chu`.",
   "5. **Ảnh: ít nhất 4–5 ảnh/tin, tối đa 15.** Bỏ ảnh kém (mờ, tối, trùng góc, bừa bộn). **Ảnh có watermark, logo sàn khác, chữ, số điện thoại đè VẪN LẤY — chủ dự án xoá hết.** Dưới 4 ảnh đạt → bỏ tin.",
   "6. **Tin nhà (bán, cho thuê): phải có ít nhất 1 ảnh mặt tiền hoặc toàn cảnh ngôi nhà** — không có ảnh đẹp thì vẫn lấy ảnh kém hơn; tin gốc không có tấm nào → bỏ tin.",
   "7. **⛔ BẮT BUỘC HẰNG NGÀY (chốt 23/10): Tin tức 2 bài chất lượng, có ảnh, hợp SEO · Mạng xã hội 1 bài Zalo + 1 bài Facebook, chất lượng, có ảnh.**",
   `8. **Tên ảnh số 2 chữ số:** \`dn01-${dd.slice(0, 4)}-01.jpg\`, \`-02\`…`,
-  "9. **⛔ LỌC ĐỦ — KHÔNG THỪA, KHÔNG THIẾU, BÁM THỰC TRẠNG (chủ dự án 23/10/2026, thay chốt lọc nhiều hơn 20/10)**: số tin lọc = số tin các nhóm cần − tin đã lọc mà chưa lên web; ngày chưa up thì ngày sau giảm. **Mỗi tin phải chất lượng cả nội dung, ảnh, video** — đạt chuẩn SEO trọn vẹn khi giao, chủ dự án chỉ sửa ảnh. Lý do cần tin: trang khu vực trên Google mỏng vì THIẾU TIN, không phải vì tin ngắn (đo 20/10: condotel Đà Nẵng 3 tin → 118 chữ riêng; nhà Đà Nẵng 49 tin → 1.366 chữ riêng). Ưu tiên nhóm (loại hình × tỉnh/phường) đang ít tin, nhất là nhóm đã có lượt hiển thị trên Google (mục 1 bên dưới). Mỗi tin chỉ cần đủ chuẩn 13 dòng, không cần viết dài.",
+  "9. **⛔ LỌC ĐỦ — KHÔNG THỪA, KHÔNG THIẾU, BÁM THỰC TRẠNG (chủ dự án 23/10/2026, thay chốt lọc nhiều hơn 20/10)**: số tin lọc = số tin các nhóm cần − tin đã lọc mà chưa lên web; ngày chưa up thì ngày sau giảm. **Mỗi tin phải chất lượng cả nội dung, ảnh, video** — đạt chuẩn SEO trọn vẹn khi giao, chủ dự án chỉ sửa ảnh. Lý do cần tin: trang khu vực trên Google mỏng vì THIẾU TIN, không phải vì tin ngắn (đo 20/10: condotel Đà Nẵng 3 tin → 118 chữ riêng; nhà Đà Nẵng 49 tin → 1.366 chữ riêng). **Nhóm làm theo bảng ở mục 0 (khách đang tìm, có số đang có và mục tiêu), dồn 2–3 nhóm một lúc, KHÔNG rải đều** — đo 24/10: 14 ngày 77 tin rải 35 nhóm, chỉ 22% trúng nhóm khách tìm. Mỗi tin chỉ cần đủ chuẩn 13 dòng, không cần viết dài.",
   "10. **TIÊU ĐỀ = Mục đích (Bán / Cho thuê) + loại hình + điểm nổi bật** (+ tên đường / dự án, nơi chốn) — viết cho ĐỦ độ dài chuẩn 30–60 ký tự, giá, diện tích là điểm nổi bật thì ghi vào, chiếu theo tin gốc (chủ dự án 23/10/2026). Phải CỐ viết cho đủ, đúng chuẩn (việc này không khó) — tin cũ tiêu đề ngắn mà đúng nội dung tạm chấp nhận, nhưng khi lọc, viết tin thì viết đủ 30–60 ký tự. **Mô tả mở đầu bằng 2 câu tóm tắt** (loại nhà, diện tích, số phòng, điểm nổi bật), không lặp lại tiêu đề — 2 câu này hiện ngay dưới tiêu đề trên thẻ tin (chủ dự án 20/10/2026).",
   "11. **Người đăng là DOANH NGHIỆP (sàn, công ty) → sheet \"Doanh nghiệp\" trong chính tệp Excel đợt tin** (chốt 23/10/2026, như sheet \"Dự án\"): tra thông tin công khai (đăng ký kinh doanh, mã số thuế, web / fanpage của doanh nghiệp), mỗi doanh nghiệp một dòng; `so_dien_thoai` trùng số `lien_he_sdt` của tin. Nạp tin là hồ sơ tự vào Admin → Khách hàng → Doanh nghiệp. Cột + cách ghi: `YEU-CAU-COWORK-DANG-TIN-HANG-LOAT.md` mục 6.5b. Không tra được tên pháp nhân + mã số → không ghi, báo trong `bao-cao.txt`.",
   "",
 ];
 v.splice(6, 0, ...YEU_CAU);
-fs.writeFileSync(tepViec, v.join("\n"));
+
+// ── QUY TRÌNH GỌN (chủ dự án 24/10/2026: VIEC.md 400 dòng, luật chồng nhau, giao không kiểm → Cowork làm sai hướng) ──
+// VIEC.md chỉ còn: BẢNG CHẤM ĐIỂM hôm qua (máy tự tính) + MỤC 0 việc hôm nay (Claude viết, tối đa 3 việc).
+// Toàn bộ phần dài (luật, bảng tự kiểm, danh sách tin cần sửa, dự án, pháp luật…) chuyển sang VIEC-CHI-TIET.md.
+const muc0Nay = (() => {
+  const i = v.findIndex((l) => typeof l === "string" && l.startsWith("## 0. "));
+  return i >= 0 ? v[i] : "";
+})();
+fs.writeFileSync(path.join(RA, "VIEC-CHI-TIET.md"), v.filter((l) => l !== muc0Nay).join("\n").replace(/^# VIỆC HÔM NAY — 3 BÊN/, "# VIỆC CHI TIẾT — luật chuẩn + danh sách"));
+
+const NHOM_TEP = path.join(RA, "nhom-uu-tien.json");
+const cauHinh = fs.existsSync(NHOM_TEP) ? JSON.parse(fs.readFileSync(NHOM_TEP, "utf8")) : { nhom: [], giao: {} };
+const khop = (x, n) => {
+  const md = x.purpose === "thue" ? "thue" : "ban";
+  if (md !== n.muc_dich) return false;
+  if (!new RegExp(n.loai, "i").test(x.type || "")) return false;
+  if (!new RegExp(n.tinh, "i").test(x.province || "")) return false;
+  if (n.tu_khoa && !new RegExp(n.tu_khoa, "i").test(`${x.title} ${x.details?.projectName ?? ""}`)) return false;
+  return true;
+};
+const ngayVN = (iso) => new Date(new Date(iso).getTime() + 7 * 3600e3).toISOString().slice(0, 10);
+const homQua = new Date(Date.now() + 7 * 3600e3 - 864e5).toISOString().slice(0, 10);
+const ddmm = (d) => `${d.slice(8, 10)}/${d.slice(5, 7)}`;
+const lenHomQua = tin.filter((x) => x.published_at && ngayVN(x.published_at) === homQua);
+const len7 = tin.filter((x) => x.published_at && Date.now() - new Date(x.published_at).getTime() < 7 * 864e5);
+const trungNhom = (ds) => ds.filter((x) => cauHinh.nhom.some((n) => khop(x, n))).length;
+const pt = (a, b) => (b ? `${Math.round((100 * a) / b)}%` : "—");
+// Cowork làm hôm qua = số dòng tin trong các tệp Bang-*.xlsx của thư mục DA-DUYET/<hôm qua> (kể cả dot2, dot3…)
+let coworkLam = "—";
+try {
+  const thuMucQua = `D:/Coastal Land/SEO/DA-DUYET/${homQua.slice(8, 10)}${homQua.slice(5, 7)}${homQua.slice(0, 4)}`;
+  if (fs.existsSync(thuMucQua)) {
+    const jiti = createJiti(import.meta.url, { alias: { "@": path.join(GOC, "src") }, jsx: { runtime: "automatic" } });
+    const { docTinTuBang } = await jiti.import(path.join(GOC, "src/lib/csvTin.ts"));
+    const { docXlsx } = await jiti.import(path.join(GOC, "src/lib/docXlsx.ts"));
+    const tep = [];
+    const quet = (d) => fs.readdirSync(d, { withFileTypes: true }).forEach((e) => {
+      const f = path.join(d, e.name);
+      if (e.isDirectory() && /^dot\d+$/i.test(e.name)) quet(f);
+      else if (/^Bang-.*\.xlsx$/i.test(e.name)) tep.push(f);
+    });
+    quet(thuMucQua);
+    let n = 0;
+    for (const f of tep) n += docTinTuBang(await docXlsx(new Uint8Array(fs.readFileSync(f)).buffer)).rows.length;
+    coworkLam = String(n);
+  } else coworkLam = "0";
+} catch (e) { coworkLam = "— (lỗi đọc tệp: " + String(e.message).slice(0, 60) + ")"; }
+const giaoQua = cauHinh.giao?.[ddmm(homQua)] ?? "—";
+const dangCo = (n) => tin.filter((x) => conHan(x) && khop(x, n)).length;
+
+const gon = [
+  `# VIỆC HÔM NAY · ${TEN_THU}, ${dd.slice(0, 2)}/${dd.slice(2, 4)}/${dd.slice(4)}`, "",
+  "**COWORK:** nhận lệnh \"Làm việc hôm nay\" → làm MỤC 0, từ trên xuống. Chuẩn từng tin: `YEU-CAU-COWORK-DANG-TIN-HANG-LOAT.md` (cố định). Luật chung + danh sách tin cần sửa, dự án, pháp luật: `VIEC-CHI-TIET.md` — chỉ mở khi mục 0 bảo.", "",
+  `## BẢNG CHẤM ĐIỂM HÔM QUA ${ddmm(homQua)} (máy tự tính)`,
+  "| Giao | Cowork làm | Lên web | Trúng nhóm khách tìm |", "|---|---|---|---|",
+  `| ${giaoQua} | ${coworkLam} | ${lenHomQua.length} | ${lenHomQua.length ? `${trungNhom(lenHomQua)} (${pt(trungNhom(lenHomQua), lenHomQua.length)}) — cần ≥ 80%` : "— (không có tin lên)"} |`,
+  `7 ngày qua: lên web ${len7.length} tin, trúng nhóm ${trungNhom(len7)} (${pt(trungNhom(len7), len7.length)}).`, "",
+  "| Nhóm khách đang tìm | Đang có | Mục tiêu |", "|---|---|---|",
+  ...cauHinh.nhom.map((n) => `| ${n.ma}. ${n.ten}${n.muc_dich === "thue" ? "" : ""} | ${dangCo(n)} | ${n.muc_tieu} |`), "",
+  muc0Nay || `## 0. VIỆC HÔM NAY ${dd.slice(0, 2)}/${dd.slice(2, 4)} — Claude chưa giao (chưa đo xong). Cowork chờ, không tự làm.`, "",
+];
+fs.writeFileSync(tepViec, gon.join("\n"));
 console.log(`→ ${RA}/VIEC.md (${TEN_THU}) · du-an-can-nap.csv`);
 console.log(`tin cần bổ sung ${chuaDat.length} · nhóm trùng ${trung.length} · số nhiều tên ${nhieuTen.length} · tin lệch tài khoản ${lech.length} · dự án cần nạp ${dsNap.length} · nhóm sắp mở trang ${sapMo.length}`);
