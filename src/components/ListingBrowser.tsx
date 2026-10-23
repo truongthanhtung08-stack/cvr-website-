@@ -47,7 +47,9 @@ export default function ListingBrowser({
   chiId,
   boQuaId,
   relevance = false,
+  daXem = false,
   nested = false,
+  trangChu = false,
   initialTypes,
   initialProvince,
 }: {
@@ -67,9 +69,13 @@ export default function ListingBrowser({
   // Danh sách "tin tương tự": nguồn đã sắp theo độ liên quan → mặc định giữ đúng
   // thứ tự đó (thay vì Mới nhất) và thêm lựa chọn sắp xếp "Liên quan nhất".
   relevance?: boolean;
+  // Danh sách "Bất động sản đã xem": giữ mọi tin đã xem (bán + thuê + hết hạn), đúng thứ tự xem
+  daXem?: boolean;
   // Đặt bên trong một trang đã có khung max-w-7xl + lề ngang (trang chi tiết tin,
   // chi tiết dự án…) → BỎ khung riêng, nếu không lề bị cộng dồn gấp đôi.
   nested?: boolean;
+  // Mở từ "Xem thêm" ở trang chủ (chủ dự án 23/10/2026): tiêu đề là H2 (trang chủ chỉ một H1), không dòng phụ
+  trangChu?: boolean;
   // Trang DANH MỤC (/mua-ban/can-ho-chung-cu…): mở sẵn đúng loại hình của danh mục.
   // Khách vẫn bỏ chọn / đổi lọc bình thường — đây chỉ là giá trị khởi đầu.
   initialTypes?: string[];
@@ -245,9 +251,9 @@ export default function ListingBrowser({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- chỉ gọi lại khi yêu cầu đổi (hoặc địa danh vừa về)
   }, [nguon, yeuCau, choDiaDanh, daDocDiaChi]);
   const taiCho = useMemo(
-    () => (nguon ? null : locDanhSach(items, itemsHetHan, purpose, locThat, sort, page, moiTrang)),
+    () => (nguon ? null : locDanhSach(items, itemsHetHan, purpose, locThat, sort, page, moiTrang, daXem)),
     // eslint-disable-next-line react-hooks/exhaustive-deps -- locThat suy ra từ filters + cauSua
-    [nguon, items, itemsHetHan, purpose, filters, cauSua, sort, page, coDiaDanh, moiTrang],
+    [nguon, items, itemsHetHan, purpose, filters, cauSua, sort, page, coDiaDanh, moiTrang, daXem],
   );
   const kq = nguon ? mayChu : taiCho;
   const khoaKetQua = `${lanTim}-${JSON.stringify(filters)}`;
@@ -292,7 +298,8 @@ export default function ListingBrowser({
 
   return (
     // PC: thanh lọc nằm SÁT header, không chừa khoảng trống (file V3 10.08.2026).
-    <div className={nested ? "pt-1 sm:pt-6" : "mx-auto max-w-7xl px-4 pt-0 pb-footer sm:px-6 sm:pt-4 lg:px-8"}>
+    // trangChu: dưới là khối "Tìm kiếm phổ biến" của trang chủ, không phải footer — đáy như mọi khối trang chủ (23/10/2026)
+    <div className={nested ? "pt-1 sm:pt-6" : `mx-auto max-w-7xl px-4 pt-0 sm:px-6 sm:pt-4 lg:px-8 ${trangChu ? "pb-3 sm:pb-4" : "pb-footer"}`}>
       {/* ── Phần trên kiểu Homedy (gọn): thanh lọc → tiêu đề + bộ đếm.
            Trang cấp 1 KHÔNG dùng breadcrumb (menu đã chỉ vị trí — chuẩn Apple). ── */}
       {/* Máy tính: thanh tìm gọn trong CỘT TIN bên trái (= lg:col-span-3 của lưới 4 cột, khe 24px), như Batdongsan — chủ dự án 18/10/2026 */}
@@ -334,18 +341,19 @@ export default function ListingBrowser({
       )}
       <div id="ket-qua" className="mt-4 flex scroll-mt-20 flex-wrap items-end justify-between gap-x-4 gap-y-2 sm:scroll-mt-24">
         <div className="min-w-0">
-          <h1 className="text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">{heading}</h1>
+          {trangChu || nested
+            ? <h2 className="text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">{heading}</h2>
+            // Một cỡ chuẩn cho tiêu đề danh sách (23/10/2026): điện thoại 20px vừa một dòng ("Mua bán nhà đất tháng 10/2026"), máy tính 24px — như tiêu đề khối trang chủ
+            : <h1 className="text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">{heading}</h1>}
           {/* KHÔNG in số lượng tin ra đây — web đang ít tin, nói ra là tự phơi
               điểm yếu với khách (chủ dự án chốt 11/9/2026). Câu này chỉ còn nói
               phạm vi hoạt động. Ẩn trên mobile cho gọn như trước. */}
           {/* khách tìm "giá rẻ" → khoảng giá của riêng phân khúc rẻ (kq.khoangRe), không phải cả trang */}
-          {kq?.khoangRe || soLieu ? (
+          {trangChu ? null : kq?.khoangRe || soLieu ? (
             <p className="mt-1 text-sm text-cvr-muted">{kq?.khoangRe || soLieu}</p>
-          ) : (
-            <p className="mt-1 hidden text-sm text-cvr-muted sm:block">
-              {active ? "Bất động sản phù hợp." : "Tin mua bán, cho thuê nhà đất mới nhất."}
-            </p>
-          )}
+          ) : active ? (
+            <p className="mt-1 hidden text-sm text-cvr-muted sm:block">Bất động sản phù hợp.</p>
+          ) : null /* bỏ dòng "Tin mua bán, cho thuê nhà đất mới nhất." (23/10/2026: sai — trang Mua bán chỉ có tin bán, không xếp theo mới nhất) */}
         </div>
         <div className="flex flex-1 flex-wrap items-center justify-end gap-3">
               {/* XEM BẢN ĐỒ — chỉ ĐIỆN THOẠI. Máy tính: nút nằm sát ô tìm trong thanh lọc như Batdongsan
@@ -503,7 +511,7 @@ export default function ListingBrowser({
             </SidebarFilter>
 
             {/* Bất động sản theo khu vực — ĐIỆN THOẠI ẨN (chủ dự án 21/10/2026: trùng khối liên kết khu vực ngay bên dưới) */}
-            <SidebarFilter title={`${boDuoiThang(heading)} theo khu vực`} className="hidden lg:block">
+            <SidebarFilter title={`${trangChu ? (purpose === "thue" ? "Bất động sản cho thuê" : "Bất động sản mua bán") : boDuoiThang(heading)} theo khu vực`} className="hidden lg:block">
               {provinces.map(([prov, count]) => {
                 const on = filters.locations.some((l) => l.province === prov && !l.district && !l.ward);
                 return (

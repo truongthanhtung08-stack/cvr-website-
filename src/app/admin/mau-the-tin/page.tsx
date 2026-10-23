@@ -2,6 +2,7 @@ import type { Listing } from "@/lib/data";
 import { getListings, getListingDetail } from "@/lib/listingsDb";
 import { getTier, type TierId } from "@/lib/packages";
 import TheTinMobile from "@/components/TheTinMobile";
+import PropertyCard from "@/components/PropertyCard";
 
 // ============================================================================
 // MẪU DEMO THẺ TIN THEO CẤP — BẢN MOBILE (chủ dự án 09/10/2026: "lên mẫu demo trước",
@@ -45,8 +46,22 @@ export default async function MauTheTinPage() {
     silver: "1 ảnh 4:3 · 343×257",
     basic: "1 ảnh 16:9 (Google Discover) · 343×193",
   };
+  const KHUNG: Record<TierId, string> = { diamond: "khung 1,272:1", gold: "khung 1,436:1", silver: "khung 1,618:1 (tỷ lệ vàng)", basic: "khung 1,809:1" };
   return (
     <div className="space-y-12">
+      <section>
+        {/* MẪU THẺ TRANG CHỦ MÁY TÍNH (chủ dự án 23/10/2026: "chốt trước mẫu 1 tin theo cấp trên trang chủ PC — làm 4 mẫu").
+            Thẻ THẬT (PropertyCard variant "tier"), đúng bề ngang ô trang chủ 4 cột (289px), khung ảnh theo cấp. */}
+        <h1 className="text-2xl font-semibold tracking-tight text-cvr-ink">Mẫu thẻ tin theo cấp · Trang chủ máy tính</h1>
+        <div className="mt-4 flex flex-wrap items-start gap-6">
+          {CAP.map((t, i) => (
+            <div key={t} className="w-[289px] shrink-0">
+              <p className="mb-2 text-sm font-semibold" style={{ color: getTier(t).accent }}>{getTier(t).name} · {KHUNG[t]}</p>
+              <PropertyCard item={{ ...ngang[i].l, badge: BADGE[t] }} variant="tier" />
+            </div>
+          ))}
+        </div>
+      </section>
       <h1 className="text-2xl font-semibold tracking-tight text-cvr-ink">Mẫu thẻ tin theo cấp · Mobile</h1>
       <section>
         <h2 className="mb-4 text-lg font-semibold text-cvr-ink">Thẻ đang dùng ở trang chủ và danh sách</h2>

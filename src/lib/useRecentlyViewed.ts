@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 // Lưu danh sách ID tin VỪA XEM vào localStorage (giống "Tin đã xem" của Homedy).
 const KEY = "cvr_viewed";
 const EVENT = "cvr-viewed-change";
-const CAP = 12;
+const CAP = 100; // "Bất động sản đã xem" có Xem thêm → danh sách theo trang (23/10/2026)
 
 function read(): string[] {
   if (typeof window === "undefined") return [];

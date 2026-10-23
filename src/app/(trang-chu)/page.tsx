@@ -5,6 +5,7 @@ import TimTrangChu from "@/components/TimTrangChu";
 import { goiYTrangChu, tinDem } from "@/lib/goiYTrangChu";
 import Hero from "@/components/Hero";
 import FeaturedListings from "@/components/FeaturedListings";
+import RecentlyViewed from "@/components/RecentlyViewed";
 import ProjectsSection from "@/components/ProjectsSection";
 // import ForYou from "@/components/ForYou"; // TẠM ẨN — chờ chốt vị trí đặt lại (component vẫn còn)
 import LocationGrid from "@/components/LocationGrid";
@@ -73,6 +74,8 @@ export default async function Home() {
               Không bọc Reveal: Reveal ẩn/hiện theo cuộn sẽ đá nhau với cơ chế mở rộng. */}
           {/* Chỉ chở đúng số tin khối này hiện (20 tin mỗi tab) — 16/10/2026, trang chủ 632KB */}
           <FeaturedListings items={chonTinTrangChu(listings)} />
+          {/* Bất động sản đã xem — ngay dưới khối nổi bật, chỉ hiện với khách đã từng xem tin (chủ dự án 23/10/2026) */}
+          <RecentlyViewed trangChu />
           <ProjectsSection projects={duAnThe} articles={baiThe} />
           {/* "Dành riêng cho bạn" TẠM ẨN theo yêu cầu — mở lại: bỏ comment import ForYou + khối này.
           <ForYou /> */}
@@ -87,7 +90,8 @@ export default async function Home() {
 
         </HomeExpandProvider>
         {/* Kế hoạch Airbnb GĐ A — docs/KE-HOACH-AIRBNB.md */}
-        <TimKiemPhoBien />
+        {/* Cách khối trên ĐÚNG như mọi khối trang chủ: máy tính 32px · điện thoại 24px (23/10/2026) */}
+        <div className="mt-1 sm:-mt-2"><TimKiemPhoBien /></div>
       </main>
       <Footer />
     </>

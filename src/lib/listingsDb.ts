@@ -16,7 +16,7 @@ import { mauSoCuaLoaiHinh } from "@/lib/chiSoGia";
 import { featuredListings, getListingById } from "@/lib/data";
 import { asset } from "@/lib/asset";
 import { isVideoUrl } from "@/lib/media";
-import { fieldsSplit, amenityGroups, coDonGiaM2, coDienTichXayDung, viTriTuDuongVao, viTriTuAccess, laTinThue, laTinBan, dienTichSanThat, type Field } from "@/lib/listingSpec";
+import { fieldsSplit, amenityGroups, coDienTichXayDung, viTriTuDuongVao, viTriTuAccess, laTinThue, laTinBan, dienTichSanThat, type Field } from "@/lib/listingSpec";
 import { chuanHoaSdt, maNguoiTuSdt, tachNhieuSdt } from "@/lib/phone";
 import { tachTenDuong } from "@/lib/tenDuong";
 import { chuoiDiaChiBanDo } from "@/lib/diaChiBanDo";
@@ -195,13 +195,9 @@ function rowToListing(r: Row): Listing {
     // tự chia. Chỉ hiện khi KHÁCH tự ghi đơn giá thuê (cờ donGiaThueNhap — nạp hàng loạt có cột don_gia_thue).
     // 23/10/2026 chủ dự án: đơn giá/m² MẶC ĐỊNH mọi cấp — khách ghi thì lấy của khách; không ghi thì web chia khi số CHẮC CHẮN:
     // thuê căn hộ (÷ m² căn) · văn phòng, mặt bằng, kho xưởng (÷ m² thuê). Thuê nhà nguyên căn: m² không chắc → không ghi.
-    if (!laTinBan(r.purpose)) {
-      if (r.details?.donGiaThueNhap && r.details?.donGiaThue) return `${fmtNum(r.details.donGiaThue * 1000, 0)} đ/m²/tháng`;
-      const dt = r.area_m2;
-      if (dt && (coDonGiaM2(r.type, r.purpose) || mauSoCuaLoaiHinh(r.type) === "can"))
-        return `${fmtNum(Math.round(r.price_vnd / dt / 1000) * 1000, 0)} đ/m²/tháng`;
-      return undefined;
-    }
+    // ⛔ CHO THUÊ (chủ dự án 23/10/2026): web KHÔNG tự chia đơn giá /m²/tháng. CHỈ hiện khi KHÁCH tự ghi đơn giá thuê
+    // (cờ donGiaThueNhap) — và hiện cùng hàng giá · diện tích. (Lịch sử giá thuê vẫn tính mỗi m² riêng trong chiSoGia.)
+    if (!laTinBan(r.purpose)) return r.details?.donGiaThueNhap && r.details?.donGiaThue ? `${fmtNum(r.details.donGiaThue * 1000, 0)} đ/m²/tháng` : undefined;
     const mau = mauSoCuaLoaiHinh(r.type);
     // ⛔ NHÀ GẮN LIỀN ĐẤT: KHÔNG HIỆN ĐƠN GIÁ MỖI M² TRÊN TIN — chủ dự án chốt
     // 19/09. Người bán nhà báo TỔNG GIÁ của cả căn (đất + nhà), không ai niêm yết
@@ -425,7 +421,11 @@ const isSeedId = (id: string) => /^\d+$/.test(id);
 export async function getListings(): Promise<Listing[]> {
   const rows = await rest(`select=${COLS}&status=eq.approved&order=bumped_at.desc.nullslast,published_at.desc.nullslast,created_at.desc&limit=500`);
   if (!rows) return featuredListings; // lỗi kết nối/chưa cấu hình → fallback mẫu
-  return rows.filter((r) => !isSeedRow(r) && conHan(r) && daToiNgay(r)).map(rowToListing);
+  // THỨ TỰ TRONG CÙNG HẠNG (chủ dự án 23/10/2026): xét MỐC GẦN NHẤT giữa ngày đăng và lần đẩy — cùng ngày đăng thì tin
+  // được đẩy lên trước; tin đẩy từ lâu không đứng mãi trên tin mới đăng. Hạng do sortListings / chonTinTrangChu xếp sau
+  // (sắp ổn định nên giữ thứ tự này trong từng hạng). Ngày đăng hiển thị vẫn giữ nguyên ("Làm mới …" là chữ riêng).
+  const moc = (r: Row) => Math.max(Date.parse(r.bumped_at ?? "") || 0, Date.parse(r.published_at ?? r.created_at) || 0);
+  return rows.filter((r) => !isSeedRow(r) && conHan(r) && daToiNgay(r)).sort((a, b) => moc(b) - moc(a)).map(rowToListing);
 }
 
 // TIN ĐÃ HẾT HẠN — chủ dự án chốt 03/10/2026: tin hết hạn VẪN HIỆN trên web, xếp SAU

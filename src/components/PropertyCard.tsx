@@ -1,12 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import BieuTuongThe from "@/components/BieuTuongThe";
-import { giuCum, tenDiaDanh } from "@/lib/chuThuong";
+import { tieuDeThe } from "@/lib/chuThuong";
 import AnhChay from "@/components/AnhChay";
 import SaveButton from "@/components/SaveButton";
 import CompareButton from "@/components/CompareButton";
 import Highlight from "@/components/Highlight";
-import { NutLienHeThe } from "@/components/LienHeReveal";
+import ShareButtons from "@/components/ShareButtons";
 import { freshText, type Listing } from "@/lib/data";
 import { diaChiHaiDong, moTaThe, soDongMoTa } from "@/lib/trichMoTa";
 import { thongSoTheoCap } from "@/lib/thongSoThe";
@@ -44,6 +44,8 @@ function AgentAvatar({ name, src, size = 6 }: { name: string; src?: string; size
   );
 }
 
+const KHUNG_CAP: Record<string, string> = { diamond: "aspect-[1.272/1]", gold: "aspect-[1.436/1]", silver: "aspect-[1.618/1]", basic: "aspect-[1.809/1]" };
+
 // ── Card lưới — bố cục giống Homedy (.product-item) ──────────────────────────
 // variant theo KÍCH THƯỚC tin trong bảng "Loại tin và đặc điểm":
 //   "featured" = Rất lớn (Diamond) · "grid" = Lớn/Trung bình (Gold/Silver) · "mini" = Nhỏ nhất (Basic)
@@ -55,8 +57,11 @@ export default function PropertyCard({
   variant = "grid",
   showTime = false,
   terms = [],
+  khung,
 }: {
   item: Listing;
+  // Khung ảnh dùng chung cho CẢ HÀNG (theo cấp cao nhất trong hàng) — hàng trộn nhiều cấp vẫn thẳng hàng (23/10/2026)
+  khung?: string;
   layout?: "grid" | "list";
   variant?: "featured" | "grid" | "mini" | "tier";
   // Hiện "Hôm nay" (thời gian đăng) — chỉ ở trang list (Mua bán/Cho thuê), KHÔNG ở trang chủ.
@@ -85,10 +90,6 @@ export default function PropertyCard({
 
   // Khung thẻ Apple thuần: viền tóc cvr-line + bóng mềm — KHÔNG viền màu theo cấp.
   const khungThe = `flex flex-col overflow-hidden rounded-none border-0 bg-white shadow-lux shadow-lux-hover transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1 sm:border sm:border-cvr-line ${item.hetHan ? "opacity-70" : ""}`;
-  // Nút Zalo + Hiện số trên thẻ — Diamond · Gold · Silver, Basic không (quy định admin "Nút Hiện số / Nút Zalo
-  // trên thẻ tin"); trang chủ máy tính cùng luật bản điện thoại (chủ dự án 20/10/2026: "2 bản phải đồng nhất").
-  // Nút nằm NGOÀI thẻ link (không lồng nút trong link).
-  const coSo = isTier && tierId !== "basic" && !item.hetHan;
   const the = (
     <Link
       href={`/bat-dong-san/${item.id}`}
@@ -97,14 +98,16 @@ export default function PropertyCard({
       // Khung thẻ Apple thuần: viền tóc cvr-line + bóng mềm — KHÔNG viền màu theo cấp.
       // Cấp tin thể hiện qua huy hiệu + màu TIÊU ĐỀ (đúng bảng đặc điểm), không tô khung.
       // Tin HẾT HẠN (chỉ có ở cuối danh sách): thẻ mờ + nhãn "Tin hết hạn" — chốt 03/10/2026.
-      className={coSo ? "flex flex-1 flex-col" : khungThe}
+      className={khungThe}
     >
       {/* Dải nhấn KIM LOẠI trên đỉnh thẻ — CHỈ Kim Cương (tier.bar) → cảm giác "đen ánh
           vàng kim" cao cấp; cao 3px nên gần như không thay đổi chiều cao thẻ. */}
       {tier?.bar && <div className="h-px w-full" style={{ backgroundColor: tier.bar }} aria-hidden />}
       {/* Ảnh — Diamond khung rộng hơn (rất lớn), còn lại 4/3 */}
       {/* Thẻ trang chủ (tier) trên MOBILE: ảnh 16/10 thấp hơn để màn hình đầu thấy trọn thẻ */}
-      <div className={`relative overflow-hidden bg-cvr-surface aspect-[3/2] sm:aspect-[16/10]`}>
+      {/* KHUNG ẢNH THEO CẤP — TỶ LỆ VÀNG (trang chủ + tin liên quan máy tính, chủ dự án 23/10/2026): 1 ảnh bìa, gốc 1,618 (Silver),
+          mỗi bậc cách đều — Diamond 1,272 · Gold 1,436 · Silver 1,618 · Basic 1,809. Thẻ khác giữ 16:10. */}
+      <div className={`relative overflow-hidden bg-cvr-surface ${isTier ? KHUNG_CAP[khung ?? tierId] ?? "aspect-[1.809/1]" : "aspect-[3/2] sm:aspect-[16/10]"}`}>
         <AnhChay
           // ĐỨNG YÊN — thẻ chỉ khoe ảnh đại diện (chốt 17/09/2026).
           chay={false}
@@ -126,8 +129,10 @@ export default function PropertyCard({
         {/* DESKTOP (đã duyệt): GIỮ NGUYÊN Yêu thích + So sánh trên ảnh.
             MOBILE: chỉ So sánh trên ảnh; Yêu thích (tim) chuyển xuống ĐÁY thẻ. */}
         <div className="absolute right-2 top-2 flex flex-col gap-1.5">
-          <SaveButton id={item.id} className={`hidden sm:flex ${isMini ? "h-7 w-7" : ""}`} />
-          <CompareButton id={item.id} className={isMini ? "h-7 w-7" : undefined} />
+          {/* Thẻ tier: Thích nằm ở hàng người đăng (cùng Chia sẻ) — không lặp trên ảnh (23/10/2026) */}
+          {!isTier && <SaveButton id={item.id} className={`hidden sm:flex ${isMini ? "h-7 w-7" : ""}`} />}
+          {/* So sánh: chỉ máy tính ở thẻ tier (điện thoại không dùng so sánh trong dải trượt — 23/10/2026) */}
+          <CompareButton id={item.id} className={isMini ? "h-7 w-7" : isTier ? "hidden sm:flex" : undefined} />
           {!showAgent && <SaveButton id={item.id} className={`sm:hidden ${isMini ? "h-7 w-7" : ""}`} />}
         </div>
         {/* Nhãn số ẢNH + VIDEO (kiểu Batdongsan/Homedy) — góc dưới trái ảnh */}
@@ -160,7 +165,7 @@ export default function PropertyCard({
           }`}
           style={tier?.titleColor ? { color: tier.titleColor } : undefined}
         >
-          <Highlight text={giuCum(item.title, [...tenDiaDanh(item), item.projectName ?? ""])} terms={terms} />
+          <Highlight text={tieuDeThe(item, !!tier?.uppercase)} terms={terms} />
         </h3>
 
         {/* Mô tả — số dòng theo cấp (Kim Cương 3 · Vàng 2 · Bạc 1 · Thường 0), hiện ở
@@ -172,19 +177,32 @@ export default function PropertyCard({
             admin, src/lib/thongSoThe.ts) → địa chỉ một dòng → mô tả → người đăng (tên, ngày đăng dòng dưới). */}
         {isTier ? (
           <>
-            <p className="mt-2 flex flex-wrap items-baseline gap-x-1.5 text-[13px] text-cvr-body">
-              {thongSoTheoCap(item, tierId).map((x, i, ds) => (
-                <span key={i} className={`flex items-baseline gap-1 ${x.do ? `text-[16px] font-bold ${item.price === "Thỏa thuận" || item.hetHan ? "text-cvr-muted" : "text-red-500"}` : ""}`}>
+            {/* Dòng 2 trang chủ máy tính (chủ dự án 23/10/2026): giá · diện tích; Diamond · Gold thêm phòng ngủ · phòng tắm; Diamond thêm nội thất. Một dòng. */}
+            {/* Hai nhóm: giá · DT (· giá/m²) | PN · WC (· nội thất). Máy tính một dòng; ô hẹp (dải trượt điện thoại) nhóm 2 tự xuống
+                dòng NGUYÊN NHÓM — không cắt chữ, không để một mục đứng lẻ (23/10/2026). */}
+            {(() => {
+              const ds = thongSoTheoCap(item, tierId).filter((x) => (!x.giaM2 || item.purpose !== "ban") && (x.icon !== "sofa" || tierId === "diamond") && (!x.icon || tierId === "diamond" || tierId === "gold"));
+              const muc = (x: (typeof ds)[number], cuoi: boolean, k: number) => (
+                <span key={k} className={`flex items-baseline gap-1 ${x.do ? `text-[16px] font-bold ${item.price === "Thỏa thuận" || item.hetHan ? "text-cvr-muted" : "text-red-500"}` : ""}`}>
                   {x.icon === "sofa" && <BieuTuongThe loai="sofa" className="h-[15px] w-[15px] self-center" />}{x.chu}{(x.icon === "pn" || x.icon === "wc") && <BieuTuongThe loai={x.icon} className="h-[15px] w-[15px] self-center" />}
-                  {i < ds.length - 1 && <span className="ml-0.5 text-[13px] font-normal text-cvr-muted">·</span>}
+                  {!cuoi && <span className="ml-0.5 text-[13px] font-normal text-cvr-muted">·</span>}
                 </span>
-              ))}
-            </p>
+              );
+              const n1 = ds.filter((x) => !x.icon), n2 = ds.filter((x) => x.icon);
+              return (
+                <p className="mt-2 flex flex-wrap items-baseline gap-x-1 gap-y-1 text-[13px] text-cvr-body sm:flex-nowrap sm:overflow-hidden sm:whitespace-nowrap">
+                  <span className="flex items-baseline gap-x-1 whitespace-nowrap">{n1.map((x, k) => muc(x, k === n1.length - 1 && !n2.length, k))}</span>
+                  {n2.length > 0 && <span className="flex items-baseline gap-x-1 whitespace-nowrap">{n2.map((x, k) => muc(x, k === n2.length - 1, k))}</span>}
+                </p>
+              );
+            })()}
             <p className="mt-1.5 flex items-center gap-1 text-[13px] text-cvr-muted">
               <PinIcon /><span className="line-clamp-1"><Highlight text={item.location} terms={terms} /></span>
             </p>
             {descLines > 0 && (
-              <p className={`mt-1.5 text-sm leading-relaxed text-cvr-muted ${descLines >= 3 ? "line-clamp-3" : "line-clamp-2"}`}>
+              // Mô tả trang chủ máy tính (chủ dự án 23/10/2026 — ưu tiên hiển thị, giữ SEO): mọi cấp 2 dòng,
+              // chữ 13px. Chỉ cắt khi hiển thị — mã trang vẫn đủ 2 câu đầu cho Google đọc.
+              <p className={`mt-1.5 text-[13px] leading-relaxed text-cvr-muted line-clamp-2`}>
                 {moTa}
               </p>
             )}
@@ -196,7 +214,9 @@ export default function PropertyCard({
                   <span className="block truncate text-[12px] text-cvr-faint">{item.hetHan ? "Hết hạn" : ((m) => (m.startsWith("Làm mới") ? m : `Đăng ${m.charAt(0).toLowerCase()}${m.slice(1)}`))(freshText(item.postedAt, item.bumpedAt))}</span>
                 )}
               </span>
-              <SaveButton id={item.id} variant="bare" className="h-8 w-8 shrink-0 sm:hidden" />
+              {/* HÀNG NGƯỜI ĐĂNG — MỘT MẪU CHO MỌI CẤP (chủ dự án 23/10/2026): ảnh + tên · ngày đăng · Thích · Chia sẻ */}
+              <SaveButton id={item.id} variant="bare" className="h-8 w-8 shrink-0" />
+              <ShareButtons title={item.title} duongDan={`/bat-dong-san/${item.id}`} moLen nutCls="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-cvr-ink transition hover:bg-cvr-surface" />
             </div></div>
           </>
         ) : (<>
@@ -243,23 +263,9 @@ export default function PropertyCard({
       </div>
     </Link>
   );
-  if (!coSo) return the;
-  return (
-    <div className={khungThe}>
-      {the}
-      <div className="flex items-center gap-2 px-3 pb-3">
-        <NutLienHeThe
-          listingId={item.id}
-          hienSo
-          zaloTruoc
-          nhan={item.soDau ? `${item.soDau} ***` : "Hiện số"}
-          soCls="flex min-h-9 min-w-0 flex-[3] items-center justify-center gap-1.5 whitespace-nowrap rounded-lg bg-cvr-blue px-2 py-1.5 text-[13px] font-semibold text-white transition active:scale-95"
-          oCls="flex min-h-9 min-w-0 flex-[2] self-stretch items-center justify-center gap-1.5 rounded-lg border border-cvr-line px-2 transition active:scale-95"
-              chuZalo="Zalo"
-        />
-      </div>
-    </div>
-  );
+  // THẺ TRANG CHỦ MÁY TÍNH (chủ dự án 23/10/2026): dòng cuối MỌI CẤP là hàng người đăng (ảnh + tên · ngày đăng · Thích · Chia sẻ) —
+  // bỏ hàng nút Zalo · Hiện số dưới thẻ VIP. Liên hệ ở trang tin.
+  return the;
 }
 
 // Nhãn "Tin hết hạn" — góc trên trái ảnh, đúng chỗ huy hiệu hạng (tin hết hạn không còn hạng).
@@ -320,7 +326,7 @@ function PropertyRow({ item, showTime = false, terms = [] }: { item: Listing; sh
           className={`clamp-2 min-h-[3em] text-sm ${tierId === "basic" ? "font-medium" : "font-bold"} leading-[1.5] text-cvr-ink sm:text-base ${tier?.uppercase ? "uppercase" : ""}`}
           style={tier?.titleColor ? { color: tier.titleColor } : undefined}
         >
-          <Highlight text={giuCum(item.title, [...tenDiaDanh(item), item.projectName ?? ""])} terms={terms} />
+          <Highlight text={tieuDeThe(item, !!tier?.uppercase)} terms={terms} />
         </h3>
         {rowDesc > 0 && (
           <p className={`mt-1 text-sm leading-relaxed text-cvr-muted ${rowDesc >= 3 ? "line-clamp-3" : rowDesc === 2 ? "line-clamp-2" : "line-clamp-1"}`}>{moTaHang}</p>

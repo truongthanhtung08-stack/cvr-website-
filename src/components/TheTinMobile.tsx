@@ -15,7 +15,7 @@ import { NutLienHeThe } from "@/components/LienHeReveal";
 import { freshText, type Listing } from "@/lib/data";
 import { getTier, tierFromBadge, type TierId } from "@/lib/packages";
 import { useSaved } from "@/lib/useSaved";
-import { chuThuong, tenDiaDanh, giuCum } from "@/lib/chuThuong";
+import { tieuDeThe } from "@/lib/chuThuong";
 import { videoPosterUrl } from "@/lib/media";
 import { moTaThe, soDongMoTa } from "@/lib/trichMoTa";
 import { thongSoTheoCap } from "@/lib/thongSoThe";
@@ -153,9 +153,8 @@ export default function TheTinMobile({ item, terms = [], tuChay = false, pc = fa
   const { has, toggle } = useSaved();
   const daLuu = has(item.id);
   const coSo = t !== "basic"; // Diamond · Gold · Silver: Zalo + Hiện số trên thẻ
-  const ten = tenDiaDanh(item);
   // Xuống dòng không cắt cụm địa danh / dự án / số + đơn vị (giuCum, chủ dự án 23/10/2026)
-  const tieuDe = giuCum(tier.uppercase ? item.title : chuThuong(item.title, ten), [...ten, item.projectName ?? ""]);
+  const tieuDe = tieuDeThe(item, !!tier.uppercase);
   const so = thongSoTheoCap(item, t);
   const soAnh = item.imageCount || anh.length;
   // "3 giờ trước" tính theo giờ hiện tại: trang máy chủ dựng sẵn (đệm tới 1 giờ) ghi giờ lúc dựng → vẽ lại một lần sau khi
@@ -226,18 +225,32 @@ export default function TheTinMobile({ item, terms = [], tuChay = false, pc = fa
   // CÂN ĐỐI TỰ GIÃN (chủ dự án 23/10/2026): điện thoại, dòng ĐỦ trường (≥ 5 mục) thì dàn đều hết bề ngang thẻ; thiếu trường
   // thì giữ khoảng cách tự nhiên từ trái — không giãn thưa vài mục ra hai mép.
   const dan = !pc && so.length >= 5 ? "justify-between" : "";
-  const thongSoDong = (
-    <p className={`${pc ? "mt-1.5" : "mt-2"} flex items-center text-cvr-body ${dan} ${motDong ? "flex-nowrap gap-x-1 overflow-hidden whitespace-nowrap text-[min(15px,3.7vw)]" : "flex-wrap gap-x-1.5 text-[15px]"}`}>
-      {so.map((x, i) => (
-        <span key={i} className={`flex shrink-0 items-center gap-1 ${x.do ? "font-bold text-red-500" : ""}`}>
-          {x.icon === "sofa" && <BieuTuongThe loai="sofa" />}
-          {x.chu}
-          {(x.icon === "pn" || x.icon === "wc") && <BieuTuongThe loai={x.icon} />}
-          {/* Dấu · đứng SAU mục (không đứng trước mục sau): chữ to trong Zalo/Facebook làm dòng xuống hàng
-              thì dấu nằm cuối dòng trên, không lơ lửng đầu dòng dưới (20/10/2026) */}
-          {i < so.length - 1 && <span className="ml-0.5 text-cvr-muted">·</span>}
-        </span>
-      ))}
+  // Một nhóm mục thông số: dấu · đứng SAU mục (không đứng trước mục sau) — chữ to trong Zalo/Facebook làm dòng xuống hàng
+  // thì dấu nằm cuối dòng trên, không lơ lửng đầu dòng dưới (20/10/2026)
+  const mucSo = (ds: typeof so) => ds.map((x, i) => (
+    <span key={i} className={`flex shrink-0 items-center gap-1 ${x.do ? "font-bold text-red-500" : ""}`}>
+      {x.icon === "sofa" && <BieuTuongThe loai="sofa" />}
+      {x.chu}
+      {(x.icon === "pn" || x.icon === "wc") && <BieuTuongThe loai={x.icon} />}
+      {i < ds.length - 1 && <span className="ml-0.5 text-cvr-muted">·</span>}
+    </span>
+  ));
+  // ĐIỆN THOẠI · Diamond, Gold (chủ dự án 23/10/2026): thông số HAI dòng, chữ 15px như mọi cấp — không thu nhỏ chữ.
+  // Dòng 1: giá · diện tích · giá/m² · dòng 2: phòng ngủ · phòng tắm (· nội thất Diamond). Tin không có PN/WC/nội thất
+  // (đất, mặt bằng…) → chỉ dòng 1. Máy tính giữ một dòng như đã chốt.
+  // Không để một mục đứng lẻ một dòng: chỉ tách 2 dòng khi có từ 5 mục (dòng 1 tối đa 3 mục → dòng 2 luôn ≥ 2 mục);
+  // 4 mục trở xuống vừa một dòng 15px → giữ một dòng.
+  const haiDong = !pc && (t === "diamond" || t === "gold") && so.length >= 5;
+  const dong1 = so.filter((x) => !x.icon);
+  const dong2 = so.filter((x) => x.icon);
+  const thongSoDong = haiDong ? (
+    <div className="mt-2 text-[15px] text-cvr-body">
+      <p className="flex flex-wrap items-center gap-x-1.5">{mucSo(dong1)}</p>
+      {dong2.length > 0 && <p className="mt-1 flex flex-wrap items-center gap-x-1.5">{mucSo(dong2)}</p>}
+    </div>
+  ) : (
+    <p className={`${pc ? "mt-1.5" : "mt-2"} flex items-center text-cvr-body ${dan} ${motDong && !(t === "diamond" || t === "gold") ? "flex-nowrap gap-x-1 overflow-hidden whitespace-nowrap text-[min(15px,3.7vw)]" : "flex-wrap gap-x-1.5 text-[15px]"}`}>
+      {mucSo(so)}
     </p>
   );
   // Địa chỉ MỘT dòng "Phường, Tỉnh/Thành phố" — điện thoại và máy tính cùng quy định (chủ dự án 20/10/2026)

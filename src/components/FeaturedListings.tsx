@@ -6,7 +6,7 @@ import PropertyCard from "@/components/PropertyCard";
 import { featuredListings, type Listing } from "@/lib/data";
 import ListingBrowser from "@/components/ListingBrowser";
 import { useHomeSection, HOME_RESET_EVENT } from "@/components/HomeExpand";
-import { tierRank } from "@/lib/packages";
+import { tierRank, tierFromBadge } from "@/lib/packages";
 import { smoothScrollTo } from "@/lib/scroll";
 import { useAutoSlide, useTamDung } from "@/lib/useAutoSlide";
 import TheTinMobile from "@/components/TheTinMobile";
@@ -17,6 +17,13 @@ import { typeTabs } from "@/lib/tinNoiBat";
 // ── Cấu trúc MỖI SLIDE: 2 hàng × 4 tin, thẻ CÙNG KÍCH THƯỚC (variant "tier") ──
 // Xếp theo cấp tin: Diamond → Gold → Silver → Basic (tierRank), cấp cao đứng trước.
 // Phân biệt cấp bằng màu tiêu đề + số dòng mô tả + hiện thành viên (trong PropertyCard).
+// Khung ảnh của một hàng 4 tin = cấp cao nhất trong hàng (hàng trộn cấp vẫn thẳng hàng — 23/10/2026)
+const khungHang = (ds: Listing[], k: number) => {
+  const hang = ds.slice(k - (k % 4), k - (k % 4) + 4);
+  return tierFromBadge(hang.reduce((a, b) => (tierRank(b.badge) < tierRank(a.badge) ? b : a)).badge);
+};
+// Mẫu 23/10: tắt để mỗi cấp giữ khung riêng ngay trong hàng (chủ dự án xem so sánh)
+const KHUNG_THEO_HANG = false;
 const PER_SLIDE = 8; // 2 hàng × 4 tin
 const SLIDE_COUNT = 2; // chạy 2 slides
 const MOB_LAN = 10; // điện thoại: ban đầu 10 tin, mỗi lần "Xem thêm" +10 (chủ dự án 09/10/2026)
@@ -31,8 +38,6 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
   // ĐIỆN THOẠI (chuẩn 09/10/2026, như Batdongsan): xếp DỌC thẻ theo cấp; bấm "Xem thêm" 2 lần
   // (mỗi lần +1 trang) rồi mới hiện phân trang 1 · 2 · 3…
   const [lanXem, setLanXem] = useState(0); // 0 = 10 tin · 1 = 20 tin (bấm Xem thêm 1 lần)
-  // Tin đã hiện ở trang chủ trước khi mở danh sách — trang 1 của danh sách bắt đầu từ các tin TIẾP THEO
-  const [daHien, setDaHien] = useState<Set<string>>(new Set());
   // BACK TỪ TRANG TIN (chủ dự án 10/10/2026): bấm vào tin thì nhớ đang xem bao nhiêu tin + vị trí cuộn;
   // quay lại (Back) đúng chỗ cũ. Vào trang chủ bằng cách khác (logo, gõ địa chỉ) thì về mặc định.
   useEffect(() => {
@@ -56,7 +61,7 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
 
   // Bấm Trang chủ / logo khi đang ở trang chủ → về mặc định 10 tin (không để danh sách dài)
   useEffect(() => {
-    const ve = () => { setLanXem(0); setDaHien(new Set()); };
+    const ve = () => setLanXem(0);
     window.addEventListener(HOME_RESET_EVENT, ve);
     return () => window.removeEventListener(HOME_RESET_EVENT, ve);
   }, []);
@@ -102,11 +107,12 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
     return (
       <section className="section-edge bg-white">
         <ListingBrowser
-          heading={expandPurpose === "thue" ? "Bất động sản cho thuê" : "Bất động sản mua bán"}
+          // Tên danh sách sau "Xem thêm" (chủ dự án 23/10/2026), cả hai bản
+          heading="Mua bán, cho thuê nhà đất"
+          trangChu
           purpose={expandPurpose}
           // Danh sách đầy đủ nạp từ /api/danh-sach (trang chủ chỉ chở 20 tin mỗi tab — 16/10/2026)
           nguon={expandPurpose}
-          boQuaId={daHien.size ? [...daHien] : undefined}
         />
       </section>
     );
@@ -116,10 +122,18 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
     <section className="section-edge bg-white">
       <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 sm:py-4 lg:px-8">
 
-        {/* Tiêu đề — chiếm TRỌN dòng (không để nút ép xuống 2 dòng) */}
-        <h2 className="text-xl font-semibold text-cvr-ink sm:text-2xl">
-          Bất động sản dành cho bạn
-        </h2>
+        {/* Tiêu đề — chiếm TRỌN dòng (không để nút ép xuống 2 dòng). MÁY TÍNH (chủ dự án 23/10/2026, như Batdongsan): bên phải
+            hai link đúng từ khoá trang đích (SEO: H1 /mua-ban "Mua bán nhà đất", /cho-thue "Cho thuê nhà đất"). Điện thoại chỉ tiêu đề. Tên khối "Bất động sản nổi bật" (chủ dự án 23/10/2026, thay "dành cho bạn"). */}
+        <div className="flex items-baseline justify-between gap-4">
+          <h2 className="text-xl font-semibold text-cvr-ink sm:text-2xl">
+            Bất động sản nổi bật
+          </h2>
+          <p className="hidden shrink-0 items-center gap-3 text-[15px] text-cvr-body sm:flex">
+            <Link href="/mua-ban" prefetch={false} className="transition hover:text-cvr-ink hover:underline">Mua bán nhà đất</Link>
+            <span className="text-cvr-faint" aria-hidden>|</span>
+            <Link href="/cho-thue" prefetch={false} className="transition hover:text-cvr-ink hover:underline">Cho thuê nhà đất</Link>
+          </p>
+        </div>
 
         {/* Tabs loại hình — MOBILE: cuộn ngang ĐÚNG 1 dòng (không xuống hàng, không bị cắt) */}
         <div className="no-scrollbar -mx-4 mt-3 flex gap-2 overflow-x-auto px-4 pb-0.5 sm:mx-0 sm:mt-5 sm:flex-wrap sm:overflow-visible sm:px-0">
@@ -150,14 +164,13 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
                 {sorted.slice(0, (lanXem + 1) * MOB_LAN).map((item, i) => <TheTinMobile key={item.id} item={item} tuChay={false} dcCu={false} uuTien={i === 0} />)}
               </div>
               {/* MỘT NÚT (chủ dự án 09/10/2026): bấm "Xem thêm" 1 lần → đủ 20 tin; bấm nữa → mở danh sách
-                  theo trang, trang 1 bắt đầu từ các tin TIẾP THEO (không lặp 20 tin đã xem). Logo/Trang chủ về mặc định. */}
+                  theo trang, BẮT ĐẦU TỪ TIN SỐ 1 (chủ dự án 23/10/2026: danh sách đầy đủ theo cấp → ngày đăng/đẩy, như trang Mua bán). Logo/Trang chủ về mặc định. */}
               {sorted.length > MOB_LAN && (
                 <div className="mt-6 flex justify-center">
                   <button
                     type="button"
                     onClick={() => {
                       if (lanXem === 0 && sorted.length > MOB_LAN) return setLanXem(1);
-                      setDaHien(new Set(sorted.slice(0, 2 * MOB_LAN).map((l) => l.id)));
                       toggle();
                     }}
                     className="btn-xemthem"
@@ -188,8 +201,8 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
                   <div key={i} className="w-full shrink-0 snap-start">
                     {/* Mobile 1 tin/hàng (thẻ đủ rộng để đọc) · tablet 2 · desktop 4 */}
                   <div className="cards-stagger grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-                      {items.map((item) => (
-                        <PropertyCard key={item.id} item={item} variant="tier" />
+                      {items.map((item, k) => (
+                        <PropertyCard key={item.id} item={item} variant="tier" khung={KHUNG_THEO_HANG ? khungHang(items, k) : undefined} />
                       ))}
                     </div>
                   </div>

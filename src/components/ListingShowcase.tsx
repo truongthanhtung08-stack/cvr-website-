@@ -20,6 +20,8 @@ export default function ListingShowcase({
   title,
   relevance = false,
   idsDayDu,
+  khoangTren = "mt-14",
+  daXem = false,
 }: {
   items: Listing[];
   emptyNote?: string;
@@ -36,6 +38,9 @@ export default function ListingShowcase({
   // Mã TẤT CẢ tin liên quan theo thứ tự (SEO 15/10/2026): có thì `items` chỉ cần 8 tin bản nhẹ cho
   // slide; bấm "Xem thêm" danh sách tự nạp dữ liệu đầy đủ (/api/danh-sach) đúng các tin này.
   idsDayDu?: string[];
+  // Khoảng cách phía trên khối (trang tin: mt-14). Trang chủ truyền "" — khoảng cách do khung khối trang chủ lo, đồng đều mọi khối.
+  khoangTren?: string;
+  daXem?: boolean;
 }) {
   const { expanded, hidden, toggle } = useHomeSection(sectionKey);
 
@@ -45,7 +50,7 @@ export default function ListingShowcase({
   // Chưa có tin → VẪN dựng sẵn khung, chỉ báo trống.
   if (items.length === 0) {
     return (
-      <div className={title ? "mt-14" : undefined}>
+      <div className={title ? khoangTren || undefined : undefined}>
         {title && <h2 className="mb-5 text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">{title}</h2>}
         <p className="rounded-xl border border-dashed border-cvr-line bg-cvr-surface px-4 py-8 text-center text-sm text-cvr-muted">
           {emptyNote}
@@ -63,13 +68,14 @@ export default function ListingShowcase({
         purpose={purpose}
         {...(idsDayDu ? { nguon: purpose, chiId: idsDayDu } : { items })}
         relevance={relevance}
+        daXem={daXem}
         nested
       />
     );
   }
 
   return (
-    <div className={title ? "mt-14" : undefined}>
+    <div className={title ? khoangTren || undefined : undefined}>
       {title && <h2 className="mb-5 text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">{title}</h2>}
       <ListingSlider items={items.slice(0, 8)} />
       <div className="mt-6 flex justify-center">
