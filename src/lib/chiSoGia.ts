@@ -1,6 +1,6 @@
 import type { Listing } from "@/lib/data";
 import { chuanTen, provinceNamesNew, wardsOfNew } from "@/lib/locations";
-import { mauSoCuaLoaiHinh, coDonGiaM2, dungODienTichXayDung, dienTichSanThat, laTinThue, TEN_MAU_SO, TEN_VI_TRI, docViTri, type MauSo, type ViTriGia } from "@/lib/listingSpec";
+import { mauSoCuaLoaiHinh, thueTheoM2, dungODienTichXayDung, dienTichSanThat, laTinThue, TEN_MAU_SO, TEN_VI_TRI, docViTri, type MauSo, type ViTriGia } from "@/lib/listingSpec";
 export { mauSoCuaLoaiHinh, TEN_MAU_SO, TEN_VI_TRI };
 export type { MauSo, ViTriGia };
 import { tachBangCsv } from "@/lib/xuatCsv";
@@ -82,10 +82,9 @@ export function giaMoiM2Theo(l: Listing, mau: MauSo): number | null {
 }
 
 /** SỐ ĐƯA VÀO LỊCH SỬ GIÁ — giá mỗi m² theo loại hình (đất ÷ m² đất · căn hộ ÷ m² căn · nhà ÷ m² sàn).
- *  CHO THUÊ: dùng ĐÚNG chuẩn đơn giá của hệ thống (coDonGiaM2 — kho, nhà xưởng, đất công nghiệp · văn phòng, mặt bằng kinh doanh
- *  → giá/m²/tháng); loại hình còn lại → TỔNG tiền/tháng (chủ dự án 23/10/2026: "mọi loại hình, mọi mục đích đã có quy chuẩn về giá"). */
+ *  CHO THUÊ (chủ dự án 23/10/2026): văn phòng · kho, nhà xưởng, đất → giá/m²/tháng; loại hình còn lại → TỔNG tiền/tháng. */
 export function laThueTong(type: string, mucDich: string | undefined): boolean {
-  return laTinThue(mucDich) && !coDonGiaM2(type, mucDich);
+  return laTinThue(mucDich) && !thueTheoM2(type);
 }
 /** Mẫu số của dãy lịch sử giá: thuê tính tổng tiền → không có mẫu số (undefined). */
 export function mauSoLichSu(type: string, mucDich: string | undefined): MauSo | undefined {
