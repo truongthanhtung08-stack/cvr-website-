@@ -703,6 +703,8 @@ export async function khoCuaMinh(
     // để hiện kèm, như Batdongsan.
     const gom = new Map<string, ChiSoKhuVuc>();
     for (const d of ds) {
+      // Mốc tính từ dưới MAU_TOI_THIEU tin không phải số liệu (chủ dự án 23/10/2026: "theo 3 BĐS mà dám đưa ra số liệu") → bỏ
+      if (!(d.so_mau >= MAU_TOI_THIEU)) continue;
       const duAn = d.du_an ?? "";
       const tenPhuong = tenPhuongChuan(tinh, d.phuong);
       const khoa = [chuanTen(tenPhuong), duAn].join("|");
