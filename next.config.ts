@@ -112,7 +112,8 @@ const nextConfig: NextConfig = isPages
             { source: "/_next/static/chunks/maplibre-gl-shared.mjs", destination: toi("maplibre-gl-shared.js") },
             { source: "/_next/static/chunks/maplibre-gl-shared.js", destination: toi("maplibre-gl-shared.js") },
           ],
-          afterFiles: [],
+          // /favicon.ico 404 (Search Console 24/10/2026: Google + trình duyệt gọi địa chỉ này) → trỏ về biểu tượng sẵn có src/app/icon.png
+          afterFiles: [{ source: "/favicon.ico", destination: "/icon.png" }],
           fallback: [],
         };
       },

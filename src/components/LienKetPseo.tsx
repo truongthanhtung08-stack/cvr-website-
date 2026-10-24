@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { NhomLienKet } from "@/lib/pseo";
+import DanhSachThuGon from "@/components/DanhSachThuGon";
 
 // Khối liên kết nội bộ của hệ pSEO (Template 1 — "Contextual internal linking hub").
 // Chỉ liệt kê trang ĐÃ QUA CỔNG CHẤT LƯỢNG (src/lib/pseo.ts) — không dẫn khách vào trang thưa tin.
@@ -24,7 +25,8 @@ export default function LienKetPseo({ nhom, cau = "", kieuGoogle = false }: { nh
       // được ngay), chữ liên kết là chính tên trang đích ("Bán căn hộ chung cư Đà Nẵng dưới 3 tỷ"), không chữ chung chung.
       <nav aria-labelledby="moi-nguoi-tim" className="mx-auto max-w-7xl px-4 pb-10 sm:px-6 lg:px-8">
         <h2 id="moi-nguoi-tim" className="text-[20px] font-normal tracking-tight text-cvr-ink sm:text-[22px]">Mọi người cũng tìm kiếm</h2>
-        <ul className="mt-4 grid max-w-[980px] gap-3 sm:grid-cols-2">
+        {/* Thu gọn 8 ô (chủ dự án 24/10/2026: "phần này càng ngày càng dài thêm, cho nút thu gọn") — mục thu vẫn trong HTML */}
+        <DanhSachThuGon the="ul" anBangCss soHien={8} className="mt-4 grid max-w-[980px] gap-3 sm:grid-cols-2">
           {links.map((l) => (
             <li key={l.href}>
               <Link href={l.href} className="flex items-center justify-between gap-4 rounded-xl bg-[#f1f3f4] px-5 py-3.5 text-[15px] text-cvr-ink transition hover:bg-[#e8eaed] active:scale-[0.99] sm:text-[16px]">
@@ -33,7 +35,7 @@ export default function LienKetPseo({ nhom, cau = "", kieuGoogle = false }: { nh
               </Link>
             </li>
           ))}
-        </ul>
+        </DanhSachThuGon>
       </nav>
     );
   }
