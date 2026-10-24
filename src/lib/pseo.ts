@@ -195,8 +195,32 @@ export function tieuDe(dk: DieuKien): string {
   return dk.muc === "thue" ? `Cho thuê nhà đất ${noi}` : `Bán nhà đất ${noi}`;
 }
 
-export function moTa(dk: DieuKien): string {
-  return `${tieuDe(dk)} — tin mới ${thangHienTai()}: giá, diện tích, vị trí, ảnh thật, liên hệ trực tiếp ${dk.muc === "thue" ? "người cho thuê" : "người bán"}.`;
+// Mô tả cho Google — câu chủ dự án duyệt 24/10/2026 (mỗi trang một đoạn riêng từ chính các tin của trang, Google/AI
+// trích được; không in số tin — chốt 11/09; dưới ~155 ký tự để Google hiện trọn):
+//   "Mua bán căn hộ chung cư Đà Nẵng giá từ 865 triệu đến 20 tỷ, diện tích từ 33 đến 117 m², từ 1 đến 3 phòng ngủ,
+//    sổ hồng chính chủ. Tin xác thực." — tiếng Việt chuẩn, không viết tắt "PN"; tên trang đã có số phòng ngủ thì không lặp.
+// Không ghi tháng, không ghi nội thất; pháp lý một loại nhiều tin nhất (chỉ tin bán). Thiếu phần nào bỏ phần đó.
+// Dùng chung cho trang pSEO, trang tỉnh, trang loại hình (/mua-ban/<slug>, /cho-thue/<slug>). `dau` = tiêu đề trang
+// (có hay không có tháng đều được). Không có giá lẫn diện tích → null, nơi gọi giữ mô tả cũ.
+export function moTaSoLieu(dau: string, tin: Listing[], muc: Muc): string | null {
+  const so = soLieuTrang(tin, muc).split(" · ").filter((p) => p && !p.startsWith("Cập nhật"))
+    .map((p) => p.startsWith("Giá") ? p.replace(/^Giá( thuê)?: /, "giá ").replace(/^giá (.+) – (.+)$/, "giá từ $1 đến $2")
+      : p.replace(/^Diện tích: /, "diện tích ").replace(/^diện tích (.+) – (.+)$/, "diện tích từ $1 đến $2"));
+  if (!so.length) return null;
+  const pn = [...new Set(tin.map((l) => l.beds ?? 0).filter((n) => n > 0))].sort((a, b) => a - b);
+  if (pn.length && !dau.includes("phòng ngủ")) so.push(pn.length === 1 ? `${pn[0]} phòng ngủ` : `từ ${pn[0]} đến ${pn[pn.length - 1]} phòng ngủ`);
+  if (muc === "ban") {
+    const dem = new Map<string, number>();
+    for (const l of tin) if (l.phapLy?.trim() && !l.phapLy.includes("/")) dem.set(l.phapLy.trim(), (dem.get(l.phapLy.trim()) ?? 0) + 1); // bỏ nhãn chung "Sổ đỏ / sổ hồng"
+    const pl = [...dem.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
+    if (pl) so.push(pl.toLowerCase());
+  }
+  const ten = dau.replace(/\s*tháng \d{1,2}\/\d{4}$/, "");
+  return `${muc === "ban" ? ten.replace(/^Bán /, "Mua bán ") : ten} ${so.join(", ")}. Tin xác thực.`;
+}
+export function moTa(dk: DieuKien, tin: Listing[] = []): string {
+  return moTaSoLieu(tieuDe(dk), tin, dk.muc)
+    ?? `${tieuDe(dk)} — tin mới ${thangHienTai()}: giá, diện tích, vị trí, ảnh thật, liên hệ trực tiếp ${dk.muc === "thue" ? "người cho thuê" : "người bán"}.`;
 }
 
 export type Crumb = { name: string; href: string };

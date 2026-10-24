@@ -5,7 +5,7 @@ import ListingBrowser from "@/components/ListingBrowser";
 import { ketQuaTrangDau } from "@/lib/ketQuaDau";
 import { BreadcrumbJsonLd } from "@/components/Breadcrumb";
 import LienKetPseo from "@/components/LienKetPseo";
-import HoiDapPseo, { hoiDapPseo } from "@/components/HoiDapPseo";
+import HoiDapPseo, { hoiDapPseo, giaTheoNhom, GiaTheoNhomPseo } from "@/components/HoiDapPseo";
 import { ListingListJsonLd } from "@/components/ListJsonLd";
 import { goiNheTin, goiNheBaiViet } from "@/lib/goiNhe";
 import { getListings, getListingsHetHan } from "@/lib/listingsDb";
@@ -24,7 +24,7 @@ export async function metadataPseo(dk: DieuKien): Promise<Metadata> {
   const tin = await getListings().catch(() => []);
   const trang = tatCaTrang(tin).get(duongDan(dk));
   const title = `${tieuDe(dk)} ${thangHienTai()}`;
-  const description = moTa(dk);
+  const description = moTa(dk, tin.filter((l) => khop(l, dk)));
   const path = duongDan(dk);
   return {
     title: tieuDeGoogle(title),
@@ -68,6 +68,7 @@ export default async function TrangPseo({ dk }: { dk: DieuKien }) {
             articles={goiNheBaiViet(articles)}
           />
         )}
+        <GiaTheoNhomPseo g={giaTheoNhom(dk, items)} />
         <HoiDapPseo hoiDap={hoiDapPseo(dk, items)} />
         <LienKetPseo nhom={lienKetCho(dk, listings)} cau={tieuDe(dk)} kieuGoogle />
       </main>

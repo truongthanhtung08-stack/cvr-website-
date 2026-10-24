@@ -16,7 +16,7 @@ const DANH_MUC = [...rentCategories, ...nhomPseo("thue")];
 import { demTinTheoKhuVuc, khuVucTrongDiem, moTaKhuVuc, slugKhuVuc, tieuDeKhuVuc, timKhuVuc } from "@/lib/khuVuc";
 import { normalizeVi } from "@/lib/filters";
 import LienKetPseo from "@/components/LienKetPseo";
-import { lienKetCho, lienKetLoaiHinh } from "@/lib/pseo";
+import { lienKetCho, lienKetLoaiHinh, moTaSoLieu } from "@/lib/pseo";
 import { thangHienTai, tieuDeGoogle } from "@/lib/thang";
 
 // ============================================================================
@@ -50,13 +50,17 @@ export async function generateMetadata({ params }: { params: Promise<{ loai: str
   const c = findCategory(DANH_MUC, loai);
   if (c) {
     // Cổng index (20/10/2026): danh mục chưa đủ 3 tin còn hạn → xem được nhưng KHÔNG cho Google lập chỉ mục (sitemap cũng bỏ).
-    const dmTin = soTinDanhMuc(await getListings().catch(() => []), c, "thue");
+    const tatCa = await getListings().catch(() => []);
+    const dmTin = soTinDanhMuc(tatCa, c, "thue");
     const title = `${c.title} ${thangHienTai()}`;
+    // Mô tả có số liệu thật của các tin trong danh mục — câu chủ dự án duyệt 24/10/2026 (lib/pseo moTaSoLieu)
+    const tinDm = tatCa.filter((l) => !l.banSao && ((l.purpose ?? "ban") === "thue" ? "thue" : "ban") === "thue" && c.types.includes(l.type));
+    const description = moTaSoLieu(c.title, tinDm, "thue") ?? moTaDu(c.desc);
     return {
       title: tieuDeGoogle(title),
-      description: moTaDu(c.desc),
+      description,
       alternates: { canonical: `/cho-thue/${c.slug}` },
-      openGraph: { title, description: moTaDu(c.desc), url: `/cho-thue/${c.slug}`, type: "website" },
+      openGraph: { title, description, url: `/cho-thue/${c.slug}`, type: "website" },
       ...(dmTin < NGUONG_INDEX_DANH_MUC ? { robots: { index: false, follow: true } } : {}),
     };
   }
@@ -71,7 +75,8 @@ export async function generateMetadata({ params }: { params: Promise<{ loai: str
   const soTin = demTinTheoKhuVuc(listings.filter((l) => (l.purpose ?? "ban") === "thue"), kv.name);
 
   const title = tieuDeKhuVuc("thue", kv.name);
-  const description = moTaKhuVuc("thue", kv.name, soTin);
+  const tinTinh = listings.filter((l) => (l.purpose ?? "ban") === "thue" && normalizeVi(tinhCua(l.location)) === normalizeVi(kv.name));
+  const description = moTaSoLieu(title, tinTinh, "thue") ?? moTaKhuVuc("thue", kv.name, soTin); // câu duyệt 24/10/2026
   return {
     title,
     description,
