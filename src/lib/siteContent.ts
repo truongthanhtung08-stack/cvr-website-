@@ -68,14 +68,15 @@ export type FooterData = {
 
 // Mặc định = đúng nội dung Footer hiện tại (khớp Footer.tsx cũ).
 export const FOOTER_DEFAULT: FooterData = {
-  // Dòng đậm dưới logo — chủ dự án muốn giữ TÊN CŨ (CVR), không phải câu mô tả.
-  tagline: "Central Coast Vietnam Real Estate (CVR)",
+  // Dòng đậm dưới logo — mặc định = ĐÚNG câu admin đang lưu (25/10/2026): trước để tên cũ CVR nên lúc mới tải
+  // footer loé tên cũ rồi mới đổi, và Google đọc được tên cũ trong HTML.
+  tagline: "Cổng thông tin mua bán, cho thuê nhà đất",
   description:
     "Coastal Land (coastalland.vn) là nền tảng công nghệ và cổng thông tin bất động sản trực tuyến hàng đầu tại Việt Nam.",
   hotline: "+84 377 985 036",
   email: "hotro@coastalland.vn",
   // Địa chỉ công ty — ghi theo đơn vị hành chính MỚI 2025 (Tỉnh/Thành → Phường/Xã)
-  address: "220 Nguyễn Mậu Tài, phường Hòa Xuân, thành phố Đà Nẵng",
+  address: "220 Nguyễn Mậu Tài, Phường Hòa Xuân, Thành phố Đà Nẵng",
   company: "Central Coast Vietnam Real Estate (CVR)",
   socials: [
     { label: "Zalo", href: "#" },

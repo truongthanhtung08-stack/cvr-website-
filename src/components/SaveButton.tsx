@@ -16,10 +16,11 @@ export default function SaveButton({
   const { has, toggle } = useSaved();
   const saved = has(id);
 
+  // Tim đã lưu = ĐỎ ở mọi nơi trên web (chủ dự án 24/10/2026: chỗ xanh chỗ đỏ) — cùng màu nút Thích ở thẻ tin, trang tin, xem ảnh.
   const style =
     variant === "bare"
-      ? `${saved ? "text-cvr-blue" : "text-cvr-muted hover:text-cvr-blue"}`
-      : `backdrop-blur-sm ${saved ? "bg-cvr-blue text-white" : "bg-black/45 text-white hover:bg-black/70"}`;
+      ? `${saved ? "text-red-500" : "text-cvr-muted hover:text-red-500"}`
+      : `backdrop-blur-sm ${saved ? "bg-red-500 text-white" : "bg-black/45 text-white hover:bg-black/70"}`;
 
   return (
     <button

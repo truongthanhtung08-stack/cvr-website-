@@ -116,6 +116,13 @@ export function useHomeSection(key: string) {
 }
 
 // Bọc các phần KHÔNG có nút "Xem thêm" (Hero, banner) — ẩn khi có khối nào đang mở.
+// Ẩn khi MỘT khối cụ thể đang mở (vd Tìm kiếm phổ biến — từ khoá nhà đất — không đặt dưới danh sách Tin tức, 25/10/2026)
+// classKhiMo: lớp dùng khi MỘT khối KHÁC đang mở (khối này thành khối cuối trang nên lề đáy khác).
+export function AnKhiMo({ khoa, children, className, classKhiMo }: { khoa: string; children: React.ReactNode; className?: string; classKhiMo?: string }) {
+  const { openKey } = useContext(HomeExpandCtx);
+  return <div className={openKey === khoa ? "hidden" : openKey && classKhiMo !== undefined ? classKhiMo : className}>{children}</div>;
+}
+
 export function HomeCollapsible({ children, className }: { children: React.ReactNode; className?: string }) {
   const { openKey } = useContext(HomeExpandCtx);
   return <div className={openKey ? "hidden" : className}>{children}</div>;

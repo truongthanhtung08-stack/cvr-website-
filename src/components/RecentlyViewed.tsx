@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import ListingShowcase from "@/components/ListingShowcase";
 import type { Listing } from "@/lib/data";
 import { useRecentlyViewed } from "@/lib/useRecentlyViewed";
+import { useSaved } from "@/lib/useSaved";
 import { useHomeSection } from "@/components/HomeExpand";
 import ListingBrowser from "@/components/ListingBrowser";
 
@@ -11,8 +12,11 @@ import ListingBrowser from "@/components/ListingBrowser";
 // theo trang (ListingShowcase dùng chung). Trang tin: ngay dưới BĐS tương tự · trang chủ: dưới BĐS nổi bật. Chỉ hiện khi khách có lịch sử xem.
 // Mã tin đã xem lưu trên máy khách (localStorage, tối đa 100 — useRecentlyViewed). Dữ liệu tin THẬT nạp từ /api/danh-sach (CDN đã lưu sẵn,
 // không tốn thêm lượt gọi máy chủ). Bỏ tin đang xem; giữ cả tin bán, thuê và tin hết hạn (nhãn "Tin hết hạn"), chỉ tin đã gỡ hẳn mới mất; thứ tự = xem gần nhất trước.
-export default function RecentlyViewed({ boQua, trangChu = false }: { boQua?: string; trangChu?: boolean }) {
-  const ids = useRecentlyViewed().filter((id) => id !== boQua);
+export default function RecentlyViewed({ boQua, trangChu = false, boTinDaLuu = false }: { boQua?: string; trangChu?: boolean; boTinDaLuu?: boolean }) {
+  // Trang Tin đã lưu (chủ dự án 24/10/2026): tin đã nằm ở mục Lưu phía trên thì không lặp lại ở "đã xem";
+  // khách bấm tim một tin ở đây → tin tự chuyển lên mục Lưu.
+  const daLuu = useSaved().ids;
+  const ids = useRecentlyViewed().filter((id) => id !== boQua && !(boTinDaLuu && daLuu.includes(id)));
   const khoa = ids.join(",");
   const [items, setItems] = useState<Listing[]>([]);
   // Khối khác trên trang chủ đang mở "Xem thêm" → bỏ cả khung, không chừa khoảng trống (23/10/2026)

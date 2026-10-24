@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SavedClient from "@/components/SavedClient";
+import RecentlyViewed from "@/components/RecentlyViewed";
+import { HomeExpandProvider } from "@/components/HomeExpand";
 
 export const metadata: Metadata = {
   title: "Tin đã lưu",
@@ -20,6 +22,10 @@ export default function TinLuuPage() {
           <p className="mt-1.5 text-sm text-cvr-muted">Những bất động sản bạn đã lưu để xem lại — lưu ngay trên trình duyệt này.</p>
 
           <SavedClient />
+          {/* Bất động sản đã xem — khách quay lại xem các tin mình quan tâm (chủ dự án 24/10/2026); chỉ hiện khi có lịch sử xem */}
+          <HomeExpandProvider>
+            <RecentlyViewed boTinDaLuu />
+          </HomeExpandProvider>
         </div>
       </main>
       <Footer />

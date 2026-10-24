@@ -19,13 +19,13 @@ export const PHAP_LY = {
   // Mã số doanh nghiệp — cũng chính là mã số thuế. CHỈ GHI MỘT LẦN trên web.
   maSoThue: "0402353502",
   ngayCap: "17/08/2026",
-  noiCap: "Sở Tài chính thành phố Đà Nẵng",
+  noiCap: "Sở Tài chính Thành phố Đà Nẵng",
   // Người chịu trách nhiệm nội dung — CỐ Ý ĐỂ TRỐNG theo yêu cầu chủ dự án:
   // không đưa TÊN CÁ NHÂN lên web, chỉ để pháp nhân (công ty) chịu trách nhiệm.
   // Để trống thì dòng này tự ẩn ở footer và trang Quy chế. Đừng tự điền lại.
   chiuTrachNhiemNoiDung: "",
   // Địa chỉ trụ sở chính, ghi theo đơn vị hành chính MỚI 2025 (Tỉnh/Thành → Phường/Xã).
-  diaChiDayDu: "220 Nguyễn Mậu Tài, phường Hòa Xuân, thành phố Đà Nẵng",
+  diaChiDayDu: "220 Nguyễn Mậu Tài, Phường Hòa Xuân, Thành phố Đà Nẵng",
 
   // ── CÒN THIẾU ─────────────────────────────────────────────────────────────
   // Link xác nhận đã thông báo website với Bộ Công Thương. ĐÃ CÓ ĐKKD → đăng ký

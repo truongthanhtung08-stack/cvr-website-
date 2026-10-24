@@ -297,8 +297,9 @@ export default function ProjectsBrowser({
 
       {/* ── Thanh tìm + lọc dự án (MOBILE: lên trên cùng, KHÔNG khung viền/bóng, rộng hết bề ngang) ── */}
       {/* Máy tính: thanh tìm gọn trong CỘT DỰ ÁN bên trái (= lg:col-span-2 của lưới 3 cột, khe 32px) — chủ dự án 18/10/2026 */}
-      <div className="order-1 mt-2 rounded-none bg-white pb-2.5 pt-0 sm:order-2 sm:mt-2.5 sm:border sm:border-cvr-line sm:p-2.5 sm:shadow-lux lg:w-[calc(66.667%-10.667px)]">
-        <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
+      {/* 25/10/2026: máy tính CÙNG KIỂU thanh tìm Mua bán / Cho thuê — không khung viền, không bóng, gạch mảnh phía dưới, cách Hero 16px */}
+      <div className="order-1 mt-2 rounded-none bg-white pb-2.5 pt-0 sm:order-2 sm:mt-4 sm:border-b sm:border-cvr-line sm:pb-4 lg:w-[calc(66.667%-10.667px)]">
+        <div className="flex flex-col gap-2 sm:gap-3">{/* máy tính 2 hàng như Mua bán: ô tìm rộng · hàng lọc dưới (25/10/2026) */}
           {/* Ô tìm nhanh dự án — nút search XANH nằm SÁT mép phải trong khung (mobile), đồng bộ Mua bán/Cho thuê.
               MOBILE: chừa lề trái đúng chỗ NÚT BACK TRÒN nổi (8px + 36px) để nút đứng
               CẠNH ô tìm thành một hàng, không đè lên chữ gợi ý đang chạy. */}
@@ -322,7 +323,7 @@ export default function ProjectsBrowser({
               placeholder={sugOpen ? "Tìm dự án…" : goiYChay} // đã chạm ô → chữ chạy dừng
               aria-label="Tìm nhanh dự án"
               enterKeyHint="search"
-              className="h-9 w-full rounded-full bg-cvr-surface pl-10 pr-10 text-[15px] text-cvr-ink placeholder-cvr-faint ring-1 ring-black/5 outline-none transition focus:ring-2 focus:ring-cvr-blue/50 focus:placeholder:text-transparent sm:h-10 sm:rounded-xl sm:border sm:border-transparent sm:pl-9 sm:pr-[8.5rem] sm:ring-0 sm:focus:border-cvr-line sm:focus:bg-white"
+              className="h-9 w-full rounded-full bg-cvr-surface pl-10 pr-10 sm:h-12 sm:rounded-xl sm:pr-32 text-[15px] text-cvr-ink placeholder-cvr-faint ring-1 ring-black/5 outline-none transition focus:ring-2 focus:ring-cvr-blue/50 focus:placeholder:text-transparent sm:h-10 sm:rounded-xl sm:border sm:border-transparent sm:pl-9 sm:pr-[8.5rem] sm:ring-0 sm:focus:border-cvr-line sm:focus:bg-white"
             />
             {/* Nút xoá nhanh (×) — đồng bộ với ô tìm Mua bán/Cho thuê */}
             {q.trim().length > 0 && (
@@ -387,6 +388,18 @@ export default function ProjectsBrowser({
 
             {/* (Bỏ nút kính lúp xanh trên điện thoại 18/10/2026 — chủ dự án: bàn phím đã có phím Tìm khi chạm ô) */}
           </div>
+          {/* MÁY TÍNH: "Xem bản đồ" đứng SÁT ô tìm, cùng chiều cao — như Mua bán / Cho thuê (chủ dự án 25/10/2026). Điện thoại giữ nút cạnh tiêu đề. */}
+          <button
+            type="button"
+            onClick={() => setMapMode((v) => !v)}
+            aria-pressed={mapMode}
+            className={`hidden h-12 shrink-0 items-center gap-2 rounded-xl px-5 text-[15px] font-semibold text-white transition sm:inline-flex ${mapMode ? "bg-cvr-blue-ink" : "bg-cvr-blue hover:bg-cvr-blue-ink"}`}
+          >
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.9} viewBox="0 0 24 24" aria-hidden>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 4.5l6 2.4 5-2.4v14.4l-5 2.4-6-2.4-5 2.4V4.9l5-2.4v16.8" />
+            </svg>
+            {mapMode ? "Xem danh sách" : "Xem bản đồ"}
+          </button>
           </div>
 
           {/* Chip lọc: Khu vực · Loại hình · Trạng thái.
@@ -497,12 +510,12 @@ export default function ProjectsBrowser({
       <div id="ket-qua" className="order-3 scroll-mt-20 sm:scroll-mt-24">
       {/* TIÊU ĐỀ + HÀNG NÚT cùng bố cục, cùng cỡ với trang Mua bán / Cho thuê (chủ dự án 18/10/2026: đồng bộ 3 tab):
           tiêu đề trái · Xem bản đồ + Xoá lọc phải (máy tính); điện thoại xuống dòng dưới tiêu đề */}
-      <div className="mt-3 flex flex-wrap items-end justify-between gap-x-4 gap-y-2 sm:mt-6">
+      <div className="mt-3 flex flex-wrap items-end justify-between gap-x-4 gap-y-2 sm:mt-5">{/* máy tính cùng nhịp Mua bán: gạch → tiêu đề 20px, tiêu đề cỡ chữ như Mua bán (25/10/2026) */}
         <div className="min-w-0">
           {tieuDePhu ? (
-            <h2 className="text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">{tieuDe}</h2>
+            <h2 className="text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">{tieuDe}</h2>
           ) : (
-            <h1 className="text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">{tieuDe}</h1>
+            <h1 className="text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">{tieuDe}</h1>
           )}
           <p className="mt-1 text-sm text-cvr-muted">
             {/* Coastal Land là CỔNG THÔNG TIN — không phân phối, không mua bán dự án. */}
@@ -514,7 +527,7 @@ export default function ProjectsBrowser({
             type="button"
             onClick={() => setMapMode((v) => !v)}
             aria-pressed={mapMode}
-            className={`mr-auto inline-flex min-h-8 items-center gap-1.5 rounded-lg px-3 text-[13px] font-semibold text-white transition sm:min-h-[38px] sm:gap-2 sm:px-3.5 sm:text-sm ${
+            className={`mr-auto inline-flex min-h-8 items-center gap-1.5 rounded-lg px-3 text-[13px] font-semibold text-white transition sm:hidden ${
               mapMode ? "bg-cvr-blue-ink" : "bg-cvr-blue hover:bg-cvr-blue-ink"
             }`}
           >
@@ -568,7 +581,7 @@ export default function ProjectsBrowser({
         </div>
       )}
 
-      <div className={`mt-6 grid grid-cols-1 gap-8 lg:grid-cols-3 ${mapMode ? "hidden" : ""}`}>
+      <div className={`mt-6 grid grid-cols-1 gap-8 sm:mt-3 lg:grid-cols-3 ${mapMode ? "hidden" : ""}`}>
         {/* ── Cột chính: thẻ dự án ngang ── */}
         <div className="lg:col-span-2">
           {/* Nhãn TẦNG kết quả — giống trang Mua bán / Cho thuê */}

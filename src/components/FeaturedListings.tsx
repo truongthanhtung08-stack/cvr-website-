@@ -120,7 +120,7 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
 
   return (
     <section className="section-edge bg-white">
-      <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 sm:py-4 lg:px-8">
+      <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 sm:pb-7 sm:pt-4 lg:px-8">
 
         {/* Tiêu đề — chiếm TRỌN dòng (không để nút ép xuống 2 dòng). MÁY TÍNH (chủ dự án 23/10/2026, như Batdongsan): bên phải
             hai link đúng từ khoá trang đích (SEO: H1 /mua-ban "Mua bán nhà đất", /cho-thue "Cho thuê nhà đất"). Điện thoại chỉ tiêu đề. Tên khối "Bất động sản nổi bật" (chủ dự án 23/10/2026, thay "dành cho bạn"). */}
@@ -160,7 +160,9 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
                 khách vuốt để xem hết tin. Thẻ cuối = "Xem tất cả". ── */}
             <div ref={khoiMobRef} className="scroll-mt-24 sm:hidden">
               {/* ĐIỆN THOẠI (chủ dự án 09/10/2026): xếp DỌC thẻ theo cấp, ban đầu 10 tin. */}
-              <div className="-mx-4 mt-4 space-y-2 bg-cvr-surface" onClickCapture={nhoViTri}>
+              {/* Thẻ vuông tràn mép, khe 10px xám vừa (#e5e5ea — đậm hơn làm chìm dải màu 1px trên thẻ VIP) — 24/10/2026 chủ dự án: khe #f5f5f7 không phân biệt được tin,
+                  giữ thẻ vuông, gọn mà phân biệt được. Cùng chuẩn danh sách Mua bán/Cho thuê. */}
+              <div className="-mx-4 mt-4 space-y-2.5 bg-[#e5e5ea]" onClickCapture={nhoViTri}>
                 {sorted.slice(0, (lanXem + 1) * MOB_LAN).map((item, i) => <TheTinMobile key={item.id} item={item} tuChay={false} dcCu={false} uuTien={i === 0} />)}
               </div>
               {/* MỘT NÚT (chủ dự án 09/10/2026): bấm "Xem thêm" 1 lần → đủ 20 tin; bấm nữa → mở danh sách
@@ -234,7 +236,7 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
             </div>
 
             {/* Chấm chuyển slide (giữa) + Xem tất cả (phải) */}
-            <div className="relative mt-6 flex items-center justify-center">
+            <div className="relative mt-4 flex items-center justify-center">
               {slides.length > 1 && (
                 <div className="flex gap-2">
                   {slides.map((_, i) => (
@@ -254,7 +256,8 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
             </div>
 
             {/* Nút Xem thêm — CHỈ PC (điện thoại giữ nút "Xem thêm" → /tim-kiem) */}
-            <div className="mt-6 hidden justify-center sm:flex">
+            {/* QUY CÁCH "Xem thêm" (chủ dự án 24/10/2026: một quy cách theo khối Bất động sản tương tự / đã xem): nội dung → nút 32px, nút → khối sau 56px */}
+            <div className="mt-2 hidden justify-center sm:flex">
               <button
                 type="button"
                 onClick={toggle}

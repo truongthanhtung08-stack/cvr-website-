@@ -10,7 +10,7 @@ import ShareButtons from "@/components/ShareButtons";
 import { freshText, type Listing } from "@/lib/data";
 import { diaChiHaiDong, moTaThe, soDongMoTa } from "@/lib/trichMoTa";
 import { thongSoTheoCap } from "@/lib/thongSoThe";
-import { tierFromBadge, getTier } from "@/lib/packages";
+import { tierFromBadge, getTier, HUY_HIEU_CLS } from "@/lib/packages";
 
 // Tên NGƯỜI ĐĂNG hiển thị trên thẻ: lấy từ tin thật (details.contact.name —
 // là tên KHÁCH HÀNG kể cả khi admin đăng giùm). Tin không có tên → "Coastal Land".
@@ -89,7 +89,7 @@ export default function PropertyCard({
   const showAgent = isTier ? true : !isMini;
 
   // Khung thẻ Apple thuần: viền tóc cvr-line + bóng mềm — KHÔNG viền màu theo cấp.
-  const khungThe = `flex flex-col overflow-hidden rounded-none border-0 bg-white shadow-lux shadow-lux-hover transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1 sm:border sm:border-cvr-line ${item.hetHan ? "opacity-70" : ""}`;
+  const khungThe = `flex flex-col overflow-hidden rounded-none border-0 bg-white shadow-lux shadow-lux-hover transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-1 ${item.hetHan ? "opacity-70" : ""}`;
   const the = (
     <Link
       href={`/bat-dong-san/${item.id}`}
@@ -100,9 +100,6 @@ export default function PropertyCard({
       // Tin HẾT HẠN (chỉ có ở cuối danh sách): thẻ mờ + nhãn "Tin hết hạn" — chốt 03/10/2026.
       className={khungThe}
     >
-      {/* Dải nhấn KIM LOẠI trên đỉnh thẻ — CHỈ Kim Cương (tier.bar) → cảm giác "đen ánh
-          vàng kim" cao cấp; cao 3px nên gần như không thay đổi chiều cao thẻ. */}
-      {tier?.bar && <div className="h-px w-full" style={{ backgroundColor: tier.bar }} aria-hidden />}
       {/* Ảnh — Diamond khung rộng hơn (rất lớn), còn lại 4/3 */}
       {/* Thẻ trang chủ (tier) trên MOBILE: ảnh 16/10 thấp hơn để màn hình đầu thấy trọn thẻ */}
       {/* KHUNG ẢNH THEO CẤP — TỶ LỆ VÀNG (trang chủ + tin liên quan máy tính, chủ dự án 23/10/2026): 1 ảnh bìa, gốc 1,618 (Silver),
@@ -115,12 +112,12 @@ export default function PropertyCard({
           alt={item.title}
           sizes={isFeatured ? "(max-width: 640px) 100vw, 50vw" : "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"}
         />
+        {/* Dải màu cấp NẰM TRONG khung ảnh, rộng đúng bằng ảnh (không lộ ra ngoài) + huy hiệu treo từ dải — chuẩn chung 24/10/2026 */}
+        {tier?.bar && <div className="absolute inset-x-0 top-0 z-10 h-px" style={{ backgroundColor: tier.bar }} aria-hidden />}
         {tier && (
           <span
-            // Huy hiệu cấp tin: viên thuốc KÍNH MỜ — nền màu hạng + CHỮ theo badgeText
-            // (Kim Cương = chữ vàng kim trên nền đen), viền vàng riêng cho Kim Cương.
-            className={`absolute left-2.5 top-2.5 rounded-full font-semibold uppercase tracking-[0.06em] shadow-[0_2px_10px_rgba(0,0,0,0.28)] ring-1 backdrop-blur-md ${tierId === "diamond" ? "ring-[#d9b64e]/70" : "ring-white/25"} ${isFeatured ? "px-2.5 py-1 text-[11px]" : "px-2 py-[3px] text-[11px]"}`}
-            style={{ backgroundColor: `${tier.accent}e6`, color: tier.badgeText }}
+            className={HUY_HIEU_CLS}
+            style={{ backgroundColor: tier.accent, color: tier.badgeText }}
           >
             {tier.short}
           </span>
@@ -136,7 +133,7 @@ export default function PropertyCard({
           {!showAgent && <SaveButton id={item.id} className={`sm:hidden ${isMini ? "h-7 w-7" : ""}`} />}
         </div>
         {/* Nhãn số ẢNH + VIDEO (kiểu Batdongsan/Homedy) — góc dưới trái ảnh */}
-        <div className="absolute bottom-2 left-2 flex items-center gap-1.5">
+        <div className="absolute bottom-3 left-3 flex items-center gap-1.5">
           <span className="flex items-center gap-1 bg-black/55 px-1.5 py-0.5 text-[11px] font-medium text-white">
             <CameraIcon />{item.imageCount || 1}
           </span>
@@ -296,22 +293,19 @@ function PropertyRow({ item, showTime = false, terms = [] }: { item: Listing; sh
       // (đã tăng theo file V3 10.08.2026 — ảnh đại diện cũ nhỏ, lệch với nội dung).
       className={`relative flex flex-col gap-3 overflow-hidden rounded-none border border-cvr-line bg-white p-2.5 shadow-lux shadow-lux-hover transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 sm:flex-row sm:gap-4 sm:p-3 ${item.hetHan ? "opacity-70" : ""}`}
     >
-      {/* Dải nhấn KIM LOẠI đỉnh thẻ — CHỈ Kim Cương (tier.bar), đồng bộ với thẻ lưới/trang chủ */}
-      {tier?.bar && <div className="absolute inset-x-0 top-0 z-10 h-px" style={{ backgroundColor: tier.bar }} aria-hidden />}
       <div className="relative aspect-[16/10] w-full shrink-0 overflow-hidden rounded-xl bg-cvr-surface sm:aspect-[16/10] sm:w-[38%] sm:min-w-[260px] sm:max-w-[380px]">
         <AnhChay chay={false} images={item.images?.length ? item.images : [item.image]} alt={item.title} sizes="(max-width: 640px) 100vw, 38vw" />
+        {/* Dải màu cấp NẰM TRONG khung ảnh, rộng đúng bằng ảnh + huy hiệu treo từ dải — chuẩn chung 24/10/2026 */}
+        {tier?.bar && <div className="absolute inset-x-0 top-0 z-10 h-px" style={{ backgroundColor: tier.bar }} aria-hidden />}
         {tier && (
-          <span
-            className={`absolute left-2 top-2 rounded-full px-2 py-[3px] text-[11px] font-semibold uppercase tracking-[0.06em] shadow-[0_2px_10px_rgba(0,0,0,0.28)] ring-1 backdrop-blur-md ${tierId === "diamond" ? "ring-[#d9b64e]/70" : "ring-white/25"}`}
-            style={{ backgroundColor: `${tier.accent}e6`, color: tier.badgeText }}
-          >{tier.short}</span>
+          <span className={HUY_HIEU_CLS} style={{ backgroundColor: tier.accent, color: tier.badgeText }}>{tier.short}</span>
         )}
         {item.hetHan && <NhanHetHan />}
         <div className="absolute right-2 top-2 flex flex-col gap-1.5">
           <SaveButton id={item.id} className="h-7 w-7" />
           <CompareButton id={item.id} className="h-7 w-7" />
         </div>
-        <div className="absolute bottom-2 left-2 flex items-center gap-1.5">
+        <div className="absolute bottom-3 left-3 flex items-center gap-1.5">
           <span className="flex items-center gap-1 bg-black/55 px-1.5 py-0.5 text-[11px] text-white">
             <CameraIcon />{item.imageCount || 1}
           </span>

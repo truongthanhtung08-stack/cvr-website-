@@ -19,21 +19,20 @@ const CHAT_LUONG = 0.8;
 const CHAT_LUONG_JPEG = 0.85;
 
 // ── ĐÓNG DẤU CHÌM "COASTAL LAND" ────────────────────────────────────────────
-// Ký hiệu MỜ ở góc dưới phải mọi ảnh tin đăng: ảnh bị lấy đi nơi khác vẫn nhận
-// ra nguồn, nhưng không che nội dung. Cỡ chữ theo bề ngang ảnh nên ảnh to hay
+// Ký hiệu MỜ, NHỎ, ở GIỮA mọi ảnh tin đăng (chủ dự án 24/10/2026: góc dưới phải bị số ảnh trên thẻ che —
+// "cho nhỏ lại, để ở giữa"): ảnh bị lấy đi nơi khác vẫn nhận ra nguồn. Cỡ chữ theo bề ngang ảnh nên ảnh to hay
 // nhỏ đều cân. Vẽ trước khi xuất JPEG nên dấu nằm HẲN trong ảnh, không gỡ được.
 function dongDauCvr(ctx: CanvasRenderingContext2D, w: number, h: number) {
-  const co = Math.max(13, Math.round(w * 0.028));
-  const le = Math.round(w * 0.022);
+  const co = Math.max(11, Math.round(w * 0.02));
   ctx.save();
   ctx.font = `600 ${co}px system-ui, -apple-system, "Segoe UI", sans-serif`;
-  ctx.textAlign = "right";
-  ctx.textBaseline = "bottom";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
   // Viền tối rất nhẹ để chữ vẫn đọc được trên nền ảnh sáng
   ctx.shadowColor = "rgba(0,0,0,0.45)";
   ctx.shadowBlur = Math.round(co * 0.5);
   ctx.fillStyle = "rgba(255,255,255,0.42)";
-  ctx.fillText("COASTAL LAND", w - le, h - le);
+  ctx.fillText("COASTAL LAND", w / 2, h / 2);
   ctx.restore();
 }
 
@@ -125,7 +124,9 @@ export const uploadImageFile = async (file: File, { dauChim = true }: { dauChim?
   // Ảnh trang (hero/banner/giới thiệu): KHÔNG đóng dấu, giữ nét tới 2880px.
   const nen = dauChim ? await nenAnh(file) : await nenAnh(file, 2880, CHAT_LUONG, false);
   const kq = await uploadMedia(nen, "image", 15);
-  if (kq.url) void taoBanNho(nen, kq.url);
+  // Bản nhỏ làm từ ẢNH GỐC CHƯA ĐÓNG DẤU (chủ dự án 24/10/2026: "ảnh lên là đóng dấu, mở ảnh thì mới có watermark"):
+  // thẻ tin dùng bản nhỏ → sạch; dấu chỉ nằm ở ảnh lớn khi khách mở xem.
+  if (kq.url) void taoBanNho(file, kq.url);
   return kq;
 };
 
@@ -143,7 +144,7 @@ async function taoBanNho(file: File, url: string) {
   try {
     const ten = decodeURIComponent(url.split("/").pop() ?? "");
     if (!ten) return;
-    const nho = await nenAnh(file, 1280, 0.78);
+    const nho = await nenAnh(file, 1280, 0.78, false);
     await createClient().storage.from("listings").upload(`nho/${ten}`, nho, { upsert: true });
   } catch {
     /* không có bản nhỏ thì dùng ảnh gốc — không việc gì phải báo khách */

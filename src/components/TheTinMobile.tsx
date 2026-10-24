@@ -13,10 +13,11 @@ const PhotoList = dynamic(() => import("@/components/PhotoList"), { ssr: false }
 import Highlight from "@/components/Highlight";
 import { NutLienHeThe } from "@/components/LienHeReveal";
 import { freshText, type Listing } from "@/lib/data";
-import { getTier, tierFromBadge, type TierId } from "@/lib/packages";
+import { getTier, tierFromBadge, HUY_HIEU_CLS, type TierId } from "@/lib/packages";
 import { useSaved } from "@/lib/useSaved";
 import { tieuDeThe } from "@/lib/chuThuong";
 import { videoPosterUrl } from "@/lib/media";
+import { anhNho } from "@/lib/asset";
 import { moTaThe, soDongMoTa } from "@/lib/trichMoTa";
 import { thongSoTheoCap } from "@/lib/thongSoThe";
 import DemAnhVideo, { IconPlay } from "@/components/DemAnhVideo";
@@ -56,7 +57,8 @@ function viTat(ten?: string): string {
 // videoTep: video tải lên (mp4…) không có ảnh bìa → hiện khung hình đầu của chính video, không để trắng.
 function O({ src, alt, className = "", sizes, onMo, children, dau, duPhong, videoTep }: { src?: string; alt: string; className?: string; sizes: string; onMo: () => void; children?: React.ReactNode; vuaKhung?: boolean; dau?: boolean; duPhong?: string; videoTep?: string }) {
   const [loi, setLoi] = useState(false);
-  const nguon = loi && duPhong ? duPhong : src;
+  // Thẻ dùng BẢN NHỎ `nho/` (không đóng dấu, nhẹ); dấu COASTAL LAND chỉ ở ảnh gốc khi mở xem (chủ dự án 24/10/2026)
+  const nguon = loi && duPhong ? duPhong : src && anhNho(src);
   return (
     <button type="button" onClick={onMo} className={`relative block overflow-hidden bg-cvr-surface ${className}`}>
       {nguon && <Image src={nguon} alt={alt} fill sizes={sizes} loading={dau ? "eager" : "lazy"} fetchPriority={dau ? "high" : undefined} unoptimized={nguon.startsWith("https://i.ytimg.com")} className="object-cover" onError={() => setLoi(true)} onLoad={(e) => { if (duPhong && e.currentTarget.naturalWidth <= 120) setLoi(true); }} />}
@@ -187,11 +189,13 @@ export default function TheTinMobile({ item, terms = [], tuChay = false, pc = fa
   };
 
   // Chỉ báo tin có bao nhiêu ảnh, bao nhiêu video (chủ dự án 09/10/2026) — cùng kiểu với khung ảnh trang tin (DemAnhVideo)
-  const dem = <DemAnhVideo soAnh={soAnh} soVideo={item.soVideo ?? (item.hasVideo ? 1 : 0)} className="absolute bottom-1.5 right-1.5" />;
+  // Góc DƯỚI TRÁI: góc dưới phải là chỗ dấu COASTAL LAND trên ảnh — không che (chủ dự án 24/10/2026)
+  const dem = <DemAnhVideo soAnh={soAnh} soVideo={item.soVideo ?? (item.hasVideo ? 1 : 0)} className="absolute bottom-3 left-3" />;
+  // Huy hiệu = THẺ TREO từ dải màu đỉnh ảnh (cùng màu dải, nhỏ gọn) — chủ dự án 24/10/2026: "màu và huy hiệu đồng nhất, nhỏ lại cho Pro".
   const huyHieu = t !== "basic" && (
     <span
-      className={`pointer-events-none absolute left-2.5 top-2.5 rounded-full px-2 py-[3px] text-[11px] font-semibold uppercase tracking-[0.06em] shadow-[0_2px_10px_rgba(0,0,0,0.28)] ring-1 backdrop-blur-md ${t === "diamond" ? "ring-[#d9b64e]/70" : "ring-white/25"}`}
-      style={{ backgroundColor: `${tier.accent}e6`, color: tier.badgeText }}
+      className={HUY_HIEU_CLS}
+      style={{ backgroundColor: tier.accent, color: tier.badgeText }}
     >
       {tier.short}
     </span>
@@ -200,7 +204,7 @@ export default function TheTinMobile({ item, terms = [], tuChay = false, pc = fa
   // cả web"): thẻ tin dùng ĐÚNG bảng chia sẻ của trang tin (ShareButtons) cho link tin này — điện thoại bật khay chia sẻ của máy
   // (Zalo, Messenger, Facebook…), máy tính mở bảng Zalo · Facebook · Sao chép link. Trước đây thẻ máy tính bấm chỉ lặng lẽ chép link.
   const nutChiaSe = (
-    <ShareButtons title={item.title} duongDan={href} moLen nutCls={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-cvr-ink transition active:scale-95 ${pc ? "border border-cvr-line hover:border-cvr-ink" : "-mr-1.5"}`} />
+    <ShareButtons title={item.title} duongDan={href} moLen nutCls={`flex h-9 w-9 shrink-0 items-center justify-center text-cvr-ink transition active:scale-95 ${pc ? "rounded-xl border border-cvr-line hover:border-cvr-ink" : "rounded-lg"} ${pc ? "" : "-mr-1.5"}`} />
   );
 
   const khungChinh = (khung: string, sizes: string) => (
@@ -262,7 +266,7 @@ export default function TheTinMobile({ item, terms = [], tuChay = false, pc = fa
 
   // Hàng người đăng ĐIỆN THOẠI gọn, cân với chữ phía trên (chủ dự án 23/10/2026): ảnh 32px · tên 14px · ngày 12px · Thích, Chia sẻ
   // chỉ biểu tượng (không khung viền), vùng bấm vẫn 36px. Máy tính giữ cỡ cũ + khung viền (hàng nút 40px).
-  const oCls = `flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-cvr-ink transition active:scale-95 ${pc ? "border border-cvr-line" : ""}`;
+  const oCls = `flex h-9 w-9 shrink-0 items-center justify-center text-cvr-ink transition active:scale-95 ${pc ? "rounded-xl border border-cvr-line" : "rounded-lg"}`;
   const nutThich = (
     <button type="button" aria-label={daLuu ? "Bỏ yêu thích" : "Yêu thích"} aria-pressed={daLuu} onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggle(item.id); }} className={`${oCls} ${daLuu ? "text-red-500" : ""}`}>
       <svg className="h-5 w-5" viewBox="0 0 24 24" fill={daLuu ? "currentColor" : "none"} stroke="currentColor" strokeWidth={1.8} aria-hidden>
@@ -336,22 +340,23 @@ export default function TheTinMobile({ item, terms = [], tuChay = false, pc = fa
             hienSo
             zaloTruoc
             nhan={item.soDau ? `${item.soDau} ***` : "Hiện số"}
-            soCls="flex min-h-10 shrink-0 py-1.5 items-center gap-1.5 whitespace-nowrap rounded-lg bg-cvr-blue px-3 text-[13px] font-semibold text-white transition active:scale-95"
-            oCls="flex min-h-10 w-11 shrink-0 self-stretch items-center justify-center rounded-lg border border-cvr-line transition active:scale-95"
+            soCls="flex min-h-10 shrink-0 py-1.5 items-center gap-1.5 whitespace-nowrap rounded-xl bg-cvr-blue px-3 text-[13px] font-semibold text-white transition active:scale-95"
+            oCls="flex min-h-10 w-11 shrink-0 self-stretch items-center justify-center rounded-xl border border-cvr-line transition active:scale-95"
           />
         )}
         {nutThich}
         {nutChiaSe}
       </div>
     );
-    // Dải màu cấp nằm SÁT mép trên khung ảnh, bo theo góc ảnh (chủ dự án 20/10/2026).
+    // Dải màu cấp nằm SÁT mép trên khung ảnh, thẻ bo góc 12px và dải màu UỐN THEO góc bo — chủ dự án 24/10/2026.
     const khoiAnh = (
       <div className="relative shrink-0 self-start overflow-hidden rounded-xl">
         {anhPC}
-        {tier.bar && <div className="absolute inset-x-0 top-0 z-10 h-px" style={{ backgroundColor: tier.bar }} aria-hidden />}
+        {tier.bar && <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-3 rounded-t-xl border-x border-t" style={{ borderColor: tier.bar }} aria-hidden />}
         {huyHieu}
       </div>
     );
+    // Khung hình BO GÓC 12px nằm trong thẻ có lề (chủ dự án 24/10/2026: "bo cái khung hình")
     return (
       <article className={`relative flex gap-4 overflow-hidden bg-white p-3 ${tren ? "flex-col" : ""}`}>
         {tren ? (
@@ -359,7 +364,7 @@ export default function TheTinMobile({ item, terms = [], tuChay = false, pc = fa
           <>
             <div className="relative w-full overflow-hidden rounded-xl">
               {anhPC}
-              {tier.bar && <div className="absolute inset-x-0 top-0 z-10 h-px" style={{ backgroundColor: tier.bar }} aria-hidden />}
+              {tier.bar && <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-3 rounded-t-xl border-x border-t" style={{ borderColor: tier.bar }} aria-hidden />}
               {huyHieu}
             </div>
             {/* Chữ gọn cho thẻ VIP thấp lại (cả trang cân đối): thông số và địa chỉ (hệ mới) CHUNG một hàng */}
@@ -369,7 +374,7 @@ export default function TheTinMobile({ item, terms = [], tuChay = false, pc = fa
               {soPC}
               {moTaDong}
             </div>
-            <div className="border-t border-cvr-line pt-3">{cuoiCu}</div>
+            <div>{cuoiCu}</div>
           </>
         ) : (
           <>
@@ -414,9 +419,10 @@ export default function TheTinMobile({ item, terms = [], tuChay = false, pc = fa
   // ── DIAMOND · GOLD · SILVER: ảnh trên, nội dung dưới ──────────────────────
   return (
     <article className="overflow-hidden bg-white">
-      {tier.bar && <div className="h-px w-full" style={{ backgroundColor: tier.bar }} aria-hidden />}
+      {/* Dải màu cấp NẰM TRONG khung ảnh (đè mép trên ảnh), như bản máy tính — không thành đường riêng lộ ra ở khe xám (chủ dự án 24/10/2026) */}
       <div className="relative">
         {khungAnh}
+        {tier.bar && <div className="absolute inset-x-0 top-0 z-10 h-px" style={{ backgroundColor: tier.bar }} aria-hidden />}
         {huyHieu}
       </div>
       <Link href={href} className="block px-3.5 pt-3">

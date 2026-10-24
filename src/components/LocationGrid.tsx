@@ -56,21 +56,23 @@ export default function LocationGrid({ areas = HOME_AREAS_DEFAULT }: { areas?: A
 
   return (
     <section className="section-edge bg-white">
-      <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 sm:py-4 lg:px-8">
+      <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 sm:py-7 lg:px-8">
         <h2 className="text-xl font-semibold text-cvr-ink sm:text-2xl">
           Bất động sản theo khu vực
         </h2>
 
         {/* Mosaic khu vực (ô lõi 2×2 + 4 ô nhỏ) — GIỮ NGUYÊN cấu trúc.
             MOBILE: TRÀN VIỀN sát mép màn hình (-mx-4) · DESKTOP: giữ như cũ. */}
-        <div ref={gridRef} className="-mx-4 mt-4 grid grid-cols-2 gap-1 [grid-auto-rows:8rem] sm:mx-0 sm:mt-5 sm:grid-cols-4 sm:gap-4 sm:[grid-auto-rows:11rem]">
+        {/* GỌN + TỶ LỆ VÀNG (chủ dự án 24/10/2026): 5 ô, ô nhỏ khung 1,618, ô lõi rộng gấp đôi CÙNG chiều cao (3,236 = hai khung vàng).
+            Máy tính: cả 5 ô MỘT hàng, cao hơn chút (ô nhỏ 1,35 · ô lõi 2,7 — chủ dự án 24/10/2026) · điện thoại: ô lõi một hàng + 4 ô nhỏ 2×2. Khe 1px (nhỏ nhất), không viền. */}
+        <div ref={gridRef} className="-mx-4 mt-4 grid grid-cols-2 gap-px sm:mx-0 sm:mt-5 sm:grid-cols-6">
           {shown.map((area, i) => (
             <AreaTile
               key={area.name}
               area={area}
               big={i === 0}          // Đà Nẵng — địa điểm lõi
               running={running}
-              delay={2000 + i * 1000} // chờ rồi mới đổi, lệch nhịp giữa các ô
+              delay={3000 + i * 1400} // chờ rồi mới đổi, lệch nhịp giữa các ô (5 ô không đổi dồn một lúc — 24/10/2026)
             />
           ))}
         </div>
@@ -90,7 +92,7 @@ function AreaTile({ area, big, running, delay }: { area: AreaCard; big: boolean;
     const next = () => setCurrent((n) => (n + 1) % images.length);
     const start = setTimeout(() => {
       next();
-      timer = setInterval(next, 5000);
+      timer = setInterval(next, 7000); // mỗi ảnh đứng 7 giây (trước 5) — 5 ô cùng chạy, chậm lại cho dễ nhìn (24/10/2026)
     }, delay);
     return () => { clearTimeout(start); clearInterval(timer); };
   }, [running, images.length, delay]);
@@ -98,8 +100,8 @@ function AreaTile({ area, big, running, delay }: { area: AreaCard; big: boolean;
   return (
     <Link
       href={duongDanKhuVuc(area)}
-      className={`card-lux group relative overflow-hidden shadow-lux transition-transform hover:-translate-y-1.5 shadow-lux-hover hover:ring-cvr-blue/40 sm:ring-1 sm:ring-black/5 ${
-        big ? "col-span-2 row-span-1 sm:row-span-2" : ""
+      className={`card-lux group relative overflow-hidden transition-transform hover:-translate-y-1 ${
+        big ? "col-span-2 aspect-[3.236] sm:aspect-[2.7]" : "aspect-[1.618] sm:aspect-[1.35]"
       }`}
     >
       <span className="card-sheen z-[3]" aria-hidden />
@@ -109,7 +111,7 @@ function AreaTile({ area, big, running, delay }: { area: AreaCard; big: boolean;
           src={anhNho(asset(src))}
           alt={area.name}
           fill
-          sizes={big ? "(max-width: 1024px) 100vw, 50vw" : "(max-width: 1024px) 50vw, 25vw"}
+          sizes={big ? "(max-width: 640px) 100vw, 34vw" : "(max-width: 640px) 50vw, 17vw"}
           className={`object-cover contrast-[1.04] saturate-[1.06] transition-[opacity,transform] duration-[800ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.08] ${
             k === current ? "opacity-100" : "opacity-0"
           }`}
@@ -117,12 +119,13 @@ function AreaTile({ area, big, running, delay }: { area: AreaCard; big: boolean;
       ))}
       {/* Ảnh giữ nguyên độ nét & độ sáng gốc; chỉ dải chân ô tối dần để chữ nổi rõ.
           (Trước đây ảnh bị đẩy sáng brightness-110 nên chữ trắng chìm vào ảnh.) */}
-      <div className="absolute inset-x-0 bottom-0 h-1/2 bg-[linear-gradient(to_top,rgba(0,0,0,0.72)_0%,rgba(0,0,0,0.42)_34%,rgba(0,0,0,0.12)_68%,rgba(0,0,0,0)_100%)]" />
-      <div className="absolute inset-x-0 bottom-0 p-3.5 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:-translate-y-1 sm:p-5 [text-shadow:0_1px_3px_rgba(0,0,0,0.55)]">
-        <h3 className={`font-semibold leading-tight tracking-[-0.01em] text-white ${big ? "text-xl sm:text-3xl" : "text-base sm:text-xl"}`}>
+      {/* Chữ dễ đọc trên mọi ảnh (chủ dự án 24/10/2026): dải chân ô đậm hơn, cao 60% — ảnh sáng (bãi biển, trời) chữ trắng vẫn nổi */}
+      <div className="absolute inset-x-0 bottom-0 h-3/5 bg-[linear-gradient(to_top,rgba(0,0,0,0.8)_0%,rgba(0,0,0,0.5)_35%,rgba(0,0,0,0.15)_70%,rgba(0,0,0,0)_100%)]" />
+      <div className="absolute inset-x-0 bottom-0 p-2.5 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:-translate-y-1 sm:p-3 [text-shadow:0_1px_4px_rgba(0,0,0,0.6)]">
+        <h3 className={`font-semibold leading-tight tracking-[-0.01em] text-white ${big ? "text-lg sm:text-xl" : "text-[15px] sm:text-base"}`}>
           {area.name}
         </h3>
-        <p className={`mt-1 text-white/85 ${big ? "text-xs sm:text-sm" : "text-[11px] sm:text-xs"}`}>{area.count}</p>
+        <p className="mt-0.5 text-[11px] font-medium text-white/90 sm:text-xs">{area.count}</p>
       </div>
     </Link>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import BieuTuong from "@/components/BieuTuong";
 
 // Nút CHIA SẺ tin — Zalo · Facebook · khay chia sẻ của máy · sao chép link.
 // Ưu tiên MOBILE: bấm là hiện bảng chọn đủ lớn để chạm bằng ngón tay (44px),
@@ -109,9 +110,7 @@ export default function ShareButtons({ title, duongDan, nutCls, moLen }: { title
         aria-label="Chia sẻ tin này"
         className={nutCls ?? "inline-flex min-h-[36px] min-w-[36px] shrink-0 items-center justify-center gap-1.5 rounded-full border border-cvr-line bg-white px-2.5 text-[13px] font-semibold text-cvr-body transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:-translate-y-0.5 hover:border-cvr-ink hover:text-cvr-ink sm:px-3.5"}
       >
-        <svg className="h-[17px] w-[17px]" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M8.7 10.7a3 3 0 100 2.6m0-2.6l6.6-3.4m-6.6 6l6.6 3.4M18 8a3 3 0 100-6 3 3 0 000 6zm0 14a3 3 0 100-6 3 3 0 000 6z" />
-        </svg>
+        <BieuTuong ten="chiaSe" className="h-[19px] w-[19px]" />
         {/* Điện thoại chỉ biểu tượng (21/10/2026): hàng hạng tin · mã tin · Chia sẻ không vỡ dòng khi máy để chữ to (Zalo, Facebook) */}
         {!nutCls && <span className="hidden sm:inline">Chia sẻ</span>}
       </button>

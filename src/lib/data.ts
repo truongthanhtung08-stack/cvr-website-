@@ -149,6 +149,9 @@ export type Article = {
   category: string;
   image: string;
   content?: string[];
+  // Ngày dạng ISO cho Google (JSON-LD datePublished / dateModified) — date ở trên là dạng hiển thị dd/mm/yyyy
+  ngayDangIso?: string;
+  ngaySuaIso?: string;
 };
 
 export const articles: Article[] = [

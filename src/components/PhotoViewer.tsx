@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import MapPaneMo from "@/components/MapPaneMo";
 import { useSaved } from "@/lib/useSaved";
 import { anhToiUu, beRongManHinh } from "@/lib/anhToiUu";
+import BieuTuong from "@/components/BieuTuong";
 import { khoaCuon, useNutQuayLai } from "@/lib/khoaCuon";
 
 // ============================================================================
@@ -332,9 +333,7 @@ export default function PhotoViewer({
             onClick={(e) => { e.stopPropagation(); chiaSe(); }}
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white active:bg-white/15"
           >
-            <svg className="h-[22px] w-[22px]" fill="none" stroke="currentColor" strokeWidth={1.9} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 12v7a2 2 0 002 2h12a2 2 0 002-2v-7M16 6l-4-4-4 4M12 2v14" />
-            </svg>
+            <BieuTuong ten="chiaSe" className="h-[22px] w-[22px]" />
           </button>
 
           {listingId && (
@@ -345,7 +344,7 @@ export default function PhotoViewer({
               className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white active:bg-white/15"
             >
               <svg
-                className={`h-[23px] w-[23px] transition-transform ${daLuu ? "scale-110 text-[#ff3b5c]" : ""}`}
+                className={`h-[23px] w-[23px] transition-transform ${daLuu ? "scale-110 text-red-500" : ""}`}
                 fill={daLuu ? "currentColor" : "none"}
                 stroke="currentColor"
                 strokeWidth={1.9}

@@ -72,6 +72,8 @@ function articleRowToArticle(r: ArticleRow): Article {
     // chứ không qua bộ dựng nội dung, để nguyên là ký hiệu lòi ra ngoài web.
     excerpt: chuThuan(r.excerpt),
     date: fmtDate(r.published_at ?? r.created_at),
+    ngayDangIso: r.published_at ?? r.created_at,
+    ngaySuaIso: r.updated_at,
     category: r.category,
     image: asset(r.image || ARTICLE_PLACEHOLDER),
     ...(content.length ? { content } : {}),

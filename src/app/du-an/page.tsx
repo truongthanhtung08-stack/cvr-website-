@@ -34,7 +34,7 @@ export default async function DuAnPage() {
             projects={xep}
             articles={articles}
             tieuDe="Dự án bất động sản"
-            hero={<Hero banners={projBanners} heightClass="aspect-[2/1] sm:aspect-auto sm:h-[400px]" search={false} />}
+            hero={<Hero banners={projBanners} heightClass="aspect-[2/1] sm:aspect-auto sm:h-[300px]" search={false} />}
           />
         </div>
         <KhuVucLinks base="/du-an" demTheoTinh={demDuAnTheoTinh(projects)} />

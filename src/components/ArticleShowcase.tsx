@@ -30,7 +30,7 @@ export default function ArticleShowcase({
 
   if (articles.length === 0) {
     return (
-      <div className={title ? "mt-14" : undefined}>
+      <div className={title ? "mt-6 sm:mt-14" : undefined}>
         {title && <h2 className="mb-5 text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">{title}</h2>}
         <p className="rounded-xl border border-dashed border-cvr-line bg-cvr-surface px-4 py-8 text-center text-sm text-cvr-muted">
           {emptyNote}
@@ -43,7 +43,7 @@ export default function ArticleShowcase({
   if (expanded) return <ArticleBrowser articles={articles} />;
 
   return (
-    <div className={title ? "mt-14" : undefined}>
+    <div className={title ? "mt-6 sm:mt-14" : undefined}>
       {title && <h2 className="mb-5 text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">{title}</h2>}
 
       {/* SLIDE 8 bài — điện thoại vuốt ngang (ló mép bài sau), máy tính lưới 4 cột */}
@@ -52,7 +52,7 @@ export default function ArticleShowcase({
           <Link
             key={a.slug}
             href={`/tin-tuc/${a.slug}`}
-            className="card-lux group relative flex w-[80%] shrink-0 snap-start flex-col overflow-hidden rounded-none bg-white shadow-lux shadow-lux-hover hover:-translate-y-1.5 sm:w-auto sm:border sm:border-cvr-line"
+            className="card-lux group relative flex w-[80%] shrink-0 snap-start flex-col overflow-hidden rounded-none bg-white shadow-lux shadow-lux-hover hover:-translate-y-1.5 sm:w-auto sm:rounded-xl"
           >
             <span className="card-sheen" aria-hidden />
             <div className="relative aspect-[16/9] w-full overflow-hidden">
@@ -75,7 +75,7 @@ export default function ArticleShowcase({
       </div>
 
       {/* Bấm là ra danh sách theo trang — không có "Thu gọn" */}
-      <div className="mt-6 flex justify-center">
+      <div className="mt-6 flex justify-center sm:mt-8">{/* nội dung → nút 32px như mọi khối (25/10/2026) */}
         <button
           type="button"
           onClick={toggle}

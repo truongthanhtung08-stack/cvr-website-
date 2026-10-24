@@ -23,7 +23,7 @@ export default function PagedArticleList({ articles }: { articles: Article[] }) 
     <div>
       <div className="reveal is-visible cards-stagger divide-y divide-cvr-line/70">
         {items.map((a) => (
-          <Link key={a.slug} href={`/tin-tuc/${a.slug}`} className="group flex flex-col gap-2.5 py-5 first:pt-0 sm:flex-row sm:gap-5">
+          <Link key={a.slug} href={`/tin-tuc/${a.slug}`} className="group flex flex-col gap-2.5 py-5 first:pt-0 last:pb-0 sm:flex-row sm:gap-5">
             <div className="relative aspect-[16/9] w-full shrink-0 overflow-hidden rounded-none bg-cvr-surface sm:aspect-[16/10] sm:w-56 sm:rounded-xl">
               <Image src={a.image} alt={a.title} fill sizes="(max-width:640px) 100vw, 224px" className="object-cover transition-transform duration-[700ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.05]" />
             </div>
@@ -32,7 +32,7 @@ export default function PagedArticleList({ articles }: { articles: Article[] }) 
                 <span className="rounded-full bg-cvr-surface px-2.5 py-0.5 font-medium text-cvr-body">{a.category}</span>
                 <span>{a.date}</span>
               </div>
-              <h3 className="mt-2 clamp-2 min-h-[3em] font-semibold leading-[1.5] text-cvr-ink transition-colors group-hover:text-cvr-blue-ink sm:text-lg">
+              <h3 className="mt-2 clamp-2 font-semibold leading-[1.5] text-cvr-ink transition-colors group-hover:text-cvr-blue-ink sm:text-lg">
                 {a.title}
               </h3>
               <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-cvr-muted">{a.excerpt}</p>

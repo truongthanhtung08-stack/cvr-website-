@@ -48,7 +48,8 @@ export default async function ChoThueTrangPage({ params }: { params: Promise<{ s
       <Header />
       <main className="flex-1 bg-white">
         <ListingBrowser purpose="thue" heading={heading} nguon="thue" ketQuaDau={ketQuaDau} articles={goiNheBaiViet(articles)} duongTrang="/cho-thue" trangDau={n} />
-        <TimKiemPhoBien muc="thue" />
+        {/* Máy tính: cách phân trang đúng 40px như trang 1 (24/10/2026) */}
+        <div className="lg:-mt-10"><TimKiemPhoBien muc="thue" /></div>
       </main>
       <Footer />
     </>

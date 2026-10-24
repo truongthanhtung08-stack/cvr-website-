@@ -21,7 +21,7 @@ export type Tier = {
   tagline: string; // mô tả ngắn
   accent: string; // màu NỀN huy hiệu cấp (trên ảnh)
   badgeText: string; // màu CHỮ trên huy hiệu (Kim Cương = vàng kim trên nền đen)
-  bar: string; // dải nhấn mảnh trên đỉnh thẻ ("" = không có; hiện chỉ Kim Cương)
+  bar: string; // dải nhấn mảnh trên đỉnh thẻ ("" = không có) — CÙNG màu huy hiệu (accent), chủ dự án 24/10/2026
   titleColor: string; // màu tiêu đề tin (đủ tương phản WCAG trên nền trắng); "" = màu mặc định
   uppercase: boolean; // tiêu đề VIẾT HOA (chỉ Diamond & Gold)
   hot: boolean; // hiện icon HOT cạnh tiêu đề (các cấp VIP)
@@ -38,6 +38,12 @@ export type Tier = {
   nhanDien: string; // đặc điểm trực quan theo bảng cơ chế
 };
 
+// HUY HIỆU CẤP — MỘT kiểu cho mọi thẻ (TheTinMobile điện thoại + máy tính, PropertyCard): viên thuốc nhỏ,
+// đứng riêng ở góc trái ảnh (KHÔNG dính vào dải), nền = accent (cùng màu dải). Chủ dự án 24/10/2026:
+// "màu và huy hiệu đồng nhất", "nhỏ lại cho Pro", "không để huy hiệu dính vào", "cỡ đều 3 cấp, chỉ khác màu" (rộng cố định 70px), "kiểu viên thuốc", chữ CĂN GIỮA cả ngang lẫn dọc (bù khoảng giãn chữ ở cuối).
+export const HUY_HIEU_CLS =
+  "pointer-events-none absolute left-3 top-3 z-10 flex h-5 w-[70px] items-center justify-center rounded-full pl-[0.08em] text-[10px] font-bold uppercase leading-none tracking-[0.08em] text-white shadow-[0_1px_4px_rgba(0,0,0,0.3)]";
+
 // Thứ tự cao → thấp: Diamond > Gold > Silver > Basic
 export const tiers: Tier[] = [
   {
@@ -51,7 +57,7 @@ export const tiers: Tier[] = [
   {
     id: "gold", name: "CVR Gold", short: "Gold",
     tagline: "Hiển thị nổi bật — hệ số tiếp cận X15",
-    accent: "#b8860b", badgeText: "#ffffff", bar: "#d9b84e", titleColor: "", uppercase: true, hot: true, rank: 1,
+    accent: "#b8860b", badgeText: "#ffffff", bar: "#b8860b", titleColor: "", uppercase: true, hot: true, rank: 1,
     heSo: 15, heSoText: "X15",
     viTri: "Ngay dưới tầng CVR Diamond, trong nửa trên màn hình đầu tiên",
     nhanDien: "Dải nhấn vàng, huy hiệu nhận diện, tiêu đề VIẾT HOA, 2 dòng mô tả",
@@ -59,7 +65,7 @@ export const tiers: Tier[] = [
   {
     id: "silver", name: "CVR Silver", short: "Silver",
     tagline: "Tiết kiệm hiệu quả — hệ số tiếp cận X8",
-    accent: "#2f5d84", badgeText: "#ffffff", bar: "#7ea6c8", titleColor: "", uppercase: false, hot: true, rank: 2,
+    accent: "#2f5d84", badgeText: "#ffffff", bar: "#2f5d84", titleColor: "", uppercase: false, hot: true, rank: 2,
     heSo: 8, heSoText: "X8",
     viTri: "Tiếp dưới nhóm CVR Gold, trước phân khúc CVR Basic",
     nhanDien: "Dải nhấn xanh, nhãn phân biệt, tiêu đề in đậm, 1 dòng mô tả",
@@ -219,5 +225,21 @@ export function getPackage(slug: string): Pkg | undefined {
 // CÔNG CỤ ĐÃ CÓ NỘI DUNG THẬT (SEO 15/10/2026 — "không đạt thì không index"). Trang công cụ còn
 // khối "Nội dung đang được cập nhật" là trang mỏng: noindex + không vào sitemap cho tới khi công cụ
 // chạy thật / có dữ liệu thật. Làm xong công cụ nào thì thêm slug đó vào đây.
-export const CONG_CU_DA_CO_NOI_DUNG: string[] = ["tinh-lai-suat-vay"];
+export const CONG_CU_DA_CO_NOI_DUNG: string[] = ["tinh-lai-suat-vay", "gia-nha-dat"];
+
+// MENU TIỆN ÍCH — các mục chủ dự án chốt 25/10/2026, XẾP THEO HÀNH TRÌNH NGƯỜI MUA (giống menu chính: người tìm nhà trước,
+// phần cho người bán/môi giới cuối): tìm hiểu giá → thị trường → so sánh → tính khoản vay → pháp lý → phong thủy → môi giới → Chuyên gia (cuối cùng, chủ dự án 25/10/2026).
+// Mục ở trang khác (So sánh → /so-sanh, Chuyên gia → /chuyen-gia, Dành cho môi giới → /chuyen-gia/dang-ky) bấm là chuyển thẳng tới trang đó.
+// Không gói dịch vụ, không báo giá. Dùng chung cho menu (PC + điện thoại) và hàng chọn trên trang tiện ích.
+// Mục chưa có nội dung: trang vẫn noindex (trangTienIchDat).
+export const TIEN_ICH: { slug: string; label: string; href: string }[] = [
+  { slug: "gia-nha-dat", label: "Giá đất", href: "/tien-ich/gia-nha-dat" },
+  { slug: "bao-cao-thi-truong-bds", label: "Báo cáo thị trường Bất động sản", href: "/tien-ich/bao-cao-thi-truong-bds" },
+  { slug: "so-sanh-nha-dat", label: "So sánh nhà đất", href: "/so-sanh" },
+  { slug: "tinh-lai-suat-vay", label: "Tính lãi suất vay", href: "/tien-ich/tinh-lai-suat-vay" },
+  { slug: "thu-vien-phap-luat", label: "Thư viện pháp luật", href: "/tien-ich/thu-vien-phap-luat" },
+  { slug: "xem-phong-thuy", label: "Phong thủy", href: "/tien-ich/xem-phong-thuy" },
+  { slug: "danh-cho-moi-gioi", label: "Dành cho môi giới", href: "/chuyen-gia/dang-ky" },
+  { slug: "chuyen-gia", label: "Chuyên gia", href: "/chuyen-gia" },
+];
 export const trangTienIchDat = (p: { slug: string; kind?: string }) => p.kind !== "tool" || CONG_CU_DA_CO_NOI_DUNG.includes(p.slug);

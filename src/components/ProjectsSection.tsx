@@ -52,8 +52,8 @@ export default function ProjectsSection({ projects, articles = [] }: { projects:
   if (projects.length === 0 || hidden) return null;
 
   return (
-    <section className="section-edge bg-cvr-surface">
-      <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 sm:py-4 lg:px-8">
+    <section className="section-edge bg-cvr-surface sm:bg-white">{/* Máy tính: nền trắng như mọi khối trang chủ (chủ dự án 24/10/2026: "đồng nhất cả nền") */}
+      <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 sm:py-7 lg:px-8">
         {/* Mở danh sách rồi thì ẩn tiêu đề khối — danh sách đã có tiêu đề riêng */}
         {!expanded && (
           <h2 className="text-xl font-semibold text-cvr-ink sm:text-2xl">
@@ -115,7 +115,7 @@ export default function ProjectsSection({ projects, articles = [] }: { projects:
                     <Link
                       key={p.name}
                       href={`/du-an/${p.slug}`}
-                      className="card-lux group relative flex flex-col overflow-hidden rounded-none border-0 bg-white shadow-lux hover:-translate-y-2 hover:border-cvr-blue/45 shadow-lux-hover sm:border sm:border-cvr-line"
+                      className="card-lux group relative flex flex-col overflow-hidden rounded-none border-0 bg-white shadow-lux hover:-translate-y-2 shadow-lux-hover"
                     >
                       <span className="card-sheen" aria-hidden />
                       <div className="relative aspect-[3/2] overflow-hidden sm:aspect-[4/3]">
@@ -174,7 +174,7 @@ export default function ProjectsSection({ projects, articles = [] }: { projects:
         </div>
 
         {/* Hàng cuối: chấm chuyển slide (giữa) — "Xem tất cả" (phải). Mobile ẩn (đã có nút Xem thêm). */}
-        <div className="relative mt-4 hidden items-center justify-center sm:mt-6 sm:flex">
+        <div className="relative mt-4 hidden items-center justify-center sm:flex">
           {totalSlides > 1 && (
             <div className="flex gap-2">
               {Array.from({ length: totalSlides }).map((_, i) => (
@@ -193,10 +193,11 @@ export default function ProjectsSection({ projects, articles = [] }: { projects:
         </div>{/* hết khối slide */}
 
         {/* Bấm "Xem thêm" → danh sách TẤT CẢ dự án dạng List, 8 dự án/trang */}
-        {expanded && <ProjectsBrowser projects={ranked} articles={articles} />}
+        {/* Mở ra: cách khối sau đúng 56px như mọi khối trang chủ máy tính (24/10/2026) */}
+        {expanded && <div className="sm:pb-4"><ProjectsBrowser projects={ranked} articles={articles} /></div>}
 
         {ranked.length > 0 && (
-          <ExpandToggle expanded={expanded} onClick={toggle} />
+          <div className="sm:-mt-4"><ExpandToggle expanded={expanded} onClick={toggle} /></div>
         )}
       </div>
     </section>

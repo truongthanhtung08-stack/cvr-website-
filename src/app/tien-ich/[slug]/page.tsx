@@ -6,7 +6,7 @@ import Footer from "@/components/Footer";
 import LeadForm from "@/components/LeadForm";
 import TraCuuGiaDat from "@/components/TraCuuGiaDat";
 import TinhLaiVay from "@/components/TinhLaiVay";
-import { packages, utilityTools, getPackage, tiers, trangTienIchDat } from "@/lib/packages";
+import { packages, utilityTools, getPackage, tiers, trangTienIchDat, TIEN_ICH } from "@/lib/packages";
 import { getBilling, getQuyDinhGia } from "@/lib/siteContent";
 import { bangTheoMucDich } from "@/lib/billing";
 import BangGiaGoiTin from "@/components/BangGiaGoiTin";
@@ -63,11 +63,11 @@ export default async function PackagePage({ params }: { params: Promise<{ slug: 
           {/* Thanh chọn gói (giống Homedy) */}
           <div className="-mx-1 mb-8 overflow-x-auto">
             <div className="flex gap-2 whitespace-nowrap px-1">
-              {[
-                { slug: "bao-gia-dang-tin", label: "Báo giá dịch vụ", href: "/bao-gia-dang-tin", kind: "service" as const },
-                ...packages.map((pkg) => ({ ...pkg, href: `/tien-ich/${pkg.slug}` })),
-                ...utilityTools.map((tool) => ({ ...tool, href: `/tien-ich/${tool.slug}` })),
-              ].map((item) => {
+              {/* Trang CÔNG CỤ: hàng chọn chỉ gồm các tiện ích (TIEN_ICH, 25/10/2026) — không lẫn báo giá, gói dịch vụ */}
+              {(p.kind === "tool" ? TIEN_ICH : [
+                { slug: "bao-gia-dang-tin", label: "Báo giá dịch vụ", href: "/bao-gia-dang-tin" },
+                ...packages.map((pkg) => ({ slug: pkg.slug, label: pkg.label, href: `/tien-ich/${pkg.slug}` })),
+              ]).map((item) => {
                 const active = item.slug === p.slug;
                 return (
                   <Link
@@ -96,25 +96,21 @@ export default async function PackagePage({ params }: { params: Promise<{ slug: 
           </header>
 
           {p.kind === "tool" ? (
-            <section className="mt-12">
-              <div className="rounded-2xl border border-cvr-line bg-cvr-surface p-8 sm:p-10">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-cvr-gold-ink">Công cụ tiện ích</p>
-                <h2 className="mt-3 text-2xl font-semibold tracking-tight text-cvr-ink">{p.title}</h2>
-                <p className="mt-3 max-w-2xl text-base leading-relaxed text-cvr-muted">{p.description}</p>
+            <section className="mt-8">
+              {/* Công cụ đặt thẳng dưới tiêu đề — bỏ khung viền và tiêu đề lặp lại lần 2 (25/10/2026) */}
+              <div>
                 {/* Giá đất Nhà nước có công cụ tra cứu thật; các tiện ích còn lại
                     vẫn là khối "đang chuẩn bị" cho tới khi có dữ liệu của chúng. */}
                 {slug === "gia-nha-dat" ? (
-                  <div className="mt-6">
+                  <div>
                     <TraCuuGiaDat />
                   </div>
                 ) : slug === "tinh-lai-suat-vay" ? (
-                  <div className="mt-6">
+                  <div>
                     <TinhLaiVay />
                   </div>
                 ) : (
-                  <div className="mt-6 rounded-xl border border-cvr-line bg-white p-5 shadow-[0_1px_10px_rgba(0,0,0,0.05)]">
-                    <p className="text-base font-semibold text-cvr-ink">Nội dung đang được cập nhật.</p>
-                  </div>
+                  <p className="text-base text-cvr-muted">Nội dung đang được cập nhật.</p>
                 )}
               </div>
             </section>
@@ -170,7 +166,8 @@ export default async function PackagePage({ params }: { params: Promise<{ slug: 
             </section>
           )}
 
-          {/* Liên hệ tư vấn */}
+          {/* Liên hệ tư vấn — CHỈ trang gói dịch vụ; trang công cụ tiện ích không có form báo giá (25/10/2026) */}
+          {p.kind !== "tool" && (
           <section id="lien-he" className="mt-14 scroll-mt-28">
             <div className="mx-auto max-w-xl">
               <h2 className="text-center text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">Đăng ký nhận bảng giá &amp; tư vấn</h2>
@@ -181,6 +178,7 @@ export default async function PackagePage({ params }: { params: Promise<{ slug: 
               />
             </div>
           </section>
+          )}
         </div>
       </main>
       <Footer />

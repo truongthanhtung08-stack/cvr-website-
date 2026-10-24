@@ -10,6 +10,7 @@ import AnhDaiDien from "@/components/AnhDaiDien";
 import { signOut } from "@/lib/useAuth";
 import { vnd } from "@/lib/billing";
 import { MUC_TAI_KHOAN } from "@/lib/menuTaiKhoan";
+import BieuTuong, { type TenBieuTuong } from "@/components/BieuTuong";
 
 // ============================================================================
 // KHU VỰC QUẢN LÝ CỦA KHÁCH HÀNG (/tai-khoan) — "trang admin của khách".
@@ -128,32 +129,11 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
   );
 }
 
+// Biểu tượng cột trái khu tài khoản = BỘ CHUNG Phosphor (cùng hình thanh tab người bán, 25/10/2026)
+const MUC_PHOSPHOR: Record<string, TenBieuTuong> = {
+  grid: "tongQuan", doc: "tinDang", users: "khachHang", plus: "dangTin", building: "duAn", heart: "tim", bell: "thongBao",
+  card: "vi", bill: "hoaDon", star: "hoiVien", tag: "baoGia", gear: "caiDat", out: "dangXuat",
+};
 function MucIcon({ name }: { name: string }) {
-  const common = "h-[18px] w-[18px] shrink-0";
-  const props = { fill: "none", stroke: "currentColor", strokeWidth: 1.8, viewBox: "0 0 24 24" } as const;
-  if (name === "grid")
-    return <svg className={common} {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z" /></svg>;
-  if (name === "plus")
-    return <svg className={common} {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14m7-7H5" /></svg>;
-  if (name === "building")
-    return <svg className={common} {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M3 21h18M5 21V5a2 2 0 012-2h6a2 2 0 012 2v16m0-10h2a2 2 0 012 2v8M9 7h2m-2 4h2m-2 4h2" /></svg>;
-  if (name === "heart")
-    return <svg className={common} {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M12 20s-7-4.5-7-9.2A3.8 3.8 0 0 1 12 8a3.8 3.8 0 0 1 7 2.8C19 15.5 12 20 12 20z" /></svg>;
-  if (name === "bell")
-    return <svg className={common} {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5m6 0a3 3 0 11-6 0" /></svg>;
-  if (name === "card")
-    return <svg className={common} {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M5 6h14a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2zm2 9h4" /></svg>;
-  if (name === "bill")
-    return <svg className={common} {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M6 3h12v18l-3-1.8-3 1.8-3-1.8L6 21V3zm3 5h6M9 12h6m-6 4h4" /></svg>;
-  if (name === "star")
-    return <svg className={common} {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5l2.3 4.7 5.2.8-3.8 3.7.9 5.2-4.6-2.4-4.6 2.4.9-5.2L4.5 10l5.2-.8L12 4.5z" /></svg>;
-  if (name === "tag")
-    return <svg className={common} {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M3 11V5a2 2 0 012-2h6l9 9a2 2 0 010 2.83l-5.17 5.17a2 2 0 01-2.83 0L3 11z" /></svg>;
-  if (name === "gear")
-    return <svg className={common} {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M12 15a3 3 0 100-6 3 3 0 000 6z" /><path strokeLinecap="round" strokeLinejoin="round" d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.5v.2a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.6 1.7 1.7 0 00-1.9.4l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.5-1H2.9a2 2 0 110-4H3a1.7 1.7 0 001.6-1.1 1.7 1.7 0 00-.4-1.9l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.9.3H9a1.7 1.7 0 001-1.5V2.9a2 2 0 114 0V3a1.7 1.7 0 001 1.5 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.9V9a1.7 1.7 0 001.5 1h.2a2 2 0 110 4H21a1.7 1.7 0 00-1.5 1z" /></svg>;
-  if (name === "users")
-    return <svg className={common} {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M16 19v-1a4 4 0 00-4-4H7a4 4 0 00-4 4v1M9.5 10a3 3 0 100-6 3 3 0 000 6zM21 19v-1a4 4 0 00-3-3.87M15.5 4.13a3 3 0 010 5.74" /></svg>;
-  if (name === "out")
-    return <svg className={common} {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M15 17l5-5-5-5M20 12H9M12 20H6a2 2 0 01-2-2V6a2 2 0 012-2h6" /></svg>;
-  return <svg className={common} {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 4H7a2 2 0 01-2-2V6a2 2 0 012-2h7l5 5v11a2 2 0 01-2 2z" /></svg>;
+  return <BieuTuong ten={MUC_PHOSPHOR[name] ?? "quanTri"} className="h-[18px] w-[18px] shrink-0" />;
 }

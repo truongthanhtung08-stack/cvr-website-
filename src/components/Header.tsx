@@ -5,8 +5,9 @@ import Link from "next/link";
 import BrandLogo from "@/components/BrandLogo";
 import BackBar from "@/components/BackBar";
 import { resetHomeIfOnHome } from "@/components/HomeExpand";
-import { trangTienIchDat, utilityTools } from "@/lib/packages";
-import { projectCategories, rentCategories, saleCategories } from "@/lib/categories";
+import { TIEN_ICH } from "@/lib/packages";
+import BieuTuong, { type TenBieuTuong } from "@/components/BieuTuong";
+import { rentCategories, saleCategories } from "@/lib/categories";
 import { useSaved } from "@/lib/useSaved";
 import { useAuth, displayName, anhDaiDien, signOut } from "@/lib/useAuth";
 import AnhDaiDien from "@/components/AnhDaiDien";
@@ -15,18 +16,9 @@ import AnhDaiDien from "@/components/AnhDaiDien";
 // dùng để gom danh mục — tránh link cha trỏ trùng một mục con.
 type NavChild = { label: string; href?: string; children?: NavChild[] };
 // icon = path 'd' của SVG (24x24, outline) — hiện bên trái mỗi mục trong menu Mobile (kiểu Batdongsan).
-type NavItem = { label: string; href: string; children?: NavChild[]; icon?: string };
+type NavItem = { label: string; href: string; children?: NavChild[]; icon?: TenBieuTuong };
 
-// Icon cho từng mục menu Mobile (outline, chuẩn Apple)
-const ICONS = {
-  duAn: "M3 21h18M5 21V5a1 1 0 011-1h5a1 1 0 011 1v16M13 21V9a1 1 0 011-1h4a1 1 0 011 1v12M8 7h.01M8 11h.01M8 15h.01M16 12h.01M16 16h.01",
-  muaBan: "M3 11.5L12 4l9 7.5M5 10v9a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1v-9",
-  choThue: "M3 21h18M6 21V7a1 1 0 011-1h4a1 1 0 011 1v14M14 21V11a1 1 0 011-1h3a1 1 0 011 1v10M8.5 9h.01M8.5 13h.01",
-  tinTuc: "M4 5a1 1 0 011-1h10a1 1 0 011 1v14a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM16 8h3a1 1 0 011 1v9a2 2 0 01-2 2M7 8h6M7 12h6M7 16h4",
-  chuyenGia: "M16 20v-1a4 4 0 00-4-4H8a4 4 0 00-4 4v1M10 11a4 4 0 100-8 4 4 0 000 8zM18 8v6M21 11h-6",
-  baoGia: "M7 7h.01M7 3h5a1.99 1.99 0 011.41.59l7 7a2 2 0 010 2.82l-7 7a2 2 0 01-2.82 0l-7-7A1.99 1.99 0 013 12V7a4 4 0 014-4z",
-  tienIch: "M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z",
-};
+// Biểu tượng menu = BỘ CHUNG Phosphor (src/components/BieuTuong.tsx) — cùng hình với thanh tab dưới đáy (25/10/2026)
 
 // Loại hình BĐS trong menu — lấy từ NGUỒN DUY NHẤT `src/lib/categories.ts`,
 // cũng chính là nguồn sinh ra các trang danh mục thật + sitemap. Nhờ vậy menu
@@ -35,26 +27,8 @@ const loaiHinhBan: NavChild[] = saleCategories.map((c) => ({ label: c.label, hre
 const loaiHinhThue: NavChild[] = rentCategories.map((c) => ({ label: c.label, href: `/cho-thue/${c.slug}` }));
 // MENU DỰ ÁN (chủ dự án 16/10/2026): Dự án nổi bật (có gói) tách khỏi Tra cứu dự án toàn quốc.
 // Gọn (chủ dự án 22/10/2026): một trang Dự án duy nhất (dự án có gói đứng đầu) · Theo khu vực · Theo loại hình.
-// Khu vực chỉ định (chủ dự án 22/10/2026: mở hết, đợt này lọc cho đủ thông tin để không trang nào trống).
-// Mở rộng tỉnh mới thì thêm vào đây cùng lần đăng dự án tỉnh đó. Ghi tay slug để menu không kéo cả bộ địa danh
-// vào mã mọi trang (tốc độ).
-const khuVucDuAn = [
-  ["Đà Nẵng", "da-nang"], ["Huế", "hue"], ["Khánh Hòa", "khanh-hoa"], ["Gia Lai", "gia-lai"],
-  ["Lâm Đồng", "lam-dong"], ["Quảng Ngãi", "quang-ngai"], ["Quảng Trị", "quang-tri"],
-];
-const loaiHinhDuAn: NavChild[] = [
-  { label: "Tất cả dự án", href: "/du-an" },
-  { label: "Theo khu vực", children: khuVucDuAn.map(([ten, slug]) => ({ label: ten, href: `/du-an/${slug}` })) },
-  { label: "Theo loại hình", children: projectCategories.map((c) => ({ label: c.label, href: `/du-an/${c.slug}` })) },
-];
+// Dự án: KHÔNG menu con (chủ dự án 25/10/2026) — bấm là vào thẳng trang Dự án, lọc khu vực / loại hình ngay trong trang.
 
-const danhMucChuyenGia: NavChild[] = [
-  { label: "Danh bạ chuyên gia", href: "/chuyen-gia" },
-  { label: "Chuyên gia tại Đà Nẵng", href: "/chuyen-gia/da-nang" },
-  { label: "Chuyên gia tại Huế", href: "/chuyen-gia/hue" },
-  { label: "Sàn giao dịch, công ty BĐS", href: "/chuyen-gia/cong-ty" },
-  { label: "Trở thành chuyên gia", href: "/chuyen-gia/dang-ky" },
-];
 
 // MENU BÁO GIÁ (chủ dự án chốt 01/10/2026): MỌI THỨ VỀ GIÁ vào MỘT menu, trỏ về MỘT trang
 // Báo giá (từng mục là một phần của trang). Công cụ tiện ích tách sang menu Tiện ích.
@@ -63,48 +37,26 @@ const danhMucChuyenGia: NavChild[] = [
 // CÂY MỤC (chủ dự án 22/10/2026 tối: "menu tổng Báo giá, trong có các mục con — bấm vào đâu ra phần ấy, bấm vào tổng ra
 // tổng"): Báo giá → từng gói (bấm ra cả gói) → Bảng giá · Đặc điểm · Quy định của gói đó. Cột menu trái trong trang Báo giá
 // (nhomDichVu) cùng cây này; bảng nào admin duyệt thêm thì cột đó tự có mục.
+// 25/10/2026 (chủ dự án): menu Báo giá CHỈ gồm các dịch vụ ĐANG CÓ bảng giá trên trang Báo giá, mỗi mục bấm ra đúng bảng
+// giá đó — bỏ hết mục con lặt vặt (Bảng giá / Mẫu tin / Đặc điểm / Quy định). Một cột, máy tính và điện thoại như nhau.
+// Admin duyệt thêm bảng giá dịch vụ nào lên trang thì thêm một dòng ở đây.
 const danhMucBaoGia: NavChild[] = [
-  {
-    label: "Gói đăng tin",
-    href: "/bao-gia-dang-tin#bang-gia-tin",
-    children: [
-      { label: "Bảng giá", href: "/bao-gia-dang-tin#gia-goi-tin" },
-      { label: "Mẫu tin hiển thị", href: "/bao-gia-dang-tin#minh-hoa" },
-      { label: "Đặc điểm chi tiết", href: "/bao-gia-dang-tin#dac-diem" },
-      { label: "Quy định", href: "/quy-dinh#quy-dinh-goi-tin" },
-    ],
-  },
-  {
-    label: "Gói đẩy tin",
-    href: "/bao-gia-dang-tin#goi-day-tin",
-    children: [
-      { label: "Bảng giá", href: "/bao-gia-dang-tin#gia-day-tin" },
-      { label: "Quy định", href: "/quy-dinh#quy-dinh-day-tin" },
-    ],
-  },
+  { label: "Gói đăng tin", href: "/bao-gia-dang-tin#bang-gia-tin" },
+  { label: "Gói đẩy tin", href: "/bao-gia-dang-tin#goi-day-tin" },
 ];
-// MENU TIỆN ÍCH — xếp theo chức năng (chủ dự án 16/10/2026). Công cụ chưa có nội dung không hiện
-// (trangTienIchDat) — có dữ liệu thì tự hiện lại; nhóm không còn mục nào thì ẩn cả nhóm.
-const congCu = (slug: string): NavChild[] =>
-  utilityTools.filter((t) => t.slug === slug && trangTienIchDat(t)).map((t) => ({ label: t.label, href: `/tien-ich/${t.slug}` }));
-const danhMucTienIch: NavChild[] = [
-  { label: "Công cụ tính", children: [...congCu("tinh-lai-suat-vay"), ...congCu("so-sanh-nha-dat")] },
-  // Bỏ "Tra cứu dự án" ở đây (22/10/2026): trùng mục Dự án trên menu chính
-  { label: "Tra cứu", children: [...congCu("gia-nha-dat"), ...congCu("thu-vien-phap-luat")] },
-  { label: "Thị trường", children: congCu("bao-cao-thi-truong-bds") },
-  { label: "Phong thủy", children: congCu("xem-phong-thuy") },
-].filter((g) => g.children.length > 0);
+// MENU TIỆN ÍCH (chủ dự án duyệt 25/10/2026): một cột, chỉ công cụ dùng được ngay — danh sách ở packages.ts (TIEN_ICH)
+const danhMucTienIch: NavChild[] = TIEN_ICH.map((t) => ({ label: t.label, href: t.href }));
 
 // Thứ tự menu (chủ dự án duyệt 22/10/2026 — PC trái → phải, điện thoại trên → dưới): người tìm nhà dùng nhiều nhất
-// trước, phần cho người bán cuối (sát nút Đăng tin): Mua bán · Cho thuê · Dự án · Tin tức · Tiện ích · Chuyên gia · Báo giá
+// trước, phần cho người bán cuối (sát nút Đăng tin): Mua bán · Cho thuê · Dự án · Tin tức · Tiện ích · Báo giá
+// (25/10/2026: bỏ "Chuyên gia" khỏi menu chính — chủ dự án; danh bạ chuyên gia nằm trong menu Tiện ích)
 const navItems: NavItem[] = [
-  { label: "Mua bán", href: "/mua-ban", children: loaiHinhBan, icon: ICONS.muaBan },
-  { label: "Cho thuê", href: "/cho-thue", children: loaiHinhThue, icon: ICONS.choThue },
-  { label: "Dự án", href: "/du-an", children: loaiHinhDuAn, icon: ICONS.duAn },
-  { label: "Tin tức", href: "/tin-tuc", icon: ICONS.tinTuc },
-  { label: "Tiện ích", href: "/tien-ich/tinh-lai-suat-vay", children: danhMucTienIch, icon: ICONS.tienIch },
-  { label: "Chuyên gia", href: "/chuyen-gia", children: danhMucChuyenGia, icon: ICONS.chuyenGia },
-  { label: "Báo giá", href: "/bao-gia-dang-tin", children: danhMucBaoGia, icon: ICONS.baoGia },
+  { label: "Mua bán", href: "/mua-ban", children: loaiHinhBan, icon: "muaBan" as const },
+  { label: "Cho thuê", href: "/cho-thue", children: loaiHinhThue, icon: "choThue" as const },
+  { label: "Dự án", href: "/du-an", icon: "duAn" as const },
+  { label: "Tin tức", href: "/tin-tuc", icon: "tinTuc" as const },
+  { label: "Tiện ích", href: "/tien-ich/gia-nha-dat", children: danhMucTienIch, icon: "tienIch" as const },
+  { label: "Báo giá", href: "/bao-gia-dang-tin", children: danhMucBaoGia, icon: "baoGia" as const },
 ];
 
 const chevronDown = (
@@ -240,9 +192,7 @@ function SaveButton() {
       aria-label={count > 0 ? `Tin đã lưu (${count})` : "Tin đã lưu"}
       className="relative flex h-11 w-9 items-center justify-center text-cvr-line transition-colors hover:text-white xl:h-auto xl:w-auto xl:gap-1.5"
     >
-      <svg className="h-[22px] w-[22px] xl:h-[18px] xl:w-[18px]" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 10-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 000-7.78z" />
-      </svg>
+      <BieuTuong ten="tim" className="h-[22px] w-[22px] xl:h-[18px] xl:w-[18px]" />
       {count > 0 && (
         <span className="absolute right-[4px] top-[7px] flex h-[15px] min-w-[15px] items-center justify-center rounded-full bg-[#ff3b30] px-1 text-[9px] font-bold leading-none text-white xl:hidden">
           {count > 9 ? "9+" : count}
@@ -254,15 +204,22 @@ function SaveButton() {
 }
 
 // Menu tài khoản khi đã đăng nhập (avatar + dropdown)
+// MỤC TÀI KHOẢN — MỘT danh sách cho máy tính (menu ảnh đại diện) và điện thoại (đầu menu), khớp khu quản lý.
+// Bỏ "Đăng tin" khỏi danh sách này (25/10/2026): nút Đăng tin đã đứng riêng ở cả hai bản, không lặp.
+const TAI_KHOAN_LINKS: { label: string; href: string }[] = [
+  { label: "Tổng quan", href: "/tai-khoan" },
+  { label: "Tin đăng", href: "/tai-khoan/tin-dang" },
+  { label: "Khách hàng", href: "/tai-khoan/khach-hang" },
+  { label: "Tài khoản", href: "/tai-khoan/ca-nhan" },
+];
+// Điện thoại: hai mục tài khoản ở nhóm cuối menu (Tổng quan = dòng ảnh đại diện, Tin đăng = nút cạnh Đăng tin)
+const TAI_KHOAN_PHU: { label: string; href: string; icon: TenBieuTuong }[] = [
+  { label: "Khách hàng", href: "/tai-khoan/khach-hang", icon: "khachHang" },
+  { label: "Tài khoản", href: "/tai-khoan/ca-nhan", icon: "taiKhoan" },
+];
+
 function AccountMenu({ name, anh, onLogout }: { name: string; anh: string; onLogout: () => void }) {
-  // KHỚP khu quản lý (25/09/2026): đúng các mục chính, cùng tên gọi.
-  const links: { label: string; href: string }[] = [
-    { label: "Tổng quan", href: "/tai-khoan" },
-    { label: "Tin đăng", href: "/tai-khoan/tin-dang" },
-    { label: "Khách hàng", href: "/tai-khoan/khach-hang" },
-    { label: "Đăng tin", href: "/dang-tin" },
-    { label: "Tài khoản", href: "/tai-khoan/ca-nhan" },
-  ];
+  const links = TAI_KHOAN_LINKS;
 
   return (
     <div className="group relative">
@@ -277,7 +234,7 @@ function AccountMenu({ name, anh, onLogout }: { name: string; anh: string; onLog
       <DropdownPanel align="right">
         <div className="mb-1 rounded-xl bg-cvr-surface px-3.5 py-2.5">
           <p className="truncate text-sm font-semibold text-cvr-ink">{name}</p>
-          <p className="text-xs text-cvr-muted">Thành viên COASTAL LAND</p>
+          <p className="text-xs text-cvr-muted">Thành viên</p>
         </div>
         {links.map((child) => (
           <DropdownItem key={child.href} href={child.href} label={child.label} />
@@ -343,45 +300,36 @@ function MobileMenu({
         {/* ── ĐĂNG TIN + (chưa đăng nhập → Đăng nhập/Đăng ký) — đầu menu.
             Kiểu Batdongsan: KHI ĐÃ ĐĂNG NHẬP, tài khoản & avatar nằm ở THANH TRÊN
             (avatar + ♡ + 🔔), KHÔNG lặp lại khối tài khoản trong menu drawer. ── */}
+        {/* CTA ĐẦU MENU — CÙNG MỘT KHUÔN cho hai trạng thái (chủ dự án 25/10/2026: cân đối, dễ nhìn):
+            hàng hai nút bằng nhau cao 44px — trái nút viền (chưa đăng nhập: Đăng nhập · đã đăng nhập: Tin đăng),
+            phải nút xanh "+ Đăng tin". Đã đăng nhập thì thêm MỘT dòng ảnh đại diện + tên phía trên (bấm → Tổng quan).
+            Các mục tài khoản còn lại (Khách hàng, Tài khoản) nằm ở nhóm cuối menu cùng Tin đã lưu · Đăng xuất. */}
         <div className="mb-7">
-          {user ? (
-            // Đã đăng nhập: [ảnh đại diện + tên] → Tổng quan. (Chuông đã bỏ 25/09 — chưa có
-            // thông báo thật thì không đặt chuông giả.)
-            <div className="mb-2 flex items-center gap-2.5">
-              <Link href="/tai-khoan" onClick={onClose} className="flex min-w-0 flex-1 items-center gap-3">
-                <AnhDaiDien url={anhDaiDien(user)} ten={displayName(user)} className="h-9 w-9 bg-white/15 text-[14px] text-white" />
-                <span className="min-w-0 truncate text-[15px] font-semibold text-white">{displayName(user)}</span>
-              </Link>
-            </div>
-          ) : (
-            <div className="mb-2 grid grid-cols-2 gap-2">
-              <Link
-                href="/dang-nhap"
-                onClick={onClose}
-                className="flex min-h-[40px] items-center justify-center rounded-full text-[14px] font-semibold text-white ring-1 ring-inset ring-white/25 transition-colors active:bg-white/10"
-              >
-                Đăng nhập
-              </Link>
-              <Link
-                href="/dang-ky"
-                onClick={onClose}
-                className="flex min-h-[40px] items-center justify-center rounded-full bg-white text-[14px] font-semibold text-cvr-ink transition-transform active:scale-[0.98]"
-              >
-                Đăng ký
-              </Link>
-            </div>
+          {user && (
+            // Ảnh đại diện 40px + tên 16px đậm + dòng phụ "Thành viên" — CÙNG khối tên trong menu ảnh đại diện máy tính (25/10/2026)
+            <Link href="/tai-khoan" onClick={onClose} className="mb-4 flex min-w-0 items-center gap-3">
+              <AnhDaiDien url={anhDaiDien(user)} ten={displayName(user)} className="h-10 w-10 shrink-0 bg-white/15 text-[15px] text-white ring-1 ring-white/20" />
+              <span className="min-w-0">
+                <span className="block truncate text-[16px] font-semibold leading-tight text-white">{displayName(user)}</span>
+                <span className="mt-0.5 block text-[13px] leading-tight text-white/55">Thành viên</span>
+              </span>
+            </Link>
           )}
-
-          <Link
-            href="/dang-tin"
-            onClick={onClose}
-            className="press flex min-h-[42px] items-center justify-center gap-1.5 rounded-full bg-cvr-blue text-[14px] font-semibold text-white"
-          >
-            <svg className="h-[15px] w-[15px]" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-            </svg>
-            Đăng tin ngay
-          </Link>
+          <div className="grid grid-cols-2 gap-2">
+            <Link href={user ? "/tai-khoan/tin-dang" : "/dang-nhap"} onClick={onClose} className="flex min-h-[44px] items-center justify-center rounded-full text-[15px] font-semibold text-white ring-1 ring-inset ring-white/25 transition-colors active:bg-white/10">
+              {user ? "Tin đăng" : "Đăng nhập"}
+            </Link>
+            <Link
+              href="/dang-tin"
+              onClick={onClose}
+              className="press flex min-h-[44px] items-center justify-center gap-1.5 rounded-full bg-cvr-blue text-[15px] font-semibold text-white"
+            >
+              <svg className="h-[15px] w-[15px]" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
+              Đăng tin
+            </Link>
+          </div>
         </div>
 
         {/* Danh sách menu — KHÔNG dùng đường kẻ phân chia (kiểu Apple): phân tách bằng
@@ -405,9 +353,7 @@ function MobileMenu({
                     className="flex min-h-[56px] flex-1 items-center gap-3.5 text-[17px] font-medium text-white"
                   >
                     {item.icon && (
-                      <svg className="h-[22px] w-[22px] shrink-0 text-white/75" fill="none" stroke="currentColor" strokeWidth={1.7} viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
-                      </svg>
+                      <BieuTuong ten={item.icon} className="h-[22px] w-[22px] shrink-0 text-white/75" />
                     )}
                     {item.label}
                   </Link>
@@ -479,9 +425,7 @@ function MobileMenu({
                 className="flex min-h-[56px] items-center gap-3.5 text-[17px] font-medium text-white"
               >
                 {item.icon && (
-                  <svg className="h-[22px] w-[22px] shrink-0 text-white/75" fill="none" stroke="currentColor" strokeWidth={1.7} viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d={item.icon} />
-                  </svg>
+                  <BieuTuong ten={item.icon} className="h-[22px] w-[22px] shrink-0 text-white/75" />
                 )}
                 {item.label}
               </Link>
@@ -494,14 +438,19 @@ function MobileMenu({
             Icon 22px + gap-3.5 để chữ thẳng hàng với các mục menu chính phía trên.
             Tách khỏi menu chính bằng KHOẢNG TRẮNG, không dùng đường kẻ. */}
         <div className="mt-7">
+          {/* Đã đăng nhập: mục tài khoản còn lại — cùng kiểu hàng với Tin đã lưu · Đăng xuất */}
+          {user && TAI_KHOAN_PHU.map((l) => (
+            <Link key={l.href} href={l.href} onClick={onClose} className="flex min-h-[56px] items-center gap-3.5 text-[16px] font-medium text-white/85">
+              <BieuTuong ten={l.icon} className="h-[22px] w-[22px] shrink-0 text-white/60" />
+              {l.label}
+            </Link>
+          ))}
           <Link
             href="/tin-luu"
             onClick={onClose}
             className="flex min-h-[56px] items-center gap-3.5 text-[16px] font-medium text-white/85"
           >
-            <svg className="h-[22px] w-[22px] shrink-0 text-white/60" fill="none" stroke="currentColor" strokeWidth={1.7} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 10-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 000-7.78z" />
-            </svg>
+            <BieuTuong ten="tim" className="h-[22px] w-[22px] shrink-0 text-white/60" />
             Tin đã lưu
           </Link>
           {user && (
@@ -510,9 +459,7 @@ function MobileMenu({
               onClick={() => { onLogout(); onClose(); }}
               className="flex min-h-[56px] w-full items-center gap-3.5 text-left text-[16px] font-medium text-white/60"
             >
-              <svg className="h-[22px] w-[22px] shrink-0 text-white/45" fill="none" stroke="currentColor" strokeWidth={1.7} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 17l5-5-5-5M20 12H9M12 20H6a2 2 0 01-2-2V6a2 2 0 012-2h6" />
-              </svg>
+              <BieuTuong ten="dangXuat" className="h-[22px] w-[22px] shrink-0 text-white/45" />
               Đăng xuất
             </button>
           )}
@@ -571,6 +518,7 @@ export default function Header() {
             {user ? (
               <AccountMenu name={displayName(user)} anh={anhDaiDien(user)} onLogout={signOut} />
             ) : (
+              // Chưa đăng nhập: CHỈ "Đăng nhập" — trang đăng nhập tự lo cả tài khoản mới, không cần nút Đăng ký (chủ dự án 25/10/2026)
               <Link
                 href="/dang-nhap"
                 className="text-sm font-medium text-cvr-line transition-colors hover:text-white"

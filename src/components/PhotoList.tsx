@@ -5,6 +5,7 @@ import Image from "next/image";
 import { khoaCuon, useNutQuayLai } from "@/lib/khoaCuon";
 import GallerySlideVideo from "@/components/GallerySlideVideo";
 import MapPaneMo from "@/components/MapPaneMo";
+import BieuTuong from "@/components/BieuTuong";
 import { useSaved } from "@/lib/useSaved";
 
 // ============================================================================
@@ -59,7 +60,7 @@ function ThanhTuongTac({ listingId, anhSo, dl, capNhat, chiaSe }: { listingId: s
           Bình luận
         </button>
         <button type="button" onClick={chiaSe} className={nut}>
-          <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24" aria-hidden><circle cx="18" cy="5" r="2.5" /><circle cx="6" cy="12" r="2.5" /><circle cx="18" cy="19" r="2.5" /><path strokeLinecap="round" d="M8.2 10.8l7.6-4.4M8.2 13.2l7.6 4.4" /></svg>
+          <BieuTuong ten="chiaSe" className="h-5 w-5" />
           Chia sẻ
         </button>
       </div>
@@ -268,7 +269,7 @@ export default function PhotoList({
             </button>
           )}
           <button type="button" aria-label="Chia sẻ" onClick={chiaSe} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-cvr-ink">
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24" aria-hidden><circle cx="18" cy="5" r="2.5" /><circle cx="6" cy="12" r="2.5" /><circle cx="18" cy="19" r="2.5" /><path strokeLinecap="round" d="M8.2 10.8l7.6-4.4M8.2 13.2l7.6 4.4" /></svg>
+            <BieuTuong ten="chiaSe" className="h-5 w-5" />
           </button>
         </div>
 

@@ -5,7 +5,6 @@ import TimTrangChu from "@/components/TimTrangChu";
 import { goiYTrangChu, tinDem } from "@/lib/goiYTrangChu";
 import Hero from "@/components/Hero";
 import FeaturedListings from "@/components/FeaturedListings";
-import RecentlyViewed from "@/components/RecentlyViewed";
 import ProjectsSection from "@/components/ProjectsSection";
 // import ForYou from "@/components/ForYou"; // TẠM ẨN — chờ chốt vị trí đặt lại (component vẫn còn)
 import LocationGrid from "@/components/LocationGrid";
@@ -14,7 +13,7 @@ import NewsSection from "@/components/NewsSection";
 // import AppDownload from "@/components/AppDownload";   // thay bằng AdBannerApp (mẫu Apple) — khôi phục nếu cần
 import Footer from "@/components/Footer";
 import TimKiemPhoBien from "@/components/TimKiemPhoBien";
-import { HomeExpandProvider, HomeCollapsible } from "@/components/HomeExpand";
+import { HomeExpandProvider, HomeCollapsible, AnKhiMo } from "@/components/HomeExpand";
 import { getListings, getListingsThe } from "@/lib/listingsDb";
 import { chonTinTrangChu } from "@/lib/tinNoiBat";
 import { getArticles, getProjects } from "@/lib/contentDb";
@@ -75,8 +74,8 @@ export default async function Home() {
               Không bọc Reveal: Reveal ẩn/hiện theo cuộn sẽ đá nhau với cơ chế mở rộng. */}
           {/* Chỉ chở đúng số tin khối này hiện (20 tin mỗi tab) — 16/10/2026, trang chủ 632KB */}
           <FeaturedListings items={chonTinTrangChu(listings)} />
-          {/* Bất động sản đã xem — ngay dưới khối nổi bật, chỉ hiện với khách đã từng xem tin (chủ dự án 23/10/2026) */}
-          <RecentlyViewed trangChu />
+          {/* "Bất động sản đã xem" ĐÃ BỎ khỏi trang chủ (chủ dự án 24/10/2026) — chỉ giữ ở trang tin: khách mới không thấy,
+              hiện sau khi tải nên xô trang, chiếm vị trí số 2 */}
           <ProjectsSection projects={duAnThe} articles={baiThe} />
           {/* "Dành riêng cho bạn" TẠM ẨN theo yêu cầu — mở lại: bỏ comment import ForYou + khối này.
           <ForYou /> */}
@@ -87,12 +86,14 @@ export default async function Home() {
             const tp = ten ? THANH_PHO.find((t) => t.name === ten) : undefined;
             return tp ? { ...a, href: `/mua-ban/${slugKhuVuc(tp.tinh)}/${tp.slug}` } : a;
           })} />
-          <NewsSection articles={baiThe} featuredSlug={featuredSlug} />
-
-        </HomeExpandProvider>
+          {/* Tìm kiếm phổ biến (từ khoá nhà đất) ĐẶT NGAY DƯỚI khối khu vực, KHÔNG nằm dưới Tin tức (chủ dự án 25/10/2026).
+              Cách khối trên và khối dưới đúng như mọi khối (máy tính 56 · điện thoại 24): lề đáy riêng của khối được bù bằng -mb.
+              Đang mở danh sách Tin tức thì ẩn; khối khác đang mở thì nó là khối cuối trang → giữ lề đáy tới footer. */}
+          <AnKhiMo khoa="tin-tuc" className="mt-1 -mb-9 sm:mt-1 sm:-mb-7" classKhiMo="mt-1 sm:mt-1"><TimKiemPhoBien /></AnKhiMo>
+          {/* Tin tức là khối CUỐI trang chủ → cuoiTrang: cách footer đúng chuẩn (máy tính 56 · điện thoại 48) */}
+          <NewsSection articles={baiThe} featuredSlug={featuredSlug} cuoiTrang />
         {/* Kế hoạch Airbnb GĐ A — docs/KE-HOACH-AIRBNB.md */}
-        {/* Cách khối trên ĐÚNG như mọi khối trang chủ: máy tính 32px · điện thoại 24px (23/10/2026) */}
-        <div className="mt-1 sm:-mt-2"><TimKiemPhoBien /></div>
+        </HomeExpandProvider>
       </main>
       <Footer />
     </>

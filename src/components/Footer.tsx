@@ -5,7 +5,7 @@ import Link from "next/link";
 import BrandLogo from "@/components/BrandLogo";
 import { docRest } from "@/lib/supabase/nap";
 import { FOOTER_DEFAULT, type FooterData } from "@/lib/siteContent";
-import { PHAP_LY, MIEN_TRU, DONG_GIAY_PHEP } from "@/lib/phapLy";
+import { PHAP_LY, DONG_GIAY_PHEP } from "@/lib/phapLy";
 import { ZALO_OA_URL } from "@/lib/lienHe";
 
 // Đường dẫn icon SVG theo tên mạng xã hội (link do admin nhập, icon giữ trong code).
@@ -87,6 +87,8 @@ const columns = [
   },
   {
     title: "Khu vực",
+    // Điện thoại: trải ngang hết bề rộng, các tỉnh nối nhau thành 2–3 hàng thay vì 9 dòng dọc (24/10/2026).
+    ngang: true,
     // ⚠️ TRỎ VÀO TRANG KHU VỰC THẬT (/mua-ban/da-nang), KHÔNG dùng ?tinh=Đà Nẵng.
     // Sửa ngày 18/09/2026. Trước đây cả 9 dòng này đều trỏ /mua-ban?tinh=<tên tỉnh>,
     // mà footer thì có mặt trên MỌI trang — nghĩa là:
@@ -112,18 +114,7 @@ const columns = [
   },
 ];
 
-// Dải pháp lý cuối footer — cấu trúc rút gọn theo chuẩn chung của Batdongsan /
-// Homedy, giữ đúng vị thế CỔNG THÔNG TIN của Coastal Land.
-// 👉 Nội dung (ĐKKD, MST, người chịu trách nhiệm, địa chỉ) nằm ở src/lib/phapLy.ts.
-
-// Hàng liên kết pháp lý cuối cùng (gọn, 1 dòng) — giống dải cuối của các sàn lớn.
-const LINK_PHAP_LY = [
-  { label: "Điều khoản thoả thuận", href: "/dieu-khoan" },
-  { label: "Chính sách bảo mật", href: "/bao-mat" },
-  { label: "Quy chế hoạt động", href: "/quy-che" },
-  { label: "Quy định đăng tin", href: "/quy-dinh" },
-  { label: "Góp ý, báo lỗi", href: "/gop-y" },
-];
+// 👉 Nội dung pháp lý (ĐKKD, MST, người chịu trách nhiệm, địa chỉ) nằm ở src/lib/phapLy.ts.
 
 export default function Footer() {
   // Tải nội dung footer từ Supabase (admin sửa được); chưa có → dùng mặc định.
@@ -151,37 +142,47 @@ export default function Footer() {
             <p className="mt-3 text-sm font-semibold text-cvr-ink">
               {f.tagline}
             </p>
-            <p className="mt-3 max-w-sm text-sm leading-relaxed text-cvr-muted">
+            <p className="mt-2 max-w-sm text-sm leading-relaxed text-cvr-muted">
               {f.description}
             </p>
 
-            <ul className="mt-6 space-y-2.5 text-sm text-cvr-body">
-              <li className="flex items-center gap-2.5">
-                <svg className="h-4 w-4 text-cvr-faint" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.95.68l1.5 4.5a1 1 0 01-.5 1.21l-2.26 1.13a11 11 0 005.52 5.52l1.13-2.26a1 1 0 011.21-.5l4.5 1.5a1 1 0 01.68.95V19a2 2 0 01-2 2h-1C9.72 21 3 14.28 3 6V5z" /></svg>
-                Hỗ trợ kỹ thuật: <span className="font-semibold text-cvr-ink">{f.hotline}</span>
-              </li>
-              <li className="flex items-center gap-2.5">
-                <svg className="h-4 w-4 text-cvr-faint" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l9 6 9-6M3 8v10a1 1 0 001 1h16a1 1 0 001-1V8M3 8l9-5 9 5" /></svg>
-                {f.email}
-              </li>
-              <li className="flex items-center gap-2.5">
-                <svg className="h-4 w-4 text-cvr-faint" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                {/* ĐỊA CHỈ lấy từ src/lib/phapLy.ts — MỘT nguồn duy nhất cho cả footer,
-                    trang Liên hệ và Quy chế. Trước đây lấy từ Admin nên sửa trong code
-                    không lên được (Admin đè). Xoá diaChiDayDu thì mới quay về ô Admin. */}
+            {/* Thông tin công ty gộp MỘT chỗ, theo thứ tự chủ dự án chốt 24/10/2026:
+                tên công ty (kèm mã số doanh nghiệp) → địa chỉ → điện thoại → email → website. */}
+            <div className="mt-6 text-sm">
+              {/* Tên pháp lý lấy từ phapLy.ts (đúng giấy ĐKKD) — không để admin sửa lệch giấy phép. */}
+              <p className="font-semibold text-cvr-ink">{PHAP_LY.tenCongTy || f.company}</p>
+              {DONG_GIAY_PHEP && <p className="mt-1 text-xs leading-relaxed text-cvr-faint">{DONG_GIAY_PHEP}</p>}
+            </div>
+
+            <ul className="mt-3 space-y-2 text-sm text-cvr-body">
+              <li className="flex items-start gap-2.5">
+                <svg className="mt-0.5 h-4 w-4 shrink-0 text-cvr-faint" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                {/* ĐỊA CHỈ lấy từ src/lib/phapLy.ts — MỘT nguồn cho footer, Liên hệ, Quy chế (Admin không đè). */}
                 {PHAP_LY.diaChiDayDu || f.address}
+              </li>
+              <li className="flex items-center gap-2.5">
+                <svg className="h-4 w-4 shrink-0 text-cvr-faint" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.95.68l1.5 4.5a1 1 0 01-.5 1.21l-2.26 1.13a11 11 0 005.52 5.52l1.13-2.26a1 1 0 011.21-.5l4.5 1.5a1 1 0 01.68.95V19a2 2 0 01-2 2h-1C9.72 21 3 14.28 3 6V5z" /></svg>
+                Hỗ trợ kỹ thuật: <a href={`tel:${f.hotline.replace(/\s/g, "")}`} className="whitespace-nowrap font-semibold text-cvr-ink">{f.hotline}</a>
+              </li>
+              <li className="flex items-center gap-2.5">
+                <svg className="h-4 w-4 shrink-0 text-cvr-faint" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l9 6 9-6M3 8v10a1 1 0 001 1h16a1 1 0 001-1V8M3 8l9-5 9 5" /></svg>
+                <a href={`mailto:${f.email}`} className="hover:text-cvr-ink">{f.email}</a>
+              </li>
+              <li className="flex items-center gap-2.5">
+                <svg className="h-4 w-4 shrink-0 text-cvr-faint" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" strokeWidth={2} /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12h18M12 3a14 14 0 010 18M12 3a14 14 0 000 18" /></svg>
+                <a href="https://coastalland.vn" className="hover:text-cvr-ink">coastalland.vn</a>
               </li>
             </ul>
 
-            {/* Mạng xã hội — icon TO, bấm là nối thẳng tới trang/kênh tương ứng */}
-            <div className="mt-6 flex flex-wrap gap-3.5">
+            {/* Mạng xã hội — bấm là nối thẳng tới trang/kênh tương ứng. Gọn lại 24/10/2026 (chủ dự án): nút 36px, không viền, cả PC + điện thoại */}
+            <div className="mt-5 flex flex-wrap gap-2.5">
               {f.socials.map((s) => {
                 const href = socialHref(s.label, s.href);
-                const box = "flex h-12 w-12 items-center justify-center rounded-full border border-black/10 bg-white shadow-sm transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]";
+                const box = "flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]";
                 const icon = s.label === "Zalo" ? (
-                  <ZaloMark className="h-[26px] w-[26px]" />
+                  <ZaloMark className="h-5 w-5" />
                 ) : (
-                  <svg className="h-6 w-6" fill={SOCIAL_COLORS[s.label] ?? DEFAULT_SOCIAL_COLOR} viewBox="0 0 24 24"><path d={SOCIAL_PATHS[s.label] ?? DEFAULT_SOCIAL_PATH} /></svg>
+                  <svg className="h-[18px] w-[18px]" fill={SOCIAL_COLORS[s.label] ?? DEFAULT_SOCIAL_COLOR} viewBox="0 0 24 24"><path d={SOCIAL_PATHS[s.label] ?? DEFAULT_SOCIAL_PATH} /></svg>
                 );
                 return href ? (
                   <a
@@ -208,11 +209,11 @@ export default function Footer() {
 
           {/* Cột liên kết */}
           {columns.map((col) => (
-            <div key={col.title}>
+            <div key={col.title} className={col.ngang ? "col-span-2 md:col-span-1" : undefined}>
               <h3 className="text-sm font-semibold uppercase tracking-wider text-cvr-ink">
                 {col.title}
               </h3>
-              <ul className="mt-4 space-y-2.5">
+              <ul className={col.ngang ? "mt-4 flex flex-wrap gap-x-5 gap-y-2.5 md:block md:space-y-2.5" : "mt-4 space-y-2.5"}>
                 {col.links.map((link) => (
                   <li key={link.href}>
                     <Link
@@ -228,35 +229,10 @@ export default function Footer() {
           ))}
         </div>
 
-        <div className="mt-8 space-y-2 border-t border-cvr-line pt-6 text-xs leading-relaxed text-cvr-faint">
-          {/* Tên pháp lý lấy từ phapLy.ts (đúng giấy ĐKKD) — không để admin sửa lệch giấy phép.
-              Chưa điền thì mới dùng tên trong phần Nội dung web. */}
-          <p className="font-semibold text-cvr-body">
-            {PHAP_LY.tenCongTy || f.company}
-          </p>
-
-          {/* Bố cục 3 dòng riêng biệt cho dễ đọc (nhất là trên điện thoại):
-              1) giấy phép · 2) địa chỉ trụ sở · 3) LIÊN HỆ CÔNG TY (điện thoại + email).
-              Ô nào trống trong src/lib/phapLy.ts thì dòng đó tự ẩn. */}
-          {DONG_GIAY_PHEP && <p>{DONG_GIAY_PHEP}</p>}
-
-          <p>Địa chỉ: {PHAP_LY.diaChiDayDu || f.address}</p>
-
-          {/* Liên hệ CÔNG TY — bấm gọi / gửi mail được ngay.
-              whitespace-nowrap: số điện thoại có dấu cách ("+84 377 985 036") nên trình duyệt
-              được phép ngắt giữa số → nhìn đứt quãng. Khoá lại để mỗi mục là MỘT khối liền,
-              màn hẹp thì cả cụm xuống dòng nguyên vẹn chứ không vỡ đôi. */}
-          <p className="flex flex-wrap gap-x-3 gap-y-1 text-cvr-body sm:gap-x-6">
-            <span className="whitespace-nowrap">
-              Điện thoại:{" "}
-              <a href={`tel:${f.hotline.replace(/\s/g, "")}`} className="font-medium hover:text-cvr-ink">{f.hotline}</a>
-            </span>
-            <span className="whitespace-nowrap">
-              Email:{" "}
-              <a href={`mailto:${f.email}`} className="font-medium hover:text-cvr-ink">{f.email}</a>
-            </span>
-          </p>
-
+        {/* Dải cuối chỉ còn dòng pháp lý chưa có ở trên + ©. Tên công ty, mã số, điện thoại,
+            email, địa chỉ đã gộp lên khối thông tin công ty; đoạn miễn trừ đã có ở Quy chế,
+            Điều khoản, Câu hỏi thường gặp; hàng liên kết pháp lý trùng hai cột trên (24/10/2026). */}
+        <div className="mt-8 space-y-2 border-t border-cvr-line pt-5 text-xs leading-relaxed text-cvr-faint">
           {PHAP_LY.chiuTrachNhiemNoiDung && (
             <p>Chịu trách nhiệm nội dung: {PHAP_LY.chiuTrachNhiemNoiDung}</p>
           )}
@@ -273,23 +249,8 @@ export default function Footer() {
             </p>
           )}
 
-          {/* Miễn trừ trách nhiệm — giữ đúng vị thế cổng thông tin */}
-          <p className="max-w-4xl pt-1">{MIEN_TRU}</p>
-
-          {/* Hàng liên kết pháp lý */}
-          <nav className="flex flex-wrap items-center gap-x-1.5 gap-y-1 pt-2">
-            {LINK_PHAP_LY.map((l, i) => (
-              <span key={l.href} className="flex items-center gap-1.5">
-                {i > 0 && <span className="text-cvr-line">·</span>}
-                <Link href={l.href} className="transition-colors hover:text-cvr-ink">
-                  {l.label}
-                </Link>
-              </span>
-            ))}
-          </nav>
-
-          <p className="pt-2 text-cvr-muted">
-            © {new Date().getFullYear()} COASTAL LAND · coastalland.vn
+          <p className="text-cvr-muted">
+            © {new Date().getFullYear()} COASTAL LAND
           </p>
         </div>
       </div>

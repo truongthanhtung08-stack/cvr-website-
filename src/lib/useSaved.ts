@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 // Chưa cần đăng nhập — sau này khi có tài khoản sẽ đồng bộ lên Supabase.
 const KEY = "cvr_saved";
 const EVENT = "cvr-saved-change";
+const CAP = 100;
 
 function read(): string[] {
   if (typeof window === "undefined") return [];
@@ -37,7 +38,8 @@ export function useSaved() {
 
   const toggle = useCallback((id: string) => {
     const cur = read();
-    const next = cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id];
+    // Giữ 100 tin lưu GẦN NHẤT — cùng giới hạn "Bất động sản đã xem" (24/10/2026): không giới hạn thì bộ nhớ trình duyệt đầy, trang treo
+    const next = cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id].slice(-CAP);
     localStorage.setItem(KEY, JSON.stringify(next));
     window.dispatchEvent(new Event(EVENT));
     setIds(next);

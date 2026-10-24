@@ -40,7 +40,7 @@ export default function LienKetPseo({ nhom, cau = "", kieuGoogle = false }: { nh
     );
   }
   return (
-    <section className="mx-auto max-w-7xl px-4 pb-10 sm:px-6 lg:px-8">
+    <section className="mx-auto max-w-7xl px-4 pb-10 sm:px-6 lg:px-8 lg:pb-14">
       <div className="space-y-5 rounded-2xl border border-cvr-line bg-white p-5 shadow-lux">
         {nhom.map((g) => (
           <div key={g.tieuDe}>

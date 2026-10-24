@@ -315,7 +315,7 @@ export default function ListingBrowser({
   return (
     // PC: thanh lọc nằm SÁT header, không chừa khoảng trống (file V3 10.08.2026).
     // trangChu: dưới là khối "Tìm kiếm phổ biến" của trang chủ, không phải footer — đáy như mọi khối trang chủ (23/10/2026)
-    <div className={nested ? "pt-1 sm:pt-6" : `mx-auto max-w-7xl px-4 pt-0 sm:px-6 sm:pt-4 lg:px-8 ${trangChu ? "pb-3 sm:pb-4" : "pb-footer"}`}>
+    <div className={nested ? "pt-1 sm:pt-6" : `mx-auto max-w-7xl px-4 pt-0 sm:px-6 sm:pt-4 lg:px-8 ${trangChu ? "pb-0 sm:pb-7" : "pb-footer"}`}>
       {/* ── Phần trên kiểu Homedy (gọn): thanh lọc → tiêu đề + bộ đếm.
            Trang cấp 1 KHÔNG dùng breadcrumb (menu đã chỉ vị trí — chuẩn Apple). ── */}
       {/* Máy tính: thanh tìm gọn trong CỘT TIN bên trái (= lg:col-span-3 của lưới 4 cột, khe 24px), như Batdongsan — chủ dự án 18/10/2026 */}
@@ -451,8 +451,9 @@ export default function ListingBrowser({
               })()}
               {/* MOBILE (< 640px): LUÔN thẻ dọc — ảnh trên, nội dung dưới (thuần CSS,
                   không phụ thuộc JS → chắc chắn đúng trên mọi máy) */}
-              {/* Tràn sát 2 mép màn hình, khe xám mảnh giữa các thẻ — hạn chế viền trắng (chủ dự án 09/10/2026) */}
-              <div className="reveal is-visible cards-stagger -mx-4 grid grid-cols-1 gap-2 bg-cvr-surface sm:hidden">
+              {/* Tràn sát 2 mép màn hình, khe xám giữa các thẻ — hạn chế viền trắng (chủ dự án 09/10/2026);
+                  24/10/2026: khe 10px xám vừa (#e5e5ea — đậm hơn làm chìm dải màu 1px trên thẻ VIP) cho rõ từng tin, thẻ vẫn vuông (cùng chuẩn trang chủ) */}
+              <div className="reveal is-visible cards-stagger -mx-4 grid grid-cols-1 gap-2.5 bg-[#e5e5ea] sm:hidden">
                 {pageItems.flatMap((item, i) => [dongTang(item, i), (
                   // Thẻ theo cấp (chuẩn 09/10/2026, docs/THE-TIN-THEO-CAP.md); tin hết hạn giữ thẻ cũ có nhãn "Tin hết hạn"
                   item.hetHan
@@ -462,11 +463,13 @@ export default function ListingBrowser({
               </div>
               {/* DESKTOP (≥ 640px): MỖI TIN MỘT HÀNG, nội dung đúng thẻ điện thoại theo cấp, khung ảnh theo cấp (TheTinMobile pc, chủ dự án
                   18/10/2026) — trang nào cũng đủ hàng, không ô trống. Tin hết hạn giữ hàng cũ có nhãn "Tin hết hạn". */}
-              <div className="reveal is-visible cards-stagger hidden sm:flex sm:flex-col sm:gap-4">
+              {/* 24/10/2026 (chủ dự án): mỗi tin là khối bo góc 12px, không viền, NỀN TRẮNG như trang chủ máy tính (bóng nhẹ để tách khỏi nền trang),
+                  cách nhau 20px — cùng kiểu các khối lọc bên phải */}
+              <div className="reveal is-visible cards-stagger hidden sm:flex sm:flex-col sm:gap-5">
                 {pageItems.flatMap((item, i) => [dongTang(item, i), (
                   item.hetHan
                     ? <PropertyCard key={khoaThe(item)} item={item} layout="list" showTime terms={chuDam(item.id)} />
-                    : <div key={khoaThe(item)} className="overflow-hidden rounded-xl border border-cvr-line"><TheTinMobile item={item} terms={chuDam(item.id)} pc uuTien={i === 0} /></div>
+                    : <div key={khoaThe(item)} className="overflow-hidden rounded-xl bg-white shadow-lux"><TheTinMobile item={item} terms={chuDam(item.id)} pc uuTien={i === 0} /></div>
                 )])}
               </div>
 
@@ -559,7 +562,8 @@ export default function ListingBrowser({
 // Máy tính giữ nguyên lưới 2 cột.
 function SidebarFilter({ title, children, className = "" }: { title: string; children: React.ReactNode; className?: string }) {
   return (
-    <div className={`rounded-none border border-cvr-line bg-white p-3 shadow-lux lg:p-4 ${className}`}>
+    // Máy tính (chủ dự án 24/10/2026): khối bo góc 12px, không viền, nền trắng + bóng nhẹ như thẻ tin; điện thoại giữ nguyên.
+    <div className={`rounded-none border border-cvr-line bg-white p-3 shadow-lux lg:rounded-xl lg:border-0 lg:p-4 ${className}`}>
       <p className="mb-2 text-sm font-semibold text-cvr-ink lg:mb-2.5">{title}</p>
       <ul className="no-scrollbar -mx-3 flex gap-1.5 overflow-x-auto px-3 lg:mx-0 lg:grid lg:grid-cols-2 lg:overflow-visible lg:px-0">{children}</ul>
     </div>
@@ -572,7 +576,7 @@ function SidebarLink({ active, onClick, count, children }: { active: boolean; on
       <button
         type="button"
         onClick={onClick}
-        className={`flex w-full items-center justify-center gap-1 whitespace-nowrap rounded-md border px-3 py-1.5 text-center text-[12px] transition lg:whitespace-normal lg:px-2 ${
+        className={`flex w-full items-center justify-center gap-1 whitespace-nowrap rounded-md border px-3 py-1.5 text-center text-[12px] transition lg:whitespace-normal lg:rounded-xl lg:px-2 ${
           active
             ? "border-cvr-ink bg-cvr-ink font-semibold text-white"
             : "border-cvr-line bg-cvr-surface text-cvr-body hover:border-cvr-ink hover:text-cvr-ink"

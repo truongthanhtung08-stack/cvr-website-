@@ -38,8 +38,10 @@ export default function KhuVucLinks({
   return (
     // sat: trang Mua bán / Cho thuê — khối "Tìm kiếm phổ biến" ngay dưới đã có đệm trên, cộng dồn từng hở ~150px (18/10/2026)
     // sat + điện thoại: kéo lên sát khối lọc phía trên cho đều 20px (khung danh sách có sẵn 48px đệm đáy) — 21/10/2026
-    <section className={`mx-auto max-w-7xl px-4 ${sat ? "-mt-7 pb-4 lg:mt-0" : "pb-14"} sm:px-6 lg:px-8`}>
-      <div className="rounded-2xl border border-cvr-line bg-white p-5 shadow-lux">
+    // sat + máy tính (24/10/2026): kéo lên 16px để cách phân trang ĐÚNG 40px như mọi khoảng giữa các khối (thẻ → phân trang 40,
+    // khối này → "Tìm kiếm phổ biến" 40); khung bo 12px không viền như thẻ tin.
+    <section className={`mx-auto max-w-7xl px-4 ${sat ? "-mt-7 pb-4 lg:-mt-4" : "pb-14"} sm:px-6 lg:px-8`}>
+      <div className="rounded-2xl border border-cvr-line bg-white p-5 shadow-lux lg:rounded-xl lg:border-0">
         <h2 className="text-base font-semibold tracking-tight text-cvr-ink sm:text-lg">{nhan}</h2>
         <div className="mt-3 flex flex-wrap gap-2">
           {ten.map((t) => {

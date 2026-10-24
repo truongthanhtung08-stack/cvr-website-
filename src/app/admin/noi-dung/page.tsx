@@ -163,7 +163,7 @@ export default function AdminSiteContentPage() {
           Khung ô là NGANG — LocationGrid để ô cao 8rem (điện thoại) / 11rem (máy tính),
           rộng gấp 1,3–2,7 lần chiều cao. Nhãn cũ ghi "ảnh dọc 800×800" là SAI: ảnh vuông
           tải lên sẽ bị cắt cụt trên–dưới. */}
-      <Panel title="Bất động sản theo khu vực (trang chủ)" desc="5 ô · ô ĐẦU hiển thị LỚN (địa điểm nổi bật). Ảnh NGANG tỷ lệ 3:2 · nên 1200 × 800 px">
+      <Panel title="Bất động sản theo khu vực (trang chủ)" desc="5 ô · ô ĐẦU rộng gấp đôi (địa điểm nổi bật): khung 3,236 : 1 · nên 1600 × 494 px. 4 ô còn lại: khung vàng 1,618 : 1 · nên 1600 × 989 px">
         <div className="space-y-4">
           {homeAreas.map((a, i) => (
             <div key={i} className="rounded-xl border border-cvr-line p-4">
@@ -171,7 +171,7 @@ export default function AdminSiteContentPage() {
                 <p className="text-sm font-semibold text-cvr-ink">Ô {i + 1}{i === 0 ? " (lớn — nổi bật)" : ""}</p>
                 <button type="button" onClick={() => delArea(i)} className="text-xs font-medium text-red-600 hover:underline">Xoá</button>
               </div>
-              <ImageField value={a.image} ratio="Ngang 3:2 · 1200×800" onChange={(url) => setArea(i, { image: url })} />
+              <ImageField value={a.image} ratio={i === 0 ? "3,236:1 · 1600×494" : "1,618:1 · 1600×989"} khung={i === 0 ? "aspect-[3.236]" : "aspect-[1.618]"} phu onChange={(url) => setArea(i, { image: url })} />
 
               {/* Ảnh chạy slide thêm — ô khu vực tự đổi ảnh 5 giây/lần */}
               <div className="mt-3">
@@ -179,7 +179,7 @@ export default function AdminSiteContentPage() {
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                   {(a.images ?? []).map((src, k) => (
                     <div key={k}>
-                      <ImageField value={src} ratio="Ngang 3:2 · 1200×800" onChange={(url) => setAreaImg(i, k, url)} />
+                      <ImageField value={src} ratio={i === 0 ? "3,236:1 · 1600×494" : "1,618:1 · 1600×989"} khung={i === 0 ? "aspect-[3.236]" : "aspect-[1.618]"} phu onChange={(url) => setAreaImg(i, k, url)} />
                       <button type="button" onClick={() => delAreaImg(i, k)} className="mt-1 text-xs font-medium text-red-600 hover:underline">Xoá ảnh</button>
                     </div>
                   ))}
@@ -331,7 +331,8 @@ const addBtnCls =
   "rounded-lg border border-dashed border-cvr-line px-4 py-2 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink";
 
 // Ô ảnh: xem trước + nút tải + ghi rõ TỶ LỆ cần dùng.
-function ImageField({ value, ratio, onChange, khung = "aspect-[16/9]" }: { value: string; ratio: string; onChange: (url: string) => void; khung?: string }) {
+// phu: xem trước ĐÚNG như trên web (ảnh lấp kín khung, cắt phần thừa) — để biết ảnh có khớp khung không (24/10/2026)
+function ImageField({ value, ratio, onChange, khung = "aspect-[16/9]", phu = false }: { value: string; ratio: string; onChange: (url: string) => void; khung?: string; phu?: boolean }) {
   const ref = useRef<HTMLInputElement>(null);
   const [up, setUp] = useState(false);
   const [err, setErr] = useState("");
@@ -350,7 +351,7 @@ function ImageField({ value, ratio, onChange, khung = "aspect-[16/9]" }: { value
       <div className={`relative ${khung} w-full overflow-hidden rounded-lg border border-cvr-line bg-cvr-surface`}>
         {value ? (
           /* eslint-disable-next-line @next/next/no-img-element */
-          <img src={asset(value)} alt="" className="h-full w-full object-contain" />
+          <img src={asset(value)} alt="" className={`h-full w-full ${phu ? "object-cover" : "object-contain"}`} />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-xs text-cvr-faint">Chưa có ảnh</div>
         )}

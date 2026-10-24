@@ -48,7 +48,8 @@ export default async function MuaBanTrangPage({ params }: { params: Promise<{ so
       <Header />
       <main className="flex-1 bg-white">
         <ListingBrowser purpose="ban" heading={heading} nguon="ban" ketQuaDau={ketQuaDau} articles={goiNheBaiViet(articles)} duongTrang="/mua-ban" trangDau={n} />
-        <TimKiemPhoBien muc="ban" />
+        {/* Máy tính: cách phân trang đúng 40px như trang 1 (24/10/2026) */}
+        <div className="lg:-mt-10"><TimKiemPhoBien muc="ban" /></div>
       </main>
       <Footer />
     </>

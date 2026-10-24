@@ -72,7 +72,8 @@ export default function ArticleBrowser({ articles }: { articles: Article[] }) {
 
       {/* Cột phải: bài viết được quan tâm — đánh số (kiểu Batdongsan) */}
       <aside className="lg:col-span-1">
-        <div className="sticky top-24 rounded-none border border-cvr-line bg-white p-5 shadow-lux">
+        {/* Máy tính: khối bo 12px, không viền như khối lọc Mua bán (24/10/2026) */}
+        <div className="sticky top-24 rounded-none border border-cvr-line bg-white p-5 shadow-lux lg:rounded-xl lg:border-0">
           <h2 className="text-sm font-semibold tracking-tight text-cvr-ink">Bài viết được quan tâm</h2>
           <div className="mt-1 flex flex-col divide-y divide-cvr-line/70">
             {articles.slice(0, 5).map((a, i) => (
