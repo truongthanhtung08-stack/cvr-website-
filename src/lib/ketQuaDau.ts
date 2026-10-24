@@ -35,8 +35,9 @@ export function goiKetQua(kq: KetQuaLoc): KetQuaLoc {
 export async function ketQuaTrangDau(
   muc: "ban" | "thue",
   macDinh: { initialTypes?: string[]; initialProvince?: string; initialFilters?: Partial<Filters> } = {},
+  trang = 1, // trang 2, 3… dựng sẵn cho /mua-ban/trang/N (24/10/2026 — Google lần theo tới mọi tin)
 ): Promise<KetQuaLoc> {
   const [tatCa, hetHan] = await Promise.all([getListings(), getListingsHetHan()]);
   const tin = tatCa.filter((l) => ((l.purpose ?? "ban") === "thue" ? "thue" : "ban") === muc);
-  return goiKetQua(locDanhSach(tin, hetHan, muc, boLocKhoiDau(emptyFilters(), macDinh), "moi", 1));
+  return goiKetQua(locDanhSach(tin, hetHan, muc, boLocKhoiDau(emptyFilters(), macDinh), "moi", trang));
 }

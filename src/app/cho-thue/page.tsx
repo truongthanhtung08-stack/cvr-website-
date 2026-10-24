@@ -41,7 +41,7 @@ export default async function ChoThuePage() {
       <Header />
       <main className="flex-1 bg-white">
         {/* Trang 1 máy chủ dựng sẵn (lib/ketQuaDau, 21/10/2026) — HTML có tin thật khách nhìn thấy */}
-        <ListingBrowser purpose="thue" heading={`Cho thuê nhà đất ${thangHienTai()}`} nguon="thue" ketQuaDau={ketQuaDau} articles={goiNheBaiViet(articles)} />
+        <ListingBrowser purpose="thue" heading={`Cho thuê nhà đất ${thangHienTai()}`} nguon="thue" ketQuaDau={ketQuaDau} articles={goiNheBaiViet(articles)} duongTrang="/cho-thue" />
         {/* Đường bò tới trang khu vực cho thuê — cùng lý do như ở /mua-ban:
             trang /cho-thue/<tỉnh> chưa có liên kết nội bộ nào trỏ tới. */}
         <KhuVucLinks base="/cho-thue" demTheoTinh={demTheoTinh(tinThue)} sat />

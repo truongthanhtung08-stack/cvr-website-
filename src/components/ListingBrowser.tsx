@@ -51,8 +51,16 @@ export default function ListingBrowser({
   trangChu = false,
   initialTypes,
   initialProvince,
+  duongTrang,
+  trangDau,
 }: {
   heading: string;
+  // PHÂN TRANG THẬT CHO GOOGLE (24/10/2026 — Search Console: 306 trang chưa được ghé; ?trang=N máy chủ trả lại đúng 10 tin
+  // trang 1 nên Google không lần được tới tin trang sau). Có `duongTrang` ("/mua-ban") thì nút số trang là đường dẫn
+  // <duongTrang>/trang/N — trang dựng sẵn ở máy chủ đúng 10 tin của trang đó; khách bấm vẫn đổi trang tại chỗ.
+  duongTrang?: string;
+  // Đang đứng ở /<duongTrang>/trang/N → danh sách mở sẵn trang N (máy chủ đã dựng ketQuaDau đúng trang này).
+  trangDau?: number;
   // Mục đích trang: "ban" = mua bán · "thue" = cho thuê — lọc nguồn tin + danh mục loại hình.
   purpose?: "ban" | "thue";
   // Tin từ Supabase (server truyền xuống) — không truyền thì dùng dữ liệu mẫu.
@@ -161,7 +169,7 @@ export default function ListingBrowser({
   // Trước đây số trang chỉ nằm trong bộ nhớ: khách đang ở trang 3, bấm vào một tin
   // rồi bấm Back là văng về trang 1, phải bấm lại 3 lần. Ghi vào địa chỉ thì bấm
   // Back trình duyệt trả đúng ?trang=3, mà gửi link cho nhau cũng ra đúng trang.
-  const [page, setPage] = useState(() => trangTu(params));
+  const [page, setPage] = useState(() => trangDau ?? trangTu(params));
   // PC 15 tin · điện thoại 10 tin mỗi trang (22/10/2026) — đọc lúc mở trang, cùng lúc đọc địa chỉ (lần gọi lọc đầu đã mang số này)
   const [moiTrang, setMoiTrang] = useState(PER_PAGE);
   // Địa chỉ có ?q, ?trang, ?sapxep… → áp ngay khi trang mở (máy chủ đã dựng sẵn bản không tham số)
@@ -188,7 +196,10 @@ export default function ListingBrowser({
   const goPage = (p: number) => { setPage(p); ghiTrangVaoDiaChi(p); window.scrollTo({ top: 0 }); };
 
   // Đường dẫn ?trang=N cho nút phân trang — Google lần theo để tới tin ở các trang sau.
+  // Không lọc gì thêm (địa chỉ chỉ có ?trang hoặc trống) → dùng đường dẫn phân trang thật <duongTrang>/trang/N.
+  const chiCoTrang = (sp: URLSearchParams) => [...sp.keys()].every((k) => k === "trang");
   const linkTrang = (p: number) => {
+    if (duongTrang && chiCoTrang(params)) return p > 1 ? `${duongTrang}/trang/${p}` : duongTrang;
     const sp = new URLSearchParams(params.toString());
     if (p > 1) sp.set("trang", String(p));
     else sp.delete("trang");
@@ -202,6 +213,14 @@ export default function ListingBrowser({
   function ghiTrangVaoDiaChi(p: number) {
     if (typeof window === "undefined") return;
     const u = new URL(window.location.href);
+    if (duongTrang && chiCoTrang(u.searchParams)) {
+      u.pathname = p > 1 ? `${duongTrang}/trang/${p}` : duongTrang;
+      u.search = "";
+      window.history.replaceState(window.history.state, "", u);
+      return;
+    }
+    // Đang ở /<duongTrang>/trang/N mà khách lọc thêm → về đường dẫn gốc + tham số (bộ lọc áp trên toàn danh sách)
+    if (duongTrang && u.pathname.startsWith(`${duongTrang}/trang/`)) u.pathname = duongTrang;
     if (p > 1) u.searchParams.set("trang", String(p));
     else u.searchParams.delete("trang");
     window.history.replaceState(window.history.state, "", u);

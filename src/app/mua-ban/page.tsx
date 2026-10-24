@@ -43,7 +43,7 @@ export default async function MuaBanPage() {
       <main className="flex-1 bg-white">
         {/* Trang 1 máy chủ dựng sẵn (lib/ketQuaDau, 21/10/2026): HTML có tin thật khách nhìn thấy — thay khung chờ + danh
             sách ẩn chỉ cho Google cũ (KhungChoDanhMuc). */}
-        <ListingBrowser purpose="ban" heading={`Mua bán nhà đất ${thangHienTai()}`} nguon="ban" ketQuaDau={ketQuaDau} articles={goiNheBaiViet(articles)} />
+        <ListingBrowser purpose="ban" heading={`Mua bán nhà đất ${thangHienTai()}`} nguon="ban" ketQuaDau={ketQuaDau} articles={goiNheBaiViet(articles)} duongTrang="/mua-ban" />
         {/* ĐƯỜNG BÒ TỚI TRANG KHU VỰC — khối này trang danh mục con đã dùng từ lâu,
             chỉ trang gốc là chưa có. Đo ngày 18/09/2026: /mua-ban/da-nang và
             /mua-ban/hue bị Google báo "URL is unknown to Google" — chưa từng biết
