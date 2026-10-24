@@ -45,7 +45,7 @@ export default function NewsSection({
   cuoiTrang = false,
 }: {
   articles: Article[];
-  // Khối cuối trang (trang chủ): lề đáy = chuẩn cuối trang thay cho lề giữa các khối
+  // Trang chủ: khi danh sách đang mở, khối này là khối cuối → lề đáy = chuẩn cuối trang thay cho lề giữa các khối
   cuoiTrang?: boolean;
   // Slug bài được GHIM làm tin chính (admin tick trong form bài viết).
   // Không ghim / bài đã xoá → tự lấy bài mới nhất.
@@ -76,7 +76,7 @@ export default function NewsSection({
 
   return (
     <section className="section-edge bg-white">
-      <div className={`mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 ${cuoiTrang ? "pb-12 pt-3 sm:pb-14 sm:pt-7" : "py-3 sm:py-7"}`}>
+      <div className={`mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 ${cuoiTrang && expanded ? "pb-12 pt-3 sm:pb-14 sm:pt-7" : "py-3 sm:py-7"}`}>
         <h2 className="text-xl font-semibold text-cvr-ink sm:text-2xl">Tin nổi bật</h2>
 
         {/* Chưa có bài viết → VẪN giữ khung, chỉ báo trống */}

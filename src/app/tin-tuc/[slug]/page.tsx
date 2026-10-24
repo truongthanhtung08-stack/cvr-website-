@@ -81,16 +81,8 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
           </div>
           <h1 className="mt-3 text-2xl font-semibold leading-tight tracking-tight text-cvr-ink sm:text-[2rem]">{a.title}</h1>
 
-          {/* TÁC GIẢ dưới tiêu đề — chuẩn bài báo (chủ dự án 24/10/2026): biểu tượng + COASTAL LAND (dẫn trang Giới thiệu) · ngày đăng */}
-          <div className="mt-3 flex items-center gap-2 text-[13px] text-cvr-muted">
-            <Link href="/gioi-thieu" className="flex items-center gap-2 font-semibold text-cvr-ink hover:text-cvr-blue-ink">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo/symbol-dark.svg" alt="" width={22} height={22} className="h-[22px] w-[22px]" />
-              Coastal Land
-            </Link>
-            <span aria-hidden>·</span>
-            <time dateTime={a.ngayDangIso}>{a.date}</time>
-          </div>
+          {/* Dưới tiêu đề: thứ, ngày, giờ đăng (giờ Việt Nam) theo lối báo — không ghi tên; tên tác giả nằm cuối bài (chủ dự án 25/10/2026) */}
+          <time dateTime={a.ngayDangIso} className="mt-3 block text-[13px] uppercase text-cvr-muted">{ngayGioDang(a.ngayDangIso) ?? a.date}</time>
 
           {/* Ảnh bìa: không viền; máy tính bo 12px như mọi khung ảnh (24/10/2026) */}
           <div className="relative mt-5 aspect-[16/9] overflow-hidden rounded-none sm:rounded-xl">
@@ -101,10 +93,10 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
             <RichContent paragraphs={content} title={a.title} />
           </div>
 
-          {/* TÁC GIẢ cuối MỌI bài (chủ dự án 25/10/2026: "Tác giả: Coastal Land", không ghi gì thêm) — cùng cỡ chữ nội dung bài, tên dẫn trang Giới thiệu */}
-          <p className="mt-6 text-[15px] leading-relaxed text-cvr-body sm:mt-8">
-            Tác giả: <Link href="/gioi-thieu" className="font-semibold text-cvr-ink hover:text-cvr-blue-ink">Coastal Land</Link>
-          </p>
+          {/* CUỐI MỌI bài: chỉ tên tác giả, chữ không logo, dẫn trang Giới thiệu (chủ dự án 25/10/2026) */}
+          <div className="mt-6 flex sm:mt-8">
+            <Link href="/gioi-thieu" className="text-[13px] font-semibold text-cvr-ink hover:text-cvr-blue-ink">Coastal Land</Link>
+          </div>
         </article>
         </HomeCollapsible>
 
@@ -123,4 +115,15 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
       <Footer />
     </>
   );
+}
+
+// "Chủ nhật, 06/09/2026, 16:43" theo giờ Việt Nam — dòng thời gian dưới tiêu đề bài
+function ngayGioDang(iso?: string) {
+  const d = iso ? new Date(iso) : null;
+  if (!d || isNaN(d.getTime())) return null;
+  const p = Object.fromEntries(
+    new Intl.DateTimeFormat("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", weekday: "long", day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: false })
+      .formatToParts(d).map((x) => [x.type, x.value]),
+  );
+  return `${p.weekday}, ${p.day}/${p.month}/${p.year}, ${p.hour}:${p.minute}`;
 }

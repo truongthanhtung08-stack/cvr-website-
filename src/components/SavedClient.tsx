@@ -1,31 +1,35 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import TheTinMobile from "@/components/TheTinMobile";
-import PhanTrang from "@/components/PhanTrang";
+import ListingShowcase from "@/components/ListingShowcase";
+import { useHomeSection } from "@/components/HomeExpand";
 import { useSaved } from "@/lib/useSaved";
-import { useListingsByIds } from "@/lib/useListingsByIds";
-import { tierRank } from "@/lib/packages";
 import type { Listing } from "@/lib/data";
 
-// Tin đã lưu (24/10/2026, theo quy tắc danh sách Mua bán / Cho thuê): cùng thứ tự cả web, 10 tin mỗi trang + phân trang
-// dùng chung, CÙNG THẺ danh sách (điện thoại: thẻ tràn mép, khe xám · máy tính: thẻ hàng ngang bo 12px).
-const MOI_TRANG = 10;
-
+// Tin đã lưu — CÙNG CẤU TRÚC khối "Bất động sản đã xem" (chủ dự án 25/10/2026): giữ tối đa 100 mã trên máy (useSaved, lưu thêm thì
+// tin lưu cũ nhất tự rơi), xếp theo lưu gần nhất trước, giữ cả tin hết hạn (nhãn "Tin hết hạn"), chỉ tin đã gỡ hẳn mới mất.
+// Hiện: dải trượt 8 tin + "Xem thêm" → danh sách theo trang ĐÚNG các tin đã lưu. Dữ liệu tin THẬT từ /api/danh-sach (CDN lưu sẵn).
 export default function SavedClient() {
   const { ids, ready } = useSaved();
-  const [trang, setTrang] = useState(1);
-  // Tin THẬT lấy từ Supabase theo id đã lưu (id nằm trong máy, tin nằm trên server) — tối đa 100 mã (useSaved), một lần tra.
-  const { items: tra, loading } = useListingsByIds(ids);
-  // MỘT THỨ TỰ CẢ WEB (chốt 23/10/2026, docs/THE-TIN-THEO-CAP.md mục 7.2): cấp trước, cùng cấp theo mốc gần nhất (đẩy / đăng)
-  const ngay = (l: Listing) => Date.parse(l.bumpedAt ?? l.postedAt ?? "") || 0;
-  const tatCa = [...tra].sort((a, b) => tierRank(a.badge) - tierRank(b.badge) || ngay(b) - ngay(a));
-  const tong = Math.max(1, Math.ceil(tatCa.length / MOI_TRANG));
-  const hienTai = Math.min(trang, tong);
-  const items = tatCa.slice((hienTai - 1) * MOI_TRANG, hienTai * MOI_TRANG);
+  const khoa = [...ids].reverse().join(",");
+  const [items, setItems] = useState<Listing[] | null>(null);
+  // Đang mở "Xem thêm": danh sách nằm sát đầu trang như mọi danh sách mở rộng, không chừa khoảng trên
+  const { expanded } = useHomeSection("tin-da-luu");
 
-  if (!ready || loading) {
+  useEffect(() => {
+    if (!khoa) { setItems([]); return; }
+    let huy = false;
+    Promise.all(["ban", "thue"].map((m) => fetch(`/api/danh-sach/${m}`).then((r) => (r.ok ? r.json() : { tin: [] })).catch(() => ({ tin: [] }))))
+      .then((ds: { tin: Listing[]; hetHan?: Listing[] }[]) => {
+        if (huy) return;
+        const theoId = new Map(ds.flatMap((d) => [...d.tin, ...(d.hetHan ?? []).map((l) => ({ ...l, hetHan: true }))]).map((l) => [l.id, l]));
+        setItems(khoa.split(",").map((id) => theoId.get(id)).filter((l): l is Listing => Boolean(l)));
+      });
+    return () => { huy = true; };
+  }, [khoa]);
+
+  if (!ready || items === null) {
     return <p className="mt-8 text-sm text-cvr-muted">Đang tải tin đã lưu…</p>;
   }
 
@@ -49,24 +53,9 @@ export default function SavedClient() {
     );
   }
 
-  const doiTrang = (p: number) => { setTrang(p); window.scrollTo({ top: 0 }); };
-
   return (
-    <>
-      <p className="mt-4 text-sm text-cvr-body">
-        <span className="font-bold text-cvr-ink">{tatCa.length}</span> tin đã lưu
-      </p>
-      {/* ĐIỆN THOẠI: như danh sách Mua bán — thẻ tràn 2 mép, khe xám 10px */}
-      <div className="-mx-4 mt-4 grid grid-cols-1 gap-2.5 bg-[#e5e5ea] sm:hidden">
-        {items.map((item, i) => <TheTinMobile key={item.id} item={item} uuTien={i === 0} />)}
-      </div>
-      {/* MÁY TÍNH: như danh sách Mua bán — mỗi tin một hàng, khối bo 12px nền trắng, cách 20px */}
-      <div className="mt-4 hidden sm:flex sm:flex-col sm:gap-5">
-        {items.map((item, i) => (
-          <div key={item.id} className="overflow-hidden rounded-xl bg-white shadow-lux"><TheTinMobile item={item} pc uuTien={i === 0} /></div>
-        ))}
-      </div>
-      {tong > 1 && <PhanTrang hienTai={hienTai} tong={tong} doiTrang={doiTrang} className="mt-10" />}
-    </>
+    <div className={expanded ? undefined : "mt-6"}>
+      <ListingShowcase items={items} sectionKey="tin-da-luu" heading="Tin đã lưu" relevance khoangTren="" />
+    </div>
   );
 }

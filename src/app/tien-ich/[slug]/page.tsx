@@ -6,7 +6,7 @@ import Footer from "@/components/Footer";
 import LeadForm from "@/components/LeadForm";
 import TraCuuGiaDat from "@/components/TraCuuGiaDat";
 import TinhLaiVay from "@/components/TinhLaiVay";
-import { packages, utilityTools, getPackage, tiers, trangTienIchDat, TIEN_ICH } from "@/lib/packages";
+import { packages, utilityTools, getPackage, tiers, trangTienIchDat } from "@/lib/packages";
 import { getBilling, getQuyDinhGia } from "@/lib/siteContent";
 import { bangTheoMucDich } from "@/lib/billing";
 import BangGiaGoiTin from "@/components/BangGiaGoiTin";
@@ -60,14 +60,14 @@ export default async function PackagePage({ params }: { params: Promise<{ slug: 
       <main className="flex-1 bg-white">
         <div className="mx-auto max-w-7xl px-4 pt-6 pb-footer sm:px-6 lg:px-8">
 
-          {/* Thanh chọn gói (giống Homedy) */}
+          {/* Thanh chọn gói (giống Homedy) — chỉ trang gói dịch vụ. Trang tiện ích KHÔNG có hàng này (chủ dự án 25/10/2026: menu hiện tùm lum, bỏ) */}
+          {p.kind !== "tool" && (
           <div className="-mx-1 mb-8 overflow-x-auto">
             <div className="flex gap-2 whitespace-nowrap px-1">
-              {/* Trang CÔNG CỤ: hàng chọn chỉ gồm các tiện ích (TIEN_ICH, 25/10/2026) — không lẫn báo giá, gói dịch vụ */}
-              {(p.kind === "tool" ? TIEN_ICH : [
+              {[
                 { slug: "bao-gia-dang-tin", label: "Báo giá dịch vụ", href: "/bao-gia-dang-tin" },
                 ...packages.map((pkg) => ({ slug: pkg.slug, label: pkg.label, href: `/tien-ich/${pkg.slug}` })),
-              ]).map((item) => {
+              ].map((item) => {
                 const active = item.slug === p.slug;
                 return (
                   <Link
@@ -85,13 +85,17 @@ export default async function PackagePage({ params }: { params: Promise<{ slug: 
               })}
             </div>
           </div>
+          )}
 
-          {/* Tiêu đề gói */}
+          {/* Tiêu đề gói. Trang tiện ích: tiêu đề cùng cỡ, cùng vị trí như Tin tức, So sánh, Chuyên gia (điện thoại 24 · máy tính 30),
+              không ô biểu tượng phía trên (25/10/2026) */}
           <header className="max-w-2xl">
-            <span className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-cvr-surface text-cvr-ink ring-1 ring-inset ring-cvr-line">
-              <PkgGlyph icon={p.icon} />
-            </span>
-            <h1 className="text-3xl font-semibold leading-tight tracking-tight text-cvr-ink sm:text-4xl">{p.title}</h1>
+            {p.kind !== "tool" && (
+              <span className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-cvr-surface text-cvr-ink ring-1 ring-inset ring-cvr-line">
+                <PkgGlyph icon={p.icon} />
+              </span>
+            )}
+            <h1 className={`font-semibold leading-tight tracking-tight text-cvr-ink ${p.kind === "tool" ? "text-2xl sm:text-3xl" : "text-3xl sm:text-4xl"}`}>{p.title}</h1>
             <p className="mt-3 text-base leading-relaxed text-cvr-muted">{p.description}</p>
           </header>
 

@@ -86,12 +86,12 @@ export default async function Home() {
             const tp = ten ? THANH_PHO.find((t) => t.name === ten) : undefined;
             return tp ? { ...a, href: `/mua-ban/${slugKhuVuc(tp.tinh)}/${tp.slug}` } : a;
           })} />
-          {/* Tìm kiếm phổ biến (từ khoá nhà đất) ĐẶT NGAY DƯỚI khối khu vực, KHÔNG nằm dưới Tin tức (chủ dự án 25/10/2026).
-              Cách khối trên và khối dưới đúng như mọi khối (máy tính 56 · điện thoại 24): lề đáy riêng của khối được bù bằng -mb.
-              Đang mở danh sách Tin tức thì ẩn; khối khác đang mở thì nó là khối cuối trang → giữ lề đáy tới footer. */}
-          <AnKhiMo khoa="tin-tuc" className="mt-1 -mb-9 sm:mt-1 sm:-mb-7" classKhiMo="mt-1 sm:mt-1"><TimKiemPhoBien /></AnKhiMo>
-          {/* Tin tức là khối CUỐI trang chủ → cuoiTrang: cách footer đúng chuẩn (máy tính 56 · điện thoại 48) */}
+          {/* cuoiTrang: khi đang mở danh sách Tin tức thì Tin tức là khối cuối (khối Tìm kiếm phổ biến ẩn) → cách footer đúng chuẩn */}
           <NewsSection articles={baiThe} featuredSlug={featuredSlug} cuoiTrang />
+          {/* Tìm kiếm phổ biến (đường dẫn từ khoá cho Google) ở CUỐI trang chủ, sát footer như Airbnb, Batdongsan — không chen giữa
+              nội dung khách đang xem (chủ dự án 25/10/2026: "đưa xuống cuối trang"). Cách khối trên 56 · 24 như mọi khối, tự có lề
+              đáy tới footer. Đang mở danh sách Tin tức thì ẩn. */}
+          <AnKhiMo khoa="tin-tuc" className="mt-1"><TimKiemPhoBien /></AnKhiMo>
         {/* Kế hoạch Airbnb GĐ A — docs/KE-HOACH-AIRBNB.md */}
         </HomeExpandProvider>
       </main>
