@@ -22,6 +22,10 @@ const BO = new Set(["ban", "mua", "cho", "thue", "nha", "dat", "tai", "duoi", "t
 
 export default function TabTimKiemPhoBien({ tabs }: { tabs: TabLienKet[] }) {
   const [dang, setDang] = useState(0);
+  // THU GỌN (chủ dự án 24/10/2026: "phần này càng ngày càng dài thêm"): mỗi tab hiện 4 hàng — điện thoại 8 · 3 cột 9 ·
+  // máy tính 12 link; còn lại ẩn bằng CSS (vẫn trong HTML cho Google) tới khi bấm "Xem thêm". Đổi tab → thu gọn lại.
+  const [mo, setMo] = useState(false);
+  useEffect(() => { setMo(false); }, [dang]);
   const [tinHieu, setTinHieu] = useState<{ tu: string[]; muc: "ban" | "thue" | null }>({ tu: [], muc: null });
   const pathname = usePathname() || "/";
 
@@ -83,13 +87,24 @@ export default function TabTimKiemPhoBien({ tabs }: { tabs: TabLienKet[] }) {
         ))}
       </div>
       {tabs.map((t, i) => (
-        <div key={t.ten} role="tabpanel" className={`mt-6 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3 lg:grid-cols-4 ${i === dang ? "" : "hidden"}`}>
+        <div key={t.ten} className={i === dang ? "" : "hidden"}>
+        <div role="tabpanel" className={`mt-6 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3 lg:grid-cols-4 ${mo ? "" : "max-sm:[&>*:nth-child(n+9)]:hidden sm:max-lg:[&>*:nth-child(n+10)]:hidden lg:[&>*:nth-child(n+13)]:hidden"}`}>
           {/* Link đúng nơi khách tìm lên đầu (thứ tự trong HTML máy chủ giữ nguyên cho tới khi trang chạy) */}
           {(tinHieu.tu.length ? [...t.links].sort((a, b) => diemLink(b.nhan) - diemLink(a.nhan)) : t.links).map((l) => (
             <Link key={l.href} href={l.href} className="text-sm leading-snug text-cvr-body transition-colors hover:text-cvr-ink hover:underline">
               {l.nhan}
             </Link>
           ))}
+        </div>
+        {t.links.length > 8 && (
+          <button
+            type="button"
+            onClick={() => setMo((v) => !v)}
+            className={`mt-4 text-[14px] font-semibold text-cvr-blue-ink ${t.links.length <= 9 ? "sm:hidden" : ""} ${t.links.length <= 12 ? "lg:hidden" : ""}`}
+          >
+            {mo ? "Thu gọn" : "Xem thêm"}
+          </button>
+        )}
         </div>
       ))}
     </section>
