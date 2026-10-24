@@ -5,7 +5,7 @@ import Link from "next/link";
 import BrandLogo from "@/components/BrandLogo";
 import { docRest } from "@/lib/supabase/nap";
 import { FOOTER_DEFAULT, type FooterData } from "@/lib/siteContent";
-import { PHAP_LY, DONG_GIAY_PHEP } from "@/lib/phapLy";
+import { PHAP_LY } from "@/lib/phapLy";
 import { ZALO_OA_URL } from "@/lib/lienHe";
 
 // Đường dẫn icon SVG theo tên mạng xã hội (link do admin nhập, icon giữ trong code).
@@ -146,15 +146,9 @@ export default function Footer() {
               {f.description}
             </p>
 
-            {/* Thông tin công ty gộp MỘT chỗ, theo thứ tự chủ dự án chốt 24/10/2026:
-                tên công ty (kèm mã số doanh nghiệp) → địa chỉ → điện thoại → email → website. */}
-            <div className="mt-6 text-sm">
-              {/* Tên pháp lý lấy từ phapLy.ts (đúng giấy ĐKKD) — không để admin sửa lệch giấy phép. */}
-              <p className="font-semibold text-cvr-ink">{PHAP_LY.tenCongTy || f.company}</p>
-              {DONG_GIAY_PHEP && <p className="mt-1 text-xs leading-relaxed text-cvr-faint">{DONG_GIAY_PHEP}</p>}
-            </div>
-
-            <ul className="mt-3 space-y-2 text-sm text-cvr-body">
+            {/* Thông tin liên hệ: địa chỉ → điện thoại → email → website. Tên công ty + mã số doanh nghiệp ĐÃ BỎ khỏi chân trang
+                (chủ dự án 25/10/2026) — vẫn hiện ở Quy chế, Điều khoản, Bảo mật, Liên hệ (lấy từ phapLy.ts). */}
+            <ul className="mt-6 space-y-2 text-sm text-cvr-body">
               <li className="flex items-start gap-2.5">
                 <svg className="mt-0.5 h-4 w-4 shrink-0 text-cvr-faint" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                 {/* ĐỊA CHỈ lấy từ src/lib/phapLy.ts — MỘT nguồn cho footer, Liên hệ, Quy chế (Admin không đè). */}
