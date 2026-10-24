@@ -48,6 +48,8 @@ export default function AdminListingsPage() {
       if (status === "da_sua") { if (!(r.status === "approved" && r.details?.da_sua_luc)) return false; }
       else if (status !== "all" && r.status !== status) return false;
       if (!kw) return true;
+      // Mã tin (8 ký tự đầu id, như hiện trên trang tin) + mã đợt nạp (dn13-2410…) — chủ dự án 24/10/2026
+      if (r.id.toLowerCase().startsWith(kw) || String((r.details as { maAnh?: string } | null)?.maAnh ?? "").toLowerCase().includes(kw)) return true;
       return [r.title, r.type, r.ward, r.district, r.province]
         .filter(Boolean)
         .some((v) => (v as string).toLowerCase().includes(kw));
@@ -256,7 +258,7 @@ export default function AdminListingsPage() {
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Tìm theo tiêu đề, loại hình, khu vực…"
+          placeholder="Tìm theo mã tin, tiêu đề, loại hình, khu vực…"
           className="h-10 min-w-[240px] flex-1 rounded-lg border border-cvr-line bg-white px-3 text-sm text-cvr-ink placeholder-cvr-faint outline-none focus:border-cvr-ink"
         />
         <select value={purpose} onChange={(e) => setPurpose(e.target.value as typeof purpose)} className={selCls}>

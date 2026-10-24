@@ -27,6 +27,7 @@ if (!thuMuc || !fs.existsSync(thuMuc)) { console.error("Cần đường dẫn th
 const jiti = createJiti(import.meta.url, { alias: { "@": ROOT + "/src" }, jsx: { runtime: "automatic" } });
 const { docTinTuBang, docTinTuCsv } = await jiti.import(ROOT + "/src/lib/csvTin.ts");
 const { docXlsx } = await jiti.import(ROOT + "/src/lib/docXlsx.ts");
+const { tachTenDuong } = await jiti.import(ROOT + "/src/lib/tenDuong.ts");
 
 const tepBang = fs.readdirSync(thuMuc).find((f) => /^Bang-.*\.(xlsx|csv)$/i.test(f));
 if (!tepBang) { console.error("Không thấy Bang-*.xlsx / .csv"); process.exit(1); }
@@ -84,6 +85,9 @@ for (const r of rows) {
   // ③ bố cục
   if (d.trim().length < 300) ly.push(`mô tả ${d.trim().length} ký tự (< 300)`);
   if (!/\n\s*\n/.test(d)) ly.push("mô tả chưa chia đoạn");
+  // Tên đường: web chỉ nhận ra khi địa chỉ có chữ "đường / kiệt / hẻm / ngõ" (tachTenDuong) — thiếu là tin không vào trang theo đường (24/10/2026)
+  const dc = String(p.details?.addressDetail || "");
+  if (dc && !tachTenDuong(dc)) ly.push(`địa chỉ "${dc}" thiếu chữ "đường" — web không nhận ra tên đường`);
   // Phường, tỉnh trong tiêu đề: tùy tin (chủ dự án 19/10) — chỉ báo khi quá 75 ký tự (Google cắt mất).
   if (t.length > 75) ly.push(`tiêu đề dài ${t.length} ký tự (> 75, Google cắt mất đuôi)`);
   // ④ giá bất thường

@@ -56,7 +56,7 @@ export default function ForYou() {
           </div>
         </div>
         {/* Mobile 1 tin/hàng · tablet 2 · desktop 4 (đồng bộ FeaturedListings) */}
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 items-start gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {items.map((item) => <PropertyCard key={item.id} item={item} />)}
         </div>
       </div>

@@ -344,6 +344,8 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
         // nội bộ, link ảnh gốc… Trước đây mỗi lần sửa tin bằng form là xoá sạch chúng
         // → mất mã ảnh, lần nhập file sau không nhận ra tin cũ nên đăng trùng.
         ...(initial?.details ?? {}),
+        // Đăng từ form = đã duyệt → bỏ cờ "chờ chủ duyệt" của tin nạp, kẻo tin đã lên web vẫn nằm ở trang Duyệt tin nạp (24/10/2026)
+        ...(asDraft ? {} : { choChuDuyet: undefined, deXuat: undefined }),
         specs: Object.fromEntries(Object.entries(specValues).filter(([, v]) => v && v.trim())),
         interior,
         amenities,

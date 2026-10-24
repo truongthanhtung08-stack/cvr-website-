@@ -157,7 +157,7 @@ function KhoiGia({
 
   // ── Biểu đồ (kiểu Batdongsan, màu Coastal Land — chủ dự án 21/10/2026): dải khoảng giá thấp nhất – cao nhất,
   // đường giá phổ biến có chấm từng kỳ; KÉO / CHẠM qua lại trên biểu đồ → vạch dọc + bảng số của kỳ đó.
-  // Hai khổ: máy tính 720×300, điện thoại 360×240 (chữ trục đọc được).
+  // Hai khổ: máy tính 760×220, điện thoại 300×250 (chữ trục đọc được).
   // DẢI KHOẢNG GIÁ TỪ QUÝ CÓ SỐ TRỞ ĐI (chủ dự án duyệt 22/10/2026 — LICH-SU-GIA-22102026 mục 4): nguồn công khai chỉ có
   // thấp/cao cho kỳ mới nhất, kỳ cũ chỉ có giá phổ biến → không đòi đủ mọi kỳ; dải vẽ từ kỳ đầu tiên có đủ thấp + cao
   // liền tới kỳ mới nhất (ít nhất 2 kỳ). Kỳ nào có thấp/cao thì ô số của kỳ đó vẫn ghi "Khoảng giá".
@@ -199,18 +199,13 @@ function KhoiGia({
       const i = Math.round(((vx - trai) / (phai - trai)) * (moc.length - 1));
       setChon(Math.min(moc.length - 1, Math.max(0, i)));
     };
-    // Ô SỐ NỔI TRÊN BIỂU ĐỒ (kiểu Batdongsan, 23/10/2026): nền tối, chạy theo vạch dọc của kỳ đang chọn
-    const phanTramX = (x(kyChon) / W) * 100;
-    const benTrai = phanTramX > 55;
+    // SỐ CỦA KỲ ĐANG CHỌN nằm TRÊN biểu đồ, không đè lên biểu đồ (chủ dự án 24/10/2026): trượt / chạm theo thời gian → hàng số đổi theo
     return (
-      <div className={`relative mt-3 ${className}`}>
-      <div
-        className="pointer-events-none absolute top-[52%] z-10 rounded-lg bg-[#1d1d1f]/90 px-3 py-2 text-[12.5px] leading-relaxed text-white shadow-lg"
-        style={benTrai ? { right: `${100 - phanTramX + 2}%` } : { left: `${phanTramX + 2}%` }}
-      >
-        <p className="whitespace-nowrap font-semibold">Giá {nhanKy(kc.quy)}: {gia(kc.giaM2)}</p>
-        {coKhoang(kc) && <p className="whitespace-nowrap">Khoảng giá: {soTruc(kc.thap!, chiaTruc)} – {gia(kc.cao!)}</p>}
-        {giaTin && kyChon === moc.length - 1 && <p className="whitespace-nowrap">Giá theo tin: {gia(giaTin)}</p>}
+      <div className={`mt-3 ${className}`}>
+      <div className="flex min-h-[64px] flex-wrap items-baseline gap-x-4 gap-y-0.5 rounded-lg bg-cvr-surface px-3 py-2 text-[14px] leading-snug text-cvr-body">
+        <p className="font-semibold text-cvr-ink">Giá {nhanKy(kc.quy)}: {gia(kc.giaM2)}</p>
+        {coKhoang(kc) && <p>Khoảng giá: {soTruc(kc.thap!, chiaTruc)} – {gia(kc.cao!)}</p>}
+        {giaTin && kyChon === moc.length - 1 && <p>Giá theo tin: {gia(giaTin)}</p>}
       </div>
       <svg
         viewBox={`0 0 ${W} ${H}`}
@@ -264,14 +259,14 @@ function KhoiGia({
   return (
     <div className="tabular-nums">
       {/* MỐC NĂM — một hàng chia đều, nút đang chọn nền đậm; mốc chưa đủ số thì mờ, không bấm được */}
-      <div className="grid grid-cols-5 gap-1 rounded-full sm:max-w-md bg-cvr-surface p-1 text-[13px]">
+      <div className="grid grid-cols-5 gap-1.5 rounded-full bg-cvr-surface p-1.5 text-[14px] sm:max-w-lg">
         {([1, 2, 3, 4, 5] as const).map((n) => (
           <button
             key={n}
             type="button"
             disabled={!duSo(n)}
             onClick={() => { setSoNam(n); setChon(null); }}
-            className={`h-8 rounded-full font-medium transition disabled:cursor-not-allowed disabled:opacity-35 ${soNam === n ? "bg-cvr-ink text-white" : "text-cvr-body hover:text-cvr-ink"}`}
+            className={`h-10 whitespace-nowrap rounded-full font-medium transition disabled:cursor-not-allowed disabled:opacity-35 ${soNam === n ? "bg-cvr-ink text-white" : "text-cvr-body hover:text-cvr-ink"}`}
           >
             {n} năm
           </button>
@@ -306,7 +301,8 @@ function KhoiGia({
       </div>
 
       {bieuDo(760, 220, 12, 6, "hidden sm:block")}
-      {bieuDo(360, 240, 12, 4, "sm:hidden")}
+      {/* Điện thoại: khổ hẹp hơn → biểu đồ và chữ trục to ra khi giãn hết chiều ngang (chủ dự án 24/10/2026) */}
+      {bieuDo(300, 250, 12, 4, "-mx-3 sm:hidden")}
 
       {/* CHÚ THÍCH */}
       <div className="mt-3 flex flex-wrap justify-center gap-x-4 gap-y-1.5 text-[12.5px] text-cvr-body">

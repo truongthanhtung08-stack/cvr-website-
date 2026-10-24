@@ -30,9 +30,8 @@ export default function ListingSlider({ items }: { items: Listing[] }) {
             key={item.id}
             // KHÔNG kéo thẻ cao bằng thẻ cao nhất (bỏ luật 18/10/2026): thẻ cao đúng nội dung, cả PC lẫn điện thoại — hàng người đăng
             // nằm ngay dưới mô tả, không dư khoảng trắng khi dải có thẻ nhiều cấp (23/10/2026)
-            // Máy tính: thẻ cao bằng nhau, hàng người đăng thẳng đáy như trang chủ PC (sm:flex → thẻ giãn, hàng cuối mt-auto).
-            // Điện thoại không giãn (một thẻ một lần nhìn, giãn là hở trắng) — chủ dự án 23/10/2026
-            className="w-[80%] shrink-0 snap-start sm:flex sm:w-[calc((100%-20px)/2)] lg:w-[calc((100%-60px)/4)]"
+            // ⛔ KHÔNG giãn thẻ (bỏ sm:flex 24/10/2026 — chủ dự án: "cái thẻ không có khoảng trắng phía dưới")
+            className="w-[80%] shrink-0 snap-start sm:w-[calc((100%-20px)/2)] lg:w-[calc((100%-60px)/4)]"
           >
             {/* THẺ ĐÃ CHỐT TRÊN PC (PropertyCard "tier") dùng cho CẢ điện thoại (chủ dự án 23/10/2026: "tôi chốt cái thẻ thế nào trên PC") */}
             <PropertyCard item={item} variant="tier" />

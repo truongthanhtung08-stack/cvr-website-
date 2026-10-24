@@ -200,7 +200,8 @@ export default function FeaturedListings({ items = featuredListings }: { items?:
                 {slides.map((items, i) => (
                   <div key={i} className="w-full shrink-0 snap-start">
                     {/* Mobile 1 tin/hàng (thẻ đủ rộng để đọc) · tablet 2 · desktop 4 */}
-                  <div className="cards-stagger grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                  {/* items-start: thẻ tự giãn theo nội dung, KHÔNG kéo cao bằng thẻ cao nhất hàng → không khoảng trắng dưới (chủ dự án 24/10/2026) */}
+                  <div className="cards-stagger grid grid-cols-1 items-start gap-5 sm:grid-cols-2 lg:grid-cols-4">
                       {items.map((item, k) => (
                         <PropertyCard key={item.id} item={item} variant="tier" khung={KHUNG_THEO_HANG ? khungHang(items, k) : undefined} />
                       ))}

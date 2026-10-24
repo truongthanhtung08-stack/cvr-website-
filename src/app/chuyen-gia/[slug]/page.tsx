@@ -76,7 +76,7 @@ export default async function HoSoChuyenGiaPage({
               </p>
 
               {tin.length > 0 && (
-                <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                <div className="mt-5 grid grid-cols-1 items-start gap-5 sm:grid-cols-2 xl:grid-cols-3">
                   {tin.map((l) => <PropertyCard key={l.id} item={l} />)}
                 </div>
               )}

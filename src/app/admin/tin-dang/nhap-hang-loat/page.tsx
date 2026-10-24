@@ -150,6 +150,9 @@ export default function NhapHangLoatPage() {
   const soAnhThat = (r: ParsedRow) => anhCuaTin(r).urls.filter((u) => !isVideoUrl(u)).length;
   const chuaAnh = dungLuat.filter((r) => soAnhThat(r) === 0);
   const hopLe = dungLuat.filter((r) => soAnhThat(r) > 0);
+  // ẢNH GHI Ở CỘT "anh" MÀ CHƯA TẢI LÊN ĐƯỢC (mạng rớt giữa chừng…) → KHÔNG cho đăng, kẻo tin lên thiếu ảnh
+  // mà không ai hay (24/10/2026: hue02-2410 lên thiếu ảnh 02). Tải lại ảnh đó rồi mới đăng.
+  const anhChuaTai = hopLe.flatMap((r) => anhCuaTin(r).thieu.map((t) => `${r.maAnh || r.tomTat.tieuDe}: ${t}`));
 
   // Nhận CẢ ẢNH LẪN VIDEO trong một lượt chọn: Cowork giao chung một thư mục,
   // trong đó video đặt tên theo cùng mã tin (dn06-video.mp4) nên tự khớp về đúng tin.
@@ -565,11 +568,14 @@ export default function NhapHangLoatPage() {
               )}
               {cbao.length > 0 && <span className="text-amber-700"> · {cbao.length} dòng cần xem lại</span>}
               {sai.length > 0 && <span className="text-red-700"> · {sai.length} dòng lỗi (sẽ bỏ qua)</span>}
+              {anhChuaTai.length > 0 && (
+                <span className="block font-medium text-red-700">{anhChuaTai.length} ảnh chưa tải lên được — chọn lại thư mục ảnh rồi mới đăng: {anhChuaTai.join(" · ")}</span>
+              )}
             </span>
             <button
               type="button"
               onClick={dangTat}
-              disabled={dangGui || hopLe.length === 0}
+              disabled={dangGui || hopLe.length === 0 || anhChuaTai.length > 0}
               className="ml-auto rounded-lg bg-cvr-ink px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-cvr-ink/90 disabled:opacity-50"
             >
               {dangGui ? "Đang đăng…" : `Đăng ${hopLe.length} tin`}

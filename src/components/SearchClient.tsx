@@ -175,7 +175,7 @@ export default function SearchClient({
             return t === 1 ? null : <p className="mb-3 text-sm font-medium text-cvr-body">{TIER_LABEL[t]}</p>;
           })()}
 
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid grid-cols-1 items-start gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {pageItems.map((item) => (
               <PropertyCard key={khoaThe(item)} item={item} terms={hitById.get(item.id)?.matched ?? []} />
             ))}

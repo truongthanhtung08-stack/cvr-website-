@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { lamMoiWeb } from "@/lib/lamMoiWeb";
 import type { ListingRow } from "@/lib/listingAdmin";
 import BangKiemTinSeo from "@/components/admin/BangKiemTinSeo";
+import { directions } from "@/lib/listingSpec";
 
 // ============================================================================
 // ADMIN — DUYỆT TIN NẠP (luồng chủ dự án chốt 16/10/2026)
@@ -78,9 +79,12 @@ function TheDuyet({ tin, xong }: { tin: Tin; xong: () => void }) {
   const [chonTruong, setChonTruong] = useState<Set<string>>(new Set(Object.keys(truong)));
   const [dang, setDang] = useState(false);
   const [bao, setBao] = useState("");
+  // Ô sửa ngay cho dòng bảng kiểm báo ✗ (chủ dự án 24/10/2026: "đưa ra luật mà không biết chỗ sửa thì đưa ra làm gì")
+  const [diaChi, setDiaChi] = useState(tin.details?.addressDetail ?? "");
+  const [huong, setHuong] = useState(tin.details?.direction ?? "");
 
   const anhGiu = anh.filter((u) => !bo.has(u));
-  const tinXem = { ...tin, title: tieuDe, description: moTa, images: anhGiu } as ListingRow;
+  const tinXem = { ...tin, title: tieuDe, description: moTa, images: anhGiu, details: { ...(tin.details ?? {}), addressDetail: diaChi, direction: huong } } as ListingRow;
 
   async function luu(duyet: boolean) {
     setDang(true);
@@ -89,6 +93,8 @@ function TheDuyet({ tin, xong }: { tin: Tin; xong: () => void }) {
     const conLai: Record<string, unknown> = { ...(tin.details ?? {}) };
     delete conLai.choChuDuyet;
     delete conLai.deXuat;
+    conLai.addressDetail = diaChi.trim();
+    conLai.direction = huong;
     // Điền các trường đã chọn (lấy từ mô tả) vào đúng ô của tin
     const cot: Record<string, unknown> = {};
     const specs: Record<string, unknown> = { ...((conLai.specs as Record<string, unknown>) ?? {}) };
@@ -100,7 +106,7 @@ function TheDuyet({ tin, xong }: { tin: Tin; xong: () => void }) {
     }
     if (Object.keys(specs).length) conLai.specs = specs;
     const now = new Date().toISOString();
-    const { error } = await createClient()
+    const { data, error } = await createClient()
       .from("listings")
       .update({
         title: tieuDe.trim(),
@@ -108,11 +114,14 @@ function TheDuyet({ tin, xong }: { tin: Tin; xong: () => void }) {
         images: anhGiu,
         ...(duyet
           ? { status: "approved", published_at: now, bumped_at: now, details: conLai, ...cot }
-          : { details: { ...(tin.details ?? {}), deXuat: dx } }),
+          : { details: { ...(tin.details ?? {}), addressDetail: diaChi.trim(), direction: huong, deXuat: dx } }),
       })
-      .eq("id", tin.id);
+      .eq("id", tin.id)
+      .select("id");
     setDang(false);
     if (error) return setBao(`Lỗi: ${error.message}`);
+    // Hết phiên đăng nhập / không phải admin → CSDL bỏ qua lệnh mà không báo lỗi (0 dòng). Phải báo, không được coi là đã duyệt (24/10/2026).
+    if (!data?.length) return setBao("Chưa lưu được — phiên đăng nhập admin đã hết. Tải lại trang, đăng nhập lại rồi bấm lại.");
     if (duyet) {
       await lamMoiWeb("listings");
       xong();
@@ -182,6 +191,20 @@ function TheDuyet({ tin, xong }: { tin: Tin; xong: () => void }) {
           <button type="button" className="text-cvr-muted hover:text-cvr-ink" onClick={() => setAnh((a) => [...a.slice(1), a[0]])}>Đổi ảnh bìa ›</button>
         </div>
       )}
+
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <label className="block text-sm">
+          <span className="text-cvr-muted">Địa chỉ — số nhà + chữ &quot;đường&quot; + tên đường</span>
+          <input value={diaChi} onChange={(e) => setDiaChi(e.target.value)} placeholder="88 đường Võ Nguyên Giáp" className={`mt-1 ${o}`} />
+        </label>
+        <label className="block text-sm">
+          <span className="text-cvr-muted">Hướng nhà — tin gốc không ghi thì để trống</span>
+          <select value={huong} onChange={(e) => setHuong(e.target.value)} className={`mt-1 ${o}`}>
+            <option value="">— Không ghi —</option>
+            {directions.map((h) => <option key={h} value={h}>{h}</option>)}
+          </select>
+        </label>
+      </div>
 
       <div className="mt-4"><BangKiemTinSeo row={tinXem} /></div>
 
