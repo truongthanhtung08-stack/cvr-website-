@@ -438,11 +438,18 @@ function tinhTatCaTrang(tinConHan: Listing[]): Map<string, TrangPseo> {
     for (const x of a) if (b.has(x)) chung++;
     return chung / (a.size + b.size - chung) >= 0.8;
   };
+  // RIÊNG CẶP "Đất" / "Đất nền dự án" (chủ dự án 26/10/2026): hai trang trùng tin thì giữ "Bán đất <tỉnh>" — cụm nhiều
+  // người tìm nhất; bước này bỏ qua cặp đó để bước ⑤ chọn trang rộng. Các cặp khác giữ luật cũ (vd condotel ≠ nghỉ dưỡng:
+  // giữ "Bán condotel Đà Nẵng" đang có lượt hiển thị — đổi luật chung là tắt mất trang này).
+  const capDat = (a: DieuKien, b: DieuKien) => {
+    const chiLoai = (dk: DieuKien) => !!dk.cat && !dk.phuong && !dk.duong && !dk.huong && !dk.phapLy && !dk.kiet && !dk.phongNgu && !dk.giaDuoi && !dk.thanhPho;
+    return chiLoai(a) && chiLoai(b) && [a.cat!.slug, b.cat!.slug].sort().join("|") === "dat|dat-nen-du-an";
+  };
   for (const ds of theoCha.values()) {
     const chon: TrangPseo[] = [];
     // Cụ thể trước (ít tin hơn) — trang rộng hơn chỉ được giữ khi khác rõ các trang đã chọn
     for (const p of ds.sort((a, b) => a.n - b.n)) {
-      if (chon.some((q) => giong(p.ids, q.ids))) continue;
+      if (chon.some((q) => giong(p.ids, q.ids) && !capDat(p.dk, q.dk))) continue;
       p.index = true;
       chon.push(p);
     }
