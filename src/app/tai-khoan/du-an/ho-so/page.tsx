@@ -80,9 +80,6 @@ export default function YeuCauDangDuAnPage() {
     <div className="space-y-4">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-cvr-ink">Yêu cầu đăng dự án</h1>
-        <p className="mt-1 text-sm text-cvr-muted">
-          Để lại thông tin, Coastal Land gọi lại xác minh và mở quyền đăng dự án.
-        </p>
       </div>
 
       <div className="rounded-2xl border border-cvr-line bg-white p-5 shadow-lux">

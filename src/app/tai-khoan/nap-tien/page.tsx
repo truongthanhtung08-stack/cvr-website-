@@ -7,6 +7,7 @@ import { vnd } from "@/lib/billing";
 import { useBilling } from "@/lib/useBilling";
 import { emailThat } from "@/lib/useAuth";
 import { createClient } from "@/lib/supabase/client";
+import MaQrThanhToan, { type DonQr } from "@/components/MaQrThanhToan";
 
 // ============================================================================
 // NẠP TIỀN VÀO TÀI KHOẢN — cổng thanh toán PayOS.
@@ -54,6 +55,7 @@ function TopUpForm() {
   const [custom, setCustom] = useState("");
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
+  const [don, setDon] = useState<DonQr | null>(null); // đơn vừa tạo → hiện mã QR tại trang
 
   // SỐ CÒN THIẾU từ trang đăng tin (?can=…). Khách bấm Đăng mà ví không đủ thì
   // web đưa sang đây kèm đúng số còn thiếu (báo ở dòng trên đầu trang khi tin đã tự lưu nháp).
@@ -71,6 +73,14 @@ function TopUpForm() {
     setCustom(canNap.toLocaleString("vi-VN"));
     requestAnimationFrame(() => { oNhapRef.current?.focus(); oNhapRef.current?.select(); });
   }, [canNap]);
+
+  // Khách sang PayOS rồi bấm Back của trình duyệt quay về: trình duyệt khôi phục trang cũ đúng lúc "Đang tạo đơn…"
+  // → nút kẹt, không bấm lại được (26/10/2026). Trang hiện lại thì trả nút về như thường.
+  useEffect(() => {
+    const moLai = (e: PageTransitionEvent) => { if (e.persisted) setLoading(false); };
+    window.addEventListener("pageshow", moLai);
+    return () => window.removeEventListener("pageshow", moLai);
+  }, []);
 
   const finalAmount = custom.trim() ? Number(custom.replace(/\D/g, "")) || 0 : amount;
   // Hệ cấp theo tổng nạp + điểm thưởng đã BỎ 25/09/2026, thay bằng Gói hội viên (0040).
@@ -99,15 +109,13 @@ function TopUpForm() {
         }),
       });
       const json = await res.json();
-      if (json.ok && json.checkoutUrl) {
-        window.location.href = json.checkoutUrl;
+      // MÃ QR NGAY TẠI TRANG, logo Coastal Land — khách không sang trang PayOS nào (chủ dự án 26/10/2026: "không có PayOS gì hết")
+      if (json.ok && json.qrCode) {
+        setDon(json as DonQr);
+        setLoading(false);
         return;
       }
-      setErr(
-        json.code === "CHUA_CAU_HINH"
-          ? "Cổng thanh toán chưa được kết nối. Vui lòng liên hệ quản trị viên."
-          : json.message || "Không tạo được đơn thanh toán.",
-      );
+      setErr(json.code === "CHUA_CAU_HINH" ? "Cổng thanh toán chưa được kết nối. Vui lòng liên hệ quản trị viên." : "Không tạo được mã thanh toán. Vui lòng thử lại.");
     } catch {
       setErr("Không kết nối được máy chủ thanh toán.");
     }
@@ -118,9 +126,6 @@ function TopUpForm() {
     <div className="space-y-5">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-cvr-ink">Nạp tiền vào tài khoản</h1>
-        <p className="mt-1 text-sm text-cvr-muted">
-          Số dư dùng để thanh toán phí đăng tin, đẩy tin và quảng cáo trên Coastal Land.
-        </p>
       </div>
 
       {canNap > 0 && daLuuNhap && (
@@ -149,6 +154,18 @@ function TopUpForm() {
         </p>
       )}
 
+      {don ? (
+        <MaQrThanhToan
+          don={don}
+          // Huỷ: đến từ tin đang đăng → về lại tin đó; nạp thường → về ô chọn số tiền
+          onHuy={() => (ve ? router.replace(ve) : setDon(null))}
+          // Tiền về (webhook đã cộng ví): đến từ tin → Tin của tôi (tin tự gửi duyệt); nạp thường → báo thành công tại đây
+          onXong={() => {
+            if (ve) router.replace("/tai-khoan/tin-dang?nap=thanh-cong");
+            else { setDon(null); router.replace("/tai-khoan/nap-tien?ket-qua=thanh-cong"); }
+          }}
+        />
+      ) : (
       <section className="rounded-2xl border border-cvr-line bg-white p-5 shadow-sm">
         <h2 className="text-base font-semibold text-cvr-ink">Chọn số tiền</h2>
         <div className="mt-3 grid grid-cols-2 gap-2.5 sm:grid-cols-3">
@@ -200,12 +217,10 @@ function TopUpForm() {
           disabled={loading}
           className="mt-4 h-12 w-full rounded-lg bg-cvr-ink text-sm font-bold text-white transition hover:bg-cvr-ink/90 disabled:opacity-60"
         >
-          {loading ? "Đang tạo đơn…" : "Thanh toán qua PayOS"}
+          {loading ? "Đang tạo mã…" : "Thanh toán"}
         </button>
-        <p className="mt-2 text-center text-[11px] text-cvr-faint">
-          Hỗ trợ quét mã QR ngân hàng, thẻ nội địa và thẻ quốc tế.
-        </p>
       </section>
+      )}
     </div>
   );
 }

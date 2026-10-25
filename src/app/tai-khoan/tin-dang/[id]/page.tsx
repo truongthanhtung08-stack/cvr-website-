@@ -97,7 +97,6 @@ export default function ChiTietTinCuaToiPage() {
     return (
       <div className="rounded-2xl border border-cvr-line bg-white p-8 text-center shadow-sm">
         <h2 className="text-lg font-semibold tracking-tight text-cvr-ink">Không tìm thấy tin này</h2>
-        <p className="mt-1.5 text-sm text-cvr-muted">Tin có thể đã bị xoá, hoặc không thuộc tài khoản của bạn.</p>
         <Link href="/tai-khoan/tin-dang" className="mt-4 inline-block rounded-lg bg-cvr-ink px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-cvr-ink/90">
           ← Về danh sách tin
         </Link>
@@ -165,10 +164,7 @@ export default function ChiTietTinCuaToiPage() {
           </p>
         ) : xem30Ngay === 0 ? (
           <p className="mt-3 rounded-xl bg-cvr-surface px-4 py-3 text-sm leading-relaxed text-cvr-muted">
-            Chưa có lượt xem nào trong 30 ngày qua.{" "}
-            {row.status === "approved"
-              ? "Đẩy tin lên đầu danh sách hoặc nâng hạng tin để nhiều người thấy hơn."
-              : "Tin chưa được duyệt nên chưa hiển thị với người mua."}
+            Chưa có lượt xem nào trong 30 ngày qua.
           </p>
         ) : (
           <>
@@ -197,9 +193,6 @@ export default function ChiTietTinCuaToiPage() {
       {/* AI ĐÃ QUAN TÂM TIN NÀY — đúng thứ người bán bỏ tiền ra để có. */}
       <section className="rounded-2xl border border-cvr-line bg-white p-5 shadow-lux">
         <h2 className="text-base font-semibold text-cvr-ink">Ai đã quan tâm tin này</h2>
-        <p className="mt-1 text-sm leading-relaxed text-cvr-muted">
-          Người đã bấm xem số điện thoại của bạn.
-        </p>
 
         {leads.length === 0 ? (
           <p className="mt-3 rounded-xl bg-cvr-surface px-4 py-3 text-sm text-cvr-muted">

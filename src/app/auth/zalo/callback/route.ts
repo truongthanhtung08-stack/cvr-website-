@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { datDaiDien } from "@/lib/daiDien";
 import {
   COOKIE_NEXT,
   COOKIE_STATE,
@@ -174,6 +175,9 @@ export async function GET(request: Request) {
     if (!daGan && link.user?.id) {
       await admin.from("profiles").update({ zalo_id: me.id }).eq("id", link.user.id).is("zalo_id", null);
     }
+    // TÊN + ẢNH MẶC ĐỊNH theo Zalo (chủ dự án 26/10/2026) — hàm chung datDaiDien; ghi trước khi mở phiên để phiên mang tên + ảnh mới.
+    const uid = daGan?.id ?? link.user?.id;
+    if (uid) await datDaiDien(admin, uid, "zalo", { ten: me.name, anh });
 
     // Supabase đổi tên loại mã theo phiên bản: bản mới dùng "email", bản cũ dùng
     // "magiclink". Thử lần lượt cả hai để không phụ thuộc phiên bản.

@@ -21,7 +21,7 @@ export async function POST() {
 
   const video = await docVideoKenh();
   if (!video.length) return NextResponse.json({ ok: false, loi: "Không đọc được kênh YouTube, thử lại sau ít phút." });
-  const { data: tins, error } = await db.from("listings").select("id, title, created_at, images, details").not("details->>maAnh", "is", null).limit(5000);
+  const { data: tins, error } = await db.from("listings").select("id, title, created_at, images, details").not("details->>maAnh", "is", null).neq("status", "deleted").limit(5000);
   if (error) return NextResponse.json({ ok: false, loi: error.message });
 
   const daGan: { ma: string; title: string }[] = [];

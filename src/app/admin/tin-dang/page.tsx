@@ -76,7 +76,8 @@ export default function AdminListingsPage() {
       if (tier !== "all" && r.tier !== tier) return false;
       // "Đã sửa — chờ kiểm" (0054): tin đang hiển thị khách vừa sửa, bản sửa đã hiện ngay.
       if (status === "da_sua") { if (!(r.status === "approved" && r.details?.da_sua_luc)) return false; }
-      else if (status !== "all" && r.status !== status) return false;
+      // Tin đã xoá chỉ hiện ở mục "Đã xoá" (0066), không lẫn vào "Tất cả trạng thái"
+      else if (status === "all" ? r.status === "deleted" : r.status !== status) return false;
       if (!kw) return true;
       // Mã tin (8 ký tự đầu id, như hiện trên trang tin) + mã đợt nạp (dn13-2410…) — chủ dự án 24/10/2026
       if (r.id.toLowerCase().startsWith(kw) || String((r.details as { maAnh?: string } | null)?.maAnh ?? "").toLowerCase().includes(kw)) return true;
@@ -228,35 +229,47 @@ export default function AdminListingsPage() {
     );
   }
 
-  // XOÁ HẲN một tin — dùng khi nhập nhầm/nhập thừa từ file và muốn nhập lại.
-  // Phải xoá thật khỏi bảng: mã ảnh còn nằm đó thì lần nhập sau chỉ bổ sung ảnh,
-  // KHÔNG đăng lại tin (xem trang Đăng nhiều tin bằng file).
-  // XOÁ HÀNG LOẠT — tick chọn nhiều tin rồi xoá một lượt. Dùng khi nhập nhầm cả
-  // một đợt tin bằng file và muốn làm lại sạch từ đầu (33 tin mà bấm xoá từng cái
+  // XOÁ = ĐƯA VÀO MỤC "ĐÃ XOÁ", có nút Khôi phục (chủ dự án 26/10/2026, migration 0066).
+  // Trang Đăng nhiều tin bằng file bỏ qua tin đã xoá khi đối chiếu mã ảnh / link gốc
+  // → xoá cả đợt nhập nhầm rồi nhập lại vẫn đăng thành tin mới như trước.
+  // XOÁ HÀNG LOẠT — tick chọn nhiều tin rồi xoá một lượt (33 tin mà bấm xoá từng cái
   // thì mất cả buổi).
   async function xoaNhieu() {
     const ds = [...chon];
     if (!ds.length) return;
-    if (!window.confirm(`XOÁ HẲN ${ds.length} tin đã chọn? Không lấy lại được.`)) return;
-    const supabase = createClient();
-    const { error } = await supabase.from("listings").delete().in("id", ds);
+    if (!window.confirm(`Chuyển ${ds.length} tin đã chọn vào mục Đã xoá?`)) return;
+    const { error } = await createClient().rpc("xoa_tin", { p_ids: ds });
     if (error) {
       window.alert(`Xoá THẤT BẠI — chưa tin nào bị xoá.\nLỗi: ${error.message}`);
       return;
     }
-    setRows((rs) => rs.filter((r) => !chon.has(r.id)));
+    setRows((rs) => rs.map((r) => (chon.has(r.id) ? { ...r, status: "deleted" } : r)));
     setChon(new Set());
   }
 
   async function xoaTin(id: string, tieuDe: string) {
-    if (!window.confirm(`XOÁ HẲN tin này? Không lấy lại được.\n\n${tieuDe}`)) return;
-    const supabase = createClient();
-    const { error } = await supabase.from("listings").delete().eq("id", id);
+    if (!window.confirm(`Chuyển tin này vào mục Đã xoá?\n\n${tieuDe}`)) return;
+    const { error } = await createClient().rpc("xoa_tin", { p_ids: [id] });
     if (error) {
       window.alert(`Xoá THẤT BẠI — tin chưa bị xoá.\nLỗi: ${error.message}`);
       return;
     }
-    setRows((rs) => rs.filter((r) => r.id !== id));
+    setRows((rs) => rs.map((r) => (r.id === id ? { ...r, status: "deleted" } : r)));
+  }
+
+  // KHÔI PHỤC — tin về đúng trạng thái trước khi xoá (máy chủ nhớ). Đọc lại để hiện đúng trạng thái.
+  async function khoiPhuc(ids: string[]) {
+    if (!ids.length) return;
+    const supabase = createClient();
+    const { error } = await supabase.rpc("khoi_phuc_tin", { p_ids: ids });
+    if (error) {
+      window.alert(`Khôi phục THẤT BẠI.\nLỗi: ${error.message}`);
+      return;
+    }
+    const { data } = await supabase.from("listings").select("*").in("id", ids);
+    const moi = new Map(((data ?? []) as ListingRow[]).map((r) => [r.id, r]));
+    setRows((rs) => rs.map((r) => moi.get(r.id) ?? r));
+    setChon(new Set());
   }
 
   if (dbMissing) {
@@ -349,6 +362,7 @@ export default function AdminListingsPage() {
           <option value="hidden">Đã ẩn</option>
           <option value="rejected">Từ chối</option>
           <option value="expired">Hết hạn</option>
+          <option value="deleted">Đã xoá</option>
         </select>
       </div>
 
@@ -358,9 +372,15 @@ export default function AdminListingsPage() {
         // trên đầu trang thì coi như không có nút. Luôn nổi ở đáy màn hình.
         <div className="sticky bottom-3 z-30 mt-4 flex flex-wrap items-center gap-3 rounded-xl border border-red-300 bg-red-50 px-4 py-3 shadow-lux">
           <span className="text-sm font-semibold text-red-800">Đã chọn {chon.size} tin</span>
-          <button type="button" onClick={xoaNhieu} className="rounded-lg bg-red-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-800">
-            Xoá {chon.size} tin
-          </button>
+          {status === "deleted" ? (
+            <button type="button" onClick={() => khoiPhuc([...chon])} className="rounded-lg bg-cvr-ink px-4 py-2 text-sm font-semibold text-white transition hover:bg-cvr-ink/90">
+              Khôi phục {chon.size} tin
+            </button>
+          ) : (
+            <button type="button" onClick={xoaNhieu} className="rounded-lg bg-red-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-red-800">
+              Xoá {chon.size} tin
+            </button>
+          )}
           <button type="button" onClick={() => setChon(new Set())} className="text-sm font-medium text-cvr-body hover:text-cvr-ink">
             Bỏ chọn
           </button>
@@ -434,7 +454,7 @@ export default function AdminListingsPage() {
                 <td className="px-4 py-3">{listingStatusBadge(r.status)}{henHienThi(r)}</td>
                 <td className="whitespace-nowrap px-4 py-3 text-cvr-muted">{fmtDate(r.created_at)}</td>
                 <td className="whitespace-nowrap px-4 py-3 text-right">
-                  <RowActions row={r} onStatus={setRowStatus} onTuChoi={tuChoi} onXoa={xoaTin} />
+                  <RowActions row={r} onStatus={setRowStatus} onTuChoi={tuChoi} onXoa={xoaTin} onKhoiPhuc={(id) => khoiPhuc([id])} />
                 </td>
               </tr>
             ))}
@@ -474,7 +494,7 @@ export default function AdminListingsPage() {
               </div>
             )}
             <div className="mt-3 border-t border-cvr-line pt-2 text-right">
-              <RowActions row={r} onStatus={setRowStatus} onTuChoi={tuChoi} onXoa={xoaTin} />
+              <RowActions row={r} onStatus={setRowStatus} onTuChoi={tuChoi} onXoa={xoaTin} onKhoiPhuc={(id) => khoiPhuc([id])} />
             </div>
           </div>
         ))}
@@ -494,12 +514,21 @@ function RowActions({
   onStatus,
   onTuChoi,
   onXoa,
+  onKhoiPhuc,
 }: {
   row: ListingRow;
   onStatus: (id: string, next: ListingStatus) => void;
   onTuChoi: (id: string) => void;
   onXoa: (id: string, tieuDe: string) => void;
+  onKhoiPhuc: (id: string) => void;
 }) {
+  // Tin đã xoá: chỉ một việc là Khôi phục
+  if (row.status === "deleted")
+    return (
+      <button type="button" onClick={() => onKhoiPhuc(row.id)} className="text-sm font-medium text-green-700 hover:text-green-800">
+        Khôi phục
+      </button>
+    );
   return (
     <span className="inline-flex items-center gap-3">
       <a href={`/bat-dong-san/${row.id}`} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-cvr-body hover:text-cvr-ink">

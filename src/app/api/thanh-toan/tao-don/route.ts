@@ -124,7 +124,13 @@ export async function POST(req: Request) {
       orderCode,
       amount,
       checkoutUrl: json.data.checkoutUrl as string,
+      // MÃ QR NGAY TRÊN COASTALLAND.VN có logo Coastal Land (chủ dự án 26/10/2026 — trang PayOS chỉ cho logo payOS giữa mã)
       qrCode: json.data.qrCode as string | undefined,
+      bin: json.data.bin as string | undefined,
+      accountNumber: json.data.accountNumber as string | undefined,
+      accountName: json.data.accountName as string | undefined,
+      description: json.data.description as string | undefined,
+      paymentLinkId: json.data.paymentLinkId as string | undefined,
     });
   } catch {
     return NextResponse.json({ ok: false, message: "Không kết nối được cổng thanh toán." }, { status: 502 });

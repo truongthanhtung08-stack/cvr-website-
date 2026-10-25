@@ -63,6 +63,7 @@ export default function MyListingsPage() {
         .from("listings")
         .select("*")
         .eq("owner_id", user.id)
+        .neq("status", "deleted") // tin đã xoá nằm ở mục Đã xoá của admin (0066)
         .order("created_at", { ascending: false });
       const list = (data ?? []) as ListingRow[];
       setRows(list);
@@ -86,7 +87,7 @@ export default function MyListingsPage() {
   // Xoá tin NHÁP của chính mình (hỏi xác nhận trước; RLS chỉ cho xoá tin mình)
   async function handleDelete(r: ListingRow) {
     if (!window.confirm(`Xoá tin nháp "${r.title || "(chưa có tiêu đề)"}"?`)) return;
-    const { error } = await createClient().from("listings").delete().eq("id", r.id);
+    const { error } = await createClient().rpc("xoa_tin", { p_ids: [r.id] }); // vào mục Đã xoá của admin (0066)
     if (!error) setRows((rows) => rows.filter((x) => x.id !== r.id));
   }
 
@@ -316,9 +317,6 @@ Tin ngừng hiển thị ngay, dữ liệu giữ nguyên — sau này bấm Đă
     return (
       <div className="rounded-2xl border border-cvr-line bg-white p-8 text-center shadow-sm">
         <h2 className="text-lg font-semibold tracking-tight text-cvr-ink">Chưa có tin đăng</h2>
-        <p className="mx-auto mt-1.5 max-w-md text-sm leading-relaxed text-cvr-muted">
-          Đăng tin đầu tiên của bạn — có thể lưu nháp và hoàn thiện dần.
-        </p>
         <Link href="/dang-tin" className="mt-4 inline-block rounded-lg bg-cvr-ink px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-cvr-ink/90">
           + Đăng tin mới
         </Link>
@@ -603,10 +601,6 @@ Tin ngừng hiển thị ngay, dữ liệu giữ nguyên — sau này bấm Đă
           <div className="max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-t-2xl bg-white p-5 shadow-xl sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
             <p className="text-sm text-cvr-muted">Đăng lại tin</p>
             <h3 className="mt-0.5 line-clamp-2 text-base font-semibold text-cvr-ink">{upCho.title || "(chưa có tiêu đề)"}</h3>
-            <p className="mt-2 text-[13px] leading-relaxed text-cvr-muted">
-              Tin chờ kiểm duyệt như tin mới; duyệt xong mới trừ phí, ngày đăng và thời hạn tính từ lúc duyệt. Mã tin, lượt xem và người quan tâm giữ nguyên.
-              Miễn phí thành viên mới và voucher hội viên tự áp khi xác nhận.
-            </p>
             {/* CÙNG MỘT bảng giá kiểu Batdongsan với form đăng tin + trang Báo giá — bấm ô là chọn gói */}
             <div className="mt-4">
               <BangGiaGoiTin

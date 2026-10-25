@@ -84,10 +84,6 @@ export default function SoDienThoaiKhac() {
   return (
     <section className="rounded-2xl border border-cvr-line bg-white p-5 shadow-lux">
       <h2 className="text-base font-semibold text-cvr-ink">Số điện thoại khác của tôi</h2>
-      <p className="mt-1 text-sm leading-relaxed text-cvr-muted">
-        Dùng nhiều số để đăng tin thì khai hết ở đây — hệ thống mới gom đủ tin về một tài khoản.
-        Số mới cần Coastal Land xác minh trước khi dùng để nhận tin.
-      </p>
 
       {ds.length > 0 && (
         <ul className="mt-4 divide-y divide-cvr-line">
@@ -119,7 +115,7 @@ export default function SoDienThoaiKhac() {
           inputMode="tel"
           value={moi}
           onChange={(e) => setMoi(e.target.value)}
-          placeholder="Thêm số khác — VD: 0905123456"
+          placeholder="0905123456"
           className="h-11 min-w-0 flex-1 rounded-lg border border-cvr-line px-4 text-sm text-cvr-ink outline-none transition placeholder:text-cvr-faint focus:border-cvr-ink"
         />
         <button

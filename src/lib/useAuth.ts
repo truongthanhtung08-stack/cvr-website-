@@ -101,3 +101,14 @@ export async function signOut() {
 export function emailThat(e?: string | null): string {
   return e && !/@users\.coastalland\.vn$/i.test(e) ? e : "";
 }
+
+// Đăng nhập bằng mật khẩu (email / số điện thoại) xong → đặt tên + ảnh mặc định theo cách vừa đăng nhập
+// (một hàm chung datDaiDien ở máy chủ), rồi làm mới phiên để đầu trang hiện ngay tên + ảnh mới.
+export async function baoCachDangNhap(cach: "email" | "sdt") {
+  await fetch("/api/xac-thuc/dai-dien", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ cach }),
+  }).catch(() => {});
+  await (await napSupabase()).auth.refreshSession().catch(() => {});
+}

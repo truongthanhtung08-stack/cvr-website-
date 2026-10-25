@@ -230,6 +230,7 @@ export default function NhapHangLoatPage() {
         .from("listings")
         .select("title,created_at,details->>maAnh,details->>nguonTin")
         .in("details->>maAnh", ma)
+        .neq("status", "deleted") // tin đã xoá không tính (0066)
         .lt("created_at", mocCungDot());
       // Tiêu đề khớp = vẫn là tin đó (chỉ bổ sung ảnh), không phải "trùng mã".
       const goi = (s: string) => (s ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "");
@@ -280,7 +281,8 @@ export default function NhapHangLoatPage() {
         const { data } = await supabase
           .from("listings")
           .select("id,images,details->>nguonTin")
-          .in("details->>nguonTin", nguonTrongFile);
+          .in("details->>nguonTin", nguonTrongFile)
+          .neq("status", "deleted"); // xoá đợt nhập nhầm rồi nhập lại → đăng thành tin mới (0066)
         for (const r of (data ?? []) as { id: string; images: string[] | null; nguonTin: string }[])
           if (r.nguonTin && !daCoTheoNguon.has(r.nguonTin)) daCoTheoNguon.set(r.nguonTin, { id: r.id, images: r.images ?? [] });
       }
@@ -289,7 +291,8 @@ export default function NhapHangLoatPage() {
         const { data } = await supabase
           .from("listings")
           .select("id,images,title,created_at,details->>maAnh")
-          .in("details->>maAnh", maTrongFile);
+          .in("details->>maAnh", maTrongFile)
+          .neq("status", "deleted");
         const moc = mocCungDot();
         const tieuDeTheoMa = new Map(hopLe.filter((r) => r.maAnh).map((r) => [r.maAnh, goi(r.tomTat.tieuDe)]));
         for (const r of (data ?? []) as { id: string; images: string[] | null; title: string | null; created_at: string; maAnh: string }[]) {
@@ -438,11 +441,11 @@ export default function NhapHangLoatPage() {
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <Buoc so="1" title="Tải file mẫu">
           <a
-            href="/mau-nhap-tin-hang-loat.csv"
+            href="/mau-nhap-tin-hang-loat.xlsx"
             download
             className="mt-2 inline-flex rounded-lg bg-cvr-ink px-4 py-2 text-sm font-semibold text-white"
           >
-            Tải file mẫu (.csv)
+            Tải file mẫu (.xlsx)
           </a>
           <p className="mt-2 text-xs text-cvr-muted">
             Mở bằng Excel / Google Sheet. Giữ nguyên dòng tiêu đề, điền từ dòng 2 trở xuống.
@@ -450,7 +453,7 @@ export default function NhapHangLoatPage() {
         </Buoc>
         <Buoc so="2" title="Soạn bằng Excel, lưu .xlsx">
           <p className="mt-2 text-xs text-cvr-muted">
-            Mở file mẫu bằng Excel → điền tin → <strong>File → Save As → Excel Workbook (.xlsx)</strong>.
+            Mở file mẫu bằng Excel → điền tin → <strong>Lưu</strong> (giữ đuôi .xlsx).
             Không cần chuyển sang CSV. Giữ .csv cũng được.
           </p>
           <p className="mt-1.5 text-xs text-cvr-muted">

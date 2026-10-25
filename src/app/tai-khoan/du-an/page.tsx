@@ -88,7 +88,6 @@ function NoiDung() {
           >
             Gửi yêu cầu
           </Link>
-          <p className="mt-3 text-xs text-cvr-muted">Coastal Land gọi lại trong 1–2 ngày làm việc.</p>
         </div>
       </div>
     );
@@ -105,7 +104,6 @@ function NoiDung() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-cvr-ink">Dự án của bạn</h1>
-          <p className="mt-1 text-sm text-cvr-muted">Đăng và theo dõi trạng thái duyệt dự án.</p>
         </div>
         <Link
           href="/tai-khoan/du-an/moi"

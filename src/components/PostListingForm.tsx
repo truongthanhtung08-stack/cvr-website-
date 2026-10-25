@@ -871,12 +871,14 @@ export default function PostListingForm() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [giaTriTuLuu, editId, suaNhap, daNapNhap, userId, done, thieuTien, saving]);
 
-  async function save(asDraft: boolean, daXacMinhXong = false) {
+  // diNap: nút "Nạp thêm" — KHÔNG KIỂM Ô NÀO (chủ dự án 26/10/2026: "khi nộp tiền không bắt buộc gì hết"), lưu nháp kèm gói
+  // rồi sang nạp tiền. Tin đủ thông tin thì nạp xong tự gửi duyệt; chưa đủ thì nạp xong khách về tin điền tiếp.
+  async function save(asDraft: boolean, daXacMinhXong = false, diNap = false) {
     // Đợi lượt tự lưu đang chạy (nếu có) và chặn lượt mới để không tạo hai tin.
     dangBamLuu.current = true;
     try {
       await tuLuuDangChay.current;
-      await luuThat(asDraft, daXacMinhXong);
+      await luuThat(asDraft, daXacMinhXong, diNap);
     } finally {
       dangBamLuu.current = false;
     }
@@ -897,7 +899,40 @@ export default function PostListingForm() {
     }, 350);
   }
 
-  async function luuThat(asDraft: boolean, daXacMinhXong: boolean) {
+  // KIỂM THEO ĐÚNG THỨ TỰ 7 BƯỚC (15/10/2026): thiếu nhiều ô thì trả ô ở bước SỚM NHẤT trước. null = đủ để gửi duyệt.
+  function loiDangTin(): [string, string, string?] | null {
+    // Bước 1 — Loại tin & vị trí
+    if (!loaiHinh) return ["Chưa chọn loại hình bất động sản.", "1", "o-loaihinh"];
+    if (!province) return ["Chưa chọn Tỉnh/Thành.", "1", "o-tinh"];
+    // Bước 2 — Thông tin chính. GIÁ BẮT BUỘC (14/10/2026): nhập số, chọn "Thoả thuận", hoặc tự ghi.
+    if (donVi === KHAC_GIA ? !giaTuGhi.trim() : donVi !== "Thoả thuận" && !priceValue.trim()) return ["Chưa nhập giá.", "2", "o-gia"];
+    if (!area.trim()) return ["Chưa nhập diện tích.", "2", "o-dientich"];
+    // Thông tin chính theo loại hình — thiếu mục nào báo đúng tên mục đó.
+    const thieu = thieuMucBatBuoc(loaiHinh, purposeOfDemand(demand), specValues);
+    if (thieu.length) return [`Chưa nhập: ${thieu.join(" · ")}.`, "2"];
+    // Bước 4 — Tiêu đề
+    if (!title.trim()) return ["Chưa nhập tiêu đề tin.", "4", "o-tieude"];
+    // Bước 5 — GÓI TIN: bắt buộc chọn, kể cả gói đang được miễn phí. Không mặc định sẵn,
+    // không tự đoán hộ — đây là thứ quyết định số tiền phải trả.
+    if (!planTier) return ["Chưa chọn gói tin.", "5"];
+    // Bước 6 — đổi sang gói thấp hơn sau khi đã up ảnh → số ảnh / video không được vượt mức của gói.
+    const toiDaAnh = duocMienPhi && billing.free.soAnh ? billing.free.soAnh : soAnhToiDa(billing, planTier as TierId);
+    const toiDaVideo = duocMienPhi && billing.free.soVideo !== undefined ? billing.free.soVideo : soVideoToiDa(billing, planTier as TierId);
+    const soVideo = images.filter((x) => isVideoUrl(x)).length;
+    const soAnh = images.length - soVideo;
+    // BẮT BUỘC ÍT NHẤT 1 ẢNH khi đăng (chủ dự án 26/10/2026); lưu nháp thì không đòi.
+    if (soAnh < 1) return ["Chưa thêm ảnh — tin cần ít nhất 1 ảnh.", "6", "b-anh"];
+    if (soAnh > toiDaAnh) return [`Tin ${getTier(planTier as TierId).name} chỉ đăng tối đa ${toiDaAnh} ảnh — xoá bớt ảnh cũ hoặc nâng cấp gói tin.`, "6"];
+    if (soVideo > toiDaVideo) return [`Mỗi tin chỉ đăng tối đa ${toiDaVideo} video — xoá video cũ rồi thêm lại.`, "6"];
+    // Bước 7 — Liên hệ. Số điện thoại BẮT BUỘC ở mọi tin (27/09/2026) — phải là số gọi được.
+    // Báo ĐÚNG Ô THIẾU (26/10/2026: đã đăng nhập, tên đã tự điền mà vẫn bị đòi "họ tên và số điện thoại")
+    if (!contactPhone.trim()) return ["Nhập số điện thoại liên hệ.", "7", "o-sdt"];
+    if (loiSdt(contactPhone)) return [loiSdt(contactPhone), "7", "o-sdt"];
+    if (loiEmail(contactEmail)) return [loiEmail(contactEmail), "7", "o-email"];
+    return null;
+  }
+
+  async function luuThat(asDraft: boolean, daXacMinhXong: boolean, diNap = false) {
     setError("");
     setLoiBuoc("");
     const uid = uidGop.current ?? userId;
@@ -905,38 +940,22 @@ export default function PostListingForm() {
       router.push(linkDangNhap);
       return;
     }
-    // KIỂM THEO ĐÚNG THỨ TỰ 7 BƯỚC (15/10/2026): thiếu nhiều ô thì báo ô ở bước SỚM NHẤT trước.
+    const loi = asDraft ? null : loiDangTin();
+    // Đủ thông tin để gửi duyệt (nạp xong máy tự gửi). Nút Nạp thêm bỏ qua mọi ô bắt buộc.
+    const duDeGui = !asDraft && !loi;
+    if (diNap && (!province || !title.trim())) {
+      // Chưa có Tỉnh/Thành + Tiêu đề (CSDL bắt buộc) → chưa lưu được tin nháp: sang nạp luôn, bản soạn dở vẫn nằm
+      // trong máy (tự lưu) và hiện lại khi khách quay về form.
+      const can = Math.max(0, truocVoucher.tongTra - (hoSoVi?.balance ?? 0));
+      window.location.href = `/tai-khoan/nap-tien?can=${can}&ve=${encodeURIComponent("/dang-tin")}`;
+      return;
+    }
     if (asDraft) {
       // Lưu nháp: CSDL bắt buộc hai cột Tỉnh/Thành + Tiêu đề — còn lại ghi tới đâu lưu tới đó.
       if (!province) return baoLoi("Chọn Tỉnh/Thành để lưu nháp.", "1", "o-tinh");
       if (!title.trim()) return baoLoi("Nhập tiêu đề để lưu nháp.", "4", "o-tieude");
-    } else {
-      // Bước 1 — Loại tin & vị trí
-      if (!loaiHinh) return baoLoi("Chưa chọn loại hình bất động sản.", "1", "o-loaihinh");
-      if (!province) return baoLoi("Chưa chọn Tỉnh/Thành.", "1", "o-tinh");
-      // Bước 2 — Thông tin chính. GIÁ BẮT BUỘC (14/10/2026): nhập số, chọn "Thoả thuận", hoặc tự ghi.
-      if (donVi === KHAC_GIA ? !giaTuGhi.trim() : donVi !== "Thoả thuận" && !priceValue.trim()) return baoLoi("Chưa nhập giá.", "2", "o-gia");
-      if (!area.trim()) return baoLoi("Chưa nhập diện tích.", "2", "o-dientich");
-      // Thông tin chính theo loại hình — thiếu mục nào báo đúng tên mục đó.
-      const thieu = thieuMucBatBuoc(loaiHinh, purposeOfDemand(demand), specValues);
-      if (thieu.length) return baoLoi(`Chưa nhập: ${thieu.join(" · ")}.`, "2");
-      // Bước 4 — Tiêu đề
-      if (!title.trim()) return baoLoi("Chưa nhập tiêu đề tin.", "4", "o-tieude");
-      // Bước 5 — GÓI TIN: bắt buộc chọn, kể cả gói đang được miễn phí. Không mặc định sẵn,
-      // không tự đoán hộ — đây là thứ quyết định số tiền phải trả.
-      if (!planTier) return baoLoi("Chưa chọn gói tin.", "5");
-      // Bước 6 — đổi sang gói thấp hơn sau khi đã up ảnh → số ảnh / video không được vượt mức của gói.
-      const toiDaAnh = duocMienPhi && billing.free.soAnh ? billing.free.soAnh : soAnhToiDa(billing, planTier as TierId);
-      const toiDaVideo = duocMienPhi && billing.free.soVideo !== undefined ? billing.free.soVideo : soVideoToiDa(billing, planTier as TierId);
-      const soVideo = images.filter((x) => isVideoUrl(x)).length;
-      const soAnh = images.length - soVideo;
-      if (soAnh > toiDaAnh) return baoLoi(`Tin ${getTier(planTier as TierId).name} chỉ đăng tối đa ${toiDaAnh} ảnh — xoá bớt ảnh cũ hoặc nâng cấp gói tin.`, "6");
-      if (soVideo > toiDaVideo) return baoLoi(`Mỗi tin chỉ đăng tối đa ${toiDaVideo} video — xoá video cũ rồi thêm lại.`, "6");
-      // Bước 7 — Liên hệ. Số điện thoại BẮT BUỘC ở mọi tin (27/09/2026) — phải là số gọi được.
-      // Báo ĐÚNG Ô THIẾU (26/10/2026: đã đăng nhập, tên đã tự điền mà vẫn bị đòi "họ tên và số điện thoại")
-      if (!contactPhone.trim()) return baoLoi("Nhập số điện thoại liên hệ.", "7", "o-sdt");
-      if (loiSdt(contactPhone)) return baoLoi(loiSdt(contactPhone), "7", "o-sdt");
-      if (loiEmail(contactEmail)) return baoLoi(loiEmail(contactEmail), "7", "o-email");
+    } else if (loi && !diNap) {
+      return baoLoi(...loi);
     }
     // LƯU NHÁP thì không chặn gì thêm — người đăng ghi tới đâu lưu tới đó.
 
@@ -948,7 +967,7 @@ export default function PostListingForm() {
     // KHÁCH CHỈ GÕ SỐ MỘT LẦN (chuẩn các sàn lớn, chủ dự án 26/10/2026): tài khoản chưa có số → lấy chính số liên hệ
     // khách vừa gõ trong form làm số tài khoản — không bật hộp bắt gõ lại. Số mới: lưu luôn. Số đã có tài khoản / tin cũ:
     // hộp xác nhận điền sẵn số đó, tự gửi mã Zalo một lần để gộp.
-    if (!asDraft && soDaXacMinh === false && !daXacMinhXong) {
+    if (!asDraft && !diNap && soDaXacMinh === false && !daXacMinhXong) {
       const soDung = soTaiKhoan || chuanHoaSdt(contactPhone);
       if (!soDung) {
         setMoXacMinh(true);
@@ -990,7 +1009,7 @@ export default function PostListingForm() {
     // phần đó vào khả dụng, chỉ so phần TĂNG thêm (đổi lên gói đắt hơn).
     const giaCu = editStatus === "pending" ? Number((chiTietGoc.current.plan as { giaBao?: number } | undefined)?.giaBao ?? 0) : 0;
     const khaDung = (hoSoVi?.balance ?? 0) + (giaCu > 0 ? tachThue(giaCu).tongTra : 0);
-    const viThieu = !asDraft && !daDang && phaiTra > 0 && khaDung < phaiTra;
+    const viThieu = diNap || (!asDraft && !daDang && phaiTra > 0 && khaDung < phaiTra);
     const luuNhap = asDraft || viThieu;
 
     setSaving(luuNhap ? "draft" : "publish");
@@ -1062,7 +1081,8 @@ export default function PostListingForm() {
     if (viThieu) {
       // Ghi "chờ nạp" (up_cho, dùng chung với Đăng lại): nạp đủ tiền là máy TỰ gửi tin
       // nháp này đi duyệt đúng gói đã chọn + báo khách — không phải quay lại bấm đăng.
-      if (maTinNhap) {
+      // Chỉ tin ĐỦ thông tin mới tự gửi duyệt khi nạp xong; bấm Nạp thêm lúc còn thiếu ô → nạp xong về tin điền tiếp.
+      if (maTinNhap && duDeGui) {
         await fetch("/api/tin-dang/up", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -1145,7 +1165,6 @@ export default function PostListingForm() {
             Xem tin nháp
           </Link>
         </div>
-        <p className="mt-4 text-xs text-cvr-muted">Nạp xong, mở tin nháp và bấm Đăng — không phải nhập lại.</p>
       </div>
     );
   }
@@ -1157,7 +1176,7 @@ export default function PostListingForm() {
           <svg className="h-7 w-7" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
         </div>
         <h3 className="text-xl font-semibold tracking-tight text-cvr-ink">
-          {done === "capNhat" ? "Đã cập nhật thông tin tin đăng!" : done === "draft" ? "Đã lưu nháp!" : editId ? "Đã cập nhật — tin chờ duyệt lại!" : "Tin đăng đã được gửi!"}
+          {done === "capNhat" ? "Đã cập nhật thông tin tin đăng!" : done === "draft" ? "Đã lưu nháp!" : editId && editStatus !== "draft" ? "Đã cập nhật — tin chờ duyệt lại!" : "Tin đăng đã được gửi!"}
         </h3>
         <p className="mt-2 text-sm text-cvr-muted">
           {done === "capNhat"
@@ -1788,7 +1807,8 @@ export default function PostListingForm() {
                         type="button"
                         aria-pressed={dang}
                         onClick={() => setBatDau(id === "chon" ? batDau || ngayVnSau(1) : "")}
-                        className={`whitespace-nowrap rounded-md px-2 py-2 text-center text-[13px] font-medium transition ${dang ? "bg-cvr-ink text-white" : "text-cvr-body hover:text-cvr-ink"}`}
+                        // Hai nút cao bằng nhau, chữ xuống dòng được — màn hẹp không bị cắt chữ (chủ dự án 26/10/2026)
+                        className={`flex min-h-11 items-center justify-center rounded-md px-2 py-2 text-center text-[14px] font-medium leading-tight transition ${dang ? "bg-cvr-ink text-white" : "text-cvr-body hover:text-cvr-ink"}`}
                       >
                         {ten}
                       </button>
@@ -1865,22 +1885,23 @@ export default function PostListingForm() {
                 )}
                 {/* Số dư ví ngay tại chỗ — biết thiếu TRƯỚC khi bấm đăng, nạp được ngay. */}
                 {thanhTien > 0 && hoSoVi && (
-                  <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white px-3.5 py-2.5">
-                    <span className="text-cvr-muted">
-                      {tamGiu > 0 ? "Số dư khả dụng" : "Số dư ví"}
-                      {tamGiu > 0 && <span className="block text-xs text-cvr-faint">Đang tạm giữ {vnd(tamGiu)} cho tin chờ duyệt</span>}
-                    </span>
-                    <span className="flex items-center gap-2.5">
+                  <div className="mt-3 rounded-xl bg-white px-3.5 py-2.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-cvr-muted">
+                        {tamGiu > 0 ? "Số dư khả dụng" : "Số dư ví"}
+                        {tamGiu > 0 && <span className="block text-xs text-cvr-faint">Đang tạm giữ {vnd(tamGiu)} cho tin chờ duyệt</span>}
+                      </span>
                       {/* Ví phải đủ SỐ TẠM GIỮ lúc gửi (giá gói trước voucher — 0056), như phần kiểm khi bấm Đăng */}
                       <span className={hoSoVi.balance < truocVoucher.tongTra ? "font-semibold tabular-nums text-red-600" : "font-semibold tabular-nums text-cvr-ink"}>{vnd(hoSoVi.balance)}</span>
-                      {/* ĐÚNG TRÌNH TỰ CHUẨN (chủ dự án 26/10/2026): nút này đi như bấm Đăng tin — kiểm đủ thông tin → tự lưu nháp
-                          KÈM GÓI → màn "Nạp thêm … để đăng tin" → nạp đủ là tin tự gửi duyệt. Trước đây là link đi tắt: chưa lưu gì, mất gói. */}
-                      {hoSoVi.balance < truocVoucher.tongTra && (
-                        <button type="button" onClick={() => save(false)} disabled={!!saving} className="rounded-full bg-cvr-ink px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-cvr-ink/90 disabled:opacity-60">
-                          Nạp thêm {vnd(truocVoucher.tongTra - hoSoVi.balance)}
-                        </button>
-                      )}
-                    </span>
+                    </div>
+                    {/* ĐÚNG TRÌNH TỰ CHUẨN (chủ dự án 26/10/2026): nút này đi như bấm Đăng tin — kiểm đủ thông tin → tự lưu nháp
+                        KÈM GÓI → màn "Nạp thêm … để đăng tin" → nạp đủ là tin tự gửi duyệt. Trước đây là link đi tắt: chưa lưu gì, mất gói.
+                        Nút kêu gọi to, cả bề ngang (chủ dự án 26/10/2026: "nút CTA nạp thêm"). */}
+                    {hoSoVi.balance < truocVoucher.tongTra && (
+                      <button type="button" onClick={() => save(false, false, true)} disabled={!!saving} className="mt-2.5 h-12 w-full rounded-lg bg-cvr-ink text-[15px] font-bold text-white transition hover:bg-cvr-ink/90 disabled:opacity-60">
+                        Nạp thêm {vnd(truocVoucher.tongTra - hoSoVi.balance)}
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
@@ -1913,7 +1934,7 @@ export default function PostListingForm() {
       {/* Hình ảnh — SAU khi chọn gói (chủ dự án 10/10/2026, nhắc lại 22/10/2026: "không đưa gói tin lên trước thì
           không thể biết giới hạn ảnh"): số ảnh / video tối đa theo gói đã chọn, số từ admin.
           Tải từ máy / dán link, ảnh đầu là ảnh đại diện. */}
-      <Card id="b-anh" step={buoc()} title="Hình ảnh & video">
+      <Card id="b-anh" step={buoc()} title="Hình ảnh & video *">
         <ImagePicker
           value={images}
           onChange={setImages}
@@ -2004,7 +2025,7 @@ export default function PostListingForm() {
           <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 19V5m0 0l-6 6m6-6l6 6" />
           </svg>
-          {saving === "publish" ? "Đang gửi duyệt…" : editId ? "Cập nhật & gửi duyệt" : "Đăng tin ngay"}
+          {saving === "publish" ? "Đang gửi duyệt…" : editId && editStatus !== "draft" ? "Cập nhật & gửi duyệt" : "Đăng tin ngay"}
         </button>
         <button
           type="button"

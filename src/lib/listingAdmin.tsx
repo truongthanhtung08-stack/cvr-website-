@@ -2,7 +2,7 @@
 // Hàng thô của bảng `listings` (supabase/migrations/0002_listings.sql).
 
 export type ListingTier = "diamond" | "gold" | "silver" | "basic";
-export type ListingStatus = "draft" | "pending" | "approved" | "rejected" | "hidden" | "expired";
+export type ListingStatus = "draft" | "pending" | "approved" | "rejected" | "hidden" | "expired" | "deleted";
 export type ListingPurpose = "ban" | "thue" | "mua" | "can-thue";
 
 // Thuộc tính linh hoạt lưu trong cột details (JSONB) — xem 0006_listing_details.sql
@@ -148,6 +148,7 @@ export function listingStatusLabel(s: ListingStatus): string {
     rejected: "Từ chối",
     hidden: "Đã ẩn",
     expired: "Hết hạn",
+    deleted: "Đã xoá",
   }[s];
 }
 
@@ -159,6 +160,7 @@ export function listingStatusBadge(s: ListingStatus) {
     rejected: "bg-red-50 text-red-700 ring-red-600/20",
     hidden: "bg-gray-100 text-gray-600 ring-gray-500/20",
     expired: "bg-gray-100 text-gray-500 ring-gray-400/20",
+    deleted: "bg-red-50 text-red-600 ring-red-500/20",
   }[s];
   return (
     <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${cls}`}>

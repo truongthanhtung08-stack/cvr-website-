@@ -20,7 +20,7 @@ export default function DoiAnhDaiDien({ idHoSo, url, ten, className }: { idHoSo:
     if (!moi) { setDang(false); window.alert("Chưa tải được ảnh. " + (error ?? "")); return; }
     const sb = createClient();
     const { error: e } = await sb.from("profiles").update({ avatar_url: moi }).eq("id", idHoSo);
-    if (!e) await sb.auth.updateUser({ data: { avatar_url: moi } });
+    if (!e) await sb.auth.updateUser({ data: { avatar_url: moi, picture: moi, tu_dat: true } }); // tu_dat: khách tự đặt → đăng nhập lại không đè (datDaiDien)
     setDang(false);
     if (e) { window.alert("Lưu thất bại: " + e.message); return; }
     setAnh(moi);

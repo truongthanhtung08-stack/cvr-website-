@@ -79,6 +79,7 @@ export default function KhachHangPage() {
         .from("listings")
         .select("id,title,view_count")
         .eq("owner_id", user.id)
+        .neq("status", "deleted")
         .order("created_at", { ascending: false });
       const list = (ds ?? []) as { id: string; title: string; view_count: number | null }[];
       if (!list.length) return setTin([]);
@@ -222,7 +223,7 @@ export default function KhachHangPage() {
       <div className="space-y-5">
         <PageHeader title="Khách hàng" />
         <div className="rounded-2xl border border-cvr-line bg-white p-8 text-center shadow-sm">
-          <p className="text-sm text-cvr-muted">Đăng tin đầu tiên để bắt đầu theo dõi lượt xem và khách quan tâm.</p>
+          <p className="text-sm text-cvr-muted">Chưa có tin nào.</p>
           <Link href="/dang-tin" className="mt-4 inline-flex h-11 items-center justify-center rounded-full bg-cvr-ink px-6 text-sm font-semibold text-white">
             Đăng tin
           </Link>
@@ -381,7 +382,7 @@ export default function KhachHangPage() {
       {the === "luot" && (
         <section className="rounded-2xl border border-cvr-line bg-white p-5 shadow-sm">
           {suKien.length === 0 ? (
-            <p className="text-sm text-cvr-muted">Chưa có lượt xem nào được ghi giờ. Lượt xem mới sẽ hiện ở đây kèm ngày giờ.</p>
+            <p className="text-sm text-cvr-muted">Chưa có lượt xem nào.</p>
           ) : (
             <ul className="divide-y divide-cvr-line/70">
               {nhomTheoNgay(suKien).map(([ngay, ds]) => (

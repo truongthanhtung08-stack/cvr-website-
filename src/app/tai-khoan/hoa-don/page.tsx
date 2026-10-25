@@ -55,7 +55,7 @@ export default function HoaDonCuaToiPage() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Hóa đơn của tôi" desc="Tiền nạp vào ví không nằm ở đây — chỉ các giao dịch đã dùng dịch vụ." />
+      <PageHeader title="Hóa đơn của tôi" />
 
       {loi && (
         <div className="rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">{loi}</div>
@@ -116,15 +116,6 @@ export default function HoaDonCuaToiPage() {
             </table>
           </div>
         )}
-
-        <p className="mt-4 rounded-lg bg-cvr-surface px-3 py-2.5 text-xs leading-relaxed text-cvr-muted">
-          Cần hóa đơn giá trị gia tăng mang tên công ty? Vào{" "}
-          <Link href="/tai-khoan/cai-dat" className="font-medium text-cvr-blue-ink hover:text-cvr-blue">
-            Cài đặt tài khoản
-          </Link>{" "}
-          → mục <strong>Thông tin xuất hóa đơn</strong> để khai tên công ty và mã số thuế. Khai một lần,
-          các giao dịch sau tự động xuất hóa đơn riêng và gửi về email của bạn.
-        </p>
       </div>
     </div>
   );

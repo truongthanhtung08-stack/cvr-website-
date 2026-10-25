@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { baoCachDangNhap } from "@/lib/useAuth";
 import { chuanHoaSdt, laSdtVN } from "@/lib/phone";
 
 // ============================================================================
@@ -91,6 +92,7 @@ export default function ForgotPasswordForm() {
       const { error } = kenh === "zalo"
         ? await supabase.auth.signInWithPassword({ phone: `+84${so.slice(1)}`, password: pw })
         : await supabase.auth.signInWithPassword({ email: dinhDanh.trim(), password: pw });
+      if (!error) await baoCachDangNhap(kenh === "zalo" ? "sdt" : "email"); // tên + ảnh mặc định theo cách đăng nhập
       window.location.href = error ? "/dang-nhap" : "/tai-khoan";
     } catch {
       setDangChay(false);

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient as taoClient } from "@supabase/supabase-js";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { timTaiKhoan } from "@/lib/taiKhoanTheoSdt";
+import { datDaiDien } from "@/lib/daiDien";
 import { phatMa, kiemMa, guiMaQuaZalo } from "@/lib/maXacThuc";
 import { chuanHoaSdt, laSdtVN } from "@/lib/phone";
 
@@ -123,9 +124,8 @@ async function xuLy(req: Request) {
     userId = moi.user.id;
     await admin.from("profiles").update({ phone: sdt, phone_verified: true }).eq("id", userId);
   }
-  // TÊN TÀI KHOẢN MẶC ĐỊNH (chủ dự án 26/10/2026, chuẩn): Email / Gmail / Zalo lấy tên của tài khoản đó; đăng nhập
-  // bằng số mà tài khoản chưa có tên → tên = số điện thoại. Đã có tên thì giữ nguyên.
-  await admin.from("profiles").update({ full_name: sdt }).eq("id", userId).or("full_name.is.null,full_name.eq.");
+  // TÊN + ẢNH MẶC ĐỊNH (chủ dự án 26/10/2026): đăng nhập bằng số → tên = số điện thoại, ảnh mặc định. Hàm chung datDaiDien.
+  await datDaiDien(admin, userId, "sdt", { ten: sdt });
 
   // Mở phiên bằng liên kết một lần (không gửi email nào). Tài khoản chưa có email thì
   // gắn email kỹ thuật — cùng cách đăng nhập Zalo Mini App đang dùng.

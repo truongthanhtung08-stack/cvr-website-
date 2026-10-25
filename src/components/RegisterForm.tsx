@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { loiEmail } from "@/lib/kiemNhap";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { baoCachDangNhap } from "@/lib/useAuth";
 import { dichSauDangNhap, thamSoNext } from "@/lib/dieuHuong";
 import SocialAuth from "@/components/SocialAuth";
 import NoiDungChuongTrinh from "@/components/NoiDungChuongTrinh";
@@ -219,6 +220,7 @@ export default function RegisterForm() {
       const { error } = email.trim()
         ? await supabase.auth.signInWithPassword({ email: email.trim(), password: pw })
         : await supabase.auth.signInWithPassword({ phone: `+84${soDT.slice(1)}`, password: pw });
+      if (!error) await baoCachDangNhap(email.trim() ? "email" : "sdt"); // tên + ảnh mặc định theo cách đăng nhập
 
       // Số vừa xác minh qua Zalo → tin Coastal Land đăng hộ tự về tài khoản ngay
       // (chưa xác minh thì hàm tự từ chối, khối "tin của bạn" ở trang tài khoản lo tiếp).

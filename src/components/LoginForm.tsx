@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { baoCachDangNhap } from "@/lib/useAuth";
 import { chuanHoaSdt, laSdtVN } from "@/lib/phone";
 import SocialAuth from "@/components/SocialAuth";
 import { dichSauDangNhap, thamSoNext } from "@/lib/dieuHuong";
@@ -111,6 +112,7 @@ export default function LoginForm() {
         setSaiMatKhau(/invalid login credentials/i.test(error.message));
         return;
       }
+      await baoCachDangNhap(dungSdt ? "sdt" : "email"); // tên + ảnh mặc định theo cách đăng nhập
       // Đăng nhập xong mới lưu — lưu trước thì sai email cũng nhớ, lần sau điền sẵn cái sai.
       try {
         if (ghiNho) {

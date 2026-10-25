@@ -43,7 +43,7 @@ export default function AccountSettingsPage() {
       })
       .eq("id", profile.id);
     // Tên mới hiện ngay ở đầu trang (đầu trang đọc tên trong phiên đăng nhập)
-    if (!error) await supabase.auth.updateUser({ data: { full_name: fullName.trim() || null } });
+    if (!error) await supabase.auth.updateUser({ data: { full_name: fullName.trim() || null, tu_dat: true } }); // tu_dat: khách tự đặt → đăng nhập lại không đè (datDaiDien)
     setSaving(false);
     setNotice(error ? "Lưu thất bại: " + error.message : "Đã lưu thay đổi ✓");
   }
@@ -67,9 +67,8 @@ export default function AccountSettingsPage() {
           </div>
         )}
 
-        <div className="mt-4 flex items-center gap-4">
+        <div className="mt-4 flex">
           <DoiAnhDaiDien idHoSo={profile.id} url={profile.avatar_url || anhDaiDien(user)} ten={fullName || "T"} className="h-16 w-16 bg-cvr-surface text-cvr-ink ring-1 ring-cvr-line" />
-          <p className="text-sm text-cvr-muted">Bấm vào ảnh để đổi ảnh đại diện.</p>
         </div>
 
         <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -100,9 +99,6 @@ export default function AccountSettingsPage() {
 
       <div className="rounded-2xl border border-cvr-line bg-white p-5 shadow-sm sm:p-6">
         <h2 className="text-base font-semibold text-cvr-ink">Mật khẩu</h2>
-        <p className="mt-1 text-sm text-cvr-muted">
-          Để đổi mật khẩu, dùng chức năng &ldquo;Quên mật khẩu&rdquo; — liên kết đặt lại sẽ gửi về email của bạn.
-        </p>
         <a href="/quen-mat-khau" className="mt-3 inline-block rounded-lg border border-cvr-line px-4 py-2 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink">
           Đặt lại mật khẩu
         </a>
@@ -177,10 +173,6 @@ function KhoiHoaDon({ profile }: { profile: { id: string; email: string | null }
   return (
     <form onSubmit={luu} className="rounded-2xl border border-cvr-line bg-white p-5 shadow-sm sm:p-6">
       <h2 className="text-base font-semibold text-cvr-ink">Thông tin xuất hóa đơn</h2>
-      <p className="mt-1 text-sm text-cvr-muted">
-        Khai một lần, các lần sau tự xuất hóa đơn mang tên công ty bạn.
-      </p>
-
       {notice && (
         <div className="mt-3 rounded-lg border border-cvr-line bg-cvr-surface px-3 py-2.5 text-sm text-cvr-body">
           {notice}
@@ -221,13 +213,6 @@ function KhoiHoaDon({ profile }: { profile: { id: string; email: string | null }
           </Field>
         </div>
       )}
-
-      {!bat && (
-        <p className="mt-3 text-sm text-cvr-muted">
-          Không bật thì hóa đơn vẫn xuất đầy đủ, chỉ là không mang tên công ty.
-        </p>
-      )}
-
       <button
         type="submit"
         disabled={saving}

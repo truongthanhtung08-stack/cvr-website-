@@ -26,10 +26,11 @@ export default function EditListingPage() {
 
   async function handleDelete() {
     if (!row) return;
-    if (!window.confirm(`Xoá vĩnh viễn tin "${row.title}"?\nMẹo: muốn gỡ tạm khỏi web thì dùng trạng thái "Ẩn tạm" thay vì xoá.`)) return;
+    if (!window.confirm(`Chuyển tin "${row.title}" vào mục Đã xoá?`)) return;
     setDeleting(true);
     const supabase = createClient();
-    const { error } = await supabase.from("listings").delete().eq("id", row.id);
+    // Xoá = đưa vào mục Đã xoá, khôi phục được (0066)
+    const { error } = await supabase.rpc("xoa_tin", { p_ids: [row.id] });
     setDeleting(false);
     if (!error) {
       router.push("/admin/tin-dang");

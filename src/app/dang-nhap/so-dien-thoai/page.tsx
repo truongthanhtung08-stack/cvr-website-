@@ -5,6 +5,7 @@ import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { createClient } from "@/lib/supabase/client";
+import { baoCachDangNhap } from "@/lib/useAuth";
 import { dichSauDangNhap } from "@/lib/dieuHuong";
 
 // ============================================================================
@@ -53,6 +54,7 @@ export default function PhoneLoginPage() {
         }
       }
       if (!error) {
+        await baoCachDangNhap("sdt"); // tên = số điện thoại, ảnh mặc định
         window.location.replace(dichSauDangNhap());
         return;
       }
