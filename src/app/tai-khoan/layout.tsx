@@ -74,12 +74,13 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
             {/* MÁY TÍNH — cột điều hướng dính theo cuộn */}
             <aside className="hidden lg:block">
               <div className="no-scrollbar sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto rounded-2xl border border-cvr-line bg-white p-3 shadow-lux">
-                <div className="flex items-center gap-2.5 px-3 pb-3 pt-1">
+                {/* Bấm avatar / tên → Cài đặt đổi tên + ảnh đại diện (như điện thoại — chủ dự án 26/10/2026) */}
+                <Link href="/tai-khoan/cai-dat" className="flex items-center gap-2.5 rounded-xl px-3 pb-3 pt-1 transition hover:bg-cvr-surface">
                   <AnhDaiDien url={profile?.avatar_url || anhDaiDien(user)} ten={profile?.full_name || "T"} className="h-9 w-9 bg-cvr-surface text-sm text-cvr-ink ring-1 ring-cvr-line" />
                   <p className="min-w-0 truncate text-sm text-cvr-muted">
                     {loading ? "Tài khoản" : <>Xin chào, <strong className="font-semibold text-cvr-ink">{profile?.full_name || "bạn"}</strong></>}
                   </p>
-                </div>
+                </Link>
                 <div className="space-y-0.5">{MUC_CHINH.map((m) => dong(m))}</div>
 
                 <div className="mt-4 border-t border-cvr-line pt-4">

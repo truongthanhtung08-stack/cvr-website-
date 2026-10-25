@@ -1,3 +1,4 @@
+import AvatarMacDinh, { tenKhongCoChu } from "@/components/AvatarMacDinh";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -744,7 +745,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                           <img src={contact.avatar} alt={contact.name} className="h-14 w-14 shrink-0 rounded-full object-cover ring-1 ring-cvr-line" />
                         ) : (
                           <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-cvr-surface text-[17px] font-semibold text-cvr-ink ring-1 ring-cvr-line">
-                            {(() => { const w = contact.name.trim().split(/\s+/).filter(Boolean); return ((w[0]?.[0] ?? "N") + (w.length > 1 ? w[w.length - 1][0] : "")).toUpperCase(); })()}
+                            {tenKhongCoChu(contact.name) ? <AvatarMacDinh /> : (() => { const w = contact.name.trim().split(/\s+/).filter(Boolean); return ((w[0]?.[0] ?? "N") + (w.length > 1 ? w[w.length - 1][0] : "")).toUpperCase(); })()}
                           </div>
                         )}
                         <p className="min-w-0 break-words text-[17px] font-semibold leading-snug text-cvr-ink">{contact.name}</p>

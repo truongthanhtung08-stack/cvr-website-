@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import AvatarMacDinh, { tenKhongCoChu } from "@/components/AvatarMacDinh";
 import { useNutQuayLai } from "@/lib/khoaCuon";
 import Gallery from "@/components/Gallery";
 import { ANH_MAC_DINH } from "@/lib/anhMau";
@@ -191,7 +192,7 @@ export default function XemTruocTin({
                   <img src={d.contact.avatar} alt="" className="h-12 w-12 shrink-0 rounded-full object-cover" />
                 ) : (
                   <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-cvr-surface text-lg font-semibold text-cvr-ink">
-                    {(d.contact.name || "?").trim().charAt(0).toUpperCase()}
+                    {tenKhongCoChu(d.contact.name) ? <AvatarMacDinh /> : (d.contact.name || "?").trim().charAt(0).toUpperCase()}
                   </span>
                 )}
                 <div className="min-w-0">

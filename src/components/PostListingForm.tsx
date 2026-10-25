@@ -146,6 +146,9 @@ export default function PostListingForm() {
   const [description, setDescription] = useState("");
   const [images, setImages] = useState<string[]>([]);
   const [contactName, setContactName] = useState("");
+  // TÊN TÀI KHOẢN (chủ dự án 26/10/2026): ô Họ tên trong form KHÔNG bắt buộc, tự điền tên này; khách để trống thì tin
+  // lấy tên tài khoản. Đăng nhập bằng số chưa đổi tên → tên = số điện thoại. Đổi tên tài khoản ở Cài đặt.
+  const [tenTaiKhoan, setTenTaiKhoan] = useState("");
   const [contactPhone, setContactPhone] = useState("");
   const [contactEmail, setContactEmail] = useState("");
   // ẢNH ĐẠI DIỆN NGƯỜI ĐĂNG — hiện trên thẻ tin và trong danh bạ chuyên gia.
@@ -627,6 +630,7 @@ export default function PostListingForm() {
           setSoDaXacMinh(!!pv.phone_verified || !!pv.sdt_lien_he_xac_minh || pv.role === "admin" || !!user.phone_confirmed_at);
           setSoTaiKhoan(chuanHoaSdt(p.phone ?? ""));
           setContactName((v) => v || p.full_name || "");
+          setTenTaiKhoan((p.full_name ?? "").trim() || chuanHoaSdt(p.phone ?? ""));
           setContactPhone((v) => v || p.phone || "");
           // Email kỹ thuật (zalo_… / sdt_…@users.coastalland.vn) không bao giờ điền vào tin (26/10/2026)
           setContactEmail((v) => v || emailThat(p.email));
@@ -814,7 +818,8 @@ export default function PostListingForm() {
       projectName: projectName.trim() || undefined,
       contact: (contactName.trim() || contactPhone.trim() || contactEmail.trim() || contactAvatar.trim())
         ? {
-            name: contactName.trim(),
+            // Ô Họ tên khách ghi; để trống → tên tài khoản (admin mở tin của khách thì không lấy tên admin)
+            name: contactName.trim() || (editOwner && editOwner !== userId ? "" : tenTaiKhoan) || chuanHoaSdt(contactPhone),
             phone: chuanHoaSdt(contactPhone),
             email: contactEmail.trim(),
             avatar: contactAvatar.trim() || undefined,
@@ -929,8 +934,6 @@ export default function PostListingForm() {
       if (soVideo > toiDaVideo) return baoLoi(`Mỗi tin chỉ đăng tối đa ${toiDaVideo} video — xoá video cũ rồi thêm lại.`, "6");
       // Bước 7 — Liên hệ. Số điện thoại BẮT BUỘC ở mọi tin (27/09/2026) — phải là số gọi được.
       // Báo ĐÚNG Ô THIẾU (26/10/2026: đã đăng nhập, tên đã tự điền mà vẫn bị đòi "họ tên và số điện thoại")
-      if (!contactName.trim() && !contactPhone.trim()) return baoLoi("Nhập họ tên và số điện thoại liên hệ.", "7", "o-ten");
-      if (!contactName.trim()) return baoLoi("Nhập họ tên liên hệ.", "7", "o-ten");
       if (!contactPhone.trim()) return baoLoi("Nhập số điện thoại liên hệ.", "7", "o-sdt");
       if (loiSdt(contactPhone)) return baoLoi(loiSdt(contactPhone), "7", "o-sdt");
       if (loiEmail(contactEmail)) return baoLoi(loiEmail(contactEmail), "7", "o-email");
@@ -1969,7 +1972,8 @@ export default function PostListingForm() {
           </div>
         </div>
         <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-3">
-          <div id="o-ten"><Label>Họ và tên *</Label><input value={contactName} onChange={(e) => setContactName(e.target.value)} placeholder="Nguyễn Văn A" className={inputCls} /></div>
+          {/* Họ tên KHÔNG bắt buộc (chủ dự án 26/10/2026): tự điền tên tài khoản; để trống thì tin lấy tên tài khoản */}
+          <div id="o-ten"><Label>Họ và tên</Label><input value={contactName} onChange={(e) => setContactName(e.target.value)} placeholder="Nguyễn Văn A" className={inputCls} /></div>
           {/* Kiểm ĐỊNH DẠNG ngay dưới ô (chuẩn chung src/lib/kiemNhap.ts) — báo khi khách rời ô. */}
           <div id="o-sdt">
             <Label>Số điện thoại *</Label>

@@ -1,3 +1,4 @@
+import AvatarMacDinh, { tenKhongCoChu } from "@/components/AvatarMacDinh";
 import Image from "next/image";
 import Link from "next/link";
 import BieuTuongThe from "@/components/BieuTuongThe";
@@ -39,7 +40,7 @@ function AgentAvatar({ name, src, size = 6 }: { name: string; src?: string; size
       className="flex shrink-0 items-center justify-center rounded-full bg-cvr-surface font-bold text-cvr-body ring-1 ring-cvr-line"
       style={{ width: dim, height: dim, fontSize: `${size * (laCongTy ? 1.2 : 1.6)}px` }}
     >
-      {initials}
+      {tenKhongCoChu(name) ? <AvatarMacDinh /> : initials}
     </span>
   );
 }
