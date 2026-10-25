@@ -295,15 +295,16 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
         return setError("Chưa nhập diện tích — thiếu diện tích thì tin bị loại khỏi bộ lọc và thiếu dữ liệu gửi cho Google.");
       if (!negotiable && (priceVnd == null || Number.isNaN(priceVnd)))
         return setError("Giá không hợp lệ — nhập số, hoặc tick \"Giá thỏa thuận\".");
-      // CHUẨN SEO (chủ dự án 25/10/2026): còn lỗi thì KHÔNG đăng — cùng luật với bảng kiểm trên đầu trang và nút Duyệt
+      // CHUẨN SEO (chủ dự án 25/10/2026) — cùng luật với bảng kiểm trên đầu trang và nút Duyệt
       const loiSeo = loiTinSeo({
         title, description, purpose, type,
         price_vnd: negotiable ? null : priceVnd, area_m2: parseFloat(area.replace(",", ".")),
         images: images.filter((s) => s.trim()),
         details: { addressDetail, direction, specs: specValues },
       });
-      if (loiSeo.length)
-        return setError(`Tin chưa đạt chuẩn SEO, còn ${loiSeo.length} lỗi — sửa xong mới đăng:\n· ${loiSeo.map((x) => `${x.ten} → sửa ở ${x.cho}`).join("\n· ")}`);
+      // Admin có quyền đăng cả khi còn lỗi (chủ dự án 25/10/2026) — cảnh báo, hỏi lại một lần
+      if (loiSeo.length && !window.confirm(`Tin còn ${loiSeo.length} lỗi chuẩn SEO:\n· ${loiSeo.map((x) => `${x.ten} → sửa ở ${x.cho}`).join("\n· ")}\n\nVẫn đăng tin?`))
+        return;
       // Hạn tin = số ngày gói theo bảng giá ĐÃ DUYỆT. Hạng chưa có giá đã duyệt thì hạn = 0 ngày
       // → tin hết hạn ngay khi lưu (vụ 09/10: nâng 5 tin VIP, cả 5 tự hết hạn sau 1 phút).
       const bang = bangTheoMucDich(billing, purpose);

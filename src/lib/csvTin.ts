@@ -723,10 +723,10 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
     status: "approved",
   };
 
-  // CHUẨN SEO — CÙNG LUẬT với bảng kiểm admin + nút Duyệt (src/lib/kiemTinSeo.ts, chủ dự án 25/10/2026: tin đăng hàng loạt /
-  // đăng hộ còn lỗi thì không cho lên web). Lỗi nào đã báo ở trên thì không báo lặp.
+  // CHUẨN SEO — CÙNG LUẬT với bảng kiểm admin + nút Duyệt (src/lib/kiemTinSeo.ts, chủ dự án 25/10/2026): cảnh báo để sửa,
+  // admin vẫn có quyền đăng. Lỗi nào đã báo ở trên thì không báo lặp.
   for (const x of loiTinSeo(payload as TinKiem))
-    if (!loi.some((l) => l.startsWith(x.ten.slice(0, 12)))) loi.push(`Chuẩn SEO: ${x.ten}`);
+    if (!loi.some((l) => l.startsWith(x.ten.slice(0, 12)))) canhBao.push(`Chuẩn SEO: ${x.ten}`);
 
   return {
     dong: soDong,

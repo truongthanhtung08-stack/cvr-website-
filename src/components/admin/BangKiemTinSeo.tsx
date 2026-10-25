@@ -53,7 +53,7 @@ export default function BangKiemTinSeo({ row }: { row: ListingRow }) {
       <p className="text-sm font-semibold text-cvr-ink">
         Chuẩn SEO của tin:{" "}
         <span className={loi.length ? "text-red-600" : "text-green-700"}>
-          {loi.length ? `chưa đạt — còn ${loi.length} lỗi, sửa hết mới duyệt lên web được` : "đạt — Google được lập chỉ mục"}
+          {loi.length ? `chưa đạt — còn ${loi.length} lỗi, bấm từng lỗi để sửa` : "đạt — Google được lập chỉ mục"}
         </span>
       </p>
       {loi.length > 0 && (

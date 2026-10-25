@@ -88,10 +88,10 @@ function TheDuyet({ tin, xong }: { tin: Tin; xong: () => void }) {
   const tinXem = { ...tin, title: tieuDe, description: moTa, images: anhGiu, details: { ...(tin.details ?? {}), addressDetail: diaChi, direction: huong } } as ListingRow;
 
   async function luu(duyet: boolean) {
-    // CHUẨN SEO (chủ dự án 25/10/2026, áp cho tin đăng hàng loạt / đăng hộ): còn lỗi thì KHÔNG duyệt — cùng luật bảng kiểm
+    // CHUẨN SEO (chủ dự án 25/10/2026, tin đăng hàng loạt / đăng hộ): còn lỗi thì cảnh báo, admin vẫn có quyền duyệt
     if (duyet) {
       const loiSeo = loiTinSeo(tinXem);
-      if (loiSeo.length) return setBao(`Tin chưa đạt chuẩn SEO, còn ${loiSeo.length} lỗi — sửa xong mới duyệt: ${loiSeo.map((x) => `${x.ten} (sửa ở ${x.cho})`).join(" · ")}`);
+      if (loiSeo.length && !window.confirm(`Tin còn ${loiSeo.length} lỗi chuẩn SEO:\n· ${loiSeo.map((x) => `${x.ten} → sửa ở ${x.cho}`).join("\n· ")}\n\nVẫn duyệt lên web?`)) return;
     }
     setDang(true);
     setBao("");

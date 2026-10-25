@@ -85,6 +85,10 @@ export default function AdminListingsPage() {
     // DUYỆT phải đi qua máy chủ — ở đó mới trừ ví theo bảng giá, ghi doanh thu
     // và báo cho khách. Sửa thẳng từ trình duyệt là tin lên sóng MIỄN PHÍ.
     if (next === "approved") {
+      // Tin còn lỗi chuẩn SEO: cảnh báo, admin vẫn có quyền duyệt (chủ dự án 25/10/2026)
+      const tin = rows.find((x) => x.id === id);
+      const loiSeo = tin ? loiTinSeo(tin) : [];
+      if (loiSeo.length && !window.confirm(`Tin còn ${loiSeo.length} lỗi chuẩn SEO:\n· ${loiSeo.map((x) => x.ten).join("\n· ")}\n\nVẫn duyệt lên web?`)) return;
       const r = await fetch("/api/tin-dang/duyet", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -502,7 +506,7 @@ function LoiSeo({ r }: { r: ListingRow }) {
   if (!loi.length) return null;
   return (
     <Link href={`/admin/tin-dang/${r.id}`} title={loi.map((x) => x.ten).join(" · ")} className="mt-1 inline-block rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700 hover:underline">
-      ✗ {loi.length} lỗi chuẩn SEO{r.status === "pending" ? " — sửa xong mới duyệt được" : " — đang đăng, cần sửa"}
+      ✗ {loi.length} lỗi chuẩn SEO{r.status === "pending" ? " — chờ duyệt" : " — đang đăng"}
     </Link>
   );
 }
