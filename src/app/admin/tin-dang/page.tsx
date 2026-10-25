@@ -89,6 +89,11 @@ export default function AdminListingsPage() {
       const tin = rows.find((x) => x.id === id);
       const loiSeo = tin ? loiTinSeo(tin) : [];
       if (loiSeo.length && !window.confirm(`Tin còn ${loiSeo.length} lỗi chuẩn SEO:\n· ${loiSeo.map((x) => x.ten).join("\n· ")}\n\nVẫn duyệt lên web?`)) return;
+      // Admin đã thấy, đã kiểm, vẫn duyệt → ghi nhận, tin không báo lại các lỗi đó (chủ dự án 25/10/2026)
+      if (loiSeo.length && tin) {
+        const daCo = ((tin.details as { seoChapNhan?: string[] } | null)?.seoChapNhan) ?? [];
+        await createClient().from("listings").update({ details: { ...(tin.details ?? {}), seoChapNhan: [...new Set([...daCo, ...loiSeo.map((x) => x.ma)])] } }).eq("id", id);
+      }
       const r = await fetch("/api/tin-dang/duyet", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

@@ -269,6 +269,8 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
   // asDraft = false → ĐĂNG TIN (kiểm tra đủ thông tin rồi công khai — status 'approved').
   async function save(asDraft: boolean) {
     setError("");
+    // Lỗi chuẩn SEO admin đã thấy và vẫn đăng → lưu lại, tin không báo lại các lỗi đó (chủ dự án 25/10/2026)
+    let seoChapNhan: string[] | undefined;
     if (!title.trim())
       return setError(asDraft ? "Nhập tiêu đề để lưu nháp." : "Chưa nhập tiêu đề tin.");
 
@@ -305,6 +307,7 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
       // Admin có quyền đăng cả khi còn lỗi (chủ dự án 25/10/2026) — cảnh báo, hỏi lại một lần
       if (loiSeo.length && !window.confirm(`Tin còn ${loiSeo.length} lỗi chuẩn SEO:\n· ${loiSeo.map((x) => `${x.ten} → sửa ở ${x.cho}`).join("\n· ")}\n\nVẫn đăng tin?`))
         return;
+      if (loiSeo.length) seoChapNhan = [...new Set([...(((initial?.details as { seoChapNhan?: string[] } | undefined)?.seoChapNhan) ?? []), ...loiSeo.map((x) => x.ma)])];
       // Hạn tin = số ngày gói theo bảng giá ĐÃ DUYỆT. Hạng chưa có giá đã duyệt thì hạn = 0 ngày
       // → tin hết hạn ngay khi lưu (vụ 09/10: nâng 5 tin VIP, cả 5 tự hết hạn sau 1 phút).
       const bang = bangTheoMucDich(billing, purpose);
@@ -357,6 +360,7 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
         ...(initial?.details ?? {}),
         // Đăng từ form = đã duyệt → bỏ cờ "chờ chủ duyệt" của tin nạp, kẻo tin đã lên web vẫn nằm ở trang Duyệt tin nạp (24/10/2026)
         ...(asDraft ? {} : { choChuDuyet: undefined, deXuat: undefined }),
+        ...(seoChapNhan ? { seoChapNhan } : {}),
         specs: Object.fromEntries(Object.entries(specValues).filter(([, v]) => v && v.trim())),
         interior,
         amenities,

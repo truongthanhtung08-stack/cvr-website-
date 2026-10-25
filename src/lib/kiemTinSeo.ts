@@ -68,25 +68,28 @@ export type TinKiem = {
   images?: string[] | null;
   details?: Record<string, unknown> | null;
 };
-export type LoiTin = { ten: string; cho: string; o: string };
+// ma = khoá cố định của loại lỗi — admin đã thấy, kiểm và vẫn bấm Duyệt thì lưu ma vào details.seoChapNhan, tin đó KHÔNG báo
+// lại lỗi ấy nữa (chủ dự án 25/10/2026); phát sinh lỗi loại khác thì vẫn báo.
+export type LoiTin = { ma: string; ten: string; cho: string; o: string };
 
 const laVideo = (s: string) => /youtu|\.mp4|\.mov|\.webm/i.test(s);
 
 export function loiTinSeo(r: TinKiem, soTinTrung = 0): LoiTin[] {
-  const d = (r.details ?? {}) as { addressDetail?: string; direction?: string; specs?: { balcony?: string }; giaTuGhi?: string };
+  const d = (r.details ?? {}) as { addressDetail?: string; direction?: string; specs?: { balcony?: string }; giaTuGhi?: string; seoChapNhan?: string[] };
   const moTa = (r.description ?? "").trim();
   const anh = (r.images ?? []).filter((s) => !laVideo(s)).length;
   const loi: LoiTin[] = [];
-  if (anh < 3) loi.push({ ten: `Ảnh thật ≥ 3 (đang có ${anh})`, cho: "phần Ảnh tin đăng", o: "o-anh" });
-  if (moTa.length < 100) loi.push({ ten: `Mô tả ≥ 100 ký tự (đang có ${moTa.length})`, cho: "phần Nội dung · ô Mô tả", o: "o-mota" });
-  if (soTinTrung > 0) loi.push({ ten: "Trùng tin khác (cùng người · loại · giá · diện tích)", cho: "xem tin trùng ghi bên dưới", o: "" });
+  if (anh < 3) loi.push({ ma: "anh", ten: `Ảnh thật ≥ 3 (đang có ${anh})`, cho: "phần Ảnh tin đăng", o: "o-anh" });
+  if (moTa.length < 100) loi.push({ ma: "mota", ten: `Mô tả ≥ 100 ký tự (đang có ${moTa.length})`, cho: "phần Nội dung · ô Mô tả", o: "o-mota" });
+  if (soTinTrung > 0) loi.push({ ma: "trung", ten: "Trùng tin khác (cùng người · loại · giá · diện tích)", cho: "xem tin trùng ghi bên dưới", o: "" });
   // Giá để trống = "Thỏa thuận" — chuẩn cho phép (N3), không phải lỗi; diện tích thì bắt buộc
-  if (r.area_m2 == null) loi.push({ ten: "Thiếu diện tích", cho: "phần Giá & thông số", o: "o-giathongso" });
+  if (r.area_m2 == null) loi.push({ ma: "dientich", ten: "Thiếu diện tích", cho: "phần Giá & thông số", o: "o-giathongso" });
   const lechGia = giaLechChu(r.title ?? "", moTa, Number(r.price_vnd) || 0, r.purpose ?? undefined);
-  if (lechGia) loi.push({ ten: lechGia.charAt(0).toUpperCase() + lechGia.slice(1), cho: "phần Giá & thông số · ô Giá", o: "o-gia" });
+  if (lechGia) loi.push({ ma: "gia", ten: lechGia.charAt(0).toUpperCase() + lechGia.slice(1), cho: "phần Giá & thông số · ô Giá", o: "o-gia" });
   if (thieuTenDuong(moTa, d.addressDetail ?? ""))
-    loi.push({ ten: "Mô tả có tên đường mà ô địa chỉ chưa có", cho: "phần Vị trí · ô Địa chỉ cụ thể", o: "o-diachi" });
+    loi.push({ ma: "duong", ten: "Mô tả có tên đường mà ô địa chỉ chưa có", cho: "phần Vị trí · ô Địa chỉ cụ thể", o: "o-diachi" });
   if (coGhiHuong(moTa) && !d.direction && !d.specs?.balcony)
-    loi.push({ ten: "Mô tả có ghi hướng mà ô hướng còn trống", cho: "phần Đặc điểm bất động sản · ô Hướng", o: "o-huong" });
-  return loi;
+    loi.push({ ma: "huong", ten: "Mô tả có ghi hướng mà ô hướng còn trống", cho: "phần Đặc điểm bất động sản · ô Hướng", o: "o-huong" });
+  const daChapNhan = d.seoChapNhan ?? [];
+  return loi.filter((x) => !daChapNhan.includes(x.ma));
 }
