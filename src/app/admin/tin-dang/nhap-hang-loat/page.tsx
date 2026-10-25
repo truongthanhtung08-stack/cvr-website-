@@ -64,10 +64,13 @@ export default function NhapHangLoatPage() {
   const [maDoiLap, setMaDoiLap] = useState<{ ma: string; ngay: string; tieuDe: string }[]>([]);
 
   const sai = rows.filter((r) => r.loi.length > 0);
-  // CẢNH BÁO VÀNG — dòng vẫn đăng được nhưng chủ dự án cần liếc qua: mô tả bị dồn
-  // một đoạn, tiện ích ghi tên lạ, số điện thoại không đúng 10 số, và ghi chú
-  // Cowork để lại khi họ có sửa tiêu đề / nội dung so với tin gốc.
-  const cbao = rows.filter((r) => r.loi.length === 0 && r.canhBao.length > 0);
+  // CHỈ BÁO KHI KHÔNG HỢP LỆ (chủ dự án 25/10/2026): ngoài dòng lỗi đỏ, chỉ giữ hai loại là lỗi thật mà vẫn cho
+  // đăng — lỗi chuẩn SEO theo luật chung kiemTinSeo (mục 5b) và mục đích Bán/Cho thuê ngược tiêu đề.
+  // Không báo: ghi chú Cowork, ô người bán không ghi, tên tiện ích lạ, mô tả một đoạn…
+  const laLoiThat = (c: string) => c.startsWith("Chuẩn SEO:") || c.startsWith("muc_dich ghi");
+  const cbao = rows
+    .filter((r) => r.loi.length === 0 && r.canhBao.some(laLoiThat))
+    .map((r) => ({ ...r, canhBao: r.canhBao.filter(laLoiThat) }));
 
   // CHỌN LẠI CÙNG MỘT THƯ MỤC LẦN THỨ HAI: mỗi lần tải lên kho sinh một địa chỉ
   // khác nhau nên cùng một tấm ảnh sẽ nằm hai lần trong danh sách → tin nhận ảnh
@@ -566,7 +569,7 @@ export default function NhapHangLoatPage() {
               {chuaAnh.length > 0 && (
                 <span className="text-amber-700"> · {chuaAnh.length} tin chưa có ảnh — chưa đăng, bỏ ảnh vào thư mục rồi tải lại file là tự lên</span>
               )}
-              {cbao.length > 0 && <span className="text-amber-700"> · {cbao.length} dòng cần xem lại</span>}
+              {cbao.length > 0 && <span className="text-amber-700"> · {cbao.length} dòng chưa đạt chuẩn SEO</span>}
               {sai.length > 0 && <span className="text-red-700"> · {sai.length} dòng lỗi (sẽ bỏ qua)</span>}
               {anhChuaTai.length > 0 && (
                 <span className="block font-medium text-red-700">{anhChuaTai.length} ảnh chưa tải lên được — chọn lại thư mục ảnh rồi mới đăng: {anhChuaTai.join(" · ")}</span>
@@ -630,9 +633,7 @@ export default function NhapHangLoatPage() {
 
           {cbao.length > 0 && (
             <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
-              <p className="text-sm font-semibold text-amber-800">
-                Vẫn đăng được, nhưng nên đối chiếu với tin gốc:
-              </p>
+              <p className="text-sm font-semibold text-amber-800">Chưa đạt chuẩn SEO — vẫn đăng được:</p>
               <ul className="mt-2 space-y-1 text-sm text-amber-800">
                 {cbao.map((r) => (
                   <li key={r.dong}>
@@ -659,7 +660,7 @@ export default function NhapHangLoatPage() {
               </thead>
               <tbody>
                 {rows.map((r) => (
-                  <tr key={r.dong} className={`border-b border-cvr-line/60 ${r.loi.length ? "bg-red-50/60" : r.canhBao.length ? "bg-amber-50/60" : ""}`}>
+                  <tr key={r.dong} className={`border-b border-cvr-line/60 ${r.loi.length ? "bg-red-50/60" : cbao.some((c) => c.dong === r.dong) ? "bg-amber-50/60" : ""}`}>
                     <td className="px-3 py-2.5 text-cvr-muted">{r.dong}</td>
                     <td className="max-w-[280px] px-3 py-2.5 font-medium text-cvr-ink"><span className="line-clamp-2">{r.tomTat.tieuDe}</span></td>
                     <td className="px-3 py-2.5 text-cvr-body">{r.tomTat.mucDich}</td>

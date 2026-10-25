@@ -144,6 +144,9 @@ export const categorySpecs: CategorySpec[] = [
       { key: "operator", label: "Đơn vị vận hành", type: "text" },
       { key: "floor", label: "Tầng số", type: "text", placeholder: "VD: Tầng 12" },
       { key: "block", label: "Block / Toà / Tháp", type: "text", placeholder: "VD: Block A" },
+      // Condotel là căn hộ — có Hướng ban công như Căn hộ, Chung cư (25/10/2026: thiếu ô này nên cột huong_ban_cong của tin
+      // nạp bị bỏ, web báo nhầm "mô tả có hướng mà ô hướng trống" — tin dn18-2410)
+      balconyField,
       mgmtFeeField,
       { key: "soHuu", label: "Thời hạn sở hữu", type: "select", options: ["Lâu dài", "50 năm"] },
     ],

@@ -53,13 +53,32 @@ export default function BangKiemTinSeo({ row }: { row: ListingRow }) {
     if (error || !data?.length) return window.alert(`Chưa ghi nhận được${error ? ": " + error.message : " — phiên đăng nhập admin đã hết, tải lại trang"}`);
     setDaNhan((x) => [...x, ...ma]);
   }
-  // Cuộn tới ô cần sửa, đặt con trỏ vào ô đó
+  // Cuộn tới ô cần sửa, đặt con trỏ vào ô đó. Trang không có ô đó (màn hình Duyệt tin nạp) → mở trang Sửa tin,
+  // nhảy đúng ô (chủ dự án 25/10/2026: "tin lỗi, bấm vào là đến SỬA")
   const toiO = (id?: string) => {
     const el = id ? document.getElementById(id) : null;
-    if (!el) return;
+    if (!el) {
+      if (id) window.location.assign(`/admin/tin-dang/${row.id}#${id}`);
+      return;
+    }
     el.scrollIntoView({ behavior: "smooth", block: "center" });
     el.querySelector<HTMLElement>("input, textarea, select, button")?.focus({ preventScroll: true });
   };
+  // Mở từ màn hình Duyệt tin nạp với #o-… → chờ form vẽ xong rồi nhảy tới ô đó (chỉ cuộn, không mở trang khác)
+  useEffect(() => {
+    const id = decodeURIComponent(window.location.hash.slice(1));
+    if (!id.startsWith("o-")) return;
+    let lan = 0;
+    const t = setInterval(() => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        el.querySelector<HTMLElement>("input, textarea, select, button")?.focus({ preventScroll: true });
+      }
+      if (el || ++lan > 20) clearInterval(t);
+    }, 200);
+    return () => clearInterval(t);
+  }, []);
 
   return (
     <div className="rounded-2xl border border-cvr-line bg-white p-4 shadow-lux">

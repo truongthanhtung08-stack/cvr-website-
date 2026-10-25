@@ -5,7 +5,7 @@
 //   ① tin gốc còn hạn không (hết hạn / đã gỡ "không tồn tại")
 //   ② so từng trường với bảng thông số tin gốc: giá, diện tích, PN, WC, hướng, hướng ban
 //      công, số tầng, tầng số, ngang, dài, nội thất, diện tích sử dụng (sàn), pháp lý
-//   ③ tiêu đề có ghi giá / diện tích không (web tự ghép vào tiêu đề trang — mục 4 yêu cầu Cowork)
+// Không kiểm tiêu đề có giá / diện tích (được phép từ 23/10/2026). Cách xử lý kết quả: CONG-VIEC-3-BEN.md bước 2 (25/10/2026).
 // Đọc được: Chợ Tốt (nhatot.com), muaban.net (thông số đầy đủ); homedy, bds123 (chỉ mô tả).
 // Mỗi tin một lượt curl, nghỉ 0,7 giây — không chạm máy chủ web (không tốn Vercel/Supabase).
 // ============================================================================
@@ -69,8 +69,7 @@ for (const r of kq.rows) {
   await new Promise((ok) => setTimeout(ok, 700));
   const lech = [];
   if (!ng.ok) lech.push(`⚠ ${ng.ly}`);
-  else if (!ng.conHan) { lech.push(`⛔ ${ng.ly || "tin gốc hết hạn"}`); soHetHan++; }
-  if (/\d\s*(m²|m2|tỷ|triệu)/i.test(p.title)) lech.push(`tiêu đề có giá/diện tích: "${p.title}"`);
+  else if (!ng.conHan) { lech.push(`⛔ ${ng.ly || "tin gốc hết hạn"} → BỎ khỏi đợt`); soHetHan++; }
   if (ng.tt) {
     const t = ng.tt;
     const chk = (ten, a, b, f = (x, y) => x == y) => { if (b == null || b === "") return; if (!f(a, b)) lech.push(`${ten}: bảng=${a ?? "(trống)"} · gốc=${b}`); };
@@ -90,4 +89,4 @@ for (const r of kq.rows) {
   console.log(`${r.maAnh} · ${p.type} · ${lech.length ? lech.join(" ; ") : "khớp"}`);
 }
 console.log(`\n${kq.rows.length} tin · ${soLech} tin cần xem · ${soHetHan} tin gốc hết hạn/đã gỡ`);
-console.log("Lệch là gợi ý, không tự sửa: tin gốc có khi ghi lệch giữa bảng thông số và mô tả (vd. 20×24 ≠ 468 m²) — Cowork ghi lý do ở ghi_chu.");
+console.log("Lệch so với ô thông số trang nguồn chỉ là gợi ý: đúng là LỜI NGƯỜI BÁN viết — bảng khớp lời người bán thì không báo; lệch lời người bán thì Claude sửa luôn, báo \"đã sửa\".");

@@ -28,10 +28,13 @@ export default function AdminDashboard() {
       const { data } = await createClient()
         .from("listings")
         .select("id,title,status,description,purpose,type,price_vnd,area_m2,beds,images,details")
-        .in("status", ["pending", "approved"])
+        .in("status", ["pending", "approved", "hidden"])
         .limit(3000);
       setChuaChuan(
         (data ?? [])
+          // Tin nạp chờ duyệt (ẩn + cờ choChuDuyet) cũng phải nằm ở đây: lỗi chưa sửa, tắt máy, mở lại vẫn thấy
+          // (chủ dự án 25/10/2026). Tin ẩn vì lý do khác thì không tính.
+          .filter((r) => r.status !== "hidden" || (r.details as { choChuDuyet?: boolean } | null)?.choChuDuyet)
           .map((r) => ({ id: r.id as string, title: r.title as string, status: r.status as string, loi: loiTinSeo(r).map((x) => x.ten) }))
           .filter((r) => r.loi.length),
       );

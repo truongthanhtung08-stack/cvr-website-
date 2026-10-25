@@ -10,13 +10,13 @@ import { loiTinSeo, type TinKiem } from "@/lib/kiemTinSeo";
 import { saleTypeGroups, rentTypeGroups } from "@/lib/filters";
 // Máy KHÔNG suy ngược được phường cũ khi một phường mới gộp nhiều phường cũ —
 // dùng để báo vàng khi file thiếu ba cột địa chỉ hệ cũ.
-import { chuanHoaDiaChiCu, ungVienPhuongCu } from "@/lib/diaChiHaiHe";
+import { chuanHoaDiaChiCu } from "@/lib/diaChiHaiHe";
 // Dùng CHUNG hàm tạo slug với form dự án trong admin → tên dự án trong file Excel
 // và slug dự án thật luôn khớp nhau, không bao giờ lệch quy tắc.
 import { slugify } from "@/lib/contentAdmin";
 // Bộ đặc điểm theo loại hình — để ghi số tầng / mặt tiền / đường vào đúng ô của
 // từng loại bất động sản, y như khi đăng tay bằng form.
-import { fieldsFor, coDonGiaM2, coDienTichXayDung, mauSoCuaLoaiHinh } from "@/lib/listingSpec";
+import { fieldsFor, coDonGiaM2, mauSoCuaLoaiHinh } from "@/lib/listingSpec";
 // SỐ ĐIỆN THOẠI — cùng một hàm với ô nhập trong admin và số hiện trên trang tin,
 // nên file của Cowork, cơ sở dữ liệu và web luôn ghi giống hệt nhau (0 + 10 số).
 import { chuanHoaSdt, laSdtVN, tachNhieuSdt } from "@/lib/phone";
@@ -24,7 +24,6 @@ import { chuanHoaSdt, laSdtVN, tachNhieuSdt } from "@/lib/phone";
 // Không có bước này thì "Bảo vệ 24/7", "Máy lạnh", "Sổ hồng riêng" lên web là MẤT.
 import {
   chuanHoaTienIch, chuanHoaNoiThat, chuanHoaPhapLy, chuanHoaMucNoiThat, phapLyLechLoaiHinh,
-  tienIchNgoaiDanhMuc, noiThatNgoaiDanhMuc,
 } from "@/lib/chuanHoaThuocTinh";
 
 export type ListingTierId = "diamond" | "gold" | "silver" | "basic";
@@ -403,29 +402,14 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
     loi.push(`loai_hinh "${loaiHinh}" không có trong danh mục ${mucDich === "thue" ? "cho thuê" : "mua bán"}`);
   const loaiHinhChuan = dsLoai.find((x) => chuanHoa(x) === chuanHoa(loaiHinh)) ?? loaiHinh;
 
-  // NHÀ GẮN LIỀN ĐẤT THIẾU DIỆN TÍCH XÂY DỰNG = thiếu MẪU SỐ để tính giá mỗi m²
-  // sàn. Không chặn đăng (tin gốc có khi không ghi) nhưng phải báo vàng, vì thiếu
-  // nó thì trang tin chỉ ra được giá trên m² đất — con số khác hẳn về ý nghĩa.
-  if (loaiHinhChuan && coDienTichXayDung(loaiHinhChuan) && !lay(COT.dienTichXayDung).trim())
-    canhBao.push("Thiếu dien_tich_xay_dung — loại hình này cần m² sàn để tính đúng giá mỗi m²");
+  // Thiếu diện tích xây dựng KHÔNG báo: người bán không ghi thì không phải lỗi (chủ dự án 25/10/2026,
+  // cảnh báo chỉ cho lỗi thật — CHUAN-TIN-DANG-SEO.md mục 5b).
 
 
   const tinhThanh = lay(COT.tinhThanh);
   if (!tinhThanh) loi.push("Thiếu tỉnh/thành");
 
-  // ĐỊA CHỈ HỆ CŨ — báo vàng khi phường mới này gộp NHIỀU phường cũ mà file không
-  // chép tên phường cũ. Máy không có cách nào suy ngược ra đúng cái nào (Phường
-  // Nha Trang gộp 10 phường cũ), nên thiếu là dòng "Địa chỉ hệ cũ" cụt mất cấp
-  // phường vĩnh viễn. Đo 19/09: 41/134 tin cũ đang thiếu vì chưa có cửa chặn này.
-  if (!lay(COT.phuongXaCu).trim() && !lay(COT.quanHuyenCu).trim()) {
-    const uv = ungVienPhuongCu("moi", tinhThanh, phuongXa);
-    if (uv.length)
-      canhBao.push(
-        `Thiếu phuong_xa_cu — "${phuongXa}" gộp từ ${uv.length} phường/xã cũ ` +
-          `(${uv.slice(0, 4).map((x) => x.phuong).join(" · ")}${uv.length > 4 ? "…" : ""}), ` +
-          `máy không suy ngược ra được. Tin gốc ghi phường cũ nào thì chép vào.`,
-      );
-  }
+  // Thiếu phường cũ KHÔNG báo: người bán không ghi thì không phải lỗi (chủ dự án 25/10/2026, mục 5b).
 
   // SEO ĐỊA PHƯƠNG (18/10/2026, chủ dự án: "tiêu đề chính là câu SEO — lọc thông tin chính, ngắn gọn"):
   // KHÔNG còn bắt ghi phường/xã, tỉnh vào tiêu đề — trang tin tự ghép địa danh còn thiếu + giá + diện tích
@@ -640,14 +624,8 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
   if (phapLyLechLoaiHinh(lay(COT.phapLy), loaiHinhChuan))
     canhBao.push(`phap_ly "${lay(COT.phapLy)}" không đúng với loại hình "${loaiHinhChuan}" — đất chỉ có sổ đỏ, căn hộ chỉ có sổ hồng`);
   const mucNoiThat = chuanHoaMucNoiThat(lay(COT.tinhTrangNoiThat));
-  const ngoaiDanhMuc = [...tienIchNgoaiDanhMuc(tienIch), ...noiThatNgoaiDanhMuc(noiThat)];
-  if (ngoaiDanhMuc.length)
-    canhBao.push(`Ngoài danh mục chuẩn (vẫn hiện ở mục "khác"): ${ngoaiDanhMuc.join(" · ")}`);
-
-  // ── GHI CHÚ CỦA COWORK ────────────────────────────────────────────────────
-  // Cowork có sửa tiêu đề / nội dung so với tin gốc thì BẮT BUỘC ghi vào cột
-  // ghi_chu. Đưa lên bảng xem trước để chủ dự án đối chiếu ngay, khỏi mở lại file.
-  if (lay(COT.ghiChu).trim()) canhBao.push(`Ghi chú Cowork: ${lay(COT.ghiChu).trim()}`);
+  // Tiện ích / nội thất ngoài danh mục (vẫn hiện ở mục "khác") và ghi chú Cowork KHÔNG đưa vào
+  // cảnh báo — không phải lỗi (chủ dự án 25/10/2026, mục 5b). Ghi chú vẫn nằm ở cột ghi_chu trong file.
 
   const payload = {
     purpose: mucDich,
