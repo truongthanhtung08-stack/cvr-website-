@@ -16,6 +16,27 @@ import {
   adminPriceText,
 } from "@/lib/listingAdmin";
 
+// Gắn video từ kênh YouTube về đúng tin (chủ dự án 25/10/2026): chủ up video lên kênh, để Công khai, bấm nút này một lần.
+// Chỉ chạy khi bấm — không có lịch tự chạy. Bấm xong báo rõ đã gắn tin nào (src/app/api/admin/gan-video).
+function NutGanVideo() {
+  const [dang, setDang] = useState(false);
+  async function gan() {
+    setDang(true);
+    const r = await fetch("/api/admin/gan-video", { method: "POST" }).then((x) => x.json()).catch(() => ({ ok: false, loi: "Mạng lỗi, thử lại." }));
+    setDang(false);
+    const daGan = (r.daGan ?? []) as { ma: string; title: string }[];
+    const ds = daGan.map((x) => `· [${x.ma}] ${x.title}`).join("\n");
+    if (!r.ok) return window.alert(`Chưa gắn được video: ${r.loi}${ds ? `\n\nĐã gắn:\n${ds}` : ""}`);
+    window.alert(daGan.length ? `Đã gắn video cho ${daGan.length} tin, đã lên web:\n${ds}` : "Không có video mới cần gắn. Video phải để Công khai và tên có mã tin (vd dn20-2410).");
+    if (daGan.length) window.location.reload();
+  }
+  return (
+    <button type="button" onClick={gan} disabled={dang} className="rounded-lg border border-cvr-line bg-white px-4 py-2 text-sm font-semibold text-cvr-ink transition hover:border-cvr-ink disabled:opacity-60">
+      {dang ? "Đang gắn video…" : "Gắn video từ YouTube"}
+    </button>
+  );
+}
+
 // Quản lý tin đăng (B3): danh sách + lọc + thao tác nhanh Duyệt/Ẩn/Hiện.
 export default function AdminListingsPage() {
   const [rows, setRows] = useState<ListingRow[]>([]);
@@ -26,6 +47,14 @@ export default function AdminListingsPage() {
   const [tier, setTier] = useState<"all" | ListingTier>("all");
   const [status, setStatus] = useState<"all" | "da_sua" | ListingStatus>("all");
   const [chon, setChon] = useState<Set<string>>(new Set()); // tin đang tick để xoá hàng loạt
+  // Vừa bấm "Cập nhật và đăng" / "Lưu nháp" ở trang sửa tin → báo đầu trang (ListingForm gửi ?daLuu=<id>&kieu=len|nhap)
+  const [daLuu, setDaLuu] = useState<{ id: string; kieu: string } | null>(null);
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search);
+    const id = p.get("daLuu");
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- đọc địa chỉ trang một lần khi mở
+    if (id) setDaLuu({ id, kieu: p.get("kieu") ?? "len" });
+  }, []);
 
   useEffect(() => {
     const supabase = createClient();
@@ -85,14 +114,13 @@ export default function AdminListingsPage() {
     // DUYỆT phải đi qua máy chủ — ở đó mới trừ ví theo bảng giá, ghi doanh thu
     // và báo cho khách. Sửa thẳng từ trình duyệt là tin lên sóng MIỄN PHÍ.
     if (next === "approved") {
-      // Tin còn lỗi chuẩn SEO: cảnh báo, admin vẫn có quyền duyệt (chủ dự án 25/10/2026)
+      // Tin hàng loạt còn lỗi chuẩn SEO: KHÔNG cho duyệt — mở tin, sửa hết lỗi mới duyệt được (chủ dự án 25/10/2026)
       const tin = rows.find((x) => x.id === id);
       const loiSeo = tin ? loiTinSeo(tin) : [];
-      if (loiSeo.length && !window.confirm(`Tin còn ${loiSeo.length} lỗi chuẩn SEO:\n· ${loiSeo.map((x) => x.ten).join("\n· ")}\n\nVẫn duyệt lên web?`)) return;
-      // Admin đã thấy, đã kiểm, vẫn duyệt → ghi nhận, tin không báo lại các lỗi đó (chủ dự án 25/10/2026)
-      if (loiSeo.length && tin) {
-        const daCo = ((tin.details as { seoChapNhan?: string[] } | null)?.seoChapNhan) ?? [];
-        await createClient().from("listings").update({ details: { ...(tin.details ?? {}), seoChapNhan: [...new Set([...daCo, ...loiSeo.map((x) => x.ma)])] } }).eq("id", id);
+      if (loiSeo.length) {
+        window.alert(`Tin chưa đạt chuẩn SEO, chưa duyệt được. Còn ${loiSeo.length} lỗi:\n· ${loiSeo.map((x) => `${x.ten} → sửa ở ${x.cho}`).join("\n· ")}\n\nBấm OK để mở tin sửa.`);
+        window.location.assign(`/admin/tin-dang/${id}${loiSeo[0].o ? `#${loiSeo[0].o}` : ""}`);
+        return;
       }
       const r = await fetch("/api/tin-dang/duyet", {
         method: "POST",
@@ -245,6 +273,7 @@ export default function AdminListingsPage() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <NutGanVideo />
           {/* Tin Cowork nạp bằng file chờ chủ dự án sửa + duyệt (16/10/2026) */}
           <Link
             href="/admin/tin-dang/duyet-nap"
@@ -260,6 +289,20 @@ export default function AdminListingsPage() {
           </Link>
         </div>
       </div>
+
+      {daLuu && (() => {
+        const tin = rows.find((x) => x.id === daLuu.id);
+        return daLuu.kieu === "len" ? (
+          <div className="mt-4 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+            <strong>Đã lên web:</strong> {tin?.title ?? "tin vừa lưu"} —{" "}
+            <a href={`/bat-dong-san/${daLuu.id}`} target="_blank" rel="noopener" className="font-semibold underline">Xem tin</a>
+          </div>
+        ) : (
+          <div className="mt-4 rounded-xl border border-cvr-line bg-cvr-surface px-4 py-3 text-sm text-cvr-body">
+            <strong>Đã lưu nháp, chưa lên web:</strong> {tin?.title ?? "tin vừa lưu"}
+          </div>
+        );
+      })()}
 
       <TuKiemTin />
 

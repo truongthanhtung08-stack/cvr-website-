@@ -199,8 +199,10 @@ if (lenh === "gan") {
   for (const [ma, v] of theoMa) {
     const t = tinMoiNhat.get(ma);
     if (!t) continue;
-    // HAI ĐIỀU KIỆN, THIẾU MỘT LÀ KHÔNG GẮN: mã khớp VÀ tiêu đề khớp.
-    if (!cungMotTin(v.ten, t.title)) { lechTieuDe.push({ ma, v, t }); continue; }
+    // Mã CÓ ĐUÔI NGÀY (dn20-2410) là mã riêng của một tin → khớp mã là đủ. Chủ dự án 25/10/2026: "up lên YouTube,
+    // công khai là lên thẳng web" — dn20-2410 bị bỏ vì tên video ngắn hơn tiêu đề tin nên phép so tiêu đề trượt.
+    // Mã cũ KHÔNG có ngày (dn06 có 3 tin) thì vẫn phải khớp cả tiêu đề, kẻo gắn nhầm nhà.
+    if (!/-\d{4}$/.test(ma) && !cungMotTin(v.ten, t.title)) { lechTieuDe.push({ ma, v, t }); continue; }
     const imgs = t.images ?? [];
     if (imgs.some(laYt)) { daCoRoi.push(ma); continue; }   // đã có video → bỏ qua
     viec.push({ t, v, images: [...imgs, `https://youtu.be/${v.id}`] });

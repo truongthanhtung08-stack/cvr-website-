@@ -1,11 +1,8 @@
 // LUẬT KIỂM TIN DÙNG CHUNG — một chỗ cho cả ba khâu: lọc tin (nạp hàng loạt `csvTin.ts`), kiểm đợt
 // (`scripts/kiem-noi-dung-dot.mjs`) và cảnh báo trong admin (`BangKiemTinSeo.tsx`). Quy định: docs/CHUAN-TIN-DANG-SEO.md mục 5b.
 // Chủ dự án 25/10/2026: khách không ghi thì không phải lỗi, không báo — chỉ báo khi khách CÓ ghi mà ô còn trống.
-
-import { fieldsFor } from "./listingSpec";
-
-// Mô tả có ghi hướng: "hướng" đi kèm tên hướng (Đông, Tây, Nam, Bắc…)
-export const coGhiHuong = (s: string) => /hướng\s*(nhà|cửa|ban công|đất|chính)?\s*[:\-]?\s*(đông|tây|nam|bắc)/i.test(s);
+// CHỈ KIỂM TIN ĐĂNG HÀNG LOẠT (chủ up sau khi đã lọc + Claude kiểm). Tin khách tự đăng: không kiểm, không báo.
+// Hướng nhà / Hướng ban công là ô không bắt buộc → KHÔNG phải lỗi chuẩn SEO, không cảnh báo (thiếu là lỗi khâu Claude kiểm đợt).
 
 // Tên đường khách ghi làm ĐỊA CHỈ trong mô tả: "đường / kiệt / hẻm / ngõ" + tên viết hoa chữ đầu (vd "kiệt 109 Minh Mạng"
 // → "Minh Mạng"). Bỏ đường chỉ để tả vị trí lân cận ("gần đường…", "cách đường…") và số đo ("đường 5,5m", "đường 28" thì giữ
@@ -76,29 +73,28 @@ export type LoiTin = { ma: string; ten: string; cho: string; o: string };
 
 const laVideo = (s: string) => /youtu|\.mp4|\.mov|\.webm/i.test(s);
 
+// Tin đăng hàng loạt = tin nạp từ bảng đợt (có mã ma_anh hoặc link tin gốc) — chỉ loại tin này bị kiểm chuẩn SEO
+export const laTinHangLoat = (r: TinKiem) => {
+  const d = (r.details ?? {}) as { maAnh?: string; nguonTin?: string };
+  return Boolean(d.maAnh || d.nguonTin);
+};
+
 export function loiTinSeo(r: TinKiem, soTinTrung = 0): LoiTin[] {
-  const d = (r.details ?? {}) as { addressDetail?: string; direction?: string; specs?: { balcony?: string }; giaTuGhi?: string; seoChapNhan?: string[] };
+  const d = (r.details ?? {}) as { addressDetail?: string; seoChapNhan?: string[] };
+  if (!laTinHangLoat(r)) return [];
   const moTa = (r.description ?? "").trim();
   const anh = (r.images ?? []).filter((s) => !laVideo(s)).length;
   const loi: LoiTin[] = [];
-  if (anh < 3) loi.push({ ma: "anh", ten: `Ảnh thật ≥ 3 (đang có ${anh})`, cho: "phần Ảnh tin đăng", o: "o-anh" });
-  if (moTa.length < 100) loi.push({ ma: "mota", ten: `Mô tả ≥ 100 ký tự (đang có ${moTa.length})`, cho: "phần Nội dung · ô Mô tả", o: "o-mota" });
-  if (soTinTrung > 0) loi.push({ ma: "trung", ten: "Trùng tin khác (cùng người · loại · giá · diện tích)", cho: "xem tin trùng ghi bên dưới", o: "" });
+  // Mỗi cảnh báo ghi đủ: lỗi gì · sửa thế nào · bấm vào nhảy đúng ô (chủ dự án 25/10/2026)
+  if (anh < 3) loi.push({ ma: "anh", ten: `Có ${anh} ảnh thật, cần ít nhất 3 — thêm ${3 - anh} ảnh`, cho: "phần Ảnh tin đăng", o: "o-anh" });
+  if (moTa.length < 100) loi.push({ ma: "mota", ten: `Mô tả có ${moTa.length} ký tự, cần ít nhất 100 — viết thêm ${100 - moTa.length} ký tự`, cho: "phần Nội dung · ô Mô tả", o: "o-mota" });
+  if (soTinTrung > 0) loi.push({ ma: "trung", ten: "Trùng tin khác (cùng người · loại · giá · diện tích)", cho: "xem tin trùng ghi bên dưới", o: "o-trung" });
   // Giá để trống = "Thỏa thuận" — chuẩn cho phép (N3), không phải lỗi; diện tích thì bắt buộc
-  if (r.area_m2 == null) loi.push({ ma: "dientich", ten: "Thiếu diện tích", cho: "phần Giá & thông số", o: "o-giathongso" });
+  if (r.area_m2 == null) loi.push({ ma: "dientich", ten: "Thiếu diện tích — ghi số m² vào ô Diện tích", cho: "phần Giá & thông số", o: "o-giathongso" });
   const lechGia = giaLechChu(r.title ?? "", moTa, Number(r.price_vnd) || 0, r.purpose ?? undefined);
-  if (lechGia) loi.push({ ma: "gia", ten: lechGia.charAt(0).toUpperCase() + lechGia.slice(1), cho: "phần Giá & thông số · ô Giá", o: "o-gia" });
+  if (lechGia) loi.push({ ma: "gia", ten: `${lechGia.charAt(0).toUpperCase() + lechGia.slice(1)} — sửa ô Giá cho đúng giá khách ghi`, cho: "phần Giá & thông số · ô Giá", o: "o-gia" });
   if (thieuTenDuong(moTa, d.addressDetail ?? ""))
-    loi.push({ ma: "duong", ten: "Mô tả có tên đường mà ô địa chỉ chưa có", cho: "phần Vị trí · ô Địa chỉ cụ thể", o: "o-diachi" });
-  // Hướng nhà và Hướng ban công XÉT RIÊNG — mỗi ô trống là một lỗi, cảnh báo ghi đúng tên ô, bấm nhảy đúng ô (25/10/2026:
-  // dn20-2410 "Cửa chính hướng Nam, ban công hướng Bắc" có Hướng nhà mà trống Hướng ban công, luật cũ xét gộp nên bỏ sót)
-  const HUONG = "(đông|tây|nam|bắc)(\\s*(đông|tây|nam|bắc))?";
-  const reBanCong = new RegExp(`(ban công\\s*hướng|hướng\\s*ban công)\\s*[:\\-]?\\s*${HUONG}`, "gi");
-  const coOBanCong = fieldsFor(r.type ?? "", r.purpose ?? undefined).some((f) => f.key === "balcony");
-  if (coOBanCong && new RegExp(reBanCong.source, "i").test(moTa) && !d.specs?.balcony)
-    loi.push({ ma: "huongbancong", ten: "Mô tả có ghi hướng ban công mà ô Hướng ban công còn trống", cho: "phần Đặc điểm bất động sản · ô Hướng ban công", o: "o-balcony" });
-  if (coGhiHuong(coOBanCong ? moTa.replace(reBanCong, "") : moTa) && !d.direction)
-    loi.push({ ma: "huong", ten: "Mô tả có ghi hướng mà ô Hướng nhà / đất còn trống", cho: "phần Đặc điểm bất động sản · ô Hướng nhà / đất", o: "o-huong" });
+    loi.push({ ma: "duong", ten: `Mô tả ghi đường "${duongTrongMoTa(moTa)}" mà ô Địa chỉ cụ thể chưa có — ghi thêm "${duongTrongMoTa(moTa)}" vào ô`, cho: "phần Vị trí · ô Địa chỉ cụ thể", o: "o-diachi" });
   const daChapNhan = d.seoChapNhan ?? [];
   return loi.filter((x) => !daChapNhan.includes(x.ma));
 }

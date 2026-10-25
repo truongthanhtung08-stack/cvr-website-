@@ -10,6 +10,7 @@ import { guiThongBao, MAU_DUYET_TIN } from "@/lib/thongBao";
 import { baoLoi } from "@/lib/baoLoi";
 import type { TierId } from "@/lib/packages";
 import { homNayVn } from "@/lib/gioVn";
+import { loiTinSeo } from "@/lib/kiemTinSeo";
 
 // ============================================================================
 // DUYỆT TIN — TRỪ VÍ + GHI DOANH THU + BÁO KHÁCH
@@ -68,12 +69,15 @@ export async function POST(request: Request) {
   // ── 2. Lấy tin ────────────────────────────────────────────────────────────
   const { data: tin, error: loiTin } = await admin
     .from("listings")
-    .select("id,title,owner_id,status,purpose,tier_yeu_cau,tier_days,da_tru_vi,details,tier_expires_at,created_at")
+    .select("id,title,owner_id,status,purpose,tier_yeu_cau,tier_days,da_tru_vi,details,tier_expires_at,created_at,description,type,price_vnd,area_m2,images")
     .eq("id", id)
     .single();
   if (loiTin || !tin) return loi("Không tìm thấy tin", 404);
 
-  // CHUẨN SEO: admin có quyền duyệt cả khi tin còn lỗi (chủ dự án 25/10/2026) — trang admin đã cảnh báo và hỏi lại trước khi gọi tới đây.
+  // CHUẨN SEO (chủ dự án 25/10/2026): tin đăng hàng loạt còn lỗi thì KHÔNG cho lên web — sửa hết mới duyệt được.
+  // Tin khách tự đăng không kiểm (loiTinSeo trả rỗng).
+  const loiSeo = loiTinSeo(tin);
+  if (loiSeo.length) return loi(`Tin chưa đạt chuẩn SEO, còn ${loiSeo.length} lỗi:\n· ${loiSeo.map((x) => x.ten).join("\n· ")}`, 400);
   // Khuyến mãi thành viên mới xét theo LÚC KHÁCH GỬI TIN, không theo lúc admin duyệt.
   const lucGui = lucGuiTin(tin);
   const ngayGui = new Date(lucGui + 7 * 3_600_000).toISOString().slice(0, 10);

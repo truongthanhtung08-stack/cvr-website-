@@ -478,10 +478,9 @@ export default function NhapHangLoatPage() {
           Mọi ảnh tải lên đều được <strong>tự thu nhỏ + đóng dấu chìm “COASTAL LAND”</strong> ở góc dưới phải.
         </p>
         <p className="mt-1 rounded-lg bg-cvr-surface px-3 py-2 text-sm text-cvr-body">
-          <strong>VIDEO ĐI QUA KÊNH YOUTUBE — không tải tệp video lên đây.</strong> Đưa video lên
-          kênh Coastal Land để <strong>Công khai</strong>, copy link, dán vào cột <code>video</code>
-          của đúng dòng tin trong file Excel. Mỗi tin <strong>15 ảnh + 1 video</strong>.
-          Video nằm trên YouTube thì <strong>không tốn kho ảnh</strong> (một video ăn bằng 40 tấm ảnh).
+          <strong>VIDEO ĐI QUA KÊNH YOUTUBE — không tải tệp video lên đây.</strong> Up video trong thư mục
+          <code>Video</code> của đợt lên kênh Coastal Land, để <strong>Công khai</strong>, không đổi tên, rồi vào
+          Tin đăng bấm <strong>Gắn video từ YouTube</strong>. Mỗi tin <strong>15 ảnh + 1 video</strong>.
         </p>
         <div className="mt-3 flex flex-wrap items-center gap-3">
           {/* HAI NÚT RIÊNG, KHÔNG GỘP MỘT Ô.

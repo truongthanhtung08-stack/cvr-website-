@@ -269,8 +269,6 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
   // asDraft = false → ĐĂNG TIN (kiểm tra đủ thông tin rồi công khai — status 'approved').
   async function save(asDraft: boolean) {
     setError("");
-    // Lỗi chuẩn SEO admin đã thấy và vẫn đăng → lưu lại, tin không báo lại các lỗi đó (chủ dự án 25/10/2026)
-    let seoChapNhan: string[] | undefined;
     if (!title.trim())
       return setError(asDraft ? "Nhập tiêu đề để lưu nháp." : "Chưa nhập tiêu đề tin.");
 
@@ -302,12 +300,11 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
         title, description, purpose, type,
         price_vnd: negotiable ? null : priceVnd, area_m2: parseFloat(area.replace(",", ".")),
         images: images.filter((s) => s.trim()),
-        details: { addressDetail, direction, specs: specValues },
+        details: { ...(initial?.details ?? {}), addressDetail },
       });
-      // Admin có quyền đăng cả khi còn lỗi (chủ dự án 25/10/2026) — cảnh báo, hỏi lại một lần
-      if (loiSeo.length && !window.confirm(`Tin còn ${loiSeo.length} lỗi chuẩn SEO:\n· ${loiSeo.map((x) => `${x.ten} → sửa ở ${x.cho}`).join("\n· ")}\n\nVẫn đăng tin?`))
-        return;
-      if (loiSeo.length) seoChapNhan = [...new Set([...(((initial?.details as { seoChapNhan?: string[] } | undefined)?.seoChapNhan) ?? []), ...loiSeo.map((x) => x.ma)])];
+      // Tin hàng loạt còn lỗi chuẩn SEO: KHÔNG cho lên web (chủ dự án 25/10/2026) — lỗi ghi ở bảng kiểm trên đầu trang, bấm từng lỗi để sửa
+      if (loiSeo.length)
+        return setError(`Tin chưa đạt chuẩn SEO, chưa lên web được. Còn ${loiSeo.length} lỗi: ${loiSeo.map((x) => `${x.ten} → sửa ở ${x.cho}`).join(" · ")}`);
       // Hạn tin = số ngày gói theo bảng giá ĐÃ DUYỆT. Hạng chưa có giá đã duyệt thì hạn = 0 ngày
       // → tin hết hạn ngay khi lưu (vụ 09/10: nâng 5 tin VIP, cả 5 tự hết hạn sau 1 phút).
       const bang = bangTheoMucDich(billing, purpose);
@@ -360,7 +357,6 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
         ...(initial?.details ?? {}),
         // Đăng từ form = đã duyệt → bỏ cờ "chờ chủ duyệt" của tin nạp, kẻo tin đã lên web vẫn nằm ở trang Duyệt tin nạp (24/10/2026)
         ...(asDraft ? {} : { choChuDuyet: undefined, deXuat: undefined }),
-        ...(seoChapNhan ? { seoChapNhan } : {}),
         specs: Object.fromEntries(Object.entries(specValues).filter(([, v]) => v && v.trim())),
         interior,
         amenities,
@@ -408,11 +404,11 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
     };
 
     const supabase = createClient();
-    const { error: err } = editing
-      ? await supabase.from("listings").update(payload).eq("id", initial!.id)
+    const { data: daLuu, error: err } = editing
+      ? await supabase.from("listings").update(payload).eq("id", initial!.id).select("id").single()
       // Tin MỚI: bumped_at = ngày đăng — danh sách xếp theo `bumped_at desc nulls last`,
       // bỏ trống là tin chìm dưới mọi tin cũ (bẫy 20/09; nhập hàng loạt đã ghi từ trước).
-      : await supabase.from("listings").insert({ ...payload, bumped_at: payload.published_at });
+      : await supabase.from("listings").insert({ ...payload, bumped_at: payload.published_at }).select("id").single();
 
     // Lưu xong → web bỏ cache, hiện ngay (xem src/lib/lamMoiWeb.ts)
     if (!err) await lamMoiWeb("listings");
@@ -420,7 +416,8 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
     if (err) return setError(`Lưu thất bại: ${err.message}`);
     // Tin đăng hộ (chưa có chủ): gắn về tài khoản theo SĐT liên hệ (chủ dự án 09/10/2026)
     if (!initial?.owner_id) await fetch("/api/admin/gom-tin-dang-ho", { method: "POST" }).catch(() => {});
-    router.push("/admin/tin-dang");
+    // Báo rõ đã lên web hay chỉ lưu nháp, rồi về trang Tin đăng (chủ dự án 25/10/2026: bấm xong phải biết tin lên hay chưa)
+    router.push(`/admin/tin-dang?daLuu=${daLuu?.id ?? initial?.id ?? ""}&kieu=${asDraft ? "nhap" : "len"}`);
     router.refresh();
   }
 

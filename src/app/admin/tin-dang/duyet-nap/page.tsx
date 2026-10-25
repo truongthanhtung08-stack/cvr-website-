@@ -88,12 +88,10 @@ function TheDuyet({ tin, xong }: { tin: Tin; xong: () => void }) {
   const tinXem = { ...tin, title: tieuDe, description: moTa, images: anhGiu, details: { ...(tin.details ?? {}), addressDetail: diaChi, direction: huong } } as ListingRow;
 
   async function luu(duyet: boolean) {
-    let chapNhan: string[] = [];
-    // CHUẨN SEO (chủ dự án 25/10/2026, tin đăng hàng loạt / đăng hộ): còn lỗi thì cảnh báo, admin vẫn có quyền duyệt
+    // CHUẨN SEO (chủ dự án 25/10/2026): tin hàng loạt còn lỗi thì KHÔNG cho duyệt — sửa hết lỗi (bảng kiểm trên đầu tin) mới duyệt được
     if (duyet) {
       const loiSeo = loiTinSeo(tinXem);
-      if (loiSeo.length && !window.confirm(`Tin còn ${loiSeo.length} lỗi chuẩn SEO:\n· ${loiSeo.map((x) => `${x.ten} → sửa ở ${x.cho}`).join("\n· ")}\n\nVẫn duyệt lên web?`)) return;
-      chapNhan = loiSeo.map((x) => x.ma);
+      if (loiSeo.length) return void window.alert(`Tin chưa đạt chuẩn SEO, chưa duyệt được. Còn ${loiSeo.length} lỗi:\n· ${loiSeo.map((x) => `${x.ten} → sửa ở ${x.cho}`).join("\n· ")}\n\nBấm từng lỗi trong bảng kiểm để sửa.`);
     }
     setDang(true);
     setBao("");
@@ -103,8 +101,6 @@ function TheDuyet({ tin, xong }: { tin: Tin; xong: () => void }) {
     delete conLai.deXuat;
     conLai.addressDetail = diaChi.trim();
     conLai.direction = huong;
-    // Lỗi chuẩn SEO admin đã thấy và vẫn duyệt → không báo lại (chủ dự án 25/10/2026)
-    if (chapNhan.length) conLai.seoChapNhan = [...new Set([...((conLai.seoChapNhan as string[] | undefined) ?? []), ...chapNhan])];
     // Điền các trường đã chọn (lấy từ mô tả) vào đúng ô của tin
     const cot: Record<string, unknown> = {};
     const specs: Record<string, unknown> = { ...((conLai.specs as Record<string, unknown>) ?? {}) };
