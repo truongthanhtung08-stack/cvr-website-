@@ -68,9 +68,6 @@ export default function NhapHangLoatPage() {
   // đăng — lỗi chuẩn SEO theo luật chung kiemTinSeo (mục 5b) và mục đích Bán/Cho thuê ngược tiêu đề.
   // Không báo: ghi chú Cowork, ô người bán không ghi, tên tiện ích lạ, mô tả một đoạn…
   const laLoiThat = (c: string) => c.startsWith("Chuẩn SEO:") || c.startsWith("muc_dich ghi");
-  const cbao = rows
-    .filter((r) => r.loi.length === 0 && r.canhBao.some(laLoiThat))
-    .map((r) => ({ ...r, canhBao: r.canhBao.filter(laLoiThat) }));
 
   // CHỌN LẠI CÙNG MỘT THƯ MỤC LẦN THỨ HAI: mỗi lần tải lên kho sinh một địa chỉ
   // khác nhau nên cùng một tấm ảnh sẽ nằm hai lần trong danh sách → tin nhận ảnh
@@ -151,6 +148,16 @@ export default function NhapHangLoatPage() {
   const dungLuat = rows.filter((r) => r.loi.length === 0);
   // Đếm ẢNH THẬT — video xếp chung cột images nhưng không thay được ảnh
   const soAnhThat = (r: ParsedRow) => anhCuaTin(r).urls.filter((u) => !isVideoUrl(u)).length;
+  // Lỗi chuẩn SEO ảnh tính theo ẢNH ĐÃ TẢI ở Bước 4 (lúc đọc file chưa có ảnh nên csvTin không xét ảnh — 25/10/2026:
+  // thử 5 tin, cả 5 bị báo "0 ảnh" dù đã tải 30 ảnh)
+  const cbao = rows
+    .filter((r) => r.loi.length === 0)
+    .map((r) => {
+      const n = soAnhThat(r);
+      const anh = n > 0 && n < 3 ? [`Chuẩn SEO: Có ${n} ảnh thật, cần ít nhất 3 — thêm ${3 - n} ảnh`] : [];
+      return { ...r, canhBao: [...anh, ...r.canhBao.filter(laLoiThat)] };
+    })
+    .filter((r) => r.canhBao.length);
   const chuaAnh = dungLuat.filter((r) => soAnhThat(r) === 0);
   const hopLe = dungLuat.filter((r) => soAnhThat(r) > 0);
   // ẢNH GHI Ở CỘT "anh" MÀ CHƯA TẢI LÊN ĐƯỢC (mạng rớt giữa chừng…) → KHÔNG cho đăng, kẻo tin lên thiếu ảnh

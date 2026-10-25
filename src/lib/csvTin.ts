@@ -703,7 +703,8 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
 
   // CHUẨN SEO — CÙNG LUẬT với bảng kiểm admin + nút Duyệt (src/lib/kiemTinSeo.ts, chủ dự án 25/10/2026): cảnh báo để sửa,
   // admin vẫn có quyền đăng. Lỗi nào đã báo ở trên thì không báo lặp.
-  for (const x of loiTinSeo(payload as TinKiem))
+  // Ảnh chưa có lúc đọc file (tải ở Bước 4) → bỏ lỗi ảnh ở đây; trang nạp tự xét ảnh sau khi tải
+  for (const x of loiTinSeo(payload as TinKiem).filter((x) => x.ma !== "anh"))
     if (!loi.some((l) => l.startsWith(x.ten.slice(0, 12)))) canhBao.push(`Chuẩn SEO: ${x.ten}`);
 
   return {
