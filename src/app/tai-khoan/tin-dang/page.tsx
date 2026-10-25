@@ -346,7 +346,7 @@ Tin ngừng hiển thị ngay, dữ liệu giữ nguyên — sau này bấm Đă
       {/* Nộp tiền từ gói tin xong → PayOS trả về đây (?nap=thanh-cong, 26/10/2026) — dùng đúng câu đã có ở trang nạp tiền */}
       {napXong && (
         <p className="rounded-lg bg-green-50 px-4 py-3 text-sm text-green-700">
-          Thanh toán thành công. Số dư sẽ được cộng vào tài khoản sau khi hệ thống đối soát.
+          Thanh toán thành công.
         </p>
       )}
 

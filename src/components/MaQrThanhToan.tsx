@@ -103,10 +103,10 @@ export default function MaQrThanhToan({ don, onHuy, onXong }: { don: DonQr; onHu
       </dl>
       <p className="mt-3 text-center text-sm text-cvr-muted">Đang chờ thanh toán…</p>
       <div className="mt-4 grid grid-cols-2 gap-2.5">
-        <a href={anh || undefined} download={`coastal-land-${don.orderCode}.png`} className="flex h-12 items-center justify-center rounded-lg bg-cvr-ink text-sm font-bold text-white">
+        <a href={anh || undefined} download={`coastal-land-${don.orderCode}.png`} className="flex h-12 items-center justify-center rounded-lg bg-cvr-ink text-[15px] font-bold text-white">
           Lưu mã QR
         </a>
-        <button type="button" onClick={onHuy} className="h-12 rounded-lg border border-cvr-line text-sm font-semibold text-cvr-body hover:border-cvr-ink hover:text-cvr-ink">
+        <button type="button" onClick={onHuy} className="h-12 rounded-lg border border-cvr-line text-[15px] font-semibold text-cvr-body hover:border-cvr-ink hover:text-cvr-ink">
           Huỷ
         </button>
       </div>

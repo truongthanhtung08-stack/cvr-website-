@@ -1134,7 +1134,6 @@ export default function PostListingForm() {
         </div>
         {/* Chủ dự án chốt 02/10/2026: nói thẳng SỐ TIỀN phải nạp + tin đã tự lưu nháp. */}
         <h3 className="text-xl font-semibold tracking-tight text-cvr-ink">Nạp thêm {vnd(conThieu)} để đăng tin</h3>
-        <p className="mt-2 text-sm text-cvr-muted">Tin đã tự động lưu nháp. Nạp đủ số tiền trên là tin tự gửi duyệt.</p>
 
         <div className="mx-auto mt-5 max-w-sm space-y-2 rounded-xl border border-cvr-line bg-cvr-surface px-4 py-3.5 text-sm">
           <div className="flex justify-between"><span className="text-cvr-muted">Phải trả (đã gồm GTGT)</span><span className="font-semibold text-cvr-ink">{vnd(thieuTien.can)}</span></div>
@@ -1145,7 +1144,8 @@ export default function PostListingForm() {
           </div>
         </div>
 
-        <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
+        {/* CTA cùng chuẩn cả vòng đăng tin + nạp tiền (26/10/2026): nút chính đen h-12 rộng hết khung, nút phụ viền cùng cỡ */}
+        <div className="mx-auto mt-6 grid max-w-sm gap-2.5">
           <Link
             href={`/tai-khoan/nap-tien?can=${conThieu}&luu=1${thieuTien.id ? `&ve=${encodeURIComponent(`/dang-tin?id=${thieuTien.id}`)}` : ""}`}
             onClick={() => {
@@ -1153,14 +1153,14 @@ export default function PostListingForm() {
               // đổi địa chỉ trang này thành /dang-tin?id=<tin nháp> ngay trước khi sang nạp (chủ dự án 26/10/2026)
               if (thieuTien.id) window.history.replaceState(window.history.state, "", `/dang-tin?id=${thieuTien.id}`);
             }}
-            className="inline-flex h-11 w-full items-center justify-center rounded-full bg-cvr-ink px-7 text-sm font-semibold text-white transition hover:bg-cvr-ink/90 sm:w-auto"
+            className="flex h-12 w-full items-center justify-center rounded-lg bg-cvr-ink text-[15px] font-bold text-white transition hover:bg-cvr-ink/90"
           >
             Nạp tiền ngay
           </Link>
           <Link
             href="/tai-khoan/tin-dang"
             replace
-            className="inline-flex h-11 w-full items-center justify-center rounded-full bg-cvr-surface px-6 text-sm font-semibold text-cvr-body ring-1 ring-inset ring-cvr-line transition hover:text-cvr-ink sm:w-auto"
+            className="flex h-12 w-full items-center justify-center rounded-lg border border-cvr-line text-[15px] font-semibold text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink"
           >
             Xem tin nháp
           </Link>
@@ -1178,19 +1178,10 @@ export default function PostListingForm() {
         <h3 className="text-xl font-semibold tracking-tight text-cvr-ink">
           {done === "capNhat" ? "Đã cập nhật thông tin tin đăng!" : done === "draft" ? "Đã lưu nháp!" : editId && editStatus !== "draft" ? "Đã cập nhật — tin chờ duyệt lại!" : "Tin đăng đã được gửi!"}
         </h3>
-        <p className="mt-2 text-sm text-cvr-muted">
-          {done === "capNhat"
-            ? editStatus === "expired"
-              ? "Tin đã hết hạn — bấm Đăng lại trong Tin đăng của tôi để gửi duyệt và hiển thị lại."
-              : "Thông tin mới đã hiển thị. Gói, ngày đăng và thời hạn giữ nguyên."
-            : done === "draft"
-            ? "Tin nháp được lưu trong tài khoản. Bạn có thể vào làm tiếp bất cứ lúc nào."
-            : "Tin của bạn đang chờ Coastal Land kiểm duyệt và sẽ hiển thị sau ít phút."}
-        </p>
-        <div className="mt-5 flex flex-wrap justify-center gap-3">
-          <Link href="/tai-khoan/tin-dang" replace className="rounded-full bg-cvr-ink px-5 py-2 text-sm font-semibold text-white transition hover:bg-cvr-ink/90">Tin đăng của tôi</Link>
+        <div className="mx-auto mt-6 grid max-w-sm gap-2.5">
+          <Link href="/tai-khoan/tin-dang" replace className="flex h-12 w-full items-center justify-center rounded-lg bg-cvr-ink text-[15px] font-bold text-white transition hover:bg-cvr-ink/90">Tin đăng của tôi</Link>
           {!editId && (
-            <button type="button" onClick={() => { setDone(""); setTitle(""); setImages([]); }} className="rounded-full border border-cvr-line px-5 py-2 text-sm font-medium text-cvr-body hover:border-cvr-ink hover:text-cvr-ink">Đăng tin khác</button>
+            <button type="button" onClick={() => { setDone(""); setTitle(""); setImages([]); }} className="h-12 w-full rounded-lg border border-cvr-line text-[15px] font-semibold text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink">Đăng tin khác</button>
           )}
         </div>
       </div>

@@ -56,21 +56,33 @@ function TopUpForm() {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
   const [don, setDon] = useState<DonQr | null>(null); // đơn vừa tạo → hiện mã QR tại trang
+  // NÚT QUAY LẠI khi đang mở mã QR = Huỷ (chủ dự án 26/10/2026): mở mã thì thêm một mốc lịch sử; quay lại (nút điện thoại,
+  // nút ‹ trên trang, nút Huỷ) gỡ mốc đó → đóng mã, về đúng chỗ: từ tin đang đăng → về tin; nạp thường → ô chọn số tiền.
+  useEffect(() => {
+    if (!don) return;
+    // Giữ nguyên state của Next (bản sao mốc hiện tại) — state lạ thì Next tải lại cả trang khi quay lại
+    window.history.pushState(window.history.state, "");
+    const dong = () => { setDon(null); if (ve) router.replace(ve); };
+    window.addEventListener("popstate", dong);
+    return () => window.removeEventListener("popstate", dong);
+  }, [don, ve, router]);
 
   // SỐ CÒN THIẾU từ trang đăng tin (?can=…). Khách bấm Đăng mà ví không đủ thì
-  // web đưa sang đây kèm đúng số còn thiếu (báo ở dòng trên đầu trang khi tin đã tự lưu nháp).
+  // web đưa sang đây kèm đúng số còn thiếu (số nằm sẵn trong ô tự nhập; bỏ câu báo đầu trang 26/10/2026).
   const canNap = Number(params.get("can") || 0);
-  // Câu "Tin của bạn đã lưu nháp…" chỉ đúng khi web vừa tự lưu nháp tin (màn "Nạp thêm … để đăng tin" gửi ?luu=1)
-  const daLuuNhap = params.get("luu") === "1";
 
   // KHÔNG CHỌN SẴN NÚT MỆNH GIÁ NÀO (chủ dự án 26/10/2026: chọn sẵn 500.000đ khi cần 846.720đ là nạp hụt).
   // Đến từ gói tin (?can=): số cần nộp nằm sẵn trong ô tự nhập, con trỏ trong ô, chữ được bôi sẵn — khách gõ số khác
   // là thay ngay, muốn nạp bao nhiêu tuỳ khách; các nút mệnh giá vẫn để chọn.
   const oNhapRef = useRef<HTMLInputElement>(null);
+  const nutTtRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     if (canNap <= 0) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect -- điền sẵn một lần theo địa chỉ trang
     setCustom(canNap.toLocaleString("vi-VN"));
+    // ĐIỆN THOẠI KHÔNG TỰ BẬT BÀN PHÍM (chủ dự án 26/10/2026: "giật lag, che bàn phím khi nạp tiền là cái tệ hại"):
+    // số đã nằm sẵn trong ô, khách bấm Thanh toán luôn; muốn sửa số thì chạm vào ô. Máy tính vẫn đặt sẵn con trỏ.
+    if (!window.matchMedia("(pointer: fine)").matches) return;
     requestAnimationFrame(() => { oNhapRef.current?.focus(); oNhapRef.current?.select(); });
   }, [canNap]);
 
@@ -128,13 +140,6 @@ function TopUpForm() {
         <h1 className="text-2xl font-semibold tracking-tight text-cvr-ink">Nạp tiền vào tài khoản</h1>
       </div>
 
-      {canNap > 0 && daLuuNhap && (
-        <p className="rounded-lg border border-cvr-blue/30 bg-cvr-blue/[0.06] px-4 py-3 text-sm text-cvr-blue-ink">
-          Tin của bạn đã lưu nháp. Cần nạp thêm{" "}
-          <strong className="font-semibold">{canNap.toLocaleString("vi-VN")}đ</strong> để đăng — nạp đủ là tin tự gửi duyệt.
-        </p>
-      )}
-
       {/* TẠM GIỮ (0056): tiền của tin đang chờ duyệt đã khoá trong ví, duyệt mới trừ. */}
       {viGiu && viGiu.tam_giu > 0 && (
         <div className="rounded-xl border border-cvr-line bg-white px-4 py-3 text-sm">
@@ -145,20 +150,20 @@ function TopUpForm() {
 
       {ketQua === "thanh-cong" && (
         <p className="rounded-lg bg-green-50 px-4 py-3 text-sm text-green-700">
-          Thanh toán thành công. Số dư sẽ được cộng vào tài khoản sau khi hệ thống đối soát.
+          Thanh toán thành công.
         </p>
       )}
       {ketQua === "huy" && (
         <p className="rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-700">
-          Bạn đã huỷ giao dịch. Có thể chọn lại mệnh giá bên dưới.
+          Đã huỷ giao dịch.
         </p>
       )}
 
       {don ? (
         <MaQrThanhToan
           don={don}
-          // Huỷ: đến từ tin đang đăng → về lại tin đó; nạp thường → về ô chọn số tiền
-          onHuy={() => (ve ? router.replace(ve) : setDon(null))}
+          // Huỷ = quay lại một bước (gỡ mốc mã QR) → đóng mã, về đúng chỗ (xem phần NÚT QUAY LẠI ở trên)
+          onHuy={() => window.history.back()}
           // Tiền về (webhook đã cộng ví): đến từ tin → Tin của tôi (tin tự gửi duyệt); nạp thường → báo thành công tại đây
           onXong={() => {
             if (ve) router.replace("/tai-khoan/tin-dang?nap=thanh-cong");
@@ -190,8 +195,20 @@ function TopUpForm() {
           <input
             ref={oNhapRef}
             inputMode="numeric"
+            enterKeyHint="go"
             value={custom}
             onChange={(e) => setCustom(e.target.value)}
+            // Phím "Đi" trên bàn phím điện thoại = bấm Thanh toán
+            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); pay(); } }}
+            // BÀN PHÍM KHÔNG CHE NÚT THANH TOÁN (chủ dự án 26/10/2026): gõ số trên điện thoại → cuộn để ô nhập + nút
+            // Thanh toán cùng nằm trên bàn phím. Chạy sau bộ chống che chung (BanPhimAo đưa ô vào giữa lúc ~350 ms).
+            onFocus={() => setTimeout(() => {
+              const vv = window.visualViewport;
+              const nut = nutTtRef.current;
+              if (!vv || !nut) return;
+              const duoi = nut.getBoundingClientRect().bottom - (vv.offsetTop + vv.height) + 12;
+              if (duoi > 0) window.scrollBy({ top: duoi, behavior: "smooth" });
+            }, 500)}
             placeholder="Ví dụ: 3.000.000"
             className="h-11 w-full rounded-lg border border-cvr-line px-3 text-sm text-cvr-ink outline-none focus:border-cvr-ink"
           />
@@ -212,10 +229,11 @@ function TopUpForm() {
         {err && <p className="mt-3 rounded-lg bg-red-50 px-4 py-2.5 text-sm text-red-700">{err}</p>}
 
         <button
+          ref={nutTtRef}
           type="button"
           onClick={pay}
           disabled={loading}
-          className="mt-4 h-12 w-full rounded-lg bg-cvr-ink text-sm font-bold text-white transition hover:bg-cvr-ink/90 disabled:opacity-60"
+          className="mt-4 h-12 w-full rounded-lg bg-cvr-ink text-[15px] font-bold text-white transition hover:bg-cvr-ink/90 disabled:opacity-60"
         >
           {loading ? "Đang tạo mã…" : "Thanh toán"}
         </button>
