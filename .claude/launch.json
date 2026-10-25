@@ -9,6 +9,13 @@
       "autoPort": true
     },
     {
+      "name": "cvr-ban-that",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["next", "start", "-p", "3002"],
+      "port": 3002,
+      "autoPort": false
+    },
+    {
       "name": "zalo-mini-app",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["--prefix", "zalo-mini-app", "run", "dev", "--", "--port", "3100", "--host"],

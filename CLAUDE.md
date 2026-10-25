@@ -51,8 +51,22 @@
 >   lượt, gói hội viên, voucher, chương trình thành viên mới và mọi chương trình sau này.
 > - **Thành viên mới** xét theo `profiles.ngay_thanh_vien` (0058): tự đăng ký = ngày tạo tài khoản;
 >   tài khoản tạo hộ (`tao_ho`) = ngày chính chủ vào lần đầu (trigger tự ghi).
+> - **QUY TRÌNH GÓI · VIP · CHƯƠNG TRÌNH (chủ dự án duyệt 22/10/2026 — thống nhất một lần, không nói lại):**
+>   Anh duyệt trong admin là chạy; đã chạy thì mọi đường phải tính như nhau.
+>   - **Thành viên mới — MỘT hàm `thanhVienMoi` (`src/lib/billing.ts`)** cho mọi chương trình (miễn phí lẫn giảm giá):
+>     tự đăng ký / tạo hộ đã tự vào → ngày thành viên trong from–to admin đặt + tin gửi trong số ngày đầu admin đặt;
+>     tạo hộ chưa tự vào → tính như admin đăng hộ (lúc gửi tin trong from–to). Còn lại = thành viên cũ.
+>   - ① Khách đăng tin, bước chọn gói: hiện ĐỦ mọi gói + mọi chương trình đang chạy; thành viên mới chọn được ưu đãi,
+>     thành viên cũ vẫn thấy nhưng ô ưu đãi MỜ, không bấm được. ② Admin đăng hộ: như ①, theo luật tạo hộ.
+>     ③ Duyệt: hạn = ngày duyệt + số ngày gói/chương trình; trừ đúng số tiền đã báo. ④ Nâng VIP: VIP chạy từ ngày nâng,
+>     kỳ Basic chạy song song (không cộng nối). ⑤ Hết VIP: tự về Basic giữ hạn Basic còn lại (ghi `ha_vip_luc`).
+>     ⑥ Hết hạn: ẩn + nhắn khách; đăng lại → chờ duyệt như tin mới. ⑦ Tự kiểm 8h: chỉ báo lỗi thật, sửa xong tự hết báo.
+>   - Mọi đường đặt hạn liệt kê ở đầu `src/lib/kiemTin.ts` — thêm đường mới phải thêm vào đó.
 > - **Tự động bằng mã, không ai sửa tay**: cron `/api/tin-dang/het-han` mỗi phút (hạ tin, tự đăng
 >   lại, nhắn khách, làm mới bản sao danh sách khi tin đổi từ bất kỳ đâu) · `kiemTin` 8h soát mọi tin.
+> - ⛔ **21/10/2026 nhắc lại:** web còn rất nhiều câu "rất AI" (chủ đã sửa nhiều ở footer). Cấm từ nội bộ trước mặt khách
+>   ("tin đăng", "người đăng", "theo các tin đang đăng"), cấm câu ghép máy, cấm số liệu vô nghĩa với người mua. Không hiểu /
+>   không biết nói sao → **HỎI CHỦ DỰ ÁN TRƯỚC KHI VIẾT**; mọi câu mới phải đưa nguyên văn cho chủ duyệt trước khi push.
 > - **Không ghi chú thích ngớ ngẩn / giọng AI lên web.** Toàn hệ thống phải đúng tiếng Việt chuẩn.
 >   ⛔ **Muốn thêm chú thích / câu giải thích / chỉ dẫn nào: HỎI chủ dự án ghi gì TRƯỚC** — đưa nguyên
 >   văn câu để duyệt, không tự viết.
@@ -60,7 +74,7 @@
 >   mỗi sàn × tầng — sàn chỉ 75–80% đất, có lửng/áp mái); không có số chính xác thì không lấy — web bỏ qua mọi số đúng bằng đất × 1 · 1,5 · 2… (`dienTichSanThat`).
 >   Việc chia giá là của web; Cowork chỉ chép số, không tự chia.
 > - **Lịch sử giá:** chỉ dãy của đúng khu vực + loại hình + mua bán/cho thuê của tin, đủ so cùng kỳ
->   1 năm mới hiện. Yêu cầu nhập liệu cho Cowork: `D:\Coastal Land\SEO\YEU-CAU-COWORK-LICH-SU-GIA.md` (mọi tệp cho Cowork — yêu cầu, dữ liệu vào, dữ liệu ra — chỉ nằm ở `D:\Coastal Land\SEO\`, xem `CONG-VIEC-3-BEN.md` mục 0) (làm mới 03/10: cùng phân khúc + cùng vị trí, 3 bậc dự án → đường → phường — ⛔ **bỏ hẳn cả tỉnh 16/10** (số một phường/loại hình không áp cho nơi khác); đơn vị theo loại hình: đất ÷ m² đất · căn hộ ÷ m² căn · nhà, văn phòng ÷ m² sàn; theo quý như Batdongsan, đủ 5 quý liền mới hiện, thuê = tổng tiền/tháng; web tự tính, Cowork điền phần thiếu từ nút "Tải danh sách còn thiếu").
+>   1 năm mới hiện. Yêu cầu nhập liệu cho Cowork: `D:\Coastal Land\SEO\YEU-CAU-COWORK-LICH-SU-GIA.md` (mọi tệp cho Cowork — yêu cầu, dữ liệu vào, dữ liệu ra — chỉ nằm ở `D:\Coastal Land\SEO\`, xem `CONG-VIEC-3-BEN.md` mục 0) (làm mới 03/10: cùng phân khúc + cùng vị trí, 3 bậc dự án → đường → phường — ⛔ **bỏ hẳn cả tỉnh 16/10** (số một phường/loại hình không áp cho nơi khác); đơn vị theo loại hình: đất ÷ m² đất · căn hộ ÷ m² căn · nhà, văn phòng ÷ m² sàn; theo quý như Batdongsan, đủ 5 quý liền mới hiện; ⛔ **thống nhất GIÁ MỖI M² theo loại hình cả bán lẫn thuê (thuê = tiền/tháng ÷ m², chốt 21/10 — "lấy đơn vị tổng là sai")**; web tự tính, Cowork điền phần thiếu từ nút "Tải danh sách còn thiếu").
 > - Bài học 03/10: Claude tự áp luật, hạ nhầm 49 tin còn hạn — xem memory `gia-chinh-sach-mot-nguon-admin`.
 
 ---
@@ -128,6 +142,24 @@ Phù hợp và tương thích cho mọi trình duyệt trên điện thoại c�
   (Khách Samsung KHÔNG bị chặn: kể cả trường hợp xấu nhất vẫn up được qua "File của bạn".)
 - ⚠️ **Luôn chạy `npx next build` cho chạy hết trước khi nói "đã lên web"** — `tsc --noEmit`
   KHÔNG bắt được lỗi JSX; đã có bản build hỏng nên không bao giờ lên, mà vẫn báo là đã lên.
+
+## 0A1. ⛔⛔ CẤM SỬA CÁI ĐÃ DUYỆT · TUYỆT ĐỐI KHÔNG CHE CHỖ KHÁCH ĐANG THAO TÁC (quán triệt 21/10/2026)
+
+> Chủ dự án: *"CẤM sửa cái đã duyệt. Tuyệt đối lưu ý phần bị che, khuất này! Tuyệt đối không!"*
+>
+> **1. Đã duyệt = cấm động vào.** Sửa thành phần DÙNG CHUNG (ô chọn `ChonCoTim`/`ChonHoacGhi`, `BanPhimAo`, form
+> đăng tin, bộ lọc…) → TRƯỚC khi push liệt kê mọi chức năng đã duyệt của nó và tự bấm thử từng cái còn THẤY NGAY,
+> cả PC lẫn điện thoại. Bài học 21/10: phiên 16/10 đổi ô chọn làm mất dòng "Khác — tự ghi" (chỉ hiện khi gõ tìm);
+> phiên sửa lại làm ô tự ghi bật lên như khung tìm kiếm, bàn phím che.
+> **2. Khách thao tác trên điện thoại (đăng tin, soạn tin, chọn, ghi, gõ bất cứ ô nào) phải THẤY NGAY mình đang bấm/gõ
+> cái gì — không bị bàn phím, thanh dính, nút chat, thanh gọi hay bất cứ dòng nào che, không bị đẩy khuất, không phải
+> kéo lên kéo xuống mới thấy.** Áp mọi trình duyệt VÀ trình duyệt trong Zalo/Facebook/Messenger.
+> - Do chung một chỗ: `src/components/BanPhimAo.tsx` (tự đo mọi thanh dính trên đầu + bàn phím, đưa ô vào vùng nhìn thấy).
+> - "Khác — tự ghi" = dòng cuối bảng chọn; chọn xong bảng đóng, ô ghi hiện NGAY DƯỚI ô chọn trong form — KHÔNG mở
+>   kiểu khung tìm toàn màn hình.
+> - Đo bắt buộc trước khi push khi đụng form/ô gõ/bảng chọn: `node --experimental-websocket scripts/do-o-bi-che.mjs
+>   http://localhost:3000/<trang>` (kiểu Zalo) và thêm ` 470` (kiểu Android co màn hình) — phải "BI CHE: 0".
+>   21/10 đo /dang-tin: 0/10 cả hai kiểu. iPhone Safari thật vẫn phải bấm thử trên máy thật.
 
 ## 0B. QUY TRÌNH BẮT BUỘC — đọc `QUY-TRINH-LAM-VIEC.md`
 
@@ -237,27 +269,6 @@ Buộc phải đụng vào vì lý do kỹ thuật → **DỪNG, HỎI TRƯỚC.
 
 ---
 
-## 0D. 📈 GOOGLE ADS + SEO — topic riêng, theo dõi lâu dài
-
-> **Bảng theo dõi đầy đủ: [`docs/KE-HOACH-GOOGLE-ADS-SEO.md`](docs/KE-HOACH-GOOGLE-ADS-SEO.md).**
-> Mở phiên mới là **đọc file đó trước**, xem đang dừng ở bước nào rồi làm tiếp — đừng bắt
-> chủ dự án kể lại. Làm xong bước nào thì **sửa bảng trong file đó ngay**.
->
-> Mở 17/09/2026. Bối cảnh: web chạy thử 1 tháng rồi thương mại hoá; **bán được gói tin hay
-> không phụ thuộc có TRAFFIC hay không**, nên Google Ads + SEO đi cùng nhau, không tách rời.
->
-> Tài khoản Ads **334-211-0750 Coastal Land** · thẻ Google **AW-18365884419**.
-> Ba việc đang chặn: ① chiến dịch bị Google khoá vì chuyển đổi "định cấu hình sai";
-> ② trang danh mục (`/mua-ban`, `/cho-thue`, `/mua-ban/<khu-vực>`) **HTML máy chủ không có
-> chữ** (khách xem vẫn bình thường — chỉ Google đọc chậm, và giá mỗi lượt bấm đắt lên);
-> ③ ngân sách 5.000 đ/ngày không mua nổi một lượt bấm.
->
-> ✅ **Nghi vấn "/mua-ban trắng" của phiên 17/9 ĐÃ GIẢI (18/9): KHÔNG CÓ LỖI** — phép đo cũ
-> chạy trên thẻ trình duyệt chưa hiển thị nên chỉ thấy khung chờ. Kết luận "trang trắng"
-> phải chứng minh bằng ẢNH CHỤP, không bằng `querySelector`.
-
----
-
 ## 0C2. ⚡ TỐC ĐỘ WEB TRÊN ĐIỆN THOẠI — CHUẨN BẮT BUỘC (quán triệt 22/10/2026)
 
 > Chủ dự án: *"Web load đạt chuẩn mà không ảnh hưởng gì đến Google, SEO."* Chuẩn = **LCP ≤ 2,5 s** trên điện thoại.
@@ -286,6 +297,27 @@ Buộc phải đụng vào vì lý do kỹ thuật → **DỪNG, HỎI TRƯỚC.
 
 ---
 
+## 0D. 📈 GOOGLE ADS + SEO — topic riêng, theo dõi lâu dài
+
+> **Bảng theo dõi đầy đủ: [`docs/KE-HOACH-GOOGLE-ADS-SEO.md`](docs/KE-HOACH-GOOGLE-ADS-SEO.md).**
+> Mở phiên mới là **đọc file đó trước**, xem đang dừng ở bước nào rồi làm tiếp — đừng bắt
+> chủ dự án kể lại. Làm xong bước nào thì **sửa bảng trong file đó ngay**.
+>
+> Mở 17/09/2026. Bối cảnh: web chạy thử 1 tháng rồi thương mại hoá; **bán được gói tin hay
+> không phụ thuộc có TRAFFIC hay không**, nên Google Ads + SEO đi cùng nhau, không tách rời.
+>
+> Tài khoản Ads **334-211-0750 Coastal Land** · thẻ Google **AW-18365884419**.
+> Ba việc đang chặn: ① chiến dịch bị Google khoá vì chuyển đổi "định cấu hình sai";
+> ② trang danh mục (`/mua-ban`, `/cho-thue`, `/mua-ban/<khu-vực>`) **HTML máy chủ không có
+> chữ** (khách xem vẫn bình thường — chỉ Google đọc chậm, và giá mỗi lượt bấm đắt lên);
+> ③ ngân sách 5.000 đ/ngày không mua nổi một lượt bấm.
+>
+> ✅ **Nghi vấn "/mua-ban trắng" của phiên 17/9 ĐÃ GIẢI (18/9): KHÔNG CÓ LỖI** — phép đo cũ
+> chạy trên thẻ trình duyệt chưa hiển thị nên chỉ thấy khung chờ. Kết luận "trang trắng"
+> phải chứng minh bằng ẢNH CHỤP, không bằng `querySelector`.
+
+---
+
 ## 0E. 🧾 THUẾ CÔNG TY (GTGT · TNDN · TNCN) — topic riêng, theo dõi lâu dài
 
 > 📌 **Bàn giao mới nhất: [`BAN-GIAO-THUE-02-10.md`](BAN-GIAO-THUE-02-10.md) — đọc TRƯỚC.** Việc gấp: A7 (mẫu TT89 cho tờ khai Q3, hạn 31/10).
@@ -304,6 +336,14 @@ Buộc phải đụng vào vì lý do kỹ thuật → **DỪNG, HỎI TRƯỚC.
 > GỐC trước khi sửa code. Không mở được văn bản gốc → nói rõ là chưa kiểm được, KHÔNG sửa.**
 > Mục tiêu chủ dự án chốt 02/10: **"nhập liệu xong là in báo cáo / lấy báo cáo gửi theo quy định"** →
 > trang in `/admin/hoa-don-thue/in`. Số liệu tính ở MỘT chỗ `src/lib/soLieuThue.ts` (+ `thueTncn.ts`).
+
+---
+
+## 0F. 🖥️ THẺ TIN + TRANG TIN BẢN PC — ĐÃ CHỐT, ĐÃ LÊN WEB 18/10/2026
+
+> **Đọc TRƯỚC khi đụng thẻ tin, trang Mua bán/Cho thuê, trang chi tiết tin: [`docs/THE-TIN-THEO-CAP.md`](docs/THE-TIN-THEO-CAP.md) mục 6.**
+> Đã duyệt = đóng băng: chỉ sửa lỗi. Trang chủ giữ nguyên. Bản đồ trong trang tin cấm đổi cỡ. Từ khoá pSEO không đụng khi chủ chưa cho.
+> Sửa xong phải tự đo + gửi **link localhost đúng trang**; **chỉ push khi chủ dự án nói "Push"**. Việc còn treo: mục 6.3.
 
 ---
 

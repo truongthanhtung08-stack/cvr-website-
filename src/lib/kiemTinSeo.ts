@@ -2,6 +2,8 @@
 // (`scripts/kiem-noi-dung-dot.mjs`) và cảnh báo trong admin (`BangKiemTinSeo.tsx`). Quy định: docs/CHUAN-TIN-DANG-SEO.md mục 5b.
 // Chủ dự án 25/10/2026: khách không ghi thì không phải lỗi, không báo — chỉ báo khi khách CÓ ghi mà ô còn trống.
 
+import { fieldsFor } from "./listingSpec";
+
 // Mô tả có ghi hướng: "hướng" đi kèm tên hướng (Đông, Tây, Nam, Bắc…)
 export const coGhiHuong = (s: string) => /hướng\s*(nhà|cửa|ban công|đất|chính)?\s*[:\-]?\s*(đông|tây|nam|bắc)/i.test(s);
 
@@ -88,8 +90,15 @@ export function loiTinSeo(r: TinKiem, soTinTrung = 0): LoiTin[] {
   if (lechGia) loi.push({ ma: "gia", ten: lechGia.charAt(0).toUpperCase() + lechGia.slice(1), cho: "phần Giá & thông số · ô Giá", o: "o-gia" });
   if (thieuTenDuong(moTa, d.addressDetail ?? ""))
     loi.push({ ma: "duong", ten: "Mô tả có tên đường mà ô địa chỉ chưa có", cho: "phần Vị trí · ô Địa chỉ cụ thể", o: "o-diachi" });
-  if (coGhiHuong(moTa) && !d.direction && !d.specs?.balcony)
-    loi.push({ ma: "huong", ten: "Mô tả có ghi hướng mà ô hướng còn trống", cho: "phần Đặc điểm bất động sản · ô Hướng", o: "o-huong" });
+  // Hướng nhà và Hướng ban công XÉT RIÊNG — mỗi ô trống là một lỗi, cảnh báo ghi đúng tên ô, bấm nhảy đúng ô (25/10/2026:
+  // dn20-2410 "Cửa chính hướng Nam, ban công hướng Bắc" có Hướng nhà mà trống Hướng ban công, luật cũ xét gộp nên bỏ sót)
+  const HUONG = "(đông|tây|nam|bắc)(\\s*(đông|tây|nam|bắc))?";
+  const reBanCong = new RegExp(`(ban công\\s*hướng|hướng\\s*ban công)\\s*[:\\-]?\\s*${HUONG}`, "gi");
+  const coOBanCong = fieldsFor(r.type ?? "", r.purpose ?? undefined).some((f) => f.key === "balcony");
+  if (coOBanCong && new RegExp(reBanCong.source, "i").test(moTa) && !d.specs?.balcony)
+    loi.push({ ma: "huongbancong", ten: "Mô tả có ghi hướng ban công mà ô Hướng ban công còn trống", cho: "phần Đặc điểm bất động sản · ô Hướng ban công", o: "o-balcony" });
+  if (coGhiHuong(coOBanCong ? moTa.replace(reBanCong, "") : moTa) && !d.direction)
+    loi.push({ ma: "huong", ten: "Mô tả có ghi hướng mà ô Hướng nhà / đất còn trống", cho: "phần Đặc điểm bất động sản · ô Hướng nhà / đất", o: "o-huong" });
   const daChapNhan = d.seoChapNhan ?? [];
   return loi.filter((x) => !daChapNhan.includes(x.ma));
 }

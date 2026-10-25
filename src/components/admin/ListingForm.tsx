@@ -736,7 +736,7 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
         {!type && <p className="mb-3 text-sm text-cvr-muted">Chọn loại hình ở trên để hiện đúng bộ đặc điểm.</p>}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {specFields.map((f) => (
-            <Field key={f.key} label={f.label + (f.unit ? ` (${f.unit})` : "")}>
+            <Field key={f.key} id={`o-${f.key}`} label={f.label + (f.unit ? ` (${f.unit})` : "")}>
               {f.type === "select" ? (
                 // Mọi ô chọn (kể cả Hướng — 8 hướng) đều có dòng "Khác — tự ghi" (chủ dự án 15/10/2026).
                 <ChonHoacGhi value={specValues[f.key] ?? ""} onChange={(v) => setSpecValues((s) => ({ ...s, [f.key]: v }))} options={f.options ?? []} batBuoc={f.batBuoc} className={inputCls} />
