@@ -17,8 +17,26 @@ type Stats = {
   duAnPending: number | null;
 };
 
+type TinLoi = { id: string; title: string; status: string; loi: string[] };
+
 export default function AdminDashboard() {
   const [stats, setStats] = useState<Stats | null>(null);
+  // Tin chưa đạt chuẩn SEO — MỘT danh sách cho cả ba chỗ trên trang: Việc cần làm, ô số liệu Tin đăng, khối liệt kê (25/10/2026)
+  const [chuaChuan, setChuaChuan] = useState<TinLoi[] | null>(null);
+  useEffect(() => {
+    (async () => {
+      const { data } = await createClient()
+        .from("listings")
+        .select("id,title,status,description,purpose,type,price_vnd,area_m2,beds,images,details")
+        .in("status", ["pending", "approved"])
+        .limit(3000);
+      setChuaChuan(
+        (data ?? [])
+          .map((r) => ({ id: r.id as string, title: r.title as string, status: r.status as string, loi: loiTinSeo(r).map((x) => x.ten) }))
+          .filter((r) => r.loi.length),
+      );
+    })();
+  }, []);
 
   useEffect(() => {
     const supabase = createClient();
@@ -55,6 +73,7 @@ export default function AdminDashboard() {
   // LUẬT: mọi tin đăng và mọi dự án đều phải được quản trị viên duyệt mới lên web.
   const viec = [
     { n: stats?.tinPending ?? 0, chu: "tin đăng chờ duyệt", href: "/admin/tin-dang" },
+    { n: chuaChuan?.length ?? 0, chu: "tin chưa đạt chuẩn SEO", href: "#tin-chua-chuan" },
     { n: stats?.duAnPending ?? 0, chu: "dự án chờ duyệt", href: "/admin/du-an" },
     { n: stats?.yeuCauMoi ?? 0, chu: "yêu cầu khách hàng mới", href: "/admin/yeu-cau" },
     { n: stats?.khachChoDuyet ?? 0, chu: "khách hàng chờ duyệt", href: "/admin/khach-hang" },
@@ -100,7 +119,7 @@ export default function AdminDashboard() {
 
       {/* 1b. TIN CHƯA ĐẠT CHUẨN SEO — web tự kiểm mọi tin đang đăng + chờ duyệt bằng đúng luật của bảng kiểm / nút Duyệt
              (src/lib/kiemTinSeo.ts). Bấm một tin là mở trang Sửa tin, bấm từng cảnh báo để sửa (chủ dự án 25/10/2026). */}
-      <TinChuaChuan />
+      <TinChuaChuan ds={chuaChuan} />
 
       {/* 2. SỐ LIỆU — chia đúng 2 nhóm có nhãn (trước là 2 hàng ô không nhãn,
              không biết hàng nào nói về cái gì). Ô nào cũng bấm được. */}
@@ -108,6 +127,7 @@ export default function AdminDashboard() {
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           <ChiSo label="Đang đăng" value={stats?.tinLive} href="/admin/tin-dang" accent />
           <ChiSo label="Chờ duyệt" value={stats?.tinPending} href="/admin/tin-dang" />
+          <ChiSo label="Chưa đạt chuẩn SEO" value={chuaChuan?.length} href="#tin-chua-chuan" />
         </div>
       </Panel>
 
@@ -227,25 +247,10 @@ function SuCoBang() {
 }
 
 // Tin còn lỗi chuẩn SEO (không xét trùng — trùng xem trong từng tin). Hết lỗi thì khối tự ẩn.
-function TinChuaChuan() {
-  const [ds, setDs] = useState<{ id: string; title: string; status: string; loi: string[] }[] | null>(null);
-  useEffect(() => {
-    (async () => {
-      const { data } = await createClient()
-        .from("listings")
-        .select("id,title,status,description,purpose,type,price_vnd,area_m2,beds,images,details")
-        .in("status", ["pending", "approved"])
-        .limit(3000);
-      setDs(
-        (data ?? [])
-          .map((r) => ({ id: r.id as string, title: r.title as string, status: r.status as string, loi: loiTinSeo(r).map((x) => x.ten) }))
-          .filter((r) => r.loi.length),
-      );
-    })();
-  }, []);
+function TinChuaChuan({ ds }: { ds: TinLoi[] | null }) {
   if (!ds || ds.length === 0) return null;
   return (
-    <Panel title={`Tin chưa đạt chuẩn SEO · ${ds.length} tin`} className="mt-4">
+    <Panel id="tin-chua-chuan" title={`Tin chưa đạt chuẩn SEO · ${ds.length} tin`} className="mt-4">
       <div className="space-y-2">
         {ds.map((r) => (
           <Link key={r.id} href={`/admin/tin-dang/${r.id}`} className="block rounded-xl border border-cvr-line px-4 py-3 transition hover:border-cvr-blue hover:shadow-lux">

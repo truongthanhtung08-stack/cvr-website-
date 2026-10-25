@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import TuKiemTin from "@/components/admin/TuKiemTin";
+import { loiTinSeo } from "@/lib/kiemTinSeo";
 import {
   type ListingRow,
   type ListingTier,
@@ -348,6 +349,7 @@ export default function AdminListingsPage() {
                   {/* Tiêu đề tin xuống tối đa 2 dòng thay vì cắt cụt một dòng —
                       cắt cụt thì hai tin cùng khu vực nhìn y hệt nhau. */}
                   <div className="line-clamp-2 font-medium text-cvr-ink">{r.title}</div>
+                  <LoiSeo r={r} />
                   {r.status === "approved" && r.details?.da_sua_luc && (
                     <div className="mt-1 flex items-center gap-2 text-xs">
                       <span className="rounded-full bg-amber-50 px-2 py-0.5 font-medium text-amber-800">Đã sửa {fmtDate(r.details.da_sua_luc)} · chờ kiểm</span>
@@ -398,6 +400,7 @@ export default function AdminListingsPage() {
                 {tierBadge(r.tier)} <span>{purposeLabel(r.purpose)} · {[r.district, r.province].filter(Boolean).join(", ")}</span>
               </div>
             </Link>
+            <LoiSeo r={r} />
             {r.status === "approved" && r.details?.da_sua_luc && (
               <div className="mt-2 flex items-center gap-2 text-xs">
                 <span className="rounded-full bg-amber-50 px-2 py-0.5 font-medium text-amber-800">Đã sửa · chờ kiểm</span>
@@ -489,4 +492,17 @@ function henHienThi(r: ListingRow) {
 
 function fmtDate(iso: string): string {
   return new Date(iso).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", day: "2-digit", month: "2-digit", year: "numeric" });
+}
+
+// Dấu "còn N lỗi chuẩn SEO" trên từng dòng tin — cùng luật với bảng kiểm trang Sửa tin, nút Duyệt và trang Tổng quan
+// (src/lib/kiemTinSeo.ts, chủ dự án 25/10/2026). Bấm là mở trang Sửa tin để sửa từng lỗi.
+function LoiSeo({ r }: { r: ListingRow }) {
+  if (r.status !== "pending" && r.status !== "approved") return null;
+  const loi = loiTinSeo(r);
+  if (!loi.length) return null;
+  return (
+    <Link href={`/admin/tin-dang/${r.id}`} title={loi.map((x) => x.ten).join(" · ")} className="mt-1 inline-block rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700 hover:underline">
+      ✗ {loi.length} lỗi chuẩn SEO{r.status === "pending" ? " — sửa xong mới duyệt được" : " — đang đăng, cần sửa"}
+    </Link>
+  );
 }
