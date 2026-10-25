@@ -11,7 +11,7 @@ import type { Listing } from "@/lib/data";
 // tin lưu cũ nhất tự rơi), xếp theo lưu gần nhất trước, giữ cả tin hết hạn (nhãn "Tin hết hạn"), chỉ tin đã gỡ hẳn mới mất.
 // Hiện: dải trượt 8 tin + "Xem thêm" → danh sách theo trang ĐÚNG các tin đã lưu. Dữ liệu tin THẬT từ /api/danh-sach (CDN lưu sẵn).
 export default function SavedClient() {
-  const { ids, ready } = useSaved();
+  const { ids, ready, giuLai } = useSaved();
   const khoa = [...ids].reverse().join(",");
   const [items, setItems] = useState<Listing[] | null>(null);
   // Đang mở "Xem thêm": danh sách nằm sát đầu trang như mọi danh sách mở rộng, không chừa khoảng trên
@@ -20,11 +20,16 @@ export default function SavedClient() {
   useEffect(() => {
     if (!khoa) { setItems([]); return; }
     let huy = false;
-    Promise.all(["ban", "thue"].map((m) => fetch(`/api/danh-sach/${m}`).then((r) => (r.ok ? r.json() : { tin: [] })).catch(() => ({ tin: [] }))))
-      .then((ds: { tin: Listing[]; hetHan?: Listing[] }[]) => {
+    Promise.all(["ban", "thue"].map((m) => fetch(`/api/danh-sach/${m}`).then((r) => (r.ok ? r.json() : null)).catch(() => null)))
+      .then((ds: ({ tin: Listing[]; hetHan?: Listing[] } | null)[]) => {
         if (huy) return;
-        const theoId = new Map(ds.flatMap((d) => [...d.tin, ...(d.hetHan ?? []).map((l) => ({ ...l, hetHan: true }))]).map((l) => [l.id, l]));
-        setItems(khoa.split(",").map((id) => theoId.get(id)).filter((l): l is Listing => Boolean(l)));
+        const du = ds.filter((d): d is { tin: Listing[]; hetHan?: Listing[] } => Boolean(d));
+        const theoId = new Map(du.flatMap((d) => [...d.tin, ...(d.hetHan ?? []).map((l) => ({ ...l, hetHan: true }))]).map((l) => [l.id, l]));
+        const thay = khoa.split(",").map((id) => theoId.get(id)).filter((l): l is Listing => Boolean(l));
+        setItems(thay);
+        // Tra ĐỦ cả hai mục mà vẫn thiếu = tin đã gỡ hẳn → bỏ khỏi danh sách lưu, số trên trái tim khớp số tin thấy được.
+        // Một mục tra lỗi (mạng) thì KHÔNG bỏ gì, tránh xoá nhầm tin khách đã lưu.
+        if (du.length === 2 && thay.length < khoa.split(",").length) giuLai(thay.map((l) => l.id));
       });
     return () => { huy = true; };
   }, [khoa]);
@@ -54,7 +59,13 @@ export default function SavedClient() {
   }
 
   return (
-    <div className={expanded ? undefined : "mt-6"}>
+    <div className={expanded ? undefined : "mt-4"}>
+      {/* Tổng số tin đã lưu — dải trượt chỉ hiện 8 tin đầu, số này cho khách biết còn bao nhiêu (khớp số trên trái tim) */}
+      {!expanded && (
+        <p className="mb-4 text-sm text-cvr-body">
+          <span className="font-bold text-cvr-ink">{items.length}</span> tin đã lưu
+        </p>
+      )}
       <ListingShowcase items={items} sectionKey="tin-da-luu" heading="Tin đã lưu" relevance khoangTren="" />
     </div>
   );

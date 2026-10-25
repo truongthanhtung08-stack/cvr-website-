@@ -152,7 +152,7 @@ function TabBody({
         <TabIcon name={icon} active={active} />
         {badge ? (
           <span className="absolute -right-1.5 -top-0.5 flex h-[15px] min-w-[15px] items-center justify-center rounded-full bg-[#ff3b30] px-1 text-[9px] font-bold leading-none text-white ring-2 ring-white">
-            {badge > 9 ? "9+" : badge}
+            {badge}
           </span>
         ) : null}
       </span>

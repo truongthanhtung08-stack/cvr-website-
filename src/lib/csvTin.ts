@@ -6,6 +6,7 @@
 // như tin đăng tay). Mọi kiểm tra làm ở đây, trang admin chỉ hiển thị kết quả.
 // ============================================================================
 
+import { loiTinSeo, type TinKiem } from "@/lib/kiemTinSeo";
 import { saleTypeGroups, rentTypeGroups } from "@/lib/filters";
 // Máy KHÔNG suy ngược được phường cũ khi một phường mới gộp nhiều phường cũ —
 // dùng để báo vàng khi file thiếu ba cột địa chỉ hệ cũ.
@@ -369,10 +370,8 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
   // CHUẨN TRƯỚC, CHẠY SAU (chủ dự án 18/10/2026: "không chuẩn không chạy", "chất lượng nội dung phải sửa từ khâu lọc").
   // Đo 18/10: 83/126 tin đang hiện lỗi chất lượng (9 tiêu đề VIẾT HOA cả câu, 17 dài quá, 22 mô tả < 300 ký tự…)
   // vì các lỗi này trước chỉ báo vàng. Nay CHẶN (đỏ) khi nạp hàng loạt — sửa xong mới đăng.
-  const chuTieuDe = tieuDe.replace(/[^A-Za-zÀ-ỹ]/g, "");
-  if (chuTieuDe.length > 10 && chuTieuDe === chuTieuDe.toUpperCase())
-    loi.push("Tiêu đề VIẾT HOA cả câu — viết thường, chỉ hoa chữ đầu và tên riêng");
-  if (tieuDe && tieuDe.length > 75) loi.push(`Tiêu đề dài ${tieuDe.length} ký tự — tối đa 75, nên 30–60`);
+  // 25/10/2026 (chủ dự án): KHÔNG chặn chữ hoa/thường và độ dài tiêu đề — tiêu đề giữ nguyên văn khách, web tự hiển thị
+  // theo chuẩn; độ dài linh động. Khớp bảng kiểm admin + kiểm đợt (docs/CHUAN-TIN-DANG-SEO.md mục N2b, 5b).
   if (tieuDe && /siêu phẩm|sập sàn|giá sốc|cực hot|gấp gấp|[\u{1F300}-\u{1FAFF}☀-➿]/iu.test(tieuDe))
     loi.push("Tiêu đề có từ câu khách / biểu tượng cảm xúc — bỏ đi, Google coi là tin rác");
   if (tieuDe && /\b0\d{8,10}\b/.test(tieuDe)) loi.push("Tiêu đề có số điện thoại — bỏ khỏi tiêu đề");
@@ -723,6 +722,11 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
     tier: hang,
     status: "approved",
   };
+
+  // CHUẨN SEO — CÙNG LUẬT với bảng kiểm admin + nút Duyệt (src/lib/kiemTinSeo.ts, chủ dự án 25/10/2026: tin đăng hàng loạt /
+  // đăng hộ còn lỗi thì không cho lên web). Lỗi nào đã báo ở trên thì không báo lặp.
+  for (const x of loiTinSeo(payload as TinKiem))
+    if (!loi.some((l) => l.startsWith(x.ten.slice(0, 12)))) loi.push(`Chuẩn SEO: ${x.ten}`);
 
   return {
     dong: soDong,

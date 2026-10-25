@@ -10,6 +10,7 @@ import { guiThongBao, MAU_DUYET_TIN } from "@/lib/thongBao";
 import { baoLoi } from "@/lib/baoLoi";
 import type { TierId } from "@/lib/packages";
 import { homNayVn } from "@/lib/gioVn";
+import { loiTinSeo } from "@/lib/kiemTinSeo";
 
 // ============================================================================
 // DUYỆT TIN — TRỪ VÍ + GHI DOANH THU + BÁO KHÁCH
@@ -72,6 +73,25 @@ export async function POST(request: Request) {
     .eq("id", id)
     .single();
   if (loiTin || !tin) return loi("Không tìm thấy tin", 404);
+
+  // ── CHUẨN SEO: còn lỗi thì KHÔNG cho duyệt (chủ dự án 25/10/2026) ─────────────
+  // Cùng một luật với bảng kiểm trong trang Sửa tin (src/lib/kiemTinSeo.ts). Sửa hết lỗi rồi mới lên web.
+  const { data: kt } = await admin
+    .from("listings")
+    .select("title,description,purpose,type,price_vnd,area_m2,beds,images,details")
+    .eq("id", id)
+    .single();
+  if (kt) {
+    const so = String((kt.details as { contact?: { phone?: string } } | null)?.contact?.phone ?? "").split(/[,;/|]| - /)[0].replace(/\D/g, "").replace(/^84/, "0").slice(0, 10);
+    let trung = 0;
+    if (so && kt.price_vnd != null && kt.area_m2 != null) {
+      const { data: giong } = await admin.from("listings").select("details").eq("type", kt.type).eq("price_vnd", kt.price_vnd)
+        .eq("area_m2", kt.area_m2).neq("id", id).in("status", ["approved", "expired", "pending"]);
+      trung = (giong ?? []).filter((x) => String((x.details as { contact?: { phone?: string } } | null)?.contact?.phone ?? "").split(/[,;/|]| - /)[0].replace(/\D/g, "").replace(/^84/, "0").slice(0, 10) === so).length;
+    }
+    const loiSeo = loiTinSeo(kt, trung);
+    if (loiSeo.length) return loi(`Tin chưa đạt chuẩn SEO, còn ${loiSeo.length} lỗi — sửa xong mới duyệt:\n· ${loiSeo.map((x) => x.ten).join("\n· ")}`, 400);
+  }
   // Khuyến mãi thành viên mới xét theo LÚC KHÁCH GỬI TIN, không theo lúc admin duyệt.
   const lucGui = lucGuiTin(tin);
   const ngayGui = new Date(lucGui + 7 * 3_600_000).toISOString().slice(0, 10);

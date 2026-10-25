@@ -45,7 +45,15 @@ export function useSaved() {
     setIds(next);
   }, []);
 
+  // Bỏ mã của tin đã gỡ hẳn (trang Tin đã lưu gọi sau khi tra) — để số trên trái tim đúng bằng số tin khách thấy
+  const giuLai = useCallback((con: string[]) => {
+    const next = read().filter((x) => con.includes(x));
+    localStorage.setItem(KEY, JSON.stringify(next));
+    window.dispatchEvent(new Event(EVENT));
+    setIds(next);
+  }, []);
+
   const has = useCallback((id: string) => ids.includes(id), [ids]);
 
-  return { ids, ready, count: ids.length, toggle, has };
+  return { ids, ready, count: ids.length, toggle, has, giuLai };
 }

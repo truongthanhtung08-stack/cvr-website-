@@ -31,6 +31,7 @@ import { useBilling } from "@/lib/useBilling";
 import { getTier } from "@/lib/packages";
 import { isVideoUrl } from "@/lib/media";
 import { Panel, Field } from "@/components/Ui";
+import { loiTinSeo } from "@/lib/kiemTinSeo";
 import {
   type ListingRow,
   type ListingPurpose,
@@ -294,6 +295,15 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
         return setError("Chưa nhập diện tích — thiếu diện tích thì tin bị loại khỏi bộ lọc và thiếu dữ liệu gửi cho Google.");
       if (!negotiable && (priceVnd == null || Number.isNaN(priceVnd)))
         return setError("Giá không hợp lệ — nhập số, hoặc tick \"Giá thỏa thuận\".");
+      // CHUẨN SEO (chủ dự án 25/10/2026): còn lỗi thì KHÔNG đăng — cùng luật với bảng kiểm trên đầu trang và nút Duyệt
+      const loiSeo = loiTinSeo({
+        title, description, purpose, type,
+        price_vnd: negotiable ? null : priceVnd, area_m2: parseFloat(area.replace(",", ".")),
+        images: images.filter((s) => s.trim()),
+        details: { addressDetail, direction, specs: specValues },
+      });
+      if (loiSeo.length)
+        return setError(`Tin chưa đạt chuẩn SEO, còn ${loiSeo.length} lỗi — sửa xong mới đăng:\n· ${loiSeo.map((x) => `${x.ten} → sửa ở ${x.cho}`).join("\n· ")}`);
       // Hạn tin = số ngày gói theo bảng giá ĐÃ DUYỆT. Hạng chưa có giá đã duyệt thì hạn = 0 ngày
       // → tin hết hạn ngay khi lưu (vụ 09/10: nâng 5 tin VIP, cả 5 tự hết hạn sau 1 phút).
       const bang = bangTheoMucDich(billing, purpose);
@@ -476,16 +486,16 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
                 phần đầu như ô một dòng. */}
             <OTieuDe value={title} onChange={setTitle} placeholder="VD: Bán căn hộ 2PN view sông Hàn, Hải Châu, Đà Nẵng" className={inputCls} />
           </Field>
-          <Field label="Mô tả (bắt buộc — tối thiểu 50 ký tự)">
+          <Field id="o-mota" label="Mô tả (bắt buộc — tối thiểu 50 ký tự)">
             <ContentEditor value={description} onChange={setDescription} placeholder="Mô tả chi tiết: vị trí, nội thất, pháp lý, tiện ích xung quanh…" />
           </Field>
         </div>
       </Panel>
 
       {/* Giá & thông số */}
-      <Panel title="Giá & thông số">
+      <Panel id="o-giathongso" title="Giá & thông số">
         {/* Giá + Giá thỏa thuận */}
-        <Field label={purpose === "thue" ? "Giá thuê (TRIỆU/tháng)" : "Giá bán (TỶ đồng)"}>
+        <Field id="o-gia" label={purpose === "thue" ? "Giá thuê (TRIỆU/tháng)" : "Giá bán (TỶ đồng)"}>
           <div className="flex flex-wrap items-center gap-3">
             <input
               value={priceUnit}
@@ -516,7 +526,7 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
               </Field>
             ),
             coPhongNgu(type) && (
-              <Field key="pn" label="Phòng ngủ">
+              <Field key="pn" id="o-phongngu" label="Phòng ngủ">
                 <input value={beds} onChange={(e) => setBeds(e.target.value)} placeholder="VD: 2" className={inputCls} />
               </Field>
             ),
@@ -662,7 +672,7 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
           );
         })()}
         <div className="mt-4">
-          <Field label="Địa chỉ cụ thể (số nhà, tên đường, số lô, block…)">
+          <Field id="o-diachi" label="Địa chỉ cụ thể (số nhà, tên đường, số lô, block…)">
             {/* Có gợi ý như form khách đăng; chọn gợi ý = chọn vị trí trên bản đồ (22/10/2026) */}
             <ODiaChiGoiY
               value={addressDetail}
@@ -730,10 +740,10 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
               )}
             </Field>
           ))}
-          <Field label="Hướng nhà / đất">
+          <Field id="o-huong" label="Hướng nhà / đất">
             <ChonHoacGhi value={direction} onChange={setDirection} options={directions} className={inputCls} />
           </Field>
-          <Field label="Tình trạng pháp lý">
+          <Field id="o-phaply" label="Tình trạng pháp lý">
             <ChonHoacGhi value={legal} onChange={setLegal} options={chonPhapLy} className={inputCls} />
           </Field>
           <Field label="Tình trạng nội thất">
@@ -786,7 +796,7 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
       </Panel>
 
       {/* Ảnh — tải từ máy / dán link · ảnh đầu là ảnh đại diện */}
-      <Panel title="Ảnh tin đăng">
+      <Panel id="o-anh" title="Ảnh tin đăng">
         <ImagePicker
           value={images}
           onChange={setImages}
@@ -877,7 +887,7 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
       </Panel>
 
       {error && (
-        <p className="rounded-lg bg-red-50 px-4 py-2.5 text-sm font-medium text-red-700 ring-1 ring-inset ring-red-600/20">{error}</p>
+        <p className="whitespace-pre-line rounded-lg bg-red-50 px-4 py-2.5 text-sm font-medium text-red-700 ring-1 ring-inset ring-red-600/20">{error}</p>
       )}
 
       {/* 2 nút: ĐĂNG TIN (công khai) · LƯU NHÁP (làm dở, vào tiếp không mất) */}

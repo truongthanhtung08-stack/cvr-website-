@@ -42,14 +42,17 @@ export function Panel({
   desc,
   children,
   className = "",
+  id,
 }: {
   title?: React.ReactNode;
   desc?: React.ReactNode;
   children: React.ReactNode;
   className?: string;
+  // id: để bảng kiểm SEO trong admin bấm cảnh báo là nhảy tới đúng phần cần sửa (25/10/2026)
+  id?: string;
 }) {
   return (
-    <section className={`rounded-2xl border border-cvr-line bg-white p-4 shadow-lux ${className}`}>
+    <section id={id} className={`scroll-mt-24 rounded-2xl border border-cvr-line bg-white p-4 shadow-lux ${className}`}>
       {title && (
         <h2 className={`text-base font-semibold text-cvr-ink ${desc ? "" : "mb-4"}`}>{title}</h2>
       )}
@@ -64,13 +67,16 @@ export function Field({
   label,
   nho,
   children,
+  id,
 }: {
   label: React.ReactNode;
   nho?: boolean;
   children: React.ReactNode;
+  // id: để bảng kiểm SEO trong admin bấm cảnh báo là nhảy tới đúng ô cần sửa (25/10/2026)
+  id?: string;
 }) {
   return (
-    <label className="block">
+    <label id={id} className="block scroll-mt-24">
       <span
         className={`mb-1.5 block font-medium ${nho ? "text-xs text-cvr-muted" : "text-sm text-cvr-body"}`}
       >

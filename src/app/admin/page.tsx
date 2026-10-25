@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { PageHeader, Panel } from "@/components/Ui";
+import { loiTinSeo } from "@/lib/kiemTinSeo";
 
 type Stats = {
   total: number; newWeek: number; agents: number;
@@ -96,6 +97,10 @@ export default function AdminDashboard() {
           </div>
         )}
       </Panel>
+
+      {/* 1b. TIN CHƯA ĐẠT CHUẨN SEO — web tự kiểm mọi tin đang đăng + chờ duyệt bằng đúng luật của bảng kiểm / nút Duyệt
+             (src/lib/kiemTinSeo.ts). Bấm một tin là mở trang Sửa tin, bấm từng cảnh báo để sửa (chủ dự án 25/10/2026). */}
+      <TinChuaChuan />
 
       {/* 2. SỐ LIỆU — chia đúng 2 nhóm có nhãn (trước là 2 hàng ô không nhãn,
              không biết hàng nào nói về cái gì). Ô nào cũng bấm được. */}
@@ -218,6 +223,39 @@ function SuCoBang() {
         ))}
       </div>
     </div>
+  );
+}
+
+// Tin còn lỗi chuẩn SEO (không xét trùng — trùng xem trong từng tin). Hết lỗi thì khối tự ẩn.
+function TinChuaChuan() {
+  const [ds, setDs] = useState<{ id: string; title: string; status: string; loi: string[] }[] | null>(null);
+  useEffect(() => {
+    (async () => {
+      const { data } = await createClient()
+        .from("listings")
+        .select("id,title,status,description,purpose,type,price_vnd,area_m2,beds,images,details")
+        .in("status", ["pending", "approved"])
+        .limit(3000);
+      setDs(
+        (data ?? [])
+          .map((r) => ({ id: r.id as string, title: r.title as string, status: r.status as string, loi: loiTinSeo(r).map((x) => x.ten) }))
+          .filter((r) => r.loi.length),
+      );
+    })();
+  }, []);
+  if (!ds || ds.length === 0) return null;
+  return (
+    <Panel title={`Tin chưa đạt chuẩn SEO · ${ds.length} tin`} className="mt-4">
+      <div className="space-y-2">
+        {ds.map((r) => (
+          <Link key={r.id} href={`/admin/tin-dang/${r.id}`} className="block rounded-xl border border-cvr-line px-4 py-3 transition hover:border-cvr-blue hover:shadow-lux">
+            <span className="text-sm font-medium text-cvr-ink">{r.title}</span>
+            <span className="ml-2 text-xs text-cvr-faint">{r.status === "pending" ? "Chờ duyệt" : "Đang đăng"}</span>
+            <span className="mt-1 block text-[13px] text-red-600">✗ {r.loi.join(" · ✗ ")}</span>
+          </Link>
+        ))}
+      </div>
+    </Panel>
   );
 }
 

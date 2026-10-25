@@ -192,12 +192,15 @@ function SaveButton() {
       aria-label={count > 0 ? `Tin đã lưu (${count})` : "Tin đã lưu"}
       className="relative flex h-11 w-9 items-center justify-center text-cvr-line transition-colors hover:text-white xl:h-auto xl:w-auto xl:gap-1.5"
     >
-      <BieuTuong ten="tim" className="h-[22px] w-[22px] xl:h-[18px] xl:w-[18px]" />
-      {count > 0 && (
-        <span className="absolute right-[4px] top-[7px] flex h-[15px] min-w-[15px] items-center justify-center rounded-full bg-[#ff3b30] px-1 text-[9px] font-bold leading-none text-white xl:hidden">
-          {count > 9 ? "9+" : count}
-        </span>
-      )}
+      {/* Chấm đỏ = ĐÚNG số tin đã lưu (tối đa 100), cả điện thoại lẫn máy tính (25/10/2026 — trước đây "9+" và máy tính không có số) */}
+      <span className="relative flex">
+        <BieuTuong ten="tim" className="h-[22px] w-[22px] xl:h-[18px] xl:w-[18px]" />
+        {count > 0 && (
+          <span className="absolute -right-2 -top-1.5 flex h-[15px] min-w-[15px] items-center justify-center rounded-full bg-[#ff3b30] px-1 text-[9px] font-bold leading-none text-white">
+            {count}
+          </span>
+        )}
+      </span>
       <span className="hidden text-sm font-medium xl:inline">Lưu</span>
     </Link>
   );

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import type { ListingRow } from "@/lib/listingAdmin";
+import { loiTinSeo } from "@/lib/kiemTinSeo";
 
 // ============================================================================
 // BẢNG KIỂM CHUẨN SEO CỦA MỘT TIN — trang duyệt/sửa tin trong admin (tự động hoá D3, 15/10/2026)
@@ -11,9 +12,7 @@ import type { ListingRow } from "@/lib/listingAdmin";
 // Giai đoạn sau, AI kiểm duyệt chấm theo đúng bảng này.
 // ============================================================================
 
-const soAnh = (r: ListingRow) => (r.images ?? []).filter((s) => !/youtu|\.mp4|\.mov|\.webm/i.test(s)).length;
 const sdt = (s?: string) => (s ?? "").split(/[,;/|]| - /)[0].replace(/\D/g, "").replace(/^84/, "0").slice(0, 10);
-const nhaHoacCanHo = (t: string) => /căn hộ|chung cư|nhà|biệt thự|shophouse|villa/i.test(t);
 
 export default function BangKiemTinSeo({ row }: { row: ListingRow }) {
   const [trung, setTrung] = useState<{ id: string; title: string }[]>([]);
@@ -38,37 +37,37 @@ export default function BangKiemTinSeo({ row }: { row: ListingRow }) {
     return () => { huy = true; };
   }, [row]);
 
-  const d = row.details ?? {};
-  const tieuDe = row.title ?? "";
-  const moTa = (row.description ?? "").trim();
-  const tieuChi: { ten: string; dat: boolean; batBuoc: boolean }[] = [
-    { ten: `Ảnh thật ≥ 3 (đang có ${soAnh(row)})`, dat: soAnh(row) >= 3, batBuoc: true },
-    { ten: `Mô tả ≥ 100 ký tự (đang có ${moTa.length})`, dat: moTa.length >= 100, batBuoc: true },
-    { ten: "Không trùng tin khác (cùng người · loại · giá · diện tích)", dat: trung.length === 0, batBuoc: true },
-    { ten: "Tiêu đề 30–100 ký tự, không viết hoa toàn bộ", dat: tieuDe.length >= 30 && tieuDe.length <= 100 && tieuDe !== tieuDe.toUpperCase(), batBuoc: false },
-    { ten: "Có giá và diện tích", dat: row.area_m2 != null && (row.price_vnd != null || !!(d as { giaTuGhi?: string }).giaTuGhi), batBuoc: false },
-    { ten: "Địa chỉ có tên đường (để vào trang theo đường)", dat: /đường|kiệt|hẻm|ngõ/i.test(d.addressDetail ?? ""), batBuoc: false },
-    { ten: "Có hướng nhà", dat: !!d.direction, batBuoc: false },
-    ...(row.purpose === "thue" ? [] : [{ ten: "Có pháp lý", dat: !!d.legal, batBuoc: false }]),
-    ...(nhaHoacCanHo(row.type) ? [{ ten: "Có số phòng ngủ", dat: row.beds != null && row.beds > 0, batBuoc: false }] : []),
-  ];
-  const datBatBuoc = tieuChi.filter((t) => t.batBuoc).every((t) => t.dat);
+  // MỘT luật cho mọi khâu (src/lib/kiemTinSeo.ts): bảng kiểm này, nút Duyệt (máy chủ khoá khi còn lỗi), nạp hàng loạt,
+  // trang Tổng quan. Chỉ ghi cái CHƯA đạt; cho = chỗ sửa trong form bên dưới (chủ dự án 25/10/2026).
+  const loi = loiTinSeo(row, trung.length);
+  // Cuộn tới ô cần sửa, đặt con trỏ vào ô đó
+  const toiO = (id?: string) => {
+    const el = id ? document.getElementById(id) : null;
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    el.querySelector<HTMLElement>("input, textarea, select, button")?.focus({ preventScroll: true });
+  };
 
   return (
     <div className="rounded-2xl border border-cvr-line bg-white p-4 shadow-lux">
       <p className="text-sm font-semibold text-cvr-ink">
         Chuẩn SEO của tin:{" "}
-        <span className={datBatBuoc ? "text-green-700" : "text-red-600"}>
-          {datBatBuoc ? "đạt — Google được lập chỉ mục" : "chưa đạt — web đang chặn Google lập chỉ mục"}
+        <span className={loi.length ? "text-red-600" : "text-green-700"}>
+          {loi.length ? `chưa đạt — còn ${loi.length} lỗi, sửa hết mới duyệt lên web được` : "đạt — Google được lập chỉ mục"}
         </span>
       </p>
+      {loi.length > 0 && (
       <ul className="mt-2 grid grid-cols-1 gap-1 text-[13px] sm:grid-cols-2">
-        {tieuChi.map((t) => (
-          <li key={t.ten} className={t.dat ? "text-cvr-body" : t.batBuoc ? "text-red-600" : "text-amber-700"}>
-            {t.dat ? "✓" : "✗"} {t.ten}{!t.dat && t.batBuoc ? " (bắt buộc)" : ""}
+        {loi.map((t) => (
+          <li key={t.ten} className="text-red-600">
+            {/* Bấm cảnh báo → nhảy tới đúng ô trong form sửa tin bên dưới (chủ dự án 25/10/2026), không mở thêm gì mới */}
+            <button type="button" onClick={() => toiO(t.o)} className="text-left hover:underline">
+              ✗ {t.ten} <span className="text-cvr-muted">→ sửa ở {t.cho}</span>
+            </button>
           </li>
         ))}
       </ul>
+      )}
       {trung.length > 0 && (
         <p className="mt-2 text-[13px] text-red-600">
           Trùng với:{" "}

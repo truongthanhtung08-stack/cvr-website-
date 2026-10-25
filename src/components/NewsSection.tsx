@@ -77,7 +77,7 @@ export default function NewsSection({
   return (
     <section className="section-edge bg-white">
       <div className={`mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 ${cuoiTrang && expanded ? "pb-12 pt-3 sm:pb-14 sm:pt-7" : "py-3 sm:py-7"}`}>
-        <h2 className="text-xl font-semibold text-cvr-ink sm:text-2xl">Tin nổi bật</h2>
+        <h2 className="text-xl font-semibold text-cvr-ink sm:text-2xl">Tin tức</h2>
 
         {/* Chưa có bài viết → VẪN giữ khung, chỉ báo trống */}
         {articles.length === 0 && (

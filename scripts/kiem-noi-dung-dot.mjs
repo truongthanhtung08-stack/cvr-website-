@@ -9,7 +9,7 @@
 // Đọc bảng bằng ĐÚNG bộ kiểm của web (src/lib/csvTin.ts). Soát từng tin:
 //   ① con số trong tiêu đề / mô tả phải KHỚP cột (giá, diện tích, phòng ngủ) — lệch là dấu hiệu bịa / chép nhầm
 //   ② từ cấm (câu khách, giọng AI, "chúng tôi bán"), biểu tượng cảm xúc, số điện thoại / link trong chữ
-//   ③ bố cục mô tả (≥ 300 ký tự, chia đoạn), tiêu đề (mở đầu Bán / Cho thuê, ≤ 60 ký tự, không viết hoa cả câu)
+//   ③ bố cục mô tả (≥ 300 ký tự, chia đoạn); tiêu đề không xét chữ hoa/thường, độ dài (25/10/2026)
 //   ④ giá mỗi m² bất thường so với tin cùng tỉnh + loại hình đang có trên web (dưới 1/3 hoặc trên 3 lần giá giữa)
 //   ⑤ ghi chú Cowork cần gọi xác nhận / nghi vấn
 // Ghi kết quả vào <thư mục>/CAN-ANH-XEM.txt — chỉ những tin có vấn đề, mỗi tin một dòng lý do.
@@ -27,7 +27,7 @@ if (!thuMuc || !fs.existsSync(thuMuc)) { console.error("Cần đường dẫn th
 const jiti = createJiti(import.meta.url, { alias: { "@": ROOT + "/src" }, jsx: { runtime: "automatic" } });
 const { docTinTuBang, docTinTuCsv } = await jiti.import(ROOT + "/src/lib/csvTin.ts");
 const { docXlsx } = await jiti.import(ROOT + "/src/lib/docXlsx.ts");
-const { tachTenDuong } = await jiti.import(ROOT + "/src/lib/tenDuong.ts");
+const { thieuTenDuong, giaLechChu } = await jiti.import(ROOT + "/src/lib/kiemTinSeo.ts");
 
 const tepBang = fs.readdirSync(thuMuc).find((f) => /^Bang-.*\.(xlsx|csv)$/i.test(f));
 if (!tepBang) { console.error("Không thấy Bang-*.xlsx / .csv"); process.exit(1); }
@@ -72,9 +72,8 @@ for (const r of rows) {
   const t = String(p.title || ""), d = String(p.description || ""), ly = [];
   for (const l of r.loi || []) ly.push(`LỖI: ${l}`);
   // ① khớp số
-  const gia = Number(p.price_vnd) || 0;
-  const giaChu = [...tyTrongChu(t + " " + d), ...trieuTrongChu(t + " " + d)].filter((v) => v >= 1e8 || p.purpose === "thue");
-  if (gia && giaChu.length && !giaChu.some((v) => gan(v, gia))) ly.push(`giá trong chữ (${giaChu.map((v) => v >= 1e9 ? v / 1e9 + " tỷ" : v / 1e6 + " triệu").join(", ")}) khác cột giá (${gia >= 1e9 ? gia / 1e9 + " tỷ" : gia / 1e6 + " triệu"})`);
+  const lechGia = giaLechChu(t, d, Number(p.price_vnd) || 0, p.purpose); // luật chung với bảng kiểm admin
+  if (lechGia) ly.push(lechGia);
   const dt = Number(p.area_m2) || 0, dtChu = m2TrongChu(t + " " + d);
   if (dt && dtChu.length && !dtChu.some((v) => gan(v, dt, 0.01))) ly.push(`diện tích trong chữ (${[...new Set(dtChu)].join(", ")} m²) khác cột (${dt} m²)`);
   const pn = Number(p.beds) || 0, pnChu = pnTrongChu(t + " " + d);
@@ -85,11 +84,9 @@ for (const r of rows) {
   // ③ bố cục
   if (d.trim().length < 300) ly.push(`mô tả ${d.trim().length} ký tự (< 300)`);
   if (!/\n\s*\n/.test(d)) ly.push("mô tả chưa chia đoạn");
-  // Tên đường: web chỉ nhận ra khi địa chỉ có chữ "đường / kiệt / hẻm / ngõ" (tachTenDuong) — thiếu là tin không vào trang theo đường (24/10/2026)
+  // Tên đường (25/10/2026, khớp bảng kiểm admin): khách không ghi tên đường thì không báo; chỉ báo khi mô tả CÓ tên đường mà địa chỉ chưa có
   const dc = String(p.details?.addressDetail || "");
-  if (dc && !tachTenDuong(dc)) ly.push(`địa chỉ "${dc}" thiếu chữ "đường" — web không nhận ra tên đường`);
-  // Phường, tỉnh trong tiêu đề: tùy tin (chủ dự án 19/10) — chỉ báo khi quá 75 ký tự (Google cắt mất).
-  if (t.length > 75) ly.push(`tiêu đề dài ${t.length} ký tự (> 75, Google cắt mất đuôi)`);
+  if (thieuTenDuong(d, dc)) ly.push(`mô tả có tên đường mà địa chỉ "${dc}" chưa có`);
   // ④ giá bất thường
   const g = giaM2(p), ds = nhom[khoa(p.province, p.type, p.purpose)];
   if (g && ds && ds.length >= 3) { const m = giua(ds); if (g < m / 3 || g > m * 3) ly.push(`giá/m² ${(g / 1e6).toFixed(1)} triệu — giá giữa trên web cùng tỉnh, loại hình ${(m / 1e6).toFixed(1)} triệu`); }

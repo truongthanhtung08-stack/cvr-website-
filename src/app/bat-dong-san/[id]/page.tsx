@@ -811,8 +811,9 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
             emptyNote="Chưa có bất động sản tương tự."
           />
           )}
-          {/* Bất động sản đã xem — ngay dưới BĐS tương tự (chủ dự án 23/10/2026) */}
-          <RecentlyViewed boQua={l.id} />
+          {/* Bất động sản đã xem — ngay dưới BĐS tương tự (chủ dự án 23/10/2026). Tin đang có trên dải Tương tự ngay phía trên
+              thì không lặp lại ở đây (25/10/2026: một tin không hiện hai lần trên cùng trang) */}
+          <RecentlyViewed boQua={l.id} boCac={relatedNhe.map((x) => x.id)} />
           </HomeExpandProvider>
         </div>
 

@@ -7,6 +7,7 @@ import { lamMoiWeb } from "@/lib/lamMoiWeb";
 import type { ListingRow } from "@/lib/listingAdmin";
 import BangKiemTinSeo from "@/components/admin/BangKiemTinSeo";
 import { directions } from "@/lib/listingSpec";
+import { loiTinSeo } from "@/lib/kiemTinSeo";
 
 // ============================================================================
 // ADMIN — DUYỆT TIN NẠP (luồng chủ dự án chốt 16/10/2026)
@@ -87,6 +88,11 @@ function TheDuyet({ tin, xong }: { tin: Tin; xong: () => void }) {
   const tinXem = { ...tin, title: tieuDe, description: moTa, images: anhGiu, details: { ...(tin.details ?? {}), addressDetail: diaChi, direction: huong } } as ListingRow;
 
   async function luu(duyet: boolean) {
+    // CHUẨN SEO (chủ dự án 25/10/2026, áp cho tin đăng hàng loạt / đăng hộ): còn lỗi thì KHÔNG duyệt — cùng luật bảng kiểm
+    if (duyet) {
+      const loiSeo = loiTinSeo(tinXem);
+      if (loiSeo.length) return setBao(`Tin chưa đạt chuẩn SEO, còn ${loiSeo.length} lỗi — sửa xong mới duyệt: ${loiSeo.map((x) => `${x.ten} (sửa ở ${x.cho})`).join(" · ")}`);
+    }
     setDang(true);
     setBao("");
     // Duyệt xong: bỏ cờ chờ duyệt + bản đề xuất khỏi details
