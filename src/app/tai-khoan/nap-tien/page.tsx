@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useProfile } from "@/lib/useProfile";
 import { vnd } from "@/lib/billing";
 import { useBilling } from "@/lib/useBilling";
+import { emailThat } from "@/lib/useAuth";
 import { createClient } from "@/lib/supabase/client";
 
 // ============================================================================
@@ -92,7 +93,7 @@ function TopUpForm() {
           amount: finalAmount,
           description: `Nap tien ${finalAmount / 1000}k`,
           buyerName: profile?.full_name ?? undefined,
-          buyerEmail: profile?.email ?? undefined,
+          buyerEmail: emailThat(profile?.email) || undefined,
           buyerPhone: profile?.phone ?? undefined,
           ve: ve ?? undefined,
         }),

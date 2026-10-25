@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useProfile } from "@/lib/useProfile";
-import { signOut, useAuth, anhDaiDien } from "@/lib/useAuth";
+import { signOut, useAuth, anhDaiDien, emailThat } from "@/lib/useAuth";
 import AnhDaiDien from "@/components/AnhDaiDien";
 import { roleLabel, statusBadge } from "@/lib/adminLabels";
 import { vnd } from "@/lib/billing";
@@ -31,18 +31,18 @@ export default function TaiKhoanCaNhanPage() {
     <div className="space-y-5">
       <PageHeader title="Tài khoản" />
 
-      {/* Thông tin người dùng */}
-      <section className="flex items-center justify-between gap-3 rounded-2xl border border-cvr-line bg-white p-4 shadow-sm">
+      {/* Thông tin người dùng — bấm vào avatar / tên là sang sửa TÊN + ẢNH ĐẠI DIỆN (chuẩn các web, chủ dự án 26/10/2026) */}
+      <Link href="/tai-khoan/cai-dat" className="flex items-center justify-between gap-3 rounded-2xl border border-cvr-line bg-white p-4 shadow-sm transition hover:border-cvr-ink active:bg-cvr-surface">
         <AnhDaiDien url={profile.avatar_url || anhDaiDien(user)} ten={profile.full_name || "T"} className="h-14 w-14 bg-cvr-surface text-xl text-cvr-ink ring-1 ring-cvr-line" />
         <div className="min-w-0 flex-1">
           <p className="truncate text-[15px] font-semibold text-cvr-ink">{profile.full_name || "Thành viên"}</p>
           <p className="truncate text-sm text-cvr-muted">
-            {[profile.phone, profile.email].filter(Boolean).join(" · ")}
+            {[profile.phone, emailThat(profile.email)].filter(Boolean).join(" · ")}
           </p>
           <p className="mt-0.5 text-[13px] text-cvr-muted">{roleLabel(profile.role)}</p>
         </div>
         <div className="shrink-0">{statusBadge(profile.status)}</div>
-      </section>
+      </Link>
 
       {/* Danh sách mục — một dòng một việc */}
       <nav aria-label="Mục tài khoản" className="overflow-hidden rounded-2xl border border-cvr-line bg-white shadow-sm">

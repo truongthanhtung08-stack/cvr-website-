@@ -6,11 +6,14 @@ import { useProfile } from "@/lib/useProfile";
 import { PageHeader } from "@/components/Ui";
 import SoDienThoaiKhac from "@/components/SoDienThoaiKhac";
 import { loiEmail } from "@/lib/kiemNhap";
+import DoiAnhDaiDien from "@/components/DoiAnhDaiDien";
+import { useAuth, anhDaiDien, emailThat } from "@/lib/useAuth";
 
 // Cài đặt tài khoản: thành viên tự sửa thông tin cơ bản của mình
 // (các cột đặc quyền role/status/plan/quota bị DB chặn — chỉ admin đổi được).
 export default function AccountSettingsPage() {
   const { profile, loading } = useProfile();
+  const { user } = useAuth();
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [city, setCity] = useState("");
@@ -39,6 +42,8 @@ export default function AccountSettingsPage() {
         city: city.trim() || null,
       })
       .eq("id", profile.id);
+    // Tên mới hiện ngay ở đầu trang (đầu trang đọc tên trong phiên đăng nhập)
+    if (!error) await supabase.auth.updateUser({ data: { full_name: fullName.trim() || null } });
     setSaving(false);
     setNotice(error ? "Lưu thất bại: " + error.message : "Đã lưu thay đổi ✓");
   }
@@ -62,6 +67,11 @@ export default function AccountSettingsPage() {
           </div>
         )}
 
+        <div className="mt-4 flex items-center gap-4">
+          <DoiAnhDaiDien idHoSo={profile.id} url={profile.avatar_url || anhDaiDien(user)} ten={fullName || "T"} className="h-16 w-16 bg-cvr-surface text-cvr-ink ring-1 ring-cvr-line" />
+          <p className="text-sm text-cvr-muted">Bấm vào ảnh để đổi ảnh đại diện.</p>
+        </div>
+
         <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Họ và tên">
             <input value={fullName} onChange={(e) => setFullName(e.target.value)} className={inp} />
@@ -70,7 +80,7 @@ export default function AccountSettingsPage() {
             <input value={phone} onChange={(e) => setPhone(e.target.value)} className={inp} />
           </Field>
           <Field label="Email (không thể đổi)">
-            <input value={profile.email ?? ""} disabled className={inp + " opacity-60"} />
+            <input value={emailThat(profile.email)} disabled className={inp + " opacity-60"} />
           </Field>
           <Field label="Khu vực">
             <input value={city} onChange={(e) => setCity(e.target.value)} placeholder="Đà Nẵng / Huế…" className={inp} />
@@ -206,7 +216,7 @@ function KhoiHoaDon({ profile }: { profile: { id: string; email: string | null }
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className={inp}
-              placeholder={profile.email ?? "ketoan@congty.vn"}
+              placeholder={emailThat(profile.email) || "ketoan@congty.vn"}
             />
           </Field>
         </div>

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { loiEmail, loiSdt } from "@/lib/kiemNhap";
 import { createClient } from "@/lib/supabase/client";
 import { useProfile } from "@/lib/useProfile";
+import { emailThat } from "@/lib/useAuth";
 import type { LoaiYeuCau } from "@/components/YeuCauForm";
 
 // ============================================================================
@@ -43,7 +44,7 @@ export default function LeadForm({
     if (!profile) return;
     setTen((v) => v || profile.full_name || "");
     setDienThoai((v) => v || profile.phone || "");
-    setEmail((v) => v || profile.email || "");
+    setEmail((v) => v || emailThat(profile.email));
   }, [profile]);
 
   function xoaHet() {

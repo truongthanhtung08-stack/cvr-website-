@@ -117,12 +117,15 @@ async function xuLy(req: Request) {
       email_confirm: true,
       phone: so84,
       phone_confirm: true,
-      user_metadata: { phone: sdt },
+      user_metadata: { phone: sdt, full_name: sdt },
     });
     if (error || !moi.user) return loi("Chưa tạo được tài khoản. Vui lòng liên hệ Coastal Land.", 409);
     userId = moi.user.id;
     await admin.from("profiles").update({ phone: sdt, phone_verified: true }).eq("id", userId);
   }
+  // TÊN TÀI KHOẢN MẶC ĐỊNH (chủ dự án 26/10/2026, chuẩn): Email / Gmail / Zalo lấy tên của tài khoản đó; đăng nhập
+  // bằng số mà tài khoản chưa có tên → tên = số điện thoại. Đã có tên thì giữ nguyên.
+  await admin.from("profiles").update({ full_name: sdt }).eq("id", userId).or("full_name.is.null,full_name.eq.");
 
   // Mở phiên bằng liên kết một lần (không gửi email nào). Tài khoản chưa có email thì
   // gắn email kỹ thuật — cùng cách đăng nhập Zalo Mini App đang dùng.

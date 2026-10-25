@@ -95,3 +95,9 @@ export async function signOut() {
     window.location.replace("/");
   }
 }
+
+// Email THẬT của khách — bỏ email kỹ thuật web tự tạo cho tài khoản Zalo / số điện thoại
+// (zalo_…@users.coastalland.vn, sdt_…@users.coastalland.vn): mã nội bộ, không hiện cho khách (26/10/2026).
+export function emailThat(e?: string | null): string {
+  return e && !/@users\.coastalland\.vn$/i.test(e) ? e : "";
+}
