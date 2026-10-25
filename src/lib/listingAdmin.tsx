@@ -128,6 +128,8 @@ export function thongTinGoi(r: ListingRow): ThongTinGoi {
   }
 
   const conLai = hetHan ? Math.ceil((hetHan.getTime() - Date.now()) / 86_400_000) : null;
+  // Tin nháp chưa chọn gói: không có cấp → không ghi tên gói, không ghi "0 ngày" (26/10/2026: hiện "CVR undefined · 0 ngày")
+  if (!cap) return { cap, tenGoi: "", soNgay: null, daDuyet, hetHan, conLai };
   return { cap, tenGoi: `CVR ${tierLabel(cap)}`, soNgay, daDuyet, hetHan, conLai };
 }
 

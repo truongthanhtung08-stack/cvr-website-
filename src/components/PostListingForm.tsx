@@ -190,7 +190,7 @@ export default function PostListingForm() {
   // Đang lưu nút nào — để 2 nút hiện trạng thái riêng, không lẫn nhau
   const [saving, setSaving] = useState<"" | "draft" | "publish">("");
   // Ví không đủ tiền để đăng gói đã chọn — tin đã được lưu nháp, còn thiếu bao nhiêu.
-  const [thieuTien, setThieuTien] = useState<{ can: number; du: number } | null>(null);
+  const [thieuTien, setThieuTien] = useState<{ can: number; du: number; id?: string | null } | null>(null);
   // Tiền đang tạm giữ cho các tin chờ duyệt khác của khách (0056).
   const [tamGiu, setTamGiu] = useState(0);
   const [error, setError] = useState("");
@@ -251,6 +251,8 @@ export default function PostListingForm() {
     setAmenities(ds("amenities"));
     setDescription(s("description"));
     setImages(ds("images"));
+    // Gói khách đã chọn đi theo bản soạn dở (đi nạp tiền rồi quay về không phải chọn lại — chủ dự án 26/10/2026)
+    if (s("planTier")) { setPlanTier(s("planTier") as TierId); setPlanDays(Number(d.planDays) || 0); setChonKm(d.chonKm === true); }
     // Liên hệ: chỉ ghi đè khi bản nháp có — không xoá phần đã điền sẵn từ hồ sơ.
     if (s("contactName")) setContactName(s("contactName"));
     if (s("contactPhone")) setContactPhone(s("contactPhone"));
@@ -286,12 +288,14 @@ export default function PostListingForm() {
         demand, category, geoMode, province, district, ward, phuongCu, addressDetail, linkChen, mapPin,
         title, priceValue, priceUnit, giaTuGhi, area, builtArea, beds, baths, specValues, legal, furnish, direction,
         interior, amenities, description, images, contactName, contactPhone, contactEmail, projectSlug, projectName,
+        planTier, planDays, chonKm,
         maNhap: maNhapTk.current,
       }));
     } catch {}
   }, [editId, daNapNhap, nhapCho, userId, done, thieuTien, demand, category, geoMode, province, district, ward, phuongCu, addressDetail, linkChen, mapPin,
     title, priceValue, priceUnit, giaTuGhi, area, builtArea, beds, baths, specValues, legal, furnish, direction,
-    interior, amenities, description, images, contactName, contactPhone, contactEmail, projectSlug, projectName]);
+    interior, amenities, description, images, contactName, contactPhone, contactEmail, projectSlug, projectName,
+    planTier, planDays, chonKm]);
 
   // KHÔNG còn ô "Ngày bắt đầu" tự chọn: tin bắt đầu hiển thị LÚC ĐƯỢC DUYỆT (một luật,
   // 01/10/2026) — cho chọn ngày là hứa một mốc web không làm đúng.
@@ -658,6 +662,12 @@ export default function PostListingForm() {
       if (error || !data) { setEditLoad("notfound"); return; }
       const r = data as ListingRow;
       if (r.status === "approved" || r.status === "expired") setGoiDangDung({ tier: r.tier as TierId, het: r.tier_expires_at });
+      // Tin NHÁP / CHỜ DUYỆT: nạp lại gói khách đã chọn (details.plan) — trước đây form mở ra trống gói, khách lưu
+      // là gói của tin bị ghi thành trống (26/10/2026)
+      if (r.status === "draft" || r.status === "pending") {
+        const p = (r.details as { plan?: { tier?: string; days?: number; khuyenMai?: boolean } } | null)?.plan;
+        if (p?.tier) { setPlanTier(p.tier as TierId); setPlanDays(Number(p.days) || 0); setChonKm(p.khuyenMai === true); }
+      }
       setDemand(demandOfPurpose(r.purpose));
       if (r.type) setCategory(r.type);
       setProvince(r.province ?? "");
@@ -1031,7 +1041,7 @@ export default function PostListingForm() {
         }).catch(() => {});
       }
       try { if (userId) localStorage.removeItem(khoaNhap(userId)); } catch {}
-      setThieuTien({ can: phaiTra, du: khaDung });
+      setThieuTien({ can: phaiTra, du: khaDung, id: maTinNhap });
       window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
@@ -1088,7 +1098,12 @@ export default function PostListingForm() {
 
         <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Link
-            href={`/tai-khoan/nap-tien?can=${conThieu}`}
+            href={`/tai-khoan/nap-tien?can=${conThieu}&luu=1${thieuTien.id ? `&ve=${encodeURIComponent(`/dang-tin?id=${thieuTien.id}`)}` : ""}`}
+            onClick={() => {
+              // Nút Back của điện thoại từ trang nạp tiền phải về lại ĐÚNG TIN NHÁP (còn nội dung + gói), không về form trống:
+              // đổi địa chỉ trang này thành /dang-tin?id=<tin nháp> ngay trước khi sang nạp (chủ dự án 26/10/2026)
+              if (thieuTien.id) window.history.replaceState(window.history.state, "", `/dang-tin?id=${thieuTien.id}`);
+            }}
             className="inline-flex h-11 w-full items-center justify-center rounded-full bg-cvr-ink px-7 text-sm font-semibold text-white transition hover:bg-cvr-ink/90 sm:w-auto"
           >
             Nạp tiền ngay
@@ -1829,10 +1844,12 @@ export default function PostListingForm() {
                     <span className="flex items-center gap-2.5">
                       {/* Ví phải đủ SỐ TẠM GIỮ lúc gửi (giá gói trước voucher — 0056), như phần kiểm khi bấm Đăng */}
                       <span className={hoSoVi.balance < truocVoucher.tongTra ? "font-semibold tabular-nums text-red-600" : "font-semibold tabular-nums text-cvr-ink"}>{vnd(hoSoVi.balance)}</span>
+                      {/* ĐÚNG TRÌNH TỰ CHUẨN (chủ dự án 26/10/2026): nút này đi như bấm Đăng tin — kiểm đủ thông tin → tự lưu nháp
+                          KÈM GÓI → màn "Nạp thêm … để đăng tin" → nạp đủ là tin tự gửi duyệt. Trước đây là link đi tắt: chưa lưu gì, mất gói. */}
                       {hoSoVi.balance < truocVoucher.tongTra && (
-                        <Link href={`/tai-khoan/nap-tien?can=${truocVoucher.tongTra - hoSoVi.balance}`} className="rounded-full bg-cvr-ink px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-cvr-ink/90">
+                        <button type="button" onClick={() => save(false)} disabled={!!saving} className="rounded-full bg-cvr-ink px-3.5 py-1.5 text-xs font-semibold text-white transition hover:bg-cvr-ink/90 disabled:opacity-60">
                           Nạp thêm {vnd(truocVoucher.tongTra - hoSoVi.balance)}
-                        </Link>
+                        </button>
                       )}
                     </span>
                   </div>

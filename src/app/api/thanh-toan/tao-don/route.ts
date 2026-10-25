@@ -34,7 +34,7 @@ export async function POST(req: Request) {
     );
   }
 
-  let body: { amount?: number; description?: string; buyerName?: string; buyerEmail?: string; buyerPhone?: string };
+  let body: { amount?: number; description?: string; buyerName?: string; buyerEmail?: string; buyerPhone?: string; ve?: string };
   try {
     body = await req.json();
   } catch {
@@ -63,8 +63,10 @@ export async function POST(req: Request) {
   const description = (body.description || `Nap tien CL ${orderCode}`).slice(0, 25);
 
   const origin = new URL(req.url).origin;
-  const returnUrl = `${origin}/tai-khoan/nap-tien?ket-qua=thanh-cong`;
-  const cancelUrl = `${origin}/tai-khoan/nap-tien?ket-qua=huy`;
+  // Nạp từ gói tin (ve = form đăng tin / Tin của tôi): PayOS trả về kèm ve → trang nạp đưa khách về đúng chỗ (26/10/2026)
+  const ve = typeof body.ve === "string" && /^\/(dang-tin|tai-khoan)(\/|\?|$)/.test(body.ve) ? `&ve=${encodeURIComponent(body.ve)}` : "";
+  const returnUrl = `${origin}/tai-khoan/nap-tien?ket-qua=thanh-cong${ve}`;
+  const cancelUrl = `${origin}/tai-khoan/nap-tien?ket-qua=huy${ve}`;
 
   // Chữ ký theo đúng thứ tự PayOS quy định
   const raw = `amount=${amount}&cancelUrl=${cancelUrl}&description=${description}&orderCode=${orderCode}&returnUrl=${returnUrl}`;

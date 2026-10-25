@@ -762,8 +762,8 @@ export default function NhapHangLoatPage() {
         </div>
 
         <p className="mt-3 text-sm text-cvr-muted">
-          Tin nhập bằng file được đăng công khai ngay như khi bấm “Đăng tin”. Sửa lại từng tin ở{" "}
-          <Link href="/admin/tin-dang" className="font-medium text-cvr-blue-ink underline">Tin đăng</Link>.
+          Tin đăng xong nằm ở{" "}
+          <Link href="/admin/tin-dang/duyet-nap" className="font-medium text-cvr-blue-ink underline">Tin chờ duyệt</Link>.
         </p>
 
         <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">

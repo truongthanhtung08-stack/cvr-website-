@@ -62,6 +62,15 @@
 >     kỳ Basic chạy song song (không cộng nối). ⑤ Hết VIP: tự về Basic giữ hạn Basic còn lại (ghi `ha_vip_luc`).
 >     ⑥ Hết hạn: ẩn + nhắn khách; đăng lại → chờ duyệt như tin mới. ⑦ Tự kiểm 8h: chỉ báo lỗi thật, sửa xong tự hết báo.
 >   - Mọi đường đặt hạn liệt kê ở đầu `src/lib/kiemTin.ts` — thêm đường mới phải thêm vào đó.
+- **⛔ QUY TRÌNH CHUẨN KHÁCH ĐĂNG TIN — MỘT QUY TRÌNH (chủ dự án chốt 26/10/2026, "đây là CHUẨN"):**
+  ① Bấm Đăng tin → chưa đăng nhập thì đăng nhập ngay tại trang, xong ở lại form. ② Điền form; thiếu ô → kéo tới đúng ô, báo rõ.
+  ③ Chọn gói: web tính số phải trả (giá admin + 8% VAT, trừ khuyến mãi, ưu đãi thành viên, chiết khấu), so với ví khả dụng.
+  ④ Đủ tiền → Đăng → tạm giữ phí, tin chờ duyệt, báo "đã nhận tin". ⑤ Thiếu → bấm Đăng HOẶC "Nạp thêm" (cùng một đường) →
+  tự lưu nháp KÈM GÓI + ghi chờ nạp → màn "Nạp thêm X để đăng tin" → trang Nạp tiền: đủ nút mệnh giá, KHÔNG chọn sẵn nút nào,
+  số cần nộp nằm sẵn trong ô tự nhập (con trỏ trong ô, khách sửa tự do), ô "Số tiền thanh toán" chạy theo đúng số khách chọn/gõ.
+  ⑥ Quay lại / huỷ PayOS → về lại tin đang đăng (còn nguyên nội dung + gói); nộp xong → Tin của tôi + "Thanh toán thành công";
+  tiền vào ví → máy tự gửi tin đi duyệt đúng gói + báo khách. ⑦ Admin duyệt → trừ tiền, hoá đơn, báo khách; từ chối → nhả tạm giữ, báo.
+  Mở lại tin nháp / chờ duyệt → gói đã chọn nạp lại đủ. Nạp ví bình thường (không từ gói tin) giữ nguyên: nút mệnh giá + ô tự nhập.
 > - **Tự động bằng mã, không ai sửa tay**: cron `/api/tin-dang/het-han` mỗi phút (hạ tin, tự đăng
 >   lại, nhắn khách, làm mới bản sao danh sách khi tin đổi từ bất kỳ đâu) · `kiemTin` 8h soát mọi tin.
 > - ⛔ **21/10/2026 nhắc lại:** web còn rất nhiều câu "rất AI" (chủ đã sửa nhiều ở footer). Cấm từ nội bộ trước mặt khách

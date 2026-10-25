@@ -37,6 +37,18 @@ type Tin = ListingRow & { details: (ListingRow["details"] & { choChuDuyet?: bool
 export default function DuyetNapPage() {
   const [ds, setDs] = useState<Tin[] | null>(null);
   const [loi, setLoi] = useState("");
+  // Duyệt xong phải có dấu hiệu, ở lại đúng trang đang làm (chủ dự án 25/10/2026): duyệt ngay tại đây,
+  // hoặc bấm lỗi → Sửa tin → lưu xong quay về đây kèm ?daLuu=<id>&kieu=len|nhap
+  const [daLuu, setDaLuu] = useState<{ id: string; kieu: string; title: string } | null>(null);
+  const baoDaLuu = (x: { id: string; kieu: string; title: string }) => { setDaLuu(x); window.scrollTo({ top: 0, behavior: "smooth" }); };
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search);
+    const id = p.get("daLuu");
+    if (!id) return;
+    const kieu = p.get("kieu") ?? "len";
+    createClient().from("listings").select("title").eq("id", id).single()
+      .then(({ data }) => setDaLuu({ id, kieu, title: (data?.title as string | undefined) ?? "tin vừa lưu" }));
+  }, []);
 
   useEffect(() => {
     let huy = false;
@@ -57,19 +69,31 @@ export default function DuyetNapPage() {
   return (
     <div className="max-w-5xl">
       <Link href="/admin/tin-dang" className="text-sm text-cvr-muted hover:text-cvr-ink">← Tin đăng</Link>
-      <h1 className="mt-2 text-2xl font-semibold tracking-tight text-cvr-ink">Duyệt tin nạp</h1>
+      <h1 className="mt-2 text-2xl font-semibold tracking-tight text-cvr-ink">Tin chờ duyệt</h1>
       <p className="mt-1 text-sm text-cvr-muted">
         {ds === null ? "Đang tải…" : `${ds.length} tin chờ duyệt — chưa hiện trên web cho tới khi bấm Duyệt.`}
       </p>
       {loi && <p className="mt-3 text-sm text-red-600">{loi}</p>}
+      {daLuu && (daLuu.kieu === "len" ? (
+        <div className="mt-4 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+          <strong>Đã lên web:</strong> {daLuu.title} —{" "}
+          <a href={`/bat-dong-san/${daLuu.id}`} target="_blank" rel="noopener" className="font-semibold underline">Xem tin</a>
+        </div>
+      ) : (
+        <div className="mt-4 rounded-xl border border-cvr-line bg-cvr-surface px-4 py-3 text-sm text-cvr-body">
+          <strong>Đã lưu nháp, chưa lên web:</strong> {daLuu.title}
+        </div>
+      ))}
       <div className="mt-5 space-y-6">
-        {ds?.map((t) => <TheDuyet key={t.id} tin={t} xong={() => setDs((cu) => cu?.filter((x) => x.id !== t.id) ?? null)} />)}
+        {ds?.map((t) => (
+          <TheDuyet key={t.id} tin={t} xong={(title) => { setDs((cu) => cu?.filter((x) => x.id !== t.id) ?? null); baoDaLuu({ id: t.id, kieu: "len", title }); }} />
+        ))}
       </div>
     </div>
   );
 }
 
-function TheDuyet({ tin, xong }: { tin: Tin; xong: () => void }) {
+function TheDuyet({ tin, xong }: { tin: Tin; xong: (title: string) => void }) {
   const dx = tin.details?.deXuat ?? {};
   const [tieuDe, setTieuDe] = useState(dx.tieuDe || tin.title);
   const [moTa, setMoTa] = useState(dx.moTa || tin.description || "");
@@ -88,11 +112,9 @@ function TheDuyet({ tin, xong }: { tin: Tin; xong: () => void }) {
   const tinXem = { ...tin, title: tieuDe, description: moTa, images: anhGiu, details: { ...(tin.details ?? {}), addressDetail: diaChi, direction: huong } } as ListingRow;
 
   async function luu(duyet: boolean) {
-    // CHUẨN SEO (chủ dự án 25/10/2026): tin hàng loạt còn lỗi thì KHÔNG cho duyệt — sửa hết lỗi (bảng kiểm trên đầu tin) mới duyệt được
-    if (duyet) {
-      const loiSeo = loiTinSeo(tinXem);
-      if (loiSeo.length) return void window.alert(`Tin chưa đạt chuẩn SEO, chưa duyệt được. Còn ${loiSeo.length} lỗi:\n· ${loiSeo.map((x) => `${x.ten} → sửa ở ${x.cho}`).join("\n· ")}\n\nBấm từng lỗi trong bảng kiểm để sửa.`);
-    }
+    // CHUẨN SEO (chủ dự án 25/10/2026, tối): tin đang mở trước mặt chủ dự án — sửa hay không là quyền chủ dự án,
+    // bấm DUYỆT là lên web. Lỗi còn lại ghi vào details.seoChapNhan để không báo lại.
+    const loiSeo = duyet ? loiTinSeo(tinXem) : [];
     setDang(true);
     setBao("");
     // Duyệt xong: bỏ cờ chờ duyệt + bản đề xuất khỏi details
@@ -101,6 +123,7 @@ function TheDuyet({ tin, xong }: { tin: Tin; xong: () => void }) {
     delete conLai.deXuat;
     conLai.addressDetail = diaChi.trim();
     conLai.direction = huong;
+    if (loiSeo.length) conLai.seoChapNhan = [...new Set([...((conLai.seoChapNhan as string[] | undefined) ?? []), ...loiSeo.map((x) => x.ma)])];
     // Điền các trường đã chọn (lấy từ mô tả) vào đúng ô của tin
     const cot: Record<string, unknown> = {};
     const specs: Record<string, unknown> = { ...((conLai.specs as Record<string, unknown>) ?? {}) };
@@ -130,7 +153,7 @@ function TheDuyet({ tin, xong }: { tin: Tin; xong: () => void }) {
     if (!data?.length) return setBao("Chưa lưu được — phiên đăng nhập admin đã hết. Tải lại trang, đăng nhập lại rồi bấm lại.");
     if (duyet) {
       await lamMoiWeb("listings");
-      xong();
+      xong(tieuDe.trim());
     } else setBao("Đã lưu.");
   }
 
@@ -217,7 +240,7 @@ function TheDuyet({ tin, xong }: { tin: Tin; xong: () => void }) {
       <div className="mt-4 flex flex-wrap items-center gap-3">
         <button type="button" disabled={dang} onClick={() => luu(true)}
           className="rounded-lg bg-cvr-ink px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-cvr-body disabled:opacity-50">
-          {dang ? "Đang lưu…" : "Duyệt — lên web"}
+          {dang ? "Đang lưu…" : "Duyệt"}
         </button>
         <button type="button" disabled={dang} onClick={() => luu(false)}
           className="rounded-lg border border-cvr-line px-4 py-2.5 text-sm font-medium text-cvr-body transition hover:border-cvr-ink disabled:opacity-50">

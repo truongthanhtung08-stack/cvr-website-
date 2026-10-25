@@ -5,9 +5,10 @@
 //   node scripts/chuan-hoa-dot.mjs "D:/…/TIN HANG NGAY chuẩn/07102026" --that   → sửa thật
 //
 // Excel (cột ma_anh) là GỐC. Ảnh và video đổi tên theo mã trong Excel:
-//   · ảnh  dn01-1007-3.jpg            → dn01-0710-3.jpg   (cùng khu+số, lệch đuôi ngày)
-//   · video bất kỳ tên nào            → "dn01-0710-video.mp4" — tải CÙNG ảnh ở trang admin nhập
-//     hàng loạt, web tự gắn vào tin như khách tự đăng (không qua YouTube; chốt 08/10)
+//   · ảnh  dn01-1007-3.jpg            → dn01-0710-03.jpg  (cùng khu+số, lệch đuôi ngày; số ảnh 2 chữ số)
+//   · video bất kỳ tên nào            → "<tiêu đề tin> dn01-0710.mp4" — dưới 95 ký tự, mã ở CUỐI;
+//     chủ dự án up lên YouTube không đổi tên → Admin bấm "Gắn video từ YouTube" (chuẩn 25/10/2026,
+//     bộ mẫu SEO\Chuẩn tin hàng loạt; luật đọc mã: src/lib/videoKenh.ts maTuTieuDe)
 //   · hai video cùng một mã → xét tiêu đề video với tiêu đề tin để trả về đúng mã
 // Dòng Excel lỗi (theo đúng bộ kiểm của web) thì liệt kê để quyết.
 // Lỗi 05/10 + 07/10/2026 là lý do có lệnh này.
@@ -57,7 +58,7 @@ for (const p of dsAnh) {
   const r = theoKhoa.get(m[1].toLowerCase());
   if (!r) continue;
   thieuAnh.delete(r.maAnh);
-  const moi = `${r.maAnh}${m[3]}`;
+  const moi = `${r.maAnh}${m[3].replace(/^-(\d)(\.[^.]+)$/, "-0$1$2")}`;
   if (moi !== ten) doi.push([p, path.join(path.dirname(p), moi)]);
 }
 
@@ -65,24 +66,28 @@ for (const p of dsAnh) {
 const thuMucVideo = path.join(thuMuc, "Video");
 const daDungMa = new Map();
 const videoLe = [];
+// Tên video chuẩn: "<tiêu đề tin> <mã>.mp4" — bỏ ký tự YouTube/Windows cấm, cả tên ≤ 95 ký tự (cắt ở chỗ hết từ)
+const tenVideoChuan = (tieuDe, ma) => {
+  let t = String(tieuDe ?? "").replace(/[<>\\/:*?"|]/g, "").replace(/\s+/g, " ").trim();
+  const max = 95 - ma.length - 1;
+  if (t.length > max) t = t.slice(0, max).replace(/\s+\S*$/, "").replace(/[\s,.\-]+$/, "");
+  return `${t} ${ma}.mp4`;
+};
 if (fs.existsSync(thuMucVideo)) {
   for (const f of fs.readdirSync(thuMucVideo)) {
     if (!/\.(mp4|mov|m4v)$/i.test(f)) continue;
     const goc = f.replace(/\.[^.]+$/, "");
-    const daChuan = /^([a-z]{2,10}\d{1,3})-\d{4}-video$/i.exec(goc);
-    if (daChuan && theoKhoa.get(daChuan[1].toLowerCase())?.maAnh === goc.replace(/-video$/i, "").toLowerCase()) {
-      daDungMa.set(goc.replace(/-video$/i, "").toLowerCase(), f);
-      continue;
-    }
-    const m = /^(.*?)[\s\-–]*\[?\s*([a-z]{2,10}\d{1,3})(?:[\s-]+\d{4})?\s*\]?\s*$/i.exec(goc);
+    // Tên kiểu cũ "dn01-0710-video" → vẫn nhận ra tin, đổi sang tên chuẩn
+    const kieuCu = /^([a-z]{2,10}\d{1,3})-\d{4}-video$/i.exec(goc);
+    const m = kieuCu ? null : /^(.*?)[\s\-–]*\[?\s*([a-z]{2,10}\d{1,3})(?:[\s-]+\d{4})?\s*\]?\s*$/i.exec(goc);
     const tieuDe = (m ? m[1] : goc).replace(/\s+/g, " ").trim();
     // Ưu tiên tin có TIÊU ĐỀ khớp (chống hai video cùng mã), rồi mới theo mã trong tên
-    const theoTieuDe = rows.find((r) => { const a = gon(tieuDe), b = gon(r.tomTat?.tieuDe); const n = Math.min(24, a.length, b.length); return n >= 12 && a.slice(0, n) === b.slice(0, n); });
-    const r = theoTieuDe ?? (m ? theoKhoa.get(m[2].toLowerCase()) : undefined);
+    const theoTieuDe = kieuCu ? undefined : rows.find((r) => { const a = gon(tieuDe), b = gon(r.tomTat?.tieuDe); const n = Math.min(24, a.length, b.length); return n >= 12 && a.slice(0, n) === b.slice(0, n); });
+    const r = theoTieuDe ?? (kieuCu ? theoKhoa.get(kieuCu[1].toLowerCase()) : m ? theoKhoa.get(m[2].toLowerCase()) : undefined);
     if (!r) { videoLe.push(f); continue; }
     if (daDungMa.has(r.maAnh)) { videoLe.push(`${f} (trùng tin với ${daDungMa.get(r.maAnh)})`); continue; }
     daDungMa.set(r.maAnh, f);
-    const moi = `${r.maAnh}-video.mp4`;
+    const moi = tenVideoChuan(r.tomTat?.tieuDe, r.maAnh);
     if (moi !== f) doi.push([path.join(thuMucVideo, f), path.join(thuMucVideo, moi)]);
   }
 }

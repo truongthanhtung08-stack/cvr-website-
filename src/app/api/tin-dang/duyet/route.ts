@@ -74,10 +74,16 @@ export async function POST(request: Request) {
     .single();
   if (loiTin || !tin) return loi("Không tìm thấy tin", 404);
 
-  // CHUẨN SEO (chủ dự án 25/10/2026): tin đăng hàng loạt còn lỗi thì KHÔNG cho lên web — sửa hết mới duyệt được.
+  // CHUẨN SEO (chủ dự án 25/10/2026, tối): tin hàng loạt còn lỗi — chủ dự án đã mở tin xem, sửa hay không là quyền
+  // chủ dự án; bấm DUYỆT là lên web. Ghi các lỗi đã xem vào details.seoChapNhan để không báo lại.
   // Tin khách tự đăng không kiểm (loiTinSeo trả rỗng).
   const loiSeo = loiTinSeo(tin);
-  if (loiSeo.length) return loi(`Tin chưa đạt chuẩn SEO, còn ${loiSeo.length} lỗi:\n· ${loiSeo.map((x) => x.ten).join("\n· ")}`, 400);
+  if (loiSeo.length) {
+    const d = (tin.details ?? {}) as { seoChapNhan?: string[] };
+    tin.details = { ...d, seoChapNhan: [...new Set([...(d.seoChapNhan ?? []), ...loiSeo.map((x) => x.ma)])] };
+    const { error } = await admin.from("listings").update({ details: tin.details }).eq("id", id);
+    if (error) return loi(error.message, 500);
+  }
   // Khuyến mãi thành viên mới xét theo LÚC KHÁCH GỬI TIN, không theo lúc admin duyệt.
   const lucGui = lucGuiTin(tin);
   const ngayGui = new Date(lucGui + 7 * 3_600_000).toISOString().slice(0, 10);

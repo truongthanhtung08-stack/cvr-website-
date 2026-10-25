@@ -36,6 +36,11 @@ type Lead = { id: string; listing_id: string; viewer_name: string | null; viewer
 export default function MyListingsPage() {
   // Giá đẩy tin lấy từ bảng admin đang lưu — chủ dự án đổi giá là nút đổi theo.
   const { billing } = useBilling();
+  const [napXong, setNapXong] = useState(false);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- đọc địa chỉ trang một lần khi mở
+    if (new URLSearchParams(window.location.search).get("nap") === "thanh-cong") setNapXong(true);
+  }, []);
   const [rows, setRows] = useState<ListingRow[]>([]);
   const [leadsByListing, setLeadsByListing] = useState<Record<string, Lead[]>>({});
   const [loading, setLoading] = useState(true);
@@ -254,7 +259,7 @@ Tin ngừng hiển thị ngay, dữ liệu giữ nguyên — sau này bấm Đă
         );
         setUpCho(null);
         setUpChon(null);
-        if (di) window.location.href = `/tai-khoan/nap-tien?can=${kq.viThieu}`;
+        if (di) window.location.href = `/tai-khoan/nap-tien?can=${kq.viThieu}&ve=${encodeURIComponent("/tai-khoan/tin-dang")}`;
         return;
       }
       if (!res.ok || !kq.ok) { window.alert(kq.loi || "Đăng lại không thành công."); return; }
@@ -339,6 +344,13 @@ Tin ngừng hiển thị ngay, dữ liệu giữ nguyên — sau này bấm Đă
           + Đăng tin mới
         </Link>
       </PageHeader>
+
+      {/* Nộp tiền từ gói tin xong → PayOS trả về đây (?nap=thanh-cong, 26/10/2026) — dùng đúng câu đã có ở trang nạp tiền */}
+      {napXong && (
+        <p className="rounded-lg bg-green-50 px-4 py-3 text-sm text-green-700">
+          Thanh toán thành công. Số dư sẽ được cộng vào tài khoản sau khi hệ thống đối soát.
+        </p>
+      )}
 
       {/* Thanh lọc: mục trạng thái bên trái, ô tìm bên phải. Ô tìm chỉ tìm trong
           tin của CHÍNH MÌNH — có vài trăm tin thì cuộn tay không nổi. */}

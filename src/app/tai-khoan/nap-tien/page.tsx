@@ -1,7 +1,7 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useProfile } from "@/lib/useProfile";
 import { vnd } from "@/lib/billing";
 import { useBilling } from "@/lib/useBilling";
@@ -35,33 +35,41 @@ function TopUpForm() {
   }, []);
   const params = useSearchParams();
   const ketQua = params.get("ket-qua");
+  // NẠP TỪ GÓI TIN (?ve= form đăng tin / Tin của tôi — chủ dự án 26/10/2026, trình tự chuẩn):
+  // huỷ trên PayOS → về lại đúng chỗ đến (tin còn nguyên nội dung + gói); nộp xong → Tin của tôi (tin tự gửi duyệt).
+  const veRaw = params.get("ve");
+  const ve = veRaw && /^\/(dang-tin|tai-khoan)(\/|\?|$)/.test(veRaw) ? veRaw : null;
+  const router = useRouter();
+  useEffect(() => {
+    if (!ve) return;
+    if (ketQua === "huy") router.replace(ve);
+    else if (ketQua === "thanh-cong") router.replace("/tai-khoan/tin-dang?nap=thanh-cong");
+  }, [ketQua, ve, router]);
 
   // Mệnh giá nạp & tỷ lệ tích điểm lấy từ bản admin đã lưu
-  const { billing, loading: billingLoading } = useBilling();
+  const { billing } = useBilling();
   const amounts = billing.topupAmounts;
-  const [amount, setAmount] = useState<number>(amounts[1] ?? amounts[0]);
+  const [amount, setAmount] = useState<number>(0);
   const [custom, setCustom] = useState("");
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
 
   // SỐ CÒN THIẾU từ trang đăng tin (?can=…). Khách bấm Đăng mà ví không đủ thì
-  // web đưa sang đây kèm đúng số còn thiếu — chọn sẵn mệnh giá vừa đủ, khỏi phải
-  // tự tính rồi nạp hụt, quay lại vẫn không đăng được.
+  // web đưa sang đây kèm đúng số còn thiếu (báo ở dòng trên đầu trang khi tin đã tự lưu nháp).
   const canNap = Number(params.get("can") || 0);
+  // Câu "Tin của bạn đã lưu nháp…" chỉ đúng khi web vừa tự lưu nháp tin (màn "Nạp thêm … để đăng tin" gửi ?luu=1)
+  const daLuuNhap = params.get("luu") === "1";
 
-  // Tải xong mệnh giá của admin → chọn sẵn mệnh giá thứ hai như trước.
-  // Có ?can= thì chọn mệnh giá nhỏ nhất mà vẫn đủ; lớn hơn mọi mệnh giá thì điền
-  // thẳng số còn thiếu vào ô nhập tay.
+  // KHÔNG CHỌN SẴN NÚT MỆNH GIÁ NÀO (chủ dự án 26/10/2026: chọn sẵn 500.000đ khi cần 846.720đ là nạp hụt).
+  // Đến từ gói tin (?can=): số cần nộp nằm sẵn trong ô tự nhập, con trỏ trong ô, chữ được bôi sẵn — khách gõ số khác
+  // là thay ngay, muốn nạp bao nhiêu tuỳ khách; các nút mệnh giá vẫn để chọn.
+  const oNhapRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
-    if (billingLoading) return;
-    if (canNap > 0) {
-      const vuaDu = amounts.find((a) => a >= canNap);
-      if (vuaDu) setAmount(vuaDu);
-      else setCustom(String(canNap));
-      return;
-    }
-    setAmount(amounts[1] ?? amounts[0]);
-  }, [billingLoading, amounts, canNap]);
+    if (canNap <= 0) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- điền sẵn một lần theo địa chỉ trang
+    setCustom(canNap.toLocaleString("vi-VN"));
+    requestAnimationFrame(() => { oNhapRef.current?.focus(); oNhapRef.current?.select(); });
+  }, [canNap]);
 
   const finalAmount = custom.trim() ? Number(custom.replace(/\D/g, "")) || 0 : amount;
   // Hệ cấp theo tổng nạp + điểm thưởng đã BỎ 25/09/2026, thay bằng Gói hội viên (0040).
@@ -86,6 +94,7 @@ function TopUpForm() {
           buyerName: profile?.full_name ?? undefined,
           buyerEmail: profile?.email ?? undefined,
           buyerPhone: profile?.phone ?? undefined,
+          ve: ve ?? undefined,
         }),
       });
       const json = await res.json();
@@ -113,7 +122,7 @@ function TopUpForm() {
         </p>
       </div>
 
-      {canNap > 0 && (
+      {canNap > 0 && daLuuNhap && (
         <p className="rounded-lg border border-cvr-blue/30 bg-cvr-blue/[0.06] px-4 py-3 text-sm text-cvr-blue-ink">
           Tin của bạn đã lưu nháp. Cần nạp thêm{" "}
           <strong className="font-semibold">{canNap.toLocaleString("vi-VN")}đ</strong> để đăng — nạp đủ là tin tự gửi duyệt.
@@ -161,6 +170,7 @@ function TopUpForm() {
         <label className="mt-4 block">
           <span className="mb-1.5 block text-xs font-medium text-cvr-muted">Hoặc nhập số tiền khác (₫)</span>
           <input
+            ref={oNhapRef}
             inputMode="numeric"
             value={custom}
             onChange={(e) => setCustom(e.target.value)}

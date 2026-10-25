@@ -178,6 +178,15 @@ export default function BackBar() {
       router.push("/tai-khoan");
       return;
     }
+    // NẠP TIỀN ĐI TỪ GÓI TIN (?ve= — form đăng tin / Tin của tôi): ‹ về đúng chỗ vừa đến, không lên tầng Tài khoản
+    // (chủ dự án 26/10/2026: chưa nộp bấm Quay lại thì về lại tin đang đăng, còn nguyên nội dung + gói)
+    if (goc === "tai-khoan" && doan[1] === "nap-tien") {
+      const ve = new URLSearchParams(window.location.search).get("ve");
+      if (ve && /^\/(dang-tin|tai-khoan)(\/|\?|$)/.test(ve)) {
+        router.push(ve);
+        return;
+      }
+    }
     // KHU QUẢN LÝ — đi LÊN MỘT TẦNG (sơ đồ ở đầu tệp).
     if (goc === "tai-khoan") {
       // Tổng quan = trang chủ khu quản lý → ra lại trang web đang xem trước khi vào.

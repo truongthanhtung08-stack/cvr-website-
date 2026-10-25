@@ -272,6 +272,7 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
     if (!title.trim())
       return setError(asDraft ? "Nhập tiêu đề để lưu nháp." : "Chưa nhập tiêu đề tin.");
 
+    let seoChapNhan: string[] = [];
     if (!asDraft) {
       // ── ĐIỀU KIỆN ĐỂ GOOGLE NHẬN TIN ──────────────────────────────────────
       // Thiếu một trong các mục dưới đây thì tin vẫn lên web nhưng Google coi là
@@ -302,9 +303,9 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
         images: images.filter((s) => s.trim()),
         details: { ...(initial?.details ?? {}), addressDetail },
       });
-      // Tin hàng loạt còn lỗi chuẩn SEO: KHÔNG cho lên web (chủ dự án 25/10/2026) — lỗi ghi ở bảng kiểm trên đầu trang, bấm từng lỗi để sửa
-      if (loiSeo.length)
-        return setError(`Tin chưa đạt chuẩn SEO, chưa lên web được. Còn ${loiSeo.length} lỗi: ${loiSeo.map((x) => `${x.ten} → sửa ở ${x.cho}`).join(" · ")}`);
+      // Tin hàng loạt còn lỗi chuẩn SEO: chủ dự án đang mở tin xem — sửa hay không là quyền chủ dự án, bấm là lên web;
+      // lỗi còn lại ghi vào details.seoChapNhan để không báo lại (chủ dự án 25/10/2026, tối)
+      seoChapNhan = loiSeo.map((x) => x.ma);
       // Hạn tin = số ngày gói theo bảng giá ĐÃ DUYỆT. Hạng chưa có giá đã duyệt thì hạn = 0 ngày
       // → tin hết hạn ngay khi lưu (vụ 09/10: nâng 5 tin VIP, cả 5 tự hết hạn sau 1 phút).
       const bang = bangTheoMucDich(billing, purpose);
@@ -357,6 +358,9 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
         ...(initial?.details ?? {}),
         // Đăng từ form = đã duyệt → bỏ cờ "chờ chủ duyệt" của tin nạp, kẻo tin đã lên web vẫn nằm ở trang Duyệt tin nạp (24/10/2026)
         ...(asDraft ? {} : { choChuDuyet: undefined, deXuat: undefined }),
+        ...(seoChapNhan.length
+          ? { seoChapNhan: [...new Set([...((initial?.details as { seoChapNhan?: string[] } | undefined)?.seoChapNhan ?? []), ...seoChapNhan])] }
+          : {}),
         specs: Object.fromEntries(Object.entries(specValues).filter(([, v]) => v && v.trim())),
         interior,
         amenities,
@@ -417,7 +421,10 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
     // Tin đăng hộ (chưa có chủ): gắn về tài khoản theo SĐT liên hệ (chủ dự án 09/10/2026)
     if (!initial?.owner_id) await fetch("/api/admin/gom-tin-dang-ho", { method: "POST" }).catch(() => {});
     // Báo rõ đã lên web hay chỉ lưu nháp, rồi về trang Tin đăng (chủ dự án 25/10/2026: bấm xong phải biết tin lên hay chưa)
-    router.push(`/admin/tin-dang?daLuu=${daLuu?.id ?? initial?.id ?? ""}&kieu=${asDraft ? "nhap" : "len"}`);
+    // Mở từ trang khác (vd Duyệt tin nạp, bấm lỗi → Sửa tin, có ?ve=) thì quay về đúng trang đó (chủ dự án 25/10/2026)
+    const ve = new URLSearchParams(window.location.search).get("ve");
+    const veTrang = ve && /^\/admin\/[\w\-/]*$/.test(ve) ? ve : "/admin/tin-dang";
+    router.push(`${veTrang}?daLuu=${daLuu?.id ?? initial?.id ?? ""}&kieu=${asDraft ? "nhap" : "len"}`);
     router.refresh();
   }
 
@@ -899,7 +906,7 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
           disabled={saving}
           className="rounded-lg bg-cvr-ink px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-cvr-ink/90 disabled:opacity-50"
         >
-          {saving ? "Đang lưu…" : editing ? "Cập nhật & đăng" : "Đăng tin"}
+          {saving ? "Đang lưu…" : (initial?.details as { choChuDuyet?: boolean } | undefined)?.choChuDuyet ? "Duyệt" : editing ? "Cập nhật & đăng" : "Đăng tin"}
         </button>
         <button
           type="button"
@@ -911,7 +918,11 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
         </button>
         <button
           type="button"
-          onClick={() => router.push("/admin/tin-dang")}
+          onClick={() => {
+            // Huỷ cũng về đúng trang đã mở tin này (?ve=), không bắt về danh sách Tin đăng
+            const ve = new URLSearchParams(window.location.search).get("ve");
+            router.push(ve && /^\/admin\/[\w\-/]*$/.test(ve) ? ve : "/admin/tin-dang");
+          }}
           className="rounded-lg px-3 py-2.5 text-sm font-medium text-cvr-muted transition hover:text-cvr-ink"
         >
           Huỷ

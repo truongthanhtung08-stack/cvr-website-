@@ -11,7 +11,7 @@
 //   · ảnh nhỏ: cạnh dài < 600 px → bỏ
 //   · ảnh mờ: độ nét (độ lệch chuẩn sau lọc Laplace, ảnh thu về 512 px) < NGUONG_MO → bỏ
 //   · ảnh trùng / gần giống (dấu vân dHash 64 bit, lệch ≤ 6 bit) → giữ tấm lớn + nét hơn
-//   · quá 12 ảnh → giữ 12 tấm điểm cao nhất (nét × kích thước), ảnh -1 của Cowork luôn giữ nếu đạt
+//   · quá 12 ảnh → giữ 12 tấm điểm cao nhất (nét × kích thước), ảnh -01 của Cowork luôn giữ nếu đạt
 // Ảnh bỏ KHÔNG XOÁ — chuyển sang _saoluu\<tên cũ>. Ảnh còn lại đánh số lại liền nhau, giữ đúng thứ tự.
 // Chạy trên máy (sharp), không tốn gì của Vercel / Supabase.
 // ============================================================================
@@ -80,7 +80,8 @@ for (const [ma, ds] of Object.entries(nhom)) {
     for (const t of ly.keys()) fs.renameSync(path.join(dirAnh, t), path.join(boDir, t));
     // Đánh số lại liền nhau: đổi qua tên tạm trước để không đè nhau
     giu.forEach((a, i) => fs.renameSync(path.join(dirAnh, a.ten), path.join(dirAnh, `__tam__${i}${a.duoi}`)));
-    giu.forEach((a, i) => fs.renameSync(path.join(dirAnh, `__tam__${i}${a.duoi}`), path.join(dirAnh, `${ma}-${i + 1}${a.duoi}`)));
+    // Số ảnh luôn 2 chữ số (-01 = ảnh đại diện) — đúng bộ mẫu SEO\Chuẩn tin hàng loạt (chủ dự án chốt 25/10/2026)
+    giu.forEach((a, i) => fs.renameSync(path.join(dirAnh, `__tam__${i}${a.duoi}`), path.join(dirAnh, `${ma}-${String(i + 1).padStart(2, "0")}${a.duoi}`)));
   }
 }
 const tep = path.join(thuMuc, "LOC-ANH.txt");

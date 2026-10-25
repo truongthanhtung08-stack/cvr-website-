@@ -114,11 +114,12 @@ export default function AdminListingsPage() {
     // DUYỆT phải đi qua máy chủ — ở đó mới trừ ví theo bảng giá, ghi doanh thu
     // và báo cho khách. Sửa thẳng từ trình duyệt là tin lên sóng MIỄN PHÍ.
     if (next === "approved") {
-      // Tin hàng loạt còn lỗi chuẩn SEO: KHÔNG cho duyệt — mở tin, sửa hết lỗi mới duyệt được (chủ dự án 25/10/2026)
+      // Tin hàng loạt còn lỗi chuẩn SEO: duyệt nhanh từ danh sách là CHƯA mở tin xem → mở tin trước; xem xong
+      // (sửa hay không tuỳ chủ dự án) bấm Duyệt trong tin là lên web (chủ dự án 25/10/2026, tối)
       const tin = rows.find((x) => x.id === id);
       const loiSeo = tin ? loiTinSeo(tin) : [];
       if (loiSeo.length) {
-        window.alert(`Tin chưa đạt chuẩn SEO, chưa duyệt được. Còn ${loiSeo.length} lỗi:\n· ${loiSeo.map((x) => `${x.ten} → sửa ở ${x.cho}`).join("\n· ")}\n\nBấm OK để mở tin sửa.`);
+        window.alert(`Tin còn ${loiSeo.length} lỗi chuẩn SEO:\n· ${loiSeo.map((x) => `${x.ten} → sửa ở ${x.cho}`).join("\n· ")}\n\nBấm OK để mở tin xem. Xem xong bấm Duyệt là tin lên web.`);
         window.location.assign(`/admin/tin-dang/${id}${loiSeo[0].o ? `#${loiSeo[0].o}` : ""}`);
         return;
       }
@@ -141,6 +142,19 @@ export default function AdminListingsPage() {
       setRows((rs) =>
         rs.map((x) => (x.id === id ? { ...x, status: next, published_at: new Date().toISOString() } : x)),
       );
+      // Tin hàng loạt duyệt từ danh sách: bỏ cờ chờ duyệt (đọc lại details mới nhất — máy chủ vừa ghi seoChapNhan),
+      // kẻo tin đã lên web vẫn nằm ở trang Tin chờ duyệt
+      if ((tin?.details as { choChuDuyet?: boolean } | null)?.choChuDuyet) {
+        const sb = createClient();
+        const { data: moi } = await sb.from("listings").select("details").eq("id", id).single();
+        const conLai = { ...((moi?.details as Record<string, unknown> | null) ?? {}) };
+        delete conLai.choChuDuyet;
+        delete conLai.deXuat;
+        await sb.from("listings").update({ details: conLai }).eq("id", id);
+      }
+      // Duyệt xong phải có dấu hiệu: báo "Đã lên web" đầu trang, ở lại đúng trang đang làm (chủ dự án 25/10/2026)
+      setDaLuu({ id, kieu: "len" });
+      window.scrollTo({ top: 0, behavior: "smooth" });
       if (j.daTru) {
         window.alert(
           `Đã duyệt và cho tin lên sóng.\n\n` +
@@ -279,7 +293,7 @@ export default function AdminListingsPage() {
             href="/admin/tin-dang/duyet-nap"
             className="rounded-lg border border-cvr-line bg-white px-4 py-2 text-sm font-semibold text-cvr-ink transition hover:border-cvr-ink"
           >
-            Duyệt tin nạp
+            Tin chờ duyệt
           </Link>
           <Link
             href="/admin/tin-dang/moi"
@@ -513,7 +527,8 @@ function RowActions({
       )}
       {(row.status === "hidden" || row.status === "rejected" || row.status === "expired") && (
         <button type="button" onClick={() => onStatus(row.id, "approved")} className="text-sm font-medium text-green-700 hover:text-green-800">
-          Hiện lại
+          {/* Tin hàng loạt đang chờ duyệt: bấm là DUYỆT — ghi đúng việc nút làm (chủ dự án 25/10/2026) */}
+          {(row.details as { choChuDuyet?: boolean } | null)?.choChuDuyet ? "Duyệt" : "Hiện lại"}
         </button>
       )}
       <Link href={`/admin/tin-dang/${row.id}`} className="text-sm font-medium text-cvr-blue-ink hover:text-cvr-blue">

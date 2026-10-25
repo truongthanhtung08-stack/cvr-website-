@@ -37,7 +37,7 @@ export default function BangKiemTinSeo({ row }: { row: ListingRow }) {
     return () => { huy = true; };
   }, [row]);
 
-  // MỘT luật cho mọi khâu (src/lib/kiemTinSeo.ts): bảng kiểm này, nút Duyệt (còn lỗi thì KHOÁ), nạp hàng loạt,
+  // MỘT luật cho mọi khâu (src/lib/kiemTinSeo.ts): bảng kiểm này, nút Duyệt (còn lỗi vẫn duyệt được, lỗi đã xem ghi vào seoChapNhan), nạp hàng loạt,
   // trang Tổng quan. Chỉ ghi cái CHƯA đạt; cho = chỗ sửa trong form bên dưới (chủ dự án 25/10/2026).
   const loi = loiTinSeo(row, trung.length);
   // Cuộn tới ô cần sửa, đặt con trỏ vào ô đó. Trang không có ô đó (màn hình Duyệt tin nạp) → mở trang Sửa tin,
@@ -45,7 +45,8 @@ export default function BangKiemTinSeo({ row }: { row: ListingRow }) {
   const toiO = (id?: string) => {
     const el = id ? document.getElementById(id) : null;
     if (!el) {
-      if (id) window.location.assign(`/admin/tin-dang/${row.id}#${id}`);
+      // ?ve= trang đang làm → lưu / duyệt xong ở trang Sửa tin thì quay về đúng chỗ này (chủ dự án 25/10/2026)
+      if (id) window.location.assign(`/admin/tin-dang/${row.id}?ve=${encodeURIComponent(window.location.pathname)}#${id}`);
       return;
     }
     el.scrollIntoView({ behavior: "smooth", block: "center" });
