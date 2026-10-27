@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { loiEmail, loiSdt } from "@/lib/kiemNhap";
 import { napSupabase } from "@/lib/supabase/nap";
+import { taiKhiRanh } from "@/lib/taiKhiRanh";
 import { useProfile } from "@/lib/useProfile";
 import { emailThat } from "@/lib/useAuth";
 import type { LoaiYeuCau } from "@/components/YeuCauForm";
@@ -39,6 +40,8 @@ export default function LeadForm({
   const [dangGui, setDangGui] = useState(false);
   const [loi, setLoi] = useState("");
   const [xong, setXong] = useState(false);
+  // Thư viện Supabase tải ngầm khi máy rảnh → bấm Gửi là gửi ngay, không chờ tải (taiKhiRanh)
+  useEffect(() => taiKhiRanh(() => import("@/lib/supabase/client")), []);
 
   useEffect(() => {
     if (!profile) return;

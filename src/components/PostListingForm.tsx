@@ -54,11 +54,14 @@ import { anhDaiDien, emailThat } from "@/lib/useAuth";
 import type { xemTruocTin } from "@/lib/listingsDb";
 import { useKhoaCuon } from "@/lib/khoaCuon";
 import { homNayVn } from "@/lib/gioVn";
+import { taiKhiRanh } from "@/lib/taiKhiRanh";
 // Thẻ tin mẫu (nút "Tin hiển thị" ở mục gói tin) — chỉ tải khi khách bấm, không nặng lúc mở trang đăng tin.
 const TinHienThiMau = dynamic(() => import("@/components/TinHienThiMau"));
-// Khung "Xem trước" (kèm bộ xem ảnh và lớp dựng chi tiết tin ~60 KB mã) — cũng chỉ tải khi khách bấm (27/10/2026: /dang-tin nặng).
+// Khung "Xem trước" (kèm bộ xem ảnh và lớp dựng chi tiết tin ~60 KB mã) — tách khỏi lúc mở trang, tải ngầm khi máy rảnh
+// (taiKhiRanh trong form) nên lúc bấm đã có sẵn (27/10/2026: /dang-tin nặng).
+const taiTruocXemTruoc = () => Promise.all([import("@/components/XemTruocTin"), import("@/lib/listingsDb")]);
 const XemTruocTin = dynamic(() =>
-  Promise.all([import("@/components/XemTruocTin"), import("@/lib/listingsDb")]).then(([m, l]) => {
+  taiTruocXemTruoc().then(([m, l]) => {
     const Khung = m.default;
     return function XemTruocTinMo({ row, ...p }: Omit<React.ComponentProps<typeof Khung>, "du"> & { row: Parameters<typeof xemTruocTin>[0] }) {
       return <Khung du={l.xemTruocTin(row)} {...p} />;
@@ -92,6 +95,8 @@ export default function PostListingForm() {
   const router = useRouter();
   const thamSo = useSearchParams();
   const editId = thamSo.get("id");
+  // Khung "Xem trước" tải ngầm khi máy rảnh → lúc khách bấm đã có sẵn, không chờ (taiKhiRanh)
+  useEffect(() => taiKhiRanh(taiTruocXemTruoc), []);
   // Đăng nhập xong quay lại ĐÚNG link khách bấm (giữ ?goi=… của chương trình quảng bá).
   const linkDangNhap = `/dang-nhap?next=${encodeURIComponent(thamSo.toString() ? `/dang-tin?${thamSo.toString()}` : "/dang-tin")}`;
 
