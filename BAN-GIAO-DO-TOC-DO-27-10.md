@@ -7,7 +7,7 @@
 ## TIẾN ĐỘ (phiên đo cập nhật sau MỖI bước rồi commit lên nhánh — dừng giữa chừng thì phiên sau đọc mục này làm tiếp)
 
 - [x] Đo TRƯỚC (main) — mục 2 (xong)
-- [~] Đo SAU (nhánh) — mục 2: build nhánh xong (thư mục chính đang ở nhánh, detached HEAD) → còn đo y như main
+- [x] Đo SAU (nhánh) — mục 2 (xong, số ở ghi chú dưới)
 - [ ] do-o-bi-che /dang-tin (thường + 470) = "BI CHE: 0"
 - [ ] Bấm thử — mục 3
 - [ ] Báo chủ dự án bảng số trước/sau
@@ -24,6 +24,11 @@ Ghi chú tiến độ (27/10, phiên trên máy):
 - main Lighthouse (trung vị 3 lần — điểm / LCP ms / TBT ms; CLS 0 trừ trang chủ 0,047): / 50·11728·1305 · /mua-ban 51·5394·1934 ·
   /cho-thue 54·4895·1903 · condotel/da-nang 53·5324·1783 · trang tin 56·4755·1266 · dự án 47·6420·2348 (2/3 lần Lighthouse lỗi NaN — đo lại) ·
   /bao-gia-dang-tin 50·5811·1673 · /gioi-thieu 57·5820·976 · /faq 62·4024·1247.
+- NHÁNH (c064c98): HTML trang chủ **480 608 byte** (−26,5 KB, CHƯA đạt < 450 KB) · trang tin 174 725 byte.
+- NHÁNH Lighthouse (trung vị 3 lần — điểm / LCP / TBT): / **76**·4523·312 · /mua-ban 68·4352·701 · /cho-thue 71·4072·626 ·
+  condotel/da-nang 70·4418·593 · trang tin 74·4538·374 · /bao-gia-dang-tin 51·5707·1312 · /gioi-thieu 56·6360·684 · /faq 66·3704·1010.
+  Dự án: Lighthouse báo NO_LCP cả main lẫn nhánh (không phải lỗi nhánh). Lighthouse cảnh báo máy chậm hơn mức nó giả định → số dao động.
+  ⇒ Mọi trang LCP Lighthouse vẫn > 2,5 s (giả lập mạng chậm). Trang chủ nhẹ hẳn (TBT 1305 → 312 ms).
 - /dang-tin, /tai-khoan khi đã đăng nhập: chưa có tài khoản thử để đo — cần chủ dự án bấm thử trên máy thật.
 
 **PHIÊN MỚI "LÀM TIẾP" — đọc trước:**
