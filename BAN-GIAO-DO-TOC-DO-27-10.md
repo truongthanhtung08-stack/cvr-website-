@@ -19,6 +19,7 @@
 | aa48f01 | Tải ngầm khi máy rảnh (taiKhiRanh) → bấm Xem trước / Gửi báo giá không chờ | không đổi mã lúc mở trang |
 | bdf9bb7 | Thanh trên + khu Tài khoản: getUser → đọc phiên có sẵn (getUser giữ khoá → các lần gọi NỐI ĐUÔI ~5 nhịp mạng) | — |
 | 9aa54bf | Admin ListingForm, LoginForm: như trên · /admin/khach-hang/[id] hỏi song song (5 → 3 nhịp) | — |
+| (preload) | Ảnh đầu trang tải trước đúng máy (/gioi-thieu, Hero trang chủ khi ảnh điện thoại trùng ảnh máy tính); logo chân trang thôi tải trước | đo LCP /gioi-thieu, trang chủ (PC + điện thoại) |
 | (ảnh) | Ảnh tĩnh `public/`: tối ưu mã hoá KHÔNG MẤT DỮ LIỆU 9 tấm (jpegtran/optipng, giữ baseline + ICC; so PIL giống hệt) | −226 KB tổng |
 
 ## 2. Việc phải ĐO trên máy (trước và sau — so `main` với nhánh)
@@ -66,7 +67,14 @@ Ghi một dòng số đo 5 trang vào memory `toc-do-web-lam-tiep`.
 - CSS chung 27 KB nén: thử chỉ quét `src/` chỉ bớt 0,6 KB → bỏ.
 - Khung Next/React ~517 KB (chưa nén) mọi trang: không bớt được.
 
-## 5. Cần CHỦ DỰ ÁN quyết (không tự làm vì đụng giao diện / chi phí)
+## 5. Ảnh — đã thử, chủ dự án cho làm nếu không giảm chất lượng (27/10)
+
+- Ảnh /gioi-thieu nén lại bằng mozjpeg cùng 4:2:0: giữ độ giống ≥ 0,99 (SSIM độ sáng + R/G/B) chỉ bớt 2–10%, nhiều tấm không bớt
+  → ảnh vốn đã nén tốt, KHÔNG thay (giảm thêm là thấy được ở chỗ nhiều chi tiết).
+- Nếu đo xong /gioi-thieu vẫn LCP > 2,5 s trên điện thoại: hướng chuẩn còn lại là ảnh riêng cho điện thoại cỡ nhỏ hơn
+  (admin → Nội dung web → ảnh điện thoại của trang Giới thiệu, ~1080 px rộng) — cùng chất lượng nhìn trên điện thoại.
+
+## 6. Ghi chú cũ
 
 - Ảnh tĩnh trong `public/images/` là JPG gốc (100–370 KB/tấm), web tắt tối ưu ảnh của Vercel (`images.unoptimized`, giữ trong gói $20).
   Nén lại sang WebP/AVIF = đổi điểm ảnh → chờ chủ dự án. Trên web thật ảnh /gioi-thieu có thể đã do admin thay — đo trước.
