@@ -4,6 +4,23 @@
 > Cloud KHÔNG có `.env.local` (khoá Supabase) và không vào được coastalland.vn → **chưa đo được với dữ liệu thật.**
 > Tệp này là danh sách việc cho phiên trên máy: đo trước/sau, bấm thử, rồi mới chờ chủ dự án nói "Push".
 
+## 0. MỞ PHIÊN ĐO — dán nguyên đoạn này vào Claude Code trên máy, trong thư mục chính dự án (có `.env.local`)
+
+```
+Dự án COASTAL LAND. Trả lời bằng tiếng Việt có dấu.
+Nhánh claude/clever-bardeen-15e4ot chứa các sửa làm nhẹ tải trang cho toàn web — KHÔNG đổi giao diện, bố cục, cấu trúc.
+Chuẩn: LCP ≤ 2,5 s, INP ≤ 200 ms, CLS ≤ 0,1 trên điện thoại; HTML trang chủ < 450 KB.
+1. git fetch origin claude/clever-bardeen-15e4ot; đọc BAN-GIAO-DO-TOC-DO-27-10.md trên nhánh đó.
+2. Đo TRƯỚC (main) và SAU (nhánh) mọi trang ở mục 2; chạy do-o-bi-che cho /dang-tin. Chỉ MỘT server.
+3. Bấm thử mọi mục ở mục 3, PC + điện thoại — giao diện, kết quả phải giống hệt main.
+4. Báo tôi bảng số trước/sau + kết quả bấm thử. Trang còn LCP > 2,5 s: tìm nguyên nhân, sửa theo chuẩn KHÔNG đổi giao diện;
+   việc đụng giao diện thì hỏi tôi.
+5. Chỉ merge nhánh vào main và push MỘT LẦN khi tôi nói "Push". Ghi một dòng số đo vào memory toc-do-web-lam-tiep.
+```
+
+Gộp vào main (khi chủ dự án nói "Push"): `git checkout main && git pull && git merge --no-ff origin/claude/clever-bardeen-15e4ot`
+→ `npx next build` chạy hết → `git push origin main` (MỘT lần) → kiểm web thật đã lên (tên gói mã) → đo lại trang chủ trên coastalland.vn.
+
 ## 1. Đã sửa (mỗi dòng một commit trên nhánh)
 
 | Commit | Việc | Đo trong cloud (mã trình duyệt lúc mở trang, nén) |
@@ -19,8 +36,8 @@
 | aa48f01 | Tải ngầm khi máy rảnh (taiKhiRanh) → bấm Xem trước / Gửi báo giá không chờ | không đổi mã lúc mở trang |
 | bdf9bb7 | Thanh trên + khu Tài khoản: getUser → đọc phiên có sẵn (getUser giữ khoá → các lần gọi NỐI ĐUÔI ~5 nhịp mạng) | — |
 | 9aa54bf | Admin ListingForm, LoginForm: như trên · /admin/khach-hang/[id] hỏi song song (5 → 3 nhịp) | — |
-| (preload) | Ảnh đầu trang tải trước đúng máy (/gioi-thieu, Hero trang chủ khi ảnh điện thoại trùng ảnh máy tính); logo chân trang thôi tải trước | đo LCP /gioi-thieu, trang chủ (PC + điện thoại) |
-| (ảnh) | Ảnh tĩnh `public/`: tối ưu mã hoá KHÔNG MẤT DỮ LIỆU 9 tấm (jpegtran/optipng, giữ baseline + ICC; so PIL giống hệt) | −226 KB tổng |
+| 7bb98d8 | Ảnh đầu trang tải trước đúng máy (/gioi-thieu, Hero trang chủ khi ảnh điện thoại trùng ảnh máy tính); logo chân trang thôi tải trước | đo LCP /gioi-thieu, trang chủ (PC + điện thoại) |
+| d74627f | Ảnh tĩnh `public/`: tối ưu mã hoá KHÔNG MẤT DỮ LIỆU 9 tấm (jpegtran/optipng, giữ baseline + ICC; so PIL giống hệt) | −226 KB tổng |
 
 ## 2. Việc phải ĐO trên máy (trước và sau — so `main` với nhánh)
 
@@ -57,6 +74,8 @@ Ghi một dòng số đo 5 trang vào memory `toc-do-web-lam-tiep`.
 - /tai-khoan: tổng quan, tin đăng, hội viên, khách hàng; nút hiện số liên hệ ở trang tin; lưu tìm kiếm.
 - /dang-nhap khi đã đăng nhập → tự chuyển; đăng nhập xong về đúng nơi theo vai trò.
 - /admin: đăng tin hộ (mặc định người đăng = admin), /admin/khach-hang/<id> (tương tác hiện đủ).
+- Ảnh đầu trang chủ và /gioi-thieu hiện ngay như cũ (PC + điện thoại); logo chân trang vẫn hiện khi cuộn xuống cuối trang.
+- Ảnh tĩnh đã tối ưu (mục 1, d74627f): app-mockup, ảnh dự án hero-*-3x1, villa-bien, hero-cty1/2 — nhìn như cũ.
 
 ## 4. Đã xem, KHÔNG sửa (để đo rồi tính)
 
