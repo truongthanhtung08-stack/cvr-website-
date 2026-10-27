@@ -15,9 +15,9 @@
 - [ ] Chủ dự án nói "Push" → gộp main, push MỘT lần, kiểm web thật
 
 Ghi chú tiến độ (27/10, phiên trên máy):
-- Cách đo:  +  (một server). Trang tin mẫu ,
-  dự án mẫu . Lighthouse 3 lần/trang (Edge headless), lấy trung vị = số chính;
-  do-toc-do dao động quá mạnh (cùng trang lệch 2–5 s) → chỉ tham khảo.
+- Cách đo: `npx next build` + `npx next start -p 3000` (một server). Trang tin mẫu `/bat-dong-san/21687cfc-0fc6-42bf-8bc5-cfcefbe50310`,
+  dự án mẫu `/du-an/sun-galaxy-complex-da-nang`. Lighthouse 3 lần/trang (Edge headless), lấy trung vị;
+  cả do-toc-do lẫn Lighthouse đều dao động mạnh ở máy này (cùng trang lệch 2–5 s) → so trước/sau theo trung vị, không theo một lần.
 - main 6a9d281: HTML trang chủ **507 133 byte** (mục tiêu < 450 KB) · trang tin 175 730 byte.
 - main do-toc-do (LCP ms, 2 lần): / 2740·3956 · /mua-ban 9136·5668 · /cho-thue 4792·4224 · condotel/da-nang 4648·lỗi ·
   trang tin 6316·10592 · dự án 2096·5428 · /bao-gia-dang-tin 9448·3932 · /gioi-thieu 3376·3240 · /faq 5288·7508.
