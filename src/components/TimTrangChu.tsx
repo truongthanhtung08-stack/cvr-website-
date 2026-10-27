@@ -15,7 +15,8 @@ import TruongLocTrangChu, { locTuCau } from "@/components/TruongLocTrangChu";
 import { timKhuVuc, slugKhuVuc } from "@/lib/khuVuc";
 import { duongDanBuoc, duongDanSach, duongDanTuCau, duongDanGanNhat } from "@/lib/duongDanTim";
 import { hintsFor, listingHints } from "@/lib/searchHints";
-import { MagnifyingGlass, ClockCounterClockwise, X, CircleNotch, ArrowUpLeft, type Icon as PhIcon } from "@phosphor-icons/react";
+import { MagnifyingGlass, ClockCounterClockwise, X, CircleNotch, ArrowUpLeft } from "@/components/HinhPhosphor"; // bản gọn của Phosphor
+import type { Icon as PhIcon } from "@phosphor-icons/react";
 import { TabIcon, type TenIcon } from "@/components/MobileTabBar";
 
 // ============================================================================
