@@ -621,7 +621,11 @@ export default function PostListingForm() {
   useEffect(() => {
     const supabase = createClient();
     (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      // Cách chuẩn Supabase (SSR): máy chủ kiểm + làm mới phiên ở middleware (getUser mỗi lượt mở trang của người đã đăng nhập),
+      // trình duyệt chỉ ĐỌC phiên có sẵn — không hỏi lại máy chủ Supabase lần nữa (27/10/2026: bớt một nhịp mạng trước khi
+      // form hiện). Quyền thật vẫn do RLS kiểm ở từng lệnh đọc/ghi; token hết hạn thì thư viện tự làm mới.
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user ?? null;
       setUserId(user?.id ?? null);
       if (user) {
         // Lấy thêm ngày tạo · hạn mức tin miễn phí · vai trò · tổng chi tiêu
