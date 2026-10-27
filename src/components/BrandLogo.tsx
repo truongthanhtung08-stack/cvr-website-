@@ -27,7 +27,9 @@ export default function BrandLogo({
       alt="COASTAL LAND — Gateway to Central Coast property"
       width={2005}
       height={389}
-      priority
+      // Chỉ logo thanh trên (md) tải trước; logo chân trang (lg) nằm cuối trang → trình duyệt tự tải khi khách cuộn gần tới,
+      // không giành đường truyền với nội dung đầu trang (27/10/2026: trước đây mọi trang tải trước CẢ HAI logo).
+      priority={size === "md"}
       className={`${cls} w-auto`}
     />
   );
