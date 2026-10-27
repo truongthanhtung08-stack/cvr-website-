@@ -39,24 +39,20 @@ export type DonQr = {
   description?: string;
 };
 
-export default function MaQrThanhToan({ don, onHuy, onXong }: { don: DonQr; onHuy: () => void; onXong: () => void }) {
+// urlXong: trang app ngân hàng trả khách về sau khi chuyển xong (tham số url bắt buộc của dl.vietqr.io)
+export default function MaQrThanhToan({ don, onHuy, onXong, urlXong }: { don: DonQr; onHuy: () => void; onXong: () => void; urlXong: string }) {
   const [anh, setAnh] = useState("");
   const [daChep, setDaChep] = useState("");
   // Đã bấm Thanh toán → bước chọn ngân hàng. Từ app ngân hàng quay về mà trang tải lại → vẫn đứng bước này (mốc cvrNh)
   const [buocNganHang, setBuocNganHang] = useState(() => !!window.history.state?.cvrNh);
-  // QUAY LẠI TỪNG BƯỚC (chủ dự án 27/10/2026): bước chọn ngân hàng là một mốc lịch sử (cvrNh) → Quay lại về mã QR;
-  // Quay lại ở mã QR / Huỷ thanh toán → về tin đang đăng, đúng khối Gói tin (trang nạp tiền lo).
+  // QUAY LẠI = HUỶ THANH TOÁN (chủ dự án 27/10/2026): ở bước nào bấm ‹ / Back / Huỷ cũng về tin đang làm, đúng khối Gói tin
+  // (trang nạp tiền lo). Bước chọn ngân hàng chỉ ghi dấu cvrNh lên mốc mã QR (không thêm mốc) — trang tải lại khi khách
+  // từ app ngân hàng quay về vẫn đứng đúng bước này.
   function moNganHang() {
-    window.history.pushState({ ...window.history.state, cvrQr: 1, cvrNh: 1 }, "");
+    window.history.replaceState({ ...window.history.state, cvrNh: 1 }, "");
     setBuocNganHang(true);
   }
-  useEffect(() => {
-    const lui = () => { if (!window.history.state?.cvrNh) setBuocNganHang(false); };
-    window.addEventListener("popstate", lui);
-    return () => window.removeEventListener("popstate", lui);
-  }, []);
-  // Huỷ ở bước chọn ngân hàng: lùi qua cả hai mốc (ngân hàng + mã QR) một lần
-  const huy = () => (buocNganHang ? window.history.go(-2) : onHuy());
+  const huy = onHuy;
   const xongRef = useRef(onXong);
   xongRef.current = onXong;
 
@@ -116,8 +112,12 @@ export default function MaQrThanhToan({ don, onHuy, onXong }: { don: DonQr; onHu
       .catch(() => {});
   }, []);
   // Tài khoản nhận theo đơn PayOS (để web tự nhận tiền); PayOS không trả thì dùng tài khoản công ty MB
+  // Theo tài liệu vietqr.io/danh-sach-api/deeplink-app-ngan-hang: ba = SỐ_TK@mã ngân hàng (MB = "mb"), am, tn, app, url bắt buộc —
+  // đủ thì app ngân hàng (loại tự điền) mở thẳng màn chuyển tiền, điền sẵn số tài khoản + số tiền + nội dung.
   const moApp = (appId: string) =>
-    `https://dl.vietqr.io/pay?app=${appId}&ba=${don.accountNumber || PHAP_LY.soTaiKhoan}@${don.bin || "970422"}&am=${don.amount}&tn=${encodeURIComponent(don.description ?? "")}`;
+    `https://dl.vietqr.io/pay?app=${appId}&ba=${don.accountNumber || PHAP_LY.soTaiKhoan}@${!don.bin || don.bin === "970422" ? "mb" : don.bin}` +
+    `&am=${don.amount}&tn=${encodeURIComponent(don.description ?? "")}&bn=${encodeURIComponent(don.accountName || PHAP_LY.chuTaiKhoan)}` +
+    `&url=${encodeURIComponent(urlXong)}`;
 
   // Quay lại từ app ngân hàng → hỏi trạng thái ngay, không đợi lượt 3 giây
   useEffect(() => {
@@ -144,17 +144,35 @@ export default function MaQrThanhToan({ don, onHuy, onXong }: { don: DonQr; onHu
     ["Nội dung", don.description ?? "", true],
   ];
 
-  // LƯU MÃ VÀO MỤC ẢNH: điện thoại mở bảng chia sẻ (iPhone có "Lưu hình ảnh", Android lưu vào ảnh); máy không chia sẻ được → tải về
+  // LƯU MÃ QR = tệp ảnh PNG (chủ dự án 27/10/2026):
+  // · iPhone: bảng chia sẻ → "Lưu hình ảnh" vào Ảnh (Safari tải thẳng chỉ vào Tệp, không vào Ảnh)
+  // · Android: tải thẳng → thư mục Download, hiện trong Bộ sưu tập / Google Ảnh
+  // · Máy tính: hộp "Lưu thành" chọn chỗ lưu (Chrome, Edge); trình duyệt khác tải về theo cài đặt của trình duyệt
   async function luuMa() {
     if (!anh) return;
-    try {
-      const tep = new File([await (await fetch(anh)).blob()], `coastal-land-${don.orderCode}.png`, { type: "image/png" });
-      if (navigator.canShare?.({ files: [tep] })) { await navigator.share({ files: [tep] }); return; }
-    } catch { /* khách đóng bảng chia sẻ */ return; }
-    const a = document.createElement("a");
-    a.href = anh;
-    a.download = `coastal-land-${don.orderCode}.png`;
-    a.click();
+    const ten = `coastal-land-${don.orderCode}.png`;
+    // Đổi ảnh sang tệp NGAY (không chờ mạng): Safari chỉ cho mở bảng chia sẻ liền sau cú bấm
+    const nhiPhan = atob(anh.split(",")[1]);
+    const anhTep = new Blob([Uint8Array.from(nhiPhan, (c) => c.charCodeAt(0))], { type: "image/png" });
+    const iphone = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
+    if (iphone) {
+      const tep = new File([anhTep], ten, { type: "image/png" });
+      if (navigator.canShare?.({ files: [tep] })) { await navigator.share({ files: [tep] }).catch(() => {}); return; }
+    }
+    const hoiLuu = (window as unknown as { showSaveFilePicker?: (o: object) => Promise<{ createWritable: () => Promise<{ write: (b: Blob) => Promise<void>; close: () => Promise<void> }> }> }).showSaveFilePicker;
+    if (mayTinh && hoiLuu) {
+      try {
+        const noi = await hoiLuu({ suggestedName: ten, types: [{ description: "Ảnh PNG", accept: { "image/png": [".png"] } }] });
+        const ghi = await noi.createWritable();
+        await ghi.write(anhTep);
+        await ghi.close();
+      } catch { /* khách bấm Huỷ ở hộp Lưu thành */ }
+      return;
+    }
+    const lk = document.createElement("a");
+    lk.href = anh;
+    lk.download = ten;
+    lk.click();
   }
 
   // HAI BƯỚC (chủ dự án 27/10/2026): ① mã QR + tài khoản + Lưu mã QR / Thanh toán → ② bấm Thanh toán: hướng dẫn một dòng

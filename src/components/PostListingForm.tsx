@@ -209,6 +209,14 @@ export default function PostListingForm() {
   const [saving, setSaving] = useState<"" | "draft" | "publish">("");
   // Ví không đủ tiền để đăng gói đã chọn — tin đã được lưu nháp, còn thiếu bao nhiêu.
   const [thieuTien, setThieuTien] = useState<{ can: number; du: number; id?: string | null } | null>(null);
+  // Nạp tiền ngay từ tin mới: mốc trang đã đổi sang /dang-tin?id=<tin nháp> thì mới sang trang nạp (hai lệnh liền nhau Next huỷ một)
+  const diNapSau = useRef<string | null>(null);
+  useEffect(() => {
+    if (!diNapSau.current || !editId || editId !== thieuTien?.id) return;
+    const den = diNapSau.current;
+    diNapSau.current = null;
+    router.push(den);
+  }, [editId, thieuTien, router]);
   // Tiền đang tạm giữ cho các tin chờ duyệt khác của khách (0056).
   const [tamGiu, setTamGiu] = useState(0);
   const [error, setError] = useState("");
@@ -1185,12 +1193,14 @@ export default function PostListingForm() {
         <div className="mx-auto mt-6 grid max-w-sm gap-2.5">
           <Link
             href={`/tai-khoan/nap-tien?can=${conThieu}&luu=1${thieuTien.id ? `&ve=${encodeURIComponent(`/dang-tin?id=${thieuTien.id}`)}` : ""}`}
-            onClick={() => {
-              // Nút Back của điện thoại từ trang nạp tiền phải về lại ĐÚNG TIN NHÁP (còn nội dung + gói), không về form trống:
-              // đổi địa chỉ trang này thành /dang-tin?id=<tin nháp> ngay trước khi sang nạp (chủ dự án 26/10/2026)
-              if (thieuTien.id) window.history.replaceState(window.history.state, "", `/dang-tin?id=${thieuTien.id}`);
-              // Back từ trang nạp về → form đứng ngay khối Gói tin (27/10/2026). Ghi cờ, không ghi lên địa chỉ: Next tự ghi đè địa chỉ.
-              try { if (thieuTien.id) sessionStorage.setItem("veGoiTin", thieuTien.id); } catch {}
+            onClick={(e) => {
+              // Nút Back của điện thoại từ trang nạp tiền phải về lại ĐÚNG TIN NHÁP (còn nội dung + gói), không về form trống
+              // (chủ dự án 26/10/2026): đổi mốc trang này thành /dang-tin?id=<tin nháp> bằng router (Next tự ghi đè
+              // replaceState tay — 27/10/2026), rồi mới sang nạp. Cờ về khối Gói tin do trang nạp ghi.
+              if (!thieuTien.id || editId === thieuTien.id) return;
+              e.preventDefault();
+              diNapSau.current = e.currentTarget.getAttribute("href");
+              router.replace(`/dang-tin?id=${thieuTien.id}`); // đổi xong (editId = tin nháp) mới sang nạp — xem diNapSau
             }}
             className="flex h-12 w-full items-center justify-center rounded-lg bg-cvr-ink text-[15px] font-bold text-white transition hover:bg-cvr-ink/90"
           >
