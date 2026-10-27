@@ -32,6 +32,26 @@ Ghi chú tiến độ (27/10, phiên trên máy):
   ⇒ Mọi trang LCP Lighthouse vẫn > 2,5 s (giả lập mạng chậm). Trang chủ nhẹ hẳn (TBT 1305 → 312 ms).
 - /dang-tin, /tai-khoan khi đã đăng nhập: chưa có tài khoản thử để đo — cần chủ dự án bấm thử trên máy thật.
 
+**CHƯA CHUẨN — danh sách đầy đủ sau đợt đo 27/10 (chủ dự án quyết từng mục; mục có ⛔ phải hỏi trước khi sửa):**
+1. **LCP > 2,5 s ở MỌI trang** (Lighthouse giả lập mạng chậm: 3,7–6,4 s). Nhánh đã đỡ nhiều (TBT giảm 2–4 lần) nhưng chưa đạt.
+   Cần đo thêm PageSpeed Insights trên coastalland.vn SAU khi push (số khách thật) mới kết luận được trang nào thật sự chậm.
+2. **HTML trang chủ 481 KB > 450 KB.** Đã đo trong HTML: phần đếm "Xem N tin" (`tinDem`, `src/lib/goiYTrangChu.ts` →
+   `TimTrangChu`) chở sẵn **157 tin = 48 KB** (~300 byte/tin) → bỏ ra là còn ~433 KB, ĐẠT. Còn lại: DOM 243 KB · dữ liệu RSC khác ~163 KB.
+   ⛔ **Lỗi cấu trúc:** phần này lớn theo số tin — 10.000 tin ≈ 3 MB HTML trang chủ (memory `web-phai-chiu-10000-tin`).
+   Hướng sửa (CHƯA LÀM, cần chủ duyệt vì đụng ô tìm trang chủ đã duyệt + thêm đường tải dữ liệu): máy chủ tính sẵn các câu chữ chạy
+   (chỉ vài câu) gửi kèm trang; danh sách đếm tải khi khách MỞ ô lọc, từ một tệp JSON có bộ nhớ đệm CDN, xoá đệm cùng lúc trang chủ
+   làm mới (không thêm cron, không thêm lần chạy máy chủ theo lượt xem). Sau khi sửa phải bấm thử lại: "Xem N tin" ra đúng số như cũ,
+   công tắc Tin xác thực / Môi giới chuyên nghiệp, chữ chạy gợi ý.
+3. **/gioi-thieu LCP 6,4 s** (main 5,8 s — trong sai số máy đo): ảnh đầu trang `hero-gioi-thieu.jpg` 300 KB. Nén thêm sẽ thấy giảm
+   chất lượng (đã thử, mục 5). Hướng chuẩn: chủ dự án đặt ảnh điện thoại riêng ~1080 px ở Admin → Nội dung web → Giới thiệu.
+4. **/bao-gia-dang-tin: không đỡ** (điểm 50 → 51, TBT 1 673 → 1 312 ms) — chưa tìm nguyên nhân; phiên sau xem thành phần nào chạy
+   nặng lúc mở trang (Lighthouse → "bootup-time", "mainthread-work-breakdown").
+5. **/du-an/<slug>: Lighthouse báo NO_LCP** cả main lẫn nhánh — trang không có phần tử nào Lighthouse tính được LCP (ảnh đầu có thể
+   là nền CSS / khung trượt ẩn lúc mở). Google cũng sẽ không đo được LCP trang này. Phiên sau xem ảnh đầu trang dự án dựng thế nào.
+6. **Chưa đo / chưa bấm thử (cần đăng nhập):** /dang-tin (thời gian form hiện + do-o-bi-che), /tai-khoan, trọn quy trình đăng tin,
+   voucher, nạp thêm, admin đăng hộ. Cần tài khoản thử, hoặc chủ dự án tự bấm trên localhost:3000 (bản nhánh) + điện thoại thật.
+7. **Bấm thử giao diện mục 3** (PC + điện thoại, so với web thật): chưa làm — chủ dự án bấm, hoặc phiên sau chụp so sánh.
+
 **PHIÊN MỚI "LÀM TIẾP" — đọc trước:**
 - Trạng thái máy: thư mục chính có thể đang ở **detached HEAD trên nhánh** (để build + đo). Xong việc đo/bấm thử phải
   `git checkout main` trả về. `src/lib/trichMoTa.ts` hiện "M" chỉ do khác ký tự xuống dòng (CRLF) — không phải sửa thật, để nguyên.
