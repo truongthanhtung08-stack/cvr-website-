@@ -24,6 +24,7 @@ import type { TierId } from "@/lib/packages";
 import { useBilling } from "@/lib/useBilling";
 import { tachThue } from "@/lib/thue";
 import { useKhoaCuon } from "@/lib/khoaCuon";
+import { nguoiDungHienTai } from "@/lib/supabase/nguoiDung";
 
 // Tin đăng của THÀNH VIÊN — tin của chính mình (mọi trạng thái, kể cả nháp).
 // RLS đảm bảo chỉ thấy tin owner_id = mình.
@@ -57,7 +58,7 @@ export default function MyListingsPage() {
   useEffect(() => {
     const supabase = createClient();
     (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await nguoiDungHienTai(supabase);
       if (!user) { setLoading(false); return; }
       const { data } = await supabase
         .from("listings")
@@ -226,7 +227,7 @@ Tin ngừng hiển thị ngay, dữ liệu giữ nguyên — sau này bấm Đă
   useEffect(() => {
     const sb = createClient();
     (async () => {
-      const { data: { user } } = await sb.auth.getUser();
+      const user = await nguoiDungHienTai(sb);
       if (!user) return;
       const { data } = await sb.from("up_cho").select("listing_id").eq("user_id", user.id).eq("trang_thai", "cho");
       setChoUp(new Set(((data ?? []) as { listing_id: string }[]).map((x) => x.listing_id)));

@@ -6,6 +6,7 @@ import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import { chuanHoaSdt } from "@/lib/phone";
 import type { ChuyenGia } from "@/lib/chuyenGiaDb";
+import { nguoiDungHienTai } from "@/lib/supabase/nguoiDung";
 
 // ============================================================================
 // THẺ CHUYÊN GIA — người thật, số tin thật, không có chỉ số bịa.
@@ -31,7 +32,7 @@ export default function ChuyenGiaCard({ cg }: { cg: ChuyenGia }) {
     setLoi("");
     try {
       const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await nguoiDungHienTai(supabase);
       if (!user) {
         const next = window.location.pathname + window.location.search;
         window.location.href = `/dang-nhap?next=${encodeURIComponent(next)}`;

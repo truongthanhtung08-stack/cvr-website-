@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { napSupabase, coPhienDangNhap } from "@/lib/supabase/nap";
+import { nguoiDungHienTai } from "@/lib/supabase/nguoiDung";
 
 // Hook đọc trạng thái đăng nhập thật từ Supabase Auth (thay demo localStorage "cvr-member").
 // Có guard: thiếu env Supabase (vd chạy dev chưa có .env.local) → coi như chưa đăng nhập,
@@ -51,9 +52,9 @@ export function useAuth() {
     let boTheoDoi = () => {};
     void napSupabase().then((supabase) => {
       if (huy) return;
-      supabase.auth.getUser().then(({ data }) => {
+      nguoiDungHienTai(supabase).then((u) => {
         if (huy) return;
-        setUser(data.user ?? null);
+        setUser(u);
         setLoading(false);
       });
       const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {

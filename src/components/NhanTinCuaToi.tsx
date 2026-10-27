@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import XacMinhSdt from "@/components/XacMinhSdt";
+import { nguoiDungHienTai } from "@/lib/supabase/nguoiDung";
 
 // ============================================================================
 // TIN ĐĂNG HỘ TỰ VỀ TÀI KHOẢN — TỰ ĐỘNG, KHÔNG CHỜ COASTAL LAND DUYỆT
@@ -27,7 +28,7 @@ export default function NhanTinCuaToi() {
   useEffect(() => {
     const supabase = createClient();
     (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await nguoiDungHienTai(supabase);
       if (!user) return;
 
       // Số đã xác minh → đồng bộ luôn, lặng lẽ; chỉ báo khi thật sự có tin vừa về.

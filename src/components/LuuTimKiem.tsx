@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { napSupabase } from "@/lib/supabase/nap";
 import { filtersToParams, locationLabel, priceRangeText, type Filters } from "@/lib/filters";
+import { nguoiDungHienTai } from "@/lib/supabase/nguoiDung";
 
 // NÚT "NHẬN TIN MỚI" (Smart Search mục 7 — Tìm kiếm đã lưu, 02/10/2026).
 // Lưu đúng bộ lọc đang xem; 8h sáng mỗi ngày có tin MỚI khớp thì báo khách
@@ -14,7 +15,7 @@ export default function LuuTimKiem({ purpose, filters }: { purpose: "ban" | "thu
   async function luu() {
     setTrangThai("dang");
     const supabase = await napSupabase();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await nguoiDungHienTai(supabase);
     if (!user) {
       window.location.href = `/dang-nhap?next=${encodeURIComponent(window.location.pathname + window.location.search)}`;
       return;
