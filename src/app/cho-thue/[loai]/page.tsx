@@ -16,7 +16,7 @@ const DANH_MUC = [...rentCategories, ...nhomPseo("thue")];
 import { demTinTheoKhuVuc, khuVucTrongDiem, moTaKhuVuc, slugKhuVuc, tieuDeKhuVuc, timKhuVuc } from "@/lib/khuVuc";
 import { normalizeVi } from "@/lib/filters";
 import LienKetPseo from "@/components/LienKetPseo";
-import { lienKetCho, lienKetLoaiHinh, moTaSoLieu } from "@/lib/pseo";
+import { TRANG_DONG_BANG, lienKetCho, lienKetLoaiHinh, moTaSoLieu } from "@/lib/pseo";
 import { thangHienTai, tieuDeGoogle } from "@/lib/thang";
 
 // ============================================================================
@@ -158,7 +158,7 @@ export default async function DanhMucChoThuePage({ params }: { params: Promise<{
           initialTypes={c!.types}
         />
         <LienKetPseo nhom={lienKetLoaiHinh("thue", c!, listings)} kieuGoogle />
-        <KhuVucLinks base="/cho-thue" demTheoTinh={demTheoTinh} trangLoai={lienKetLoaiHinh("thue", c!, listings)[0]?.links} tieuDe={`${c!.h1} theo khu vực`} />
+        <KhuVucLinks base="/cho-thue" demTheoTinh={demTheoTinh} trangLoai={TRANG_DONG_BANG.has(`/cho-thue/${c!.slug}`) ? undefined : lienKetLoaiHinh("thue", c!, listings)[0]?.links} tieuDe={`${c!.h1} theo khu vực`} />
       </main>
       <Footer />
     </>

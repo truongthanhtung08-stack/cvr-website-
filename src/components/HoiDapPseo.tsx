@@ -144,10 +144,11 @@ export function giaTheoNhom(dk: DieuKien, tin: Listing[]): GiaNhom | null {
 
 // lienKet: thay link "Xem thêm nhà đất <tỉnh>" (trang Giá nhà đất theo tỉnh trỏ về đúng trang loại hình × tỉnh)
 // coTrangGia: tỉnh đã có trang "Giá nhà đất <tỉnh>" mở cho Google (src/lib/giaNhaDat) — chỉ khi đó mới hiện liên kết sang trang giá
-export function GiaTheoNhomPseo({ g, lienKet, coTrangGia = false }: { g: GiaNhom | null; lienKet?: { href: string; nhan: string }; coTrangGia?: boolean }) {
-  if (!g || (!g.duAn.length && !g.khuVuc.length && !g.khuVucGia.length)) return null;
+// cu: trang đang lên Google (TRANG_DONG_BANG) — vẽ ĐÚNG bản cũ (khối "Tham khảo giá" theo khu vực / dự án), không gì mới
+export function GiaTheoNhomPseo({ g, lienKet, coTrangGia = false, cu = false }: { g: GiaNhom | null; lienKet?: { href: string; nhan: string }; coTrangGia?: boolean; cu?: boolean }) {
+  if (!g || (!g.duAn.length && !g.khuVuc.length && (cu || !g.khuVucGia.length))) return null;
   // Có ≥ 2 khu vực: khuôn khung AI (mẫu chủ dự án duyệt 27/10/2026) — mỗi khu vực một mục, dự án nằm trong khu vực
-  if (g.khuVucGia.length) return (
+  if (!cu && g.khuVucGia.length) return (
     <section aria-labelledby="gia-theo-nhom" className="mx-auto max-w-7xl px-4 pb-8 sm:px-6 lg:px-8">
       <h2 id="gia-theo-nhom" className="text-[20px] font-normal tracking-tight text-cvr-ink sm:text-[22px]">{g.tieuDeKV}</h2>
       <div className="max-w-[980px]">
@@ -189,13 +190,13 @@ export function GiaTheoNhomPseo({ g, lienKet, coTrangGia = false }: { g: GiaNhom
         {bang("Theo khu vực", g.khuVuc)}
         {bang("Theo dự án", g.duAn)}
         <Link href={(lienKet ?? g.veTinh).href} className="mt-4 inline-block text-[15px] font-medium text-cvr-ink underline underline-offset-4">{(lienKet ?? g.veTinh).nhan}</Link>
-        {!lienKet && coTrangGia && <><span className="mx-2 text-cvr-faint">·</span><Link href={g.veGia.href} className="mt-4 inline-block text-[15px] font-medium text-cvr-ink underline underline-offset-4">{g.veGia.nhan}</Link></>}
+        {!cu && !lienKet && coTrangGia && <><span className="mx-2 text-cvr-faint">·</span><Link href={g.veGia.href} className="mt-4 inline-block text-[15px] font-medium text-cvr-ink underline underline-offset-4">{g.veGia.nhan}</Link></>}
       </div>
     </section>
   );
 }
 
-export function hoiDapPseo(dk: DieuKien, tin: Listing[]): { q: string; a: string }[] {
+export function hoiDapPseo(dk: DieuKien, tin: Listing[], cu = false): { q: string; a: string }[] {
   if (tin.length < 3) return [];
   const thue = dk.muc === "thue";
   // CÂU HỎI THEO LỜI NGƯỜI MUA (chủ dự án 21/10/2026: bỏ kiểu ghép máy móc; bỏ hẳn câu "khu vực nào nhiều tin").
@@ -212,6 +213,19 @@ export function hoiDapPseo(dk: DieuKien, tin: Listing[]): { q: string; a: string
   }
   // ③ "Có những dự án nào" — câu Google gợi trong "Mọi người cũng hỏi"; ≥ 2 dự án mới hỏi
   if (g?.duAn.length) ds.push({ q: `Có những dự án ${mon} nào ở ${noi}?`, a: `${g.duAn.map((x) => `${x.ten} (${x.gia})`).join("; ")}.` });
+  if (cu) return ds; // trang đang lên Google: đúng 3 câu cũ
+  // ④ ⑤ CỘNG THÊM theo cách gõ khách hay dùng (chủ dự án 27/10/2026: "hiểu cả cách gõ… không để cái đã lên biến mất") —
+  // "T10/2026" và "… ở khu vực nào". Chỉ thêm câu, không đổi tiêu đề / mô tả / dòng số liệu trang đang có hạng.
+  const thangVietTat = thangHienTai().replace(/^tháng\s+/, "T");
+  const dtAll = tin.map((l) => l.areaM2 ?? 0).filter((v) => v > 0);
+  if (tien.length) {
+    const kg = khoangGiaTin(tin, thue).replace(/^từ /, "");
+    const dt = dtAll.length ? `, diện tích ${(() => { const a = Math.min(...dtAll), b = Math.max(...dtAll); return a === b ? `${soVi(a)} m²` : `từ ${soVi(a)} đến ${soVi(b)} m²`; })()}` : "";
+    ds.push({ q: `Giá ${thue ? "thuê " : ""}${mon} ${noi} ${thangVietTat} bao nhiêu?`, a: `${kg.includes(" đến ") ? `Từ ${kg}` : kg.charAt(0).toUpperCase() + kg.slice(1)}${dt}.` });
+  }
+  if (g && g.khuVucGia.length >= 2) {
+    ds.push({ q: `${thue ? "Thuê" : "Mua"} ${mon} ${noi} ${thangHienTai()} ở khu vực nào?`, a: `${g.khuVucGia.map((k) => `${k.ten}${k.cu ? ` (${k.cu})` : ""}`).join(", ")}.` });
+  }
   return ds;
 }
 

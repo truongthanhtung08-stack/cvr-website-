@@ -39,6 +39,14 @@ export const phuongCuaTin = (l: Listing) => {
 // Tên quận/huyện CŨ của một nhóm tin (chủ dự án 27/10/2026: người tìm vẫn gõ "nhà Hải Châu", "đất Ngũ Hành Sơn") — lấy từ địa chỉ cũ
 // của chính tin (locationCu "Phường cũ, Quận cũ, Tỉnh"), tên xuất hiện nhiều nhất; cấp chỉ ghi khi biết chắc. Dùng ở khối giá theo khu vực
 // + mô tả Google trang phường.
+// ⛔⛔ TRANG ĐANG LÊN GOOGLE — CẤM ĐỤNG (chủ dự án 27/10/2026: "khó khăn lắm nó mới lên, cái đã lên thì CẤM đụng vào").
+// Trang top 10 hoặc có lượt bấm (Search Console + tra Google 27/10). Giữ ĐÚNG bản Google đã đọc: khối "Tham khảo giá" cũ, 3 câu hỏi đáp cũ,
+// khối khu vực cũ — không thêm khối giá mới, hỏi đáp mới, liên kết mới. Thêm/bớt trang ở đây khi có số đo mới.
+export const TRANG_DONG_BANG = new Set<string>([
+  "/cho-thue/can-ho-chung-cu/da-nang", "/mua-ban/can-ho-chung-cu/da-nang/1-phong-ngu", "/mua-ban/can-ho-chung-cu/hue",
+  "/mua-ban", "/mua-ban/da-nang", "/mua-ban/dat", "/mua-ban/bds-khac",
+]);
+
 export const CAP_CU: Record<string, string> = {
   "Hải Châu": "quận", "Thanh Khê": "quận", "Sơn Trà": "quận", "Ngũ Hành Sơn": "quận", "Liên Chiểu": "quận", "Cẩm Lệ": "quận", "Hòa Vang": "huyện",
   "Phú Xuân": "quận", "Thuận Hóa": "quận", "Nha Trang": "thành phố", "Cam Ranh": "thành phố", "Quy Nhơn": "thành phố",
