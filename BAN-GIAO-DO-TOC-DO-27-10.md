@@ -7,7 +7,7 @@
 ## TIẾN ĐỘ (phiên đo cập nhật sau MỖI bước rồi commit lên nhánh — dừng giữa chừng thì phiên sau đọc mục này làm tiếp)
 
 - [x] Đo TRƯỚC (main) — mục 2 (xong)
-- [~] Đo SAU (nhánh) — mục 2: đang build nhánh
+- [~] Đo SAU (nhánh) — mục 2: build nhánh xong (thư mục chính đang ở nhánh, detached HEAD) → còn đo y như main
 - [ ] do-o-bi-che /dang-tin (thường + 470) = "BI CHE: 0"
 - [ ] Bấm thử — mục 3
 - [ ] Báo chủ dự án bảng số trước/sau
@@ -25,6 +25,27 @@ Ghi chú tiến độ (27/10, phiên trên máy):
   /cho-thue 54·4895·1903 · condotel/da-nang 53·5324·1783 · trang tin 56·4755·1266 · dự án 47·6420·2348 (2/3 lần Lighthouse lỗi NaN — đo lại) ·
   /bao-gia-dang-tin 50·5811·1673 · /gioi-thieu 57·5820·976 · /faq 62·4024·1247.
 - /dang-tin, /tai-khoan khi đã đăng nhập: chưa có tài khoản thử để đo — cần chủ dự án bấm thử trên máy thật.
+
+**PHIÊN MỚI "LÀM TIẾP" — đọc trước:**
+- Trạng thái máy: thư mục chính có thể đang ở **detached HEAD trên nhánh** (để build + đo). Xong việc đo/bấm thử phải
+  `git checkout main` trả về. `src/lib/trichMoTa.ts` hiện "M" chỉ do khác ký tự xuống dòng (CRLF) — không phải sửa thật, để nguyên.
+- Số đo phải lấy ĐÚNG cách như main: tắt mọi server cổng 3000 → `npx next build` → `npx next start -p 3000` → chạy 2 vòng dưới.
+- Vòng 1 (do-toc-do + cỡ HTML), trong Git Bash ở thư mục chính:
+  ```
+  ID=21687cfc-0fc6-42bf-8bc5-cfcefbe50310; SLUG=sun-galaxy-complex-da-nang
+  curl -s http://localhost:3000/ | wc -c
+  for p in / /mua-ban /cho-thue /mua-ban/condotel/da-nang /bat-dong-san/$ID /du-an/$SLUG /bao-gia-dang-tin /gioi-thieu /faq; do
+    curl -s -o /dev/null http://localhost:3000$p; echo "$p"; node --experimental-websocket scripts/do-toc-do.mjs http://localhost:3000$p 2; done
+  ```
+- Vòng 2 (Lighthouse 3 lần/trang, lấy trung vị điểm / LCP / TBT / CLS):
+  ```
+  export CHROME_PATH="C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe"
+  npx -y lighthouse http://localhost:3000<trang> --only-categories=performance --output=json --output-path=lh.json --chrome-flags="--headless=new" --quiet
+  ```
+  (đọc `categories.performance.score`, `audits['largest-contentful-paint'|'total-blocking-time'|'cumulative-layout-shift'].numericValue`)
+- Commit tiến độ lên nhánh mà không đổi thư mục làm việc (server đọc `public/` từ đĩa): dùng chỉ mục git tạm
+  (`GIT_INDEX_FILE=… git read-tree origin/<nhánh>` → `hash-object -w` → `update-index --cacheinfo` → `write-tree` → `commit-tree -p` → `git push origin <sha>:refs/heads/claude/clever-bardeen-15e4ot`).
+  ⛔ Không đặt dấu backtick trong chuỗi lệnh shell (bash chạy luôn lệnh bên trong — đã dính 27/10).
 
 ## 0. MỞ PHIÊN ĐO — dán nguyên đoạn này vào Claude Code trên máy, trong thư mục chính dự án (có `.env.local`)
 
