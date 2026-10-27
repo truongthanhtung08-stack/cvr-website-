@@ -45,7 +45,11 @@ export default async function Home() {
   // 20/10/2026 (trang chủ 603 KB > ngưỡng 450): thẻ chỉ cần phần đầu — bỏ toàn văn bài viết và phần giới thiệu, bảng giá,
   // mặt bằng… của dự án khỏi dữ liệu gửi kèm (ProjectsSection dùng name/slug/type/status/priceFrom/location/image/photos/map).
   const baiThe = articles.map(({ content: _c, ...a }) => a);
-  const duAnThe = projects.map(({ scale: _s, amenities: _a, overview: _o, priceTable: _pt, floorPlans: _fp, places: _pl, developerInfo: _di, videos: _v, ...p }) => ({ ...p, scale: [], amenities: [], overview: [] }));
+  const duAnThe = projects.map(({ scale: _s, amenities: _a, overview: _o, priceTable: _pt, floorPlans: _fp, places: _pl, developerInfo: _di, videos: _v, ...p }) => ({
+    ...p, scale: [], amenities: [], overview: [],
+    // 27/10/2026: thẻ dự án chạy tối đa 6 ảnh của [image, ...photos] (AnhChay `slice(0, 6)`) → bỏ ảnh thứ 7 trở đi
+    ...(p.photos ? { photos: p.photos.slice(0, 6) } : {}),
+  }));
 
   return (
     <>

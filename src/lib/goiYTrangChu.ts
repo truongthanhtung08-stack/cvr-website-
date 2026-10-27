@@ -15,10 +15,14 @@ import { tatCaTrang, tieuDe, cha, NGUONG_INDEX } from "@/lib/pseo";
 export type CauGoiY = { nhan: string; sub: string; href: string; muc: "ban" | "thue"; loai: boolean };
 
 export function goiYTrangChu(tin: Listing[]): CauGoiY[] {
-  return [...tatCaTrang(tin).values()]
+  const ds = [...tatCaTrang(tin).values()]
     .filter((p) => !p.dk.huong && p.n >= NGUONG_INDEX && (p.index || !cha(p.dk)))
     .sort((a, b) => b.n - a.n)
     .map((p) => ({ nhan: tieuDe(p.dk), sub: `${p.n} tin`, href: p.path, muc: p.dk.muc, loai: !!p.dk.cat }));
+  // 27/10/2026 (trang chủ 497 KB > ngưỡng 450): TimTrangChu chỉ hiện cụm có loại hình, 6 cụm đầu mỗi mục
+  // (`filter(c.muc === mb && c.loai).slice(0, 6)`) → chỉ gửi đúng những cụm đó, cùng thứ tự. Đổi số 6 ở đó thì đổi cả ở đây.
+  const dem = { ban: 0, thue: 0 };
+  return ds.filter((c) => c.loai && dem[c.muc]++ < 6);
 }
 
 // ĐẾM TIN cho nút "Xem N tin" của hàng trường lọc (chủ dự án 17/10/2026): chỉ những trường applyFilters cần,
@@ -31,8 +35,15 @@ export type TinDem = {
 export function tinDem(tin: Listing[]): TinDem[] {
   // diaChiTim lặp "mới · cũ · mới" → bỏ phần trùng (20/10/2026, trang chủ nặng); đủ chữ để lọc như cũ
   const gon = (s?: string) => (s ? [...new Set(s.split(" · ").map((x) => x.trim()))].join(" · ") : undefined);
-  return tin.map((l) => ({
-    id: l.id, title: "", price: l.price, area: l.area, beds: l.beds, location: l.location, diaChiTim: gon(l.diaChiTim),
-    type: l.type, purpose: l.purpose === "thue" ? "thue" : "ban", huong: l.huong, phapLy: l.phapLy, noiThat: l.noiThat,
-  }));
+  return tin.map((l) => {
+    const diaChiTim = gon(l.diaChiTim);
+    return {
+      // 27/10/2026 (trang chủ 497 KB): id chỉ còn dùng cho công tắc "Tin xác thực" / "Môi giới chuyên nghiệp"
+      // (listingVerified/listingProBroker đọc parseInt(id) || 1) → gửi đúng con số đó thay cho mã 36 ký tự, đếm y như cũ.
+      id: String(parseInt(l.id, 10) || 1), title: "", price: l.price, area: l.area, beds: l.beds,
+      // Có diaChiTim thì bộ lọc dò trên nó (đã chứa location); location chỉ còn cho listingHints lấy tên tỉnh (phần sau dấu phẩy cuối).
+      location: diaChiTim ? (l.location.split(",").pop()?.trim() ?? "") : l.location, diaChiTim,
+      type: l.type, purpose: l.purpose === "thue" ? "thue" : "ban", huong: l.huong, phapLy: l.phapLy, noiThat: l.noiThat,
+    };
+  });
 }
