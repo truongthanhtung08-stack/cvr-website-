@@ -56,13 +56,26 @@ function TopUpForm() {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
   const [don, setDon] = useState<DonQr | null>(null); // đơn vừa tạo → hiện mã QR tại trang
+  // GIỮ ĐƠN khi khách sang app ngân hàng (27/10/2026): điện thoại có thể tải lại trang lúc khách quay về → mở lại đúng
+  // đơn đó (trang hỏi trạng thái, đã nộp thì tự về đúng chỗ). Huỷ hoặc nộp xong thì xoá.
+  const KHOA_DON = "donNap";
+  const boDon = () => { try { sessionStorage.removeItem(KHOA_DON); } catch {} };
+  useEffect(() => {
+    try {
+      const luu = JSON.parse(sessionStorage.getItem(KHOA_DON) || "null") as { don: DonQr; ve: string | null; luc: number } | null;
+      // Chỉ đơn trong 15 phút (bằng thời gian trang hỏi trạng thái)
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- khôi phục một lần lúc mở trang
+      if (luu?.don && luu.ve === ve && Date.now() - luu.luc < 15 * 60_000) setDon(luu.don);
+    } catch {}
+  }, [ve]);
   // NÚT QUAY LẠI khi đang mở mã QR = Huỷ (chủ dự án 26/10/2026): mở mã thì thêm một mốc lịch sử; quay lại (nút điện thoại,
   // nút ‹ trên trang, nút Huỷ) gỡ mốc đó → đóng mã, về đúng chỗ: từ tin đang đăng → về tin; nạp thường → ô chọn số tiền.
   useEffect(() => {
     if (!don) return;
     // Giữ nguyên state của Next (bản sao mốc hiện tại) — state lạ thì Next tải lại cả trang khi quay lại
     window.history.pushState(window.history.state, "");
-    const dong = () => { setDon(null); if (ve) router.replace(ve); };
+    // Về tin đang đăng kèm huy-tt=1 → form cuộn tới khối Gói tin — thanh toán
+    const dong = () => { setDon(null); boDon(); if (ve) router.replace(ve.startsWith("/dang-tin?id=") ? `${ve}&huy-tt=1` : ve); };
     window.addEventListener("popstate", dong);
     return () => window.removeEventListener("popstate", dong);
   }, [don, ve, router]);
@@ -124,6 +137,7 @@ function TopUpForm() {
       // MÃ QR NGAY TẠI TRANG, logo Coastal Land — khách không sang trang PayOS nào (chủ dự án 26/10/2026: "không có PayOS gì hết")
       if (json.ok && json.qrCode) {
         setDon(json as DonQr);
+        try { sessionStorage.setItem(KHOA_DON, JSON.stringify({ don: json, ve, luc: Date.now() })); } catch {}
         setLoading(false);
         return;
       }
@@ -166,6 +180,7 @@ function TopUpForm() {
           onHuy={() => window.history.back()}
           // Tiền về (webhook đã cộng ví): đến từ tin → Tin của tôi (tin tự gửi duyệt); nạp thường → báo thành công tại đây
           onXong={() => {
+            boDon();
             if (ve) router.replace("/tai-khoan/tin-dang?nap=thanh-cong");
             else { setDon(null); router.replace("/tai-khoan/nap-tien?ket-qua=thanh-cong"); }
           }}

@@ -700,6 +700,13 @@ export default function PostListingForm() {
         const p = (r.details as { plan?: { tier?: string; days?: number; khuyenMai?: boolean } } | null)?.plan;
         if (p?.tier) { setPlanTier(p.tier as TierId); setPlanDays(Number(p.days) || 0); setChonKm(p.khuyenMai === true); }
       }
+      // HUỶ THANH TOÁN (?huy-tt=1 từ trang nạp tiền — chủ dự án 27/10/2026): về tin nháp, đưa thẳng tới khối Gói tin — thanh toán
+      const dc = new URL(window.location.href);
+      if (dc.searchParams.get("huy-tt") === "1") {
+        dc.searchParams.delete("huy-tt");
+        window.history.replaceState(window.history.state, "", dc.pathname + dc.search);
+        setTimeout(() => document.getElementById("b-goi")?.scrollIntoView({ behavior: "smooth", block: "start" }), 400);
+      }
       setDemand(demandOfPurpose(r.purpose));
       if (r.type) setCategory(r.type);
       setProvince(r.province ?? "");

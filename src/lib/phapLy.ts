@@ -26,6 +26,10 @@ export const PHAP_LY = {
   chiuTrachNhiemNoiDung: "",
   // Địa chỉ trụ sở chính, ghi theo đơn vị hành chính MỚI 2025 (Tỉnh/Thành → Phường/Xã).
   diaChiDayDu: "220 Nguyễn Mậu Tài, Phường Hòa Xuân, Thành phố Đà Nẵng",
+  // Tài khoản công ty ghi dưới mã QR thanh toán (chủ dự án 27/10/2026)
+  nganHang: "MB Bank",
+  soTaiKhoan: "88347168",
+  chuTaiKhoan: "CTY TNHH BDS COASTAL LAND",
 
   // ── CÒN THIẾU ─────────────────────────────────────────────────────────────
   // Link xác nhận đã thông báo website với Bộ Công Thương. ĐÃ CÓ ĐKKD → đăng ký
