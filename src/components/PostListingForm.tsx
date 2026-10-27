@@ -626,11 +626,23 @@ export default function PostListingForm() {
       if (user) {
         // Lấy thêm ngày tạo · hạn mức tin miễn phí · vai trò · tổng chi tiêu
         // để tính ĐÚNG số tiền phải trả (ưu đãi thành viên mới, khuyến mãi, cấp).
-        const { data: p } = await supabase
-          .from("profiles")
-          .select("full_name, phone, email, avatar_url, created_at:ngay_thanh_vien, free_quota, role, total_topup, balance, phone_verified, sdt_lien_he_xac_minh")
-          .eq("id", user.id)
-          .single();
+        // Hồ sơ · ví · voucher hỏi CÙNG LÚC (27/10/2026, chủ dự án: "mở trang đăng tin vào và đăng, nhanh nhất") — trước đây
+        // nối đuôi 4 lượt nên "Đang tải…" kéo dài thêm mỗi lượt một nhịp mạng. Vẫn đúng các câu hỏi đó, số tính như cũ.
+        const [{ data: p }, { data: vi }, { data: vc }] = await Promise.all([
+          supabase
+            .from("profiles")
+            .select("full_name, phone, email, avatar_url, created_at:ngay_thanh_vien, free_quota, role, total_topup, balance, phone_verified, sdt_lien_he_xac_minh")
+            .eq("id", user.id)
+            .single(),
+          // TẠM GIỮ (0056): tiền của các tin đang chờ duyệt đã khoá trong ví → mọi phép so
+          // "đủ tiền" trong form dùng số KHẢ DỤNG (số dư − tạm giữ), y như CSDL kiểm.
+          supabase.rpc("so_du_kha_dung"),
+          // VOUCHER GÓI HỘI VIÊN (0040): cấp kỳ 30 ngày hiện tại (lười — như trang Tài khoản → Hội viên) rồi đọc voucher còn lượt.
+          (async () => {
+            await supabase.rpc("cap_voucher_hoi_vien", { p_user: user.id });
+            return supabase.from("hoi_vien_voucher").select("loai,giam,con_lai,tu,den").gt("con_lai", 0);
+          })(),
+        ]);
         if (p) {
           const pv = p as { phone_verified?: boolean; sdt_lien_he_xac_minh?: boolean; role?: string };
           // Số khách đăng ký bằng số (Supabase đã nhận mã) cũng coi là đã xác minh; nhóm Email đã
@@ -652,17 +664,11 @@ export default function PostListingForm() {
             // Cột balance có thể chưa bật trong CSDL → coi như 0.
             balance: (p as { balance?: number }).balance ?? 0,
           });
-          // TẠM GIỮ (0056): tiền của các tin đang chờ duyệt đã khoá trong ví → mọi phép so
-          // "đủ tiền" trong form dùng số KHẢ DỤNG (số dư − tạm giữ), y như CSDL kiểm.
-          const { data: vi } = await supabase.rpc("so_du_kha_dung");
           const v = (vi as { kha_dung: number; tam_giu: number }[] | null)?.[0];
           if (v) {
             setHoSoVi((h) => (h ? { ...h, balance: Number(v.kha_dung) } : h));
             setTamGiu(Number(v.tam_giu));
           }
-          // VOUCHER GÓI HỘI VIÊN (0040): cấp kỳ 30 ngày hiện tại (lười — như trang Tài khoản → Hội viên) rồi đọc voucher còn lượt.
-          await supabase.rpc("cap_voucher_hoi_vien", { p_user: user.id });
-          const { data: vc } = await supabase.from("hoi_vien_voucher").select("loai,giam,con_lai,tu,den").gt("con_lai", 0);
           setVouchers(((vc ?? []) as { loai: string; giam: number; con_lai: number; tu: string; den: string }[]).map((x) => ({ ...x, giam: Number(x.giam) })));
         }
       }
