@@ -51,12 +51,20 @@ import ODiaChiGoiY from "@/components/ODiaChiGoiY";
 import { ganNhanPhimEnter, enterSangOTiep } from "@/lib/oTiepTheo";
 import { loiEmail, loiSdt } from "@/lib/kiemNhap";
 import { anhDaiDien, emailThat } from "@/lib/useAuth";
-import XemTruocTin from "@/components/XemTruocTin";
-import { xemTruocTin } from "@/lib/listingsDb";
+import type { xemTruocTin } from "@/lib/listingsDb";
 import { useKhoaCuon } from "@/lib/khoaCuon";
 import { homNayVn } from "@/lib/gioVn";
 // Thẻ tin mẫu (nút "Tin hiển thị" ở mục gói tin) — chỉ tải khi khách bấm, không nặng lúc mở trang đăng tin.
 const TinHienThiMau = dynamic(() => import("@/components/TinHienThiMau"));
+// Khung "Xem trước" (kèm bộ xem ảnh và lớp dựng chi tiết tin ~60 KB mã) — cũng chỉ tải khi khách bấm (27/10/2026: /dang-tin nặng).
+const XemTruocTin = dynamic(() =>
+  Promise.all([import("@/components/XemTruocTin"), import("@/lib/listingsDb")]).then(([m, l]) => {
+    const Khung = m.default;
+    return function XemTruocTinMo({ row, ...p }: Omit<React.ComponentProps<typeof Khung>, "du"> & { row: Parameters<typeof xemTruocTin>[0] }) {
+      return <Khung du={l.xemTruocTin(row)} {...p} />;
+    };
+  }),
+);
 
 // Đơn vị giá "Khác — tự ghi" (chủ dự án 14/10/2026): khách ghi nguyên văn, lưu details.giaTuGhi.
 const KHAC_GIA = "Khác — tự ghi";
@@ -1245,7 +1253,7 @@ export default function PostListingForm() {
 
       {xemTruoc && (
         <XemTruocTin
-          du={xemTruocTin({ ...giaTriTin(true), province: province || "", tier: (planTier || "basic") as TierId } as Parameters<typeof xemTruocTin>[0])}
+          row={{ ...giaTriTin(true), province: province || "", tier: (planTier || "basic") as TierId } as Parameters<typeof xemTruocTin>[0]}
           tier={planTier}
           onDong={() => setXemTruoc(false)}
           onDang={() => { setXemTruoc(false); save(false); }}
