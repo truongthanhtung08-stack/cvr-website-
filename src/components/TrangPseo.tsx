@@ -12,6 +12,7 @@ import { getListings, getListingsHetHan } from "@/lib/listingsDb";
 import { getArticles } from "@/lib/contentDb";
 import { boLocCua, duongDan, duongDanPhanCap, khop, lienKetCho, moTa, soLieuTrang, tatCaTrang, thangHienTai, tieuDe, type DieuKien } from "@/lib/pseo";
 import { tieuDeGoogle } from "@/lib/thang";
+import { trangGiaNhaDat } from "@/lib/giaNhaDat";
 
 // ============================================================================
 // TEMPLATE 1 — DYNAMIC LISTING (pSEO). Dùng chung cho mọi trục: loại × tỉnh, phường,
@@ -68,7 +69,7 @@ export default async function TrangPseo({ dk }: { dk: DieuKien }) {
             articles={goiNheBaiViet(articles)}
           />
         )}
-        <GiaTheoNhomPseo g={giaTheoNhom(dk, items)} />
+        <GiaTheoNhomPseo g={giaTheoNhom(dk, items)} coTrangGia={trangGiaNhaDat(dk.tinh, listings).index} />
         <HoiDapPseo hoiDap={hoiDapPseo(dk, items)} />
         <LienKetPseo nhom={lienKetCho(dk, listings)} cau={tieuDe(dk)} kieuGoogle />
       </main>

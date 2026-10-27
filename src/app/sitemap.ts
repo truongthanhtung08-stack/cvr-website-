@@ -4,7 +4,8 @@ import { getListings, getListingsHetHan } from "@/lib/listingsDb";
 import { getChuyenGia, NGUONG_INDEX_HO_SO } from "@/lib/chuyenGiaDb";
 import { duAnThuocNhom, NGUONG_INDEX_DANH_MUC, projectCategories, rentCategories, saleCategories, soTinDanhMuc } from "@/lib/categories";
 import { packages, trangTienIchDat, utilityTools } from "@/lib/packages";
-import { khuVucList } from "@/lib/khuVuc";
+import { khuVucList, khuVucTrongDiem, slugKhuVuc, timKhuVuc } from "@/lib/khuVuc";
+import { trangGiaNhaDat } from "@/lib/giaNhaDat";
 import { banGocCua, tinDatChuan, trangIndex } from "@/lib/pseo";
 import { NGUONG_INDEX_CDT, nhomChuDauTu } from "@/lib/chuDauTu";
 
@@ -116,6 +117,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         changeFrequency: "daily",
         priority: 0.8,
       });
+    }
+
+    // TRANG GIÁ NHÀ ĐẤT THEO TỈNH (kế hoạch SEO 5b-D3, 27/10/2026) — chỉ tỉnh qua cổng (≥ 2 loại hình có số)
+    for (const t of khuVucTrongDiem) {
+      const kv = timKhuVuc(slugKhuVuc(t));
+      if (kv && trangGiaNhaDat(kv, listings).index) dynamic.push({ url: `${SITE}/gia-nha-dat/${kv.slug}`, changeFrequency: "weekly", priority: 0.8 });
     }
 
     // TRANG CHỦ ĐẦU TƯ — chỉ chủ đầu tư có ≥ 2 dự án đã đăng (src/lib/chuDauTu.ts)

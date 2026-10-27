@@ -96,7 +96,12 @@ function giaKhuVuc(xs: Listing[], thue: boolean): string {
   const motM2 = thue ? "" : giaNhom(xs, false).replace(/^từ /, "").replace(" đến ", " – ");
   return `${phan.join(", ")}${motM2 ? ` (${motM2})` : ""}.`;
 }
-export type GiaNhom = { hoi: string; tong: string; tieuDe: string; veTinh: { href: string; nhan: string }; duAn: { ten: string; gia: string }[]; khuVuc: { ten: string; gia: string }[]; tieuDeKV: string; tongKV: string; khuVucGia: KhuVucGia[]; phanKhuc: PhanKhuc[] };
+export type GiaNhom = { hoi: string; tong: string; tieuDe: string; veTinh: { href: string; nhan: string }; veGia: { href: string; nhan: string }; duAn: { ten: string; gia: string }[]; khuVuc: { ten: string; gia: string }[]; tieuDeKV: string; tongKV: string; khuVucGia: KhuVucGia[]; phanKhuc: PhanKhuc[] };
+// Khoảng giá một nhóm tin — dùng ở trang Giá nhà đất theo tỉnh (bán: tổng giá · thuê: triệu/tháng)
+export function khoangGiaTin(tin: Listing[], thue: boolean): string {
+  const g = tin.map((l) => l.priceVnd ?? 0).filter((v) => v > 0);
+  return g.length ? (thue ? khoangDon(g, trieu("triệu/tháng")) : khoangDon(g, gia)) : "";
+}
 export function giaTheoNhom(dk: DieuKien, tin: Listing[]): GiaNhom | null {
   if (tin.length < 3) return null; // cùng cổng trang mở cho Google
   // Trang gộp nhiều loại hình ("nhà đất …") KHÔNG tính giá: luật chủ dự án 03/10 + 16/10/2026 — giá đúng khu vực, đúng loại
@@ -129,6 +134,7 @@ export function giaTheoNhom(dk: DieuKien, tin: Listing[]): GiaNhom | null {
     // Hỏi theo cụm ngắn khách gõ; đáp ghi cả cụm ngắn lẫn tên đầy đủ: "Giá chung cư Huế, căn hộ chung cư tại Huế tháng 10/2026 từ …"
     hoi: `Giá ${thueChu}${ngan} ${noi} ${thang}?`,
     tong: !tong ? "" : ngan !== mon ? `Giá ${thueChu}${ngan} ${noi}, ${mon} tại ${noi} ${thang} ${tong}.` : `Giá ${thueChu}${mon} ${noi} ${thang} ${tong}.`,
+    veGia: { href: `/gia-nha-dat/${dk.tinh.slug}`, nhan: `Giá nhà đất ${dk.tinh.name} ${thang}` },
     veTinh: { href: `/${thue ? "cho-thue" : "mua-ban"}/${dk.tinh.slug}`, nhan: `Xem thêm nhà đất ${thue ? "cho thuê " : ""}${dk.tinh.name}` },
     tieuDe: `Tham khảo giá ${thue ? "thuê" : "bán"} ${mon} ${noi}`,
     duAn: duAn.length >= 2 ? duAn : [],
@@ -136,7 +142,9 @@ export function giaTheoNhom(dk: DieuKien, tin: Listing[]): GiaNhom | null {
   };
 }
 
-export function GiaTheoNhomPseo({ g }: { g: GiaNhom | null }) {
+// lienKet: thay link "Xem thêm nhà đất <tỉnh>" (trang Giá nhà đất theo tỉnh trỏ về đúng trang loại hình × tỉnh)
+// coTrangGia: tỉnh đã có trang "Giá nhà đất <tỉnh>" mở cho Google (src/lib/giaNhaDat) — chỉ khi đó mới hiện liên kết sang trang giá
+export function GiaTheoNhomPseo({ g, lienKet, coTrangGia = false }: { g: GiaNhom | null; lienKet?: { href: string; nhan: string }; coTrangGia?: boolean }) {
   if (!g || (!g.duAn.length && !g.khuVuc.length && !g.khuVucGia.length)) return null;
   // Có ≥ 2 khu vực: khuôn khung AI (mẫu chủ dự án duyệt 27/10/2026) — mỗi khu vực một mục, dự án nằm trong khu vực
   if (g.khuVucGia.length) return (
@@ -160,7 +168,8 @@ export function GiaTheoNhomPseo({ g }: { g: GiaNhom | null }) {
             </ul>
           </div>
         )}
-        <Link href={g.veTinh.href} className="mt-4 inline-block text-[15px] font-medium text-cvr-ink underline underline-offset-4">{g.veTinh.nhan}</Link>
+        <Link href={(lienKet ?? g.veTinh).href} className="mt-4 inline-block text-[15px] font-medium text-cvr-ink underline underline-offset-4">{(lienKet ?? g.veTinh).nhan}</Link>
+        {!lienKet && coTrangGia && <><span className="mx-2 text-cvr-faint">·</span><Link href={g.veGia.href} className="mt-4 inline-block text-[15px] font-medium text-cvr-ink underline underline-offset-4">{g.veGia.nhan}</Link></>}
       </div>
     </section>
   );
@@ -179,7 +188,8 @@ export function GiaTheoNhomPseo({ g }: { g: GiaNhom | null }) {
         {g.tong && <p className="mt-3 text-[15px] leading-relaxed text-cvr-muted">{g.tong}</p>}
         {bang("Theo khu vực", g.khuVuc)}
         {bang("Theo dự án", g.duAn)}
-        <Link href={g.veTinh.href} className="mt-4 inline-block text-[15px] font-medium text-cvr-ink underline underline-offset-4">{g.veTinh.nhan}</Link>
+        <Link href={(lienKet ?? g.veTinh).href} className="mt-4 inline-block text-[15px] font-medium text-cvr-ink underline underline-offset-4">{(lienKet ?? g.veTinh).nhan}</Link>
+        {!lienKet && coTrangGia && <><span className="mx-2 text-cvr-faint">·</span><Link href={g.veGia.href} className="mt-4 inline-block text-[15px] font-medium text-cvr-ink underline underline-offset-4">{g.veGia.nhan}</Link></>}
       </div>
     </section>
   );
