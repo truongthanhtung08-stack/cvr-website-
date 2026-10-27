@@ -8,7 +8,8 @@
 
 - [x] Đo TRƯỚC (main) — mục 2 (xong)
 - [x] Đo SAU (nhánh) — mục 2 (xong, số ở ghi chú dưới)
-- [ ] do-o-bi-che /dang-tin (thường + 470) = "BI CHE: 0"
+- [~] do-o-bi-che /dang-tin (thường + 470) = "BI CHE: 0" — chạy chưa đăng nhập ra "so o go: 0" (chỉ có màn đăng nhập) → VÔ NGHĨA;
+      cần tài khoản thử đăng nhập trong trình duyệt đo (đang chờ chủ dự án đưa tài khoản thử hoặc tự bấm thử)
 - [ ] Bấm thử — mục 3
 - [ ] Báo chủ dự án bảng số trước/sau
 - [ ] Sửa tiếp trang còn LCP > 2,5 s (nếu có, không đổi giao diện)
