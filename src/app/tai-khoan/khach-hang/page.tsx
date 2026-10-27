@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { PageHeader } from "@/components/Ui";
 import { ngayVN, tuNgayVN } from "@/lib/ngayVN";
 import { khoaKhach } from "@/lib/khachHang";
+import { nguoiDungHienTai } from "@/lib/supabase/nguoiDung";
 
 // ════════════════════════════════════════════════════════════════════════════
 // KHÁCH HÀNG — AI ĐANG QUAN TÂM TIN CỦA TÔI (thay cho trang "Tương tác")
@@ -72,7 +73,7 @@ export default function KhachHangPage() {
 
     const supabase = createClient();
     (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await nguoiDungHienTai(supabase);
       if (!user) return setTin([]);
 
       const { data: ds } = await supabase

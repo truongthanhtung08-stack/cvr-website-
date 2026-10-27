@@ -44,9 +44,16 @@ export default function Hero({
   // ẢNH ĐẦU TRANG CHỦ TẢI TRƯỚC, ƯU TIÊN CAO (tốc độ điện thoại, đo 21/10/2026): ảnh nằm trong <picture> nên trình duyệt chỉ thấy
   // khi đọc tới nó, và các ảnh khác được tải trước giành đường truyền. Khai sẵn trong <head> đúng ảnh của từng máy.
   const b0 = banners[0];
+  // Cùng một tệp cho cả hai máy (admin chưa nhập ảnh điện thoại riêng) → tải trước MỘT lần, không kèm điều kiện: React gộp
+  // hai lệnh cùng địa chỉ và giữ lệnh đầu (chỉ cho điện thoại) → máy tính mất phần tải trước (27/10/2026).
   if (b0) {
-    preload(asset(b0.imageMobile || b0.image), { as: "image", fetchPriority: "high", media: "(max-width: 639.98px)" });
-    preload(asset(b0.image), { as: "image", fetchPriority: "high", media: "(min-width: 640px)" });
+    const anhDt = asset(b0.imageMobile || b0.image);
+    const anhPc = asset(b0.image);
+    if (anhDt === anhPc) preload(anhPc, { as: "image", fetchPriority: "high" });
+    else {
+      preload(anhDt, { as: "image", fetchPriority: "high", media: "(max-width: 639.98px)" });
+      preload(anhPc, { as: "image", fetchPriority: "high", media: "(min-width: 640px)" });
+    }
   }
 
   useEffect(() => {

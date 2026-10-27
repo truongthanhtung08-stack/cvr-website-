@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { banChuyenDoiMotLan } from "@/lib/gtagChuyenDoi";
+import { nguoiDungHienTai } from "@/lib/supabase/nguoiDung";
 
 // ============================================================================
 // ĐẾM "ĐĂNG KÝ THÀNH CÔNG" CHO GOOGLE ADS — đặt ở /tai-khoan.
@@ -26,8 +27,7 @@ export default function DoDangKyMoi() {
     (async () => {
       try {
         const supabase = createClient();
-        const { data } = await supabase.auth.getUser();
-        const user = data.user;
+        const user = await nguoiDungHienTai(supabase);
         if (!user?.created_at) return;
 
         const tuoiTaiKhoan = Date.now() - new Date(user.created_at).getTime();

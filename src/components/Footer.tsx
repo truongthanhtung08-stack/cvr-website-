@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import BrandLogo from "@/components/BrandLogo";
 import { docRest } from "@/lib/supabase/nap";
-import { FOOTER_DEFAULT, type FooterData } from "@/lib/siteContent";
+import { FOOTER_DEFAULT, type FooterData } from "@/lib/footerMacDinh";
 import { PHAP_LY } from "@/lib/phapLy";
 import { ZALO_OA_URL } from "@/lib/lienHe";
 

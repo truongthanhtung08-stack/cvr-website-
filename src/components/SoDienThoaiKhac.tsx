@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { chuanHoaSdt, laSdtVN } from "@/lib/phone";
+import { nguoiDungHienTai } from "@/lib/supabase/nguoiDung";
 
 // ============================================================================
 // "SỐ ĐIỆN THOẠI KHÁC CỦA TÔI"
@@ -30,7 +31,7 @@ export default function SoDienThoaiKhac() {
   useEffect(() => {
     (async () => {
       const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await nguoiDungHienTai(supabase);
       if (!user) { setAn(true); return; }
       const { data, error } = await supabase
         .from("sdt_nguoi_dung")
@@ -50,7 +51,7 @@ export default function SoDienThoaiKhac() {
 
     setDangLam(true);
     const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const user = await nguoiDungHienTai(supabase);
     if (!user) { setDangLam(false); return; }
 
     const { data, error } = await supabase

@@ -15,6 +15,7 @@ import { PageHeader } from "@/components/Ui";
 import DoDangKyMoi from "@/components/DoDangKyMoi";
 import NhanTinCuaToi from "@/components/NhanTinCuaToi";
 import { homNayVn } from "@/lib/gioVn";
+import { nguoiDungHienTai } from "@/lib/supabase/nguoiDung";
 
 // ============================================================================
 // TỔNG QUAN — GỌN CÒN 2 KHỐI (chủ dự án chốt 24/09/2026; 22/10/2026 bỏ khối "Việc cần làm" — "rất vớ vẩn, chỉ cho
@@ -46,7 +47,7 @@ export default function AccountOverviewPage() {
   useEffect(() => {
     const sb = createClient();
     (async () => {
-      const { data: { user } } = await sb.auth.getUser();
+      const user = await nguoiDungHienTai(sb);
       if (!user) return;
       // PHẢI lọc user_id: tài khoản admin đọc được gói của mọi người (RLS).
       const { data } = await sb.from("hoi_vien").select("ten_goi,het_han").eq("user_id", user.id)
@@ -58,7 +59,7 @@ export default function AccountOverviewPage() {
   useEffect(() => {
     const supabase = createClient();
     (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await nguoiDungHienTai(supabase);
       if (!user) return;
       const { data } = await supabase
         .from("listings")

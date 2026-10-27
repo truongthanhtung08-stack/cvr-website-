@@ -3,7 +3,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { uploadImageFile, uploadVideoFile } from "@/lib/uploadImage";
 import { isVideoUrl } from "@/lib/media";
-import { imageMarkerUrl, videoMarkerUrl } from "@/components/RichContent";
+import { imageMarkerUrl, videoMarkerUrl } from "@/lib/dauNoiDung";
 import { asset } from "@/lib/asset";
 import { tachDinhDang, thoatChu } from "@/lib/dinhDangMoTa";
 

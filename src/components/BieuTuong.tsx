@@ -5,7 +5,7 @@
 import {
   House, Buildings, City, Newspaper, User, Heart, FileText, Plus,
   SquaresFour, Wallet, Receipt, Star, Bell, Gear, SignOut, ShieldCheck, ShareNetwork,
-} from "@phosphor-icons/react/dist/ssr";
+} from "@/components/HinhPhosphor"; // bản gọn của Phosphor (chỉ nét thường + tô) — xem đầu tệp đó
 
 const HINH = {
   trangChu: House,

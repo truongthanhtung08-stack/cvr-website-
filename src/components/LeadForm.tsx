@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { loiEmail, loiSdt } from "@/lib/kiemNhap";
-import { createClient } from "@/lib/supabase/client";
+import { napSupabase } from "@/lib/supabase/nap";
+import { taiKhiRanh } from "@/lib/taiKhiRanh";
 import { useProfile } from "@/lib/useProfile";
 import { emailThat } from "@/lib/useAuth";
 import type { LoaiYeuCau } from "@/components/YeuCauForm";
@@ -39,6 +40,8 @@ export default function LeadForm({
   const [dangGui, setDangGui] = useState(false);
   const [loi, setLoi] = useState("");
   const [xong, setXong] = useState(false);
+  // Thư viện Supabase tải ngầm khi máy rảnh → bấm Gửi là gửi ngay, không chờ tải (taiKhiRanh)
+  useEffect(() => taiKhiRanh(() => import("@/lib/supabase/client")), []);
 
   useEffect(() => {
     if (!profile) return;
@@ -66,7 +69,8 @@ export default function LeadForm({
 
     setDangGui(true);
     try {
-      const supabase = createClient();
+      // Thư viện Supabase (~58 KB nén) chỉ tải lúc khách bấm Gửi — không tải lúc mở trang dự án / bảng giá (27/10/2026)
+      const supabase = await napSupabase();
       const { error } = await supabase.from("customer_requests").insert({
         user_id: profile?.id ?? null,
         loai,

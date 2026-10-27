@@ -19,8 +19,11 @@ function TuongTacKhach({ id }: { id: string }) {
   useEffect(() => {
     const db = createClient();
     (async () => {
-      const { data: a } = await db.from("tuong_tac_tin").select("listing_id, anh_so, loai, noi_dung, created_at, user_id").eq("user_id", id).order("created_at", { ascending: false }).limit(200);
-      const { data: tinKhach } = await db.from("listings").select("id").eq("owner_id", id).limit(1000);
+      // Lệnh nào không phụ thuộc nhau thì hỏi CÙNG LÚC (27/10/2026: trước đây 5 lệnh nối đuôi → 3 nhịp mạng). Kết quả như cũ.
+      const [{ data: a }, { data: tinKhach }] = await Promise.all([
+        db.from("tuong_tac_tin").select("listing_id, anh_so, loai, noi_dung, created_at, user_id").eq("user_id", id).order("created_at", { ascending: false }).limit(200),
+        db.from("listings").select("id").eq("owner_id", id).limit(1000),
+      ]);
       const idsTin = (tinKhach ?? []).map((x) => x.id as string);
       const { data: b } = idsTin.length
         ? await db.from("tuong_tac_tin").select("listing_id, anh_so, loai, noi_dung, created_at, user_id").in("listing_id", idsTin).neq("user_id", id).order("created_at", { ascending: false }).limit(300)
@@ -28,8 +31,10 @@ function TuongTacKhach({ id }: { id: string }) {
       const ds = [...(a ?? []), ...(b ?? [])] as DongTT[];
       const maTin = [...new Set(ds.map((x) => x.listing_id))];
       const maNguoi = [...new Set((b ?? []).map((x) => x.user_id as string))];
-      const { data: t } = maTin.length ? await db.from("listings").select("id, title").in("id", maTin) : { data: [] };
-      const { data: p } = maNguoi.length ? await db.from("profiles").select("id, full_name, phone").in("id", maNguoi) : { data: [] };
+      const [{ data: t }, { data: p }] = await Promise.all([
+        maTin.length ? db.from("listings").select("id, title").in("id", maTin) : Promise.resolve({ data: [] as { id: string; title: string }[] }),
+        maNguoi.length ? db.from("profiles").select("id, full_name, phone").in("id", maNguoi) : Promise.resolve({ data: [] as { id: string; full_name: string | null; phone: string | null }[] }),
+      ]);
       setTieuDe(new Map((t ?? []).map((x) => [x.id as string, x.title as string])));
       setTen(new Map((p ?? []).map((x) => [x.id as string, `${x.full_name || "Thành viên"}${x.phone ? " · " + x.phone : ""}`])));
       setCuaKhach((a ?? []) as DongTT[]);

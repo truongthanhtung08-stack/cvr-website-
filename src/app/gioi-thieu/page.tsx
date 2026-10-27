@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import { preload } from "react-dom";
 import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -85,6 +86,18 @@ function Figure({ src, alt, className = "" }: { src: string; alt: string; classN
 export default async function GioiThieuPage() {
   // Nội dung admin sửa được (site_content key 'about') — chưa nhập → mặc định trong code.
   const about = await getAbout();
+  // ẢNH ĐẦU TRANG TẢI TRƯỚC ĐÚNG KHỔ MÁY (cùng cách Hero trang chủ, 27/10/2026): trước đây hai ảnh (điện thoại + máy tính) đều
+  // "priority" → điện thoại tải trước CẢ ảnh máy tính đang ẩn, giành đường truyền với ảnh đang hiện (LCP).
+  // Cùng một tệp cho cả hai máy → tải trước MỘT lần, không kèm điều kiện (React gộp hai lệnh cùng địa chỉ, giữ lệnh đầu).
+  if (about.heroImage) {
+    const anhDt = asset(about.heroImageMobile || about.heroImage);
+    const anhPc = asset(about.heroImage);
+    if (anhDt === anhPc) preload(anhPc, { as: "image", fetchPriority: "high" });
+    else {
+      preload(anhDt, { as: "image", fetchPriority: "high", media: "(max-width: 639.98px)" });
+      preload(anhPc, { as: "image", fetchPriority: "high", media: "(min-width: 640px)" });
+    }
+  }
 
   return (
     <>
@@ -107,7 +120,8 @@ export default async function GioiThieuPage() {
               src={asset(about.heroImageMobile || about.heroImage)}
               alt="Coastal Land"
               fill
-              priority
+              loading="eager"
+              fetchPriority="high"
               sizes="100vw"
               className="object-cover sm:hidden"
             />
@@ -116,7 +130,8 @@ export default async function GioiThieuPage() {
               src={asset(about.heroImage)}
               alt="Coastal Land"
               fill
-              priority
+              loading="eager"
+              fetchPriority="high"
               sizes="100vw"
               className="hidden object-cover sm:block"
             />

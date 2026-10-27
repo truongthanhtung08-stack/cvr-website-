@@ -11,6 +11,7 @@ import { tachThue } from "@/lib/thue";
 import { PageHeader } from "@/components/Ui";
 import GoiHoiVienCards, { DieuKienHoiVien } from "@/components/GoiHoiVienCards";
 import { ghepQuyDinh, KHOA_QUY_DINH_GIA, type QuyDinhGia } from "@/lib/quyDinhGia";
+import { nguoiDungHienTai } from "@/lib/supabase/nguoiDung";
 
 // ============================================================================
 // GÓI HỘI VIÊN CỦA TÔI (chủ dự án chốt 25/09/2026 — cơ chế theo Batdongsan)
@@ -51,7 +52,7 @@ function GoiHoiVienCuaToi() {
 
   const tai = useCallback(async () => {
     const sb = createClient();
-    const { data: { user } } = await sb.auth.getUser();
+    const user = await nguoiDungHienTai(sb);
     if (!user) return setGoi(null);
     // Cấp voucher kỳ 30 ngày hiện tại (nếu vừa sang kỳ mới) rồi mới đọc.
     await sb.rpc("cap_voucher_hoi_vien", { p_user: user.id });

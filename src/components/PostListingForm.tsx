@@ -51,12 +51,23 @@ import ODiaChiGoiY from "@/components/ODiaChiGoiY";
 import { ganNhanPhimEnter, enterSangOTiep } from "@/lib/oTiepTheo";
 import { loiEmail, loiSdt } from "@/lib/kiemNhap";
 import { anhDaiDien, emailThat } from "@/lib/useAuth";
-import XemTruocTin from "@/components/XemTruocTin";
-import { xemTruocTin } from "@/lib/listingsDb";
+import type { xemTruocTin } from "@/lib/listingsDb";
 import { useKhoaCuon } from "@/lib/khoaCuon";
 import { homNayVn } from "@/lib/gioVn";
+import { taiKhiRanh } from "@/lib/taiKhiRanh";
 // Thẻ tin mẫu (nút "Tin hiển thị" ở mục gói tin) — chỉ tải khi khách bấm, không nặng lúc mở trang đăng tin.
 const TinHienThiMau = dynamic(() => import("@/components/TinHienThiMau"));
+// Khung "Xem trước" (kèm bộ xem ảnh và lớp dựng chi tiết tin ~60 KB mã) — tách khỏi lúc mở trang, tải ngầm khi máy rảnh
+// (taiKhiRanh trong form) nên lúc bấm đã có sẵn (27/10/2026: /dang-tin nặng).
+const taiTruocXemTruoc = () => Promise.all([import("@/components/XemTruocTin"), import("@/lib/listingsDb")]);
+const XemTruocTin = dynamic(() =>
+  taiTruocXemTruoc().then(([m, l]) => {
+    const Khung = m.default;
+    return function XemTruocTinMo({ row, ...p }: Omit<React.ComponentProps<typeof Khung>, "du"> & { row: Parameters<typeof xemTruocTin>[0] }) {
+      return <Khung du={l.xemTruocTin(row)} {...p} />;
+    };
+  }),
+);
 
 // Đơn vị giá "Khác — tự ghi" (chủ dự án 14/10/2026): khách ghi nguyên văn, lưu details.giaTuGhi.
 const KHAC_GIA = "Khác — tự ghi";
@@ -84,6 +95,8 @@ export default function PostListingForm() {
   const router = useRouter();
   const thamSo = useSearchParams();
   const editId = thamSo.get("id");
+  // Khung "Xem trước" tải ngầm khi máy rảnh → lúc khách bấm đã có sẵn, không chờ (taiKhiRanh)
+  useEffect(() => taiKhiRanh(taiTruocXemTruoc), []);
   // Đăng nhập xong quay lại ĐÚNG link khách bấm (giữ ?goi=… của chương trình quảng bá).
   const linkDangNhap = `/dang-nhap?next=${encodeURIComponent(thamSo.toString() ? `/dang-tin?${thamSo.toString()}` : "/dang-tin")}`;
 
@@ -613,16 +626,32 @@ export default function PostListingForm() {
   useEffect(() => {
     const supabase = createClient();
     (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      // Cách chuẩn Supabase (SSR): máy chủ kiểm + làm mới phiên ở middleware (getUser mỗi lượt mở trang của người đã đăng nhập),
+      // trình duyệt chỉ ĐỌC phiên có sẵn — không hỏi lại máy chủ Supabase lần nữa (27/10/2026: bớt một nhịp mạng trước khi
+      // form hiện). Quyền thật vẫn do RLS kiểm ở từng lệnh đọc/ghi; token hết hạn thì thư viện tự làm mới.
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user ?? null;
       setUserId(user?.id ?? null);
       if (user) {
         // Lấy thêm ngày tạo · hạn mức tin miễn phí · vai trò · tổng chi tiêu
         // để tính ĐÚNG số tiền phải trả (ưu đãi thành viên mới, khuyến mãi, cấp).
-        const { data: p } = await supabase
-          .from("profiles")
-          .select("full_name, phone, email, avatar_url, created_at:ngay_thanh_vien, free_quota, role, total_topup, balance, phone_verified, sdt_lien_he_xac_minh")
-          .eq("id", user.id)
-          .single();
+        // Hồ sơ · ví · voucher hỏi CÙNG LÚC (27/10/2026, chủ dự án: "mở trang đăng tin vào và đăng, nhanh nhất") — trước đây
+        // nối đuôi 4 lượt nên "Đang tải…" kéo dài thêm mỗi lượt một nhịp mạng. Vẫn đúng các câu hỏi đó, số tính như cũ.
+        const [{ data: p }, { data: vi }, { data: vc }] = await Promise.all([
+          supabase
+            .from("profiles")
+            .select("full_name, phone, email, avatar_url, created_at:ngay_thanh_vien, free_quota, role, total_topup, balance, phone_verified, sdt_lien_he_xac_minh")
+            .eq("id", user.id)
+            .single(),
+          // TẠM GIỮ (0056): tiền của các tin đang chờ duyệt đã khoá trong ví → mọi phép so
+          // "đủ tiền" trong form dùng số KHẢ DỤNG (số dư − tạm giữ), y như CSDL kiểm.
+          supabase.rpc("so_du_kha_dung"),
+          // VOUCHER GÓI HỘI VIÊN (0040): cấp kỳ 30 ngày hiện tại (lười — như trang Tài khoản → Hội viên) rồi đọc voucher còn lượt.
+          (async () => {
+            await supabase.rpc("cap_voucher_hoi_vien", { p_user: user.id });
+            return supabase.from("hoi_vien_voucher").select("loai,giam,con_lai,tu,den").gt("con_lai", 0);
+          })(),
+        ]);
         if (p) {
           const pv = p as { phone_verified?: boolean; sdt_lien_he_xac_minh?: boolean; role?: string };
           // Số khách đăng ký bằng số (Supabase đã nhận mã) cũng coi là đã xác minh; nhóm Email đã
@@ -644,17 +673,11 @@ export default function PostListingForm() {
             // Cột balance có thể chưa bật trong CSDL → coi như 0.
             balance: (p as { balance?: number }).balance ?? 0,
           });
-          // TẠM GIỮ (0056): tiền của các tin đang chờ duyệt đã khoá trong ví → mọi phép so
-          // "đủ tiền" trong form dùng số KHẢ DỤNG (số dư − tạm giữ), y như CSDL kiểm.
-          const { data: vi } = await supabase.rpc("so_du_kha_dung");
           const v = (vi as { kha_dung: number; tam_giu: number }[] | null)?.[0];
           if (v) {
             setHoSoVi((h) => (h ? { ...h, balance: Number(v.kha_dung) } : h));
             setTamGiu(Number(v.tam_giu));
           }
-          // VOUCHER GÓI HỘI VIÊN (0040): cấp kỳ 30 ngày hiện tại (lười — như trang Tài khoản → Hội viên) rồi đọc voucher còn lượt.
-          await supabase.rpc("cap_voucher_hoi_vien", { p_user: user.id });
-          const { data: vc } = await supabase.from("hoi_vien_voucher").select("loai,giam,con_lai,tu,den").gt("con_lai", 0);
           setVouchers(((vc ?? []) as { loai: string; giam: number; con_lai: number; tu: string; den: string }[]).map((x) => ({ ...x, giam: Number(x.giam) })));
         }
       }
@@ -1245,7 +1268,7 @@ export default function PostListingForm() {
 
       {xemTruoc && (
         <XemTruocTin
-          du={xemTruocTin({ ...giaTriTin(true), province: province || "", tier: (planTier || "basic") as TierId } as Parameters<typeof xemTruocTin>[0])}
+          row={{ ...giaTriTin(true), province: province || "", tier: (planTier || "basic") as TierId } as Parameters<typeof xemTruocTin>[0]}
           tier={planTier}
           onDong={() => setXemTruoc(false)}
           onDang={() => { setXemTruoc(false); save(false); }}

@@ -2,6 +2,7 @@ import { asset } from "@/lib/asset";
 import VideoEmbed from "@/components/VideoEmbed";
 import ContentPhoto from "@/components/ContentPhoto";
 import { tachDinhDang } from "@/lib/dinhDangMoTa";
+import { imageMarkerUrl, videoMarkerUrl } from "@/lib/dauNoiDung";
 
 // Nội dung admin nhập được lưu dạng text: MỖI ĐOẠN 1 dòng. Ảnh/video chèn giữa bài là
 // một dòng riêng theo cú pháp markdown:
@@ -9,8 +10,6 @@ import { tachDinhDang } from "@/lib/dinhDangMoTa";
 //   • Video: @[video](url)   (tệp mp4/webm đã tải lên, hoặc link YouTube/Vimeo)
 //   • Đậm:   **chữ đậm**      • Nghiêng: *chữ nghiêng*
 //   • Canh lề: ::center:: / ::right:: / ::justify:: đặt ở ĐẦU dòng
-const IMG_MARKER = /^!\[[^\]]*\]\((.+)\)$/;
-const VIDEO_MARKER = /^@\[video\]\((.+)\)$/i;
 const ALIGN_MARKER = /^::(center|right|justify)::\s?/;
 
 const ALIGN_CLASS: Record<string, string> = {
@@ -30,15 +29,7 @@ function renderInline(text: string): React.ReactNode[] {
   );
 }
 
-export function imageMarkerUrl(line: string): string | null {
-  const m = line.trim().match(IMG_MARKER);
-  return m ? m[1].trim() : null;
-}
-
-export function videoMarkerUrl(line: string): string | null {
-  const m = line.trim().match(VIDEO_MARKER);
-  return m ? m[1].trim() : null;
-}
+export { imageMarkerUrl, videoMarkerUrl };
 
 // Hiển thị nội dung có ảnh/video chèn giữa bài. Tương thích ngược: nội dung cũ
 // (toàn văn bản) vẫn hiện như trước — dòng nào không phải marker → đoạn văn <p>.

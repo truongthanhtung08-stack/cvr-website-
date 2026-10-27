@@ -5,6 +5,7 @@ import { napSupabase, coPhienDangNhap } from "@/lib/supabase/nap";
 import { tachNhieuSdt } from "@/lib/phone";
 import HopXacThucSo, { veDaLuu } from "@/components/HopXacThucSo";
 import { useKhoaCuon } from "@/lib/khoaCuon";
+import { nguoiDungHienTai } from "@/lib/supabase/nguoiDung";
 
 // ============================================================================
 // CỔNG SỐ ĐIỆN THOẠI — full SĐT người đăng chỉ hiện sau khi khách tự định danh.
@@ -54,7 +55,7 @@ function useReveal(listingId: string) {
     setError(null);
     try {
       const supabase = await napSupabase();
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await nguoiDungHienTai(supabase);
       // ĐÃ ĐĂNG NHẬP (Zalo/Google/Email/Số) → hiện số NGAY, không bắt nhập mã (chủ dự án chốt
       // 01/10/2026). Thành viên chưa có số trong hồ sơ thì khách quan tâm ghi theo tên tài khoản.
       // Chỉ khách CHƯA ĐĂNG NHẬP mới đi đường xác thực số.

@@ -39,6 +39,7 @@ import {
   type ListingStatus,
 } from "@/lib/listingAdmin";
 import { homNayVn } from "@/lib/gioVn";
+import { nguoiDungHienTai } from "@/lib/supabase/nguoiDung";
 
 // Form Thêm/Sửa tin đăng (admin). Giá nhập theo đơn vị tự nhiên:
 //   Mua bán → TỶ đồng (7.2 = 7,2 tỷ) · Cho thuê → TRIỆU/tháng (18 = 18 triệu/tháng)
@@ -121,7 +122,7 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
   useEffect(() => {
     const supabase = createClient();
     (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await nguoiDungHienTai(supabase);
       const { data: list } = await supabase
         .from("profiles")
         .select("id, full_name, phone, email, role")

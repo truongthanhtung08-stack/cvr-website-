@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useHomeSection } from "@/components/HomeExpand";
 import { asset, anhNho } from "@/lib/asset";
-import { HOME_AREAS_DEFAULT, areaImages, type AreaCard } from "@/lib/siteContent";
+import { HOME_AREAS_DEFAULT, areaImages, type AreaCard } from "@/lib/khuVucMacDinh";
 import { slugKhuVuc, timKhuVuc } from "@/lib/khuVuc";
 
 // ── ĐƯỜNG DẪN CỦA MỘT THẺ KHU VỰC (sửa 18/09/2026) ──────────────────────────
