@@ -10,10 +10,19 @@
 - [x] Đo SAU (nhánh) — mục 2 (xong, số ở ghi chú dưới)
 - [~] do-o-bi-che /dang-tin (thường + 470) = "BI CHE: 0" — chạy chưa đăng nhập ra "so o go: 0" (chỉ có màn đăng nhập) → VÔ NGHĨA;
       cần tài khoản thử đăng nhập trong trình duyệt đo (đang chờ chủ dự án đưa tài khoản thử hoặc tự bấm thử)
-- [ ] Bấm thử — mục 3
-- [ ] Báo chủ dự án bảng số trước/sau
-- [ ] Sửa tiếp trang còn LCP > 2,5 s (nếu có, không đổi giao diện)
-- [ ] Chủ dự án nói "Push" → gộp main, push MỘT lần, kiểm web thật
+- [ ] Bấm thử — mục 3 (chưa làm — xem CHƯA CHUẨN mục 6–7)
+- [x] Báo chủ dự án bảng số trước/sau (27/10)
+- [ ] Sửa tiếp trang còn LCP > 2,5 s — VIỆC CỦA PHIÊN SAU: làm theo danh sách CHƯA CHUẨN bên dưới, từ mục 1–2
+- [x] Chủ dự án nói "Push" (27/10) → gộp main `432f84b`, `npx next build` qua, push MỘT lần; Vercel báo "Deployment has completed"
+      cho 432f84b (trạng thái commit trên GitHub); tên gói mã coastalland.vn khớp bản build máy 19/21.
+- Web thật sau push (Lighthouse ở máy nhắm coastalland.vn, 2 lần): trang chủ điểm 88·71, LCP 2,8·5,4 s, TBT 201·316 ms, CLS 0 ·
+  /mua-ban điểm 82·77, LCP 3,0·3,7 s, TBT 415·432 ms. HTML trang chủ web thật 493 KB. PageSpeed Insights hết lượt miễn phí trong ngày
+  27/10 → phiên sau đo lại PSI (số khách thật), và Search Console → Core Web Vitals sau 28 ngày (~24/11/2026).
+- ⛔ Không có `vercel-token.txt` trong máy → kiểm deploy bằng trạng thái commit GitHub (api.github.com/repos/…/commits/<sha>/status).
+
+**PHIÊN SAU — chủ gõ "làm tiếp về tốc độ load web đúng chuẩn":** báo ngay 3–5 dòng tình trạng (lấy từ mục này), rồi làm danh sách
+CHƯA CHUẨN theo thứ tự; mục có ⛔ (sửa `tinDem` ô tìm trang chủ) phải đưa cách sửa cho chủ duyệt trước. Làm thẳng trên main
+(không còn nhánh riêng), push một lần khi chủ nói "Push".
 
 Ghi chú tiến độ (27/10, phiên trên máy):
 - Cách đo: `npx next build` + `npx next start -p 3000` (một server). Trang tin mẫu `/bat-dong-san/21687cfc-0fc6-42bf-8bc5-cfcefbe50310`,
