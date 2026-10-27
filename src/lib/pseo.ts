@@ -36,6 +36,25 @@ export const phuongCuaTin = (l: Listing) => {
   const p = l.location.split(",").map((s) => s.trim());
   return p.length >= 2 ? p[0] : "";
 };
+// Tên quận/huyện CŨ của một nhóm tin (chủ dự án 27/10/2026: người tìm vẫn gõ "nhà Hải Châu", "đất Ngũ Hành Sơn") — lấy từ địa chỉ cũ
+// của chính tin (locationCu "Phường cũ, Quận cũ, Tỉnh"), tên xuất hiện nhiều nhất; cấp chỉ ghi khi biết chắc. Dùng ở khối giá theo khu vực
+// + mô tả Google trang phường.
+export const CAP_CU: Record<string, string> = {
+  "Hải Châu": "quận", "Thanh Khê": "quận", "Sơn Trà": "quận", "Ngũ Hành Sơn": "quận", "Liên Chiểu": "quận", "Cẩm Lệ": "quận", "Hòa Vang": "huyện",
+  "Phú Xuân": "quận", "Thuận Hóa": "quận", "Nha Trang": "thành phố", "Cam Ranh": "thành phố", "Quy Nhơn": "thành phố",
+  "Đà Lạt": "thành phố", "Phan Thiết": "thành phố", "Hội An": "thành phố", "Tam Kỳ": "thành phố", "Đại Lộc": "huyện",
+};
+export function tenCu(xs: Listing[], tinh: string): string {
+  const dem = new Map<string, number>();
+  for (const l of xs) {
+    const p = (l.locationCu ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+    const q = p.length >= 3 ? p[p.length - 2] : "";
+    if (q && q !== tinh) dem.set(q, (dem.get(q) ?? 0) + 1);
+  }
+  const q = [...dem.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
+  return q ? `${CAP_CU[q] ? `${CAP_CU[q]} ` : ""}${q} cũ` : "";
+}
+
 const mucCuaTin = (l: Listing): Muc => ((l.purpose ?? "ban") === "thue" ? "thue" : "ban");
 const cungTen = (a: string, b: string) => normalizeVi(a) === normalizeVi(b);
 
@@ -219,6 +238,11 @@ export function moTaSoLieu(dau: string, tin: Listing[], muc: Muc): string | null
   return `${muc === "ban" ? ten.replace(/^Bán /, "Mua bán ") : ten} ${so.join(", ")}. Tin xác thực.`;
 }
 export function moTa(dk: DieuKien, tin: Listing[] = []): string {
+  // Trang phường: kèm tên quận cũ ngay sau tên phường ("Phường Hải Châu (quận Hải Châu cũ), Đà Nẵng") — 27/10/2026
+  const cu = dk.phuong ? tenCu(tin, dk.tinh.name) : "";
+  // chỉ kèm khi cả câu còn ≤ 160 ký tự (Google hiện trọn) — dài hơn thì giữ câu gốc
+  const coCu = cu && dk.phuong ? moTaSoLieu(tieuDe(dk).replace(dk.phuong, `${dk.phuong} (${cu})`), tin, dk.muc) : null;
+  if (coCu && [...coCu].length <= 160) return coCu;
   return moTaSoLieu(tieuDe(dk), tin, dk.muc)
     ?? `${tieuDe(dk)} — tin mới ${thangHienTai()}: giá, diện tích, vị trí, ảnh thật, liên hệ trực tiếp ${dk.muc === "thue" ? "người cho thuê" : "người bán"}.`;
 }

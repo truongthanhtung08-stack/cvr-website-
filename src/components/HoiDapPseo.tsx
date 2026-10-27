@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Listing } from "@/lib/data";
 import { giaMoiM2 } from "@/lib/chiSoGia";
-import { phuongCuaTin, tieuDe, type DieuKien } from "@/lib/pseo";
+import { phuongCuaTin, tenCu, tieuDe, type DieuKien } from "@/lib/pseo";
 import { thangHienTai } from "@/lib/thang";
 
 // ============================================================================
@@ -49,7 +49,54 @@ function monNoi(dk: DieuKien) {
   const ngan = mon.replace(/^căn hộ chung cư/, "chung cư").replace(/^nhà riêng/, "nhà").replace(/^đất nền( dự án)?/, "đất");
   return { mon, noi, ngan };
 }
-export type GiaNhom = { hoi: string; tong: string; tieuDe: string; veTinh: { href: string; nhan: string }; duAn: { ten: string; gia: string }[]; khuVuc: { ten: string; gia: string }[] };
+// ── GIÁ THEO KHU VỰC — KHUÔN KHUNG AI CỦA GOOGLE (chủ dự án duyệt mẫu 27/10/2026, kế hoạch SEO mục 3 #24) ──
+// Khung AI trả lời "căn hộ tháng 10 Đà Nẵng" theo mẫu: khu vực (tên quận cũ) → Dự án tiêu biểu → Mức giá tham khảo X – Y tỷ
+// (diện tích A – B m²). Mỗi khu vực một mục H3 "Phường … (quận … cũ)": dự án trong khu vực · tổng giá · diện tích · giá/m² (bán).
+// Tên cũ lấy từ địa chỉ cũ của chính tin (locationCu "Phường cũ, Quận cũ, Tỉnh"); cấp "quận/huyện" chỉ ghi khi biết chắc,
+// chưa biết thì ghi "(… cũ)". Khu vực không có tên cũ (hoặc tên cũ trùng tỉnh, vd thành phố Huế) thì không ghi ngoặc.
+
+const khoangDon = (ds: number[], f: (n: number) => string) => {
+  const a = f(Math.min(...ds)), b = f(Math.max(...ds));
+  if (a === b) return a;
+  const [x, dx] = a.split(" "), [, db] = b.split(" ");
+  return dx && dx === db ? `từ ${x} đến ${b}` : `từ ${a} đến ${b}`;
+};
+const m2 = (n: number) => `${soVi(n)} m²`;
+export type KhuVucGia = { ten: string; cu: string; duAn: string[]; gia: string; phongNgu: string };
+// Theo số phòng ngủ trong khu vực (khung AI từ khoá thứ 2, 27/10/2026: "Căn hộ 1 phòng ngủ / Studio: 12 – 30 triệu/tháng") —
+// chỉ ghi khi khu vực có ≥ 2 nhóm phòng ngủ, mỗi nhóm một khoảng giá (bán: tổng giá · thuê: triệu/tháng).
+function giaTheoPhongNgu(xs: Listing[], thue: boolean): string {
+  const m = new Map<number, number[]>();
+  for (const l of xs) if (l.beds && l.priceVnd) m.set(l.beds, [...(m.get(l.beds) ?? []), l.priceVnd]);
+  if (m.size < 2) return "";
+  return [...m.entries()].sort((a, b) => a[0] - b[0])
+    .map(([pn, g]) => `${pn} phòng ngủ: ${thue ? khoangDon(g, trieu("triệu/tháng")) : khoangDon(g, gia)}`).join(" · ");
+}
+// Theo phân khúc giá (khung AI từ khoá thứ 2: "Căn hộ trung – cao cấp (65 – 133 m²): giá từ 3,4 tỷ đến 10,7 tỷ (ví dụ: Azura – Sơn Trà)").
+// Chỉ trang BÁN; mốc theo tổng giá; ≥ 2 phân khúc có tin mới hiện. Tên phân khúc là mức giá (không tự xếp "cao cấp" thay khách).
+const MOC_PK: [number, number, string][] = [[0, 2e9, "Dưới 2 tỷ"], [2e9, 5e9, "Từ 2 đến 5 tỷ"], [5e9, 10e9, "Từ 5 đến 10 tỷ"], [10e9, Infinity, "Trên 10 tỷ"]];
+export type PhanKhuc = { ten: string; mo: string };
+function phanKhucGia(tin: Listing[]): PhanKhuc[] {
+  const ds = MOC_PK.map(([a, b, ten]) => {
+    const xs = tin.filter((l) => (l.priceVnd ?? 0) >= a && (l.priceVnd ?? 0) < b && (l.priceVnd ?? 0) > 0);
+    if (!xs.length) return null;
+    const dt = xs.map((l) => l.areaM2 ?? 0).filter((v) => v > 0);
+    const vd = [...new Set(xs.map((l) => { const da = l.projectName?.replace(TINH_DUOI, "").trim(); const p = phuongCuaTin(l); return da ? `${da}${p ? ` – ${p}` : ""}` : ""; }).filter(Boolean))].slice(0, 3);
+    const mo = [`giá ${khoangDon(xs.map((l) => l.priceVnd!), gia)}`, dt.length ? `diện tích ${khoangDon(dt, m2)}` : ""].filter(Boolean).join(", ");
+    return { ten, mo: `${mo[0].toUpperCase()}${mo.slice(1)}${vd.length ? ` (ví dụ: ${vd.join("; ")})` : ""}.` };
+  }).filter((x): x is PhanKhuc => !!x);
+  return ds.length >= 2 ? ds : [];
+}
+function giaKhuVuc(xs: Listing[], thue: boolean): string {
+  const tien = xs.map((l) => l.priceVnd ?? 0).filter((v) => v > 0);
+  const dt = xs.map((l) => l.areaM2 ?? 0).filter((v) => v > 0);
+  if (!tien.length) return "";
+  const phan = [`${thue ? "Giá thuê" : "Giá"} ${thue ? khoangDon(tien, trieu("triệu/tháng")) : khoangDon(tien, gia)}`];
+  if (dt.length) phan.push(`diện tích ${khoangDon(dt, m2)}`);
+  const motM2 = thue ? "" : giaNhom(xs, false).replace(/^từ /, "").replace(" đến ", " – ");
+  return `${phan.join(", ")}${motM2 ? ` (${motM2})` : ""}.`;
+}
+export type GiaNhom = { hoi: string; tong: string; tieuDe: string; veTinh: { href: string; nhan: string }; duAn: { ten: string; gia: string }[]; khuVuc: { ten: string; gia: string }[]; tieuDeKV: string; tongKV: string; khuVucGia: KhuVucGia[]; phanKhuc: PhanKhuc[] };
 export function giaTheoNhom(dk: DieuKien, tin: Listing[]): GiaNhom | null {
   if (tin.length < 3) return null; // cùng cổng trang mở cho Google
   // Trang gộp nhiều loại hình ("nhà đất …") KHÔNG tính giá: luật chủ dự án 03/10 + 16/10/2026 — giá đúng khu vực, đúng loại
@@ -61,7 +108,24 @@ export function giaTheoNhom(dk: DieuKien, tin: Listing[]): GiaNhom | null {
   const thang = thangHienTai(), thueChu = thue ? "thuê " : "";
   const duAn = nhomTheo(tin, (l) => l.projectName?.replace(TINH_DUOI, ""), thue);
   const khuVuc = dk.phuong || dk.duong ? [] : nhomTheo(tin, (l) => phuongCuaTin(l) || undefined, thue);
+  // Giá theo khu vực (khuôn khung AI): mọi khu vực có tin, nhiều tin trước; ≥ 2 khu vực mới hiện
+  const theoPhuong = new Map<string, Listing[]>();
+  // Trang đường: không chia khu vực. Trang phường / nhóm một khu vực: một mục duy nhất (27/10/2026 — vẫn có dự án, giá, phòng ngủ)
+  if (!dk.duong) for (const l of tin) { const p = phuongCuaTin(l); if (p) theoPhuong.set(p, [...(theoPhuong.get(p) ?? []), l]); }
+  const khuVucGia = [...theoPhuong.entries()].sort((a, b) => b[1].length - a[1].length).map(([ten, xs]) => ({
+    ten,
+    cu: tenCu(xs, dk.tinh.name),
+    duAn: [...new Set(xs.map((l) => l.projectName?.replace(TINH_DUOI, "").trim()).filter((x): x is string => !!x))],
+    gia: giaKhuVuc(xs, thue),
+    phongNgu: giaTheoPhongNgu(xs, thue),
+  })).filter((k) => k.gia);
+  const tienAll = tin.map((l) => l.priceVnd ?? 0).filter((v) => v > 0), dtAll = tin.map((l) => l.areaM2 ?? 0).filter((v) => v > 0);
+  const tongKV = !tienAll.length ? "" : `${thue ? "Giá thuê" : "Giá"} ${mon} ${noi} ${thang} ${thue ? khoangDon(tienAll, trieu("triệu/tháng")) : khoangDon(tienAll, gia)}${dtAll.length ? `, diện tích ${khoangDon(dtAll, m2)}` : ""}.`;
   return {
+    tieuDeKV: khuVucGia.length >= 2 ? `Giá ${thue ? "thuê" : "bán"} ${mon} ${noi} theo khu vực ${thang}` : `Giá ${thue ? "thuê" : "bán"} ${mon} ${noi} ${thang}`,
+    tongKV,
+    khuVucGia,
+    phanKhuc: thue || dk.duong || dk.giaDuoi ? [] : phanKhucGia(tin),
     // Hỏi theo cụm ngắn khách gõ; đáp ghi cả cụm ngắn lẫn tên đầy đủ: "Giá chung cư Huế, căn hộ chung cư tại Huế tháng 10/2026 từ …"
     hoi: `Giá ${thueChu}${ngan} ${noi} ${thang}?`,
     tong: !tong ? "" : ngan !== mon ? `Giá ${thueChu}${ngan} ${noi}, ${mon} tại ${noi} ${thang} ${tong}.` : `Giá ${thueChu}${mon} ${noi} ${thang} ${tong}.`,
@@ -73,7 +137,33 @@ export function giaTheoNhom(dk: DieuKien, tin: Listing[]): GiaNhom | null {
 }
 
 export function GiaTheoNhomPseo({ g }: { g: GiaNhom | null }) {
-  if (!g || (!g.duAn.length && !g.khuVuc.length)) return null;
+  if (!g || (!g.duAn.length && !g.khuVuc.length && !g.khuVucGia.length)) return null;
+  // Có ≥ 2 khu vực: khuôn khung AI (mẫu chủ dự án duyệt 27/10/2026) — mỗi khu vực một mục, dự án nằm trong khu vực
+  if (g.khuVucGia.length) return (
+    <section aria-labelledby="gia-theo-nhom" className="mx-auto max-w-7xl px-4 pb-8 sm:px-6 lg:px-8">
+      <h2 id="gia-theo-nhom" className="text-[20px] font-normal tracking-tight text-cvr-ink sm:text-[22px]">{g.tieuDeKV}</h2>
+      <div className="max-w-[980px]">
+        {g.tongKV && g.khuVucGia.length >= 2 && <p className="mt-3 text-[15px] leading-relaxed text-cvr-muted">{g.tongKV}</p>}
+        {g.khuVucGia.map((k) => (
+          <div key={k.ten} className="mt-4">
+            {g.khuVucGia.length >= 2 && <h3 className="text-[16px] font-semibold text-cvr-ink">{k.ten}{k.cu ? ` (${k.cu})` : ""}</h3>}
+            {k.duAn.length > 0 && <p className="mt-1 text-[15px] leading-relaxed text-cvr-muted">Dự án: {k.duAn.join(", ")}</p>}
+            <p className="mt-0.5 text-[15px] leading-relaxed text-cvr-muted">{k.gia}</p>
+            {k.phongNgu && <p className="mt-0.5 text-[15px] leading-relaxed text-cvr-muted">{k.phongNgu}</p>}
+          </div>
+        ))}
+        {g.phanKhuc.length > 0 && (
+          <div className="mt-6">
+            <h3 className="text-[16px] font-semibold text-cvr-ink">Theo mức giá</h3>
+            <ul className="mt-2 space-y-1.5 text-[15px] leading-relaxed text-cvr-muted">
+              {g.phanKhuc.map((p) => <li key={p.ten}><span className="font-medium text-cvr-ink">{p.ten}:</span> {p.mo}</li>)}
+            </ul>
+          </div>
+        )}
+        <Link href={g.veTinh.href} className="mt-4 inline-block text-[15px] font-medium text-cvr-ink underline underline-offset-4">{g.veTinh.nhan}</Link>
+      </div>
+    </section>
+  );
   const bang = (tieu: string, ds: { ten: string; gia: string }[]) => ds.length ? (
     <div className="mt-4">
       <h3 className="text-[16px] font-semibold text-cvr-ink">{tieu}</h3>

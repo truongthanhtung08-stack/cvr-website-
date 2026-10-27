@@ -17,6 +17,8 @@ export default function KhuVucLinks({
   demTheoTinh,
   tinhDangXem,
   sat = false,
+  trangLoai,
+  tieuDe,
 }: {
   base: "/mua-ban" | "/cho-thue" | "/du-an";
   // [tên tỉnh, số tin] — lấy từ chính dữ liệu của trang
@@ -24,15 +26,21 @@ export default function KhuVucLinks({
   tinhDangXem?: string;
   // Trang Mua bán / Cho thuê: khối "Tìm kiếm phổ biến" ngay dưới — thu đệm đáy
   sat?: boolean;
+  // Trang loại hình CẢ NƯỚC (vd /mua-ban/condotel): trỏ thẳng trang loại hình × tỉnh ĐÃ MỞ cho Google (vd /mua-ban/condotel/da-nang),
+  // chữ neo đúng từ khoá người gõ ("Bán condotel Đà Nẵng"). Search Console 27/10/2026: Google xếp trang cả nước cho từ khoá có tên tỉnh
+  // vì trang cả nước gần như không trỏ xuống trang tỉnh. Không có trang tỉnh nào mở thì giữ khối tỉnh như cũ.
+  trangLoai?: { href: string; nhan: string }[];
+  tieuDe?: string;
 }) {
   const dem = new Map(demTheoTinh);
   const ten = Array.from(
     new Set([...demTheoTinh.filter(([, n]) => n > 0).map(([t]) => t), ...khuVucTrongDiem]),
   ).filter((t) => khuVucList.some((k) => k.name === t) && t !== tinhDangXem);
 
-  if (ten.length === 0) return null;
+  const coTrangLoai = !!trangLoai?.length;
+  if (ten.length === 0 && !coTrangLoai) return null;
 
-  const nhan =
+  const nhan = coTrangLoai && tieuDe ? tieuDe :
     base === "/cho-thue" ? "Cho thuê theo khu vực" : base === "/du-an" ? "Dự án theo khu vực" : "Nhà đất bán theo khu vực";
 
   return (
@@ -44,7 +52,15 @@ export default function KhuVucLinks({
       <div className="rounded-2xl border border-cvr-line bg-white p-5 shadow-lux lg:rounded-xl lg:border-0">
         <h2 className="text-base font-semibold tracking-tight text-cvr-ink sm:text-lg">{nhan}</h2>
         <div className="mt-3 flex flex-wrap gap-2">
-          {ten.map((t) => {
+          {coTrangLoai ? trangLoai!.map((l) => (
+            <Link
+              key={l.href}
+              href={l.href}
+              className="inline-flex items-center gap-1.5 rounded-full border border-cvr-line bg-cvr-surface px-3.5 py-1.5 text-sm text-cvr-ink transition hover:border-cvr-blue hover:text-cvr-blue-ink"
+            >
+              {l.nhan}
+            </Link>
+          )) : ten.map((t) => {
             const n = dem.get(t) ?? 0;
             return (
               <Link

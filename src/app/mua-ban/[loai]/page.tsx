@@ -158,7 +158,7 @@ export default async function DanhMucMuaBanPage({ params }: { params: Promise<{ 
           initialTypes={c!.types}
         />
         <LienKetPseo nhom={lienKetLoaiHinh("ban", c!, listings)} kieuGoogle />
-        <KhuVucLinks base="/mua-ban" demTheoTinh={demTheoTinh} />
+        <KhuVucLinks base="/mua-ban" demTheoTinh={demTheoTinh} trangLoai={lienKetLoaiHinh("ban", c!, listings)[0]?.links} tieuDe={`${c!.h1} theo khu vực`} />
       </main>
       <Footer />
     </>

@@ -158,7 +158,7 @@ export default async function DanhMucChoThuePage({ params }: { params: Promise<{
           initialTypes={c!.types}
         />
         <LienKetPseo nhom={lienKetLoaiHinh("thue", c!, listings)} kieuGoogle />
-        <KhuVucLinks base="/cho-thue" demTheoTinh={demTheoTinh} />
+        <KhuVucLinks base="/cho-thue" demTheoTinh={demTheoTinh} trangLoai={lienKetLoaiHinh("thue", c!, listings)[0]?.links} tieuDe={`${c!.h1} theo khu vực`} />
       </main>
       <Footer />
     </>
