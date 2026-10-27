@@ -6,7 +6,7 @@
 
 ## TIẾN ĐỘ (phiên đo cập nhật sau MỖI bước rồi commit lên nhánh — dừng giữa chừng thì phiên sau đọc mục này làm tiếp)
 
-- [ ] Đo TRƯỚC (main) — mục 2
+- [~] Đo TRƯỚC (main) — mục 2: do-toc-do xong; Lighthouse 9 trang đang chạy
 - [ ] Đo SAU (nhánh) — mục 2
 - [ ] do-o-bi-che /dang-tin (thường + 470) = "BI CHE: 0"
 - [ ] Bấm thử — mục 3
@@ -14,7 +14,14 @@
 - [ ] Sửa tiếp trang còn LCP > 2,5 s (nếu có, không đổi giao diện)
 - [ ] Chủ dự án nói "Push" → gộp main, push MỘT lần, kiểm web thật
 
-Ghi chú tiến độ: (chưa bắt đầu)
+Ghi chú tiến độ (27/10, phiên trên máy):
+- Cách đo:  +  (một server). Trang tin mẫu ,
+  dự án mẫu . Lighthouse 3 lần/trang (Edge headless), lấy trung vị = số chính;
+  do-toc-do dao động quá mạnh (cùng trang lệch 2–5 s) → chỉ tham khảo.
+- main 6a9d281: HTML trang chủ **507 133 byte** (mục tiêu < 450 KB) · trang tin 175 730 byte.
+- main do-toc-do (LCP ms, 2 lần): / 2740·3956 · /mua-ban 9136·5668 · /cho-thue 4792·4224 · condotel/da-nang 4648·lỗi ·
+  trang tin 6316·10592 · dự án 2096·5428 · /bao-gia-dang-tin 9448·3932 · /gioi-thieu 3376·3240 · /faq 5288·7508.
+- /dang-tin, /tai-khoan khi đã đăng nhập: chưa có tài khoản thử để đo — cần chủ dự án bấm thử trên máy thật.
 
 ## 0. MỞ PHIÊN ĐO — dán nguyên đoạn này vào Claude Code trên máy, trong thư mục chính dự án (có `.env.local`)
 
