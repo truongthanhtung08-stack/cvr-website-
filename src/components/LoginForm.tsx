@@ -8,6 +8,7 @@ import { baoCachDangNhap } from "@/lib/useAuth";
 import { chuanHoaSdt, laSdtVN } from "@/lib/phone";
 import SocialAuth from "@/components/SocialAuth";
 import { dichSauDangNhap, thamSoNext } from "@/lib/dieuHuong";
+import { nguoiDungHienTai } from "@/lib/supabase/nguoiDung";
 
 // Dịch vài lỗi Supabase thường gặp sang tiếng Việt.
 function viError(msg: string): string {
@@ -53,10 +54,10 @@ export default function LoginForm() {
   // ĐÃ ĐĂNG NHẬP MÀ VẪN RƠI VÀO ĐÂY → không hiện lại form: có ?next thì về đúng trang đó, không thì vào
   // trang quản lý của khách (chủ dự án 22/10/2026: "bấm vào đăng nhập thì ra màn hình admin khách hàng").
   useEffect(() => {
-    createClient().auth.getUser().then(({ data }) => {
+    nguoiDungHienTai(createClient()).then((user) => {
       // Chỉ trang /dang-nhap riêng mới tự chuyển. Khung nằm NGAY TRONG trang khác (vd /dang-tin) thì trang đó tự lo —
       // tự chuyển ở đây sẽ tải lại chính trang đó, có thể lặp vô hạn nếu hai bên đọc phiên lệch nhau.
-      if (data.user && window.location.pathname.startsWith("/dang-nhap")) window.location.replace(dichSauDangNhap("/tai-khoan"));
+      if (user && window.location.pathname.startsWith("/dang-nhap")) window.location.replace(dichSauDangNhap("/tai-khoan"));
     }).catch(() => { /* chưa cấu hình → cứ hiện form */ });
   }, []);
 
@@ -130,7 +131,7 @@ export default function LoginForm() {
         return;
       }
       // Không có đích cụ thể → về đúng nơi theo vai trò: admin → /admin, khách → /tai-khoan
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await nguoiDungHienTai(supabase);
       const { data: profile } = user
         ? await supabase.from("profiles").select("role").eq("id", user.id).single()
         : { data: null };
