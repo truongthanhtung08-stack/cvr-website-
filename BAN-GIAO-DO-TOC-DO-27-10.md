@@ -19,6 +19,7 @@
 | aa48f01 | Tải ngầm khi máy rảnh (taiKhiRanh) → bấm Xem trước / Gửi báo giá không chờ | không đổi mã lúc mở trang |
 | bdf9bb7 | Thanh trên + khu Tài khoản: getUser → đọc phiên có sẵn (getUser giữ khoá → các lần gọi NỐI ĐUÔI ~5 nhịp mạng) | — |
 | 9aa54bf | Admin ListingForm, LoginForm: như trên · /admin/khach-hang/[id] hỏi song song (5 → 3 nhịp) | — |
+| (ảnh) | Ảnh tĩnh `public/`: tối ưu mã hoá KHÔNG MẤT DỮ LIỆU 9 tấm (jpegtran/optipng, giữ baseline + ICC; so PIL giống hệt) | −226 KB tổng |
 
 ## 2. Việc phải ĐO trên máy (trước và sau — so `main` với nhánh)
 
@@ -56,7 +57,16 @@ Ghi một dòng số đo 5 trang vào memory `toc-do-web-lam-tiep`.
 - /dang-nhap khi đã đăng nhập → tự chuyển; đăng nhập xong về đúng nơi theo vai trò.
 - /admin: đăng tin hộ (mặc định người đăng = admin), /admin/khach-hang/<id> (tương tác hiện đủ).
 
-## 4. Cần CHỦ DỰ ÁN quyết (không tự làm vì đụng giao diện / chi phí)
+## 4. Đã xem, KHÔNG sửa (để đo rồi tính)
+
+- Google Analytics: đã nạp đúng chuẩn (gtag `lazyOnload`, thẻ Ads tắt) — giữ.
+- /bat-dong-san/[id]: khối "tin tương tự" chở 8 tin bản nhẹ + danh sách MỌI mã tin cùng mục (`relatedIds`, cho nút "Xem thêm").
+  Đo HTML trang tin: nếu danh sách mã chiếm đáng kể (hàng trăm mã × ~40 byte) thì cân nhắc tính thứ tự ở trình duyệt — phải
+  chứng minh ra ĐÚNG thứ tự cũ trước khi làm.
+- CSS chung 27 KB nén: thử chỉ quét `src/` chỉ bớt 0,6 KB → bỏ.
+- Khung Next/React ~517 KB (chưa nén) mọi trang: không bớt được.
+
+## 5. Cần CHỦ DỰ ÁN quyết (không tự làm vì đụng giao diện / chi phí)
 
 - Ảnh tĩnh trong `public/images/` là JPG gốc (100–370 KB/tấm), web tắt tối ưu ảnh của Vercel (`images.unoptimized`, giữ trong gói $20).
   Nén lại sang WebP/AVIF = đổi điểm ảnh → chờ chủ dự án. Trên web thật ảnh /gioi-thieu có thể đã do admin thay — đo trước.
