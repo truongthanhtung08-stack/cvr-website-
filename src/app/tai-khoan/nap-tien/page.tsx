@@ -7,7 +7,7 @@ import { vnd } from "@/lib/billing";
 import { useBilling } from "@/lib/useBilling";
 import { emailThat } from "@/lib/useAuth";
 import { createClient } from "@/lib/supabase/client";
-import MaQrThanhToan, { type DonQr } from "@/components/MaQrThanhToan";
+import MaQrThanhToan, { type DonQr, veHuy } from "@/components/MaQrThanhToan";
 
 // ============================================================================
 // NẠP TIỀN VÀO TÀI KHOẢN — cổng thanh toán PayOS.
@@ -65,7 +65,8 @@ function TopUpForm() {
       const luu = JSON.parse(sessionStorage.getItem(KHOA_DON) || "null") as { don: DonQr; ve: string | null; luc: number } | null;
       // Chỉ đơn trong 15 phút (bằng thời gian trang hỏi trạng thái)
       // eslint-disable-next-line react-hooks/set-state-in-effect -- khôi phục một lần lúc mở trang
-      if (luu?.don && luu.ve === ve && Date.now() - luu.luc < 15 * 60_000) setDon(luu.don);
+      // Chỉ khi chính mốc mã QR được tải lại (history.state còn cvrQr) — vào trang nạp lần mới thì không mở lại đơn cũ
+      if (luu?.don && luu.ve === ve && Date.now() - luu.luc < 15 * 60_000 && window.history.state?.cvrQr) setDon(luu.don);
     } catch {}
   }, [ve]);
   // NÚT QUAY LẠI khi đang mở mã QR = Huỷ (chủ dự án 26/10/2026): mở mã thì thêm một mốc lịch sử; quay lại (nút điện thoại,
@@ -73,9 +74,14 @@ function TopUpForm() {
   useEffect(() => {
     if (!don) return;
     // Giữ nguyên state của Next (bản sao mốc hiện tại) — state lạ thì Next tải lại cả trang khi quay lại
-    window.history.pushState(window.history.state, "");
+    // cvrQr đánh dấu mốc mã QR: bước chọn ngân hàng (MaQrThanhToan) lùi về mốc này thì mã vẫn mở, không phải huỷ
+    // Trang tải lại khi khách từ app ngân hàng quay về: mốc mã QR đã có sẵn → không chồng thêm
+    if (!window.history.state?.cvrQr) window.history.pushState({ ...window.history.state, cvrQr: 1 }, "");
     // Về tin đang đăng kèm huy-tt=1 → form cuộn tới khối Gói tin — thanh toán
-    const dong = () => { setDon(null); boDon(); if (ve) router.replace(ve.startsWith("/dang-tin?id=") ? `${ve}&huy-tt=1` : ve); };
+    const dong = () => {
+      if (window.history.state?.cvrQr) return; // lùi từ bước chọn ngân hàng về mã QR
+      setDon(null); boDon(); if (ve) router.replace(veHuy(ve));
+    };
     window.addEventListener("popstate", dong);
     return () => window.removeEventListener("popstate", dong);
   }, [don, ve, router]);

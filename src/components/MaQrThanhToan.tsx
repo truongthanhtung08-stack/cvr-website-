@@ -26,6 +26,9 @@ const INTERNET_BANKING: { appId: string; appName: string; appLogo: string; href:
   ["SHB", "SHB", "SHB", "https://ibanking.shb.com.vn"],
 ].map(([appId, appName, anh, href]) => ({ appId, appName, appLogo: `https://cdn.vietqr.io/img/${anh}.png`, href }));
 
+// Về tin đang đăng sau khi huỷ / quay lại: huy-tt=1 → form cuộn thẳng tới khối Gói tin — thanh toán (PostListingForm)
+export const veHuy = (ve: string) => (ve.startsWith("/dang-tin?id=") ? `${ve}&huy-tt=1` : ve);
+
 export type DonQr = {
   orderCode: number;
   amount: number;
@@ -39,7 +42,21 @@ export type DonQr = {
 export default function MaQrThanhToan({ don, onHuy, onXong }: { don: DonQr; onHuy: () => void; onXong: () => void }) {
   const [anh, setAnh] = useState("");
   const [daChep, setDaChep] = useState("");
-  const [buocNganHang, setBuocNganHang] = useState(false); // đã bấm Thanh toán → bước chọn ngân hàng
+  // Đã bấm Thanh toán → bước chọn ngân hàng. Từ app ngân hàng quay về mà trang tải lại → vẫn đứng bước này (mốc cvrNh)
+  const [buocNganHang, setBuocNganHang] = useState(() => !!window.history.state?.cvrNh);
+  // QUAY LẠI TỪNG BƯỚC (chủ dự án 27/10/2026): bước chọn ngân hàng là một mốc lịch sử (cvrNh) → Quay lại về mã QR;
+  // Quay lại ở mã QR / Huỷ thanh toán → về tin đang đăng, đúng khối Gói tin (trang nạp tiền lo).
+  function moNganHang() {
+    window.history.pushState({ ...window.history.state, cvrQr: 1, cvrNh: 1 }, "");
+    setBuocNganHang(true);
+  }
+  useEffect(() => {
+    const lui = () => { if (!window.history.state?.cvrNh) setBuocNganHang(false); };
+    window.addEventListener("popstate", lui);
+    return () => window.removeEventListener("popstate", lui);
+  }, []);
+  // Huỷ ở bước chọn ngân hàng: lùi qua cả hai mốc (ngân hàng + mã QR) một lần
+  const huy = () => (buocNganHang ? window.history.go(-2) : onHuy());
   const xongRef = useRef(onXong);
   xongRef.current = onXong;
 
@@ -201,14 +218,14 @@ export default function MaQrThanhToan({ don, onHuy, onXong }: { don: DonQr; onHu
           {bangTaiKhoan}
           <div className="mt-4 grid grid-cols-2 gap-2.5">
             <button type="button" onClick={luuMa} className={nutPhu}>Lưu mã QR</button>
-            <button type="button" onClick={() => setBuocNganHang(true)} className="h-12 rounded-lg bg-cvr-ink text-[15px] font-bold text-white">
+            <button type="button" onClick={moNganHang} className="h-12 rounded-lg bg-cvr-ink text-[15px] font-bold text-white">
               Thanh toán
             </button>
           </div>
         </>
       )}
       <p className="mt-4 text-center text-sm text-cvr-muted">Đang chờ thanh toán…</p>
-      <button type="button" onClick={onHuy} className={`mt-3 w-full bg-cvr-surface ${nutPhu}`}>
+      <button type="button" onClick={huy} className={`mt-3 w-full bg-cvr-surface ${nutPhu}`}>
         Huỷ thanh toán
       </button>
     </section>

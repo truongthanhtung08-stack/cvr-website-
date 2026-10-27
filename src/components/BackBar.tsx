@@ -183,7 +183,9 @@ export default function BackBar() {
     if (goc === "tai-khoan" && doan[1] === "nap-tien") {
       const ve = new URLSearchParams(window.location.search).get("ve");
       if (ve && /^\/(dang-tin|tai-khoan)(\/|\?|$)/.test(ve)) {
-        router.push(ve);
+        // Đang mở mã QR / chọn ngân hàng → lùi đúng một bước (27/10/2026); chưa mở mã → về tin, đúng khối Gói tin
+        if (window.history.state?.cvrQr) window.history.back();
+        else router.push(ve.startsWith("/dang-tin?id=") ? `${ve}&huy-tt=1` : ve); // như veHuy (MaQrThanhToan) — không nhập để BackBar khỏi kéo theo
         return;
       }
     }

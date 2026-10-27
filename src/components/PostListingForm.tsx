@@ -702,10 +702,17 @@ export default function PostListingForm() {
       }
       // HUỶ THANH TOÁN (?huy-tt=1 từ trang nạp tiền — chủ dự án 27/10/2026): về tin nháp, đưa thẳng tới khối Gói tin — thanh toán
       const dc = new URL(window.location.href);
-      if (dc.searchParams.get("huy-tt") === "1") {
+      let coCo = false;
+      try { coCo = sessionStorage.getItem("veGoiTin") === editId; sessionStorage.removeItem("veGoiTin"); } catch {}
+      if (dc.searchParams.get("huy-tt") === "1" || coCo) {
         dc.searchParams.delete("huy-tt");
         window.history.replaceState(window.history.state, "", dc.pathname + dc.search);
         setTimeout(() => document.getElementById("b-goi")?.scrollIntoView({ behavior: "smooth", block: "start" }), 400);
+        // Quay lại bằng nút Back: trình duyệt / Next khôi phục vị trí cuộn cũ sau đó → đặt lại nếu bị kéo đi
+        for (const ms of [1200, 2000]) setTimeout(() => {
+          const el = document.getElementById("b-goi");
+          if (el && Math.abs(el.getBoundingClientRect().top) > 200) el.scrollIntoView({ block: "start" });
+        }, ms);
       }
       setDemand(demandOfPurpose(r.purpose));
       if (r.type) setCategory(r.type);
@@ -1182,6 +1189,8 @@ export default function PostListingForm() {
               // Nút Back của điện thoại từ trang nạp tiền phải về lại ĐÚNG TIN NHÁP (còn nội dung + gói), không về form trống:
               // đổi địa chỉ trang này thành /dang-tin?id=<tin nháp> ngay trước khi sang nạp (chủ dự án 26/10/2026)
               if (thieuTien.id) window.history.replaceState(window.history.state, "", `/dang-tin?id=${thieuTien.id}`);
+              // Back từ trang nạp về → form đứng ngay khối Gói tin (27/10/2026). Ghi cờ, không ghi lên địa chỉ: Next tự ghi đè địa chỉ.
+              try { if (thieuTien.id) sessionStorage.setItem("veGoiTin", thieuTien.id); } catch {}
             }}
             className="flex h-12 w-full items-center justify-center rounded-lg bg-cvr-ink text-[15px] font-bold text-white transition hover:bg-cvr-ink/90"
           >
