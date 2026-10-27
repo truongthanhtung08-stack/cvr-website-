@@ -4,6 +4,18 @@
 > Cloud KHÔNG có `.env.local` (khoá Supabase) và không vào được coastalland.vn → **chưa đo được với dữ liệu thật.**
 > Tệp này là danh sách việc cho phiên trên máy: đo trước/sau, bấm thử, rồi mới chờ chủ dự án nói "Push".
 
+## TIẾN ĐỘ (phiên đo cập nhật sau MỖI bước rồi commit lên nhánh — dừng giữa chừng thì phiên sau đọc mục này làm tiếp)
+
+- [ ] Đo TRƯỚC (main) — mục 2
+- [ ] Đo SAU (nhánh) — mục 2
+- [ ] do-o-bi-che /dang-tin (thường + 470) = "BI CHE: 0"
+- [ ] Bấm thử — mục 3
+- [ ] Báo chủ dự án bảng số trước/sau
+- [ ] Sửa tiếp trang còn LCP > 2,5 s (nếu có, không đổi giao diện)
+- [ ] Chủ dự án nói "Push" → gộp main, push MỘT lần, kiểm web thật
+
+Ghi chú tiến độ: (chưa bắt đầu)
+
 ## 0. MỞ PHIÊN ĐO — dán nguyên đoạn này vào Claude Code trên máy, trong thư mục chính dự án (có `.env.local`)
 
 ```
