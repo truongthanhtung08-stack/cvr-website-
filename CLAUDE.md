@@ -83,7 +83,7 @@
 >   mỗi sàn × tầng — sàn chỉ 75–80% đất, có lửng/áp mái); không có số chính xác thì không lấy — web bỏ qua mọi số đúng bằng đất × 1 · 1,5 · 2… (`dienTichSanThat`).
 >   Việc chia giá là của web; Cowork chỉ chép số, không tự chia.
 > - **Lịch sử giá:** chỉ dãy của đúng khu vực + loại hình + mua bán/cho thuê của tin, đủ so cùng kỳ
->   1 năm mới hiện. Yêu cầu nhập liệu cho Cowork: `D:\Coastal Land\SEO\YEU-CAU-COWORK-LICH-SU-GIA.md` (mọi tệp cho Cowork — yêu cầu, dữ liệu vào, dữ liệu ra — chỉ nằm ở `D:\Coastal Land\SEO\`, xem `CONG-VIEC-3-BEN.md` mục 0) (làm mới 03/10: cùng phân khúc + cùng vị trí, 3 bậc dự án → đường → phường — ⛔ **bỏ hẳn cả tỉnh 16/10** (số một phường/loại hình không áp cho nơi khác); đơn vị theo loại hình: đất ÷ m² đất · căn hộ ÷ m² căn · nhà, văn phòng ÷ m² sàn; theo quý như Batdongsan, đủ 5 quý liền mới hiện; ⛔ **thống nhất GIÁ MỖI M² theo loại hình cả bán lẫn thuê (thuê = tiền/tháng ÷ m², chốt 21/10 — "lấy đơn vị tổng là sai")**; web tự tính, Cowork điền phần thiếu từ nút "Tải danh sách còn thiếu").
+>   1 năm mới hiện. Yêu cầu nhập liệu cho Cowork: `D:\Coastal Land\SEO\YEU-CAU-COWORK-LICH-SU-GIA.md` (mọi tệp cho Cowork — yêu cầu, dữ liệu vào, dữ liệu ra — chỉ nằm ở `D:\Coastal Land\SEO\`, xem `KE-HOACH-SEO.md` mục 11.0) (làm mới 03/10: cùng phân khúc + cùng vị trí, 3 bậc dự án → đường → phường — ⛔ **bỏ hẳn cả tỉnh 16/10** (số một phường/loại hình không áp cho nơi khác); đơn vị theo loại hình: đất ÷ m² đất · căn hộ ÷ m² căn · nhà, văn phòng ÷ m² sàn; theo quý như Batdongsan, đủ 5 quý liền mới hiện; ⛔ **thống nhất GIÁ MỖI M² theo loại hình cả bán lẫn thuê (thuê = tiền/tháng ÷ m², chốt 21/10 — "lấy đơn vị tổng là sai")**; web tự tính, Cowork điền phần thiếu từ nút "Tải danh sách còn thiếu").
 > - Bài học 03/10: Claude tự áp luật, hạ nhầm 49 tin còn hạn — xem memory `gia-chinh-sach-mot-nguon-admin`.
 
 ---
@@ -175,7 +175,7 @@ Phù hợp và tương thích cho mọi trình duyệt trên điện thoại c�
 > 📌 **File chi tiết: [`QUY-TRINH-LAM-VIEC.md`](QUY-TRINH-LAM-VIEC.md) — PHẢI đọc và tuân thủ.**
 
 **QUY TRÌNH DỮ LIỆU 3 BÊN (Cowork · chủ dự án · Claude) — MỘT TỆP DUY NHẤT:** `D:\Coastal Land\SEO\Plan SEO - pSEO\KE-HOACH-SEO.md` mục 11 (gom từ `CONG-VIEC-3-BEN.md` 28/10/2026 — xem mục 0D1).
-Hai quy trình: ① tin đăng hằng ngày · ② dữ liệu khác hằng tuần. Mọi tệp Cowork (yêu cầu, mẫu, dữ liệu vào `VAO`, dữ liệu ra `RA`) chỉ ở `D:\Coastal Land\SEO\`; tin giao ở `D:\Coastal Land\Đăng tin\TIN HANG NGAY chuẩn\<ngày>`. Muốn đổi quy trình → sửa thẳng mục 11 tệp đó, không tạo tệp quy trình mới.
+Hai quy trình: ① tin đăng hằng ngày · ② dữ liệu khác hằng tuần. Mọi tệp Cowork chỉ ở `D:\Coastal Land\SEO\`: việc máy giao `RA\VIEC.md` · Cowork giao `DA-DUYET\<ddmmyyyy>\` (bảng nơi lưu mục 11.0; không dùng `VAO`, `Đăng tin\TIN HANG NGAY chuẩn` nữa). Muốn đổi quy trình → sửa thẳng mục 11 tệp đó, không tạo tệp quy trình mới.
 
 **Nguyên tắc 1 — ĐÃ DUYỆT LÀ KHÔNG ĐỘNG VÀO.**
 Phần nào chủ dự án đã xem và duyệt thì GIỮ NGUYÊN 100%. Không tự ý chỉnh kích thước, màu,
@@ -341,6 +341,10 @@ Buộc phải đụng vào vì lý do kỹ thuật → **DỪNG, HỎI TRƯỚC.
 > `VIEC.md` · làm dòng mục 3 Ai = Claude) = ĐÃ GIAO VIỆC → chủ dự án kiểm `VIEC.md` → **chủ dự án nhắn Cowork** (Cowork không tự chạy, chỉ
 > làm việc trong `VIEC.md`) → Cowork lưu `SEO\DA-DUYET\<ngày>\` → chủ dự án + Claude cùng kiểm → mã web: Claude làm, chờ "Push";
 > tin, ảnh, video, bài viết, mạng xã hội: **chủ dự án tự đưa lên** → ai làm gì tự kiểm việc đó → Claude báo cáo + ghi mục 9.
+> **⭐ KẾ HOẠCH TỪ KHOÁ LÀ ƯU TIÊN SỐ 1 — mỗi lần "Bắt đầu" làm TRƯỚC mọi việc:** đo #14 (tra Google các từ khoá "Cần tra" trong
+> `TRA-GOOGLE.csv`, mục 5.10) → dựng lại hệ thống từ khoá (`may-tu-khoa\` → `HE-THONG-TU-KHOA.xlsx`, mục 5.4) → giao tin theo nhóm từ khoá #2
+> → sửa gốc #30 khi chủ dự án duyệt mục 5.8 (B1–B3) → xin index #4. Mọi điều chỉnh từ khoá đến 28/10 ĐÃ NẰM trong mục 5 (bản 3) + 5 luật
+> dưới đây — làm tiếp từ đó; **KHÔNG bắt chủ dự án nói lại, KHÔNG làm lại từ đầu.**
 > Chủ dự án không phải nhớ bước: Claude dẫn quy trình, việc nào cần chủ dự án thì nhắn đúng lúc. Nơi lưu: bảng mục 11.0 (dọn: mục 3 #53).
 > **Bàn giao phiên cloud 28/10/2026:** khối 📌 ngay dưới khối ⭐ đầu tệp kế hoạch — Claude trên máy đọc khi nhận "Bắt đầu" lần đầu,
 > làm #52 → #53 trước; chờ chủ dự án quyết mục 5.8 (B1–B3).
