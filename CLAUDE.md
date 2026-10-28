@@ -336,10 +336,10 @@ Buộc phải đụng vào vì lý do kỹ thuật → **DỪNG, HỎI TRƯỚC.
 > dựng `SEO\RA\VIEC.md` cho Cowork. Đã gom, không dùng nữa: `CONG-VIEC-3-BEN.md` · `Plan MXH\KE-HOACH-MXH.md` · `THU-TU-UU-TIEN.txt` ·
 > thư mục `GUI-CLAUDE-CODE\` · tệp `CAN-ANH\<ngày>.md` · mảng YEU_CAU trong mã. Tài liệu tra cứu (YEU-CAU-COWORK-…, MAU-…) giữ riêng,
 > không yêu cầu hay sửa ở đó — muốn đổi thì ghi một dòng ở mục 3.
-> **Hằng ngày — MỘT lệnh (chủ dự án chốt 28/10):** chủ dự án mở máy → mở tệp này kiểm tra, sửa, bổ sung → nhắn Claude trên máy
+> **Hằng ngày — MỘT lệnh (chủ dự án chốt 28/10):** chủ dự án mở máy → mở tệp này xem (cần thì sửa, bổ sung) → nhắn Claude trên máy
 > **"Bắt đầu"**. Claude làm đúng khối ⭐ đầu tệp, không hỏi lại: lấy mã mới (`git pull --ff-only`) · đọc tệp · kiểm web + Search Console,
-> xin index · chạy `node scripts/viec-du-lieu.mjs` → `VIEC.md` · làm các dòng mục 3 có Ai = Claude · báo ngắn. Sửa tệp rồi nhắn "Bắt đầu"
-> = đã duyệt; đề xuất mới của Claude ghi thành dòng mục 3 chờ duyệt. Sau đó chủ dự án chỉ duyệt: "Đăng <ngày>" · "Push".
+> xin index · chạy `node scripts/viec-du-lieu.mjs` → `VIEC.md` · làm các dòng mục 3 có Ai = Claude · báo ngắn. Nhắn "Bắt đầu" = đã duyệt tệp
+> như đang có (sửa hay không); đề xuất mới của Claude ghi thành dòng mục 3 chờ duyệt. Sau đó chủ dự án chỉ duyệt: "Đăng <ngày>" · "Push".
 
 > **MỘT thư mục cho cả 3 bên: `D:\Coastal Land\SEO\Plan SEO - pSEO\`** — chủ dự án sửa, Claude đọc + sửa, máy giao việc hằng ngày
 > (`scripts/viec-du-lieu.mjs`) đọc. Không tạo tệp kế hoạch / tệp nhập ở chỗ khác; trùng thì gom vào đây, không cần thì bỏ.
