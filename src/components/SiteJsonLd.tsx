@@ -28,11 +28,17 @@ const data = {
       // chủ dự án, web chỉ dùng tên viết tắt COASTAL LAND (đã nằm ở trường "name").
       taxID: "0402353502",
       url: SITE,
-      logo: `${SITE}/logo/logo-horizontal-dark.svg`,
+      // Logo cho Google phải là ẢNH (PNG/JPG/WebP, ≥ 112 px) — Google không nhận SVG cho logo Organization (28/10/2026).
+      // Logo vuông nền trắng, đúng logo hồ sơ Google Doanh nghiệp.
+      logo: { "@type": "ImageObject", url: `${SITE}/logo/app-icon-1024.png`, width: 1024, height: 1024 },
       image: `${SITE}/logo/logo-horizontal.jpg`,
       description:
         "Cổng thông tin mua bán, cho thuê nhà đất, căn hộ, đất nền và dự án.",
       slogan: "Cổng thông tin mua bán, cho thuê nhà đất",
+      // Câu phân biệt (28/10/2026): gõ "coastal land" thì khung AI của Google trả nghĩa từ điển "đất ven biển" — nói rõ đây là TÊN
+      // THƯƠNG HIỆU của cổng thông tin bất động sản (schema.org disambiguatingDescription).
+      disambiguatingDescription:
+        "COASTAL LAND (coastalland.vn) là tên cổng thông tin mua bán, cho thuê nhà đất tại Việt Nam, không phải thuật ngữ tiếng Anh “coastal land” (đất ven biển).",
       areaServed: [
         { "@type": "Country", name: "Việt Nam" },
       ],
