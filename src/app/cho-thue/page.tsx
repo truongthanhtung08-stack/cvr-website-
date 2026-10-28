@@ -3,6 +3,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import TimKiemPhoBien from "@/components/TimKiemPhoBien";
 import { ListingListJsonLd } from "@/components/ListJsonLd";
+import { BreadcrumbJsonLd } from "@/components/Breadcrumb";
 import ListingBrowser from "@/components/ListingBrowser";
 import { goiNheBaiViet } from "@/lib/goiNhe";
 import { ketQuaTrangDau } from "@/lib/ketQuaDau";
@@ -38,6 +39,8 @@ export default async function ChoThuePage() {
   return (
     <>
       <ListingListJsonLd items={tinThue} heading={`Cho thuê nhà đất ${thangHienTai()}`} path="/cho-thue" />
+      {/* BreadcrumbList cho Google (28/10/2026, On-page nhóm A) — chỉ dữ liệu, không hiện gì; cùng tên cấp với trang /cho-thue/<loại> */}
+      <BreadcrumbJsonLd items={[{ name: "Nhà đất cho thuê", href: "/cho-thue" }]} />
       <Header />
       <main className="flex-1 bg-white">
         {/* Trang 1 máy chủ dựng sẵn (lib/ketQuaDau, 21/10/2026) — HTML có tin thật khách nhìn thấy */}
