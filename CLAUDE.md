@@ -341,7 +341,8 @@ Buộc phải đụng vào vì lý do kỹ thuật → **DỪNG, HỎI TRƯỚC.
 > xin index · chạy `node scripts/viec-du-lieu.mjs` → `VIEC.md` · làm các dòng mục 3 có Ai = Claude · báo ngắn. Nhắn "Bắt đầu" = đã duyệt tệp
 > như đang có (sửa hay không); đề xuất mới của Claude ghi thành dòng mục 3 chờ duyệt. Sau đó chủ dự án chỉ duyệt: "Đăng <ngày>" · "Push".
 > **Chủ dự án không phải nhớ bước:** nhắn Claude Code là Claude tự dẫn cả quy trình theo tệp (mục 3 việc, mục 11 quy trình); việc nào cần chủ
-> dự án (sửa ảnh, duyệt) thì nhắn đúng lúc, đúng việc.
+> dự án (sửa ảnh, duyệt) thì nhắn đúng lúc, đúng việc. Làm xong lệnh "Bắt đầu" = đã GIAO VIỆC cho cả 3 bên (Cowork: mục 0
+> `VIEC.md` · chủ dự án: báo việc của chủ dự án · Claude: dòng mục 3 có Ai = Claude).
 
 > **MỘT thư mục cho cả 3 bên: `D:\Coastal Land\SEO\Plan SEO - pSEO\`** — chủ dự án sửa, Claude đọc + sửa, máy giao việc hằng ngày
 > (`scripts/viec-du-lieu.mjs`) đọc. Không tạo tệp kế hoạch / tệp nhập ở chỗ khác; trùng thì gom vào đây, không cần thì bỏ.
