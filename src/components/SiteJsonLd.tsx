@@ -19,7 +19,8 @@ const data = {
       name: "COASTAL LAND",
       // Tên gọi khác khách hay gõ — AI tìm kiếm của Google (24/10/2026) đang lẫn "coastalland" với khu nghỉ dưỡng
       // Vinpearl Coastalland; khai đủ tên + lĩnh vực để Google nhận đúng thực thể cổng thông tin bất động sản.
-      alternateName: ["Coastal Land", "Coastalland", "coastalland.vn", "Central Coast Vietnam Real Estate"],
+      // 28/10/2026: thêm cách gõ thiếu chữ "a" ("costalland", "costal land") khách hay gõ — nối về cùng thực thể. Hoa/thường Google tự coi như nhau.
+      alternateName: ["Coastal Land", "Coastalland", "coastalland.vn", "Costalland", "Costal Land", "Central Coast Vietnam Real Estate"],
       foundingDate: "2026-08-17", // ngày cấp mã số doanh nghiệp (trang Giới thiệu)
       email: "hotro@coastalland.vn",
       knowsAbout: ["Mua bán nhà đất", "Cho thuê nhà đất", "Căn hộ chung cư", "Đất nền", "Dự án bất động sản"],
@@ -62,7 +63,7 @@ const data = {
       "@id": `${SITE}/#website`,
       url: SITE,
       name: "COASTAL LAND",
-      alternateName: ["Coastal Land", "coastalland.vn"],
+      alternateName: ["Coastal Land", "Coastalland", "coastalland.vn", "Costalland", "Costal Land"],
       inLanguage: "vi-VN",
       publisher: { "@id": `${SITE}/#to-chuc` },
       potentialAction: {
