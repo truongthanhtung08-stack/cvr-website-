@@ -342,8 +342,8 @@ Buộc phải đụng vào vì lý do kỹ thuật → **DỪNG, HỎI TRƯỚC.
 > - Không có phiên trên máy: Claude trả MỘT tệp `Plan-SEO-pSEO.zip` cùng cấu trúc thư mục. Gói KHÔNG chứa `KE-HOACH-SEO.md`
 >   (tệp này máy ghi nhật ký mỗi sáng — chép đè là mất); bản đã sửa đi kèm là `may-tu-khoa\KE-HOACH-SEO.moi.md`, và
 >   `CAP-NHAT-MOT-LAN.bat` chỉ thay khi tệp trên máy còn ĐÚNG bản Claude đã dựa vào (so số byte), sao lưu bản cũ vào
->   `may-tu-khoa\sao-luu\`, lệch thì dừng không ghi. ⛔ Windows máy chủ dự án KHÔNG có Node.js (đo 28/10) → tệp .bat chỉ dùng lệnh
->   có sẵn của Windows. Chủ dự án: giải nén vào `D:\Coastal Land\SEO\` ("Overwrite without prompt"), bấm đúp `CAP-NHAT-MOT-LAN.bat`.
+>   `may-tu-khoa\sao-luu\`, lệch thì dừng không ghi. ⛔ Máy chủ dự án CÓ Node.js nhưng cửa sổ lệnh mở bằng bấm đúp
+>   tệp .bat không tìm thấy `node` (đo 28/10) → tệp .bat chỉ dùng lệnh có sẵn của Windows. Chủ dự án: giải nén vào `D:\Coastal Land\SEO\` ("Overwrite without prompt"), bấm đúp `CAP-NHAT-MOT-LAN.bat`.
 >
 > **Luật** (đọc mục 5 trước khi đụng tiêu đề, mô tả, khối số liệu, nối trang, giao tin):
 > 1. Gợi ý Google (gợi ý khi gõ + "Mọi người cũng tìm kiếm") là CHUẨN: chữ trên web giữ đúng chữ + thứ tự gợi ý, thêm mục đích ở đầu.
