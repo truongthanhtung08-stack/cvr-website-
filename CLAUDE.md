@@ -370,6 +370,13 @@ Buộc phải đụng vào vì lý do kỹ thuật → **DỪNG, HỎI TRƯỚC.
 >   từ Downloads hoặc dựng theo mẫu https://claude.ai/artifact/W5VaB1rXzFqS3wY9uzVEKN.
 > - ⑥ **KẾ HOẠCH TỪ KHOÁ** (ưu tiên số 1 từ đây mỗi ngày): đo #14 → dựng lại hệ thống từ khoá → giao tin theo nhóm #2 → sửa gốc #30 khi anh duyệt ②
 >   → xin index #4. Chữ mới lên web: đưa anh nguyên văn trước.
+> - ⑦ **NHÁNH `claude/clever-bardeen-15e4ot` (phiên cloud 27–28/10) — LÀM SAU ⓪, GỘP MAIN + PUSH MỘT LẦN khi anh nhắn "Push":**
+>   làm nhẹ tải trang (trang chủ < 450 KB, /dang-tin, /tai-khoan, biểu tượng, ảnh…) + **On-page nhóm A** của `HE-THONG-TU-KHOA.xlsx`
+>   (đã làm trong nhánh, commit 754a9b7: ItemList 11 trang loại hình cả nước · BreadcrumbList /cho-thue + 8 trang chi tiết dự án; trang
+>   khoá bỏ qua). Không đổi chữ, giao diện. Việc của Claude trên máy: `git fetch origin claude/clever-bardeen-15e4ot` → đọc
+>   `BAN-GIAO-DO-TOC-DO-27-10.md` trên nhánh (mục TIẾN ĐỘ = đang dừng ở đâu) → đo trước/sau + bấm thử theo tệp đó → kiểm thêm ItemList /
+>   BreadcrumbList bằng Rich Results Test trên 2–3 trang → báo anh → anh "Push" → `git merge --no-ff` vào main, push MỘT lần → đánh dấu
+>   20 dòng nhóm A trong trang tính On-page là ✅ (ổ D:). Phiên cloud không ghi được ổ D: và không đẩy được main.
 >
 > **LƯU Ở ĐÂU (không xoá gì):** `SEO\RA\` máy viết (`VIEC.md`, anh chỉ sửa mục 0) · `SEO\DA-DUYET\<ddmmyyyy>\` Cowork giao · `SEO\MAU\` mẫu ·
 > `SEO\` gốc: `YEU-CAU-COWORK-*.md`, `MAU-DANG-TIN-HANG-LOAT.xlsx`, `DANH-SACH-PHUONG-XA-TOAN-QUOC.txt` · `SEO\_cu\` thứ không dùng nữa.
