@@ -38,7 +38,7 @@ const data = {
       // Câu phân biệt (28/10/2026): gõ "coastal land" thì khung AI của Google trả nghĩa từ điển "đất ven biển" — nói rõ đây là TÊN
       // THƯƠNG HIỆU của cổng thông tin bất động sản (schema.org disambiguatingDescription).
       disambiguatingDescription:
-        "COASTAL LAND (coastalland.vn) là tên cổng thông tin mua bán, cho thuê nhà đất tại Việt Nam, không phải thuật ngữ tiếng Anh “coastal land” (đất ven biển).",
+        "COASTAL LAND: Cổng thông tin mua bán, cho thuê nhà đất", // câu chủ dự án duyệt 28/10/2026
       areaServed: [
         { "@type": "Country", name: "Việt Nam" },
       ],

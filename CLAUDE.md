@@ -379,9 +379,8 @@ Buộc phải đụng vào vì lý do kỹ thuật → **DỪNG, HỎI TRƯỚC.
 >   20 dòng nhóm A trong trang tính On-page là ✅ (ổ D:). Phiên cloud không ghi được ổ D: và không đẩy được main.
 > - ⑧ **THƯƠNG HIỆU "COASTAL LAND" TRÊN GOOGLE** (chủ dự án 28/10: gõ "coastal land" → web đứng đầu + có hồ sơ doanh nghiệp, nhưng khung AI
 >   trả nghĩa từ điển "đất ven biển"). Chép việc này vào `KE-HOACH-SEO.md` (📋 việc đang làm + chi tiết ở `chi-tiet\`). Gồm:
->   · Mã (đã làm trong nhánh, commit 46a5de1, chờ anh duyệt câu): `SiteJsonLd` logo PNG vuông `/logo/app-icon-1024.png` (Google không nhận
->     SVG) + `disambiguatingDescription`: "COASTAL LAND (coastalland.vn) là tên cổng thông tin mua bán, cho thuê nhà đất tại Việt Nam, không
->     phải thuật ngữ tiếng Anh “coastal land” (đất ven biển)."
+>   · Mã (đã làm trong nhánh): `SiteJsonLd` logo PNG vuông `/logo/app-icon-1024.png` (Google không nhận
+>     SVG) + `disambiguatingDescription`: "COASTAL LAND: Cổng thông tin mua bán, cho thuê nhà đất" (anh đã duyệt 28/10).
 >   · Anh gửi link hồ sơ Google Doanh nghiệp (Maps → Chia sẻ → Sao chép link) → thêm vào `sameAs` của `SiteJsonLd`, gộp cùng đợt push.
 >   · Ngoài web (anh / Cowork): cùng một tên "COASTAL LAND" + link coastalland.vn + mô tả "cổng thông tin mua bán, cho thuê nhà đất" ở
 >     Facebook, Zalo OA, YouTube, hồ sơ Google; tạo mục Wikidata cho công ty (tên, web, mã số thuế, địa chỉ, mạng xã hội); đăng tên ở các
