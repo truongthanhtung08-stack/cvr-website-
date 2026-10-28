@@ -327,64 +327,39 @@ Buộc phải đụng vào vì lý do kỹ thuật → **DỪNG, HỎI TRƯỚC.
 
 ---
 
-## 0D1. 🔑 MỘT TỆP CHO CẢ 3 BÊN · TỪ KHOÁ — GỢI Ý GOOGLE LÀ CHUẨN (chốt 28/10/2026)
+## 0D1. 🔑 HỆ THỐNG LÀM VIỆC HẰNG NGÀY + KẾ HOẠCH TỪ KHOÁ (chủ dự án chốt 28/10/2026 — đơn giản, thống nhất)
 
-> ⛔ **MỘT TỆP `D:\Coastal Land\SEO\Plan SEO - pSEO\KE-HOACH-SEO.md` = điểm bắt đầu của cả 3 bên** (chủ dự án 28/10: "1 chỗ, 1 file .md
-> để yêu cầu và sửa — bất cứ bên nào cũng phải từ đây"). Mục 0 yêu cầu chủ dự án · 0b thứ tự việc Cowork · 3 mọi việc (kể cả mạng xã hội
-> #41–#51; giao việc / yêu cầu Claude = thêm một dòng) · 5 kế hoạch từ khoá · 11 quy trình 3 bên · 12 kế hoạch mạng xã hội.
-> Mỗi phiên Claude ĐỌC TỆP NÀY TRƯỚC, làm việc ở mục 3, ghi kết quả vào cột Trạng thái. `scripts/viec-du-lieu.mjs` chỉ đọc tệp này để
-> dựng `SEO\RA\VIEC.md` cho Cowork. Đã gom, không dùng nữa: `CONG-VIEC-3-BEN.md` · `Plan MXH\KE-HOACH-MXH.md` · `THU-TU-UU-TIEN.txt` ·
-> thư mục `GUI-CLAUDE-CODE\` · tệp `CAN-ANH\<ngày>.md` · mảng YEU_CAU trong mã. Tài liệu tra cứu (YEU-CAU-COWORK-…, MAU-…) giữ riêng,
-> không yêu cầu hay sửa ở đó — muốn đổi thì ghi một dòng ở mục 3.
-> **Hằng ngày — bảng ⭐ 6 bước đầu tệp là chuẩn duy nhất (chủ dự án chốt 28/10):** chủ dự án (khi cần) xem, sửa tệp → lưu → nhắn Claude
-> trên máy **"Bắt đầu"** → Claude tự làm theo tệp (lấy mã mới · kiểm web + Search Console · `node scripts/viec-du-lieu.mjs` · viết mục 0
-> `VIEC.md` · làm dòng mục 3 Ai = Claude) = ĐÃ GIAO VIỆC → chủ dự án kiểm `VIEC.md` → **chủ dự án nhắn Cowork** (Cowork không tự chạy, chỉ
-> làm việc trong `VIEC.md`) → Cowork lưu `SEO\DA-DUYET\<ngày>\` → chủ dự án + Claude cùng kiểm → mã web: Claude làm, chờ "Push";
-> tin, ảnh, video, bài viết, mạng xã hội: **chủ dự án tự đưa lên** → ai làm gì tự kiểm việc đó → Claude báo cáo + ghi mục 9.
-> **⭐ KẾ HOẠCH TỪ KHOÁ LÀ ƯU TIÊN SỐ 1 — mỗi lần "Bắt đầu" làm TRƯỚC mọi việc:** đo #14 (tra Google các từ khoá "Cần tra" trong
-> `TRA-GOOGLE.csv`, mục 5.10) → dựng lại hệ thống từ khoá (`may-tu-khoa\` → `HE-THONG-TU-KHOA.xlsx`, mục 5.4) → giao tin theo nhóm từ khoá #2
-> → sửa gốc #30 khi chủ dự án duyệt mục 5.8 (B1–B3) → xin index #4. Mọi điều chỉnh từ khoá đến 28/10 ĐÃ NẰM trong mục 5 (bản 3) + 5 luật
-> dưới đây — làm tiếp từ đó; **KHÔNG bắt chủ dự án nói lại, KHÔNG làm lại từ đầu.**
-> Chủ dự án không phải nhớ bước: Claude dẫn quy trình, việc nào cần chủ dự án thì nhắn đúng lúc. Nơi lưu: bảng mục 11.0 (dọn: mục 3 #53).
-> **Bàn giao phiên cloud 28/10/2026:** khối 📌 ngay dưới khối ⭐ đầu tệp kế hoạch — Claude trên máy đọc khi nhận "Bắt đầu" lần đầu,
-> làm #52 → #53 trước; chờ chủ dự án quyết mục 5.8 (B1–B3).
-> **Đầu tệp phải gọn cho chủ dự án** (chủ dự án 28/10: "rất lộn xộn"): đầu `KE-HOACH-SEO.md` chỉ 3 khối — ⭐ quy trình · **✍ ANH CẦN DUYỆT**
-> (gom MỌI việc chờ chủ dự án: mục 5.8, 5.12, dòng mục 3 có Ai = Chủ dự án; mỗi việc 1–2 dòng, các phương án, chỗ ghi `→ DUYỆT: …`) · 📌 bàn giao.
-> Phần dưới là tra cứu cho Claude. Lần "Bắt đầu" đầu tiên: dựng khối ✍ (không xoá nội dung gốc), sau mỗi lần chủ dự án ghi DUYỆT thì làm
-> theo rồi chuyển việc đó khỏi khối ✍.
-> **Tệp không được dài thêm mãi** (chủ dự án 28/10): mỗi lần "Bắt đầu", Claude chuyển các dòng mục 3 đã ✅ và nhật ký mục 9 cũ hơn 7 ngày
-> sang `D:\Coastal Land\SEO\_cu\KE-HOACH-SEO-LUU-TRU.md` (nối vào cuối, không xoá). Tệp chính chỉ giữ việc đang làm, kế hoạch, quy trình.
-> **⛔ VIỆC TÁCH TỆP — Claude trên máy làm ở lần "Bắt đầu" đầu tiên (chủ dự án 28/10: "một tệp rất dài, miên man, lộn xộn, không thể
-> quản lý xem hết"; cloud chỉ ghi, Claude Desktop làm).** Tách `KE-HOACH-SEO.md` thành 2 tầng, không mất chữ nào:
-> - **Tầng 1 — `Plan SEO - pSEO\KE-HOACH-SEO.md`, chỉ MỘT màn hình, chủ dự án xem + quản lý:** ⭐ QUY TRÌNH (6 dòng) · ✍ ANH CẦN DUYỆT (mỗi
->   việc 1 dòng + các phương án + `→ DUYỆT: …`) · 📋 VIỆC ĐANG LÀM (bảng `| # | Việc | Ai | Trạng thái |`, mỗi việc ≤ 1 dòng ngắn — giữ tiêu
->   đề có chữ "VIỆC THEO THỨ TỰ" để máy giao việc đọc được) · 🔑 TỪ KHOÁ (5 dòng: đang ở đâu, bước tiếp, trỏ `chi-tiet\tu-khoa.md`).
-> - **Tầng 2 — `Plan SEO - pSEO\chi-tiet\`, Claude đọc, chủ dự án không cần mở:** `tu-khoa.md` (mục 5 nguyên văn) · `viec-chi-tiet.md`
->   (mục 3 nguyên văn đủ từng dòng) · `yeu-cau-chu-du-an.md` (mục 0 + 0b) · `quy-trinh-3-ben.md` (mục 11) · `mang-xa-hoi.md` (mục 12) ·
->   `nhat-ky.md` (mục 9) · `con-lai.md` (mục 1, 2, 2b, 4, 4a, 4b, 6, 7, 8, 10).
-> - Cách làm: sao lưu bản trước khi tách vào `may-tu-khoa\sao-luu\` → tách → soát mọi dòng cũ đều có ở tệp mới → đổi tham chiếu "mục 5.x /
->   11.x / 12.x" sang tên tệp chi tiết → sửa `scripts/viec-du-lieu.mjs` đọc mục 0, 0b từ `chi-tiet\yeu-cau-chu-du-an.md` (mục 3 vẫn từ
->   `KE-HOACH-SEO.md`) → chạy thử `node scripts/viec-du-lieu.mjs`, `VIEC.md` ra đủ yêu cầu + việc → **đưa chủ dự án xem tầng 1, duyệt
->   rồi mới thay**; mã chỉ push khi chủ dự án nói "Push". Xong: cập nhật mục 0D1 này + bảng nơi lưu (mục 11.0) theo cấu trúc mới.
-> **Sơ đồ quy trình trên máy:** `D:\Coastal Land\SEO\Plan SEO - pSEO\QUY-TRINH-LAM-VIEC-HANG-NGAY.html` = bản vẽ khối ⭐ (6 bước,
-> 3 làn Anh · Claude · Cowork, dưới mỗi bước ghi tên tệp + đường dẫn thư mục, bên dưới bảng tệp — tên và chỗ). Chưa có, hoặc khối ⭐ đã đổi →
-> Claude trên máy dựng lại khi "Bắt đầu" (mẫu: https://claude.ai/artifact/W5VaB1rXzFqS3wY9uzVEKN). Không đưa tệp này lên GitHub.
-
-> **MỘT thư mục cho cả 3 bên: `D:\Coastal Land\SEO\Plan SEO - pSEO\`** — chủ dự án sửa, Claude đọc + sửa, máy giao việc hằng ngày
-> (`scripts/viec-du-lieu.mjs`) đọc. Không tạo tệp kế hoạch / tệp nhập ở chỗ khác; trùng thì gom vào đây, không cần thì bỏ.
-> - `KE-HOACH-SEO.md` — MỘT kế hoạch: mục 3 = việc (dòng chưa ✅ tự vào việc hằng ngày) · mục 5 = kế hoạch từ khoá bản 3.
-> - `TRA-GOOGLE.csv` — MỘT tệp nhập: gợi ý Google (chuẩn) · kết quả từng lần tra · danh sách cần tra.
-> - `HE-THONG-TU-KHOA.xlsx` — MỘT tệp kết quả (máy dựng): tiến độ hằng ngày, cây từ khoá, chẩn đoán, trang cần mở, on-page.
-> - `may-tu-khoa\` — máy 6 bước `goc → kiem → onpage → chandoan → xuat → soat` + dữ liệu nguồn.
-> **MỌI chỉnh sửa, điều chỉnh từ MỘT nguồn là thư mục này** (chủ dự án 28/10):
-> - Phiên trên máy chủ dự án: sửa thẳng trong thư mục, không chép ra chỗ khác để sửa.
-> - Muốn phiên đám mây ghi thẳng ổ D:: chủ dự án mở một phiên trên máy mình (Claude Desktop mở `D:\Coastal Land\SEO`, hoặc terminal
->   tại đó gõ `claude remote-control`) → phiên đám mây nhắn phiên đó làm.
-> - Không có phiên trên máy: Claude trả MỘT tệp `Plan-SEO-pSEO.zip` cùng cấu trúc thư mục. Gói KHÔNG chứa `KE-HOACH-SEO.md`
->   (tệp này máy ghi nhật ký mỗi sáng — chép đè là mất); bản đã sửa đi kèm là `may-tu-khoa\KE-HOACH-SEO.moi.md`, và
->   `CAP-NHAT-MOT-LAN.bat` chỉ thay khi tệp trên máy còn ĐÚNG bản Claude đã dựa vào (so số byte), sao lưu bản cũ vào
->   `may-tu-khoa\sao-luu\`, lệch thì dừng không ghi. ⛔ Máy chủ dự án CÓ Node.js nhưng cửa sổ lệnh mở bằng bấm đúp
->   tệp .bat không tìm thấy `node` (đo 28/10) → tệp .bat chỉ dùng lệnh có sẵn của Windows. Chủ dự án: giải nén vào `D:\Coastal Land\SEO\` ("Overwrite without prompt"), bấm đúp `CAP-NHAT-MOT-LAN.bat`.
+> **MỘT CHỖ:** `D:\Coastal Land\SEO\Plan SEO - pSEO\` — `KE-HOACH-SEO.md` (chủ dự án xem, sửa, giao việc) · `chi-tiet\` (phần đầy đủ, Claude
+> đọc) · `TRA-GOOGLE.csv` · `HE-THONG-TU-KHOA.xlsx` · `may-tu-khoa\` · sơ đồ `QUY-TRINH-LAM-VIEC-HANG-NGAY.html`. Không bên nào làm việc từ chỗ khác.
+>
+> **MỖI NGÀY — 6 BƯỚC:** ① Anh: khi cần sửa `KE-HOACH-SEO.md`, lưu → nhắn Claude trên máy **"Bắt đầu"** · ② Claude: giao việc → `SEO\RA\VIEC.md`
+> · ③ Anh: duyệt `VIEC.md` → nhắn Cowork · ④ Cowork: chỉ làm việc trong `VIEC.md` → lưu `SEO\DA-DUYET\<ddmmyyyy>\` · ⑤ Anh + Claude: kiểm →
+> lên web (anh tự đưa tin, ảnh, video, bài viết, mạng xã hội · Claude chỉ sửa mã web, lên khi anh nhắn **"Push"**) · ⑥ Claude: báo cáo anh, ghi nhật ký.
+> Anh là người bắt đầu: trước "Bắt đầu" không bên nào tự chạy. Ai làm gì tự kiểm việc đó.
+>
+> **"BẮT ĐẦU" = CLAUDE LÀM, KHÔNG HỎI LẠI:** `git pull --ff-only origin main` → đọc `KE-HOACH-SEO.md` → **kế hoạch từ khoá trước mọi việc**
+> (đo #14 → dựng lại hệ thống từ khoá → giao tin theo nhóm #2 → sửa gốc #30 khi anh duyệt → xin index #4) → `node scripts/viec-du-lieu.mjs`
+> → viết mục 0 `VIEC.md` → làm việc có Ai = Claude → báo anh ngắn. Mọi điều chỉnh từ khoá đến 28/10 đã nằm trong kế hoạch bản 3 + 5 luật dưới —
+> làm tiếp từ đó, **không bắt anh nói lại, không làm lại từ đầu, anh không phải nhớ bước.** Nhắn "Bắt đầu" = anh đã duyệt tệp như đang có.
+>
+> **GIỮ GỌN:** đầu `KE-HOACH-SEO.md` chỉ một màn hình — ⭐ quy trình · ✍ ANH CẦN DUYỆT (mỗi việc 1 dòng, anh ghi `→ DUYỆT: …`) · 📋 việc đang
+> làm (mỗi việc 1 dòng) · 🔑 tóm tắt từ khoá. Mỗi lần "Bắt đầu": việc đã ✅ + nhật ký cũ hơn 7 ngày → `SEO\_cu\KE-HOACH-SEO-LUU-TRU.md` (không xoá).
+>
+> **VIỆC LẦN ĐẦU — LÀM TRƯỚC TIÊN, trước cả kế hoạch từ khoá** (chủ dự án 28/10: "việc đầu tiên nó vào là làm cái này trước"; bàn giao
+> phiên cloud — khối 📌 đầu tệp): ① **tách tệp 2 tầng**: sao lưu vào `may-tu-khoa\sao-luu\` → tầng 1
+> `KE-HOACH-SEO.md` một màn hình như trên (bảng việc giữ tiêu đề có chữ "VIỆC THEO THỨ TỰ" và khung `| # | Việc | Ai | Trạng thái |`) · tầng 2
+> `chi-tiet\`: `tu-khoa.md` (mục 5) · `viec-chi-tiet.md` (mục 3 đủ) · `yeu-cau-chu-du-an.md` (mục 0 + 0b) · `quy-trinh-3-ben.md` (mục 11) ·
+> `mang-xa-hoi.md` (mục 12) · `nhat-ky.md` (mục 9) · `con-lai.md` (phần còn lại) → soát không mất dòng nào → sửa `viec-du-lieu.mjs` đọc mục 0, 0b từ
+> `chi-tiet\yeu-cau-chu-du-an.md`, chạy thử → **anh duyệt tầng 1 rồi mới thay** · ② #52 (lượt tự chạy theo "Bắt đầu"; tự kiểm khi Cowork giao
+> xong) · ③ #53 (đối chiếu ổ D: với bảng nơi lưu, lập bảng chuyển, anh duyệt) · ④ dựng sơ đồ html (mẫu https://claude.ai/artifact/W5VaB1rXzFqS3wY9uzVEKN)
+> · ⑤ đưa B1–B3 (kế hoạch từ khoá mục 5.8) vào ✍ cho anh duyệt.
+>
+> **LƯU Ở ĐÂU (không xoá gì):** `SEO\RA\` máy viết (`VIEC.md`, anh chỉ sửa mục 0) · `SEO\DA-DUYET\<ddmmyyyy>\` Cowork giao · `SEO\MAU\` mẫu ·
+> `SEO\` gốc: `YEU-CAU-COWORK-*.md`, `MAU-DANG-TIN-HANG-LOAT.xlsx`, `DANH-SACH-PHUONG-XA-TOAN-QUOC.txt` · `SEO\_cu\` thứ không dùng nữa.
+> Đã gom, không dùng: `CONG-VIEC-3-BEN.md`, `Plan MXH\KE-HOACH-MXH.md`, `THU-TU-UU-TIEN.txt`, `GUI-CLAUDE-CODE\`, `CAN-ANH\`, `VAO\`.
+>
+> **BẢO MẬT · PUSH:** kế hoạch và sơ đồ không đưa lên GitHub (`docs/` cũng không). Chỉ push khi anh nhắn "Push"; chưa thử, chưa kiểm thì không push.
+> Phiên cloud không ghi được ổ D: → chỉ ghi lệnh vào đây cho Claude trên máy làm.
 >
 > **Luật** (đọc mục 5 trước khi đụng tiêu đề, mô tả, khối số liệu, nối trang, giao tin):
 > 1. Gợi ý Google (gợi ý khi gõ + "Mọi người cũng tìm kiếm") là CHUẨN: chữ trên web giữ đúng chữ + thứ tự gợi ý, thêm mục đích ở đầu.
