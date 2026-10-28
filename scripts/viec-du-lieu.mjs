@@ -193,7 +193,7 @@ const KE_HOACH = "D:/Coastal Land/SEO/Plan SEO - pSEO/KE-HOACH-SEO.md";
 // MỘT TỆP (chủ dự án 28/10/2026: "1 chỗ, 1 file .md để yêu cầu và sửa — bất cứ bên nào cũng phải từ đây"): yêu cầu chủ dự án
 // (mục 0), thứ tự việc Cowork (mục 0b), việc 3 bên kể cả mạng xã hội (mục 3), quy trình 3 bên (mục 11), kế hoạch MXH (mục 12).
 const KH_TEP = KE_HOACH.replace(/\//g, BS);
-const KH_DONG = fs.existsSync(KE_HOACH) ? fs.readFileSync(KE_HOACH, "utf8").replace(/^\uFEFF/, "").split(/\r?\n/) : [];
+const KH_DONG = fs.existsSync(KE_HOACH) ? fs.readFileSync(KE_HOACH, "utf8").replace(/^\uFEFF/, "").split(/\r\n|\r|\n/) : [];
 const doanMuc = (bat) => { const a = KH_DONG.findIndex((l) => bat.test(l)); if (a < 0) return []; const ds = []; for (const l of KH_DONG.slice(a + 1)) { if (/^#{2,3} /.test(l)) break; ds.push(l.trim()); } return ds; };
 const MUC = [
   ["Tìm tin cho nhóm sắp có trang Google", NOI_TIN, sapMo.length, sapMo.length
@@ -264,7 +264,7 @@ const MUC = [
 // Việc mạng xã hội nằm luôn trong mục 3 (#41–#51, gom 28/10/2026) — không đọc KE-HOACH-MXH.md nữa.
 const docKeHoach = (tep, dau1 = "") => {
   if (!fs.existsSync(tep)) return [];
-  const kh = fs.readFileSync(tep, "utf8").split(/\r?\n/);
+  const kh = fs.readFileSync(tep, "utf8").split(/\r\n|\r|\n/);
   const dau = kh.findIndex((l) => /^## .*VIỆC THEO THỨ TỰ/.test(l));
   if (dau < 0) return [];
   const ds = [];
