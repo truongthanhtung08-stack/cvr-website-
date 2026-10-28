@@ -337,7 +337,7 @@ Buộc phải đụng vào vì lý do kỹ thuật → **DỪNG, HỎI TRƯỚC.
 > lên web (anh tự đưa tin, ảnh, video, bài viết, mạng xã hội · Claude chỉ sửa mã web, lên khi anh nhắn **"Push"**) · ⑥ Claude: báo cáo anh, ghi nhật ký.
 > Anh là người bắt đầu: trước "Bắt đầu" không bên nào tự chạy. Ai làm gì tự kiểm việc đó.
 >
-> **"BẮT ĐẦU" = CLAUDE LÀM, KHÔNG HỎI LẠI:** `git pull --ff-only origin main` → đọc `KE-HOACH-SEO.md` → **kế hoạch từ khoá trước mọi việc**
+> **"BẮT ĐẦU" = CLAUDE LÀM, KHÔNG HỎI LẠI:** `git pull --ff-only origin main` → đọc `KE-HOACH-SEO.md` → **còn khối VIỆC DỞ DANG dưới đây thì làm nó trước** → **kế hoạch từ khoá trước mọi việc khác**
 > (đo #14 → dựng lại hệ thống từ khoá → giao tin theo nhóm #2 → sửa gốc #30 khi anh duyệt → xin index #4) → `node scripts/viec-du-lieu.mjs`
 > → viết mục 0 `VIEC.md` → làm việc có Ai = Claude → báo anh ngắn. Mọi điều chỉnh từ khoá đến 28/10 đã nằm trong kế hoạch bản 3 + 5 luật dưới —
 > làm tiếp từ đó, **không bắt anh nói lại, không làm lại từ đầu, anh không phải nhớ bước.** Nhắn "Bắt đầu" = anh đã duyệt tệp như đang có.
@@ -345,19 +345,31 @@ Buộc phải đụng vào vì lý do kỹ thuật → **DỪNG, HỎI TRƯỚC.
 > **GIỮ GỌN:** đầu `KE-HOACH-SEO.md` chỉ một màn hình — ⭐ quy trình · ✍ ANH CẦN DUYỆT (mỗi việc 1 dòng, anh ghi `→ DUYỆT: …`) · 📋 việc đang
 > làm (mỗi việc 1 dòng) · 🔑 tóm tắt từ khoá. Mỗi lần "Bắt đầu": việc đã ✅ + nhật ký cũ hơn 7 ngày → `SEO\_cu\KE-HOACH-SEO-LUU-TRU.md` (không xoá).
 >
-> **VIỆC LẦN ĐẦU — LÀM TRƯỚC TIÊN, trước cả kế hoạch từ khoá** (chủ dự án 28/10: "việc đầu tiên nó vào là làm cái này trước"; bàn giao
-> phiên cloud — khối 📌 đầu tệp): ⓪ **SỬA VERCEL TRƯỚC TIÊN** (28/10: 7+ bản production ERROR ở bước "ignore" — lỗi 128
-> `fatal: bad object b241623…`: lần dựng tốt gần nhất không có trong bản sao nông của Vercel; web vẫn chạy bản cũ nhưng **mọi lần sửa web sẽ không
-> lên** tới khi sửa). Trong `vercel.json` thay `ignoreCommand` bằng: `if [ -n "$VERCEL_GIT_PREVIOUS_SHA" ] && git cat-file -e
-> "$VERCEL_GIT_PREVIOUS_SHA^{commit}" 2>/dev/null; then git diff --quiet "$VERCEL_GIT_PREVIOUS_SHA" HEAD -- . ":(exclude)*.md" ":(exclude)docs"
-> ":(exclude)supabase"; else exit 1; fi` (đã thử trên cloud đủ 4 trường hợp: thiếu SHA → dựng · chỉ đổi .md → bỏ dựng · đổi mã → dựng · không có
-> SHA → dựng) → commit, push main (chủ dự án đã cho phép sửa việc này) → xem bản mới trên Vercel là READY, mở coastalland.vn → báo anh · ① **tách tệp 2 tầng**: sao lưu vào `may-tu-khoa\sao-luu\` → tầng 1
-> `KE-HOACH-SEO.md` một màn hình như trên (bảng việc giữ tiêu đề có chữ "VIỆC THEO THỨ TỰ" và khung `| # | Việc | Ai | Trạng thái |`) · tầng 2
-> `chi-tiet\`: `tu-khoa.md` (mục 5) · `viec-chi-tiet.md` (mục 3 đủ) · `yeu-cau-chu-du-an.md` (mục 0 + 0b) · `quy-trinh-3-ben.md` (mục 11) ·
-> `mang-xa-hoi.md` (mục 12) · `nhat-ky.md` (mục 9) · `con-lai.md` (phần còn lại) → soát không mất dòng nào → sửa `viec-du-lieu.mjs` đọc mục 0, 0b từ
-> `chi-tiet\yeu-cau-chu-du-an.md`, chạy thử → **anh duyệt tầng 1 rồi mới thay** · ② #52 (lượt tự chạy theo "Bắt đầu"; tự kiểm khi Cowork giao
-> xong) · ③ #53 (đối chiếu ổ D: với bảng nơi lưu, lập bảng chuyển, anh duyệt) · ④ dựng sơ đồ html (mẫu https://claude.ai/artifact/W5VaB1rXzFqS3wY9uzVEKN)
-> · ⑤ đưa B1–B3 (kế hoạch từ khoá mục 5.8) vào ✍ cho anh duyệt.
+> **VIỆC DỞ DANG 28/10 — CLAUDE TRÊN MÁY LÀM TIẾP THEO ĐÚNG THỨ TỰ, LÀM TRƯỚC MỌI VIỆC KHÁC** (chủ dự án: "đừng để vô ích yêu cầu cả ngày
+> hôm nay"; chi tiết thêm ở khối 📌 đầu `KE-HOACH-SEO.md`). Xong việc nào ghi ✅ + ngày vào đây; hết danh sách thì xoá khối này.
+> - ⓪ **SỬA VERCEL** (7+ bản production ERROR ở bước "ignore", lỗi 128 `fatal: bad object b241623…` — lần dựng tốt gần nhất không có trong bản
+>   sao nông; web vẫn chạy bản cũ nhưng **mọi lần sửa web sẽ không lên** tới khi sửa). `vercel.json` thay `ignoreCommand` bằng:
+>   `if [ -n "$VERCEL_GIT_PREVIOUS_SHA" ] && git cat-file -e "$VERCEL_GIT_PREVIOUS_SHA^{commit}" 2>/dev/null; then git diff --quiet
+>   "$VERCEL_GIT_PREVIOUS_SHA" HEAD -- . ":(exclude)*.md" ":(exclude)docs" ":(exclude)supabase"; else exit 1; fi` (đã thử đủ 4 trường hợp
+>   trên cloud) → commit, push main (chủ dự án đã cho phép việc này; phiên cloud bị hệ thống chặn đẩy) → xem bản mới trên Vercel READY, mở web → báo.
+> - ① **TÁCH TỆP 2 TẦNG** ("một tệp rất dài, lộn xộn, không quản lý nổi"): sao lưu vào `may-tu-khoa\sao-luu\` → tầng 1 `KE-HOACH-SEO.md` một màn
+>   hình (⭐ quy trình · ✍ ANH CẦN DUYỆT · 📋 việc đang làm, mỗi việc 1 dòng, giữ tiêu đề có "VIỆC THEO THỨ TỰ" và khung `| # | Việc | Ai |
+>   Trạng thái |` · 🔑 tóm tắt từ khoá) · tầng 2 `chi-tiet\`: `tu-khoa.md` (mục 5) · `viec-chi-tiet.md` (mục 3 đủ) · `yeu-cau-chu-du-an.md`
+>   (mục 0 + 0b) · `quy-trinh-3-ben.md` (mục 11) · `mang-xa-hoi.md` (mục 12) · `nhat-ky.md` (mục 9) · `con-lai.md` (phần còn lại) → soát không mất
+>   dòng nào → sửa `scripts/viec-du-lieu.mjs` đọc mục 0, 0b từ `chi-tiet\yeu-cau-chu-du-an.md`, chạy thử → **anh duyệt tầng 1 rồi mới thay**.
+> - ② **✍ ANH CẦN DUYỆT** — đưa vào khối ✍ đầu tệp, mỗi việc 1 dòng + phương án: B1 tiêu đề bán căn hộ (P1 "Bán căn hộ Đà Nẵng tháng 10/2026",
+>   áp/ trừ 2 trang đã lên · P2 giữ "Bán căn hộ chung cư…") · B2 trang thuê căn hộ ĐN thêm "(quận … cũ)" sau tên phường: có/không · B3 dòng giá
+>   (P1 giữ chữ, tính khoảng phổ biến · P2 thêm chữ "phổ biến") · mở trang phòng trọ, trang trại – nghỉ dưỡng, kho xưởng: có/để sau/không · số tin
+>   Cowork làm mỗi ngày (đang tính ~15) · xoá tệp tải thừa trong Downloads (`Gom-mot-tep-28-10.zip` ×2, `Plan-SEO-pSEO.zip`): có/không.
+> - ③ **#52**: lượt tự chạy lúc mở máy (6:30, 9:11) chuyển sang chạy theo lệnh "Bắt đầu" · Claude tự kiểm khi thư mục giao hôm nay có `bao-cao.txt`
+>   rồi báo anh. Cowork KHÔNG tự chạy — anh nhắn Cowork (đã chốt).
+> - ④ **#53 DỌN THƯ MỤC** `D:\Coastal Land\SEO`: đối chiếu ổ D: thật với bảng nơi lưu (mục 11.0) → lập bảng "tệp → chuyển đi đâu" → anh duyệt →
+>   chuyển (không xoá; thứ không dùng vào `_cu\`). Đã thấy: `Plan SEO - pSEO` còn ảnh, sơ đồ giao diện chưa có chỗ (`BO-LOC-…`,
+>   `MAU-BO-LOC-GAN-DAU-TRANG`, `SO-DO-TRANG-CHU`).
+> - ⑤ **SƠ ĐỒ QUY TRÌNH** `Plan SEO - pSEO\QUY-TRINH-LAM-VIEC-HANG-NGAY.html`: anh đã tải về Downloads, có thể đã chép sang — kiểm; chưa có thì chép
+>   từ Downloads hoặc dựng theo mẫu https://claude.ai/artifact/W5VaB1rXzFqS3wY9uzVEKN.
+> - ⑥ **KẾ HOẠCH TỪ KHOÁ** (ưu tiên số 1 từ đây mỗi ngày): đo #14 → dựng lại hệ thống từ khoá → giao tin theo nhóm #2 → sửa gốc #30 khi anh duyệt ②
+>   → xin index #4. Chữ mới lên web: đưa anh nguyên văn trước.
 >
 > **LƯU Ở ĐÂU (không xoá gì):** `SEO\RA\` máy viết (`VIEC.md`, anh chỉ sửa mục 0) · `SEO\DA-DUYET\<ddmmyyyy>\` Cowork giao · `SEO\MAU\` mẫu ·
 > `SEO\` gốc: `YEU-CAU-COWORK-*.md`, `MAU-DANG-TIN-HANG-LOAT.xlsx`, `DANH-SACH-PHUONG-XA-TOAN-QUOC.txt` · `SEO\_cu\` thứ không dùng nữa.
