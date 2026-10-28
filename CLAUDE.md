@@ -346,7 +346,12 @@ Buộc phải đụng vào vì lý do kỹ thuật → **DỪNG, HỎI TRƯỚC.
 > làm (mỗi việc 1 dòng) · 🔑 tóm tắt từ khoá. Mỗi lần "Bắt đầu": việc đã ✅ + nhật ký cũ hơn 7 ngày → `SEO\_cu\KE-HOACH-SEO-LUU-TRU.md` (không xoá).
 >
 > **VIỆC LẦN ĐẦU — LÀM TRƯỚC TIÊN, trước cả kế hoạch từ khoá** (chủ dự án 28/10: "việc đầu tiên nó vào là làm cái này trước"; bàn giao
-> phiên cloud — khối 📌 đầu tệp): ① **tách tệp 2 tầng**: sao lưu vào `may-tu-khoa\sao-luu\` → tầng 1
+> phiên cloud — khối 📌 đầu tệp): ⓪ **SỬA VERCEL TRƯỚC TIÊN** (28/10: 7+ bản production ERROR ở bước "ignore" — lỗi 128
+> `fatal: bad object b241623…`: lần dựng tốt gần nhất không có trong bản sao nông của Vercel; web vẫn chạy bản cũ nhưng **mọi lần sửa web sẽ không
+> lên** tới khi sửa). Trong `vercel.json` thay `ignoreCommand` bằng: `if [ -n "$VERCEL_GIT_PREVIOUS_SHA" ] && git cat-file -e
+> "$VERCEL_GIT_PREVIOUS_SHA^{commit}" 2>/dev/null; then git diff --quiet "$VERCEL_GIT_PREVIOUS_SHA" HEAD -- . ":(exclude)*.md" ":(exclude)docs"
+> ":(exclude)supabase"; else exit 1; fi` (đã thử trên cloud đủ 4 trường hợp: thiếu SHA → dựng · chỉ đổi .md → bỏ dựng · đổi mã → dựng · không có
+> SHA → dựng) → commit, push main (chủ dự án đã cho phép sửa việc này) → xem bản mới trên Vercel là READY, mở coastalland.vn → báo anh · ① **tách tệp 2 tầng**: sao lưu vào `may-tu-khoa\sao-luu\` → tầng 1
 > `KE-HOACH-SEO.md` một màn hình như trên (bảng việc giữ tiêu đề có chữ "VIỆC THEO THỨ TỰ" và khung `| # | Việc | Ai | Trạng thái |`) · tầng 2
 > `chi-tiet\`: `tu-khoa.md` (mục 5) · `viec-chi-tiet.md` (mục 3 đủ) · `yeu-cau-chu-du-an.md` (mục 0 + 0b) · `quy-trinh-3-ben.md` (mục 11) ·
 > `mang-xa-hoi.md` (mục 12) · `nhat-ky.md` (mục 9) · `con-lai.md` (phần còn lại) → soát không mất dòng nào → sửa `viec-du-lieu.mjs` đọc mục 0, 0b từ
