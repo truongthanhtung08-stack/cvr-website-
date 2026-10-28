@@ -391,6 +391,13 @@ Buộc phải đụng vào vì lý do kỹ thuật → **DỪNG, HỎI TRƯỚC.
 > 3. Cùng nghĩa (có/không dấu, viết liền, đảo thứ tự) = một nút, một trang; nhưng ĐO RIÊNG từng cách gõ; top 10 chỉ đếm dạng đúng chính tả.
 > 4. Sửa từ GỐC — 4 luật dùng chung, không vá từng trang: đặt chữ (`categories.ts` `tuKhoa`) · số liệu (`soLieuTrang`) · nối trang · giao tin.
 > 5. Làm hết; trang chưa đạt cổng không lên; trang đã lên (`TRANG_DONG_BANG`) không sửa.
+> 6. ⛔ **TRANG ĐÃ LÊN TOP = MẪU, KHÔNG ĐỤNG** (chủ dự án 28/10/2026): lấy trang đang top làm VÍ DỤ cho các trang chưa lên (cách đặt tiêu đề,
+>    H1, mô tả, khối số liệu, hỏi đáp, nối trang) — chép CÁCH LÀM sang trang khác, KHÔNG sửa chính trang top. Trước khi sửa trang nào:
+>    tra cột "Hạng tốt nhất" (trang tính Cụm) + "Coastal Land: hạng · trang hiện" (Đo theo cách gõ) trong `HE-THONG-TU-KHOA.xlsx`; hạng ≤ 10
+>    hoặc có lượt bấm → không sửa. Đang top (28/10): `/cho-thue/can-ho-chung-cu/da-nang` (2) · **`/mua-ban/nha/da-nang` (3 — CHƯA có
+>    trong `TRANG_DONG_BANG`)** · `/mua-ban/da-nang` (5). ⚠️ Đừng tự thêm trang đang top vào `TRANG_DONG_BANG`: tập đó làm trang VẼ LẠI
+>    BẢN CŨ (khối giá cũ, hỏi đáp cũ) — trang đang top bằng bản hiện tại sẽ bị đổi. Muốn khoá `/mua-ban/nha/da-nang` thì cần cơ chế
+>    "giữ nguyên bản hiện tại" → hỏi anh trước. Mã dùng chung (khuôn tiêu đề, `categories.ts`, `soLieuTrang`…) đổi thì phải loại trừ trang top.
 > ⛔ Bài học 28/10: đếm cách gõ sai chính tả là "đã top" — sai; lấy "trang Google đang chọn" làm trang đích — sai;
 > kết luận "trang không có khối X" khi chưa đo trên web thật — sai (khối giá theo khu vực đã có ở 64/130 trang).
 
