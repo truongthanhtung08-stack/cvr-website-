@@ -335,7 +335,11 @@ Buộc phải đụng vào vì lý do kỹ thuật → **DỪNG, HỎI TRƯỚC.
 > - `TRA-GOOGLE.csv` — MỘT tệp nhập: gợi ý Google (chuẩn) · kết quả từng lần tra · danh sách cần tra.
 > - `HE-THONG-TU-KHOA.xlsx` — MỘT tệp kết quả (máy dựng): tiến độ hằng ngày, cây từ khoá, chẩn đoán, trang cần mở, on-page.
 > - `may-tu-khoa\` — máy 6 bước `goc → kiem → onpage → chandoan → xuat → soat` + dữ liệu nguồn.
-> Phiên trên đám mây không đọc được ổ D: → chủ dự án tải tệp lên.
+> **MỌI chỉnh sửa, điều chỉnh từ MỘT nguồn là thư mục này** (chủ dự án 28/10):
+> - Phiên trên máy chủ dự án: sửa thẳng trong thư mục, không chép ra chỗ khác để sửa.
+> - Phiên trên đám mây (không đọc được ổ D:): chủ dự án tải lên bản HIỆN TẠI của `KE-HOACH-SEO.md` + `TRA-GOOGLE.csv` → Claude sửa
+>   trên đúng bản đó → trả MỘT tệp `Plan-SEO-pSEO.zip` cùng cấu trúc thư mục → chủ dự án giải nén vào `D:\Coastal Land\SEO\`,
+>   chọn "Thay thế" (chép đè). Không sửa trên bản cũ trong phiên trước; không gửi tệp lẻ khác tên.
 >
 > **Luật** (đọc mục 5 trước khi đụng tiêu đề, mô tả, khối số liệu, nối trang, giao tin):
 > 1. Gợi ý Google (gợi ý khi gõ + "Mọi người cũng tìm kiếm") là CHUẨN: chữ trên web giữ đúng chữ + thứ tự gợi ý, thêm mục đích ở đầu.
