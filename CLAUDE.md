@@ -327,6 +327,27 @@ Buộc phải đụng vào vì lý do kỹ thuật → **DỪNG, HỎI TRƯỚC.
 
 ---
 
+## 0D1. 🔑 TỪ KHOÁ · SEO — MỘT THƯ MỤC, GỢI Ý GOOGLE LÀ CHUẨN (chốt 28/10/2026)
+
+> **MỘT thư mục cho cả 3 bên: `D:\Coastal Land\SEO\Plan SEO - pSEO\`** — chủ dự án sửa, Claude đọc + sửa, máy giao việc hằng ngày
+> (`scripts/viec-du-lieu.mjs`) đọc. Không tạo tệp kế hoạch / tệp nhập ở chỗ khác; trùng thì gom vào đây, không cần thì bỏ.
+> - `KE-HOACH-SEO.md` — MỘT kế hoạch: mục 3 = việc (dòng chưa ✅ tự vào việc hằng ngày) · mục 5 = kế hoạch từ khoá bản 3.
+> - `TRA-GOOGLE.csv` — MỘT tệp nhập: gợi ý Google (chuẩn) · kết quả từng lần tra · danh sách cần tra.
+> - `HE-THONG-TU-KHOA.xlsx` — MỘT tệp kết quả (máy dựng): tiến độ hằng ngày, cây từ khoá, chẩn đoán, trang cần mở, on-page.
+> - `may-tu-khoa\` — máy 6 bước `goc → kiem → onpage → chandoan → xuat → soat` + dữ liệu nguồn.
+> Phiên trên đám mây không đọc được ổ D: → chủ dự án tải tệp lên.
+>
+> **Luật** (đọc mục 5 trước khi đụng tiêu đề, mô tả, khối số liệu, nối trang, giao tin):
+> 1. Gợi ý Google (gợi ý khi gõ + "Mọi người cũng tìm kiếm") là CHUẨN: chữ trên web giữ đúng chữ + thứ tự gợi ý, thêm mục đích ở đầu.
+> 2. Mục đích + loại hình (chữ người gõ nhiều nhất) + đặc điểm + khu vực + mức giá + tháng/năm; từ khoá dài chứa từ khoá ngắn.
+> 3. Cùng nghĩa (có/không dấu, viết liền, đảo thứ tự) = một nút, một trang; nhưng ĐO RIÊNG từng cách gõ; top 10 chỉ đếm dạng đúng chính tả.
+> 4. Sửa từ GỐC — 4 luật dùng chung, không vá từng trang: đặt chữ (`categories.ts` `tuKhoa`) · số liệu (`soLieuTrang`) · nối trang · giao tin.
+> 5. Làm hết; trang chưa đạt cổng không lên; trang đã lên (`TRANG_DONG_BANG`) không sửa.
+> ⛔ Bài học 28/10: đếm cách gõ sai chính tả là "đã top" — sai; lấy "trang Google đang chọn" làm trang đích — sai;
+> kết luận "trang không có khối X" khi chưa đo trên web thật — sai (khối giá theo khu vực đã có ở 64/130 trang).
+
+---
+
 ## 0E. 🧾 THUẾ CÔNG TY (GTGT · TNDN · TNCN) — topic riêng, theo dõi lâu dài
 
 > 📌 **Bàn giao mới nhất: [`BAN-GIAO-THUE-02-10.md`](BAN-GIAO-THUE-02-10.md) — đọc TRƯỚC.** Việc gấp: A7 (mẫu TT89 cho tờ khai Q3, hạn 31/10).
