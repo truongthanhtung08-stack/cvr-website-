@@ -327,6 +327,20 @@ Buộc phải đụng vào vì lý do kỹ thuật → **DỪNG, HỎI TRƯỚC.
 
 ---
 
+## 0D0. ☁️ "TIẾP NỐI VIỆC CLAUDE CLOUD" — CLAUDE TRÊN MÁY LÀM NGAY, KHÔNG HỎI LẠI (chủ dự án chốt 28/10/2026)
+
+> Phiên Claude trên cloud không ghi được ổ D:, không chạy được web với dữ liệu thật, không đẩy được `main` → việc làm dở được để ở NHÁNH
+> GitHub và ghi ở đây. Anh nhắn **"tiếp nối việc Claude cloud"** (hoặc "làm tiếp việc cloud") → Claude trên máy:
+> 1. `git fetch origin` → nhánh cloud đang mở: **`claude/clever-bardeen-15e4ot`** (cloud đổi nhánh thì sửa dòng này).
+> 2. Đọc trên nhánh đó: `git show origin/claude/clever-bardeen-15e4ot:CLAUDE.md` mục 0D1 việc **⑦ ⑧** + luật 6, và
+>    `BAN-GIAO-DO-TOC-DO-27-10.md` mục **TIẾN ĐỘ** (đang dừng ở đâu) → làm tiếp từ đó, không làm lại.
+> 3. Thứ tự: ⓪ sửa Vercel (nếu chưa) → ⑦ đo + bấm thử nhánh → ⑧ thương hiệu (chép vào `KE-HOACH-SEO.md`) → báo anh số trước/sau.
+> 4. Sau mỗi bước: cập nhật mục TIẾN ĐỘ + commit lên nhánh (gom, không đẩy lắt nhắt). Hết usage giữa chừng → lần sau đọc TIẾN ĐỘ làm tiếp.
+> 5. Anh nhắn **"Push"** → `git merge --no-ff origin/claude/clever-bardeen-15e4ot` vào `main` → `npx next build` → push `main` MỘT LẦN →
+>    kiểm web thật đã lên. Không đổi giao diện, bố cục; trang đang top (`TRANG_TOP`) không đụng.
+
+---
+
 ## 0D1. 🔑 HỆ THỐNG LÀM VIỆC HẰNG NGÀY + KẾ HOẠCH TỪ KHOÁ (chủ dự án chốt 28/10/2026 — đơn giản, thống nhất)
 
 > **MỘT CHỖ:** `D:\Coastal Land\SEO\Plan SEO - pSEO\` — `KE-HOACH-SEO.md` (chủ dự án xem, sửa, giao việc) · `chi-tiet\` (phần đầy đủ, Claude
