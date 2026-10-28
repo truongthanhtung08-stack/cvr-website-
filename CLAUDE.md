@@ -396,8 +396,8 @@ Buộc phải đụng vào vì lý do kỹ thuật → **DỪNG, HỎI TRƯỚC.
 >    tra cột "Hạng tốt nhất" (trang tính Cụm) + "Coastal Land: hạng · trang hiện" (Đo theo cách gõ) trong `HE-THONG-TU-KHOA.xlsx`; hạng ≤ 10
 >    hoặc có lượt bấm → không sửa. Đang top (28/10): `/cho-thue/can-ho-chung-cu/da-nang` (2) · **`/mua-ban/nha/da-nang` (3 — CHƯA có
 >    trong `TRANG_DONG_BANG`)** · `/mua-ban/da-nang` (5). ⚠️ Đừng tự thêm trang đang top vào `TRANG_DONG_BANG`: tập đó làm trang VẼ LẠI
->    BẢN CŨ (khối giá cũ, hỏi đáp cũ) — trang đang top bằng bản hiện tại sẽ bị đổi. Muốn khoá `/mua-ban/nha/da-nang` thì cần cơ chế
->    "giữ nguyên bản hiện tại" → hỏi anh trước. Mã dùng chung (khuôn tiêu đề, `categories.ts`, `soLieuTrang`…) đổi thì phải loại trừ trang top.
+>    BẢN CŨ (khối giá cũ, hỏi đáp cũ) — trang đang top bằng bản hiện tại sẽ bị đổi. Danh sách trang top nằm ở `TRANG_TOP`
+>    (`src/lib/pseo.ts`, chỉ đánh dấu, không đổi cách vẽ): sửa mã dùng chung xong phải so HTML các trang trong đó trước/sau — GIỐNG HỆT. Mã dùng chung (khuôn tiêu đề, `categories.ts`, `soLieuTrang`…) đổi thì phải loại trừ trang top.
 > ⛔ Bài học 28/10: đếm cách gõ sai chính tả là "đã top" — sai; lấy "trang Google đang chọn" làm trang đích — sai;
 > kết luận "trang không có khối X" khi chưa đo trên web thật — sai (khối giá theo khu vực đã có ở 64/130 trang).
 

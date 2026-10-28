@@ -47,6 +47,16 @@ export const TRANG_DONG_BANG = new Set<string>([
   "/mua-ban", "/mua-ban/da-nang", "/mua-ban/dat", "/mua-ban/bds-khac",
 ]);
 
+// ⛔ TRANG ĐANG TOP — CHỈ ĐỂ ĐÁNH DẤU, KHÔNG ĐỔI CÁCH VẼ (chủ dự án 28/10/2026: "lấy trang đã lên top làm ví dụ, không đụng cái đã có top").
+// Khác TRANG_DONG_BANG: tập đó bắt trang vẽ lại BẢN CŨ; tập này không làm gì với trang — chỉ là danh sách mọi phiên PHẢI tra trước khi sửa mã
+// dùng chung (khuôn tiêu đề, categories.ts, soLieuTrang, nối trang…): sửa xong so HTML các trang này trước/sau, phải GIỐNG HỆT. Nguồn: hạng
+// trong HE-THONG-TU-KHOA.xlsx (Cụm · Đo theo cách gõ). Cập nhật khi có số đo mới. CLAUDE.md mục 0D1 luật 6.
+export const TRANG_TOP = new Set<string>([
+  "/cho-thue/can-ho-chung-cu/da-nang", // hạng 2
+  "/mua-ban/nha/da-nang",              // hạng 3 — chưa có trong TRANG_DONG_BANG
+  "/mua-ban/da-nang",                  // hạng 5
+]);
+
 export const CAP_CU: Record<string, string> = {
   "Hải Châu": "quận", "Thanh Khê": "quận", "Sơn Trà": "quận", "Ngũ Hành Sơn": "quận", "Liên Chiểu": "quận", "Cẩm Lệ": "quận", "Hòa Vang": "huyện",
   "Phú Xuân": "quận", "Thuận Hóa": "quận", "Nha Trang": "thành phố", "Cam Ranh": "thành phố", "Quy Nhơn": "thành phố",
