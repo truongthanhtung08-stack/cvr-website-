@@ -174,8 +174,8 @@ Phù hợp và tương thích cho mọi trình duyệt trên điện thoại c�
 
 > 📌 **File chi tiết: [`QUY-TRINH-LAM-VIEC.md`](QUY-TRINH-LAM-VIEC.md) — PHẢI đọc và tuân thủ.**
 
-**QUY TRÌNH DỮ LIỆU 3 BÊN (Cowork · chủ dự án · Claude) — MỘT TỆP DUY NHẤT:** `D:\Coastal Land\SEO\CONG-VIEC-3-BEN.md` (chốt 16/10/2026).
-Hai quy trình: ① tin đăng hằng ngày · ② dữ liệu khác hằng tuần. Mọi tệp Cowork (yêu cầu, mẫu, dữ liệu vào `VAO`, dữ liệu ra `RA`) chỉ ở `D:\Coastal Land\SEO\`; tin giao ở `D:\Coastal Land\Đăng tin\TIN HANG NGAY chuẩn\<ngày>`. Muốn đổi quy trình → sửa thẳng tệp đó, không tạo tệp quy trình mới.
+**QUY TRÌNH DỮ LIỆU 3 BÊN (Cowork · chủ dự án · Claude) — MỘT TỆP DUY NHẤT:** `D:\Coastal Land\SEO\Plan SEO - pSEO\KE-HOACH-SEO.md` mục 11 (gom từ `CONG-VIEC-3-BEN.md` 28/10/2026 — xem mục 0D1).
+Hai quy trình: ① tin đăng hằng ngày · ② dữ liệu khác hằng tuần. Mọi tệp Cowork (yêu cầu, mẫu, dữ liệu vào `VAO`, dữ liệu ra `RA`) chỉ ở `D:\Coastal Land\SEO\`; tin giao ở `D:\Coastal Land\Đăng tin\TIN HANG NGAY chuẩn\<ngày>`. Muốn đổi quy trình → sửa thẳng mục 11 tệp đó, không tạo tệp quy trình mới.
 
 **Nguyên tắc 1 — ĐÃ DUYỆT LÀ KHÔNG ĐỘNG VÀO.**
 Phần nào chủ dự án đã xem và duyệt thì GIỮ NGUYÊN 100%. Không tự ý chỉnh kích thước, màu,
@@ -327,7 +327,15 @@ Buộc phải đụng vào vì lý do kỹ thuật → **DỪNG, HỎI TRƯỚC.
 
 ---
 
-## 0D1. 🔑 TỪ KHOÁ · SEO — MỘT THƯ MỤC, GỢI Ý GOOGLE LÀ CHUẨN (chốt 28/10/2026)
+## 0D1. 🔑 MỘT TỆP CHO CẢ 3 BÊN · TỪ KHOÁ — GỢI Ý GOOGLE LÀ CHUẨN (chốt 28/10/2026)
+
+> ⛔ **MỘT TỆP `D:\Coastal Land\SEO\Plan SEO - pSEO\KE-HOACH-SEO.md` = điểm bắt đầu của cả 3 bên** (chủ dự án 28/10: "1 chỗ, 1 file .md
+> để yêu cầu và sửa — bất cứ bên nào cũng phải từ đây"). Mục 0 yêu cầu chủ dự án · 0b thứ tự việc Cowork · 3 mọi việc (kể cả mạng xã hội
+> #41–#51; giao việc / yêu cầu Claude = thêm một dòng) · 5 kế hoạch từ khoá · 11 quy trình 3 bên · 12 kế hoạch mạng xã hội.
+> Mỗi phiên Claude ĐỌC TỆP NÀY TRƯỚC, làm việc ở mục 3, ghi kết quả vào cột Trạng thái. `scripts/viec-du-lieu.mjs` chỉ đọc tệp này để
+> dựng `SEO\RA\VIEC.md` cho Cowork. Đã gom, không dùng nữa: `CONG-VIEC-3-BEN.md` · `Plan MXH\KE-HOACH-MXH.md` · `THU-TU-UU-TIEN.txt` ·
+> thư mục `GUI-CLAUDE-CODE\` · tệp `CAN-ANH\<ngày>.md` · mảng YEU_CAU trong mã. Tài liệu tra cứu (YEU-CAU-COWORK-…, MAU-…) giữ riêng,
+> không yêu cầu hay sửa ở đó — muốn đổi thì ghi một dòng ở mục 3.
 
 > **MỘT thư mục cho cả 3 bên: `D:\Coastal Land\SEO\Plan SEO - pSEO\`** — chủ dự án sửa, Claude đọc + sửa, máy giao việc hằng ngày
 > (`scripts/viec-du-lieu.mjs`) đọc. Không tạo tệp kế hoạch / tệp nhập ở chỗ khác; trùng thì gom vào đây, không cần thì bỏ.
