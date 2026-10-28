@@ -337,9 +337,12 @@ Buộc phải đụng vào vì lý do kỹ thuật → **DỪNG, HỎI TRƯỚC.
 > - `may-tu-khoa\` — máy 6 bước `goc → kiem → onpage → chandoan → xuat → soat` + dữ liệu nguồn.
 > **MỌI chỉnh sửa, điều chỉnh từ MỘT nguồn là thư mục này** (chủ dự án 28/10):
 > - Phiên trên máy chủ dự án: sửa thẳng trong thư mục, không chép ra chỗ khác để sửa.
-> - Phiên trên đám mây (không đọc được ổ D:): chủ dự án tải lên bản HIỆN TẠI của `KE-HOACH-SEO.md` + `TRA-GOOGLE.csv` → Claude sửa
->   trên đúng bản đó → trả MỘT tệp `Plan-SEO-pSEO.zip` cùng cấu trúc thư mục → chủ dự án giải nén vào `D:\Coastal Land\SEO\`,
->   chọn "Thay thế" (chép đè). Không sửa trên bản cũ trong phiên trước; không gửi tệp lẻ khác tên.
+> - Muốn phiên đám mây ghi thẳng ổ D:: chủ dự án mở một phiên trên máy mình (Claude Desktop mở `D:\Coastal Land\SEO`, hoặc terminal
+>   tại đó gõ `claude remote-control`) → phiên đám mây nhắn phiên đó làm.
+> - Không có phiên trên máy: Claude trả MỘT tệp `Plan-SEO-pSEO.zip` cùng cấu trúc thư mục. Gói KHÔNG chứa `KE-HOACH-SEO.md`
+>   (tệp này máy ghi nhật ký mỗi sáng — chép đè là mất); phần sửa kế hoạch nằm trong `CAP-NHAT-MOT-LAN.bat` → `cap-nhat-ke-hoach.mjs`
+>   tự áp vào ĐÚNG bản đang có trên máy, sao lưu bản cũ vào `may-tu-khoa\sao-luu\`, gặp gì lạ thì dừng không ghi. Chủ dự án: giải nén
+>   vào `D:\Coastal Land\SEO\`, chọn "Thay thế", bấm đúp `CAP-NHAT-MOT-LAN.bat`. Không gửi tệp lẻ khác tên.
 >
 > **Luật** (đọc mục 5 trước khi đụng tiêu đề, mô tả, khối số liệu, nối trang, giao tin):
 > 1. Gợi ý Google (gợi ý khi gõ + "Mọi người cũng tìm kiếm") là CHUẨN: chữ trên web giữ đúng chữ + thứ tự gợi ý, thêm mục đích ở đầu.
