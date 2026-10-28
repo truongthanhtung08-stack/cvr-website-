@@ -348,6 +348,10 @@ Buộc phải đụng vào vì lý do kỹ thuật → **DỪNG, HỎI TRƯỚC.
 > Chủ dự án không phải nhớ bước: Claude dẫn quy trình, việc nào cần chủ dự án thì nhắn đúng lúc. Nơi lưu: bảng mục 11.0 (dọn: mục 3 #53).
 > **Bàn giao phiên cloud 28/10/2026:** khối 📌 ngay dưới khối ⭐ đầu tệp kế hoạch — Claude trên máy đọc khi nhận "Bắt đầu" lần đầu,
 > làm #52 → #53 trước; chờ chủ dự án quyết mục 5.8 (B1–B3).
+> **Đầu tệp phải gọn cho chủ dự án** (chủ dự án 28/10: "rất lộn xộn"): đầu `KE-HOACH-SEO.md` chỉ 3 khối — ⭐ quy trình · **✍ ANH CẦN DUYỆT**
+> (gom MỌI việc chờ chủ dự án: mục 5.8, 5.12, dòng mục 3 có Ai = Chủ dự án; mỗi việc 1–2 dòng, các phương án, chỗ ghi `→ DUYỆT: …`) · 📌 bàn giao.
+> Phần dưới là tra cứu cho Claude. Lần "Bắt đầu" đầu tiên: dựng khối ✍ (không xoá nội dung gốc), sau mỗi lần chủ dự án ghi DUYỆT thì làm
+> theo rồi chuyển việc đó khỏi khối ✍.
 > **Sơ đồ quy trình trên máy:** `D:\Coastal Land\SEO\Plan SEO - pSEO\QUY-TRINH-LAM-VIEC-HANG-NGAY.html` = bản vẽ khối ⭐ (6 bước,
 > 3 làn Anh · Claude · Cowork, dưới mỗi bước ghi tên tệp + đường dẫn thư mục, bên dưới bảng tệp — tên và chỗ). Chưa có, hoặc khối ⭐ đã đổi →
 > Claude trên máy dựng lại khi "Bắt đầu" (mẫu: https://claude.ai/artifact/W5VaB1rXzFqS3wY9uzVEKN). Không đưa tệp này lên GitHub.
