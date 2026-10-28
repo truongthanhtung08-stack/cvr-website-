@@ -338,6 +338,28 @@ Buộc phải đụng vào vì lý do kỹ thuật → **DỪNG, HỎI TRƯỚC.
 > 4. Sau mỗi bước: cập nhật mục TIẾN ĐỘ + commit lên nhánh (gom, không đẩy lắt nhắt). Hết usage giữa chừng → lần sau đọc TIẾN ĐỘ làm tiếp.
 > 5. Anh nhắn **"Push"** → `git merge --no-ff origin/claude/clever-bardeen-15e4ot` vào `main` → `npx next build` → push `main` MỘT LẦN →
 >    kiểm web thật đã lên. Không đổi giao diện, bố cục; trang đang top (`TRANG_TOP`) không đụng.
+>
+> **DANH SÁCH VIỆC CLOUD CHƯA LÀM / KHÔNG LÀM ĐƯỢC — Claude trên máy làm hết, xong việc nào ghi ✅ + ngày vào đây:**
+> - [ ] **Vercel chỉ dựng nhánh `main`** (gộp vào việc ⓪ sửa Vercel): thêm vào đầu `ignoreCommand` trong `vercel.json`:
+>       `[ "$VERCEL_GIT_COMMIT_REF" != "main" ] && exit 0;` → mọi nhánh khác (nhánh cloud, nhánh thử) không dựng, không tốn Build CPU.
+>       Phiên cloud 27–28/10 đã đẩy nhánh ~20 lần → có thể đã tạo ~15 bản xem thử; xem Vercel → Deployments, báo anh nếu tốn.
+> - [ ] **Đo tốc độ trước/sau** mọi trang ở mục 2 `BAN-GIAO-DO-TOC-DO-27-10.md` (HTML trang chủ < 450 KB · LCP ≤ 2,5 s · INP ≤ 200 ms ·
+>       CLS ≤ 0,1) + `do-o-bi-che` /dang-tin = 0. Trang còn chậm → tìm nguyên nhân, sửa KHÔNG đổi giao diện.
+> - [ ] **Bấm thử** mục 3 tệp đó (PC + điện thoại), có đăng nhập: ô tìm trang chủ, đăng tin trọn quy trình, tài khoản, admin, form báo giá.
+> - [ ] **Kiểm dữ liệu cho Google** bằng Rich Results Test (search.google.com/test/rich-results) trên localhost qua đường hầm hoặc sau push:
+>       /mua-ban/can-ho-chung-cu (ItemList) · /cho-thue (BreadcrumbList) · một /du-an/<slug> · trang chủ (Organization: logo PNG,
+>       disambiguatingDescription, alternateName) · mở /llms.txt.
+> - [ ] **Push MỘT lần** khi anh nhắn "Push" (bước 5 trên) → kiểm web thật.
+> - [ ] **Sau push:** Search Console → Kiểm tra URL → Yêu cầu lập chỉ mục cho trang chủ, /cho-thue, 2–3 trang /mua-ban/<loại>;
+>       đánh dấu ✅ 20 dòng nhóm A (trang tính On-page) trong `HE-THONG-TU-KHOA.xlsx` ở ổ D:.
+> - [ ] **Link hồ sơ Google Doanh nghiệp**: anh gửi → thêm vào `sameAs` trong `src/components/SiteJsonLd.tsx` (gộp đợt push sau).
+> - [ ] **Thương hiệu ngoài web** (việc ⑧): soạn sẵn cho anh/Cowork — chữ giới thiệu thống nhất cho Facebook, Zalo OA, YouTube (tên
+>       "COASTAL LAND" + coastalland.vn + "Cổng thông tin mua bán, cho thuê nhà đất"); bộ thông tin tạo mục Wikidata (tên, web, mã số
+>       0402353502, địa chỉ, ngày thành lập 17/08/2026, mạng xã hội); danh sách danh bạ doanh nghiệp nên đăng. Chữ mới → đưa anh duyệt.
+> - [ ] **Đo thương hiệu mỗi thứ Hai**: tra "coastal land", "coastalland", "costalland", "costal land", "coastal land đà nẵng" → chụp
+>       khung AI + hồ sơ bên phải → ghi nhật ký `KE-HOACH-SEO.md`.
+> - [ ] **Kế hoạch từ khoá**: nhóm B (102 việc chữ/giao diện) chờ anh duyệt B1–B3 · nhóm C (số lạ trong tin) giao Cowork — theo 0D1 ⑥.
+> - [ ] **Ứng viên làm nhẹ thêm** (đo rồi mới tính): danh sách mã "tin tương tự" ở /bat-dong-san/<id> (mục 4 tệp bàn giao).
 
 ---
 
