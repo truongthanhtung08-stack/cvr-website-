@@ -381,6 +381,8 @@ Buộc phải đụng vào vì lý do kỹ thuật → **DỪNG, HỎI TRƯỚC.
 >   trả nghĩa từ điển "đất ven biển"). Chép việc này vào `KE-HOACH-SEO.md` (📋 việc đang làm + chi tiết ở `chi-tiet\`). Gồm:
 >   · Mã (đã làm trong nhánh): `SiteJsonLd` logo PNG vuông `/logo/app-icon-1024.png` (Google không nhận
 >     SVG) + `disambiguatingDescription`: "COASTAL LAND: Cổng thông tin mua bán, cho thuê nhà đất" (anh đã duyệt 28/10).
+>   · `public/llms.txt` (anh duyệt 28/10): giới thiệu web cho mọi AI (ChatGPT, Perplexity, Claude, Gemini) — tên + cách gõ khác
+>     (Coastalland, Costalland, Costal Land), câu thương hiệu, mã số, địa chỉ, trang chính, kênh chính thức. Đổi địa chỉ/kênh → sửa cả tệp này.
 >   · Anh gửi link hồ sơ Google Doanh nghiệp (Maps → Chia sẻ → Sao chép link) → thêm vào `sameAs` của `SiteJsonLd`, gộp cùng đợt push.
 >   · Ngoài web (anh / Cowork): cùng một tên "COASTAL LAND" + link coastalland.vn + mô tả "cổng thông tin mua bán, cho thuê nhà đất" ở
 >     Facebook, Zalo OA, YouTube, hồ sơ Google; tạo mục Wikidata cho công ty (tên, web, mã số thuế, địa chỉ, mạng xã hội); đăng tên ở các
