@@ -336,7 +336,7 @@ Buộc phải đụng vào vì lý do kỹ thuật → **DỪNG, HỎI TRƯỚC.
 > dựng `SEO\RA\VIEC.md` cho Cowork. Đã gom, không dùng nữa: `CONG-VIEC-3-BEN.md` · `Plan MXH\KE-HOACH-MXH.md` · `THU-TU-UU-TIEN.txt` ·
 > thư mục `GUI-CLAUDE-CODE\` · tệp `CAN-ANH\<ngày>.md` · mảng YEU_CAU trong mã. Tài liệu tra cứu (YEU-CAU-COWORK-…, MAU-…) giữ riêng,
 > không yêu cầu hay sửa ở đó — muốn đổi thì ghi một dòng ở mục 3.
-> **Hằng ngày — bảng ⭐ 11 bước đầu tệp là chuẩn duy nhất (chủ dự án chốt 28/10):** chủ dự án (khi cần) xem, sửa tệp → lưu → nhắn Claude
+> **Hằng ngày — bảng ⭐ 6 bước đầu tệp là chuẩn duy nhất (chủ dự án chốt 28/10):** chủ dự án (khi cần) xem, sửa tệp → lưu → nhắn Claude
 > trên máy **"Bắt đầu"** → Claude tự làm theo tệp (lấy mã mới · kiểm web + Search Console · `node scripts/viec-du-lieu.mjs` · viết mục 0
 > `VIEC.md` · làm dòng mục 3 Ai = Claude) = ĐÃ GIAO VIỆC → chủ dự án kiểm `VIEC.md` → **chủ dự án nhắn Cowork** (Cowork không tự chạy, chỉ
 > làm việc trong `VIEC.md`) → Cowork lưu `SEO\DA-DUYET\<ngày>\` → chủ dự án + Claude cùng kiểm → mã web: Claude làm, chờ "Push";
