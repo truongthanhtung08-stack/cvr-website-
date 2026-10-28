@@ -340,9 +340,10 @@ Buộc phải đụng vào vì lý do kỹ thuật → **DỪNG, HỎI TRƯỚC.
 > - Muốn phiên đám mây ghi thẳng ổ D:: chủ dự án mở một phiên trên máy mình (Claude Desktop mở `D:\Coastal Land\SEO`, hoặc terminal
 >   tại đó gõ `claude remote-control`) → phiên đám mây nhắn phiên đó làm.
 > - Không có phiên trên máy: Claude trả MỘT tệp `Plan-SEO-pSEO.zip` cùng cấu trúc thư mục. Gói KHÔNG chứa `KE-HOACH-SEO.md`
->   (tệp này máy ghi nhật ký mỗi sáng — chép đè là mất); phần sửa kế hoạch nằm trong `CAP-NHAT-MOT-LAN.bat` → `cap-nhat-ke-hoach.mjs`
->   tự áp vào ĐÚNG bản đang có trên máy, sao lưu bản cũ vào `may-tu-khoa\sao-luu\`, gặp gì lạ thì dừng không ghi. Chủ dự án: giải nén
->   vào `D:\Coastal Land\SEO\`, chọn "Thay thế", bấm đúp `CAP-NHAT-MOT-LAN.bat`. Không gửi tệp lẻ khác tên.
+>   (tệp này máy ghi nhật ký mỗi sáng — chép đè là mất); bản đã sửa đi kèm là `may-tu-khoa\KE-HOACH-SEO.moi.md`, và
+>   `CAP-NHAT-MOT-LAN.bat` chỉ thay khi tệp trên máy còn ĐÚNG bản Claude đã dựa vào (so số byte), sao lưu bản cũ vào
+>   `may-tu-khoa\sao-luu\`, lệch thì dừng không ghi. ⛔ Windows máy chủ dự án KHÔNG có Node.js (đo 28/10) → tệp .bat chỉ dùng lệnh
+>   có sẵn của Windows. Chủ dự án: giải nén vào `D:\Coastal Land\SEO\` ("Overwrite without prompt"), bấm đúp `CAP-NHAT-MOT-LAN.bat`.
 >
 > **Luật** (đọc mục 5 trước khi đụng tiêu đề, mô tả, khối số liệu, nối trang, giao tin):
 > 1. Gợi ý Google (gợi ý khi gõ + "Mọi người cũng tìm kiếm") là CHUẨN: chữ trên web giữ đúng chữ + thứ tự gợi ý, thêm mục đích ở đầu.
