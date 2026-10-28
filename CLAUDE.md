@@ -83,7 +83,7 @@
 >   mỗi sàn × tầng — sàn chỉ 75–80% đất, có lửng/áp mái); không có số chính xác thì không lấy — web bỏ qua mọi số đúng bằng đất × 1 · 1,5 · 2… (`dienTichSanThat`).
 >   Việc chia giá là của web; Cowork chỉ chép số, không tự chia.
 > - **Lịch sử giá:** chỉ dãy của đúng khu vực + loại hình + mua bán/cho thuê của tin, đủ so cùng kỳ
->   1 năm mới hiện. Yêu cầu nhập liệu cho Cowork: `D:\Coastal Land\SEO\YEU-CAU-COWORK-LICH-SU-GIA.md` (mọi tệp cho Cowork — yêu cầu, dữ liệu vào, dữ liệu ra — chỉ nằm ở `D:\Coastal Land\SEO\`, xem `CONG-VIEC-3-BEN.md` mục 0) (làm mới 03/10: cùng phân khúc + cùng vị trí, 3 bậc dự án → đường → phường — ⛔ **bỏ hẳn cả tỉnh 16/10** (số một phường/loại hình không áp cho nơi khác); đơn vị theo loại hình: đất ÷ m² đất · căn hộ ÷ m² căn · nhà, văn phòng ÷ m² sàn; theo quý như Batdongsan, đủ 5 quý liền mới hiện; ⛔ **thống nhất GIÁ MỖI M² theo loại hình cả bán lẫn thuê (thuê = tiền/tháng ÷ m², chốt 21/10 — "lấy đơn vị tổng là sai")**; web tự tính, Cowork điền phần thiếu từ nút "Tải danh sách còn thiếu").
+>   1 năm mới hiện. Yêu cầu nhập liệu cho Cowork: `D:\Coastal Land\SEO\YEU-CAU-COWORK-LICH-SU-GIA.md` (mọi tệp cho Cowork — yêu cầu, dữ liệu vào, dữ liệu ra — chỉ nằm ở `D:\Coastal Land\SEO\`, xem `KE-HOACH-SEO.md` mục 11.0) (làm mới 03/10: cùng phân khúc + cùng vị trí, 3 bậc dự án → đường → phường — ⛔ **bỏ hẳn cả tỉnh 16/10** (số một phường/loại hình không áp cho nơi khác); đơn vị theo loại hình: đất ÷ m² đất · căn hộ ÷ m² căn · nhà, văn phòng ÷ m² sàn; theo quý như Batdongsan, đủ 5 quý liền mới hiện; ⛔ **thống nhất GIÁ MỖI M² theo loại hình cả bán lẫn thuê (thuê = tiền/tháng ÷ m², chốt 21/10 — "lấy đơn vị tổng là sai")**; web tự tính, Cowork điền phần thiếu từ nút "Tải danh sách còn thiếu").
 > - Bài học 03/10: Claude tự áp luật, hạ nhầm 49 tin còn hạn — xem memory `gia-chinh-sach-mot-nguon-admin`.
 
 ---
@@ -174,8 +174,8 @@ Phù hợp và tương thích cho mọi trình duyệt trên điện thoại c�
 
 > 📌 **File chi tiết: [`QUY-TRINH-LAM-VIEC.md`](QUY-TRINH-LAM-VIEC.md) — PHẢI đọc và tuân thủ.**
 
-**QUY TRÌNH DỮ LIỆU 3 BÊN (Cowork · chủ dự án · Claude) — MỘT TỆP DUY NHẤT:** `D:\Coastal Land\SEO\CONG-VIEC-3-BEN.md` (chốt 16/10/2026).
-Hai quy trình: ① tin đăng hằng ngày · ② dữ liệu khác hằng tuần. Mọi tệp Cowork (yêu cầu, mẫu, dữ liệu vào `VAO`, dữ liệu ra `RA`) chỉ ở `D:\Coastal Land\SEO\`; tin giao ở `D:\Coastal Land\Đăng tin\TIN HANG NGAY chuẩn\<ngày>`. Muốn đổi quy trình → sửa thẳng tệp đó, không tạo tệp quy trình mới.
+**QUY TRÌNH DỮ LIỆU 3 BÊN (Cowork · chủ dự án · Claude) — MỘT TỆP DUY NHẤT:** `D:\Coastal Land\SEO\Plan SEO - pSEO\KE-HOACH-SEO.md` mục 11 (gom từ `CONG-VIEC-3-BEN.md` 28/10/2026 — xem mục 0D1).
+Hai quy trình: ① tin đăng hằng ngày · ② dữ liệu khác hằng tuần. Mọi tệp Cowork chỉ ở `D:\Coastal Land\SEO\`: việc máy giao `RA\VIEC.md` · Cowork giao `DA-DUYET\<ddmmyyyy>\` (bảng nơi lưu mục 11.0; không dùng `VAO`, `Đăng tin\TIN HANG NGAY chuẩn` nữa). Muốn đổi quy trình → sửa thẳng mục 11 tệp đó, không tạo tệp quy trình mới.
 
 **Nguyên tắc 1 — ĐÃ DUYỆT LÀ KHÔNG ĐỘNG VÀO.**
 Phần nào chủ dự án đã xem và duyệt thì GIỮ NGUYÊN 100%. Không tự ý chỉnh kích thước, màu,
@@ -324,6 +324,68 @@ Buộc phải đụng vào vì lý do kỹ thuật → **DỪNG, HỎI TRƯỚC.
 > ✅ **Nghi vấn "/mua-ban trắng" của phiên 17/9 ĐÃ GIẢI (18/9): KHÔNG CÓ LỖI** — phép đo cũ
 > chạy trên thẻ trình duyệt chưa hiển thị nên chỉ thấy khung chờ. Kết luận "trang trắng"
 > phải chứng minh bằng ẢNH CHỤP, không bằng `querySelector`.
+
+---
+
+## 0D1. 🔑 HỆ THỐNG LÀM VIỆC HẰNG NGÀY + KẾ HOẠCH TỪ KHOÁ (chủ dự án chốt 28/10/2026 — đơn giản, thống nhất)
+
+> **MỘT CHỖ:** `D:\Coastal Land\SEO\Plan SEO - pSEO\` — `KE-HOACH-SEO.md` (chủ dự án xem, sửa, giao việc) · `chi-tiet\` (phần đầy đủ, Claude
+> đọc) · `TRA-GOOGLE.csv` · `HE-THONG-TU-KHOA.xlsx` · `may-tu-khoa\` · sơ đồ `QUY-TRINH-LAM-VIEC-HANG-NGAY.html`. Không bên nào làm việc từ chỗ khác.
+>
+> **MỖI NGÀY — 6 BƯỚC:** ① Anh: khi cần sửa `KE-HOACH-SEO.md`, lưu → nhắn Claude trên máy **"Bắt đầu"** · ② Claude: giao việc → `SEO\RA\VIEC.md`
+> · ③ Anh: duyệt `VIEC.md` → nhắn Cowork · ④ Cowork: chỉ làm việc trong `VIEC.md` → lưu `SEO\DA-DUYET\<ddmmyyyy>\` · ⑤ Anh + Claude: kiểm →
+> lên web (anh tự đưa tin, ảnh, video, bài viết, mạng xã hội · Claude chỉ sửa mã web, lên khi anh nhắn **"Push"**) · ⑥ Claude: báo cáo anh, ghi nhật ký.
+> Anh là người bắt đầu: trước "Bắt đầu" không bên nào tự chạy. Ai làm gì tự kiểm việc đó.
+>
+> **"BẮT ĐẦU" = CLAUDE LÀM, KHÔNG HỎI LẠI:** `git pull --ff-only origin main` → đọc `KE-HOACH-SEO.md` → **còn khối VIỆC DỞ DANG dưới đây thì làm nó trước** → **kế hoạch từ khoá trước mọi việc khác**
+> (đo #14 → dựng lại hệ thống từ khoá → giao tin theo nhóm #2 → sửa gốc #30 khi anh duyệt → xin index #4) → `node scripts/viec-du-lieu.mjs`
+> → viết mục 0 `VIEC.md` → làm việc có Ai = Claude → báo anh ngắn. Mọi điều chỉnh từ khoá đến 28/10 đã nằm trong kế hoạch bản 3 + 5 luật dưới —
+> làm tiếp từ đó, **không bắt anh nói lại, không làm lại từ đầu, anh không phải nhớ bước.** Nhắn "Bắt đầu" = anh đã duyệt tệp như đang có.
+>
+> **GIỮ GỌN:** đầu `KE-HOACH-SEO.md` chỉ một màn hình — ⭐ quy trình · ✍ ANH CẦN DUYỆT (mỗi việc 1 dòng, anh ghi `→ DUYỆT: …`) · 📋 việc đang
+> làm (mỗi việc 1 dòng) · 🔑 tóm tắt từ khoá. Mỗi lần "Bắt đầu": việc đã ✅ + nhật ký cũ hơn 7 ngày → `SEO\_cu\KE-HOACH-SEO-LUU-TRU.md` (không xoá).
+>
+> **VIỆC DỞ DANG 28/10 — CLAUDE TRÊN MÁY LÀM TIẾP THEO ĐÚNG THỨ TỰ, LÀM TRƯỚC MỌI VIỆC KHÁC** (chủ dự án: "đừng để vô ích yêu cầu cả ngày
+> hôm nay"; chi tiết thêm ở khối 📌 đầu `KE-HOACH-SEO.md`). Xong việc nào ghi ✅ + ngày vào đây; hết danh sách thì xoá khối này.
+> - ⓪ **SỬA VERCEL** (7+ bản production ERROR ở bước "ignore", lỗi 128 `fatal: bad object b241623…` — lần dựng tốt gần nhất không có trong bản
+>   sao nông; web vẫn chạy bản cũ nhưng **mọi lần sửa web sẽ không lên** tới khi sửa). `vercel.json` thay `ignoreCommand` bằng:
+>   `if [ -n "$VERCEL_GIT_PREVIOUS_SHA" ] && git cat-file -e "$VERCEL_GIT_PREVIOUS_SHA^{commit}" 2>/dev/null; then git diff --quiet
+>   "$VERCEL_GIT_PREVIOUS_SHA" HEAD -- . ":(exclude)*.md" ":(exclude)docs" ":(exclude)supabase"; else exit 1; fi` (đã thử đủ 4 trường hợp
+>   trên cloud) → commit, push main (chủ dự án đã cho phép việc này; phiên cloud bị hệ thống chặn đẩy) → xem bản mới trên Vercel READY, mở web → báo.
+> - ① **TÁCH TỆP 2 TẦNG** ("một tệp rất dài, lộn xộn, không quản lý nổi"): sao lưu vào `may-tu-khoa\sao-luu\` → tầng 1 `KE-HOACH-SEO.md` một màn
+>   hình (⭐ quy trình · ✍ ANH CẦN DUYỆT · 📋 việc đang làm, mỗi việc 1 dòng, giữ tiêu đề có "VIỆC THEO THỨ TỰ" và khung `| # | Việc | Ai |
+>   Trạng thái |` · 🔑 tóm tắt từ khoá) · tầng 2 `chi-tiet\`: `tu-khoa.md` (mục 5) · `viec-chi-tiet.md` (mục 3 đủ) · `yeu-cau-chu-du-an.md`
+>   (mục 0 + 0b) · `quy-trinh-3-ben.md` (mục 11) · `mang-xa-hoi.md` (mục 12) · `nhat-ky.md` (mục 9) · `con-lai.md` (phần còn lại) → soát không mất
+>   dòng nào → sửa `scripts/viec-du-lieu.mjs` đọc mục 0, 0b từ `chi-tiet\yeu-cau-chu-du-an.md`, chạy thử → **anh duyệt tầng 1 rồi mới thay**.
+> - ② **✍ ANH CẦN DUYỆT** — đưa vào khối ✍ đầu tệp, mỗi việc 1 dòng + phương án: B1 tiêu đề bán căn hộ (P1 "Bán căn hộ Đà Nẵng tháng 10/2026",
+>   áp/ trừ 2 trang đã lên · P2 giữ "Bán căn hộ chung cư…") · B2 trang thuê căn hộ ĐN thêm "(quận … cũ)" sau tên phường: có/không · B3 dòng giá
+>   (P1 giữ chữ, tính khoảng phổ biến · P2 thêm chữ "phổ biến") · mở trang phòng trọ, trang trại – nghỉ dưỡng, kho xưởng: có/để sau/không · số tin
+>   Cowork làm mỗi ngày (đang tính ~15) · xoá tệp tải thừa trong Downloads (`Gom-mot-tep-28-10.zip` ×2, `Plan-SEO-pSEO.zip`): có/không.
+> - ③ **#52**: lượt tự chạy lúc mở máy (6:30, 9:11) chuyển sang chạy theo lệnh "Bắt đầu" · Claude tự kiểm khi thư mục giao hôm nay có `bao-cao.txt`
+>   rồi báo anh. Cowork KHÔNG tự chạy — anh nhắn Cowork (đã chốt).
+> - ④ **#53 DỌN THƯ MỤC** `D:\Coastal Land\SEO`: đối chiếu ổ D: thật với bảng nơi lưu (mục 11.0) → lập bảng "tệp → chuyển đi đâu" → anh duyệt →
+>   chuyển (không xoá; thứ không dùng vào `_cu\`). Đã thấy: `Plan SEO - pSEO` còn ảnh, sơ đồ giao diện chưa có chỗ (`BO-LOC-…`,
+>   `MAU-BO-LOC-GAN-DAU-TRANG`, `SO-DO-TRANG-CHU`).
+> - ⑤ **SƠ ĐỒ QUY TRÌNH** `Plan SEO - pSEO\QUY-TRINH-LAM-VIEC-HANG-NGAY.html`: anh đã tải về Downloads, có thể đã chép sang — kiểm; chưa có thì chép
+>   từ Downloads hoặc dựng theo mẫu https://claude.ai/artifact/W5VaB1rXzFqS3wY9uzVEKN.
+> - ⑥ **KẾ HOẠCH TỪ KHOÁ** (ưu tiên số 1 từ đây mỗi ngày): đo #14 → dựng lại hệ thống từ khoá → giao tin theo nhóm #2 → sửa gốc #30 khi anh duyệt ②
+>   → xin index #4. Chữ mới lên web: đưa anh nguyên văn trước.
+>
+> **LƯU Ở ĐÂU (không xoá gì):** `SEO\RA\` máy viết (`VIEC.md`, anh chỉ sửa mục 0) · `SEO\DA-DUYET\<ddmmyyyy>\` Cowork giao · `SEO\MAU\` mẫu ·
+> `SEO\` gốc: `YEU-CAU-COWORK-*.md`, `MAU-DANG-TIN-HANG-LOAT.xlsx`, `DANH-SACH-PHUONG-XA-TOAN-QUOC.txt` · `SEO\_cu\` thứ không dùng nữa.
+> Đã gom, không dùng: `CONG-VIEC-3-BEN.md`, `Plan MXH\KE-HOACH-MXH.md`, `THU-TU-UU-TIEN.txt`, `GUI-CLAUDE-CODE\`, `CAN-ANH\`, `VAO\`.
+>
+> **BẢO MẬT · PUSH:** kế hoạch và sơ đồ không đưa lên GitHub (`docs/` cũng không). Chỉ push khi anh nhắn "Push"; chưa thử, chưa kiểm thì không push.
+> Phiên cloud không ghi được ổ D: → chỉ ghi lệnh vào đây cho Claude trên máy làm.
+>
+> **Luật** (đọc mục 5 trước khi đụng tiêu đề, mô tả, khối số liệu, nối trang, giao tin):
+> 1. Gợi ý Google (gợi ý khi gõ + "Mọi người cũng tìm kiếm") là CHUẨN: chữ trên web giữ đúng chữ + thứ tự gợi ý, thêm mục đích ở đầu.
+> 2. Mục đích + loại hình (chữ người gõ nhiều nhất) + đặc điểm + khu vực + mức giá + tháng/năm; từ khoá dài chứa từ khoá ngắn.
+> 3. Cùng nghĩa (có/không dấu, viết liền, đảo thứ tự) = một nút, một trang; nhưng ĐO RIÊNG từng cách gõ; top 10 chỉ đếm dạng đúng chính tả.
+> 4. Sửa từ GỐC — 4 luật dùng chung, không vá từng trang: đặt chữ (`categories.ts` `tuKhoa`) · số liệu (`soLieuTrang`) · nối trang · giao tin.
+> 5. Làm hết; trang chưa đạt cổng không lên; trang đã lên (`TRANG_DONG_BANG`) không sửa.
+> ⛔ Bài học 28/10: đếm cách gõ sai chính tả là "đã top" — sai; lấy "trang Google đang chọn" làm trang đích — sai;
+> kết luận "trang không có khối X" khi chưa đo trên web thật — sai (khối giá theo khu vực đã có ở 64/130 trang).
 
 ---
 

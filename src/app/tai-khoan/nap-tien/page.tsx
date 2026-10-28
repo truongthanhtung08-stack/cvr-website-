@@ -7,7 +7,7 @@ import { vnd } from "@/lib/billing";
 import { useBilling } from "@/lib/useBilling";
 import { emailThat } from "@/lib/useAuth";
 import { createClient } from "@/lib/supabase/client";
-import MaQrThanhToan, { type DonQr } from "@/components/MaQrThanhToan";
+import MaQrThanhToan, { type DonQr, veHuy } from "@/components/MaQrThanhToan";
 
 // ============================================================================
 // NẠP TIỀN VÀO TÀI KHOẢN — cổng thanh toán PayOS.
@@ -56,13 +56,42 @@ function TopUpForm() {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
   const [don, setDon] = useState<DonQr | null>(null); // đơn vừa tạo → hiện mã QR tại trang
+  // GIỮ ĐƠN khi khách sang app ngân hàng (27/10/2026): điện thoại có thể tải lại trang lúc khách quay về → mở lại đúng
+  // đơn đó (trang hỏi trạng thái, đã nộp thì tự về đúng chỗ). Huỷ hoặc nộp xong thì xoá.
+  const KHOA_DON = "donNap";
+  // Đến từ tin đang đăng: ghi cờ để quay về (Back, ‹, Huỷ) thì form đứng ngay khối Gói tin (PostListingForm đọc cờ)
+  useEffect(() => {
+    const ma = ve?.match(/^\/dang-tin\?id=([\w-]+)/)?.[1];
+    try { if (ma) sessionStorage.setItem("veGoiTin", ma); } catch {}
+  }, [ve]);
+  const boDon = () => { try { sessionStorage.removeItem(KHOA_DON); } catch {} };
+  useEffect(() => {
+    try {
+      const luu = JSON.parse(sessionStorage.getItem(KHOA_DON) || "null") as { don: DonQr; ve: string | null; luc: number } | null;
+      // Chỉ đơn trong 15 phút (bằng thời gian trang hỏi trạng thái)
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- khôi phục một lần lúc mở trang
+      // Chỉ khi chính mốc mã QR được tải lại (history.state còn cvrQr) — vào trang nạp lần mới thì không mở lại đơn cũ
+      if (luu?.don && luu.ve === ve && Date.now() - luu.luc < 15 * 60_000 && window.history.state?.cvrQr) setDon(luu.don);
+    } catch {}
+  }, [ve]);
   // NÚT QUAY LẠI khi đang mở mã QR = Huỷ (chủ dự án 26/10/2026): mở mã thì thêm một mốc lịch sử; quay lại (nút điện thoại,
   // nút ‹ trên trang, nút Huỷ) gỡ mốc đó → đóng mã, về đúng chỗ: từ tin đang đăng → về tin; nạp thường → ô chọn số tiền.
   useEffect(() => {
     if (!don) return;
     // Giữ nguyên state của Next (bản sao mốc hiện tại) — state lạ thì Next tải lại cả trang khi quay lại
-    window.history.pushState(window.history.state, "");
-    const dong = () => { setDon(null); if (ve) router.replace(ve); };
+    // cvrQr đánh dấu mốc mã QR (trang tải lại thì mở lại đúng đơn)
+    // Trang tải lại khi khách từ app ngân hàng quay về: mốc mã QR đã có sẵn → không chồng thêm
+    if (!window.history.state?.cvrQr) window.history.pushState({ ...window.history.state, cvrQr: 1 }, "");
+    // Về tin đang đăng kèm huy-tt=1 → form cuộn tới khối Gói tin — thanh toán
+    const dong = () => {
+      setDon(null); boDon();
+      if (!ve) return;
+      // Vừa từ đúng trang tin sang đây → lùi thêm một mốc về chính trang đó (không sinh mốc trùng: Z→A lùi đúng từng trang)
+      let truoc = "";
+      try { truoc = sessionStorage.getItem("cl_trang_truoc") || ""; } catch {}
+      if (truoc === ve.split("?")[0]) window.history.back();
+      else router.replace(veHuy(ve));
+    };
     window.addEventListener("popstate", dong);
     return () => window.removeEventListener("popstate", dong);
   }, [don, ve, router]);
@@ -124,6 +153,7 @@ function TopUpForm() {
       // MÃ QR NGAY TẠI TRANG, logo Coastal Land — khách không sang trang PayOS nào (chủ dự án 26/10/2026: "không có PayOS gì hết")
       if (json.ok && json.qrCode) {
         setDon(json as DonQr);
+        try { sessionStorage.setItem(KHOA_DON, JSON.stringify({ don: json, ve, luc: Date.now() })); } catch {}
         setLoading(false);
         return;
       }
@@ -164,8 +194,11 @@ function TopUpForm() {
           don={don}
           // Huỷ = quay lại một bước (gỡ mốc mã QR) → đóng mã, về đúng chỗ (xem phần NÚT QUAY LẠI ở trên)
           onHuy={() => window.history.back()}
+          urlXong={`${window.location.origin}${ve ? "/tai-khoan/tin-dang?nap=thanh-cong" : "/tai-khoan/nap-tien?ket-qua=thanh-cong"}`}
           // Tiền về (webhook đã cộng ví): đến từ tin → Tin của tôi (tin tự gửi duyệt); nạp thường → báo thành công tại đây
           onXong={() => {
+            boDon();
+            try { sessionStorage.removeItem("veGoiTin"); } catch {} // đã trả xong: không còn quay về tin nháp
             if (ve) router.replace("/tai-khoan/tin-dang?nap=thanh-cong");
             else { setDon(null); router.replace("/tai-khoan/nap-tien?ket-qua=thanh-cong"); }
           }}

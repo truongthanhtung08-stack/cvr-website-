@@ -5,7 +5,7 @@
 //   ① tin gốc còn hạn không (hết hạn / đã gỡ "không tồn tại")
 //   ② so từng trường với bảng thông số tin gốc: giá, diện tích, PN, WC, hướng, hướng ban
 //      công, số tầng, tầng số, ngang, dài, nội thất, diện tích sử dụng (sàn), pháp lý
-// Không kiểm tiêu đề có giá / diện tích (được phép từ 23/10/2026). Cách xử lý kết quả: CONG-VIEC-3-BEN.md bước 2 (25/10/2026).
+// Không kiểm tiêu đề có giá / diện tích (được phép từ 23/10/2026). Cách xử lý kết quả: KE-HOACH-SEO.md mục 11, bước 2 (25/10/2026; gom từ CONG-VIEC-3-BEN.md 28/10/2026).
 // Đọc được: Chợ Tốt (nhatot.com), muaban.net (thông số đầy đủ); homedy, bds123 (chỉ mô tả).
 // Mỗi tin một lượt curl, nghỉ 0,7 giây — không chạm máy chủ web (không tốn Vercel/Supabase).
 // ============================================================================
