@@ -354,6 +354,18 @@ Buộc phải đụng vào vì lý do kỹ thuật → **DỪNG, HỎI TRƯỚC.
 > theo rồi chuyển việc đó khỏi khối ✍.
 > **Tệp không được dài thêm mãi** (chủ dự án 28/10): mỗi lần "Bắt đầu", Claude chuyển các dòng mục 3 đã ✅ và nhật ký mục 9 cũ hơn 7 ngày
 > sang `D:\Coastal Land\SEO\_cu\KE-HOACH-SEO-LUU-TRU.md` (nối vào cuối, không xoá). Tệp chính chỉ giữ việc đang làm, kế hoạch, quy trình.
+> **⛔ VIỆC TÁCH TỆP — Claude trên máy làm ở lần "Bắt đầu" đầu tiên (chủ dự án 28/10: "một tệp rất dài, miên man, lộn xộn, không thể
+> quản lý xem hết"; cloud chỉ ghi, Claude Desktop làm).** Tách `KE-HOACH-SEO.md` thành 2 tầng, không mất chữ nào:
+> - **Tầng 1 — `Plan SEO - pSEO\KE-HOACH-SEO.md`, chỉ MỘT màn hình, chủ dự án xem + quản lý:** ⭐ QUY TRÌNH (6 dòng) · ✍ ANH CẦN DUYỆT (mỗi
+>   việc 1 dòng + các phương án + `→ DUYỆT: …`) · 📋 VIỆC ĐANG LÀM (bảng `| # | Việc | Ai | Trạng thái |`, mỗi việc ≤ 1 dòng ngắn — giữ tiêu
+>   đề có chữ "VIỆC THEO THỨ TỰ" để máy giao việc đọc được) · 🔑 TỪ KHOÁ (5 dòng: đang ở đâu, bước tiếp, trỏ `chi-tiet\tu-khoa.md`).
+> - **Tầng 2 — `Plan SEO - pSEO\chi-tiet\`, Claude đọc, chủ dự án không cần mở:** `tu-khoa.md` (mục 5 nguyên văn) · `viec-chi-tiet.md`
+>   (mục 3 nguyên văn đủ từng dòng) · `yeu-cau-chu-du-an.md` (mục 0 + 0b) · `quy-trinh-3-ben.md` (mục 11) · `mang-xa-hoi.md` (mục 12) ·
+>   `nhat-ky.md` (mục 9) · `con-lai.md` (mục 1, 2, 2b, 4, 4a, 4b, 6, 7, 8, 10).
+> - Cách làm: sao lưu bản trước khi tách vào `may-tu-khoa\sao-luu\` → tách → soát mọi dòng cũ đều có ở tệp mới → đổi tham chiếu "mục 5.x /
+>   11.x / 12.x" sang tên tệp chi tiết → sửa `scripts/viec-du-lieu.mjs` đọc mục 0, 0b từ `chi-tiet\yeu-cau-chu-du-an.md` (mục 3 vẫn từ
+>   `KE-HOACH-SEO.md`) → chạy thử `node scripts/viec-du-lieu.mjs`, `VIEC.md` ra đủ yêu cầu + việc → **đưa chủ dự án xem tầng 1, duyệt
+>   rồi mới thay**; mã chỉ push khi chủ dự án nói "Push". Xong: cập nhật mục 0D1 này + bảng nơi lưu (mục 11.0) theo cấu trúc mới.
 > **Sơ đồ quy trình trên máy:** `D:\Coastal Land\SEO\Plan SEO - pSEO\QUY-TRINH-LAM-VIEC-HANG-NGAY.html` = bản vẽ khối ⭐ (6 bước,
 > 3 làn Anh · Claude · Cowork, dưới mỗi bước ghi tên tệp + đường dẫn thư mục, bên dưới bảng tệp — tên và chỗ). Chưa có, hoặc khối ⭐ đã đổi →
 > Claude trên máy dựng lại khi "Bắt đầu" (mẫu: https://claude.ai/artifact/W5VaB1rXzFqS3wY9uzVEKN). Không đưa tệp này lên GitHub.
