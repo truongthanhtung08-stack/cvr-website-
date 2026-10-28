@@ -342,6 +342,8 @@ Buộc phải đụng vào vì lý do kỹ thuật → **DỪNG, HỎI TRƯỚC.
 > làm việc trong `VIEC.md`) → Cowork lưu `SEO\DA-DUYET\<ngày>\` → chủ dự án + Claude cùng kiểm → mã web: Claude làm, chờ "Push";
 > tin, ảnh, video, bài viết, mạng xã hội: **chủ dự án tự đưa lên** → ai làm gì tự kiểm việc đó → Claude báo cáo + ghi mục 9.
 > Chủ dự án không phải nhớ bước: Claude dẫn quy trình, việc nào cần chủ dự án thì nhắn đúng lúc. Nơi lưu: bảng mục 11.0 (dọn: mục 3 #53).
+> **Bàn giao phiên cloud 28/10/2026:** khối 📌 ngay dưới khối ⭐ đầu tệp kế hoạch — Claude trên máy đọc khi nhận "Bắt đầu" lần đầu,
+> làm #52 → #53 trước; chờ chủ dự án quyết mục 5.8 (B1–B3).
 
 > **MỘT thư mục cho cả 3 bên: `D:\Coastal Land\SEO\Plan SEO - pSEO\`** — chủ dự án sửa, Claude đọc + sửa, máy giao việc hằng ngày
 > (`scripts/viec-du-lieu.mjs`) đọc. Không tạo tệp kế hoạch / tệp nhập ở chỗ khác; trùng thì gom vào đây, không cần thì bỏ.
