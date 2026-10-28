@@ -352,6 +352,8 @@ Buộc phải đụng vào vì lý do kỹ thuật → **DỪNG, HỎI TRƯỚC.
 > (gom MỌI việc chờ chủ dự án: mục 5.8, 5.12, dòng mục 3 có Ai = Chủ dự án; mỗi việc 1–2 dòng, các phương án, chỗ ghi `→ DUYỆT: …`) · 📌 bàn giao.
 > Phần dưới là tra cứu cho Claude. Lần "Bắt đầu" đầu tiên: dựng khối ✍ (không xoá nội dung gốc), sau mỗi lần chủ dự án ghi DUYỆT thì làm
 > theo rồi chuyển việc đó khỏi khối ✍.
+> **Tệp không được dài thêm mãi** (chủ dự án 28/10): mỗi lần "Bắt đầu", Claude chuyển các dòng mục 3 đã ✅ và nhật ký mục 9 cũ hơn 7 ngày
+> sang `D:\Coastal Land\SEO\_cu\KE-HOACH-SEO-LUU-TRU.md` (nối vào cuối, không xoá). Tệp chính chỉ giữ việc đang làm, kế hoạch, quy trình.
 > **Sơ đồ quy trình trên máy:** `D:\Coastal Land\SEO\Plan SEO - pSEO\QUY-TRINH-LAM-VIEC-HANG-NGAY.html` = bản vẽ khối ⭐ (6 bước,
 > 3 làn Anh · Claude · Cowork, dưới mỗi bước ghi tên tệp + đường dẫn thư mục, bên dưới bảng tệp — tên và chỗ). Chưa có, hoặc khối ⭐ đã đổi →
 > Claude trên máy dựng lại khi "Bắt đầu" (mẫu: https://claude.ai/artifact/W5VaB1rXzFqS3wY9uzVEKN). Không đưa tệp này lên GitHub.
