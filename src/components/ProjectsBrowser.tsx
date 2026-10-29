@@ -699,7 +699,7 @@ export default function ProjectsBrowser({
             <div
               ref={diNoiBatMob}
               onTouchStart={chamNoiBatMob}
-              className="no-scrollbar -mx-4 mt-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 sm:hidden"
+              className="no-scrollbar -mx-4 mt-4 flex snap-x snap-mandatory scroll-px-4 gap-4 overflow-x-auto px-4 pb-2 sm:hidden"
             >
               {hangNoiBat.map((p) => (
                 <div key={p.slug} className="w-[90%] shrink-0 snap-start">{theNoiBat(p)}</div>

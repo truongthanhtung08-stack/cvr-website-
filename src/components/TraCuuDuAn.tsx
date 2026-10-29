@@ -26,10 +26,11 @@ export function locTraCuu(ds: DongTraCuu[], q: string, tinh: string, loai: strin
 export function TheTraCuu({ d }: { d: DongTraCuu }) {
   return (
     // CÙNG KHUÔN thẻ dự án trên trang (viền, bóng, ảnh bo góc, khe 20px) để cân với Dự án nổi bật — chủ dự án 29/10/2026.
-    // Ảnh trái cả máy tính lẫn điện thoại (danh bạ nhiều dòng — gọn hơn ảnh trên), ảnh và chữ cân giữa theo chiều cao.
+    // Ảnh trái cả máy tính lẫn điện thoại (danh bạ nhiều dòng — gọn hơn ảnh trên); ảnh và tên dự án CĂN TRÊN cùng một mép
+    // (chữ dài trên điện thoại không làm ảnh trôi giữa thẻ).
     <Link
       href={`/du-an/${d.slug}`}
-      className="card-lux group flex items-center gap-3 rounded-none border border-cvr-line bg-white p-2.5 shadow-lux shadow-lux-hover hover:-translate-y-1 hover:border-cvr-blue/45 sm:gap-5 sm:p-3"
+      className="card-lux group flex items-start gap-3 rounded-none border border-cvr-line bg-white p-2.5 shadow-lux shadow-lux-hover hover:-translate-y-1 hover:border-cvr-blue/45 sm:gap-5 sm:p-3"
     >
       {/* Ảnh dự án — chưa có ảnh: khung xám + biểu tượng Coastal Land (không lấy ảnh chung chung thay) */}
       <span className="relative aspect-[4/3] w-28 shrink-0 overflow-hidden rounded-lg bg-cvr-surface sm:w-48 sm:rounded-xl md:w-56">
@@ -41,7 +42,7 @@ export function TheTraCuu({ d }: { d: DongTraCuu }) {
         )}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="line-clamp-2 font-semibold leading-snug text-cvr-ink transition-colors group-hover:text-cvr-blue-ink sm:text-lg">{d.ten}</span>
+        <span className="-mt-0.5 line-clamp-2 font-semibold leading-snug text-cvr-ink transition-colors group-hover:text-cvr-blue-ink sm:text-lg">{d.ten}</span>
         <span className="mt-1 block text-xs text-cvr-body sm:text-sm">Chủ đầu tư: <span className="font-medium text-cvr-ink">{d.chuDauTu || "Đang cập nhật"}</span></span>
         <span className="mt-0.5 block text-xs text-cvr-body sm:text-sm">Địa chỉ: {d.diaChi}</span>
         {d.diaChiCu && <span className="block text-[11px] text-cvr-faint sm:text-xs">Địa chỉ cũ: {d.diaChiCu}</span>}
