@@ -318,7 +318,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
   const dayTheoMuc = async (muc: "ban" | "thue") => {
     const items = [...(await khoCuaMinh(l.diaGioi?.province ?? "", l.type, muc)), ...soNhapHopLe(nhapTay?.items)];
     const tinMuc = { ...l, purpose: muc };
-    const chiSo = chiSoChoTin(tinMuc, { items }, { duAn: d.projectName, diaChi: d.addressDetail });
+    const chiSo = chiSoChoTin(tinMuc, { items }, { duAn: d.projectName, diaChi: d.addressDetail, giaTin: muc === mucTin ? giaChoLichSu(l) : null });
     return {
       chiSo,
       // Bảng so sánh khu vực / dự án lân cận: TẠM KHÔNG LÀM (chủ dự án 21/10/2026: chưa đủ cơ sở số liệu)

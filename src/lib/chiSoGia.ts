@@ -321,10 +321,13 @@ function coDuong(diaChi: string, duong: string): boolean {
  * của loại hình · ĐỦ SỐ (13 tháng liền). Bậc trên không đủ số mới xuống bậc dưới.
  * Không bậc nào đủ → null, khối Lịch sử giá ẩn hẳn.
  */
+// Nhóm căn hộ (mục cha "Căn hộ") — chỉ dùng để khớp dãy CÙNG DỰ ÁN (29/10/2026)
+const NHOM_CAN_HO = new Set(["Căn hộ", "Chung cư", "Căn hộ chung cư", "Căn hộ dịch vụ", "Condotel"].map((s) => chuanTen(s)));
+
 export function chiSoChoTin(
   tin: Listing,
   data: ChiSoGiaData | null,
-  them: { duAn?: string | null; diaChi?: string | null } = {},
+  them: { duAn?: string | null; diaChi?: string | null; giaTin?: number | null } = {},
 ): ChiSoKhuVuc | null {
   if (!data?.items?.length) return null;
   const tinh = chuanTen(tin.diaGioi?.province ?? "");
@@ -341,7 +344,10 @@ export function chiSoChoTin(
     (x) =>
       chuanTen(x.tinh) === tinh &&
       (x.mucDich ?? "ban") === mucDich &&
-      !!x.loaiHinh && chuanTen(x.loaiHinh) === loai &&
+      // Cùng loại hình. Riêng dãy CỦA DỰ ÁN: căn hộ · chung cư · căn hộ dịch vụ · condotel trong cùng một dự án là MỘT sản phẩm
+      // (mục cha "Căn hộ", cùng đơn vị m² căn) — chủ dự án 29/10/2026: tin Golden Bay ghi "Căn hộ" theo tin gốc, dãy dự án ghi
+      // "Condotel" → trượt xuống dãy cả phường Sơn Trà 70,2 tr/m² trong khi dự án 42,3 tr/m².
+      !!x.loaiHinh && (chuanTen(x.loaiHinh) === loai || (!!x.duAn && NHOM_CAN_HO.has(chuanTen(x.loaiHinh)) && NHOM_CAN_HO.has(loai))) &&
       // Đúng mẫu số của loại hình; thuê tính tổng tiền/tháng thì dãy không có mẫu số (23/10/2026)
       x.mauSo === mau &&
       !x.viTri && // cùng phân khúc + cùng vị trí; không chia nhỏ theo bề rộng đường
@@ -349,8 +355,9 @@ export function chiSoChoTin(
   );
 
   const bac: ((x: ChiSoKhuVuc) => boolean)[] = [
-    // ① cùng dự án
-    (x) => !!x.duAn && ((!!duAn && chuanTen(x.duAn) === duAn) || (!!tin.projectSlug && x.duAn === tin.projectSlug)),
+    // ① cùng dự án (tin chưa gắn dự án mà tiêu đề ghi đúng tên dự án cũng tính — vd Capital Square)
+    (x) => !!x.duAn && ((!!duAn && chuanTen(x.duAn) === duAn) || (!!tin.projectSlug && x.duAn === tin.projectSlug) ||
+      (!duAn && chuanTen(x.duAn).length >= 6 && chuanTen(tin.title ?? "").includes(chuanTen(x.duAn)))),
     // ② cùng tuyến đường (trong đúng phường)
     (x) => !x.duAn && !!x.duong && !!phuong && chuanTen(x.khuVuc ?? "") === phuong && coDuong(diaChi, x.duong),
     // ③ cùng phường
@@ -358,10 +365,30 @@ export function chiSoChoTin(
     // ⛔ KHÔNG có bậc cả tỉnh (chủ dự án 16/10/2026: số một phường / một loại hình
     // đem áp cho cả tỉnh là sai — lịch sử giá chỉ của cùng dự án, đường hoặc vị trí tương đương).
   ];
-  for (const dung of bac) {
+  // GIÁ TIN LÀ SỐ CỦA QUÝ HIỆN TẠI (chủ dự án 29/10/2026: "lấy giá hiện tại của tin là nguồn hiện tại … đối chiếu và so sánh để đưa
+  // ra khoảng giá chuẩn"). Đường giá phổ biến – khoảng giá – giá tin phải khớp:
+  //  · dãy CÙNG DỰ ÁN là cùng sản phẩm → luôn dùng; khoảng thấp–cao của quý mới nhất mở ra cho chứa giá tin.
+  //  · dãy đường / phường chỉ dùng khi giá tin nằm trong khoảng của dãy (lệch ≤ 3%) — ngoài khoảng là khác sản phẩm (đất kiệt so
+  //    với dãy trộn mặt tiền, nhà ở xã hội so với chung cư thường, studio so với căn 3 phòng ngủ) → thử bậc sau; hết bậc → không vẽ.
+  // Đo cả hệ thống: node scripts/kiem-logic-lich-su-gia.mjs (phải 0 tin lệch).
+  const g = them.giaTin ?? null;
+  const cuoi = (x: ChiSoKhuVuc) => x.moc[x.moc.length - 1];
+  const khop = (x: ChiSoKhuVuc) => {
+    if (!g) return true;
+    const m = cuoi(x);
+    return g >= (m.thap ?? m.giaM2) * 0.97 && g <= (m.cao ?? m.giaM2) * 1.03;
+  };
+  const chuaGiaTin = (x: ChiSoKhuVuc): ChiSoKhuVuc => {
+    if (!g) return x;
+    const m = cuoi(x);
+    const moc = [...x.moc.slice(0, -1), { ...m, thap: Math.min(m.thap ?? m.giaM2, g), cao: Math.max(m.cao ?? m.giaM2, g) }];
+    return { ...x, moc };
+  };
+  for (const [i, dung] of bac.entries()) {
     // Cùng bậc: ưu tiên dãy dài hơn (nhiều tháng liền hơn).
     const ds = hop.filter(dung).sort((a, b) => soKyLienMach(b) - soKyLienMach(a));
-    if (ds.length) return ds[0];
+    const chon = i === 0 ? ds[0] : ds.find(khop);
+    if (chon) return chuaGiaTin(chon);
   }
   return null;
 }
