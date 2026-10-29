@@ -9,6 +9,8 @@ import dynamic from "next/dynamic";
 // Bộ xem ảnh chỉ tải khi khách bấm mở (tốc độ điện thoại, đo 22/10/2026): trước đây nằm sẵn trong mã mọi trang có thẻ tin.
 const XemAnhPC = dynamic(() => import("@/components/XemAnhPC"), { ssr: false });
 import { videoPosterUrl } from "@/lib/media";
+import { anhNho } from "@/lib/asset";
+// Ảnh hiện sẵn trong trang tin = BẢN NHỎ không dấu (anhNho); dấu COASTAL LAND chỉ ở ảnh gốc khi bấm mở xem (chủ dự án 29/10/2026)
 
 // ============================================================================
 // KHUNG ẢNH TRANG TIN — BẢN MÁY TÍNH, kiểu Batdongsan (chủ dự án 18/10/2026).
@@ -86,7 +88,7 @@ export default function KhungAnhPC({ images, videos = [], alt, banDo }: { images
           </div>
         ) : (
           <button type="button" onClick={() => setXem(nVid > 0 ? 0 : i)} className="absolute inset-0 block h-full w-full" aria-label="Xem ảnh lớn">
-            <Image key={i} src={m.src} alt={`${alt} ${i - nVid + 1}`} fill priority={i === nVid} quality={90} sizes="800px" className="animate-fadein object-cover" />
+            <Image key={i} src={anhNho(m.src)} alt={`${alt} ${i - nVid + 1}`} fill priority={i === nVid} quality={90} sizes="800px" className="animate-fadein object-cover" />
           </button>
         )}
         {n > 1 && (
@@ -119,7 +121,7 @@ export default function KhungAnhPC({ images, videos = [], alt, banDo }: { images
         <div className="relative w-[100px] shrink-0">
         <div ref={dai} className="no-scrollbar absolute inset-0 flex flex-col gap-2 overflow-y-auto">
           {media.map((x, k) => {
-            const bia = x.kind === "video" ? videoPosterUrl(x.src)?.thuong : x.src;
+            const bia = x.kind === "video" ? videoPosterUrl(x.src)?.thuong : anhNho(x.src);
             return (
               <button key={k} type="button" onClick={() => setI(k)} aria-label={x.kind === "video" ? "Video" : `Ảnh ${k - nVid + 1}`}
                 className={`relative h-[62px] w-[100px] shrink-0 overflow-hidden rounded-md bg-black transition ${k === i ? "ring-2 ring-cvr-blue ring-offset-1" : "opacity-70 hover:opacity-100"}`}>
