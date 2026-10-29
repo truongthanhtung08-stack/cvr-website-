@@ -77,7 +77,7 @@ export default function AdminDashboard() {
   // Nay việc nào đang chờ thì hiện thành DÒNG BẤM ĐƯỢC, đi thẳng tới nơi xử lý.
   // LUẬT: mọi tin đăng và mọi dự án đều phải được quản trị viên duyệt mới lên web.
   const viec = [
-    { n: stats?.tinPending ?? 0, chu: "tin đăng chờ duyệt", href: "/admin/tin-dang" },
+    { n: stats?.tinPending ?? 0, chu: "tin đăng chờ duyệt", href: "/admin/tin-dang?trang-thai=pending" },
     { n: chuaChuan?.length ?? 0, chu: "tin chưa đạt chuẩn SEO", href: "#tin-chua-chuan" },
     { n: stats?.duAnPending ?? 0, chu: "dự án chờ duyệt", href: "/admin/du-an" },
     { n: stats?.yeuCauMoi ?? 0, chu: "yêu cầu khách hàng mới", href: "/admin/yeu-cau" },
@@ -131,7 +131,7 @@ export default function AdminDashboard() {
       <Panel title="Tin đăng" className="mt-4">
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           <ChiSo label="Đang đăng" value={stats?.tinLive} href="/admin/tin-dang" accent />
-          <ChiSo label="Chờ duyệt" value={stats?.tinPending} href="/admin/tin-dang" />
+          <ChiSo label="Chờ duyệt" value={stats?.tinPending} href="/admin/tin-dang?trang-thai=pending" />
           <ChiSo label="Chưa đạt chuẩn SEO" value={chuaChuan?.length} href="#tin-chua-chuan" />
         </div>
       </Panel>

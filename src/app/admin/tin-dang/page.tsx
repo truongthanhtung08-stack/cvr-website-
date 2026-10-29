@@ -45,7 +45,11 @@ export default function AdminListingsPage() {
   const [q, setQ] = useState("");
   const [purpose, setPurpose] = useState<"all" | ListingPurpose>("all");
   const [tier, setTier] = useState<"all" | ListingTier>("all");
+  // Mở từ ô "Chờ duyệt" trang chủ admin (?trang-thai=pending) → vào thẳng danh sách chờ duyệt (chủ dự án 29/10/2026)
   const [status, setStatus] = useState<"all" | "da_sua" | ListingStatus>("all");
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("trang-thai") === "pending") setStatus("pending");
+  }, []);
   const [chon, setChon] = useState<Set<string>>(new Set()); // tin đang tick để xoá hàng loạt
   // Vừa bấm "Cập nhật và đăng" / "Lưu nháp" ở trang sửa tin → báo đầu trang (ListingForm gửi ?daLuu=<id>&kieu=len|nhap)
   const [daLuu, setDaLuu] = useState<{ id: string; kieu: string } | null>(null);
