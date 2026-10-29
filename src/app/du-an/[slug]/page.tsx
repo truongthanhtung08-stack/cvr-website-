@@ -24,7 +24,7 @@ import KhuVucLinks from "@/components/KhuVucLinks";
 import { ProjectListJsonLd } from "@/components/ListJsonLd";
 import ProjectsBrowser from "@/components/ProjectsBrowser";
 import { provinceOf, districtOf, segmentOf, pickRelated, type Project, type Listing } from "@/lib/data";
-import { getProject, getProjects, getArticles } from "@/lib/contentDb";
+import { getProject, getProjectsNoiBat, getArticles } from "@/lib/contentDb";
 import { getListings } from "@/lib/listingsDb";
 import { duAnThuocNhom, findCategory, projectCategories, type Category } from "@/lib/categories";
 import { normalizeVi, cungDuAn } from "@/lib/filters";
@@ -92,7 +92,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       alternates: { canonical: `/du-an/${c.slug}` },
       openGraph: { title: c.title, description: c.desc, url: `/du-an/${c.slug}`, type: "website" },
       // Nhóm chưa có dự án nào → xem được nhưng không cho lập chỉ mục (tránh trang trống — 22/10/2026)
-      ...(projectsInCategory(await getProjects().catch(() => []), c).length === 0 ? { robots: { index: false, follow: true } } : {}),
+      ...(projectsInCategory(await getProjectsNoiBat().catch(() => []), c).length === 0 ? { robots: { index: false, follow: true } } : {}),
     };
   }
 
@@ -100,7 +100,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   // Xét TRƯỚC khi tra dự án: tên dự án không bao giờ trùng slug tỉnh.
   const kv = timKhuVuc(slug);
   if (kv) {
-    const projects = await getProjects().catch(() => []);
+    const projects = await getProjectsNoiBat().catch(() => []);
     const soDuAn = demTinTheoKhuVuc(projects, kv.name);
     const title = tieuDeKhuVuc("duan", kv.name);
     const description = moTaKhuVuc("duan", kv.name, soDuAn);
@@ -126,7 +126,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       robots: { index: false, follow: true },
     };
   }
-  const desc = `Dự án ${p.name} tại ${p.location}. ${p.type}, ${p.status}. Giá từ ${p.priceFrom} — tiến độ, mặt bằng, tiện ích đầy đủ tại Coastal Land.`;
+  const desc = `Dự án ${p.name} tại ${p.location}. ${[p.type, p.status].filter(Boolean).join(", ")}. Giá từ ${p.priceFrom} — tiến độ, mặt bằng, tiện ích đầy đủ tại Coastal Land.`;
   return {
     title: tieuDeGoogle(`${p.name} — ${p.priceFrom}`),
     description: catMoTa(desc),
@@ -136,7 +136,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       description: desc,
       url: `/du-an/${p.slug}`,
       type: "website",
-      ...(p.image ? { images: [{ url: p.image, alt: p.name }] } : {}),
+      ...(p.photos?.length ? { images: [{ url: p.image, alt: p.name }] } : {}),
     },
   };
 }
@@ -168,7 +168,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   // ── Nhánh 1: slug là DANH MỤC loại hình dự án → trang danh sách ──
   const cat = findCategory(projectCategories, slug);
   if (cat) {
-    const [projects, articles] = await Promise.all([getProjects(), getArticles()]);
+    const [projects, articles] = await Promise.all([getProjectsNoiBat(), getArticles()]);
     const items = projectsInCategory(projects, cat);
     return (
       <>
@@ -191,7 +191,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   // trước đây web không có trang nào nhận nhóm này.
   const kv = timKhuVuc(slug);
   if (kv) {
-    const [projects, articles] = await Promise.all([getProjects(), getArticles()]);
+    const [projects, articles] = await Promise.all([getProjectsNoiBat(), getArticles()]);
     const items = projects.filter((x) => normalizeVi(x.location.split(",").pop() ?? "") === normalizeVi(kv.name));
     const demTheoTinh = (() => {
       const m = new Map<string, number>();
@@ -224,7 +224,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   }
 
   // ── Nhánh 2: trang chi tiết một dự án ──
-  const [p, projects, listings, articles] = await Promise.all([getProject(slug), getProjects(), getListings(), getArticles()]);
+  const [p, projects, listings, articles] = await Promise.all([getProject(slug), getProjectsNoiBat(), getListings(), getArticles()]);
   if (!p) {
     const coban = duAnTuTin(listings, slug);
     if (!coban) notFound();
@@ -266,6 +266,9 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   // Thư viện ảnh: CHỈ ảnh của CHÍNH dự án này.
   // (Trước đây độn thêm ảnh của các dự án khác cho đủ 8 tấm → ảnh các dự án lẫn lộn nhau.)
   const gallery = Array.from(new Set(p.photos?.length ? p.photos : [p.image]));
+  // HỒ SƠ CƠ BẢN (chưa ảnh — Cowork nạp cho Tra cứu dự án, 29/10/2026): khung xám + biểu tượng Coastal Land thay ảnh (không lấy
+  // ảnh căn hộ chung chung — khách tưởng ảnh thật), mục nào hồ sơ chưa có thì ẩn.
+  const coAnh = !!p.photos?.length;
 
   const province = provinceOf(p.location);
   // Chưa có mốc bàn giao trong hồ sơ → ĐỂ TRỐNG, không lấy tạm tình trạng (22/10/2026: từng hiện "Bàn giao: Đang mở bán",
@@ -312,12 +315,12 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   // giá ẩn hoặc chưa có bảng → bỏ hẳn mục (cột phải đã có "Liên hệ" + ô nhận bảng giá), không lặp hộp "Liên hệ".
   const coBangGia = showPrice && priceTable.length > 0;
   const nav = [
-    { id: "tong-quan", label: "Tổng quan" },
+    ...(p.overview.length || p.scale.length ? [{ id: "tong-quan", label: "Tổng quan" }] : []),
     ...(p.videos?.length ? [{ id: "video", label: "Video" }] : []),
     { id: "vi-tri", label: "Vị trí" },
     ...(floorPlans.length ? [{ id: "mat-bang", label: "Mặt bằng" }] : []),
     { id: "tien-ich", label: "Tiện ích" },
-    { id: "tien-do", label: "Tiến độ" },
+    ...(coAnh ? [{ id: "tien-do", label: "Tiến độ" }] : []),
     ...(coBangGia ? [{ id: "bang-gia", label: "Bảng giá" }] : []),
     { id: "chu-dau-tu", label: "Chủ đầu tư" },
     // Menu mục của trang (22/10/2026): thông tin dự án → tin thuộc dự án → dự án tương tự
@@ -339,7 +342,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
     name: p.name,
     url: `${SITE}/du-an/${p.slug}`,
     description: chuThuan(p.overview?.[0]) || `Dự án ${p.name} tại ${p.location}. Loại hình ${p.type}, tình trạng ${p.status}.`,
-    image: (p.photos?.length ? p.photos : [p.image]).map((x) => (x.startsWith("http") ? x : `${SITE}${x}`)),
+    ...(coAnh ? { image: p.photos!.map((x) => (x.startsWith("http") ? x : `${SITE}${x}`)) } : {}),
     address: { "@type": "PostalAddress", streetAddress: p.location, addressCountry: "VN" },
     ...(p.developer ? { developer: { "@type": "Organization", name: p.developer } } : {}),
     ...(p.amenities?.length ? { amenityFeature: p.amenities.slice(0, 12).map((a) => ({ "@type": "LocationFeatureSpecification", name: a })) } : {}),
@@ -364,7 +367,12 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
           {/* Thư viện ảnh — MOBILE tràn viền sát 2 mép (giảm khoảng trống trên) · bấm để xem lớn + zoom */}
           <div className="-mx-4 sm:mx-0">
-            <ProjectGallery images={gallery} alt={p.name} />
+            {coAnh ? <ProjectGallery images={gallery} alt={p.name} /> : (
+              <div className="flex h-[190px] items-center justify-center bg-cvr-surface sm:h-[300px]">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/logo/symbol-dark.svg" alt="" className="h-16 w-16 opacity-25" />
+              </div>
+            )}
           </div>
 
           {/* Tiêu đề + địa chỉ — bố cục cân đối, rõ ràng */}
@@ -372,7 +380,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             <div className="flex flex-wrap items-center gap-2">
               {purposes.includes("ban") && <PurposeChip>Bán</PurposeChip>}
               {purposes.includes("thue") && <PurposeChip>Cho thuê</PurposeChip>}
-              <span className="rounded-full bg-cvr-surface px-3 py-1 text-[12px] font-medium text-cvr-body">{p.status}</span>
+              {p.status && <span className="rounded-full bg-cvr-surface px-3 py-1 text-[12px] font-medium text-cvr-body">{p.status}</span>}
             </div>
             <h1 className="mt-3 text-[21px] font-semibold leading-[1.3] tracking-tight text-cvr-ink sm:text-[28px]">{p.name}</h1>
             <p className="mt-2 flex items-start gap-1.5 text-[14px] leading-relaxed text-cvr-muted sm:text-[15px]">
@@ -416,13 +424,16 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             <div className="reveal is-visible cards-stagger lg:col-span-2 [&>section:first-of-type]:mt-5">
 
               {/* 1) Tổng quan */}
+              {(p.overview.length > 0 || p.scale.length > 0) && (
               <Section id="tong-quan" title="Tổng quan dự án">
                 {/* Tổng quan dài → thu gọn + "Xem thêm" như mô tả tin (22/10/2026), để tin của dự án không bị đẩy quá xa */}
+                {p.overview.length > 0 && (
                 <MoTaThuGon dong={6}>
                   <div className="space-y-3 text-[15px] leading-relaxed text-cvr-body">
                     <RichContent paragraphs={p.overview} title={p.name} />
                   </div>
                 </MoTaThuGon>
+                )}
                 {p.scale.length > 0 && (
                   <div className="mt-6 grid grid-cols-1 gap-x-8 sm:grid-cols-2">
                     {p.scale.map((s) => (
@@ -434,6 +445,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                   </div>
                 )}
               </Section>
+              )}
 
               {/* Video (nếu có) */}
               {p.videos && p.videos.length > 0 && (
@@ -472,6 +484,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               )}
 
               {/* 5) Tiến độ dự án */}
+              {coAnh && (
               <Section id="tien-do" title="Tiến độ dự án">
                 <div className="flex items-center justify-between gap-1">
                   {progressSteps.map((s, i) => (
@@ -489,6 +502,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                     có ở đầu trang. Chỉ ghi mốc bàn giao khi hồ sơ có. */}
                 {handover && <p className="mt-4 text-sm text-cvr-muted">Dự kiến bàn giao: <span className="font-semibold text-cvr-ink">{handover}</span></p>}
               </Section>
+              )}
 
               {/* 6) Bảng giá — cấu trúc Loại căn – Diện tích – Hướng – Giá (ẩn/hiện giá) */}
               {coBangGia && (

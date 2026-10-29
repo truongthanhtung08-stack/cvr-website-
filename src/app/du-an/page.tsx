@@ -6,7 +6,7 @@ import Hero from "@/components/Hero";
 import ProjectsBrowser from "@/components/ProjectsBrowser";
 import KhuVucLinks from "@/components/KhuVucLinks";
 import LienKetPseo from "@/components/LienKetPseo";
-import { getProjects, getArticles } from "@/lib/contentDb";
+import { getProjectsNoiBat, getArticles } from "@/lib/contentDb";
 import { getProjectBanners } from "@/lib/siteContent";
 import { demDuAnTheoTinh, nhomTraCuu } from "@/lib/traCuuDuAn";
 
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
 };
 
 export default async function DuAnPage() {
-  const [projects, articles, projBanners] = await Promise.all([getProjects(), getArticles(), getProjectBanners()]);
+  const [projects, articles, projBanners] = await Promise.all([getProjectsNoiBat(), getArticles(), getProjectBanners()]);
   const xep = [...projects].sort((a, b) => (HANG[a.tier ?? ""] ?? 9) - (HANG[b.tier ?? ""] ?? 9));
   return (
     <>

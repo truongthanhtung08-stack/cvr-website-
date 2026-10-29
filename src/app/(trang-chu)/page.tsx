@@ -16,7 +16,7 @@ import TimKiemPhoBien from "@/components/TimKiemPhoBien";
 import { HomeExpandProvider, HomeCollapsible, AnKhiMo } from "@/components/HomeExpand";
 import { getListings, getListingsThe } from "@/lib/listingsDb";
 import { chonTinTrangChu } from "@/lib/tinNoiBat";
-import { getArticles, getProjects } from "@/lib/contentDb";
+import { getArticles, getProjectsNoiBat } from "@/lib/contentDb";
 import { getHeroBanners, getHomeAreas, getFeaturedArticleSlug } from "@/lib/siteContent";
 import { THANH_PHO } from "@/lib/pseo";
 import { slugKhuVuc } from "@/lib/khuVuc";
@@ -38,7 +38,7 @@ export default async function Home() {
   // Hero ảnh + khu vực: ảnh/chữ admin sửa được (siteContent) — chưa nhập → mặc định
   // tinDu: bản đầy đủ (cùng lần đọc có cache) — chỉ dùng ở máy chủ để dựng cụm gợi ý, không gửi xuống máy khách
   const [listings, tinDu, projects, articles, homeAreas, featuredSlug, heroBanners] = await Promise.all([
-    getListingsThe(), getListings(), getProjects(), getArticles(), getHomeAreas(),
+    getListingsThe(), getListings(), getProjectsNoiBat(), getArticles(), getHomeAreas(),
     getFeaturedArticleSlug(), getHeroBanners(),
   ]);
 

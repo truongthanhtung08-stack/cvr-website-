@@ -133,12 +133,14 @@ function projectRowToProject(r: ProjectRow): Project {
     ...(locationCu ? { locationCu } : {}),
     priceFrom: r.price_from || "Liên hệ",
     type: r.type || "Dự án bất động sản",
-    status: r.status_text || "Đang mở bán",
+    // Hồ sơ CƠ BẢN (chưa ảnh — Cowork nạp hàng loạt cho Tra cứu dự án, 29/10/2026): không tự gán tình trạng, không câu tổng quan
+    // thay thế — trống thì trang dự án ẩn mục đó. Hồ sơ có ảnh giữ như cũ.
+    status: r.status_text || (photos.length ? "Đang mở bán" : ""),
     image: asset(photos[0] ?? PROJECT_PLACEHOLDER),
     developer: r.developer || "Đang cập nhật",
     scale: (r.scale ?? []).filter((s) => s && s.label && s.value),
     amenities: (r.amenities ?? []).filter(Boolean),
-    overview: overview.length ? overview : [`Dự án ${r.name}${location ? ` tại ${location}` : ""} — thông tin đang được Coastal Land cập nhật.`],
+    overview: overview.length ? overview : !photos.length ? [] : [`Dự án ${r.name}${location ? ` tại ${location}` : ""} — thông tin đang được Coastal Land cập nhật.`],
     ...(photos.length ? { photos: photos.map(asset) } : {}),
     ...(videos.length ? { videos } : {}),
     tier: d.tier ?? "basic",
@@ -170,6 +172,11 @@ export async function getProjects(): Promise<Project[]> {
   );
   if (!rows || rows.length === 0) return sampleProjects;
   return rows.map(projectRowToProject);
+}
+
+// DỰ ÁN NỔI BẬT = hồ sơ CÓ ẢNH (chủ dự án 29/10/2026). Hồ sơ cơ bản chưa ảnh chỉ hiện ở Tra cứu dự án (/du-an/tra-cuu).
+export async function getProjectsNoiBat(): Promise<Project[]> {
+  return (await getProjects()).filter((p) => p.photos?.length);
 }
 
 // Một dự án theo slug — không có trong DB → tìm trong dự án mẫu
