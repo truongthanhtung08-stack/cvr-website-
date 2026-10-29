@@ -6,6 +6,7 @@ import Hero from "@/components/Hero";
 import ProjectsBrowser from "@/components/ProjectsBrowser";
 import KhuVucLinks from "@/components/KhuVucLinks";
 import LienKetPseo from "@/components/LienKetPseo";
+import { HomeExpandProvider, HomeCollapsible } from "@/components/HomeExpand";
 import { getProjects, getProjectsNoiBat, getArticles } from "@/lib/contentDb";
 import { getListings } from "@/lib/listingsDb";
 import { getProjectBanners } from "@/lib/siteContent";
@@ -34,17 +35,22 @@ export default async function DuAnPage() {
       <ProjectListJsonLd items={xep} heading="Dự án bất động sản" path="/du-an" />
       <Header />
       <main className="flex-1 bg-white">
-        <div className="mx-auto max-w-7xl px-4 pt-0 pb-footer sm:px-6 sm:pt-0 lg:px-8">
-          <ProjectsBrowser
-            projects={xep}
-            articles={articles}
-            tieuDe="Dự án bất động sản"
-            traCuu={traCuu}
-            hero={<Hero banners={projBanners} heightClass="aspect-[2/1] sm:aspect-auto sm:h-[300px]" search={false} />}
-          />
-        </div>
-        <KhuVucLinks base="/du-an" demTheoTinh={demDuAnTheoTinh(projects)} />
-        <LienKetPseo nhom={nhomTraCuu(projects)} />
+        {/* "Xem thêm" ở Dự án nổi bật: mở danh sách → phần còn lại ẩn, Quay lại về như cũ (chuẩn chung HomeExpand) */}
+        <HomeExpandProvider>
+          <div className="mx-auto max-w-7xl px-4 pt-0 pb-footer sm:px-6 sm:pt-0 lg:px-8">
+            <ProjectsBrowser
+              projects={xep}
+              articles={articles}
+              tieuDe="Dự án bất động sản"
+              traCuu={traCuu}
+              hero={<Hero banners={projBanners} heightClass="aspect-[2/1] sm:aspect-auto sm:h-[300px]" search={false} />}
+            />
+          </div>
+          <HomeCollapsible>
+            <KhuVucLinks base="/du-an" demTheoTinh={demDuAnTheoTinh(projects)} />
+            <LienKetPseo nhom={nhomTraCuu(projects)} />
+          </HomeCollapsible>
+        </HomeExpandProvider>
       </main>
       <Footer />
     </>

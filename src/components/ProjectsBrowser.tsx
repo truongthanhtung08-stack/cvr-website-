@@ -23,6 +23,9 @@ import type { DiemBanDo } from "@/components/MapViewGoogle";
 import type { Project, Article } from "@/lib/data";
 import type { DongTraCuu } from "@/lib/traCuuDuAn";
 import { TheTraCuu, locTraCuu, nhomLoai } from "@/components/TraCuuDuAn";
+import { useHomeSection } from "@/components/HomeExpand";
+import { smoothScrollTo } from "@/lib/scroll";
+import { useAutoSlide, useAutoSlideThe, useTamDung } from "@/lib/useAutoSlide";
 
 // Bản đồ chỉ chạy phía client (Leaflet đụng tới window) — nạp động, không SSR.
 const MapView = dynamic(() => import("@/components/MapViewMo"), { ssr: false });
@@ -243,12 +246,30 @@ export default function ProjectsBrowser({
   const current = Math.min(page, totalPages);
   const pageItems = visible.slice((current - 1) * PER_PAGE, current * PER_PAGE);
   const trangTraCuu = traCuuLoc.slice((current - 1) * PER_PAGE, current * PER_PAGE);
-  // Dự án nổi bật: hàng trượt 8 dự án; "Xem thêm" → lưới theo trang (đổi lọc → về hàng trượt)
+  // Dự án nổi bật: hàng trượt 8 dự án + "Xem thêm" (chuẩn chung HomeExpand): bấm → phần còn lại của trang ẩn, danh sách
+  // Dự án nổi bật 10 dự án / trang (chủ dự án 29/10/2026); nút Quay lại về như cũ.
   const NOI_BAT_HANG = 8;
-  const [moNoiBat, setMoNoiBat] = useState(false);
+  const NOI_BAT_MOI_TRANG = 10;
+  const noiBat = useHomeSection("du-an-noi-bat");
   const [trangNoiBat, setTrangNoiBat] = useState(1);
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { setMoNoiBat(false); setTrangNoiBat(1); }, [q, status, province, type]);
+  // Slide Dự án nổi bật — cùng cơ chế khối "Dự án nổi bật" trang chủ (ProjectsSection): máy tính mỗi slide 4 thẻ tự chạy 7 s,
+  // rê chuột dừng; điện thoại từng thẻ tự chạy 5 s, chạm dừng rồi chạy lại.
+  const hangNoiBat = visible.slice(0, NOI_BAT_HANG);
+  const nhomNoiBat: Project[][] = [];
+  for (let i = 0; i < hangNoiBat.length; i += 4) nhomNoiBat.push(hangNoiBat.slice(i, i + 4));
+  const trackNoiBat = useRef<HTMLDivElement>(null);
+  const diNoiBatMob = useRef<HTMLDivElement>(null);
+  const [slideNoiBat, setSlideNoiBat] = useState(0);
+  const slideNoiBatHienTai = Math.min(slideNoiBat, Math.max(nhomNoiBat.length, 1) - 1);
+  const { dung: dungNoiBat, chamVao: chamNoiBat, setDung: setDungNoiBat } = useTamDung(6000);
+  const { dung: dungNoiBatMob, chamVao: chamNoiBatMob } = useTamDung(6000);
+  const denSlideNoiBat = (i: number) => {
+    const el = trackNoiBat.current;
+    const n = Math.max(nhomNoiBat.length, 1);
+    if (el) smoothScrollTo(el, ((i + n) % n) * el.clientWidth);
+  };
+  useAutoSlide(trackNoiBat, Math.max(nhomNoiBat.length, 1), dungNoiBat || !traCuu, 7000);
+  useAutoSlideThe(diNoiBatMob, hangNoiBat.length, dungNoiBatMob || !traCuu, 5000);
 
   // Panel chọn 1 giá trị trong dropdown (không in số dự án — chủ dự án 09/10/2026)
   const optionList = (
@@ -308,12 +329,17 @@ export default function ProjectsBrowser({
 
   // Thẻ Dự án nổi bật trong hàng trượt (trang /du-an): NỘI DUNG Y NHƯ thẻ ngang bên dưới (tình trạng · tên · giá · địa chỉ ·
   // loại hình + giới thiệu · chủ đầu tư) — chủ dự án 29/10/2026 "nội dung như hiện tại"; chỉ xếp ảnh trên, chữ dưới.
-  const theNoiBat = (p: Project) => (
+  // ngang = danh sách sau "Xem thêm": y thẻ ngang trang Dự án đang chạy (ảnh trái máy tính, ảnh trên điện thoại)
+  const theNoiBat = (p: Project, ngang = false) => (
     <Link
       href={`/du-an/${p.slug}`}
-      className="card-lux group flex h-full flex-col overflow-hidden rounded-none border border-cvr-line bg-white shadow-lux shadow-lux-hover hover:-translate-y-1 hover:border-cvr-blue/45"
+      className={ngang
+        ? "card-lux group relative flex flex-col overflow-hidden rounded-none bg-white shadow-lux shadow-lux-hover hover:-translate-y-1 hover:border-cvr-blue/45 sm:flex-row sm:gap-5 sm:border sm:border-cvr-line sm:p-3"
+        : "card-lux group flex h-full flex-col overflow-hidden rounded-none border border-cvr-line bg-white shadow-lux shadow-lux-hover hover:-translate-y-1 hover:border-cvr-blue/45"}
     >
-      <div className="relative aspect-[16/10] w-full shrink-0 overflow-hidden bg-cvr-surface">
+      <div className={ngang
+        ? "relative aspect-[16/9] w-full shrink-0 overflow-hidden rounded-none bg-cvr-surface sm:aspect-[4/3] sm:w-56 sm:rounded-xl md:w-64"
+        : "relative aspect-[16/10] w-full shrink-0 overflow-hidden bg-cvr-surface"}>
         <AnhChay
           chay={false}
           images={[p.image, ...(p.photos ?? [])]}
@@ -325,29 +351,43 @@ export default function ProjectsBrowser({
           {p.status}
         </span>
       </div>
-      <div className="flex min-w-0 flex-1 flex-col p-3">
-        <h3 className="line-clamp-2 font-semibold leading-snug text-cvr-ink transition-colors group-hover:text-cvr-blue-ink">
+      <div className={`flex min-w-0 flex-1 flex-col p-3 ${ngang ? "sm:p-0 sm:py-1 sm:pr-1" : ""}`}>
+        {/* GỌN (chủ dự án 29/10/2026): Tên dự án · Địa chỉ · Loại hình · Chủ đầu tư — hiện đủ chữ, không cắt "…";
+            giá ("Liên hệ" khi ẩn giá) nằm phải dòng Chủ đầu tư như dòng cuối thẻ dự án trang chủ — không thêm dòng */}
+        <h3 className={`font-semibold leading-snug text-cvr-ink transition-colors group-hover:text-cvr-blue-ink ${ngang ? "sm:text-lg" : ""}`}>
           <Highlight text={p.name} terms={termsBySlug.get(p.slug) ?? []} />
         </h3>
-        <p className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
-          <span className="text-base font-semibold text-cvr-gold-ink">{p.priceFrom}</span>
-          {priceRef(p) && <span className="text-xs text-cvr-muted">{priceRef(p)}</span>}
+        <p className="mt-1 flex items-start gap-1 text-xs text-cvr-muted">
+          <svg className="mt-px h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+          <span className="min-w-0">{p.location}</span>
         </p>
-        <p className="mt-1 flex items-center gap-1 text-xs text-cvr-muted">
-          <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-          <span className="truncate">{p.location}</span>
-        </p>
-        <p className="mb-3 mt-1.5 line-clamp-2 text-xs leading-relaxed text-cvr-muted">
-          {p.type} · {chuThuan(p.overview[0])}
-        </p>
-        <div className="mt-auto border-t border-cvr-line pt-2.5">
-          <span className="text-xs text-cvr-body">
+        <p className="mb-3 mt-1 text-xs text-cvr-body">Loại hình: {p.type}</p>
+        <div className="mt-auto flex items-end justify-between gap-3 border-t border-cvr-line pt-2.5">
+          <span className="min-w-0 text-xs text-cvr-body">
             Chủ đầu tư: <span className="font-medium text-cvr-ink">{p.developer}</span>
           </span>
+          <span className="shrink-0 whitespace-nowrap text-sm font-semibold text-cvr-gold-ink">{p.priceFrom}</span>
         </div>
       </div>
     </Link>
   );
+
+  // Đã bấm "Xem thêm" ở Dự án nổi bật → chỉ còn danh sách Dự án nổi bật theo trang (phần còn lại ẩn; Quay lại về như cũ)
+  if (traCuu && noiBat.expanded) {
+    const tongNB = Math.max(1, Math.ceil(visible.length / NOI_BAT_MOI_TRANG));
+    const trangNB = Math.min(trangNoiBat, tongNB);
+    return (
+      <section id="noi-bat" className="pt-4 sm:pt-6">
+        <h2 className="text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">Dự án nổi bật</h2>
+        <div className="mt-4 flex flex-col gap-5">
+          {visible.slice((trangNB - 1) * NOI_BAT_MOI_TRANG, trangNB * NOI_BAT_MOI_TRANG).map((p) => (
+            <div key={p.slug}>{theNoiBat(p, true)}</div>
+          ))}
+        </div>
+        <PhanTrang hienTai={trangNB} tong={tongNB} doiTrang={(p) => { setTrangNoiBat(p); window.scrollTo({ top: 0 }); }} />
+      </section>
+    );
+  }
 
   return (
     <div className="flex flex-col">
@@ -650,33 +690,82 @@ export default function ProjectsBrowser({
       {traCuu ? (
       <div className={mapMode ? "hidden" : ""}>
         {/* ── DỰ ÁN NỔI BẬT (chủ dự án 29/10/2026): một hàng trượt ngang trên cùng — thẻ GIỮ NGUYÊN nội dung thẻ Dự án đang chạy (chủ dự án 29/10/2026), xếp dọc cho vừa hàng; xếp
-            Kim cương → Vàng → Bạc → mới cập nhật. Hàng hiện 8 dự án; nhiều hơn → "Xem thêm" mở lưới theo trang. ── */}
+            Kim cương → Vàng → Bạc → mới cập nhật. Hàng hiện 8 dự án; "Xem thêm" → danh sách 10 dự án / trang. ── */}
         {visible.length > 0 && (
           <section id="noi-bat" className="mt-6 scroll-mt-24 sm:mt-5">
             <h2 className="text-lg font-semibold tracking-tight text-cvr-ink sm:text-xl">Dự án nổi bật</h2>
-            {!moNoiBat ? (
-              <div className="-mx-4 mt-3 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0">
-                {visible.slice(0, NOI_BAT_HANG).map((p) => (
-                  <div key={p.slug} className="w-[80%] shrink-0 snap-start sm:w-[calc((100%-2rem)/3)] lg:w-[calc((100%-3rem)/4)]">
-                    {theNoiBat(p)}
+            {/* SLIDE ĐÚNG CHUẨN khối "Dự án nổi bật" trang chủ (ProjectsSection, đã duyệt) — chủ dự án 29/10/2026.
+                Điện thoại: lướt từng thẻ, tự chạy 5 s, chạm là dừng rồi chạy lại. */}
+            <div
+              ref={diNoiBatMob}
+              onTouchStart={chamNoiBatMob}
+              className="no-scrollbar -mx-4 mt-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 sm:hidden"
+            >
+              {hangNoiBat.map((p) => (
+                <div key={p.slug} className="w-[90%] shrink-0 snap-start">{theNoiBat(p)}</div>
+              ))}
+            </div>
+            {/* Máy tính: mỗi slide 4 thẻ, tự chạy 7 s, rê chuột là dừng; mũi tên tròn hai mép + chấm chuyển slide ở giữa */}
+            <div className="relative mt-5 hidden sm:block">
+              <div
+                ref={trackNoiBat}
+                className="no-scrollbar flex snap-x snap-mandatory items-start overflow-x-auto overscroll-x-contain py-2"
+                onScroll={(e) => setSlideNoiBat(Math.round(e.currentTarget.scrollLeft / e.currentTarget.clientWidth))}
+                onMouseEnter={() => setDungNoiBat(true)}
+                onMouseLeave={() => setDungNoiBat(false)}
+                onTouchStart={chamNoiBat}
+              >
+                {nhomNoiBat.map((nhom, gi) => (
+                  <div key={gi} className="w-full shrink-0 snap-start">
+                    <div className="grid grid-cols-2 gap-5 lg:grid-cols-4">
+                      {nhom.map((p) => <div key={p.slug}>{theNoiBat(p)}</div>)}
+                    </div>
                   </div>
                 ))}
               </div>
-            ) : (
-              <>
-                <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-                  {visible.slice((trangNoiBat - 1) * PER_PAGE, trangNoiBat * PER_PAGE).map((p) => <div key={p.slug}>{theNoiBat(p)}</div>)}
-                </div>
-                <PhanTrang hienTai={trangNoiBat} tong={Math.max(1, Math.ceil(visible.length / PER_PAGE))} doiTrang={(p) => { setTrangNoiBat(p); document.getElementById("noi-bat")?.scrollIntoView({ block: "start" }); }} />
-              </>
-            )}
-            {!moNoiBat && visible.length > NOI_BAT_HANG && (
-              <div className="mt-3 flex justify-center">
-                <button type="button" onClick={() => setMoNoiBat(true)} className="rounded-full border border-cvr-line px-5 py-2 text-sm font-medium text-cvr-ink transition hover:border-cvr-ink">
-                  Xem thêm
-                </button>
+              {nhomNoiBat.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    aria-label="Slide trước"
+                    onClick={() => denSlideNoiBat(slideNoiBatHienTai - 1)}
+                    className="absolute -left-3 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-cvr-line bg-white/90 text-cvr-ink shadow-lux backdrop-blur transition hover:bg-white sm:flex"
+                  >
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Slide tiếp"
+                    onClick={() => denSlideNoiBat(slideNoiBatHienTai + 1)}
+                    className="absolute -right-3 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-cvr-line bg-white/90 text-cvr-ink shadow-lux backdrop-blur transition hover:bg-white sm:flex"
+                  >
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+                  </button>
+                </>
+              )}
+            </div>
+            {nhomNoiBat.length > 1 && (
+              <div className="mt-4 hidden justify-center gap-2 sm:flex">
+                {nhomNoiBat.map((_, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => denSlideNoiBat(i)}
+                    aria-label={`Slide ${i + 1}`}
+                    className={`h-2 rounded-full transition-all duration-300 ${i === slideNoiBatHienTai ? "w-6 bg-cvr-ink" : "w-2 bg-cvr-line hover:bg-cvr-muted"}`}
+                  />
+                ))}
               </div>
             )}
+            {/* Nút "Xem thêm" chuẩn chung (cùng kiểu khối Dự án trang chủ) — luôn có, kể cả khi ít hơn 8 dự án */}
+            <div className="mt-6 flex justify-center">
+              <button type="button" onClick={() => { setTrangNoiBat(1); noiBat.toggle(); }} className="btn-xemthem">
+                Xem thêm
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+            </div>
           </section>
         )}
 
@@ -684,12 +773,12 @@ export default function ProjectsBrowser({
           {/* ── TRA CỨU DỰ ÁN — mọi dự án cả nước, thẻ ảnh + Tên · Chủ đầu tư · Địa chỉ · Loại hình, phân trang ── */}
           <section id="tra-cuu" className="scroll-mt-24 lg:col-span-2">
             <h2 className="text-lg font-semibold tracking-tight text-cvr-ink sm:text-xl">Tra cứu dự án</h2>
-            <ul className="mt-2 divide-y divide-cvr-line border-y border-cvr-line">
+            <ul className="mt-3 flex flex-col gap-4 sm:gap-5">
               {trangTraCuu.map((d) => (
                 <li key={d.slug}><TheTraCuu d={d} /></li>
               ))}
               {traCuuLoc.length === 0 && (
-                <li className="py-10 text-center text-sm text-cvr-muted">Chưa có dự án phù hợp bộ lọc.</li>
+                <li className="rounded-none border border-cvr-line bg-cvr-surface p-10 text-center text-sm text-cvr-muted">Chưa có dự án phù hợp bộ lọc.</li>
               )}
             </ul>
             <PhanTrang

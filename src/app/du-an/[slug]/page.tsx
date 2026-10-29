@@ -23,6 +23,7 @@ import Breadcrumb, { BreadcrumbJsonLd } from "@/components/Breadcrumb";
 import KhuVucLinks from "@/components/KhuVucLinks";
 import { ProjectListJsonLd } from "@/components/ListJsonLd";
 import ProjectsBrowser from "@/components/ProjectsBrowser";
+import TrangDuAnTraCuu from "@/components/TrangDuAnTraCuu";
 import { provinceOf, districtOf, segmentOf, pickRelated, type Project, type Listing } from "@/lib/data";
 import { getProject, getProjectsNoiBat, getArticles } from "@/lib/contentDb";
 import { getListings } from "@/lib/listingsDb";
@@ -228,35 +229,20 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   if (!p) {
     const coban = duAnTuTin(listings, slug);
     if (!coban) notFound();
+    // Dự án bậc 1 (chỉ có tên từ tin) → trang TRA CỨU (chủ dự án 29/10/2026): bảng thông tin cơ bản, ô chưa có ghi "Đang cập nhật"
     return (
       <>
         <Header />
         <main className="flex-1 bg-white">
-          <Breadcrumb items={[{ name: "Dự án", href: "/du-an" }, { name: coban.ten, href: `/du-an/${slug}` }]} />
-          <div className="mx-auto max-w-7xl px-4 pb-footer sm:px-6 lg:px-8">
-            {/* CẢ TRANG nằm trong HomeExpandProvider (22/10/2026: chủ dự án báo "nút bấm cứng đơ, không bấm được" — khối tin
-                dự án nằm NGOÀI bộ điều khiển "Xem thêm" nên bấm không có tác dụng). Mở danh sách → phần đầu tự ẩn như trang
-                dự án đầy đủ. */}
-            <HomeExpandProvider>
-              <HomeCollapsible>
-                <h1 className="mt-3 text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">{coban.ten}</h1>
-                <p className="mt-1 text-sm text-cvr-muted">{coban.viTri}</p>
-                {/* Dự án bậc 1 (chỉ có tên từ tin) — câu chữ CHỜ CHỦ DỰ ÁN DUYỆT NGUYÊN VĂN (22/10/2026) */}
-                <p className="mt-3 rounded-xl bg-cvr-surface px-4 py-2.5 text-sm text-cvr-body">Thông tin dự án đang được cập nhật.</p>
-              </HomeCollapsible>
-              <section id="tin-dang" className="scroll-mt-14">
-                <RelatedListingsTabs
-                  ban={coban.tin.filter((x) => (x.purpose ?? "ban") === "ban")}
-                  thue={coban.tin.filter((x) => (x.purpose ?? "ban") === "thue")}
-                  tenDuAn={coban.ten}
-                  title={`Tin mua bán liên quan tại dự án ${coban.ten}`}
-                />
-              </section>
-              {(() => { const tt = tuongTuDuAn(listings, coban.tin, coban.viTri); return (
-                <ListingShowcase items={tt.nhe} idsDayDu={tt.ids} sectionKey="bds-tuong-tu" title="Bất động sản tương tự" heading="Bất động sản tương tự" relevance emptyNote="Chưa có bất động sản tương tự." />
-              ); })()}
-            </HomeExpandProvider>
-          </div>
+          <TrangDuAnTraCuu
+            d={{
+              slug, ten: coban.ten, anh: "", chuDauTu: "", diaChi: coban.viTri, diaChiCu: coban.tin[0]?.locationCu ?? "",
+              loaiHinh: "", tinhTrang: "", thongSo: [], capNhat: "", nguon: "", coHoSo: false,
+            }}
+            tinBan={coban.tin.filter((x) => (x.purpose ?? "ban") === "ban")}
+            tinThue={coban.tin.filter((x) => (x.purpose ?? "ban") === "thue")}
+            tuongTu={tuongTuDuAn(listings, coban.tin, coban.viTri)}
+          />
         </main>
         <Footer />
       </>
@@ -268,9 +254,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   const gallery = Array.from(new Set(p.photos?.length ? p.photos : [p.image]));
   // Chưa có ảnh: khung xám + biểu tượng Coastal Land thay ảnh (không lấy ảnh căn hộ chung chung — khách tưởng ảnh thật).
   const coAnh = !!p.photos?.length;
-  // HỒ SƠ DẠNG THẺ (nạp từ tệp Cowork cho Tra cứu dự án — chủ dự án 29/10/2026): cùng khuôn trang dự án nhưng gọn theo đúng
-  // các trường hồ sơ có — một ảnh lớn, tên, địa chỉ, chủ đầu tư, loại hình; mục nào hồ sơ chưa có thì ẩn (không Tiến độ suy từ
-  // tình trạng, không nhãn Bán / Cho thuê tự gán, không ô nhận brochure khi chưa có tài liệu). Dự án nổi bật giữ nguyên.
+  // Hồ sơ DẠNG THẺ (nạp từ tệp Cowork cho Tra cứu dự án) có trang tra cứu riêng — xem nhánh dangThe phía dưới (29/10/2026)
   const dangThe = !!p.dangThe;
 
   const province = provinceOf(p.location);
@@ -287,8 +271,6 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   const dev = p.developerInfo;
   // Liên hệ dự án — admin không nhập thì contentDb trả undefined → không hiện khối liên hệ.
   const contact = p.contact;
-  const coChuDauTu = !dangThe || !!dev || !!p.developmentUnit;
-  const coCotPhai = !dangThe || !!contact;
 
   // ẨN GIÁ: không hiện bất kỳ thông tin giá/loại căn/diện tích nào — chỉ "Liên hệ".
   const showPrice = p.priceMode === "show";
@@ -325,9 +307,9 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
     { id: "vi-tri", label: "Vị trí" },
     ...(floorPlans.length ? [{ id: "mat-bang", label: "Mặt bằng" }] : []),
     { id: "tien-ich", label: "Tiện ích" },
-    ...(!dangThe ? [{ id: "tien-do", label: "Tiến độ" }] : []),
+    { id: "tien-do", label: "Tiến độ" },
     ...(coBangGia ? [{ id: "bang-gia", label: "Bảng giá" }] : []),
-    ...(coChuDauTu ? [{ id: "chu-dau-tu", label: "Chủ đầu tư" }] : []),
+    { id: "chu-dau-tu", label: "Chủ đầu tư" },
     // Menu mục của trang (22/10/2026): thông tin dự án → tin thuộc dự án → dự án tương tự
     ...(hasRelated ? [{ id: "tin-du-an", label: "Tin bán / cho thuê" }] : []),
     { id: "du-an-tuong-tu", label: "Dự án tương tự" },
@@ -356,6 +338,32 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
     provider: { "@id": `${SITE}/#to-chuc` }, // nối về thực thể COASTAL LAND ở layout gốc
   };
 
+  // HỒ SƠ DẠNG THẺ (nạp từ tệp Cowork) → trang TRA CỨU: thông tin cơ bản để tra, khác trang Dự án nổi bật (chủ dự án 29/10/2026)
+  if (dangThe) {
+    return (
+      <>
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(duAnJsonLd) }} />
+        <BreadcrumbJsonLd items={[{ name: "Dự án", href: "/du-an" }, { name: "Tra cứu dự án", href: "/du-an#tra-cuu" }, { name: p.name, href: `/du-an/${p.slug}` }]} />
+        <Header />
+        <main className="flex-1 bg-white">
+          <TrangDuAnTraCuu
+            d={{
+              slug: p.slug, ten: p.name, anh: p.photos?.[0] ?? "",
+              chuDauTu: p.developer !== "Đang cập nhật" ? p.developer : "",
+              diaChi: p.location, diaChiCu: p.locationCu ?? "",
+              loaiHinh: p.type !== "Dự án bất động sản" ? p.type : "",
+              tinhTrang: p.status, thongSo: p.scale, capNhat: p.capNhat ?? "", nguon: p.nguon ?? "", coHoSo: true,
+            }}
+            tinBan={relBan}
+            tinThue={relThue}
+            tuongTu={tuongTuDuAn(listings, projectListings, p.location, p.type)}
+          />
+        </main>
+        <Footer />
+      </>
+    );
+  }
+
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(duAnJsonLd) }} />
@@ -372,7 +380,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
           {/* Thư viện ảnh — MOBILE tràn viền sát 2 mép (giảm khoảng trống trên) · bấm để xem lớn + zoom */}
           <div className="-mx-4 sm:mx-0">
-            {coAnh ? <ProjectGallery images={gallery} alt={p.name} motAnh={dangThe} /> : (
+            {coAnh ? <ProjectGallery images={gallery} alt={p.name} /> : (
               <div className="flex h-[190px] items-center justify-center bg-cvr-surface sm:h-[300px]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/logo/symbol-dark.svg" alt="" className="h-16 w-16 opacity-25" />
@@ -383,8 +391,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
           {/* Tiêu đề + địa chỉ — bố cục cân đối, rõ ràng */}
           <div className="mt-5">
             <div className="flex flex-wrap items-center gap-2">
-              {!dangThe && purposes.includes("ban") && <PurposeChip>Bán</PurposeChip>}
-              {!dangThe && purposes.includes("thue") && <PurposeChip>Cho thuê</PurposeChip>}
+              {purposes.includes("ban") && <PurposeChip>Bán</PurposeChip>}
+              {purposes.includes("thue") && <PurposeChip>Cho thuê</PurposeChip>}
               {p.status && <span className="rounded-full bg-cvr-surface px-3 py-1 text-[12px] font-medium text-cvr-body">{p.status}</span>}
             </div>
             <h1 className="mt-3 text-[21px] font-semibold leading-[1.3] tracking-tight text-cvr-ink sm:text-[28px]">{p.name}</h1>
@@ -409,11 +417,11 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             </p>
 
             {/* Dải thông tin nhanh — cân đối, dễ đọc từng tiêu chí */}
-            <div className={`mt-5 grid grid-cols-2 gap-2 ${dangThe && !showPrice ? "sm:grid-cols-3" : handover ? "sm:grid-cols-4" : "sm:grid-cols-3 [&>*:last-child]:col-span-2 sm:[&>*:last-child]:col-span-1"}`}>
+            <div className={`mt-5 grid grid-cols-2 gap-2 ${handover ? "sm:grid-cols-4" : "sm:grid-cols-3 [&>*:last-child]:col-span-2 sm:[&>*:last-child]:col-span-1"}`}>
               {/* Thứ tự (chủ dự án 22/10/2026): chủ đầu tư · loại hình · giá · bàn giao */}
               <Fact label="Chủ đầu tư" value={p.developer} />
               <Fact label="Loại hình" value={p.type} />
-              {(!dangThe || showPrice) && <Fact label="Giá từ" value={sidePrice} accent />}
+              <Fact label="Giá từ" value={sidePrice} accent />
               {handover && <Fact label="Bàn giao" value={handover} />}
             </div>
           </div>
@@ -426,7 +434,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
           <HomeCollapsible>
           <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
-            <div className={`reveal is-visible cards-stagger ${coCotPhai ? "lg:col-span-2" : "lg:col-span-3"} [&>section:first-of-type]:mt-5`}>
+            <div className="reveal is-visible cards-stagger lg:col-span-2 [&>section:first-of-type]:mt-5">
 
               {/* 1) Tổng quan */}
               {(p.overview.length > 0 || p.scale.length > 0) && (
@@ -489,7 +497,6 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               )}
 
               {/* 5) Tiến độ dự án */}
-              {!dangThe && (
               <Section id="tien-do" title="Tiến độ dự án">
                 <div className="flex items-center justify-between gap-1">
                   {progressSteps.map((s, i) => (
@@ -507,7 +514,6 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                     có ở đầu trang. Chỉ ghi mốc bàn giao khi hồ sơ có. */}
                 {handover && <p className="mt-4 text-sm text-cvr-muted">Dự kiến bàn giao: <span className="font-semibold text-cvr-ink">{handover}</span></p>}
               </Section>
-              )}
 
               {/* 6) Bảng giá — cấu trúc Loại căn – Diện tích – Hướng – Giá (ẩn/hiện giá) */}
               {coBangGia && (
@@ -533,7 +539,6 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               )}
 
               {/* 7) Chủ đầu tư */}
-              {coChuDauTu && (
               <Section id="chu-dau-tu" title="Chủ đầu tư">
                 {/* GỌN (22/10/2026): có logo thì hiện logo nhỏ; KHÔNG có thì chỉ tên — bỏ ô chữ cái to thay logo. */}
                 <div className="flex items-center gap-3">
@@ -567,12 +572,10 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                   </div>
                 )}
               </Section>
-              )}
 
             </div>
 
             {/* Cột phụ — giá & liên hệ (dính khi cuộn) */}
-            {coCotPhai && (
             <aside className="lg:col-span-1">
               <div className="sticky top-24 space-y-4">
                 {/* Điện thoại: hộp giá nằm cuối trang, lặp lại "Giá từ · Loại hình" ở đầu trang → chỉ hiện khi có liên hệ dự án;
@@ -621,7 +624,6 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                 </div>
               </div>
             </aside>
-            )}
           </div>
 
           </HomeCollapsible>
