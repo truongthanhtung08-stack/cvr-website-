@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { vnd } from "@/lib/billing";
 import { PHAP_LY } from "@/lib/phapLy";
+import { APP_NGAN_HANG } from "@/lib/appNganHang";
 
 // ============================================================================
 // MÃ QR THANH TOÁN NGAY TRÊN COASTALLAND.VN — logo Coastal Land giữa mã (chủ dự án 26/10/2026: trang PayOS chỉ cho
@@ -39,24 +40,18 @@ export type DonQr = {
   description?: string;
 };
 
-// urlXong: trang app ngân hàng trả khách về sau khi chuyển xong (tham số url bắt buộc của dl.vietqr.io)
-export default function MaQrThanhToan({ don, onHuy, onXong, urlXong }: { don: DonQr; onHuy: () => void; onXong: () => void; urlXong: string }) {
+export default function MaQrThanhToan({ don, onHuy, onXong }: { don: DonQr; onHuy: () => void; onXong: () => void }) {
   const [anh, setAnh] = useState("");
   const [daChep, setDaChep] = useState("");
   // Đã bấm Thanh toán → bước chọn ngân hàng. Từ app ngân hàng quay về mà trang tải lại → vẫn đứng bước này (mốc cvrNh)
   const [buocNganHang, setBuocNganHang] = useState(() => !!window.history.state?.cvrNh);
-  // BACK LÙI ĐÚNG TỪNG BƯỚC Z→A (chủ dự án 27/10/2026): bước chọn ngân hàng là một mốc lịch sử (cvrNh) → Back về mã QR;
-  // Back ở mã QR → trang nạp; Back ở trang nạp → tin, khối Gói tin. HUỶ THANH TOÁN → về thẳng tin (trang nạp lo).
-  // Trang tải lại khi khách từ app ngân hàng quay về: mốc cvrNh còn nguyên → vẫn đứng bước chọn ngân hàng.
+  // BACK = HUỶ THANH TOÁN (chủ dự án 29/10/2026): đang thanh toán (mã QR hay chọn ngân hàng) bấm Back / ‹ / Huỷ đều về tin đang
+  // làm, đứng khối Chọn gói (trang nạp tiền lo). Bước chọn ngân hàng chỉ ghi dấu cvrNh lên mốc mã QR (không thêm mốc) — trang tải
+  // lại khi khách từ app ngân hàng quay về vẫn đứng đúng bước này.
   function moNganHang() {
-    window.history.pushState({ ...window.history.state, cvrQr: 1, cvrNh: 1 }, "");
+    window.history.replaceState({ ...window.history.state, cvrNh: 1 }, "");
     setBuocNganHang(true);
   }
-  useEffect(() => {
-    const lui = () => setBuocNganHang(!!window.history.state?.cvrNh);
-    window.addEventListener("popstate", lui);
-    return () => window.removeEventListener("popstate", lui);
-  }, []);
   const huy = onHuy;
   const xongRef = useRef(onXong);
   xongRef.current = onXong;
@@ -97,32 +92,20 @@ export default function MaQrThanhToan({ don, onHuy, onXong, urlXong }: { don: Do
     return () => clearInterval(t);
   }, [don.orderCode]);
 
-  // DANH SÁCH NGÂN HÀNG trên điện thoại (chủ dự án 27/10/2026): chạm ngân hàng → mở thẳng app ngân hàng, số tài khoản +
-  // số tiền + nội dung điền sẵn (đường dẫn dl.vietqr.io). Chuyển xong khách quay lại trình duyệt → trang hỏi trạng thái
-  // thấy "paid" là tự về đúng chỗ. Danh sách lấy từ api.vietqr.io lúc mở mã (1 lần/đơn, không qua máy chủ Coastal Land).
-  const [nganHang, setNganHang] = useState<{ appId: string; appLogo: string; appName: string; href?: string }[]>([]);
+  // DANH SÁCH NGÂN HÀNG (chủ dự án 27/10/2026): điện thoại nhấn logo → MỞ THẲNG app ngân hàng (appNganHang.ts), trang này đứng
+  // nguyên → quay về / Back đúng chỗ (trước đi qua trang trung gian dl.vietqr.io: chen vào lịch sử, và không điền sẵn được số tiền).
+  // Vào app khách Quét mã QR → ảnh mã đã Lưu: số tài khoản, số tiền, nội dung nằm sẵn trong mã. Nộp xong quay lại trình duyệt →
+  // trang hỏi trạng thái thấy "paid" là tự về đúng chỗ. Máy tính: Internet Banking (thẻ mới).
+  const [nganHang, setNganHang] = useState<{ appId: string; appLogo: string; appName: string; href: string }[]>([]);
   const [mayTinh, setMayTinh] = useState(false);
   useEffect(() => {
-    // Máy tính không mở được app ngân hàng → danh sách Internet Banking
     // eslint-disable-next-line react-hooks/set-state-in-effect -- đo loại máy một lần lúc mở mã
     if (!window.matchMedia("(pointer: coarse)").matches) { setMayTinh(true); setNganHang(INTERNET_BANKING); return; }
-    const ios = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-    fetch(`https://api.vietqr.io/v2/${ios ? "ios" : "android"}-app-deeplinks`)
-      .then((r) => r.json())
-      .then((j: { apps?: { appId: string; appLogo: string; appName: string; autofill?: number }[] }) =>
-        // Đủ mọi ngân hàng; app tự điền sẵn số tiền + nội dung (autofill) xếp trước
-        setNganHang([...(j.apps ?? [])]
-          .filter((a, i, ds) => ds.findIndex((b) => b.appName === a.appName) === i) // danh sách VietQR có app trùng tên
-          .sort((a, b) => (b.autofill ?? 0) - (a.autofill ?? 0))))
-      .catch(() => {});
+    const ios = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
+    setNganHang(APP_NGAN_HANG
+      .filter((n) => !ios || n.iphone) // iPhone không mở được app này → không hiện
+      .map((n) => ({ appId: n.id, appLogo: n.logo, appName: n.ten, href: ios ? n.iphone : n.android })));
   }, []);
-  // Tài khoản nhận theo đơn PayOS (để web tự nhận tiền); PayOS không trả thì dùng tài khoản công ty MB
-  // Theo tài liệu vietqr.io/danh-sach-api/deeplink-app-ngan-hang: ba = SỐ_TK@mã ngân hàng (MB = "mb"), am, tn, app, url bắt buộc —
-  // đủ thì app ngân hàng (loại tự điền) mở thẳng màn chuyển tiền, điền sẵn số tài khoản + số tiền + nội dung.
-  const moApp = (appId: string) =>
-    `https://dl.vietqr.io/pay?app=${appId}&ba=${don.accountNumber || PHAP_LY.soTaiKhoan}@${!don.bin || don.bin === "970422" ? "mb" : don.bin}` +
-    `&am=${don.amount}&tn=${encodeURIComponent(don.description ?? "")}&bn=${encodeURIComponent(don.accountName || PHAP_LY.chuTaiKhoan)}` +
-    `&url=${encodeURIComponent(urlXong)}`;
 
   // Quay lại từ app ngân hàng → hỏi trạng thái ngay, không đợi lượt 3 giây
   useEffect(() => {
@@ -223,7 +206,7 @@ export default function MaQrThanhToan({ don, onHuy, onXong, urlXong }: { don: Do
             {nganHang.map((n) => (
               <a
                 key={n.appId}
-                href={mayTinh ? n.href : moApp(n.appId)}
+                href={n.href}
                 {...(mayTinh ? { target: "_blank", rel: "noopener noreferrer" } : {})}
                 className="flex flex-col items-center gap-1 rounded-lg border border-cvr-line p-2 text-center hover:border-cvr-ink active:bg-cvr-surface"
               >

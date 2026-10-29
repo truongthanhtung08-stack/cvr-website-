@@ -82,26 +82,19 @@ function TopUpForm() {
     // cvrQr đánh dấu mốc mã QR (trang tải lại thì mở lại đúng đơn)
     // Trang tải lại khi khách từ app ngân hàng quay về: mốc mã QR đã có sẵn → không chồng thêm
     if (!window.history.state?.cvrQr) window.history.pushState({ ...window.history.state, cvrQr: 1 }, "");
-    // Back ở mã QR (Z→A): đóng mã, về ô chọn số tiền của trang nạp — Back tiếp mới về tin
+    // Back / Huỷ ở mã QR = về tin đang làm, khối Chọn gói (chủ dự án 29/10/2026). Vừa từ đúng trang tin sang đây → lùi thêm một
+    // mốc về chính trang đó (không sinh mốc trùng); vào trang nạp bằng đường khác → mở tin. Nạp ví thường → ô chọn số tiền.
     const dong = () => {
-      if (window.history.state?.cvrQr) return; // từ bước chọn ngân hàng lùi về mã QR — MaQrThanhToan lo
       setDon(null); boDon();
+      if (!ve) return;
+      let truoc = "";
+      try { truoc = sessionStorage.getItem("cl_trang_truoc") || ""; } catch {}
+      if (truoc === ve.split("?")[0]) window.history.back();
+      else router.replace(veHuy(ve));
     };
     window.addEventListener("popstate", dong);
     return () => window.removeEventListener("popstate", dong);
   }, [don, ve, router]);
-
-  // HUỶ THANH TOÁN: về thẳng tin đang làm, khối Gói tin. Vừa từ đúng trang tin sang → lùi qua mọi mốc của vòng thanh toán
-  // (chọn ngân hàng · mã QR · trang nạp) — không sinh mốc trùng; vào trang nạp bằng đường khác → mở tin. Nạp ví thường → ô chọn số tiền.
-  function huyThanhToan() {
-    const soMoc = window.history.state?.cvrNh ? 2 : 1; // mốc mã QR (+ mốc chọn ngân hàng)
-    boDon();
-    let truoc = "";
-    try { truoc = sessionStorage.getItem("cl_trang_truoc") || ""; } catch {}
-    if (!ve) window.history.go(-soMoc);
-    else if (truoc === ve.split("?")[0]) window.history.go(-(soMoc + 1));
-    else router.replace(veHuy(ve));
-  }
 
   // SỐ CÒN THIẾU từ trang đăng tin (?can=…). Khách bấm Đăng mà ví không đủ thì
   // web đưa sang đây kèm đúng số còn thiếu (số nằm sẵn trong ô tự nhập; bỏ câu báo đầu trang 26/10/2026).
@@ -200,8 +193,7 @@ function TopUpForm() {
         <MaQrThanhToan
           don={don}
           // Huỷ = quay lại một bước (gỡ mốc mã QR) → đóng mã, về đúng chỗ (xem phần NÚT QUAY LẠI ở trên)
-          onHuy={huyThanhToan}
-          urlXong={`${window.location.origin}${ve ? "/tai-khoan/tin-dang?nap=thanh-cong" : "/tai-khoan/nap-tien?ket-qua=thanh-cong"}`}
+          onHuy={() => window.history.back()}
           // Tiền về (webhook đã cộng ví): đến từ tin → Tin của tôi (tin tự gửi duyệt); nạp thường → báo thành công tại đây
           onXong={() => {
             boDon();
