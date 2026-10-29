@@ -298,12 +298,19 @@ export default function PostListingForm() {
     dc.searchParams.delete("huy-tt");
     window.history.replaceState(window.history.state, "", dc.pathname + dc.search);
     const toi = () => document.getElementById("b-thanhtoan") ?? document.getElementById("b-goi");
-    setTimeout(() => toi()?.scrollIntoView({ behavior: "smooth", block: "start" }), 400);
-    // Quay lại bằng nút Back: trình duyệt / Next khôi phục vị trí cuộn cũ sau đó; máy chậm dựng khối muộn → đặt lại nếu lệch
-    for (const ms of [1200, 2000, 3000]) setTimeout(() => {
+    // Điện thoại thật (29/10/2026: từ app ngân hàng về vẫn đứng đầu trang): máy chậm dựng khối sau 3 giây, trình duyệt / Next khôi
+    // phục vị trí cuộn cũ → soát mỗi 300 ms tới 12 giây: lệch thì đưa khối lên lại, đứng đúng 3 lượt liền thì thôi; khách tự chạm /
+    // cuộn thì thôi ngay, không giật trang của khách.
+    let dung = 0, lan = 0;
+    const thoi = () => { clearInterval(t); ["touchstart", "wheel", "keydown"].forEach((e) => removeEventListener(e, thoi)); };
+    ["touchstart", "wheel", "keydown"].forEach((e) => addEventListener(e, thoi, { passive: true }));
+    const t = setInterval(() => {
       const el = toi();
-      if (el && Math.abs(el.getBoundingClientRect().top) > 200) el.scrollIntoView({ block: "start" });
-    }, ms);
+      if (++lan > 40) return thoi();
+      if (!el) return;
+      if (Math.abs(el.getBoundingClientRect().top - 70) > 120) { dung = 0; el.scrollIntoView({ block: "start" }); }
+      else if (++dung >= 3) thoi();
+    }, 300);
     return true;
   }
   /* eslint-disable react-hooks/set-state-in-effect -- nạp bản nháp một lần, khi đã biết tài khoản */
