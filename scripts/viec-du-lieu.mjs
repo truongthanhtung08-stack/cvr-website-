@@ -312,7 +312,7 @@ const v = [`# VIỆC HÔM NAY — 3 BÊN · ${TEN_THU}, ${dd.slice(0, 2)}/${dd.s
   "| 6 | Không bịa | Tin gốc còn hạn (mở lại link ngay trước khi giao) · mọi con số, tiện ích, khoảng cách, pháp lý đều có trong tin gốc · thiếu thì bỏ, không viết cho đủ |",
   "| 7 | Khớp số | Số trong tiêu đề = số trong mô tả = số trong cột = tin gốc |",
   "| 8 | Dự án | Tin thuộc dự án → `ten_du_an` đúng tên trên web; dự án chưa có → lập hồ sơ dự án cùng ngày |",
-  "| 8b | Loại hình | `loai_hinh` = ĐÚNG loại người bán chọn ở tin gốc (ô \"Loại hình\"), không tự đổi — người bán chọn Chung cư thì không ghi Condotel; web không có loại đó → loại gần nhất cùng nhóm (Căn hộ dịch vụ → Căn hộ). Tiêu đề, mô tả gọi đúng loại đó (chủ dự án 29/10) |",
+  "| 8b | Loại hình | `loai_hinh` = ĐÚNG loại người bán chọn ở tin gốc (ô \"Loại hình\"), không tự đổi — người bán chọn Chung cư thì không ghi Condotel; loại hình = MỤC CHA, loại con vào cột đặc điểm: căn hộ/chung cư → `loai_hinh` Căn hộ + `loai_can_ho` (Căn hộ chung cư, Căn hộ dịch vụ…) · đất → `loai_dat` (Đất thổ cư…) · nhà riêng → `loi_vao`. Tiêu đề, mô tả gọi đúng loại con người bán chọn (chủ dự án 29/10) |",
   "| 8c | Địa chỉ 2 hệ | Đủ phường mới + phường/quận cũ, theo ô địa chỉ người bán ghi + bảng sáp nhập, không suy từ tên đường (chủ dự án 29/10) |",
   "| # | NGÔN NGỮ | Đạt khi |",
   "| 9 | Tiếng Việt chuẩn | Có dấu, đúng chính tả, viết hoa đúng tên riêng · **không VIẾT HOA cả câu** |",

@@ -153,6 +153,11 @@ export const COT = {
   chieuDai: "chieu_dai",                // chiều sâu thửa đất (m)
   namXayDung: "nam_xay_dung",
   tangSo: "tang_so",                    // căn hộ ở tầng mấy
+  // ── ĐẶC ĐIỂM PHÂN LOẠI — đúng ô người bán chọn ở tin gốc (chủ dự án 29/10/2026: "trang web đã cấu trúc rõ:
+  //    loại hình + đặc điểm BĐS"). Chép NGUYÊN một lựa chọn của form (listingSpec.ts), để trống nếu tin gốc không ghi.
+  loaiCanHo: "loai_can_ho",             // Căn hộ: Căn hộ chung cư · Căn hộ dịch vụ · Studio · Officetel · Duplex · Penthouse…
+  loaiDat: "loai_dat",                  // Đất: Đất thổ cư · Đất ở đô thị · Đất nền dự án · Đất nông nghiệp · Đất vườn · Đất khác
+  loiVao: "loi_vao",                    // Nhà riêng…: Mặt tiền đường · Kiệt / hẻm ô tô · Kiệt / hẻm ba gác · Kiệt / hẻm xe máy
   // ── ĐẶC ĐIỂM RIÊNG CỦA KHO · NHÀ XƯỞNG · BÃI (chủ yếu tin CHO THUÊ) ──────
   dienTichSuDung: "dien_tich_su_dung",  // diện tích xưởng/kho thực dùng (m²)
   loaiKho: "loai_kho",                  // Xưởng sản xuất · Kho hàng khô · Kho lạnh…
@@ -594,6 +599,9 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
   datSpec(lay(COT.chieuDai), COT.chieuDai, "depth");
   datSpec(lay(COT.namXayDung), COT.namXayDung, "builtYear");
   datSpec(lay(COT.tangSo), COT.tangSo, "floor");
+  datSpec(lay(COT.loaiCanHo), COT.loaiCanHo, "loaiCanho");
+  datSpec(lay(COT.loaiDat), COT.loaiDat, "landType");
+  datSpec(lay(COT.loiVao), COT.loiVao, "access");
   // Kho · nhà xưởng · bãi — bộ đặc điểm riêng, phần lớn là tin CHO THUÊ.
   datSpec(lay(COT.dienTichSuDung), COT.dienTichSuDung, "usableArea");
   datSpec(lay(COT.loaiKho), COT.loaiKho, "khoLoai");
