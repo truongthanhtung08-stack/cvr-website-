@@ -1,5 +1,6 @@
 import { chuanTen } from "@/lib/locations";
 import { mauSoLichSu, veQuy, tenTinhChuan, tenPhuongChuan, coLichSuGia, MAU_TOI_THIEU, type ChiSoKhuVuc } from "@/lib/chiSoGia";
+import { chuanLoaiCon } from "@/lib/listingSpec";
 
 // ════════════════════════════════════════════════════════════════════════════
 // LỊCH SỬ GIÁ CÒN THIẾU — dựng từ CHÍNH TIN ĐANG ĐĂNG trên web.
@@ -46,7 +47,7 @@ export function dongConThieu(tin: TinCan[], kho: DongKho[], items: ChiSoKhuVuc[]
     // m² sàn, hệ số…); nguồn chỉ có m² đất thì Cowork không dùng. Trước đây bỏ hẳn bán nhà khỏi danh sách → 46/69 tin chưa có
     // lịch sử giá là bán nhà mà Cowork không hề được giao.
     // Theo phường: dãy đúng LOẠI CON của tin (căn hộ, đất — 29/10/2026); tin chưa có loại con thì dãy chung loại hình.
-    const lc = (t.details?.specs?.loaiCanho || t.details?.specs?.landType || "").trim();
+    const lc = chuanLoaiCon(t.details?.specs?.loaiCanho || t.details?.specs?.landType);
     const phuong = tenPhuongChuan(tinh, t.ward);
     if (phuong) {
       can.set(k(tinh, phuong, "", loai, md, lc), { tinh, phuong, duAn: "", duAnSlug: "", loai, loaiCon: lc, md });

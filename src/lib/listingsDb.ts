@@ -16,7 +16,7 @@ import { mauSoCuaLoaiHinh } from "@/lib/chiSoGia";
 import { featuredListings, getListingById } from "@/lib/data";
 import { asset } from "@/lib/asset";
 import { isVideoUrl } from "@/lib/media";
-import { fieldsSplit, amenityGroups, coDienTichXayDung, viTriTuDuongVao, viTriTuAccess, laTinThue, laTinBan, dienTichSanThat, type Field } from "@/lib/listingSpec";
+import { fieldsSplit, amenityGroups, coDienTichXayDung, viTriTuDuongVao, viTriTuAccess, laTinThue, laTinBan, dienTichSanThat, chuanLoaiCon, type Field } from "@/lib/listingSpec";
 import { chuanHoaSdt, maNguoiTuSdt, tachNhieuSdt } from "@/lib/phone";
 import { tachTenDuong } from "@/lib/tenDuong";
 import { chuoiDiaChiBanDo } from "@/lib/diaChiBanDo";
@@ -249,7 +249,7 @@ function rowToListing(r: Row): Listing {
       const v = viTriTuDuongVao(r.details?.specs?.roadWidth) ?? viTriTuAccess(r.details?.specs?.access);
       return v ? { viTri: v } : {};
     })(),
-    ...((r.details?.specs?.loaiCanho || r.details?.specs?.landType) ? { loaiCon: (r.details?.specs?.loaiCanho || r.details?.specs?.landType)!.trim() } : {}),
+    ...((r.details?.specs?.loaiCanho || r.details?.specs?.landType) ? { loaiCon: chuanLoaiCon(r.details?.specs?.loaiCanho || r.details?.specs?.landType) } : {}),
     ...(r.beds != null ? { beds: r.beds } : {}),
     ...(r.baths != null ? { baths: r.baths } : {}),
     // ĐỊA CHỈ HIỂN THỊ THEO HỆ MỚI — áp cho MỌI tin, kể cả tin đã đăng từ trước.

@@ -149,7 +149,7 @@ export const categorySpecs: CategorySpec[] = [
     match: ["homestay", "farmstay", "khu nghỉ dưỡng"],
     fields: [
       loaiNghiDuongField,
-      { key: "landType", label: "Loại đất", type: "select", options: ["Đất ở (thổ cư)", "Đất nền dự án", "Đất nông nghiệp", "Đất vườn"], main: true },
+      { key: "landType", label: "Loại đất", type: "select", options: ["Đất ở đô thị", "Đất thổ cư", "Đất nền dự án", "Đất nông nghiệp", "Đất vườn"], main: true },
       frontageField,
       roadField,
       { key: "resiArea", label: "Diện tích đất ở (thổ cư)", type: "number", unit: "m²", main: true },
@@ -337,7 +337,9 @@ export const categorySpecs: CategorySpec[] = [
   {
     label: "Đất nền / Đất",
     match: ["đất nền", "đất"],
-    fields: datFields(["Đất ở (thổ cư)", "Đất nền dự án", "Đất tái định cư"]),
+    // Chủ dự án 29/10/2026 tối: "Đất / Đất nền dự án (menu cha) — Đất ở đô thị, đất ở nông thôn (đất thổ cư) là đặc điểm thuộc
+    // đất" · "hoặc thay đất ở nông thôn = đất thổ cư"
+    fields: datFields(["Đất nền dự án", "Đất ở đô thị", "Đất thổ cư", "Đất tái định cư"]),
   },
 ];
 
@@ -612,6 +614,36 @@ const genericSpec: CategorySpec = { label: "Bất động sản khác", match: [
 
 // Nhận diện bộ đặc điểm theo NHÃN LOẠI HÌNH thật. Khớp theo độ ưu tiên (mảng trên);
 // không khớp gì → bộ tối giản (KHÔNG mặc định về Căn hộ như trước).
+// ── LOẠI CON: MỘT LUẬT CHO MỌI KHÂU (chủ dự án 29/10/2026: "chỉnh từ gốc để thống nhất luật") ─────────────────────
+// Danh sách loại con = ô chọn của loại hình ở trên (form khách, admin, nạp hàng loạt, trang tin, lịch sử giá cùng đọc).
+// Tên cũ còn trong tin / tệp Cowork → tên chuẩn mới; khoá so là chữ thường đã gọn khoảng trắng.
+// Loại đất ở (chủ dự án 29/10/2026 tối): "Đất ở đô thị" và "Đất thổ cư" (= đất ở nông thôn, chữ khách gõ nhiều nhất).
+const TEN_CU_LOAI_CON: Record<string, string> = {
+  "thổ cư": "Đất thổ cư",
+  "đất ở (thổ cư)": "Đất thổ cư",
+  "đất ở nông thôn": "Đất thổ cư",
+  "đất ở nông thôn (thổ cư)": "Đất thổ cư",
+  "đất ở đô thị (thổ cư)": "Đất ở đô thị",
+};
+export function chuanLoaiCon(v?: string | null): string {
+  const s = (v ?? "").trim().replace(/\s+/g, " ");
+  return TEN_CU_LOAI_CON[s.toLowerCase()] ?? s;
+}
+
+// LỜI KHÁCH THẮNG Ô THÔNG SỐ TRANG NGUỒN (chủ dự án 29/10/2026: "đây là TRANG nó ghi sai, mình ghi theo nội dung của khách").
+// Ô thông số trang nguồn (Nhà Tốt, Batdongsan…) hay chọn sai loại; khách viết rõ trong tiêu đề / mô tả thì theo lời khách.
+// Trả về loại con lời khách nói (nếu khác ô đang ghi), không thì null. Mỗi luật một dòng — thêm luật mới vào đây.
+const LOI_KHACH_LOAI_CON: { khoa: string; neuLa: string[]; loiKhach: RegExp; dungLa: string }[] = [
+  // Lô trong khu đô thị / dự án → Đất nền dự án (tin dn03-2910 Thâm Tâm: ô Nhà Tốt "Đất thổ cư", khách viết "khu đô thị Sun")
+  { khoa: "landType", neuLa: ["Đất ở đô thị", "Đất thổ cư"], loiKhach: /khu đô thị|\bkđt\b|đất nền dự án|khu dân cư mới/i, dungLa: "Đất nền dự án" },
+];
+export function loaiConTheoLoiKhach(khoa: string, dangGhi: string, loiKhach: string): string | null {
+  const v = chuanLoaiCon(dangGhi);
+  for (const l of LOI_KHACH_LOAI_CON)
+    if (l.khoa === khoa && l.neuLa.includes(v) && l.loiKhach.test(loiKhach)) return l.dungLa;
+  return null;
+}
+
 export function specForType(type: string): CategorySpec {
   const t = type.toLowerCase();
   return categorySpecs.find((c) => c.match.some((m) => t.includes(m))) ?? genericSpec;

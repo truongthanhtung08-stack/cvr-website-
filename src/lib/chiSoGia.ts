@@ -1,6 +1,6 @@
 import type { Listing } from "@/lib/data";
 import { chuanTen, provinceNamesNew, wardsOfNew } from "@/lib/locations";
-import { mauSoCuaLoaiHinh, coDonGiaM2, dungODienTichXayDung, dienTichSanThat, laTinThue, TEN_MAU_SO, TEN_VI_TRI, docViTri, type MauSo, type ViTriGia } from "@/lib/listingSpec";
+import { mauSoCuaLoaiHinh, coDonGiaM2, dungODienTichXayDung, dienTichSanThat, laTinThue, TEN_MAU_SO, TEN_VI_TRI, docViTri, chuanLoaiCon, type MauSo, type ViTriGia } from "@/lib/listingSpec";
 export { mauSoCuaLoaiHinh, TEN_MAU_SO, TEN_VI_TRI };
 export type { MauSo, ViTriGia };
 import { tachBangCsv } from "@/lib/xuatCsv";
@@ -385,7 +385,7 @@ export function chiSoChoTin(
       x.mauSo === mau &&
       !x.viTri && // cùng phân khúc + cùng vị trí; không chia nhỏ theo bề rộng đường
       // LOẠI CON (29/10/2026: "căn hộ thì phải có loại hình con của nó, đất cũng vậy"): dãy ghi loại con chỉ so với tin cùng loại con
-      (!x.loaiCon || chuanTen(x.loaiCon) === chuanTen(tin.loaiCon ?? "")) &&
+      (!x.loaiCon || chuanTen(chuanLoaiCon(x.loaiCon)) === chuanTen(chuanLoaiCon(tin.loaiCon))) &&
       dayHopLogic(x) &&
       coDuLichSuGia(x),
   );

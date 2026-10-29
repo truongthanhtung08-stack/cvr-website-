@@ -16,7 +16,7 @@ import { chuanHoaDiaChiCu } from "@/lib/diaChiHaiHe";
 import { slugify } from "@/lib/contentAdmin";
 // Bộ đặc điểm theo loại hình — để ghi số tầng / mặt tiền / đường vào đúng ô của
 // từng loại bất động sản, y như khi đăng tay bằng form.
-import { fieldsFor, coDonGiaM2, mauSoCuaLoaiHinh } from "@/lib/listingSpec";
+import { fieldsFor, coDonGiaM2, mauSoCuaLoaiHinh, chuanLoaiCon, loaiConTheoLoiKhach } from "@/lib/listingSpec";
 // SỐ ĐIỆN THOẠI — cùng một hàm với ô nhập trong admin và số hiện trên trang tin,
 // nên file của Cowork, cơ sở dữ liệu và web luôn ghi giống hệt nhau (0 + 10 số).
 import { chuanHoaSdt, laSdtVN, tachNhieuSdt } from "@/lib/phone";
@@ -156,7 +156,7 @@ export const COT = {
   // ── ĐẶC ĐIỂM PHÂN LOẠI — đúng ô người bán chọn ở tin gốc (chủ dự án 29/10/2026: "trang web đã cấu trúc rõ:
   //    loại hình + đặc điểm BĐS"). Chép NGUYÊN một lựa chọn của form (listingSpec.ts), để trống nếu tin gốc không ghi.
   loaiCanHo: "loai_can_ho",             // Căn hộ: Căn hộ cao cấp · Căn hộ dịch vụ · Studio… · Chung cư: Chung cư thương mại · Căn hộ tập thể · Nhà ở xã hội (listingSpec)
-  loaiDat: "loai_dat",                  // Đất: Đất thổ cư · Đất ở đô thị · Đất nền dự án · Đất nông nghiệp · Đất vườn · Đất khác
+  loaiDat: "loai_dat",                  // Đất: danh sách "Loại đất" của loại hình trong listingSpec (một nguồn) — VD Đất nền dự án · Đất ở đô thị · Đất thổ cư
   loiVao: "loi_vao",                    // Nhà riêng…: Mặt tiền đường · Kiệt / hẻm ô tô · Kiệt / hẻm ba gác · Kiệt / hẻm xe máy
   // ── ĐẶC ĐIỂM RIÊNG CỦA KHO · NHÀ XƯỞNG · BÃI (chủ yếu tin CHO THUÊ) ──────
   dienTichSuDung: "dien_tich_su_dung",  // diện tích xưởng/kho thực dùng (m²)
@@ -409,7 +409,19 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
   // LOẠI CON BẮT BUỘC cho căn hộ, đất (chủ dự án 29/10/2026) — chỉ áp đăng tin hàng loạt, form đăng tin giữ nguyên
   const oLoai = fieldsFor(loaiHinhChuan, mucDich).map((f) => f.key);
   if (oLoai.includes("loaiCanho") && !lay(COT.loaiCanHo).trim()) loi.push("Thiếu loai_can_ho — căn hộ phải ghi loại con đúng tin gốc (vd Chung cư thương mại, Căn hộ cao cấp)");
-  if (oLoai.includes("landType") && /^đất/i.test(loaiHinhChuan) && !lay(COT.loaiDat).trim()) loi.push("Thiếu loai_dat — đất phải ghi loại con đúng tin gốc (vd Đất thổ cư)");
+  if (oLoai.includes("landType") && /^đất/i.test(loaiHinhChuan) && !lay(COT.loaiDat).trim()) loi.push("Thiếu loai_dat — đất phải ghi loại con đúng tin gốc (vd Đất nền dự án, Đất ở đô thị, Đất thổ cư)");
+  // Loại con phải ĐÚNG danh sách của loại hình (listingSpec — một nguồn); tên cũ tự đổi sang tên chuẩn (chuanLoaiCon).
+  // Lời khách (tiêu đề, mô tả) nói khác ô đang ghi → báo để sửa theo lời khách (loaiConTheoLoiKhach) — chủ dự án 29/10/2026.
+  const loaiConDung = (cot: string, khoa: string): string => {
+    const v = chuanLoaiCon(lay(cot));
+    const o = fieldsFor(loaiHinhChuan, mucDich).find((f) => f.key === khoa);
+    if (!v || !o?.options) return v;
+    const khop = o.options.find((x) => chuanHoa(x) === chuanHoa(v));
+    if (!khop) { loi.push(`${cot} "${lay(cot)}" không có trong danh sách ${o.label} của "${loaiHinhChuan}": ${o.options.join(" · ")}`); return v; }
+    const theoKhach = loaiConTheoLoiKhach(khoa, khop, `${lay(COT.tieuDe)} ${lay(COT.moTa)}`);
+    if (theoKhach) canhBao.push(`${cot} "${khop}" nhưng lời khách viết là "${theoKhach}" — ghi theo lời khách, không theo ô thông số trang nguồn`);
+    return khop;
+  };
 
   // Thiếu diện tích xây dựng KHÔNG báo: người bán không ghi thì không phải lỗi (chủ dự án 25/10/2026,
   // cảnh báo chỉ cho lỗi thật — CHUAN-TIN-DANG-SEO.md mục 5b).
@@ -603,8 +615,8 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
   datSpec(lay(COT.chieuDai), COT.chieuDai, "depth");
   datSpec(lay(COT.namXayDung), COT.namXayDung, "builtYear");
   datSpec(lay(COT.tangSo), COT.tangSo, "floor");
-  datSpec(lay(COT.loaiCanHo), COT.loaiCanHo, "loaiCanho");
-  datSpec(lay(COT.loaiDat), COT.loaiDat, "landType");
+  datSpec(loaiConDung(COT.loaiCanHo, "loaiCanho"), COT.loaiCanHo, "loaiCanho");
+  datSpec(loaiConDung(COT.loaiDat, "landType"), COT.loaiDat, "landType");
   datSpec(lay(COT.loiVao), COT.loiVao, "access");
   // Kho · nhà xưởng · bãi — bộ đặc điểm riêng, phần lớn là tin CHO THUÊ.
   datSpec(lay(COT.dienTichSuDung), COT.dienTichSuDung, "usableArea");
