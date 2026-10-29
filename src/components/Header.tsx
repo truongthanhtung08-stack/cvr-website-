@@ -44,11 +44,10 @@ const danhMucBaoGia: NavChild[] = [
   { label: "Gói đăng tin", href: "/bao-gia-dang-tin#bang-gia-tin" },
   { label: "Gói đẩy tin", href: "/bao-gia-dang-tin#goi-day-tin" },
 ];
-// MENU DỰ ÁN (chủ dự án 29/10/2026): Dự án nổi bật (dự án có ảnh, trang đã duyệt) · Tra cứu dự án (danh bạ chữ mọi dự án —
-// có hồ sơ + dự án khách chọn khi đăng tin).
+// MENU DỰ ÁN (chủ dự án 29/10/2026): trang /du-an có cả hai phần — Tra cứu dự án (mọi dự án) + Dự án nổi bật; mục con nhảy tới đúng phần.
 const danhMucDuAn: NavChild[] = [
-  { label: "Dự án nổi bật", href: "/du-an" },
-  { label: "Tra cứu dự án", href: "/du-an/tra-cuu" },
+  { label: "Dự án nổi bật", href: "/du-an#noi-bat" },
+  { label: "Tra cứu dự án", href: "/du-an#tra-cuu" },
 ];
 // MENU TIỆN ÍCH (chủ dự án duyệt 25/10/2026): một cột, chỉ công cụ dùng được ngay — danh sách ở packages.ts (TIEN_ICH)
 const danhMucTienIch: NavChild[] = TIEN_ICH.map((t) => ({ label: t.label, href: t.href }));

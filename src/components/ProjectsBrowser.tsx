@@ -21,6 +21,8 @@ import dynamic from "next/dynamic";
 import { coordOf } from "@/lib/geo";
 import type { DiemBanDo } from "@/components/MapViewGoogle";
 import type { Project, Article } from "@/lib/data";
+import type { DongTraCuu } from "@/lib/traCuuDuAn";
+import { TheTraCuu, locTraCuu, nhomLoai } from "@/components/TraCuuDuAn";
 
 // Bản đồ chỉ chạy phía client (Leaflet đụng tới window) — nạp động, không SSR.
 const MapView = dynamic(() => import("@/components/MapViewMo"), { ssr: false });
@@ -69,6 +71,7 @@ export default function ProjectsBrowser({
   hero,
   tieuDePhu = false,
   tieuDe = "Dự án nổi bật",
+  traCuu,
 }: {
   projects: Project[];
   articles: Article[];
@@ -80,6 +83,9 @@ export default function ProjectsBrowser({
   // Banner Hero — nhận từ trang cha để đặt ĐÚNG thứ tự: mobile nằm DƯỚI thanh lọc,
   // desktop nằm TRÊN (dùng CSS order, không đổi cấu trúc dữ liệu).
   hero?: React.ReactNode;
+  /** Trang Dự án (/du-an, chủ dự án 29/10/2026): có danh bạ → trái TRA CỨU DỰ ÁN (mọi dự án), phải DỰ ÁN NỔI BẬT (projects);
+   *  một bộ tìm + lọc áp cả hai. Không truyền (trang loại hình, trang tỉnh) → bố cục cũ. */
+  traCuu?: DongTraCuu[];
 }) {
   useDiaDanh(); // địa danh nạp sau khi trang hiện — về tới thì vẽ lại (20/10/2026)
   const [q, setQ] = useState("");
@@ -144,9 +150,16 @@ export default function ProjectsBrowser({
     try { localStorage.setItem(GEO_MODE_KEY, m); } catch { /* noop */ }
   };
 
-  const provinceCounts = countBy(projects, (p) => provinceOf(p.location));
-  const typeCounts = countBy(projects, (p) => typeOf(p.type));
-  const statusCounts = countBy(projects, (p) => p.status);
+  // Có danh bạ Tra cứu → lựa chọn lọc lấy từ MỌI dự án (danh bạ chứa cả dự án nổi bật)
+  const nguonDem = (k1: (p: Project) => string, k2: (d: DongTraCuu) => string): [string, number][] => {
+    if (!traCuu) return countBy(projects, k1);
+    const m = new Map<string, number>();
+    for (const d of traCuu) { const k = k2(d); if (k) m.set(k, (m.get(k) ?? 0) + 1); }
+    return [...m];
+  };
+  const provinceCounts = nguonDem((p) => provinceOf(p.location), (d) => d.tinh);
+  const typeCounts = nguonDem((p) => typeOf(p.type), (d) => nhomLoai(d.loaiHinh));
+  const statusCounts = nguonDem((p) => p.status, (d) => d.tinhTrang);
   // Danh sách tỉnh theo hệ đã chọn, chỉ giữ tỉnh có dự án (kèm số đếm). Rỗng → dùng nguyên data.
   const provCountMap = new Map(provinceCounts);
   const provinceOpts: [string, number][] =
@@ -223,9 +236,13 @@ export default function ProjectsBrowser({
   const [mapMode, setMapMode] = useState(false);
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setPage(1); }, [q, status, province, type]); // đổi lọc → về trang 1
-  const totalPages = Math.max(1, Math.ceil(visible.length / PER_PAGE));
+  // Có danh bạ: phân trang áp cho Tra cứu (bên trái); Dự án nổi bật bên phải hiện hết
+  const traCuuLoc = traCuu ? locTraCuu(traCuu, q, province, type, status, ALL) : [];
+  const soDong = traCuu ? traCuuLoc.length : visible.length;
+  const totalPages = Math.max(1, Math.ceil(soDong / PER_PAGE));
   const current = Math.min(page, totalPages);
   const pageItems = visible.slice((current - 1) * PER_PAGE, current * PER_PAGE);
+  const trangTraCuu = traCuuLoc.slice((current - 1) * PER_PAGE, current * PER_PAGE);
 
   // Panel chọn 1 giá trị trong dropdown (không in số dự án — chủ dự án 09/10/2026)
   const optionList = (
@@ -581,6 +598,53 @@ export default function ProjectsBrowser({
         </div>
       )}
 
+      {traCuu ? (
+      <div className={`mt-6 grid grid-cols-1 gap-8 sm:mt-3 lg:grid-cols-3 ${mapMode ? "hidden" : ""}`}>
+        {/* ── TRÁI: TRA CỨU DỰ ÁN — mọi dự án, thẻ ảnh + Tên · Chủ đầu tư · Địa chỉ · Loại hình (điện thoại: nằm dưới) ── */}
+        <section id="tra-cuu" className="order-2 scroll-mt-24 lg:order-1 lg:col-span-2">
+          <h2 className="text-lg font-semibold tracking-tight text-cvr-ink sm:text-xl">Tra cứu dự án</h2>
+          <ul className="mt-2 divide-y divide-cvr-line border-y border-cvr-line">
+            {trangTraCuu.map((d) => (
+              <li key={d.slug}><TheTraCuu d={d} /></li>
+            ))}
+            {traCuuLoc.length === 0 && (
+              <li className="py-10 text-center text-sm text-cvr-muted">Chưa có dự án phù hợp bộ lọc.</li>
+            )}
+          </ul>
+          <PhanTrang
+            hienTai={current}
+            tong={totalPages}
+            doiTrang={(p) => { setPage(p); document.getElementById("tra-cuu")?.scrollIntoView({ block: "start" }); }}
+          />
+        </section>
+
+        {/* ── PHẢI: DỰ ÁN NỔI BẬT — thẻ ảnh (điện thoại: nằm trên, trượt ngang) ── */}
+        <aside id="noi-bat" className="order-1 scroll-mt-24 lg:order-2 lg:col-span-1">
+          <h2 className="text-lg font-semibold tracking-tight text-cvr-ink sm:text-xl">Dự án nổi bật</h2>
+          <div className="-mx-4 mt-3 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0 lg:flex-col lg:gap-4 lg:overflow-visible">
+            {visible.map((p) => (
+              <Link
+                key={p.slug}
+                href={`/du-an/${p.slug}`}
+                className="group w-[72%] shrink-0 snap-start border border-cvr-line bg-white p-2.5 sm:w-[45%] lg:w-auto"
+              >
+                <span className="relative block aspect-[16/10] overflow-hidden bg-cvr-surface">
+                  <Image src={p.image} alt={p.name} fill sizes="(max-width:640px) 72vw, (max-width:1024px) 45vw, 380px" className="object-cover transition-transform duration-500 group-hover:scale-[1.04]" />
+                  {p.status && (
+                    <span className="absolute left-2 top-2 rounded-full bg-white/85 px-2.5 py-[3px] text-[11px] font-semibold uppercase tracking-[0.06em] text-cvr-ink">{p.status}</span>
+                  )}
+                </span>
+                <span className="mt-2 block font-semibold leading-snug text-cvr-ink group-hover:text-cvr-blue-ink">{p.name}</span>
+                <span className="mt-0.5 block truncate text-xs text-cvr-muted">{p.location}</span>
+              </Link>
+            ))}
+            {visible.length === 0 && (
+              <p className="text-sm text-cvr-muted">Chưa có dự án phù hợp bộ lọc.</p>
+            )}
+          </div>
+        </aside>
+      </div>
+      ) : (
       <div className={`mt-6 grid grid-cols-1 gap-8 sm:mt-3 lg:grid-cols-3 ${mapMode ? "hidden" : ""}`}>
         {/* ── Cột chính: thẻ dự án ngang ── */}
         <div className="lg:col-span-2">
@@ -679,6 +743,7 @@ export default function ProjectsBrowser({
           </div>
         </aside>
       </div>
+      )}
       </div>
     </div>
   );
