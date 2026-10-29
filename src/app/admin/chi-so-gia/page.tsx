@@ -489,7 +489,7 @@ export default function ChiSoGiaPage() {
               <input
                 value={kv.loaiHinh ?? ""}
                 onChange={(e) => sua(i, { loaiHinh: e.target.value || undefined })}
-                placeholder="VD: Căn hộ chung cư"
+                placeholder="VD: Chung cư thương mại"
                 className={inputCls}
               />
             </label>
