@@ -61,7 +61,8 @@ function TopUpForm() {
   const KHOA_DON = "donNap";
   // Đến từ tin đang đăng: ghi cờ để quay về (Back, ‹, Huỷ) thì form đứng ngay khối Gói tin (PostListingForm đọc cờ)
   useEffect(() => {
-    const ma = ve?.match(/^\/dang-tin\?id=([\w-]+)/)?.[1];
+    // "moi" = tin mới chưa lưu được nháp (chưa có Tỉnh/Thành + Tiêu đề) — bản soạn nằm trong máy
+    const ma = ve?.match(/^\/dang-tin\?id=([\w-]+)/)?.[1] ?? (ve === "/dang-tin" ? "moi" : undefined);
     try { if (ma) sessionStorage.setItem("veGoiTin", ma); } catch {}
   }, [ve]);
   const boDon = () => { try { sessionStorage.removeItem(KHOA_DON); } catch {} };

@@ -279,12 +279,32 @@ export default function PostListingForm() {
     setImages(ds("images"));
     // Gói khách đã chọn đi theo bản soạn dở (đi nạp tiền rồi quay về không phải chọn lại — chủ dự án 26/10/2026)
     if (s("planTier")) { setPlanTier(s("planTier") as TierId); setPlanDays(Number(d.planDays) || 0); setChonKm(d.chonKm === true); }
+    if (s("batDau")) setBatDau(s("batDau"));
     // Liên hệ: chỉ ghi đè khi bản nháp có — không xoá phần đã điền sẵn từ hồ sơ.
     if (s("contactName")) setContactName(s("contactName"));
     if (s("contactPhone")) setContactPhone(s("contactPhone"));
     if (emailThat(s("contactEmail"))) setContactEmail(emailThat(s("contactEmail")));
     setProjectSlug(s("projectSlug"));
     setProjectName(s("projectName"));
+  }
+  // HUỶ THANH TOÁN / QUAY LẠI từ trang nạp tiền (chủ dự án 27/10 + 29/10/2026): về đúng công đoạn khách đang làm — Bắt đầu hiển thị ·
+  // Tổng tiền · Nạp thêm (#b-thanhtoan); chưa dựng kịp thì đầu khối Gói tin. Nhận biết: ?huy-tt=1 hoặc cờ veGoiTin trang nạp ghi
+  // (mã tin nháp, hoặc "moi" = tin mới chưa lưu được nháp). Trả true khi đúng là đang quay về.
+  function veThanhToan(ma: string): boolean {
+    const dc = new URL(window.location.href);
+    let coCo = false;
+    try { coCo = sessionStorage.getItem("veGoiTin") === ma; if (coCo) sessionStorage.removeItem("veGoiTin"); } catch {}
+    if (dc.searchParams.get("huy-tt") !== "1" && !coCo) return false;
+    dc.searchParams.delete("huy-tt");
+    window.history.replaceState(window.history.state, "", dc.pathname + dc.search);
+    const toi = () => document.getElementById("b-thanhtoan") ?? document.getElementById("b-goi");
+    setTimeout(() => toi()?.scrollIntoView({ behavior: "smooth", block: "start" }), 400);
+    // Quay lại bằng nút Back: trình duyệt / Next khôi phục vị trí cuộn cũ sau đó; máy chậm dựng khối muộn → đặt lại nếu lệch
+    for (const ms of [1200, 2000, 3000]) setTimeout(() => {
+      const el = toi();
+      if (el && Math.abs(el.getBoundingClientRect().top) > 200) el.scrollIntoView({ block: "start" });
+    }, ms);
+    return true;
   }
   /* eslint-disable react-hooks/set-state-in-effect -- nạp bản nháp một lần, khi đã biết tài khoản */
   useEffect(() => {
@@ -296,9 +316,11 @@ export default function PostListingForm() {
         if (cu && !localStorage.getItem(khoaNhap(userId))) localStorage.setItem(khoaNhap(userId), cu);
         if (cu) localStorage.removeItem(KHOA_NHAP_MAY);
         const d = JSON.parse(localStorage.getItem(khoaNhap(userId)) ?? "null") as Record<string, unknown> | null;
+        // Vừa huỷ thanh toán quay về → mở lại ngay bản đang soạn, không hỏi "tiếp tục bản nháp?"
+        const veLai = veThanhToan("moi");
         if (d) {
           const coNoiDung = ["title", "category", "province"].some((k) => typeof d[k] === "string" && (d[k] as string).trim());
-          if (coNoiDung) setNhapCho(d);
+          if (coNoiDung && !veLai) setNhapCho(d);
           else apDungNhap(d);
         }
       } catch {}
@@ -314,14 +336,14 @@ export default function PostListingForm() {
         demand, category, geoMode, province, district, ward, phuongCu, addressDetail, linkChen, mapPin,
         title, priceValue, priceUnit, giaTuGhi, area, builtArea, beds, baths, specValues, legal, furnish, direction,
         interior, amenities, description, images, contactName, contactPhone, contactEmail, projectSlug, projectName,
-        planTier, planDays, chonKm,
+        planTier, planDays, chonKm, batDau,
         maNhap: maNhapTk.current,
       }));
     } catch {}
   }, [editId, daNapNhap, nhapCho, userId, done, thieuTien, demand, category, geoMode, province, district, ward, phuongCu, addressDetail, linkChen, mapPin,
     title, priceValue, priceUnit, giaTuGhi, area, builtArea, beds, baths, specValues, legal, furnish, direction,
     interior, amenities, description, images, contactName, contactPhone, contactEmail, projectSlug, projectName,
-    planTier, planDays, chonKm]);
+    planTier, planDays, chonKm, batDau]);
 
   // KHÔNG còn ô "Ngày bắt đầu" tự chọn: tin bắt đầu hiển thị LÚC ĐƯỢC DUYỆT (một luật,
   // 01/10/2026) — cho chọn ngày là hứa một mốc web không làm đúng.
@@ -705,23 +727,11 @@ export default function PostListingForm() {
       // Tin NHÁP / CHỜ DUYỆT: nạp lại gói khách đã chọn (details.plan) — trước đây form mở ra trống gói, khách lưu
       // là gói của tin bị ghi thành trống (26/10/2026)
       if (r.status === "draft" || r.status === "pending") {
-        const p = (r.details as { plan?: { tier?: string; days?: number; khuyenMai?: boolean } } | null)?.plan;
+        const p = (r.details as { plan?: { tier?: string; days?: number; khuyenMai?: boolean; batDau?: string } } | null)?.plan;
         if (p?.tier) { setPlanTier(p.tier as TierId); setPlanDays(Number(p.days) || 0); setChonKm(p.khuyenMai === true); }
+        if (p?.batDau) setBatDau(p.batDau); // Chọn ngày đi theo gói (về từ nạp tiền không mất ngày đã chọn)
       }
-      // HUỶ THANH TOÁN (?huy-tt=1 từ trang nạp tiền — chủ dự án 27/10/2026): về tin nháp, đưa thẳng tới khối Gói tin — thanh toán
-      const dc = new URL(window.location.href);
-      let coCo = false;
-      try { coCo = sessionStorage.getItem("veGoiTin") === editId; sessionStorage.removeItem("veGoiTin"); } catch {}
-      if (dc.searchParams.get("huy-tt") === "1" || coCo) {
-        dc.searchParams.delete("huy-tt");
-        window.history.replaceState(window.history.state, "", dc.pathname + dc.search);
-        setTimeout(() => document.getElementById("b-goi")?.scrollIntoView({ behavior: "smooth", block: "start" }), 400);
-        // Quay lại bằng nút Back: trình duyệt / Next khôi phục vị trí cuộn cũ sau đó → đặt lại nếu bị kéo đi
-        for (const ms of [1200, 2000]) setTimeout(() => {
-          const el = document.getElementById("b-goi");
-          if (el && Math.abs(el.getBoundingClientRect().top) > 200) el.scrollIntoView({ block: "start" });
-        }, ms);
-      }
+      veThanhToan(editId);
       setDemand(demandOfPurpose(r.purpose));
       if (r.type) setCategory(r.type);
       setProvince(r.province ?? "");
@@ -1836,7 +1846,7 @@ export default function PostListingForm() {
               {/* BẮT ĐẦU HIỂN THỊ (chủ dự án 23/10/2026: "có 2 lựa chọn — Ngay khi được duyệt và Chọn ngày; chọn ngày thì lên cái lịch và
                   chọn ngày"): nút đôi cùng kiểu Địa chỉ mới / cũ; Chọn ngày → ô lịch của máy (mặc định ngày mai, tối đa 30 ngày tới, giờ
                   VN). Duyệt xong tin "Chờ hiển thị", 0h ngày đó mới lên; ngày đăng + hạn tính từ ngày đó (api/tin-dang/duyet). */}
-              <div className="mt-5">
+              <div id="b-thanhtoan" className="mt-5 scroll-mt-[70px]">
                 <p className="text-[15px] font-semibold text-cvr-ink">Bắt đầu hiển thị</p>
                 <div className="mt-2 grid w-full grid-cols-2 gap-1 rounded-lg border border-cvr-line bg-white p-1 sm:max-w-md">
                   {([["", "Ngay khi được duyệt"], ["chon", "Chọn ngày"]] as const).map(([id, ten]) => {

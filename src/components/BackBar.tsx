@@ -186,7 +186,7 @@ export default function BackBar() {
         // Như nút Back / Huỷ thanh toán (27/10/2026): đang mở mã QR → gỡ mốc mã (trang nạp đưa về tin); chưa mở mã → về tin. Đều đứng khối Gói tin
         if (window.history.state?.cvrQr) window.history.back();
         else if (docPhien("cl_trang_truoc") === ve.split("?")[0]) router.back(); // vừa từ trang đó sang → lùi, không sinh mốc trùng
-        else router.push(ve.startsWith("/dang-tin?id=") ? `${ve}&huy-tt=1` : ve); // như veHuy (MaQrThanhToan) — không nhập để BackBar khỏi kéo theo
+        else router.push(ve.startsWith("/dang-tin?id=") ? `${ve}&huy-tt=1` : ve === "/dang-tin" ? "/dang-tin?huy-tt=1" : ve); // như veHuy (MaQrThanhToan) — không nhập để BackBar khỏi kéo theo
         return;
       }
     }

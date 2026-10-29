@@ -28,7 +28,7 @@ const INTERNET_BANKING: { appId: string; appName: string; appLogo: string; href:
 ].map(([appId, appName, anh, href]) => ({ appId, appName, appLogo: `https://cdn.vietqr.io/img/${anh}.png`, href }));
 
 // Về tin đang đăng sau khi huỷ / quay lại: huy-tt=1 → form cuộn thẳng tới khối Gói tin — thanh toán (PostListingForm)
-export const veHuy = (ve: string) => (ve.startsWith("/dang-tin?id=") ? `${ve}&huy-tt=1` : ve);
+export const veHuy = (ve: string) => (ve.startsWith("/dang-tin?id=") ? `${ve}&huy-tt=1` : ve === "/dang-tin" ? "/dang-tin?huy-tt=1" : ve);
 
 export type DonQr = {
   orderCode: number;
