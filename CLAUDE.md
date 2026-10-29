@@ -388,7 +388,7 @@ Buộc phải đụng vào vì lý do kỹ thuật → **DỪNG, HỎI TRƯỚC.
 >   `if [ -n "$VERCEL_GIT_PREVIOUS_SHA" ] && git cat-file -e "$VERCEL_GIT_PREVIOUS_SHA^{commit}" 2>/dev/null; then git diff --quiet
 >   "$VERCEL_GIT_PREVIOUS_SHA" HEAD -- . ":(exclude)*.md" ":(exclude)docs" ":(exclude)supabase"; else exit 1; fi` (đã thử đủ 4 trường hợp
 >   trên cloud) → commit, push main (chủ dự án đã cho phép việc này; phiên cloud bị hệ thống chặn đẩy) → xem bản mới trên Vercel READY, mở web → báo.
-> - ① **TÁCH TỆP 2 TẦNG** ("một tệp rất dài, lộn xộn, không quản lý nổi"): sao lưu vào `may-tu-khoa\sao-luu\` → tầng 1 `KE-HOACH-SEO.md` một màn
+> - ① ✅ 29/10 anh duyệt, đã thay (bản cũ `may-tu-khoasao-luu`; việc cần anh: tệp riêng `CAN-ANH-DUYET.md`) **TÁCH TỆP 2 TẦNG** ("một tệp rất dài, lộn xộn, không quản lý nổi"): sao lưu vào `may-tu-khoa\sao-luu\` → tầng 1 `KE-HOACH-SEO.md` một màn
 >   hình (⭐ quy trình · ✍ ANH CẦN DUYỆT · 📋 việc đang làm, mỗi việc 1 dòng, giữ tiêu đề có "VIỆC THEO THỨ TỰ" và khung `| # | Việc | Ai |
 >   Trạng thái |` · 🔑 tóm tắt từ khoá) · tầng 2 `chi-tiet\`: `tu-khoa.md` (mục 5) · `viec-chi-tiet.md` (mục 3 đủ) · `yeu-cau-chu-du-an.md`
 >   (mục 0 + 0b) · `quy-trinh-3-ben.md` (mục 11) · `mang-xa-hoi.md` (mục 12) · `nhat-ky.md` (mục 9) · `con-lai.md` (phần còn lại) → soát không mất

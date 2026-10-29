@@ -193,11 +193,13 @@ const KE_HOACH = "D:/Coastal Land/SEO/Plan SEO - pSEO/KE-HOACH-SEO.md";
 // MỘT TỆP (chủ dự án 28/10/2026: "1 chỗ, 1 file .md để yêu cầu và sửa — bất cứ bên nào cũng phải từ đây"): yêu cầu chủ dự án
 // (mục 0), thứ tự việc Cowork (mục 0b), việc 3 bên kể cả mạng xã hội (mục 3), quy trình 3 bên (mục 11), kế hoạch MXH (mục 12).
 const KH_TEP = KE_HOACH.replace(/\//g, BS);
+// Tách 2 tầng 29/10/2026: quy trình 3 bên (mục 11) và mạng xã hội (mục 12) nằm ở chi-tiet/ — Cowork mở đúng tệp đó.
 // TÁCH 2 TẦNG (29/10/2026): mục 0, 0b nằm ở chi-tiet/yeu-cau-chu-du-an.md; đủ dòng mục 3 ở chi-tiet/viec-chi-tiet.md.
 // Chưa tách (tệp cũ còn đủ mục) → tìm thấy ngay trong KE_HOACH trước.
 const KH_CT = "D:/Coastal Land/SEO/Plan SEO - pSEO/chi-tiet/";
 const docDong = (f) => (fs.existsSync(f) ? fs.readFileSync(f, "utf8").replace(/^\uFEFF/, "").split(/\r\n|\r|\n/) : []);
 const KH_DONG = [...docDong(KE_HOACH), ...docDong(KH_CT + "yeu-cau-chu-du-an.md")];
+const KH_QT = (KH_CT + "quy-trinh-3-ben.md").split("/").join(BS), KH_MXH = (KH_CT + "mang-xa-hoi.md").split("/").join(BS), KH_YC = (KH_CT + "yeu-cau-chu-du-an.md").split("/").join(BS);
 const doanMuc = (bat) => { const a = KH_DONG.findIndex((l) => bat.test(l)); if (a < 0) return []; const ds = []; for (const l of KH_DONG.slice(a + 1)) { if (/^#{2,3} /.test(l)) break; ds.push(l.trim()); } return ds; };
 const MUC = [
   ["Tìm tin cho nhóm sắp có trang Google", NOI_TIN, sapMo.length, sapMo.length
@@ -217,17 +219,17 @@ const MUC = [
   })()],
   // Mạng xã hội — chung quy trình 4 bước: máy chọn tin → Cowork soạn bài → chủ dự án duyệt nguyên văn → chủ dự án tự đăng.
   ["Bài mạng xã hội (Fanpage · OA · nhóm)", `${NOI_KHAC.slice(0, -1)}mxh${BS}\` (tệp \`bai-mxh-${dd}.docx\` + \`anh${BS}\`)`, tinMxh.length, tinMxh.length
-    ? [`**⛔ BẮT BUỘC HẰNG NGÀY: 1 bài Zalo + 1 bài Facebook, chất lượng, có ảnh** (chủ dự án chốt 23/10). Soạn bài theo mục 12.4–12.5 của \`${KH_TEP}\`: mỗi bài ghi rõ kênh, chữ, ảnh (lấy từ tin), link đúng như dưới.`,
+    ? [`**⛔ BẮT BUỘC HẰNG NGÀY: 1 bài Zalo + 1 bài Facebook, chất lượng, có ảnh** (chủ dự án chốt 23/10). Soạn bài theo mục 12.4–12.5 của \`${KH_MXH}\`: mỗi bài ghi rõ kênh, chữ, ảnh (lấy từ tin), link đúng như dưới.`,
       ...tinMxh.map((x) => `- ${x.title.slice(0, 60)} — Fanpage: ${link(x)}?utm_source=facebook&utm_medium=fanpage · OA: ${link(x)}?utm_source=zalo&utm_medium=oa · nhóm: ${link(x)}?utm_source=zalo&utm_medium=nhom`)]
-    : [`**⛔ BẮT BUỘC HẰNG NGÀY: 1 bài Zalo + 1 bài Facebook, chất lượng, có ảnh** (chủ dự án chốt 23/10). Chưa có tin mới đạt chuẩn trong 2 ngày qua → mỗi bài gom tin nổi bật theo khu vực, soạn theo mục 12.4–12.5 của \`${KH_TEP}\`, link về trang mua bán / cho thuê đúng khu vực.`]],
+    : [`**⛔ BẮT BUỘC HẰNG NGÀY: 1 bài Zalo + 1 bài Facebook, chất lượng, có ảnh** (chủ dự án chốt 23/10). Chưa có tin mới đạt chuẩn trong 2 ngày qua → mỗi bài gom tin nổi bật theo khu vực, soạn theo mục 12.4–12.5 của \`${KH_MXH}\`, link về trang mua bán / cho thuê đúng khu vực.`]],
   ["Hồ sơ dự án", `${NOI_KHAC} (tệp \`du-an-${dd}.csv\`)`, dsNap.length, dsNap.length
-    ? [`Điền \`${p(SEO, "RA", "du-an-can-nap.csv")}\` theo mục 11.4 của \`${KH_TEP}\`: đủ cột bắt buộc, **tổng quan tự viết lại 3–6 câu chuẩn SEO** (tên dự án · vị trí · chủ đầu tư · loại sản phẩm), có nguồn + ngày. Ưu tiên dự án đã có người tìm (Alacarte, Altara, Fusion Suites, Harmony). Làm 10 dự án mỗi lần:`, ...dsNap.slice(0, 10).map((d) => `- ${d.ten} · ${d.phuong ? d.phuong + ", " : ""}${d.tinh}`)]
-    : [`Nạp dự án mới toàn quốc theo mục 11.4 của \`${KH_TEP}\`.`]],
+    ? [`Điền \`${p(SEO, "RA", "du-an-can-nap.csv")}\` theo mục 11.4 của \`${KH_QT}\`: đủ cột bắt buộc, **tổng quan tự viết lại 3–6 câu chuẩn SEO** (tên dự án · vị trí · chủ đầu tư · loại sản phẩm), có nguồn + ngày. Ưu tiên dự án đã có người tìm (Alacarte, Altara, Fusion Suites, Harmony). Làm 10 dự án mỗi lần:`, ...dsNap.slice(0, 10).map((d) => `- ${d.ten} · ${d.phuong ? d.phuong + ", " : ""}${d.tinh}`)]
+    : [`Nạp dự án mới toàn quốc theo mục 11.4 của \`${KH_QT}\`.`]],
   ["Bổ sung trường còn thiếu (tên đường / hướng / pháp lý / phòng ngủ, WC, m² sàn — để thẻ hiện đủ theo cấp)", NOI_TIN, chuaDat.filter((r) => !r.chan).length, (() => {
     const ds = chuaDat.filter((r) => !r.chan);
     return ds.length ? [`Lấy lại từ tin gốc, ${GOP}. Làm 20 tin mỗi lần:`, ...sua(ds.slice(0, 20), (r) => r.thieu.join(", "))] : ["Không có việc."];
   })()],
-  ["Bảng giá đất Nhà nước", `${NOI_KHAC} (tệp \`gia-dat-<tỉnh>.csv\`)`, null, ["Theo mục 11.5 của `" + KH_TEP + "`, từ văn bản gốc quyết định UBND tỉnh. Thứ tự: Đà Nẵng → Huế → Khánh Hòa → Gia Lai → Lâm Đồng."]],
+  ["Bảng giá đất Nhà nước", `${NOI_KHAC} (tệp \`gia-dat-<tỉnh>.csv\`)`, null, ["Theo mục 11.5 của `" + KH_QT + "`, từ văn bản gốc quyết định UBND tỉnh. Thứ tự: Đà Nẵng → Huế → Khánh Hòa → Gia Lai → Lâm Đồng."]],
   // Quy trình 17/10: Cowork chỉ thấy 4 số đầu nên không làm được mục này — máy so số đầy đủ, Claude ghi mục 2 chờ chủ dự án OK.
   ["Tin trùng · một số nhiều tên · tin đăng hộ", "Cowork KHÔNG làm — Claude xử lý, chủ dự án OK ở mục 2", trung.length + nhieuTen.length + lech.length, [
     ...(trung.length ? ["Cùng một BĐS đăng nhiều tin — ghi tin nào giữ, tin nào gỡ:", ...trung.map((g) => `- ${g.map((x) => `[${x.title.slice(0, 40)}](${link(x)})`).join(" · ")}`)] : []),
@@ -249,10 +251,10 @@ const MUC = [
     // Lịch chốt 23/10/2026 (chủ dự án: "tôi chỉ nhắn Cowork làm, các thứ khác ghi vào .md") — Cowork tự đặt lịch theo dòng này.
     `- **Lịch (Cowork tự đặt, không chờ nhắn)**: làm mỗi ngày tới khi hết danh sách · sau đó **ngày 5 hằng tháng** (dãy mới + số tháng mới) · **ngày 5 tháng 1, 4, 7, 10** (đủ trung bình · thấp · cao của quý vừa xong — lỡ ngày này là mất thấp/cao). Nguồn đổi cách công bố → ghi \`bao-cao.txt\`, Claude chỉnh lịch.`,
   ]],
-  ["Tiện ích lân cận (trường, bệnh viện, khu công nghiệp, chợ, biển, sân bay)", `${NOI_KHAC} (tệp \`tien-ich-<tỉnh>.csv\`)`, null, [`Theo mục 11.8 của \`${KH_TEP}\`, mẫu \`${p("SEO", "MAU", "mau-tien-ich-lan-can.csv")}\` — một tỉnh mỗi lần: Đà Nẵng → Huế → Khánh Hòa.`]],
-  ["Thư viện pháp luật", `${NOI_KHAC} (tệp \`thu-vien-phap-luat-${dd}.csv\`)`, null, ["Hằng ngày, theo mục 11.6 của `" + KH_TEP + "` — văn bản thật, link nguồn chính thức, tình trạng hiệu lực đúng luật, 20 văn bản mỗi lần. **Không chờ chủ dự án duyệt**: Claude kiểm nguồn + hiệu lực rồi nạp thẳng (chốt 18/10)."]],
+  ["Tiện ích lân cận (trường, bệnh viện, khu công nghiệp, chợ, biển, sân bay)", `${NOI_KHAC} (tệp \`tien-ich-<tỉnh>.csv\`)`, null, [`Theo mục 11.8 của \`${KH_QT}\`, mẫu \`${p("SEO", "MAU", "mau-tien-ich-lan-can.csv")}\` — một tỉnh mỗi lần: Đà Nẵng → Huế → Khánh Hòa.`]],
+  ["Thư viện pháp luật", `${NOI_KHAC} (tệp \`thu-vien-phap-luat-${dd}.csv\`)`, null, ["Hằng ngày, theo mục 11.6 của `" + KH_QT + "` — văn bản thật, link nguồn chính thức, tình trạng hiệu lực đúng luật, 20 văn bản mỗi lần. **Không chờ chủ dự án duyệt**: Claude kiểm nguồn + hiệu lực rồi nạp thẳng (chốt 18/10)."]],
   ["Hồ sơ công ty", `${NOI_KHAC} (tệp \`ho-so-cong-ty-${dd}.csv\`)`, null, ["**Không làm riêng mục này** (chốt 18/10): khi lọc tin, người đăng là công ty / sàn thì ghi đúng tên công ty vào `lien_he_ten` — hồ sơ công ty sẽ lấy từ tin."]],
-  ["Bài viết", `${NOI_KHAC} (tệp \`bai-viet-${dd}.docx\`)`, null, ["**⛔ BẮT BUỘC HẰNG NGÀY: 2 bài chất lượng, có ảnh, cho mục Tin tức** (chủ dự án chốt 23/10) — Cowork tự chọn đề tài theo tình trạng SEO: từ khoá người tìm có lượt hiện mà chưa có lượt bấm (số Search Console trong tệp này / kế hoạch SEO mục 3). Viết theo mục 11.6 và 11.7 của `" + KH_TEP + "`: chuẩn SEO, giọng người làm nghề, số liệu có nguồn + ngày, 2–4 link về trang coastalland.vn."]],
+  ["Bài viết", `${NOI_KHAC} (tệp \`bai-viet-${dd}.docx\`)`, null, ["**⛔ BẮT BUỘC HẰNG NGÀY: 2 bài chất lượng, có ảnh, cho mục Tin tức** (chủ dự án chốt 23/10) — Cowork tự chọn đề tài theo tình trạng SEO: từ khoá người tìm có lượt hiện mà chưa có lượt bấm (số Search Console trong tệp này / kế hoạch SEO mục 3). Viết theo mục 11.6 và 11.7 của `" + KH_QT + "`: chuẩn SEO, giọng người làm nghề, số liệu có nguồn + ngày, 2–4 link về trang coastalland.vn."]],
 ];
 
 // CHỦ DỰ ÁN TỰ ĐỔI THỨ TỰ (16/10/2026) — từ 28/10/2026 ở mục 0b của KE-HOACH-SEO.md (gom MỘT tệp, bỏ THU-TU-UU-TIEN.txt):
@@ -297,7 +299,7 @@ const v = [`# VIỆC HÔM NAY — 3 BÊN · ${TEN_THU}, ${dd.slice(0, 2)}/${dd.s
   "**\"Làm mục 2, 6\"** = chỉ các mục đó.", "",
   // BẢNG TỰ KIỂM (chủ dự án 17/10/2026: "tôi phải sửa lại nhiều — nhắc Cowork về SEO, nội dung, ngôn ngữ")
   "### ⛔ TỰ KIỂM TỪNG TIN TRƯỚC KHI GIAO — chủ dự án đang phải sửa lại nhiều",
-  "Tin nào chưa qua đủ 13 dòng dưới đây thì **chưa được giao**. Chuẩn đầy đủ: `YEU-CAU-COWORK-DANG-TIN-HANG-LOAT.md` mục 4–9 · ngôn ngữ: `" + KH_TEP + "` mục 11.7.",
+  "Tin nào chưa qua đủ 13 dòng dưới đây thì **chưa được giao**. Chuẩn đầy đủ: `YEU-CAU-COWORK-DANG-TIN-HANG-LOAT.md` mục 4–9 · ngôn ngữ: `" + KH_QT + "` mục 11.7.",
   "",
   "| # | SEO | Đạt khi |",
   "|---|---|---|",
@@ -346,7 +348,7 @@ if (fs.existsSync(TD)) {
   const ngay = (td.match(/cập nhật (\d{4}-\d{2}-\d{2})/) || [])[1] ?? "";
   v.push(`- Search Console ${ngay}: Google đã index ${so("Google đã index")} · đạt chuẩn mà chưa index ${so("Muốn index nhưng CHƯA index")} → xin index 10 trang/ngày theo \`THEO-DOI-INDEX.md\` mục 1; nhóm trang nào chạy thử thì đo theo kế hoạch mục 4 (cổng chạy hàng loạt).`);
 }
-v.push("", `Yêu cầu, việc, quy trình 3 bên, kế hoạch — MỘT tệp: \`${KH_TEP}\` (mục 0 yêu cầu · 0b thứ tự · 3 việc · 11 quy trình 3 bên · 12 mạng xã hội)`, "", "---", "# CHI TIẾT VIỆC COWORK", "");
+v.push("", `Yêu cầu, việc, quy trình 3 bên, kế hoạch — MỘT tệp: \`${KH_TEP}\` (việc theo thứ tự) · chi tiết: thư mục ${KH_CT.split("/").join(BS)} (yêu cầu, từ khoá, quy trình 3 bên, mạng xã hội)`, "", "---", "# CHI TIẾT VIỆC COWORK", "");
 MUC.forEach(([ten, noi, , dong], i) => v.push(`## Mục ${i + 1}. ${ten}`, `Giao vào: ${noi}`, "", ...dong, ""));
 // GIỮ MỤC 0 (18/10/2026): mục 0 là Claude trả lời Cowork / giao việc riêng trong ngày — lượt 6:30 ghi đè cả tệp
 // nên từng xoá mất. Giữ nguyên khi tiêu đề mục 0 có ngày hôm nay (dd/mm); mục 0 của ngày cũ thì bỏ.
@@ -365,7 +367,7 @@ v.splice(4, 0, "**⛔ CHUẨN TRƯỚC, CHẠY SAU — cả 3 bên, mọi việc
 const ycDong = doanMuc(/^## 0\. YÊU CẦU CHỦ DỰ ÁN/).filter((l) => /^\d+\.\s/.test(l));
 const YEU_CAU = [
   "## ⛔ YÊU CẦU CHỦ DỰ ÁN — áp cho mọi việc, đè lên mọi dòng khác (chốt 19–20/10/2026)",
-  ...(ycDong.length ? ycDong : [`⚠️ Chưa đọc được mục 0 "YÊU CẦU CHỦ DỰ ÁN" trong \`${KH_TEP}\` — Claude kiểm tệp kế hoạch.`]),
+  ...(ycDong.length ? ycDong : [`⚠️ Chưa đọc được mục 0 "YÊU CẦU CHỦ DỰ ÁN" trong \`${KH_YC}\` — Claude kiểm tệp kế hoạch.`]),
   "",
 ];
 v.splice(6, 0, ...YEU_CAU);
