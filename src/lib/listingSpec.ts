@@ -136,11 +136,12 @@ const balconyField: Field = { key: "balcony", label: "Hướng ban công", type:
 // FORM ĐĂNG TIN ĐÃ DUYỆT — KHÔNG ĐỔI GIAO DIỆN (chủ dự án 29/10/2026). Loại con căn hộ / đất chỉ BẮT BUỘC ở đăng tin hàng loạt
 // (csvTin.ts); ở form chỉ thêm lựa chọn mới vào danh sách sẵn có (Nhà ở xã hội · Đất tái định cư).
 export const categorySpecs: CategorySpec[] = [
-  // Trang trại / khu nghỉ dưỡng (D18, 29/10/2026): đứng TRƯỚC Condotel — "khu nghỉ dưỡng" chứa chữ "nghỉ dưỡng" của Condotel.
-  // Là đất + công trình nên dùng các ô của Đất (chữ đã duyệt), không phải ô căn hộ (tầng, block, phí quản lý)
+  // Homestay, Farmstay · Khu nghỉ dưỡng (D24, 29/10/2026 — thay "Trang trại / Khu nghỉ dưỡng" của D18): đứng TRƯỚC Condotel —
+  // "khu nghỉ dưỡng" chứa chữ "nghỉ dưỡng" của Condotel. Là đất + công trình nên dùng các ô của Đất (chữ đã duyệt), không phải
+  // ô căn hộ (tầng, block, phí quản lý)
   {
-    label: "Trang trại / Khu nghỉ dưỡng",
-    match: ["trang trại"],
+    label: "Homestay / Farmstay / Khu nghỉ dưỡng",
+    match: ["homestay", "farmstay", "khu nghỉ dưỡng"],
     fields: [
       { key: "landType", label: "Loại đất", type: "select", options: ["Đất thổ cư", "Đất ở đô thị", "Đất nền dự án", "Đất nông nghiệp", "Đất vườn", "Đất khác"], main: true },
       frontageField,

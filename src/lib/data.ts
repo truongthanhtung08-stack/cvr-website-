@@ -177,7 +177,7 @@ export function districtOf(location: string): string {
 // Phân khúc = từ khoá loại hình chuẩn hoá, suy từ chuỗi type (khớp giữa dự án ↔ tin).
 // Trả "" nếu không nhận ra (không tính là cùng phân khúc).
 const SEGMENT_KEYWORDS = [
-  "Căn hộ", "Condotel", "Trang trại", "Villa", "Biệt thự", "Shophouse", "Nhà phố",
+  "Căn hộ", "Condotel", "Homestay", "Farmstay", "Khu nghỉ dưỡng", "Villa", "Biệt thự", "Shophouse", "Nhà phố",
   "Nhà riêng", "Đất nền", "Đất công nghiệp", "Nhà xưởng", "Kho", "Đất",
 ];
 export function segmentOf(type: string): string {
