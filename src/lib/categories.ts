@@ -76,7 +76,8 @@ export const saleCategories: Category[] = [
     slug: "trang-trai-nghi-duong", label: "Trang trại, khu nghỉ dưỡng",
     h1: "Bán trang trại, khu nghỉ dưỡng", title: `Bán trang trại, khu nghỉ dưỡng`,
     desc: `Mua bán trang trại, villa và bất động sản nghỉ dưỡng ven biển.`,
-    types: ["Villa / Biệt thự biển"],
+    // chỉ loại riêng (D18, 29/10/2026) — "Villa / Biệt thự biển" đã thuộc trang biệt thự, để ở đây là trùng trang
+    types: ["Trang trại / Khu nghỉ dưỡng"],
   },
   {
     slug: "condotel", label: "Condotel",
@@ -180,7 +181,7 @@ export const rentNhaPseo: Category = {
 export const saleNghiDuongPseo: Category = {
   slug: "nghi-duong", label: "BĐS nghỉ dưỡng", h1: "Bán bất động sản nghỉ dưỡng", tuKhoa: "Bán bất động sản nghỉ dưỡng",
   title: "Bán bất động sản nghỉ dưỡng", desc: "Mua bán bất động sản nghỉ dưỡng: condotel, villa biển, trang trại, khu nghỉ dưỡng",
-  types: ["Villa / Biệt thự biển", "Condotel"],
+  types: ["Villa / Biệt thự biển", "Condotel", "Trang trại / Khu nghỉ dưỡng"],
 };
 export const rentVanPhongMatBangPseo: Category = {
   slug: "van-phong-mat-bang", label: "Văn phòng, mặt bằng", h1: "Cho thuê văn phòng, mặt bằng", tuKhoa: "Cho thuê văn phòng, mặt bằng",

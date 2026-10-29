@@ -136,6 +136,21 @@ const balconyField: Field = { key: "balcony", label: "Hướng ban công", type:
 // NGOẠI LỆ ĐÃ DUYỆT 29/10/2026: LOẠI CON của căn hộ ("Loại hình căn hộ") và của đất ("Loại đất") bắt buộc — chủ dự án: "căn hộ thì
 // phải có loại hình con của nó, đất cũng vậy" (lịch sử giá, trang danh mục so theo đúng loại con).
 export const categorySpecs: CategorySpec[] = [
+  // Trang trại / khu nghỉ dưỡng (D18, 29/10/2026): đứng TRƯỚC Condotel — "khu nghỉ dưỡng" chứa chữ "nghỉ dưỡng" của Condotel.
+  // Là đất + công trình nên dùng các ô của Đất (chữ đã duyệt), không phải ô căn hộ (tầng, block, phí quản lý)
+  {
+    label: "Trang trại / Khu nghỉ dưỡng",
+    match: ["trang trại"],
+    fields: [
+      { key: "landType", label: "Loại đất", type: "select", options: ["Đất thổ cư", "Đất ở đô thị", "Đất nền dự án", "Đất nông nghiệp", "Đất vườn", "Đất khác"], main: true },
+      frontageField,
+      roadField,
+      { key: "resiArea", label: "Diện tích đất ở (thổ cư)", type: "number", unit: "m²", main: true },
+      { key: "landTerm", label: "Thời hạn sử dụng", type: "select", options: ["Lâu dài", "Có thời hạn"] },
+      { key: "landState", label: "Hiện trạng đất", type: "select", options: ["Đất trống", "Đã san lấp", "Đã có tường rào", "Có nhà cấp 4 trên đất", "Có nhà kiên cố trên đất", "Đang trồng cây", "Ao / ruộng"] },
+      { key: "planning", label: "Quy hoạch / lộ giới", type: "text", placeholder: "VD: Không dính quy hoạch · Lộ giới 5m" },
+    ],
+  },
   {
     label: "Condotel / Nghỉ dưỡng",
     match: ["condotel", "nghỉ dưỡng"],
