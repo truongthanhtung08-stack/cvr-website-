@@ -106,8 +106,10 @@ export default function MaQrThanhToan({ don, onHuy, onXong }: { don: DonQr; onHu
       .filter((n) => !ios || n.iphone) // iPhone không mở được app này → không hiện
       .map((n) => ({ appId: n.id, appLogo: n.logo, appName: n.ten, href: ios ? n.iphone : n.android, tuDien: n.tuDien })));
   }, []);
-  // Báo đơn cho VietQR ngay trước khi mở app có điền sẵn → app hiện sẵn số tài khoản, số tiền, nội dung (không mở trang VietQR)
-  const baoVietQr = (app: string) => {
+  // Đơn VietQR cho app có điền sẵn. Android (29/10/2026: chỉ báo đơn bằng fetch rồi mở app → MB vẫn không hiện số tiền): nhấn logo đi
+  // thẳng link VietQR — máy chủ VietQR ghi đơn rồi chuyển ngay sang app (302 → intent://, không chen trang vào lịch sử).
+  // iPhone: link VietQR mở trang trung gian → giữ cách báo đơn trước (baoVietQr) rồi mở app.
+  const linkVietQr = (app: string) => {
     const q = new URLSearchParams({
       app,
       ba: `${don.accountNumber || PHAP_LY.soTaiKhoan}@${don.bin || "970422"}`,
@@ -115,8 +117,9 @@ export default function MaQrThanhToan({ don, onHuy, onXong }: { don: DonQr; onHu
       tn: don.description || "",
       bn: don.accountName || PHAP_LY.chuTaiKhoan,
     });
-    fetch(`https://dl.vietqr.io/pay?${q}`, { mode: "no-cors", keepalive: true }).catch(() => {});
+    return `https://dl.vietqr.io/pay?${q}`;
   };
+  const baoVietQr = (app: string) => { fetch(linkVietQr(app), { mode: "no-cors", keepalive: true }).catch(() => {}); };
 
   // Quay lại từ app ngân hàng → hỏi trạng thái ngay, không đợi lượt 3 giây
   useEffect(() => {
@@ -217,9 +220,9 @@ export default function MaQrThanhToan({ don, onHuy, onXong }: { don: DonQr; onHu
             {nganHang.map((n) => (
               <a
                 key={n.appId}
-                href={n.href}
+                href={n.tuDien && n.href.startsWith("intent:") ? linkVietQr(n.appId) : n.href}
                 {...(mayTinh ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-                onClick={n.tuDien ? () => baoVietQr(n.appId) : undefined}
+                onClick={n.tuDien && !n.href.startsWith("intent:") ? () => baoVietQr(n.appId) : undefined}
                 className="flex flex-col items-center gap-1 rounded-lg border border-cvr-line p-2 text-center hover:border-cvr-ink active:bg-cvr-surface"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
