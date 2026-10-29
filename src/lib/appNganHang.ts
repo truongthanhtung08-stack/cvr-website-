@@ -1,5 +1,7 @@
-// APP NGÂN HÀNG — nhấn logo mở THẲNG app (không qua trang trung gian dl.vietqr.io: trang đó chen vào lịch sử làm Back rối,
-// và không điền sẵn được số tiền — 27/10/2026). Khách vào app chọn Quét mã QR → ảnh mã đã Lưu (số tiền nằm trong mã).
+// APP NGÂN HÀNG — nhấn logo mở THẲNG app (không qua trang trung gian dl.vietqr.io: trang đó chen vào lịch sử làm Back rối — 27/10/2026).
+// ĐIỀN SẴN (29/10/2026): 5 app có "autofill":1 trong danh sách VietQR (MB, VietinBank, BIDV, ACB, OCB) tự lấy đơn từ VietQR khi mở
+// (app hỏi VietQR theo IP của máy) → web báo đơn cho VietQR ngay trước khi mở app (MaQrThanhToan). App khác ngân hàng chưa nối
+// → chỉ mở app, khách Quét mã QR → ảnh mã đã Lưu (số tiền nằm trong mã).
 // Danh sách + cách mở lấy từ api.vietqr.io (android/ios-app-deeplinks) ngày 27/10/2026. Logo: cdn.vietqr.io.
 // [mã app, tên app, scheme Android, gói Android, đường mở iPhone (rỗng = iPhone không mở được)]
 const DS: [string, string, string, string, string][] = [
@@ -39,7 +41,9 @@ const DS: [string, string, string, string, string][] = [
   ["cimb", "Octo by CIMB Vietnam", "cimb", "vn.cimbbank.octo", "cimb://"],
 ];
 
-export type AppNganHang = { id: string; ten: string; logo: string; android: string; iphone: string };
+export type AppNganHang = { id: string; ten: string; logo: string; android: string; iphone: string; tuDien: boolean };
+
+const TU_DIEN = new Set(["icb", "bidv", "ocb", "acb", "mb"]);
 
 export const APP_NGAN_HANG: AppNganHang[] = DS.map(([id, ten, scheme, goi, iphone]) => ({
   id,
@@ -48,4 +52,5 @@ export const APP_NGAN_HANG: AppNganHang[] = DS.map(([id, ten, scheme, goi, iphon
   // Chưa cài app → mở trang app trên CH Play
   android: `intent://#Intent;scheme=${scheme};package=${goi};S.browser_fallback_url=${encodeURIComponent(`https://play.google.com/store/apps/details?id=${goi}`)};end`,
   iphone,
+  tuDien: TU_DIEN.has(id),
 }));

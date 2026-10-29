@@ -93,10 +93,10 @@ export default function MaQrThanhToan({ don, onHuy, onXong }: { don: DonQr; onHu
   }, [don.orderCode]);
 
   // DANH SÁCH NGÂN HÀNG (chủ dự án 27/10/2026): điện thoại nhấn logo → MỞ THẲNG app ngân hàng (appNganHang.ts), trang này đứng
-  // nguyên → quay về / Back đúng chỗ (trước đi qua trang trung gian dl.vietqr.io: chen vào lịch sử, và không điền sẵn được số tiền).
-  // Vào app khách Quét mã QR → ảnh mã đã Lưu: số tài khoản, số tiền, nội dung nằm sẵn trong mã. Nộp xong quay lại trình duyệt →
+  // nguyên → quay về / Back đúng chỗ (trước đi qua trang trung gian dl.vietqr.io: chen vào lịch sử). 5 app có điền sẵn (baoVietQr)
+  // hiện sẵn đơn; app khác: khách Quét mã QR → ảnh mã đã Lưu: số tài khoản, số tiền, nội dung nằm sẵn trong mã. Nộp xong quay lại trình duyệt →
   // trang hỏi trạng thái thấy "paid" là tự về đúng chỗ. Máy tính: Internet Banking (thẻ mới).
-  const [nganHang, setNganHang] = useState<{ appId: string; appLogo: string; appName: string; href: string }[]>([]);
+  const [nganHang, setNganHang] = useState<{ appId: string; appLogo: string; appName: string; href: string; tuDien?: boolean }[]>([]);
   const [mayTinh, setMayTinh] = useState(false);
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- đo loại máy một lần lúc mở mã
@@ -104,8 +104,19 @@ export default function MaQrThanhToan({ don, onHuy, onXong }: { don: DonQr; onHu
     const ios = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
     setNganHang(APP_NGAN_HANG
       .filter((n) => !ios || n.iphone) // iPhone không mở được app này → không hiện
-      .map((n) => ({ appId: n.id, appLogo: n.logo, appName: n.ten, href: ios ? n.iphone : n.android })));
+      .map((n) => ({ appId: n.id, appLogo: n.logo, appName: n.ten, href: ios ? n.iphone : n.android, tuDien: n.tuDien })));
   }, []);
+  // Báo đơn cho VietQR ngay trước khi mở app có điền sẵn → app hiện sẵn số tài khoản, số tiền, nội dung (không mở trang VietQR)
+  const baoVietQr = (app: string) => {
+    const q = new URLSearchParams({
+      app,
+      ba: `${don.accountNumber || PHAP_LY.soTaiKhoan}@${don.bin || "970422"}`,
+      am: String(don.amount),
+      tn: don.description || "",
+      bn: don.accountName || PHAP_LY.chuTaiKhoan,
+    });
+    fetch(`https://dl.vietqr.io/pay?${q}`, { mode: "no-cors", keepalive: true }).catch(() => {});
+  };
 
   // Quay lại từ app ngân hàng → hỏi trạng thái ngay, không đợi lượt 3 giây
   useEffect(() => {
@@ -208,6 +219,7 @@ export default function MaQrThanhToan({ don, onHuy, onXong }: { don: DonQr; onHu
                 key={n.appId}
                 href={n.href}
                 {...(mayTinh ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                onClick={n.tuDien ? () => baoVietQr(n.appId) : undefined}
                 className="flex flex-col items-center gap-1 rounded-lg border border-cvr-line p-2 text-center hover:border-cvr-ink active:bg-cvr-surface"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
