@@ -18,7 +18,7 @@ import { docDuAnTuBang, type DongDuAn } from "@/lib/csvDuAn";
 import { docDoanhNghiepTuBang, type DongDoanhNghiep } from "@/lib/hoSoDoanhNghiep";
 import { chuanHoaSdt } from "@/lib/phone";
 import { uploadImageFile, uploadVideoFile } from "@/lib/uploadImage";
-import { soAnhToiDa, soVideoToiDa } from "@/lib/billing";
+import { freeDangChay, soAnhToiDa, soVideoToiDa } from "@/lib/billing";
 import { isVideoUrl } from "@/lib/media";
 import { useBilling } from "@/lib/useBilling";
 import type { TierId } from "@/lib/packages";
@@ -310,6 +310,15 @@ export default function NhapHangLoatPage() {
       const tinMoi = hopLe.filter((r) => !tinCuCua(r));
       const tinCu = hopLe.filter((r) => tinCuCua(r));
 
+      // GÓI CỦA TIN HÀNG LOẠT = khuôn TIN THÀNH VIÊN MỚI (chủ dự án 29/10/2026: "tin hàng loạt cùng chung một khuôn là tin cho
+      // thành viên mới"). Lấy đúng chương trình đang chạy trong Admin → Giá & quy định (gói + số ngày hiển thị), không tự đặt.
+      // Không có gói thì nút Duyệt chặn ("gói 0 ngày không có trong bảng giá") — đợt 29/10 đã vướng. Duyệt vẫn xét từng tài
+      // khoản có hưởng chương trình không (luật tạo hộ, thanhVienMoi).
+      const ctMoi = billing.free;
+      const goiHangLoat = ctMoi && freeDangChay(ctMoi, new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" }))
+        ? { tier: ctMoi.tierId, days: ctMoi.hienThi ?? ctMoi.days }
+        : undefined;
+
       let xong = 0;
       // Chia lô 50 tin/lần cho nhẹ đường truyền và dễ biết dừng ở đâu nếu lỗi
       for (let i = 0; i < tinMoi.length; i += 50) {
@@ -326,7 +335,7 @@ export default function NhapHangLoatPage() {
           .map((r) => ({
             ...r.payload,
             status: "hidden",
-            details: { ...chiTietCoBia(r), choChuDuyet: true },
+            details: { ...chiTietCoBia(r), choChuDuyet: true, ...(goiHangLoat ? { plan: goiHangLoat } : {}) },
             images: anhCuaTin(r).urls,
             published_at: now,
             bumped_at: now,
