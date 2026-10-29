@@ -368,8 +368,10 @@ Buộc phải đụng vào vì lý do kỹ thuật → **DỪNG, HỎI TRƯỚC.
 > **MỘT CHỖ:** `D:\Coastal Land\SEO\Plan SEO - pSEO\` — `KE-HOACH-SEO.md` (chủ dự án xem, sửa, giao việc) · `chi-tiet\` (phần đầy đủ, Claude
 > đọc) · `TRA-GOOGLE.csv` · `HE-THONG-TU-KHOA.xlsx` · `may-tu-khoa\` · sơ đồ `QUY-TRINH-LAM-VIEC-HANG-NGAY.html`. Không bên nào làm việc từ chỗ khác.
 >
-> **MỖI NGÀY — 6 BƯỚC:** ① Anh: khi cần sửa `KE-HOACH-SEO.md`, lưu → nhắn Claude trên máy **"Bắt đầu"** · ② Claude: giao việc → `SEO\RA\VIEC.md`
-> · ③ Anh: duyệt `VIEC.md` → nhắn Cowork · ④ Cowork: chỉ làm việc trong `VIEC.md` → lưu `SEO\DA-DUYET\<ddmmyyyy>\` · ⑤ Anh + Claude: kiểm →
+> **MỖI NGÀY — BƯỚC 0 + 6 BƯỚC (chỉnh 29/10):** ⓪ Anh mở máy làm TRƯỚC TIÊN: `Plan SEO - pSEO\CAN-ANH-DUYET.md` (tệp riêng), ghi quyết định ·
+> ① Anh: khi cần sửa `KE-HOACH-SEO.md`, lưu → nhắn Claude trên máy **"Bắt đầu"** (Claude làm NGAY các dòng anh vừa quyết ở ⓪, ghi vào
+> `chi-tiet\yeu-cau-chu-du-an.md`, chuyển xuống "Đã xử lý") · ② Claude: ĐO TRƯỚC (Search Console + tra Google 3 từ khoá) rồi mới giao → `SEO\RA\VIEC.md`
+> · ③ Anh: duyệt `VIEC.md` → nhắn Cowork · ④ Cowork: chỉ làm việc trong `VIEC.md` → lưu `SEO\DA-DUYET\<ddmmyyyy>\` · ⑤ Anh nhắn Claude **"Kiểm"** → Anh + Claude: kiểm →
 > lên web (anh tự đưa tin, ảnh, video, bài viết, mạng xã hội · Claude chỉ sửa mã web, lên khi anh nhắn **"Push"**) · ⑥ Claude: báo cáo anh, ghi nhật ký.
 > Anh là người bắt đầu: trước "Bắt đầu" không bên nào tự chạy. Ai làm gì tự kiểm việc đó.
 >
@@ -427,8 +429,9 @@ Buộc phải đụng vào vì lý do kỹ thuật → **DỪNG, HỎI TRƯỚC.
 >     danh bạ doanh nghiệp / báo uy tín có link về web — Google hiểu "thực thể" nhờ nhiều nguồn khớp nhau.
 >   · Đo mỗi tuần (thứ Hai): tra "coastal land", "coastalland", "costalland", "costal land", "coastal land đà nẵng" → chụp khung AI + hồ sơ bên phải → ghi nhật ký.
 >
-> **LƯU Ở ĐÂU (không xoá gì):** `SEO\RA\` máy viết (`VIEC.md`, anh chỉ sửa mục 0) · `SEO\DA-DUYET\<ddmmyyyy>\` Cowork giao · `SEO\MAU\` mẫu ·
-> `SEO\` gốc: `YEU-CAU-COWORK-*.md`, `MAU-DANG-TIN-HANG-LOAT.xlsx`, `DANH-SACH-PHUONG-XA-TOAN-QUOC.txt` · `SEO\_cu\` thứ không dùng nữa.
+> **LƯU Ở ĐÂU (không xoá gì; bảng đủ: `chi-tiet\quy-trinh-3-ben.md` 11.0, dọn xong 29/10):** `Plan SEO - pSEO\` kế hoạch một màn hình + `CAN-ANH-DUYET.md` + `chi-tiet\` + `nguon\` (tư liệu gốc) + `giao-dien\` (làm sau SEO) ·
+> `SEO\RA\` máy viết (`VIEC.md`, anh chỉ sửa mục 0) · `SEO\DA-DUYET\<ddmmyyyy>\` Cowork giao · `SEO\MAU\` mẫu (+ `dot-tin-mau-24-10\`, `mxh\`) ·
+> `SEO\` gốc: `YEU-CAU-COWORK-*.md`, `MAU-DANG-TIN-HANG-LOAT.xlsx`, `DANH-SACH-PHUONG-XA-TOAN-QUOC.txt` · `SEO\_cu\` thứ không dùng nữa · công cụ ảnh Photoshop ở `SEO\` gốc tự chạy khi mở máy — không chuyển.
 > Đã gom, không dùng: `CONG-VIEC-3-BEN.md`, `Plan MXH\KE-HOACH-MXH.md`, `THU-TU-UU-TIEN.txt`, `GUI-CLAUDE-CODE\`, `CAN-ANH\`, `VAO\`.
 >
 > **BẢO MẬT · PUSH:** kế hoạch và sơ đồ không đưa lên GitHub (`docs/` cũng không). Chỉ push khi anh nhắn "Push"; chưa thử, chưa kiểm thì không push.
