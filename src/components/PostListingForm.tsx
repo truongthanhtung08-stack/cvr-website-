@@ -293,7 +293,12 @@ export default function PostListingForm() {
   function veThanhToan(ma: string): boolean {
     const dc = new URL(window.location.href);
     let coCo = false;
-    try { coCo = sessionStorage.getItem("veGoiTin") === ma; if (coCo) sessionStorage.removeItem("veGoiTin"); } catch {}
+    try {
+      // Cờ chỉ tính khi vừa từ trang nạp sang (khách bỏ nạp đi trang khác rồi mới vào Đăng tin → cờ cũ, vẫn hỏi Soạn tiếp / Đăng tin mới)
+      const tuNap = [sessionStorage.getItem("cl_trang_truoc"), sessionStorage.getItem("cl_trang_hien")].includes("/tai-khoan/nap-tien");
+      coCo = tuNap && sessionStorage.getItem("veGoiTin") === ma;
+      if (coCo || !tuNap) sessionStorage.removeItem("veGoiTin");
+    } catch {}
     if (dc.searchParams.get("huy-tt") !== "1" && !coCo) return false;
     dc.searchParams.delete("huy-tt");
     window.history.replaceState(window.history.state, "", dc.pathname + dc.search);
@@ -327,7 +332,9 @@ export default function PostListingForm() {
         // Vừa huỷ thanh toán quay về → mở lại ngay bản đang soạn, không hỏi "tiếp tục bản nháp?"
         const veLai = veThanhToan("moi");
         if (d) {
-          const coNoiDung = ["title", "category", "province"].some((k) => typeof d[k] === "string" && (d[k] as string).trim());
+          // Có bất cứ gì khách đã điền / đã chọn (kể cả chỉ chọn gói, up ảnh) → hỏi Soạn tiếp / Đăng tin mới (chủ dự án 29/10/2026)
+          const coNoiDung = ["title", "category", "province", "priceValue", "area", "description", "addressDetail", "planTier"]
+            .some((k) => typeof d[k] === "string" && (d[k] as string).trim()) || (Array.isArray(d.images) && d.images.length > 0);
           if (coNoiDung && !veLai) setNhapCho(d);
           else apDungNhap(d);
         }
@@ -1293,7 +1300,7 @@ export default function PostListingForm() {
         return (
           <div className="rounded-2xl border border-cvr-blue/30 bg-cvr-blue/[0.06] p-4">
             <p className="text-[15px] leading-snug text-cvr-ink">
-              <span className="font-semibold">Bạn có tin đang soạn dở:</span> {ten}
+              <span className="font-semibold">Bạn có tin đang soạn dở{ten ? ":" : "."}</span> {ten}
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
               {/* eslint-disable-next-line react-hooks/refs -- apDungNhap chỉ chạy khi khách bấm, không chạy lúc vẽ */}
