@@ -449,6 +449,14 @@ export async function getListingsHetHan(): Promise<Listing[]> {
     .map((r) => ({ ...rowToListing(r), hetHan: true }));
 }
 
+// TIN DÙNG ĐỂ XÉT TRANG pSEO ĐỦ TIN (mở trang, index, sitemap, liên kết nội bộ, trang giá) — chủ dự án 29/10/2026: "tính hết tin
+// hết hạn, tất cả tin trên web; tin hết hạn đã có cơ chế hết hạn, không ảnh hưởng cách Google chấm điểm". Chỉ để ĐẾM / XÉT
+// cổng — danh sách hiển thị vẫn tách tin còn hạn (getListings) và tin hết hạn (getListingsHetHan, mục riêng trên trang).
+export async function getTinXetTrang(): Promise<Listing[]> {
+  const [con, het] = await Promise.all([getListings().catch(() => []), getListingsHetHan().catch(() => [])]);
+  return [...con, ...het];
+}
+
 // ── BẢN NHẸ CHO TRANG CHỈ HIỆN THẺ TIN (trang chủ) ──────────────────────────
 //
 // VÌ SAO CÓ: mọi thứ hàm trên trả về đều bị Next gói vào HTML gửi xuống máy khách.

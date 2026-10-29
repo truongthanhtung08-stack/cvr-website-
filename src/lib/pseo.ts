@@ -448,6 +448,14 @@ export function tatCaTrang(tinConHan: Listing[]): Map<string, TrangPseo> {
   const khoa = tinConHan.map((l) => l.id + (l.bumpedAt ?? "")).join(",");
   if (nhoTrang?.khoa === khoa) return nhoTrang.kq;
   const m = tinhTatCaTrang(tinConHan);
+  // CHỈ THÊM, KHÔNG BỚT (chủ dự án 29/10/2026): đếm cả tin hết hạn mở thêm trang, nhưng trang đang đủ chuẩn theo tin còn hạn
+  // vẫn giữ — cộng tin hết hạn có thể làm trang "gần trùng" cha / anh em và bị cổng chống trùng loại, mất trang đã index.
+  if (tinConHan.some((l) => l.hetHan)) {
+    for (const p of tinhTatCaTrang(tinConHan.filter((l) => !l.hetHan)).values()) {
+      const q = m.get(p.path);
+      if (p.index && q) q.index = true;
+    }
+  }
   nhoTrang = { khoa, kq: m };
   return m;
 }
