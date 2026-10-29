@@ -133,6 +133,8 @@ const balconyField: Field = { key: "balcony", label: "Hướng ban công", type:
 // (loại đặc thù đứng trước loại chung: Biệt thự/Shophouse trước "nhà", Kho xưởng trước "đất").
 // KHÔNG mục đặc điểm nào bắt buộc (chủ dự án 09/10/2026, như Batdongsan): chỉ bắt buộc loại hình,
 // tiêu đề, tỉnh/thành, diện tích, liên hệ, gói tin. Thêm `batBuoc: true` lại thì phải hỏi chủ dự án.
+// NGOẠI LỆ ĐÃ DUYỆT 29/10/2026: LOẠI CON của căn hộ ("Loại hình căn hộ") và của đất ("Loại đất") bắt buộc — chủ dự án: "căn hộ thì
+// phải có loại hình con của nó, đất cũng vậy" (lịch sử giá, trang danh mục so theo đúng loại con).
 export const categorySpecs: CategorySpec[] = [
   {
     label: "Condotel / Nghỉ dưỡng",
@@ -174,7 +176,7 @@ export const categorySpecs: CategorySpec[] = [
     label: "Căn hộ",
     match: ["căn hộ", "officetel", "duplex", "penthouse", "studio"],
     fields: [
-      { key: "loaiCanho", label: "Loại hình căn hộ", type: "select", options: ["Căn hộ chung cư", "Căn hộ dịch vụ", "Studio", "Officetel", "Duplex", "Penthouse", "Sky villa", "Shophouse khối đế", "Căn hộ tập thể"] },
+      { key: "loaiCanho", label: "Loại hình căn hộ", type: "select", options: ["Căn hộ chung cư", "Căn hộ dịch vụ", "Studio", "Officetel", "Duplex", "Penthouse", "Sky villa", "Shophouse khối đế", "Căn hộ tập thể", "Nhà ở xã hội"], main: true, batBuoc: true },
       { key: "floor", label: "Tầng số (căn)", type: "text", placeholder: "VD: Tầng 18", main: true },
       { key: "block", label: "Block / Toà / Tháp", type: "text", placeholder: "VD: Block A" },
       { key: "buildingFloors", label: "Tổng số tầng toà", type: "text", placeholder: "VD: 30 tầng" },
@@ -303,7 +305,7 @@ export const categorySpecs: CategorySpec[] = [
     label: "Đất nền / Đất",
     match: ["đất nền", "đất nông nghiệp", "đất"],
     fields: [
-      { key: "landType", label: "Loại đất", type: "select", options: ["Đất thổ cư", "Đất ở đô thị", "Đất nền dự án", "Đất nông nghiệp", "Đất vườn", "Đất khác"], main: true },
+      { key: "landType", label: "Loại đất", type: "select", options: ["Đất thổ cư", "Đất ở đô thị", "Đất nền dự án", "Đất nông nghiệp", "Đất vườn", "Đất tái định cư", "Đất khác"], main: true, batBuoc: true },
       frontageField,
       depthField,
       roadField,

@@ -406,6 +406,10 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
   else if (!dsLoai.some((x) => chuanHoa(x) === chuanHoa(loaiHinh)))
     loi.push(`loai_hinh "${loaiHinh}" không có trong danh mục ${mucDich === "thue" ? "cho thuê" : "mua bán"}`);
   const loaiHinhChuan = dsLoai.find((x) => chuanHoa(x) === chuanHoa(loaiHinh)) ?? loaiHinh;
+  // LOẠI CON BẮT BUỘC cho căn hộ, đất (chủ dự án 29/10/2026) — cùng luật với form đăng tin (batBuoc trong listingSpec)
+  const oLoai = fieldsFor(loaiHinhChuan, mucDich).map((f) => f.key);
+  if (oLoai.includes("loaiCanho") && !lay(COT.loaiCanHo).trim()) loi.push("Thiếu loai_can_ho — căn hộ phải ghi loại con đúng tin gốc (vd Căn hộ chung cư)");
+  if (oLoai.includes("landType") && !lay(COT.loaiDat).trim()) loi.push("Thiếu loai_dat — đất phải ghi loại con đúng tin gốc (vd Đất thổ cư)");
 
   // Thiếu diện tích xây dựng KHÔNG báo: người bán không ghi thì không phải lỗi (chủ dự án 25/10/2026,
   // cảnh báo chỉ cho lỗi thật — CHUAN-TIN-DANG-SEO.md mục 5b).

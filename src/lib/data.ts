@@ -38,6 +38,8 @@ export type Listing = {
   /** Nhóm vị trí suy từ bề rộng đường vào: "lon" | "nho" | "kiet" — để so giá với
    *  đúng hạng đường, vì trong cùng một phường mặt tiền và kiệt lệch 2–3 lần. */
   viTri?: "lon" | "nho" | "kiet";
+  /** LOẠI CON người bán chọn (căn hộ: "Loại hình căn hộ" · đất: "Loại đất") — lịch sử giá so theo đúng loại con (29/10/2026). */
+  loaiCon?: string;
   /** Cùng chỗ đó gọi theo hệ CŨ — hiện ở dòng dưới, nhãn "Địa chỉ cũ". */
   locationCu?: string;
   // Số nhà + tên đường người đăng cho hiện (details.addressDetail) — dòng địa chỉ hệ mới trên thẻ (20/10/2026)

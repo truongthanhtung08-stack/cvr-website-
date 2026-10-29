@@ -1,43 +1,55 @@
 // ============================================================================
-// KIỂM LOGIC LỊCH SỬ GIÁ CẢ HỆ THỐNG (chủ dự án 29/10/2026: "số liệu phải logic! sửa cả hệ thống")
+// KIỂM LOGIC LỊCH SỬ GIÁ CẢ HỆ THỐNG (chủ dự án 29/10/2026: "số liệu phải logic! sửa cả hệ thống" · "đường giá phổ biến – khoảng
+// giá – giá hiện tại phải khớp và logic, chuẩn" · "cái nào không đúng chuẩn, không hiện")
 //   node scripts/kiem-logic-lich-su-gia.mjs
-// Chỉ ĐỌC. Mỗi tin đang hiện: dãy lịch sử giá web chọn (bậc dự án / đường / phường — đúng hàm chiSoChoTin của web)
-// so với giá/m² của chính tin (cùng mẫu số theo loại hình). Báo LỆCH khi giá tin nằm ngoài khoảng thấp–cao của quý
-// mới nhất trong dãy — dấu hiệu dãy không cùng phân khúc / vị trí với tin (vd Golden Bay 39,7 tr/m² so dãy cả phường
-// 57–108,8). Không tự ẩn, không tự sửa số: liệt kê để chủ dự án / Cowork xem.
+// Chỉ ĐỌC. Lấy số ĐÚNG như trang tin (số web khoCuaMinh + số nộp soNhapHopLe → chiSoChoTin) cho từng tin đang hiện, rồi soát:
+//   ① giá tin nằm trong khoảng thấp–cao của quý mới nhất · ② mỗi quý thấp ≤ phổ biến ≤ cao, không nhảy gấp đôi / còn nửa
+//   ③ đủ 5 quý liền (1 năm) · ④ cùng loại hình, cùng loại con (nếu dãy ghi loại con) · ⑤ đúng mẫu số.
+// Phải ra 0 tin SAI. Kèm bảng mỗi loại hình: số tin có biểu đồ / tổng — phần thiếu là việc Cowork lọc (danh sách còn thiếu).
 // ============================================================================
 import fs from "node:fs";
 import path from "node:path";
 import { createJiti } from "jiti";
 
 const ROOT = path.resolve(import.meta.dirname, "..").split(path.sep).join("/");
-const jiti = createJiti(import.meta.url, { alias: { "@": ROOT + "/src" }, jsx: true });
-const { chiSoChoTin, giaChoLichSu } = await jiti.import(ROOT + "/src/lib/chiSoGia.ts");
-const { getListings } = await jiti.import(ROOT + "/src/lib/listingsDb.ts");
 const env = Object.fromEntries(fs.readFileSync(ROOT + "/.env.local", "utf8").split(/\r?\n/).filter((l) => l.includes("=")).map((l) => [l.slice(0, l.indexOf("=")), l.slice(l.indexOf("=") + 1)]));
 for (const [k, v] of Object.entries(env)) process.env[k] ??= v;
+const jiti = createJiti(import.meta.url, { alias: { "@": ROOT + "/src" }, jsx: true });
+const { chiSoChoTin, giaChoLichSu, khoCuaMinh, soNhapHopLe, dayHopLogic, coDuLichSuGia, mauSoLichSu } = await jiti.import(ROOT + "/src/lib/chiSoGia.ts");
+const { getListings } = await jiti.import(ROOT + "/src/lib/listingsDb.ts");
 const H = { apikey: env.SUPABASE_SERVICE_ROLE_KEY, Authorization: "Bearer " + env.SUPABASE_SERVICE_ROLE_KEY };
 const [sc] = await (await fetch(env.NEXT_PUBLIC_SUPABASE_URL + "/rest/v1/site_content?select=data&key=eq.chi_so_gia", { headers: H })).json();
+const nhap = soNhapHopLe(sc?.data?.items);
 
 const tin = await getListings();
 const tr = (v) => (v / 1e6).toLocaleString("vi-VN", { maximumFractionDigits: 1 });
-let coDay = 0, lech = 0;
-const dong = [];
+const chuan = (s) => (s ?? "").normalize("NFC").toLowerCase().trim();
+const kho = new Map();
+const bang = {};
+const sai = [];
+let coBieuDo = 0;
 for (const l of tin) {
-  const d = chiSoChoTin(l, sc.data, { duAn: l.projectName ?? null, diaChi: l.diaChiSo ?? l.location ?? "", giaTin: giaChoLichSu(l) });
+  const muc = l.purpose === "thue" ? "thue" : "ban";
+  const k = `${l.diaGioi?.province}|${l.type}|${muc}`;
+  if (!kho.has(k)) kho.set(k, await khoCuaMinh(l.diaGioi?.province ?? "", l.type, muc));
+  const g = giaChoLichSu(l);
+  const d = chiSoChoTin(l, { items: [...kho.get(k), ...nhap] }, { duAn: l.projectName ?? null, diaChi: l.diaChiSo ?? l.location ?? "", giaTin: g });
+  const nhom = `${muc === "thue" ? "Thuê" : "Bán"} · ${l.type}`;
+  bang[nhom] ??= [0, 0];
+  bang[nhom][0]++;
   if (!d) continue;
-  coDay++;
-  const m = d.moc?.at?.(-1);
-  // Thuê: dãy tính TỔNG tiền/tháng (không mẫu số, chốt 23/10/2026) → so thẳng giá tin; bán: chia đúng mẫu số loại hình
-  const dt = !d.mauSo ? 1 : d.mauSo === "san" ? (l.builtAreaM2 ?? null) : (l.areaM2 ?? null);
-  if (!m || !l.priceVnd || !dt) continue;
-  const g = l.priceVnd / dt;
-  const thap = m.thap ?? m.giaM2, cao = m.cao ?? m.giaM2;
-  const bac = d.duAn ? "dự án" : d.duong ? "đường" : "phường";
-  if (g < thap * 0.97 || g > cao * 1.03) { const tl = g < thap ? g / thap : g / cao;
-    lech++;
-    dong.push(`${tl.toFixed(2)} · ${l.specs?.loaiCanho ?? ""} · ${l.id.slice(0, 8)} · ${l.type} · ${(l.title ?? "").slice(0, 42)} | tin ${tr(g)} ${d.mauSo ? "tr/m²" : "tr/tháng"} | dãy ${bac} "${d.duAn ?? d.duong ?? d.khuVuc}" (${d.loaiHinh}) ${m.quy}: ${tr(m.giaM2)} [${tr(thap)}–${tr(cao)}]`);
-  }
+  bang[nhom][1]++;
+  coBieuDo++;
+  const m = d.moc[d.moc.length - 1];
+  const loi = [];
+  if (g && (g < (m.thap ?? m.giaM2) || g > (m.cao ?? m.giaM2))) loi.push(`giá tin ${tr(g)} ngoài khoảng [${tr(m.thap ?? m.giaM2)}–${tr(m.cao ?? m.giaM2)}]`);
+  if (!dayHopLogic(d)) loi.push("dãy sai logic (thấp/phổ biến/cao hoặc nhảy bất thường)");
+  if (!coDuLichSuGia(d)) loi.push("chưa đủ 5 quý liền");
+  if (chuan(d.loaiHinh) !== chuan(l.type) && !d.duAn) loi.push(`khác loại hình (${d.loaiHinh})`);
+  if (d.loaiCon && chuan(d.loaiCon) !== chuan(l.loaiCon)) loi.push(`khác loại con (${d.loaiCon} ≠ ${l.loaiCon ?? "trống"})`);
+  if (d.mauSo !== mauSoLichSu(l.type, muc)) loi.push("sai mẫu số");
+  if (loi.length) sai.push(`${l.id.slice(0, 8)} · ${l.type} · ${(l.title ?? "").slice(0, 40)} → ${loi.join("; ")}`);
 }
-console.log(dong.sort().join("\n"));
-console.log(`\n${tin.length} tin đang hiện · ${coDay} tin có lịch sử giá · ${lech} tin LỆCH (giá tin ngoài khoảng của dãy)`);
+console.log(Object.entries(bang).sort().map(([k, [a, b]]) => `${k}: ${b}/${a} tin có biểu đồ`).join("\n"));
+if (sai.length) console.log("\nSAI:\n" + sai.join("\n"));
+console.log(`\n${tin.length} tin đang hiện · ${coBieuDo} tin có biểu đồ · ${sai.length} tin SAI`);

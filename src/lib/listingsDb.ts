@@ -249,6 +249,7 @@ function rowToListing(r: Row): Listing {
       const v = viTriTuDuongVao(r.details?.specs?.roadWidth) ?? viTriTuAccess(r.details?.specs?.access);
       return v ? { viTri: v } : {};
     })(),
+    ...((r.details?.specs?.loaiCanho || r.details?.specs?.landType) ? { loaiCon: (r.details?.specs?.loaiCanho || r.details?.specs?.landType)!.trim() } : {}),
     ...(r.beds != null ? { beds: r.beds } : {}),
     ...(r.baths != null ? { baths: r.baths } : {}),
     // ĐỊA CHỈ HIỂN THỊ THEO HỆ MỚI — áp cho MỌI tin, kể cả tin đã đăng từ trước.
@@ -467,7 +468,7 @@ export async function getListingsThe(): Promise<Listing[]> {
     // FeaturedListings, tinNoiBat) — vùng dò tìm, địa giới, mã người, số thô, hạn tin.
     const {
       desc: _desc, searchText: _searchText, diaChiTim: _dct, diaGioi: _dg, maNguoi: _mn, hetHanLuc: _hh,
-      builtAreaM2Uoc: _bu, hangTin: _ht, duong: _du,  priceVnd: _pv, areaM2: _am, builtAreaM2: _ba,
+      builtAreaM2Uoc: _bu, hangTin: _ht, duong: _du,  priceVnd: _pv, areaM2: _am, builtAreaM2: _ba, loaiCon: _lc,
       ...the
     } = l;
     // 20/10/2026: thẻ hiện 2 câu đầu mô tả (src/lib/trichMoTa.ts) → chỉ gửi đúng 2 câu đó (~150–250 ký tự), không gửi cả mô tả
@@ -574,15 +575,25 @@ function rowToDetail(r: Row): ListingFull {
   const TIEN_DAU = ["deposit", "billingCycle"], TIEN_SAU = ["elecPrice", "waterPrice", "phiDichVu"], DIEU_KIEN = ["moveIn", "minTerm"];
   const tatCa = [...chinh, ...dacDiem];
   const theoKhoa = (ks: string[]) => ks.map((k) => tatCa.find((f) => f.key === k)).filter((f): f is Field => Boolean(f));
+  // THỐNG NHẤT ĐƠN VỊ TIỀN (chủ dự án 29/10/2026, ảnh Sun Ponte: giá thuê "15 triệu/tháng" mà cọc "15.000.000 đ") → số tiền từ
+  // 1 triệu trở lên trong ô tiền đổi về triệu / tỷ như giá; số nhỏ (điện, nước theo kWh, m³) giữ nguyên.
+  const dvt = (v: string) =>
+    v.replace(/(\d{1,3}(?:\.\d{3})+|\d{7,})\s*(?:đồng|vnđ|vnd|đ)(?![\p{L}])/giu, (m, so: string) => {
+      const n = Number(so.split(".").join(""));
+      if (!(n >= 1_000_000)) return m;
+      return n >= 1e9
+        ? `${(n / 1e9).toLocaleString("vi-VN", { maximumFractionDigits: 3 })} tỷ`
+        : `${(n / 1e6).toLocaleString("vi-VN", { maximumFractionDigits: 2 })} triệu`;
+    });
   const tienDau = doc(theoKhoa(TIEN_DAU))
     // Theo tháng là mặc định của giá thuê — chỉ nói khi tin báo theo quý / năm
     .filter((s) => s.value !== "Theo tháng")
     .map((s) => ({
       label: s.label === "Tiền cọc" ? "Tiền đặt cọc" : s.label === "Kỳ báo giá" ? "Kỳ thanh toán" : s.label,
       // Tiền đặt cọc ghi số trơn ("7") = triệu đồng, cùng đơn vị giá thuê
-      value: s.label === "Tiền cọc" && /^\d+(,\d+)?$/.test(s.value) ? `${s.value} triệu` : s.value,
+      value: s.label === "Tiền cọc" && /^\d+(,\d+)?$/.test(s.value) ? `${s.value} triệu` : dvt(s.value),
     }));
-  const tienSau = doc(theoKhoa(TIEN_SAU));
+  const tienSau = doc(theoKhoa(TIEN_SAU)).map((s) => ({ ...s, value: dvt(s.value) }));
   const boRa = new Set([...TIEN_DAU, ...TIEN_SAU, ...DIEU_KIEN]);
   const specsChinh = doc([...chinh.filter((f) => !boRa.has(f.key)), ...theoKhoa(DIEU_KIEN)]);
   const specs = doc(dacDiem.filter((f) => !boRa.has(f.key)));
