@@ -156,8 +156,10 @@ function fmtNum(n: number, maxFrac = 1): string {
 function fmtPrice(v: number | null, purpose: Row["purpose"]): string {
   if (v == null) return "Thỏa thuận";
   // Cả "thue" lẫn "can-thue" đều là giá MỖI THÁNG — xem laTinThue().
-  if (laTinThue(purpose)) return `${fmtNum(v / 1e6)} triệu/tháng`;
-  return v >= 1e9 ? `${fmtNum(v / 1e9)} tỷ` : `${fmtNum(v / 1e6)} triệu`;
+  // GHI ĐÚNG SỐ KHÁCH GHI, KHÔNG LÀM TRÒN (chủ dự án 29/10/2026: 1,35 tỷ từng hiện "1,4 tỷ", 2,75 tỷ hiện "2,8 tỷ" — cả thẻ
+  // tin, trang tin lẫn tiêu đề Google). Số lẻ tối đa: tỷ 3 chữ số, triệu 2 chữ số; số tròn vẫn hiện gọn ("2,9 tỷ", "23 triệu").
+  if (laTinThue(purpose)) return `${fmtNum(v / 1e6, 2)} triệu/tháng`;
+  return v >= 1e9 ? `${fmtNum(v / 1e9, 3)} tỷ` : `${fmtNum(v / 1e6, 2)} triệu`;
 }
 
 // Gom MỌI TRƯỜNG đã nhập (ngoài tiêu đề/mô tả) thành một chuỗi để ô tìm kiếm dò

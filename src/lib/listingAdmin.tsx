@@ -172,7 +172,8 @@ export function listingStatusBadge(s: ListingStatus) {
 // Giá hiển thị trong bảng admin: bán "7,2 tỷ" · thuê "18 triệu/th" · null "Thỏa thuận"
 export function adminPriceText(v: number | null, purpose: ListingPurpose): string {
   if (v == null) return "Thỏa thuận";
-  const num = (n: number) => n.toLocaleString("vi-VN", { maximumFractionDigits: 1 });
-  if (purpose === "thue") return `${num(v / 1e6)} triệu/th`;
-  return v >= 1e9 ? `${num(v / 1e9)} tỷ` : `${num(v / 1e6)} triệu`;
+  // Đúng số khách ghi, không làm tròn (chủ dự án 29/10/2026 — như listingsDb fmtPrice)
+  const num = (n: number, le: number) => n.toLocaleString("vi-VN", { maximumFractionDigits: le });
+  if (purpose === "thue") return `${num(v / 1e6, 2)} triệu/th`;
+  return v >= 1e9 ? `${num(v / 1e9, 3)} tỷ` : `${num(v / 1e6, 2)} triệu`;
 }
