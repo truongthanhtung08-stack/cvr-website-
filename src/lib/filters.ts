@@ -19,7 +19,7 @@ type TypeGroup = { label: string; items: string[] };
 // Tên loại hình bên trong (items) KHÔNG đổi — tin cũ và tệp nhập CSV vẫn khớp.
 // MUA BÁN
 export const saleTypeGroups: TypeGroup[] = [
-  { label: "Căn hộ", items: ["Căn hộ", "Chung cư"] },
+  { label: "Căn hộ, chung cư", items: ["Căn hộ", "Chung cư"] }, // tên nhóm = tên cha trên menu (chủ dự án 29/10/2026)
   { label: "Nhà", items: ["Nhà riêng", "Nhà mặt phố", "Nhà biệt thự / Liền kề", "Shophouse / Nhà phố thương mại"] },
   { label: "Đất", items: ["Đất nền / Đất nền dự án", "Đất nông nghiệp"] },
   // "Trang trại / Khu nghỉ dưỡng" (D18) tách thành "Homestay / Farmstay" + "Khu nghỉ dưỡng" (chủ dự án 29/10/2026, D24)
@@ -30,7 +30,7 @@ export const saleTypeGroups: TypeGroup[] = [
 
 // CHO THUÊ
 export const rentTypeGroups: TypeGroup[] = [
-  { label: "Căn hộ", items: ["Căn hộ", "Chung cư", "Căn hộ dịch vụ"] },
+  { label: "Căn hộ, chung cư", items: ["Căn hộ", "Chung cư", "Căn hộ dịch vụ"] },
   { label: "Nhà", items: ["Nhà riêng", "Nhà mặt phố", "Nhà phố thương mại", "Biệt thự / Liền kề"] },
   { label: "Phòng trọ", items: ["Nhà trọ / Phòng trọ"] },
   { label: "Văn phòng, mặt bằng", items: ["Văn phòng", "Mặt bằng / Cửa hàng bán lẻ"] },
