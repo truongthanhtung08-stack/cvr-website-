@@ -1,5 +1,4 @@
 import { chuanTen } from "@/lib/locations";
-import { dungODienTichXayDung } from "@/lib/listingSpec";
 import { mauSoLichSu, veQuy, tenTinhChuan, tenPhuongChuan, coLichSuGia, type ChiSoKhuVuc } from "@/lib/chiSoGia";
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -43,9 +42,9 @@ export function dongConThieu(tin: TinCan[], kho: DongKho[], items: ChiSoKhuVuc[]
     const tinh = tenTinhChuan(t.province);
     const loai = (t.type ?? "").trim();
     if (!md || !tinh || !coLichSuGia(loai)) continue;
-    // BÁN NHÀ: web tính trên m² sàn, nguồn công bố tính trên diện tích tin (m² đất) —
-    // Cowork không có số cùng cách tính, nên không giao. Web tự tính dần từ tin đăng.
-    if (md === "ban" && dungODienTichXayDung(loai)) continue;
+    // BÁN NHÀ VẪN GIAO (29/10/2026): yêu cầu Cowork chốt 23/10 — làm NHÀ trước, giá ÷ TỔNG m² sàn ghi rõ (lọc tin rao có
+    // m² sàn, hệ số…); nguồn chỉ có m² đất thì Cowork không dùng. Trước đây bỏ hẳn bán nhà khỏi danh sách → 46/69 tin chưa có
+    // lịch sử giá là bán nhà mà Cowork không hề được giao.
     const phuong = tenPhuongChuan(tinh, t.ward);
     if (phuong) {
       can.set(k(tinh, phuong, "", loai, md), { tinh, phuong, duAn: "", duAnSlug: "", loai, md });
