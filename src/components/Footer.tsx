@@ -122,7 +122,10 @@ export default function Footer() {
   useEffect(() => {
     (async () => {
       // Đọc thẳng qua REST (không cần thư viện Supabase ~58 KB ở mọi trang) — cùng truy vấn như trước
-      const rows = await docRest<{ data: Partial<FooterData> | null }[]>("site_content?select=data&key=eq.footer&limit=1").catch(() => null);
+      const rows = await docRest<{ data: Partial<FooterData> | null }[]>(
+        "site_content?select=data&key=eq.footer&limit=1",
+        { cache: "no-store" },
+      ).catch(() => null);
       const d = rows?.[0]?.data ?? null;
       if (d) setF({
         ...FOOTER_DEFAULT, ...d,

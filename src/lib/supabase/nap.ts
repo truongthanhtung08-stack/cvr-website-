@@ -20,9 +20,9 @@ const KHOA_SB = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const dauSb = () => ({ apikey: KHOA_SB ?? "" });
 
 /** Đọc bảng qua REST, vd docRest("site_content?select=data&key=eq.footer"). Lỗi → null. */
-export async function docRest<T>(duongDan: string): Promise<T | null> {
+export async function docRest<T>(duongDan: string, options?: { cache?: RequestCache }): Promise<T | null> {
   if (!URL_SB || !KHOA_SB) return null;
-  const r = await fetch(`${URL_SB}/rest/v1/${duongDan}`, { headers: dauSb() });
+  const r = await fetch(`${URL_SB}/rest/v1/${duongDan}`, { headers: dauSb(), cache: options?.cache });
   return r.ok ? ((await r.json()) as T) : null;
 }
 
