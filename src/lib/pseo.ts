@@ -242,8 +242,8 @@ export function tieuDe(dk: DieuKien): string {
 // Không ghi tháng, không ghi nội thất; pháp lý một loại nhiều tin nhất (chỉ tin bán). Thiếu phần nào bỏ phần đó.
 // Dùng chung cho trang pSEO, trang tỉnh, trang loại hình (/mua-ban/<slug>, /cho-thue/<slug>). `dau` = tiêu đề trang
 // (có hay không có tháng đều được). Không có giá lẫn diện tích → null, nơi gọi giữ mô tả cũ.
-export function moTaSoLieu(dau: string, tin: Listing[], muc: Muc): string | null {
-  const so = soLieuTrang(tin, muc).split(" · ").filter((p) => p && !p.startsWith("Cập nhật"))
+export function moTaSoLieu(dau: string, tin: Listing[], muc: Muc, phoBien = false): string | null {
+  const so = soLieuTrang(tin, muc, phoBien).split(" · ").filter((p) => p && !p.startsWith("Cập nhật"))
     .map((p) => p.startsWith("Giá") ? p.replace(/^Giá( thuê)?: /, "giá ").replace(/^giá (.+) – (.+)$/, "giá từ $1 đến $2")
       : p.replace(/^Diện tích: /, "diện tích ").replace(/^diện tích (.+) – (.+)$/, "diện tích từ $1 đến $2"));
   if (!so.length) return null;
@@ -260,11 +260,12 @@ export function moTaSoLieu(dau: string, tin: Listing[], muc: Muc): string | null
 }
 export function moTa(dk: DieuKien, tin: Listing[] = []): string {
   // Trang phường: kèm tên quận cũ ngay sau tên phường ("Phường Hải Châu (quận Hải Châu cũ), Đà Nẵng") — 27/10/2026
-  const cu = dk.phuong ? tenCu(tin, dk.tinh.name) : "";
+  const cu = dk.phuong ? tenCu(tin, dk.tinh.name, dk.phuong) : "";
+  const pb = !giuSoCu(duongDan(dk));
   // chỉ kèm khi cả câu còn ≤ 160 ký tự (Google hiện trọn) — dài hơn thì giữ câu gốc
-  const coCu = cu && dk.phuong ? moTaSoLieu(tieuDe(dk).replace(dk.phuong, `${dk.phuong} (${cu})`), tin, dk.muc) : null;
+  const coCu = cu && dk.phuong ? moTaSoLieu(tieuDe(dk).replace(dk.phuong, `${dk.phuong} (${cu})`), tin, dk.muc, pb) : null;
   if (coCu && [...coCu].length <= 160) return coCu;
-  return moTaSoLieu(tieuDe(dk), tin, dk.muc)
+  return moTaSoLieu(tieuDe(dk), tin, dk.muc, pb)
     ?? `${tieuDe(dk)} — tin mới ${thangHienTai()}: giá, diện tích, vị trí, ảnh thật, liên hệ trực tiếp ${dk.muc === "thue" ? "người cho thuê" : "người bán"}.`;
 }
 
@@ -580,10 +581,19 @@ function khoang(min: number, max: number, dinhDang: (n: number) => string): stri
   const da = a.split(" "), db = b.split(" ");
   return da.length === 2 && db.length === 2 && da[1] === db[1] ? `${da[0]} – ${b}` : `${a} – ${b}`;
 }
-export function soLieuTrang(tin: Listing[], muc: Muc): string {
+// KHOẢNG PHỔ BIẾN (chuẩn SEO một trang, kế hoạch từ khoá 5.0A — anh chốt 29/10/2026 D4): ≥ 5 tin thì bỏ 10 % thấp nhất và 10 % cao nhất
+// để một tin lạ không kéo cả dòng (khung AI từng chép "30 – 350 m²"). Chữ giữ nguyên. Trang đã lên (TRANG_DONG_BANG) giữ cách tính cũ.
+/** Trang đã lên / đang top: giữ cách tính số cũ (CLAUDE.md 0D1 luật 5–6). */
+export const giuSoCu = (p: string) => TRANG_DONG_BANG.has(p) || TRANG_TOP.has(p);
+function phoBienCua(xs: number[]): number[] {
+  if (xs.length < 5) return xs;
+  const s = [...xs].sort((a, b) => a - b), bo = Math.max(1, Math.floor(s.length * 0.1));
+  return s.slice(bo, s.length - bo);
+}
+export function soLieuTrang(tin: Listing[], muc: Muc, phoBien = false): string {
   const thue = muc === "thue";
-  const gia = tin.map((l) => l.priceVnd ?? 0).filter((v) => v > 0);
-  const dt = tin.map((l) => l.areaM2 ?? 0).filter((v) => v > 0);
+  const giaGoc = tin.map((l) => l.priceVnd ?? 0).filter((v) => v > 0), dtGoc = tin.map((l) => l.areaM2 ?? 0).filter((v) => v > 0);
+  const gia = phoBien ? phoBienCua(giaGoc) : giaGoc, dt = phoBien ? phoBienCua(dtGoc) : dtGoc;
   const moiNhat = Math.max(0, ...tin.map((l) => new Date(l.bumpedAt ?? l.postedAt ?? 0).getTime() || 0));
   const phan: string[] = [];
   if (gia.length) phan.push(`${thue ? "Giá thuê" : "Giá"}: ${khoang(Math.min(...gia), Math.max(...gia), giaNgan)}${thue ? "/tháng" : ""}`);

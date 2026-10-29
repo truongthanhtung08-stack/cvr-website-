@@ -16,7 +16,7 @@ const DANH_MUC = [...saleCategories, ...nhomPseo("ban")];
 import { demTinTheoKhuVuc, khuVucTrongDiem, moTaKhuVuc, slugKhuVuc, tieuDeKhuVuc, timKhuVuc } from "@/lib/khuVuc";
 import { normalizeVi } from "@/lib/filters";
 import LienKetPseo from "@/components/LienKetPseo";
-import { TRANG_DONG_BANG, lienKetCho, lienKetLoaiHinh, moTaSoLieu } from "@/lib/pseo";
+import { TRANG_DONG_BANG, giuSoCu, lienKetCho, lienKetLoaiHinh, moTaSoLieu } from "@/lib/pseo";
 import { thangHienTai, tieuDeGoogle } from "@/lib/thang";
 
 // ============================================================================
@@ -55,7 +55,7 @@ export async function generateMetadata({ params }: { params: Promise<{ loai: str
     const title = `${c.title} ${thangHienTai()}`;
     // Mô tả có số liệu thật của các tin trong danh mục — câu chủ dự án duyệt 24/10/2026 (lib/pseo moTaSoLieu)
     const tinDm = tatCa.filter((l) => !l.banSao && ((l.purpose ?? "ban") === "thue" ? "thue" : "ban") === "ban" && c.types.includes(l.type));
-    const description = moTaSoLieu(c.title, tinDm, "ban") ?? moTaDu(c.desc);
+    const description = moTaSoLieu(c.title, tinDm, "ban", !giuSoCu(`/mua-ban/${loai}`)) ?? moTaDu(c.desc);
     return {
       title: tieuDeGoogle(title),
       description,
@@ -76,7 +76,7 @@ export async function generateMetadata({ params }: { params: Promise<{ loai: str
 
   const title = tieuDeKhuVuc("ban", kv.name);
   const tinTinh = listings.filter((l) => (l.purpose ?? "ban") === "ban" && normalizeVi(tinhCua(l.location)) === normalizeVi(kv.name));
-  const description = moTaSoLieu(title, tinTinh, "ban") ?? moTaKhuVuc("ban", kv.name, soTin); // câu duyệt 24/10/2026
+  const description = moTaSoLieu(title, tinTinh, "ban", !giuSoCu(`/mua-ban/${loai}`)) ?? moTaKhuVuc("ban", kv.name, soTin); // câu duyệt 24/10/2026
   return {
     title,
     description,
