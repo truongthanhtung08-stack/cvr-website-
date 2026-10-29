@@ -155,7 +155,7 @@ export const COT = {
   tangSo: "tang_so",                    // căn hộ ở tầng mấy
   // ── ĐẶC ĐIỂM PHÂN LOẠI — đúng ô người bán chọn ở tin gốc (chủ dự án 29/10/2026: "trang web đã cấu trúc rõ:
   //    loại hình + đặc điểm BĐS"). Chép NGUYÊN một lựa chọn của form (listingSpec.ts), để trống nếu tin gốc không ghi.
-  loaiCanHo: "loai_can_ho",             // Căn hộ: Căn hộ chung cư · Căn hộ dịch vụ · Studio · Officetel · Duplex · Penthouse…
+  loaiCanHo: "loai_can_ho",             // Căn hộ: Căn hộ cao cấp · Căn hộ dịch vụ · Studio… · Chung cư: Chung cư thương mại · Căn hộ tập thể · Nhà ở xã hội (listingSpec)
   loaiDat: "loai_dat",                  // Đất: Đất thổ cư · Đất ở đô thị · Đất nền dự án · Đất nông nghiệp · Đất vườn · Đất khác
   loiVao: "loi_vao",                    // Nhà riêng…: Mặt tiền đường · Kiệt / hẻm ô tô · Kiệt / hẻm ba gác · Kiệt / hẻm xe máy
   // ── ĐẶC ĐIỂM RIÊNG CỦA KHO · NHÀ XƯỞNG · BÃI (chủ yếu tin CHO THUÊ) ──────
@@ -408,7 +408,7 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
   const loaiHinhChuan = dsLoai.find((x) => chuanHoa(x) === chuanHoa(loaiHinh)) ?? loaiHinh;
   // LOẠI CON BẮT BUỘC cho căn hộ, đất (chủ dự án 29/10/2026) — chỉ áp đăng tin hàng loạt, form đăng tin giữ nguyên
   const oLoai = fieldsFor(loaiHinhChuan, mucDich).map((f) => f.key);
-  if (oLoai.includes("loaiCanho") && !lay(COT.loaiCanHo).trim()) loi.push("Thiếu loai_can_ho — căn hộ phải ghi loại con đúng tin gốc (vd Căn hộ chung cư)");
+  if (oLoai.includes("loaiCanho") && !lay(COT.loaiCanHo).trim()) loi.push("Thiếu loai_can_ho — căn hộ phải ghi loại con đúng tin gốc (vd Chung cư thương mại, Căn hộ cao cấp)");
   if (oLoai.includes("landType") && /^đất/i.test(loaiHinhChuan) && !lay(COT.loaiDat).trim()) loi.push("Thiếu loai_dat — đất phải ghi loại con đúng tin gốc (vd Đất thổ cư)");
 
   // Thiếu diện tích xây dựng KHÔNG báo: người bán không ghi thì không phải lỗi (chủ dự án 25/10/2026,

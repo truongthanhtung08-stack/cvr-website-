@@ -28,9 +28,13 @@ export const LOAI_HINH: [string, string[]][] = [
   ["Nhà mặt phố", ["nha mat pho", "mat pho", "mat tien"]],
   ["Biệt thự", ["biet thu", "villa", "lien ke", "song lap"]],
   ["Shophouse", ["shophouse", "nha pho thuong mai"]],
+  // Trang trại = đất nông nghiệp; homestay, farmstay và khu nghỉ dưỡng là BĐS nghỉ dưỡng (chủ dự án 29/10/2026, D24).
+  // Cụm dài thắng cụm ngắn của nhãn khác ("dat trang trai" ≠ Đất nền, "khu nghi duong" ≠ Condotel) — luật nhường ở timTuDien.
+  ["Đất nông nghiệp", ["dat nong nghiep", "dat trang trai", "trang trai", "dat vuon"]],
   ["Đất nền", ["dat nen", "dat du an", "lo dat", "dat tho cu", "dat"]],
-  ["Trang trại", ["trang trai", "farmstay", "khu nghi duong"]],
-  ["Condotel", ["condotel", "nghi duong", "resort"]],
+  ["Homestay", ["homestay", "home stay", "farmstay", "farm stay"]],
+  ["Khu nghỉ dưỡng", ["khu nghi duong", "resort"]],
+  ["Condotel", ["condotel", "nghi duong"]],
   ["Kho xưởng", ["kho xuong", "nha xuong", "kho bai", "nha kho"]],
   ["Văn phòng", ["van phong"]],
   // MẶT BẰNG là loại riêng ("Mặt bằng / Cửa hàng bán lẻ"), không phải văn phòng (rà 21/10/2026: "mặt bằng kinh doanh" ra trang văn phòng)
@@ -327,13 +331,15 @@ export type ParsedQuery = {
   highlight: string[];  // các cụm chữ NGUYÊN BẢN để bôi đậm trong kết quả
 };
 
-function timTuDien(nq: string, dict: [string, string[]][]): string[] {
-  const found: string[] = [];
+function timTuDien(nq: string, dict: [string, string[]][], nhuong = false): string[] {
   const cau = ` ${nq.replace(/[^a-z0-9]+/g, " ")} `;
-  for (const [nhan, keys] of dict) {
-    if (keys.some((k) => cau.includes(` ${k} `))) found.push(nhan);
-  }
-  return found;
+  const trung = dict.map(([nhan, keys]) => ({ nhan, k: keys.filter((k) => cau.includes(` ${k} `)) })).filter((x) => x.k.length);
+  // Cụm ngắn nằm trong cụm dài của nhãn khác thì nhường ("khu nghi duong" → Khu nghỉ dưỡng, không thêm Condotel vì "nghi duong";
+  // "dat trang trai" → Đất nông nghiệp, không thêm Đất nền vì "dat") — 29/10/2026
+  const tuNoi = (ngan: string, dai: string) => dai !== ngan && ` ${dai} `.includes(` ${ngan} `);
+  return trung
+    .filter((x) => !nhuong || !x.k.every((k) => trung.some((y) => y !== x && y.k.some((d) => tuNoi(k, d)))))
+    .map((x) => x.nhan);
 }
 
 // "3 phòng ngủ" / "3pn" / "3 pn" → 3
@@ -428,7 +434,7 @@ function phanTichCau(raw: string): ParsedQuery {
   // "nhà đất" / "bất động sản" là cách nói CHUNG, không phải loại hình — phải bỏ
   // trước khi dò, nếu không chữ "đất" trong "nhà đất" bị hiểu thành "Đất nền".
   // "2 mặt tiền" / "hai mặt tiền" là đặc điểm (căn góc), không phải loại Nhà mặt phố
-  const types = timTuDien(nq.replace(/nha dat|bat dong san|bds/g, " ").replace(/\b(\d+|hai|ba) mat tien\b/g, " "), LOAI_HINH);
+  const types = timTuDien(nq.replace(/nha dat|bat dong san|bds/g, " ").replace(/\b(\d+|hai|ba) mat tien\b/g, " "), LOAI_HINH, true);
   const places = timTuDien(nq, TINH);
   if (!places.length) places.push(...tinhGanDung(nq));
   const features = timTuDien(nq, DAC_DIEM);

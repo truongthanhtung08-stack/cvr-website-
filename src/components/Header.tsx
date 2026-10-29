@@ -7,7 +7,7 @@ import BackBar from "@/components/BackBar";
 import { resetHomeIfOnHome } from "@/components/HomeExpand";
 import { TIEN_ICH } from "@/lib/packages";
 import BieuTuong, { type TenBieuTuong } from "@/components/BieuTuong";
-import { rentCategories, saleCategories } from "@/lib/categories";
+import { cayLoaiHinh } from "@/lib/categories";
 import { useSaved } from "@/lib/useSaved";
 import { useAuth, displayName, anhDaiDien, signOut } from "@/lib/useAuth";
 import AnhDaiDien from "@/components/AnhDaiDien";
@@ -23,8 +23,17 @@ type NavItem = { label: string; href: string; children?: NavChild[]; icon?: TenB
 // Loại hình BĐS trong menu — lấy từ NGUỒN DUY NHẤT `src/lib/categories.ts`,
 // cũng chính là nguồn sinh ra các trang danh mục thật + sitemap. Nhờ vậy menu
 // không bao giờ trỏ vào đường dẫn không có trang (trước đây 29 link trả 404).
-const loaiHinhBan: NavChild[] = saleCategories.map((c) => ({ label: c.label, href: `/mua-ban/${c.slug}` }));
-const loaiHinhThue: NavChild[] = rentCategories.map((c) => ({ label: c.label, href: `/cho-thue/${c.slug}` }));
+// Cây CHA – CON (chủ dự án 29/10/2026, D24): bấm nhóm cha → mọi tin của nhóm · bấm loại con → đúng loại. `children` luôn là
+// mảng (kể cả rỗng) để nhóm một trang (Căn hộ, Phòng trọ…) vẫn vẽ như nhóm, cùng khuôn với các nhóm khác.
+const cayMenu = (muc: "ban" | "thue"): NavChild[] => {
+  const goc = muc === "thue" ? "/cho-thue" : "/mua-ban";
+  return cayLoaiHinh(muc).map((n) => ({
+    label: n.label, href: `${goc}/${n.cha.slug}`,
+    children: n.con.map((c) => ({ label: c.label, href: `${goc}/${c.slug}` })),
+  }));
+};
+const loaiHinhBan: NavChild[] = cayMenu("ban");
+const loaiHinhThue: NavChild[] = cayMenu("thue");
 // MENU DỰ ÁN (chủ dự án 16/10/2026): Dự án nổi bật (có gói) tách khỏi Tra cứu dự án toàn quốc.
 // Gọn (chủ dự án 22/10/2026): một trang Dự án duy nhất (dự án có gói đứng đầu) · Theo khu vực · Theo loại hình.
 // Dự án: KHÔNG menu con (chủ dự án 25/10/2026) — bấm là vào thẳng trang Dự án, lọc khu vực / loại hình ngay trong trang.
@@ -121,8 +130,9 @@ function NavLink({ item }: { item: NavItem }) {
   }
 
   // Mục có NHÓM con (hiện chỉ "Tiện ích") → panel rộng 2 cột kiểu mega-menu Apple.
-  const groups = item.children.filter((c) => c.children?.length);
-  const singles = item.children.filter((c) => !c.children?.length);
+  // Nhóm = mục có `children` (kể cả mảng rỗng — nhóm một trang của cây loại hình)
+  const groups = item.children.filter((c) => c.children);
+  const singles = item.children.filter((c) => !c.children);
 
   return (
     <div className="group relative">
@@ -147,12 +157,14 @@ function NavLink({ item }: { item: NavItem }) {
               <span className="text-sm font-semibold text-cvr-gold-ink">→</span>
             </Link>
           ))}
-          <div className="grid grid-cols-2 gap-x-4">
+          {/* Cây loại hình CHA – CON (29/10/2026, D24): xếp cột liền (columns) để nhóm ngắn không chừa khoảng trống ·
+              CHA chữ đậm, to hơn · CON lùi vào sau vạch dọc — nhìn là biết cấp */}
+          <div className="columns-2 gap-x-6">
             {groups.map((g) => (
-              <div key={g.label}>
+              <div key={g.label} className="mb-1.5 break-inside-avoid">
                 {g.href ? (
                   // Tên nhóm bấm được (menu Báo giá: tên gói → cả gói, 22/10/2026)
-                  <Link href={g.href} className="block rounded-lg px-3.5 pb-1.5 pt-3 text-[14px] font-semibold text-cvr-ink transition-colors hover:text-cvr-gold-ink">
+                  <Link href={g.href} className="block rounded-lg px-3.5 pb-1.5 pt-3 text-[15px] font-semibold text-cvr-ink transition-colors hover:text-cvr-gold-ink">
                     {g.label}
                   </Link>
                 ) : (
@@ -160,9 +172,13 @@ function NavLink({ item }: { item: NavItem }) {
                     {g.label}
                   </p>
                 )}
-                {g.children?.map((c) => (
-                  <DropdownItem key={c.label} href={c.href ?? "#"} label={c.label} />
-                ))}
+                {g.children?.length ? (
+                  <div className="ml-3.5 border-l border-cvr-line pl-1.5">
+                    {g.children.map((c) => (
+                      <DropdownItem key={c.label} href={c.href ?? "#"} label={c.label} />
+                    ))}
+                  </div>
+                ) : null}
               </div>
             ))}
           </div>
@@ -402,7 +418,7 @@ function MobileMenu({
                             </p>
                           )}
                           {child.children?.length ? (
-                            <div className="mt-2.5 space-y-3.5 pl-3.5">
+                            <div className="mt-2.5 space-y-3.5 border-l border-white/15 pl-3.5">
                               {child.children.map((grandChild) => (
                                 <Link
                                   key={grandChild.label}
