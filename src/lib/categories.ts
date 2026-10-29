@@ -235,13 +235,15 @@ export const projectCategories: Category[] = [
 // phủ đủ nhóm · con = các trang loại còn lại của nhóm. Trang loại thuộc nhóm chứa loại hình ĐẦU TIÊN của nó (Biệt thự, liền kề
 // có cả villa biển → vẫn thuộc Nhà). Thêm loại / nhóm ở filters.ts + categories.ts là menu tự đủ.
 export type NhanhMenu = { label: string; cha: Category; con: Category[] };
+// Tên cha trên menu khác tên nhóm của bộ lọc (tên nhóm "Căn hộ" là khoá so ở locTuCau.ts, trang chủ — không đổi ở filters.ts)
+const TEN_CHA_MENU: Record<string, string> = { "Căn hộ": "Căn hộ, chung cư" }; // chủ dự án 29/10/2026
 export function cayLoaiHinh(muc: "ban" | "thue"): NhanhMenu[] {
   const ds = muc === "thue" ? rentCategories : saleCategories;
   return typeGroupsFor(muc).flatMap((g) => {
     const cats = ds.filter((c) => g.items.includes(c.types[0]));
     const cha = nhomPseo(muc).find((n) => n.label === g.label) ?? cats.find((c) => g.items.every((t) => c.types.includes(t))) ?? cats[0];
     if (!cha) return [];
-    return [{ label: g.label === "Khác" ? cha.label : g.label, cha, con: cats.filter((c) => c !== cha) }];
+    return [{ label: TEN_CHA_MENU[g.label] ?? (g.label === "Khác" ? cha.label : g.label), cha, con: cats.filter((c) => c !== cha) }];
   });
 }
 
