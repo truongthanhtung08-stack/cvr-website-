@@ -324,6 +324,37 @@ function coDuong(diaChi: string, duong: string): boolean {
 // Nhóm căn hộ (mục cha "Căn hộ") — chỉ dùng để khớp dãy CÙNG DỰ ÁN (29/10/2026)
 const NHOM_CAN_HO = new Set(["Căn hộ", "Chung cư", "Căn hộ chung cư", "Căn hộ dịch vụ", "Condotel"].map((s) => chuanTen(s)));
 
+// NGUỒN SỐ LIỆU (chủ dự án 29/10/2026: "lấy web! thiếu thì lọc! lọc thì phải CHUẨN!"): cùng một dãy (tỉnh · phường/dự án/đường ·
+// loại hình · bán/thuê · mẫu số · vị trí) có cả số của web (tin đăng trên Coastal Land, kể cả tin hết hạn trong tháng) lẫn số Cowork
+// lọc → quý nào web có số thì lấy số web, quý web chưa có thì lấy số lọc.
+const NGUON_WEB = "tin đăng trên Coastal Land";
+function ghepNguon(ds: ChiSoKhuVuc[]): ChiSoKhuVuc[] {
+  const khoa = (x: ChiSoKhuVuc) =>
+    [x.tinh, x.khuVuc ?? "", x.duAn ?? "", x.duong ?? "", x.loaiHinh ?? ""].map((s) => chuanTen(s)).concat([x.mucDich ?? "ban", x.mauSo ?? "", x.viTri ?? ""]).join("|");
+  const web = new Map(ds.filter((x) => x.nguon === NGUON_WEB).map((x) => [khoa(x), x]));
+  const daGhep = new Set<string>();
+  const ra = ds.map((x) => {
+    const w = x.nguon === NGUON_WEB ? undefined : web.get(khoa(x));
+    if (!w) return x;
+    daGhep.add(khoa(x));
+    const theoQuy = new Map(x.moc.map((m) => [m.quy, m]));
+    for (const m of w.moc) theoQuy.set(m.quy, m);
+    return { ...x, moc: [...theoQuy.values()].sort((a, b) => a.quy.localeCompare(b.quy)) };
+  });
+  return ra.filter((x) => !(x.nguon === NGUON_WEB && daGhep.has(khoa(x))));
+}
+
+/** SỐ BẤT THƯỜNG, SAI LOGIC THÌ KHÔNG HIỆN (chủ dự án 29/10/2026): mỗi quý thấp ≤ phổ biến ≤ cao; hai quý liền nhau không đổi
+ *  gấp đôi / còn một nửa (cùng ngưỡng với cửa nộp số liệu). */
+export function dayHopLogic(x: ChiSoKhuVuc): boolean {
+  const moc = x.moc.filter((m) => m.giaM2 > 0);
+  return moc.every((m, i) => {
+    if ((m.thap ?? m.giaM2) <= 0 || (m.thap ?? m.giaM2) > m.giaM2 || (m.cao ?? m.giaM2) < m.giaM2) return false;
+    const ty = i ? m.giaM2 / moc[i - 1].giaM2 : 1;
+    return ty < 2 && ty > 0.5;
+  });
+}
+
 export function chiSoChoTin(
   tin: Listing,
   data: ChiSoGiaData | null,
@@ -340,7 +371,7 @@ export function chiSoChoTin(
   if (!tinh || !coLichSuGia(tin.type)) return null;
 
   // Điều kiện chung của mọi bậc (sau khi đưa mọi dãy về theo quý).
-  const hop = data.items.map(veQuy).filter(
+  const hop = ghepNguon(data.items.map(veQuy)).filter(
     (x) =>
       chuanTen(x.tinh) === tinh &&
       (x.mucDich ?? "ban") === mucDich &&
@@ -351,6 +382,7 @@ export function chiSoChoTin(
       // Đúng mẫu số của loại hình; thuê tính tổng tiền/tháng thì dãy không có mẫu số (23/10/2026)
       x.mauSo === mau &&
       !x.viTri && // cùng phân khúc + cùng vị trí; không chia nhỏ theo bề rộng đường
+      dayHopLogic(x) &&
       coDuLichSuGia(x),
   );
 

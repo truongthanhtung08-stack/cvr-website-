@@ -31,7 +31,7 @@ export async function GET(req: Request) {
   }
   const kho: DongKho[] = [];
   for (let tu = 0; ; tu += 1000) {
-    const { data } = await admin.from("gia_khu_vuc_thang").select("thang,tinh,phuong,du_an,loai_hinh,muc_dich").range(tu, tu + 999);
+    const { data } = await admin.from("gia_khu_vuc_thang").select("thang,tinh,phuong,du_an,loai_hinh,muc_dich,so_mau").range(tu, tu + 999);
     if (!data?.length) break;
     kho.push(...(data as DongKho[]));
     if (data.length < 1000) break;
