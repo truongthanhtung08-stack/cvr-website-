@@ -223,6 +223,20 @@ export default function MaQrThanhToan({ don, onHuy, onXong }: { don: DonQr; onHu
                 key={n.appId}
                 href={n.tuDien ? linkVietQr(n.appId) : n.href}
                 {...(mayTinh ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                // App không nhận đơn (VCB, Techcombank…, chủ dự án 29/10/2026 — Android lẫn iPhone): nhấn logo → lưu ảnh mã QR vào
+                // máy rồi mở app; trong app khách bấm QR → chọn ảnh là có sẵn tài khoản, số tiền, nội dung.
+                // Android: tải thẳng ảnh rồi để liên kết mở app. iPhone: bảng chia sẻ "Lưu hình ảnh" (Safari chỉ lưu vào Ảnh qua đó) → xong mới mở app.
+                onClick={!mayTinh && !n.tuDien && anh ? (e) => {
+                  if (n.href.startsWith("intent:")) {
+                    const lk = document.createElement("a");
+                    lk.href = anh;
+                    lk.download = `coastal-land-${don.orderCode}.png`;
+                    lk.click();
+                    return;
+                  }
+                  e.preventDefault();
+                  void luuMa().finally(() => { window.location.href = n.href; });
+                } : undefined}
                 className="flex flex-col items-center gap-1 rounded-lg border border-cvr-line p-2 text-center hover:border-cvr-ink active:bg-cvr-surface"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
