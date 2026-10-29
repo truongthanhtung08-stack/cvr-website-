@@ -112,14 +112,18 @@ export function giaTheoNhom(dk: DieuKien, tin: Listing[]): GiaNhom | null {
   const tong = giaNhom(tin, thue);
   const thang = thangHienTai(), thueChu = thue ? "thuê " : "";
   const duAn = nhomTheo(tin, (l) => l.projectName?.replace(TINH_DUOI, ""), thue);
-  const khuVuc = dk.phuong || dk.duong ? [] : nhomTheo(tin, (l) => phuongCuaTin(l) || undefined, thue);
+  // Tên khu vực kèm tên cũ (29/10/2026, chủ dự án: mọi chỗ có địa chỉ đồng bộ hệ cũ và mới — khách gõ cách nào cũng ra)
+  const khuVuc = (dk.phuong || dk.duong ? [] : nhomTheo(tin, (l) => phuongCuaTin(l) || undefined, thue)).map((x) => {
+    const c = tenCu(tin.filter((l) => phuongCuaTin(l) === x.ten), dk.tinh.name, x.ten);
+    return c ? { ...x, ten: `${x.ten} (${c})` } : x;
+  });
   // Giá theo khu vực (khuôn khung AI): mọi khu vực có tin, nhiều tin trước; ≥ 2 khu vực mới hiện
   const theoPhuong = new Map<string, Listing[]>();
   // Trang đường: không chia khu vực. Trang phường / nhóm một khu vực: một mục duy nhất (27/10/2026 — vẫn có dự án, giá, phòng ngủ)
   if (!dk.duong) for (const l of tin) { const p = phuongCuaTin(l); if (p) theoPhuong.set(p, [...(theoPhuong.get(p) ?? []), l]); }
   const khuVucGia = [...theoPhuong.entries()].sort((a, b) => b[1].length - a[1].length).map(([ten, xs]) => ({
     ten,
-    cu: tenCu(xs, dk.tinh.name),
+    cu: tenCu(xs, dk.tinh.name, ten),
     duAn: [...new Set(xs.map((l) => l.projectName?.replace(TINH_DUOI, "").trim()).filter((x): x is string => !!x))],
     gia: giaKhuVuc(xs, thue),
     phongNgu: giaTheoPhongNgu(xs, thue),
@@ -155,7 +159,7 @@ export function GiaTheoNhomPseo({ g, lienKet, coTrangGia = false, cu = false }: 
         {g.tongKV && g.khuVucGia.length >= 2 && <p className="mt-3 text-[15px] leading-relaxed text-cvr-muted">{g.tongKV}</p>}
         {g.khuVucGia.map((k) => (
           <div key={k.ten} className="mt-4">
-            {g.khuVucGia.length >= 2 && <h3 className="text-[16px] font-semibold text-cvr-ink">{k.ten}{k.cu ? ` (${k.cu})` : ""}</h3>}
+            {(g.khuVucGia.length >= 2 || k.cu) && <h3 className="text-[16px] font-semibold text-cvr-ink">{k.ten}{k.cu ? ` (${k.cu})` : ""}</h3>}
             {k.duAn.length > 0 && <p className="mt-1 text-[15px] leading-relaxed text-cvr-muted">Dự án: {k.duAn.join(", ")}</p>}
             <p className="mt-0.5 text-[15px] leading-relaxed text-cvr-muted">{k.gia}</p>
             {k.phongNgu && <p className="mt-0.5 text-[15px] leading-relaxed text-cvr-muted">{k.phongNgu}</p>}

@@ -2,7 +2,7 @@ import type { Listing } from "@/lib/data";
 import { findCategory, nhomPseo, rentCategories, saleCategories, type Category } from "@/lib/categories";
 import { khuVucList, slugKhuVuc, timKhuVuc, type KhuVuc } from "@/lib/khuVuc";
 import { normalizeVi, type Filters } from "@/lib/filters";
-import { newProvinceOf, phuongMoiCuaQuan } from "@/lib/locations";
+import { choCuCua, newProvinceOf, phuongMoiCuaQuan } from "@/lib/locations";
 import { daCoDiaDanh, khiCoDiaDanh } from "@/lib/diaDanhNguon";
 
 // ============================================================================
@@ -62,13 +62,16 @@ export const CAP_CU: Record<string, string> = {
   "Phú Xuân": "quận", "Thuận Hóa": "quận", "Nha Trang": "thành phố", "Cam Ranh": "thành phố", "Quy Nhơn": "thành phố",
   "Đà Lạt": "thành phố", "Phan Thiết": "thành phố", "Hội An": "thành phố", "Tam Kỳ": "thành phố", "Đại Lộc": "huyện",
 };
-export function tenCu(xs: Listing[], tinh: string): string {
+// Tên cũ lấy từ địa chỉ cũ khách ghi; khách không ghi → tra BẢNG SÁP NHẬP chính thức theo phường mới (29/10/2026, chủ dự án:
+// pSEO tự hiện cả tên mới lẫn tên cũ để khách gõ cách nào cũng ra). Phường mới gộp từ nhiều quận cũ → lấy quận góp nhiều phường nhất.
+export function tenCu(xs: Listing[], tinh: string, phuong = ""): string {
   const dem = new Map<string, number>();
   for (const l of xs) {
     const p = (l.locationCu ?? "").split(",").map((s) => s.trim()).filter(Boolean);
     const q = p.length >= 3 ? p[p.length - 2] : "";
     if (q && q !== tinh) dem.set(q, (dem.get(q) ?? 0) + 1);
   }
+  if (!dem.size && phuong) for (const c of choCuCua(tinh, phuong)) if (c.quan && c.quan !== tinh) dem.set(c.quan, (dem.get(c.quan) ?? 0) + 1);
   const q = [...dem.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
   return q ? `${CAP_CU[q] ? `${CAP_CU[q]} ` : ""}${q} cũ` : "";
 }

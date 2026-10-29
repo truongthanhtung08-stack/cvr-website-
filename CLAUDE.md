@@ -439,7 +439,9 @@ Buộc phải đụng vào vì lý do kỹ thuật → **DỪNG, HỎI TRƯỚC.
 > 2. Mục đích + loại hình (chữ người gõ nhiều nhất) + đặc điểm + khu vực + mức giá + tháng/năm; từ khoá dài chứa từ khoá ngắn.
 > 3. Cùng nghĩa (có/không dấu, viết liền, đảo thứ tự) = một nút, một trang; nhưng ĐO RIÊNG từng cách gõ; top 10 chỉ đếm dạng đúng chính tả.
 > 4. Sửa từ GỐC — 4 luật dùng chung, không vá từng trang: đặt chữ (`categories.ts` `tuKhoa`) · số liệu (`soLieuTrang`) · nối trang · giao tin.
-> 5. Làm hết; trang chưa đạt cổng không lên; trang đã lên (`TRANG_DONG_BANG`) không sửa.
+> 5. Làm hết; trang chưa đạt cổng không lên; trang đã lên (`TRANG_DONG_BANG`) không sửa — trừ luật 8.
+> 7. **Anh duyệt gì → ghi ngay** vào `chi-tiet\yeu-cau-chu-du-an.md` mục 0; trước khi hỏi anh, tra ở đó — đã có thì làm, không hỏi lại (29/10).
+> 8. **Cùng loại hình = một trang** (căn hộ / chung cư… gõ cách nào cũng ra) · **mọi chỗ có địa chỉ đồng bộ hệ cũ + mới**, kể cả trang đã lên (`tenCu` tra bảng sáp nhập khi tin không ghi địa chỉ cũ) (29/10).
 > 6. ⛔ **TRANG ĐÃ LÊN TOP = MẪU, KHÔNG ĐỤNG** (chủ dự án 28/10/2026): lấy trang đang top làm VÍ DỤ cho các trang chưa lên (cách đặt tiêu đề,
 >    H1, mô tả, khối số liệu, hỏi đáp, nối trang) — chép CÁCH LÀM sang trang khác, KHÔNG sửa chính trang top. Trước khi sửa trang nào:
 >    tra cột "Hạng tốt nhất" (trang tính Cụm) + "Coastal Land: hạng · trang hiện" (Đo theo cách gõ) trong `HE-THONG-TU-KHOA.xlsx`; hạng ≤ 10
