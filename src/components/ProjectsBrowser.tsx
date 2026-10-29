@@ -243,6 +243,12 @@ export default function ProjectsBrowser({
   const current = Math.min(page, totalPages);
   const pageItems = visible.slice((current - 1) * PER_PAGE, current * PER_PAGE);
   const trangTraCuu = traCuuLoc.slice((current - 1) * PER_PAGE, current * PER_PAGE);
+  // Dự án nổi bật: hàng trượt 8 dự án; "Xem thêm" → lưới theo trang (đổi lọc → về hàng trượt)
+  const NOI_BAT_HANG = 8;
+  const [moNoiBat, setMoNoiBat] = useState(false);
+  const [trangNoiBat, setTrangNoiBat] = useState(1);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { setMoNoiBat(false); setTrangNoiBat(1); }, [q, status, province, type]);
 
   // Panel chọn 1 giá trị trong dropdown (không in số dự án — chủ dự án 09/10/2026)
   const optionList = (
@@ -298,6 +304,49 @@ export default function ProjectsBrowser({
         {({ close }) => optionList(statusCounts, status, setStatus, close)}
       </FilterDropdown>
     </FilterDropdownGroup>
+  );
+
+  // Thẻ Dự án nổi bật trong hàng trượt (trang /du-an): NỘI DUNG Y NHƯ thẻ ngang bên dưới (tình trạng · tên · giá · địa chỉ ·
+  // loại hình + giới thiệu · chủ đầu tư) — chủ dự án 29/10/2026 "nội dung như hiện tại"; chỉ xếp ảnh trên, chữ dưới.
+  const theNoiBat = (p: Project) => (
+    <Link
+      href={`/du-an/${p.slug}`}
+      className="card-lux group flex h-full flex-col overflow-hidden rounded-none border border-cvr-line bg-white shadow-lux shadow-lux-hover hover:-translate-y-1 hover:border-cvr-blue/45"
+    >
+      <div className="relative aspect-[16/10] w-full shrink-0 overflow-hidden bg-cvr-surface">
+        <AnhChay
+          chay={false}
+          images={[p.image, ...(p.photos ?? [])]}
+          alt={p.name}
+          sizes="(max-width:640px) 80vw, 25vw"
+          className="object-cover transition-transform duration-[700ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.06]"
+        />
+        <span className="absolute left-2.5 top-2.5 rounded-full bg-white/80 px-2.5 py-[3px] text-[11px] font-semibold uppercase tracking-[0.06em] text-cvr-ink shadow-[0_2px_10px_rgba(0,0,0,0.18)] ring-1 ring-white/60 backdrop-blur-md">
+          {p.status}
+        </span>
+      </div>
+      <div className="flex min-w-0 flex-1 flex-col p-3">
+        <h3 className="line-clamp-2 font-semibold leading-snug text-cvr-ink transition-colors group-hover:text-cvr-blue-ink">
+          <Highlight text={p.name} terms={termsBySlug.get(p.slug) ?? []} />
+        </h3>
+        <p className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
+          <span className="text-base font-semibold text-cvr-gold-ink">{p.priceFrom}</span>
+          {priceRef(p) && <span className="text-xs text-cvr-muted">{priceRef(p)}</span>}
+        </p>
+        <p className="mt-1 flex items-center gap-1 text-xs text-cvr-muted">
+          <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+          <span className="truncate">{p.location}</span>
+        </p>
+        <p className="mb-3 mt-1.5 line-clamp-2 text-xs leading-relaxed text-cvr-muted">
+          {p.type} · {chuThuan(p.overview[0])}
+        </p>
+        <div className="mt-auto border-t border-cvr-line pt-2.5">
+          <span className="text-xs text-cvr-body">
+            Chủ đầu tư: <span className="font-medium text-cvr-ink">{p.developer}</span>
+          </span>
+        </div>
+      </div>
+    </Link>
   );
 
   return (
@@ -599,50 +648,78 @@ export default function ProjectsBrowser({
       )}
 
       {traCuu ? (
-      <div className={`mt-6 grid grid-cols-1 gap-8 sm:mt-3 lg:grid-cols-3 ${mapMode ? "hidden" : ""}`}>
-        {/* ── TRÁI: TRA CỨU DỰ ÁN — mọi dự án, thẻ ảnh + Tên · Chủ đầu tư · Địa chỉ · Loại hình (điện thoại: nằm dưới) ── */}
-        <section id="tra-cuu" className="order-2 scroll-mt-24 lg:order-1 lg:col-span-2">
-          <h2 className="text-lg font-semibold tracking-tight text-cvr-ink sm:text-xl">Tra cứu dự án</h2>
-          <ul className="mt-2 divide-y divide-cvr-line border-y border-cvr-line">
-            {trangTraCuu.map((d) => (
-              <li key={d.slug}><TheTraCuu d={d} /></li>
-            ))}
-            {traCuuLoc.length === 0 && (
-              <li className="py-10 text-center text-sm text-cvr-muted">Chưa có dự án phù hợp bộ lọc.</li>
+      <div className={mapMode ? "hidden" : ""}>
+        {/* ── DỰ ÁN NỔI BẬT (chủ dự án 29/10/2026): một hàng trượt ngang trên cùng — thẻ GIỮ NGUYÊN nội dung thẻ Dự án đang chạy (chủ dự án 29/10/2026), xếp dọc cho vừa hàng; xếp
+            Kim cương → Vàng → Bạc → mới cập nhật. Hàng hiện 8 dự án; nhiều hơn → "Xem thêm" mở lưới theo trang. ── */}
+        {visible.length > 0 && (
+          <section id="noi-bat" className="mt-6 scroll-mt-24 sm:mt-5">
+            <h2 className="text-lg font-semibold tracking-tight text-cvr-ink sm:text-xl">Dự án nổi bật</h2>
+            {!moNoiBat ? (
+              <div className="-mx-4 mt-3 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0">
+                {visible.slice(0, NOI_BAT_HANG).map((p) => (
+                  <div key={p.slug} className="w-[80%] shrink-0 snap-start sm:w-[calc((100%-2rem)/3)] lg:w-[calc((100%-3rem)/4)]">
+                    {theNoiBat(p)}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <>
+                <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+                  {visible.slice((trangNoiBat - 1) * PER_PAGE, trangNoiBat * PER_PAGE).map((p) => <div key={p.slug}>{theNoiBat(p)}</div>)}
+                </div>
+                <PhanTrang hienTai={trangNoiBat} tong={Math.max(1, Math.ceil(visible.length / PER_PAGE))} doiTrang={(p) => { setTrangNoiBat(p); document.getElementById("noi-bat")?.scrollIntoView({ block: "start" }); }} />
+              </>
             )}
-          </ul>
-          <PhanTrang
-            hienTai={current}
-            tong={totalPages}
-            doiTrang={(p) => { setPage(p); document.getElementById("tra-cuu")?.scrollIntoView({ block: "start" }); }}
-          />
-        </section>
+            {!moNoiBat && visible.length > NOI_BAT_HANG && (
+              <div className="mt-3 flex justify-center">
+                <button type="button" onClick={() => setMoNoiBat(true)} className="rounded-full border border-cvr-line px-5 py-2 text-sm font-medium text-cvr-ink transition hover:border-cvr-ink">
+                  Xem thêm
+                </button>
+              </div>
+            )}
+          </section>
+        )}
 
-        {/* ── PHẢI: DỰ ÁN NỔI BẬT — thẻ ảnh (điện thoại: nằm trên, trượt ngang) ── */}
-        <aside id="noi-bat" className="order-1 scroll-mt-24 lg:order-2 lg:col-span-1">
-          <h2 className="text-lg font-semibold tracking-tight text-cvr-ink sm:text-xl">Dự án nổi bật</h2>
-          <div className="-mx-4 mt-3 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0 lg:flex-col lg:gap-4 lg:overflow-visible">
-            {visible.map((p) => (
-              <Link
-                key={p.slug}
-                href={`/du-an/${p.slug}`}
-                className="group w-[72%] shrink-0 snap-start border border-cvr-line bg-white p-2.5 sm:w-[45%] lg:w-auto"
-              >
-                <span className="relative block aspect-[16/10] overflow-hidden bg-cvr-surface">
-                  <Image src={p.image} alt={p.name} fill sizes="(max-width:640px) 72vw, (max-width:1024px) 45vw, 380px" className="object-cover transition-transform duration-500 group-hover:scale-[1.04]" />
-                  {p.status && (
-                    <span className="absolute left-2 top-2 rounded-full bg-white/85 px-2.5 py-[3px] text-[11px] font-semibold uppercase tracking-[0.06em] text-cvr-ink">{p.status}</span>
-                  )}
-                </span>
-                <span className="mt-2 block font-semibold leading-snug text-cvr-ink group-hover:text-cvr-blue-ink">{p.name}</span>
-                <span className="mt-0.5 block truncate text-xs text-cvr-muted">{p.location}</span>
-              </Link>
-            ))}
-            {visible.length === 0 && (
-              <p className="text-sm text-cvr-muted">Chưa có dự án phù hợp bộ lọc.</p>
-            )}
-          </div>
-        </aside>
+        <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-3">
+          {/* ── TRA CỨU DỰ ÁN — mọi dự án cả nước, thẻ ảnh + Tên · Chủ đầu tư · Địa chỉ · Loại hình, phân trang ── */}
+          <section id="tra-cuu" className="scroll-mt-24 lg:col-span-2">
+            <h2 className="text-lg font-semibold tracking-tight text-cvr-ink sm:text-xl">Tra cứu dự án</h2>
+            <ul className="mt-2 divide-y divide-cvr-line border-y border-cvr-line">
+              {trangTraCuu.map((d) => (
+                <li key={d.slug}><TheTraCuu d={d} /></li>
+              ))}
+              {traCuuLoc.length === 0 && (
+                <li className="py-10 text-center text-sm text-cvr-muted">Chưa có dự án phù hợp bộ lọc.</li>
+              )}
+            </ul>
+            <PhanTrang
+              hienTai={current}
+              tong={totalPages}
+              doiTrang={(p) => { setPage(p); document.getElementById("tra-cuu")?.scrollIntoView({ block: "start" }); }}
+            />
+          </section>
+
+          {/* Cột phải máy tính: lọc theo khu vực (như trang Dự án đã duyệt) — điện thoại đã có nút Khu vực trên thanh lọc */}
+          <aside className="hidden lg:col-span-1 lg:block">
+            <div className="sticky top-24 rounded-none border border-cvr-line bg-white p-5 shadow-lux">
+              <h2 className="text-sm font-semibold tracking-tight text-cvr-ink">Lọc theo khu vực</h2>
+              <div className="mt-3 flex flex-col">
+                {[ALL, ...provinceCounts.map(([n]) => n)].map((name) => (
+                  <button
+                    key={name}
+                    type="button"
+                    onClick={() => setProvince(name)}
+                    className={`flex items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition-colors ${
+                      province === name ? "bg-cvr-surface font-semibold text-cvr-ink" : "text-cvr-body hover:bg-cvr-surface hover:text-cvr-ink"
+                    }`}
+                  >
+                    <span>{name === ALL ? "Tất cả khu vực" : name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </aside>
+        </div>
       </div>
       ) : (
       <div className={`mt-6 grid grid-cols-1 gap-8 sm:mt-3 lg:grid-cols-3 ${mapMode ? "hidden" : ""}`}>
