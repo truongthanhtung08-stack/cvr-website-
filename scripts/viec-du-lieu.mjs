@@ -193,7 +193,11 @@ const KE_HOACH = "D:/Coastal Land/SEO/Plan SEO - pSEO/KE-HOACH-SEO.md";
 // MỘT TỆP (chủ dự án 28/10/2026: "1 chỗ, 1 file .md để yêu cầu và sửa — bất cứ bên nào cũng phải từ đây"): yêu cầu chủ dự án
 // (mục 0), thứ tự việc Cowork (mục 0b), việc 3 bên kể cả mạng xã hội (mục 3), quy trình 3 bên (mục 11), kế hoạch MXH (mục 12).
 const KH_TEP = KE_HOACH.replace(/\//g, BS);
-const KH_DONG = fs.existsSync(KE_HOACH) ? fs.readFileSync(KE_HOACH, "utf8").replace(/^\uFEFF/, "").split(/\r\n|\r|\n/) : [];
+// TÁCH 2 TẦNG (29/10/2026): mục 0, 0b nằm ở chi-tiet/yeu-cau-chu-du-an.md; đủ dòng mục 3 ở chi-tiet/viec-chi-tiet.md.
+// Chưa tách (tệp cũ còn đủ mục) → tìm thấy ngay trong KE_HOACH trước.
+const KH_CT = "D:/Coastal Land/SEO/Plan SEO - pSEO/chi-tiet/";
+const docDong = (f) => (fs.existsSync(f) ? fs.readFileSync(f, "utf8").replace(/^\uFEFF/, "").split(/\r\n|\r|\n/) : []);
+const KH_DONG = [...docDong(KE_HOACH), ...docDong(KH_CT + "yeu-cau-chu-du-an.md")];
 const doanMuc = (bat) => { const a = KH_DONG.findIndex((l) => bat.test(l)); if (a < 0) return []; const ds = []; for (const l of KH_DONG.slice(a + 1)) { if (/^#{2,3} /.test(l)) break; ds.push(l.trim()); } return ds; };
 const MUC = [
   ["Tìm tin cho nhóm sắp có trang Google", NOI_TIN, sapMo.length, sapMo.length
@@ -269,9 +273,14 @@ const docKeHoach = (tep, dau1 = "") => {
   if (dau < 0) return [];
   const ds = [];
   for (const l of kh.slice(dau + 1)) { if (/^## /.test(l)) break; if (/^\| \d+[a-z]? \|/.test(l)) ds.push(l.split("|").map((c) => c.trim())); }
-  return ds.filter((c) => !/✅/.test(c[4] ?? "")).map((c) => ({ viec: dau1 + c[2].replace(/\*\*/g, ""), ai: c[3], tt: c[4] }));
+  return ds.filter((c) => !/✅/.test(c[4] ?? "")).map((c) => ({ so: c[1], viec: dau1 + c[2].replace(/\*\*/g, ""), ai: c[3], tt: c[4] }));
 };
-const keHoach = docKeHoach(KE_HOACH);
+// Bảng ở KE_HOACH là danh sách chính (anh thêm việc ở đó); dòng đủ chữ lấy từ chi-tiet nếu có cùng số.
+const keHoach = (() => {
+  const chinh = docKeHoach(KE_HOACH), du = new Map(docKeHoach(KH_CT + "viec-chi-tiet.md").map((v) => [v.so, v]));
+  // trạng thái tầng 1 là bản rút gọn (đuôi …) → giữ trạng thái đủ ở chi-tiet; anh sửa trạng thái ở tầng 1 → lấy bản của anh
+  return chinh.map((v) => { const d = du.get(v.so); return d ? { ...d, tt: v.tt.endsWith("…") ? d.tt : v.tt } : v; });
+})();
 // Thư mục Cowork đã giao mà chủ dự án chưa chuyển sang "đã duyệt"
 const thuMuc = (d) => (fs.existsSync(d) ? fs.readdirSync(d).filter((x) => /^\d{8}$/.test(x)) : []);
 const choDuyet = [
