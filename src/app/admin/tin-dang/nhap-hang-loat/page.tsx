@@ -412,8 +412,8 @@ export default function NhapHangLoatPage() {
       setKetQua(
         `Đã đăng ${xong} tin mới` +
           (capNhat ? ` · bổ sung ảnh/video và cập nhật nội dung cho ${capNhat} tin đã đăng` : "") +
-          ". Tin đã hiện trên web." +
-          (loiDuAn ? ` Dự án: lỗi ${loiDuAn}.` : soDuAn || duAnTrung ? ` Dự án: nạp ${soDuAn} vào "Chờ duyệt" (Admin → Dự án)${duAnTrung ? `, bỏ qua ${duAnTrung} đã có` : ""}.` : "") +
+          ". Tin đang chờ duyệt (Admin → Tin đăng)." +
+          (loiDuAn ? ` Dự án: lỗi ${loiDuAn}.` : soDuAn || duAnTrung ? ` Dự án: ${soDuAn} hồ sơ chờ duyệt (Admin → Dự án)${duAnTrung ? `, bỏ qua ${duAnTrung} đã có` : ""}.` : "") +
           (soDn ? ` Doanh nghiệp: ${soDn} hồ sơ vào Admin → Khách hàng → Doanh nghiệp.` : "") +
           (dnKhongKhop.length ? ` Không khớp số điện thoại tài khoản nào: ${dnKhongKhop.join(", ")}.` : ""),
       );
