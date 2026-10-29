@@ -133,8 +133,8 @@ const balconyField: Field = { key: "balcony", label: "Hướng ban công", type:
 // (loại đặc thù đứng trước loại chung: Biệt thự/Shophouse trước "nhà", Kho xưởng trước "đất").
 // KHÔNG mục đặc điểm nào bắt buộc (chủ dự án 09/10/2026, như Batdongsan): chỉ bắt buộc loại hình,
 // tiêu đề, tỉnh/thành, diện tích, liên hệ, gói tin. Thêm `batBuoc: true` lại thì phải hỏi chủ dự án.
-// NGOẠI LỆ ĐÃ DUYỆT 29/10/2026: LOẠI CON của căn hộ ("Loại hình căn hộ") và của đất ("Loại đất") bắt buộc — chủ dự án: "căn hộ thì
-// phải có loại hình con của nó, đất cũng vậy" (lịch sử giá, trang danh mục so theo đúng loại con).
+// FORM ĐĂNG TIN ĐÃ DUYỆT — KHÔNG ĐỔI GIAO DIỆN (chủ dự án 29/10/2026). Loại con căn hộ / đất chỉ BẮT BUỘC ở đăng tin hàng loạt
+// (csvTin.ts); ở form chỉ thêm lựa chọn mới vào danh sách sẵn có (Nhà ở xã hội · Đất tái định cư).
 export const categorySpecs: CategorySpec[] = [
   // Trang trại / khu nghỉ dưỡng (D18, 29/10/2026): đứng TRƯỚC Condotel — "khu nghỉ dưỡng" chứa chữ "nghỉ dưỡng" của Condotel.
   // Là đất + công trình nên dùng các ô của Đất (chữ đã duyệt), không phải ô căn hộ (tầng, block, phí quản lý)
@@ -191,7 +191,7 @@ export const categorySpecs: CategorySpec[] = [
     label: "Căn hộ",
     match: ["căn hộ", "officetel", "duplex", "penthouse", "studio"],
     fields: [
-      { key: "loaiCanho", label: "Loại hình căn hộ", type: "select", options: ["Căn hộ chung cư", "Căn hộ dịch vụ", "Studio", "Officetel", "Duplex", "Penthouse", "Sky villa", "Shophouse khối đế", "Căn hộ tập thể", "Nhà ở xã hội"], main: true, batBuoc: true },
+      { key: "loaiCanho", label: "Loại hình căn hộ", type: "select", options: ["Căn hộ chung cư", "Căn hộ dịch vụ", "Studio", "Officetel", "Duplex", "Penthouse", "Sky villa", "Shophouse khối đế", "Căn hộ tập thể", "Nhà ở xã hội"] },
       { key: "floor", label: "Tầng số (căn)", type: "text", placeholder: "VD: Tầng 18", main: true },
       { key: "block", label: "Block / Toà / Tháp", type: "text", placeholder: "VD: Block A" },
       { key: "buildingFloors", label: "Tổng số tầng toà", type: "text", placeholder: "VD: 30 tầng" },
@@ -320,7 +320,7 @@ export const categorySpecs: CategorySpec[] = [
     label: "Đất nền / Đất",
     match: ["đất nền", "đất nông nghiệp", "đất"],
     fields: [
-      { key: "landType", label: "Loại đất", type: "select", options: ["Đất thổ cư", "Đất ở đô thị", "Đất nền dự án", "Đất nông nghiệp", "Đất vườn", "Đất tái định cư", "Đất khác"], main: true, batBuoc: true },
+      { key: "landType", label: "Loại đất", type: "select", options: ["Đất thổ cư", "Đất ở đô thị", "Đất nền dự án", "Đất nông nghiệp", "Đất vườn", "Đất tái định cư", "Đất khác"], main: true },
       frontageField,
       depthField,
       roadField,
