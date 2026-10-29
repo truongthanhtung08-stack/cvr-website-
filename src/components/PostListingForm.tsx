@@ -287,8 +287,8 @@ export default function PostListingForm() {
     setProjectSlug(s("projectSlug"));
     setProjectName(s("projectName"));
   }
-  // HUỶ THANH TOÁN / QUAY LẠI từ trang nạp tiền (chủ dự án 27/10 + 29/10/2026): về đúng công đoạn khách đang làm — Bắt đầu hiển thị ·
-  // Tổng tiền · Nạp thêm (#b-thanhtoan); chưa dựng kịp thì đầu khối Gói tin. Nhận biết: ?huy-tt=1 hoặc cờ veGoiTin trang nạp ghi
+  // HUỶ THANH TOÁN / QUAY LẠI từ trang nạp tiền (chủ dự án 27/10 + 29/10/2026): về đúng công đoạn khách đang làm — đầu mục
+  // Gói tin — thanh toán (#b-goi). Nhận biết: ?huy-tt=1 hoặc cờ veGoiTin trang nạp ghi
   // (mã tin nháp, hoặc "moi" = tin mới chưa lưu được nháp). Trả true khi đúng là đang quay về.
   function veThanhToan(ma: string): boolean {
     const dc = new URL(window.location.href);
@@ -297,7 +297,8 @@ export default function PostListingForm() {
     if (dc.searchParams.get("huy-tt") !== "1" && !coCo) return false;
     dc.searchParams.delete("huy-tt");
     window.history.replaceState(window.history.state, "", dc.pathname + dc.search);
-    const toi = () => document.getElementById("b-thanhtoan") ?? document.getElementById("b-goi");
+    // Về ĐẦU mục "Gói tin — thanh toán" (chủ dự án 29/10/2026: "về chỗ nộp tiền là ở phần gói") — thấy gói đã chọn + Tổng tiền
+    const toi = () => document.getElementById("b-goi") ?? document.getElementById("b-thanhtoan");
     // Điện thoại thật (29/10/2026: từ app ngân hàng về vẫn đứng đầu trang): máy chậm dựng khối sau 3 giây, trình duyệt / Next khôi
     // phục vị trí cuộn cũ → soát mỗi 300 ms tới 12 giây: lệch thì đưa khối lên lại, đứng đúng 3 lượt liền thì thôi; khách tự chạm /
     // cuộn thì thôi ngay, không giật trang của khách.
