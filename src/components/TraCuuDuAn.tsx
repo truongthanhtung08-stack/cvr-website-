@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import FilterDropdown, { FilterDropdownGroup } from "@/components/FilterDropdown";
@@ -94,17 +95,23 @@ export default function TraCuuDuAn({ ds }: { ds: DongTraCuu[] }) {
       <ul className="mt-1 divide-y divide-cvr-line border-y border-cvr-line">
         {trangNay.map((d) => (
           <li key={d.slug}>
-            <Link href={`/du-an/${d.slug}`} className="group block py-4">
-              <span className="text-[17px] font-semibold text-cvr-ink group-hover:text-cvr-blue-ink group-hover:underline">{d.ten}</span>
-              {d.chuDauTu && <span className="mt-1 block text-sm text-cvr-body">Chủ đầu tư: {d.chuDauTu}</span>}
-              {d.loaiHinh && <span className="mt-0.5 block text-sm text-cvr-body">Loại hình: {d.loaiHinh}</span>}
-              <span className="mt-0.5 block text-sm text-cvr-muted">{d.diaChi}</span>
-              {d.diaChiCu && <span className="block text-[13px] text-cvr-faint">Địa chỉ cũ: {d.diaChiCu}</span>}
-              {(d.ban > 0 || d.thue > 0) && (
-                <span className="mt-1 block text-[13px] text-cvr-body">
-                  {[d.ban > 0 && `Bán (${d.ban})`, d.thue > 0 && `Cho thuê (${d.thue})`].filter(Boolean).join(" · ")}
-                </span>
-              )}
+            <Link href={`/du-an/${d.slug}`} className="group flex gap-3 py-4 sm:gap-5">
+              {/* Ảnh dự án — chưa có ảnh: khung xám + biểu tượng Coastal Land (không lấy ảnh chung chung thay) */}
+              <span className="relative h-20 w-28 shrink-0 overflow-hidden bg-cvr-surface sm:h-28 sm:w-40">
+                {d.anh ? (
+                  <Image src={d.anh} alt={d.ten} fill sizes="(max-width:640px) 112px, 160px" className="object-cover" />
+                ) : (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src="/logo/symbol-dark.svg" alt="" className="absolute inset-0 m-auto h-8 w-8 opacity-25" />
+                )}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-[17px] font-semibold leading-snug text-cvr-ink group-hover:text-cvr-blue-ink group-hover:underline">{d.ten}</span>
+                <span className="mt-1 block text-sm text-cvr-body">Chủ đầu tư: {d.chuDauTu || "Đang cập nhật"}</span>
+                <span className="mt-0.5 block text-sm text-cvr-body">Địa chỉ: {d.diaChi}</span>
+                {d.diaChiCu && <span className="block text-[13px] text-cvr-faint">Địa chỉ cũ: {d.diaChiCu}</span>}
+                <span className="mt-0.5 block text-sm text-cvr-body">Loại hình: {d.loaiHinh || "Đang cập nhật"}</span>
+              </span>
             </Link>
           </li>
         ))}

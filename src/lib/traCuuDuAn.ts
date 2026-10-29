@@ -35,8 +35,9 @@ export function demDuAnTheoTinh(items: { location: string }[]): [string, number]
 }
 
 // ── DANH BẠ TRA CỨU DỰ ÁN (/du-an/tra-cuu — chủ dự án 29/10/2026) ──────────────────────────────────────────────────────────
-// Mọi dự án: có hồ sơ (kể cả hồ sơ cơ bản chưa ảnh) + dự án khách chọn khi đăng tin (gộp tên trùng như ô tìm — dungDsDuAn).
-// Mỗi dòng chỉ 4 trường kiểu tra mã số thuế: tên · chủ đầu tư · loại hình · địa chỉ (+ tình trạng để lọc, số tin bán / cho thuê).
+// Mọi dự án: có hồ sơ (nổi bật lẫn dạng thẻ) + dự án khách chọn khi đăng tin (gộp tên trùng như ô tìm — dungDsDuAn).
+// Thẻ chỉ các trường cơ bản (chủ dự án 29/10/2026): tên · chủ đầu tư · địa chỉ · loại hình sản phẩm · 1 ảnh (+ tình trạng để lọc,
+// số tin để xếp dự án có tin lên trước).
 export type DongTraCuu = {
   slug: string;
   ten: string;
@@ -46,6 +47,7 @@ export type DongTraCuu = {
   diaChi: string;
   diaChiCu: string;
   tinh: string;
+  anh: string;       // ảnh đầu của hồ sơ — "" = chưa có (thẻ hiện khung xám + biểu tượng)
   ban: number;
   thue: number;
 };
@@ -76,6 +78,7 @@ export function dongTraCuu(tin: Listing[], duAn: Project[]): DongTraCuu[] {
         diaChi: p?.location ?? tin1?.location ?? d.tinh,
         diaChiCu: p?.locationCu ?? tin1?.locationCu ?? "",
         tinh: d.tinh,
+        anh: p?.photos?.[0] ?? "",
         ban: d.ban,
         thue: d.thue,
       };

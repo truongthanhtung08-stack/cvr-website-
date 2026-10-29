@@ -239,6 +239,8 @@ export default function ProjectForm({
       amenities,
       overview: overview.trim() || null,
       details: {
+        // Giữ khoá form không sửa (nguồn, ngày cập nhật, dấu hồ sơ dạng thẻ — nạp từ tệp Cowork) — 29/10/2026
+        ...(initial?.details ?? {}),
         tier,
         addressDetail: addressDetail.trim() || undefined,
         // Bỏ trống hết → không lưu contact → trang dự án KHÔNG hiện khối liên hệ

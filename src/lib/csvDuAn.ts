@@ -69,6 +69,10 @@ export function docDuAnTuBang(rows: string[][]): DongDuAn[] {
     if (!v("tinh")) loi.push("thiếu tỉnh/thành");
     else { const l = loiDiaDanh(v("tinh"), v("phuong_xa") || undefined); if (l) loi.push(l); }
     if (!v("nguon")) loi.push("thiếu nguồn thông tin");
+    // Trường cơ bản của một dự án ở Tra cứu dự án (chủ dự án 29/10/2026): tên · chủ đầu tư · địa chỉ · loại hình · ≥ 1 ảnh
+    if (!v("chu_dau_tu")) loi.push("thiếu chủ đầu tư");
+    if (!v("loai_hinh")) loi.push("thiếu loại hình");
+    if (!v("anh").split("|").some((x) => /^https?:\/\//.test(x.trim()))) loi.push("thiếu ảnh (ít nhất 1 ảnh)");
     const trangThai = v("trang_thai");
     // Bắt buộc: trang dự án mặc định ghi "Đang mở bán" khi trống — không để máy tự gán trạng thái
     if (!trangThai) loi.push("thiếu trạng thái");
@@ -108,6 +112,8 @@ export function docDuAnTuBang(rows: string[][]): DongDuAn[] {
           overview: v("tong_quan") || null,
           details: {
             tier: "basic",
+            // Hồ sơ DẠNG THẺ: hiện ở Tra cứu dự án, không lên Dự án nổi bật (chủ dự án 29/10/2026)
+            dangThe: true,
             addressDetail: v("dia_chi_chi_tiet") || undefined,
             developmentUnit: v("don_vi_phat_trien") || undefined,
             purposes: ["ban"],

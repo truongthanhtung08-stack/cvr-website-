@@ -133,17 +133,18 @@ function projectRowToProject(r: ProjectRow): Project {
     ...(locationCu ? { locationCu } : {}),
     priceFrom: r.price_from || "Liên hệ",
     type: r.type || "Dự án bất động sản",
-    // Hồ sơ CƠ BẢN (chưa ảnh — Cowork nạp hàng loạt cho Tra cứu dự án, 29/10/2026): không tự gán tình trạng, không câu tổng quan
-    // thay thế — trống thì trang dự án ẩn mục đó. Hồ sơ có ảnh giữ như cũ.
-    status: r.status_text || (photos.length ? "Đang mở bán" : ""),
+    // Hồ sơ DẠNG THẺ (Cowork nạp hàng loạt cho Tra cứu dự án, 29/10/2026): không tự gán tình trạng, không câu tổng quan
+    // thay thế — trống thì trang dự án ẩn mục đó. Hồ sơ nổi bật giữ như cũ.
+    status: r.status_text || (d.dangThe ? "" : "Đang mở bán"),
     image: asset(photos[0] ?? PROJECT_PLACEHOLDER),
     developer: r.developer || "Đang cập nhật",
     scale: (r.scale ?? []).filter((s) => s && s.label && s.value),
     amenities: (r.amenities ?? []).filter(Boolean),
-    overview: overview.length ? overview : !photos.length ? [] : [`Dự án ${r.name}${location ? ` tại ${location}` : ""} — thông tin đang được Coastal Land cập nhật.`],
+    overview: overview.length ? overview : d.dangThe ? [] : [`Dự án ${r.name}${location ? ` tại ${location}` : ""} — thông tin đang được Coastal Land cập nhật.`],
     ...(photos.length ? { photos: photos.map(asset) } : {}),
     ...(videos.length ? { videos } : {}),
     tier: d.tier ?? "basic",
+    ...(d.dangThe ? { dangThe: true } : {}),
     // Chỉ trả contact khi admin ĐÃ nhập ít nhất SĐT hoặc email — không có thì
     // trang dự án bỏ hẳn khối liên hệ (không hiện số tổng đài bịa).
     ...(d.contact && (d.contact.phone?.trim() || d.contact.email?.trim())
@@ -174,9 +175,10 @@ export async function getProjects(): Promise<Project[]> {
   return rows.map(projectRowToProject);
 }
 
-// DỰ ÁN NỔI BẬT = hồ sơ CÓ ẢNH (chủ dự án 29/10/2026). Hồ sơ cơ bản chưa ảnh chỉ hiện ở Tra cứu dự án (/du-an/tra-cuu).
+// DỰ ÁN NỔI BẬT = hồ sơ admin dựng đầy đủ (chủ dự án 29/10/2026). Hồ sơ DẠNG THẺ (nạp hàng loạt từ tệp Cowork — tên, chủ đầu tư,
+// địa chỉ, loại hình, ≥ 1 ảnh) chỉ hiện ở Tra cứu dự án (/du-an/tra-cuu).
 export async function getProjectsNoiBat(): Promise<Project[]> {
-  return (await getProjects()).filter((p) => p.photos?.length);
+  return (await getProjects()).filter((p) => !p.dangThe);
 }
 
 // Một dự án theo slug — không có trong DB → tìm trong dự án mẫu

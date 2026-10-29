@@ -13,13 +13,15 @@ import PhotoList from "@/components/PhotoList";
 type Props = {
   images: string[];
   alt: string;
+  /** Hồ sơ dạng thẻ (Tra cứu dự án, 29/10/2026): một ảnh lớn cả khung, không lưới 4 ảnh nhỏ — dự án nổi bật giữ lưới như cũ */
+  motAnh?: boolean;
 };
 
-export default function ProjectGallery({ images, alt }: Props) {
+export default function ProjectGallery({ images, alt, motAnh = false }: Props) {
   const [active, setActive] = useState(0);
   const [lightbox, setLightbox] = useState(false);
   const [list, setList] = useState(false);
-  const thumbs = images.slice(1, 5);
+  const thumbs = motAnh ? [] : images.slice(1, 5);
   const open = (i: number) => { setActive(i); setLightbox(true); };
   // Điện thoại chỉ thấy 1 ảnh lớn → bộ đếm mở DANH SÁCH ảnh.
   // Máy tính đã có lưới 5 ảnh → bộ đếm mở thẳng ảnh lớn như cũ.
@@ -36,7 +38,7 @@ export default function ProjectGallery({ images, alt }: Props) {
           <button
             type="button"
             onClick={() => open(0)}
-            className="group relative col-span-4 row-span-2 overflow-hidden sm:col-span-2"
+            className={`group relative col-span-4 row-span-2 overflow-hidden ${motAnh ? "" : "sm:col-span-2"}`}
           >
             <Image src={images[0]} alt={alt} fill priority quality={90} sizes="(max-width:640px) 100vw, 44vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
           </button>
