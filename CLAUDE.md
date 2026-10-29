@@ -340,13 +340,13 @@ Buộc phải đụng vào vì lý do kỹ thuật → **DỪNG, HỎI TRƯỚC.
 >    kiểm web thật đã lên. Không đổi giao diện, bố cục; trang đang top (`TRANG_TOP`) không đụng.
 >
 > **DANH SÁCH VIỆC CLOUD CHƯA LÀM / KHÔNG LÀM ĐƯỢC — Claude trên máy làm hết, xong việc nào ghi ✅ + ngày vào đây:**
-> - [ ] **Vercel chỉ dựng nhánh `main`** (gộp vào việc ⓪ sửa Vercel): thêm vào đầu `ignoreCommand` trong `vercel.json`:
+> - [x] ✅ 29/10 (e8929bb, chưa push) **Vercel chỉ dựng nhánh `main`** (gộp vào việc ⓪ sửa Vercel): thêm vào đầu `ignoreCommand` trong `vercel.json`:
 >       `[ "$VERCEL_GIT_COMMIT_REF" != "main" ] && exit 0;` → mọi nhánh khác (nhánh cloud, nhánh thử) không dựng, không tốn Build CPU.
 >       Phiên cloud 27–28/10 đã đẩy nhánh ~20 lần → có thể đã tạo ~15 bản xem thử; xem Vercel → Deployments, báo anh nếu tốn.
-> - [ ] **Đo tốc độ trước/sau** mọi trang ở mục 2 `BAN-GIAO-DO-TOC-DO-27-10.md` (HTML trang chủ < 450 KB · LCP ≤ 2,5 s · INP ≤ 200 ms ·
+> - [x] ✅ 29/10 trang chủ 446 KB; lần mở 2 LCP ≤ 2,5 s cả 5 trang mẫu (lần đầu như 27/10); do-o-bi-che /dang-tin CHƯA (cần tài khoản thử) **Đo tốc độ trước/sau** mọi trang ở mục 2 `BAN-GIAO-DO-TOC-DO-27-10.md` (HTML trang chủ < 450 KB · LCP ≤ 2,5 s · INP ≤ 200 ms ·
 >       CLS ≤ 0,1) + `do-o-bi-che` /dang-tin = 0. Trang còn chậm → tìm nguyên nhân, sửa KHÔNG đổi giao diện.
 > - [ ] **Bấm thử** mục 3 tệp đó (PC + điện thoại), có đăng nhập: ô tìm trang chủ, đăng tin trọn quy trình, tài khoản, admin, form báo giá.
-> - [ ] **Kiểm dữ liệu cho Google** bằng Rich Results Test (search.google.com/test/rich-results) trên localhost qua đường hầm hoặc sau push:
+> - [~] 29/10 đã kiểm HTML trên máy: đủ ItemList, BreadcrumbList, Organization, /llms.txt 200; Rich Results Test làm sau push **Kiểm dữ liệu cho Google** bằng Rich Results Test (search.google.com/test/rich-results) trên localhost qua đường hầm hoặc sau push:
 >       /mua-ban/can-ho-chung-cu (ItemList) · /cho-thue (BreadcrumbList) · một /du-an/<slug> · trang chủ (Organization: logo PNG,
 >       disambiguatingDescription, alternateName) · mở /llms.txt.
 > - [ ] **Push MỘT lần** khi anh nhắn "Push" (bước 5 trên) → kiểm web thật.
@@ -383,7 +383,7 @@ Buộc phải đụng vào vì lý do kỹ thuật → **DỪNG, HỎI TRƯỚC.
 >
 > **VIỆC DỞ DANG 28/10 — CLAUDE TRÊN MÁY LÀM TIẾP THEO ĐÚNG THỨ TỰ, LÀM TRƯỚC MỌI VIỆC KHÁC** (chủ dự án: "đừng để vô ích yêu cầu cả ngày
 > hôm nay"; chi tiết thêm ở khối 📌 đầu `KE-HOACH-SEO.md`). Xong việc nào ghi ✅ + ngày vào đây; hết danh sách thì xoá khối này.
-> - ⓪ **SỬA VERCEL** (7+ bản production ERROR ở bước "ignore", lỗi 128 `fatal: bad object b241623…` — lần dựng tốt gần nhất không có trong bản
+> - ⓪ ✅ 29/10 đã sửa trên máy (e8929bb), chờ "Push" **SỬA VERCEL** (7+ bản production ERROR ở bước "ignore", lỗi 128 `fatal: bad object b241623…` — lần dựng tốt gần nhất không có trong bản
 >   sao nông; web vẫn chạy bản cũ nhưng **mọi lần sửa web sẽ không lên** tới khi sửa). `vercel.json` thay `ignoreCommand` bằng:
 >   `if [ -n "$VERCEL_GIT_PREVIOUS_SHA" ] && git cat-file -e "$VERCEL_GIT_PREVIOUS_SHA^{commit}" 2>/dev/null; then git diff --quiet
 >   "$VERCEL_GIT_PREVIOUS_SHA" HEAD -- . ":(exclude)*.md" ":(exclude)docs" ":(exclude)supabase"; else exit 1; fi` (đã thử đủ 4 trường hợp
