@@ -49,6 +49,19 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
 
   const dong = (m: Muc, phu?: React.ReactNode) => {
     const active = dangXem(m.href, pathname);
+    // ĐĂNG TIN = nút chính của khu quản lý, cùng màu nút Đăng tin thanh dưới điện thoại (chủ dự án 29/10/2026)
+    if (m.href === "/dang-tin") {
+      return (
+        <Link
+          key={m.href}
+          href={m.href}
+          className="mt-1 flex items-center gap-3 rounded-lg bg-cvr-blue px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-cvr-blue/90"
+        >
+          <MucIcon name={m.icon} />
+          <span className="min-w-0 flex-1 truncate">{m.label}</span>
+        </Link>
+      );
+    }
     return (
       <Link
         key={m.href}
