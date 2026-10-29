@@ -294,10 +294,11 @@ export default function PostListingForm() {
     const dc = new URL(window.location.href);
     let coCo = false;
     try {
-      // Cờ chỉ tính khi vừa từ trang nạp sang (khách bỏ nạp đi trang khác rồi mới vào Đăng tin → cờ cũ, vẫn hỏi Soạn tiếp / Đăng tin mới)
-      const tuNap = [sessionStorage.getItem("cl_trang_truoc"), sessionStorage.getItem("cl_trang_hien")].includes("/tai-khoan/nap-tien");
-      coCo = tuNap && sessionStorage.getItem("veGoiTin") === ma;
-      if (coCo || !tuNap) sessionStorage.removeItem("veGoiTin");
+      // Cờ nằm trong localStorage, có giờ ghi (29/10/2026: Samsung Internet qua lại app ngân hàng làm mất sessionStorage →
+      // về form lại hỏi "Bạn có tin đang soạn dở"). Quá 30 phút = cờ cũ → vẫn hỏi Soạn tiếp / Đăng tin mới.
+      const c = JSON.parse(localStorage.getItem("veGoiTin") || "null") as { ma?: string; luc?: number } | null;
+      coCo = c?.ma === ma && Date.now() - (c.luc ?? 0) < 30 * 60_000;
+      if (coCo || (c && Date.now() - (c.luc ?? 0) >= 30 * 60_000)) localStorage.removeItem("veGoiTin");
     } catch {}
     if (dc.searchParams.get("huy-tt") !== "1" && !coCo) return false;
     dc.searchParams.delete("huy-tt");
