@@ -22,7 +22,8 @@ export const saleTypeGroups: TypeGroup[] = [
   { label: "Căn hộ", items: ["Căn hộ", "Chung cư"] },
   { label: "Nhà", items: ["Nhà riêng", "Nhà mặt phố", "Nhà biệt thự / Liền kề", "Shophouse / Nhà phố thương mại"] },
   { label: "Đất", items: ["Đất nền / Đất nền dự án", "Đất nông nghiệp"] },
-  { label: "BĐS nghỉ dưỡng", items: ["Villa / Biệt thự biển", "Condotel"] },
+  // "Trang trại / Khu nghỉ dưỡng": loại mới, chủ dự án duyệt 29/10/2026 (CAN-ANH D18) — trước đó tin trang trại không có loại để chọn
+  { label: "BĐS nghỉ dưỡng", items: ["Villa / Biệt thự biển", "Condotel", "Trang trại / Khu nghỉ dưỡng"] },
   { label: "BĐS công nghiệp", items: ["Đất công nghiệp", "Kho / Nhà xưởng"] },
   { label: "Khác", items: ["Bất động sản khác"] },
 ];

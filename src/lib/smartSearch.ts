@@ -29,6 +29,7 @@ export const LOAI_HINH: [string, string[]][] = [
   ["Biệt thự", ["biet thu", "villa", "lien ke", "song lap"]],
   ["Shophouse", ["shophouse", "nha pho thuong mai"]],
   ["Đất nền", ["dat nen", "dat du an", "lo dat", "dat tho cu", "dat"]],
+  ["Trang trại", ["trang trai", "farmstay", "khu nghi duong"]],
   ["Condotel", ["condotel", "nghi duong", "resort"]],
   ["Kho xưởng", ["kho xuong", "nha xuong", "kho bai", "nha kho"]],
   ["Văn phòng", ["van phong"]],

@@ -134,6 +134,21 @@ const balconyField: Field = { key: "balcony", label: "Hướng ban công", type:
 // KHÔNG mục đặc điểm nào bắt buộc (chủ dự án 09/10/2026, như Batdongsan): chỉ bắt buộc loại hình,
 // tiêu đề, tỉnh/thành, diện tích, liên hệ, gói tin. Thêm `batBuoc: true` lại thì phải hỏi chủ dự án.
 export const categorySpecs: CategorySpec[] = [
+  // Trang trại / khu nghỉ dưỡng (D18, 29/10/2026): đứng TRƯỚC Condotel — "khu nghỉ dưỡng" chứa chữ "nghỉ dưỡng" của Condotel.
+  // Là đất + công trình nên dùng các ô của Đất (chữ đã duyệt), không phải ô căn hộ (tầng, block, phí quản lý)
+  {
+    label: "Trang trại / Khu nghỉ dưỡng",
+    match: ["trang trại"],
+    fields: [
+      { key: "landType", label: "Loại đất", type: "select", options: ["Đất thổ cư", "Đất ở đô thị", "Đất nền dự án", "Đất nông nghiệp", "Đất vườn", "Đất khác"], main: true },
+      frontageField,
+      roadField,
+      { key: "resiArea", label: "Diện tích đất ở (thổ cư)", type: "number", unit: "m²", main: true },
+      { key: "landTerm", label: "Thời hạn sử dụng", type: "select", options: ["Lâu dài", "Có thời hạn"] },
+      { key: "landState", label: "Hiện trạng đất", type: "select", options: ["Đất trống", "Đã san lấp", "Đã có tường rào", "Có nhà cấp 4 trên đất", "Có nhà kiên cố trên đất", "Đang trồng cây", "Ao / ruộng"] },
+      { key: "planning", label: "Quy hoạch / lộ giới", type: "text", placeholder: "VD: Không dính quy hoạch · Lộ giới 5m" },
+    ],
+  },
   {
     label: "Condotel / Nghỉ dưỡng",
     match: ["condotel", "nghỉ dưỡng"],
