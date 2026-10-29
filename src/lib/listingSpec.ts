@@ -339,7 +339,8 @@ export const categorySpecs: CategorySpec[] = [
     match: ["đất nền", "đất"],
     // Chủ dự án 29/10/2026 tối: "Đất / Đất nền dự án (menu cha) — Đất ở đô thị, đất ở nông thôn (đất thổ cư) là đặc điểm thuộc
     // đất" · "hoặc thay đất ở nông thôn = đất thổ cư"
-    fields: datFields(["Đất nền dự án", "Đất ở đô thị", "Đất thổ cư", "Đất tái định cư"]),
+    // Chủ dự án 29/10/2026 tối (lần 3): "Đất / Đất nền dự án (menu cha) — đặc điểm ghi ĐẦY ĐỦ tương ứng theo đặc điểm đất để khách chọn"
+    fields: datFields(["Đất thổ cư", "Đất nền dự án", "Đất ở đô thị", "Đất tái định cư", "Đất thương mại, dịch vụ", "Đất vườn", "Đất nông nghiệp"]),
   },
 ];
 
