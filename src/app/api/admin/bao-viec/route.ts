@@ -35,12 +35,13 @@ export async function GET(request: Request) {
 
   try {
     const [tinCho, tinSua, duAn, hoSo, yeuCau, tongCho] = await Promise.all([
-      admin.from("listings").select("id,title").eq("status", "pending").gte("updated_at", tu).lt("updated_at", den),
+      admin.from("listings").select("id,title").or("status.eq.pending,and(status.eq.hidden,details->>choChuDuyet.eq.true)").gte("updated_at", tu).lt("updated_at", den),
       admin.from("listings").select("id,title").eq("status", "approved").gte("details->>da_sua_luc", tu).lt("details->>da_sua_luc", den),
       admin.from("projects").select("id,name").eq("status", "pending").gte("updated_at", tu).lt("updated_at", den),
       admin.from("project_poster_requests").select("id,company_name,project_name").gte("created_at", tu).lt("created_at", den),
       admin.from("customer_requests").select("id,ten,dien_thoai,noi_dung").gte("created_at", tu).lt("created_at", den),
-      admin.from("listings").select("id", { count: "exact", head: true }).eq("status", "pending"),
+      // Chờ duyệt = tin khách gửi + tin đăng hàng loạt chờ chủ duyệt (29/10/2026)
+      admin.from("listings").select("id", { count: "exact", head: true }).or("status.eq.pending,and(status.eq.hidden,details->>choChuDuyet.eq.true)"),
     ]);
 
     const ten = (s: string | null | undefined) => (s ?? "").slice(0, 70) || "(không tiêu đề)";

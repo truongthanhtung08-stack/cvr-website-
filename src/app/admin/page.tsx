@@ -50,7 +50,9 @@ export default function AdminDashboard() {
         supabase.from("profiles").select("*", { count: "exact", head: true }).gte("created_at", weekAgo),
         supabase.from("profiles").select("*", { count: "exact", head: true }).eq("status", "pending"),
         supabase.from("profiles").select("*", { count: "exact", head: true }).in("role", ["agent", "company"]),
-        supabase.from("listings").select("*", { count: "exact", head: true }).eq("status", "pending"),
+        // Chờ duyệt = tin khách gửi (pending) + tin đăng hàng loạt chờ chủ duyệt (ẩn + choChuDuyet) — 29/10/2026: đợt 7 tin
+        // vào hàng chờ mà ô này ghi 0
+        supabase.from("listings").select("*", { count: "exact", head: true }).or("status.eq.pending,and(status.eq.hidden,details->>choChuDuyet.eq.true)"),
         supabase.from("listings").select("*", { count: "exact", head: true }).eq("status", "approved"),
         supabase.from("customer_requests").select("*", { count: "exact", head: true }).eq("status", "moi"),
         supabase.from("projects").select("*", { count: "exact", head: true }).eq("status", "pending"),

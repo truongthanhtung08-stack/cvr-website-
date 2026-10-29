@@ -69,6 +69,8 @@ export default function AdminListingsPage() {
     })();
   }, []);
 
+  // Chờ duyệt = tin khách gửi (pending) + tin đăng hàng loạt chờ chủ duyệt (ẩn + choChuDuyet) — 29/10/2026
+  const choDuyet = (r: ListingRow) => r.status === "pending" || (r.status === "hidden" && !!(r.details as { choChuDuyet?: boolean } | null)?.choChuDuyet);
   const filtered = useMemo(() => {
     const kw = q.trim().toLowerCase();
     const ds = rows.filter((r) => {
@@ -77,6 +79,8 @@ export default function AdminListingsPage() {
       // "Đã sửa — chờ kiểm" (0054): tin đang hiển thị khách vừa sửa, bản sửa đã hiện ngay.
       if (status === "da_sua") { if (!(r.status === "approved" && r.details?.da_sua_luc)) return false; }
       // Tin đã xoá chỉ hiện ở mục "Đã xoá" (0066), không lẫn vào "Tất cả trạng thái"
+      else if (status === "pending") { if (!choDuyet(r)) return false; }
+      else if (status === "hidden") { if (r.status !== "hidden" || choDuyet(r)) return false; }
       else if (status === "all" ? r.status === "deleted" : r.status !== status) return false;
       if (!kw) return true;
       // Mã tin (8 ký tự đầu id, như hiện trên trang tin) + mã đợt nạp (dn13-2410…) — chủ dự án 24/10/2026
@@ -96,7 +100,7 @@ export default function AdminListingsPage() {
       new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
   }, [rows, q, purpose, tier, status]);
 
-  const pendingCount = rows.filter((r) => r.status === "pending").length;
+  const pendingCount = rows.filter(choDuyet).length;
   const draftCount = rows.filter((r) => r.status === "draft").length;
   const daSuaCount = rows.filter((r) => r.status === "approved" && r.details?.da_sua_luc).length;
 
