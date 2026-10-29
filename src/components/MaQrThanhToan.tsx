@@ -45,13 +45,18 @@ export default function MaQrThanhToan({ don, onHuy, onXong, urlXong }: { don: Do
   const [daChep, setDaChep] = useState("");
   // Đã bấm Thanh toán → bước chọn ngân hàng. Từ app ngân hàng quay về mà trang tải lại → vẫn đứng bước này (mốc cvrNh)
   const [buocNganHang, setBuocNganHang] = useState(() => !!window.history.state?.cvrNh);
-  // QUAY LẠI = HUỶ THANH TOÁN (chủ dự án 27/10/2026): ở bước nào bấm ‹ / Back / Huỷ cũng về tin đang làm, đúng khối Gói tin
-  // (trang nạp tiền lo). Bước chọn ngân hàng chỉ ghi dấu cvrNh lên mốc mã QR (không thêm mốc) — trang tải lại khi khách
-  // từ app ngân hàng quay về vẫn đứng đúng bước này.
+  // BACK LÙI ĐÚNG TỪNG BƯỚC Z→A (chủ dự án 27/10/2026): bước chọn ngân hàng là một mốc lịch sử (cvrNh) → Back về mã QR;
+  // Back ở mã QR → trang nạp; Back ở trang nạp → tin, khối Gói tin. HUỶ THANH TOÁN → về thẳng tin (trang nạp lo).
+  // Trang tải lại khi khách từ app ngân hàng quay về: mốc cvrNh còn nguyên → vẫn đứng bước chọn ngân hàng.
   function moNganHang() {
-    window.history.replaceState({ ...window.history.state, cvrNh: 1 }, "");
+    window.history.pushState({ ...window.history.state, cvrQr: 1, cvrNh: 1 }, "");
     setBuocNganHang(true);
   }
+  useEffect(() => {
+    const lui = () => setBuocNganHang(!!window.history.state?.cvrNh);
+    window.addEventListener("popstate", lui);
+    return () => window.removeEventListener("popstate", lui);
+  }, []);
   const huy = onHuy;
   const xongRef = useRef(onXong);
   xongRef.current = onXong;
