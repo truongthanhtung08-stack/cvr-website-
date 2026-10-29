@@ -10,7 +10,7 @@ import { ListingListJsonLd } from "@/components/ListJsonLd";
 import { goiNheTin, goiNheBaiViet } from "@/lib/goiNhe";
 import { getListings, getListingsHetHan } from "@/lib/listingsDb";
 import { getArticles } from "@/lib/contentDb";
-import { TRANG_DONG_BANG, boLocCua, giuSoCu, duongDan, duongDanPhanCap, khop, lienKetCho, moTa, soLieuTrang, tatCaTrang, thangHienTai, tieuDe, type DieuKien } from "@/lib/pseo";
+import { TRANG_DONG_BANG, TRANG_GIU_THEM, boLocCua, giuSoCu, duongDan, duongDanPhanCap, khop, lienKetCho, moTa, soLieuTrang, tatCaTrang, thangHienTai, tieuDe, type DieuKien } from "@/lib/pseo";
 import { tieuDeGoogle } from "@/lib/thang";
 import { trangGiaNhaDat } from "@/lib/giaNhaDat";
 
@@ -70,7 +70,9 @@ export default async function TrangPseo({ dk }: { dk: DieuKien }) {
           />
         )}
         {/* Trang đang lên Google (TRANG_DONG_BANG): giữ đúng bản cũ — khối giá cũ, 3 câu hỏi đáp cũ */}
-        <GiaTheoNhomPseo g={giaTheoNhom(dk, items)} coTrangGia={trangGiaNhaDat(dk.tinh, listings).index} cu={TRANG_DONG_BANG.has(path)} />
+        {/* Trang "giữ cũ + thêm mới" (TRANG_GIU_THEM): khối giá cũ giữ nguyên ở trên, khối theo phường + quận cũ thêm ở dưới */}
+        {TRANG_GIU_THEM.has(path) && <GiaTheoNhomPseo g={giaTheoNhom(dk, items)} coTrangGia={trangGiaNhaDat(dk.tinh, listings).index} cu />}
+        <GiaTheoNhomPseo g={giaTheoNhom(dk, items)} coTrangGia={trangGiaNhaDat(dk.tinh, listings).index} cu={TRANG_DONG_BANG.has(path)} id={TRANG_GIU_THEM.has(path) ? "gia-theo-khu-vuc" : undefined} />
         <HoiDapPseo hoiDap={hoiDapPseo(dk, items, TRANG_DONG_BANG.has(path))} />
         <LienKetPseo nhom={lienKetCho(dk, listings)} cau={tieuDe(dk)} kieuGoogle />
       </main>

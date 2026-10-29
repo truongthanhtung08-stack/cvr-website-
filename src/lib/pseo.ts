@@ -43,7 +43,7 @@ export const phuongCuaTin = (l: Listing) => {
 // Trang top 10 hoặc có lượt bấm (Search Console + tra Google 27/10). Giữ ĐÚNG bản Google đã đọc: khối "Tham khảo giá" cũ, 3 câu hỏi đáp cũ,
 // khối khu vực cũ — không thêm khối giá mới, hỏi đáp mới, liên kết mới. Thêm/bớt trang ở đây khi có số đo mới.
 export const TRANG_DONG_BANG = new Set<string>([
-  "/cho-thue/can-ho-chung-cu/da-nang", "/mua-ban/can-ho-chung-cu/da-nang/1-phong-ngu", "/mua-ban/can-ho-chung-cu/hue",
+  "/mua-ban/can-ho-chung-cu/da-nang/1-phong-ngu", "/mua-ban/can-ho-chung-cu/hue",
   "/mua-ban", "/mua-ban/da-nang", "/mua-ban/dat", "/mua-ban/bds-khac",
 ]);
 
@@ -52,7 +52,8 @@ export const TRANG_DONG_BANG = new Set<string>([
 // dùng chung (khuôn tiêu đề, categories.ts, soLieuTrang, nối trang…): sửa xong so HTML các trang này trước/sau, phải GIỐNG HỆT. Nguồn: hạng
 // trong HE-THONG-TU-KHOA.xlsx (Cụm · Đo theo cách gõ). Cập nhật khi có số đo mới. CLAUDE.md mục 0D1 luật 6.
 export const TRANG_TOP = new Set<string>([
-  "/cho-thue/can-ho-chung-cu/da-nang", // hạng 2
+  // "/cho-thue/can-ho-chung-cu/da-nang" BỎ 29/10/2026 (chủ dự án "Bỏ đóng băng"): "hạng 2" là ở cách gõ sai chính tả; gõ đúng y tiêu đề
+  // trang thì đứng ~23 (tra 29/10) → vẽ theo khuôn chung như các trang khác. Đã bỏ cả khỏi TRANG_DONG_BANG.
   "/mua-ban/nha/da-nang",              // hạng 3 — chưa có trong TRANG_DONG_BANG
   "/mua-ban/da-nang",                  // hạng 5
 ]);
@@ -584,7 +585,11 @@ function khoang(min: number, max: number, dinhDang: (n: number) => string): stri
 // KHOẢNG PHỔ BIẾN (chuẩn SEO một trang, kế hoạch từ khoá 5.0A — anh chốt 29/10/2026 D4): ≥ 5 tin thì bỏ 10 % thấp nhất và 10 % cao nhất
 // để một tin lạ không kéo cả dòng (khung AI từng chép "30 – 350 m²"). Chữ giữ nguyên. Trang đã lên (TRANG_DONG_BANG) giữ cách tính cũ.
 /** Trang đã lên / đang top: giữ cách tính số cũ (CLAUDE.md 0D1 luật 5–6). */
-export const giuSoCu = (p: string) => TRANG_DONG_BANG.has(p) || TRANG_TOP.has(p);
+export const giuSoCu = (p: string) => TRANG_DONG_BANG.has(p) || TRANG_TOP.has(p) || TRANG_GIU_THEM.has(p);
+// GIỮ CŨ + THÊM MỚI (chủ dự án 29/10/2026: "bỏ đóng băng không có nghĩa bỏ cái đã có top"): trang thôi đóng băng nhưng GIỮ NGUYÊN mọi thứ
+// đang có (tiêu đề, dòng số + mô tả theo cách tính cũ, khối "Tham khảo giá" theo khu vực / dự án, câu hỏi đáp cũ) và CHỈ THÊM phần mới
+// (khối giá theo phường + quận cũ, câu hỏi đáp mới). Số lạ sửa ở dữ liệu tin, không đổi cách tính.
+export const TRANG_GIU_THEM = new Set<string>(["/cho-thue/can-ho-chung-cu/da-nang"]);
 function phoBienCua(xs: number[]): number[] {
   if (xs.length < 5) return xs;
   const s = [...xs].sort((a, b) => a - b), bo = Math.max(1, Math.floor(s.length * 0.1));
