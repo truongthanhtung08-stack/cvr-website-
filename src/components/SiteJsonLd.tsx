@@ -19,7 +19,8 @@ const data = {
       name: "COASTAL LAND",
       // Tên gọi khác khách hay gõ — AI tìm kiếm của Google (24/10/2026) đang lẫn "coastalland" với khu nghỉ dưỡng
       // Vinpearl Coastalland; khai đủ tên + lĩnh vực để Google nhận đúng thực thể cổng thông tin bất động sản.
-      alternateName: ["Coastal Land", "Coastalland", "coastalland.vn", "Central Coast Vietnam Real Estate"],
+      // 28/10/2026: thêm cách gõ thiếu chữ "a" ("costalland", "costal land") khách hay gõ — nối về cùng thực thể. Hoa/thường Google tự coi như nhau.
+      alternateName: ["Coastal Land", "Coastalland", "coastalland.vn", "Costalland", "Costal Land", "Central Coast Vietnam Real Estate"],
       foundingDate: "2026-08-17", // ngày cấp mã số doanh nghiệp (trang Giới thiệu)
       email: "hotro@coastalland.vn",
       knowsAbout: ["Mua bán nhà đất", "Cho thuê nhà đất", "Căn hộ chung cư", "Đất nền", "Dự án bất động sản"],
@@ -28,11 +29,17 @@ const data = {
       // chủ dự án, web chỉ dùng tên viết tắt COASTAL LAND (đã nằm ở trường "name").
       taxID: "0402353502",
       url: SITE,
-      logo: `${SITE}/logo/logo-horizontal-dark.svg`,
+      // Logo cho Google phải là ẢNH (PNG/JPG/WebP, ≥ 112 px) — Google không nhận SVG cho logo Organization (28/10/2026).
+      // Logo vuông nền trắng, đúng logo hồ sơ Google Doanh nghiệp.
+      logo: { "@type": "ImageObject", url: `${SITE}/logo/app-icon-1024.png`, width: 1024, height: 1024 },
       image: `${SITE}/logo/logo-horizontal.jpg`,
       description:
         "Cổng thông tin mua bán, cho thuê nhà đất, căn hộ, đất nền và dự án.",
       slogan: "Cổng thông tin mua bán, cho thuê nhà đất",
+      // Câu phân biệt (28/10/2026): gõ "coastal land" thì khung AI của Google trả nghĩa từ điển "đất ven biển" — nói rõ đây là TÊN
+      // THƯƠNG HIỆU của cổng thông tin bất động sản (schema.org disambiguatingDescription).
+      disambiguatingDescription:
+        "COASTAL LAND: Cổng thông tin mua bán, cho thuê nhà đất", // câu chủ dự án duyệt 28/10/2026
       areaServed: [
         { "@type": "Country", name: "Việt Nam" },
       ],
@@ -56,7 +63,7 @@ const data = {
       "@id": `${SITE}/#website`,
       url: SITE,
       name: "COASTAL LAND",
-      alternateName: ["Coastal Land", "coastalland.vn"],
+      alternateName: ["Coastal Land", "Coastalland", "coastalland.vn", "Costalland", "Costal Land"],
       inLanguage: "vi-VN",
       publisher: { "@id": `${SITE}/#to-chuc` },
       potentialAction: {

@@ -142,6 +142,11 @@ export default async function DanhMucMuaBanPage({ params }: { params: Promise<{ 
   const ketQuaDau = await ketQuaTrangDau("ban", { initialTypes: c!.types });
   return (
     <>
+      {/* ItemList cho Google (28/10/2026, kế hoạch từ khoá — On-page nhóm A): đúng các tin trang đang hiện, cùng thứ tự. Không hiện gì
+          trên màn hình. Trang đã lên Google (TRANG_DONG_BANG) giữ nguyên bản cũ. */}
+      {!TRANG_DONG_BANG.has(`/mua-ban/${c!.slug}`) && (
+        <ListingListJsonLd items={ketQuaDau.trang} heading={`${c!.h1} ${thangHienTai()}`} path={`/mua-ban/${c!.slug}`} />
+      )}
       <Header />
       <main className="flex-1 bg-white">
         <Breadcrumb

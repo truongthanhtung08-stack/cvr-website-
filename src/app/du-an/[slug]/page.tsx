@@ -19,7 +19,7 @@ import RichContent from "@/components/RichContent";
 import MoTaThuGon from "@/components/MoTaThuGon";
 import { chuThuan } from "@/lib/chuThuan";
 import VideoEmbed from "@/components/VideoEmbed";
-import Breadcrumb from "@/components/Breadcrumb";
+import Breadcrumb, { BreadcrumbJsonLd } from "@/components/Breadcrumb";
 import KhuVucLinks from "@/components/KhuVucLinks";
 import { ProjectListJsonLd } from "@/components/ListJsonLd";
 import ProjectsBrowser from "@/components/ProjectsBrowser";
@@ -351,6 +351,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(duAnJsonLd) }} />
+      {/* BreadcrumbList cho Google (28/10/2026, On-page nhóm A) — chỉ dữ liệu, giao diện trang dự án đã duyệt giữ nguyên */}
+      <BreadcrumbJsonLd items={[{ name: "Dự án", href: "/du-an" }, { name: p.name, href: `/du-an/${p.slug}` }]} />
       <Header />
       <main className="flex-1 bg-white">
         {/* MOBILE: pt-0 → ảnh dự án nằm SÁT mép dưới header (không chừa khoảng trắng) */}

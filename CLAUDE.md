@@ -327,6 +327,42 @@ Buộc phải đụng vào vì lý do kỹ thuật → **DỪNG, HỎI TRƯỚC.
 
 ---
 
+## 0D0. ☁️ "TIẾP NỐI VIỆC CLAUDE CLOUD" — CLAUDE TRÊN MÁY LÀM NGAY, KHÔNG HỎI LẠI (chủ dự án chốt 28/10/2026)
+
+> Phiên Claude trên cloud không ghi được ổ D:, không chạy được web với dữ liệu thật, không đẩy được `main` → việc làm dở được để ở NHÁNH
+> GitHub và ghi ở đây. Anh nhắn **"tiếp nối việc Claude cloud"** (hoặc "làm tiếp việc cloud") → Claude trên máy:
+> 1. `git fetch origin` → nhánh cloud đang mở: **`claude/clever-bardeen-15e4ot`** (cloud đổi nhánh thì sửa dòng này).
+> 2. Đọc trên nhánh đó: `git show origin/claude/clever-bardeen-15e4ot:CLAUDE.md` mục 0D1 việc **⑦ ⑧** + luật 6, và
+>    `BAN-GIAO-DO-TOC-DO-27-10.md` mục **TIẾN ĐỘ** (đang dừng ở đâu) → làm tiếp từ đó, không làm lại.
+> 3. Thứ tự: ⓪ sửa Vercel (nếu chưa) → ⑦ đo + bấm thử nhánh → ⑧ thương hiệu (chép vào `KE-HOACH-SEO.md`) → báo anh số trước/sau.
+> 4. Sau mỗi bước: cập nhật mục TIẾN ĐỘ + commit lên nhánh (gom, không đẩy lắt nhắt). Hết usage giữa chừng → lần sau đọc TIẾN ĐỘ làm tiếp.
+> 5. Anh nhắn **"Push"** → `git merge --no-ff origin/claude/clever-bardeen-15e4ot` vào `main` → `npx next build` → push `main` MỘT LẦN →
+>    kiểm web thật đã lên. Không đổi giao diện, bố cục; trang đang top (`TRANG_TOP`) không đụng.
+>
+> **DANH SÁCH VIỆC CLOUD CHƯA LÀM / KHÔNG LÀM ĐƯỢC — Claude trên máy làm hết, xong việc nào ghi ✅ + ngày vào đây:**
+> - [ ] **Vercel chỉ dựng nhánh `main`** (gộp vào việc ⓪ sửa Vercel): thêm vào đầu `ignoreCommand` trong `vercel.json`:
+>       `[ "$VERCEL_GIT_COMMIT_REF" != "main" ] && exit 0;` → mọi nhánh khác (nhánh cloud, nhánh thử) không dựng, không tốn Build CPU.
+>       Phiên cloud 27–28/10 đã đẩy nhánh ~20 lần → có thể đã tạo ~15 bản xem thử; xem Vercel → Deployments, báo anh nếu tốn.
+> - [ ] **Đo tốc độ trước/sau** mọi trang ở mục 2 `BAN-GIAO-DO-TOC-DO-27-10.md` (HTML trang chủ < 450 KB · LCP ≤ 2,5 s · INP ≤ 200 ms ·
+>       CLS ≤ 0,1) + `do-o-bi-che` /dang-tin = 0. Trang còn chậm → tìm nguyên nhân, sửa KHÔNG đổi giao diện.
+> - [ ] **Bấm thử** mục 3 tệp đó (PC + điện thoại), có đăng nhập: ô tìm trang chủ, đăng tin trọn quy trình, tài khoản, admin, form báo giá.
+> - [ ] **Kiểm dữ liệu cho Google** bằng Rich Results Test (search.google.com/test/rich-results) trên localhost qua đường hầm hoặc sau push:
+>       /mua-ban/can-ho-chung-cu (ItemList) · /cho-thue (BreadcrumbList) · một /du-an/<slug> · trang chủ (Organization: logo PNG,
+>       disambiguatingDescription, alternateName) · mở /llms.txt.
+> - [ ] **Push MỘT lần** khi anh nhắn "Push" (bước 5 trên) → kiểm web thật.
+> - [ ] **Sau push:** Search Console → Kiểm tra URL → Yêu cầu lập chỉ mục cho trang chủ, /cho-thue, 2–3 trang /mua-ban/<loại>;
+>       đánh dấu ✅ 20 dòng nhóm A (trang tính On-page) trong `HE-THONG-TU-KHOA.xlsx` ở ổ D:.
+> - [ ] **Link hồ sơ Google Doanh nghiệp**: anh gửi → thêm vào `sameAs` trong `src/components/SiteJsonLd.tsx` (gộp đợt push sau).
+> - [ ] **Thương hiệu ngoài web** (việc ⑧): soạn sẵn cho anh/Cowork — chữ giới thiệu thống nhất cho Facebook, Zalo OA, YouTube (tên
+>       "COASTAL LAND" + coastalland.vn + "Cổng thông tin mua bán, cho thuê nhà đất"); bộ thông tin tạo mục Wikidata (tên, web, mã số
+>       0402353502, địa chỉ, ngày thành lập 17/08/2026, mạng xã hội); danh sách danh bạ doanh nghiệp nên đăng. Chữ mới → đưa anh duyệt.
+> - [ ] **Đo thương hiệu mỗi thứ Hai**: tra "coastal land", "coastalland", "costalland", "costal land", "coastal land đà nẵng" → chụp
+>       khung AI + hồ sơ bên phải → ghi nhật ký `KE-HOACH-SEO.md`.
+> - [ ] **Kế hoạch từ khoá**: nhóm B (102 việc chữ/giao diện) chờ anh duyệt B1–B3 · nhóm C (số lạ trong tin) giao Cowork — theo 0D1 ⑥.
+> - [ ] **Ứng viên làm nhẹ thêm** (đo rồi mới tính): danh sách mã "tin tương tự" ở /bat-dong-san/<id> (mục 4 tệp bàn giao).
+
+---
+
 ## 0D1. 🔑 HỆ THỐNG LÀM VIỆC HẰNG NGÀY + KẾ HOẠCH TỪ KHOÁ (chủ dự án chốt 28/10/2026 — đơn giản, thống nhất)
 
 > **MỘT CHỖ:** `D:\Coastal Land\SEO\Plan SEO - pSEO\` — `KE-HOACH-SEO.md` (chủ dự án xem, sửa, giao việc) · `chi-tiet\` (phần đầy đủ, Claude
@@ -370,6 +406,26 @@ Buộc phải đụng vào vì lý do kỹ thuật → **DỪNG, HỎI TRƯỚC.
 >   từ Downloads hoặc dựng theo mẫu https://claude.ai/artifact/W5VaB1rXzFqS3wY9uzVEKN.
 > - ⑥ **KẾ HOẠCH TỪ KHOÁ** (ưu tiên số 1 từ đây mỗi ngày): đo #14 → dựng lại hệ thống từ khoá → giao tin theo nhóm #2 → sửa gốc #30 khi anh duyệt ②
 >   → xin index #4. Chữ mới lên web: đưa anh nguyên văn trước.
+> - ⑦ **NHÁNH `claude/clever-bardeen-15e4ot` (phiên cloud 27–28/10) — LÀM SAU ⓪, GỘP MAIN + PUSH MỘT LẦN khi anh nhắn "Push":**
+>   làm nhẹ tải trang (trang chủ < 450 KB, /dang-tin, /tai-khoan, biểu tượng, ảnh…) + **On-page nhóm A** của `HE-THONG-TU-KHOA.xlsx`
+>   (đã làm trong nhánh, commit 754a9b7: ItemList 11 trang loại hình cả nước · BreadcrumbList /cho-thue + 8 trang chi tiết dự án; trang
+>   khoá bỏ qua). Không đổi chữ, giao diện. Việc của Claude trên máy: `git fetch origin claude/clever-bardeen-15e4ot` → đọc
+>   `BAN-GIAO-DO-TOC-DO-27-10.md` trên nhánh (mục TIẾN ĐỘ = đang dừng ở đâu) → đo trước/sau + bấm thử theo tệp đó → kiểm thêm ItemList /
+>   BreadcrumbList bằng Rich Results Test trên 2–3 trang → báo anh → anh "Push" → `git merge --no-ff` vào main, push MỘT lần → đánh dấu
+>   20 dòng nhóm A trong trang tính On-page là ✅ (ổ D:). Phiên cloud không ghi được ổ D: và không đẩy được main.
+> - ⑧ **THƯƠNG HIỆU "COASTAL LAND" TRÊN GOOGLE** (chủ dự án 28/10: gõ "coastal land" → web đứng đầu + có hồ sơ doanh nghiệp, nhưng khung AI
+>   trả nghĩa từ điển "đất ven biển"). Chép việc này vào `KE-HOACH-SEO.md` (📋 việc đang làm + chi tiết ở `chi-tiet\`). Gồm:
+>   · Mã (đã làm trong nhánh): `SiteJsonLd` logo PNG vuông `/logo/app-icon-1024.png` (Google không nhận
+>     SVG) + `disambiguatingDescription`: "COASTAL LAND: Cổng thông tin mua bán, cho thuê nhà đất" (anh đã duyệt 28/10).
+>     + `alternateName` đủ cách gõ: Coastal Land, Coastalland, coastalland.vn, Costalland, Costal Land (hoa/thường, đậm/nhạt Google tự coi
+>     như nhau — chỉ cần khai cách gõ sai/viết liền). Khách hay gõ kiểu sai nào khác → thêm vào cả `SiteJsonLd` lẫn `llms.txt`.
+>   · `public/llms.txt` (anh duyệt 28/10): giới thiệu web cho mọi AI (ChatGPT, Perplexity, Claude, Gemini) — tên + cách gõ khác
+>     (Coastalland, Costalland, Costal Land), câu thương hiệu, mã số, địa chỉ, trang chính, kênh chính thức. Đổi địa chỉ/kênh → sửa cả tệp này.
+>   · Anh gửi link hồ sơ Google Doanh nghiệp (Maps → Chia sẻ → Sao chép link) → thêm vào `sameAs` của `SiteJsonLd`, gộp cùng đợt push.
+>   · Ngoài web (anh / Cowork): cùng một tên "COASTAL LAND" + link coastalland.vn + mô tả "cổng thông tin mua bán, cho thuê nhà đất" ở
+>     Facebook, Zalo OA, YouTube, hồ sơ Google; tạo mục Wikidata cho công ty (tên, web, mã số thuế, địa chỉ, mạng xã hội); đăng tên ở các
+>     danh bạ doanh nghiệp / báo uy tín có link về web — Google hiểu "thực thể" nhờ nhiều nguồn khớp nhau.
+>   · Đo mỗi tuần (thứ Hai): tra "coastal land", "coastalland", "costalland", "costal land", "coastal land đà nẵng" → chụp khung AI + hồ sơ bên phải → ghi nhật ký.
 >
 > **LƯU Ở ĐÂU (không xoá gì):** `SEO\RA\` máy viết (`VIEC.md`, anh chỉ sửa mục 0) · `SEO\DA-DUYET\<ddmmyyyy>\` Cowork giao · `SEO\MAU\` mẫu ·
 > `SEO\` gốc: `YEU-CAU-COWORK-*.md`, `MAU-DANG-TIN-HANG-LOAT.xlsx`, `DANH-SACH-PHUONG-XA-TOAN-QUOC.txt` · `SEO\_cu\` thứ không dùng nữa.
@@ -384,6 +440,13 @@ Buộc phải đụng vào vì lý do kỹ thuật → **DỪNG, HỎI TRƯỚC.
 > 3. Cùng nghĩa (có/không dấu, viết liền, đảo thứ tự) = một nút, một trang; nhưng ĐO RIÊNG từng cách gõ; top 10 chỉ đếm dạng đúng chính tả.
 > 4. Sửa từ GỐC — 4 luật dùng chung, không vá từng trang: đặt chữ (`categories.ts` `tuKhoa`) · số liệu (`soLieuTrang`) · nối trang · giao tin.
 > 5. Làm hết; trang chưa đạt cổng không lên; trang đã lên (`TRANG_DONG_BANG`) không sửa.
+> 6. ⛔ **TRANG ĐÃ LÊN TOP = MẪU, KHÔNG ĐỤNG** (chủ dự án 28/10/2026): lấy trang đang top làm VÍ DỤ cho các trang chưa lên (cách đặt tiêu đề,
+>    H1, mô tả, khối số liệu, hỏi đáp, nối trang) — chép CÁCH LÀM sang trang khác, KHÔNG sửa chính trang top. Trước khi sửa trang nào:
+>    tra cột "Hạng tốt nhất" (trang tính Cụm) + "Coastal Land: hạng · trang hiện" (Đo theo cách gõ) trong `HE-THONG-TU-KHOA.xlsx`; hạng ≤ 10
+>    hoặc có lượt bấm → không sửa. Đang top (28/10): `/cho-thue/can-ho-chung-cu/da-nang` (2) · **`/mua-ban/nha/da-nang` (3 — CHƯA có
+>    trong `TRANG_DONG_BANG`)** · `/mua-ban/da-nang` (5). ⚠️ Đừng tự thêm trang đang top vào `TRANG_DONG_BANG`: tập đó làm trang VẼ LẠI
+>    BẢN CŨ (khối giá cũ, hỏi đáp cũ) — trang đang top bằng bản hiện tại sẽ bị đổi. Danh sách trang top nằm ở `TRANG_TOP`
+>    (`src/lib/pseo.ts`, chỉ đánh dấu, không đổi cách vẽ): sửa mã dùng chung xong phải so HTML các trang trong đó trước/sau — GIỐNG HỆT. Mã dùng chung (khuôn tiêu đề, `categories.ts`, `soLieuTrang`…) đổi thì phải loại trừ trang top.
 > ⛔ Bài học 28/10: đếm cách gõ sai chính tả là "đã top" — sai; lấy "trang Google đang chọn" làm trang đích — sai;
 > kết luận "trang không có khối X" khi chưa đo trên web thật — sai (khối giá theo khu vực đã có ở 64/130 trang).
 

@@ -115,6 +115,7 @@ Gộp vào main (khi chủ dự án nói "Push"): `git checkout main && git pull
 | bdf9bb7 | Thanh trên + khu Tài khoản: getUser → đọc phiên có sẵn (getUser giữ khoá → các lần gọi NỐI ĐUÔI ~5 nhịp mạng) | — |
 | 9aa54bf | Admin ListingForm, LoginForm: như trên · /admin/khach-hang/[id] hỏi song song (5 → 3 nhịp) | — |
 | 7bb98d8 | Ảnh đầu trang tải trước đúng máy (/gioi-thieu, Hero trang chủ khi ảnh điện thoại trùng ảnh máy tính); logo chân trang thôi tải trước | đo LCP /gioi-thieu, trang chủ (PC + điện thoại) |
+| 754a9b7 | SEO On-page nhóm A (HE-THONG-TU-KHOA.xlsx): ItemList 11 trang loại hình cả nước · BreadcrumbList /cho-thue + 8 trang chi tiết dự án | kiểm Rich Results Test 2–3 trang |
 | d74627f | Ảnh tĩnh `public/`: tối ưu mã hoá KHÔNG MẤT DỮ LIỆU 9 tấm (jpegtran/optipng, giữ baseline + ICC; so PIL giống hệt) | −226 KB tổng |
 
 ## 2. Việc phải ĐO trên máy (trước và sau — so `main` với nhánh)
@@ -151,6 +152,7 @@ Ghi một dòng số đo 5 trang vào memory `toc-do-web-lam-tiep`.
 - Bảng giá: khối quy định / quyền lợi hiện như cũ.
 - /tai-khoan: tổng quan, tin đăng, hội viên, khách hàng; nút hiện số liên hệ ở trang tin; lưu tìm kiếm.
 - /dang-nhap khi đã đăng nhập → tự chuyển; đăng nhập xong về đúng nơi theo vai trò.
+- SEO nhóm A: xem nguồn trang /mua-ban/can-ho-chung-cu, /cho-thue, một /du-an/<slug> có `ItemList` / `BreadcrumbList`; /mua-ban/dat (trang khoá) KHÔNG có ItemList mới.
 - /admin: đăng tin hộ (mặc định người đăng = admin), /admin/khach-hang/<id> (tương tác hiện đủ).
 - Ảnh đầu trang chủ và /gioi-thieu hiện ngay như cũ (PC + điện thoại); logo chân trang vẫn hiện khi cuộn xuống cuối trang.
 - Ảnh tĩnh đã tối ưu (mục 1, d74627f): app-mockup, ảnh dự án hero-*-3x1, villa-bien, hero-cty1/2 — nhìn như cũ.
