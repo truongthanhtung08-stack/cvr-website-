@@ -69,6 +69,13 @@ export const saleCategories: Category[] = [
     types: ["Đất nền / Đất nền dự án"],
   },
   {
+    // Con của nhóm Đất (chủ dự án 29/10/2026): đất nông nghiệp, đất vườn, đất trang trại — loại con ở ô "Loại đất"
+    slug: "dat-nong-nghiep", label: "Đất nông nghiệp",
+    h1: "Bán đất nông nghiệp", title: `Bán đất nông nghiệp, đất vườn, đất trang trại`,
+    desc: `Mua bán đất nông nghiệp, đất vườn, đất trang trại.`,
+    types: ["Đất nông nghiệp"],
+  },
+  {
     slug: "dat", label: "Đất",
     h1: "Bán đất", title: `Bán đất thổ cư, đất nông nghiệp`,
     desc: `Mua bán đất thổ cư, đất nông nghiệp — lọc theo diện tích và mức giá.`,
