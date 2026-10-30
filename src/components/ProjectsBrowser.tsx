@@ -22,7 +22,7 @@ import { coordOf } from "@/lib/geo";
 import type { DiemBanDo } from "@/components/MapViewGoogle";
 import type { Project, Article } from "@/lib/data";
 import type { DongTraCuu } from "@/lib/traCuuDuAn";
-import { TheTraCuu, locTraCuu, nhomLoai } from "@/components/TraCuuDuAn";
+import { TheDuAnDoc, TheTraCuu, locTraCuu, nhomLoai } from "@/components/TraCuuDuAn";
 import { useHomeSection } from "@/components/HomeExpand";
 import { smoothScrollTo } from "@/lib/scroll";
 import { useAutoSlide, useAutoSlideThe, useTamDung } from "@/lib/useAutoSlide";
@@ -331,19 +331,14 @@ export default function ProjectsBrowser({
     </FilterDropdownGroup>
   );
 
-  // Thẻ Dự án nổi bật trong hàng trượt (trang /du-an): NỘI DUNG Y NHƯ thẻ ngang bên dưới (tình trạng · tên · giá · địa chỉ ·
-  // loại hình + giới thiệu · chủ đầu tư) — chủ dự án 29/10/2026 "nội dung như hiện tại"; chỉ xếp ảnh trên, chữ dưới.
-  // ngang = danh sách sau "Xem thêm": y thẻ ngang trang Dự án đang chạy (ảnh trái máy tính, ảnh trên điện thoại)
-  const theNoiBat = (p: Project, ngang = false) => (
+  // Thẻ Dự án nổi bật (hàng trượt + lưới Xem thêm, trang /du-an và trang chủ): tình trạng · Tên · Địa chỉ · Loại hình · Chủ đầu tư
+  // + giá — chủ dự án 29–30/10/2026; ảnh trên, chữ dưới, hiện đủ chữ.
+  const theNoiBat = (p: Project) => (
     <Link
       href={`/du-an/${p.slug}`}
-      className={ngang
-        ? "card-lux group relative flex flex-col overflow-hidden rounded-none bg-white shadow-lux shadow-lux-hover hover:-translate-y-1 hover:border-cvr-blue/45 sm:flex-row sm:gap-5 sm:border sm:border-cvr-line sm:p-3"
-        : "card-lux group flex h-full flex-col overflow-hidden rounded-none border border-cvr-line bg-white shadow-lux shadow-lux-hover hover:-translate-y-1 hover:border-cvr-blue/45"}
+      className="card-lux group flex h-full flex-col overflow-hidden rounded-none border border-cvr-line bg-white shadow-lux shadow-lux-hover hover:-translate-y-1 hover:border-cvr-blue/45"
     >
-      <div className={ngang
-        ? "relative aspect-[16/9] w-full shrink-0 overflow-hidden rounded-none bg-cvr-surface sm:aspect-[4/3] sm:w-56 sm:rounded-xl md:w-64"
-        : "relative aspect-[16/10] w-full shrink-0 overflow-hidden bg-cvr-surface"}>
+      <div className="relative aspect-[16/10] w-full shrink-0 overflow-hidden bg-cvr-surface">
         <AnhChay
           chay={false}
           images={[p.image, ...(p.photos ?? [])]}
@@ -355,10 +350,10 @@ export default function ProjectsBrowser({
           {p.status}
         </span>
       </div>
-      <div className={`flex min-w-0 flex-1 flex-col p-3 ${ngang ? "sm:p-0 sm:py-1 sm:pr-1" : ""}`}>
+      <div className="flex min-w-0 flex-1 flex-col p-3">
         {/* GỌN (chủ dự án 29/10/2026): Tên dự án · Địa chỉ · Loại hình · Chủ đầu tư — hiện đủ chữ, không cắt "…";
             giá ("Liên hệ" khi ẩn giá) nằm phải dòng Chủ đầu tư như dòng cuối thẻ dự án trang chủ — không thêm dòng */}
-        <h3 className={`font-semibold leading-snug text-cvr-ink transition-colors group-hover:text-cvr-blue-ink ${ngang ? "sm:text-lg" : ""}`}>
+        <h3 className="font-semibold leading-snug text-cvr-ink transition-colors group-hover:text-cvr-blue-ink">
           <Highlight text={p.name} terms={termsBySlug.get(p.slug) ?? []} />
         </h3>
         <p className="mt-1 flex items-start gap-1 text-xs text-cvr-muted">
@@ -390,11 +385,13 @@ export default function ProjectsBrowser({
     return (
       <section id="noi-bat" className="pt-4 sm:pt-6">
         <h2 className="text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">{traCuu ? "Dự án bất động sản" : "Dự án nổi bật"}</h2>
-        <div className="mt-4 flex flex-col gap-5">
+        {/* LƯỚI THẺ DỌC (30/10/2026: 1 cột thẻ ngang trên PC trống quá) — PC 4 · máy tính bảng 2 · điện thoại 1 cột, cùng thẻ hàng
+            trượt Nổi bật; thẻ cùng hàng cao bằng nhau */}
+        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4">
           {dsChung.slice((trangNB - 1) * NOI_BAT_MOI_TRANG, trangNB * NOI_BAT_MOI_TRANG).map((x) =>
             "noiBat" in x
-              ? <div key={x.noiBat.slug}>{theNoiBat(x.noiBat, true)}</div>
-              : <div key={x.traCuu.slug}><TheTraCuu d={x.traCuu} /></div>,
+              ? <div key={x.noiBat.slug}>{theNoiBat(x.noiBat)}</div>
+              : <div key={x.traCuu.slug}><TheDuAnDoc d={x.traCuu} /></div>,
           )}
         </div>
         <PhanTrang hienTai={trangNB} tong={tongNB} doiTrang={(p) => { setTrangNoiBat(p); window.scrollTo({ top: 0 }); }} />

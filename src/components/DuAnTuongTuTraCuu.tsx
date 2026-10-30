@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useHomeSection } from "@/components/HomeExpand";
 import PhanTrang from "@/components/PhanTrang";
-import { TheDuAnDoc, TheTraCuu } from "@/components/TraCuuDuAn";
+import { TheDuAnDoc } from "@/components/TraCuuDuAn";
 import type { DongTraCuu } from "@/lib/traCuuDuAn";
 
 // "DỰ ÁN TƯƠNG TỰ" trang dự án tra cứu — CHUẨN khối có "Xem thêm" (chủ dự án 30/10/2026): slide tối đa 8 thẻ dự án (thẻ dọc cùng
@@ -23,8 +23,9 @@ export default function DuAnTuongTuTraCuu({ ds, id }: { ds: DongTraCuu[]; id?: s
     return (
       <section className="pt-4 sm:pt-6">
         <h2 className="text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">Dự án tương tự</h2>
-        <ul className="mt-4 flex flex-col gap-4 sm:gap-5">
-          {ds.slice((hienTai - 1) * MOI_TRANG, hienTai * MOI_TRANG).map((x) => <li key={x.slug}><TheTraCuu d={x} /></li>)}
+        {/* Lưới thẻ dọc như danh sách Xem thêm trang Dự án: PC 4 · máy tính bảng 2 · điện thoại 1 cột (30/10/2026) */}
+        <ul className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4">
+          {ds.slice((hienTai - 1) * MOI_TRANG, hienTai * MOI_TRANG).map((x) => <li key={x.slug}><TheDuAnDoc d={x} /></li>)}
         </ul>
         <PhanTrang hienTai={hienTai} tong={tong} doiTrang={(p) => { setTrang(p); window.scrollTo({ top: 0 }); }} />
       </section>
