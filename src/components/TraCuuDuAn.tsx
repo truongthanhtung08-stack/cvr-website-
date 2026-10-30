@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { normalizeVi } from "@/lib/filters";
 import type { DongTraCuu } from "@/lib/traCuuDuAn";
-import { getTier, type TierId } from "@/lib/packages";
+import { getTier, HUY_HIEU_CLS } from "@/lib/packages";
 
 // TRA CỨU DỰ ÁN (chủ dự án 29/10/2026): phần trái trang Dự án (/du-an) — danh bạ kiểu tra mã số thuế, mỗi thẻ: ảnh · Tên ·
 // Chủ đầu tư · Địa chỉ · Loại hình. Bộ lọc của trang Dự án áp chung cho phần này và Dự án nổi bật (ProjectsBrowser).
@@ -26,9 +26,6 @@ export function locTraCuu(ds: DongTraCuu[], q: string, tinh: string, loai: strin
 
 // Thẻ DỌC (ảnh trên, chữ dưới) — khối "Dự án tương tự" ở trang dự án tra cứu: CÙNG KIỂU thẻ Dự án nổi bật (Tên · Địa chỉ ·
 // Loại hình · Chủ đầu tư), hiện đủ chữ, thẻ trong hàng cao bằng nhau (chủ dự án 30/10/2026)
-// Màu nhãn từng cấp VIP = ĐÚNG màu huy hiệu cấp của thẻ tin (packages.ts tiers.accent — một nguồn, 31/10/2026)
-const MAU_CAP = (cap: TierId) => getTier(cap).accent;
-
 export function TheDuAnDoc({ d }: { d: DongTraCuu }) {
   return (
     <Link
@@ -45,9 +42,12 @@ export function TheDuAnDoc({ d }: { d: DongTraCuu }) {
           <img src="/logo/symbol-dark.svg" alt="" className="absolute inset-0 m-auto h-10 w-10 opacity-25" />
         )}
         {/* CHỈ THẺ VIP có nhãn tình trạng trên ảnh, màu theo cấp (cùng màu nhãn cấp thẻ dự án nổi bật) — chủ dự án 31/10/2026 */}
-        {d.cap && (
-          <span className="absolute left-2 top-2 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.04em] text-white shadow-[0_2px_10px_rgba(0,0,0,0.28)] ring-1 ring-white/25 backdrop-blur-md" style={{ backgroundColor: MAU_CAP(d.cap) }}>{d.tinhTrang || "Đang cập nhật"}</span>
-        )}
+        {/* QUY ĐỊNH HIỂN THỊ CẤP (chốt 4–5/9, một kiểu mọi nơi như thẻ tin): huy hiệu viên thuốc HUY_HIEU_CLS + dải màu cấp đỉnh thẻ;
+            nội dung huy hiệu = tình trạng dự án, rộng theo chữ (chủ dự án 31/10/2026); thẻ thường trơn */}
+        {d.cap && (<>
+          <span className="absolute inset-x-0 top-0 z-10 h-px" style={{ backgroundColor: getTier(d.cap).bar }} aria-hidden />
+          <span className={HUY_HIEU_CLS.replace("w-[70px]", "px-2.5")} style={{ backgroundColor: getTier(d.cap).accent, color: getTier(d.cap).badgeText }}>{d.tinhTrang || "Đang cập nhật"}</span>
+        </>)}
       </span>
       {/* CHỮ DƯỚI ẢNH ĐỒNG NHẤT THẺ TIN (PropertyCard, chủ dự án 31/10/2026): tên 15 px đậm dòng 1,5 · các dòng 13 px biểu tượng +
           nội dung · dòng cuối gạch trên như dòng người đăng. Trường bắt buộc luôn hiện, thiếu ghi "<trường> đang cập nhật" */}
