@@ -109,6 +109,14 @@ export async function getArticle(slug: string): Promise<Article | null> {
 
 // ── DỰ ÁN ───────────────────────────────────────────────────────────────────
 
+// "dd/mm/yyyy" (Cowork ghi) so với updated_at (lần sửa cuối) → chuỗi ngày mới hơn
+function ngayMoiHon(ghi: string | undefined, sua: string): string {
+  const p = (ghi ?? "").trim().split("/").map(Number); // "dd/mm/yyyy"
+  const tGhi = p.length === 3 && p.every((x) => x > 0) ? new Date(p[2], p[1] - 1, p[0]).getTime() : 0;
+  const tSua = new Date(sua).getTime() || 0;
+  return tGhi > tSua ? ghi!.trim() : fmtDate(sua);
+}
+
 function projectRowToProject(r: ProjectRow): Project {
   // ĐỊA CHỈ ĐẦY ĐỦ: số nhà/đường (admin nhập) + Phường/Xã + Quận/Huyện + Tỉnh/Thành.
   // Cùng luật với tin đăng: dòng chính theo hệ MỚI, cách gọi cũ để ở locationCu.
@@ -177,7 +185,8 @@ function projectRowToProject(r: ProjectRow): Project {
       : {}),
     ...(d.developmentUnit?.trim() ? { developmentUnit: d.developmentUnit.trim() } : {}),
     // Ngày cập nhật: ngày Cowork ghi khi nạp, không có thì lần sửa cuối trong admin
-    capNhat: d.ngayCapNhat?.trim() || fmtDate(r.updated_at),
+    // NGÀY CẬP NHẬT = ngày MỚI NHẤT giữa ngày Cowork ghi khi nạp và lần sửa cuối trong Admin — anh sửa hôm nào hiện đúng hôm đó (30/10/2026)
+    capNhat: ngayMoiHon(d.ngayCapNhat, r.updated_at),
     ...(d.nguon?.trim() ? { nguon: tenNguon(d.nguon) } : {}),
   };
 }

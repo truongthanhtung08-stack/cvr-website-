@@ -5,7 +5,6 @@ import { loiEmail, loiSdt } from "@/lib/kiemNhap";
 import { napSupabase } from "@/lib/supabase/nap";
 import { taiKhiRanh } from "@/lib/taiKhiRanh";
 import { useProfile } from "@/lib/useProfile";
-import { emailThat } from "@/lib/useAuth";
 import type { LoaiYeuCau } from "@/components/YeuCauForm";
 
 // ============================================================================
@@ -43,12 +42,8 @@ export default function LeadForm({
   // Thư viện Supabase tải ngầm khi máy rảnh → bấm Gửi là gửi ngay, không chờ tải (taiKhiRanh)
   useEffect(() => taiKhiRanh(() => import("@/lib/supabase/client")), []);
 
-  useEffect(() => {
-    if (!profile) return;
-    setTen((v) => v || profile.full_name || "");
-    setDienThoai((v) => v || profile.phone || "");
-    setEmail((v) => v || emailThat(profile.email));
-  }, [profile]);
+  // KHÔNG tự điền sẵn tên / SĐT / email từ tài khoản (chủ dự án 30/10/2026: bỏ trường mặc định ở mọi form nhận báo giá) —
+  // khách tự gõ; đăng nhập rồi thì yêu cầu vẫn gắn tài khoản (user_id)
 
   function xoaHet() {
     setTen("");

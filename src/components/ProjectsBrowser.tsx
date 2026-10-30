@@ -26,6 +26,8 @@ import { locTraCuu, nhomLoai } from "@/components/TraCuuDuAn";
 import { useHomeSection } from "@/components/HomeExpand";
 import { sortProjectsByTier } from "@/components/ProjectSlider";
 import { khuVucList, khuVucTrongDiem, slugKhuVuc } from "@/lib/khuVuc";
+import { duAnThuocNhom, projectCategories } from "@/lib/categories";
+import { nhomChuDauTu } from "@/lib/chuDauTu";
 
 // Bản đồ chỉ chạy phía client (Leaflet đụng tới window) — nạp động, không SSR.
 const MapView = dynamic(() => import("@/components/MapViewMo"), { ssr: false });
@@ -62,10 +64,10 @@ const BIEU_TUONG: Record<string, string> = {
 // Một dòng thông tin dưới tên dự án: biểu tượng + nội dung (thẻ dự án dùng chung)
 function DongThe({ icon, gt, chua }: { icon: string; gt: string; chua?: string }) {
   return (
-    <p className="flex min-w-0 items-start gap-1.5 text-xs leading-snug">
+    <p className="flex min-w-0 items-start gap-1.5 text-[13px] leading-snug">
       <svg className="mt-px h-3.5 w-3.5 shrink-0 text-cvr-muted" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d={BIEU_TUONG[icon]} /></svg>
       {/* NỘI DUNG DÀI (địa chỉ đầy đủ số nhà, đường, phường, tỉnh là BẮT BUỘC): luôn hiện đủ, xuống dòng — không cắt "…" */}
-      <span className={`min-w-0 ${gt ? "text-cvr-body" : "text-cvr-faint"}`}>{gt || chua}</span>
+      <span title={gt || undefined} className={`min-w-0 sm:truncate ${gt ? "text-cvr-body" : "text-cvr-faint"}`}>{gt || chua}</span>
     </p>
   );
 }
@@ -73,10 +75,25 @@ function DongThe({ icon, gt, chua }: { icon: string; gt: string; chua?: string }
 // Một dòng có nhãn dưới tên dự án: "Nhãn: nội dung" — nhãn đậm, chưa có thì "Đang cập nhật" mờ hơn
 function DongNhan({ nhan, gt }: { nhan: string; gt: string }) {
   return (
-    <p className="min-w-0 text-xs leading-snug text-cvr-body">
+    <p title={gt || undefined} className="min-w-0 text-[13px] leading-snug text-cvr-body sm:truncate">
       <span className="font-semibold text-cvr-ink">{nhan}:</span> <span className={gt ? "" : "text-cvr-faint"}>{gt || CHUA}</span>
     </p>
   );
+}
+
+// CHIA TRANG THEO CHIỀU CAO THẺ (chủ dự án 30/10/2026: trang toàn tra cứu thẻ nhỏ thì nhiều dự án hơn, có nổi bật thì ít hơn) —
+// mỗi trang 10 suất: thẻ nổi bật (cao 178) = 1 suất, thẻ tra cứu (cao 109) = 2/3 suất → toàn nổi bật 10 · toàn tra cứu 15 dự án / trang
+const SUAT_TRANG = 30; // tính theo phần ba suất cho khỏi lẻ: nổi bật 3, tra cứu 2
+function chiaTrangDuAn<T extends object>(ds: T[]): T[][] {
+  const trang: T[][] = [[]];
+  let dung = 0;
+  for (const x of ds) {
+    const suat = "noiBat" in x ? 3 : 2;
+    if (dung + suat > SUAT_TRANG && trang[trang.length - 1].length) { trang.push([]); dung = 0; }
+    trang[trang.length - 1].push(x);
+    dung += suat;
+  }
+  return trang;
 }
 
 const ALL = "Tất cả";
@@ -275,7 +292,7 @@ export default function ProjectsBrowser({
   };
 
   // Phân trang danh sách dự án: 9 dự án/trang (khớp yêu cầu "8–10/trang").
-  const PER_PAGE = useSoMoiTrang(); // PC 15 · điện thoại 10 — quy định chung mọi danh sách (22/10/2026; trước 9)
+  useSoMoiTrang();
   const [page, setPage] = useState(1);
   // CHẾ ĐỘ BẢN ĐỒ cho tab Dự án — giống Mua bán / Cho thuê, marker là TÊN DỰ ÁN.
   const [mapMode, setMapMode] = useState(false);
@@ -289,9 +306,10 @@ export default function ProjectsBrowser({
     ...visible.map((p) => ({ noiBat: p })),
     ...traCuuLoc.filter((d) => !slugNoiBat.has(d.slug)).map((d) => ({ traCuu: d })),
   ];
-  const totalPages = Math.max(1, Math.ceil(dsTrang.length / PER_PAGE));
+  const cacTrang = chiaTrangDuAn(dsTrang);
+  const totalPages = cacTrang.length;
   const current = Math.min(page, totalPages);
-  const pageItems = dsTrang.slice((current - 1) * PER_PAGE, current * PER_PAGE);
+  const pageItems = cacTrang[current - 1];
   // Mở một dự án rồi BACK → về đúng trang danh sách + đúng chỗ đang xem (ghi vào bước lịch sử, giữ dữ liệu Next.js)
   const ghiTrang = (p: number, y?: number) =>
     window.history.replaceState({ ...(window.history.state ?? {}), clTrangDa: p, ...(y !== undefined ? { clYDa: y } : {}) }, "");
@@ -303,8 +321,7 @@ export default function ProjectsBrowser({
     if (st.clYDa) { const y = st.clYDa; requestAnimationFrame(() => window.scrollTo({ top: y })); window.setTimeout(() => window.scrollTo({ top: y }), 350); }
   }, []);
   // Dự án nổi bật: hàng trượt 8 dự án + "Xem thêm" (chuẩn chung HomeExpand): bấm → phần còn lại của trang ẩn, danh sách
-  // Dự án nổi bật 10 dự án / trang (chủ dự án 29/10/2026); nút Quay lại về như cũ.
-  const NOI_BAT_MOI_TRANG = 10;
+  // Chia trang theo chiều cao thẻ (chiaTrangDuAn); nút Quay lại về như cũ.
   const noiBat = useHomeSection("du-an-noi-bat");
   const [trangNoiBat, setTrangNoiBat] = useState(1);
   // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -397,14 +414,18 @@ export default function ProjectsBrowser({
           className={`card-lux group relative flex overflow-hidden rounded-none bg-white shadow-lux shadow-lux-hover hover:-translate-y-1 hover:border-cvr-blue/45 sm:gap-5 sm:border sm:border-cvr-line sm:p-3 ${gon ? "gap-3 border border-cvr-line p-2.5" : "flex-col sm:flex-row"}`}
         >
           <div className={gon
-            ? "relative min-h-24 w-24 shrink-0 self-stretch overflow-hidden rounded-lg bg-cvr-surface sm:min-h-[109px] sm:w-44 sm:rounded-xl"
-            : `relative w-full shrink-0 overflow-hidden bg-cvr-surface sm:aspect-auto sm:min-h-[158px] sm:w-64 sm:self-stretch sm:rounded-xl ${p.image ? "aspect-[16/9]" : "aspect-[3/1]"}`}>
+            ? "relative min-h-24 w-24 shrink-0 self-stretch overflow-hidden rounded-lg bg-cvr-surface sm:h-[109px] sm:min-h-0 sm:w-44 sm:self-start sm:rounded-xl"
+            : `relative w-full shrink-0 overflow-hidden bg-cvr-surface sm:aspect-auto sm:h-[178px] sm:w-72 sm:self-start sm:rounded-xl ${p.image ? "aspect-[16/9]" : "aspect-[3/1]"}`}>
+            {/* Dự án nổi bật: tình trạng (tiến độ) ghi trên ảnh; thẻ không còn dòng Trạng thái (chủ dự án 30/10/2026) */}
+                        {!gon && p.status && p.status !== CHUA && (
+              <span className="absolute left-2 top-2 z-10 rounded-full bg-white/85 px-1.5 py-px text-[9px] font-semibold uppercase leading-[14px] tracking-[0.02em] text-cvr-ink shadow-[0_2px_10px_rgba(0,0,0,0.18)] ring-1 ring-white/60 backdrop-blur-md">{p.status}</span>
+            )}
             {p.image ? (
             <AnhChay
               chay={false}
               images={[p.image, ...(p.photos ?? [])]}
               alt={p.name}
-              sizes={gon ? "(max-width:640px) 96px, 176px" : "(max-width:640px) 100vw, 256px"}
+              sizes={gon ? "(max-width:640px) 96px, 176px" : "(max-width:640px) 100vw, 288px"}
               className="object-cover transition-transform duration-[700ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.06]"
             />
             ) : (
@@ -413,24 +434,29 @@ export default function ProjectsBrowser({
             )}
           </div>
 
-          <div className={`flex min-w-0 flex-1 flex-col ${gon ? "sm:min-h-[109px] sm:justify-between" : "p-3 sm:min-h-[158px] sm:justify-between sm:p-0"}`}>
-            <h3 className="line-clamp-2 font-semibold leading-snug text-cvr-ink transition-colors group-hover:text-cvr-blue-ink sm:text-lg">
+          <div className={`flex min-w-0 flex-1 flex-col ${gon ? "sm:h-[109px] sm:justify-between sm:overflow-hidden" : "p-3 sm:h-[178px] sm:overflow-hidden sm:p-0"}`}>
+            {/* PC: KHUNG ẢNH CỐ ĐỊNH tỷ lệ vàng, chữ chỉnh theo khung — mỗi dòng 1 dòng, dài thì “…” (rê chuột thấy đủ), giới thiệu tối đa 2 dòng (chủ dự án 30/10/2026) */}
+            <h3 title={p.name} className="line-clamp-2 font-semibold leading-snug text-cvr-ink transition-colors group-hover:text-cvr-blue-ink sm:line-clamp-1 sm:text-lg">
               <Highlight text={p.name} terms={termsBySlug.get(p.slug) ?? []} />
             </h3>
             {/* Mọi dòng dưới tên một kiểu: biểu tượng + nội dung, cùng cỡ, cùng màu; chưa có thì "<trường> đang cập nhật" mờ hơn */}
-            <div className="mt-1.5 space-y-1 sm:mt-0">
+            {/* Thẻ tra cứu: địa chỉ ĐẦY ĐỦ một dòng riêng; Loại hình một dòng; Tiến độ dòng cuối bên phải (KHÔNG ghi trên ảnh) — chủ dự án 30/10/2026 */}
+            <div className="mt-2 space-y-1.5">
               <DongThe icon="ghim" gt={p.location} />
               {/* Mọi thẻ: chỉ dòng Vị trí có biểu tượng; các dòng khác ghi NHÃN ĐẬM có dấu hai chấm (chủ dự án 30/10/2026) */}
+              {/* Loại hình: 1 dòng dài hết bề ngang thẻ, quá dài mới “…” ở cuối (chủ dự án 30/10/2026) */}
               <DongNhan nhan="Loại hình" gt={p.type === CHUA ? "" : p.type} />
-              <DongNhan nhan="Trạng thái" gt={p.status === CHUA ? "" : p.status} />
-              <div className="flex items-start justify-between gap-3">
-                <DongNhan nhan="Chủ đầu tư" gt={p.developer === CHUA ? "" : p.developer} />
-                {p.priceFrom && <span className="shrink-0 whitespace-nowrap text-sm font-semibold leading-snug text-cvr-gold-ink">{p.priceFrom}</span>}
-              </div>
             </div>
             {!gon && p.overview[0] && (
-              <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-cvr-muted sm:mt-0">{chuThuan(p.overview[0])}</p>
+              <p className="mt-2.5 line-clamp-2 text-[13px] leading-relaxed text-cvr-muted">{chuThuan(p.overview[0])}</p>
             )}
+            {/* Chủ đầu tư + Liên hệ: dòng cuối thẻ, gạch ngang phía trên (chủ dự án 30/10/2026) */}
+            <div className="mt-3 flex items-center justify-between gap-3 border-t border-cvr-line pt-2.5 sm:mt-auto">
+              <DongNhan nhan="Chủ đầu tư" gt={p.developer === CHUA ? "" : p.developer} />
+              {p.priceFrom && <span className="shrink-0 whitespace-nowrap text-sm font-semibold leading-snug text-cvr-gold-ink">{p.priceFrom}</span>}
+              {/* Thẻ tra cứu: Tiến độ dòng cuối bên phải (không ghi trên ảnh) */}
+              {gon && <span className="shrink-0 whitespace-nowrap text-[13px] text-cvr-body"><span className="font-semibold text-cvr-ink">Tiến độ:</span> <span className={p.status === CHUA ? "text-cvr-faint" : ""}>{p.status}</span></span>}
+            </div>
           </div>
         </Link>
   );
@@ -474,7 +500,8 @@ export default function ProjectsBrowser({
       ...visible.map((p) => ({ noiBat: p })),
       ...(traCuu ? traCuuLoc.filter((d) => !noiBatSlug.has(d.slug)).map((d) => ({ traCuu: d })) : []),
     ];
-    const tongNB = Math.max(1, Math.ceil(dsChung.length / NOI_BAT_MOI_TRANG));
+    const trangChung = chiaTrangDuAn(dsChung);
+    const tongNB = trangChung.length;
     const trangNB = Math.min(trangNoiBat, tongNB);
     danhSachXemThem = (
       <section id="noi-bat" className={`mt-6 scroll-mt-24 sm:mt-5 ${mapMode ? "hidden" : ""}`}>
@@ -485,7 +512,7 @@ export default function ProjectsBrowser({
         <div className={`${danhSachNoiBat ? "mt-4" : ""} grid grid-cols-1 gap-8 lg:grid-cols-3`}>
           <div className="lg:col-span-2">
             <div className="flex flex-col gap-4 sm:gap-5" onClickCapture={() => ghiDs(trangNB, window.scrollY)}>
-              {dsChung.slice((trangNB - 1) * NOI_BAT_MOI_TRANG, trangNB * NOI_BAT_MOI_TRANG).map((x) =>
+              {trangChung[trangNB - 1].map((x) =>
                 "noiBat" in x
                   ? <div key={x.noiBat.slug}>{theDuAnWeb(x.noiBat)}</div>
                   : <div key={x.traCuu.slug}>{theDuAnWeb(duAnTuTraCuu(x.traCuu), true)}</div>,
@@ -842,7 +869,10 @@ export default function ProjectsBrowser({
         {/* ── Sidebar: lọc theo khu vực + tin tức (kiểu Batdongsan) ── */}
         {/* Điện thoại: thanh lọc trên đầu đã có "Khu vực" → khối lọc khu vực này chỉ ở máy tính (cột bên) — 22/10/2026 */}
         <aside className="hidden lg:col-span-1 lg:block">
-          <div className="sticky top-24 space-y-5">
+          {/* CỘT PHẢI CHUẨN TÌM KIẾM + SEO (chủ dự án 30/10/2026): lọc khu vực (có số) · loại hình → /du-an/<loại> · chủ đầu tư →
+              /chu-dau-tu/<tên> · dự án mới cập nhật — toàn liên kết tới trang đã có, khối nào không có dữ liệu thì ẩn. Không dính khi cuộn
+              (cột dài hơn màn hình). */}
+          <div className="space-y-5">
             <div className="rounded-none border border-cvr-line bg-white p-5 shadow-lux">
               <h2 className="text-sm font-semibold tracking-tight text-cvr-ink">Lọc theo khu vực</h2>
               <div className="mt-3 flex flex-col">
@@ -860,13 +890,54 @@ export default function ProjectsBrowser({
                     }`}
                   >
                     <span>{name === ALL ? "Tất cả khu vực" : name}</span>
+                    {name !== ALL && provCountMap.get(name) ? <span className="text-xs text-cvr-muted">{provCountMap.get(name)}</span> : null}
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Bỏ khối "Tin tức bất động sản" (chủ dự án 22/10/2026): web đã có mục Tin tức riêng — trang dự án
-                chỉ lo dự án, không độn bài viết không liên quan. */}
+            {(() => {
+              const tatCa: Project[] = [...projects, ...(traCuu ? traCuu.filter((d) => !slugNoiBat.has(d.slug)).map(duAnTuTraCuu) : [])];
+              const loai = projectCategories.map((c) => [c, duAnThuocNhom(tatCa, c).length] as const).filter(([, n]) => n > 0);
+              const cdt = [...nhomChuDauTu(tatCa)].sort((a, b) => b[1].duAn.length - a[1].duAn.length).slice(0, 8);
+              const moi = projects.slice(0, 5);
+              const hop = "rounded-none border border-cvr-line bg-white p-5 shadow-lux";
+              const dong = "flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-sm text-cvr-body transition-colors hover:bg-cvr-surface hover:text-cvr-ink";
+              return (
+                <>
+                  {loai.length > 0 && (
+                    <div className={hop}>
+                      <h2 className="text-sm font-semibold tracking-tight text-cvr-ink">Dự án theo loại hình</h2>
+                      <div className="mt-3 flex flex-col">
+                        {loai.map(([c, n]) => (
+                          <Link key={c.slug} href={`/du-an/${c.slug}`} className={dong}><span className="min-w-0 truncate">{c.label}</span><span className="shrink-0 text-xs text-cvr-muted">{n}</span></Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {cdt.length > 0 && (
+                    <div className={hop}>
+                      <h2 className="text-sm font-semibold tracking-tight text-cvr-ink">Dự án theo chủ đầu tư</h2>
+                      <div className="mt-3 flex flex-col">
+                        {cdt.map(([s, g]) => (
+                          <Link key={s} href={`/chu-dau-tu/${s}`} className={dong}><span className="min-w-0 truncate">{g.ten}</span><span className="shrink-0 text-xs text-cvr-muted">{g.duAn.length}</span></Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {moi.length > 0 && (
+                    <div className={hop}>
+                      <h2 className="text-sm font-semibold tracking-tight text-cvr-ink">Dự án mới cập nhật</h2>
+                      <div className="mt-3 flex flex-col">
+                        {moi.map((p) => (
+                          <Link key={p.slug} href={`/du-an/${p.slug}`} className={dong}><span className="min-w-0 truncate">{p.name}</span></Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              );
+            })()}
           </div>
         </aside>
       </div>

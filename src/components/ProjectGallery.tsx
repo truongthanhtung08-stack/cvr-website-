@@ -34,6 +34,18 @@ export default function ProjectGallery({ images, alt }: Props) {
     else setList(true);
   };
 
+  // MỘT ẢNH (dự án tra cứu — chủ dự án 30/10/2026): ẢNH NHỎ, khung nhỏ 16:10 ở cột trái (PC rộng 320 px; điện thoại hết bề ngang).
+  // Chuẩn lọc ảnh: ảnh ngang 16:10 (vd 1600 × 1000) là khít khung, không phải chỉnh.
+  if (images.length === 1) {
+    return (
+      <>
+        <button type="button" onClick={() => open(0)} className="relative block aspect-[16/10] w-full overflow-hidden rounded-xl bg-cvr-surface sm:mt-4 sm:w-80">
+          <Image src={images[0]} alt={alt} fill priority quality={90} sizes="(max-width:640px) 100vw, 320px" className="object-cover" />
+        </button>
+        {lightbox && <PhotoViewer images={images} start={active} title={alt} onClose={() => setLightbox(false)} />}
+      </>
+    );
+  }
   return (
     <>
       <div className="relative">
@@ -60,18 +72,20 @@ export default function ProjectGallery({ images, alt }: Props) {
           ))}
         </div>
 
-        {/* Bộ đếm ảnh — góc dưới phải */}
-        <button
-          type="button"
-          onClick={bamDem}
-          className="absolute bottom-3 right-3 flex items-center gap-1.5 rounded-lg bg-white/95 px-2.5 py-1.5 text-sm font-semibold text-cvr-ink shadow-md transition hover:bg-white"
-        >
-          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M4 6h16a0 0 0 010 0v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6a0 0 0 010 0z" />
-            <circle cx="15" cy="9" r="1.3" fill="currentColor" stroke="none" />
-          </svg>
-          {images.length}
-        </button>
+        {/* Bộ đếm ảnh — góc dưới phải; chỉ 1 ảnh thì không cần đếm (chủ dự án 30/10/2026) */}
+        {images.length > 1 && (
+          <button
+            type="button"
+            onClick={bamDem}
+            className="absolute bottom-3 right-3 flex items-center gap-1.5 rounded-lg bg-white/95 px-2.5 py-1.5 text-sm font-semibold text-cvr-ink shadow-md transition hover:bg-white"
+          >
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14M4 6h16a0 0 0 010 0v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6a0 0 0 010 0z" />
+              <circle cx="15" cy="9" r="1.3" fill="currentColor" stroke="none" />
+            </svg>
+            {images.length}
+          </button>
+          )}
       </div>
 
       {/* Danh sách ảnh kiểu Facebook (điện thoại) — cuộn tiếp ở cuối trang là thoát */}

@@ -111,21 +111,6 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   };
 }
 
-// Các mốc tiến độ
-const progressSteps = ["Pháp lý & khởi công", "Thi công phần thô", "Hoàn thiện", "Bàn giao"];
-// Tình trạng dự án (admin chọn) → bước sáng trên thanh Tiến độ.
-// ⚠️ Thứ tự kiểm tra QUAN TRỌNG: "Chưa mở bán" cũng chứa chữ "mở bán", "Sắp bàn
-// giao" cũng chứa "bàn giao" — mục hẹp phải xét TRƯỚC mục rộng.
-function currentStep(status: string): number {
-  const s = status.toLowerCase();
-  if (s.includes("chưa mở")) return 0;
-  if (s.includes("sắp mở")) return 0;
-  if (s.includes("đã bàn giao")) return 3;
-  if (s.includes("sắp bàn giao")) return 2;
-  if (s.includes("hoàn thành") || s.includes("hoàn thiện")) return 2;
-  if (s.includes("mở bán")) return 1;
-  return 1;
-}
 
 // Chuẩn hoá website chủ đầu tư → có http để mở tab mới
 function normalizeUrl(u: string): string {
@@ -240,11 +225,14 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   const coLoaiHinh = !traCuu || (!!p.type && p.type !== "Dự án bất động sản");
 
   const province = provinceOf(p.location);
-  // Chưa có mốc bàn giao trong hồ sơ → ĐỂ TRỐNG, không lấy tạm tình trạng (22/10/2026: từng hiện "Bàn giao: Đang mở bán",
-  // "Dự kiến bàn giao: Đang mở bán" — sai nghĩa, lặp nhãn tình trạng).
-  const handover = p.scale.find((s) => s.label.includes("Bàn giao"))?.value ?? "";
+  // DỰ ÁN THEO KHU VỰC ở cột phải (chủ dự án 30/10/2026): mọi tỉnh trên menu đang có dự án, đếm như trang Dự án (danh bạ tra cứu),
+  // tỉnh của dự án đang xem đứng đầu
+  const demKhuVuc = new Map<string, number>();
+  for (const d of dongTraCuu(listings, tatCaDuAn)) {
+    if (khuVucList.some((k) => k.name === d.tinh)) demKhuVuc.set(d.tinh, (demKhuVuc.get(d.tinh) ?? 0) + 1);
+  }
+  const duAnTheoKhuVuc = [...demKhuVuc.entries()].sort((a, b) => (a[0] === province ? -1 : b[0] === province ? 1 : b[1] - a[1]));
   const mapQuery = `${p.location}, Việt Nam`;
-  const step = currentStep(p.status);
 
   const floorPlans = p.floorPlans ?? [];
   const priceTable = p.priceTable ?? [];
@@ -261,7 +249,18 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   // Giá ở cột phải: ẩn giá → "Liên hệ" thay vì lộ khoảng giá.
   const sidePrice = showPrice ? p.priceFrom : "Liên hệ";
   // TRƯỜNG BẮT BUỘC LUÔN HIỆN (chủ dự án 30/10/2026): trạng thái · chủ đầu tư · loại hình — chưa có dữ liệu thì "Đang cập nhật"
-  const soO = [true, true, showPrice, !!handover].filter(Boolean).length;
+  // Bỏ dải "Chủ đầu tư · Loại hình" dưới địa chỉ (chủ dự án 30/10/2026: dư thừa) — hai trường này đứng ĐẦU bảng Tổng quan dự án
+  // BẢNG TỔNG QUAN ĐỦ TRƯỜNG (mẫu chủ dự án duyệt 30/10/2026): Tình trạng · Chủ đầu tư · Đơn vị phát triển · Loại hình · Giá từ ·
+  // rồi thông số hồ sơ (quy mô, sản phẩm, khởi công, bàn giao, pháp lý…). Tình trạng, chủ đầu tư, loại hình luôn có ("Đang cập nhật");
+  // trường khác chỉ khi có. Thay khối Tiến độ (trùng tình trạng, khởi công, bàn giao) — đã bỏ.
+  const hangThongSo: { label: string; value: string; href?: string }[] = [
+    { label: "Tình trạng", value: p.status || "Đang cập nhật" },
+    { label: "Chủ đầu tư", value: coChuDauTu ? p.developer : "Đang cập nhật", href: coChuDauTu && laChuDauTuThat(p.developer) ? `/chu-dau-tu/${slugChuDauTu(p.developer)}` : undefined },
+    ...(p.developmentUnit ? [{ label: "Đơn vị phát triển", value: p.developmentUnit }] : []),
+    { label: "Loại hình", value: coLoaiHinh ? p.type : "Đang cập nhật" },
+    ...(showPrice ? [{ label: "Giá từ", value: sidePrice }] : []),
+    ...p.scale.filter((s) => !["Tình trạng", "Chủ đầu tư", "Loại hình", "Giá từ"].includes(s.label)),
+  ];
 
   // Dự án tương tự — cùng cách trang dự án tra cứu (cùng tỉnh, cùng nhóm loại hình trước), lấy hết cho slide + Xem thêm
   const tuongTuNoiBat = duAnTuongTu(province, p.type, p.slug);
@@ -281,12 +280,11 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   // giá ẩn hoặc chưa có bảng → bỏ hẳn mục (cột phải đã có "Liên hệ" + ô nhận bảng giá), không lặp hộp "Liên hệ".
   const coBangGia = showPrice && priceTable.length > 0;
   const nav = [
-    ...(p.overview.length || p.scale.length ? [{ id: "tong-quan", label: "Tổng quan" }] : []),
+    { id: "tong-quan", label: "Tổng quan" },
     ...(p.videos?.length ? [{ id: "video", label: "Video" }] : []),
     { id: "vi-tri", label: "Vị trí" },
-    ...(floorPlans.length ? [{ id: "mat-bang", label: "Mặt bằng" }] : []),
     ...(p.amenities.length ? [{ id: "tien-ich", label: "Tiện ích" }] : []),
-    ...(!traCuu || p.status ? [{ id: "tien-do", label: "Tiến độ" }] : []),
+    ...(floorPlans.length ? [{ id: "mat-bang", label: "Mặt bằng" }] : []),
     ...(coBangGia ? [{ id: "bang-gia", label: "Bảng giá" }] : []),
     ...(coThongTinCdt ? [{ id: "chu-dau-tu", label: "Chủ đầu tư" }] : []),
     // Menu mục của trang (22/10/2026): thông tin dự án → tin thuộc dự án → dự án tương tự
@@ -334,18 +332,22 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
           {/* Thư viện ảnh — MOBILE tràn viền sát 2 mép (giảm khoảng trống trên) · bấm để xem lớn + zoom.
               Chưa có ảnh: không vẽ khung trống, tên dự án lên đầu trang (chủ dự án 30/10/2026) */}
           {coAnh && (
-            <div className="-mx-4 sm:mx-0">
+            <div className="relative -mx-4 sm:mx-0">
               <ProjectGallery images={gallery} alt={p.name} />
+              {/* Dự án có video: nút ▶ Video góc trái dưới ảnh → khối Video ngay sau Tổng quan (mẫu 30/10/2026) */}
+              {!!p.videos?.length && (
+                <a href="#video" className="absolute bottom-3 left-3 flex items-center gap-1.5 rounded-full bg-black/60 px-3 py-1.5 text-[13px] font-medium text-white backdrop-blur-sm hover:bg-black/75">
+                  <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden><path d="M8 5v14l11-7z" /></svg>
+                  Video
+                </a>
+              )}
             </div>
           )}
 
           {/* Tiêu đề + địa chỉ — bố cục cân đối, rõ ràng */}
           <div className={coAnh ? "mt-5" : "mt-2"}>
-            <div className="flex flex-wrap items-center gap-2">
-              {/* Dự án tra cứu: nhãn Bán / Cho thuê do máy tự gán khi nạp → không hiện */}
-              <span className="rounded-full bg-cvr-surface px-3 py-1 text-[12px] font-medium text-cvr-body">{p.status || "Đang cập nhật"}</span>
-            </div>
-            <h1 className="mt-3 text-[21px] font-semibold leading-[1.3] tracking-tight text-cvr-ink sm:text-[28px]">{p.name}</h1>
+            {/* Bỏ nhãn tình trạng trên tên (chủ dự án 30/10/2026: trùng dòng Tình trạng trong bảng Tổng quan) */}
+            <h1 className="text-[21px] font-semibold leading-[1.3] tracking-tight text-cvr-ink sm:text-[28px]">{p.name}</h1>
             <p className="mt-2 flex items-start gap-1.5 text-[14px] leading-relaxed text-cvr-muted sm:text-[15px]">
               <svg className="mt-0.5 h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
               <span className="min-w-0">{p.location}</span>
@@ -354,36 +356,12 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             {p.locationCu && (
               <p className="mt-1 pl-[22px] text-[13px] text-cvr-faint">Địa chỉ cũ: {p.locationCu}</p>
             )}
-            {/* Kiểu Mã số thuế (15/10/2026): ngày cập nhật + nguồn thông tin — MASTER 3.2 */}
-            {p.capNhat && (
-              <p className="mt-1 pl-[22px] text-[13px] text-cvr-faint">
-                Cập nhật ngày {p.capNhat}{p.nguon ? ` · Nguồn: ${p.nguon}` : ""}
-              </p>
-            )}
             {/* Bỏ câu "Thông tin dự án do Coastal Land tổng hợp…" (chủ dự án 30/10/2026) */}
             {tuTin && (
               <p className="mt-3 rounded-xl bg-cvr-surface px-4 py-2.5 text-sm text-cvr-body">Thông tin dự án đang được cập nhật.</p>
             )}
 
-            {/* Dải thông tin nhanh — GỌN (chủ dự án 30/10/2026): các ô xếp sát theo nội dung, gạch ngăn giữa các ô, không kéo
-                giãn hết bề ngang */}
-            {soO > 0 && (
-            <div className="mt-4 flex flex-wrap gap-x-6 gap-y-3 border-y border-cvr-line py-3 sm:divide-x sm:divide-cvr-line [&>*]:sm:pl-6 [&>*:first-child]:sm:pl-0">
-              {/* Thứ tự (chủ dự án 22/10/2026): chủ đầu tư · loại hình · giá · bàn giao — chỉ ô có thông tin; "Giá từ" chỉ khi dự án có
-                  giá thật (ẩn giá → "Liên hệ" đã có ở hộp liên hệ, không ghi trùng — 30/10/2026) */}
-              <Fact label="Chủ đầu tư" value={coChuDauTu ? p.developer : "Đang cập nhật"} href={coChuDauTu && laChuDauTuThat(p.developer) ? `/chu-dau-tu/${slugChuDauTu(p.developer)}` : undefined} />
-              <Fact label="Loại hình" value={coLoaiHinh ? p.type : "Đang cập nhật"} />
-              {showPrice && <Fact label="Giá từ" value={sidePrice} accent />}
-              {handover && <Fact label="Bàn giao" value={handover} />}
-            </div>
-            )}
 
-            {/* ĐIỆN THOẠI: người liên hệ + nút gọi ngay dưới dải thông tin (trước nằm cuối phần thông tin, cuộn ~3.000 px mới thấy) */}
-            {contact && (
-              <div className="mt-4 rounded-2xl border border-cvr-line bg-white p-4 shadow-lux lg:hidden">
-                <LienHeDuAn contact={contact} />
-              </div>
-            )}
           </div>
 
           </HomeCollapsible>
@@ -399,28 +377,32 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             <div className={`reveal is-visible cards-stagger lg:col-span-2 [&>section:first-of-type]:mt-5`}>
 
               {/* 1) Tổng quan */}
-              {(p.overview.length > 0 || p.scale.length > 0) && (
+              {hangThongSo.length > 0 && (
               <Section id="tong-quan" title="Tổng quan dự án">
                 {/* LOGIC TỔNG QUAN (chủ dự án 30/10/2026): bảng thông số (quy mô, sản phẩm, bàn giao, pháp lý…) lên TRƯỚC, luôn hiện —
                     đọc là biết dự án; phần giới thiệu bên dưới, dài thì thu gọn, nút "Xem thêm / Thu gọn" ở CUỐI khối (ngắn thì không có nút) */}
-                {p.scale.length > 0 && (
-                  <div className="grid grid-cols-1 gap-x-8 sm:grid-cols-2">
-                    {p.scale.map((s) => (
-                      <div key={s.label} className="flex items-start justify-between gap-4 border-b border-cvr-line/70 py-3 text-sm">
-                        <span className="shrink-0 whitespace-nowrap text-cvr-muted">{s.label}</span>
-                        <span className="min-w-0 text-right font-medium text-cvr-ink">{s.value}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                <div className="grid grid-cols-1 gap-x-8 sm:grid-cols-2">
+                  {hangThongSo.map((s) => (
+                    <div key={s.label} className="flex items-start justify-between gap-4 border-b border-cvr-line/70 py-3 text-sm">
+                      <span className="shrink-0 whitespace-nowrap text-cvr-muted">{s.label}</span>
+                      <span className={`min-w-0 text-right font-medium ${s.value === "Đang cập nhật" ? "font-normal text-cvr-faint" : "text-cvr-ink"}`}>
+                        {s.href ? <Link href={s.href} className="hover:text-cvr-blue-ink">{s.value}</Link> : s.value}
+                      </span>
+                    </div>
+                  ))}
+                </div>
                 {p.overview.length > 0 && (
-                <div className={p.scale.length > 0 ? "mt-5" : undefined}>
+                <div className="mt-5">
                 <MoTaThuGon dong={6}>
                   <div className="space-y-3 text-[15px] leading-relaxed text-cvr-body">
                     <RichContent paragraphs={p.overview} title={p.name} />
                   </div>
                 </MoTaThuGon>
                 </div>
+                )}
+                {/* Ngày cập nhật + nguồn — cuối khối Tổng quan (mẫu 30/10/2026; trước nằm dưới địa chỉ) */}
+                {p.capNhat && (
+                  <p className="mt-4 text-[13px] text-cvr-faint">Cập nhật ngày {p.capNhat}{p.nguon ? ` · Nguồn: ${p.nguon}` : ""}</p>
                 )}
               </Section>
               )}
@@ -439,14 +421,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                 <ProjectNearby mapQuery={mapQuery} address={p.location} places={places} zoom={16} />
               </Section>
 
-              {/* 3) Mặt bằng — ảnh từng tháp/tầng/loại căn, bấm để phóng to */}
-              {floorPlans.length > 0 && (
-                <Section id="mat-bang" title="Mặt bằng dự án">
-                  <FloorPlans items={floorPlans} />
-                </Section>
-              )}
-
-              {/* 4) Tiện ích dự án */}
+              {/* 3) Tiện ích dự án */}
               {p.amenities.length > 0 && (
                 <Section id="tien-ich" title="Tiện ích dự án">
                   {/* Danh sách dài → 6 mục đầu + "Xem thêm" (gọn, 22/10/2026) */}
@@ -461,26 +436,13 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                 </Section>
               )}
 
-              {/* 5) Tiến độ dự án — dự án tra cứu: chỉ khi hồ sơ có trạng thái */}
-              {(!traCuu || !!p.status) && (
-              <Section id="tien-do" title="Tiến độ dự án">
-                <div className="flex items-center justify-between gap-1">
-                  {progressSteps.map((s, i) => (
-                    <div key={s} className="flex flex-1 flex-col items-center text-center">
-                      <div className="flex w-full items-center">
-                        <span className={`h-0.5 flex-1 ${i === 0 ? "bg-transparent" : i <= step ? "bg-cvr-blue" : "bg-cvr-line"}`} />
-                        <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold ${i <= step ? "bg-cvr-blue text-white" : "border border-cvr-line text-cvr-faint"}`}>{i + 1}</span>
-                        <span className={`h-0.5 flex-1 ${i === progressSteps.length - 1 ? "bg-transparent" : i < step ? "bg-cvr-blue" : "bg-cvr-line"}`} />
-                      </div>
-                      <span className={`mt-2 text-[11px] leading-tight sm:text-xs ${i <= step ? "text-cvr-ink" : "text-cvr-faint"}`}>{s}</span>
-                    </div>
-                  ))}
-                </div>
-                {/* GỌN (chủ dự án 22/10/2026): bỏ dòng "Trạng thái hiện tại" — thanh tiến độ đã tô bước hiện tại, nhãn tình trạng
-                    có ở đầu trang. Chỉ ghi mốc bàn giao khi hồ sơ có. */}
-                {handover && <p className="mt-4 text-sm text-cvr-muted">Dự kiến bàn giao: <span className="font-semibold text-cvr-ink">{handover}</span></p>}
-              </Section>
+              {/* 4) Mặt bằng — ảnh từng tháp/tầng/loại căn, bấm để phóng to */}
+              {floorPlans.length > 0 && (
+                <Section id="mat-bang" title="Mặt bằng dự án">
+                  <FloorPlans items={floorPlans} />
+                </Section>
               )}
+
 
               {/* 6) Bảng giá — cấu trúc Loại căn – Diện tích – Hướng – Giá (ẩn/hiện giá) */}
               {coBangGia && (
@@ -549,38 +511,48 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             {/* CỘT PHẢI LUÔN CÓ, ĐỦ THỨ LIÊN QUAN (chủ dự án 30/10/2026) — mọi dự án cùng một khuôn: giá + liên hệ (khi có) · tin của dự án
                 · dự án cùng khu vực · nhận tài liệu & báo giá */}
             <aside className="lg:col-span-1 lg:mt-5">
-              <div className="sticky top-24 space-y-4">
-                {/* MÁY TÍNH: hộp liên hệ dính theo khi cuộn — giá chỉ khi dự án có giá thật; người liên hệ + gọi / email. Không nhắc lại
-                    "Liên hệ · loại hình" (đã ở dải thông tin bên trái) — 30/10/2026. Điện thoại: hộp liên hệ đã đưa lên dưới dải thông tin. */}
+              <div className="space-y-4 lg:sticky lg:top-24">
+                {/* Tin của dự án (bấm xuống khối tin) — máy tính lẫn điện thoại */}
+                {hasRelated && (
+                  <div className="rounded-2xl border border-cvr-line bg-white p-4 shadow-lux lg:p-5">
+                    <p className="text-base font-semibold tracking-tight text-cvr-ink">{`Tin mua bán, cho thuê tại ${p.name}`}</p>
+                    <div className="mt-3 flex flex-col">
+                      {relBan.length > 0 && <a href="#tin-du-an" className="flex items-center justify-between rounded-lg px-3 py-2 text-sm text-cvr-body transition-colors hover:bg-cvr-surface hover:text-cvr-ink"><span>Mua bán</span><span className="text-xs text-cvr-muted">{relBan.length}</span></a>}
+                      {relThue.length > 0 && <a href="#tin-du-an" className="flex items-center justify-between rounded-lg px-3 py-2 text-sm text-cvr-body transition-colors hover:bg-cvr-surface hover:text-cvr-ink"><span>Cho thuê</span><span className="text-xs text-cvr-muted">{relThue.length}</span></a>}
+                    </div>
+                  </div>
+                )}
+
+                {/* Dự án theo khu vực — cùng khối với trang Dự án, mọi tỉnh đang có dự án → trang /du-an/<tỉnh> */}
+                {duAnTheoKhuVuc.length > 0 && (
+                  <div className="rounded-2xl border border-cvr-line bg-white p-4 shadow-lux lg:p-5">
+                    <p className="text-base font-semibold tracking-tight text-cvr-ink">Dự án theo khu vực</p>
+                    <div className="mt-3 flex flex-col">
+                      {duAnTheoKhuVuc.map(([ten, so]) => (
+                        <Link key={ten} href={`/du-an/${slugKhuVuc(ten)}`} className="flex items-center justify-between rounded-lg px-3 py-2 text-sm text-cvr-body transition-colors hover:bg-cvr-surface hover:text-cvr-ink">
+                          <span>Dự án tại {ten}</span>
+                          <span className="text-xs text-cvr-muted">{so}</span>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Hộp Liên hệ — ngay trên form nhận tài liệu & báo giá, máy tính lẫn điện thoại (chủ dự án 30/10/2026) */}
                 {(showPrice || contact) && (
-                  <div className="hidden rounded-2xl border border-cvr-line bg-white p-5 shadow-lux lg:block">
+                  <div className="rounded-2xl border border-cvr-line bg-white p-4 shadow-lux lg:p-5">
                     {showPrice && (
                       <div className={contact ? "mb-4 border-b border-cvr-line pb-4" : undefined}>
                         <p className="text-xs text-cvr-muted">Giá bán từ</p>
                         <p className="text-2xl font-bold tracking-tight text-cvr-ink">{sidePrice}</p>
                       </div>
                     )}
-                    {contact && <LienHeDuAn contact={contact} />}
-                  </div>
-                )}
-
-                {/* MÁY TÍNH: tin của dự án (bấm xuống khối tin) + dự án cùng khu vực (trang khu vực) — điện thoại đã có menu mục */}
-                {(hasRelated || khuVucList.some((k) => k.name === province)) && (
-                  <div className="hidden rounded-2xl border border-cvr-line bg-white p-5 shadow-lux lg:block">
-                    {hasRelated && (
+                    {/* Tiêu đề "Liên hệ" — khách biết hộp này để làm gì (chủ dự án 30/10/2026) */}
+                    {contact && (
                       <>
-                        <p className="text-base font-semibold tracking-tight text-cvr-ink">{`Tin mua bán, cho thuê tại ${p.name}`}</p>
-                        <div className="mt-3 flex flex-col">
-                          {relBan.length > 0 && <a href="#tin-du-an" className="flex items-center justify-between rounded-lg px-3 py-2 text-sm text-cvr-body transition-colors hover:bg-cvr-surface hover:text-cvr-ink"><span>Mua bán</span><span className="text-xs text-cvr-muted">{relBan.length}</span></a>}
-                          {relThue.length > 0 && <a href="#tin-du-an" className="flex items-center justify-between rounded-lg px-3 py-2 text-sm text-cvr-body transition-colors hover:bg-cvr-surface hover:text-cvr-ink"><span>Cho thuê</span><span className="text-xs text-cvr-muted">{relThue.length}</span></a>}
-                        </div>
+                        <p className="mb-3 text-base font-semibold tracking-tight text-cvr-ink">Liên hệ</p>
+                        <LienHeDuAn contact={contact} />
                       </>
-                    )}
-                    {khuVucList.some((k) => k.name === province) && (
-                      <Link href={`/du-an/${slugKhuVuc(province)}`} className={`${hasRelated ? "mt-3 border-t border-cvr-line pt-3" : ""} flex items-center justify-between rounded-lg px-3 py-2 text-sm text-cvr-body transition-colors hover:bg-cvr-surface hover:text-cvr-ink`}>
-                        <span>Dự án tại {province}</span>
-                        <span aria-hidden>›</span>
-                      </Link>
                     )}
                   </div>
                 )}
@@ -658,12 +630,4 @@ function Section({ id, title, children }: { id: string; title: string; children:
   );
 }
 
-function Fact({ label, value, accent = false, href }: { label: string; value: string; accent?: boolean; href?: string }) {
-  return (
-    <div className="min-w-0">
-      <p className="text-[12px] text-cvr-muted">{label}</p>
-      <p className={`mt-0.5 text-[15px] font-semibold leading-snug break-words ${accent ? "text-cvr-blue-ink" : value === "Đang cập nhật" ? "font-normal text-cvr-faint" : "text-cvr-ink"}`} title={value}>{href ? <Link href={href} className="hover:text-cvr-blue-ink">{value}</Link> : value}</p>
-    </div>
-  );
-}
 
