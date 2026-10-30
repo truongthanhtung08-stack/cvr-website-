@@ -413,12 +413,13 @@ export default function ProjectsBrowser({
   const theDuAnWeb = (p: Project, gon = false) => (
         <Link
           href={`/du-an/${p.slug}`}
-          className={`card-lux group relative flex overflow-hidden rounded-none bg-white shadow-lux shadow-lux-hover hover:-translate-y-1 hover:border-cvr-blue/45 sm:gap-5 sm:border sm:border-cvr-line sm:p-3 ${gon ? "gap-3 border border-cvr-line p-2.5" : "flex-col sm:flex-row"}`}
+          className={`card-lux group relative flex overflow-hidden rounded-none bg-white shadow-lux shadow-lux-hover hover:-translate-y-1 hover:border-cvr-blue/45 sm:gap-5 sm:border sm:border-cvr-line sm:p-3 ${gon ? "flex-col border border-cvr-line sm:flex-row" : "flex-col sm:flex-row"}`}
         >
           <div className={gon
-            // Điện thoại: khung ảnh CỐ ĐỊNH tỷ lệ vàng dọc 84 × 136 (1 : 1,618) = đúng chiều cao khối chữ 5 dòng; thẻ gọn (chủ dự án 31/10/2026:
-            // "cân đối, tỷ lệ vàng", "khung thẻ tra cứu nhỏ hơn")
-            ? "relative aspect-[84/136] w-[84px] shrink-0 self-start overflow-hidden rounded-lg bg-cvr-surface sm:aspect-auto sm:min-h-[109px] sm:w-44 sm:self-stretch sm:rounded-xl"
+            // Điện thoại: BỐ TRÍ NHƯ THẺ NỔI BẬT — ảnh trên rộng hết thẻ, chữ hiện đủ bên dưới (chủ dự án 31/10/2026: câu dài thì ảnh trái
+            // không cân được với chữ → "bố trí như nhau hết"; không cắt chữ). Máy tính giữ ảnh trái 176 × 109
+            // Khung ảnh tra cứu THẤP hơn thẻ nổi bật: 5:2 (chủ dự án 31/10/2026: "cho cái khung nhỏ hơn")
+            ? "relative aspect-[5/2] w-full shrink-0 overflow-hidden bg-cvr-surface sm:aspect-auto sm:min-h-[109px] sm:w-44 sm:self-stretch sm:rounded-xl"
             : `relative w-full shrink-0 overflow-hidden bg-cvr-surface sm:aspect-auto sm:min-h-[178px] sm:w-72 sm:self-stretch sm:rounded-xl ${p.image ? "aspect-[16/9]" : "aspect-[3/1]"}`}>
             {/* Dự án nổi bật: tình trạng (tiến độ) ghi trên ảnh; thẻ không còn dòng Trạng thái (chủ dự án 30/10/2026) */}
             {/* Nhãn tình trạng chung mọi nơi (NhanTinhTrang, 31/10/2026): chỉ dự án VIP, màu theo cấp; còn lại ghi "Tiến độ" ở dòng cuối */}
@@ -439,8 +440,8 @@ export default function ProjectsBrowser({
 
           {/* Khung chữ CAO THEO NỘI DUNG, tối thiểu đúng số đo cũ (109 / 178 px); ảnh giãn theo — không cắt, không che tên (31/10/2026: thêm dòng
               Tiến độ làm khung cố định 109 px che mất tên — chủ dự án chụp màn hình) */}
-          {/* Điện thoại (tra cứu): MỖI DÒNG MỘT DÒNG, dài thì “…” (như thẻ trang chủ); khối chữ cao bằng ảnh 136 px → mọi thẻ cân, cao như nhau */}
-          <div className={`flex min-w-0 flex-1 flex-col ${gon ? "min-h-[136px] justify-between max-sm:[&_h3]:line-clamp-1 max-sm:[&_p]:truncate max-sm:[&_p>span]:truncate sm:min-h-[109px] sm:justify-start" : "p-3 sm:min-h-[178px] sm:p-0"}`}>
+          {/* Điện thoại (tra cứu): chữ hiện đủ dưới ảnh, đệm như thẻ nổi bật */}
+          <div className={`flex min-w-0 flex-1 flex-col ${gon ? "p-3 sm:min-h-[109px] sm:p-0" : "p-3 sm:min-h-[178px] sm:p-0"}`}>
             {/* PC: KHUNG ẢNH CỐ ĐỊNH tỷ lệ vàng, chữ chỉnh theo khung — mỗi dòng 1 dòng, dài thì “…” (rê chuột thấy đủ), giới thiệu tối đa 2 dòng (chủ dự án 30/10/2026) */}
             <h3 title={p.name} className="line-clamp-2 font-semibold leading-snug text-cvr-ink transition-colors group-hover:text-cvr-blue-ink sm:line-clamp-1 sm:text-lg">
               <Highlight text={p.name} terms={termsBySlug.get(p.slug) ?? []} />
