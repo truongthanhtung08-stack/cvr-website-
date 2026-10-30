@@ -94,13 +94,16 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       robots: { index: false, follow: true },
     };
   }
-  const desc = `Dự án ${p.name} tại ${p.location}. ${[p.type, p.status].filter(Boolean).join(", ")}. Giá từ ${p.priceFrom} — tiến độ, mặt bằng, tiện ích đầy đủ tại Coastal Land.`;
+  // Giá chỉ lên tiêu đề / mô tả khi admin cho hiện giá — ẩn giá thì không lộ, không ghi "Giá từ Liên hệ" (31/10/2026)
+  const gia = p.priceMode === "show" && p.priceFrom && p.priceFrom !== "Liên hệ" ? p.priceFrom : "";
+  const desc = `Dự án ${p.name} tại ${p.location}. ${[p.type, p.status].filter(Boolean).join(", ")}.${gia ? ` Giá từ ${gia} — tiến độ` : " Tiến độ"}, mặt bằng, tiện ích đầy đủ tại Coastal Land.`;
+  const tieuDe = gia ? `${p.name} — ${gia}` : p.name;
   return {
-    title: tieuDeGoogle(`${p.name} — ${p.priceFrom}`),
+    title: tieuDeGoogle(tieuDe),
     description: catMoTa(desc),
     alternates: { canonical: `/du-an/${p.slug}` },
     openGraph: {
-      title: `${p.name} — ${p.priceFrom}`,
+      title: tieuDe,
       description: desc,
       url: `/du-an/${p.slug}`,
       type: "website",
