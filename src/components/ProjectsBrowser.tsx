@@ -257,6 +257,20 @@ export default function ProjectsBrowser({
   const NOI_BAT_MOI_TRANG = 10;
   const noiBat = useHomeSection("du-an-noi-bat");
   const [trangNoiBat, setTrangNoiBat] = useState(1);
+  // MỞ MỘT DỰ ÁN RỒI BACK → về đúng trang danh sách + đúng chỗ đang xem (30/10/2026): ghi số trang + vị trí cuộn vào bước lịch sử
+  // của danh sách (giữ nguyên dữ liệu Next.js trong đó), quay lại thì đọc ra
+  const dangMoDs = !!((traCuu && noiBat.expanded) || danhSachNoiBat);
+  const ghiDs = (trang: number, y?: number) =>
+    window.history.replaceState({ ...(window.history.state ?? {}), clTrang: trang, ...(y !== undefined ? { clYDs: y } : {}) }, "");
+  useEffect(() => {
+    if (!dangMoDs) return;
+    const st = (window.history.state ?? {}) as { clTrang?: number; clYDs?: number };
+    if (!st.clTrang) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setTrangNoiBat(st.clTrang);
+    // cuộn hai nhịp: sau khi vẽ, và sau khi trình duyệt tự đặt lại vị trí lúc lùi trang
+    if (st.clYDs) { const y = st.clYDs; requestAnimationFrame(() => window.scrollTo({ top: y })); window.setTimeout(() => window.scrollTo({ top: y }), 350); }
+  }, [dangMoDs]);
   // Slide Dự án nổi bật — cùng cơ chế khối "Dự án nổi bật" trang chủ (ProjectsSection): máy tính mỗi slide 4 thẻ tự chạy 7 s,
   // rê chuột dừng; điện thoại từng thẻ tự chạy 5 s, chạm dừng rồi chạy lại.
   const hangNoiBat = visible.slice(0, NOI_BAT_HANG);
@@ -464,14 +478,14 @@ export default function ProjectsBrowser({
             (ngang); tra cứu: thẻ tra cứu · CỘT PHẢI = liên kết pSEO "Dự án theo khu vực" (/du-an/<tỉnh>), dính theo khi cuộn — máy tính */}
         <div className="mt-4 grid grid-cols-1 gap-8 lg:grid-cols-3">
           <div className="lg:col-span-2">
-            <div className="flex flex-col gap-4 sm:gap-5">
+            <div className="flex flex-col gap-4 sm:gap-5" onClickCapture={() => ghiDs(trangNB, window.scrollY)}>
               {dsChung.slice((trangNB - 1) * NOI_BAT_MOI_TRANG, trangNB * NOI_BAT_MOI_TRANG).map((x) =>
                 "noiBat" in x
                   ? <div key={x.noiBat.slug}>{theDuAnWeb(x.noiBat)}</div>
                   : <div key={x.traCuu.slug}><TheTraCuu d={x.traCuu} /></div>,
               )}
             </div>
-            <PhanTrang hienTai={trangNB} tong={tongNB} doiTrang={(p) => { setTrangNoiBat(p); window.scrollTo({ top: 0 }); }} />
+            <PhanTrang hienTai={trangNB} tong={tongNB} doiTrang={(p) => { setTrangNoiBat(p); ghiDs(p, 0); window.scrollTo({ top: 0 }); }} />
           </div>
           {cotKhuVuc}
         </div>

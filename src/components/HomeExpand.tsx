@@ -28,7 +28,8 @@ export const HOME_RESET_EVENT = "cl-home-reset";
 
 // Mỗi bước lịch sử do khối "Xem thêm" tạo ra mang dấu này để phân biệt với
 // điều hướng thật (chuyển trang).
-type SectionHistoryState = { clSection?: string; clDepth?: number };
+// clY: vị trí cuộn lúc bấm "Xem thêm" — BACK đóng danh sách thì về đúng chỗ đó, không văng lên đầu trang (30/10/2026)
+type SectionHistoryState = { clSection?: string; clDepth?: number; clY?: number };
 
 export function HomeExpandProvider({ children }: { children: React.ReactNode }) {
   const [openKey, setOpenKey] = useState<string | null>(null);
@@ -56,7 +57,10 @@ export function HomeExpandProvider({ children }: { children: React.ReactNode }) 
       if ((s.clSection ?? null) === keyRef.current && (s.clDepth ?? 0) === depthRef.current) return;
       setOpenKey(s.clSection ?? null);
       depthRef.current = s.clDepth ?? 0;
+      // Đóng danh sách → về đúng chỗ đã bấm "Xem thêm" (đợi trang vẽ lại các khối vừa hiện); mở lại → đầu danh sách
+      const y = s.clSection ? 0 : (s.clY ?? 0);
       window.scrollTo({ top: 0 });
+      if (y) { requestAnimationFrame(() => window.scrollTo({ top: y })); window.setTimeout(() => window.scrollTo({ top: y }), 350); }
     };
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
@@ -80,6 +84,8 @@ export function HomeExpandProvider({ children }: { children: React.ReactNode }) 
   }, [closeAll]);
 
   const openSection = useCallback((key: string) => {
+    // Ghi vị trí đang đứng vào bước lịch sử hiện tại (giữ nguyên dữ liệu Next.js trong đó) trước khi thêm bước mới
+    window.history.replaceState({ ...(window.history.state ?? {}), clY: window.scrollY }, "");
     setOpenKey(key);
     depthRef.current += 1;
     const state: SectionHistoryState = { clSection: key, clDepth: depthRef.current };
