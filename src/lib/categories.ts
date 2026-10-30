@@ -63,7 +63,7 @@ export const saleCategories: Category[] = [
     types: ["Shophouse / Nhà phố thương mại"],
   },
   {
-    slug: "dat-nen-du-an", label: "Đất nền dự án",
+    slug: "dat-nen-du-an", label: "Đất nền, đất nền dự án", // menu con của Đất (chủ dự án 30/10/2026); H1, tiêu đề Google giữ nguyên
     h1: "Bán đất nền dự án", tuKhoa: "Bán đất nền", title: `Bán đất nền dự án`,
     desc: `Mua bán đất nền dự án — pháp lý rõ ràng, giá theo từng phân khu.`,
     types: ["Đất nền / Đất nền dự án"],
