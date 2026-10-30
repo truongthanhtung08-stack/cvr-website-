@@ -260,7 +260,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   const rowPrice = (price: string) => (showPrice && price ? price : "Liên hệ");
   // Giá ở cột phải: ẩn giá → "Liên hệ" thay vì lộ khoảng giá.
   const sidePrice = showPrice ? p.priceFrom : "Liên hệ";
-  const soO = [coChuDauTu, coLoaiHinh, showPrice, !!handover].filter(Boolean).length;
+  // TRƯỜNG BẮT BUỘC LUÔN HIỆN (chủ dự án 30/10/2026): trạng thái · chủ đầu tư · loại hình — chưa có dữ liệu thì "Đang cập nhật"
+  const soO = [true, true, showPrice, !!handover].filter(Boolean).length;
 
   // Dự án tương tự — cùng cách trang dự án tra cứu (cùng tỉnh, cùng nhóm loại hình trước), lấy hết cho slide + Xem thêm
   const tuongTuNoiBat = duAnTuongTu(province, p.type, p.slug);
@@ -344,7 +345,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               {/* Dự án tra cứu: nhãn Bán / Cho thuê do máy tự gán khi nạp → không hiện */}
               {!traCuu && purposes.includes("ban") && <PurposeChip>Bán</PurposeChip>}
               {!traCuu && purposes.includes("thue") && <PurposeChip>Cho thuê</PurposeChip>}
-              {p.status && <span className="rounded-full bg-cvr-surface px-3 py-1 text-[12px] font-medium text-cvr-body">{p.status}</span>}
+              <span className="rounded-full bg-cvr-surface px-3 py-1 text-[12px] font-medium text-cvr-body">{p.status || "Đang cập nhật"}</span>
             </div>
             <h1 className="mt-3 text-[21px] font-semibold leading-[1.3] tracking-tight text-cvr-ink sm:text-[28px]">{p.name}</h1>
             <p className="mt-2 flex items-start gap-1.5 text-[14px] leading-relaxed text-cvr-muted sm:text-[15px]">
@@ -376,8 +377,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             <div className={`mt-5 grid grid-cols-2 gap-2 ${COT_O[soO]} ${soO % 2 ? "[&>*:last-child]:col-span-2 sm:[&>*:last-child]:col-span-1" : ""}`}>
               {/* Thứ tự (chủ dự án 22/10/2026): chủ đầu tư · loại hình · giá · bàn giao — chỉ ô có thông tin; "Giá từ" chỉ khi dự án có
                   giá thật (ẩn giá → "Liên hệ" đã có ở hộp liên hệ, không ghi trùng — 30/10/2026) */}
-              {coChuDauTu && <Fact label="Chủ đầu tư" value={p.developer} />}
-              {coLoaiHinh && <Fact label="Loại hình" value={p.type} />}
+              <Fact label="Chủ đầu tư" value={coChuDauTu ? p.developer : "Đang cập nhật"} />
+              <Fact label="Loại hình" value={coLoaiHinh ? p.type : "Đang cập nhật"} />
               {showPrice && <Fact label="Giá từ" value={sidePrice} accent />}
               {handover && <Fact label="Bàn giao" value={handover} />}
             </div>

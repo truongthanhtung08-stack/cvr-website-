@@ -65,7 +65,7 @@ export function ProjectCard({ p }: { p: Project }) {
       <div className="relative aspect-[3/2] overflow-hidden bg-cvr-surface sm:aspect-[16/10]">
         <AnhChay chay={false} images={[p.image, ...(p.photos ?? [])]} alt={p.name} sizes="(max-width: 640px) 86vw, 25vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
         <TierBadge tier={p.tier} />
-        <span className="absolute right-3 top-3 rounded-full bg-white/80 px-2.5 py-[3px] text-[10px] font-semibold uppercase tracking-[0.06em] text-cvr-ink shadow-[0_2px_10px_rgba(0,0,0,0.18)] ring-1 ring-white/60 backdrop-blur-md">
+        <span className="absolute right-2 top-2 rounded-full bg-white/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.04em] text-cvr-ink shadow-[0_2px_10px_rgba(0,0,0,0.18)] ring-1 ring-white/60 backdrop-blur-md">
           {p.status}
         </span>
       </div>

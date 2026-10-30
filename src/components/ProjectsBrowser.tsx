@@ -378,7 +378,7 @@ export default function ProjectsBrowser({
               // eslint-disable-next-line @next/next/no-img-element
               <img src="/logo/symbol-dark.svg" alt="" className="absolute inset-0 m-auto h-12 w-12 opacity-25" />
             )}
-            <span className="absolute left-2.5 top-2.5 rounded-full bg-white/80 px-2.5 py-[3px] text-[11px] font-semibold uppercase tracking-[0.06em] text-cvr-ink shadow-[0_2px_10px_rgba(0,0,0,0.18)] ring-1 ring-white/60 backdrop-blur-md">
+            <span className="absolute left-2 top-2 rounded-full bg-white/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.04em] text-cvr-ink shadow-[0_2px_10px_rgba(0,0,0,0.18)] ring-1 ring-white/60 backdrop-blur-md">
               {p.status}
             </span>
           </div>

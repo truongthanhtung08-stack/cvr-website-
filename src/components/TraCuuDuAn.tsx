@@ -38,7 +38,7 @@ export function TheDuAnDoc({ d }: { d: DongTraCuu }) {
           // eslint-disable-next-line @next/next/no-img-element
           <img src="/logo/symbol-dark.svg" alt="" className="absolute inset-0 m-auto h-10 w-10 opacity-25" />
         )}
-        <span className="absolute left-2.5 top-2.5 rounded-full bg-white/80 px-2.5 py-[3px] text-[11px] font-semibold uppercase tracking-[0.06em] text-cvr-ink shadow-[0_2px_10px_rgba(0,0,0,0.18)] ring-1 ring-white/60 backdrop-blur-md">{d.tinhTrang || "Đang cập nhật"}</span>
+        <span className="absolute left-2 top-2 rounded-full bg-white/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.04em] text-cvr-ink shadow-[0_2px_10px_rgba(0,0,0,0.18)] ring-1 ring-white/60 backdrop-blur-md">{d.tinhTrang || "Đang cập nhật"}</span>
       </span>
       <span className="flex min-w-0 flex-1 flex-col p-3">
         <span className="font-semibold leading-snug text-cvr-ink transition-colors group-hover:text-cvr-blue-ink">{d.ten}</span>
@@ -60,7 +60,7 @@ export function TheDuAnDoc({ d }: { d: DongTraCuu }) {
 // dự án"): trạng thái = nhãn tròn trên ảnh · tên · địa chỉ có biểu tượng ghim · "Loại hình: …" · gạch ngăn · "Chủ đầu tư: …".
 // Trường bắt buộc luôn hiện, chưa có thông tin thì "Đang cập nhật" (mờ hơn thông tin thật). Máy tính ảnh trái cùng cỡ thẻ nổi bật;
 // điện thoại ảnh trái 96 px (danh bạ nhiều dự án chưa có ảnh — ảnh trên tràn viền sẽ toàn khung xám), nhãn trạng thái đầu cột chữ.
-const NHAN_TT = "rounded-full bg-white/80 px-2.5 py-[3px] text-[11px] font-semibold uppercase tracking-[0.06em] text-cvr-ink shadow-[0_2px_10px_rgba(0,0,0,0.18)] ring-1 ring-white/60 backdrop-blur-md";
+const NHAN_TT = "rounded-full bg-white/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.04em] text-cvr-ink shadow-[0_2px_10px_rgba(0,0,0,0.18)] ring-1 ring-white/60 backdrop-blur-md";
 const giaTri = (gt?: string) => <span className={gt ? "font-medium text-cvr-ink" : "text-cvr-faint"}>{gt || "Đang cập nhật"}</span>;
 
 export function TheTraCuu({ d }: { d: DongTraCuu }) {
