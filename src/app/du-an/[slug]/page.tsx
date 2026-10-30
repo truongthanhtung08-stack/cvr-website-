@@ -289,7 +289,10 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   // Dự án không có tin nào → để TRỐNG, tuyệt đối KHÔNG độn tin của dự án khác vào.
   // Cùng với tin KHÁCH TỰ GHI ĐÚNG TÊN dự án này (chưa có mã vì lúc đăng dự án chưa có trang) —
   // tạo trang dự án xong là tin tự về đây (chủ dự án 15/10/2026).
-  const projectListings = listings.filter((x) => x.projectSlug === p.slug || cungDuAn(x.projectSlug, p.slug)
+  const projectListings = slug === "demo-tra-cuu" && !hoSoDb
+    // DEMO (chỉ máy dev): mượn tin căn hộ Đà Nẵng — mỗi nhóm Mua bán / Cho thuê hơn 8 tin để xem dải trượt + "Xem thêm" khi dự án nhiều tin
+    ? listings.filter((x) => /Đà Nẵng/.test(x.location) && /căn hộ|chung cư|condotel/i.test(x.type))
+    : listings.filter((x) => x.projectSlug === p.slug || cungDuAn(x.projectSlug, p.slug)
     || (!x.projectSlug && !!x.projectName && normalizeVi(x.projectName) === normalizeVi(p.name)));
   // THỨ TỰ MỘT CHUẨN CẢ WEB (chốt 23/10/2026): cấp tin trước, cùng cấp theo mốc gần nhất (đăng / đẩy) — getListings đã xếp theo mốc,
   // sortListings "moi" xếp cấp giữ nguyên mốc. Dải trượt lấy 8 tin đầu, "Xem thêm" giữ đúng thứ tự này từ tin số 1 (chủ dự án 31/10/2026)
