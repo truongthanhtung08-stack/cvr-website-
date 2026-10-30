@@ -16,7 +16,8 @@ import { mauSoCuaLoaiHinh } from "@/lib/chiSoGia";
 import { featuredListings, getListingById } from "@/lib/data";
 import { asset } from "@/lib/asset";
 import { isVideoUrl } from "@/lib/media";
-import { fieldsSplit, amenityGroups, coDienTichXayDung, viTriTuDuongVao, viTriTuAccess, laTinThue, laTinBan, dienTichSanThat, chuanLoaiCon, type Field } from "@/lib/listingSpec";
+import { fieldsSplit, amenityGroups, coDienTichXayDung, viTriTuDuongVao, viTriTuAccess, laTinThue, laTinBan, dienTichSanThat, chuanLoaiCon, O_LOAI_CON, type Field } from "@/lib/listingSpec";
+import { lapCha } from "@/lib/filters";
 import { chuanHoaSdt, maNguoiTuSdt, tachNhieuSdt } from "@/lib/phone";
 import { tachTenDuong } from "@/lib/tenDuong";
 import { chuoiDiaChiBanDo } from "@/lib/diaChiBanDo";
@@ -577,7 +578,8 @@ function rowToDetail(r: Row): ListingFull {
         // Trang tin ghi nhãn gọn "Mặt tiền", "Chiều dài" (chủ dự án 21/10/2026); form đăng tin giữ chú thích trong ngoặc
         return { label: f.label.replace(/\s*\((chiều ngang|chiều sâu)\)$/, ""), value: v && f.unit && /^[\d.,\s]+$/.test(v) ? `${v} ${f.unit}` : v };
       })
-      .filter((s) => s.value);
+      // Loại con lặp tên cha thì bỏ (lapCha, 30/10/2026)
+      .filter((s, i) => s.value && !(O_LOAI_CON.includes(fs[i].key) && lapCha(s.value, r.type, r.purpose)));
   const { chinh, dacDiem } = fieldsSplit(r.type, r.purpose);
   // Tin thuê: mục TIỀN lên hàng giá, mục điều kiện thuê (vào ở, thời hạn) lên thông tin chính — "Đặc điểm" chỉ còn
   // đặc điểm của bất động sản. Chỉ đổi chỗ hiện trên trang tin; form đăng tin giữ nguyên (fieldsSplit dùng chung).

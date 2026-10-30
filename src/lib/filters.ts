@@ -53,6 +53,14 @@ export function nhomCuaLoaiHinh(type: string | null | undefined, purpose?: strin
   return !g ? tenLoaiHinh(type) : g.label === "Khác" ? "Bất động sản khác" : g.label;
 }
 
+// Loại con LẶP cha: mọi chữ của nó đã có trong tên nhóm cha ("Căn hộ chung cư" dưới "Căn hộ, chung cư") → không hiện dòng loại con.
+// Chữ khách tự ghi ("Khác — tự ghi") khác cha thì vẫn hiện nguyên văn.
+export function lapCha(v: string | null | undefined, type: string | null | undefined, purpose?: string | null): boolean {
+  const cha = new Set(normalizeVi(nhomCuaLoaiHinh(type, purpose)).split(/[^a-z0-9]+/).filter(Boolean));
+  const chu = normalizeVi(v ?? "").split(/[^a-z0-9]+/).filter(Boolean);
+  return chu.length > 0 && chu.every((w) => cha.has(w));
+}
+
 // Chọn bộ danh mục theo mục đích (dùng cho FilterBar trên từng trang)
 export function typeGroupsFor(purpose: "ban" | "thue"): TypeGroup[] {
   return purpose === "thue" ? rentTypeGroups : saleTypeGroups;

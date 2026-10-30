@@ -35,7 +35,7 @@ import { rentCategories, saleCategories } from "@/lib/categories";
 import { khuVucList } from "@/lib/khuVuc";
 import LienKetPseo from "@/components/LienKetPseo";
 import { getProject, getProjects } from "@/lib/contentDb";
-import { normalizeVi, cungDuAn, tenLoaiHinh, nhomCuaLoaiHinh } from "@/lib/filters";
+import { normalizeVi, cungDuAn, tenLoaiHinh, nhomCuaLoaiHinh, lapCha } from "@/lib/filters";
 import { tierFromBadge, getTier } from "@/lib/packages";
 import { chuanHoaSdt } from "@/lib/phone";
 import MoTaThuGon from "@/components/MoTaThuGon";
@@ -658,7 +658,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                     const coCon = oCon && [...d.specs, ...d.specsChinh].some((s) => s.label === oCon.label);
                     return (<>
                       <Row label="Loại hình" value={nhomCuaLoaiHinh(l.type, l.purpose)} />
-                      {oCon && !coCon && <Row label={oCon.label} value={tenLoaiHinh(l.type)} />}
+                      {oCon && !coCon && !lapCha(tenLoaiHinh(l.type), l.type, l.purpose) && <Row label={oCon.label} value={tenLoaiHinh(l.type)} />}
                     </>);
                   })()}
                   {/* Dòng "Dự án" đã chuyển lên ngay dưới địa chỉ đầu tin (22/10/2026 — dự án là vị trí, không phải đặc điểm). */}

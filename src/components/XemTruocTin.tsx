@@ -9,7 +9,7 @@ import RichContent from "@/components/RichContent";
 import { getTier, type TierId } from "@/lib/packages";
 import { nhanDienTich as nhanDienTichTheoLoai, laTinThue, fieldsFor, O_LOAI_CON } from "@/lib/listingSpec";
 import type { ListingFull } from "@/lib/listingsDb";
-import { tenLoaiHinh, nhomCuaLoaiHinh } from "@/lib/filters";
+import { tenLoaiHinh, nhomCuaLoaiHinh, lapCha } from "@/lib/filters";
 
 // ============================================================================
 // XEM TRƯỚC TIN ĐĂNG (chủ dự án 15/10/2026: "phải cấu trúc để khách hình dung được tin đăng như thế
@@ -160,7 +160,7 @@ export default function XemTruocTin({
                     const coCon = oCon && [...d.specs, ...d.specsChinh].some((s) => s.label === oCon.label);
                     return (<>
                       <Row label="Loại hình" value={nhomCuaLoaiHinh(l.type, l.purpose)} />
-                      {oCon && !coCon && <Row label={oCon.label} value={tenLoaiHinh(l.type)} />}
+                      {oCon && !coCon && !lapCha(tenLoaiHinh(l.type), l.type, l.purpose) && <Row label={oCon.label} value={tenLoaiHinh(l.type)} />}
                     </>);
                   })()}
               {d.projectName && <Row label="Dự án" value={d.projectName} />}
