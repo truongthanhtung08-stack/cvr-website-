@@ -396,12 +396,14 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                     điện thoại 2 ô; ô đều nhau, giá trị dài tự xuống dòng trong ô */}
                 {/* BẢNG THÔNG TIN CHUẨN (chủ dự án 30/10/2026): PC 2 cột thẳng hàng — mỗi mục nhãn xám rộng cố định + giá trị đậm NGAY SAU;
                     thứ tự theo cặp (chủ đầu tư | tình trạng · loại hình | giá · quy mô | diện tích …); điện thoại 1 cột */}
+                {/* CHUẨN CHỮ TRANG DỰ ÁN (chủ dự án 31/10/2026): nội dung 15 px · nhãn 14 px · mọi dòng cao 24 px · các dòng cách 12 px ·
+                    tiêu đề mục 24 px cách nội dung 20 px · mục cách mục 48 px · ghi chú 13 px */}
                 <div className="grid grid-cols-1 gap-x-10 gap-y-3 sm:grid-cols-2">
                   {hangThongSo.map((s) => (
                     // MẪU B (31/10/2026): 2 cột đúng thứ tự trái → phải; chữ dài tự xuống dòng trong ô, không chiếm trọn hàng
                     <div key={s.label} className="flex min-w-0 items-start gap-3 text-[15px]">
-                      <span className="w-32 shrink-0 text-sm leading-[22px] text-cvr-muted sm:w-36">{s.label}</span>
-                      <span className={`min-w-0 ${s.value === "Đang cập nhật" ? "text-cvr-faint" : "font-medium text-cvr-ink"}`}>
+                      <span className="w-32 shrink-0 text-sm leading-6 text-cvr-muted sm:w-36">{s.label}</span>
+                      <span className={`min-w-0 leading-6 ${s.value === "Đang cập nhật" ? "text-cvr-faint" : "font-medium text-cvr-ink"}`}>
                         {s.href ? <Link href={s.href} className="hover:text-cvr-blue-ink">{s.value}</Link> : s.value}
                       </span>
                     </div>
@@ -412,7 +414,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                 <div className="mt-8">
                 {/* TRANG DỰ ÁN HIỆN ĐỦ, KHÔNG CẮT TỪNG PHẦN — trang dài là chuẩn (chủ dự án 30/10/2026) */}
                 <div>
-                  <div className="space-y-3 text-[15px] leading-relaxed text-cvr-body">
+                  <div className="space-y-3 text-[15px] leading-6 text-cvr-body">
                     <RichContent paragraphs={p.overview} title={p.name} />
                   </div>
                 </div>
@@ -436,10 +438,10 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                 <Section id="tien-ich" title="Tiện ích dự án">
                   {/* Danh sách dài → 6 mục đầu + "Xem thêm" (gọn, 22/10/2026) */}
                   {/* 2 cột thẳng hàng với bảng Tổng quan (gap-x-10) — 3 cột chữ dài lổn nhổn (chủ dự án 31/10/2026: cân đo toàn trang) */}
-                  <div className="grid grid-cols-1 gap-x-10 gap-y-2.5 sm:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-x-10 gap-y-3 sm:grid-cols-2">
                     {p.amenities.map((a) => (
-                      <span key={a} className="flex items-start gap-2.5 py-1.5 text-[15px] leading-snug text-cvr-body">
-                        <svg className="mt-0.5 h-4 w-4 shrink-0 text-cvr-blue" fill="none" stroke="currentColor" strokeWidth={2.4} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                      <span key={a} className="flex items-start gap-2.5 text-[15px] leading-6 text-cvr-body">
+                        <svg className="mt-1 h-4 w-4 shrink-0 text-cvr-blue" fill="none" stroke="currentColor" strokeWidth={2.4} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                         <span className="min-w-0">{a}</span>
                       </span>
                     ))}
