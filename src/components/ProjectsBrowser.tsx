@@ -70,6 +70,15 @@ function DongThe({ icon, gt, chua }: { icon: string; gt: string; chua?: string }
   );
 }
 
+// Một dòng có nhãn dưới tên dự án: "Nhãn: nội dung" — nhãn đậm, chưa có thì "Đang cập nhật" mờ hơn
+function DongNhan({ nhan, gt }: { nhan: string; gt: string }) {
+  return (
+    <p className="min-w-0 text-xs leading-snug text-cvr-body">
+      <span className="font-semibold text-cvr-ink">{nhan}:</span> <span className={gt ? "" : "text-cvr-faint"}>{gt || CHUA}</span>
+    </p>
+  );
+}
+
 const ALL = "Tất cả";
 
 // Đếm số dự án theo từng giá trị của 1 tiêu chí
@@ -411,10 +420,11 @@ export default function ProjectsBrowser({
             {/* Mọi dòng dưới tên một kiểu: biểu tượng + nội dung, cùng cỡ, cùng màu; chưa có thì "<trường> đang cập nhật" mờ hơn */}
             <div className="mt-1.5 space-y-1 sm:mt-0">
               <DongThe icon="ghim" gt={p.location} />
-              <DongThe icon="loai" gt={p.type === CHUA ? "" : p.type} chua="Loại hình đang cập nhật" />
-              <DongThe icon="trangthai" gt={p.status === CHUA ? "" : p.status} chua="Trạng thái đang cập nhật" />
+              {/* Mọi thẻ: chỉ dòng Vị trí có biểu tượng; các dòng khác ghi NHÃN ĐẬM có dấu hai chấm (chủ dự án 30/10/2026) */}
+              <DongNhan nhan="Loại hình" gt={p.type === CHUA ? "" : p.type} />
+              <DongNhan nhan="Trạng thái" gt={p.status === CHUA ? "" : p.status} />
               <div className="flex items-start justify-between gap-3">
-                <DongThe icon="cdt" gt={p.developer === CHUA ? "" : p.developer} chua="Chủ đầu tư đang cập nhật" />
+                <DongNhan nhan="Chủ đầu tư" gt={p.developer === CHUA ? "" : p.developer} />
                 {p.priceFrom && <span className="shrink-0 whitespace-nowrap text-sm font-semibold leading-snug text-cvr-gold-ink">{p.priceFrom}</span>}
               </div>
             </div>
