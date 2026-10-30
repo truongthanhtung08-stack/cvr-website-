@@ -46,9 +46,9 @@ export default function AnhTraCuu({ images, alt }: { images: string[]; alt: stri
       {ds.map((src, k) => (k === i || k === (i + 1) % ds.length || k === (i - 1 + ds.length) % ds.length) && (
         <div key={src} className={`absolute inset-0 transition-opacity duration-700 ${k === i ? "opacity-100" : "opacity-0"}`} aria-hidden={k !== i}>
           {/* Nền: chính ảnh đó phóng to, làm mờ — lấp phần khung thừa */}
-          <Image src={src} alt="" fill sizes="(max-width:1024px) 100vw, 800px" className="scale-110 object-cover blur-2xl brightness-90" />
+          <Image src={src} alt="" fill sizes="(max-width:1024px) 100vw, 800px" className="z-0 scale-110 object-cover blur-2xl brightness-90" />
           {/* Ảnh thật hiện trọn, không cắt */}
-          <Image src={src} alt={k === i ? alt : ""} fill priority={k === 0} fetchPriority={k === 0 ? "high" : "auto"} sizes="(max-width:1024px) 100vw, 800px" className="object-contain" />
+          <Image src={src} alt={k === i ? alt : ""} fill priority={k === 0} fetchPriority={k === 0 ? "high" : "auto"} sizes="(max-width:1024px) 100vw, 800px" className="z-[1] object-contain" />
         </div>
       ))}
       {ds.length > 1 && (

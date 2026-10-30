@@ -325,7 +325,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   const coMucTongQuan = traCuu ? hangThem.length > 0 || p.overview.length > 0 || !!p.capNhat : hangThongSo.length > 0;
   const nav = [
     ...(coMucTongQuan ? [{ id: "tong-quan", label: "Tổng quan" }] : []),
-    { id: "vi-tri", label: "Vị trí" },
+    ...(!traCuu || p.mapPin ? [{ id: "vi-tri", label: "Vị trí" }] : []),
     ...(p.amenities.length ? [{ id: "tien-ich", label: "Tiện ích" }] : []),
     ...(floorPlans.length ? [{ id: "mat-bang", label: "Mặt bằng" }] : []),
     ...(coBangGia ? [{ id: "bang-gia", label: "Bảng giá" }] : []),
@@ -442,7 +442,6 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                     <NhanTinhTrang tier={p.tier} tinhTrang={giaTriThat(p.status)} />
                     <AnhTraCuu images={coAnh ? gallery : []} alt={p.name} />
                   </div>
-                  <div className="mt-5">{bangThongSo(hangBatBuoc)}</div>
                 </div>
               )}
 
@@ -478,9 +477,12 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
 
               {/* 2) Vị trí — bản đồ + tiện ích xung quanh + chỉ đường từ vị trí của bạn */}
+              {/* Tra cứu: trang chỉ ảnh · tên · thông tin cơ bản; bản đồ chỉ khi Admin ghim toạ độ (chủ dự án 31/10/2026) */}
+              {(!traCuu || !!p.mapPin) && (
               <Section id="vi-tri" title="Vị trí & tiện ích xung quanh">
                 <ProjectNearby mapQuery={mapQuery} address={diaChiDu} places={places} zoom={16} caoBanDo="h-[240px] w-full sm:h-[320px]" />
               </Section>
+              )}
 
               {/* 3) Tiện ích dự án */}
               {p.amenities.length > 0 && (
@@ -599,6 +601,20 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                 )}
 
                 {/* Dự án theo khu vực — cùng khối với trang Dự án, mọi tỉnh đang có dự án → trang /du-an/<tỉnh> */}
+                {/* Tra cứu: 3 trường bắt buộc thành hộp đầu cột phải, cùng kiểu hộp khu vực — cột phải cao ngang ảnh, cân 2 bên (31/10/2026) */}
+                {traCuu && (
+                  <div className="space-y-3 rounded-2xl border border-cvr-line bg-white p-4 lg:p-5">
+                    {hangBatBuoc.map((s) => (
+                      <div key={s.label} className="flex min-w-0 items-start gap-3 text-[15px]">
+                        <span className="w-24 shrink-0 text-sm leading-6 text-cvr-muted">{s.label}</span>
+                        <span className={`min-w-0 leading-6 ${s.value === "Đang cập nhật" ? "text-cvr-faint" : "font-medium text-cvr-ink"}`}>
+                          {s.href ? <Link href={s.href} className="hover:text-cvr-blue-ink">{s.value}</Link> : s.value}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
                 {duAnTheoKhuVuc.length > 0 && (
                   <div className="rounded-2xl border border-cvr-line bg-white p-4 lg:p-5">
                     <p className="text-base font-semibold tracking-tight text-cvr-ink">Dự án theo khu vực</p>
