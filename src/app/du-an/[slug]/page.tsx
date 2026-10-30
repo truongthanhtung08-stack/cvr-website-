@@ -347,7 +347,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   // Trang tra cứu GỌN (chủ dự án 31/10/2026: "bỏ hết những phần không cần thiết… vì đây là tra cứu"): không thanh mục, không form
   // tải tài liệu. GIỮ "Dự án theo khu vực" (liên kết sang trang dự án từng tỉnh — SEO; chủ dự án: "không được bỏ")
   const coCotPhai = !traCuu || hasRelated || showPrice || !!contact || duAnTheoKhuVuc.length > 0;
-  const coMucTongQuan = hangThongSo.length > 0;
+  // Tra cứu: bảng thông tin ở hàng đầu trang → mục Tổng quan chỉ còn giới thiệu, không có thì ẩn
+  const coMucTongQuan = traCuu ? p.overview.length > 0 || !!p.capNhat : hangThongSo.length > 0;
   const nav = [
     ...(coMucTongQuan ? [{ id: "tong-quan", label: "Tổng quan" }] : []),
     ...(!traCuu || p.mapPin ? [{ id: "vi-tri", label: "Vị trí" }] : []),
@@ -447,13 +448,25 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             </div>
           )}
 
-          {/* TRA CỨU — HÀNG ĐẦU TRANG (chủ dự án 31/10/2026): 1 khung ảnh (≥ 2 ảnh tự chạy, hiện trọn không cắt) | cột phải Dự án theo khu vực,
-              cùng hàng nên đáy cột phải luôn ngang đáy ảnh. Nằm TRÊN thanh mục như khung ảnh trang nổi bật */}
+          {/* TRA CỨU — HÀNG ĐẦU TRANG 3 CỘT BẰNG NHAU (chủ dự án 31/10/2026: khung ảnh đúng tỷ lệ ảnh, gọn, cân đối): khung ảnh 16:9 (≥ 2 ảnh
+              tự chạy, hiện trọn không cắt) | bảng thông tin (trường bắt buộc + mục Admin ghi thêm, thứ tự chuẩn) | Dự án theo khu vực. Ba cột cao
+              bằng nhau: bảng dài hơn thì khung ảnh cao theo (ảnh vẫn hiện trọn, phần thừa lấp ảnh mờ). Nằm TRÊN thanh mục như khung ảnh nổi bật */}
           {traCuu && (
             <div className="mb-2 grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
-              <div className="relative -mx-4 sm:mx-0 lg:col-span-2">
+              <div className="relative -mx-4 sm:mx-0">
                 <NhanTinhTrang tier={p.tier} tinhTrang={giaTriThat(p.status)} />
-                <AnhTraCuu images={coAnh ? gallery : []} alt={p.name} />
+                <AnhTraCuu images={coAnh ? gallery : []} alt={p.name} khung="aspect-[16/9] lg:aspect-auto lg:h-full lg:min-h-[216px]" />
+              </div>
+              {/* Cùng kiểu hộp "Dự án theo khu vực" (đệm 16 px, viền, bo góc); các dòng giãn đều theo chiều cao hàng */}
+              <div className="flex flex-col justify-around gap-3 rounded-2xl border border-cvr-line bg-white p-4">
+                {hangThongSo.map((s) => (
+                  <div key={s.label} className="flex min-w-0 items-start gap-3 text-[15px]">
+                    <span className="w-28 shrink-0 text-sm leading-6 text-cvr-muted">{s.label}</span>
+                    <span className={`min-w-0 leading-6 ${s.value === "Đang cập nhật" ? "text-cvr-faint" : "font-medium text-cvr-ink"}`}>
+                      {s.href ? <Link href={s.href} className="hover:text-cvr-blue-ink">{s.value}</Link> : s.value}
+                    </span>
+                  </div>
+                ))}
               </div>
               {duAnTheoKhuVuc.length > 0 && (
                 // Cao ĐÚNG bằng ảnh (h-0 + min-h-full: hộp không kéo hàng cao thêm); nhiều tỉnh hơn chỗ thì cuộn trong hộp
@@ -498,10 +511,10 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                     thứ tự theo cặp (chủ đầu tư | tình trạng · loại hình | giá · quy mô | diện tích …); điện thoại 1 cột */}
                 {/* CHUẨN CHỮ TRANG DỰ ÁN (chủ dự án 31/10/2026): nội dung 15 px · nhãn 14 px · mọi dòng cao 24 px · các dòng cách 12 px ·
                     tiêu đề mục 24 px cách nội dung 20 px · mục cách mục 48 px · ghi chú 13 px */}
-                {bangThongSo(hangThongSo)}
+                {!traCuu && bangThongSo(hangThongSo)}
                 {p.overview.length > 0 && (
                 // Cách bảng thông số 32 px (chủ dự án 31/10/2026: cần cách biệt với phần nội dung bên dưới); tra cứu: bảng ở đầu trang
-                <div className="mt-8">
+                <div className={traCuu ? "" : "mt-8"}>
                 <div>
                   <div className="space-y-3 text-[15px] leading-6 text-cvr-body">
                     <RichContent paragraphs={p.overview} title={p.name} />

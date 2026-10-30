@@ -17,7 +17,8 @@ const PhotoViewer = dynamic(() => import("@/components/PhotoViewer"));
 
 const NHIP = 4500;
 
-export default function AnhTraCuu({ images, alt }: { images: string[]; alt: string }) {
+// khung: lớp cỡ khung (mặc định 16:9; trang chi tiết tra cứu truyền khung 16:9 cột 1/3 PC, cao theo hàng — 31/10/2026)
+export default function AnhTraCuu({ images, alt, khung = "aspect-[16/9]" }: { images: string[]; alt: string; khung?: string }) {
   const ds = images.filter(Boolean).slice(0, 6);
   const [i, setI] = useState(0);
   const [dung, setDung] = useState(false);
@@ -31,7 +32,7 @@ export default function AnhTraCuu({ images, alt }: { images: string[]; alt: stri
 
   return (
     <div
-      className="relative aspect-[16/9] w-full overflow-hidden bg-cvr-surface lg:aspect-[10/3]"
+      className={`relative w-full overflow-hidden bg-cvr-surface ${khung}`}
       onMouseEnter={() => setDung(true)}
       onMouseLeave={() => setDung(false)}
     >
