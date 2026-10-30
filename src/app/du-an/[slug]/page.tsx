@@ -649,7 +649,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
           {/* Chưa có tin thuộc dự án → ẩn hẳn khối (không phơi "chưa có tin" trước khách — 22/10/2026) */}
           {hasRelated && (
           <section id="tin-du-an" className="scroll-mt-14">
-            <RelatedListingsTabs ban={relBan} thue={relThue} tenDuAn={p.name} title={`Bán, cho thuê tại ${p.name}`} />
+            <RelatedListingsTabs ban={relBan} thue={relThue} tenDuAn={p.name} title={`Tin mua bán, cho thuê tại ${p.name}`} />
           </section>
           )}
 

@@ -41,7 +41,7 @@ export default function RelatedListingsTabs({ ban, thue, title, the = false, ten
             onClick={() => setTab("ban")}
             className={`rounded-md px-4 py-1.5 text-sm font-medium transition ${tab === "ban" ? "bg-cvr-ink text-white" : "text-cvr-body hover:text-cvr-ink"}`}
           >
-            Bán ({ban.length})
+            Mua bán ({ban.length})
           </button>
         )}
         {hasThue && (

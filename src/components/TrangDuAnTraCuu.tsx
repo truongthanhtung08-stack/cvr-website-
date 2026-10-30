@@ -124,7 +124,7 @@ export default function TrangDuAnTraCuu({
 
           {(tinBan.length > 0 || tinThue.length > 0) && (
             <section id="tin-du-an" className="scroll-mt-14">
-              <RelatedListingsTabs ban={tinBan} thue={tinThue} tenDuAn={d.ten} title={`Bán, cho thuê tại ${d.ten}`} />
+              <RelatedListingsTabs ban={tinBan} thue={tinThue} tenDuAn={d.ten} title={`Tin mua bán, cho thuê tại ${d.ten}`} />
             </section>
           )}
           {/* CUỐI TRANG: DỰ ÁN TƯƠNG TỰ (chủ dự án 30/10/2026: mở dự án → dự án tương tự; mở tin → BĐS tương tự) — cùng tỉnh, cùng
