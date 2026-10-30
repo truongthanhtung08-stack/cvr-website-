@@ -510,7 +510,8 @@ export default function ProjectsBrowser({
     danhSachXemThem = (
       <section id="noi-bat" className={`mt-6 scroll-mt-24 sm:mt-5 ${mapMode ? "hidden" : ""}`}>
         {/* Trang Dự án / trang khu vực đã có tiêu đề trang ngay trên → không lặp; trang chủ: tiêu đề khối "Dự án nổi bật" */}
-        {danhSachNoiBat && <h2 className="text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">{tieuDeDs}</h2>}
+        {/* Điện thoại ẩn dòng tiêu đề (chủ dự án 31/10/2026) — vẫn trong HTML cho Google */}
+        {danhSachNoiBat && <h2 className="sr-only text-xl font-semibold tracking-tight text-cvr-ink sm:not-sr-only sm:text-2xl">{tieuDeDs}</h2>}
         {/* BỐ CỤC WEB HIỆN TẠI (chủ dự án 30/10/2026): CỘT TRÁI = danh sách thẻ, MỖI DỰ ÁN ĐÚNG LOẠI THẺ CỦA NÓ — nổi bật: thẻ nổi bật
             (ngang); tra cứu: thẻ tra cứu · CỘT PHẢI = liên kết pSEO "Dự án theo khu vực" (/du-an/<tỉnh>), dính theo khi cuộn — máy tính */}
         <div className={`${danhSachNoiBat ? "mt-4" : ""} grid grid-cols-1 gap-8 lg:grid-cols-3`}>
@@ -765,9 +766,10 @@ export default function ProjectsBrowser({
         {!(traCuu && tieuDePhu) && !danhSachNoiBat && (
         <div className="min-w-0">
           {tieuDePhu ? (
-            <h2 className="text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">{tieuDe}</h2>
+            <h2 className="sr-only text-xl font-semibold tracking-tight text-cvr-ink sm:not-sr-only sm:text-2xl">{tieuDe}</h2>
           ) : (
-            <h1 className="text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">{tieuDe}</h1>
+            // Điện thoại ẩn dòng "Dự án bất động sản" — thanh "‹ Dự án" đã ghi tên (chủ dự án 31/10/2026); vẫn là H1 cho Google
+            <h1 className="sr-only text-xl font-semibold tracking-tight text-cvr-ink sm:not-sr-only sm:text-2xl">{tieuDe}</h1>
           )}
           <p className="mt-1 text-sm text-cvr-muted">
             {/* Coastal Land là CỔNG THÔNG TIN — không phân phối, không mua bán dự án. */}
