@@ -201,7 +201,7 @@ export type ChiSoKhuVuc = {
    *  với người xem rằng đó là mức chung của cả khu, không phải giá của đúng
    *  con đường trước căn nhà họ đang xem (chênh nhau 2–3 lần là chuyện thường). */
   viTri?: ViTriGia;
-  /** LOẠI CON (cột loai_con): "Căn hộ chung cư", "Nhà ở xã hội", "Đất thổ cư"… Để trống = chung cả loại hình (29/10/2026). */
+  /** LOẠI CON (cột loai_con, đúng danh sách ô loại con ở listingSpec): "Chung cư thương mại", "Căn hộ cao cấp", "Đất thổ cư"… Để trống = chung cả loại hình (29/10/2026). */
   loaiCon?: string;
   /** Tên DỰ ÁN dãy số này nói tới (bậc ① — sát nhất). */
   duAn?: string;

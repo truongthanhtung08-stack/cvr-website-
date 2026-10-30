@@ -93,7 +93,13 @@ const nextConfig: NextConfig = isPages
         }));
         // 22/10/2026 chủ dự án bỏ trang đích riêng /dang-tin-mien-phi ("có cần cái trang ghi vớ vẩn như vậy không"): chương
         // trình thành viên mới trỏ thẳng về trang chính Đăng ký / Đăng nhập — địa chỉ cũ (quảng cáo, Google) chuyển hẳn về đó.
-        const boTrang = [{ source: "/dang-tin-mien-phi", destination: "/dang-ky", permanent: true }];
+        // 29/10/2026 (D24): loại "Trang trại / Khu nghỉ dưỡng" tách thành Homestay, Farmstay + Khu nghỉ dưỡng — trang cũ (Google
+        // đưa cho "bán khu nghỉ dưỡng đà nẵng", "bán trang trại đà nẵng") chuyển hẳn về trang Khu nghỉ dưỡng, kể cả trang con theo nơi.
+        const boTrang = [
+          { source: "/dang-tin-mien-phi", destination: "/dang-ky", permanent: true },
+          { source: "/mua-ban/trang-trai-nghi-duong", destination: "/mua-ban/khu-nghi-duong", permanent: true },
+          { source: "/mua-ban/trang-trai-nghi-duong/:duong*", destination: "/mua-ban/khu-nghi-duong/:duong*", permanent: true },
+        ];
         return [...boTrang, ...thanhPho, ...["/mua-ban", "/cho-thue"].flatMap((base) =>
           ten.map((t) => ({
             source: base,

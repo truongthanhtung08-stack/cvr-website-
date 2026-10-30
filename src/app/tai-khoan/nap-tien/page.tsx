@@ -44,7 +44,8 @@ function TopUpForm() {
   const router = useRouter();
   useEffect(() => {
     if (!ve) return;
-    if (ketQua === "huy") router.replace(ve);
+    // Huỷ / tin mới chưa lưu nháp nộp xong → về mục Gói tin của tin (veHuy); tin nháp nộp xong → Tin của tôi
+    if (ketQua === "huy" || (ketQua === "thanh-cong" && ve === "/dang-tin")) router.replace(veHuy(ve));
     else if (ketQua === "thanh-cong") router.replace("/tai-khoan/tin-dang?nap=thanh-cong");
   }, [ketQua, ve, router]);
 
@@ -63,7 +64,7 @@ function TopUpForm() {
   useEffect(() => {
     // "moi" = tin mới chưa lưu được nháp (chưa có Tỉnh/Thành + Tiêu đề) — bản soạn nằm trong máy
     const ma = ve?.match(/^\/dang-tin\?id=([\w-]+)/)?.[1] ?? (ve === "/dang-tin" ? "moi" : undefined);
-    try { if (ma) sessionStorage.setItem("veGoiTin", ma); } catch {}
+    try { if (ma) localStorage.setItem("veGoiTin", JSON.stringify({ ma, luc: Date.now() })); } catch {} // localStorage: xem PostListingForm veThanhToan
   }, [ve]);
   const boDon = () => { try { sessionStorage.removeItem(KHOA_DON); } catch {} };
   useEffect(() => {
@@ -198,8 +199,10 @@ function TopUpForm() {
           // Tiền về (webhook đã cộng ví): đến từ tin → Tin của tôi (tin tự gửi duyệt); nạp thường → báo thành công tại đây
           onXong={() => {
             boDon();
-            try { sessionStorage.removeItem("veGoiTin"); } catch {} // đã trả xong: không còn quay về tin nháp
-            if (ve) router.replace("/tai-khoan/tin-dang?nap=thanh-cong");
+            try { localStorage.removeItem("veGoiTin"); } catch {} // đã trả xong: không còn quay về tin nháp
+            // Tin mới chưa lưu được nháp (ve = /dang-tin): Tin của tôi không có tin nào → về lại form, mục Gói tin, bấm Đăng (29/10/2026)
+            if (ve === "/dang-tin") router.replace(veHuy(ve));
+            else if (ve) router.replace("/tai-khoan/tin-dang?nap=thanh-cong");
             else { setDon(null); router.replace("/tai-khoan/nap-tien?ket-qua=thanh-cong"); }
           }}
         />

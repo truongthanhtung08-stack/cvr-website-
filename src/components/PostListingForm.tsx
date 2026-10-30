@@ -287,23 +287,37 @@ export default function PostListingForm() {
     setProjectSlug(s("projectSlug"));
     setProjectName(s("projectName"));
   }
-  // HUỶ THANH TOÁN / QUAY LẠI từ trang nạp tiền (chủ dự án 27/10 + 29/10/2026): về đúng công đoạn khách đang làm — Bắt đầu hiển thị ·
-  // Tổng tiền · Nạp thêm (#b-thanhtoan); chưa dựng kịp thì đầu khối Gói tin. Nhận biết: ?huy-tt=1 hoặc cờ veGoiTin trang nạp ghi
+  // HUỶ THANH TOÁN / QUAY LẠI từ trang nạp tiền (chủ dự án 27/10 + 29/10/2026): về đúng công đoạn khách đang làm — đầu mục
+  // Gói tin — thanh toán (#b-goi). Nhận biết: ?huy-tt=1 hoặc cờ veGoiTin trang nạp ghi
   // (mã tin nháp, hoặc "moi" = tin mới chưa lưu được nháp). Trả true khi đúng là đang quay về.
   function veThanhToan(ma: string): boolean {
     const dc = new URL(window.location.href);
     let coCo = false;
-    try { coCo = sessionStorage.getItem("veGoiTin") === ma; if (coCo) sessionStorage.removeItem("veGoiTin"); } catch {}
+    try {
+      // Cờ nằm trong localStorage, có giờ ghi (29/10/2026: Samsung Internet qua lại app ngân hàng làm mất sessionStorage →
+      // về form lại hỏi "Bạn có tin đang soạn dở"). Quá 30 phút = cờ cũ → vẫn hỏi Soạn tiếp / Đăng tin mới.
+      const c = JSON.parse(localStorage.getItem("veGoiTin") || "null") as { ma?: string; luc?: number } | null;
+      coCo = c?.ma === ma && Date.now() - (c.luc ?? 0) < 30 * 60_000;
+      if (coCo || (c && Date.now() - (c.luc ?? 0) >= 30 * 60_000)) localStorage.removeItem("veGoiTin");
+    } catch {}
     if (dc.searchParams.get("huy-tt") !== "1" && !coCo) return false;
     dc.searchParams.delete("huy-tt");
     window.history.replaceState(window.history.state, "", dc.pathname + dc.search);
-    const toi = () => document.getElementById("b-thanhtoan") ?? document.getElementById("b-goi");
-    setTimeout(() => toi()?.scrollIntoView({ behavior: "smooth", block: "start" }), 400);
-    // Quay lại bằng nút Back: trình duyệt / Next khôi phục vị trí cuộn cũ sau đó; máy chậm dựng khối muộn → đặt lại nếu lệch
-    for (const ms of [1200, 2000, 3000]) setTimeout(() => {
+    // Về ĐẦU mục "Gói tin — thanh toán" (chủ dự án 29/10/2026: "về chỗ nộp tiền là ở phần gói") — thấy gói đã chọn + Tổng tiền
+    const toi = () => document.getElementById("b-goi") ?? document.getElementById("b-thanhtoan");
+    // Điện thoại thật (29/10/2026: từ app ngân hàng về vẫn đứng đầu trang): máy chậm dựng khối sau 3 giây, trình duyệt / Next khôi
+    // phục vị trí cuộn cũ → soát mỗi 300 ms tới 12 giây: lệch thì đưa khối lên lại, đứng đúng 3 lượt liền thì thôi; khách tự chạm /
+    // cuộn thì thôi ngay, không giật trang của khách.
+    let dung = 0, lan = 0;
+    const thoi = () => { clearInterval(t); ["touchstart", "wheel", "keydown"].forEach((e) => removeEventListener(e, thoi)); };
+    ["touchstart", "wheel", "keydown"].forEach((e) => addEventListener(e, thoi, { passive: true }));
+    const t = setInterval(() => {
       const el = toi();
-      if (el && Math.abs(el.getBoundingClientRect().top) > 200) el.scrollIntoView({ block: "start" });
-    }, ms);
+      if (++lan > 40) return thoi();
+      if (!el) return;
+      if (Math.abs(el.getBoundingClientRect().top - 70) > 120) { dung = 0; el.scrollIntoView({ block: "start" }); }
+      else if (++dung >= 3) thoi();
+    }, 300);
     return true;
   }
   /* eslint-disable react-hooks/set-state-in-effect -- nạp bản nháp một lần, khi đã biết tài khoản */
@@ -319,7 +333,9 @@ export default function PostListingForm() {
         // Vừa huỷ thanh toán quay về → mở lại ngay bản đang soạn, không hỏi "tiếp tục bản nháp?"
         const veLai = veThanhToan("moi");
         if (d) {
-          const coNoiDung = ["title", "category", "province"].some((k) => typeof d[k] === "string" && (d[k] as string).trim());
+          // Có bất cứ gì khách đã điền / đã chọn (kể cả chỉ chọn gói, up ảnh) → hỏi Soạn tiếp / Đăng tin mới (chủ dự án 29/10/2026)
+          const coNoiDung = ["title", "category", "province", "priceValue", "area", "description", "addressDetail", "planTier"]
+            .some((k) => typeof d[k] === "string" && (d[k] as string).trim()) || (Array.isArray(d.images) && d.images.length > 0);
           if (coNoiDung && !veLai) setNhapCho(d);
           else apDungNhap(d);
         }
@@ -1285,7 +1301,7 @@ export default function PostListingForm() {
         return (
           <div className="rounded-2xl border border-cvr-blue/30 bg-cvr-blue/[0.06] p-4">
             <p className="text-[15px] leading-snug text-cvr-ink">
-              <span className="font-semibold">Bạn có tin đang soạn dở:</span> {ten}
+              <span className="font-semibold">Bạn có tin đang soạn dở{ten ? ":" : "."}</span> {ten}
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
               {/* eslint-disable-next-line react-hooks/refs -- apDungNhap chỉ chạy khi khách bấm, không chạy lúc vẽ */}

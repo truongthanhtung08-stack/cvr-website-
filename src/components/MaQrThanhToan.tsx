@@ -93,7 +93,7 @@ export default function MaQrThanhToan({ don, onHuy, onXong }: { don: DonQr; onHu
   }, [don.orderCode]);
 
   // DANH SÁCH NGÂN HÀNG (chủ dự án 27/10/2026): điện thoại nhấn logo → MỞ THẲNG app ngân hàng (appNganHang.ts), trang này đứng
-  // nguyên → quay về / Back đúng chỗ (trước đi qua trang trung gian dl.vietqr.io: chen vào lịch sử). 5 app có điền sẵn (baoVietQr)
+  // nguyên → quay về / Back đúng chỗ (trước đi qua trang trung gian dl.vietqr.io: chen vào lịch sử). 5 app có điền sẵn đi qua trang VietQR (linkVietQr)
   // hiện sẵn đơn; app khác: khách Quét mã QR → ảnh mã đã Lưu: số tài khoản, số tiền, nội dung nằm sẵn trong mã. Nộp xong quay lại trình duyệt →
   // trang hỏi trạng thái thấy "paid" là tự về đúng chỗ. Máy tính: Internet Banking (thẻ mới).
   const [nganHang, setNganHang] = useState<{ appId: string; appLogo: string; appName: string; href: string; tuDien?: boolean }[]>([]);
@@ -106,16 +106,20 @@ export default function MaQrThanhToan({ don, onHuy, onXong }: { don: DonQr; onHu
       .filter((n) => !ios || n.iphone) // iPhone không mở được app này → không hiện
       .map((n) => ({ appId: n.id, appLogo: n.logo, appName: n.ten, href: ios ? n.iphone : n.android, tuDien: n.tuDien })));
   }, []);
-  // Báo đơn cho VietQR ngay trước khi mở app có điền sẵn → app hiện sẵn số tài khoản, số tiền, nội dung (không mở trang VietQR)
-  const baoVietQr = (app: string) => {
+  // Đơn VietQR cho app có điền sẵn (29/10/2026, đã đo): trang dl.vietqr.io/pay chạy bước xác minh trong trình duyệt rồi mới ghi đơn
+  // và mở app → gửi đơn ngầm bằng fetch KHÔNG BAO GIỜ chạy; phải đi qua chính trang đó (Android lẫn iPhone). Quay lại từ app → trang
+  // VietQR → Back thêm một lần về mã QR.
+  const linkVietQr = (app: string) => {
     const q = new URLSearchParams({
       app,
-      ba: `${don.accountNumber || PHAP_LY.soTaiKhoan}@${don.bin || "970422"}`,
+      // VietQR đòi MÃ CHỮ ngân hàng nhận (vd 113366668888@vcb), không nhận mã số BIN — ghi 970422 thì app không nhận đơn (29/10/2026)
+      ba: `${don.accountNumber || PHAP_LY.soTaiKhoan}@${!don.bin || don.bin === "970422" ? "mb" : don.bin}`,
       am: String(don.amount),
       tn: don.description || "",
       bn: don.accountName || PHAP_LY.chuTaiKhoan,
+      url: window.location.href, // VietQR bắt buộc: trang về sau khi nộp
     });
-    fetch(`https://dl.vietqr.io/pay?${q}`, { mode: "no-cors", keepalive: true }).catch(() => {});
+    return `https://dl.vietqr.io/pay?${q}`;
   };
 
   // Quay lại từ app ngân hàng → hỏi trạng thái ngay, không đợi lượt 3 giây
@@ -217,9 +221,22 @@ export default function MaQrThanhToan({ don, onHuy, onXong }: { don: DonQr; onHu
             {nganHang.map((n) => (
               <a
                 key={n.appId}
-                href={n.href}
+                href={n.tuDien ? linkVietQr(n.appId) : n.href}
                 {...(mayTinh ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-                onClick={n.tuDien ? () => baoVietQr(n.appId) : undefined}
+                // App không nhận đơn (VCB, Techcombank…, chủ dự án 29/10/2026 — Android lẫn iPhone): nhấn logo → lưu ảnh mã QR vào
+                // máy rồi mở app; trong app khách bấm QR → chọn ảnh là có sẵn tài khoản, số tiền, nội dung.
+                // Android: tải thẳng ảnh rồi để liên kết mở app. iPhone: bảng chia sẻ "Lưu hình ảnh" (Safari chỉ lưu vào Ảnh qua đó) → xong mới mở app.
+                onClick={!mayTinh && !n.tuDien && anh ? (e) => {
+                  if (n.href.startsWith("intent:")) {
+                    const lk = document.createElement("a");
+                    lk.href = anh;
+                    lk.download = `coastal-land-${don.orderCode}.png`;
+                    lk.click();
+                    return;
+                  }
+                  e.preventDefault();
+                  void luuMa().finally(() => { window.location.href = n.href; });
+                } : undefined}
                 className="flex flex-col items-center gap-1 rounded-lg border border-cvr-line p-2 text-center hover:border-cvr-ink active:bg-cvr-surface"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}

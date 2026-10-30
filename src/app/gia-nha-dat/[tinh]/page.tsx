@@ -5,7 +5,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { BreadcrumbJsonLd } from "@/components/Breadcrumb";
 import { GiaTheoNhomPseo } from "@/components/HoiDapPseo";
-import { getListings } from "@/lib/listingsDb";
+import { getTinXetTrang } from "@/lib/listingsDb";
 import { khuVucTrongDiem, slugKhuVuc, timKhuVuc } from "@/lib/khuVuc";
 import { trangGiaNhaDat } from "@/lib/giaNhaDat";
 import { tieuDeGoogle } from "@/lib/thang";
@@ -23,7 +23,7 @@ export async function generateMetadata({ params }: { params: Promise<{ tinh: str
   const { tinh } = await params;
   const kv = timKhuVuc(tinh);
   if (!kv) return { title: "Không tìm thấy", robots: { index: false, follow: true } };
-  const t = trangGiaNhaDat(kv, await getListings().catch(() => []));
+  const t = trangGiaNhaDat(kv, await getTinXetTrang());
   const path = `/gia-nha-dat/${kv.slug}`;
   return {
     title: tieuDeGoogle(t.tieuDe),
@@ -38,7 +38,7 @@ export default async function GiaNhaDatTinh({ params }: { params: Promise<{ tinh
   const { tinh } = await params;
   const kv = timKhuVuc(tinh);
   if (!kv) notFound();
-  const t = trangGiaNhaDat(kv, await getListings());
+  const t = trangGiaNhaDat(kv, await getTinXetTrang()) /* cổng đếm cả tin hết hạn (29/10/2026) */;
   if (!t.ban.length && !t.thue.length) notFound();
   return (
     <>

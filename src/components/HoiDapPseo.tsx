@@ -149,12 +149,12 @@ export function giaTheoNhom(dk: DieuKien, tin: Listing[]): GiaNhom | null {
 // lienKet: thay link "Xem thêm nhà đất <tỉnh>" (trang Giá nhà đất theo tỉnh trỏ về đúng trang loại hình × tỉnh)
 // coTrangGia: tỉnh đã có trang "Giá nhà đất <tỉnh>" mở cho Google (src/lib/giaNhaDat) — chỉ khi đó mới hiện liên kết sang trang giá
 // cu: trang đang lên Google (TRANG_DONG_BANG) — vẽ ĐÚNG bản cũ (khối "Tham khảo giá" theo khu vực / dự án), không gì mới
-export function GiaTheoNhomPseo({ g, lienKet, coTrangGia = false, cu = false }: { g: GiaNhom | null; lienKet?: { href: string; nhan: string }; coTrangGia?: boolean; cu?: boolean }) {
+export function GiaTheoNhomPseo({ g, lienKet, coTrangGia = false, cu = false, id = "gia-theo-nhom" }: { g: GiaNhom | null; lienKet?: { href: string; nhan: string }; coTrangGia?: boolean; cu?: boolean; id?: string }) {
   if (!g || (!g.duAn.length && !g.khuVuc.length && (cu || !g.khuVucGia.length))) return null;
   // Có ≥ 2 khu vực: khuôn khung AI (mẫu chủ dự án duyệt 27/10/2026) — mỗi khu vực một mục, dự án nằm trong khu vực
   if (!cu && g.khuVucGia.length) return (
-    <section aria-labelledby="gia-theo-nhom" className="mx-auto max-w-7xl px-4 pb-8 sm:px-6 lg:px-8">
-      <h2 id="gia-theo-nhom" className="text-[20px] font-normal tracking-tight text-cvr-ink sm:text-[22px]">{g.tieuDeKV}</h2>
+    <section aria-labelledby={id} className="mx-auto max-w-7xl px-4 pb-8 sm:px-6 lg:px-8">
+      <h2 id={id} className="text-[20px] font-normal tracking-tight text-cvr-ink sm:text-[22px]">{g.tieuDeKV}</h2>
       <div className="max-w-[980px]">
         {g.tongKV && g.khuVucGia.length >= 2 && <p className="mt-3 text-[15px] leading-relaxed text-cvr-muted">{g.tongKV}</p>}
         {g.khuVucGia.map((k) => (
@@ -187,8 +187,8 @@ export function GiaTheoNhomPseo({ g, lienKet, coTrangGia = false, cu = false }: 
     </div>
   ) : null;
   return (
-    <section aria-labelledby="gia-theo-nhom" className="mx-auto max-w-7xl px-4 pb-8 sm:px-6 lg:px-8">
-      <h2 id="gia-theo-nhom" className="text-[20px] font-normal tracking-tight text-cvr-ink sm:text-[22px]">{g.tieuDe}</h2>
+    <section aria-labelledby={id} className="mx-auto max-w-7xl px-4 pb-8 sm:px-6 lg:px-8">
+      <h2 id={id} className="text-[20px] font-normal tracking-tight text-cvr-ink sm:text-[22px]">{g.tieuDe}</h2>
       <div className="max-w-[980px]">
         {g.tong && <p className="mt-3 text-[15px] leading-relaxed text-cvr-muted">{g.tong}</p>}
         {bang("Theo khu vực", g.khuVuc)}

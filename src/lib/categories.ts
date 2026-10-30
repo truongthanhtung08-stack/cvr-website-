@@ -16,6 +16,8 @@
 // rentTypeGroups) để trang danh mục lọc được bằng bộ lọc sẵn có.
 // ═══════════════════════════════════════════════════════════════════════════
 
+import { typeGroupsFor } from "./filters";
+
 export type Category = {
   slug: string;
   label: string;      // nhãn trong menu
@@ -67,17 +69,17 @@ export const saleCategories: Category[] = [
     types: ["Đất nền / Đất nền dự án"],
   },
   {
+    // Con của nhóm Đất (chủ dự án 29/10/2026): đất nông nghiệp, đất vườn, đất trang trại — loại con ở ô "Loại đất"
+    slug: "dat-nong-nghiep", label: "Đất nông nghiệp",
+    h1: "Bán đất nông nghiệp", title: `Bán đất nông nghiệp, đất vườn, đất trang trại`,
+    desc: `Mua bán đất nông nghiệp, đất vườn, đất trang trại.`,
+    types: ["Đất nông nghiệp"],
+  },
+  {
     slug: "dat", label: "Đất",
     h1: "Bán đất", title: `Bán đất thổ cư, đất nông nghiệp`,
     desc: `Mua bán đất thổ cư, đất nông nghiệp — lọc theo diện tích và mức giá.`,
     types: ["Đất nông nghiệp", "Đất nền / Đất nền dự án"],
-  },
-  {
-    slug: "trang-trai-nghi-duong", label: "Trang trại, khu nghỉ dưỡng",
-    h1: "Bán trang trại, khu nghỉ dưỡng", title: `Bán trang trại, khu nghỉ dưỡng`,
-    desc: `Mua bán trang trại, villa và bất động sản nghỉ dưỡng ven biển.`,
-    // chỉ loại riêng (D18, 29/10/2026) — "Villa / Biệt thự biển" đã thuộc trang biệt thự, để ở đây là trùng trang
-    types: ["Trang trại / Khu nghỉ dưỡng"],
   },
   {
     slug: "condotel", label: "Condotel",
@@ -87,6 +89,28 @@ export const saleCategories: Category[] = [
     // trong trường "Cam kết lợi nhuận" của tin, không phải Coastal Land cam kết.
     desc: `Mua bán condotel, căn hộ khách sạn — vị trí ven biển, thông tin pháp lý rõ ràng.`,
     types: ["Condotel"],
+  },
+  {
+    // Con của BĐS nghỉ dưỡng (cây menu 29/10/2026). Tin villa vẫn hiện cả ở trang Biệt thự, liền kề (chủ dự án 21/10/2026)
+    slug: "villa-biet-thu-bien", label: "Villa, biệt thự biển",
+    h1: "Bán villa, biệt thự biển", title: `Bán villa, biệt thự biển`,
+    desc: `Mua bán villa, biệt thự biển nghỉ dưỡng.`,
+    types: ["Villa / Biệt thự biển"],
+  },
+  // "Trang trại / Khu nghỉ dưỡng" (D18) tách đôi theo chủ dự án 29/10/2026 (D24): "Trang trại" đổi thành Homestay, Farmstay;
+  // Khu nghỉ dưỡng trang riêng — cả hai thuộc nhóm BĐS nghỉ dưỡng. Đất trang trại thuần nông nghiệp → loại Đất nông nghiệp.
+  // Đường dẫn cũ /mua-ban/trang-trai-nghi-duong chuyển hẳn về /mua-ban/khu-nghi-duong (next.config.ts).
+  {
+    slug: "homestay-farmstay", label: "Homestay, Farmstay",
+    h1: "Bán homestay, farmstay", title: `Bán homestay, farmstay`,
+    desc: `Mua bán homestay, farmstay.`,
+    types: ["Homestay / Farmstay"],
+  },
+  {
+    slug: "khu-nghi-duong", label: "Khu nghỉ dưỡng",
+    h1: "Bán khu nghỉ dưỡng", title: `Bán khu nghỉ dưỡng, resort`,
+    desc: `Mua bán khu nghỉ dưỡng, resort.`,
+    types: ["Khu nghỉ dưỡng"],
   },
   {
     slug: "kho-nha-xuong", label: "Kho, nhà xưởng",
@@ -141,6 +165,13 @@ export const rentCategories: Category[] = [
     types: ["Nhà trọ / Phòng trọ"],
   },
   {
+    // Homestay, Farmstay có cả mua bán lẫn cho thuê (chủ dự án 29/10/2026) — thuê nguyên căn / thuê để kinh doanh, không đặt phòng
+    slug: "homestay-farmstay", label: "Homestay, Farmstay",
+    h1: "Cho thuê homestay, farmstay", title: `Cho thuê homestay, farmstay`,
+    desc: `Cho thuê homestay, farmstay nguyên căn.`,
+    types: ["Homestay / Farmstay"],
+  },
+  {
     slug: "van-phong", label: "Văn phòng",
     h1: "Cho thuê văn phòng", title: `Cho thuê văn phòng`,
     desc: `Cho thuê văn phòng, toà nhà văn phòng — giá theo m²/tháng.`,
@@ -180,17 +211,22 @@ export const rentNhaPseo: Category = {
 // Trang NHÓM (chuẩn thống nhất 17/10/2026): gộp loại hình cùng nhóm — bấm nhóm ra mọi tin trong nhóm.
 export const saleNghiDuongPseo: Category = {
   slug: "nghi-duong", label: "BĐS nghỉ dưỡng", h1: "Bán bất động sản nghỉ dưỡng", tuKhoa: "Bán bất động sản nghỉ dưỡng",
-  title: "Bán bất động sản nghỉ dưỡng", desc: "Mua bán bất động sản nghỉ dưỡng: condotel, villa biển, trang trại, khu nghỉ dưỡng",
-  types: ["Villa / Biệt thự biển", "Condotel", "Trang trại / Khu nghỉ dưỡng"],
+  title: "Bán bất động sản nghỉ dưỡng", desc: "Mua bán bất động sản nghỉ dưỡng: condotel, villa biển, homestay, farmstay, khu nghỉ dưỡng",
+  types: ["Villa / Biệt thự biển", "Condotel", "Homestay / Farmstay", "Khu nghỉ dưỡng"],
 };
 export const rentVanPhongMatBangPseo: Category = {
   slug: "van-phong-mat-bang", label: "Văn phòng, mặt bằng", h1: "Cho thuê văn phòng, mặt bằng", tuKhoa: "Cho thuê văn phòng, mặt bằng",
   title: "Cho thuê văn phòng, mặt bằng", desc: "Cho thuê văn phòng, mặt bằng kinh doanh, cửa hàng, ki ốt",
   types: ["Văn phòng", "Mặt bằng / Cửa hàng bán lẻ"],
 };
+export const rentNghiDuongPseo: Category = {
+  slug: "nghi-duong", label: "BĐS nghỉ dưỡng", h1: "Cho thuê bất động sản nghỉ dưỡng", title: "Cho thuê bất động sản nghỉ dưỡng",
+  desc: "Cho thuê bất động sản nghỉ dưỡng: homestay, farmstay",
+  types: ["Homestay / Farmstay"],
+};
 /** Trang nhóm theo mục đích — thêm nhóm mới: thêm một dòng. */
 export const nhomPseo = (muc: "ban" | "thue"): Category[] =>
-  muc === "thue" ? [rentNhaPseo, rentVanPhongMatBangPseo] : [saleNhaPseo, saleNghiDuongPseo];
+  muc === "thue" ? [rentNhaPseo, rentVanPhongMatBangPseo, rentNghiDuongPseo] : [saleNhaPseo, saleNghiDuongPseo];
 
 // ── DỰ ÁN (khớp menu Header) — lọc theo trường `type` của dự án ─────────────
 export const projectCategories: Category[] = [
@@ -207,6 +243,21 @@ export const projectCategories: Category[] = [
   { slug: "nha-pho", label: "Nhà phố", h1: "Dự án nhà phố", title: `Dự án nhà phố`, desc: `Tra cứu dự án nhà phố: vị trí, chủ đầu tư, quy mô, tình trạng, hình ảnh và tin mua bán, cho thuê trong dự án.`, types: ["Nhà phố"] },
   { slug: "shophouse", label: "Shophouse", h1: "Dự án shophouse", title: `Dự án shophouse`, desc: `Tra cứu dự án shophouse: vị trí, chủ đầu tư, quy mô, tình trạng, hình ảnh và tin mua bán, cho thuê trong dự án.`, types: ["Shophouse"] },
 ];
+
+// CÂY MENU LOẠI HÌNH CHA – CON (chủ dự án 29/10/2026, D24: "hệ thống hết lại cây menu mua bán / cho thuê, chuẩn và logic theo
+// cha – con"). Một nguồn: nhóm cha = nhóm loại hình của bộ lọc (filters.ts) · trang cha = trang nhóm (nhomPseo) hoặc trang loại
+// phủ đủ nhóm · con = các trang loại còn lại của nhóm. Trang loại thuộc nhóm chứa loại hình ĐẦU TIÊN của nó (Biệt thự, liền kề
+// có cả villa biển → vẫn thuộc Nhà). Thêm loại / nhóm ở filters.ts + categories.ts là menu tự đủ.
+export type NhanhMenu = { label: string; cha: Category; con: Category[] };
+export function cayLoaiHinh(muc: "ban" | "thue"): NhanhMenu[] {
+  const ds = muc === "thue" ? rentCategories : saleCategories;
+  return typeGroupsFor(muc).flatMap((g) => {
+    const cats = ds.filter((c) => g.items.includes(c.types[0]));
+    const cha = nhomPseo(muc).find((n) => n.label === g.label) ?? cats.find((c) => g.items.every((t) => c.types.includes(t))) ?? cats[0];
+    if (!cha) return [];
+    return [{ label: g.label === "Khác" ? cha.label : g.label, cha, con: cats.filter((c) => c !== cha) }];
+  });
+}
 
 export function findCategory(list: Category[], slug: string): Category | undefined {
   return list.find((c) => c.slug === slug);
