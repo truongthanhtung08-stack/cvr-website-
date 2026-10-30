@@ -395,15 +395,15 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               <Section id="tong-quan" title="Tổng quan dự án">
                 {/* LOGIC TỔNG QUAN (chủ dự án 30/10/2026): bảng thông số (quy mô, sản phẩm, bàn giao, pháp lý…) lên TRƯỚC, luôn hiện —
                     đọc là biết dự án; phần giới thiệu bên dưới, dài thì thu gọn, nút "Xem thêm / Thu gọn" ở CUỐI khối (ngắn thì không có nút) */}
-                {/* MỘT CỘT, đọc từ trên xuống (2 cột đọc ziczac, rối — chủ dự án 30/10/2026) */}
-                <div className="grid grid-cols-1">
+                {/* Ô THÔNG SỐ XẾP LƯỚI (chủ dự án 30/10/2026: một cột tốn chỗ, xấu): nhãn nhỏ xám trên · giá trị đậm dưới; PC 3 ô / hàng,
+                    điện thoại 2 ô; ô đều nhau, giá trị dài tự xuống dòng trong ô */}
+                <div className="grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-3">
                   {hangThongSo.map((s) => (
-                    // Nhãn cột trái cố định, giá trị NGAY SAU nhãn (trước dạt sát phải, khó đọc) — chủ dự án 30/10/2026
-                    <div key={s.label} className="grid grid-cols-[7.5rem_1fr] items-start gap-3 py-2 text-sm sm:grid-cols-[10.5rem_1fr] sm:gap-4">
-                      <span className="text-cvr-muted">{s.label}</span>
-                      <span className={`min-w-0 font-medium ${s.value === "Đang cập nhật" ? "font-normal text-cvr-faint" : "text-cvr-ink"}`}>
+                    <div key={s.label} className="min-w-0">
+                      <p className="text-xs text-cvr-muted">{s.label}</p>
+                      <p className={`mt-1 text-[15px] leading-snug ${s.value === "Đang cập nhật" ? "text-cvr-faint" : "font-medium text-cvr-ink"}`}>
                         {s.href ? <Link href={s.href} className="hover:text-cvr-blue-ink">{s.value}</Link> : s.value}
-                      </span>
+                      </p>
                     </div>
                   ))}
                 </div>
