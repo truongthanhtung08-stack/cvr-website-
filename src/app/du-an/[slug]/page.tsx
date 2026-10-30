@@ -418,19 +418,15 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                     đọc là biết dự án; phần giới thiệu bên dưới, dài thì thu gọn, nút "Xem thêm / Thu gọn" ở CUỐI khối (ngắn thì không có nút) */}
                 {/* Ô THÔNG SỐ XẾP LƯỚI (chủ dự án 30/10/2026: một cột tốn chỗ, xấu): nhãn nhỏ xám trên · giá trị đậm dưới; PC 3 ô / hàng,
                     điện thoại 2 ô; ô đều nhau, giá trị dài tự xuống dòng trong ô */}
-                {/* XẾP THEO NHÓM, mỗi nhóm một hàng mới (chủ dự án 30/10/2026: "sắp xếp cột hàng phải logic"): thông tin chung · địa chỉ
-                    (hàng riêng) · quy mô · bàn giao & pháp lý · khác */}
-                <div className="space-y-5">
-                  {nhomThongSo(hangThongSo).map((nhom, k) => (
-                    <div key={k} className="grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-3">
-                      {nhom.map((s) => (
-                        <div key={s.label} className={`min-w-0 ${laDiaChi(s.label) ? "col-span-full" : ""}`}>
-                          <p className="text-xs text-cvr-muted">{s.label}</p>
-                          <p className={`mt-1 text-[15px] leading-snug ${s.value === "Đang cập nhật" ? "text-cvr-faint" : "font-medium text-cvr-ink"}`}>
-                            {s.href ? <Link href={s.href} className="hover:text-cvr-blue-ink">{s.value}</Link> : s.value}
-                          </p>
-                        </div>
-                      ))}
+                {/* BẢNG THÔNG TIN CHUẨN (chủ dự án 30/10/2026): PC 2 cột thẳng hàng — mỗi mục nhãn xám rộng cố định + giá trị đậm NGAY SAU;
+                    thứ tự theo cặp (chủ đầu tư | tình trạng · loại hình | giá · quy mô | diện tích …); điện thoại 1 cột */}
+                <div className="grid grid-cols-1 gap-x-10 gap-y-3 sm:grid-cols-2">
+                  {nhomThongSo(hangThongSo).flat().map((s) => (
+                    <div key={s.label} className="flex min-w-0 items-start gap-3 text-sm">
+                      <span className="w-32 shrink-0 text-cvr-muted sm:w-36">{s.label}</span>
+                      <span className={`min-w-0 ${s.value === "Đang cập nhật" ? "text-cvr-faint" : "font-medium text-cvr-ink"}`}>
+                        {s.href ? <Link href={s.href} className="hover:text-cvr-blue-ink">{s.value}</Link> : s.value}
+                      </span>
                     </div>
                   ))}
                 </div>
