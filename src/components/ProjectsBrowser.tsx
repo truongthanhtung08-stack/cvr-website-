@@ -460,8 +460,10 @@ export default function ProjectsBrowser({
     )}</>
   );
 
-  // Đã bấm "Xem thêm" ở Dự án nổi bật → chỉ còn danh sách Dự án nổi bật theo trang (phần còn lại ẩn; Quay lại về như cũ)
-  if ((traCuu && noiBat.expanded) || danhSachNoiBat) {
+  // Đã bấm "Xem thêm" ở Dự án nổi bật → danh sách theo trang thay cho các khối slide (Quay lại về như cũ). THANH TÌM + LỌC LUÔN
+  // HIỆN phía trên danh sách (chủ dự án 30/10/2026: trang Dự án có thêm Tra cứu → trang nào cũng tìm, lọc được)
+  let danhSachXemThem: React.ReactNode = null;
+  if (dangMoDs) {
     // "Xem thêm" của Dự án nổi bật (trang chủ + trang Dự án) ra MỘT danh sách theo thứ tự (chủ dự án 30/10/2026): dự án nổi bật
     // trước (thẻ ngang đang chạy trên web), rồi dự án tra cứu (thẻ tra cứu). Cùng bộ lọc đang chọn.
     const noiBatSlug = new Set(visible.map((p) => p.slug));
@@ -471,8 +473,8 @@ export default function ProjectsBrowser({
     ];
     const tongNB = Math.max(1, Math.ceil(dsChung.length / NOI_BAT_MOI_TRANG));
     const trangNB = Math.min(trangNoiBat, tongNB);
-    return (
-      <section id="noi-bat" className="pt-4 sm:pt-6">
+    danhSachXemThem = (
+      <section id="noi-bat" className={`mt-6 scroll-mt-24 sm:mt-5 ${mapMode ? "hidden" : ""}`}>
         <h2 className="text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">{traCuu ? "Dự án bất động sản" : "Dự án nổi bật"}</h2>
         {/* BỐ CỤC WEB HIỆN TẠI (chủ dự án 30/10/2026): CỘT TRÁI = danh sách thẻ, MỖI DỰ ÁN ĐÚNG LOẠI THẺ CỦA NÓ — nổi bật: thẻ nổi bật
             (ngang); tra cứu: thẻ tra cứu · CỘT PHẢI = liên kết pSEO "Dự án theo khu vực" (/du-an/<tỉnh>), dính theo khi cuộn — máy tính */}
@@ -497,7 +499,7 @@ export default function ProjectsBrowser({
     <div className="flex flex-col">
       {/* Hero banner — MOBILE nằm DƯỚI thanh lọc (mẫu Batdongsan), DESKTOP nằm TRÊN.
           Âm lề để banner tràn hết bề ngang, không bị lề trang bó lại. */}
-      {hero && (
+      {hero && !dangMoDs && (
         // Tràn viền THẬT: kéo ra full bề ngang màn hình, không bị khung max-w-7xl bó lại
         // (trước đây Hero nằm ngoài khung nên full màn hình — phải giữ đúng như vậy trên PC).
         <div className="relative left-1/2 order-2 mb-0 w-screen -translate-x-1/2 sm:order-1 sm:mb-0">
@@ -509,7 +511,7 @@ export default function ProjectsBrowser({
       {/* Máy tính: thanh tìm gọn trong CỘT DỰ ÁN bên trái (= lg:col-span-2 của lưới 3 cột, khe 32px) — chủ dự án 18/10/2026 */}
       {/* 25/10/2026: máy tính CÙNG KIỂU thanh tìm Mua bán / Cho thuê — không khung viền, không bóng, gạch mảnh phía dưới, cách Hero 16px */}
       {/* Trang Dự án có Tra cứu (29/10/2026): không còn cột phải → thanh tìm rộng hết khung, thẳng mép với Nổi bật + Tra cứu */}
-      <div className={`order-1 mt-2 rounded-none bg-white pb-2.5 pt-0 sm:order-2 sm:mt-4 sm:border-b sm:border-cvr-line sm:pb-4 ${traCuu ? "" : "lg:w-[calc(66.667%-10.667px)]"}`}>
+      <div className={`order-1 mt-2 rounded-none bg-white pb-2.5 pt-0 sm:order-2 sm:mt-4 sm:border-b sm:border-cvr-line sm:pb-4 ${traCuu && !dangMoDs ? "" : "lg:w-[calc(66.667%-10.667px)]"}`}>
         <div className="flex flex-col gap-2 sm:gap-3">{/* máy tính 2 hàng như Mua bán: ô tìm rộng · hàng lọc dưới (25/10/2026) */}
           {/* Ô tìm nhanh dự án — nút search XANH nằm SÁT mép phải trong khung (mobile), đồng bộ Mua bán/Cho thuê.
               MOBILE: chừa lề trái đúng chỗ NÚT BACK TRÒN nổi (8px + 36px) để nút đứng
@@ -796,7 +798,7 @@ export default function ProjectsBrowser({
         </div>
       )}
 
-      {traCuu ? (
+      {dangMoDs ? danhSachXemThem : traCuu ? (
       <div className={mapMode ? "hidden" : ""}>
         {/* ── DỰ ÁN NỔI BẬT (chủ dự án 29/10/2026): một hàng trượt ngang trên cùng — thẻ GIỮ NGUYÊN nội dung thẻ Dự án đang chạy (chủ dự án 29/10/2026), xếp dọc cho vừa hàng; xếp
             Kim cương → Vàng → Bạc → mới cập nhật. Hàng hiện 8 dự án; "Xem thêm" → danh sách 10 dự án / trang. ── */}

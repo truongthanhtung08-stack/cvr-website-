@@ -20,7 +20,7 @@ const MUC_KEY = "cvr-muc-tim";
 const tuCua = (s: string) => normalizeVi(s).replace(/[^a-z0-9]+/g, " ").split(" ").filter((w) => w.length > 1 || /\d/.test(w));
 const BO = new Set(["ban", "mua", "cho", "thue", "nha", "dat", "tai", "duoi", "tren", "ty", "trieu", "phuong", "quan", "xa"]);
 
-export default function TabTimKiemPhoBien({ tabs }: { tabs: TabLienKet[] }) {
+export default function TabTimKiemPhoBien({ tabs, trangChu }: { tabs: TabLienKet[]; trangChu?: boolean }) {
   const [dang, setDang] = useState(0);
   // THU GỌN (chủ dự án 24/10/2026: "phần này càng ngày càng dài thêm"): mỗi tab hiện 4 hàng — điện thoại 8 · 3 cột 9 ·
   // máy tính 12 link; còn lại ẩn bằng CSS (vẫn trong HTML cho Google) tới khi bấm "Xem thêm". Đổi tab → thu gọn lại.
@@ -69,7 +69,8 @@ export default function TabTimKiemPhoBien({ tabs }: { tabs: TabLienKet[] }) {
   // Khối trước luôn có đệm đáy riêng (danh sách tin pb-footer, khu vực…) → đệm trên nhỏ, không cộng dồn thành khoảng trống to (22/10/2026)
   return (
     <section className="mx-auto max-w-7xl px-4 pb-12 pt-2 sm:px-6 sm:pb-14 sm:pt-6 lg:px-8">
-      <h2 className="text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">Tìm kiếm phổ biến</h2>
+      {/* Trang chủ: tiêu đề cùng cỡ mọi khối trang chủ (30/10/2026) */}
+      <h2 className={`${trangChu ? "text-xl sm:text-2xl" : "text-2xl sm:text-3xl"} font-semibold tracking-tight text-cvr-ink`}>Tìm kiếm phổ biến</h2>
       <div role="tablist" className="no-scrollbar mt-5 flex gap-6 overflow-x-auto border-b border-cvr-line">
         {tabs.map((t, i) => (
           <button

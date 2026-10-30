@@ -96,7 +96,7 @@ export default async function Home() {
           {/* Tìm kiếm phổ biến (đường dẫn từ khoá cho Google) ở CUỐI trang chủ, sát footer như Airbnb, Batdongsan — không chen giữa
               nội dung khách đang xem (chủ dự án 25/10/2026: "đưa xuống cuối trang"). Cách khối trên 56 · 24 như mọi khối, tự có lề
               đáy tới footer. Đang mở danh sách Tin tức thì ẩn. */}
-          <AnKhiMo khoa="tin-tuc" className="mt-1"><TimKiemPhoBien /></AnKhiMo>
+          <AnKhiMo khoa="tin-tuc" className="section-edge pt-1"><TimKiemPhoBien trangChu /></AnKhiMo>
         {/* Kế hoạch Airbnb GĐ A — docs/KE-HOACH-AIRBNB.md */}
         </HomeExpandProvider>
       </main>

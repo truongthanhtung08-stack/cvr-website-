@@ -56,6 +56,17 @@ export function TheDuAnDoc({ d }: { d: DongTraCuu }) {
   );
 }
 
+// Một dòng thông tin thẻ tra cứu: NHÃN mờ · GIÁ TRỊ đậm (chủ dự án 30/10/2026: "nội dung không phân biệt được phần nào");
+// chưa có thông tin thì "Đang cập nhật" mờ hẳn, để thông tin thật nổi lên
+function Dong({ nhan, gt }: { nhan: string; gt?: string }) {
+  return (
+    <span className="mt-1 flex gap-1.5 text-[13px] leading-snug sm:text-sm">
+      <span className="shrink-0 text-cvr-muted">{nhan}</span>
+      <span className={`min-w-0 ${gt ? "font-medium text-cvr-ink" : "text-cvr-faint"}`}>{gt || "Đang cập nhật"}</span>
+    </span>
+  );
+}
+
 export function TheTraCuu({ d }: { d: DongTraCuu }) {
   return (
     // CÙNG KHUÔN thẻ dự án trên trang (viền, bóng, ảnh bo góc, khe 20px) để cân với Dự án nổi bật — chủ dự án 29/10/2026.
@@ -79,11 +90,11 @@ export function TheTraCuu({ d }: { d: DongTraCuu }) {
       {/* TRƯỜNG BẮT BUỘC LUÔN HIỆN (chủ dự án 30/10/2026): Tên → Chủ đầu tư → Địa chỉ (hệ mới) → Loại hình → Trạng thái;
           chưa có thông tin thì ghi "Đang cập nhật", không ẩn */}
       <span className="min-w-0 flex-1">
-        <span className="-mt-0.5 line-clamp-2 text-[15px] font-semibold leading-snug text-cvr-ink transition-colors group-hover:text-cvr-blue-ink sm:text-lg">{d.ten}</span>
-        <span className="mt-1 block text-[13px] leading-snug text-cvr-body sm:text-sm">Chủ đầu tư: <span className="font-medium text-cvr-ink">{d.chuDauTu || "Đang cập nhật"}</span></span>
-        <span className="mt-0.5 block text-[13px] leading-snug text-cvr-body sm:text-sm">Địa chỉ: {d.diaChi}</span>
-        <span className="mt-0.5 block text-[13px] leading-snug text-cvr-body sm:text-sm">Loại hình: {d.loaiHinh || "Đang cập nhật"}</span>
-        <span className="mt-0.5 block text-[13px] leading-snug text-cvr-body sm:text-sm">Trạng thái: {d.tinhTrang || "Đang cập nhật"}</span>
+        <span className="-mt-0.5 mb-1 line-clamp-2 text-[15px] font-semibold leading-snug text-cvr-ink transition-colors group-hover:text-cvr-blue-ink sm:text-lg">{d.ten}</span>
+        <Dong nhan="Chủ đầu tư:" gt={d.chuDauTu} />
+        <Dong nhan="Địa chỉ:" gt={d.diaChi} />
+        <Dong nhan="Loại hình:" gt={d.loaiHinh} />
+        <Dong nhan="Trạng thái:" gt={d.tinhTrang} />
       </span>
     </Link>
   );
