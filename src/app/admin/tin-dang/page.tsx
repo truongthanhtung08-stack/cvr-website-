@@ -5,6 +5,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import TuKiemTin from "@/components/admin/TuKiemTin";
 import { loiTinSeo } from "@/lib/kiemTinSeo";
+import { tenLoaiHinh } from "@/lib/filters";
 import {
   type ListingRow,
   type ListingTier,
@@ -451,7 +452,7 @@ export default function AdminListingsPage() {
                     </div>
                   )}
                   <div className="line-clamp-2 text-xs text-cvr-muted">
-                    {purposeLabel(r.purpose)} · {r.type} · {[r.district, r.province].filter(Boolean).join(", ")}
+                    {purposeLabel(r.purpose)} · {tenLoaiHinh(r.type)} · {[r.district, r.province].filter(Boolean).join(", ")}
                   </div>
                 </td>
                 <td className="whitespace-nowrap px-4 py-3 text-cvr-body">

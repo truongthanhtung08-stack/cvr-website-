@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import type { Listing } from "@/lib/data";
+import { tenLoaiHinh } from "@/lib/filters";
 
 // Danh sách tin DẠNG LIST (kiểu Batdongsan): mỗi tin 1 hàng ngang — ảnh nhỏ bên trái,
 // tiêu đề · giá · diện tích · khu vực bên phải. Dùng cho "Tin đăng mới nhất" trang dự án.
@@ -31,7 +32,7 @@ export default function ListingList({ items }: { items: Listing[] }) {
               <p className="mt-auto flex items-center gap-1.5 pt-1.5 text-[13px] text-cvr-muted">
                 <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                 <span className="line-clamp-1">{l.location}</span>
-                <span className="ml-1 hidden rounded bg-cvr-surface px-1.5 py-0.5 text-[12px] text-cvr-body sm:inline">{l.type}</span>
+                <span className="ml-1 hidden rounded bg-cvr-surface px-1.5 py-0.5 text-[12px] text-cvr-body sm:inline">{tenLoaiHinh(l.type)}</span>
               </p>
             </div>
           </Link>

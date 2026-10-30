@@ -5,6 +5,7 @@ import Image from "next/image";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { asset } from "@/lib/asset";
+import { tenLoaiHinh } from "@/lib/filters";
 import { listingSummary, type Listing } from "@/lib/data";
 import { tierFromBadge, getTier } from "@/lib/packages";
 import { useCompare } from "@/lib/useCompare";
@@ -22,7 +23,7 @@ export default function ComparePage() {
     { label: "Giá / m²", get: (l) => l.pricePerM2 ?? "—" },
     { label: "Phòng ngủ", get: (l) => (l.beds ? `${l.beds}` : "—") },
     { label: "Phòng tắm", get: (l) => (l.baths ? `${l.baths}` : "—") },
-    { label: "Loại hình", get: (l) => l.type },
+    { label: "Loại hình", get: (l) => tenLoaiHinh(l.type) },
     { label: "Nhu cầu", get: (l) => ((l.purpose ?? "ban") === "thue" ? "Cho thuê" : "Mua bán") },
     { label: "Khu vực", get: (l) => l.location },
     { label: "Mô tả", get: (l) => l.desc?.trim() || listingSummary(l) },

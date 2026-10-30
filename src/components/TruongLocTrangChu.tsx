@@ -5,7 +5,7 @@ import FilterDropdown, { FilterDropdownGroup, PanelActions } from "@/components/
 import { LocationPanel, ProjectPanel, RangePanel, Chip, SwitchRow } from "@/components/FilterBar";
 import {
   typeGroupsFor, priceRangesFor, areaRangesFor, bedroomOptions, priceRangeText, areaRangeText,
-  locationLabel, directionOptions, legalOptions, furnishingOptions, type Filters,
+  locationLabel, directionOptions, legalOptions, furnishingOptions, tenLoaiHinh, type Filters,
 } from "@/lib/filters";
 
 // ============================================================================
@@ -77,7 +77,7 @@ export default function TruongLocTrangChu({
     <FilterDropdownGroup>
       {hang(<>
         {khuVuc}
-        {hien("lh") && <FilterDropdown pill={!seg && !the} seg={seg} the={the} id="lh" label="Loại hình" summary={tenLoai ?? (f.types.length === 1 ? f.types[0] : `${f.types.length} loại hình`)} active={f.types.length > 0} panelClassName="w-72" className={cls}>
+        {hien("lh") && <FilterDropdown pill={!seg && !the} seg={seg} the={the} id="lh" label="Loại hình" summary={tenLoai ?? (f.types.length === 1 ? tenLoaiHinh(f.types[0]) : `${f.types.length} loại hình`)} active={f.types.length > 0} panelClassName="w-72" className={cls}>
           {({ close }) => (
             <div>
               <div className="max-h-72 space-y-1.5 overflow-y-auto pr-1">
@@ -94,7 +94,7 @@ export default function TruongLocTrangChu({
                         return (
                           <label key={t} className="flex cursor-pointer items-center gap-2.5 rounded-lg py-1.5 pl-8 pr-2 text-sm text-cvr-ink/80 transition hover:bg-black/5">
                             <input type="checkbox" checked={on} onChange={() => set({ types: on ? f.types.filter((x) => x !== t) : [...f.types, t] })} className="h-4 w-4 shrink-0 accent-cvr-blue" />
-                            <span className="truncate">{t}</span>
+                            <span className="truncate">{tenLoaiHinh(t)}</span>
                           </label>
                         );
                       })}

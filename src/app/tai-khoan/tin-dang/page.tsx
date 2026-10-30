@@ -25,6 +25,7 @@ import { useBilling } from "@/lib/useBilling";
 import { tachThue } from "@/lib/thue";
 import { useKhoaCuon } from "@/lib/khoaCuon";
 import { nguoiDungHienTai } from "@/lib/supabase/nguoiDung";
+import { tenLoaiHinh } from "@/lib/filters";
 
 // Tin đăng của THÀNH VIÊN — tin của chính mình (mọi trạng thái, kể cả nháp).
 // RLS đảm bảo chỉ thấy tin owner_id = mình.
@@ -416,7 +417,7 @@ Tin ngừng hiển thị ngay, dữ liệu giữ nguyên — sau này bấm Đă
               {r.title || "(chưa có tiêu đề)"}
             </h3>
             <p className="mt-1 text-sm leading-relaxed text-cvr-muted">
-              {purposeLabel(r.purpose)}{r.type ? ` · ${r.type}` : ""} · {adminPriceText(r.price_vnd, r.purpose)}
+              {purposeLabel(r.purpose)}{r.type ? ` · ${tenLoaiHinh(r.type)}` : ""} · {adminPriceText(r.price_vnd, r.purpose)}
               {r.area_m2 != null ? ` · ${r.area_m2} m²` : ""}
               {r.province ? ` · ${r.province}` : ""}
             </p>

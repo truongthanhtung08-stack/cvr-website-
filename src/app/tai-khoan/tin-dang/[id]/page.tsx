@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { PageHeader } from "@/components/Ui";
+import { tenLoaiHinh } from "@/lib/filters";
 import {
   type ListingRow,
   purposeLabel,
@@ -115,7 +116,7 @@ export default function ChiTietTinCuaToiPage() {
         title={<span className="break-words">{row.title || "(chưa có tiêu đề)"}</span>}
         desc={
           <>
-            {purposeLabel(row.purpose)}{row.type ? ` · ${row.type}` : ""} · {adminPriceText(row.price_vnd, row.purpose)}
+            {purposeLabel(row.purpose)}{row.type ? ` · ${tenLoaiHinh(row.type)}` : ""} · {adminPriceText(row.price_vnd, row.purpose)}
             {row.area_m2 != null ? ` · ${row.area_m2} m²` : ""}
             {row.province ? ` · ${row.province}` : ""}
           </>
