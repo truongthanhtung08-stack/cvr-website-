@@ -28,13 +28,9 @@ function tenNguon(nguon: string): string {
 }
 
 // Gọi PostgREST trực tiếp bằng fetch (nội dung đã đăng là công khai — dùng anon key)
-async function rest<T>(table: string, query0: string): Promise<T[] | null> {
+async function rest<T>(table: string, query: string): Promise<T[] | null> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  // XEM TRƯỚC HỒ SƠ DỰ ÁN CHỜ DUYỆT — CHỈ MÁY CHỦ NHÀ (chủ dự án 30/10/2026 cần xem trang dự án tra cứu có thêm thông tin trước
-  // khi duyệt): .env.local đặt XEM_HO_SO_CHO_DUYET=1 thì dự án "chờ duyệt" hiện như đã đăng. Web thật không đặt biến này.
-  const xemChoDuyet = table === "projects" && process.env.XEM_HO_SO_CHO_DUYET === "1" && !!process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const key = xemChoDuyet ? process.env.SUPABASE_SERVICE_ROLE_KEY : process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  const query = xemChoDuyet ? query0.replace("status=eq.published", "status=in.(published,pending)") : query0;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) return null; // chưa cấu hình env (worktree/CI) → fallback
   try {
     const res = await fetch(`${url}/rest/v1/${table}?${query}`, {
