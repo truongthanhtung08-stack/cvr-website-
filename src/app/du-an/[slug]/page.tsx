@@ -285,7 +285,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
     // Thông số hồ sơ: QUAN TRỌNG LÊN TRƯỚC (chủ dự án 30/10/2026) — địa chỉ · quy mô · diện tích · số căn · loại căn · bàn giao · pháp lý
     // / sở hữu · khởi công; nhãn khác giữ thứ tự hồ sơ, xếp sau
     ...p.scale
-      .filter((s) => !["Tình trạng", "Chủ đầu tư", "Loại hình", "Giá từ"].includes(s.label))
+      // bỏ dòng địa chỉ: đã có ngay dưới tên dự án (chủ dự án 30/10/2026)
+      .filter((s) => !["Tình trạng", "Chủ đầu tư", "Loại hình", "Giá từ"].includes(s.label) && !laDiaChi(s.label))
       .map((s, i) => ({ s, i, h: hangUuTien(s.label) }))
       .sort((a, b) => a.h - b.h || a.i - b.i)
       .map((x) => x.s),
