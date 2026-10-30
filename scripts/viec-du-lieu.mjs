@@ -110,9 +110,13 @@ for (const x of tin) {
   (canNap[slug] ??= { ten: ten || slug, tinh: x.province || "", phuong: x.ward || "", n: 0 }).n++;
 }
 const dsNap = Object.values(canNap).sort((a, b) => b.n - a.n);
-const COT = "ten_du_an,loai_hinh,trang_thai,chu_dau_tu,don_vi_phat_trien,tinh,phuong_xa,dia_chi_chi_tiet,quy_mo,san_pham,khoi_cong,ban_giao,phap_ly,tien_ich,tong_quan,gia_tu,anh,nguon,ngay_cap_nhat";
+// ĐÚNG mẫu public/mau-nhap-du-an.csv = COT_DU_AN trong src/lib/csvDuAn.ts (thứ tự bảng Tổng quan, chủ dự án 31/10/2026)
+const COT = "ten_du_an,chu_dau_tu,loai_hinh,dien_tich_du_an,quy_mo,loai_hinh_can_ho,so_luong_can_ho,trang_thai,don_vi_phat_trien,tinh,phuong_xa,dia_chi_chi_tiet,toa_do,khoi_cong,ban_giao,phap_ly,tien_ich,tong_quan,gia_tu,anh,nguon,ngay_cap_nhat".split(",");
 const q = (s) => `"${String(s).replace(/"/g, '""')}"`;
-fs.writeFileSync(path.join(RA, "du-an-can-nap.csv"), "﻿" + [COT, ...dsNap.map((d) => [q(d.ten), "", "", "", "", q(d.tinh), q(d.phuong), "", "", "", "", "", "", "", "", "", "", "", ""].join(","))].join("\n") + "\n");
+fs.writeFileSync(path.join(RA, "du-an-can-nap.csv"), "﻿" + [COT.join(","), ...dsNap.map((d) => {
+  const o = { ten_du_an: d.ten, tinh: d.tinh, phuong_xa: d.phuong };
+  return COT.map((c) => (o[c] ? q(o[c]) : "")).join(",");
+})].join("\n") + "\n");
 // 5b) TIN ĐÃ LÊN WEB để Cowork SO TRÙNG trước khi lọc (đề xuất Cowork 24/10/2026 mục 8: môi giới đăng nhiều căn cùng dự án,
 // Cowork chỉ thấy số bị che nên dễ lấy trùng căn đã lên web — vd dn20 cùng số với 46EEB2AE). Chỉ 4 số cuối điện thoại.
 fs.writeFileSync(path.join(RA, "tin-da-len-web.csv"), "﻿" + [

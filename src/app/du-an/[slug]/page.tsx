@@ -272,7 +272,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   ].filter((s, i, ds) => ds.findIndex((x) => normalizeVi(x.label) === normalizeVi(s.label)) === i)
     // THỨ TỰ CHỦ DỰ ÁN CHỐT (30/10/2026): Chủ đầu tư → Loại hình → Diện tích dự án → Quy mô dự án → Loại hình căn hộ → Số lượng căn hộ →
     // các mục khác giữ thứ tự Admin
-    .map((s, i) => ({ s, i, h: [/chu dau tu/, /^loai hinh$/, /dien tich/, /quy mo/, /loai hinh can|loai can/, /so luong|so can/]
+    .map((s, i) => ({ s, i, h: [/chu dau tu/, /^loai hinh$/, /dien tich/, /quy mo/, /loai hinh can|loai can|^san pham$/,/so luong|so can/]
       .findIndex((r) => r.test(normalizeVi(s.label).replace(/đ/g, "d").trim())) }))
     .sort((a, b) => (a.h < 0 ? 99 : a.h) - (b.h < 0 ? 99 : b.h) || a.i - b.i)
     .map((x) => x.s);

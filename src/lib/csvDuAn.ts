@@ -9,14 +9,16 @@
 import { chuDauTuChuan, loiDiaDanh } from "@/lib/tenChuan";
 import { parseLatLng } from "@/lib/googleMaps";
 
-// Thứ tự cột = thứ tự thông tin lọc được (chủ dự án 22/10/2026): tên dự án · chủ đầu tư · vị trí, địa chỉ ·
-// giới thiệu (loại hình, tổng quan) · giá · rồi các thông tin khác nếu có. Đọc theo TÊN cột nên tệp cũ vẫn nạp được.
+// Thứ tự cột = THỨ TỰ BẢNG TỔNG QUAN trang dự án (chủ dự án chốt 31/10/2026, thay thứ tự 22/10): tên · chủ đầu tư · loại hình ·
+// diện tích dự án · quy mô · loại hình căn hộ · số lượng căn hộ · rồi các mục khác. MỘT mẫu cho mọi nơi (Admin, Cowork, scripts).
+// Đọc theo TÊN cột nên tệp cũ vẫn nạp được (san_pham → "Loại hình căn hộ"; quy_mo kiểu "Nhãn: giá trị; …" giữ như cũ).
 export const COT_DU_AN = [
-  "ten_du_an", "chu_dau_tu", "don_vi_phat_trien", "tinh", "phuong_xa", "dia_chi_chi_tiet",
-  "loai_hinh", "tong_quan", "gia_tu", "trang_thai", "quy_mo", "san_pham", "phap_ly",
-  "khoi_cong", "ban_giao", "tien_ich", "anh", "nguon", "ngay_cap_nhat",
+  "ten_du_an", "chu_dau_tu", "loai_hinh", "dien_tich_du_an", "quy_mo", "loai_hinh_can_ho", "so_luong_can_ho",
+  "trang_thai", "don_vi_phat_trien", "tinh", "phuong_xa", "dia_chi_chi_tiet",
   // TOẠ ĐỘ lấy trên Google Maps ("16.0254, 108.2205" hoặc link Google Maps) → bản đồ trang dự án ghim ĐÚNG như Google (30/10/2026)
   "toa_do",
+  "khoi_cong", "ban_giao", "phap_ly", "tien_ich", "tong_quan", "gia_tu", "anh", "nguon", "ngay_cap_nhat",
+  "san_pham", // cột cũ = loai_hinh_can_ho
 ] as const;
 type Cot = (typeof COT_DU_AN)[number];
 
@@ -76,15 +78,20 @@ export function docDuAnTuBang(rows: string[][]): DongDuAn[] {
     // trường nào thì vẫn nạp, thẻ và trang dự án ghi "Đang cập nhật" (chủ dự án 30/10/2026). Không để máy tự gán trạng thái.
     const trangThai = v("trang_thai");
     if (trangThai && !TRANG_THAI_HOP_LE.includes(trangThai)) loi.push(`trạng thái "${trangThai}" không hợp lệ`);
-    const quyMo = v("quy_mo")
-      .split(";")
-      .map((x) => x.split(":"))
-      .filter((p) => p.length >= 2 && p[0].trim() && p.slice(1).join(":").trim())
-      .map((p) => ({ label: p[0].trim(), value: p.slice(1).join(":").trim() }));
+    // quy_mo: một giá trị → dòng "Quy mô"; tệp cũ ghi "Nhãn: giá trị; …" → mỗi cặp một dòng như trước
+    const quyMoGoc = v("quy_mo");
+    const quyMo = quyMoGoc.includes(":")
+      ? quyMoGoc.split(";").map((x) => x.split(":"))
+        .filter((p) => p.length >= 2 && p[0].trim() && p.slice(1).join(":").trim())
+        .map((p) => ({ label: p[0].trim(), value: p.slice(1).join(":").trim() }))
+      : quyMoGoc ? [{ label: "Quy mô", value: quyMoGoc }] : [];
     const them = (label: string, value: string) => (value ? [{ label, value }] : []);
+    // Đúng thứ tự bảng Tổng quan, tên mục y như trang dự án hiện (31/10/2026)
     const scale = [
+      ...them("Diện tích dự án", v("dien_tich_du_an")),
       ...quyMo,
-      ...them("Sản phẩm", v("san_pham")),
+      ...them("Loại hình căn hộ", v("loai_hinh_can_ho") || v("san_pham")),
+      ...them("Số lượng căn hộ", v("so_luong_can_ho")),
       ...them("Khởi công", v("khoi_cong")),
       ...them("Bàn giao", v("ban_giao")),
       ...them("Pháp lý", v("phap_ly")),
