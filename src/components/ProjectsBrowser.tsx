@@ -419,7 +419,8 @@ export default function ProjectsBrowser({
             // Điện thoại: BỐ TRÍ NHƯ THẺ NỔI BẬT — ảnh trên rộng hết thẻ, chữ hiện đủ bên dưới (chủ dự án 31/10/2026: câu dài thì ảnh trái
             // không cân được với chữ → "bố trí như nhau hết"; không cắt chữ). Máy tính giữ ảnh trái 176 × 109
             // Khung ảnh tra cứu THẤP hơn thẻ nổi bật: 5:2 (chủ dự án 31/10/2026: "cho cái khung nhỏ hơn")
-            ? "relative aspect-[5/2] w-full shrink-0 overflow-hidden bg-cvr-surface sm:aspect-auto sm:min-h-[109px] sm:w-44 sm:self-stretch sm:rounded-xl"
+            // Chưa có ảnh: điện thoại bỏ hẳn khung ảnh (chủ dự án 31/10/2026: "có ảnh thì hiển thị, không có thì bỏ"); máy tính giữ khung xám
+            ? `relative aspect-[5/2] w-full shrink-0 overflow-hidden bg-cvr-surface sm:aspect-auto sm:min-h-[109px] sm:w-44 sm:self-stretch sm:rounded-xl ${p.image ? "" : "max-sm:hidden"}`
             : `relative w-full shrink-0 overflow-hidden bg-cvr-surface sm:aspect-auto sm:min-h-[178px] sm:w-72 sm:self-stretch sm:rounded-xl ${p.image ? "aspect-[16/9]" : "aspect-[3/1]"}`}>
             {/* Dự án nổi bật: tình trạng (tiến độ) ghi trên ảnh; thẻ không còn dòng Trạng thái (chủ dự án 30/10/2026) */}
             {/* Nhãn tình trạng chung mọi nơi (NhanTinhTrang, 31/10/2026): chỉ dự án VIP, màu theo cấp; còn lại ghi "Tiến độ" ở dòng cuối */}
