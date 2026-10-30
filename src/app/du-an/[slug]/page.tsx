@@ -24,15 +24,15 @@ import { provinceOf, type Project, type Listing } from "@/lib/data";
 import { getProject, getProjects, getArticles } from "@/lib/contentDb";
 import { dongTraCuu } from "@/lib/traCuuDuAn";
 import { getListings } from "@/lib/listingsDb";
-import { duAnThuocNhom, findCategory, projectCategories, rentCategories, saleCategories, type Category } from "@/lib/categories";
+import { duAnThuocNhom, findCategory, projectCategories, type Category } from "@/lib/categories";
 import { normalizeVi, cungDuAn } from "@/lib/filters";
 import { xepThongSo } from "@/lib/thongSoDuAn";
 import NhanTinhTrang, { capVip } from "@/components/NhanTinhTrang";
-import { giaTriThat } from "@/lib/truongDuAn";
+import { giaTriThat, loaiHinhThe } from "@/lib/truongDuAn";
+import TabTimKiemPhoBien from "@/components/TabTimKiemPhoBien";
 import { demTinTheoKhuVuc, khuVucList, moTaKhuVuc, slugKhuVuc, tieuDeKhuVuc, timKhuVuc } from "@/lib/khuVuc";
 import { catMoTa, thangHienTai, tieuDeGoogle } from "@/lib/thang";
 import { giaMoiM2 } from "@/lib/chiSoGia";
-import { lienKetCho } from "@/lib/pseo";
 
 // Đường dẫn /du-an/<slug> phục vụ HAI loại trang:
 //   · slug là DANH MỤC loại hình (can-ho-chung-cu, khu-do-thi-moi…) → trang danh sách
@@ -313,30 +313,29 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
     ...(giaTriThat(p.developer) ? [{ q: `Chủ đầu tư ${p.name} là ai?`, a: `${giaTriThat(p.developer)}.` }] : []),
     ...(giaTriThat(p.type) ? [{ q: `${p.name} thuộc loại hình nào?`, a: `${giaTriThat(p.type)}.` }] : []),
   ];
-  // pSEO "Mọi người cũng tìm kiếm" — TỪ KHOÁ DÀI theo kế hoạch SEO (công thức [mục đích] [loại hình] [phường / mức giá…] [nơi], chữ = gợi ý
-  // Google, chi-tiet/tu-khoa.md 5.1): loại hình lấy theo tin CỦA DỰ ÁN (chưa có tin thì theo loại hình hồ sơ), cùng nhóm "Tìm kiếm theo
-  // từ khoá" như trang tin; chỉ trang đã qua cổng chất lượng. Mua bán trước, cho thuê sau.
-  const tinhDuAn = timKhuVuc(slugKhuVuc(province));
+  // pSEO "Mọi người cũng tìm kiếm" — TỪ KHOÁ DỰ ÁN theo kế hoạch SEO (KE-HOACH-SEO mục 🏢: "[mua bán / cho thuê] [loại hình] [dự án]
+  // [nơi] → trang đích /du-an/<dự án>"; chủ dự án 31/10/2026: từ khoá phải liên quan dự án). ① Từ khoá của CHÍNH dự án (mục đích có tin)
+  // → khối tin của dự án · ② dự án khác cùng tỉnh đang có tin (nhiều tin trước) → trang dự án đó. Chữ = khuôn gợi ý Google.
+  const loaiChu = (t: string) => (t ? loaiHinhThe(t.split(" / ")[0]).toLocaleLowerCase("vi") : ""); // "Đất nền / đất nền dự án" → "đất nền"
   const loaiNhieuNhat = (ds: typeof listings) => {
     const dem = new Map<string, number>();
     for (const l of ds) if (l.type) dem.set(l.type, (dem.get(l.type) ?? 0) + 1);
-    return [...dem.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
+    return [...dem.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? "";
   };
-  const lienKetDuAn = (tinhDuAn ? (["ban", "thue"] as const).flatMap((muc) => {
-    const tin = muc === "ban" ? relBan : relThue;
-    const loai = loaiNhieuNhat(tin) ?? (muc === "ban" ? giaTriThat(p.type) : undefined);
-    // Loại hình hồ sơ ghi tự do ("Căn hộ cao cấp") → nhóm có tên loại nằm trong chữ đó
-    const dsCat = muc === "thue" ? rentCategories : saleCategories;
-    const cat = loai ? dsCat.find((c) => c.types.includes(loai)) ?? dsCat.find((c) => c.types.some((t) => normalizeVi(loai).includes(normalizeVi(t)))) : undefined;
-    if (!cat && tin.length === 0) return [];
-    // Trang gốc "Bán <loại> <tỉnh>" đứng đầu (lienKetCho bỏ trang đang xem nên phải lấy ở nhóm loại hình của trang tỉnh)
-    const goc = cat ? lienKetCho({ muc, tinh: tinhDuAn }, listings).filter((g) => g.tieuDe === "Theo loại hình").flatMap((g) => g.links)
-      .filter((l) => l.href.split("/")[2] === cat.slug) : [];
-    const tuKhoa = lienKetCho({ muc, tinh: tinhDuAn, ...(cat ? { cat } : {}) }, listings).filter((g) => g.tieuDe === "Tìm kiếm theo từ khoá").flatMap((g) => g.links);
-    // Phường của dự án lên trước
-    const phuongDA = normalizeVi(diaChiDu.split(",").find((x) => /phường|xã/i.test(x)) ?? "");
-    return [...goc, ...tuKhoa.sort((a, b) => Number(!!phuongDA && normalizeVi(b.day ?? b.nhan).includes(phuongDA.trim())) - Number(!!phuongDA && normalizeVi(a.day ?? a.nhan).includes(phuongDA.trim()))).slice(0, 5)];
-  }) : []).filter((l, i, ds) => ds.findIndex((x) => x.href === l.href) === i);
+  // Tên đã có tên tỉnh ("Fhome Đà Nẵng", "Đà Nẵng Golden Bay") thì không ghi thêm; loại hình đã nằm trong tên thì không lặp
+  const tuKhoaDuAn = (muc: "Bán" | "Cho thuê", loai: string, ten: string, tinh: string) =>
+    [muc, loai && !normalizeVi(ten).includes(normalizeVi(loai)) ? loai : "", ten, normalizeVi(ten).includes(normalizeVi(tinh)) ? "" : tinh].filter(Boolean).join(" ");
+  // Cùng khối "Tìm kiếm phổ biến" của web (TabTimKiemPhoBien — tab + lưới link, chủ dự án 31/10/2026: "tao để ở đây mà"): tab Mua bán · Cho thuê
+  const cacDuAnTinh = dongTraCuu(listings, tatCaDuAn).filter((d) => d.tinh === province && !cungDuAn(d.slug, p.slug));
+  const tabTuKhoa = ([["ban", "Mua bán", "Bán", relBan], ["thue", "Cho thuê", "Cho thuê", relThue]] as const).map(([muc, ten, chu, tin]) => ({
+    ten,
+    links: [
+      ...(tin.length ? [{ href: "#tin-du-an", nhan: tuKhoaDuAn(chu, loaiChu(loaiNhieuNhat([...tin])), p.name, province) }] : []),
+      ...cacDuAnTinh.filter((d) => d[muc] > 0).sort((x, y) => y[muc] - x[muc]).slice(0, 23)
+        // Loại hình theo tin của chính dự án đó (hồ sơ hay ghi dài / trống)
+        .map((d) => ({ href: `/du-an/${d.slug}`, nhan: tuKhoaDuAn(chu, loaiChu(loaiNhieuNhat(listings.filter((l) => (l.purpose ?? "ban") === muc && cungDuAn(l.projectSlug, d.slug)))), d.ten, d.tinh) })),
+    ],
+  })).filter((t) => t.links.length > 0);
 
   // Menu — chỉ mục có nội dung (khớp id các <section>)
   // GỌN (chủ dự án 22/10/2026: "rõ ràng, gọn, tránh lan man"): mục Bảng giá chỉ hiện khi có bảng giá thật để hiện;
@@ -649,20 +648,6 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                 </Section>
               )}
 
-              {/* pSEO — CÙNG KIỂU CÁC MỤC TRANG DỰ ÁN (chủ dự án 31/10/2026: "xem cả trang web, bố cục, kiểu chữ"): tiêu đề mục, chữ 15 px,
-                  2 cột như bảng thông số; liên kết thật máy chủ vẽ sẵn (Google đọc được) */}
-              {lienKetDuAn.length > 0 && (
-                <Section id="tim-kiem" title="Mọi người cũng tìm kiếm">
-                  <ul className="grid grid-cols-1 gap-x-10 gap-y-3 sm:grid-cols-2">
-                    {lienKetDuAn.map((l) => (
-                      <li key={l.href} className="text-[15px] leading-6">
-                        <Link href={l.href} className="text-cvr-body underline-offset-2 transition-colors hover:text-cvr-ink hover:underline">{l.day ?? l.nhan}</Link>
-                      </li>
-                    ))}
-                  </ul>
-                </Section>
-              )}
-
             </div>
 
             {/* Cột phụ — dính khi cuộn */}
@@ -761,6 +746,12 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
 
           {/* pSEO — liên kết sang trang mua bán / cho thuê cùng tỉnh (khối có lề riêng → bù lề khung trang) */}
+          {/* pSEO — khối "Tìm kiếm phổ biến" cuối trang như trang chủ, trang danh sách (khối có lề riêng → bù lề khung trang) */}
+          {tabTuKhoa.length > 0 && (
+            <div className="-mx-4 mt-12 sm:-mx-6 lg:-mx-8">
+              <TabTimKiemPhoBien tabs={tabTuKhoa} />
+            </div>
+          )}
           </HomeExpandProvider>
         </div>
       </main>
