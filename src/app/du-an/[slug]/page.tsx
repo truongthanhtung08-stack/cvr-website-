@@ -460,7 +460,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               bằng nhau: bảng dài hơn thì khung ảnh cao theo (ảnh vẫn hiện trọn, phần thừa lấp ảnh mờ). Nằm TRÊN thanh mục như khung ảnh nổi bật */}
           {traCuu && (
             <div className="mb-2 grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
-              <div className="relative -mx-4 sm:mx-0">
+              {/* Điện thoại: chưa có ảnh thì bỏ hẳn khung ảnh (chủ dự án 31/10/2026, chỉ điện thoại) — PC giữ khung xám + biểu tượng */}
+              <div className={`relative -mx-4 sm:mx-0 ${coAnh ? "" : "max-sm:hidden"}`}>
                 <NhanTinhTrang tier={p.tier} tinhTrang={giaTriThat(p.status)} />
                 {/* Điện thoại có ảnh: bộ ảnh trang tin (Gallery) như trang nổi bật; chưa có ảnh hoặc máy tính: khung tra cứu */}
                 {coAnh && <div className="sm:hidden"><Gallery images={gallery} videos={p.videos ?? []} alt={p.name} /></div>}
