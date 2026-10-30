@@ -133,7 +133,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     for (const p of projects) {
       dynamic.push({
         url: `${SITE}/du-an/${p.slug}`, changeFrequency: "weekly", priority: 0.7,
-        images: (p.photos?.length ? p.photos.slice(0, 5) : [p.image]).flatMap(anhTuyetDoi),
+        // Chỉ ảnh thật của dự án — chưa có ảnh thì không gửi ảnh mẫu chung cho Google (30/10/2026)
+        images: (p.photos ?? []).slice(0, 5).flatMap(anhTuyetDoi),
       });
     }
     for (const a of articles) {
