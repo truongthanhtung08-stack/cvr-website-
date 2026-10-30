@@ -84,5 +84,6 @@ export function dongTraCuu(tin: Listing[], duAn: Project[]): DongTraCuu[] {
         thue: d.thue,
       };
     })
-    .sort((a, b) => b.ban + b.thue - (a.ban + a.thue) || a.ten.localeCompare(b.ten, "vi"));
+    // Thứ tự danh bạ tra cứu: theo tên A, B, C (chủ dự án 30/10/2026) — dự án nổi bật xếp riêng theo cấp VIP ở trước
+    .sort((a, b) => a.ten.localeCompare(b.ten, "vi"));
 }

@@ -547,7 +547,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             {/* Cột phụ — dính khi cuộn */}
             {/* CỘT PHẢI LUÔN CÓ, ĐỦ THỨ LIÊN QUAN (chủ dự án 30/10/2026) — mọi dự án cùng một khuôn: giá + liên hệ (khi có) · tin của dự án
                 · dự án cùng khu vực · nhận tài liệu & báo giá */}
-            <aside className="lg:col-span-1">
+            {/* lg:mt-5: mép trên cột phải thẳng hàng khối đầu cột trái (khối đầu có mt-5) — 30/10/2026 */}
+            <aside className="lg:col-span-1 lg:mt-5">
               <div className="sticky top-24 space-y-4">
                 {/* MÁY TÍNH: hộp liên hệ dính theo khi cuộn — giá chỉ khi dự án có giá thật; người liên hệ + gọi / email. Không nhắc lại
                     "Liên hệ · loại hình" (đã ở dải thông tin bên trái) — 30/10/2026. Điện thoại: hộp liên hệ đã đưa lên dưới dải thông tin. */}

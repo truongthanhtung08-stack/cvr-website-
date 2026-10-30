@@ -23,8 +23,8 @@ import type { DiemBanDo } from "@/components/MapViewGoogle";
 import type { Project, Article } from "@/lib/data";
 import type { DongTraCuu } from "@/lib/traCuuDuAn";
 import { TheTraCuu, locTraCuu, nhomLoai } from "@/components/TraCuuDuAn";
-import { HangTraCuu } from "@/components/TraCuuSlide";
 import { useHomeSection } from "@/components/HomeExpand";
+import { sortProjectsByTier } from "@/components/ProjectSlider";
 import { khuVucList, slugKhuVuc } from "@/lib/khuVuc";
 import { smoothScrollTo } from "@/lib/scroll";
 import { useAutoSlide, useAutoSlideThe, useTamDung } from "@/lib/useAutoSlide";
@@ -178,7 +178,10 @@ export default function ProjectsBrowser({
   // TÌM KIẾM THEO TRƯỜNG — DÙNG CHUNG một luật với Mua bán / Cho thuê:
   // bóc tách câu dài → xếp 3 tầng (khớp đủ → gần đúng → liên quan) → không bao
   // giờ ra màn hình trống. Khu vực + Loại hình là 2 trường GIỮ khi nới lỏng.
-  const hits = searchAny(projects, q, {
+  // Dự án nổi bật luôn xếp theo cấp VIP (Kim cương → Vàng → Bạc → thường) ở MỌI trang (trang Dự án, khu vực, loại hình, chủ đầu tư,
+  // trang chủ) — chủ dự án 30/10/2026; dự án tra cứu xếp theo tên A, B, C (dongTraCuu)
+  const xepVip = useMemo(() => sortProjectsByTier(projects), [projects]);
+  const hits = searchAny(xepVip, q, {
     // TÊN dự án = chuỗi chính (khớp ở đây ăn điểm cao nhất)
     ten: (p) => `${p.name} ${p.type}`,
     // Vùng dò ĐẦY ĐỦ: thêm MÔ TẢ, quy mô và TIỆN ÍCH XUNG QUANH — trước đây chỉ
@@ -257,9 +260,13 @@ export default function ProjectsBrowser({
   const NOI_BAT_MOI_TRANG = 10;
   const noiBat = useHomeSection("du-an-noi-bat");
   const [trangNoiBat, setTrangNoiBat] = useState(1);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { setTrangNoiBat(1); }, [q, status, province, type]); // đổi tìm / lọc → danh sách về trang 1
   // MỞ MỘT DỰ ÁN RỒI BACK → về đúng trang danh sách + đúng chỗ đang xem (30/10/2026): ghi số trang + vị trí cuộn vào bước lịch sử
   // của danh sách (giữ nguyên dữ liệu Next.js trong đó), quay lại thì đọc ra
-  const dangMoDs = !!((traCuu && noiBat.expanded) || danhSachNoiBat);
+  // TRA CỨU = THANH TÌM (chủ dự án 30/10/2026): trang Dự án gõ tìm hoặc chọn lọc là ra ngay danh sách chung (nổi bật theo cấp VIP trước,
+  // dự án tra cứu theo tên A, B, C sau — mỗi dự án đúng loại thẻ của nó); bỏ hết tìm / lọc là về như cũ
+  const dangMoDs = !!((traCuu && (noiBat.expanded || hasActive)) || danhSachNoiBat);
   const ghiDs = (trang: number, y?: number) =>
     window.history.replaceState({ ...(window.history.state ?? {}), clTrang: trang, ...(y !== undefined ? { clYDs: y } : {}) }, "");
   useEffect(() => {
@@ -475,10 +482,11 @@ export default function ProjectsBrowser({
     const trangNB = Math.min(trangNoiBat, tongNB);
     danhSachXemThem = (
       <section id="noi-bat" className={`mt-6 scroll-mt-24 sm:mt-5 ${mapMode ? "hidden" : ""}`}>
-        <h2 className="text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">{traCuu ? "Dự án bất động sản" : "Dự án nổi bật"}</h2>
+        {/* Trang Dự án / trang khu vực đã có tiêu đề trang ngay trên → không lặp; trang chủ: tiêu đề khối "Dự án nổi bật" */}
+        {danhSachNoiBat && <h2 className="text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">Dự án nổi bật</h2>}
         {/* BỐ CỤC WEB HIỆN TẠI (chủ dự án 30/10/2026): CỘT TRÁI = danh sách thẻ, MỖI DỰ ÁN ĐÚNG LOẠI THẺ CỦA NÓ — nổi bật: thẻ nổi bật
             (ngang); tra cứu: thẻ tra cứu · CỘT PHẢI = liên kết pSEO "Dự án theo khu vực" (/du-an/<tỉnh>), dính theo khi cuộn — máy tính */}
-        <div className="mt-4 grid grid-cols-1 gap-8 lg:grid-cols-3">
+        <div className={`${danhSachNoiBat ? "mt-4" : ""} grid grid-cols-1 gap-8 lg:grid-cols-3`}>
           <div className="lg:col-span-2">
             <div className="flex flex-col gap-4 sm:gap-5" onClickCapture={() => ghiDs(trangNB, window.scrollY)}>
               {dsChung.slice((trangNB - 1) * NOI_BAT_MOI_TRANG, trangNB * NOI_BAT_MOI_TRANG).map((x) =>
@@ -499,7 +507,7 @@ export default function ProjectsBrowser({
     <div className="flex flex-col">
       {/* Hero banner — MOBILE nằm DƯỚI thanh lọc (mẫu Batdongsan), DESKTOP nằm TRÊN.
           Âm lề để banner tràn hết bề ngang, không bị lề trang bó lại. */}
-      {hero && !dangMoDs && (
+      {hero && !(noiBat.expanded || danhSachNoiBat) && (
         // Tràn viền THẬT: kéo ra full bề ngang màn hình, không bị khung max-w-7xl bó lại
         // (trước đây Hero nằm ngoài khung nên full màn hình — phải giữ đúng như vậy trên PC).
         <div className="relative left-1/2 order-2 mb-0 w-screen -translate-x-1/2 sm:order-1 sm:mb-0">
@@ -511,7 +519,7 @@ export default function ProjectsBrowser({
       {/* Máy tính: thanh tìm gọn trong CỘT DỰ ÁN bên trái (= lg:col-span-2 của lưới 3 cột, khe 32px) — chủ dự án 18/10/2026 */}
       {/* 25/10/2026: máy tính CÙNG KIỂU thanh tìm Mua bán / Cho thuê — không khung viền, không bóng, gạch mảnh phía dưới, cách Hero 16px */}
       {/* Trang Dự án có Tra cứu (29/10/2026): không còn cột phải → thanh tìm rộng hết khung, thẳng mép với Nổi bật + Tra cứu */}
-      <div className={`order-1 mt-2 rounded-none bg-white pb-2.5 pt-0 sm:order-2 sm:mt-4 sm:border-b sm:border-cvr-line sm:pb-4 ${traCuu && !dangMoDs ? "" : "lg:w-[calc(66.667%-10.667px)]"}`}>
+      <div id="tra-cuu" className={`order-1 mt-2 scroll-mt-24 rounded-none bg-white pb-2.5 pt-0 sm:order-2 sm:mt-4 sm:border-b sm:border-cvr-line sm:pb-4 ${traCuu && !dangMoDs ? "" : "lg:w-[calc(66.667%-10.667px)]"}`}>
         <div className="flex flex-col gap-2 sm:gap-3">{/* máy tính 2 hàng như Mua bán: ô tìm rộng · hàng lọc dưới (25/10/2026) */}
           {/* Ô tìm nhanh dự án — nút search XANH nằm SÁT mép phải trong khung (mobile), đồng bộ Mua bán/Cho thuê.
               MOBILE: chừa lề trái đúng chỗ NÚT BACK TRÒN nổi (8px + 36px) để nút đứng
@@ -726,7 +734,8 @@ export default function ProjectsBrowser({
       <div className="mt-3 flex flex-wrap items-end justify-between gap-x-4 gap-y-2 sm:mt-5">{/* máy tính cùng nhịp Mua bán: gạch → tiêu đề 20px, tiêu đề cỡ chữ như Mua bán (25/10/2026) */}
         {/* Trang pSEO (loại hình, tỉnh, chủ đầu tư) có Tra cứu: h1 + mô tả ở trang cha, khối Nổi bật / Tra cứu có tiêu đề riêng →
             không vẽ thêm tiêu đề ở đây (30/10/2026) */}
-        {!(traCuu && tieuDePhu) && (
+        {/* Danh sách Xem thêm trang chủ: không vẽ tiêu đề trang (trang chủ đã có h1) — danh sách có tiêu đề khối riêng */}
+        {!(traCuu && tieuDePhu) && !danhSachNoiBat && (
         <div className="min-w-0">
           {tieuDePhu ? (
             <h2 className="text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">{tieuDe}</h2>
@@ -880,30 +889,6 @@ export default function ProjectsBrowser({
           </section>
         )}
 
-        {/* TRA CỨU DỰ ÁN — mọi dự án cả nước, cùng cách hiện Dự án nổi bật (bỏ cột "Lọc theo khu vực" — trùng nút Khu vực
-            trên thanh tìm, 30/10/2026); cách khối Nổi bật đúng chuẩn khoảng cách khối (máy tính 56 · điện thoại 24) */}
-        <section id="tra-cuu" className="mt-6 scroll-mt-24 sm:mt-14">
-          <h2 className="text-lg font-semibold tracking-tight text-cvr-ink sm:text-xl">Tra cứu dự án</h2>
-          {/* CÙNG CÁCH Dự án nổi bật (chủ dự án 30/10/2026): hàng trượt 8 thẻ (không lặp dự án đã ở Nổi bật) + "Xem thêm" */}
-          {(() => {
-            const noiBatSlug = new Set(visible.map((p) => p.slug));
-            const hang = traCuuLoc.filter((d) => !noiBatSlug.has(d.slug)).slice(0, NOI_BAT_HANG);
-            return hang.length ? <HangTraCuu ds={hang} /> : (
-              <p className="mt-3 rounded-none border border-cvr-line bg-cvr-surface p-10 text-center text-sm text-cvr-muted">Chưa có dự án phù hợp bộ lọc.</p>
-            );
-          })()}
-          {traCuuLoc.length > 0 && (
-            <div className="mt-6 flex justify-center">
-              {/* MỘT LOGIC (chủ dự án 30/10/2026): Xem thêm ở đâu cũng ra cùng danh sách như trang chủ — nổi bật trước, tra cứu sau */}
-              <button type="button" onClick={() => { setTrangNoiBat(1); noiBat.toggle(); }} className="btn-xemthem">
-                Xem thêm
-                <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-            </div>
-          )}
-        </section>
       </div>
       ) : (
       <div className={`mt-6 grid grid-cols-1 gap-8 sm:mt-3 lg:grid-cols-3 ${mapMode ? "hidden" : ""}`}>

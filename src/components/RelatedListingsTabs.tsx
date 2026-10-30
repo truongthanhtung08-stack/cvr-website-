@@ -28,7 +28,7 @@ export default function RelatedListingsTabs({ ban, thue, title, the = false, ten
   if (hidden) return null;
 
   return (
-    <div className={expanded ? undefined : the ? "mt-5 rounded-2xl bg-cvr-surface p-4 sm:p-5" : "mt-10"}>
+    <div className={expanded ? undefined : the ? "mt-5 rounded-2xl bg-cvr-surface p-4 sm:p-5" : "mt-6 sm:mt-14"}>
       {!expanded && title && (
         <h2 className={the ? "mb-4 text-[19px] font-semibold tracking-tight text-cvr-ink sm:text-[22px]" : "mb-5 text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl"}>{title}</h2>
       )}
