@@ -653,8 +653,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             {/* CỘT PHẢI LUÔN CÓ, ĐỦ THỨ LIÊN QUAN (chủ dự án 30/10/2026) — mọi dự án cùng một khuôn: giá + liên hệ (khi có) · tin của dự án
                 · dự án cùng khu vực · nhận tài liệu & báo giá */}
             {coCotPhai && (
-            // Tra cứu: máy tính đã có hàng đầu trang; điện thoại chỉ dựng cột này khi có giá / liên hệ (cột rỗng vẫn ăn khe 24 px — 31/10/2026)
-            <aside className={`lg:col-span-1 ${traCuu ? (showPrice || contact ? "lg:hidden" : "hidden") : `lg:mt-5 ${showPrice || contact ? "" : "hidden lg:block"}`}`}>
+            // Cột phải chỉ máy tính (tra cứu: máy tính đã có hàng đầu trang). Điện thoại: Liên hệ + form GOM xuống sau khối tin thuộc dự án (31/10/2026)
+            <aside className={`hidden lg:col-span-1 ${traCuu ? "" : "lg:mt-5 lg:block"}`}>
               {/* Cột phải CUỘN THEO TRANG, không dính: cột cao hơn màn hình mà dính thì cuộn bị khựng rồi trôi (chủ dự án 30/10/2026) */}
               <div className="h-full space-y-4">
                 <div className="space-y-4">
@@ -745,7 +745,23 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
 
           {/* pSEO — liên kết sang trang mua bán / cho thuê cùng tỉnh (khối có lề riêng → bù lề khung trang) */}
-          {/* Điện thoại: form "Tải tài liệu & báo giá" GOM xuống sau khối tin thuộc dự án — không chèn giữa nội dung (chủ dự án 31/10/2026) */}
+          {/* Điện thoại: Liên hệ (giá) + form "Tải tài liệu & báo giá" GOM xuống sau khối tin thuộc dự án — không chèn giữa nội dung (chủ dự án 31/10/2026) */}
+          {(showPrice || contact) && (
+            <div className="mt-12 rounded-2xl border border-cvr-line bg-white p-4 lg:hidden">
+              {showPrice && (
+                <div className={contact ? "mb-4 border-b border-cvr-line pb-4" : undefined}>
+                  <p className="text-xs text-cvr-muted">Giá bán từ</p>
+                  <p className="text-2xl font-bold tracking-tight text-cvr-ink">{sidePrice}</p>
+                </div>
+              )}
+              {contact && (
+                <>
+                  <p className="mb-3 text-base font-semibold tracking-tight text-cvr-ink">Liên hệ</p>
+                  <LienHeDuAn contact={contact} />
+                </>
+              )}
+            </div>
+          )}
           {!traCuu && (
             <div className="mt-12 overflow-hidden rounded-2xl border border-cvr-line bg-white p-4 lg:hidden [&>div:last-child]:border-0 [&>div:last-child]:p-0 [&>div:last-child]:shadow-none [&_input]:h-10 [&_select]:h-10">
               <p className="mb-3 text-base font-semibold tracking-tight text-cvr-ink">Tải tài liệu & báo giá</p>
