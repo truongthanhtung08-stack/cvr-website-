@@ -13,7 +13,7 @@ import { anhNho } from "@/lib/asset";
 import { sortProjectsByTier, ExpandToggle } from "@/components/ProjectSlider";
 import { useHomeSection } from "@/components/HomeExpand";
 import NhanTinhTrang, { capVip } from "@/components/NhanTinhTrang";
-import { giaTriThat, CHUA_CO } from "@/lib/truongDuAn";
+import { giaTriThat } from "@/lib/truongDuAn";
 
 const PER_SLIDE = 4; // 1 hàng × 4 dự án mỗi slide (số slide KHÔNG giới hạn)
 
@@ -94,13 +94,17 @@ export default function ProjectsSection({ projects, articles = [] }: { projects:
                     <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                     {p.location}
                   </p>
-                  {/* Trường bắt buộc thẻ dự án: Chủ đầu tư (chủ dự án 31/10/2026 — mọi thẻ dự án cùng trường) */}
-                  <p className={`mt-1 flex items-center gap-1 text-xs ${giaTriThat(p.developer) ? "text-cvr-muted" : "text-cvr-faint"}`}>
-                    <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 21V5a2 2 0 012-2h8a2 2 0 012 2v16M16 9h2a2 2 0 012 2v10M8 7h4M8 11h4M8 15h4M2 21h20" /></svg>
-                    {giaTriThat(p.developer) || CHUA_CO.chuDauTu}
-                  </p>
-                  <div className="mt-3 flex items-center justify-between gap-3 border-t border-cvr-line pt-3">
-                    <span className="min-w-0 truncate text-xs text-cvr-muted">{giaTriThat(p.type) || CHUA_CO.loaiHinh}{!capVip(p.tier) ? ` · ${giaTriThat(p.status) || CHUA_CO.tinhTrang}` : ""}</span>
+                  {/* THẺ DỰ ÁN MỘT CHUẨN (chủ dự án 30–31/10/2026, như thẻ /du-an và Dự án tương tự): chỉ dòng Vị trí có biểu tượng; dòng khác nhãn đậm;
+
+                      tiến độ: VIP ở nhãn trên ảnh, thẻ thường một dòng; dòng cuối Chủ đầu tư + giá; trống ghi "Đang cập nhật" */}
+
+                  <p className="mt-1 text-xs text-cvr-body"><span className="font-semibold text-cvr-ink">Loại hình:</span> <span className={giaTriThat(p.type) ? "" : "text-cvr-faint"}>{giaTriThat(p.type) || "Đang cập nhật"}</span></p>
+
+                  {!capVip(p.tier) && <p className="mt-1 text-xs text-cvr-body"><span className="font-semibold text-cvr-ink">Tiến độ:</span> <span className={giaTriThat(p.status) ? "" : "text-cvr-faint"}>{giaTriThat(p.status) || "Đang cập nhật"}</span></p>}
+
+                  <span className="block h-3 shrink-0" aria-hidden />
+                  <div className="mt-auto flex items-center justify-between gap-3 border-t border-cvr-line pt-3">
+                    <span className="min-w-0 text-xs text-cvr-body"><span className="font-semibold text-cvr-ink">Chủ đầu tư:</span> <span className={giaTriThat(p.developer) ? "" : "text-cvr-faint"}>{giaTriThat(p.developer) || "Đang cập nhật"}</span></span>
                     <span className="shrink-0 whitespace-nowrap text-sm font-semibold text-cvr-ink">{p.priceFrom}</span>
                   </div>
                 </div>
@@ -151,13 +155,17 @@ export default function ProjectsSection({ projects, articles = [] }: { projects:
                           <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                           {p.location}
                         </p>
-                        {/* Trường bắt buộc thẻ dự án: Chủ đầu tư (chủ dự án 31/10/2026 — mọi thẻ dự án cùng trường) */}
-                        <p className={`mt-1 flex items-center gap-1 text-xs ${giaTriThat(p.developer) ? "text-cvr-muted" : "text-cvr-faint"}`}>
-                          <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 21V5a2 2 0 012-2h8a2 2 0 012 2v16M16 9h2a2 2 0 012 2v10M8 7h4M8 11h4M8 15h4M2 21h20" /></svg>
-                          {giaTriThat(p.developer) || CHUA_CO.chuDauTu}
-                        </p>
-                        <div className="mt-3 flex items-center justify-between border-t border-cvr-line pt-3">
-                          <span className="text-xs text-cvr-muted">{giaTriThat(p.type) || CHUA_CO.loaiHinh}{!capVip(p.tier) ? ` · ${giaTriThat(p.status) || CHUA_CO.tinhTrang}` : ""}</span>
+                        {/* THẺ DỰ ÁN MỘT CHUẨN (chủ dự án 30–31/10/2026, như thẻ /du-an và Dự án tương tự): chỉ dòng Vị trí có biểu tượng; dòng khác nhãn đậm;
+
+                            tiến độ: VIP ở nhãn trên ảnh, thẻ thường một dòng; dòng cuối Chủ đầu tư + giá; trống ghi "Đang cập nhật" */}
+
+                        <p className="mt-1 text-xs text-cvr-body"><span className="font-semibold text-cvr-ink">Loại hình:</span> <span className={giaTriThat(p.type) ? "" : "text-cvr-faint"}>{giaTriThat(p.type) || "Đang cập nhật"}</span></p>
+
+                        {!capVip(p.tier) && <p className="mt-1 text-xs text-cvr-body"><span className="font-semibold text-cvr-ink">Tiến độ:</span> <span className={giaTriThat(p.status) ? "" : "text-cvr-faint"}>{giaTriThat(p.status) || "Đang cập nhật"}</span></p>}
+
+                        <span className="block h-3 shrink-0" aria-hidden />
+                        <div className="mt-auto flex items-center justify-between gap-3 border-t border-cvr-line pt-3">
+                          <span className="min-w-0 text-xs text-cvr-body"><span className="font-semibold text-cvr-ink">Chủ đầu tư:</span> <span className={giaTriThat(p.developer) ? "" : "text-cvr-faint"}>{giaTriThat(p.developer) || "Đang cập nhật"}</span></span>
                           <span className="text-sm font-semibold text-cvr-ink">{p.priceFrom}</span>
                         </div>
                       </div>

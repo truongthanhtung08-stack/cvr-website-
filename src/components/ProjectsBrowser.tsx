@@ -447,6 +447,8 @@ export default function ProjectsBrowser({
               {/* Mọi thẻ: chỉ dòng Vị trí có biểu tượng; các dòng khác ghi NHÃN ĐẬM có dấu hai chấm (chủ dự án 30/10/2026) */}
               {/* Loại hình: 1 dòng dài hết bề ngang thẻ, quá dài mới “…” ở cuối (chủ dự án 30/10/2026) */}
               <DongNhan nhan="Loại hình" gt={giaTriThat(p.type)} />
+              {/* Tiến độ: thẻ VIP ở nhãn trên ảnh; thẻ thường một dòng ngay sau Loại hình — một chuẩn mọi thẻ dự án (31/10/2026) */}
+              {!capVip(p.tier) && <DongNhan nhan="Tiến độ" gt={giaTriThat(p.status)} />}
             </div>
             {/* Điện thoại bỏ 2 dòng giới thiệu (chủ dự án 30/10/2026) */}
             {!gon && p.overview[0] && (
@@ -456,8 +458,6 @@ export default function ProjectsBrowser({
             <div className="mt-3 flex items-center justify-between gap-3 border-t border-cvr-line pt-2.5 sm:mt-auto">
               <DongNhan nhan="Chủ đầu tư" gt={giaTriThat(p.developer)} />
               {p.priceFrom && <span className="shrink-0 whitespace-nowrap text-sm font-semibold leading-snug text-cvr-gold-ink">{p.priceFrom}</span>}
-              {/* Thẻ tra cứu: Tiến độ dòng cuối bên phải (không ghi trên ảnh) */}
-              {!capVip(p.tier) && <span className="shrink-0 whitespace-nowrap text-[13px] text-cvr-body"><span className="font-semibold text-cvr-ink">Tiến độ:</span> <span className={giaTriThat(p.status) ? "" : "text-cvr-faint"}>{giaTriThat(p.status) || CHUA}</span></span>}
             </div>
           </div>
         </Link>

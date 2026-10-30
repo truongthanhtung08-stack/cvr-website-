@@ -51,6 +51,7 @@ export type DongTraCuu = {
   anh: string;       // ảnh đầu của hồ sơ — "" = chưa có (thẻ hiện khung xám + biểu tượng)
   ban: number;
   thue: number;
+  gia: string;       // giá như thẻ /du-an: dự án nổi bật có (priceFrom, mặc định "Liên hệ"); hồ sơ dạng thẻ / dự án từ tin "" (31/10/2026)
   cap?: "diamond" | "gold" | "silver"; // dự án nổi bật cấp VIP — thẻ ghi tình trạng thành NHÃN màu cấp trên ảnh (31/10/2026)
 };
 
@@ -82,6 +83,7 @@ export function dongTraCuu(tin: Listing[], duAn: Project[]): DongTraCuu[] {
         diaChiCu: p?.locationCu ?? tin1?.locationCu ?? "",
         tinh: d.tinh,
         anh: p?.photos?.[0] ?? "",
+        gia: p && !p.dangThe ? p.priceFrom : "",
         ban: d.ban,
         thue: d.thue,
       };

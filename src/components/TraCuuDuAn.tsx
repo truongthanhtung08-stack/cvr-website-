@@ -3,7 +3,6 @@ import Link from "next/link";
 import { normalizeVi } from "@/lib/filters";
 import type { DongTraCuu } from "@/lib/traCuuDuAn";
 import NhanTinhTrang from "@/components/NhanTinhTrang";
-import { CHUA_CO } from "@/lib/truongDuAn";
 
 // TRA CỨU DỰ ÁN (chủ dự án 29/10/2026): phần trái trang Dự án (/du-an) — danh bạ kiểu tra mã số thuế, mỗi thẻ: ảnh · Tên ·
 // Chủ đầu tư · Địa chỉ · Loại hình. Bộ lọc của trang Dự án áp chung cho phần này và Dự án nổi bật (ProjectsBrowser).
@@ -53,18 +52,14 @@ export function TheDuAnDoc({ d }: { d: DongTraCuu }) {
         <svg className="mt-[3px] h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
         <span className="min-w-0">{d.diaChi}</span>
       </span>
-      {/* GỌN, CÓ LOGIC (chủ dự án 31/10/2026): loại hình + tình trạng chung một dòng ("Căn hộ cao cấp · Đang mở bán"); thẻ VIP đã có
-          tình trạng ở nhãn trên ảnh → dòng chỉ ghi loại hình. Không còn dòng trống; chữ dài tự xuống dòng, thẻ giãn đều cả dải */}
-      <span className="flex min-w-0 items-start gap-1 px-3 pb-3 pt-1.5 text-[13px] text-cvr-body">
-        <svg className="mt-[3px] h-3.5 w-3.5 shrink-0 text-cvr-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6" /></svg>
-        <span className="min-w-0">
-          <span className={d.loaiHinh ? "" : "text-cvr-faint"}>{d.loaiHinh || CHUA_CO.loaiHinh}</span>
-          {!d.cap && <span className={d.tinhTrang ? "" : "text-cvr-faint"}> · {d.tinhTrang || CHUA_CO.tinhTrang}</span>}
-        </span>
-      </span>
-      <span className={`mx-3 mt-auto flex min-w-0 items-start gap-1 border-t border-cvr-line pb-3 pt-2.5 text-[13px] ${d.chuDauTu ? "font-medium text-cvr-body" : "text-cvr-faint"}`}>
-        <svg className="mt-[3px] h-3.5 w-3.5 shrink-0 text-cvr-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 21V5a2 2 0 012-2h8a2 2 0 012 2v16M16 9h2a2 2 0 012 2v10M8 7h4M8 11h4M8 15h4M2 21h20" /></svg>
-        <span className="min-w-0">{d.chuDauTu || CHUA_CO.chuDauTu}</span>
+      {/* CÁC DÒNG DƯỚI TÊN (chủ dự án chốt 30/10/2026, nhắc 31/10): CHỈ dòng Vị trí có biểu tượng; dòng khác ghi NHÃN ĐẬM có dấu hai chấm,
+          giống thẻ danh sách /du-an (DongNhan); trống ghi "Đang cập nhật" mờ. Tiến độ: thẻ VIP ở nhãn trên ảnh, thẻ thường một dòng */}
+      <span className="min-w-0 px-3 pt-1.5 text-[13px] leading-snug text-cvr-body"><span className="font-semibold text-cvr-ink">Loại hình:</span> <span className={d.loaiHinh ? "" : "text-cvr-faint"}>{d.loaiHinh || "Đang cập nhật"}</span></span>
+      {!d.cap && <span className="min-w-0 px-3 pt-1.5 text-[13px] leading-snug text-cvr-body"><span className="font-semibold text-cvr-ink">Tiến độ:</span> <span className={d.tinhTrang ? "" : "text-cvr-faint"}>{d.tinhTrang || "Đang cập nhật"}</span></span>}
+      {/* Dòng cuối = Chủ đầu tư + giá ("Liên hệ") bên phải, gạch ngang trên — như thẻ /du-an (bàn giao 30/10/2026 mục 2.1) */}
+      <span className="mx-3 mt-auto flex min-w-0 items-start justify-between gap-3 border-t border-cvr-line pb-3 pt-2.5 text-[13px] leading-snug text-cvr-body">
+        <span className="min-w-0"><span className="font-semibold text-cvr-ink">Chủ đầu tư:</span> <span className={d.chuDauTu ? "" : "text-cvr-faint"}>{d.chuDauTu || "Đang cập nhật"}</span></span>
+        {d.gia && <span className="shrink-0 whitespace-nowrap text-sm font-semibold text-cvr-gold-ink">{d.gia}</span>}
       </span>
     </Link>
   );
