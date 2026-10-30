@@ -12,7 +12,7 @@ import type { DongTraCuu } from "@/lib/traCuuDuAn";
 const SLIDE = 8;
 const MOI_TRANG = 10;
 
-export default function DuAnTuongTuTraCuu({ ds }: { ds: DongTraCuu[] }) {
+export default function DuAnTuongTuTraCuu({ ds, id }: { ds: DongTraCuu[]; id?: string }) {
   const { expanded, hidden, toggle } = useHomeSection("du-an-tuong-tu");
   const [trang, setTrang] = useState(1);
   if (hidden || ds.length === 0) return null;
@@ -32,7 +32,7 @@ export default function DuAnTuongTuTraCuu({ ds }: { ds: DongTraCuu[] }) {
   }
 
   return (
-    <section className="mt-10">
+    <section id={id} className="mt-10 scroll-mt-14">
       <h2 className="text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">Dự án tương tự</h2>
       {/* Slide: điện thoại 1 thẻ (lộ thẻ kế), máy tính bảng 2, máy tính 4 — vuốt / cuộn ngang */}
       <ul className="no-scrollbar -mx-4 mt-4 flex snap-x snap-mandatory scroll-px-4 gap-4 overflow-x-auto px-4 py-2 sm:mx-0 sm:scroll-px-0 sm:gap-5 sm:px-0">

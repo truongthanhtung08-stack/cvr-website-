@@ -75,6 +75,7 @@ export default function ProjectsBrowser({
   tieuDePhu = false,
   tieuDe = "Dự án nổi bật",
   traCuu,
+  danhSachNoiBat = false,
 }: {
   projects: Project[];
   articles: Article[];
@@ -89,6 +90,9 @@ export default function ProjectsBrowser({
   /** Trang Dự án (/du-an, chủ dự án 29/10/2026): có danh bạ → trái TRA CỨU DỰ ÁN (mọi dự án), phải DỰ ÁN NỔI BẬT (projects);
    *  một bộ tìm + lọc áp cả hai. Không truyền (trang loại hình, trang tỉnh) → bố cục cũ. */
   traCuu?: DongTraCuu[];
+  /** "Xem thêm" khối Dự án nổi bật TRANG CHỦ (30/10/2026): cùng một logic với "Xem thêm" ở trang Dự án — danh sách thẻ Dự án
+   *  nổi bật (Tên · Địa chỉ · Loại hình · Chủ đầu tư), 10 dự án / trang; nút Quay lại do khối trang chủ lo (HomeExpand). */
+  danhSachNoiBat?: boolean;
 }) {
   useDiaDanh(); // địa danh nạp sau khi trang hiện — về tới thì vẽ lại (20/10/2026)
   const [q, setQ] = useState("");
@@ -373,7 +377,7 @@ export default function ProjectsBrowser({
   );
 
   // Đã bấm "Xem thêm" ở Dự án nổi bật → chỉ còn danh sách Dự án nổi bật theo trang (phần còn lại ẩn; Quay lại về như cũ)
-  if (traCuu && noiBat.expanded) {
+  if ((traCuu && noiBat.expanded) || danhSachNoiBat) {
     const tongNB = Math.max(1, Math.ceil(visible.length / NOI_BAT_MOI_TRANG));
     const trangNB = Math.min(trangNoiBat, tongNB);
     return (
@@ -404,7 +408,8 @@ export default function ProjectsBrowser({
       {/* ── Thanh tìm + lọc dự án (MOBILE: lên trên cùng, KHÔNG khung viền/bóng, rộng hết bề ngang) ── */}
       {/* Máy tính: thanh tìm gọn trong CỘT DỰ ÁN bên trái (= lg:col-span-2 của lưới 3 cột, khe 32px) — chủ dự án 18/10/2026 */}
       {/* 25/10/2026: máy tính CÙNG KIỂU thanh tìm Mua bán / Cho thuê — không khung viền, không bóng, gạch mảnh phía dưới, cách Hero 16px */}
-      <div className="order-1 mt-2 rounded-none bg-white pb-2.5 pt-0 sm:order-2 sm:mt-4 sm:border-b sm:border-cvr-line sm:pb-4 lg:w-[calc(66.667%-10.667px)]">
+      {/* Trang Dự án có Tra cứu (29/10/2026): không còn cột phải → thanh tìm rộng hết khung, thẳng mép với Nổi bật + Tra cứu */}
+      <div className={`order-1 mt-2 rounded-none bg-white pb-2.5 pt-0 sm:order-2 sm:mt-4 sm:border-b sm:border-cvr-line sm:pb-4 ${traCuu ? "" : "lg:w-[calc(66.667%-10.667px)]"}`}>
         <div className="flex flex-col gap-2 sm:gap-3">{/* máy tính 2 hàng như Mua bán: ô tìm rộng · hàng lọc dưới (25/10/2026) */}
           {/* Ô tìm nhanh dự án — nút search XANH nằm SÁT mép phải trong khung (mobile), đồng bộ Mua bán/Cho thuê.
               MOBILE: chừa lề trái đúng chỗ NÚT BACK TRÒN nổi (8px + 36px) để nút đứng
@@ -769,46 +774,24 @@ export default function ProjectsBrowser({
           </section>
         )}
 
-        <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-3">
-          {/* ── TRA CỨU DỰ ÁN — mọi dự án cả nước, thẻ ảnh + Tên · Chủ đầu tư · Địa chỉ · Loại hình, phân trang ── */}
-          <section id="tra-cuu" className="scroll-mt-24 lg:col-span-2">
-            <h2 className="text-lg font-semibold tracking-tight text-cvr-ink sm:text-xl">Tra cứu dự án</h2>
-            <ul className="mt-3 flex flex-col gap-4 sm:gap-5">
-              {trangTraCuu.map((d) => (
-                <li key={d.slug}><TheTraCuu d={d} /></li>
-              ))}
-              {traCuuLoc.length === 0 && (
-                <li className="rounded-none border border-cvr-line bg-cvr-surface p-10 text-center text-sm text-cvr-muted">Chưa có dự án phù hợp bộ lọc.</li>
-              )}
-            </ul>
-            <PhanTrang
-              hienTai={current}
-              tong={totalPages}
-              doiTrang={(p) => { setPage(p); document.getElementById("tra-cuu")?.scrollIntoView({ block: "start" }); }}
-            />
-          </section>
-
-          {/* Cột phải máy tính: lọc theo khu vực (như trang Dự án đã duyệt) — điện thoại đã có nút Khu vực trên thanh lọc */}
-          <aside className="hidden lg:col-span-1 lg:block">
-            <div className="sticky top-24 rounded-none border border-cvr-line bg-white p-5 shadow-lux">
-              <h2 className="text-sm font-semibold tracking-tight text-cvr-ink">Lọc theo khu vực</h2>
-              <div className="mt-3 flex flex-col">
-                {[ALL, ...provinceCounts.map(([n]) => n)].map((name) => (
-                  <button
-                    key={name}
-                    type="button"
-                    onClick={() => setProvince(name)}
-                    className={`flex items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition-colors ${
-                      province === name ? "bg-cvr-surface font-semibold text-cvr-ink" : "text-cvr-body hover:bg-cvr-surface hover:text-cvr-ink"
-                    }`}
-                  >
-                    <span>{name === ALL ? "Tất cả khu vực" : name}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </aside>
-        </div>
+        {/* TRA CỨU DỰ ÁN — mọi dự án cả nước, rộng hết khung; máy tính 2 cột thẻ (bỏ cột "Lọc theo khu vực" — trùng nút Khu vực
+            trên thanh tìm, 30/10/2026); cách khối Nổi bật đúng chuẩn khoảng cách khối (máy tính 56 · điện thoại 24) */}
+        <section id="tra-cuu" className="mt-6 scroll-mt-24 sm:mt-14">
+          <h2 className="text-lg font-semibold tracking-tight text-cvr-ink sm:text-xl">Tra cứu dự án</h2>
+          <ul className="mt-3 grid grid-cols-1 gap-4 sm:gap-5 lg:grid-cols-2">
+            {trangTraCuu.map((d) => (
+              <li key={d.slug}><TheTraCuu d={d} /></li>
+            ))}
+            {traCuuLoc.length === 0 && (
+              <li className="rounded-none border border-cvr-line bg-cvr-surface p-10 text-center text-sm text-cvr-muted lg:col-span-2">Chưa có dự án phù hợp bộ lọc.</li>
+            )}
+          </ul>
+          <PhanTrang
+            hienTai={current}
+            tong={totalPages}
+            doiTrang={(p) => { setPage(p); document.getElementById("tra-cuu")?.scrollIntoView({ block: "start" }); }}
+          />
+        </section>
       </div>
       ) : (
       <div className={`mt-6 grid grid-cols-1 gap-8 sm:mt-3 lg:grid-cols-3 ${mapMode ? "hidden" : ""}`}>

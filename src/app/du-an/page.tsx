@@ -32,7 +32,8 @@ export default async function DuAnPage() {
   const xep = [...projects].sort((a, b) => (HANG[a.tier ?? ""] ?? 9) - (HANG[b.tier ?? ""] ?? 9));
   return (
     <>
-      <ProjectListJsonLd items={xep} heading="Dự án bất động sản" path="/du-an" />
+      {/* Danh sách cho Google: MỌI dự án có hồ sơ (nổi bật + tra cứu) — dự án mới chỉ từ tin chưa có trang mở cho Google nên không khai */}
+      <ProjectListJsonLd items={[...xep, ...tatCa.filter((x) => !xep.some((y) => y.slug === x.slug))]} heading="Dự án bất động sản" path="/du-an" />
       <Header />
       <main className="flex-1 bg-white">
         {/* "Xem thêm" ở Dự án nổi bật: mở danh sách → phần còn lại ẩn, Quay lại về như cũ (chuẩn chung HomeExpand) */}

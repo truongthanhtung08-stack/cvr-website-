@@ -624,11 +624,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
           {/* DỰ ÁN TƯƠNG TỰ — CÙNG MỘT KIỂU với trang dự án tra cứu (chủ dự án 30/10/2026): thẻ dự án, slide 8 + Xem thêm → danh sách
               10 dự án / trang; cùng tỉnh, cùng nhóm loại hình trước (cả dự án nổi bật lẫn dự án tra cứu) */}
-          {tuongTuNoiBat.length > 0 && (
-            <section id="du-an-tuong-tu" className="scroll-mt-14">
-              <DuAnTuongTuTraCuu ds={tuongTuNoiBat} />
-            </section>
-          )}
+          <DuAnTuongTuTraCuu ds={tuongTuNoiBat} id="du-an-tuong-tu" />
 
 
           </HomeExpandProvider>

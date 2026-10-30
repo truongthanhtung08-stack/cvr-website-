@@ -192,9 +192,9 @@ export default function ProjectsSection({ projects, articles = [] }: { projects:
 
         </div>{/* hết khối slide */}
 
-        {/* Bấm "Xem thêm" → danh sách TẤT CẢ dự án dạng List, 8 dự án/trang */}
+        {/* Bấm "Xem thêm" → danh sách Dự án nổi bật CÙNG LOGIC trang Dự án (thẻ Tên · Địa chỉ · Loại hình · Chủ đầu tư, 10 dự án/trang) — 30/10/2026 */}
         {/* Mở ra: cách khối sau đúng 56px như mọi khối trang chủ máy tính (24/10/2026) */}
-        {expanded && <div className="sm:pb-4"><ProjectsBrowser projects={ranked} articles={articles} /></div>}
+        {expanded && <div className="sm:pb-4"><ProjectsBrowser projects={ranked} articles={articles} danhSachNoiBat /></div>}
 
         {ranked.length > 0 && (
           <div className="sm:-mt-4"><ExpandToggle expanded={expanded} onClick={toggle} /></div>
