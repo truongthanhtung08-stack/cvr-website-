@@ -13,7 +13,6 @@ import DanhSachThuGon from "@/components/DanhSachThuGon";
 import FloorPlans from "@/components/FloorPlans";
 import PropertyCard from "@/components/PropertyCard";
 import RelatedListingsTabs from "@/components/RelatedListingsTabs";
-import ListingShowcase from "@/components/ListingShowcase";
 import LeadForm from "@/components/LeadForm";
 import RichContent from "@/components/RichContent";
 import MoTaThuGon from "@/components/MoTaThuGon";
@@ -24,7 +23,7 @@ import KhuVucLinks from "@/components/KhuVucLinks";
 import { ProjectListJsonLd } from "@/components/ListJsonLd";
 import ProjectsBrowser from "@/components/ProjectsBrowser";
 import TrangDuAnTraCuu from "@/components/TrangDuAnTraCuu";
-import { provinceOf, districtOf, segmentOf, pickRelated, type Project, type Listing } from "@/lib/data";
+import { provinceOf, pickRelated, type Project, type Listing } from "@/lib/data";
 import { getProject, getProjects, getProjectsNoiBat, getArticles } from "@/lib/contentDb";
 import { dongTraCuu } from "@/lib/traCuuDuAn";
 import { nhomLoai } from "@/components/TraCuuDuAn";
@@ -48,36 +47,6 @@ function duAnTuTin(listings: Listing[], slug: string): { ten: string; viTri: str
   if (tin.length === 0) return null;
   const ten = tin.find((x) => x.projectName)?.projectName ?? slug;
   return { ten, viTri: tin[0].location, tin };
-}
-
-// BẤT ĐỘNG SẢN TƯƠNG TỰ ngay sau tin của dự án (chủ dự án 21/10/2026): tin NGOÀI dự án, cùng tỉnh trở lên
-// (cùng quận/phường cũ, cùng loại hình được xếp trước). Khác tỉnh thì không gợi ý — gợi ý vô lý là tệ nhất.
-// LOẠI HÌNH DỰ ÁN → LOẠI TIN TƯƠNG ỨNG (chủ dự án 22/10/2026: dự án căn hộ mà "BĐS tương tự" ra đất nền, mặt bằng cho
-// thuê là gợi ý vô lý). Một dự án có thể nhiều loại ("Căn hộ, Shophouse") → nhận mọi nhóm khớp.
-const NHOM_LOAI: [RegExp, RegExp][] = [
-  [/căn hộ|chung cư|apartment/i, /căn hộ|chung cư/i],
-  [/đất/i, /đất/i],
-  [/shophouse|nhà phố|thương mại/i, /shophouse|nhà phố|mặt phố/i],
-  [/biệt thự|villa|liền kề/i, /biệt thự|villa|liền kề/i],
-  [/condotel|nghỉ dưỡng|khách sạn/i, /condotel/i],
-];
-
-function tuongTuDuAn(listings: Listing[], tinDuAn: Listing[], viTri: string, loaiDuAn = ""): { nhe: Listing[]; ids: string[] } {
-  const trong = new Set(tinDuAn.map((x) => x.id));
-  const tinh = provinceOf(viTri), quan = districtOf(viTri);
-  const loai = new Set(tinDuAn.map((x) => x.type));
-  // Loại tin hợp với dự án: theo loại hình của CHÍNH dự án, thêm loại của các tin thuộc dự án. Không xác định được thì
-  // giữ cách cũ (mọi loại cùng tỉnh, chấm điểm).
-  const khop = NHOM_LOAI.filter(([duAn]) => duAn.test(loaiDuAn) || [...loai].some((t) => duAn.test(t))).map(([, tin]) => tin);
-  const hopLoai = (x: Listing) => !khop.length || khop.some((r) => r.test(x.type));
-  const ds = pickRelated(
-    listings.filter((x) => !trong.has(x.id) && provinceOf(x.location) === tinh && hopLoai(x)),
-    // cùng quận trước · cùng loại tin của dự án · tin BÁN trước tin thuê (không trộn lẫn lộn)
-    (x) => (quan && districtOf(x.location) === quan ? 4 : 0) + (loai.has(x.type) ? 2 : 0) + (x.purpose === "ban" ? 3 : 0),
-    listings.length,
-  );
-  // HTML nhẹ như trang tin: 8 tin bản nhẹ cho slide, "Xem thêm" tự nạp đủ theo danh sách mã
-  return { nhe: ds.slice(0, 8).map(({ desc: _d, searchText: _s, ...the }) => the as Listing), ids: ds.map((x) => x.id) };
 }
 
 function projectsInCategory(projects: Project[], c: Category): Project[] {
@@ -644,8 +613,9 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
           </HomeCollapsible>
 
-          {/* ── SAU THÔNG TIN DỰ ÁN (chủ dự án 22/10/2026): xem hết dự án → TIN THUỘC DỰ ÁN → DỰ ÁN TƯƠNG TỰ →
-              Bất động sản tương tự. Mỗi khối: slide, "Xem thêm" ra danh sách theo trang, phần còn lại ẩn. */}
+          {/* ── SAU THÔNG TIN DỰ ÁN (chủ dự án 22/10/2026): xem hết dự án → TIN THUỘC DỰ ÁN → DỰ ÁN TƯƠNG TỰ. Mỗi khối: slide,
+              "Xem thêm" ra danh sách theo trang, phần còn lại ẩn. 30/10/2026: bỏ "Bất động sản tương tự" — mở dự án → dự án
+              tương tự, mở tin → bất động sản tương tự. */}
           {/* Chưa có tin thuộc dự án → ẩn hẳn khối (không phơi "chưa có tin" trước khách — 22/10/2026) */}
           {hasRelated && (
           <section id="tin-du-an" className="scroll-mt-14">
@@ -664,10 +634,6 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
           />
           </section>
 
-
-          {(() => { const tt = tuongTuDuAn(listings, projectListings, p.location, p.type); return (
-            <ListingShowcase items={tt.nhe} idsDayDu={tt.ids} sectionKey="bds-tuong-tu" title="Bất động sản tương tự" heading="Bất động sản tương tự" relevance emptyNote="Chưa có bất động sản tương tự." />
-          ); })()}
 
           </HomeExpandProvider>
         </div>
