@@ -628,6 +628,9 @@ export default function ProjectsBrowser({
       {/* TIÊU ĐỀ + HÀNG NÚT cùng bố cục, cùng cỡ với trang Mua bán / Cho thuê (chủ dự án 18/10/2026: đồng bộ 3 tab):
           tiêu đề trái · Xem bản đồ + Xoá lọc phải (máy tính); điện thoại xuống dòng dưới tiêu đề */}
       <div className="mt-3 flex flex-wrap items-end justify-between gap-x-4 gap-y-2 sm:mt-5">{/* máy tính cùng nhịp Mua bán: gạch → tiêu đề 20px, tiêu đề cỡ chữ như Mua bán (25/10/2026) */}
+        {/* Trang pSEO (loại hình, tỉnh, chủ đầu tư) có Tra cứu: h1 + mô tả ở trang cha, khối Nổi bật / Tra cứu có tiêu đề riêng →
+            không vẽ thêm tiêu đề ở đây (30/10/2026) */}
+        {!(traCuu && tieuDePhu) && (
         <div className="min-w-0">
           {tieuDePhu ? (
             <h2 className="text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">{tieuDe}</h2>
@@ -639,6 +642,7 @@ export default function ProjectsBrowser({
             Dự án căn hộ, khu đô thị và nghỉ dưỡng đang được cập nhật trên Coastal Land.
           </p>
         </div>
+        )}
         <div className="flex flex-1 flex-wrap items-center justify-end gap-3">
           <button
             type="button"

@@ -23,7 +23,7 @@ import KhuVucLinks from "@/components/KhuVucLinks";
 import { ProjectListJsonLd } from "@/components/ListJsonLd";
 import ProjectsBrowser from "@/components/ProjectsBrowser";
 import { provinceOf, type Project, type Listing } from "@/lib/data";
-import { getProject, getProjects, getProjectsNoiBat, getArticles } from "@/lib/contentDb";
+import { getProject, getProjects, getArticles } from "@/lib/contentDb";
 import { dongTraCuu } from "@/lib/traCuuDuAn";
 import { nhomLoai } from "@/components/TraCuuDuAn";
 import { getListings } from "@/lib/listingsDb";
@@ -63,7 +63,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       alternates: { canonical: `/du-an/${c.slug}` },
       openGraph: { title: c.title, description: c.desc, url: `/du-an/${c.slug}`, type: "website" },
       // Nhóm chưa có dự án nào → xem được nhưng không cho lập chỉ mục (tránh trang trống — 22/10/2026)
-      ...(projectsInCategory(await getProjectsNoiBat().catch(() => []), c).length === 0 ? { robots: { index: false, follow: true } } : {}),
+      ...(projectsInCategory(await getProjects().catch(() => []), c).length === 0 ? { robots: { index: false, follow: true } } : {}),
     };
   }
 
@@ -71,7 +71,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   // Xét TRƯỚC khi tra dự án: tên dự án không bao giờ trùng slug tỉnh.
   const kv = timKhuVuc(slug);
   if (kv) {
-    const projects = await getProjectsNoiBat().catch(() => []);
+    const projects = await getProjects().catch(() => []);
     const soDuAn = demTinTheoKhuVuc(projects, kv.name);
     const title = tieuDeKhuVuc("duan", kv.name);
     const description = moTaKhuVuc("duan", kv.name, soDuAn);
@@ -139,17 +139,24 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   // ── Nhánh 1: slug là DANH MỤC loại hình dự án → trang danh sách ──
   const cat = findCategory(projectCategories, slug);
   if (cat) {
-    const [projects, articles] = await Promise.all([getProjectsNoiBat(), getArticles()]);
-    const items = projectsInCategory(projects, cat);
+    // CÙNG CẤU TRÚC trang Dự án (30/10/2026): Nổi bật = dự án nổi bật thuộc loại hình; Tra cứu = MỌI dự án có hồ sơ thuộc loại hình
+    const [tatCa, listings, articles] = await Promise.all([getProjects(), getListings(), getArticles()]);
+    const trongNhom = projectsInCategory(tatCa, cat);
+    const items = trongNhom.filter((x) => !x.dangThe);
+    const slugNhom = new Set(trongNhom.map((x) => x.slug));
+    const traCuu = dongTraCuu(listings, tatCa).filter((d) => slugNhom.has(d.slug));
     return (
       <>
+        <ProjectListJsonLd items={trongNhom} heading={cat.h1} path={`/du-an/${cat.slug}`} />
         <Header />
         <main className="flex-1 bg-white">
           <Breadcrumb items={[{ name: "Dự án", href: "/du-an" }, { name: cat.label, href: `/du-an/${cat.slug}` }]} />
           <div className="mx-auto max-w-7xl px-4 pb-footer sm:px-6 lg:px-8">
             <h1 className="mb-1 mt-3 text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">{cat.h1}</h1>
             <p className="mb-4 text-sm text-cvr-muted">{cat.desc}</p>
-            <ProjectsBrowser projects={items} articles={articles} tieuDePhu />
+            <HomeExpandProvider>
+              <ProjectsBrowser projects={items} articles={articles} tieuDePhu traCuu={traCuu} />
+            </HomeExpandProvider>
           </div>
         </main>
         <Footer />
@@ -162,8 +169,11 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   // trước đây web không có trang nào nhận nhóm này.
   const kv = timKhuVuc(slug);
   if (kv) {
-    const [projects, articles] = await Promise.all([getProjectsNoiBat(), getArticles()]);
-    const items = projects.filter((x) => normalizeVi(x.location.split(",").pop() ?? "") === normalizeVi(kv.name));
+    // CÙNG CẤU TRÚC trang Dự án (30/10/2026): Nổi bật = dự án nổi bật tại tỉnh; Tra cứu = MỌI dự án tại tỉnh (cả dự án chỉ từ tin)
+    const [projects, listings, articles] = await Promise.all([getProjects(), getListings(), getArticles()]);
+    const trongTinh = projects.filter((x) => normalizeVi(x.location.split(",").pop() ?? "") === normalizeVi(kv.name));
+    const items = trongTinh.filter((x) => !x.dangThe);
+    const traCuu = dongTraCuu(listings, projects).filter((d) => normalizeVi(d.tinh) === normalizeVi(kv.name));
     const demTheoTinh = (() => {
       const m = new Map<string, number>();
       for (const x of projects) {
@@ -174,20 +184,24 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
     })();
     return (
       <>
-        <ProjectListJsonLd items={items} heading={tieuDeKhuVuc("duan", kv.name)} path={`/du-an/${kv.slug}`} />
+        <ProjectListJsonLd items={trongTinh} heading={tieuDeKhuVuc("duan", kv.name)} path={`/du-an/${kv.slug}`} />
         <Header />
         <main className="flex-1 bg-white">
+          <HomeExpandProvider>
           <Breadcrumb items={[{ name: "Dự án", href: "/du-an" }, { name: kv.name, href: `/du-an/${kv.slug}` }]} />
           <div className="mx-auto max-w-7xl px-4 pb-footer sm:px-6 lg:px-8">
             <h1 className="mb-1 mt-3 text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">
               Dự án bất động sản tại {kv.name}
             </h1>
             <p className="mb-4 text-sm text-cvr-muted">
-              {moTaKhuVuc("duan", kv.name, items.length)}
+              {moTaKhuVuc("duan", kv.name, trongTinh.length)}
             </p>
-            <ProjectsBrowser projects={items} articles={articles} tieuDePhu />
+            <ProjectsBrowser projects={items} articles={articles} tieuDePhu traCuu={traCuu} />
           </div>
-          <KhuVucLinks base="/du-an" demTheoTinh={demTheoTinh} tinhDangXem={kv.name} />
+          <HomeCollapsible>
+            <KhuVucLinks base="/du-an" demTheoTinh={demTheoTinh} tinhDangXem={kv.name} />
+          </HomeCollapsible>
+          </HomeExpandProvider>
         </main>
         <Footer />
       </>
