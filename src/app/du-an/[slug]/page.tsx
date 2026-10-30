@@ -445,34 +445,45 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             </div>
           )}
 
+          {/* TRA CỨU — HÀNG ĐẦU TRANG (chủ dự án 31/10/2026): 1 khung ảnh (≥ 2 ảnh tự chạy, hiện trọn không cắt) | cột phải Dự án theo khu vực,
+              cùng hàng nên đáy cột phải luôn ngang đáy ảnh. Nằm TRÊN thanh mục như khung ảnh trang nổi bật */}
+          {traCuu && (
+            <div className="mb-2 grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
+              <div className="relative -mx-4 sm:mx-0 lg:col-span-2">
+                <NhanTinhTrang tier={p.tier} tinhTrang={giaTriThat(p.status)} />
+                <AnhTraCuu images={coAnh ? gallery : []} alt={p.name} />
+              </div>
+              {duAnTheoKhuVuc.length > 0 && (
+                <div className="hidden flex-col rounded-2xl border border-cvr-line bg-white p-5 lg:flex">
+                  <p className="text-base font-semibold tracking-tight text-cvr-ink">Dự án theo khu vực</p>
+                  <div className="mt-3 flex flex-col flex-1 justify-around">
+                    {duAnTheoKhuVuc.map(([ten, so]) => (
+                      <Link key={ten} href={`/du-an/${slugKhuVuc(ten)}`} className="flex items-center justify-between rounded-lg px-3 py-2 text-sm text-cvr-body transition-colors hover:bg-cvr-surface hover:text-cvr-ink">
+                        <span>Dự án tại {ten}</span>
+                        <span className="text-xs text-cvr-muted">{so}</span>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           </HomeCollapsible>
 
           {/* MENU MỤC DÍNH SUỐT TRANG (22/10/2026, đã chốt): nằm ngoài lưới nội dung nên cuộn tới khối tin thuộc dự án,
               dự án tương tự cuối trang vẫn dính và sáng đúng mục đang xem. */}
-          {/* Trang tra cứu gọn (chủ dự án 31/10/2026): bỏ thanh mục — trang ngắn, không cần */}
-          {!traCuu && <ProjectNav items={nav} anKhiMo />}
+          {/* Tra cứu: có từ 2 mục thông tin trở lên thì hiện thanh mục như trang nổi bật; 1 mục thì không cần (chủ dự án 31/10/2026) */}
+          {(!traCuu || nav.length >= 2) && <ProjectNav items={nav} anKhiMo />}
 
           {/* BỐ CỤC CHUẨN (chủ dự án 30/10/2026) — dự án nổi bật và dự án tra cứu MỘT KHUÔN: cột trái các khối nội dung | cột phải dính
               (liên hệ, tin thuộc dự án, dự án tại tỉnh, nhận tài liệu), mép trên ngang khối đầu cột trái; phần nào chưa có thông tin thì ẩn */}
           <HomeCollapsible>
           <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
             <div className={`reveal is-visible cards-stagger ${coCotPhai ? "lg:col-span-2" : "lg:col-span-3"} [&>section:first-child]:mt-5 [&>section:first-child]:border-t-0 [&>section:first-child]:pt-0`}>
-              {/* TRANG RIÊNG DỰ ÁN TRA CỨU (chủ dự án 31/10/2026) — CÙNG KHUÔN TRANG MUA BÁN: tên + địa chỉ trên cùng; cột trái ảnh TO
-                  rộng hết cột (≥ 2 ảnh tự chuyển, ảnh hiện trọn, bấm xem to), dưới ảnh 3 trường bắt buộc; cột phải (Dự án theo khu vực)
-                  mép trên ngang mép trên ảnh. Mục Admin ghi thêm xuống Tổng quan */}
-              {traCuu && (
-                // Ảnh cách mục kế 48 px như mục cách mục; không còn mục nào trong cột thì không chừa (31/10/2026)
-                <div className="not-last:mb-12">
-                  <div className="relative -mx-4 sm:mx-0">
-                    <NhanTinhTrang tier={p.tier} tinhTrang={giaTriThat(p.status)} />
-                    <AnhTraCuu images={coAnh ? gallery : []} alt={p.name} />
-                  </div>
-                </div>
-              )}
-
               {/* THÔNG TIN DỰ ÁN DÀI → THU GỌN (chủ dự án 31/10/2026, kiểu Batdongsan): bao TỪ Tổng quan TỚI mục cuối; "Xem thêm" ở chỗ cắt,
                   "Thu gọn" ở CUỐI phần thông tin; ngắn thì hiện hết. Hỏi đáp nằm ngoài (luôn hiện) */}
-              <ThuGonTrang className={traCuu ? "[&>section:first-child]:mt-0" : "[&>section:first-child]:mt-5"}>
+              <ThuGonTrang className="[&>section:first-child]:mt-5">
               {/* 1) Tổng quan */}
               {coMucTongQuan && (
               <Section id="tong-quan" title="Tổng quan dự án">
@@ -615,15 +626,14 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             {/* CỘT PHẢI LUÔN CÓ, ĐỦ THỨ LIÊN QUAN (chủ dự án 30/10/2026) — mọi dự án cùng một khuôn: giá + liên hệ (khi có) · tin của dự án
                 · dự án cùng khu vực · nhận tài liệu & báo giá */}
             {coCotPhai && (
-            <aside className={`lg:col-span-1 ${traCuu ? "@container" : "lg:mt-5"}`}>
+            <aside className={`lg:col-span-1 ${traCuu ? "lg:hidden" : "lg:mt-5"}`}>
               {/* Cột phải CUỘN THEO TRANG, không dính: cột cao hơn màn hình mà dính thì cuộn bị khựng rồi trôi (chủ dự án 30/10/2026) */}
               <div className="h-full space-y-4">
-                {/* Tra cứu: các hộp đầu cột phải đáy NGANG đáy ảnh (31/10/2026) — cao tối thiểu = cao ảnh: ảnh rộng 2 cột + khe 32 px,
-                    tỷ lệ 2:1 → 100% bề rộng cột phải + 16 px; hộp "Dự án theo khu vực" giãn lấp phần còn lại */}
-                <div className={traCuu ? "space-y-4 lg:flex lg:min-h-[calc(100cqw+16px)] lg:flex-col lg:gap-4 lg:space-y-0" : "space-y-4"}>
+                <div className="space-y-4">
                 {/* Tin của dự án (bấm xuống khối tin) — máy tính lẫn điện thoại. Tra cứu: khối tin nằm ngay dưới ảnh nên không lặp hộp này
                     (3 hộp làm cột phải dài hơn ảnh — 31/10/2026) */}
-                {hasRelated && (
+                {/* Tra cứu: không lặp hộp này — khối tin của dự án nằm ngay dưới, cột phải cạnh ảnh chỉ Dự án theo khu vực (31/10/2026) */}
+                {hasRelated && !traCuu && (
                   <div className="rounded-2xl border border-cvr-line bg-white p-4 lg:p-5">
                     <p className="text-base font-semibold tracking-tight text-cvr-ink">{`Tin mua bán, cho thuê tại ${p.name}`}</p>
                     <div className="mt-3 flex flex-col">
@@ -638,11 +648,11 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                 {/* Điện thoại: hộp này nằm ngay dưới ảnh (cột phải xuống cuối trang) → ở đây chỉ hiện trên máy tính */}
 
                 {duAnTheoKhuVuc.length > 0 && (
-                  <div className={`rounded-2xl border border-cvr-line bg-white p-4 lg:p-5 ${traCuu ? "lg:flex lg:flex-1 lg:flex-col" : ""}`}>
+                  <div className="rounded-2xl border border-cvr-line bg-white p-4 lg:p-5">
                     <p className="text-base font-semibold tracking-tight text-cvr-ink">Dự án theo khu vực</p>
-                    <div className={`mt-3 flex flex-col ${traCuu ? "lg:flex-1 lg:justify-around" : ""}`}>
+                    <div className="mt-3 flex flex-col">
                       {duAnTheoKhuVuc.map(([ten, so]) => (
-                        <Link key={ten} href={`/du-an/${slugKhuVuc(ten)}`} className={`flex items-center justify-between rounded-lg px-3 ${traCuu ? "py-1.5" : "py-2"} text-sm text-cvr-body transition-colors hover:bg-cvr-surface hover:text-cvr-ink`}>
+                        <Link key={ten} href={`/du-an/${slugKhuVuc(ten)}`} className="flex items-center justify-between rounded-lg px-3 py-2 text-sm text-cvr-body transition-colors hover:bg-cvr-surface hover:text-cvr-ink">
                           <span>Dự án tại {ten}</span>
                           <span className="text-xs text-cvr-muted">{so}</span>
                         </Link>
@@ -772,7 +782,9 @@ const DU_AN_DEMO: Record<string, Project> = {
     type: "Căn hộ", status: "Đang mở bán", developer: "Công ty CP ABC", image: "/images/tin/2.jpg",
     photos: ["/images/tin/2.jpg", "/anh/listings/0d4c189f3293a590dd96286f-1784682958486-201631-4.1.webp", "/images/tin/1.jpg"],
     scale: [{ label: "Diện tích dự án", value: "1,2 ha" }, { label: "Quy mô", value: "2 tòa cao 22 tầng" }, { label: "Bàn giao", value: "Quý IV/2026" }],
-    amenities: ["Hồ bơi", "Phòng gym", "Công viên"], overview: ["Đoạn giới thiệu mẫu — chỉ để xem bố cục trang dự án tra cứu."],
+    amenities: ["Hồ bơi", "Phòng gym", "Công viên"], mapPin: "16.0717,108.2244",
+    // Mô tả DÀI (chỉ để thử thu gọn "Xem thêm" của trang tra cứu khi Admin nhập nhiều thông tin)
+    overview: Array.from({ length: 8 }, (_, i) => `Đoạn giới thiệu mẫu số ${i + 1} — chỉ để xem bố cục trang dự án tra cứu khi Admin nhập mô tả dài: vị trí, quy mô, tiện ích, pháp lý, tiến độ, chính sách bán hàng của dự án.`),
   },
   "demo-tra-cuu-1-anh": {
     ...DEMO_GOC, slug: "demo-tra-cuu-1-anh", name: "Dự án mẫu một ảnh (demo)", location: "Phường An Hải, Đà Nẵng",
