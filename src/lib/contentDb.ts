@@ -20,10 +20,21 @@ import type { ArticleRow, ProjectRow } from "@/lib/contentAdmin";
 const ARTICLE_PLACEHOLDER = "/images/segments/canho1.jpg";
 const PROJECT_PLACEHOLDER = "/images/segments/canho2.jpg";
 
+// Nguồn thông tin hồ sơ dự án: chỉ ghi TÊN TRANG (vinpearl.com, melia.com…) — không in nguyên chuỗi ghi chú + đường dẫn dài (30/10/2026)
+function tenNguon(nguon: string): string {
+  const trang = [...nguon.matchAll(/https?:\/\/(?:www\.)?([^/\s;,)]+)/g)].map((m) => m[1].toLowerCase());
+  const ds = [...new Set(trang)];
+  return ds.length ? ds.join(", ") : nguon.split(/[;(]/)[0].trim();
+}
+
 // Gọi PostgREST trực tiếp bằng fetch (nội dung đã đăng là công khai — dùng anon key)
-async function rest<T>(table: string, query: string): Promise<T[] | null> {
+async function rest<T>(table: string, query0: string): Promise<T[] | null> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  // XEM TRƯỚC HỒ SƠ DỰ ÁN CHỜ DUYỆT — CHỈ MÁY CHỦ NHÀ (chủ dự án 30/10/2026 cần xem trang dự án tra cứu có thêm thông tin trước
+  // khi duyệt): .env.local đặt XEM_HO_SO_CHO_DUYET=1 thì dự án "chờ duyệt" hiện như đã đăng. Web thật không đặt biến này.
+  const xemChoDuyet = table === "projects" && process.env.XEM_HO_SO_CHO_DUYET === "1" && !!process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const key = xemChoDuyet ? process.env.SUPABASE_SERVICE_ROLE_KEY : process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const query = xemChoDuyet ? query0.replace("status=eq.published", "status=in.(published,pending)") : query0;
   if (!url || !key) return null; // chưa cấu hình env (worktree/CI) → fallback
   try {
     const res = await fetch(`${url}/rest/v1/${table}?${query}`, {
@@ -105,7 +116,9 @@ export async function getArticle(slug: string): Promise<Article | null> {
 function projectRowToProject(r: ProjectRow): Project {
   // ĐỊA CHỈ ĐẦY ĐỦ: số nhà/đường (admin nhập) + Phường/Xã + Quận/Huyện + Tỉnh/Thành.
   // Cùng luật với tin đăng: dòng chính theo hệ MỚI, cách gọi cũ để ở locationCu.
-  const soNha = r.details?.addressDetail?.trim();
+  // Ghi chú trong ngoặc của hồ sơ nạp ("(phường An Hải Bắc, quận Sơn Trà cũ)") bỏ khỏi địa chỉ hiển thị — địa chỉ cũ đã có dòng riêng
+  // (chủ dự án 30/10/2026: địa chỉ ghi đúng, gọn: số nhà, đường, phường, tỉnh)
+  const soNha = r.details?.addressDetail?.replace(/\s*\([^)]*\)/g, "").replace(/\s+,/g, ",").trim();
   const goc = [soNha, r.ward, r.district, r.province].map((s) => s?.trim()).filter(Boolean).join(", ");
   const hai = r.province
     ? haiDongDiaChi(heCuaTin(r.district), {
@@ -169,7 +182,7 @@ function projectRowToProject(r: ProjectRow): Project {
     ...(d.developmentUnit?.trim() ? { developmentUnit: d.developmentUnit.trim() } : {}),
     // Ngày cập nhật: ngày Cowork ghi khi nạp, không có thì lần sửa cuối trong admin
     capNhat: d.ngayCapNhat?.trim() || fmtDate(r.updated_at),
-    ...(d.nguon?.trim() ? { nguon: d.nguon.trim() } : {}),
+    ...(d.nguon?.trim() ? { nguon: tenNguon(d.nguon) } : {}),
   };
 }
 
