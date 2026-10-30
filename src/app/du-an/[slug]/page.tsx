@@ -8,7 +8,6 @@ import ProjectGallery from "@/components/ProjectGallery";
 import AnhTraCuu from "@/components/AnhTraCuu";
 import ProjectNav from "@/components/ProjectNav";
 import ProjectNearby from "@/components/ProjectNearby";
-import DuAnTuongTuTraCuu from "@/components/DuAnTuongTuTraCuu";
 import { HomeExpandProvider, HomeCollapsible } from "@/components/HomeExpand";
 import FloorPlans from "@/components/FloorPlans";
 import RelatedListingsTabs from "@/components/RelatedListingsTabs";
@@ -23,7 +22,6 @@ import ProjectsBrowser from "@/components/ProjectsBrowser";
 import { provinceOf, type Project, type Listing } from "@/lib/data";
 import { getProject, getProjects, getArticles } from "@/lib/contentDb";
 import { dongTraCuu } from "@/lib/traCuuDuAn";
-import { nhomLoai } from "@/components/TraCuuDuAn";
 import { getListings } from "@/lib/listingsDb";
 import { duAnThuocNhom, findCategory, projectCategories, type Category } from "@/lib/categories";
 import { normalizeVi, cungDuAn } from "@/lib/filters";
@@ -209,22 +207,6 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   const [hoSoDb, listings, tatCaDuAn] = await Promise.all([getProject(slug), getListings(), getProjects()]);
   // DEMO trang dự án tra cứu — CHỈ chạy trên máy (npx next dev), web thật không có đường này (chủ dự án 31/10/2026: "làm demo")
   const hoSo = hoSoDb ?? (process.env.NODE_ENV !== "production" ? DU_AN_DEMO[slug] ?? null : null);
-  // Trang dự án TRA CỨU: "Dự án tương tự" (30/10/2026) — theo KHU VỰC + LOẠI HÌNH: cùng tỉnh bắt buộc, cùng nhóm loại hình đứng trước,
-  // rồi dự án có nhiều tin hơn; lấy hết (slide 8 + Xem thêm ra danh sách), trong danh bạ Tra cứu
-  const duAnTuongTu = (tinh: string, loai: string, cdt: string, bo: string) => {
-    const nhom = nhomLoai(loai);
-    // Trong mỗi nhóm: dự án nổi bật theo cấp VIP trước, dự án tra cứu theo tên A, B, C sau (chủ dự án 31/10/2026)
-    // Cùng bậc với sortProjectsByTier (ProjectSlider — tệp client, máy chủ không gọi được): Kim cương → Vàng → Bạc → thường
-    const BAC: Record<string, number> = { diamond: 0, gold: 1, silver: 2, basic: 3 };
-    const noiBat = new Map(tatCaDuAn.filter((x) => !x.dangThe).map((x) => [x.slug, BAC[x.tier ?? "basic"] ?? 3]));
-    const hang = (s: string) => noiBat.get(s) ?? 9;
-    return dongTraCuu(listings, tatCaDuAn)
-      .filter((x) => x.tinh === tinh && !cungDuAn(x.slug, bo))
-      // TƯƠNG TỰ THEO (chủ dự án 31/10/2026): khu vực (cùng tỉnh, bắt buộc) → loại hình → chủ đầu tư
-      .map((x, i) => ({ x, i, khop: nhom && nhomLoai(x.loaiHinh) === nhom ? 0 : 1, cungCdt: cdt && normalizeVi(x.chuDauTu) === normalizeVi(cdt) ? 0 : 1, vip: hang(x.slug) }))
-      .sort((a, b) => a.khop - b.khop || a.cungCdt - b.cungCdt || a.vip - b.vip || a.i - b.i)
-      .map((e) => ({ ...e.x, ...(e.vip < 3 ? { cap: (["diamond", "gold", "silver"] as const)[e.vip] } : {}) }));
-  };
   // MỘT KHUÔN cho mọi dự án (chủ dự án 30/10/2026): dự án nổi bật giữ nguyên trang đã dựng; dự án TRA CỨU (hồ sơ dạng thẻ, hoặc
   // dự án mới chỉ biết từ tin) chạy ĐÚNG khuôn đó — hồ sơ bổ sung tới đâu hiện tới đó, cái gì chưa có thì ẩn.
   const coban = hoSo ? null : duAnTuTin(listings, slug);
@@ -299,8 +281,6 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
     ]),
   ].filter((s, i, ds) => ds.findIndex((x) => normalizeVi(x.label) === normalizeVi(s.label)) === i);
 
-  // Dự án tương tự — cùng cách trang dự án tra cứu (cùng tỉnh, cùng nhóm loại hình trước), lấy hết cho slide + Xem thêm
-  const tuongTuNoiBat = duAnTuongTu(province, p.type, p.developer, p.slug);
 
   // Tin của CHÍNH dự án này — gán trong admin qua trường "Thuộc dự án" (details.project).
   // Dự án không có tin nào → để TRỐNG, tuyệt đối KHÔNG độn tin của dự án khác vào.
@@ -395,7 +375,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
     <>
       {!tuTin && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(duAnJsonLd) }} />}
       {/* BreadcrumbList cho Google (28/10/2026, On-page nhóm A) — chỉ dữ liệu, giao diện trang dự án đã duyệt giữ nguyên */}
-      <BreadcrumbJsonLd items={[{ name: "Dự án", href: "/du-an" }, { name: p.name, href: `/du-an/${p.slug}` }]} />
+      {/* BreadcrumbList cho Google — chỉ dữ liệu, không hiện đường dẫn trên trang (chủ dự án 31/10/2026: "không cần") */}
+      <BreadcrumbJsonLd items={[{ name: "Dự án", href: "/du-an" }, ...(timKhuVuc(slugKhuVuc(province)) ? [{ name: `Dự án tại ${province}`, href: `/du-an/${slugKhuVuc(province)}` }] : []), { name: p.name, href: `/du-an/${p.slug}` }]} />
       <Header />
       <main className="flex-1 bg-white">
         {/* MOBILE: pt-0 → ảnh dự án nằm SÁT mép dưới header (không chừa khoảng trắng) */}
@@ -405,20 +386,10 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
           {/* Nội dung dự án — ẩn khi bấm "Xem thêm" ở mục tin/dự án bên dưới */}
           <HomeCollapsible>
 
-          {/* Thư viện ảnh — MOBILE tràn viền sát 2 mép (giảm khoảng trống trên) · bấm để xem lớn + zoom.
-              Chưa có ảnh: không vẽ khung trống, tên dự án lên đầu trang (chủ dự án 30/10/2026) */}
-          {coAnh && !traCuu && (
-            <div className="relative -mx-4 sm:mx-0">
-              {/* Nhãn tình trạng chung mọi nơi (NhanTinhTrang, 31/10/2026): chỉ dự án VIP, màu theo cấp; dự án thường ghi Tình trạng trong bảng Tổng quan */}
-              <NhanTinhTrang tier={p.tier} tinhTrang={giaTriThat(p.status)} />
-              <ProjectGallery images={gallery} alt={p.name} />
-            </div>
-          )}
-
           {/* Tiêu đề + địa chỉ — bố cục cân đối, rõ ràng */}
           {/* Khoảng thở giữa tên · địa chỉ · thanh mục (trước chật — chủ dự án 30/10/2026) */}
           {(
-          <div className={`pb-5 ${coAnh && !traCuu ? "mt-6" : "mt-3"}`}>
+          <div className={`pb-5 mt-3`}>
             <div className="min-w-0">
             {/* Bỏ nhãn tình trạng trên tên (chủ dự án 30/10/2026: trùng dòng Tình trạng trong bảng Tổng quan) */}
             <h1 className="text-[21px] font-semibold leading-[1.3] tracking-tight text-cvr-ink sm:text-[28px]">{p.name}</h1>
@@ -436,6 +407,16 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             )}
             </div>
           </div>
+          )}
+
+          {/* Thư viện ảnh DƯỚI tên + địa chỉ (bố cục kiểu Batdongsan — chủ dự án 31/10/2026) · MOBILE tràn viền sát 2 mép · bấm để xem lớn + zoom.
+              Chưa có ảnh: không vẽ khung trống, tên dự án lên đầu trang (chủ dự án 30/10/2026) */}
+          {coAnh && !traCuu && (
+            <div className="relative -mx-4 mb-2 sm:mx-0">
+              {/* Nhãn tình trạng chung mọi nơi (NhanTinhTrang, 31/10/2026): chỉ dự án VIP, màu theo cấp; dự án thường ghi Tình trạng trong bảng Tổng quan */}
+              <NhanTinhTrang tier={p.tier} tinhTrang={giaTriThat(p.status)} />
+              <ProjectGallery images={gallery} alt={p.name} />
+            </div>
           )}
 
           </HomeCollapsible>
@@ -694,7 +675,6 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
           {/* DỰ ÁN TƯƠNG TỰ — CÙNG MỘT KIỂU với trang dự án tra cứu (chủ dự án 30/10/2026): thẻ dự án, slide 8 + Xem thêm → danh sách
               10 dự án / trang; cùng tỉnh, cùng nhóm loại hình trước (cả dự án nổi bật lẫn dự án tra cứu) */}
-          <DuAnTuongTuTraCuu ds={tuongTuNoiBat} id="du-an-tuong-tu" />
 
 
           </HomeExpandProvider>
