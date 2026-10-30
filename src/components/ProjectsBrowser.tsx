@@ -23,6 +23,7 @@ import type { DiemBanDo } from "@/components/MapViewGoogle";
 import type { Project, Article } from "@/lib/data";
 import type { DongTraCuu } from "@/lib/traCuuDuAn";
 import { TheTraCuu, locTraCuu, nhomLoai } from "@/components/TraCuuDuAn";
+import { HangTraCuu } from "@/components/TraCuuSlide";
 import { useHomeSection } from "@/components/HomeExpand";
 import { khuVucList, slugKhuVuc } from "@/lib/khuVuc";
 import { smoothScrollTo } from "@/lib/scroll";
@@ -250,7 +251,6 @@ export default function ProjectsBrowser({
   const totalPages = Math.max(1, Math.ceil(soDong / PER_PAGE));
   const current = Math.min(page, totalPages);
   const pageItems = visible.slice((current - 1) * PER_PAGE, current * PER_PAGE);
-  const trangTraCuu = traCuuLoc.slice((current - 1) * PER_PAGE, current * PER_PAGE);
   // Dự án nổi bật: hàng trượt 8 dự án + "Xem thêm" (chuẩn chung HomeExpand): bấm → phần còn lại của trang ẩn, danh sách
   // Dự án nổi bật 10 dự án / trang (chủ dự án 29/10/2026); nút Quay lại về như cũ.
   const NOI_BAT_HANG = 8;
@@ -418,21 +418,43 @@ export default function ProjectsBrowser({
     </Link>
   );
 
+  // Cột phải: tỉnh có dự án (đếm cả dự án tra cứu khi có) → trang pSEO /du-an/<tỉnh>
+  const demTinhLienKet = new Map<string, number>();
+  for (const t of traCuu ? traCuu.map((d) => d.tinh) : projects.map((p) => provinceOf(p.location))) {
+    if (t && khuVucList.some((k) => k.name === t)) demTinhLienKet.set(t, (demTinhLienKet.get(t) ?? 0) + 1);
+  }
+  const tinhLienKet = [...demTinhLienKet.entries()].sort((a, b) => b[1] - a[1]);
+  const cotKhuVuc = (
+    <>{tinhLienKet.length > 0 && (
+    <aside className="hidden lg:col-span-1 lg:block">
+      <div className="sticky top-24 rounded-none border border-cvr-line bg-white p-5 shadow-lux">
+        <h3 className="text-sm font-semibold tracking-tight text-cvr-ink">Dự án theo khu vực</h3>
+        <div className="mt-3 flex flex-col">
+          {tinhLienKet.map(([ten, so]) => (
+            <Link
+              key={ten}
+              href={`/du-an/${slugKhuVuc(ten)}`}
+              className="flex items-center justify-between rounded-lg px-3 py-2 text-sm text-cvr-body transition-colors hover:bg-cvr-surface hover:text-cvr-ink"
+            >
+              <span>Dự án tại {ten}</span>
+              <span className="text-xs text-cvr-muted">{so}</span>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </aside>
+    )}</>
+  );
+
   // Đã bấm "Xem thêm" ở Dự án nổi bật → chỉ còn danh sách Dự án nổi bật theo trang (phần còn lại ẩn; Quay lại về như cũ)
   if ((traCuu && noiBat.expanded) || danhSachNoiBat) {
-    // Trang Dự án (có Tra cứu) — "Xem thêm" ra MỘT danh sách chung (chủ dự án 30/10/2026): dự án nổi bật trước, thẻ nổi bật; rồi dự
-    // án tra cứu, thẻ tra cứu (có thông tin hiện đủ, thiếu thì thẻ mặc định). Cùng bộ lọc đang chọn. Trang chủ: chỉ dự án nổi bật.
+    // "Xem thêm" của Dự án nổi bật (trang chủ + trang Dự án) ra MỘT danh sách theo thứ tự (chủ dự án 30/10/2026): dự án nổi bật
+    // trước (thẻ ngang đang chạy trên web), rồi dự án tra cứu (thẻ tra cứu). Cùng bộ lọc đang chọn.
     const noiBatSlug = new Set(visible.map((p) => p.slug));
     const dsChung: ({ noiBat: Project } | { traCuu: DongTraCuu })[] = [
       ...visible.map((p) => ({ noiBat: p })),
       ...(traCuu ? traCuuLoc.filter((d) => !noiBatSlug.has(d.slug)).map((d) => ({ traCuu: d })) : []),
     ];
-    // Cột phải: tỉnh có dự án (đếm cả dự án tra cứu khi có) → trang pSEO /du-an/<tỉnh>
-    const demTinhLienKet = new Map<string, number>();
-    for (const t of traCuu ? traCuu.map((d) => d.tinh) : projects.map((p) => provinceOf(p.location))) {
-      if (t && khuVucList.some((k) => k.name === t)) demTinhLienKet.set(t, (demTinhLienKet.get(t) ?? 0) + 1);
-    }
-    const tinhLienKet = [...demTinhLienKet.entries()].sort((a, b) => b[1] - a[1]);
     const tongNB = Math.max(1, Math.ceil(dsChung.length / NOI_BAT_MOI_TRANG));
     const trangNB = Math.min(trangNoiBat, tongNB);
     return (
@@ -451,25 +473,7 @@ export default function ProjectsBrowser({
             </div>
             <PhanTrang hienTai={trangNB} tong={tongNB} doiTrang={(p) => { setTrangNoiBat(p); window.scrollTo({ top: 0 }); }} />
           </div>
-          {tinhLienKet.length > 0 && (
-            <aside className="hidden lg:col-span-1 lg:block">
-              <div className="sticky top-24 rounded-none border border-cvr-line bg-white p-5 shadow-lux">
-                <h3 className="text-sm font-semibold tracking-tight text-cvr-ink">Dự án theo khu vực</h3>
-                <div className="mt-3 flex flex-col">
-                  {tinhLienKet.map(([ten, so]) => (
-                    <Link
-                      key={ten}
-                      href={`/du-an/${slugKhuVuc(ten)}`}
-                      className="flex items-center justify-between rounded-lg px-3 py-2 text-sm text-cvr-body transition-colors hover:bg-cvr-surface hover:text-cvr-ink"
-                    >
-                      <span>Dự án tại {ten}</span>
-                      <span className="text-xs text-cvr-muted">{so}</span>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            </aside>
-          )}
+          {cotKhuVuc}
         </div>
       </section>
     );
@@ -860,23 +864,29 @@ export default function ProjectsBrowser({
           </section>
         )}
 
-        {/* TRA CỨU DỰ ÁN — mọi dự án cả nước, rộng hết khung; máy tính 2 cột thẻ (bỏ cột "Lọc theo khu vực" — trùng nút Khu vực
+        {/* TRA CỨU DỰ ÁN — mọi dự án cả nước, cùng cách hiện Dự án nổi bật (bỏ cột "Lọc theo khu vực" — trùng nút Khu vực
             trên thanh tìm, 30/10/2026); cách khối Nổi bật đúng chuẩn khoảng cách khối (máy tính 56 · điện thoại 24) */}
         <section id="tra-cuu" className="mt-6 scroll-mt-24 sm:mt-14">
           <h2 className="text-lg font-semibold tracking-tight text-cvr-ink sm:text-xl">Tra cứu dự án</h2>
-          <ul className="mt-3 grid grid-cols-1 gap-4 sm:gap-5 lg:grid-cols-2">
-            {trangTraCuu.map((d) => (
-              <li key={d.slug}><TheTraCuu d={d} /></li>
-            ))}
-            {traCuuLoc.length === 0 && (
-              <li className="rounded-none border border-cvr-line bg-cvr-surface p-10 text-center text-sm text-cvr-muted lg:col-span-2">Chưa có dự án phù hợp bộ lọc.</li>
-            )}
-          </ul>
-          <PhanTrang
-            hienTai={current}
-            tong={totalPages}
-            doiTrang={(p) => { setPage(p); document.getElementById("tra-cuu")?.scrollIntoView({ block: "start" }); }}
-          />
+          {/* CÙNG CÁCH Dự án nổi bật (chủ dự án 30/10/2026): hàng trượt 8 thẻ (không lặp dự án đã ở Nổi bật) + "Xem thêm" */}
+          {(() => {
+            const noiBatSlug = new Set(visible.map((p) => p.slug));
+            const hang = traCuuLoc.filter((d) => !noiBatSlug.has(d.slug)).slice(0, NOI_BAT_HANG);
+            return hang.length ? <HangTraCuu ds={hang} /> : (
+              <p className="mt-3 rounded-none border border-cvr-line bg-cvr-surface p-10 text-center text-sm text-cvr-muted">Chưa có dự án phù hợp bộ lọc.</p>
+            );
+          })()}
+          {traCuuLoc.length > 0 && (
+            <div className="mt-6 flex justify-center">
+              {/* MỘT LOGIC (chủ dự án 30/10/2026): Xem thêm ở đâu cũng ra cùng danh sách như trang chủ — nổi bật trước, tra cứu sau */}
+              <button type="button" onClick={() => { setTrangNoiBat(1); noiBat.toggle(); }} className="btn-xemthem">
+                Xem thêm
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+            </div>
+          )}
         </section>
       </div>
       ) : (
