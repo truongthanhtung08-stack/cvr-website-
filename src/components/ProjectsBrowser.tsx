@@ -22,10 +22,10 @@ import { coordOf } from "@/lib/geo";
 import type { DiemBanDo } from "@/components/MapViewGoogle";
 import type { Project, Article } from "@/lib/data";
 import type { DongTraCuu } from "@/lib/traCuuDuAn";
-import { TheTraCuu, locTraCuu, nhomLoai } from "@/components/TraCuuDuAn";
+import { locTraCuu, nhomLoai } from "@/components/TraCuuDuAn";
 import { useHomeSection } from "@/components/HomeExpand";
 import { sortProjectsByTier } from "@/components/ProjectSlider";
-import { khuVucList, slugKhuVuc } from "@/lib/khuVuc";
+import { khuVucList, khuVucTrongDiem, slugKhuVuc } from "@/lib/khuVuc";
 
 // Bản đồ chỉ chạy phía client (Leaflet đụng tới window) — nạp động, không SSR.
 const MapView = dynamic(() => import("@/components/MapViewMo"), { ssr: false });
@@ -46,6 +46,15 @@ const typeOf = (type: string) =>
 // Giá/m² tham khảo: lấy hàng "Giá..." trong bảng quy mô của dự án
 const priceRef = (p: Project) =>
   p.scale.find((s) => s.label.startsWith("Giá"))?.value;
+
+// MỘT THẺ CHO MỌI DỰ ÁN TRONG DANH SÁCH (chủ dự án 30/10/2026: "thẻ mục tra cứu phải thống nhất"): dự án tra cứu vẽ bằng chính thẻ
+// ngang đang chạy của dự án nổi bật — cùng ảnh, nhãn trạng thái, tên, ghim địa chỉ, loại hình, chủ đầu tư; trường bắt buộc chưa có
+// thông tin ghi "Đang cập nhật"; chưa có giá thì không có dòng giá, chưa có ảnh thì khung xám + biểu tượng
+const CHUA = "Đang cập nhật";
+const duAnTuTraCuu = (d: DongTraCuu): Project => ({
+  slug: d.slug, name: d.ten, location: d.diaChi, priceFrom: "", type: d.loaiHinh || CHUA, status: d.tinhTrang || CHUA,
+  image: d.anh, developer: d.chuDauTu || CHUA, scale: [], amenities: [], overview: [],
+});
 
 const ALL = "Tất cả";
 
@@ -357,6 +366,7 @@ export default function ProjectsBrowser({
         >
           {/* MOBILE: ảnh TRÊN tràn viền · DESKTOP: ảnh trái */}
           <div className="relative aspect-[16/9] w-full shrink-0 overflow-hidden rounded-none bg-cvr-surface sm:aspect-[4/3] sm:w-56 sm:rounded-xl md:w-64">
+            {p.image ? (
             <AnhChay
               chay={false}
               images={[p.image, ...(p.photos ?? [])]}
@@ -364,6 +374,10 @@ export default function ProjectsBrowser({
               sizes="(max-width:640px) 33vw, 256px"
               className="object-cover transition-transform duration-[700ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.06]"
             />
+            ) : (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src="/logo/symbol-dark.svg" alt="" className="absolute inset-0 m-auto h-12 w-12 opacity-25" />
+            )}
             <span className="absolute left-2.5 top-2.5 rounded-full bg-white/80 px-2.5 py-[3px] text-[11px] font-semibold uppercase tracking-[0.06em] text-cvr-ink shadow-[0_2px_10px_rgba(0,0,0,0.18)] ring-1 ring-white/60 backdrop-blur-md">
               {p.status}
             </span>
@@ -374,21 +388,27 @@ export default function ProjectsBrowser({
             <h3 className="line-clamp-2 font-semibold leading-snug text-cvr-ink transition-colors group-hover:text-cvr-blue-ink sm:text-lg">
               <Highlight text={p.name} terms={termsBySlug.get(p.slug) ?? []} />
             </h3>
-            <p className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
-              <span className="text-base font-semibold text-cvr-gold-ink sm:text-lg">{p.priceFrom}</span>
-              {priceRef(p) && <span className="text-xs text-cvr-muted">{priceRef(p)}</span>}
+            <p className="mt-1 flex items-start gap-1 text-xs text-cvr-muted">
+              <svg className="mt-px h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+              <span className="min-w-0">{p.location}</span>
             </p>
-            <p className="mt-1 flex items-center gap-1 text-xs text-cvr-muted">
-              <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-              <span className="truncate">{p.location}</span>
-            </p>
-            <p className="mb-3 mt-1.5 line-clamp-2 text-xs leading-relaxed text-cvr-muted">
-              {p.type} · {chuThuan(p.overview[0])}
-            </p>
-            <div className="mt-auto border-t border-cvr-line pt-2.5">
-              <span className="text-xs text-cvr-body">
-                Chủ đầu tư: <span className="font-medium text-cvr-ink">{p.developer}</span>
+            {/* CÙNG THỨ TỰ thẻ Dự án nổi bật (chủ dự án 30/10/2026): tên · địa chỉ · Loại hình · giới thiệu · Chủ đầu tư — giá ("Liên hệ"
+                khi ẩn giá) nằm phải dòng Chủ đầu tư như thẻ dự án trang chủ; dự án chưa có giá thì không có */}
+            <p className="mt-1 text-xs text-cvr-body">Loại hình: <span className={p.type === CHUA ? "text-cvr-faint" : "font-medium text-cvr-ink"}>{p.type}</span></p>
+            {p.overview[0] && (
+              <p className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-cvr-muted">{chuThuan(p.overview[0])}</p>
+            )}
+            <div className="mb-3" aria-hidden />
+            <div className="mt-auto flex items-end justify-between gap-3 border-t border-cvr-line pt-2.5">
+              <span className="min-w-0 text-xs text-cvr-body">
+                Chủ đầu tư: <span className={p.developer === CHUA ? "text-cvr-faint" : "font-medium text-cvr-ink"}>{p.developer}</span>
               </span>
+              {p.priceFrom && (
+                <span className="shrink-0 text-right">
+                  {priceRef(p) && <span className="mr-2 text-xs text-cvr-muted">{priceRef(p)}</span>}
+                  <span className="whitespace-nowrap text-base font-semibold text-cvr-gold-ink">{p.priceFrom}</span>
+                </span>
+              )}
             </div>
           </div>
         </Link>
@@ -447,7 +467,7 @@ export default function ProjectsBrowser({
               {dsChung.slice((trangNB - 1) * NOI_BAT_MOI_TRANG, trangNB * NOI_BAT_MOI_TRANG).map((x) =>
                 "noiBat" in x
                   ? <div key={x.noiBat.slug}>{theDuAnWeb(x.noiBat)}</div>
-                  : <div key={x.traCuu.slug}><TheTraCuu d={x.traCuu} /></div>,
+                  : <div key={x.traCuu.slug}>{theDuAnWeb(duAnTuTraCuu(x.traCuu))}</div>,
               )}
             </div>
             <PhanTrang hienTai={trangNB} tong={tongNB} doiTrang={(p) => { setTrangNoiBat(p); ghiDs(p, 0); window.scrollTo({ top: 0 }); }} />
@@ -780,7 +800,7 @@ export default function ProjectsBrowser({
             {pageItems.map((x) =>
               "noiBat" in x
                 ? <Fragment key={x.noiBat.slug}>{theDuAnWeb(x.noiBat)}</Fragment>
-                : <TheTraCuu key={x.traCuu.slug} d={x.traCuu} />,
+                : <Fragment key={x.traCuu.slug}>{theDuAnWeb(duAnTuTraCuu(x.traCuu))}</Fragment>,
             )}
 
             {dsTrang.length === 0 && (
@@ -805,7 +825,9 @@ export default function ProjectsBrowser({
             <div className="rounded-none border border-cvr-line bg-white p-5 shadow-lux">
               <h2 className="text-sm font-semibold tracking-tight text-cvr-ink">Lọc theo khu vực</h2>
               <div className="mt-3 flex flex-col">
-                {[[ALL, projects.length] as [string, number], ...provinceCounts].map(([name]) => (
+                {/* ĐỦ MỌI KHU VỰC CỦA WEB (chủ dự án 30/10/2026: "khu vực trên web có mấy khu vực hiện hết lên") — khu vực trọng điểm theo
+                    thứ tự menu, thêm tỉnh khác nếu có dự án */}
+                {[ALL, ...khuVucTrongDiem, ...provinceCounts.map(([n]) => n).filter((n) => !khuVucTrongDiem.includes(n))].map((name) => (
                   <button
                     key={name}
                     type="button"
