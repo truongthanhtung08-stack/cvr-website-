@@ -44,9 +44,6 @@ const provinceOf = (location: string) => location.split(",").pop()?.trim() ?? ""
 const typeOf = (type: string) =>
   type.includes("Căn hộ") ? "Căn hộ" : type.includes("đô thị") ? "Khu đô thị" : "Nghỉ dưỡng & biệt thự";
 // Giá/m² tham khảo: lấy hàng "Giá..." trong bảng quy mô của dự án
-const priceRef = (p: Project) =>
-  p.scale.find((s) => s.label.startsWith("Giá"))?.value;
-
 // MỘT THẺ CHO MỌI DỰ ÁN TRONG DANH SÁCH (chủ dự án 30/10/2026: "thẻ mục tra cứu phải thống nhất"): dự án tra cứu vẽ bằng chính thẻ
 // ngang đang chạy của dự án nổi bật — cùng ảnh, nhãn trạng thái, tên, ghim địa chỉ, loại hình, chủ đầu tư; trường bắt buộc chưa có
 // thông tin ghi "Đang cập nhật"; chưa có giá thì không có dòng giá, chưa có ảnh thì khung xám + biểu tượng
@@ -55,6 +52,23 @@ const duAnTuTraCuu = (d: DongTraCuu): Project => ({
   slug: d.slug, name: d.ten, location: d.diaChi, priceFrom: "", type: d.loaiHinh || CHUA, status: d.tinhTrang || CHUA,
   image: d.anh, developer: d.chuDauTu || CHUA, scale: [], amenities: [], overview: [],
 });
+
+const BIEU_TUONG: Record<string, string> = {
+  ghim: "M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z",
+  loai: "M3 21h18M5 21V7l7-4 7 4v14M9 9h1m-1 4h1m4-4h1m-1 4h1M10 21v-4h4v4",
+  trangthai: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z",
+  cdt: "M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z",
+};
+// Một dòng thông tin dưới tên dự án: biểu tượng + nội dung (thẻ dự án dùng chung)
+function DongThe({ icon, gt, chua }: { icon: string; gt: string; chua?: string }) {
+  return (
+    <p className="flex min-w-0 items-start gap-1.5 text-xs leading-snug">
+      <svg className="mt-px h-3.5 w-3.5 shrink-0 text-cvr-muted" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d={BIEU_TUONG[icon]} /></svg>
+      {/* NỘI DUNG DÀI (địa chỉ đầy đủ số nhà, đường, phường, tỉnh là BẮT BUỘC): luôn hiện đủ, xuống dòng — không cắt "…" */}
+      <span className={`min-w-0 ${gt ? "text-cvr-body" : "text-cvr-faint"}`}>{gt || chua}</span>
+    </p>
+  );
+}
 
 const ALL = "Tất cả";
 
@@ -362,57 +376,51 @@ export default function ProjectsBrowser({
   // + giá — chủ dự án 29–30/10/2026; ảnh trên, chữ dưới, hiện đủ chữ.
   // THẺ DỰ ÁN NGANG ĐANG CHẠY TRÊN WEB (đã chốt — giữ nguyên nội dung: tình trạng · tên · giá + giá tham khảo · địa chỉ · loại hình +
   // giới thiệu · chủ đầu tư). Dùng chung: danh sách trang Dự án cũ + cột trái danh sách "Xem thêm" (chủ dự án 30/10/2026)
-  const theDuAnWeb = (p: Project) => (
+  // HAI KHỐI THẺ, MỖI KHỐI MỘT KIỂU CỐ ĐỊNH, ĐO SẴN (chủ dự án 30/10/2026: "cân đối ảnh – nội dung, đo đếm mà làm"):
+  //  · Dự án nổi bật — máy tính: ảnh trái 256 × 158 px (tỷ lệ vàng 1,618), khối chữ cao đúng 158 px chia đều: tên · địa chỉ · loại hình ·
+  //    trạng thái · chủ đầu tư (giá / "Liên hệ" cuối dòng) · giới thiệu 2 dòng. Điện thoại: ảnh trên 16:9, chữ dưới.
+  //  · Dự án tra cứu (gon) — máy tính: ảnh trái 176 × 109 px (tỷ lệ vàng), khối chữ 5 dòng cao đúng 109 px. Điện thoại: ảnh trái
+  //    96 px cao theo khối chữ. Không có khoảng trống dưới ảnh hay dưới chữ.
+  //  · NỘI DUNG DÀI (tên 2 dòng, địa chỉ đầy đủ xuống dòng…): ảnh cao theo khối chữ (không nhỏ hơn số đo tỷ lệ vàng ở trên), chữ hiện đủ.
+  const theDuAnWeb = (p: Project, gon = false) => (
         <Link
           href={`/du-an/${p.slug}`}
-          className="card-lux group relative flex flex-col overflow-hidden rounded-none bg-white shadow-lux shadow-lux-hover hover:-translate-y-1 hover:border-cvr-blue/45 sm:flex-row sm:gap-5 sm:border sm:border-cvr-line sm:p-3"
+          className={`card-lux group relative flex overflow-hidden rounded-none bg-white shadow-lux shadow-lux-hover hover:-translate-y-1 hover:border-cvr-blue/45 sm:gap-5 sm:border sm:border-cvr-line sm:p-3 ${gon ? "gap-3 border border-cvr-line p-2.5" : "flex-col sm:flex-row"}`}
         >
-          {/* MOBILE: ảnh TRÊN tràn viền · DESKTOP: ảnh trái */}
-          {/* Khung ảnh: điện thoại 16:9 (chưa có ảnh thì dải thấp 3:1, không để khung xám to) · máy tính tỷ lệ vàng — 30/10/2026 */}
-          <div className={`relative w-full shrink-0 self-start overflow-hidden rounded-none bg-cvr-surface sm:aspect-[1.618/1] sm:w-56 sm:rounded-xl md:w-64 ${p.image ? "aspect-[16/9]" : "aspect-[3/1]"}`}>
+          <div className={gon
+            ? "relative min-h-24 w-24 shrink-0 self-stretch overflow-hidden rounded-lg bg-cvr-surface sm:min-h-[109px] sm:w-44 sm:rounded-xl"
+            : `relative w-full shrink-0 overflow-hidden bg-cvr-surface sm:aspect-auto sm:min-h-[158px] sm:w-64 sm:self-stretch sm:rounded-xl ${p.image ? "aspect-[16/9]" : "aspect-[3/1]"}`}>
             {p.image ? (
             <AnhChay
               chay={false}
               images={[p.image, ...(p.photos ?? [])]}
               alt={p.name}
-              sizes="(max-width:640px) 33vw, 256px"
+              sizes={gon ? "(max-width:640px) 96px, 176px" : "(max-width:640px) 100vw, 256px"}
               className="object-cover transition-transform duration-[700ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.06]"
             />
             ) : (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src="/logo/symbol-dark.svg" alt="" className="absolute inset-0 m-auto h-12 w-12 opacity-25" />
+              <img src="/logo/symbol-dark.svg" alt="" className={`absolute inset-0 m-auto opacity-25 ${gon ? "h-7 w-7 sm:h-10 sm:w-10" : "h-12 w-12"}`} />
             )}
-            {/* Trạng thái ghi thành dòng chữ trong phần nội dung (trường bắt buộc, đọc rõ) — không lặp nhãn trên ảnh (30/10/2026) */}
           </div>
 
-          {/* Thông tin — mobile có padding cho "thở", desktop sát ảnh */}
-          <div className="flex min-w-0 flex-1 flex-col p-3 sm:p-0 sm:py-1 sm:pr-1">
+          <div className={`flex min-w-0 flex-1 flex-col ${gon ? "sm:min-h-[109px] sm:justify-between" : "p-3 sm:min-h-[158px] sm:justify-between sm:p-0"}`}>
             <h3 className="line-clamp-2 font-semibold leading-snug text-cvr-ink transition-colors group-hover:text-cvr-blue-ink sm:text-lg">
               <Highlight text={p.name} terms={termsBySlug.get(p.slug) ?? []} />
             </h3>
-            <p className="mt-1 flex items-start gap-1 text-xs text-cvr-muted">
-              <svg className="mt-px h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-              <span className="min-w-0">{p.location}</span>
-            </p>
-            {/* CÙNG THỨ TỰ thẻ Dự án nổi bật (chủ dự án 30/10/2026): tên · địa chỉ · Loại hình · giới thiệu · Chủ đầu tư — giá ("Liên hệ"
-                khi ẩn giá) nằm phải dòng Chủ đầu tư như thẻ dự án trang chủ; dự án chưa có giá thì không có */}
-            <p className="mt-1 text-xs text-cvr-body">Loại hình: <span className={p.type === CHUA ? "text-cvr-faint" : "font-medium text-cvr-ink"}>{p.type}</span></p>
-            <p className="mt-0.5 text-xs text-cvr-body">Trạng thái: <span className={p.status === CHUA ? "text-cvr-faint" : "font-medium text-cvr-ink"}>{p.status}</span></p>
-            {p.overview[0] && (
-              <p className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-cvr-muted">{chuThuan(p.overview[0])}</p>
-            )}
-            <div className="mb-3" aria-hidden />
-            <div className="mt-auto flex items-end justify-between gap-3 border-t border-cvr-line pt-2.5">
-              <span className="min-w-0 text-xs text-cvr-body">
-                Chủ đầu tư: <span className={p.developer === CHUA ? "text-cvr-faint" : "font-medium text-cvr-ink"}>{p.developer}</span>
-              </span>
-              {p.priceFrom && (
-                <span className="shrink-0 text-right">
-                  {priceRef(p) && <span className="mr-2 text-xs text-cvr-muted">{priceRef(p)}</span>}
-                  <span className="whitespace-nowrap text-base font-semibold text-cvr-gold-ink">{p.priceFrom}</span>
-                </span>
-              )}
+            {/* Mọi dòng dưới tên một kiểu: biểu tượng + nội dung, cùng cỡ, cùng màu; chưa có thì "<trường> đang cập nhật" mờ hơn */}
+            <div className="mt-1.5 space-y-1 sm:mt-0">
+              <DongThe icon="ghim" gt={p.location} />
+              <DongThe icon="loai" gt={p.type === CHUA ? "" : p.type} chua="Loại hình đang cập nhật" />
+              <DongThe icon="trangthai" gt={p.status === CHUA ? "" : p.status} chua="Trạng thái đang cập nhật" />
+              <div className="flex items-start justify-between gap-3">
+                <DongThe icon="cdt" gt={p.developer === CHUA ? "" : p.developer} chua="Chủ đầu tư đang cập nhật" />
+                {p.priceFrom && <span className="shrink-0 whitespace-nowrap text-sm font-semibold leading-snug text-cvr-gold-ink">{p.priceFrom}</span>}
+              </div>
             </div>
+            {!gon && p.overview[0] && (
+              <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-cvr-muted sm:mt-0">{chuThuan(p.overview[0])}</p>
+            )}
           </div>
         </Link>
   );
@@ -470,7 +478,7 @@ export default function ProjectsBrowser({
               {dsChung.slice((trangNB - 1) * NOI_BAT_MOI_TRANG, trangNB * NOI_BAT_MOI_TRANG).map((x) =>
                 "noiBat" in x
                   ? <div key={x.noiBat.slug}>{theDuAnWeb(x.noiBat)}</div>
-                  : <div key={x.traCuu.slug}>{theDuAnWeb(duAnTuTraCuu(x.traCuu))}</div>,
+                  : <div key={x.traCuu.slug}>{theDuAnWeb(duAnTuTraCuu(x.traCuu), true)}</div>,
               )}
             </div>
             <PhanTrang hienTai={trangNB} tong={tongNB} doiTrang={(p) => { setTrangNoiBat(p); ghiDs(p, 0); window.scrollTo({ top: 0 }); }} />
@@ -803,7 +811,7 @@ export default function ProjectsBrowser({
             {pageItems.map((x) =>
               "noiBat" in x
                 ? <Fragment key={x.noiBat.slug}>{theDuAnWeb(x.noiBat)}</Fragment>
-                : <Fragment key={x.traCuu.slug}>{theDuAnWeb(duAnTuTraCuu(x.traCuu))}</Fragment>,
+                : <Fragment key={x.traCuu.slug}>{theDuAnWeb(duAnTuTraCuu(x.traCuu), true)}</Fragment>,
             )}
 
             {dsTrang.length === 0 && (
