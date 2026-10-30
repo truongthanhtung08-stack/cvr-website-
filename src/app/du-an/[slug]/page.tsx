@@ -290,8 +290,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
     ...(coBangGia ? [{ id: "bang-gia", label: "Bảng giá" }] : []),
     ...(coChuDauTu ? [{ id: "chu-dau-tu", label: "Chủ đầu tư" }] : []),
     // Menu mục của trang (22/10/2026): thông tin dự án → tin thuộc dự án → dự án tương tự
-    ...(hasRelated ? [{ id: "tin-du-an", label: "Tin bán / cho thuê" }] : []),
-    ...(tuongTuNoiBat.length ? [{ id: "du-an-tuong-tu", label: "Dự án tương tự" }] : []),
+    ...(hasRelated ? [{ id: "tin-du-an", label: "Tin thuộc dự án" }] : []),
+    // Bỏ "Dự án tương tự" khỏi thanh mục (chủ dự án 30/10/2026: thừa) — khối vẫn ở cuối trang
   ];
 
   // ── DỮ LIỆU CÓ CẤU TRÚC CHO GOOGLE (JSON-LD) ──────────────────────────────
@@ -339,8 +339,16 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             </div>
           )}
 
+          </HomeCollapsible>
+
+          {/* BỐ CỤC CHUẨN TRANG DỰ ÁN (chủ dự án 30/10/2026) — dự án nổi bật và dự án tra cứu MỘT KHUÔN:
+              ảnh · [TRÁI: tên, địa chỉ, dải thông tin, thanh mục, các khối nội dung | PHẢI: liên hệ, tin thuộc dự án, khu vực, nhận tài
+              liệu — dính khi cuộn, mép trên ngang tên dự án] · tin thuộc dự án · dự án tương tự. Phần nào chưa có thông tin thì ẩn. */}
+          <HomeCollapsible>
+          <div className={`${coAnh ? "mt-5" : "mt-2"} grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8`}>
+            <div className="min-w-0 lg:col-span-2">
           {/* Tiêu đề + địa chỉ — bố cục cân đối, rõ ràng */}
-          <div className={coAnh ? "mt-5" : "mt-2"}>
+          <div>
             <div className="flex flex-wrap items-center gap-2">
               {/* Dự án tra cứu: nhãn Bán / Cho thuê do máy tự gán khi nạp → không hiện */}
               {!traCuu && purposes.includes("ban") && <PurposeChip>Bán</PurposeChip>}
@@ -362,19 +370,15 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                 Cập nhật ngày {p.capNhat}{p.nguon ? ` · Nguồn: ${p.nguon}` : ""}
               </p>
             )}
-            {/* Chủ đầu tư lớn (Vinhomes, Sun…) cảnh báo web mạo danh — nói rõ đây là thông tin tổng hợp
-                (chủ dự án duyệt câu 15/10/2026, docs/YEU-CAU-COWORK-DU-AN-TIN-DANG.md mục E) */}
-            {tuTin ? (
+            {/* Bỏ câu "Thông tin dự án do Coastal Land tổng hợp…" (chủ dự án 30/10/2026) */}
+            {tuTin && (
               <p className="mt-3 rounded-xl bg-cvr-surface px-4 py-2.5 text-sm text-cvr-body">Thông tin dự án đang được cập nhật.</p>
-            ) : (
-              <p className="mt-1 pl-[22px] text-[13px] text-cvr-faint">
-                Thông tin dự án do Coastal Land tổng hợp từ nguồn công khai, không phải trang chính thức của chủ đầu tư.
-              </p>
             )}
 
-            {/* Dải thông tin nhanh — cân đối, dễ đọc từng tiêu chí */}
+            {/* Dải thông tin nhanh — GỌN (chủ dự án 30/10/2026): các ô xếp sát theo nội dung, gạch ngăn giữa các ô, không kéo
+                giãn hết bề ngang */}
             {soO > 0 && (
-            <div className={`mt-5 grid grid-cols-2 gap-2 ${COT_O[soO]} ${soO % 2 ? "[&>*:last-child]:col-span-2 sm:[&>*:last-child]:col-span-1" : ""}`}>
+            <div className="mt-4 flex flex-wrap gap-x-6 gap-y-3 border-y border-cvr-line py-3 sm:divide-x sm:divide-cvr-line [&>*]:sm:pl-6 [&>*:first-child]:sm:pl-0">
               {/* Thứ tự (chủ dự án 22/10/2026): chủ đầu tư · loại hình · giá · bàn giao — chỉ ô có thông tin; "Giá từ" chỉ khi dự án có
                   giá thật (ẩn giá → "Liên hệ" đã có ở hộp liên hệ, không ghi trùng — 30/10/2026) */}
               <Fact label="Chủ đầu tư" value={coChuDauTu ? p.developer : "Đang cập nhật"} />
@@ -392,15 +396,10 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             )}
           </div>
 
-          </HomeCollapsible>
+          {/* Thanh mục dính trong cột nội dung */}
+          <div className="mt-4"><ProjectNav items={nav} anKhiMo /></div>
 
-          {/* MENU MỤC DÍNH SUỐT TRANG (22/10/2026): nằm ngoài lưới nội dung nên cuộn tới khối tin thuộc dự án,
-              dự án tương tự cuối trang vẫn dính và sáng đúng mục đang xem. */}
-          <ProjectNav items={nav} anKhiMo />
-
-          <HomeCollapsible>
-          <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
-            <div className={`reveal is-visible cards-stagger lg:col-span-2 [&>section:first-of-type]:mt-5`}>
+            <div className={`reveal is-visible cards-stagger [&>section:first-of-type]:mt-5`}>
 
               {/* 1) Tổng quan */}
               {(p.overview.length > 0 || p.scale.length > 0) && (
@@ -548,8 +547,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             {/* Cột phụ — dính khi cuộn */}
             {/* CỘT PHẢI LUÔN CÓ, ĐỦ THỨ LIÊN QUAN (chủ dự án 30/10/2026) — mọi dự án cùng một khuôn: giá + liên hệ (khi có) · tin của dự án
                 · dự án cùng khu vực · nhận tài liệu & báo giá */}
-            {/* lg:mt-5: mép trên cột phải thẳng hàng khối đầu cột trái (khối đầu có mt-5) — 30/10/2026 */}
-            <aside className="lg:col-span-1 lg:mt-5">
+            </div>
+            <aside className="lg:col-span-1">
               <div className="sticky top-24 space-y-4">
                 {/* MÁY TÍNH: hộp liên hệ dính theo khi cuộn — giá chỉ khi dự án có giá thật; người liên hệ + gọi / email. Không nhắc lại
                     "Liên hệ · loại hình" (đã ở dải thông tin bên trái) — 30/10/2026. Điện thoại: hộp liên hệ đã đưa lên dưới dải thông tin. */}
@@ -587,8 +586,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                 )}
 
                 <div id="tai-tai-lieu" className="scroll-mt-14">
-                  <h3 className="mb-1 text-center text-lg font-semibold tracking-tight text-cvr-ink">Tải tài liệu & báo giá</h3>
-                  <p className="mb-3 text-center text-xs text-cvr-muted">Nhận brochure, mặt bằng, bảng giá & chính sách mới nhất</p>
+                  <h3 className="mb-2 text-base font-semibold tracking-tight text-cvr-ink">Tải tài liệu & báo giá</h3>
                   <LeadForm cta="Đăng ký nhận tài liệu" topics={["Nhận brochure & mặt bằng", "Nhận bảng giá & chính sách", "Đặt lịch tham quan dự án", "Tư vấn vay ngân hàng"]} />
                 </div>
               </div>
@@ -647,8 +645,6 @@ function LienHeDuAn({ contact }: { contact: { name?: string; phone?: string; ema
   );
 }
 
-const COT_O: Record<number, string> = { 1: "sm:grid-cols-1", 2: "sm:grid-cols-2", 3: "sm:grid-cols-3", 4: "sm:grid-cols-4" };
-
 // Section chuẩn — có id để menu cuộn tới, tiêu đề nhất quán
 function Section({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
   return (
@@ -661,9 +657,9 @@ function Section({ id, title, children }: { id: string; title: string; children:
 
 function Fact({ label, value, accent = false }: { label: string; value: string; accent?: boolean }) {
   return (
-    <div className="bg-white px-4 py-3">
-      <p className="text-[12px] uppercase tracking-wide text-cvr-faint">{label}</p>
-      <p className={`mt-1 text-[15px] font-semibold leading-snug break-words ${accent ? "text-cvr-blue-ink" : "text-cvr-ink"}`} title={value}>{value}</p>
+    <div className="min-w-0">
+      <p className="text-[12px] text-cvr-muted">{label}</p>
+      <p className={`mt-0.5 text-[15px] font-semibold leading-snug break-words ${accent ? "text-cvr-blue-ink" : value === "Đang cập nhật" ? "font-normal text-cvr-faint" : "text-cvr-ink"}`} title={value}>{value}</p>
     </div>
   );
 }
