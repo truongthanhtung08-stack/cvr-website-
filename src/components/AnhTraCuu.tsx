@@ -8,7 +8,8 @@ const PhotoViewer = dynamic(() => import("@/components/PhotoViewer"));
 
 // ============================================================================
 // ẢNH ĐẦU TRANG DỰ ÁN TRA CỨU (chủ dự án 31/10/2026): MỘT khung = ảnh đại diện; có từ 2 ảnh thì tự chuyển (mờ dần, như ô Khu
-// vực trang chủ — tối đa 6 tấm). Khuôn trang Mua bán: ảnh TO rộng hết cột trái (800 × 450 PC); điện thoại tràn viền 16:9.
+// vực trang chủ — tối đa 6 tấm). Khuôn trang Mua bán: ảnh rộng hết cột trái, PC 800 × 400 (2:1 — chủ dự án 31/10/2026: "khung ảnh QUÁ TO",
+// trước 800 × 450); điện thoại tràn viền 16:9.
 // Ảnh tra cứu nhiều nguồn, cỡ / tỷ lệ khác nhau, admin không chỉnh được → ảnh HIỆN TRỌN không cắt, phần khung thừa lấp bằng
 // chính ảnh đó làm mờ (không viền trắng / đen).
 // Rê chuột thì dừng. Chỉ nạp tấm đang hiện + tấm kế.
@@ -30,7 +31,7 @@ export default function AnhTraCuu({ images, alt }: { images: string[]; alt: stri
 
   return (
     <div
-      className="relative aspect-[16/9] w-full overflow-hidden bg-cvr-surface"
+      className="relative aspect-[16/9] w-full overflow-hidden bg-cvr-surface lg:aspect-[2/1]"
       onMouseEnter={() => setDung(true)}
       onMouseLeave={() => setDung(false)}
     >
