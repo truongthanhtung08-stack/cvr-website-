@@ -15,8 +15,8 @@ export default function DuAnTuongTuTraCuu({ ds, id }: { ds: DongTraCuu[]; id?: s
   const { expanded, hidden, toggle } = useHomeSection("du-an-tuong-tu");
   if (hidden || ds.length === 0) return null;
 
-  // "Xem thêm" = CÙNG BỐ CỤC THẺ với dải slide (chủ dự án 31/10/2026: dự án tương tự một bố cục thẻ): lưới 4 thẻ / hàng, mỗi hàng
-  // subgrid (thẻ cao bằng nhau, dòng thẳng hàng), 12 dự án / trang
+  // "Xem thêm" = CÙNG BỐ CỤC THẺ với dải slide (chủ dự án 31/10/2026: dự án tương tự một bố cục thẻ): lưới 4 thẻ / hàng,
+  // thẻ trong hàng cao bằng nhau, 12 dự án / trang
   if (expanded) return <DanhSachTuongTu ds={ds} />;
 
   return (
@@ -24,10 +24,9 @@ export default function DuAnTuongTuTraCuu({ ds, id }: { ds: DongTraCuu[]; id?: s
     <section id={id} className="mt-6 scroll-mt-14 sm:mt-12">
       <h2 className="text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">Dự án tương tự</h2>
       {/* Slide: điện thoại 1 thẻ (lộ thẻ kế), máy tính bảng 2, máy tính 4 — vuốt / cuộn ngang */}
-      {/* Lưới 5 hàng chạy ngang (subgrid): mọi thẻ cao bằng nhau, từng dòng thẳng hàng — xem TheDuAnDoc (31/10/2026) */}
-      <ul className="no-scrollbar -mx-4 mt-4 grid snap-x snap-mandatory scroll-px-4 auto-cols-[80%] grid-flow-col grid-rows-[auto_auto_auto_auto_auto] gap-x-4 gap-y-0 overflow-x-auto px-4 py-2 sm:mx-0 sm:mt-3 sm:scroll-px-0 sm:auto-cols-[calc(50%-10px)] sm:gap-x-5 sm:px-0 lg:auto-cols-[calc(25%-15px)]">
+      <ul className="no-scrollbar -mx-4 mt-4 grid snap-x snap-mandatory scroll-px-4 auto-cols-[80%] grid-flow-col gap-x-4 overflow-x-auto px-4 py-2 sm:mx-0 sm:mt-3 sm:scroll-px-0 sm:auto-cols-[calc(50%-10px)] sm:gap-x-5 sm:px-0 lg:auto-cols-[calc(25%-15px)]">
         {ds.slice(0, SLIDE).map((x) => (
-          <li key={x.slug} className="row-span-5 grid snap-start grid-rows-subgrid"><TheDuAnDoc d={x} /></li>
+          <li key={x.slug} className="snap-start"><TheDuAnDoc d={x} /></li>
         ))}
       </ul>
       {/* "Xem thêm" chỉ khi còn dự án ngoài slide (30/10/2026) */}
@@ -52,9 +51,9 @@ function DanhSachTuongTu({ ds }: { ds: DongTraCuu[] }) {
   return (
     <section className="pt-1">
       <h2 className="text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">Dự án tương tự</h2>
-      <ul className="mt-4 grid grid-cols-1 gap-x-4 gap-y-0 sm:mt-5 sm:grid-cols-2 sm:gap-x-5 lg:grid-cols-4">
+      <ul className="mt-4 grid grid-cols-1 gap-x-4 gap-y-6 sm:mt-5 sm:grid-cols-2 sm:gap-x-5 lg:grid-cols-4">
         {ds.slice((trang - 1) * MOI_TRANG, trang * MOI_TRANG).map((x) => (
-          <li key={x.slug} className="row-span-5 grid grid-rows-subgrid gap-0 pb-6"><TheDuAnDoc d={x} /></li>
+          <li key={x.slug}><TheDuAnDoc d={x} /></li>
         ))}
       </ul>
       <PhanTrang hienTai={trang} tong={tong} doiTrang={(t) => { setTrang(t); window.scrollTo({ top: 0, behavior: "smooth" }); }} />

@@ -30,9 +30,9 @@ export function TheDuAnDoc({ d }: { d: DongTraCuu }) {
   return (
     <Link
       href={`/du-an/${d.slug}`}
-      // ĐỒNG BỘ (chủ dự án 31/10/2026: thẻ to nhỏ rất xấu, không để khoảng trống): 5 dòng của thẻ (ảnh · tên · địa chỉ · loại hình [· tình trạng] ·
-      // chủ đầu tư) là 5 hàng SUBGRID của dải slide → mọi thẻ trong dải cao bằng nhau, từng dòng thẳng hàng giữa các thẻ, chữ hiện đủ
-      className="card-lux group row-span-5 grid grid-rows-subgrid gap-0 overflow-hidden rounded-none border-0 bg-white shadow-lux shadow-lux-hover hover:-translate-y-1 hover:border-cvr-blue/45"
+      // NHƯ THẺ TIN (chủ dự án 31/10/2026): chữ liền nhau, không khoảng trống giữa các dòng; thẻ trong hàng cao bằng nhau, dòng
+      // Chủ đầu tư dồn xuống đáy (như dòng người đăng thẻ tin). Bỏ cách xếp dòng thẳng hàng giữa các thẻ (sinh khoảng trống lớn)
+      className="card-lux group flex h-full flex-col overflow-hidden rounded-none border-0 bg-white shadow-lux shadow-lux-hover hover:-translate-y-1 hover:border-cvr-blue/45"
     >
       <span className="relative block aspect-[16/10] w-full shrink-0 overflow-hidden bg-cvr-surface">
         {d.anh ? (
@@ -61,7 +61,7 @@ export function TheDuAnDoc({ d }: { d: DongTraCuu }) {
           {!d.cap && <span className={d.tinhTrang ? "" : "text-cvr-faint"}> · {d.tinhTrang || "Tình trạng đang cập nhật"}</span>}
         </span>
       </span>
-      <span className={`mx-3 flex min-w-0 items-start gap-1 border-t border-cvr-line pb-3 pt-2.5 text-[13px] ${d.chuDauTu ? "font-medium text-cvr-body" : "text-cvr-faint"}`}>
+      <span className={`mx-3 mt-auto flex min-w-0 items-start gap-1 border-t border-cvr-line pb-3 pt-2.5 text-[13px] ${d.chuDauTu ? "font-medium text-cvr-body" : "text-cvr-faint"}`}>
         <svg className="mt-[3px] h-3.5 w-3.5 shrink-0 text-cvr-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 21V5a2 2 0 012-2h8a2 2 0 012 2v16M16 9h2a2 2 0 012 2v10M8 7h4M8 11h4M8 15h4M2 21h20" /></svg>
         <span className="min-w-0">{d.chuDauTu || "Chủ đầu tư đang cập nhật"}</span>
       </span>
