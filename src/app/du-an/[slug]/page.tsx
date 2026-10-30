@@ -27,6 +27,7 @@ import { getListings } from "@/lib/listingsDb";
 import { duAnThuocNhom, findCategory, projectCategories, type Category } from "@/lib/categories";
 import { normalizeVi, cungDuAn } from "@/lib/filters";
 import { xepThongSo } from "@/lib/thongSoDuAn";
+import NhanTinhTrang, { capVip } from "@/components/NhanTinhTrang";
 import { demTinTheoKhuVuc, khuVucList, moTaKhuVuc, slugKhuVuc, tieuDeKhuVuc, timKhuVuc } from "@/lib/khuVuc";
 import { catMoTa, tieuDeGoogle } from "@/lib/thang";
 
@@ -276,6 +277,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
     // Tình trạng ghi thành NHÃN TRÊN ẢNH đầu trang — bảng không lặp lại (chủ dự án 30/10/2026)
     ...(p.developmentUnit ? [{ label: "Đơn vị phát triển", value: p.developmentUnit }] : []),
     { label: "Loại hình", value: coLoaiHinh ? p.type : "Đang cập nhật" },
+    // Dự án thường không có nhãn trên ảnh → Tình trạng ghi ngay sau Loại hình (dự án VIP: ở nhãn trên ảnh) — 31/10/2026
+    ...(capVip(p.tier) ? [] : [{ label: "Tình trạng", value: p.status || "Đang cập nhật" }]),
     // THỨ TỰ CHỦ DỰ ÁN CHỐT: Chủ đầu tư → Loại hình → Diện tích dự án → Quy mô → Loại hình căn hộ → Số lượng căn hộ → các mục khác
     // theo thứ tự Admin. Xếp bằng CÙNG HÀM với form Admin (xepThongSo) — Admin thấy sao, web hiện vậy (31/10/2026)
     ...xepThongSo([
@@ -358,8 +361,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               Chưa có ảnh: không vẽ khung trống, tên dự án lên đầu trang (chủ dự án 30/10/2026) */}
           {coAnh && (
             <div className="relative -mx-4 sm:mx-0">
-              {/* Nhãn tình trạng (tiến độ) trên ảnh — cùng kiểu nhãn trên thẻ dự án */}
-              <span className="pointer-events-none absolute left-3 top-3 z-10 rounded-full bg-white/85 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-[0.04em] text-cvr-ink shadow-[0_2px_10px_rgba(0,0,0,0.18)] ring-1 ring-white/60 backdrop-blur-md">{p.status || "Đang cập nhật"}</span>
+              {/* Nhãn tình trạng chung mọi nơi (NhanTinhTrang, 31/10/2026): chỉ dự án VIP, màu theo cấp; dự án thường ghi Tình trạng trong bảng Tổng quan */}
+              <NhanTinhTrang tier={p.tier} tinhTrang={p.status} />
               <ProjectGallery images={gallery} alt={p.name} />
             </div>
           )}

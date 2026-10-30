@@ -25,6 +25,7 @@ import type { DongTraCuu } from "@/lib/traCuuDuAn";
 import { locTraCuu, nhomLoai } from "@/components/TraCuuDuAn";
 import { useHomeSection } from "@/components/HomeExpand";
 import { sortProjectsByTier } from "@/components/ProjectSlider";
+import NhanTinhTrang, { capVip } from "@/components/NhanTinhTrang";
 import { khuVucList, khuVucTrongDiem, slugKhuVuc } from "@/lib/khuVuc";
 import { duAnThuocNhom, projectCategories } from "@/lib/categories";
 import { nhomChuDauTu } from "@/lib/chuDauTu";
@@ -417,9 +418,8 @@ export default function ProjectsBrowser({
             ? "relative min-h-24 w-24 shrink-0 self-stretch overflow-hidden rounded-lg bg-cvr-surface sm:h-[109px] sm:min-h-0 sm:w-44 sm:self-start sm:rounded-xl"
             : `relative w-full shrink-0 overflow-hidden bg-cvr-surface sm:aspect-auto sm:h-[178px] sm:w-72 sm:self-start sm:rounded-xl ${p.image ? "aspect-[16/9]" : "aspect-[3/1]"}`}>
             {/* Dự án nổi bật: tình trạng (tiến độ) ghi trên ảnh; thẻ không còn dòng Trạng thái (chủ dự án 30/10/2026) */}
-                        {!gon && p.status && p.status !== CHUA && (
-              <span className="absolute left-2 top-2 z-10 rounded-full bg-white/85 px-1.5 py-px text-[9px] font-semibold uppercase leading-[14px] tracking-[0.02em] text-cvr-ink shadow-[0_2px_10px_rgba(0,0,0,0.18)] ring-1 ring-white/60 backdrop-blur-md">{p.status}</span>
-            )}
+            {/* Nhãn tình trạng chung mọi nơi (NhanTinhTrang, 31/10/2026): chỉ dự án VIP, màu theo cấp; còn lại ghi "Tiến độ" ở dòng cuối */}
+            <NhanTinhTrang tier={p.tier} tinhTrang={p.status === CHUA ? "" : p.status} />
             {p.image ? (
             <AnhChay
               chay={false}
@@ -456,7 +456,7 @@ export default function ProjectsBrowser({
               <DongNhan nhan="Chủ đầu tư" gt={p.developer === CHUA ? "" : p.developer} />
               {p.priceFrom && <span className="shrink-0 whitespace-nowrap text-sm font-semibold leading-snug text-cvr-gold-ink">{p.priceFrom}</span>}
               {/* Thẻ tra cứu: Tiến độ dòng cuối bên phải (không ghi trên ảnh) */}
-              {gon && <span className="shrink-0 whitespace-nowrap text-[13px] text-cvr-body"><span className="font-semibold text-cvr-ink">Tiến độ:</span> <span className={p.status === CHUA ? "text-cvr-faint" : ""}>{p.status}</span></span>}
+              {!capVip(p.tier) && <span className="shrink-0 whitespace-nowrap text-[13px] text-cvr-body"><span className="font-semibold text-cvr-ink">Tiến độ:</span> <span className={p.status === CHUA ? "text-cvr-faint" : ""}>{p.status}</span></span>}
             </div>
           </div>
         </Link>

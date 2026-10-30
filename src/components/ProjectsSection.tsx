@@ -12,6 +12,7 @@ import AnhChay from "@/components/AnhChay";
 import { anhNho } from "@/lib/asset";
 import { sortProjectsByTier, ExpandToggle } from "@/components/ProjectSlider";
 import { useHomeSection } from "@/components/HomeExpand";
+import NhanTinhTrang, { capVip } from "@/components/NhanTinhTrang";
 
 const PER_SLIDE = 4; // 1 hàng × 4 dự án mỗi slide (số slide KHÔNG giới hạn)
 
@@ -84,7 +85,7 @@ export default function ProjectsSection({ projects, articles = [] }: { projects:
               <Link key={p.slug} href={`/du-an/${p.slug}`} className="flex w-[90%] shrink-0 snap-start flex-col overflow-hidden rounded-none bg-white shadow-lux">
                 <div className="relative aspect-[3/2] w-full overflow-hidden">
                   <AnhChay images={[p.image, ...(p.photos ?? [])]} alt={p.name} sizes="90vw" chay={false} />
-                  <span className="absolute left-2 top-2 rounded-full bg-white/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.04em] text-cvr-ink shadow-[0_2px_10px_rgba(0,0,0,0.18)] ring-1 ring-white/60 backdrop-blur-md">{p.status}</span>
+                  <NhanTinhTrang tier={p.tier} tinhTrang={p.status} />
                 </div>
                 <div className="flex flex-1 flex-col p-4">
                   <h3 className="clamp-2 min-h-[3em] font-semibold leading-[1.5] text-cvr-ink">{p.name}</h3>
@@ -92,8 +93,13 @@ export default function ProjectsSection({ projects, articles = [] }: { projects:
                     <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                     {p.location}
                   </p>
+                  {/* Trường bắt buộc thẻ dự án: Chủ đầu tư (chủ dự án 31/10/2026 — mọi thẻ dự án cùng trường) */}
+                  <p className={`mt-1 flex items-center gap-1 text-xs ${p.developer && p.developer !== "Đang cập nhật" ? "text-cvr-muted" : "text-cvr-faint"}`}>
+                    <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 21V5a2 2 0 012-2h8a2 2 0 012 2v16M16 9h2a2 2 0 012 2v10M8 7h4M8 11h4M8 15h4M2 21h20" /></svg>
+                    {p.developer && p.developer !== "Đang cập nhật" ? p.developer : "Chủ đầu tư đang cập nhật"}
+                  </p>
                   <div className="mt-3 flex items-center justify-between gap-3 border-t border-cvr-line pt-3">
-                    <span className="min-w-0 truncate text-xs text-cvr-muted">{p.type}</span>
+                    <span className="min-w-0 truncate text-xs text-cvr-muted">{p.type}{!capVip(p.tier) && p.status ? ` · ${p.status}` : ""}</span>
                     <span className="shrink-0 whitespace-nowrap text-sm font-semibold text-cvr-ink">{p.priceFrom}</span>
                   </div>
                 </div>
@@ -135,9 +141,8 @@ export default function ProjectsSection({ projects, articles = [] }: { projects:
                           sizes="(max-width: 768px) 100vw, 25vw"
                           className="object-cover transition-transform duration-[700ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.07]"
                         />
-                        <span className="absolute left-2 top-2 rounded-full bg-white/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.04em] text-cvr-ink shadow-[0_2px_10px_rgba(0,0,0,0.18)] ring-1 ring-white/60 backdrop-blur-md">
-                          {p.status}
-                        </span>
+                        {/* Nhãn tình trạng chung mọi nơi (NhanTinhTrang, 31/10/2026): chỉ VIP, màu theo cấp; dự án thường ghi sau loại hình */}
+                        <NhanTinhTrang tier={p.tier} tinhTrang={p.status} />
                       </div>
                       <div className="flex flex-1 flex-col p-4">
                         <h3 className="font-semibold leading-snug text-cvr-ink">{p.name}</h3>
@@ -145,8 +150,13 @@ export default function ProjectsSection({ projects, articles = [] }: { projects:
                           <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                           {p.location}
                         </p>
+                        {/* Trường bắt buộc thẻ dự án: Chủ đầu tư (chủ dự án 31/10/2026 — mọi thẻ dự án cùng trường) */}
+                        <p className={`mt-1 flex items-center gap-1 text-xs ${p.developer && p.developer !== "Đang cập nhật" ? "text-cvr-muted" : "text-cvr-faint"}`}>
+                          <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 21V5a2 2 0 012-2h8a2 2 0 012 2v16M16 9h2a2 2 0 012 2v10M8 7h4M8 11h4M8 15h4M2 21h20" /></svg>
+                          {p.developer && p.developer !== "Đang cập nhật" ? p.developer : "Chủ đầu tư đang cập nhật"}
+                        </p>
                         <div className="mt-3 flex items-center justify-between border-t border-cvr-line pt-3">
-                          <span className="text-xs text-cvr-muted">{p.type}</span>
+                          <span className="text-xs text-cvr-muted">{p.type}{!capVip(p.tier) && p.status ? ` · ${p.status}` : ""}</span>
                           <span className="text-sm font-semibold text-cvr-ink">{p.priceFrom}</span>
                         </div>
                       </div>

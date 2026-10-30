@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { normalizeVi } from "@/lib/filters";
 import type { DongTraCuu } from "@/lib/traCuuDuAn";
-import { getTier, HUY_HIEU_CLS } from "@/lib/packages";
+import NhanTinhTrang from "@/components/NhanTinhTrang";
 
 // TRA CỨU DỰ ÁN (chủ dự án 29/10/2026): phần trái trang Dự án (/du-an) — danh bạ kiểu tra mã số thuế, mỗi thẻ: ảnh · Tên ·
 // Chủ đầu tư · Địa chỉ · Loại hình. Bộ lọc của trang Dự án áp chung cho phần này và Dự án nổi bật (ProjectsBrowser).
@@ -41,12 +41,8 @@ export function TheDuAnDoc({ d }: { d: DongTraCuu }) {
           // eslint-disable-next-line @next/next/no-img-element
           <img src="/logo/symbol-dark.svg" alt="" className="absolute inset-0 m-auto h-10 w-10 opacity-25" />
         )}
-        {/* QUY ĐỊNH HIỂN THỊ CẤP (chốt 4–5/9, một kiểu mọi nơi như thẻ tin): huy hiệu viên thuốc HUY_HIEU_CLS + dải màu cấp đỉnh thẻ;
-            nội dung huy hiệu = tình trạng dự án; mọi nhãn rộng đều 112 px (vừa chữ dài nhất "Đã hoàn thành"), chữ căn giữa (chủ dự án 31/10/2026); thẻ thường trơn */}
-        {d.cap && (<>
-          <span className="absolute inset-x-0 top-0 z-10 h-px" style={{ backgroundColor: getTier(d.cap).bar }} aria-hidden />
-          <span className={HUY_HIEU_CLS.replace("w-[70px]", "w-[112px]")} style={{ backgroundColor: getTier(d.cap).accent, color: getTier(d.cap).badgeText }}>{d.tinhTrang || "Đang cập nhật"}</span>
-        </>)}
+        {/* Nhãn tình trạng chung mọi nơi (NhanTinhTrang) — chỉ dự án VIP, màu theo cấp */}
+        <NhanTinhTrang tier={d.cap} tinhTrang={d.tinhTrang} />
       </span>
       {/* CHỮ DƯỚI ẢNH ĐỒNG NHẤT THẺ TIN (PropertyCard, chủ dự án 31/10/2026): tên 15 px đậm dòng 1,5 · các dòng 13 px biểu tượng +
           nội dung · dòng cuối gạch trên như dòng người đăng. Trường bắt buộc luôn hiện, thiếu ghi "<trường> đang cập nhật" */}
