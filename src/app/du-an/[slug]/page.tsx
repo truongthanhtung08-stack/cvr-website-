@@ -28,6 +28,7 @@ import { duAnThuocNhom, findCategory, projectCategories, type Category } from "@
 import { normalizeVi, cungDuAn } from "@/lib/filters";
 import { xepThongSo } from "@/lib/thongSoDuAn";
 import NhanTinhTrang, { capVip } from "@/components/NhanTinhTrang";
+import { giaTriThat } from "@/lib/truongDuAn";
 import { demTinTheoKhuVuc, khuVucList, moTaKhuVuc, slugKhuVuc, tieuDeKhuVuc, timKhuVuc } from "@/lib/khuVuc";
 import { catMoTa, tieuDeGoogle } from "@/lib/thang";
 
@@ -233,8 +234,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   const coAnh = !!p.photos?.length;
   // DỰ ÁN TRA CỨU = hồ sơ dạng thẻ hoặc dự án chỉ từ tin: cùng khuôn, ẩn phần chưa có (dự án nổi bật: traCuu = false, không đổi gì)
   const traCuu = !!p.dangThe || tuTin;
-  const coChuDauTu = !traCuu || (!!p.developer && p.developer !== "Đang cập nhật");
-  const coLoaiHinh = !traCuu || (!!p.type && p.type !== "Dự án bất động sản");
+  const coChuDauTu = !!giaTriThat(p.developer); // trường bắt buộc — một nguồn (truongDuAn.ts); trống → "Đang cập nhật"
+  const coLoaiHinh = !!giaTriThat(p.type);
 
   const province = provinceOf(p.location);
   // DỰ ÁN THEO KHU VỰC ở cột phải (chủ dự án 30/10/2026): mọi tỉnh trên menu đang có dự án, đếm như trang Dự án (danh bạ tra cứu),
@@ -278,7 +279,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
     ...(p.developmentUnit ? [{ label: "Đơn vị phát triển", value: p.developmentUnit }] : []),
     { label: "Loại hình", value: coLoaiHinh ? p.type : "Đang cập nhật" },
     // Dự án thường không có nhãn trên ảnh → Tình trạng ghi ngay sau Loại hình (dự án VIP: ở nhãn trên ảnh) — 31/10/2026
-    ...(capVip(p.tier) ? [] : [{ label: "Tình trạng", value: p.status || "Đang cập nhật" }]),
+    ...(capVip(p.tier) ? [] : [{ label: "Tình trạng", value: giaTriThat(p.status) || "Đang cập nhật" }]),
     // THỨ TỰ CHỦ DỰ ÁN CHỐT: Chủ đầu tư → Loại hình → Diện tích dự án → Quy mô → Loại hình căn hộ → Số lượng căn hộ → các mục khác
     // theo thứ tự Admin. Xếp bằng CÙNG HÀM với form Admin (xepThongSo) — Admin thấy sao, web hiện vậy (31/10/2026)
     ...xepThongSo([
@@ -362,7 +363,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
           {coAnh && (
             <div className="relative -mx-4 sm:mx-0">
               {/* Nhãn tình trạng chung mọi nơi (NhanTinhTrang, 31/10/2026): chỉ dự án VIP, màu theo cấp; dự án thường ghi Tình trạng trong bảng Tổng quan */}
-              <NhanTinhTrang tier={p.tier} tinhTrang={p.status} />
+              <NhanTinhTrang tier={p.tier} tinhTrang={giaTriThat(p.status)} />
               <ProjectGallery images={gallery} alt={p.name} />
             </div>
           )}

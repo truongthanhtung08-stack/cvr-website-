@@ -13,6 +13,7 @@ import { anhNho } from "@/lib/asset";
 import { sortProjectsByTier, ExpandToggle } from "@/components/ProjectSlider";
 import { useHomeSection } from "@/components/HomeExpand";
 import NhanTinhTrang, { capVip } from "@/components/NhanTinhTrang";
+import { giaTriThat, CHUA_CO } from "@/lib/truongDuAn";
 
 const PER_SLIDE = 4; // 1 hàng × 4 dự án mỗi slide (số slide KHÔNG giới hạn)
 
@@ -85,7 +86,7 @@ export default function ProjectsSection({ projects, articles = [] }: { projects:
               <Link key={p.slug} href={`/du-an/${p.slug}`} className="flex w-[90%] shrink-0 snap-start flex-col overflow-hidden rounded-none bg-white shadow-lux">
                 <div className="relative aspect-[3/2] w-full overflow-hidden">
                   <AnhChay images={[p.image, ...(p.photos ?? [])]} alt={p.name} sizes="90vw" chay={false} />
-                  <NhanTinhTrang tier={p.tier} tinhTrang={p.status} />
+                  <NhanTinhTrang tier={p.tier} tinhTrang={giaTriThat(p.status)} />
                 </div>
                 <div className="flex flex-1 flex-col p-4">
                   <h3 className="clamp-2 min-h-[3em] font-semibold leading-[1.5] text-cvr-ink">{p.name}</h3>
@@ -94,12 +95,12 @@ export default function ProjectsSection({ projects, articles = [] }: { projects:
                     {p.location}
                   </p>
                   {/* Trường bắt buộc thẻ dự án: Chủ đầu tư (chủ dự án 31/10/2026 — mọi thẻ dự án cùng trường) */}
-                  <p className={`mt-1 flex items-center gap-1 text-xs ${p.developer && p.developer !== "Đang cập nhật" ? "text-cvr-muted" : "text-cvr-faint"}`}>
+                  <p className={`mt-1 flex items-center gap-1 text-xs ${giaTriThat(p.developer) ? "text-cvr-muted" : "text-cvr-faint"}`}>
                     <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 21V5a2 2 0 012-2h8a2 2 0 012 2v16M16 9h2a2 2 0 012 2v10M8 7h4M8 11h4M8 15h4M2 21h20" /></svg>
-                    {p.developer && p.developer !== "Đang cập nhật" ? p.developer : "Chủ đầu tư đang cập nhật"}
+                    {giaTriThat(p.developer) || CHUA_CO.chuDauTu}
                   </p>
                   <div className="mt-3 flex items-center justify-between gap-3 border-t border-cvr-line pt-3">
-                    <span className="min-w-0 truncate text-xs text-cvr-muted">{p.type}{!capVip(p.tier) && p.status ? ` · ${p.status}` : ""}</span>
+                    <span className="min-w-0 truncate text-xs text-cvr-muted">{giaTriThat(p.type) || CHUA_CO.loaiHinh}{!capVip(p.tier) ? ` · ${giaTriThat(p.status) || CHUA_CO.tinhTrang}` : ""}</span>
                     <span className="shrink-0 whitespace-nowrap text-sm font-semibold text-cvr-ink">{p.priceFrom}</span>
                   </div>
                 </div>
@@ -142,7 +143,7 @@ export default function ProjectsSection({ projects, articles = [] }: { projects:
                           className="object-cover transition-transform duration-[700ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.07]"
                         />
                         {/* Nhãn tình trạng chung mọi nơi (NhanTinhTrang, 31/10/2026): chỉ VIP, màu theo cấp; dự án thường ghi sau loại hình */}
-                        <NhanTinhTrang tier={p.tier} tinhTrang={p.status} />
+                        <NhanTinhTrang tier={p.tier} tinhTrang={giaTriThat(p.status)} />
                       </div>
                       <div className="flex flex-1 flex-col p-4">
                         <h3 className="font-semibold leading-snug text-cvr-ink">{p.name}</h3>
@@ -151,12 +152,12 @@ export default function ProjectsSection({ projects, articles = [] }: { projects:
                           {p.location}
                         </p>
                         {/* Trường bắt buộc thẻ dự án: Chủ đầu tư (chủ dự án 31/10/2026 — mọi thẻ dự án cùng trường) */}
-                        <p className={`mt-1 flex items-center gap-1 text-xs ${p.developer && p.developer !== "Đang cập nhật" ? "text-cvr-muted" : "text-cvr-faint"}`}>
+                        <p className={`mt-1 flex items-center gap-1 text-xs ${giaTriThat(p.developer) ? "text-cvr-muted" : "text-cvr-faint"}`}>
                           <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 21V5a2 2 0 012-2h8a2 2 0 012 2v16M16 9h2a2 2 0 012 2v10M8 7h4M8 11h4M8 15h4M2 21h20" /></svg>
-                          {p.developer && p.developer !== "Đang cập nhật" ? p.developer : "Chủ đầu tư đang cập nhật"}
+                          {giaTriThat(p.developer) || CHUA_CO.chuDauTu}
                         </p>
                         <div className="mt-3 flex items-center justify-between border-t border-cvr-line pt-3">
-                          <span className="text-xs text-cvr-muted">{p.type}{!capVip(p.tier) && p.status ? ` · ${p.status}` : ""}</span>
+                          <span className="text-xs text-cvr-muted">{giaTriThat(p.type) || CHUA_CO.loaiHinh}{!capVip(p.tier) ? ` · ${giaTriThat(p.status) || CHUA_CO.tinhTrang}` : ""}</span>
                           <span className="text-sm font-semibold text-cvr-ink">{p.priceFrom}</span>
                         </div>
                       </div>

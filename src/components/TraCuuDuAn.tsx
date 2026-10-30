@@ -3,6 +3,7 @@ import Link from "next/link";
 import { normalizeVi } from "@/lib/filters";
 import type { DongTraCuu } from "@/lib/traCuuDuAn";
 import NhanTinhTrang from "@/components/NhanTinhTrang";
+import { CHUA_CO } from "@/lib/truongDuAn";
 
 // TRA CỨU DỰ ÁN (chủ dự án 29/10/2026): phần trái trang Dự án (/du-an) — danh bạ kiểu tra mã số thuế, mỗi thẻ: ảnh · Tên ·
 // Chủ đầu tư · Địa chỉ · Loại hình. Bộ lọc của trang Dự án áp chung cho phần này và Dự án nổi bật (ProjectsBrowser).
@@ -57,13 +58,13 @@ export function TheDuAnDoc({ d }: { d: DongTraCuu }) {
       <span className="flex min-w-0 items-start gap-1 px-3 pb-3 pt-1.5 text-[13px] text-cvr-body">
         <svg className="mt-[3px] h-3.5 w-3.5 shrink-0 text-cvr-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6" /></svg>
         <span className="min-w-0">
-          <span className={d.loaiHinh ? "" : "text-cvr-faint"}>{d.loaiHinh || "Loại hình đang cập nhật"}</span>
-          {!d.cap && <span className={d.tinhTrang ? "" : "text-cvr-faint"}> · {d.tinhTrang || "Tình trạng đang cập nhật"}</span>}
+          <span className={d.loaiHinh ? "" : "text-cvr-faint"}>{d.loaiHinh || CHUA_CO.loaiHinh}</span>
+          {!d.cap && <span className={d.tinhTrang ? "" : "text-cvr-faint"}> · {d.tinhTrang || CHUA_CO.tinhTrang}</span>}
         </span>
       </span>
       <span className={`mx-3 mt-auto flex min-w-0 items-start gap-1 border-t border-cvr-line pb-3 pt-2.5 text-[13px] ${d.chuDauTu ? "font-medium text-cvr-body" : "text-cvr-faint"}`}>
         <svg className="mt-[3px] h-3.5 w-3.5 shrink-0 text-cvr-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 21V5a2 2 0 012-2h8a2 2 0 012 2v16M16 9h2a2 2 0 012 2v10M8 7h4M8 11h4M8 15h4M2 21h20" /></svg>
-        <span className="min-w-0">{d.chuDauTu || "Chủ đầu tư đang cập nhật"}</span>
+        <span className="min-w-0">{d.chuDauTu || CHUA_CO.chuDauTu}</span>
       </span>
     </Link>
   );

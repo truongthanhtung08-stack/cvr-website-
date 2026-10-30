@@ -26,6 +26,7 @@ import { locTraCuu, nhomLoai } from "@/components/TraCuuDuAn";
 import { useHomeSection } from "@/components/HomeExpand";
 import { sortProjectsByTier } from "@/components/ProjectSlider";
 import NhanTinhTrang, { capVip } from "@/components/NhanTinhTrang";
+import { giaTriThat } from "@/lib/truongDuAn";
 import { khuVucList, khuVucTrongDiem, slugKhuVuc } from "@/lib/khuVuc";
 import { duAnThuocNhom, projectCategories } from "@/lib/categories";
 import { nhomChuDauTu } from "@/lib/chuDauTu";
@@ -419,7 +420,7 @@ export default function ProjectsBrowser({
             : `relative w-full shrink-0 overflow-hidden bg-cvr-surface sm:aspect-auto sm:h-[178px] sm:w-72 sm:self-start sm:rounded-xl ${p.image ? "aspect-[16/9]" : "aspect-[3/1]"}`}>
             {/* Dự án nổi bật: tình trạng (tiến độ) ghi trên ảnh; thẻ không còn dòng Trạng thái (chủ dự án 30/10/2026) */}
             {/* Nhãn tình trạng chung mọi nơi (NhanTinhTrang, 31/10/2026): chỉ dự án VIP, màu theo cấp; còn lại ghi "Tiến độ" ở dòng cuối */}
-            <NhanTinhTrang tier={p.tier} tinhTrang={p.status === CHUA ? "" : p.status} />
+            <NhanTinhTrang tier={p.tier} tinhTrang={giaTriThat(p.status)} />
             {p.image ? (
             <AnhChay
               chay={false}
@@ -445,7 +446,7 @@ export default function ProjectsBrowser({
               <DongThe icon="ghim" gt={p.location} />
               {/* Mọi thẻ: chỉ dòng Vị trí có biểu tượng; các dòng khác ghi NHÃN ĐẬM có dấu hai chấm (chủ dự án 30/10/2026) */}
               {/* Loại hình: 1 dòng dài hết bề ngang thẻ, quá dài mới “…” ở cuối (chủ dự án 30/10/2026) */}
-              <DongNhan nhan="Loại hình" gt={p.type === CHUA ? "" : p.type} />
+              <DongNhan nhan="Loại hình" gt={giaTriThat(p.type)} />
             </div>
             {/* Điện thoại bỏ 2 dòng giới thiệu (chủ dự án 30/10/2026) */}
             {!gon && p.overview[0] && (
@@ -453,10 +454,10 @@ export default function ProjectsBrowser({
             )}
             {/* Chủ đầu tư + Liên hệ: dòng cuối thẻ, gạch ngang phía trên (chủ dự án 30/10/2026) */}
             <div className="mt-3 flex items-center justify-between gap-3 border-t border-cvr-line pt-2.5 sm:mt-auto">
-              <DongNhan nhan="Chủ đầu tư" gt={p.developer === CHUA ? "" : p.developer} />
+              <DongNhan nhan="Chủ đầu tư" gt={giaTriThat(p.developer)} />
               {p.priceFrom && <span className="shrink-0 whitespace-nowrap text-sm font-semibold leading-snug text-cvr-gold-ink">{p.priceFrom}</span>}
               {/* Thẻ tra cứu: Tiến độ dòng cuối bên phải (không ghi trên ảnh) */}
-              {!capVip(p.tier) && <span className="shrink-0 whitespace-nowrap text-[13px] text-cvr-body"><span className="font-semibold text-cvr-ink">Tiến độ:</span> <span className={p.status === CHUA ? "text-cvr-faint" : ""}>{p.status}</span></span>}
+              {!capVip(p.tier) && <span className="shrink-0 whitespace-nowrap text-[13px] text-cvr-body"><span className="font-semibold text-cvr-ink">Tiến độ:</span> <span className={giaTriThat(p.status) ? "" : "text-cvr-faint"}>{giaTriThat(p.status) || CHUA}</span></span>}
             </div>
           </div>
         </Link>

@@ -2,6 +2,7 @@ import { NGUONG_INDEX_CDT, nhomChuDauTu } from "@/lib/chuDauTu";
 import type { Listing, Project } from "@/lib/data";
 import { dungDsDuAn } from "@/lib/duAnTenMayChu";
 import { cungDuAn } from "@/lib/filters";
+import { giaTriThat } from "@/lib/truongDuAn";
 
 // Dùng chung cho trang Tra cứu dự án (/du-an/tra-cuu).
 
@@ -73,9 +74,9 @@ export function dongTraCuu(tin: Listing[], duAn: Project[]): DongTraCuu[] {
       return {
         slug: d.slug,
         ten: p?.name ?? d.ten,
-        chuDauTu: p && p.developer !== "Đang cập nhật" ? p.developer : "",
-        loaiHinh: p && p.type !== "Dự án bất động sản" ? p.type : "",
-        tinhTrang: p?.status ?? "",
+        chuDauTu: giaTriThat(p?.developer), // trường bắt buộc — một nguồn (truongDuAn.ts, 31/10/2026)
+        loaiHinh: giaTriThat(p?.type),
+        tinhTrang: giaTriThat(p?.status),
         // Thẻ ghi địa chỉ một kiểu: phường + tỉnh hệ MỚI (như thẻ Dự án nổi bật, 30/10/2026); địa chỉ đầy đủ ở trang chi tiết
         diaChi: p?.location ?? tin1?.location ?? d.tinh,
         diaChiCu: p?.locationCu ?? tin1?.locationCu ?? "",
