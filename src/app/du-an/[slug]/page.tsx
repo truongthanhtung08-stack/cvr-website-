@@ -517,13 +517,13 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                   )}
                   <div className="min-w-0 flex-1">
                     {laChuDauTuThat(p.developer) ? (
-                      <Link href={`/chu-dau-tu/${slugChuDauTu(p.developer)}`} className="text-base font-semibold text-cvr-ink hover:text-cvr-blue-ink">{p.developer}</Link>
+                      <Link href={`/chu-dau-tu/${slugChuDauTu(p.developer)}`} className="block text-base font-semibold text-cvr-ink hover:text-cvr-blue-ink">{p.developer}</Link>
                     ) : (
                       <p className="text-base font-semibold text-cvr-ink">{p.developer}</p>
                     )}
                     {dev?.established && <p className="mt-0.5 text-sm text-cvr-muted">{dev.established}</p>}
                     {dev?.website && (
-                      <a href={normalizeUrl(dev.website)} target="_blank" rel="noopener noreferrer" className="mt-0.5 inline-block text-sm font-medium text-cvr-blue-ink hover:text-cvr-blue">
+                      <a href={normalizeUrl(dev.website)} target="_blank" rel="noopener noreferrer" className="mt-0.5 block w-fit text-sm font-medium text-cvr-blue-ink hover:text-cvr-blue">
                         {dev.website} ↗
                       </a>
                     )}
