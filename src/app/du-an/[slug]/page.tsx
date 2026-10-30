@@ -254,7 +254,11 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   }
   const duAnTheoKhuVuc = [...demKhuVuc.entries()].sort((a, b) => (a[0] === province ? -1 : b[0] === province ? 1 : b[1] - a[1]));
   // Bản đồ: điểm admin GHIM trước; chưa ghim thì tìm theo địa chỉ đầy đủ (số nhà, đường, phường, tỉnh) — 30/10/2026
-  const mapQuery = p.mapPin ?? `${p.location}, Việt Nam`;
+  // ĐỊA CHỈ ĐẦY ĐỦ: hồ sơ ghi địa chỉ chi tiết ở dòng "Địa chỉ" của bảng thông số (vd "Giao lộ Nguyễn Đình Thi với 29/3, phường Hòa Xuân,
+  // Đà Nẵng") mà ô số nhà/đường trống → dùng dòng đó: hiện dưới tên dự án + định vị bản đồ đúng chỗ (chủ dự án 30/10/2026)
+  const diaChiHoSo = p.scale.find((s) => laDiaChi(s.label))?.value?.trim();
+  const diaChiDu = diaChiHoSo && diaChiHoSo.length > p.location.length ? diaChiHoSo : p.location;
+  const mapQuery = p.mapPin ?? `${diaChiDu}, Việt Nam`;
 
   const floorPlans = p.floorPlans ?? [];
   const priceTable = p.priceTable ?? [];
@@ -381,7 +385,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             <h1 className="text-[21px] font-semibold leading-[1.3] tracking-tight text-cvr-ink sm:text-[28px]">{p.name}</h1>
             <p className="mt-3 flex items-start gap-1.5 text-[14px] leading-relaxed text-cvr-muted sm:text-[15px]">
               <svg className="mt-0.5 h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-              <span className="min-w-0">{p.location}</span>
+              <span className="min-w-0">{diaChiDu}</span>
             </p>
             {/* Cách gọi theo hệ 3 cấp cũ — số nhà/đường không đổi nên không nhắc lại. */}
             {p.locationCu && (
@@ -450,7 +454,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
               {/* 2) Vị trí — bản đồ + tiện ích xung quanh + chỉ đường từ vị trí của bạn */}
               <Section id="vi-tri" title="Vị trí & tiện ích xung quanh">
-                <ProjectNearby mapQuery={mapQuery} address={p.location} places={places} zoom={16} caoBanDo="h-[220px] w-full sm:h-[260px]" />
+                <ProjectNearby mapQuery={mapQuery} address={diaChiDu} places={places} zoom={16} caoBanDo="h-[220px] w-full sm:h-[260px]" />
               </Section>
 
               {/* 3) Tiện ích dự án */}
