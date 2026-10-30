@@ -25,7 +25,8 @@ import { ProjectListJsonLd } from "@/components/ListJsonLd";
 import ProjectsBrowser from "@/components/ProjectsBrowser";
 import TrangDuAnTraCuu from "@/components/TrangDuAnTraCuu";
 import { provinceOf, districtOf, segmentOf, pickRelated, type Project, type Listing } from "@/lib/data";
-import { getProject, getProjectsNoiBat, getArticles } from "@/lib/contentDb";
+import { getProject, getProjects, getProjectsNoiBat, getArticles } from "@/lib/contentDb";
+import { dongTraCuu } from "@/lib/traCuuDuAn";
 import { getListings } from "@/lib/listingsDb";
 import { duAnThuocNhom, findCategory, projectCategories, type Category } from "@/lib/categories";
 import { normalizeVi, cungDuAn } from "@/lib/filters";
@@ -225,7 +226,9 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   }
 
   // ── Nhánh 2: trang chi tiết một dự án ──
-  const [p, projects, listings, articles] = await Promise.all([getProject(slug), getProjectsNoiBat(), getListings(), getArticles()]);
+  const [p, projects, listings, articles, tatCaDuAn] = await Promise.all([getProject(slug), getProjectsNoiBat(), getListings(), getArticles(), getProjects()]);
+  // Trang dự án TRA CỨU: "Dự án khác tại <tỉnh>" — tối đa 5 dự án cùng tỉnh trong danh bạ Tra cứu (30/10/2026)
+  const cungTinh = (tinh: string, bo: string) => dongTraCuu(listings, tatCaDuAn).filter((x) => x.tinh === tinh && !cungDuAn(x.slug, bo)).slice(0, 5);
   if (!p) {
     const coban = duAnTuTin(listings, slug);
     if (!coban) notFound();
@@ -242,6 +245,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             tinBan={coban.tin.filter((x) => (x.purpose ?? "ban") === "ban")}
             tinThue={coban.tin.filter((x) => (x.purpose ?? "ban") === "thue")}
             tuongTu={tuongTuDuAn(listings, coban.tin, coban.viTri)}
+            tinh={provinceOf(coban.viTri)}
+            cungKhuVuc={cungTinh(provinceOf(coban.viTri), slug)}
           />
         </main>
         <Footer />
@@ -357,6 +362,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             tinBan={relBan}
             tinThue={relThue}
             tuongTu={tuongTuDuAn(listings, projectListings, p.location, p.type)}
+            tinh={province}
+            cungKhuVuc={cungTinh(province, p.slug)}
           />
         </main>
         <Footer />

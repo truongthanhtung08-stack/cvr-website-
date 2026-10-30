@@ -3,7 +3,9 @@ import Breadcrumb from "@/components/Breadcrumb";
 import { HomeExpandProvider, HomeCollapsible } from "@/components/HomeExpand";
 import RelatedListingsTabs from "@/components/RelatedListingsTabs";
 import ListingShowcase from "@/components/ListingShowcase";
+import { TheTraCuu } from "@/components/TraCuuDuAn";
 import type { Listing } from "@/lib/data";
+import type { DongTraCuu } from "@/lib/traCuuDuAn";
 
 // TRANG CHI TIẾT DỰ ÁN TRA CỨU (chủ dự án 29/10/2026): dự án ở mục Tra cứu là THÔNG TIN CƠ BẢN để tra — khác trang Dự án nổi bật
 // (ảnh lớn, tổng quan, mặt bằng, tiện ích…). Bố cục kiểu tra mã số thuế: ảnh + BẢNG thông tin (tên · chủ đầu tư · địa chỉ ·
@@ -38,11 +40,15 @@ export default function TrangDuAnTraCuu({
   tinBan,
   tinThue,
   tuongTu,
+  tinh,
+  cungKhuVuc,
 }: {
   d: TraCuuChiTiet;
   tinBan: Listing[];
   tinThue: Listing[];
   tuongTu: { nhe: Listing[]; ids: string[] };
+  tinh: string;
+  cungKhuVuc: DongTraCuu[];
 }) {
   return (
     <>
@@ -50,21 +56,24 @@ export default function TrangDuAnTraCuu({
       <div className="mx-auto max-w-7xl px-4 pb-footer sm:px-6 lg:px-8">
         <HomeExpandProvider>
           <HomeCollapsible>
-            <div className="mt-3 grid grid-cols-1 gap-5 lg:grid-cols-5 lg:gap-8">
+            {/* TRA NHANH (30/10/2026): TÊN trước — điện thoại: tên → ảnh ngang thấp → bảng; máy tính: ảnh trái tự giãn cao bằng
+                tên + bảng bên phải (ảnh khớp khối chữ, không hở) */}
+            <div className="mt-3 grid grid-cols-1 gap-4 lg:grid-cols-5 lg:gap-x-8 lg:gap-y-3">
+              <h1 className="order-1 text-[21px] font-semibold leading-[1.3] tracking-tight text-cvr-ink sm:text-[28px] lg:col-span-3 lg:col-start-3 lg:row-start-1">{d.ten}</h1>
+
               {/* Ảnh dự án — một ảnh (hồ sơ tra cứu); chưa có: khung xám + biểu tượng Coastal Land */}
-              <div className="relative -mx-4 aspect-[4/3] overflow-hidden bg-cvr-surface sm:mx-0 sm:rounded-xl lg:col-span-2">
+              <div className="relative order-2 -mx-4 aspect-[16/9] overflow-hidden bg-cvr-surface sm:mx-0 sm:rounded-xl lg:col-span-2 lg:col-start-1 lg:row-span-2 lg:row-start-1 lg:aspect-auto lg:min-h-64">
                 {d.anh ? (
                   <Image src={d.anh} alt={d.ten} fill priority fetchPriority="high" sizes="(max-width:1024px) 100vw, 40vw" className="object-cover" />
                 ) : (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src="/logo/symbol-dark.svg" alt="" className="absolute inset-0 m-auto h-16 w-16 opacity-25" />
+                  <img src="/logo/symbol-dark.svg" alt="" className="absolute inset-0 m-auto h-14 w-14 opacity-25" />
                 )}
               </div>
 
               {/* Bảng thông tin cơ bản — kiểu tra mã số thuế */}
-              <div className="lg:col-span-3">
-                <h1 className="text-[21px] font-semibold leading-[1.3] tracking-tight text-cvr-ink sm:text-[28px]">{d.ten}</h1>
-                <dl className="mt-3 border-t border-cvr-line">
+              <div className="order-3 lg:col-span-3 lg:col-start-3 lg:row-start-2">
+                <dl className="border-t border-cvr-line">
                   <Dong nhan="Chủ đầu tư">{d.chuDauTu || "Đang cập nhật"}</Dong>
                   <Dong nhan="Địa chỉ">
                     {d.diaChi}
@@ -91,6 +100,17 @@ export default function TrangDuAnTraCuu({
             <section id="tin-du-an" className="scroll-mt-14">
               <RelatedListingsTabs ban={tinBan} thue={tinThue} tenDuAn={d.ten} title={`Tin mua bán liên quan tại dự án ${d.ten}`} />
             </section>
+          )}
+          {/* Tra tiếp ngay tại chỗ: dự án khác cùng tỉnh, đúng thẻ Tra cứu của trang Dự án */}
+          {cungKhuVuc.length > 0 && (
+            <HomeCollapsible>
+              <section className="mt-10">
+                <h2 className="text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">Dự án khác tại {tinh}</h2>
+                <ul className="mt-4 flex flex-col gap-4 sm:gap-5">
+                  {cungKhuVuc.map((x) => <li key={x.slug}><TheTraCuu d={x} /></li>)}
+                </ul>
+              </section>
+            </HomeCollapsible>
           )}
           <ListingShowcase items={tuongTu.nhe} idsDayDu={tuongTu.ids} sectionKey="bds-tuong-tu" title="Bất động sản tương tự" heading="Bất động sản tương tự" relevance emptyNote="Chưa có bất động sản tương tự." />
         </HomeExpandProvider>
