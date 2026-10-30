@@ -47,6 +47,12 @@ export function tenLoaiHinh(type?: string | null): string {
   return (type ?? "").split(/\s*\/\s*/).map((s, i) => (i ? s.charAt(0).toLowerCase() + s.slice(1) : s)).join(", ");
 }
 
+// NHÓM CHA của loại hình = menu cha (chủ dự án 30/10/2026: "Loại hình BĐS sẽ là menu CHA trong tin") — "Khác" hiện đủ chữ.
+export function nhomCuaLoaiHinh(type: string | null | undefined, purpose?: string | null): string {
+  const g = typeGroupsFor(purpose === "thue" ? "thue" : "ban").find((x) => x.items.includes(type ?? ""));
+  return !g ? tenLoaiHinh(type) : g.label === "Khác" ? "Bất động sản khác" : g.label;
+}
+
 // Chọn bộ danh mục theo mục đích (dùng cho FilterBar trên từng trang)
 export function typeGroupsFor(purpose: "ban" | "thue"): TypeGroup[] {
   return purpose === "thue" ? rentTypeGroups : saleTypeGroups;

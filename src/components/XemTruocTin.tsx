@@ -7,9 +7,9 @@ import Gallery from "@/components/Gallery";
 import { ANH_MAC_DINH } from "@/lib/anhMau";
 import RichContent from "@/components/RichContent";
 import { getTier, type TierId } from "@/lib/packages";
-import { nhanDienTich as nhanDienTichTheoLoai, laTinThue } from "@/lib/listingSpec";
+import { nhanDienTich as nhanDienTichTheoLoai, laTinThue, fieldsFor, O_LOAI_CON } from "@/lib/listingSpec";
 import type { ListingFull } from "@/lib/listingsDb";
-import { tenLoaiHinh } from "@/lib/filters";
+import { tenLoaiHinh, nhomCuaLoaiHinh } from "@/lib/filters";
 
 // ============================================================================
 // XEM TRƯỚC TIN ĐĂNG (chủ dự án 15/10/2026: "phải cấu trúc để khách hình dung được tin đăng như thế
@@ -155,7 +155,14 @@ export default function XemTruocTin({
 
           <Section title="Đặc điểm bất động sản">
             <div className="grid grid-cols-1 gap-x-8 sm:grid-cols-2">
-              <Row label="Loại hình" value={tenLoaiHinh(l.type)} />
+              {(() => {
+                    const oCon = fieldsFor(l.type, l.purpose).find((f) => O_LOAI_CON.includes(f.key));
+                    const coCon = oCon && [...d.specs, ...d.specsChinh].some((s) => s.label === oCon.label);
+                    return (<>
+                      <Row label="Loại hình" value={nhomCuaLoaiHinh(l.type, l.purpose)} />
+                      {oCon && !coCon && <Row label={oCon.label} value={tenLoaiHinh(l.type)} />}
+                    </>);
+                  })()}
               {d.projectName && <Row label="Dự án" value={d.projectName} />}
               {d.specs.map((f) => <Row key={f.label} label={f.label} value={f.value} />)}
               <Row label="Tình trạng pháp lý" value={d.legal ?? "Chưa cập nhật"} />

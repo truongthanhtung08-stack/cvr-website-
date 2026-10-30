@@ -647,6 +647,9 @@ export function loaiConTheoLoiKhach(khoa: string, dangGhi: string, loiKhach: str
   return null;
 }
 
+// Các ô LOẠI CON (mục đầu Đặc điểm) — trang tin dựa vào đây để hiện dòng loại cụ thể dưới "Loại hình" (nhóm cha)
+export const O_LOAI_CON = ["loaiCanho", "landType", "loaiNha", "loaiNghiDuong", "loaiPhong", "loaiVanPhong", "khoLoai"];
+
 export function specForType(type: string): CategorySpec {
   const t = type.toLowerCase();
   return categorySpecs.find((c) => c.match.some((m) => t.includes(m))) ?? genericSpec;
