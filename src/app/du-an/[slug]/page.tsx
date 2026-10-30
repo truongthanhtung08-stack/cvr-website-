@@ -9,12 +9,10 @@ import ProjectNav from "@/components/ProjectNav";
 import ProjectNearby from "@/components/ProjectNearby";
 import DuAnTuongTuTraCuu from "@/components/DuAnTuongTuTraCuu";
 import { HomeExpandProvider, HomeCollapsible } from "@/components/HomeExpand";
-import DanhSachThuGon from "@/components/DanhSachThuGon";
 import FloorPlans from "@/components/FloorPlans";
 import RelatedListingsTabs from "@/components/RelatedListingsTabs";
 import LeadForm from "@/components/LeadForm";
 import RichContent from "@/components/RichContent";
-import MoTaThuGon from "@/components/MoTaThuGon";
 import { chuThuan } from "@/lib/chuThuan";
 import VideoEmbed from "@/components/VideoEmbed";
 import Breadcrumb, { BreadcrumbJsonLd } from "@/components/Breadcrumb";
@@ -296,12 +294,12 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   const coBangGia = showPrice && priceTable.length > 0;
   const nav = [
     { id: "tong-quan", label: "Tổng quan" },
-    ...(p.videos?.length ? [{ id: "video", label: "Video" }] : []),
     { id: "vi-tri", label: "Vị trí" },
     ...(p.amenities.length ? [{ id: "tien-ich", label: "Tiện ích" }] : []),
     ...(floorPlans.length ? [{ id: "mat-bang", label: "Mặt bằng" }] : []),
     ...(coBangGia ? [{ id: "bang-gia", label: "Bảng giá" }] : []),
     ...(coThongTinCdt ? [{ id: "chu-dau-tu", label: "Chủ đầu tư" }] : []),
+    ...(p.videos?.length ? [{ id: "video", label: "Video" }] : []),
     // Menu mục của trang (22/10/2026): thông tin dự án → tin thuộc dự án → dự án tương tự
     ...(hasRelated ? [{ id: "tin-du-an", label: "Tin thuộc dự án" }] : []),
     // Bỏ "Dự án tương tự" khỏi thanh mục (chủ dự án 30/10/2026: thừa) — khối vẫn ở cuối trang
@@ -401,7 +399,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                 <div className="grid grid-cols-1">
                   {hangThongSo.map((s) => (
                     // Nhãn cột trái cố định, giá trị NGAY SAU nhãn (trước dạt sát phải, khó đọc) — chủ dự án 30/10/2026
-                    <div key={s.label} className="grid grid-cols-[7.5rem_1fr] items-start gap-3 border-b sm:grid-cols-[10.5rem_1fr] sm:gap-4 border-cvr-line/70 py-3 text-sm">
+                    <div key={s.label} className="grid grid-cols-[7.5rem_1fr] items-start gap-3 py-2 text-sm sm:grid-cols-[10.5rem_1fr] sm:gap-4">
                       <span className="text-cvr-muted">{s.label}</span>
                       <span className={`min-w-0 font-medium ${s.value === "Đang cập nhật" ? "font-normal text-cvr-faint" : "text-cvr-ink"}`}>
                         {s.href ? <Link href={s.href} className="hover:text-cvr-blue-ink">{s.value}</Link> : s.value}
@@ -411,11 +409,12 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                 </div>
                 {p.overview.length > 0 && (
                 <div className="mt-5">
-                <MoTaThuGon dong={6} nenMo="from-white">
+                {/* TRANG DỰ ÁN HIỆN ĐỦ, KHÔNG CẮT TỪNG PHẦN — trang dài là chuẩn (chủ dự án 30/10/2026) */}
+                <div>
                   <div className="space-y-3 text-[15px] leading-relaxed text-cvr-body">
                     <RichContent paragraphs={p.overview} title={p.name} />
                   </div>
-                </MoTaThuGon>
+                </div>
                 </div>
                 )}
                 {/* Ngày cập nhật + nguồn — cuối khối Tổng quan (mẫu 30/10/2026; trước nằm dưới địa chỉ) */}
@@ -425,15 +424,6 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               </Section>
               )}
 
-              {/* Video (nếu có) */}
-              {p.videos && p.videos.length > 0 && (
-                <Section id="video" title="Video dự án">
-                  {/* Video thẳng mép các phần khác: 1 video rộng hết khung · từ 2 video xếp 2 một hàng (chủ dự án 30/10/2026: thu nhỏ lệch trái là vô lý) */}
-                  <div className={`grid grid-cols-1 gap-4 ${p.videos.length > 1 ? "sm:grid-cols-2" : ""}`}>
-                    {p.videos.map((v, i) => <VideoEmbed key={i} url={v} />)}
-                  </div>
-                </Section>
-              )}
 
               {/* 2) Vị trí — bản đồ + tiện ích xung quanh + chỉ đường từ vị trí của bạn */}
               <Section id="vi-tri" title="Vị trí & tiện ích xung quanh">
@@ -444,14 +434,14 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               {p.amenities.length > 0 && (
                 <Section id="tien-ich" title="Tiện ích dự án">
                   {/* Danh sách dài → 6 mục đầu + "Xem thêm" (gọn, 22/10/2026) */}
-                  <DanhSachThuGon className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+                  <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
                     {p.amenities.map((a) => (
                       <span key={a} className="flex items-start gap-2.5 py-1.5 text-[15px] leading-snug text-cvr-body">
                         <svg className="mt-0.5 h-4 w-4 shrink-0 text-cvr-blue" fill="none" stroke="currentColor" strokeWidth={2.4} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                         <span className="min-w-0">{a}</span>
                       </span>
                     ))}
-                  </DanhSachThuGon>
+                  </div>
                 </Section>
               )}
 
@@ -524,6 +514,16 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               </Section>
               )}
 
+              {/* Video (nếu có) — DƯỚI CÙNG các phần thông tin dự án (chủ dự án 30/10/2026) */}
+              {p.videos && p.videos.length > 0 && (
+                <Section id="video" title="Video dự án">
+                  {/* Video thẳng mép các phần khác: 1 video rộng hết khung · từ 2 video xếp 2 một hàng (chủ dự án 30/10/2026: thu nhỏ lệch trái là vô lý) */}
+                  <div className={`grid grid-cols-1 gap-4 ${p.videos.length > 1 ? "sm:grid-cols-2" : ""}`}>
+                    {p.videos.map((v, i) => <VideoEmbed key={i} url={v} />)}
+                  </div>
+                </Section>
+              )}
+
             </div>
 
             {/* Cột phụ — dính khi cuộn */}
@@ -534,7 +534,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               <div className="h-full space-y-4">
                 {/* Tin của dự án (bấm xuống khối tin) — máy tính lẫn điện thoại */}
                 {hasRelated && (
-                  <div className="rounded-2xl border border-cvr-line bg-white p-4 shadow-lux lg:p-5">
+                  <div className="rounded-2xl border border-cvr-line bg-white p-4 lg:p-5">
                     <p className="text-base font-semibold tracking-tight text-cvr-ink">{`Tin mua bán, cho thuê tại ${p.name}`}</p>
                     <div className="mt-3 flex flex-col">
                       {relBan.length > 0 && <a href="#tin-du-an" className="flex items-center justify-between rounded-lg px-3 py-2 text-sm text-cvr-body transition-colors hover:bg-cvr-surface hover:text-cvr-ink"><span>Mua bán</span><span className="text-xs text-cvr-muted">{relBan.length}</span></a>}
@@ -545,7 +545,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
                 {/* Dự án theo khu vực — cùng khối với trang Dự án, mọi tỉnh đang có dự án → trang /du-an/<tỉnh> */}
                 {duAnTheoKhuVuc.length > 0 && (
-                  <div className="rounded-2xl border border-cvr-line bg-white p-4 shadow-lux lg:p-5">
+                  <div className="rounded-2xl border border-cvr-line bg-white p-4 lg:p-5">
                     <p className="text-base font-semibold tracking-tight text-cvr-ink">Dự án theo khu vực</p>
                     <div className="mt-3 flex flex-col">
                       {duAnTheoKhuVuc.map(([ten, so]) => (
@@ -562,7 +562,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                 <div className="space-y-4 lg:sticky lg:top-24">
                 {/* Hộp Liên hệ — ngay trên form nhận tài liệu & báo giá, máy tính lẫn điện thoại (chủ dự án 30/10/2026) */}
                 {(showPrice || contact) && (
-                  <div className="rounded-2xl border border-cvr-line bg-white p-4 shadow-lux lg:p-5">
+                  <div className="rounded-2xl border border-cvr-line bg-white p-4 lg:p-5">
                     {showPrice && (
                       <div className={contact ? "mb-4 border-b border-cvr-line pb-4" : undefined}>
                         <p className="text-xs text-cvr-muted">Giá bán từ</p>
@@ -580,7 +580,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                 )}
 
                 {/* Cùng kiểu mọi hộp cột phải: tiêu đề NẰM TRONG khung, cùng cỡ chữ (khung riêng của form tắt đi) — 30/10/2026 */}
-                <div id="tai-tai-lieu" className="scroll-mt-14 overflow-hidden rounded-2xl border border-cvr-line bg-white p-4 shadow-lux lg:p-5 [&>div:last-child]:border-0 [&>div:last-child]:p-0 [&>div:last-child]:shadow-none [&_input]:h-10 [&_select]:h-10">
+                <div id="tai-tai-lieu" className="scroll-mt-14 overflow-hidden rounded-2xl border border-cvr-line bg-white p-4 lg:p-5 [&>div:last-child]:border-0 [&>div:last-child]:p-0 [&>div:last-child]:shadow-none [&_input]:h-10 [&_select]:h-10">
                   <p className="mb-3 text-base font-semibold tracking-tight text-cvr-ink">Tải tài liệu & báo giá</p>
                   <LeadForm cta="Đăng ký nhận tài liệu" topics={["Nhận brochure & mặt bằng", "Nhận bảng giá & chính sách", "Đặt lịch tham quan dự án", "Tư vấn vay ngân hàng"]} />
                 </div>
@@ -647,8 +647,8 @@ function LienHeDuAn({ contact }: { contact: { name?: string; phone?: string; ema
 // Section chuẩn — có id để menu cuộn tới, tiêu đề nhất quán
 function Section({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
   return (
-    // KHỐI PHÂN BIỆT GỌN (chủ dự án 30/10/2026: không màu nền, không viền bao): một đường kẻ mảnh giữa các phần + tiêu đề, khoảng cách đều
-    <section id={id} className="mt-6 scroll-mt-14 border-t border-cvr-line pt-6 sm:mt-8 sm:pt-8">
+    // KHỐI PHÂN BIỆT GỌN (chủ dự án 30/10/2026: không màu nền, không viền, không gạch ngang — quá nhiều là vô lý): tách phần bằng khoảng trống + tiêu đề
+    <section id={id} className="mt-10 scroll-mt-14 sm:mt-12">
       <h2 className="mb-4 text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">{title}</h2>
       {children}
     </section>
