@@ -90,7 +90,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!p) {
     // Bậc 1 (21/10/2026): dự án mới chỉ có tên từ tin — khách xem được, Google CHƯA lập chỉ mục (trang mỏng) tới khi có hồ sơ
     const coban = duAnTuTin(await getListings().catch(() => []), slug);
-    if (!coban) return { title: "Không tìm thấy dự án", robots: { index: false, follow: true } };
+    if (!coban) {
+      // Trang demo tra cứu (chỉ máy dev) — tên thẻ trình duyệt đúng tên dự án mẫu
+      const demo = process.env.NODE_ENV !== "production" ? DU_AN_DEMO[slug] : undefined;
+      return { title: demo?.name ?? "Không tìm thấy dự án", robots: { index: false, follow: true } };
+    }
     return {
       title: tieuDeGoogle(coban.ten),
       description: catMoTa(`Dự án ${coban.ten} tại ${coban.viTri}.`),
@@ -322,6 +326,19 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   // Trang tra cứu GỌN (chủ dự án 31/10/2026: "bỏ hết những phần không cần thiết… vì đây là tra cứu"): không thanh mục, không form
   // tải tài liệu. GIỮ "Dự án theo khu vực" (liên kết sang trang dự án từng tỉnh — SEO; chủ dự án: "không được bỏ")
   const coCotPhai = !traCuu || hasRelated || showPrice || !!contact || duAnTheoKhuVuc.length > 0;
+  // Tra cứu: hộp 3 trường bắt buộc — máy tính ở đầu cột phải, điện thoại ngay dưới ảnh (31/10/2026)
+  const hopBatBuoc = (
+    <div className="divide-y divide-cvr-line rounded-2xl border border-cvr-line bg-white px-4 py-1.5 lg:px-5">
+      {hangBatBuoc.map((s) => (
+        <div key={s.label} className="flex min-w-0 items-start gap-3 py-2.5 text-[15px]">
+          <span className="w-24 shrink-0 text-sm leading-6 text-cvr-muted">{s.label}</span>
+          <span className={`min-w-0 leading-6 ${s.value === "Đang cập nhật" ? "text-cvr-faint" : "font-medium text-cvr-ink"}`}>
+            {s.href ? <Link href={s.href} className="hover:text-cvr-blue-ink">{s.value}</Link> : s.value}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
   const coMucTongQuan = traCuu ? hangThem.length > 0 || p.overview.length > 0 || !!p.capNhat : hangThongSo.length > 0;
   const nav = [
     ...(coMucTongQuan ? [{ id: "tong-quan", label: "Tổng quan" }] : []),
@@ -437,11 +454,13 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                   rộng hết cột (≥ 2 ảnh tự chuyển, ảnh hiện trọn, bấm xem to), dưới ảnh 3 trường bắt buộc; cột phải (Dự án theo khu vực)
                   mép trên ngang mép trên ảnh. Mục Admin ghi thêm xuống Tổng quan */}
               {traCuu && (
-                <div className="mb-7">
+                // Ảnh cách mục kế 48 px như mục cách mục; không còn mục nào trong cột thì không chừa (31/10/2026)
+                <div className="not-last:mb-12">
                   <div className="relative -mx-4 sm:mx-0">
                     <NhanTinhTrang tier={p.tier} tinhTrang={giaTriThat(p.status)} />
                     <AnhTraCuu images={coAnh ? gallery : []} alt={p.name} />
                   </div>
+                  <div className="mt-4 lg:hidden">{hopBatBuoc}</div>
                 </div>
               )}
 
@@ -586,11 +605,15 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             {/* CỘT PHẢI LUÔN CÓ, ĐỦ THỨ LIÊN QUAN (chủ dự án 30/10/2026) — mọi dự án cùng một khuôn: giá + liên hệ (khi có) · tin của dự án
                 · dự án cùng khu vực · nhận tài liệu & báo giá */}
             {coCotPhai && (
-            <aside className={`lg:col-span-1 ${traCuu ? "" : "lg:mt-5"}`}>
+            <aside className={`lg:col-span-1 ${traCuu ? "@container" : "lg:mt-5"}`}>
               {/* Cột phải CUỘN THEO TRANG, không dính: cột cao hơn màn hình mà dính thì cuộn bị khựng rồi trôi (chủ dự án 30/10/2026) */}
               <div className="h-full space-y-4">
-                {/* Tin của dự án (bấm xuống khối tin) — máy tính lẫn điện thoại */}
-                {hasRelated && (
+                {/* Tra cứu: các hộp đầu cột phải đáy NGANG đáy ảnh (31/10/2026) — cao tối thiểu = cao ảnh: ảnh rộng 2 cột + khe 32 px,
+                    tỷ lệ 16:9 → 112,5% bề rộng cột phải + 18 px; hộp "Dự án theo khu vực" giãn lấp phần còn lại */}
+                <div className={traCuu ? "space-y-4 lg:flex lg:min-h-[calc(112.5cqw+18px)] lg:flex-col lg:gap-4 lg:space-y-0" : "space-y-4"}>
+                {/* Tin của dự án (bấm xuống khối tin) — máy tính lẫn điện thoại. Tra cứu: khối tin nằm ngay dưới ảnh nên không lặp hộp này
+                    (3 hộp làm cột phải dài hơn ảnh — 31/10/2026) */}
+                {hasRelated && !traCuu && (
                   <div className="rounded-2xl border border-cvr-line bg-white p-4 lg:p-5">
                     <p className="text-base font-semibold tracking-tight text-cvr-ink">{`Tin mua bán, cho thuê tại ${p.name}`}</p>
                     <div className="mt-3 flex flex-col">
@@ -602,21 +625,11 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
                 {/* Dự án theo khu vực — cùng khối với trang Dự án, mọi tỉnh đang có dự án → trang /du-an/<tỉnh> */}
                 {/* Tra cứu: 3 trường bắt buộc thành hộp đầu cột phải, cùng kiểu hộp khu vực — cột phải cao ngang ảnh, cân 2 bên (31/10/2026) */}
-                {traCuu && (
-                  <div className="space-y-3 rounded-2xl border border-cvr-line bg-white p-4 lg:p-5">
-                    {hangBatBuoc.map((s) => (
-                      <div key={s.label} className="flex min-w-0 items-start gap-3 text-[15px]">
-                        <span className="w-24 shrink-0 text-sm leading-6 text-cvr-muted">{s.label}</span>
-                        <span className={`min-w-0 leading-6 ${s.value === "Đang cập nhật" ? "text-cvr-faint" : "font-medium text-cvr-ink"}`}>
-                          {s.href ? <Link href={s.href} className="hover:text-cvr-blue-ink">{s.value}</Link> : s.value}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                {/* Điện thoại: hộp này nằm ngay dưới ảnh (cột phải xuống cuối trang) → ở đây chỉ hiện trên máy tính */}
+                {traCuu && <div className="hidden lg:block">{hopBatBuoc}</div>}
 
                 {duAnTheoKhuVuc.length > 0 && (
-                  <div className="rounded-2xl border border-cvr-line bg-white p-4 lg:p-5">
+                  <div className={`rounded-2xl border border-cvr-line bg-white p-4 lg:p-5 ${traCuu ? "lg:flex-1" : ""}`}>
                     <p className="text-base font-semibold tracking-tight text-cvr-ink">Dự án theo khu vực</p>
                     <div className="mt-3 flex flex-col">
                       {duAnTheoKhuVuc.map(([ten, so]) => (
@@ -628,8 +641,11 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                     </div>
                   </div>
                 )}
+                </div>
 
                 {/* LIÊN HỆ + FORM DÍNH khi cuộn (máy tính) — khối thấp hơn màn hình nên dính êm; các hộp trên cuộn theo trang (30/10/2026) */}
+                {/* Tra cứu không giá, không liên hệ → không dựng khối rỗng (khối rỗng vẫn ăn khe 16 px, đẩy mục dưới lệch) */}
+                {(!traCuu || showPrice || contact) && (
                 <div className="space-y-4 lg:sticky lg:top-24">
                 {/* Hộp Liên hệ — ngay trên form nhận tài liệu & báo giá, máy tính lẫn điện thoại (chủ dự án 30/10/2026) */}
                 {(showPrice || contact) && (
@@ -658,6 +674,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                 </div>
                 )}
                 </div>
+                )}
               </div>
             </aside>
             )}
