@@ -314,7 +314,12 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   const coBangGia = showPrice && priceTable.length > 0;
   // TRANG RIÊNG DỰ ÁN TRA CỨU (chủ dự án 31/10/2026): bảng thông tin lên đầu trang cạnh ảnh → mục Tổng quan chỉ còn giới thiệu,
   // không có giới thiệu thì bỏ mục
-  const coMucTongQuan = traCuu ? p.overview.length > 0 || !!p.capNhat : hangThongSo.length > 0;
+  // Đầu trang tra cứu CỐ ĐỊNH, nhiều ít thông tin giao diện không đổi (chủ dự án 31/10/2026): chỉ 3 trường bắt buộc (Chủ đầu tư ·
+  // Loại hình · Tình trạng); mục Admin ghi thêm xuống mục Tổng quan
+  const BAT_BUOC = ["Chủ đầu tư", "Loại hình", "Tình trạng"];
+  const hangBatBuoc = hangThongSo.filter((s) => BAT_BUOC.includes(s.label));
+  const hangThem = hangThongSo.filter((s) => !BAT_BUOC.includes(s.label));
+  const coMucTongQuan = traCuu ? hangThem.length > 0 || p.overview.length > 0 || !!p.capNhat : hangThongSo.length > 0;
   const nav = [
     ...(coMucTongQuan ? [{ id: "tong-quan", label: "Tổng quan" }] : []),
     { id: "vi-tri", label: "Vị trí" },
@@ -352,9 +357,9 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   };
 
   // Bảng thông tin (trường bắt buộc + mục Admin ghi thêm) — dự án nổi bật: trong mục Tổng quan; dự án tra cứu: ngay dưới tên (31/10/2026)
-  const bangThongSo = (
+  const bangThongSo = (ds: typeof hangThongSo) => (
         <div className="grid grid-cols-1 gap-x-10 gap-y-3 sm:grid-cols-2">
-          {hangThongSo.map((s) => (
+          {ds.map((s) => (
             // MẪU B (31/10/2026): 2 cột đúng thứ tự trái → phải; chữ dài tự xuống dòng trong ô, không chiếm trọn hàng
             <div key={s.label} className="flex min-w-0 items-start gap-3 text-[15px]">
               <span className="w-32 shrink-0 text-sm leading-6 text-cvr-muted sm:w-36">{s.label}</span>
@@ -402,7 +407,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                 <AnhTraCuu images={gallery} alt={p.name} />
               </div>
             )}
-            <div className={`min-w-0 ${traCuu ? "lg:col-span-2" : ""}`}>
+            <div className={`min-w-0 ${traCuu ? "lg:col-span-2 lg:flex lg:flex-col" : ""}`}>
             {/* Bỏ nhãn tình trạng trên tên (chủ dự án 30/10/2026: trùng dòng Tình trạng trong bảng Tổng quan) */}
             <h1 className="text-[21px] font-semibold leading-[1.3] tracking-tight text-cvr-ink sm:text-[28px]">{p.name}</h1>
             <p className="mt-3 flex items-start gap-1.5 text-[14px] leading-relaxed text-cvr-muted sm:text-[15px]">
@@ -418,7 +423,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               <p className="mt-3 rounded-xl bg-cvr-surface px-4 py-2.5 text-sm text-cvr-body">Thông tin dự án đang được cập nhật.</p>
             )}
             {/* Tra cứu: bảng thông tin ngay dưới tên, kín cột trái cạnh ảnh */}
-            {traCuu && hangThongSo.length > 0 && <div className="mt-6">{bangThongSo}</div>}
+            {/* Cân đầu trang: tên thẳng mép trên ảnh, bảng thẳng mép dưới ảnh (PC) */}
+            {traCuu && <div className="mt-6 lg:mt-auto lg:pt-6">{bangThongSo(hangBatBuoc)}</div>}
             </div>
           </div>
 
@@ -445,10 +451,10 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                     thứ tự theo cặp (chủ đầu tư | tình trạng · loại hình | giá · quy mô | diện tích …); điện thoại 1 cột */}
                 {/* CHUẨN CHỮ TRANG DỰ ÁN (chủ dự án 31/10/2026): nội dung 15 px · nhãn 14 px · mọi dòng cao 24 px · các dòng cách 12 px ·
                     tiêu đề mục 24 px cách nội dung 20 px · mục cách mục 48 px · ghi chú 13 px */}
-                {!traCuu && bangThongSo}
+                {traCuu ? hangThem.length > 0 && bangThongSo(hangThem) : bangThongSo(hangThongSo)}
                 {p.overview.length > 0 && (
                 // Cách bảng thông số 32 px (chủ dự án 31/10/2026: cần cách biệt với phần nội dung bên dưới); tra cứu: bảng ở đầu trang
-                <div className={traCuu ? "" : "mt-8"}>
+                <div className={traCuu && hangThem.length === 0 ? "" : "mt-8"}>
                 {/* TRANG DỰ ÁN HIỆN ĐỦ, KHÔNG CẮT TỪNG PHẦN — trang dài là chuẩn (chủ dự án 30/10/2026) */}
                 <div>
                   <div className="space-y-3 text-[15px] leading-6 text-cvr-body">
