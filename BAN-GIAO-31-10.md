@@ -134,3 +134,8 @@ Mỗi trang: PC 1440 + điện thoại 375 · 1 H1 · ảnh hiện thật (khôn
 **Đã soát:** 288 liên kết của vòng (trang chủ, /du-an, /du-an/da-nang, 2 nổi bật, demo tra cứu, Apec) — chỉ 1 link hỏng ở trang demo (chủ đầu tư giả, chỉ máy dev). Luồng trang chủ → Xem thêm → trang 3 → dự án tra cứu → tin → về dự án → Quay lại: chạy đúng.
 
 **Còn treo:** chủ chưa duyệt bản cuối; chưa bấm thử trên điện thoại thật; câu chữ tên tab "Tìm kiếm phổ biến" và từ khoá dự án là chữ Claude ghép theo công thức kế hoạch SEO — chưa duyệt; trang demo `DU_AN_DEMO` (chỉ dev) — hỏi chủ xoá hay giữ trước push; ảnh bìa /du-an có 1 link rỗng từ trước.
+
+**Link xem (máy xem thử cổng 3001; điện thoại cùng wifi thay `localhost` bằng `192.168.0.189`):** nổi bật http://localhost:3001/du-an/can-ho-5-sao-goldenbay-son-tra ·
+tra cứu đủ phần http://localhost:3001/du-an/demo-tra-cuu · tra cứu 1 ảnh …/du-an/demo-tra-cuu-1-anh · không ảnh …/du-an/demo-tra-cuu-khong-anh ·
+chỉ biết từ tin …/du-an/apec-mandala-wyndham-binh-thuan · danh sách …/du-an · trang chủ http://localhost:3001/
+**Trước push:** `rm -rf .next && npx next build` phải sạch (phiên này chỉ chạy `tsc --noEmit` — sạch, CHƯA chạy next build).
