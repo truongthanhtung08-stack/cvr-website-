@@ -451,7 +451,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
               {/* 2) Vị trí — bản đồ + tiện ích xung quanh + chỉ đường từ vị trí của bạn */}
               <Section id="vi-tri" title="Vị trí & tiện ích xung quanh">
-                <ProjectNearby mapQuery={mapQuery} address={diaChiDu} places={places} zoom={16} caoBanDo="h-[240px] w-full sm:h-[400px]" />
+                <ProjectNearby mapQuery={mapQuery} address={diaChiDu} places={places} zoom={16} caoBanDo="h-[240px] w-full sm:h-[320px]" />
               </Section>
 
               {/* 3) Tiện ích dự án */}
@@ -541,8 +541,9 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               {/* Video (nếu có) — DƯỚI CÙNG các phần thông tin dự án (chủ dự án 30/10/2026) */}
               {p.videos && p.videos.length > 0 && (
                 <Section id="video" title="Video dự án">
-                  {/* CÂN ĐO (chủ dự án 30/10/2026): bản đồ 798×400, video 16:9 cao bằng bản đồ = 711×400 căn giữa · từ 2 video xếp 2 một hàng */}
-                  <div className={`grid grid-cols-1 gap-4 ${p.videos.length > 1 ? "sm:grid-cols-2" : "mx-auto max-w-[711px]"}`}>
+                  {/* CÂN ĐO CẢ TRANG (chủ dự án 30/10/2026): mọi khung cao ~320–336 (ảnh đầu 300 · mặt bằng 336 · dự án tương tự 328) — bản đồ 798×320,
+                      video 16:9 cao 320 = 569×320 căn giữa · từ 2 video xếp 2 một hàng */}
+                  <div className={`grid grid-cols-1 gap-4 ${p.videos.length > 1 ? "sm:grid-cols-2" : "mx-auto max-w-[569px]"}`}>
                     {p.videos.map((v, i) => <VideoEmbed key={i} url={v} />)}
                   </div>
                 </Section>
