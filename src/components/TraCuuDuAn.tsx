@@ -43,10 +43,10 @@ export function TheDuAnDoc({ d }: { d: DongTraCuu }) {
         )}
         {/* CHỈ THẺ VIP có nhãn tình trạng trên ảnh, màu theo cấp (cùng màu nhãn cấp thẻ dự án nổi bật) — chủ dự án 31/10/2026 */}
         {/* QUY ĐỊNH HIỂN THỊ CẤP (chốt 4–5/9, một kiểu mọi nơi như thẻ tin): huy hiệu viên thuốc HUY_HIEU_CLS + dải màu cấp đỉnh thẻ;
-            nội dung huy hiệu = tình trạng dự án, rộng theo chữ (chủ dự án 31/10/2026); thẻ thường trơn */}
+            nội dung huy hiệu = tình trạng dự án; mọi nhãn rộng đều 112 px (vừa chữ dài nhất "Đã hoàn thành"), chữ căn giữa (chủ dự án 31/10/2026); thẻ thường trơn */}
         {d.cap && (<>
           <span className="absolute inset-x-0 top-0 z-10 h-px" style={{ backgroundColor: getTier(d.cap).bar }} aria-hidden />
-          <span className={HUY_HIEU_CLS.replace("w-[70px]", "px-2.5")} style={{ backgroundColor: getTier(d.cap).accent, color: getTier(d.cap).badgeText }}>{d.tinhTrang || "Đang cập nhật"}</span>
+          <span className={HUY_HIEU_CLS.replace("w-[70px]", "w-[112px]")} style={{ backgroundColor: getTier(d.cap).accent, color: getTier(d.cap).badgeText }}>{d.tinhTrang || "Đang cập nhật"}</span>
         </>)}
       </span>
       {/* CHỮ DƯỚI ẢNH ĐỒNG NHẤT THẺ TIN (PropertyCard, chủ dự án 31/10/2026): tên 15 px đậm dòng 1,5 · các dòng 13 px biểu tượng +
