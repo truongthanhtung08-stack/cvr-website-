@@ -116,27 +116,7 @@ function normalizeUrl(u: string): string {
 }
 
 // Thứ tự ưu tiên dòng thông số trong bảng Tổng quan (nhãn hồ sơ viết tự do → so theo chữ, không dấu)
-const UU_TIEN = ["dia chi|dai chi", "vi tri", "quy mo", "dien tich", "so luong", "so can", "loai hinh can", "san pham", "ban giao", "tieu chuan", "phap ly", "so huu", "khoi cong"];
-// Nhóm hàng của bảng Tổng quan: 0 chung · 1 địa chỉ · 2 quy mô · 3 bàn giao & pháp lý · 4 khác
 const laDiaChi = (nhan: string) => /dia chi|dai chi|vi tri/.test(normalizeVi(nhan).replace(/đ/g, "d"));
-function nhomThongSo<T extends { label: string }>(ds: T[]): T[][] {
-  const nhomCua = (nhan: string) => {
-    const x = normalizeVi(nhan).replace(/đ/g, "d");
-    if (/chu dau tu|don vi phat trien|tinh trang|^loai hinh$|gia tu/.test(x)) return 0;
-    if (laDiaChi(nhan)) return 1;
-    if (/quy mo|dien tich|so luong|so can|loai hinh can|san pham|so tang|so toa/.test(x)) return 2;
-    if (/khoi cong|ban giao|tieu chuan|phap ly|so huu/.test(x)) return 3;
-    return 4;
-  };
-  const g: T[][] = [[], [], [], [], []];
-  for (const s of ds) g[nhomCua(s.label)].push(s);
-  return g.filter((n) => n.length);
-}
-function hangUuTien(nhan: string): number {
-  const x = normalizeVi(nhan).replace(/đ/g, "d");
-  const i = UU_TIEN.findIndex((k) => k.split("|").some((y) => x.includes(y)));
-  return i < 0 ? UU_TIEN.length : i;
-}
 
 export default async function ProjectDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -280,21 +260,16 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   // rồi thông số hồ sơ (quy mô, sản phẩm, khởi công, bàn giao, pháp lý…). Tình trạng, chủ đầu tư, loại hình luôn có ("Đang cập nhật");
   // trường khác chỉ khi có. Thay khối Tiến độ (trùng tình trạng, khởi công, bàn giao) — đã bỏ.
   const hangThongSo: { label: string; value: string; href?: string }[] = [
-    // Chủ đầu tư đứng ĐẦU (chủ dự án 30/10/2026)
+    // THỨ TỰ KHỚP ADMIN (chủ dự án 30/10/2026): mục cố định theo form Admin (Chủ đầu tư · Đơn vị phát triển · Loại hình · Giá từ),
+    // rồi các dòng "Quy mô dự án" ĐÚNG THỨ TỰ ANH NHẬP trong Admin — web không tự xếp lại; mục trùng bỏ
     { label: "Chủ đầu tư", value: coChuDauTu ? p.developer : "Đang cập nhật", href: coChuDauTu && laChuDauTuThat(p.developer) ? `/chu-dau-tu/${slugChuDauTu(p.developer)}` : undefined },
-    { label: "Tình trạng", value: p.status || "Đang cập nhật" },
-    { label: "Loại hình", value: coLoaiHinh ? p.type : "Đang cập nhật" },
+    // Tình trạng ghi thành NHÃN TRÊN ẢNH đầu trang — bảng không lặp lại (chủ dự án 30/10/2026)
     ...(p.developmentUnit ? [{ label: "Đơn vị phát triển", value: p.developmentUnit }] : []),
+    { label: "Loại hình", value: coLoaiHinh ? p.type : "Đang cập nhật" },
     ...(showPrice ? [{ label: "Giá từ", value: sidePrice }] : []),
-    // Thông số hồ sơ: QUAN TRỌNG LÊN TRƯỚC (chủ dự án 30/10/2026) — địa chỉ · quy mô · diện tích · số căn · loại căn · bàn giao · pháp lý
-    // / sở hữu · khởi công; nhãn khác giữ thứ tự hồ sơ, xếp sau
-    ...p.scale
-      // bỏ dòng địa chỉ: đã có ngay dưới tên dự án (chủ dự án 30/10/2026)
-      .filter((s) => !["Tình trạng", "Chủ đầu tư", "Loại hình", "Giá từ"].includes(s.label) && !laDiaChi(s.label))
-      .map((s, i) => ({ s, i, h: hangUuTien(s.label) }))
-      .sort((a, b) => a.h - b.h || a.i - b.i)
-      .map((x) => x.s),
-  ];
+    // bỏ dòng địa chỉ (đã có dưới tên dự án) và tình trạng (nhãn trên ảnh)
+    ...p.scale.filter((s) => !["Tình trạng", "Chủ đầu tư", "Loại hình", "Giá từ"].includes(s.label) && !laDiaChi(s.label)),
+  ].filter((s, i, ds) => ds.findIndex((x) => normalizeVi(x.label) === normalizeVi(s.label)) === i);
 
   // Dự án tương tự — cùng cách trang dự án tra cứu (cùng tỉnh, cùng nhóm loại hình trước), lấy hết cho slide + Xem thêm
   const tuongTuNoiBat = duAnTuongTu(province, p.type, p.slug);
@@ -367,6 +342,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               Chưa có ảnh: không vẽ khung trống, tên dự án lên đầu trang (chủ dự án 30/10/2026) */}
           {coAnh && (
             <div className="relative -mx-4 sm:mx-0">
+              {/* Nhãn tình trạng (tiến độ) trên ảnh — cùng kiểu nhãn trên thẻ dự án */}
+              <span className="pointer-events-none absolute left-3 top-3 z-10 rounded-full bg-white/85 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-[0.04em] text-cvr-ink shadow-[0_2px_10px_rgba(0,0,0,0.18)] ring-1 ring-white/60 backdrop-blur-md">{p.status || "Đang cập nhật"}</span>
               <ProjectGallery images={gallery} alt={p.name} />
               {/* Dự án có video: nút ▶ Video góc trái dưới ảnh → khối Video ngay sau Tổng quan (mẫu 30/10/2026) */}
               {!!p.videos?.length && (
@@ -421,7 +398,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                 {/* BẢNG THÔNG TIN CHUẨN (chủ dự án 30/10/2026): PC 2 cột thẳng hàng — mỗi mục nhãn xám rộng cố định + giá trị đậm NGAY SAU;
                     thứ tự theo cặp (chủ đầu tư | tình trạng · loại hình | giá · quy mô | diện tích …); điện thoại 1 cột */}
                 <div className="grid grid-cols-1 gap-x-10 gap-y-3 sm:grid-flow-row-dense sm:grid-cols-2">
-                  {nhomThongSo(hangThongSo).flat().map((s) => (
+                  {hangThongSo.map((s) => (
                     // Giữ THỨ TỰ ƯU TIÊN; mục dài (> 26 ký tự) trọn một hàng ngay tại chỗ, ô trống do nó để lại thì mục ngắn kế tiếp lấp (grid dense)
                     <div key={s.label} className={`flex min-w-0 items-start gap-3 text-[15px] ${s.value.length > 26 ? "sm:col-span-2" : ""}`}>
                       <span className="w-32 shrink-0 text-sm leading-[22px] text-cvr-muted sm:w-36">{s.label}</span>
