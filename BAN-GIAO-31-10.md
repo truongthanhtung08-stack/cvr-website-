@@ -139,3 +139,29 @@ Mỗi trang: PC 1440 + điện thoại 375 · 1 H1 · ảnh hiện thật (khôn
 tra cứu đủ phần http://localhost:3001/du-an/demo-tra-cuu · tra cứu 1 ảnh …/du-an/demo-tra-cuu-1-anh · không ảnh …/du-an/demo-tra-cuu-khong-anh ·
 chỉ biết từ tin …/du-an/apec-mandala-wyndham-binh-thuan · danh sách …/du-an · trang chủ http://localhost:3001/
 **Trước push:** `rm -rf .next && npx next build` phải sạch (phiên này chỉ chạy `tsc --noEmit` — sạch, CHƯA chạy next build).
+
+## 7. BÀN GIAO HẾT VỀ ĐIỀU PHỐI (phiên trang dự án dừng tại đây — 31/10/2026 tối)
+
+**Commit cuối của phiên:** xem `git log` (sau c89f114 chỉ có commit bàn giao này). Không push.
+
+**Việc đang dở + bước kế tiếp cụ thể:**
+1. **Build trước push — CHƯA LÀM ĐƯỢC.** `rm -rf .next` báo "Directory not empty" (có tiến trình đang giữ tệp trong `.next`, máy xem thử 3001 lúc đó đã tắt). Bước kế: tắt mọi tiến trình `next` (dev 3000/3001/3002) → `rm -rf .next` → `npx next build` phải sạch → mới push. Đã chạy `npx tsc --noEmit` sạch.
+2. **Bật lại máy xem thử 3001** sau khi build (preview `xem-thu-3001` hoặc `.claude\xem-thu-3001.cmd`) để anh xem các link mục 6.
+3. **Chờ anh duyệt D29 · D30 · D31** (CAN-ANH-DUYET.md). D31 = trang demo `DU_AN_DEMO` ở cuối `src/app/du-an/[slug]/page.tsx` (chỉ chạy khi `NODE_ENV !== "production"`, web thật không có) — anh chọn xoá thì xoá khối `DEMO_GOC` + `DU_AN_DEMO` + nhánh `slug === "demo-tra-cuu"` trong `projectListings` + nhánh demo trong `generateMetadata`.
+4. **Chưa bấm thử điện thoại thật** (chỉ đo trên khung 375 px).
+5. Ảnh bìa /du-an có 1 link rỗng (`href="#"`, lớp phủ `absolute inset-0 z-0`) — có từ trước, chưa sửa.
+
+**Yêu cầu anh đã chốt trong phiên (đã ghi vào mã + mục 6; ghi lại đủ ở đây):**
+- Trang chi tiết dự án: tên + địa chỉ trên cùng; nổi bật giữ khung ảnh như cũ; **bỏ "Dự án tương tự" ở cả 2 loại**, chỉ giữ tin thuộc dự án; **bỏ "Câu hỏi thường gặp"** ở trang chi tiết; **không hiện đường dẫn** (chỉ BreadcrumbList cho Google).
+- Tra cứu PC: đầu trang 3 cột bằng nhau (ảnh 16:9 · bảng thông tin · Dự án theo khu vực), ba cột cao bằng nhau; Chủ đầu tư · Loại hình · Tình trạng nằm trong bảng; mục không có thông tin thì ẩn, có thì hiện theo chuẩn nổi bật; thanh mục khi ≥ 2 mục.
+- Xem thêm / Thu gọn kiểu Batdongsan: chỉ nội dung dài; Xem thêm ở chỗ cắt, Thu gọn ở CUỐI phần thông tin, sát nội dung; không cắt ngang ảnh/bản đồ; "làm là code cả hệ thống" (một hàm `diemCat`). Memory `xem-them-thu-gon-kieu-bds`.
+- Tin thuộc dự án: chịu được rất nhiều tin; xếp theo thứ tự chuẩn cả web; có cả Mua bán / Cho thuê.
+- pSEO trang dự án: "một hệ thống, một khối liên kết" — dùng khối "Tìm kiếm phổ biến" sẵn có của web (tab), có thu gọn khi nhiều dòng; chữ tab chờ D30.
+- Cân đo: mục cách mục 48 px, tiêu đề khối 22 px điện thoại / 24 px PC; "tự canh, không để anh nhắc".
+- Điện thoại: chức năng như PC, giao diện riêng; ảnh + video mở kiểu Facebook như tin mua bán/cho thuê (dùng `Gallery`); Liên hệ + Tải tài liệu **gộp một khối, xuống sau tin thuộc dự án**; Dự án theo khu vực xuống cuối trang (kiểu khối khu vực điện thoại); tra cứu **không ảnh thì bỏ khung ảnh** (chỉ điện thoại).
+- Thẻ dự án **trang chủ điện thoại** (chỉ trang chủ): mỗi thông tin một dòng, địa chỉ rút gọn phường + tỉnh, loại hình lấy loại chính (không cắt ngang), mọi thẻ có dòng Tiến độ, cao bằng nhau. Bấm Xem thêm / menu Dự án thì ra thẻ như bình thường; danh sách Xem thêm trang chủ tên "Dự án bất động sản" (PC + điện thoại thống nhất); điện thoại ẩn dòng tiêu đề "Dự án bất động sản" (vẫn trong HTML).
+- Thẻ **tra cứu điện thoại**: xếp như thẻ nổi bật (ảnh trên, khung 5:2 nhỏ hơn), **không cắt chữ**, không ảnh thì bỏ khung; số dự án mỗi trang cân theo chiều cao thẻ từng màn hình.
+
+**Đề xuất bộ lọc "Loại hình 10 nhóm" trang Dự án:** phiên này KHÔNG làm và không có đề xuất nào về việc đó — có thể là của phiên khác (xem `BAN-GIAO-30-10.md` hoặc các phiên dự án trước). Danh sách nhóm loại hình dự án hiện có trong mã: `projectCategories` (`src/lib/categories.ts`): Căn hộ chung cư · Khu đô thị mới · Khu nghỉ dưỡng, sinh thái · Nhà ở xã hội · Cao ốc văn phòng · Trung tâm thương mại · Biệt thự, liền kề · Đất nền · Nhà phố · Shophouse.
+
+**Tệp tạm:** phiên này KHÔNG tạo tệp nào trong `public/_mau-*`, `public/_so-sanh-*`, `scripts/_tam-doc.mjs`, `.claude/*.png|jpg` (chỉ dùng thư mục tạm của máy). Các tệp đó (`public/_mau-tong-quan.html`, `public/_mau-tra-cuu-du-an.html`, `public/_so-sanh-tam.html`, `public/_so-sanh-the/`, `scripts/_tam-doc.mjs`, ~78 tệp `.claude/*`) là của các phiên trước, chưa từng commit (git `??`) → xoá được mà không ảnh hưởng web; nên hỏi anh trước khi xoá ảnh `.claude/` vì có thể là ảnh chụp anh cần đối chiếu.
