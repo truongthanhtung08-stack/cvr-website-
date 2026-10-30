@@ -2,7 +2,7 @@
 
 import { useDiaDanh } from "@/lib/useDiaDanh";
 import { batDauTim, xongTim } from "@/components/VachTim";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { useNutQuayLai } from "@/lib/khoaCuon";
 import { useSoMoiTrang } from "@/lib/useSoMoiTrang";
 import PhanTrang from "@/components/PhanTrang";
@@ -334,13 +334,58 @@ export default function ProjectsBrowser({
 
   // Thẻ Dự án nổi bật (hàng trượt + lưới Xem thêm, trang /du-an và trang chủ): tình trạng · Tên · Địa chỉ · Loại hình · Chủ đầu tư
   // + giá — chủ dự án 29–30/10/2026; ảnh trên, chữ dưới, hiện đủ chữ.
-  // ngang = danh sách cột trái (bố cục web hiện tại: ảnh trái lớn, chữ phải trên máy tính; điện thoại ảnh trên) — 30/10/2026
-  const theNoiBat = (p: Project, ngang = false) => (
+  // THẺ DỰ ÁN NGANG ĐANG CHẠY TRÊN WEB (đã chốt — giữ nguyên nội dung: tình trạng · tên · giá + giá tham khảo · địa chỉ · loại hình +
+  // giới thiệu · chủ đầu tư). Dùng chung: danh sách trang Dự án cũ + cột trái danh sách "Xem thêm" (chủ dự án 30/10/2026)
+  const theDuAnWeb = (p: Project) => (
+        <Link
+          href={`/du-an/${p.slug}`}
+          className="card-lux group relative flex flex-col overflow-hidden rounded-none bg-white shadow-lux shadow-lux-hover hover:-translate-y-1 hover:border-cvr-blue/45 sm:flex-row sm:gap-5 sm:border sm:border-cvr-line sm:p-3"
+        >
+          {/* MOBILE: ảnh TRÊN tràn viền · DESKTOP: ảnh trái */}
+          <div className="relative aspect-[16/9] w-full shrink-0 overflow-hidden rounded-none bg-cvr-surface sm:aspect-[4/3] sm:w-56 sm:rounded-xl md:w-64">
+            <AnhChay
+              chay={false}
+              images={[p.image, ...(p.photos ?? [])]}
+              alt={p.name}
+              sizes="(max-width:640px) 33vw, 256px"
+              className="object-cover transition-transform duration-[700ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.06]"
+            />
+            <span className="absolute left-2.5 top-2.5 rounded-full bg-white/80 px-2.5 py-[3px] text-[11px] font-semibold uppercase tracking-[0.06em] text-cvr-ink shadow-[0_2px_10px_rgba(0,0,0,0.18)] ring-1 ring-white/60 backdrop-blur-md">
+              {p.status}
+            </span>
+          </div>
+
+          {/* Thông tin — mobile có padding cho "thở", desktop sát ảnh */}
+          <div className="flex min-w-0 flex-1 flex-col p-3 sm:p-0 sm:py-1 sm:pr-1">
+            <h3 className="line-clamp-2 font-semibold leading-snug text-cvr-ink transition-colors group-hover:text-cvr-blue-ink sm:text-lg">
+              <Highlight text={p.name} terms={termsBySlug.get(p.slug) ?? []} />
+            </h3>
+            <p className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
+              <span className="text-base font-semibold text-cvr-gold-ink sm:text-lg">{p.priceFrom}</span>
+              {priceRef(p) && <span className="text-xs text-cvr-muted">{priceRef(p)}</span>}
+            </p>
+            <p className="mt-1 flex items-center gap-1 text-xs text-cvr-muted">
+              <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+              <span className="truncate">{p.location}</span>
+            </p>
+            <p className="mb-3 mt-1.5 line-clamp-2 text-xs leading-relaxed text-cvr-muted">
+              {p.type} · {chuThuan(p.overview[0])}
+            </p>
+            <div className="mt-auto border-t border-cvr-line pt-2.5">
+              <span className="text-xs text-cvr-body">
+                Chủ đầu tư: <span className="font-medium text-cvr-ink">{p.developer}</span>
+              </span>
+            </div>
+          </div>
+        </Link>
+  );
+
+  const theNoiBat = (p: Project) => (
     <Link
       href={`/du-an/${p.slug}`}
-      className={`card-lux group flex h-full flex-col overflow-hidden rounded-none border border-cvr-line bg-white shadow-lux shadow-lux-hover hover:-translate-y-1 hover:border-cvr-blue/45 ${ngang ? "sm:flex-row sm:gap-5 sm:p-3" : ""}`}
+      className="card-lux group flex h-full flex-col overflow-hidden rounded-none border border-cvr-line bg-white shadow-lux shadow-lux-hover hover:-translate-y-1 hover:border-cvr-blue/45"
     >
-      <div className={`relative aspect-[16/10] w-full shrink-0 overflow-hidden bg-cvr-surface ${ngang ? "sm:aspect-[4/3] sm:w-56 sm:rounded-xl md:w-64" : ""}`}>
+      <div className="relative aspect-[16/10] w-full shrink-0 overflow-hidden bg-cvr-surface">
         <AnhChay
           chay={false}
           images={[p.image, ...(p.photos ?? [])]}
@@ -352,10 +397,10 @@ export default function ProjectsBrowser({
           {p.status}
         </span>
       </div>
-      <div className={`flex min-w-0 flex-1 flex-col p-3 ${ngang ? "sm:p-0 sm:py-1 sm:pr-1" : ""}`}>
+      <div className="flex min-w-0 flex-1 flex-col p-3">
         {/* GỌN (chủ dự án 29/10/2026): Tên dự án · Địa chỉ · Loại hình · Chủ đầu tư — hiện đủ chữ, không cắt "…";
             giá ("Liên hệ" khi ẩn giá) nằm phải dòng Chủ đầu tư như dòng cuối thẻ dự án trang chủ — không thêm dòng */}
-        <h3 className={`font-semibold leading-snug text-cvr-ink transition-colors group-hover:text-cvr-blue-ink ${ngang ? "sm:text-lg" : ""}`}>
+        <h3 className="font-semibold leading-snug text-cvr-ink transition-colors group-hover:text-cvr-blue-ink">
           <Highlight text={p.name} terms={termsBySlug.get(p.slug) ?? []} />
         </h3>
         <p className="mt-1 flex items-start gap-1 text-xs text-cvr-muted">
@@ -400,7 +445,7 @@ export default function ProjectsBrowser({
             <div className="flex flex-col gap-4 sm:gap-5">
               {dsChung.slice((trangNB - 1) * NOI_BAT_MOI_TRANG, trangNB * NOI_BAT_MOI_TRANG).map((x) =>
                 "noiBat" in x
-                  ? <div key={x.noiBat.slug}>{theNoiBat(x.noiBat, true)}</div>
+                  ? <div key={x.noiBat.slug}>{theDuAnWeb(x.noiBat)}</div>
                   : <div key={x.traCuu.slug}><TheTraCuu d={x.traCuu} /></div>,
               )}
             </div>
@@ -845,48 +890,7 @@ export default function ProjectsBrowser({
           })()}
           <div className="reveal is-visible cards-stagger flex flex-col gap-5">
             {pageItems.map((p) => (
-              <Link
-                key={p.slug}
-                href={`/du-an/${p.slug}`}
-                className="card-lux group relative flex flex-col overflow-hidden rounded-none bg-white shadow-lux shadow-lux-hover hover:-translate-y-1 hover:border-cvr-blue/45 sm:flex-row sm:gap-5 sm:border sm:border-cvr-line sm:p-3"
-              >
-                {/* MOBILE: ảnh TRÊN tràn viền · DESKTOP: ảnh trái */}
-                <div className="relative aspect-[16/9] w-full shrink-0 overflow-hidden rounded-none bg-cvr-surface sm:aspect-[4/3] sm:w-56 sm:rounded-xl md:w-64">
-                  <AnhChay
-                    chay={false}
-                    images={[p.image, ...(p.photos ?? [])]}
-                    alt={p.name}
-                    sizes="(max-width:640px) 33vw, 256px"
-                    className="object-cover transition-transform duration-[700ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.06]"
-                  />
-                  <span className="absolute left-2.5 top-2.5 rounded-full bg-white/80 px-2.5 py-[3px] text-[11px] font-semibold uppercase tracking-[0.06em] text-cvr-ink shadow-[0_2px_10px_rgba(0,0,0,0.18)] ring-1 ring-white/60 backdrop-blur-md">
-                    {p.status}
-                  </span>
-                </div>
-
-                {/* Thông tin — mobile có padding cho "thở", desktop sát ảnh */}
-                <div className="flex min-w-0 flex-1 flex-col p-3 sm:p-0 sm:py-1 sm:pr-1">
-                  <h3 className="line-clamp-2 font-semibold leading-snug text-cvr-ink transition-colors group-hover:text-cvr-blue-ink sm:text-lg">
-                    <Highlight text={p.name} terms={termsBySlug.get(p.slug) ?? []} />
-                  </h3>
-                  <p className="mt-1 flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
-                    <span className="text-base font-semibold text-cvr-gold-ink sm:text-lg">{p.priceFrom}</span>
-                    {priceRef(p) && <span className="text-xs text-cvr-muted">{priceRef(p)}</span>}
-                  </p>
-                  <p className="mt-1 flex items-center gap-1 text-xs text-cvr-muted">
-                    <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                    <span className="truncate">{p.location}</span>
-                  </p>
-                  <p className="mb-3 mt-1.5 line-clamp-2 text-xs leading-relaxed text-cvr-muted">
-                    {p.type} · {chuThuan(p.overview[0])}
-                  </p>
-                  <div className="mt-auto border-t border-cvr-line pt-2.5">
-                    <span className="text-xs text-cvr-body">
-                      Chủ đầu tư: <span className="font-medium text-cvr-ink">{p.developer}</span>
-                    </span>
-                  </div>
-                </div>
-              </Link>
+              <Fragment key={p.slug}>{theDuAnWeb(p)}</Fragment>
             ))}
 
             {visible.length === 0 && (

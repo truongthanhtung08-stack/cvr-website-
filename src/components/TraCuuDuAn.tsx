@@ -38,9 +38,7 @@ export function TheDuAnDoc({ d }: { d: DongTraCuu }) {
           // eslint-disable-next-line @next/next/no-img-element
           <img src="/logo/symbol-dark.svg" alt="" className="absolute inset-0 m-auto h-10 w-10 opacity-25" />
         )}
-        {d.tinhTrang && (
-          <span className="absolute left-2.5 top-2.5 rounded-full bg-white/80 px-2.5 py-[3px] text-[11px] font-semibold uppercase tracking-[0.06em] text-cvr-ink shadow-[0_2px_10px_rgba(0,0,0,0.18)] ring-1 ring-white/60 backdrop-blur-md">{d.tinhTrang}</span>
-        )}
+        <span className="absolute left-2.5 top-2.5 rounded-full bg-white/80 px-2.5 py-[3px] text-[11px] font-semibold uppercase tracking-[0.06em] text-cvr-ink shadow-[0_2px_10px_rgba(0,0,0,0.18)] ring-1 ring-white/60 backdrop-blur-md">{d.tinhTrang || "Đang cập nhật"}</span>
       </span>
       <span className="flex min-w-0 flex-1 flex-col p-3">
         <span className="font-semibold leading-snug text-cvr-ink transition-colors group-hover:text-cvr-blue-ink">{d.ten}</span>
@@ -48,16 +46,11 @@ export function TheDuAnDoc({ d }: { d: DongTraCuu }) {
           <svg className="mt-px h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
           <span className="min-w-0">{d.diaChi}</span>
         </span>
-        {/* Cái gì chưa có thì ẩn — không "Đang cập nhật" (30/10/2026) */}
-        {d.loaiHinh && <span className="mt-1 text-xs text-cvr-body">Loại hình: {d.loaiHinh}</span>}
-        {d.chuDauTu && (
-          <>
-            <span className="h-3 shrink-0" aria-hidden />
-            <span className="mt-auto border-t border-cvr-line pt-2.5 text-xs text-cvr-body">
-              Chủ đầu tư: <span className="font-medium text-cvr-ink">{d.chuDauTu}</span>
-            </span>
-          </>
-        )}
+        {/* Trường bắt buộc luôn hiện, chưa có thì "Đang cập nhật" (chủ dự án 30/10/2026) */}
+        <span className="mb-3 mt-1 text-xs text-cvr-body">Loại hình: {d.loaiHinh || "Đang cập nhật"}</span>
+        <span className="mt-auto border-t border-cvr-line pt-2.5 text-xs text-cvr-body">
+          Chủ đầu tư: <span className="font-medium text-cvr-ink">{d.chuDauTu || "Đang cập nhật"}</span>
+        </span>
       </span>
     </Link>
   );
@@ -83,23 +76,14 @@ export function TheTraCuu({ d }: { d: DongTraCuu }) {
           <img src="/logo/symbol-dark.svg" alt="" className="absolute inset-0 m-auto h-7 w-7 opacity-25 sm:h-12 sm:w-12" />
         )}
       </span>
-      {/* Thứ tự anh chốt: Tên → Chủ đầu tư → Địa chỉ (hệ mới, ghim thay chữ nhãn) → Loại hình · Trạng thái (nhãn tròn như thẻ
-          Nổi bật). Cái gì chưa có thì ẨN — không dòng "Đang cập nhật" (30/10/2026) */}
+      {/* TRƯỜNG BẮT BUỘC LUÔN HIỆN (chủ dự án 30/10/2026): Tên → Chủ đầu tư → Địa chỉ (hệ mới) → Loại hình → Trạng thái;
+          chưa có thông tin thì ghi "Đang cập nhật", không ẩn */}
       <span className="min-w-0 flex-1">
         <span className="-mt-0.5 line-clamp-2 text-[15px] font-semibold leading-snug text-cvr-ink transition-colors group-hover:text-cvr-blue-ink sm:text-lg">{d.ten}</span>
-        {d.chuDauTu && (
-          <span className="mt-1 block text-[13px] leading-snug text-cvr-body sm:text-sm">Chủ đầu tư: <span className="font-medium text-cvr-ink">{d.chuDauTu}</span></span>
-        )}
-        <span className="mt-1 flex items-start gap-1 text-[13px] leading-snug text-cvr-muted sm:text-sm">
-          <svg className="mt-0.5 h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-          <span className="min-w-0">{d.diaChi}</span>
-        </span>
-        {(d.loaiHinh || d.tinhTrang) && (
-          <span className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] leading-snug text-cvr-body sm:text-sm">
-            {d.loaiHinh && <span className="min-w-0">{d.loaiHinh}</span>}
-            {d.tinhTrang && <span className="rounded-full bg-cvr-surface px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.04em] text-cvr-ink">{d.tinhTrang}</span>}
-          </span>
-        )}
+        <span className="mt-1 block text-[13px] leading-snug text-cvr-body sm:text-sm">Chủ đầu tư: <span className="font-medium text-cvr-ink">{d.chuDauTu || "Đang cập nhật"}</span></span>
+        <span className="mt-0.5 block text-[13px] leading-snug text-cvr-body sm:text-sm">Địa chỉ: {d.diaChi}</span>
+        <span className="mt-0.5 block text-[13px] leading-snug text-cvr-body sm:text-sm">Loại hình: {d.loaiHinh || "Đang cập nhật"}</span>
+        <span className="mt-0.5 block text-[13px] leading-snug text-cvr-body sm:text-sm">Trạng thái: {d.tinhTrang || "Đang cập nhật"}</span>
       </span>
     </Link>
   );

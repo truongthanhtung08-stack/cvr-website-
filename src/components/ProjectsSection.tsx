@@ -1,9 +1,10 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import type { Project, Article } from "@/lib/data";
+import type { DongTraCuu } from "@/lib/traCuuDuAn";
 import ProjectsBrowser from "@/components/ProjectsBrowser";
 import { smoothScrollTo } from "@/lib/scroll";
 import { useAutoSlide, useAutoSlideThe, useTamDung } from "@/lib/useAutoSlide";
@@ -25,6 +26,12 @@ export default function ProjectsSection({ projects, articles = [] }: { projects:
   const { dung: pausedMob, chamVao: chamDaiMob } = useTamDung(6000);
   // Nút "Xem thêm" → khối này thành danh sách theo trang, các khối khác ẩn.
   const { expanded, hidden, toggle } = useHomeSection("du-an");
+  // "Xem thêm" cùng logic trang Dự án (30/10/2026): sau dự án nổi bật là danh bạ Tra cứu — nạp lúc mở danh sách (không nhúng vào HTML)
+  const [traCuu, setTraCuu] = useState<DongTraCuu[] | undefined>(undefined);
+  useEffect(() => {
+    if (!expanded || traCuu) return;
+    fetch("/api/du-an/tra-cuu").then((r) => (r.ok ? r.json() : [])).then((ds: DongTraCuu[]) => setTraCuu(ds)).catch(() => setTraCuu([]));
+  }, [expanded, traCuu]);
 
   // Homepage: slide 8 dự án đầu XẾP THEO CẤP VIP (Diamond → Gold → Silver → thường);
   // còn lại xem qua nút "Xem thêm".
@@ -194,7 +201,7 @@ export default function ProjectsSection({ projects, articles = [] }: { projects:
 
         {/* Bấm "Xem thêm" → danh sách Dự án nổi bật CÙNG LOGIC trang Dự án (thẻ Tên · Địa chỉ · Loại hình · Chủ đầu tư, 10 dự án/trang) — 30/10/2026 */}
         {/* Mở ra: cách khối sau đúng 56px như mọi khối trang chủ máy tính (24/10/2026) */}
-        {expanded && <div className="sm:pb-4"><ProjectsBrowser projects={ranked} articles={articles} danhSachNoiBat /></div>}
+        {expanded && <div className="sm:pb-4"><ProjectsBrowser projects={ranked} articles={articles} danhSachNoiBat traCuu={traCuu} /></div>}
 
         {ranked.length > 0 && (
           <div className="sm:-mt-4"><ExpandToggle expanded={expanded} onClick={toggle} /></div>
