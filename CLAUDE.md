@@ -62,6 +62,11 @@
 >     kỳ Basic chạy song song (không cộng nối). ⑤ Hết VIP: tự về Basic giữ hạn Basic còn lại (ghi `ha_vip_luc`).
 >     ⑥ Hết hạn: ẩn + nhắn khách; đăng lại → chờ duyệt như tin mới. ⑦ Tự kiểm 8h: chỉ báo lỗi thật, sửa xong tự hết báo.
 >   - Mọi đường đặt hạn liệt kê ở đầu `src/lib/kiemTin.ts` — thêm đường mới phải thêm vào đó.
+> - **⛔⛔ TIN ĐĂNG HỘ = CẤM MỌI TIN NHẮN TỰ ĐỘNG (chủ dự án chốt 31/10/2026):** tin chủ dự án đăng hộ là tin miễn phí; tài khoản
+>   hiện trên tin là của khách (tài khoản đăng hộ `tao_ho`). Khách CHƯA tự vào đăng nhập → máy KHÔNG nhắn gì (Zalo ZBS lẫn email:
+>   duyệt tin, sắp/đã hết hạn, có người quan tâm, báo cáo tuần…), không báo lỗi. Chủ dự án tự nhắn khách hàng loạt qua ZBS.
+>   **Khách tự vào đăng nhập** (`vao_chinh_thuc_luc`) thì mới áp dụng nhắn tự động. Chặn một chỗ: `guiThongBao` (`src/lib/thongBao.ts`);
+>   đường nhắn mới phải đi qua hàm này (mã OTP đi đường riêng, không bị chặn).
 - **⛔ QUY TRÌNH CHUẨN KHÁCH ĐĂNG TIN — MỘT QUY TRÌNH (chủ dự án chốt 26/10/2026, "đây là CHUẨN"):**
   ① Bấm Đăng tin → chưa đăng nhập thì đăng nhập ngay tại trang, xong ở lại form. ② Điền form; thiếu ô → kéo tới đúng ô, báo rõ.
   ③ Chọn gói: web tính số phải trả (giá admin + 8% VAT, trừ khuyến mãi, ưu đãi thành viên, chiết khấu), so với ví khả dụng.
@@ -349,7 +354,7 @@ Buộc phải đụng vào vì lý do kỹ thuật → **DỪNG, HỎI TRƯỚC.
 > - [~] 29/10 đã kiểm HTML trên máy: đủ ItemList, BreadcrumbList, Organization, /llms.txt 200; Rich Results Test làm sau push **Kiểm dữ liệu cho Google** bằng Rich Results Test (search.google.com/test/rich-results) trên localhost qua đường hầm hoặc sau push:
 >       /mua-ban/can-ho-chung-cu (ItemList) · /cho-thue (BreadcrumbList) · một /du-an/<slug> · trang chủ (Organization: logo PNG,
 >       disambiguatingDescription, alternateName) · mở /llms.txt.
-> - [ ] **Push MỘT lần** khi anh nhắn "Push" (bước 5 trên) → kiểm web thật.
+> - [x] ✅ 31/10 đã push cfda3d7 (90 commit), web thật khớp bản đã kiểm **Push MỘT lần** khi anh nhắn "Push" (bước 5 trên) → kiểm web thật.
 > - [ ] **Sau push:** Search Console → Kiểm tra URL → Yêu cầu lập chỉ mục cho trang chủ, /cho-thue, 2–3 trang /mua-ban/<loại>;
 >       đánh dấu ✅ 20 dòng nhóm A (trang tính On-page) trong `HE-THONG-TU-KHOA.xlsx` ở ổ D:.
 > - [ ] **Link hồ sơ Google Doanh nghiệp**: anh gửi → thêm vào `sameAs` trong `src/components/SiteJsonLd.tsx` (gộp đợt push sau).
