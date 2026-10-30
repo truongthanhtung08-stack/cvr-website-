@@ -84,13 +84,17 @@ function DongNhan({ nhan, gt }: { nhan: string; gt: string }) {
 }
 
 // CHIA TRANG THEO CHIỀU CAO THẺ (chủ dự án 30/10/2026: trang toàn tra cứu thẻ nhỏ thì nhiều dự án hơn, có nổi bật thì ít hơn) —
-// mỗi trang 10 suất: thẻ nổi bật (cao 178) = 1 suất, thẻ tra cứu (cao 109) = 2/3 suất → toàn nổi bật 10 · toàn tra cứu 15 dự án / trang
-const SUAT_TRANG = 30; // tính theo phần ba suất cho khỏi lẻ: nổi bật 3, tra cứu 2
-function chiaTrangDuAn<T extends object>(ds: T[]): T[][] {
+// mỗi trang 10 suất (= 10 thẻ nổi bật), tính theo phần sáu suất cho khỏi lẻ, theo chiều cao THẬT của thẻ trên từng màn hình:
+//  · máy tính: nổi bật cao 178 = 6 · tra cứu cao 109 = 4 → toàn tra cứu 15 dự án / trang
+//  · điện thoại (31/10/2026 — thẻ tra cứu xếp như nổi bật, chưa có ảnh thì bỏ khung): nổi bật 331 = 6 · tra cứu có ảnh 299 = 5 ·
+//    tra cứu chưa ảnh 163 = 3 → các trang dài xấp xỉ nhau dù trộn loại nào
+const SUAT_TRANG = 60;
+function chiaTrangDuAn<T extends object>(ds: T[], dt = false): T[][] {
   const trang: T[][] = [[]];
   let dung = 0;
   for (const x of ds) {
-    const suat = "noiBat" in x ? 3 : 2;
+    const coAnh = "traCuu" in x && !!(x as { traCuu: { anh?: string } }).traCuu.anh;
+    const suat = "noiBat" in x ? 6 : !dt ? 4 : coAnh ? 5 : 3;
     if (dung + suat > SUAT_TRANG && trang[trang.length - 1].length) { trang.push([]); dung = 0; }
     trang[trang.length - 1].push(x);
     dung += suat;
@@ -149,6 +153,15 @@ export default function ProjectsBrowser({
   tieuDeDs?: string;
 }) {
   useDiaDanh(); // địa danh nạp sau khi trang hiện — về tới thì vẽ lại (20/10/2026)
+  // Điện thoại (< 640 px): chia trang theo chiều cao thẻ điện thoại (chiaTrangDuAn)
+  const [dienThoai, setDienThoai] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 639px)");
+    const doi = () => setDienThoai(mq.matches);
+    doi();
+    mq.addEventListener("change", doi);
+    return () => mq.removeEventListener("change", doi);
+  }, []);
   const [q, setQ] = useState("");
   const [status, setStatus] = useState(ALL);
   const [province, setProvince] = useState(ALL);
@@ -308,7 +321,7 @@ export default function ProjectsBrowser({
     ...visible.map((p) => ({ noiBat: p })),
     ...traCuuLoc.filter((d) => !slugNoiBat.has(d.slug)).map((d) => ({ traCuu: d })),
   ];
-  const cacTrang = chiaTrangDuAn(dsTrang);
+  const cacTrang = chiaTrangDuAn(dsTrang, dienThoai);
   const totalPages = cacTrang.length;
   const current = Math.min(page, totalPages);
   const pageItems = cacTrang[current - 1];
@@ -509,7 +522,7 @@ export default function ProjectsBrowser({
       ...visible.map((p) => ({ noiBat: p })),
       ...(traCuu ? traCuuLoc.filter((d) => !noiBatSlug.has(d.slug)).map((d) => ({ traCuu: d })) : []),
     ];
-    const trangChung = chiaTrangDuAn(dsChung);
+    const trangChung = chiaTrangDuAn(dsChung, dienThoai);
     const tongNB = trangChung.length;
     const trangNB = Math.min(trangNoiBat, tongNB);
     danhSachXemThem = (
