@@ -30,9 +30,9 @@ export function TheDuAnDoc({ d }: { d: DongTraCuu }) {
   return (
     <Link
       href={`/du-an/${d.slug}`}
-      // ĐỒNG BỘ (chủ dự án 31/10/2026: thẻ to nhỏ rất xấu, không để khoảng trống): 6 dòng của thẻ (ảnh · tên · địa chỉ · tình trạng · loại hình ·
-      // chủ đầu tư) là 6 hàng SUBGRID của dải slide → mọi thẻ trong dải cao bằng nhau, từng dòng thẳng hàng giữa các thẻ, chữ hiện đủ
-      className="card-lux group row-span-6 grid grid-rows-subgrid gap-0 overflow-hidden rounded-none border-0 bg-white shadow-lux shadow-lux-hover hover:-translate-y-1 hover:border-cvr-blue/45"
+      // ĐỒNG BỘ (chủ dự án 31/10/2026: thẻ to nhỏ rất xấu, không để khoảng trống): 5 dòng của thẻ (ảnh · tên · địa chỉ · loại hình [· tình trạng] ·
+      // chủ đầu tư) là 5 hàng SUBGRID của dải slide → mọi thẻ trong dải cao bằng nhau, từng dòng thẳng hàng giữa các thẻ, chữ hiện đủ
+      className="card-lux group row-span-5 grid grid-rows-subgrid gap-0 overflow-hidden rounded-none border-0 bg-white shadow-lux shadow-lux-hover hover:-translate-y-1 hover:border-cvr-blue/45"
     >
       <span className="relative block aspect-[16/10] w-full shrink-0 overflow-hidden bg-cvr-surface">
         {d.anh ? (
@@ -41,7 +41,6 @@ export function TheDuAnDoc({ d }: { d: DongTraCuu }) {
           // eslint-disable-next-line @next/next/no-img-element
           <img src="/logo/symbol-dark.svg" alt="" className="absolute inset-0 m-auto h-10 w-10 opacity-25" />
         )}
-        {/* CHỈ THẺ VIP có nhãn tình trạng trên ảnh, màu theo cấp (cùng màu nhãn cấp thẻ dự án nổi bật) — chủ dự án 31/10/2026 */}
         {/* QUY ĐỊNH HIỂN THỊ CẤP (chốt 4–5/9, một kiểu mọi nơi như thẻ tin): huy hiệu viên thuốc HUY_HIEU_CLS + dải màu cấp đỉnh thẻ;
             nội dung huy hiệu = tình trạng dự án; mọi nhãn rộng đều 112 px (vừa chữ dài nhất "Đã hoàn thành"), chữ căn giữa (chủ dự án 31/10/2026); thẻ thường trơn */}
         {d.cap && (<>
@@ -52,20 +51,19 @@ export function TheDuAnDoc({ d }: { d: DongTraCuu }) {
       {/* CHỮ DƯỚI ẢNH ĐỒNG NHẤT THẺ TIN (PropertyCard, chủ dự án 31/10/2026): tên 15 px đậm dòng 1,5 · các dòng 13 px biểu tượng +
           nội dung · dòng cuối gạch trên như dòng người đăng. Trường bắt buộc luôn hiện, thiếu ghi "<trường> đang cập nhật" */}
       <span className="min-w-0 px-3 pt-3 text-[15px] font-bold leading-[1.5] text-cvr-ink transition-colors group-hover:text-cvr-blue-ink">{d.ten}</span>
-      <span className="flex min-w-0 items-start gap-1 px-3 pt-1.5 text-[13px] text-cvr-muted">
-        <svg className="mt-[3px] h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-        <span className="min-w-0">{d.diaChi}</span>
+      {/* Địa chỉ = ĐÚNG dòng địa chỉ thẻ tin: địa chỉ MỚI (phường + tỉnh), ghim, 13 px, một dòng (chủ dự án 31/10/2026) */}
+      <span className="flex min-w-0 items-center gap-1 px-3 pt-1.5 text-[13px] text-cvr-muted">
+        <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+        <span className="line-clamp-1 min-w-0">{d.diaChi.replace(/^.*?(?=(Phường|Xã|Đặc khu) )/, "")}</span>
       </span>
-      {/* Thẻ thường: tình trạng là một dòng dưới ảnh; thẻ VIP đã có nhãn trên ảnh → dòng trống (hàng vẫn thẳng với thẻ bên cạnh) */}
-      <span className={`flex min-w-0 items-start gap-1 px-3 pt-1.5 text-[13px] ${d.tinhTrang ? "text-cvr-body" : "text-cvr-faint"}`}>
-        {!d.cap && (<>
-          <svg className="mt-[3px] h-3.5 w-3.5 shrink-0 text-cvr-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-          <span className="min-w-0">{d.tinhTrang || "Tình trạng đang cập nhật"}</span>
-        </>)}
-      </span>
-      <span className={`flex min-w-0 items-start gap-1 px-3 pb-3 pt-1.5 text-[13px] ${d.loaiHinh ? "text-cvr-body" : "text-cvr-faint"}`}>
+      {/* GỌN, CÓ LOGIC (chủ dự án 31/10/2026): loại hình + tình trạng chung một dòng ("Căn hộ cao cấp · Đang mở bán"); thẻ VIP đã có
+          tình trạng ở nhãn trên ảnh → dòng chỉ ghi loại hình. Không còn dòng trống; chữ dài tự xuống dòng, thẻ giãn đều cả dải */}
+      <span className="flex min-w-0 items-start gap-1 px-3 pb-3 pt-1.5 text-[13px] text-cvr-body">
         <svg className="mt-[3px] h-3.5 w-3.5 shrink-0 text-cvr-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6" /></svg>
-        <span className="min-w-0">{d.loaiHinh || "Loại hình đang cập nhật"}</span>
+        <span className="min-w-0">
+          <span className={d.loaiHinh ? "" : "text-cvr-faint"}>{d.loaiHinh || "Loại hình đang cập nhật"}</span>
+          {!d.cap && <span className={d.tinhTrang ? "" : "text-cvr-faint"}> · {d.tinhTrang || "Tình trạng đang cập nhật"}</span>}
+        </span>
       </span>
       <span className={`mx-3 flex min-w-0 items-start gap-1 border-t border-cvr-line pb-3 pt-2.5 text-[13px] ${d.chuDauTu ? "font-medium text-cvr-body" : "text-cvr-faint"}`}>
         <svg className="mt-[3px] h-3.5 w-3.5 shrink-0 text-cvr-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 21V5a2 2 0 012-2h8a2 2 0 012 2v16M16 9h2a2 2 0 012 2v10M8 7h4M8 11h4M8 15h4M2 21h20" /></svg>
