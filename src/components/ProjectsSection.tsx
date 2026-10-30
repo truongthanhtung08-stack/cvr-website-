@@ -92,7 +92,7 @@ export default function ProjectsSection({ projects, articles = [] }: { projects:
                   <h3 className="clamp-2 min-h-[3em] font-semibold leading-[1.5] text-cvr-ink">{p.name}</h3>
                   <p className="mt-1 flex items-center gap-1 text-xs text-cvr-muted">
                     <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                    {p.location}
+                    {giaTriThat(p.location) || "Đang cập nhật"}
                   </p>
                   {/* THẺ DỰ ÁN MỘT CHUẨN (chủ dự án 30–31/10/2026, như thẻ /du-an và Dự án tương tự): chỉ dòng Vị trí có biểu tượng; dòng khác nhãn đậm;
 
@@ -153,7 +153,7 @@ export default function ProjectsSection({ projects, articles = [] }: { projects:
                         <h3 className="font-semibold leading-snug text-cvr-ink">{p.name}</h3>
                         <p className="mt-1 flex items-center gap-1 text-xs text-cvr-muted">
                           <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                          {p.location}
+                          {giaTriThat(p.location) || "Đang cập nhật"}
                         </p>
                         {/* THẺ DỰ ÁN MỘT CHUẨN (chủ dự án 30–31/10/2026, như thẻ /du-an và Dự án tương tự): chỉ dòng Vị trí có biểu tượng; dòng khác nhãn đậm;
 

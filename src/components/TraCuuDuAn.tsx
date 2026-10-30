@@ -51,7 +51,7 @@ export function TheDuAnDoc({ d }: { d: DongTraCuu }) {
       {/* Địa chỉ ĐẦY ĐỦ hệ mới, không cắt — dài thì xuống dòng (chủ dự án 31/10/2026); ghim + 13 px như dòng địa chỉ thẻ tin */}
       <span className="flex min-w-0 items-start gap-1 px-3 pt-1.5 text-[13px] text-cvr-muted">
         <svg className="mt-[3px] h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-        <span className="min-w-0">{d.diaChi}</span>
+        <span className={`min-w-0 ${d.diaChi ? "" : "text-cvr-faint"}`}>{d.diaChi || "Đang cập nhật"}</span>
       </span>
       {/* CÁC DÒNG DƯỚI TÊN (chủ dự án chốt 30/10/2026, nhắc 31/10): CHỈ dòng Vị trí có biểu tượng; dòng khác ghi NHÃN ĐẬM có dấu hai chấm,
           giống thẻ danh sách /du-an (DongNhan); trống ghi "Đang cập nhật" mờ. Tiến độ: thẻ VIP ở nhãn trên ảnh, thẻ thường một dòng */}

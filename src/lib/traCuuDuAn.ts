@@ -79,7 +79,7 @@ export function dongTraCuu(tin: Listing[], duAn: Project[]): DongTraCuu[] {
         loaiHinh: giaTriThat(p?.type),
         tinhTrang: giaTriThat(p?.status),
         // Thẻ ghi địa chỉ một kiểu: phường + tỉnh hệ MỚI (như thẻ Dự án nổi bật, 30/10/2026); địa chỉ đầy đủ ở trang chi tiết
-        diaChi: p?.location ?? tin1?.location ?? d.tinh,
+        diaChi: giaTriThat(p?.location) || giaTriThat(tin1?.location) || d.tinh,
         diaChiCu: p?.locationCu ?? tin1?.locationCu ?? "",
         tinh: d.tinh,
         anh: p?.photos?.[0] ?? "",

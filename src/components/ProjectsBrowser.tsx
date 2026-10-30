@@ -443,7 +443,7 @@ export default function ProjectsBrowser({
             {/* Mọi dòng dưới tên một kiểu: biểu tượng + nội dung, cùng cỡ, cùng màu; chưa có thì "<trường> đang cập nhật" mờ hơn */}
             {/* Thẻ tra cứu: địa chỉ ĐẦY ĐỦ một dòng riêng; Loại hình một dòng; Tiến độ dòng cuối bên phải (KHÔNG ghi trên ảnh) — chủ dự án 30/10/2026 */}
             <div className="mt-2 space-y-1.5">
-              <DongThe icon="ghim" gt={p.location} />
+              <DongThe icon="ghim" gt={giaTriThat(p.location)} chua="Đang cập nhật" />
               {/* Mọi thẻ: chỉ dòng Vị trí có biểu tượng; các dòng khác ghi NHÃN ĐẬM có dấu hai chấm (chủ dự án 30/10/2026) */}
               {/* Loại hình: 1 dòng dài hết bề ngang thẻ, quá dài mới “…” ở cuối (chủ dự án 30/10/2026) */}
               <DongNhan nhan="Loại hình" gt={loaiHinhThe(p.type)} />
