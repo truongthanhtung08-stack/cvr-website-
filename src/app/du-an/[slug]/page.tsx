@@ -420,9 +420,9 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                     điện thoại 2 ô; ô đều nhau, giá trị dài tự xuống dòng trong ô */}
                 {/* BẢNG THÔNG TIN CHUẨN (chủ dự án 30/10/2026): PC 2 cột thẳng hàng — mỗi mục nhãn xám rộng cố định + giá trị đậm NGAY SAU;
                     thứ tự theo cặp (chủ đầu tư | tình trạng · loại hình | giá · quy mô | diện tích …); điện thoại 1 cột */}
-                <div className="grid grid-cols-1 gap-x-10 gap-y-3 sm:grid-cols-2">
-                  {(() => { const ds = nhomThongSo(hangThongSo).flat(); return [...ds.filter((x) => x.value.length <= 26), ...ds.filter((x) => x.value.length > 26)]; })().map((s) => (
-                    // Mục dài (> 26 ký tự) xuống cuối, trọn một hàng — không bẻ dòng khi còn chỗ (chủ dự án 30/10/2026)
+                <div className="grid grid-cols-1 gap-x-10 gap-y-3 sm:grid-flow-row-dense sm:grid-cols-2">
+                  {nhomThongSo(hangThongSo).flat().map((s) => (
+                    // Giữ THỨ TỰ ƯU TIÊN; mục dài (> 26 ký tự) trọn một hàng ngay tại chỗ, ô trống do nó để lại thì mục ngắn kế tiếp lấp (grid dense)
                     <div key={s.label} className={`flex min-w-0 items-start gap-3 text-[15px] ${s.value.length > 26 ? "sm:col-span-2" : ""}`}>
                       <span className="w-32 shrink-0 text-sm leading-[22px] text-cvr-muted sm:w-36">{s.label}</span>
                       <span className={`min-w-0 ${s.value === "Đang cập nhật" ? "text-cvr-faint" : "font-medium text-cvr-ink"}`}>
@@ -451,7 +451,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
               {/* 2) Vị trí — bản đồ + tiện ích xung quanh + chỉ đường từ vị trí của bạn */}
               <Section id="vi-tri" title="Vị trí & tiện ích xung quanh">
-                <ProjectNearby mapQuery={mapQuery} address={diaChiDu} places={places} zoom={16} caoBanDo="h-[240px] w-full sm:aspect-video sm:h-auto" />
+                <ProjectNearby mapQuery={mapQuery} address={diaChiDu} places={places} zoom={16} caoBanDo="h-[240px] w-full sm:h-[400px]" />
               </Section>
 
               {/* 3) Tiện ích dự án */}
@@ -541,8 +541,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               {/* Video (nếu có) — DƯỚI CÙNG các phần thông tin dự án (chủ dự án 30/10/2026) */}
               {p.videos && p.videos.length > 0 && (
                 <Section id="video" title="Video dự án">
-                  {/* Video thẳng mép các phần khác: 1 video rộng hết khung · từ 2 video xếp 2 một hàng (chủ dự án 30/10/2026: thu nhỏ lệch trái là vô lý) */}
-                  <div className={`grid grid-cols-1 gap-4 ${p.videos.length > 1 ? "sm:grid-cols-2" : ""}`}>
+                  {/* CÂN ĐO (chủ dự án 30/10/2026): bản đồ 798×400, video 16:9 cao bằng bản đồ = 711×400 căn giữa · từ 2 video xếp 2 một hàng */}
+                  <div className={`grid grid-cols-1 gap-4 ${p.videos.length > 1 ? "sm:grid-cols-2" : "mx-auto max-w-[711px]"}`}>
                     {p.videos.map((v, i) => <VideoEmbed key={i} url={v} />)}
                   </div>
                 </Section>
