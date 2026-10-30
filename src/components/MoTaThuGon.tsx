@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { veDauKhoi } from "@/lib/thuGon";
+import { diemCat, veDauKhoi } from "@/lib/thuGon";
 
 // MÔ TẢ TIN DÀI → THU GỌN + "Xem thêm" (như Batdongsan, chủ dự án 09/10/2026).
 // Ngắn hơn khung thì hiện trọn, không có nút. Mô tả dài: "Xem thêm" ↔ "Thu gọn" (chủ dự án 09/10/2026).
@@ -30,14 +30,9 @@ export default function MoTaThuGon({ children, dong = 10, nenMo = "from-cvr-surf
     const tinh = () => {
       const khung = dong * GIAN_DONG * parseFloat(getComputedStyle(el).fontSize);
       setDai(el.scrollHeight > khung * 1.6);
-      const goc = el.getBoundingClientRect().top;
-      let cat: number | undefined;
-      for (const m of el.querySelectorAll<HTMLElement>("img, picture, figure, video, iframe, table")) {
-        const r = m.getBoundingClientRect();
-        const tren = r.top - goc, duoi = r.bottom - goc;
-        // ảnh nằm sát đầu (phần chữ trên nó chưa tới 1/3 khung) → lấy trọn ảnh rồi cắt dưới nó
-        if (tren < khung && duoi > khung) { cat = tren < khung / 3 ? duoi + 8 : tren - 8; break; }
-      }
+      // Chỗ cắt theo luật chung cả web (diemCat): không cắt ngang ảnh, bản đồ, video, bảng…
+      const { cat: c } = diemCat(el, khung);
+      const cat = c === khung ? undefined : c;
       setCatTai(cat);
     };
     tinh();

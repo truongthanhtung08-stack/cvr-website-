@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { veDauKhoi } from "@/lib/thuGon";
+import { diemCat, veDauKhoi } from "@/lib/thuGon";
 
 // NỘI DUNG DÀI → THU GỌN, nút "Xem thêm" kiểu Batdongsan ở cuối mục Tổng quan dự án (chủ dự án 31/10/2026: "dài thì xem thêm").
 // Nội dung cao hơn CAO × 1,5 thì cắt ở CAO px (vệt mờ cuối), ngắn thì hiện trọn, không nút. Đường cắt rơi giữa ảnh / bản đồ / video
@@ -21,14 +21,8 @@ export default function ThuGonTrang({ children, className = "" }: { children: Re
     if (!el) return;
     const tinh = () => {
       setDai(el.scrollHeight > CAO * 1.5);
-      const goc = el.getBoundingClientRect().top;
-      let cat = CAO, sauAnh = false;
-      for (const m of el.querySelectorAll<HTMLElement>("img, picture, figure, video, iframe, table, [data-khong-cat]")) {
-        const r = m.getBoundingClientRect();
-        const tren = r.top - goc, duoi = r.bottom - goc;
-        // KHÔNG BAO GIỜ CẮT NGANG ẢNH (chủ dự án 31/10/2026): ảnh nằm gần đầu → lấy trọn ảnh, cắt dưới nó; còn lại cắt trên nó
-        if (tren < CAO && duoi > CAO) { sauAnh = tren < CAO / 2; cat = sauAnh ? duoi + 16 : tren - 16; break; }
-      }
+      // Chỗ cắt theo luật chung cả web (diemCat): không cắt ngang ảnh, bản đồ, video, bảng…
+      const { cat, sauKhoi: sauAnh } = diemCat(el, CAO);
       setCatTai(cat);
       setDuoiAnh(sauAnh);
     };
