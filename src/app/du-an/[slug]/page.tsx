@@ -277,6 +277,14 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
     .sort((a, b) => (a.h < 0 ? 99 : a.h) - (b.h < 0 ? 99 : b.h) || a.i - b.i)
     .map((x) => x.s);
 
+  // Bảng Tổng quan 2 cột, GIỮ ĐÚNG THỨ TỰ (chủ dự án 30/10/2026): mục dài (> 26 ký tự) chiếm trọn hàng; nếu nửa hàng bên trái đang có
+  // mục ngắn đứng một mình thì mục đó cũng giãn trọn hàng — không lỗ, không kéo mục sau lên
+  const trongHang = hangThongSo.map(() => false);
+  { let cot = 0; hangThongSo.forEach((s, i) => {
+    if (s.value.length > 26) { if (cot === 1) trongHang[i - 1] = true; trongHang[i] = true; cot = 0; }
+    else cot = cot === 0 ? 1 : 0;
+  }); }
+
   // Dự án tương tự — cùng cách trang dự án tra cứu (cùng tỉnh, cùng nhóm loại hình trước), lấy hết cho slide + Xem thêm
   const tuongTuNoiBat = duAnTuongTu(province, p.type, p.slug);
 
@@ -396,10 +404,10 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                     điện thoại 2 ô; ô đều nhau, giá trị dài tự xuống dòng trong ô */}
                 {/* BẢNG THÔNG TIN CHUẨN (chủ dự án 30/10/2026): PC 2 cột thẳng hàng — mỗi mục nhãn xám rộng cố định + giá trị đậm NGAY SAU;
                     thứ tự theo cặp (chủ đầu tư | tình trạng · loại hình | giá · quy mô | diện tích …); điện thoại 1 cột */}
-                <div className="grid grid-cols-1 gap-x-10 gap-y-3 sm:grid-flow-row-dense sm:grid-cols-2">
-                  {hangThongSo.map((s) => (
-                    // Giữ THỨ TỰ ƯU TIÊN; mục dài (> 26 ký tự) trọn một hàng ngay tại chỗ, ô trống do nó để lại thì mục ngắn kế tiếp lấp (grid dense)
-                    <div key={s.label} className={`flex min-w-0 items-start gap-3 text-[15px] ${s.value.length > 26 ? "sm:col-span-2" : ""}`}>
+                <div className="grid grid-cols-1 gap-x-10 gap-y-3 sm:grid-cols-2">
+                  {hangThongSo.map((s, i) => (
+                    // ĐÚNG THỨ TỰ, không kéo mục nào lên; mục dài trọn hàng — trước nó còn trống nửa hàng thì mục trước giãn kín (trongHang)
+                    <div key={s.label} className={`flex min-w-0 items-start gap-3 text-[15px] ${trongHang[i] ? "sm:col-span-2" : ""}`}>
                       <span className="w-32 shrink-0 text-sm leading-[22px] text-cvr-muted sm:w-36">{s.label}</span>
                       <span className={`min-w-0 ${s.value === "Đang cập nhật" ? "text-cvr-faint" : "font-medium text-cvr-ink"}`}>
                         {s.href ? <Link href={s.href} className="hover:text-cvr-blue-ink">{s.value}</Link> : s.value}
