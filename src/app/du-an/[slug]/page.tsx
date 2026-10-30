@@ -368,9 +368,9 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             <div className="relative -mx-4 sm:mx-0">
               {/* Nhãn tình trạng chung mọi nơi (NhanTinhTrang, 31/10/2026): chỉ dự án VIP, màu theo cấp; dự án thường ghi Tình trạng trong bảng Tổng quan */}
               <NhanTinhTrang tier={p.tier} tinhTrang={giaTriThat(p.status)} />
-              {/* Dự án tra cứu: MỘT khung ảnh đại diện (≥ 2 ảnh tự chuyển), ảnh hiện trọn — bằng cột nội dung; dự án nổi bật giữ thư viện ảnh */}
+              {/* Dự án tra cứu: MỘT khung ảnh đại diện (≥ 2 ảnh tự chuyển), ảnh hiện trọn — rộng hết khổ, cao bằng thư viện ảnh dự án nổi bật */}
               {traCuu ? (
-                <div className="grid lg:grid-cols-3 lg:gap-8"><div className="lg:col-span-2"><AnhTraCuu images={gallery} alt={p.name} /></div></div>
+                <AnhTraCuu images={gallery} alt={p.name} />
               ) : (
                 <ProjectGallery images={gallery} alt={p.name} />
               )}
