@@ -30,7 +30,7 @@ export const LOAI_HINH: [string, string[]][] = [
   ["Shophouse", ["shophouse", "nha pho thuong mai"]],
   // Trang trại = đất nông nghiệp; homestay, farmstay và khu nghỉ dưỡng là BĐS nghỉ dưỡng (chủ dự án 29/10/2026, D24).
   // Cụm dài thắng cụm ngắn của nhãn khác ("dat trang trai" ≠ Đất nền, "khu nghi duong" ≠ Condotel) — luật nhường ở timTuDien.
-  ["Đất nông nghiệp", ["dat nong nghiep", "dat trang trai", "trang trai", "dat vuon"]],
+  ["Đất khác", ["dat nong nghiep", "dat trang trai", "trang trai", "dat vuon", "dat khac"]],
   ["Đất nền", ["dat nen", "dat du an", "lo dat", "dat tho cu", "dat"]],
   ["Homestay", ["homestay", "home stay", "farmstay", "farm stay"]],
   ["Khu nghỉ dưỡng", ["khu nghi duong", "resort"]],

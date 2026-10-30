@@ -331,8 +331,9 @@ export const categorySpecs: CategorySpec[] = [
   {
     // Đứng TRƯỚC "Đất nền / Đất" (khoá "đất" bắt mọi loại đất)
     label: "Đất nông nghiệp",
-    match: ["đất nông nghiệp"],
-    fields: datFields(["Đất trồng cây lâu năm", "Đất vườn", "Đất trang trại", "Đất trồng lúa", "Đất rừng sản xuất"]),
+    // Loại hình "Đất khác" (chủ dự án 30/10/2026) — nhãn bộ ô giữ "Đất nông nghiệp" (các danh sách KHONG_* dùng nhãn này)
+    match: ["đất khác", "đất nông nghiệp"],
+    fields: datFields(["Đất nông nghiệp", "Đất trồng cây lâu năm", "Đất vườn", "Đất trang trại", "Đất trồng lúa", "Đất rừng sản xuất"]),
   },
   {
     label: "Đất nền / Đất",
@@ -340,7 +341,7 @@ export const categorySpecs: CategorySpec[] = [
     // Chủ dự án 29/10/2026 tối: "Đất / Đất nền dự án (menu cha) — Đất ở đô thị, đất ở nông thôn (đất thổ cư) là đặc điểm thuộc
     // đất" · "hoặc thay đất ở nông thôn = đất thổ cư"
     // Chủ dự án 29/10/2026 tối (lần 3): "Đất / Đất nền dự án (menu cha) — đặc điểm ghi ĐẦY ĐỦ tương ứng theo đặc điểm đất để khách chọn".
-    // Đất vườn, đất nông nghiệp KHÔNG ở đây — đăng loại hình "Đất nông nghiệp" (có trang menu riêng), tránh một loại hai đường.
+    // Đất vườn, đất nông nghiệp KHÔNG ở đây — đăng loại hình "Đất khác" (menu con "Các loại đất khác"), tránh một loại hai đường.
     fields: datFields(["Đất thổ cư", "Đất nền dự án", "Đất ở đô thị", "Đất tái định cư", "Đất thương mại, dịch vụ"]),
   },
 ];

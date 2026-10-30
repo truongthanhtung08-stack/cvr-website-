@@ -22,7 +22,8 @@ export const saleTypeGroups: TypeGroup[] = [
   // "Căn hộ dịch vụ" bán: bổ sung cho đủ như Batdongsan ("Bán chung cư mini, căn hộ dịch vụ") — chủ dự án 30/10/2026 "cái chưa có thì bổ sung vào"
   { label: "Căn hộ, chung cư", items: ["Căn hộ", "Chung cư", "Căn hộ dịch vụ"] }, // tên nhóm = tên cha trên menu (chủ dự án 29/10/2026)
   { label: "Nhà", items: ["Nhà riêng", "Nhà mặt phố", "Nhà biệt thự / Liền kề", "Shophouse / Nhà phố thương mại"] },
-  { label: "Đất", items: ["Đất nền / Đất nền dự án", "Đất nông nghiệp"] },
+  // "Đất khác" = mọi loại đất ngoài đất nền (nông nghiệp, vườn, trang trại…) — chủ dự án 30/10/2026; trước là "Đất nông nghiệp"
+  { label: "Đất", items: ["Đất nền / Đất nền dự án", "Đất khác"] },
   // "Trang trại / Khu nghỉ dưỡng" (D18) tách thành "Homestay / Farmstay" + "Khu nghỉ dưỡng" (chủ dự án 29/10/2026, D24)
   { label: "BĐS nghỉ dưỡng", items: ["Villa / Biệt thự biển", "Condotel", "Homestay / Farmstay", "Khu nghỉ dưỡng"] },
   { label: "BĐS công nghiệp", items: ["Đất công nghiệp", "Kho / Nhà xưởng"] },

@@ -87,7 +87,7 @@ export function duongDanTuCau(mucTab: "ban" | "thue", raw: string): string | nul
     "Shophouse": { ban: "shophouse", thue: "shophouse" },
     "Đất nền": { ban: "dat", thue: "kho-nha-xuong" },
     "Condotel": { ban: "condotel" },
-    "Đất nông nghiệp": { ban: "dat-nong-nghiep" },
+    "Đất khác": { ban: "dat-nong-nghiep" },
     "Homestay": { ban: "homestay-farmstay", thue: "homestay-farmstay" },
     "Khu nghỉ dưỡng": { ban: "khu-nghi-duong" },
     "Kho xưởng": { ban: "kho-nha-xuong", thue: "kho-nha-xuong" },
