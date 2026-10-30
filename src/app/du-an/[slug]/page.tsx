@@ -408,7 +408,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                   ))}
                 </div>
                 {p.overview.length > 0 && (
-                <div className="mt-5">
+                // Cách bảng thông số 32 px (chủ dự án 31/10/2026: cần cách biệt với phần nội dung bên dưới)
+                <div className="mt-8">
                 {/* TRANG DỰ ÁN HIỆN ĐỦ, KHÔNG CẮT TỪNG PHẦN — trang dài là chuẩn (chủ dự án 30/10/2026) */}
                 <div>
                   <div className="space-y-3 text-[15px] leading-relaxed text-cvr-body">
