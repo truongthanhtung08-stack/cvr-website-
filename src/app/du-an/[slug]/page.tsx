@@ -745,27 +745,32 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
 
           {/* pSEO — liên kết sang trang mua bán / cho thuê cùng tỉnh (khối có lề riêng → bù lề khung trang) */}
-          {/* Điện thoại: Liên hệ (giá) + form "Tải tài liệu & báo giá" GOM xuống sau khối tin thuộc dự án — không chèn giữa nội dung (chủ dự án 31/10/2026) */}
-          {(showPrice || contact) && (
-            <div className="mt-12 rounded-2xl border border-cvr-line bg-white p-4 lg:hidden">
-              {showPrice && (
-                <div className={contact ? "mb-4 border-b border-cvr-line pb-4" : undefined}>
-                  <p className="text-xs text-cvr-muted">Giá bán từ</p>
-                  <p className="text-2xl font-bold tracking-tight text-cvr-ink">{sidePrice}</p>
+          {/* Điện thoại: Liên hệ (giá) + form "Tải tài liệu & báo giá" GỘP MỘT KHỐI, đặt sau khối tin thuộc dự án — gọn, không chèn giữa
+              nội dung, không hai hộp rời (chủ dự án 31/10/2026) */}
+          {(showPrice || contact || !traCuu) && (
+            <div className="mt-12 divide-y divide-cvr-line overflow-hidden rounded-2xl border border-cvr-line bg-white lg:hidden">
+              {(showPrice || contact) && (
+                <div className="p-4">
+                  {showPrice && (
+                    <div className={contact ? "mb-4" : undefined}>
+                      <p className="text-xs text-cvr-muted">Giá bán từ</p>
+                      <p className="text-2xl font-bold tracking-tight text-cvr-ink">{sidePrice}</p>
+                    </div>
+                  )}
+                  {contact && (
+                    <>
+                      <p className="mb-3 text-base font-semibold tracking-tight text-cvr-ink">Liên hệ</p>
+                      <LienHeDuAn contact={contact} />
+                    </>
+                  )}
                 </div>
               )}
-              {contact && (
-                <>
-                  <p className="mb-3 text-base font-semibold tracking-tight text-cvr-ink">Liên hệ</p>
-                  <LienHeDuAn contact={contact} />
-                </>
+              {!traCuu && (
+                <div className="p-4 [&>div:last-child]:border-0 [&>div:last-child]:p-0 [&>div:last-child]:shadow-none [&_input]:h-10 [&_select]:h-10">
+                  <p className="mb-3 text-base font-semibold tracking-tight text-cvr-ink">Tải tài liệu & báo giá</p>
+                  <LeadForm cta="Đăng ký nhận tài liệu" topics={["Nhận brochure & mặt bằng", "Nhận bảng giá & chính sách", "Đặt lịch tham quan dự án", "Tư vấn vay ngân hàng"]} />
+                </div>
               )}
-            </div>
-          )}
-          {!traCuu && (
-            <div className="mt-12 overflow-hidden rounded-2xl border border-cvr-line bg-white p-4 lg:hidden [&>div:last-child]:border-0 [&>div:last-child]:p-0 [&>div:last-child]:shadow-none [&_input]:h-10 [&_select]:h-10">
-              <p className="mb-3 text-base font-semibold tracking-tight text-cvr-ink">Tải tài liệu & báo giá</p>
-              <LeadForm cta="Đăng ký nhận tài liệu" topics={["Nhận brochure & mặt bằng", "Nhận bảng giá & chính sách", "Đặt lịch tham quan dự án", "Tư vấn vay ngân hàng"]} />
             </div>
           )}
 
