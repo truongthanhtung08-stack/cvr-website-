@@ -645,7 +645,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             {/* CỘT PHẢI LUÔN CÓ, ĐỦ THỨ LIÊN QUAN (chủ dự án 30/10/2026) — mọi dự án cùng một khuôn: giá + liên hệ (khi có) · tin của dự án
                 · dự án cùng khu vực · nhận tài liệu & báo giá */}
             {coCotPhai && (
-            <aside className={`lg:col-span-1 ${traCuu ? "lg:hidden" : "lg:mt-5"}`}>
+            // Tra cứu: máy tính đã có hàng đầu trang; điện thoại chỉ dựng cột này khi có giá / liên hệ (cột rỗng vẫn ăn khe 24 px — 31/10/2026)
+            <aside className={`lg:col-span-1 ${traCuu ? (showPrice || contact ? "lg:hidden" : "hidden") : "lg:mt-5"}`}>
               {/* Cột phải CUỘN THEO TRANG, không dính: cột cao hơn màn hình mà dính thì cuộn bị khựng rồi trôi (chủ dự án 30/10/2026) */}
               <div className="h-full space-y-4">
                 <div className="space-y-4">

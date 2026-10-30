@@ -5,6 +5,8 @@ import Image from "next/image";
 import dynamic from "next/dynamic";
 // Bộ xem ảnh lớn (zoom, vuốt đổi ảnh) — CÙNG bộ với thư viện ảnh dự án nổi bật; chỉ tải khi bấm vào ảnh
 const PhotoViewer = dynamic(() => import("@/components/PhotoViewer"));
+// Điện thoại: bấm ảnh → danh sách ảnh xếp dọc kiểu Facebook — CÙNG cơ chế khung ảnh dự án nổi bật (ProjectGallery / PhotoList, 31/10/2026)
+const PhotoList = dynamic(() => import("@/components/PhotoList"));
 
 // ============================================================================
 // ẢNH ĐẦU TRANG DỰ ÁN TRA CỨU (chủ dự án 31/10/2026): MỘT khung = ảnh đại diện; có từ 2 ảnh thì tự chuyển (mờ dần, như ô Khu
@@ -23,6 +25,12 @@ export default function AnhTraCuu({ images, alt, khung = "aspect-[16/9]" }: { im
   const [i, setI] = useState(0);
   const [dung, setDung] = useState(false);
   const [xemTo, setXemTo] = useState(false);
+  const [dsDoc, setDsDoc] = useState(false);
+  // Máy tính: mở thẳng ảnh lớn · điện thoại: mở danh sách ảnh kiểu Facebook (bấm một tấm trong danh sách → xem lớn)
+  const moAnh = () => {
+    if (window.matchMedia("(min-width: 1024px)").matches) setXemTo(true);
+    else setDsDoc(true);
+  };
 
   useEffect(() => {
     if (ds.length < 2 || dung) return;
@@ -43,7 +51,9 @@ export default function AnhTraCuu({ images, alt, khung = "aspect-[16/9]" }: { im
       )}
       {/* Dựng tấm trước (đang mờ dần đi) · tấm đang hiện · tấm kế (nạp sẵn) — không chớp nền xám khi chuyển */}
       {/* Bấm vào ảnh → mở xem to (chủ dự án 31/10/2026) */}
-      {ds.length > 0 && <button type="button" aria-label="Xem ảnh lớn" onClick={() => setXemTo(true)} className="absolute inset-0 z-[5] cursor-zoom-in" />}
+      {ds.length > 0 && <button type="button" aria-label="Xem ảnh lớn" onClick={moAnh} className="absolute inset-0 z-[5] cursor-zoom-in" />}
+      {dsDoc && <PhotoList images={ds} title={alt} onPick={(k) => { setI(k); setXemTo(true); }} onClose={() => setDsDoc(false)} nhanPhim={!xemTo} />}
+      {/* Ảnh lớn dựng SAU danh sách → nằm trên danh sách khi mở từ danh sách */}
       {xemTo && <PhotoViewer images={ds} start={i} title={alt} onClose={() => setXemTo(false)} />}
       {ds.map((src, k) => (k === i || k === (i + 1) % ds.length || k === (i - 1 + ds.length) % ds.length) && (
         <div key={src} className={`absolute inset-0 transition-opacity duration-700 ${k === i ? "opacity-100" : "opacity-0"}`} aria-hidden={k !== i}>
