@@ -9,6 +9,7 @@ import RichContent from "@/components/RichContent";
 import { getTier, type TierId } from "@/lib/packages";
 import { nhanDienTich as nhanDienTichTheoLoai, laTinThue } from "@/lib/listingSpec";
 import type { ListingFull } from "@/lib/listingsDb";
+import { tenLoaiHinh } from "@/lib/filters";
 
 // ============================================================================
 // XEM TRƯỚC TIN ĐĂNG (chủ dự án 15/10/2026: "phải cấu trúc để khách hình dung được tin đăng như thế
@@ -154,7 +155,7 @@ export default function XemTruocTin({
 
           <Section title="Đặc điểm bất động sản">
             <div className="grid grid-cols-1 gap-x-8 sm:grid-cols-2">
-              <Row label="Loại hình" value={l.type} />
+              <Row label="Loại hình" value={tenLoaiHinh(l.type)} />
               {d.projectName && <Row label="Dự án" value={d.projectName} />}
               {d.specs.map((f) => <Row key={f.label} label={f.label} value={f.value} />)}
               <Row label="Tình trạng pháp lý" value={d.legal ?? "Chưa cập nhật"} />

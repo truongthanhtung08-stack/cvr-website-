@@ -8,7 +8,7 @@ import OGoTuGian from "@/components/OGoTuGian";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { lamMoiWeb } from "@/lib/lamMoiWeb";
-import { saleTypeGroups, rentTypeGroups } from "@/lib/filters";
+import { saleTypeGroups, rentTypeGroups, tenLoaiHinh } from "@/lib/filters";
 import { provinceNamesFor, districtsOf, wardsOf, wardsOfNew, wardsOfAny, chuanTen, type GeoMode } from "@/lib/locations";
 import { haiDongDiaChi, doiHeGiuNguyen, chuoiTimBanDo, diemTimBanDo, ungVienPhuongCu, type NhoHaiHe } from "@/lib/diaChiHaiHe";
 import { ganDiaGioi, phuongCuTheoGhim, type DiaGioiBanDo } from "@/lib/diaGioiTuBanDo";
@@ -453,7 +453,7 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
               <option value="">— Chọn loại hình —</option>
               {typeGroups.map((g) => (
                 <optgroup key={g.label} label={g.label}>
-                  {g.items.map((t) => <option key={t} value={t}>{t}</option>)}
+                  {g.items.map((t) => <option key={t} value={t}>{tenLoaiHinh(t)}</option>)}
                 </optgroup>
               ))}
             </select>

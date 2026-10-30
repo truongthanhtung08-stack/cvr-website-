@@ -35,7 +35,7 @@ import { rentCategories, saleCategories } from "@/lib/categories";
 import { khuVucList } from "@/lib/khuVuc";
 import LienKetPseo from "@/components/LienKetPseo";
 import { getProject, getProjects } from "@/lib/contentDb";
-import { normalizeVi, cungDuAn } from "@/lib/filters";
+import { normalizeVi, cungDuAn, tenLoaiHinh } from "@/lib/filters";
 import { tierFromBadge, getTier } from "@/lib/packages";
 import { chuanHoaSdt } from "@/lib/phone";
 import MoTaThuGon from "@/components/MoTaThuGon";
@@ -653,7 +653,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                     (giá · diện tích · phòng ngủ · phòng tắm · hướng · nội thất và
                     bộ mục chính của loại hình). Ở đây chỉ còn phần đặc điểm. */}
                 <div className="grid grid-cols-1 gap-x-8 sm:grid-cols-2">
-                  <Row label="Loại hình" value={l.type} />
+                  <Row label="Loại hình" value={tenLoaiHinh(l.type)} />
                   {/* Dòng "Dự án" đã chuyển lên ngay dưới địa chỉ đầu tin (22/10/2026 — dự án là vị trí, không phải đặc điểm). */}
                   {d.specs.map((f) => <Row key={f.label} label={f.label} value={f.value} />)}
                   {/* Trống thì ẩn — không phơi "Chưa cập nhật" lên trang công khai (20/10/2026); thiếu thì VIỆC Cowork bổ sung */}

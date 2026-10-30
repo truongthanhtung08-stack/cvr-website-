@@ -26,7 +26,7 @@ import {
   phapLyCho, legalOptions, fieldsFor, furnishLevels, amenityGroups, tienIchCho, interiorItems, directions,
   purposeOfDemand, demandOfPurpose,
 } from "@/lib/listingSpec";
-import { typeGroupsFor, normalizeVi } from "@/lib/filters";
+import { typeGroupsFor, normalizeVi, tenLoaiHinh } from "@/lib/filters";
 import { khoaDuAn } from "@/lib/duAnTen";
 import { slugify } from "@/lib/contentAdmin";
 import { provinceNamesFor, districtsOf, wardsOf, wardsOfNew, wardsOfAny, chuanTen, type GeoMode } from "@/lib/locations";
@@ -1394,6 +1394,7 @@ export default function PostListingForm() {
               onChange={(v) => { setCategory(v); setSpecValues({}); }}
               options={nhomLoaiHinh.flatMap((g) => g.items)}
               nhom={nhomLoaiHinh}
+              nhanHien={tenLoaiHinh}
               placeholder="Chọn loại hình"
               timPlaceholder=""
               khongTim

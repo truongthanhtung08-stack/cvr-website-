@@ -41,6 +41,12 @@ export const rentTypeGroups: TypeGroup[] = [
   { label: "Khác", items: ["Bất động sản khác"] },
 ];
 
+// TÊN HIỆN của loại hình (chủ dự án 30/10/2026): giá trị lưu có dấu "/" (tên nội bộ, tin cũ + tệp nhập khớp) → chữ hiện cho khách
+// theo đúng kiểu menu: "Đất nền / Đất nền dự án" → "Đất nền, đất nền dự án". Form khách, form admin, trang tin cùng dùng.
+export function tenLoaiHinh(type?: string | null): string {
+  return (type ?? "").split(/\s*\/\s*/).map((s, i) => (i ? s.charAt(0).toLowerCase() + s.slice(1) : s)).join(", ");
+}
+
 // Chọn bộ danh mục theo mục đích (dùng cho FilterBar trên từng trang)
 export function typeGroupsFor(purpose: "ban" | "thue"): TypeGroup[] {
   return purpose === "thue" ? rentTypeGroups : saleTypeGroups;
