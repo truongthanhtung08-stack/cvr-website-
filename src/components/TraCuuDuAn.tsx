@@ -25,11 +25,16 @@ export function locTraCuu(ds: DongTraCuu[], q: string, tinh: string, loai: strin
 
 // Thẻ DỌC (ảnh trên, chữ dưới) — khối "Dự án tương tự" ở trang dự án tra cứu: CÙNG KIỂU thẻ Dự án nổi bật (Tên · Địa chỉ ·
 // Loại hình · Chủ đầu tư), hiện đủ chữ, thẻ trong hàng cao bằng nhau (chủ dự án 30/10/2026)
+// Màu nhãn từng cấp VIP — đúng màu TIER_ACCENT của thẻ dự án nổi bật (ProjectSlider)
+const MAU_CAP: Record<string, string> = { diamond: "#d7263d", gold: "#c9a24a", silver: "#0071e3" };
+
 export function TheDuAnDoc({ d }: { d: DongTraCuu }) {
   return (
     <Link
       href={`/du-an/${d.slug}`}
-      className="card-lux group flex flex-col overflow-hidden rounded-none border border-cvr-line bg-white shadow-lux shadow-lux-hover hover:-translate-y-1 hover:border-cvr-blue/45"
+      // ĐỒNG BỘ (chủ dự án 31/10/2026: thẻ to nhỏ rất xấu, không để khoảng trống): 6 dòng của thẻ (ảnh · tên · địa chỉ · tình trạng · loại hình ·
+      // chủ đầu tư) là 6 hàng SUBGRID của dải slide → mọi thẻ trong dải cao bằng nhau, từng dòng thẳng hàng giữa các thẻ, chữ hiện đủ
+      className="card-lux group row-span-6 grid grid-rows-subgrid gap-0 overflow-hidden rounded-none border-0 bg-white shadow-lux shadow-lux-hover hover:-translate-y-1 hover:border-cvr-blue/45"
     >
       <span className="relative block aspect-[16/10] w-full shrink-0 overflow-hidden bg-cvr-surface">
         {d.anh ? (
@@ -38,20 +43,32 @@ export function TheDuAnDoc({ d }: { d: DongTraCuu }) {
           // eslint-disable-next-line @next/next/no-img-element
           <img src="/logo/symbol-dark.svg" alt="" className="absolute inset-0 m-auto h-10 w-10 opacity-25" />
         )}
-        <span className="absolute left-2 top-2 rounded-full bg-white/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.04em] text-cvr-ink shadow-[0_2px_10px_rgba(0,0,0,0.18)] ring-1 ring-white/60 backdrop-blur-md">{d.tinhTrang || "Đang cập nhật"}</span>
+        {/* CHỈ THẺ VIP có nhãn tình trạng trên ảnh, màu theo cấp (cùng màu nhãn cấp thẻ dự án nổi bật) — chủ dự án 31/10/2026 */}
+        {d.cap && (
+          <span className="absolute left-2 top-2 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.04em] text-white shadow-[0_2px_10px_rgba(0,0,0,0.28)] ring-1 ring-white/25 backdrop-blur-md" style={{ backgroundColor: MAU_CAP[d.cap] }}>{d.tinhTrang || "Đang cập nhật"}</span>
+        )}
       </span>
-      <span className="flex min-w-0 flex-1 flex-col p-3">
-        <span className="font-semibold leading-snug text-cvr-ink transition-colors group-hover:text-cvr-blue-ink">{d.ten}</span>
-        <span className="mt-1 flex items-start gap-1 text-xs text-cvr-muted">
-          <svg className="mt-px h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-          <span className="min-w-0">{d.diaChi}</span>
-        </span>
-        {/* Trường bắt buộc luôn hiện, chưa có thì "Đang cập nhật" (chủ dự án 30/10/2026). Không khoảng trống: thẻ cao theo nội dung,
-            câu dài thì thẻ giãn (chủ dự án 31/10/2026) */}
-        <span className="mb-2.5 mt-1 text-xs text-cvr-body">Loại hình: {d.loaiHinh || "Đang cập nhật"}</span>
-        <span className="border-t border-cvr-line pt-2.5 text-xs text-cvr-body">
-          Chủ đầu tư: <span className="font-medium text-cvr-ink">{d.chuDauTu || "Đang cập nhật"}</span>
-        </span>
+      {/* CHỮ DƯỚI ẢNH ĐỒNG NHẤT THẺ TIN (PropertyCard, chủ dự án 31/10/2026): tên 15 px đậm dòng 1,5 · các dòng 13 px biểu tượng +
+          nội dung · dòng cuối gạch trên như dòng người đăng. Trường bắt buộc luôn hiện, thiếu ghi "<trường> đang cập nhật" */}
+      <span className="min-w-0 px-3 pt-3 text-[15px] font-bold leading-[1.5] text-cvr-ink transition-colors group-hover:text-cvr-blue-ink">{d.ten}</span>
+      <span className="flex min-w-0 items-start gap-1 px-3 pt-1.5 text-[13px] text-cvr-muted">
+        <svg className="mt-[3px] h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+        <span className="min-w-0">{d.diaChi}</span>
+      </span>
+      {/* Thẻ thường: tình trạng là một dòng dưới ảnh; thẻ VIP đã có nhãn trên ảnh → dòng trống (hàng vẫn thẳng với thẻ bên cạnh) */}
+      <span className={`flex min-w-0 items-start gap-1 px-3 pt-1.5 text-[13px] ${d.tinhTrang ? "text-cvr-body" : "text-cvr-faint"}`}>
+        {!d.cap && (<>
+          <svg className="mt-[3px] h-3.5 w-3.5 shrink-0 text-cvr-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          <span className="min-w-0">{d.tinhTrang || "Tình trạng đang cập nhật"}</span>
+        </>)}
+      </span>
+      <span className={`flex min-w-0 items-start gap-1 px-3 pb-3 pt-1.5 text-[13px] ${d.loaiHinh ? "text-cvr-body" : "text-cvr-faint"}`}>
+        <svg className="mt-[3px] h-3.5 w-3.5 shrink-0 text-cvr-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6" /></svg>
+        <span className="min-w-0">{d.loaiHinh || "Loại hình đang cập nhật"}</span>
+      </span>
+      <span className={`mx-3 flex min-w-0 items-start gap-1 border-t border-cvr-line pb-3 pt-2.5 text-[13px] ${d.chuDauTu ? "font-medium text-cvr-body" : "text-cvr-faint"}`}>
+        <svg className="mt-[3px] h-3.5 w-3.5 shrink-0 text-cvr-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 21V5a2 2 0 012-2h8a2 2 0 012 2v16M16 9h2a2 2 0 012 2v10M8 7h4M8 11h4M8 15h4M2 21h20" /></svg>
+        <span className="min-w-0">{d.chuDauTu || "Chủ đầu tư đang cập nhật"}</span>
       </span>
     </Link>
   );

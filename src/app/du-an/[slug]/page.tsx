@@ -213,7 +213,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
       // TƯƠNG TỰ THEO (chủ dự án 31/10/2026): khu vực (cùng tỉnh, bắt buộc) → loại hình → chủ đầu tư
       .map((x, i) => ({ x, i, khop: nhom && nhomLoai(x.loaiHinh) === nhom ? 0 : 1, cungCdt: cdt && normalizeVi(x.chuDauTu) === normalizeVi(cdt) ? 0 : 1, vip: hang(x.slug) }))
       .sort((a, b) => a.khop - b.khop || a.cungCdt - b.cungCdt || a.vip - b.vip || a.i - b.i)
-      .map((e) => e.x);
+      .map((e) => ({ ...e.x, ...(e.vip < 3 ? { cap: (["diamond", "gold", "silver"] as const)[e.vip] } : {}) }));
   };
   // MỘT KHUÔN cho mọi dự án (chủ dự án 30/10/2026): dự án nổi bật giữ nguyên trang đã dựng; dự án TRA CỨU (hồ sơ dạng thẻ, hoặc
   // dự án mới chỉ biết từ tin) chạy ĐÚNG khuôn đó — hồ sơ bổ sung tới đâu hiện tới đó, cái gì chưa có thì ẩn.

@@ -50,6 +50,7 @@ export type DongTraCuu = {
   anh: string;       // ảnh đầu của hồ sơ — "" = chưa có (thẻ hiện khung xám + biểu tượng)
   ban: number;
   thue: number;
+  cap?: "diamond" | "gold" | "silver"; // dự án nổi bật cấp VIP — thẻ ghi tình trạng thành NHÃN màu cấp trên ảnh (31/10/2026)
 };
 
 export function dongTraCuu(tin: Listing[], duAn: Project[]): DongTraCuu[] {
