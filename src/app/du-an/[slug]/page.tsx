@@ -423,8 +423,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                 <div className="grid grid-cols-1 gap-x-10 gap-y-3 sm:grid-cols-2">
                   {(() => { const ds = nhomThongSo(hangThongSo).flat(); return [...ds.filter((x) => x.value.length <= 26), ...ds.filter((x) => x.value.length > 26)]; })().map((s) => (
                     // Mục dài (> 26 ký tự) xuống cuối, trọn một hàng — không bẻ dòng khi còn chỗ (chủ dự án 30/10/2026)
-                    <div key={s.label} className={`flex min-w-0 items-start gap-3 text-sm ${s.value.length > 26 ? "sm:col-span-2" : ""}`}>
-                      <span className="w-32 shrink-0 text-cvr-muted sm:w-36">{s.label}</span>
+                    <div key={s.label} className={`flex min-w-0 items-start gap-3 text-[15px] ${s.value.length > 26 ? "sm:col-span-2" : ""}`}>
+                      <span className="w-32 shrink-0 text-sm leading-[22px] text-cvr-muted sm:w-36">{s.label}</span>
                       <span className={`min-w-0 ${s.value === "Đang cập nhật" ? "text-cvr-faint" : "font-medium text-cvr-ink"}`}>
                         {s.href ? <Link href={s.href} className="hover:text-cvr-blue-ink">{s.value}</Link> : s.value}
                       </span>
@@ -451,7 +451,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
               {/* 2) Vị trí — bản đồ + tiện ích xung quanh + chỉ đường từ vị trí của bạn */}
               <Section id="vi-tri" title="Vị trí & tiện ích xung quanh">
-                <ProjectNearby mapQuery={mapQuery} address={diaChiDu} places={places} zoom={16} caoBanDo="h-[240px] w-full sm:h-[450px]" />
+                <ProjectNearby mapQuery={mapQuery} address={diaChiDu} places={places} zoom={16} caoBanDo="h-[240px] w-full sm:aspect-video sm:h-auto" />
               </Section>
 
               {/* 3) Tiện ích dự án */}
@@ -672,8 +672,8 @@ function LienHeDuAn({ contact }: { contact: { name?: string; phone?: string; ema
 function Section({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
   return (
     // KHỐI PHÂN BIỆT GỌN (chủ dự án 30/10/2026: không màu nền, không viền, không gạch ngang — quá nhiều là vô lý): tách phần bằng khoảng trống + tiêu đề
-    <section id={id} className="mt-10 scroll-mt-14 sm:mt-12">
-      <h2 className="mb-4 text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">{title}</h2>
+    <section id={id} className="mt-12 scroll-mt-14">
+      <h2 className="mb-5 text-[22px] font-semibold tracking-tight text-cvr-ink sm:text-2xl">{title}</h2>
       {children}
     </section>
   );
