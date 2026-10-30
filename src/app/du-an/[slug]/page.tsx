@@ -739,7 +739,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
           {tabTuKhoa.length > 0 && (
             // CÂN ĐO (chủ dự án 31/10/2026): cách mục trên đúng 48 px như mục cách mục (khối có đệm trên riêng 8 / 24 px), đáy bù đệm dưới riêng
             // của khối → cách footer đúng .pb-footer như mọi trang; tiêu đề cùng cỡ 24 px các mục trang dự án
-            <div className="-mx-4 -mb-12 mt-10 sm:-mx-6 sm:-mb-14 sm:mt-6 lg:-mx-8">
+            <div className="-mx-4 -mb-12 mt-10 sm:-mx-6 sm:-mb-14 sm:mt-6 lg:-mx-8 [&_h2]:text-[22px] sm:[&_h2]:text-2xl">
               <TabTimKiemPhoBien tabs={tabTuKhoa} trangChu />
             </div>
           )}

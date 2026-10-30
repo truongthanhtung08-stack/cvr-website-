@@ -136,12 +136,15 @@ export default function BackBar() {
       setTenTrang(laTrangChiTiet ? (document.querySelector("h1")?.textContent?.trim() ?? "") : "");
     };
     // Đọc sau khi trang vẽ xong, rồi đọc lại một nhịp nữa cho nội dung vào muộn.
+    // Trang nặng (dự án nhiều ảnh, bản đồ) vẽ tiêu đề muộn hơn 400 ms → thanh ghi chung "Dự án" (31/10/2026): đọc thêm nhịp 1,2 s
     const r = requestAnimationFrame(doc);
     const t = window.setTimeout(doc, 400);
+    const t2 = window.setTimeout(doc, 1200);
     return () => {
       con = false;
       cancelAnimationFrame(r);
       window.clearTimeout(t);
+      window.clearTimeout(t2);
     };
   }, [pathname]);
 

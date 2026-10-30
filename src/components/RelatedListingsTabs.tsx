@@ -34,7 +34,7 @@ export default function RelatedListingsTabs({ ban, thue, idsBan, idsThue, title,
   return (
     <div className={expanded ? undefined : the ? "mt-5 rounded-2xl bg-cvr-surface p-4 sm:p-5" : "mt-12"}>
       {!expanded && title && (
-        <h2 className={the ? "mb-4 text-[19px] font-semibold tracking-tight text-cvr-ink sm:text-[22px]" : "mb-5 text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl"}>{title}</h2>
+        <h2 className={the ? "mb-4 text-[19px] font-semibold tracking-tight text-cvr-ink sm:text-[22px]" : "mb-5 text-[22px] font-semibold tracking-tight text-cvr-ink sm:text-2xl"}>{title}</h2>
       )}
       {/* Đang mở danh sách → ẩn hẳn hàng tab (trước để chung "inline-flex hidden" nên inline-flex thắng, tab vẫn lơ lửng
           trên đầu danh sách — sửa 22/10/2026) */}
