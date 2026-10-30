@@ -196,7 +196,7 @@ export async function POST(request: Request) {
         so_tien: vnd(0),
         so_du: vnd(soDuHienTai),
       },
-    });
+    }, { id: String(tin.id), title: tin.title, daTru: false });
     return NextResponse.json({ ok: true, mienPhi: true });
   }
 
@@ -307,7 +307,7 @@ export async function POST(request: Request) {
           so_tien: vnd(0),
           so_du: vnd(Number(hs.balance ?? 0)),
         },
-      });
+      }, { id: String(tin.id), title: tin.title, daTru: false });
       return NextResponse.json({ ok: true, mienPhi: true });
     }
     // Hết lượt thật (khách vừa dùng ở tin khác) → đi tiếp, thu tiền bình thường.
@@ -495,7 +495,7 @@ export async function POST(request: Request) {
       so_tien: vnd(tien.tongTra),
       so_du: vnd(soDuConLai),
     },
-  }, hs);
+  }, { id: String(tin.id), title: tin.title, daTru: true }, hs);
 
   return NextResponse.json({
     ok: true,
@@ -520,6 +520,8 @@ async function baoKhach(
   admin: NonNullable<ReturnType<typeof createAdminClient>>,
   ownerId: string | null,
   noiDung: Parameters<typeof guiThongBao>[0],
+  // Tin vừa duyệt — để cảnh báo có tên tin + link mở thẳng tin (chủ dự án 31/10/2026: "cảnh báo không vào xem được thì làm gì")
+  tinBao: { id: string; title: string | null; daTru: boolean },
   hoSo?: HoSo,
 ) {
   try {
@@ -551,14 +553,23 @@ async function baoKhach(
 
     // Không kênh nào tới được khách = khách đã bị trừ tiền mà không biết tin đã
     // lên sóng. Im lặng ở đây là mất khách, nên báo ngay cho chủ dự án gọi tay.
-    if (!kq.some((k) => k.daGui)) {
+    if (!kq.some((k) => k.daGui) && !kq.some((k) => k.dangHo)) {
+      const chiTiet = kq.map((k) => `${k.kenh}: ${k.lyDo ?? "không rõ"}`).join(" · ");
+      // -137 = tài khoản ZBS không trừ được tiền: lỗi phía Coastal Land, mọi tin ZNS (cả mã OTP) đều chết
+      const loiZbs = /-137|charge failure/i.test(chiTiet);
       await baoLoi({
         noi: "duyet-tin",
         mucDo: "nang",
-        tomTat: "Duyệt tin xong nhưng KHÔNG báo được cho khách",
-        chiTiet: kq.map((k) => `${k.kenh}: ${k.lyDo ?? "không rõ"}`).join(" · "),
-        hauQua: "Khách bị trừ tiền mà không biết tin đã lên sóng.",
-        canLam: `Gọi hoặc nhắn cho khách${email ? ` (${email})` : ""} để báo tin đã đăng.`,
+        tomTat: "Duyệt tin xong nhưng không gửi được thông báo cho người đăng",
+        chiTiet,
+        hauQua: tinBao.daTru
+          ? "Khách bị trừ tiền mà không biết tin đã lên sóng."
+          : "Người đăng không biết tin đã lên web (tin miễn phí, không trừ tiền).",
+        canLam:
+          `Tin "${tinBao.title ?? ""}" /bat-dong-san/${tinBao.id} — ` +
+          (loiZbs
+            ? "nạp tiền tài khoản Zalo ZBS (Zalo báo không thanh toán được; mã OTP đăng nhập cũng không gửi được)."
+            : `gọi hoặc nhắn người đăng${phone ? ` ${phone}` : ""} để báo tin đã đăng.`),
         khoa: `duyet-tin:bao-khach:${ownerId ?? "khong-ro"}`,
       });
     }
