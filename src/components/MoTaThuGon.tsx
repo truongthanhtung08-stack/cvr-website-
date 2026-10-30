@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { veDauKhoi } from "@/lib/thuGon";
 
 // MÔ TẢ TIN DÀI → THU GỌN + "Xem thêm" (như Batdongsan, chủ dự án 09/10/2026).
 // Ngắn hơn khung thì hiện trọn, không có nút. Mô tả dài: "Xem thêm" ↔ "Thu gọn" (chủ dự án 09/10/2026).
@@ -99,7 +100,7 @@ export default function MoTaThuGon({ children, dong = 10 }: { children: React.Re
         {dai && !mo && <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-cvr-surface to-transparent" aria-hidden />}
       </div>
       {dai && (
-        <button type="button" onClick={() => setMo((v) => !v)} className="mt-2 text-[14px] font-semibold text-cvr-blue-ink">
+        <button type="button" onClick={(e) => { if (mo) veDauKhoi(e.currentTarget); setMo((v) => !v); }} className="mt-2 text-[14px] font-semibold text-cvr-blue-ink">
           {mo ? "Thu gọn" : "Xem thêm"}
         </button>
       )}

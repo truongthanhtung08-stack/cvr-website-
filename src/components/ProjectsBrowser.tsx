@@ -85,6 +85,7 @@ export default function ProjectsBrowser({
   tieuDe = "Dự án nổi bật",
   traCuu,
   danhSachNoiBat = false,
+  tieuDeDs = "Dự án nổi bật",
 }: {
   projects: Project[];
   articles: Article[];
@@ -102,6 +103,8 @@ export default function ProjectsBrowser({
   /** "Xem thêm" khối Dự án nổi bật TRANG CHỦ (30/10/2026): cùng một logic với "Xem thêm" ở trang Dự án — danh sách thẻ Dự án
    *  nổi bật (Tên · Địa chỉ · Loại hình · Chủ đầu tư), 10 dự án / trang; nút Quay lại do khối trang chủ lo (HomeExpand). */
   danhSachNoiBat?: boolean;
+  /** Tiêu đề danh sách "Xem thêm" (trang chủ: "Dự án nổi bật"; trang dự án: "Dự án tương tự") */
+  tieuDeDs?: string;
 }) {
   useDiaDanh(); // địa danh nạp sau khi trang hiện — về tới thì vẽ lại (20/10/2026)
   const [q, setQ] = useState("");
@@ -365,7 +368,8 @@ export default function ProjectsBrowser({
           className="card-lux group relative flex flex-col overflow-hidden rounded-none bg-white shadow-lux shadow-lux-hover hover:-translate-y-1 hover:border-cvr-blue/45 sm:flex-row sm:gap-5 sm:border sm:border-cvr-line sm:p-3"
         >
           {/* MOBILE: ảnh TRÊN tràn viền · DESKTOP: ảnh trái */}
-          <div className="relative aspect-[16/9] w-full shrink-0 overflow-hidden rounded-none bg-cvr-surface sm:aspect-[4/3] sm:w-56 sm:rounded-xl md:w-64">
+          {/* Khung ảnh: điện thoại 16:9 (chưa có ảnh thì dải thấp 3:1, không để khung xám to) · máy tính tỷ lệ vàng — 30/10/2026 */}
+          <div className={`relative w-full shrink-0 self-start overflow-hidden rounded-none bg-cvr-surface sm:aspect-[1.618/1] sm:w-56 sm:rounded-xl md:w-64 ${p.image ? "aspect-[16/9]" : "aspect-[3/1]"}`}>
             {p.image ? (
             <AnhChay
               chay={false}
@@ -378,9 +382,7 @@ export default function ProjectsBrowser({
               // eslint-disable-next-line @next/next/no-img-element
               <img src="/logo/symbol-dark.svg" alt="" className="absolute inset-0 m-auto h-12 w-12 opacity-25" />
             )}
-            <span className="absolute left-2 top-2 rounded-full bg-white/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.04em] text-cvr-ink shadow-[0_2px_10px_rgba(0,0,0,0.18)] ring-1 ring-white/60 backdrop-blur-md">
-              {p.status}
-            </span>
+            {/* Trạng thái ghi thành dòng chữ trong phần nội dung (trường bắt buộc, đọc rõ) — không lặp nhãn trên ảnh (30/10/2026) */}
           </div>
 
           {/* Thông tin — mobile có padding cho "thở", desktop sát ảnh */}
@@ -395,6 +397,7 @@ export default function ProjectsBrowser({
             {/* CÙNG THỨ TỰ thẻ Dự án nổi bật (chủ dự án 30/10/2026): tên · địa chỉ · Loại hình · giới thiệu · Chủ đầu tư — giá ("Liên hệ"
                 khi ẩn giá) nằm phải dòng Chủ đầu tư như thẻ dự án trang chủ; dự án chưa có giá thì không có */}
             <p className="mt-1 text-xs text-cvr-body">Loại hình: <span className={p.type === CHUA ? "text-cvr-faint" : "font-medium text-cvr-ink"}>{p.type}</span></p>
+            <p className="mt-0.5 text-xs text-cvr-body">Trạng thái: <span className={p.status === CHUA ? "text-cvr-faint" : "font-medium text-cvr-ink"}>{p.status}</span></p>
             {p.overview[0] && (
               <p className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-cvr-muted">{chuThuan(p.overview[0])}</p>
             )}
@@ -458,7 +461,7 @@ export default function ProjectsBrowser({
     danhSachXemThem = (
       <section id="noi-bat" className={`mt-6 scroll-mt-24 sm:mt-5 ${mapMode ? "hidden" : ""}`}>
         {/* Trang Dự án / trang khu vực đã có tiêu đề trang ngay trên → không lặp; trang chủ: tiêu đề khối "Dự án nổi bật" */}
-        {danhSachNoiBat && <h2 className="text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">Dự án nổi bật</h2>}
+        {danhSachNoiBat && <h2 className="text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">{tieuDeDs}</h2>}
         {/* BỐ CỤC WEB HIỆN TẠI (chủ dự án 30/10/2026): CỘT TRÁI = danh sách thẻ, MỖI DỰ ÁN ĐÚNG LOẠI THẺ CỦA NÓ — nổi bật: thẻ nổi bật
             (ngang); tra cứu: thẻ tra cứu · CỘT PHẢI = liên kết pSEO "Dự án theo khu vực" (/du-an/<tỉnh>), dính theo khi cuộn — máy tính */}
         <div className={`${danhSachNoiBat ? "mt-4" : ""} grid grid-cols-1 gap-8 lg:grid-cols-3`}>
