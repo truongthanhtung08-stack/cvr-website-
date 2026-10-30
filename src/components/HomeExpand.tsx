@@ -77,6 +77,28 @@ export function HomeExpandProvider({ children }: { children: React.ReactNode }) 
     window.scrollTo({ top: 0 });
   }, []);
 
+  // THANH ĐIỀU HƯỚNG (menu đầu trang, thanh dưới điện thoại, menu con, mọi link) trỏ về CHÍNH TRANG ĐANG XEM khi một danh sách
+  // "Xem thêm" đang mở (vd đang ở danh sách dự án mà bấm "Dự án" / "Tra cứu dự án") → đóng danh sách, trang về như lúc mới mở;
+  // link có #mục thì tới đúng mục đó. Trước đây đường dẫn đổi mà danh sách vẫn nằm đó (30/10/2026).
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      if (!keyRef.current || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      const a = (e.target as Element | null)?.closest?.("a[href]") as HTMLAnchorElement | null;
+      if (!a || a.target === "_blank") return;
+      const u = new URL(a.href, window.location.href);
+      if (u.origin !== window.location.origin || u.pathname !== window.location.pathname || u.searchParams.get("muc")) return;
+      closeAll();
+      const muc = decodeURIComponent(u.hash.slice(1));
+      if (muc) {
+        const den = () => document.getElementById(muc)?.scrollIntoView({ block: "start" });
+        requestAnimationFrame(() => requestAnimationFrame(den));
+        window.setTimeout(den, 350);
+      }
+    };
+    document.addEventListener("click", onClick, true);
+    return () => document.removeEventListener("click", onClick, true);
+  }, [closeAll]);
+
   // Logo / tab "Trang chủ" khi đang ở trang chủ → về trang chủ trang 1
   useEffect(() => {
     window.addEventListener(HOME_RESET_EVENT, closeAll);
