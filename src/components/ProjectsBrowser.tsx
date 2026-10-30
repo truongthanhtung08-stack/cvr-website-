@@ -447,8 +447,9 @@ export default function ProjectsBrowser({
               {/* Loại hình: 1 dòng dài hết bề ngang thẻ, quá dài mới “…” ở cuối (chủ dự án 30/10/2026) */}
               <DongNhan nhan="Loại hình" gt={p.type === CHUA ? "" : p.type} />
             </div>
+            {/* Điện thoại bỏ 2 dòng giới thiệu (chủ dự án 30/10/2026) */}
             {!gon && p.overview[0] && (
-              <p className="mt-2.5 line-clamp-2 text-[13px] leading-relaxed text-cvr-muted">{chuThuan(p.overview[0])}</p>
+              <p className="mt-2.5 hidden text-[13px] leading-relaxed text-cvr-muted sm:line-clamp-2">{chuThuan(p.overview[0])}</p>
             )}
             {/* Chủ đầu tư + Liên hệ: dòng cuối thẻ, gạch ngang phía trên (chủ dự án 30/10/2026) */}
             <div className="mt-3 flex items-center justify-between gap-3 border-t border-cvr-line pt-2.5 sm:mt-auto">

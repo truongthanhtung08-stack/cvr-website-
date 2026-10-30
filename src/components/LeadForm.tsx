@@ -144,7 +144,6 @@ export default function LeadForm({
         {dangGui ? "Đang gửi…" : cta}
       </button>
 
-      <p className="mt-2 text-center text-[11px] text-cvr-faint">Thông tin của bạn được bảo mật theo chính sách của Coastal Land.</p>
     </div>
   );
 }

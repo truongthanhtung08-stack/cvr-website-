@@ -117,6 +117,14 @@ function normalizeUrl(u: string): string {
   return /^https?:\/\//i.test(u) ? u : `https://${u}`;
 }
 
+// Thứ tự ưu tiên dòng thông số trong bảng Tổng quan (nhãn hồ sơ viết tự do → so theo chữ, không dấu)
+const UU_TIEN = ["dia chi|dai chi", "vi tri", "quy mo", "dien tich", "so luong", "so can", "loai hinh can", "san pham", "ban giao", "tieu chuan", "phap ly", "so huu", "khoi cong"];
+function hangUuTien(nhan: string): number {
+  const x = normalizeVi(nhan).replace(/đ/g, "d");
+  const i = UU_TIEN.findIndex((k) => k.split("|").some((y) => x.includes(y)));
+  return i < 0 ? UU_TIEN.length : i;
+}
+
 export default async function ProjectDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
 
@@ -232,7 +240,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
     if (khuVucList.some((k) => k.name === d.tinh)) demKhuVuc.set(d.tinh, (demKhuVuc.get(d.tinh) ?? 0) + 1);
   }
   const duAnTheoKhuVuc = [...demKhuVuc.entries()].sort((a, b) => (a[0] === province ? -1 : b[0] === province ? 1 : b[1] - a[1]));
-  const mapQuery = `${p.location}, Việt Nam`;
+  // Bản đồ: điểm admin GHIM trước; chưa ghim thì tìm theo địa chỉ đầy đủ (số nhà, đường, phường, tỉnh) — 30/10/2026
+  const mapQuery = p.mapPin ?? `${p.location}, Việt Nam`;
 
   const floorPlans = p.floorPlans ?? [];
   const priceTable = p.priceTable ?? [];
@@ -255,11 +264,17 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   // trường khác chỉ khi có. Thay khối Tiến độ (trùng tình trạng, khởi công, bàn giao) — đã bỏ.
   const hangThongSo: { label: string; value: string; href?: string }[] = [
     { label: "Tình trạng", value: p.status || "Đang cập nhật" },
+    { label: "Loại hình", value: coLoaiHinh ? p.type : "Đang cập nhật" },
     { label: "Chủ đầu tư", value: coChuDauTu ? p.developer : "Đang cập nhật", href: coChuDauTu && laChuDauTuThat(p.developer) ? `/chu-dau-tu/${slugChuDauTu(p.developer)}` : undefined },
     ...(p.developmentUnit ? [{ label: "Đơn vị phát triển", value: p.developmentUnit }] : []),
-    { label: "Loại hình", value: coLoaiHinh ? p.type : "Đang cập nhật" },
     ...(showPrice ? [{ label: "Giá từ", value: sidePrice }] : []),
-    ...p.scale.filter((s) => !["Tình trạng", "Chủ đầu tư", "Loại hình", "Giá từ"].includes(s.label)),
+    // Thông số hồ sơ: QUAN TRỌNG LÊN TRƯỚC (chủ dự án 30/10/2026) — địa chỉ · quy mô · diện tích · số căn · loại căn · bàn giao · pháp lý
+    // / sở hữu · khởi công; nhãn khác giữ thứ tự hồ sơ, xếp sau
+    ...p.scale
+      .filter((s) => !["Tình trạng", "Chủ đầu tư", "Loại hình", "Giá từ"].includes(s.label))
+      .map((s, i) => ({ s, i, h: hangUuTien(s.label) }))
+      .sort((a, b) => a.h - b.h || a.i - b.i)
+      .map((x) => x.s),
   ];
 
   // Dự án tương tự — cùng cách trang dự án tra cứu (cùng tỉnh, cùng nhóm loại hình trước), lấy hết cho slide + Xem thêm
@@ -345,16 +360,17 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
           )}
 
           {/* Tiêu đề + địa chỉ — bố cục cân đối, rõ ràng */}
-          <div className={coAnh ? "mt-5" : "mt-2"}>
+          {/* Khoảng thở giữa tên · địa chỉ · thanh mục (trước chật — chủ dự án 30/10/2026) */}
+          <div className={`pb-5 ${coAnh ? "mt-6" : "mt-3"}`}>
             {/* Bỏ nhãn tình trạng trên tên (chủ dự án 30/10/2026: trùng dòng Tình trạng trong bảng Tổng quan) */}
             <h1 className="text-[21px] font-semibold leading-[1.3] tracking-tight text-cvr-ink sm:text-[28px]">{p.name}</h1>
-            <p className="mt-2 flex items-start gap-1.5 text-[14px] leading-relaxed text-cvr-muted sm:text-[15px]">
+            <p className="mt-3 flex items-start gap-1.5 text-[14px] leading-relaxed text-cvr-muted sm:text-[15px]">
               <svg className="mt-0.5 h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
               <span className="min-w-0">{p.location}</span>
             </p>
             {/* Cách gọi theo hệ 3 cấp cũ — số nhà/đường không đổi nên không nhắc lại. */}
             {p.locationCu && (
-              <p className="mt-1 pl-[22px] text-[13px] text-cvr-faint">Địa chỉ cũ: {p.locationCu}</p>
+              <p className="mt-1.5 pl-[22px] text-[13px] text-cvr-faint">Địa chỉ cũ: {p.locationCu}</p>
             )}
             {/* Bỏ câu "Thông tin dự án do Coastal Land tổng hợp…" (chủ dự án 30/10/2026) */}
             {tuTin && (
@@ -374,18 +390,20 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               (liên hệ, tin thuộc dự án, dự án tại tỉnh, nhận tài liệu), mép trên ngang khối đầu cột trái; phần nào chưa có thông tin thì ẩn */}
           <HomeCollapsible>
           <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
-            <div className={`reveal is-visible cards-stagger lg:col-span-2 [&>section:first-of-type]:mt-5`}>
+            <div className={`reveal is-visible cards-stagger lg:col-span-2 [&>section:first-of-type]:mt-5 [&>section:first-of-type]:border-t-0 [&>section:first-of-type]:pt-0`}>
 
               {/* 1) Tổng quan */}
               {hangThongSo.length > 0 && (
               <Section id="tong-quan" title="Tổng quan dự án">
                 {/* LOGIC TỔNG QUAN (chủ dự án 30/10/2026): bảng thông số (quy mô, sản phẩm, bàn giao, pháp lý…) lên TRƯỚC, luôn hiện —
                     đọc là biết dự án; phần giới thiệu bên dưới, dài thì thu gọn, nút "Xem thêm / Thu gọn" ở CUỐI khối (ngắn thì không có nút) */}
-                <div className="grid grid-cols-1 gap-x-8 sm:grid-cols-2">
+                {/* MỘT CỘT, đọc từ trên xuống (2 cột đọc ziczac, rối — chủ dự án 30/10/2026) */}
+                <div className="grid grid-cols-1">
                   {hangThongSo.map((s) => (
-                    <div key={s.label} className="flex items-start justify-between gap-4 border-b border-cvr-line/70 py-3 text-sm">
-                      <span className="shrink-0 whitespace-nowrap text-cvr-muted">{s.label}</span>
-                      <span className={`min-w-0 text-right font-medium ${s.value === "Đang cập nhật" ? "font-normal text-cvr-faint" : "text-cvr-ink"}`}>
+                    // Nhãn cột trái cố định, giá trị NGAY SAU nhãn (trước dạt sát phải, khó đọc) — chủ dự án 30/10/2026
+                    <div key={s.label} className="grid grid-cols-[7.5rem_1fr] items-start gap-3 border-b sm:grid-cols-[10.5rem_1fr] sm:gap-4 border-cvr-line/70 py-3 text-sm">
+                      <span className="text-cvr-muted">{s.label}</span>
+                      <span className={`min-w-0 font-medium ${s.value === "Đang cập nhật" ? "font-normal text-cvr-faint" : "text-cvr-ink"}`}>
                         {s.href ? <Link href={s.href} className="hover:text-cvr-blue-ink">{s.value}</Link> : s.value}
                       </span>
                     </div>
@@ -393,7 +411,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                 </div>
                 {p.overview.length > 0 && (
                 <div className="mt-5">
-                <MoTaThuGon dong={6}>
+                <MoTaThuGon dong={6} nenMo="from-white">
                   <div className="space-y-3 text-[15px] leading-relaxed text-cvr-body">
                     <RichContent paragraphs={p.overview} title={p.name} />
                   </div>
@@ -410,7 +428,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               {/* Video (nếu có) */}
               {p.videos && p.videos.length > 0 && (
                 <Section id="video" title="Video dự án">
-                  <div className="space-y-4">
+                  {/* Video thẳng mép các phần khác: 1 video rộng hết khung · từ 2 video xếp 2 một hàng (chủ dự án 30/10/2026: thu nhỏ lệch trái là vô lý) */}
+                  <div className={`grid grid-cols-1 gap-4 ${p.videos.length > 1 ? "sm:grid-cols-2" : ""}`}>
                     {p.videos.map((v, i) => <VideoEmbed key={i} url={v} />)}
                   </div>
                 </Section>
@@ -418,7 +437,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
               {/* 2) Vị trí — bản đồ + tiện ích xung quanh + chỉ đường từ vị trí của bạn */}
               <Section id="vi-tri" title="Vị trí & tiện ích xung quanh">
-                <ProjectNearby mapQuery={mapQuery} address={p.location} places={places} zoom={16} />
+                <ProjectNearby mapQuery={mapQuery} address={p.location} places={places} zoom={16} caoBanDo="h-[220px] w-full sm:h-[260px]" />
               </Section>
 
               {/* 3) Tiện ích dự án */}
@@ -427,7 +446,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                   {/* Danh sách dài → 6 mục đầu + "Xem thêm" (gọn, 22/10/2026) */}
                   <DanhSachThuGon className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
                     {p.amenities.map((a) => (
-                      <span key={a} className="flex items-start gap-2.5 rounded-xl border border-cvr-line bg-white px-4 py-3 text-[15px] leading-snug text-cvr-body">
+                      <span key={a} className="flex items-start gap-2.5 py-1.5 text-[15px] leading-snug text-cvr-body">
                         <svg className="mt-0.5 h-4 w-4 shrink-0 text-cvr-blue" fill="none" stroke="currentColor" strokeWidth={2.4} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                         <span className="min-w-0">{a}</span>
                       </span>
@@ -511,7 +530,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             {/* CỘT PHẢI LUÔN CÓ, ĐỦ THỨ LIÊN QUAN (chủ dự án 30/10/2026) — mọi dự án cùng một khuôn: giá + liên hệ (khi có) · tin của dự án
                 · dự án cùng khu vực · nhận tài liệu & báo giá */}
             <aside className="lg:col-span-1 lg:mt-5">
-              <div className="space-y-4 lg:sticky lg:top-24">
+              {/* Cột phải CUỘN THEO TRANG, không dính: cột cao hơn màn hình mà dính thì cuộn bị khựng rồi trôi (chủ dự án 30/10/2026) */}
+              <div className="h-full space-y-4">
                 {/* Tin của dự án (bấm xuống khối tin) — máy tính lẫn điện thoại */}
                 {hasRelated && (
                   <div className="rounded-2xl border border-cvr-line bg-white p-4 shadow-lux lg:p-5">
@@ -538,6 +558,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                   </div>
                 )}
 
+                {/* LIÊN HỆ + FORM DÍNH khi cuộn (máy tính) — khối thấp hơn màn hình nên dính êm; các hộp trên cuộn theo trang (30/10/2026) */}
+                <div className="space-y-4 lg:sticky lg:top-24">
                 {/* Hộp Liên hệ — ngay trên form nhận tài liệu & báo giá, máy tính lẫn điện thoại (chủ dự án 30/10/2026) */}
                 {(showPrice || contact) && (
                   <div className="rounded-2xl border border-cvr-line bg-white p-4 shadow-lux lg:p-5">
@@ -557,9 +579,11 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                   </div>
                 )}
 
-                <div id="tai-tai-lieu" className="scroll-mt-14">
-                  <h3 className="mb-2 text-base font-semibold tracking-tight text-cvr-ink">Tải tài liệu & báo giá</h3>
+                {/* Cùng kiểu mọi hộp cột phải: tiêu đề NẰM TRONG khung, cùng cỡ chữ (khung riêng của form tắt đi) — 30/10/2026 */}
+                <div id="tai-tai-lieu" className="scroll-mt-14 overflow-hidden rounded-2xl border border-cvr-line bg-white p-4 shadow-lux lg:p-5 [&>div:last-child]:border-0 [&>div:last-child]:p-0 [&>div:last-child]:shadow-none [&_input]:h-10 [&_select]:h-10">
+                  <p className="mb-3 text-base font-semibold tracking-tight text-cvr-ink">Tải tài liệu & báo giá</p>
                   <LeadForm cta="Đăng ký nhận tài liệu" topics={["Nhận brochure & mặt bằng", "Nhận bảng giá & chính sách", "Đặt lịch tham quan dự án", "Tư vấn vay ngân hàng"]} />
+                </div>
                 </div>
               </div>
             </aside>
@@ -623,7 +647,8 @@ function LienHeDuAn({ contact }: { contact: { name?: string; phone?: string; ema
 // Section chuẩn — có id để menu cuộn tới, tiêu đề nhất quán
 function Section({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
   return (
-    <section id={id} className="mt-5 scroll-mt-14 rounded-2xl bg-cvr-surface p-4 sm:p-5">
+    // KHỐI PHÂN BIỆT GỌN (chủ dự án 30/10/2026: không màu nền, không viền bao): một đường kẻ mảnh giữa các phần + tiêu đề, khoảng cách đều
+    <section id={id} className="mt-6 scroll-mt-14 border-t border-cvr-line pt-6 sm:mt-8 sm:pt-8">
       <h2 className="mb-4 text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">{title}</h2>
       {children}
     </section>

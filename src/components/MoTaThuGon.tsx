@@ -16,7 +16,8 @@ const CO_SO_AN = /\d{4} \d{3} ∗∗∗/;
 // luôn đúng bấy nhiêu dòng. Chuẩn: mô tả tin 10 dòng · tổng quan dự án 6 dòng. Chỉ thu gọn khi nội dung dài hơn
 // 1,6 lần khung (bị ẩn ít nhất ~6 dòng); ngắn hơn thì hiện trọn, không có nút.
 const GIAN_DONG = 1.625;
-export default function MoTaThuGon({ children, dong = 10 }: { children: React.ReactNode; dong?: number }) {
+// nenMo: màu vệt mờ cuối đoạn thu gọn = màu nền khối chứa (khối nền trắng truyền "from-white")
+export default function MoTaThuGon({ children, dong = 10, nenMo = "from-cvr-surface" }: { children: React.ReactNode; dong?: number; nenMo?: string }) {
   const ref = useRef<HTMLDivElement>(null);
   const [dai, setDai] = useState(false);
   const [mo, setMo] = useState(false);
@@ -97,12 +98,16 @@ export default function MoTaThuGon({ children, dong = 10 }: { children: React.Re
     <div>
       <div ref={ref} className="relative overflow-hidden text-[15px]" style={dai && !mo ? { maxHeight: catTai !== undefined ? `${catTai}px` : `${dong * GIAN_DONG}em` } : undefined}>
         {children}
-        {dai && !mo && <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-cvr-surface to-transparent" aria-hidden />}
+        {dai && !mo && <div className={`pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t ${nenMo} to-transparent`} aria-hidden />}
       </div>
       {dai && (
-        <button type="button" onClick={(e) => { if (mo) veDauKhoi(e.currentTarget); setMo((v) => !v); }} className="mt-2 text-[14px] font-semibold text-cvr-blue-ink">
-          {mo ? "Thu gọn" : "Xem thêm"}
-        </button>
+        // MỘT KIỂU NÚT "Xem thêm / Thu gọn" CẢ WEB, căn giữa dưới nội dung (chủ dự án 30/10/2026: chữ xanh lệch trái là mất hợp lý)
+        <div className="mt-4 flex justify-center">
+          <button type="button" onClick={(e) => { if (mo) veDauKhoi(e.currentTarget); setMo((v) => !v); }} className="btn-xemthem">
+            {mo ? "Thu gọn" : "Xem thêm"}
+            <svg className={`h-4 w-4 transition-transform ${mo ? "rotate-180" : ""}`} fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+          </button>
+        </div>
       )}
     </div>
   );

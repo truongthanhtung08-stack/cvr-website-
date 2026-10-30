@@ -29,6 +29,8 @@ import {
 import { directions } from "@/lib/listingSpec";
 import { Panel, Field } from "@/components/Ui";
 import { homNayVn } from "@/lib/gioVn";
+import MapPicker from "@/components/MapPickerMo";
+import { chuoiTimBanDo, diemTimBanDo } from "@/lib/diaChiHaiHe";
 
 // Nhãn gợi ý cho bảng "Quy mô dự án" (sửa tự do được)
 const DEFAULT_SCALE: ProjectScaleItem[] = [
@@ -91,6 +93,7 @@ export default function ProjectForm({
 
   // ── Dữ liệu cấu trúc mới (cột details) ──
   const [addressDetail, setAddressDetail] = useState(initial?.details?.addressDetail ?? "");
+  const [mapPin, setMapPin] = useState(initial?.details?.mapPin ?? "");
   const [tier, setTier] = useState<ProjectTier>(initial?.details?.tier ?? "basic");
 
   // Bảng giá gói dự án (admin đặt ở /admin/gia-khuyen-mai → tab "Gói dự án")
@@ -243,6 +246,7 @@ export default function ProjectForm({
         ...(initial?.details ?? {}),
         tier,
         addressDetail: addressDetail.trim() || undefined,
+        mapPin: mapPin.trim() || undefined,
         // Bỏ trống hết → không lưu contact → trang dự án KHÔNG hiện khối liên hệ
         contact:
           contactName.trim() || contactPhone.trim() || contactEmail.trim()
@@ -509,6 +513,21 @@ export default function ProjectForm({
               className={inputCls}
             />
           </Field>
+        </div>
+        {/* GHIM VỊ TRÍ — cùng công cụ form tin đăng: bấm lên bản đồ là ghim; trang dự án lấy đúng điểm ghim. Bỏ trống → bản đồ tự tìm theo
+            địa chỉ đầy đủ ở trên (chủ dự án 30/10/2026: "bản đồ phải định vị đúng vị trí nạp vào hoặc ghi vào") */}
+        <div className="mt-4">
+          <Field label="Ghim vị trí trên bản đồ (bấm lên bản đồ để ghim)">
+            <input value={mapPin} onChange={(e) => setMapPin(e.target.value)} placeholder="VD: 16.0678, 108.2208 — hoặc bấm lên bản đồ bên dưới" className={inputCls} />
+          </Field>
+          <div className="mt-3">
+            <MapPicker
+              value={mapPin}
+              onChange={setMapPin}
+              hint={chuoiTimBanDo(geoMode, { tinh: province, quan: district, phuong: ward }, addressDetail)}
+              tim={diemTimBanDo(geoMode, { tinh: province, quan: district, phuong: ward }, addressDetail)}
+            />
+          </div>
         </div>
         <p className="mt-2 text-xs text-cvr-faint">
           Hệ MỚI (sau sáp nhập) bỏ cấp Quận/Huyện: Tỉnh/Thành → thẳng Phường/Xã.

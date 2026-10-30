@@ -155,6 +155,7 @@ function projectRowToProject(r: ProjectRow): Project {
     location: location || "Đang cập nhật",
     // Chỉ phường + tỉnh theo hệ MỚI (không số nhà, đường) — thẻ Dự án nổi bật ghi địa chỉ một kiểu (chủ dự án 30/10/2026)
     ...(hai.moi ? { diaChiMoi: hai.moi } : {}),
+    ...(d.mapPin?.trim() ? { mapPin: d.mapPin.trim() } : {}),
     ...(locationCu ? { locationCu } : {}),
     priceFrom: r.price_from || "Liên hệ",
     type: r.type || "Dự án bất động sản",

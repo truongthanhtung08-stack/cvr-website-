@@ -30,7 +30,9 @@ export default function ProjectNearby({
   address,
   places,
   zoom = 15,
+  caoBanDo,
 }: {
+  caoBanDo?: string; // khung bản đồ thấp hơn ở trang dự án (30/10/2026); trang tin giữ như cũ
   mapQuery: string;
   address: string;
   places: Place[];
@@ -72,7 +74,7 @@ export default function ProjectNearby({
       <div className="relative overflow-hidden rounded-xl border border-cvr-line">
         {/* KHÔNG có lớp "Chạm để xem bản đồ" (chủ dự án 22/10/2026 tối: "vì sao phải có câu đó, lại bắt khách chạm"): bản đồ
             dùng được ngay — điện thoại kéo một ngón, phóng hai ngón; máy tính kéo chuột, nút +/−. */}
-        <MapPane query={mapQuery} zoom={zoom} locked={false} />
+        <MapPane query={mapQuery} zoom={zoom} locked={false} cao={caoBanDo} />
 
 
         {/* Trên mặt bản đồ CHỈ có nút ⛶ xem toàn màn hình (chủ dự án 23/10/2026) — nằm trong MapPaneMo. Không thêm nút

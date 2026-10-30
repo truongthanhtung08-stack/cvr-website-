@@ -236,7 +236,9 @@ export default function PhotoViewer({
     }
     lanCham.current = now;
     window.setTimeout(() => {
-      if (lanCham.current && Date.now() - lanCham.current >= 280) setHienNut((v) => !v);
+      // MÁY TÍNH: nút thoát + nút chuyển ảnh LUÔN HIỆN (bấm nền không ẩn — trước bấm nhầm là mất đường thoát, chủ dự án 30/10/2026);
+      // điện thoại giữ như đã duyệt: chạm nền ẩn/hiện thanh nút
+      if (lanCham.current && Date.now() - lanCham.current >= 280 && window.innerWidth < 1024) setHienNut((v) => !v);
     }, 290);
   }
 
@@ -315,11 +317,13 @@ export default function PhotoViewer({
             type="button"
             aria-label="Quay lại"
             onClick={(e) => { e.stopPropagation(); dong(); }}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white active:bg-white/15"
+            className="flex h-10 w-10 shrink-0 items-center justify-center gap-1 rounded-full text-white active:bg-white/15 lg:w-auto lg:bg-white/15 lg:px-3 lg:hover:bg-white/25"
           >
             <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
             </svg>
+            {/* Máy tính: ghi rõ "Đóng" (kèm phím Esc) — nhìn là biết chỗ thoát */}
+            <span className="hidden pr-1 text-sm font-medium lg:inline">Đóng</span>
           </button>
 
           <div className="min-w-0 flex-1">
