@@ -450,7 +450,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
               {/* 2) Vị trí — bản đồ + tiện ích xung quanh + chỉ đường từ vị trí của bạn */}
               <Section id="vi-tri" title="Vị trí & tiện ích xung quanh">
-                <ProjectNearby mapQuery={mapQuery} address={diaChiDu} places={places} zoom={16} caoBanDo="h-[240px] w-full sm:h-[380px]" />
+                <ProjectNearby mapQuery={mapQuery} address={diaChiDu} places={places} zoom={16} caoBanDo="h-[240px] w-full sm:h-[450px]" />
               </Section>
 
               {/* 3) Tiện ích dự án */}
