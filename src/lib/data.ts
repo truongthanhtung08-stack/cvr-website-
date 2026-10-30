@@ -294,6 +294,8 @@ export type Project = {
   location: string;
   /** Cùng chỗ đó gọi theo hệ CŨ — dòng dưới, nhãn "Địa chỉ cũ". */
   locationCu?: string;
+  /** Chỉ phường + tỉnh/thành theo hệ MỚI (không số nhà, đường) — thẻ Dự án nổi bật */
+  diaChiMoi?: string;
   priceFrom: string;
   type: string;
   status: string;
@@ -317,6 +319,7 @@ export type Project = {
   developmentUnit?: string;             // Đơn vị phát triển (khác Chủ đầu tư)
   capNhat?: string;                     // "15/10/2026" — ngày cập nhật thông tin dự án
   nguon?: string;                       // nguồn thông tin dự án (MASTER 3.2: dự án phải có nguồn + ngày)
+  dangThe?: boolean;                    // hồ sơ dạng thẻ (nạp hàng loạt cho Tra cứu dự án) — không lên Dự án nổi bật
 };
 
 // ⚠️ Số liệu dự án mang tính tham khảo cho mẫu giao diện — cần đối chiếu công bố

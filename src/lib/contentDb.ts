@@ -20,6 +20,13 @@ import type { ArticleRow, ProjectRow } from "@/lib/contentAdmin";
 const ARTICLE_PLACEHOLDER = "/images/segments/canho1.jpg";
 const PROJECT_PLACEHOLDER = "/images/segments/canho2.jpg";
 
+// Nguồn thông tin hồ sơ dự án: chỉ ghi TÊN TRANG (vinpearl.com, melia.com…) — không in nguyên chuỗi ghi chú + đường dẫn dài (30/10/2026)
+function tenNguon(nguon: string): string {
+  const trang = [...nguon.matchAll(/https?:\/\/(?:www\.)?([^/\s;,)]+)/g)].map((m) => m[1].toLowerCase());
+  const ds = [...new Set(trang)];
+  return ds.length ? ds.join(", ") : nguon.split(/[;(]/)[0].trim();
+}
+
 // Gọi PostgREST trực tiếp bằng fetch (nội dung đã đăng là công khai — dùng anon key)
 async function rest<T>(table: string, query: string): Promise<T[] | null> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -105,14 +112,22 @@ export async function getArticle(slug: string): Promise<Article | null> {
 function projectRowToProject(r: ProjectRow): Project {
   // ĐỊA CHỈ ĐẦY ĐỦ: số nhà/đường (admin nhập) + Phường/Xã + Quận/Huyện + Tỉnh/Thành.
   // Cùng luật với tin đăng: dòng chính theo hệ MỚI, cách gọi cũ để ở locationCu.
-  const soNha = r.details?.addressDetail?.trim();
+  // Ghi chú trong ngoặc của hồ sơ nạp ("(phường An Hải Bắc, quận Sơn Trà cũ)") bỏ khỏi địa chỉ hiển thị — địa chỉ cũ đã có dòng riêng
+  // (chủ dự án 30/10/2026: địa chỉ ghi đúng, gọn: số nhà, đường, phường, tỉnh)
+  const soNha = r.details?.addressDetail?.replace(/\s*\([^)]*\)/g, "").replace(/\s+,/g, ",").trim();
   const goc = [soNha, r.ward, r.district, r.province].map((s) => s?.trim()).filter(Boolean).join(", ");
   const hai = r.province
     ? haiDongDiaChi(heCuaTin(r.district), {
         tinh: r.province, quan: r.district ?? "", phuong: r.ward ?? "",
       })
     : { moi: "", cu: "" };
-  const location = hai.moi ? [soNha, hai.moi].filter(Boolean).join(", ") : goc;
+  // Số nhà/đường admin nhập hay kèm sẵn phường, tỉnh ("01 Lê Văn Duyệt, Phường Sơn Trà, Thành phố Đà Nẵng") → bỏ các vế đó trước
+  // khi ghép địa chỉ hệ mới, không ghi lặp (30/10/2026)
+  const gon = (x: string) => x.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/gi, "d").toLowerCase()
+    .replace(/^(phuong|xa|thi tran|thanh pho|tinh|tp\.?|quan|huyen|thi xa)\s+/, "").trim();
+  const veTrung = new Set([r.ward, r.district, r.province, ...hai.moi.split(",")].filter(Boolean).map((x) => gon(x!)));
+  const soNhaGon = soNha?.split(",").map((x) => x.trim()).filter((x) => x && !veTrung.has(gon(x))).join(", ");
+  const location = hai.moi ? [soNhaGon, hai.moi].filter(Boolean).join(", ") : goc;
   // Dòng hệ cũ KHÔNG nhắc lại số nhà/đường — chúng không đổi sau sáp nhập.
   const locationCu = hai.cu;
   const overview = paras(r.overview);
@@ -130,18 +145,23 @@ function projectRowToProject(r: ProjectRow): Project {
     slug: r.slug,
     name: r.name,
     location: location || "Đang cập nhật",
+    // Chỉ phường + tỉnh theo hệ MỚI (không số nhà, đường) — thẻ Dự án nổi bật ghi địa chỉ một kiểu (chủ dự án 30/10/2026)
+    ...(hai.moi ? { diaChiMoi: hai.moi } : {}),
     ...(locationCu ? { locationCu } : {}),
     priceFrom: r.price_from || "Liên hệ",
     type: r.type || "Dự án bất động sản",
-    status: r.status_text || "Đang mở bán",
+    // Hồ sơ DẠNG THẺ (Cowork nạp hàng loạt cho Tra cứu dự án, 29/10/2026): không tự gán tình trạng, không câu tổng quan
+    // thay thế — trống thì trang dự án ẩn mục đó. Hồ sơ nổi bật giữ như cũ.
+    status: r.status_text || (d.dangThe ? "" : "Đang mở bán"),
     image: asset(photos[0] ?? PROJECT_PLACEHOLDER),
     developer: r.developer || "Đang cập nhật",
     scale: (r.scale ?? []).filter((s) => s && s.label && s.value),
     amenities: (r.amenities ?? []).filter(Boolean),
-    overview: overview.length ? overview : [`Dự án ${r.name}${location ? ` tại ${location}` : ""} — thông tin đang được Coastal Land cập nhật.`],
+    overview: overview.length ? overview : d.dangThe ? [] : [`Dự án ${r.name}${location ? ` tại ${location}` : ""} — thông tin đang được Coastal Land cập nhật.`],
     ...(photos.length ? { photos: photos.map(asset) } : {}),
     ...(videos.length ? { videos } : {}),
     tier: d.tier ?? "basic",
+    ...(d.dangThe ? { dangThe: true } : {}),
     // Chỉ trả contact khi admin ĐÃ nhập ít nhất SĐT hoặc email — không có thì
     // trang dự án bỏ hẳn khối liên hệ (không hiện số tổng đài bịa).
     ...(d.contact && (d.contact.phone?.trim() || d.contact.email?.trim())
@@ -158,7 +178,7 @@ function projectRowToProject(r: ProjectRow): Project {
     ...(d.developmentUnit?.trim() ? { developmentUnit: d.developmentUnit.trim() } : {}),
     // Ngày cập nhật: ngày Cowork ghi khi nạp, không có thì lần sửa cuối trong admin
     capNhat: d.ngayCapNhat?.trim() || fmtDate(r.updated_at),
-    ...(d.nguon?.trim() ? { nguon: d.nguon.trim() } : {}),
+    ...(d.nguon?.trim() ? { nguon: tenNguon(d.nguon) } : {}),
   };
 }
 
@@ -170,6 +190,12 @@ export async function getProjects(): Promise<Project[]> {
   );
   if (!rows || rows.length === 0) return sampleProjects;
   return rows.map(projectRowToProject);
+}
+
+// DỰ ÁN NỔI BẬT = hồ sơ admin dựng đầy đủ (chủ dự án 29/10/2026). Hồ sơ DẠNG THẺ (nạp hàng loạt từ tệp Cowork — tên, chủ đầu tư,
+// địa chỉ, loại hình, ≥ 1 ảnh) chỉ hiện ở Tra cứu dự án (/du-an/tra-cuu).
+export async function getProjectsNoiBat(): Promise<Project[]> {
+  return (await getProjects()).filter((p) => !p.dangThe);
 }
 
 // Một dự án theo slug — không có trong DB → tìm trong dự án mẫu

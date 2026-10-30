@@ -6,6 +6,9 @@ import Breadcrumb from "@/components/Breadcrumb";
 import ProjectsBrowser from "@/components/ProjectsBrowser";
 import { ProjectListJsonLd } from "@/components/ListJsonLd";
 import { getArticles, getProjects } from "@/lib/contentDb";
+import { getListings } from "@/lib/listingsDb";
+import { dongTraCuu } from "@/lib/traCuuDuAn";
+import { HomeExpandProvider } from "@/components/HomeExpand";
 import { NGUONG_INDEX_CDT, nhomChuDauTu } from "@/lib/chuDauTu";
 
 // pSEO trục 11 — /chu-dau-tu/<tên>: danh sách dự án của một chủ đầu tư (kiểu Mã số thuế).
@@ -40,8 +43,11 @@ export async function generateMetadata({ params }: { params: Promise<{ cdt: stri
 
 export default async function ChuDauTuPage({ params }: { params: Promise<{ cdt: string }> }) {
   const { cdt } = await params;
-  const [g, articles] = await Promise.all([nhom(cdt), getArticles()]);
+  const [g, articles, listings, tatCa] = await Promise.all([nhom(cdt), getArticles(), getListings(), getProjects()]);
   if (!g) notFound();
+  // CÙNG CẤU TRÚC trang Dự án (30/10/2026): Nổi bật = dự án nổi bật của chủ đầu tư; Tra cứu = mọi dự án của chủ đầu tư
+  const slugCdt = new Set(g.duAn.map((x) => x.slug));
+  const traCuu = dongTraCuu(listings, tatCa).filter((d) => slugCdt.has(d.slug));
   const heading = `Dự án của ${g.ten}`;
   return (
     <>
@@ -51,7 +57,9 @@ export default async function ChuDauTuPage({ params }: { params: Promise<{ cdt: 
         <Breadcrumb items={[{ name: "Dự án", href: "/du-an" }, { name: g.ten, href: `/chu-dau-tu/${cdt}` }]} />
         <div className="mx-auto max-w-7xl px-4 pb-footer sm:px-6 lg:px-8">
           <h1 className="mb-4 mt-3 text-2xl font-semibold tracking-tight text-cvr-ink sm:text-3xl">{heading}</h1>
-          <ProjectsBrowser projects={g.duAn} articles={articles} tieuDePhu />
+          <HomeExpandProvider>
+            <ProjectsBrowser projects={g.duAn.filter((x) => !x.dangThe)} articles={articles} tieuDePhu traCuu={traCuu} />
+          </HomeExpandProvider>
         </div>
       </main>
       <Footer />

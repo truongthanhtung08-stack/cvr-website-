@@ -16,7 +16,7 @@ import TimKiemPhoBien from "@/components/TimKiemPhoBien";
 import { HomeExpandProvider, HomeCollapsible, AnKhiMo } from "@/components/HomeExpand";
 import { getListings, getListingsThe } from "@/lib/listingsDb";
 import { chonTinTrangChu } from "@/lib/tinNoiBat";
-import { getArticles, getProjects } from "@/lib/contentDb";
+import { getArticles, getProjectsNoiBat } from "@/lib/contentDb";
 import { getHeroBanners, getHomeAreas, getFeaturedArticleSlug } from "@/lib/siteContent";
 import { THANH_PHO } from "@/lib/pseo";
 import { slugKhuVuc } from "@/lib/khuVuc";
@@ -38,7 +38,7 @@ export default async function Home() {
   // Hero ảnh + khu vực: ảnh/chữ admin sửa được (siteContent) — chưa nhập → mặc định
   // tinDu: bản đầy đủ (cùng lần đọc có cache) — chỉ dùng ở máy chủ để dựng cụm gợi ý, không gửi xuống máy khách
   const [listings, tinDu, projects, articles, homeAreas, featuredSlug, heroBanners] = await Promise.all([
-    getListingsThe(), getListings(), getProjects(), getArticles(), getHomeAreas(),
+    getListingsThe(), getListings(), getProjectsNoiBat(), getArticles(), getHomeAreas(),
     getFeaturedArticleSlug(), getHeroBanners(),
   ]);
 
@@ -46,7 +46,8 @@ export default async function Home() {
   // mặt bằng… của dự án khỏi dữ liệu gửi kèm (ProjectsSection dùng name/slug/type/status/priceFrom/location/image/photos/map).
   const baiThe = articles.map(({ content: _c, ...a }) => a);
   const duAnThe = projects.map(({ scale: _s, amenities: _a, overview: _o, priceTable: _pt, floorPlans: _fp, places: _pl, developerInfo: _di, videos: _v, ...p }) => ({
-    ...p, scale: [], amenities: [], overview: [],
+    // Giữ đoạn giới thiệu đầu + dòng "Giá…" cho thẻ ngang "Xem thêm" (thẻ dự án đang chạy trên web: loại hình · giới thiệu, giá tham khảo)
+    ...p, scale: _s.filter((x) => x.label.startsWith("Giá")), amenities: [], overview: _o.slice(0, 1),
     // 27/10/2026: thẻ dự án chạy tối đa 6 ảnh của [image, ...photos] (AnhChay `slice(0, 6)`) → bỏ ảnh thứ 7 trở đi
     ...(p.photos ? { photos: p.photos.slice(0, 6) } : {}),
   }));
@@ -95,7 +96,7 @@ export default async function Home() {
           {/* Tìm kiếm phổ biến (đường dẫn từ khoá cho Google) ở CUỐI trang chủ, sát footer như Airbnb, Batdongsan — không chen giữa
               nội dung khách đang xem (chủ dự án 25/10/2026: "đưa xuống cuối trang"). Cách khối trên 56 · 24 như mọi khối, tự có lề
               đáy tới footer. Đang mở danh sách Tin tức thì ẩn. */}
-          <AnKhiMo khoa="tin-tuc" className="mt-1"><TimKiemPhoBien /></AnKhiMo>
+          <AnKhiMo khoa="tin-tuc" className="section-edge pt-1"><TimKiemPhoBien trangChu /></AnKhiMo>
         {/* Kế hoạch Airbnb GĐ A — docs/KE-HOACH-AIRBNB.md */}
         </HomeExpandProvider>
       </main>

@@ -1,5 +1,7 @@
 import { NGUONG_INDEX_CDT, nhomChuDauTu } from "@/lib/chuDauTu";
-import type { Project } from "@/lib/data";
+import type { Listing, Project } from "@/lib/data";
+import { dungDsDuAn } from "@/lib/duAnTenMayChu";
+import { cungDuAn } from "@/lib/filters";
 
 // Dùng chung cho trang Tra cứu dự án (/du-an/tra-cuu).
 
@@ -30,4 +32,58 @@ export function demDuAnTheoTinh(items: { location: string }[]): [string, number]
     if (t) m.set(t, (m.get(t) ?? 0) + 1);
   }
   return [...m.entries()].sort((a, b) => b[1] - a[1]);
+}
+
+// ── DANH BẠ TRA CỨU DỰ ÁN (/du-an/tra-cuu — chủ dự án 29/10/2026) ──────────────────────────────────────────────────────────
+// Mọi dự án: có hồ sơ (nổi bật lẫn dạng thẻ) + dự án khách chọn khi đăng tin (gộp tên trùng như ô tìm — dungDsDuAn).
+// Thẻ chỉ các trường cơ bản (chủ dự án 29/10/2026): tên · chủ đầu tư · địa chỉ · loại hình sản phẩm · 1 ảnh (+ tình trạng để lọc,
+// số tin để xếp dự án có tin lên trước).
+export type DongTraCuu = {
+  slug: string;
+  ten: string;
+  chuDauTu: string;  // "" = hồ sơ chưa có
+  loaiHinh: string;  // "" = hồ sơ chưa có
+  tinhTrang: string; // "" = hồ sơ chưa có
+  diaChi: string;
+  diaChiCu: string;
+  tinh: string;
+  anh: string;       // ảnh đầu của hồ sơ — "" = chưa có (thẻ hiện khung xám + biểu tượng)
+  ban: number;
+  thue: number;
+};
+
+export function dongTraCuu(tin: Listing[], duAn: Project[]): DongTraCuu[] {
+  const theoSlug = new Map(duAn.map((p) => [p.slug, p]));
+  // Mã tin viết khác mã hồ sơ ("golden-bay" / "goldenbay") → gộp vào dòng hồ sơ, cùng luật trang dự án (cungDuAn)
+  const ds = dungDsDuAn(tin, duAn);
+  const coHoSo = ds.filter((d) => d.coTrang);
+  const gon = ds.filter((d) => {
+    if (d.coTrang) return true;
+    const cha = coHoSo.find((h) => cungDuAn(d.slug, h.slug));
+    if (!cha) return true;
+    cha.ban += d.ban;
+    cha.thue += d.thue;
+    return false;
+  });
+  return gon
+    .map((d) => {
+      const p = d.coTrang ? theoSlug.get(d.slug) : undefined;
+      const tin1 = p ? undefined : tin.find((l) => l.projectSlug === d.slug);
+      return {
+        slug: d.slug,
+        ten: p?.name ?? d.ten,
+        chuDauTu: p && p.developer !== "Đang cập nhật" ? p.developer : "",
+        loaiHinh: p && p.type !== "Dự án bất động sản" ? p.type : "",
+        tinhTrang: p?.status ?? "",
+        // Thẻ ghi địa chỉ một kiểu: phường + tỉnh hệ MỚI (như thẻ Dự án nổi bật, 30/10/2026); địa chỉ đầy đủ ở trang chi tiết
+        diaChi: p?.location ?? tin1?.location ?? d.tinh,
+        diaChiCu: p?.locationCu ?? tin1?.locationCu ?? "",
+        tinh: d.tinh,
+        anh: p?.photos?.[0] ?? "",
+        ban: d.ban,
+        thue: d.thue,
+      };
+    })
+    // Thứ tự danh bạ tra cứu: theo tên A, B, C (chủ dự án 30/10/2026) — dự án nổi bật xếp riêng theo cấp VIP ở trước
+    .sort((a, b) => a.ten.localeCompare(b.ten, "vi"));
 }

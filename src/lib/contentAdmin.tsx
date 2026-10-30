@@ -52,6 +52,8 @@ export type ProjectDetails = {
   // Mục tra cứu dự án (nạp CSV hằng tuần, 15/10/2026): nguồn thông tin + ngày Cowork cập nhật
   nguon?: string;
   ngayCapNhat?: string;
+  // Hồ sơ DẠNG THẺ (nạp hàng loạt cho Tra cứu dự án, 29/10/2026) — không lên Dự án nổi bật
+  dangThe?: boolean;
   contact?: ProjectContact;               // Liên hệ dự án (SĐT, email…)
 };
 

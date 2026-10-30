@@ -53,6 +53,11 @@ const danhMucBaoGia: NavChild[] = [
   { label: "Gói đăng tin", href: "/bao-gia-dang-tin#bang-gia-tin" },
   { label: "Gói đẩy tin", href: "/bao-gia-dang-tin#goi-day-tin" },
 ];
+// MENU DỰ ÁN (chủ dự án 29/10/2026): trang /du-an có cả hai phần — Tra cứu dự án (mọi dự án) + Dự án nổi bật; mục con nhảy tới đúng phần.
+const danhMucDuAn: NavChild[] = [
+  { label: "Dự án nổi bật", href: "/du-an#noi-bat" },
+  { label: "Tra cứu dự án", href: "/du-an#tra-cuu" },
+];
 // MENU TIỆN ÍCH (chủ dự án duyệt 25/10/2026): một cột, chỉ công cụ dùng được ngay — danh sách ở packages.ts (TIEN_ICH)
 const danhMucTienIch: NavChild[] = TIEN_ICH.map((t) => ({ label: t.label, href: t.href }));
 
@@ -62,7 +67,7 @@ const danhMucTienIch: NavChild[] = TIEN_ICH.map((t) => ({ label: t.label, href: 
 const navItems: NavItem[] = [
   { label: "Mua bán", href: "/mua-ban", children: loaiHinhBan, icon: "muaBan" as const },
   { label: "Cho thuê", href: "/cho-thue", children: loaiHinhThue, icon: "choThue" as const },
-  { label: "Dự án", href: "/du-an", icon: "duAn" as const },
+  { label: "Dự án", href: "/du-an", children: danhMucDuAn, icon: "duAn" as const },
   { label: "Tin tức", href: "/tin-tuc", icon: "tinTuc" as const },
   { label: "Tiện ích", href: "/tien-ich/gia-nha-dat", children: danhMucTienIch, icon: "tienIch" as const },
   { label: "Báo giá", href: "/bao-gia-dang-tin", children: danhMucBaoGia, icon: "baoGia" as const },

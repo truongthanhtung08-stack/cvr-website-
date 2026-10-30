@@ -1,9 +1,10 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import type { Project, Article } from "@/lib/data";
+import type { DongTraCuu } from "@/lib/traCuuDuAn";
 import ProjectsBrowser from "@/components/ProjectsBrowser";
 import { smoothScrollTo } from "@/lib/scroll";
 import { useAutoSlide, useAutoSlideThe, useTamDung } from "@/lib/useAutoSlide";
@@ -25,6 +26,12 @@ export default function ProjectsSection({ projects, articles = [] }: { projects:
   const { dung: pausedMob, chamVao: chamDaiMob } = useTamDung(6000);
   // Nút "Xem thêm" → khối này thành danh sách theo trang, các khối khác ẩn.
   const { expanded, hidden, toggle } = useHomeSection("du-an");
+  // "Xem thêm" cùng logic trang Dự án (30/10/2026): sau dự án nổi bật là danh bạ Tra cứu — nạp lúc mở danh sách (không nhúng vào HTML)
+  const [traCuu, setTraCuu] = useState<DongTraCuu[] | undefined>(undefined);
+  useEffect(() => {
+    if (!expanded || traCuu) return;
+    fetch("/api/du-an/tra-cuu").then((r) => (r.ok ? r.json() : [])).then((ds: DongTraCuu[]) => setTraCuu(ds)).catch(() => setTraCuu([]));
+  }, [expanded, traCuu]);
 
   // Homepage: slide 8 dự án đầu XẾP THEO CẤP VIP (Diamond → Gold → Silver → thường);
   // còn lại xem qua nút "Xem thêm".
@@ -77,7 +84,7 @@ export default function ProjectsSection({ projects, articles = [] }: { projects:
               <Link key={p.slug} href={`/du-an/${p.slug}`} className="flex w-[90%] shrink-0 snap-start flex-col overflow-hidden rounded-none bg-white shadow-lux">
                 <div className="relative aspect-[3/2] w-full overflow-hidden">
                   <AnhChay images={[p.image, ...(p.photos ?? [])]} alt={p.name} sizes="90vw" chay={false} />
-                  <span className="absolute left-3 top-3 rounded-full bg-white/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.06em] text-cvr-ink shadow-[0_2px_10px_rgba(0,0,0,0.18)] ring-1 ring-white/60 backdrop-blur-md">{p.status}</span>
+                  <span className="absolute left-2 top-2 rounded-full bg-white/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.04em] text-cvr-ink shadow-[0_2px_10px_rgba(0,0,0,0.18)] ring-1 ring-white/60 backdrop-blur-md">{p.status}</span>
                 </div>
                 <div className="flex flex-1 flex-col p-4">
                   <h3 className="clamp-2 min-h-[3em] font-semibold leading-[1.5] text-cvr-ink">{p.name}</h3>
@@ -128,7 +135,7 @@ export default function ProjectsSection({ projects, articles = [] }: { projects:
                           sizes="(max-width: 768px) 100vw, 25vw"
                           className="object-cover transition-transform duration-[700ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.07]"
                         />
-                        <span className="absolute left-3 top-3 rounded-full bg-white/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.06em] text-cvr-ink shadow-[0_2px_10px_rgba(0,0,0,0.18)] ring-1 ring-white/60 backdrop-blur-md">
+                        <span className="absolute left-2 top-2 rounded-full bg-white/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.04em] text-cvr-ink shadow-[0_2px_10px_rgba(0,0,0,0.18)] ring-1 ring-white/60 backdrop-blur-md">
                           {p.status}
                         </span>
                       </div>
@@ -192,9 +199,9 @@ export default function ProjectsSection({ projects, articles = [] }: { projects:
 
         </div>{/* hết khối slide */}
 
-        {/* Bấm "Xem thêm" → danh sách TẤT CẢ dự án dạng List, 8 dự án/trang */}
+        {/* Bấm "Xem thêm" → danh sách Dự án nổi bật CÙNG LOGIC trang Dự án (thẻ Tên · Địa chỉ · Loại hình · Chủ đầu tư, 10 dự án/trang) — 30/10/2026 */}
         {/* Mở ra: cách khối sau đúng 56px như mọi khối trang chủ máy tính (24/10/2026) */}
-        {expanded && <div className="sm:pb-4"><ProjectsBrowser projects={ranked} articles={articles} /></div>}
+        {expanded && <div className="sm:pb-4"><ProjectsBrowser projects={ranked} articles={articles} danhSachNoiBat traCuu={traCuu} /></div>}
 
         {ranked.length > 0 && (
           <div className="sm:-mt-4"><ExpandToggle expanded={expanded} onClick={toggle} /></div>
