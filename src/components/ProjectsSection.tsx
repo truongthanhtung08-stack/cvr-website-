@@ -13,7 +13,7 @@ import { anhNho } from "@/lib/asset";
 import { sortProjectsByTier, ExpandToggle } from "@/components/ProjectSlider";
 import { useHomeSection } from "@/components/HomeExpand";
 import NhanTinhTrang, { capVip } from "@/components/NhanTinhTrang";
-import { giaTriThat } from "@/lib/truongDuAn";
+import { giaTriThat, loaiHinhThe } from "@/lib/truongDuAn";
 
 const PER_SLIDE = 4; // 1 hàng × 4 dự án mỗi slide (số slide KHÔNG giới hạn)
 
@@ -98,7 +98,7 @@ export default function ProjectsSection({ projects, articles = [] }: { projects:
 
                       tiến độ: VIP ở nhãn trên ảnh, thẻ thường một dòng; dòng cuối Chủ đầu tư + giá; trống ghi "Đang cập nhật" */}
 
-                  <p className="mt-1 text-xs text-cvr-body"><span className="font-semibold text-cvr-ink">Loại hình:</span> <span className={giaTriThat(p.type) ? "" : "text-cvr-faint"}>{giaTriThat(p.type) || "Đang cập nhật"}</span></p>
+                  <p title={giaTriThat(p.type) || undefined} className="mt-1 truncate text-xs text-cvr-body"><span className="font-semibold text-cvr-ink">Loại hình:</span> <span className={giaTriThat(p.type) ? "" : "text-cvr-faint"}>{loaiHinhThe(p.type) || "Đang cập nhật"}</span></p>
 
                   {!capVip(p.tier) && <p className="mt-1 text-xs text-cvr-body"><span className="font-semibold text-cvr-ink">Tiến độ:</span> <span className={giaTriThat(p.status) ? "" : "text-cvr-faint"}>{giaTriThat(p.status) || "Đang cập nhật"}</span></p>}
 
@@ -159,7 +159,7 @@ export default function ProjectsSection({ projects, articles = [] }: { projects:
 
                             tiến độ: VIP ở nhãn trên ảnh, thẻ thường một dòng; dòng cuối Chủ đầu tư + giá; trống ghi "Đang cập nhật" */}
 
-                        <p className="mt-1 text-xs text-cvr-body"><span className="font-semibold text-cvr-ink">Loại hình:</span> <span className={giaTriThat(p.type) ? "" : "text-cvr-faint"}>{giaTriThat(p.type) || "Đang cập nhật"}</span></p>
+                        <p title={giaTriThat(p.type) || undefined} className="mt-1 truncate text-xs text-cvr-body"><span className="font-semibold text-cvr-ink">Loại hình:</span> <span className={giaTriThat(p.type) ? "" : "text-cvr-faint"}>{loaiHinhThe(p.type) || "Đang cập nhật"}</span></p>
 
                         {!capVip(p.tier) && <p className="mt-1 text-xs text-cvr-body"><span className="font-semibold text-cvr-ink">Tiến độ:</span> <span className={giaTriThat(p.status) ? "" : "text-cvr-faint"}>{giaTriThat(p.status) || "Đang cập nhật"}</span></p>}
 

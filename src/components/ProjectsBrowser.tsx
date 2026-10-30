@@ -26,7 +26,7 @@ import { locTraCuu, nhomLoai } from "@/components/TraCuuDuAn";
 import { useHomeSection } from "@/components/HomeExpand";
 import { sortProjectsByTier } from "@/components/ProjectSlider";
 import NhanTinhTrang, { capVip } from "@/components/NhanTinhTrang";
-import { giaTriThat } from "@/lib/truongDuAn";
+import { giaTriThat, loaiHinhThe } from "@/lib/truongDuAn";
 import { khuVucList, khuVucTrongDiem, slugKhuVuc } from "@/lib/khuVuc";
 import { duAnThuocNhom, projectCategories } from "@/lib/categories";
 import { nhomChuDauTu } from "@/lib/chuDauTu";
@@ -446,7 +446,7 @@ export default function ProjectsBrowser({
               <DongThe icon="ghim" gt={p.location} />
               {/* Mọi thẻ: chỉ dòng Vị trí có biểu tượng; các dòng khác ghi NHÃN ĐẬM có dấu hai chấm (chủ dự án 30/10/2026) */}
               {/* Loại hình: 1 dòng dài hết bề ngang thẻ, quá dài mới “…” ở cuối (chủ dự án 30/10/2026) */}
-              <DongNhan nhan="Loại hình" gt={giaTriThat(p.type)} />
+              <DongNhan nhan="Loại hình" gt={loaiHinhThe(p.type)} />
               {/* Tiến độ: thẻ VIP ở nhãn trên ảnh; thẻ thường một dòng ngay sau Loại hình — một chuẩn mọi thẻ dự án (31/10/2026) */}
               {!capVip(p.tier) && <DongNhan nhan="Tiến độ" gt={giaTriThat(p.status)} />}
             </div>

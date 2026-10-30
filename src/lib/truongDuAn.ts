@@ -30,3 +30,12 @@ export const CHUA_CO: Record<keyof TruongBatBuoc, string> = {
   tinhTrang: "Tình trạng đang cập nhật",
   chuDauTu: "Chủ đầu tư đang cập nhật",
 };
+
+/** Loại hình trên THẺ: gom về MỘT dòng (chủ dự án 31/10/2026) — ngắn thì giữ nguyên; dài (> 30 ký tự, quá một dòng thẻ) thì lấy
+ *  LOẠI HÌNH CHÍNH = vế đầu trước dấu , ; : ( — vd "Tổ hợp Căn hộ cao cấp, Khách sạn 5 sao, TMDV" → "Tổ hợp Căn hộ cao cấp".
+ *  Trang chi tiết vẫn ghi đủ. */
+export function loaiHinhThe(loaiHinh: string): string {
+  const v = giaTriThat(loaiHinh);
+  if (v.length <= 30) return v;
+  return v.split(/[,;:(]/)[0].replace(/\s+gồm\s*$/i, "").trim() || v;
+}
