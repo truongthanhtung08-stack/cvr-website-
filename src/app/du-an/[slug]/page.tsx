@@ -27,6 +27,7 @@ import TrangDuAnTraCuu from "@/components/TrangDuAnTraCuu";
 import { provinceOf, districtOf, segmentOf, pickRelated, type Project, type Listing } from "@/lib/data";
 import { getProject, getProjects, getProjectsNoiBat, getArticles } from "@/lib/contentDb";
 import { dongTraCuu } from "@/lib/traCuuDuAn";
+import { nhomLoai } from "@/components/TraCuuDuAn";
 import { getListings } from "@/lib/listingsDb";
 import { duAnThuocNhom, findCategory, projectCategories, type Category } from "@/lib/categories";
 import { normalizeVi, cungDuAn } from "@/lib/filters";
@@ -227,8 +228,17 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
   // ── Nhánh 2: trang chi tiết một dự án ──
   const [p, projects, listings, articles, tatCaDuAn] = await Promise.all([getProject(slug), getProjectsNoiBat(), getListings(), getArticles(), getProjects()]);
-  // Trang dự án TRA CỨU: "Dự án khác tại <tỉnh>" — tối đa 5 dự án cùng tỉnh trong danh bạ Tra cứu (30/10/2026)
-  const cungTinh = (tinh: string, bo: string) => dongTraCuu(listings, tatCaDuAn).filter((x) => x.tinh === tinh && !cungDuAn(x.slug, bo)).slice(0, 5);
+  // Trang dự án TRA CỨU: "Dự án tương tự" (30/10/2026) — theo KHU VỰC + LOẠI HÌNH: cùng tỉnh bắt buộc, cùng nhóm loại hình đứng trước,
+  // rồi dự án có nhiều tin hơn; tối đa 5, trong danh bạ Tra cứu
+  const duAnTuongTu = (tinh: string, loai: string, bo: string) => {
+    const nhom = nhomLoai(loai);
+    return dongTraCuu(listings, tatCaDuAn)
+      .filter((x) => x.tinh === tinh && !cungDuAn(x.slug, bo))
+      .map((x, i) => ({ x, i, khop: nhom && nhomLoai(x.loaiHinh) === nhom ? 0 : 1 }))
+      .sort((a, b) => a.khop - b.khop || a.i - b.i)
+      .slice(0, 5)
+      .map((e) => e.x);
+  };
   if (!p) {
     const coban = duAnTuTin(listings, slug);
     if (!coban) notFound();
@@ -239,14 +249,12 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
         <main className="flex-1 bg-white">
           <TrangDuAnTraCuu
             d={{
-              slug, ten: coban.ten, anh: "", chuDauTu: "", diaChi: coban.viTri, diaChiCu: coban.tin[0]?.locationCu ?? "",
-              loaiHinh: "", tinhTrang: "", thongSo: [], capNhat: "", nguon: "", coHoSo: false,
+              slug, ten: coban.ten, anhs: [], chuDauTu: "", donViPhatTrien: "", diaChi: coban.viTri, diaChiCu: coban.tin[0]?.locationCu ?? "",
+              loaiHinh: "", tinhTrang: "", giaTu: "", thongSo: [], capNhat: "", nguon: "", tongQuan: [], tienIch: [], coHoSo: false,
             }}
             tinBan={coban.tin.filter((x) => (x.purpose ?? "ban") === "ban")}
             tinThue={coban.tin.filter((x) => (x.purpose ?? "ban") === "thue")}
-            tuongTu={tuongTuDuAn(listings, coban.tin, coban.viTri)}
-            tinh={provinceOf(coban.viTri)}
-            cungKhuVuc={cungTinh(provinceOf(coban.viTri), slug)}
+            duAnTuongTu={duAnTuongTu(provinceOf(coban.viTri), "", slug)}
           />
         </main>
         <Footer />
@@ -353,17 +361,18 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
         <main className="flex-1 bg-white">
           <TrangDuAnTraCuu
             d={{
-              slug: p.slug, ten: p.name, anh: p.photos?.[0] ?? "",
+              slug: p.slug, ten: p.name, anhs: p.photos ?? [],
               chuDauTu: p.developer !== "Đang cập nhật" ? p.developer : "",
+              donViPhatTrien: p.developmentUnit ?? "",
+              giaTu: showPrice && p.priceFrom !== "Liên hệ" ? p.priceFrom : "",
+              tongQuan: p.overview, tienIch: p.amenities,
               diaChi: p.location, diaChiCu: p.locationCu ?? "",
               loaiHinh: p.type !== "Dự án bất động sản" ? p.type : "",
               tinhTrang: p.status, thongSo: p.scale, capNhat: p.capNhat ?? "", nguon: p.nguon ?? "", coHoSo: true,
             }}
             tinBan={relBan}
             tinThue={relThue}
-            tuongTu={tuongTuDuAn(listings, projectListings, p.location, p.type)}
-            tinh={province}
-            cungKhuVuc={cungTinh(province, p.slug)}
+            duAnTuongTu={duAnTuongTu(province, p.type, p.slug)}
           />
         </main>
         <Footer />
@@ -640,7 +649,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
           {/* Chưa có tin thuộc dự án → ẩn hẳn khối (không phơi "chưa có tin" trước khách — 22/10/2026) */}
           {hasRelated && (
           <section id="tin-du-an" className="scroll-mt-14">
-            <RelatedListingsTabs ban={relBan} thue={relThue} tenDuAn={p.name} title={`Tin mua bán liên quan tại dự án ${p.name}`} />
+            <RelatedListingsTabs ban={relBan} thue={relThue} tenDuAn={p.name} title={`Bán, cho thuê tại ${p.name}`} />
           </section>
           )}
 

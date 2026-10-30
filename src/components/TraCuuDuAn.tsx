@@ -23,6 +23,40 @@ export function locTraCuu(ds: DongTraCuu[], q: string, tinh: string, loai: strin
   });
 }
 
+// Thẻ DỌC (ảnh trên, chữ dưới) — khối "Dự án tương tự" ở trang dự án tra cứu: CÙNG KIỂU thẻ Dự án nổi bật (Tên · Địa chỉ ·
+// Loại hình · Chủ đầu tư), hiện đủ chữ, thẻ trong hàng cao bằng nhau (chủ dự án 30/10/2026)
+export function TheDuAnDoc({ d }: { d: DongTraCuu }) {
+  return (
+    <Link
+      href={`/du-an/${d.slug}`}
+      className="card-lux group flex h-full flex-col overflow-hidden rounded-none border border-cvr-line bg-white shadow-lux shadow-lux-hover hover:-translate-y-1 hover:border-cvr-blue/45"
+    >
+      <span className="relative block aspect-[16/10] w-full shrink-0 overflow-hidden bg-cvr-surface">
+        {d.anh ? (
+          <Image src={d.anh} alt={d.ten} fill sizes="(max-width:640px) 80vw, 25vw" className="object-cover transition-transform duration-[700ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.06]" />
+        ) : (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src="/logo/symbol-dark.svg" alt="" className="absolute inset-0 m-auto h-10 w-10 opacity-25" />
+        )}
+        {d.tinhTrang && (
+          <span className="absolute left-2.5 top-2.5 rounded-full bg-white/80 px-2.5 py-[3px] text-[11px] font-semibold uppercase tracking-[0.06em] text-cvr-ink shadow-[0_2px_10px_rgba(0,0,0,0.18)] ring-1 ring-white/60 backdrop-blur-md">{d.tinhTrang}</span>
+        )}
+      </span>
+      <span className="flex min-w-0 flex-1 flex-col p-3">
+        <span className="font-semibold leading-snug text-cvr-ink transition-colors group-hover:text-cvr-blue-ink">{d.ten}</span>
+        <span className="mt-1 flex items-start gap-1 text-xs text-cvr-muted">
+          <svg className="mt-px h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+          <span className="min-w-0">{d.diaChi}</span>
+        </span>
+        <span className="mb-3 mt-1 text-xs text-cvr-body">Loại hình: {d.loaiHinh || "Đang cập nhật"}</span>
+        <span className="mt-auto border-t border-cvr-line pt-2.5 text-xs text-cvr-body">
+          Chủ đầu tư: <span className="font-medium text-cvr-ink">{d.chuDauTu || "Đang cập nhật"}</span>
+        </span>
+      </span>
+    </Link>
+  );
+}
+
 export function TheTraCuu({ d }: { d: DongTraCuu }) {
   return (
     // CÙNG KHUÔN thẻ dự án trên trang (viền, bóng, ảnh bo góc, khe 20px) để cân với Dự án nổi bật — chủ dự án 29/10/2026.
