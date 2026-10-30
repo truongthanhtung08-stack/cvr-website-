@@ -421,8 +421,9 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                 {/* BẢNG THÔNG TIN CHUẨN (chủ dự án 30/10/2026): PC 2 cột thẳng hàng — mỗi mục nhãn xám rộng cố định + giá trị đậm NGAY SAU;
                     thứ tự theo cặp (chủ đầu tư | tình trạng · loại hình | giá · quy mô | diện tích …); điện thoại 1 cột */}
                 <div className="grid grid-cols-1 gap-x-10 gap-y-3 sm:grid-cols-2">
-                  {nhomThongSo(hangThongSo).flat().map((s) => (
-                    <div key={s.label} className="flex min-w-0 items-start gap-3 text-sm">
+                  {(() => { const ds = nhomThongSo(hangThongSo).flat(); return [...ds.filter((x) => x.value.length <= 26), ...ds.filter((x) => x.value.length > 26)]; })().map((s) => (
+                    // Mục dài (> 26 ký tự) xuống cuối, trọn một hàng — không bẻ dòng khi còn chỗ (chủ dự án 30/10/2026)
+                    <div key={s.label} className={`flex min-w-0 items-start gap-3 text-sm ${s.value.length > 26 ? "sm:col-span-2" : ""}`}>
                       <span className="w-32 shrink-0 text-cvr-muted sm:w-36">{s.label}</span>
                       <span className={`min-w-0 ${s.value === "Đang cập nhật" ? "text-cvr-faint" : "font-medium text-cvr-ink"}`}>
                         {s.href ? <Link href={s.href} className="hover:text-cvr-blue-ink">{s.value}</Link> : s.value}
