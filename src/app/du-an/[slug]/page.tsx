@@ -666,8 +666,9 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                 {/* Tra cứu: 3 trường bắt buộc thành hộp đầu cột phải, cùng kiểu hộp khu vực — cột phải cao ngang ảnh, cân 2 bên (31/10/2026) */}
                 {/* Điện thoại: hộp này nằm ngay dưới ảnh (cột phải xuống cuối trang) → ở đây chỉ hiện trên máy tính */}
 
+                {/* Điện thoại bỏ hộp này (chủ dự án 31/10/2026) — chỉ máy tính */}
                 {duAnTheoKhuVuc.length > 0 && (
-                  <div className="rounded-2xl border border-cvr-line bg-white p-4 lg:p-5">
+                  <div className="hidden rounded-2xl border border-cvr-line bg-white p-4 lg:block lg:p-5">
                     <p className="text-base font-semibold tracking-tight text-cvr-ink">Dự án theo khu vực</p>
                     <div className="mt-3 flex flex-col">
                       {duAnTheoKhuVuc.map(([ten, so]) => (
@@ -735,6 +736,14 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
 
           {/* pSEO — liên kết sang trang mua bán / cho thuê cùng tỉnh (khối có lề riêng → bù lề khung trang) */}
+          {/* Điện thoại: Dự án theo khu vực xuống CUỐI trang, khối khu vực kiểu điện thoại như trang Dự án (KhuVucLinks) — 31/10/2026.
+              Máy tính giữ ở cột phải */}
+          {duAnTheoKhuVuc.length > 0 && (
+            <div className="-mx-4 mt-12 sm:-mx-6 lg:hidden [&>section]:pb-0">
+              <KhuVucLinks base="/du-an" demTheoTinh={duAnTheoKhuVuc} />
+            </div>
+          )}
+
           {/* pSEO — khối "Tìm kiếm phổ biến" cuối trang như trang chủ, trang danh sách (khối có lề riêng → bù lề khung trang) */}
           {tabTuKhoa.length > 0 && (
             // CÂN ĐO (chủ dự án 31/10/2026): cách mục trên đúng 48 px như mục cách mục (khối có đệm trên riêng 8 / 24 px), đáy bù đệm dưới riêng
