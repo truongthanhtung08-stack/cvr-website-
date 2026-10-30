@@ -117,6 +117,21 @@ function normalizeUrl(u: string): string {
 
 // Thứ tự ưu tiên dòng thông số trong bảng Tổng quan (nhãn hồ sơ viết tự do → so theo chữ, không dấu)
 const UU_TIEN = ["dia chi|dai chi", "vi tri", "quy mo", "dien tich", "so luong", "so can", "loai hinh can", "san pham", "ban giao", "tieu chuan", "phap ly", "so huu", "khoi cong"];
+// Nhóm hàng của bảng Tổng quan: 0 chung · 1 địa chỉ · 2 quy mô · 3 bàn giao & pháp lý · 4 khác
+const laDiaChi = (nhan: string) => /dia chi|dai chi|vi tri/.test(normalizeVi(nhan).replace(/đ/g, "d"));
+function nhomThongSo<T extends { label: string }>(ds: T[]): T[][] {
+  const nhomCua = (nhan: string) => {
+    const x = normalizeVi(nhan).replace(/đ/g, "d");
+    if (/chu dau tu|don vi phat trien|tinh trang|^loai hinh$|gia tu/.test(x)) return 0;
+    if (laDiaChi(nhan)) return 1;
+    if (/quy mo|dien tich|so luong|so can|loai hinh can|san pham|so tang|so toa/.test(x)) return 2;
+    if (/khoi cong|ban giao|tieu chuan|phap ly|so huu/.test(x)) return 3;
+    return 4;
+  };
+  const g: T[][] = [[], [], [], [], []];
+  for (const s of ds) g[nhomCua(s.label)].push(s);
+  return g.filter((n) => n.length);
+}
 function hangUuTien(nhan: string): number {
   const x = normalizeVi(nhan).replace(/đ/g, "d");
   const i = UU_TIEN.findIndex((k) => k.split("|").some((y) => x.includes(y)));
@@ -398,13 +413,19 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                     đọc là biết dự án; phần giới thiệu bên dưới, dài thì thu gọn, nút "Xem thêm / Thu gọn" ở CUỐI khối (ngắn thì không có nút) */}
                 {/* Ô THÔNG SỐ XẾP LƯỚI (chủ dự án 30/10/2026: một cột tốn chỗ, xấu): nhãn nhỏ xám trên · giá trị đậm dưới; PC 3 ô / hàng,
                     điện thoại 2 ô; ô đều nhau, giá trị dài tự xuống dòng trong ô */}
-                <div className="grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-3">
-                  {hangThongSo.map((s) => (
-                    <div key={s.label} className="min-w-0">
-                      <p className="text-xs text-cvr-muted">{s.label}</p>
-                      <p className={`mt-1 text-[15px] leading-snug ${s.value === "Đang cập nhật" ? "text-cvr-faint" : "font-medium text-cvr-ink"}`}>
-                        {s.href ? <Link href={s.href} className="hover:text-cvr-blue-ink">{s.value}</Link> : s.value}
-                      </p>
+                {/* XẾP THEO NHÓM, mỗi nhóm một hàng mới (chủ dự án 30/10/2026: "sắp xếp cột hàng phải logic"): thông tin chung · địa chỉ
+                    (hàng riêng) · quy mô · bàn giao & pháp lý · khác */}
+                <div className="space-y-5">
+                  {nhomThongSo(hangThongSo).map((nhom, k) => (
+                    <div key={k} className="grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-3">
+                      {nhom.map((s) => (
+                        <div key={s.label} className={`min-w-0 ${laDiaChi(s.label) ? "col-span-full" : ""}`}>
+                          <p className="text-xs text-cvr-muted">{s.label}</p>
+                          <p className={`mt-1 text-[15px] leading-snug ${s.value === "Đang cập nhật" ? "text-cvr-faint" : "font-medium text-cvr-ink"}`}>
+                            {s.href ? <Link href={s.href} className="hover:text-cvr-blue-ink">{s.value}</Link> : s.value}
+                          </p>
+                        </div>
+                      ))}
                     </div>
                   ))}
                 </div>
