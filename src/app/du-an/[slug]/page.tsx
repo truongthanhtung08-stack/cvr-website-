@@ -261,6 +261,9 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   // Giá ở cột phải: ẩn giá → "Liên hệ" thay vì lộ khoảng giá.
   const sidePrice = showPrice ? p.priceFrom : "Liên hệ";
   const coCotPhai = !traCuu || showPrice || !!contact;
+  // BẢN ĐỒ CẠNH TIÊU ĐỀ (chủ dự án 30/10/2026): dự án tra cứu không có cột phải (giá, liên hệ) thì bản đồ không kéo hết bề ngang
+  // máy tính — đặt ở cột phải ngang tên dự án; điện thoại nằm ngay dưới phần tên, địa chỉ. Bỏ mục "Vị trí" riêng bên dưới.
+  const banDoCanhTieuDe = !coCotPhai;
   const soO = [coChuDauTu, coLoaiHinh, showPrice, !!handover].filter(Boolean).length;
 
   // Dự án tương tự — cùng cách trang dự án tra cứu (cùng tỉnh, cùng nhóm loại hình trước), lấy hết cho slide + Xem thêm
@@ -283,7 +286,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   const nav = [
     ...(p.overview.length || p.scale.length ? [{ id: "tong-quan", label: "Tổng quan" }] : []),
     ...(p.videos?.length ? [{ id: "video", label: "Video" }] : []),
-    { id: "vi-tri", label: "Vị trí" },
+    ...(banDoCanhTieuDe ? [] : [{ id: "vi-tri", label: "Vị trí" }]),
     ...(floorPlans.length ? [{ id: "mat-bang", label: "Mặt bằng" }] : []),
     ...(p.amenities.length ? [{ id: "tien-ich", label: "Tiện ích" }] : []),
     ...(!traCuu || p.status ? [{ id: "tien-do", label: "Tiến độ" }] : []),
@@ -331,18 +334,17 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
           {/* Nội dung dự án — ẩn khi bấm "Xem thêm" ở mục tin/dự án bên dưới */}
           <HomeCollapsible>
 
-          {/* Thư viện ảnh — MOBILE tràn viền sát 2 mép (giảm khoảng trống trên) · bấm để xem lớn + zoom */}
-          <div className="-mx-4 sm:mx-0">
-            {coAnh ? <ProjectGallery images={gallery} alt={p.name} /> : (
-              <div className="flex h-[190px] items-center justify-center bg-cvr-surface sm:h-[300px]">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/logo/symbol-dark.svg" alt="" className="h-16 w-16 opacity-25" />
-              </div>
-            )}
-          </div>
+          {/* Thư viện ảnh — MOBILE tràn viền sát 2 mép (giảm khoảng trống trên) · bấm để xem lớn + zoom.
+              Chưa có ảnh: không vẽ khung trống, tên dự án lên đầu trang (chủ dự án 30/10/2026) */}
+          {coAnh && (
+            <div className="-mx-4 sm:mx-0">
+              <ProjectGallery images={gallery} alt={p.name} />
+            </div>
+          )}
 
           {/* Tiêu đề + địa chỉ — bố cục cân đối, rõ ràng */}
-          <div className="mt-5">
+          <div className={banDoCanhTieuDe ? `${coAnh ? "mt-5" : "mt-2"} grid grid-cols-1 gap-5 lg:grid-cols-3 lg:gap-8` : undefined}>
+          <div className={banDoCanhTieuDe ? "lg:col-span-2" : coAnh ? "mt-5" : "mt-2"}>
             <div className="flex flex-wrap items-center gap-2">
               {/* Dự án tra cứu: nhãn Bán / Cho thuê do máy tự gán khi nạp → không hiện */}
               {!traCuu && purposes.includes("ban") && <PurposeChip>Bán</PurposeChip>}
@@ -393,6 +395,12 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               </div>
             )}
           </div>
+          {banDoCanhTieuDe && (
+            <div id="vi-tri" className="scroll-mt-14 lg:col-span-1">
+              <ProjectNearby mapQuery={mapQuery} address="" places={places} zoom={16} />
+            </div>
+          )}
+          </div>
 
           </HomeCollapsible>
 
@@ -438,9 +446,11 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               )}
 
               {/* 2) Vị trí — bản đồ + tiện ích xung quanh + chỉ đường từ vị trí của bạn */}
+              {!banDoCanhTieuDe && (
               <Section id="vi-tri" title="Vị trí & tiện ích xung quanh">
                 <ProjectNearby mapQuery={mapQuery} address={p.location} places={places} zoom={16} />
               </Section>
+              )}
 
               {/* 3) Mặt bằng — ảnh từng tháp/tầng/loại căn, bấm để phóng to */}
               {floorPlans.length > 0 && (

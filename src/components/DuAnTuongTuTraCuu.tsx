@@ -41,6 +41,8 @@ export default function DuAnTuongTuTraCuu({ ds, id }: { ds: DongTraCuu[]; id?: s
           <li key={x.slug} className="w-[80%] shrink-0 snap-start sm:w-[calc(50%-10px)] lg:w-[calc(25%-15px)]"><TheDuAnDoc d={x} /></li>
         ))}
       </ul>
+      {/* "Xem thêm" chỉ khi còn dự án ngoài slide (30/10/2026) */}
+      {ds.length > SLIDE && (
       <div className="mt-6 flex justify-center">
         <button type="button" onClick={() => { setTrang(1); toggle(); }} className="btn-xemthem">
           Xem thêm
@@ -49,6 +51,7 @@ export default function DuAnTuongTuTraCuu({ ds, id }: { ds: DongTraCuu[]; id?: s
           </svg>
         </button>
       </div>
+      )}
     </section>
   );
 }
