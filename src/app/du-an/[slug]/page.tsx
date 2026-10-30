@@ -261,9 +261,10 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   // rồi thông số hồ sơ (quy mô, sản phẩm, khởi công, bàn giao, pháp lý…). Tình trạng, chủ đầu tư, loại hình luôn có ("Đang cập nhật");
   // trường khác chỉ khi có. Thay khối Tiến độ (trùng tình trạng, khởi công, bàn giao) — đã bỏ.
   const hangThongSo: { label: string; value: string; href?: string }[] = [
+    // Chủ đầu tư đứng ĐẦU (chủ dự án 30/10/2026)
+    { label: "Chủ đầu tư", value: coChuDauTu ? p.developer : "Đang cập nhật", href: coChuDauTu && laChuDauTuThat(p.developer) ? `/chu-dau-tu/${slugChuDauTu(p.developer)}` : undefined },
     { label: "Tình trạng", value: p.status || "Đang cập nhật" },
     { label: "Loại hình", value: coLoaiHinh ? p.type : "Đang cập nhật" },
-    { label: "Chủ đầu tư", value: coChuDauTu ? p.developer : "Đang cập nhật", href: coChuDauTu && laChuDauTuThat(p.developer) ? `/chu-dau-tu/${slugChuDauTu(p.developer)}` : undefined },
     ...(p.developmentUnit ? [{ label: "Đơn vị phát triển", value: p.developmentUnit }] : []),
     ...(showPrice ? [{ label: "Giá từ", value: sidePrice }] : []),
     // Thông số hồ sơ: QUAN TRỌNG LÊN TRƯỚC (chủ dự án 30/10/2026) — địa chỉ · quy mô · diện tích · số căn · loại căn · bàn giao · pháp lý
