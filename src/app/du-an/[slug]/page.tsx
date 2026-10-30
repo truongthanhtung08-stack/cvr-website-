@@ -269,7 +269,13 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
     ...(showPrice ? [{ label: "Giá từ", value: sidePrice }] : []),
     // bỏ dòng địa chỉ (đã có dưới tên dự án) và tình trạng (nhãn trên ảnh)
     ...p.scale.filter((s) => !["Tình trạng", "Chủ đầu tư", "Loại hình", "Giá từ"].includes(s.label) && !laDiaChi(s.label)),
-  ].filter((s, i, ds) => ds.findIndex((x) => normalizeVi(x.label) === normalizeVi(s.label)) === i);
+  ].filter((s, i, ds) => ds.findIndex((x) => normalizeVi(x.label) === normalizeVi(s.label)) === i)
+    // THỨ TỰ CHỦ DỰ ÁN CHỐT (30/10/2026): Chủ đầu tư → Loại hình → Diện tích dự án → Quy mô dự án → Loại hình căn hộ → Số lượng căn hộ →
+    // các mục khác giữ thứ tự Admin
+    .map((s, i) => ({ s, i, h: [/chu dau tu/, /^loai hinh$/, /dien tich/, /quy mo/, /loai hinh can|loai can/, /so luong|so can/]
+      .findIndex((r) => r.test(normalizeVi(s.label).replace(/đ/g, "d").trim())) }))
+    .sort((a, b) => (a.h < 0 ? 99 : a.h) - (b.h < 0 ? 99 : b.h) || a.i - b.i)
+    .map((x) => x.s);
 
   // Dự án tương tự — cùng cách trang dự án tra cứu (cùng tỉnh, cùng nhóm loại hình trước), lấy hết cho slide + Xem thêm
   const tuongTuNoiBat = duAnTuongTu(province, p.type, p.slug);
@@ -345,13 +351,6 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               {/* Nhãn tình trạng (tiến độ) trên ảnh — cùng kiểu nhãn trên thẻ dự án */}
               <span className="pointer-events-none absolute left-3 top-3 z-10 rounded-full bg-white/85 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-[0.04em] text-cvr-ink shadow-[0_2px_10px_rgba(0,0,0,0.18)] ring-1 ring-white/60 backdrop-blur-md">{p.status || "Đang cập nhật"}</span>
               <ProjectGallery images={gallery} alt={p.name} />
-              {/* Dự án có video: nút ▶ Video góc trái dưới ảnh → khối Video ngay sau Tổng quan (mẫu 30/10/2026) */}
-              {!!p.videos?.length && (
-                <a href="#video" className="absolute bottom-3 left-3 flex items-center gap-1.5 rounded-full bg-black/60 px-3 py-1.5 text-[13px] font-medium text-white backdrop-blur-sm hover:bg-black/75">
-                  <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden><path d="M8 5v14l11-7z" /></svg>
-                  Video
-                </a>
-              )}
             </div>
           )}
 
