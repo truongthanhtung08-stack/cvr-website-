@@ -75,22 +75,23 @@ export default function ProjectsSection({ projects, articles = [] }: { projects:
 
         {/* ── MOBILE (< 640px): lướt ngang TỪNG thẻ dự án (như "BĐS dành cho bạn"),
             ló mép thẻ sau. ── */}
+        {/* CÙNG CHUẨN THẺ TRANG DỰ ÁN ĐIỆN THOẠI (31/10/2026): ảnh 16:9, chữ 13 px, thẻ cao theo nội dung (không kéo bằng thẻ dài nhất) */}
         <div className="sm:hidden">
           {/* Dải lướt ngang trên điện thoại: TỰ CHẠY từng thẻ; chạm là dừng hẳn. */}
           <div
             ref={diMobRef}
             onTouchStart={chamDaiMob}
-            className="no-scrollbar -mx-4 mt-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2"
+            className="no-scrollbar -mx-4 mt-4 flex items-start snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2"
           >
             {homeProjects.map((p) => (
               <Link key={p.slug} href={`/du-an/${p.slug}`} className="flex w-[90%] shrink-0 snap-start flex-col overflow-hidden rounded-none bg-white shadow-lux">
-                <div className="relative aspect-[3/2] w-full overflow-hidden">
+                <div className="relative aspect-[16/9] w-full overflow-hidden">
                   <AnhChay images={[p.image, ...(p.photos ?? [])]} alt={p.name} sizes="90vw" chay={false} />
                   <NhanTinhTrang tier={p.tier} tinhTrang={giaTriThat(p.status)} />
                 </div>
                 <div className="flex flex-1 flex-col p-4">
-                  <h3 className="clamp-2 min-h-[3em] font-semibold leading-[1.5] text-cvr-ink">{p.name}</h3>
-                  <p className="mt-1 flex items-center gap-1 text-xs text-cvr-muted">
+                  <h3 className="clamp-2 font-semibold leading-[1.5] text-cvr-ink">{p.name}</h3>
+                  <p className="mt-1 flex items-center gap-1 text-[13px] text-cvr-muted">
                     <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                     {giaTriThat(p.location) || "Đang cập nhật"}
                   </p>
@@ -98,13 +99,13 @@ export default function ProjectsSection({ projects, articles = [] }: { projects:
 
                       tiến độ: VIP ở nhãn trên ảnh, thẻ thường một dòng; dòng cuối Chủ đầu tư + giá; trống ghi "Đang cập nhật" */}
 
-                  <p title={giaTriThat(p.type) || undefined} className="mt-1 truncate text-xs text-cvr-body"><span className="font-semibold text-cvr-ink">Loại hình:</span> <span className={giaTriThat(p.type) ? "" : "text-cvr-faint"}>{loaiHinhThe(p.type) || "Đang cập nhật"}</span></p>
+                  <p title={giaTriThat(p.type) || undefined} className="mt-1 truncate text-[13px] text-cvr-body"><span className="font-semibold text-cvr-ink">Loại hình:</span> <span className={giaTriThat(p.type) ? "" : "text-cvr-faint"}>{loaiHinhThe(p.type) || "Đang cập nhật"}</span></p>
 
-                  {!capVip(p.tier) && <p className="mt-1 text-xs text-cvr-body"><span className="font-semibold text-cvr-ink">Tiến độ:</span> <span className={giaTriThat(p.status) ? "" : "text-cvr-faint"}>{giaTriThat(p.status) || "Đang cập nhật"}</span></p>}
+                  {!capVip(p.tier) && <p className="mt-1 text-[13px] text-cvr-body"><span className="font-semibold text-cvr-ink">Tiến độ:</span> <span className={giaTriThat(p.status) ? "" : "text-cvr-faint"}>{giaTriThat(p.status) || "Đang cập nhật"}</span></p>}
 
                   <span className="block h-3 shrink-0" aria-hidden />
                   <div className="mt-auto flex items-center justify-between gap-3 border-t border-cvr-line pt-3">
-                    <span className="min-w-0 text-xs text-cvr-body"><span className="font-semibold text-cvr-ink">Chủ đầu tư:</span> <span className={giaTriThat(p.developer) ? "" : "text-cvr-faint"}>{giaTriThat(p.developer) || "Đang cập nhật"}</span></span>
+                    <span className="min-w-0 text-[13px] text-cvr-body"><span className="font-semibold text-cvr-ink">Chủ đầu tư:</span> <span className={giaTriThat(p.developer) ? "" : "text-cvr-faint"}>{giaTriThat(p.developer) || "Đang cập nhật"}</span></span>
                     <span className="shrink-0 whitespace-nowrap text-sm font-semibold text-cvr-ink">{p.priceFrom}</span>
                   </div>
                 </div>
