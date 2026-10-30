@@ -5,9 +5,9 @@ import Image from "next/image";
 
 // ============================================================================
 // ẢNH ĐẦU TRANG DỰ ÁN TRA CỨU (chủ dự án 31/10/2026): MỘT khung = ảnh đại diện; có từ 2 ảnh thì tự chuyển (mờ dần, như ô Khu
-// vực trang chủ — tối đa 6 tấm). Ảnh tra cứu lấy từ nhiều nguồn, cỡ / tỷ lệ khác nhau, admin không chỉnh được → khung RỘNG HẾT
-// KHỔ, cao 300 px như thư viện ảnh dự án nổi bật (điện thoại 16:9) — không chừa chỗ trống bên phải (chủ dự án chụp 31/10); ảnh
-// HIỆN TRỌN không cắt, phần khung thừa lấp bằng chính ảnh đó làm mờ (không viền trắng / đen).
+// vực trang chủ — tối đa 6 tấm). Đặt NGAY TRONG khối tên dự án: PC ảnh ở cột phải 384 × 216, chữ trái; điện thoại tràn viền 16:9.
+// Ảnh tra cứu nhiều nguồn, cỡ / tỷ lệ khác nhau, admin không chỉnh được → ảnh HIỆN TRỌN không cắt, phần khung thừa lấp bằng
+// chính ảnh đó làm mờ (không viền trắng / đen).
 // Rê chuột thì dừng. Chỉ nạp tấm đang hiện + tấm kế.
 // ============================================================================
 
@@ -26,7 +26,7 @@ export default function AnhTraCuu({ images, alt }: { images: string[]; alt: stri
 
   return (
     <div
-      className="relative aspect-[16/9] w-full overflow-hidden bg-cvr-surface sm:aspect-auto sm:h-[300px]"
+      className="relative aspect-[16/9] w-full overflow-hidden bg-cvr-surface"
       onMouseEnter={() => setDung(true)}
       onMouseLeave={() => setDung(false)}
     >
@@ -34,9 +34,9 @@ export default function AnhTraCuu({ images, alt }: { images: string[]; alt: stri
       {ds.map((src, k) => (k === i || k === (i + 1) % ds.length || k === (i - 1 + ds.length) % ds.length) && (
         <div key={src} className={`absolute inset-0 transition-opacity duration-700 ${k === i ? "opacity-100" : "opacity-0"}`} aria-hidden={k !== i}>
           {/* Nền: chính ảnh đó phóng to, làm mờ — lấp phần khung thừa */}
-          <Image src={src} alt="" fill sizes="(max-width:1024px) 100vw, 1232px" className="scale-110 object-cover blur-2xl brightness-90" />
+          <Image src={src} alt="" fill sizes="(max-width:640px) 100vw, 384px" className="scale-110 object-cover blur-2xl brightness-90" />
           {/* Ảnh thật hiện trọn, không cắt */}
-          <Image src={src} alt={k === i ? alt : ""} fill priority={k === 0} fetchPriority={k === 0 ? "high" : "auto"} sizes="(max-width:1024px) 100vw, 1232px" className="object-contain" />
+          <Image src={src} alt={k === i ? alt : ""} fill priority={k === 0} fetchPriority={k === 0 ? "high" : "auto"} sizes="(max-width:640px) 100vw, 384px" className="object-contain" />
         </div>
       ))}
       {ds.length > 1 && (
