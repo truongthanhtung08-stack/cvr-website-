@@ -161,7 +161,8 @@ function projectRowToProject(r: ProjectRow): Project {
     type: r.type || "Dự án bất động sản",
     // Hồ sơ DẠNG THẺ (Cowork nạp hàng loạt cho Tra cứu dự án, 29/10/2026): không tự gán tình trạng, không câu tổng quan
     // thay thế — trống thì trang dự án ẩn mục đó. Hồ sơ nổi bật giữ như cũ.
-    status: r.status_text || (d.dangThe ? "" : "Đang mở bán"),
+    // Tình trạng = ĐÚNG Admin ghi; trống thì web ghi "Đang cập nhật" — không tự gán "Đang mở bán" (chủ dự án 31/10/2026: một nguồn = Admin)
+    status: r.status_text || "",
     image: asset(photos[0] ?? PROJECT_PLACEHOLDER),
     developer: r.developer || "Đang cập nhật",
     scale: (r.scale ?? []).filter((s) => s && s.label && s.value),
