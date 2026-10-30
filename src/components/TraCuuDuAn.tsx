@@ -29,7 +29,7 @@ export function TheDuAnDoc({ d }: { d: DongTraCuu }) {
   return (
     <Link
       href={`/du-an/${d.slug}`}
-      className="card-lux group flex h-full flex-col overflow-hidden rounded-none border border-cvr-line bg-white shadow-lux shadow-lux-hover hover:-translate-y-1 hover:border-cvr-blue/45"
+      className="card-lux group flex flex-col overflow-hidden rounded-none border border-cvr-line bg-white shadow-lux shadow-lux-hover hover:-translate-y-1 hover:border-cvr-blue/45"
     >
       <span className="relative block aspect-[16/10] w-full shrink-0 overflow-hidden bg-cvr-surface">
         {d.anh ? (
@@ -46,9 +46,10 @@ export function TheDuAnDoc({ d }: { d: DongTraCuu }) {
           <svg className="mt-px h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
           <span className="min-w-0">{d.diaChi}</span>
         </span>
-        {/* Trường bắt buộc luôn hiện, chưa có thì "Đang cập nhật" (chủ dự án 30/10/2026) */}
-        <span className="mb-3 mt-1 text-xs text-cvr-body">Loại hình: {d.loaiHinh || "Đang cập nhật"}</span>
-        <span className="mt-auto border-t border-cvr-line pt-2.5 text-xs text-cvr-body">
+        {/* Trường bắt buộc luôn hiện, chưa có thì "Đang cập nhật" (chủ dự án 30/10/2026). Không khoảng trống: thẻ cao theo nội dung,
+            câu dài thì thẻ giãn (chủ dự án 31/10/2026) */}
+        <span className="mb-2.5 mt-1 text-xs text-cvr-body">Loại hình: {d.loaiHinh || "Đang cập nhật"}</span>
+        <span className="border-t border-cvr-line pt-2.5 text-xs text-cvr-body">
           Chủ đầu tư: <span className="font-medium text-cvr-ink">{d.chuDauTu || "Đang cập nhật"}</span>
         </span>
       </span>

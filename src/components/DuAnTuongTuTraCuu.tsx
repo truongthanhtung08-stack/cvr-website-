@@ -24,7 +24,7 @@ export default function DuAnTuongTuTraCuu({ ds, id }: { ds: DongTraCuu[]; id?: s
     <section id={id} className="mt-6 scroll-mt-14 sm:mt-12">
       <h2 className="text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">Dự án tương tự</h2>
       {/* Slide: điện thoại 1 thẻ (lộ thẻ kế), máy tính bảng 2, máy tính 4 — vuốt / cuộn ngang */}
-      <ul className="no-scrollbar -mx-4 mt-4 flex snap-x sm:mt-3 snap-mandatory scroll-px-4 gap-4 overflow-x-auto px-4 py-2 sm:mx-0 sm:scroll-px-0 sm:gap-5 sm:px-0">
+      <ul className="no-scrollbar -mx-4 mt-4 flex snap-x sm:mt-3 snap-mandatory items-start scroll-px-4 gap-4 overflow-x-auto px-4 py-2 sm:mx-0 sm:scroll-px-0 sm:gap-5 sm:px-0">
         {ds.slice(0, SLIDE).map((x) => (
           <li key={x.slug} className="w-[80%] shrink-0 snap-start sm:w-[calc(50%-10px)] lg:w-[calc(25%-15px)]"><TheDuAnDoc d={x} /></li>
         ))}
