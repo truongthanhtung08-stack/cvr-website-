@@ -29,7 +29,7 @@ import { nhomLoai } from "@/components/TraCuuDuAn";
 import { getListings } from "@/lib/listingsDb";
 import { duAnThuocNhom, findCategory, projectCategories, type Category } from "@/lib/categories";
 import { normalizeVi, cungDuAn } from "@/lib/filters";
-import { demTinTheoKhuVuc, moTaKhuVuc, tieuDeKhuVuc, timKhuVuc } from "@/lib/khuVuc";
+import { demTinTheoKhuVuc, khuVucList, moTaKhuVuc, slugKhuVuc, tieuDeKhuVuc, timKhuVuc } from "@/lib/khuVuc";
 import { catMoTa, tieuDeGoogle } from "@/lib/thang";
 
 // Đường dẫn /du-an/<slug> phục vụ HAI loại trang:
@@ -260,7 +260,6 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   const rowPrice = (price: string) => (showPrice && price ? price : "Liên hệ");
   // Giá ở cột phải: ẩn giá → "Liên hệ" thay vì lộ khoảng giá.
   const sidePrice = showPrice ? p.priceFrom : "Liên hệ";
-  const coCotPhai = !traCuu || showPrice || !!contact;
   const soO = [coChuDauTu, coLoaiHinh, showPrice, !!handover].filter(Boolean).length;
 
   // Dự án tương tự — cùng cách trang dự án tra cứu (cùng tỉnh, cùng nhóm loại hình trước), lấy hết cho slide + Xem thêm
@@ -545,8 +544,9 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
             </div>
 
-            {/* Cột phụ — giá & liên hệ (dính khi cuộn); dự án tra cứu chỉ khi có giá thật hoặc liên hệ */}
-            {coCotPhai && (
+            {/* Cột phụ — dính khi cuộn */}
+            {/* CỘT PHẢI LUÔN CÓ, ĐỦ THỨ LIÊN QUAN (chủ dự án 30/10/2026) — mọi dự án cùng một khuôn: giá + liên hệ (khi có) · tin của dự án
+                · dự án cùng khu vực · nhận tài liệu & báo giá */}
             <aside className="lg:col-span-1">
               <div className="sticky top-24 space-y-4">
                 {/* MÁY TÍNH: hộp liên hệ dính theo khi cuộn — giá chỉ khi dự án có giá thật; người liên hệ + gọi / email. Không nhắc lại
@@ -563,16 +563,34 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                   </div>
                 )}
 
-                {!traCuu && (
+                {/* MÁY TÍNH: tin của dự án (bấm xuống khối tin) + dự án cùng khu vực (trang khu vực) — điện thoại đã có menu mục */}
+                {(hasRelated || khuVucList.some((k) => k.name === province)) && (
+                  <div className="hidden rounded-2xl border border-cvr-line bg-white p-5 shadow-lux lg:block">
+                    {hasRelated && (
+                      <>
+                        <p className="text-sm font-semibold tracking-tight text-cvr-ink">{`Tin mua bán, cho thuê tại ${p.name}`}</p>
+                        <div className="mt-3 flex flex-col">
+                          {relBan.length > 0 && <a href="#tin-du-an" className="flex items-center justify-between rounded-lg px-3 py-2 text-sm text-cvr-body transition-colors hover:bg-cvr-surface hover:text-cvr-ink"><span>Mua bán</span><span className="text-xs text-cvr-muted">{relBan.length}</span></a>}
+                          {relThue.length > 0 && <a href="#tin-du-an" className="flex items-center justify-between rounded-lg px-3 py-2 text-sm text-cvr-body transition-colors hover:bg-cvr-surface hover:text-cvr-ink"><span>Cho thuê</span><span className="text-xs text-cvr-muted">{relThue.length}</span></a>}
+                        </div>
+                      </>
+                    )}
+                    {khuVucList.some((k) => k.name === province) && (
+                      <Link href={`/du-an/${slugKhuVuc(province)}`} className={`${hasRelated ? "mt-3 border-t border-cvr-line pt-3" : ""} flex items-center justify-between rounded-lg px-3 py-2 text-sm text-cvr-body transition-colors hover:bg-cvr-surface hover:text-cvr-ink`}>
+                        <span>Dự án tại {province}</span>
+                        <span aria-hidden>›</span>
+                      </Link>
+                    )}
+                  </div>
+                )}
+
                 <div id="tai-tai-lieu" className="scroll-mt-14">
                   <h3 className="mb-1 text-center text-lg font-semibold tracking-tight text-cvr-ink">Tải tài liệu & báo giá</h3>
                   <p className="mb-3 text-center text-xs text-cvr-muted">Nhận brochure, mặt bằng, bảng giá & chính sách mới nhất</p>
                   <LeadForm cta="Đăng ký nhận tài liệu" topics={["Nhận brochure & mặt bằng", "Nhận bảng giá & chính sách", "Đặt lịch tham quan dự án", "Tư vấn vay ngân hàng"]} />
                 </div>
-                )}
               </div>
             </aside>
-            )}
           </div>
 
           </HomeCollapsible>
