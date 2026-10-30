@@ -7,6 +7,7 @@
 // ============================================================================
 
 import { chuDauTuChuan, loiDiaDanh } from "@/lib/tenChuan";
+import { parseLatLng } from "@/lib/googleMaps";
 
 // Thứ tự cột = thứ tự thông tin lọc được (chủ dự án 22/10/2026): tên dự án · chủ đầu tư · vị trí, địa chỉ ·
 // giới thiệu (loại hình, tổng quan) · giá · rồi các thông tin khác nếu có. Đọc theo TÊN cột nên tệp cũ vẫn nạp được.
@@ -14,6 +15,8 @@ export const COT_DU_AN = [
   "ten_du_an", "chu_dau_tu", "don_vi_phat_trien", "tinh", "phuong_xa", "dia_chi_chi_tiet",
   "loai_hinh", "tong_quan", "gia_tu", "trang_thai", "quy_mo", "san_pham", "phap_ly",
   "khoi_cong", "ban_giao", "tien_ich", "anh", "nguon", "ngay_cap_nhat",
+  // TOẠ ĐỘ lấy trên Google Maps ("16.0254, 108.2205" hoặc link Google Maps) → bản đồ trang dự án ghim ĐÚNG như Google (30/10/2026)
+  "toa_do",
 ] as const;
 type Cot = (typeof COT_DU_AN)[number];
 
@@ -111,6 +114,7 @@ export function docDuAnTuBang(rows: string[][]): DongDuAn[] {
             // Hồ sơ DẠNG THẺ: hiện ở Tra cứu dự án, không lên Dự án nổi bật (chủ dự án 29/10/2026)
             dangThe: true,
             addressDetail: v("dia_chi_chi_tiet") || undefined,
+            ...(parseLatLng(v("toa_do")) ? { mapPin: v("toa_do").trim() } : {}),
             developmentUnit: v("don_vi_phat_trien") || undefined,
             purposes: ["ban"],
             priceMode: giaTu ? "show" : "hidden",
