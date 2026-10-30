@@ -416,8 +416,8 @@ export default function ProjectsBrowser({
           className={`card-lux group relative flex overflow-hidden rounded-none bg-white shadow-lux shadow-lux-hover hover:-translate-y-1 hover:border-cvr-blue/45 sm:gap-5 sm:border sm:border-cvr-line sm:p-3 ${gon ? "gap-3 border border-cvr-line p-2.5" : "flex-col sm:flex-row"}`}
         >
           <div className={gon
-            ? "relative min-h-24 w-24 shrink-0 self-stretch overflow-hidden rounded-lg bg-cvr-surface sm:h-[109px] sm:min-h-0 sm:w-44 sm:self-start sm:rounded-xl"
-            : `relative w-full shrink-0 overflow-hidden bg-cvr-surface sm:aspect-auto sm:h-[178px] sm:w-72 sm:self-start sm:rounded-xl ${p.image ? "aspect-[16/9]" : "aspect-[3/1]"}`}>
+            ? "relative min-h-24 w-24 shrink-0 self-stretch overflow-hidden rounded-lg bg-cvr-surface sm:min-h-[109px] sm:w-44 sm:self-stretch sm:rounded-xl"
+            : `relative w-full shrink-0 overflow-hidden bg-cvr-surface sm:aspect-auto sm:min-h-[178px] sm:w-72 sm:self-stretch sm:rounded-xl ${p.image ? "aspect-[16/9]" : "aspect-[3/1]"}`}>
             {/* Dự án nổi bật: tình trạng (tiến độ) ghi trên ảnh; thẻ không còn dòng Trạng thái (chủ dự án 30/10/2026) */}
             {/* Nhãn tình trạng chung mọi nơi (NhanTinhTrang, 31/10/2026): chỉ dự án VIP, màu theo cấp; còn lại ghi "Tiến độ" ở dòng cuối */}
             <NhanTinhTrang tier={p.tier} tinhTrang={giaTriThat(p.status)} />
@@ -435,7 +435,9 @@ export default function ProjectsBrowser({
             )}
           </div>
 
-          <div className={`flex min-w-0 flex-1 flex-col ${gon ? "sm:h-[109px] sm:justify-between sm:overflow-hidden" : "p-3 sm:h-[178px] sm:overflow-hidden sm:p-0"}`}>
+          {/* Khung chữ CAO THEO NỘI DUNG, tối thiểu đúng số đo cũ (109 / 178 px); ảnh giãn theo — không cắt, không che tên (31/10/2026: thêm dòng
+              Tiến độ làm khung cố định 109 px che mất tên — chủ dự án chụp màn hình) */}
+          <div className={`flex min-w-0 flex-1 flex-col ${gon ? "sm:min-h-[109px]" : "p-3 sm:min-h-[178px] sm:p-0"}`}>
             {/* PC: KHUNG ẢNH CỐ ĐỊNH tỷ lệ vàng, chữ chỉnh theo khung — mỗi dòng 1 dòng, dài thì “…” (rê chuột thấy đủ), giới thiệu tối đa 2 dòng (chủ dự án 30/10/2026) */}
             <h3 title={p.name} className="line-clamp-2 font-semibold leading-snug text-cvr-ink transition-colors group-hover:text-cvr-blue-ink sm:line-clamp-1 sm:text-lg">
               <Highlight text={p.name} terms={termsBySlug.get(p.slug) ?? []} />
