@@ -203,10 +203,15 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   // rồi dự án có nhiều tin hơn; lấy hết (slide 8 + Xem thêm ra danh sách), trong danh bạ Tra cứu
   const duAnTuongTu = (tinh: string, loai: string, bo: string) => {
     const nhom = nhomLoai(loai);
+    // Trong mỗi nhóm: dự án nổi bật theo cấp VIP trước, dự án tra cứu theo tên A, B, C sau (chủ dự án 31/10/2026)
+    // Cùng bậc với sortProjectsByTier (ProjectSlider — tệp client, máy chủ không gọi được): Kim cương → Vàng → Bạc → thường
+    const BAC: Record<string, number> = { diamond: 0, gold: 1, silver: 2, basic: 3 };
+    const noiBat = new Map(tatCaDuAn.filter((x) => !x.dangThe).map((x) => [x.slug, BAC[x.tier ?? "basic"] ?? 3]));
+    const hang = (s: string) => noiBat.get(s) ?? 9;
     return dongTraCuu(listings, tatCaDuAn)
       .filter((x) => x.tinh === tinh && !cungDuAn(x.slug, bo))
-      .map((x, i) => ({ x, i, khop: nhom && nhomLoai(x.loaiHinh) === nhom ? 0 : 1 }))
-      .sort((a, b) => a.khop - b.khop || a.i - b.i)
+      .map((x, i) => ({ x, i, khop: nhom && nhomLoai(x.loaiHinh) === nhom ? 0 : 1, vip: hang(x.slug) }))
+      .sort((a, b) => a.khop - b.khop || a.vip - b.vip || a.i - b.i)
       .map((e) => e.x);
   };
   // MỘT KHUÔN cho mọi dự án (chủ dự án 30/10/2026): dự án nổi bật giữ nguyên trang đã dựng; dự án TRA CỨU (hồ sơ dạng thẻ, hoặc
