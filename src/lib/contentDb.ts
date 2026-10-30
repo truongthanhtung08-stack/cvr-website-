@@ -112,7 +112,13 @@ function projectRowToProject(r: ProjectRow): Project {
         tinh: r.province, quan: r.district ?? "", phuong: r.ward ?? "",
       })
     : { moi: "", cu: "" };
-  const location = hai.moi ? [soNha, hai.moi].filter(Boolean).join(", ") : goc;
+  // Số nhà/đường admin nhập hay kèm sẵn phường, tỉnh ("01 Lê Văn Duyệt, Phường Sơn Trà, Thành phố Đà Nẵng") → bỏ các vế đó trước
+  // khi ghép địa chỉ hệ mới, không ghi lặp (30/10/2026)
+  const gon = (x: string) => x.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/gi, "d").toLowerCase()
+    .replace(/^(phuong|xa|thi tran|thanh pho|tinh|tp\.?|quan|huyen|thi xa)\s+/, "").trim();
+  const veTrung = new Set([r.ward, r.district, r.province, ...hai.moi.split(",")].filter(Boolean).map((x) => gon(x!)));
+  const soNhaGon = soNha?.split(",").map((x) => x.trim()).filter((x) => x && !veTrung.has(gon(x))).join(", ");
+  const location = hai.moi ? [soNhaGon, hai.moi].filter(Boolean).join(", ") : goc;
   // Dòng hệ cũ KHÔNG nhắc lại số nhà/đường — chúng không đổi sau sáp nhập.
   const locationCu = hai.cu;
   const overview = paras(r.overview);

@@ -48,10 +48,16 @@ export function TheDuAnDoc({ d }: { d: DongTraCuu }) {
           <svg className="mt-px h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
           <span className="min-w-0">{d.diaChi}</span>
         </span>
-        <span className="mb-3 mt-1 text-xs text-cvr-body">Loại hình: {d.loaiHinh || "Đang cập nhật"}</span>
-        <span className="mt-auto border-t border-cvr-line pt-2.5 text-xs text-cvr-body">
-          Chủ đầu tư: <span className="font-medium text-cvr-ink">{d.chuDauTu || "Đang cập nhật"}</span>
-        </span>
+        {/* Cái gì chưa có thì ẩn — không "Đang cập nhật" (30/10/2026) */}
+        {d.loaiHinh && <span className="mt-1 text-xs text-cvr-body">Loại hình: {d.loaiHinh}</span>}
+        {d.chuDauTu && (
+          <>
+            <span className="h-3 shrink-0" aria-hidden />
+            <span className="mt-auto border-t border-cvr-line pt-2.5 text-xs text-cvr-body">
+              Chủ đầu tư: <span className="font-medium text-cvr-ink">{d.chuDauTu}</span>
+            </span>
+          </>
+        )}
       </span>
     </Link>
   );
@@ -68,21 +74,32 @@ export function TheTraCuu({ d }: { d: DongTraCuu }) {
       {/* Ảnh dự án — chưa có ảnh: khung xám + biểu tượng Coastal Land (không lấy ảnh chung chung thay) */}
       {/* ẢNH TỰ GIÃN THEO CHỮ (chủ dự án 30/10/2026): cao đúng bằng khối chữ (self-stretch), tối thiểu 96 / 120 px để ảnh
           không dẹt — chữ dài (tên 2 dòng, điện thoại) thì ảnh cao theo, không hở trên dưới */}
-      <span className="relative min-h-24 w-32 shrink-0 self-stretch overflow-hidden rounded-lg bg-cvr-surface sm:min-h-30 sm:w-40 sm:rounded-xl">
+      {/* GỌN CHO ĐIỆN THOẠI (30/10/2026): ảnh 96 px (máy tính 160) để chữ đủ chỗ, ít bẻ dòng */}
+      <span className="relative min-h-24 w-24 shrink-0 self-stretch overflow-hidden rounded-lg bg-cvr-surface sm:min-h-30 sm:w-40 sm:rounded-xl">
         {d.anh ? (
-          <Image src={d.anh} alt={d.ten} fill sizes="(max-width:640px) 128px, 160px" className="object-cover transition-transform duration-[700ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.06]" />
+          <Image src={d.anh} alt={d.ten} fill sizes="(max-width:640px) 96px, 160px" className="object-cover transition-transform duration-[700ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.06]" />
         ) : (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src="/logo/symbol-dark.svg" alt="" className="absolute inset-0 m-auto h-8 w-8 opacity-25 sm:h-12 sm:w-12" />
+          <img src="/logo/symbol-dark.svg" alt="" className="absolute inset-0 m-auto h-7 w-7 opacity-25 sm:h-12 sm:w-12" />
         )}
       </span>
+      {/* Thứ tự anh chốt: Tên → Chủ đầu tư → Địa chỉ (hệ mới, ghim thay chữ nhãn) → Loại hình · Trạng thái (nhãn tròn như thẻ
+          Nổi bật). Cái gì chưa có thì ẨN — không dòng "Đang cập nhật" (30/10/2026) */}
       <span className="min-w-0 flex-1">
-        <span className="-mt-0.5 line-clamp-2 font-semibold leading-snug text-cvr-ink transition-colors group-hover:text-cvr-blue-ink sm:text-lg">{d.ten}</span>
-        <span className="mt-1 block text-xs text-cvr-body sm:text-sm">Chủ đầu tư: <span className="font-medium text-cvr-ink">{d.chuDauTu || "Đang cập nhật"}</span></span>
-        {/* Thẻ: địa chỉ MỘT kiểu theo hệ mới (chủ dự án 30/10/2026) — địa chỉ cũ chỉ ở trang chi tiết; thêm trạng thái dự án */}
-        <span className="mt-0.5 block text-xs text-cvr-body sm:text-sm">Địa chỉ: {d.diaChi}</span>
-        <span className="mt-0.5 block text-xs text-cvr-body sm:text-sm">Loại hình: {d.loaiHinh || "Đang cập nhật"}</span>
-        <span className="mt-0.5 block text-xs text-cvr-body sm:text-sm">Trạng thái: {d.tinhTrang || "Đang cập nhật"}</span>
+        <span className="-mt-0.5 line-clamp-2 text-[15px] font-semibold leading-snug text-cvr-ink transition-colors group-hover:text-cvr-blue-ink sm:text-lg">{d.ten}</span>
+        {d.chuDauTu && (
+          <span className="mt-1 block text-[13px] leading-snug text-cvr-body sm:text-sm">Chủ đầu tư: <span className="font-medium text-cvr-ink">{d.chuDauTu}</span></span>
+        )}
+        <span className="mt-1 flex items-start gap-1 text-[13px] leading-snug text-cvr-muted sm:text-sm">
+          <svg className="mt-0.5 h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+          <span className="min-w-0">{d.diaChi}</span>
+        </span>
+        {(d.loaiHinh || d.tinhTrang) && (
+          <span className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] leading-snug text-cvr-body sm:text-sm">
+            {d.loaiHinh && <span className="min-w-0">{d.loaiHinh}</span>}
+            {d.tinhTrang && <span className="rounded-full bg-cvr-surface px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.04em] text-cvr-ink">{d.tinhTrang}</span>}
+          </span>
+        )}
       </span>
     </Link>
   );

@@ -247,6 +247,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   // Giá ở cột phải: ẩn giá → "Liên hệ" thay vì lộ khoảng giá.
   const sidePrice = showPrice ? p.priceFrom : "Liên hệ";
   const coCotPhai = !traCuu || showPrice || !!contact;
+  const soO = [coChuDauTu, coLoaiHinh, showPrice, !!handover].filter(Boolean).length;
 
   // Dự án tương tự — cùng cách trang dự án tra cứu (cùng tỉnh, cùng nhóm loại hình trước), lấy hết cho slide + Xem thêm
   const tuongTuNoiBat = duAnTuongTu(province, p.type, p.slug);
@@ -360,14 +361,22 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             )}
 
             {/* Dải thông tin nhanh — cân đối, dễ đọc từng tiêu chí */}
-            {(!traCuu || coChuDauTu || coLoaiHinh || showPrice || handover) && (
-            <div className={`mt-5 grid grid-cols-2 gap-2 ${traCuu ? "sm:grid-cols-4" : handover ? "sm:grid-cols-4" : "sm:grid-cols-3 [&>*:last-child]:col-span-2 sm:[&>*:last-child]:col-span-1"}`}>
-              {/* Thứ tự (chủ dự án 22/10/2026): chủ đầu tư · loại hình · giá · bàn giao — dự án tra cứu chỉ ô có thông tin */}
+            {soO > 0 && (
+            <div className={`mt-5 grid grid-cols-2 gap-2 ${COT_O[soO]} ${soO % 2 ? "[&>*:last-child]:col-span-2 sm:[&>*:last-child]:col-span-1" : ""}`}>
+              {/* Thứ tự (chủ dự án 22/10/2026): chủ đầu tư · loại hình · giá · bàn giao — chỉ ô có thông tin; "Giá từ" chỉ khi dự án có
+                  giá thật (ẩn giá → "Liên hệ" đã có ở hộp liên hệ, không ghi trùng — 30/10/2026) */}
               {coChuDauTu && <Fact label="Chủ đầu tư" value={p.developer} />}
               {coLoaiHinh && <Fact label="Loại hình" value={p.type} />}
-              {(!traCuu || showPrice) && <Fact label="Giá từ" value={sidePrice} accent />}
+              {showPrice && <Fact label="Giá từ" value={sidePrice} accent />}
               {handover && <Fact label="Bàn giao" value={handover} />}
             </div>
+            )}
+
+            {/* ĐIỆN THOẠI: người liên hệ + nút gọi ngay dưới dải thông tin (trước nằm cuối phần thông tin, cuộn ~3.000 px mới thấy) */}
+            {contact && (
+              <div className="mt-4 rounded-2xl border border-cvr-line bg-white p-4 shadow-lux lg:hidden">
+                <LienHeDuAn contact={contact} />
+              </div>
             )}
           </div>
 
@@ -528,44 +537,19 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             {coCotPhai && (
             <aside className="lg:col-span-1">
               <div className="sticky top-24 space-y-4">
-                {/* Điện thoại: hộp giá nằm cuối trang, lặp lại "Giá từ · Loại hình" ở đầu trang → chỉ hiện khi có liên hệ dự án;
-                    máy tính giữ (cột phải dính theo khi cuộn) — 22/10/2026 */}
-                <div className={`rounded-2xl border border-cvr-line bg-white p-4 shadow-lux lg:p-5 ${contact ? "" : "hidden lg:block"}`}>
-                  {/* Điện thoại: giá + loại hình đã ở đầu trang → hộp chỉ còn người liên hệ + nút gọi (gọn, 22/10/2026). */}
-                  <div className="hidden lg:block">
-                    <p className="text-xs text-cvr-muted">{showPrice ? "Giá bán từ" : "Giá bán"}</p>
-                    <p className="text-2xl font-bold tracking-tight text-cvr-ink">{sidePrice}</p>
-                    <p className="mt-1 text-xs text-cvr-muted">{p.type}</p>
+                {/* MÁY TÍNH: hộp liên hệ dính theo khi cuộn — giá chỉ khi dự án có giá thật; người liên hệ + gọi / email. Không nhắc lại
+                    "Liên hệ · loại hình" (đã ở dải thông tin bên trái) — 30/10/2026. Điện thoại: hộp liên hệ đã đưa lên dưới dải thông tin. */}
+                {(showPrice || contact) && (
+                  <div className="hidden rounded-2xl border border-cvr-line bg-white p-5 shadow-lux lg:block">
+                    {showPrice && (
+                      <div className={contact ? "mb-4 border-b border-cvr-line pb-4" : undefined}>
+                        <p className="text-xs text-cvr-muted">Giá bán từ</p>
+                        <p className="text-2xl font-bold tracking-tight text-cvr-ink">{sidePrice}</p>
+                      </div>
+                    )}
+                    {contact && <LienHeDuAn contact={contact} />}
                   </div>
-
-                  {/* Liên hệ dự án — CHỈ hiện khi admin đã nhập (không bịa số tổng đài) */}
-                  {contact && (
-                    <div className="space-y-2.5 lg:mt-4">
-                      {contact.name && (
-                        <p className="text-sm font-semibold text-cvr-ink">{contact.name}</p>
-                      )}
-                      {contact.phone && (
-                        <a
-                          href={`tel:${contact.phone.replace(/\s/g, "")}`}
-                          className="flex items-center justify-center gap-2 rounded-lg bg-cvr-ink px-4 py-3 text-sm font-bold text-white transition hover:bg-cvr-ink/90"
-                        >
-                          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h2.5a1 1 0 01.97.757l.9 3.6a1 1 0 01-.29.98l-1.5 1.4a14 14 0 006.68 6.68l1.4-1.5a1 1 0 01.98-.29l3.6.9a1 1 0 01.76.97V19a2 2 0 01-2 2A16 16 0 013 5z" /></svg>
-                          {contact.phone}
-                        </a>
-                      )}
-                      {contact.email && (
-                        <a
-                          href={`mailto:${contact.email}`}
-                          className="flex items-center justify-center gap-2 rounded-lg border border-cvr-line px-4 py-3 text-sm font-semibold text-cvr-ink transition hover:bg-cvr-surface"
-                        >
-                          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 8l9 6 9-6M4 5h16a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V6a1 1 0 011-1z" /></svg>
-                          {contact.email}
-                        </a>
-                      )}
-                    </div>
-                  )}
-
-                </div>
+                )}
 
                 {!traCuu && (
                 <div id="tai-tai-lieu" className="scroll-mt-14">
@@ -603,6 +587,35 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
     </>
   );
 }
+
+// Người liên hệ dự án — CHỈ khi admin đã nhập (không bịa số tổng đài); dùng chung cột phải máy tính + đầu trang điện thoại
+function LienHeDuAn({ contact }: { contact: { name?: string; phone?: string; email?: string } }) {
+  return (
+    <div className="space-y-2.5">
+      {contact.name && <p className="text-sm font-semibold text-cvr-ink">{contact.name}</p>}
+      {contact.phone && (
+        <a
+          href={`tel:${contact.phone.replace(/\s/g, "")}`}
+          className="flex items-center justify-center gap-2 rounded-lg bg-cvr-ink px-4 py-3 text-sm font-bold text-white transition hover:bg-cvr-ink/90"
+        >
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h2.5a1 1 0 01.97.757l.9 3.6a1 1 0 01-.29.98l-1.5 1.4a14 14 0 006.68 6.68l1.4-1.5a1 1 0 01.98-.29l3.6.9a1 1 0 01.76.97V19a2 2 0 01-2 2A16 16 0 013 5z" /></svg>
+          {contact.phone}
+        </a>
+      )}
+      {contact.email && (
+        <a
+          href={`mailto:${contact.email}`}
+          className="flex items-center justify-center gap-2 rounded-lg border border-cvr-line px-4 py-3 text-sm font-semibold text-cvr-ink transition hover:bg-cvr-surface"
+        >
+          <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 8l9 6 9-6M4 5h16a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V6a1 1 0 011-1z" /></svg>
+          {contact.email}
+        </a>
+      )}
+    </div>
+  );
+}
+
+const COT_O: Record<number, string> = { 1: "sm:grid-cols-1", 2: "sm:grid-cols-2", 3: "sm:grid-cols-3", 4: "sm:grid-cols-4" };
 
 // Section chuẩn — có id để menu cuộn tới, tiêu đề nhất quán
 function Section({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {

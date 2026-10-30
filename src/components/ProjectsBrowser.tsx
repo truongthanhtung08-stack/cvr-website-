@@ -378,15 +378,24 @@ export default function ProjectsBrowser({
 
   // Đã bấm "Xem thêm" ở Dự án nổi bật → chỉ còn danh sách Dự án nổi bật theo trang (phần còn lại ẩn; Quay lại về như cũ)
   if ((traCuu && noiBat.expanded) || danhSachNoiBat) {
-    const tongNB = Math.max(1, Math.ceil(visible.length / NOI_BAT_MOI_TRANG));
+    // Trang Dự án (có Tra cứu) — "Xem thêm" ra MỘT danh sách chung (chủ dự án 30/10/2026): dự án nổi bật trước, thẻ nổi bật; rồi dự
+    // án tra cứu, thẻ tra cứu (có thông tin hiện đủ, thiếu thì thẻ mặc định). Cùng bộ lọc đang chọn. Trang chủ: chỉ dự án nổi bật.
+    const noiBatSlug = new Set(visible.map((p) => p.slug));
+    const dsChung: ({ noiBat: Project } | { traCuu: DongTraCuu })[] = [
+      ...visible.map((p) => ({ noiBat: p })),
+      ...(traCuu ? traCuuLoc.filter((d) => !noiBatSlug.has(d.slug)).map((d) => ({ traCuu: d })) : []),
+    ];
+    const tongNB = Math.max(1, Math.ceil(dsChung.length / NOI_BAT_MOI_TRANG));
     const trangNB = Math.min(trangNoiBat, tongNB);
     return (
       <section id="noi-bat" className="pt-4 sm:pt-6">
-        <h2 className="text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">Dự án nổi bật</h2>
+        <h2 className="text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">{traCuu ? "Dự án bất động sản" : "Dự án nổi bật"}</h2>
         <div className="mt-4 flex flex-col gap-5">
-          {visible.slice((trangNB - 1) * NOI_BAT_MOI_TRANG, trangNB * NOI_BAT_MOI_TRANG).map((p) => (
-            <div key={p.slug}>{theNoiBat(p, true)}</div>
-          ))}
+          {dsChung.slice((trangNB - 1) * NOI_BAT_MOI_TRANG, trangNB * NOI_BAT_MOI_TRANG).map((x) =>
+            "noiBat" in x
+              ? <div key={x.noiBat.slug}>{theNoiBat(x.noiBat, true)}</div>
+              : <div key={x.traCuu.slug}><TheTraCuu d={x.traCuu} /></div>,
+          )}
         </div>
         <PhanTrang hienTai={trangNB} tong={tongNB} doiTrang={(p) => { setTrangNoiBat(p); window.scrollTo({ top: 0 }); }} />
       </section>
