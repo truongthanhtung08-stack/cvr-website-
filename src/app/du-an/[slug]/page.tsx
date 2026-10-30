@@ -5,6 +5,7 @@ import { laChuDauTuThat, NGUONG_INDEX_CDT, nhomChuDauTu, slugChuDauTu } from "@/
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ProjectGallery from "@/components/ProjectGallery";
+import Gallery from "@/components/Gallery";
 import AnhTraCuu from "@/components/AnhTraCuu";
 import ProjectNav from "@/components/ProjectNav";
 import ProjectNearby from "@/components/ProjectNearby";
@@ -447,7 +448,10 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             <div className="relative -mx-4 mb-2 sm:mx-0">
               {/* Nhãn tình trạng chung mọi nơi (NhanTinhTrang, 31/10/2026): chỉ dự án VIP, màu theo cấp; dự án thường ghi Tình trạng trong bảng Tổng quan */}
               <NhanTinhTrang tier={p.tier} tinhTrang={giaTriThat(p.status)} />
-              <ProjectGallery images={gallery} alt={p.name} />
+              {/* Điện thoại: CÙNG bộ ảnh trang tin mua bán / cho thuê (Gallery) — ảnh + video vuốt ngang, bấm ra danh sách kiểu Facebook
+                  (chủ dự án 31/10/2026); từ máy tính bảng trở lên giữ khung ảnh dự án */}
+              <div className="sm:hidden"><Gallery images={gallery} videos={p.videos ?? []} alt={p.name} /></div>
+              <div className="hidden sm:block"><ProjectGallery images={gallery} alt={p.name} /></div>
             </div>
           )}
 
@@ -458,7 +462,11 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             <div className="mb-2 grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
               <div className="relative -mx-4 sm:mx-0">
                 <NhanTinhTrang tier={p.tier} tinhTrang={giaTriThat(p.status)} />
-                <AnhTraCuu images={coAnh ? gallery : []} alt={p.name} khung="aspect-[16/9] lg:aspect-auto lg:h-full lg:min-h-[216px]" />
+                {/* Điện thoại có ảnh: bộ ảnh trang tin (Gallery) như trang nổi bật; chưa có ảnh hoặc máy tính: khung tra cứu */}
+                {coAnh && <div className="sm:hidden"><Gallery images={gallery} videos={p.videos ?? []} alt={p.name} /></div>}
+                <div className={`h-full ${coAnh ? "hidden sm:block" : ""}`}>
+                  <AnhTraCuu images={coAnh ? gallery : []} alt={p.name} khung="aspect-[16/9] lg:aspect-auto lg:h-full lg:min-h-[216px]" />
+                </div>
               </div>
               {/* Cùng kiểu hộp "Dự án theo khu vực" (đệm 16 px, viền, bo góc); các dòng giãn đều theo chiều cao hàng */}
               <div className="flex flex-col justify-around gap-3 rounded-2xl border border-cvr-line bg-white p-4">
@@ -498,7 +506,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
           {/* BỐ CỤC CHUẨN (chủ dự án 30/10/2026) — dự án nổi bật và dự án tra cứu MỘT KHUÔN: cột trái các khối nội dung | cột phải dính
               (liên hệ, tin thuộc dự án, dự án tại tỉnh, nhận tài liệu), mép trên ngang khối đầu cột trái; phần nào chưa có thông tin thì ẩn */}
           <HomeCollapsible>
-          <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
+          <div className="mt-4 grid grid-cols-1 gap-12 lg:grid-cols-3 lg:gap-8">
             <div className={`reveal is-visible cards-stagger ${coCotPhai ? "lg:col-span-2" : "lg:col-span-3"} [&>section:first-child]:mt-5 [&>section:first-child]:border-t-0 [&>section:first-child]:pt-0`}>
               {/* THÔNG TIN DỰ ÁN DÀI → THU GỌN (chủ dự án 31/10/2026, kiểu Batdongsan): bao TỪ Tổng quan TỚI mục cuối; "Xem thêm" ở chỗ cắt,
                   "Thu gọn" ở CUỐI phần thông tin; ngắn thì hiện hết. Hỏi đáp nằm ngoài (luôn hiện) */}
@@ -646,7 +654,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                 · dự án cùng khu vực · nhận tài liệu & báo giá */}
             {coCotPhai && (
             // Tra cứu: máy tính đã có hàng đầu trang; điện thoại chỉ dựng cột này khi có giá / liên hệ (cột rỗng vẫn ăn khe 24 px — 31/10/2026)
-            <aside className={`lg:col-span-1 ${traCuu ? (showPrice || contact ? "lg:hidden" : "hidden") : "lg:mt-5"}`}>
+            <aside className={`lg:col-span-1 ${traCuu ? (showPrice || contact ? "lg:hidden" : "hidden") : `lg:mt-5 ${showPrice || contact ? "" : "hidden lg:block"}`}`}>
               {/* Cột phải CUỘN THEO TRANG, không dính: cột cao hơn màn hình mà dính thì cuộn bị khựng rồi trôi (chủ dự án 30/10/2026) */}
               <div className="h-full space-y-4">
                 <div className="space-y-4">
@@ -654,7 +662,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                     (3 hộp làm cột phải dài hơn ảnh — 31/10/2026) */}
                 {/* Tra cứu: không lặp hộp này — khối tin của dự án nằm ngay dưới, cột phải cạnh ảnh chỉ Dự án theo khu vực (31/10/2026) */}
                 {hasRelated && !traCuu && (
-                  <div className="rounded-2xl border border-cvr-line bg-white p-4 lg:p-5">
+                  <div className="hidden rounded-2xl border border-cvr-line bg-white p-4 lg:block lg:p-5">
                     <p className="text-base font-semibold tracking-tight text-cvr-ink">{`Tin mua bán, cho thuê tại ${p.name}`}</p>
                     <div className="mt-3 flex flex-col">
                       {relBan.length > 0 && <a href="#tin-du-an" className="flex items-center justify-between rounded-lg px-3 py-2 text-sm text-cvr-body transition-colors hover:bg-cvr-surface hover:text-cvr-ink"><span>Mua bán</span><span className="text-xs text-cvr-muted">{relBan.length}</span></a>}
@@ -708,7 +716,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
                 {/* Cùng kiểu mọi hộp cột phải: tiêu đề NẰM TRONG khung, cùng cỡ chữ (khung riêng của form tắt đi) — 30/10/2026 */}
                 {!traCuu && (
-                <div id="tai-tai-lieu" className="scroll-mt-14 overflow-hidden rounded-2xl border border-cvr-line bg-white p-4 lg:p-5 [&>div:last-child]:border-0 [&>div:last-child]:p-0 [&>div:last-child]:shadow-none [&_input]:h-10 [&_select]:h-10">
+                <div id="tai-tai-lieu" className="scroll-mt-14 hidden overflow-hidden rounded-2xl lg:block border border-cvr-line bg-white p-4 lg:p-5 [&>div:last-child]:border-0 [&>div:last-child]:p-0 [&>div:last-child]:shadow-none [&_input]:h-10 [&_select]:h-10">
                   <p className="mb-3 text-base font-semibold tracking-tight text-cvr-ink">Tải tài liệu & báo giá</p>
                   <LeadForm cta="Đăng ký nhận tài liệu" topics={["Nhận brochure & mặt bằng", "Nhận bảng giá & chính sách", "Đặt lịch tham quan dự án", "Tư vấn vay ngân hàng"]} />
                 </div>
@@ -737,6 +745,14 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
 
           {/* pSEO — liên kết sang trang mua bán / cho thuê cùng tỉnh (khối có lề riêng → bù lề khung trang) */}
+          {/* Điện thoại: form "Tải tài liệu & báo giá" GOM xuống sau khối tin thuộc dự án — không chèn giữa nội dung (chủ dự án 31/10/2026) */}
+          {!traCuu && (
+            <div className="mt-12 overflow-hidden rounded-2xl border border-cvr-line bg-white p-4 lg:hidden [&>div:last-child]:border-0 [&>div:last-child]:p-0 [&>div:last-child]:shadow-none [&_input]:h-10 [&_select]:h-10">
+              <p className="mb-3 text-base font-semibold tracking-tight text-cvr-ink">Tải tài liệu & báo giá</p>
+              <LeadForm cta="Đăng ký nhận tài liệu" topics={["Nhận brochure & mặt bằng", "Nhận bảng giá & chính sách", "Đặt lịch tham quan dự án", "Tư vấn vay ngân hàng"]} />
+            </div>
+          )}
+
           {/* Điện thoại: Dự án theo khu vực xuống CUỐI trang, khối khu vực kiểu điện thoại như trang Dự án (KhuVucLinks) — 31/10/2026.
               Máy tính giữ ở cột phải */}
           {duAnTheoKhuVuc.length > 0 && (
