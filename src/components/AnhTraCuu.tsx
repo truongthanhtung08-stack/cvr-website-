@@ -2,6 +2,9 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import dynamic from "next/dynamic";
+// Bộ xem ảnh lớn (zoom, vuốt đổi ảnh) — CÙNG bộ với thư viện ảnh dự án nổi bật; chỉ tải khi bấm vào ảnh
+const PhotoViewer = dynamic(() => import("@/components/PhotoViewer"));
 
 // ============================================================================
 // ẢNH ĐẦU TRANG DỰ ÁN TRA CỨU (chủ dự án 31/10/2026): MỘT khung = ảnh đại diện; có từ 2 ảnh thì tự chuyển (mờ dần, như ô Khu
@@ -17,6 +20,7 @@ export default function AnhTraCuu({ images, alt }: { images: string[]; alt: stri
   const ds = images.filter(Boolean).slice(0, 6);
   const [i, setI] = useState(0);
   const [dung, setDung] = useState(false);
+  const [xemTo, setXemTo] = useState(false);
 
   useEffect(() => {
     if (ds.length < 2 || dung) return;
@@ -30,7 +34,15 @@ export default function AnhTraCuu({ images, alt }: { images: string[]; alt: stri
       onMouseEnter={() => setDung(true)}
       onMouseLeave={() => setDung(false)}
     >
+      {/* Chưa có ảnh: khung xám + biểu tượng Coastal Land (như thẻ tra cứu) — đầu trang luôn cùng một dáng (31/10/2026) */}
+      {ds.length === 0 && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src="/logo/symbol-dark.svg" alt="" className="absolute inset-0 m-auto h-12 w-12 opacity-25" />
+      )}
       {/* Dựng tấm trước (đang mờ dần đi) · tấm đang hiện · tấm kế (nạp sẵn) — không chớp nền xám khi chuyển */}
+      {/* Bấm vào ảnh → mở xem to (chủ dự án 31/10/2026) */}
+      {ds.length > 0 && <button type="button" aria-label="Xem ảnh lớn" onClick={() => setXemTo(true)} className="absolute inset-0 z-[5] cursor-zoom-in" />}
+      {xemTo && <PhotoViewer images={ds} start={i} title={alt} onClose={() => setXemTo(false)} />}
       {ds.map((src, k) => (k === i || k === (i + 1) % ds.length || k === (i - 1 + ds.length) % ds.length) && (
         <div key={src} className={`absolute inset-0 transition-opacity duration-700 ${k === i ? "opacity-100" : "opacity-0"}`} aria-hidden={k !== i}>
           {/* Nền: chính ảnh đó phóng to, làm mờ — lấp phần khung thừa */}

@@ -204,7 +204,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   // ── Nhánh 2: trang chi tiết một dự án ──
   const [hoSoDb, listings, tatCaDuAn] = await Promise.all([getProject(slug), getListings(), getProjects()]);
   // DEMO trang dự án tra cứu — CHỈ chạy trên máy (npx next dev), web thật không có đường này (chủ dự án 31/10/2026: "làm demo")
-  const hoSo = hoSoDb ?? (process.env.NODE_ENV !== "production" && slug === "demo-tra-cuu" ? DU_AN_DEMO : null);
+  const hoSo = hoSoDb ?? (process.env.NODE_ENV !== "production" ? DU_AN_DEMO[slug] ?? null : null);
   // Trang dự án TRA CỨU: "Dự án tương tự" (30/10/2026) — theo KHU VỰC + LOẠI HÌNH: cùng tỉnh bắt buộc, cùng nhóm loại hình đứng trước,
   // rồi dự án có nhiều tin hơn; lấy hết (slide 8 + Xem thêm ra danh sách), trong danh bạ Tra cứu
   const duAnTuongTu = (tinh: string, loai: string, cdt: string, bo: string) => {
@@ -400,11 +400,11 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
           {/* DỰ ÁN TRA CỨU (chủ dự án 31/10/2026): ảnh đại diện đặt NGAY TRONG khối tên, CÂN THEO LƯỚI TRANG — PC: tên + địa chỉ ở cột
               nội dung (trái, 2/3), ảnh ở cột phải (1/3, thẳng mép với cột Dự án theo khu vực / Tải tài liệu bên dưới); ≥ 2 ảnh tự chuyển,
               ảnh hiện trọn. Điện thoại: ảnh trên tràn viền, chữ dưới */}
-          <div className={`pb-5 ${coAnh && !traCuu ? "mt-6" : "mt-3"} ${traCuu ? "flex flex-col lg:mt-6 lg:grid lg:grid-cols-3 lg:gap-8" : ""}`}>
-            {coAnh && traCuu && (
+          <div className={`pb-5 ${(coAnh && !traCuu) ? "mt-6" : traCuu ? "mt-0" : "mt-3"} ${traCuu ? "flex flex-col lg:mt-6 lg:grid lg:grid-cols-3 lg:gap-8" : ""}`}>
+            {traCuu && (
               <div className="relative -mx-4 mb-5 sm:mx-0 lg:order-last lg:mb-0">
                 <NhanTinhTrang tier={p.tier} tinhTrang={giaTriThat(p.status)} />
-                <AnhTraCuu images={gallery} alt={p.name} />
+                <AnhTraCuu images={coAnh ? gallery : []} alt={p.name} />
               </div>
             )}
             <div className={`min-w-0 ${traCuu ? "lg:col-span-2 lg:flex lg:flex-col" : ""}`}>
@@ -705,12 +705,24 @@ function Section({ id, title, children }: { id: string; title: string; children:
 
 
 
-// Dữ liệu DEMO dự án tra cứu (chỉ máy dev) — ảnh cố tình khác tỷ lệ (16:10 · 3:1 · ảnh tin) để thử khung ảnh hiện trọn
-const DU_AN_DEMO: Project = {
-  slug: "demo-tra-cuu", name: "Dự án mẫu tra cứu (demo)", location: "Đường Bạch Đằng, Phường Hải Châu, Đà Nẵng",
-  priceFrom: "Liên hệ", type: "Căn hộ", status: "Đang mở bán", image: "/images/tin/2.jpg",
-  photos: ["/images/tin/2.jpg", "/anh/listings/0d4c189f3293a590dd96286f-1784682958486-201631-4.1.webp", "/images/tin/1.jpg"],
-  developer: "Công ty CP ABC", dangThe: true,
-  scale: [{ label: "Diện tích dự án", value: "1,2 ha" }, { label: "Quy mô", value: "2 tòa cao 22 tầng" }, { label: "Bàn giao", value: "Quý IV/2026" }],
-  amenities: ["Hồ bơi", "Phòng gym", "Công viên"], overview: ["Đoạn giới thiệu mẫu — chỉ để xem bố cục trang dự án tra cứu."],
+// Dữ liệu DEMO dự án tra cứu (CHỈ máy dev) — đủ trường hợp: nhiều ảnh + thông tin thêm · 1 ảnh, chỉ trường bắt buộc ·
+// không ảnh, tên + địa chỉ dài, chỉ trường bắt buộc (dự án chỉ biết từ tin: xem trang thật /du-an/apec-mandala-wyndham-binh-thuan)
+const DEMO_GOC = { priceFrom: "Liên hệ", dangThe: true, scale: [], amenities: [], overview: [] };
+const DU_AN_DEMO: Record<string, Project> = {
+  "demo-tra-cuu": {
+    ...DEMO_GOC, slug: "demo-tra-cuu", name: "Dự án mẫu tra cứu (demo)", location: "Đường Bạch Đằng, Phường Hải Châu, Đà Nẵng",
+    type: "Căn hộ", status: "Đang mở bán", developer: "Công ty CP ABC", image: "/images/tin/2.jpg",
+    photos: ["/images/tin/2.jpg", "/anh/listings/0d4c189f3293a590dd96286f-1784682958486-201631-4.1.webp", "/images/tin/1.jpg"],
+    scale: [{ label: "Diện tích dự án", value: "1,2 ha" }, { label: "Quy mô", value: "2 tòa cao 22 tầng" }, { label: "Bàn giao", value: "Quý IV/2026" }],
+    amenities: ["Hồ bơi", "Phòng gym", "Công viên"], overview: ["Đoạn giới thiệu mẫu — chỉ để xem bố cục trang dự án tra cứu."],
+  },
+  "demo-tra-cuu-1-anh": {
+    ...DEMO_GOC, slug: "demo-tra-cuu-1-anh", name: "Dự án mẫu một ảnh (demo)", location: "Phường An Hải, Đà Nẵng",
+    type: "Căn hộ", status: "", developer: "", image: "/images/tin/1.jpg", photos: ["/images/tin/1.jpg"],
+  },
+  "demo-tra-cuu-khong-anh": {
+    ...DEMO_GOC, slug: "demo-tra-cuu-khong-anh", name: "Khu đô thị mẫu không ảnh có tên dự án rất dài để thử xuống dòng (demo)",
+    location: "Lô A1-A5 đường Nguyễn Tất Thành nối dài, Phường Hải Vân, Đà Nẵng", type: "", status: "Sắp mở bán",
+    developer: "Công ty Cổ phần Đầu tư Phát triển Đô thị mẫu", image: "", photos: [],
+  },
 };
