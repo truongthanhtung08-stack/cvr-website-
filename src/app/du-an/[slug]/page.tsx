@@ -22,7 +22,6 @@ import Breadcrumb, { BreadcrumbJsonLd } from "@/components/Breadcrumb";
 import KhuVucLinks from "@/components/KhuVucLinks";
 import { ProjectListJsonLd } from "@/components/ListJsonLd";
 import ProjectsBrowser from "@/components/ProjectsBrowser";
-import TrangDuAnTraCuu from "@/components/TrangDuAnTraCuu";
 import { provinceOf, type Project, type Listing } from "@/lib/data";
 import { getProject, getProjects, getProjectsNoiBat, getArticles } from "@/lib/contentDb";
 import { dongTraCuu } from "@/lib/traCuuDuAn";
@@ -196,7 +195,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   }
 
   // ── Nhánh 2: trang chi tiết một dự án ──
-  const [p, listings, tatCaDuAn] = await Promise.all([getProject(slug), getListings(), getProjects()]);
+  const [hoSo, listings, tatCaDuAn] = await Promise.all([getProject(slug), getListings(), getProjects()]);
   // Trang dự án TRA CỨU: "Dự án tương tự" (30/10/2026) — theo KHU VỰC + LOẠI HÌNH: cùng tỉnh bắt buộc, cùng nhóm loại hình đứng trước,
   // rồi dự án có nhiều tin hơn; lấy hết (slide 8 + Xem thêm ra danh sách), trong danh bạ Tra cứu
   const duAnTuongTu = (tinh: string, loai: string, bo: string) => {
@@ -207,37 +206,25 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
       .sort((a, b) => a.khop - b.khop || a.i - b.i)
       .map((e) => e.x);
   };
-  if (!p) {
-    const coban = duAnTuTin(listings, slug);
-    if (!coban) notFound();
-    // Dự án bậc 1 (chỉ có tên từ tin) → trang TRA CỨU (chủ dự án 29/10/2026): bảng thông tin cơ bản, ô chưa có ghi "Đang cập nhật"
-    return (
-      <>
-        <Header />
-        <main className="flex-1 bg-white">
-          <TrangDuAnTraCuu
-            d={{
-              slug, ten: coban.ten, anhs: [], chuDauTu: "", donViPhatTrien: "", diaChi: coban.viTri, diaChiCu: coban.tin[0]?.locationCu ?? "",
-              loaiHinh: "", tinhTrang: "", giaTu: "", thongSo: [], capNhat: "", nguon: "", tongQuan: [], tienIch: [], coHoSo: false,
-              videos: [], viTri: null, matBang: [], bangGia: [],
-            }}
-            tinBan={coban.tin.filter((x) => (x.purpose ?? "ban") === "ban")}
-            tinThue={coban.tin.filter((x) => (x.purpose ?? "ban") === "thue")}
-            duAnTuongTu={duAnTuongTu(provinceOf(coban.viTri), "", slug)}
-          />
-        </main>
-        <Footer />
-      </>
-    );
-  }
+  // MỘT KHUÔN cho mọi dự án (chủ dự án 30/10/2026): dự án nổi bật giữ nguyên trang đã dựng; dự án TRA CỨU (hồ sơ dạng thẻ, hoặc
+  // dự án mới chỉ biết từ tin) chạy ĐÚNG khuôn đó — hồ sơ bổ sung tới đâu hiện tới đó, cái gì chưa có thì ẩn.
+  const coban = hoSo ? null : duAnTuTin(listings, slug);
+  if (!hoSo && !coban) notFound();
+  const tuTin = !hoSo;
+  const p: Project = hoSo ?? {
+    slug, name: coban!.ten, location: coban!.viTri, ...(coban!.tin[0]?.locationCu ? { locationCu: coban!.tin[0].locationCu } : {}),
+    priceFrom: "Liên hệ", type: "", status: "", image: "", developer: "", scale: [], amenities: [], overview: [], dangThe: true,
+  };
 
   // Thư viện ảnh: CHỈ ảnh của CHÍNH dự án này.
   // (Trước đây độn thêm ảnh của các dự án khác cho đủ 8 tấm → ảnh các dự án lẫn lộn nhau.)
   const gallery = Array.from(new Set(p.photos?.length ? p.photos : [p.image]));
   // Chưa có ảnh: khung xám + biểu tượng Coastal Land thay ảnh (không lấy ảnh căn hộ chung chung — khách tưởng ảnh thật).
   const coAnh = !!p.photos?.length;
-  // Hồ sơ DẠNG THẺ (nạp từ tệp Cowork cho Tra cứu dự án) có trang tra cứu riêng — xem nhánh dangThe phía dưới (29/10/2026)
-  const dangThe = !!p.dangThe;
+  // DỰ ÁN TRA CỨU = hồ sơ dạng thẻ hoặc dự án chỉ từ tin: cùng khuôn, ẩn phần chưa có (dự án nổi bật: traCuu = false, không đổi gì)
+  const traCuu = !!p.dangThe || tuTin;
+  const coChuDauTu = !traCuu || (!!p.developer && p.developer !== "Đang cập nhật");
+  const coLoaiHinh = !traCuu || (!!p.type && p.type !== "Dự án bất động sản");
 
   const province = provinceOf(p.location);
   // Chưa có mốc bàn giao trong hồ sơ → ĐỂ TRỐNG, không lấy tạm tình trạng (22/10/2026: từng hiện "Bàn giao: Đang mở bán",
@@ -259,6 +246,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   const rowPrice = (price: string) => (showPrice && price ? price : "Liên hệ");
   // Giá ở cột phải: ẩn giá → "Liên hệ" thay vì lộ khoảng giá.
   const sidePrice = showPrice ? p.priceFrom : "Liên hệ";
+  const coCotPhai = !traCuu || showPrice || !!contact;
 
   // Dự án tương tự — cùng cách trang dự án tra cứu (cùng tỉnh, cùng nhóm loại hình trước), lấy hết cho slide + Xem thêm
   const tuongTuNoiBat = duAnTuongTu(province, p.type, p.slug);
@@ -282,10 +270,10 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
     ...(p.videos?.length ? [{ id: "video", label: "Video" }] : []),
     { id: "vi-tri", label: "Vị trí" },
     ...(floorPlans.length ? [{ id: "mat-bang", label: "Mặt bằng" }] : []),
-    { id: "tien-ich", label: "Tiện ích" },
-    { id: "tien-do", label: "Tiến độ" },
+    ...(p.amenities.length ? [{ id: "tien-ich", label: "Tiện ích" }] : []),
+    ...(!traCuu || p.status ? [{ id: "tien-do", label: "Tiến độ" }] : []),
     ...(coBangGia ? [{ id: "bang-gia", label: "Bảng giá" }] : []),
-    { id: "chu-dau-tu", label: "Chủ đầu tư" },
+    ...(coChuDauTu ? [{ id: "chu-dau-tu", label: "Chủ đầu tư" }] : []),
     // Menu mục của trang (22/10/2026): thông tin dự án → tin thuộc dự án → dự án tương tự
     ...(hasRelated ? [{ id: "tin-du-an", label: "Tin bán / cho thuê" }] : []),
     ...(tuongTuNoiBat.length ? [{ id: "du-an-tuong-tu", label: "Dự án tương tự" }] : []),
@@ -314,43 +302,9 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
     provider: { "@id": `${SITE}/#to-chuc` }, // nối về thực thể COASTAL LAND ở layout gốc
   };
 
-  // HỒ SƠ DẠNG THẺ (nạp từ tệp Cowork) → trang TRA CỨU: thông tin cơ bản để tra, khác trang Dự án nổi bật (chủ dự án 29/10/2026)
-  if (dangThe) {
-    return (
-      <>
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(duAnJsonLd) }} />
-        <BreadcrumbJsonLd items={[{ name: "Dự án", href: "/du-an" }, { name: "Tra cứu dự án", href: "/du-an#tra-cuu" }, { name: p.name, href: `/du-an/${p.slug}` }]} />
-        <Header />
-        <main className="flex-1 bg-white">
-          <TrangDuAnTraCuu
-            d={{
-              slug: p.slug, ten: p.name, anhs: p.photos ?? [],
-              chuDauTu: p.developer !== "Đang cập nhật" ? p.developer : "",
-              donViPhatTrien: p.developmentUnit ?? "",
-              giaTu: showPrice && p.priceFrom !== "Liên hệ" ? p.priceFrom : "",
-              tongQuan: p.overview, tienIch: p.amenities,
-              videos: p.videos ?? [],
-              // Bản đồ khi hồ sơ có số nhà / đường cụ thể hoặc tiện ích xung quanh (chỉ phường thì bản đồ không thêm gì)
-              viTri: places.length || (p.diaChiMoi && p.location !== p.diaChiMoi) ? { mapQuery, places } : null,
-              matBang: floorPlans,
-              bangGia: showPrice ? priceTable : [],
-              diaChi: p.location, diaChiCu: p.locationCu ?? "",
-              loaiHinh: p.type !== "Dự án bất động sản" ? p.type : "",
-              tinhTrang: p.status, thongSo: p.scale, capNhat: p.capNhat ?? "", nguon: p.nguon ?? "", coHoSo: true,
-            }}
-            tinBan={relBan}
-            tinThue={relThue}
-            duAnTuongTu={duAnTuongTu(province, p.type, p.slug)}
-          />
-        </main>
-        <Footer />
-      </>
-    );
-  }
-
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(duAnJsonLd) }} />
+      {!tuTin && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(duAnJsonLd) }} />}
       {/* BreadcrumbList cho Google (28/10/2026, On-page nhóm A) — chỉ dữ liệu, giao diện trang dự án đã duyệt giữ nguyên */}
       <BreadcrumbJsonLd items={[{ name: "Dự án", href: "/du-an" }, { name: p.name, href: `/du-an/${p.slug}` }]} />
       <Header />
@@ -375,8 +329,9 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
           {/* Tiêu đề + địa chỉ — bố cục cân đối, rõ ràng */}
           <div className="mt-5">
             <div className="flex flex-wrap items-center gap-2">
-              {purposes.includes("ban") && <PurposeChip>Bán</PurposeChip>}
-              {purposes.includes("thue") && <PurposeChip>Cho thuê</PurposeChip>}
+              {/* Dự án tra cứu: nhãn Bán / Cho thuê do máy tự gán khi nạp → không hiện */}
+              {!traCuu && purposes.includes("ban") && <PurposeChip>Bán</PurposeChip>}
+              {!traCuu && purposes.includes("thue") && <PurposeChip>Cho thuê</PurposeChip>}
               {p.status && <span className="rounded-full bg-cvr-surface px-3 py-1 text-[12px] font-medium text-cvr-body">{p.status}</span>}
             </div>
             <h1 className="mt-3 text-[21px] font-semibold leading-[1.3] tracking-tight text-cvr-ink sm:text-[28px]">{p.name}</h1>
@@ -396,18 +351,24 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             )}
             {/* Chủ đầu tư lớn (Vinhomes, Sun…) cảnh báo web mạo danh — nói rõ đây là thông tin tổng hợp
                 (chủ dự án duyệt câu 15/10/2026, docs/YEU-CAU-COWORK-DU-AN-TIN-DANG.md mục E) */}
-            <p className="mt-1 pl-[22px] text-[13px] text-cvr-faint">
-              Thông tin dự án do Coastal Land tổng hợp từ nguồn công khai, không phải trang chính thức của chủ đầu tư.
-            </p>
+            {tuTin ? (
+              <p className="mt-3 rounded-xl bg-cvr-surface px-4 py-2.5 text-sm text-cvr-body">Thông tin dự án đang được cập nhật.</p>
+            ) : (
+              <p className="mt-1 pl-[22px] text-[13px] text-cvr-faint">
+                Thông tin dự án do Coastal Land tổng hợp từ nguồn công khai, không phải trang chính thức của chủ đầu tư.
+              </p>
+            )}
 
             {/* Dải thông tin nhanh — cân đối, dễ đọc từng tiêu chí */}
-            <div className={`mt-5 grid grid-cols-2 gap-2 ${handover ? "sm:grid-cols-4" : "sm:grid-cols-3 [&>*:last-child]:col-span-2 sm:[&>*:last-child]:col-span-1"}`}>
-              {/* Thứ tự (chủ dự án 22/10/2026): chủ đầu tư · loại hình · giá · bàn giao */}
-              <Fact label="Chủ đầu tư" value={p.developer} />
-              <Fact label="Loại hình" value={p.type} />
-              <Fact label="Giá từ" value={sidePrice} accent />
+            {(!traCuu || coChuDauTu || coLoaiHinh || showPrice || handover) && (
+            <div className={`mt-5 grid grid-cols-2 gap-2 ${traCuu ? "sm:grid-cols-4" : handover ? "sm:grid-cols-4" : "sm:grid-cols-3 [&>*:last-child]:col-span-2 sm:[&>*:last-child]:col-span-1"}`}>
+              {/* Thứ tự (chủ dự án 22/10/2026): chủ đầu tư · loại hình · giá · bàn giao — dự án tra cứu chỉ ô có thông tin */}
+              {coChuDauTu && <Fact label="Chủ đầu tư" value={p.developer} />}
+              {coLoaiHinh && <Fact label="Loại hình" value={p.type} />}
+              {(!traCuu || showPrice) && <Fact label="Giá từ" value={sidePrice} accent />}
               {handover && <Fact label="Bàn giao" value={handover} />}
             </div>
+            )}
           </div>
 
           </HomeCollapsible>
@@ -418,7 +379,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
           <HomeCollapsible>
           <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
-            <div className="reveal is-visible cards-stagger lg:col-span-2 [&>section:first-of-type]:mt-5">
+            <div className={`reveal is-visible cards-stagger ${coCotPhai ? "lg:col-span-2" : "lg:col-span-3"} [&>section:first-of-type]:mt-5`}>
 
               {/* 1) Tổng quan */}
               {(p.overview.length > 0 || p.scale.length > 0) && (
@@ -480,7 +441,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                 </Section>
               )}
 
-              {/* 5) Tiến độ dự án */}
+              {/* 5) Tiến độ dự án — dự án tra cứu: chỉ khi hồ sơ có trạng thái */}
+              {(!traCuu || !!p.status) && (
               <Section id="tien-do" title="Tiến độ dự án">
                 <div className="flex items-center justify-between gap-1">
                   {progressSteps.map((s, i) => (
@@ -498,6 +460,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                     có ở đầu trang. Chỉ ghi mốc bàn giao khi hồ sơ có. */}
                 {handover && <p className="mt-4 text-sm text-cvr-muted">Dự kiến bàn giao: <span className="font-semibold text-cvr-ink">{handover}</span></p>}
               </Section>
+              )}
 
               {/* 6) Bảng giá — cấu trúc Loại căn – Diện tích – Hướng – Giá (ẩn/hiện giá) */}
               {coBangGia && (
@@ -522,7 +485,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               </Section>
               )}
 
-              {/* 7) Chủ đầu tư */}
+              {/* 7) Chủ đầu tư — dự án tra cứu: chỉ khi hồ sơ có */}
+              {coChuDauTu && (
               <Section id="chu-dau-tu" title="Chủ đầu tư">
                 {/* GỌN (22/10/2026): có logo thì hiện logo nhỏ; KHÔNG có thì chỉ tên — bỏ ô chữ cái to thay logo. */}
                 <div className="flex items-center gap-3">
@@ -556,10 +520,12 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                   </div>
                 )}
               </Section>
+              )}
 
             </div>
 
-            {/* Cột phụ — giá & liên hệ (dính khi cuộn) */}
+            {/* Cột phụ — giá & liên hệ (dính khi cuộn); dự án tra cứu chỉ khi có giá thật hoặc liên hệ */}
+            {coCotPhai && (
             <aside className="lg:col-span-1">
               <div className="sticky top-24 space-y-4">
                 {/* Điện thoại: hộp giá nằm cuối trang, lặp lại "Giá từ · Loại hình" ở đầu trang → chỉ hiện khi có liên hệ dự án;
@@ -601,13 +567,16 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
                 </div>
 
+                {!traCuu && (
                 <div id="tai-tai-lieu" className="scroll-mt-14">
                   <h3 className="mb-1 text-center text-lg font-semibold tracking-tight text-cvr-ink">Tải tài liệu & báo giá</h3>
                   <p className="mb-3 text-center text-xs text-cvr-muted">Nhận brochure, mặt bằng, bảng giá & chính sách mới nhất</p>
                   <LeadForm cta="Đăng ký nhận tài liệu" topics={["Nhận brochure & mặt bằng", "Nhận bảng giá & chính sách", "Đặt lịch tham quan dự án", "Tư vấn vay ngân hàng"]} />
                 </div>
+                )}
               </div>
             </aside>
+            )}
           </div>
 
           </HomeCollapsible>
