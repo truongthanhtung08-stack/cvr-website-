@@ -67,7 +67,7 @@ export function TheTraCuu({ d }: { d: DongTraCuu }) {
     >
       {/* Ảnh dự án — chưa có ảnh: khung xám + biểu tượng Coastal Land (không lấy ảnh chung chung thay) */}
       {/* ẢNH TỰ GIÃN THEO CHỮ (chủ dự án 30/10/2026): cao đúng bằng khối chữ (self-stretch), tối thiểu 96 / 120 px để ảnh
-          không dẹt — chữ dài (địa chỉ cũ, tên 2 dòng, điện thoại) thì ảnh cao theo, không hở trên dưới */}
+          không dẹt — chữ dài (tên 2 dòng, điện thoại) thì ảnh cao theo, không hở trên dưới */}
       <span className="relative min-h-24 w-32 shrink-0 self-stretch overflow-hidden rounded-lg bg-cvr-surface sm:min-h-30 sm:w-40 sm:rounded-xl">
         {d.anh ? (
           <Image src={d.anh} alt={d.ten} fill sizes="(max-width:640px) 128px, 160px" className="object-cover transition-transform duration-[700ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.06]" />
@@ -79,9 +79,10 @@ export function TheTraCuu({ d }: { d: DongTraCuu }) {
       <span className="min-w-0 flex-1">
         <span className="-mt-0.5 line-clamp-2 font-semibold leading-snug text-cvr-ink transition-colors group-hover:text-cvr-blue-ink sm:text-lg">{d.ten}</span>
         <span className="mt-1 block text-xs text-cvr-body sm:text-sm">Chủ đầu tư: <span className="font-medium text-cvr-ink">{d.chuDauTu || "Đang cập nhật"}</span></span>
+        {/* Thẻ: địa chỉ MỘT kiểu theo hệ mới (chủ dự án 30/10/2026) — địa chỉ cũ chỉ ở trang chi tiết; thêm trạng thái dự án */}
         <span className="mt-0.5 block text-xs text-cvr-body sm:text-sm">Địa chỉ: {d.diaChi}</span>
-        {d.diaChiCu && <span className="block text-[11px] text-cvr-faint sm:text-xs">Địa chỉ cũ: {d.diaChiCu}</span>}
         <span className="mt-0.5 block text-xs text-cvr-body sm:text-sm">Loại hình: {d.loaiHinh || "Đang cập nhật"}</span>
+        <span className="mt-0.5 block text-xs text-cvr-body sm:text-sm">Trạng thái: {d.tinhTrang || "Đang cập nhật"}</span>
       </span>
     </Link>
   );

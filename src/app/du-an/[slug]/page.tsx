@@ -7,7 +7,7 @@ import Footer from "@/components/Footer";
 import ProjectGallery from "@/components/ProjectGallery";
 import ProjectNav from "@/components/ProjectNav";
 import ProjectNearby from "@/components/ProjectNearby";
-import ProjectSlider from "@/components/ProjectSlider";
+import DuAnTuongTuTraCuu from "@/components/DuAnTuongTuTraCuu";
 import { HomeExpandProvider, HomeCollapsible } from "@/components/HomeExpand";
 import DanhSachThuGon from "@/components/DanhSachThuGon";
 import FloorPlans from "@/components/FloorPlans";
@@ -23,7 +23,7 @@ import KhuVucLinks from "@/components/KhuVucLinks";
 import { ProjectListJsonLd } from "@/components/ListJsonLd";
 import ProjectsBrowser from "@/components/ProjectsBrowser";
 import TrangDuAnTraCuu from "@/components/TrangDuAnTraCuu";
-import { provinceOf, pickRelated, type Project, type Listing } from "@/lib/data";
+import { provinceOf, type Project, type Listing } from "@/lib/data";
 import { getProject, getProjects, getProjectsNoiBat, getArticles } from "@/lib/contentDb";
 import { dongTraCuu } from "@/lib/traCuuDuAn";
 import { nhomLoai } from "@/components/TraCuuDuAn";
@@ -196,16 +196,15 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   }
 
   // ── Nhánh 2: trang chi tiết một dự án ──
-  const [p, projects, listings, articles, tatCaDuAn] = await Promise.all([getProject(slug), getProjectsNoiBat(), getListings(), getArticles(), getProjects()]);
+  const [p, listings, tatCaDuAn] = await Promise.all([getProject(slug), getListings(), getProjects()]);
   // Trang dự án TRA CỨU: "Dự án tương tự" (30/10/2026) — theo KHU VỰC + LOẠI HÌNH: cùng tỉnh bắt buộc, cùng nhóm loại hình đứng trước,
-  // rồi dự án có nhiều tin hơn; tối đa 5, trong danh bạ Tra cứu
+  // rồi dự án có nhiều tin hơn; lấy hết (slide 8 + Xem thêm ra danh sách), trong danh bạ Tra cứu
   const duAnTuongTu = (tinh: string, loai: string, bo: string) => {
     const nhom = nhomLoai(loai);
     return dongTraCuu(listings, tatCaDuAn)
       .filter((x) => x.tinh === tinh && !cungDuAn(x.slug, bo))
       .map((x, i) => ({ x, i, khop: nhom && nhomLoai(x.loaiHinh) === nhom ? 0 : 1 }))
       .sort((a, b) => a.khop - b.khop || a.i - b.i)
-      .slice(0, 5)
       .map((e) => e.x);
   };
   if (!p) {
@@ -220,6 +219,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             d={{
               slug, ten: coban.ten, anhs: [], chuDauTu: "", donViPhatTrien: "", diaChi: coban.viTri, diaChiCu: coban.tin[0]?.locationCu ?? "",
               loaiHinh: "", tinhTrang: "", giaTu: "", thongSo: [], capNhat: "", nguon: "", tongQuan: [], tienIch: [], coHoSo: false,
+              videos: [], viTri: null, matBang: [], bangGia: [],
             }}
             tinBan={coban.tin.filter((x) => (x.purpose ?? "ban") === "ban")}
             tinThue={coban.tin.filter((x) => (x.purpose ?? "ban") === "thue")}
@@ -260,14 +260,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   // Giá ở cột phải: ẩn giá → "Liên hệ" thay vì lộ khoảng giá.
   const sidePrice = showPrice ? p.priceFrom : "Liên hệ";
 
-  // Dự án khác — ưu tiên cùng tỉnh + cùng loại hình
-  // Dự án liên quan — LẤY HẾT (ưu tiên cùng tỉnh + cùng loại hình) để nút "Xem thêm"
-  // còn danh sách mà xổ ra; ProjectSlider tự cắt 8 cái đầu cho slide.
-  const others = pickRelated(
-    projects.filter((x) => x.slug !== p.slug),
-    (x) => (provinceOf(x.location) === province ? 2 : 0) + (x.type === p.type ? 1 : 0),
-    projects.length,
-  );
+  // Dự án tương tự — cùng cách trang dự án tra cứu (cùng tỉnh, cùng nhóm loại hình trước), lấy hết cho slide + Xem thêm
+  const tuongTuNoiBat = duAnTuongTu(province, p.type, p.slug);
 
   // Tin của CHÍNH dự án này — gán trong admin qua trường "Thuộc dự án" (details.project).
   // Dự án không có tin nào → để TRỐNG, tuyệt đối KHÔNG độn tin của dự án khác vào.
@@ -294,7 +288,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
     { id: "chu-dau-tu", label: "Chủ đầu tư" },
     // Menu mục của trang (22/10/2026): thông tin dự án → tin thuộc dự án → dự án tương tự
     ...(hasRelated ? [{ id: "tin-du-an", label: "Tin bán / cho thuê" }] : []),
-    { id: "du-an-tuong-tu", label: "Dự án tương tự" },
+    ...(tuongTuNoiBat.length ? [{ id: "du-an-tuong-tu", label: "Dự án tương tự" }] : []),
   ];
 
   // ── DỮ LIỆU CÓ CẤU TRÚC CHO GOOGLE (JSON-LD) ──────────────────────────────
@@ -335,6 +329,11 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               donViPhatTrien: p.developmentUnit ?? "",
               giaTu: showPrice && p.priceFrom !== "Liên hệ" ? p.priceFrom : "",
               tongQuan: p.overview, tienIch: p.amenities,
+              videos: p.videos ?? [],
+              // Bản đồ khi hồ sơ có số nhà / đường cụ thể hoặc tiện ích xung quanh (chỉ phường thì bản đồ không thêm gì)
+              viTri: places.length || (p.diaChiMoi && p.location !== p.diaChiMoi) ? { mapQuery, places } : null,
+              matBang: floorPlans,
+              bangGia: showPrice ? priceTable : [],
               diaChi: p.location, diaChiCu: p.locationCu ?? "",
               loaiHinh: p.type !== "Dự án bất động sản" ? p.type : "",
               tinhTrang: p.status, thongSo: p.scale, capNhat: p.capNhat ?? "", nguon: p.nguon ?? "", coHoSo: true,
@@ -623,16 +622,13 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
           </section>
           )}
 
-          <section id="du-an-tuong-tu" className="scroll-mt-14">
-          <ProjectSlider
-            projects={others}
-            relevance
-            title="Dự án tương tự"
-            sectionKey="du-an-lien-quan"
-            articles={articles}
-            emptyNote="Chưa có dự án liên quan."
-          />
-          </section>
+          {/* DỰ ÁN TƯƠNG TỰ — CÙNG MỘT KIỂU với trang dự án tra cứu (chủ dự án 30/10/2026): thẻ dự án, slide 8 + Xem thêm → danh sách
+              10 dự án / trang; cùng tỉnh, cùng nhóm loại hình trước (cả dự án nổi bật lẫn dự án tra cứu) */}
+          {tuongTuNoiBat.length > 0 && (
+            <section id="du-an-tuong-tu" className="scroll-mt-14">
+              <DuAnTuongTuTraCuu ds={tuongTuNoiBat} />
+            </section>
+          )}
 
 
           </HomeExpandProvider>
