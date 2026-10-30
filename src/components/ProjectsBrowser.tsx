@@ -22,8 +22,9 @@ import { coordOf } from "@/lib/geo";
 import type { DiemBanDo } from "@/components/MapViewGoogle";
 import type { Project, Article } from "@/lib/data";
 import type { DongTraCuu } from "@/lib/traCuuDuAn";
-import { TheDuAnDoc, TheTraCuu, locTraCuu, nhomLoai } from "@/components/TraCuuDuAn";
+import { TheTraCuu, locTraCuu, nhomLoai } from "@/components/TraCuuDuAn";
 import { useHomeSection } from "@/components/HomeExpand";
+import { khuVucList, slugKhuVuc } from "@/lib/khuVuc";
 import { smoothScrollTo } from "@/lib/scroll";
 import { useAutoSlide, useAutoSlideThe, useTamDung } from "@/lib/useAutoSlide";
 
@@ -333,12 +334,13 @@ export default function ProjectsBrowser({
 
   // Thẻ Dự án nổi bật (hàng trượt + lưới Xem thêm, trang /du-an và trang chủ): tình trạng · Tên · Địa chỉ · Loại hình · Chủ đầu tư
   // + giá — chủ dự án 29–30/10/2026; ảnh trên, chữ dưới, hiện đủ chữ.
-  const theNoiBat = (p: Project) => (
+  // ngang = danh sách cột trái (bố cục web hiện tại: ảnh trái lớn, chữ phải trên máy tính; điện thoại ảnh trên) — 30/10/2026
+  const theNoiBat = (p: Project, ngang = false) => (
     <Link
       href={`/du-an/${p.slug}`}
-      className="card-lux group flex h-full flex-col overflow-hidden rounded-none border border-cvr-line bg-white shadow-lux shadow-lux-hover hover:-translate-y-1 hover:border-cvr-blue/45"
+      className={`card-lux group flex h-full flex-col overflow-hidden rounded-none border border-cvr-line bg-white shadow-lux shadow-lux-hover hover:-translate-y-1 hover:border-cvr-blue/45 ${ngang ? "sm:flex-row sm:gap-5 sm:p-3" : ""}`}
     >
-      <div className="relative aspect-[16/10] w-full shrink-0 overflow-hidden bg-cvr-surface">
+      <div className={`relative aspect-[16/10] w-full shrink-0 overflow-hidden bg-cvr-surface ${ngang ? "sm:aspect-[4/3] sm:w-56 sm:rounded-xl md:w-64" : ""}`}>
         <AnhChay
           chay={false}
           images={[p.image, ...(p.photos ?? [])]}
@@ -350,10 +352,10 @@ export default function ProjectsBrowser({
           {p.status}
         </span>
       </div>
-      <div className="flex min-w-0 flex-1 flex-col p-3">
+      <div className={`flex min-w-0 flex-1 flex-col p-3 ${ngang ? "sm:p-0 sm:py-1 sm:pr-1" : ""}`}>
         {/* GỌN (chủ dự án 29/10/2026): Tên dự án · Địa chỉ · Loại hình · Chủ đầu tư — hiện đủ chữ, không cắt "…";
             giá ("Liên hệ" khi ẩn giá) nằm phải dòng Chủ đầu tư như dòng cuối thẻ dự án trang chủ — không thêm dòng */}
-        <h3 className="font-semibold leading-snug text-cvr-ink transition-colors group-hover:text-cvr-blue-ink">
+        <h3 className={`font-semibold leading-snug text-cvr-ink transition-colors group-hover:text-cvr-blue-ink ${ngang ? "sm:text-lg" : ""}`}>
           <Highlight text={p.name} terms={termsBySlug.get(p.slug) ?? []} />
         </h3>
         <p className="mt-1 flex items-start gap-1 text-xs text-cvr-muted">
@@ -380,21 +382,50 @@ export default function ProjectsBrowser({
       ...visible.map((p) => ({ noiBat: p })),
       ...(traCuu ? traCuuLoc.filter((d) => !noiBatSlug.has(d.slug)).map((d) => ({ traCuu: d })) : []),
     ];
+    // Cột phải: tỉnh có dự án (đếm cả dự án tra cứu khi có) → trang pSEO /du-an/<tỉnh>
+    const demTinhLienKet = new Map<string, number>();
+    for (const t of traCuu ? traCuu.map((d) => d.tinh) : projects.map((p) => provinceOf(p.location))) {
+      if (t && khuVucList.some((k) => k.name === t)) demTinhLienKet.set(t, (demTinhLienKet.get(t) ?? 0) + 1);
+    }
+    const tinhLienKet = [...demTinhLienKet.entries()].sort((a, b) => b[1] - a[1]);
     const tongNB = Math.max(1, Math.ceil(dsChung.length / NOI_BAT_MOI_TRANG));
     const trangNB = Math.min(trangNoiBat, tongNB);
     return (
       <section id="noi-bat" className="pt-4 sm:pt-6">
         <h2 className="text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">{traCuu ? "Dự án bất động sản" : "Dự án nổi bật"}</h2>
-        {/* LƯỚI THẺ DỌC (30/10/2026: 1 cột thẻ ngang trên PC trống quá) — PC 4 · máy tính bảng 2 · điện thoại 1 cột, cùng thẻ hàng
-            trượt Nổi bật; thẻ cùng hàng cao bằng nhau */}
-        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4">
-          {dsChung.slice((trangNB - 1) * NOI_BAT_MOI_TRANG, trangNB * NOI_BAT_MOI_TRANG).map((x) =>
-            "noiBat" in x
-              ? <div key={x.noiBat.slug}>{theNoiBat(x.noiBat)}</div>
-              : <div key={x.traCuu.slug}><TheDuAnDoc d={x.traCuu} /></div>,
+        {/* BỐ CỤC WEB HIỆN TẠI (chủ dự án 30/10/2026): CỘT TRÁI = danh sách thẻ, MỖI DỰ ÁN ĐÚNG LOẠI THẺ CỦA NÓ — nổi bật: thẻ nổi bật
+            (ngang); tra cứu: thẻ tra cứu · CỘT PHẢI = liên kết pSEO "Dự án theo khu vực" (/du-an/<tỉnh>), dính theo khi cuộn — máy tính */}
+        <div className="mt-4 grid grid-cols-1 gap-8 lg:grid-cols-3">
+          <div className="lg:col-span-2">
+            <div className="flex flex-col gap-4 sm:gap-5">
+              {dsChung.slice((trangNB - 1) * NOI_BAT_MOI_TRANG, trangNB * NOI_BAT_MOI_TRANG).map((x) =>
+                "noiBat" in x
+                  ? <div key={x.noiBat.slug}>{theNoiBat(x.noiBat, true)}</div>
+                  : <div key={x.traCuu.slug}><TheTraCuu d={x.traCuu} /></div>,
+              )}
+            </div>
+            <PhanTrang hienTai={trangNB} tong={tongNB} doiTrang={(p) => { setTrangNoiBat(p); window.scrollTo({ top: 0 }); }} />
+          </div>
+          {tinhLienKet.length > 0 && (
+            <aside className="hidden lg:col-span-1 lg:block">
+              <div className="sticky top-24 rounded-none border border-cvr-line bg-white p-5 shadow-lux">
+                <h3 className="text-sm font-semibold tracking-tight text-cvr-ink">Dự án theo khu vực</h3>
+                <div className="mt-3 flex flex-col">
+                  {tinhLienKet.map(([ten, so]) => (
+                    <Link
+                      key={ten}
+                      href={`/du-an/${slugKhuVuc(ten)}`}
+                      className="flex items-center justify-between rounded-lg px-3 py-2 text-sm text-cvr-body transition-colors hover:bg-cvr-surface hover:text-cvr-ink"
+                    >
+                      <span>Dự án tại {ten}</span>
+                      <span className="text-xs text-cvr-muted">{so}</span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </aside>
           )}
         </div>
-        <PhanTrang hienTai={trangNB} tong={tongNB} doiTrang={(p) => { setTrangNoiBat(p); window.scrollTo({ top: 0 }); }} />
       </section>
     );
   }
