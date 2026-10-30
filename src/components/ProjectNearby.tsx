@@ -105,13 +105,10 @@ export default function ProjectNearby({
         </button>
       </div>
 
-      {/* address rỗng = trang đã ghi địa chỉ ngay cạnh bản đồ (dự án tra cứu, 30/10/2026) → không lặp */}
-      {address && (
       <p className="flex items-start gap-1.5 text-[14px] leading-relaxed text-cvr-muted">
         <svg className="mt-0.5 h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
         <span className="min-w-0">{address}</span>
       </p>
-      )}
 
       {places.length > 0 && (
         <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
