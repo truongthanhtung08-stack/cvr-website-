@@ -13,6 +13,7 @@ import FloorPlans from "@/components/FloorPlans";
 import RelatedListingsTabs from "@/components/RelatedListingsTabs";
 import LeadForm from "@/components/LeadForm";
 import RichContent from "@/components/RichContent";
+import ThuGonTrang from "@/components/ThuGonTrang";
 import { chuThuan } from "@/lib/chuThuan";
 import VideoEmbed from "@/components/VideoEmbed";
 import Breadcrumb, { BreadcrumbJsonLd } from "@/components/Breadcrumb";
@@ -23,13 +24,15 @@ import { provinceOf, type Project, type Listing } from "@/lib/data";
 import { getProject, getProjects, getArticles } from "@/lib/contentDb";
 import { dongTraCuu } from "@/lib/traCuuDuAn";
 import { getListings } from "@/lib/listingsDb";
-import { duAnThuocNhom, findCategory, projectCategories, type Category } from "@/lib/categories";
+import { duAnThuocNhom, findCategory, projectCategories, rentCategories, saleCategories, type Category } from "@/lib/categories";
 import { normalizeVi, cungDuAn } from "@/lib/filters";
 import { xepThongSo } from "@/lib/thongSoDuAn";
 import NhanTinhTrang, { capVip } from "@/components/NhanTinhTrang";
 import { giaTriThat } from "@/lib/truongDuAn";
 import { demTinTheoKhuVuc, khuVucList, moTaKhuVuc, slugKhuVuc, tieuDeKhuVuc, timKhuVuc } from "@/lib/khuVuc";
-import { catMoTa, tieuDeGoogle } from "@/lib/thang";
+import { catMoTa, thangHienTai, tieuDeGoogle } from "@/lib/thang";
+import { giaMoiM2 } from "@/lib/chiSoGia";
+import { lienKetCho } from "@/lib/pseo";
 
 // Đường dẫn /du-an/<slug> phục vụ HAI loại trang:
 //   · slug là DANH MỤC loại hình (can-ho-chung-cu, khu-do-thi-moi…) → trang danh sách
@@ -292,6 +295,49 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   const relThue = projectListings.filter((x) => (x.purpose ?? "ban") === "thue");
   const hasRelated = projectListings.length > 0;
 
+  // SEO TRANG DỰ ÁN (chủ dự án 31/10/2026: "SEO, pSEO đâu — đọc tài liệu SEO"). Kế hoạch SEO: đối thủ thắng từ khoá dự án nhờ trang dự án có
+  // giá + bán + thuê; khuôn hỏi "Giá … tháng 10/2026?" như trang pSEO (MAU-NOI-DUNG-PSEO.md). Hỏi đáp tính từ CHÍNH tin của dự án + hồ sơ Admin,
+  // trường nào chưa có thì không hỏi. Máy chủ vẽ sẵn + FAQPage JSON-LD trùng nguyên văn. Không thêm truy vấn (dùng tin đã nạp).
+  const soVi = (n: number) => (Math.round(n * 10) / 10).toLocaleString("vi-VN", { maximumFractionDigits: 1 });
+  const khoangGia = (ds: number[], dv: string) => {
+    const a = soVi(Math.min(...ds)), b = soVi(Math.max(...ds));
+    return a === b ? `${a} ${dv}` : `từ ${a} đến ${b} ${dv}`;
+  };
+  const thang = thangHienTai();
+  const m2Ban = relBan.map(giaMoiM2).filter((v): v is number => v != null && v > 0).map((v) => v / 1e6);
+  const giaThue = relThue.map((l) => l.priceVnd ?? 0).filter((v) => v > 0).map((v) => v / 1e6);
+  const hoiDapDuAn = [
+    ...(m2Ban.length ? [{ q: `Giá bán ${p.name} ${thang}?`, a: `Theo thông tin mua bán trên thị trường, giá ${khoangGia(m2Ban, "triệu/m²")}.` }] : []),
+    ...(giaThue.length ? [{ q: `Giá thuê ${p.name} ${thang}?`, a: `Theo thông tin cho thuê trên thị trường, giá ${khoangGia(giaThue, "triệu/tháng")}.` }] : []),
+    ...(diaChiDu !== "Đang cập nhật" ? [{ q: `${p.name} ở đâu?`, a: `${diaChiDu}${p.locationCu ? ` (địa chỉ cũ: ${p.locationCu})` : ""}.` }] : []),
+    ...(giaTriThat(p.developer) ? [{ q: `Chủ đầu tư ${p.name} là ai?`, a: `${giaTriThat(p.developer)}.` }] : []),
+    ...(giaTriThat(p.type) ? [{ q: `${p.name} thuộc loại hình nào?`, a: `${giaTriThat(p.type)}.` }] : []),
+  ];
+  // pSEO "Mọi người cũng tìm kiếm" — TỪ KHOÁ DÀI theo kế hoạch SEO (công thức [mục đích] [loại hình] [phường / mức giá…] [nơi], chữ = gợi ý
+  // Google, chi-tiet/tu-khoa.md 5.1): loại hình lấy theo tin CỦA DỰ ÁN (chưa có tin thì theo loại hình hồ sơ), cùng nhóm "Tìm kiếm theo
+  // từ khoá" như trang tin; chỉ trang đã qua cổng chất lượng. Mua bán trước, cho thuê sau.
+  const tinhDuAn = timKhuVuc(slugKhuVuc(province));
+  const loaiNhieuNhat = (ds: typeof listings) => {
+    const dem = new Map<string, number>();
+    for (const l of ds) if (l.type) dem.set(l.type, (dem.get(l.type) ?? 0) + 1);
+    return [...dem.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
+  };
+  const lienKetDuAn = (tinhDuAn ? (["ban", "thue"] as const).flatMap((muc) => {
+    const tin = muc === "ban" ? relBan : relThue;
+    const loai = loaiNhieuNhat(tin) ?? (muc === "ban" ? giaTriThat(p.type) : undefined);
+    // Loại hình hồ sơ ghi tự do ("Căn hộ cao cấp") → nhóm có tên loại nằm trong chữ đó
+    const dsCat = muc === "thue" ? rentCategories : saleCategories;
+    const cat = loai ? dsCat.find((c) => c.types.includes(loai)) ?? dsCat.find((c) => c.types.some((t) => normalizeVi(loai).includes(normalizeVi(t)))) : undefined;
+    if (!cat && tin.length === 0) return [];
+    // Trang gốc "Bán <loại> <tỉnh>" đứng đầu (lienKetCho bỏ trang đang xem nên phải lấy ở nhóm loại hình của trang tỉnh)
+    const goc = cat ? lienKetCho({ muc, tinh: tinhDuAn }, listings).filter((g) => g.tieuDe === "Theo loại hình").flatMap((g) => g.links)
+      .filter((l) => l.href.split("/")[2] === cat.slug) : [];
+    const tuKhoa = lienKetCho({ muc, tinh: tinhDuAn, ...(cat ? { cat } : {}) }, listings).filter((g) => g.tieuDe === "Tìm kiếm theo từ khoá").flatMap((g) => g.links);
+    // Phường của dự án lên trước
+    const phuongDA = normalizeVi(diaChiDu.split(",").find((x) => /phường|xã/i.test(x)) ?? "");
+    return [...goc, ...tuKhoa.sort((a, b) => Number(!!phuongDA && normalizeVi(b.day ?? b.nhan).includes(phuongDA.trim())) - Number(!!phuongDA && normalizeVi(a.day ?? a.nhan).includes(phuongDA.trim()))).slice(0, 5)];
+  }) : []).filter((l, i, ds) => ds.findIndex((x) => x.href === l.href) === i);
+
   // Menu — chỉ mục có nội dung (khớp id các <section>)
   // GỌN (chủ dự án 22/10/2026: "rõ ràng, gọn, tránh lan man"): mục Bảng giá chỉ hiện khi có bảng giá thật để hiện;
   // giá ẩn hoặc chưa có bảng → bỏ hẳn mục (cột phải đã có "Liên hệ" + ô nhận bảng giá), không lặp hộp "Liên hệ".
@@ -430,7 +476,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               (liên hệ, tin thuộc dự án, dự án tại tỉnh, nhận tài liệu), mép trên ngang khối đầu cột trái; phần nào chưa có thông tin thì ẩn */}
           <HomeCollapsible>
           <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
-            <div className={`reveal is-visible cards-stagger ${coCotPhai ? "lg:col-span-2" : "lg:col-span-3"} [&>section:first-of-type]:mt-5 [&>section:first-of-type]:border-t-0 [&>section:first-of-type]:pt-0`}>
+            <div className={`reveal is-visible cards-stagger ${coCotPhai ? "lg:col-span-2" : "lg:col-span-3"} [&>section:first-child]:mt-5 [&>section:first-child]:border-t-0 [&>section:first-child]:pt-0`}>
               {/* TRANG RIÊNG DỰ ÁN TRA CỨU (chủ dự án 31/10/2026) — CÙNG KHUÔN TRANG MUA BÁN: tên + địa chỉ trên cùng; cột trái ảnh TO
                   rộng hết cột (≥ 2 ảnh tự chuyển, ảnh hiện trọn, bấm xem to), dưới ảnh 3 trường bắt buộc; cột phải (Dự án theo khu vực)
                   mép trên ngang mép trên ảnh. Mục Admin ghi thêm xuống Tổng quan */}
@@ -445,6 +491,9 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                 </div>
               )}
 
+              {/* THÔNG TIN DỰ ÁN DÀI → THU GỌN (chủ dự án 31/10/2026, kiểu Batdongsan): bao TỪ Tổng quan TỚI mục cuối; "Xem thêm" ở chỗ cắt,
+                  "Thu gọn" ở CUỐI phần thông tin; ngắn thì hiện hết. Hỏi đáp nằm ngoài (luôn hiện) */}
+              <ThuGonTrang className={traCuu ? "[&>section:first-child]:mt-0" : "[&>section:first-child]:mt-5"}>
               {/* 1) Tổng quan */}
               {coMucTongQuan && (
               <Section id="tong-quan" title="Tổng quan dự án">
@@ -460,7 +509,6 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                 {p.overview.length > 0 && (
                 // Cách bảng thông số 32 px (chủ dự án 31/10/2026: cần cách biệt với phần nội dung bên dưới); tra cứu: bảng ở đầu trang
                 <div className={traCuu && hangThem.length === 0 ? "" : "mt-8"}>
-                {/* TRANG DỰ ÁN HIỆN ĐỦ, KHÔNG CẮT TỪNG PHẦN — trang dài là chuẩn (chủ dự án 30/10/2026) */}
                 <div>
                   <div className="space-y-3 text-[15px] leading-6 text-cvr-body">
                     <RichContent paragraphs={p.overview} title={p.name} />
@@ -580,6 +628,41 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                 </Section>
               )}
 
+              </ThuGonTrang>
+
+              {/* Hỏi đáp (SEO) — cuối cột nội dung, như Batdongsan "Các câu hỏi thường gặp" */}
+              {hoiDapDuAn.length > 0 && (
+                <Section id="hoi-dap" title="Câu hỏi thường gặp">
+                  <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+                    "@context": "https://schema.org",
+                    "@type": "FAQPage",
+                    mainEntity: hoiDapDuAn.map((h) => ({ "@type": "Question", name: h.q, acceptedAnswer: { "@type": "Answer", text: h.a } })),
+                  }) }} />
+                  <dl className="space-y-4">
+                    {hoiDapDuAn.map((h) => (
+                      <div key={h.q}>
+                        <dt className="text-[15px] font-semibold leading-6 text-cvr-ink">{h.q}</dt>
+                        <dd className="mt-1 text-[15px] leading-6 text-cvr-body">{h.a}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </Section>
+              )}
+
+              {/* pSEO — CÙNG KIỂU CÁC MỤC TRANG DỰ ÁN (chủ dự án 31/10/2026: "xem cả trang web, bố cục, kiểu chữ"): tiêu đề mục, chữ 15 px,
+                  2 cột như bảng thông số; liên kết thật máy chủ vẽ sẵn (Google đọc được) */}
+              {lienKetDuAn.length > 0 && (
+                <Section id="tim-kiem" title="Mọi người cũng tìm kiếm">
+                  <ul className="grid grid-cols-1 gap-x-10 gap-y-3 sm:grid-cols-2">
+                    {lienKetDuAn.map((l) => (
+                      <li key={l.href} className="text-[15px] leading-6">
+                        <Link href={l.href} className="text-cvr-body underline-offset-2 transition-colors hover:text-cvr-ink hover:underline">{l.day ?? l.nhan}</Link>
+                      </li>
+                    ))}
+                  </ul>
+                </Section>
+              )}
+
             </div>
 
             {/* Cột phụ — dính khi cuộn */}
@@ -677,6 +760,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               10 dự án / trang; cùng tỉnh, cùng nhóm loại hình trước (cả dự án nổi bật lẫn dự án tra cứu) */}
 
 
+          {/* pSEO — liên kết sang trang mua bán / cho thuê cùng tỉnh (khối có lề riêng → bù lề khung trang) */}
           </HomeExpandProvider>
         </div>
       </main>

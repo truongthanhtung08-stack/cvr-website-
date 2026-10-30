@@ -44,7 +44,10 @@ export default function MoTaThuGon({ children, dong = 10, nenMo = "from-cvr-surf
     // Ảnh tải xong mới có chiều cao thật → đo lại
     const anh = [...el.querySelectorAll("img")];
     anh.forEach((a) => a.addEventListener("load", tinh));
-    return () => anh.forEach((a) => a.removeEventListener("load", tinh));
+    // Ảnh / video nạp chậm đổi cỡ khối → đo lại (cùng cơ chế trang dự án ThuGonTrang, chủ dự án duyệt 31/10/2026)
+    const ro = new ResizeObserver(tinh);
+    [...el.children].forEach((c) => ro.observe(c));
+    return () => { anh.forEach((a) => a.removeEventListener("load", tinh)); ro.disconnect(); };
   }, [dong]);
 
   useEffect(() => {
