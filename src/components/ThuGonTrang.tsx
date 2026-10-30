@@ -37,7 +37,12 @@ export default function ThuGonTrang({ children, className = "" }: { children: Re
       // Liên kết #mục hoặc nút thanh mục dự án (ProjectNav, data-muc)
       const a = (e.target as HTMLElement).closest?.("a[href^='#'], [data-muc]");
       const id = a?.getAttribute("data-muc") ?? a?.getAttribute("href")?.slice(1);
-      if (id && el.querySelector(`#${CSS.escape(id)}`)) setMo(true);
+      const dich = id ? el.querySelector<HTMLElement>(`#${CSS.escape(id)}`) : null;
+      if (!dich) return;
+      setMo(true);
+      // Lệnh cuộn của thanh mục chạy lúc khối còn thu → trình duyệt cuộn NHẦM bên trong khối (overflow). Mở xong: trả khối về đầu,
+      // cuộn trang tới đúng mục (31/10/2026 — bấm "Vị trí" khi đang thu không tới được mục)
+      setTimeout(() => { el.scrollTop = 0; dich.scrollIntoView({ behavior: "smooth", block: "start" }); }, 50);
     };
     document.addEventListener("click", bam, true);
     return () => {

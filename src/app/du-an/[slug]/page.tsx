@@ -26,7 +26,7 @@ import { dongTraCuu } from "@/lib/traCuuDuAn";
 import { getListings } from "@/lib/listingsDb";
 import { duAnThuocNhom, findCategory, projectCategories, rentCategories, saleCategories, type Category } from "@/lib/categories";
 import { lienKetCho } from "@/lib/pseo";
-import { normalizeVi, cungDuAn } from "@/lib/filters";
+import { normalizeVi, cungDuAn, sortListings } from "@/lib/filters";
 import { xepThongSo } from "@/lib/thongSoDuAn";
 import NhanTinhTrang, { capVip } from "@/components/NhanTinhTrang";
 import { giaTriThat, loaiHinhThe } from "@/lib/truongDuAn";
@@ -291,8 +291,10 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   // tạo trang dự án xong là tin tự về đây (chủ dự án 15/10/2026).
   const projectListings = listings.filter((x) => x.projectSlug === p.slug || cungDuAn(x.projectSlug, p.slug)
     || (!x.projectSlug && !!x.projectName && normalizeVi(x.projectName) === normalizeVi(p.name)));
-  const relBan = projectListings.filter((x) => (x.purpose ?? "ban") === "ban");
-  const relThue = projectListings.filter((x) => (x.purpose ?? "ban") === "thue");
+  // THỨ TỰ MỘT CHUẨN CẢ WEB (chốt 23/10/2026): cấp tin trước, cùng cấp theo mốc gần nhất (đăng / đẩy) — getListings đã xếp theo mốc,
+  // sortListings "moi" xếp cấp giữ nguyên mốc. Dải trượt lấy 8 tin đầu, "Xem thêm" giữ đúng thứ tự này từ tin số 1 (chủ dự án 31/10/2026)
+  const relBan = sortListings(projectListings.filter((x) => (x.purpose ?? "ban") === "ban"), "moi");
+  const relThue = sortListings(projectListings.filter((x) => (x.purpose ?? "ban") === "thue"), "moi");
   const hasRelated = projectListings.length > 0;
 
   const tinhDuAn = timKhuVuc(slugKhuVuc(province));
@@ -454,11 +456,12 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                 <AnhTraCuu images={coAnh ? gallery : []} alt={p.name} />
               </div>
               {duAnTheoKhuVuc.length > 0 && (
-                <div className="hidden flex-col rounded-2xl border border-cvr-line bg-white p-5 lg:flex">
+                // Cao ĐÚNG bằng ảnh (h-0 + min-h-full: hộp không kéo hàng cao thêm); nhiều tỉnh hơn chỗ thì cuộn trong hộp
+                <div className="hidden h-0 min-h-full flex-col overflow-y-auto rounded-2xl border border-cvr-line bg-white p-4 lg:flex">
                   <p className="text-base font-semibold tracking-tight text-cvr-ink">Dự án theo khu vực</p>
-                  <div className="mt-3 flex flex-col flex-1 justify-around">
+                  <div className="mt-2 flex flex-1 flex-col justify-around">
                     {duAnTheoKhuVuc.map(([ten, so]) => (
-                      <Link key={ten} href={`/du-an/${slugKhuVuc(ten)}`} className="flex items-center justify-between rounded-lg px-3 py-2 text-sm text-cvr-body transition-colors hover:bg-cvr-surface hover:text-cvr-ink">
+                      <Link key={ten} href={`/du-an/${slugKhuVuc(ten)}`} className="flex items-center justify-between rounded-lg px-3 py-1.5 text-sm text-cvr-body transition-colors hover:bg-cvr-surface hover:text-cvr-ink">
                         <span>Dự án tại {ten}</span>
                         <span className="text-xs text-cvr-muted">{so}</span>
                       </Link>
@@ -718,8 +721,10 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
           {/* pSEO — liên kết sang trang mua bán / cho thuê cùng tỉnh (khối có lề riêng → bù lề khung trang) */}
           {/* pSEO — khối "Tìm kiếm phổ biến" cuối trang như trang chủ, trang danh sách (khối có lề riêng → bù lề khung trang) */}
           {tabTuKhoa.length > 0 && (
-            <div className="-mx-4 mt-12 sm:-mx-6 lg:-mx-8">
-              <TabTimKiemPhoBien tabs={tabTuKhoa} />
+            // CÂN ĐO (chủ dự án 31/10/2026): cách mục trên đúng 48 px như mục cách mục (khối có đệm trên riêng 8 / 24 px), đáy bù đệm dưới riêng
+            // của khối → cách footer đúng .pb-footer như mọi trang; tiêu đề cùng cỡ 24 px các mục trang dự án
+            <div className="-mx-4 -mb-12 mt-10 sm:-mx-6 sm:-mb-14 sm:mt-6 lg:-mx-8">
+              <TabTimKiemPhoBien tabs={tabTuKhoa} trangChu />
             </div>
           )}
           </HomeExpandProvider>
