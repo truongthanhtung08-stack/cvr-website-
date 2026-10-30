@@ -506,7 +506,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
           {/* BỐ CỤC CHUẨN (chủ dự án 30/10/2026) — dự án nổi bật và dự án tra cứu MỘT KHUÔN: cột trái các khối nội dung | cột phải dính
               (liên hệ, tin thuộc dự án, dự án tại tỉnh, nhận tài liệu), mép trên ngang khối đầu cột trái; phần nào chưa có thông tin thì ẩn */}
           <HomeCollapsible>
-          <div className="mt-4 grid grid-cols-1 gap-12 lg:grid-cols-3 lg:gap-8">
+          {/* Tra cứu chưa có mục thông tin nào: không dựng lưới rỗng (lưới rỗng vẫn ăn khoảng trên → lệch 48 px chuẩn) */}
+          <div className={`mt-4 grid grid-cols-1 gap-12 lg:grid-cols-3 lg:gap-8 ${traCuu && !nav.some((n) => n.id !== "tin-du-an") ? "hidden" : ""}`}>
             <div className={`reveal is-visible cards-stagger ${coCotPhai ? "lg:col-span-2" : "lg:col-span-3"} [&>section:first-child]:mt-5 [&>section:first-child]:border-t-0 [&>section:first-child]:pt-0`}>
               {/* THÔNG TIN DỰ ÁN DÀI → THU GỌN (chủ dự án 31/10/2026, kiểu Batdongsan): bao TỪ Tổng quan TỚI mục cuối; "Xem thêm" ở chỗ cắt,
                   "Thu gọn" ở CUỐI phần thông tin; ngắn thì hiện hết. Hỏi đáp nằm ngoài (luôn hiện) */}
