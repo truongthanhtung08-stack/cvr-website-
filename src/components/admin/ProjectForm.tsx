@@ -31,16 +31,15 @@ import { Panel, Field } from "@/components/Ui";
 import { homNayVn } from "@/lib/gioVn";
 import MapPicker from "@/components/MapPickerMo";
 import { chuoiTimBanDo, diemTimBanDo } from "@/lib/diaChiHaiHe";
+import { thongSoChoForm } from "@/lib/thongSoDuAn";
 
-// Nhãn gợi ý cho bảng "Quy mô dự án" (sửa tự do được)
-const DEFAULT_SCALE: ProjectScaleItem[] = [
-  { label: "Giá tham khảo", value: "" },
-  { label: "Loại hình", value: "" },
-  { label: "Quy mô", value: "" },
-  { label: "Điểm nhấn", value: "" },
+// Bảng "Quy mô dự án" = ĐÚNG cấu trúc bảng Tổng quan trên web (chủ dự án 31/10/2026): luôn có 4 dòng chuẩn (Diện tích dự án ·
+// Quy mô · Loại hình căn hộ · Số lượng căn hộ), xếp bằng cùng hàm với trang dự án; dòng thêm hiện sau, đúng thứ tự nhập.
+// Bỏ dòng mẫu "Giá tham khảo", "Loại hình" (trùng ô Giá bán từ, Loại hình dự án ở trên — web không hiện, Admin lại hiện).
+const DEFAULT_SCALE: ProjectScaleItem[] = thongSoChoForm([
   { label: "Pháp lý", value: "" },
   { label: "Bàn giao (dự kiến)", value: "" },
-];
+]);
 
 // Gợi ý dòng bảng giá mặc định (sửa/xoá tự do)
 const DEFAULT_PRICE_ROWS: ProjectPriceRow[] = [
@@ -86,7 +85,7 @@ export default function ProjectForm({
   const [overview, setOverview] = useState(initial?.overview ?? "");
   const [images, setImages] = useState<string[]>(initial?.images ?? []);
   const [scale, setScale] = useState<ProjectScaleItem[]>(
-    initial?.scale?.length ? initial.scale : DEFAULT_SCALE,
+    initial?.scale?.length ? thongSoChoForm(initial.scale) : DEFAULT_SCALE,
   );
   const [amenities, setAmenities] = useState<string[]>(initial?.amenities ?? []);
   const [amenityInput, setAmenityInput] = useState("");

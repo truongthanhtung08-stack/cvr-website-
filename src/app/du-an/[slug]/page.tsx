@@ -26,6 +26,7 @@ import { nhomLoai } from "@/components/TraCuuDuAn";
 import { getListings } from "@/lib/listingsDb";
 import { duAnThuocNhom, findCategory, projectCategories, type Category } from "@/lib/categories";
 import { normalizeVi, cungDuAn } from "@/lib/filters";
+import { xepThongSo } from "@/lib/thongSoDuAn";
 import { demTinTheoKhuVuc, khuVucList, moTaKhuVuc, slugKhuVuc, tieuDeKhuVuc, timKhuVuc } from "@/lib/khuVuc";
 import { catMoTa, tieuDeGoogle } from "@/lib/thang";
 
@@ -269,16 +270,16 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
     // Tình trạng ghi thành NHÃN TRÊN ẢNH đầu trang — bảng không lặp lại (chủ dự án 30/10/2026)
     ...(p.developmentUnit ? [{ label: "Đơn vị phát triển", value: p.developmentUnit }] : []),
     { label: "Loại hình", value: coLoaiHinh ? p.type : "Đang cập nhật" },
-    ...(showPrice ? [{ label: "Giá từ", value: sidePrice }] : []),
-    // bỏ dòng địa chỉ (đã có dưới tên dự án) và tình trạng (nhãn trên ảnh)
-    ...p.scale.filter((s) => !["Tình trạng", "Chủ đầu tư", "Loại hình", "Giá từ"].includes(s.label) && !laDiaChi(s.label)),
-  ].filter((s, i, ds) => ds.findIndex((x) => normalizeVi(x.label) === normalizeVi(s.label)) === i)
-    // THỨ TỰ CHỦ DỰ ÁN CHỐT (30/10/2026): Chủ đầu tư → Loại hình → Diện tích dự án → Quy mô dự án → Loại hình căn hộ → Số lượng căn hộ →
-    // các mục khác giữ thứ tự Admin
-    .map((s, i) => ({ s, i, h: [/chu dau tu/, /^loai hinh$/, /dien tich/, /quy mo/, /loai hinh can|loai can|^san pham$/,/so luong|so can/]
-      .findIndex((r) => r.test(normalizeVi(s.label).replace(/đ/g, "d").trim())) }))
-    .sort((a, b) => (a.h < 0 ? 99 : a.h) - (b.h < 0 ? 99 : b.h) || a.i - b.i)
-    .map((x) => x.s);
+    // THỨ TỰ CHỦ DỰ ÁN CHỐT: Chủ đầu tư → Loại hình → Diện tích dự án → Quy mô → Loại hình căn hộ → Số lượng căn hộ → các mục khác
+    // theo thứ tự Admin. Xếp bằng CÙNG HÀM với form Admin (xepThongSo) — Admin thấy sao, web hiện vậy (31/10/2026)
+    ...xepThongSo([
+      ...(p.developmentUnit ? [{ label: "Đơn vị phát triển", value: p.developmentUnit }] : []),
+      // Admin không ghi giá → không có dòng Giá từ (contentDb tự điền "Liên hệ" — không phải admin ghi)
+      ...(showPrice && p.priceFrom !== "Liên hệ" ? [{ label: "Giá từ", value: sidePrice }] : []),
+      // bỏ dòng địa chỉ (đã có dưới tên dự án) và tình trạng (nhãn trên ảnh)
+      ...p.scale.filter((s) => !["Tình trạng", "Chủ đầu tư", "Loại hình", "Giá từ"].includes(s.label) && !laDiaChi(s.label)),
+    ]),
+  ].filter((s, i, ds) => ds.findIndex((x) => normalizeVi(x.label) === normalizeVi(s.label)) === i);
 
   // Dự án tương tự — cùng cách trang dự án tra cứu (cùng tỉnh, cùng nhóm loại hình trước), lấy hết cho slide + Xem thêm
   const tuongTuNoiBat = duAnTuongTu(province, p.type, p.slug);

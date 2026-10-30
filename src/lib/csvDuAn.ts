@@ -8,6 +8,7 @@
 
 import { chuDauTuChuan, loiDiaDanh } from "@/lib/tenChuan";
 import { parseLatLng } from "@/lib/googleMaps";
+import { tenChuan } from "@/lib/thongSoDuAn";
 
 // Thứ tự cột = THỨ TỰ BẢNG TỔNG QUAN trang dự án (chủ dự án chốt 31/10/2026, thay thứ tự 22/10): tên · chủ đầu tư · loại hình ·
 // diện tích dự án · quy mô · loại hình căn hộ · số lượng căn hộ · rồi các mục khác. MỘT mẫu cho mọi nơi (Admin, Cowork, scripts).
@@ -83,7 +84,7 @@ export function docDuAnTuBang(rows: string[][]): DongDuAn[] {
     const quyMo = quyMoGoc.includes(":")
       ? quyMoGoc.split(";").map((x) => x.split(":"))
         .filter((p) => p.length >= 2 && p[0].trim() && p.slice(1).join(":").trim())
-        .map((p) => ({ label: p[0].trim(), value: p.slice(1).join(":").trim() }))
+        .map((p) => ({ label: tenChuan(p[0]), value: p.slice(1).join(":").trim() }))
       : quyMoGoc ? [{ label: "Quy mô", value: quyMoGoc }] : [];
     const them = (label: string, value: string) => (value ? [{ label, value }] : []);
     // Đúng thứ tự bảng Tổng quan, tên mục y như trang dự án hiện (31/10/2026)
