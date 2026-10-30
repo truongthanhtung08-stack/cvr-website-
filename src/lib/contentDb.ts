@@ -130,6 +130,8 @@ function projectRowToProject(r: ProjectRow): Project {
     slug: r.slug,
     name: r.name,
     location: location || "Đang cập nhật",
+    // Chỉ phường + tỉnh theo hệ MỚI (không số nhà, đường) — thẻ Dự án nổi bật ghi địa chỉ một kiểu (chủ dự án 30/10/2026)
+    ...(hai.moi ? { diaChiMoi: hai.moi } : {}),
     ...(locationCu ? { locationCu } : {}),
     priceFrom: r.price_from || "Liên hệ",
     type: r.type || "Dự án bất động sản",

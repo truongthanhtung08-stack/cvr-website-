@@ -75,7 +75,8 @@ export function dongTraCuu(tin: Listing[], duAn: Project[]): DongTraCuu[] {
         chuDauTu: p && p.developer !== "Đang cập nhật" ? p.developer : "",
         loaiHinh: p && p.type !== "Dự án bất động sản" ? p.type : "",
         tinhTrang: p?.status ?? "",
-        diaChi: p?.location ?? tin1?.location ?? d.tinh,
+        // Thẻ ghi địa chỉ một kiểu: phường + tỉnh hệ MỚI (như thẻ Dự án nổi bật, 30/10/2026); địa chỉ đầy đủ ở trang chi tiết
+        diaChi: p?.diaChiMoi ?? p?.location ?? tin1?.location ?? d.tinh,
         diaChiCu: p?.locationCu ?? tin1?.locationCu ?? "",
         tinh: d.tinh,
         anh: p?.photos?.[0] ?? "",

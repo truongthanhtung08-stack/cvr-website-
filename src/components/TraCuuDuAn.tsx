@@ -26,16 +26,17 @@ export function locTraCuu(ds: DongTraCuu[], q: string, tinh: string, loai: strin
 export function TheTraCuu({ d }: { d: DongTraCuu }) {
   return (
     // CÙNG KHUÔN thẻ dự án trên trang (viền, bóng, ảnh bo góc, khe 20px) để cân với Dự án nổi bật — chủ dự án 29/10/2026.
-    // Ảnh trái cả máy tính lẫn điện thoại (danh bạ nhiều dòng — gọn hơn ảnh trên); ảnh và tên dự án CĂN TRÊN cùng một mép
-    // (chữ dài trên điện thoại không làm ảnh trôi giữa thẻ).
+    // Ảnh trái cả máy tính lẫn điện thoại (danh bạ nhiều dòng — gọn hơn ảnh trên); ảnh và khối chữ cùng mép trên, cùng mép dưới.
     <Link
       href={`/du-an/${d.slug}`}
-      className="card-lux group flex items-start gap-3 rounded-none border border-cvr-line bg-white p-2.5 shadow-lux shadow-lux-hover hover:-translate-y-1 hover:border-cvr-blue/45 sm:gap-5 sm:p-3"
+      className="card-lux group flex items-stretch gap-3 rounded-none border border-cvr-line bg-white p-2.5 shadow-lux shadow-lux-hover hover:-translate-y-1 hover:border-cvr-blue/45 sm:gap-5 sm:p-3"
     >
       {/* Ảnh dự án — chưa có ảnh: khung xám + biểu tượng Coastal Land (không lấy ảnh chung chung thay) */}
-      <span className="relative aspect-[4/3] w-28 shrink-0 overflow-hidden rounded-lg bg-cvr-surface sm:w-48 sm:rounded-xl md:w-56">
+      {/* ẢNH TỰ GIÃN THEO CHỮ (chủ dự án 30/10/2026): cao đúng bằng khối chữ (self-stretch), tối thiểu 96 / 120 px để ảnh
+          không dẹt — chữ dài (địa chỉ cũ, tên 2 dòng, điện thoại) thì ảnh cao theo, không hở trên dưới */}
+      <span className="relative min-h-24 w-32 shrink-0 self-stretch overflow-hidden rounded-lg bg-cvr-surface sm:min-h-30 sm:w-40 sm:rounded-xl">
         {d.anh ? (
-          <Image src={d.anh} alt={d.ten} fill sizes="(max-width:640px) 112px, 224px" className="object-cover transition-transform duration-[700ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.06]" />
+          <Image src={d.anh} alt={d.ten} fill sizes="(max-width:640px) 128px, 160px" className="object-cover transition-transform duration-[700ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.06]" />
         ) : (
           // eslint-disable-next-line @next/next/no-img-element
           <img src="/logo/symbol-dark.svg" alt="" className="absolute inset-0 m-auto h-8 w-8 opacity-25 sm:h-12 sm:w-12" />

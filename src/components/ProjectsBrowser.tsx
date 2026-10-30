@@ -359,7 +359,7 @@ export default function ProjectsBrowser({
         </h3>
         <p className="mt-1 flex items-start gap-1 text-xs text-cvr-muted">
           <svg className="mt-px h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-          <span className="min-w-0">{p.location}</span>
+          <span className="min-w-0">{p.diaChiMoi ?? p.location}</span>
         </p>
         <p className="mb-3 mt-1 text-xs text-cvr-body">Loại hình: {p.type}</p>
         <div className="mt-auto flex items-end justify-between gap-3 border-t border-cvr-line pt-2.5">

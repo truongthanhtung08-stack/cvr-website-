@@ -294,6 +294,8 @@ export type Project = {
   location: string;
   /** Cùng chỗ đó gọi theo hệ CŨ — dòng dưới, nhãn "Địa chỉ cũ". */
   locationCu?: string;
+  /** Chỉ phường + tỉnh/thành theo hệ MỚI (không số nhà, đường) — thẻ Dự án nổi bật */
+  diaChiMoi?: string;
   priceFrom: string;
   type: string;
   status: string;
