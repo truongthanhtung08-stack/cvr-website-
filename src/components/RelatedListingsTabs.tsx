@@ -14,9 +14,13 @@ const SECTION_KEY = "tin-du-an";
 // (Trước đây dùng ListingList: ảnh chỉ 160px và mất hết phân cấp VIP.)
 // the: đặt GIỮA trang dự án (sau Tổng quan — 22/10/2026) → khung xám, tiêu đề cùng cỡ các mục khác của trang.
 // tenDuAn: tiêu đề danh sách khi bấm "Xem thêm" mang TÊN dự án (chủ dự án 22/10/2026 — không để "Tin … tại dự án" trơn).
-export default function RelatedListingsTabs({ ban, thue, title, the = false, tenDuAn }: { ban: Listing[]; thue: Listing[]; title?: string; the?: boolean; tenDuAn?: string }) {
-  const hasBan = ban.length > 0;
-  const hasThue = thue.length > 0;
+// CHỊU NHIỀU TIN (chủ dự án 31/10/2026: "dự án có rất nhiều tin thì sao"): trang chỉ gửi 8 tin mỗi nhóm cho slide + MÃ mọi tin
+// (idsBan / idsThue); "Xem thêm" danh sách tự nạp từng trang 10 tin từ máy chủ (/api/danh-sach — cùng đường "Tin tương tự").
+export default function RelatedListingsTabs({ ban, thue, idsBan, idsThue, title, the = false, tenDuAn }: { ban: Listing[]; thue: Listing[]; idsBan?: string[]; idsThue?: string[]; title?: string; the?: boolean; tenDuAn?: string }) {
+  const soBan = idsBan?.length ?? ban.length;
+  const soThue = idsThue?.length ?? thue.length;
+  const hasBan = soBan > 0;
+  const hasThue = soThue > 0;
   const [tab, setTab] = useState<"ban" | "thue">(hasBan ? "ban" : "thue");
   // Bấm "Xem thêm" → danh sách xổ ra có tiêu đề riêng: ẩn tiêu đề + tab ở đây
   // để không lặp chữ và không chừa khoảng trống trên đầu.
@@ -41,7 +45,7 @@ export default function RelatedListingsTabs({ ban, thue, title, the = false, ten
             onClick={() => setTab("ban")}
             className={`rounded-md px-4 py-1.5 text-sm font-medium transition ${tab === "ban" ? "bg-cvr-ink text-white" : "text-cvr-body hover:text-cvr-ink"}`}
           >
-            Mua bán ({ban.length})
+            Mua bán ({soBan})
           </button>
         )}
         {hasThue && (
@@ -50,7 +54,7 @@ export default function RelatedListingsTabs({ ban, thue, title, the = false, ten
             onClick={() => setTab("thue")}
             className={`rounded-md px-4 py-1.5 text-sm font-medium transition ${tab === "thue" ? "bg-cvr-ink text-white" : "text-cvr-body hover:text-cvr-ink"}`}
           >
-            Cho thuê ({thue.length})
+            Cho thuê ({soThue})
           </button>
         )}
       </div>
@@ -58,6 +62,7 @@ export default function RelatedListingsTabs({ ban, thue, title, the = false, ten
         /* Slide mặc định · "Xem thêm" → đổ ra list phân trang */
         <ListingShowcase
           items={items}
+          {...((tab === "ban" ? idsBan : idsThue) ? { idsDayDu: tab === "ban" ? idsBan : idsThue } : {})}
           sectionKey={SECTION_KEY}
           purpose={tab}
           relevance
