@@ -33,6 +33,9 @@
 // từ chối cả tin, mà hỏng lặng lẽ — khách không nhận được gì.
 // ════════════════════════════════════════════════════════════════════════════
 
+import { createAdminClient } from "@/lib/supabase/admin";
+import { laChuThat } from "@/lib/billing";
+
 const ZNS_URL = "https://business.openapi.zalo.me/message/template";
 
 /** Mã mẫu ZNS mặc định — xem bảng ở đầu file. Biến môi trường được ưu tiên hơn. */
@@ -64,6 +67,8 @@ export type KetQuaKenh = {
   kenh: "email" | "zalo";
   daGui: boolean;
   lyDo?: string;
+  /** Tài khoản đăng hộ, khách chưa tự vào đăng nhập → cố ý không nhắn (không phải lỗi, không báo admin). */
+  dangHo?: boolean;
 };
 
 export type NoiDungThongBao = {
@@ -99,6 +104,14 @@ export function soDienThoaiZalo(phone: string | null | undefined): string | null
  * Mã OTP không đi qua hàm này. Không bao giờ ném lỗi.
  */
 export async function guiThongBao(t: NoiDungThongBao): Promise<KetQuaKenh[]> {
+  // ⛔⛔ TIN ĐĂNG HỘ = CẤM MỌI TIN NHẮN TỰ ĐỘNG (chủ dự án 31/10/2026): tin admin đăng hộ đứng tên tài khoản đăng hộ
+  // (tao_ho) — khách CHƯA tự vào đăng nhập → máy KHÔNG nhắn gì (Zalo lẫn email), không báo lỗi; chủ dự án tự nhắn
+  // hàng loạt qua ZBS. KHÁCH TỰ VÀO ĐĂNG NHẬP (vao_chinh_thuc_luc có giá trị) thì mới áp dụng nhắn tự động.
+  // Mã OTP không đi qua hàm này nên không bị chặn.
+  if (await laDangHoChuaVao(t.email, t.phone)) {
+    const lyDo = "tài khoản đăng hộ, khách chưa tự vào đăng nhập — không nhắn";
+    return [{ kenh: "email", daGui: false, lyDo, dangHo: true }, { kenh: "zalo", daGui: false, lyDo, dangHo: true }];
+  }
   const emailThat = t.email && !/@users\.coastalland\.vn$/i.test(t.email) ? t.email : null;
   const quaEmail = await guiEmail({ ...t, email: emailThat });
   const ketQua = quaEmail.daGui
@@ -108,6 +121,15 @@ export async function guiThongBao(t: NoiDungThongBao): Promise<KetQuaKenh[]> {
     if (!k.daGui && k.lyDo && !quaEmail.daGui) console.warn(`[thong-bao] ${k.kenh}: ${k.lyDo}`);
   }
   return ketQua;
+}
+
+// Một lượt đọc profiles mỗi thông báo (vài chục lượt/ngày — trong hạn mức Supabase Pro). Không đọc được → coi như khách thường.
+async function laDangHoChuaVao(email?: string | null, phone?: string | null): Promise<boolean> {
+  const db = createAdminClient();
+  if (!db || (!email && !phone)) return false;
+  const q = db.from("profiles").select("tao_ho,vao_chinh_thuc_luc").limit(1);
+  const { data } = await (email ? q.eq("email", email) : q.eq("phone", phone as string));
+  return Boolean(data?.[0]) && !laChuThat(data?.[0]);
 }
 
 // ── EMAIL (Resend) ──────────────────────────────────────────────────────────
