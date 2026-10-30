@@ -69,14 +69,10 @@ export function docDuAnTuBang(rows: string[][]): DongDuAn[] {
     if (!v("tinh")) loi.push("thiếu tỉnh/thành");
     else { const l = loiDiaDanh(v("tinh"), v("phuong_xa") || undefined); if (l) loi.push(l); }
     if (!v("nguon")) loi.push("thiếu nguồn thông tin");
-    // Trường cơ bản của một dự án ở Tra cứu dự án (chủ dự án 29/10/2026): tên · chủ đầu tư · địa chỉ · loại hình · ≥ 1 ảnh
-    if (!v("chu_dau_tu")) loi.push("thiếu chủ đầu tư");
-    if (!v("loai_hinh")) loi.push("thiếu loại hình");
-    if (!v("anh").split("|").some((x) => /^https?:\/\//.test(x.trim()))) loi.push("thiếu ảnh (ít nhất 1 ảnh)");
+    // Trường bắt buộc của thẻ dự án (trạng thái · tên · địa chỉ · loại hình · chủ đầu tư · ảnh) LUÔN HIỆN; hồ sơ chưa có dữ liệu
+    // trường nào thì vẫn nạp, thẻ và trang dự án ghi "Đang cập nhật" (chủ dự án 30/10/2026). Không để máy tự gán trạng thái.
     const trangThai = v("trang_thai");
-    // Bắt buộc: trang dự án mặc định ghi "Đang mở bán" khi trống — không để máy tự gán trạng thái
-    if (!trangThai) loi.push("thiếu trạng thái");
-    else if (!TRANG_THAI_HOP_LE.includes(trangThai)) loi.push(`trạng thái "${trangThai}" không hợp lệ`);
+    if (trangThai && !TRANG_THAI_HOP_LE.includes(trangThai)) loi.push(`trạng thái "${trangThai}" không hợp lệ`);
     const quyMo = v("quy_mo")
       .split(";")
       .map((x) => x.split(":"))
@@ -101,7 +97,7 @@ export function docDuAnTuBang(rows: string[][]): DongDuAn[] {
           // ghi cách nhau bằng dấu chấm phẩy → lưu "Đất nền, Nhà phố, Shophouse"; trang lọc theo loại hình
           // khớp từng loại (projectsInCategory so "chứa"), nên dự án hiện ở mọi loại hình nó có.
           type: v("loai_hinh").split(/[;|]/).map((x) => x.trim()).filter(Boolean).join(", ") || null,
-          status_text: trangThai,
+          status_text: trangThai, // cột không nhận null — chưa có trạng thái thì chuỗi trống, web ghi "Đang cập nhật"
           developer: v("chu_dau_tu") ? chuDauTuChuan(v("chu_dau_tu")) : null,
           province: v("tinh"),
           ward: v("phuong_xa") || null,
