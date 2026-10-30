@@ -51,10 +51,10 @@ export function TheDuAnDoc({ d }: { d: DongTraCuu }) {
       {/* CHỮ DƯỚI ẢNH ĐỒNG NHẤT THẺ TIN (PropertyCard, chủ dự án 31/10/2026): tên 15 px đậm dòng 1,5 · các dòng 13 px biểu tượng +
           nội dung · dòng cuối gạch trên như dòng người đăng. Trường bắt buộc luôn hiện, thiếu ghi "<trường> đang cập nhật" */}
       <span className="min-w-0 px-3 pt-3 text-[15px] font-bold leading-[1.5] text-cvr-ink transition-colors group-hover:text-cvr-blue-ink">{d.ten}</span>
-      {/* Địa chỉ = ĐÚNG dòng địa chỉ thẻ tin: địa chỉ MỚI (phường + tỉnh), ghim, 13 px, một dòng (chủ dự án 31/10/2026) */}
-      <span className="flex min-w-0 items-center gap-1 px-3 pt-1.5 text-[13px] text-cvr-muted">
-        <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-        <span className="line-clamp-1 min-w-0">{d.diaChi.replace(/^.*?(?=(Phường|Xã|Đặc khu) )/, "")}</span>
+      {/* Địa chỉ ĐẦY ĐỦ hệ mới, không cắt — dài thì xuống dòng (chủ dự án 31/10/2026); ghim + 13 px như dòng địa chỉ thẻ tin */}
+      <span className="flex min-w-0 items-start gap-1 px-3 pt-1.5 text-[13px] text-cvr-muted">
+        <svg className="mt-[3px] h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+        <span className="min-w-0">{d.diaChi}</span>
       </span>
       {/* GỌN, CÓ LOGIC (chủ dự án 31/10/2026): loại hình + tình trạng chung một dòng ("Căn hộ cao cấp · Đang mở bán"); thẻ VIP đã có
           tình trạng ở nhãn trên ảnh → dòng chỉ ghi loại hình. Không còn dòng trống; chữ dài tự xuống dòng, thẻ giãn đều cả dải */}
