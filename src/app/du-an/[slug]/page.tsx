@@ -201,7 +201,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   const [hoSo, listings, tatCaDuAn] = await Promise.all([getProject(slug), getListings(), getProjects()]);
   // Trang dự án TRA CỨU: "Dự án tương tự" (30/10/2026) — theo KHU VỰC + LOẠI HÌNH: cùng tỉnh bắt buộc, cùng nhóm loại hình đứng trước,
   // rồi dự án có nhiều tin hơn; lấy hết (slide 8 + Xem thêm ra danh sách), trong danh bạ Tra cứu
-  const duAnTuongTu = (tinh: string, loai: string, bo: string) => {
+  const duAnTuongTu = (tinh: string, loai: string, cdt: string, bo: string) => {
     const nhom = nhomLoai(loai);
     // Trong mỗi nhóm: dự án nổi bật theo cấp VIP trước, dự án tra cứu theo tên A, B, C sau (chủ dự án 31/10/2026)
     // Cùng bậc với sortProjectsByTier (ProjectSlider — tệp client, máy chủ không gọi được): Kim cương → Vàng → Bạc → thường
@@ -210,8 +210,9 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
     const hang = (s: string) => noiBat.get(s) ?? 9;
     return dongTraCuu(listings, tatCaDuAn)
       .filter((x) => x.tinh === tinh && !cungDuAn(x.slug, bo))
-      .map((x, i) => ({ x, i, khop: nhom && nhomLoai(x.loaiHinh) === nhom ? 0 : 1, vip: hang(x.slug) }))
-      .sort((a, b) => a.khop - b.khop || a.vip - b.vip || a.i - b.i)
+      // TƯƠNG TỰ THEO (chủ dự án 31/10/2026): khu vực (cùng tỉnh, bắt buộc) → loại hình → chủ đầu tư
+      .map((x, i) => ({ x, i, khop: nhom && nhomLoai(x.loaiHinh) === nhom ? 0 : 1, cungCdt: cdt && normalizeVi(x.chuDauTu) === normalizeVi(cdt) ? 0 : 1, vip: hang(x.slug) }))
+      .sort((a, b) => a.khop - b.khop || a.cungCdt - b.cungCdt || a.vip - b.vip || a.i - b.i)
       .map((e) => e.x);
   };
   // MỘT KHUÔN cho mọi dự án (chủ dự án 30/10/2026): dự án nổi bật giữ nguyên trang đã dựng; dự án TRA CỨU (hồ sơ dạng thẻ, hoặc
@@ -287,7 +288,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   ].filter((s, i, ds) => ds.findIndex((x) => normalizeVi(x.label) === normalizeVi(s.label)) === i);
 
   // Dự án tương tự — cùng cách trang dự án tra cứu (cùng tỉnh, cùng nhóm loại hình trước), lấy hết cho slide + Xem thêm
-  const tuongTuNoiBat = duAnTuongTu(province, p.type, p.slug);
+  const tuongTuNoiBat = duAnTuongTu(province, p.type, p.developer, p.slug);
 
   // Tin của CHÍNH dự án này — gán trong admin qua trường "Thuộc dự án" (details.project).
   // Dự án không có tin nào → để TRỐNG, tuyệt đối KHÔNG độn tin của dự án khác vào.
