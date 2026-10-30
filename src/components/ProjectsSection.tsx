@@ -93,15 +93,18 @@ export default function ProjectsSection({ projects, articles = [] }: { projects:
                   <h3 title={p.name} className="truncate font-semibold leading-[1.5] text-cvr-ink">{p.name}</h3>
                   <p className="mt-1 flex min-w-0 items-center gap-1 text-[13px] text-cvr-muted">
                     <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                    <span className="truncate">{giaTriThat(p.location) || "Đang cập nhật"}</span>
+                    {/* Rút gọn còn phường + tỉnh (chủ dự án 31/10/2026) — địa chỉ đầy đủ ở trang chi tiết */}
+                    <span className="truncate">{giaTriThat(p.location).split(",").map((t) => t.trim()).filter(Boolean).slice(-2).join(", ") || "Đang cập nhật"}</span>
                   </p>
                   {/* THẺ DỰ ÁN MỘT CHUẨN (chủ dự án 30–31/10/2026, như thẻ /du-an và Dự án tương tự): chỉ dòng Vị trí có biểu tượng; dòng khác nhãn đậm;
 
                       tiến độ: VIP ở nhãn trên ảnh, thẻ thường một dòng; dòng cuối Chủ đầu tư + giá; trống ghi "Đang cập nhật" */}
 
-                  <p title={giaTriThat(p.type) || undefined} className="mt-1 truncate text-[13px] text-cvr-body"><span className="font-semibold text-cvr-ink">Loại hình:</span> <span className={giaTriThat(p.type) ? "" : "text-cvr-faint"}>{loaiHinhThe(p.type) || "Đang cập nhật"}</span></p>
+                  <p title={giaTriThat(p.type) || undefined} className="mt-1 truncate text-[13px] text-cvr-body"><span className="font-semibold text-cvr-ink">Loại hình:</span> <span className={giaTriThat(p.type) ? "" : "text-cvr-faint"}>{/* Trang chủ: luôn lấy loại hình CHÍNH (vế đầu trước , ; : ( · /) thay vì cắt ngang "…" — chủ dự án 31/10/2026 */}
+                    {giaTriThat(p.type).split(/[,;:(/]/)[0].trim().replace(/\s+g\S{1,2}m$/i, "") || "Đang cập nhật"}</span></p>
 
-                  {!capVip(p.tier) && <p className="mt-1 truncate text-[13px] text-cvr-body"><span className="font-semibold text-cvr-ink">Tiến độ:</span> <span className={giaTriThat(p.status) ? "" : "text-cvr-faint"}>{giaTriThat(p.status) || "Đang cập nhật"}</span></p>}
+                  {/* Trang chủ: MỌI thẻ có dòng Tiến độ (cả dự án VIP đã có nhãn trên ảnh) — đủ dòng như nhau (chủ dự án 31/10/2026) */}
+                  {<p className="mt-1 truncate text-[13px] text-cvr-body"><span className="font-semibold text-cvr-ink">Tiến độ:</span> <span className={giaTriThat(p.status) ? "" : "text-cvr-faint"}>{giaTriThat(p.status) || "Đang cập nhật"}</span></p>}
 
                   <span className="block h-3 shrink-0" aria-hidden />
                   <div className="mt-auto flex items-center justify-between gap-3 border-t border-cvr-line pt-3">
