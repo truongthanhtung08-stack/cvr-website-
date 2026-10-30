@@ -187,7 +187,7 @@ export const categorySpecs: CategorySpec[] = [
       // LOẠI CON — MỘT Ô CHUNG cho Căn hộ và Chung cư (khoá loaiCanho, cột loai_can_ho, lịch sử giá so theo ô này), mỗi loại một
       // danh sách: căn hộ cao cấp hơn chung cư (chủ dự án duyệt 29/10/2026). Trước đây Chung cư không có ô này → loại con Cowork
       // ghi cho tin chung cư bị bỏ khi nạp.
-      { key: "loaiCanho", label: "Loại chung cư", type: "select", options: ["Chung cư thương mại", "Căn hộ tập thể", "Nhà ở xã hội"] },
+      { key: "loaiCanho", label: "Loại chung cư", type: "select", options: ["Chung cư thương mại", "Chung cư mini", "Căn hộ tập thể", "Nhà ở xã hội"] },
       { key: "floor", label: "Tầng số (căn)", type: "text", placeholder: "VD: Tầng 18", main: true },
       { key: "block", label: "Block / Toà / Tháp", type: "text", placeholder: "VD: Block A" },
       { key: "buildingFloors", label: "Tổng số tầng toà", type: "text", placeholder: "VD: 30 tầng" },

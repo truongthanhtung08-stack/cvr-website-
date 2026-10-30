@@ -35,7 +35,7 @@ export const saleCategories: Category[] = [
     slug: "can-ho-chung-cu", label: "Căn hộ chung cư",
     h1: "Bán căn hộ chung cư", title: `Bán căn hộ chung cư`,
     desc: `Mua bán căn hộ chung cư — giá thật, hình thật, lọc theo khu vực, diện tích và mức giá.`,
-    types: ["Căn hộ", "Chung cư"],
+    types: ["Căn hộ", "Chung cư", "Căn hộ dịch vụ"],
   },
   {
     slug: "nha-rieng", label: "Nhà riêng",
