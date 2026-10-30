@@ -435,7 +435,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               {p.amenities.length > 0 && (
                 <Section id="tien-ich" title="Tiện ích dự án">
                   {/* Danh sách dài → 6 mục đầu + "Xem thêm" (gọn, 22/10/2026) */}
-                  <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+                  {/* 2 cột thẳng hàng với bảng Tổng quan (gap-x-10) — 3 cột chữ dài lổn nhổn (chủ dự án 31/10/2026: cân đo toàn trang) */}
+                  <div className="grid grid-cols-1 gap-x-10 gap-y-2.5 sm:grid-cols-2">
                     {p.amenities.map((a) => (
                       <span key={a} className="flex items-start gap-2.5 py-1.5 text-[15px] leading-snug text-cvr-body">
                         <svg className="mt-0.5 h-4 w-4 shrink-0 text-cvr-blue" fill="none" stroke="currentColor" strokeWidth={2.4} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
