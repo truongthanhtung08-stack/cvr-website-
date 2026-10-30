@@ -99,7 +99,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   }
   // Giá chỉ lên tiêu đề / mô tả khi admin cho hiện giá — ẩn giá thì không lộ, không ghi "Giá từ Liên hệ" (31/10/2026)
   const gia = p.priceMode === "show" && p.priceFrom && p.priceFrom !== "Liên hệ" ? p.priceFrom : "";
-  const desc = `Dự án ${p.name} tại ${p.location}. ${[p.type, p.status].filter(Boolean).join(", ")}.${gia ? ` Giá từ ${gia} — tiến độ` : " Tiến độ"}, mặt bằng, tiện ích đầy đủ tại Coastal Land.`;
+  // Trường bắt buộc từ MỘT nguồn (truongDuAn.ts): chữ thay thế "Đang cập nhật"/"Dự án bất động sản" không lên mô tả Google (31/10/2026)
+  const desc = `Dự án ${p.name} tại ${giaTriThat(p.location)}. ${[giaTriThat(p.type), giaTriThat(p.status)].filter(Boolean).join(", ")}.${gia ? ` Giá từ ${gia} — tiến độ` : " Tiến độ"}, mặt bằng, tiện ích đầy đủ tại Coastal Land.`;
   const tieuDe = gia ? `${p.name} — ${gia}` : p.name;
   return {
     title: tieuDeGoogle(tieuDe),
@@ -249,8 +250,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   // ĐỊA CHỈ ĐẦY ĐỦ: hồ sơ ghi địa chỉ chi tiết ở dòng "Địa chỉ" của bảng thông số (vd "Giao lộ Nguyễn Đình Thi với 29/3, phường Hòa Xuân,
   // Đà Nẵng") mà ô số nhà/đường trống → dùng dòng đó: hiện dưới tên dự án + định vị bản đồ đúng chỗ (chủ dự án 30/10/2026)
   const diaChiHoSo = p.scale.find((s) => laDiaChi(s.label))?.value?.trim();
-  const diaChiDu = diaChiHoSo && diaChiHoSo.length > p.location.length ? diaChiHoSo : p.location;
-  const mapQuery = p.mapPin ?? `${diaChiDu}, Việt Nam`;
+  const diaChiDu = diaChiHoSo && diaChiHoSo.length > giaTriThat(p.location).length ? diaChiHoSo : giaTriThat(p.location) || "Đang cập nhật";
+  const mapQuery = p.mapPin ?? `${giaTriThat(diaChiDu) || province}, Việt Nam`;
 
   const floorPlans = p.floorPlans ?? [];
   const priceTable = p.priceTable ?? [];
@@ -334,10 +335,10 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
     "@id": `${SITE}/du-an/${p.slug}#du-an`,
     name: p.name,
     url: `${SITE}/du-an/${p.slug}`,
-    description: chuThuan(p.overview?.[0]) || `Dự án ${p.name} tại ${p.location}. Loại hình ${p.type}, tình trạng ${p.status}.`,
+    description: chuThuan(p.overview?.[0]) || `Dự án ${p.name} tại ${giaTriThat(p.location)}.`,
     ...(coAnh ? { image: p.photos!.map((x) => (x.startsWith("http") ? x : `${SITE}${x}`)) } : {}),
-    address: { "@type": "PostalAddress", streetAddress: p.location, addressCountry: "VN" },
-    ...(p.developer ? { developer: { "@type": "Organization", name: p.developer } } : {}),
+    address: { "@type": "PostalAddress", streetAddress: giaTriThat(p.location), addressCountry: "VN" },
+    ...(giaTriThat(p.developer) ? { developer: { "@type": "Organization", name: giaTriThat(p.developer) } } : {}),
     ...(p.amenities?.length ? { amenityFeature: p.amenities.slice(0, 12).map((a) => ({ "@type": "LocationFeatureSpecification", name: a })) } : {}),
     // Giá "từ …" chỉ khai khi dự án cho hiện giá (admin đặt priceMode)
     ...(giaTu ? { makesOffer: { "@type": "Offer", priceCurrency: "VND", description: giaTu, availability: "https://schema.org/InStock" } } : {}),

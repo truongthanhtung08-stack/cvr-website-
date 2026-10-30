@@ -742,7 +742,7 @@ export default function ProjectsBrowser({
                   className="flex flex-col rounded-lg px-2.5 py-2.5 active:bg-cvr-surface"
                 >
                   <span className="text-sm font-medium text-cvr-ink">{p.name}</span>
-                  <span className="text-[12px] text-cvr-faint">{p.location}</span>
+                  <span className="text-[12px] text-cvr-faint">{giaTriThat(p.location)}</span>
                 </Link>
               ))
             )}
@@ -817,7 +817,7 @@ export default function ProjectsBrowser({
                   q: p.location,
                   nhan: p.name,
                   title: p.name,
-                  phu: `${p.priceFrom} · ${p.status}`,
+                  phu: [p.priceFrom, giaTriThat(p.status)].filter(Boolean).join(" · "),
                   loc: p.location,
                   image: p.image,
                   href: `/du-an/${p.slug}`,
