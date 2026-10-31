@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import PhotoViewer from "@/components/PhotoViewer";
+import { anhNho } from "@/lib/asset";
 
 type FloorPlan = { label: string; image: string; note: string };
 
@@ -25,7 +26,9 @@ export default function FloorPlans({ items }: { items: FloorPlan[] }) {
           <figure key={i} className={`overflow-hidden rounded-xl border border-cvr-line bg-white ${nhieu ? "w-[85%] shrink-0 snap-start sm:w-[calc(50%-8px)]" : ""}`}>
             <button type="button" onClick={() => setOpen(i)} className="group relative block aspect-[4/3] w-full overflow-hidden bg-cvr-surface">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={f.image} alt={f.label || `Mặt bằng ${i + 1}`} loading="lazy" className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-105" />
+              {/* Ảnh khung = bản NHỎ 1280 px (khung ≤ 600 px); bấm "Phóng to" vẫn xem ảnh gốc. Ảnh gốc mặt bằng 350–380 KB/tấm: trên
+                  mạng chậm Chrome tải sớm cả ảnh lazy trong ~2500 px dưới màn hình → tranh đường truyền ảnh đầu trang (31/10/2026) */}
+              <img src={anhNho(f.image)} alt={f.label || `Mặt bằng ${i + 1}`} loading="lazy" className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-105" />
               <span className="absolute right-2 top-2 flex items-center gap-1 rounded-md bg-black/55 px-2 py-1 text-[11px] font-medium text-white">
                 <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M11 8v6m-3-3h6m4 0a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                 Phóng to
