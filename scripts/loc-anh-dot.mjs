@@ -80,7 +80,7 @@ for (const [ma, ds] of Object.entries(nhom)) {
     for (const t of ly.keys()) fs.renameSync(path.join(dirAnh, t), path.join(boDir, t));
     // Đánh số lại liền nhau: đổi qua tên tạm trước để không đè nhau
     giu.forEach((a, i) => fs.renameSync(path.join(dirAnh, a.ten), path.join(dirAnh, `__tam__${i}${a.duoi}`)));
-    // Số ảnh luôn 2 chữ số (-01 = ảnh đại diện) — đúng bộ mẫu SEO\Chuẩn tin hàng loạt (chủ dự án chốt 25/10/2026)
+    // Số ảnh luôn 2 chữ số (-01 = ảnh đại diện) — đúng bộ mẫu SEO\MAU\dot-tin-mau-24-10 (chủ dự án chốt 25/10/2026)
     giu.forEach((a, i) => fs.renameSync(path.join(dirAnh, `__tam__${i}${a.duoi}`), path.join(dirAnh, `${ma}-${String(i + 1).padStart(2, "0")}${a.duoi}`)));
   }
 }

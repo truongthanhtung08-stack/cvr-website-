@@ -29,6 +29,7 @@ import {
   hasActiveFilters,
   type Filters,
   type LocationSel,
+  tenLoaiHinh,
 } from "@/lib/filters";
 import { suggest, type Suggestion } from "@/lib/suggest";
 import { goiYNoiLong, parseQuery, suaChinhTa } from "@/lib/smartSearch";
@@ -383,7 +384,7 @@ export default function FilterBar({
     f.locations.length === 1 ? locationLabel(f.locations[0]) :
     `${locationLabel(f.locations[0])} +${f.locations.length - 1}`;
   const typeLabel =
-    f.types.length === 0 ? "" : f.types.length === 1 ? f.types[0] : `${f.types.length} loại hình`;
+    f.types.length === 0 ? "" : f.types.length === 1 ? tenLoaiHinh(f.types[0]) : `${f.types.length} loại hình`;
   // Lọc thêm ĐẶC THÙ theo ý định: mua bán = Hướng + Pháp lý · cho thuê = Nội thất.
   // + 2 công tắc Tin xác thực / Môi giới chuyên nghiệp (đã gộp vào drawer "Lọc thêm").
   const moreCount =
@@ -435,7 +436,7 @@ export default function FilterBar({
                           onChange={() => doiLoai(t, checked)}
                           className="h-4 w-4 shrink-0 accent-cvr-blue"
                         />
-                        <span className="truncate">{t}</span>
+                        <span className="truncate">{tenLoaiHinh(t)}</span>
                       </label>
                     );
                   })}

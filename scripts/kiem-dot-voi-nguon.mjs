@@ -22,6 +22,7 @@ if (!thuMuc || !fs.existsSync(thuMuc)) { console.error('Thiếu thư mục đợ
 const jiti = createJiti(import.meta.url, { alias: { "@": ROOT + "/src" }, jsx: { runtime: "automatic" } });
 const { docTinTuBang } = await jiti.import(ROOT + "/src/lib/csvTin.ts");
 const { docXlsx } = await jiti.import(ROOT + "/src/lib/docXlsx.ts");
+const { loaiConTheoLoiKhach } = await jiti.import(ROOT + "/src/lib/listingSpec.ts");
 const tepBang = fs.readdirSync(thuMuc).find((f) => /^Bang-.*\.xlsx$/i.test(f));
 if (!tepBang) { console.error("Không thấy Bang-*.xlsx"); process.exit(1); }
 const kq = docTinTuBang(await docXlsx(new Uint8Array(fs.readFileSync(path.join(thuMuc, tepBang))).buffer));
@@ -43,13 +44,13 @@ function docNguon(u) {
       const info = j.props?.pageProps?.initialState?.adView?.adInfo;
       if (!info?.ad?.subject) return { ok: true, conHan: false, ly: "tin gốc không còn tồn tại" };
       const tt = Object.fromEntries(Object.values(info.ad_params || {}).map((x) => [x.label, x.value]));
-      return { ok: true, conHan: !info.ad.status || info.ad.status === "active", ly: info.ad.status, tt, gia: info.ad.price_string };
+      return { ok: true, conHan: !info.ad.status || info.ad.status === "active", ly: info.ad.status, tt, gia: info.ad.price_string, loiKhach: `${info.ad.subject} ${info.ad.body ?? ""}` };
     }
     if (/muaban/.test(u)) {
       const ad = tim(JSON.parse(h.match(RE_ND)[1]));
       if (!ad) return { ok: true, conHan: false, ly: "tin gốc không còn tồn tại" };
       const tt = Object.fromEntries((ad.parameters || []).map((x) => [x.label || x.name, String(x.value)]));
-      return { ok: true, conHan: !(ad.is_expired || ad.is_outdate), ly: ad.is_expired ? "hết hạn" : "", tt, gia: ad.price_display };
+      return { ok: true, conHan: !(ad.is_expired || ad.is_outdate), ly: ad.is_expired ? "hết hạn" : "", tt, gia: ad.price_display, loiKhach: `${ad.title} ${ad.body ?? ""}` };
     }
     // homedy / bds123: chỉ đọc được ngày hết hạn trong trang
     const het = (h.replace(/<[^>]+>/g, " ").match(/Ngày hết hạn\s+(?:[^0-9]{0,12})?(\d{2})\/(\d{2})\/(\d{4})/) || []);
@@ -84,6 +85,12 @@ for (const r of kq.rows) {
     chk("dài", sp.depth, so(t["Chiều dài"]), (a, b) => so(a) == b);
     chk("nội thất", d.furnish, t["Tình trạng nội thất"], (a, b) => kd(a) === kd(b));
     chk("diện tích sàn", p.built_area_m2, so(t["Diện tích sử dụng"]), (a, b) => a == b);
+  }
+  // LỜI KHÁCH THẮNG Ô THÔNG SỐ TRANG NGUỒN (chủ dự án 29/10/2026) — cùng luật với bước nạp (listingSpec.loaiConTheoLoiKhach):
+  // khách viết trong tin gốc (tiêu đề, mô tả) là loại khác ô đang ghi → sửa theo lời khách.
+  if (ng.loiKhach) for (const k of ["landType", "loaiCanho"]) {
+    const dung = sp[k] && loaiConTheoLoiKhach(k, sp[k], ng.loiKhach);
+    if (dung) lech.push(`loại con: bảng=${sp[k]} · lời khách ở tin gốc → ${dung} (theo LỜI KHÁCH, không theo ô trang nguồn)`);
   }
   if (lech.length) soLech++;
   console.log(`${r.maAnh} · ${p.type} · ${lech.length ? lech.join(" ; ") : "khớp"}`);

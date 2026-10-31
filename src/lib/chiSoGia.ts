@@ -1,6 +1,6 @@
 import type { Listing } from "@/lib/data";
 import { chuanTen, provinceNamesNew, wardsOfNew } from "@/lib/locations";
-import { mauSoCuaLoaiHinh, coDonGiaM2, dungODienTichXayDung, dienTichSanThat, laTinThue, TEN_MAU_SO, TEN_VI_TRI, docViTri, type MauSo, type ViTriGia } from "@/lib/listingSpec";
+import { mauSoCuaLoaiHinh, coDonGiaM2, dungODienTichXayDung, dienTichSanThat, laTinThue, TEN_MAU_SO, TEN_VI_TRI, docViTri, chuanLoaiCon, type MauSo, type ViTriGia } from "@/lib/listingSpec";
 export { mauSoCuaLoaiHinh, TEN_MAU_SO, TEN_VI_TRI };
 export type { MauSo, ViTriGia };
 import { tachBangCsv } from "@/lib/xuatCsv";
@@ -201,6 +201,8 @@ export type ChiSoKhuVuc = {
    *  với người xem rằng đó là mức chung của cả khu, không phải giá của đúng
    *  con đường trước căn nhà họ đang xem (chênh nhau 2–3 lần là chuyện thường). */
   viTri?: ViTriGia;
+  /** LOẠI CON (cột loai_con, đúng danh sách ô loại con ở listingSpec): "Chung cư thương mại", "Căn hộ cao cấp", "Đất thổ cư"… Để trống = chung cả loại hình (29/10/2026). */
+  loaiCon?: string;
   /** Tên DỰ ÁN dãy số này nói tới (bậc ① — sát nhất). */
   duAn?: string;
   /** Tên TUYẾN ĐƯỜNG trong phường `khuVuc` (bậc ②). */
@@ -321,10 +323,44 @@ function coDuong(diaChi: string, duong: string): boolean {
  * của loại hình · ĐỦ SỐ (13 tháng liền). Bậc trên không đủ số mới xuống bậc dưới.
  * Không bậc nào đủ → null, khối Lịch sử giá ẩn hẳn.
  */
+// Nhóm căn hộ (mục cha "Căn hộ") — chỉ dùng để khớp dãy CÙNG DỰ ÁN (29/10/2026)
+const NHOM_CAN_HO = new Set(["Căn hộ", "Chung cư", "Căn hộ chung cư", "Căn hộ dịch vụ", "Condotel"].map((s) => chuanTen(s)));
+
+// NGUỒN SỐ LIỆU (chủ dự án 29/10/2026: "lấy web! thiếu thì lọc! lọc thì phải CHUẨN!"): cùng một dãy (tỉnh · phường/dự án/đường ·
+// loại hình · bán/thuê · mẫu số · vị trí) có cả số của web (tin đăng trên Coastal Land, kể cả tin hết hạn trong tháng) lẫn số Cowork
+// lọc → quý nào web có số thì lấy số web, quý web chưa có thì lấy số lọc.
+const NGUON_WEB = "tin đăng trên Coastal Land";
+function ghepNguon(ds: ChiSoKhuVuc[]): ChiSoKhuVuc[] {
+  const khoa = (x: ChiSoKhuVuc) =>
+    [x.tinh, x.khuVuc ?? "", x.duAn ?? "", x.duong ?? "", x.loaiHinh ?? "", x.loaiCon ?? ""].map((s) => chuanTen(s)).concat([x.mucDich ?? "ban", x.mauSo ?? "", x.viTri ?? ""]).join("|");
+  const web = new Map(ds.filter((x) => x.nguon === NGUON_WEB).map((x) => [khoa(x), x]));
+  const daGhep = new Set<string>();
+  const ra = ds.map((x) => {
+    const w = x.nguon === NGUON_WEB ? undefined : web.get(khoa(x));
+    if (!w) return x;
+    daGhep.add(khoa(x));
+    const theoQuy = new Map(x.moc.map((m) => [m.quy, m]));
+    for (const m of w.moc) theoQuy.set(m.quy, m);
+    return { ...x, moc: [...theoQuy.values()].sort((a, b) => a.quy.localeCompare(b.quy)) };
+  });
+  return ra.filter((x) => !(x.nguon === NGUON_WEB && daGhep.has(khoa(x))));
+}
+
+/** SỐ BẤT THƯỜNG, SAI LOGIC THÌ KHÔNG HIỆN (chủ dự án 29/10/2026): mỗi quý thấp ≤ phổ biến ≤ cao; hai quý liền nhau không đổi
+ *  gấp đôi / còn một nửa (cùng ngưỡng với cửa nộp số liệu). */
+export function dayHopLogic(x: ChiSoKhuVuc): boolean {
+  const moc = x.moc.filter((m) => m.giaM2 > 0);
+  return moc.every((m, i) => {
+    if ((m.thap ?? m.giaM2) <= 0 || (m.thap ?? m.giaM2) > m.giaM2 || (m.cao ?? m.giaM2) < m.giaM2) return false;
+    const ty = i ? m.giaM2 / moc[i - 1].giaM2 : 1;
+    return ty < 2 && ty > 0.5;
+  });
+}
+
 export function chiSoChoTin(
   tin: Listing,
   data: ChiSoGiaData | null,
-  them: { duAn?: string | null; diaChi?: string | null } = {},
+  them: { duAn?: string | null; diaChi?: string | null; giaTin?: number | null } = {},
 ): ChiSoKhuVuc | null {
   if (!data?.items?.length) return null;
   const tinh = chuanTen(tin.diaGioi?.province ?? "");
@@ -337,20 +373,27 @@ export function chiSoChoTin(
   if (!tinh || !coLichSuGia(tin.type)) return null;
 
   // Điều kiện chung của mọi bậc (sau khi đưa mọi dãy về theo quý).
-  const hop = data.items.map(veQuy).filter(
+  const hop = ghepNguon(data.items.map(veQuy)).filter(
     (x) =>
       chuanTen(x.tinh) === tinh &&
       (x.mucDich ?? "ban") === mucDich &&
-      !!x.loaiHinh && chuanTen(x.loaiHinh) === loai &&
+      // Cùng loại hình. Riêng dãy CỦA DỰ ÁN: căn hộ · chung cư · căn hộ dịch vụ · condotel trong cùng một dự án là MỘT sản phẩm
+      // (mục cha "Căn hộ", cùng đơn vị m² căn) — chủ dự án 29/10/2026: tin Golden Bay ghi "Căn hộ" theo tin gốc, dãy dự án ghi
+      // "Condotel" → trượt xuống dãy cả phường Sơn Trà 70,2 tr/m² trong khi dự án 42,3 tr/m².
+      !!x.loaiHinh && (chuanTen(x.loaiHinh) === loai || (!!x.duAn && NHOM_CAN_HO.has(chuanTen(x.loaiHinh)) && NHOM_CAN_HO.has(loai))) &&
       // Đúng mẫu số của loại hình; thuê tính tổng tiền/tháng thì dãy không có mẫu số (23/10/2026)
       x.mauSo === mau &&
       !x.viTri && // cùng phân khúc + cùng vị trí; không chia nhỏ theo bề rộng đường
+      // LOẠI CON (29/10/2026: "căn hộ thì phải có loại hình con của nó, đất cũng vậy"): dãy ghi loại con chỉ so với tin cùng loại con
+      (!x.loaiCon || chuanTen(chuanLoaiCon(x.loaiCon)) === chuanTen(chuanLoaiCon(tin.loaiCon))) &&
+      dayHopLogic(x) &&
       coDuLichSuGia(x),
   );
 
   const bac: ((x: ChiSoKhuVuc) => boolean)[] = [
-    // ① cùng dự án
-    (x) => !!x.duAn && ((!!duAn && chuanTen(x.duAn) === duAn) || (!!tin.projectSlug && x.duAn === tin.projectSlug)),
+    // ① cùng dự án (tin chưa gắn dự án mà tiêu đề ghi đúng tên dự án cũng tính — vd Capital Square)
+    (x) => !!x.duAn && ((!!duAn && chuanTen(x.duAn) === duAn) || (!!tin.projectSlug && x.duAn === tin.projectSlug) ||
+      (!duAn && chuanTen(x.duAn).length >= 6 && chuanTen(tin.title ?? "").includes(chuanTen(x.duAn)))),
     // ② cùng tuyến đường (trong đúng phường)
     (x) => !x.duAn && !!x.duong && !!phuong && chuanTen(x.khuVuc ?? "") === phuong && coDuong(diaChi, x.duong),
     // ③ cùng phường
@@ -358,10 +401,32 @@ export function chiSoChoTin(
     // ⛔ KHÔNG có bậc cả tỉnh (chủ dự án 16/10/2026: số một phường / một loại hình
     // đem áp cho cả tỉnh là sai — lịch sử giá chỉ của cùng dự án, đường hoặc vị trí tương đương).
   ];
-  for (const dung of bac) {
+  // GIÁ TIN LÀ SỐ CỦA QUÝ HIỆN TẠI (chủ dự án 29/10/2026: "lấy giá hiện tại của tin là nguồn hiện tại … đối chiếu và so sánh để đưa
+  // ra khoảng giá chuẩn"). Đường giá phổ biến – khoảng giá – giá tin phải khớp:
+  //  · dãy CÙNG DỰ ÁN là cùng sản phẩm → dùng; khoảng thấp–cao của quý mới nhất mở ra cho chứa giá tin. Giá tin lệch quá 30% ngoài
+  //    khoảng (nhập nhầm diện tích, nhầm giá) là số bất thường → không hiện (chủ dự án 29/10/2026).
+  //  · dãy đường / phường chỉ dùng khi giá tin nằm trong khoảng của dãy (lệch ≤ 3%) — ngoài khoảng là khác sản phẩm (đất kiệt so
+  //    với dãy trộn mặt tiền, nhà ở xã hội so với chung cư thường, studio so với căn 3 phòng ngủ) → thử bậc sau; hết bậc → không vẽ.
+  // Đo cả hệ thống: node scripts/kiem-logic-lich-su-gia.mjs (phải 0 tin lệch).
+  const g = them.giaTin ?? null;
+  const cuoi = (x: ChiSoKhuVuc) => x.moc[x.moc.length - 1];
+  const khop = (x: ChiSoKhuVuc, bien = 0.03) => {
+    if (!g) return true;
+    const m = cuoi(x);
+    return g >= (m.thap ?? m.giaM2) * (1 - bien) && g <= (m.cao ?? m.giaM2) * (1 + bien);
+  };
+  const chuaGiaTin = (x: ChiSoKhuVuc): ChiSoKhuVuc => {
+    if (!g) return x;
+    const m = cuoi(x);
+    const moc = [...x.moc.slice(0, -1), { ...m, thap: Math.min(m.thap ?? m.giaM2, g), cao: Math.max(m.cao ?? m.giaM2, g) }];
+    return { ...x, moc };
+  };
+  for (const [i, dung] of bac.entries()) {
     // Cùng bậc: ưu tiên dãy dài hơn (nhiều tháng liền hơn).
-    const ds = hop.filter(dung).sort((a, b) => soKyLienMach(b) - soKyLienMach(a));
-    if (ds.length) return ds[0];
+    // Cùng bậc: dãy đúng loại con trước, rồi dãy dài hơn.
+    const ds = hop.filter(dung).sort((a, b) => Number(!!b.loaiCon) - Number(!!a.loaiCon) || soKyLienMach(b) - soKyLienMach(a));
+    const chon = i === 0 ? ds.find((x) => khop(x, 0.3)) : ds.find((x) => khop(x));
+    if (chon) return chuaGiaTin(chon);
   }
   return null;
 }
@@ -387,7 +452,7 @@ const COT_CSV = [
 
 /** Cột tuỳ chọn — có thì tốt, không có vẫn nhập được. Cả hai chỉ phục vụ việc
  *  KIỂM CHỨNG trong admin, không hiện ra cho khách. */
-const COT_THEM = ["gia_thap_trieu", "gia_cao_trieu", "so_mau", "nguon_link", "mau_so", "vi_tri", "du_an", "duong"] as const;
+const COT_THEM = ["gia_thap_trieu", "gia_cao_trieu", "so_mau", "nguon_link", "mau_so", "vi_tri", "du_an", "duong", "loai_con"] as const;
 
 /**
  * Đọc một ô giá về SỐ TRIỆU, chấp nhận cả bốn lối viết đang gặp thật:
@@ -520,6 +585,7 @@ export function docBangChiSo(bang: string[][]): { items: ChiSoKhuVuc[]; loi: Loi
     const loaiHinh = lay(2);
     const duAnO = themLay(6).trim();
     const duongO = themLay(7).trim();
+    const loaiConO = themLay(8).trim();
     // BA BẬC (chủ dự án 16/10/2026): dự án → tuyến đường → phường. Không có cả tỉnh.
     // Dòng nào không đủ điều kiện của bậc mình thì trang tin không bao giờ dùng tới →
     // chặn ngay khi nhập, không để nằm trong kho như số liệu hợp lệ.
@@ -553,7 +619,7 @@ export function docBangChiSo(bang: string[][]): { items: ChiSoKhuVuc[]; loi: Loi
     // đường lớn" và "kiệt hẻm" của cùng một phường bị gom làm một, số của dãy sau
     // đè lên dãy trước — mất hẳn phần phân loại vừa thu thập.
     const vt = docViTri(themLay(5));
-    const khoa = [chuanTen(tinh), chuanTen(khuVuc), chuanTen(loaiHinh), mucDich, vt ?? "", chuanTen(duAnO), chuanTen(duongO)].join("|");
+    const khoa = [chuanTen(tinh), chuanTen(khuVuc), chuanTen(loaiHinh), mucDich, vt ?? "", chuanTen(duAnO), chuanTen(duongO), chuanTen(loaiConO)].join("|");
     let muc = gom.get(khoa);
     if (!muc) {
       muc = {
@@ -568,6 +634,7 @@ export function docBangChiSo(bang: string[][]): { items: ChiSoKhuVuc[]; loi: Loi
         viTri: vt,
         duAn: duAnO || undefined,
         duong: duongO || undefined,
+        loaiCon: loaiConO || undefined,
         nhapLuc: new Date().toISOString(),
         moc: [],
       };

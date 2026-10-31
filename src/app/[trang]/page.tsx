@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import TrangPseo, { metadataPseo } from "@/components/TrangPseo";
-import { getListings, getListingsHetHan } from "@/lib/listingsDb";
+import { getListings, getListingsHetHan, getTinXetTrang } from "@/lib/listingsDb";
 import { giaiMaDuong, trangIndex } from "@/lib/pseo";
 
 // pSEO trục 4 — /ban-nha-duong-<đường>-<tỉnh> (đúng mẫu URL của file pSEO, bỏ cấp quận).
@@ -14,7 +14,7 @@ async function dieuKien(trang: string) {
 }
 
 export async function generateStaticParams() {
-  const tin = await getListings().catch(() => []);
+  const tin = await getTinXetTrang(); // cổng đếm cả tin hết hạn (29/10/2026)
   return trangIndex(tin)
     .filter((p) => p.path.startsWith("/ban-nha-duong-"))
     .map((p) => ({ trang: p.path.slice(1) }));

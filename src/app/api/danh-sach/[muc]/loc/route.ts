@@ -48,7 +48,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ muc: st
   }
 
   const boLoc: Filters = { ...emptyFilters(), ...(yc.boLoc ?? {}) };
-  const kq = locDanhSach(tin, hetHan, muc, boLoc, yc.sapXep ?? "moi", yc.trang ?? 1, yc.moiTrang === MOI_TRANG_PC ? MOI_TRANG_PC : PER_PAGE);
+  // Chỉ đúng các tin được chỉ định (tin thuộc dự án, tin tương tự) → tin hết hạn cũng chỉ trong danh sách đó; trước 31/10/2026 chèn tin
+  // hết hạn của CẢ WEB vào cuối nên 15 tin của dự án ra 4 trang
+  const hetHanLoc = yc.chiId ? hetHan.filter((l) => yc.chiId!.includes(l.id)) : hetHan;
+  const kq = locDanhSach(tin, hetHanLoc, muc, boLoc, yc.sapXep ?? "moi", yc.trang ?? 1, yc.moiTrang === MOI_TRANG_PC ? MOI_TRANG_PC : PER_PAGE);
 
   return NextResponse.json({
     // Cùng một cách gói với trang 1 máy chủ dựng sẵn (lib/ketQuaDau): tinhHieu — tỉnh máy hiểu từ câu gõ, để ghi đúng dòng

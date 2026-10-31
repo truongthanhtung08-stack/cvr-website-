@@ -262,7 +262,9 @@ export default function MapPickerMo({
   useEffect(() => {
     const map = mapRef.current;
     if (map) {
-      if (toan || matchMedia("(pointer: coarse)").matches) map.cooperativeGestures.disable();
+      // Trong khung (cả điện thoại — chủ dự án 30/10/2026: kéo một ngón làm VƯỚNG khi cuộn form): một ngón cuộn trang,
+      // hai ngón kéo/phóng, chạm một lần vẫn ghim; bản đồ lớn ⛶ kéo một ngón.
+      if (toan) map.cooperativeGestures.disable();
       else map.cooperativeGestures.enable();
       requestAnimationFrame(() => map.resize());
     }
@@ -289,11 +291,10 @@ export default function MapPickerMo({
           style: STYLE_MO,
           center: [tam.lng, tam.lat],
           zoom: saved ? 17 : kv ? 12 : 5,
-          // ĐIỆN THOẠI: KÉO, PHÓNG TO NHỎ, GHIM NGAY TRONG KHUNG BẰNG MỘT NGÓN — không bắt mở bản đồ lớn (chủ dự án 22/10/2026
-          // tối: "khách không muốn xem full thì sao ép khách bấm full — muốn phóng to nhỏ, ghim, làm gì tuỳ ý từ khung bản đồ").
-          // Cuộn trang: vuốt ngoài khung bản đồ. ⛶ vẫn còn cho ai muốn xem lớn.
+          // ĐIỆN THOẠI: phóng to nhỏ, kéo bằng HAI ngón ngay trong khung, chạm một lần là ghim — không bắt mở bản đồ lớn (22/10/2026);
+          // MỘT ngón là cuộn trang (chủ dự án 30/10/2026: kéo một ngón làm vướng khi cuộn form). ⛶ bản đồ lớn kéo một ngón.
           // MÁY TÍNH: kéo chuột, bấm ghim, nút +/− như thường; Ctrl/⌘ + lăn chuột mới phóng to, lăn thường là cuộn trang.
-          cooperativeGestures: !matchMedia("(pointer: coarse)").matches,
+          cooperativeGestures: true,
           locale: {
             "CooperativeGesturesHandler.WindowsHelpText": "Sử dụng Ctrl + cuộn để thu phóng bản đồ",
             "CooperativeGesturesHandler.MacHelpText": "Sử dụng ⌘ + cuộn để thu phóng bản đồ",

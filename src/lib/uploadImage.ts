@@ -19,20 +19,22 @@ const CHAT_LUONG = 0.8;
 const CHAT_LUONG_JPEG = 0.85;
 
 // ── ĐÓNG DẤU CHÌM "COASTAL LAND" ────────────────────────────────────────────
-// Ký hiệu MỜ, NHỎ, ở GIỮA mọi ảnh tin đăng (chủ dự án 24/10/2026: góc dưới phải bị số ảnh trên thẻ che —
-// "cho nhỏ lại, để ở giữa"): ảnh bị lấy đi nơi khác vẫn nhận ra nguồn. Cỡ chữ theo bề ngang ảnh nên ảnh to hay
+// Ký hiệu MỜ, NHỎ, ở GÓC DƯỚI BÊN PHẢI mọi ảnh tin đăng (chủ dự án 29/10/2026: thẻ tin và ảnh trong trang tin đã dùng bản nhỏ
+// không dấu, dấu chỉ hiện khi bấm mở xem → đưa dấu từ giữa xuống góc dưới phải; 24/10 từng để giữa vì số ảnh trên thẻ che góc).
+// Ảnh bị lấy đi nơi khác vẫn nhận ra nguồn. Cỡ chữ theo bề ngang ảnh nên ảnh to hay
 // nhỏ đều cân. Vẽ trước khi xuất JPEG nên dấu nằm HẲN trong ảnh, không gỡ được.
 function dongDauCvr(ctx: CanvasRenderingContext2D, w: number, h: number) {
   const co = Math.max(11, Math.round(w * 0.02));
   ctx.save();
   ctx.font = `600 ${co}px system-ui, -apple-system, "Segoe UI", sans-serif`;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
+  ctx.textAlign = "right";
+  ctx.textBaseline = "bottom";
   // Viền tối rất nhẹ để chữ vẫn đọc được trên nền ảnh sáng
   ctx.shadowColor = "rgba(0,0,0,0.45)";
   ctx.shadowBlur = Math.round(co * 0.5);
   ctx.fillStyle = "rgba(255,255,255,0.42)";
-  ctx.fillText("COASTAL LAND", w / 2, h / 2);
+  const le = Math.round(co * 1.2); // cách mép phải, mép dưới
+  ctx.fillText("COASTAL LAND", w - le, h - le);
   ctx.restore();
 }
 

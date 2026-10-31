@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import TrangPseo, { metadataPseo } from "@/components/TrangPseo";
-import { getListings } from "@/lib/listingsDb";
+import { getListings, getTinXetTrang } from "@/lib/listingsDb";
 import { giaiMaHuong, trangIndex } from "@/lib/pseo";
 
 // pSEO trục 6 — /phong-thuy/huong-<hướng>/<loại>/<tỉnh> · /phong-thuy/huong-<hướng>/<tỉnh>
 
 export async function generateStaticParams() {
-  const tin = await getListings().catch(() => []);
+  const tin = await getTinXetTrang(); // cổng đếm cả tin hết hạn (29/10/2026)
   return trangIndex(tin)
     .filter((p) => p.path.startsWith("/phong-thuy/"))
     .map((p) => p.path.split("/").slice(2))

@@ -28,7 +28,8 @@ export const HOME_RESET_EVENT = "cl-home-reset";
 
 // Mỗi bước lịch sử do khối "Xem thêm" tạo ra mang dấu này để phân biệt với
 // điều hướng thật (chuyển trang).
-type SectionHistoryState = { clSection?: string; clDepth?: number };
+// clY: vị trí cuộn lúc bấm "Xem thêm" — BACK đóng danh sách thì về đúng chỗ đó, không văng lên đầu trang (30/10/2026)
+type SectionHistoryState = { clSection?: string; clDepth?: number; clY?: number };
 
 export function HomeExpandProvider({ children }: { children: React.ReactNode }) {
   const [openKey, setOpenKey] = useState<string | null>(null);
@@ -56,7 +57,10 @@ export function HomeExpandProvider({ children }: { children: React.ReactNode }) 
       if ((s.clSection ?? null) === keyRef.current && (s.clDepth ?? 0) === depthRef.current) return;
       setOpenKey(s.clSection ?? null);
       depthRef.current = s.clDepth ?? 0;
+      // Đóng danh sách → về đúng chỗ đã bấm "Xem thêm" (đợi trang vẽ lại các khối vừa hiện); mở lại → đầu danh sách
+      const y = s.clSection ? 0 : (s.clY ?? 0);
       window.scrollTo({ top: 0 });
+      if (y) { requestAnimationFrame(() => window.scrollTo({ top: y })); window.setTimeout(() => window.scrollTo({ top: y }), 350); }
     };
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
@@ -73,6 +77,28 @@ export function HomeExpandProvider({ children }: { children: React.ReactNode }) 
     window.scrollTo({ top: 0 });
   }, []);
 
+  // THANH ĐIỀU HƯỚNG (menu đầu trang, thanh dưới điện thoại, menu con, mọi link) trỏ về CHÍNH TRANG ĐANG XEM khi một danh sách
+  // "Xem thêm" đang mở (vd đang ở danh sách dự án mà bấm "Dự án" / "Tra cứu dự án") → đóng danh sách, trang về như lúc mới mở;
+  // link có #mục thì tới đúng mục đó. Trước đây đường dẫn đổi mà danh sách vẫn nằm đó (30/10/2026).
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      if (!keyRef.current || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      const a = (e.target as Element | null)?.closest?.("a[href]") as HTMLAnchorElement | null;
+      if (!a || a.target === "_blank") return;
+      const u = new URL(a.href, window.location.href);
+      if (u.origin !== window.location.origin || u.pathname !== window.location.pathname || u.searchParams.get("muc")) return;
+      closeAll();
+      const muc = decodeURIComponent(u.hash.slice(1));
+      if (muc) {
+        const den = () => document.getElementById(muc)?.scrollIntoView({ block: "start" });
+        requestAnimationFrame(() => requestAnimationFrame(den));
+        window.setTimeout(den, 350);
+      }
+    };
+    document.addEventListener("click", onClick, true);
+    return () => document.removeEventListener("click", onClick, true);
+  }, [closeAll]);
+
   // Logo / tab "Trang chủ" khi đang ở trang chủ → về trang chủ trang 1
   useEffect(() => {
     window.addEventListener(HOME_RESET_EVENT, closeAll);
@@ -80,6 +106,8 @@ export function HomeExpandProvider({ children }: { children: React.ReactNode }) 
   }, [closeAll]);
 
   const openSection = useCallback((key: string) => {
+    // Ghi vị trí đang đứng vào bước lịch sử hiện tại (giữ nguyên dữ liệu Next.js trong đó) trước khi thêm bước mới
+    window.history.replaceState({ ...(window.history.state ?? {}), clY: window.scrollY }, "");
     setOpenKey(key);
     depthRef.current += 1;
     const state: SectionHistoryState = { clSection: key, clDepth: depthRef.current };

@@ -2,7 +2,7 @@ import type { Listing } from "@/lib/data";
 import { findCategory, nhomPseo, rentCategories, saleCategories, type Category } from "@/lib/categories";
 import { khuVucList, slugKhuVuc, timKhuVuc, type KhuVuc } from "@/lib/khuVuc";
 import { normalizeVi, type Filters } from "@/lib/filters";
-import { newProvinceOf, phuongMoiCuaQuan } from "@/lib/locations";
+import { choCuCua, newProvinceOf, phuongMoiCuaQuan } from "@/lib/locations";
 import { daCoDiaDanh, khiCoDiaDanh } from "@/lib/diaDanhNguon";
 
 // ============================================================================
@@ -43,8 +43,19 @@ export const phuongCuaTin = (l: Listing) => {
 // Trang top 10 hoặc có lượt bấm (Search Console + tra Google 27/10). Giữ ĐÚNG bản Google đã đọc: khối "Tham khảo giá" cũ, 3 câu hỏi đáp cũ,
 // khối khu vực cũ — không thêm khối giá mới, hỏi đáp mới, liên kết mới. Thêm/bớt trang ở đây khi có số đo mới.
 export const TRANG_DONG_BANG = new Set<string>([
-  "/cho-thue/can-ho-chung-cu/da-nang", "/mua-ban/can-ho-chung-cu/da-nang/1-phong-ngu", "/mua-ban/can-ho-chung-cu/hue",
+  "/mua-ban/can-ho-chung-cu/da-nang/1-phong-ngu", "/mua-ban/can-ho-chung-cu/hue",
   "/mua-ban", "/mua-ban/da-nang", "/mua-ban/dat", "/mua-ban/bds-khac",
+]);
+
+// ⛔ TRANG ĐANG TOP — CHỈ ĐỂ ĐÁNH DẤU, KHÔNG ĐỔI CÁCH VẼ (chủ dự án 28/10/2026: "lấy trang đã lên top làm ví dụ, không đụng cái đã có top").
+// Khác TRANG_DONG_BANG: tập đó bắt trang vẽ lại BẢN CŨ; tập này không làm gì với trang — chỉ là danh sách mọi phiên PHẢI tra trước khi sửa mã
+// dùng chung (khuôn tiêu đề, categories.ts, soLieuTrang, nối trang…): sửa xong so HTML các trang này trước/sau, phải GIỐNG HỆT. Nguồn: hạng
+// trong HE-THONG-TU-KHOA.xlsx (Cụm · Đo theo cách gõ). Cập nhật khi có số đo mới. CLAUDE.md mục 0D1 luật 6.
+export const TRANG_TOP = new Set<string>([
+  // "/cho-thue/can-ho-chung-cu/da-nang" BỎ 29/10/2026 (chủ dự án "Bỏ đóng băng"): "hạng 2" là ở cách gõ sai chính tả; gõ đúng y tiêu đề
+  // trang thì đứng ~23 (tra 29/10) → vẽ theo khuôn chung như các trang khác. Đã bỏ cả khỏi TRANG_DONG_BANG.
+  "/mua-ban/nha/da-nang",              // hạng 3 — chưa có trong TRANG_DONG_BANG
+  "/mua-ban/da-nang",                  // hạng 5
 ]);
 
 export const CAP_CU: Record<string, string> = {
@@ -52,13 +63,16 @@ export const CAP_CU: Record<string, string> = {
   "Phú Xuân": "quận", "Thuận Hóa": "quận", "Nha Trang": "thành phố", "Cam Ranh": "thành phố", "Quy Nhơn": "thành phố",
   "Đà Lạt": "thành phố", "Phan Thiết": "thành phố", "Hội An": "thành phố", "Tam Kỳ": "thành phố", "Đại Lộc": "huyện",
 };
-export function tenCu(xs: Listing[], tinh: string): string {
+// Tên cũ lấy từ địa chỉ cũ khách ghi; khách không ghi → tra BẢNG SÁP NHẬP chính thức theo phường mới (29/10/2026, chủ dự án:
+// pSEO tự hiện cả tên mới lẫn tên cũ để khách gõ cách nào cũng ra). Phường mới gộp từ nhiều quận cũ → lấy quận góp nhiều phường nhất.
+export function tenCu(xs: Listing[], tinh: string, phuong = ""): string {
   const dem = new Map<string, number>();
   for (const l of xs) {
     const p = (l.locationCu ?? "").split(",").map((s) => s.trim()).filter(Boolean);
     const q = p.length >= 3 ? p[p.length - 2] : "";
     if (q && q !== tinh) dem.set(q, (dem.get(q) ?? 0) + 1);
   }
+  if (!dem.size && phuong) for (const c of choCuCua(tinh, phuong)) if (c.quan && c.quan !== tinh) dem.set(c.quan, (dem.get(c.quan) ?? 0) + 1);
   const q = [...dem.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
   return q ? `${CAP_CU[q] ? `${CAP_CU[q]} ` : ""}${q} cũ` : "";
 }
@@ -229,8 +243,8 @@ export function tieuDe(dk: DieuKien): string {
 // Không ghi tháng, không ghi nội thất; pháp lý một loại nhiều tin nhất (chỉ tin bán). Thiếu phần nào bỏ phần đó.
 // Dùng chung cho trang pSEO, trang tỉnh, trang loại hình (/mua-ban/<slug>, /cho-thue/<slug>). `dau` = tiêu đề trang
 // (có hay không có tháng đều được). Không có giá lẫn diện tích → null, nơi gọi giữ mô tả cũ.
-export function moTaSoLieu(dau: string, tin: Listing[], muc: Muc): string | null {
-  const so = soLieuTrang(tin, muc).split(" · ").filter((p) => p && !p.startsWith("Cập nhật"))
+export function moTaSoLieu(dau: string, tin: Listing[], muc: Muc, phoBien = false): string | null {
+  const so = soLieuTrang(tin, muc, phoBien).split(" · ").filter((p) => p && !p.startsWith("Cập nhật"))
     .map((p) => p.startsWith("Giá") ? p.replace(/^Giá( thuê)?: /, "giá ").replace(/^giá (.+) – (.+)$/, "giá từ $1 đến $2")
       : p.replace(/^Diện tích: /, "diện tích ").replace(/^diện tích (.+) – (.+)$/, "diện tích từ $1 đến $2"));
   if (!so.length) return null;
@@ -247,11 +261,12 @@ export function moTaSoLieu(dau: string, tin: Listing[], muc: Muc): string | null
 }
 export function moTa(dk: DieuKien, tin: Listing[] = []): string {
   // Trang phường: kèm tên quận cũ ngay sau tên phường ("Phường Hải Châu (quận Hải Châu cũ), Đà Nẵng") — 27/10/2026
-  const cu = dk.phuong ? tenCu(tin, dk.tinh.name) : "";
+  const cu = dk.phuong ? tenCu(tin, dk.tinh.name, dk.phuong) : "";
+  const pb = !giuSoCu(duongDan(dk));
   // chỉ kèm khi cả câu còn ≤ 160 ký tự (Google hiện trọn) — dài hơn thì giữ câu gốc
-  const coCu = cu && dk.phuong ? moTaSoLieu(tieuDe(dk).replace(dk.phuong, `${dk.phuong} (${cu})`), tin, dk.muc) : null;
+  const coCu = cu && dk.phuong ? moTaSoLieu(tieuDe(dk).replace(dk.phuong, `${dk.phuong} (${cu})`), tin, dk.muc, pb) : null;
   if (coCu && [...coCu].length <= 160) return coCu;
-  return moTaSoLieu(tieuDe(dk), tin, dk.muc)
+  return moTaSoLieu(tieuDe(dk), tin, dk.muc, pb)
     ?? `${tieuDe(dk)} — tin mới ${thangHienTai()}: giá, diện tích, vị trí, ảnh thật, liên hệ trực tiếp ${dk.muc === "thue" ? "người cho thuê" : "người bán"}.`;
 }
 
@@ -433,6 +448,14 @@ export function tatCaTrang(tinConHan: Listing[]): Map<string, TrangPseo> {
   const khoa = tinConHan.map((l) => l.id + (l.bumpedAt ?? "")).join(",");
   if (nhoTrang?.khoa === khoa) return nhoTrang.kq;
   const m = tinhTatCaTrang(tinConHan);
+  // CHỈ THÊM, KHÔNG BỚT (chủ dự án 29/10/2026): đếm cả tin hết hạn mở thêm trang, nhưng trang đang đủ chuẩn theo tin còn hạn
+  // vẫn giữ — cộng tin hết hạn có thể làm trang "gần trùng" cha / anh em và bị cổng chống trùng loại, mất trang đã index.
+  if (tinConHan.some((l) => l.hetHan)) {
+    for (const p of tinhTatCaTrang(tinConHan.filter((l) => !l.hetHan)).values()) {
+      const q = m.get(p.path);
+      if (p.index && q) q.index = true;
+    }
+  }
   nhoTrang = { khoa, kq: m };
   return m;
 }
@@ -567,10 +590,23 @@ function khoang(min: number, max: number, dinhDang: (n: number) => string): stri
   const da = a.split(" "), db = b.split(" ");
   return da.length === 2 && db.length === 2 && da[1] === db[1] ? `${da[0]} – ${b}` : `${a} – ${b}`;
 }
-export function soLieuTrang(tin: Listing[], muc: Muc): string {
+// KHOẢNG PHỔ BIẾN (chuẩn SEO một trang, kế hoạch từ khoá 5.0A — anh chốt 29/10/2026 D4): ≥ 5 tin thì bỏ 10 % thấp nhất và 10 % cao nhất
+// để một tin lạ không kéo cả dòng (khung AI từng chép "30 – 350 m²"). Chữ giữ nguyên. Trang đã lên (TRANG_DONG_BANG) giữ cách tính cũ.
+/** Trang đã lên / đang top: giữ cách tính số cũ (CLAUDE.md 0D1 luật 5–6). */
+export const giuSoCu = (p: string) => TRANG_DONG_BANG.has(p) || TRANG_TOP.has(p) || TRANG_GIU_THEM.has(p);
+// GIỮ CŨ + THÊM MỚI (chủ dự án 29/10/2026: "bỏ đóng băng không có nghĩa bỏ cái đã có top"): trang thôi đóng băng nhưng GIỮ NGUYÊN mọi thứ
+// đang có (tiêu đề, dòng số + mô tả theo cách tính cũ, khối "Tham khảo giá" theo khu vực / dự án, câu hỏi đáp cũ) và CHỈ THÊM phần mới
+// (khối giá theo phường + quận cũ, câu hỏi đáp mới). Số lạ sửa ở dữ liệu tin, không đổi cách tính.
+export const TRANG_GIU_THEM = new Set<string>(["/cho-thue/can-ho-chung-cu/da-nang"]);
+function phoBienCua(xs: number[]): number[] {
+  if (xs.length < 5) return xs;
+  const s = [...xs].sort((a, b) => a - b), bo = Math.max(1, Math.floor(s.length * 0.1));
+  return s.slice(bo, s.length - bo);
+}
+export function soLieuTrang(tin: Listing[], muc: Muc, phoBien = false): string {
   const thue = muc === "thue";
-  const gia = tin.map((l) => l.priceVnd ?? 0).filter((v) => v > 0);
-  const dt = tin.map((l) => l.areaM2 ?? 0).filter((v) => v > 0);
+  const giaGoc = tin.map((l) => l.priceVnd ?? 0).filter((v) => v > 0), dtGoc = tin.map((l) => l.areaM2 ?? 0).filter((v) => v > 0);
+  const gia = phoBien ? phoBienCua(giaGoc) : giaGoc, dt = phoBien ? phoBienCua(dtGoc) : dtGoc;
   const moiNhat = Math.max(0, ...tin.map((l) => new Date(l.bumpedAt ?? l.postedAt ?? 0).getTime() || 0));
   const phan: string[] = [];
   if (gia.length) phan.push(`${thue ? "Giá thuê" : "Giá"}: ${khoang(Math.min(...gia), Math.max(...gia), giaNgan)}${thue ? "/tháng" : ""}`);

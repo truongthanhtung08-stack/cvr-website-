@@ -26,6 +26,9 @@ export default function AdminSiteContentPage() {
   const [savingAreas, setSavingAreas] = useState(false);
   const [savingAbout, setSavingAbout] = useState(false);
   const [msg, setMsg] = useState("");
+  // Khối vừa bấm Lưu — dòng báo kết quả hiện NGAY DƯỚI nút Lưu của khối đó (29/10/2026: dòng báo ở đầu trang,
+  // khối Footer nằm dưới xa → bấm Lưu không thấy gì, lưu lỗi cũng không biết).
+  const [khoiMsg, setKhoiMsg] = useState("");
 
   useEffect(() => {
     (async () => {
@@ -74,15 +77,31 @@ export default function AdminSiteContentPage() {
 
   async function saveBlock(key: string, data: unknown, setSaving: (b: boolean) => void) {
     setMsg("");
+    setKhoiMsg(key);
     setSaving(true);
     const supabase = createClient();
     const { error } = await supabase.from("site_content").upsert({ key, data });
-    // LƯU XONG PHẢI BÁO WEB XOÁ CACHE — nếu không, trang ngoài còn giữ bản cũ tới
-    // 5 phút. Trang này ghi thẳng vào Supabase từ trình duyệt nên máy chủ không
-    // hề biết có thay đổi; /api/lam-moi là chỗ báo. Xem src/lib/contentDb.ts.
-    if (!error) await fetch("/api/lam-moi", { method: "POST", body: JSON.stringify({ the: "noi-dung" }) }).catch(() => {});
+    if (error) {
+      setSaving(false);
+      setMsg(`Lưu thất bại: ${error.message}`);
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/lam-moi", {
+        method: "POST",
+        body: JSON.stringify({ the: "noi-dung" }),
+      });
+      if (!response.ok) {
+        const result = await response.json().catch(() => null) as { message?: string } | null;
+        throw new Error(result?.message || `HTTP ${response.status}`);
+      }
+      setMsg("✓ Đã lưu — web cập nhật ngay.");
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : String(error);
+      setMsg(`Đã lưu nội dung, nhưng làm mới cache thất bại: ${detail}.`);
+    }
     setSaving(false);
-    setMsg(error ? `Lưu thất bại: ${error.message}` : "✓ Đã lưu — web cập nhật ngay.");
   }
 
   const setSlide = (i: number, patch: Partial<Banner>) =>
@@ -119,9 +138,6 @@ export default function AdminSiteContentPage() {
         <p className="mt-1 text-sm text-cvr-muted">Sửa ảnh &amp; chữ phần cứng của web. Bấm <strong>Lưu</strong> ở từng khối → web cập nhật ngay.</p>
       </div>
 
-      {msg && (
-        <p className={`rounded-lg px-4 py-2.5 text-sm font-medium ring-1 ring-inset ${msg.startsWith("✓") ? "bg-green-50 text-green-700 ring-green-600/20" : "bg-red-50 text-red-700 ring-red-600/20"}`}>{msg}</p>
-      )}
 
       {/* HERO TRANG CHỦ */}
       <Panel title="Hero trang chủ (3 slide)" desc="Mỗi slide cần 2 ảnh: MÁY TÍNH 2880×823 (7:2) và ĐIỆN THOẠI 1200×520 (2,3:1)">
@@ -156,7 +172,7 @@ export default function AdminSiteContentPage() {
             </div>
           ))}
         </div>
-        <SaveButton saving={savingHero} onClick={() => saveBlock("hero_home", { slides: heroSlides }, setSavingHero)} />
+        <SaveButton msg={khoiMsg === "hero_home" ? msg : ""} saving={savingHero} onClick={() => saveBlock("hero_home", { slides: heroSlides }, setSavingHero)} />
       </Panel>
 
       {/* BẤT ĐỘNG SẢN THEO KHU VỰC (trang chủ)
@@ -196,7 +212,7 @@ export default function AdminSiteContentPage() {
           ))}
           <button type="button" onClick={addArea} className={addBtnCls}>+ Thêm khu vực</button>
         </div>
-        <SaveButton saving={savingAreas} onClick={() => saveBlock("home_areas", { items: homeAreas }, setSavingAreas)} />
+        <SaveButton msg={khoiMsg === "home_areas" ? msg : ""} saving={savingAreas} onClick={() => saveBlock("home_areas", { items: homeAreas }, setSavingAreas)} />
       </Panel>
 
       {/* FOOTER */}
@@ -233,7 +249,7 @@ export default function AdminSiteContentPage() {
               không thấy gì đổi. Dữ liệu cũ vẫn nằm nguyên trong site_content, muốn dùng lại
               thì mở lại khối này + phần hiển thị trong Footer.tsx. */}
         </div>
-        <SaveButton saving={savingFooter} onClick={() => saveBlock("footer", footer, setSavingFooter)} />
+        <SaveButton msg={khoiMsg === "footer" ? msg : ""} saving={savingFooter} onClick={() => saveBlock("footer", footer, setSavingFooter)} />
       </Panel>
 
       {/* 2 BANNER CUỐI TRANG CHỦ */}
@@ -268,7 +284,7 @@ export default function AdminSiteContentPage() {
             <div className="mt-3"><Field label="Mô tả"><textarea value={homeAd.app.body} onChange={(e) => setApp({ body: e.target.value })} rows={2} className={`${inputCls} h-auto py-2.5`} /></Field></div>
           </div>
         </div>
-        <SaveButton saving={savingAd} onClick={() => saveBlock("home_ad", homeAd, setSavingAd)} />
+        <SaveButton msg={khoiMsg === "home_ad" ? msg : ""} saving={savingAd} onClick={() => saveBlock("home_ad", homeAd, setSavingAd)} />
       </Panel>
 
       {/* BANNER TRANG DỰ ÁN */}
@@ -308,13 +324,13 @@ export default function AdminSiteContentPage() {
           ))}
           <button type="button" onClick={addProj} className={addBtnCls}>+ Thêm slide</button>
         </div>
-        <SaveButton saving={savingProj} onClick={() => saveBlock("banner_projects", { slides: projBanners }, setSavingProj)} />
+        <SaveButton msg={khoiMsg === "banner_projects" ? msg : ""} saving={savingProj} onClick={() => saveBlock("banner_projects", { slides: projBanners }, setSavingProj)} />
       </Panel>
 
       {/* TRANG GIỚI THIỆU CÔNG TY */}
       <Panel title="Trang Giới thiệu công ty (/gioi-thieu)" desc="Toàn bộ nội dung trang: câu chuyện · tầm nhìn/sứ mệnh · giá trị cốt lõi · số liệu · thị trường · CTA">
         <AboutEditor value={about} onChange={(patch) => setAbout((a) => ({ ...a, ...patch }))} />
-        <SaveButton saving={savingAbout} onClick={() => saveBlock("about", about, setSavingAbout)} />
+        <SaveButton msg={khoiMsg === "about" ? msg : ""} saving={savingAbout} onClick={() => saveBlock("about", about, setSavingAbout)} />
       </Panel>
 
       <p className="text-xs text-cvr-faint">
@@ -368,11 +384,16 @@ function ImageField({ value, ratio, onChange, khung = "aspect-[16/9]", phu = fal
   );
 }
 
-function SaveButton({ saving, onClick }: { saving: boolean; onClick: () => void }) {
+function SaveButton({ saving, onClick, msg }: { saving: boolean; onClick: () => void; msg: string }) {
   return (
-    <button type="button" onClick={onClick} disabled={saving} className="mt-4 rounded-lg bg-cvr-ink px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-cvr-ink/90 disabled:opacity-50">
-      {saving ? "Đang lưu…" : "Lưu khối này"}
-    </button>
+    <>
+      <button type="button" onClick={onClick} disabled={saving} className="mt-4 rounded-lg bg-cvr-ink px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-cvr-ink/90 disabled:opacity-50">
+        {saving ? "Đang lưu…" : "Lưu khối này"}
+      </button>
+      {msg && (
+        <p className={`mt-3 rounded-lg px-4 py-2.5 text-sm font-medium ring-1 ring-inset ${msg.startsWith("✓") ? "bg-green-50 text-green-700 ring-green-600/20" : "bg-red-50 text-red-700 ring-red-600/20"}`}>{msg}</p>
+      )}
+    </>
   );
 }
 

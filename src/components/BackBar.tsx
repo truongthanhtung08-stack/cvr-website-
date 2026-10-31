@@ -136,12 +136,15 @@ export default function BackBar() {
       setTenTrang(laTrangChiTiet ? (document.querySelector("h1")?.textContent?.trim() ?? "") : "");
     };
     // Đọc sau khi trang vẽ xong, rồi đọc lại một nhịp nữa cho nội dung vào muộn.
+    // Trang nặng (dự án nhiều ảnh, bản đồ) vẽ tiêu đề muộn hơn 400 ms → thanh ghi chung "Dự án" (31/10/2026): đọc thêm nhịp 1,2 s
     const r = requestAnimationFrame(doc);
     const t = window.setTimeout(doc, 400);
+    const t2 = window.setTimeout(doc, 1200);
     return () => {
       con = false;
       cancelAnimationFrame(r);
       window.clearTimeout(t);
+      window.clearTimeout(t2);
     };
   }, [pathname]);
 
@@ -186,7 +189,7 @@ export default function BackBar() {
         // Như nút Back / Huỷ thanh toán (27/10/2026): đang mở mã QR → gỡ mốc mã (trang nạp đưa về tin); chưa mở mã → về tin. Đều đứng khối Gói tin
         if (window.history.state?.cvrQr) window.history.back();
         else if (docPhien("cl_trang_truoc") === ve.split("?")[0]) router.back(); // vừa từ trang đó sang → lùi, không sinh mốc trùng
-        else router.push(ve.startsWith("/dang-tin?id=") ? `${ve}&huy-tt=1` : ve); // như veHuy (MaQrThanhToan) — không nhập để BackBar khỏi kéo theo
+        else router.push(ve.startsWith("/dang-tin?id=") ? `${ve}&huy-tt=1` : ve === "/dang-tin" ? "/dang-tin?huy-tt=1" : ve); // như veHuy (MaQrThanhToan) — không nhập để BackBar khỏi kéo theo
         return;
       }
     }

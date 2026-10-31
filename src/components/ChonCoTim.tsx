@@ -26,6 +26,7 @@ export default function ChonCoTim({
   khongTim,
   haiDong,
   nhom,
+  nhanHien = (v: string) => v,
 }: {
   value: string;
   onChange: (v: string) => void;
@@ -49,6 +50,8 @@ export default function ChonCoTim({
   /** Danh sách theo NHÓM (Loại hình: Căn hộ · Nhà · Đất…, đúng bộ phân loại đã chốt ở lib/filters) → tên nhóm làm
    *  dòng tiêu đề, mục con nằm dưới; mục đang chọn có dấu ✓ ngay tại chỗ (22/10/2026). */
   nhom?: { label: string; items: string[] }[];
+  /** Chữ hiện của một mục (giá trị lưu giữ nguyên) — VD loại hình "Đất nền / Đất nền dự án" hiện "Đất nền, đất nền dự án". */
+  nhanHien?: (v: string) => string;
 }) {
   useDiaDanh(); // địa danh nạp sau khi trang hiện — về tới thì vẽ lại (20/10/2026)
   const [mo, setMo] = useState(false);
@@ -100,7 +103,7 @@ export default function ChonCoTim({
     <>
       <div className="relative">
         <button ref={nutRef} data-o-chon="" type="button" onClick={moBang} disabled={disabled} className={className + ` flex items-center justify-between gap-2 text-left disabled:cursor-not-allowed disabled:opacity-45 ${xoaDuoc && value ? "pr-10" : ""}`}>
-          <span className={`${haiDong ? "line-clamp-2 break-words py-1 leading-snug" : "truncate"} ${value ? "" : "text-cvr-faint"}`}>{value || placeholder}</span>
+          <span className={`${haiDong ? "line-clamp-2 break-words py-1 leading-snug" : "truncate"} ${value ? "" : "text-cvr-faint"}`}>{value ? nhanHien(value) : placeholder}</span>
           {!(xoaDuoc && value) && (timNgay
             ? <svg className="h-4 w-4 shrink-0 text-cvr-muted" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><circle cx="11" cy="11" r="7" /><path strokeLinecap="round" d="M21 21l-4.3-4.3" /></svg>
             : <svg className="h-4 w-4 shrink-0 text-cvr-muted" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>)}
@@ -149,7 +152,7 @@ export default function ChonCoTim({
             )}
             {coChon && !nhom && (
               <button type="button" onClick={() => chon(value)} className="flex w-full items-center justify-between gap-3 border-b border-cvr-line bg-cvr-surface px-4 py-3 text-left text-[15px] font-semibold text-cvr-ink">
-                <span className="min-w-0 truncate">{value}</span>
+                <span className="min-w-0 truncate">{nhanHien(value)}</span>
                 <svg className="h-5 w-5 shrink-0 text-cvr-blue-ink" fill="none" stroke="currentColor" strokeWidth={2.4} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
               </button>
             )}
@@ -164,14 +167,14 @@ export default function ChonCoTim({
                   <p className="px-4 pb-1 pt-3 text-[13px] font-semibold text-cvr-faint">{g.label}</p>
                   {g.items.map((o) => (
                     <button key={o} type="button" onClick={() => chon(o)} className={`flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-[15px] transition hover:bg-cvr-surface ${o === value ? "font-semibold text-cvr-ink" : "text-cvr-body"}`}>
-                      <span className="min-w-0 truncate">{o}</span>
+                      <span className="min-w-0 truncate">{nhanHien(o)}</span>
                       {o === value && <svg className="h-5 w-5 shrink-0 text-cvr-blue-ink" fill="none" stroke="currentColor" strokeWidth={2.4} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
                     </button>
                   ))}
                 </div>
               )) : ds.map(({ ten: o, boiTen }) => (
                 <button key={o} type="button" onClick={() => chon(o)} className="block w-full px-4 py-3 text-left text-[15px] text-cvr-body transition hover:bg-cvr-surface">
-                  {o}
+                  {nhanHien(o)}
                   {boiTen && <span className="mt-0.5 block text-[12px] text-cvr-faint">{boiTen}</span>}
                 </button>
               ))}

@@ -3,6 +3,7 @@ import { parseLatLng } from "@/lib/googleMaps";
 import { coordOf } from "@/lib/geo";
 import { chuoiDiaChiBanDo } from "@/lib/diaChiBanDo";
 import type { DiemBanDo } from "@/components/MapViewGoogle";
+import { duongDanTin } from "@/lib/duongDanTin";
 
 /** Điểm bản đồ của một tin — dùng chung cho bản đồ nhiều tin (MapViewMo) và máy chủ (/api/danh-sach/…/loc). */
 export function diemTuTin(it: Listing): DiemBanDo {
@@ -21,6 +22,6 @@ export function diemTuTin(it: Listing): DiemBanDo {
     phu: `${it.price} · ${it.area}`,
     loc: it.location,
     image: it.image,
-    href: `/bat-dong-san/${it.id}`,
+    href: duongDanTin(it),
   };
 }

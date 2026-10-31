@@ -38,10 +38,16 @@ export async function chupGiaKhuVuc(): Promise<{ ghi: number; boQua: number } | 
   const admin = createAdminClient();
   if (!admin) return null;
 
+  const thang = new Date();
+  thang.setDate(1);
+  const mocThang = thang.toISOString().slice(0, 10);
+
+  // Số liệu tháng = MỌI tin có trên web trong tháng, kể cả tin đã hết hạn trong tháng (chủ dự án 29/10/2026: "số liệu là cả
+  // tin hết hạn") — tin hết hạn giữ tier_expires_at nên lấy được đúng tháng nó còn hiện.
   const { data, error } = await admin
     .from("listings")
     .select("province, ward, type, purpose, price_vnd, area_m2, built_area_m2, details")
-    .eq("status", "approved")
+    .or(`status.eq.approved,and(status.eq.expired,tier_expires_at.gte.${mocThang})`)
     .limit(20000);
   if (error || !data) return null;
 
@@ -81,10 +87,6 @@ export async function chupGiaKhuVuc(): Promise<{ ghi: number; boQua: number } | 
     if (!phuong) continue;
     them([tinh, phuong, loai, mucDich, ""].join("|"), m2);
   }
-
-  const thang = new Date();
-  thang.setDate(1);
-  const mocThang = thang.toISOString().slice(0, 10);
 
   const rows: Record<string, unknown>[] = [];
   let boQua = 0;

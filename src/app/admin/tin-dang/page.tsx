@@ -5,6 +5,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import TuKiemTin from "@/components/admin/TuKiemTin";
 import { loiTinSeo } from "@/lib/kiemTinSeo";
+import { tenLoaiHinh } from "@/lib/filters";
 import {
   type ListingRow,
   type ListingTier,
@@ -45,7 +46,11 @@ export default function AdminListingsPage() {
   const [q, setQ] = useState("");
   const [purpose, setPurpose] = useState<"all" | ListingPurpose>("all");
   const [tier, setTier] = useState<"all" | ListingTier>("all");
+  // Mở từ ô "Chờ duyệt" trang chủ admin (?trang-thai=pending) → vào thẳng danh sách chờ duyệt (chủ dự án 29/10/2026)
   const [status, setStatus] = useState<"all" | "da_sua" | ListingStatus>("all");
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("trang-thai") === "pending") setStatus("pending");
+  }, []);
   const [chon, setChon] = useState<Set<string>>(new Set()); // tin đang tick để xoá hàng loạt
   // Vừa bấm "Cập nhật và đăng" / "Lưu nháp" ở trang sửa tin → báo đầu trang (ListingForm gửi ?daLuu=<id>&kieu=len|nhap)
   const [daLuu, setDaLuu] = useState<{ id: string; kieu: string } | null>(null);
@@ -69,6 +74,8 @@ export default function AdminListingsPage() {
     })();
   }, []);
 
+  // Chờ duyệt = tin khách gửi (pending) + tin đăng hàng loạt chờ chủ duyệt (ẩn + choChuDuyet) — 29/10/2026
+  const choDuyet = (r: ListingRow) => r.status === "pending" || (r.status === "hidden" && !!(r.details as { choChuDuyet?: boolean } | null)?.choChuDuyet);
   const filtered = useMemo(() => {
     const kw = q.trim().toLowerCase();
     const ds = rows.filter((r) => {
@@ -77,6 +84,8 @@ export default function AdminListingsPage() {
       // "Đã sửa — chờ kiểm" (0054): tin đang hiển thị khách vừa sửa, bản sửa đã hiện ngay.
       if (status === "da_sua") { if (!(r.status === "approved" && r.details?.da_sua_luc)) return false; }
       // Tin đã xoá chỉ hiện ở mục "Đã xoá" (0066), không lẫn vào "Tất cả trạng thái"
+      else if (status === "pending") { if (!choDuyet(r)) return false; }
+      else if (status === "hidden") { if (r.status !== "hidden" || choDuyet(r)) return false; }
       else if (status === "all" ? r.status === "deleted" : r.status !== status) return false;
       if (!kw) return true;
       // Mã tin (8 ký tự đầu id, như hiện trên trang tin) + mã đợt nạp (dn13-2410…) — chủ dự án 24/10/2026
@@ -96,7 +105,7 @@ export default function AdminListingsPage() {
       new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
   }, [rows, q, purpose, tier, status]);
 
-  const pendingCount = rows.filter((r) => r.status === "pending").length;
+  const pendingCount = rows.filter(choDuyet).length;
   const draftCount = rows.filter((r) => r.status === "draft").length;
   const daSuaCount = rows.filter((r) => r.status === "approved" && r.details?.da_sua_luc).length;
 
@@ -443,7 +452,7 @@ export default function AdminListingsPage() {
                     </div>
                   )}
                   <div className="line-clamp-2 text-xs text-cvr-muted">
-                    {purposeLabel(r.purpose)} · {r.type} · {[r.district, r.province].filter(Boolean).join(", ")}
+                    {purposeLabel(r.purpose)} · {tenLoaiHinh(r.type)} · {[r.district, r.province].filter(Boolean).join(", ")}
                   </div>
                 </td>
                 <td className="whitespace-nowrap px-4 py-3 text-cvr-body">

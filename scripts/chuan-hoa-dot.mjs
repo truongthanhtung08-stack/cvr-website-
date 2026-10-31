@@ -8,7 +8,7 @@
 //   · ảnh  dn01-1007-3.jpg            → dn01-0710-03.jpg  (cùng khu+số, lệch đuôi ngày; số ảnh 2 chữ số)
 //   · video bất kỳ tên nào            → "<tiêu đề tin> dn01-0710.mp4" — dưới 95 ký tự, mã ở CUỐI;
 //     chủ dự án up lên YouTube không đổi tên → Admin bấm "Gắn video từ YouTube" (chuẩn 25/10/2026,
-//     bộ mẫu SEO\Chuẩn tin hàng loạt; luật đọc mã: src/lib/videoKenh.ts maTuTieuDe)
+//     bộ mẫu SEO\MAU\dot-tin-mau-24-10; luật đọc mã: src/lib/videoKenh.ts maTuTieuDe)
 //   · hai video cùng một mã → xét tiêu đề video với tiêu đề tin để trả về đúng mã
 // Dòng Excel lỗi (theo đúng bộ kiểm của web) thì liệt kê để quyết.
 // Lỗi 05/10 + 07/10/2026 là lý do có lệnh này.

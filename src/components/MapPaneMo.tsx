@@ -49,8 +49,9 @@ export default function MapPaneMo({
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
-    // Toàn màn hình: kéo/phóng tự do cả máy tính (không cần Ctrl + lăn); thu về: như cũ (điện thoại kéo một ngón).
-    if (toan || !trongTrang || matchMedia("(pointer: coarse)").matches) map.cooperativeGestures.disable();
+    // Toàn màn hình: kéo/phóng tự do. Trong trang (cả điện thoại — chủ dự án 30/10/2026: kéo một ngón làm VƯỚNG khi cuộn):
+    // một ngón cuộn trang, hai ngón kéo/phóng (máy tính: Ctrl + lăn).
+    if (toan || !trongTrang) map.cooperativeGestures.disable();
     else map.cooperativeGestures.enable();
     requestAnimationFrame(() => map.resize());
   }, [toan, trongTrang]);
@@ -87,11 +88,11 @@ export default function MapPaneMo({
         // Dòng ghi nguồn thu thành nút (i), KHÔNG chèn chữ "MapLibre" (chủ dự án 22/10/2026). "© OpenStreetMap" vẫn nằm
         // trong (i) — giấy phép dữ liệu bản đồ bắt buộc ghi nguồn.
         attributionControl: { compact: true },
-        // ĐIỆN THOẠI: kéo MỘT ngón, phóng HAI ngón ngay, không phải chạm mở trước (chủ dự án 22/10/2026 tối: "bản đồ này thao
-        // tác 1 ngón tay được mà"; "vì sao phải có câu Chạm để xem bản đồ"). MÁY TÍNH: kéo chuột như thường; Ctrl/⌘ + lăn mới
-        // phóng, lăn thường là cuộn trang; câu nhắc của thư viện bị ẩn (globals.css).
+        // ĐIỆN THOẠI: một ngón cuộn trang, HAI ngón kéo/phóng ngay trong khung (chủ dự án 30/10/2026: kéo một ngón làm vướng
+        // khi cuộn); ⛶ bản đồ lớn kéo một ngón. MÁY TÍNH: kéo chuột như thường; Ctrl/⌘ + lăn mới phóng, lăn thường là cuộn trang.
+        // Câu nhắc của thư viện bị ẩn (globals.css) — không chữ nào phủ bản đồ.
         ...(trongTrang ? {
-          cooperativeGestures: !matchMedia("(pointer: coarse)").matches,
+          cooperativeGestures: true,
           locale: {
             "CooperativeGesturesHandler.WindowsHelpText": "Sử dụng Ctrl + cuộn để thu phóng bản đồ",
             "CooperativeGesturesHandler.MacHelpText": "Sử dụng ⌘ + cuộn để thu phóng bản đồ",

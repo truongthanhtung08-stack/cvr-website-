@@ -10,7 +10,7 @@ function loaiTuNhan(nhan: string, nq: string, mb: "ban" | "thue"): string[] {
   // "đất" trần → cả nhóm Đất; "đất nền" mới là loại chi tiết
   if (n === "dat nen" && !nq.includes("dat nen")) return nhom.find((g) => g.label === "Đất")?.items ?? [];
   // "chung cư" và "căn hộ" là một nhu cầu → cả nhóm Căn hộ
-  if (n === "chung cu" || n === "can ho") return nhom.find((g) => g.label === "Căn hộ")?.items ?? [];
+  if (n === "chung cu" || n === "can ho") return nhom.find((g) => g.label === "Căn hộ, chung cư")?.items ?? [];
   const g = nhom.find((x) => normalizeVi(x.label) === n);
   if (g) return g.items;
   const khop = nhom.flatMap((x) => x.items).filter((t) => normalizeVi(t).includes(n));

@@ -1,6 +1,6 @@
 import { chuanTen } from "@/lib/locations";
-import { dungODienTichXayDung } from "@/lib/listingSpec";
-import { mauSoLichSu, veQuy, tenTinhChuan, tenPhuongChuan, coLichSuGia, type ChiSoKhuVuc } from "@/lib/chiSoGia";
+import { mauSoLichSu, veQuy, tenTinhChuan, tenPhuongChuan, coLichSuGia, MAU_TOI_THIEU, type ChiSoKhuVuc } from "@/lib/chiSoGia";
+import { chuanLoaiCon } from "@/lib/listingSpec";
 
 // ════════════════════════════════════════════════════════════════════════════
 // LỊCH SỬ GIÁ CÒN THIẾU — dựng từ CHÍNH TIN ĐANG ĐĂNG trên web.
@@ -14,7 +14,7 @@ import { mauSoLichSu, veQuy, tenTinhChuan, tenPhuongChuan, coLichSuGia, type Chi
 // KHUÔN ĐÚNG TỆP NỘP (chủ dự án duyệt 22/10/2026 — LICH-SU-GIA-22102026 mục 6): mỗi dòng một QUÝ của một dãy; tinh · khu_vuc ·
 // du_an · loai_hinh · muc_dich · ky · mau_so điền sẵn (thuê văn phòng, kho/xưởng/đất: giá/m²/tháng có mau_so; thuê loại hình khác: TỔNG tiền/tháng, mau_so trống — 23/10/2026); Cowork điền giá + nguồn.
 export const COT_MAU = [
-  "tinh", "khu_vuc", "du_an", "loai_hinh", "muc_dich", "ky", "mau_so",
+  "tinh", "khu_vuc", "du_an", "loai_hinh", "loai_con", "muc_dich", "ky", "mau_so",
   "gia_m2_trieu", "gia_thap_trieu", "gia_cao_trieu", "so_mau", "nguon", "nguon_link",
   // Số tin đang đăng trên web cần dãy này — dãy nhiều tin xếp trước, làm trước
   // thì lịch sử giá hiện sớm cho nhiều tin nhất. Web bỏ qua cột này khi nộp.
@@ -26,15 +26,15 @@ export type TinCan = {
   ward: string | null;
   type: string | null;
   purpose: string | null;
-  details: { project?: string; projectName?: string } | null;
+  details: { project?: string; projectName?: string; specs?: { loaiCanho?: string; landType?: string } } | null;
 };
-export type DongKho = { thang: string; tinh: string; phuong: string; du_an?: string; loai_hinh: string; muc_dich: string };
+export type DongKho = { thang: string; tinh: string; phuong: string; du_an?: string; loai_hinh: string; muc_dich: string; so_mau?: number };
 
 export function dongConThieu(tin: TinCan[], kho: DongKho[], items: ChiSoKhuVuc[], now = new Date()): string[][] {
   // Dãy cần có: khoá = tỉnh|phường|dự án|loại hình|bán/thuê (chuẩn hoá để so).
-  type Day = { tinh: string; phuong: string; duAn: string; duAnSlug: string; loai: string; md: "ban" | "thue" };
-  const k = (tinh: string, phuong: string, duAn: string, loai: string, md: string) =>
-    [chuanTen(tinh), chuanTen(phuong), chuanTen(duAn), chuanTen(loai), md].join("|");
+  type Day = { tinh: string; phuong: string; duAn: string; duAnSlug: string; loai: string; loaiCon: string; md: "ban" | "thue" };
+  const k = (tinh: string, phuong: string, duAn: string, loai: string, md: string, loaiCon = "") =>
+    [chuanTen(tinh), chuanTen(phuong), chuanTen(duAn), chuanTen(loai), md, chuanTen(loaiCon)].join("|");
   const can = new Map<string, Day>();
   const soTin = new Map<string, number>();
   const dem = (khoa: string) => soTin.set(khoa, (soTin.get(khoa) ?? 0) + 1);
@@ -43,18 +43,20 @@ export function dongConThieu(tin: TinCan[], kho: DongKho[], items: ChiSoKhuVuc[]
     const tinh = tenTinhChuan(t.province);
     const loai = (t.type ?? "").trim();
     if (!md || !tinh || !coLichSuGia(loai)) continue;
-    // BÁN NHÀ: web tính trên m² sàn, nguồn công bố tính trên diện tích tin (m² đất) —
-    // Cowork không có số cùng cách tính, nên không giao. Web tự tính dần từ tin đăng.
-    if (md === "ban" && dungODienTichXayDung(loai)) continue;
+    // BÁN NHÀ VẪN GIAO (29/10/2026): yêu cầu Cowork chốt 23/10 — làm NHÀ trước, giá ÷ TỔNG m² sàn ghi rõ (lọc tin rao có
+    // m² sàn, hệ số…); nguồn chỉ có m² đất thì Cowork không dùng. Trước đây bỏ hẳn bán nhà khỏi danh sách → 46/69 tin chưa có
+    // lịch sử giá là bán nhà mà Cowork không hề được giao.
+    // Theo phường: dãy đúng LOẠI CON của tin (căn hộ, đất — 29/10/2026); tin chưa có loại con thì dãy chung loại hình.
+    const lc = chuanLoaiCon(t.details?.specs?.loaiCanho || t.details?.specs?.landType);
     const phuong = tenPhuongChuan(tinh, t.ward);
     if (phuong) {
-      can.set(k(tinh, phuong, "", loai, md), { tinh, phuong, duAn: "", duAnSlug: "", loai, md });
-      dem(k(tinh, phuong, "", loai, md));
+      can.set(k(tinh, phuong, "", loai, md, lc), { tinh, phuong, duAn: "", duAnSlug: "", loai, loaiCon: lc, md });
+      dem(k(tinh, phuong, "", loai, md, lc));
     }
     const slug = (t.details?.project ?? "").trim();
     if (slug) {
       const ten = (t.details?.projectName ?? "").trim() || slug;
-      can.set(k(tinh, "", ten, loai, md), { tinh, phuong: "", duAn: ten, duAnSlug: slug, loai, md });
+      can.set(k(tinh, "", ten, loai, md), { tinh, phuong: "", duAn: ten, duAnSlug: slug, loai, loaiCon: "", md });
       dem(k(tinh, "", ten, loai, md));
     }
   }
@@ -67,6 +69,8 @@ export function dongConThieu(tin: TinCan[], kho: DongKho[], items: ChiSoKhuVuc[]
   };
   const slugSangTen = new Map([...can.values()].filter((d) => d.duAnSlug).map((d) => [d.duAnSlug, d.duAn]));
   for (const r of kho) {
+    // Số web chỉ tính là "đã có" khi đủ tin (MAU_TOI_THIEU) — tháng ít tin web không hiện thì vẫn giao Cowork lọc (29/10/2026)
+    if (r.so_mau != null && r.so_mau < MAU_TOI_THIEU) continue;
     const duAn = r.du_an ? slugSangTen.get(r.du_an) ?? r.du_an : "";
     const [y, m] = String(r.thang).slice(0, 7).split("-");
     danh(k(r.tinh, duAn ? "" : r.phuong, duAn, r.loai_hinh, r.muc_dich), `${y}-Q${Math.ceil(Number(m) / 3)}`);
@@ -74,23 +78,25 @@ export function dongConThieu(tin: TinCan[], kho: DongKho[], items: ChiSoKhuVuc[]
   for (const x of items.map(veQuy)) {
     if (!x.loaiHinh || x.viTri) continue;
     if (x.mauSo !== mauSoLichSu(x.loaiHinh, x.mucDich ?? "ban")) continue; // đúng mẫu số; thuê tổng tiền thì không có mẫu số (23/10/2026)
-    for (const m of x.moc) if (m.giaM2 > 0) danh(k(x.tinh, x.duAn ? "" : x.khuVuc ?? "", x.duAn ?? "", x.loaiHinh, x.mucDich ?? "ban"), m.quy);
+    for (const m of x.moc) if (m.giaM2 > 0) danh(k(x.tinh, x.duAn ? "" : x.khuVuc ?? "", x.duAn ?? "", x.loaiHinh, x.mucDich ?? "ban", x.loaiCon ?? ""), m.quy);
   }
 
-  // 8 quý gần nhất (2 năm), không tính quý đang chạy (quý này web tự tính).
+  // 20 quý gần nhất (đủ 5 năm — chủ dự án 29/10/2026: "lịch sử giá đến cả 5 năm"), không tính quý đang chạy (quý này web tự tính).
   const thang: string[] = [];
   const quyNay = now.getFullYear() * 4 + Math.floor(now.getMonth() / 3);
-  for (let i = 8; i >= 1; i--) {
+  for (let i = 20; i >= 1; i--) {
     const q = quyNay - i;
     thang.push(`${Math.floor(q / 4)}-Q${(q % 4) + 1}`);
   }
   const dong: string[][] = [];
   const theoUuTien = [...can.entries()].sort((a, b) => (soTin.get(b[0]) ?? 0) - (soTin.get(a[0]) ?? 0));
-  for (const [khoa, d] of theoUuTien) {
+  // Đủ 1 năm (5 quý liền) là web đã vẽ được biểu đồ (chủ dự án 29/10/2026) → 5 quý gần nhất của MỌI dãy xếp trước,
+  // quý cũ hơn (tới 5 năm) xếp sau; trong mỗi đợt quý MỚI NHẤT trước (lọc theo thời gian thực).
+  for (const dot of [thang.slice(-5).reverse(), thang.slice(0, -5).reverse()]) for (const [khoa, d] of theoUuTien) {
     const daCo = co.get(khoa) ?? new Set();
-    for (const t of thang) {
+    for (const t of dot) {
       if (daCo.has(t)) continue;
-      dong.push([d.tinh, d.phuong, d.duAn, d.loai, d.md, t, mauSoLichSu(d.loai, d.md) ?? "", "", "", "", "", "", "", String(soTin.get(khoa) ?? 0)]);
+      dong.push([d.tinh, d.phuong, d.duAn, d.loai, d.loaiCon, d.md, t, mauSoLichSu(d.loai, d.md) ?? "", "", "", "", "", "", "", String(soTin.get(khoa) ?? 0)]);
     }
   }
   return dong;

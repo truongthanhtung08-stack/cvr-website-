@@ -1,4 +1,4 @@
-import { getListings } from "@/lib/listingsDb";
+import { getTinXetTrang } from "@/lib/listingsDb";
 import { tieuDe, trangIndex, type Muc } from "@/lib/pseo";
 import TabTimKiemPhoBien, { type TabLienKet } from "@/components/TabTimKiemPhoBien";
 
@@ -6,8 +6,8 @@ import TabTimKiemPhoBien, { type TabLienKet } from "@/components/TabTimKiemPhoBi
 // Học khối "Gợi ý cho chuyến đi" cuối trang Airbnb: tab theo loại hình, mỗi tab một lưới link tới
 // trang khu vực. Chỉ link tới trang ĐÃ QUA CỔNG CHẤT LƯỢNG (trangIndex — ≥ 3 tin đạt chuẩn), chữ link
 // chính là từ khoá người tìm gõ. Mọi tab nằm sẵn trong HTML máy chủ để Google đọc được.
-export default async function TimKiemPhoBien({ muc }: { muc?: Muc }) {
-  const tin = await getListings().catch(() => []);
+export default async function TimKiemPhoBien({ muc, trangChu }: { muc?: Muc; trangChu?: boolean }) {
+  const tin = await getTinXetTrang(); // cổng đếm cả tin hết hạn (29/10/2026)
   const theoNhom = new Map<string, { href: string; nhan: string; n: number }[]>();
   for (const p of trangIndex(tin)) {
     if ((muc && p.dk.muc !== muc) || !p.dk.cat) continue;
@@ -19,5 +19,5 @@ export default async function TimKiemPhoBien({ muc }: { muc?: Muc }) {
     .sort((a, b) => b.tong - a.tong)
     .map(({ ten, links }) => ({ ten, links }));
   if (tabs.length === 0) return null;
-  return <TabTimKiemPhoBien tabs={tabs} />;
+  return <TabTimKiemPhoBien tabs={tabs} trangChu={trangChu} />;
 }

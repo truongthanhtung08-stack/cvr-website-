@@ -8,6 +8,7 @@ import { khuVucList, khuVucTrongDiem, slugKhuVuc, timKhuVuc } from "@/lib/khuVuc
 import { trangGiaNhaDat } from "@/lib/giaNhaDat";
 import { banGocCua, tinDatChuan, trangIndex } from "@/lib/pseo";
 import { NGUONG_INDEX_CDT, nhomChuDauTu } from "@/lib/chuDauTu";
+import { duongDanTin } from "@/lib/duongDanTin";
 
 // TỰ LÀM MỚI MỖI GIỜ. Trước đây để `force-static` (di sản thời GitHub Pages):
 // sitemap chỉ sinh 1 lần lúc build, nên MỌI tin/dự án/bài viết đăng sau lần
@@ -110,7 +111,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     // ── TRANG pSEO (src/lib/pseo.ts) — CHỈ trang qua cổng chất lượng (≥ 3 tin còn hạn,
     // không trùng trang cha). lastmod = lần đăng/đẩy tin mới nhất của chính trang đó.
-    for (const p of trangIndex(listings)) {
+    for (const p of trangIndex([...listings, ...tinHetHan])) { // cổng đếm cả tin hết hạn (29/10/2026)
       dynamic.push({
         url: `${SITE}${p.path}`,
         ...(p.moiNhat ? { lastModified: new Date(p.moiNhat) } : {}),
@@ -122,7 +123,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // TRANG GIÁ NHÀ ĐẤT THEO TỈNH (kế hoạch SEO 5b-D3, 27/10/2026) — chỉ tỉnh qua cổng (≥ 2 loại hình có số)
     for (const t of khuVucTrongDiem) {
       const kv = timKhuVuc(slugKhuVuc(t));
-      if (kv && trangGiaNhaDat(kv, listings).index) dynamic.push({ url: `${SITE}/gia-nha-dat/${kv.slug}`, changeFrequency: "weekly", priority: 0.8 });
+      if (kv && trangGiaNhaDat(kv, [...listings, ...tinHetHan]).index) dynamic.push({ url: `${SITE}/gia-nha-dat/${kv.slug}`, changeFrequency: "weekly", priority: 0.8 });
     }
 
     // TRANG CHỦ ĐẦU TƯ — chỉ chủ đầu tư có ≥ 2 dự án đã đăng (src/lib/chuDauTu.ts)
@@ -133,7 +134,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     for (const p of projects) {
       dynamic.push({
         url: `${SITE}/du-an/${p.slug}`, changeFrequency: "weekly", priority: 0.7,
-        images: (p.photos?.length ? p.photos.slice(0, 5) : [p.image]).flatMap(anhTuyetDoi),
+        // Chỉ ảnh thật của dự án — chưa có ảnh thì không gửi ảnh mẫu chung cho Google (30/10/2026)
+        images: (p.photos ?? []).slice(0, 5).flatMap(anhTuyetDoi),
       });
     }
     for (const a of articles) {
@@ -152,14 +154,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const tatCaTin = [...listings, ...tinHetHan];
     for (const l of listings.filter((x) => tinDatChuan(x) && !banGocCua(x, tatCaTin))) {
       dynamic.push({
-        url: `${SITE}/bat-dong-san/${l.id}`, lastModified: ngayTin(l), changeFrequency: "weekly", priority: 0.7,
+        url: `${SITE}${duongDanTin(l)}`, lastModified: ngayTin(l), changeFrequency: "weekly", priority: 0.7,
         images: anhTuyetDoi(l.image),
       });
     }
     // TIN HẾT HẠN cũng khai (chủ dự án 08/10/2026): trang vẫn mở, vẫn lập chỉ mục.
     for (const l of tinHetHan.filter((x) => tinDatChuan(x) && !banGocCua(x, tatCaTin))) {
       dynamic.push({
-        url: `${SITE}/bat-dong-san/${l.id}`, lastModified: ngayTin(l), changeFrequency: "monthly", priority: 0.5,
+        url: `${SITE}${duongDanTin(l)}`, lastModified: ngayTin(l), changeFrequency: "monthly", priority: 0.5,
         images: anhTuyetDoi(l.image),
       });
     }

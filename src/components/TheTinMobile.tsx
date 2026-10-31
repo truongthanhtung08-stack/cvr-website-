@@ -21,6 +21,7 @@ import { anhNho } from "@/lib/asset";
 import { moTaThe, soDongMoTa } from "@/lib/trichMoTa";
 import { thongSoTheoCap } from "@/lib/thongSoThe";
 import DemAnhVideo, { IconPlay } from "@/components/DemAnhVideo";
+import { duongDanTin } from "@/lib/duongDanTin";
 
 // ============================================================================
 // THẺ TIN THEO CẤP — BẢN ĐIỆN THOẠI (docs/THE-TIN-THEO-CAP.md, chủ dự án 09/10/2026).
@@ -147,7 +148,7 @@ function KhungChay({ slides, alt, khung, sizes, onMo, children, tuChay = true, u
 export default function TheTinMobile({ item, terms = [], tuChay = false, pc = false, moTa = true, dcCu = true, uuTien = false }: { item: Listing; terms?: string[]; tuChay?: boolean; pc?: boolean; moTa?: boolean; dcCu?: boolean; uuTien?: boolean }) {
   const t: TierId = item.badge ? tierFromBadge(item.badge) : "basic";
   const tier = getTier(t);
-  const href = `/bat-dong-san/${item.id}`;
+  const href = duongDanTin(item);
   const anh = (item.images?.length ? item.images : [item.image]).filter(Boolean);
   const [xem, setXem] = useState(-1);
   // Bấm ảnh trên thẻ → danh sách kiểu Facebook: video + ảnh + bản đồ (chủ dự án 09/10/2026)

@@ -234,10 +234,11 @@ function ThanhTab({ tabs, count, nutDangTinNoi = false }: { tabs: { href: string
               {nutDangTinNoi && t.href === "/dang-tin" ? (
                 // ĐĂNG TIN = NÚT CHÍNH của khu quản lý (25/09): vòng tròn xanh. 22/10/2026 chủ dự án: "cân đối, không phải
                 // cứ to là nổi bật mà cản trở giao diện" → bỏ nhô lên, cùng cỡ + cùng hàng với các tab khác, không che nội dung.
-                <Link href={t.href} aria-label="Đăng tin" className="press flex h-[49px] flex-col items-center justify-center gap-[2px]">
-                  {/* 22/10/2026 chủ dự án: giữ kiểu cũ, to hơn một chút — 35px (vừa khung 49px của thanh, không nhô lên) */}
-                  <span className="flex h-[35px] w-[35px] items-center justify-center rounded-full bg-cvr-blue text-white">
-                    <svg className="h-[20px] w-[20px]" fill="none" stroke="currentColor" strokeWidth={2.6} viewBox="0 0 24 24" aria-hidden>
+                <Link href={t.href} aria-label="Đăng tin" className="press relative -top-[6px] flex h-[49px] flex-col items-center justify-center gap-px">
+                  {/* 22/10/2026 chủ dự án: giữ kiểu cũ, to hơn một chút — 35px. 29/10/2026: to thêm chút nữa + nhô lên một chút → 38px,
+                      cả nút dời lên 6px để chữ "Đăng tin" thẳng hàng chữ các nút khác (vòng tròn nhô khỏi thanh ~5px). Các nút khác giữ nguyên. */}
+                  <span className="flex h-[38px] w-[38px] items-center justify-center rounded-full bg-cvr-blue text-white">
+                    <svg className="h-[22px] w-[22px]" fill="none" stroke="currentColor" strokeWidth={2.6} viewBox="0 0 24 24" aria-hidden>
                       <path strokeLinecap="round" d="M12 5v14M5 12h14" />
                     </svg>
                   </span>

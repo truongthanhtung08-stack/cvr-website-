@@ -183,7 +183,13 @@ export async function timToaDo(diaChi: string): Promise<ToaDoTim | null> {
   const soRieng = chiTiet.find((x) => LA_SO_NHA.test(x))?.replace(/^số\s*/i, "") ?? "";
   const ten = chiTiet.filter((x) => !LA_SO_NHA.test(x));
   // Mảnh tên đường: mảnh có chữ Đường/Phố/Kiệt…; không ghi loại đường thì mảnh sát phường nhất ("Ngô Quyền", "123 Lê Lợi").
-  const duong = ten.find((x) => LA_DUONG.test(x.replace(SO_DAU, ""))) ?? ten[ten.length - 1] ?? "";
+  const duongGoc = ten.find((x) => LA_DUONG.test(x.replace(SO_DAU, ""))) ?? ten[ten.length - 1] ?? "";
+  // GIAO LỘ / NGÃ BA / NGÃ TƯ / GÓC "X với Y" (chủ dự án 30/10/2026: hồ sơ ghi "Giao lộ Nguyễn Đình Thi với 29/3" → bản đồ không hiểu,
+  // rơi về giữa phường): bỏ chữ giao lộ, lấy tên đường đầu để dò
+  // "29/3" → "29 Tháng 3" (bản đồ ghi tên đường ngày tháng bằng chữ)
+  const cacDuong = duongGoc.replace(/^(giao\s*lộ|ngã\s*(ba|tư|năm|sáu)|góc(\s*đường)?)\s+/i, "")
+    .split(/\s+(?:với|và|giao|x)\s+|\s+[-–]\s+/i).map((x) => x.trim().replace(/^(\d{1,2})\/(\d{1,2})$/, "$1 Tháng $2")).filter(Boolean);
+  const duong = cacDuong[0] ?? "";
   const hoiDuong = soRieng && duong && !SO_DAU.test(duong) ? `${soRieng} ${duong}` : duong;
 
   // LÙI DẦN TỚI CHỖ GẦN ĐÚNG NHẤT, KHÔNG BAO GIỜ NHẬN KẾT QUẢ NGOÀI TỈNH CỦA TIN (chủ dự án 23/10/2026: "khách gõ số, tên
@@ -195,8 +201,9 @@ export async function timToaDo(diaChi: string): Promise<ToaDoTim | null> {
   //   5. tỉnh                                              → bảng toạ độ sẵn có, không cần mạng
   // Trước 23/10 hỏi nguyên chuỗi rồi nhận kết quả đầu tiên mà vẫn gọi là "duong" → dấu rơi giữa phường hoặc sang đường khác
   // trùng chữ (Tố Hữu → "Cửa Hữu"), "76, Altara…" thì đọc "76" là tên đường.
-  if (hoiDuong) {
-    const kq = await timDuong(hoiDuong, diaGioi, tinh);
+  // Giao lộ: thử lần lượt từng đường (đường đầu không có trên bản đồ thì lấy đường kia — chủ dự án 30/10/2026)
+  for (const d of hoiDuong ? [hoiDuong, ...cacDuong.slice(1)] : []) {
+    const kq = await timDuong(d, diaGioi, tinh);
     if (kq) {
       daTra.set(chuoi, kq);
       return kq;
@@ -267,7 +274,9 @@ async function hoiTim(q: string): Promise<KqTim[]> {
 const boLoaiDuong = (s: string) => s.trim().replace(/^(đường|phố)\s+/i, "").trim();
 
 export async function timDuong(dau: string, phuongs: string[], tinh: string): Promise<ToaDoTim | null> {
-  const m = dau.trim().match(/^(?:số\s*)?(\d+[a-z]?(?:\/\d+[a-z]?)*)\s+(.+)$/i);
+  // Tên đường NGÀY THÁNG ("29 Tháng 3", "Đường 2 Tháng 9") giữ nguyên là tên đường — trước bị đọc thành số nhà 29 + đường "Tháng 3"
+  const laNgayThang = /^(?:đường\s+)?\d{1,2}\s+tháng\s+\d{1,2}$/i.test(dau.trim());
+  const m = laNgayThang ? null : dau.trim().match(/^(?:số\s*)?(\d+[a-z]?(?:\/\d+[a-z]?)*)\s+(.+)$/i);
   const soNha = m ? m[1] : "";
   const ten = boLoaiDuong(m ? m[2] : dau);
   if (ten.length < 3 || !tinh) return null;

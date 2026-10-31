@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import TrangPseo, { metadataPseo } from "@/components/TrangPseo";
-import { getListings, getListingsHetHan } from "@/lib/listingsDb";
+import { getListings, getListingsHetHan, getTinXetTrang } from "@/lib/listingsDb";
 import { giaiMaDanhSach, trangIndex } from "@/lib/pseo";
 
 // pSEO Template 1 — /cho-thue/<loại>/<tỉnh>[/<phường | mức giá | pháp lý | phòng ngủ>] và /cho-thue/<tỉnh>/<phường>
@@ -14,7 +14,7 @@ async function dieuKien(loai: string, duong: string[]) {
 
 // Dựng sẵn trang đã qua cổng chất lượng; trang khác dựng khi có khách vào.
 export async function generateStaticParams() {
-  const tin = await getListings().catch(() => []);
+  const tin = await getTinXetTrang(); // cổng đếm cả tin hết hạn (29/10/2026)
   return trangIndex(tin)
     .filter((p) => p.path.startsWith("/cho-thue/"))
     .map((p) => p.path.split("/").slice(2))
