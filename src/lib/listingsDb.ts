@@ -120,21 +120,8 @@ function tierHieuLuc(r: Row): Row["tier"] {
   return new Date(r.tier_expires_at).getTime() < Date.now() ? "basic" : r.tier;
 }
 
-// Ảnh đại diện khi tin chưa có ảnh (admin đăng nhanh chưa kịp upload)
-const PLACEHOLDER_IMAGE = "/images/segments/canho1.jpg";
-
-// ẢNH TẠM THEO LOẠI HÌNH — tin gốc không có ảnh nào (rất hay gặp với tin gom
-// hàng loạt) vẫn lên web được, và ảnh minh hoạ ít nhất đúng phân khúc thay vì
-// luôn là ảnh căn hộ. Chủ dự án xin được ảnh thật rồi tải lại là ảnh thật thay chỗ.
-const ANH_TAM_THEO_LOAI: { khop: RegExp; anh: string }[] = [
-  { khop: /đất nền|đất nền dự án|đất thổ|đất ở/i, anh: "/images/segments/datnen1.jpg" },
-  { khop: /đất công nghiệp|đất nông nghiệp/i, anh: "/images/segments/datcn1.jpg" },
-  { khop: /kho|nhà xưởng|kho bãi/i, anh: "/images/segments/kho1.jpg" },
-  { khop: /villa|biệt thự/i, anh: "/images/segments/villa1.jpg" },
-  { khop: /condotel/i, anh: "/images/segments/condotel1.jpg" },
-  { khop: /nhà mặt phố|shophouse|nhà phố thương mại|mặt bằng|cửa hàng|văn phòng/i, anh: "/images/segments/nhapho1.jpg" },
-  { khop: /nhà riêng|nhà trọ|phòng trọ/i, anh: "/images/segments/nhapho2.jpg" },
-];
+// Tin chưa có ảnh → để TRỐNG (chủ dự án 31/10/2026: "cấm dùng ảnh dùng chung") — trước đây gán ảnh mẫu theo loại hình
+// (canho1, datnen1, villa1…) nên nhiều tin khác nhau hiện cùng một ảnh. Thẻ / trang tin tự hiện khung xám + biểu tượng (AnhChay).
 
 // ẢNH (không video) theo thứ tự hiển thị. Tin admin ĐĂNG HỘ có details.anh_bia = ảnh hợp khung
 // 4:3 nhất trong 5 ảnh đầu (chủ dự án 09/10/2026) → đưa lên đầu. Tin khách tự đăng giữ ảnh khách chọn.
@@ -142,11 +129,6 @@ function anhTheoThuTu(r: Row): string[] {
   const ds = r.images.filter((s) => !isVideoUrl(s));
   const bia = (r.details as { anh_bia?: string } | null)?.anh_bia;
   return bia && ds.includes(bia) ? [bia, ...ds.filter((s) => s !== bia)] : ds;
-}
-
-function anhTam(loaiHinh: string | null): string {
-  const t = loaiHinh ?? "";
-  return ANH_TAM_THEO_LOAI.find((x) => x.khop.test(t))?.anh ?? PLACEHOLDER_IMAGE;
 }
 
 // Số kiểu VN: 7.2 → "7,2" · 1500 → "1.500"
@@ -302,7 +284,7 @@ function rowToListing(r: Row): Listing {
     diaGioi: { ward: r.ward ?? "", district: r.district ?? "", province: r.province ?? "" },
     type: r.type,
     // Ảnh đại diện = ẢNH đầu tiên (bỏ qua video nếu đứng trước)
-    image: asset(anhTheoThuTu(r)[0] ?? anhTam(r.type)),
+    image: anhTheoThuTu(r)[0] ? asset(anhTheoThuTu(r)[0]) : "",
     // Số ẢNH thật (không tính video) → badge "📷 n" đúng thay vì cứng "1"
     imageCount: r.images.filter((s) => !isVideoUrl(s)).length,
     // Có ít nhất 1 video → thẻ hiện nhãn "▶ Video"
@@ -586,7 +568,7 @@ function rowToDetail(r: Row): ListingFull {
   // YouTube/Vimeo thì asset() giữ nguyên.
   const videos = r.images.filter(isVideoUrl).map(asset);
   const imageOnly = anhTheoThuTu(r);
-  const imgs = imageOnly.length ? imageOnly : [anhTam(r.type)];
+  const imgs = imageOnly; // chưa có ảnh → [] (không ảnh mẫu, 31/10/2026)
   // Bộ mục theo LOẠI HÌNH, tách sẵn THÔNG TIN CHÍNH và ĐẶC ĐIỂM. Tin cho thuê
   // có thêm phần điện/nước/thời gian vào ở. Mục nào người đăng để trống thì lọc
   // bỏ luôn — trang tin không bao giờ hiện ô rỗng.

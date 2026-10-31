@@ -75,7 +75,7 @@ export default function ComparePage() {
                         <th key={l.id} className="border-b border-cvr-line p-3 align-top" style={{ width: `${72 / items.length}%` }}>
                           <div className="relative">
                             <div className="relative aspect-[4/3] overflow-hidden rounded-lg bg-cvr-surface">
-                              <Image src={asset(l.image)} alt={l.title} fill sizes="200px" className="object-cover" />
+                              {l.image && <Image src={asset(l.image)} alt={l.title} fill sizes="200px" className="object-cover" />}
                               {tier && (
                                 <span className="absolute left-1.5 top-1.5 px-1.5 py-0.5 text-[9px] font-bold uppercase text-white" style={{ backgroundColor: tier.accent }}>
                                   {tier.short}

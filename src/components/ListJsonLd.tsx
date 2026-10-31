@@ -32,7 +32,7 @@ export function ListingListJsonLd({ items, heading, path }: { items: Listing[]; 
       position: i + 1,
       url: `${SITE}${duongDanTin(l)}`,
       name: l.title,
-      image: tuyetDoi(l.image),
+      ...(l.image ? { image: tuyetDoi(l.image) } : {}),
     })),
   };
   return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }} />;
