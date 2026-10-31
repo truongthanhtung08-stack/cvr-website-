@@ -1,5 +1,4 @@
 import type { Listing, Project } from "@/lib/data";
-import { duongDanTin } from "@/lib/duongDanTin";
 
 const SITE = "https://coastalland.vn";
 
@@ -30,7 +29,7 @@ export function ListingListJsonLd({ items, heading, path }: { items: Listing[]; 
     itemListElement: items.slice(0, 20).map((l, i) => ({
       "@type": "ListItem",
       position: i + 1,
-      url: `${SITE}${duongDanTin(l)}`,
+      url: `${SITE}/bat-dong-san/${l.id}`,
       name: l.title,
       image: tuyetDoi(l.image),
     })),

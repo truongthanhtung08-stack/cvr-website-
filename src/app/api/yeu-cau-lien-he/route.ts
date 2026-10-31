@@ -3,7 +3,6 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { chuanHoaSdt, laSdtVN } from "@/lib/phone";
 import { guiThongBao, MAU_CO_NGUOI_QUAN_TAM } from "@/lib/thongBao";
 import { baoAdmin } from "@/lib/baoAdmin";
-import { duongDanTin } from "@/lib/duongDanTin";
 
 // ════════════════════════════════════════════════════════════════════════════
 // TIN HẾT HẠN — "GỬI YÊU CẦU LIÊN HỆ" (như Batdongsan, 03/10/2026)
@@ -63,7 +62,7 @@ export async function POST(req: Request) {
       {
         tieuDe: tin.title,
         dong: [`Khách: ${ten}`, `Số điện thoại: ${sdt}`, `Lúc: ${luc}`],
-        link: `https://coastalland.vn${duongDanTin(tin)}`,
+        link: `https://coastalland.vn/bat-dong-san/${tin.id}`,
         nhanLink: "Xem tin",
       },
     ]);

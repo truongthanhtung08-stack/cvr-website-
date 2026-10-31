@@ -17,7 +17,6 @@ import {
 import { layViTri, loiDinhVi, quyenDinhVi } from "@/lib/dinhVi";
 import NhacBatDinhVi from "@/components/NhacBatDinhVi";
 import TimDiaDiem from "@/components/TimDiaDiem";
-import { duongDanTin } from "@/lib/duongDanTin";
 
 export type DiemBanDo = {
   id: string;
@@ -77,7 +76,7 @@ export default function MapViewGoogle({ items, diem }: { items?: Listing[]; diem
           phu: `${it.price} · ${it.area}`,
           loc: it.location,
           image: it.image,
-          href: duongDanTin(it),
+          href: `/bat-dong-san/${it.id}`,
         };
       }),
     [diem, items],
