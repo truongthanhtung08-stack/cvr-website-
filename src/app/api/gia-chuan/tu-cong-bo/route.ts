@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { congBoTin, congBoHoiVien, docBillingLuu } from "@/lib/congBoGia";
 import { baoLoi } from "@/lib/baoLoi";
+import { SU_CO } from "@/lib/chuThongBao";
 import { homNayVn } from "@/lib/gioVn";
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -36,9 +37,9 @@ export async function GET(request: Request) {
     await baoLoi({
       noi: "tu-cong-bo-gia",
       mucDo: "nang",
-      tomTat: "Tự công bố lại giá lúc 0h bị lỗi",
+      tomTat: SU_CO.congBoGia.tomTat,
       chiTiet: hong.map(([k, v]) => `${k}: ${v}`).join(" · "),
-      hauQua: "Khuyến mãi có ngày bắt đầu / kết thúc có thể chưa áp đúng ngày.",
+      hauQua: SU_CO.congBoGia.hauQua,
       canLam: "Vào /admin/gia-chuan bấm Công bố lại.",
       khoa: `tu-cong-bo-gia:${homNayVn()}`,
     });

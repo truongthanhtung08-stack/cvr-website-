@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { chuDeEmail, NHAN_SU_CO } from "@/lib/chuThongBao";
 
 // ════════════════════════════════════════════════════════════════════════════
 // BÁO SỰ CỐ — LỖI NGUY HIỂM PHẢI GÀO LÊN
@@ -135,7 +136,6 @@ async function guiMail(khoa: string, t: SuCo): Promise<void> {
     return;
   }
 
-  const nhanMucDo = { chet: "KHẨN", nang: "Cần xử lý", nhe: "Ghi nhận" }[t.mucDo];
 
   await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -143,7 +143,7 @@ async function guiMail(khoa: string, t: SuCo): Promise<void> {
     body: JSON.stringify({
       from: process.env.RESEND_FROM || "COASTAL LAND <onboarding@resend.dev>",
       to: nhan,
-      subject: `[${nhanMucDo}] Sự cố: ${t.tomTat}`,
+      subject: chuDeEmail(t.tomTat, t.mucDo === "chet" ? "khan" : "can"),
       html: dungHtml(khoa, t),
     }),
   });
@@ -160,13 +160,13 @@ function dungHtml(khoa: string, t: SuCo): string {
 
   return `<div style="margin:0;padding:24px;background:#f5f5f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif">
   <div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:16px;border-top:4px solid ${vien};padding:28px">
-    <div style="font-size:13px;font-weight:700;letter-spacing:.12em;color:${vien}">SỰ CỐ HỆ THỐNG</div>
+    <div style="font-size:13px;font-weight:700;letter-spacing:.12em;color:${vien}">${t.mucDo === "chet" ? NHAN_SU_CO.khan.toUpperCase() : NHAN_SU_CO.canXuLy.toUpperCase()}</div>
     <h1 style="margin:12px 0 0;font-size:20px;font-weight:600;color:#1d1d1f">${thoat(t.tomTat)}</h1>
     <table style="width:100%;margin-top:18px;border-collapse:collapse;border-top:1px solid #e8e8ed">
-      ${dong("Xảy ra ở", t.noi)}
-      ${t.hauQua ? dong("Không sửa thì", t.hauQua) : ""}
-      ${t.canLam ? dong("Cần làm", t.canLam) : ""}
-      ${t.chiTiet ? dong("Máy báo", t.chiTiet.slice(0, 500)) : ""}
+      ${dong(NHAN_SU_CO.noi, t.noi)}
+      ${t.hauQua ? dong(NHAN_SU_CO.hauQua, t.hauQua) : ""}
+      ${t.canLam ? dong(NHAN_SU_CO.canLam, t.canLam) : ""}
+      ${t.chiTiet ? dong(NHAN_SU_CO.chiTiet, t.chiTiet.slice(0, 500)) : ""}
     </table>
     <p style="margin:22px 0 0;font-size:12px;line-height:1.6;color:#86868b">
       Mã gộp: ${thoat(khoa)} — cùng mã này chỉ báo tối đa 1 lần mỗi giờ.

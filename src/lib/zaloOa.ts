@@ -1,5 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { baoLoi } from "@/lib/baoLoi";
+import { SU_CO } from "@/lib/chuThongBao";
 
 // ════════════════════════════════════════════════════════════════════════════
 // ZALO OA — TỰ LÀM MỚI ACCESS TOKEN
@@ -114,9 +115,9 @@ export async function layAccessToken(epLamMoi = false): Promise<string | null> {
         noi: "zalo-oa",
         khach: true,
         mucDo: "chet",
-        tomTat: "Không làm mới được token Zalo OA — mã OTP đăng nhập đang chết",
+        tomTat: SU_CO.zaloOaMat.tomTat,
         chiTiet: JSON.stringify(kq).slice(0, 300),
-        hauQua: "Khách đăng nhập bằng số điện thoại sẽ không nhận được mã, và mọi thông báo ZNS đều hỏng.",
+        hauQua: SU_CO.zaloOaMat.hauQua,
         canLam:
           "Vào developers.zalo.me → ứng dụng liên kết OA → cấp quyền lại để lấy refresh token mới, " +
           "rồi thay ZALO_OA_REFRESH_TOKEN trên Vercel và Redeploy.",
@@ -140,9 +141,9 @@ export async function layAccessToken(epLamMoi = false): Promise<string | null> {
         noi: "zalo-oa",
         khach: true,
         mucDo: "chet",
-        tomTat: "LƯU TOKEN ZALO MỚI THẤT BẠI — refresh token cũ đã mất hiệu lực",
+        tomTat: SU_CO.zaloOaSapMat.tomTat,
         chiTiet: error.message,
-        hauQua: "Khoảng một tiếng nữa mọi tin ZNS và mã OTP đăng nhập sẽ chết.",
+        hauQua: SU_CO.zaloOaSapMat.hauQua,
         canLam: "Kiểm tra bảng bi_mat trên Supabase, rồi cấp quyền lại OA để lấy refresh token mới.",
       });
     }

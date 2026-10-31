@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { guiThongBao, maTin, MAU_TU_CHOI, type KetQuaKenh } from "@/lib/thongBao";
 import { baoLoi } from "@/lib/baoLoi";
+import { SU_CO } from "@/lib/chuThongBao";
 
 // ============================================================================
 // TỪ CHỐI TIN — GHI LÝ DO + BÁO KHÁCH
@@ -103,7 +104,7 @@ export async function POST(request: Request) {
     await baoLoi({
       noi: "tu-choi-tin",
       mucDo: "nhe",
-      tomTat: "Từ chối tin xong nhưng không báo được cho khách",
+      tomTat: SU_CO.baoKhachTuChoi.tomTat,
       chiTiet: String(e),
       canLam: "Khách vẫn đọc được lý do trong trang tin của họ — chỉ cần kiểm tra lại khoá Resend.",
     });

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import TuKiemTin from "@/components/admin/TuKiemTin";
 import { loiTinSeo } from "@/lib/kiemTinSeo";
+import { HOP_BAO } from "@/lib/chuThongBao";
 import { tenLoaiHinh } from "@/lib/filters";
 import {
   type ListingRow,
@@ -27,8 +28,8 @@ function NutGanVideo() {
     setDang(false);
     const daGan = (r.daGan ?? []) as { ma: string; title: string }[];
     const ds = daGan.map((x) => `· [${x.ma}] ${x.title}`).join("\n");
-    if (!r.ok) return window.alert(`Chưa gắn được video: ${r.loi}${ds ? `\n\nĐã gắn:\n${ds}` : ""}`);
-    window.alert(daGan.length ? `Đã gắn video cho ${daGan.length} tin, đã lên web:\n${ds}` : "Không có video mới cần gắn. Video phải để Công khai và tên có mã tin (vd dn20-2410).");
+    if (!r.ok) return window.alert(HOP_BAO.chuaGanVideo(r.loi, ds));
+    window.alert(daGan.length ? HOP_BAO.daGanVideo(daGan.length, ds) : HOP_BAO.khongVideoMoi);
     if (daGan.length) window.location.reload();
   }
   return (
@@ -114,7 +115,7 @@ export default function AdminListingsPage() {
     const { da_sua_luc: _bo, ...conLai } = r.details ?? {};
     void _bo;
     const { error } = await createClient().from("listings").update({ details: conLai }).eq("id", r.id);
-    if (error) { window.alert(`Không lưu được: ${error.message}`); return; }
+    if (error) { window.alert(HOP_BAO.chuaLuu(error.message)); return; }
     setRows((rs) => rs.map((x) => (x.id === r.id ? { ...x, details: conLai } : x)));
   }
 
@@ -129,7 +130,7 @@ export default function AdminListingsPage() {
       const tin = rows.find((x) => x.id === id);
       const loiSeo = tin ? loiTinSeo(tin) : [];
       if (loiSeo.length) {
-        window.alert(`Tin còn ${loiSeo.length} lỗi chuẩn SEO:\n· ${loiSeo.map((x) => `${x.ten} → sửa ở ${x.cho}`).join("\n· ")}\n\nBấm OK để mở tin xem. Xem xong bấm Duyệt là tin lên web.`);
+        window.alert(HOP_BAO.loiSeo(loiSeo.length, loiSeo.map((x) => `${x.ten} → sửa ở ${x.cho}`).join("\n· ")));
         window.location.assign(`/admin/tin-dang/${id}${loiSeo[0].o ? `#${loiSeo[0].o}` : ""}`);
         return;
       }
@@ -140,13 +141,13 @@ export default function AdminListingsPage() {
       });
       const j = await r.json().catch(() => ({ ok: false, message: "Máy chủ không trả lời" }));
       if (!j.ok) {
-        window.alert(`Duyệt tin THẤT BẠI — tin chưa thay đổi.\n${j.message ?? ""}`);
+        window.alert(HOP_BAO.chuaDuyet(j.message ?? "lỗi không rõ"));
         return;
       }
       // Duyệt lại tin đã sửa: giữ nguyên ngày đăng + hạn; kỳ đã qua thì tin về Hết hạn.
       if (j.duyetLai) {
         setRows((rs) => rs.map((x) => (x.id === id ? { ...x, status: j.hetHan ? "expired" : "approved" } : x)));
-        if (j.hetHan) window.alert("Nội dung đã duyệt, nhưng thời hạn hiển thị của tin đã hết — tin chuyển Hết hạn, khách bấm Đăng lại.");
+        if (j.hetHan) window.alert(HOP_BAO.hetHanSauDuyet);
         return;
       }
       setRows((rs) =>
@@ -167,10 +168,7 @@ export default function AdminListingsPage() {
       window.scrollTo({ top: 0, behavior: "smooth" });
       if (j.daTru) {
         window.alert(
-          `Đã duyệt và cho tin lên sóng.\n\n` +
-            `Đã trừ ví: ${Number(j.daTru).toLocaleString("vi-VN")}đ\n` +
-            `Số dư còn: ${Number(j.soDuMoi).toLocaleString("vi-VN")}đ\n` +
-            `Hóa đơn: ${j.hoaDon}`,
+          HOP_BAO.daLenWeb(`${Number(j.daTru).toLocaleString("vi-VN")}đ`, `${Number(j.soDuMoi).toLocaleString("vi-VN")}đ`, String(j.hoaDon)),
         );
       }
       return;
@@ -197,7 +195,7 @@ export default function AdminListingsPage() {
     const patch: Partial<ListingRow> = { status: next };
     const { error } = await supabase.from("listings").update(patch).eq("id", id);
     if (error) {
-      window.alert(`Đổi trạng thái THẤT BẠI — tin chưa thay đổi.\nLỗi: ${error.message}`);
+      window.alert(HOP_BAO.chuaDoiTrangThai(error.message));
       return;
     }
     setRows((rs) => rs.map((r) => (r.id === id ? { ...r, ...patch } : r)));
@@ -212,7 +210,7 @@ export default function AdminListingsPage() {
     );
     if (lyDo === null) return;
     if (!lyDo.trim()) {
-      window.alert("Chưa ghi lý do — tin chưa thay đổi.");
+      window.alert(HOP_BAO.chuaGhiLyDo);
       return;
     }
 
@@ -223,19 +221,17 @@ export default function AdminListingsPage() {
     });
     const j = await r.json().catch(() => ({ ok: false, message: "Máy chủ không trả lời" }));
     if (!j.ok) {
-      window.alert(`Từ chối tin THẤT BẠI — tin chưa thay đổi.\n${j.message ?? ""}`);
+      window.alert(HOP_BAO.chuaTuChoi(j.message ?? "lỗi không rõ"));
       return;
     }
     setRows((rs) => rs.map((x) => (x.id === id ? { ...x, status: "rejected" } : x)));
 
     // Nói rõ đã báo được khách chưa — gửi hỏng thì admin còn gọi điện.
-    const kenh = (j.thongBao ?? []) as { kenh: string; daGui: boolean; lyDo?: string }[];
+    const kenh = (j.thongBao ?? []) as { kenh: string; daGui: boolean; lyDo?: string; dangHo?: boolean }[];
     const hong = kenh.filter((k) => !k.daGui).map((k) => `· ${k.kenh}: ${k.lyDo ?? "không gửi được"}`);
-    window.alert(
-      "Đã từ chối tin.\n\n" +
-        (kenh.some((k) => k.daGui) ? "Đã báo cho khách." : "CHƯA báo được cho khách — cần liên hệ tay.") +
-        (hong.length ? `\n\nKênh không gửi được:\n${hong.join("\n")}` : ""),
-    );
+    // Tin đăng hộ: luật cấm nhắn tự động — không phải "chưa báo được"
+    const dangHo = kenh.some((k) => k.dangHo);
+    window.alert(HOP_BAO.daTuChoi(kenh.some((k) => k.daGui) ? "da" : dangHo ? "dangHo" : "chua", dangHo ? "" : hong.join("\n")));
   }
 
   // XOÁ = ĐƯA VÀO MỤC "ĐÃ XOÁ", có nút Khôi phục (chủ dự án 26/10/2026, migration 0066).
@@ -249,7 +245,7 @@ export default function AdminListingsPage() {
     if (!window.confirm(`Chuyển ${ds.length} tin đã chọn vào mục Đã xoá?`)) return;
     const { error } = await createClient().rpc("xoa_tin", { p_ids: ds });
     if (error) {
-      window.alert(`Xoá THẤT BẠI — chưa tin nào bị xoá.\nLỗi: ${error.message}`);
+      window.alert(HOP_BAO.chuaXoaNhieu(error.message));
       return;
     }
     setRows((rs) => rs.map((r) => (chon.has(r.id) ? { ...r, status: "deleted" } : r)));
@@ -260,7 +256,7 @@ export default function AdminListingsPage() {
     if (!window.confirm(`Chuyển tin này vào mục Đã xoá?\n\n${tieuDe}`)) return;
     const { error } = await createClient().rpc("xoa_tin", { p_ids: [id] });
     if (error) {
-      window.alert(`Xoá THẤT BẠI — tin chưa bị xoá.\nLỗi: ${error.message}`);
+      window.alert(HOP_BAO.chuaXoa(error.message));
       return;
     }
     setRows((rs) => rs.map((r) => (r.id === id ? { ...r, status: "deleted" } : r)));
@@ -272,7 +268,7 @@ export default function AdminListingsPage() {
     const supabase = createClient();
     const { error } = await supabase.rpc("khoi_phuc_tin", { p_ids: ids });
     if (error) {
-      window.alert(`Khôi phục THẤT BẠI.\nLỗi: ${error.message}`);
+      window.alert(HOP_BAO.chuaKhoiPhuc(error.message));
       return;
     }
     const { data } = await supabase.from("listings").select("*").in("id", ids);

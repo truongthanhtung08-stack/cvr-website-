@@ -6,6 +6,7 @@ import { viKhaDung, cauThieuTien } from "@/lib/viKhaDung";
 import { vnd, type BillingData } from "@/lib/billing";
 import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
 import { baoLoi } from "@/lib/baoLoi";
+import { SU_CO } from "@/lib/chuThongBao";
 
 // ============================================================================
 // MUA GÓI HỘI VIÊN — trừ ví + tạo gói + cấp voucher kỳ đầu + ghi sổ doanh thu
@@ -88,9 +89,9 @@ export async function POST(request: Request) {
       noi: "mua-hoi-vien",
       khach: true,
       mucDo: "chet",
-      tomTat: "Đã trừ tiền mua gói hội viên nhưng KHÔNG ghi được sổ doanh thu",
+      tomTat: SU_CO.doanhThuHoiVien.tomTat,
       chiTiet: `Gói ${d?.hoi_vien_id} — ${loiSo.message}`,
-      hauQua: "Tờ khai thuế thiếu một khoản thu, khách cũng không được xuất hóa đơn khoản này.",
+      hauQua: SU_CO.doanhThuHoiVien.hauQua,
       canLam: `Vào /admin/hoa-don-thue → ghi tay khoản ${vnd(tien.tongTra)} (${goi.ten} ${ky.thang} tháng).`,
       khoa: `mua-hoi-vien:doanh-thu:${d?.hoi_vien_id}`,
     });

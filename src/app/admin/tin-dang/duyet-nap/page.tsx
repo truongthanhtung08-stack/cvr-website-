@@ -8,6 +8,7 @@ import type { ListingRow } from "@/lib/listingAdmin";
 import BangKiemTinSeo from "@/components/admin/BangKiemTinSeo";
 import { directions } from "@/lib/listingSpec";
 import { loiTinSeo } from "@/lib/kiemTinSeo";
+import { HOP_BAO } from "@/lib/chuThongBao";
 
 // ============================================================================
 // ADMIN — DUYỆT TIN NẠP (luồng chủ dự án chốt 16/10/2026)
@@ -148,9 +149,9 @@ function TheDuyet({ tin, xong }: { tin: Tin; xong: (title: string) => void }) {
       .eq("id", tin.id)
       .select("id");
     setDang(false);
-    if (error) return setBao(`Lỗi: ${error.message}`);
+    if (error) return setBao(HOP_BAO.chuaLuu(error.message));
     // Hết phiên đăng nhập / không phải admin → CSDL bỏ qua lệnh mà không báo lỗi (0 dòng). Phải báo, không được coi là đã duyệt (24/10/2026).
-    if (!data?.length) return setBao("Chưa lưu được — phiên đăng nhập admin đã hết. Tải lại trang, đăng nhập lại rồi bấm lại.");
+    if (!data?.length) return setBao(HOP_BAO.hetPhien);
     if (duyet) {
       await lamMoiWeb("listings");
       xong(tieuDe.trim());

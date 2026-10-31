@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { baoLoi } from "@/lib/baoLoi";
+import { SU_CO } from "@/lib/chuThongBao";
 
 // ============================================================================
 // WEBHOOK ZALO MINI APP — khai ở Quản lý Zalo App → Open APIs → Webhook URL:
@@ -41,9 +42,9 @@ export async function POST(req: Request) {
       noi: "zalo-mini-app",
       khach: true, // khách yêu cầu xoá dữ liệu
       mucDo: "nang",
-      tomTat: "Khách rút lại sự đồng ý và yêu cầu xoá dữ liệu Zalo Mini App",
+      tomTat: SU_CO.xoaDuLieuMiniApp.tomTat,
       chiTiet: `userId Zalo ${data.userId} · appId ${data.appId}${khoa ? "" : " · (chưa cắm ZALO_MINIAPP_API_KEY — chưa xác thực chữ ký)"}`,
-      hauQua: "Đã cam kết ở /bao-mat: xoá dữ liệu gắn với tài khoản Mini App trong 30 ngày.",
+      hauQua: SU_CO.xoaDuLieuMiniApp.hauQua,
       canLam: "Tìm tài khoản đăng nhập bằng Mini App của khách này, xoá dữ liệu cá nhân theo yêu cầu, trả lời khách nếu có liên hệ.",
       khoa: `zalo-mini-app:revoke:${data.userId}`,
     });
@@ -54,11 +55,11 @@ export async function POST(req: Request) {
     await baoLoi({
       noi: "zalo-mini-app",
       mucDo: "nang",
-      tomTat: `Mini App phiên bản ${data.versionId} ${biTuChoi ? "BỊ ZALO TỪ CHỐI" : "đã được Zalo duyệt"} (trạng thái ${data.status})`,
+      tomTat: SU_CO.miniAppDuyet(String(data.versionId), biTuChoi),
       canLam: biTuChoi
         ? "Mở miniapp.zaloplatforms.com → Danh sách phiên bản / Quản lý xác thực để xem lý do, sửa rồi gửi lại."
         : "Mở miniapp.zaloplatforms.com để phát hành phiên bản.",
-      chiTiet: String(data.description ?? ""),
+      chiTiet: `Trạng thái ${data.status}. ${String(data.description ?? "")}`,
       khoa: `zalo-mini-app:review:${data.versionId}`,
     });
   }

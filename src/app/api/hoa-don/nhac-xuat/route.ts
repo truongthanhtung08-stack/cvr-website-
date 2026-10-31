@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { guiThongBao, soDienThoaiZalo } from "@/lib/thongBao";
 import { baoLoi } from "@/lib/baoLoi";
+import { SU_CO } from "@/lib/chuThongBao";
 import { vnd } from "@/lib/billing";
 import { chayCacViec } from "@/lib/tuDong/soViec";
 import { DANH_SACH_VIEC } from "@/lib/tuDong/danhSach";
@@ -144,9 +145,9 @@ export async function GET(request: Request) {
       noi: "nhac-xuat-hoa-don",
       khach: true, // quên xuất hoá đơn cho khách là vi phạm
       mucDo: "chet",
-      tomTat: `Không gửi được lời nhắc xuất ${soTo} tờ hóa đơn`,
+      tomTat: SU_CO.xuatHoaDon.tomTat(soTo),
       chiTiet: ketQua.flat().map((k) => `${k.kenh}: ${k.lyDo ?? "không rõ"}`).join(" · "),
-      hauQua: "Quên ký trong ngày thì VNPT khoá phát hành, phải gọi tổng đài xin mở.",
+      hauQua: SU_CO.xuatHoaDon.hauQua,
       canLam: "Mở /admin/hoa-don-thue ký ngay, rồi kiểm tra khoá Resend.",
     });
   }

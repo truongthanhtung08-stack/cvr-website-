@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { baoAdmin, type KhoiBao } from "@/lib/baoAdmin";
 import { baoLoi } from "@/lib/baoLoi";
+import { SU_CO, EMAIL, VIEC, kemSo } from "@/lib/chuThongBao";
 
 // ============================================================================
 // EMAIL VIỆC CẦN ADMIN XỬ LÝ — cron mỗi giờ (vercel.json "2 * * * *").
@@ -48,43 +49,43 @@ export async function GET(request: Request) {
     const tin = (tinCho.data ?? []) as { id: string; title: string | null }[];
     if (tin.length)
       khoi.push({
-        tieuDe: `${tin.length} tin mới chờ duyệt (tổng đang chờ: ${dem(tongCho.count)})`,
+        tieuDe: EMAIL.tinKhachMoi(tin.length, dem(tongCho.count)),
         dong: tin.map((t) => `${t.id.slice(0, 8).toUpperCase()} · ${ten(t.title)}`),
         link: "/admin/tin-dang",
-        nhanLink: "Mở mục Chờ duyệt",
+        nhanLink: EMAIL.moiDeDuyet,
       });
     const sua = (tinSua.data ?? []) as { id: string; title: string | null }[];
     if (sua.length)
       khoi.push({
-        tieuDe: `${sua.length} tin khách vừa sửa — chờ kiểm`,
+        tieuDe: kemSo(VIEC.tinSua, sua.length),
         dong: sua.map((t) => `${t.id.slice(0, 8).toUpperCase()} · ${ten(t.title)}`),
         link: "/admin/tin-dang",
-        nhanLink: "Mở mục Đã sửa — chờ kiểm",
+        nhanLink: EMAIL.moiDeKiem,
       });
     const da = (duAn.data ?? []) as { name: string | null }[];
-    if (da.length) khoi.push({ tieuDe: `${da.length} dự án chờ duyệt`, dong: da.map((d) => ten(d.name)), link: "/admin/du-an" });
+    if (da.length) khoi.push({ tieuDe: kemSo(VIEC.duAnKhach, da.length), dong: da.map((d) => ten(d.name)), link: "/admin/du-an" });
     const hs = (hoSo.data ?? []) as { company_name: string | null; project_name: string | null }[];
     if (hs.length)
       khoi.push({
-        tieuDe: `${hs.length} hồ sơ đăng dự án chờ duyệt`,
+        tieuDe: kemSo(VIEC.hoSoDuAn, hs.length),
         dong: hs.map((h) => `${ten(h.company_name)}${h.project_name ? ` · ${h.project_name}` : ""}`),
         link: "/admin/du-an",
       });
     const yc = (yeuCau.data ?? []) as { ten: string | null; dien_thoai: string | null; noi_dung: string | null }[];
     if (yc.length)
       khoi.push({
-        tieuDe: `${yc.length} yêu cầu khách mới`,
+        tieuDe: kemSo(VIEC.yeuCau, yc.length),
         dong: yc.map((y) => `${y.ten || "(không tên)"} · ${y.dien_thoai || "—"} · ${(y.noi_dung ?? "").slice(0, 80)}`),
         link: "/admin/yeu-cau",
       });
     // Tự kiểm tin (src/lib/kiemTin.ts) là việc nội bộ → không email nữa, hiện ở Admin → Tổng quan (chủ dự án 31/10/2026).
   } catch (e) {
-    await baoLoi({ noi: "bao-viec-admin", mucDo: "nhe", tomTat: "Quét việc cần báo admin bị lỗi", chiTiet: String(e) });
+    await baoLoi({ noi: "bao-viec-admin", mucDo: "nhe", tomTat: SU_CO.baoViec, chiTiet: String(e) });
     return NextResponse.json({ ok: false, message: String(e) }, { status: 500 });
   }
 
   if (!khoi.length) return NextResponse.json({ ok: true, guiEmail: false });
-  const chuDe = khoi.length === 1 ? khoi[0].tieuDe : `${khoi.length} việc cần xử lý`;
+  const chuDe = khoi.length === 1 ? khoi[0].tieuDe : EMAIL.nhieuViec(khoi.length);
   const daGui = await baoAdmin(chuDe, khoi);
   return NextResponse.json({ ok: true, guiEmail: daGui, viec: khoi.map((k) => k.tieuDe) });
 }

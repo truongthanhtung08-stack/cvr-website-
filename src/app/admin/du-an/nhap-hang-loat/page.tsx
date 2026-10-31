@@ -7,6 +7,7 @@ import { docDuAnTuCsv, anhTepCuaDong, type DongDuAn } from "@/lib/csvDuAn";
 import { lapKeHoach, thucHienNap, type KeHoachDuAn } from "@/lib/napDuAn";
 import { uploadImageFile } from "@/lib/uploadImage";
 import { lamMoiWeb } from "@/lib/lamMoiWeb";
+import { NAP } from "@/lib/chuThongBao";
 
 // ============================================================================
 // ADMIN — NẠP DỰ ÁN HÀNG LOẠT (Cowork, hằng tuần) → trạng thái CHỜ DUYỆT
@@ -104,7 +105,7 @@ export default function NapDuAnPage() {
       setTepAnh([]);
       setTenTep("");
     } catch (e) {
-      setKetQua(`Nạp thất bại: ${e instanceof Error ? e.message : "lỗi không rõ"}`);
+      setKetQua(NAP.napLoi(e instanceof Error ? e.message : "lỗi không rõ"));
     }
     setDangNap(false);
   }

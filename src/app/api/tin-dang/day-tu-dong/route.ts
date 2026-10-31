@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { baoLoi } from "@/lib/baoLoi";
+import { SU_CO } from "@/lib/chuThongBao";
 
 // ============================================================================
 // TỰ ĐỘNG ĐẨY TIN VÀO KHUNG GIỜ VÀNG — chạy mỗi sáng
@@ -81,9 +82,9 @@ export async function GET(request: Request) {
       noi: "day-tu-dong",
       khach: true,
       mucDo: "nang",
-      tomTat: `Tự đẩy tin: ${hong.length} tin không đẩy được`,
+      tomTat: SU_CO.tuDay.tomTat(hong.length),
       chiTiet: hong.slice(0, 10).join(" · "),
-      hauQua: "Khách đã mua lượt đẩy nhưng hôm nay tin không được đẩy.",
+      hauQua: SU_CO.tuDay.hauQua,
       canLam: "Kiểm tra hàm day_tin_bang_luot và migration 0035.",
       khoa: `day-tu-dong:${gioVn.toISOString().slice(0, 10)}`,
     });

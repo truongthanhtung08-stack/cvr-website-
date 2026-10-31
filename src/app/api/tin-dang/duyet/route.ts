@@ -8,6 +8,7 @@ import { ghepBillingLuu, bangTheoMucDich, freeDangChay, soNgayHienThi, huongKhuy
 import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
 import { guiThongBao, MAU_DUYET_TIN } from "@/lib/thongBao";
 import { baoLoi } from "@/lib/baoLoi";
+import { SU_CO } from "@/lib/chuThongBao";
 import type { TierId } from "@/lib/packages";
 import { homNayVn } from "@/lib/gioVn";
 import { loiTinSeo } from "@/lib/kiemTinSeo";
@@ -448,9 +449,9 @@ export async function POST(request: Request) {
       noi: "duyet-tin",
       khach: true,
       mucDo: "chet",
-      tomTat: "Đã trừ tiền khách nhưng KHÔNG ghi được sổ doanh thu",
+      tomTat: SU_CO.doanhThuDuyetTin.tomTat,
       chiTiet: `Tin ${id} — ${loiSo.message}`,
-      hauQua: "Tờ khai thuế quý này thiếu một khoản thu, và khách sẽ không được xuất hóa đơn.",
+      hauQua: SU_CO.doanhThuDuyetTin.hauQua,
       canLam: `Vào /admin/hoa-don-thue → ghi tay khoản ${vnd(tien.tongTra)} của tin "${tin.title}".`,
       khoa: `duyet-tin:doanh-thu:${id}`, // mỗi tin một cảnh báo riêng, không nuốt của nhau
     });
@@ -563,11 +564,9 @@ async function baoKhach(
         noi: "duyet-tin",
         khach: true,
         mucDo: "nang",
-        tomTat: "Duyệt tin xong nhưng không gửi được thông báo cho người đăng",
+        tomTat: SU_CO.baoKhachDuyet.tomTat,
         chiTiet,
-        hauQua: tinBao.daTru
-          ? "Khách bị trừ tiền mà không biết tin đã lên sóng."
-          : "Người đăng không biết tin đã lên web (tin miễn phí, không trừ tiền).",
+        hauQua: SU_CO.baoKhachDuyet.hauQua(tinBao.daTru),
         canLam:
           `Tin "${tinBao.title ?? ""}" /bat-dong-san/${tinBao.id} — ` +
           (loiZbs
@@ -582,9 +581,9 @@ async function baoKhach(
       noi: "duyet-tin",
       khach: true,
       mucDo: "nang",
-      tomTat: "Gửi thông báo duyệt tin cho khách bị lỗi",
+      tomTat: SU_CO.baoKhachDuyet.tomTat,
       chiTiet: String(e),
-      hauQua: "Khách bị trừ tiền mà không biết tin đã lên sóng.",
+      hauQua: SU_CO.baoKhachDuyet.hauQua(true),
       canLam: "Liên hệ khách bằng tay, rồi xem lại khoá Resend / Zalo.",
     });
     return [];

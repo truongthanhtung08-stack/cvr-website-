@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { BILLING_DEFAULT, chuanHoaCapHoiVien, vnd, type BillingData, type MemberLevel } from "@/lib/billing";
 import { guiThongBao, MAU_NAP_TIEN } from "@/lib/thongBao";
 import { baoLoi } from "@/lib/baoLoi";
+import { SU_CO } from "@/lib/chuThongBao";
 import { revalidateTag } from "next/cache";
 import { xuLyUpCho } from "@/lib/upTin";
 
@@ -117,9 +118,9 @@ export async function POST(req: Request) {
         noi: "payos-webhook",
         khach: true,
         mucDo: "chet",
-        tomTat: "Tiền đã về nhưng KHÔNG biết của khách nào — ví chưa được cộng",
+        tomTat: SU_CO.payosKhongRoDon.tomTat,
         chiTiet: `Mã đơn PayOS ${orderCode}, số tiền ${body.data.amount ?? "?"}`,
-        hauQua: "Khách mất tiền mà ví vẫn bằng 0.",
+        hauQua: SU_CO.payosKhongRoDon.hauQua,
         canLam: `Mở /admin/thanh-toan, tìm mã đơn ${orderCode}, đối chiếu sao kê rồi cộng ví tay cho khách.`,
         khoa: `payos:mat-don:${orderCode}`,
       });
@@ -223,9 +224,9 @@ export async function POST(req: Request) {
         noi: "payos-webhook",
         khach: true,
         mucDo: "chet",
-        tomTat: "Đơn đã ghi ĐÃ THANH TOÁN nhưng cộng ví cho khách thất bại",
+        tomTat: SU_CO.payosCongVi.tomTat,
         chiTiet: `Đơn ${don.id} — ${loiVi.message}`,
-        hauQua: "Khách đã trả tiền mà số dư không tăng.",
+        hauQua: SU_CO.payosCongVi.hauQua,
         canLam: `Kiểm tra hồ sơ khách rồi cộng tay ${vnd(soTien)} vào ví, hoặc chờ PayOS gọi lại.`,
         khoa: `payos:cong-vi:${don.id}`,
       });

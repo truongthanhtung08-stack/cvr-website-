@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { ghepBillingLuu, bangTheoMucDich, huongKhuyenMai, thanhVienMoi, chonKhuyenMai, laChuThat, quotePrice, vnd, type BillingData } from "@/lib/billing";
 import { tachThue } from "@/lib/thue";
 import { baoLoi } from "@/lib/baoLoi";
+import { SU_CO } from "@/lib/chuThongBao";
 import { viKhaDung, cauThieuTien } from "@/lib/viKhaDung";
 import { guiThongBao, MAU_DA_NHAN_TIN, maTin } from "@/lib/thongBao";
 import type { TierId } from "@/lib/packages";
@@ -164,9 +165,9 @@ export async function xuLyUpCho(admin: SupabaseClient, userId: string): Promise<
       noi: "up-tin-cho-nap",
       khach: true,
       mucDo: "nang",
-      tomTat: "Tự gửi đăng lại tin sau khi nạp tiền bị lỗi",
+      tomTat: SU_CO.guiDuyetSauNap.tomTat,
       chiTiet: String(e),
-      hauQua: "Khách đã nạp tiền nhưng tin chưa được gửi đăng lại.",
+      hauQua: SU_CO.guiDuyetSauNap.hauQua,
       canLam: "Vào /admin kiểm bảng up_cho của khách, gửi đăng lại giúp khách.",
       khoa: `up-cho:${userId}`,
     }).catch(() => {});

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { PageHeader, Panel } from "@/components/Ui";
 import { loiTinSeo } from "@/lib/kiemTinSeo";
+import { VIEC, KHOI, NHAN_SU_CO, HOP_BAO } from "@/lib/chuThongBao";
 
 type Stats = {
   total: number; newWeek: number; agents: number;
@@ -91,13 +92,13 @@ export default function AdminDashboard() {
   // Nay việc nào đang chờ thì hiện thành DÒNG BẤM ĐƯỢC, đi thẳng tới nơi xử lý.
   // LUẬT: mọi tin đăng và mọi dự án đều phải được quản trị viên duyệt mới lên web.
   const viec = [
-    { n: (stats?.tinPending ?? 0) - (stats?.tinNap ?? 0), chu: "tin khách đăng chờ duyệt", href: "/admin/tin-dang?trang-thai=pending" },
-    { n: stats?.tinNap ?? 0, chu: "tin nạp hàng loạt chờ duyệt", href: "/admin/tin-dang/duyet-nap" },
-    { n: loiTuKiem, chu: "lỗi Tự kiểm tin", href: "/admin/tin-dang" },
-    { n: chuaChuan?.length ?? 0, chu: "tin chưa đạt chuẩn SEO", href: "#tin-chua-chuan" },
-    { n: stats?.duAnPending ?? 0, chu: "dự án chờ duyệt", href: "/admin/du-an" },
-    { n: stats?.yeuCauMoi ?? 0, chu: "yêu cầu khách hàng mới", href: "/admin/yeu-cau" },
-    { n: stats?.khachChoDuyet ?? 0, chu: "khách hàng chờ duyệt", href: "/admin/khach-hang" },
+    { n: (stats?.tinPending ?? 0) - (stats?.tinNap ?? 0), chu: VIEC.tinKhach, href: "/admin/tin-dang?trang-thai=pending" },
+    { n: stats?.tinNap ?? 0, chu: VIEC.tinNap, href: "/admin/tin-dang/duyet-nap" },
+    { n: loiTuKiem, chu: VIEC.tuKiem, href: "/admin/tin-dang" },
+    { n: chuaChuan?.length ?? 0, chu: VIEC.chuaChuanSeo, href: "#tin-chua-chuan" },
+    { n: stats?.duAnPending ?? 0, chu: VIEC.duAn, href: "/admin/du-an" },
+    { n: stats?.yeuCauMoi ?? 0, chu: VIEC.yeuCau, href: "/admin/yeu-cau" },
+    { n: stats?.khachChoDuyet ?? 0, chu: VIEC.taiKhoan, href: "/admin/khach-hang" },
   ].filter((v) => v.n > 0);
 
   return (
@@ -118,7 +119,7 @@ export default function AdminDashboard() {
         {!stats ? (
           <p className="text-sm text-cvr-muted">Đang tải…</p>
         ) : viec.length === 0 ? (
-          <p className="text-sm text-cvr-muted">Không còn việc nào chờ xử lý.</p>
+          <p className="text-sm text-cvr-muted">{VIEC.khongCon}</p>
         ) : (
           <div className="space-y-2">
             {viec.map((v) => (
@@ -131,7 +132,7 @@ export default function AdminDashboard() {
                   {v.n}
                 </span>
                 <span className="flex-1 text-sm font-medium text-cvr-ink">{v.chu}</span>
-                <span className="text-sm text-cvr-muted">Xử lý →</span>
+                <span className="text-sm text-cvr-muted">{VIEC.xuLy}</span>
               </Link>
             ))}
           </div>
@@ -228,12 +229,12 @@ function SuCoBang() {
       .eq("id", id)
       .select("id");
     if (error) {
-      window.alert(`Không đánh dấu được: ${error.message}`);
+      window.alert(HOP_BAO.chuaLuu(error.message));
       return;
     }
     // Hết phiên đăng nhập / không phải admin → CSDL bỏ qua lệnh mà không báo lỗi (0 dòng): không giấu thẻ khi chưa lưu
     if (!data?.length) {
-      window.alert("Chưa lưu được — phiên đăng nhập admin đã hết. Tải lại trang, đăng nhập lại rồi bấm lại.");
+      window.alert(HOP_BAO.hetPhien);
       return;
     }
     setDs((rs) => rs.filter((r) => r.id !== id));
@@ -245,29 +246,29 @@ function SuCoBang() {
   return (
     <div className="mt-6 rounded-2xl border border-red-300 bg-red-50/70 p-5 shadow-sm sm:p-6">
       <h2 className="text-base font-semibold text-red-900">
-        Sự cố hệ thống · {tong} việc chưa xử lý
+        {KHOI.suCo(tong)}
       </h2>
       <div className="mt-4 space-y-3">
         {ds.map((s) => (
           <div key={s.id} className="rounded-xl border border-red-200 bg-white p-4">
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <p className="font-semibold text-cvr-ink">
-                {s.muc_do === "chet" && <span className="mr-2 text-red-700">KHẨN</span>}
+                {s.muc_do === "chet" && <span className="mr-2 text-red-700">{NHAN_SU_CO.khan}</span>}
                 {s.tom_tat}
               </p>
               <span className="text-xs text-cvr-faint">
                 {new Date(s.xay_ra_luc).toLocaleString("vi-VN")} · {s.noi}
               </span>
             </div>
-            {s.hau_qua && <p className="mt-1.5 text-sm text-red-800">Không sửa thì: {s.hau_qua}</p>}
+            {s.hau_qua && <p className="mt-1.5 text-sm text-red-800">{NHAN_SU_CO.hauQua}: {s.hau_qua}</p>}
             {s.can_lam && (
               <p className="mt-1 text-sm text-cvr-body">
-                Cần làm:{" "}
+                {NHAN_SU_CO.canLam}:{" "}
                 {/* Đường dẫn tin trong câu → bấm mở thẳng tin (chủ dự án 31/10/2026) */}
                 {s.can_lam.split(/(\/bat-dong-san\/[0-9a-f-]{36})/).map((doan, i) =>
                   i % 2 ? (
                     <Link key={i} href={doan} target="_blank" className="font-medium text-cvr-ink underline">
-                      Mở tin
+                      {NHAN_SU_CO.moTin}
                     </Link>
                   ) : (
                     doan
@@ -276,14 +277,14 @@ function SuCoBang() {
               </p>
             )}
             {s.chi_tiet && (
-              <p className="mt-1 break-words text-xs text-cvr-faint">Máy báo: {s.chi_tiet}</p>
+              <p className="mt-1 break-words text-xs text-cvr-faint">{NHAN_SU_CO.chiTiet}: {s.chi_tiet}</p>
             )}
             <button
               type="button"
               onClick={() => xong(s.id)}
               className="mt-3 rounded-lg border border-cvr-line px-3 py-1.5 text-sm font-medium text-cvr-body transition hover:border-cvr-ink hover:text-cvr-ink"
             >
-              Đã xử lý
+              {NHAN_SU_CO.xong}
             </button>
           </div>
         ))}
@@ -296,7 +297,7 @@ function SuCoBang() {
 function TinChuaChuan({ ds }: { ds: TinLoi[] | null }) {
   if (!ds || ds.length === 0) return null;
   return (
-    <Panel id="tin-chua-chuan" title={`Tin chưa đạt chuẩn SEO · ${ds.length} tin`} className="mt-4">
+    <Panel id="tin-chua-chuan" title={KHOI.chuaChuanSeo(ds.length)} className="mt-4">
       <div className="space-y-2">
         {ds.map((r) => (
           <Link key={r.id} href={`/admin/tin-dang/${r.id}`} className="block rounded-xl border border-cvr-line px-4 py-3 transition hover:border-cvr-blue hover:shadow-lux">
@@ -370,7 +371,7 @@ function MachTuDong() {
     <div className={`mt-6 rounded-2xl border p-5 shadow-sm sm:p-6 ${vien}`}>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-base font-semibold text-cvr-ink">
-          Máy tự làm việc · {lanCuoi.length - hong.length}/{lanCuoi.length} việc xong
+          {KHOI.tuDong(lanCuoi.length - hong.length, lanCuoi.length)}
         </h2>
         <span className="text-xs text-cvr-faint">
           Lần gần nhất: {new Date(moiNhat).toLocaleString("vi-VN")}
@@ -379,8 +380,7 @@ function MachTuDong() {
 
       {imLang && (
         <p className="mt-2 text-sm font-medium text-amber-900">
-          Đã hơn 36 giờ không chạy — nhiều khả năng lịch tự động đã ngừng. Kiểm tra
-          Vercel → Settings → Cron Jobs, và biến CRON_SECRET.
+          {KHOI.tuDongNgung}
         </p>
       )}
 

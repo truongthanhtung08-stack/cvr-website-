@@ -45,6 +45,7 @@ import { freeDangChay, soAnhToiDa, soVideoToiDa } from "@/lib/billing";
 import { isVideoUrl } from "@/lib/media";
 import { useBilling } from "@/lib/useBilling";
 import type { TierId } from "@/lib/packages";
+import { NAP } from "@/lib/chuThongBao";
 
 // Lấy lại TÊN TỆP GỐC từ một link trong kho ảnh: kho lưu dạng
 // "<mốc thời gian>-<số ngẫu nhiên>-<tên tệp>" nên bỏ hai cụm đầu là ra tên gốc.
@@ -383,7 +384,7 @@ export default function NhapHangLoatPage() {
           }));
         const { error } = await supabase.from("listings").insert(lo);
         if (error) {
-          setKetQua(`Đã đăng ${xong} tin thì gặp lỗi: ${error.message}`);
+          setKetQua(NAP.dangLoiGiuaChung(xong, error.message));
           setDangGui(false);
           return;
         }
@@ -426,7 +427,7 @@ export default function NhapHangLoatPage() {
           .update({ ...noiDung, images: gop, bumped_at: now })
           .eq("id", cu.id);
         if (error) {
-          setKetQua(`Đã đăng ${xong} tin, cập nhật ${capNhat} tin thì gặp lỗi: ${error.message}`);
+          setKetQua(NAP.dangLoiGiuaChungCapNhat(xong, capNhat, error.message));
           setDangGui(false);
           return;
         }
@@ -468,7 +469,7 @@ export default function NhapHangLoatPage() {
       setTenFile("");
       setAnhDaTai([]);
     } catch {
-      setKetQua("Không kết nối được cơ sở dữ liệu.");
+      setKetQua(NAP.khongKetNoi);
     }
     setDangGui(false);
   }
@@ -661,8 +662,7 @@ export default function NhapHangLoatPage() {
           {maDoiLap.length > 0 && (
             <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
               <p className="text-sm font-semibold text-blue-800">
-                {maDoiLap.length} mã tin trong file trùng mã của đợt ngày khác — vẫn đăng thành
-                <strong> tin mới</strong>, không đụng vào tin cũ:
+                {NAP.maTrungDotKhac(maDoiLap.length)}
               </p>
               <ul className="mt-2 space-y-1 text-sm text-blue-800">
                 {maDoiLap.map((m) => (
@@ -679,7 +679,7 @@ export default function NhapHangLoatPage() {
 
           {sai.length > 0 && (
             <div className="rounded-xl border border-red-200 bg-red-50 p-4">
-              <p className="text-sm font-semibold text-red-700">Các dòng cần sửa trong file:</p>
+              <p className="text-sm font-semibold text-red-700">{NAP.dongCanSua}</p>
               <ul className="mt-2 space-y-1 text-sm text-red-700">
                 {sai.map((r) => (
                   <li key={r.dong}>
@@ -692,7 +692,7 @@ export default function NhapHangLoatPage() {
 
           {cbao.length > 0 && (
             <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
-              <p className="text-sm font-semibold text-amber-800">Chưa đạt chuẩn SEO — vẫn đăng được:</p>
+              <p className="text-sm font-semibold text-amber-800">{NAP.chuaChuanSeo}</p>
               <ul className="mt-2 space-y-1 text-sm text-amber-800">
                 {cbao.map((r) => (
                   <li key={r.dong}>

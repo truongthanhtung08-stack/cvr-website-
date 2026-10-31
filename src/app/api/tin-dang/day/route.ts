@@ -7,6 +7,7 @@ import { viKhaDung, cauThieuTien } from "@/lib/viKhaDung";
 import { ghepBillingLuu, bangTheoMucDich, bangUp, COT_UP, giaDayTin, vnd, type BillingData } from "@/lib/billing";
 import { tachThue, THUE_SUAT_GTGT } from "@/lib/thue";
 import { baoLoi } from "@/lib/baoLoi";
+import { SU_CO } from "@/lib/chuThongBao";
 import { getTier, type TierId } from "@/lib/packages";
 import { homNayVn } from "@/lib/gioVn";
 
@@ -160,9 +161,9 @@ export async function POST(request: Request) {
       noi: "day-tin",
       khach: true,
       mucDo: "chet",
-      tomTat: "Đã trừ tiền đẩy tin nhưng KHÔNG ghi được sổ doanh thu",
+      tomTat: SU_CO.doanhThuDayTin.tomTat,
       chiTiet: `Tin ${id} — ${loiSo.message}`,
-      hauQua: "Tờ khai thuế thiếu một khoản thu, khách cũng không được xuất hóa đơn khoản này.",
+      hauQua: SU_CO.doanhThuDayTin.hauQua,
       canLam: `Vào /admin/hoa-don-thue → ghi tay khoản ${vnd(tien.tongTra)} (đẩy tin "${tin.title}").`,
       khoa: `day-tin:doanh-thu:${id}:${homNayVn()}`,
     });
