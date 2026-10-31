@@ -295,7 +295,8 @@ function rowToListing(r: Row): Listing {
         // Số nhà + tên đường KHÁCH CHO HIỆN (ô "Địa chỉ chi tiết") — dòng địa chỉ trên thẻ ghép trước hệ mới (20/10/2026)
         ...(r.details?.addressDetail?.trim() ? { diaChiSo: r.details.addressDetail.trim() } : {}),
         // Lọc/tìm khu vực dò trên chuỗi này để tin không mất hút khi đổi cách gọi.
-        diaChiTim: [moi, cu, goc].filter(Boolean).join(" · "),
+        // Địa chỉ cũ chỉ tới cấp quận ("Nha Trang, Khánh Hòa") → để trống ô phường, bộ lọc so đúng cấp (coDonVi) — 31/10/2026
+        diaChiTim: [moi, cu && cu.split(",").length === 2 ? `, ${cu}` : cu, goc].filter(Boolean).join(" · "),
       };
     })(),
     diaGioi: { ward: r.ward ?? "", district: r.district ?? "", province: r.province ?? "" },

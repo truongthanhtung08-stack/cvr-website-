@@ -7,7 +7,7 @@
 // ============================================================================
 
 import { loiTinSeo, type TinKiem } from "@/lib/kiemTinSeo";
-import { saleTypeGroups, rentTypeGroups } from "@/lib/filters";
+import { saleTypeGroups, rentTypeGroups, loaiHinhTheoLoaiCon } from "@/lib/filters";
 // Máy KHÔNG suy ngược được phường cũ khi một phường mới gộp nhiều phường cũ —
 // dùng để báo vàng khi file thiếu ba cột địa chỉ hệ cũ.
 import { chuanHoaDiaChiCu } from "@/lib/diaChiHaiHe";
@@ -405,7 +405,11 @@ function docMotDong(header: string[], cells: string[], soDong: number): ParsedRo
   if (!loaiHinh) loi.push("Thiếu loại hình");
   else if (!dsLoai.some((x) => chuanHoa(x) === chuanHoa(loaiHinh)))
     loi.push(`loai_hinh "${loaiHinh}" không có trong danh mục ${mucDich === "thue" ? "cho thuê" : "mua bán"}`);
-  const loaiHinhChuan = dsLoai.find((x) => chuanHoa(x) === chuanHoa(loaiHinh)) ?? loaiHinh;
+  const loaiHinhGhi = dsLoai.find((x) => chuanHoa(x) === chuanHoa(loaiHinh)) ?? loaiHinh;
+  // Loại con thuộc loại hình anh em cùng mục cha → theo loại con (loaiHinhTheoLoaiCon — một luật với lúc đọc tin, 31/10/2026)
+  const theoCon = loaiHinhTheoLoaiCon(loaiHinhGhi, mucDich, chuanLoaiCon(lay(COT.loaiCanHo) || lay(COT.loaiDat)));
+  if (theoCon) canhBao.push(`loai_hinh "${loaiHinhGhi}" nhưng loại con "${theoCon.loaiCon || loaiHinhGhi}" thuộc loại hình "${theoCon.type}" — đã đổi sang "${theoCon.type}"`);
+  const loaiHinhChuan = theoCon?.type ?? loaiHinhGhi;
   // LOẠI CON BẮT BUỘC cho căn hộ, đất (chủ dự án 29/10/2026) — chỉ áp đăng tin hàng loạt, form đăng tin giữ nguyên
   const oLoai = fieldsFor(loaiHinhChuan, mucDich).map((f) => f.key);
   if (oLoai.includes("loaiCanho") && !lay(COT.loaiCanHo).trim()) loi.push("Thiếu loai_can_ho — căn hộ phải ghi loại con đúng tin gốc (vd Chung cư thương mại, Căn hộ cao cấp)");

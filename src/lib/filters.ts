@@ -2,8 +2,8 @@
 // 👉 Thêm/bớt loại hình hoặc mức giá tại đây — toàn bộ bộ lọc tự cập nhật.
 
 import { tierRank } from "./packages";
-import { tenTinhTuongDuong, chuanTen, chuanTenCap } from "./locations";
-import { dungODienTichXayDung, dienTichSanThat } from "./listingSpec";
+import { tenTinhTuongDuong, chuanTen } from "./locations";
+import { dungODienTichXayDung, dienTichSanThat, oLoaiCon } from "./listingSpec";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // LOẠI HÌNH (sản phẩm) PHÂN THEO MỤC ĐÍCH — chuẩn Brief + Kế hoạch V3.
@@ -59,6 +59,22 @@ export function lapCha(v: string | null | undefined, type: string | null | undef
   const cha = new Set(normalizeVi(nhomCuaLoaiHinh(type, purpose)).split(/[^a-z0-9]+/).filter(Boolean));
   const chu = normalizeVi(v ?? "").split(/[^a-z0-9]+/).filter(Boolean);
   return chu.length > 0 && chu.every((w) => cha.has(w));
+}
+
+// LOẠI CON QUYẾT ĐỊNH LOẠI HÌNH trong cùng mục cha (cây cha – con, 31/10/2026). Loại con không có trong danh sách của loại hình đang
+// ghi mà là tên / loại con của ĐÚNG MỘT loại hình anh em → trả loại hình đó + tên loại con chuẩn của nó; không thì null (giữ nguyên).
+// Gốc lỗi: cây đổi 30/10 ("Căn hộ dịch vụ" tách thành loại hình riêng) mà tin cũ còn "Căn hộ · Căn hộ dịch vụ"; tệp nạp ghi
+// "Chung cư" cho căn Penthouse, Studio (loại con của "Căn hộ"). Nạp hàng loạt và đọc tin cùng dùng hàm này.
+export function loaiHinhTheoLoaiCon(type: string, purpose: string | null | undefined, loaiCon: string | null | undefined): { type: string; loaiCon: string } | null {
+  const v = (loaiCon ?? "").trim().toLowerCase();
+  if (!v) return null;
+  const md = purpose === "thue" ? "thue" : "ban";
+  const coTrong = (t: string) => oLoaiCon(t, md)?.options?.find((x) => x.toLowerCase() === v);
+  if (coTrong(type)) return null;
+  const nhom = typeGroupsFor(md).find((g) => g.items.includes(type));
+  const anhEm = (nhom?.items ?? []).filter((t) => t !== type && (t.toLowerCase() === v || coTrong(t)));
+  if (anhEm.length !== 1) return null;
+  return { type: anhEm[0], loaiCon: coTrong(anhEm[0]) ?? "" };
 }
 
 // Chọn bộ danh mục theo mục đích (dùng cho FilterBar trên từng trang)
@@ -395,15 +411,20 @@ export function matchType(itemType: string, option: string): boolean {
   return !!b && (a === b || a.startsWith(b + " "));
 }
 
-// Chuỗi địa chỉ ("Phường Hội An, Đà Nẵng · Minh An, Hội An, Quảng Nam") → mảng tên
-// riêng đã bỏ dấu, bỏ tiền tố cấp, để so cho khớp giữa hai hệ và hai lối viết.
-function tachDiaChi(s: string): string[] {
-  return (s || "").split(/[,·]/).map((x) => chuanTen(x)).filter(Boolean);
-}
-
-// Như trên nhưng GIỮ cấp hành chính — để phân biệt huyện/thành phố trùng tên tỉnh.
-function tachDiaChiCap(s: string): string[] {
-  return (s || "").split(/[,·]/).map((x) => chuanTenCap(x)).filter(Boolean);
+// Địa chỉ có ĐÚNG đơn vị hành chính này không — một luật cho bộ lọc, trang danh sách, tìm kiếm (31/10/2026).
+// So TRỌN TÊN (bỏ dấu, bỏ tiền tố cấp), không "chứa chữ": "Nha Trang" từng ra cả "Bắc Nha Trang", "Huế" ra phường cũ "Khuê Trung".
+// So ĐÚNG CẤP khi có cấp: phường với ô phường, quận với ô quận, tỉnh với ô tỉnh của từng địa chỉ (mới · cũ · gốc, cách nhau "·") —
+// phường mới "Nha Trang" trùng tên thành phố Nha Trang cũ, "TP. Quảng Ngãi" trùng tên tỉnh. Không ghi cấp = khớp ô nào cũng được.
+export function coDonVi(diaChi: string, ten: string, cap?: "tinh" | "quan" | "phuong"): boolean {
+  const t = chuanTen(ten);
+  if (!t) return false;
+  return (diaChi || "").split("·").some((dc) => {
+    const o = dc.split(",").map((x) => chuanTen(x)); // giữ ô trống: ", Quận, Tỉnh" = không có phường
+    if (!cap) return o.includes(t);
+    if (cap === "tinh") return o[o.length - 1] === t;
+    if (cap === "quan") return o.length >= 3 && o[o.length - 2] === t;
+    return o.length >= 2 && o[0] === t;
+  });
 }
 
 type FilterableListing = {
@@ -444,26 +465,10 @@ export function applyFilters<T extends FilterableListing>(items: T[], f: Filters
       // gửi "TP. Quảng Ngãi" mà tin lưu "Quảng Ngãi" (hoặc "Thành phố Quảng Ngãi")
       // thì so thô là trượt, người dùng lọc xong thấy trống dù tin có thật.
       const noi = item.diaChiTim ?? item.location;
-      const phan = tachDiaChi(noi);        // tên riêng, đã bỏ tiền tố cấp
-      const phanCap = tachDiaChiCap(noi);  // giữ cấp: "tp. quang ngai"
-      const coTen = (ten: string) => {
-        const t = chuanTen(ten);
-        return !!t && phan.some((x) => x === t || x.includes(t));
-      };
-      const inArea = f.locations.some((l) => {
-        if (!tenTinhTuongDuong(l.province).some(coTen)) return false;
-        // QUẬN/HUYỆN TRÙNG TÊN TỈNH ("TP. Quảng Ngãi" trong tỉnh "Quảng Ngãi"):
-        // bỏ cấp đi thì mọi tin trong tỉnh đều khớp, lọc thành vô nghĩa. Nên với
-        // tên trùng tên tỉnh thì BẮT BUỘC khớp cả cấp.
-        const tenTinh = new Set(tenTinhTuongDuong(l.province).map(chuanTen));
-        const khopCap = (ten: string) => {
-          const coCap = chuanTenCap(ten);
-          if (phanCap.some((x) => x === coCap)) return true;
-          const khongCap = chuanTen(ten);
-          return !tenTinh.has(khongCap) && coTen(ten);
-        };
-        return (!l.district || khopCap(l.district)) && (!l.ward || khopCap(l.ward));
-      });
+      const inArea = f.locations.some((l) =>
+        tenTinhTuongDuong(l.province).some((t) => coDonVi(noi, t, "tinh")) &&
+        (!l.district || coDonVi(noi, l.district, "quan")) &&
+        (!l.ward || coDonVi(noi, l.ward, "phuong")));
       if (!inArea) return false;
     }
     // DỰ ÁN: khớp TRƯỜNG "Dự án" của tin (mã hoặc tên, bỏ dấu + bỏ khoảng trắng — "goldenbay" = "golden bay"), hoặc tên dự án

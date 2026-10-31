@@ -13,7 +13,7 @@
 // khớp để nơi hiển thị BÔI ĐẬM (xem components/Highlight.tsx).
 // ============================================================================
 
-import { applyFilters, emptyFilters, normalizeVi, type Filters } from "@/lib/filters";
+import { applyFilters, coDonVi, emptyFilters, normalizeVi, type Filters } from "@/lib/filters";
 import { provinces, newProvinceOf } from "@/lib/locations";
 // Tỉnh khách nói (có thể là tên CŨ: "hội an" → Quảng Nam) có chứa tỉnh của nơi tìm được (tên MỚI: Đà Nẵng) không
 const cungTinh = (tinh: string[], p: string) => tinh.some((t) => t === p || newProvinceOf(t) === p);
@@ -554,9 +554,8 @@ export function smartSearch<T extends Searchable>(items: T[], raw: string): { hi
     // 2b) Địa giới SÂU (phường/quận bóc được từ câu) — chấm riêng, ăn điểm cao
     //     hơn tỉnh vì cụ thể hơn. Có nó thì "Đất nền Hoà Quý" mới đẩy đúng tin ở
     //     Hoà Quý lên trước tin cùng Đà Nẵng nhưng khác phường.
-    const nDiaChi = normalizeVi(item.location);
     const tenSau = parsed.place?.ward ?? parsed.place?.district ?? null;
-    const dungDiaGioiSau = tenSau != null && nDiaChi.includes(normalizeVi(tenSau));
+    const dungDiaGioiSau = tenSau != null && coDonVi(item.location, tenSau);
     if (tenSau) {
       tong++;
       if (dungDiaGioiSau) { dat++; matched.push(tenSau); }
