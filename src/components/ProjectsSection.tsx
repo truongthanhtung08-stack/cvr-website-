@@ -12,6 +12,8 @@ import AnhChay from "@/components/AnhChay";
 import { anhNho } from "@/lib/asset";
 import { sortProjectsByTier, ExpandToggle } from "@/components/ProjectSlider";
 import { useHomeSection } from "@/components/HomeExpand";
+import NhanTinhTrang, { capVip } from "@/components/NhanTinhTrang";
+import { giaTriThat, loaiHinhThe } from "@/lib/truongDuAn";
 
 const PER_SLIDE = 4; // 1 hàng × 4 dự án mỗi slide (số slide KHÔNG giới hạn)
 
@@ -73,6 +75,7 @@ export default function ProjectsSection({ projects, articles = [] }: { projects:
 
         {/* ── MOBILE (< 640px): lướt ngang TỪNG thẻ dự án (như "BĐS dành cho bạn"),
             ló mép thẻ sau. ── */}
+        {/* THẺ TRANG CHỦ ĐỒNG NHẤT (chủ dự án 31/10/2026): ảnh 16:9, chữ 13 px, MỖI THÔNG TIN MỘT DÒNG, dài thì cắt "…" → mọi thẻ cao bằng nhau */}
         <div className="sm:hidden">
           {/* Dải lướt ngang trên điện thoại: TỰ CHẠY từng thẻ; chạm là dừng hẳn. */}
           <div
@@ -82,18 +85,30 @@ export default function ProjectsSection({ projects, articles = [] }: { projects:
           >
             {homeProjects.map((p) => (
               <Link key={p.slug} href={`/du-an/${p.slug}`} className="flex w-[90%] shrink-0 snap-start flex-col overflow-hidden rounded-none bg-white shadow-lux">
-                <div className="relative aspect-[3/2] w-full overflow-hidden">
+                <div className="relative aspect-[16/9] w-full overflow-hidden">
                   <AnhChay images={[p.image, ...(p.photos ?? [])]} alt={p.name} sizes="90vw" chay={false} />
-                  <span className="absolute left-2 top-2 rounded-full bg-white/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.04em] text-cvr-ink shadow-[0_2px_10px_rgba(0,0,0,0.18)] ring-1 ring-white/60 backdrop-blur-md">{p.status}</span>
+                  <NhanTinhTrang tier={p.tier} tinhTrang={giaTriThat(p.status)} />
                 </div>
                 <div className="flex flex-1 flex-col p-4">
-                  <h3 className="clamp-2 min-h-[3em] font-semibold leading-[1.5] text-cvr-ink">{p.name}</h3>
-                  <p className="mt-1 flex items-center gap-1 text-xs text-cvr-muted">
+                  <h3 title={p.name} className="truncate font-semibold leading-[1.5] text-cvr-ink">{p.name}</h3>
+                  <p className="mt-1 flex min-w-0 items-center gap-1 text-[13px] text-cvr-muted">
                     <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                    {p.location}
+                    {/* Rút gọn còn phường + tỉnh (chủ dự án 31/10/2026) — địa chỉ đầy đủ ở trang chi tiết */}
+                    <span className="truncate">{giaTriThat(p.location).split(",").map((t) => t.trim()).filter(Boolean).slice(-2).join(", ") || "Đang cập nhật"}</span>
                   </p>
-                  <div className="mt-3 flex items-center justify-between gap-3 border-t border-cvr-line pt-3">
-                    <span className="min-w-0 truncate text-xs text-cvr-muted">{p.type}</span>
+                  {/* THẺ DỰ ÁN MỘT CHUẨN (chủ dự án 30–31/10/2026, như thẻ /du-an và Dự án tương tự): chỉ dòng Vị trí có biểu tượng; dòng khác nhãn đậm;
+
+                      tiến độ: VIP ở nhãn trên ảnh, thẻ thường một dòng; dòng cuối Chủ đầu tư + giá; trống ghi "Đang cập nhật" */}
+
+                  <p title={giaTriThat(p.type) || undefined} className="mt-1 truncate text-[13px] text-cvr-body"><span className="font-semibold text-cvr-ink">Loại hình:</span> <span className={giaTriThat(p.type) ? "" : "text-cvr-faint"}>{/* Trang chủ: luôn lấy loại hình CHÍNH (vế đầu trước , ; : ( · /) thay vì cắt ngang "…" — chủ dự án 31/10/2026 */}
+                    {giaTriThat(p.type).split(/[,;:(/]/)[0].trim().replace(/\s+g\S{1,2}m$/i, "") || "Đang cập nhật"}</span></p>
+
+                  {/* Trang chủ: MỌI thẻ có dòng Tiến độ (cả dự án VIP đã có nhãn trên ảnh) — đủ dòng như nhau (chủ dự án 31/10/2026) */}
+                  {<p className="mt-1 truncate text-[13px] text-cvr-body"><span className="font-semibold text-cvr-ink">Tiến độ:</span> <span className={giaTriThat(p.status) ? "" : "text-cvr-faint"}>{giaTriThat(p.status) || "Đang cập nhật"}</span></p>}
+
+                  <span className="block h-3 shrink-0" aria-hidden />
+                  <div className="mt-auto flex items-center justify-between gap-3 border-t border-cvr-line pt-3">
+                    <span className="min-w-0 truncate text-[13px] text-cvr-body"><span className="font-semibold text-cvr-ink">Chủ đầu tư:</span> <span className={giaTriThat(p.developer) ? "" : "text-cvr-faint"}>{giaTriThat(p.developer) || "Đang cập nhật"}</span></span>
                     <span className="shrink-0 whitespace-nowrap text-sm font-semibold text-cvr-ink">{p.priceFrom}</span>
                   </div>
                 </div>
@@ -135,18 +150,26 @@ export default function ProjectsSection({ projects, articles = [] }: { projects:
                           sizes="(max-width: 768px) 100vw, 25vw"
                           className="object-cover transition-transform duration-[700ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.07]"
                         />
-                        <span className="absolute left-2 top-2 rounded-full bg-white/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.04em] text-cvr-ink shadow-[0_2px_10px_rgba(0,0,0,0.18)] ring-1 ring-white/60 backdrop-blur-md">
-                          {p.status}
-                        </span>
+                        {/* Nhãn tình trạng chung mọi nơi (NhanTinhTrang, 31/10/2026): chỉ VIP, màu theo cấp; dự án thường ghi sau loại hình */}
+                        <NhanTinhTrang tier={p.tier} tinhTrang={giaTriThat(p.status)} />
                       </div>
                       <div className="flex flex-1 flex-col p-4">
                         <h3 className="font-semibold leading-snug text-cvr-ink">{p.name}</h3>
                         <p className="mt-1 flex items-center gap-1 text-xs text-cvr-muted">
                           <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                          {p.location}
+                          {giaTriThat(p.location) || "Đang cập nhật"}
                         </p>
-                        <div className="mt-3 flex items-center justify-between border-t border-cvr-line pt-3">
-                          <span className="text-xs text-cvr-muted">{p.type}</span>
+                        {/* THẺ DỰ ÁN MỘT CHUẨN (chủ dự án 30–31/10/2026, như thẻ /du-an và Dự án tương tự): chỉ dòng Vị trí có biểu tượng; dòng khác nhãn đậm;
+
+                            tiến độ: VIP ở nhãn trên ảnh, thẻ thường một dòng; dòng cuối Chủ đầu tư + giá; trống ghi "Đang cập nhật" */}
+
+                        <p title={giaTriThat(p.type) || undefined} className="mt-1 truncate text-xs text-cvr-body"><span className="font-semibold text-cvr-ink">Loại hình:</span> <span className={giaTriThat(p.type) ? "" : "text-cvr-faint"}>{loaiHinhThe(p.type) || "Đang cập nhật"}</span></p>
+
+                        {!capVip(p.tier) && <p className="mt-1 text-xs text-cvr-body"><span className="font-semibold text-cvr-ink">Tiến độ:</span> <span className={giaTriThat(p.status) ? "" : "text-cvr-faint"}>{giaTriThat(p.status) || "Đang cập nhật"}</span></p>}
+
+                        <span className="block h-3 shrink-0" aria-hidden />
+                        <div className="mt-auto flex items-center justify-between gap-3 border-t border-cvr-line pt-3">
+                          <span className="min-w-0 text-xs text-cvr-body"><span className="font-semibold text-cvr-ink">Chủ đầu tư:</span> <span className={giaTriThat(p.developer) ? "" : "text-cvr-faint"}>{giaTriThat(p.developer) || "Đang cập nhật"}</span></span>
                           <span className="text-sm font-semibold text-cvr-ink">{p.priceFrom}</span>
                         </div>
                       </div>
@@ -201,7 +224,8 @@ export default function ProjectsSection({ projects, articles = [] }: { projects:
 
         {/* Bấm "Xem thêm" → danh sách Dự án nổi bật CÙNG LOGIC trang Dự án (thẻ Tên · Địa chỉ · Loại hình · Chủ đầu tư, 10 dự án/trang) — 30/10/2026 */}
         {/* Mở ra: cách khối sau đúng 56px như mọi khối trang chủ máy tính (24/10/2026) */}
-        {expanded && <div className="sm:pb-4"><ProjectsBrowser projects={ranked} articles={articles} danhSachNoiBat traCuu={traCuu} /></div>}
+        {/* Danh sách mở ra có cả dự án tra cứu → không gọi "Dự án nổi bật" (chủ dự án 31/10/2026); dùng đúng tên trang Dự án */}
+        {expanded && <div className="sm:pb-4"><ProjectsBrowser projects={ranked} articles={articles} danhSachNoiBat traCuu={traCuu} tieuDeDs="Dự án bất động sản" /></div>}
 
         {ranked.length > 0 && (
           <div className="sm:-mt-4"><ExpandToggle expanded={expanded} onClick={toggle} /></div>

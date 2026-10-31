@@ -26,14 +26,22 @@ export default function ProjectNav({ items, anKhiMo = false }: { items: { id: st
     // menu nó chưa có trên trang — tìm một lần là bỏ sót nó vĩnh viễn.
     let raf = 0;
     let cho = 0;
-    const tinh = () => {
-      raf = 0;
-      if (bamRef.current) return;
-      const sections = items
+    // CUỘN MƯỢT (chủ dự án 30/10/2026: "PC kéo lên xuống cảm giác rất lag, khựng"): việc dò mục nào CÓ NỘI DUNG (đọc textContent cả
+    // khối — rất nặng ở trang dài) chỉ chạy tối đa 1 lần / giây; mỗi khung hình khi cuộn chỉ đo vị trí các mục đã dò.
+    let sections: HTMLElement[] = [];
+    let doLuc = 0;
+    const doMuc = () => {
+      doLuc = performance.now();
+      sections = items
         .map((it) => document.getElementById(it.id))
         .filter((el): el is HTMLElement => el != null && el.offsetHeight > 0 && (!!el.textContent?.trim() || !!el.querySelector("img,canvas,svg,iframe,video")));
       const ids = sections.map((el) => el.id);
       setCoMuc((cu) => (cu && cu.join() === ids.join() ? cu : ids));
+    };
+    const tinh = () => {
+      raf = 0;
+      if (bamRef.current) return;
+      if (performance.now() - doLuc > 1000) doMuc();
       if (sections.length === 0) return;
       // VẠCH = 25% phần màn hình dưới thanh (40% thì mục ngắn kế tiếp lấn: Tiến độ đang ở đầu màn hình mà sáng "Chủ đầu tư") (chủ dự án 22/10/2026: "vuốt lên xuống nội dung đến đâu menu tới đó" — trước
       // vạch chỉ cách thanh 24px: bản đồ Vị trí đã hiện gần hết màn hình mà vẫn sáng "Lịch sử giá").

@@ -25,7 +25,11 @@ import type { DongTraCuu } from "@/lib/traCuuDuAn";
 import { locTraCuu, nhomLoai } from "@/components/TraCuuDuAn";
 import { useHomeSection } from "@/components/HomeExpand";
 import { sortProjectsByTier } from "@/components/ProjectSlider";
+import NhanTinhTrang, { capVip } from "@/components/NhanTinhTrang";
+import { giaTriThat, loaiHinhThe } from "@/lib/truongDuAn";
 import { khuVucList, khuVucTrongDiem, slugKhuVuc } from "@/lib/khuVuc";
+import { duAnThuocNhom, projectCategories } from "@/lib/categories";
+import { nhomChuDauTu } from "@/lib/chuDauTu";
 
 // Bản đồ chỉ chạy phía client (Leaflet đụng tới window) — nạp động, không SSR.
 const MapView = dynamic(() => import("@/components/MapViewMo"), { ssr: false });
@@ -62,12 +66,40 @@ const BIEU_TUONG: Record<string, string> = {
 // Một dòng thông tin dưới tên dự án: biểu tượng + nội dung (thẻ dự án dùng chung)
 function DongThe({ icon, gt, chua }: { icon: string; gt: string; chua?: string }) {
   return (
-    <p className="flex min-w-0 items-start gap-1.5 text-xs leading-snug">
+    <p className="flex min-w-0 items-start gap-1.5 text-[13px] leading-snug">
       <svg className="mt-px h-3.5 w-3.5 shrink-0 text-cvr-muted" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d={BIEU_TUONG[icon]} /></svg>
       {/* NỘI DUNG DÀI (địa chỉ đầy đủ số nhà, đường, phường, tỉnh là BẮT BUỘC): luôn hiện đủ, xuống dòng — không cắt "…" */}
-      <span className={`min-w-0 ${gt ? "text-cvr-body" : "text-cvr-faint"}`}>{gt || chua}</span>
+      <span title={gt || undefined} className={`min-w-0 sm:truncate ${gt ? "text-cvr-body" : "text-cvr-faint"}`}>{gt || chua}</span>
     </p>
   );
+}
+
+// Một dòng có nhãn dưới tên dự án: "Nhãn: nội dung" — nhãn đậm, chưa có thì "Đang cập nhật" mờ hơn
+function DongNhan({ nhan, gt }: { nhan: string; gt: string }) {
+  return (
+    <p title={gt || undefined} className="min-w-0 text-[13px] leading-snug text-cvr-body sm:truncate">
+      <span className="font-semibold text-cvr-ink">{nhan}:</span> <span className={gt ? "" : "text-cvr-faint"}>{gt || CHUA}</span>
+    </p>
+  );
+}
+
+// CHIA TRANG THEO CHIỀU CAO THẺ (chủ dự án 30/10/2026: trang toàn tra cứu thẻ nhỏ thì nhiều dự án hơn, có nổi bật thì ít hơn) —
+// mỗi trang 10 suất (= 10 thẻ nổi bật), tính theo phần sáu suất cho khỏi lẻ, theo chiều cao THẬT của thẻ trên từng màn hình:
+//  · máy tính: nổi bật cao 178 = 6 · tra cứu cao 109 = 4 → toàn tra cứu 15 dự án / trang
+//  · điện thoại (31/10/2026 — thẻ tra cứu xếp như nổi bật, chưa có ảnh thì bỏ khung): nổi bật 331 = 6 · tra cứu có ảnh 299 = 5 ·
+//    tra cứu chưa ảnh 163 = 3 → các trang dài xấp xỉ nhau dù trộn loại nào
+const SUAT_TRANG = 60;
+function chiaTrangDuAn<T extends object>(ds: T[], dt = false): T[][] {
+  const trang: T[][] = [[]];
+  let dung = 0;
+  for (const x of ds) {
+    const coAnh = "traCuu" in x && !!(x as { traCuu: { anh?: string } }).traCuu.anh;
+    const suat = "noiBat" in x ? 6 : !dt ? 4 : coAnh ? 5 : 3;
+    if (dung + suat > SUAT_TRANG && trang[trang.length - 1].length) { trang.push([]); dung = 0; }
+    trang[trang.length - 1].push(x);
+    dung += suat;
+  }
+  return trang;
 }
 
 const ALL = "Tất cả";
@@ -121,6 +153,15 @@ export default function ProjectsBrowser({
   tieuDeDs?: string;
 }) {
   useDiaDanh(); // địa danh nạp sau khi trang hiện — về tới thì vẽ lại (20/10/2026)
+  // Điện thoại (< 640 px): chia trang theo chiều cao thẻ điện thoại (chiaTrangDuAn)
+  const [dienThoai, setDienThoai] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 639px)");
+    const doi = () => setDienThoai(mq.matches);
+    doi();
+    mq.addEventListener("change", doi);
+    return () => mq.removeEventListener("change", doi);
+  }, []);
   const [q, setQ] = useState("");
   const [status, setStatus] = useState(ALL);
   const [province, setProvince] = useState(ALL);
@@ -266,7 +307,7 @@ export default function ProjectsBrowser({
   };
 
   // Phân trang danh sách dự án: 9 dự án/trang (khớp yêu cầu "8–10/trang").
-  const PER_PAGE = useSoMoiTrang(); // PC 15 · điện thoại 10 — quy định chung mọi danh sách (22/10/2026; trước 9)
+  useSoMoiTrang();
   const [page, setPage] = useState(1);
   // CHẾ ĐỘ BẢN ĐỒ cho tab Dự án — giống Mua bán / Cho thuê, marker là TÊN DỰ ÁN.
   const [mapMode, setMapMode] = useState(false);
@@ -280,9 +321,10 @@ export default function ProjectsBrowser({
     ...visible.map((p) => ({ noiBat: p })),
     ...traCuuLoc.filter((d) => !slugNoiBat.has(d.slug)).map((d) => ({ traCuu: d })),
   ];
-  const totalPages = Math.max(1, Math.ceil(dsTrang.length / PER_PAGE));
+  const cacTrang = chiaTrangDuAn(dsTrang, dienThoai);
+  const totalPages = cacTrang.length;
   const current = Math.min(page, totalPages);
-  const pageItems = dsTrang.slice((current - 1) * PER_PAGE, current * PER_PAGE);
+  const pageItems = cacTrang[current - 1];
   // Mở một dự án rồi BACK → về đúng trang danh sách + đúng chỗ đang xem (ghi vào bước lịch sử, giữ dữ liệu Next.js)
   const ghiTrang = (p: number, y?: number) =>
     window.history.replaceState({ ...(window.history.state ?? {}), clTrangDa: p, ...(y !== undefined ? { clYDa: y } : {}) }, "");
@@ -294,8 +336,7 @@ export default function ProjectsBrowser({
     if (st.clYDa) { const y = st.clYDa; requestAnimationFrame(() => window.scrollTo({ top: y })); window.setTimeout(() => window.scrollTo({ top: y }), 350); }
   }, []);
   // Dự án nổi bật: hàng trượt 8 dự án + "Xem thêm" (chuẩn chung HomeExpand): bấm → phần còn lại của trang ẩn, danh sách
-  // Dự án nổi bật 10 dự án / trang (chủ dự án 29/10/2026); nút Quay lại về như cũ.
-  const NOI_BAT_MOI_TRANG = 10;
+  // Chia trang theo chiều cao thẻ (chiaTrangDuAn); nút Quay lại về như cũ.
   const noiBat = useHomeSection("du-an-noi-bat");
   const [trangNoiBat, setTrangNoiBat] = useState(1);
   // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -385,17 +426,24 @@ export default function ProjectsBrowser({
   const theDuAnWeb = (p: Project, gon = false) => (
         <Link
           href={`/du-an/${p.slug}`}
-          className={`card-lux group relative flex overflow-hidden rounded-none bg-white shadow-lux shadow-lux-hover hover:-translate-y-1 hover:border-cvr-blue/45 sm:gap-5 sm:border sm:border-cvr-line sm:p-3 ${gon ? "gap-3 border border-cvr-line p-2.5" : "flex-col sm:flex-row"}`}
+          className={`card-lux group relative flex overflow-hidden rounded-none bg-white shadow-lux shadow-lux-hover hover:-translate-y-1 hover:border-cvr-blue/45 sm:gap-5 sm:border sm:border-cvr-line sm:p-3 ${gon ? "flex-col border border-cvr-line sm:flex-row" : "flex-col sm:flex-row"}`}
         >
           <div className={gon
-            ? "relative min-h-24 w-24 shrink-0 self-stretch overflow-hidden rounded-lg bg-cvr-surface sm:min-h-[109px] sm:w-44 sm:rounded-xl"
-            : `relative w-full shrink-0 overflow-hidden bg-cvr-surface sm:aspect-auto sm:min-h-[158px] sm:w-64 sm:self-stretch sm:rounded-xl ${p.image ? "aspect-[16/9]" : "aspect-[3/1]"}`}>
+            // Điện thoại: BỐ TRÍ NHƯ THẺ NỔI BẬT — ảnh trên rộng hết thẻ, chữ hiện đủ bên dưới (chủ dự án 31/10/2026: câu dài thì ảnh trái
+            // không cân được với chữ → "bố trí như nhau hết"; không cắt chữ). Máy tính giữ ảnh trái 176 × 109
+            // Khung ảnh tra cứu THẤP hơn thẻ nổi bật: 5:2 (chủ dự án 31/10/2026: "cho cái khung nhỏ hơn")
+            // Chưa có ảnh: điện thoại bỏ hẳn khung ảnh (chủ dự án 31/10/2026: "có ảnh thì hiển thị, không có thì bỏ"); máy tính giữ khung xám
+            ? `relative aspect-[5/2] w-full shrink-0 overflow-hidden bg-cvr-surface sm:aspect-auto sm:min-h-[109px] sm:w-44 sm:self-stretch sm:rounded-xl ${p.image ? "" : "max-sm:hidden"}`
+            : `relative w-full shrink-0 overflow-hidden bg-cvr-surface sm:aspect-auto sm:min-h-[178px] sm:w-72 sm:self-stretch sm:rounded-xl ${p.image ? "aspect-[16/9]" : "aspect-[3/1]"}`}>
+            {/* Dự án nổi bật: tình trạng (tiến độ) ghi trên ảnh; thẻ không còn dòng Trạng thái (chủ dự án 30/10/2026) */}
+            {/* Nhãn tình trạng chung mọi nơi (NhanTinhTrang, 31/10/2026): chỉ dự án VIP, màu theo cấp; còn lại ghi "Tiến độ" ở dòng cuối */}
+            <NhanTinhTrang tier={p.tier} tinhTrang={giaTriThat(p.status)} />
             {p.image ? (
             <AnhChay
               chay={false}
               images={[p.image, ...(p.photos ?? [])]}
               alt={p.name}
-              sizes={gon ? "(max-width:640px) 96px, 176px" : "(max-width:640px) 100vw, 256px"}
+              sizes={gon ? "(max-width:640px) 96px, 176px" : "(max-width:640px) 100vw, 288px"}
               className="object-cover transition-transform duration-[700ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.06]"
             />
             ) : (
@@ -404,23 +452,33 @@ export default function ProjectsBrowser({
             )}
           </div>
 
-          <div className={`flex min-w-0 flex-1 flex-col ${gon ? "sm:min-h-[109px] sm:justify-between" : "p-3 sm:min-h-[158px] sm:justify-between sm:p-0"}`}>
-            <h3 className="line-clamp-2 font-semibold leading-snug text-cvr-ink transition-colors group-hover:text-cvr-blue-ink sm:text-lg">
+          {/* Khung chữ CAO THEO NỘI DUNG, tối thiểu đúng số đo cũ (109 / 178 px); ảnh giãn theo — không cắt, không che tên (31/10/2026: thêm dòng
+              Tiến độ làm khung cố định 109 px che mất tên — chủ dự án chụp màn hình) */}
+          {/* Điện thoại (tra cứu): chữ hiện đủ dưới ảnh, đệm như thẻ nổi bật */}
+          <div className={`flex min-w-0 flex-1 flex-col ${gon ? "p-3 sm:min-h-[109px] sm:p-0" : "p-3 sm:min-h-[178px] sm:p-0"}`}>
+            {/* PC: KHUNG ẢNH CỐ ĐỊNH tỷ lệ vàng, chữ chỉnh theo khung — mỗi dòng 1 dòng, dài thì “…” (rê chuột thấy đủ), giới thiệu tối đa 2 dòng (chủ dự án 30/10/2026) */}
+            <h3 title={p.name} className="line-clamp-2 font-semibold leading-snug text-cvr-ink transition-colors group-hover:text-cvr-blue-ink sm:line-clamp-1 sm:text-lg">
               <Highlight text={p.name} terms={termsBySlug.get(p.slug) ?? []} />
             </h3>
             {/* Mọi dòng dưới tên một kiểu: biểu tượng + nội dung, cùng cỡ, cùng màu; chưa có thì "<trường> đang cập nhật" mờ hơn */}
-            <div className="mt-1.5 space-y-1 sm:mt-0">
-              <DongThe icon="ghim" gt={p.location} />
-              <DongThe icon="loai" gt={p.type === CHUA ? "" : p.type} chua="Loại hình đang cập nhật" />
-              <DongThe icon="trangthai" gt={p.status === CHUA ? "" : p.status} chua="Trạng thái đang cập nhật" />
-              <div className="flex items-start justify-between gap-3">
-                <DongThe icon="cdt" gt={p.developer === CHUA ? "" : p.developer} chua="Chủ đầu tư đang cập nhật" />
-                {p.priceFrom && <span className="shrink-0 whitespace-nowrap text-sm font-semibold leading-snug text-cvr-gold-ink">{p.priceFrom}</span>}
-              </div>
+            {/* Thẻ tra cứu: địa chỉ ĐẦY ĐỦ một dòng riêng; Loại hình một dòng; Tiến độ dòng cuối bên phải (KHÔNG ghi trên ảnh) — chủ dự án 30/10/2026 */}
+            <div className="mt-2 space-y-1.5">
+              <DongThe icon="ghim" gt={giaTriThat(p.location)} chua="Đang cập nhật" />
+              {/* Mọi thẻ: chỉ dòng Vị trí có biểu tượng; các dòng khác ghi NHÃN ĐẬM có dấu hai chấm (chủ dự án 30/10/2026) */}
+              {/* Loại hình: 1 dòng dài hết bề ngang thẻ, quá dài mới “…” ở cuối (chủ dự án 30/10/2026) */}
+              <DongNhan nhan="Loại hình" gt={loaiHinhThe(p.type)} />
+              {/* Tiến độ: thẻ VIP ở nhãn trên ảnh; thẻ thường một dòng ngay sau Loại hình — một chuẩn mọi thẻ dự án (31/10/2026) */}
+              {!capVip(p.tier) && <DongNhan nhan="Tiến độ" gt={giaTriThat(p.status)} />}
             </div>
+            {/* Điện thoại bỏ 2 dòng giới thiệu (chủ dự án 30/10/2026) */}
             {!gon && p.overview[0] && (
-              <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-cvr-muted sm:mt-0">{chuThuan(p.overview[0])}</p>
+              <p className="mt-2.5 hidden text-[13px] leading-relaxed text-cvr-muted sm:line-clamp-2">{chuThuan(p.overview[0])}</p>
             )}
+            {/* Chủ đầu tư + Liên hệ: dòng cuối thẻ, gạch ngang phía trên (chủ dự án 30/10/2026) */}
+            <div className="mt-3 flex items-center justify-between gap-3 border-t border-cvr-line pt-2.5 sm:mt-auto">
+              <DongNhan nhan="Chủ đầu tư" gt={giaTriThat(p.developer)} />
+              {p.priceFrom && <span className="shrink-0 whitespace-nowrap text-sm font-semibold leading-snug text-cvr-gold-ink">{p.priceFrom}</span>}
+            </div>
           </div>
         </Link>
   );
@@ -464,18 +522,20 @@ export default function ProjectsBrowser({
       ...visible.map((p) => ({ noiBat: p })),
       ...(traCuu ? traCuuLoc.filter((d) => !noiBatSlug.has(d.slug)).map((d) => ({ traCuu: d })) : []),
     ];
-    const tongNB = Math.max(1, Math.ceil(dsChung.length / NOI_BAT_MOI_TRANG));
+    const trangChung = chiaTrangDuAn(dsChung, dienThoai);
+    const tongNB = trangChung.length;
     const trangNB = Math.min(trangNoiBat, tongNB);
     danhSachXemThem = (
       <section id="noi-bat" className={`mt-6 scroll-mt-24 sm:mt-5 ${mapMode ? "hidden" : ""}`}>
         {/* Trang Dự án / trang khu vực đã có tiêu đề trang ngay trên → không lặp; trang chủ: tiêu đề khối "Dự án nổi bật" */}
-        {danhSachNoiBat && <h2 className="text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">{tieuDeDs}</h2>}
+        {/* Điện thoại ẩn dòng tiêu đề (chủ dự án 31/10/2026) — vẫn trong HTML cho Google */}
+        {danhSachNoiBat && <h2 className="sr-only text-xl font-semibold tracking-tight text-cvr-ink sm:not-sr-only sm:text-2xl">{tieuDeDs}</h2>}
         {/* BỐ CỤC WEB HIỆN TẠI (chủ dự án 30/10/2026): CỘT TRÁI = danh sách thẻ, MỖI DỰ ÁN ĐÚNG LOẠI THẺ CỦA NÓ — nổi bật: thẻ nổi bật
             (ngang); tra cứu: thẻ tra cứu · CỘT PHẢI = liên kết pSEO "Dự án theo khu vực" (/du-an/<tỉnh>), dính theo khi cuộn — máy tính */}
         <div className={`${danhSachNoiBat ? "mt-4" : ""} grid grid-cols-1 gap-8 lg:grid-cols-3`}>
           <div className="lg:col-span-2">
             <div className="flex flex-col gap-4 sm:gap-5" onClickCapture={() => ghiDs(trangNB, window.scrollY)}>
-              {dsChung.slice((trangNB - 1) * NOI_BAT_MOI_TRANG, trangNB * NOI_BAT_MOI_TRANG).map((x) =>
+              {trangChung[trangNB - 1].map((x) =>
                 "noiBat" in x
                   ? <div key={x.noiBat.slug}>{theDuAnWeb(x.noiBat)}</div>
                   : <div key={x.traCuu.slug}>{theDuAnWeb(duAnTuTraCuu(x.traCuu), true)}</div>,
@@ -703,7 +763,7 @@ export default function ProjectsBrowser({
                   className="flex flex-col rounded-lg px-2.5 py-2.5 active:bg-cvr-surface"
                 >
                   <span className="text-sm font-medium text-cvr-ink">{p.name}</span>
-                  <span className="text-[12px] text-cvr-faint">{p.location}</span>
+                  <span className="text-[12px] text-cvr-faint">{giaTriThat(p.location)}</span>
                 </Link>
               ))
             )}
@@ -724,9 +784,10 @@ export default function ProjectsBrowser({
         {!(traCuu && tieuDePhu) && !danhSachNoiBat && (
         <div className="min-w-0">
           {tieuDePhu ? (
-            <h2 className="text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">{tieuDe}</h2>
+            <h2 className="sr-only text-xl font-semibold tracking-tight text-cvr-ink sm:not-sr-only sm:text-2xl">{tieuDe}</h2>
           ) : (
-            <h1 className="text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">{tieuDe}</h1>
+            // Điện thoại ẩn dòng "Dự án bất động sản" — thanh "‹ Dự án" đã ghi tên (chủ dự án 31/10/2026); vẫn là H1 cho Google
+            <h1 className="sr-only text-xl font-semibold tracking-tight text-cvr-ink sm:not-sr-only sm:text-2xl">{tieuDe}</h1>
           )}
           <p className="mt-1 text-sm text-cvr-muted">
             {/* Coastal Land là CỔNG THÔNG TIN — không phân phối, không mua bán dự án. */}
@@ -778,7 +839,7 @@ export default function ProjectsBrowser({
                   q: p.location,
                   nhan: p.name,
                   title: p.name,
-                  phu: `${p.priceFrom} · ${p.status}`,
+                  phu: [p.priceFrom, giaTriThat(p.status)].filter(Boolean).join(" · "),
                   loc: p.location,
                   image: p.image,
                   href: `/du-an/${p.slug}`,
@@ -832,7 +893,10 @@ export default function ProjectsBrowser({
         {/* ── Sidebar: lọc theo khu vực + tin tức (kiểu Batdongsan) ── */}
         {/* Điện thoại: thanh lọc trên đầu đã có "Khu vực" → khối lọc khu vực này chỉ ở máy tính (cột bên) — 22/10/2026 */}
         <aside className="hidden lg:col-span-1 lg:block">
-          <div className="sticky top-24 space-y-5">
+          {/* CỘT PHẢI CHUẨN TÌM KIẾM + SEO (chủ dự án 30/10/2026): lọc khu vực (có số) · loại hình → /du-an/<loại> · chủ đầu tư →
+              /chu-dau-tu/<tên> · dự án mới cập nhật — toàn liên kết tới trang đã có, khối nào không có dữ liệu thì ẩn. Không dính khi cuộn
+              (cột dài hơn màn hình). */}
+          <div className="space-y-5">
             <div className="rounded-none border border-cvr-line bg-white p-5 shadow-lux">
               <h2 className="text-sm font-semibold tracking-tight text-cvr-ink">Lọc theo khu vực</h2>
               <div className="mt-3 flex flex-col">
@@ -850,13 +914,54 @@ export default function ProjectsBrowser({
                     }`}
                   >
                     <span>{name === ALL ? "Tất cả khu vực" : name}</span>
+                    {name !== ALL && provCountMap.get(name) ? <span className="text-xs text-cvr-muted">{provCountMap.get(name)}</span> : null}
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Bỏ khối "Tin tức bất động sản" (chủ dự án 22/10/2026): web đã có mục Tin tức riêng — trang dự án
-                chỉ lo dự án, không độn bài viết không liên quan. */}
+            {(() => {
+              const tatCa: Project[] = [...projects, ...(traCuu ? traCuu.filter((d) => !slugNoiBat.has(d.slug)).map(duAnTuTraCuu) : [])];
+              const loai = projectCategories.map((c) => [c, duAnThuocNhom(tatCa, c).length] as const).filter(([, n]) => n > 0);
+              const cdt = [...nhomChuDauTu(tatCa)].sort((a, b) => b[1].duAn.length - a[1].duAn.length).slice(0, 8);
+              const moi = projects.slice(0, 5);
+              const hop = "rounded-none border border-cvr-line bg-white p-5 shadow-lux";
+              const dong = "flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-sm text-cvr-body transition-colors hover:bg-cvr-surface hover:text-cvr-ink";
+              return (
+                <>
+                  {loai.length > 0 && (
+                    <div className={hop}>
+                      <h2 className="text-sm font-semibold tracking-tight text-cvr-ink">Dự án theo loại hình</h2>
+                      <div className="mt-3 flex flex-col">
+                        {loai.map(([c, n]) => (
+                          <Link key={c.slug} href={`/du-an/${c.slug}`} className={dong}><span className="min-w-0 truncate">{c.label}</span><span className="shrink-0 text-xs text-cvr-muted">{n}</span></Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {cdt.length > 0 && (
+                    <div className={hop}>
+                      <h2 className="text-sm font-semibold tracking-tight text-cvr-ink">Dự án theo chủ đầu tư</h2>
+                      <div className="mt-3 flex flex-col">
+                        {cdt.map(([s, g]) => (
+                          <Link key={s} href={`/chu-dau-tu/${s}`} className={dong}><span className="min-w-0 truncate">{g.ten}</span><span className="shrink-0 text-xs text-cvr-muted">{g.duAn.length}</span></Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {moi.length > 0 && (
+                    <div className={hop}>
+                      <h2 className="text-sm font-semibold tracking-tight text-cvr-ink">Dự án mới cập nhật</h2>
+                      <div className="mt-3 flex flex-col">
+                        {moi.map((p) => (
+                          <Link key={p.slug} href={`/du-an/${p.slug}`} className={dong}><span className="min-w-0 truncate">{p.name}</span></Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              );
+            })()}
           </div>
         </aside>
       </div>

@@ -2,6 +2,7 @@ import { NGUONG_INDEX_CDT, nhomChuDauTu } from "@/lib/chuDauTu";
 import type { Listing, Project } from "@/lib/data";
 import { dungDsDuAn } from "@/lib/duAnTenMayChu";
 import { cungDuAn } from "@/lib/filters";
+import { giaTriThat } from "@/lib/truongDuAn";
 
 // Dùng chung cho trang Tra cứu dự án (/du-an/tra-cuu).
 
@@ -50,6 +51,8 @@ export type DongTraCuu = {
   anh: string;       // ảnh đầu của hồ sơ — "" = chưa có (thẻ hiện khung xám + biểu tượng)
   ban: number;
   thue: number;
+  gia: string;       // giá như thẻ /du-an: dự án nổi bật có (priceFrom, mặc định "Liên hệ"); hồ sơ dạng thẻ / dự án từ tin "" (31/10/2026)
+  cap?: "diamond" | "gold" | "silver"; // dự án nổi bật cấp VIP — thẻ ghi tình trạng thành NHÃN màu cấp trên ảnh (31/10/2026)
 };
 
 export function dongTraCuu(tin: Listing[], duAn: Project[]): DongTraCuu[] {
@@ -72,14 +75,15 @@ export function dongTraCuu(tin: Listing[], duAn: Project[]): DongTraCuu[] {
       return {
         slug: d.slug,
         ten: p?.name ?? d.ten,
-        chuDauTu: p && p.developer !== "Đang cập nhật" ? p.developer : "",
-        loaiHinh: p && p.type !== "Dự án bất động sản" ? p.type : "",
-        tinhTrang: p?.status ?? "",
+        chuDauTu: giaTriThat(p?.developer), // trường bắt buộc — một nguồn (truongDuAn.ts, 31/10/2026)
+        loaiHinh: giaTriThat(p?.type),
+        tinhTrang: giaTriThat(p?.status),
         // Thẻ ghi địa chỉ một kiểu: phường + tỉnh hệ MỚI (như thẻ Dự án nổi bật, 30/10/2026); địa chỉ đầy đủ ở trang chi tiết
-        diaChi: p?.location ?? tin1?.location ?? d.tinh,
+        diaChi: giaTriThat(p?.location) || giaTriThat(tin1?.location) || d.tinh,
         diaChiCu: p?.locationCu ?? tin1?.locationCu ?? "",
         tinh: d.tinh,
         anh: p?.photos?.[0] ?? "",
+        gia: p && !p.dangThe ? p.priceFrom : "",
         ban: d.ban,
         thue: d.thue,
       };

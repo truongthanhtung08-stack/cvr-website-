@@ -22,9 +22,13 @@ export default function DanhSachThuGon({ children, soHien = 6, className, the = 
     <>
       <Khung className={className + anCss}>{hien}</Khung>
       {children.length > soHien && (
-        <button type="button" onClick={(e) => { if (mo) veDauKhoi(e.currentTarget); setMo((v) => !v); }} className="mt-2 text-[14px] font-semibold text-cvr-blue-ink">
-          {mo ? "Thu gọn" : "Xem thêm"}
-        </button>
+        // MỘT KIỂU NÚT "Xem thêm / Thu gọn" CẢ WEB, căn giữa dưới nội dung (chủ dự án 30/10/2026: chữ xanh lệch trái là mất hợp lý)
+        <div className="mt-4 flex justify-center">
+          <button type="button" onClick={(e) => { if (mo) veDauKhoi(e.currentTarget); setMo((v) => !v); }} className="btn-xemthem">
+            {mo ? "Thu gọn" : "Xem thêm"}
+            <svg className={`h-4 w-4 transition-transform ${mo ? "rotate-180" : ""}`} fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+          </button>
+        </div>
       )}
     </>
   );

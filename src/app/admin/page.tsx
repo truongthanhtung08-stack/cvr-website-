@@ -233,7 +233,21 @@ function SuCoBang() {
               </span>
             </div>
             {s.hau_qua && <p className="mt-1.5 text-sm text-red-800">Không sửa thì: {s.hau_qua}</p>}
-            {s.can_lam && <p className="mt-1 text-sm text-cvr-body">Cần làm: {s.can_lam}</p>}
+            {s.can_lam && (
+              <p className="mt-1 text-sm text-cvr-body">
+                Cần làm:{" "}
+                {/* Đường dẫn tin trong câu → bấm mở thẳng tin (chủ dự án 31/10/2026) */}
+                {s.can_lam.split(/(\/bat-dong-san\/[0-9a-f-]{36})/).map((doan, i) =>
+                  i % 2 ? (
+                    <Link key={i} href={doan} target="_blank" className="font-medium text-cvr-ink underline">
+                      Mở tin
+                    </Link>
+                  ) : (
+                    doan
+                  ),
+                )}
+              </p>
+            )}
             {s.chi_tiet && (
               <p className="mt-1 break-words text-xs text-cvr-faint">Máy báo: {s.chi_tiet}</p>
             )}
