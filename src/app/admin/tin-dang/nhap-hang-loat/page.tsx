@@ -16,6 +16,28 @@ import {
 import { docXlsx, docXlsxTheoTen } from "@/lib/docXlsx";
 import { docDuAnTuBang, anhTepCuaDong, type DongDuAn } from "@/lib/csvDuAn";
 import { lapKeHoach, thucHienNap, type KeHoachDuAn } from "@/lib/napDuAn";
+import { khopHoSoDuAn, type HoSoDuAn } from "@/lib/khopDuAn";
+
+// TIN GHI DỰ ÁN → PHẢI KHỚP HỒ SƠ ĐÃ CÓ (anh 31/10/2026, D32): khớp một hồ sơ cùng tỉnh thì lưu đúng mã + tên hồ sơ;
+// không khớp / khớp nhiều → báo đỏ đúng dòng, không tự đặt mã mới (src/lib/khopDuAn.ts). Hồ sơ trong sheet "Dự án" cùng tệp cũng tính.
+async function ganHoSoDuAn(ds: ParsedRow[], sheetDuAn: DongDuAn[]): Promise<ParsedRow[]> {
+  const coDuAn = (r: ParsedRow) => (r.payload.details as { project?: string } | undefined)?.project;
+  if (!ds.some(coDuAn)) return ds;
+  const { data, error } = await createClient().from("projects").select("slug,name,province");
+  const hoSo: HoSoDuAn[] = [
+    ...((data ?? []) as HoSoDuAn[]),
+    ...sheetDuAn.filter((d) => d.payload).map((d) => ({ slug: d.slug, name: d.ten, province: (d.payload!.province as string) || null })),
+  ];
+  return ds.map((r) => {
+    const ma = coDuAn(r);
+    if (!ma) return r;
+    const ct = r.payload.details as { project: string; projectName?: string };
+    if (error) return { ...r, loi: [...r.loi, `không đọc được danh sách hồ sơ dự án: ${error.message}`] };
+    const k = khopHoSoDuAn(ct.projectName || ma, ma, r.payload.province as string | null, hoSo);
+    if ("loi" in k) return { ...r, loi: [...r.loi, k.loi] };
+    return { ...r, payload: { ...r.payload, details: { ...ct, project: k.hoSo.slug, projectName: k.hoSo.name } } };
+  });
+}
 import { docDoanhNghiepTuBang, type DongDoanhNghiep } from "@/lib/hoSoDoanhNghiep";
 import { chuanHoaSdt } from "@/lib/phone";
 import { uploadImageFile, uploadVideoFile } from "@/lib/uploadImage";
@@ -217,11 +239,13 @@ export default function NhapHangLoatPage() {
         ? docTinTuBang(await docXlsx(await file.arrayBuffer()))
         : docTinTuCsv(await file.text());
       if (err) setLoiChung(err);
-      if (laExcel) setDuAn(docDuAnTuBang((await docXlsxTheoTen(await file.arrayBuffer(), /^d[ựu]\s*[áa]n$/i)) ?? []));
+      const sheetDuAn = laExcel ? docDuAnTuBang((await docXlsxTheoTen(await file.arrayBuffer(), /^d[ựu]\s*[áa]n$/i)) ?? []) : [];
+      setDuAn(sheetDuAn);
       if (laExcel) setDoanhNghiep(docDoanhNghiepTuBang((await docXlsxTheoTen(await file.arrayBuffer(), /^doanh\s*nghi[ệe]p$/i)) ?? [], chuanHoaSdt));
       setCanhBaoFile(canhBaoChung ?? "");
-      setRows(r);
-      doMaTrungDotCu(r);
+      const rGan = await ganHoSoDuAn(r, sheetDuAn);
+      setRows(rGan);
+      doMaTrungDotCu(rGan);
     } catch (e) {
       setLoiChung(
         /\.xls$/i.test(file.name)
