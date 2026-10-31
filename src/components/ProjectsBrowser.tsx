@@ -11,7 +11,7 @@ import { chuThuan } from "@/lib/chuThuan";
 import AnhChay from "@/components/AnhChay";
 import Link from "next/link";
 import FilterDropdown, { FilterDropdownGroup, PanelActions } from "@/components/FilterDropdown";
-import { LocationPanel, Chip } from "@/components/FilterBar";
+import { LocationPanel } from "@/components/FilterBar";
 import { applyFilters, emptyFilters, locationLabel, normalizeVi, type LocationSel } from "@/lib/filters";
 import Highlight from "@/components/Highlight";
 import { goiYNoiLong, searchAny, TIER_LABEL } from "@/lib/smartSearch";
@@ -30,7 +30,7 @@ import NhanTinhTrang, { capVip } from "@/components/NhanTinhTrang";
 import { giaTriThat, loaiHinhThe } from "@/lib/truongDuAn";
 import { khuVucList, khuVucTrongDiem, slugKhuVuc } from "@/lib/khuVuc";
 import { duAnThuocNhom, projectCategories } from "@/lib/categories";
-import { nhomChuDauTu, slugChuDauTu } from "@/lib/chuDauTu";
+import { nhomChuDauTu } from "@/lib/chuDauTu";
 
 // Bản đồ chỉ chạy phía client (Leaflet đụng tới window) — nạp động, không SSR.
 const MapView = dynamic(() => import("@/components/MapViewMo"), { ssr: false });
@@ -170,7 +170,7 @@ export default function ProjectsBrowser({
   const [status, setStatus] = useState(ALL);
   const [locations, setLocations] = useState<LocationSel[]>([]);
   const [types, setTypes] = useState<string[]>([]);      // slug nhóm loại hình (projectCategories)
-  const [chuDauTu, setChuDauTu] = useState("");          // slug chủ đầu tư ("" = mọi chủ đầu tư)
+  const [duAn, setDuAn] = useState("");                  // slug dự án chọn ở ô "Dự án" ("" = mọi dự án)
   // NHẬN TỪ KHOÁ TỪ TRANG CHỦ: bấm tab "Dự án" ở Hero rồi tìm → nhảy sang
   // /du-an?q=... , ô tìm ở đây phải tự điền và lọc ngay (trước đây bỏ qua ?q=).
   useEffect(() => {
@@ -227,15 +227,12 @@ export default function ProjectsBrowser({
   const provinceCounts = nguonDem((p) => provinceOf(p.location), (d) => d.tinh);
   const statusCounts = nguonDem((p) => p.status, (d) => d.tinhTrang);
   const provCountMap = new Map(provinceCounts);
-  // Lựa chọn Loại hình + Chủ đầu tư: chỉ những nhóm / chủ đầu tư CÓ dự án (nổi bật + tra cứu)
+  // Lựa chọn ô "Dự án" + Loại hình: MỌI dự án (nổi bật + tra cứu); loại hình chỉ những nhóm CÓ dự án
   const tatCaDuAn = useMemo(() => {
     const coSan = new Set(projects.map((p) => p.slug));
     return [...projects, ...(traCuu ?? []).filter((d) => !coSan.has(d.slug)).map(duAnTuTraCuu)];
   }, [projects, traCuu]);
   const loaiOpts = useMemo(() => projectCategories.filter((c) => duAnThuocNhom(tatCaDuAn, c).length > 0), [tatCaDuAn]);
-  const cdtOpts = useMemo(() => [...nhomChuDauTu(tatCaDuAn)].map(([s, g]) => ({ slug: s, ten: g.ten }))
-    .sort((a, b) => a.ten.localeCompare(b.ten, "vi")), [tatCaDuAn]);
-  const khopCdt = (ten: string) => !chuDauTu || slugChuDauTu(ten) === chuDauTu;
 
   // TÌM KIẾM THEO TRƯỜNG — DÙNG CHUNG một luật với Mua bán / Cho thuê:
   // bóc tách câu dài → xếp 3 tầng (khớp đủ → gần đúng → liên quan) → không bao
@@ -259,7 +256,7 @@ export default function ProjectsBrowser({
     truong: [
       { ten: "khu vực", chon: locations.length > 0, giu: true, ok: (p) => khopKhuVuc(p.location, locations) },
       { ten: "loại hình", chon: types.length > 0, giu: true, ok: (p) => khopLoai(p.type, types) },
-      { ten: "chủ đầu tư", chon: !!chuDauTu, giu: true, ok: (p) => khopCdt(p.developer) },
+      { ten: "dự án", chon: !!duAn, giu: true, ok: (p) => p.slug === duAn },
       { ten: "tình trạng", chon: status !== ALL, ok: (p) => p.status === status },
     ],
   });
@@ -279,8 +276,8 @@ export default function ProjectsBrowser({
     chayTim(); // bấm gợi ý = ra kết quả NGAY, không phải bấm thêm nút Tìm
   };
 
-  const hasActive = q.trim() !== "" || status !== ALL || locations.length > 0 || types.length > 0 || !!chuDauTu;
-  const reset = () => { setQ(""); setStatus(ALL); setLocations([]); setTypes([]); setChuDauTu(""); };
+  const hasActive = q.trim() !== "" || status !== ALL || locations.length > 0 || types.length > 0 || !!duAn;
+  const reset = () => { setQ(""); setStatus(ALL); setLocations([]); setTypes([]); setDuAn(""); };
 
   // Gợi ý CHẠY CHỮ trong ô tìm — dựng từ CHÍNH kho dự án đang có (tên dự án, chủ
   // đầu tư, khu vực, tình trạng CÓ THẬT) nên gõ vào là chắc chắn ra kết quả;
@@ -310,12 +307,12 @@ export default function ProjectsBrowser({
   // CHẾ ĐỘ BẢN ĐỒ cho tab Dự án — giống Mua bán / Cho thuê, marker là TÊN DỰ ÁN.
   const [mapMode, setMapMode] = useState(false);
   // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { setPage(1); }, [q, status, locations, types, chuDauTu]); // đổi lọc → về trang 1
+  useEffect(() => { setPage(1); }, [q, status, locations, types, duAn]); // đổi lọc → về trang 1
   // TRANG DỰ ÁN = BỐ CỤC WEB CŨ + THÊM TRA CỨU (chủ dự án 30/10/2026: "PC để như cũ, chỉ thêm vào"): một danh sách — dự án nổi bật
   // theo cấp VIP trước (thẻ ngang đang chạy), rồi dự án tra cứu theo tên A, B, C (thẻ tra cứu); thanh tìm + lọc áp chung cả hai
   const traCuuLoc = traCuu
     ? locTraCuu(traCuu, q, ALL, ALL, status, ALL).filter((d) =>
-        khopKhuVuc(`${d.diaChi} · ${d.diaChiCu} · ${d.tinh}`, locations) && khopLoai(d.loaiHinh, types) && (!chuDauTu || (!!d.chuDauTu && khopCdt(d.chuDauTu))))
+        khopKhuVuc(`${d.diaChi} · ${d.diaChiCu} · ${d.tinh}`, locations) && khopLoai(d.loaiHinh, types) && (!duAn || d.slug === duAn))
     : [];
   const slugNoiBat = new Set(visible.map((p) => p.slug));
   // Đang lọc: dự án KHỚP đứng trước (nổi bật khớp → tra cứu khớp), dự án nổi bật "gợi ý tương tự" (tầng 2–3) xuống cuối, có nhãn tầng
@@ -353,7 +350,7 @@ export default function ProjectsBrowser({
   const noiBat = useHomeSection("du-an-noi-bat");
   const [trangNoiBat, setTrangNoiBat] = useState(1);
   // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { setTrangNoiBat(1); }, [q, status, locations, types, chuDauTu]); // đổi tìm / lọc → danh sách về trang 1
+  useEffect(() => { setTrangNoiBat(1); }, [q, status, locations, types, duAn]); // đổi tìm / lọc → danh sách về trang 1
   // MỞ MỘT DỰ ÁN RỒI BACK → về đúng trang danh sách + đúng chỗ đang xem (30/10/2026): ghi số trang + vị trí cuộn vào bước lịch sử
   // của danh sách (giữ nguyên dữ liệu Next.js trong đó), quay lại thì đọc ra
   // Danh sách "Xem thêm" của khối Dự án nổi bật TRANG CHỦ (trang Dự án đã là danh sách)
@@ -372,30 +369,50 @@ export default function ProjectsBrowser({
 
   // Nhóm nút lọc dùng chung cho HAI vị trí: thanh lọc (desktop) và trang tìm
   // toàn màn hình (mobile). Chức năng y hệt — chỉ khác chỗ đặt.
-  // CÙNG KHUÔN thanh lọc Mua bán / Cho thuê (FilterBar, 31/10/2026): Toàn quốc (đa tầng, đa chọn) · Chủ đầu tư (chỗ "Dự án" bên tin:
-  // tìm + chọn là ra kết quả) · Loại hình (chọn nhiều như "Loại BĐS") · Trạng thái — mọi bảng kết thúc bằng Đặt lại · Áp dụng (cách A).
+  // CÙNG CƠ CẤU thanh lọc Mua bán / Cho thuê (FilterBar — chủ dự án 31/10/2026, D41: "làm như thế ấy cho dự án: lọc theo khu vực, lọc
+  // theo tên (chủ đầu tư – tên dự án)"), cùng chữ: Toàn quốc (đa tầng, đa chọn) · Dự án (gõ tên dự án hoặc tên chủ đầu tư, chọn là ra
+  // kết quả) · Loại hình (chọn nhiều như "Loại BĐS", Đặt lại · Áp dụng) · Trạng thái (giữ như cũ).
   const locLabel =
     locations.length === 0 ? "" : locations.length === 1 ? locationLabel(locations[0]) : `${locationLabel(locations[0])} +${locations.length - 1}`;
   const typeLabel =
     types.length === 0 ? "" : types.length === 1 ? (projectCategories.find((c) => c.slug === types[0])?.label ?? "") : `${types.length} loại hình`;
-  const cdtTen = cdtOpts.find((c) => c.slug === chuDauTu)?.ten ?? "";
+  // Panel chọn 1 giá trị trong dropdown (không in số dự án — chủ dự án 09/10/2026) — Trạng thái
+  const optionList = (
+    options: [string, number][],
+    value: string,
+    onPick: (v: string) => void,
+    close: () => void
+  ) => (
+    <div className="space-y-0.5">
+      {[[ALL, projects.length] as [string, number], ...options].map(([name]) => (
+        <button
+          key={name}
+          type="button"
+          onClick={() => { onPick(name); close(); batDauTim(); xongTim(); }}
+          className={`flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-1.5 text-left text-sm transition ${
+            value === name ? "bg-cvr-blue/10 font-medium text-cvr-blue-ink" : "text-cvr-ink/80 hover:bg-black/5"
+          }`}
+        >
+          <span className="truncate">{name}</span>
+        </button>
+      ))}
+    </div>
+  );
   const chipLoc = (
     <FilterDropdownGroup>
       <FilterDropdown label="Toàn quốc" summary={locLabel} active={locations.length > 0} panelClassName="w-80" className="shrink-0">
         {({ close }) => <LocationPanel locations={locations} onChange={setLocations} onClose={() => { close(); chayTim(); }} />}
       </FilterDropdown>
-      {/* Trang một chủ đầu tư (/chu-dau-tu/<tên>) chỉ có một lựa chọn → không vẽ ô này */}
-      {cdtOpts.length > 1 && (
-        <FilterDropdown label="Chủ đầu tư" summary={cdtTen} active={!!chuDauTu} panelClassName="w-72" className="shrink-0">
-          {({ close }) => (
-            <ChuDauTuPanel
-              ds={cdtOpts}
-              chon={chuDauTu}
-              onPick={(s) => { setChuDauTu(chuDauTu === s ? "" : s); close(); chayTim(); }}
-            />
-          )}
-        </FilterDropdown>
-      )}
+      <FilterDropdown label="Dự án" summary={tatCaDuAn.find((x) => x.slug === duAn)?.name ?? ""} active={!!duAn} panelClassName="w-72" className="shrink-0">
+        {({ close }) => (
+          <DuAnPanel
+            ds={tatCaDuAn}
+            locations={locations}
+            chon={duAn}
+            onPick={(s) => { setDuAn(duAn === s ? "" : s); close(); chayTim(); }}
+          />
+        )}
+      </FilterDropdown>
       <FilterDropdown label="Loại hình" summary={typeLabel} active={types.length > 0} panelClassName="w-72" className="shrink-0">
         {({ close }) => {
           // Cùng logic "Loại BĐS": chưa chọn = tất cả; chọn đủ mọi nhóm = quay về tất cả
@@ -407,7 +424,7 @@ export default function ProjectsBrowser({
             <div>
               <label className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm font-semibold text-cvr-ink transition hover:bg-black/5">
                 <input type="checkbox" checked={types.length === 0} onChange={() => setTypes([])} className="h-4 w-4 shrink-0 accent-cvr-blue" />
-                <span>Tất cả loại hình</span>
+                <span>{ALL}</span>
               </label>
               <div className="mt-1 max-h-64 space-y-0.5 overflow-y-auto pr-1">
                 {loaiOpts.map((c) => {
@@ -425,17 +442,8 @@ export default function ProjectsBrowser({
           );
         }}
       </FilterDropdown>
-      <FilterDropdown label="Trạng thái" summary={status === ALL ? "" : status} active={status !== ALL} panelClassName="w-72" className="shrink-0">
-        {({ close }) => (
-          <div>
-            <div className="flex flex-wrap gap-1.5">
-              {statusCounts.map(([ten]) => (
-                <Chip key={ten} active={status === ten} onClick={() => setStatus(status === ten ? ALL : ten)}>{ten}</Chip>
-              ))}
-            </div>
-            <PanelActions onReset={() => setStatus(ALL)} onApply={() => { close(); chayTim(); }} />
-          </div>
-        )}
+      <FilterDropdown label="Trạng thái" summary={status === ALL ? "" : status} active={status !== ALL} panelClassName="w-64" className="shrink-0">
+        {({ close }) => optionList(statusCounts, status, setStatus, close)}
       </FilterDropdown>
     </FilterDropdownGroup>
   );
@@ -983,12 +991,13 @@ export default function ProjectsBrowser({
   );
 }
 
-// Bảng chọn Chủ đầu tư — cùng kiểu bảng "Dự án" của Mua bán / Cho thuê (ProjectPanel): ô tìm trên, danh sách dưới, bấm một tên là
-// chốt luôn (bấm lại tên đang chọn = bỏ chọn)
-function ChuDauTuPanel({ ds, chon, onPick }: { ds: { slug: string; ten: string }[]; chon: string; onPick: (slug: string) => void }) {
+// Bảng chọn "Dự án" — ĐÚNG bảng "Dự án" của Mua bán / Cho thuê (ProjectPanel: cùng ô tìm, cùng chữ, cùng cách dò tên dự án + địa chỉ +
+// chủ đầu tư, lọc theo khu vực đã chọn), nguồn là MỌI dự án của trang (nổi bật + tra cứu). Bấm một dự án là chốt (bấm lại = bỏ chọn)
+function DuAnPanel({ ds, locations, chon, onPick }: { ds: Project[]; locations: LocationSel[]; chon: string; onPick: (slug: string) => void }) {
   const [q, setQ] = useState("");
+  const base = ds.filter((p) => khopKhuVuc(p.location, locations));
   const nq = normalizeVi(q);
-  const list = nq ? ds.filter((c) => normalizeVi(c.ten).includes(nq)) : ds;
+  const list = nq ? base.filter((p) => normalizeVi(`${p.name} ${p.location} ${p.developer}`).includes(nq)) : base;
   return (
     <div>
       <div className="relative">
@@ -998,21 +1007,26 @@ function ChuDauTuPanel({ ds, chon, onPick }: { ds: { slug: string; ten: string }
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Tìm chủ đầu tư…"
-          aria-label="Tìm chủ đầu tư"
+          placeholder="Tìm dự án…"
+          aria-label="Tìm dự án"
           className="h-9 w-full rounded-lg border border-black/12 bg-black/[0.03] pl-9 pr-3 text-sm text-cvr-ink placeholder-cvr-faint outline-none focus:border-cvr-blue/60"
         />
       </div>
       <div className="mt-2 max-h-64 space-y-0.5 overflow-y-auto">
-        {list.length === 0 && <p className="px-2 py-3 text-center text-sm text-cvr-faint">Không có chủ đầu tư khớp</p>}
-        {list.map((c) => (
+        {list.length === 0 && (
+          <p className="px-2 py-3 text-center text-sm text-cvr-faint">
+            {locations.length ? "Chưa có dự án ở khu vực đã chọn" : "Không có dự án khớp"}
+          </p>
+        )}
+        {list.map((p) => (
           <button
-            key={c.slug}
+            key={p.slug}
             type="button"
-            onClick={() => onPick(c.slug)}
-            className={`flex w-full rounded-lg px-2.5 py-1.5 text-left text-sm transition ${chon === c.slug ? "bg-cvr-blue/10 font-medium text-cvr-blue-ink" : "text-cvr-ink/80 hover:bg-black/5"}`}
+            onClick={() => onPick(p.slug)}
+            className={`flex w-full flex-col rounded-lg px-2.5 py-1.5 text-left text-sm transition ${chon === p.slug ? "bg-cvr-blue/10 text-cvr-blue-ink" : "text-cvr-ink/80 hover:bg-black/5"}`}
           >
-            <span className="truncate">{c.ten}</span>
+            <span className="truncate font-medium">{chon === p.slug ? p.name : <Highlight text={p.name} terms={q.trim() ? [q.trim()] : []} />}</span>
+            <span className="truncate text-[11px] text-cvr-faint">{p.location}</span>
           </button>
         ))}
       </div>
