@@ -67,7 +67,7 @@ function quyGanDay(n: number): string[] {
 
 /** Khoá định danh một dãy số — trùng khoá thì lần nhập sau ghi đè lần trước. */
 function khoaDay(x: ChiSoKhuVuc): string {
-  return [chuanTen(x.tinh), chuanTen(x.khuVuc ?? ""), chuanTen(x.loaiHinh ?? ""), x.mucDich ?? "ban", x.viTri ?? "", chuanTen(x.duAn ?? ""), chuanTen(x.duong ?? ""), chuanTen(x.loaiCon ?? "")].join("|");
+  return [chuanTen(x.tinh), chuanTen(x.khuVuc ?? ""), chuanTen(x.loaiHinh ?? ""), x.mucDich ?? "ban", x.viTri ?? "", chuanTen(x.duAn ?? ""), chuanTen(x.duong ?? "")].join("|");
 }
 
 export default function ChiSoGiaPage() {
@@ -489,7 +489,7 @@ export default function ChiSoGiaPage() {
               <input
                 value={kv.loaiHinh ?? ""}
                 onChange={(e) => sua(i, { loaiHinh: e.target.value || undefined })}
-                placeholder="VD: Chung cư thương mại"
+                placeholder="VD: Căn hộ chung cư"
                 className={inputCls}
               />
             </label>

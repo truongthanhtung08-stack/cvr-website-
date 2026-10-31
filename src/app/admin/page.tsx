@@ -50,9 +50,7 @@ export default function AdminDashboard() {
         supabase.from("profiles").select("*", { count: "exact", head: true }).gte("created_at", weekAgo),
         supabase.from("profiles").select("*", { count: "exact", head: true }).eq("status", "pending"),
         supabase.from("profiles").select("*", { count: "exact", head: true }).in("role", ["agent", "company"]),
-        // Chờ duyệt = tin khách gửi (pending) + tin đăng hàng loạt chờ chủ duyệt (ẩn + choChuDuyet) — 29/10/2026: đợt 7 tin
-        // vào hàng chờ mà ô này ghi 0
-        supabase.from("listings").select("*", { count: "exact", head: true }).or("status.eq.pending,and(status.eq.hidden,details->>choChuDuyet.eq.true)"),
+        supabase.from("listings").select("*", { count: "exact", head: true }).eq("status", "pending"),
         supabase.from("listings").select("*", { count: "exact", head: true }).eq("status", "approved"),
         supabase.from("customer_requests").select("*", { count: "exact", head: true }).eq("status", "moi"),
         supabase.from("projects").select("*", { count: "exact", head: true }).eq("status", "pending"),
@@ -77,7 +75,7 @@ export default function AdminDashboard() {
   // Nay việc nào đang chờ thì hiện thành DÒNG BẤM ĐƯỢC, đi thẳng tới nơi xử lý.
   // LUẬT: mọi tin đăng và mọi dự án đều phải được quản trị viên duyệt mới lên web.
   const viec = [
-    { n: stats?.tinPending ?? 0, chu: "tin đăng chờ duyệt", href: "/admin/tin-dang?trang-thai=pending" },
+    { n: stats?.tinPending ?? 0, chu: "tin đăng chờ duyệt", href: "/admin/tin-dang" },
     { n: chuaChuan?.length ?? 0, chu: "tin chưa đạt chuẩn SEO", href: "#tin-chua-chuan" },
     { n: stats?.duAnPending ?? 0, chu: "dự án chờ duyệt", href: "/admin/du-an" },
     { n: stats?.yeuCauMoi ?? 0, chu: "yêu cầu khách hàng mới", href: "/admin/yeu-cau" },
@@ -131,7 +129,7 @@ export default function AdminDashboard() {
       <Panel title="Tin đăng" className="mt-4">
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           <ChiSo label="Đang đăng" value={stats?.tinLive} href="/admin/tin-dang" accent />
-          <ChiSo label="Chờ duyệt" value={stats?.tinPending} href="/admin/tin-dang?trang-thai=pending" />
+          <ChiSo label="Chờ duyệt" value={stats?.tinPending} href="/admin/tin-dang" />
           <ChiSo label="Chưa đạt chuẩn SEO" value={chuaChuan?.length} href="#tin-chua-chuan" />
         </div>
       </Panel>
@@ -233,21 +231,7 @@ function SuCoBang() {
               </span>
             </div>
             {s.hau_qua && <p className="mt-1.5 text-sm text-red-800">Không sửa thì: {s.hau_qua}</p>}
-            {s.can_lam && (
-              <p className="mt-1 text-sm text-cvr-body">
-                Cần làm:{" "}
-                {/* Đường dẫn tin trong câu → bấm mở thẳng tin (chủ dự án 31/10/2026) */}
-                {s.can_lam.split(/(\/bat-dong-san\/[0-9a-f-]{36})/).map((doan, i) =>
-                  i % 2 ? (
-                    <Link key={i} href={doan} target="_blank" className="font-medium text-cvr-ink underline">
-                      Mở tin
-                    </Link>
-                  ) : (
-                    doan
-                  ),
-                )}
-              </p>
-            )}
+            {s.can_lam && <p className="mt-1 text-sm text-cvr-body">Cần làm: {s.can_lam}</p>}
             {s.chi_tiet && (
               <p className="mt-1 break-words text-xs text-cvr-faint">Máy báo: {s.chi_tiet}</p>
             )}

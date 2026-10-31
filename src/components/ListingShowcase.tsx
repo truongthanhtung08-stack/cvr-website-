@@ -80,9 +80,6 @@ export default function ListingShowcase({
     <div className={title ? khoangTren || undefined : undefined}>
       {title && <h2 className="mb-5 text-xl font-semibold tracking-tight text-cvr-ink sm:text-2xl">{title}</h2>}
       <ListingSlider items={items.slice(0, 8)} />
-      {/* "Xem thêm" CHỈ KHI CẦN (chủ dự án 30/10/2026): còn tin ngoài 8 tin của slide — 1 vài tin thì slide đã đủ, không hiện nút.
-          "Đã xem" luôn có: Xem thêm ra danh sách chung */}
-      {(daXem || (idsDayDu?.length ?? items.length) > 8) && (
       <div className="mt-6 flex justify-center">
         <button
           type="button"
@@ -95,7 +92,6 @@ export default function ListingShowcase({
           </svg>
         </button>
       </div>
-      )}
     </div>
   );
 }

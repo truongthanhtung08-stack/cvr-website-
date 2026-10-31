@@ -8,8 +8,6 @@ const PhotoViewer = dynamic(() => import("@/components/PhotoViewer"), { ssr: fal
 const PhotoList = dynamic(() => import("@/components/PhotoList"), { ssr: false });
 import GallerySlideVideo from "@/components/GallerySlideVideo";
 import DemAnhVideo from "@/components/DemAnhVideo";
-import { anhNho } from "@/lib/asset";
-// Ảnh hiện sẵn trong trang tin = BẢN NHỎ không dấu (anhNho); dấu COASTAL LAND chỉ ở ảnh gốc khi bấm mở xem (chủ dự án 29/10/2026)
 
 // Thư viện ảnh trang chi tiết BĐS — bố cục kiểu Homedy:
 // 1 ảnh lớn bên trái + lưới 2×2 ảnh nhỏ bên phải.
@@ -170,7 +168,7 @@ export default function Gallery({
           </div>
         ) : (
           <button type="button" onClick={() => open(0)} className="group relative block aspect-[4/3] w-full max-sm:h-[clamp(50vw,calc(100svh-465px),75vw)] sm:aspect-[2/1] overflow-hidden rounded-none border border-cvr-line">
-            <Image src={anhNho(media[0].src)} alt={alt} fill priority quality={90} sizes="(max-width:1024px) 100vw, 66vw" className="object-cover" />
+            <Image src={media[0].src} alt={alt} fill priority quality={90} sizes="(max-width:1024px) 100vw, 66vw" className="object-cover" />
           </button>
         )
       ) : (
@@ -211,7 +209,7 @@ export default function Gallery({
                   aria-label={`Ảnh ${imgIdx(i) + 1}`}
                   className="relative aspect-[4/3] max-h-[70dvh] max-sm:h-[clamp(50vw,calc(100svh-465px),75vw)] w-full shrink-0 snap-center overflow-hidden bg-black"
                 >
-                  <Image src={anhNho(m.src)} alt={`${alt} ${imgIdx(i) + 1}`} fill priority={i === nVid} fetchPriority={i === nVid ? "high" : undefined} quality={90} sizes="100vw" className="object-cover" />
+                  <Image src={m.src} alt={`${alt} ${imgIdx(i) + 1}`} fill priority={i === nVid} fetchPriority={i === nVid ? "high" : undefined} quality={90} sizes="100vw" className="object-cover" />
                 </button>
               ),
             )}
@@ -348,7 +346,7 @@ export default function Gallery({
               <GallerySlideVideo url={media[bigIdx].src} active onHold={setHold} onLon={(b) => setLonO(b ? "mt" : null)} />
             ) : (
               <button type="button" onClick={() => open(imgIdx(bigIdx))} className="absolute inset-0 block h-full w-full">
-                <Image key={bigIdx} src={anhNho(media[bigIdx].src)} alt={alt} fill priority quality={90} sizes="(max-width:1024px) 100vw, 50vw" className="object-cover animate-fadein" />
+                <Image key={bigIdx} src={media[bigIdx].src} alt={alt} fill priority quality={90} sizes="(max-width:1024px) 100vw, 50vw" className="object-cover animate-fadein" />
               </button>
             )}
             {/* ── NÚT CHUYỂN ‹ › ────────────────────────────────────────────
@@ -419,7 +417,7 @@ export default function Gallery({
                     </span>
                   </span>
                 ) : (
-                  <Image src={anhNho(m.src)} alt={`${alt} ${imgIdx(idx) + 1}`} fill sizes="(max-width:1024px) 50vw, 25vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
+                  <Image src={m.src} alt={`${alt} ${imgIdx(idx) + 1}`} fill sizes="(max-width:1024px) 50vw, 25vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
                 )}
                 {isLast && (
                   <span className="absolute inset-0 flex items-center justify-center bg-black/55 text-lg font-semibold text-white">

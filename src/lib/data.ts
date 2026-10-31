@@ -38,8 +38,6 @@ export type Listing = {
   /** Nhóm vị trí suy từ bề rộng đường vào: "lon" | "nho" | "kiet" — để so giá với
    *  đúng hạng đường, vì trong cùng một phường mặt tiền và kiệt lệch 2–3 lần. */
   viTri?: "lon" | "nho" | "kiet";
-  /** LOẠI CON người bán chọn (căn hộ: "Loại hình căn hộ" · đất: "Loại đất") — lịch sử giá so theo đúng loại con (29/10/2026). */
-  loaiCon?: string;
   /** Cùng chỗ đó gọi theo hệ CŨ — hiện ở dòng dưới, nhãn "Địa chỉ cũ". */
   locationCu?: string;
   // Số nhà + tên đường người đăng cho hiện (details.addressDetail) — dòng địa chỉ hệ mới trên thẻ (20/10/2026)
@@ -177,7 +175,7 @@ export function districtOf(location: string): string {
 // Phân khúc = từ khoá loại hình chuẩn hoá, suy từ chuỗi type (khớp giữa dự án ↔ tin).
 // Trả "" nếu không nhận ra (không tính là cùng phân khúc).
 const SEGMENT_KEYWORDS = [
-  "Căn hộ", "Condotel", "Homestay", "Farmstay", "Khu nghỉ dưỡng", "Villa", "Biệt thự", "Shophouse", "Nhà phố",
+  "Căn hộ", "Condotel", "Villa", "Biệt thự", "Shophouse", "Nhà phố",
   "Nhà riêng", "Đất nền", "Đất công nghiệp", "Nhà xưởng", "Kho", "Đất",
 ];
 export function segmentOf(type: string): string {
@@ -294,8 +292,6 @@ export type Project = {
   location: string;
   /** Cùng chỗ đó gọi theo hệ CŨ — dòng dưới, nhãn "Địa chỉ cũ". */
   locationCu?: string;
-  /** Chỉ phường + tỉnh/thành theo hệ MỚI (không số nhà, đường) — thẻ Dự án nổi bật */
-  diaChiMoi?: string;
   priceFrom: string;
   type: string;
   status: string;
@@ -319,7 +315,6 @@ export type Project = {
   developmentUnit?: string;             // Đơn vị phát triển (khác Chủ đầu tư)
   capNhat?: string;                     // "15/10/2026" — ngày cập nhật thông tin dự án
   nguon?: string;                       // nguồn thông tin dự án (MASTER 3.2: dự án phải có nguồn + ngày)
-  dangThe?: boolean;                    // hồ sơ dạng thẻ (nạp hàng loạt cho Tra cứu dự án) — không lên Dự án nổi bật
 };
 
 // ⚠️ Số liệu dự án mang tính tham khảo cho mẫu giao diện — cần đối chiếu công bố

@@ -19,47 +19,23 @@ type TypeGroup = { label: string; items: string[] };
 // Tên loại hình bên trong (items) KHÔNG đổi — tin cũ và tệp nhập CSV vẫn khớp.
 // MUA BÁN
 export const saleTypeGroups: TypeGroup[] = [
-  // "Căn hộ dịch vụ" bán: bổ sung cho đủ như Batdongsan ("Bán chung cư mini, căn hộ dịch vụ") — chủ dự án 30/10/2026 "cái chưa có thì bổ sung vào"
-  { label: "Căn hộ, chung cư", items: ["Căn hộ", "Chung cư", "Căn hộ dịch vụ"] }, // tên nhóm = tên cha trên menu (chủ dự án 29/10/2026)
+  { label: "Căn hộ", items: ["Căn hộ", "Chung cư"] },
   { label: "Nhà", items: ["Nhà riêng", "Nhà mặt phố", "Nhà biệt thự / Liền kề", "Shophouse / Nhà phố thương mại"] },
-  // "Đất khác" = mọi loại đất ngoài đất nền (nông nghiệp, vườn, trang trại…) — chủ dự án 30/10/2026; trước là "Đất nông nghiệp"
-  { label: "Đất", items: ["Đất nền / Đất nền dự án", "Đất khác"] },
-  // "Trang trại / Khu nghỉ dưỡng" (D18) tách thành "Homestay / Farmstay" + "Khu nghỉ dưỡng" (chủ dự án 29/10/2026, D24)
-  { label: "BĐS nghỉ dưỡng", items: ["Villa / Biệt thự biển", "Condotel", "Homestay / Farmstay", "Khu nghỉ dưỡng"] },
+  { label: "Đất", items: ["Đất nền / Đất nền dự án", "Đất nông nghiệp"] },
+  { label: "BĐS nghỉ dưỡng", items: ["Villa / Biệt thự biển", "Condotel"] },
   { label: "BĐS công nghiệp", items: ["Đất công nghiệp", "Kho / Nhà xưởng"] },
   { label: "Khác", items: ["Bất động sản khác"] },
 ];
 
 // CHO THUÊ
 export const rentTypeGroups: TypeGroup[] = [
-  { label: "Căn hộ, chung cư", items: ["Căn hộ", "Chung cư", "Căn hộ dịch vụ"] },
+  { label: "Căn hộ", items: ["Căn hộ", "Chung cư", "Căn hộ dịch vụ"] },
   { label: "Nhà", items: ["Nhà riêng", "Nhà mặt phố", "Nhà phố thương mại", "Biệt thự / Liền kề"] },
   { label: "Phòng trọ", items: ["Nhà trọ / Phòng trọ"] },
   { label: "Văn phòng, mặt bằng", items: ["Văn phòng", "Mặt bằng / Cửa hàng bán lẻ"] },
-  { label: "BĐS nghỉ dưỡng", items: ["Homestay / Farmstay"] },
   { label: "BĐS công nghiệp", items: ["Thuê đất / Nhà xưởng / Kho bãi"] },
   { label: "Khác", items: ["Bất động sản khác"] },
 ];
-
-// TÊN HIỆN của loại hình (chủ dự án 30/10/2026): giá trị lưu có dấu "/" (tên nội bộ, tin cũ + tệp nhập khớp) → chữ hiện cho khách
-// theo đúng kiểu menu: "Đất nền / Đất nền dự án" → "Đất nền, đất nền dự án". Form khách, form admin, trang tin cùng dùng.
-export function tenLoaiHinh(type?: string | null): string {
-  return (type ?? "").split(/\s*\/\s*/).map((s, i) => (i ? s.charAt(0).toLowerCase() + s.slice(1) : s)).join(", ");
-}
-
-// NHÓM CHA của loại hình = menu cha (chủ dự án 30/10/2026: "Loại hình BĐS sẽ là menu CHA trong tin") — "Khác" hiện đủ chữ.
-export function nhomCuaLoaiHinh(type: string | null | undefined, purpose?: string | null): string {
-  const g = typeGroupsFor(purpose === "thue" ? "thue" : "ban").find((x) => x.items.includes(type ?? ""));
-  return !g ? tenLoaiHinh(type) : g.label === "Khác" ? "Bất động sản khác" : g.label;
-}
-
-// Loại con LẶP cha: mọi chữ của nó đã có trong tên nhóm cha ("Căn hộ chung cư" dưới "Căn hộ, chung cư") → không hiện dòng loại con.
-// Chữ khách tự ghi ("Khác — tự ghi") khác cha thì vẫn hiện nguyên văn.
-export function lapCha(v: string | null | undefined, type: string | null | undefined, purpose?: string | null): boolean {
-  const cha = new Set(normalizeVi(nhomCuaLoaiHinh(type, purpose)).split(/[^a-z0-9]+/).filter(Boolean));
-  const chu = normalizeVi(v ?? "").split(/[^a-z0-9]+/).filter(Boolean);
-  return chu.length > 0 && chu.every((w) => cha.has(w));
-}
 
 // Chọn bộ danh mục theo mục đích (dùng cho FilterBar trên từng trang)
 export function typeGroupsFor(purpose: "ban" | "thue"): TypeGroup[] {

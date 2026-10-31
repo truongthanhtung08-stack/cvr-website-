@@ -16,8 +16,7 @@ import { mauSoCuaLoaiHinh } from "@/lib/chiSoGia";
 import { featuredListings, getListingById } from "@/lib/data";
 import { asset } from "@/lib/asset";
 import { isVideoUrl } from "@/lib/media";
-import { fieldsSplit, amenityGroups, coDienTichXayDung, viTriTuDuongVao, viTriTuAccess, laTinThue, laTinBan, dienTichSanThat, chuanLoaiCon, O_LOAI_CON, type Field } from "@/lib/listingSpec";
-import { lapCha } from "@/lib/filters";
+import { fieldsSplit, amenityGroups, coDienTichXayDung, viTriTuDuongVao, viTriTuAccess, laTinThue, laTinBan, dienTichSanThat, type Field } from "@/lib/listingSpec";
 import { chuanHoaSdt, maNguoiTuSdt, tachNhieuSdt } from "@/lib/phone";
 import { tachTenDuong } from "@/lib/tenDuong";
 import { chuoiDiaChiBanDo } from "@/lib/diaChiBanDo";
@@ -157,10 +156,8 @@ function fmtNum(n: number, maxFrac = 1): string {
 function fmtPrice(v: number | null, purpose: Row["purpose"]): string {
   if (v == null) return "Thỏa thuận";
   // Cả "thue" lẫn "can-thue" đều là giá MỖI THÁNG — xem laTinThue().
-  // GHI ĐÚNG SỐ KHÁCH GHI, KHÔNG LÀM TRÒN (chủ dự án 29/10/2026: 1,35 tỷ từng hiện "1,4 tỷ", 2,75 tỷ hiện "2,8 tỷ" — cả thẻ
-  // tin, trang tin lẫn tiêu đề Google). Số lẻ tối đa: tỷ 3 chữ số, triệu 2 chữ số; số tròn vẫn hiện gọn ("2,9 tỷ", "23 triệu").
-  if (laTinThue(purpose)) return `${fmtNum(v / 1e6, 2)} triệu/tháng`;
-  return v >= 1e9 ? `${fmtNum(v / 1e9, 3)} tỷ` : `${fmtNum(v / 1e6, 2)} triệu`;
+  if (laTinThue(purpose)) return `${fmtNum(v / 1e6)} triệu/tháng`;
+  return v >= 1e9 ? `${fmtNum(v / 1e9)} tỷ` : `${fmtNum(v / 1e6)} triệu`;
 }
 
 // Gom MỌI TRƯỜNG đã nhập (ngoài tiêu đề/mô tả) thành một chuỗi để ô tìm kiếm dò
@@ -250,7 +247,6 @@ function rowToListing(r: Row): Listing {
       const v = viTriTuDuongVao(r.details?.specs?.roadWidth) ?? viTriTuAccess(r.details?.specs?.access);
       return v ? { viTri: v } : {};
     })(),
-    ...((r.details?.specs?.loaiCanho || r.details?.specs?.landType) ? { loaiCon: chuanLoaiCon(r.details?.specs?.loaiCanho || r.details?.specs?.landType) } : {}),
     ...(r.beds != null ? { beds: r.beds } : {}),
     ...(r.baths != null ? { baths: r.baths } : {}),
     // ĐỊA CHỈ HIỂN THỊ THEO HỆ MỚI — áp cho MỌI tin, kể cả tin đã đăng từ trước.
@@ -450,14 +446,6 @@ export async function getListingsHetHan(): Promise<Listing[]> {
     .map((r) => ({ ...rowToListing(r), hetHan: true }));
 }
 
-// TIN DÙNG ĐỂ XÉT TRANG pSEO ĐỦ TIN (mở trang, index, sitemap, liên kết nội bộ, trang giá) — chủ dự án 29/10/2026: "tính hết tin
-// hết hạn, tất cả tin trên web; tin hết hạn đã có cơ chế hết hạn, không ảnh hưởng cách Google chấm điểm". Chỉ để ĐẾM / XÉT
-// cổng — danh sách hiển thị vẫn tách tin còn hạn (getListings) và tin hết hạn (getListingsHetHan, mục riêng trên trang).
-export async function getTinXetTrang(): Promise<Listing[]> {
-  const [con, het] = await Promise.all([getListings().catch(() => []), getListingsHetHan().catch(() => [])]);
-  return [...con, ...het];
-}
-
 // ── BẢN NHẸ CHO TRANG CHỈ HIỆN THẺ TIN (trang chủ) ──────────────────────────
 //
 // VÌ SAO CÓ: mọi thứ hàm trên trả về đều bị Next gói vào HTML gửi xuống máy khách.
@@ -477,7 +465,7 @@ export async function getListingsThe(): Promise<Listing[]> {
     // FeaturedListings, tinNoiBat) — vùng dò tìm, địa giới, mã người, số thô, hạn tin.
     const {
       desc: _desc, searchText: _searchText, diaChiTim: _dct, diaGioi: _dg, maNguoi: _mn, hetHanLuc: _hh,
-      builtAreaM2Uoc: _bu, hangTin: _ht, duong: _du,  priceVnd: _pv, areaM2: _am, builtAreaM2: _ba, loaiCon: _lc,
+      builtAreaM2Uoc: _bu, hangTin: _ht, duong: _du,  priceVnd: _pv, areaM2: _am, builtAreaM2: _ba,
       ...the
     } = l;
     // 20/10/2026: thẻ hiện 2 câu đầu mô tả (src/lib/trichMoTa.ts) → chỉ gửi đúng 2 câu đó (~150–250 ký tự), không gửi cả mô tả
@@ -573,38 +561,26 @@ function rowToDetail(r: Row): ListingFull {
     fs
       // Nhãn gọn, đơn vị ghép vào số ("Mặt tiền (chiều ngang): 4,16 m") — trước ghi kiểu ô nhập liệu "Mặt tiền (chiều ngang) (m): 4,16" (20/10/2026)
       .map((f) => {
-        // Loại con hiện theo TÊN CHUẨN (chuanLoaiCon — cùng danh sách form khách, admin, nạp hàng loạt; 29/10/2026)
-        const v = f.key === "landType" || f.key === "loaiCanho" ? chuanLoaiCon(gon(d.specs?.[f.key])) : gon(d.specs?.[f.key]);
+        const v = gon(d.specs?.[f.key]);
         // Trang tin ghi nhãn gọn "Mặt tiền", "Chiều dài" (chủ dự án 21/10/2026); form đăng tin giữ chú thích trong ngoặc
         return { label: f.label.replace(/\s*\((chiều ngang|chiều sâu)\)$/, ""), value: v && f.unit && /^[\d.,\s]+$/.test(v) ? `${v} ${f.unit}` : v };
       })
-      // Loại con lặp tên cha thì bỏ (lapCha, 30/10/2026)
-      .filter((s, i) => s.value && !(O_LOAI_CON.includes(fs[i].key) && lapCha(s.value, r.type, r.purpose)));
+      .filter((s) => s.value);
   const { chinh, dacDiem } = fieldsSplit(r.type, r.purpose);
   // Tin thuê: mục TIỀN lên hàng giá, mục điều kiện thuê (vào ở, thời hạn) lên thông tin chính — "Đặc điểm" chỉ còn
   // đặc điểm của bất động sản. Chỉ đổi chỗ hiện trên trang tin; form đăng tin giữ nguyên (fieldsSplit dùng chung).
   const TIEN_DAU = ["deposit", "billingCycle"], TIEN_SAU = ["elecPrice", "waterPrice", "phiDichVu"], DIEU_KIEN = ["moveIn", "minTerm"];
   const tatCa = [...chinh, ...dacDiem];
   const theoKhoa = (ks: string[]) => ks.map((k) => tatCa.find((f) => f.key === k)).filter((f): f is Field => Boolean(f));
-  // THỐNG NHẤT ĐƠN VỊ TIỀN (chủ dự án 29/10/2026, ảnh Sun Ponte: giá thuê "15 triệu/tháng" mà cọc "15.000.000 đ") → số tiền từ
-  // 1 triệu trở lên trong ô tiền đổi về triệu / tỷ như giá; số nhỏ (điện, nước theo kWh, m³) giữ nguyên.
-  const dvt = (v: string) =>
-    v.replace(/(\d{1,3}(?:\.\d{3})+|\d{7,})\s*(?:đồng|vnđ|vnd|đ)(?![\p{L}])/giu, (m, so: string) => {
-      const n = Number(so.split(".").join(""));
-      if (!(n >= 1_000_000)) return m;
-      return n >= 1e9
-        ? `${(n / 1e9).toLocaleString("vi-VN", { maximumFractionDigits: 3 })} tỷ`
-        : `${(n / 1e6).toLocaleString("vi-VN", { maximumFractionDigits: 2 })} triệu`;
-    });
   const tienDau = doc(theoKhoa(TIEN_DAU))
     // Theo tháng là mặc định của giá thuê — chỉ nói khi tin báo theo quý / năm
     .filter((s) => s.value !== "Theo tháng")
     .map((s) => ({
       label: s.label === "Tiền cọc" ? "Tiền đặt cọc" : s.label === "Kỳ báo giá" ? "Kỳ thanh toán" : s.label,
       // Tiền đặt cọc ghi số trơn ("7") = triệu đồng, cùng đơn vị giá thuê
-      value: s.label === "Tiền cọc" && /^\d+(,\d+)?$/.test(s.value) ? `${s.value} triệu` : dvt(s.value),
+      value: s.label === "Tiền cọc" && /^\d+(,\d+)?$/.test(s.value) ? `${s.value} triệu` : s.value,
     }));
-  const tienSau = doc(theoKhoa(TIEN_SAU)).map((s) => ({ ...s, value: dvt(s.value) }));
+  const tienSau = doc(theoKhoa(TIEN_SAU));
   const boRa = new Set([...TIEN_DAU, ...TIEN_SAU, ...DIEU_KIEN]);
   const specsChinh = doc([...chinh.filter((f) => !boRa.has(f.key)), ...theoKhoa(DIEU_KIEN)]);
   const specs = doc(dacDiem.filter((f) => !boRa.has(f.key)));

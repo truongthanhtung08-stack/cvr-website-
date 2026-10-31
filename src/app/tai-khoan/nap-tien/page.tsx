@@ -44,8 +44,7 @@ function TopUpForm() {
   const router = useRouter();
   useEffect(() => {
     if (!ve) return;
-    // Huỷ / tin mới chưa lưu nháp nộp xong → về mục Gói tin của tin (veHuy); tin nháp nộp xong → Tin của tôi
-    if (ketQua === "huy" || (ketQua === "thanh-cong" && ve === "/dang-tin")) router.replace(veHuy(ve));
+    if (ketQua === "huy") router.replace(ve);
     else if (ketQua === "thanh-cong") router.replace("/tai-khoan/tin-dang?nap=thanh-cong");
   }, [ketQua, ve, router]);
 
@@ -62,9 +61,8 @@ function TopUpForm() {
   const KHOA_DON = "donNap";
   // Đến từ tin đang đăng: ghi cờ để quay về (Back, ‹, Huỷ) thì form đứng ngay khối Gói tin (PostListingForm đọc cờ)
   useEffect(() => {
-    // "moi" = tin mới chưa lưu được nháp (chưa có Tỉnh/Thành + Tiêu đề) — bản soạn nằm trong máy
-    const ma = ve?.match(/^\/dang-tin\?id=([\w-]+)/)?.[1] ?? (ve === "/dang-tin" ? "moi" : undefined);
-    try { if (ma) localStorage.setItem("veGoiTin", JSON.stringify({ ma, luc: Date.now() })); } catch {} // localStorage: xem PostListingForm veThanhToan
+    const ma = ve?.match(/^\/dang-tin\?id=([\w-]+)/)?.[1];
+    try { if (ma) sessionStorage.setItem("veGoiTin", ma); } catch {}
   }, [ve]);
   const boDon = () => { try { sessionStorage.removeItem(KHOA_DON); } catch {} };
   useEffect(() => {
@@ -84,11 +82,11 @@ function TopUpForm() {
     // cvrQr đánh dấu mốc mã QR (trang tải lại thì mở lại đúng đơn)
     // Trang tải lại khi khách từ app ngân hàng quay về: mốc mã QR đã có sẵn → không chồng thêm
     if (!window.history.state?.cvrQr) window.history.pushState({ ...window.history.state, cvrQr: 1 }, "");
-    // Back / Huỷ ở mã QR = về tin đang làm, khối Chọn gói (chủ dự án 29/10/2026). Vừa từ đúng trang tin sang đây → lùi thêm một
-    // mốc về chính trang đó (không sinh mốc trùng); vào trang nạp bằng đường khác → mở tin. Nạp ví thường → ô chọn số tiền.
+    // Về tin đang đăng kèm huy-tt=1 → form cuộn tới khối Gói tin — thanh toán
     const dong = () => {
       setDon(null); boDon();
       if (!ve) return;
+      // Vừa từ đúng trang tin sang đây → lùi thêm một mốc về chính trang đó (không sinh mốc trùng: Z→A lùi đúng từng trang)
       let truoc = "";
       try { truoc = sessionStorage.getItem("cl_trang_truoc") || ""; } catch {}
       if (truoc === ve.split("?")[0]) window.history.back();
@@ -196,13 +194,12 @@ function TopUpForm() {
           don={don}
           // Huỷ = quay lại một bước (gỡ mốc mã QR) → đóng mã, về đúng chỗ (xem phần NÚT QUAY LẠI ở trên)
           onHuy={() => window.history.back()}
+          urlXong={`${window.location.origin}${ve ? "/tai-khoan/tin-dang?nap=thanh-cong" : "/tai-khoan/nap-tien?ket-qua=thanh-cong"}`}
           // Tiền về (webhook đã cộng ví): đến từ tin → Tin của tôi (tin tự gửi duyệt); nạp thường → báo thành công tại đây
           onXong={() => {
             boDon();
-            try { localStorage.removeItem("veGoiTin"); } catch {} // đã trả xong: không còn quay về tin nháp
-            // Tin mới chưa lưu được nháp (ve = /dang-tin): Tin của tôi không có tin nào → về lại form, mục Gói tin, bấm Đăng (29/10/2026)
-            if (ve === "/dang-tin") router.replace(veHuy(ve));
-            else if (ve) router.replace("/tai-khoan/tin-dang?nap=thanh-cong");
+            try { sessionStorage.removeItem("veGoiTin"); } catch {} // đã trả xong: không còn quay về tin nháp
+            if (ve) router.replace("/tai-khoan/tin-dang?nap=thanh-cong");
             else { setDon(null); router.replace("/tai-khoan/nap-tien?ket-qua=thanh-cong"); }
           }}
         />

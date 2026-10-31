@@ -112,18 +112,14 @@ export function giaTheoNhom(dk: DieuKien, tin: Listing[]): GiaNhom | null {
   const tong = giaNhom(tin, thue);
   const thang = thangHienTai(), thueChu = thue ? "thuê " : "";
   const duAn = nhomTheo(tin, (l) => l.projectName?.replace(TINH_DUOI, ""), thue);
-  // Tên khu vực kèm tên cũ (29/10/2026, chủ dự án: mọi chỗ có địa chỉ đồng bộ hệ cũ và mới — khách gõ cách nào cũng ra)
-  const khuVuc = (dk.phuong || dk.duong ? [] : nhomTheo(tin, (l) => phuongCuaTin(l) || undefined, thue)).map((x) => {
-    const c = tenCu(tin.filter((l) => phuongCuaTin(l) === x.ten), dk.tinh.name, x.ten);
-    return c ? { ...x, ten: `${x.ten} (${c})` } : x;
-  });
+  const khuVuc = dk.phuong || dk.duong ? [] : nhomTheo(tin, (l) => phuongCuaTin(l) || undefined, thue);
   // Giá theo khu vực (khuôn khung AI): mọi khu vực có tin, nhiều tin trước; ≥ 2 khu vực mới hiện
   const theoPhuong = new Map<string, Listing[]>();
   // Trang đường: không chia khu vực. Trang phường / nhóm một khu vực: một mục duy nhất (27/10/2026 — vẫn có dự án, giá, phòng ngủ)
   if (!dk.duong) for (const l of tin) { const p = phuongCuaTin(l); if (p) theoPhuong.set(p, [...(theoPhuong.get(p) ?? []), l]); }
   const khuVucGia = [...theoPhuong.entries()].sort((a, b) => b[1].length - a[1].length).map(([ten, xs]) => ({
     ten,
-    cu: tenCu(xs, dk.tinh.name, ten),
+    cu: tenCu(xs, dk.tinh.name),
     duAn: [...new Set(xs.map((l) => l.projectName?.replace(TINH_DUOI, "").trim()).filter((x): x is string => !!x))],
     gia: giaKhuVuc(xs, thue),
     phongNgu: giaTheoPhongNgu(xs, thue),
@@ -149,17 +145,17 @@ export function giaTheoNhom(dk: DieuKien, tin: Listing[]): GiaNhom | null {
 // lienKet: thay link "Xem thêm nhà đất <tỉnh>" (trang Giá nhà đất theo tỉnh trỏ về đúng trang loại hình × tỉnh)
 // coTrangGia: tỉnh đã có trang "Giá nhà đất <tỉnh>" mở cho Google (src/lib/giaNhaDat) — chỉ khi đó mới hiện liên kết sang trang giá
 // cu: trang đang lên Google (TRANG_DONG_BANG) — vẽ ĐÚNG bản cũ (khối "Tham khảo giá" theo khu vực / dự án), không gì mới
-export function GiaTheoNhomPseo({ g, lienKet, coTrangGia = false, cu = false, id = "gia-theo-nhom" }: { g: GiaNhom | null; lienKet?: { href: string; nhan: string }; coTrangGia?: boolean; cu?: boolean; id?: string }) {
+export function GiaTheoNhomPseo({ g, lienKet, coTrangGia = false, cu = false }: { g: GiaNhom | null; lienKet?: { href: string; nhan: string }; coTrangGia?: boolean; cu?: boolean }) {
   if (!g || (!g.duAn.length && !g.khuVuc.length && (cu || !g.khuVucGia.length))) return null;
   // Có ≥ 2 khu vực: khuôn khung AI (mẫu chủ dự án duyệt 27/10/2026) — mỗi khu vực một mục, dự án nằm trong khu vực
   if (!cu && g.khuVucGia.length) return (
-    <section aria-labelledby={id} className="mx-auto max-w-7xl px-4 pb-8 sm:px-6 lg:px-8">
-      <h2 id={id} className="text-[20px] font-normal tracking-tight text-cvr-ink sm:text-[22px]">{g.tieuDeKV}</h2>
+    <section aria-labelledby="gia-theo-nhom" className="mx-auto max-w-7xl px-4 pb-8 sm:px-6 lg:px-8">
+      <h2 id="gia-theo-nhom" className="text-[20px] font-normal tracking-tight text-cvr-ink sm:text-[22px]">{g.tieuDeKV}</h2>
       <div className="max-w-[980px]">
         {g.tongKV && g.khuVucGia.length >= 2 && <p className="mt-3 text-[15px] leading-relaxed text-cvr-muted">{g.tongKV}</p>}
         {g.khuVucGia.map((k) => (
           <div key={k.ten} className="mt-4">
-            {(g.khuVucGia.length >= 2 || k.cu) && <h3 className="text-[16px] font-semibold text-cvr-ink">{k.ten}{k.cu ? ` (${k.cu})` : ""}</h3>}
+            {g.khuVucGia.length >= 2 && <h3 className="text-[16px] font-semibold text-cvr-ink">{k.ten}{k.cu ? ` (${k.cu})` : ""}</h3>}
             {k.duAn.length > 0 && <p className="mt-1 text-[15px] leading-relaxed text-cvr-muted">Dự án: {k.duAn.join(", ")}</p>}
             <p className="mt-0.5 text-[15px] leading-relaxed text-cvr-muted">{k.gia}</p>
             {k.phongNgu && <p className="mt-0.5 text-[15px] leading-relaxed text-cvr-muted">{k.phongNgu}</p>}
@@ -187,8 +183,8 @@ export function GiaTheoNhomPseo({ g, lienKet, coTrangGia = false, cu = false, id
     </div>
   ) : null;
   return (
-    <section aria-labelledby={id} className="mx-auto max-w-7xl px-4 pb-8 sm:px-6 lg:px-8">
-      <h2 id={id} className="text-[20px] font-normal tracking-tight text-cvr-ink sm:text-[22px]">{g.tieuDe}</h2>
+    <section aria-labelledby="gia-theo-nhom" className="mx-auto max-w-7xl px-4 pb-8 sm:px-6 lg:px-8">
+      <h2 id="gia-theo-nhom" className="text-[20px] font-normal tracking-tight text-cvr-ink sm:text-[22px]">{g.tieuDe}</h2>
       <div className="max-w-[980px]">
         {g.tong && <p className="mt-3 text-[15px] leading-relaxed text-cvr-muted">{g.tong}</p>}
         {bang("Theo khu vực", g.khuVuc)}

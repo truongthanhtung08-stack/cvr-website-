@@ -110,7 +110,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     // ── TRANG pSEO (src/lib/pseo.ts) — CHỈ trang qua cổng chất lượng (≥ 3 tin còn hạn,
     // không trùng trang cha). lastmod = lần đăng/đẩy tin mới nhất của chính trang đó.
-    for (const p of trangIndex([...listings, ...tinHetHan])) { // cổng đếm cả tin hết hạn (29/10/2026)
+    for (const p of trangIndex(listings)) {
       dynamic.push({
         url: `${SITE}${p.path}`,
         ...(p.moiNhat ? { lastModified: new Date(p.moiNhat) } : {}),
@@ -122,7 +122,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // TRANG GIÁ NHÀ ĐẤT THEO TỈNH (kế hoạch SEO 5b-D3, 27/10/2026) — chỉ tỉnh qua cổng (≥ 2 loại hình có số)
     for (const t of khuVucTrongDiem) {
       const kv = timKhuVuc(slugKhuVuc(t));
-      if (kv && trangGiaNhaDat(kv, [...listings, ...tinHetHan]).index) dynamic.push({ url: `${SITE}/gia-nha-dat/${kv.slug}`, changeFrequency: "weekly", priority: 0.8 });
+      if (kv && trangGiaNhaDat(kv, listings).index) dynamic.push({ url: `${SITE}/gia-nha-dat/${kv.slug}`, changeFrequency: "weekly", priority: 0.8 });
     }
 
     // TRANG CHỦ ĐẦU TƯ — chỉ chủ đầu tư có ≥ 2 dự án đã đăng (src/lib/chuDauTu.ts)
@@ -133,8 +133,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     for (const p of projects) {
       dynamic.push({
         url: `${SITE}/du-an/${p.slug}`, changeFrequency: "weekly", priority: 0.7,
-        // Chỉ ảnh thật của dự án — chưa có ảnh thì không gửi ảnh mẫu chung cho Google (30/10/2026)
-        images: (p.photos ?? []).slice(0, 5).flatMap(anhTuyetDoi),
+        images: (p.photos?.length ? p.photos.slice(0, 5) : [p.image]).flatMap(anhTuyetDoi),
       });
     }
     for (const a of articles) {

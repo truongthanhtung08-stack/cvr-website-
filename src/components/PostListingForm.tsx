@@ -26,7 +26,7 @@ import {
   phapLyCho, legalOptions, fieldsFor, furnishLevels, amenityGroups, tienIchCho, interiorItems, directions,
   purposeOfDemand, demandOfPurpose,
 } from "@/lib/listingSpec";
-import { typeGroupsFor, normalizeVi, tenLoaiHinh } from "@/lib/filters";
+import { typeGroupsFor, normalizeVi } from "@/lib/filters";
 import { khoaDuAn } from "@/lib/duAnTen";
 import { slugify } from "@/lib/contentAdmin";
 import { provinceNamesFor, districtsOf, wardsOf, wardsOfNew, wardsOfAny, chuanTen, type GeoMode } from "@/lib/locations";
@@ -279,46 +279,12 @@ export default function PostListingForm() {
     setImages(ds("images"));
     // Gói khách đã chọn đi theo bản soạn dở (đi nạp tiền rồi quay về không phải chọn lại — chủ dự án 26/10/2026)
     if (s("planTier")) { setPlanTier(s("planTier") as TierId); setPlanDays(Number(d.planDays) || 0); setChonKm(d.chonKm === true); }
-    if (s("batDau")) setBatDau(s("batDau"));
     // Liên hệ: chỉ ghi đè khi bản nháp có — không xoá phần đã điền sẵn từ hồ sơ.
     if (s("contactName")) setContactName(s("contactName"));
     if (s("contactPhone")) setContactPhone(s("contactPhone"));
     if (emailThat(s("contactEmail"))) setContactEmail(emailThat(s("contactEmail")));
     setProjectSlug(s("projectSlug"));
     setProjectName(s("projectName"));
-  }
-  // HUỶ THANH TOÁN / QUAY LẠI từ trang nạp tiền (chủ dự án 27/10 + 29/10/2026): về đúng công đoạn khách đang làm — đầu mục
-  // Gói tin — thanh toán (#b-goi). Nhận biết: ?huy-tt=1 hoặc cờ veGoiTin trang nạp ghi
-  // (mã tin nháp, hoặc "moi" = tin mới chưa lưu được nháp). Trả true khi đúng là đang quay về.
-  function veThanhToan(ma: string): boolean {
-    const dc = new URL(window.location.href);
-    let coCo = false;
-    try {
-      // Cờ nằm trong localStorage, có giờ ghi (29/10/2026: Samsung Internet qua lại app ngân hàng làm mất sessionStorage →
-      // về form lại hỏi "Bạn có tin đang soạn dở"). Quá 30 phút = cờ cũ → vẫn hỏi Soạn tiếp / Đăng tin mới.
-      const c = JSON.parse(localStorage.getItem("veGoiTin") || "null") as { ma?: string; luc?: number } | null;
-      coCo = c?.ma === ma && Date.now() - (c.luc ?? 0) < 30 * 60_000;
-      if (coCo || (c && Date.now() - (c.luc ?? 0) >= 30 * 60_000)) localStorage.removeItem("veGoiTin");
-    } catch {}
-    if (dc.searchParams.get("huy-tt") !== "1" && !coCo) return false;
-    dc.searchParams.delete("huy-tt");
-    window.history.replaceState(window.history.state, "", dc.pathname + dc.search);
-    // Về ĐẦU mục "Gói tin — thanh toán" (chủ dự án 29/10/2026: "về chỗ nộp tiền là ở phần gói") — thấy gói đã chọn + Tổng tiền
-    const toi = () => document.getElementById("b-goi") ?? document.getElementById("b-thanhtoan");
-    // Điện thoại thật (29/10/2026: từ app ngân hàng về vẫn đứng đầu trang): máy chậm dựng khối sau 3 giây, trình duyệt / Next khôi
-    // phục vị trí cuộn cũ → soát mỗi 300 ms tới 12 giây: lệch thì đưa khối lên lại, đứng đúng 3 lượt liền thì thôi; khách tự chạm /
-    // cuộn thì thôi ngay, không giật trang của khách.
-    let dung = 0, lan = 0;
-    const thoi = () => { clearInterval(t); ["touchstart", "wheel", "keydown"].forEach((e) => removeEventListener(e, thoi)); };
-    ["touchstart", "wheel", "keydown"].forEach((e) => addEventListener(e, thoi, { passive: true }));
-    const t = setInterval(() => {
-      const el = toi();
-      if (++lan > 40) return thoi();
-      if (!el) return;
-      if (Math.abs(el.getBoundingClientRect().top - 70) > 120) { dung = 0; el.scrollIntoView({ block: "start" }); }
-      else if (++dung >= 3) thoi();
-    }, 300);
-    return true;
   }
   /* eslint-disable react-hooks/set-state-in-effect -- nạp bản nháp một lần, khi đã biết tài khoản */
   useEffect(() => {
@@ -330,13 +296,9 @@ export default function PostListingForm() {
         if (cu && !localStorage.getItem(khoaNhap(userId))) localStorage.setItem(khoaNhap(userId), cu);
         if (cu) localStorage.removeItem(KHOA_NHAP_MAY);
         const d = JSON.parse(localStorage.getItem(khoaNhap(userId)) ?? "null") as Record<string, unknown> | null;
-        // Vừa huỷ thanh toán quay về → mở lại ngay bản đang soạn, không hỏi "tiếp tục bản nháp?"
-        const veLai = veThanhToan("moi");
         if (d) {
-          // Có bất cứ gì khách đã điền / đã chọn (kể cả chỉ chọn gói, up ảnh) → hỏi Soạn tiếp / Đăng tin mới (chủ dự án 29/10/2026)
-          const coNoiDung = ["title", "category", "province", "priceValue", "area", "description", "addressDetail", "planTier"]
-            .some((k) => typeof d[k] === "string" && (d[k] as string).trim()) || (Array.isArray(d.images) && d.images.length > 0);
-          if (coNoiDung && !veLai) setNhapCho(d);
+          const coNoiDung = ["title", "category", "province"].some((k) => typeof d[k] === "string" && (d[k] as string).trim());
+          if (coNoiDung) setNhapCho(d);
           else apDungNhap(d);
         }
       } catch {}
@@ -352,14 +314,14 @@ export default function PostListingForm() {
         demand, category, geoMode, province, district, ward, phuongCu, addressDetail, linkChen, mapPin,
         title, priceValue, priceUnit, giaTuGhi, area, builtArea, beds, baths, specValues, legal, furnish, direction,
         interior, amenities, description, images, contactName, contactPhone, contactEmail, projectSlug, projectName,
-        planTier, planDays, chonKm, batDau,
+        planTier, planDays, chonKm,
         maNhap: maNhapTk.current,
       }));
     } catch {}
   }, [editId, daNapNhap, nhapCho, userId, done, thieuTien, demand, category, geoMode, province, district, ward, phuongCu, addressDetail, linkChen, mapPin,
     title, priceValue, priceUnit, giaTuGhi, area, builtArea, beds, baths, specValues, legal, furnish, direction,
     interior, amenities, description, images, contactName, contactPhone, contactEmail, projectSlug, projectName,
-    planTier, planDays, chonKm, batDau]);
+    planTier, planDays, chonKm]);
 
   // KHÔNG còn ô "Ngày bắt đầu" tự chọn: tin bắt đầu hiển thị LÚC ĐƯỢC DUYỆT (một luật,
   // 01/10/2026) — cho chọn ngày là hứa một mốc web không làm đúng.
@@ -743,11 +705,23 @@ export default function PostListingForm() {
       // Tin NHÁP / CHỜ DUYỆT: nạp lại gói khách đã chọn (details.plan) — trước đây form mở ra trống gói, khách lưu
       // là gói của tin bị ghi thành trống (26/10/2026)
       if (r.status === "draft" || r.status === "pending") {
-        const p = (r.details as { plan?: { tier?: string; days?: number; khuyenMai?: boolean; batDau?: string } } | null)?.plan;
+        const p = (r.details as { plan?: { tier?: string; days?: number; khuyenMai?: boolean } } | null)?.plan;
         if (p?.tier) { setPlanTier(p.tier as TierId); setPlanDays(Number(p.days) || 0); setChonKm(p.khuyenMai === true); }
-        if (p?.batDau) setBatDau(p.batDau); // Chọn ngày đi theo gói (về từ nạp tiền không mất ngày đã chọn)
       }
-      veThanhToan(editId);
+      // HUỶ THANH TOÁN (?huy-tt=1 từ trang nạp tiền — chủ dự án 27/10/2026): về tin nháp, đưa thẳng tới khối Gói tin — thanh toán
+      const dc = new URL(window.location.href);
+      let coCo = false;
+      try { coCo = sessionStorage.getItem("veGoiTin") === editId; sessionStorage.removeItem("veGoiTin"); } catch {}
+      if (dc.searchParams.get("huy-tt") === "1" || coCo) {
+        dc.searchParams.delete("huy-tt");
+        window.history.replaceState(window.history.state, "", dc.pathname + dc.search);
+        setTimeout(() => document.getElementById("b-goi")?.scrollIntoView({ behavior: "smooth", block: "start" }), 400);
+        // Quay lại bằng nút Back: trình duyệt / Next khôi phục vị trí cuộn cũ sau đó → đặt lại nếu bị kéo đi
+        for (const ms of [1200, 2000]) setTimeout(() => {
+          const el = document.getElementById("b-goi");
+          if (el && Math.abs(el.getBoundingClientRect().top) > 200) el.scrollIntoView({ block: "start" });
+        }, ms);
+      }
       setDemand(demandOfPurpose(r.purpose));
       if (r.type) setCategory(r.type);
       setProvince(r.province ?? "");
@@ -1301,7 +1275,7 @@ export default function PostListingForm() {
         return (
           <div className="rounded-2xl border border-cvr-blue/30 bg-cvr-blue/[0.06] p-4">
             <p className="text-[15px] leading-snug text-cvr-ink">
-              <span className="font-semibold">Bạn có tin đang soạn dở{ten ? ":" : "."}</span> {ten}
+              <span className="font-semibold">Bạn có tin đang soạn dở:</span> {ten}
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
               {/* eslint-disable-next-line react-hooks/refs -- apDungNhap chỉ chạy khi khách bấm, không chạy lúc vẽ */}
@@ -1394,7 +1368,6 @@ export default function PostListingForm() {
               onChange={(v) => { setCategory(v); setSpecValues({}); }}
               options={nhomLoaiHinh.flatMap((g) => g.items)}
               nhom={nhomLoaiHinh}
-              nhanHien={tenLoaiHinh}
               placeholder="Chọn loại hình"
               timPlaceholder=""
               khongTim
@@ -1863,7 +1836,7 @@ export default function PostListingForm() {
               {/* BẮT ĐẦU HIỂN THỊ (chủ dự án 23/10/2026: "có 2 lựa chọn — Ngay khi được duyệt và Chọn ngày; chọn ngày thì lên cái lịch và
                   chọn ngày"): nút đôi cùng kiểu Địa chỉ mới / cũ; Chọn ngày → ô lịch của máy (mặc định ngày mai, tối đa 30 ngày tới, giờ
                   VN). Duyệt xong tin "Chờ hiển thị", 0h ngày đó mới lên; ngày đăng + hạn tính từ ngày đó (api/tin-dang/duyet). */}
-              <div id="b-thanhtoan" className="mt-5 scroll-mt-[70px]">
+              <div className="mt-5">
                 <p className="text-[15px] font-semibold text-cvr-ink">Bắt đầu hiển thị</p>
                 <div className="mt-2 grid w-full grid-cols-2 gap-1 rounded-lg border border-cvr-line bg-white p-1 sm:max-w-md">
                   {([["", "Ngay khi được duyệt"], ["chon", "Chọn ngày"]] as const).map(([id, ten]) => {
