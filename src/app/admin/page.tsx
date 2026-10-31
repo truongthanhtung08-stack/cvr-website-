@@ -186,31 +186,42 @@ type SuCoRow = {
 
 function SuCoBang() {
   const [ds, setDs] = useState<SuCoRow[]>([]);
+  // Tổng số sự cố chưa xử lý — trước đây tiêu đề đếm theo 10 dòng đang hiện, bấm hết 10 thì tải lại ra 10 dòng
+  // cũ hơn cùng tên, trông như bấm không ăn (chủ dự án 31/10/2026: 24 sự cố, mỗi lần chỉ thấy 10)
+  const [tong, setTong] = useState(0);
 
   useEffect(() => {
     const supabase = createClient();
     (async () => {
-      const { data } = await supabase
+      const { data, count } = await supabase
         .from("su_co")
-        .select("id,xay_ra_luc,noi,muc_do,tom_tat,chi_tiet,hau_qua,can_lam")
+        .select("id,xay_ra_luc,noi,muc_do,tom_tat,chi_tiet,hau_qua,can_lam", { count: "exact" })
         .eq("da_xu_ly", false)
         .order("xay_ra_luc", { ascending: false })
-        .limit(10);
+        .limit(50);
       setDs((data ?? []) as SuCoRow[]);
+      setTong(count ?? data?.length ?? 0);
     })();
   }, []);
 
   // Đánh dấu đã xử lý = giấu khỏi danh sách, KHÔNG xoá — còn tra lại được về sau.
   async function xong(id: string) {
-    const { error } = await createClient()
+    const { data, error } = await createClient()
       .from("su_co")
       .update({ da_xu_ly: true, xu_ly_luc: new Date().toISOString() })
-      .eq("id", id);
+      .eq("id", id)
+      .select("id");
     if (error) {
       window.alert(`Không đánh dấu được: ${error.message}`);
       return;
     }
+    // Hết phiên đăng nhập / không phải admin → CSDL bỏ qua lệnh mà không báo lỗi (0 dòng): không giấu thẻ khi chưa lưu
+    if (!data?.length) {
+      window.alert("Chưa lưu được — phiên đăng nhập admin đã hết. Tải lại trang, đăng nhập lại rồi bấm lại.");
+      return;
+    }
     setDs((rs) => rs.filter((r) => r.id !== id));
+    setTong((n) => n - 1);
   }
 
   if (ds.length === 0) return null;
@@ -218,7 +229,7 @@ function SuCoBang() {
   return (
     <div className="mt-6 rounded-2xl border border-red-300 bg-red-50/70 p-5 shadow-sm sm:p-6">
       <h2 className="text-base font-semibold text-red-900">
-        Sự cố hệ thống · {ds.length} việc chưa xử lý
+        Sự cố hệ thống · {tong} việc chưa xử lý
       </h2>
       <div className="mt-4 space-y-3">
         {ds.map((s) => (
