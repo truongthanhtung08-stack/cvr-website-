@@ -16,6 +16,17 @@
 7. **Xin index là việc HẰNG NGÀY của điều phối.** Trước khi index: kiểm web · Search Console · kế hoạch SEO, pSEO · URL Inspection · đối chiếu Page indexing để phát hiện lỗi. Index theo chuẩn Google, trong giới hạn Google cho phép, hàng loạt theo pSEO, **làm hết một lần, không lắc nhắc**; chỉ index khi web đủ điều kiện. **Thứ tự: tin thuộc Mua bán, Cho thuê trước** (tin đăng chi tiết + trang danh sách), xong mới đến Dự án, Tin tức. Sổ: `THEO-DOI-INDEX.md`.
 7b. **Đường dẫn chuẩn Google trước khi index** (Google "Sử dụng URL mang tính mô tả"; anh chốt 31/10): tin đăng chi tiết = chữ mô tả + mã ngắn, vd `/bat-dong-san/ban-can-ho-2pn-ph-nha-trang-view-bien-59140f1a`; đường dẫn cũ (mã số) chuyển hướng 301 sang mới; sitemap + canonical + mọi link trong web dùng đường mới; xong mới xin index. Cấm xin index đường dẫn chỉ có mã số.
 8. **Trong khi làm ghi nhật ký** (`chi-tiet\nhat-ky.md`): việc đã làm · lỗi phát hiện · nguyên nhân · lý do · giải pháp · cần bổ sung gì. Làm xong mới báo anh, một lần. Không giải thích vòng vo, không nói "đã ghi nhận" rồi làm sai.
+9. **ĐỌC QUY TRÌNH TRƯỚC KHI LÀM — bước nào của ai** (31/10): mở đúng mục quy trình của việc đó (đăng tin, dự án → `chi-tiet\quy-trinh-3-ben.md` 11.0B; push → mục 0B) → bước của anh thì báo "đến bước anh", KHÔNG tự làm; lệnh mơ hồ so với quy trình → hỏi một câu. **Nạp dự án, đăng tin, duyệt = ANH; Claude chỉ kiểm trước (bước A) và sau (bước C, F).** (Bài học 31/10: tự vào Admin nạp dự án.)
+10. **Báo ngắn, đúng 3 mục: Xong · Chưa xong · Cần gì** (31/10). Việc anh giao thì làm HẾT rồi mới báo. Nói ít, chỉ cái cần, không giải thích lại.
+11. **Điều phối chính = phiên "ĐIỀU PHỐI CÔNG VIỆC HẰNG NGÀY"** (`local_29599553-f08e-4fa5-a473-919f702b941e`, anh giao 31/10). Mọi phiên khác bàn giao về đây (đã xong · còn dở, dừng ở bước nào · tệp, nhánh, commit · việc chờ anh duyệt); **chỉ phiên điều phối push**, khi anh nhắn "Push".
+12. **LỖI CỦA PHIÊN ĐIỀU PHỐI 31/10 — ĐỪNG LẶP** (anh: "lỗi gì ghi hết vào CLAUDE.md"):
+    - Anh hỏi mà không trả lời ngay, tự làm trước (ghi bộ nhớ, bật máy xem thử 3001) → **anh hỏi thì trả lời đúng câu đó trước; anh bảo kiểm thì chỉ kiểm.**
+    - Hiểu sai ý anh nhiều lần, trả lời vòng vo, phải hỏi lại 4–5 lần mới ra một câu "đảm trách được" → **trả lời một câu thẳng; chưa hiểu thì hỏi lại một câu ngắn.**
+    - Lệnh anh mơ hồ mà vẫn định nhắn phiên khác (anh chặn) → **lệnh mơ hồ thì hỏi trước, không gửi đi.**
+    - Báo cáo dài, nhiều bảng, giải thích lại → **luật 10.**
+    - Được giao kiểm đợt mà chỉ đọc, không làm phần sửa của mình → **kiểm là làm trọn phần của Claude (bước A 11.0B), chỉ để lại việc của anh.**
+    - Tự vào Admin định nạp dự án — bước của anh, không đọc quy trình → **luật 9.**
+    - Ghi tệp ổ D: chèn nhầm chỗ (tệp xuống dòng kiểu Windows) · viết câu chưa kiểm vào trả lời Cowork rồi phải sửa → **ghi xong đọc lại đúng chỗ; câu nào cũng phải có căn cứ đã xem.**
 
 ---
 
