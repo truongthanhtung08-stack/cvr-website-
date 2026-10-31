@@ -502,9 +502,9 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                 </div>
                 </div>
                 )}
-                {/* Ngày cập nhật — cuối khối Tổng quan (mẫu 30/10/2026). Nguồn (tên trang khác) chỉ giữ trong Admin, không hiện cho
-                    khách (chủ dự án 31/10/2026: chấn chỉnh cách lọc nội dung) */}
+                {/* Ngày cập nhật + nguồn — cuối khối Tổng quan (mẫu 30/10/2026; trước nằm dưới địa chỉ) */}
                 {p.capNhat && (
+                  {/* Nguồn (tên trang khác) chỉ giữ trong Admin, không hiện cho khách (chủ dự án 31/10/2026: chấn chỉnh cách lọc nội dung) */}
                   <p className="mt-4 text-[13px] text-cvr-faint">Cập nhật ngày {p.capNhat}</p>
                 )}
               </Section>

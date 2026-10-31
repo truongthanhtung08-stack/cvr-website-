@@ -41,7 +41,7 @@ const CHI_TIET: [string, string][] = [
 ];
 // Trường bắt buộc (một nguồn truongDuAn.ts) → hồ sơ trên web đã có chưa
 const TREN_WEB: Record<keyof TruongBatBuoc, (h: Dong) => boolean> = {
-  ten: (h) => coGiaTri(h.name), diaChi: (h) => coGiaTri(h.province) && coGiaTri(h.ward) && coGiaTri((h.details as { mapPin?: string } | null)?.mapPin),
+  ten: (h) => coGiaTri(h.name), diaChi: (h) => coGiaTri(h.province) && coGiaTri(h.ward),
   loaiHinh: (h) => coGiaTri(h.type), tinhTrang: (h) => coGiaTri(h.status_text), chuDauTu: (h) => coGiaTri(h.developer),
 };
 

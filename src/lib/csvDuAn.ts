@@ -70,8 +70,7 @@ export type DongDuAn = {
 // Trường bắt buộc (khoá + tên lấy từ truongDuAn.ts) → tệp có ghi chưa
 const CO_TRONG_TEP: Record<keyof TruongBatBuoc, (v: (c: Cot) => string) => boolean> = {
   ten: (v) => !!v("ten_du_an"),
-  // Địa chỉ gồm cả VỊ TRÍ (toạ độ) — anh 31/10/2026: "vị trí đi với địa chỉ, đó là trường bắt buộc"
-  diaChi: (v) => !!v("tinh") && !!v("phuong_xa") && !!v("toa_do"),
+  diaChi: (v) => !!v("tinh") && !!v("phuong_xa"),
   loaiHinh: (v) => !!v("loai_hinh"),
   tinhTrang: (v) => !!v("trang_thai"),
   chuDauTu: (v) => !!v("chu_dau_tu"),
