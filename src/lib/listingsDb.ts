@@ -221,8 +221,13 @@ function rowToListing(r: Row): Listing {
     // (luật 15/10: VIP song song kỳ Basic). Trang tin đọc hai mốc này → hiện "Hiệu lực = ngày nâng · Hết hạn = hết VIP".
     // Ở đây trả đúng hạn CỦA TIN (CLAUDE.md 0.1 ③④⑤): hết hạn = muộn hơn giữa hạn VIP và hạn Basic; hiệu lực = postedAt
     // bên dưới (ngày lên web gốc). Không đổi dữ liệu, không đổi luật.
-    hetHanLuc: ((a?: string | null, b?: string | null) => (a && b ? (Date.parse(b) > Date.parse(a) ? b : a) : (a ?? b ?? null)))(
-      r.tier_expires_at, typeof r.details?.han_basic === "string" ? r.details.han_basic : null),
+    // KHÁCH CHỌN GÓI THƯỜNG (details.plan.khuyenMai === false — không theo chương trình): nâng gói = đăng gói mới, MỘT hạn = hạn gói
+    // đang chạy (chủ dự án 01/11/2026: "khách muốn gì chọn cái đó, up = nâng gói, khách chọn chương trình thì áp đúng chương trình").
+    // Tin theo chương trình giữ hạn kỳ chương trình như cũ.
+    hetHanLuc: (r.details as { plan?: { khuyenMai?: boolean } } | null)?.plan?.khuyenMai === false
+      ? r.tier_expires_at ?? null
+      : ((a?: string | null, b?: string | null) => (a && b ? (Date.parse(b) > Date.parse(a) ? b : a) : (a ?? b ?? null)))(
+        r.tier_expires_at, typeof r.details?.han_basic === "string" ? r.details.han_basic : null),
     hangTin: tierHieuLuc(r),
     areaM2: r.area_m2 ?? null,
     builtAreaM2: r.built_area_m2 ?? null,

@@ -389,6 +389,8 @@ export default function ListingForm({ initial }: { initial?: ListingRow }) {
         ...((): { han_basic?: string } => {
           const d0 = initial?.details as { han_basic?: string; sau_vip_con_lai_ms?: number } | undefined;
           if (tier === "basic") return {};
+          // Khách chọn GÓI THƯỜNG (không chương trình): nâng = đăng gói mới, không giữ hạn Basic song song (chủ dự án 01/11/2026)
+          if ((initial?.details as { plan?: { khuyenMai?: boolean } } | undefined)?.plan?.khuyenMai === false) return {};
           if (d0?.han_basic) return { han_basic: d0.han_basic };
           // Khoá cũ (09/10): số ms Basic còn lại tính từ lúc nâng = published_at của kỳ VIP.
           if (d0?.sau_vip_con_lai_ms && initial?.published_at)

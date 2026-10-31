@@ -133,6 +133,8 @@ export async function quetTinHetHan(
         }
         hanBasic = await hanChuongTrinh(admin, tin, bill);
       }
+      // Khách chọn GÓI THƯỜNG (không chương trình): hết gói là hết hạn, không về Basic cũ (chủ dự án 01/11/2026: nâng = đăng gói mới)
+      if (!chonKhuyenMai(tin.details)) hanBasic = NaN;
       if (tin.tier !== "basic" && Number.isFinite(hanBasic) && hanBasic > bayGio.getTime()) {
         const { sau_vip_con_lai_ms: _bo1, han_basic: _bo2, ...giu } = tin.details ?? {};
         void _bo1; void _bo2;

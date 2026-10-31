@@ -100,6 +100,9 @@ Tóm tắt lệnh của anh (chi tiết ở 11.00): **"Bắt đầu"** (ở phi�
 >     tạo hộ chưa tự vào → tính như admin đăng hộ (lúc gửi tin trong from–to). Còn lại = thành viên cũ.
 >   - ① Khách đăng tin, bước chọn gói: hiện ĐỦ mọi gói + mọi chương trình đang chạy; thành viên mới chọn được ưu đãi,
 >     thành viên cũ vẫn thấy nhưng ô ưu đãi MỜ, không bấm được. ② Admin đăng hộ: như ①, theo luật tạo hộ.
+>     ⛔ **01/11/2026 (anh):** khách chọn gói nào tính tiền gói đó theo Admin · **up = nâng gói** (trả gói mới − khấu trừ gói hiện tại, hoặc
+>     chiết khấu hội viên) = đăng gói mới, MỘT hạn = ngày nâng + số ngày gói mới, hết là hết hạn (tin gói thường `plan.khuyenMai === false`)
+>     · **đẩy** = gói đẩy có sẵn · **khách chọn chương trình** → áp đúng chương trình (④⑤ dưới chỉ còn áp cho tin theo chương trình).
 >     ③ Duyệt: hạn = ngày duyệt + số ngày gói/chương trình; trừ đúng số tiền đã báo. ④ Nâng VIP: VIP chạy từ ngày nâng,
 >     kỳ Basic chạy song song (không cộng nối). ⑤ Hết VIP: tự về Basic giữ hạn Basic còn lại (ghi `ha_vip_luc`).
 >     ⑥ Hết hạn: ẩn + nhắn khách; đăng lại → chờ duyệt như tin mới. ⑦ Tự kiểm 8h: chỉ báo lỗi thật, sửa xong tự hết báo.
